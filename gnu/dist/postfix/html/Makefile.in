@@ -13,7 +13,7 @@ CONFIG	= access.5.html aliases.5.html canonical.5.html relocated.5.html \
 update:	$(DAEMONS) $(COMMANDS) $(CONFIG)
 
 Makefile: Makefile.in
-	(set -e; echo "# DO NOT EDIT"; $(OPTS) $(SHELL) ../makedefs; cat $?) >$@
+	(set -e; echo "# DO NOT EDIT"; $(OPTS) $(SHELL) ../makedefs && cat $?) >$@
 
 clean:
 	echo clean

@@ -155,6 +155,12 @@ static int deliver_switch(LOCAL_STATE state, USER_ATTR usr_attr)
 	return (deliver_indirect(state));
 
     /*
+     * Always forward recipients in :include: files.
+     */
+    if (state.msg_attr.exp_type == EXPAND_TYPE_INCL)
+	return (deliver_indirect(state));
+
+    /*
      * Delivery to local user. First try expansion of the recipient's
      * $HOME/.forward file, then mailbox delivery.
      */

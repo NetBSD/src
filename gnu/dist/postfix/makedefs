@@ -145,7 +145,7 @@ case "$SYSTEM.$RELEASE" in
 			case "$CC" in
 			cc|*/cc|xlc|*/xlc) OPT=; CCARGS="$CCARGS -w";;
 			esac
-			CCARGS="$CCARGS -D_ALL_SOURCE"
+			CCARGS="$CCARGS -D_ALL_SOURCE -DHAS_POSIX_REGEXP"
 			;;
 		3)	SYSTYPE=AIX3
 			# How embarrassing...
@@ -157,14 +157,23 @@ case "$SYSTEM.$RELEASE" in
 		*)	echo "Unknown AIX version: `uname -v`." 1>&2; exit 1;;
 		esac;;
     Linux.2*)	SYSTYPE=LINUX2
-		for name in db nsl resolv
+		SYSLIBS="-ldb"
+		for name in nsl resolv
 		do
 		    test -f /usr/lib/lib$name.a && SYSLIBS="$SYSLIBS -l$name"
 		done
-		if [ -f /usr/include/db_185.h ]; then
-		    CCARGS="$CCARGS -DPATH_DB_H='<db_185.h>'"
+		if [ -f /usr/include/db.h ]; then
+		    : all set
 		elif [ -f /usr/include/db/db.h ]; then
-		    CCARGS="$CCARGS -DPATH_DB_H='<db/db.h>'"
+		    CCARGS="$CCARGS -I/usr/include/db"
+		else
+		    # No, we're not going to try db1 db2 db3 etc.
+		    # On a properly installed system, Postfix builds
+		    # by including <db.h> and by linking with -ldb
+		    echo "No <db.h> include file." 1>&2
+		    echo "Install appropriate db development package first" 1>&2
+		    echo "See the RELEASE_NOTES file for more information." 1>&2
+		    exit 1
 		fi
 		;;
      IRIX*.5.*)	SYSTYPE=IRIX5

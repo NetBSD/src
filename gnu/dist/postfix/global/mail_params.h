@@ -438,7 +438,7 @@ extern int var_qmgr_rcpt_limit;
 extern int var_qmgr_fudge;
 
 #define VAR_QMGR_HOG		"qmgr_site_hog_factor"
-#define DEF_QMGR_HOG		90
+#define DEF_QMGR_HOG		100
 extern int var_qmgr_hog;
 
  /*

@@ -78,8 +78,12 @@ int     make_dirs(const char *path, int perms)
 		ret = -1;
 		break;
 	    }
-	} else if (errno != ENOENT || (ret = mkdir(saved_path, perms)) < 0)
-	    break;
+	} else {
+	    if (errno != ENOENT)
+		break;
+	    if ((ret = mkdir(saved_path, perms)) < 0 && errno != EEXIST)
+		break;
+	}
 	if (saved_ch != 0)
 	    *cp = saved_ch;
 	SKIP_WHILE(*cp == '/', cp);

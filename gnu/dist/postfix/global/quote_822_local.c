@@ -80,7 +80,7 @@ static int is_822_dot_string(const char *local_part, const char *end)
      */
     if (local_part[0] == 0 || local_part[0] == '.')
 	return (NO);
-    for (cp = local_part; cp < end && (ch = *cp) != 0; cp++) {
+    for (cp = local_part; cp < end && (ch = *(unsigned char *) cp) != 0; cp++) {
 	if (ch == '.' && (cp + 1) < end && cp[1] == '.')
 	    return (NO);
 #if 0

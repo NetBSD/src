@@ -3,6 +3,11 @@
 # Dummy UUCP rmail command for postfix/qmail systems
 
 SENDMAIL="/usr/sbin/sendmail"
-IFS=" " read junk from junk
+IFS=" " read junk from junk junk junk junk junk junk junk relay
+
+case "$from" in
+ *[@!]*) ;;
+      *) from="$from@$relay";;
+esac
 
 exec $SENDMAIL -f "$from" -- "$@"

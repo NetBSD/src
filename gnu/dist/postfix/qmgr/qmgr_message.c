@@ -97,6 +97,7 @@
 #include <argv.h>
 #include <stringops.h>
 #include <myflock.h>
+#include <stringops.h>
 
 /* Global library. */
 
@@ -459,6 +460,12 @@ static void qmgr_message_resolve(QMGR_MESSAGE *message)
 	if (!STREQ(recipient->address, STR(reply.recipient)))
 	    UPDATE(recipient->address, STR(reply.recipient));
 
+	/*
+	 * XXX The nexthop destination is also used as lookup key for the
+	 * per-destination queue. Fold the nexthop to lower case so that we
+	 * don't have multiple queues for the same site.
+	 */
+	lowercase(STR(reply.nexthop));
 
 	/*
 	 * Bounce recipients that have moved. We do it here instead of in the

@@ -18,7 +18,7 @@ LIBS	= ../lib/libglobal.a ../lib/libutil.a
 all:	$(PROG)
 
 Makefile: Makefile.in
-	(set -e; echo "# DO NOT EDIT"; $(OPTS) $(SHELL) ../makedefs; cat $?) >$@
+	(set -e; echo "# DO NOT EDIT"; $(OPTS) $(SHELL) ../makedefs && cat $?) >$@
 
 smtp-sink: smtp-sink.o $(LIBS)
 	$(CC) $(CFLAGS) -o $@ smtp-sink.o $(LIBS) $(SYSLIBS)

@@ -2161,30 +2161,11 @@ systems.
 <p>
 
 In order to build Postfix with <b>db</b> support on UNIX systems
-that do not have <b>db</b> support out of the box, you need the
-db-1.85 release, or <a href="http://www.sleepycat.com">the current
-version</a> which has a db-1.85 compatible interface.
-
-<p>
-
-Use the following commands in the Postfix top-level directory.
-The LD_LIBRARY_PATH unset commands may be required to avoid linking
-in the wrong libraries.
-
-<p>
-
-<pre>
-    % LD_LIBRARY_PATH=         (Bourne-shell syntax)
-    % unsetenv LD_LIBRARY_PATH (C-shell syntax)
-    % make tidy
-    % make makefiles CCARGS="-DHAS_DB -DPATH_DB_H='&lt;db_185.h&gt;' -I/some/where/include" AUXLIBS=/some/where/libdb.a
-    % make
-</pre>
-
-<p>
-
-Of course you will have to specify the actual location of the
-include directory and of the object library.
+that do not have <b>db</b> support out of the box, you can use the
+Berkeley DB source code from <a
+href="http://www.sleepycat.com">www.sleepycat.com</a>. See the file
+<b>DB_README</b> in the Postfix source code distribution for
+instructions on how to build Postfix with Sleepycat's Berkeley DB.
 
 <p>
 

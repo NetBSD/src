@@ -25,7 +25,7 @@ $(PROG):	$(OBJS) $(LIBS)
 	$(CC) $(CFLAGS) -o $@ $(OBJS) $(LIBS) $(SYSLIBS)
 
 Makefile: Makefile.in
-	(set -e; echo "# DO NOT EDIT"; $(OPTS) $(SHELL) ../makedefs; cat $?) >$@
+	(set -e; echo "# DO NOT EDIT"; $(OPTS) $(SHELL) ../makedefs && cat $?) >$@
 
 test:	$(TESTPROG)
 
@@ -100,6 +100,8 @@ cleanup_envelope.o: ../include/tok822.h
 cleanup_envelope.o: ../include/resolve_clnt.h
 cleanup_envelope.o: ../include/mail_params.h
 cleanup_envelope.o: ../include/ext_prop.h
+cleanup_envelope.o: ../include/mail_addr.h
+cleanup_envelope.o: ../include/canon_addr.h
 cleanup_envelope.o: cleanup.h
 cleanup_envelope.o: ../include/argv.h
 cleanup_envelope.o: ../include/maps.h
@@ -157,10 +159,10 @@ cleanup_map1n.o: ../include/mail_addr_map.h
 cleanup_map1n.o: ../include/maps.h
 cleanup_map1n.o: ../include/cleanup_user.h
 cleanup_map1n.o: ../include/quote_822_local.h
+cleanup_map1n.o: ../include/been_here.h
 cleanup_map1n.o: cleanup.h
 cleanup_map1n.o: ../include/tok822.h
 cleanup_map1n.o: ../include/resolve_clnt.h
-cleanup_map1n.o: ../include/been_here.h
 cleanup_map1n.o: ../include/mail_stream.h
 cleanup_masquerade.o: cleanup_masquerade.c
 cleanup_masquerade.o: ../include/sys_defs.h

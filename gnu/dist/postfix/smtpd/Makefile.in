@@ -21,7 +21,7 @@ $(PROG): $(OBJS) $(LIBS)
 	$(CC) $(CFLAGS) -o $@ $(OBJS) $(LIBS) $(SYSLIBS)
 
 Makefile: Makefile.in
-	(set -e; echo "# DO NOT EDIT"; $(OPTS) $(SHELL) ../makedefs; cat $?) >$@
+	(set -e; echo "# DO NOT EDIT"; $(OPTS) $(SHELL) ../makedefs && cat $?) >$@
 
 test:	$(TESTPROG)
 
@@ -106,6 +106,7 @@ smtpd.o: ../include/smtp_stream.h
 smtpd.o: ../include/valid_hostname.h
 smtpd.o: ../include/dict.h
 smtpd.o: ../include/argv.h
+smtpd.o: ../include/watchdog.h
 smtpd.o: ../include/mail_params.h
 smtpd.o: ../include/record.h
 smtpd.o: ../include/rec_type.h

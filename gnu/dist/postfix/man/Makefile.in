@@ -13,7 +13,7 @@ CONFIG	= man5/access.5 man5/aliases.5 man5/canonical.5 man5/relocated.5 \
 update:	$(DAEMONS) $(COMMANDS) $(CONFIG)
 
 Makefile: Makefile.in
-	(set -e; echo "# DO NOT EDIT"; $(OPTS) $(SHELL) ../makedefs; cat $?) >$@
+	(set -e; echo "# DO NOT EDIT"; $(OPTS) $(SHELL) ../makedefs && cat $?) >$@
 
 clean:
 	rm -f cat?/*

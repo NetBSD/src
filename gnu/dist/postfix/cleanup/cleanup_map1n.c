@@ -54,6 +54,7 @@
 #include <mail_addr_map.h>
 #include <cleanup_user.h>
 #include <quote_822_local.h>
+#include <been_here.h>
 
 /* Application-specific. */
 
@@ -68,7 +69,7 @@ ARGV   *cleanup_map1n_internal(char *addr, MAPS *maps, int propagate)
     int     count;
     int     i;
     int     arg;
-    int     expand_to_self;
+    BH_TABLE *been_here;
     char   *saved_lhs;
 
     /*
@@ -77,6 +78,7 @@ ARGV   *cleanup_map1n_internal(char *addr, MAPS *maps, int propagate)
     argv = argv_alloc(1);
     argv_add(argv, addr, ARGV_END);
     argv_terminate(argv);
+    been_here = been_here_init(0, BH_FLAG_FOLD);
 
     /*
      * Rewrite the address vector in place. With each map lookup result,
@@ -89,14 +91,17 @@ ARGV   *cleanup_map1n_internal(char *addr, MAPS *maps, int propagate)
 #define MAX_RECURSION 1000
 #define MAX_EXPANSION 1000
 #define STR	vstring_str
+#define RETURN(x) { been_here_free(been_here); return (x); }
 
-    for (expand_to_self = 0, arg = 0; arg < argv->argc; arg++) {
+    for (arg = 0; arg < argv->argc; arg++) {
 	if (argv->argc > MAX_EXPANSION) {
 	    msg_warn("%s: unreasonable %s map expansion size for %s",
 		     cleanup_queue_id, maps->title, addr);
 	    break;
 	}
 	for (count = 0; /* void */ ; count++) {
+	    if (been_here_fixed(been_here, argv->argv[arg]) != 0)
+		break;
 	    if (count >= MAX_RECURSION) {
 		msg_warn("%s: unreasonable %s map nesting for %s",
 			 cleanup_queue_id, maps->title, addr);
@@ -106,8 +111,6 @@ ARGV   *cleanup_map1n_internal(char *addr, MAPS *maps, int propagate)
 		saved_lhs = mystrdup(argv->argv[arg]);
 		for (i = 0; i < lookup->argc; i++) {
 		    unquote_822_local(cleanup_temp1, lookup->argv[i]);
-		    if (strcasecmp(saved_lhs, STR(cleanup_temp1)) == 0)
-			expand_to_self = 1;
 		    if (i == 0) {
 			UPDATE(argv->argv[arg], STR(cleanup_temp1));
 		    } else {
@@ -117,17 +120,15 @@ ARGV   *cleanup_map1n_internal(char *addr, MAPS *maps, int propagate)
 		}
 		myfree(saved_lhs);
 		argv_free(lookup);
-		if (expand_to_self)
-		    return (argv);
 	    } else if (dict_errno != 0) {
 		msg_warn("%s: %s map lookup problem for %s",
 			 cleanup_queue_id, maps->title, addr);
 		cleanup_errs |= CLEANUP_STAT_WRITE;
-		return (argv);
+		RETURN(argv);
 	    } else {
 		break;
 	    }
 	}
     }
-    return (argv);
+    RETURN(argv);
 }

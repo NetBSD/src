@@ -359,6 +359,12 @@ SMTP_SESSION *smtp_connect(char *destination, VSTRING *why)
     } else {
 	session = smtp_connect_domain(host, port, why);
     }
+    if (session == 0
+	&& smtp_errno == SMTP_FAIL
+	&& strcmp(host, var_relayhost) == 0) {
+	msg_warn("relayhost configuration problem: %s", var_relayhost);
+	smtp_errno = SMTP_RETRY;
+    }
     myfree(dest_buf);
     return (session);
 }

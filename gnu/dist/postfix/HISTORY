@@ -3639,9 +3639,19 @@ Apologies for any names omitted.
 
 20000308
 
+	Bugfix: the unused db and dbm "delete" routines would
+	clobber the per-dictionary flags when called before reading
+	or writing the table. Files: util/dict_dbm.c, util/dict_db.c.
+	Lutz Jaenicke @ aet.TU-Cottbus.DE.
+
 	Bugfix: the SMTP server would produce a cryptic message
 	when a queue file write error happened before it had written
 	any recipients.  Keith Stevenson. File: smtpd/smtpd.c.
+
+	Robustness: the db and dbm "delete" routines didn't adjust
+	to dictionaries with/without one trailing null in lookup
+	keys and values. Did a complete rewrite of the routines.
+	Files: util/dict_db.c, util/dict_dbm.c.
 
 20000311
 
@@ -3732,3 +3742,156 @@ Apologies for any names omitted.
 	feature uses the same filtering syntax as the header_checks
 	feature.  File:  cleanup/cleanup_message.c. See also the
 	conf/sample-filter.cf file.
+
+20000617
+
+	Bugfix: the maildir delivery routine left temporary files
+	lying around after unsuccessful delivery (problem reported
+	by Brian Laughton @ Corp.Axxent.Ca).
+
+20000621
+
+	AIX 4.x had POSIX regular expression support all the time
+	I was working on Postfix. Better find out late than never.
+
+20000623
+
+	Bugfix: the SMTP server did not reset the so-called junk
+	command counter after successfull delivery (Mark Hoffman
+	@ wallst.com).  File: smtpd/smtpd.c.
+
+20000708
+
+	Portability: support for NEXT/OPENSTEP requires extra
+	include file in util/watchdog.c (Masaki Murase).
+
+20000718
+
+	Robustness: make_dirs() now continues when a missing
+	directory is created by another process.
+
+20000726
+
+	Robustness: added watchdog_pat() routine to keep the watchdog
+	quiet if a client stays connected for a lot of time. Files:
+	util/watchdog.[hc], smtpd/smtpd.c.
+
+20000729
+
+	Robustness: if relayhost is specified but the host does
+	not exist, defer mail instead of bouncing it (which would
+	lose the mail if the bounce would have to be delivered to
+	that same non-existent relayhost). Problem reported by
+	Chris Cooper @ maths.ox.ac.uk. File: smtp/smtp_connect.c.
+
+20000821
+
+	Cleanup: smtpd now replies with 555 when the client sends
+	unrecognized RCPT TO parameters, as required by RFC 1869
+	(problem report by Robert Norris @ its.monash.edu.au).
+	File: smtpd/smtpd.c.
+
+20000905
+
+	Robustness: the dns client now rejects malformed domain
+	names rather than depending on the DNS to report that the
+	name does not exist. Linux returns a rather misleading
+	server failure code as found out by Patrik Rak. File:
+	dns/dns_lookup.c.
+
+20000913
+
+	Bugfix: the rmail script did not handle remote UUCP systems
+	that send a from_ line with unqualified envelope sender.
+	Reported by Luciano Mannucci.
+
+	Compatibility: don't insert Sender: header lines. Sendmail
+	has not done so for at least 10 years, if it ever did.
+	Problem reported by Brad Knowles. File: cleanup/cleanup_message.c.
+
+20000916
+
+	Bugfix: when propagating an address extension in a virtual
+	or canonical mapping, cleanup accesses memory that is no
+	longer allocated. This can happen when the result address
+	length is more than 100 characters.  Problem reported by
+	Adi Prasaja @ satunet.com. File: global/mail_addr_crunch.c.
+
+	Bugfix: fixed a misleading error message when the cleanup
+	server reaches the queue file size limit. Fix by Robby
+	Griffin @ MIT.EDU.  File: cleanup/cleanup_message.c.
+
+20000917
+
+	Bugfix: postalias -i would complain about duplicate entries
+	for the Sendmail-compatible @ entry and for the NIS-compatible
+	YP_LAST_MODIFIED and YP_MASTER_NAME entries.
+
+20000918
+
+	Gross hack: prevent looping on a bad recipient by always
+	forwarding recipients in :include: files to a new mail
+	delivery request, even when owner-listname is not set.
+	File: local/recipient.c.
+
+20001003
+
+	Unfeature: qmgr_hog_factor is now disabled by default. It
+	was just too confusing. If you don't know what this means,
+	do not worry.
+
+20001025
+
+	Bugfix: virtual map expansion stopped too early with
+	self-referential aliases. Reported by Michael Douglass
+	@ datafoundry.net. File: cleanup/cleanup_map1n.c.
+
+20001026
+
+	Horror:  postmap and postalias (newaliases) silently lose
+	the file lock while building a lookup table with Berkeley
+	DB 2.x and later on Solaris, HP-UX, IRIX, and UNIXWARE.
+	The result is that table lookups fail while the table is
+	being built, so that mail is lost.  In order to avoid this
+	misbehavior one has to use an undocumented feature that is
+	NOT available with the DB1.85 compatibility interface.
+	Therefore, Postfix now supports three Berkeley DB programming
+	interfaces of increasing complexity. File: util/dict_db.c.
+
+	Bugfix: some character manipulations were not portable for
+	signed/unsigned characters. Files: global/quote_821_local.c,
+	global/quote_822_local.c.
+
+20001030
+
+	Bugfix: further testing in preparation for 19991231-pl10
+	revealed that the DB map code was now broken for every
+	platform.
+
+20001104
+
+	Portability: RedHat Linux has changed incompatibly, again.
+	Fixed with the help of Matthias Andree.  File: makedefs.
+
+20001119
+
+	Bugfix: per-destination queue names were case sensitive so
+	that the same site could have multiple queues.  Reported
+	by Patrik Rak. File: qmgr/qmgr_message.c.
+
+20001121
+
+	Performance: the slow start (gradually increase number of
+	parallel connections to the same site) was too gentle and
+	Postfix would back off too quickly.  Final solution by
+	Patrik Rak. File: qmgr/qmgr_message.c.
+
+20001208
+
+	Bugfix: while processing massive amounts of one-recipient
+	mail, qmgr could deadlock for 10 seconds while sending a
+	bounce message. All queue manager bounce send requests are
+	now implemented asynchronously.  Files: global/abounce.[hc]
+	(asynchronous bounce client), qmgr/qmgr_active.c.  Problem
+	reported by El Bunzo (webpower.nl) and Tiger Technologies
+	(tigertech.com).
