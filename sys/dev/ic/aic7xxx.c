@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.65 2001/02/05 10:42:41 chs Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.66 2001/02/24 00:01:22 cgd Exp $	*/
 
 /*
  * Generic driver for the aic7xxx based adaptec SCSI controllers
@@ -3862,6 +3862,7 @@ ahc_ioctl(struct scsipi_link *sc_link, u_long cmd, caddr_t addr, int flag,
 		ret = 0;
 		break;
 	default:
+		break;
 	}
 
 	return ret;

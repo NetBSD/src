@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.90 2001/02/21 21:39:55 jdolecek Exp $	*/
+/*	$NetBSD: tulip.c,v 1.91 2001/02/24 00:01:23 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -1056,6 +1056,7 @@ tlp_intr(arg)
 
 	default:
 		/* Nothing. */
+		break;
 	}
 
 	for (;;) {
@@ -1197,6 +1198,7 @@ tlp_intr(arg)
 
 	default:
 		/* Nothing. */
+		break;
 	}
 
 	/* Try to get more packets going. */
@@ -1640,6 +1642,7 @@ tlp_init(ifp)
 
 	default:
 		/* Nothing. */
+		break;
 	}
 	switch (sc->sc_cacheline) {
 	default:
@@ -1709,6 +1712,7 @@ tlp_init(ifp)
 
 	default:
 		/* Nothing. */
+		break;
 	}
 
 	TULIP_WRITE(sc, CSR_BUSMODE, sc->sc_busmode);
@@ -1743,6 +1747,7 @@ tlp_init(ifp)
 
 	default:
 		/* Nothing. */
+		break;
 	}
 
 	/*
@@ -1817,6 +1822,7 @@ tlp_init(ifp)
 
 	default:
 		/* Nothing. */
+		break;
 	}
 
 	sc->sc_rxint_mask &= sc->sc_inten;
@@ -1867,6 +1873,7 @@ tlp_init(ifp)
 
 	default:
 		/* Nothing. */
+		break;
 	}
 
 	/*
@@ -3192,6 +3199,7 @@ tlp_mii_setmedia(sc)
 
 		default:
 			/* Nothing. */
+			break;
 		}
 		mii_mediachg(&sc->sc_mii);
 	}
@@ -3487,6 +3495,7 @@ tlp_dm9102_preinit(sc)
 
 	default:
 		/* Nothing. */
+		break;
 	}
 
 	TULIP_WRITE(sc, CSR_OPMODE, sc->sc_opmode);
@@ -3594,6 +3603,7 @@ tlp_pmac_reset(sc)
 
 	default:
 		/* Nothing. */
+		break;
 	}
 }
 
@@ -3834,6 +3844,7 @@ tlp_srom_media_info(sc, tsti, tm)
 
 	default:
 		/* Nothing. */
+		break;
 	}
 }
 
@@ -4011,6 +4022,7 @@ tlp_sia_update_link(sc)
 
 	default:
 		/* Nothing. */
+		break;
 	}
 }
 
@@ -4525,6 +4537,7 @@ tlp_2114x_isv_tmsw_init(sc)
 
 	default:
 		/* Nothing. */
+		break;
 	}
 
 	/* Get the media count. */
@@ -5660,6 +5673,7 @@ tlp_dm9102_tmsw_init(sc)
 
 	default:
 		/* Nothing. */
+		break;
 	}
 
 	TULIP_WRITE(sc, CSR_OPMODE, opmode);

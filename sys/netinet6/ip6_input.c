@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.35 2001/02/10 04:14:28 itojun Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.36 2001/02/24 00:02:16 cgd Exp $	*/
 /*	$KAME: ip6_input.c,v 1.174 2001/02/09 06:17:41 jinmei Exp $	*/
 
 /*
@@ -1162,6 +1162,7 @@ ip6_savecontrol(in6p, mp, ip6, m)
 			nxt = ip6e->ip6e_nxt;
 		}
 	  loopend:
+		;
 	}
 	if ((in6p->in6p_flags & IN6P_HOPOPTS) && privileged) {
 		/* to be done */
