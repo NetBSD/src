@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_debugMem.h,v 1.1 1998/11/13 04:20:28 oster Exp $	*/
+/*	$NetBSD: rf_debugMem.h,v 1.2 1999/01/14 22:49:05 thorpej Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -198,7 +198,7 @@ typedef u_int32_t U32;
 
 #define RF_Malloc(_p_, _size_, _cast_)                                      \
   {                                                                      \
-     _p_ = _cast_ malloc((u_long)_size_, M_DEVBUF, M_WAITOK); \
+     _p_ = _cast_ malloc((u_long)_size_, M_RAIDFRAME, M_WAITOK); \
      bzero((char *)_p_, _size_); \
      if (rf_memDebug) rf_record_malloc(_p_, _size_, __LINE__, __FILE__);       \
   }
@@ -231,11 +231,19 @@ typedef u_int32_t U32;
      if (__alist) rf_AddToAllocList(__alist, __p, (__nel)*(__elsz));         \
   }
 
+#ifdef __NetBSD__
+#define RF_Free(_p_, _sz_)                                                   \
+  {                                                                       \
+	free((void *)(_p_), M_RAIDFRAME);                                      \
+    if (rf_memDebug) rf_unrecord_malloc(_p_, (U32) (_sz_));                     \
+  }
+#else
 #define RF_Free(_p_, _sz_)                                                   \
   {                                                                       \
 	free((void *)(_p_), M_DEVBUF);                                        \
     if (rf_memDebug) rf_unrecord_malloc(_p_, (U32) (_sz_));                     \
   }
+#endif /* __NetBSD__ */
 
 #endif /* KERNEL */
 
