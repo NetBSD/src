@@ -1,4 +1,6 @@
-# $NetBSD: Makefile,v 1.6 1997/06/22 05:09:58 mrg Exp $
+# $NetBSD: Makefile,v 1.7 1998/03/02 20:01:05 cgd Exp $
+
+.include <bsd.prog.mk>
 
 PROG=	setnetbootinfo
 BINDIR=	/usr/mdec
@@ -6,6 +8,6 @@ BINDIR=	/usr/mdec
 NOMAN=	yes
 
 CFLAGS+= -g -I${.CURDIR}/../..
-LDSTATIC=-static
+LDSTATIC?=-static
 
 .include <bsd.prog.mk>
