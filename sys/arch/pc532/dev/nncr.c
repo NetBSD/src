@@ -1,4 +1,4 @@
-/*	$NetBSD: nncr.c,v 1.5 1994/12/30 01:40:01 phil Exp $	*/
+/*	$NetBSD: nncr.c,v 1.6 1995/01/09 08:18:43 phil Exp $	*/
 
 /*
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -268,6 +268,7 @@ ncr5380_scsi_cmd(struct scsi_xfer *xs)
 		return(COMPLETE);
 	}
 
+	xs->resid = 0;			/* Default value? */
 	r = ncr5380_send_cmd(xs);
 	xs->flags |= ITSDONE;
 	scsi_done(xs);
