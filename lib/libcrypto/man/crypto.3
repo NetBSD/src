@@ -222,6 +222,14 @@ the \fIpkcs7(3)|pkcs7(3)\fR manpage, the \fIpkcs12(3)|pkcs12(3)\fR manpage
 the \fIbn(3)|bn(3)\fR manpage, the \fIbuffer(3)|buffer(3)\fR manpage, the \fIlhash(3)|lhash(3)\fR manpage,
 the \fIobjects(3)|objects(3)\fR manpage, the \fIstack(3)|stack(3)\fR manpage,
 the \fItxt_db(3)|txt_db(3)\fR manpage 
+.\"
+.LP
+On NetBSD system,
+\fIidea(3)\fR and \fIrc5(3)\fR are not shipped in the standard
+\fBcrypto\fR library.
+To use these algorithms, you need to build 
+\fBcrypto_idea\fR and \fBcrypto_rc5\fR separately,
+and link your applications against them.
 .SH "SEE ALSO"
 the \fIopenssl(1)|openssl(1)\fR manpage, the \fIssl(3)|ssl(3)\fR manpage
 
