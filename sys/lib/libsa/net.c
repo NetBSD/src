@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.6 1995/09/14 23:45:26 pk Exp $	*/
+/*	$NetBSD: net.c,v 1.7 1995/09/17 00:49:41 pk Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -158,18 +158,18 @@ readudp(d, pkt, len, tleft)
 
 	n = readether(d, ip, len + sizeof(*ip) + sizeof(*uh), tleft, &etype);
 	if (n == -1 || n < sizeof(*ip) + sizeof(*uh))
-		goto bad;
+		return -1;
 
 	/* Ethernet address checks now in readether() */
 
 	/* Need to respond to ARP requests. */
 	if (etype == ETHERTYPE_ARP) {
 		struct arphdr *ah = (void *)ip;
-        if (ah->ar_op == htons(ARPOP_REQUEST)) {
+		if (ah->ar_op == htons(ARPOP_REQUEST)) {
 			/* Send ARP reply */
 			arp_reply(d, ah);
 		}
-		goto bad;
+		return -1;
 	}
 
 	if (etype != ETHERTYPE_IP) {
@@ -177,7 +177,7 @@ readudp(d, pkt, len, tleft)
 		if (debug)
 			printf("readudp: not IP. ether_type=%x\n", etype);
 #endif
-		goto bad;
+		return -1;
 	}
 
 	/* Check ip header */
@@ -187,7 +187,7 @@ readudp(d, pkt, len, tleft)
 		if (debug)
 			printf("readudp: IP version or not UDP. ip_v=%d ip_p=%d\n", ip->ip_v, ip->ip_p);
 #endif
-		goto bad;
+		return -1;
 	}
 
 	hlen = ip->ip_hl << 2;
@@ -197,7 +197,7 @@ readudp(d, pkt, len, tleft)
 		if (debug)
 			printf("readudp: short hdr or bad cksum.\n");
 #endif
-		goto bad;
+		return -1;
 	}
 	NTOHS(ip->ip_len);
 	if (n < ip->ip_len) {
@@ -205,7 +205,7 @@ readudp(d, pkt, len, tleft)
 		if (debug)
 			printf("readudp: bad length %d < %d.\n", n, ip->ip_len);
 #endif
-		goto bad;
+		return -1;
 	}
 	if (d->myip && ntohl(ip->ip_dst.s_addr) != d->myip) {
 #ifdef NET_DEBUG
@@ -214,7 +214,7 @@ readudp(d, pkt, len, tleft)
 			printf("%s\n", intoa(ntohl(ip->ip_dst.s_addr)));
 		}
 #endif
-		goto bad;
+		return -1;
 	}
 
 	/* If there were ip options, make them go away */
@@ -229,14 +229,14 @@ readudp(d, pkt, len, tleft)
 			printf("readudp: bad dport %d != %d\n",
 				d->myport, ntohs(uh->uh_dport));
 #endif
-		goto bad;
+		return -1;
 	}
 
 	if (uh->uh_sum) {
 		n = ntohs(uh->uh_ulen) + sizeof(*ip);
 		if (n > RECV_SIZE - ETHER_SIZE) {
 			printf("readudp: huge packet, udp len %d\n", n);
-			goto bad;
+			return -1;
 		}
 
 		/* Check checksum (must save and restore ip header) */
@@ -252,7 +252,7 @@ readudp(d, pkt, len, tleft)
 				printf("readudp: bad cksum\n");
 #endif
 			*ip = tip;
-			goto bad;
+			return -1;
 		}
 		*ip = tip;
 	}
@@ -265,14 +265,11 @@ readudp(d, pkt, len, tleft)
 			printf("readudp: bad udp len %d < %d\n",
 				uh->uh_ulen, sizeof(*uh));
 #endif
-		goto bad;
+		return -1;
 	}
 
 	n -= sizeof(*ip) + sizeof(*uh);
 	return (n);
-
-bad:
-	return (-1);
 }
 
 /*
