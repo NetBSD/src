@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.28 1999/04/12 20:38:18 pk Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.29 1999/10/12 17:08:57 jdolecek Exp $	*/
 
 /* 
  * Copyright (c) 1996 Scott K. Stevens
@@ -295,7 +295,7 @@ db_write_bytes(addr, size, data)
 }
 
 void
-Debugger()
+cpu_Debugger()
 {
 	asm(".word	0xe7ffffff");
 }

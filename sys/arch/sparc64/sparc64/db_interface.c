@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.21 1999/07/22 21:12:19 thorpej Exp $ */
+/*	$NetBSD: db_interface.c,v 1.22 1999/10/12 17:08:59 jdolecek Exp $ */
 
 /*
  * Mach Operating System
@@ -294,7 +294,7 @@ db_write_bytes(addr, size, data)
 }
 
 void
-Debugger()
+cpu_Debugger()
 {
 	/* We use the breakpoint to trap into DDB */
 	asm("ta 1; nop");
