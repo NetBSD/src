@@ -1,7 +1,7 @@
-/*	$NetBSD: svr4_exec.h,v 1.7 1995/07/02 06:16:06 christos Exp $	 */
+/*	$NetBSD: svr4_sysconfig.h,v 1.1 1995/07/02 06:16:10 christos Exp $	 */
 
 /*
- * Copyright (c) 1994 Christos Zoulas
+ * Copyright (c) 1995 Christos Zoulas
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,41 +27,35 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef	_SVR4_EXEC_H_
-#define	_SVR4_EXEC_H_
+#ifndef	_SVR4_SYSCONFIG_H_
+#define	_SVR4_SYSCONFIG_H_
 
-#ifdef SVR4_COMPAT_SOLARIS2
-# define SVR4_AUX_ARGSIZ (sizeof(AuxInfo) * 12 / sizeof(char *))
-#else
-# define SVR4_AUX_ARGSIZ (sizeof(AuxInfo) * 8 / sizeof(char *))
-#endif
+#define SVR4_CONFIG_UNUSED		0x01
+#define SVR4_CONFIG_NGROUPS		0x02
+#define SVR4_CONFIG_CHILD_MAX		0x03
+#define SVR4_CONFIG_OPEN_FILES		0x04
+#define SVR4_CONFIG_POSIX_VER		0x05
+#define SVR4_CONFIG_PAGESIZE		0x06
+#define SVR4_CONFIG_CLK_TCK		0x07
+#define SVR4_CONFIG_XOPEN_VER		0x08
+#define SVR4_CONFIG_UNUSED_9		0x09
+#define SVR4_CONFIG_PROF_TCK		0x0a
+#define SVR4_CONFIG_NPROC_CONF		0x0b
+#define	SVR4_CONFIG_NPROC_ONLN		0x0c
+#define	SVR4_CONFIG_AIO_LISTIO_MAX	0x0e
+#define	SVR4_CONFIG_AIO_MAX		0x0f
+#define	SVR4_CONFIG_AIO_PRIO_DELTA_MAX	0x10
+#define	SVR4_CONFIG_DELAYTIMER_MAX	0x11
+#define	SVR4_CONFIG_MQ_OPEN_MAX		0x12
+#define	SVR4_CONFIG_MQ_PRIO_MAX		0x13
+#define	SVR4_CONFIG_RTSIG_MAX		0x14
+#define	SVR4_CONFIG_SEM_NSEMS_MAX	0x15
+#define	SVR4_CONFIG_SEM_VALUE_MAX	0x16
+#define	SVR4_CONFIG_SIGQUEUE_MAX	0x17
+#define	SVR4_CONFIG_SIGRT_MIN		0x18
+#define	SVR4_CONFIG_SIGRT_MAX		0x19
+#define	SVR4_CONFIG_TIMER_MAX		0x20
+#define	SVR4_CONFIG_PHYS_PAGES		0x21
+#define	SVR4_CONFIG_AVPHYS_PAGES	0x22
 
-/*
- * The following is horrible; there must be a better way. I need to
- * play with brk(2) a bit more.
- */
-#ifdef i386
-/*
- * I cannot load the interpreter after the data segment because brk(2)
- * breaks. I have to load it somewhere before. Programs start at
- * 0x08000000 so I load the interpreter far before.
- */
-#define SVR4_INTERP_ADDR	0x01000000
-#endif
-
-#ifdef sparc
-/*
- * Here programs load at 0x00010000, so I load the interpreter far after
- * the end of the data segment.
- */
-#define SVR4_INTERP_ADDR	0x10000000
-#endif
-
-#ifndef SVR4_INTERP_ADDR
-# define SVR4_INTERP_ADDR	0
-#endif
-
-int svr4_elf_probe __P((struct proc *p, struct exec_package *, char *,
-	u_long *pos));
-
-#endif /* !_SVR4_EXEC_H_ */
+#endif /* !_SVR4_SYSCONFIG_H_ */
