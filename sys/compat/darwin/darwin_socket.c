@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_socket.c,v 1.1 2004/07/21 01:37:57 manu Exp $ */
+/*	$NetBSD: darwin_socket.c,v 1.2 2004/07/21 20:57:30 manu Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,8 +37,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_socket.c,v 1.1 2004/07/21 01:37:57 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_socket.c,v 1.2 2004/07/21 20:57:30 manu Exp $");
 
+#include <sys/systm.h>
 #include <sys/socket.h>
 
 #include <compat/darwin/darwin_socket.h>
@@ -75,6 +76,12 @@ unsigned char native_to_darwin_af[] = {
 	0,
 	DARWIN_AF_KEY,
 	DARWIN_AF_HDRCMPLT,	/* 30 */
+	0,
+	0,
+	0,
+	0,
+	0,			/* 35 */
+	0,
 };
 
 unsigned char darwin_to_native_af[] = {
@@ -114,4 +121,20 @@ unsigned char darwin_to_native_af[] = {
 	0,
 	0,
 	pseudo_AF_HDRCMPLT,	/* 35 */
+	0,
 };
+
+void
+native_to_darwin_socket(nsa, dsa)
+	struct sockaddr *nsa;
+	struct sockaddr_storage *dsa;
+{
+	size_t len;
+
+	len = nsa->sa_len;
+	memcpy(dsa, nsa, len);
+
+	dsa->ss_family = native_to_darwin_af[nsa->sa_family];
+
+	return;
+}
