@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.105 2000/07/17 07:37:51 jeffs Exp $	*/
+/*	$NetBSD: locore.S,v 1.106 2000/07/18 06:25:33 jeffs Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -518,6 +518,7 @@ END(longjmp)
  * Used as building blocks for spl(9) kernel interface.
  */
 LEAF(_splraise)
+XLEAF(_splraise_noprof)				# does not get mcount hooks
 	mfc0	v0, MIPS_COP_0_STATUS		# fetch status register
 	and	a0, a0, MIPS_INT_MASK		# extract INT bits
 	nor	a0, zero, a0			# bitwise inverse of A0
@@ -554,6 +555,7 @@ LEAF(_splrestore)
 END(_splrestore)
 
 LEAF(_splset)
+XLEAF(_splset_noprof)				# does not get mcount hooks
 	mfc0	v0, MIPS_COP_0_STATUS		# fetch status register
 	and	a0, a0, (MIPS_INT_MASK | MIPS_SR_INT_IE)
 	li	v1, ~(MIPS_INT_MASK | MIPS_SR_INT_IE)
