@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.77 2005/01/24 11:54:51 simonb Exp $	*/
+/*	$NetBSD: locore.s,v 1.78 2005/02/21 00:57:38 chs Exp $	*/
 
 /*
  * Copyright (c) 1993 Philip A. Nelson.
@@ -808,7 +808,7 @@ sw1:	/* Get the process and unlink it from the queue. */
 
 3:
 #ifdef	DIAGNOSTIC
-	cmpqd	0,P_WCHAN(r2)		/* Waiting for something? */
+	cmpqd	0,L_WCHAN(r2)		/* Waiting for something? */
 	bne	_C_LABEL(switch_error)	/* Yes; shouldn't be queued. */
 	cmpb	LSRUN,L_STAT(r2)	/* In run state? */
 	bne	_C_LABEL(switch_error)	/* No; shouldn't be queued. */
