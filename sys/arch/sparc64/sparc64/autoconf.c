@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.25 2000/01/14 14:57:27 pk Exp $ */
+/*	$NetBSD: autoconf.c,v 1.26 2000/01/16 03:10:58 eeh Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -1208,6 +1208,7 @@ device_register(dev, aux)
 		 * parameters and advance boot path on match.
 		 */
 		if (instance_match(dev, aux, bp) != 0) {
+			bp->dev = dev;
 			bootpath_store(1, bp + 1);
 			return;
 		}
@@ -1255,7 +1256,6 @@ device_register(dev, aux)
 			return;
 		}
 	} else if (strcmp("xd", dvname) == 0 || strcmp("xy", dvname) == 0) {
-
 		/* A Xylogic disk */
 		if (instance_match(dev, aux, bp) != 0) {
 			nail_bootdev(dev, bp);
