@@ -1,4 +1,4 @@
-#	$NetBSD: CAYMAN,v 1.10 2002/10/22 15:21:24 scw Exp $
+#	$NetBSD: CAYMAN,v 1.11 2002/10/22 15:35:25 scw Exp $
 
 #
 # Config file for SuperH "CAYMAN" SH-5 Evaluation board
@@ -10,7 +10,7 @@ maxusers	8
 
 options 	INCLUDE_CONFIG_FILE
 
-#ident		"CAYMAN-$Revision: 1.10 $"
+#ident		"CAYMAN-$Revision: 1.11 $"
 
 # Uncomment this to build a 64-bit kernel
 #makeoptions 	SH5_ABI=64
@@ -134,7 +134,7 @@ superio0	at sysfpga0			# SMC Super I/O Device
 isa0		at superio0			# The ISAbus attachment.
 
 # Onboard SMC91C100 LAN controller
-sm0		at superio0
+sm0		at sysfpga0
 
 #
 # These are the devices Cayman uses
