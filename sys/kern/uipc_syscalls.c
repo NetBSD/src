@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)uipc_syscalls.c	7.24 (Berkeley) 6/3/91
- *	$Id: uipc_syscalls.c,v 1.2 1993/05/18 18:19:40 cgd Exp $
+ *	$Id: uipc_syscalls.c,v 1.3 1993/05/22 11:41:54 cgd Exp $
  */
 
 #include "param.h"
@@ -40,7 +40,6 @@
 #include "file.h"
 #include "buf.h"
 #include "malloc.h"
-#include "select.h"
 #include "mbuf.h"
 #include "protosw.h"
 #include "socket.h"

@@ -31,11 +31,10 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)af.c	7.6 (Berkeley) 6/28/90
- *	$Id: af.c,v 1.2 1993/05/18 18:19:49 cgd Exp $
+ *	$Id: af.c,v 1.3 1993/05/22 11:42:05 cgd Exp $
  */
 
 #include "param.h"
-#include "select.h"
 #include "mbuf.h"
 #include "protosw.h"
 #include "socket.h"

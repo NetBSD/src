@@ -31,12 +31,11 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)raw_usrreq.c	7.9 (Berkeley) 6/28/90
- *	$Id: raw_usrreq.c,v 1.2 1993/05/18 18:20:00 cgd Exp $
+ *	$Id: raw_usrreq.c,v 1.3 1993/05/22 11:42:17 cgd Exp $
  */
 
 #include "param.h"
 #include "socket.h"
-#include "select.h"
 #include "mbuf.h"
 #include "domain.h"
 #include "protosw.h"

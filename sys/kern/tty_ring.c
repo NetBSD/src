@@ -45,14 +45,13 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: tty_ring.c,v 1.5 1993/05/18 18:19:33 cgd Exp $
+ *	$Id: tty_ring.c,v 1.6 1993/05/22 11:41:50 cgd Exp $
  */
 
 #include "param.h"
 #include "systm.h"
 #include "buf.h"
 #include "ioctl.h"
-#include "select.h"
 #include "tty.h"
 
 /*

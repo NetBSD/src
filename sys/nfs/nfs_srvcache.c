@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfs_srvcache.c	7.11 (Berkeley) 4/16/91
- *	$Id: nfs_srvcache.c,v 1.3 1993/05/21 07:31:58 cgd Exp $
+ *	$Id: nfs_srvcache.c,v 1.4 1993/05/22 11:43:02 cgd Exp $
  */
 
 /*

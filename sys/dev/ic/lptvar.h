@@ -45,7 +45,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: lptvar.h,v 1.3 1993/05/18 18:19:04 cgd Exp $
+ *	$Id: lptvar.h,v 1.4 1993/05/22 11:41:22 cgd Exp $
  */
 
 /*
@@ -65,7 +65,6 @@
 #include "buf.h"
 #include "kernel.h"
 #include "ioctl.h"
-#include "select.h"
 #include "tty.h"
 #include "uio.h"
 
