@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_base.c,v 1.40 1996/10/12 23:23:15 christos Exp $	*/
+/*	$NetBSD: scsi_base.c,v 1.41 1997/03/18 01:28:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles Hannum.  All rights reserved.
@@ -270,15 +270,21 @@ scsi_inquire(sc_link, inqbuf, flags)
 	int flags;
 {
 	struct scsi_inquiry scsi_cmd;
+	union { struct scsi_inquiry_data i; char pad[255]; } inq;
+	int rv;
 
 	bzero(&scsi_cmd, sizeof(scsi_cmd));
 	scsi_cmd.opcode = INQUIRY;
-	scsi_cmd.length = sizeof(struct scsi_inquiry_data);
+	scsi_cmd.length = sizeof(inq);
+	bzero(&inq, sizeof(inq));
 
-	return scsi_scsi_cmd(sc_link, (struct scsi_generic *) &scsi_cmd,
-			     sizeof(scsi_cmd), (u_char *) inqbuf,
-			     sizeof(struct scsi_inquiry_data), 2, 10000, NULL,
-			     SCSI_DATA_IN | flags);
+	rv = scsi_scsi_cmd(sc_link, (struct scsi_generic *) &scsi_cmd,
+	    sizeof(scsi_cmd), (u_char *) &inq, sizeof(inq),
+	    2, 10000, NULL, SCSI_DATA_IN | flags);
+
+	if (rv == 0)
+		bcopy(&inq.i, inqbuf, sizeof(inq.i));
+	return rv;
 }
 
 /*
@@ -364,7 +370,7 @@ scsi_done(xs)
 			goto done;
 		SC_DEBUG(sc_link, SDEV_DB3, ("continuing with generic done()\n"));
 	}
-	if (xs->bp == NULL) {
+	if (!((xs->flags & (SCSI_NOSLEEP | SCSI_POLL)) == SCSI_NOSLEEP)) {
 		/*
 		 * if it's a normal upper level request, then ask
 		 * the upper level code to handle error checking
@@ -424,14 +430,19 @@ retry:
 	 * TRY_AGAIN_LATER, (as for polling)
 	 * After the wakeup, we must still check if it succeeded
 	 * 
-	 * If we have a bp however, all the error proccessing
-	 * and the buffer code both expect us to return straight
-	 * to them, so as soon as the command is queued, return
+	 * If we have a SCSI_NOSLEEP (typically because we have a buf)
+	 * we just return.  All the error proccessing and the buffer
+	 * code both expect us to return straight to them, so as soon
+	 * as the command is queued, return.
 	 */
 	switch ((*(xs->sc_link->adapter->scsi_cmd)) (xs)) {
 	case SUCCESSFULLY_QUEUED:
-		if (xs->bp)
+		if ((xs->flags & (SCSI_NOSLEEP | SCSI_POLL)) == SCSI_NOSLEEP)
 			return EJUSTRETURN;
+#ifdef DIAGNOSTIC
+		if (xs->flags & SCSI_NOSLEEP)
+			panic("scsi_execute_xs: NOSLEEP and POLL");
+#endif
 		s = splbio();
 		while ((xs->flags & ITSDONE) == 0)
 			tsleep(xs, PRIBIO + 1, "scsi_scsi_cmd", 0);
