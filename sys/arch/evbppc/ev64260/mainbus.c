@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.1 2003/03/05 22:08:27 matt Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.2 2003/03/07 18:24:01 matt Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -32,6 +32,7 @@
 
 #include "mainbus.h"
 #include "pci.h"
+#include "opt_multiprocessor.h"
 #include "opt_pci.h"
 
 #include <sys/param.h>
@@ -102,12 +103,14 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 	mba.mba_unit = 0;
 	config_found(self, &mba, mainbus_cfprint);
 
+#ifdef MULTIPROCESSOR
 	/*
 	 * Try for a second one...
 	 */
 	mba.mba_busname = "cpu";
 	mba.mba_unit = 1;
 	config_found(self, &mba, mainbus_cfprint);
+#endif
 
 	/*
 	 * Now try to configure the Discovery
