@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.44 1995/08/12 04:10:34 briggs Exp $	*/
+/*	$NetBSD: locore.s,v 1.45 1995/08/12 18:48:47 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -858,7 +858,7 @@ start:
 	jbsr	_consinit		| XXX Should only be if graybar on
 
 	cmpl	#MMU_68040, _mmutype	| Set in _getenvvars ONLY if 040.
-	beq	Lstartnot040		| It's not an '040
+	jne	Lstartnot040		| It's not an '040
 	.word	0xf4f8			| cpusha bc - push and invalidate caches
 
 	movl	#CACHE4_OFF,d0		| 68040 cache disable
@@ -2237,7 +2237,6 @@ _machineid:
 	.globl	_mmutype,_protorp
 _mmutype:
 	.long	0		| Are we running 68851, 68030, or 68040?
-				| (-1, 0, 1, respectively)
 _protorp:
 	.long	0,0		| prototype root pointer
 	.globl	_cold
