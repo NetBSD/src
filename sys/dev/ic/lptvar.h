@@ -1,4 +1,4 @@
-/*	$NetBSD: lptvar.h,v 1.47 1997/12/07 16:09:37 thorpej Exp $	*/
+/*	$NetBSD: lptvar.h,v 1.48 1998/02/02 22:55:06 cgd Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -65,6 +65,7 @@ struct lpt_softc {
 	int sc_spinmax;
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
+	u_char sc_dev_ok;	/* device attached correctly */
 	u_char sc_state;
 #define	LPT_OPEN	0x01	/* device is open */
 #define	LPT_OBUSY	0x02	/* printer is busy doing output */
