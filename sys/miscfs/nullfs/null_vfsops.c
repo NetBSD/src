@@ -1,4 +1,4 @@
-/*	$NetBSD: null_vfsops.c,v 1.20 1998/08/09 20:51:09 perry Exp $	*/
+/*	$NetBSD: null_vfsops.c,v 1.21 1999/01/13 01:51:37 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -138,17 +138,18 @@ nullfs_mount(mp, path, data, ndp, p)
 	 */
 	error = null_node_create(mp, lowerrootvp, &vp, 1);
 	/*
-	 * Unlock the node (either the lower or the alias)
-	 */
-	VOP_UNLOCK(vp, 0);
-	/*
 	 * Make sure the node alias worked
+	 *
 	 */
 	if (error) {
 		vrele(lowerrootvp);
 		free(xmp, M_UFSMNT);	/* XXX */
 		return (error);
 	}
+	/*
+	 * Unlock the node (either the lower or the alias)
+	 */
+	VOP_UNLOCK(vp, 0);
 
 	/*
 	 * Keep a held reference to the root vnode.
