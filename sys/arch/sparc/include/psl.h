@@ -42,7 +42,7 @@
  *	@(#)psl.h	8.1 (Berkeley) 6/11/93
  *
  * from: Header: psl.h,v 1.12 92/11/26 02:04:42 torek Exp 
- * $Id: psl.h,v 1.1 1993/10/02 10:23:21 deraadt Exp $
+ * $Id: psl.h,v 1.2 1993/10/11 02:28:29 deraadt Exp $
  */
 
 #ifndef PSR_IMPL
@@ -78,7 +78,7 @@
 
 #define	PIL_CLOCK	10
 
-#ifndef LOCORE
+#if defined(KERNEL) && !defined(LOCORE)
 /*
  * GCC pseudo-functions for manipulating PSR (primarily PIL field).
  */
@@ -180,6 +180,6 @@ static __inline void splx(int newipl) {
 	    "r" (psr & ~PSR_PIL), "rn" (newipl));
 	__asm __volatile("nop; nop; nop");
 }
-#endif /* LOCORE */
+#endif /* KERNEL && !LOCORE */
 
 #endif /* PSR_IMPL */

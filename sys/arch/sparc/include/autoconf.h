@@ -42,7 +42,7 @@
  *	@(#)autoconf.h	8.1 (Berkeley) 6/11/93
  *
  * from: Header: autoconf.h,v 1.10 92/11/26 02:04:32 torek Exp  (LBL)
- * $Id: autoconf.h,v 1.1 1993/10/02 10:23:03 deraadt Exp $
+ * $Id: autoconf.h,v 1.2 1993/10/11 02:28:23 deraadt Exp $
  */
 
 /*
@@ -138,3 +138,6 @@ struct bootpath {
 };
 
 struct device *bootdv;			/* found during autoconfiguration */
+
+/* Parse a disk string into a dev_t, return device struct pointer */
+struct	device *parsedisk __P((char *, int, int, dev_t *));
