@@ -1,4 +1,4 @@
-/*	$NetBSD: popen.c,v 1.4 1998/01/31 14:40:42 christos Exp $	*/
+/*	$NetBSD: popen.c,v 1.5 1998/01/31 14:44:47 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -21,26 +21,18 @@
  *
  */
 
-/* this came out of the ftpd sources; it's been modified to avoid the
- * globbing stuff since we don't need it.  also execvp instead of execv.
- */
-
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char rcsid[] = "Id: popen.c,v 1.5 1994/01/15 20:43:43 vixie Exp";
 static char sccsid[] = "@(#)popen.c	5.7 (Berkeley) 2/14/89";
 #else
-__RCSID("$NetBSD: popen.c,v 1.4 1998/01/31 14:40:42 christos Exp $");
+__RCSID("$NetBSD: popen.c,v 1.5 1998/01/31 14:44:47 christos Exp $");
 #endif
 #endif /* not lint */
 
 #include "cron.h"
 #include <signal.h>
-
-
-#define MAX_ARGS 100
-#define WANT_GLOBBING 0
 
 /*
  * Special version of popen which avoids call to shell.  This insures noone
@@ -59,12 +51,7 @@ cron_popen(program, type)
 	int argc, pdes[2];
 	PID_T pid;
 	char *argv[MAX_ARGS + 1];
-#if WANT_GLOBBING
-	char **pop, *vv[2];
-	int gargc;
-	char *gargv[1000];
-	extern char **glob(), **copyblk();
-#endif
+
 #ifdef __GNUC__
 	(void) &iop;	/* Avoid vfork clobbering */
 #endif
@@ -86,22 +73,6 @@ cron_popen(program, type)
 	for (argc = 0, cp = program; argc < MAX_ARGS; cp = NULL)
 		if (!(argv[argc++] = strtok(cp, " \t\n")))
 			break;
-
-#if WANT_GLOBBING
-	/* glob each piece */
-	gargv[0] = argv[0];
-	for (gargc = argc = 1; argv[argc]; argc++) {
-		if (!(pop = glob(argv[argc]))) {	/* globbing failed */
-			vv[0] = argv[argc];
-			vv[1] = NULL;
-			pop = copyblk(vv);
-		}
-		argv[argc] = (char *)pop;		/* save to free later */
-		while (*pop && gargc < 1000)
-			gargv[gargc++] = *pop++;
-	}
-	gargv[gargc] = NULL;
-#endif
 
 	iop = NULL;
 	switch(pid = vfork()) {
@@ -125,11 +96,7 @@ cron_popen(program, type)
 			}
 			(void)close(pdes[1]);
 		}
-#if WANT_GLOBBING
-		execvp(gargv[0], gargv);
-#else
 		execvp(argv[0], argv);
-#endif
 		_exit(1);
 	}
 	/* parent; assume fdopen can't fail...  */
@@ -143,12 +110,6 @@ cron_popen(program, type)
 	pids[fileno(iop)] = pid;
 
 pfree:
-#if WANT_GLOBBING
-	for (argc = 1; argv[argc] != NULL; argc++) {
-/*		blkfree((char **)argv[argc]);	*/
-		free((char *)argv[argc]);
-	}
-#endif
 	return(iop);
 }
 
