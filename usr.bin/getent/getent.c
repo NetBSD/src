@@ -1,4 +1,4 @@
-/*	$NetBSD: getent.c,v 1.5 2004/11/29 05:02:40 lukem Exp $	*/
+/*	$NetBSD: getent.c,v 1.6 2005/01/21 02:43:33 ginsbach Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: getent.c,v 1.5 2004/11/29 05:02:40 lukem Exp $");
+__RCSID("$NetBSD: getent.c,v 1.6 2005/01/21 02:43:33 ginsbach Exp $");
 #endif /* not lint */
 
 #include <sys/socket.h>
@@ -61,6 +61,8 @@ __RCSID("$NetBSD: getent.c,v 1.5 2004/11/29 05:02:40 lukem Exp $");
 
 #include <netinet/in.h>		/* for INET6_ADDRSTRLEN */
 
+#include <rpc/rpcent.h>
+
 static int	usage(void);
 static int	parsenum(const char *, unsigned long *);
 static int	group(int, char *[]);
@@ -68,6 +70,7 @@ static int	hosts(int, char *[]);
 static int	networks(int, char *[]);
 static int	passwd(int, char *[]);
 static int	protocols(int, char *[]);
+static int	rpc(int, char *[]);
 static int	services(int, char *[]);
 static int	shells(int, char *[]);
 
@@ -87,6 +90,7 @@ static struct getentdb {
 	{	"networks",	networks,	},
 	{	"passwd",	passwd,		},
 	{	"protocols",	protocols,	},
+	{	"rpc",		rpc,		},
 	{	"services",	services,	},
 	{	"shells",	shells,		},
 
@@ -404,6 +408,46 @@ protocols(int argc, char *argv[])
 	return rv;
 }
 
+		/*
+		 * rpc
+		 */
+
+static int
+rpc(int argc, char *argv[])
+{
+	struct rpcent	*re;
+	unsigned long	id;
+	int		i, rv;
+	
+	assert(argc > 1);
+	assert(argv != NULL);
+
+#define RPCPRINT	printfmtstrings(re->r_aliases, "  ", " ", \
+				"%-16s  %6d", \
+				re->r_name, re->r_number)
+
+	setrpcent(1);
+	rv = RV_OK;
+	if (argc == 2) {
+		while ((re = getrpcent()) != NULL)
+			RPCPRINT;
+	} else {
+		for (i = 2; i < argc; i++) {
+			if (parsenum(argv[i], &id))
+				re = getrpcbynumber((int)id);
+			else
+				re = getrpcbyname(argv[i]);
+			if (re != NULL)
+				RPCPRINT;
+			else {
+				rv = RV_NOTFOUND;
+				break;
+			}
+		}
+	}
+	endrpcent();
+	return rv;
+}
 
 		/*
 		 * services
