@@ -1,4 +1,4 @@
-/* $NetBSD: osf1.h,v 1.6 1999/04/26 06:10:36 cgd Exp $ */
+/* $NetBSD: osf1.h,v 1.7 1999/04/27 17:50:23 cgd Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -44,7 +44,9 @@
 #include <sys/types.h>
 #include <compat/osf1/osf1_errno.h>
 
-/* type definitions used by structures */
+/*
+ * type and structure definitions used by other structures
+ */
 
 typedef int16_t		osf1_short;
 typedef int32_t		osf1_int;
@@ -66,6 +68,11 @@ typedef u_int64_t	osf1_fsid_t;
 typedef u_int64_t	osf1_rlim_t;
 typedef void		*osf1_data_ptr;	/* XXX hard to fix size */
 typedef void		*osf1_fcn_ptr;	/* XXX hard to fix size, bogus */
+
+struct osf1_timeval {				/* time.h */
+	osf1_time_t	tv_sec;
+	osf1_int	tv_usec;
+};
 
 
 /* auxv.h */
@@ -326,6 +333,29 @@ struct osf1_statfs {
 
 
 /* resource.h */
+
+#define	OSF1_RUSAGE_THREAD	1
+#define	OSF1_RUSAGE_SELF	0
+#define	OSF1_RUSAGE_CHILDREN	-1
+
+struct osf1_rusage {
+	struct osf1_timeval ru_utime;
+	struct osf1_timeval ru_stime;
+	osf1_long	ru_maxrss;
+	osf1_long	ru_ixrss;
+	osf1_long	ru_idrss;
+	osf1_long	ru_isrss;
+	osf1_long	ru_minflt;
+	osf1_long	ru_majflt;
+	osf1_long	ru_nswap;
+	osf1_long	ru_inblock;
+	osf1_long	ru_oublock;
+	osf1_long	ru_msgsnd;
+	osf1_long	ru_msgrcv;
+	osf1_long	ru_nsignals;
+	osf1_long	ru_nvcsw;
+	osf1_long	ru_nivcsw;
+};
 
 #define OSF1_RLIMIT_CPU		0
 #define OSF1_RLIMIT_FSIZE	1
