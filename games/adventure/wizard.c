@@ -1,4 +1,4 @@
-/*	$NetBSD: wizard.c,v 1.4 1997/08/11 14:06:19 christos Exp $	*/
+/*	$NetBSD: wizard.c,v 1.5 1997/10/10 12:00:02 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)wizard.c	8.1 (Berkeley) 6/2/93";
 #else
-__RCSID("$NetBSD: wizard.c,v 1.4 1997/08/11 14:06:19 christos Exp $");
+__RCSID("$NetBSD: wizard.c,v 1.5 1997/10/10 12:00:02 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -125,7 +125,7 @@ wizard()                /* not as complex as advent/10 (for now)        */
 void
 ciao(cmdfile)
 char *cmdfile;
-{       register char *c;
+{       char *c;
 	char fname[80];
 
 	printf("What would you like to call the saved version?\n");
