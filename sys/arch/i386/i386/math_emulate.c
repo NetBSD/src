@@ -1,7 +1,7 @@
 /*
  * expediant "port" of linux 8087 emulator to 386BSD, with apologies -wfj
  *
- *	$Id: math_emulate.c,v 1.5 1994/01/11 17:39:07 mycroft Exp $
+ *	$Id: math_emulate.c,v 1.6 1994/01/27 18:01:47 ws Exp $
  */
 
 /*
@@ -207,12 +207,10 @@ math_emulate(struct trapframe * info)
 			real_to_real(&tmp,&ST(0));
 			return(0);
 		case 0x1a:
-			fcom(PST(code & 7),&tmp);
-			real_to_real(&tmp,&ST(0));
+			fcom(PST(code & 7),PST(0));
 			return(0);
 		case 0x1b:
-			fcom(PST(code & 7),&tmp);
-			real_to_real(&tmp,&ST(0));
+			fcom(PST(code & 7),PST(0));
 			fpop();
 			return(0);
 		case 0x1c:
