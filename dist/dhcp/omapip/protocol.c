@@ -105,9 +105,7 @@ isc_result_t omapi_protocol_connect (omapi_object_t *h,
 		rstatus = ISC_R_INCOMPLETE;
 	} else {
 		obj -> insecure = 1;
-#if 0
-		status = ISC_R_SUCCESS;
-#endif
+		rstatus = ISC_R_SUCCESS;
 	}
 
 	omapi_protocol_dereference (&obj, MDL);
