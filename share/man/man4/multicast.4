@@ -24,7 +24,7 @@
 .\" DEALINGS IN THE SOFTWARE.
 .\"
 .\" $FreeBSD: src/share/man/man4/multicast.4,v 1.4 2004/07/09 09:22:36 ru Exp $
-.\" $NetBSD: multicast.4,v 1.1 2004/09/04 23:54:51 manu Exp $
+.\" $NetBSD: multicast.4,v 1.2 2004/09/12 13:06:14 wiz Exp $
 .\"
 .Dd September 4, 2003
 .Dt MULTICAST 4
@@ -130,17 +130,17 @@ or disable multicast forwarding in the kernel:
 .Bd -literal
 /* IPv4 */
 int v = 1;        /* 1 to enable, or 0 to disable */
-setsockopt(mrouter_s4, IPPROTO_IP, MRT_INIT, (void *)&v, sizeof(v));
+setsockopt(mrouter_s4, IPPROTO_IP, MRT_INIT, (void *)\*[Am]v, sizeof(v));
 .Ed
 .Bd -literal
 /* IPv6 */
 int v = 1;        /* 1 to enable, or 0 to disable */
-setsockopt(mrouter_s6, IPPROTO_IPV6, MRT6_INIT, (void *)&v, sizeof(v));
+setsockopt(mrouter_s6, IPPROTO_IPV6, MRT6_INIT, (void *)\*[Am]v, sizeof(v));
 \&...
 /* If necessary, filter all ICMPv6 messages */
 struct icmp6_filter filter;
-ICMP6_FILTER_SETBLOCKALL(&filter);
-setsockopt(mrouter_s6, IPPROTO_ICMPV6, ICMP6_FILTER, (void *)&filter,
+ICMP6_FILTER_SETBLOCKALL(\*[Am]filter);
+setsockopt(mrouter_s6, IPPROTO_ICMPV6, ICMP6_FILTER, (void *)\*[Am]filter,
            sizeof(filter));
 .Ed
 .Pp
@@ -156,17 +156,17 @@ multicast interface must be added to the kernel:
 .Bd -literal
 /* IPv4 */
 struct vifctl vc;
-memset(&vc, 0, sizeof(vc));
+memset(\*[Am]vc, 0, sizeof(vc));
 /* Assign all vifctl fields as appropriate */
 vc.vifc_vifi = vif_index;
 vc.vifc_flags = vif_flags;
 vc.vifc_threshold = min_ttl_threshold;
 vc.vifc_rate_limit = max_rate_limit;
-memcpy(&vc.vifc_lcl_addr, &vif_local_address, sizeof(vc.vifc_lcl_addr));
-if (vc.vifc_flags & VIFF_TUNNEL)
-    memcpy(&vc.vifc_rmt_addr, &vif_remote_address,
+memcpy(\*[Am]vc.vifc_lcl_addr, \*[Am]vif_local_address, sizeof(vc.vifc_lcl_addr));
+if (vc.vifc_flags \*[Am] VIFF_TUNNEL)
+    memcpy(\*[Am]vc.vifc_rmt_addr, \*[Am]vif_remote_address,
            sizeof(vc.vifc_rmt_addr));
-setsockopt(mrouter_s4, IPPROTO_IP, MRT_ADD_VIF, (void *)&vc,
+setsockopt(mrouter_s4, IPPROTO_IP, MRT_ADD_VIF, (void *)\*[Am]vc,
            sizeof(vc));
 .Ed
 .Pp
@@ -198,12 +198,12 @@ contains the remote IP address in case of DVMRP multicast tunnels.
 .Bd -literal
 /* IPv6 */
 struct mif6ctl mc;
-memset(&mc, 0, sizeof(mc));
+memset(\*[Am]mc, 0, sizeof(mc));
 /* Assign all mif6ctl fields as appropriate */
 mc.mif6c_mifi = mif_index;
 mc.mif6c_flags = mif_flags;
 mc.mif6c_pifi = pif_index;
-setsockopt(mrouter_s6, IPPROTO_IPV6, MRT6_ADD_MIF, (void *)&mc,
+setsockopt(mrouter_s6, IPPROTO_IPV6, MRT6_ADD_MIF, (void *)\*[Am]mc,
            sizeof(mc));
 .Ed
 .Pp
@@ -224,13 +224,13 @@ A multicast interface is deleted by:
 .Bd -literal
 /* IPv4 */
 vifi_t vifi = vif_index;
-setsockopt(mrouter_s4, IPPROTO_IP, MRT_DEL_VIF, (void *)&vifi,
+setsockopt(mrouter_s4, IPPROTO_IP, MRT_DEL_VIF, (void *)\*[Am]vifi,
            sizeof(vifi));
 .Ed
 .Bd -literal
 /* IPv6 */
 mifi_t mifi = mif_index;
-setsockopt(mrouter_s6, IPPROTO_IPV6, MRT6_DEL_MIF, (void *)&mifi,
+setsockopt(mrouter_s6, IPPROTO_IPV6, MRT6_DEL_MIF, (void *)\*[Am]mifi,
            sizeof(mifi));
 .Ed
 .Pp
@@ -293,27 +293,27 @@ An MFC entry is added by:
 .Bd -literal
 /* IPv4 */
 struct mfcctl mc;
-memset(&mc, 0, sizeof(mc));
-memcpy(&mc.mfcc_origin, &source_addr, sizeof(mc.mfcc_origin));
-memcpy(&mc.mfcc_mcastgrp, &group_addr, sizeof(mc.mfcc_mcastgrp));
+memset(\*[Am]mc, 0, sizeof(mc));
+memcpy(\*[Am]mc.mfcc_origin, \*[Am]source_addr, sizeof(mc.mfcc_origin));
+memcpy(\*[Am]mc.mfcc_mcastgrp, \*[Am]group_addr, sizeof(mc.mfcc_mcastgrp));
 mc.mfcc_parent = iif_index;
-for (i = 0; i < maxvifs; i++)
+for (i = 0; i \*[Lt] maxvifs; i++)
     mc.mfcc_ttls[i] = oifs_ttl[i];
 setsockopt(mrouter_s4, IPPROTO_IP, MRT_ADD_MFC,
-           (void *)&mc, sizeof(mc));
+           (void *)\*[Am]mc, sizeof(mc));
 .Ed
 .Bd -literal
 /* IPv6 */
 struct mf6cctl mc;
-memset(&mc, 0, sizeof(mc));
-memcpy(&mc.mf6cc_origin, &source_addr, sizeof(mc.mf6cc_origin));
-memcpy(&mc.mf6cc_mcastgrp, &group_addr, sizeof(mf6cc_mcastgrp));
+memset(\*[Am]mc, 0, sizeof(mc));
+memcpy(\*[Am]mc.mf6cc_origin, \*[Am]source_addr, sizeof(mc.mf6cc_origin));
+memcpy(\*[Am]mc.mf6cc_mcastgrp, \*[Am]group_addr, sizeof(mf6cc_mcastgrp));
 mc.mf6cc_parent = iif_index;
-for (i = 0; i < maxvifs; i++)
-    if (oifs_ttl[i] > 0)
-        IF_SET(i, &mc.mf6cc_ifset);
+for (i = 0; i \*[Lt] maxvifs; i++)
+    if (oifs_ttl[i] \*[Gt] 0)
+        IF_SET(i, \*[Am]mc.mf6cc_ifset);
 setsockopt(mrouter_s4, IPPROTO_IPV6, MRT6_ADD_MFC,
-           (void *)&mc, sizeof(mc));
+           (void *)\*[Am]mc, sizeof(mc));
 .Ed
 .Pp
 The
@@ -339,20 +339,20 @@ An MFC entry is deleted by:
 .Bd -literal
 /* IPv4 */
 struct mfcctl mc;
-memset(&mc, 0, sizeof(mc));
-memcpy(&mc.mfcc_origin, &source_addr, sizeof(mc.mfcc_origin));
-memcpy(&mc.mfcc_mcastgrp, &group_addr, sizeof(mc.mfcc_mcastgrp));
+memset(\*[Am]mc, 0, sizeof(mc));
+memcpy(\*[Am]mc.mfcc_origin, \*[Am]source_addr, sizeof(mc.mfcc_origin));
+memcpy(\*[Am]mc.mfcc_mcastgrp, \*[Am]group_addr, sizeof(mc.mfcc_mcastgrp));
 setsockopt(mrouter_s4, IPPROTO_IP, MRT_DEL_MFC,
-           (void *)&mc, sizeof(mc));
+           (void *)\*[Am]mc, sizeof(mc));
 .Ed
 .Bd -literal
 /* IPv6 */
 struct mf6cctl mc;
-memset(&mc, 0, sizeof(mc));
-memcpy(&mc.mf6cc_origin, &source_addr, sizeof(mc.mf6cc_origin));
-memcpy(&mc.mf6cc_mcastgrp, &group_addr, sizeof(mf6cc_mcastgrp));
+memset(\*[Am]mc, 0, sizeof(mc));
+memcpy(\*[Am]mc.mf6cc_origin, \*[Am]source_addr, sizeof(mc.mf6cc_origin));
+memcpy(\*[Am]mc.mf6cc_mcastgrp, \*[Am]group_addr, sizeof(mf6cc_mcastgrp));
 setsockopt(mrouter_s4, IPPROTO_IPV6, MRT6_DEL_MFC,
-           (void *)&mc, sizeof(mc));
+           (void *)\*[Am]mc, sizeof(mc));
 .Ed
 .Pp
 The following method can be used to get various statistics per
@@ -361,18 +361,18 @@ packets per source and group address):
 .Bd -literal
 /* IPv4 */
 struct sioc_sg_req sgreq;
-memset(&sgreq, 0, sizeof(sgreq));
-memcpy(&sgreq.src, &source_addr, sizeof(sgreq.src));
-memcpy(&sgreq.grp, &group_addr, sizeof(sgreq.grp));
-ioctl(mrouter_s4, SIOCGETSGCNT, &sgreq);
+memset(\*[Am]sgreq, 0, sizeof(sgreq));
+memcpy(\*[Am]sgreq.src, \*[Am]source_addr, sizeof(sgreq.src));
+memcpy(\*[Am]sgreq.grp, \*[Am]group_addr, sizeof(sgreq.grp));
+ioctl(mrouter_s4, SIOCGETSGCNT, \*[Am]sgreq);
 .Ed
 .Bd -literal
 /* IPv6 */
 struct sioc_sg_req6 sgreq;
-memset(&sgreq, 0, sizeof(sgreq));
-memcpy(&sgreq.src, &source_addr, sizeof(sgreq.src));
-memcpy(&sgreq.grp, &group_addr, sizeof(sgreq.grp));
-ioctl(mrouter_s6, SIOCGETSGCNT_IN6, &sgreq);
+memset(\*[Am]sgreq, 0, sizeof(sgreq));
+memcpy(\*[Am]sgreq.src, \*[Am]source_addr, sizeof(sgreq.src));
+memcpy(\*[Am]sgreq.grp, \*[Am]group_addr, sizeof(sgreq.grp));
+ioctl(mrouter_s6, SIOCGETSGCNT_IN6, \*[Am]sgreq);
 .Ed
 .Pp
 The following method can be used to get various statistics per
@@ -381,16 +381,16 @@ packets per interface):
 .Bd -literal
 /* IPv4 */
 struct sioc_vif_req vreq;
-memset(&vreq, 0, sizeof(vreq));
+memset(\*[Am]vreq, 0, sizeof(vreq));
 vreq.vifi = vif_index;
-ioctl(mrouter_s4, SIOCGETVIFCNT, &vreq);
+ioctl(mrouter_s4, SIOCGETVIFCNT, \*[Am]vreq);
 .Ed
 .Bd -literal
 /* IPv6 */
 struct sioc_mif_req6 mreq;
-memset(&mreq, 0, sizeof(mreq));
+memset(\*[Am]mreq, 0, sizeof(mreq));
 mreq.mifi = vif_index;
-ioctl(mrouter_s6, SIOCGETMIFCNT_IN6, &mreq);
+ioctl(mrouter_s6, SIOCGETMIFCNT_IN6, \*[Am]mreq);
 .Ed
 .Ss Advanced Multicast API Programming Guide
 If we want to add new features in the kernel, it becomes difficult
@@ -451,7 +451,7 @@ and
 Example:
 .Bd -literal
 uint32_t v;
-getsockopt(sock, IPPROTO_IP, MRT_API_SUPPORT, (void *)&v, sizeof(v));
+getsockopt(sock, IPPROTO_IP, MRT_API_SUPPORT, (void *)\*[Am]v, sizeof(v));
 .Ed
 .Pp
 would set in
@@ -476,11 +476,11 @@ would fail.
 To modify the API, and to set some specific feature in the kernel, then:
 .Bd -literal
 uint32_t v = MRT_MFC_FLAGS_DISABLE_WRONGVIF;
-if (setsockopt(sock, IPPROTO_IP, MRT_API_CONFIG, (void *)&v, sizeof(v))
+if (setsockopt(sock, IPPROTO_IP, MRT_API_CONFIG, (void *)\*[Am]v, sizeof(v))
     != 0) {
     return (ERROR);
 }
-if (v & MRT_MFC_FLAGS_DISABLE_WRONGVIF)
+if (v \*[Am] MRT_MFC_FLAGS_DISABLE_WRONGVIF)
     return (OK);	/* Success */
 else
     return (ERROR);
@@ -496,7 +496,7 @@ The return value in
 is the actual (sub)set of features that were enabled in the kernel.
 To obtain later the same set of features that were enabled, then:
 .Bd -literal
-getsockopt(sock, IPPROTO_IP, MRT_API_CONFIG, (void *)&v, sizeof(v));
+getsockopt(sock, IPPROTO_IP, MRT_API_CONFIG, (void *)\*[Am]v, sizeof(v));
 .Ed
 .Pp
 The set of enabled features is global.
@@ -507,15 +507,15 @@ should be called right after
 .Pp
 Currently, the following set of new features is defined:
 .Bd -literal
-#define	MRT_MFC_FLAGS_DISABLE_WRONGVIF (1 << 0) /* disable WRONGVIF signals */
-#define	MRT_MFC_FLAGS_BORDER_VIF   (1 << 1)  /* border vif              */
-#define MRT_MFC_RP                 (1 << 8)  /* enable RP address	*/
-#define MRT_MFC_BW_UPCALL          (1 << 9)  /* enable bw upcalls	*/
+#define	MRT_MFC_FLAGS_DISABLE_WRONGVIF (1 \*[Lt]\*[Lt] 0) /* disable WRONGVIF signals */
+#define	MRT_MFC_FLAGS_BORDER_VIF   (1 \*[Lt]\*[Lt] 1)  /* border vif              */
+#define MRT_MFC_RP                 (1 \*[Lt]\*[Lt] 8)  /* enable RP address	*/
+#define MRT_MFC_BW_UPCALL          (1 \*[Lt]\*[Lt] 9)  /* enable bw upcalls	*/
 .Ed
 .\" .Pp
 .\" In the future there might be:
 .\" .Bd -literal
-.\" #define MRT_MFC_GROUP_SPECIFIC     (1 << 10) /* allow (*,G) MFC entries */
+.\" #define MRT_MFC_GROUP_SPECIFIC     (1 \*[Lt]\*[Lt] 10) /* allow (*,G) MFC entries */
 .\" .Ed
 .\" .Pp
 .\" to allow (*,G) MFC entries (i.e., group-specific entries) in the kernel.
@@ -566,8 +566,8 @@ field is used to set various flags per
 interface per (S,G) entry.
 Currently, the defined flags are:
 .Bd -literal
-#define	MRT_MFC_FLAGS_DISABLE_WRONGVIF (1 << 0) /* disable WRONGVIF signals */
-#define	MRT_MFC_FLAGS_BORDER_VIF       (1 << 1) /* border vif          */
+#define	MRT_MFC_FLAGS_DISABLE_WRONGVIF (1 \*[Lt]\*[Lt] 0) /* disable WRONGVIF signals */
+#define	MRT_MFC_FLAGS_BORDER_VIF       (1 \*[Lt]\*[Lt] 1) /* border vif          */
 .Ed
 .Pp
 The
@@ -693,14 +693,14 @@ There can be
 more than one filter per (S,G).
 .It
 Instead of supporting all possible comparison operations
-(i.e., < <= == != > >= ), there is support only for the
-<= and >= operations,
+(i.e., \*[Lt] \*[Lt]= == != \*[Gt] \*[Gt]= ), there is support only for the
+\*[Lt]= and \*[Gt]= operations,
 because this makes the kernel-level implementation simpler,
 and because practically we need only those two.
 Further, the missing operations can be simulated by secondary
-user-level filtering of those <= and >= filters.
+user-level filtering of those \*[Lt]= and \*[Gt]= filters.
 For example, to simulate !=, then we need to install filter
-.Dq bw <= 0xffffffff ,
+.Dq bw \*[Lt]= 0xffffffff ,
 and after an
 upcall is received, we need to check whether
 .Dq measured_bw != expected_bw .
@@ -740,14 +740,14 @@ the following:
  *
  * Measurement works as follows:
  *
- * For >= measurements:
+ * For \*[Gt]= measurements:
  * The first packet marks the start of a measurement interval.
  * During an interval we count packets and bytes, and when we
  * pass the threshold we deliver an upcall and we are done.
  * The first packet after the end of the interval resets the
  * count and restarts the measurement.
  *
- * For <= measurement:
+ * For \*[Lt]= measurement:
  * We start a timer to fire at the end of the interval, and
  * then for each incoming packet we count packets and bytes.
  * When the timer fires, we compare the value with the threshold,
@@ -765,11 +765,11 @@ struct bw_upcall {
         struct in_addr  bu_src;         /* source address            */
         struct in_addr  bu_dst;         /* destination address       */
         uint32_t        bu_flags;       /* misc flags (see below)    */
-#define BW_UPCALL_UNIT_PACKETS (1 << 0) /* threshold (in packets)    */
-#define BW_UPCALL_UNIT_BYTES   (1 << 1) /* threshold (in bytes)      */
-#define BW_UPCALL_GEQ          (1 << 2) /* upcall if bw >= threshold */
-#define BW_UPCALL_LEQ          (1 << 3) /* upcall if bw <= threshold */
-#define BW_UPCALL_DELETE_ALL   (1 << 4) /* delete all upcalls for s,d*/
+#define BW_UPCALL_UNIT_PACKETS (1 \*[Lt]\*[Lt] 0) /* threshold (in packets)    */
+#define BW_UPCALL_UNIT_BYTES   (1 \*[Lt]\*[Lt] 1) /* threshold (in bytes)      */
+#define BW_UPCALL_GEQ          (1 \*[Lt]\*[Lt] 2) /* upcall if bw \*[Gt]= threshold */
+#define BW_UPCALL_LEQ          (1 \*[Lt]\*[Lt] 3) /* upcall if bw \*[Lt]= threshold */
+#define BW_UPCALL_DELETE_ALL   (1 \*[Lt]\*[Lt] 4) /* delete all upcalls for s,d*/
         struct bw_data  bu_threshold;   /* the bw threshold          */
         struct bw_data  bu_measured;    /* the measured bw           */
 };
@@ -796,19 +796,19 @@ argument,
 and that filter will trigger an upcall according to the following
 pseudo-algorithm:
 .Bd -literal
- if (bw_upcall_oper IS ">=") {
-    if (((bw_upcall_unit & PACKETS == PACKETS) &&
-         (measured_packets >= threshold_packets)) ||
-        ((bw_upcall_unit & BYTES == BYTES) &&
-         (measured_bytes >= threshold_bytes)))
-       SEND_UPCALL("measured bandwidth is >= threshold");
+ if (bw_upcall_oper IS "\*[Gt]=") {
+    if (((bw_upcall_unit \*[Am] PACKETS == PACKETS) \*[Am]\*[Am]
+         (measured_packets \*[Gt]= threshold_packets)) ||
+        ((bw_upcall_unit \*[Am] BYTES == BYTES) \*[Am]\*[Am]
+         (measured_bytes \*[Gt]= threshold_bytes)))
+       SEND_UPCALL("measured bandwidth is \*[Gt]= threshold");
   }
-  if (bw_upcall_oper IS "<=" && measured_interval >= threshold_interval) {
-    if (((bw_upcall_unit & PACKETS == PACKETS) &&
-         (measured_packets <= threshold_packets)) ||
-        ((bw_upcall_unit & BYTES == BYTES) &&
-         (measured_bytes <= threshold_bytes)))
-       SEND_UPCALL("measured bandwidth is <= threshold");
+  if (bw_upcall_oper IS "\*[Lt]=" \*[Am]\*[Am] measured_interval \*[Gt]= threshold_interval) {
+    if (((bw_upcall_unit \*[Am] PACKETS == PACKETS) \*[Am]\*[Am]
+         (measured_packets \*[Lt]= threshold_packets)) ||
+        ((bw_upcall_unit \*[Am] BYTES == BYTES) \*[Am]\*[Am]
+         (measured_bytes \*[Lt]= threshold_bytes)))
+       SEND_UPCALL("measured bandwidth is \*[Lt]= threshold");
   }
 .Ed
 .Pp
@@ -817,27 +817,27 @@ In the same
 the unit can be specified in both BYTES and PACKETS.
 However, the GEQ and LEQ flags are mutually exclusive.
 .Pp
-Basically, an upcall is delivered if the measured bandwidth is >= or
-<= the threshold bandwidth (within the specified measurement
+Basically, an upcall is delivered if the measured bandwidth is \*[Gt]= or
+\*[Lt]= the threshold bandwidth (within the specified measurement
 interval).
 For practical reasons, the smallest value for the measurement
 interval is 3 seconds.
 If smaller values are allowed, then the bandwidth
 estimation may be less accurate, or the potentially very high frequency
 of the generated upcalls may introduce too much overhead.
-For the >= operation, the answer may be known before the end of
+For the \*[Gt]= operation, the answer may be known before the end of
 .Va threshold_interval ,
 therefore the upcall may be delivered earlier.
-For the <= operation however, we must wait
+For the \*[Lt]= operation however, we must wait
 until the threshold interval has expired to know the answer.
 .Pp
 Example of usage:
 .Bd -literal
 struct bw_upcall bw_upcall;
 /* Assign all bw_upcall fields as appropriate */
-memset(&bw_upcall, 0, sizeof(bw_upcall));
-memcpy(&bw_upcall.bu_src, &source, sizeof(bw_upcall.bu_src));
-memcpy(&bw_upcall.bu_dst, &group, sizeof(bw_upcall.bu_dst));
+memset(\*[Am]bw_upcall, 0, sizeof(bw_upcall));
+memcpy(\*[Am]bw_upcall.bu_src, \*[Am]source, sizeof(bw_upcall.bu_src));
+memcpy(\*[Am]bw_upcall.bu_dst, \*[Am]group, sizeof(bw_upcall.bu_dst));
 bw_upcall.bu_threshold.b_data = threshold_interval;
 bw_upcall.bu_threshold.b_packets = threshold_packets;
 bw_upcall.bu_threshold.b_bytes = threshold_bytes;
@@ -857,7 +857,7 @@ do {
     return (ERROR);
 } while (0);
 setsockopt(mrouter_s4, IPPROTO_IP, MRT_ADD_BW_UPCALL,
-          (void *)&bw_upcall, sizeof(bw_upcall));
+          (void *)\*[Am]bw_upcall, sizeof(bw_upcall));
 .Ed
 .Pp
 To delete a single filter, then use
@@ -905,10 +905,10 @@ the particular intervals are measured, the user should be careful how
 is used.
 For example, if the
 filter is installed to trigger an upcall if the number of packets
-is >= 1, then
+is \*[Gt]= 1, then
 .Va bu_measured
 may have a value of zero in the upcalls after the
-first one, because the measured interval for >= filters is
+first one, because the measured interval for \*[Gt]= filters is
 .Dq clocked
 by the forwarded packets.
 Hence, this upcall mechanism should not be used for measuring
@@ -925,7 +925,7 @@ Note that the upcalls for a filter are delivered until the specific
 filter is deleted, but no more frequently than once per
 .Va bu_threshold.b_time .
 For example, if the filter is specified to
-deliver a signal if bw >= 1 packet, the first packet will trigger a
+deliver a signal if bw \*[Gt]= 1 packet, the first packet will trigger a
 signal, but the next upcall will be triggered no earlier than
 .Va bu_threshold.b_time
 after the previous upcall.
