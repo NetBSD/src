@@ -1,4 +1,4 @@
-/*	$NetBSD: fortune.c,v 1.19 1999/09/09 17:30:19 jsm Exp $	*/
+/*	$NetBSD: fortune.c,v 1.20 1999/09/18 19:38:49 jsm Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1993\n\
 #if 0
 static char sccsid[] = "@(#)fortune.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: fortune.c,v 1.19 1999/09/09 17:30:19 jsm Exp $");
+__RCSID("$NetBSD: fortune.c,v 1.20 1999/09/18 19:38:49 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -970,7 +970,7 @@ get_fort()
 			choice = random() % Noprob_tbl.str_numstr;
 			DPRINTF(1, (stderr, "choice = %d (of %d) \n", choice,
 				    Noprob_tbl.str_numstr));
-			while (choice >= fp->tbl.str_numstr) {
+			while ((u_int32_t)choice >= fp->tbl.str_numstr) {
 				choice -= fp->tbl.str_numstr;
 				fp = fp->next;
 				DPRINTF(1, (stderr,
@@ -1022,7 +1022,7 @@ pick_child(parent)
 		choice = random() % parent->tbl.str_numstr;
 		DPRINTF(1, (stderr, "    choice = %d (of %d)\n",
 			    choice, parent->tbl.str_numstr));
-		for (fp = parent->child; choice >= fp->tbl.str_numstr;
+		for (fp = parent->child; (u_int32_t)choice >= fp->tbl.str_numstr;
 		     fp = fp->next) {
 			choice -= fp->tbl.str_numstr;
 			DPRINTF(1, (stderr, "\tskip %s, %d (choice = %d)\n",
@@ -1113,7 +1113,7 @@ get_pos(fp)
 		fp->pos = random() % fp->tbl.str_numstr;
 #endif /* OK_TO_WRITE_DISK */
 	}
-	if (++(fp->pos) >= fp->tbl.str_numstr)
+	if ((u_int64_t)++(fp->pos) >= fp->tbl.str_numstr)
 		fp->pos -= fp->tbl.str_numstr;
 	DPRINTF(1, (stderr, "pos for %s is %qd\n", fp->name, fp->pos));
 }
@@ -1298,7 +1298,7 @@ maxlen_in_list(list)
 		}
 		else {
 			get_tbl(fp);
-			if (fp->tbl.str_longlen > maxlen)
+			if (fp->tbl.str_longlen > (u_int32_t)maxlen)
 				maxlen = fp->tbl.str_longlen;
 		}
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: comp.c,v 1.6 1999/09/08 21:17:50 jsm Exp $	*/
+/*	$NetBSD: comp.c,v 1.7 1999/09/18 19:38:52 jsm Exp $	*/
 
 /*
  * Copyright (c) 1982, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)comp.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: comp.c,v 1.6 1999/09/08 21:17:50 jsm Exp $");
+__RCSID("$NetBSD: comp.c,v 1.7 1999/09/18 19:38:52 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -194,7 +194,7 @@ redoit:
 				diff = End - pp->mileage;
 				/* avoid getting too close */
 				if (Topcard > Deck && cango && diff <= 100
-				    && diff / Value[card] > count[card]
+				    && (int)diff / Value[card] > count[card]
 				    && (card == C_25 || diff % 50 == 0)) {
 					if (card == C_50 && diff - 50 == 25
 					    && count[C_25] > 0)
