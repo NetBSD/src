@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops.c,v 1.9 1999/05/18 21:51:59 ad Exp $ */
+/*	 $NetBSD: rasops.c,v 1.10 1999/06/15 21:34:05 ad Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.9 1999/05/18 21:51:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.10 1999/06/15 21:34:05 ad Exp $");
 
 #include "rasops_glue.h"
 
@@ -774,7 +774,7 @@ rasops_do_cursor(ri)
 	height = ri->ri_font->fontheight;
 	mask = ri->ri_devcmap[15];
 	
-	slop1 = (int)rp & 3;
+	slop1 = (4 - ((int)rp & 3)) & 3;
 	
 	if (slop1 > ri->ri_xscale)
 		slop1 = ri->ri_xscale;
@@ -902,7 +902,7 @@ rasops_erasecols(cookie, row, col, num, attr)
 		return;
 	}
 	
-	slop1 = (int)rp & 3;
+	slop1 = (4 - ((int)rp & 3)) & 3;
 	slop2 = (num - slop1) & 3;
 	num -= slop1 + slop2;
 	n8 = num >> 5;
