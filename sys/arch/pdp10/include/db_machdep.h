@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.1 2003/08/19 10:53:05 ragge Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.2 2003/09/03 19:35:26 ragge Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -63,11 +63,20 @@ extern db_regs_t	ddb_regs;
 #define	inst_trap_return(ins)	(((ins)&0777740000000) == XJEN)
 #define	inst_return(ins)	(((ins)&0777000000000) == POPJ)
 #define	inst_call(ins)		(((ins)&0777000000000) == PUSHJ)
+#define next_instr_address(v, b) ((db_addr_t) ((b) ? (v) : ((v) + 4)))
 
 #define SOFTWARE_SSTEP
 
 #define inst_load(ins)		0
 #define inst_store(ins)		0
+
+/*
+ * Functions needed for software single-stepping.
+ */
+
+boolean_t	inst_branch(int inst);
+db_addr_t	branch_taken(int inst, db_addr_t pc, db_regs_t *regs);
+boolean_t	inst_unconditional_flow_transfer(int inst);
 
 #define	DB_ELF_SYMBOLS
 #define	DB_ELFSIZE		36
