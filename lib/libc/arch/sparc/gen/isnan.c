@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  * from: Header: isnan.c,v 1.1 91/07/08 19:03:34 torek Exp
- * $Id: isnan.c,v 1.1 1993/10/07 00:21:35 cgd Exp $
+ * $Id: isnan.c,v 1.2 1996/02/05 04:31:30 jtc Exp $
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
@@ -45,6 +45,7 @@ static char sccsid[] = "@(#)isnan.c	8.1 (Berkeley) 6/4/93";
 #include <sys/types.h>
 #include <machine/ieee.h>
 
+int
 isnan(d)
 	double d;
 {
