@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.20 1998/05/20 04:05:51 thorpej Exp $ */
+/* $NetBSD: pmap.h,v 1.21 1998/06/11 05:10:41 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -206,6 +206,7 @@ int	pmap_uses_prom_console __P((void));
 #define	pmap_pte_v(pte)		(*(pte) & PG_V)
 #define	pmap_pte_pv(pte)	(*(pte) & PG_PVLIST)
 #define	pmap_pte_asm(pte)	(*(pte) & PG_ASM)
+#define	pmap_pte_exec(pte)	(*(pte) & PG_EXEC)
 
 #define	pmap_pte_set_w(pte, v)						\
 do {									\
