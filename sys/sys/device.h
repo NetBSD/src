@@ -1,4 +1,4 @@
-/*	$NetBSD: device.h,v 1.24 1998/01/12 21:21:45 thorpej Exp $	*/
+/*	$NetBSD: device.h,v 1.25 1998/06/09 18:46:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -182,6 +182,7 @@ struct device *config_attach __P((struct device *, void *, void *, cfprint_t));
 struct device *config_attach __P((struct device *, struct cfdata *, void *,
     cfprint_t));
 #endif /* __BROKEN_INDIRECT_CONFIG */
+void config_defer __P((struct device *, void (*)(struct device *)));
 #if defined(__alpha__) || defined(hp300) || defined(__i386__)
 void device_register __P((struct device *, void *));
 #endif
