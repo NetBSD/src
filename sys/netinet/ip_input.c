@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.20 1995/06/04 05:58:26 mycroft Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.21 1995/06/07 16:01:15 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -96,11 +96,6 @@ static	struct ip_srcrt {
 	struct	in_addr route[MAX_IPOPTLEN/sizeof(struct in_addr)];
 } ip_srcrt;
 
-#ifdef GATEWAY
-extern	int if_index;
-u_int32_t *ip_ifmatrix;
-#endif
-
 static void save_rte __P((u_char *, struct in_addr));
 /*
  * IP initialization: fill in IP protocol switch table.
@@ -125,11 +120,6 @@ ip_init()
 	ipq.next = ipq.prev = &ipq;
 	ip_id = time.tv_sec & 0xffff;
 	ipintrq.ifq_maxlen = ipqmaxlen;
-#ifdef GATEWAY
-	i = (if_index + 1) * (if_index + 1) * sizeof (u_int32_t);
-	ip_ifmatrix = (u_int32_t *) malloc(i, M_RTABLE, M_WAITOK);
-	bzero((char *)ip_ifmatrix, i);
-#endif
 }
 
 struct	sockaddr_in ipaddr = { sizeof(ipaddr), AF_INET };
@@ -1054,10 +1044,6 @@ ip_forward(m, srcrt)
 	 */
 	mcopy = m_copy(m, 0, imin((int)ip->ip_len, 64));
 
-#ifdef GATEWAY
-	ip_ifmatrix[rt->rt_ifp->if_index +
-	     if_index * m->m_pkthdr.rcvif->if_index]++;
-#endif
 	/*
 	 * If forwarding packet using same interface that it came in on,
 	 * perhaps should send a redirect to sender to shortcut a hop.
