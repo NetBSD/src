@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.eng,v 1.2.2.4 1997/11/13 05:53:41 simonb Exp $	*/
+/*	$NetBSD: menus.md.eng,v 1.2.2.5 1998/11/16 07:18:58 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -38,7 +38,7 @@
 
 /* pc532 machine dependent menus, english */
 
-menu editfsparts, y=13, exit;
+menu editfsparts, y=12, exit;
 	display action  {
 			ask_sizemult();
 			msg_display(MSG_fspart, multname);
@@ -46,6 +46,7 @@ menu editfsparts, y=13, exit;
 		};
 	option "Change a", action { editpart = A;}, sub menu edfspart;
 	option "Change b", action { editpart = B;}, sub menu edfspart;
+	option "Whole disk - can't change", action {};
 	option "Change d", action { editpart = D;}, sub menu edfspart;
 	option "Change e", action { editpart = E;}, sub menu edfspart;
 	option "Change f", action { editpart = F;}, sub menu edfspart;
