@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.66 2002/12/05 01:17:24 fvdl Exp $ */
+/*	$NetBSD: md.c,v 1.67 2003/01/10 20:00:30 christos Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -48,6 +48,8 @@
 #include <stdio.h>
 #include <util.h>
 #include <dirent.h>
+#define FSTYPENAMES
+#include <sys/disklabel.h>
 #include "defs.h"
 #include "md.h"
 #include "msg_defs.h"
@@ -55,8 +57,7 @@
 
 
 char mbr[512];
-char kernstr[STRSIZE];
-int mbr_present, mbr_len;
+int mbr_len;
 int c1024_resp;
 struct disklist *disklist = NULL;
 struct nativedisk_info *nativedisk;
@@ -94,7 +95,7 @@ md_get_info()
 	md_bios_info(diskdev);
 
 edit:
-	edit_mbr((struct mbr_partition *)&mbr[MBR_PARTOFF]);
+	edit_mbr((struct mbr_partition *)(void *)&mbr[MBR_PARTOFF]);
 
 	if (mbr_part_above_chs(part) &&
 	    (biosdisk == NULL || !(biosdisk->bi_flags & BIFLAG_EXTINT13))) {
@@ -164,11 +165,11 @@ md_read_bootcode(path, buf, len)
 		close(fd);
 		return -1;
 	}
-	if (lseek(fd, MBR_MAGICOFF, SEEK_SET) < 0) {
+	if (lseek(fd, (off_t)MBR_MAGICOFF, SEEK_SET) < 0) {
 		close(fd);
 		return -1;
 	}
-	cc = read(fd, &buf[MBR_MAGICOFF], st.st_size - MBR_MAGICOFF);
+	cc = read(fd, &buf[MBR_MAGICOFF], (size_t)(st.st_size - MBR_MAGICOFF));
 
 	close(fd);
 
@@ -379,7 +380,7 @@ custom:
 		/* XXX UGH! need arguments to process_menu */
 		switch (c1024_resp) {
 		case 1:
-			edit_mbr((struct mbr_partition *)&mbr[MBR_PARTOFF]);
+			edit_mbr((struct mbr_partition *)(void *)&mbr[MBR_PARTOFF]);
 			/*FALLTHROUGH*/
 		case 2:
 			goto editlab;
@@ -461,7 +462,7 @@ md_upgrade_mbrtype()
 	if (read_mbr(diskdev, mbr, sizeof mbr) < 0)
 		return;
 
-	mbrp = (struct mbr_partition *)&mbr[MBR_PARTOFF];
+	mbrp = (struct mbr_partition *)(void *)&mbr[MBR_PARTOFF];
 
 	for (i = 0; i < NMBRPART; i++) {
 		if (mbrp[i].mbrp_typ == MBR_PTYPE_386BSD) {
@@ -534,7 +535,8 @@ int
 md_bios_info(dev)
 	char *dev;
 {
-	int mib[2], i, len;
+	int mib[2], i;
+	size_t len;
 	struct biosdisk_info *bip;
 	struct nativedisk_info *nip = NULL, *nat;
 	int cyl, head, sec;
@@ -625,11 +627,11 @@ static void
 configure_bootsel()
 {
 	struct mbr_partition *parts =
-	    (struct mbr_partition *)&mbr[MBR_PARTOFF];
+	    (struct mbr_partition *)(void *)&mbr[MBR_PARTOFF];
 	int i;
 
 
-	mbs = (struct mbr_bootsel *)&mbr[MBR_BOOTSELOFF];
+	mbs = (struct mbr_bootsel *)(void *)&mbr[MBR_BOOTSELOFF];
 	mbs->flags = BFL_SELACTIVE;
 
 	/* Setup default labels for partitions, since if not done by user */
@@ -653,6 +655,7 @@ configure_bootsel()
 }
 
 void
+/*ARGSUSED*/
 disp_bootsel(part, mbsp)
 	struct mbr_partition *part;
 	struct mbr_bootsel *mbsp;
@@ -698,12 +701,14 @@ md_init()
 {
 }
 
+#ifdef notdef
 void
 md_set_sizemultname()
 {
 
 	set_sizemultname_meg();
 }
+#endif
 
 void
 md_set_no_x()

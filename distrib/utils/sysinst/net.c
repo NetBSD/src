@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.80 2002/12/05 01:17:17 fvdl Exp $	*/
+/*	$NetBSD: net.c,v 1.81 2003/01/10 20:00:28 christos Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -210,7 +210,7 @@ get_ifconfig_info()
 	char *textbuf;
 	char *t, *nt, *ndest;
 	const char **ignore;
-	int textsize, len;
+	int textsize;
 
 	/* Get ifconfig information */
 	
@@ -229,7 +229,7 @@ get_ifconfig_info()
 	*ndest = '\0';
 	while ((t = strsep(&nt, " ")) != NULL) {
 		for (ignore = ignored_if_names; *ignore != NULL; ignore++) {
-			len = strlen(*ignore);
+			size_t len = strlen(*ignore);
 			if (strncmp(t, *ignore, len) == 0 &&
 			    isdigit((unsigned char)t[len]))
 				goto loop;
@@ -254,7 +254,6 @@ get_ifinterface_info()
 	int textsize;
 	char *t;
 	char hostname[MAXHOSTNAMELEN + 1];
-	int max_len;
 	char *dot;
 
 	/* First look to see if the selected interface is already configured. */
@@ -318,7 +317,7 @@ get_ifinterface_info()
 			strncpy(net_host, hostname, sizeof(net_host));
 		} else {
 			/* split hostname into host/domain parts */
-			max_len = dot - hostname;
+			size_t max_len = dot - hostname;
 			max_len = (sizeof(net_host)<max_len)?sizeof(net_host):max_len;
 			*dot = '\0';
 			dot++;
@@ -393,7 +392,10 @@ config_network()
 {	char *tp;
 	char defname[255];
 	int  octet0;
-	int  pass, v6config, dhcp_config;
+	int  pass, dhcp_config;
+#ifdef INET6
+	int v6config = 1;
+#endif
 
 	FILE *f;
 	time_t now;
@@ -431,11 +433,6 @@ again:
 	/* Remove that space we added. */
 	net_dev[strlen(net_dev) - 1] = 0;
 
-#ifdef INET6
-	v6config = 1;
-#else
-	v6config = 0;
-#endif
 
 	/* Preload any defaults we can find */
 	get_ifinterface_info();
@@ -1028,7 +1025,7 @@ char *line;
 	int textsize;
 	char *textbuf;
 	char *t;
-	char *walk;
+	char *walkp;
 
 	textsize = collect(T_FILE, &textbuf, "/tmp/dhclient.leases");
 	if (textsize < 0) {
@@ -1045,14 +1042,14 @@ char *line;
 				t = strtok(NULL, " \t\n");
 				/* found the tag, extract the value */
 				/* last char should be a ';' */
-				walk = strrchr(t,';');
-				if (walk != NULL ) {
-					*walk = '\0';
+				walkp = strrchr(t, ';');
+				if (walkp != NULL) {
+					*walkp = '\0';
 				}
 				/* strip any " from the string */
-				walk = strrchr(t,'"');
-				if (walk != NULL ) {
-					*walk = '\0';
+				walkp = strrchr(t, '"');
+				if (walkp != NULL) {
+					*walkp = '\0';
 					t++;
 				}
 				strcpy(targ, t);

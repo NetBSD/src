@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.pl,v 1.3 2002/07/25 15:19:18 grant Exp $	*/
+/*	$NetBSD: menus.md.pl,v 1.4 2003/01/10 20:00:30 christos Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: menus.md.en,v 1.36 2001/11/29 23:20:58 thorpej Exp 	*/
 
@@ -83,7 +83,7 @@ menu dlgeom, title "Wybierz opcje";
 
 menu editparttable, title  "Wybierz swoje partycje", exit;
 	display action  { msg_display (MSG_editparttable);
-			  disp_cur_part((struct mbr_partition *)&mbr[MBR_PARTOFF
+			  disp_cur_part((struct mbr_partition *)(void *)&mbr[MBR_PARTOFF
 ], activepart,-1);
 			};
 	option "Edytuj partycje 0",  sub menu editpart,
@@ -99,7 +99,7 @@ menu editparttable, title  "Wybierz swoje partycje", exit;
 
 menu editpart, title  "Wybierz aby zmienic";
 	display action { msg_display (MSG_editpart, editpart);
-			   disp_cur_part((struct mbr_partition *)&mbr[MBR_PARTOFF
+			   disp_cur_part((struct mbr_partition *)(void *)&mbr[MBR_PARTOFF
 ], editpart,-1);
 			   msg_display_add(MSG_newline);
 			};
@@ -288,7 +288,7 @@ menu biosmultmatch;
 
 menu configbootsel, y=16, title  "Zmien bootmenu", exit;
         display action  { msg_display(MSG_configbootsel);
-                          disp_bootsel((struct mbr_partition *)&mbr[MBR_PARTOFF], mbs);
+                          disp_bootsel((struct mbr_partition *)(void *)&mbr[MBR_PARTOFF], mbs);
 			  msg_display_add(MSG_bootseltimeout, (1000 * mbs->timeo) / 18200);
 			  msg_display_add(MSG_defbootselopt);
 			  if (mbs->defkey == SCAN_ENTER)

@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.77 2002/12/22 12:07:34 lukem Exp $	*/
+/*	$NetBSD: util.c,v 1.78 2003/01/10 20:00:28 christos Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -117,13 +117,13 @@ distribution_sets_exist_p(path)
 void
 get_ramsize()
 {
-	long len = sizeof(long);
+	size_t len = sizeof(ramsize);
 	int mib[2] = {CTL_HW, HW_PHYSMEM};
 	
-	sysctl(mib, 2, (void *)&ramsize, (size_t *)&len, NULL, 0);
+	sysctl(mib, 2, &ramsize, &len, NULL, 0);
 
 	/* Find out how many Megs ... round up. */
-	rammb = (ramsize + MEG - 1) / MEG;
+	rammb = (unsigned int)((ramsize + MEG - 1) / MEG);
 }
 
 static int asked = 0;
@@ -160,7 +160,7 @@ run_makedev()
 	msg_display(MSG_makedev);
 	sleep (1);
 
-	owd = getcwd(NULL,0);
+	owd = getcwd(NULL, 0);
 
 	/* make /dev, in case the user  didn't extract it. */
 	make_target_dir("/dev");
@@ -181,7 +181,7 @@ get_via_floppy()
 	char distname[STRSIZE];
 	char fddev[STRSIZE] = "/dev/fd0a";
 	char fname[STRSIZE];
-	char fullname[STRSIZE];
+	char full_name[STRSIZE];
 	char catcmd[STRSIZE];
 	distinfo *list;
 	char post[4];
@@ -199,9 +199,9 @@ get_via_floppy()
 		snprintf(distname, STRSIZE, "%s%s", list->name, dist_postfix);
 		while (list->getit && strcmp(&post[1],list->fdlast) <= 0) {
 			snprintf(fname, STRSIZE, "%s%s", list->name, post);
-			snprintf(fullname, STRSIZE, "/mnt2/%s", fname);
+			snprintf(full_name, STRSIZE, "/mnt2/%s", fname);
 			first = 1;
-			while (!mounted || stat(fullname, &sb)) {
+			while (!mounted || stat(full_name, &sb)) {
  				if (mounted) 
 				  run_prog(0, NULL, "/sbin/umount /mnt2");
 				if (first)
@@ -223,7 +223,7 @@ get_via_floppy()
 				first = 0;
 			}
 			sprintf(catcmd, "/bin/cat %s >> %s",
-				fullname, distname);
+				full_name, distname);
 			if (logging)
 				(void)fprintf(logfp, "%s\n", catcmd);
 			if (scripting)
@@ -860,6 +860,7 @@ sanity_check()
 	return 1;
 }
 
+#ifdef notdef
 /* set reverse to 1 to default to no */
 int askyesno(int reverse)
 {
@@ -880,7 +881,7 @@ int askyesno(int reverse)
 		waddstr(yesnowin, "Yes or No: [Y]");
 
 	wrefresh(yesnowin);
-	while ((c = getchar())) {
+	while ((c = getchar()) != 0) {
 		if (c == 'y' || c == 'Y') {
 			found = 1;
 			break;
@@ -901,6 +902,7 @@ int askyesno(int reverse)
 	refresh();
 	return(found);
 }
+#endif
 
 /*
  * Some globals to pass things back from callbacks
@@ -933,6 +935,7 @@ set_timezone_select(menudesc *m)
  * Alarm-handler to update example-display
  */
 static void
+/*ARGSUSED*/
 timezone_sig(int sig)
 {
 	set_timezone_select(NULL);
@@ -949,10 +952,8 @@ set_timezone()
 	char localtime_target[STRSIZE];
 	int rc;
 	time_t t;
-	sig_t oldalrm;
 	FTS *tree;
 	FTSENT *entry;
-	int rval;
 	char *argv[2];
 	int skip;
 	struct stat sb;
@@ -960,7 +961,7 @@ set_timezone()
 	int menu_no;
 	menu_ent *tz_menu;
 
-	oldalrm = signal(SIGALRM, timezone_sig);
+	signal(SIGALRM, timezone_sig);
 	alarm(1);
        
 	strncpy(zoneinfo_dir, target_expand("/usr/share/zoneinfo"), STRSIZE);
@@ -1012,10 +1013,12 @@ set_timezone()
 		return 1;	/* error - skip timezone setting */
 	}
 	n = 0;
-	for (rval = 0; (entry = fts_read(tree)) != NULL; ) {
+	for (; (entry = fts_read(tree)) != NULL; ) {
 		stat(entry->fts_accpath, &sb);
 		if (S_ISREG(sb.st_mode)) {
 			tz_menu[n].opt_name = strdup(entry->fts_accpath+skip+1);
+			if (tz_menu[n].opt_name == NULL)
+				tz_menu[n].opt_name = "*";
 			tz_menu[n].opt_menu = OPT_NOMENU;
 			tz_menu[n].opt_flags = 0;
 			tz_menu[n].opt_action = set_timezone_select;
@@ -1153,6 +1156,7 @@ add_rc_conf(const char *fmt, ...)
 	va_end(ap);
 }
 
+#ifdef notdef
 /*
  * check that there is at least a / somewhere.
  */
@@ -1185,6 +1189,7 @@ set_sizemultname_meg()
 	sizemult = MEG / sectorsize;
 	multname = msg_string(MSG_megname);
 }
+#endif
 
 int
 check_lfs_progs()

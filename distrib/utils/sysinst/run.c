@@ -1,4 +1,4 @@
-/*	$NetBSD: run.c,v 1.36 2002/12/05 01:17:17 fvdl Exp $	*/
+/*	$NetBSD: run.c,v 1.37 2003/01/10 20:00:28 christos Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -70,7 +70,6 @@
 /*
  * local prototypes 
  */
-static char* va_prog_cmdstr (const char *cmd, va_list ap);
 static int launch_subwin (WINDOW *actionwin, char **args, struct winsize *win,
 				int display, const char **errstr);
 int log_flip (menudesc *);
@@ -104,6 +103,7 @@ do_logging(void)
 }
 
 int
+/*ARGSUSED*/
 log_flip(menudesc *m)
 {
 	time_t tloc;
@@ -131,6 +131,7 @@ log_flip(menudesc *m)
 }
 
 int
+/*ARGSUSED*/
 script_flip(menudesc *m)
 {
 	time_t tloc;
@@ -242,21 +243,6 @@ do_system(execstr)
 }
 
 /*
- *  build command tring for do_system() from anonymous args.
- *  XXX return result is in a static buffer.
- */
-static char *
-va_prog_cmdstr(const char *cmd, va_list ap)
-{
-	static char command[STRSIZE];
-
-	memset(command, 0, STRSIZE);
-	(void)vsnprintf(command, STRSIZE, cmd, ap);
-	return (command);
-}
-
-
-/*
  * launch a program inside a subwindow, and report it's return status when done
  */
 static int
@@ -275,7 +261,6 @@ launch_subwin(actionwin, args, win, flags, errstr)
 	int dataflow[2];
 	pid_t child, subchild, pid;
 	char ibuf[MAXBUF], obuf[MAXBUF];
-	char *command, *p, *argzero, **origargs;
 	char pktdata;
 	struct termios rtt;
 	struct termios tt;
@@ -285,14 +270,6 @@ launch_subwin(actionwin, args, win, flags, errstr)
 		return (1);
 	}
 
-	argzero = *args;
-	origargs = args;
-
-	command = (char *)malloc(MAXBUF * sizeof(char));
-	for (p = *args; p != NULL; p = *++args) {
-		strcat(command, p);
-		strcat(command, " ");
-	}
 	(void)tcgetattr(STDIN_FILENO, &tt);
 	if (openpty(&master, &slave, NULL, &tt, win) == -1) {
 		*errstr = "openpty() failed";
@@ -326,7 +303,7 @@ launch_subwin(actionwin, args, win, flags, errstr)
 				n = read(master, obuf, sizeof(obuf));
 				if (n <= 0)
 					break;
-				write(dataflow[1], obuf, n);
+				write(dataflow[1], obuf, (size_t)n);
 			} /* while spinning */
 			_exit(EXIT_SUCCESS);
 		} /* subchild, child forks */
@@ -338,13 +315,16 @@ launch_subwin(actionwin, args, win, flags, errstr)
 		(void)tcsetattr(slave, TCSANOW, &rtt);
 		login_tty(slave);
 		if (logging) {
-			fprintf(logfp, "executing: %s\n", command);
-			fflush(logfp);
+			fprintf(logfp, "executing:");
+			for (i = 0; args[i]; i++)
+				fprintf(logfp, " %s", args[i]);
+			fprintf(logfp, "\n");
 			fclose(logfp);
 		}
 		if (scripting) {
-			fprintf(script, "%s\n", command);
-			fflush(script);
+			for (i = 0; args[i]; i++)
+				fprintf(script, "%s ", args[i]);
+			fprintf(script, "\n");
 			fclose(script);
 		}
 		/*
@@ -353,10 +333,10 @@ launch_subwin(actionwin, args, win, flags, errstr)
 		 */
 		if ((flags & RUN_CHROOT) != 0)
 			chroot(target_prefix());
-		execvp(argzero, origargs);
+		execvp(*args, args);
 		/* the parent will see this as the output from the
 		   child */
-		warn("execvp %s", argzero);
+		warn("execvp %s", *args);
 		_exit(EXIT_FAILURE);
 		break; /* end of child */
 	default:
@@ -375,16 +355,16 @@ launch_subwin(actionwin, args, win, flags, errstr)
 
 	for (selectfailed = 0;;) {
 		if (selectfailed) {
-			char *msg = "select(2) failed but no child died?";
+			char *mmsg = "select(2) failed but no child died?";
 			if(logging)
-				(void)fprintf(logfp, msg);
-			errx(1, msg);
+				(void)fprintf(logfp, mmsg);
+			errx(1, mmsg);
 		}
 		read_fd_set = active_fd_set;
 		if (select(FD_SETSIZE, &read_fd_set, NULL, NULL, NULL) < 0) {
 			if (errno == EINTR)
 				goto loop;
-			perror("select");
+			warn("select");
 			if (logging)
 				(void)fprintf(logfp,
 				    "select failure: %s\n", strerror(errno));
@@ -392,15 +372,19 @@ launch_subwin(actionwin, args, win, flags, errstr)
 		} else for (i = 0; i < FD_SETSIZE; ++i) {
 			if (FD_ISSET (i, &read_fd_set)) {
 				n = read(i, ibuf, MAXBUF);
+				if (n <= 0) {
+					warn("read");
+					continue;
+				}
 				if (i == STDIN_FILENO) {
-					(void)write(master, ibuf, n);
+					(void)write(master, ibuf, (size_t)n);
 					if ((rtt.c_lflag & ECHO) == 0)
 						goto enddisp;
 				}
 				pktdata = ibuf[0];
 				if (pktdata != 0 && i != STDIN_FILENO) {
 					if (pktdata & TIOCPKT_IOCTL)
-						rtt = *(struct termios *)ibuf;
+						memcpy(&rtt, ibuf, sizeof(rtt));
 					goto enddisp;
 				}
 				for (j=1; j < n; j++) {
@@ -477,17 +461,18 @@ run_prog(int flags, msg errmsg, const char *cmd, ...)
 	struct winsize win;
 	int ret;
 	WINDOW *actionwin, *statuswin, *boxwin;
-	char buf2[MAXBUF];
-	char *command, *p, *args[51], **aps;
+	char buf2[MAXBUF], scmd[MAXBUF];
+	char *p, *args[256], **aps;
 	const char *errstr;
 
 	va_start(ap,cmd);
-	sprintf(buf2,"%s",va_prog_cmdstr(cmd,ap));
+	vsnprintf(buf2, sizeof(buf2), cmd, ap);
+	strcpy(scmd, buf2);
 	p = buf2;
-	command = strdup(buf2);
 
 	/* 51 strings and it's blown! */
-	for (aps = args; (*aps = strsep(&p, " ")) != NULL;)
+	for (aps = args; aps < &args[sizeof(args) / sizeof(args[0])] &&
+	    (*aps = strsep(&p, " ")) != NULL;)
 		if (**aps != '\0')
 			++aps;
 
@@ -501,7 +486,7 @@ run_prog(int flags, msg errmsg, const char *cmd, ...)
 	if ((flags & RUN_SYSTEM) != 0) {
 		if ((flags & RUN_CHROOT) != 0)
 			chroot(target_prefix());
-		ret = system(command);
+		ret = system(scmd);
 	} else if ((flags & RUN_DISPLAY) != 0) {
 		wclear(stdscr);
 		clearok(stdscr, 1);
@@ -550,7 +535,7 @@ run_prog(int flags, msg errmsg, const char *cmd, ...)
 		wmove(statuswin, 1, 4);
 		waddstr(statuswin, "Command: ");
 		wstandout(statuswin);
-		waddstr(statuswin, command);
+		waddstr(statuswin, scmd);
 		wstandend(statuswin);
 		wrefresh(statuswin);
 
@@ -599,7 +584,7 @@ done:
 	if ((flags & RUN_FATAL) != 0 && ret != 0)
 		exit(ret);
 	if (ret && errmsg != MSG_NONE) {
-		msg_display(errmsg, command);
+		msg_display(errmsg, scmd);
 		process_menu(MENU_ok);
 	}
 	return(ret);

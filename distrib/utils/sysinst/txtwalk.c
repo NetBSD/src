@@ -1,4 +1,4 @@
-/*	$NetBSD: txtwalk.c,v 1.6 2000/12/22 10:12:13 mrg Exp $	*/
+/*	$NetBSD: txtwalk.c,v 1.7 2003/01/10 20:00:28 christos Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -10,16 +10,16 @@
  * modification, are permitted provided that the following conditions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
+ *    notice, item list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
+ *    notice, item list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
+ * 3. All advertising materials mentioning features or use of item software
  *    must display the following acknowledgement:
  *      This product includes software developed for the NetBSD Project by
  *      Piermont Information Systems Inc.
  * 4. The name of Piermont Information Systems Inc. may not be used to endorse
- *    or promote products derived from this software without specific prior
+ *    or promote products derived from item software without specific prior
  *    written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY PIERMONT INFORMATION SYSTEMS INC. ``AS IS''
@@ -56,10 +56,10 @@
 
 /* prototypes */
 
-static void process (struct lookfor, char *);
-static void match (char *, struct lookfor *, int);
-static int finddata (struct lookfor, char *, struct data *, int *);
-static char *strndup (char *, int);
+static void process (struct lookfor *, char *);
+static void match (char *, struct lookfor *, size_t);
+static int finddata (struct lookfor *, char *, struct data *, size_t *);
+static char *strndup (char *, size_t);
 
 /*
  * Walk the buffer, call match for each line.
@@ -69,10 +69,10 @@ walk(buffer, size, these, numthese)
 	char *buffer;
 	size_t size;
 	struct lookfor *these;
-	int numthese;
+	size_t numthese;
 {
-	int i = 0;
-	int len;
+	size_t i = 0;
+	size_t len;
 	int line = 1;
 
 	while (i < size) {
@@ -81,7 +81,7 @@ walk(buffer, size, these, numthese)
 			buffer++;
 			i++;
 		} else {
-			/* Assume this starts a line. */
+			/* Assume item starts a line. */
 			len = 0;
 			while (buffer[len] != '\n' && buffer[len] != '\0')
 				len++;
@@ -105,11 +105,11 @@ static void
 match(line, these, numthese)
 	char *line;
 	struct lookfor *these;
-	int numthese;
+	size_t numthese;
 {
-	int linelen;		/* Line length */
-	int patlen;		/* Pattern length */
-	int which;		/* Which pattern we are using */
+	size_t linelen;		/* Line length */
+	size_t patlen;		/* Pattern length */
+	size_t which;		/* Which pattern we are using */
 
 	linelen = strlen(line); 	
 
@@ -118,23 +118,23 @@ match(line, these, numthese)
 		if (linelen < patlen)
 			continue;
 		if (strncmp(these[which].head, line, patlen) == 0)
-			process(these[which], line);
+			process(&these[which], line);
 	}
 }
 
 
 /* process the matched line. */
 static void
-process(this, line)
-	struct lookfor this;
+process(item, line)
+	struct lookfor *item;
 	char *line;
 {
 	struct data found[MAXDATA];
-	int numfound = 0;
+	size_t numfound = 0;
 	char *p;
-	int   i, j;
+	size_t  i, j;
 	
-	if (finddata(this, line, found, &numfound)) {
+	if (finddata(item, line, found, &numfound)) {
 #ifdef DEBUG
 		printf("process: \"%s\"\n", line);
 		for (i = 0; i < numfound; i++) {
@@ -150,9 +150,9 @@ process(this, line)
 		}
 #endif
 		/* Process the stuff. */
-		switch (this.todo[0]) {
+		switch (item->todo[0]) {
 		case 'a':  /* Assign data */
-			p = this.todo;
+			p = item->todo;
 			j = 0;
 			while (*p && *p != '$')
 				p++;
@@ -162,14 +162,14 @@ process(this, line)
 				i = atoi(p);
 				switch (found[i].what) {
 				case INT:
-					*((int *)this.var+j)
+					*((int *)item->var+j)
 						= found[i].u.i_val;
 					break;
 				case STR:
-					strncpy(*((char **)this.var+j),
+					strncpy(*((char **)item->var+j),
 					        found[i].u.s_val,
-						this.size-1);
-					found[i].u.s_val[this.size-1] = 0;
+						item->size-1);
+					found[i].u.s_val[item->size-1] = 0;
 					break;
 				}
 				while (isdigit(*p))
@@ -179,12 +179,12 @@ process(this, line)
 				if (*p)
 					p++;
 				j++;
-				if (j >= this.nument)
+				if (j >= item->nument)
 					break;
 			}
 			break;
 		case 'c':  /* Call a function with data. */
-			(*this.func)(found, numfound);
+			(*item->func)(found, numfound);
 			break;
 		}
 	}
@@ -198,14 +198,14 @@ process(this, line)
  * Side Effect -- sets numfound and found.
  */
 static int
-finddata(this, line, found, numfound )
-	struct lookfor this;
+finddata(item, line, found, numfound)
+	struct lookfor *item;
 	char *line;
 	struct data *found;
-	int *numfound;
+	size_t *numfound;
 {
-	char *fmt = this.fmt;
-	int len;
+	char *fmt = item->fmt;
+	size_t len;
 
 	*numfound = 0;
 	while (*fmt) {
@@ -280,14 +280,14 @@ finddata(this, line, found, numfound )
 static char *
 strndup(str, len)
 	char *str;
-	int len;
+	size_t len;
 {
-	int alen;
+	size_t alen;
 	char *val;
 	
 	alen = strlen(str);
 	alen = len < alen ? len + 1 : alen + 1;
-	val = (char *)malloc(alen);
+	val = malloc(alen);
 	if (!val)
 		return NULL;
 	strncpy(val, str, alen-1);
