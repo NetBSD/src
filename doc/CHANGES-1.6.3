@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.74 2004/04/09 10:41:26 tron Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.75 2004/04/09 18:24:58 jmc Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -516,3 +516,8 @@ etc/rc.d/ipmon					1.11
 	works fine from $ipmon_flags. From PR#25006.
 	[mrg, ticket #1663]
 
+
+sbin/raidctl/raidctl.8				patch
+
+	Add a couple little warnings about swapping to RAID 5 sets.
+	[oster, ticket #1555]
