@@ -1,4 +1,4 @@
-/*	$NetBSD: top.c,v 1.4.8.1 2000/10/04 18:09:32 itojun Exp $	*/
+/*	$NetBSD: top.c,v 1.4.8.2 2001/04/22 18:36:42 he Exp $	*/
 
 char *copyright =
     "Copyright (c) 1984 through 1996, William LeFebvre";
@@ -625,7 +625,8 @@ Usage: %s [-ISbinqu] [-d x] [-s x] [-o field] [-U username] [number]\n",
 
 		    /* now read it and convert to command strchr */
 		    /* (use "change" as a temporary to hold strchr) */
-		    (void) read(0, &ch, 1);
+		    if (read(0, &ch, 1) < 1)
+			quit(0);
 		    if ((iptr = strchr(command_chars, ch)) == NULL)
 		    {
 			/* illegal command */
