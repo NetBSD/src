@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sig.c,v 1.12 2003/03/14 22:27:34 nathanw Exp $	*/
+/*	$NetBSD: pthread_sig.c,v 1.13 2003/03/20 01:03:52 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,14 +37,13 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_sig.c,v 1.12 2003/03/14 22:27:34 nathanw Exp $");
+__RCSID("$NetBSD: pthread_sig.c,v 1.13 2003/03/20 01:03:52 nathanw Exp $");
 
 /* We're interposing a specific version of the signal interface. */
 #define	__LIBC12_SOURCE__
 
 #define	__PTHREAD_SIGNAL_PRIVATE
 
-#include <assert.h>
 #include <errno.h>
 #include <lwp.h>
 #include <stdint.h>
@@ -383,7 +382,7 @@ sigtimedwait(const sigset_t * __restrict set, siginfo_t * __restrict info, const
 			goto block;
 
 		/* not signal nor alarm, must have been upgraded to master */
-		assert(pt_sigwmaster == self);
+		pthread__assert(pt_sigwmaster == self);
 
 		/* update timeout before upgrading to master */
 		if (timeout) {
@@ -449,7 +448,7 @@ sigtimedwait(const sigset_t * __restrict set, siginfo_t * __restrict info, const
 			 */
 			PTQ_FOREACH(target, &pt_sigwaiting, pt_sleep) {
 			    if (__sigismember14(target->pt_sigwait, info->si_signo)) {
-				assert(target->pt_state==PT_STATE_BLOCKED_QUEUE);
+				pthread__assert(target->pt_state == PT_STATE_BLOCKED_QUEUE);
 
 				/* copy to waiter siginfo */
 				memcpy(target->pt_wsig, info, sizeof(*info));
@@ -755,7 +754,7 @@ pthread__kill(pthread_t self, pthread_t target, int sig, int code)
 	 * XXX As long as this is uniprocessor, encountering a running
 	 * target process is a bug.
 	 */
-	assert(target->pt_state != PT_STATE_RUNNING);
+	pthread__assert(target->pt_state != PT_STATE_RUNNING);
 
 	/*
 	 * Holding the state lock blocks out cancellation and any other
@@ -894,7 +893,7 @@ pthread__signal_tramp(int sig, int code,
 	 */
 	_setcontext_u(uc);
        	/*NOTREACHED*//*CONSTCOND*/
-	assert(0);
+	pthread__assert(0);
 }
 
 /*
