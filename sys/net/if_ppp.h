@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.h,v 1.15 1998/02/09 17:43:51 perry Exp $	*/
+/*	$NetBSD: if_ppp.h,v 1.16 1999/05/12 18:50:51 thorpej Exp $	*/
 /*	Id: if_ppp.h,v 1.16 1997/04/30 05:46:04 paulus Exp 	*/
 
 /*
@@ -107,8 +107,22 @@ struct ifpppcstatsreq {
 #define PPPIOCSNPMODE	_IOW('t', 75, struct npioctl)  /* set NP mode */
 #define PPPIOCGIDLE	_IOR('t', 74, struct ppp_idle) /* get idle time */
 #ifdef PPP_FILTER
+/*
+ * XXX These are deprecated; they can no longer be used, because they
+ * XXX don't play well with multiple encaps.  The defs are here so that
+ * XXX we can return decent errors to old pppds, and so that new pppds
+ * XXX will work with old kernels.
+ */
 #define PPPIOCSPASS	_IOW('t', 71, struct bpf_program) /* set pass filter */
 #define PPPIOCSACTIVE	_IOW('t', 70, struct bpf_program) /* set active filt */
+
+/*
+ * Use these instead.
+ */
+#define	PPPIOCSIPASS	_IOW('t', 69, struct bpf_program) /* set in pass flt */
+#define	PPPIOCSOPASS	_IOW('t', 68, struct bpf_program) /* set out pass flt */
+#define	PPPIOCSIACTIVE	_IOW('t', 67, struct bpf_program) /* set in act flt */
+#define	PPPIOCSOACTIVE	_IOW('t', 66, struct bpf_program) /* set out act flt */
 #endif /* PPP_FILTER */
 
 /* PPPIOC[GS]MTU are alternatives to SIOC[GS]IFMTU, used under Ultrix */
