@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.83.2.1 1999/04/28 19:08:02 perry Exp $	*/
+/*	$NetBSD: if_de.c,v 1.83.2.2 1999/06/21 23:14:28 perry Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -5753,6 +5753,12 @@ tulip_pci_attach(
 	    printf(": unable to map device registers\n");
 	    return;
 	}
+
+	/* Make sure bus mastering is enabled. */
+	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
+		       pci_conf_read(pa->pa_pc, pa->pa_tag,
+				     PCI_COMMAND_STATUS_REG) |
+		       PCI_COMMAND_MASTER_ENABLE);
     }
 #endif /* __NetBSD__ */
 
