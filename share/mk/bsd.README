@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.161 2005/01/10 21:06:39 manu Exp $
+#	$NetBSD: bsd.README,v 1.162 2005/02/07 01:38:44 wiz Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new make "include" files for the BSD
@@ -155,7 +155,7 @@ MKHOSTOBJ	If not "no", for programs intended to be run on the compile
 		Default: no
 
 MKHTML		If "no", don't build or install the html man pages.
-		Default: yes
+		Default: no
 
 MKIEEEFP	If "no", don't add code for IEEE754/IEC60559 conformance.
 		Has no effect on most platforms.
