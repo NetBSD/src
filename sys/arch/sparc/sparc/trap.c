@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.140 2003/09/07 20:41:05 uwe Exp $ */
+/*	$NetBSD: trap.c,v 1.141 2003/09/16 13:59:59 cl Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.140 2003/09/07 20:41:05 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.141 2003/09/16 13:59:59 cl Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -920,8 +920,14 @@ mem_access_fault(type, ser, v, pc, psr, tf)
 				return;
 			goto kfault;
 		}
-	} else
+	} else {
 		l->l_md.md_tf = tf;
+		if (l->l_flag & L_SA) {
+			KDASSERT(p != NULL && p->p_sa != NULL);
+			p->p_sa->sa_vp_faultaddr = (vaddr_t)v;
+			l->l_flag |= L_SA_PAGEFAULT;
+		}
+	}
 
 	/*
 	 * mmu_pagein returns -1 if the page is already valid, in which
@@ -1004,6 +1010,7 @@ kfault:
 	}
 out:
 	if ((psr & PSR_PS) == 0) {
+		l->l_flag &= ~L_SA_PAGEFAULT;
 		KERNEL_PROC_UNLOCK(l);
 		userret(l, pc, sticks);
 		share_fpu(l, tf);
@@ -1158,6 +1165,7 @@ mem_access_fault4m(type, sfsr, sfva, tf)
 		 * Attempt to handle early fault. Ignores ASI 8,9 issue...may
 		 * do a useless VM read.
 		 * XXX: Is this really necessary?
+		 * XXX: If it's necessary, add SA_PAGEFAULT handling
 		 */
 		if (cpuinfo.cpu_type == CPUTYP_HS_MBUS) {
 			/* On HS, we have va for both */
@@ -1217,8 +1225,14 @@ mem_access_fault4m(type, sfsr, sfva, tf)
 			}
 			goto kfault;
 		}
-	} else
+	} else {
 		l->l_md.md_tf = tf;
+		if (l->l_flag & L_SA) {
+			KDASSERT(p != NULL && p->p_sa != NULL);
+			p->p_sa->sa_vp_faultaddr = (vaddr_t)cr2;
+			l->l_flag |= L_SA_PAGEFAULT;
+		}
+	}
 
 	vm = p->p_vmspace;
 
@@ -1276,6 +1290,7 @@ kfault:
 	}
 out:
 	if ((psr & PSR_PS) == 0) {
+		l->l_flag &= ~L_SA_PAGEFAULT;
 		KERNEL_PROC_UNLOCK(l);
 out_nounlock:
 		userret(l, pc, sticks);
