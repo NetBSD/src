@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.gnuhost,v 1.7 2001/11/14 22:14:48 tv Exp $
+#	$NetBSD: Makefile.gnuhost,v 1.8 2001/11/16 16:41:46 tv Exp $
 #
 # Rules used when building a GNU host package.  Expects MODULE to be set.
 #
@@ -24,6 +24,7 @@ FIND_ARGS+=	\! \( -type d \( \
 			-name 'config' -o \
 			-name 'doc' -o \
 			-name 'po' -o \
+			-name 'nbsd.mt' -o \
 			-name 'tests*' \
 		\) -prune \)
 
@@ -73,10 +74,10 @@ INSTALL_TARGET?=install
 .install_done:
 .if defined(UPDATE)
 	@if [ ! -f .install_done ] || [ .build_done -nt .install_done ]; then \
-		(cd build && ${MAKE} ${MAKE_ARGS} ${INSTALL_TARGET}); \
+		(cd ${.OBJDIR}/build && ${MAKE} ${MAKE_ARGS} ${INSTALL_TARGET}); \
 	fi
 .else
-	@(cd build && ${MAKE} ${MAKE_ARGS} ${INSTALL_TARGET})
+	@(cd ${.OBJDIR}/build && ${MAKE} ${MAKE_ARGS} ${INSTALL_TARGET})
 .endif
 	@touch $@
 
