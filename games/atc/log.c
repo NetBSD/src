@@ -1,6 +1,8 @@
+/*	$NetBSD: log.c,v 1.3 1995/03/21 15:04:21 cgd Exp $	*/
+
 /*-
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Ed James.
@@ -44,8 +46,11 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)log.c	5.7 (Berkeley) 10/30/90";*/
-static char rcsid[] = "$Id: log.c,v 1.2 1993/08/01 18:57:06 mycroft Exp $";
+#if 0
+static char sccsid[] = "@(#)log.c	8.1 (Berkeley) 5/31/93";
+#else
+static char rcsid[] = "$NetBSD: log.c,v 1.3 1995/03/21 15:04:21 cgd Exp $";
+#endif
 #endif not lint
 
 #include "include.h"

@@ -1,9 +1,11 @@
+/*	$NetBSD: bcd.c,v 1.5 1995/03/21 15:08:15 cgd Exp $	*/
+
 /*
- * Copyright (c) 1989 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1989, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
- * Steve Hayman of the Indiana University Computer Science Dept..
+ * Steve Hayman of the Indiana University Computer Science Dept.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -35,14 +37,13 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1989 The Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1989, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)bcd.c	4.4 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: bcd.c,v 1.4 1993/11/05 20:22:35 jtc Exp $";
+static char sccsid[] = "@(#)bcd.c	8.2 (Berkeley) 3/20/94";
 #endif /* not lint */
 
 /*
@@ -61,9 +62,22 @@ static char rcsid[] = "$Id: bcd.c,v 1.4 1993/11/05 20:22:35 jtc Exp $";
  * Steve Hayman
  * sahayman@iuvax.cs.indiana.edu
  * 1989 11 30
+ *
+ *
+ * I found an error in the table. The same error is found in the SunOS 4.1.1
+ * version of bcd. It has apparently been around a long time. The error caused
+ * 'Q' and 'R' to have the same punch code. I only noticed the error due to
+ * someone pointing it out to me when the program was used to print a cover
+ * for an APA!  The table was wrong in 4 places. The other error was masked
+ * by the fact that the input is converted to upper case before lookup.
+ *
+ * Dyane Bruce
+ * db@diana.ocunix.on.ca
+ * Nov 5, 1993
  */
 
 #include <sys/types.h>
+
 #include <stdio.h>
 #include <ctype.h>
 
@@ -107,6 +121,7 @@ u_short holes[256] = {
  */
 #define	bit(w,i)	((w)&(1<<(i)))
 
+int
 main(argc, argv)
 	int argc;
 	char **argv;
