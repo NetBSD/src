@@ -1,4 +1,4 @@
-/*	$NetBSD: vald_acpi.c,v 1.18 2004/03/24 11:26:46 kanaoka Exp $	*/
+/*	$NetBSD: vald_acpi.c,v 1.19 2004/04/10 11:50:55 kochi Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vald_acpi.c,v 1.18 2004/03/24 11:26:46 kanaoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vald_acpi.c,v 1.19 2004/04/10 11:50:55 kochi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -117,10 +117,10 @@ struct vald_acpi_softc {
 	struct device sc_dev;		/* base device glue */
 	struct acpi_devnode *sc_node;	/* our ACPI devnode */
 	int sc_flags;			/* see below */
-	
+
 	ACPI_HANDLE lcd_handle;		/* lcd handle */
 	int *lcd_level;			/* lcd brightness table */
-	int lcd_num;			/* size of lcd brightness table */ 
+	int lcd_num;			/* size of lcd brightness table */
 	int lcd_index;			/* index of lcd brightness table */
 
 	ACPI_INTEGER sc_ac_status;	/* AC adaptor status when attach */
@@ -205,7 +205,7 @@ vald_acpi_attach(struct device *parent, struct device *self, void *aux)
 		printf("%s: Unable to evaluate _PSR: %s\n",
 		    sc->sc_dev.dv_xname, AcpiFormatException(rv));
 	else
-		printf("AC adaptor status %sconnected\n", 
+		printf("AC adaptor status %sconnected\n",
 		    (sc->sc_ac_status == 0 ? "not ": ""));
 
 	/* Get LCD backlight status. */
@@ -221,12 +221,12 @@ vald_acpi_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Enable SystemEventFIFO,HotkeyEvent */
 	rv = vald_acpi_ghci_set(sc, GHCI_SYSTEM_EVENT_FIFO, GHCI_ENABLE,
-	    &result); 
+	    &result);
 	if (ACPI_SUCCESS(rv) && result != 0)
 		printf("%s: can't enable SystemEventFIFO error=%d\n",
 		    sc->sc_dev.dv_xname, result);
 
-	rv = vald_acpi_ghci_set(sc, GHCI_HOTKEY_EVENT, GHCI_ENABLE, &result); 
+	rv = vald_acpi_ghci_set(sc, GHCI_HOTKEY_EVENT, GHCI_ENABLE, &result);
 	if (ACPI_SUCCESS(rv) && result != 0)
 		printf("%s: can't enable HotkeyEvent error=%d\n",
 		    sc->sc_dev.dv_xname, result);
@@ -259,7 +259,7 @@ vald_acpi_notify_handler(ACPI_HANDLE handle, UINT32 notify, void *context)
 {
 	struct vald_acpi_softc *sc = context;
 	ACPI_STATUS rv;
-	
+
 	switch (notify) {
 	case ACPI_NOTIFY_ValdStatusChanged:
 #ifdef VALD_ACPI_DEBUG
@@ -300,7 +300,7 @@ vald_acpi_event(void *arg)
 		    &result);
 		if (ACPI_SUCCESS(rv) && result == 0) {
 #ifdef VALD_ACPI_DEBUG
-			printf("%s: System Event %x\n", sc->sc_dev.dv_xname, 
+			printf("%s: System Event %x\n", sc->sc_dev.dv_xname,
 			    value);
 #endif
 			switch (value) {
@@ -322,9 +322,9 @@ vald_acpi_event(void *arg)
 				break;
 			}
 		}
-		if (ACPI_FAILURE(rv) || result == GHCI_FIFO_EMPTY) 
+		if (ACPI_FAILURE(rv) || result == GHCI_FIFO_EMPTY)
 			break;
-	}	
+	}
 }
 
 /*
@@ -332,8 +332,8 @@ vald_acpi_event(void *arg)
  *
  *	Get value via "GHCI" Method.
  */
-ACPI_STATUS 
-vald_acpi_ghci_get(struct vald_acpi_softc *sc, 
+ACPI_STATUS
+vald_acpi_ghci_get(struct vald_acpi_softc *sc,
     UINT32 reg, UINT32 *value, UINT32 *result)
 {
 	ACPI_STATUS rv;
@@ -342,7 +342,7 @@ vald_acpi_ghci_get(struct vald_acpi_softc *sc,
 	ACPI_OBJECT *param, *PrtElement;
 	ACPI_BUFFER buf;
 	int		i;
-	
+
 	for (i = 0; i < GHCI_WORDS; i++) {
 		Arg[i].Type = ACPI_TYPE_INTEGER;
 		Arg[i].Integer.Value = 0;
@@ -358,13 +358,13 @@ vald_acpi_ghci_get(struct vald_acpi_softc *sc,
 	buf.Pointer = NULL;
 	buf.Length = ACPI_ALLOCATE_BUFFER;
 
-	rv = AcpiEvaluateObject(sc->sc_node->ad_handle, 
+	rv = AcpiEvaluateObject(sc->sc_node->ad_handle,
 	    "GHCI", &ArgList, &buf);
 	if (ACPI_FAILURE(rv)) {
 		printf("%s: failed to evaluate GHCI: %s\n",
 		    sc->sc_dev.dv_xname, AcpiFormatException(rv));
 		return (rv);
-	}	
+	}
 
 	*result = GHCI_NOT_SUPPORT;
 	*value = 0;
@@ -389,8 +389,8 @@ vald_acpi_ghci_get(struct vald_acpi_softc *sc,
  *
  *	Set value via "GHCI" Method.
  */
-ACPI_STATUS 
-vald_acpi_ghci_set(struct vald_acpi_softc *sc, 
+ACPI_STATUS
+vald_acpi_ghci_set(struct vald_acpi_softc *sc,
     UINT32 reg, UINT32 value, UINT32 *result)
 {
 	ACPI_STATUS rv;
@@ -400,7 +400,7 @@ vald_acpi_ghci_set(struct vald_acpi_softc *sc,
 	ACPI_BUFFER buf;
 	int	i;
 
-	
+
 	for (i = 0; i < GHCI_WORDS; i++) {
 		Arg[i].Type = ACPI_TYPE_INTEGER;
 		Arg[i].Integer.Value = 0;
@@ -416,15 +416,15 @@ vald_acpi_ghci_set(struct vald_acpi_softc *sc,
 	buf.Pointer = NULL;
 	buf.Length = ACPI_ALLOCATE_BUFFER;
 
-	rv = AcpiEvaluateObject(sc->sc_node->ad_handle, 
-	    "GHCI", &ArgList, &buf);	
+	rv = AcpiEvaluateObject(sc->sc_node->ad_handle,
+	    "GHCI", &ArgList, &buf);
 	if (ACPI_FAILURE(rv)) {
 		printf("%s: failed to evaluate GHCI: %s\n",
 		    sc->sc_dev.dv_xname, AcpiFormatException(rv));
 		return (rv);
 	}
 
-	*result = GHCI_NOT_SUPPORT;	
+	*result = GHCI_NOT_SUPPORT;
 	param = (ACPI_OBJECT *)buf.Pointer;
 	if (param->Type == ACPI_TYPE_PACKAGE) {
 		PrtElement = param->Package.Elements;
@@ -433,7 +433,7 @@ vald_acpi_ghci_set(struct vald_acpi_softc *sc,
 	}
 
 	if (buf.Pointer)
-		AcpiOsFree(buf.Pointer);	
+		AcpiOsFree(buf.Pointer);
 	return (rv);
 }
 
@@ -524,7 +524,7 @@ vald_acpi_libright_get(struct vald_acpi_softc *sc)
  *
  *	Figure up next status and set it.
  */
-void 
+void
 vald_acpi_libright_set(struct vald_acpi_softc *sc, int UpDown)
 {
 	ACPI_STATUS rv;
@@ -553,7 +553,7 @@ vald_acpi_libright_set(struct vald_acpi_softc *sc, int UpDown)
 	} else if (UpDown == LIBRIGHT_DOWN) {
 		if ((backlight == 1) && (sc->lcd_index > 2))
 			sc->lcd_index--;
-		else { 
+		else {
 			/* backlight off */
 			backlight_new = 0;
 			sc->lcd_index = 2;
@@ -572,7 +572,7 @@ vald_acpi_libright_set(struct vald_acpi_softc *sc, int UpDown)
 		    &result);
 		if (ACPI_SUCCESS(rv) && result != 0)
 			printf("%s: can't set LCD backlight %s error=%x\n",
-			    sc->sc_dev.dv_xname, 
+			    sc->sc_dev.dv_xname,
 			    ((backlight_new == 1) ? "on" : "off"), result);
 	}
 
@@ -585,7 +585,7 @@ vald_acpi_libright_set(struct vald_acpi_softc *sc, int UpDown)
 		if (ACPI_FAILURE(rv))
 			printf("%s: unable to evaluate _BCM: %s\n",
 			    sc->sc_dev.dv_xname, AcpiFormatException(rv));
-	} else { 
+	} else {
 		bright = 0;
 	}
 #ifdef ACPI_DEBUG
@@ -619,19 +619,19 @@ vald_acpi_video_switch(struct vald_acpi_softc *sc)
 
 #ifdef ACPI_DEBUG
 	printf("Toggle LCD/CRT\n");
-	printf("\t Before switch, video status:   %s", 
+	printf("\t Before switch, video status:   %s",
 	    (((value & GHCI_LCD) == GHCI_LCD) ? "LCD" : ""));
-	printf("%s\n", (((value & GHCI_CRT) == GHCI_CRT) ? "CRT": "")); 
+	printf("%s\n", (((value & GHCI_CRT) == GHCI_CRT) ? "CRT": ""));
 #endif
 
-	/* Toggle LCD/CRT */	
+	/* Toggle LCD/CRT */
 	if (value & GHCI_LCD) {
 		value &= ~GHCI_LCD;
-		value |= GHCI_CRT; 
+		value |= GHCI_CRT;
 	} else if (value & GHCI_CRT){
 		value &= ~GHCI_CRT;
 		value |= GHCI_LCD;
-	} 
+	}
 
 	rv = vald_acpi_dssx_set(value);
 	if (ACPI_FAILURE(rv))
@@ -673,14 +673,14 @@ vald_acpi_dssx_set(UINT32 value)
 	ACPI_STATUS rv;
 	ACPI_OBJECT Arg;
 	ACPI_OBJECT_LIST ArgList;
-	
+
 	ArgList.Count = 1;
 	ArgList.Pointer = &Arg;
 
 	Arg.Type = ACPI_TYPE_INTEGER;
 	Arg.Integer.Value = value;
 
-	rv = AcpiEvaluateObject(ACPI_ROOT_OBJECT, "\\_SB_.VALX.DSSX", 
+	rv = AcpiEvaluateObject(ACPI_ROOT_OBJECT, "\\_SB_.VALX.DSSX",
 	    &ArgList, NULL);
 
 	return (rv);
@@ -691,14 +691,14 @@ vald_acpi_dssx_set(UINT32 value)
  *
  *	Get FAN status and set new FAN status.
  */
-void 
+void
 vald_acpi_fan_switch(struct vald_acpi_softc *sc)
 {
 	ACPI_STATUS rv;
 	UINT32	value, result;
 
 	/* Get FAN status */
-	rv = vald_acpi_ghci_get(sc, GHCI_FAN, &value, &result); 
+	rv = vald_acpi_ghci_get(sc, GHCI_FAN, &value, &result);
 	if (ACPI_FAILURE(rv))
 		return;
 	if (result != 0) {
@@ -709,18 +709,18 @@ vald_acpi_fan_switch(struct vald_acpi_softc *sc)
 
 #ifdef ACPI_DEBUG
 	printf("Toggle FAN on/off\n");
-	printf("\t Before toggle, FAN status %s\n", 
+	printf("\t Before toggle, FAN status %s\n",
 	    (value == GHCI_OFF ? "off" : "on"));
 #endif
 
-	/* Toggle FAN on/off */	
-	if (value == GHCI_OFF) 
+	/* Toggle FAN on/off */
+	if (value == GHCI_OFF)
 		value = GHCI_ON;
-	else 
+	else
 		value = GHCI_OFF;
 
 	/* Set FAN new status. */
-	rv = vald_acpi_ghci_set(sc, GHCI_FAN, value, &result); 
+	rv = vald_acpi_ghci_set(sc, GHCI_FAN, value, &result);
 	if (ACPI_FAILURE(rv))
 		return;
 	if (result != 0) {
@@ -730,7 +730,7 @@ vald_acpi_fan_switch(struct vald_acpi_softc *sc)
 	}
 
 #ifdef ACPI_DEBUG
-	printf("\t After toggle, FAN status %s\n", 
+	printf("\t After toggle, FAN status %s\n",
 	    (value == GHCI_OFF ? "off" : "on"));
 #endif
 }
