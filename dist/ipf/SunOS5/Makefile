@@ -20,6 +20,7 @@ PKGBIN=$(PKGDIR)/bin
 TOP=..
 TMP=/tmp
 CPUDIR=`uname -p`-`uname -r`
+BITS=`optisa sparcv9 >/dev/null 2>&1; if [ $$? -eq 0 ] ; then echo "64"; else echo "32"; fi`
 CC=gcc -Wall
 DEBUG=-g
 LIBS=-lsocket -lnsl -lelf
@@ -184,12 +185,12 @@ clean:
 	if [ `basename \`pwd\`` != SunOS5 ] ; then \
 		${RM} -f core *.o ipt fils ipf ipfstat ipftest ipmon ipnat ipf.exe; \
 		${RM} -f ipnat.5 ipnat.4 ipnat.1 ipfilter.5; \
-		${RM} -f prototype pkginfo postinstall copyright; \
+		${RM} -f prototype pkginfo postinstall postremove copyright; \
 	fi
 	/bin/rm -rf */root ipf.pkg
 	make -f Makefile.ipsend clean
 	-(for i in *; do \
-		if [ -d $${i} -a -f $${i}/Makefile ] ; then \
+		if [ -d $${i} -a -h $${i}/Makefile ] ; then \
 			cd $${i}; (make clean); cd ..; \
 			rm $${i}/Makefile $${i}/Makefile.ipsend; \
 			rmdir $${i}; \
@@ -236,7 +237,8 @@ ipf.pkg:
 	-$(INSTALL) ip_proxy.h $(ROOTINC)/netinet
 	-$(INSTALL) ip_auth.h $(ROOTINC)/netinet
 	-(cd $(CPUDIR); optisa sparcv9 >/dev/null 2>&1; if [ $$? -eq 0 ] ; then ln -s ../prototype64 prototype; else ln -s ../prototype .; fi)
-	-(cd $(CPUDIR); ln -s ../pkginfo ../copyright ../postinstall ../postremove .)
+	-(cd $(CPUDIR); ln -s ../copyright ../postinstall ../postremove .)
+	-(cd $(CPUDIR); cat ../pkginfo | sed -e "s/ARCH=.*/ARCH=`uname -p` (${BITS}-bit)/" > pkginfo)
 	(cd $(CPUDIR); pkgmk -o -d $(TMP))
 	touch $(CPUDIR)/ipf.pkg
 	pkgtrans -s ${TMP} $(CPUDIR)/ipf.pkg ipf

@@ -3,7 +3,7 @@ if [ ! -f netinet/done ] ; then
 	echo "Do NOT run this script directly, do 'make solaris'!"
 	exit 1
 fi
-# Id: buildsunos,v 2.1.2.1 1999/08/08 13:55:20 darrenr Exp
+# Id: buildsunos,v 2.1.2.2 1999/12/28 05:08:14 darrenr Exp
 :
 rev=`uname -r | sed -e 's/^\([^\.]*\)\..*/\1/'`
 if [ -d /usr/ccs/bin ] ; then

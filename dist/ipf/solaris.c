@@ -1,4 +1,4 @@
-/*	$NetBSD: solaris.c,v 1.1.1.1 1999/12/11 22:23:59 veego Exp $	*/
+/*	$NetBSD: solaris.c,v 1.1.1.2 2000/02/01 20:11:25 veego Exp $	*/
 
 /*
  * Copyright (C) 1993-1998 by Darren Reed.
@@ -8,7 +8,7 @@
  * to the original author and the contributors.
  */
 /* #pragma ident   "@(#)solaris.c	1.12 6/5/96 (C) 1995 Darren Reed"*/
-#pragma ident "@(#)Id: solaris.c,v 2.1.2.11 1999/12/04 03:33:59 darrenr Exp"
+#pragma ident "@(#)Id: solaris.c,v 2.1.2.14 2000/01/25 15:32:03 darrenr Exp"
 
 #include <sys/systm.h>
 #include <sys/types.h>
@@ -939,6 +939,8 @@ again:
 void ipf_synctimeout(arg)
 void *arg;
 {
+	if (fr_running < 0)
+		return;
 	READ_ENTER(&ipf_solaris);
 	ipfsync();
 	WRITE_ENTER(&ipfs_mutex);
@@ -1329,8 +1331,10 @@ int ipfsync()
 	/*
 	 * Resync. any NAT `connections' using this interface and its IP #.
 	 */
-	for (il = ill_g_head; il; il = il->ill_next)
+	for (il = ill_g_head; il; il = il->ill_next) {
 		ip_natsync((void *)il);
+		ip_statesync((void *)il);
+	}
 	return 0;
 }
 
@@ -1444,9 +1448,13 @@ frdest_t *fdp;
 	 * If there is another M_PROTO, we don't want it
 	 */
 	if (*mpp != mb) {
+		mp = *mpp;
+		(void) unlinkb(mp);
+		mp = (*mpp)->b_cont;
 		(*mpp)->b_cont = NULL;
 		(*mpp)->b_prev = NULL;
 		freemsg(*mpp);
+		*mpp = mp;
 	}
 
 	ir = (ire_t *)fdp->fd_ifp;
@@ -1539,6 +1547,7 @@ frdest_t *fdp;
 				mb = mp2;
 			}
 		}
+		*mpp = mb;
 
 		if (ir->ire_stq)
 			q = ir->ire_stq;
@@ -1546,6 +1555,7 @@ frdest_t *fdp;
 			q = WR(ir->ire_rfq);
 		if (q) {
 			mb->b_prev = NULL;
+			mb->b_queue = q;
 			RWLOCK_EXIT(&ipfs_mutex);
 			RWLOCK_EXIT(&ipf_solaris);
 #if SOLARIS2 >= 6

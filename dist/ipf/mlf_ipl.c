@@ -1,4 +1,4 @@
-/*	$NetBSD: mlf_ipl.c,v 1.1.1.1 1999/12/11 22:23:59 veego Exp $	*/
+/*	$NetBSD: mlf_ipl.c,v 1.1.1.2 2000/02/01 20:11:24 veego Exp $	*/
 
 /*
  * Copyright (C) 1993-1998 by Darren Reed.
@@ -113,8 +113,8 @@ SYSCTL_INT(_net_inet_ipf, OID_AUTO, fr_ipfrttl, CTLFLAG_RW,
 	   &fr_ipfrttl, 0, "");
 SYSCTL_INT(_net_inet_ipf, OID_AUTO, ipl_unreach, CTLFLAG_RW,
 	   &ipl_unreach, 0, "");
-SYSCTL_INT(_net_inet_ipf, OID_AUTO, ipl_inited, CTLFLAG_RD,
-	   &ipl_inited, 0, "");
+SYSCTL_INT(_net_inet_ipf, OID_AUTO, fr_running, CTLFLAG_RD,
+	   &fr_running, 0, "");
 SYSCTL_INT(_net_inet_ipf, OID_AUTO, fr_authsize, CTLFLAG_RD,
 	   &fr_authsize, 0, "");
 SYSCTL_INT(_net_inet_ipf, OID_AUTO, fr_authused, CTLFLAG_RD,
