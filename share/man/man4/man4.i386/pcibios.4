@@ -1,4 +1,4 @@
-.\" $NetBSD: pcibios.4,v 1.6 2000/08/03 13:14:22 soda Exp $
+.\" $NetBSD: pcibios.4,v 1.7 2000/08/03 13:32:39 soda Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -159,31 +159,29 @@ The kernel global variable
 holds this value,
 so a user can override this value without kernel recompilation.
 For example:
-.Bl -bullet
+.Bl -bullet -compact
 .It
-To specify this value on the fly, type
-.Qq Ic boot -d
+To specify this value on the fly, type the following command
 at the boot prompt to drop into DDB (the in-kernel debugger;
 you have to specify
 .Qq Sy options DDB
-to make kernel with DDB).
-Specify
-.Qq Ic write pcibios_irqs_hint 0x0a00
-on
+to make kernel with DDB):
+.Dl Ic boot -d
+And type the following command on
 .Qq Sy db>
-prompt and type
-.Qq Ic c
-to continue to boot.
+prompt:
+.Dl Ic write pcibios_irqs_hint 0x0a00
+Then type the following to continue to boot:
+.Dl Ic c
 .It
 To modify kernel image without kernel recompilation,
-run
-.Qq Ic gdb --write /netbsd
-on shell, type
-.Qq Ic set pcibios_irqs_hint=0xa00
-at the
+run the following command on shell:
+.Dl Ic gdb --write /netbsd
+And type the following commands at the 
 .Qq Sy (gdb)
-prompt, and type
-.Qq Ic quit .
+prompt:
+.Dl Ic set pcibios_irqs_hint=0xa00
+.Dl Ic quit
 .El
 
 .It Nm PCIBIOS_INTR_FIXUP_FORCE
