@@ -1,5 +1,5 @@
 #! /bin/sh -
-#	$NetBSD: makesyscalls.sh,v 1.37 2000/08/18 19:33:30 cgd Exp $
+#	$NetBSD: makesyscalls.sh,v 1.38 2000/11/13 21:32:16 jdolecek Exp $
 #
 # Copyright (c) 1994, 1996, 2000 Christopher G. Demetriou
 # All rights reserved.
@@ -177,7 +177,7 @@ NR == 1 {
 	printf "#if defined(_KERNEL) && !defined(_LKM)\n" > sysnames
 
 	printf "#endif /* _KERNEL && ! _LKM */\n\n" > sysnamesbottom
-	printf "char *%s[] = {\n",namesname > sysnamesbottom
+	printf "const char * const %s[] = {\n",namesname > sysnamesbottom
 
 	printf " * created from%s\n */\n\n", $0 > sysnumhdr
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec_elf32.c,v 1.45 2000/06/29 02:40:39 mrg Exp $	*/
+/*	$NetBSD: linux_exec_elf32.c,v 1.46 2000/11/13 21:32:18 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@ static int ELFNAME2(linux,gcc_signature) __P((struct proc *p,
 
 extern char linux_sigcode[], linux_esigcode[];
 extern struct sysent linux_sysent[];
-extern char *linux_syscallnames[];
+extern const char * const linux_syscallnames[];
 
 struct emul ELFNAMEEND(emul_linux) = {
 	"linux",

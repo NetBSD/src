@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.182 2000/10/29 18:38:47 he Exp $	*/
+/*	$NetBSD: init_main.c,v 1.183 2000/11/13 21:32:15 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -146,7 +146,7 @@ void main(void);
 
 extern char sigcode[], esigcode[];
 #ifdef SYSCALL_DEBUG
-extern char *syscallnames[];
+extern const char * const syscallnames[];
 #endif
 
 struct emul emul_netbsd = {
