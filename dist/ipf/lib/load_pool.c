@@ -1,11 +1,11 @@
-/*	$NetBSD: load_pool.c,v 1.1.1.1 2004/03/28 08:56:19 martti Exp $	*/
+/*	$NetBSD: load_pool.c,v 1.1.1.2 2005/02/19 21:26:47 martti Exp $	*/
 
 /*
  * Copyright (C) 2002 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: load_pool.c,v 1.14.2.1 2004/03/06 14:33:29 darrenr Exp
+ * Id: load_pool.c,v 1.14.2.2 2005/02/01 02:44:06 darrenr Exp
  */
 
 #include <fcntl.h>
@@ -51,7 +51,7 @@ ioctlfunc_t iocfunc;
 
 	if ((opts & OPT_VERBOSE) != 0) {
 		pool.ipo_list = plp->ipo_list;
-		printpool(&pool, bcopywrap, opts);
+		printpool(&pool, bcopywrap, pool.ipo_name, opts);
 		pool.ipo_list = NULL;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: printpool.c,v 1.1.1.1 2004/03/28 08:56:20 martti Exp $	*/
+/*	$NetBSD: printpool.c,v 1.1.1.2 2005/02/19 21:26:49 martti Exp $	*/
 
 /*
  * Copyright (C) 2002 by Darren Reed.
@@ -11,9 +11,10 @@
 #define	PRINTF	(void)printf
 #define	FPRINTF	(void)fprintf
 
-ip_pool_t *printpool(pp, copyfunc, opts)
+ip_pool_t *printpool(pp, copyfunc, name, opts)
 ip_pool_t *pp;
 copyfunc_t copyfunc;
+char *name;
 int opts;
 {
 	ip_pool_node_t *ipnp, *ipnpn, ipn;
@@ -21,6 +22,9 @@ int opts;
 
 	if ((*copyfunc)(pp, &ipp, sizeof(ipp)))
 		return NULL;
+
+	if ((name != NULL) && strncmp(name, ipp.ipo_name, FR_GROUPLEN))
+		return ipp.ipo_next;
 
 	if ((opts & OPT_DEBUG) == 0) {
 		if ((ipp.ipo_flags & IPOOL_ANON) != 0)
@@ -85,11 +89,15 @@ int opts;
 		ipp.ipo_list = ipnp;
 	}
 
-	for (ipnp = ipp.ipo_list; ipnp != NULL; ) {
-		ipnp = printpoolnode(ipnp, opts);
+	if (ipp.ipo_list == NULL) {
+		putchar(';');
+	} else {
+		for (ipnp = ipp.ipo_list; ipnp != NULL; ) {
+			ipnp = printpoolnode(ipnp, opts);
 
-		if ((opts & OPT_DEBUG) == 0) {
-			putchar(';');
+			if ((opts & OPT_DEBUG) == 0) {
+				putchar(';');
+			}
 		}
 	}
 
