@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ex_pci.c,v 1.23 2002/06/20 23:47:26 itojun Exp $	*/
+/*	$NetBSD: if_ex_pci.c,v 1.24 2002/07/01 16:15:35 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ex_pci.c,v 1.23 2002/06/20 23:47:26 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ex_pci.c,v 1.24 2002/07/01 16:15:35 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -272,7 +272,10 @@ ex_pci_attach(parent, self, aux)
 		psc->psc_regs[PCI_FUNCMEM>>2] =
 		    pci_conf_read(pc, pa->pa_tag, PCI_FUNCMEM);
 	}
-		
+
+	psc->psc_regs[PCI_INTERRUPT_REG>>2] =
+	    pci_conf_read(pc, pa->pa_tag, PCI_INTERRUPT_REG);
+
 	/* Get it out of power save mode if needed (BIOS bugs) */
 	if (pci_get_capability(pc, pa->pa_tag, PCI_CAP_PWRMGMT, &pmreg, 0)) {
 		sc->enable = ex_pci_enable;
@@ -361,6 +364,8 @@ ex_pci_confreg_restore(psc)
 	if (sc->ex_conf & EX_CONF_PCI_FUNCREG)
 		pci_conf_write(psc->psc_pc, psc->psc_tag, PCI_FUNCMEM,
 		    psc->psc_regs[PCI_FUNCMEM>>2]);
+	pci_conf_write(psc->psc_pc, psc->psc_tag, PCI_INTERRUPT_REG,
+	    psc->psc_regs[PCI_INTERRUPT_REG>>2]);
 }
 
 int
