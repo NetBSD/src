@@ -1,3 +1,5 @@
+/*	$NetBSD: sunndd.c,v 1.2 2001/05/17 20:42:08 fredette Exp $	*/
+
 /* sunndd.c - the Sun Network Disk (nd) daemon: */
 
 /*
@@ -1016,4 +1018,4 @@ where OPTIONS are:\n\
 }
 
 /* the raw Ethernet access code: */
-#include "sunndd-raw.c"
+#include "config/sunndd-bpf.c"
