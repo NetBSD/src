@@ -1,10 +1,10 @@
-/*	$NetBSD: miidevs.h,v 1.59 2005/02/27 14:29:44 perry Exp $	*/
+/*	$NetBSD: miidevs.h,v 1.60 2005/03/16 17:22:11 briggs Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: miidevs,v 1.57 2005/02/20 16:35:56 jdolecek Exp
+ *	NetBSD: miidevs,v 1.58 2005/03/16 17:20:28 briggs Exp
  */
 
 /*-
@@ -82,6 +82,9 @@
 
 /* Some Intel 82553's use an alternative OUI. */
 #define	MII_OUI_xxINTEL	0x001f00	/* Intel */
+
+/* Some VIA 6122's use an alternative OUI. */
+#define	MII_OUI_xxCICADA	0x00c08f	/* Cicada Semiconductor */
 
 /* bad bitorder (bits "g" and "h" (= MSBs byte 1) lost) */
 #define	MII_OUI_yyAMD	0x000058	/* Advanced Micro Devices */
@@ -174,6 +177,8 @@
 #define	MII_STR_CICADA_CS8201A	"Cicada CS8201 10/100/1000TX PHY"
 #define	MII_MODEL_CICADA_CS8201B	0x0021
 #define	MII_STR_CICADA_CS8201B	"Cicada CS8201 10/100/1000TX PHY"
+#define	MII_MODEL_xxCICADA_CS8201B	0x0021
+#define	MII_STR_xxCICADA_CS8201B	"Cicada CS8201 10/100/1000TX PHY"
 
 /* Davicom Semiconductor PHYs */
 /* AMD Am79C873 seems to be a relabeled DM9101 */
