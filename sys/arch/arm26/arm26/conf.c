@@ -1,4 +1,4 @@
-/* $NetBSD: conf.c,v 1.5 2001/04/22 15:01:25 bjh21 Exp $ */
+/* $NetBSD: conf.c,v 1.6 2001/04/28 17:41:01 bjh21 Exp $ */
 /*-
  * Copyright (c) 1998, 2000 Ben Harris
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: conf.c,v 1.5 2001/04/22 15:01:25 bjh21 Exp $");
+__RCSID("$NetBSD: conf.c,v 1.6 2001/04/28 17:41:01 bjh21 Exp $");
 
 #include <sys/systm.h>
 #include <sys/buf.h>
@@ -58,8 +58,6 @@ cdev_decl(wd);
 #include "cd.h" 
 #include "bpfilter.h"
 #include "tun.h"
-#include "ipfilter.h"
-#include "rnd.h"
 #include "rs.h"
 #include "wsdisplay.h"
 cdev_decl(wsdisplay);
@@ -75,7 +73,15 @@ cdev_decl(com);
 cdev_decl(lpt);
 #include "arcpp.h"
 cdev_decl(arcpp);
-
+#include "ipfilter.h"
+cdev_decl(ipl);
+#include "rnd.h"
+cdev_decl(rnd);
+#include "vcoda.h"
+cdev_decl(vc_nb_);
+#include "raid.h"
+cdev_decl(raid);
+bdev_decl(raid);
 cons_decl(rs);
 
 struct bdevsw bdevsw[] = {
@@ -86,6 +92,7 @@ struct bdevsw bdevsw[] = {
 	bdev_disk_init(NWD, wd),	/* 4: IDE disks */
 	bdev_disk_init(NSD, sd),	/* 5: SCSI disks */
 	bdev_disk_init(NCD, cd),	/* 6: SCSI CD-ROMs */
+	bdev_disk_init(NRAID, raid),	/* 7: RAIDframe disk driver */
 };
 
 int nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
@@ -117,6 +124,10 @@ struct cdevsw cdevsw[] = {
 	cdev_tty_init(NCOM, com),	/* 20: ns8250 etc serial */
 	cdev_lpt_init(NLPT, lpt),	/* 21: PC-style parallel */
 	cdev_lpt_init(NARCPP, arcpp),	/* 22: Arc-style parallel */
+	cdev_ipf_init(NIPFILTER,ipl),	/* 23: ip-filter device */
+	cdev_rnd_init(NRND,rnd),	/* 24: random source pseudo-device */
+       	cdev_vc_nb_init(NVCODA,vc_nb_),	/* 25: coda file system psdev */
+	cdev_disk_init(NRAID,raid),    	/* 26: RAIDframe disk driver */
 };
 
 int nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
@@ -181,6 +192,11 @@ static int chrtoblktbl[] = {
 	/* 19 */	NODEV,
 	/* 20 */	NODEV,
 	/* 21 */	NODEV,
+	/* 22 */	NODEV,
+	/* 23 */	NODEV,
+	/* 24 */	NODEV,
+	/* 25 */	NODEV,
+	/* 26 */	7,		/* raid */
 };
 
 /*
