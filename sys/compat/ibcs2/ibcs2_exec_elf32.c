@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_exec_elf32.c,v 1.7 2003/10/31 14:04:35 drochner Exp $	*/
+/*	$NetBSD: ibcs2_exec_elf32.c,v 1.8 2003/11/05 04:03:21 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_exec_elf32.c,v 1.7 2003/10/31 14:04:35 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_exec_elf32.c,v 1.8 2003/11/05 04:03:21 christos Exp $");
 
 #define ELFSIZE		32
 
@@ -85,6 +85,9 @@ ibcs2_elf32_signature(p, epp, eh)
 	char buf[sizeof(signature) - 1];
 	Elf32_Shdr *sh;
 	int error;
+
+	if (shsize > 64 * 1024)
+		return ENOEXEC;
 
 	sh = (Elf32_Shdr *)malloc(shsize, M_TEMP, M_WAITOK);
 
