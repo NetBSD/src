@@ -1,4 +1,4 @@
-/*	$NetBSD: swapgeneric.c,v 1.8 1996/10/13 04:10:44 christos Exp $	*/
+/*	$NetBSD: swapgeneric.c,v 1.9 1996/11/06 13:57:12 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -97,14 +97,14 @@ static struct genericconf genericconf[] = {
 #if NRD > 0
 	{&rd_cd, makedev(1, 0)},
 #endif
-#if NFD > 0
-	{&fd_cd, makedev(2, 0)},
-#endif
 #if NSD > 0
 	{&sd_cd, makedev(4, 0)},
 #endif
 #if NCD > 0
 	{&cd_cd, makedev(6, 0)},
+#endif
+#if NFD > 0
+	{&fd_cd, makedev(2, 0)},
 #endif
 	{ 0 },
 };
