@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.147 2004/01/10 14:39:51 yamt Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.148 2004/01/25 18:06:49 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.147 2004/01/10 14:39:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.148 2004/01/25 18:06:49 hannken Exp $");
 
 #define ivndebug(vp,str) printf("ino %d: %s\n",VTOI(vp)->i_number,(str))
 
@@ -2008,6 +2008,7 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 		V_INCR_NUMOUTPUT(devvp);
 		splx(s);
 		vop_strategy_a.a_desc = VDESC(vop_strategy);
+		vop_strategy_a.a_vp = cbp->b_vp;
 		vop_strategy_a.a_bp = cbp;
 		(strategy)(&vop_strategy_a);
 		curproc->p_stats->p_ru.ru_oublock++;
@@ -2072,6 +2073,7 @@ lfs_writesuper(struct lfs *fs, daddr_t daddr)
 	else
 		BIO_SETPRIO(bp, BPRIO_TIMELIMITED);
 	vop_strategy_a.a_desc = VDESC(vop_strategy);
+	vop_strategy_a.a_vp = bp->b_vp;
 	vop_strategy_a.a_bp = bp;
 	curproc->p_stats->p_ru.ru_oublock++;
 	s = splbio();

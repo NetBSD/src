@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.7 2003/09/07 22:09:11 itojun Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.8 2004/01/25 18:06:48 hannken Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.7 2003/09/07 22:09:11 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.8 2004/01/25 18:06:48 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1770,9 +1770,7 @@ msdosfs_strategy(v)
 	 */
 
 	vp = dep->de_devvp;
-	bp->b_dev = vp->v_rdev;
-	VOCALL(vp->v_op, VOFFSET(vop_strategy), ap);
-	return (0);
+	return (VOP_STRATEGY(vp, bp));
 }
 
 int

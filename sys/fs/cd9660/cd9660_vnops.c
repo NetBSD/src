@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vnops.c,v 1.6 2003/08/07 16:31:36 agc Exp $	*/
+/*	$NetBSD: cd9660_vnops.c,v 1.7 2004/01/25 18:06:48 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vnops.c,v 1.6 2003/08/07 16:31:36 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vnops.c,v 1.7 2004/01/25 18:06:48 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -771,9 +771,7 @@ cd9660_strategy(v)
 		return (0);
 	}
 	vp = ip->i_devvp;
-	bp->b_dev = vp->v_rdev;
-	VOCALL (vp->v_op, VOFFSET(vop_strategy), ap);
-	return (0);
+	return (VOP_STRATEGY(vp, bp));
 }
 
 /*
