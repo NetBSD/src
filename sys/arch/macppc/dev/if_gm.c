@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gm.c,v 1.20 2003/05/03 18:10:51 wiz Exp $	*/
+/*	$NetBSD: if_gm.c,v 1.21 2003/07/15 02:43:29 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -25,6 +25,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_gm.c,v 1.21 2003/07/15 02:43:29 lukem Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"

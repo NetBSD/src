@@ -1,4 +1,4 @@
-/*	$NetBSD: timekeeper.c,v 1.5 2002/10/02 05:28:14 thorpej Exp $	*/
+/*	$NetBSD: timekeeper.c,v 1.6 2003/07/15 02:43:47 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,6 +42,9 @@
  * XXXSCW: Needs to be extended to allow read/write to NVRAM by
  * userland application.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: timekeeper.c,v 1.6 2003/07/15 02:43:47 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

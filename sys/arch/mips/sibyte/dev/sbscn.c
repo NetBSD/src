@@ -1,4 +1,4 @@
-/* $NetBSD: sbscn.c,v 1.10 2003/06/29 22:28:40 fvdl Exp $ */
+/* $NetBSD: sbscn.c,v 1.11 2003/07/15 02:43:40 lukem Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -31,8 +31,6 @@
  *    WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
  *    OR OTHERWISE), EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-#define	SBSCN_DEBUG
 
 /* from: $NetBSD: com.c,v 1.172 2000/05/03 19:19:04 thorpej Exp */
 
@@ -120,6 +118,11 @@
  * So, another driver.  Eventually there should be One True Driver,
  * but we're not here to save the world.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sbscn.c,v 1.11 2003/07/15 02:43:40 lukem Exp $");
+
+#define	SBSCN_DEBUG
 
 #include "opt_ddb.h"
 

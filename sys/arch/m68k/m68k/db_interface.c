@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.28 2002/05/13 20:30:08 matt Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.29 2003/07/15 02:43:12 lukem Exp $	*/
 
 /* 
  * Mach Operating System
@@ -29,6 +29,10 @@
 /*
  * Interface to the "ddb" kernel debugger.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.29 2003/07/15 02:43:12 lukem Exp $");
+
 #include "opt_ddb.h"
 
 #include <sys/param.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.26 2003/02/15 02:28:22 tsutsui Exp $	*/
+/*	$NetBSD: zs.c,v 1.27 2003/07/15 02:43:31 lukem Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Bill Studenmund
@@ -52,6 +52,9 @@
  * intermediate version (mac68k using a local, patched version of
  * the m.i. drivers), with NetBSD 1.3 containing a full version.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.27 2003/07/15 02:43:31 lukem Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"

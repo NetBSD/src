@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_two_68k.c,v 1.5 2002/10/02 05:28:15 thorpej Exp $	*/
+/*	$NetBSD: vme_two_68k.c,v 1.6 2003/07/15 02:43:47 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -39,6 +39,9 @@
 /*
  * Front-end for the VMEchip2 found on the MVME-1[67][27] boards.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: vme_two_68k.c,v 1.6 2003/07/15 02:43:47 lukem Exp $");
 
 #include "vmetwo.h"
 

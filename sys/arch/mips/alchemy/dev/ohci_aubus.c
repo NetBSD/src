@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci_aubus.c,v 1.2 2003/04/03 16:41:23 hpeyerl Exp $	*/
+/*	$NetBSD: ohci_aubus.c,v 1.3 2003/07/15 02:43:35 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ohci_aubus.c,v 1.3 2003/07/15 02:43:35 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

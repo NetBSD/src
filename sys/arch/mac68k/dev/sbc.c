@@ -1,4 +1,4 @@
-/*	$NetBSD: sbc.c,v 1.43 2003/05/03 18:10:50 wiz Exp $	*/
+/*	$NetBSD: sbc.c,v 1.44 2003/07/15 02:43:18 lukem Exp $	*/
 
 /*
  * Copyright (C) 1996 Scott Reynolds.  All rights reserved.
@@ -43,6 +43,10 @@
  * Thorpe all helped to refine this code, and were considerable sources
  * of moral support.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sbc.c,v 1.44 2003/07/15 02:43:18 lukem Exp $");
+
 #include "opt_ddb.h"
 
 #include <sys/types.h>

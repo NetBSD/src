@@ -1,4 +1,4 @@
-/*	$NetBSD: pcctwo_68k.c,v 1.3 2002/10/02 05:28:14 thorpej Exp $	*/
+/*	$NetBSD: pcctwo_68k.c,v 1.4 2003/07/15 02:43:47 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -39,6 +39,9 @@
 /*
  * PCCchip2 and MCchip Mvme68k Front End Driver
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pcctwo_68k.c,v 1.4 2003/07/15 02:43:47 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>

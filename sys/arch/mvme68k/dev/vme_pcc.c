@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_pcc.c,v 1.17 2002/10/02 05:28:15 thorpej Exp $	*/
+/*	$NetBSD: vme_pcc.c,v 1.18 2003/07/15 02:43:47 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-2000 The NetBSD Foundation, Inc.
@@ -43,6 +43,9 @@
  * For a manual on the MVME-147, call: 408.991.8634.  (Yes, this
  * is the Sunnyvale sales office.)
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: vme_pcc.c,v 1.18 2003/07/15 02:43:47 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>

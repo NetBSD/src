@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.18 2003/06/11 07:35:39 hamajima Exp $	*/
+/*	$NetBSD: obio.c,v 1.19 2003/07/15 02:43:30 lukem Exp $	*/
 
 /*-
  * Copyright (C) 1998	Internet Research Institute, Inc.
@@ -30,6 +30,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.19 2003/07/15 02:43:30 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

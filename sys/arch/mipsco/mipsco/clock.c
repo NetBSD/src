@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.2 2000/08/29 10:34:13 wdk Exp $	*/
+/*	$NetBSD: clock.c,v 1.3 2003/07/15 02:43:42 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,6 +43,8 @@
  *	@(#)clock.c	8.1 (Berkeley) 6/11/93
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.3 2003/07/15 02:43:42 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_implode.c,v 1.5 2001/02/18 20:05:58 chs Exp $ */
+/*	$NetBSD: fpu_implode.c,v 1.6 2003/07/15 02:43:10 lukem Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -48,6 +48,9 @@
  * FPU subroutines: `implode' internal format numbers into the machine's
  * `packed binary' format.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: fpu_implode.c,v 1.6 2003/07/15 02:43:10 lukem Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: in_cksum.c,v 1.6 1996/04/30 11:57:05 briggs Exp $	*/
+/*	$NetBSD: in_cksum.c,v 1.7 2003/07/15 02:43:13 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990 Regents of the University of California.
@@ -40,6 +40,9 @@
 /*
  * in_cksum - checksum routine for the Internet Protocol family.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: in_cksum.c,v 1.7 2003/07/15 02:43:13 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: platform.c,v 1.2 2003/02/02 20:43:20 matt Exp $	*/
+/*	$NetBSD: platform.c,v 1.3 2003/07/15 02:43:52 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: platform.c,v 1.3 2003/07/15 02:43:52 lukem Exp $");
 
 #include "opt_mvmetype.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_pcc.c,v 1.15 2002/10/02 05:28:16 thorpej Exp $	*/
+/*	$NetBSD: zs_pcc.c,v 1.16 2003/07/15 02:43:48 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -44,6 +44,9 @@
  *
  * Modified for NetBSD/mvme68k by Jason R. Thorpe <thorpej@NetBSD.ORG>
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: zs_pcc.c,v 1.16 2003/07/15 02:43:48 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

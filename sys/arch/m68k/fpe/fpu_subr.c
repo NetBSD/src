@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_subr.c,v 1.4 2002/12/29 14:40:35 kristerw Exp $ */
+/*	$NetBSD: fpu_subr.c,v 1.5 2003/07/15 02:43:11 lukem Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -47,6 +47,9 @@
 /*
  * FPU subroutines.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: fpu_subr.c,v 1.5 2003/07/15 02:43:11 lukem Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_bus_mem_chipdep.c,v 1.1 2001/10/29 22:28:39 thorpej Exp $	*/
+/*	$NetBSD: pci_bus_mem_chipdep.c,v 1.2 2003/07/15 02:46:34 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -80,6 +80,9 @@
  *			Size of the device-provided static storage area
  *			for the sparse memory space extent.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(1, "$NetBSD: pci_bus_mem_chipdep.c,v 1.2 2003/07/15 02:46:34 lukem Exp $");
 
 #include <sys/extent.h>
 
