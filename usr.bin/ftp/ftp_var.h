@@ -1,7 +1,7 @@
-/*	$NetBSD: ftp_var.h,v 1.68 2004/07/21 00:09:14 lukem Exp $	*/
+/*	$NetBSD: ftp_var.h,v 1.69 2005/01/03 09:50:09 lukem Exp $	*/
 
 /*-
- * Copyright (c) 1996-2004 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996-2005 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -269,7 +269,8 @@ GLOBAL	char   *direction;	/* direction transfer is occurring */
 GLOBAL	char   *hostname;	/* name of host connected to */
 GLOBAL	int	unix_server;	/* server is unix, can use binary for ascii */
 GLOBAL	int	unix_proxy;	/* proxy is unix, can use binary for ascii */
-GLOBAL	char	remotepwd[MAXPATHLEN];	/* remote dir */
+GLOBAL	char	localcwd[MAXPATHLEN];	/* local dir */
+GLOBAL	char	remotecwd[MAXPATHLEN];	/* remote dir */
 GLOBAL	char   *username;	/* name of user logged in as. (dynamic) */
 
 GLOBAL	sa_family_t family;	/* address family to use for connections */
