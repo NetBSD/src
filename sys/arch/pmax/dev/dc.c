@@ -1,4 +1,4 @@
-/*	$NetBSD: dc.c,v 1.65 2000/11/03 15:01:10 simonb Exp $	*/
+/*	$NetBSD: dc.c,v 1.66 2001/03/31 00:35:21 enami Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.65 2000/11/03 15:01:10 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.66 2001/03/31 00:35:21 enami Exp $");
 
 /*
  * devDC7085.c --
@@ -908,10 +908,7 @@ dcxint(tp)
 		ndflush(&tp->t_outq, dp->p_mem - (caddr_t) tp->t_outq.c_cf);
 		dp->p_end = dp->p_mem = tp->t_outq.c_cf;
 	}
-	if (tp->t_linesw)
-		(*tp->t_linesw->l_start)(tp);
-	else
-		dcstart(tp);
+	(*tp->t_linesw->l_start)(tp);
 	if (tp->t_outq.c_cc == 0 || !(tp->t_state & TS_BUSY)) {
 		dcaddr = (dcregs *)dp->p_addr;
 		dcaddr->dc_tcr &= ~(1 << line);
