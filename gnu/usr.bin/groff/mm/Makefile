@@ -14,6 +14,7 @@ MAN7=		groff_mm.0 groff_mmse.0
 MLINKS=		groff_mm.7 mm.7 groff_mmse.7 mmse.7
 
 afterinstall:
+	install -d -o $(TMACOWN) -g $(TMACGRP) -m 755 $(DESTDIR)$(TMACDIR)
 	install -c -o $(TMACOWN) -g $(TMACGRP) -m $(TMACMODE) \
 		$(.CURDIR)/tmac.m $(DESTDIR)$(TMACDIR)/tmac.m
 	install -c -o $(TMACOWN) -g $(TMACGRP) -m $(TMACMODE) \
@@ -27,7 +28,7 @@ afterinstall:
 	done
 	for f in $(LOCALE); do \
 		if test ! -f $(DESTDIR)$(TMACDIR)/mm/$$f; then \
-			install -o $(TMACOWN) -g $(TMACGRP) -m $(TMACMODE) \
+			install -c -o $(TMACOWN) -g $(TMACGRP) -m $(TMACMODE) \
 				/dev/null $(DESTDIR)$(TMACDIR)/mm/$$f; \
 		fi; \
 	done
