@@ -552,6 +552,7 @@
 ./usr/share/man/cat8/amd.0
 ./usr/share/man/cat8/amq.0
 ./usr/share/man/cat8/arp.0
+./usr/share/man/cat8/atactl.0
 ./usr/share/man/cat8/atrun.0
 ./usr/share/man/cat8/badsect.0
 ./usr/share/man/cat8/bootparamd.0
