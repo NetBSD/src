@@ -592,7 +592,7 @@ bfd_generic_openr_next_archived_file (archive, last_file)
 	 Note that last_file->origin can be odd in the case of
 	 BSD-4.4-style element with a long odd size. */
       filestart = last_file->origin + size;
-      filestart += filestart % 2;
+      filestart += size % 2;
     }
 
   return _bfd_get_elt_at_filepos (archive, filestart);
@@ -1207,8 +1207,6 @@ _bfd_archive_bsd44_construct_extended_name_table (abfd, tabloc, tablen, name)
   unsigned int maxname = abfd->xvec->ar_max_namelen;
   bfd *current;
 
-  /* 4.4BSD does not align ar(1) headers on a word. */
-  bfd_get_file_flags (abfd) |= BFD_DATA_MISALIGN;
   for (current = abfd->archive_head; current != NULL; current = current->next)
     {
       const char *normal;
@@ -1219,8 +1217,8 @@ _bfd_archive_bsd44_construct_extended_name_table (abfd, tabloc, tablen, name)
 	return false;
 
       thislen = strlen (normal);
-      if (thislen > maxname
-	  && (bfd_get_file_flags (abfd) & BFD_TRADITIONAL_FORMAT) == 0)
+      if (((thislen > maxname) || (strchr(normal, ' ') != NULL))
+	  && ((bfd_get_file_flags (abfd) & BFD_TRADITIONAL_FORMAT) == 0))
 	{
 	  struct ar_hdr *hdr = arch_hdr (current);
 	  sprintf ((hdr->ar_name), "#1/%-12ld", (long) thislen);
@@ -1689,19 +1687,21 @@ _bfd_write_archive_contents (arch)
   for (current = arch->archive_head; current; current = current->next)
     {
       char buffer[DEFAULT_BUFFERSIZE];
-      unsigned int remaining = arelt_size (current);
+      unsigned int saved_size = arelt_size (current);
+      unsigned int remaining = saved_size;
       struct ar_hdr *hdr = arch_hdr (current);
 
       /* write ar header */
       if (bfd_write ((char *) hdr, 1, sizeof (*hdr), arch) != sizeof (*hdr))
 	return false;
-      /* write filename if it is a 4.4BSD extended file */
+      /* write filename if it is a 4.4BSD extended file, and add to size */
       if (!strncmp (hdr->ar_name, "#1/", 3))
 	{
 	  const char *normal = normalize (current, current->filename);
 	  unsigned int thislen = strlen (normal);
 	  if (bfd_write (normal, 1, thislen, arch) != thislen)
 	    return false;
+	  saved_size += thislen;
 	}
       if (bfd_seek (current, (file_ptr) 0, SEEK_SET) != 0)
 	return false;
@@ -1721,8 +1721,7 @@ _bfd_write_archive_contents (arch)
 	    return false;
 	  remaining -= amt;
 	}
-      if (((arelt_size (current) % 2) == 1) &&
-	  ((bfd_get_file_flags (arch) & BFD_DATA_MISALIGN) == 0))
+      if ((saved_size % 2) == 1)
 	{
 	  if (bfd_write ("\012", 1, 1, arch) != 1)
 	    return false;
