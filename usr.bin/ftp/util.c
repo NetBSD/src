@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.107 2002/06/05 10:20:50 lukem Exp $	*/
+/*	$NetBSD: util.c,v 1.108 2002/06/08 14:44:07 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997-2002 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.107 2002/06/05 10:20:50 lukem Exp $");
+__RCSID("$NetBSD: util.c,v 1.108 2002/06/08 14:44:07 yamt Exp $");
 #endif /* not lint */
 
 /*
@@ -878,7 +878,7 @@ progressmeter(int flag)
 					 * stars should contain at least
 					 * sizeof(buf) - BAROVERHEAD entries
 					 */
-	const char	stars[] =
+	static const char	stars[] =
 "*****************************************************************************"
 "*****************************************************************************"
 "*****************************************************************************";
