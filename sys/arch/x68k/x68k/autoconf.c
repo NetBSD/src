@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.30 2002/09/27 20:37:23 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.31 2002/09/30 17:36:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -143,6 +143,8 @@ void
 config_console()
 {	
 	struct cfdata *cf;
+
+	config_init();
 
 	/*
 	 * we need mainbus' cfdata.

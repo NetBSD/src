@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.83 2002/09/27 20:29:42 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.84 2002/09/30 17:36:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.83 2002/09/27 20:29:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.84 2002/09/30 17:36:35 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -192,6 +192,8 @@ void
 config_console()
 {
 	struct cfdata *cf;
+
+	config_init();
 
 	/*
 	 * we need mainbus' cfdata.
