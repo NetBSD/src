@@ -1,4 +1,4 @@
-.\"	$NetBSD: queue.3,v 1.14 2000/05/27 22:31:57 mycroft Exp $
+.\"	$NetBSD: queue.3,v 1.15 2000/05/27 22:34:24 mycroft Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -398,8 +398,7 @@ for (np = LIST_FIRST(&head); np != NULL; np = LIST_NEXT(np, entries))
 					/* Delete. */
 while (LIST_FIRST(&head) != NULL)
 	LIST_REMOVE(LIST_FIRST(&head), entries);
-					/* Test for emptiness. */
-if (LIST_EMPTY(&head))
+if (LIST_EMPTY(&head))			/* Test for emptiness. */
 	printf("nothing to do\\n");
 .Ed
 .Sh SIMPLE QUEUES
@@ -520,8 +519,7 @@ for (np = SIMPLEQ_FIRST(&head); np != NULL; np = SIMPLEQ_NEXT(np, entries))
 					/* Delete. */
 while (SIMPLEQ_FIRST(&head) != NULL)
 	SIMPLEQ_REMOVE_HEAD(&head, SIMPLEQ_FIRST(&head), entries);
-					/* Test for emptiness. */
-if (SIMPLEQ_EMPTY(&head))
+if (SIMPLEQ_EMPTY(&head))		/* Test for emptiness. */
 	printf("nothing to do\\n");
 .Ed
 .Sh TAIL QUEUES
@@ -654,8 +652,7 @@ for (np = TAILQ_FIRST(&head); np != NULL; np = TAILQ_NEXT(np, entries))
 					/* Delete. */
 while (TAILQ_FIRST(&head) != NULL)
 	TAILQ_REMOVE(&head, TAILQ_FIRST(&head), entries);
-					/* Test for emptiness. */
-if (TAILQ_EMPTY(&head))
+if (TAILQ_EMPTY(&head))			/* Test for emptiness. */
 	printf("nothing to do\\n");
 .Ed
 .Sh CIRCULAR QUEUES
@@ -803,8 +800,7 @@ for (np = CIRCLEQ_LAST(&head); np != (void *)&head;
 					/* Delete. */
 while (CIRCLEQ_HEAD(&head) != (void *)&head)
 	CIRCLEQ_REMOVE(&head, CIRCLEQ_HEAD(&head), entries);
-					/* Test for emptiness. */
-if (CIRCLEQ_EMPTY(&head))
+if (CIRCLEQ_EMPTY(&head))		/* Test for emptiness. */
 	printf("nothing to do\\n");
 .Ed
 .Sh HISTORY
