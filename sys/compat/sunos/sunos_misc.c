@@ -42,7 +42,7 @@
  *	@(#)sun_misc.c	8.1 (Berkeley) 6/18/93
  *
  * from: Header: sun_misc.c,v 1.16 93/04/07 02:46:27 torek Exp 
- * $Id: sunos_misc.c,v 1.22 1994/05/19 22:11:54 deraadt Exp $
+ * $Id: sunos_misc.c,v 1.23 1994/05/21 08:47:25 deraadt Exp $
  */
 
 /*
@@ -404,12 +404,6 @@ out:
 	return (error);
 }
 
-#if defined(sparc)
-#define	DEVZERO	makedev(3, 12)		/* major,minor of /dev/zero */
-#else /* all m68k architectures */
-#define	DEVZERO	makedev(2, 12)		/* major,minor of /dev/zero */
-#endif
-
 #define	SUN__MAP_NEW	0x80000000	/* if not, old mmap & cannot handle */
 
 struct sun_mmap_args {
@@ -453,7 +447,7 @@ sun_mmap(p, uap, retval)
 	    (fp = fdp->fd_ofiles[uap->fd]) != NULL &&			/*XXX*/
 	    fp->f_type == DTYPE_VNODE &&				/*XXX*/
 	    (vp = (struct vnode *)fp->f_data)->v_type == VCHR &&	/*XXX*/
-	    vp->v_rdev == DEVZERO) {					/*XXX*/
+	    iszerodev(vp->v_rdev)) {					/*XXX*/
 		uap->flags |= MAP_ANON;
 		uap->fd = -1;
 	}
