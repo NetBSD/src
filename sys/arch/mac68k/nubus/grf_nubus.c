@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_nubus.c,v 1.49 1998/08/12 02:36:38 scottr Exp $	*/
+/*	$NetBSD: grf_nubus.c,v 1.50 1998/08/17 15:04:51 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -674,7 +674,7 @@ grfmv_intr_vimage(vsc)
 }
 
 /*
- * Routine to clear interrupts for the Vimage by Interware Co., Ltd.
+ * Routine to clear interrupts for the Grand Vimage by Interware Co., Ltd.
  */
 /*ARGSUSED*/
 static void
