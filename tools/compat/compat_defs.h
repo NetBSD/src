@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_defs.h,v 1.11 2002/04/22 15:09:19 lukem Exp $	*/
+/*	$NetBSD: compat_defs.h,v 1.12 2002/04/22 23:39:38 bjh21 Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_DEFS_H__
 #define	__NETBSD_COMPAT_DEFS_H__
@@ -69,6 +69,9 @@ struct passwd;
 
 /* Some things usually in BSD <sys/cdefs.h>. */
 
+#ifndef __CONCAT
+#define	__CONCAT(x,y)	x ## y
+#endif
 #if !defined(__attribute__) && !defined(__GNUC__)
 #define __attribute__(x)
 #endif
