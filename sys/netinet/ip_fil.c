@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.c,v 1.74 2002/01/24 08:23:41 martti Exp $	*/
+/*	$NetBSD: ip_fil.c,v 1.75 2002/01/24 08:24:59 martti Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -120,7 +120,7 @@ extern	int	ip_optcopy __P((struct ip *, struct ip *));
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_fil.c,v 1.74 2002/01/24 08:23:41 martti Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_fil.c,v 1.75 2002/01/24 08:24:59 martti Exp $");
 #else
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_fil.c,v 2.42.2.48 2002/01/01 13:34:05 darrenr Exp";
@@ -367,12 +367,15 @@ int iplattach()
 # ifdef NETBSD_PF
 #  if __NetBSD_Version__ >= 104200000
 #   if __NetBSD_Version__ >= 105110000
-	if (
-	    !(ph_inet = pfil_head_get(PFIL_TYPE_AF, AF_INET))
+	ph_inet = pfil_head_get(PFIL_TYPE_AF, AF_INET);
 #    ifdef USE_INET6
-	    && !(ph_inet6 = pfil_head_get(PFIL_TYPE_AF, AF_INET6))
+	ph_inet6 = pfil_head_get(PFIL_TYPE_AF, AF_INET6);
 #    endif
-	   )
+	if (ph_inet == NULL
+#    ifdef USE_INET6
+	    && ph_inet6 == NULL
+#    endif
+           )
 		return ENODEV;
 
 	if (ph_inet != NULL)
@@ -402,7 +405,7 @@ int iplattach()
 #   if __NetBSD_Version__ >= 105110000
 	if (ph_inet6 != NULL)
 		error = pfil_add_hook((void *)fr_check_wrapper6, NULL,
-				      PFIL_IN|PFIL_OUT, ph_inet);
+				      PFIL_IN|PFIL_OUT, ph_inet6);
 	else
 		error = 0;
 	if (error) {
