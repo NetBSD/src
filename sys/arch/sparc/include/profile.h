@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.h,v 1.4 1995/08/14 15:44:36 pk Exp $ */
+/*	$NetBSD: profile.h,v 1.5 1996/03/31 22:21:42 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -65,7 +65,8 @@
 	asm("add %o7, 8, %o1");
 #endif
 
-#define	_MCOUNT_DECL	static void _mcount
+#define	_MCOUNT_DECL	void _mcount
+_MCOUNT_DECL __P((unsigned long, unsigned long));
 
 #ifdef _KERNEL
 /*
