@@ -1,4 +1,4 @@
-/*	$NetBSD: hid.c,v 1.19 2001/12/29 17:48:29 augustss Exp $	*/
+/*	$NetBSD: hid.c,v 1.20 2001/12/29 18:56:20 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/hid.c,v 1.11 1999/11/17 22:33:39 n_hibma Exp $ */
 
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hid.c,v 1.19 2001/12/29 17:48:29 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hid.c,v 1.20 2001/12/29 18:56:20 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -145,6 +145,7 @@ hid_get_item(struct hid_data *s, struct hid_item *h)
 			DPRINTFN(5,("return multi\n"));
 			return (1);
 		} else {
+			c->loc.count = s->multimax;
 			s->multimax = 0;
 			s->nu = 0;
 			hid_clear_local(c);
@@ -388,17 +389,19 @@ hid_report_size(void *buf, int len, enum hid_kind k, u_int8_t id)
 			    h.kind, h.report_ID, h.loc.pos, h.loc.size,
 			    h.loc.count));
 		if (h.report_ID == id && h.kind == k) {
-			if (lo < 0)
+			if (lo < 0) {
 				lo = h.loc.pos;
+#ifdef DIAGNOSTIC
+				if (lo != 0) {
+					printf("hid_report_size: lo != 0\n");
+				}
+#endif
+			}
 			hi = h.loc.pos + h.loc.size * h.loc.count;
 			DPRINTFN(2,("hid_report_size: lo=%d hi=%d\n", lo, hi));
 		}
 	}
 	hid_end_parse(d);
-#ifdef DIAGNOSTIC
-	if (lo != 0)
-		printf("hid_report_size: lo != 0\n");
-#endif
 	return ((hi - lo + 7) / 8);
 }
 
