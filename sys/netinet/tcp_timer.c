@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_timer.c,v 1.37 1998/05/07 01:30:46 thorpej Exp $	*/
+/*	$NetBSD: tcp_timer.c,v 1.38 1998/05/11 19:57:24 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -72,7 +72,6 @@
  *	@(#)tcp_timer.c	8.2 (Berkeley) 5/24/95
  */
 
-#ifndef TUBA_INCLUDE
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
@@ -102,11 +101,6 @@ int	tcp_keepintvl = TCPTV_KEEPINTVL;
 int	tcp_keepcnt = TCPTV_KEEPCNT;		/* max idle probes */
 int	tcp_maxpersistidle = TCPTV_KEEP_IDLE;	/* max idle time in persist */
 int	tcp_maxidle;
-#else /* TUBA_INCLUDE */
-
-extern	int tcp_keepcnt;
-extern	int tcp_maxpersistidle;
-#endif /* TUBA_INCLUDE */
 
 struct tcp_delack_head tcp_delacks;
 
@@ -194,7 +188,6 @@ tpgone:
 	}
 	splx(s);
 }
-#ifndef TUBA_INCLUDE
 
 /*
  * Cancel all timers for TCP tp.
@@ -414,4 +407,3 @@ tcp_timers(tp, timer)
 	}
 	return (tp);
 }
-#endif /* TUBA_INCLUDE */

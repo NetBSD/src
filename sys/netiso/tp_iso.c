@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_iso.c,v 1.11 1998/03/01 02:24:46 fvdl Exp $	*/
+/*	$NetBSD: tp_iso.c,v 1.12 1998/05/11 19:58:18 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -106,10 +106,6 @@ SOFTWARE.
 #include <netiso/tp_var.h>
 #include <netiso/cltp_var.h>
 #include <netiso/idrp_var.h>
-
-#ifdef TUBA
-#include <netiso/tuba_table.h>
-#endif
 
 #include <machine/stdarg.h>
 
@@ -553,11 +549,6 @@ tpclnp_input(m, va_alist)
 	m->m_pkthdr.len -= clnp_len;
 	/* XXXX: should probably be in clnp_input */
 	switch (dst->siso_data[dst->siso_nlen - 1]) {
-#ifdef TUBA
-	case ISOPROTO_TCP:
-		tuba_tcpinput(m, src, dst);
-		return;
-#endif
 	case 0:
 		if (m->m_len == 0 && (m = m_pullup(m, 1)) == 0)
 			return;
