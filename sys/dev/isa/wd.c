@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)wd.c	7.2 (Berkeley) 5/9/91
- *	$Id: wd.c,v 1.35 1994/02/09 21:13:56 mycroft Exp $
+ *	$Id: wd.c,v 1.36 1994/02/10 15:17:34 mycroft Exp $
  */
 
 /* Note: This code heavily modified by tih@barsoom.nhh.no; use at own risk! */
@@ -1639,7 +1639,8 @@ bad144intern(struct disk *du)
 /* so I eliminate the processing, I believe that sorting the sectors */
 /* is adequate */
 void
-wddisksort(struct buf *dp, struct buf *bp)
+wddisksort(dp, bp)
+	register struct buf *dp, *bp;
 {
 	register struct buf *ap;
 
@@ -1649,11 +1650,8 @@ wddisksort(struct buf *dp, struct buf *bp)
 	 */
 	ap = dp->b_actf;
 	if (ap == NULL) {
-		dp->b_actb = &dp->b_actf;	/* XXX */
 		bp->b_actf = NULL;
-		bp->b_actb = dp->b_actb;
-		*dp->b_actb = bp;
-		dp->b_actb = &bp->b_actf;
+		dp->b_actf = bp;
 		return;
 	}
 	while (ap->b_flags & B_XXX) {
@@ -1717,12 +1715,8 @@ wddisksort(struct buf *dp, struct buf *bp)
 	 * which is the same as the end of the whole schebang.
 	 */
 insert:
-	if (bp->b_actf = ap->b_actf)
-		bp->b_actf->b_actb = &bp->b_actf;
-	else
-		dp->b_actb = &bp->b_actf;
+	bp->b_actf = ap->b_actf;
 	ap->b_actf = bp;
-	bp->b_actb = &ap->b_actf;
 }
 
 static int
