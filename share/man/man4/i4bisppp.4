@@ -1,4 +1,4 @@
-.\" $NetBSD: i4bisppp.4,v 1.1 2001/04/09 19:16:03 wiz Exp $
+.\" $NetBSD: i4bisppp.4,v 1.2 2001/05/12 13:21:45 wiz Exp $
 .\"
 .\" Copyright (c) 1997, 2000 Hellmuth Michaelis. All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$Id: i4bisppp.4,v 1.1 2001/04/09 19:16:03 wiz Exp $
+.\"	$Id: i4bisppp.4,v 1.2 2001/05/12 13:21:45 wiz Exp $
 .\"
 .\" $FreeBSD$
 .\"
@@ -35,10 +35,8 @@
 .Sh NAME
 .Nm i4bisppp
 .Nd isdn4bsd synchronous PPP over ISDN B-channel network driver
-.Sh FreeBSD SYNOPSIS
-.Cd pseudo-device \&"i4bisppp\&" Op count
-.Sh NetBSD SYNOPSIS
-none
+.Sh SYNOPSIS
+.Cd "pseudo-device i4bisppp" Ar count
 .Sh DESCRIPTION
 The
 .Nm
@@ -55,7 +53,9 @@ subsystem was integrated into the
 driver to support more i4b/ISDN specific options. As a consequence it is no
 longer necessary to add a "options sppp" to your kernel
 .Xr config 8
-file. For configuration of the i4bsppp driver, either the
+file. For configuration of the
+.Nm
+driver, either the
 .Xr ispppcontrol 8
 utility is used or it is configured via
 .Xr isdnd 8
