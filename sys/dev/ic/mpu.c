@@ -1,4 +1,4 @@
-/*	$NetBSD: mpu.c,v 1.2 1999/08/02 17:37:42 augustss Exp $	*/
+/*	$NetBSD: mpu.c,v 1.3 1999/10/05 03:29:22 itohy Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -175,8 +175,17 @@ mpu_open(addr, flags, iintr, ointr, arg)
 
 	if (sc->open)
 		return EBUSY;
-	if (mpu_reset(sc) != 0)
+#ifndef AUDIO_NO_POWER_CTL
+	if (sc->powerctl)
+		sc->powerctl(sc->powerarg, 1);
+#endif
+	if (mpu_reset(sc) != 0) {
+#ifndef AUDIO_NO_POWER_CTL
+		if (sc->powerctl)
+			sc->powerctl(sc->powerarg, 0);
+#endif
 		return EIO;
+	}
 
 	bus_space_write_1(sc->iot, sc->ioh, MPU_COMMAND, MPU_UART_MODE);
 	sc->open = 1;
@@ -196,6 +205,11 @@ mpu_close(addr)
 	sc->open = 0;
 	sc->intr = 0;
 	mpu_reset(sc); /* exit UART mode */
+
+#ifndef AUDIO_NO_POWER_CTL
+	if (sc->powerctl)
+		sc->powerctl(sc->powerarg, 0);
+#endif
 }
 
 void

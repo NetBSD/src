@@ -1,4 +1,4 @@
-/*	$NetBSD: oplvar.h,v 1.3 1998/11/25 22:17:06 augustss Exp $	*/
+/*	$NetBSD: oplvar.h,v 1.4 1999/10/05 03:29:22 itohy Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -61,7 +61,12 @@ struct opl_softc {
 	int volume;
 
 	int	(*spkrctl)__P((void *, int));
-	void    *spkrarg;
+	void	*spkrarg;
+
+#ifndef AUDIO_NO_POWER_CTL
+	int	(*powerctl)__P((void *, int));
+	void	*powerarg;
+#endif
 };
 
 struct opl_attach_arg {
@@ -84,8 +89,11 @@ struct opl_operators {
 };
 
 #define OPL_NINSTR 256
+
+#ifdef _KERNEL
 extern struct opl_operators opl2_instrs[];
 extern struct opl_operators opl3_instrs[];
 
 int	opl_find __P((struct opl_softc *));
 void	opl_attach __P((struct opl_softc *));
+#endif
