@@ -1,4 +1,4 @@
-/*	$NetBSD: xcfb.c,v 1.7 1995/09/11 07:45:42 jonathan Exp $	*/
+/*	$NetBSD: xcfb.c,v 1.8 1995/09/20 05:19:54 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -119,6 +119,7 @@ xcfb needs dtop device
 
 #include <pmax/dev/fbreg.h>
 
+#include <pmax/stand/dec_prom.h>	/* console debugging */
 
 /*
  * These need to be mapped into user space.
@@ -211,7 +212,7 @@ xcfbattach(parent, self, aux)
 {
 	struct confargs *ca = aux;
 
-	if (!xcfbinit(BUS_CVTADDR(ca), self->dv_unit, 0));
+	if (!xcfbinit(NULL, BUS_CVTADDR(ca), self->dv_unit, 0));
 		return;
 
 	/* no interrupts for XCFB */
@@ -224,14 +225,16 @@ xcfbattach(parent, self, aux)
  * Initialization
  */
 int
-xcfbinit(base, unit, silent)
+xcfbinit(fi, base, unit, silent)
+	struct fbinfo *fi;
 	caddr_t base;
 	int unit;
 	int silent;
 {
 	register u_int *reset = (u_int *)IMS332_RESET_ADDRESS;
-	struct fbinfo *fi;
 
+(*callv->_printf)("xcfbinit: starting\n");
+	if (fi == 0) fi = &xcfbfi;
 	unit = 0;	/*XXX*/ /* FIXME */
 
 	/*XXX*/
@@ -255,7 +258,7 @@ xcfbinit(base, unit, silent)
 	fi->fi_cmap_bits = (caddr_t)&cmap_bits [CMAP_BITS * unit];
 
 	/* Fill in Frame Buffer Type struct. */
-	fi->fi_type.fb_boardtype = PMAX_FBTYPE_CFB;
+	fi->fi_type.fb_boardtype = PMAX_FBTYPE_XCFB;
 	fi->fi_type.fb_width = 1024;
 	fi->fi_type.fb_height = 768;
 	fi->fi_type.fb_depth = 8;
@@ -265,15 +268,13 @@ xcfbinit(base, unit, silent)
 	/*
 	 * qvss/pm-style mmap()ed event queue compatibility glue
 	 */
-
+(*callv->_printf)("xcfbinit: starting qvss-compat init\n");
 	/*
 	 * Must be in Uncached space since the fbuaccess structure is
 	 * mapped into the user's address space uncached.
 	 */
 	fi->fi_fbu = (struct fbuaccess *)
 		MACH_PHYS_TO_UNCACHED(MACH_CACHED_TO_PHYS(&xcfbu));
-	fi->fi_glasstty->KBDPutc = dtopKBDPutc;
-	fi->fi_glasstty->kbddev = makedev(DTOPDEV, DTOPKBD_PORT);
 
 	/* This is glass-tty state but it's in the shared structure. Ick. */
 	fi->fi_fbu->scrInfo.max_row = 50;
@@ -294,18 +295,27 @@ xcfbinit(base, unit, silent)
 	fi->fi_fbu->scrInfo.min_cur_x = -15;
 	fi->fi_fbu->scrInfo.min_cur_y = -15;
 
+(*callv->_printf)("xcfbinit: resetting RAMDAC\n");
 	/* Initialize the RAMDAC. */
 	ims332init (fi);
 
 
+	/* Connect serial device(s) */
+	if (tb_kbdmouseconfig(fi)) {
+		printf(" (mouse/keyboard config failed)");
+		return (0);
+	}
+
 	/*
 	 * Connect to the raster-console pseudo-driver
 	 */
+(*callv->_printf)("xcfbinit: calling fbconnect()\n");
 	fbconnect("PMAG-DV", fi, silent);
 
 #ifdef	fpinitialized
 	fp->initialized = 1;
 #endif
+(*callv->_printf)("xcfbinit: done\n");
 	return (1);
 }
 
