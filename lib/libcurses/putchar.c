@@ -1,4 +1,4 @@
-/*	$NetBSD: putchar.c,v 1.11 2000/04/11 13:57:10 blymn Exp $	*/
+/*	$NetBSD: putchar.c,v 1.12 2000/04/15 13:17:04 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,15 +38,14 @@
 #if 0
 static char sccsid[] = "@(#)putchar.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: putchar.c,v 1.11 2000/04/11 13:57:10 blymn Exp $");
+__RCSID("$NetBSD: putchar.c,v 1.12 2000/04/15 13:17:04 blymn Exp $");
 #endif
 #endif				/* not lint */
 
 #include "curses.h"
 
 int
-__cputchar(ch)
-	int	ch;
+__cputchar(int ch)
 {
 
 #ifdef DEBUG

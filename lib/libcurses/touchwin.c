@@ -1,4 +1,4 @@
-/*	$NetBSD: touchwin.c,v 1.10 2000/04/11 13:57:10 blymn Exp $	*/
+/*	$NetBSD: touchwin.c,v 1.11 2000/04/15 13:17:05 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)touchwin.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: touchwin.c,v 1.10 2000/04/11 13:57:10 blymn Exp $");
+__RCSID("$NetBSD: touchwin.c,v 1.11 2000/04/15 13:17:05 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -51,9 +51,7 @@ __RCSID("$NetBSD: touchwin.c,v 1.10 2000/04/11 13:57:10 blymn Exp $");
  */
 
 int
-touchline(win, start, count)
-	WINDOW *win;
-	int     start, count;
+touchline(WINDOW *win, int start, int count)
 {
 	int y;
 
@@ -69,8 +67,7 @@ touchline(win, start, count)
  *	Make it look like the whole window has been changed.
  */
 int
-touchwin(win)
-	WINDOW *win;
+touchwin(WINDOW *win)
 {
 	int     y, maxy;
 
@@ -85,8 +82,7 @@ touchwin(win)
 
 
 int
-__touchwin(win)
-	WINDOW *win;
+__touchwin(WINDOW *win)
 {
 	int     y, maxy;
 
@@ -100,10 +96,7 @@ __touchwin(win)
 }
 
 int
-__touchline(win, y, sx, ex, force)
-	WINDOW *win;
-	int     y, sx, ex;
-	int     force;
+__touchline(WINDOW *win, int y, int sx, int ex, int force)
 {
 #ifdef DEBUG
 	__CTRACE("touchline: (%0.2o, %d, %d, %d, %d)\n", win, y, sx, ex, force);

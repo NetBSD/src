@@ -1,4 +1,4 @@
-/*	$NetBSD: getch.c,v 1.17 2000/04/12 21:34:24 jdc Exp $	*/
+/*	$NetBSD: getch.c,v 1.18 2000/04/15 13:17:03 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getch.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: getch.c,v 1.17 2000/04/12 21:34:24 jdc Exp $");
+__RCSID("$NetBSD: getch.c,v 1.18 2000/04/15 13:17:03 blymn Exp $");
 #endif
 #endif					/* not lint */
 
@@ -169,12 +169,12 @@ static wchar_t		inkey(int, int);
  *
  */
 void
-__init_getch(sp)
-	char   *sp;
+__init_getch(char *sp)
 {
-static	char termcap[1024];
+static struct tinfo *termcap;
 	char entry[1024], termname[1024], *p;
 	int i, j, length;
+        size_t limit;
 	keymap_t *current;
 	key_entry_t *the_key;
 
@@ -191,13 +191,14 @@ static	char termcap[1024];
 	(void) strncpy(termname, sp, (size_t) 1022);
 	termname[1023] = 0;
 
-	if (tgetent(termcap, termname) <= 0)
+	if (t_getent(&termcap, termname) <= 0)
 		return;
 
 	for (i = 0; i < num_tcs; i++) {
 
 		p = entry;
-		if (tgetstr(tc[i].name, &p) == NULL)
+                limit = 1023;
+		if (t_getstr(termcap, tc[i].name, &p, &limit) == NULL)
 			continue;
 
 		current = base_keymap;	/* always start with base keymap. */
@@ -440,13 +441,49 @@ reread:
 	}
 }
 
+#ifndef _CURSES_USE_MACROS
+/*
+ * getch --
+ *	Read in a character from stdscr.
+ */
+int
+getch(void)
+{
+	return wgetch(stdscr);
+}
+
+/*
+ * mvgetch --
+ *      Read in a character from stdscr at the given location.
+ */
+int
+mvgetch(int y, int x)
+{
+	return mvwgetch(stdscr, y, x);
+}
+
+/*
+ * mvwgetch --
+ *      Read in a character from stdscr at the given location in the
+ *      given window.
+ */
+int
+mvwgetch(WINDOW *win, int y, int x)
+{
+	if (wmove(win, y, x) == ERR)
+		return ERR;
+
+	return wgetch(win);
+}
+
+#endif
+
 /*
  * wgetch --
  *	Read in a character from the window.
  */
 int
-wgetch(win)
-	WINDOW *win;
+wgetch(WINDOW *win)
 {
 	int     inp, weset;
 	ssize_t	nchar;

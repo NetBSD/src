@@ -1,4 +1,4 @@
-/*	$NetBSD: addnstr.c,v 1.6 2000/04/11 13:57:08 blymn Exp $	*/
+/*	$NetBSD: addnstr.c,v 1.7 2000/04/15 13:17:02 blymn Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)addnstr.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: addnstr.c,v 1.6 2000/04/11 13:57:08 blymn Exp $");
+__RCSID("$NetBSD: addnstr.c,v 1.7 2000/04/15 13:17:02 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -47,6 +47,77 @@ __RCSID("$NetBSD: addnstr.c,v 1.6 2000/04/11 13:57:08 blymn Exp $");
 #include "curses.h"
 #include "curses_private.h"
 
+#ifndef _CURSES_USE_MACROS
+
+/*
+ * addstr --
+ *      Add a string to stdscr starting at (_cury, _curx).
+ */
+int
+addstr(s)
+	const char *s;
+{
+	return waddnstr(stdscr, s, -1);
+}
+
+/*
+ * addnstr --
+ *      Add a string (at most n characters) to stdscr starting
+ *	at (_cury, _curx).  If n is negative, add the entire string.
+ */
+int
+addnstr(const char *str, int n)
+{
+	return waddnstr(stdscr, str, n);
+}
+
+/*
+ * mvaddstr --
+ *      Add a string to stdscr starting at (y, x)
+ */
+int
+mvaddstr(int y, int x, const char *str)
+{
+	return mvwaddnstr(stdscr, y, x, str, -1);
+}
+
+/*
+ * mvwaddstr --
+ *      Add a string to the given window starting at (y, x)
+ */
+int
+mvwaddstr(WINDOW *win, int y, int x, const char *str)
+{
+	return mvwaddnstr(win, y, x, str, -1);
+}
+
+/*
+ * mvaddnstr --
+ *      Add a string of at most n characters to stdscr
+ *      starting at (y, x).
+ */
+int
+mvaddnstr(int y, int x, const char *str, int count)
+{
+	return mvwaddnstr(stdscr, y, x, str, count);
+}
+
+/*
+ * mvwaddnstr --
+ *      Add a string of at most n characters to the given window
+ *      starting at (y, x).
+ */
+int
+mvwaddnstr(WINDOW *win, int y, int x, const char *str, int count)
+{
+	if (wmove(win, y, x) == ERR)
+		return ERR;
+
+	return waddnstr(win, str, count);
+}
+
+#endif
+
 /*
  * waddnstr --
  *	Add a string (at most n characters) to the given window
@@ -54,10 +125,7 @@ __RCSID("$NetBSD: addnstr.c,v 1.6 2000/04/11 13:57:08 blymn Exp $");
  *	entire string.
  */
 int
-waddnstr(win, s, n)
-	WINDOW *win;
-	const char *s;
-	int     n;
+waddnstr(WINDOW *win, const char *s, int n)
 {
 	size_t  len;
 	const char *p;

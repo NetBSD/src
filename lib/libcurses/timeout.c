@@ -1,4 +1,4 @@
-/*	$NetBSD: timeout.c,v 1.3 2000/04/12 21:33:13 jdc Exp $	*/
+/*	$NetBSD: timeout.c,v 1.4 2000/04/15 13:17:05 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -39,14 +39,26 @@
 #include "curses.h"
 #include "curses_private.h"
 
+#ifndef _CURSES_USE_MACROS
+
 /*
  * timeout --
+ *	Set the getch() delay for stdscr.
+ */
+void
+timeout(int delay)
+{
+	wtimeout(stdscr, delay);
+}
+
+#endif
+
+/*
+ * wtimeout --
  *	Set the getch() delay for a window.
  */
 void
-wtimeout(win, delay)
-	WINDOW *win;
-	int	delay;
+wtimeout(WINDOW *win, int delay)
 {
 
 	if (delay < 0)

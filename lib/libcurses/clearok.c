@@ -1,4 +1,4 @@
-/*	$NetBSD: clearok.c,v 1.2 2000/04/11 13:57:08 blymn Exp $	*/
+/*	$NetBSD: clearok.c,v 1.3 2000/04/15 13:17:03 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -44,9 +44,7 @@
  *	Turn on and off clear before refresh for the given window.
  */
 int
-clearok(win, bf)
-	WINDOW	*win;
-	bool	 bf;
+clearok(WINDOW *win, bool bf)
 {
 	if (bf)
 		win->flags |= __CLEAROK;

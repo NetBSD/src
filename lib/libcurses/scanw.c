@@ -1,4 +1,4 @@
-/*	$NetBSD: scanw.c,v 1.13 2000/04/14 02:53:54 simonb Exp $	*/
+/*	$NetBSD: scanw.c,v 1.14 2000/04/15 13:17:04 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)scanw.c	8.3 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: scanw.c,v 1.13 2000/04/14 02:53:54 simonb Exp $");
+__RCSID("$NetBSD: scanw.c,v 1.14 2000/04/15 13:17:04 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -85,7 +85,7 @@ va_dcl
  */
 int
 #ifdef __STDC__
-wscanw(WINDOW * win, const char *fmt,...)
+wscanw(WINDOW *win, const char *fmt,...)
 #else
 wscanw(win, fmt, va_alist)
 	WINDOW *win;
@@ -165,10 +165,7 @@ va_dcl
  *	This routine actually executes the scanf from the window.
  */
 int
-vwscanw(win, fmt, ap)
-	WINDOW *win;
-	const char *fmt;
-	va_list ap;
+vwscanw(WINDOW *win, const char *fmt, va_list ap)
 {
 
 	char    buf[1024];

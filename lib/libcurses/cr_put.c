@@ -1,4 +1,4 @@
-/*	$NetBSD: cr_put.c,v 1.15 2000/04/11 13:57:08 blymn Exp $	*/
+/*	$NetBSD: cr_put.c,v 1.16 2000/04/15 13:17:03 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cr_put.c	8.3 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: cr_put.c,v 1.15 2000/04/11 13:57:08 blymn Exp $");
+__RCSID("$NetBSD: cr_put.c,v 1.16 2000/04/15 13:17:03 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -57,8 +57,7 @@ __RCSID("$NetBSD: cr_put.c,v 1.15 2000/04/11 13:57:08 blymn Exp $");
 
 /* Stub function for the users. */
 int
-mvcur(ly, lx, y, x)
-	int     ly, lx, y, x;
+mvcur(int ly, int lx, int y, int x)
 {
 	return (__mvcur(ly, lx, y, x, 0));
 }
@@ -76,8 +75,7 @@ static int outcol, outline, destcol, destline;
  * the lack thereof and rolling up the screen to get destline on the screen.
  */
 int
-__mvcur(ly, lx, y, x, in_refresh)
-	int     ly, lx, y, x, in_refresh;
+__mvcur(int ly, int lx, int y, int x, int in_refresh)
 {
 #ifdef DEBUG
 	__CTRACE("mvcur: moving cursor from (%d, %d) to (%d, %d)\n",

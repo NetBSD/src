@@ -1,4 +1,4 @@
-/*	$NetBSD: newwin.c,v 1.15 2000/04/14 17:35:15 jdc Exp $	*/
+/*	$NetBSD: newwin.c,v 1.16 2000/04/15 13:17:04 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)newwin.c	8.3 (Berkeley) 7/27/94";
 #else
-__RCSID("$NetBSD: newwin.c,v 1.15 2000/04/14 17:35:15 jdc Exp $");
+__RCSID("$NetBSD: newwin.c,v 1.16 2000/04/15 13:17:04 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -60,8 +60,7 @@ void __set_subwin __P((WINDOW *, WINDOW *));
  *	Allocate space for and set up defaults for a new window.
  */
 WINDOW *
-newwin(nl, nc, by, bx)
-	int     nl, nc, by, bx;
+newwin(int nl, int nc, int by, int bx)
 {
 	WINDOW *win;
 	__LINE *lp;
@@ -99,9 +98,7 @@ newwin(nl, nc, by, bx)
 }
 
 WINDOW *
-subwin(orig, nl, nc, by, bx)
-	WINDOW *orig;
-	int     by, bx, nl, nc;
+subwin(WINDOW *orig, int nl, int nc, int by, int bx)
 {
 	int     i;
 	__LINE *lp;
@@ -135,8 +132,7 @@ subwin(orig, nl, nc, by, bx)
  * This code is shared with mvwin().
  */
 void
-__set_subwin(orig, win)
-	WINDOW *orig, *win;
+__set_subwin(WINDOW *orig, WINDOW *win)
 {
 	int     i;
 	__LINE *lp, *olp;
@@ -262,8 +258,7 @@ __makenew(nl, nc, by, bx, sub)
 }
 
 void
-__swflags(win)
-	WINDOW *win;
+__swflags(WINDOW *win)
 {
 	win->flags &= ~(__ENDLINE | __FULLWIN | __SCROLLWIN | __LEAVEOK);
 	if (win->begx + win->maxx == COLS) {

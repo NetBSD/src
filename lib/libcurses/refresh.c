@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.16 2000/04/12 21:47:20 jdc Exp $	*/
+/*	$NetBSD: refresh.c,v 1.17 2000/04/15 13:17:04 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.7 (Berkeley) 8/13/94";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.16 2000/04/12 21:47:20 jdc Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.17 2000/04/15 13:17:04 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -55,14 +55,28 @@ static int	makech __P((WINDOW *, int));
 static void	quickch __P((WINDOW *));
 static void	scrolln __P((WINDOW *, int, int, int, int, int));
 
+#ifndef _CURSES_USE_MACROS
+
+/*
+ * refresh --
+ *	Make the current screen look like "stdscr" over the area covered by
+ *	stdscr.
+ */
+int
+refresh(void)
+{
+	return wrefresh(stdscr);
+}
+
+#endif
+
 /*
  * wrefresh --
  *	Make the current screen look like "win" over the area coverd by
  *	win.
  */
 int
-wrefresh(win)
-	WINDOW *win;
+wrefresh(WINDOW *win)
 {
 	__LINE *wlp;
 	int	retval;

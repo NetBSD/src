@@ -1,4 +1,4 @@
-/*	$NetBSD: mvwin.c,v 1.10 2000/04/11 13:57:10 blymn Exp $	*/
+/*	$NetBSD: mvwin.c,v 1.11 2000/04/15 13:17:04 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)mvwin.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: mvwin.c,v 1.10 2000/04/11 13:57:10 blymn Exp $");
+__RCSID("$NetBSD: mvwin.c,v 1.11 2000/04/15 13:17:04 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -50,9 +50,7 @@ __RCSID("$NetBSD: mvwin.c,v 1.10 2000/04/11 13:57:10 blymn Exp $");
  *	Relocate the starting position of a window.
  */
 int
-mvwin(win, by, bx)
-	WINDOW *win;
-	int     by, bx;
+mvwin(WINDOW *win, int by, int bx)
 {
 	WINDOW *orig;
 	int     dy, dx;

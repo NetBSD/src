@@ -1,4 +1,4 @@
-/*	$NetBSD: insertln.c,v 1.11 2000/04/11 13:57:09 blymn Exp $	*/
+/*	$NetBSD: insertln.c,v 1.12 2000/04/15 13:17:04 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,19 +38,33 @@
 #if 0
 static char sccsid[] = "@(#)insertln.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: insertln.c,v 1.11 2000/04/11 13:57:09 blymn Exp $");
+__RCSID("$NetBSD: insertln.c,v 1.12 2000/04/15 13:17:04 blymn Exp $");
 #endif
 #endif				/* not lint */
 
 #include "curses.h"
+#include "curses_private.h"
+
+#ifndef _CURSES_USE_MACROS
+
+/*
+ * insertln --
+ *	Do an insert-line on stdscr, leaving (cury, curx) unchanged.
+ */
+int
+insertln(void)
+{
+	return(winsdelln(stdscr, 1));
+}
+
+#endif
 
 /*
  * winsertln --
  *	Do an insert-line on the window, leaving (cury, curx) unchanged.
  */
 int
-winsertln(win)
-	WINDOW *win;
+winsertln(WINDOW *win)
 {
 	return(winsdelln(win, 1));
 }

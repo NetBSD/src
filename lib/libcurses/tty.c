@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.14 2000/04/12 21:36:02 jdc Exp $	*/
+/*	$NetBSD: tty.c,v 1.15 2000/04/15 13:17:05 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tty.c	8.6 (Berkeley) 1/10/95";
 #else
-__RCSID("$NetBSD: tty.c,v 1.14 2000/04/12 21:36:02 jdc Exp $");
+__RCSID("$NetBSD: tty.c,v 1.15 2000/04/15 13:17:05 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -84,7 +84,7 @@ static int ovtime = 0;
  *	Do terminal type initialization.
  */
 int
-gettmode()
+gettmode(void)
 {
 	useraw = 0;
 
@@ -135,7 +135,7 @@ gettmode()
 }
 
 int
-raw()
+raw(void)
 {
 	/* Check if we need to restart ... */
 	if (__endwin) {
@@ -150,7 +150,7 @@ raw()
 }
 
 int
-noraw()
+noraw(void)
 {
 	/* Check if we need to restart ... */
 	if (__endwin) {
@@ -165,7 +165,7 @@ noraw()
 }
 
 int
-cbreak()
+cbreak(void)
 {
 	/* Check if we need to restart ... */
 	if (__endwin) {
@@ -180,7 +180,7 @@ cbreak()
 }
 
 int
-nocbreak()
+nocbreak(void)
 {
 	/* Check if we need to restart ... */
 	if (__endwin) {
@@ -195,7 +195,7 @@ nocbreak()
 }
 
 int
-__delay()
+__delay(void)
  {
 	/* Check if we need to restart ... */
 	if (__endwin) {
@@ -215,7 +215,7 @@ __delay()
 }
 
 int
-__nodelay()
+__nodelay(void)
 {
 	/* Check if we need to restart ... */
 	if (__endwin) {
@@ -235,7 +235,7 @@ __nodelay()
 }
 
 void
-__save_termios()
+__save_termios(void)
 {
 	/* Check if we need to restart ... */
 	if (__endwin) {
@@ -248,7 +248,7 @@ __save_termios()
 }
 
 void
-__restore_termios()
+__restore_termios(void)
 {
 	/* Check if we need to restart ... */
 	if (__endwin) {
@@ -265,8 +265,7 @@ __restore_termios()
 }
 
 int
-__timeout(delay)
-	int	delay;
+__timeout(int delay)
 {
 	/* Check if we need to restart ... */
 	if (__endwin) {
@@ -288,7 +287,7 @@ __timeout(delay)
 }
 
 int
-__notimeout()
+__notimeout(void)
 {
 	/* Check if we need to restart ... */
 	if (__endwin) {
@@ -308,7 +307,7 @@ __notimeout()
 }
 
 int
-echo()
+echo(void)
 {
 	/* Check if we need to restart ... */
 	if (__endwin) {
@@ -326,7 +325,7 @@ echo()
 }
 
 int
-noecho()
+noecho(void)
 {
 	/* Check if we need to restart ... */
 	if (__endwin) {
@@ -344,7 +343,7 @@ noecho()
 }
 
 int
-nl()
+nl(void)
 {
 	/* Check if we need to restart ... */
 	if (__endwin) {
@@ -365,7 +364,7 @@ nl()
 }
 
 int
-nonl()
+nonl(void)
 {
 	/* Check if we need to restart ... */
 	if (__endwin) {
@@ -386,9 +385,7 @@ nonl()
 }
 
 int
-intrflush(win, bf)	/*ARGSUSED*/
-	WINDOW	*win;
-	bool	 bf;
+intrflush(WINDOW *win, bool bf)	/*ARGSUSED*/
 {
 	/* Check if we need to restart ... */
 	if (__endwin) {
@@ -412,7 +409,7 @@ intrflush(win, bf)	/*ARGSUSED*/
 }
 
 void
-__startwin()
+__startwin(void)
 {
 	static char *stdbuf;
 	static size_t len;
@@ -440,33 +437,33 @@ __startwin()
 }
 
 int
-endwin()
+endwin(void)
 {
 	__endwin = 1;
 	return __stopwin();
 }
 
 bool
-isendwin()
+isendwin(void)
 {
 	return (__endwin ? TRUE : FALSE);
 }
 
 int
-flushinp()
+flushinp(void)
 {
 	(void) fpurge(stdin);
 	return (OK);
 }
 
 int
-def_shell_mode()
+def_shell_mode(void)
 {
 	return (tcgetattr(STDIN_FILENO, &__orig_termios) ? ERR : OK);
 }
 
 int
-reset_shell_mode()
+reset_shell_mode(void)
 {
 	return (tcsetattr(STDIN_FILENO, __tcaction ?
 	    TCSASOFT | TCSADRAIN : TCSADRAIN, &__orig_termios) ? ERR : OK);
@@ -479,13 +476,13 @@ reset_shell_mode()
  */
 static struct termios savedtty;
 int
-savetty()
+savetty(void)
 {
 	return (tcgetattr(STDIN_FILENO, &savedtty) ? ERR : OK);
 }
 
 int
-resetty()
+resetty(void)
 {
 	return (tcsetattr(STDIN_FILENO, __tcaction ?
 	    TCSASOFT | TCSADRAIN : TCSADRAIN, &savedtty) ? ERR : OK);

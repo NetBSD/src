@@ -1,4 +1,4 @@
-/*	$NetBSD: insdelln.c,v 1.2 2000/04/11 13:57:09 blymn Exp $	*/
+/*	$NetBSD: insdelln.c,v 1.3 2000/04/15 13:17:04 blymn Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -47,14 +47,26 @@
 #include "curses.h"
 #include "curses_private.h"
 
+#ifndef _CURSES_USE_MACROS
+
+/*
+ * insdelln --
+ *	Insert or delete lines on stdscr, leaving (cury, curx) unchanged.
+ */
+int
+insdelln(int lines)
+{
+	return winsdelln(stdscr, lines);
+}
+
+#endif
+
 /*
  * winsdelln --
  *	Insert or delete lines on the window, leaving (cury, curx) unchanged.
  */
 int
-winsdelln(win, lines)
-	WINDOW *win;
-	int	lines;
+winsdelln(WINDOW *win, int lines)
 {
 	int     y, i;
 	__LINE *temp;

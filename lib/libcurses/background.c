@@ -1,4 +1,4 @@
-/*	$NetBSD: background.c,v 1.2 2000/04/13 00:01:03 simonb Exp $	*/
+/*	$NetBSD: background.c,v 1.3 2000/04/15 13:17:02 blymn Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -44,9 +44,7 @@
  *	Set new background attributes.
  */
 void
-wbkgdset(win, ch)
-	WINDOW	*win;
-	chtype	 ch;
+wbkgdset(WINDOW *win, chtype ch)
 {
 	win->bchar = (wchar_t) ch & A_CHARTEXT;
 	win->battr = (attr_t) ch & A_ATTRIBUTES;
@@ -60,9 +58,7 @@ wbkgdset(win, ch)
  *	Set new background and new background attributes.
  */
 int
-wbkgd(win, ch)
-	WINDOW	*win;
-	chtype	 ch;
+wbkgd(WINDOW *win, chtype ch)
 {
 	wbkgdset(win, ch);
 	__touchwin(win);
@@ -74,8 +70,7 @@ wbkgd(win, ch)
  *	Get current background attributes.
  */	
 chtype
-getbkgd(win)
-	WINDOW	*win;
+getbkgd(WINDOW *win)
 {
 	return ((chtype) ((win->bchar & A_CHARTEXT) |
 	    (win->battr & A_ATTRIBUTES)));

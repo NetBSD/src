@@ -1,4 +1,4 @@
-/*	$NetBSD: curses_private.h,v 1.3 2000/04/14 17:35:14 jdc Exp $	*/
+/*	$NetBSD: curses_private.h,v 1.4 2000/04/15 13:17:03 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-2000 Brett Lymn
@@ -93,35 +93,35 @@ struct __winlist {
 
 /* Private functions. */
 #ifdef DEBUG
-void	 __CTRACE __P((const char *, ...));
+void	 __CTRACE(const char *fmt, ...);
 #endif
-int	 __delay __P((void));
-unsigned int __hash __P((char *, int));
-void	 __id_subwins __P((WINDOW *));
-void	 __init_getch __P((char *));
-void	 __init_acs __P((void));
-char	*__longname __P((char *, char *));	/* Original BSD version */
-int	 __mvcur __P((int, int, int, int, int));
-int	 __nodelay __P((void));
-int	 __notimeout __P((void));
-char	*__parse_cap __P((const char *, ...));
-void	 __restartwin __P((void));
-void	 __restore_colors __P((void));
-void	 __restore_termios __P((void));
-void	 __restore_stophandler __P((void));
-void	 __save_termios __P((void));
-void	 __set_color __P((attr_t));
-void	 __set_stophandler __P((void));
-void	 __set_subwin __P((WINDOW *, WINDOW *));
-void	 __startwin __P((void));
-void	 __stop_signal_handler __P((int));
-int	 __stopwin __P((void));
-void	 __swflags __P((WINDOW *));
-int	 __timeout __P((int));
-int	 __touchline __P((WINDOW *, int, int, int, int));
-int	 __touchwin __P((WINDOW *));
-char	*__tscroll __P((const char *, int, int));
-int	 __waddch __P((WINDOW *, __LDATA *));
+int	 __delay(void);
+unsigned int __hash(char *s, int len);
+void	 __id_subwins(WINDOW *orig);
+void	 __init_getch(char *sp);
+void	 __init_acs(void);
+char	*__longname(char *bp, char *def);	/* Original BSD version */
+int	 __mvcur(int ly, int lx, int y, int x, int in_refresh);
+int	 __nodelay(void);
+int	 __notimeout(void);
+char	*__parse_cap(const char *, ...);
+void	 __restartwin(void);
+void	 __restore_colors(void);
+void	 __restore_termios(void);
+void	 __restore_stophandler(void);
+void	 __save_termios(void);
+void	 __set_color(attr_t attr);
+void	 __set_stophandler(void);
+void	 __set_subwin(WINDOW *orig, WINDOW *win);
+void	 __startwin(void);
+void	 __stop_signal_handler(int signo);
+int	 __stopwin(void);
+void	 __swflags(WINDOW *win);
+int	 __timeout(int delay);
+int	 __touchline(WINDOW *win, int y, int sx, int ex, int force);
+int	 __touchwin(WINDOW *win);
+char	*__tscroll(const char *cap, int n1, int n2);
+int	 __waddch(WINDOW *win, __LDATA *dp);
 
 /* Private #defines. */
 #define	min(a,b)	(a < b ? a : b)

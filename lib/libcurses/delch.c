@@ -1,4 +1,4 @@
-/*	$NetBSD: delch.c,v 1.11 2000/04/11 13:57:09 blymn Exp $	*/
+/*	$NetBSD: delch.c,v 1.12 2000/04/15 13:17:03 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)delch.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: delch.c,v 1.11 2000/04/11 13:57:09 blymn Exp $");
+__RCSID("$NetBSD: delch.c,v 1.12 2000/04/15 13:17:03 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -47,13 +47,48 @@ __RCSID("$NetBSD: delch.c,v 1.11 2000/04/11 13:57:09 blymn Exp $");
 #include "curses.h"
 #include "curses_private.h"
 
+#ifndef _CURSES_USE_MACROS
+/*
+ * delch --
+ *	Do an insert-char on the line, leaving (cury, curx) unchanged.
+ */
+int
+delch(void)
+{
+	return wdelch(stdscr);
+}
+
+/*
+ * mvdelch --
+ *      Do an insert-char on the line at (y, x) on stdscr.
+ */
+int
+mvdelch(int y, int x)
+{
+	return mvwdelch(stdscr, y, x);
+}
+
+/*
+ * mvwdelch --
+ *      Do an insert-char on the line at (y, x) of the given window.
+ */
+int
+mvwdelch(WINDOW *win, int y, int x)
+{
+	if (wmove(win, y, x) == ERR)
+		return ERR;
+
+	return wdelch(win);
+}
+
+#endif
+
 /*
  * wdelch --
  *	Do an insert-char on the line, leaving (cury, curx) unchanged.
  */
 int
-wdelch(win)
-	WINDOW *win;
+wdelch(WINDOW *win)
 {
 	__LDATA *end, *temp1, *temp2;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: color.c,v 1.2 2000/04/14 17:37:15 jdc Exp $	*/
+/*	$NetBSD: color.c,v 1.3 2000/04/15 13:17:03 blymn Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ __change_pair __P((short));
  *	Check if terminal has colours.
  */
 bool
-has_colors()
+has_colors(void)
 {
 	if (cO > 0)
 		return(TRUE);
@@ -93,7 +93,7 @@ has_colors()
  *	Check if terminal can change colours.
  */
 bool
-can_change_colors()
+can_change_colors(void)
 {
 	if (CC)
 		return(TRUE);
@@ -230,8 +230,7 @@ start_color()
  *	Set pair foreground and background colors.
  */
 int
-init_pair(pair, fore, back)
-	short	pair, fore, back;
+init_pair(short pair, short fore, short back)
 {
 	int	changed;
 
@@ -272,8 +271,7 @@ init_pair(pair, fore, back)
  *	Get pair foreground and background colours.
  */
 int
-pair_content(pair, forep, backp)
-	short	 pair, *forep, *backp;
+pair_content(short pair, short *forep, short *backp)
 {
 	if (pair < 0 || pair >= COLOR_PAIRS)
 		return(ERR);
@@ -288,8 +286,7 @@ pair_content(pair, forep, backp)
  *	Set colour red, green and blue values.
  */
 int
-init_color(color, red, green, blue)
-	short	color, red, green, blue;
+init_color(short color, short red, short green, short blue)
 {
 #ifdef DEBUG
 	__CTRACE("init_color: %d, %d, %d, %d\n", color, red, green, blue);
@@ -310,8 +307,7 @@ init_color(color, red, green, blue)
  *	Get colour red, green and blue values.
  */
 int
-color_content(color, redp, greenp, bluep)
-	short	 color, *redp, *greenp, *bluep;
+color_content(short color, short *redp, short *greenp, short *bluep)
 {
 	if (color < 0 || color >= COLORS)
 		return(ERR);
@@ -327,8 +323,7 @@ color_content(color, redp, greenp, bluep)
  *	Set terminal foreground and background colours.
  */
 void
-__set_color(attr)
-	attr_t	attr;
+__set_color(attr_t attr)
 {
 	short	pair;
 
@@ -357,7 +352,7 @@ __set_color(attr)
  *	Redo color definitions after restarting 'curses' mode.
  */
 void
-__restore_colors()
+__restore_colors(void)
 {
 	if (CC != NULL)
 		switch (__color_type) {
@@ -375,8 +370,7 @@ __restore_colors()
  *	Mark dirty all positions using pair.
  */
 void
-__change_pair(pair)
-	short	pair;
+__change_pair(short pair)
 {
 	struct __winlist	*wlp;
 	WINDOW			*win;

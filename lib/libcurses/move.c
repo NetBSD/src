@@ -1,4 +1,4 @@
-/*	$NetBSD: move.c,v 1.10 2000/04/11 13:57:09 blymn Exp $	*/
+/*	$NetBSD: move.c,v 1.11 2000/04/15 13:17:04 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,21 +38,32 @@
 #if 0
 static char sccsid[] = "@(#)move.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: move.c,v 1.10 2000/04/11 13:57:09 blymn Exp $");
+__RCSID("$NetBSD: move.c,v 1.11 2000/04/15 13:17:04 blymn Exp $");
 #endif
 #endif				/* not lint */
 
 #include "curses.h"
 #include "curses_private.h"
 
+#ifndef _CURSES_USE_MACROS
+/*
+ * move --
+ *	Moves the cursor to the given point on stdscr.
+ */
+int
+move(int y, int x)
+{
+	return wmove(stdscr, y, x);
+}
+
+#endif
+
 /*
  * wmove --
  *	Moves the cursor to the given point.
  */
 int
-wmove(win, y, x)
-	WINDOW *win;
-	int     y, x;
+wmove(WINDOW *win, int y, int x)
 {
 
 #ifdef DEBUG

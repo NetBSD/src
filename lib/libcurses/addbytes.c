@@ -1,4 +1,4 @@
-/*	$NetBSD: addbytes.c,v 1.16 2000/04/12 21:47:50 jdc Exp $	*/
+/*	$NetBSD: addbytes.c,v 1.17 2000/04/15 13:17:02 blymn Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)addbytes.c	8.4 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: addbytes.c,v 1.16 2000/04/12 21:47:50 jdc Exp $");
+__RCSID("$NetBSD: addbytes.c,v 1.17 2000/04/15 13:17:02 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -48,16 +48,59 @@ __RCSID("$NetBSD: addbytes.c,v 1.16 2000/04/12 21:47:50 jdc Exp $");
 #define	SYNCH_IN	{y = win->cury; x = win->curx;}
 #define	SYNCH_OUT	{win->cury = y; win->curx = x;}
 
+#ifndef _CURSES_USE_MACROS
+
+/*
+ * addbytes --
+ *      Add the character to the current position in stdscr.
+ */
+int
+addbytes(const char *bytes, int count)
+{
+	return __waddbytes(stdscr, bytes, count, 0);
+}
+
+/*
+ * waddbytes --
+ *      Add the character to the current position in the given window.
+ */
+int
+waddbytes(WINDOW *win, const char *bytes, int count)
+{
+	return __waddbytes(win, bytes, count, 0);
+}
+
+/*
+ * mvaddbytes --
+ *      Add the characters to stdscr at the location given.
+ */
+int
+mvaddbytes(int y, int x, const char *bytes, int count)
+{
+	return mvwaddbytes(stdscr, y, x, bytes, count);
+}
+
+/*
+ * mvwaddbytes --
+ *      Add the characters to the given window at the location given.
+ */
+int
+mvwaddbytes(WINDOW *win, int y, int x, const char *bytes, int count)
+{
+	if (wmove(win, y, x) == ERR)
+		return ERR;
+
+	return __waddbytes(win, bytes, count, 0);
+}
+
+#endif
+
 /*
  * waddbytes --
  *	Add the character to the current position in the given window.
  */
 int
-__waddbytes(win, bytes, count, attr)
-	WINDOW		*win;
-	const char	*bytes;
-	int		 count;
-	attr_t		 attr;
+__waddbytes(WINDOW *win, const char *bytes, int count, attr_t attr)
 {
 	static char	 blanks[] = "        ";
 	int		 c, newx, x, y;

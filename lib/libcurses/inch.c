@@ -1,4 +1,4 @@
-/*	$NetBSD: inch.c,v 1.2 2000/04/11 13:57:09 blymn Exp $	*/
+/*	$NetBSD: inch.c,v 1.3 2000/04/15 13:17:04 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -39,13 +39,49 @@
 #include "curses.h"
 #include "curses_private.h"
 
+#ifndef _CURSES_USE_MACROS
+
+/*
+ * inch --
+ *	Return character at cursor position from stdscr.
+ */
+chtype
+inch(void)
+{
+	return winch(stdscr);
+}
+
+/*
+ * mvinch --
+ *      Return character at position (y, x) from stdscr.
+ */
+chtype
+mvinch(int y, int x)
+{
+	return mvwinch(stdscr, y, x);
+}
+
+/*
+ * mvwinch --
+ *      Return character at position (y, x) from the given window.
+ */
+chtype
+mvwinch(WINDOW *win, int y, int x)
+{
+	if (wmove(win, y, x) == ERR)
+		return ERR;
+	
+	return winch(win);
+}
+
+#endif
+
 /*
  * winch --
  *	Return character at cursor position.
  */
 chtype
-winch(win)
-	WINDOW	*win;
+winch(WINDOW *win)
 {
 
 	chtype	 ch;
