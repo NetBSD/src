@@ -1,5 +1,5 @@
 #
-#	$NetBSD: BOOTX,v 1.5 1996/10/04 07:08:29 leo Exp $
+#	$NetBSD: BOOTX,v 1.6 1996/10/16 12:50:31 leo Exp $
 #
 # BOOTX
 #
@@ -7,7 +7,7 @@
 # more people than the bare BOOT kernel.
 #
 
-include "std.atari"
+include "arch/atari/conf/std.atari"
 #
 # Add support for about 16 users. This variable is used to size
 # various kernel structures.
