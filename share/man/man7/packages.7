@@ -1,4 +1,4 @@
-.\"	$NetBSD: packages.7,v 1.71 2002/10/02 15:41:53 wiz Exp $
+.\"	$NetBSD: packages.7,v 1.72 2002/11/10 18:23:48 hubertf Exp $
 .\"
 .\" from: NetBSD: bsd.pkg.mk,v 1.89 1998/06/01 21:30:10 hubertf Exp
 .\"
@@ -97,7 +97,7 @@ shared libs.
 Says that if Mesa is requested, a package should preferably use a
 GLX (hardware-accelerated) version of the Mesa library.
 .It BINPKG_SITES
-List of sites carrying binary pkgs. Variables
+List of sites carrying binary pkgs. 
 .It LOCALPATCHES
 Directory for local patches that aren't part of pkgsrc. See
 pkgsrc/Packages.txt for more information.
@@ -733,7 +733,7 @@ Install the results of a build.
 .It bin-install
 Install a binary package from local disk and via FTP from a list
 of sites (see
-.Dq BINPKG_LIST
+.Dq BINPKG_SITES
 variable), and do a
 .Dq make package
 if no binary package is available anywhere. The arguments given to
