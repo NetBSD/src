@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.179 1998/08/15 15:05:22 rvb Exp $ */
+/*	$NetBSD: wd.c,v 1.180 1998/09/07 21:28:22 drochner Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -559,10 +559,10 @@ wdgetdefaultlabel(wd, lp)
 	lp->d_secpercyl = lp->d_ntracks * lp->d_nsectors;
 
 #if 0
-	strncpy(lp->d_typename, "ST506 disk", 16);
 	lp->d_type = DTYPE_ST506;
 #endif
-	strncpy(lp->d_packname, d_link->sc_params.wdp_model, 16);
+	strncpy(lp->d_typename, d_link->sc_params.wdp_model, 16);
+	strncpy(lp->d_packname, "fictitious", 16);
 	lp->d_secperunit = d_link->sc_capacity;
 	lp->d_rpm = 3600;
 	lp->d_interleave = 1;
