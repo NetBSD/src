@@ -2,7 +2,7 @@
 # Distribution kernel (TX3912 based model) kernel config file
 
 #
-#	$NetBSD: TX3912,v 1.6 2000/01/09 07:57:43 shin Exp $
+#	$NetBSD: TX3912,v 1.7 2000/01/12 14:56:22 uch Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
@@ -79,26 +79,28 @@ txcsbus4	at	tx39biu? platform PHILIPS_NINO
 txcsbus5	at	tx39biu? platform SHARP_MOBILON
 txcsbus*	at	tx39biu?	# misc unknown.
 
-# PHILIPS 74ALVC*1624? connected keyboard
+# PHILIPS 74ALVC*1624? / TOSHIBA TC5165BFTS buffer chip (keyboard)
 #
 tc5165buf*	at	txcsbus3 iocs 3 iocsbase 0 iocssize 0x100 iocswidth 16
 tc5165buf*	at	txcsbus5 iocs 4 iocsbase 0 iocssize 0x100 iocswidth 16
 skbd*		at	tc5165buf?
 
-# ITE IT8368E PCMCIA buffer chip
+# ITE IT8368E PCMCIA / TOSHIBA TC6345AF buffer chip (PCMCIA)
 # card		... 3:2 (98)
 # insert/remove ... 5:1/8 (161/168)
 options	IT8368E_LEGACY_MODE	# Mobilon HC-4100 requires this
 it8368e*	at	txcsbus? regcs 2 regcsbase 0 regcssize 0x20 regcswidth 16 iocs 8 iocsbase 0 iocssize 0x4000000 iocswidth 16 irq1 161 irq2 168 irq3 98
 
-# PHILIPS UCB1200 modem/audio analog front-end
+# PHILIPS UCB1200 / TOSHIBA TC35413F (modem/audio analog front-end)
 ucb*		at	tx39sib? slot 0
+ucbtp*		at	ucb?
+ucbsnd*		at	ucb?
 
 # WS console uses SUN or VT100 terminal emulation
 fb*		at	tx3912video?
 wsdisplay*	at	fb?
 wskbd*		at	skbd? mux 1
-wsmouse*	at	ucb? mux 0
+wsmouse*	at	ucbtp? mux 0
 
 options 	WSEMUL_VT100
 options 	WSDISPLAY_DEFAULTSCREENS=4
