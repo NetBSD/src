@@ -1,4 +1,4 @@
-# $NetBSD: NetBSD-1.5.mk,v 1.2 2000/11/29 19:56:19 tv Exp $
+# $NetBSD: NetBSD-1.5.mk,v 1.3 2000/11/30 00:04:08 tv Exp $
 #
 # Configuration file for the NetBSD 1.5 binary release.
 
@@ -8,7 +8,7 @@ RELEASE_SUBDIR=		# empty
 # BOOTFILE.alpha is absolute
 BOOTFILE.alpha=		${EXTFILEDIR}/alpha.bootxx
 EXTFILES.alpha=		alpha.bootxx:alpha/binary/sets/base.tgz,./usr/mdec/bootxx_cd9660
-INTFILES.alpha=		netbsd.alpha:alpha/installation/instkernel/netbsd.gz \
+INTFILES.alpha=		netbsd.alpha:alpha/installation/instkernel/netbsd.gz,link \
 			boot:alpha/binary/sets/base.tgz,./usr/mdec/boot
 
 # BOOTFILE.i386 is relative to CD staging root
