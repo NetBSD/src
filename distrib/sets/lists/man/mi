@@ -391,6 +391,7 @@
 ./usr/share/man/cat4/ip.0
 ./usr/share/man/cat4/ipf.0
 ./usr/share/man/cat4/ipfilter.0
+./usr/share/man/cat4/ipip.0
 ./usr/share/man/cat4/ipl.0
 ./usr/share/man/cat4/ipnat.0
 ./usr/share/man/cat4/isa.0
@@ -1482,6 +1483,7 @@
 ./usr/share/man/man4/ip.4
 ./usr/share/man/man4/ipf.4
 ./usr/share/man/man4/ipfilter.4
+./usr/share/man/man4/ipip.4
 ./usr/share/man/man4/ipl.4
 ./usr/share/man/man4/ipnat.4
 ./usr/share/man/man4/isa.4
