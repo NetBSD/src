@@ -1,5 +1,6 @@
-/* $NetBSD: tga_bt463.c,v 1.4 1999/04/30 02:47:42 nathanw Exp $ */
+/* $NetBSD: tga_bt463.c,v 1.5 2000/03/04 10:27:59 elric Exp $ */
 
+#if 0
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -589,3 +590,4 @@ tga_bt463_update(tag, regs, data)
 
 
 }
+#endif
