@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_compat.c,v 1.54.2.10 2002/10/05 01:40:21 gmcgarry Exp $	*/
+/*	$NetBSD: hpux_compat.c,v 1.54.2.11 2002/10/05 04:54:24 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_compat.c,v 1.54.2.10 2002/10/05 01:40:21 gmcgarry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_compat.c,v 1.54.2.11 2002/10/05 04:54:24 gmcgarry Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -1190,9 +1190,10 @@ hpux_sys_alarm_6x(l, v, retval)
 	struct proc *p = l->l_proc;
 	int s;
 	struct itimerval *itp, it;
+	struct ptimer *ptp;
 
-	if (p->p_timers && p->p_timers->pts_timers[ITIMER_REAL])
-		itp = &p->p_timers->pts_timers[ITIMER_REAL]->pt_time;
+ 	if (p->p_timers && p->p_timers->pts_timers[ITIMER_REAL])
+		itp = &ptp->pt_time;
 	else
 		itp = NULL;
 
@@ -1239,15 +1240,14 @@ hpux_sys_alarm_6x(l, v, retval)
 	}
 	if (p->p_timers == NULL)
 		timers_alloc(p);
-	if (p->p_timers->pts_timers[ITIMER_REAL] == NULL) {
-		p->p_timers->pts_timers[ITIMER_REAL] = 
-		    pool_get(&ptimer_pool, PR_WAITOK);
-		p->p_timers->pts_timers[ITIMER_REAL]->pt_ev.sigev_notify =
-		    SIGEV_SIGNAL;
-		p->p_timers->pts_timers[ITIMER_REAL]->pt_ev.sigev_signo =
-		    SIGALRM;
-		p->p_timers->pts_timers[ITIMER_REAL]->pt_type = CLOCK_REALTIME;
-		callout_init(&p->p_timers->pts_timers[ITIMER_REAL]->pt_ch);
+	ptp = p->p_timers->pts_timers[ITIMER_REAL];
+	if (ptp == NULL) {
+		ptp = pool_get(&ptimer_pool, PR_WAITOK);
+		ptp->pt_ev.sigev_notify = SIGEV_SIGNAL;
+		ptp->pt_ev.sigev_signo = SIGALRM;
+		ptp->pt_type = CLOCK_REALTIME;
+		p->p_timers->pts_timers[ITIMER_REAL] = ptp;
+		callout_init(&ptp->pt_ch);
 	}
 
 	if (timerisset(&it.it_value)) {
@@ -1256,11 +1256,10 @@ hpux_sys_alarm_6x(l, v, retval)
 		 * callout_reset() does it for us.
 		 */
 		timeradd(&it.it_value, &time, &it.it_value);
-		callout_reset(&p->p_timers->pts_timers[ITIMER_REAL]->pt_ch,
-		    hzto(&p->p_timers->pts_timers[ITIMER_REAL]->pt_time.it_value),
-		    realtimerexpire, p->p_timers->pts_timers[ITIMER_REAL]);
+		callout_reset(&ptp->pt_ch, hzto(&ptp->pt_time.it_value),
+		    realtimerexpire, ptp);
 	}
-	p->p_timers->pts_timers[ITIMER_REAL]->pt_time = it;
+	ptp->pt_time = it;
 	splx(s);
 
 	return (0);
