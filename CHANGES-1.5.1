@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.1,v 1.1.2.54 2001/04/24 23:17:41 he Exp $
+#	$NetBSD: CHANGES-1.5.1,v 1.1.2.55 2001/04/25 12:36:54 he Exp $
 
 A complete list of changes from NetBSD 1.5 to NetBSD 1.5.1:
 
@@ -4043,3 +4043,63 @@ usr.sbin/pkg_install/add/main.c			1.21-1.22
   and still let ``pkg_add foo'' work.  Required packages will be
   pulled in as usual.  If PKG_PATH contains a mixture of local
   paths and ftp:// URLs, the local paths will be searched first.
+
+sys/arch/i386/include/param.h			1.43
+
+  Bump NMBCLUSTERS to 1024 or 2048 in GATEWAY case (was 256/512).
+
+sys/arch/i386/conf/GENERIC			1.403
+sys/arch/i386/conf/GENERIC_DIAGNOSTIC		1.1-1.2 (new)
+sys/arch/i386/conf/GENERIC_LAPTOP		1.14
+sys/arch/i386/conf/GENERIC_TINY			1.24
+sys/arch/i386/conf/CARDBUS			1.34
+sys/arch/i386/conf/DR-EVIL			1.27
+sys/arch/i386/conf/NBFTP			1.27
+sys/arch/i386/conf/HOMEWORLD			1.53
+sys/arch/i386/conf/INSTALL			1.164
+sys/arch/i386/conf/INSTALL_LAPTOP		1.8
+sys/arch/i386/conf/INSTALL_SMALL		1.65
+sys/arch/i386/conf/INSTALL_TINY			1.33
+sys/arch/i386/conf/IOPENER			1.13
+sys/arch/i386/conf/MINBAR			1.25
+sys/arch/i386/conf/PS2				1.18
+sys/arch/i386/conf/SWINGER			1.15
+etc/etc.i386/Makefile.inc			1.27
+share/man/man4/options.4			1.136
+
+  Not all DIAGNOSTIC checks are all that cheap, so disable that
+  option in meant-for-production kernels.  Introduces GENERIC_DIAGNOSTIC.
+
+usr.sbin/pkg_install/Makefile.inc		1.12-1.16
+
+  Various updates:
+   o Add ZOULARISBASE
+   o Allow overriding CHOWN/CHGRP/CHMOD
+   o Use "tar" included in Zoularis under SunOS
+   o Use PRINTOBJDIRS
+   o Always include /etc/mk.conf
+
+sys/arch/i386/include/cpu.h			1.66
+sys/arch/i386/i386/machdep.c			1.416-1.419
+sys/arch/i386/i386/locore.s			1.226
+
+  Add ``const'' to cpu tables.
+  Properly identify and distinguish newer Intel CPUs using Brand
+  ID information.
+
+lib/libc/Makefile				1.96
+share/mk/bsd.prog.mk				1.129
+regress/sys/kerm/execve/Makefile		1.14
+
+  Remove duplicate ``tags'' target definition.
+  Permit redefinition of ``afterdepend'' target.
+  Remove duplicate ``empty'' target definition.
+
+usr.bin/skeyinit/skeyinit.c			1.15
+
+  Fix spurious error message when run by non-root.  Fixes PR#12465.
+
+sys/dev/usb/ukbdmap.c				1.6-1.7
+
+  Add Japanese, German, Danish, Swedish, Norwegian, French, Italian,
+  English, and Spanish keyboard mappings.
