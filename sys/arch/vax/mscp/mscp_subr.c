@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_subr.c,v 1.9 1998/02/08 14:03:58 ragge Exp $	*/
+/*	$NetBSD: mscp_subr.c,v 1.10 1998/11/05 19:47:20 ragge Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1988 Regents of the University of California.
@@ -363,7 +363,7 @@ mscp_init(mi)
 
 	count = 0;
 	while (count < DELAYTEN) {
-		if (((volatile)mi->mi_flags & MSC_READY) != 0)
+		if (((volatile int)mi->mi_flags & MSC_READY) != 0)
 			break;
 		if ((j = *mi->mi_sa) & MP_ERR)
 			goto out;
