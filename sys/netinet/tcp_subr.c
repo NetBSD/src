@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.46 1998/03/31 22:49:10 thorpej Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.47 1998/04/13 21:18:19 kml Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -110,6 +110,7 @@ int 	tcp_mssdflt = TCP_MSS;
 int 	tcp_rttdflt = TCPTV_SRTTDFLT / PR_SLOWHZ;
 int	tcp_do_rfc1323 = 1;
 int	tcp_init_win = 1;
+int	tcp_mss_ifmtu = 0;
 
 #ifndef TCBHASHSIZE
 #define	TCBHASHSIZE	128
@@ -589,25 +590,38 @@ tcp_mtudisc(inp, errno)
  * socket.  If we are the client (we initiated connection), we
  * are called witht he TCPCB for the actual connection.
  */
-int
-tcp_mss_to_advertise(tp)
-	const struct tcpcb *tp;
+u_long
+tcp_mss_to_advertise(ifp)
+	const struct ifnet *ifp;
 {
 	extern u_long in_maxmtu;
-	struct inpcb *inp;
-	struct socket *so;
-	int mss;
-
-	inp = tp->t_inpcb;
-	so = inp->inp_socket;
+	u_long mss = 0;
 
 	/*
 	 * In order to avoid defeating path MTU discovery on the peer,
 	 * we advertise the max MTU of all attached networks as our MSS,
 	 * per RFC 1191, section 3.1.
+	 *
+	 * We provide the option to advertise just the MTU of
+	 * the interface on which we hope this connection will
+	 * be receiving.  If we are responding to a SYN, we
+	 * will have a pretty good idea about this, but when
+	 * initiating a connection there is a bit more doubt.
+	 *
+	 * We also need to ensure that loopback has a large enough
+	 * MSS, as the loopback MTU is never included in in_maxmtu.
 	 */
-	mss = in_maxmtu - sizeof(struct tcpiphdr);
 
+	if (ifp != NULL)
+		mss = ifp->if_mtu;
+
+	if (tcp_mss_ifmtu == 0)
+		mss = max(in_maxmtu, mss);
+
+	if (mss > sizeof(struct tcpiphdr))
+		mss -= sizeof(struct tcpiphdr);
+
+	mss = max(tcp_mssdflt, mss);
 	return (mss);
 }
 
