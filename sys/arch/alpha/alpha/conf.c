@@ -1,4 +1,4 @@
-/* $NetBSD: conf.c,v 1.25 1997/09/03 00:25:01 thorpej Exp $ */
+/* $NetBSD: conf.c,v 1.26 1997/09/19 00:59:38 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.25 1997/09/03 00:25:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.26 1997/09/19 00:59:38 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,6 +64,10 @@ bdev_decl(vnd);
 bdev_decl(ccd);
 #include "md.h"
 bdev_decl(md);
+
+#include "awdc.h"	/* XXX */
+#undef NWDC		/* XXX */
+#define	NWDC	NAWDC	/* XXX */
 
 struct bdevsw	bdevsw[] =
 {
