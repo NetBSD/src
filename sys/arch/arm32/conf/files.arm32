@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm32,v 1.72 1998/10/06 02:37:59 mark Exp $
+#	$NetBSD: files.arm32,v 1.73 1998/10/08 01:50:28 mark Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -149,7 +149,7 @@ file    arch/arm32/iomd/qms_iomd.c		qms_iomd
 
 # attribute used to represent the "keyboard controller" on the shark
 # XXX should be a real device
-define	pckbd { [irq = -1], [port = -1] }
+define	spckbd { [irq = -1], [port = -1] }
 
 # PS/2 mouse device
 device	pms: tty
@@ -157,7 +157,7 @@ file	arch/arm32/dev/pms.c			pms & pms_iomd needs-flag
 file	arch/arm32/shark/pms.c			pms & ofw needs-flag
 major	{pms = 40}
 
-attach	pms at pckbd with pms
+attach	pms at spckbd with pms
 attach	pms at iomd with pms_iomd
 file	arch/arm32/iomd/pms_iomd.c		pms_iomd
 
@@ -448,7 +448,7 @@ pseudo-device profiler: disk
 file	arch/arm32/shark/profile.c	profiler needs-flag
 
 # SHARK pc console
-device  pc: tty, pckbd, i8042
+device  pc: tty, spckbd, i8042
 attach  pc at ofisapc
 file	arch/arm32/shark/pccons.c		pc & ofw needs-flag
 
@@ -538,7 +538,7 @@ include "dev/usb/files.usb"
 # Include WSCONS stuff
 include "dev/wscons/files.wscons"
 
-#include "dev/pckbc/files.pckbc"
+include "dev/pckbc/files.pckbc"
 
 #
 # Compatibility modules
