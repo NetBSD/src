@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.30 1998/10/30 10:45:09 lukem Exp $
+#	$NetBSD: bsd.sys.mk,v 1.31 1998/10/30 11:17:08 lukem Exp $
 #
 # Overrides used for NetBSD source tree builds.
 
@@ -74,10 +74,9 @@ YFLAGS+=-d -p${YACCPREFIX}
 	${YACC.y} -b ${.TARGET:R} ${.IMPSRC}
 	${LINK.c} -o ${.TARGET} ${.TARGET:R}.tab.c ${LDLIBS}
 	rm -f ${.TARGET:R}.tab.c ${.TARGET:R}.tab.h
-.y.h .y.c:
-	${YACC.y} -b ${.TARGET:R} ${.IMPSRC}
-	mv ${.TARGET:R}.tab.c ${.TARGET:R}.c
-	mv ${.TARGET:R}.tab.h ${.TARGET:R}.h
+.y.h: ${.TARGET:R}.c
+.y.c:
+	${YACC.y} -o ${.TARGET} ${.IMPSRC}
 .y.o:
 	${YACC.y} -b ${.TARGET:R} ${.IMPSRC}
 	${COMPILE.c} -o ${.TARGET} ${.TARGET:R}.tab.c
@@ -92,8 +91,7 @@ YFLAGS+=-d -p${YACCPREFIX}
 	${LINK.c} -o ${.TARGET} ${.TARGET:R}.tab.c ${LDLIBS}
 	rm -f ${.TARGET:R}.tab.c
 .y.c:
-	${YACC.y} -b ${.TARGET:R} ${.IMPSRC}
-	mv ${.TARGET:R}.tab.c ${.TARGET}
+	${YACC.y} -o ${.TARGET} ${.IMPSRC}
 .y.o:
 	${YACC.y} -b ${.TARGET:R} ${.IMPSRC}
 	${COMPILE.c} -o ${.TARGET} ${.TARGET:R}.tab.c
