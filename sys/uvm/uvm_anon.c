@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_anon.c,v 1.18 2001/09/15 20:36:44 chs Exp $	*/
+/*	$NetBSD: uvm_anon.c,v 1.19 2001/10/21 00:04:42 chs Exp $	*/
 
 /*
  *
@@ -235,6 +235,7 @@ uvm_anfree(anon)
 			 */
 
 			KASSERT((pg->flags & PG_RELEASED) == 0);
+			simple_lock(&anon->an_lock);
 			pmap_page_protect(pg, VM_PROT_NONE);
 			while ((pg = anon->u.an_page) &&
 			       (pg->flags & PG_BUSY) != 0) {
@@ -248,6 +249,7 @@ uvm_anfree(anon)
 				uvm_pagefree(pg);
 				uvm_unlock_pageq();
 			}
+			simple_unlock(&anon->an_lock);
 			UVMHIST_LOG(maphist, "anon 0x%x, page 0x%x: "
 				    "freed now!", anon, pg, 0, 0);
 		}
