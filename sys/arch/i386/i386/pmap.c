@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.83.2.16 2001/01/01 20:34:24 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.83.2.17 2001/01/01 20:40:10 thorpej Exp $	*/
 
 /*
  *
@@ -625,8 +625,7 @@ pmap_apte_flush(struct pmap *pmap)
 	for (CPU_INFO_FOREACH(cii, ci)) {
 		if (ci == self)
 			continue;
-		if (pmap == pmap_kernel() ||
-		    (pmap->pm_cpus & (1U << ci->ci_cpuid)) != 0) {
+		if (pmap_is_active(pmap, ci->ci_cpuid)) {
 			pq = &pmap_tlb_shootdown_q[ci->ci_cpuid];
 			simple_lock(&pq->pq_slock);
 			pq->pq_flushu++;
