@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_3min.c,v 1.17 1999/05/25 07:37:08 nisimura Exp $	*/
+/*	$NetBSD: dec_3min.c,v 1.18 1999/05/26 04:23:59 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.17 1999/05/25 07:37:08 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.18 1999/05/26 04:23:59 nisimura Exp $");
 
 
 #include <sys/types.h>
@@ -98,8 +98,6 @@ __KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.17 1999/05/25 07:37:08 nisimura Exp $
 #include <pmax/pmax/clockreg.h>
 #include <pmax/pmax/turbochannel.h>
 #include <pmax/pmax/pmaxtype.h>
-
-#include <pmax/pmax/machdep.h>		/* XXXjrs replace with vectors */
 
 #include <pmax/pmax/kmin.h>		/* 3min baseboard addresses */
 #include <pmax/pmax/memc.h>		/* 3min/maxine memory errors */
@@ -128,9 +126,21 @@ void dec_3min_mcclock_cpuspeed __P((volatile struct chiptime *mcclock_addr,
 			       int clockmask));
 u_long	kmin_tc3_imask;
 
+static unsigned latched_cycle_cnt;
+
 void kn02ba_wbflush __P((void));
 unsigned kn02ba_clkread __P((void));
 extern unsigned (*clkread) __P((void));
+extern void prom_haltbutton __P((void));
+
+extern volatile struct chiptime *mcclock_addr; /* XXX */
+extern char cpu_model[];
+extern int physmem_boardmax;
+
+#ifdef MIPS3
+extern u_int32_t mips3_cycle_count __P((void));
+#endif
+
 
 /*
  * Fill in platform struct.
@@ -392,7 +402,6 @@ dec_3min_intr(cpumask, pc, status, cause)
 			struct clockframe cf;
 			struct chiptime *clk;
 			volatile int temp;
-			extern u_int32_t mips3_cycle_count __P((void));
 
 			clk = (void *)(ioasic_base + IOASIC_SLOT_8_START);
 			temp = clk->regc;	/* XXX clear interrupt bits */
@@ -545,20 +554,13 @@ unsigned
 kn02ba_clkread()
 {
 #ifdef MIPS3
-	extern u_int32_t mips3_cycle_count __P((void));
-	extern u_long latched_cycle_cnt;
-
 	if (CPUISMIPS3) {
 		u_int32_t mips3_cycles;
 
 		mips3_cycles = mips3_cycle_count() - latched_cycle_cnt;
-#if 0
 		/* XXX divides take 78 cycles: approximate with * 41/2048 */
-		return (mips3_cycles / cpu_mhz);
-#else
 		return((mips3_cycles >> 6) + (mips3_cycles >> 8) +
 		       (mips3_cycles >> 11));
-#endif
 	}
 #endif
 	return 0;
