@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.365 2001/10/11 14:31:58 tron Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.366 2001/10/13 07:44:22 ichiro Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.362 2001/10/11 14:30:21 tron Exp 
+ *	NetBSD: pcidevs,v 1.363 2001/10/13 07:43:42 ichiro Exp 
  */
 
 /*
@@ -3410,6 +3410,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Intergraph",
 	    "Powerstorm 4D50T",
+	},
+	{
+	    PCI_VENDOR_INTERSIL, PCI_PRODUCT_INTERSIL_MINI_PCI_WLAN,
+	    0,
+	    "Intersil",
+	    "Intersil PRISM2.5 Mini-PCI WLAN",
 	},
 	{
 	    PCI_VENDOR_INVERTEX, PCI_PRODUCT_INVERTEX_AEON,
@@ -9127,6 +9133,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_ESSTECH, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "ESS Technology Inc",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_INTERSIL, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Intersil",
 	    NULL,
 	},
 	{
