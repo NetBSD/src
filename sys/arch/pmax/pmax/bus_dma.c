@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.20.4.2 2000/09/30 01:46:48 mhitch Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.20.4.3 2000/11/13 19:14:51 tv Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -499,9 +499,11 @@ _bus_dmamap_sync(t, map, offset, len, ops)
 		minlen = len < map->dm_segs[i].ds_len - offset ?
 		    len : map->dm_segs[i].ds_len - offset;
 
+#ifdef MIPS3
 		if (CPUISMIPS3)
 			addr = map->dm_segs[i]._ds_vaddr;
 		else
+#endif
 			addr = map->dm_segs[i].ds_addr;
 
 #ifdef BUS_DMA_DEBUG
@@ -509,9 +511,12 @@ _bus_dmamap_sync(t, map, offset, len, ops)
 		    "(0x%lx..0x%lx) ...", i, addr + offset,
 		    addr + offset + minlen - 1);
 #endif
+#ifdef MIPS3
 		if (CPUISMIPS3)
 			MachHitFlushDCache(addr + offset, minlen);
-		else {
+		else
+#endif
+		{
 			/*
 			 * We can't have a TLB miss; use KSEG0.
 			 */
