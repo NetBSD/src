@@ -1,4 +1,4 @@
-# 	$NetBSD: NEWS1200,v 1.7 2000/11/24 12:58:17 tsutsui Exp $
+# 	$NetBSD: NEWS1200,v 1.8 2000/11/24 13:05:31 tsutsui Exp $
 
 #	news1200 config file
 #
@@ -49,7 +49,7 @@ file-system	FFS		# Berkeley Fast Filesystem
 #file-system	LFS		# log-structured file system
 file-system	NFS		# Sun NFS-compatible filesystem client
 file-system	MFS		# memory-based filesystem
-file-system	CD9660		# ISO 9660 + Rock Ridge file system
+#file-system	CD9660		# ISO 9660 + Rock Ridge file system
 #file-system	MSDOSFS		# MS-DOS FAT file system
 file-system	KERNFS		# /kern
 file-system	PROCFS		# /proc
@@ -64,7 +64,7 @@ file-system	NULLFS		# loopback file system
 #options 	NFSSERVER	# nfs server support
 #options 	QUOTA		# ffs quotas
 #options 	FFS_EI		# ffs endian independant support
-#options	SOFTDEP		# ffs soft updates support
+#options 	SOFTDEP		# ffs soft updates support
 
 # Networking options
 options 	INET		# Internet protocols
@@ -133,5 +133,5 @@ pseudo-device	ipfilter		# ip filter
 #pseudo-device	ipip		2	# IP Encapsulation within IP (RFC 2003)
 pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
-#pseudo-device	rnd			# /dev/random and in-kernle generator
+pseudo-device	rnd			# /dev/random and in-kernle generator
 #pseudo-device	vcoda		4	# coda minicache <-> venus comm.
