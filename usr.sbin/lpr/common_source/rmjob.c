@@ -1,4 +1,4 @@
-/*	$NetBSD: rmjob.c,v 1.10 1997/03/10 06:13:16 cgd Exp $	*/
+/*	$NetBSD: rmjob.c,v 1.11 1997/07/10 06:19:54 mikel Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,11 @@
  */
 
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)rmjob.c	8.1 (Berkeley) 6/6/93";
+#else
+static char rcsid[] = "$NetBSD";
+#endif
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -96,7 +100,7 @@ rmjob()
 	if (cgetstr(bp,"lo", &LO) < 0)
 		LO = DEFLOCK;
 	cgetstr(bp, "rm", &RM);
-	if (cp = checkremote())
+	if ((cp = checkremote()) != NULL)
 		printf("Warning: %s\n", cp);
 
 	/*
