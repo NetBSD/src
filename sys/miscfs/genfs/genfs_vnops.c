@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.81 2003/08/07 16:32:35 agc Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.82 2003/09/24 10:22:53 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.81 2003/08/07 16:32:35 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.82 2003/09/24 10:22:53 yamt Exp $");
 
 #include "opt_nfsserver.h"
 
@@ -499,9 +499,9 @@ genfs_getpages(void *v)
 	if (flags & PGO_PASTEOF) {
 		newsize = MAX(vp->v_size,
 		    origoffset + (orignpages << PAGE_SHIFT));
-		GOP_SIZE(vp, newsize, &memeof, GOP_SIZE_READ);
+		GOP_SIZE(vp, newsize, &memeof, GOP_SIZE_READ|GOP_SIZE_MEM);
 	} else {
-		memeof = diskeof;
+		GOP_SIZE(vp, vp->v_size, &memeof, GOP_SIZE_READ|GOP_SIZE_MEM);
 	}
 	KASSERT(ap->a_centeridx >= 0 || ap->a_centeridx <= orignpages);
 	KASSERT((origoffset & (PAGE_SIZE - 1)) == 0 && origoffset >= 0);
