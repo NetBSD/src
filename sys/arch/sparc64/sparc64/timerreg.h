@@ -1,4 +1,4 @@
-/*	$NetBSD: timerreg.h,v 1.2 1998/08/13 02:10:48 eeh Exp $ */
+/*	$NetBSD: timerreg.h,v 1.3 1999/06/05 05:10:01 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -87,6 +87,10 @@
  *	- The counters are 28 bits wide with 1us accuracy.
  *	- You can make them do funky things with the limit register
  *	- They have standard 64-bit SBUS control registers.
+ *
+ * There is a problem on the Ultra5 and Ultra10.  As the PCI controller
+ * doesn't include the timer, there are no `counter-timer' nodes here
+ * and so we must use %tick.
  */
 #ifndef _LOCORE
 struct timer_4 {
