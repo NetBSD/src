@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep.c,v 1.67 1995/01/07 21:37:56 mycroft Exp $	*/
+/*	$NetBSD: if_ep.c,v 1.68 1995/01/22 07:37:28 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Herb Peyerl <hpeyerl@novatel.ca>
@@ -202,7 +202,10 @@ epprobe(parent, match, aux)
 		for (slot = 0; slot < 10; slot++) {
 			elink_reset();
 			elink_idseq(ELINK_509_POLY);
-			delay(1000);
+
+			/* Untag all the adapters so they will talk to us. */
+			if (slot == 0)
+				outb(ELINK_ID_PORT, TAG_ADAPTER + 0);
 
 			vendor =
 			    htons(epreadeeprom(ELINK_ID_PORT, EEPROM_MFG_ID));
@@ -226,7 +229,7 @@ epprobe(parent, match, aux)
 			epaddcard(k, k2, 0);
 
 			/* so card will not respond to contention again */
-			outb(ELINK_ID_PORT, TAG_ADAPTER_0 + 1);
+			outb(ELINK_ID_PORT, TAG_ADAPTER + 1);
 
 			/*
 			 * XXX: this should probably not be done here
@@ -276,6 +279,8 @@ epattach(parent, self, aux)
 
 	sc->ep_iobase = ia->ia_iobase;
 
+	GO_WINDOW(0);
+
 	sc->ep_connectors = 0;
 	i = inw(ia->ia_iobase + EP_W0_CONFIG_CTRL);
 	if (i & IS_AUI) {
@@ -301,18 +306,17 @@ epattach(parent, self, aux)
 	 * Read the station address from the eeprom
 	 */
 	for (i = 0; i < 3; i++) {
-		u_short *p;
-		GO_WINDOW(0);
+		u_short x;
 		if (epbusyeeprom(sc))
 			return;
 		outw(BASE + EP_W0_EEPROM_COMMAND, READ_EEPROM | i);
 		if (epbusyeeprom(sc))
 			return;
-		p = (u_short *)&sc->sc_arpcom.ac_enaddr[i * 2];
-		*p = htons(inw(BASE + EP_W0_EEPROM_DATA));
-		GO_WINDOW(2);
-		outw(BASE + EP_W2_ADDR_0 + (i * 2), ntohs(*p));
+		x = inw(BASE + EP_W0_EEPROM_DATA);
+		sc->sc_arpcom.ac_enaddr[(i << 1)] = x >> 8;
+		sc->sc_arpcom.ac_enaddr[(i << 1) + 1] = x;
 	}
+
 	printf(" address %s\n", ether_sprintf(sc->sc_arpcom.ac_enaddr));
 
 	ifp->if_unit = sc->sc_dev.dv_unit;
@@ -435,7 +439,6 @@ epsetlink(sc)
 	 */
 	GO_WINDOW(4);
 	outw(BASE + EP_W4_MEDIA_TYPE, DISABLE_UTP);
-	GO_WINDOW(1);
 	if (!(ifp->if_flags & IFF_LINK0) && (sc->ep_connectors & BNC)) {
 		outw(BASE + EP_COMMAND, START_TRANSCEIVER);
 		delay(1000);
@@ -443,12 +446,10 @@ epsetlink(sc)
 	if (ifp->if_flags & IFF_LINK0) {
 		outw(BASE + EP_COMMAND, STOP_TRANSCEIVER);
 		delay(1000);
-		if((ifp->if_flags & IFF_LINK1) && (sc->ep_connectors & UTP)) {
-			GO_WINDOW(4);
+		if ((ifp->if_flags & IFF_LINK1) && (sc->ep_connectors & UTP))
 			outw(BASE + EP_W4_MEDIA_TYPE, ENABLE_UTP);
-			GO_WINDOW(1);
-		}
 	}
+	GO_WINDOW(1);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_epreg.h,v 1.11 1994/12/10 14:52:04 christos Exp $	*/
+/*	$NetBSD: if_epreg.h,v 1.12 1995/01/22 07:37:30 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993 Herb Peyerl (hpeyerl@novatel.ca)
@@ -306,7 +306,7 @@
 /*
  * Misc defines for various things.
  */
-#define TAG_ADAPTER_0 			0xd0
+#define TAG_ADAPTER 			0xd0
 #define ACTIVATE_ADAPTER_TO_CONFIG 	0xff
 #define ENABLE_DRQ_IRQ			0x0001
 #define MFG_ID				0x506d	/* `TCM' */
