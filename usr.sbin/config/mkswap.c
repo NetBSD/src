@@ -1,4 +1,4 @@
-/*	$NetBSD: mkswap.c,v 1.7 1997/06/12 15:03:11 mrg Exp $	*/
+/*	$NetBSD: mkswap.c,v 1.8 1997/06/14 04:25:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -88,7 +88,7 @@ mkoneswap(cf)
 	register struct nvlist *nv;
 	register FILE *fp;
 	char fname[200];
-	char rootinfo[200];
+	char specinfo[200];
 
 	(void)sprintf(fname, "swap%s.c", cf->cf_name);
 	if ((fp = fopen(fname, "w")) == NULL) {
@@ -106,12 +106,12 @@ mkoneswap(cf)
 	 */
 	nv = cf->cf_root;
 	if (cf->cf_root->nv_str == s_qmark)
-		strcpy(rootinfo, "NULL");
+		strcpy(specinfo, "NULL");
 	else
-		sprintf(rootinfo, "\"%s\"", cf->cf_root->nv_str);
-	if (fprintf(fp, "const char *rootspec = %s;\n", rootinfo) < 0)
+		sprintf(specinfo, "\"%s\"", cf->cf_root->nv_str);
+	if (fprintf(fp, "const char *rootspec = %s;\n", specinfo) < 0)
 		goto wrerror;
-	if (fprintf(fp, "dev_t\trootdev = %s;\t/* %s */\n",
+	if (fprintf(fp, "dev_t\trootdev = %s;\t/* %s */\n\n",
 	    mkdevstr(nv->nv_int),
 	    nv->nv_str == s_qmark ? "wildcarded" : nv->nv_str) < 0)
 		goto wrerror;
@@ -120,22 +120,28 @@ mkoneswap(cf)
 	 * Emit the dump device.
 	 */
 	nv = cf->cf_dump;
-	if (fprintf(fp, "dev_t\tdumpdev = %s;\t/* %s */\n",
+	if (cf->cf_dump == NULL)
+		strcpy(specinfo, "NULL");
+	else
+		sprintf(specinfo, "\"%s\"", cf->cf_dump->nv_str);
+	if (fprintf(fp, "const char *dumpspec = %s;\n", specinfo) < 0)
+		goto wrerror;
+	if (fprintf(fp, "dev_t\tdumpdev = %s;\t/* %s */\n\n",
 	    nv ? mkdevstr(nv->nv_int) : "NODEV",
-	    nv ? (nv->nv_str ? nv->nv_str : "none") : "unspecified") < 0)
+	    nv ? nv->nv_str : "unspecified") < 0)
 		goto wrerror;
 
 	/*
 	 * Emit the root file system.
 	 */
 	if (cf->cf_fstype == NULL)
-		strcpy(rootinfo, "NULL");
+		strcpy(specinfo, "NULL");
 	else {
-		sprintf(rootinfo, "%s_mountroot", cf->cf_fstype);
-		if (fprintf(fp, "extern int %s __P((void));\n", rootinfo) < 0)
+		sprintf(specinfo, "%s_mountroot", cf->cf_fstype);
+		if (fprintf(fp, "extern int %s __P((void));\n", specinfo) < 0)
 			goto wrerror;
 	}
-	if (fprintf(fp, "int (*mountroot) __P((void)) = %s;\n", rootinfo) < 0)
+	if (fprintf(fp, "int (*mountroot) __P((void)) = %s;\n", specinfo) < 0)
 		goto wrerror;
 
 	if (fclose(fp)) {

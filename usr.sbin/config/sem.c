@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.16 1997/06/12 15:03:13 mrg Exp $	*/
+/*	$NetBSD: sem.c,v 1.17 1997/06/14 04:25:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -59,8 +59,8 @@
 #define	NAMESIZE	100	/* local name buffers */
 
 const char *s_ifnet;		/* magic attribute */
-const char *s_nfs;
 const char *s_qmark;
+const char *s_none;
 
 static struct hashtab *cfhashtab;	/* for config lookup */
 static struct hashtab *devitab;		/* etc */
@@ -78,8 +78,6 @@ static int has_errobj __P((struct nvlist *, void *));
 static struct nvlist *addtoattr __P((struct nvlist *, struct devbase *));
 static int exclude __P((struct nvlist *, const char *, const char *));
 static int resolve __P((struct nvlist **, const char *, const char *,
-			struct nvlist *, int));
-static int lresolve __P((struct nvlist **, const char *, const char *,
 			struct nvlist *, int));
 static struct devi *newdevi __P((const char *, int, struct devbase *d));
 static struct devi *getdevi __P((const char *));
@@ -116,8 +114,8 @@ initsem()
 	nextpseudo = &allpseudo;
 
 	s_ifnet = intern("ifnet");
-	s_nfs = intern("nfs");
 	s_qmark = intern("?");
+	s_none = intern("none");
 }
 
 /* Name of include file just ended (set in scan.l) */
@@ -673,21 +671,6 @@ resolve(nvp, name, what, dflt, part)
 	return (0);
 }
 
-static int
-lresolve(nvp, name, what, dflt, part)
-	register struct nvlist **nvp;
-	const char *name, *what;
-	struct nvlist *dflt;
-	int part;
-{
-	int err;
-
-	while ((err = resolve(nvp, name, what, dflt, part)) == 0 &&
-	    (*nvp)->nv_next != NULL)
-		nvp = &(*nvp)->nv_next;
-	return (err);
-}
-
 /*
  * Add a completed configuration to the list.
  */
@@ -709,23 +692,33 @@ addconf(cf0)
 	*cf = *cf0;
 
 	/*
-	 * Check for wildcarded root device.
+	 * Resolve the root device.
 	 */
-	if (cf->cf_root->nv_str == s_qmark) {
-		/*
-		 * Make sure no dump device specified.
-		 * Note single | here (check all).
-		 */
-		if (exclude(cf->cf_dump, name, "dump device"))
-			goto bad;
-	} else {
+	if (cf->cf_root->nv_str != s_qmark) {
 		nv = cf->cf_root;
 		if (nv == NULL) {
 			error("%s: no root device specified", name);
 			goto bad;
 		}
-		if (resolve(&cf->cf_root, name, "root", nv, 'a') |
-		    resolve(&cf->cf_dump, name, "dumps", nv, 'b'))
+		if (resolve(&cf->cf_root, name, "root", nv, 'a'))
+			goto bad;
+	}
+
+	/*
+	 * Resolve the dump device.
+	 */
+	if (cf->cf_dump == NULL || cf->cf_dump->nv_str == s_qmark) {
+		/*
+		 * Wildcarded dump device is equivalent to unspecified.
+		 */
+		cf->cf_dump = NULL;
+	} else if (cf->cf_dump->nv_str == s_none) {
+		/*
+		 * Operator has requested that no dump device should be
+		 * configured; do nothing.
+		 */
+	} else {
+		if (resolve(&cf->cf_dump, name, "dumps", cf->cf_dump, 'b'))
 			goto bad;
 	}
 
