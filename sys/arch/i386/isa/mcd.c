@@ -1,4 +1,4 @@
-/*	$NetBSD: mcd.c,v 1.22 1994/10/30 21:44:08 cgd Exp $	*/
+/*	$NetBSD: mcd.c,v 1.23 1994/11/03 22:56:01 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -158,12 +158,14 @@ int mcd_play __P((struct mcd_softc *, struct mcd_read2 *));
 int mcd_pause __P((struct mcd_softc *));
 int mcd_resume __P((struct mcd_softc *));
 
-int mcdprobe();
-void mcdattach();
+int mcdprobe __P((struct device *, void *, void *));
+void mcdattach __P((struct device *, struct device *, void *));
+void mcdstrategy __P((struct buf *));
 
 struct cfdriver mcdcd = {
 	NULL, "mcd", mcdprobe, mcdattach, DV_DISK, sizeof(struct mcd_softc)
 };
+struct dkdriver mcddkdriver = { mcdstrategy };
 
 #define mcd_put(port,byte)	outb(port,byte)
 
@@ -198,6 +200,7 @@ mcdattach(parent, self, aux)
 	printf("\n");
 
 	sc->flags = 0;
+	sc->sc_dk.dk_driver = &mcddkdriver;
 
 	sc->sc_ih.ih_fun = mcdintr;
 	sc->sc_ih.ih_arg = sc;
@@ -565,11 +568,11 @@ mcd_configure(sc)
 }
 
 int
-mcdprobe(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+mcdprobe(parent, match, aux)
+	struct device *parent;
+	void *match, *aux;
 {
-	struct mcd_softc *sc = (void *)self;
+	struct mcd_softc *sc = match;
 	struct isa_attach_args *ia = aux;
 	u_short iobase = ia->ia_iobase;
 	int i;
