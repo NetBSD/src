@@ -92,7 +92,7 @@ int     resolve_local(const char *addr)
      */
     len = strlen(saved_addr);
     if (len == 0)
-	msg_panic("resolve_local: null domain");
+	RETURN(0);
     if (saved_addr[len - 1] == '.')
 	saved_addr[--len] = 0;
 
