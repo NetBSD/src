@@ -1,4 +1,4 @@
-/* $NetBSD: locore.S,v 1.12 1996/10/13 16:52:02 christos Exp $ */
+/* $NetBSD: locore.S,v 1.13 1996/10/15 02:10:17 mark Exp $ */
 
 /*
  * Copyright (C) 1994 Mark Brinicombe
@@ -31,6 +31,7 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "kgdb.h"
 #include "assym.h"
 #include <machine/asm.h>
 #include <machine/cpu.h>
@@ -94,31 +95,12 @@ L1:
 
 	mov	sp, r0
 
-/* Debug code */
-
-/*	mov	r1, sp
-	add	r0, pc, #(Ltext9 - . - 8)
-	bl	_printf
-*/
-
 /* Setup an initial trap frame for start_init to use */
 
 	PUSHFRAME
 
 	mov	fp, #0x00000000		/* trace back starts here */
 	mov	r0, sp			/* parameter to main is trap frame*/ 
-
-/* Debug */
-
-#if 0
-stmfd r13!, {r0-r3}
-	ldr	r1, Lproc0
-	ldr	r2, [r1]
-/*	mov	r1, r0*/
-	add	r0, pc, #(Ltext7 - . - 8)
-	bl	_printf
-ldmfd r13!, {r0-r3}
-#endif
 
 	bl	_main			/* Lets light the flame and start her up */
 
@@ -138,18 +120,7 @@ Lstart:
 Lproc0:
 	.word	_proc0
 
-/*
-Ltext7:
-	.asciz	"proc0=%08x %08x\n"
-	.align	0
-
-
-Ltext9:
-	.asciz	"proc0 stack at V%08x %08x\n"
-	.align	0
-*/
-
-/* What size shoudl this really be ? It is only used by init_arm() */
+/* What size should this really be ? It is only used by init_arm() */
 
 	.bss
 svcstk:	.space	INIT_ARM_STACK_SIZE
@@ -214,71 +185,10 @@ reset_entry:
 
 	movs	pc, lr			/* Exit */
 
-#if 0
-undefined:
-#ifndef	KGDB
-	add	r0, pc, #Wundefined - . - 8
-	ldmia	r0, {r0, pc}
-undmsg:
-	.asciz	"undefined"
-	.align	0
-Wundefined:
-	.word	undmsg
-	.word	_panic
-#else
-/*
- * lr is the saved pc, and we make space for the saved psr
- */
-	stmfd	sp!, {lr, pc}
-/*
- * now save all the rest of the registers (r13&r14) are redone later
- */
-	stmfd	sp!, {r0-lr}
-/*
- * now switch to the old mode to get r13&r14, but disable interrupts
-*/
-/* stupid gas doesn't yet know about the psr transfers */
-	.word	0xe10f3000		@	mrs	r3, cpsr
-	.word	0xe14f2000		@	mrs	r2, spsr
-	str	r2, [sp, #64]
-	orr	r2, r2, #(PSR_FIQ32_MODE|PSR_IRQ32_MODE)
-	.word	0xe129f002		@	msr	cpsr, r2
-	mov	r0, r13
-	mov	r1, r14
-	orr	r3, r3, #(PSR_FIQ32_MODE|PSR_IRQ32_MODE)
-	.word	0xe129f003		@	msr	cpsr, r3
-	str	r0, [sp, #52]
-	str	r1, [sp, #56]
-	mov	r0, sp
-	mov	lr, pc
-	ldr	pc, [pc, #Wundefined - . - 8]
-	add	sp, sp, #52		/* adjust stack to r13 */
-/*
- * set saved psr and get r13&r14 to new (saved) mode first
- */
-	ldr	r2, [sp, #12]
-	ldr	r0, [sp]
-	ldr	r1, [sp, #4]
-/* stupid gas doesn't yet know about the psr transfers */
-	.word	0xe169f002		@	msr	spsr, r2
-	.word	0xe10f3000		@	mrs	r3, cpsr
-	orr	r2, r2, #(PSR_FIQ32_MODE|PSR_IRQ32_MODE)
-	.word	0xe129f002		@	msr	cpsr, r2
-	mov	r13, r0
-	mov	r14, r1
-	.word	0xe129f003		@	msr	cpsr, r3
-	ldmea	sp, {r0-r12}		/* now the rest of the registers */
-	add	sp, sp, #16		/* Adjust stack to top */
-	ldr	lr, [sp, #-8]		/* get link address */
-	movs	pc, lr			/* return */
-Wundefined:
-	.word	_kgdb_trap_glue
-#endif
-#endif
 
 addrexc:
-	.word	0xe10f1000
-	.word	0xe14f2000
+	mrs	r1, cpsr_all
+	mrs	r2, spsr_all
 	mov	r3, lr
 	add	r0, pc, #addrexcmsg - . - 8
 	bl	_printf
@@ -310,15 +220,6 @@ fiqmsg:
 Wfiq:
 	.word	fiqmsg
 	.word	_panic
-
-	.global	_initmode
-_initmode:
-/* stupid gas doesn't yet know about the psr transfers */
-	mrs	r2, cpsr_all
-	msr	cpsr_all, r0
-	mov	sp, r1
-	msr	cpsr_all, r2
-	mov	pc, lr
 
 
 	.global	_boot0
@@ -552,6 +453,80 @@ Lsigerr:
         .globl  _esigcode
 _esigcode:
 
+#if	NKGDB > 0 || NKGDBSLIP > 0
+#if	0
+/*
+ * kgdbfbyte and kgdbsbyte are now in kgdb_glue.c and do not tweak
+ * the abort handler anymore
+ */
+	.global	_kgdbfbyte
+_kgdbfbyte:
+	ldr	ip, abortp
+	ldr	r2, [ip]
+	add	r3, pc, #kgdbfault - . - 8
+	str	r3, [ip]
+	ldrb	r0, [r0]
+	str	r2, [ip]
+	mov	pc, lr
+
+	.global	_kgdbsbyte
+_kgdbsbyte:
+	ldr	ip, abortp
+	ldr	r2, [ip]
+	add	r3, pc, #kgdbfault - . - 8
+	str	r3, [ip]
+	strb	r1, [r0]
+	sub	r0, r0, r0
+	str	r2, [ip]
+	mov	pc, lr
+
+abortp:
+	.word	Labortdata - _page0
+kgdbfault:
+	mov	r0, #0xd3
+	msr	cpsr_all, r0
+	mvn	r0, #0			/* mov	r0, #-1 */
+	str	r2, [ip]
+	mov	pc, lr
+#endif
+
+/*
+ * Execute(inst, psr, args, sp)
+ *
+ * Execute INSTruction with PSR and ARGS[0] - ARGS[3] making
+ * available stack at SP for next undefined instruction trap.
+ *
+ * Move the instruction onto the stack and jump to it.
+ */
+	.global	_Execute
+_Execute:
+	mov	ip, sp
+	stmfd	sp!, {r2, r4-r7, fp, ip, lr, pc}
+	sub	fp, ip, #4
+	mov	ip, r3
+	ldr	r7, return
+	stmfd	sp!, {r0, r7}
+	add	r7, pc, #LExec - . - 8
+	mov	r5, r1
+	mrs	r4, cpsr_all
+	ldmia	r2, {r0-r3}
+	mov	r6, sp
+	mov	sp, ip
+	msr	cpsr_all, r5
+	mov	pc, r6
+LExec:
+	mrs	r5, cpsr_all
+/* XXX Cannot switch thus easily back from user mode */
+	msr	cpsr_all, r4
+	add	sp, r6, #8
+	ldmfd	sp!, {r6}
+	stmia	r6, {r0-r3}
+	mov	r0, r5
+	ldmdb	fp, {r4-r7, fp, sp, pc}
+return:
+	mov	pc, r7
+#endif
+
 /*
  * setjump + longjmp
  */
@@ -573,3 +548,35 @@ _esym:	.word	_end
 	.global	_abort
 _abort:
 	b	_abort
+
+
+/*
+ * Atomic bit set and clear functions
+ */
+
+	.global	_atomic_set_bit
+_atomic_set_bit:
+	mrs	r2, cpsr_all
+	orr	r3, r2, #(I32_bit)
+	msr	cpsr_all, r3
+
+	ldr	r3, [r0]
+	orr	r3, r3, r1
+	str	r3, [r0]
+
+	msr	cpsr_all, r2
+	mov	pc, lr
+
+
+	.global	_atomic_clear_bit
+_atomic_clear_bit:
+	mrs	r2, cpsr_all
+	orr	r3, r2, #(I32_bit)
+	msr	cpsr_all, r3
+
+	ldr	r3, [r0]
+	bic	r3, r3, r1
+	str	r3, [r0]
+
+	msr	cpsr_all, r2
+	mov	pc, lr
