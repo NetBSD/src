@@ -1,10 +1,21 @@
-#	$NetBSD: crtbegin.S,v 1.1 1998/05/06 00:59:18 ross Exp $
+#	$NetBSD: crtbegin.S,v 1.2 1998/05/06 05:32:08 ross Exp $
 #
 # Warning -- 
 #
-# See comments in crtbegin.c prior to attempting work on this module.
-#
-# This module has been modified by hand.
+# This module has been modified by hand from a prototype crtbegin.c
+# for the purpose of the following low-level mechanisms:
+# 
+# [1] Fall through the .init section from _init() to a return block
+# in crtend(). This allows compilers for object-oriented languages
+# to generate inline initialization code. The mechanism is an
+# alternative to the one presently used by g++ for file level
+# constructors and destructors. It is apparently the original
+# intention of the ELF .init and .fini segments that this option
+# be open to compilers. Work based on a suggestion by jtc@netbsd.org.
+# 
+# [2] The incorrect cross-elf-section bsr was fixed, this had
+# the side-effect of limiting program text size to 4 MB.
+# 
 #
 	.file	1 "crtbegin.c"
 	.version	"01.01"
@@ -127,6 +138,18 @@ initialized.6:
 	.long 0
 .section	.init,"ax",@progbits
 	.align 3
+	.globl	You_did_not_link_crtend
+	.long	You_did_not_link_crtend
+#
+# See comment below on _fini_return
+#
+	.globl	_init_return
+_init_return:
+You_did_not_link_crtbegin:
+	.globl	You_did_not_link_crtbegin
+	ldq $26,0($30)
+	addq $30,16,$30
+	ret $31,($26),1
 	.globl _init
 	.ent _init
 _init:
@@ -137,19 +160,28 @@ _init..ng:
 	stq $26,0($30)
 	.mask 0x4000000,-16
 	.prologue 1
+	lda $26,__ctors..ng
 	lda $2,initialized.6
 	ldl $1,0($2)
-	bne $1,$51
+	bne $1,_init_return
 	bis $31,1,$1
 	stl $1,0($2)
-	bsr $26,__ctors..ng
-$51:
+	jsr $26,($26),__ctors..ng
+	nop
+	.end _init
+.section	.fini,"ax",@progbits
+	.globl	You_did_not_link_crtend	
+	.long	You_did_not_link_crtend	
+	.align 3
+#
+# A jump back to _init_return and _fini_return are made here so that
+# corresponding stack adjustments are not split over multiple modules.
+#
+	.globl	_fini_return
+_fini_return:
 	ldq $26,0($30)
 	addq $30,16,$30
 	ret $31,($26),1
-	.end _init
-.section	.fini,"ax",@progbits
-	.align 3
 	.globl _fini
 	.ent _fini
 _fini:
@@ -160,9 +192,8 @@ _fini..ng:
 	stq $26,0($30)
 	.mask 0x4000000,-16
 	.prologue 1
-	bsr $26,__dtors..ng
-	ldq $26,0($30)
-	addq $30,16,$30
-	ret $31,($26),1
+	lda $26,__dtors..ng
+	jsr $26,($26),__dtors..ng
+	nop
 	.end _fini
 	.ident	"GCC: (GNU) 2.7.2.2"
