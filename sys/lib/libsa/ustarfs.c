@@ -1,4 +1,4 @@
-/*	$NetBSD: ustarfs.c,v 1.10 1999/09/01 02:32:26 ross Exp $	*/
+/*	$NetBSD: ustarfs.c,v 1.11 1999/09/10 07:22:03 ross Exp $	*/
 
 /* [Notice revision 2.2]
  * Copyright (c) 1997, 1998 Avalon Computer Systems, Inc.
@@ -126,6 +126,7 @@ typedef struct ust_active_struct {
 	int	uas_init_window;	/* data present in window */
 	int	uas_init_fs;		/* ust FS actually found */
 	int	uas_volzerosig;		/* ID volume 0 by signature */
+	int	uas_sigdone;		/* did sig already */
 	int	uas_offset;		/* amount of cylinder below lba 0 */
 } ust_active_t;
 
@@ -138,9 +139,11 @@ static int checksig __P((ust_active_t *));
 static int convert __P((const char *, int, int));
 static int get_volume __P((struct open_file *, int));
 static void setwindow(ust_active_t *, ustoffs, ustoffs);
+static int real_fs_cylinder_read __P((struct open_file *, ustoffs, int));
 static int ustarfs_cylinder_read __P((struct open_file *, ustoffs, int));
 static void ustarfs_sscanf __P((const char *, const char *, int *));
 static int read512block __P((struct open_file *, ustoffs, char block[512]));
+static int init_volzero_sig __P((struct open_file *));
 
 static int
 convert(f, base, fw)
@@ -173,6 +176,21 @@ ustarfs_sscanf(s,f,xi)
 
 static int
 ustarfs_cylinder_read(f, seek2, forcelabel)
+	struct open_file *f;
+	ustoffs seek2;
+{
+	int i, e;
+
+	for (i = 0; i < 3; ++i) {
+		e = real_fs_cylinder_read(f, seek2, forcelabel);
+		if (e == 0)
+			return 0;
+	}
+	return e;
+}
+
+static int
+real_fs_cylinder_read(f, seek2, forcelabel)
 	struct open_file *f;
 	ustoffs seek2;
 {
@@ -255,9 +273,7 @@ get_volume(f, vn)
 			needvolume + 1);
 		getchar();
 		printf("\n");
-		e = ustarfs_cylinder_read(f, 0, 1);
-		if (e)		/* Try again on error, needed on i386 */
-			e = ustarfs_cylinder_read(f, 0, 1);
+		e = ustarfs_cylinder_read(f, 0, needvolume != 0);
 		if (e)
 			return e;
 		if(strncmp(formatid, ustf->uas_1cyl, strlen(formatid))) {
@@ -300,20 +316,6 @@ read512block(f, vda, block)
 	dienow = 0;
 	ustf = f->f_fsdata;
 
-	if (!ustf->uas_init_window
-	&&   ustf->uas_windowbase == 0) {
-		/*
-		 * The algorithm doesn't require this, but without it we would
-		 * need some trick to get the cylinder zero signature computed.
-		 * That signature is used to identify volume zero, which we
-		 * don't give a USTARFS label to. (It's platform-dependent.)
-		 */
-		e = ustarfs_cylinder_read(f, 0, 0);
-		if (e)
-			return e;
-		ustf->uas_volzerosig = checksig(ustf);
-		setwindow(ustf, 0, 0);
-	}
 	/*
 	 * if (vda in window)
 	 * 	copy out and return data
@@ -351,6 +353,24 @@ tryagain:
 	goto tryagain;
 }
 
+static int
+init_volzero_sig(f)
+	struct open_file *f;
+{
+	int e;
+	ust_active_t *ustf;
+
+	ustf = f->f_fsdata;
+	if (!ustf->uas_sigdone) {
+		e = ustarfs_cylinder_read(f, 0, 0);
+		if (e)
+			return e;
+		ustf->uas_volzerosig = checksig(ustf);
+		setwindow(ustf, 0, 0);
+	}
+	return 0;
+}
+
 int
 ustarfs_open(path, f)
 	char *path;
@@ -373,6 +393,9 @@ ustarfs_open(path, f)
 	/* default to 2880 sector floppy */
 	ustf->uas_volsize = 80 * 2 * 18 * 512 - lda2pda(0);
 	ustf->uas_fseek = 0;
+	e = init_volzero_sig(f);
+	if (e)
+		return e;
 	for(;;) {
 		ustf->uas_filestart = offset;
 		e2 = read512block(f, offset, block);
