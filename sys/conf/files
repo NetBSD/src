@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.686 2004/09/25 03:30:44 thorpej Exp $
+#	$NetBSD: files,v 1.687 2004/09/26 03:03:17 dyoung Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -502,6 +502,13 @@ file	../contrib/sys/dev/ic/athhal_osdep.c		ath
 #
 device	atw: arp, wlan, ifnet, smc93cx6
 file	dev/ic/atw.c			atw
+
+# Realtek RTL8180 802.11
+#
+device rtw: arp, wlan, ifnet, smc93cx6
+file	dev/ic/rtw.c			rtw
+file	dev/ic/rtwphy.c			rtw
+file	dev/ic/rtwphyio.c		rtw
 
 # 3Com Etherlink-III Ethernet controller
 #

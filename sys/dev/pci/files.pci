@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.219 2004/08/30 10:30:38 drochner Exp $
+#	$NetBSD: files.pci,v 1.220 2004/09/26 03:03:17 dyoung Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -640,6 +640,10 @@ file	dev/pci/if_an_pci.c		an_pci
 # ADMtek ADM8211 PCI/Mini-PCI
 attach	atw at pci with atw_pci
 file	dev/pci/if_atw_pci.c		atw_pci
+
+# Realtek RTL8180 PCI/Mini-PCI
+attach	rtw at pci with rtw_pci
+file	dev/pci/if_rtw_pci.c		rtw_pci
 
 # Intersil Prism2.5 Mini-PCI
 attach	wi at pci with wi_pci
