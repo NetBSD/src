@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.141.4.3 2002/09/06 06:21:17 lukem Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.141.4.4 2002/10/21 02:22:26 lukem Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -152,7 +152,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.141.4.3 2002/09/06 06:21:17 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.141.4.4 2002/10/21 02:22:26 lukem Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -992,7 +992,8 @@ findpcb:
 #endif
 		{
 			++tcpstat.tcps_noport;
-			if (tcp_log_refused && (tiflags & TH_SYN)) {
+			if (tcp_log_refused &&
+			    (tiflags & (TH_RST|TH_ACK|TH_SYN)) == TH_SYN) {
 				char src[4*sizeof "123"];
 				char dst[4*sizeof "123"];
 
@@ -1045,7 +1046,8 @@ findpcb:
 		}
 		if (in6p == NULL) {
 			++tcpstat.tcps_noport;
-			if (tcp_log_refused && (tiflags & TH_SYN)) {
+			if (tcp_log_refused &&
+			    (tiflags & (TH_RST|TH_ACK|TH_SYN)) == TH_SYN) {
 				char src[INET6_ADDRSTRLEN];
 				char dst[INET6_ADDRSTRLEN];
 
