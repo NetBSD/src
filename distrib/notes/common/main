@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.245 2003/10/10 23:59:16 mbw Exp $
+.\"	$NetBSD: main,v 1.246 2003/10/17 04:45:40 sekiya Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1875,6 +1875,7 @@ If you're one of them, and would like to mentioned, tell us!)
 .It Ta Amitai Schlair Ta Mt schmonz@NetBSD.org
 .It Ta Konrad Schroder Ta Mt perseant@NetBSD.org
 .It Ta Lubomir Sedlacik Ta Mt salo@NetBSD.org
+.It Ta Christopher SEKIYA Ta Mt sekiya@NetBSD.org
 .It Ta Reed Shadgett Ta Mt dent@NetBSD.org
 .It Ta Tim Shepard Ta Mt shep@NetBSD.org
 .It Ta Takeshi Shibagaki Ta Mt shiba@NetBSD.org
