@@ -190,25 +190,28 @@ vax_nbsd_frame_chain (struct frame_info *frame)
   CORE_ADDR fp, addr;
   int argc;
 
-  if (frame->signal_handler_caller) {
-    addr = vax_nbsd_sigcontext_addr (frame);
-    argc = read_memory_integer (addr, 4);	/* get sigcontext addr */
-    if (argc == 3)
-      {
-        addr = read_memory_integer (addr + 12, 4); /* get sigcontext addr */
-        fp = read_memory_integer (addr + 12, 4); /* get FP in sigcontext */
-      }
-    else
-      {
-        addr = read_memory_integer (addr + 8, 4); /* get ucontext addr */
-        fp = read_memory_integer (addr + 88, 4); /* get FP in ucontext */
-      }
-  } else {
-    if (PC_IN_CALL_DUMMY (frame->pc, frame->frame, frame->frame))
-      fp = frame->frame;
-    else
-      fp = read_memory_integer (frame->frame + 12, 4);
-  }
+  if (frame->signal_handler_caller)
+    {
+      addr = vax_nbsd_sigcontext_addr (frame);
+      argc = read_memory_integer (addr, 4);	/* get sigcontext addr */
+      if (argc == 3)
+        {
+          addr = read_memory_integer (addr + 12, 4); /* get sigcontext addr */
+          fp = read_memory_integer (addr + 12, 4); /* get FP in sigcontext */
+        }
+      else
+        {
+          addr = read_memory_integer (addr + 8, 4); /* get ucontext addr */
+          fp = read_memory_integer (addr + 88, 4); /* get FP in ucontext */
+        }
+    }
+  else
+    {
+      if (PC_IN_CALL_DUMMY (frame->pc, frame->frame, frame->frame))
+        fp = frame->frame;
+      else
+        fp = read_memory_integer (frame->frame + 12, 4);
+    }
   return fp;
 }
 
@@ -219,6 +222,73 @@ vax_nbsd_in_sigtramp (CORE_ADDR pc, char *name)
 {
   return (nbsd_pc_in_sigtramp (pc, name)
 	  || vax_nbsd_sigtramp_start (pc) != 0);
+}
+
+static void
+vax_nbsd_frame_init_saved_regs (struct frame_info *frame)
+{
+  int regnum, regmask;
+  CORE_ADDR next_addr, addr;
+  int argc;
+
+  if (frame->saved_regs)
+    return;
+
+  frame_saved_regs_zalloc (frame);
+
+  if (frame->signal_handler_caller)
+    {
+      addr = vax_nbsd_sigcontext_addr (frame);
+      argc = read_memory_integer (addr, 4);	/* get sigcontext addr */
+      if (argc == 3)
+        {
+          addr = read_memory_integer (addr + 12, 4); /* get sigcontext addr */
+	  if (addr != read_memory_integer (addr - 4, 4))
+            {
+	      frame->saved_regs[0] = read_memory_integer (addr + 4, 4);
+	      frame->saved_regs[1] = read_memory_integer (addr + 8, 4);
+	      frame->saved_regs[2] = read_memory_integer (addr + 12, 4);
+	      frame->saved_regs[3] = read_memory_integer (addr + 16, 4);
+	      frame->saved_regs[4] = read_memory_integer (addr + 20, 4);
+	      frame->saved_regs[5] = read_memory_integer (addr + 24, 4);
+            }
+	  frame->saved_regs[SP_REGNUM] = read_memory_integer (addr + 8, 4);
+	  frame->saved_regs[FP_REGNUM] = read_memory_integer (addr + 12, 4);
+	  frame->saved_regs[VAX_AP_REGNUM] = read_memory_integer (addr + 16, 4);
+	  frame->saved_regs[PC_REGNUM] = read_memory_integer (addr + 20, 4);
+	  frame->saved_regs[PS_REGNUM] = read_memory_integer (addr + 24, 4);
+        }
+      else
+        {
+          addr = read_memory_integer (addr + 8, 4); /* get ucontext addr */
+	  addr += 36;
+	  for (regnum = 0; regnum <= PS_REGNUM; regnum++)
+	    frame->saved_regs[regnum] = read_memory_integer (addr + 4*regnum, 4);
+        }
+      return;
+    }
+
+  regmask = read_memory_integer (frame->frame + 4, 4) >> 16;
+
+  next_addr = frame->frame + 16;
+
+  /* regmask's low bit is for register 0, which is the first one
+     what would be pushed.  */
+  for (regnum = 0; regnum < VAX_AP_REGNUM; regnum++)
+    {
+      if (regmask & (1 << regnum))
+        frame->saved_regs[regnum] = next_addr += 4;
+    }
+
+  frame->saved_regs[SP_REGNUM] = next_addr + 4;
+  if (regmask & (1 << FP_REGNUM))
+    frame->saved_regs[SP_REGNUM] +=
+      4 + (4 * read_memory_integer (next_addr + 4, 4));
+
+  frame->saved_regs[PC_REGNUM] = frame->frame + 16;
+  frame->saved_regs[FP_REGNUM] = frame->frame + 12;
+  frame->saved_regs[VAX_AP_REGNUM] = frame->frame + 8;
+  frame->saved_regs[PS_REGNUM] = frame->frame + 4;
 }
 
 /* NetBSD ELF.  */
@@ -236,6 +306,7 @@ vax_nbsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   set_gdbarch_frame_chain_valid (gdbarch, func_frame_chain_valid);
   set_gdbarch_frame_saved_pc (gdbarch, vax_nbsd_frame_saved_pc);
   set_gdbarch_saved_pc_after_call (gdbarch, vax_nbsd_saved_pc_after_call);
+  set_gdbarch_frame_init_saved_regs (gdbarch, vax_nbsd_frame_init_saved_regs);
 }
 
 static void
