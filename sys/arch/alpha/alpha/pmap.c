@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.160 2001/04/21 16:27:10 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.161 2001/04/21 23:51:14 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -154,7 +154,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.160 2001/04/21 16:27:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.161 2001/04/21 23:51:14 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2266,6 +2266,7 @@ pmap_copy(pmap_t dst_pmap, pmap_t src_pmap, vaddr_t dst_addr, vsize_t len,
 #endif
 }
 
+#if 0 /* defined away in <machine/pmap.h> */
 /*
  * pmap_update:			[ INTERFACE ]
  *
@@ -2286,6 +2287,7 @@ pmap_update(void)
 	 * Nothing to do; this pmap module does not defer any operations.
 	 */
 }
+#endif /* 0 */
 
 /*
  * pmap_collect:		[ INTERFACE ]

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.84 2001/04/21 17:25:01 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.85 2001/04/21 23:51:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -1540,19 +1540,6 @@ void pmap_copy(dst_pmap, src_pmap, dst_addr, len, src_addr)
 		printf("pmap_copy(%p, %p, %lx, %lx, %lx)\n",
 		       dst_pmap, src_pmap, dst_addr, len, src_addr);
 #endif
-}
-
-/*
- *	Require that all active physical maps contain no
- *	incorrect entries NOW.
- *
- *	Generally used to insure that a thread about
- *	to run will see a semantically correct world.
- */
-void pmap_update()
-{
-
-	/* Nothing (yet) */
 }
 
 /*
