@@ -1,4 +1,4 @@
-# $NetBSD: rc.subr,v 1.17 2000/04/30 13:16:47 lukem Exp $
+# $NetBSD: rc.subr,v 1.18 2000/05/13 03:07:17 lukem Exp $
 #
 # Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -185,9 +185,12 @@ check_process()
 #				the action should be run.
 #				If this variable isn't set, ${name} is checked 
 #				instead.
+#	${name}_chdir	n	Directory to cd to before running ${command}.
 #	${name}_flags	n	Arguments to call ${command} with.
 #				NOTE:	if $flags is set (e.g, from the parent
 #					environment), it overrides this.
+#	${name}_nice	n	Nice level to run ${command} at.
+#	${name}_user	n	User to run ${command} as.
 #	${_arg}_cmd	n	If set, use this as the action when invoked;
 #				$_arg is available to the action to use.
 #				Otherwise, use default command (see below)
@@ -267,6 +270,9 @@ run_rc_command()
 	else
 		eval _flags=\$${name}_flags
 	fi
+	eval _chdir=\$${name}_chdir
+	eval _nice=\$${name}_nice
+	eval _user=\$${name}_user
 
 	eval $_pidcmd
 
@@ -327,7 +333,13 @@ run_rc_command()
 
 			eval $_precmd || return 1
 			echo "Starting ${name}."
-			eval $command $_flags $command_args
+			_doit="\
+${_user:+su -m $_user -c 'sh -c \"}\
+${_chdir:+cd $_chdir; }\
+${_nice:+nice -n $_nice }\
+$command $_flags $command_args\
+${_user:+\"'}"
+			eval $_doit
 			;;
 
 		stop)
@@ -346,7 +358,9 @@ run_rc_command()
 
 			eval $_precmd || return 1
 			echo "Stopping ${name}."
-			kill -${sig_stop:-TERM} $_pid
+			_doit=\
+"${_user:+su -m $_user -c '}kill -${sig_stop:-TERM} $_pid${_user:+'}"
+			eval $_doit
 			;;
 
 		reload)
@@ -364,7 +378,9 @@ run_rc_command()
 			fi
 			echo "Reloading ${name} config files."
 			eval $_precmd || return 1
-			kill -${sig_reload:-HUP} $_pid
+			_doit=\
+"${_user:+su -m $_user -c '}kill -${sig_reload:-HUP} $_pid${_user:+'}"
+			eval $_doit
 			;;
 
 		restart)
