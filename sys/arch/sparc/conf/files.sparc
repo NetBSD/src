@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc,v 1.27 1996/06/20 20:17:57 pk Exp $
+#	$NetBSD: files.sparc,v 1.28 1996/06/22 02:02:52 chuck Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
 # sparc-specific configuration info
@@ -151,6 +151,12 @@ attach si at vmes
 device sw: scsi, ncr5380sbc
 attach sw at obio
 file	arch/sparc/dev/si.c		si | sw
+
+# ENI ATM driver
+device  en: atm, ifnet
+attach  en at sbus with en_sbus
+file    arch/sparc/dev/if_en_sbus.c     en
+file    dev/ic/midway.c                 en
 
 pseudo-device	kbd
 
