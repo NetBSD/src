@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.12 2003/03/13 13:44:19 scw Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.13 2003/03/24 14:21:27 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -76,6 +76,16 @@ setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 	tf->tf_state.sf_ssr = SH5_CONREG_SR_MMU;
 	tf->tf_state.sf_flags = SF_FLAGS_CALLEE_SAVED;
 
+#ifdef SHMEDIA_ENTRY_POINT_HACK
+	if ((tf->tf_state.sf_spc & 3) == 0) {
+#ifdef DIAGNOSTIC
+		printf("setregs: warning: non-SHmedia entry point for '%s'\n",
+		    l->l_proc->p_comm);
+#endif
+		tf->tf_state.sf_spc |= 1;
+	}
+#endif
+
 	tf->tf_caller.r2 = (register_t) argc;			 /* argc */
 	tf->tf_caller.r3 = (register_t) (sstack + sizeof(long)); /* argv */
 	tf->tf_caller.r4 = (register_t) (sstack + ((argc + 2) * sizeof(long)));
@@ -88,7 +98,7 @@ setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 	tf->tf_caller.r7 = (register_t)(long)l->l_proc->p_psstr;
 
 	/* Align the stack as required by the SH-5 ABI */
-	tf->tf_caller.r15 = tf->tf_caller.r14 = (register_t) (sstack & ~0xf);
+	tf->tf_caller.r15 = tf->tf_caller.r14 = (register_t) (sstack & ~0x7);
 
 	/* Give the new process a clean set of FP regs */
 	memset(&l->l_addr->u_pcb.pcb_ctx.sf_fpregs, 0, sizeof(struct fpregs));
