@@ -1,4 +1,4 @@
-.\"	$NetBSD: ftpd.8,v 1.57 2000/07/23 14:40:48 lukem Exp $
+.\"	$NetBSD: ftpd.8,v 1.58 2000/07/26 13:45:52 lukem Exp $
 .\"
 .\" Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -67,7 +67,7 @@
 .\"
 .\"     @(#)ftpd.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd July 23, 2000
+.Dd July 26, 2000
 .Dt FTPD 8
 .Os
 .Sh NAME
@@ -583,6 +583,15 @@ Welcome notice before login.
 Welcome notice after login.
 .It Pa /etc/nologin
 If it exists, displayed and access is refused.
+.It Pa /var/run/ftpd.pids-CLASS
+State file of logged-in processes for the
+.Nm
+class
+.Sq CLASS .
+.It Pa /var/run/utmp
+List of logged-in users on the system.
+.It Pa /var/run/wtmp
+Login history database.
 .El
 .Sh SEE ALSO
 .Xr ftp 1 ,
