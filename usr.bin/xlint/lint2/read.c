@@ -1,4 +1,4 @@
-/* $NetBSD: read.c,v 1.10 2001/07/26 15:05:10 wiz Exp $ */
+/* $NetBSD: read.c,v 1.11 2002/01/03 18:50:54 tron Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: read.c,v 1.10 2001/07/26 15:05:10 wiz Exp $");
+__RCSID("$NetBSD: read.c,v 1.11 2002/01/03 18:50:54 tron Exp $");
 #endif
 
 #include <stdio.h>
@@ -669,7 +669,6 @@ inptype(const char *cp, const char **epp)
 			break;
 		}
 		break;
-		/* LINTED (enumeration value(s) not handled in switch) */
 	case LONG:
 	case VOID:
 	case LDOUBLE:
@@ -689,6 +688,8 @@ inptype(const char *cp, const char **epp)
 	case SIGNED:
 	case NOTSPEC:
 		break;
+	case NTSPEC:
+		abort();
 	}
 
 	*epp = cp;
@@ -873,7 +874,6 @@ gettlen(const char *cp, const char **epp)
 			inperr();
 		}
 		break;
-		/* LINTED (enumeration value(s) not handled in switch) */
 	case FLOAT:
 	case USHORT:
 	case SHORT:
@@ -893,6 +893,8 @@ gettlen(const char *cp, const char **epp)
 	case UQUAD:
 	case LONG:
 		break;
+	case NTSPEC:
+		abort();
 	}
 
 	*epp = cp;
