@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.265.4.12 2002/09/17 21:15:28 nathanw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.265.4.13 2002/10/05 05:59:41 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -604,8 +604,8 @@ cpu_reboot(howto, bootstr)
 	(void)&howto;
 #endif
 	/* take a snap shot before clobbering any registers */
-	if (curlwp && curlwp->p_addr)
-		savectx(&curlwp->p_addr->u_pcb);
+	if (curlwp && curlwp->l_addr)
+		savectx(&curlwp->l_addr->u_pcb);
 
 	/* If system is cold, just halt. */
 	if (cold) {
