@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 1998/09/13 23:50:39 perry Exp $
+#	$NetBSD: Makefile,v 1.8 1998/11/15 20:36:31 perry Exp $
 #
 #	from: @(#)Makefile	8.2 (Berkeley) 3/21/94
 
@@ -22,16 +22,6 @@ vnode_if.c ../sys/vnode_if.h: ${VNODEIFSRC}
 	-mv -f ../sys/vnode_if.h ../sys/vnode_if.h.bak
 	sh vnode_if.sh vnode_if.src
 
-# XXX 
-# [Note by Perry Metzger, Sept. 1998]
-# As it stands, the tags support below is hopelessly
-# broken. Just look at the names of the architectures it is dealing
-# with and where it expects to find the support for them to see why.
-# I've left the stuff in this Makefile alone in the hope that someone
-# will fix it someday -- I am assuming that it might help that
-# person if they have the old Makefile goo left in place as a starting
-# point. 
-# XXX
 
 # Kernel tags:
 # Tags files are built in the top-level directory for each architecture,
@@ -40,33 +30,33 @@ vnode_if.c ../sys/vnode_if.h: ${VNODEIFSRC}
 # are placed in each source directory.  We need to have links to tags files
 # from the generic directories that are relative to the machine type, even
 # via remote mounts; therefore we use symlinks to $SYSTAGS, which points at
-# ${SYSDIR}/${MACHINE}/tags.
+# ${SYSDIR}/arch/${MACHINE}/tags.
 
-ARCH=	hp300 i386 luna68k news3400 pmax sparc tahoe vax
+# Note: only a couple of architectures are currently working right. Add more
+# to ARCH as you fix them. Use the i386 as a model.
+
+ARCH=	i386 mac68k
 
 SYSTAGS=/var/db/sys_tags
 SYSDIR=/sys
 
-# Directories in which to place tags links (other than machine-dependent)
-DGEN=	conf \
-	dev dev/scsi \
-	hp hp/dev hp/hpux \
-	kern libkern \
-	miscfs miscfs/deadfs miscfs/fdesc miscfs/fifofs miscfs/kernfs \
-	miscfs/lofs miscfs/nullfs miscfs/portal miscfs/procfs \
-	miscfs/specfs miscfs/umapfs miscfs/union \
-	net netccitt netinet netiso netns nfs scripts sys \
-	ufs ufs/ffs ufs/lfs ufs/mfs ufs/ufs \
-	vm
+.ifmake links
+# Directories in which to place tags links (other than machine-dependent):
+# The invocation below returns every directory that contains sources, the idea
+# being, in the face of a constantly varying source tree, that this will be 
+# easier to maintain than a fixed list.
+DGEN!=	find -H /sys ! -path "/sys/arch*" -name "*.[chs]" | \
+	    sed -e "s@/sys/@@" -e "s@/[^/]*\..*@@" | sort -t / -u
+.endif
 
 tags::
 	-for i in ${ARCH}; do \
-	    (cd ../$$i && make ${MFLAGS} tags); done
+	    (cd ../arch/$$i && make ${MFLAGS} tags); done
 
 links::
 	rm -f ${SYSTAGS}
-	ln -s ${SYSDIR}/${MACHINE}/tags ${SYSTAGS}
+	ln -s ${SYSDIR}/arch/${MACHINE}/tags ${SYSTAGS}
 	-for i in ${DGEN}; do \
-	    (cd ../$$i && { rm -f tags; ln -s ${SYSTAGS} tags; }) done
+	    (cd ../$$i && { rm -f tags; ln -s ${SYSTAGS} tags; }); done
 	-for i in ${ARCH}; do \
-	    (cd ../$$i && make ${MFLAGS} SYSTAGS=${SYSTAGS} links); done
+	    (cd ../arch/$$i && make ${MFLAGS} SYSTAGS=${SYSTAGS} links); done
