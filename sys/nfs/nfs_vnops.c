@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.135 2001/07/24 15:39:33 assar Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.136 2001/08/14 05:31:55 itojun Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1403,10 +1403,9 @@ nfs_mknod(v)
 		struct componentname *a_cnp;
 		struct vattr *a_vap;
 	} */ *ap = v;
-	struct vnode *newvp;
 	int error;
 
-	error = nfs_mknodrpc(ap->a_dvp, &newvp, ap->a_cnp, ap->a_vap);
+	error = nfs_mknodrpc(ap->a_dvp, ap->a_vpp, ap->a_cnp, ap->a_vap);
 	return (error);
 }
 
