@@ -1,4 +1,4 @@
-/*	$NetBSD: scb.c,v 1.6 1999/08/14 18:42:17 ragge Exp $ */
+/*	$NetBSD: scb.c,v 1.7 1999/08/27 20:00:24 ragge Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -40,6 +40,7 @@
 #include <machine/scb.h>
 #include <machine/frame.h>
 #include <machine/cpu.h>
+#include <machine/sid.h>
 #include <machine/mtpr.h>
 
 static	void scb_stray __P((int));
@@ -65,6 +66,7 @@ scb_init(avail_start)
 	/* Init the whole SCB with interrupt catchers */
 	for (i = 0; i < (scb_size * VAX_NBPG)/4; i++) {
 		ivec[i] = &scb_vec[i];
+		(int)ivec[i] |= 1; /* On istack, please */
 		memcpy(&scb_vec[i], &idsptch, sizeof(struct ivec_dsp));
 		scb_vec[i].hoppaddr = scb_stray;
 	}
@@ -102,6 +104,7 @@ scb_stray(arg)
 		printf("stray interrupt: vector 0x%x, ipl %d\n", vector, ipl);
 	else
 		a[8] = (a[8] & 0xffe0ffff) | ipl << 16;
+
 	mtpr(ipl + 1, PR_IPL);
 }
 
