@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_lookup.c,v 1.10 1999/08/02 22:58:29 wrstuden Exp $	*/
+/*	$NetBSD: ext2fs_lookup.c,v 1.11 1999/08/04 18:40:47 wrstuden Exp $	*/
 
 /* 
  * Modified for NetBSD 1.2E
@@ -714,12 +714,13 @@ found:
 				cnp->cn_flags &= ~PDIRUNLOCK;
 			return (error);
 		}
-		if (lockparent && (flags & ISLASTCN) &&
-		    (error = vn_lock(pdp, LK_EXCLUSIVE))) {
-			vput(tdp);
-			return (error);
+		if (lockparent && (flags & ISLASTCN)) {
+			if ((error = vn_lock(pdp, LK_EXCLUSIVE))) {
+				vput(tdp);
+				return (error);
+			}
+			cnp->cn_flags &= ~PDIRUNLOCK;
 		}
-		cnp->cn_flags &= ~PDIRUNLOCK;
 		*vpp = tdp;
 	} else if (dp->i_number == dp->i_ino) {
 		VREF(vdp);	/* we want ourself, ie "." */
