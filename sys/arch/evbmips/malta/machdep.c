@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.1 2002/03/07 14:44:04 simonb Exp $	*/
+/*	$NetBSD: machdep.c,v 1.2 2002/04/08 14:11:32 simonb Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -139,8 +139,6 @@ int	physmem;		/* Total physical memory */
 
 int	netboot;		/* Are we netbooting? */
 
-int	cpuspeed;
-
 yamon_env_var *yamon_envp;
 
 phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
@@ -191,6 +189,15 @@ mach_init(int argc, char **argv, yamon_env_var *envp, u_long memsize)
 	/* Use YAMON callbacks for early console I/O */
 	cn_tab = &yamon_promcd;
 
+	/*
+	 * Set up the exception vectors and cpu-specific function
+	 * vectors early on.  We need the wbflush() vector set up
+	 * before comcnattach() is called (or at least before the
+	 * first printf() after that is called).
+	 * Also clears the I+D caches.
+	 */
+	mips_vector_init();
+
 	uvm_setpagesize();
 
 	physmem = btoc(memsize);
@@ -200,7 +207,6 @@ mach_init(int argc, char **argv, yamon_env_var *envp, u_long memsize)
 	malta_bus_mem_init(&mcp->mc_memt, mcp);
 	malta_dma_init(mcp);
 
-#if 1
 #if NCOM > 0
 	/*
 	 * Delay to allow firmware putchars to complete.
@@ -215,20 +221,12 @@ mach_init(int argc, char **argv, yamon_env_var *envp, u_long memsize)
 #else
 	panic("malta: not configured to use serial console");
 #endif /* NCOM > 0 */
-#endif
 
 	bus_space_map(&mcp->mc_iot, MALTA_RTCADR, 2, 0, &sh);
 	malta_cal_timer(&mcp->mc_iot, sh);
 	bus_space_unmap(&mcp->mc_iot, sh, 2);
 
 	consinit();
-
-	/*
-	 * Copy exception-dispatch code down to exception vector.
-	 * Initialize locore-function vector.
-	 * Clear out the I and D caches.
-	 */
-	mips_vector_init();
 
 	mem_clusters[0].start = 0;
 	mem_clusters[0].size = ctob(physmem);
