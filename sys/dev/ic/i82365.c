@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365.c,v 1.76 2003/09/12 22:09:04 mycroft Exp $	*/
+/*	$NetBSD: i82365.c,v 1.77 2003/12/28 01:21:37 christos Exp $	*/
 
 /*
  * Copyright (c) 2000 Christian E. Hopps.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82365.c,v 1.76 2003/09/12 22:09:04 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82365.c,v 1.77 2003/12/28 01:21:37 christos Exp $");
 
 #define	PCICDEBUG
 
@@ -1330,9 +1330,10 @@ pcic_chip_io_map(pch, width, offset, size, pcihp, windowp)
 
 	/* XXX wtf is this doing here? */
 
-	printf(" port 0x%lx", (u_long) ioaddr);
+	printf("%s: port 0x%lx", sc->dev.dv_xname, (u_long) ioaddr);
 	if (size > 1)
 		printf("-0x%lx", (u_long) ioaddr + (u_long) size - 1);
+	printf("\n");
 
 	h->io[win].addr = ioaddr;
 	h->io[win].size = size;
