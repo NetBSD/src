@@ -4,10 +4,10 @@ PROG=	kdump
 CFLAGS+=-I/sys -I${.CURDIR}/../ktrace
 SRCS=	kdump.c ioctl.c subr.c
 .PATH:	${.CURDIR}/../ktrace
-#CLEANFILES+=ioctl.c
+CLEANFILES+=ioctl.c
 
-#ioctl.c: mkioctls
-#	/bin/sh ${.CURDIR}/mkioctls > ioctl.c
+ioctl.c: mkioctls
+	/bin/sh ${.CURDIR}/mkioctls > ioctl.c
 
 .include "../../Makefile.inc"
 .include <bsd.prog.mk>
