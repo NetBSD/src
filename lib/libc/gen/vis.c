@@ -1,4 +1,4 @@
-/*	$NetBSD: vis.c,v 1.6 1995/02/25 15:40:09 cgd Exp $	*/
+/*	$NetBSD: vis.c,v 1.7 1997/07/13 19:43:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)vis.c	8.1 (Berkeley) 7/19/93";
 #else
-static char rcsid[] = "$NetBSD: vis.c,v 1.6 1995/02/25 15:40:09 cgd Exp $";
+__RCSID("$NetBSD: vis.c,v 1.7 1997/07/13 19:43:00 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -57,7 +58,7 @@ vis(dst, c, flag, nextc)
 	int c, nextc;
 	register int flag;
 {
-	if ((u_int)c <= UCHAR_MAX && isascii(c) && isgraph(c) ||
+	if (((u_int)c <= UCHAR_MAX && isascii(c) && isgraph(c)) ||
 	   ((flag & VIS_SP) == 0 && c == ' ') ||
 	   ((flag & VIS_TAB) == 0 && c == '\t') ||
 	   ((flag & VIS_NL) == 0 && c == '\n') ||
@@ -164,7 +165,7 @@ strvis(dst, src, flag)
 	register char c;
 	char *start;
 
-	for (start = dst; c = *src;)
+	for (start = dst; (c = *src) != '\0';)
 		dst = vis(dst, c, flag, *++src);
 	*dst = '\0';
 	return (dst - start);
