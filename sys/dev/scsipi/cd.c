@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.175 2003/01/20 05:30:09 simonb Exp $	*/
+/*	$NetBSD: cd.c,v 1.176 2003/01/23 00:00:33 bad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.175 2003/01/20 05:30:09 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.176 2003/01/23 00:00:33 bad Exp $");
 
 #include "rnd.h"
 
@@ -584,8 +584,7 @@ cdstrategy(bp)
 	 * Do bounds checking, adjust transfer. if error, process.
 	 * If end of partition, just return.
 	 */
-	if (CDPART(bp->b_dev) != RAW_PART &&
-	    bounds_check_with_label(bp, lp,
+	if (bounds_check_with_label(bp, lp,
 	    (cd->flags & (CDF_WLABEL|CDF_LABELLING)) != 0) <= 0)
 		goto done;
 
