@@ -1,4 +1,4 @@
-/*	$NetBSD: idesc.c,v 1.56 2004/12/07 23:07:31 thorpej Exp $ */
+/*	$NetBSD: idesc.c,v 1.57 2004/12/07 23:14:03 thorpej Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: idesc.c,v 1.56 2004/12/07 23:07:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: idesc.c,v 1.57 2004/12/07 23:14:03 thorpej Exp $");
 
 /*
  * A4000 IDE interface, emulating a SCSI controller
@@ -1011,7 +1011,7 @@ ideicmd(struct idec_softc *dev, int target, void *cbuf, int clen, void *buf,
 			inqbuf->revision[i] = ide->sc_params.idep_rev[i];
 		return (0);
 
-	case READ_CAPACITY:
+	case READ_CAPACITY_10:
 		*((long *)buf) = ide->sc_params.idep_sectors *
 		    ide->sc_params.idep_heads *
 		    ide->sc_params.idep_fixedcyl - 1;

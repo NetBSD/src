@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.122 2004/12/03 20:20:32 thorpej Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.123 2004/12/07 23:14:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.122 2004/12/03 20:20:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.123 2004/12/07 23:14:03 thorpej Exp $");
 
 #include "opt_scsi.h"
 
@@ -1027,16 +1027,16 @@ u_int64_t
 scsipi_size(struct scsipi_periph *periph, int flags)
 {
 	union {
-		struct scsipi_read_capacity cmd;
+		struct scsipi_read_capacity_10 cmd;
 		struct scsipi_read_capacity_16 cmd16;
 	} cmd;
 	union {
-		struct scsipi_read_cap_data data;
+		struct scsipi_read_capacity_10_data data;
 		struct scsipi_read_capacity_16_data data16;
 	} data;
 
 	memset(&cmd, 0, sizeof(cmd));
-	cmd.cmd.opcode = READ_CAPACITY;
+	cmd.cmd.opcode = READ_CAPACITY_10;
 
 	/*
 	 * If the command works, interpret the result as a 4 byte
