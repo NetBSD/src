@@ -1,4 +1,4 @@
-/*	$NetBSD: grammar.y,v 1.5 1999/07/21 13:10:47 hubertf Exp $	*/
+/*	$NetBSD: grammar.y,v 1.6 1999/07/25 00:24:38 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -68,7 +68,7 @@
 #if 0
 static char sccsid[] = "@(#)grammar.y	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: grammar.y,v 1.5 1999/07/21 13:10:47 hubertf Exp $");
+__RCSID("$NetBSD: grammar.y,v 1.6 1999/07/25 00:24:38 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -379,7 +379,7 @@ check_edir(x, y, dir)
 
 void
 check_adir(x, y, dir)
-	int x, y, dir;
+	int x __attribute__((__unused__)), y __attribute__((__unused__)), dir __attribute__((__unused__));
 {
 }
 
