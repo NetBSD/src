@@ -1,4 +1,4 @@
-/*	$NetBSD: cbiiisc.c,v 1.4 1999/06/06 19:58:31 is Exp $	*/
+/*	$NetBSD: cbiiisc.c,v 1.5 1999/06/07 21:30:58 is Exp $	*/
 
 /*
  * Copyright (c) 1994,1998 Michael L. Hitch
@@ -145,6 +145,9 @@ cbiiiscattach(pdp, dp, auxp)
 	sc->sc_link.type = BUS_SCSI;
 
 	siopnginitialize(sc);
+
+	if (sc->sc_link.scsipi_scsi.max_target < 0)
+		return;
 
 	sc->sc_isr.isr_intr = cbiiisc_dmaintr;
 	sc->sc_isr.isr_arg = sc;
