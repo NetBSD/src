@@ -1,4 +1,4 @@
-/*	$NetBSD: chroot.c,v 1.11 2001/04/06 02:34:04 lukem Exp $	*/
+/*	$NetBSD: chroot.c,v 1.12 2001/07/14 21:56:45 manu Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)chroot.c	8.1 (Berkeley) 6/9/93";
 #else
-__RCSID("$NetBSD: chroot.c,v 1.11 2001/04/06 02:34:04 lukem Exp $");
+__RCSID("$NetBSD: chroot.c,v 1.12 2001/07/14 21:56:45 manu Exp $");
 #endif
 #endif /* not lint */
 
@@ -109,8 +109,8 @@ main(int argc, char *argv[])
 		usage();
 
 	if (group != NULL) {
-		if (isdigit(*group)) {
-			gid = (gid_t)strtol(group, &endp, 0);
+		if (isdigit((unsigned char)*group)) {
+			gid = (gid_t)strtoul(group, &endp, 0);
 			if (*endp != '\0')
 				goto getgroup;
 		} else {
@@ -118,7 +118,7 @@ main(int argc, char *argv[])
 			if ((gp = getgrnam(group)) != NULL)
 				gid = gp->gr_gid;
 			else
-				errx(1, "no such group %s", group);
+				errx(1, "no such group `%s'", group);
 		}
 	}
 
@@ -127,8 +127,8 @@ main(int argc, char *argv[])
 		if (*p == '\0')
 			continue;
 
-		if (isdigit(*p)) {
-			gidlist[gids] = (gid_t)strtol(p, &endp, 0);
+		if (isdigit((unsigned char)*p)) {
+			gidlist[gids] = (gid_t)strtoul(p, &endp, 0);
 			if (*endp != '\0')
 				goto getglist;
 		} else {
@@ -136,7 +136,7 @@ main(int argc, char *argv[])
 			if ((gp = getgrnam(p)) != NULL)
 				gidlist[gids] = gp->gr_gid;
 			else
-				errx(1, "no such group %s", p);
+				errx(1, "no such group `%s'", p);
 		}
 		gids++;
 	}
@@ -144,8 +144,8 @@ main(int argc, char *argv[])
 		errx(1, "too many supplementary groups provided");
 
 	if (user != NULL) {
-		if (isdigit(*user)) {
-			uid = (uid_t)strtol(user, &endp, 0);
+		if (isdigit((unsigned char)*user)) {
+			uid = (uid_t)strtoul(user, &endp, 0);
 			if (*endp != '\0')
 				goto getuser;
 		} else {
@@ -153,7 +153,7 @@ main(int argc, char *argv[])
 			if ((pw = getpwnam(user)) != NULL)
 				uid = pw->pw_uid;
 			else
-				errx(1, "no such user %s", user);
+				errx(1, "no such user `%s'", user);
 		}
 	}
 
