@@ -1,4 +1,4 @@
-/*	$NetBSD: ifpga_clock.c,v 1.6 2003/09/06 11:21:44 rearnsha Exp $ */
+/*	$NetBSD: ifpga_clock.c,v 1.7 2003/09/06 11:31:21 rearnsha Exp $ */
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -39,7 +39,7 @@
 /* Include header files */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ifpga_clock.c,v 1.6 2003/09/06 11:21:44 rearnsha Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ifpga_clock.c,v 1.7 2003/09/06 11:31:21 rearnsha Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -50,7 +50,6 @@ __KERNEL_RCSID(0, "$NetBSD: ifpga_clock.c,v 1.6 2003/09/06 11:21:44 rearnsha Exp
 
 #include <arm/cpufunc.h>
 #include <machine/intr.h>
-#include <evbarm/ifpga/irqhandler.h>	/* XXX XXX XXX */
 
 #include <evbarm/ifpga/ifpgavar.h>
 #include <evbarm/ifpga/ifpgamem.h>
@@ -82,7 +81,7 @@ static int statprev;		/* previous value in stat timer */
 
 #define COUNTS_PER_SEC (IFPGA_TIMER1_FREQ / 16)
 
-extern struct ifpga_softc *clock_sc;
+extern struct ifpga_softc *ifpga_sc;
 
 static int clock_started = 0;
 
@@ -91,14 +90,14 @@ static int load_timer(int, int);
 static __inline u_int
 getclock(void)
 {
-	return bus_space_read_4(clock_sc->sc_iot, clock_sc->sc_tmr_ioh,
+	return bus_space_read_4(ifpga_sc->sc_iot, ifpga_sc->sc_tmr_ioh,
 	    TIMER_1_VALUE);
 }
 
 static __inline u_int
 getstatclock(void)
 {
-	return bus_space_read_4(clock_sc->sc_iot, clock_sc->sc_tmr_ioh,
+	return bus_space_read_4(ifpga_sc->sc_iot, ifpga_sc->sc_tmr_ioh,
 	    TIMER_2_VALUE);
 }
 
@@ -114,7 +113,7 @@ clockhandler(void *fr)
 {
 	struct clockframe *frame = (struct clockframe *)fr;
 
-	bus_space_write_4(clock_sc->sc_iot, clock_sc->sc_tmr_ioh,
+	bus_space_write_4(ifpga_sc->sc_iot, ifpga_sc->sc_tmr_ioh,
 	    TIMER_1_CLEAR, 0);
 	hardclock(frame);
 	return 0;	/* Pass the interrupt on down the chain */
@@ -181,11 +180,11 @@ load_timer(int base, int intvl)
 	control = (TIMERx_CTRL_ENABLE | TIMERx_CTRL_MODE_PERIODIC | 
 	    TIMERx_CTRL_PRESCALE_DIV16);
 
-	bus_space_write_4(clock_sc->sc_iot, clock_sc->sc_tmr_ioh,
+	bus_space_write_4(ifpga_sc->sc_iot, ifpga_sc->sc_tmr_ioh,
 	    base + TIMERx_LOAD, intvl);
-	bus_space_write_4(clock_sc->sc_iot, clock_sc->sc_tmr_ioh,
+	bus_space_write_4(ifpga_sc->sc_iot, ifpga_sc->sc_tmr_ioh,
 	    base + TIMERx_CTRL, control);
-	bus_space_write_4(clock_sc->sc_iot, clock_sc->sc_tmr_ioh,
+	bus_space_write_4(ifpga_sc->sc_iot, ifpga_sc->sc_tmr_ioh,
 	    base + TIMERx_CLR, 0);
 	return intvl;
 }
@@ -264,30 +263,30 @@ cpu_initclocks()
 	printf("clock: hz=%d stathz = %d profhz = %d\n", hz, stathz, profhz);
 
 	/* Setup timer 1 and claim interrupt */
-	clock_sc->sc_clockintr = intr_claim(IFPGA_TIMER1_IRQ, IPL_CLOCK,
-	    "tmr1 hard clk", clockhandler, 0);
-	if (clock_sc->sc_clockintr == NULL)
+	ifpga_sc->sc_clockintr = ifpga_intr_establish(IFPGA_TIMER1_IRQ,
+	    IPL_CLOCK, clockhandler, 0);
+	if (ifpga_sc->sc_clockintr == NULL)
 		panic("%s: Cannot install timer 1 interrupt handler",
-		    clock_sc->sc_dev.dv_xname);
+		    ifpga_sc->sc_dev.dv_xname);
 
-	clock_sc->sc_clock_count
+	ifpga_sc->sc_clock_count
 	    = load_timer(IFPGA_TIMER1_BASE, intvl);
 
 	/*
 	 * Use ticks per 256us for accuracy since ticks per us is often
 	 * fractional e.g. @ 66MHz
 	 */
-	clock_sc->sc_clock_ticks_per_256us =
-	    ((((clock_sc->sc_clock_count * hz) / 1000) * 256) / 1000);
+	ifpga_sc->sc_clock_ticks_per_256us =
+	    ((((ifpga_sc->sc_clock_count * hz) / 1000) * 256) / 1000);
 
 	clock_started = 1;
 
 	/* Set up timer 2 as statclk/profclk. */
-	clock_sc->sc_statclockintr = intr_claim(IFPGA_TIMER2_IRQ,
-	    IPL_STATCLOCK, "tmr2 stat clk", statclockhandler, 0);
-	if (clock_sc->sc_statclockintr == NULL)
+	ifpga_sc->sc_statclockintr = ifpga_intr_establish(IFPGA_TIMER2_IRQ,
+	    IPL_STATCLOCK, statclockhandler, 0);
+	if (ifpga_sc->sc_statclockintr == NULL)
 		panic("%s: Cannot install timer 2 interrupt handler",
-		    clock_sc->sc_dev.dv_xname);
+		    ifpga_sc->sc_dev.dv_xname);
 	load_timer(IFPGA_TIMER2_BASE, statint);
 }
 
@@ -307,14 +306,14 @@ microtime(struct timeval *tvp)
 	int deltatm;
 	static struct timeval oldtv;
 
-	if (clock_sc == NULL || clock_sc->sc_clock_count == 0)
+	if (ifpga_sc == NULL || ifpga_sc->sc_clock_count == 0)
 		return;
 
 	s = splhigh();
 
 	tm = getclock();
 
-	deltatm = clock_sc->sc_clock_count - tm;
+	deltatm = ifpga_sc->sc_clock_count - tm;
 
 #ifdef DIAGNOSTIC
 	if (deltatm < 0)
@@ -323,7 +322,7 @@ microtime(struct timeval *tvp)
 
 	/* Fill in the timeval struct */
 	*tvp = time;
-	tvp->tv_usec += ((deltatm << 8) / clock_sc->sc_clock_ticks_per_256us);
+	tvp->tv_usec += ((deltatm << 8) / ifpga_sc->sc_clock_ticks_per_256us);
 
 	/* Make sure the micro seconds don't overflow. */
 	while (tvp->tv_usec >= 1000000) {
@@ -362,7 +361,7 @@ delay(u_int n)
 		u_int starttime;
 		u_int curtime;
 		u_int delta = 0;
-		u_int count_max = clock_sc->sc_clock_count;
+		u_int count_max = ifpga_sc->sc_clock_count;
 
 		starttime = getclock();
 

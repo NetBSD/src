@@ -1,11 +1,11 @@
-#	$NetBSD: files.integrator,v 1.5 2002/04/12 19:14:11 thorpej Exp $
+#	$NetBSD: files.integrator,v 1.6 2003/09/06 11:38:38 rearnsha Exp $
 #
 # ARM, Ltd. Integrator evaluation board configuraiton info
 #
 
-# XXX Use the old arm32 interrupt code for now.
-file	arch/arm/arm32/intr.c
-file	arch/arm/arm32/spl.S
+# Use the generic ARM soft interrupt code.
+file    arch/arm/arm/softintr.c
+file    arch/arm/arm32/irq_dispatch.S
 
 file	arch/evbarm/integrator/integrator_machdep.c
 file	arch/evbarm/integrator/int_bus_dma.c
@@ -16,8 +16,7 @@ attach	ifpga at mainbus
 file	arch/evbarm/ifpga/ifpga.c		ifpga
 file	arch/evbarm/ifpga/ifpga_io.c		ifpga
 file	arch/evbarm/ifpga/ifpga_clock.c		ifpga
-file	arch/evbarm/ifpga/ifpga_irq.S		ifpga
-file	arch/evbarm/ifpga/ifpga_irqhandler.c	ifpga
+file	arch/evbarm/ifpga/ifpga_intr.c		ifpga
 file	arch/evbarm/ifpga/ifpga_pci.c		ifpga & pci
 
 # Integrator fpga serial port
