@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.eng,v 1.2 1997/10/17 21:11:02 phil Exp $	*/
+/*	$NetBSD: msg.md.eng,v 1.3 1997/11/25 20:35:11 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -60,16 +60,16 @@ real geom: %d cylinders, %d heads, %d sectors
 }
 
 message biosgeom
-{It appears that your disk, %s, did not have a FDISK label on the disk.
-NetBSD is using the true geometry which is incompatible with the
-BIOS.  This install program gets the BIOS fake geometry of your disk
-by reading the FDISK label.  Your options are:
-    -- Abort the install, have DOS/Windows/? put on a FDISK label
-    -- Choose your own gemoetry and then tell the BIOS about it
-    -- Find out what the BIOS uses and set it
+{It appears that your disk, %s, did not have a valid Master Boot
+Record (MBR).  That is, NetBSD is using a geometry which is 
+incompatible with the BIOS.  This "sysinst" program gets the BIOS 
+fake geometry of your disk by reading the MBR.  Your options are:
+    -- Abort the install and initialize the MBR from some other OS
+    -- Enter the BIOS fake geometry and sysinst will initialize the MBR
 
-Note: Entering new geometry will cause this program to initialize your
-master boot record.
+WARNING: Entering new geometry will cause this program to initialize
+your master boot record (MBR) and destroy any boot program you may
+have installed.
 
 }
 
@@ -143,7 +143,7 @@ message dobootblks
 }
 
 message askfsroot
-{I will be asking for partition sizes and on some, mount points.
+{I will be asking for partition information.
 
 First the root partition.  You have %d %s left on your disk.
 Root partition size? }
@@ -152,11 +152,6 @@ message askfsswap
 {
 Next the swap partition.  You have %d %s left on your disk.
 Swap partition size? }
-
-message askfsusr
-{
-Next the /usr partition.  You have %d %s left on your disk.
-/usr partition size? }
 
 message otherparts
 {You still have some space remaining unallocated on your disk.  Please

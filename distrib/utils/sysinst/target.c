@@ -1,4 +1,4 @@
-/*	$NetBSD: target.c,v 1.10 1997/11/13 17:26:25 phil Exp $	*/
+/*	$NetBSD: target.c,v 1.11 1997/11/25 20:35:02 phil Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: target.c,v 1.10 1997/11/13 17:26:25 phil Exp $");
+__RCSID("$NetBSD: target.c,v 1.11 1997/11/25 20:35:02 phil Exp $");
 #endif
 
 
@@ -96,7 +96,6 @@ void backtowin(void)
 
 	getchar();	/* wait for user to press return */
 
-	puts (CL);
 	wrefresh(stdscr);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.eng,v 1.7 1997/11/13 04:23:41 simonb Exp $	*/
+/*	$NetBSD: menus.md.eng,v 1.8 1997/11/25 20:35:10 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -79,8 +79,8 @@ menu biosgeom, title  "  Choose an option", y=16;
 	display action { msg_display (MSG_biosgeom, diskdev);
 			 disp_cur_geom ();
 			};
-	option "Abort install, halt machine",
-		action (endwin)  { system ("/sbin/halt"); exit(1); };
+	option "Abort install",
+		action (endwin)  { exit(1); };
 	option "Enter geometry",
 		action  { msg_clear(); set_fdisk_geom(); },
 		next menu confirmbios;
@@ -112,6 +112,8 @@ menu editparttable, title  "  Choose your partition", exit;
 		action  { editpart = 2; };
 	option "Edit partition 3",  sub menu editpart,
 		action  { editpart = 3; };
+	option "Reselect size specification",
+		action  { reask_sizemult(); }; 
 
 menu editpart, title  "  Select to change";
 	display action { msg_display (MSG_editpart, editpart);
@@ -137,6 +139,7 @@ menu editpart, title  "  Select to change";
 			}
 			part[editpart][START] = start;
 			part[editpart][SIZE] = size;
+			part[editpart][SET] = 1;
 		};
 	option "Set active", action { activepart = editpart; };
 	option "Partition OK", exit;
