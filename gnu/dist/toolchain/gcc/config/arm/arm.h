@@ -477,6 +477,9 @@ extern int arm_ld_sched;
 /* Nonzero if this chip is a StrongARM.  */
 extern int arm_is_strong;
 
+/* Nonzero if this chip is an XScale.  */
+extern int arm_is_xscale;
+
 /* Nonzero if this chip is a an ARM6 or an ARM7.  */
 extern int arm_is_6_or_7;
 
@@ -614,9 +617,12 @@ extern int arm_is_6_or_7;
 #define BIGGEST_ALIGNMENT  32
 
 /* Make strings word-aligned so strcpy from constants will be faster.  */
-#define CONSTANT_ALIGNMENT(EXP, ALIGN)  \
-  (TREE_CODE (EXP) == STRING_CST        \
-   && (ALIGN) < BITS_PER_WORD ? BITS_PER_WORD : (ALIGN))
+#define CONSTANT_ALIGNMENT_FACTOR (! arm_is_xscale ? 1 : 2)
+
+#define CONSTANT_ALIGNMENT(EXP, ALIGN)				\
+  ((TREE_CODE (EXP) == STRING_CST				\
+    && (ALIGN) < BITS_PER_WORD * CONSTANT_ALIGNMENT_FACTOR)	\
+   ? BITS_PER_WORD * CONSTANT_ALIGNMENT_FACTOR : (ALIGN))
 
 /* Every structures size must be a multiple of 32 bits.  */
 /* This is for compatibility with ARMCC.  ARM SDT Reference Manual
@@ -1702,6 +1708,9 @@ extern struct rtx_def *legitimize_pic_address ();
 /* Max number of bytes we can move from memory to memory
    in one reasonably fast instruction.  */
 #define MOVE_MAX 4
+
+#undef  MOVE_RATIO
+#define MOVE_RATIO (arm_is_xscale ? 4 : 2)
 
 /* Define if operations between registers always perform the operation
    on the full register even if a narrower mode is specified.  */
