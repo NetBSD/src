@@ -93,6 +93,8 @@ case "$SYSTEM.$RELEASE" in
 		;;
   OpenBSD.2*)	SYSTYPE=OPENBSD2
 		;;
+  OpenBSD.3*)	SYSTYPE=OPENBSD3
+		;;
    NetBSD.1*)	SYSTYPE=NETBSD1
 		;;
    BSD/OS.2*)	SYSTYPE=BSDI2
@@ -142,6 +144,12 @@ case "$SYSTEM.$RELEASE" in
 		done
 		;;
        AIX.*)	case "`uname -v`" in
+		5)	SYSTYPE=AIX4
+			case "$CC" in
+			cc|*/cc|xlc|*/xlc) CCARGS="$CCARGS -w -blibpath:/usr/lib:/lib:/usr/local/lib";;
+			esac
+			CCARGS="$CCARGS -D_ALL_SOURCE -DHAS_POSIX_REGEXP"
+			;;
 		4)	SYSTYPE=AIX4
 			# How embarrassing...
 			case "$CC" in
@@ -175,10 +183,22 @@ case "$SYSTEM.$RELEASE" in
 		    echo "See the RELEASE_NOTES file for more information." 1>&2
 		    exit 1
 		fi
+		# See where GDBM's ndbm.h include file sits.
+		if [ -f /usr/include/gdbm-ndbm.h ]
+		then
+		    CCARGS="$CCARGS -DHAS_DBM -DPATH_NDBM_H='<gdbm-ndbm.h>'"
+		    GDBM_LIBS=gdbm
+		elif [ -f /usr/include/gdbm/ndbm.h ]
+		then
+		    CCARGS="$CCARGS -DHAS_DBM -DPATH_NDBM_H='<gdbm/ndbm.h>'"
+		    GDBM_LIBS=gdbm
+		fi
 		SYSLIBS="-ldb"
-		for name in nsl resolv
+		for name in nsl resolv $GDBM_LIBS
 		do
-		    test -f /usr/lib/lib$name.a && SYSLIBS="$SYSLIBS -l$name"
+		    test -e /usr/lib/lib$name.a -o -e /usr/lib/lib$name.so \
+			-o -e /lib/lib$name.a -o -e /lib/lib$name.so \
+			    && SYSLIBS="$SYSLIBS -l$name"
 		done
 		;;
      IRIX*.5.*)	SYSTYPE=IRIX5
@@ -218,11 +238,17 @@ ReliantUNIX-?.5.43) SYSTYPE=ReliantUnix543
 		RANLIB=echo
 		SYSLIBS="-lresolv -lsocket -lnsl"
 		;;
-Rhapsody.5*|Darwin.1.*)
+Rhapsody.5*|Darwin.*)
 		SYSTYPE=RHAPSODY5
 		# Use the native compiler by default
 		: ${CC=cc}
 		AWK=gawk
+		case $RELEASE in
+		 1.[0-3]) ;;
+		       *) AWK=awk
+			  SYSLIBS=-flat_namespace
+			  ;;
+		esac
 		;;
 "Mac OS".10*)	SYSTYPE=MACOSX
 		# Use the native compiler by default
