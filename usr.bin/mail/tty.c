@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.6 1996/12/28 07:11:08 tls Exp $	*/
+/*	$NetBSD: tty.c,v 1.7 1997/07/09 05:25:46 mikel Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)tty.c	8.2 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: tty.c,v 1.6 1996/12/28 07:11:08 tls Exp $";
+static char rcsid[] = "$NetBSD: tty.c,v 1.7 1997/07/09 05:25:46 mikel Exp $";
 #endif
 #endif /* not lint */
 
@@ -81,6 +81,9 @@ grabh(hp, gflags)
 	int errs;
 #ifdef __GNUC__
 	/* Avoid longjmp clobbering */
+#ifdef TIOCSTI
+	(void) &extproc;
+#endif
 	(void) &saveint;
 #endif
 
