@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus.h,v 1.6 2001/03/18 15:56:05 bjh21 Exp $ */
+/* $NetBSD: podulebus.h,v 1.7 2001/03/19 21:03:47 bjh21 Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -69,12 +69,12 @@ struct podulebus_attach_args {
 	bus_space_handle_t	pa_sync_h;
 
 	/* Same things as raw addresses (arm32 compat) */
-	u_int	pa_easi_base;
-	u_int	pa_mod_base;
-	u_int	pa_fast_base;
-	u_int	pa_medium_base;
-	u_int	pa_slow_base;
-	u_int	pa_sync_base;
+	bus_addr_t	pa_easi_base;
+	bus_addr_t	pa_mod_base;
+	bus_addr_t	pa_fast_base;
+	bus_addr_t	pa_medium_base;
+	bus_addr_t	pa_slow_base;
+	bus_addr_t	pa_sync_base;
 
 	podulebus_intr_handle_t	pa_ih;
 
