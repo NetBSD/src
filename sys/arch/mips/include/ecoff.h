@@ -1,4 +1,4 @@
-/*	$NetBSD: ecoff.h,v 1.3 1994/10/26 21:09:38 cgd Exp $	*/
+/*	$NetBSD: ecoff.h,v 1.4 1995/06/16 02:07:33 mellon Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass
@@ -41,6 +41,6 @@
         u_long ea_gp_value
 
 #define ECOFF_MAGIC_MIPSEL 0x0162
-#define ECOFF_BADMAG(ex) (ex->ef_magic != ECOFF_MAGIC_MIPSEL)
+#define ECOFF_BADMAG(ex) ((ex)->ef_magic != ECOFF_MAGIC_MIPSEL)
 
-#define ECOFF_SEGMENT_ALIGNMENT(eap) (eap->ea_vstamp < 23 ? 8 : 16)
+#define ECOFF_SEGMENT_ALIGNMENT(eap) ((eap)->ea_vstamp < 23 ? 8 : 16)
