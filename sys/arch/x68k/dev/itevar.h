@@ -1,4 +1,4 @@
-/*	$NetBSD: itevar.h,v 1.2 1996/05/21 15:32:25 oki Exp $	*/
+/*	$NetBSD: itevar.h,v 1.3 1997/02/03 17:01:57 oki Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -257,17 +257,14 @@ int	ite_cnfilter __P((u_char, enum caller));
 void	ite_filter __P((u_char ,enum caller));
 
 /* lower layer functions */
-int	view_cnprobe __P((int));
-void	view_init __P((struct ite_softc *));
-void	view_deinit __P((struct ite_softc *));
+void	tv_init __P((struct ite_softc *));
+void	tv_deinit __P((struct ite_softc *));
 
 #ifdef _KERNEL
 #if ITEKANJI
 extern unsigned char kern_font[];
 #endif
-#if x68k
 /* keyboard LED status variable */
 extern unsigned char kbdled;
 void kbd_setLED __P((void));
-#endif
 #endif
