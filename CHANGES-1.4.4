@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.4,v 1.1.2.13 2001/05/26 15:01:29 he Exp $
+#	$NetBSD: CHANGES-1.4.4,v 1.1.2.14 2001/05/30 09:46:46 he Exp $
 
 A complete list of changes from NetBSD 1.4.3 to NetBSD 1.4.4:
 
@@ -320,3 +320,12 @@ sys/arch/i386/i386/svr4_machdep.c		1.51
 
   Make sure the machine state restored by setmcontext() is identical
   to that of sigreturn().
+
+sys/netinet/ip_input.c				1.131,1.133 via patch
+sys/netinet/in.h				1.53 via patch
+usr.sbin/sysctl/sysctl.8			patch
+lib/libc/gen/sysctl.3				1.75 via patch
+
+  Introduce net.inet.ip.maxfragpackets, which controls the maximum
+  number of IPv4 fragment reassembly queue entries.  Defends against
+  certain DoS attacks.  Fixes SA#2001-006.
