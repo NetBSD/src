@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_exec_ecoff.c,v 1.8.2.5 2004/11/21 08:53:49 skrll Exp $ */
+/* $NetBSD: osf1_exec_ecoff.c,v 1.8.2.6 2005/02/09 15:16:28 skrll Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_exec_ecoff.c,v 1.8.2.5 2004/11/21 08:53:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_exec_ecoff.c,v 1.8.2.6 2005/02/09 15:16:28 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -285,13 +285,13 @@ osf1_exec_ecoff_dynamic(struct lwp *l, struct exec_package *epp)
 
 	switch (ldr_exechdr.a.magic) {
 	case ECOFF_OMAGIC:
-		error = exec_ecoff_prep_omagic(p, epp, &ldr_exechdr, ldr_vp);
+		error = exec_ecoff_prep_omagic(l, epp, &ldr_exechdr, ldr_vp);
 		break;
 	case ECOFF_NMAGIC:
-		error = exec_ecoff_prep_nmagic(p, epp, &ldr_exechdr, ldr_vp);
+		error = exec_ecoff_prep_nmagic(l, epp, &ldr_exechdr, ldr_vp);
 		break;
 	case ECOFF_ZMAGIC:
-		error = exec_ecoff_prep_zmagic(p, epp, &ldr_exechdr, ldr_vp);
+		error = exec_ecoff_prep_zmagic(l, epp, &ldr_exechdr, ldr_vp);
 		break;
 	default:
 		error = ENOEXEC;
@@ -300,7 +300,7 @@ osf1_exec_ecoff_dynamic(struct lwp *l, struct exec_package *epp)
 		goto bad;
 
 	/* finally, set up the stack. */
-	error = (*epp->ep_esch->es_setup_stack)(p, epp);
+	error = (*epp->ep_esch->es_setup_stack)(l, epp);
 	if (error)
 		goto bad;
 

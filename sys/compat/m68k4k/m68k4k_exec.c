@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k4k_exec.c,v 1.13.2.5 2005/02/04 11:45:08 skrll Exp $	*/
+/*	$NetBSD: m68k4k_exec.c,v 1.13.2.6 2005/02/09 15:16:28 skrll Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m68k4k_exec.c,v 1.13.2.5 2005/02/04 11:45:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m68k4k_exec.c,v 1.13.2.6 2005/02/09 15:16:28 skrll Exp $");
 
 #if !defined(__m68k__)
 #error YOU GOTTA BE KIDDING!
@@ -57,9 +57,9 @@ __KERNEL_RCSID(0, "$NetBSD: m68k4k_exec.c,v 1.13.2.5 2005/02/04 11:45:08 skrll E
 
 #include <compat/m68k4k/m68k4k_exec.h>
 
-int	exec_m68k4k_prep_zmagic __P((struct proc *, struct exec_package *));
-int	exec_m68k4k_prep_nmagic __P((struct proc *, struct exec_package *));
-int	exec_m68k4k_prep_omagic __P((struct proc *, struct exec_package *));
+int	exec_m68k4k_prep_zmagic __P((struct lwp *, struct exec_package *));
+int	exec_m68k4k_prep_nmagic __P((struct lwp *, struct exec_package *));
+int	exec_m68k4k_prep_omagic __P((struct lwp *, struct exec_package *));
 
 /*
  * exec_m68k4k_makecmds(): Check if it's an a.out-format executable
@@ -99,13 +99,13 @@ exec_m68k4k_makecmds(l, epp)
 
 	switch (midmag) {
 	case (MID_M68K4K << 16) | ZMAGIC:
-		error = exec_m68k4k_prep_zmagic(l->l_proc, epp);
+		error = exec_m68k4k_prep_zmagic(l, epp);
 		break;
 	case (MID_M68K4K << 16) | NMAGIC:
-		error = exec_m68k4k_prep_nmagic(l->l_proc, epp);
+		error = exec_m68k4k_prep_nmagic(l, epp);
 		break;
 	case (MID_M68K4K << 16) | OMAGIC:
-		error = exec_m68k4k_prep_omagic(l->l_proc, epp);
+		error = exec_m68k4k_prep_omagic(l, epp);
 		break;
 	default:
 		error = ENOEXEC;
@@ -128,8 +128,8 @@ exec_m68k4k_makecmds(l, epp)
  */
 
 int
-exec_m68k4k_prep_zmagic(p, epp)
-	struct proc *p;
+exec_m68k4k_prep_zmagic(l, epp)
+	struct lwp *l;
 	struct exec_package *epp;
 {
 	struct exec *execp = epp->ep_hdr;
@@ -160,7 +160,7 @@ exec_m68k4k_prep_zmagic(p, epp)
 		    epp->ep_daddr + execp->a_data, NULLVP, 0,
 		    VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 
-	return (*epp->ep_esch->es_setup_stack)(p, epp);
+	return (*epp->ep_esch->es_setup_stack)(l, epp);
 }
 
 /*
@@ -168,8 +168,8 @@ exec_m68k4k_prep_zmagic(p, epp)
  */
 
 int
-exec_m68k4k_prep_nmagic(p, epp)
-	struct proc *p;
+exec_m68k4k_prep_nmagic(l, epp)
+	struct lwp *l;
 	struct exec_package *epp;
 {
 	struct exec *execp = epp->ep_hdr;
@@ -199,7 +199,7 @@ exec_m68k4k_prep_nmagic(p, epp)
 		NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, bsize, baddr,
 		    NULLVP, 0, VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 
-	return (*epp->ep_esch->es_setup_stack)(p, epp);
+	return (*epp->ep_esch->es_setup_stack)(l, epp);
 }
 
 /*
@@ -207,8 +207,8 @@ exec_m68k4k_prep_nmagic(p, epp)
  */
 
 int
-exec_m68k4k_prep_omagic(p, epp)
-	struct proc *p;
+exec_m68k4k_prep_omagic(l, epp)
+	struct lwp *l;
 	struct exec_package *epp;
 {
 	struct exec *execp = epp->ep_hdr;
@@ -243,5 +243,5 @@ exec_m68k4k_prep_omagic(p, epp)
 	dsize = epp->ep_dsize + execp->a_text - roundup(execp->a_text,
 							PAGE_SIZE);
 	epp->ep_dsize = (dsize > 0) ? dsize : 0;
-	return (*epp->ep_esch->es_setup_stack)(p, epp);
+	return (*epp->ep_esch->es_setup_stack)(l, epp);
 }
