@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2000/04/30 21:21:50 perry Exp $
+#	$NetBSD: Makefile,v 1.2 2000/04/30 21:43:45 perry Exp $
 
 # Note that the order here is picked to look much like that in the
 # original Makefile.in in order to make it easier to visually compare
@@ -11,5 +11,9 @@ SUBDIR=	util global dns masterlib master postfix sendmail error \
 
 # not built: smtpstone (unneeded), spawn (experimental),
 # and html (unsure what to do with it (yet))
+
+distribution:
+	cd ${.CURDIR}/postfix-etc; ${MAKE} install
+
 
 .include <bsd.subdir.mk>
