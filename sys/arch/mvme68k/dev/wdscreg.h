@@ -1,4 +1,4 @@
-/*  $NetBSD: wdscreg.h,v 1.1 1996/04/18 18:30:49 chuck Exp $  */
+/*	$NetBSD: wdscreg.h,v 1.2 1996/05/08 05:55:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps

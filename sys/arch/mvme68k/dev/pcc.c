@@ -1,4 +1,4 @@
-/* $Id: pcc.c,v 1.3 1996/04/26 19:00:06 chuck Exp $ */
+/*	$NetBSD: pcc.c,v 1.4 1996/05/08 05:55:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe
