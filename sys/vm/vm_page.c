@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_page.c,v 1.20 1994/10/30 19:11:20 cgd Exp $	*/
+/*	$NetBSD: vm_page.c,v 1.21 1994/12/01 00:19:57 gwr Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -492,39 +492,71 @@ pmap_startup(startp, endp)
 	vm_offset_t	*startp;
 	vm_offset_t	*endp;
 {
-	unsigned int	i;
+	unsigned int	i, pmap_idx, freepages;
 	vm_offset_t	paddr;
 	
 	/*
-	 *	We calculate how many page frames we will have
-	 *	and then allocate the page structures in one chunk.
+	 * We calculate how many page frames we will have
+	 * and then allocate the page structures in one chunk.
+	 * The calculation is non-trivial.  We want:
+	 *
+	 *	vmpages > (freepages - (vmpages / sizeof(vm_page_t)))
+	 *
+	 * which, with some algebra, becomes:
+	 *
+	 *	vmpages > (freepages * sizeof(...) / (1 + sizeof(...)))
+	 *
+	 * The value of vm_page_count need not be exact, but must be
+	 * large enough so vm_page_array handles the index range.
 	 */
-	
-	vm_page_count = ((PAGE_SIZE * pmap_free_pages() +
-		   (round_page(virtual_space_start) - virtual_space_start)) /
-		  (PAGE_SIZE + sizeof *vm_page_array));
-	
-	vm_page_array = (vm_page_t) pmap_steal_memory(vm_page_count
-						      * sizeof *vm_page_array);
-	
+
+	freepages = pmap_free_pages();
+	/* Fudge slightly to deal with truncation error. */
+	freepages += 1;	/* fudge */
+
+	vm_page_count = (PAGE_SIZE * freepages) /
+		(PAGE_SIZE + sizeof(*vm_page_array));
+
+	vm_page_array = (vm_page_t)
+		pmap_steal_memory(vm_page_count * sizeof(*vm_page_array));
+
+#ifdef	DIAGNOSTIC
+	/*
+	 * Initialize everyting in case the holes are stepped in,
+	 * and set PA to something that will cause a panic...
+	 */
+	for (i = 0; i < vm_page_count; i++) {
+		bzero(&vm_page_array[i], sizeof(*vm_page_array));
+		vm_page_array[i].phys_addr = 0xdeadbeef;
+	}
+#endif
+
 	/*
 	 *	Initialize the page frames.
+	 *	Note that some page indices may not be usable
+	 *	when pmap_free_pages() counts pages in a hole.
 	 */
-	
-	for (i = 0; i < vm_page_count; i++) {
-		if (!pmap_next_page(&paddr))
-			break;
-		
+	if (!pmap_next_page(&paddr))
+		panic("pmap_startup: can't get first page");
+	first_page = pmap_page_index(paddr);
+	i = 0;
+	for (;;) {
+		/* Initialize a page array element. */
 		VM_PAGE_INIT(&vm_page_array[i], NULL, NULL);
 		vm_page_array[i].phys_addr = paddr;
 		vm_page_free(&vm_page_array[i]);
+
+		/* Are there more physical pages? */
+		if (!pmap_next_page(&paddr))
+			break;
+		pmap_idx = pmap_page_index(paddr);
+		i = pmap_idx - first_page;
+
+		/* Don't trust pmap_page_index()... */
+		if (i < 0 || i >= vm_page_count)
+			panic("pmap_startup: bad i=0x%x", i);
 	}
-	/*
-	 *	Remember the actual page count and the index of the first page
-	 */
-	vm_page_count = i;
-	first_page = pmap_page_index(vm_page_array[0].phys_addr);
-	
+
 	*startp = virtual_space_start;
 	*endp = virtual_space_end;
 }
