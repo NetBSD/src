@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.7 1997/04/10 23:12:20 cgd Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.8 1998/01/12 18:04:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.  All rights reserved.
@@ -63,10 +63,6 @@ static int pci_config_offset __P((pcitag_t));
 
 struct cfattach pcibus_ca = {
 	sizeof(struct device), pcibusmatch, pcibusattach
-};
-
-struct cfdriver pcibus_cd = {
-	NULL, "pcibus", DV_DULL
 };
 
 int

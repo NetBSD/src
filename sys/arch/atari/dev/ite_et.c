@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_et.c,v 1.7 1997/07/15 06:48:06 leo Exp $	*/
+/*	$NetBSD: ite_et.c,v 1.8 1998/01/12 18:04:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.
@@ -104,10 +104,6 @@ int  grfetprint __P((void *, const char *));
 
 struct cfattach grfet_ca = {
 	sizeof(struct grf_softc), grfetmatch, grfetattach
-};
-
-struct cfdriver grfet_cd = {
-	NULL, "grfet", DV_DULL
 };
 
 /*

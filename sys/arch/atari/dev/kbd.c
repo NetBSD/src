@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.16 1997/06/29 20:30:50 leo Exp $	*/
+/*	$NetBSD: kbd.c,v 1.17 1998/01/12 18:04:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -90,11 +90,6 @@ static void kbd_pkg_start __P((struct kbd_softc *, u_char));
 struct cfattach kbd_ca = {
 	sizeof(struct device), kbdmatch, kbdattach
 };
-
-struct cfdriver kbd_cd = {
-	NULL, "kbd", DV_DULL, NULL, 0
-};
-
 
 /*ARGSUSED*/
 static	int

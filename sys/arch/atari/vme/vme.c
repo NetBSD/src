@@ -1,4 +1,4 @@
-/*	$NetBSD: vme.c,v 1.2 1997/10/09 07:41:04 jtc Exp $	*/
+/*	$NetBSD: vme.c,v 1.3 1998/01/12 18:04:22 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -50,10 +50,6 @@ int vmeprint __P((void *, const char *));
 
 struct cfattach vme_ca = {
 	sizeof(struct vme_softc), vmematch, vmeattach
-};
-
-struct cfdriver vme_cd = {
-	NULL, "vme", DV_DULL
 };
 
 int	vmesearch __P((struct device *, struct cfdata *, void *));

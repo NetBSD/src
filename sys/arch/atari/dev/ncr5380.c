@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380.c,v 1.30 1997/08/27 11:23:40 bouyer Exp $	*/
+/*	$NetBSD: ncr5380.c,v 1.31 1998/01/12 18:04:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -213,9 +213,7 @@ struct cfattach CANAME(DRNAME) = {
 	sizeof(struct ncr_softc), ncr_match, ncr_attach
 };
 
-struct cfdriver CFNAME(DRNAME) = {
-	NULL, CFSTRING(DRNAME), DV_DULL, NULL, 0
-};
+extern struct cfdriver CFNAME(DRNAME);
 
 int
 ncr_match(pdp, cfp, auxp)

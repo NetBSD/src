@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.27 1997/03/10 14:41:43 leo Exp $	*/
+/*	$NetBSD: zs.c,v 1.28 1998/01/12 18:04:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 L. Weppelman (Atari modifications)
@@ -195,9 +195,7 @@ struct cfattach zs_ca = {
 	sizeof(struct zs_softc), zsmatch, zsattach
 };
 
-struct cfdriver zs_cd = {
-	NULL, "zs", DV_TTY, NULL, 0
-};
+extern struct cfdriver zs_cd;
 
 /* {b,c}devsw[] function prototypes */
 dev_type_open(zsopen);

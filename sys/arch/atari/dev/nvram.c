@@ -1,4 +1,4 @@
-/*	$NetBSD: nvram.c,v 1.6 1996/12/20 12:49:44 leo Exp $	*/
+/*	$NetBSD: nvram.c,v 1.7 1998/01/12 18:04:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -68,9 +68,7 @@ struct cfattach nvr_ca = {
 	sizeof(struct nvr_softc), nvr_match, nvr_attach
 };
 
-struct cfdriver nvr_cd = {
-	NULL, "nvr", DV_DULL, NULL, 0
-};
+extern struct cfdriver nvr_cd;
 
 /*ARGSUSED*/
 static	int

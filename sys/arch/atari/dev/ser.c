@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.2 1997/08/27 06:59:19 leo Exp $	*/
+/*	$NetBSD: ser.c,v 1.3 1998/01/12 18:04:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -175,9 +175,7 @@ struct cfattach ser_ca = {
 	sizeof(struct ser_softc), sermatch, serattach
 };
 
-struct cfdriver ser_cd = {
-	NULL, "ser", DV_TTY, NULL, 0
-};
+extern struct cfdriver ser_cd;
 
 /*ARGSUSED*/
 static	int

@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_machdep.c,v 1.2 1997/10/09 07:41:05 jtc Exp $	*/
+/*	$NetBSD: vme_machdep.c,v 1.3 1998/01/12 18:04:24 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -57,10 +57,6 @@ static void	vmebusattach __P((struct device *, struct device *, void *));
 
 struct cfattach vmebus_ca = {
 	sizeof(struct device), vmebusmatch, vmebusattach
-};
-
-struct cfdriver vmebus_cd = {
-	NULL, "vmebus", DV_DULL
 };
 
 int
