@@ -1,5 +1,5 @@
-/*	$NetBSD: raw_ip6.c,v 1.26 2001/01/24 09:04:17 itojun Exp $	*/
-/*	$KAME: raw_ip6.c,v 1.56 2001/01/11 11:01:23 sumikawa Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.27 2001/02/08 18:43:17 itojun Exp $	*/
+/*	$KAME: raw_ip6.c,v 1.65 2001/02/08 18:36:17 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -129,8 +129,8 @@ rip6_input(mp, offp, proto)
 	int	*offp, proto;
 {
 	struct mbuf *m = *mp;
-	register struct ip6_hdr *ip6 = mtod(m, struct ip6_hdr *);
-	register struct in6pcb *in6p;
+	struct ip6_hdr *ip6 = mtod(m, struct ip6_hdr *);
+	struct in6pcb *in6p;
 	struct in6pcb *last = NULL;
 	struct sockaddr_in6 rip6src;
 	struct mbuf *opts = NULL;
@@ -217,6 +217,7 @@ rip6_input(mp, offp, proto)
 			m_freem(m);
 		else {
 			char *prvnxtp = ip6_get_prevhdr(m, *offp); /* XXX */
+			in6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_protounknown);
 			icmp6_error(m, ICMP6_PARAM_PROB,
 				    ICMP6_PARAMPROB_NEXTHEADER,
 				    prvnxtp - mtod(m, char *));
@@ -233,7 +234,7 @@ rip6_ctlinput(cmd, sa, d)
 	void *d;
 {
 	struct sockaddr_in6 sa6;
-	register struct ip6_hdr *ip6;
+	struct ip6_hdr *ip6;
 	struct mbuf *m;
 	int off;
 	void (*notify) __P((struct in6pcb *, int)) = in6_rtchange;
@@ -313,6 +314,7 @@ rip6_output(m, va_alist)
 	int type, code;		/* for ICMPv6 output statistics only */
 	int priv = 0;
 	va_list ap;
+	int flags;
 
 	va_start(ap, m);
 	so = va_arg(ap, struct socket *);
@@ -438,9 +440,15 @@ rip6_output(m, va_alist)
 		goto bad;
 	}
 #endif /*IPSEC*/
+
+	flags = 0;
+#ifdef IPV6_MINMTU
+	if (in6p->in6p_flags & IN6P_MINMTU)
+		flags |= IPV6_MINMTU;
+#endif
 	
-	error = ip6_output(m, optp, &in6p->in6p_route, 0, in6p->in6p_moptions,
-			   &oifp);
+	error = ip6_output(m, optp, &in6p->in6p_route, flags,
+	    in6p->in6p_moptions, &oifp);
 	if (so->so_proto->pr_protocol == IPPROTO_ICMPV6) {
 		if (oifp)
 			icmp6_ifoutstat_inc(oifp, type, code);
@@ -473,40 +481,40 @@ rip6_ctloutput(op, so, level, optname, m)
 {
 	int error = 0;
 
-	switch(level) {
-	 case IPPROTO_IPV6:
-		 switch(optname) {
-		  case MRT6_INIT:
-		  case MRT6_DONE:
-		  case MRT6_ADD_MIF:
-		  case MRT6_DEL_MIF:
-		  case MRT6_ADD_MFC:
-		  case MRT6_DEL_MFC:
-		  case MRT6_PIM:
-			  if (op == PRCO_SETOPT) {
-				  error = ip6_mrouter_set(optname, so, *m);
-				  if (*m)
-					  (void)m_free(*m);
-			  } else if (op == PRCO_GETOPT) {
-				  error = ip6_mrouter_get(optname, so, m);
-			  } else
-				  error = EINVAL;
-			  return (error);
-		 }
-		 return (ip6_ctloutput(op, so, level, optname, m));
-		 /* NOTREACHED */
+	switch (level) {
+	case IPPROTO_IPV6:
+		switch (optname) {
+		case MRT6_INIT:
+		case MRT6_DONE:
+		case MRT6_ADD_MIF:
+		case MRT6_DEL_MIF:
+		case MRT6_ADD_MFC:
+		case MRT6_DEL_MFC:
+		case MRT6_PIM:
+			if (op == PRCO_SETOPT) {
+				error = ip6_mrouter_set(optname, so, *m);
+				if (*m)
+					(void)m_free(*m);
+			} else if (op == PRCO_GETOPT) {
+				error = ip6_mrouter_get(optname, so, m);
+			} else
+				error = EINVAL;
+			return (error);
+		}
+		return (ip6_ctloutput(op, so, level, optname, m));
+		/* NOTREACHED */
 
-	 case IPPROTO_ICMPV6:
-		 /*
-		  * XXX: is it better to call icmp6_ctloutput() directly
-		  * from protosw?
-		  */
-		 return(icmp6_ctloutput(op, so, level, optname, m));
+	case IPPROTO_ICMPV6:
+		/*
+		 * XXX: is it better to call icmp6_ctloutput() directly
+		 * from protosw?
+		 */
+		return(icmp6_ctloutput(op, so, level, optname, m));
 
-	 default:
-		 if (op == PRCO_SETOPT && *m)
-			 (void)m_free(*m);
-		 return(EINVAL);
+	default:
+		if (op == PRCO_SETOPT && *m)
+			(void)m_free(*m);
+		return(EINVAL);
 	}
 }
 
@@ -515,12 +523,12 @@ extern	u_long rip6_recvspace;
 
 int
 rip6_usrreq(so, req, m, nam, control, p)
-	register struct socket *so;
+	struct socket *so;
 	int req;
 	struct mbuf *m, *nam, *control;
 	struct proc *p;
 {
-	register struct in6pcb *in6p = sotoin6pcb(so);
+	struct in6pcb *in6p = sotoin6pcb(so);
 	int s;
 	int error = 0;
 /*	extern	struct socket *ip6_mrouter; */ /* xxx */
@@ -549,8 +557,12 @@ rip6_usrreq(so, req, m, nam, control, p)
 			break;
 		}
 		s = splsoftnet();
-		if ((error = soreserve(so, rip6_sendspace, rip6_recvspace)) ||
-		    (error = in6_pcballoc(so, &rawin6pcb))) {
+		if ((error = soreserve(so, rip6_sendspace, rip6_recvspace)) != 0) {
+			splx(s);
+			break;
+		}
+		if ((error = in6_pcballoc(so, &rawin6pcb)) != 0)
+		{
 			splx(s);
 			break;
 		}
