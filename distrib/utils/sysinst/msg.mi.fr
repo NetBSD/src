@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.fr,v 1.64 2003/07/18 10:29:37 dsl Exp $	*/
+/*	$NetBSD: msg.mi.fr,v 1.65 2003/07/22 08:30:10 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -638,6 +638,11 @@ message netagain
 {Veuillez indiquer à nouveau les informations sur votre réseau.
 }
 
+message wait_network	/* XXX translate */
+{
+Waiting while network interface comes up.
+}
+
 message resolv
 {Impossible de créer le fichier /etc/resolv.conf.
 L'installation a échoué.
@@ -656,6 +661,10 @@ message ftperror
 
 message distdir
 {Quel répertoire dois je utiliser pour %s ?}
+
+message delete_dist_files	/* XXX translate */
+{Do you want to delete the NetBSD sets from %s?
+(You can keep them to install/upgrade a second system.)}
 
 message verboseextract
 {Pendant la procédure d'extraction des fichiers,

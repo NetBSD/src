@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.26 2003/07/18 10:29:37 dsl Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.27 2003/07/22 08:30:10 dsl Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.en,v 1.86 2002/04/04 14:26:44 ad Exp 	*/
 
@@ -617,6 +617,11 @@ beda domyslnymi wartosciami.
 
 }
 
+message wait_network	/* XXX translate */
+{
+Waiting while network interface comes up.
+}
+
 message resolv
 {Nie moglem utworzyc /etc/resolv.conf.  Instalacja przerwana.
 }
@@ -633,6 +638,10 @@ message ftperror
 
 message distdir
 {Jakiego katalogu powinienem uzyc dla %s? }
+
+message delete_dist_files	/* XXX translate */
+{Do you want to delete the NetBSD sets from %s?
+(You can keep them to install/upgrade a second system.)}
 
 message verboseextract
 {Czy w trakcie rozpakowywania plikow, chcesz widziec nazwe aktualnie

@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.114 2003/07/18 10:29:36 dsl Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.115 2003/07/22 08:30:10 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -627,6 +627,11 @@ will be your default.
 
 }
 
+message wait_network
+{
+Waiting while network interface comes up.
+}
+
 message resolv
 {Could not create /etc/resolv.conf.  Install aborted.
 }
@@ -643,6 +648,10 @@ message ftperror
 
 message distdir
 {What directory shall I use for %s? }
+
+message delete_dist_files
+{Do you want to delete the NetBSD sets from %s?
+(You can keep them to install/upgrade a second system.)}
 
 message verboseextract
 {During the extraction process, what do you want to see as

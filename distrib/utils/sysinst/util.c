@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.105 2003/07/18 10:29:37 dsl Exp $	*/
+/*	$NetBSD: util.c,v 1.106 2003/07/22 08:30:11 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1023,8 +1023,13 @@ get_and_unpack_sets(msg success_msg, msg failure_msg)
 		mnt_net_config();
 		
 		/* Clean up dist dir (use absolute path name) */
-		if (clean_dist_dir && ext_dir[0] == '/' && ext_dir[1] != 0)
-			run_prog(0, NULL, "/bin/rm -rf %s", ext_dir);
+		if (clean_dist_dir && ext_dir[0] == '/' && ext_dir[1] != 0) {
+			msg_display(MSG_delete_dist_files,
+			    ext_dir + strlen(target_prefix()));
+			process_menu(MENU_yesno, NULL);
+			if (yesno)
+				run_prog(0, NULL, "/bin/rm -rf %s", ext_dir);
+		}
 
 		/* Mounted dist dir? */
 		if (mnt2_mounted)
