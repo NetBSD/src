@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.73 1997/03/27 21:21:12 veego Exp $
+#	$NetBSD: GENERIC,v 1.74 1997/03/30 11:06:42 is Exp $
 
 #
 # GENERIC AMIGA
@@ -184,6 +184,9 @@ mfcs1		at mfc0 unit 1		# MFC serial
 #mfcs2		at mfc1 unit 0
 #mfcs3		at mfc1 unit 1
 #mfcp1		at mfc1 unit 0
+
+drcom0		at mainbus0		# DraCo serial 0
+drcom1		at mainbus0		# DraCo serial 1, normally mouse
 
 le*		at zbus0		# Lance ethernet.
 ed0		at zbus0		# dp8390 ethernet
