@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.26 1997/03/18 01:50:01 thorpej Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.27 1997/03/18 05:04:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.
@@ -75,7 +75,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static char rcsid[] = "$NetBSD: ifconfig.c,v 1.26 1997/03/18 01:50:01 thorpej Exp $";
+static char rcsid[] = "$NetBSD: ifconfig.c,v 1.27 1997/03/18 05:04:50 thorpej Exp $";
 #endif
 #endif /* not lint */
 
@@ -782,7 +782,7 @@ get_media_subtype(type, val)
 
 	for (i = 0; ttos->subtypes[i].desc != NULL; i++) {
 		rval = lookup_media_word(ttos->subtypes[i].desc, val);
-		if (rval)
+		if (rval != -1)
 			return (rval);
 	}
 	errx(1, "unknown media subtype: %s", val);
@@ -820,7 +820,7 @@ get_media_options(type, val)
 	for (; (val = strtok(val, ",")) != NULL; val = NULL) {
 		for (i = 0; ttos->options[i].desc != NULL; i++) {
 			option = lookup_media_word(ttos->options[i].desc, val);
-			if (option)
+			if (option != -1)
 				break;
 		}
 		if (option == 0)
@@ -842,7 +842,7 @@ lookup_media_word(desc, val)
 		if (strcasecmp(desc->ifmt_string, val) == 0)
 			return (desc->ifmt_word);
 
-	return (0);
+	return (-1);
 }
 
 void
