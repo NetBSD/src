@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudio.c,v 1.8 1997/05/07 18:51:37 augustss Exp $	*/
+/*	$NetBSD: ossaudio.c,v 1.9 1997/05/07 19:24:30 augustss Exp $	*/
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
@@ -226,7 +226,25 @@ oss_ioctl_audio(p, uap, retval)
 	case OSS_SOUND_PCM_READ_FILTER:
 		return EINVAL; /* XXX unimplemented */
 	case OSS_SNDCTL_DSP_SUBDIVIDE:
-		return EINVAL; /* XXX unimplemented */
+		error = copyin(SCARG(uap, data), &idat, sizeof idat);
+		if (error)
+			return error;
+		error = ioctlf(fp, AUDIO_GETINFO, (caddr_t)&tmpinfo, p);
+		if (error)
+			return error;
+		if (idat == 0)
+			idat = tmpinfo.buffersize / tmpinfo.blocksize;
+		idat = (tmpinfo.buffersize / idat) & -4;
+		AUDIO_INITINFO(&tmpinfo);
+		tmpinfo.blocksize = idat;
+		error = ioctlf(fp, AUDIO_SETINFO, (caddr_t)&tmpinfo, p);
+		if (error)
+			return error;
+		idat = tmpinfo.buffersize / tmpinfo.blocksize;
+		error = copyout(&idat, SCARG(uap, data), sizeof idat);
+		if (error)
+			return error;
+		break;
 	case OSS_SNDCTL_DSP_SETFRAGMENT:
 		AUDIO_INITINFO(&tmpinfo);
 		error = copyin(SCARG(uap, data), &idat, sizeof idat);
