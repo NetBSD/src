@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.60 1998/05/24 19:32:44 is Exp $	*/
+/*	$NetBSD: trap.c,v 1.61 1998/05/27 04:11:51 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -59,6 +59,9 @@
 #endif
 #ifdef KTRACE
 #include <sys/ktrace.h>
+#endif
+#ifdef DEBUG
+#include <dev/cons.h>
 #endif
 
 #include <machine/db_machdep.h>
