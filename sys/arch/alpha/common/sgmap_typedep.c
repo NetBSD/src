@@ -1,4 +1,4 @@
-/* $NetBSD: sgmap_typedep.c,v 1.19 2001/07/19 14:26:54 thorpej Exp $ */
+/* $NetBSD: sgmap_typedep.c,v 1.20 2001/07/19 17:08:44 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-__KERNEL_RCSID(0, "$NetBSD: sgmap_typedep.c,v 1.19 2001/07/19 14:26:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sgmap_typedep.c,v 1.20 2001/07/19 17:08:44 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -96,8 +96,15 @@ __C(SGMAP_TYPE,_load_buffer)(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	 * mapping.  Round the size, since we deal with whole pages.
 	 */
 
-	/* XXX Always allocate a spill page for now. */
-	spill = 1;
+	/*
+	 * XXX Always allocate a spill page for now.  Note
+	 * the spill page is not needed for an in-bound-only
+	 * transfer.
+	 */
+	if ((flags & BUS_DMA_READ) == 0)
+		spill = 1;
+	else
+		spill = 0;
 
 	endva = round_page(va + buflen);
 	va = trunc_page(va);
@@ -207,6 +214,11 @@ __C(SGMAP_TYPE,_load)(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	if (buflen > map->_dm_size)
 		return (EINVAL);
 
+	KASSERT((flags & (BUS_DMA_READ|BUS_DMA_WRITE)) !=
+	    (BUS_DMA_READ|BUS_DMA_WRITE));
+
+	map->_dm_flags |= flags & (BUS_DMA_READ|BUS_DMA_WRITE);
+
 	seg = 0;
 	error = __C(SGMAP_TYPE,_load_buffer)(t, map, buf, buflen, p,
 	    flags, &seg, sgmap);
@@ -221,10 +233,13 @@ __C(SGMAP_TYPE,_load)(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	if (error == 0) {
 		map->dm_mapsize = buflen;
 		map->dm_nsegs = 1;
-	} else if (t->_next_window != NULL) {
-		/* Give the next window a chance. */
-		error = bus_dmamap_load(t->_next_window, map, buf, buflen,
-		    p, flags);
+	} else {
+		map->_dm_flags &= ~(BUS_DMA_READ|BUS_DMA_WRITE);
+		if (t->_next_window != NULL) {
+			/* Give the next window a chance. */
+			error = bus_dmamap_load(t->_next_window, map, buf,
+			    buflen, p, flags);
+		}
 	}
 	return (error);
 }
@@ -250,6 +265,11 @@ __C(SGMAP_TYPE,_load_mbuf)(bus_dma_tag_t t, bus_dmamap_t map,
 	if (m0->m_pkthdr.len > map->_dm_size)
 		return (EINVAL);
 
+	KASSERT((flags & (BUS_DMA_READ|BUS_DMA_WRITE)) !=
+	    (BUS_DMA_READ|BUS_DMA_WRITE));
+
+	map->_dm_flags |= flags & (BUS_DMA_READ|BUS_DMA_WRITE);
+
 	seg = 0;
 	error = 0;
 	for (m = m0; m != NULL && error == 0; m = m->m_next, seg++)
@@ -270,6 +290,7 @@ __C(SGMAP_TYPE,_load_mbuf)(bus_dma_tag_t t, bus_dmamap_t map,
 		/* Need to back out what we've done so far. */
 		map->dm_nsegs = seg - 1;
 		__C(SGMAP_TYPE,_unload)(t, map, sgmap);
+		map->_dm_flags &= ~(BUS_DMA_READ|BUS_DMA_WRITE);
 		if (t->_next_window != NULL) {
 			/* Give the next window a chance. */
 			error = bus_dmamap_load_mbuf(t->_next_window, map,
@@ -285,6 +306,9 @@ __C(SGMAP_TYPE,_load_uio)(bus_dma_tag_t t, bus_dmamap_t map, struct uio *uio,
     int flags, struct alpha_sgmap *sgmap)
 {
 
+	KASSERT((flags & (BUS_DMA_READ|BUS_DMA_WRITE)) !=
+	    (BUS_DMA_READ|BUS_DMA_WRITE));
+
 	panic(__S(__C(SGMAP_TYPE,_load_uio)) ": not implemented");
 }
 
@@ -293,6 +317,9 @@ __C(SGMAP_TYPE,_load_raw)(bus_dma_tag_t t, bus_dmamap_t map,
     bus_dma_segment_t *segs, int nsegs, bus_size_t size, int flags,
     struct alpha_sgmap *sgmap)
 {
+
+	KASSERT((flags & (BUS_DMA_READ|BUS_DMA_WRITE)) !=
+	    (BUS_DMA_READ|BUS_DMA_WRITE));
 
 	panic(__S(__C(SGMAP_TYPE,_load_raw)) ": not implemented");
 }
@@ -306,8 +333,15 @@ __C(SGMAP_TYPE,_unload)(bus_dma_tag_t t, bus_dmamap_t map,
 	int s, error, spill, seg, pteidx;
 
 	for (seg = 0; seg < map->dm_nsegs; seg++) {
-		/* XXX Always have a spill page for now... */
-		spill = 1;
+		/*
+		 * XXX Always allocate a spill page for now.  Note
+		 * the spill page is not needed for an in-bound-only
+		 * transfer.
+		 */
+		if ((map->_dm_flags & BUS_DMA_READ) == 0)
+			spill = 1;
+		else
+			spill = 0;
 
 		sgva = map->dm_segs[seg].ds_addr & ~sgmap->aps_wbase;
 
@@ -339,6 +373,8 @@ __C(SGMAP_TYPE,_unload)(bus_dma_tag_t t, bus_dmamap_t map,
 		if (error)
 			panic(__S(__C(SGMAP_TYPE,_unload)));
 	}
+
+	map->_dm_flags &= ~(BUS_DMA_READ|BUS_DMA_WRITE);
 
 	/* Mark the mapping invalid. */
 	map->dm_mapsize = 0;
