@@ -1,4 +1,4 @@
-/*	$NetBSD: mm.c,v 1.5 2003/09/21 19:16:55 jdolecek Exp $	*/
+/*	$NetBSD: mm.c,v 1.6 2003/12/20 16:22:14 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mm.c,v 1.5 2003/09/21 19:16:55 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mm.c,v 1.6 2003/12/20 16:22:14 jdolecek Exp $");
 
 /*
  * Memory special file
@@ -64,10 +64,7 @@ mmioctl(dev, cmd, data, flag, p)
 	struct proc *p;
 {
 	switch (minor(dev)) {
-	case DEV_MEM:
-	case DEV_KMEM:
-	case DEV_NULL:
-	case DEV_ZERO:
+	default:
 		switch (cmd) {
 		case FIONBIO:	/* We never block anyway */
 			return 0;
@@ -81,8 +78,6 @@ mmioctl(dev, cmd, data, flag, p)
 				return 0;
 			/*FALLTHROUGH*/
 		}
-		/*FALLTHROUGH*/
-	default:
 		return EOPNOTSUPP;
 	}
 }
