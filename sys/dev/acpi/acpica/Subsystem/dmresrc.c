@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: dmresrc.c - Resource Descriptor disassembly
- *              xRevision: 7 $
+ *              $Revision: 1.4 $
  *
  ******************************************************************************/
 
@@ -114,8 +114,6 @@
  *
  *****************************************************************************/
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dmresrc.c,v 1.3 2003/05/03 18:11:09 wiz Exp $");
 
 #include "acpi.h"
 #include "amlcode.h"
@@ -432,7 +430,7 @@ AcpiDmIsResourceDescriptor (
 
     /* Extract the data pointer and data length */
 
-    ByteCount = NextOp->Common.Value.Integer32;
+    ByteCount = (UINT32) NextOp->Common.Value.Integer;
     ByteData = NextOp->Named.Data;
 
     /* The list must have a valid END_TAG */

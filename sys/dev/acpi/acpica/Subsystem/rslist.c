@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: rslist - Linked list utilities
- *              xRevision: 32 $
+ *              $Revision: 1.7 $
  *
  ******************************************************************************/
 
@@ -113,9 +113,6 @@
  * such license, approval or letter.
  *
  *****************************************************************************/
-
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rslist.c,v 1.6 2003/03/04 17:25:26 kochi Exp $");
 
 #define __RSLIST_C__
 
@@ -393,8 +390,8 @@ AcpiRsByteStreamToList (
          * Set the Buffer to the next structure
          */
         Resource = ACPI_CAST_PTR (ACPI_RESOURCE, Buffer);
-        Resource->Length = ACPI_ALIGN_RESOURCE_SIZE(Resource->Length);
-        Buffer += ACPI_ALIGN_RESOURCE_SIZE(StructureSize);
+        Resource->Length = (UINT32) ACPI_ALIGN_RESOURCE_SIZE (Resource->Length);
+        Buffer += ACPI_ALIGN_RESOURCE_SIZE (StructureSize);
 
     } /*  end while */
 

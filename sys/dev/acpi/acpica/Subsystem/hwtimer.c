@@ -2,7 +2,7 @@
 /******************************************************************************
  *
  * Name: hwtimer.c - ACPI Power Management Timer Interface
- *              xRevision: 24 $
+ *              $Revision: 1.7 $
  *
  *****************************************************************************/
 
@@ -115,9 +115,6 @@
  *
  *****************************************************************************/
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hwtimer.c,v 1.6 2003/03/04 17:25:21 kochi Exp $");
-
 #include "acpi.h"
 
 #define _COMPONENT          ACPI_HARDWARE
@@ -188,7 +185,7 @@ AcpiGetTimer (
         return_ACPI_STATUS (AE_BAD_PARAMETER);
     }
 
-    Status = AcpiHwLowLevelRead (32, Ticks, &AcpiGbl_FADT->XPmTmrBlk, 0);
+    Status = AcpiHwLowLevelRead (32, Ticks, &AcpiGbl_FADT->XPmTmrBlk);
 
     return_ACPI_STATUS (Status);
 }

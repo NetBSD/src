@@ -2,7 +2,7 @@
  *
  * Module Name: nsxfobj - Public interfaces to the ACPI subsystem
  *                         ACPI Object oriented interfaces
- *              xRevision: 116 $
+ *              $Revision: 1.7 $
  *
  ******************************************************************************/
 
@@ -115,8 +115,6 @@
  *
  *****************************************************************************/
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nsxfobj.c,v 1.6 2003/03/04 17:25:23 kochi Exp $");
 
 #define __NSXFOBJ_C__
 
