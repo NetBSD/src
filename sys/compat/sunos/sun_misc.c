@@ -42,7 +42,7 @@
  *	@(#)sun_misc.c	8.1 (Berkeley) 6/18/93
  *
  * from: Header: sun_misc.c,v 1.16 93/04/07 02:46:27 torek Exp 
- * $Id: sun_misc.c,v 1.19 1994/05/04 01:38:25 cgd Exp $
+ * $Id: sun_misc.c,v 1.20 1994/05/05 02:46:58 cgd Exp $
  */
 
 /*
@@ -661,7 +661,7 @@ sun_open(p, uap, retval)
 	uap->fmode = r;
 	ret = open(p, uap, retval);
 
-	if (!ret && !noctty && SESS_LEADER(p) && !(p->p_flag & SCTTY)) {
+	if (!ret && !noctty && SESS_LEADER(p) && !(p->p_flag & P_CONTROLT)) {
 		struct filedesc *fdp = p->p_fd;
 		struct file *fp = fdp->fd_ofiles[*retval];
 
