@@ -1,4 +1,4 @@
-/*	$NetBSD: k5login.c,v 1.7 1999/07/12 21:36:10 aidan Exp $	*/
+/*	$NetBSD: k5login.c,v 1.8 1999/08/25 19:58:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,13 +38,14 @@
 #if 0
 static char sccsid[] = "@(#)klogin.c	5.11 (Berkeley) 7/12/92";
 #endif
-__RCSID("$NetBSD: k5login.c,v 1.7 1999/07/12 21:36:10 aidan Exp $");
+__RCSID("$NetBSD: k5login.c,v 1.8 1999/08/25 19:58:15 christos Exp $");
 #endif /* not lint */
 
 #ifdef KERBEROS5
 #include <sys/param.h>
 #include <sys/syslog.h>
-#include <krb5.h>
+#include <krb5/krb5.h>
+#include <kerberosIV/com_err.h>
 #include <pwd.h>
 #include <netdb.h>
 #include <stdio.h>
@@ -71,6 +72,11 @@ static char tkt_location[MAXPATHLEN];
 static krb5_creds forw_creds;
 int have_forward;
 static krb5_principal me, server;
+
+int k5_read_creds __P((char *));
+int k5_write_creds __P((void));
+int klogin __P((struct passwd *, char *, char *, char *));
+void kdestroy __P((void));
 
 /*
  * Attempt to read forwarded kerberos creds
@@ -137,7 +143,6 @@ k5_write_creds()
 {
 	krb5_error_code code;
 	krb5_ccache ccache;
-	char buf[256];
 
 	if (!have_forward)
 		return(1);
@@ -180,10 +185,8 @@ klogin(pw, instance, localhost, password)
 	krb5_creds my_creds;
 	krb5_timestamp now;
 	krb5_ccache ccache = NULL;
-	int preauth_type = -1;
 	long lifetime = KRB5_DEFAULT_LIFE;
 	int options = KRB5_DEFAULT_OPTIONS;
-	int i;
 	char *realm, *client_name;
 	char *principal;
 
@@ -220,19 +223,19 @@ klogin(pw, instance, localhost, password)
 	    strcat(principal, instance);	/* XXX strcat is safe */
 	}
 	
-	if (kerror = krb5_cc_resolve(kcontext, tkt_location, &ccache)) {
+	if ((kerror = krb5_cc_resolve(kcontext, tkt_location, &ccache)) != 0) {
 	    syslog(LOG_NOTICE, "warning: %s while getting default ccache",
 		error_message(kerror));
 	    return(1);
 	}
 
-	if (kerror = krb5_parse_name(kcontext, principal, &me)) {
+	if ((kerror = krb5_parse_name(kcontext, principal, &me)) != 0) {
 	    syslog(LOG_NOTICE, "warning: %s when parsing name %s",
 		error_message(kerror), principal);
 	    return(1);
 	}
     
-	if (kerror = krb5_unparse_name(kcontext, me, &client_name)) {
+	if ((kerror = krb5_unparse_name(kcontext, me, &client_name)) != 0) {
 	    syslog(LOG_NOTICE, "warning: %s when unparsing name %s",
 		error_message(kerror), principal);
 	    return(1);
@@ -249,14 +252,14 @@ klogin(pw, instance, localhost, password)
     
 	my_creds.client = me;
 
-	if (kerror = krb5_build_principal_ext(kcontext,
+	if ((kerror = krb5_build_principal_ext(kcontext,
 					&server,
 					krb5_princ_realm(kcontext, me)->length,
 					krb5_princ_realm(kcontext, me)->data,
 					tgtname.length, tgtname.data,
 					krb5_princ_realm(kcontext, me)->length,
 					krb5_princ_realm(kcontext, me)->data,
-					0)) {
+					0)) != 0) {
 	    syslog(LOG_NOTICE, "%s while building server name",
 		error_message(kerror));
 	    return(1);
@@ -271,7 +274,7 @@ klogin(pw, instance, localhost, password)
 	    return(1);
 	}
 
-	if (kerror = krb5_timeofday(kcontext, &now)) {
+	if ((kerror = krb5_timeofday(kcontext, &now)) != 0) {
 	    syslog(LOG_NOTICE, "%s while getting time of day",
 		error_message(kerror));
 	    return(1);
