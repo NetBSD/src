@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_pci.c,v 1.44 2000/07/17 17:53:44 tron Exp $	*/
+/*	$NetBSD: if_tlp_pci.c,v 1.45 2000/07/17 18:12:00 tron Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -489,7 +489,8 @@ tlp_pci_attach(parent, self, aux)
 			printf(": waking up from power state D%d\n%s",
 			    reg & PCI_PMCSR_STATE_MASK, sc->sc_dev.dv_xname);
 			pci_conf_write(pc, pa->pa_tag, pmreg + 4,
-				       reg & ~PCI_PMCSR_STATE_MASK);
+			    (reg & ~PCI_PMCSR_STATE_MASK) |
+			    PCI_PMCSR_STATE_D0);
 			break;
 		case PCI_PMCSR_STATE_D3:
 			/*
@@ -499,7 +500,8 @@ tlp_pci_attach(parent, self, aux)
 			printf(": unable to wake up from power state D3, "
 			       "reboot required.\n");
 			pci_conf_write(pc, pa->pa_tag, pmreg + 4,
-				       reg & ~PCI_PMCSR_STATE_MASK);
+			    (reg & ~PCI_PMCSR_STATE_MASK) |
+			    PCI_PMCSR_STATE_D0);
 			return;
 		}
 	}
