@@ -1,4 +1,4 @@
-/*	$NetBSD: netstat.h,v 1.22 2001/05/28 04:22:56 assar Exp $	*/
+/*	$NetBSD: netstat.h,v 1.23 2001/10/18 09:26:16 itojun Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -92,6 +92,7 @@ void	ip6_ifstats __P((char *));
 void	icmp6_stats __P((u_long, char *));
 void	icmp6_ifstats __P((char *));
 void	pim6_stats __P((u_long, char *));
+void	rip6_stats __P((u_long, char *));
 void	mroute6pr __P((u_long, u_long, u_long));
 void	mrt6_stats __P((u_long, u_long));
 char	*routename6 __P((struct sockaddr_in6 *));
