@@ -37,7 +37,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)compile.c	5.6 (Berkeley) 11/2/92";*/
-static char rcsid[] = "$Id: compile.c,v 1.5 1993/08/13 02:26:39 alm Exp $";
+static char rcsid[] = "$Id: compile.c,v 1.6 1993/11/04 01:36:29 andrew Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -518,7 +518,7 @@ compile_flags(p, s)
 			break;
 		case 'w':
 			p++;
-#ifdef HISTORIC_PRACTICE
+#ifdef FUSSY_HISTORIC_PRACTICE
 			if (*p != ' ') {
 				err(WARNING, "space missing before w wfile");
 				return (p);
