@@ -1,4 +1,4 @@
-/*	$NetBSD: sbusvar.h,v 1.19 2002/09/27 20:41:35 thorpej Exp $ */
+/*	$NetBSD: sbusvar.h,v 1.20 2003/08/01 12:21:59 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -135,7 +135,7 @@ struct sbus_softc {
 #define SBUS_BURST_64	0x40
 
 /* We use #defined(SUN4*) here while the ports are in flux */
-#if defined(SUN4) || defined(SUN4C) || defined(SUN4M)
+#if defined(SUN4) || defined(SUN4C) || defined(SUN4M) || defined(SUN4D)
 #include <sparc/dev/sbusvar.h>
 #elif defined(SUN4U)
 #include <sparc64/dev/sbusvar.h>
