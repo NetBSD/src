@@ -1,4 +1,4 @@
-/*	$NetBSD: eap.c,v 1.11 1998/08/10 01:27:34 mycroft Exp $	*/
+/*	$NetBSD: eap.c,v 1.12 1998/08/12 18:47:43 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -220,9 +220,10 @@
 #define EAP_MIC_VOL		6
 #define	EAP_RECORD_SOURCE 	7
 #define EAP_OUTPUT_SELECT	8
-#define EAP_OUTPUT_CLASS	9
-#define EAP_RECORD_CLASS	10
-#define EAP_INPUT_CLASS		11
+#define	EAP_MIC_PREAMP		9
+#define EAP_OUTPUT_CLASS	10
+#define EAP_RECORD_CLASS	11
+#define EAP_INPUT_CLASS		12
 
 #ifdef AUDIO_DEBUG
 #define DPRINTF(x)	if (eapdebug) printf x
@@ -272,6 +273,7 @@ struct eap_softc {
 	u_char	sc_port[AK_NPORTS];	/* mirror of the hardware setting */
 	u_int	sc_record_source;	/* recording source mask */
 	u_int	sc_output_source;	/* output source mask */
+	u_int	sc_mic_preamp;
 };
 
 int	eap_allocmem __P((struct eap_softc *, size_t, size_t, struct eap_dma *));
@@ -447,6 +449,10 @@ eap_attach(parent, self, aux)
 	}
 	ctl.un.value.level[AUDIO_MIXER_LEVEL_MONO] = 0;
 	eap_mixer_set_port(sc, &ctl); /* set the mic to 0 */
+	ctl.dev = EAP_MIC_PREAMP;
+	ctl.type = AUDIO_MIXER_ENUM;
+	ctl.un.ord = 0;
+	eap_mixer_set_port(sc, &ctl);
 	ctl.dev = EAP_RECORD_SOURCE;
 	ctl.type = AUDIO_MIXER_SET;
 	ctl.un.mask = 1 << EAP_MIC_VOL;
@@ -972,6 +978,15 @@ eap_mixer_set_port(addr, cp)
 		eap_set_mixer(sc, AK_OUT_MIXER2, o2);
 		return (0);
 	}
+	if (cp->dev == EAP_MIC_PREAMP) {
+		if (cp->type != AUDIO_MIXER_ENUM)
+			return (EINVAL);
+		if (cp->un.ord != 0 && cp->un.ord != 1)
+			return (EINVAL);
+		sc->sc_mic_preamp = cp->un.ord;
+		eap_set_mixer(sc, AK_MGAIN, cp->un.ord);
+		return (0);
+	}
 	if (cp->type != AUDIO_MIXER_VALUE)
 		return (EINVAL);
 	if (cp->un.value.num_channels == 1)
@@ -1039,10 +1054,19 @@ eap_mixer_get_port(addr, cp)
 
 	switch (cp->dev) {
 	case EAP_RECORD_SOURCE:
+		if (cp->type != AUDIO_MIXER_SET);
+			return (EINVAL);
 		cp->un.mask = sc->sc_record_source;
 		return (0);
 	case EAP_OUTPUT_SELECT:
+		if (cp->type != AUDIO_MIXER_SET);
+			return (EINVAL);
 		cp->un.mask = sc->sc_output_source;
+		return (0);
+	case EAP_MIC_PREAMP:
+		if (cp->type != AUDIO_MIXER_ENUM);
+			return (EINVAL);
+		cp->un.ord = sc->sc_mic_preamp;
 		return (0);
 	case EAP_MASTER_VOL:
 		l = ATT5_TO_VOL(sc->sc_port[AK_MASTER_L]);
@@ -1084,7 +1108,8 @@ eap_mixer_get_port(addr, cp)
 	else if (cp->un.value.num_channels == 2) {
 		cp->un.value.level[AUDIO_MIXER_LEVEL_LEFT]  = l;
 		cp->un.value.level[AUDIO_MIXER_LEVEL_RIGHT] = r;
-	}
+	} else
+		return (EINVAL);
 	return (0);
 }
 
@@ -1193,6 +1218,17 @@ eap_query_devinfo(addr, dip)
 		dip->un.s.member[4].mask = 1 << EAP_AUX_VOL;
 		strcpy(dip->un.s.member[5].label.name, AudioNdac);
 		dip->un.s.member[5].mask = 1 << EAP_VOICE_VOL;
+		return (0);
+	case EAP_MIC_PREAMP:
+		dip->type = AUDIO_MIXER_ENUM;
+		dip->mixer_class = EAP_RECORD_CLASS;
+		dip->next = dip->prev = AUDIO_MIXER_LAST;
+		strcpy(dip->label.name, AudioNpreamp);
+		dip->un.e.num_mem = 2;
+		strcpy(dip->un.e.member[0].label.name, AudioNoff);
+		dip->un.e.member[0].ord = 0;
+		strcpy(dip->un.e.member[1].label.name, AudioNon);
+		dip->un.e.member[1].ord = 1;
 		return (0);
 	case EAP_OUTPUT_CLASS:
 		dip->type = AUDIO_MIXER_CLASS;
