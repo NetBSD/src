@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.62 2001/05/25 04:06:15 chs Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.63 2001/05/26 21:27:21 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -237,7 +237,7 @@ uvm_page_init(kvm_startp, kvm_endp)
 {
 	vsize_t freepages, pagecount, bucketcount, n;
 	struct pgflbucket *bucketarray;
-	vm_page_t pagearray;
+	struct vm_page *pagearray;
 	int lcv, i;
 	paddr_t paddr;
 
@@ -886,7 +886,7 @@ uvm_page_recolor(int newncolors)
 {
 	struct pgflbucket *bucketarray, *oldbucketarray;
 	struct pgfreelist pgfl;
-	vm_page_t pg;
+	struct vm_page *pg;
 	vsize_t bucketcount;
 	int s, lcv, color, i, ocolors;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.5 2001/05/14 15:36:42 fredette Exp $	*/
+/*	$NetBSD: machdep.c,v 1.6 2001/05/26 21:27:16 chs Exp $	*/
 
 /*
  * Copyright (c) 2001 Matthew Fredette.
@@ -1128,7 +1128,7 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 	caddr_t *kvap;
 	int flags;
 {
-	vm_page_t m;
+	struct vm_page *m;
 	vaddr_t va;
 	struct pglist *mlist;
 
@@ -1213,7 +1213,7 @@ _bus_dmamap_load_raw(t, map, segs, nsegs, size, flags)
 	bus_size_t size;
 	int flags;
 {
-	vm_page_t m;
+	struct vm_page *m;
 	paddr_t pa;
 	bus_addr_t dva;
 	bus_size_t sgsize;

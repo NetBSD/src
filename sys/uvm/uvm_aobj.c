@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.42 2001/05/26 16:32:46 chs Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.43 2001/05/26 21:27:20 chs Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -177,7 +177,7 @@ static boolean_t		 uao_flush __P((struct uvm_object *,
 						voff_t, voff_t, int));
 static void			 uao_free __P((struct uvm_aobj *));
 static int			 uao_get __P((struct uvm_object *, voff_t,
-					      vm_page_t *, int *, int,
+					      struct vm_page **, int *, int,
 					      vm_prot_t, int, int));
 static boolean_t		 uao_releasepg __P((struct vm_page *,
 						    struct vm_page **));
@@ -958,7 +958,7 @@ uao_get(uobj, offset, pps, npagesp, centeridx, access_type, advice, flags)
 {
 	struct uvm_aobj *aobj = (struct uvm_aobj *)uobj;
 	voff_t current_offset;
-	vm_page_t ptmp;
+	struct vm_page *ptmp;
 	int lcv, gotpages, maxpages, swslot, rv, pageidx;
 	boolean_t done;
 	UVMHIST_FUNC("uao_get"); UVMHIST_CALLED(pdhist);

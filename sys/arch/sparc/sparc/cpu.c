@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.117 2001/04/24 04:31:11 thorpej Exp $ */
+/*	$NetBSD: cpu.c,v 1.118 2001/05/26 21:27:14 chs Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -177,7 +177,7 @@ alloc_cpuinfo()
 	vaddr_t va;
 	vsize_t sz;
 	vaddr_t low, high;
-	vm_page_t m;
+	struct vm_page *m;
 	struct pglist mlist;
 	struct cpu_info *cpi;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.51 2001/04/26 05:25:14 enami Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.52 2001/05/26 21:27:19 chs Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995 Jan-Simon Pendry.
@@ -1981,7 +1981,7 @@ union_getpages(v)
 	struct vop_getpages_args /* {
 		struct vnode *a_vp;
 		voff_t a_offset;
-		vm_page_t *a_m;
+		struct vm_page **a_m;
 		int *a_count;
 		int a_centeridx;
 		vm_prot_t a_access_type;

@@ -1,4 +1,4 @@
-/* $NetBSD: bus_dma.c,v 1.14 2001/05/16 19:06:47 scw Exp $	*/
+/* $NetBSD: bus_dma.c,v 1.15 2001/05/26 21:27:10 chs Exp $	*/
 
 /*
  * This file was taken from from next68k/dev/bus_dma.c, which was originally
@@ -46,7 +46,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.14 2001/05/16 19:06:47 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.15 2001/05/26 21:27:10 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -604,7 +604,7 @@ _bus_dmamem_alloc_common(t, low, high, size, alignment, boundary,
 	int flags; 
 {
 	paddr_t curaddr, lastaddr;
-	vm_page_t m;    
+	struct vm_page *m;    
 	struct pglist mlist;
 	int curseg, error;
 
@@ -725,7 +725,7 @@ _bus_dmamem_free(t, segs, nsegs)
 	bus_dma_segment_t *segs;
 	int nsegs;
 {
-	vm_page_t m;
+	struct vm_page *m;
 	bus_addr_t addr;
 	struct pglist mlist;
 	int curseg;

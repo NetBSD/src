@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_io.c,v 1.1 2000/12/07 03:33:46 deberg Exp $	*/
+/*	$NetBSD: smbfs_io.c,v 1.2 2001/05/26 21:27:20 chs Exp $	*/
 
 /*
  * Copyright (c) 2000, Boris Popov
@@ -404,7 +404,7 @@ int
 smbfs_getpages(ap)
 	struct vop_getpages_args /* {
 		struct vnode *a_vp;
-		vm_page_t *a_m;
+		struct vm_page **a_m;
 		int a_count;
 		int a_reqpage;
 		vm_ooffset_t a_offset;
@@ -425,7 +425,7 @@ smbfs_getpages(ap)
 	struct smbmount *smp;
 	struct smbnode *np;
 	struct smb_cred scred;
-	vm_page_t *pages;
+	struct vm_page **pages;
 
 	vp = ap->a_vp;
 	p = curproc;				/* XXX */
@@ -481,7 +481,7 @@ smbfs_getpages(ap)
 	size = count - uio.uio_resid;
 
 	for (i = 0, toff = 0; i < npages; i++, toff = nextoff) {
-		vm_page_t m;
+		struct vm_page *m;
 		nextoff = toff + PAGE_SIZE;
 		m = pages[i];
 
@@ -535,7 +535,7 @@ int
 smbfs_putpages(ap)
 	struct vop_putpages_args /* {
 		struct vnode *a_vp;
-		vm_page_t *a_m;
+		struct vm_page **a_m;
 		int a_count;
 		int a_sync;
 		int *a_rtvals;
@@ -565,7 +565,7 @@ smbfs_putpages(ap)
 	struct smbmount *smp;
 	struct smbnode *np;
 	struct smb_cred scred;
-	vm_page_t *pages;
+	struct vm_page **pages;
 
 	p = curproc;			/* XXX */
 	cred = p->p_ucred;		/* XXX */

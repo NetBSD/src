@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pglist.c,v 1.15 2001/05/25 04:06:17 chs Exp $	*/
+/*	$NetBSD: uvm_pglist.c,v 1.16 2001/05/26 21:27:21 chs Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -92,10 +92,10 @@ uvm_pglistalloc(size, low, high, alignment, boundary, rlist, nsegs, waitok)
 	int psi;
 	struct vm_page *pgs;
 	int s, tryidx, idx, pgflidx, end, error, free_list, color;
-	vm_page_t m;
+	struct vm_page *m;
 	u_long pagemask;
 #ifdef DEBUG
-	vm_page_t tp;
+	struct vm_page *tp;
 #endif
 
 	KASSERT((alignment & (alignment - 1)) == 0);
@@ -253,7 +253,7 @@ void
 uvm_pglistfree(list)
 	struct pglist *list;
 {
-	vm_page_t m;
+	struct vm_page *m;
 	int s;
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.96 2001/05/17 02:31:26 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.97 2001/05/26 21:27:16 chs Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
 /*
@@ -184,8 +184,8 @@ static paddr_t pseg_find(struct pmap* pm, vaddr_t addr, paddr_t spare) {
 
 #endif
 
-extern vm_page_t vm_page_alloc1 __P((void));
-extern void vm_page_free1 __P((vm_page_t));
+extern struct vm_page *vm_page_alloc1 __P((void));
+extern void vm_page_free1 __P((struct vm_page *));
 
 
 #ifdef DEBUG
@@ -201,7 +201,7 @@ extern void vm_page_free1 __P((vm_page_t));
 #endif
 
 /*
- * For each vm_page_t, there is a list of all currently valid virtual
+ * For each struct vm_page, there is a list of all currently valid virtual
  * mappings of that page.  An entry is a pv_entry_t, the list is pv_table.
  * XXX really should do this as a part of the higher level code.
  */
@@ -217,7 +217,7 @@ typedef struct pv_entry {
  *
  * First of all, ref/mod info must be non-volatile.  Hence we need to keep it
  * in the pv_entry structure for each page.  (We could bypass this for the 
- * vm_page_t, but that's a long story....)
+ * vm_page, but that's a long story....)
  * 
  * This architecture has nice, fast traps with lots of space for software bits
  * in the TTE.  To accellerate ref/mod counts we make use of these features.
@@ -1372,7 +1372,7 @@ remap_data:
 void
 pmap_init()
 {
-	vm_page_t m;
+	struct vm_page *m;
 	paddr_t pa;
 	psize_t size;
 	vaddr_t va;
@@ -1487,7 +1487,7 @@ pmap_growkernel(maxkvaddr)
 				("pmap_growkernel: extending %lx\n", kbreak));
 			pg = 0;
 			if (uvm.page_init_done || !uvm_page_physget(&pg)) {
-				vm_page_t page;
+				struct vm_page *page;
 				DPRINTF(PDB_GROW,
 ("pmap_growkernel: need to alloc page\n"));
 				while ((page = 
@@ -1546,7 +1546,7 @@ pmap_pinit(pm)
 	simple_lock(&pm->pm_lock);
 	pm->pm_refs = 1;
 	if(pm != pmap_kernel()) {
-		vm_page_t page;
+		struct vm_page *page;
 #ifdef NOTDEF_DEBUG
 		printf("pmap_pinit: need to alloc page\n");
 #endif
@@ -1665,16 +1665,16 @@ pmap_release(pm)
 						}
 					}
 					stxa(pdirentp, ASI_PHYS_CACHED, NULL);
-					vm_page_free1((vm_page_t)PHYS_TO_VM_PAGE((paddr_t)(u_long)ptbl));
+					vm_page_free1(PHYS_TO_VM_PAGE((paddr_t)(u_long)ptbl));
 				}
 			}
 			stxa(psegentp, ASI_PHYS_CACHED, NULL);
-			vm_page_free1((vm_page_t)PHYS_TO_VM_PAGE((paddr_t)(u_long)pdir));
+			vm_page_free1(PHYS_TO_VM_PAGE((paddr_t)(u_long)pdir));
 		}
 	}
 	tmp = (paddr_t)(u_long)pm->pm_segs;
 	pm->pm_segs = NULL;
-	vm_page_free1((vm_page_t)PHYS_TO_VM_PAGE(tmp));
+	vm_page_free1(PHYS_TO_VM_PAGE(tmp));
 #ifdef NOTDEF_DEBUG
 	for (i=0; i<physmem; i++) {
 		struct pv_entry *pv;
@@ -1753,14 +1753,14 @@ pmap_collect(pm)
 					if (!n) {
 						/* Free the damn thing */
 						stxa((paddr_t)(u_long)&pdir[k], ASI_PHYS_CACHED, NULL);
-						vm_page_free1((vm_page_t)PHYS_TO_VM_PAGE((paddr_t)(u_long)ptbl));
+						vm_page_free1(PHYS_TO_VM_PAGE((paddr_t)(u_long)ptbl));
 					}
 				}
 			}
 			if (!m) {
 				/* Free the damn thing */
 				stxa((paddr_t)(u_long)&pm->pm_segs[i], ASI_PHYS_CACHED, NULL);
-				vm_page_free1((vm_page_t)PHYS_TO_VM_PAGE((paddr_t)(u_long)pdir));
+				vm_page_free1(PHYS_TO_VM_PAGE((paddr_t)(u_long)pdir));
 			}
 		}
 	}
@@ -1887,7 +1887,7 @@ pmap_kenter_pa(va, pa, prot)
 	while ((i = pseg_set(pm, va, tte.data.data, pg)) == 1) {
 		pg = NULL;
 		if (uvm.page_init_done || !uvm_page_physget(&pg)) {
-			vm_page_t page;
+			struct vm_page *page;
 #ifdef NOTDEF_DEBUG
 			printf("pmap_kenter_pa: need to alloc page\n");
 #endif
@@ -1912,7 +1912,7 @@ pmap_kenter_pa(va, pa, prot)
 		/* We allocated a spare page but didn't use it.  Free it. */
 		printf("pmap_kenter_pa: freeing unused page %llx\n", 
 		       (long long)pg);
-		vm_page_free1((vm_page_t)PHYS_TO_VM_PAGE(pg));
+		vm_page_free1(PHYS_TO_VM_PAGE(pg));
 	}
 #ifdef DEBUG
 	i = ptelookup_va(va);
@@ -2162,7 +2162,7 @@ pmap_enter(pm, va, pa, prot, flags)
 	while (pseg_set(pm, va, tte.data.data, pg) == 1) {
 		pg = NULL;
 		if (uvm.page_init_done || !uvm_page_physget(&pg)) {
-			vm_page_t page;
+			struct vm_page *page;
 #ifdef NOTDEF_DEBUG
 			printf("pmap_enter: need to alloc page\n");
 #endif
@@ -3744,10 +3744,10 @@ pmap_page_cache(pm, pa, mode)
  *
  *	Allocate and return a memory cell with no associated object.
  */
-vm_page_t
+struct vm_page *
 vm_page_alloc1()
 {
-	vm_page_t pg = uvm_pagealloc(NULL, 0, NULL, UVM_PGA_USERESERVE);
+	struct vm_page *pg = uvm_pagealloc(NULL, 0, NULL, UVM_PGA_USERESERVE);
 	if (pg) {
 		pg->wire_count = 1;	/* no mappings yet */
 		pg->flags &= ~PG_BUSY;	/* never busy */
@@ -3765,7 +3765,7 @@ vm_page_alloc1()
  */
 void
 vm_page_free1(mem)
-	register vm_page_t	mem;
+	struct vm_page *mem;
 {
 	if (mem->flags != (PG_CLEAN|PG_FAKE)) {
 		printf("Freeing invalid page %p\n", mem);

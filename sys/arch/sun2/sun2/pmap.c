@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.9 2001/05/14 15:07:23 fredette Exp $	*/
+/*	$NetBSD: pmap.c,v 1.10 2001/05/26 21:27:16 chs Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -874,9 +874,6 @@ pmeg_allocate(pmap, va)
 		/*
 		 * Remove mappings to free-up a pmeg
 		 * (so it will go onto the free list).
-		 * XXX - Should this call up into the VM layer
-		 * to notify it when pages are deactivated?
-		 * See: vm_page.c:vm_page_deactivate(vm_page_t)
 		 * XXX - Skip this one if it is wired?
 		 */
 		pmap_remove1(pmegp->pmeg_owner,

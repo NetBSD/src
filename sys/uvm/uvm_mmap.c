@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.51 2001/05/25 04:06:15 chs Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.52 2001/05/26 21:27:21 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -131,7 +131,7 @@ sys_mincore(p, v, retval)
 		syscallarg(size_t) len;
 		syscallarg(char *) vec;
 	} */ *uap = v;
-	vm_page_t m;
+	struct vm_page *m;
 	char *vec, pgi;
 	struct uvm_object *uobj;
 	struct vm_amap *amap;

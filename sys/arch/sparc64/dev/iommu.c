@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.34 2001/05/18 21:35:23 mrg Exp $	*/
+/*	$NetBSD: iommu.c,v 1.35 2001/05/26 21:27:15 chs Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -160,7 +160,7 @@ iommu_init(name, is, tsbsize)
 	psize_t size;
 	vaddr_t va;
 	paddr_t pa;
-	vm_page_t m;
+	struct vm_page *m;
 	struct pglist mlist;
 
 	/*
@@ -620,7 +620,7 @@ iommu_dvmamap_load_raw(t, is, map, segs, nsegs, flags, size)
 	int flags;
 	bus_size_t size;
 {
-	vm_page_t m;
+	struct vm_page *m;
 	int i, s;
 	int left;
 	int err;
@@ -889,7 +889,7 @@ iommu_dvmamem_map(t, is, segs, nsegs, size, kvap, flags)
 	caddr_t *kvap;
 	int flags;
 {
-	vm_page_t m;
+	struct vm_page *m;
 	vaddr_t va;
 	bus_addr_t addr;
 	struct pglist *mlist;

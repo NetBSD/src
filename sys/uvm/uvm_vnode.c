@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.49 2001/05/25 04:06:18 chs Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.50 2001/05/26 21:27:21 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -82,10 +82,11 @@ static int		uvn_findpage __P((struct uvm_object *, voff_t,
 					  struct vm_page **, int));
 static boolean_t	uvn_flush __P((struct uvm_object *, voff_t, voff_t,
 				       int));
-static int		uvn_get __P((struct uvm_object *, voff_t, vm_page_t *,
-				     int *, int, vm_prot_t, int, int));
-static int		uvn_put __P((struct uvm_object *, vm_page_t *, int,
-				     boolean_t));
+static int		uvn_get __P((struct uvm_object *, voff_t,
+				     struct vm_page **, int *, int, vm_prot_t,
+				     int, int));
+static int		uvn_put __P((struct uvm_object *, struct vm_page **,
+				     int, boolean_t));
 static void		uvn_reference __P((struct uvm_object *));
 static boolean_t	uvn_releasepg __P((struct vm_page *,
 					   struct vm_page **));
