@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.54 2002/04/16 06:05:05 enami Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.55 2002/04/26 03:57:31 enami Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.54 2002/04/16 06:05:05 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.55 2002/04/26 03:57:31 enami Exp $");
 
 #include "opt_nfsserver.h"
 
@@ -1235,18 +1235,6 @@ genfs_putpages(void *v)
 			if (by_list) {
 				pg = TAILQ_NEXT(&curmp, listq);
 				TAILQ_REMOVE(&uobj->memq, &curmp, listq);
-			}
-			if (error == ENOMEM) {
-				for (i = 0; i < npages; i++) {
-					tpg = pgs[i];
-					if (tpg->flags & PG_PAGEOUT) {
-						tpg->flags &= ~PG_PAGEOUT;
-						uvmexp.paging--;
-					}
-					tpg->flags &= ~PG_CLEAN;
-					uvm_pageactivate(tpg);
-				}
-				uvm_page_unbusy(pgs, npages);
 			}
 			if (error) {
 				break;
