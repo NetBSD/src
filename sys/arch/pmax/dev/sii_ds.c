@@ -1,4 +1,4 @@
-/*	$NetBSD: sii_ds.c,v 1.1 1996/10/13 03:02:40 jonathan Exp $	*/
+/*	$NetBSD: sii_ds.c,v 1.2 1996/10/13 16:59:15 christos Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -65,7 +65,7 @@ sii_ds_match(parent, match, aux)
 	/* XXX check for bad address, untested */
 	siiaddr = (void *)ca->ca_addr;
 	if (siiaddr != (void *)MACH_PHYS_TO_UNCACHED(KN01_SYS_SII)) {
-		kprintf("(siimatch: bad addr %x, substituting %x\n",
+		printf("(siimatch: bad addr %x, substituting %x\n",
 			ca->ca_addr, MACH_PHYS_TO_UNCACHED(KN01_SYS_SII));
 		siiaddr = (void *)MACH_PHYS_TO_UNCACHED(KN01_SYS_SII);
 	}
@@ -92,5 +92,5 @@ siiattach(sc);
 
 	/* tie pseudo-slot to device */
 	BUS_INTR_ESTABLISH(ca, siiintr, sc);
-	kprintf("\n");
+	printf("\n");
 }
