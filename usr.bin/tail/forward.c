@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)forward.c	5.4 (Berkeley) 2/12/92";*/
-static char rcsid[] = "$Id: forward.c,v 1.3 1994/03/28 02:22:29 cgd Exp $";
+static char rcsid[] = "$Id: forward.c,v 1.4 1994/04/24 20:19:17 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -178,7 +178,7 @@ rlines(fp, off, sbp)
 	long off;
 	struct stat *sbp;
 {
-	register off_t size;
+	register int size;
 	register char *p;
 
 	if (!(size = sbp->st_size))
