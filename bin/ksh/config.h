@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.4 1997/01/12 19:11:44 tls Exp $	*/
+/*	$NetBSD: config.h,v 1.4.12.1 2002/02/26 19:50:55 he Exp $	*/
 
 /* config.h.  Generated automatically by configure.  */
 /* config.h.in.  Generated automatically from configure.in by autoheader.  */
@@ -40,6 +40,9 @@
 
 /* Define if you have <unistd.h>.  */
 #define HAVE_UNISTD_H 1
+
+/* Define if you have dup2.  */
+#define HAVE_DUP2 1
 
 /* Define if on MINIX.  */
 /* #undef _MINIX */
