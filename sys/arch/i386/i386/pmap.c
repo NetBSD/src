@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.83.2.27 2001/01/08 13:57:24 sommerfeld Exp $	*/
+/*	$NetBSD: pmap.c,v 1.83.2.28 2001/01/09 03:19:49 sommerfeld Exp $	*/
 
 /*
  *
@@ -1018,7 +1018,9 @@ pmap_bootstrap(kva_start)
 	 * init the static-global locks and global lists.
 	 */
 
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	spinlockinit(&pmap_main_lock, "pmaplk", 0);
+#endif
 	simple_lock_init(&pvalloc_lock);
 	simple_lock_init(&pmaps_lock);
 	LIST_INIT(&pmaps);
