@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.444 2003/12/14 10:14:48 rtr Exp $
+# $NetBSD: mi,v 1.445 2003/12/21 11:35:36 agc Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -744,6 +744,7 @@
 ./usr/sbin/bootpef		base-bootserver-bin
 ./usr/sbin/bootpgw		base-bootserver-bin
 ./usr/sbin/bootptest		base-bootserver-bin
+./usr/sbin/bpm			base-pkgutil-bin
 ./usr/sbin/catman		base-man-bin
 ./usr/sbin/chat			base-ppp-bin
 ./usr/sbin/chown		base-sysutil-bin
