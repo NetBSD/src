@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops.c,v 1.19 1999/10/04 22:52:13 ad Exp $ */
+/*	 $NetBSD: rasops.c,v 1.20 1999/10/23 23:14:13 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.19 1999/10/04 22:52:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.20 1999/10/23 23:14:13 ad Exp $");
 
 #include "opt_rasops.h"
 #include "rasops_glue.h"
@@ -97,14 +97,6 @@ static int	rasops_alloc_mattr __P((void *, int, int, int, long *));
 static void	rasops_do_cursor __P((struct rasops_info *));
 static void	rasops_init_devcmap __P((struct rasops_info *));
 
-/* Per-depth initalization functions */
-void	rasops1_init __P((struct rasops_info *));
-void	rasops2_init __P((struct rasops_info *));
-void	rasops8_init __P((struct rasops_info *));
-void	rasops15_init __P((struct rasops_info *));
-void	rasops24_init __P((struct rasops_info *));
-void	rasops32_init __P((struct rasops_info *));
-
 /*
  * Initalize a 'rasops_info' descriptor.
  */
@@ -113,6 +105,7 @@ rasops_init(ri, wantrows, wantcols)
 	struct rasops_info *ri;
 	int wantrows, wantcols;
 {
+
 #ifdef _KERNEL	
 	/* Select a font if the caller doesn't care */
 	if (ri->ri_font == NULL) {
@@ -164,7 +157,6 @@ rasops_init(ri, wantrows, wantcols)
 	return (0);
 }
 
-
 /*
  * Reconfigure (because parameters have changed in some way).
  */
@@ -173,8 +165,7 @@ rasops_reconfig(ri, wantrows, wantcols)
 	struct rasops_info *ri;
 	int wantrows, wantcols;
 {
-	int bpp;
-	int s;
+	int bpp, s;
 	
 	s = splhigh();
 		
@@ -205,7 +196,7 @@ rasops_reconfig(ri, wantrows, wantcols)
 		ri->ri_emuheight = ri->ri_height;
 	
 	/* Reduce width until aligned on a 32-bit boundary */
-	while ((ri->ri_emuwidth*bpp & 31) != 0)
+	while ((ri->ri_emuwidth * bpp & 31) != 0)
 		ri->ri_emuwidth--;
 	
 	ri->ri_cols = ri->ri_emuwidth / ri->ri_font->fontwidth;
@@ -265,38 +256,33 @@ rasops_reconfig(ri, wantrows, wantcols)
 	}
 
 	switch (ri->ri_depth) {
-#if NRASOPS1
+#if NRASOPS1 > 0
 	case 1:
 		rasops1_init(ri);
 		break;
 #endif
-
-#if NRASOPS2
+#if NRASOPS2 > 0
 	case 2:
 		rasops2_init(ri);
 		break;
 #endif
-
-#if NRASOPS8
+#if NRASOPS8 > 0
 	case 8:
 		rasops8_init(ri);
 		break;
 #endif
-
-#if NRASOPS15 || NRASOPS16
+#if NRASOPS15 > 0 || NRASOPS16 > 0
 	case 15:
 	case 16:
 		rasops15_init(ri);
 		break;
 #endif
-
-#if NRASOPS24
+#if NRASOPS24 > 0
 	case 24:
 		rasops24_init(ri);
 		break;
 #endif
-
-#if NRASOPS32
+#if NRASOPS32 > 0
 	case 32:
 		rasops32_init(ri);
 		break;
@@ -311,7 +297,6 @@ rasops_reconfig(ri, wantrows, wantcols)
 	splx(s);
 	return (0);
 }
-
 
 /*
  * Map a character.
@@ -344,7 +329,6 @@ rasops_mapchar(cookie, c, cp)
 	*cp = c;
 	return (5);
 }
-
 
 /*
  * Allocate a color attribute.
@@ -385,7 +369,6 @@ rasops_alloc_cattr(cookie, fg, bg, flg, attr)
 	return (0);
 }
 
-
 /*
  * Allocate a mono attribute.
  */
@@ -412,7 +395,6 @@ rasops_alloc_mattr(cookie, fg, bg, flg, attr)
 	*attr = (bg << 16) | (fg << 24) | ((flg & WSATTR_UNDERLINE) ? 7 : 6);
 	return (0);
 }
-
 
 /*
  * Copy rows.
@@ -492,7 +474,6 @@ rasops_copyrows(cookie, src, dst, num)
 	}
 }
 
-
 /*
  * Copy columns. This is slow, and hard to optimize due to alignment,
  * and the fact that we have to copy both left->right and right->left.
@@ -552,7 +533,6 @@ rasops_copycols(cookie, row, src, dst, num)
 	}
 }
 
-
 /*
  * Turn cursor off/on.
  */
@@ -593,7 +573,6 @@ rasops_cursor(cookie, on, row, col)
 	} else 
 		ri->ri_flg &= ~RI_CURSOR;
 }
-
 
 /*
  * Make the device colormap
@@ -663,7 +642,6 @@ rasops_init_devcmap(ri)
 	}
 }
 
-
 /*
  * Unpack a rasops attribute
  */
@@ -677,7 +655,6 @@ rasops_unpack_attr(attr, fg, bg, underline)
 	*bg = ((u_int)attr >> 16) & 15;
 	*underline = (u_int)attr & 1;
 }
-
 
 /*
  * Erase rows. This isn't static, since 24-bpp uses it in special cases.
@@ -710,7 +687,7 @@ rasops_eraserows(cookie, row, num, attr)
 	clr = ri->ri_devcmap[(attr >> 16) & 15];
 
 	/* 
-	 * XXX the wsdisplay_emulops interface seems a little deficient in
+	 * XXX The wsdisplay_emulops interface seems a little deficient in
 	 * that there is no way to clear the *entire* screen. We provide a 
 	 * workaround here: if the entire console area is being cleared, and 
 	 * the RI_FULLCLEAR flag is set, clear the entire display.
@@ -750,7 +727,6 @@ rasops_eraserows(cookie, row, num, attr)
 		DELTA(dp, delta, int32_t *);
 	}
 }
-
 
 /*
  * Actually turn the cursor on or off. This does the dirty work for
@@ -816,7 +792,6 @@ rasops_do_cursor(ri)
 		}
 	}
 }
-
 
 /*
  * Erase columns.

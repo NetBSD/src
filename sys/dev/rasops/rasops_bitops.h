@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops_bitops.h,v 1.4 1999/07/21 19:19:04 ad Exp $ */
+/* 	$NetBSD: rasops_bitops.h,v 1.5 1999/10/23 23:14:14 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -48,8 +48,9 @@ NAME(erasecols)(cookie, row, col, num, attr)
 	int row, col, num;
 	long attr;
 {
-	int32_t *dp, *rp, lmask, rmask, lclr, rclr, clr;
+	int lmask, rmask, lclr, rclr, clr;
 	struct rasops_info *ri;
+	int32_t *dp, *rp;
 	int height, cnt;
 	
 	ri = (struct rasops_info *)cookie;
@@ -113,7 +114,6 @@ NAME(erasecols)(cookie, row, col, num, attr)
 	}
 }
 
-
 /*
  * Actually paint the cursor.
  */
@@ -121,8 +121,8 @@ static void
 NAME(do_cursor)(ri)
 	struct rasops_info *ri;
 {
-	int32_t *dp, *rp, lmask, rmask;
-	int height, row, col, num;
+	int lmask, rmask, height, row, col, num;
+	int32_t *dp, *rp;
 	
 	row = ri->ri_crow;
 	col = ri->ri_ccol * ri->ri_font->fontwidth << PIXEL_SHIFT;
@@ -155,7 +155,6 @@ NAME(do_cursor)(ri)
 	}
 }
 
-
 /*
  * Copy columns. Ick!
  */
@@ -164,8 +163,8 @@ NAME(copycols)(cookie, row, src, dst, num)
 	void *cookie;
 	int row, src, dst, num;
 {
-	int32_t *sp, *dp, *srp, *drp, tmp, lmask, rmask;
-	int height, lnum, rnum, sb, db, cnt, full;
+	int tmp, lmask, rmask, height, lnum, rnum, sb, db, cnt, full;
+	int32_t *sp, *dp, *srp, *drp;
 	struct rasops_info *ri;
 	
 	ri = (struct rasops_info *)cookie;
@@ -269,8 +268,10 @@ NAME(copycols)(cookie, row, src, dst, num)
 			}
 
 			if (lmask) {
-//				if (src > sb)
-//					sp++;
+#if 0
+				if (src > sb)
+					sp++;
+#endif
 				GETBITS(sp, sb, lnum, tmp);
 				PUTBITS(tmp, rnum, lnum, dp);
  			}
@@ -312,4 +313,5 @@ NAME(copycols)(cookie, row, src, dst, num)
  		}
  	}
 }
+
 #endif /* _RASOPS_BITOPS_H_ */
