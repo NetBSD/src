@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.2 1999/09/14 11:20:54 tsubai Exp $	*/
+/*	$NetBSD: locore.s,v 1.3 1999/09/16 21:39:25 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1997
@@ -79,8 +79,8 @@
 	shld	r10, r9		; /* r9 = 0xc0000000 */ \
 	and	r9, r8		; \
 	mov	#2, r9		; \
-	shld	r10, r9 	; /* r9 = 0x80000000 */ \
-	and	r15, r9 	; \
+	shld	r10, r9		; /* r9 = 0x80000000 */ \
+	and	r15, r9		; \
 	cmp/eq	r8, r9		; \
 	bt	1f		; /* If already kernel mode then jump */ \
 	nop			; \
@@ -1273,7 +1273,7 @@ ENTRY(ConvVtoP)
 	mov	#SHREG_TTB, r1
 	mov.l	@r1, r1
 	add	r0, r1
-	mov.l	@r1, r2		/* r2 = pde  */
+	mov.l	@r1, r2		/* r2 = pde */
 	mov.l	XL_PG_FRAME, r1
 	and	r1, r2		/* r2 = page table address */
 	mov	r4, r0
@@ -1455,7 +1455,7 @@ load_and_reset:
 	dt	r1
 	bf	1b
 
-	jmp	@r8	/* jump to start address */
+	jmp	@r8		/* jump to start address */
 	nop
 
 	.align	2
@@ -1470,14 +1470,14 @@ ENTRY(XLoadAndReset)
 	mov.l	XL_load_and_reset_end, r1
 	mov.l	XL_load_trampoline_addr, r2
 	mov	r2, r8
-	sub	r0, r1	/* r1 = bytes to be copied */
+	sub	r0, r1		/* r1 = bytes to be copied */
 1:	mov.b	@r0+, r3
 	mov.b	r3, @r2
 	add	#1, r2
 	dt	r1
 	bf	1b
 
-	jmp	@r8	/* jump to trampoline code */
+	jmp	@r8		/* jump to trampoline code */
 	nop
 
 	.align	2
