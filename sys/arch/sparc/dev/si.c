@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.14 1996/02/23 07:24:45 thorpej Exp $	*/
+/*	$NetBSD: si.c,v 1.15 1996/02/23 16:29:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Jason R. Thorpe
@@ -179,6 +179,11 @@ struct si_softc {
  * Alternatively, you can patch your kernel with DDB or some other
  * mechanism.  The sc_options member of the softc is OR'd with
  * the value in si_options.
+ *
+ * On the "sw", interrupts (and thus) reselection don't work, so they're
+ * disabled by default.  DMA is still a little dangerous, too.
+ *
+ * Note, there's a separate sw_options to make life easier.
  */
 #define	SI_ENABLE_DMA	0x01	/* Use DMA (maybe polled) */
 #define	SI_DMA_INTR	0x02	/* DMA completion interrupts */
@@ -186,6 +191,7 @@ struct si_softc {
 #define	SI_OPTIONS_MASK	(SI_ENABLE_DMA|SI_DMA_INTR|SI_DO_RESELECT)
 #define SI_OPTIONS_BITS	"\10\3RESELECT\2DMA_INTR\1DMA"
 int si_options = SI_ENABLE_DMA;
+int sw_options = 0;
 
 /* How long to wait for DMA before declaring an error. */
 int si_dma_intr_timo = 500;	/* ticks (sec. X 100) */
@@ -329,17 +335,10 @@ si_attach(parent, self, args)
 	int i;
 
 	/* Pull in the options flags. */
-	if (ca->ca_bustype == BUS_OBIO) {
-		/*
-		 * XXX Interrupts and reselect don't work on the "sw".
-		 * I don't know why (yet).  Disable DMA by default, too.
-		 * It's still a little dangerous.
-		 */
-		sc->sc_options = ncr_sc->sc_dev.dv_cfdata->cf_flags &
-		    SI_OPTIONS_MASK;
-	} else
-		sc->sc_options =
-	 ((ncr_sc->sc_dev.dv_cfdata->cf_flags | si_options) & SI_OPTIONS_MASK);
+	sc->sc_options =
+	    ((ncr_sc->sc_dev.dv_cfdata->cf_flags |
+	     (ca->ca_bustype == BUS_OBIO) ? sw_options : si_options) &
+	     SI_OPTIONS_MASK);
 
 	/* Map the controller registers. */
 	regs = (struct si_regs *)mapiodev(ra->ra_reg, 0,
