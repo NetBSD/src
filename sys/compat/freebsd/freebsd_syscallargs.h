@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_syscallargs.h,v 1.16 1998/01/09 06:10:56 thorpej Exp $	*/
+/*	$NetBSD: freebsd_syscallargs.h,v 1.17 1998/01/22 16:31:35 mycroft Exp $	*/
 
 /*
  * System call argument lists.
@@ -168,6 +168,30 @@ struct freebsd_sys_rtprio_args {
 	syscallarg(int) function;
 	syscallarg(pid_t) pid;
 	syscallarg(struct freebsd_rtprio *) rtp;
+};
+
+struct freebsd_sys_semsys_args {
+	syscallarg(int) which;
+	syscallarg(int) a2;
+	syscallarg(int) a3;
+	syscallarg(int) a4;
+	syscallarg(int) a5;
+};
+
+struct freebsd_sys_msgsys_args {
+	syscallarg(int) which;
+	syscallarg(int) a2;
+	syscallarg(int) a3;
+	syscallarg(int) a4;
+	syscallarg(int) a5;
+	syscallarg(int) a6;
+};
+
+struct freebsd_sys_shmsys_args {
+	syscallarg(int) which;
+	syscallarg(int) a2;
+	syscallarg(int) a3;
+	syscallarg(int) a4;
 };
 
 struct freebsd_ntp_adjtime_args {
@@ -373,15 +397,15 @@ int	compat_09_sys_uname	__P((struct proc *, void *, register_t *));
 int	sys_sysarch	__P((struct proc *, void *, register_t *));
 int	freebsd_sys_rtprio	__P((struct proc *, void *, register_t *));
 #if defined(SYSVSEM) && !defined(alpha)
-int	compat_10_sys_semsys	__P((struct proc *, void *, register_t *));
+int	freebsd_sys_semsys	__P((struct proc *, void *, register_t *));
 #else
 #endif
 #if defined(SYSVMSG) && !defined(alpha)
-int	compat_10_sys_msgsys	__P((struct proc *, void *, register_t *));
+int	freebsd_sys_msgsys	__P((struct proc *, void *, register_t *));
 #else
 #endif
 #if defined(SYSVSHM) && !defined(alpha)
-int	compat_10_sys_shmsys	__P((struct proc *, void *, register_t *));
+int	freebsd_sys_shmsys	__P((struct proc *, void *, register_t *));
 #else
 #endif
 int	freebsd_ntp_adjtime	__P((struct proc *, void *, register_t *));
