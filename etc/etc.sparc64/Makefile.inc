@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.19 2002/12/02 13:31:22 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.20 2002/12/04 06:15:01 lukem Exp $
 #
 #	etc.sparc64/Makefile.inc -- sparc64-specific etc Makefile targets
 #
@@ -40,6 +40,7 @@ SPARC32=COPTS=-m32 LD="ld -m elf32_sparc" AS="as -32" \
 	    ${SPARC32_ENV} ${MAKE} ${SPARC32} ${_M} ${_J} MKSHARE=no dependall \
 	    && ${SPARC32_ENV} ${MAKE} ${SPARC32} ${_M} MKSHARE=no install)
 .endfor
+.endif	# MACHINE_ARCH==sparc64 && MACHINE==sparc && MK32BITLIBS==yes
 
 #
 # Install miniroot images and auxiliary scripts to the release tree
