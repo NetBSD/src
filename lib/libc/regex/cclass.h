@@ -1,4 +1,4 @@
-/*	$NetBSD: cclass.h,v 1.5 1998/07/26 11:11:07 mycroft Exp $	*/
+/*	$NetBSD: cclass.h,v 1.6 1998/07/26 12:17:51 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
@@ -41,9 +41,9 @@
 
 /* character-class table */
 static const struct cclass {
-	char *name;
-	char *chars;
-	char *multis;
+	const char *name;
+	const char *chars;
+	const char *multis;
 } cclasses[] = {
 	{ "alnum",	"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz\
 0123456789",				"" },
