@@ -1,10 +1,10 @@
 # bootptest/Makefile
-# $Id: Makefile,v 1.5 1997/05/06 20:46:05 gwr Exp $
+# $Id: Makefile,v 1.6 1997/05/08 21:12:13 gwr Exp $
 
 PROG=	bootptest
 SRCDIR= ${.CURDIR}/../bootpd
 CFLAGS+= -I${SRCDIR}
-.PATH.c: ${SRCDIR}
+.PATH: ${SRCDIR}
 
 SRCS=	bootptest.c print-bootp.c getif.c getether.c report.c
 

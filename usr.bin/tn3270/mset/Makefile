@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 1997/05/07 07:15:49 mycroft Exp $
+#	$NetBSD: Makefile,v 1.17 1997/05/08 21:11:50 gwr Exp $
 
 .include "../../Makefile.inc"
 
@@ -40,4 +40,4 @@ depend: .depend
 
 .include <bsd.prog.mk>
 
-.PATH.c: ${.CURDIR}/../api ${.CURDIR}/../ascii
+.PATH: ${.CURDIR}/../api ${.CURDIR}/../ascii

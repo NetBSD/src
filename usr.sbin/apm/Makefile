@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.3 1997/05/06 20:46:02 gwr Exp $
+#	$NetBSD: Makefile,v 1.4 1997/05/08 21:12:09 gwr Exp $
 
 SRCS=	apm.c apmsubr.c
 #LDADD+=	-lutil
 #DPADD+=	${LIBUTIL}
 
-.PATH.c: ${.CURDIR}/../apmd
+.PATH:	${.CURDIR}/../apmd
 
 CFLAGS+=	-g  -O2 -Wmissing-prototypes -Wall -I${.CURDIR}/../apmd
 PROG=	apm

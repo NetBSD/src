@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 1997/05/06 20:45:34 gwr Exp $
+#	$NetBSD: Makefile,v 1.4 1997/05/08 21:11:41 gwr Exp $
 
 PROG=	ldd
 SRCS=	ldd.c \
@@ -19,6 +19,6 @@ CFLAGS+= -DLIBDIR=\"${LIBDIR}\"
 
 LDFLAGS+= -static
 
-.PATH.c: ${.CURDIR}/../../libexec/ld.elf_so
+.PATH: ${.CURDIR}/../../libexec/ld.elf_so
 
 .include <bsd.prog.mk>

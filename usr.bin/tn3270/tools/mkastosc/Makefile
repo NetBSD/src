@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 1997/05/06 20:45:45 gwr Exp $
+#	$NetBSD: Makefile,v 1.7 1997/05/08 21:11:55 gwr Exp $
 
 CFLAGS += -I${.CURDIR}/../mkhits -I${.CURDIR}/.. -I.
 
@@ -9,4 +9,4 @@ PROG = mkastosc
 
 .include <bsd.prog.mk>
 
-.PATH.c: ${.CURDIR}/../mkhits ${.CURDIR}/../../api
+.PATH: ${.CURDIR}/../mkhits ${.CURDIR}/../../api
