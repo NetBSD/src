@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.59 2002/02/07 23:23:29 tv Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.60 2002/03/16 20:45:43 christos Exp $	 */
 
 /*-
  * Copyright (c) 1994, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.59 2002/02/07 23:23:29 tv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.60 2002/03/16 20:45:43 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -450,7 +450,7 @@ svr4_sys_sysarch(p, v, retval)
 {
 	struct svr4_sys_sysarch_args *uap = v;
 #ifdef USER_LDT
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(p, 0);
 	int error;
 #endif
 	*retval = 0;	/* XXX: What to do */
@@ -507,10 +507,11 @@ svr4_sys_sysarch(p, v, retval)
 			bsd.sd.sd_gran = (ssd.access2 >> 3)& 0x1;
 
 			sa.start = IDXSEL(ssd.selector);
-			sa.desc = stackgap_alloc(&sg, sizeof(union descriptor));
+			sa.desc = stackgap_alloc(p, &sg,
+			    sizeof(union descriptor));
 			sa.num = 1;
-			sap = stackgap_alloc(&sg,
-					     sizeof(struct i386_set_ldt_args));
+			sap = stackgap_alloc(p, &sg,
+			     sizeof(struct i386_set_ldt_args));
 
 			if ((error = copyout(&sa, sap, sizeof(sa))) != 0)
 				return error;
