@@ -1,10 +1,10 @@
-#	$NetBSD: RAMDISK,v 1.7 1996/08/26 23:40:31 mrg Exp $
+#	$NetBSD: RAMDISK,v 1.8 1996/09/22 06:49:12 scottr Exp $
 
 # RAMDISK
 # Support Root/swap on ramdisk
 #
 
-include	"std.mac68k"
+include "arch/mac68k/conf/std.mac68k"
 
 maxusers	2
 
@@ -57,8 +57,8 @@ grf*		at macvid?
 # Attach ite semantics to the appropriate grf device
 ite0		at grf?
 
-ncrscsi0	at mainbus?		# SCSI NCR 5380
-ncr96scsi0	at mainbus?		# SCSI NCR 53C96
+ncrscsi0	at obio?		# SCSI NCR 5380
+ncr96scsi0	at obio?		# SCSI NCR 53C96
 
 scsibus*	at scsi?
 sd*	at scsibus? target ? lun ?
