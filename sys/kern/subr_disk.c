@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk.c,v 1.24 1998/08/04 04:03:14 perry Exp $	*/
+/*	$NetBSD: subr_disk.c,v 1.25 1999/02/22 16:00:01 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -188,11 +188,6 @@ insert:	bp->b_actf = bq->b_actf;
 	bq->b_actf = bp;
 }
 
-/* encoding of disk minor numbers, should be elsewhere... */
-#define dkunit(dev)		(minor(dev) >> 3)
-#define dkpart(dev)		(minor(dev) & 07)
-#define dkminor(unit, part)	(((unit) << 3) | (part))
-
 /*
  * Compute checksum for disk label.
  */
@@ -231,7 +226,7 @@ diskerr(bp, dname, what, pri, blkdone, lp)
 	int pri, blkdone;
 	register struct disklabel *lp;
 {
-	int unit = dkunit(bp->b_dev), part = dkpart(bp->b_dev);
+	int unit = DISKUNIT(bp->b_dev), part = DISKPART(bp->b_dev);
 	register void (*pr) __P((const char *, ...));
 	char partname = 'a' + part;
 	int sn;
