@@ -1,4 +1,4 @@
-/*	$NetBSD: fp.S,v 1.18 2000/05/14 06:19:32 castor Exp $	*/
+/*	$NetBSD: fp.S,v 1.19 2000/05/29 23:40:03 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1318,7 +1318,7 @@ sqrt_s:
 
 	/* calculate result */
 1:	srl	t2, t4, 1			# ix = (q >> 1);
-	add	t1, t1, SEXP_BIAS 		# m += 127;  (re-bias)
+	add	t1, t1, SEXP_BIAS 		# m += 127; (re-bias)
 	li	v1, SIMPL_ONE
 	and	v0, t2, v1			# keep extra exponent bit
 	bne	v0, zero, 1f			# if it is there.
@@ -4739,7 +4739,7 @@ bcemul_add:
 	xor	v0, v0, t0
 	srl	v0, v0, 31
 	beq	v0, zero, addok
-	
+
 	j	_C_LABEL(bcemul_sigfpe)
 
 addok:
@@ -4790,7 +4790,7 @@ bcemul_sub:
 	xor	v0, v0, t0
 	srl	v0, v0, 31
 	beq	v0, zero, subok
-	
+
 	j	_C_LABEL(bcemul_sigfpe)
 
 subok:

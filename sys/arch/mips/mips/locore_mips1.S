@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips1.S,v 1.33 2000/05/27 02:13:46 soren Exp $	*/
+/*	$NetBSD: locore_mips1.S,v 1.34 2000/05/29 23:40:04 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -165,16 +165,16 @@ mips1_SlowFault:
  * call trap() to process the condition.
  *
  * trapframe is now pointed by 5th arg {
- *  	register_t cf_args[4 + 1];
+ *	register_t cf_args[4 + 1];
  *	register_t cf_pad;
- *  	register_t cf_sp;
- *  	register_t cf_ra;
- *  	mips_reg_t tf_regs[17];		- trapframe begins here
+ *	register_t cf_sp;
+ *	register_t cf_ra;
+ *	mips_reg_t tf_regs[17];		- trapframe begins here
  * 	mips_reg_t tf_sr;		-
  * 	mips_reg_t tf_mullo;		-
  * 	mips_reg_t tf_mulhi;		-
  * 	register_t tf_epc;		- may be changed by trap() call
- *  };
+ * };
  */
 NESTED_NOPROFILE(mips1_KernGenException, KERNFRAME_SIZ, ra)
 	.set	noat
@@ -1283,7 +1283,7 @@ END(mips1_wbflush)
  *	2. Coprocessor1
  *	2.1	cache operation.
  *		R3900 uses MIPSIII cache op like method.
- *	2.2	R3900 specific CP0 register.	
+ *	2.2	R3900 specific CP0 register.
  *		(mips/include/r3900regs.h overrides cpuregs.h)
  *	2.3	# of TLB entries
  *		TX3912 32 entries
@@ -1292,38 +1292,38 @@ END(mips1_wbflush)
  *	3. System address map
  *		kseg2 0xff000000-0xfffeffff is reserved.
  *		(mips/include/vmparam.h)
- *		
- *  If defined both MIPS1 and ENABLE_MIPS_TX3900, it generates kernel for
+ *
+ * If defined both MIPS1 and ENABLE_MIPS_TX3900, it generates kernel for
  * R3900. If defined MIPS1 only, No R3900 feature include.
  */
 
 /*
- * void mips1_ConfigCache(void)	
+ * void mips1_ConfigCache(void)
  */
-LEAF(mips1_ConfigCache)	
+LEAF(mips1_ConfigCache)
 	mfc0	t0, R3900_COP_0_CONFIG
 	li	t1, R3900_CONFIG_ICS_MASK
 	and	t1, t1, t0
 	srl	t1, t1, R3900_CONFIG_ICS_SHIFT
 	li	t2, R3900_MIN_CACHE_SIZE
 	sllv	t1, t2, t1
-	sw	t1, _C_LABEL(mips_L1ICacheSize)	
+	sw	t1, _C_LABEL(mips_L1ICacheSize)
 
 	li	t1, R3900_CONFIG_DCS_MASK
 	and	t1, t1, t0
 	srl	t1, t1, R3900_CONFIG_DCS_SHIFT
-	li	t2, R3900_MIN_CACHE_SIZE 
+	li	t2, R3900_MIN_CACHE_SIZE
 	sllv	t1, t2, t1
-	sw	t1, _C_LABEL(mips_L1DCacheSize)	
+	sw	t1, _C_LABEL(mips_L1DCacheSize)
 
 	j	ra
 	nop
-END(mips1_ConfigCache)	
+END(mips1_ConfigCache)
 
 /*
  * R3900 2-way set-associative, line size 4byte(3900)/16byte(3920)
  *	void mips1_FlushDCache(vaddr_t addr, vsize_t len)
- */			
+ */
 LEAF(mips1_FlushDCache)
 	lw	t0, mips_L1DCacheLSize
 	addu	a1, a1, a0			# compute ending address
@@ -1332,7 +1332,7 @@ LEAF(mips1_FlushDCache)
 	addu	a0, a0, t0
 	bne	a0, a1, 1b
 	nop
-	
+
 	j	ra
 	nop
 END(mips1_FlushDCache)
@@ -1340,7 +1340,7 @@ END(mips1_FlushDCache)
 /*
  * R3900 direct-mapped/2-way set-associative line size 16byte
  *	void mips1_FlushICache(vaddr_t addr, vsize_t len)
- */			
+ */
 LEAF(mips1_FlushICache)
 	mfc0	t0, MIPS_COP_0_STATUS		# Save SR
 	nop
@@ -1348,13 +1348,13 @@ LEAF(mips1_FlushICache)
 	nop
 	# Disable I-cache
 	li	t1, ~R3900_CONFIG_ICE
-	mfc0	t2, R3900_COP_0_CONFIG	
+	mfc0	t2, R3900_COP_0_CONFIG
 	and	t1, t1, t2
 	nop
-	mtc0	t1, R3900_COP_0_CONFIG	
+	mtc0	t1, R3900_COP_0_CONFIG
 	j	2f	# stop streaming
 	nop
-2:	
+2:
 	# Flush I-cache
 	addu	a1, 127
 	srl	a1, a1, 7	# Number of unrolled loops
@@ -1373,7 +1373,7 @@ LEAF(mips1_FlushICache)
 
 	# Enable I-cache
 	nop
-	mtc0	t2, R3900_COP_0_CONFIG	
+	mtc0	t2, R3900_COP_0_CONFIG
 	nop
 	mtc0	t0, MIPS_COP_0_STATUS		# enable interrupts
 	j	ra				# return and run cached
@@ -1381,9 +1381,9 @@ LEAF(mips1_FlushICache)
 END(mips1_FlushICache)
 
 /*
- * 
+ *
  *	void mips_FlushCache(void)
- */			
+ */
 LEAF(mips1_FlushCache)
 	lw	t1, mips_L1ICacheSize
 	lw	t2, mips_L1DCacheSize
@@ -1396,13 +1396,13 @@ LEAF(mips1_FlushCache)
 	nop
 	# Disable I-cache
 	li	t5, ~R3900_CONFIG_ICE
-	mfc0	t6, R3900_COP_0_CONFIG	
+	mfc0	t6, R3900_COP_0_CONFIG
 	and	t5, t5, t6
 	nop
-	mtc0	t5, R3900_COP_0_CONFIG	
+	mtc0	t5, R3900_COP_0_CONFIG
 	j	2f	# stop streaming
 	nop
-2:	
+2:
 	# Flush cache
 	li	t0, MIPS_KSEG0_START
 	addu	t1, t0, t1		# End address
@@ -1422,14 +1422,14 @@ LEAF(mips1_FlushCache)
 	# Flush D-cache
 	la	t0, dummy_buffer
 	addu	t1, t0, t2		# End address
-4:	
+4:
 	lw	t2, 0(t0)
 	bne	t1, t0, 4b
 	addu	t0, t0, 4
 
 	# Enable I-cache
 	nop
-	mtc0	t6, R3900_COP_0_CONFIG	
+	mtc0	t6, R3900_COP_0_CONFIG
 	nop
 	mtc0	t7, MIPS_COP_0_STATUS		# enable interrupts
 	j	ra				# return and run cached
@@ -1443,9 +1443,9 @@ LEAF(mips1_wbflush)
 	j	ra
 	nop
 END(mips1_wbflush)
-	
+
 	.comm dummy_buffer, R3900_MAX_DCACHE_SIZE
-	
+
 #endif /* !ENABLE_MIPS_TX3900 */
 /*
  * mips1_proc_trampoline
