@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.ext,v 1.5 2003/12/23 04:46:26 rtr Exp $
+#	$NetBSD: Makefile.ext,v 1.6 2004/01/25 02:19:38 rtr Exp $
 
 .include <bsd.own.mk>
 
@@ -19,7 +19,7 @@ CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/Xext \
 CPPFLAGS+=	${X11FLAGS.EXTENSION}
 
 .if ${MACHINE} == "sparc64"
-CPPFLAGS+=	-UXF86VIDMODE -UXF86VIDMODE -UXF86DRI -D__GLX_ALIGN64
+CPPFLAGS+=	-UXF86VIDMODE
 .endif
 
 CPPFLAGS.security.c=	-DDEFAULTPOLICYFILE=\"${X11LIBDIR}/xserver/SecurityPolicy\"
