@@ -1,4 +1,4 @@
-#	$NetBSD: TODO,v 1.1 2002/09/21 08:17:40 lukem Exp $
+#	$NetBSD: TODO,v 1.2 2002/12/05 22:47:28 jonb Exp $
 
 THINGS TO BE DONE:
 
@@ -46,9 +46,6 @@ User programs:
     rwall nfs-mountees on shutdown
     add detachment to window
     clean up gas config files, set up common defines
-    fix things that use $EDITOR to use system() or friends
-        rather than exec(), because some people put options in
-        $EDITOR (some programs do this correctly already)
 
 Pie-in-the-Sky:
     someone should actually test all the netiso stuff.	
