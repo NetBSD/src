@@ -1,5 +1,10 @@
 #!/bin/sh
-# $NetBSD: script,v 1.1 2001/04/25 03:43:31 garbled Exp $
+# $NetBSD: script,v 1.2 2002/07/26 07:29:06 jdolecek Exp $
+
+if [ "$1" = "" ]; then
+	echo "No host selected"
+	exit 0
+fi
 
 DATA=`echo $1 | sed -e 's@ @\[^A-Za-z0-9_/\\.-\]\*@g'`
 LIST=`echo $DATA | sed -e 's@,@.*//" | sed -e "s/^@g'`
