@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.sun2,v 1.1 2001/03/29 21:07:58 fredette Exp $
+# $NetBSD: Makefile.sun2,v 1.2 2001/04/06 17:17:58 fredette Exp $
 
 # Makefile for NetBSD
 #
@@ -74,6 +74,7 @@ STRIPFLAGS=	-g
 
 ### find out what to use for libkern
 KERN_AS=	obj
+KERNMISCMAKEFLAGS=	MACHINE_ARCH=${MACHINE_ARCH}
 .include "$S/lib/libkern/Makefile.inc"
 .ifndef PROF
 LIBKERN=	${KERNLIB}
