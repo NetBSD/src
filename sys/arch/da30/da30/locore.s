@@ -38,7 +38,7 @@
  * from: Utah $Hdr: locore.s 1.66 92/12/22$
  *
  *	from: @(#)locore.s	8.5 (Berkeley) 11/14/93
- *	$Id: locore.s,v 1.3 1994/07/08 12:02:14 paulus Exp $
+ *	$Id: locore.s,v 1.4 1994/08/25 06:18:55 paulus Exp $
  */
 
 /*
@@ -158,9 +158,19 @@ Lbe10:
 	ptestr	#1,a0@,#7		| do a table search
 	pmove	psr,sp@			| save result
 	btst	#7,sp@			| bus error bit set?
-	jeq	Lismerr			| no, must be MMU fault
-	clrw	sp@			| yes, re-clear pad word
-	jra	Lisberr			| and process as normal bus error
+	jne	Lisberr			| yes, process as normal bus error
+	btst	#2,sp@			| invalid bit set?
+	jne	Lismerr			| yes, is MMU fault
+	btst	#5,sp@			| supervisor-only bit set?
+	jne	Lismerr			| yes, is MMU fault
+	btst	#3,sp@			| write-protected bit set?
+	jeq	Lisberr			| no, must have been a bus error
+	btst	#0,sp@(2)		| yes, was it a data access?
+	jeq	Lisberr			| no, must have been a bus error
+	btst	#6,sp@(3)		| yes, was it a write?
+	jeq	Lismerr			| yes, it was a MMU fault
+	btst	#7,sp@(3)		| no, was it a RMW cycle?
+	jeq	Lisberr			| no, must have been a bus error
 Lismerr:
 	movl	#T_MMUFLT,sp@-		| show that we are an MMU fault
 	jra	Ltrapnstkadj		| and deal with it
@@ -168,6 +178,7 @@ Lisaerr:
 	movl	#T_ADDRERR,sp@-		| mark address error
 	jra	Ltrapnstkadj		| and deal with it
 Lisberr:
+	clrw	sp@			| re-clear pad word
 	movl	#T_BUSERR,sp@-		| mark bus error
 Ltrapnstkadj:
 	jbsr	_trap			| handle the error
