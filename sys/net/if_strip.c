@@ -1,4 +1,4 @@
-/*	$NetBSD: if_strip.c,v 1.44 2002/03/17 19:41:11 atatat Exp $	*/
+/*	$NetBSD: if_strip.c,v 1.45 2002/09/11 05:36:28 itojun Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
 /*
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.44 2002/03/17 19:41:11 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.45 2002/09/11 05:36:28 itojun Exp $");
 
 #include "strip.h"
 
@@ -490,7 +490,7 @@ stripopen(dev, tp)
 					 * is no good, so we need to return
 					 * something else.
 					 */
-					return(ENOMEM);
+					return (ENOMEM);
 				}
 			} else
 				sc->sc_oldbufsize = sc->sc_oldbufquot = 0;
@@ -757,7 +757,7 @@ stripoutput(ifp, m, dst, rt)
 		  	DPRINTF(("strip: could not arp starmode addr %x\n",
 			 ((struct sockaddr_in *)dst)->sin_addr.s_addr));
 			m_freem(m);
-			return(EHOSTUNREACH);
+			return (EHOSTUNREACH);
 		}
 		/*bcopy(LLADDR(SDL(rt->rt_gateway)), dldst, ifp->if_addrlen);*/
                 dldst = LLADDR(SDL(rt->rt_gateway));
@@ -801,7 +801,7 @@ stripoutput(ifp, m, dst, rt)
 	M_PREPEND(m, sizeof(struct st_header), M_DONTWAIT);
 	if (m == 0) {
 	  	DPRINTF(("strip: could not prepend starmode header\n"));
-	  	return(ENOBUFS);
+	  	return (ENOBUFS);
 	}
 
 	/*
@@ -1698,7 +1698,7 @@ strip_newpacket(sc, ptr, end)
 
 	/* XXX redundant copy */
 	bcopy(sc->sc_rxbuf, sc->sc_pktstart, packetlen );
-	return(packetlen);
+	return (packetlen);
 }
 
 
@@ -1750,7 +1750,7 @@ StuffData(u_char *src, u_long length, u_char *dest, u_char **code_ptr_ptr)
 	u_char *code_ptr = *code_ptr_ptr;
 	u_char code = Stuff_NoCode, count = 0;
 	
-	if (!length) return(dest);
+	if (!length) return (dest);
 	
 	if (code_ptr) {	/* Recover state from last call, if applicable */
 		code  = (*code_ptr ^ Stuff_Magic) & Stuff_CodeMask;
@@ -1844,7 +1844,7 @@ StuffData(u_char *src, u_long length, u_char *dest, u_char **code_ptr_ptr)
 		StuffData_FinishBlock(code + count);
 	}
 
-	return(dest);
+	return (dest);
 }
 
 
@@ -1878,7 +1878,7 @@ UnStuffData(u_char *src, u_char *end, u_char *dst, u_long dst_length)
 
 	/* Sanity check */
 	if (!src || !end || !dst || !dst_length)
-		return(NULL);
+		return (NULL);
 
 	while (src < end && dst < dst_end)
 	{
@@ -1887,7 +1887,7 @@ UnStuffData(u_char *src, u_char *end, u_char *dst, u_long dst_length)
 			{
 			case Stuff_Diff:
 				if (src+1+count >= end)
-					return(NULL);
+					return (NULL);
 				do
 				{
 					*dst++ = *++src ^ Stuff_Magic;
@@ -1903,7 +1903,7 @@ UnStuffData(u_char *src, u_char *end, u_char *dst, u_long dst_length)
 				break;
 			case Stuff_DiffZero:
 				if (src+1+count >= end)
-					return(NULL);
+					return (NULL);
 				do
 				{
 					*dst++ = *++src ^ Stuff_Magic;
@@ -1916,7 +1916,7 @@ UnStuffData(u_char *src, u_char *end, u_char *dst, u_long dst_length)
 				break;
 			case Stuff_Same:
 				if (src+1 >= end)
-					return(NULL);
+					return (NULL);
 				do
 				{
 					*dst++ = src[1] ^ Stuff_Magic;
@@ -1942,9 +1942,9 @@ UnStuffData(u_char *src, u_char *end, u_char *dst, u_long dst_length)
 	}
 
 	if (dst < dst_end)
-		return(NULL);
+		return (NULL);
 	else
-		return(src);
+		return (src);
 }
 
 
