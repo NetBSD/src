@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.149 1998/09/29 21:59:33 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.150 1998/09/29 23:45:25 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.149 1998/09/29 21:59:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.150 1998/09/29 23:45:25 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1195,6 +1195,7 @@ cpu_startup()
 	 * Spin up any secondary CPUs.
 	 */
 	cpu_run_spinup_queue();
+	Debugger();
 #endif /* MULTIPROCESSOR */
 }
 
@@ -1281,7 +1282,9 @@ cpu_reboot(howto, bootstr)
 {
 	extern int cold;
 #if defined(MULTIPROCESSOR)
+#if 0 /* XXX See below. */
 	u_long cpu_id;
+#endif
 #endif
 
 #if defined(MULTIPROCESSOR)
