@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.5 1997/07/23 20:58:40 thorpej Exp $	*/
+/*	$NetBSD: main.c,v 1.6 1997/07/28 19:29:54 fair Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #ifndef lint
 __COPYRIGHT(
 "@(#) Copyright (c) 1996 The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: main.c,v 1.5 1997/07/23 20:58:40 thorpej Exp $");
+__RCSID("$NetBSD: main.c,v 1.6 1997/07/28 19:29:54 fair Exp $");
 #endif
 
 #include <sys/param.h>
@@ -254,7 +254,7 @@ static void
 action(line)
 	char *line;
 {
-	char *keyword, *arg, *cp;
+	char *keyword, *arg;
 	struct keytabent *ktent;
 
 	keyword = strdup(line);
@@ -263,6 +263,7 @@ action(line)
 
 #ifdef __sparc__
 	if (use_openprom) {
+		char	*cp;
 		/*
 		 * The whole point of the Openprom is that one
 		 * isn't required to know the keywords.  With this
