@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_net.c,v 1.17 1999/05/05 20:01:02 thorpej Exp $	*/
+/*	$NetBSD: hpux_net.c,v 1.18 1999/06/13 21:34:32 oster Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -245,7 +245,7 @@ hpux_sys_setsockopt(p, v, retval)
 	error = sosetopt((struct socket *)fp->f_data, SCARG(uap, level),
 	    SCARG(uap, name), m);
  out:
-	FILE_UNUSE(fp);
+	FILE_UNUSE(fp, p);
 	return (error);
 }
 
@@ -281,7 +281,7 @@ hpux_sys_setsockopt2(p, v, retval)
 	error = sosetopt((struct socket *)fp->f_data, SCARG(uap, level),
 	    SCARG(uap, name), m);
  out:
-	FILE_UNUSE(fp);
+	FILE_UNUSE(fp, p);
 	return (error);
 }
 
@@ -329,6 +329,6 @@ hpux_sys_getsockopt(p, v, retval)
 	if (m != NULL)
 		(void) m_free(m);
  out:
-	FILE_UNUSE(fp);
+	FILE_UNUSE(fp, p);
 	return (error);
 }
