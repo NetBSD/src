@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.54 2000/12/12 15:11:56 fvdl Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.55 2000/12/18 14:47:38 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -615,6 +615,7 @@ linux_machdepioctl(p, v, retval)
 	u_long start, biostotal, realtotal;
 	u_char heads, sectors;
 	u_int cylinders;
+	struct ioctl_pt pt;
 
 	fd = SCARG(uap, fd);
 	SCARG(&bia, fd) = fd;
@@ -772,17 +773,17 @@ linux_machdepioctl(p, v, retval)
 
 	default:
 		/*
-		 * XXX just pass all for LKMs?
-		 * XXX this means that device drivers specifically dealing
-	 	 * XXX with Linux binaries will need to do copyin/copyout
-		 * XXX handling themselves.
+		 * Unknown to us. If it's on a device, just pass it through
+		 * using PTIOCLINUX, the device itself might be able to
+		 * make some sense of it.
 		 */
-		if (com > LINUX_IOCTL_MIN_PASS &&
-		    com < LINUX_IOCTL_MAX_PASS) {
-			FILE_USE(fp);
-			ioctlf = fp->f_ops->fo_ioctl;
-			error = ioctlf(fp, com, SCARG(uap, data), p);
-		}
+		FILE_USE(fp);
+		ioctlf = fp->f_ops->fo_ioctl;
+		pt.com = SCARG(uap, com);
+		pt.data = SCARG(uap, data);
+		error = ioctlf(fp, PTIOCLINUX, (caddr_t)&pt, p);
+		FILE_UNUSE(fp, p);
+
 		if (error == EINVAL)
 			printf("linux_machdepioctl: invalid ioctl %08lx\n",
 			    com);
