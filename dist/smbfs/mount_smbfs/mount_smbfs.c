@@ -1,4 +1,4 @@
-/* $NetBSD: mount_smbfs.c,v 1.7 2004/03/21 08:35:18 jdolecek Exp $ */
+/* $NetBSD: mount_smbfs.c,v 1.8 2004/10/29 19:15:20 dsl Exp $ */
 
 /*
  * Copyright (c) 2000-2002, Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mount_smbfs.c,v 1.7 2004/03/21 08:35:18 jdolecek Exp $");
+__RCSID("$NetBSD: mount_smbfs.c,v 1.8 2004/10/29 19:15:20 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/stat.h>
@@ -118,7 +118,7 @@ main(int argc, char *argv[])
 		    case 'u': {
 			struct passwd *pwd;
 
-			pwd = isdigit(optarg[0]) ?
+			pwd = isdigit((unsigned char)optarg[0]) ?
 			    getpwuid(atoi(optarg)) : getpwnam(optarg);
 			if (pwd == NULL)
 				errx(EX_NOUSER, "unknown user '%s'", optarg);
@@ -128,7 +128,7 @@ main(int argc, char *argv[])
 		    case 'g': {
 			struct group *grp;
 
-			grp = isdigit(optarg[0]) ?
+			grp = isdigit((unsigned char)optarg[0]) ?
 			    getgrgid(atoi(optarg)) : getgrnam(optarg);
 			if (grp == NULL)
 				errx(EX_NOUSER, "unknown group '%s'", optarg);
