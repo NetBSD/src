@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi.fr,v 1.33 2001/06/16 08:25:20 veego Exp $	*/
+/*	$NetBSD: menus.mi.fr,v 1.34 2002/04/16 02:06:10 mycroft Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -69,7 +69,7 @@ menu netbsd, title "NetBSD-@@VERSION@@ Programme d'installation",
 	option "Réinstaller ou installer de nouveaux composants",
 		action { do_reinstall_sets(); };
 	option "Redémarrer l'ordinateur", exit,
-		action (endwin) { run_prog(0, NULL, "/sbin/reboot"); };
+		action (endwin) { run_prog(0, NULL, "/sbin/reboot -q"); };
 	option "Menu utilitaire", sub menu utility;
 
 menu utility, title "Utilitaires NetBSD-@@VERSION@@", exit;
@@ -87,7 +87,7 @@ menu utility, title "Utilitaires NetBSD-@@VERSION@@", exit;
 /*	option "Partitioner un disque"; XXX add later.  */
 	option "Traces", action { do_logging(); };
 	option "Arrêter le système", exit,
-		action (endwin) { run_prog(0, NULL, "/sbin/halt"); };
+		action (endwin) { run_prog(0, NULL, "/sbin/halt -q"); };
 
 menu yesno, title "oui ou non?";
 	option "Oui", exit, action  {yesno = 1;};
