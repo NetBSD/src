@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.18 1995/10/10 04:54:29 mycroft Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.19 1995/10/11 17:04:11 mycroft Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -158,7 +158,7 @@ svr4_setcontext(p, uc)
 	 * Check for security violations.
 	 */
 	if (((r[SVR4_X86_EFL] ^ tf->tf_eflags) & PSL_USERSTATIC) != 0 ||
-	    !USERMODE(r[SVR4_X86_CS], r[SVR4_X86_EFLAGS]))
+	    !USERMODE(r[SVR4_X86_CS], r[SVR4_X86_EFL]))
 		return (EINVAL);
 
 	/*
@@ -395,8 +395,6 @@ svr4_sys_sysarch(p, v, retval)
 	int error;
 	*retval = 0;	/* XXX: What to do */
 
-	printf("op %d, a1 %x\n", SCARG(uap, op), SCARG(uap, a1));
-
 	switch (SCARG(uap, op)) {
 	case SVR4_SYSARCH_FPHW:
 		return 0;
@@ -468,7 +466,8 @@ svr4_sys_sysarch(p, v, retval)
 #endif
 
 	default:
-		printf("svr4_sysarch(%d)\n", SCARG(uap, op));
+		printf("svr4_sysarch(%d), a1 %x\n", SCARG(uap, op),
+		       SCARG(uap, a1));
 		return 0;
 	}
 }
