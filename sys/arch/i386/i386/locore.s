@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)locore.s	7.3 (Berkeley) 5/13/91
- *	$Id: locore.s,v 1.28.2.5 1993/10/09 10:06:25 mycroft Exp $
+ *	$Id: locore.s,v 1.28.2.6 1993/10/09 10:08:47 mycroft Exp $
  */
 
 
@@ -463,7 +463,7 @@ ENTRY(icode)
 
 	pushl	%eax		/* dummy return address */
 
-	movl	$(SYS_exec),%eax
+	movl	$(SYS_execve),%eax
 	LCALL(0x7,0x0)
 
 	/* exit if something botches up in the above exec */
