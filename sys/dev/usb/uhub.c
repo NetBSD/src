@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.65 2003/12/29 08:17:11 toshii Exp $	*/
+/*	$NetBSD: uhub.c,v 1.66 2004/04/23 17:25:25 itojun Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.65 2003/12/29 08:17:11 toshii Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.66 2004/04/23 17:25:25 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -156,7 +156,7 @@ USB_ATTACH(uhub)
 
 	DPRINTFN(1,("uhub_attach\n"));
 	sc->sc_hub = dev;
-	usbd_devinfo(dev, 1, devinfo);
+	usbd_devinfo(dev, 1, devinfo, sizeof(devinfo));
 	USB_ATTACH_SETUP;
 	printf("%s: %s\n", USBDEVNAME(sc->sc_dev), devinfo);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: umodem.c,v 1.46 2003/11/07 17:03:25 wiz Exp $	*/
+/*	$NetBSD: umodem.c,v 1.47 2004/04/23 17:25:25 itojun Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umodem.c,v 1.46 2003/11/07 17:03:25 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umodem.c,v 1.47 2004/04/23 17:25:25 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -195,7 +195,7 @@ USB_ATTACH(umodem)
 	int i;
 	struct ucom_attach_args uca;
 
-	usbd_devinfo(uaa->device, 0, devinfo);
+	usbd_devinfo(uaa->device, 0, devinfo, sizeof(devinfo));
 	USB_ATTACH_SETUP;
 
 	sc->sc_udev = dev;

@@ -1,4 +1,4 @@
-/*	$NetBSD: uscanner.c,v 1.45 2004/03/15 11:09:23 augustss Exp $	*/
+/*	$NetBSD: uscanner.c,v 1.46 2004/04/23 17:25:27 itojun Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.45 2004/03/15 11:09:23 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.46 2004/04/23 17:25:27 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -324,7 +324,7 @@ USB_ATTACH(uscanner)
 	int i;
 	usbd_status err;
 
-	usbd_devinfo(uaa->device, 0, devinfo);
+	usbd_devinfo(uaa->device, 0, devinfo, sizeof(devinfo));
 	USB_ATTACH_SETUP;
 	printf("%s: %s\n", USBDEVNAME(sc->sc_dev), devinfo);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kue.c,v 1.50 2002/07/16 22:00:31 augustss Exp $	*/
+/*	$NetBSD: if_kue.c,v 1.51 2004/04/23 17:25:25 itojun Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_kue.c,v 1.50 2002/07/16 22:00:31 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_kue.c,v 1.51 2004/04/23 17:25:25 itojun Exp $");
 
 #if defined(__NetBSD__)
 #include "opt_inet.h"
@@ -431,7 +431,7 @@ USB_ATTACH(kue)
 
 	DPRINTFN(5,(" : kue_attach: sc=%p, dev=%p", sc, dev));
 
-	usbd_devinfo(dev, 0, devinfo);
+	usbd_devinfo(dev, 0, devinfo, sizeof(devinfo));
 	USB_ATTACH_SETUP;
 	printf("%s: %s\n", USBDEVNAME(sc->kue_dev), devinfo);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.110 2004/04/22 00:17:13 itojun Exp $	*/
+/*	$NetBSD: umass.c,v 1.111 2004/04/23 17:25:25 itojun Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -131,7 +131,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.110 2004/04/22 00:17:13 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.111 2004/04/23 17:25:25 itojun Exp $");
 
 #include "atapibus.h"
 #include "scsibus.h"
@@ -309,7 +309,7 @@ USB_ATTACH(umass)
 	usbd_status err;
 	int i, bno, error;
 
-	usbd_devinfo(uaa->device, 0, devinfo);
+	usbd_devinfo(uaa->device, 0, devinfo, sizeof(devinfo));
 	USB_ATTACH_SETUP;
 
 	sc->sc_udev = uaa->device;
