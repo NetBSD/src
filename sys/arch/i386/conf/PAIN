@@ -1,103 +1,142 @@
 #
-# PAIN -- kernel for another of cgd's 486/50 EISA boxes...
+# PAIN
 #
-#	$Id: PAIN,v 1.35.2.1 1994/07/16 22:21:55 cgd Exp $
+#	$Id: PAIN,v 1.35.2.2 1994/08/24 19:28:44 mycroft Exp $
 #
+
 machine		"i386"
+cpu		"I386_CPU"
 cpu		"I486_CPU"
+options		"DUMMY_NOPS"
+options		"MACHINE_NONCONTIG"
+options		XSERVER,UCONSOLE
+options		"USER_LDT"
+
 ident		PAIN
-timezone	8 dst
-maxusers	10
+maxusers	16
+timezone	5 dst
 
-# "mandatory"
-options		SWAPPAGER,VNODEPAGER,DEVPAGER
-
-# all of the networking possibilities known to man
-options		INET
-options		NS
-options		ISO
-options		TPIP
-options		EON
-options		CCITT
-options		LLC
-options		HDLC
-# and even multicast support!
-options		MULTICAST
-
-# and even forward packets
-options		GATEWAY
-
-# "optional, but generally included"
-options		"COMPAT_43"
-options		"TCP_COMPAT_42"
-options		"COMPAT_09"
-
-# i386 stuff
-options		UCONSOLE, XSERVER
-options		DUMMY_NOPS
-options		COMPAT_NOMID
-options		MACHINE_NONCONTIG
-
-# for per-process i386 LDT's
-options		USER_LDT
-
-# every file system known to man
-options		FFS
-options		MFS
-options		NFSSERVER,NFSCLIENT
-options		MSDOSFS
-options		"CD9660",NULLFS
-options		FDESC,FIFO,KERNFS,PORTAL,PROCFS
-
-# and even UFS quotas
-options		QUOTA
-
-# SysV compat stuff
-options		SYSVMSG,SYSVSEM
-options		SYSVSHM
-#options	"SHMMAXPAGES=1024"		# 1024 is the default.
-
-# Various "debugging" stuff
+options		SWAPPAGER
+options		VNODEPAGER,DEVPAGER
 options		DDB
 options		DIAGNOSTIC
 options		KTRACE
-
-# loadable kernel modules
+options		SYSVSHM,SYSVSEM,SYSVMSG
+#options	"SHMMAXPGS=1024"
 options		LKM
 
-# uses the SCSI system (XXX)
+options		"COMPAT_NOMID"
+options		"COMPAT_09"
+options		"COMPAT_43"
+options		"TCP_COMPAT_42"
+
+options		"COMPAT_SVR4"
+options		"COMPAT_IBCS2"
+
+options		FFS,QUOTA
+options		LFS
+options		MFS
+
+options		NFSCLIENT
+options		NFSSERVER
+
+options		"CD9660"
+options		MSDOSFS
+options		FDESC
+options		FIFO
+options		KERNFS
+options		NULLFS
+options		PORTAL
+options		PROCFS
+options		UMAPFS
+options		UNION
+
+options		GATEWAY
+options		INET
+
 options		SCSI
 
-config		netbsd	root on sd0 swap on sd0
+config		netbsd	root on sd0 swap on sd0 and sd1 and sd2 and sd3 and wd0 and wd1 and vnd0c and vnd1c and vnd2c and vnd3c
+#config		netbsd	swap generic
+#options	GENERIC
 
 controller	isa0
 
-device		pc0	at isa? port "IO_KBD" irq 1
+#device		pc0	at isa? port "IO_KBD" irq 1
+device		vt0	at isa? port "IO_KBD" irq 1
+
 device		com0	at isa? port "IO_COM1" irq 4
 device		com1	at isa? port "IO_COM2" irq 3
+
+master		rtfps0	at isa? port 0x1230 irq 10
+device		com2	at rtfps0 slave 0
+#device		com3	at rtfps0 slave 1
+device		com4	at rtfps0 slave 2
+device		com5	at rtfps0 slave 3
+
+master		rtfps1	at isa? port 0x3230 irq 10
+device		com6	at rtfps1 slave 0
+#device		com7	at rtfps1 slave 1
+device		com8	at rtfps1 slave 2
+device		com9	at rtfps1 slave 3
+
 device		lpt0	at isa? port "IO_LPT1" irq 7
+
+device		lms0	at isa? port "IO_BMS1" irq 5
+#device		mms0	at isa? port "IO_BMS1" irq 5
+#device		pms0	at isa? port "IO_KBD" irq 12
+
+#controller	aha0	at isa? port "IO_AHA0" irq ? drq ?
+#master		scsibus0 at aha0
+#controller	bt0	at isa? port "IO_BT0" irq ? drq ?
+#master		scsibus0 at bt0
+#controller	uha0	at isa? port "IO_UHA0" irq ? drq ?
+#master		scsibus0 at uha0
+#controller	sea0	at isa? iomem 0xc8000 irq 5
+#master		scsibus0 at sea0
+
+controller	ahb0	at isa? irq ?
+master		scsibus0 at ahb0
+disk		sd0	at scsibus0 slave ?
+disk		sd1	at scsibus0 slave ?
+disk		sd2	at scsibus0 slave ?
+disk		sd3	at scsibus0 slave ?
+tape		st0	at scsibus0 slave ?
+tape		st1	at scsibus0 slave ?
+disk		cd0	at scsibus0 slave ?
+disk		cd1	at scsibus0 slave ?
+
+controller	aic0	at isa? port 0x340 irq 12
+master		scsibus1 at aic0
+disk		sd0	at scsibus1 slave ?
+disk		sd1	at scsibus1 slave ?
+disk		sd2	at scsibus1 slave ?
+disk		sd3	at scsibus1 slave ?
+tape		st0	at scsibus1 slave ?
+tape		st1	at scsibus1 slave ?
+disk		cd0	at scsibus1 slave ?
+disk		cd1	at scsibus1 slave ?
+
+controller	wdc0	at isa? port "IO_WD1" irq 14
+disk		wd0	at wdc0 drive ?
+disk		wd1	at wdc0 drive ?
 
 controller	fdc0	at isa? port "IO_FD1" irq 6 drq 2
 disk		fd0	at fdc0 drive ?
 disk		fd1	at fdc0 drive ?
 
-controller	ahb0	at isa? irq 11 drq 5
-master		scsibus0 at ahb0
-disk		sd0	at scsibus0 slave 000
-disk		sd1	at scsibus0 slave ?
-tape		st0	at scsibus0 slave ?
+#device		mcd0	at isa? port 0x300 irq 10
 
-device		ed0	at isa? port 0x300 irq 5 iomem 0xca000
+device		ed0	at isa? port 0x300 iomem 0xc8000 iosiz 16384 irq 5
+device		ep0	at isa? port ? irq ?
+device		le0	at isa? port 0x200 iomem 0xd0000 iosiz 49152 irq 5
 
 device		npx0	at isa? port "IO_NPX" irq 13
 
-pseudo-device	loop		2
+pseudo-device	loop
 pseudo-device	ether
+pseudo-device	bpfilter 8
 pseudo-device	log
-pseudo-device	pty		32
-
-pseudo-device	sl		4
-pseudo-device	ppp		4
-pseudo-device	bpfilter	4
-
-pseudo-device	vn		4
+pseudo-device	pty	32
+pseudo-device	vn	4
+pseudo-device	ppp	2
