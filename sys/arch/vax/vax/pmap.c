@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.40 1997/11/02 14:25:23 ragge Exp $	   */
+/*	$NetBSD: pmap.c,v 1.41 1997/11/04 22:59:20 ragge Exp $	   */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -590,11 +590,11 @@ pmap_is_modified(pa)
 	pv = pv_table + (pa >> CLSHIFT);
 
 	if (pv->pv_pte)
-		if ((pv->pv_pte[0].pg_m + pv->pv_pte[1].pg_m))
+		if ((pv->pv_pte[0].pg_m | pv->pv_pte[1].pg_m))
 			return 1;
 
 	while ((pv = pv->pv_next)) {
-		if ((pv->pv_pte[0].pg_m + pv->pv_pte[1].pg_m))
+		if ((pv->pv_pte[0].pg_m | pv->pv_pte[1].pg_m))
 			return 1;
 	}
 	return 0;
