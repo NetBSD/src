@@ -1,0 +1,26 @@
+$NetBSD: TODO,v 1.1.1.1 2001/10/26 07:41:07 lukem Exp $
+
+todo:
+
+- finish makefs.8
+
+- testing
+
+- even more testing
+
+
+outstanding bugs:
+
+- size estimation is still out (need to take into account indirect blocks!)
+
+- mkfs.c parameter checking when density is rather high or low (dumps core)
+  e.g, a large directory with a small number of files dumps core with a
+  floating exception i.e, density is too high such as 21886635 or too
+  low such as 30
+
+
+discuss:
+
+- consider replacing ffs_balloc() et al with own code that doesn't
+  need hacked-up buf.c code
+
