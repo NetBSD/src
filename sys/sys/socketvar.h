@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.34 1999/02/09 02:15:45 kml Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.35 1999/02/09 19:50:28 kml Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -41,10 +41,10 @@
 #include <sys/select.h>			/* for struct selinfo */
 #include <sys/queue.h>
 
-#ifndef _KERNEL
-struct uio;
-
+#ifdef _KERNEL
 #include "opt_sb_max.h"
+#else
+struct uio;
 #endif
 
 TAILQ_HEAD(soqhead, socket);
