@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_irq.S,v 1.2 1998/06/12 23:08:52 tv Exp $	*/
+/*	$NetBSD: isa_irq.S,v 1.3 1998/07/06 00:53:07 mark Exp $	*/
 
 /*
  * Copyright 1997
@@ -75,6 +75,8 @@
  *
  * Created      : 27/09/94
  */
+
+#include "opt_irqstats.h"
 
 #include "assym.h"
 #include <machine/cpu.h>

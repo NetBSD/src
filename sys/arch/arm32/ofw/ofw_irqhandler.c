@@ -1,4 +1,4 @@
-/* $NetBSD: ofw_irqhandler.c,v 1.2 1998/05/01 21:13:59 cgd Exp $ */
+/* $NetBSD: ofw_irqhandler.c,v 1.3 1998/07/06 00:53:08 mark Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -42,6 +42,8 @@
  *
  * Created      : 30/09/94
  */
+
+#include "opt_irqstats.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
