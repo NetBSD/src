@@ -1,4 +1,4 @@
-#	$NetBSD: RPCINST,v 1.28 2001/02/18 00:54:02 reinoud Exp $
+#	$NetBSD: RPCINST,v 1.29 2001/02/20 22:49:56 reinoud Exp $
 #
 #	RPCINST -- RiscPC install configuration
 #
@@ -157,7 +157,7 @@ todclock0	at rtc?
 vidc0		at mainbus?
 
 # The vidc
-vidcvideo0	at vidc?
+vidcconsole0	at vidc?
 
 # generic VT console device
 vt0     at vidc?

@@ -1,4 +1,4 @@
-#	$NetBSD: A7INST,v 1.29 2001/02/18 00:54:02 reinoud Exp $
+#	$NetBSD: A7INST,v 1.30 2001/02/20 22:49:55 reinoud Exp $
 #
 #	A7INST - A7000 install configuration
 #
@@ -157,7 +157,7 @@ todclock0	at rtc?
 vidc0		at mainbus?
 
 # The vidc
-vidcvideo0	at vidc?
+vidcconsole0	at vidc?
 
 # generic VT console device
 vt0     at vidc?
