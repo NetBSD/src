@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.27 1998/10/06 20:50:16 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.28 1998/10/07 18:29:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -269,7 +269,9 @@ void init_pci_bus __P((void));
 /*
  * Prototypes from trap.c:
  */
-void  child_return __P((struct proc *, void *));
+#ifdef _MACHINE_FRAME_H_ /* XXX: We don't want to include this everywhere */
+void  child_return __P((struct proc *, struct frame));
+#endif
 
 #endif /* _KERNEL */
 #endif /* !_MACHINE_CPU_H_ */
