@@ -1,4 +1,4 @@
-/*	$NetBSD: atzsc.c,v 1.24 1998/01/12 10:39:09 thorpej Exp $	*/
+/*	$NetBSD: atzsc.c,v 1.25 1998/08/21 19:13:28 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -154,7 +154,9 @@ atzscattach(pdp, dp, auxp)
 			    PREP_DMA_MEM(sc->sc_dmabuffer));
 	}
 #endif
-	sc->sc_sbicp = (sbic_regmap_p) ((int)rp + 0x91);
+	sc->sc_sbic.sbic_asr_p = (volatile unsigned char *)rp + 0x91;
+	sc->sc_sbic.sbic_value_p = (volatile unsigned char *)rp + 0x93;
+
 	sc->sc_clkfreq = sbic_clock_override ? sbic_clock_override : 77;
 	
 	printf(": dmamask 0x%lx\n", ~sc->sc_dmamask);

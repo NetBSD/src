@@ -1,4 +1,4 @@
-/*	$NetBSD: sbicreg.h,v 1.2 1994/10/26 02:04:40 cgd Exp $	*/
+/*	$NetBSD: sbicreg.h,v 1.3 1998/08/21 19:13:29 is Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -310,21 +310,20 @@
 #define SBIC_MACHINE_DMA_MODE	SBIC_CTL_DMA
 
 typedef struct {
-        volatile unsigned char  sbic_asr;	/* r : Aux Status Register */
-#define sbic_address sbic_asr			/* w : desired register no */
-        PAD(pad1);
-        volatile unsigned char  sbic_value;	/* rw: register value */
-} sbic_padded_ind_regmap_t;
-typedef volatile sbic_padded_ind_regmap_t *sbic_regmap_p;
+        volatile unsigned char  *sbic_asr_p;	/* r : Aux Status Register */
+#define sbic_address_p sbic_asr_p		/* w : desired register no */
+        volatile unsigned char  *sbic_value_p;	/* rw: register value */
+} sbic_regmap_t;
+typedef sbic_regmap_t *sbic_regmap_p;
 
 #define	sbic_read_reg(regs,regno,val) do { \
-		(regs)->sbic_address = (regno);	\
-		(val) = (regs)->sbic_value;	\
+		*((regs).sbic_address_p) = (regno);	\
+		(val) = *((regs).sbic_value_p);	\
 	} while (0)
 
 #define	sbic_write_reg(regs,regno,val)	do { \
-		(regs)->sbic_address = (regno);	\
-		(regs)->sbic_value = (val);	\
+		*((regs).sbic_address_p) = (regno);	\
+		*((regs).sbic_value_p) = (val);	\
 	} while (0)
 
 #define SET_SBIC_myid(regs,val)         sbic_write_reg(regs,SBIC_myid,val)
@@ -384,26 +383,26 @@ typedef volatile sbic_padded_ind_regmap_t *sbic_regmap_p;
 
 #define SBIC_TC_PUT(regs,val) do { \
 	sbic_write_reg(regs,SBIC_count_hi,((val)>>16)); \
-	(regs)->sbic_value = (val)>>8; \
-	(regs)->sbic_value = (val); \
+	*((regs).sbic_value_p) = (val)>>8; \
+	*((regs).sbic_value_p) = (val); \
 } while (0)
 #define SBIC_TC_GET(regs,val) do { \
 	sbic_read_reg(regs,SBIC_count_hi,(val)); \
-	(val) = ((val)<<8) | (regs)->sbic_value; \
-	(val) = ((val)<<8) | (regs)->sbic_value; \
+	(val) = ((val)<<8) | *((regs).sbic_value_p); \
+	(val) = ((val)<<8) | *((regs).sbic_value_p); \
 } while (0)
 
 #define SBIC_LOAD_COMMAND(regs,cmd,cmdsize) do { \
 	int n=(cmdsize)-1; \
 	char *ptr = (char*)(cmd); \
 	sbic_write_reg(regs,SBIC_cdb1,*ptr++); \
-	while (n-- > 0) (regs)->sbic_value = *ptr++; \
+	while (n-- > 0) *((regs).sbic_value_p) = *ptr++; \
 } while (0)
 
-#define GET_SBIC_asr(regs,val)          (val) = (regs)->sbic_asr
+#define GET_SBIC_asr(regs,val)          (val) = *((regs).sbic_asr_p)
 
 #define WAIT_CIP(regs) do { \
-	while ((regs)->sbic_asr & SBIC_ASR_CIP) \
+	while (*((regs).sbic_asr_p) & SBIC_ASR_CIP) \
 		; \
 } while (0)
 

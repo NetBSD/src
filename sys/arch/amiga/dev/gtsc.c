@@ -1,4 +1,4 @@
-/*	$NetBSD: gtsc.c,v 1.23 1998/01/12 10:39:42 thorpej Exp $	*/
+/*	$NetBSD: gtsc.c,v 1.24 1998/08/21 19:13:28 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -179,7 +179,9 @@ gtscattach(pdp, dp, auxp)
 	printf(" flags %x", gap->flags);
 	printf(" maxdma %d\n", gtsc_maxdma);
 
-	sc->sc_sbicp = (sbic_regmap_p) ((int)rp + 0x61);
+	sc->sc_sbic.sbic_asr_p = (volatile unsigned char *)rp + 0x61;
+	sc->sc_sbic.sbic_value_p = (volatile unsigned char *)rp + 0x63;
+
 	sc->sc_clkfreq = gtsc_clock_override ? gtsc_clock_override :
 	    ((gap->flags & GVP_14MHZ) ? 143 : 72);
 	printf("sc_clkfreg: %ld.%ldMhz\n", sc->sc_clkfreq / 10, sc->sc_clkfreq % 10);

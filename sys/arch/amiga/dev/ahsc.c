@@ -1,4 +1,4 @@
-/*	$NetBSD: ahsc.c,v 1.20 1998/01/12 10:39:08 thorpej Exp $	*/
+/*	$NetBSD: ahsc.c,v 1.21 1998/08/21 19:13:27 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -132,7 +132,11 @@ ahscattach(pdp, dp, auxp)
 	 * eveything is a valid dma address
 	 */
 	sc->sc_dmamask = 0;
-	sc->sc_sbicp = (sbic_regmap_p) ((int)rp + 0x41);
+
+	/* XXX todo: make this variable for Apollo-3060 boards */
+	sc->sc_sbic.sbic_asr_p =  ((volatile unsigned char *)rp + 0x41);
+	sc->sc_sbic.sbic_value_p =  ((volatile unsigned char *)rp + 0x43);
+
 	sc->sc_clkfreq = sbic_clock_override ? sbic_clock_override : 143;
 	
 	sc->sc_link.scsipi_scsi.channel = SCSI_CHANNEL_ONLY_ONE;
