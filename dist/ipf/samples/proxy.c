@@ -1,4 +1,4 @@
-/*	$NetBSD: proxy.c,v 1.5 2005/02/19 21:30:25 martti Exp $	*/
+/*	$NetBSD: proxy.c,v 1.5.2.1 2005/04/04 18:25:44 tron Exp $	*/
 
 /*
  * Sample transparent proxy program.
@@ -101,7 +101,7 @@ char *argv[];
 	 * Open the NAT device and lookup the mapping pair.
 	 */
 	fd = open(IPNAT_NAME, O_RDONLY);
-	if (ioctl(fd, SIOCGNATL, &natlookp) == -1) {
+	if (ioctl(fd, SIOCGNATL, &obj) == -1) {
 		perror("ioctl(SIOCGNATL)");
 		exit(-1);
 	}
