@@ -1,4 +1,4 @@
-/*	$NetBSD: hid.h,v 1.3 2004/02/13 11:36:16 wiz Exp $	*/
+/*	$NetBSD: hid.h,v 1.4 2005/01/11 02:09:54 chs Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -42,6 +42,7 @@
 #define HID0_PAR	0x01000000  /* Disable precharge of ARTRY */
 #define HID0_STEN	0x01000000  /* Software table search enable (7450) */
 #define HID0_DOZE	0x00800000  /* Enable doze mode */
+#define HID0_HIGH_BAT_EN 0x00800000  /* Enable additional BATs (74[45][57]) */
 #define HID0_NAP	0x00400000  /* Enable nap mode */
 #define HID0_SLEEP	0x00200000  /* Enable sleep mode */
 #define HID0_DPM	0x00100000  /* Enable Dynamic power management */
@@ -75,7 +76,7 @@
 
 #define HID0_7450_BITMASK "\020" \
     "\040EMCP\037b1\036b2\035b3\034b4\033TBEN\032b6\031STEN" \
-    "\030b8\027NAP\026SLEEP\025DPM\024b12\023BHTCLR\022XAEN\021NHR" \
+    "\030HIGH_BAT_EN\027NAP\026SLEEP\025DPM\024b12\023BHTCLR\022XAEN\021NHR" \
     "\020ICE\017DCE\016ILOCK\015DLOCK\014ICFI\013DCFI\012SPD\011b23" \
     "\010SGE\007b25\006BTIC\005LRSTK\004FOLD\003BHT\002NOPDST\001NOPTI"
 
@@ -91,7 +92,7 @@
  *   5	EICE	-	-	-	-	TBEN
  *   6	ECLK	-	ECLK	ECLK	ECLK	-
  *   7	PAR	PAR	PAR	PAR	PAR	STEN
- *   8	DOZE	-	DOZE	DOZE	DOZE	-
+ *   8	DOZE	-	DOZE	DOZE	DOZE	HIGH_BAT_EN
  *   9	NAP	-	NAP	NAP	NAP	NAP
  *  10	SLEEP	-	SLEEP	SLEEP	SLEEP	SLEEP
  *  11	DPM	-	DPM	DPM	DPM	DPM

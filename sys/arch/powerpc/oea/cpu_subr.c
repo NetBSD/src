@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.18 2005/01/07 21:31:04 briggs Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.19 2005/01/11 02:09:54 chs Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.18 2005/01/07 21:31:04 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.19 2005/01/11 02:09:54 chs Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_multiprocessor.h"
@@ -387,9 +387,9 @@ cpu_setup(self, ci)
 		if (vers == MPC7450 && (pvr & 0xFFFF) <= 0x0200)
 			hid0 &= ~HID0_BTIC;
 		/* Select NAP mode. */
-		hid0 &= ~(HID0_DOZE | HID0_NAP | HID0_SLEEP);
+		hid0 &= ~(HID0_HIGH_BAT_EN | HID0_SLEEP);
 		hid0 |= HID0_NAP | HID0_DPM;
-		powersave = 0;		/* but don't use it */
+		powersave = 1;
 		break;
 
 	default:
