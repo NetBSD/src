@@ -1,9 +1,6 @@
-#	$NetBSD: Makefile,v 1.3 1999/02/13 02:54:28 lukem Exp $
+#	$NetBSD: Makefile,v 1.4 2000/11/01 02:06:25 itojun Exp $
 
 LIB=		common
-SRCS=		bindtextdom.c dcgettext.c dgettext.c gettext.c finddomain.c \
-		loadmsgcat.c localealias.c textdomain.c l10nflist.c \
-		explodename.c intl-compat.c
 SRCS+=		getopt.c getopt1.c xmalloc.c xstrdup.c
 
 CPPFLAGS+=	-DGNULOCALEDIR=\"/usr/share/locale\" \
@@ -16,7 +13,7 @@ MKLINKLIB=	no
 
 .include <bsd.lib.mk>
 
-.PATH: ${DIST}/texinfo/intl ${DIST}/texinfo/lib ${DIST}/texinfo/po
+.PATH: ${DIST}/texinfo/lib ${DIST}/texinfo/po
 
 all: ${FILES}
 .SUFFIXES: .gmo .mo
