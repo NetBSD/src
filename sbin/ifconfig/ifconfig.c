@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.124 2002/05/23 21:38:01 matt Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.125 2002/06/14 01:04:41 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.124 2002/05/23 21:38:01 matt Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.125 2002/06/14 01:04:41 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -137,7 +137,8 @@ struct	sockaddr_in	netmask;
 struct	netrange	at_nr;		/* AppleTalk net range */
 
 char	name[30];
-int	flags, metric, mtu, setaddr, setipdst, doalias;
+int	flags, setaddr, setipdst, doalias;
+u_long	metric, mtu;
 int	clearaddr, s;
 int	newaddr = -1;
 int	conflicting = 0;
@@ -1169,6 +1170,7 @@ setia6flags(vname, value)
 	const char *vname;
 	int value;
 {
+
 	if (value < 0) {
 		value = -value;
 		in6_addreq.ifra_flags &= ~value;
@@ -1181,6 +1183,7 @@ setia6pltime(val, d)
 	const char *val;
 	int d;
 {
+
 	setia6lifetime("pltime", val);
 }
 
@@ -1189,6 +1192,7 @@ setia6vltime(val, d)
 	const char *val;
 	int d;
 {
+
 	setia6lifetime("vltime", val);
 }
 
@@ -1221,8 +1225,13 @@ setifmetric(val, d)
 	const char *val;
 	int d;
 {
+	char *ep;
+
 	(void) strncpy(ifr.ifr_name, name, sizeof (ifr.ifr_name));
-	ifr.ifr_metric = atoi(val);
+	ep = NULL;
+	ifr.ifr_metric = strtoul(val, &ep, 10);
+	if (!ep || *ep)
+		errx(1, "%s: invalid metric", val);
 	if (ioctl(s, SIOCSIFMETRIC, (caddr_t)&ifr) == -1)
 		warn("SIOCSIFMETRIC");
 }
@@ -1232,8 +1241,12 @@ setifmtu(val, d)
 	const char *val;
 	int d;
 {
+	char *ep;
+
 	(void)strncpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
-	ifr.ifr_mtu = atoi(val);
+	ifr.ifr_mtu = strtoul(val, &ep, 10);
+	if (!ep || *ep)
+		errx(1, "%s: invalid mtu", val);
 	if (ioctl(s, SIOCSIFMTU, (caddr_t)&ifr) == -1)
 		warn("SIOCSIFMTU");
 }
@@ -1869,9 +1882,9 @@ status(sdl)
 	printf("%s: ", name);
 	printb("flags", flags, IFFBITS);
 	if (metric)
-		printf(" metric %d", metric);
+		printf(" metric %lu", metric);
 	if (mtu)
-		printf(" mtu %d", mtu);
+		printf(" mtu %lu", mtu);
 	putchar('\n');
 
 	if (g_ifcr.ifcr_capabilities) {
