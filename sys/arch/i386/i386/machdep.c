@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.236 1997/07/08 17:55:44 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.237 1997/07/10 02:36:44 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -225,7 +225,7 @@ void	consinit __P((void));
 static int exec_nomid	__P((struct proc *, struct exec_package *));
 #endif
 
-int	bus_mem_add_mapping __P((bus_addr_t, bus_size_t,
+int	i386_mem_add_mapping __P((bus_addr_t, bus_size_t,
 	    int, bus_space_handle_t *));
 
 /*
@@ -1714,7 +1714,7 @@ cpu_reset()
 }
 
 int
-bus_space_map(t, bpa, size, cacheable, bshp)
+i386_memio_map(t, bpa, size, cacheable, bshp)
 	bus_space_tag_t t;
 	bus_addr_t bpa;
 	bus_size_t size;
@@ -1737,7 +1737,7 @@ bus_space_map(t, bpa, size, cacheable, bshp)
 		break;
 
 	default:
-		panic("bus_space_map: bad bus space tag");
+		panic("i386_memio_map: bad bus space tag");
 	}
 
 	/*
@@ -1761,13 +1761,13 @@ bus_space_map(t, bpa, size, cacheable, bshp)
 	 * For memory space, map the bus physical address to
 	 * a kernel virtual address.
 	 */
-	error = bus_mem_add_mapping(bpa, size, cacheable, bshp);
+	error = i386_mem_add_mapping(bpa, size, cacheable, bshp);
 	if (error) {
 		if (extent_free(ex, bpa, size, EX_NOWAIT |
 		    (ioport_malloc_safe ? EX_MALLOCOK : 0))) {
-			printf("bus_space_map: pa 0x%lx, size 0x%lx\n",
+			printf("i386_memio_map: pa 0x%lx, size 0x%lx\n",
 			    bpa, size);
-			printf("bus_space_map: can't free region\n");
+			printf("i386_memio_map: can't free region\n");
 		}
 	}
 
@@ -1775,7 +1775,31 @@ bus_space_map(t, bpa, size, cacheable, bshp)
 }
 
 int
-bus_space_alloc(t, rstart, rend, size, alignment, boundary, cacheable,
+_i386_memio_map(t, bpa, size, cacheable, bshp)
+	bus_space_tag_t t;
+	bus_addr_t bpa;
+	bus_size_t size;
+	int cacheable;
+	bus_space_handle_t *bshp;
+{
+
+	/*
+	 * For I/O space, just fill in the handle.
+	 */
+	if (t == I386_BUS_SPACE_IO) {
+		*bshp = bpa;
+		return (0);
+	}
+
+	/*
+	 * For memory space, map the bus physical address to
+	 * a kernel virtual address.
+	 */
+	return (i386_mem_add_mapping(bpa, size, cacheable, bshp));
+}
+
+int
+i386_memio_alloc(t, rstart, rend, size, alignment, boundary, cacheable,
     bpap, bshp)
 	bus_space_tag_t t;
 	bus_addr_t rstart, rend;
@@ -1801,14 +1825,14 @@ bus_space_alloc(t, rstart, rend, size, alignment, boundary, cacheable,
 		break;
 
 	default:
-		panic("bus_space_alloc: bad bus space tag");
+		panic("i386_memio_alloc: bad bus space tag");
 	}
 
 	/*
 	 * Sanity check the allocation against the extent's boundaries.
 	 */
 	if (rstart < ex->ex_start || rend > ex->ex_end)
-		panic("bus_space_alloc: bad region start/end");
+		panic("i386_memio_alloc: bad region start/end");
 
 	/*
 	 * Do the requested allocation.
@@ -1832,13 +1856,13 @@ bus_space_alloc(t, rstart, rend, size, alignment, boundary, cacheable,
 	 * For memory space, map the bus physical address to
 	 * a kernel virtual address.
 	 */
-	error = bus_mem_add_mapping(bpa, size, cacheable, bshp);
+	error = i386_mem_add_mapping(bpa, size, cacheable, bshp);
 	if (error) {
 		if (extent_free(iomem_ex, bpa, size, EX_NOWAIT |
 		    (ioport_malloc_safe ? EX_MALLOCOK : 0))) {
-			printf("bus_space_alloc: pa 0x%lx, size 0x%lx\n",
+			printf("i386_memio_alloc: pa 0x%lx, size 0x%lx\n",
 			    bpa, size);
-			printf("bus_space_alloc: can't free region\n");
+			printf("i386_memio_alloc: can't free region\n");
 		}
 	}
 
@@ -1848,7 +1872,7 @@ bus_space_alloc(t, rstart, rend, size, alignment, boundary, cacheable,
 }
 
 int
-bus_mem_add_mapping(bpa, size, cacheable, bshp)
+i386_mem_add_mapping(bpa, size, cacheable, bshp)
 	bus_addr_t bpa;
 	bus_size_t size;
 	int cacheable;
@@ -1862,7 +1886,7 @@ bus_mem_add_mapping(bpa, size, cacheable, bshp)
 
 #ifdef DIAGNOSTIC
 	if (endpa <= pa)
-		panic("bus_mem_add_mapping: overflow");
+		panic("i386_mem_add_mapping: overflow");
 #endif
 
 	va = kmem_alloc_pageable(kernel_map, endpa - pa);
@@ -1884,7 +1908,7 @@ bus_mem_add_mapping(bpa, size, cacheable, bshp)
 }
 
 void
-bus_space_unmap(t, bsh, size)
+i386_memio_unmap(t, bsh, size)
 	bus_space_tag_t t;
 	bus_space_handle_t bsh;
 	bus_size_t size;
@@ -1909,7 +1933,7 @@ bus_space_unmap(t, bsh, size)
 
 #ifdef DIAGNOSTIC
 		if (endva <= va)
-			panic("bus_space_unmap: overflow");
+			panic("i386_memio_unmap: overflow");
 #endif
 
 		bpa = pmap_extract(pmap_kernel(), va) + (bsh & PGOFSET);
@@ -1921,30 +1945,30 @@ bus_space_unmap(t, bsh, size)
 		break;
 
 	default:
-		panic("bus_space_unmap: bad bus space tag");
+		panic("i386_memio_unmap: bad bus space tag");
 	}
 
 	if (extent_free(ex, bpa, size,
 	    EX_NOWAIT | (ioport_malloc_safe ? EX_MALLOCOK : 0))) {
-		printf("bus_space_unmap: %s 0x%lx, size 0x%lx\n",
+		printf("i386_memio_unmap: %s 0x%lx, size 0x%lx\n",
 		    (t == I386_BUS_SPACE_IO) ? "port" : "pa", bpa, size);
-		printf("bus_space_unmap: can't free region\n");
+		printf("i386_memio_unmap: can't free region\n");
 	}
 }
 
 void    
-bus_space_free(t, bsh, size)
+i386_memio_free(t, bsh, size)
 	bus_space_tag_t t;
 	bus_space_handle_t bsh;
 	bus_size_t size;
 {
 
-	/* bus_space_unmap() does all that we need to do. */
-	bus_space_unmap(t, bsh, size);
+	/* i386_memio_unmap() does all that we need to do. */
+	i386_memio_unmap(t, bsh, size);
 }
 
 int
-bus_space_subregion(t, bsh, offset, size, nbshp)
+i386_memio_subregion(t, bsh, offset, size, nbshp)
 	bus_space_tag_t t;
 	bus_space_handle_t bsh;
 	bus_size_t offset, size;
