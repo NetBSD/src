@@ -1,4 +1,4 @@
-# $NetBSD: files.alpha,v 1.155 2002/04/16 20:50:17 thorpej Exp $
+# $NetBSD: files.alpha,v 1.155.4.1 2003/06/30 02:52:09 grant Exp $
 #
 # alpha-specific configuration info
 
@@ -430,7 +430,7 @@ file	arch/alpha/pci/agp_machdep.c	agp
 
 device	sio: isabus, alpha_shared_intr, cy82c693
 attach	sio at pci
-device	pceb: isabus, eisabus, cy82c693
+device	pceb: isabus, eisabus, cy82c693, alpha_shared_intr
 attach	pceb at pci
 file	arch/alpha/pci/sio.c		sio | pceb	needs-flag
 file	arch/alpha/pci/sio_pic.c	sio | pceb
