@@ -1,5 +1,5 @@
 #! /bin/sh -
-#	$NetBSD: makesyscalls.sh,v 1.28 1998/02/19 03:30:24 thorpej Exp $
+#	$NetBSD: makesyscalls.sh,v 1.29 1998/09/13 04:57:24 thorpej Exp $
 #
 # Copyright (c) 1994,1996 Christopher G. Demetriou
 # All rights reserved.
@@ -399,6 +399,11 @@ function putent(nodefs, compatwrap) {
 
 		printf("#define\t%s%s\t%d\n\n", constprefix, funcalias,
 		    syscall) > sysnumhdr
+	} else if (nodefs == "COMPAT") {
+		# Just define the syscall number with a comment.  These
+		# may be used by compatibility stubs in libc.
+		printf("#define\t%s%s_%s\t%d\n\n",
+		    constprefix, compatwrap, funcalias, syscall) > sysnumhdr
 	} else if (nodefs != "NODEF")
 		printf("\t\t\t\t/* %d is %s %s */\n\n", syscall,
 		    compatwrap, funcalias) > sysnumhdr
@@ -449,7 +454,7 @@ $2 == "OBSOL" || $2 == "UNIMPL" {
 	for (i = 1; i <= ncompat; i++) {
 		if ($2 == compat_upper[i]) {
 			parseline();
-			putent("COMMENT", compat[i])
+			putent("COMPAT", compat[i])
 			syscall++
 			next
 		}
