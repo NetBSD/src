@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.38 1995/10/09 14:03:35 mycroft Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.39 1995/10/09 14:25:02 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -372,7 +372,7 @@ kernfs_getattr(ap)
 		vap->va_type = kt->kt_vtype;
 		vap->va_mode = kt->kt_mode;
 		vap->va_nlink = 1;
-		vap->va_fileid = 1 + (kt - kern_targets) / sizeof(*kt);
+		vap->va_fileid = 3 + (kt - kern_targets);
 		total = 0;
 		while (buf = strbuf,
 		       nbytes = kernfs_xread(kt, total, &buf, sizeof(strbuf)))
