@@ -1,4 +1,4 @@
-/*	$NetBSD: idprom.c,v 1.9 1994/12/12 18:59:06 gwr Exp $	*/
+/*	$NetBSD: idprom.c,v 1.10 1995/02/11 20:57:11 gwr Exp $	*/
 
 /*
  * Copyright (c) 1993 Adam Glass
@@ -32,121 +32,148 @@
 
 /*
  * Machine ID PROM - system type and serial number
- * All this to read some bytes in control space...
  */
 
-#include "sys/param.h"
-#include "sys/systm.h"
-#include "sys/device.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/device.h>
 
-#include "machine/autoconf.h"
-#include "machine/control.h"
-#include "machine/idprom.h"
-#include "machine/obctl.h"
+#include <machine/autoconf.h>
+#include <machine/control.h>
+#include <machine/idprom.h>
+#include <machine/mon.h>
 
-#include "idprom.h"
+extern long hostid;	/* in kern_sysctl.c */
 
-struct idprom_softc {
-    struct device idprom_driver;
-    int           idprom_init;
-    struct idprom idprom_copy;
-    char         *idprom_addr;
-    int           idprom_size;
-};
+/*
+ * This structure is what this driver is all about.
+ * It is copied from control space early in startup.
+ */
+struct idprom identity_prom;
 
 static int  idprom_match __P((struct device *, void *vcf, void *args));
 static void idprom_attach __P((struct device *, struct device *, void *));
 
 struct cfdriver idpromcd = {
 	NULL, "idprom", idprom_match, idprom_attach,
-	DV_DULL, sizeof(struct idprom_softc), 0 };
-
-#define IDPROM_CHECK(unit) \
-      if (unit >= idpromcd.cd_ndevs || (idpromcd.cd_devs[unit] == NULL)) \
-	  return ENXIO
-#define UNIT_TO_IDP(unit) idpromcd.cd_devs[unit]
-
+	DV_DULL, sizeof(struct device), 0 };
 
 int idprom_match(parent, vcf, args)
-    struct device *parent;
-    void *vcf, *args;
+	struct device *parent;
+	void *vcf, *args;
 {
-    struct cfdata *cf = vcf;
-	struct confargs *ca = args;
+	struct cfdata *cf = vcf;
 
 	/* This driver only supports one unit. */
 	if (cf->cf_unit != 0)
 		return (0);
-	if (ca->ca_paddr == -1)
-		ca->ca_paddr = IDPROM_BASE;
+
 	return (1);
 }
 
 void idprom_attach(parent, self, args)
-     struct device *parent;
-     struct device *self;
-     void *args;
+	struct device *parent;
+	struct device *self;
+	void *args;
 {
-    struct idprom_softc *idp = (struct idprom_softc *) self;
-    struct confargs *ca = args;
+	struct idprom *idp;
+	union {
+		long l;
+		char c[4];
+	} id;
 
-    idp->idprom_init = 0;
+	/*
+	 * Construct the hostid from the idprom contents.
+	 * This appears to be the way SunOS does it.
+	 */
+	idp = &identity_prom;
+	id.c[0] = idp->idp_machtype;
+	id.c[1] = idp->idp_serialnum[0];
+	id.c[2] = idp->idp_serialnum[1];
+	id.c[3] = idp->idp_serialnum[2];
+	hostid = id.l;
 
-    idp->idprom_addr = (char *) ca->ca_paddr;
-    idp->idprom_size = IDPROM_SIZE;
-
-    printf("\n");
+	printf(" hostid 0x%x\n", id.l);
 }
 
 int idpromopen(dev, oflags, devtype, p)
-     dev_t dev;
-     int oflags;
-     int devtype;
-     struct proc *p;
+	dev_t dev;
+	int oflags;
+	int devtype;
+	struct proc *p;
 {
-    struct idprom_softc *idp;
-    int unit, idprom_ok;
-    
-    unit = minor(dev);
-    IDPROM_CHECK(unit);
-    idp = UNIT_TO_IDP(unit);
-    if (!idp->idprom_init)
-	idprom_ok = idprom_fetch(&idp->idprom_copy, IDPROM_VERSION);
-    if (!idprom_ok) return EIO;
-    idp->idprom_init = 1;
-    return 0;
+	return 0;
 }
 
 int idpromclose(dev, fflag, devtype, p)
-     dev_t dev;
-     int fflag;
-     int devtype;
-     struct proc *p;
+	dev_t dev;
+	int fflag;
+	int devtype;
+	struct proc *p;
 {
-    int unit;
-
-    unit = minor(dev);
-    IDPROM_CHECK(unit);
-    return 0;
+	return 0;
 }
 
 idpromread(dev, uio, ioflag)
-     dev_t dev;
-     struct uio *uio;
-     int ioflag;
+	dev_t dev;
+	struct uio *uio;
+	int ioflag;
 {
-    int error, unit, length;
-    struct idprom_softc *idp;
+	int error, unit, length;
 
-    unit = minor(dev);
-    IDPROM_CHECK(unit);
-    idp = UNIT_TO_IDP(unit);
-    if (!idp->idprom_init) return EIO;
-    error = 0;
-    while (uio->uio_resid > 0) {
-	if (uio->uio_offset >= idp->idprom_size) break; /* past or at end */
-	length = min(uio->uio_resid, (idp->idprom_size - uio->uio_offset));
-	error = uiomove((caddr_t) &idp->idprom_copy, length, uio);
-    }
-    return error;
+	error = 0;
+	while (uio->uio_resid > 0 && error == 0) {
+		if (uio->uio_offset >= IDPROM_SIZE)
+			break; /* past or at end */
+		length = min(uio->uio_resid,
+					 (IDPROM_SIZE - (int)uio->uio_offset));
+		error = uiomove((caddr_t) &identity_prom, length, uio);
+	}
+	return error;
+}
+
+/*
+ * This is called very early during startup to
+ * get a copy of the idprom from control space.
+ */
+int idprom_init()
+{
+	struct idprom *idp;
+	char *src, *dst;
+	int len, x, xorsum;
+
+	idp = &identity_prom;
+	dst = (char*)idp;
+	src = (char*)IDPROM_BASE;
+	len = IDPROM_SIZE;
+	xorsum = 0;	/* calculated as xor of data */
+
+	do {
+		x = get_control_byte(src++);
+		*dst++ = x;
+		xorsum ^= x;
+	} while (--len > 0);
+
+	if (xorsum != 0) {
+		mon_printf("idprom_fetch: bad checksum=%d\n", xorsum);
+		return xorsum;
+	}
+	if (idp->idp_format < 1) {
+		mon_printf("idprom_fetch: bad version=%d\n", idp->idp_format);
+		return -1;
+	}
+	return 0;
+}
+
+void idprom_etheraddr(eaddrp)
+	u_char *eaddrp;
+{
+	u_char *src, *dst;
+	int len = 6;
+
+	src = identity_prom.idp_etheraddr;
+	dst = eaddrp;
+
+	do *dst++ = *src++;
+	while (--len > 0);
 }
