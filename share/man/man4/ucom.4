@@ -1,4 +1,4 @@
-.\" $NetBSD: ucom.4,v 1.8 2002/03/19 15:17:49 augustss Exp $
+.\" $NetBSD: ucom.4,v 1.9 2002/03/22 00:39:40 augustss Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -41,12 +41,12 @@
 .Nm ucom
 .Nd USB tty support
 .Sh SYNOPSIS
-.\"Cd "ucom* at uetekcom? portno ?"
 .Cd "ucom* at uftdi?"
+.Cd "ucom* at umct?"
 .Cd "ucom* at umodem?"
 .Cd "ucom* at uplcom?"
-.Cd "ucom* at umct?"
 .Cd "ucom* at uvisor? portno ?"
+.Cd "ucom* at uvscom?"
 .Sh DESCRIPTION
 The
 .Nm
@@ -72,7 +72,6 @@ multiple external ports.
 .El
 .Sh SEE ALSO
 .Xr tty 4 ,
-.\"Xr uetekcom 4 ,
 .Xr uftdi 4 ,
 .Xr umct 4 ,
 .Xr umodem 4 ,
