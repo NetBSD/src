@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.19 1997/10/10 06:25:36 mycroft Exp $
+	$NetBSD: syscalls.master,v 1.20 1997/10/15 17:18:38 mycroft Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -129,9 +129,9 @@
 74	NOARGS		{ int compat_43_sys_sethostname(char *hostname, \
 			    u_int len);}
 75	NOARGS		{ int compat_43_sys_setrlimit(u_int which, \
-			    struct ogetrlimit *rlp); }
+			    struct orlimit *rlp); }
 76	NOARGS		{ int compat_43_sys_getrlimit(u_int which, \
-			    struct ogetrlimit *rlp); }
+			    struct orlimit *rlp); }
 77	NOARGS		{ int sys_getrusage(int who, struct rusage *rusage); }
 78	NOARGS		{ int sys_gettimeofday(struct timeval *tp, \
 			    struct timezone *tzp); }
