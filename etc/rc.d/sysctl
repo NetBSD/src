@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: sysctl,v 1.3 2000/04/09 21:00:04 tsarna Exp $
+# $NetBSD: sysctl,v 1.4 2000/04/15 21:14:51 tsarna Exp $
 #
 
 # PROVIDE: sysctl
@@ -20,6 +20,13 @@ sysctl_start()
 *** WARNING: /etc/rc.conf \$defcorename setting is obsolete. Please
 *** set kern.defcorename in /etc/sysctl.conf
 		sysctl -w kern.defcorename=$defcorename
+__EOF__
+	fi
+
+	if [ "X$nfsiod_flags" != "X" ]; then
+		cat <<__EOF__
+*** WARNING: /etc/rc.conf \$nfsiod_flags setting is obsolete. Please
+*** set vfs.nfs.iothreads in /etc/sysctl.conf if using NFS client.
 __EOF__
 	fi
 
