@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.99 1996/09/26 20:51:03 cgd Exp $
+#	$NetBSD: files,v 1.100 1996/09/30 16:16:46 ws Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -20,6 +20,9 @@ define	arc
 define	atm
 define	ether
 define	fddi
+
+# kgdb has its own "files" file, but is really machine independent
+include "kgdb/files.kgdb"
 
 # "Chipset" drivers.  These are the bus-independent routines which
 # contain the cfdrivers.  Attachments are provided by files.<bus>
