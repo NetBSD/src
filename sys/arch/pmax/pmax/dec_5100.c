@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_5100.c,v 1.2 1998/04/27 06:10:32 simonb Exp $	*/
+/*	$NetBSD: dec_5100.c,v 1.3 1998/11/29 00:58:06 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -236,6 +236,8 @@ dec_5100_intr(mask, pc, statusReg, causeReg)
 #endif
 	}
 
+	icsr = *((volatile u_int *)MIPS_PHYS_TO_KSEG1(KN230_SYS_ICSR));
+
 	/* handle clock interrupts ASAP */
 	if (mask & MIPS_INT_MASK_2) {
 		temp = c->regc;	/* XXX clear interrupt bits */
@@ -258,7 +260,6 @@ dec_5100_intr(mask, pc, statusReg, causeReg)
 	}
 
 	if (mask & MIPS_INT_MASK_0) {
-		/*XXX5100*/printf(".");
 		if (icsr & KN230_CSR_INTR_DZ0) {
 		    CALLINTR(1, SERIAL0_INTR);
 		}		    
