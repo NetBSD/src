@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.267 2004/10/13 23:28:35 gavan Exp $
+.\"	$NetBSD: main,v 1.268 2004/10/14 01:16:30 snj Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -609,7 +609,7 @@ Fixes for free block tracking and directory block allocation in FFS softdeps.
 .It
 Correctly support FFS file systems with a large number of cylinder groups.
 .It
-Fix the endian independant FFS (FFS_EI) support.
+Fix the endian independent FFS (FFS_EI) support.
 .It
 .Xr newfs 8 
 calculates default block size from the file system size,
