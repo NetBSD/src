@@ -1,4 +1,4 @@
-/*	$NetBSD: encrypt.c,v 1.12 2003/08/07 16:44:54 agc Exp $	*/
+/*	$NetBSD: encrypt.c,v 1.13 2005/02/06 05:53:07 perry Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -33,7 +33,7 @@
 #if 0
 static char sccsid[] = "@(#)encrypt.c	8.2 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: encrypt.c,v 1.12 2003/08/07 16:44:54 agc Exp $");
+__RCSID("$NetBSD: encrypt.c,v 1.13 2005/02/06 05:53:07 perry Exp $");
 #endif /* not lint */
 
 /*
@@ -73,14 +73,13 @@ __RCSID("$NetBSD: encrypt.c,v 1.12 2003/08/07 16:44:54 agc Exp $");
 #endif
 
 #include <sys/cdefs.h>
-#define P __P
 
 /*
  * These functions pointers point to the current routines
  * for encrypting and decrypting data.
  */
-void	(*encrypt_output) P((unsigned char *, int));
-int	(*decrypt_input) P((int));
+void	(*encrypt_output)(unsigned char *, int);
+int	(*decrypt_input)(int);
 
 int encrypt_debug_mode = 0;
 static int decrypt_mode = 0;
@@ -171,7 +170,7 @@ static struct key_info {
 	int keylen;
 	int dir;
 	int *modep;
-	Encryptions *(*getcrypt) P((int));
+	Encryptions *(*getcrypt)(int);
 } ki[2] = {
 	{ { 0 }, 0, DIR_ENCRYPT, &encrypt_mode, findencryption },
 	{ { 0 }, 0, DIR_DECRYPT, &decrypt_mode, finddecryption },
