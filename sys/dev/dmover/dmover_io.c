@@ -1,4 +1,4 @@
-/*	$NetBSD: dmover_io.c,v 1.6 2002/10/23 09:13:10 jdolecek Exp $	*/
+/*	$NetBSD: dmover_io.c,v 1.7 2002/11/07 08:05:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dmover_io.c,v 1.6 2002/10/23 09:13:10 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dmover_io.c,v 1.7 2002/11/07 08:05:33 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/queue.h>
@@ -142,8 +142,8 @@ dmio_usrreq_init(struct file *fp, struct dmio_usrreq_state *dus,
 	struct uio *uio_in;
 	dmio_buffer inbuf;
 	size_t len;
-	int i, j;
-	int error;
+	int i, error;
+	u_int j;
 
 	/* XXX How should malloc interact w/ FNONBLOCK? */
 

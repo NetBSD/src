@@ -1,4 +1,4 @@
-/*	$NetBSD: nslm7x.c,v 1.15 2002/04/05 16:11:47 bouyer Exp $ */
+/*	$NetBSD: nslm7x.c,v 1.16 2002/11/07 08:08:51 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nslm7x.c,v 1.15 2002/04/05 16:11:47 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nslm7x.c,v 1.16 2002/11/07 08:08:51 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -189,7 +189,7 @@ void
 lm_attach(lmsc)
 	struct lm_softc *lmsc;
 {
-	int i;
+	u_int i;
 
 	for (i = 0; i < sizeof(lm_chips) / sizeof(lm_chips[0]); i++)
 		if (lm_chips[i].chip_match(lmsc))
