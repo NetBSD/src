@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf32.c,v 1.2 1997/01/23 05:43:29 cgd Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.3 1997/08/02 21:30:19 perry Exp $	*/
 
 /*
  * Copyright (c) 1997 Christopher G. Demetriou.  All rights reserved.
@@ -30,10 +30,11 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char *e32rcsid = "$NetBSD: exec_elf32.c,v 1.2 1997/01/23 05:43:29 cgd Exp $";
-#endif /* not lint */
-
+__RCSID("$NetBSD: exec_elf32.c,v 1.3 1997/08/02 21:30:19 perry Exp $");
+#endif
+ 
 #ifndef ELFSIZE
 #define ELFSIZE         32
 #endif
