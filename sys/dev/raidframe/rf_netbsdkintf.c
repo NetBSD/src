@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.34 1999/12/12 20:51:41 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.35 1999/12/14 15:27:00 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -356,10 +356,11 @@ raidattach(num)
 	}
 	numraid = num;
 	bzero(raid_softc, num * sizeof(struct raid_softc));
-	raid_softc->buf_queue.b_actf = NULL;
-	raid_softc->buf_queue.b_actb = &raid_softc->buf_queue.b_actf;
 
 	for (raidID = 0; raidID < num; raidID++) {
+		raid_softc[raidID].buf_queue.b_actf = NULL;
+		raid_softc[raidID].buf_queue.b_actb = 
+			&raid_softc[raidID].buf_queue.b_actf;
 		RF_Calloc(raidPtrs[raidID], 1, sizeof(RF_Raid_t),
 			  (RF_Raid_t *));
 		if (raidPtrs[raidID] == NULL) {
