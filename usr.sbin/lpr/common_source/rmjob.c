@@ -1,3 +1,4 @@
+/*	$NetBSD: rmjob.c,v 1.5.2.1 1995/11/19 00:41:32 pk Exp $	*/
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -210,7 +211,7 @@ process(file)
 	while (getline(cfp)) {
 		switch (line[0]) {
 		case 'U':  /* unlink associated files */
-			do_unlink(file);
+			do_unlink(line+1);
 		}
 	}
 	(void) fclose(cfp);
