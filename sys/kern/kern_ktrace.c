@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.74.2.1 2003/07/02 15:26:38 darrenr Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.74.2.2 2003/08/19 19:40:51 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.74.2.1 2003/07/02 15:26:38 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.74.2.2 2003/08/19 19:40:51 skrll Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h"
@@ -393,6 +393,48 @@ ktrmmsg(l, msgh, size)
 	kth.ktr_buf = (caddr_t)kp;
 	kth.ktr_len = size;
 	(void) ktrwrite(l, &kth);
+	p->p_traceflag &= ~KTRFAC_ACTIVE;
+}
+
+void
+ktrsaupcall(struct lwp *l, int type, int nevent, int nint, void *sas,
+    void *ap)
+{
+	struct proc *p = l->l_proc;
+	struct ktr_header kth;
+	struct ktr_saupcall *ktp;
+	size_t len;
+	struct sa_t **sapp;
+	int i;
+
+	p->p_traceflag |= KTRFAC_ACTIVE;
+	ktrinitheader(&kth, l, KTR_SAUPCALL);
+
+	len = sizeof(struct ktr_saupcall);
+	ktp = malloc(len + sizeof(struct sa_t) * (nevent + nint + 1), M_TEMP,
+	    M_WAITOK);
+
+	ktp->ktr_type = type;
+	ktp->ktr_nevent = nevent;
+	ktp->ktr_nint = nint;
+	ktp->ktr_sas = sas;
+	ktp->ktr_ap = ap;
+	/*
+	 *  Copy the sa_t's
+	 */
+	sapp = (struct sa_t **) sas;
+
+	for (i = nevent + nint; i >= 0; i--) {
+		if (copyin(*sapp, (char *)ktp + len, sizeof(struct sa_t)) == 0)
+			len += sizeof(struct sa_t);
+		sapp++;
+	}
+
+	kth.ktr_buf = (void *)ktp;
+	kth.ktr_len = len;
+	(void) ktrwrite(l, &kth);
+
+	free(ktp, M_TEMP);
 	p->p_traceflag &= ~KTRFAC_ACTIVE;
 }
 
