@@ -1,4 +1,4 @@
-/*	$NetBSD: amiga_init.c,v 1.41 1996/05/09 20:30:30 is Exp $	*/
+/*	$NetBSD: amiga_init.c,v 1.41.4.1 1996/05/26 16:23:32 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -66,7 +66,7 @@ extern u_int	lowram;
 extern u_int	Sysptmap, Sysptsize, Sysseg, Umap, proc0paddr;
 extern u_int	Sysseg_pa;
 extern u_int	virtual_avail;
-#ifdef M68040
+#if defined(M68040) || defined(M68060)
 extern int	protostfree;
 #endif
 
@@ -174,6 +174,7 @@ alloc_z2mem(amount)
  * written by Bryan Ford and Niklas Hallqvist.
  *
  * Very crude 68040 support by Michael L. Hitch.
+ *
  */
 
 int kernel_copyback = 1;
@@ -199,13 +200,16 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync)
 	u_int loadbase = 0;	/* XXXXXXXXXXXXXXXXXXXXXXXXXXXX */
 	u_int *shadow_pt = 0;	/* XXXXXXXXXXXXXXXXXXXXXXXXXXXX */
 
+#ifdef DEBUG_KERNEL_START
 	/* XXX this only is valid if Altais is in slot 0 */
 	volatile u_int8_t *altaiscolpt = (u_int8_t *)0x200003c8;
 	volatile u_int8_t *altaiscol = (u_int8_t *)0x200003c9;
+#endif
 
 	if ((u_int)&loadbase > cphysize)
 		loadbase = fphystart;
 
+#ifdef DEBUG_KERNEL_START
 	if ((id>>24)==0x7D) {
 		*altaiscolpt = 0;
 		*altaiscol = 40;
@@ -213,6 +217,7 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync)
 		*altaiscol = 0;
 	} else
 ((volatile struct Custom *)0xdff000)->color[0] = 0xa00;		/* RED */
+#endif
 
 	RELOC(boot_fphystart, u_long) = fphystart;
 	RELOC(boot_fphysize, u_long) = fphysize;
@@ -330,7 +335,7 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync)
 	pend   = vend   + fphystart;
 	avail -= vstart;
 
-#ifdef M68040
+#if defined(M68040) || defined(M68060)
 	if (RELOC(mmutype, int) == MMU_68040)
 		kstsize = MAXKL2SIZE / (NPTEPG/SG4_LEV2SIZE);
 	else
@@ -606,36 +611,20 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync)
 	if ((id >> 24) == 0x7D) {
 		pg_proto = DRCCBASE | PG_RW | PG_CI | PG_V;
 		while (pg_proto < DRCIATOP) {
-			if (*pg != PG_NV) {
-				*altaiscolpt = 0;
-				*altaiscol = 20;
-				*altaiscol = 0;
-				*altaiscol = 0;
-				asm volatile("stop #0x2700"::);
-			}
 			*pg++ = pg_proto;
 			pg_proto += DRCCSTRIDE;
 		}
 
 		/* NCR 53C710 chip */
-		if (*pg != PG_NV) {
-			*altaiscolpt = 0;
-			*altaiscol = 20;
-			*altaiscol = 0;
-			*altaiscol = 0;
-			asm volatile("stop #0x2700"::);
-		}
 		*pg++ = DRSCSIBASE | PG_RW | PG_CI | PG_V;
 
-		/* XXX Debug Altais register mapping */
-		if (*pg != PG_NV) {
-			*altaiscolpt = 0;
-			*altaiscol = 20;
-			*altaiscol = 0;
-			*altaiscol = 0;
-			asm volatile("stop #0x2700"::);
-		}
+#ifdef DEBUG_KERNEL_START
+		/*
+		 * early rollcolor Altais mapping 
+		 * XXX (only works if in slot 0)
+		 */
 		*pg++ = 0x20000000 | PG_RW | PG_CI | PG_V;
+#endif
 	} else
 #endif
 	{
@@ -795,6 +784,7 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync)
 			*fp++ = *lp++;
 	}
 
+#ifdef DEBUG_KERNEL_START
 	if ((id>>24)==0x7D) {
 		*altaiscolpt = 0;
 		*altaiscol = 40;
@@ -802,10 +792,11 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync)
 		*altaiscol = 0;
 	} else
 ((volatile struct Custom *)0xdff000)->color[0] = 0xAA0;		/* YELLOW */
+#endif
 	/*
 	 * prepare to enable the MMU
 	 */
-#ifdef M68040
+#if defined(M68040) || defined(M68060)
 	if (RELOC(mmutype, int) == MMU_68040) {
 		/*
 		 * movel Sysseg_pa,a0;
@@ -826,6 +817,7 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync)
 		    : : "a" (RELOC(Sysseg_pa, u_int)) : "a0");
 		asm volatile (".word 0xf518" : : );
 
+#ifdef DEBUG_KERNEL_START
 		if ((id>>24)==0x7D) {
 			*altaiscolpt = 0;
 			*altaiscol = 40;
@@ -833,6 +825,7 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync)
 			*altaiscol = 0;
 		} else
 ((volatile struct Custom *)0xdff000)->color[0] = 0xA70;		/* ORANGE */
+#endif
 
 		asm volatile ("movel #0xc000,d0; .word 0x4e7b,0x0003" 
 		    : : :"d0" );
@@ -854,6 +847,7 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync)
 		tc = 0x82d08b00;
 		asm volatile ("pmove %0@,tc" : : "a" (&tc));
 	}
+#ifdef DEBUG_KERNEL_START
 #ifdef DRACO
 	if ((id >> 24) == 0x7D) { /* mapping on, is_draco() is valid */
 		int i;
@@ -869,6 +863,7 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync)
 	} else
 #endif
 ((volatile struct Custom *)CUSTOMADDR)->color[0] = 0x0a0;	/* GREEN */
+#endif
 
 	bzero ((u_char *)proc0paddr, USPACE);	/* XXXXXXXXXXXXXXXXXXXXX */
 	pmap_bootstrap(pstart, fphystart);	/* XXXXXXXXXXXXXXXXXXXXXXx*/
