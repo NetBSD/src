@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mknative-gcc,v 1.6 2003/08/01 02:44:56 mrg Exp $
+#	$NetBSD: mknative-gcc,v 1.7 2003/08/22 00:24:46 mrg Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of src/gnu/dist/toolchain.
@@ -186,7 +186,7 @@ get_gcc () {
 			F77_OBJS | sed 's/f\///g'
 	} | write_mk gnu/usr.bin/gcc3/arch/$MACHINE_ARCH/defs.mk
 
-	for f in auto-build auto-host configargs cs-hconfig gencheck hconfig gthr-default; do
+	for f in auto-host configargs cs-hconfig gencheck hconfig gthr-default; do
 		write_c gnu/usr.bin/gcc3/arch/$MACHINE_ARCH/$f.h <$_TMPDIR/gcc/$f.h
 	done
 }
