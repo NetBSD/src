@@ -1,16 +1,25 @@
-PROG=	file
-MAGIC	= /etc/magic
-CFLAGS+= -DMAGIC='"$(MAGIC)"'
-SRCS=	file.c apprentice.c fsmagic.c softmagic.c ascmagic.c is_tar.c \
-	print.c $(LOCALSRCS)
-MAN5=	magic.0
-MAN1=	file.0
+#	$NetBSD: Makefile,v 1.1.1.2 1998/09/19 18:07:40 christos Exp $
 
-ascmagic.o:	names.h
+FILESDIR=	/usr/share/misc
+FILES=		magic
+MAGIC=		${FILESDIR}/${FILES}
 
-apprentice.o ascmagic.o file.o fsmagic.o print.o softmagic.o: file.h
+PROG=		file
+SRCS=		file.c apprentice.c fsmagic.c softmagic.c ascmagic.c is_tar.c \
+		print.c compress.c readelf.c internat.c
+CPPFLAGS+=	-DMAGIC='"$(MAGIC)"'
+MAN=		file.1 magic.5
 
-afterinstall:
-	install -c ${.CURDIR}/magic $(MAGIC)
+CLEANFILES+=	magic
+all:		file magic
+
+MAGDIRF:sh=	echo $(.CURDIR)/magdir/[0-9a-z]*
+MAGFILES=	$(.CURDIR)/Header \
+		$(.CURDIR)/Localstuff \
+		$(.CURDIR)/magdir/netbsd \
+		${MAGDIRF}
+
+magic:		$(MAGFILES)
+	cat $(MAGFILES) > $(.TARGET)
 
 .include <bsd.prog.mk>
