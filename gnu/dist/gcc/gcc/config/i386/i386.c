@@ -7083,7 +7083,7 @@ print_operand (file, x, code)
 
       if (ASSEMBLER_DIALECT == ASM_ATT)
 	putc ('$', file);
-      fprintf (file, "0x%lx", l & 0xffffffff);
+      fprintf (file, "0x%lx", l);
     }
 
  /* These float cases don't actually occur as immediate operands.  */
