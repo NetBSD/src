@@ -8,6 +8,6 @@ FONTS=		AB ABI AI AR BMB BMBI BMI BMR CB CBI CI CR HB HBI \
 SUPPORT=        download prologue symbolsl.ps text.enc textmap \
 		zapfdr.ps
 
-clean cleandir:
+clean cleandir obj:
 
 .include "../Makefile.dev"
