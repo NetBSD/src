@@ -1,4 +1,4 @@
-/* $NetBSD: irqhandler.c,v 1.10 1996/10/15 23:20:41 mark Exp $ */
+/* $NetBSD: irqhandler.c,v 1.11 1996/11/06 18:18:41 mark Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -53,7 +53,6 @@
 #include <machine/cpu.h>
 #include <machine/iomd.h>
 #include <machine/katelib.h>
-#include <machine/pte.h>
 
 #include "podulebus.h"
 
@@ -559,7 +558,7 @@ dosoftints()
 		}
 #endif
 #include "ppp.h"
-#ifdef PPP
+#ifdef NPPP
 		if (netisr & (1 << NETISR_PPP)) {
 			atomic_clear_bit(&netisr, (1 << NETISR_PPP));
 			pppintr();
