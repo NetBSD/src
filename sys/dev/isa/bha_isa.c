@@ -1,7 +1,7 @@
-/*	$NetBSD: bha_isa.c,v 1.5 1996/10/21 22:40:26 thorpej Exp $	*/
+/*	$NetBSD: bha_isa.c,v 1.6 1997/03/28 23:47:13 mycroft Exp $	*/
 
 /*
- * Copyright (c) 1994, 1996 Charles M. Hannum.  All rights reserved.
+ * Copyright (c) 1994, 1996, 1997 Charles M. Hannum.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -66,25 +66,25 @@ bha_isa_probe(parent, match, aux)
 	void *match, *aux;
 {
 	struct isa_attach_args *ia = aux;
-	struct bha_softc sc;
 	bus_space_tag_t iot = ia->ia_iot;
 	bus_space_handle_t ioh;
+	struct bha_probe_data bpd;
 	int rv;
 
 	if (bus_space_map(iot, ia->ia_iobase, BHA_ISA_IOSIZE, 0, &ioh))
 		return (0);
 
-	rv = bha_find(iot, ioh, &sc);
+	rv = bha_find(iot, ioh, &bpd);
 
 	bus_space_unmap(iot, ioh, BHA_ISA_IOSIZE);
 
 	if (rv) {
-		if (ia->ia_irq != -1 && ia->ia_irq != sc.sc_irq)
+		if (ia->ia_irq != -1 && ia->ia_irq != bpd.sc_irq)
 			return (0);
-		if (ia->ia_drq != -1 && ia->ia_drq != sc.sc_drq)
+		if (ia->ia_drq != -1 && ia->ia_drq != bpd.sc_drq)
 			return (0);
-		ia->ia_irq = sc.sc_irq;
-		ia->ia_drq = sc.sc_drq;
+		ia->ia_irq = bpd.sc_irq;
+		ia->ia_drq = bpd.sc_drq;
 		ia->ia_msize = 0;
 		ia->ia_iosize = BHA_ISA_IOSIZE;
 	}
@@ -103,22 +103,23 @@ bha_isa_attach(parent, self, aux)
 	struct bha_softc *sc = (void *)self;
 	bus_space_tag_t iot = ia->ia_iot;
 	bus_space_handle_t ioh;
+	struct bha_probe_data bpd;
 	isa_chipset_tag_t ic = ia->ia_ic;
 
 	printf("\n");
 
 	if (bus_space_map(iot, ia->ia_iobase, BHA_ISA_IOSIZE, 0, &ioh))
-		panic("bha_attach: bus_space_map failed!");
+		panic("bha_isa_attach: bus_space_map failed");
 
 	sc->sc_iot = iot;
 	sc->sc_ioh = ioh;
-	if (!bha_find(iot, ioh, sc))
-		panic("bha_attach: bha_find failed!");
+	if (!bha_find(iot, ioh, &bpd))
+		panic("bha_isa_attach: bha_find failed");
 
-	if (sc->sc_drq != -1)
-		isa_dmacascade(sc->sc_drq);
+	if (bpd.sc_drq != -1)
+		isa_dmacascade(bpd.sc_drq);
 
-	sc->sc_ih = isa_intr_establish(ic, sc->sc_irq, IST_EDGE, IPL_BIO,
+	sc->sc_ih = isa_intr_establish(ic, bpd.sc_irq, IST_EDGE, IPL_BIO,
 	    bha_intr, sc);
 	if (sc->sc_ih == NULL) {
 		printf("%s: couldn't establish interrupt\n",
@@ -126,5 +127,5 @@ bha_isa_attach(parent, self, aux)
 		return;
 	}
 
-	bha_attach(sc);
+	bha_attach(sc, &bpd);
 }
