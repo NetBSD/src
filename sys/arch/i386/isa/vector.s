@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: vector.s,v 1.10.2.16 1993/12/05 11:20:15 mycroft Exp $
+ *	$Id: vector.s,v 1.10.2.17 1993/12/05 11:31:55 mycroft Exp $
  */
 
 #include <i386/isa/icu.h>
@@ -50,17 +50,18 @@
 
 #ifndef AUTO_EOI_1
 #define	ENABLE_ICU1(irq_num) \
-	movb	$ICU_EOI,%al ;	/* non-specific EOI */ \
+	movb	$(0x60|irq_num),%al ;		/* specific EOI */ \
 	outb	%al,$IO_ICU1 ;
 #else /* AUTO_EOI_1 */
-#define	ENABLE_ICU1		/* we now use auto-EOI to reduce i/o */
+#define	ENABLE_ICU1		/* we might use auto-EOI to reduce i/o */
 #endif
 
 #ifndef AUTO_EOI_2
 #define	ENABLE_ICU1_AND_2(irq_num) \
-	movb	$ICU_EOI,%al ;	/* non-specific EOI */ \
-	outb	%al,$IO_ICU2 ;	/* do second icu first */ \
-	outb	%al,$IO_ICU1 ;	/* then first */
+	movb	$(0x60|(irq_num%8)),%al ;	/* specific EOI for slave */ \
+	outb	%al,$IO_ICU2 ;			/* do second icu first */ \
+	movb	$(0x60|2),%al ;			/* specific EOI for master */ \
+	outb	%al,$IO_ICU1 ;			/* then first */
 #else /* AUTO_EOI_2 */
 #define	ENABLE_ICU1_AND_2	/* data sheet says no auto-EOI on slave */
 				/* on older chips, but it sometimes works */
