@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.81 2001/09/15 20:36:44 chs Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.82 2001/09/23 05:28:23 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -1453,6 +1453,7 @@ ufs_symlink(void *v)
 		ip = VTOI(vp);
 		memcpy((char *)ip->i_ffs_shortlink, ap->a_target, len);
 		ip->i_ffs_size = len;
+		uvm_vnp_setsize(vp, ip->i_ffs_size);
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
 	} else
 		error = vn_rdwr(UIO_WRITE, vp, ap->a_target, len, (off_t)0,
