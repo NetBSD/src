@@ -1,4 +1,4 @@
-#	$NetBSD: std.atari,v 1.6 1996/09/16 06:22:27 leo Exp $
+#	$NetBSD: std.atari,v 1.7 1996/10/16 12:52:47 leo Exp $
 #
 # standard atari information
 #
@@ -6,6 +6,9 @@ machine		atari m68k
 
 options		MACHINE_NONCONTIG	# Non-contiguous memory support
 					# (required)
+
+options		EXEC_SCRIPT		# Support #!
+options		EXEC_AOUT		# a.out format executables
 
 mainbus0	at root
 
