@@ -1,4 +1,4 @@
-/*	$NetBSD: bt485reg.h,v 1.2 1995/08/03 01:17:07 cgd Exp $	*/
+/*	$NetBSD: bt485reg.h,v 1.3 1996/04/12 04:31:08 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -55,3 +55,10 @@
 #define	BT485_REG_CURSOR_Y_HIGH	0x0f
 
 #define	BT485_REG_MAX		0x0f
+
+#define	BT485_IREG_STATUS	0x00
+#define	BT485_IREG_COMMAND_3	0x01
+#define	BT485_IREG_COMMAND_4	0x02
+#define	BT485_IREG_RSA		0x20
+#define	BT485_IREG_GSA		0x21
+#define	BT485_IREG_BSA		0x22
