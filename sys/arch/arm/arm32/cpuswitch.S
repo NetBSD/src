@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.3.2.13 2002/08/06 19:22:20 thorpej Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.3.2.14 2002/08/12 20:02:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -251,11 +251,9 @@ Lidle_slept:
 	ldr	r7, Lwhichqs
 	ldr	r3, [r7]
 	teq	r3, #0x00000000
-	bne	sw1
 
-	/* All processes are still asleep so idle a while longer */
-	b	_ASM_LABEL(idle)
-
+	beq	_ASM_LABEL(idle)
+	b	Lidle_ret
 
 /*
  * Find a new lwp to run, save the current context and
@@ -325,8 +323,8 @@ Lswitch_search:
 	/* If not we must idle until we do. */
 	teq	r3, #0x00000000
 	beq	_ASM_LABEL(idle)
+Lidle_ret:
 
-sw1:
 	/* rem: r1 = old lwp */
 	/* rem: r3 = whichqs */
 	/* rem: interrupts are disabled */
