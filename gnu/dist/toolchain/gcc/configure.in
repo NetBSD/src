@@ -752,6 +752,7 @@ changequote([,])dnl
 		tmake_file=arm/t-semiaof
 		;;
 	arm*-*-netbsdelf*)
+		xm_file="arm/xm-netbsd.h ${xm_file}"
 		gas=yes gnu_ld=yes
 		;;
 	arm*-*-netbsd*)
