@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.14 2000/12/14 10:33:42 mycroft Exp $	*/
+/*	$NetBSD: cpu.h,v 1.15 2001/01/01 04:33:40 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995-1997 Wolfgang Solfrank.
@@ -57,6 +57,20 @@ struct cpu_info {
 	struct proc *ci_fpuproc;
 	struct pcb *ci_idle_pcb;	/* PA of our idle pcb */
 	int ci_cpuid;
+
+	int ci_astpending;
+	int ci_want_resched;
+	u_long ci_lasttb;
+	int ci_tickspending;
+	int ci_cpl;
+	int ci_ipending;
+	int ci_intrdepth;
+	char *ci_intstk;
+	char *ci_spillstk;
+	int ci_tempsave[8];
+	int ci_ddbsave[8];
+	int ci_ipkdbsave[8];
+	int ci_disisave[4];
 };
 
 #ifdef MULTIPROCESSOR
@@ -77,9 +91,13 @@ extern struct cpu_info cpu_info[];
 #define fpuproc			curcpu()->ci_fpuproc
 #define curpcb			curcpu()->ci_curpcb
 #define curpm			curcpu()->ci_curpm
+#define want_resched		curcpu()->ci_want_resched
+#define astpending		curcpu()->ci_astpending
 
 #else
 extern struct cpu_info cpu_info_store;
+extern volatile int want_resched;
+extern volatile int astpending;
 
 #define curcpu()		(&cpu_info_store)
 #define cpu_number()		0
@@ -98,9 +116,6 @@ extern struct cpu_info cpu_info_store;
 
 extern void delay __P((unsigned));
 #define	DELAY(n)		delay(n)
-
-extern __volatile int want_resched;
-extern __volatile int astpending;
 
 #define	need_resched(ci)	(want_resched = 1, astpending = 1)
 #define	need_proftick(p)	((p)->p_flag |= P_OWEUPC, astpending = 1)

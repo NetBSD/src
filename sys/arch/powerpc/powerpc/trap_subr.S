@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.S,v 1.2 2000/12/04 17:05:52 tsubai Exp $	*/
+/*	$NetBSD: trap_subr.S,v 1.3 2001/01/01 04:33:39 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -617,8 +617,13 @@ trapexit:
 	lwz	5,FRAME_SRR1+8(1)
 	mtcr	5
 	bc	4,17,1f			/* branch if PSL_PR is false */
+#if defined(MULTIPROCESSOR)
+	GET_CPUINFO(3)
+	lwz	4,CI_ASTPENDING(3)
+#else
 	lis	3,_C_LABEL(astpending)@ha
 	lwz	4,_C_LABEL(astpending)@l(3)
+#endif
 	andi.	4,4,1
 	beq	1f
 	li	6,EXC_AST
@@ -781,16 +786,20 @@ intr_exit:
 	mtcr	6			/* saved SRR1 */
 	bc	4,17,1f			/* branch if PSL_PR is false */
 #if defined(MULTIPROCESSOR)
-	GET_CPUINFO(3)
-	lwz	3,CI_CURPM(3)
+	GET_CPUINFO(4)
+	lwz	3,CI_CURPM(4)
 #else
 	lis	3,_C_LABEL(curpm)@ha	/* get current pmap real address */
 	lwz	3,_C_LABEL(curpm)@l(3)
 #endif
 	lwz	3,PM_KERNELSR(3)
 	mtsr	KERNEL_SR,3		/* Restore kernel SR */
+#if defined(MULTIPROCESSOR)
+	lwz	4,CI_ASTPENDING(4)	 /* Test AST pending */
+#else
 	lis	3,_C_LABEL(astpending)@ha /* Test AST pending */
 	lwz	4,_C_LABEL(astpending)@l(3)
+#endif
 	andi.	4,4,1
 	beq	1f
 /* Setup for entry to realtrap: */
