@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: nfslocking,v 1.3 2000/05/13 08:45:07 lukem Exp $
+# $NetBSD: nfslocking,v 1.4 2000/09/19 13:04:39 lukem Exp $
 #
 
 # PROVIDE: nfslocking
@@ -15,11 +15,13 @@ stop_precmd=$start_precmd
 status_precmd=$start_precmd
 
 name="statd"
+rcvar=$name
 command="/usr/sbin/rpc.${name}"
 load_rc_config $name
 run_rc_command "$arg"
 
 name="lockd"
+rcvar=$name
 command="/usr/sbin/rpc.${name}"
 load_rc_config $name
 run_rc_command "$arg"
