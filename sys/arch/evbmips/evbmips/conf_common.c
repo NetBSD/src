@@ -1,4 +1,4 @@
-/*	$NetBSD: conf_common.c,v 1.2 2002/07/31 03:42:54 simonb Exp $	*/
+/*	$NetBSD: conf_common.c,v 1.3 2002/08/04 14:42:56 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: conf_common.c,v 1.2 2002/07/31 03:42:54 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: conf_common.c,v 1.3 2002/08/04 14:42:56 simonb Exp $");
 
 #include "opt_systrace.h"
 
@@ -195,7 +195,6 @@ __KERNEL_RCSID(0, "$NetBSD: conf_common.c,v 1.2 2002/07/31 03:42:54 simonb Exp $
 cdev_decl(sbjcn);
 #else
 #include "sbscn.h"
-cdev_decl(sbscn);
 #endif /* JTAGCONSOLE */
 #else
 #define	NSBSCN		0
@@ -230,6 +229,7 @@ dev_type_open(filedescopen);
 #include "com.h"
 cdev_decl(com);
 cdev_decl(aucom);
+cdev_decl(sbscn);
 cdev_decl(kbd);
 cdev_decl(ms);
 cdev_decl(lpt);
