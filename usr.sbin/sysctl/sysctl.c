@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.18 1998/11/13 20:56:21 thorpej Exp $	*/
+/*	$NetBSD: sysctl.c,v 1.19 1999/04/26 22:13:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.18 1998/11/13 20:56:21 thorpej Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.19 1999/04/26 22:13:52 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -54,6 +54,7 @@ __RCSID("$NetBSD: sysctl.c,v 1.18 1998/11/13 20:56:21 thorpej Exp $");
 #include <sys/sysctl.h>
 #include <sys/socket.h>
 #include <sys/mount.h>
+#include <sys/mbuf.h>
 #include <vm/vm_param.h>
 #include <machine/cpu.h>
 
@@ -139,6 +140,7 @@ static void debuginit __P((void));
 static int sysctl_inet __P((char *, char **, int[], int, int *));
 static int sysctl_vfs __P((char *, char **, int[], int, int *));
 static int sysctl_vfsgen __P((char *, char **, int[], int, int *));
+static int sysctl_mbuf __P((char *, char **, int[], int, int *));
 static int findname __P((char *, char *, char **, struct list *));
 static void usage __P((void));
 
@@ -308,6 +310,11 @@ parse(string, flags)
 			warnx("Use xntpdc -c kerninfo to view %s information",
 			    string);
 			return;
+		case KERN_MBUF:
+			len = sysctl_mbuf(string, &bufp, mib, flags, &type);
+			if (len < 0)
+				return;
+			break;
 		}
 		break;
 
@@ -675,6 +682,34 @@ sysctl_vfsgen(string, bufpp, mib, flags, typep)
 		return (-1);
 	/* Don't bother with VFS_CONF. */
 	if (indx == VFS_CONF)
+		return (-1);
+	mib[2] = indx;
+	*typep = lp->list[indx].ctl_type;
+	return (3);
+}
+
+struct ctlname mbufnames[] = CTL_MBUF_NAMES;
+struct list mbufvars = { mbufnames, MBUF_MAXID };
+
+/*
+ * handle kern.mbuf requests
+ */
+static int
+sysctl_mbuf(string, bufpp, mib, flags, typep)
+	char *string;
+	char **bufpp;
+	int mib[];
+	int flags;
+	int *typep;
+{
+	struct list *lp = &mbufvars;
+	int indx;
+
+	if (*bufpp == NULL) {
+		listall(string, lp);
+		return (-1);
+	}
+	if ((indx = findname(string, "third", bufpp, lp)) == -1)
 		return (-1);
 	mib[2] = indx;
 	*typep = lp->list[indx].ctl_type;

@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.8,v 1.27 1999/03/28 17:18:45 kleink Exp $
+.\"	$NetBSD: sysctl.8,v 1.28 1999/04/26 22:13:52 thorpej Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -140,6 +140,11 @@ privilege can change the value.
 .It kern.shortcorename	integer	yes
 .It kern.synchronized_io	integer	no
 .It kern.iov_max	integer	no
+.It kern.mbuf.msize	integer	no
+.It kern.mbuf.mclsize	integer	no
+.It kern.mbuf.nmbclusters	integer	raise only
+.It kern.mbuf.mblowat	integer	yes
+.It kern.mbuf.mcllowat	integer	yes
 .It vm.loadavg	struct	no
 .It machdep.console_device	dev_t	no
 .It net.inet.ip.forwarding	integer	yes
