@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.6 1996/10/09 00:13:36 jtc Exp $ 
+#	$NetBSD: Makefile.inc,v 1.7 1997/06/23 21:36:16 thorpej Exp $ 
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -23,13 +23,17 @@ PWDOBJ=		${PWDSRC}/obj
 PWDOBJ=		${PWDSRC}
 .endif
 
+DISKTYPE=	boot3
+INJECTDISKTYPE=	rd
+
 all: netbsd
 	dd if=/dev/zero of=${IMAGE} bs=18k count=80
 	disklabel -r -w ${.OBJDIR}/${IMAGE} boot3 2>/dev/null
 	-yes|bim -c init -c "add ${MDEC}/boot boot" -c "default 0" \
 	    -c "exit" ${.OBJDIR}/${IMAGE} 2>/dev/null >/dev/null
-	vnconfig -v -c ${VND_DEV} ${IMAGE}
-	newfs -b 8192 -f 1024 -O -m 0 -o space -i 204800 -c 80 ${VND_RDEV} boot3
+	vnconfig -t ${DISKTYPE} -v -c ${VND_DEV} ${IMAGE}
+	newfs -b 8192 -f 1024 -O -m 0 -o space -i 204800 -c 80 ${VND_RDEV} \
+	    ${DISKTYPE}
 	mount ${VND_DEV} ${MOUNT_POINT}
 	cp netbsd ${MOUNT_POINT}/netbsd
 	@df -i ${MOUNT_POINT}
@@ -42,8 +46,9 @@ inject.fs: ${CBIN} ${LISTS} netbsd.gz
 	${CC} -static -o pwd_mkdb ${PWDOBJ}/*.o -lutil
 .ifndef SD
 	dd if=/dev/zero of=${.TARGET} bs=128k count=16
-	vnconfig -v -c ${VND_DEV} ${.TARGET}
-	newfs -b 8192 -f 1024 -O -m 0 -o space -i 7168 ${VND_RDEV} rd
+	vnconfig -t ${INJECTDISKTYPE} -v -c ${VND_DEV} ${.TARGET}
+	newfs -b 8192 -f 1024 -O -m 0 -o space -i 7168 ${VND_RDEV} \
+	    ${INJECTDISKTYPE}
 	mount ${VND_DEV} ${MOUNT_POINT}
 .else
 	newfs -b 8192 -f 1024 -O -m 0 -o space -i 7168 -s 4096 \
