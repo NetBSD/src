@@ -1,4 +1,4 @@
-/*	$NetBSD: pk_output.c,v 1.13 2000/03/30 13:53:36 augustss Exp $	*/
+/*	$NetBSD: pk_output.c,v 1.14 2001/10/18 20:17:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1984 University of British Columbia.
@@ -211,7 +211,7 @@ nextpk(lcp)
 			return (NULL);
 
 		sb->sb_mb = m->m_nextpkt;
-		m->m_act = 0;
+		m->m_nextpkt = 0;
 		for (n = m; n; n = n->m_next)
 			sbfree(sb, n);
 	}
