@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	/* .asciz "@(#)setjmp.s	8.1 (Berkeley) 6/4/93" */
-	.asciz "$NetBSD: __setjmp14.S,v 1.3 1998/10/10 01:50:23 matt Exp $"
+	.asciz "$NetBSD: __setjmp14.S,v 1.4 2000/06/28 19:20:17 matt Exp $"
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -54,12 +54,12 @@ ENTRY(__setjmp14, R6)
 	subl2	$12,sp			# space for current struct sigstack
 	pushl	sp			# get current values
 	pushl	$0			# no new values
-	calls	$4,___sigaltstack14	# pop args plus signal stack value
+	calls	$4,_C_LABEL(__sigaltstack14) # pop args plus signal stack value
 	movl	(sp)+,(r6)+		# save onsigstack status of caller
 	pushal	24(r6)
 	pushl	$0
 	pushl	$0
-	calls	$3,___sigprocmask14	# get signal mask
+	calls	$3,_C_LABEL(__sigprocmask14) # get signal mask
 	addl2	$4,r6			# skip old mask
 	movl	(ap),r0
 	moval	4(ap)[r0],(r6)+		# save sp of caller
@@ -92,8 +92,8 @@ loop:
 
 done:
 	pushl	r1			# pointer to sigcontext
-	calls	$1,___sigreturn14	# restore previous context
+	calls	$1,_C_LABEL(__sigreturn14) # restore previous context
 					# we should never return
 botch:
-	calls	$0,_longjmperror
+	calls	$0,_C_LABEL(longjmperror)
 	halt

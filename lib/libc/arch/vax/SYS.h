@@ -1,4 +1,4 @@
-/*	$NetBSD: SYS.h,v 1.5 1998/10/20 06:46:19 matt Exp $ */
+/*	$NetBSD: SYS.h,v 1.6 2000/06/28 19:20:16 matt Exp $ */
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -48,7 +48,7 @@
 	SYSTRAP(y)
 
 #define _SYSCALL(x,y)							\
-	err: nop; nop; jmp cerror+2;					\
+	err: nop; nop; jmp CERROR+2;					\
 	_SYSCALL_NOERROR(x,y);						\
 	jcs err+2
 
@@ -74,4 +74,12 @@
 
 #define	ASMSTR		.asciz
 
-	.globl	cerror
+#ifdef __ELF__
+#define	CERROR	_C_LABEL(__cerror)
+#define	CURBRK	_C_LABEL(__curbrk)
+#else
+#define	CERROR	_ASM_LABEL(cerror)
+#define	CURBRK	_ASM_LABEL(curbrk)
+#endif
+
+	.globl	CERROR
