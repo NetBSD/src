@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.40 2004/07/17 11:28:16 dsl Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.41 2004/08/14 16:06:38 dsl Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.pl,v 1.36 2004/04/17 18:55:35 atatat Exp       */
 
@@ -171,17 +171,16 @@ Standard wymaga przynajmniej %d Megabajtow.
 Standard z Xami wymaga przynajmniej %d Megabajtow.
 }
 
-message sizechoice
-{Zdecydowales sie podac rozmiary partycji (albo dla BSD disklabel,
-lub na niektorych portach, dla plastrow MBR). Musisz najpierw wybrac
-jednostke rozmiaru. Wybranie Megabajtow nada partycji rozmiar bliski
-twojemu wyborowi, ale dopasowany do granic cylindrow. Wybranie sektorow
-pozwoli ci na bardziej dokladne okreslenie rozmiarow. Na nowych dyskach ZBR
-rozmiar cylindra zmienia sie w zaleznosci od miejsca na dysku, jest wiec
-niewielka korzysc z dopasowania cylindrow. Na starszych dyskach bardziej
-wydajne jest podawanie rozmiaru dysku, ktore sa wielokrotnoscia aktualnego
-rozmiaru cylindra.
-}
+message Choose_your_size_specifier
+{Wybranie Megabajtow nada partycji rozmiar bliski twojemu wyborowi,
+ale dopasowany do granic cylindrow.  Wybranie sektorow pozwoli ci na
+bardziej dokladne okreslenie rozmiarow.  Na nowych dyskach ZBR rozmiar
+cylindra zmienia sie w zaleznosci od miejsca na dysku, jest wiec
+niewielka korzysc z dopasowania cylindrow.  Na starszych dyskach
+bardziej wydajne jest podawanie rozmiaru dysku, ktore sa
+wielokrotnoscia aktualnego rozmiaru cylindra.
+
+Wybierz specyfikator rozmiaru}
 
 message defaultunit
 {Jezeli nie wybrales 'M' (megabajty), 'G' (gigabajty), 'c' (cylindry)
@@ -965,7 +964,6 @@ message Hit_enter_to_continue {Nacisnij enter aby kontynuowac}
 message Choose_your_installation {Wybierz swoja instalacje}
 message Set_Sizes {Ustaw rozmiary partycji NetBSD}
 message Use_Existing {Uzyj istniejacych romiarow partycji}
-message Choose_your_size_specifier {Wybierz specyfikator rozmiaru}
 message Megabytes {Megabajty}
 message Cylinders {Cylindry}
 message Sectors {Sektory}
