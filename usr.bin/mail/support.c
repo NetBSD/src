@@ -1,4 +1,4 @@
-/*	$NetBSD: support.c,v 1.7 2002/03/05 20:58:54 wiz Exp $	*/
+/*	$NetBSD: support.c,v 1.8 2002/03/05 21:18:15 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)aux.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: support.c,v 1.7 2002/03/05 20:58:54 wiz Exp $");
+__RCSID("$NetBSD: support.c,v 1.8 2002/03/05 21:18:15 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -329,10 +329,10 @@ alter(char *name)
 
 	if (stat(name, &sb))
 		return;
-	(void) gettimeofday(&tv[0], NULL);
+	(void)gettimeofday(&tv[0], NULL);
 	tv[0].tv_sec++;
 	TIMESPEC_TO_TIMEVAL(&tv[1], &sb.st_mtimespec);
-	(void) utimes(name, tv);
+	(void)utimes(name, tv);
 }
 
 /*

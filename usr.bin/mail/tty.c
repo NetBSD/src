@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.14 2002/03/04 03:16:10 wiz Exp $	*/
+/*	$NetBSD: tty.c,v 1.15 2002/03/05 21:18:15 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tty.c	8.2 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: tty.c,v 1.14 2002/03/04 03:16:10 wiz Exp $");
+__RCSID("$NetBSD: tty.c,v 1.15 2002/03/05 21:18:15 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -83,9 +83,9 @@ grabh(struct header *hp, int gflags)
 #ifdef __GNUC__
 	/* Avoid longjmp clobbering */
 # if defined(TIOCSTI) && defined(TIOCEXT)
-	(void) &extproc;
+	(void)&extproc;
 # endif
-	(void) &saveint;
+	(void)&saveint;
 #endif /* __GNUC__ */
 
 	savetstp = signal(SIGTSTP, SIG_DFL);
@@ -190,8 +190,8 @@ readtty(char pr[], char src[])
 	char *cp, *cp2;
 #if __GNUC__
 	/* Avoid longjmp clobbering */
-	(void) &c;
-	(void) &cp2;
+	(void)&c;
+	(void)&cp2;
 #endif
 
 	fputs(pr, stdout);
