@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.51 2001/11/02 03:51:48 lukem Exp $	*/
+/*	$NetBSD: route.c,v 1.52 2001/11/15 21:25:08 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)route.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: route.c,v 1.51 2001/11/02 03:51:48 lukem Exp $");
+__RCSID("$NetBSD: route.c,v 1.52 2001/11/15 21:25:08 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -81,16 +81,16 @@ __RCSID("$NetBSD: route.c,v 1.51 2001/11/02 03:51:48 lukem Exp $");
 typedef union sockunion *sup;
 
 int main __P((int, char **));
-static void usage __P((char *));
+static void usage __P((char *)) __attribute__((__noreturn__));
 static char *any_ntoa __P((const struct sockaddr *));
 static void set_metric __P((char *, int));
-static void newroute __P((int, char **));
+static int newroute __P((int, char **));
 static void inet_makenetandmask __P((u_int32_t, struct sockaddr_in *));
 #ifdef INET6
 static void inet6_makenetandmask __P((struct sockaddr_in6 *));
 #endif
 static int getaddr __P((int, char *, struct hostent **));
-static void flushroutes __P((int, char *[]));
+static int flushroutes __P((int, char *[]));
 #ifndef SMALL
 static int prefixlen __P((char *));
 static int x25_makemask __P((void));
@@ -188,6 +188,7 @@ main(argc, argv)
 		case '?':
 		default:
 			usage(NULL);
+			/*NOTREACHED*/
 		}
 	argc -= optind;
 	argv += optind;
@@ -209,7 +210,6 @@ main(argc, argv)
 		ch = keyword(*argv);
 
 	switch (ch) {
-
 #ifndef SMALL
 	case K_GET:
 #endif /* SMALL */
@@ -217,37 +217,34 @@ main(argc, argv)
 	case K_ADD:
 	case K_DELETE:
 		if (doflush)
-			flushroutes(1, argv);
-		newroute(argc, argv);
-		break;
+			(void)flushroutes(1, argv);
+		return newroute(argc, argv);
 
 	case K_SHOW:
 		show(argc, argv);
-		break;
+		return 0;
 
 #ifndef SMALL
 	case K_MONITOR:
 		monitor();
-		break;
+		return 0;
 
 #endif /* SMALL */
 	case K_FLUSH:
-		flushroutes(argc, argv);
-		break;
+		return flushroutes(argc, argv);
 
 	no_cmd:
 	default:
 		usage(*argv);
-		return 1;
+		/*NOTREACHED*/
 	}
-	return 0;
 }
 
 /*
  * Purge all entries in the routing tables not
  * associated with network interfaces.
  */
-static void
+static int
 flushroutes(argc, argv)
 	int argc;
 	char *argv[];
@@ -304,7 +301,7 @@ bad:			usage(*argv);
 	if (sysctl(mib, 6, NULL, &needed, NULL, 0) < 0)
 		err(1, "route-sysctl-estimate");
 	if (needed == 0)
-		return;
+		return 0;
 	if ((buf = malloc(needed)) == NULL)
 		err(1, "malloc");
 	if (sysctl(mib, 6, buf, &needed, NULL, 0) < 0)
@@ -351,6 +348,7 @@ bad:			usage(*argv);
 			(void) printf("done\n");
 		}
 	}
+	return 0;
 }
 
 
@@ -793,7 +791,7 @@ set_metric(value, key)
 	*valp = atoi(value);
 }
 
-static void
+static int
 newroute(argc, argv)
 	int argc;
 	char **argv;
@@ -1014,7 +1012,7 @@ newroute(argc, argv)
 			break;
 	}
 	if (*cmd == 'g')
-		exit(rv);
+		return rv;
 	oerrno = errno;
 	if (!qflag) {
 		(void) printf("%s %s %s", cmd, ishost? "host" : "net", dest);
@@ -1043,7 +1041,9 @@ newroute(argc, argv)
 			break;
 		}
 		(void) printf(": %s\n", error);
+		return 1;
 	}
+	return 0;
 }
 
 static void
