@@ -1,4 +1,4 @@
-/*	$NetBSD: lockf.h,v 1.10 2000/08/04 09:20:21 jdolecek Exp $	*/
+/*	$NetBSD: lockf.h,v 1.11 2003/03/05 18:28:23 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -61,7 +61,8 @@ struct lockf {
 	short	lf_type;	 /* Lock type: F_RDLCK, F_WRLCK */
 	off_t	lf_start;	 /* The byte # of the start of the lock */
 	off_t	lf_end;		 /* The byte # of the end of the lock (-1=EOF)*/
-	caddr_t	lf_id;		 /* The id of the resource holding the lock */
+	void	*lf_id;		 /* process or file description holding lock */
+	struct	lwp *lf_lwp;	 /* LWP waiting for lock */
 	struct	lockf **lf_head; /* Back pointer to the head of lockf list */
 	struct	lockf *lf_next;	 /* Next lock on this vnode, or blocking lock */
 	struct  locklist lf_blkhd; /* List of requests blocked on this lock */
