@@ -1,4 +1,4 @@
-/*	$NetBSD: fms.c,v 1.2 1999/11/01 23:26:58 augustss Exp $	*/
+/*	$NetBSD: fms.c,v 1.3 1999/11/02 17:48:01 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -284,10 +284,10 @@ fms_attach(parent, self, aux)
 	pci_conf_write(pc, pt, 0x40, 0);
 	
 	/* Reset codec and AC'97 */
-	bus_space_write_2(sc->sc_iot, sc->sc_ioh, FM_CODEC_CTL, 0x0060);
-	delay(10000);		/* XXX shouldn't delay this long */
+	bus_space_write_2(sc->sc_iot, sc->sc_ioh, FM_CODEC_CTL, 0x0020);
+	delay(2);		/* > 1us according to AC'97 documentation */
 	bus_space_write_2(sc->sc_iot, sc->sc_ioh, FM_CODEC_CTL, 0x0000);
-	delay(10000);		/* XXX shouldn't delay this long */
+	delay(1);		/* > 168.2ns according to AC'97 documentation */
 	
 	/* Set up volume */
 	bus_space_write_2(sc->sc_iot, sc->sc_ioh, FM_PCM_VOLUME, 0x0808);
@@ -345,8 +345,11 @@ fms_attach(parent, self, aux)
 	sc->sc_mpu_dev = config_found(&sc->sc_dev, &aa, audioprint);
 }
 
-
-#define TIMO 100
+/*
+ * Each AC-link frame takes 20.8us, data should be ready in next frame,
+ * we allow more than two.
+ */
+#define TIMO 50
 int
 fms_read_codec(addr, reg, val)
 	void *addr;
@@ -359,7 +362,7 @@ fms_read_codec(addr, reg, val)
 	/* Poll until codec is ready */
 	for (i = 0; i < TIMO && bus_space_read_2(sc->sc_iot, sc->sc_ioh, 
 		 FM_CODEC_CMD) & FM_CODEC_CMD_BUSY; i++)
-		delay(5);
+		delay(1);
 	if (i >= TIMO) {
 		printf("fms: codec busy\n");
 		return 1;
@@ -372,7 +375,7 @@ fms_read_codec(addr, reg, val)
 	/* Poll until we have valid data */
 	for (i = 0; i < TIMO && !(bus_space_read_2(sc->sc_iot, sc->sc_ioh, 
 		 FM_CODEC_CMD) & FM_CODEC_CMD_VALID); i++)
-		delay(5);
+		delay(1);
 	if (i >= TIMO) {
 		printf("fms: no data from codec\n");
 		return 1;
@@ -395,7 +398,7 @@ fms_write_codec(addr, reg, val)
 	/* Poll until codec is ready */
 	for (i = 0; i < TIMO && bus_space_read_2(sc->sc_iot, sc->sc_ioh, 
 		 FM_CODEC_CMD) & FM_CODEC_CMD_BUSY; i++)
-		delay(5);
+		delay(1);
 	if (i >= TIMO) {
 		printf("fms: codec busy\n");
 		return 1;
@@ -420,15 +423,16 @@ fms_attach_codec(addr, cif)
 	return 0;
 }
 
+/* Cold Reset */
 void
 fms_reset_codec(addr)
 	void *addr;
 {
 	struct fms_softc *sc = addr;
-	bus_space_write_2(sc->sc_iot, sc->sc_ioh, FM_CODEC_CTL, 0x0060);
-	delay(10000);		/* XXX */
+	bus_space_write_2(sc->sc_iot, sc->sc_ioh, FM_CODEC_CTL, 0x0020);
+	delay(2);
 	bus_space_write_2(sc->sc_iot, sc->sc_ioh, FM_CODEC_CTL, 0x0000);
-	delay(10000);		/* XXX */
+	delay(1);
 }
 
 int
@@ -621,10 +625,13 @@ fms_set_params(addr, setmode, usemode, play, rec)
 		default:
 			return EINVAL;
 		}
-		for (i = 0; i < 10 && play->sample_rate > fms_rates[i].limit; i++)
+		for (i = 0; i < 10 && play->sample_rate > fms_rates[i].limit;
+		     i++)
 			;
 		play->sample_rate = fms_rates[i].rate;
-		sc->sc_play_reg = (play->channels == 2 ? FM_PLAY_STEREO : 0) | (play->precision * play->factor == 16 ? FM_PLAY_16BIT : 0) | (i << 8);
+		sc->sc_play_reg = (play->channels == 2 ? FM_PLAY_STEREO : 0) |
+		    (play->precision * play->factor == 16 ? FM_PLAY_16BIT : 0) |
+		    (i << 8);
 	}
 
 	if (setmode & AUMODE_RECORD) {

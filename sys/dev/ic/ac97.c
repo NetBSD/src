@@ -1,4 +1,4 @@
-/*      $NetBSD: ac97.c,v 1.2 1999/11/02 05:41:27 soren Exp $ */
+/*      $NetBSD: ac97.c,v 1.3 1999/11/02 17:48:02 augustss Exp $ */
 /*      $OpenBSD: ac97.c,v 1.2 1999/09/21 16:06:27 csapuntz Exp $ */
 
 /*
@@ -498,11 +498,9 @@ ac97_attach(hostIf)
 	}
 
 	hostIf->reset(hostIf->arg);
-	delay(1000);		/* XXX shouldn't delay for so long */
 
 	hostIf->write(hostIf->arg, AC97_REG_POWER, 0);
 	hostIf->write(hostIf->arg, AC97_REG_RESET, 0);
-	delay(10000);		/* XXX shouldn't delay for so long */
 
 	if ((error = hostIf->read(hostIf->arg, AC97_REG_VENDOR_ID1, &id1)))
 		return (error);
