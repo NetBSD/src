@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd.c,v 1.16 2003/04/19 20:57:36 christos Exp $	*/
+/*	$NetBSD: netbsd.c,v 1.17 2003/04/22 16:42:00 tron Exp $	*/
 
 /*
 ** netbsd.c		Low level kernel access functions for NetBSD
@@ -15,6 +15,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <errno.h>
 #include <ctype.h>
 #include <limits.h>
@@ -106,9 +107,9 @@ int k_getuid(faddr, fport, laddr, lport, uid
 
   uidlen = sizeof(myuid);
   
-    if ((rv = sysctl(mib, 4, &myuid, &uidlen, &args,sizeof(args)))== -1)
+    if ((rv = sysctl(mib, 4, &myuid, &uidlen, &args,sizeof(args))) < 0)
     {
-      ERROR1("k_getuid: sysctl 1 (%d)", rv);
+      ERROR1("k_getuid: sysctl 1: %s", strerror(errno));
       return -1;
     }
    
