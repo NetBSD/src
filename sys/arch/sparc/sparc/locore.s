@@ -4780,29 +4780,6 @@ ENTRY(microtime)
 	retl
 	 st	%o3, [%o0+4]
 
-/*
- * This procedure exists to make stdarg functions work correctly.
- * We write the caller's `in' registers into his caller's `arg dump'
- * area.  That arg-dump area immediately precedes the argument extension
- * area, resulting in a single contiguous block of memory.
- *
- * This is really the wrong way to do it: the arguments should be written
- * to storage local to the stdarg function, and the stdarg `pick up
- * the next argument' code should pick it up from whichever region is
- * `active' at that point.
- */
-	.globl	___builtin_saveregs
-___builtin_saveregs:
-	! not profiled -- this should be done inline anyway
-	! bleah! the arg dump area is unaligned!  cannot std w/o reg/reg moves
-	st	%i0, [%fp + 0x44]	! fr->fr_argd[0]
-	st	%i1, [%fp + 0x48]	! fr->fr_argd[1]
-	st	%i2, [%fp + 0x4c]	! fr->fr_argd[2]
-	st	%i3, [%fp + 0x50]	! fr->fr_argd[3]
-	st	%i4, [%fp + 0x54]	! fr->fr_argd[4]
-	retl
-	 st	%i5, [%fp + 0x58]	! fr->fr_argd[5]
-
 #if defined(KGDB) || defined(DDB)
 /*
  * Write all windows (user or otherwise), except the current one.
