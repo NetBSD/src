@@ -1,4 +1,4 @@
-/*	$NetBSD: sid.h,v 1.4 1995/02/13 00:43:31 ragge Exp $	*/
+/*	$NetBSD: sid.h,v 1.5 1995/02/23 17:51:44 ragge Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -41,7 +41,7 @@
 #define VAX_8200 5
 #define VAX_8800 6
 #define VAX_610 7
-#define VAX_630	8
+#define VAX_78032 8
 #define VAX_650 10
 #define	VAX_MAX	10
 
@@ -49,5 +49,15 @@
 
 #define V750UCODE(x)    ((x>>8)&255)
 #define V750HARDW(x)    (cpu_type&255)
+
+/*
+ * The MicroVAXII CPU chip (78032) is used on more than one type of system
+ * that are differentiated by the low order 8 bits of cpu_type. (Filled in
+ * from the System Identification Extension Register.) To test for the cpu
+ * chip, compare cpunumber == VAX_78032, but to test for a Qbus MicroVAXII
+ * compare cpu_type == VAX_630.
+ */
+#define VAX_630       0x8000001
+#define VAX_410       0x8000002
 
 extern int cpu_type, cpunumber;
