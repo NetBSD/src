@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.7 2002/09/27 15:36:59 provos Exp $	*/
+/*	$NetBSD: bus.c,v 1.8 2003/04/01 15:24:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Matthew Fredette.
@@ -550,7 +550,7 @@ sun68k_find_prom_map(pa, iospace, len, hp)
 	/*
 	 * The mapping must fit entirely within one page.
 	 */
-	if ((((u_long)pa & PGOFSET) + len) > NBPG)
+	if ((((u_long)pa & PGOFSET) + len) > PAGE_SIZE)
 		return (EINVAL);
 
 	pf = PA_PGNUM(pa);
@@ -575,7 +575,7 @@ sun68k_find_prom_map(pa, iospace, len, hp)
 		/*
 		 * Walk the pages of this segment.
 		 */
-		for(eva = va + NBSG; va < eva; va += NBPG) {
+		for(eva = va + NBSG; va < eva; va += PAGE_SIZE) {
 			pte = get_pte(va);
 
 			if ((pte & (PG_VALID | PG_TYPE)) ==
