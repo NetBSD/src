@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.18 1995/07/05 02:12:38 chopps Exp $	*/
+/*	$NetBSD: fd.c,v 1.19 1995/07/24 07:25:46 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -162,7 +162,7 @@ void fddmadone __P((struct fd_softc *, int));
 void fdsetpos __P((struct fd_softc *, int, int));
 void fdmotoroff __P((void *));
 void fdmotorwait __P((void *));
-int fdminphys __P((struct buf *));
+u_int fdminphys __P((struct buf *));
 void fdcachetoraw __P((struct fd_softc *));
 int fdrawtocache __P((struct fd_softc *));
 int fdloaddisk __P((struct fd_softc *));
@@ -1564,7 +1564,7 @@ fdminphys(bp)
 	int trk, sec, toff, tsz;
 
 	if ((sc = getsoftc(fdcd, FDUNIT(bp->b_dev))) == NULL)
-		return(ENXIO);
+		panic("fdminphys: couldn't get softc");
 
 	trk = bp->b_blkno / sc->nsectors;
 	sec = bp->b_blkno % sc->nsectors;
@@ -1578,7 +1578,7 @@ fdminphys(bp)
 #ifdef FDDEBUG
 	printf(" after %d\n", bp->b_bcount);
 #endif
-	return(bp->b_bcount);
+	return (minphys(bp);
 }
 
 /*
