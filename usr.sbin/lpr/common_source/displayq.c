@@ -1,4 +1,4 @@
-/*	$NetBSD: displayq.c,v 1.15 1998/09/14 21:23:07 frueauf Exp $	*/
+/*	$NetBSD: displayq.c,v 1.15.2.1 2000/10/19 17:05:14 he Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)displayq.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: displayq.c,v 1.15 1998/09/14 21:23:07 frueauf Exp $");
+__RCSID("$NetBSD: displayq.c,v 1.15.2.1 2000/10/19 17:05:14 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -84,8 +84,8 @@ static int	lflag;		/* long output option */
 static int	rank;		/* order to be printed (-1=none, 0=active) */
 static long	totsize;	/* total print job size in bytes */
 
-static char	*head0 = "Rank   Owner      Job  Files";
-static char	*head1 = "Total Size\n";
+static const char head0[] = "Rank   Owner      Job  Files";
+static const char head1[] = "Total Size\n";
 
 /*
  * Display the current state of the queue. Format = 1 if long format.
