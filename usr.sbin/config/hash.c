@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.c,v 1.6 1997/10/18 07:59:15 lukem Exp $	*/
+/*	$NetBSD: hash.c,v 1.7 2000/10/02 19:48:34 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -89,18 +89,17 @@ static struct hashtab strings;
 /* round up to next multiple of y, where y is a power of 2 */
 #define	ROUND(x, y) (((x) + (y) - 1) & ~((y) - 1))
 
-static void		       *poolalloc __P((size_t));
-static void			ht_expand __P((struct hashtab *));
-static void			ht_init __P((struct hashtab *, size_t));
-static inline u_int		hash __P((const char *));
-static inline struct hashent   *newhashent __P((const char *, u_int));
+static void		       *poolalloc(size_t);
+static void			ht_expand(struct hashtab *);
+static void			ht_init(struct hashtab *, size_t);
+static inline u_int		hash(const char *);
+static inline struct hashent   *newhashent(const char *, u_int);
 
 /*
  * Allocate space that will never be freed.
  */
 static void *
-poolalloc(size)
-	size_t size;
+poolalloc(size_t size)
 {
 	char *p;
 	size_t alloc;
@@ -128,9 +127,7 @@ poolalloc(size)
  * Initialize a new hash table.  The size must be a power of 2.
  */
 static void
-ht_init(ht, sz)
-	struct hashtab *ht;
-	size_t sz;
+ht_init(struct hashtab *ht, size_t sz)
 {
 	struct hashent **h;
 	u_int n;
@@ -149,8 +146,7 @@ ht_init(ht, sz)
  * Expand an existing hash table.
  */
 static void
-ht_expand(ht)
-	struct hashtab *ht;
+ht_expand(struct hashtab *ht)
 {
 	struct hashent *p, **h, **oldh, *q;
 	u_int n, i;
@@ -179,9 +175,7 @@ ht_expand(ht)
  * Make a new hash entry, setting its h_next to NULL.
  */
 static inline struct hashent *
-newhashent(name, h)
-	const char *name;
-	u_int h;
+newhashent(const char *name, u_int h)
 {
 	struct hashent *hp;
 	char *m;
@@ -198,8 +192,7 @@ newhashent(name, h)
  * Hash a string.
  */
 static inline u_int
-hash(str)
-	const char *str;
+hash(const char *str)
 {
 	u_int h;
 
@@ -209,7 +202,7 @@ hash(str)
 }
 
 void
-initintern()
+initintern(void)
 {
 
 	ht_init(&strings, 128);
@@ -220,8 +213,7 @@ initintern()
  * function to be used frequently, so it should be fast.
  */
 const char *
-intern(s)
-	const char *s;
+intern(const char *s)
 {
 	struct hashtab *ht;
 	struct hashent *hp, **hpp;
@@ -245,7 +237,7 @@ intern(s)
 }
 
 struct hashtab *
-ht_new()
+ht_new(void)
 {
 	struct hashtab *ht;
 
@@ -258,11 +250,7 @@ ht_new()
  * Insert and/or replace.
  */
 int
-ht_insrep(ht, nam, val, replace)
-	struct hashtab *ht;
-	const char *nam;
-	void *val;
-	int replace;
+ht_insrep(struct hashtab *ht, const char *nam, void *val, int replace)
 {
 	struct hashent *hp, **hpp;
 	u_int h;
@@ -284,9 +272,7 @@ ht_insrep(ht, nam, val, replace)
 }
 
 void *
-ht_lookup(ht, nam)
-	struct hashtab *ht;
-	const char *nam;
+ht_lookup(struct hashtab *ht, const char *nam)
 {
 	struct hashent *hp, **hpp;
 	u_int h;
@@ -306,10 +292,7 @@ ht_lookup(ht, nam)
  */
 
 int
-ht_enumerate(ht, cbfunc, arg)
-	struct hashtab *ht;
-	ht_callback cbfunc;
-	void *arg;
+ht_enumerate(struct hashtab *ht, ht_callback cbfunc, void *arg)
 {
 	struct hashent *hp, **hpp;
 	u_int i;

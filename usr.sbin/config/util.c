@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.12 2000/10/02 18:59:04 cgd Exp $	*/
+/*	$NetBSD: util.c,v 1.13 2000/10/02 19:48:35 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -52,18 +52,17 @@
 #include <sys/types.h>
 #include "config.h"
 
-static void nomem __P((void));
-static void vxerror __P((const char *, int, const char *, va_list));
-static void vxwarn __P((const char *, int, const char *, va_list));
-static void vxmsg __P((const char *fname, int line, const char *class, 
-		       const char *fmt, va_list));
+static void nomem(void);
+static void vxerror(const char *, int, const char *, va_list);
+static void vxwarn(const char *, int, const char *, va_list);
+static void vxmsg(const char *fname, int line, const char *class, 
+		  const char *fmt, va_list);
 
 /*
  * Malloc, with abort on error.
  */
 void *
-emalloc(size)
-	size_t size;
+emalloc(size_t size)
 {
 	void *p;
 
@@ -76,9 +75,7 @@ emalloc(size)
  * Realloc, with abort on error.
  */
 void *
-erealloc(p, size)
-	void *p;
-	size_t size;
+erealloc(void *p, size_t size)
 {
 
 	if ((p = realloc(p, size)) == NULL)
@@ -90,8 +87,7 @@ erealloc(p, size)
  * Strdup, with abort on error.
  */
 char *
-estrdup(p)
-	const char *p;
+estrdup(const char *p)
 {
 	char *cp;
 
@@ -101,7 +97,7 @@ estrdup(p)
 }
 
 static void
-nomem()
+nomem(void)
 {
 
 	(void)fprintf(stderr, "config: out of memory\n");
@@ -112,8 +108,7 @@ nomem()
  * Push a prefix onto the prefix stack.
  */
 void
-prefix_push(path)
-	const char *path;
+prefix_push(const char *path)
 {
 	struct prefix *pf;
 	char *cp;
@@ -137,7 +132,7 @@ prefix_push(path)
  * Pop a prefix off the prefix stack.
  */
 void
-prefix_pop()
+prefix_pop(void)
 {
 	struct prefix *pf;
 
@@ -157,8 +152,7 @@ prefix_pop()
  * Prepend the source path to a file name.
  */
 char *
-sourcepath(file)
-	const char *file;
+sourcepath(const char *file)
 {
 	size_t len;
 	char *cp;
@@ -187,11 +181,7 @@ sourcepath(file)
 static struct nvlist *nvhead;
 
 struct nvlist *
-newnv(name, str, ptr, i, next)
-	const char *name, *str;
-	void *ptr;
-	int i;
-	struct nvlist *next;
+newnv(const char *name, const char *str, void *ptr, int i, struct nvlist *next)
 {
 	struct nvlist *nv;
 
@@ -216,8 +206,7 @@ newnv(name, str, ptr, i, next)
  * Free an nvlist structure (just one).
  */
 void
-nvfree(nv)
-	struct nvlist *nv;
+nvfree(struct nvlist *nv)
 {
 
 	nv->nv_next = nvhead;
@@ -228,8 +217,7 @@ nvfree(nv)
  * Free an nvlist (the whole list).
  */
 void
-nvfreel(nv)
-	struct nvlist *nv;
+nvfreel(struct nvlist *nv)
 {
 	struct nvlist *next;
 
@@ -253,11 +241,7 @@ warn(const char *fmt, ...)
 
 
 static void
-vxwarn(file, line, fmt, ap)
-	const char *file;
-	int line;
-	const char *fmt;
-	va_list ap;
+vxwarn(const char *file, int line, const char *fmt, va_list ap)
 {
 	vxmsg(file, line, "warning: ", fmt, ap);
 }
@@ -295,11 +279,7 @@ xerror(const char *file, int line, const char *fmt, ...)
  * Internal form of error() and xerror().
  */
 static void
-vxerror(file, line, fmt, ap)
-	const char *file;
-	int line;
-	const char *fmt;
-	va_list ap;
+vxerror(const char *file, int line, const char *fmt, va_list ap)
 {
 	vxmsg(file, line, "", fmt, ap);
 	errors++;
@@ -326,12 +306,8 @@ panic(const char *fmt, ...)
  * Internal form of error() and xerror().
  */
 static void
-vxmsg(file, line, msgclass, fmt, ap)
-	const char *file;
-	int line;
-	const char *msgclass;
-	const char *fmt;
-	va_list ap;
+vxmsg(const char *file, int line, const char *msgclass, const char *fmt,
+      va_list ap)
 {
 
 	(void)fprintf(stderr, "%s:%d: %s", file, line, msgclass);

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.47 2000/04/14 06:26:52 simonb Exp $	*/
+/*	$NetBSD: main.c,v 1.48 2000/10/02 19:48:34 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -66,7 +66,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 
 int	vflag;				/* verbose output */
 
-int	yyparse __P((void));
+int	yyparse(void);
 
 extern int yydebug;
 
@@ -75,32 +75,29 @@ static struct nvlist **nextopt;
 static struct nvlist **nextmkopt;
 static struct nvlist **nextfsopt;
 
-static	void	dependopts __P((void));
-static	void	do_depend __P((struct nvlist *));
-static	void	stop __P((void));
-static	int	do_option __P((struct hashtab *, struct nvlist ***,
-		    const char *, const char *, const char *));
-static	int	crosscheck __P((void));
-static	int	badstar __P((void));
-	int	main __P((int, char **));
-static	int	mksymlinks __P((void));
-static	int	mkident __P((void));
-static	int	hasparent __P((struct devi *));
-static	int	cfcrosscheck __P((struct config *, const char *,
-		    struct nvlist *));
-void	defopt __P((struct hashtab *ht, const char *fname,
-	     struct nvlist *opts, struct nvlist *deps));
+static	void	dependopts(void);
+static	void	do_depend(struct nvlist *);
+static	void	stop(void);
+static	int	do_option(struct hashtab *, struct nvlist ***,
+		    const char *, const char *, const char *);
+static	int	crosscheck(void);
+static	int	badstar(void);
+	int	main(int, char **);
+static	int	mksymlinks(void);
+static	int	mkident(void);
+static	int	hasparent(struct devi *);
+static	int	cfcrosscheck(struct config *, const char *, struct nvlist *);
+void	defopt(struct hashtab *ht, const char *fname,
+	     struct nvlist *opts, struct nvlist *deps);
 
-int badfilename __P((const char *fname));
+int badfilename(const char *fname);
 
 #ifdef	MAKE_BOOTSTRAP
 char *__progname;
 #endif
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char **argv)
 {
 	char *p;
 	const char *last_component;
@@ -285,7 +282,7 @@ usage:
  * Set any options that are implied by other options.
  */
 static void
-dependopts()
+dependopts(void)
 {
 	struct nvlist *nv, *opt;
 
@@ -300,8 +297,7 @@ dependopts()
 }
 
 static void
-do_depend(nv)
-	struct nvlist *nv;
+do_depend(struct nvlist *nv)
 {
 	struct nvlist *nextnv;
 
@@ -319,7 +315,7 @@ do_depend(nv)
  * and for the machine's CPU architecture, so that works as well.
  */
 static int
-mksymlinks()
+mksymlinks(void)
 {
 	int ret;
 	char *p, buf[MAXPATHLEN];
@@ -359,7 +355,7 @@ mksymlinks()
 }
 
 static __dead void
-stop()
+stop(void)
 {
 	(void)fprintf(stderr, "*** Stop.\n");
 	exit(1);
@@ -372,9 +368,7 @@ stop()
  * Otherwise, no preprocessor #defines will be generated.
  */
 void
-deffilesystem(fname, fses)
-	const char *fname;
-	struct nvlist *fses;
+deffilesystem(const char *fname, struct nvlist *fses)
 {
 	struct nvlist *nv;
 
@@ -420,8 +414,7 @@ deffilesystem(fname, fses)
  * Sanity check a file name.
  */
 int
-badfilename(fname)
-	const char *fname;
+badfilename(const char *fname)
 {
 	const char *n;
 
@@ -446,8 +439,7 @@ badfilename(fname)
  * return the  option's struct nvlist.
  */
 struct nvlist *
-find_declared_option(name)
-	const char *name;
+find_declared_option(const char *name)
 {
 	struct nvlist *option = NULL;
 
@@ -469,10 +461,8 @@ find_declared_option(name)
  * record the option information in the specified table.
  */
 void
-defopt(ht, fname, opts, deps)
-	struct hashtab *ht;
-	const char *fname;
-	struct nvlist *opts, *deps;
+defopt(struct hashtab *ht, const char *fname, struct nvlist *opts,
+       struct nvlist *deps)
 {
 	struct nvlist *nv, *nextnv, *oldnv;
 	const char *name, *n;
@@ -551,10 +541,9 @@ defopt(ht, fname, opts, deps)
  * an option file for each option.
  */
 void
-defoption(fname, opts, deps)
-	const char *fname;
-	struct nvlist *opts, *deps;
+defoption(const char *fname, struct nvlist *opts, struct nvlist *deps)
 {
+
 	defopt(defopttab, fname, opts, deps);
 }
 
@@ -563,10 +552,9 @@ defoption(fname, opts, deps)
  * Define an option for which a value is required. 
  */
 void
-defparam(fname, opts, deps)
-	const char *fname;
-	struct nvlist *opts, *deps;
+defparam(const char *fname, struct nvlist *opts, struct nvlist *deps)
 {
+
 	defopt(defparamtab, fname, opts, deps);
 }
 
@@ -575,10 +563,9 @@ defparam(fname, opts, deps)
  * emits  a "needs-flag" style output.
  */
 void
-defflag(fname, opts, deps)
-	const char *fname;
-	struct nvlist *opts, *deps;
+defflag(const char *fname, struct nvlist *opts, struct nvlist *deps)
 {
+
 	defopt(defflagtab, fname, opts, deps);
 }
 
@@ -588,8 +575,7 @@ defflag(fname, opts, deps)
  * are "optional foo".
  */
 void
-addoption(name, value)
-	const char *name, *value;
+addoption(const char *name, const char *value)
 {
 	const char *n;
 	char *p, c;
@@ -644,8 +630,7 @@ addoption(name, value)
  * file system type.  The name is then treated like a standard option.
  */
 void
-addfsoption(name)
-	const char *name;
+addfsoption(const char *name)
 {
 	const char *n; 
 	char *p, c;
@@ -685,8 +670,7 @@ addfsoption(name)
  * Add a "make" option.
  */
 void
-addmkoption(name, value)
-	const char *name, *value;
+addmkoption(const char *name, const char *value)
 {
 
 	(void)do_option(mkopttab, &nextmkopt, name, value, "mkoptions");
@@ -696,10 +680,8 @@ addmkoption(name, value)
  * Add a name=value pair to an option list.  The value may be NULL.
  */
 static int
-do_option(ht, nppp, name, value, type)
-	struct hashtab *ht;
-	struct nvlist ***nppp;
-	const char *name, *value, *type;
+do_option(struct hashtab *ht, struct nvlist ***nppp, const char *name,
+	  const char *value, const char *type)
 {
 	struct nvlist *nv;
 
@@ -735,9 +717,7 @@ do_option(ht, nppp, name, value, type)
  * on the given device attachment (or any units, if unit == WILD).
  */
 int
-deva_has_instances(deva, unit)
-	struct deva *deva;
-	int unit;
+deva_has_instances(struct deva *deva, int unit)
 {
 	struct devi *i;
 
@@ -754,9 +734,7 @@ deva_has_instances(deva, unit)
  * on the given base (or any units, if unit == WILD).
  */
 int
-devbase_has_instances(dev, unit)
-	struct devbase *dev;
-	int unit;
+devbase_has_instances(struct devbase *dev, int unit)
 {
 	struct deva *da;
 
@@ -767,8 +745,7 @@ devbase_has_instances(dev, unit)
 }
 
 static int
-hasparent(i)
-	struct devi *i;
+hasparent(struct devi *i)
 {
 	struct nvlist *nv;
 	int atunit = i->i_atunit;
@@ -802,10 +779,7 @@ hasparent(i)
 }
 
 static int
-cfcrosscheck(cf, what, nv)
-	struct config *cf;
-	const char *what;
-	struct nvlist *nv;
+cfcrosscheck(struct config *cf, const char *what, struct nvlist *nv)
 {
 	struct devbase *dev;
 	struct devi *pd;
@@ -849,7 +823,7 @@ loop:
  * see that the root and dump devices for all configurations are there.
  */
 int
-crosscheck()
+crosscheck(void)
 {
 	struct devi *i;
 	struct config *cf;
@@ -884,7 +858,7 @@ crosscheck()
  * Check to see if there is a *'d unit with a needs-count file.
  */
 int
-badstar()
+badstar(void)
 {
 	struct devbase *d;
 	struct deva *da;
@@ -921,7 +895,7 @@ badstar()
  * This will be called when we see the first include.
  */
 void
-setupdirs()
+setupdirs(void)
 {
 	struct stat st;
 
@@ -965,7 +939,7 @@ setupdirs()
  * newvers.sh to pick it up.
  */
 int
-mkident()
+mkident(void)
 {
 	FILE *fp;
 

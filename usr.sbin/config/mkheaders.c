@@ -1,4 +1,4 @@
-/*	$NetBSD: mkheaders.c,v 1.24 1999/09/22 14:23:03 ws Exp $	*/
+/*	$NetBSD: mkheaders.c,v 1.25 2000/10/02 19:48:35 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -52,23 +52,23 @@
 #include <string.h>
 #include "config.h"
 
-static int emitcnt __P((struct nvlist *));
-static int emitlocs __P((void));
-static int emitopts __P((void));
-static int emitioconfh __P((void));
-static int herr __P((const char *, const char *, FILE *));
-static int locators_print __P((const char *, void *, void *));
-static int defopts_print __P((const char *, void *, void *));
-static char *cntname __P((const char *));
-static int cmphdr __P((const char *, const char *));
-static int fprintcnt __P((FILE *, struct nvlist *));
-static int fprintstr __P((FILE *, const char *));
+static int emitcnt(struct nvlist *);
+static int emitlocs(void);
+static int emitopts(void);
+static int emitioconfh(void);
+static int herr(const char *, const char *, FILE *);
+static int locators_print(const char *, void *, void *);
+static int defopts_print(const char *, void *, void *);
+static char *cntname(const char *);
+static int cmphdr(const char *, const char *);
+static int fprintcnt(FILE *, struct nvlist *);
+static int fprintstr(FILE *, const char *);
 
 /*
  * Make the various config-generated header files.
  */
 int
-mkheaders()
+mkheaders(void)
 {
 	struct files *fi;
 
@@ -91,17 +91,14 @@ mkheaders()
 
 
 static int
-fprintcnt(fp, nv)
-	FILE *fp;
-	struct nvlist *nv;
+fprintcnt(FILE *fp, struct nvlist *nv)
 {
 	return (fprintf(fp, "#define\t%s\t%d\n",
 	     cntname(nv->nv_name), nv->nv_int));
 }
 
 static int
-emitcnt(head)
-	struct nvlist *head;
+emitcnt(struct nvlist *head)
 {
 	char nfname[BUFSIZ], tfname[BUFSIZ];
 	struct nvlist *nv;
@@ -129,9 +126,7 @@ emitcnt(head)
  * Otherwise the first backslash in a \? sequence will be dropped.
  */
 static int
-fprintstr(fp, str)
-	FILE *fp;
-	const char *str;
+fprintstr(FILE *fp, const char *str)
 {
 	int n;
 
@@ -160,9 +155,7 @@ fprintstr(fp, str)
  * the options defined for this file.
  */
 static int
-defopts_print(name, value, arg)
-	const char *name;
-	void *value, *arg;
+defopts_print(const char *name, void *value, void *arg)
 {
 	char tfname[BUFSIZ];
 	struct nvlist *nv, *option;
@@ -213,7 +206,7 @@ defopts_print(name, value, arg)
  * Emit the option header files.
  */
 static int
-emitopts()
+emitopts(void)
 {
 
 	return (ht_enumerate(optfiletab, defopts_print, NULL));
@@ -225,10 +218,7 @@ emitopts()
  * "name" attribute node (passed as the "value" parameter).
  */
 static int
-locators_print(name, value, arg)
-	const char *name;
-	void *value;
-	void *arg;
+locators_print(const char *name, void *value, void *arg)
 {
 	struct attr *a;
 	struct nvlist *nv;
@@ -286,7 +276,7 @@ locators_print(name, value, arg)
  * hash table and emitting all the locators for each attribute.
  */
 static int
-emitlocs()
+emitlocs(void)
 {
 	char *tfname;
 	int rval;
@@ -309,7 +299,7 @@ emitlocs()
  * cfdrivers.
  */
 static int
-emitioconfh()
+emitioconfh(void)
 {
 	const char *tfname;
 	FILE *tfp;
@@ -338,8 +328,7 @@ emitioconfh()
  * tfname, move tfname to nfname.  Otherwise, delete tfname.
  */
 static int
-cmphdr(tfname, nfname)
-	const char *tfname, *nfname;
+cmphdr(const char *tfname, const char *nfname)
 {
 	char tbuf[BUFSIZ], nbuf[BUFSIZ];
 	FILE *tfp, *nfp;
@@ -392,9 +381,7 @@ cmphdr(tfname, nfname)
 }
 
 static int
-herr(what, fname, fp)
-	const char *what, *fname;
-	FILE *fp;
+herr(const char *what, const char *fname, FILE *fp)
 {
 	extern char *__progname;
 
@@ -406,8 +393,7 @@ herr(what, fname, fp)
 }
 
 static char *
-cntname(src)
-	const char *src;
+cntname(const char *src)
 {
 	char *dst, c;
 	static char buf[100];
