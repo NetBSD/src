@@ -33,7 +33,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: kernfs.h,v 1.2 1993/03/25 06:00:22 cgd Exp $
+ *	$Id: kernfs.h,v 1.3 1993/03/27 00:37:08 cgd Exp $
  */
 
 #ifdef KERNEL
@@ -50,4 +50,6 @@ struct kernfs_node {
 
 extern struct vnodeops kernfs_vnodeops;
 extern struct vfsops kernfs_vfsops;
+
+extern struct vnode *rrootdevvp;
 #endif /* KERNEL */

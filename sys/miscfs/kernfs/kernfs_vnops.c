@@ -33,7 +33,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: kernfs_vnops.c,v 1.3 1993/03/25 17:34:52 cgd Exp $
+ * $Id: kernfs_vnops.c,v 1.4 1993/03/27 00:37:11 cgd Exp $
  */
 
 /*
@@ -80,6 +80,7 @@ struct kern_target {
 /* NOTE: The name must be less than UIO_MX-16 chars in length */
 	/* name		data		tag		ro/rw */
 	{ ".",		0,		KTT_NULL,	KTM_RO,	VDIR },
+	{ "..",		0,		KTT_NULL,	KTM_RO,	VDIR },
 	{ "copyright",	copyright,	KTT_STRING,	KTM_RO,	VREG },
 	{ "hostname",	0,		KTT_HOSTNAME,	KTM_RW,	VREG },
 	{ "hz",		&hz,		KTT_INT,	KTM_RO,	VREG },
@@ -87,6 +88,7 @@ struct kern_target {
 	{ "physmem",	&physmem,	KTT_INT,	KTM_RO,	VREG },
 	{ "root",	0,		KTT_NULL,	KTM_RO,	VDIR },
 	{ "rootdev",	0,		KTT_NULL,	KTM_RO,	VBLK },
+	{ "rrootdev",	0,		KTT_NULL,	KTM_RO,	VCHR },
 	{ "time",	0,		KTT_TIME,	KTM_RO,	VREG },
 	{ "version",	version,	KTT_STRING,	KTM_RO,	VREG },
 };
@@ -217,6 +219,17 @@ kernfs_lookup(dvp, ndp, p)
 		ndp->ni_vp = fvp;
 		VREF(fvp);
 		VOP_LOCK(fvp);
+		return (0);
+	}
+
+	/*
+	 * /kern/rrootdev is the root device
+	 */
+	if (ndp->ni_namelen == 8 && bcmp(pname, "rrootdev", 7) == 0) {
+		ndp->ni_dvp = dvp;
+		ndp->ni_vp = rrootdevvp;
+		VREF(rrootdevvp);
+		VOP_LOCK(rrootdevvp);
 		return (0);
 	}
 
