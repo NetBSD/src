@@ -1,4 +1,4 @@
-# $NetBSD: md_share,v 1.91 2000/06/20 01:28:44 minoura Exp $
+# $NetBSD: md_share,v 1.92 2000/07/04 07:59:13 gmcgarry Exp $
 ./usr/share/man/cat1/atari/edahdi.0
 ./usr/share/man/cat1/atari/msconfig.0
 ./usr/share/man/cat1/grfinfo.0
@@ -161,6 +161,7 @@
 ./usr/share/man/cat4/pmax/scc.0
 ./usr/share/man/cat4/pmax/sii.0
 ./usr/share/man/cat4/pmax/tc.0
+./usr/share/man/cat4/sparc/audioamd.0
 ./usr/share/man/cat4/sparc/bwtwo.0
 ./usr/share/man/cat4/sparc/cgeight.0
 ./usr/share/man/cat4/sparc/cgfour.0
@@ -507,6 +508,7 @@
 ./usr/share/man/man4/pmax/scc.4
 ./usr/share/man/man4/pmax/sii.4
 ./usr/share/man/man4/pmax/tc.4
+./usr/share/man/man4/sparc/audioamd.4
 ./usr/share/man/man4/sparc/bwtwo.4
 ./usr/share/man/man4/sparc/cgeight.4
 ./usr/share/man/man4/sparc/cgfour.4
