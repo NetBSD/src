@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.25 2004/12/10 17:10:16 nathanw Exp $
+#	$NetBSD: Makefile,v 1.26 2005/03/03 18:47:23 nathanw Exp $
 
 .include <bsd.own.mk>
 
@@ -27,7 +27,7 @@ SUBDIR+= atexit \
 	 once1 once2 \
 	 preempt1 \
 	 resolv rwlock1 \
-	 sem sem2 sigalarm sigmask1 siglongjmp1 sigsuspend
+	 sem sem2 sigalarm sigmask1 sigmask2 sigmask3 siglongjmp1 sigsuspend
 
 .endif
 
