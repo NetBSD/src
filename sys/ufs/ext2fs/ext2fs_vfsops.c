@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.80 2005/01/09 09:27:17 mycroft Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.81 2005/01/11 00:19:36 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.80 2005/01/09 09:27:17 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.81 2005/01/11 00:19:36 mycroft Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -271,22 +271,7 @@ ext2fs_mount(mp, path, data, ndp, p)
 
 	update = mp->mnt_flag & MNT_UPDATE;
 
-	/*
-	 * If updating, check whether changing from read-only to
-	 * read/write; if there is no device name, that's all we do.
-	 */
-	if (update) {
-		/* Use the extant mount */
-		ump = VFSTOUFS(mp);
-		devvp = ump->um_devvp;
-		if (args.fspec == NULL)
-			vref(devvp);
-	} else {
-		/* New mounts must have a filename for the device */
-		if (args.fspec == NULL)
-			return (EINVAL);
-	}
-
+	/* Check arguments */
 	if (args.fspec != NULL) {
 		/*
 		 * Look up the name and verify that it's sane.
@@ -309,8 +294,18 @@ ext2fs_mount(mp, path, data, ndp, p)
 			 * Be sure we're still naming the same device
 			 * used for our initial mount
 			 */
+			ump = VFSTOUFS(mp);
 			if (devvp != ump->um_devvp)
 				error = EINVAL;
+		}
+	} else {
+		if (!update) {
+			/* New mounts must have a filename for the device */
+			return (EINVAL);
+		} else {
+			ump = VFSTOUFS(mp);
+			devvp = ump->um_devvp;
+			vref(devvp);
 		}
 	}
 
@@ -379,6 +374,7 @@ ext2fs_mount(mp, path, data, ndp, p)
 		 */
 		vrele(devvp);
 
+		ump = VFSTOUFS(mp);
 		fs = ump->um_e2fs;
 		if (fs->e2fs_ronly == 0 && (mp->mnt_flag & MNT_RDONLY)) {
 			/*
