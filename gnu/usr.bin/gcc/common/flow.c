@@ -769,23 +769,26 @@ uses_reg_or_mem (x)
   int i, j;
   char *fmt;
 
-#ifdef GCC_27_ARM32_PIC_SUPPORT
-  /*
-   * This is a patch for a bug found when implementing arm32 PIC support
-   * that has been fixed in 2.8
-   */
-  if(code == IF_THEN_ELSE) {
-      if(!uses_reg_or_mem (XEXP (x, 1)) && !uses_reg_or_mem (XEXP (x, 2)))
-          return 0;
-      return 1;
-  }
-#endif
+  switch (code)
+    {
+    case CONST:
+    case LABEL_REF:
+    case PC:
+      return 0;
 
-  if (code == REG
-      || (code == MEM
-	  && ! (GET_CODE (XEXP (x, 0)) == SYMBOL_REF
-		&& CONSTANT_POOL_ADDRESS_P (XEXP (x, 0)))))
-    return 1;
+    case REG:
+      return 1;
+
+    case MEM:
+      return ! (GET_CODE (XEXP (x, 0)) == SYMBOL_REF
+		&& CONSTANT_POOL_ADDRESS_P (XEXP (x, 0)));
+
+    case IF_THEN_ELSE:
+      return (uses_reg_or_mem (XEXP (x, 1)) || uses_reg_or_mem (XEXP (x, 2)));
+
+    case PLUS:  case MINUS:  case MULT:
+      return (uses_reg_or_mem (XEXP (x, 0)) || uses_reg_or_mem (XEXP (x, 1)));
+    }
 
   fmt = GET_RTX_FORMAT (code);
   for (i = GET_RTX_LENGTH (code) - 1; i >= 0; i--)
@@ -1616,30 +1619,16 @@ propagate_block (old, first, last, final, significant, bnum)
 				      final, insn);
 
 		  /* Each call clobbers all call-clobbered regs that are not
-		     global.  Note that the function-value reg is a
+		     global or fixed.  Note that the function-value reg is a
 		     call-clobbered reg, and mark_set_regs has already had
 		     a chance to handle it.  */
 
-#ifdef GCC_27_ARM32_PIC_SUPPORT
-  /*
-   * This is a patch for a bug found when implementing arm32 PIC support
-   * that has been fixed in 2.8
-   */
-		  for (i = 0; i < FIRST_PSEUDO_REGISTER; i++) {
+		  for (i = 0; i < FIRST_PSEUDO_REGISTER; i++)
 		    if (call_used_regs[i] && ! global_regs[i]
-#if defined (PIC_OFFSET_TABLE_REGNUM) && !defined (PIC_OFFSET_TABLE_REG_CALL_CLOBBERED)
-                        &&  (i != PIC_OFFSET_TABLE_REGNUM || !flag_pic)
-#endif
-                        )
+			&& ! fixed_regs[i])
   		      dead[i / REGSET_ELT_BITS]
 			|= ((REGSET_ELT_TYPE) 1 << (i % REGSET_ELT_BITS));
-                  }
-#else
-		  for (i = 0; i < FIRST_PSEUDO_REGISTER; i++)
-		    if (call_used_regs[i] && ! global_regs[i])
-		      dead[i / REGSET_ELT_BITS]
-			|= ((REGSET_ELT_TYPE) 1 << (i % REGSET_ELT_BITS));
-#endif
+
 		  /* The stack ptr is used (honorarily) by a CALL insn.  */
 		  live[STACK_POINTER_REGNUM / REGSET_ELT_BITS]
 		    |= ((REGSET_ELT_TYPE) 1
@@ -2401,9 +2390,13 @@ mark_used_regs (needed, live, x, final, insn)
       return;
 
     case MEM:
-      /* Invalidate the data for the last MEM stored.  We could do this only
-	 if the addresses conflict, but this doesn't seem worthwhile.  */
-      last_mem_set = 0;
+      /* Invalidate the data for the last MEM stored, but only if MEM is
+	 something that can be stored into.  */
+      if (GET_CODE (XEXP (x, 0)) == SYMBOL_REF
+	  && CONSTANT_POOL_ADDRESS_P (XEXP (x, 0)))
+	; /* needn't clear last_mem_set */
+      else
+	last_mem_set = 0;
 
 #ifdef AUTO_INC_DEC
       if (final)
