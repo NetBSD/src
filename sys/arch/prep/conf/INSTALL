@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.29.6.2 2005/03/19 08:33:12 yamt Exp $
+#	$NetBSD: INSTALL,v 1.29.6.3 2005/03/26 18:19:17 yamt Exp $
 #
 #	INSTALL -- Installation kernel
 #
@@ -17,6 +17,7 @@ options 	MEMORY_DISK_ROOT_SIZE=4096	# 2 Megabytes
 maxusers	8
 
 # Platform support
+options 	PLATFORM_IBM_6015		# IBM RS/6000 40P
 options 	PLATFORM_IBM_6040		# IBM ThinkPad 820
 options 	PLATFORM_IBM_6050		# IBM Personal Power Series 830
 options 	PLATFORM_IBM_7248		# IBM RS/6000 7248-100/120/133

@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.25.4.1 2005/03/19 08:33:05 yamt Exp $	*/
+/*	$NetBSD: cache.c,v 1.25.4.2 2005/03/26 18:19:17 yamt Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.25.4.1 2005/03/19 08:33:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.25.4.2 2005/03/26 18:19:17 yamt Exp $");
 
 #include "opt_cputype.h"
 #include "opt_mips_cache.h"
@@ -129,8 +129,6 @@ int mips_sdcache_write_through;
 
 int mips_scache_unified;
 
-u_int mips_sdcache_forceinv = 0;
-
 /* TERTIARY CACHE VARIABLES */
 u_int mips_tcache_size;		/* always unified */
 u_int mips_tcache_line_size;
@@ -153,6 +151,8 @@ u_int mips_dcache_align_mask;
 
 u_int mips_cache_alias_mask;	/* for virtually-indexed caches */
 u_int mips_cache_prefer_mask;
+
+int mips_cache_virtual_alias;
 
 struct mips_cache_ops mips_cache_ops;
 
@@ -421,6 +421,11 @@ mips_config_cache_prehistoric(void)
 
 		mips3_get_cache_config(csizebase);
 
+		if (mips_picache_size > PAGE_SIZE ||
+		    mips_pdcache_size > PAGE_SIZE)
+			/* no VCE support if there is no L2 cache */
+			mips_cache_virtual_alias = 1;
+
 		switch (mips_picache_line_size) {
 		case 16:
 			mips_cache_ops.mco_icache_sync_all =
@@ -493,6 +498,10 @@ primary_cache_is_2way:
 		mips_pdcache_ways = 2;
 
 		mips3_get_cache_config(csizebase);
+
+		if (mips_picache_size > PAGE_SIZE ||
+		    mips_pdcache_size > PAGE_SIZE)
+			mips_cache_virtual_alias = 1;
 
 		switch (mips_picache_line_size) {
 		case 32:
@@ -590,6 +599,7 @@ primary_cache_is_2way:
 		    ~(PAGE_SIZE - 1);
 		mips_cache_prefer_mask =
 		    max(mips_pdcache_size, mips_picache_size) - 1;
+		mips_cache_virtual_alias = 1;
 		/* cache ops */
 		mips_cache_ops.mco_icache_sync_all =
 		    r5900_icache_sync_all_64;
@@ -618,6 +628,8 @@ primary_cache_is_2way:
 		mips_sdcache_ways = 2;
 
 		mips4_get_cache_config(csizebase);
+
+		/* VCE is handled by hardware */
 
 		mips_cache_ops.mco_icache_sync_all =
 		    r10k_icache_sync_all;
@@ -669,14 +681,22 @@ primary_cache_is_2way:
 	switch (MIPS_PRID_IMPL(cpu_id)) {
 #if defined(MIPS3) || defined(MIPS4)
 	case MIPS_R4000:
+#if 0
 		/*
 		 * R4000/R4400 always detects virtual alias as if
 		 * primary cache size is 32KB. Actual primary cache size
 		 * is ignored wrt VCED/VCEI.
 		 */
+		/*
+		 * XXX
+		 * It's still better to avoid virtual alias even with VCE,
+		 * isn't it?
+		 */
 		mips_cache_alias_mask =
 			(MIPS3_MAX_PCACHE_SIZE - 1) & ~(PAGE_SIZE - 1);
 		mips_cache_prefer_mask = MIPS3_MAX_PCACHE_SIZE - 1;
+#endif
+		mips_cache_virtual_alias = 0;
 		/* FALLTHROUGH */
 	case MIPS_R4600:
 #ifdef ENABLE_MIPS_R4700

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.86.6.1 2005/03/19 08:36:11 yamt Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.86.6.2 2005/03/26 18:19:20 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.86.6.1 2005/03/19 08:36:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.86.6.2 2005/03/26 18:19:20 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,10 +64,8 @@ rlim_t maxsmap = MAXSSIZ;
 
 struct uihashhead *uihashtbl;
 u_long uihash;		/* size of hash table - 1 */
+struct simplelock uihashtbl_slock = SIMPLELOCK_INITIALIZER;
 
-static struct uidinfo *getuidinfo(uid_t);
-static void freeuidinfo(struct uidinfo *);
-static struct uidinfo *allocuidinfo(uid_t);
 
 /*
  * Resource controls and accounting.
@@ -330,11 +328,13 @@ dosetrlimit(p, cred, which, limp)
 			if (limp->rlim_cur > alimp->rlim_cur) {
 				prot = VM_PROT_READ | VM_PROT_WRITE;
 				size = limp->rlim_cur - alimp->rlim_cur;
-				addr = USRSTACK - limp->rlim_cur;
+				addr = (vaddr_t)p->p_vmspace->vm_minsaddr -
+				    limp->rlim_cur;
 			} else {
 				prot = VM_PROT_NONE;
 				size = alimp->rlim_cur - limp->rlim_cur;
-				addr = USRSTACK - alimp->rlim_cur;
+				addr = (vaddr_t)p->p_vmspace->vm_minsaddr -
+				     alimp->rlim_cur;
 			}
 			(void) uvm_map_protect(&p->p_vmspace->vm_map,
 					      addr, addr+size, prot, FALSE);
@@ -891,39 +891,36 @@ SYSCTL_SETUP(sysctl_proc_setup, "sysctl proc subtree setup")
 		       CTL_PROC, PROC_CURPROC, PROC_PID_STOPEXIT, CTL_EOL);
 }
 
-static struct uidinfo *
-getuidinfo(uid_t uid)
+struct uidinfo *
+uid_find(uid_t uid)
 {
 	struct uidinfo *uip;
+	struct uidinfo *newuip = NULL;
 	struct uihashhead *uipp;
 
 	uipp = UIHASH(uid);
 
+again:
+	simple_lock(&uihashtbl_slock);
 	LIST_FOREACH(uip, uipp, ui_hash)
-		if (uip->ui_uid == uid)
+		if (uip->ui_uid == uid) {
+			simple_unlock(&uihashtbl_slock);
+			if (newuip)
+				free(newuip, M_PROC);
 			return uip;
-	return NULL;
-}
+		}
 
-static void
-freeuidinfo(struct uidinfo *uip)
-{
-	LIST_REMOVE(uip, ui_hash);
-	FREE(uip, M_PROC);
-}
+	if (newuip == NULL) {
+		simple_unlock(&uihashtbl_slock);
+		newuip = malloc(sizeof(*uip), M_PROC, M_WAITOK | M_ZERO);
+		goto again;
+	}
+	uip = newuip;
 
-static struct uidinfo *
-allocuidinfo(uid_t uid)
-{
-	struct uidinfo *uip;
-	struct uihashhead *uipp;
-
-	uipp = UIHASH(uid);
-	MALLOC(uip, struct uidinfo *, sizeof(*uip), M_PROC, M_WAITOK);
 	LIST_INSERT_HEAD(uipp, uip, ui_hash);
 	uip->ui_uid = uid;
-	uip->ui_proccnt = 0;
-	uip->ui_sbsize = 0;
+	simple_unlock(&uihashtbl_slock);
+
 	return uip;
 }
 
@@ -939,23 +936,10 @@ chgproccnt(uid_t uid, int diff)
 	if (diff == 0)
 		return 0;
 
-	if ((uip = getuidinfo(uid)) != NULL) {
-		uip->ui_proccnt += diff;
-		KASSERT(uip->ui_proccnt >= 0);
-		if (uip->ui_proccnt > 0)
-			return uip->ui_proccnt;
-		else {
-			if (uip->ui_sbsize == 0)
-				freeuidinfo(uip);
-			return 0;
-		}
-	} else {
-		if (diff < 0)
-			panic("chgproccnt: lost user %lu", (unsigned long)uid);
-		uip = allocuidinfo(uid);
-		uip->ui_proccnt = diff;
-		return uip->ui_proccnt;
-	}
+	uip = uid_find(uid);
+	uip->ui_proccnt += diff;
+	KASSERT(uip->ui_proccnt >= 0);
+	return uip->ui_proccnt;
 }
 
 int
@@ -963,23 +947,15 @@ chgsbsize(uid_t uid, u_long *hiwat, u_long to, rlim_t max)
 {
 	*hiwat = to;
 	return 1;
-#ifdef notyet
 	struct uidinfo *uip;
 	rlim_t nsb;
-	int rv = 0;
 
-	if ((uip = getuidinfo(uid)) == NULL)
-		uip = allocuidinfo(uid);
+	uip = uid_find(uid);
 	nsb = uip->ui_sbsize + to - *hiwat;
 	if (to > *hiwat && nsb > max)
-		goto done;
+		return 0;
 	*hiwat = to;
 	uip->ui_sbsize = nsb;
-	rv = 1;
 	KASSERT(uip->ui_sbsize >= 0);
-done:
-	if (uip->ui_sbsize == 0 && uip->ui_proccnt == 0)
-		freeuidinfo(uip);
-	return rv;
-#endif
+	return 1;
 }

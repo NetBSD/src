@@ -1,4 +1,4 @@
-/* $NetBSD: pcppivar.h,v 1.2.38.2 2005/03/19 08:34:33 yamt Exp $ */
+/* $NetBSD: pcppivar.h,v 1.2.38.3 2005/03/26 18:19:19 yamt Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -27,13 +27,34 @@
  * rights to redistribute these changes.
  */
 
+#ifndef _PCPPIVAR_H_
+#define _PCPPIVAR_H_
+
 typedef void *pcppi_tag_t;
 
 struct pcppi_attach_args {
 	pcppi_tag_t pa_cookie;
 };
 
+struct pcppi_softc {
+        struct device sc_dv;  
+
+        bus_space_tag_t sc_iot;
+        bus_space_handle_t sc_ppi_ioh;
+        struct attimer_softc *sc_timer;
+        
+        struct callout sc_bell_ch;
+
+        int sc_bellactive, sc_bellpitch;
+        int sc_slp;
+        int sc_timeout;
+};
+
+void pcppi_attach(struct pcppi_softc *);
+
 #define	PCPPI_BELL_SLEEP	0x01	/* synchronous; sleep for complete */
 #define	PCPPI_BELL_POLL		0x02	/* synchronous; poll for complete */
 
 void pcppi_bell(pcppi_tag_t, int, int, int);
+
+#endif /* ! _PCPPIVAR_H_ */

@@ -1,11 +1,11 @@
-/*	$NetBSD: if.h,v 1.100.2.1 2005/03/19 08:36:31 yamt Exp $	*/
+/*	$NetBSD: if.h,v 1.100.2.2 2005/03/26 18:19:20 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by William Studnemund and Jason R. Thorpe.
+ * by William Studenmund and Jason R. Thorpe.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -331,6 +331,11 @@ struct ifnet {				/* and the entries */
 #define	IFF_LINK2	0x4000		/* per link layer defined bit */
 #define	IFF_MULTICAST	0x8000		/* supports multicast */
 
+#define	IFFBITS \
+    "\020\1UP\2BROADCAST\3DEBUG\4LOOPBACK\5POINTOPOINT\6NOTRAILERS" \
+    "\7RUNNING\10NOARP\11PROMISC\12ALLMULTI\13OACTIVE\14SIMPLEX" \
+    "\15LINK0\16LINK1\17LINK2\20MULTICAST"
+
 /* flags set internally only: */
 #define	IFF_CANTCHANGE \
 	(IFF_BROADCAST|IFF_POINTOPOINT|IFF_RUNNING|IFF_OACTIVE|\
@@ -353,6 +358,10 @@ struct ifnet {				/* and the entries */
 #define	IFCAP_CSUM_TCPv4_Rx	0x0020	/* can do IPv4/TCP (Rx only) */
 #define	IFCAP_CSUM_UDPv4_Rx	0x0040	/* can do IPv4/UDP (Rx only) */
 #define	IFCAP_TSOv4		0x0080	/* can do TCPv4 segmentation offload */
+
+#define	IFCAPBITS \
+    "\020\1IP4CSUM\2TCP4CSUM\3UDP4CSUM\4TCP6CSUM\5UDP6CSUM\6TCP4CSUM_Rx" \
+    "\7UDP4CSUM_Rx\10TSO4"
 
 /*
  * Output queues (ifp->if_snd) and internetwork datagram level (pup level 1)

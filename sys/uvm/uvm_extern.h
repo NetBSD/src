@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.98.4.2 2005/01/25 12:58:28 yamt Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.98.4.3 2005/03/26 18:19:20 yamt Exp $	*/
 
 /*
  *
@@ -642,6 +642,7 @@ int			uvm_sysctl(int *, u_int, void *, size_t *,
 int			uvm_mmap(struct vm_map *, vaddr_t *, vsize_t,
 			    vm_prot_t, vm_prot_t, int,
 			    void *, voff_t, vsize_t);
+vaddr_t			uvm_default_mapaddr(struct proc *, vaddr_t, vsize_t);
 
 /* uvm_page.c */
 struct vm_page		*uvm_pagealloc_strat(struct uvm_object *,

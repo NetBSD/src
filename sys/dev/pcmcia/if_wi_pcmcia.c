@@ -1,4 +1,4 @@
-/* $NetBSD: if_wi_pcmcia.c,v 1.59.2.2 2005/03/19 08:35:34 yamt Exp $ */
+/* $NetBSD: if_wi_pcmcia.c,v 1.59.2.3 2005/03/26 18:19:20 yamt Exp $ */
 
 /*-
  * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.59.2.2 2005/03/19 08:35:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.59.2.3 2005/03/26 18:19:20 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -211,6 +211,9 @@ static const struct pcmcia_product wi_pcmcia_products[] = {
 	{ PCMCIA_VENDOR_LINKSYS2, PCMCIA_PRODUCT_LINKSYS2_WCF11,
 	  PCMCIA_CIS_LINKSYS2_WCF11 },
 
+	{ PCMCIA_VENDOR_MICROSOFT, PCMCIA_PRODUCT_MICROSOFT_MN_520,
+	  PCMCIA_CIS_MICROSOFT_MN_520 },
+
 	{ PCMCIA_VENDOR_PLANEX, PCMCIA_PRODUCT_PLANEX_GWNS11H,
 	  PCMCIA_CIS_PLANEX_GWNS11H },
 
@@ -231,6 +234,9 @@ static const struct pcmcia_product wi_pcmcia_products[] = {
 
 	{ PCMCIA_VENDOR_ASUSTEK, PCMCIA_PRODUCT_ASUSTEK_WL_100,
 	  PCMCIA_CIS_ASUSTEK_WL_100 },
+
+	{ PCMCIA_VENDOR_PROXIM, PCMCIA_PRODUCT_PROXIM_RANGELANDS_8430,
+	  PCMCIA_CIS_PROXIM_RANGELANDS_8430 },
 };
 static const size_t wi_pcmcia_nproducts =
     sizeof(wi_pcmcia_products) / sizeof(wi_pcmcia_products[0]);

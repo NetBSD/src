@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.209.2.1 2005/03/19 08:35:35 yamt Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.209.2.2 2005/03/26 18:19:20 yamt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.208 2005/01/21 20:26:09 imp Exp
+ *	NetBSD: pcmciadevs,v 1.210 2005/03/23 11:58:56 martin Exp
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -729,6 +729,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "Melco LPC3-TX",	}
 	,
 	{
+	    PCMCIA_VENDOR_MICROSOFT, PCMCIA_PRODUCT_MICROSOFT_MN_520,
+	    PCMCIA_CIS_MICROSOFT_MN_520,
+	    0,
+	    "Microsoft Corporation",
+	    "Microsoft MN-520 WLAN Card",	}
+	,
+	{
 	    PCMCIA_VENDOR_MOTOROLA, PCMCIA_PRODUCT_MOTOROLA_POWER144,
 	    PCMCIA_CIS_MOTOROLA_POWER144,
 	    0,
@@ -895,6 +902,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "Proxim",
 	    "Proxim RangeLAN2 7401",	}
+	,
+	{
+	    PCMCIA_VENDOR_PROXIM, PCMCIA_PRODUCT_PROXIM_RANGELANDS_8430,
+	    PCMCIA_CIS_PROXIM_RANGELANDS_8430,
+	    0,
+	    "Proxim",
+	    "Proxim RangeLAN-DS 8430",	}
 	,
 	{
 	    PCMCIA_VENDOR_PSION, PCMCIA_PRODUCT_PSION_GOLDCARD,
@@ -2087,6 +2101,14 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_CIS_INVALID,
 	    0,
 	    "Asustek Computer",
+	    NULL,
+	},
+	{
+	    PCMCIA_VENDOR_MICROSOFT,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    0,
+	    "Microsoft Corporation",
 	    NULL,
 	},
 	{

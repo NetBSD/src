@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.130.4.2 2005/03/19 08:34:04 yamt Exp $	*/
+/*	$NetBSD: tulip.c,v 1.130.4.3 2005/03/26 18:19:19 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.130.4.2 2005/03/19 08:34:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.130.4.3 2005/03/26 18:19:19 yamt Exp $");
 
 #include "bpfilter.h"
 
@@ -2817,7 +2817,7 @@ tlp_filter_setup(sc)
 
 	/*
 	 * Set the OPMODE register.  This will also resume the
-	 * transmit transmit process we idled above.
+	 * transmit process we idled above.
 	 */
 	TULIP_WRITE(sc, CSR_OPMODE, sc->sc_opmode);
 
