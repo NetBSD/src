@@ -1,8 +1,8 @@
-/*	$NetBSD: pathnames.h,v 1.4 1996/03/06 00:15:26 christos Exp $	*/
+/*	$NetBSD: pathnames.h,v 1.4.4.1 1997/01/26 05:51:49 rat Exp $	*/
 
 /*
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -33,10 +33,10 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pathnames.h	5.2 (Berkeley) 6/1/90
- *	$Id: pathnames.h,v 1.4 1996/03/06 00:15:26 christos Exp $
  */
 
 #define	_PATH_OBJDIR		"obj"
+#define	_PATH_OBJDIRPREFIX	"/usr/obj"
 #define	_PATH_DEFSHELLDIR	"/bin"
 #define	_PATH_DEFSYSMK		"sys.mk"
 #define	_PATH_DEFSYSPATH	"/usr/share/mk"

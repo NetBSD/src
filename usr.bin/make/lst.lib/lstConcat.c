@@ -1,8 +1,8 @@
-/*	$NetBSD: lstConcat.c,v 1.5 1995/06/14 15:20:53 christos Exp $	*/
+/*	$NetBSD: lstConcat.c,v 1.5.6.1 1997/01/26 05:52:07 rat Exp $	*/
 
 /*
- * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1988, 1989, 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Adam de Boor.
@@ -38,9 +38,9 @@
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)lstConcat.c	5.3 (Berkeley) 6/1/90";
+static char sccsid[] = "@(#)lstConcat.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: lstConcat.c,v 1.5 1995/06/14 15:20:53 christos Exp $";
+static char rcsid[] = "$NetBSD: lstConcat.c,v 1.5.6.1 1997/01/26 05:52:07 rat Exp $";
 #endif
 #endif /* not lint */
 
@@ -155,7 +155,7 @@ Lst_Concat (l1, l2, flags)
 
 	/*
 	 * Finish bookkeeping. The last new element becomes the last element
-	 * of list one. 
+	 * of list one.
 	 */
 	list1->lastPtr = last;
 
@@ -179,4 +179,4 @@ Lst_Concat (l1, l2, flags)
 
     return (SUCCESS);
 }
-	
+

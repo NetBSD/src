@@ -1,6 +1,7 @@
-.\"	$NetBSD: make.1,v 1.14 1996/03/15 21:52:32 christos Exp $
-.\" Copyright (c) 1990 The Regents of the University of California.
-.\" All rights reserved.
+.\"	$NetBSD: make.1,v 1.14.4.1 1997/01/26 05:51:44 rat Exp $
+.\"
+.\" Copyright (c) 1990, 1993
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -30,9 +31,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	from: @(#)make.1	5.7 (Berkeley) 7/24/91
+.\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd July 24, 1991
+.Dd March 19, 1994
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -40,7 +41,7 @@
 .Nd maintain program dependencies
 .Sh SYNOPSIS
 .Nm make
-.Op Fl Beiknqrstv
+.Op Fl Beiknqrst
 .Op Fl D Ar variable
 .Op Fl d Ar flags
 .Op Fl f Ar makefile
@@ -49,6 +50,7 @@
 .Op Fl j Ar max_jobs
 .Op Fl m Ar directory
 .Ek
+.Op Fl V Ar variable
 .Op Ar variable=value
 .Op Ar target ...
 .Sh DESCRIPTION
@@ -75,7 +77,7 @@ and makefiles, please refer to
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Fl B 
+.It Fl B
 Try to be backwards compatible by executing a single shell per command and
 by executing the commands to make the sources of a dependency line in sequence.
 .It Fl D Ar variable
@@ -142,7 +144,7 @@ before each command line in the makefile.
 .It Fl j Ar max_jobs
 Specify the maximum number of jobs that
 .Nm make
-may have running at any one time. Turns compatibility mode off, unless the 
+may have running at any one time. Turns compatibility mode off, unless the
 .Ar B
 flag is also specified.
 .It Fl k
@@ -172,6 +174,16 @@ before each command line in the makefile.
 .It Fl t
 Rather than re-building a target as specified in the makefile, create it
 or update its modification time to make it appear up-to-date.
+.It Fl V Ar variable
+Print
+.Nm make Ns 's
+idea of the value of
+.Ar variable ,
+in the global context.
+Do not build any targets.
+Multiple instances of this option may be specified;
+the variables will be printed one per line,
+with a blank line for each null or undefined variable.
 .It Ar variable=value
 Set the value of the variable
 .Ar variable
@@ -416,6 +428,28 @@ variable which is then
 entered into the environment for all programs which
 .Nm make
 executes.
+.It Ev PWD
+Alternate path to the current directory.
+.Nm make
+normally sets
+.Ql Va .CURDIR
+to the canonical path given by
+.Xr getcwd 2 .
+However, if the environment variable
+.Ql Ev PWD
+is set and gives a path to the current directory, then
+.Nm make
+sets
+.Ql Va .CURDIR
+to the value of
+.Ql Ev PWD
+instead.
+.Ql Ev PWD
+is set to the value of
+.Ql Va .OBJDIR
+for all programs which
+.Nm make
+executes.
 .El
 .Pp
 Variable expansion may be modified to select or modify each word of the
@@ -449,30 +483,38 @@ This is identical to
 .Ql Cm M ,
 but selects all words which do not match
 the rest of the modifier.
+.It Cm Q
+Quotes every shell meta-character in the variable, so that it can be passed
+safely through recursive invocations of
+.Nm .
 .It Cm R
 Replaces each word in the variable with everything but its suffix.
 .Sm off
-.It Cm S No \&/ Ar old_pattern Xo
-.No \&/ Ar new_pattern
-.No \&/ Op Cm g
+.It Cm S No \&/ Ar old_string Xo
+.No \&/ Ar new_string
+.No \&/ Op Cm 1g
 .Xc
 .Sm on
 Modify the first occurrence of
-.Ar old_pattern
-in each word to be replaced with
-.Ar new_pattern .
+.Ar old_string
+in the variable's value, replacing it with
+.Ar new_string .
 If a
 .Ql g
 is appended to the last slash of the pattern, all occurrences
 in each word are replaced.
+If a
+.Ql 1
+is appended to the last slash of the pattern, only the first word
+is affected.
 If
-.Ar old_pattern
-begins with a carat
+.Ar old_string
+begins with a caret
 .Pq Ql ^ ,
-.Ar old_pattern
+.Ar old_string
 is anchored at the beginning of each word.
 If
-.Ar old_pattern
+.Ar old_string
 ends with a dollar sign
 .Pq Ql \&$ ,
 it is anchored at the end of each word.
@@ -481,7 +523,11 @@ Inside
 an ampersand
 .Pq Ql &
 is replaced by
-.Ar old_pattern .
+.Ar old_string
+(without any
+.Ql ^
+or
+.Ql \&$ ) .
 Any character may be used as a delimiter for the parts of the modifier
 string.
 The anchoring, ampersand and delimiter characters may be escaped with a
@@ -494,8 +540,36 @@ and
 .Ar new_string
 with the single exception that a backslash is used to prevent the expansion
 of a dollar sign
-.Pq Ql \&$
+.Pq Ql \&$ ,
 not a preceding dollar sign as is usual.
+.Sm off
+.It Cm C No \&/ Ar pattern Xo
+.No \&/ Ar replacement
+.No \&/ Op Cm 1g
+.Xc
+.Sm on
+The
+.Cm C
+modifier is just like the
+.Cm S
+modifier except that the the old and new strings, instead of being
+simple strings, are a regular expression (see
+.Xr regex 3 )
+and an
+.Xr ed 1 Ns \-style
+replacement string.  Normally, the first occurrence of the pattern in
+each word of the value is changed.  The
+.Ql 1
+modifier causes the substitution to apply to at most one word; the
+.Ql g
+modifier causes the substitution to apply to as many instances of the
+search pattern as occur in the word or words it is found in.  Note that
+.Ql 1
+and
+.Ql g
+are orthogonal; the former specifies whether multiple words are
+potentially affected, the latter whether multiple substitutions can
+potentially occur within each affected word.
 .It Cm T
 Replaces each word in the variable with its last component.
 .It Ar old_string=new_string
@@ -503,23 +577,23 @@ This is the
 .At V
 style variable substitution.
 It must be the last modifier specified.
-If 
+If
 .Ar old_string
 or
 .Ar new_string
 do not contain the pattern matching character
 .Ar %
-then it is assumed that they are 
+then it is assumed that they are
 anchored at the end of each word, so only suffixes or entire
-words may be replaced. Otherwise 
+words may be replaced. Otherwise
 .Ar %
-is the substring of 
-.Ar old_string 
+is the substring of
+.Ar old_string
 to be replaced in
 .Ar new_string
 .El
 .Sh INCLUDE STATEMENTS, CONDITIONALS AND FOR LOOPS
-Makefile inclusion, conditional structures and for loops  reminiscent 
+Makefile inclusion, conditional structures and for loops  reminiscent
 of the C programming language are provided in
 .Nm make .
 All such structures are identified by a line beginning with a single
@@ -645,7 +719,7 @@ As in C,
 .Nm make
 will only evaluate a conditional as far as is necessary to determine
 its value.
-Parenthesis may be used to change the order of evaluation.
+Parentheses may be used to change the order of evaluation.
 The boolean operator
 .Ql Ic \&!
 may be used to logically negate an entire
@@ -721,14 +795,14 @@ In both cases this continues until a
 or
 .Ql Ic .endif
 is found.
-.Pp 
+.Pp
 For loops are typically used to apply a set of rules to a list of files.
 The syntax of a for loop is:
 .Bl -tag -width Ds
 .It Xo
 .Ic \&.for
-.Ar variable 
-.Ic in 
+.Ar variable
+.Ic in
 .Ar expression
 .Xc
 .It Xo
@@ -739,12 +813,12 @@ The syntax of a for loop is:
 .Xc
 .El
 After the for
-.Ic expression 
-is evaluated, it is split into words. The 
+.Ic expression
+is evaluated, it is split into words. The
 iteration
 .Ic variable
-is successively set to each word, and substituted in the 
-.Ic make-rules 
+is successively set to each word, and substituted in the
+.Ic make-rules
 inside the body of the for loop.
 .Sh COMMENTS
 Comments begin with a hash
@@ -899,10 +973,12 @@ If no sources are specified, any previous specified suffices are deleted.
 .Sh ENVIRONMENT
 .Nm Make
 utilizes the following environment variables, if they exist:
+.Ev MACHINE ,
 .Ev MAKE ,
-.Ev MAKEFLAGS
+.Ev MAKEFLAGS ,
+.Ev MAKEOBJDIR ,
 and
-.Ev MAKEOBJDIR .
+.Ev PWD .
 .Sh FILES
 .Bl -tag -width /usr/share/mk -compact
 .It .depend
