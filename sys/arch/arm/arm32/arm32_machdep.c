@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.31 2003/04/18 11:08:24 scw Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.32 2003/04/18 22:30:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -151,6 +151,13 @@ arm32_vector_init(vaddr_t va, int which)
 		 * cpu_setup()) because the vector page needs to be
 		 * accessible *before* cpu_startup() is called.
 		 * Think ddb(9) ...
+		 *
+		 * NOTE: If the CPU control register is not readable,
+		 * this will totally fail!  We'll just assume that
+		 * any system that has high vector support has a
+		 * readable CPU control register, for now.  If we
+		 * ever encounter one that does not, we'll have to
+		 * rethink this.
 		 */
 		cpu_control(CPU_CONTROL_VECRELOC, CPU_CONTROL_VECRELOC);
 	}
