@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.64 2000/08/20 21:50:11 thorpej Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.65 2000/09/24 07:31:28 erh Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou.  All rights reserved.
@@ -119,13 +119,19 @@ sys_ptrace(p, v, retval)
 			return (EINVAL);
 
 		/*
-		 *	(2) it's already being traced, or
+		 *  (2) it's a system process
+		 */
+		if (t->p_flag & P_SYSTEM)
+			return (EPERM);
+
+		/*
+		 *	(3) it's already being traced, or
 		 */
 		if (ISSET(t->p_flag, P_TRACED))
 			return (EBUSY);
 
 		/*
-		 *	(3) it's not owned by you, or is set-id on exec
+		 *	(4) it's not owned by you, or is set-id on exec
 		 *	    (unless you're root), or...
 		 */
 		if ((t->p_cred->p_ruid != p->p_cred->p_ruid ||
@@ -134,16 +140,15 @@ sys_ptrace(p, v, retval)
 			return (error);
 
 		/*
-		 *	(4) ...it's init, which controls the security level
+		 *	(5) ...it's init, which controls the security level
 		 *	    of the entire system, and the system was not
-		 *          compiled with permanently insecure mode turned
-		 *	    on.
+		 *	    compiled with permanently insecure mode turned on
 		 */
 		if (t == initproc && securelevel > -1)
 			return (EPERM);
 
 		/*
-		 * (4) the tracer is chrooted, and its root directory is
+		 * (6) the tracer is chrooted, and its root directory is
 		 * not at or above the root directory of the tracee
 		 */
 
