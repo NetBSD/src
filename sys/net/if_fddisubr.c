@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fddisubr.c,v 1.13 1997/04/02 21:23:27 christos Exp $	*/
+/*	$NetBSD: if_fddisubr.c,v 1.14 1997/04/03 21:07:42 christos Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996
@@ -263,43 +263,43 @@ fddi_output(ifp, m0, dst, rt0)
 #endif
 #ifdef NETATALK
 	case AF_APPLETALK: {
-	    struct at_ifaddr *aa;
-            if (!aarpresolve(ac, m, (struct sockaddr_at *)dst, edst)) {
+		struct at_ifaddr *aa;
+		if (!aarpresolve(ifp, m, (struct sockaddr_at *)dst, edst)) {
 #ifdef NETATALKDEBUG
-                extern char *prsockaddr(struct sockaddr *);
-                printf("aarpresolv: failed for %s\n", prsockaddr(dst));
+			printf("aarpresolv: failed\n");
 #endif
-                return (0);
-            }
-	    /*
-	     * ifaddr is the first thing in at_ifaddr
-	     */
-	    if ((aa = (struct at_ifaddr *)at_ifawithnet(
-			(struct sockaddr_at *)dst, ifp->if_addrlist))
-		== 0)
-		goto bad;
+			return (0);
+		}
+		/*
+		 * ifaddr is the first thing in at_ifaddr
+		 */
+		if ((aa = (struct at_ifaddr *)at_ifawithnet(
+		    (struct sockaddr_at *)dst, ifp)) == NULL)
+			goto bad;
 	    
-	    /*
-	     * In the phase 2 case, we need to prepend an mbuf for the llc header.
-	     * Since we must preserve the value of m, which is passed to us by
-	     * value, we m_copy() the first mbuf, and use it for our llc header.
-	     */
-	    if (aa->aa_flags & AFA_PHASE2) {
-		struct llc llc;
+		/*
+		 * In the phase 2 case, we need to prepend an mbuf for the llc
+		 * header. Since we must preserve the value of m, which is
+		 * passed to us by value, we m_copy() the first mbuf, and use
+		 * it for our llc header.
+		 */
+		if (aa->aa_flags & AFA_PHASE2) {
+			struct llc llc;
 
-		M_PREPEND(m, sizeof(struct llc), M_WAIT);
-		if (m == 0)
-			senderr(ENOBUFS);
-		llc.llc_dsap = llc.llc_ssap = LLC_SNAP_LSAP;
-		llc.llc_control = LLC_UI;
-		bcopy(at_org_code, llc.llc_snap_org_code, sizeof(at_org_code));
-		llc.llc_snap_ether_type = htons(ETHERTYPE_AT);
-		bcopy(&llc, mtod(m, caddr_t), sizeof(struct llc));
-		etype = 0;
-	    } else {
-		etype = htons(ETHERTYPE_AT);
-	    }
-	    break;
+			M_PREPEND(m, sizeof(struct llc), M_WAIT);
+			if (m == 0)
+				senderr(ENOBUFS);
+			llc.llc_dsap = llc.llc_ssap = LLC_SNAP_LSAP;
+			llc.llc_control = LLC_UI;
+			bcopy(at_org_code, llc.llc_snap_org_code,
+			    sizeof(at_org_code));
+			llc.llc_snap_ether_type = htons(ETHERTYPE_AT);
+			bcopy(&llc, mtod(m, caddr_t), sizeof(struct llc));
+			etype = 0;
+		} else {
+			etype = htons(ETHERTYPE_AT);
+		}
+		break;
 	}
 #endif /* NETATALK */
 #ifdef NS
