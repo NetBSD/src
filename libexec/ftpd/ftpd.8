@@ -1,4 +1,4 @@
-.\"	$NetBSD: ftpd.8,v 1.66 2001/08/31 00:05:31 lukem Exp $
+.\"	$NetBSD: ftpd.8,v 1.67 2001/10/13 13:50:18 lukem Exp $
 .\"
 .\" Copyright (c) 1997-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -67,7 +67,7 @@
 .\"
 .\"     @(#)ftpd.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd August 31, 2001
+.Dd October 13, 2001
 .Dt FTPD 8
 .Os
 .Sh NAME
@@ -629,6 +629,7 @@ The following
 directives should be used:
 .Dl "modify guest off"
 .Dl "umask  guest 0707"
+.Dl "upload guest on"
 .Pp
 This will result in anonymous users being able to upload files to this
 directory, but they will not be able to download them, delete them, or
