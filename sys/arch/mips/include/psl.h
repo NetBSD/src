@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.9 1998/09/11 16:46:32 jonathan Exp $	*/
+/*	$NetBSD: psl.h,v 1.9.2.1 1998/10/15 03:25:09 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -44,7 +44,7 @@
  * configured CPU types.
  */
 
-#include <mips/cpuregs.h>
+#include <mips/cpuarch.h>
 
 /*
  * mips3-specific  definitions

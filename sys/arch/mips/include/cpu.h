@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.25 1998/09/11 16:46:31 jonathan Exp $	*/
+/*	$NetBSD: cpu.h,v 1.25.2.1 1998/10/15 03:25:08 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -168,9 +168,13 @@ extern u_int32_t mips3_timer_delta;
 /*
  * Misc prototypes.
  */
-
+struct proc;
 struct user;
 
+/* trap.c */
+void	child_return __P((struct proc *));
+
+/* mips_machdep.c */
 caddr_t	allocsys __P((caddr_t));
 void	dumpsys __P((void));
 int	savectx __P((struct user *));
@@ -179,66 +183,10 @@ void	mips_init_proc0 __P((caddr_t));
 
 /* locore.S */
 extern void savefpregs __P((struct proc *));
+extern void switchfpregs __P((struct proc *, struct proc *));
 
 /* mips_machdep.c */
 extern void cpu_identify __P((void));
 extern void mips_vector_init __P((void));
-
-/*
- * MIPS CPU types (cp_imp).
- */
-#define	MIPS_R2000	0x01	/* MIPS R2000 CPU		ISA I   */
-#define	MIPS_R3000	0x02	/* MIPS R3000 CPU		ISA I   */
-#define	MIPS_R6000	0x03	/* MIPS R6000 CPU		ISA II	*/
-#define	MIPS_R4000	0x04	/* MIPS R4000/4400 CPU		ISA III	*/
-#define MIPS_R3LSI	0x05	/* LSI Logic R3000 derivate	ISA I	*/
-#define	MIPS_R6000A	0x06	/* MIPS R6000A CPU		ISA II	*/
-#define	MIPS_R3IDT	0x07	/* IDT R3000 derivate		ISA I	*/
-#define	MIPS_R10000	0x09	/* MIPS R10000/T5 CPU		ISA IV  */
-#define	MIPS_R4200	0x0a	/* MIPS R4200 CPU (ICE)		ISA III */
-#define MIPS_R4300	0x0b	/* NEC VR4300 CPU		ISA III */
-#define MIPS_UNKC2	0x0c	/* unnanounced product cpu	ISA III */
-#define	MIPS_R8000	0x10	/* MIPS R8000 Blackbird/TFP	ISA IV  */
-#define	MIPS_R4600	0x20	/* QED R4600 Orion		ISA III */
-/* ID conflict */
-#define	MIPS_R4700	0x21	/* QED R4700 Orion		ISA III */
-#define	MIPS_R3SONY	MIPS_R4700 /* Sony R3000 CPU		ISA I CLASH */
-
-#define	MIPS_R3TOSH	0x22	/* Toshiba R3000 based CPU	ISA I	*/
-/* ID conflict */
-#define	MIPS_R5000	0x23	/* MIPS R5000 based CPU		ISA IV  */
-#define	MIPS_R3NKK	MIPS_R5000 /* NKK R3000 based CPU	ISA I  CLASH */
-
-#define	MIPS_RM5230	0x28	/* QED RM5230 based CPU		ISA IV  */
-
-
-/*
- * MIPS FPU types
- */
-#define	MIPS_SOFT	0x00	/* Software emulation		ISA I   */
-#define	MIPS_R2360	0x01	/* MIPS R2360 FPC		ISA I   */
-#define	MIPS_R2010	0x02	/* MIPS R2010 FPC		ISA I   */
-#define	MIPS_R3010	0x03	/* MIPS R3010 FPC		ISA I   */
-#define	MIPS_R6010	0x04	/* MIPS R6010 FPC		ISA II  */
-#define	MIPS_R4010	0x05	/* MIPS R4000/R4400 FPC		ISA II  */
-#define MIPS_R31LSI	0x06	/* LSI Logic derivate		ISA I	*/
-#define	MIPS_R10010	0x09	/* MIPS R10000/T5 FPU		ISA IV  */
-#define	MIPS_R4210	0x0a	/* MIPS R4200 FPC (ICE)		ISA III */
-#define MIPS_UNKF1	0x0b	/* unnanounced product cpu	ISA III */
-#define	MIPS_R8000	0x10	/* MIPS R8000 Blackbird/TFP	ISA IV  */
-#define	MIPS_R4600	0x20	/* QED R4600 Orion		ISA III */
-#define	MIPS_R3SONY	MIPS_R4700	/* Sony R3000 based FPU		ISA I   */
-#define	MIPS_R3TOSH	0x22	/* Toshiba R3000 based FPU	ISA I	*/
-/* ID conflict */
-#define	MIPS_R3NKK	MIPS_R5000 /* NKK R3000 based CPU	ISA I  CLASH */
-
-#define	MIPS_R5010	0x23	/* MIPS R5000 based FPU		ISA IV  */
-#define	MIPS_RM5230	0x28	/* QED RM5230 based FPU		ISA IV  */
-
-
-/*
- * Enable realtime clock (always enabled).
- */
-#define	enablertclock()
 
 #endif /* _CPU_H_ */
