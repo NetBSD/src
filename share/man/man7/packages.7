@@ -1,4 +1,4 @@
-.\"	$NetBSD: packages.7,v 1.20 1999/09/12 18:47:12 kleink Exp $
+.\"	$NetBSD: packages.7,v 1.21 1999/10/07 12:45:38 hubertf Exp $
 .\"
 .\" from: NetBSD: bsd.pkg.mk,v 1.89 1998/06/01 21:30:10 hubertf Exp
 .\"
@@ -302,6 +302,8 @@ Says that the package uses
 .It USE_X11BASE	
 Says that the package installs itself into the X11 base directory
 .Dv ${X11BASE} .
+This is necessary for packages that install X11 fonts, application
+default files or Imake rule or template files. 
 .It USE_GTEXINFO	
 Says that the package uses gtexinfo.
 .It USE_MOTIF
