@@ -1,4 +1,4 @@
-#	$NetBSD: PAIN,v 1.40 1994/10/27 04:14:55 cgd Exp $
+#	$NetBSD: PAIN,v 1.41 1994/10/31 21:07:50 mycroft Exp $
 #
 # PAIN
 #
@@ -9,7 +9,7 @@ cpu		"I486_CPU"
 options		"DUMMY_NOPS"
 options		"MACHINE_NONCONTIG"
 options		XSERVER,UCONSOLE
-#options	"USER_LDT"
+options		"USER_LDT"
 
 ident		PAIN
 maxusers	16
