@@ -1,4 +1,4 @@
-/*	$NetBSD: dc.c,v 1.30 1996/10/16 02:10:33 jonathan Exp $	*/
+/*	$NetBSD: dc.c,v 1.31 1997/06/15 17:58:59 mhitch Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -81,6 +81,8 @@
 
 #include <machine/dc7085cons.h>
 #include <machine/pmioctl.h>
+
+#include <machine/locore.h>	/* XXX wbflush() */
 
 #include <pmax/pmax/pmaxtype.h>
 #include <pmax/pmax/cons.h>
@@ -724,10 +726,10 @@ dcrint(sc)
 		}
 		/* the keyboard requires special translation */
 		if (raster_console() && tp == dc_tty[DCKBD_PORT]) {
-#ifdef KADB
+#ifdef MDB
 			if (cc == LK_DO) {
 				spl0();
-				kdbpanic();
+				mdbpanic();
 				return;
 			}
 #endif
