@@ -1,3 +1,5 @@
+/*	$NetBSD: strcmp.S,v 1.2 1998/04/03 22:59:30 matthias Exp $	*/
+
 /* 
  * Written by Randy Hyde, 1993
  * Public domain.
@@ -6,7 +8,7 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: strcmp.S,v 1.1 1996/11/07 07:36:25 matthias Exp $")
+	RCSID("$NetBSD: strcmp.S,v 1.2 1998/04/03 22:59:30 matthias Exp $")
 #endif
 
 /*
@@ -15,7 +17,7 @@
  *	compare strings s1 and s2.
  */
 
-ENTRY(strcmp)
+KENTRY(strcmp, 8)
 	enter	[r3,r4,r5],0
 	movd	B_ARG1,r1
 	movd	B_ARG0,r2
@@ -117,13 +119,13 @@ ENTRY(strcmp)
 
 9:	movqd	0,r0
 	exit	[r3,r4,r5]
-	ret	0
+	ret	ARGS
 
 8:	blo	0f			/* Operands were reversed on cmp. */
 	movqd	-1,r0			/* It's >, so return one. */
 	exit	[r3,r4,r5]
-	ret	0
+	ret	ARGS
 
 0:	movqd	1,r0			/* It's <, so return -1. */
 	exit	[r3,r4,r5]
-	ret	0
+	ret	ARGS
