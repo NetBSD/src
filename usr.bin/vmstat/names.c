@@ -41,14 +41,11 @@ void read_names()
 }
 #endif
 
-#ifdef __386BSD__
-/*
- * 386BSD support added by Rodney W. Grimes, rgrimes@agora.rain.com 3/24/93
- */
+#ifdef i386
 #include <i386/isa/isa_device.h>
 
 char *defdrives[] = { "fd0", "fd1", "wd0", "wd1",
-	              "as0", "as1", "sd0", "sd1", 0 };
+		      "sd0", "sd1", "sd2", "sd3", 0 };
 
 void
 read_names()
@@ -60,10 +57,6 @@ read_names()
 	struct isa_driver drv;
 	char name[10];
 	int i = 0;
-	int dummydk = 0;
-	int fdunit = 0;
-	int wdunit = 0;
-	int ahaunit = 0;
 
 	isa_bio = nl[X_ISA_BIO].n_value;
 	if (isa_bio == 0) {
@@ -82,20 +75,15 @@ read_names()
 		(void)kvm_read(dev.id_driver, &drv, sizeof drv);
 		(void)kvm_read(drv.name, name, sizeof name);
 
-		/*
-		 * 386bsd is kinda brain dead about dk_units, or at least
-		 * I can't figure out how to get the real unit mappings
-		 */
-		if (strcmp(name, "fd") == 0) dummydk = fdunit++;
-		if (strcmp(name, "wd") == 0) dummydk = wdunit++;
-		if (strcmp(name, "aha") == 0) dummydk = ahaunit++;
-
 		dr_name[i] = p;
-		p += sprintf(p, "%s%d", name, dummydk) + 1;
+		if( strlen(name) > 2 && name[strlen(name)-1]=='c')
+			name[strlen(name)-1] = '\0';
+
+		p += sprintf(p, "%s%d", name, dev.id_unit) + 1;
 		i++;
 	}
 }
-#endif /* __386BSD__ */
+#endif /* i386 */
 
 #ifdef hp300
 #include <hp300/dev/device.h>

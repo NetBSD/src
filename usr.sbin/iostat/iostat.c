@@ -95,7 +95,7 @@ struct nlist nl[] = {
 #endif
 #ifdef __386BSD__
 #define	X_ISA_BIO	(X_END+1)
-	{ "_isa_devtab_bio" },
+	{ "_isa_subdev" },
 #endif /* __386BSD__ */
 	{ NULL },
 };
@@ -311,7 +311,7 @@ phdr(notused)
 	(void)printf("      tty");
 	for (i = 0; i < dk_ndrive; i++)
 		if (dr_select[i])
-			(void)printf("          %3.3s ", dr_name[i]);
+			(void)printf("        %5.5s ", dr_name[i]);
 	(void)printf("         cpu\n tin tout");
 	for (i = 0; i < dk_ndrive; i++)
 		if (dr_select[i])
