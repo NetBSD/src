@@ -1,4 +1,4 @@
-/* $NetBSD: style,v 1.12 2000/03/02 08:51:54 lukem Exp $ */
+/* $NetBSD: style,v 1.13 2000/03/10 12:01:15 lukem Exp $ */
 
 /*
  * The revision control tag appears first, with a blank line after it.
@@ -30,7 +30,7 @@
 #ifndef __lint
 __COPYRIGHT("@(#) Copyright (c) 2000\n\
 	The NetBSD Foundation, inc. All rights reserved.\n");
-__RCSID("$NetBSD: style,v 1.12 2000/03/02 08:51:54 lukem Exp $");
+__RCSID("$NetBSD: style,v 1.13 2000/03/10 12:01:15 lukem Exp $");
 #endif /* !__lint */
 
 /*
@@ -118,7 +118,7 @@ int main(int, char *[]);
  * If the macro is an expression, wrap the expression in parenthesis.
  * If the macro is more than a single statement, use ``do { ... } while (0)'',
  * so that a trailing semicolon works.  Right-justify the backslashes; it
- * makes it easier to read. The /* CONSTCOND */ is to satisfy lint(1).
+ * makes it easier to read. The CONSTCOND comment is to satisfy lint(1).
  */
 #define	MACRO(v, w, x, y)						\
 do {									\
