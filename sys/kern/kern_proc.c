@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.46 2002/03/08 20:48:40 thorpej Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.47 2002/04/12 17:02:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.46 2002/03/08 20:48:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.47 2002/04/12 17:02:33 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -393,8 +393,8 @@ enterpgrp(p, pgid, mksess)
 				panic("enterpgrp: mksession and p != curproc");
 #endif
 		} else {
+			SESSHOLD(p->p_session);
 			pgrp->pg_session = p->p_session;
-			pgrp->pg_session->s_count++;
 		}
 		pgrp->pg_id = pgid;
 		LIST_INIT(&pgrp->pg_members);
@@ -447,12 +447,7 @@ pgdelete(pgrp)
 	    pgrp->pg_session->s_ttyp->t_pgrp == pgrp)
 		pgrp->pg_session->s_ttyp->t_pgrp = NULL;
 	LIST_REMOVE(pgrp, pg_hash);
-	if (--pgrp->pg_session->s_count == 0) {
-		/* Remove reference (if any) from tty to this session */
-		if (pgrp->pg_session->s_ttyp != NULL)
-			pgrp->pg_session->s_ttyp->t_session = NULL;
-		FREE(pgrp->pg_session, M_SESSION);
-	}
+	SESSRELE(pgrp->pg_session);
 	pool_put(&pgrp_pool, pgrp);
 }
 
