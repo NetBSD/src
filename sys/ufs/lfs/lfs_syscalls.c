@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.85 2003/03/08 02:55:49 perseant Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.86 2003/03/08 23:18:54 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,9 +71,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.85 2003/03/08 02:55:49 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.86 2003/03/08 23:18:54 perseant Exp $");
 
-#define LFS		/* for prototypes in syscallargs.h */
+#ifndef LFS
+# define LFS		/* for prototypes in syscallargs.h */
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
