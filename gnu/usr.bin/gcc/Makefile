@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 1997/06/24 12:25:57 chopps Exp $
+#	$NetBSD: Makefile,v 1.4 1997/10/18 06:21:28 lukem Exp $
 
 .if	(${MACHINE_ARCH} == "arm32") || \
 	(${MACHINE_ARCH} == "i386") || \
@@ -8,6 +8,9 @@
 	(${MACHINE_ARCH} == "sparc") || \
 	(${MACHINE_ARCH} == "vax")
 SUBDIR+=	common cc1 cc1plus cc1obj libgcc libobjc
+
+all-cc1 all-cc1plus all-cc1obj: all-common
+
 .endif
 
 SUBDIR+=	cc cpp g++
