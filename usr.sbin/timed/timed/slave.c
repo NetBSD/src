@@ -1,4 +1,4 @@
-/*	$NetBSD: slave.c,v 1.10 2002/07/06 22:08:31 wiz Exp $	*/
+/*	$NetBSD: slave.c,v 1.11 2002/07/10 22:44:22 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)slave.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: slave.c,v 1.10 2002/07/06 22:08:31 wiz Exp $");
+__RCSID("$NetBSD: slave.c,v 1.11 2002/07/10 22:44:22 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -67,7 +67,7 @@ int
 slave(void)
 {
 	int tries;
-	long electiontime, refusetime, looktime, looptime, adjtime;
+	long electiontime, refusetime, looktime, looptime, adjusttime;
 	u_short seq;
 	long fastelection;
 #define FASTTOUT 3
@@ -88,7 +88,7 @@ slave(void)
 	old_slavenet = 0;
 	seq = 0;
 	refusetime = 0;
-	adjtime = 0;
+	adjusttime = 0;
 
 	(void)gettimeofday(&ntime, 0);
 	electiontime = ntime.tv_sec + delay2;
@@ -233,7 +233,7 @@ loop:
 			 * is found.
 			 */
 			(void)gettimeofday(&otime, 0);
-			if (adjtime < otime.tv_sec)
+			if (adjusttime < otime.tv_sec)
 				looptime -= (looptime-otime.tv_sec)/2 + 1;
 
 			setmaster(msg);
@@ -244,7 +244,7 @@ loop:
 			(void)gettimeofday(&ntime, 0);
 			electiontime = ntime.tv_sec + delay2;
 			fastelection = ntime.tv_sec + FASTTOUT;
-			adjtime = ntime.tv_sec + SAMPLEINTVL*2;
+			adjusttime = ntime.tv_sec + SAMPLEINTVL*2;
 			break;
 
 		case TSP_SETTIME:

@@ -1,4 +1,4 @@
-/*	$NetBSD: measure.c,v 1.8 2001/09/02 00:13:06 reinoud Exp $	*/
+/*	$NetBSD: measure.c,v 1.9 2002/07/10 22:44:22 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)measure.c	8.2 (Berkeley) 3/26/95";
 #else
-__RCSID("$NetBSD: measure.c,v 1.8 2001/09/02 00:13:06 reinoud Exp $");
+__RCSID("$NetBSD: measure.c,v 1.9 2002/07/10 22:44:22 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -71,7 +71,7 @@ measure(u_long maxmsec,			/* wait this many msec at most */
 	u_long wmsec,			/* msec to wait for an answer */
 	char *hname,
 	struct sockaddr_in *addr,
-	int print)			/* print complaints on stderr */
+	int printerr)			/* print complaints on stderr */
 {
 	int length;
 	int measure_status;
@@ -271,7 +271,7 @@ quit:
 			   	measure_delta, trials,
 				inet_ntoa(addr->sin_addr), hname);
 		}
-	} else if (print) {
+	} else if (printerr) {
 		if (errno != 0)
 			fprintf(stderr, "measure %s: %s\n", hname,
 				strerror(errno));
