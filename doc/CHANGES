@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.212 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.213 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -506,3 +506,5 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 	ccdconfig(8): add CCDF_NOLABEL to ignore the on-disk (raw) disklabel
 		when creating a ccd.  [lukem 20031017]
 	GCC: Update to GCC 3.3.2.  [mrg 20031018]
+	hpcsh: Added j6x0tp(4) driver for Jornada 680/690 touch screen.
+		[uwe 20031019]
