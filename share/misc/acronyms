@@ -1,12 +1,14 @@
-$NetBSD: acronyms,v 1.103 2002/02/13 13:54:21 wiz Exp $
+$NetBSD: acronyms,v 1.104 2002/05/21 12:01:09 lukem Exp $
 
 AFAICR	as far as I can recall
 AFAICT	as far as I can tell
 AFAIK	as far as I know
 AFAIR	as far as I recall
+AFAIU	as far as I understand
 AFD	away from desktop
 AFK	away from keyboard
 AFW	away from window
+AIU	as I understand
 AIUI	as I understand it
 AKA	also known as
 ASAP	as soon as possible
