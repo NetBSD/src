@@ -1,4 +1,4 @@
-/*	$NetBSD: fsort.c,v 1.19 2001/05/15 11:19:45 jdolecek Exp $	*/
+/*	$NetBSD: fsort.c,v 1.20 2001/05/15 11:49:25 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -47,7 +47,7 @@
 #include "fsort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: fsort.c,v 1.19 2001/05/15 11:19:45 jdolecek Exp $");
+__RCSID("$NetBSD: fsort.c,v 1.20 2001/05/15 11:49:25 jdolecek Exp $");
 __SCCSID("@(#)fsort.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -188,21 +188,32 @@ fsort(binno, depth, top, filelist, nfiles, outfp, ftbl)
 				mfct++;
 				/* reduce number of open files */
 				if (mfct == MERGE_FNUM ||(c == EOF && ntfiles)) {
-					tmpbuf = malloc(bufend -
-					    crec->data);
-					memmove(tmpbuf, crec->data,
-					    bufend - crec->data);
-					fstack[base + ntfiles].fp
-					    = ftmp();
+					/*
+					 * Only copy extra incomplete crec
+					 * data if there are any.
+					 */
+					int nodata = (bufend >= (u_char *)crec
+					    && bufend <= crec->data);
+
+					if (!nodata) {
+						tmpbuf = malloc(bufend -
+						    crec->data);
+						memmove(tmpbuf, crec->data,
+						    bufend - crec->data);
+					}
+
+					fstack[base + ntfiles].fp = ftmp();
 					fmerge(0, MSTART, filelist,
-					    mfct, geteasy,
-					    fstack[base].fp,
+					    mfct, geteasy, fstack[base].fp,
 					    putrec, ftbl);
 					ntfiles++;
 					mfct = 0;
-					memmove(crec->data, tmpbuf,
-					    bufend - crec->data);
-					free(tmpbuf);
+
+					if (!nodata) {
+						memmove(crec->data, tmpbuf,
+						    bufend - crec->data);
+						free(tmpbuf);
+					}
 				}
 			} else {
 				fstack[base + ntfiles].fp= ftmp();
