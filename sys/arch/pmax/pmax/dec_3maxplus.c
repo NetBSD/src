@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_3maxplus.c,v 1.9.2.10 1999/05/11 06:43:15 nisimura Exp $ */
+/*	$NetBSD: dec_3maxplus.c,v 1.9.2.11 1999/05/26 05:24:54 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.9.2.10 1999/05/11 06:43:15 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.9.2.11 1999/05/26 05:24:54 nisimura Exp $");
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>	
@@ -140,14 +140,18 @@ extern volatile struct chiptime *mcclock_addr;	/* XXX */
 void
 dec_3maxplus_init()
 {
-	platform.iobus = "tc3maxplus";
+	u_int32_t prodtype;
 
+	prodtype = *(u_int32_t *)(ioasic_base + IOASIC_INTR);
+	prodtype &= KN03_INTR_PROD_JUMPER;
+
+	platform.iobus = "tc3maxplus";
 	platform.bus_reset = dec_3maxplus_bus_reset;
 	platform.cons_init = dec_3maxplus_cons_init;
 	platform.device_register = dec_3maxplus_device_register;
 
 	/* clear any memory errors from probes */
-	*(volatile u_int *)MIPS_PHYS_TO_KSEG1(KN03_SYS_ERRADR) = 0;
+	*(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN03_SYS_ERRADR) = 0;
 	kn03_wbflush();
 
 	ioasic_base = MIPS_PHYS_TO_KSEG1(KN03_SYS_ASIC);
@@ -175,26 +179,30 @@ dec_3maxplus_init()
 
 	mc_cpuspeed(mcclock_addr, MIPS_INT_MASK_1);
 
-	*(volatile u_int *)(ioasic_base + IOASIC_LANCE_DECODE) = 0x3;
-	*(volatile u_int *)(ioasic_base + IOASIC_SCSI_DECODE) = 0xe;
+	*(u_int32_t *)(ioasic_base + IOASIC_LANCE_DECODE) = 0x3;
+	*(u_int32_t *)(ioasic_base + IOASIC_SCSI_DECODE) = 0xe;
 #if 0
-	*(volatile u_int *)(ioasic_base + IOASIC_SCC0_DECODE) = (0x10|4);
-	*(volatile u_int *)(ioasic_base + IOASIC_SCC1_DECODE) = (0x10|6);
-	*(volatile u_int *)(ioasic_base + IOASIC_CSR) = 0x00000f00;
+	*(u_int32_t *)(ioasic_base + IOASIC_SCC0_DECODE) = (0x10|4);
+	*(u_int32_t *)(ioasic_base + IOASIC_SCC1_DECODE) = (0x10|6);
+	*(u_int32_t *)(ioasic_base + IOASIC_CSR) = 0x00000f00;
 #endif
 
 	/* XXX hard-reset LANCE */
-	*(volatile u_int *)(ioasic_base + IOASIC_CSR) |= 0x100;
+	*(u_int32_t *)(ioasic_base + IOASIC_CSR) |= 0x100;
 
 	/*
 	 * Initialize interrupts.
 	 */
-	*(volatile u_int *)(ioasic_base + IOASIC_IMSK) = KN03_INTR_PSWARN;
-	*(volatile u_int *)(ioasic_base + IOASIC_INTR) = 0;
+	*(u_int32_t *)(ioasic_base + IOASIC_IMSK) = KN03_INTR_PSWARN;
+	*(u_int32_t *)(ioasic_base + IOASIC_INTR) = 0;
 	kn03_wbflush();
 
-	sprintf(cpu_model, "DECstation 5000/2%c0 (3MAXPLUS)",
-	    CPUISMIPS3 ? '6' : '4');
+	if (prodtype)
+		sprintf(cpu_model, "DECstation 5000/%s (3MAXPLUS)",
+		    (CPUISMIPS3) ? "260" : "240");
+	else
+		sprintf(cpu_model, "DECsystem 5900%s (3MAXPLUS)",
+		    (CPUISMIPS3) ? "-260" : "");
 }
 
 /*
@@ -207,10 +215,10 @@ dec_3maxplus_bus_reset()
 	 * Reset interrupts, clear any errors from newconf probes
 	 */
 
-	*(volatile u_int *)MIPS_PHYS_TO_KSEG1(KN03_SYS_ERRADR) = 0;
+	*(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN03_SYS_ERRADR) = 0;
 	kn03_wbflush();
 
-	*(volatile u_int *)(ioasic_base + IOASIC_INTR) = 0;
+	*(u_int32_t *)(ioasic_base + IOASIC_INTR) = 0;
 	kn03_wbflush();
 }
 
@@ -267,7 +275,7 @@ dec_3maxplus_intr(cpumask, pc, status, cause)
 	unsigned cause;
 {
 	static int warned = 0;
-	u_long old_buscycle = latched_cycle_cnt;
+	unsigned old_buscycle = latched_cycle_cnt;
 
 	if (cpumask & MIPS_INT_MASK_4)
 		prom_haltbutton();
@@ -384,7 +392,7 @@ dec_3maxplus_memerr()
 	/* Fetch error address, ECC chk/syn bits, clear interrupt */
 	erradr = *(u_int *)MIPS_PHYS_TO_KSEG1(KN03_SYS_ERRADR);
 	errsyn = MIPS_PHYS_TO_KSEG1(KN03_SYS_ERRSYN);
-	*(volatile u_int *)MIPS_PHYS_TO_KSEG1(KN03_SYS_ERRADR) = 0;
+	*(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN03_SYS_ERRADR) = 0;
 	kn03_wbflush();
 
 	/* Send to kn02/kn03 memory subsystem handler */

@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_3max.c,v 1.6.2.7 1999/05/11 06:43:15 nisimura Exp $ */
+/*	$NetBSD: dec_3max.c,v 1.6.2.8 1999/05/26 05:24:54 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.6.2.7 1999/05/11 06:43:15 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.6.2.8 1999/05/26 05:24:54 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,7 +100,6 @@ extern u_int32_t iplmask[], oldiplmask[];
 /* XXX XXX XXX */
 
 void dec_3max_init __P((void));
-void dec_3max_os_init __P((void));
 void dec_3max_bus_reset __P((void));
 void dec_3max_cons_init __P((void));
 void dec_3max_device_register __P((struct device *, void *));
@@ -138,22 +137,12 @@ struct splsw spl_3max = {
 void
 dec_3max_init()
 {
-	platform.iobus = "tcbus";
+	u_int32_t csr;
 
-	platform.os_init = dec_3max_os_init;
+	platform.iobus = "tc3max";
 	platform.bus_reset = dec_3max_bus_reset;
 	platform.cons_init = dec_3max_cons_init;
 	platform.device_register = dec_3max_device_register;
-
-	strcpy(cpu_model, "DECstation 5000/200 (3MAX)");
-
-	dec_3max_os_init();
-}
-
-void
-dec_3max_os_init()
-{
-	u_int32_t csr;
 
 	/* clear any memory errors from new-config probes */
 	*(volatile u_int *)MIPS_PHYS_TO_KSEG1(KN02_SYS_ERRADR) = 0;
@@ -185,8 +174,9 @@ dec_3max_os_init()
 
 	/* no high resolution timer circuit; possibly never called */
 	clkread = nullclkread;
-}
 
+	strcpy(cpu_model, "DECstation 5000/200 (3MAX)");
+}
 
 /*
  * Initalize the memory system and I/O buses.
