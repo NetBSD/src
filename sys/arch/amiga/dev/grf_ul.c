@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_ul.c,v 1.3 1995/09/29 13:11:21 chopps Exp $	*/
+/*	$NetBSD: grf_ul.c,v 1.4 1995/10/07 19:48:08 chopps Exp $	*/
 #define UL_DEBUG
 
 /*
@@ -144,7 +144,7 @@ int ulowell_default_gfx = ULOWELL_DEFAULT_MON;
  * anyway.
  */
 
-u_long ulowell_clock[2] = { ULOWELL_OSC1, ULOWELL_OSC2 };
+u_long ulowell_clock[2] = { ULOWELL_OSC2, ULOWELL_OSC1 };
     
 static struct grfvideo_mode *current_mon;
 
