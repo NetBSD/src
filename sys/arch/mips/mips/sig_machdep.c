@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.1 2002/11/09 02:02:34 nisimura Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.2 2002/11/09 19:36:29 thorpej Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -120,7 +120,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 	
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.1 2002/11/09 02:02:34 nisimura Exp $"); 
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.2 2002/11/09 19:36:29 thorpej Exp $"); 
 
 #include "opt_cputype.h"
 #include "opt_compat_netbsd.h"
@@ -314,7 +314,7 @@ sys___sigreturn14(struct proc *p, void *v, register_t *retval)
 	if ((error = copyin(scp, &ksc, sizeof(ksc))) != 0)
 		return (error);
 
-	if ((int) ksc.sc_regs[ZERO] != 0xACEDBADE)	/* magic number */
+	if ((u_int) ksc.sc_regs[ZERO] != 0xacedbadeU)	/* magic number */
 		return (EINVAL);
 
 	/* Restore the register context. */
