@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.64 2000/10/03 23:50:52 thorpej Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.65 2000/10/04 07:01:52 enami Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -551,6 +551,8 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 		 */
 		if (((struct ethercom *)ifp)->ec_nvlans != 0)
 			vlan_input(ifp, m);
+		else
+			m_freem(m);
 		return;
 #endif /* NVLAN > 0 */
 	default:
