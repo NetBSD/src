@@ -1,4 +1,4 @@
-/*	$NetBSD: eject.c,v 1.5 1997/11/07 09:01:29 mikel Exp $	*/
+/*	$NetBSD: eject.c,v 1.6 1997/12/07 19:04:36 msaitoh Exp $	*/
 /*
  * Copyright (c) 1995
  *	Matthieu Herrb.  All rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: eject.c,v 1.5 1997/11/07 09:01:29 mikel Exp $");
+__RCSID("$NetBSD: eject.c,v 1.6 1997/12/07 19:04:36 msaitoh Exp $");
 #endif
 
 /*
@@ -296,9 +296,14 @@ main(argc, argv)
 			break;
 		case 'n':
 			for (i = 0; devtab[i].name != NULL; i++) {
-				printf("%9s => %s%c\n",
-					devtab[i].name,
-					devtab[i].device, devtab[i].qualifier);
+				if (devtab[i].qualifier != '\0') {
+					printf("%9s => %s%c\n", devtab[i].name,
+					       devtab[i].device,
+					       devtab[i].qualifier);
+				} else {
+					printf("%9s => %s\n", devtab[i].name,
+					       devtab[i].device);
+				}
 			}
 			return 0;
 		case 't':
