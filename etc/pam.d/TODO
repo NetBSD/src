@@ -1,4 +1,4 @@
-# $NetBSD: TODO,v 1.6 2005/02/23 01:28:40 christos Exp $
+# $NetBSD: TODO,v 1.7 2005/02/24 13:16:42 manu Exp $
 
 Status:
 
@@ -13,7 +13,7 @@ other		- Internal
 passwd		- Done, needs testing and review, XXX docs? XXX: ??
 pop3		- Pkgsrc, nothing to do
 rsh		- Done, needs testing and review, XXX: ???
-racoon		- XXX: Switch to ipsec-tools will bring some PAM support.
+racoon		- Done, needs testing and review, working
 rexecd		- Done, needs testing and review, working
 rsh		- Done, needs testing and review, working
 sshd		- Done, needs testing and review, working
@@ -33,7 +33,7 @@ other		- Internal
 passwd		- passwd -p usage.
 pop3		- Pkgsrc, nothing to do
 pppd		- XXX: No /etc/pam.d/ppp
-racoon		- XXX: Not done
+racoon		- Check racoon.conf(5). XXX No /etc/pam.d/racoon
 rexecd		- Nothing
 rsh		- Nothing
 sshd		- add "UsePam yes" in /etc/ssh/sshd_config
