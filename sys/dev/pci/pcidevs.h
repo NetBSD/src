@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.27 1997/04/04 00:22:00 augustss Exp 
+ *	NetBSD: pcidevs,v 1.28 1997/05/13 14:44:54 jtk Exp 
  */
 
 /*
@@ -729,8 +729,8 @@
 #define	PCI_PRODUCT_INTEL_82371USB	0x7020		/* 82371SB (Triton II) USB Interface */
 #define	PCI_PRODUCT_INTEL_82430VX	0x7030		/* 82430VX (Triton VX) Host Bridge */
 #define	PCI_PRODUCT_INTEL_82371AB	0x7110		/* 82371AB PIIX4 ISA Bridge */
-#define	PCI_PRODUCT_INTEL_82450KX	0x84c4		/* 82450KX (Orion) PCI Memory Controller */
-#define	PCI_PRODUCT_INTEL_82454GX	0x84c5		/* 82454GX (Orion) Host-PCI bridge */
+#define	PCI_PRODUCT_INTEL_PCI450_PB	0x84c4		/* 450 PCIset (Orion) Host-PCI bridge */
+#define	PCI_PRODUCT_INTEL_PCI450_MC	0x84c5		/* 450 PCIset (Orion) Memory Controller */
 
 /* I. T. T. products */
 #define	PCI_PRODUCT_ITT_AGX016	0x0001		/* AGX016 */
