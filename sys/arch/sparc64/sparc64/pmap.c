@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.50 2000/04/08 04:45:41 mrg Exp $	*/
+/*	$NetBSD: pmap.c,v 1.51 2000/04/14 04:08:26 mrg Exp $	*/
 #undef NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define HWREF 1 
 #undef BOOT_DEBUG
@@ -2472,7 +2472,9 @@ pmap_clear_modify(pg)
 {
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
 	int changed = 0;
+#ifdef DEBUG
 	int modified = 0;
+#endif
 	int i, s;
 	register pv_entry_t pv;
 	
@@ -2566,7 +2568,9 @@ pmap_clear_reference(pg)
 {
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
 	int changed = 0;
+#ifdef DEBUG
 	int referenced = 0;
+#endif
 	int i, s;
 	register pv_entry_t pv;
 
