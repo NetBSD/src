@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.78 1998/09/28 21:20:52 drochner Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.79 1998/11/12 22:31:02 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -582,7 +582,7 @@ nfs_decode_args(nmp, argp)
 			while (nfs_connect(nmp, (struct nfsreq *)0)) {
 				printf("nfs_args: retrying connect\n");
 				(void) tsleep((caddr_t)&lbolt,
-					      PSOCK, "nfscon", 0);
+					      PSOCK, "nfscn3", 0);
 			}
 	}
 }
