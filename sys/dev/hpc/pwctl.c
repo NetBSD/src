@@ -1,4 +1,4 @@
-/*	$NetBSD: pwctl.c,v 1.2 2001/04/30 11:42:17 takemura Exp $	*/
+/*	$NetBSD: pwctl.c,v 1.3 2001/05/01 00:25:17 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -89,8 +89,11 @@ pwctl_match(parent, match, aux)
 	struct cfdata *match;
 	void *aux;
 {
+	struct hpcio_attach_args *haa = aux;
 	platid_mask_t mask;
 
+	if (strcmp(haa->haa_busname, HPCIO_BUSNAME))
+		return 0;
 	if (match->cf_loc[HPCIOIFCF_PLATFORM] == 0)
 		return 0;
 	mask = PLATID_DEREF(match->cf_loc[HPCIOIFCF_PLATFORM]);
