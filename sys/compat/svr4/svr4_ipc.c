@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_ipc.c,v 1.3 1997/03/30 17:21:02 christos Exp $	*/
+/*	$NetBSD: svr4_ipc.c,v 1.3.8.1 1998/05/05 09:42:40 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Christos Zoulas.  All rights reserved.
@@ -68,6 +68,8 @@ static void bsd_to_svr4_semid_ds __P((const struct semid_ds *,
 				      struct svr4_semid_ds *));
 static void svr4_to_bsd_semid_ds __P((const struct svr4_semid_ds *,
 				      struct semid_ds *));
+static int svr4_setsemun __P((caddr_t *sgp, union semun **argp,
+			      union semun *usp));
 static int svr4_semop __P((struct proc *, void *, register_t *));
 static int svr4_semget __P((struct proc *, void *, register_t *));
 static int svr4_semctl __P((struct proc *, void *, register_t *));
@@ -155,12 +157,22 @@ svr4_to_bsd_semid_ds(sds, bds)
 	bds->sem_pad2 = sds->sem_pad2;
 }
 
+static int
+svr4_setsemun(sgp, argp, usp)
+	caddr_t *sgp;
+	union semun **argp;
+	union semun *usp;
+{
+	*argp = stackgap_alloc(sgp, sizeof(union semun));
+	return copyout((caddr_t)usp, *argp, sizeof(union semun));
+}
+
 struct svr4_sys_semctl_args {
 	syscallarg(int) what;
 	syscallarg(int) semid;
 	syscallarg(int) semnum;
 	syscallarg(int) cmd;
-	syscallarg(void *) arg;
+	syscallarg(union semun) arg;
 };
 
 static int
@@ -173,7 +185,7 @@ svr4_semctl(p, v, retval)
 	struct svr4_sys_semctl_args *uap = v;
 	struct sys___semctl_args ap;
 	struct svr4_semid_ds ss;
-	struct semid_ds bs;
+	struct semid_ds bs, *bsp;
 	caddr_t sg = stackgap_init(p->p_emul);
 
 	SCARG(&ap, semid) = SCARG(uap, semid);
@@ -201,51 +213,69 @@ svr4_semctl(p, v, retval)
 		return sys___semctl(p, &ap, retval);
 
 	case SVR4_SEM_SETVAL:
-		SCARG(&ap, arg)->val = (int) SCARG(uap, arg);
+		error = svr4_setsemun(&sg, &SCARG(&ap, arg), &SCARG(uap, arg));
+		if (error)
+			return error;
 		SCARG(&ap, cmd) = SETVAL;
 		return sys___semctl(p, &ap, retval);
 
 	case SVR4_SEM_GETALL:
-		SCARG(&ap, arg)->array = SCARG(uap, arg);
+		error = svr4_setsemun(&sg, &SCARG(&ap, arg), &SCARG(uap, arg));
+		if (error)
+			return error;
 		SCARG(&ap, cmd) = GETVAL;
 		return sys___semctl(p, &ap, retval);
 
 	case SVR4_SEM_SETALL:
-		SCARG(&ap, arg)->array = SCARG(uap, arg);
+		error = svr4_setsemun(&sg, &SCARG(&ap, arg), &SCARG(uap, arg));
+		if (error)
+			return error;
 		SCARG(&ap, cmd) = SETVAL;
 		return sys___semctl(p, &ap, retval);
 
 	case SVR4_IPC_STAT:
-		SCARG(&ap, cmd) = IPC_STAT;
-		SCARG(&ap, arg)->buf = stackgap_alloc(&sg, sizeof(bs));
-		if ((error = sys___semctl(p, &ap, retval)) != 0)
-			return error;
-		error = copyin(&bs, SCARG(&ap, arg)->buf, sizeof bs);
+                SCARG(&ap, cmd) = IPC_STAT;
+		bsp = stackgap_alloc(&sg, sizeof(bs));
+		error = svr4_setsemun(&sg, &SCARG(&ap, arg),
+				      (union semun *)&bsp);
 		if (error)
 			return error;
-		bsd_to_svr4_semid_ds(&bs, &ss);
-		return copyout(&ss, SCARG(uap, arg), sizeof ss);
+                if ((error = sys___semctl(p, &ap, retval)) != 0)
+                        return error;
+		error = copyin((caddr_t)bsp, (caddr_t)&bs, sizeof(bs));
+                if (error)
+                        return error;
+                bsd_to_svr4_semid_ds(&bs, &ss);
+		return copyout(&ss, SCARG(uap, arg).buf, sizeof(ss));
 
 	case SVR4_IPC_SET:
 		SCARG(&ap, cmd) = IPC_SET;
-		SCARG(&ap, arg)->buf = stackgap_alloc(&sg, sizeof(bs));
-		error = copyin(SCARG(uap, arg), (caddr_t) &ss, sizeof ss);
+		bsp = stackgap_alloc(&sg, sizeof(bs));
+		error = svr4_setsemun(&sg, &SCARG(&ap, arg),
+				      (union semun *)&bsp);
 		if (error)
 			return error;
-		svr4_to_bsd_semid_ds(&ss, &bs);
-		error = copyout(&bs, SCARG(&ap, arg)->buf, sizeof bs);
-		if (error)
-			return error;
+		error = copyin(SCARG(uap, arg).buf, (caddr_t) &ss, sizeof ss);
+                if (error)
+                        return error;
+                svr4_to_bsd_semid_ds(&ss, &bs);
+		error = copyout(&bs, bsp, sizeof(bs));
+                if (error)
+                        return error;
 		return sys___semctl(p, &ap, retval);
 
 	case SVR4_IPC_RMID:
 		SCARG(&ap, cmd) = IPC_RMID;
-		SCARG(&ap, arg)->buf = stackgap_alloc(&sg, sizeof(bs));
-		error = copyin(SCARG(uap, arg), &ss, sizeof ss);
+		bsp = stackgap_alloc(&sg, sizeof(bs));
+		error = svr4_setsemun(&sg, &SCARG(&ap, arg),
+				      (union semun *)&bsp);
 		if (error)
 			return error;
-		svr4_to_bsd_semid_ds(&ss, &bs);
-		error = copyout(&bs, SCARG(&ap, arg)->buf, sizeof bs);
+		error = copyin(SCARG(uap, arg).buf, &ss, sizeof ss);
+                if (error)
+                        return error;
+                svr4_to_bsd_semid_ds(&ss, &bs);
+		error = copyout(&bs, bsp, sizeof(bs));
 		if (error)
 			return error;
 		return sys___semctl(p, &ap, retval);
