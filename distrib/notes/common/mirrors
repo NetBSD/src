@@ -4,7 +4,7 @@
 .\"	appropriate changes to the script.
 .\"
 .Ss2 "NetBSD Mirror Site List"
-The following sites mirror NetBSD as of May 27, 1999.
+The following sites mirror NetBSD as of June 01, 1999.
 .Pp
 If you wish to become a distribution site for NetBSD, contact
 .Mt mirrors@netbsd.org .
@@ -66,6 +66,9 @@ If you wish to become a distribution site for NetBSD, contact
 .mirror "ftp2.de.netbsd.org" \
 "University of Erlangen-Nuremberg" \
 "ftp://ftp2.de.netbsd.org/pub/NetBSD/"
+.mirror "ftp.netbsd.uni-mainz.de" \
+"Johannes Gutenberg University, Mainz" \
+"ftp://ftp.netbsd.uni-mainz.de/pub/NetBSD/"
 .mirror "ftp.uni-regensburg.de" \
 "University of Regensburg" \
 "ftp://ftp.uni-regensburg.de/pub/comp/os/NetBSD/"
@@ -125,6 +128,9 @@ If you wish to become a distribution site for NetBSD, contact
 .mirror "ftp.sunet.se" \
 "Swedish University NETwork, Uppsala" \
 "ftp://ftp.sunet.se/pub/os/NetBSD/"
+.mirror "gort.ludd.luth.se" \
+"Lulea University of Technology" \
+"ftp://gort.ludd.luth.se/pub/NetBSD"
 .
 .Country "UK"
 .mirror "ftp.uk.netbsd.org" \
