@@ -1,4 +1,5 @@
-/*	$NetBSD: getaddrinfo.c,v 1.40 2000/04/26 12:25:51 itojun Exp $	*/
+/*	$NetBSD: getaddrinfo.c,v 1.41 2000/04/26 16:08:10 itojun Exp $	*/
+/*	$KAME: getaddrinfo.c,v 1.13 2000/04/26 15:41:49 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -78,7 +79,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getaddrinfo.c,v 1.40 2000/04/26 12:25:51 itojun Exp $");
+__RCSID("$NetBSD: getaddrinfo.c,v 1.41 2000/04/26 16:08:10 itojun Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
