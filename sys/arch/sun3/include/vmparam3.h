@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam3.h,v 1.15 1997/01/18 18:58:21 gwr Exp $	*/
+/*	$NetBSD: vmparam3.h,v 1.16 1997/02/27 18:22:54 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -153,7 +153,7 @@
 #define VM_MAX_ADDRESS		((vm_offset_t)KERNBASE)
 #define VM_MAXUSER_ADDRESS	((vm_offset_t)KERNBASE)
 #define VM_MIN_KERNEL_ADDRESS	((vm_offset_t)KERNBASE)
-#define VM_MAX_KERNEL_ADDRESS	((vm_offset_t)0x0FE00000)
+#define VM_MAX_KERNEL_ADDRESS	((vm_offset_t)KERN_END)
 
 /* virtual sizes (bytes) for various kernel submaps */
 #define VM_MBUF_SIZE		(NMBCLUSTERS*MCLBYTES)
