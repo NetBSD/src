@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.75 2002/11/22 15:23:48 fvdl Exp $	*/
+/*	$NetBSD: clock.c,v 1.76 2002/12/03 16:11:11 kenh Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -90,7 +90,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.75 2002/11/22 15:23:48 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.76 2002/12/03 16:11:11 kenh Exp $");
 
 /* #define CLOCKDEBUG */
 /* #define CLOCK_PARANOIA */
@@ -869,7 +869,7 @@ resettodr()
 	rtclk[MC_SEC] = bintobcd(dt.dt_sec);
 	rtclk[MC_MIN] = bintobcd(dt.dt_min);
 	rtclk[MC_HOUR] = bintobcd(dt.dt_hour);
-	rtclk[MC_DOW] = dt.dt_wday;
+	rtclk[MC_DOW] = dt.dt_wday + 1;
 	rtclk[MC_YEAR] = bintobcd(dt.dt_year % 100);
 	rtclk[MC_MONTH] = bintobcd(dt.dt_mon);
 	rtclk[MC_DOM] = bintobcd(dt.dt_day);
