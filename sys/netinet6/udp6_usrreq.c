@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_usrreq.c,v 1.29 2000/06/05 06:38:23 itojun Exp $	*/
+/*	$NetBSD: udp6_usrreq.c,v 1.30 2000/06/08 13:51:34 itojun Exp $	*/
 /*	$KAME: udp6_usrreq.c,v 1.52 2000/06/05 00:41:58 itojun Exp $	*/
 
 /*
@@ -566,6 +566,7 @@ udp6_output(in6p, m, addr6, control, p)
 #ifdef INET
 	struct ip *ip;
 #endif
+	struct sockaddr_in6 tmp;
 
 	priv = 0;
 	if (p && !suser(p->p_ucred, &p->p_acflag))
@@ -604,6 +605,10 @@ udp6_output(in6p, m, addr6, control, p)
 			error = EISCONN;
 			goto release;
 		}
+
+		/* protect *sin6 from overwrites */
+		tmp = *sin6;
+		sin6 = &tmp;
 
 		faddr = &sin6->sin6_addr;
 		fport = sin6->sin6_port; /* allow 0 port */
