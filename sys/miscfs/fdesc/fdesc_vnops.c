@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vnops.c,v 1.30 1996/02/09 22:40:10 christos Exp $	*/
+/*	$NetBSD: fdesc_vnops.c,v 1.31 1996/02/13 13:12:52 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -83,10 +83,9 @@ FD_STDIN, FD_STDOUT, FD_STDERR must be a sequence n, n+1, n+2
 LIST_HEAD(fdhashhead, fdescnode) *fdhashtbl;
 u_long fdhash;
 
-int	fdesc_enotsupp	__P((void *));
-int	fdesc_abortop	__P((void *));
 int	fdesc_badop	__P((void *));
-int	fdesc_nullop	__P((void *));
+int	fdesc_enotsupp	__P((void *));
+
 int	fdesc_lookup	__P((void *));
 #define	fdesc_create	fdesc_enotsupp
 #define	fdesc_mknod	fdesc_enotsupp
@@ -103,13 +102,14 @@ int	fdesc_select	__P((void *));
 #define	fdesc_fsync	nullop
 #define	fdesc_seek	nullop
 #define	fdesc_remove	fdesc_enotsupp
+int	fdesc_link	__P((void *));
 #define	fdesc_rename	fdesc_enotsupp
 #define	fdesc_mkdir	fdesc_enotsupp
 #define	fdesc_rmdir	fdesc_enotsupp
-int	fdesc_link	__P((void *));
 int	fdesc_symlink	__P((void *));
 int	fdesc_readdir	__P((void *));
 int	fdesc_readlink	__P((void *));
+int	fdesc_abortop	__P((void *));
 int	fdesc_inactive	__P((void *));
 int	fdesc_reclaim	__P((void *));
 #define	fdesc_lock	nullop
@@ -117,8 +117,8 @@ int	fdesc_reclaim	__P((void *));
 #define	fdesc_bmap	fdesc_badop
 #define	fdesc_strategy	fdesc_badop
 int	fdesc_print	__P((void *));
-#define	fdesc_islocked	nullop
 int	fdesc_pathconf	__P((void *));
+#define	fdesc_islocked	nullop
 #define	fdesc_advlock	fdesc_enotsupp
 #define	fdesc_blkatoff	fdesc_enotsupp
 #define	fdesc_valloc	fdesc_enotsupp
@@ -1028,16 +1028,4 @@ fdesc_badop(v)
 
 	panic("fdesc: bad op");
 	/* NOTREACHED */
-}
-
-/*
- * /dev/fd vnode null operation
- */
-/*ARGSUSED*/
-int
-fdesc_nullop(v)
-	void *v;
-{
-
-	return (0);
 }

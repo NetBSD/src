@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.41 1996/02/09 22:40:24 christos Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.42 1996/02/13 13:12:55 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -108,9 +108,9 @@ struct kern_target {
 };
 static int nkern_targets = sizeof(kern_targets) / sizeof(kern_targets[0]);
 
-int	kernfs_enotsupp	__P((void *));
 int	kernfs_badop	__P((void *));
-int	kernfs_nullop	__P((void *));
+int	kernfs_enotsupp __P((void *));
+
 int	kernfs_lookup	__P((void *));
 #define	kernfs_create	kernfs_enotsupp
 #define	kernfs_mknod	kernfs_enotsupp
@@ -803,16 +803,3 @@ kernfs_badop(v)
 	panic("kernfs: bad op");
 	return 0;
 }
-
-/*
- * kernfs vnode null operation
- */
-/*ARGSUSED*/
-int
-kernfs_nullop(v)
-	void *v;
-{
-
-	return (0);
-}
-
