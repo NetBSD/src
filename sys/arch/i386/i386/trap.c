@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.194 2003/11/04 10:33:15 dsl Exp $	*/
+/*	$NetBSD: trap.c,v 1.195 2004/02/19 17:02:44 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.194 2003/11/04 10:33:15 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.195 2004/02/19 17:02:44 drochner Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -401,6 +401,12 @@ copyfault:
 		    &l->l_addr->u_pcb)) {
 			goto out;
 		}
+		KSI_INIT_TRAP(&ksi);
+		ksi.ksi_signo = SIGSEGV;
+		ksi.ksi_trap = type & ~T_USER;
+		ksi.ksi_addr = (void *)rcr2();
+		ksi.ksi_code = SEGV_ACCERR;
+		goto trapsignal;
 
 	case T_TSSFLT|T_USER:
 	case T_SEGNPFLT|T_USER:
