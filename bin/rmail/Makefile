@@ -1,6 +1,5 @@
-#	@(#)Makefile	5.2 (Berkeley) 4/20/91
-#
-#	$Header: /cvsroot/src/bin/rmail/Attic/Makefile,v 1.3 1993/03/23 00:27:13 cgd Exp $
+#	from: @(#)Makefile	5.2 (Berkeley) 4/20/91
+#	$Id: Makefile,v 1.4 1993/08/01 05:46:57 mycroft Exp $
 
 PROG=	rmail
 MAN8=	rmail.0

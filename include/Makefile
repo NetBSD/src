@@ -1,10 +1,10 @@
-#	@(#)Makefile	5.45.1.1 (Berkeley) 5/6/91
-#
+#	from: @(#)Makefile	5.45.1.1 (Berkeley) 5/6/91
+#	$Id: Makefile,v 1.21 1993/08/01 05:41:49 mycroft Exp $
+
 # Doing a make install builds /usr/include
 #
 # The ``rm -rf''s used below are safe because rm doesn't follow symbolic
 # links.
-#
 
 SUBDIR= rpcsvc
 

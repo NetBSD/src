@@ -1,4 +1,6 @@
-#	@(#)Makefile	6.4 (Berkeley) 2/21/91
+#	from: @(#)Makefile	6.4 (Berkeley) 2/21/91
+#	$Id: Makefile,v 1.5 1993/08/01 05:42:46 mycroft Exp $
+
 PROG=		cpp
 BINDIR=		/usr/libexec
 SRCS=		cccp.c cexp.y version.c

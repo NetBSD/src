@@ -1,4 +1,5 @@
-#	@(#)Makefile.inc	5.6 (Berkeley) 6/4/91
+#	from: @(#)Makefile.inc	5.6 (Berkeley) 6/4/91
+#	$Id: Makefile.inc,v 1.4 1993/08/01 05:40:41 mycroft Exp $
 
 # stdlib sources
 .PATH: ${.CURDIR}/${MACHINE}/stdlib ${.CURDIR}/stdlib

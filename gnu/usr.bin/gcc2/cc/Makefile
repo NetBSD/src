@@ -1,4 +1,6 @@
-#       @(#)Makefile    6.2 (Berkeley) 3/25/91
+#	from: @(#)Makefile    6.2 (Berkeley) 3/25/91
+#	$Id: Makefile,v 1.5 1993/08/01 05:43:03 mycroft Exp $
+
 PROG=           cc
 SRCS=           gcc.c version.c obstack.c
 MAN1=		gcc.0 g++.0

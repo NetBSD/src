@@ -1,4 +1,5 @@
-#	@(#)Makefile	5.9 (Berkeley) 7/25/90
+#	from: @(#)Makefile	5.9 (Berkeley) 7/25/90
+#	$Id: Makefile,v 1.4 1993/08/01 05:45:05 mycroft Exp $
 
 # EXTRA
 #	Incorporates code to gather additional performance statistics

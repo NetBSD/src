@@ -1,6 +1,6 @@
 #	from: @(#)Makefile	5.3 (Berkeley) 5/11/90
 #	from: BSDI Id: Makefile,v 1.3 1993/06/14 20:06:22 donn Exp 
-#	$Id: Makefile,v 1.9 1993/07/08 01:47:31 cgd Exp $
+#	$Id: Makefile,v 1.10 1993/08/01 05:37:39 mycroft Exp $
 
 PROG=	init
 MAN8=	init.0

@@ -1,4 +1,5 @@
-#	@(#)Makefile	5.12 (Berkeley) 1/21/91
+#	from: @(#)Makefile	5.12 (Berkeley) 1/21/91
+#	$Id: Makefile,v 1.2 1993/08/01 05:39:18 mycroft Exp $
 
 PROG=	getty
 SRCS=	main.c init.c subr.c gettytab.c ttydefaults.c

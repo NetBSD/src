@@ -1,4 +1,5 @@
-#       @(#)Makefile    5.10 (Berkeley) 6/24/90
+#	from: @(#)Makefile    5.10 (Berkeley) 6/24/90
+#	$Id: Makefile,v 1.6 1993/08/01 05:40:01 mycroft Exp $
 
 .PATH: ${.CURDIR}/../../include/rpcsvc /usr/src/include/rpcsvc
 

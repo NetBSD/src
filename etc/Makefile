@@ -1,4 +1,5 @@
-#	@(#)Makefile	5.11 (Berkeley) 5/21/91
+#	from: @(#)Makefile	5.11 (Berkeley) 5/21/91
+#	$Id: Makefile,v 1.24 1993/08/01 05:46:37 mycroft Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	US/Pacific

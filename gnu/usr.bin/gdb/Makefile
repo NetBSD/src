@@ -1,4 +1,5 @@
-#	@(#)Makefile	6.4 (Berkley) 5/6/91
+#	from: @(#)Makefile	6.4 (Berkley) 5/6/91
+#	$Id: Makefile,v 1.3 1993/08/01 05:42:13 mycroft Exp $
 
 PROG=		gdb
 GDBSRCS=	blockframe.c breakpoint.c command.c copying.c core.c \

@@ -1,4 +1,5 @@
-#	@(#)Makefile	5.8 (Berkeley) 5/11/90
+#	from: @(#)Makefile	5.8 (Berkeley) 5/11/90
+#	$Id: Makefile,v 1.3 1993/08/01 05:44:00 mycroft Exp $
 
 PROG=	trek
 SRCS=	abandon.c attack.c autover.c capture.c check_out.c checkcond.c \

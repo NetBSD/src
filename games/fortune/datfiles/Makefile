@@ -1,4 +1,5 @@
-#	@(#)Makefile	5.2 (Berkeley) 5/6/91
+#	from: @(#)Makefile	5.2 (Berkeley) 5/6/91
+#	$Id: Makefile,v 1.6 1993/08/01 05:45:27 mycroft Exp $
 
 #
 # set `OBSCENE' to "real" to have obscene fortunes installed,
