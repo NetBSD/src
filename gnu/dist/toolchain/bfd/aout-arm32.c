@@ -97,7 +97,7 @@ reloc_howto_type MY(howto_table)[] =
 	 0x00000fff, 0x00000fff, false),
   HOWTO (18, 0, 2, 32, false, 0, complain_overflow_bitfield, 0, "GOT32", true,
 	 0xffffffff, 0xffffffff, false),
-  HOWTO (19, 0, 2, 26, true, 0, complain_overflow_bitfield, MY(fix_pcrel_26), "JMPSLOT", true,
+  HOWTO (19, 0, 2, 26, true, 0, complain_overflow_bitfield, MY(fix_pcrel_26), "JUMP_SLOT", true,
 	 0x00ffffff, 0x00ffffff, true),
 
   {-1},
@@ -165,7 +165,7 @@ FPRINTF((stderr, "%s:reloc_howto", __FILE__));
   index = r_length + 4 * r_pcrel_done + 8 * r_neg + 16 * r_pic;
   if (index == 3)
     *r_pcrel = 1;        
-  if (index == 19)	/* jmpslot */
+  if (index == 19)	/* jump_slot */
     *r_pcrel = 1;        
 FPRINTF((stderr, " index=%d name=%s\n", index, (MY(howto_table) + index)->name));
   return MY(howto_table) + index;
@@ -261,7 +261,7 @@ FPRINTF((stderr, "%s:bfd_reloc_type_lookup code=%d\n", __FILE__, (int)code));
       ASTD (BFD_RELOC_ARM_GOT12, 17);
       ASTD (BFD_RELOC_ARM_GOT32, 18);
       ASTD (BFD_RELOC_ARM_GOTPC, 22);
-      ASTD (BFD_RELOC_ARM_JMPSLOT, 19);
+      ASTD (BFD_RELOC_ARM_JUMP_SLOT, 19);
     default: return (CONST struct reloc_howto_struct *) 0;
     }
 }
@@ -423,7 +423,7 @@ MY_swap_std_reloc_out (abfd, g, natptr)
   if (g->howto->type >= 16)
     r_pic = 1;
 
-  /* jmpslot (branch with pic set) - treat like a branch */
+  /* jump_slot (branch with pic set) - treat like a branch */
   if (g->howto->type == 19) {
       r_length = 3;
       r_pcrel = 0;
