@@ -1,4 +1,4 @@
-/* $NetBSD: bus.h,v 1.20 1998/02/04 07:36:10 thorpej Exp $ */
+/* $NetBSD: bus.h,v 1.21 1998/05/07 20:09:37 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -457,6 +457,7 @@ typedef struct alpha_bus_dma_segment	bus_dma_segment_t;
  */
 struct alpha_bus_dma_tag {
 	void	*_cookie;		/* cookie used in the guts */
+	bus_addr_t _wbase;		/* DMA window base */
 
 	/*
 	 * Internal-use only utility methods.  NOT TO BE USED BY
@@ -563,15 +564,14 @@ int	_bus_dmamap_create __P((bus_dma_tag_t, bus_size_t, int, bus_size_t,
 	    bus_size_t, int, bus_dmamap_t *));
 void	_bus_dmamap_destroy __P((bus_dma_tag_t, bus_dmamap_t));
 
-int	_bus_dmamap_load_direct_common __P((bus_dma_tag_t, bus_dmamap_t,
-	    void *, bus_size_t, struct proc *, int, bus_addr_t));
-int	_bus_dmamap_load_mbuf_direct_common __P((bus_dma_tag_t,
-	    bus_dmamap_t, struct mbuf *, int, bus_addr_t));
-int	_bus_dmamap_load_uio_direct_common __P((bus_dma_tag_t,
-	    bus_dmamap_t, struct uio *, int, bus_addr_t));
-int	_bus_dmamap_load_raw_direct_common __P((bus_dma_tag_t,
-	    bus_dmamap_t, bus_dma_segment_t *, int, bus_size_t,
-	    int, bus_addr_t));
+int	_bus_dmamap_load_direct __P((bus_dma_tag_t, bus_dmamap_t,
+	    void *, bus_size_t, struct proc *, int));
+int	_bus_dmamap_load_mbuf_direct __P((bus_dma_tag_t,
+	    bus_dmamap_t, struct mbuf *, int));
+int	_bus_dmamap_load_uio_direct __P((bus_dma_tag_t,
+	    bus_dmamap_t, struct uio *, int));
+int	_bus_dmamap_load_raw_direct __P((bus_dma_tag_t,
+	    bus_dmamap_t, bus_dma_segment_t *, int, bus_size_t, int));
 
 void	_bus_dmamap_unload __P((bus_dma_tag_t, bus_dmamap_t));
 void	_bus_dmamap_sync __P((bus_dma_tag_t, bus_dmamap_t, bus_addr_t,
