@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.6 2004/03/25 15:27:26 drochner Exp $	*/
+/*	$NetBSD: signal.h,v 1.7 2004/05/10 21:51:49 drochner Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991 Regents of the University of California.
@@ -46,7 +46,9 @@ typedef int sig_atomic_t;
 #include <machine/fpu.h>
 #include <machine/mcontext.h>
 
+#ifdef _KERNEL
 #define SIGTRAMP_VALID(vers)	((vers) == 2)
+#endif
 
 #endif	/* _NETBSD_SOURCE */
 #endif	/* !_AMD64_SIGNAL_H_ */
