@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.12 2000/01/21 23:39:55 thorpej Exp $	*/
+/*	$NetBSD: fd.c,v 1.13 2000/01/28 11:30:22 jdc Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.
@@ -504,7 +504,7 @@ fdattach(parent, self, aux)
 	else
 		printf(": density unknown\n");
 
-	BUFQ_FIRST(&fd->sc_q);
+	bp = BUFQ_FIRST(&fd->sc_q);
 	fd->sc_cylin = -1;
 	fd->sc_drive = drive;
 	fd->sc_deftype = type;
@@ -683,7 +683,7 @@ fdfinish(fd, bp)
 	}
 	bp->b_resid = fd->sc_bcount;
 	fd->sc_skip = 0;
-	BUFQ_REMOVE(&fd->sc_q);
+	BUFQ_REMOVE(&fd->sc_q, bp);
 
 	biodone(bp);
 	/* turn off motor 5s from now */
