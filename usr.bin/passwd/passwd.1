@@ -1,4 +1,4 @@
-.\"	$NetBSD: passwd.1,v 1.15 2000/07/11 12:12:18 ad Exp $
+.\"	$NetBSD: passwd.1,v 1.16 2000/09/21 11:13:06 ad Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -90,6 +90,13 @@ Its total length must be less than
 Numbers, upper case letters and meta characters
 are encouraged.
 .Pp
+In the case of where the local password is being changed, and the existing
+password (if any) has expired or is due to expire, the user will be forced
+to set a different password than the one currently in use.  The password is
+considered due to expire if it will expire within
+.Dv _PASSWORD_WARNDAYS
+(currently 14 days) or the configured time from the user's login class.
+.Pp
 All options may not be available on all systems.
 .Bl -tag -width flag
 .It Fl l
@@ -147,8 +154,10 @@ If Kerberos is unavailable, an attempt is made to use the YP database.
 If the password is not in the YP database, then
 an attempt is made to use the local password database.
 .Pp
-The super-user is not required to provide a user's current password
-if only the local password is modified.
+The super-user is not required to provide a user's current password if only
+the local password is modified.  If a local password has expired, the
+super-user is not required to set a password that differs from the existing
+one.
 .Pp
 The type of cipher used to encrypt the password depends on the configuration 
 in
@@ -166,6 +175,7 @@ Temporary copy of the password file
 .Sh SEE ALSO
 .Xr chpass 1 ,
 .Xr login 1 ,
+.Xr login.conf 5 ,
 .Xr passwd 5 ,
 .Xr passwd.conf 5 ,
 .Xr pwd_mkdb 8 ,
