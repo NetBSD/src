@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.7 2003/01/17 13:19:25 nonaka Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.8 2003/01/17 13:27:56 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -42,6 +42,8 @@
 #include <sys/kernel.h>
 #include <sys/extent.h>
 #include <sys/mbuf.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <machine/bus.h>
 
