@@ -1,11 +1,11 @@
-/*	$NetBSD: file.c,v 1.37.4.3 2000/10/04 16:44:05 hubertf Exp $	*/
+/*	$NetBSD: file.c,v 1.37.4.4 2000/10/16 21:16:52 tv Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: file.c,v 1.29 1997/10/08 07:47:54 charnier Exp";
 #else
-__RCSID("$NetBSD: file.c,v 1.37.4.3 2000/10/04 16:44:05 hubertf Exp $");
+__RCSID("$NetBSD: file.c,v 1.37.4.4 2000/10/16 21:16:52 tv Exp $");
 #endif
 #endif
 
@@ -405,7 +405,7 @@ fileFindByPath(char *base, char *fname)
 	}
 
 	cp = getenv("PKG_PATH");
-	while (cp) {
+	while (cp && *cp) {
 		char   *cp2 = strsep(&cp, ";");
 
 		if (Verbose)
