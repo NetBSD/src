@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.4 1998/02/10 14:12:21 mrg Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.5 1998/03/03 14:34:10 mycroft Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -308,19 +308,16 @@ register_t *retval;
       goto is_anon;
     }
 
-#if defined(COMPAT_13)
     /*
-     * XXX: support MAP_FILE: some older applications call mmap with flags
-     * set to MAP_FILE (i.e. zero).    the proper semantics for this seem
-     * to be MAP_SHARED for devices and MAP_PRIVATE for files.
+     * Old programs may not select a specific sharing type, so default to
+     * an appropriate one.
      *
      * XXX: how does MAP_ANON fit in the picture?
-     * XXX: what about MAP_COPY?
      */
-
     if ((flags & (MAP_SHARED|MAP_PRIVATE|MAP_COPY)) == 0) {
 #if defined(DIAGNOSTIC)
-      printf("WARNING: corrected bogus mmap (pid %d comm %s)\n", p->p_pid,
+      printf("WARNING: defaulted mmap() sharing type to %s (pid %d comm %s)\n",
+	  vp->v_type == VCHR ? "MAP_SHARED" : "MAP_PRIVATE", p->p_pid,
 	  p->p_comm);
 #endif
       if (vp->v_type == VCHR)
@@ -328,27 +325,19 @@ register_t *retval;
       else
         flags |= MAP_PRIVATE;		/* for a file */
     }
-#else
 
-    if ((flags & (MAP_SHARED|MAP_PRIVATE|MAP_COPY)) == 0) 
-      return (EINVAL);   /* sorry, old timer */
-
-#endif
-
-#if defined(sparc)
-    /*
-     * sparc seems to want to map devices MAP_PRIVATE, which doesn't
-     * make sense for us (why would we want to copy-on-write fault 
-     * framebuffer mappings?).    fix this.
+    /* 
+     * MAP_PRIVATE device mappings don't make sense (and aren't supported
+     * anyway).  However, some programs rely on this, so just change it to
+     * MAP_SHARED.
      */
     if (vp->v_type == VCHR && (flags & MAP_PRIVATE) != 0) {
 #if defined(DIAGNOSTIC)
-      printf("WARNING: converting MAP_PRIVATE device mapping to MAP_SHARE "
+      printf("WARNING: converted MAP_PRIVATE device mapping to MAP_SHARED "
 	  "(pid %d comm %s)\n", p->p_pid, p->p_comm);
 #endif
-      flags = (flags & ~MAP_PRIVATE) | MAP_SHARED;   /* switch it */
+      flags = (flags & ~MAP_PRIVATE) | MAP_SHARED;
     }
-#endif
 
     /*
      * now check protection
