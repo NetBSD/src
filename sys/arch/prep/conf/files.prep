@@ -1,4 +1,4 @@
-#	$NetBSD: files.prep,v 1.25 2002/02/24 13:19:06 kleink Exp $
+#	$NetBSD: files.prep,v 1.26 2002/02/25 19:09:43 kleink Exp $
 #
 # prep-specific configuration info
 #
@@ -132,6 +132,11 @@ device	mcclock
 attach	mcclock at isa with mcclock_isa
 file	arch/prep/prep/mcclock.c	mcclock
 file	arch/prep/isa/mcclock_isa.c	mcclock_isa
+
+# mk48t18 and compat.
+device	mkclock: mk48txx
+attach	mkclock at isa with mkclock_isa
+file	arch/prep/isa/mkclock_isa.c	mkclock_isa
 
 # attribute used to represent the "keyboard controller"
 # XXX should be a real device
