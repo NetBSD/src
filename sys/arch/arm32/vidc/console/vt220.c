@@ -1,4 +1,4 @@
-/* $NetBSD: vt220.c,v 1.7 1996/06/03 22:08:37 mark Exp $ */
+/* $NetBSD: vt220.c,v 1.8 1996/07/05 19:07:55 mark Exp $ */
 
 /*
  * Copyright (c) 1994-1995 Melvyn Tang-Richardson
@@ -329,6 +329,10 @@ strcpy ( console_proc, "vt_curadr" );
 		return;
 	}
 	/* Limit checking */
+	cdata->param[0] = (cdata->param[0] <= 0) ? 1 : cdata->param[0];
+	cdata->param[0] = (cdata->param[0] > vc->ychars) ? vc->ychars : cdata->param[0];
+	cdata->param[1] = (cdata->param[1] <= 0) ? 1 : cdata->param[1];
+	cdata->param[1] = (cdata->param[1] >= vc->xchars) ? (vc->xchars-1) : cdata->param[1];
 
 	(cdata->param[0])--;
 	(cdata->param[1])--;
