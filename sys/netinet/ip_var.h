@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_var.h,v 1.53 2003/06/23 11:02:15 martin Exp $	*/
+/*	$NetBSD: ip_var.h,v 1.54 2003/06/23 13:58:06 martin Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -37,9 +37,6 @@
 
 #ifndef _NETINET_IP_VAR_H_
 #define _NETINET_IP_VAR_H_
-
-#include "opt_gateway.h"
-#include "opt_mbuftrace.h"
 
 #include <sys/queue.h>
 #include <net/route.h>
@@ -178,6 +175,12 @@ struct ipflow {
 };
 
 #ifdef _KERNEL
+
+#ifdef _KERNEL_OPT
+#include "opt_gateway.h"
+#include "opt_mbuftrace.h"
+#endif
+
 /* flags passed to ip_output as last parameter */
 #define	IP_FORWARDING		0x1		/* most of ip header exists */
 #define	IP_RAWOUTPUT		0x2		/* raw ip header exists */
