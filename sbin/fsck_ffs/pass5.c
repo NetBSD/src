@@ -1,4 +1,4 @@
-/*	$NetBSD: pass5.c,v 1.13 1995/03/18 14:55:57 cgd Exp $	*/
+/*	$NetBSD: pass5.c,v 1.14 1995/03/21 01:30:16 cgd Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)pass5.c	8.6 (Berkeley) 11/30/94";
 #else
-static char rcsid[] = "$NetBSD: pass5.c,v 1.13 1995/03/18 14:55:57 cgd Exp $";
+static char rcsid[] = "$NetBSD: pass5.c,v 1.14 1995/03/21 01:30:16 cgd Exp $";
 #endif
 #endif /* not lint */
 
@@ -124,9 +124,9 @@ pass5()
 		newcg->cg_btotoff =
 		     &newcg->cg_space[0] - (u_char *)(&newcg->cg_firstfield);
 		newcg->cg_boff =
-		    newcg->cg_btotoff + fs->fs_cpg * sizeof(long);
+		    newcg->cg_btotoff + fs->fs_cpg * sizeof(int32_t);
 		newcg->cg_iusedoff = newcg->cg_boff + 
-		    fs->fs_cpg * fs->fs_nrpos * sizeof(short);
+		    fs->fs_cpg * fs->fs_nrpos * sizeof(int16_t);
 		newcg->cg_freeoff =
 		    newcg->cg_iusedoff + howmany(fs->fs_ipg, NBBY);
 		if (fs->fs_contigsumsize <= 0) {
@@ -135,11 +135,11 @@ pass5()
 		} else {
 			newcg->cg_clustersumoff = newcg->cg_freeoff +
 			    howmany(fs->fs_cpg * fs->fs_spc / NSPF(fs), NBBY) -
-			    sizeof(long);
+			    sizeof(int32_t);
 			newcg->cg_clustersumoff =
-			    roundup(newcg->cg_clustersumoff, sizeof(long));
+			    roundup(newcg->cg_clustersumoff, sizeof(int32_t));
 			newcg->cg_clusteroff = newcg->cg_clustersumoff +
-			    (fs->fs_contigsumsize + 1) * sizeof(long);
+			    (fs->fs_contigsumsize + 1) * sizeof(int32_t);
 			newcg->cg_nextfreeoff = newcg->cg_clusteroff +
 			    howmany(fs->fs_cpg * fs->fs_spc / NSPB(fs), NBBY);
 		}

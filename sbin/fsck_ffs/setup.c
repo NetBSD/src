@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.19 1995/03/18 14:56:01 cgd Exp $	*/
+/*	$NetBSD: setup.c,v 1.20 1995/03/21 01:30:20 cgd Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.5 (Berkeley) 11/23/94";
 #else
-static char rcsid[] = "$NetBSD: setup.c,v 1.19 1995/03/18 14:56:01 cgd Exp $";
+static char rcsid[] = "$NetBSD: setup.c,v 1.20 1995/03/21 01:30:20 cgd Exp $";
 #endif
 #endif /* not lint */
 
@@ -259,7 +259,7 @@ setup(dev)
 	/*
 	 * allocate and initialize the necessary maps
 	 */
-	bmapsize = roundup(howmany(maxfsblock, NBBY), sizeof(short));
+	bmapsize = roundup(howmany(maxfsblock, NBBY), sizeof(int16_t));
 	blockmap = calloc((unsigned)bmapsize, sizeof (char));
 	if (blockmap == NULL) {
 		printf("cannot alloc %u bytes for blockmap\n",
@@ -278,10 +278,10 @@ setup(dev)
 		    (unsigned)(maxino + 1));
 		goto badsblabel;
 	}
-	lncntp = (short *)calloc((unsigned)(maxino + 1), sizeof(short));
+	lncntp = (int16_t *)calloc((unsigned)(maxino + 1), sizeof(int16_t));
 	if (lncntp == NULL) {
 		printf("cannot alloc %u bytes for lncntp\n", 
-		    (unsigned)(maxino + 1) * sizeof(short));
+		    (unsigned)(maxino + 1) * sizeof(int16_t));
 		goto badsblabel;
 	}
 	numdirs = sblock.fs_cstotal.cs_ndir;
