@@ -1,4 +1,4 @@
-# $NetBSD: md.amiga,v 1.43 2001/09/19 16:40:52 thorpej Exp $
+# $NetBSD: md.amiga,v 1.44 2001/11/28 13:29:29 kleink Exp $
 ./usr/include/amiga	comp-c-include
 ./usr/include/amiga/_G_config.h	comp-c-include
 ./usr/include/amiga/ansi.h	comp-c-include
@@ -42,7 +42,6 @@
 ./usr/include/amiga/setjmp.h	comp-c-include
 ./usr/include/amiga/signal.h	comp-c-include
 ./usr/include/amiga/stdarg.h	comp-c-include
-./usr/include/amiga/svr4_machdep.h	comp-c-include
 ./usr/include/amiga/trap.h	comp-c-include
 ./usr/include/amiga/types.h	comp-c-include
 ./usr/include/amiga/varargs.h	comp-c-include
