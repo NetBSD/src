@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_bat.c,v 1.26 2003/11/01 03:45:58 mycroft Exp $	*/
+/*	$NetBSD: acpi_bat.c,v 1.27 2003/11/01 09:41:25 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.26 2003/11/01 03:45:58 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.27 2003/11/01 09:41:25 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -314,20 +314,12 @@ acpibat_clear_info(struct acpibat_softc *sc)
 	acpibat_clear_stat(sc);
 	if (sc->sc_available>ABAT_ALV_PRESENCE)
 		sc->sc_available = ABAT_ALV_PRESENCE;
-	sc->sc_data[ACPIBAT_DCAPACITY].cur.data_s = 0;
 	sc->sc_data[ACPIBAT_DCAPACITY].validflags &= ~ENVSYS_FCURVALID;
-	sc->sc_data[ACPIBAT_LFCCAPACITY].cur.data_s = 0;
-	sc->sc_data[ACPIBAT_LFCCAPACITY].max.data_s = 0;
 	sc->sc_data[ACPIBAT_LFCCAPACITY].validflags &= ~(ENVSYS_FCURVALID | ENVSYS_FMAXVALID | ENVSYS_FFRACVALID);
-	sc->sc_data[ACPIBAT_CAPACITY].max.data_s = 0;
 	sc->sc_data[ACPIBAT_CAPACITY].validflags &= ~ENVSYS_FMAXVALID;
-	sc->sc_data[ACPIBAT_TECHNOLOGY].cur.data_s = 0;
 	sc->sc_data[ACPIBAT_TECHNOLOGY].validflags &= ~ENVSYS_FCURVALID;
-	sc->sc_data[ACPIBAT_DVOLTAGE].cur.data_s = 0;
 	sc->sc_data[ACPIBAT_DVOLTAGE].validflags &= ~ENVSYS_FCURVALID;
-	sc->sc_data[ACPIBAT_WCAPACITY].cur.data_s = 0;
 	sc->sc_data[ACPIBAT_WCAPACITY].validflags &= ~ENVSYS_FCURVALID;
-	sc->sc_data[ACPIBAT_LCAPACITY].cur.data_s = 0;
 	sc->sc_data[ACPIBAT_LCAPACITY].validflags &= ~ENVSYS_FCURVALID;
 }
 
@@ -339,16 +331,11 @@ acpibat_clear_stat(struct acpibat_softc *sc)
 
 	if (sc->sc_available>ABAT_ALV_INFO)
 		sc->sc_available = ABAT_ALV_INFO;
-	sc->sc_data[ACPIBAT_LOAD].cur.data_s = 0;
 	sc->sc_data[ACPIBAT_LOAD].validflags &= ~ENVSYS_FCURVALID;
-	sc->sc_data[ACPIBAT_CAPACITY].cur.data_s = 0;
 	sc->sc_data[ACPIBAT_CAPACITY].validflags &= ~(ENVSYS_FCURVALID | ENVSYS_FFRACVALID);
 	sc->sc_data[ACPIBAT_CAPACITY].warnflags = 0;
-	sc->sc_data[ACPIBAT_VOLTAGE].cur.data_s = 0;
 	sc->sc_data[ACPIBAT_VOLTAGE].validflags &= ~ENVSYS_FCURVALID;
-	sc->sc_data[ACPIBAT_DISCHARGING].cur.data_s = 0;
 	sc->sc_data[ACPIBAT_DISCHARGING].validflags &= ~ENVSYS_FCURVALID;
-	sc->sc_data[ACPIBAT_CHARGING].cur.data_s = 0;
 	sc->sc_data[ACPIBAT_CHARGING].validflags &= ~ENVSYS_FCURVALID;
 }
 
