@@ -1,4 +1,4 @@
-/*	$NetBSD: mappedcopy.c,v 1.4 1999/03/31 14:18:49 minoura Exp $	*/
+/*	$NetBSD: mappedcopy.c,v 1.5 1999/04/18 00:36:36 minoura Exp $	*/
 
 /*
  * XXX This doesn't work yet.  Soon.  --thorpej@netbsd.org
@@ -185,5 +185,5 @@ mappedcopyout(f, t, count)
 	}
 	pmap_remove(pmap_kernel(), kva, kva + PAGE_SIZE);
 	return (0);
-#undef CADDR1
+#undef CADDR2
 }
