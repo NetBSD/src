@@ -1,4 +1,4 @@
-/*	$NetBSD: libaudio.h,v 1.9 2002/01/15 08:19:37 mrg Exp $	*/
+/*	$NetBSD: libaudio.h,v 1.10 2002/01/15 23:48:52 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -89,7 +89,7 @@ typedef struct {
 #define	AUDIO_FILE_ENCODING_ADPCM_G723_5	26
 #define	AUDIO_FILE_ENCODING_ALAW_8		27
 
-char	*audio_enc_from_val (int);
+const char *audio_enc_from_val (int);
 int	audio_enc_to_val (const char *);
 
 int	audio_sun_to_encoding (int, int *, int *);
@@ -121,7 +121,7 @@ int	audio_encoding_to_sun (int, int, int *);
 #define IBM_FORMAT_ALAW			(0x0102)
 #define IBM_FORMAT_ADPCM		(0x0103)
 
-char *wav_enc_from_val (int);
+const char *wav_enc_from_val (int);
 
 typedef struct {
 	char		name[4];
