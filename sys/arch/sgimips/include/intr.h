@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.15 2003/11/17 10:07:58 keihan Exp $	*/
+/*	$NetBSD: intr.h,v 1.16 2004/02/08 13:15:42 sekiya Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -80,7 +80,7 @@
 struct sgimips_intrhand {
 	LIST_ENTRY(sgimips_intrhand)
 		ih_q;
-	int	(*ih_fun) __P((void *));
+	int	(*ih_fun) (void *);
 	void	 *ih_arg;
 	struct	sgimips_intr *ih_intrhead;
 	int	ih_pending;
