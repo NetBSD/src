@@ -1,4 +1,4 @@
-/* $NetBSD: exception.S,v 1.5 1996/03/13 21:00:26 mark Exp $ */
+/* $NetBSD: exception.S,v 1.6 1996/10/15 22:56:27 mark Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -45,6 +45,7 @@
  * Based on kate/display/abort.s
  */
 
+#include "kgdb.h"
 #include <machine/cpu.h>
 #include "assym.h"
 
@@ -123,6 +124,58 @@ pc	.req	r15
 	.text	
 	.align	0
 
+Lastpending:
+        .word   _astpending
+
+/*
+ * General exception exit handler
+ *
+ * It exits straight away if not returning to USR mode.
+ * This loops around delivering any pending ASTs.
+ * Interrupts are disabled at suitable points to avoid ASTs
+ * being posted between testing and exit to user mode.
+ *
+ * This function uses PULLFRAMEFROMSVCANDEXIT thus should
+ * only be called if the exception handler used PUSHFRAMEINSVC
+ */
+
+exception_exit:
+	mrs     r4, cpsr_all		/* Get CPSR */
+
+	ldr	r0, [sp]		/* Get the SPSR from stack */
+	and	r0, r0, #(PSR_MODE)	/* Test for USR32 mode before the AST */
+	teq	r0, #(PSR_USR32_MODE)
+	bne	do_exit			/* Not USR mode so no AST delivery */
+
+	ldr	r5, Lastpending		/* Get address of astpending */
+
+exception_exit_loop:
+	orr     r0, r4, #(I32_bit)	/* Block IRQs */
+	msr     cpsr_all, r0
+
+	ldr	r1, [r5]		/* Do we have an AST pending */
+	teq	r1, #0x00000000
+	bne	do_ast
+
+	PULLFRAMEFROMSVCANDEXIT		/* No AST so exit */
+
+do_ast:
+	msr     cpsr_all, r4		/* Restore interrupts */
+
+	mov	r1, #0x00000000		/* Clear ast pending */
+	str	r1, [r5]
+
+	mov	r0, sp			/* arg 0 = trap frame */
+	bl	_ast			/* call the AST handler */
+	b	exception_exit_loop	/* Try and exit again */
+
+do_exit:
+	orr     r0, r4, #(I32_bit)	/* Disable interupts */
+	msr     cpsr_all, r0
+
+	PULLFRAMEFROMSVCANDEXIT		/* Restore the trap frame and exit */
+
+
 /* entry point for CPU data abort */
 
 	.global	data_abort_entry
@@ -135,31 +188,13 @@ data_abort_entry:
 
 	mov	r0, sp			/* pass the stack pointer as r0 */
 
-	add	lr, pc, #Ldata_abort_return - . - 8
+/*	add	lr, pc, #exception_exitLdata_abort_return - . - 8*/
+	add	lr, pc, #exception_exit - . - 8
 	ldr	r1, Ldata_abort_handler_address
 	ldr	pc, [r1]
 	
-Ldata_abort_return:
-#if 0	/* For now only handle ast's after interrupts */
-	ldr	r0, [sp]		/* Get the SPSR from stack */
-	and	r0, r0, #(PSR_MODE)	/* Test for USR32 mode before the ABT */
-	teq	r0, #(PSR_USR32_MODE)
-	ldreq	r0, Lastpending		/* Do we have an AST pending ? */
-	ldreq	r1, [r0]
-	teqeq	r1, #0x00000001
-	moveq	r1, #0x00000000		/* Clear it */
-	streq	r1, [r0]
-
-	moveq	r0, sp			/* arg 0 = irq frame */
-	bleq	_ast			/* call the AST handler */
-#endif
-
-/* Kill IRQ's */
-        mrs     r0, cpsr_all
-        orr     r0, r0, #(I32_bit)
-        msr     cpsr_all, r0
-
-	PULLFRAMEFROMSVCANDEXIT		/* Restore the trap frame and exit */
+Ldata_abort_return:	/* XXX - could just straight to exception_exit */
+	b	exception_exit
 
 Ldata_abort_handler_address:
 	.word	_data_abort_handler_address
@@ -189,31 +224,13 @@ prefetch_abort_entry:
 
  	mov	r0, sp			/* pass the stack pointer as r0 */
 
-	add	lr, pc, #Lprefetch_abort_return - . - 8
+#	add	lr, pc, #Lprefetch_abort_return - . - 8
+	add	lr, pc, #exception_exit - . - 8
 	ldr	r1, Lprefetch_abort_handler_address
 	ldr	pc, [r1]
 	
-Lprefetch_abort_return:
-#if 0	/* For the moment ast's are only handled by irq handler */
-	ldr	r0, [sp]		/* Get the SPSR from stack */
-	and	r0, r0, #(PSR_MODE)	/* Test for USR32 mode before the IRQ */
-	teq	r0, #(PSR_USR32_MODE)
-	ldreq	r0, Lastpending		/* Do we have an AST pending ? */
-	ldreq	r1, [r0]
-	teqeq	r1, #0x00000001
-	moveq	r1, #0x00000000		/* Clear it */
-	streq	r1, [r0]
-
-	moveq	r0, sp			/* arg 0 = irq frame */
-	bleq	_ast			/* call the AST handler */
-#endif
-
-/* Kill IRQ's */
-        mrs     r0, cpsr_all
-        orr     r0, r0, #(I32_bit)
-        msr     cpsr_all, r0
-
-	PULLFRAMEFROMSVCANDEXIT
+Lprefetch_abort_return:	/* XXX - could just straight to exception_exit */
+	b	exception_exit
 
 Lprefetch_abort_handler_address:
 	.word	_prefetch_abort_handler_address
@@ -253,32 +270,30 @@ swi_entry:
 
 	bl	_syscall		/* It's a syscall ! */
 
-#if 0	/* Ast's only from the irqhandler .... */
-	ldr	r0, Lastpending		/* Do we have an AST pending ? */
-	ldr	r1, [r0]
-	teq	r1, #0x00000001
-	moveq	r1, #0x00000000		/* Clear it */
-	streq	r1, [r0]
+	ldr	r5, Lastpending		/* Get address of astpending */
+	mrs     r4, cpsr_all		/* Get CPSR */
 
-	moveq	r0, sp			/* arg 0 = irq frame */
-	bleq	_ast			/* call the AST handler */
-#endif
+swi_exit_loop:
+	orr     r0, r4, #(I32_bit)	/* Disable IRQs */
+	msr     cpsr_all, r0
 
-/* Kill irq's */
-
-        mrs     r0, cpsr_all
-        orr     r0, r0, #(I32_bit)
-        msr     cpsr_all, r0
+	ldr	r1, [r5]		/* Do we have an AST pending */
+	teq	r1, #0x00000000
+	bne	do_swi_ast
 
 	PULLFRAME
-
 	movs	pc, lr			/* Exit */
 
-Lastpending:
-        .word   _astpending
+do_swi_ast:
+	msr     cpsr_all, r4		/* Restore interrupts */
 
-	.text
-	.align	0
+	mov	r1, #0x00000000		/* Clear ast pending */
+	str	r1, [r5]
+
+	mov	r0, sp			/* arg 0 = trap frame */
+	bl	_ast			/* call the AST handler */
+	b	swi_exit_loop		/* Try and exit again */
+
 
 /*
  * We indirect the undefined vector via the handler address
@@ -289,6 +304,121 @@ Lastpending:
 
 	.global	undefined_entry
 undefined_entry:
+#if NKGDB > 0 || NKGDBSLIP > 0
+/*
+ * KGDB must be hooked in at the earliest possible entry point.
+ *
+ */
+/*
+ * Make room for all registers saving real r0-r7 and r15.
+ * The remaining registers are updated later.
+ */
+	stmfd	sp!, {r0,r1}		/* psr & spsr */
+	stmfd	sp!, {lr}		/* pc */
+	stmfd	sp!, {r0-r14}		/* r0-r7, r8-r14 */
+/*
+ * Get previous psr.
+ */
+	mrs	r7, cpsr_all
+	mrs	r0, spsr_all
+	str	r0, [sp, #(16*4)]
+/*
+ * Test for user mode.
+ */
+	tst	r0, #0xf
+	bne	Lprenotuser_push
+	add	r1, sp, #(8*4)
+	stmia	r1,{r8-r14}^		/* store user mode r8-r14*/
+	b	Lgokgdb
+/*
+ * Switch to previous mode to get r8-r13.
+ */
+Lprenotuser_push:
+	orr	r0, r0, #(F32_bit|I32_bit) /* disable interrupts */
+	msr	cpsr_all, r0
+	mov	r1, r8
+	mov	r2, r9
+	mov	r3, r10
+	mov	r4, r11
+	mov	r5, r12
+	mov	r6, r13
+	msr	cpsr_all, r7		/* back to undefined mode */
+	add	r8, sp, #(8*4)
+	stmia	r8, {r1-r6}		/* r8-r13 */
+/*
+ * Now back to previous mode to get r14 and spsr.
+ */
+	msr	cpsr_all, r0
+	mov	r1, r14
+	mrs	r2, spsr
+	msr	cpsr_all, r7		/* back to undefined mode */
+	str	r1, [sp, #(14*4)]	/* r14 */
+	str	r2, [sp, #(17*4)]	/* spsr */
+/*
+ * Now to KGDB.
+ */
+Lgokgdb:
+	mov	r0, sp
+	bl	_kgdb_trap_glue
+	ldr	r1, Lkgdb_trap_return
+	str	r0,[r1]
+/*
+ * Have to load all registers from the stack.
+ *
+ * Start with spsr and pc.
+ */
+	ldr	r0, [sp, #(16*4)]	/* spsr */
+	ldr	r1, [sp, #(15*4)]	/* r15 */
+	msr	spsr_all, r0
+	mov	r14, r1
+/*
+ * Test for user mode.
+ */
+	tst	r0, #0xf
+	bne	Lprenotuser_pull
+	add	r1, sp, #(8*4)
+	ldmia	r1, {r8-r14}^		/* load user mode r8-r14 */
+	b	Lpull_r0r7
+Lprenotuser_pull:
+/*
+ * Now previous mode spsr and r14.
+ */
+	ldr	r1, [sp, #(17*4)]		/* spsr */
+	ldr	r2, [sp, #(14*4)]		/* r14 */
+	orr	r0, r0, #(F32_bit|I32_bit)
+	msr	cpsr_all, r0			/* switch to previous mode */
+	msr	spsr_all, r1
+	mov	r14, r2
+	msr	cpsr_all, r7			/* back to undefined mode */
+/*
+ * Now r8-r13.
+ */
+	add	r8, sp, #(8*4)
+	ldmia	r8, {r1-r6}		/* r8-r13 */
+	msr	cpsr_all, r0
+	mov	r8, r1
+	mov	r9, r2
+	mov	r10, r3
+	mov	r11, r4
+	mov	r12, r5
+	mov	r13, r6
+	msr	cpsr_all, r7
+Lpull_r0r7:
+/*
+ * Now the rest of the registers.
+ */
+	ldr	r1,Lkgdb_trap_return
+	ldr	r0,[r1]
+	tst	r0,r0
+	ldmfd	sp!, {r0-r7}		/* r0-r7 */
+	add	sp, sp, #(10*4)		/* adjust sp */
+
+/*
+ * Did KGDB handle it?
+ */
+	movnes	pc, lr			/* return */
+
+#endif
 	stmfd	sp!, {r0, r1}
 	ldr	r0, Lundefined_handler_indirection
 	ldr	r1, [sp], #0x0004
@@ -296,6 +426,11 @@ undefined_entry:
 	ldr	r1, [sp], #0x0004
 	str	r1, [r0, #0x0004]
 	ldmia	r0, {r0, r1, pc}
+
+#if NKGDB > 0 || NKGDBSLIP > 0
+Lkgdb_trap_return:
+	.word	Lkgdb_trap_return_data
+#endif
 
 Lundefined_handler_indirection:
 	.word	Lundefined_handler_indirection_data
@@ -312,16 +447,15 @@ _undefinedinstruction_bounce:
 	mov	r0, sp
 	bl	_undefinedinstruction
 
-/* Kill irq's */
-        mrs     r0, cpsr_all
-        orr     r0, r0, #(I32_bit)
-        msr     cpsr_all, r0
-
-	PULLFRAMEFROMSVCANDEXIT
-
+	b	exception_exit
 
 	.data
 	.align	0
+
+#if NKGDB > 0 || NKGDBSLIP > 0
+Lkgdb_trap_return_data:
+	.word	0
+#endif
 
 /*
  * Indirection data
