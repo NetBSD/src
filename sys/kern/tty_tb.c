@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_tb.c,v 1.15 1994/10/30 21:48:04 cgd Exp $	*/
+/*	$NetBSD: tty_tb.c,v 1.16 1994/12/13 20:03:13 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -55,10 +55,10 @@ struct	tbconf {
 	short	tbc_uiosize;	/* size of data record returned user */
 	int	tbc_sync;	/* mask for finding sync byte/bit */
 	int	(*tbc_decode)();/* decoding routine */
-	char	*tbc_run;	/* enter run mode sequence */
-	char	*tbc_point;	/* enter point mode sequence */
-	char	*tbc_stop;	/* stop sequence */
-	char	*tbc_start;	/* start/restart sequence */
+	u_char	*tbc_run;	/* enter run mode sequence */
+	u_char	*tbc_point;	/* enter point mode sequence */
+	u_char	*tbc_stop;	/* stop sequence */
+	u_char	*tbc_start;	/* start/restart sequence */
 	int	tbc_flags;
 #define	TBF_POL		0x1	/* polhemus hack */
 #define	TBF_INPROX	0x2	/* tablet has proximity info */
@@ -328,25 +328,25 @@ tbtioctl(tp, cmd, data, flag, p)
 
 	case BIOSMODE: {
 		register struct tbconf *tc;
-		char *c;
+		u_char *c;
 
 		tbp->tbflags &= ~TBMODE;
 		tbp->tbflags |= *(int *)data & TBMODE;
 		tc = &tbconf[tbp->tbflags & TBTYPE];
-		if (tbp->tbflags&TBSTOP) {
+		if (tbp->tbflags & TBSTOP) {
 			if (tc->tbc_stop)
 				for (c = tc->tbc_stop; *c != '\0'; c++)
-					ttyoutput(c, tp);
+					ttyoutput(*c, tp);
 		} else if (tc->tbc_start)
 			for (c = tc->tbc_start; *c != '\0'; c++)
-				ttyoutput(c, tp);
-		if (tbp->tbflags&TBPOINT) {
+				ttyoutput(*c, tp);
+		if (tbp->tbflags & TBPOINT) {
 			if (tc->tbc_point)
 				for (c = tc->tbc_point; *c != '\0'; c++)
-					ttyoutput(c, tp);
+					ttyoutput(*c, tp);
 		} else if (tc->tbc_run)
 			for (c = tc->tbc_run; *c != '\0'; c++)
-				ttyoutput(c, tp);
+				ttyoutput(*c, tp);
 		ttstart(tp);
 		break;
 	}
