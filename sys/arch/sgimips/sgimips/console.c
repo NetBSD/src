@@ -1,4 +1,4 @@
-/*	$NetBSD: console.c,v 1.23 2004/04/08 14:45:13 pooka Exp $	*/
+/*	$NetBSD: console.c,v 1.24 2004/04/10 20:03:11 pooka Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: console.c,v 1.23 2004/04/08 14:45:13 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: console.c,v 1.24 2004/04/10 20:03:11 pooka Exp $");
 
 #include "opt_kgdb.h"
 
@@ -102,6 +102,7 @@ consinit()
 			    KBCMDP, PCKBC_KBD_SLOT);
 		}
 #endif
+	case MACH_SGI_IP12:
 #if (NZSC > 0)
 		if ((strlen(consdev) == 9) &&
 		    (!strncmp(consdev, "serial", 6)) &&
@@ -148,8 +149,12 @@ kgdb_port_init()
 # endif	/* (NCOM > 0) */
 
 # if (NZSC > 0)
-	if (mach_type == MACH_SGI_IP20 || mach_type == MACH_SGI_IP22)
+	switch(mach_type) {
+	case MACH_SGI_IP12:
+	case MACH_SGI_IP20:
+	case MACH_SGI_IP22:
 		zs_kgdb_init();			/* XXX */
+	}
 # endif
 }
 #endif	/* KGDB */
