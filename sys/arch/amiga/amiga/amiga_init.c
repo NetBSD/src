@@ -1,4 +1,4 @@
-/*	$NetBSD: amiga_init.c,v 1.72 2001/01/13 02:15:16 aymeric Exp $	*/
+/*	$NetBSD: amiga_init.c,v 1.73 2001/02/14 20:24:17 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -841,7 +841,7 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync, boot_part
 					".word 0x4e7b,0x0002" : : : "d0");
 		}
 
-		asm volatile ("movel %0,a0; .word 0x4e7b,0x8807"
+		asm volatile ("movel %0,%%a0; .word 0x4e7b,0x8807"
 		    : : "a" (RELOC(Sysseg_pa, u_int)) : "a0");
 		asm volatile (".word 0xf518" : : );
 
@@ -855,7 +855,7 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync, boot_part
 ((volatile struct Custom *)0xdff000)->color[0] = 0xA70;		/* ORANGE */
 #endif
 
-		asm volatile ("movel #0xc000,d0; .word 0x4e7b,0x0003" 
+		asm volatile ("movel #0xc000,%%d0; .word 0x4e7b,0x0003" 
 		    : : :"d0" );
 	} else
 #endif
@@ -866,14 +866,14 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync, boot_part
 		 * nolimit, share global, 4 byte PTE's
 		 */
 		(RELOC(protorp[0], u_int)) = 0x80000202;
-		asm volatile ("pmove %0@,srp" : : "a" (&RELOC(protorp, u_int)));
+		asm volatile ("pmove %0@,%%srp":: "a" (&RELOC(protorp, u_int)));
 		/*
 		 * setup and load TC register.
 		 * enable_cpr, enable_srp, pagesize=8k,
 		 * A = 8 bits, B = 11 bits
 		 */
 		tc = 0x82d08b00;
-		asm volatile ("pmove %0@,tc" : : "a" (&tc));
+		asm volatile ("pmove %0@,%%tc" : : "a" (&tc));
 	}
 #ifdef DEBUG_KERNEL_START
 #ifdef DRACO
