@@ -29,8 +29,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     from: @(#)utimes.2	6.7 (Berkeley) 4/19/91
-.\"	$Id: utimes.2,v 1.2 1993/08/01 07:42:02 mycroft Exp $
+.\"     @(#)utimes.2	6.7 (Berkeley) 4/19/91
 .\"
 .Dd April 19, 1991
 .Dt UTIMES 2
@@ -45,25 +44,27 @@
 .Sh DESCRIPTION
 The
 .Fn utimes
-function sets the access and modification times of the named file from
-the structures in the argument array
-.Fa times .
+function sets the access and modification times of the named.
 .Pp
-The first structure is the access time, and the second is the modification
-time.
-.Pp
-If the times are specified (the
+If 
 .Fa times
-argument is
-.Pf non- Dv NULL )
-the caller must be the owner of the file or be the super-user.
-.Pp
-If the times are not specified (the
-.Fa times
-argument is
-.Dv NULL )
-the caller must be the owner of the file, have permission to
+is 
+.Dv NULL ,
+the access and modification times are set to the current time.
+The caller must be the owner of the file, have permission to
 write the file, or be the super-user.
+.Pp
+If
+.Fa times
+is
+.Pf non- Dv NULL , 
+it is assumed to point to an array of two timeval structures.
+The access time is set to the value of the first element, and the
+modification time is set to the value of the second element.
+The caller must be the owner of the file or be the super-user.
+.Pp
+In either case, the inode-change-time of the file is set to the current
+time.
 .Sh RETURN VALUES
 Upon successful completion, a value of 0 is returned.
 Otherwise, a value of -1 is returned and
@@ -111,7 +112,8 @@ does not match the owner of the file and is not the super-user.
 The file system containing the file is mounted read-only.
 .El
 .Sh SEE ALSO
-.Xr stat 2
+.Xr stat 2 ,
+.Xr utime 3
 .Sh HISTORY
 The
 .Nm
