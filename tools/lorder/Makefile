@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.2 2001/09/22 05:02:13 tv Exp $
+#	$NetBSD: Makefile,v 1.3 2001/11/14 22:13:41 tv Exp $
 
-TIMESTAMP=	${TOOLDIR}/bin/lorder
+TIMESTAMP=	${TOOLDIR}/bin/nblorder
 
 .PATH: ${.CURDIR}/../../usr.bin/lorder
 
@@ -8,6 +8,4 @@ TIMESTAMP=	${TOOLDIR}/bin/lorder
 
 install: ${TIMESTAMP}
 ${TIMESTAMP}: lorder.sh
-.if !make(build)
-	${INSTALL} ${RENAME} ${PRESERVE} ${COPY} -m ${BINMODE} $> $@
-.endif
+	${INSTALL_FILE:N-U} -m ${BINMODE} ${.ALLSRC} ${.TARGET}
