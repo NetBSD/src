@@ -1,14 +1,17 @@
-#	$NetBSD: Makefile,v 1.14 2000/01/11 05:48:30 matt Exp $
+#	$NetBSD: Makefile,v 1.15 2000/03/27 19:15:32 msaitoh Exp $
 
 LIB=		bfd
 
 MKLINT=		no
 MKMAN=		no
 MKPROFILE=	no
-MKLINKLIB=	no
 
 # for MKPIC, BFD_SLIM, BFD_UNIFIED, OBJECT_FMT
 .include <bsd.own.mk>
+
+.if ${MKPIC} != "no"
+MKLINKLIB=	no
+.endif
 
 .if (${OBJECT_FMT} == "ELF") || defined(BOOTSTRAP_ELF)
 ELF_PLEASE=
