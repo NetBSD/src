@@ -1,4 +1,4 @@
-/* $NetBSD: prom.c,v 1.16 1997/09/02 13:18:34 thorpej Exp $ */
+/* $NetBSD: prom.c,v 1.17 1997/09/02 20:15:36 thorpej Exp $ */
 
 /* 
  * Copyright (c) 1992, 1994, 1995, 1996 Carnegie Mellon University
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: prom.c,v 1.16 1997/09/02 13:18:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: prom.c,v 1.17 1997/09/02 20:15:36 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,7 +56,7 @@ extern struct prom_vec prom_dispatch_v;
 pt_entry_t	*rom_ptep, rom_pte, saved_pte;	/* XXX */
 
 #ifdef NEW_PMAP
-#define	rom_ptep   (curproc ? &curproc->p_vmspace->vm_pmap.dir[0] : rom_ptep)
+#define	rom_ptep   (curproc ? &curproc->p_vmspace->vm_map.pmap->dir[0] : rom_ptep)
 #endif
 
 void
