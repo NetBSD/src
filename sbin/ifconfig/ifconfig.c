@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.39 1997/09/15 01:53:36 lukem Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.
@@ -75,7 +75,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.39 1997/09/15 01:53:36 lukem Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -253,7 +253,6 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	extern int optind;
 	int ch, aflag;
 
 	/* Parse command-line options */
