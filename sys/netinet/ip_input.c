@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.56 1998/01/28 02:36:10 thorpej Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.57 1998/02/13 18:21:44 tls Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -113,6 +113,7 @@ extern	struct protosw inetsw[];
 u_char	ip_protox[IPPROTO_MAX];
 int	ipqmaxlen = IFQ_MAXLEN;
 struct	in_ifaddrhead in_ifaddr;
+struct	in_ifaddrhashhead *in_ifaddrhashtbl;
 struct	ifqueue ipintrq;
 
 /*
@@ -156,6 +157,8 @@ ip_init()
 	ip_id = time.tv_sec & 0xffff;
 	ipintrq.ifq_maxlen = ipqmaxlen;
 	TAILQ_INIT(&in_ifaddr);
+	in_ifaddrhashtbl = 
+	    hashinit(IN_IFADDR_HASH_SIZE, M_IFADDR, M_WAITOK, &in_ifaddrhash);
 }
 
 struct	sockaddr_in ipaddr = { sizeof(ipaddr), AF_INET };
@@ -172,6 +175,7 @@ ipintr()
 	register struct mbuf *m;
 	register struct ipq *fp;
 	register struct in_ifaddr *ia;
+	register struct ifaddr *ifa;
 	struct ipqent *ipqe;
 	int hlen = 0, mff, len, s;
 #ifdef PFIL_HOOKS
@@ -281,12 +285,13 @@ next:
 	/*
 	 * Check our list of addresses, to see if the packet is for us.
 	 */
-	for (ia = in_ifaddr.tqh_first; ia; ia = ia->ia_list.tqe_next) {
-		if (in_hosteq(ip->ip_dst, ia->ia_addr.sin_addr))
-			goto ours;
-		if (((ip_directedbcast == 0) || (ip_directedbcast &&
-		    ia->ia_ifp == m->m_pkthdr.rcvif)) &&
-		    (ia->ia_ifp->if_flags & IFF_BROADCAST)) {
+	INADDR_TO_IA(ip->ip_dst, ia);
+	if (ia != NULL) goto ours;
+	if (m->m_pkthdr.rcvif->if_flags & IFF_BROADCAST) {
+		for (ifa = m->m_pkthdr.rcvif->if_addrlist.tqh_first;
+		    ifa != NULL; ifa = ifa->ifa_list.tqe_next) {
+			if (ifa->ifa_addr->sa_family != AF_INET) continue;
+			ia = ifatoia(ifa);
 			if (in_hosteq(ip->ip_dst, ia->ia_broadaddr.sin_addr) ||
 			    in_hosteq(ip->ip_dst, ia->ia_netbroadcast) ||
 			    /*
@@ -296,14 +301,13 @@ next:
 			    ip->ip_dst.s_addr == ia->ia_subnet ||
 			    ip->ip_dst.s_addr == ia->ia_net)
 				goto ours;
+			/*
+			 * An interface with IP address zero accepts
+			 * all packets that arrive on that interface.
+			 */
+			if (in_nullhost(ia->ia_addr.sin_addr))
+				goto ours;
 		}
-		/*
-		 * An interface with IP address zero accepts
-		 * all packets that arrive on that interface.
-		 */
-		if ((ia->ia_ifp == m->m_pkthdr.rcvif) &&
-		    in_nullhost(ia->ia_addr.sin_addr))
-			goto ours;
 	}
 	if (IN_MULTICAST(ip->ip_dst.s_addr)) {
 		struct in_multi *inm;
