@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.100 1998/09/10 20:45:33 is Exp $	*/
+/*	$NetBSD: locore.s,v 1.101 1998/09/30 23:01:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -46,6 +46,7 @@
  * Other contributors: Bryan Ford (kernel reload stuff)
  */
 
+#include "opt_compat_netbsd.h"
 #include "opt_uvm.h"
 
 #include "assym.h"

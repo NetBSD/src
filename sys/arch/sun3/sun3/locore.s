@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.61 1998/09/09 00:07:56 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.62 1998/09/30 23:01:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -43,6 +43,7 @@
  *	@(#)locore.s	8.6 (Berkeley) 5/27/94
  */
 
+#include "opt_compat_netbsd.h"
 #include "opt_uvm.h"
 
 #include "assym.h"
