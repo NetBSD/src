@@ -1,4 +1,4 @@
-/*	$NetBSD: mv.c,v 1.20 1998/11/04 18:56:53 christos Exp $	*/
+/*	$NetBSD: mv.c,v 1.21 1999/08/02 01:42:08 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mv.c	8.2 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: mv.c,v 1.20 1998/11/04 18:56:53 christos Exp $");
+__RCSID("$NetBSD: mv.c,v 1.21 1999/08/02 01:42:08 sommerfeld Exp $");
 #endif
 #endif /* not lint */
 
@@ -175,8 +175,16 @@ do_move(from, to)
 		int ch;
 
 		if (iflg) {
+			if (access(from, F_OK)) {
+				warn("rename %s", from);
+				return (1);
+			}
 			(void)fprintf(stderr, "overwrite %s? ", to);
 		} else if (stdin_ok && access(to, W_OK) && !stat(to, &sb)) {
+			if (access(from, F_OK)) {
+				warn("rename %s", from);
+				return (1);
+			}
 			strmode(sb.st_mode, modep);
 			(void)fprintf(stderr, "override %s%s%s/%s for %s? ",
 			    modep + 1, modep[9] == ' ' ? "" : " ",
