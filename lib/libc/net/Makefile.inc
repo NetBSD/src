@@ -1,8 +1,8 @@
 #	from: @(#)Makefile.inc	5.3 (Berkeley) 2/21/91
-#	$Id: Makefile.inc,v 1.7 1993/10/07 00:23:27 cgd Exp $
+#	$Id: Makefile.inc,v 1.8 1993/12/04 02:36:36 cgd Exp $
 
 # net sources
-.PATH: ${.CURDIR}/arch/${MACHINE}/net ${.CURDIR}/net
+.PATH: ${.CURDIR}/arch/${MACHINE_ARCH}/net ${.CURDIR}/net
 
 SRCS+=	gethostnamadr.c getnetbyaddr.c getnetbyname.c getnetent.c \
 	getproto.c getprotoent.c getprotoname.c getservbyname.c \
@@ -13,16 +13,16 @@ SRCS+=	gethostnamadr.c getnetbyaddr.c getnetbyname.c getnetent.c \
 	res_debug.c res_init.c res_mkquery.c res_query.c res_send.c \
 	send.c sethostent.c
 
-.if   (${MACHINE} == "hp300")
-SRCS+=	htonl.s htons.s ntohl.s ntohs.s
-.elif (${MACHINE} == "i386")
-SRCS+=	htonl.s htons.s ntohl.s ntohs.s
-.elif (${MACHINE} == "pc532")
-SRCS+=	ntoh.s
-.elif (${MACHINE} == "tahoe")
-SRCS+=	htonl.s htons.s ntohl.s ntohs.s
-.elif (${MACHINE} == "vax")
-SRCS+=	htonl.s htons.s ntohl.s ntohs.s
+.if   (${MACHINE_ARCH} == "hp300")
+SRCS+=	htonl.S htons.S ntohl.S ntohs.S
+.elif (${MACHINE_ARCH} == "i386")
+SRCS+=	htonl.S htons.S ntohl.S ntohs.S
+.elif (${MACHINE_ARCH} == "pc532")
+SRCS+=	ntoh.S
+.elif (${MACHINE_ARCH} == "tahoe")
+SRCS+=	htonl.S htons.S ntohl.S ntohs.S
+.elif (${MACHINE_ARCH} == "vax")
+SRCS+=	htonl.S htons.S ntohl.S ntohs.S
 .else 
 SRCS+=	htonl.c htons.c ntohl.c ntohs.c
 .endif

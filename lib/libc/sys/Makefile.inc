@@ -1,13 +1,13 @@
 #	from: @(#)Makefile.inc	5.11 (Berkeley) 6/23/91
-#	$Id: Makefile.inc,v 1.14 1993/11/21 19:32:11 mycroft Exp $
+#	$Id: Makefile.inc,v 1.15 1993/12/04 02:39:41 cgd Exp $
 
 # sys sources
-.PATH: ${.CURDIR}/arch/${MACHINE}/sys ${.CURDIR}/sys
+.PATH: ${.CURDIR}/arch/${MACHINE_ARCH}/sys ${.CURDIR}/sys
 
 # modules with non-default implementations on at least one architecture:
-SRCS+=	Ovfork.s brk.s cerror.s exect.s fork.s pipe.s ptrace.s reboot.s \
-	sbrk.s setlogin.s sigpending.s sigprocmask.s sigreturn.s \
-	sigsuspend.s syscall.s
+SRCS+=	Ovfork.S brk.S cerror.S exect.S fork.S pipe.S ptrace.S reboot.S \
+	sbrk.S setlogin.S sigpending.S sigprocmask.S sigreturn.S \
+	sigsuspend.S syscall.S
 
 # modules with default implementations on all architectures:
 ASM=	accept.o access.o acct.o adjtime.o async_daemon.o bind.o chdir.o \
@@ -39,38 +39,38 @@ SPSEUDO=${PSEUDO:.o=.so}
 
 OBJS+=	${ASM} ${PSEUDO}
 
-${PASM}: ${.CURDIR}/arch/${MACHINE}/SYS.h /usr/include/sys/syscall.h
+${PASM}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h /usr/include/sys/syscall.h
 	@echo creating ${.TARGET}
 	@printf '#include "SYS.h"\nRSYSCALL(${.PREFIX})\n' | \
 	    ${CPP} -DPROF ${CFLAGS:M-[ID]*} ${AINC} | ${AS} -o ${.TARGET}
 	@${LD} -X -r ${.TARGET}
 	@mv a.out ${.TARGET}
 
-${SASM}: ${.CURDIR}/arch/${MACHINE}/SYS.h /usr/include/sys/syscall.h
+${SASM}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h /usr/include/sys/syscall.h
 	@echo creating ${.TARGET}
 	@printf '#include "SYS.h"\nRSYSCALL(${.PREFIX})\n' | \
 	    ${CPP} -DPIC ${CFLAGS:M-[ID]*} ${AINC} | ${AS} -k -o ${.TARGET}
 
-${ASM}: ${.CURDIR}/arch/${MACHINE}/SYS.h /usr/include/sys/syscall.h
+${ASM}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h /usr/include/sys/syscall.h
 	@echo creating ${.TARGET}
 	@printf '#include "SYS.h"\nRSYSCALL(${.PREFIX})\n' | \
 	    ${CPP} ${CFLAGS:M-[ID]*} ${AINC} | ${AS} -o ${.TARGET}
 	@${LD} -x -r ${.TARGET}
 	@mv a.out ${.TARGET}
 
-${PPSEUDO}: ${.CURDIR}/arch/${MACHINE}/SYS.h /usr/include/sys/syscall.h
+${PPSEUDO}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h /usr/include/sys/syscall.h
 	@echo creating ${.TARGET}
 	@printf '#include "SYS.h"\nPSEUDO(${.PREFIX},${.PREFIX:S/_//})\n' | \
 	    ${CPP} -DPROF ${CFLAGS:M-[ID]*} ${AINC} | ${AS} -o ${.TARGET}
 	@${LD} -X -r ${.TARGET}
 	@mv a.out ${.TARGET}
 
-${SPSEUDO}: ${.CURDIR}/arch/${MACHINE}/SYS.h /usr/include/sys/syscall.h
+${SPSEUDO}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h /usr/include/sys/syscall.h
 	@echo creating ${.TARGET}
 	@printf '#include "SYS.h"\nPSEUDO(${.PREFIX},${.PREFIX:S/_//})\n' | \
 	    ${CPP} -DPIC ${CFLAGS:M-[ID]*} ${AINC} | ${AS} -k -o ${.TARGET}
 
-${PSEUDO}: ${.CURDIR}/arch/${MACHINE}/SYS.h /usr/include/sys/syscall.h
+${PSEUDO}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h /usr/include/sys/syscall.h
 	@echo creating ${.TARGET}
 	@printf '#include "SYS.h"\nPSEUDO(${.PREFIX},${.PREFIX:S/_//})\n' | \
 	    ${CPP} ${CFLAGS:M-[ID]*} ${AINC} | ${AS} -o ${.TARGET}

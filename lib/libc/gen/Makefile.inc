@@ -1,8 +1,8 @@
 #	from: @(#)Makefile.inc	5.21 (Berkeley) 5/24/91
-#	$Id: Makefile.inc,v 1.28 1993/12/03 19:40:23 jtc Exp $
+#	$Id: Makefile.inc,v 1.29 1993/12/04 02:35:35 cgd Exp $
 
 # gen sources
-.PATH: ${.CURDIR}/arch/${MACHINE}/gen ${.CURDIR}/gen
+.PATH: ${.CURDIR}/arch/${MACHINE_ARCH}/gen ${.CURDIR}/gen
 
 SRCS+=	alarm.c assert.c clock.c confstr.c ctermid.c ctime.c ctype_.c \
 	cuserid.c difftime.c \
@@ -23,26 +23,26 @@ SRCS+=	alarm.c assert.c clock.c confstr.c ctermid.c ctime.c ctype_.c \
 	ualarm.c unvis.c usleep.c utime.c valloc.c vis.c wait.c wait3.c \
 	waitpid.c
 
-.if   (${MACHINE} == "hp300")
-SRCS+=	_setjmp.s alloca.s fabs.s ldexp.s modf.s setjmp.s
-SRCS+=	adddf3.s addsf3.s ashlsi3.s ashrsi3.s cmpdf2.s cmpsf2.s divdf3.s \
-	divsf3.s divsi3.s extendsfdf2.s fixdfsi.s fixunsdfsi.s \
-	floatsidf.s lshlsi3.s lshrsi3.s modsi3.s muldf3.s mulsf3.s mulsi3.s \
-	negdf2.s negsf2.s saveregs.c subdf3.s subsf3.s truncdfsf2.s udivsi3.s \
-	umodsi3.s umulsi3.s
-.elif (${MACHINE} == "i386")
-SRCS+=	_setjmp.s alloca.s fabs.s ldexp.c modf.s setjmp.s sigsetjmp.s
-SRCS+=	divsi3.s fixdfsi.s fixunsdfsi.s udivsi3.s
-.elif (${MACHINE} == "pc532")
-SRCS+=	__main.c _setjmp.s alloca.s fabs.s frexp.s infinity.c isinf.c
-SRCS+=  ldexp.s modf.s setjmp.s
-.elif (${MACHINE} == "tahoe")
+.if   (${MACHINE_ARCH} == "m68k")
+SRCS+=	_setjmp.S alloca.S fabs.S ldexp.S modf.S setjmp.S
+SRCS+=	adddf3.S addsf3.S ashlsi3.S ashrsi3.S cmpdf2.S cmpsf2.S divdf3.S \
+	divsf3.S divsi3.S extendsfdf2.S fixdfsi.S fixunsdfsi.S \
+	floatsidf.S lshlsi3.S lshrsi3.S modsi3.S muldf3.S mulsf3.S mulsi3.S \
+	negdf2.S negsf2.S saveregs.c subdf3.S subsf3.S truncdfsf2.S udivsi3.S \
+	umodsi3.S umulsi3.S
+.elif (${MACHINE_ARCH} == "i386")
+SRCS+=	_setjmp.S alloca.S fabs.S ldexp.c modf.S setjmp.S sigsetjmp.S
+SRCS+=	divsi3.S fixdfsi.S fixunsdfsi.S udivsi3.S
+.elif (${MACHINE_ARCH} == "pc532")
+SRCS+=	__main.c _setjmp.S alloca.S fabs.S frexp.S infinity.c isinf.c
+SRCS+=  ldexp.S modf.S setjmp.S
+.elif (${MACHINE_ARCH} == "tahoe")
 CFLAGS+=-I/sys
-SRCS+=	_setjmp.s alloca.s fabs.s ldexp.s modf.s setjmp.s
-SRCS+=	udiv.s urem.s
-.elif (${MACHINE} == "vax")
-SRCS+=	_setjmp.s alloca.s fabs.s ldexp.s modf.s setjmp.s
-SRCS+=	udiv.s urem.s
+SRCS+=	_setjmp.S alloca.S fabs.S ldexp.S modf.S setjmp.S
+SRCS+=	udiv.S urem.S
+.elif (${MACHINE_ARCH} == "vax")
+SRCS+=	_setjmp.S alloca.S fabs.S ldexp.S modf.S setjmp.S
+SRCS+=	udiv.S urem.S
 .endif
 
 MAN3+=	alarm.0 clock.0 ctermid.0 ctime.0 ctype.0 cuserid.0 directory.0 err.0 \
