@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_proc.c,v 1.55 2003/09/29 09:50:21 wiz Exp $	*/
+/*	$NetBSD: kvm_proc.c,v 1.56 2003/11/17 20:41:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_proc.c	8.3 (Berkeley) 9/23/93";
 #else
-__RCSID("$NetBSD: kvm_proc.c,v 1.55 2003/09/29 09:50:21 wiz Exp $");
+__RCSID("$NetBSD: kvm_proc.c,v 1.56 2003/11/17 20:41:54 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -828,6 +828,7 @@ kvm_getprocs(kd, op, arg, cnt)
 	} else {
 		struct nlist nl[4], *p;
 
+		(void)memset(nl, 0, sizeof(nl));
 		nl[0].n_name = "_nprocs";
 		nl[1].n_name = "_allproc";
 		nl[2].n_name = "_zombproc";
