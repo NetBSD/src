@@ -11,8 +11,8 @@ int main(void)
 	 * Test that an error set by dlopen() persists past a successful
 	 * dlopen() call.
 	 */
-	handle = dlopen("libnonexistent.so", DL_LAZY);
-	handle = dlopen("libm.so", DL_LAZY);
+	handle = dlopen("libnonexistent.so", RTLD_LAZY);
+	handle = dlopen("libm.so", RTLD_LAZY);
 	error = dlerror();
 	if (error == NULL)
 		errx(1, "Failed: dlerror() was cleared by successful dlopen()\n");
