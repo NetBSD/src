@@ -1,4 +1,4 @@
-$NetBSD: TODO,v 1.1 2002/03/06 02:13:37 simonb Exp $
+$NetBSD: TODO,v 1.2 2003/07/18 05:18:19 simonb Exp $
 
 NetBSD/sbmips to-do list
 
@@ -14,14 +14,11 @@ REALLY REALLY SHOULD ("MUST") BE DONE BEFORE INTEGRATION INTO NetBSD:
 
 SHOULD BE DONE BEFORE INTEGRATION INTO NetBSD:
 
-	* redo the softintr code.  it's fairly icky.
+	* redo the softintr code.  should use arch/mips/mips/softintr.c.
 
 	* clean as many changes off of 'stand' as possible.  the files
 	  in there were the most part derived from other ports (alpha
 	  and followers of that style of boot block).
-
-	  NOTE- 'stand' has not been imported to the NetBSD source tree
-	  yet.
 
 General features needed:
 
@@ -33,9 +30,9 @@ General features needed:
 
 	* ide on generic bus (requires bus.h support).
 
-	* generic smbus support, and support for our controller.
-
-		* TOD clock on smbus.
+	* generic smbus support.  currently the 'generic' sibyte
+	  code in arch/mips/sibyte knows board-specific information,
+	  and is not very clean.
 
 	* board-level configuration details.
 
@@ -49,10 +46,7 @@ General features needed:
 
 	* sync serial driver.
 
-
 Cleanups / Improvements:
-
-	* mips cache code / pmap for coherent system.
 
 	* sb-1 cache error handler.
 
