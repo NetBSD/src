@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: failover.c,v 1.5 2002/06/11 14:00:05 drochner Exp $ Copyright (c) 1999-2001 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: failover.c,v 1.6 2002/06/11 15:16:28 drochner Exp $ Copyright (c) 1999-2001 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -794,7 +794,7 @@ isc_result_t dhcp_failover_link_get_value (omapi_object_t *h,
 					   omapi_value_t **value)
 {
 	dhcp_failover_link_t *link;
-	int tmp;
+	int tmp; /* XXX used to force a signed comparision below */
 
 	if (h -> type != omapi_type_protocol)
 		return ISC_R_INVALIDARG;
@@ -847,7 +847,7 @@ isc_result_t dhcp_failover_link_stuff_values (omapi_object_t *c,
 {
 	dhcp_failover_link_t *link;
 	isc_result_t status;
-	int tmp;
+	int tmp; /* XXX used to force a signed comparision below */
 
 	if (l -> type != dhcp_type_failover_link)
 		return ISC_R_INVALIDARG;
