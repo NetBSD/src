@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.16 2003/01/13 19:49:59 briggs Exp $
+#	$NetBSD: Makefile,v 1.17 2003/10/10 06:14:02 grog Exp $
 
 SUBDIR=	apm ata dec dmover hpc i2o ic ieee1394 ir isa ofw \
-	pci pckbc pcmcia raidframe sbus scsipi sun tc usb vme wscons 
+	pci pckbc pcmcia raidframe sbus scsipi sun tc usb vme wscons vinum
 
 INCSDIR= /usr/include/dev
 
