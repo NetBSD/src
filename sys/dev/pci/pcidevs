@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.381 2002/01/04 18:26:20 augustss Exp $
+$NetBSD: pcidevs,v 1.382 2002/01/05 16:35:52 junyoung Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -798,7 +798,6 @@ product ATI MACH64_CT		0x4354	Mach64 CT
 product ATI MACH64_CX		0x4358	Mach64 CX
 product ATI MACH64_ET		0x4554	Mach64 ET
 product ATI MACH64_VT		0x4654	Mach64 VT
-product ATI MACH64_B		0x4750	Mach64 B
 product ATI MACH64_GB		0x4742	Mach64 GB
 product ATI MACH64_GD		0x4744	Mach64 GD
 product ATI MACH64_GI		0x4749	Mach64 GI
