@@ -36,7 +36,7 @@
  *	@(#)SYS.h	5.5 (Berkeley) 5/7/91
  */
 
-#include <syscall.h>
+#include <sys/syscall.h>
 
 #ifdef PROF
 #define	ENTRY(x)	.globl _/**/x; \
