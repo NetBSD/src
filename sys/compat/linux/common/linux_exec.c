@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.c,v 1.10 1995/08/14 01:27:48 mycroft Exp $	*/
+/*	$NetBSD: linux_exec.c,v 1.11 1995/09/19 22:37:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -394,13 +394,14 @@ linux_elf_probe(p, epp, itp, pos)
  */
 
 int
-linux_uselib(p, uap, retval)
+linux_uselib(p, v, retval)
 	struct proc *p;
-	struct linux_uselib_args /* {
-		syscallarg(char *) path;
-	} */ *uap;
+	void *v;
 	register_t *retval;
 {
+	struct linux_uselib_args /* {
+		syscallarg(char *) path;
+	} */ *uap = v;
 	caddr_t sg;
 	long bsize, dsize, tsize, taddr, baddr, daddr;
 	struct nameidata ni;
@@ -481,15 +482,16 @@ linux_uselib(p, uap, retval)
  * to the NetBSD execve().
  */
 int
-linux_execve(p, uap, retval)
+linux_execve(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	struct linux_execve_args /* {
 		syscallarg(char *) path;
 		syscallarg(char **) argv;
 		syscallarg(char **) envp;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	caddr_t sg;
 
 	sg = stackgap_init(p->p_emul);

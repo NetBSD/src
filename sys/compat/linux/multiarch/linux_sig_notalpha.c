@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sig_notalpha.c,v 1.7 1995/08/14 01:12:15 mycroft Exp $	*/
+/*	$NetBSD: linux_sig_notalpha.c,v 1.8 1995/09/19 22:37:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -223,15 +223,16 @@ bsd_to_linux_sigaction(bsa, lsa)
  * ignored (see above).
  */
 int
-linux_sigaction(p, uap, retval)
+linux_sigaction(p, v, retval)
 	register struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	struct linux_sigaction_args /* {
 		syscallarg(int) signum;
 		syscallarg(struct linux_sigaction *) nsa;
 		syscallarg(struct linux_sigaction *) osa;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	struct linux_sigaction *nlsa, *olsa, tmplsa;
 	struct sigaction *nbsa, *obsa, tmpbsa;
 	struct sigaction_args sa;
@@ -282,14 +283,15 @@ linux_sigaction(p, uap, retval)
  * sigaction() apply.
  */
 int
-linux_signal(p, uap, retval)
+linux_signal(p, v, retval)
 	register struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	struct linux_signal_args /* {
 		syscallarg(int) sig;
 		syscallarg(linux_handler_t) handler;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	caddr_t sg;
 	struct sigaction_args sa_args;
 	struct sigaction *osa, *nsa, tmpsa;
@@ -322,15 +324,16 @@ linux_signal(p, uap, retval)
  * This is just a copy of the svr4 compat one. I feel so creative now.
  */
 int
-linux_sigprocmask(p, uap, retval)
+linux_sigprocmask(p, v, retval)
 	register struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	struct linux_sigprocmask_args /* {
 		syscallarg(int) how;
 		syscallarg(linux_sigset_t *) set;
 		syscallarg(linux_sigset_t *) oset;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	linux_sigset_t ss;
 	sigset_t bs;
 	int error = 0;
@@ -403,13 +406,14 @@ linux_siggetmask(p, uap, retval)
  * they are here, and have not been mapped directly.
  */
 int
-linux_sigsetmask(p, uap, retval)
+linux_sigsetmask(p, v, retval)
 	register struct proc *p;
-	struct linux_sigsetmask_args /* {
-		syscallarg(linux_sigset_t) mask;
-	} */ *uap;
+	void *v;
 	register_t *retval;
 {
+	struct linux_sigsetmask_args /* {
+		syscallarg(linux_sigset_t) mask;
+	} */ *uap = v;
 	linux_sigset_t mask;
 	sigset_t bsdsig;
 
@@ -426,13 +430,14 @@ linux_sigsetmask(p, uap, retval)
 }
 
 int
-linux_sigpending(p, uap, retval)
+linux_sigpending(p, v, retval)
 	register struct proc *p;
-	struct linux_sigpending_args /* {
-		syscallarg(linux_sigset_t *) mask;
-	} */ *uap;
+	void *v;
 	register_t *retval;
 {
+	struct linux_sigpending_args /* {
+		syscallarg(linux_sigset_t *) mask;
+	} */ *uap = v;
 	sigset_t bs;
 	linux_sigset_t ls;
 
@@ -443,15 +448,16 @@ linux_sigpending(p, uap, retval)
 }
 
 int
-linux_sigsuspend(p, uap, retval)
+linux_sigsuspend(p, v, retval)
 	register struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	struct linux_sigsuspend_args /* {
 		syscallarg(caddr_t) restart;
 		syscallarg(int) oldmask;
 		syscallarg(int) mask;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	struct sigsuspend_args sa;
 
 	linux_to_bsd_sigset(&SCARG(uap, mask), &SCARG(&sa, mask));
@@ -478,14 +484,15 @@ linux_pause(p, uap, retval)
  * Once more: only a signal conversion is needed.
  */
 int
-linux_kill(p, uap, retval)
+linux_kill(p, v, retval)
 	register struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	struct linux_kill_args /* {
 		syscallarg(int) pid;
 		syscallarg(int) signum;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	struct kill_args ka;
 
 	SCARG(&ka, pid) = SCARG(uap, pid);

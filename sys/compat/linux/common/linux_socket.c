@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.10 1995/08/14 01:27:55 mycroft Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.11 1995/09/19 22:37:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -369,8 +369,11 @@ linux_sendto(p, args, retval)
 }
 
 int
-linux_recvfrom(p, args, retval)
+linux_recvfrom(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	struct linux_recvfrom_args /* {
 		syscallarg(int) s;
 		syscallarg(void *) buf;
@@ -378,8 +381,7 @@ linux_recvfrom(p, args, retval)
 		syscallarg(int) flags;
 		syscallarg(struct sockaddr *) from;
 		syscallarg(int *) fromlen;
-	} */ *args;
-{
+	} */ *args = v;
 	struct linux_recvfrom_args lra;
 	struct compat_43_recvfrom_args bra;
 	int error;
@@ -645,14 +647,16 @@ linux_getsockopt(p, args, retval)
  * make and take appropriate action.
  */
 int
-linux_socketcall(p, uap, retval)
+linux_socketcall(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	struct linux_socketcall_args /* {
 		syscallarg(int) what;
 		syscallarg(void *) args;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
+
 	switch (SCARG(uap, what)) {
 	case LINUX_SYS_socket:
 		return linux_socket(p, SCARG(uap, args), retval);
