@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pci.c,v 1.19 2001/06/12 22:28:16 thorpej Exp $	*/
+/*	$NetBSD: if_ne_pci.c,v 1.20 2001/07/08 18:02:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,8 +38,6 @@
  */
 
 #include "opt_ipkdb.h"
-#include "opt_inet.h"
-#include "bpfilter.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
