@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.h,v 1.3 1995/11/23 02:36:28 cgd Exp $	*/
+/*	$NetBSD: profile.h,v 1.4 1996/07/09 00:35:05 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -203,13 +203,13 @@ _mcount:;			\
 #ifdef _KERNEL
 /*
  * The following two macros do splhigh and splx respectively.
- * profile_swpipl is a special version of pal_swpipl which
+ * _alpha_pal_swpipl is a special version of alpha_pal_swpipl which
  * doesn't include profiling support.
  *
  * XXX These macros should probably use inline assembly.
  */
 #define MCOUNT_ENTER \
-	s = profile_swpipl(PSL_IPL_HIGH)
+	s = _alpha_pal_swpipl(PSL_IPL_HIGH)
 #define MCOUNT_EXIT \
-	(void)profile_swpipl(s);
+	(void)_alpha_pal_swpipl(s);
 #endif
