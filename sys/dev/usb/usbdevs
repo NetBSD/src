@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.366 2004/01/28 21:50:28 augustss Exp $
+$NetBSD: usbdevs,v 1.367 2004/01/28 21:56:51 augustss Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -308,6 +308,7 @@ vendor CONCORDCAMERA	0x0919	Concord Camera
 vendor GOHUBS		0x0921	GoHubs
 vendor BIOMETRIC	0x0929	American Biometric Company
 vendor TOSHIBA		0x0930	Toshiba Corporation
+vendor PLEXTOR		0x093b	Plextor
 vendor YANO		0x094f	Yano
 vendor KINGSTON		0x0951	Kingston Technology
 vendor BLUEWATER	0x0956	BlueWater Systems
@@ -359,6 +360,7 @@ vendor MSI		0x0db0	Micro Star International
 vendor HAWKING		0x0e66	Hawking Technologies
 vendor OTI		0x0ea0	Ours Technology Inc.
 vendor PILOTECH		0x0eaf  Pilotech
+vendor QUALCOMM		0x1004	Qualcomm
 vendor MOTOROLA		0x1063	Motorola
 vendor CCYU		0x1065	CCYU Technology
 vendor PLX		0x10b5	PLX
@@ -768,6 +770,7 @@ product GENERALINSTMNTS SB5100	0x5100	SURFboard SB5100 Cable modem
 /* Genesys Logic products */
 product GENESYS GL650		0x0604	GL650 Hub
 product GENESYS GL641USB	0x0700	GL641USB CompactFlash Card Reader
+product GENESYS GL641USB2IDE_2	0x0701	GL641USB USB-IDE Bridge
 product GENESYS GL641USB2IDE	0x0702	GL641USB USB-IDE Bridge
 
 /* GoHubs products */
@@ -900,6 +903,7 @@ product INTEL TESTBOARD		0x9890	82930 test board
 product INTERSIL PRISM_2X	0x3642	Prism2.x WLAN
 
 /* I-O DATA products */
+product IODATA IU_CD2		0x0204	DVD Multi-plus unit iU-CD2
 product IODATA USBSSMRW		0x0314	USB-SSMRW SD-card adapter
 product IODATA USBSDRW		0x031e	USB-SDRW SD-card adapter
 product IODATA USBETT		0x0901	USB ETT
@@ -1243,6 +1247,7 @@ product PALM ZIRE		0x0070	Palm Zire
 
 /* Panasonic products */
 product PANASONIC LS120		0x0901	LS-120 Camera
+product PANASONIC KXLRW32AN	0x0d09	CD-R Drive KXL-RW32AN
 product PANASONIC KXLCB20AN	0x0d0a	CD-R Drive KXL-CB20AN
 product PANASONIC KXLCB35AN	0x0d0e	DVD-ROM & CD-R/RW
 product PANASONIC SDCAAE	0x1b00	MultiMediaCard Adapter
@@ -1288,6 +1293,9 @@ product PILOTECH CRW600		0x0001	CRW-600 6-in-1 Reader
 
 /* Plantronics products */
 product PLANTRONICS HEADSET	0x0ca1	Platronics DSP-400 Headset
+
+/* Plextor Corp. */
+product PLEXTOR 40_12_40U	0x0011	PlexWriter 40/12/40U
 
 /* PLX products */
 product PLX TESTBOARD		0x9060	test board
@@ -1336,6 +1344,9 @@ product PUTERCOM UPA100		0x047e	USB-1284 BRIDGE
 
 /* Qtronix products */
 product QTRONIX 980N		0x2011	Scorpion-980N keyboard
+
+/* Qualcomm products */
+product QUALCOMM CDMA_MSM	0x6000	CDMA Technologies MSM phone
 
 /* Quickshot products */
 product QUICKSHOT STRIKEPAD	0x6238	USB StrikePad
@@ -1497,6 +1508,7 @@ product SUNTAC DS96L		0x0003	SUNTAC U-Cable type D2
 product SUNTAC PS64P1		0x0005	SUNTAC U-Cable type P1
 product SUNTAC VS10U		0x0009	SUNTAC Slipper U
 product SUNTAC IS96U		0x000a	SUNTAC Ir-Trinity
+product SUNTAC AS64LX		0x000b	SUNTAC U-Cable type A3
 
 /* Sun Microsystems products */
 product SUN KEYBOARD		0x0005	Type 6 USB keyboard
