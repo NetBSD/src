@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.93 1998/07/04 22:18:39 jonathan Exp $ */
+/*	$NetBSD: autoconf.c,v 1.94 1998/08/20 11:47:39 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -256,7 +256,7 @@ bootstrap()
 
 	/* First we'll do the interrupt registers */
 	if (CPU_ISSUN4M) {
-		register int node;
+		int node;
 		int nvaddrs, *vaddrs, vstore[10];
 		register u_int pte;
 		register int i;
@@ -275,7 +275,7 @@ bootstrap()
 		}
 #if 0
 		if (!romprop(&ra, "interrupt", node))
-		    panic("bootstrap: could not get interrupt properties");
+			panic("bootstrap: could not get interrupt properties");
 #endif
 		if (nvaddrs < 2 || nvaddrs > 5) {
 			printf("bootstrap: cannot handle %d interrupt regs\n",
@@ -1292,7 +1292,7 @@ findzs(zs)
 
 #if defined(SUN4C) || defined(SUN4M)
 	if (CPU_ISSUN4COR4M) {
-		register int node, addr;
+		int node;
 
 		node = firstchild(findroot());
 		if (CPU_ISSUN4M) { /* zs is in "obio" tree on Sun4M */
@@ -1302,12 +1302,23 @@ findzs(zs)
 			node = firstchild(node);
 		}
 		while ((node = findnode(node, "zs")) != 0) {
-			if (getpropint(node, "slave", -1) == zs) {
-				if ((addr = getpropint(node, "address", 0)) == 0)
-					panic("findzs: zs%d not mapped by PROM", zs);
-				return ((void *)addr);
+			int nvaddrs, *vaddrs, vstore[10];
+
+			if (getpropint(node, "slave", -1) != zs) {
+				node = nextsibling(node);
+				continue;
 			}
-			node = nextsibling(node);
+
+			/*
+			 * On some machines (e.g. the Voyager), the zs
+			 * device has multi-valued register properties.
+			 */
+			vaddrs = vstore;
+			if (getpropA(node, "address", sizeof(int),
+				     &nvaddrs, (void **)&vaddrs) != 0) {
+				panic("findzs: zs%d not mapped by PROM", zs);
+			}
+			return ((void *)vaddrs[0]);
 		}
 	}
 #endif
