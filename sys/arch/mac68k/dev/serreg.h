@@ -30,7 +30,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: serreg.h,v 1.3 1994/06/26 12:56:26 briggs Exp $
+ * $Id: serreg.h,v 1.4 1994/07/10 16:56:00 briggs Exp $
  *
  *	Mac II serial device interface
  *
@@ -41,7 +41,6 @@
 
 /* Gleaned from MacOS */
 extern volatile unsigned char	*sccA;
-extern int			sccClkConst;
 
 #define SER_W0_RSTESINTS	0x10	/* Reset ext/status interrupts */
 #define SER_W0_ENBRXRDY		0x20	/* Enable interrupt on next receive */
@@ -98,7 +97,7 @@ extern int			sccClkConst;
 #define	SER_R1_CRCERR		0x40
 #define	SER_R1_ENDOFFRAME	0x80
 
-#define	SERBRD(x)	(sccClkConst / (x) - 2)
+#define	SERBRD(x)	(mac68k_machine.sccClkConst / (x) - 2)
 #define SCCCNTL(unit)	(sccA[2 - ((unit) << 1)])
 #define SCCRDWR(unit)	(sccA[6 - ((unit) << 1)])
 

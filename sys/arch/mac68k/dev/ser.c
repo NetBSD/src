@@ -69,7 +69,7 @@
  *		added DCD event detection
  *		added software fifo's
  *
- * $Id: ser.c,v 1.7 1994/07/09 06:38:55 briggs Exp $
+ * $Id: ser.c,v 1.8 1994/07/10 16:55:57 briggs Exp $
  *
  *	Mac II serial device interface
  *
@@ -99,8 +99,7 @@
 /*#define DEBUG*/
 #undef DEBUG
 
-volatile unsigned char *sccA = (unsigned char *) 0x50f04000;
-int			sccClkConst = 115200;
+volatile unsigned char *sccA = (unsigned char *) 0x4000;
 
 static void	serstart __P((register struct tty *));
 static int	serparam __P((register struct tty *, register struct termios *));
@@ -203,12 +202,17 @@ serattach(parent, dev, aux)
 	void		*aux;
 {
 extern	int serial_boot_echo;
+static	int initted=0;
 	int bcount;
 	int i, s;
 
 	printf("\n");
 	if (serial_boot_echo) {
 		printf("(serial boot echo is on)\n");
+	}
+
+	if (!initted++) {
+		sccA = IOBase + sccA;
 	}
 
 	SER_DOCNTL(0, 9, 0xc0);	/* force hardware reset */
