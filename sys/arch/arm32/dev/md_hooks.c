@@ -1,4 +1,4 @@
-/* $NetBSD: md_hooks.c,v 1.2 1996/02/02 20:23:00 mark Exp $ */
+/* $NetBSD: md_hooks.c,v 1.3 1996/03/07 10:25:28 leo Exp $ */
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -49,6 +49,14 @@ int load_ramdisc_from_floppy __P((struct rd_conf *rd, dev_t dev));
 /*
  * This is called during autoconfig.
  */
+int
+rd_match_hook(parent, self, aux)
+	struct device	*parent;
+	void	*self;
+	void	*aux;
+{
+	return (1);
+}
 
 void
 rd_attach_hook(unit, rd)
