@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1982 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,14 +32,14 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1982 Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1982, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)table.c	5.4 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: table.c,v 1.2 1993/08/01 18:53:55 mycroft Exp $";
+/*static char sccsid[] = "from: @(#)table.c	8.1 (Berkeley) 5/31/93";*/
+static char rcsid[] = "$Id: table.c,v 1.3 1994/05/12 17:39:42 jtc Exp $";
 #endif /* not lint */
 
 # define	DEBUG
