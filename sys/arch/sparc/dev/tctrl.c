@@ -1,4 +1,4 @@
-/*	$NetBSD: tctrl.c,v 1.12 2000/07/25 09:57:59 toddpw Exp $	*/
+/*	$NetBSD: tctrl.c,v 1.13 2001/08/20 12:20:06 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -606,7 +606,7 @@ tctrl_set_lcd(what, which)
 	req.cmdbuf[4] = (u_int8_t)(~which>>8);
 	req.cmdbuf[1] = (u_int8_t)(~which&0xff);
 
-	/* XXX this thing is wierd.... */
+	/* XXX this thing is weird.... */
 	req.cmdlen = 3;
 	req.rsplen = 2;
 #if 0
