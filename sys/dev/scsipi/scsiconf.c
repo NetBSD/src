@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.220 2004/03/12 23:00:40 bouyer Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.221 2004/08/05 19:45:13 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.220 2004/03/12 23:00:40 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.221 2004/08/05 19:45:13 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -305,16 +305,39 @@ scsibusdetach(self, flags)
 {
 	struct scsibus_softc *sc = (void *) self;
 	struct scsipi_channel *chan = sc->sc_channel;
+	struct scsipi_periph *periph;
+	int ctarget, clun;
+	struct scsipi_xfer *xs;
+
 
 	/*
-	 * Shut down the channel.
+	 * Process outstanding commands (which will never complete as the
+	 * controller is gone).
 	 */
-	scsipi_channel_shutdown(chan);
+	for (ctarget = 0; ctarget < chan->chan_ntargets; ctarget++) {
+		if (ctarget == chan->chan_id)
+			continue;
+		for (clun = 0; clun < chan->chan_nluns; clun++) {
+			periph = scsipi_lookup_periph(chan, ctarget, clun);
+			if (periph == NULL)
+				continue;
+			TAILQ_FOREACH(xs, &periph->periph_xferq, device_q) {
+				callout_stop(&xs->xs_callout);
+				xs->error = XS_DRIVER_STUFFUP;
+				scsipi_done(xs);
+			}
+		}
+	}
 
 	/*
-	 * Now detach all of the periphs.
+	 * Detach all of the periphs.
 	 */
 	return scsipi_target_detach(chan, -1, -1, flags);
+
+	/*
+	 * Now shut down the channel.
+	 */
+	scsipi_channel_shutdown(chan);
 }
 
 /*
