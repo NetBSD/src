@@ -1,4 +1,4 @@
-/*	$NetBSD: ibm4xx_intr.h,v 1.4 2003/09/03 21:33:35 matt Exp $	*/
+/*	$NetBSD: ibm4xx_intr.h,v 1.5 2003/11/26 03:55:38 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -83,8 +83,6 @@ int  splsoftnet(void);
 
 void do_pending_int(void);
 void ext_intr(void);
-void intr_md_register(void (*)(void *, int), void (*)(void *, int),
-	int (*)(void *), void (*)(void *, int), void *);
 void *intr_establish(int, int, int, int (*)(void *), void *);
 void intr_disestablish(void *);
 void intr_init(void);
