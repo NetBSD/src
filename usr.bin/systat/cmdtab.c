@@ -1,4 +1,4 @@
-/*	$NetBSD: cmdtab.c,v 1.7 1999/08/02 17:27:27 ad Exp $	*/
+/*	$NetBSD: cmdtab.c,v 1.8 1999/11/15 06:16:56 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -38,33 +38,25 @@
 #if 0
 static char sccsid[] = "@(#)cmdtab.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: cmdtab.c,v 1.7 1999/08/02 17:27:27 ad Exp $");
+__RCSID("$NetBSD: cmdtab.c,v 1.8 1999/11/15 06:16:56 simonb Exp $");
 #endif /* not lint */
 
 #include "systat.h"
 #include "extern.h"
 
 struct	cmdtab cmdtab[] = {
+	/* "pigs" is the default, it must be first. */
 	{ "pigs",	showpigs,	fetchpigs,	labelpigs,
 	  initpigs,	openpigs,	closepigs,	0,
 	  CF_LOADAV },
-	{ "swap",	showswap,	fetchswap,	labelswap,
-	  initswap,	openswap,	closeswap,	0,
+	{ "bufcache",	showbufcache,	fetchbufcache,	labelbufcache,
+	  initbufcache,	openbufcache,	closebufcache,	0,
 	  CF_LOADAV },
-	{ "mbufs",	showmbufs,	fetchmbufs,	labelmbufs,
-	  initmbufs,	openmbufs,	closembufs,	0,
+	{ "inet.icmp",	showicmp,	fetchicmp,	labelicmp,
+	  initicmp,	openicmp,	closeicmp,	0,
 	  CF_LOADAV },
-	{ "iostat",	showiostat,	fetchiostat,	labeliostat,
-	  initiostat,	openiostat,	closeiostat,	cmdiostat,
-	  CF_LOADAV },
-	{ "vmstat",	showkre,	fetchkre,	labelkre,
-	  initkre,	openkre,	closekre,	cmdkre,
-	  0 },
-	{ "netstat",	shownetstat,	fetchnetstat,	labelnetstat,
-	  initnetstat,	opennetstat,	closenetstat,	cmdnetstat,
-	  CF_LOADAV },
-	{ "ps",		showps,		fetchpigs,	labelps,
-	  initpigs,	openpigs,	closepigs,	0,
+	{ "inet.ip",	showip,		fetchip,	labelip,
+	  initip,	openip,		closeip,	0,
 	  CF_LOADAV },
 	{ "inet.tcp",	showtcp,	fetchtcp,	labeltcp,
 	  inittcp,	opentcp,	closetcp,	0,
@@ -72,12 +64,24 @@ struct	cmdtab cmdtab[] = {
 	{ "inet.tcpsyn",showtcpsyn,	fetchtcp,	labeltcpsyn,
 	  inittcp,	opentcp,	closetcp,	0,
 	  CF_LOADAV },
-	{ "inet.ip",	showip,		fetchip,	labelip,
-	  initip,	openip,		closeip,	0,
+	{ "iostat",	showiostat,	fetchiostat,	labeliostat,
+	  initiostat,	openiostat,	closeiostat,	cmdiostat,
 	  CF_LOADAV },
-	{ "inet.icmp",	showicmp,	fetchicmp,	labelicmp,
-	  initicmp,	openicmp,	closeicmp,	0,
+	{ "mbufs",	showmbufs,	fetchmbufs,	labelmbufs,
+	  initmbufs,	openmbufs,	closembufs,	0,
 	  CF_LOADAV },
+	{ "netstat",	shownetstat,	fetchnetstat,	labelnetstat,
+	  initnetstat,	opennetstat,	closenetstat,	cmdnetstat,
+	  CF_LOADAV },
+	{ "ps",		showps,		fetchpigs,	labelps,
+	  initpigs,	openpigs,	closepigs,	0,
+	  CF_LOADAV },
+	{ "swap",	showswap,	fetchswap,	labelswap,
+	  initswap,	openswap,	closeswap,	0,
+	  CF_LOADAV },
+	{ "vmstat",	showkre,	fetchkre,	labelkre,
+	  initkre,	openkre,	closekre,	cmdkre,
+	  0 },
 	{ 0 }
 };
 struct  cmdtab *curcmd = &cmdtab[0];
