@@ -1,4 +1,4 @@
-/* $NetBSD: alloca.S,v 1.2 1996/05/12 20:25:46 mark Exp $ */
+/*	$NetBSD: alloca.S,v 1.3 1997/10/06 00:20:28 mark Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -34,10 +34,7 @@
 
 /* like alloc, but automatic automatic free in return */
 
-# include "DEFS.h"
-
-	.text
-	.align	0
+#include <machine/asm.h>
 
 ENTRY(alloca)
 	add	r0, r0, #0x00000003	/* round up to next word */
