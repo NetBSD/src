@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vfsops.c,v 1.2 1998/08/14 18:04:07 mark Exp $	*/
+/*	$NetBSD: filecore_vfsops.c,v 1.3 1998/09/01 04:09:30 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 Andrew McMurry
@@ -48,6 +48,7 @@
 #include <sys/device.h>
 #include <sys/errno.h>
 #include <sys/malloc.h>
+#include <sys/pool.h>
 
 #include <filecorefs/filecore.h>
 #include <filecorefs/filecore_extern.h>
@@ -543,8 +544,7 @@ filecore_vget(mp, ino, vpp)
 		*vpp = NULLVP;
 		return (error);
 	}
-	MALLOC(ip, struct filecore_node *, sizeof(struct filecore_node),
-	    M_FILECORENODE, M_WAITOK);
+	ip = pool_get(&filecore_node_pool, PR_WAITOK);
 	memset((caddr_t)ip, 0, sizeof(struct filecore_node));
 	lockinit(&ip->i_lock, PINOD, "filecorenode", 0, 0);
 	vp->v_data = ip;
