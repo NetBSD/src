@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.38.2.3 2002/01/08 00:26:18 nathanw Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.38.2.4 2002/02/01 04:57:45 gmcgarry Exp $	*/
 
 /*
  * Mach Operating System
@@ -170,7 +170,7 @@ kdb_trap(int type, mips_reg_t /* struct trapframe */ *tfp)
 	db_active--;
 
 	if (type & T_USER)
-		*(struct frame *)curproc->p_md.md_regs = *f;
+		*(struct frame *)curproc->l_md.md_regs = *f;
 	else {
 		/* Synthetic full scale register context when trap happens */
 		tfp[0] = f->f_regs[AST];
