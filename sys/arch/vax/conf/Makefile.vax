@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.vax,v 1.40 1998/05/03 12:59:56 ragge Exp $
+#	$NetBSD: Makefile.vax,v 1.41 1998/05/22 09:59:55 ragge Exp $
 
 # Makefile for NetBSD
 #
@@ -182,7 +182,7 @@ machdep.o: Makefile
 
 # depend on CPU configuration 
 tmscp.o ts.o uba.o uda.o autoconf.o clock.o conf.o emulate.o intvec.o: Makefile
-machdep.o sbi.o subr.o uvaxII.o: Makefile
+machdep.o sbi.o subr.o: Makefile
 
 
 intvec.o: ${VAX}/vax/intvec.s assym.h
