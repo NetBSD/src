@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.10 2000/06/09 05:51:43 soda Exp $	*/
+/*	$NetBSD: pte.h,v 1.11 2001/03/23 01:27:59 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -282,11 +282,4 @@ mips_paddr_to_tlbpfn(pa)
 extern	pt_entry_t *Sysmap;		/* kernel pte table */
 extern	u_int Sysmapsize;		/* number of pte's in Sysmap */
 #endif	/* defined(_KERNEL) && !defined(_LOCORE) */
-
-/*
- * User virtual to pte page entry.  Same on mips1 and mips3.
- */
-#define	uvtopte(adr)	(((adr) >> PGSHIFT) & (NPTEPG - 1))
-
-
 #endif /* __MIPS_PTE_H__ */
