@@ -1,4 +1,4 @@
-/* $NetBSD: zs_ioasic.c,v 1.1.2.6 1999/08/09 13:05:48 drochner Exp $ */
+/* $NetBSD: zs_ioasic.c,v 1.1.2.7 1999/10/26 12:37:41 drochner Exp $ */
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: zs_ioasic.c,v 1.1.2.6 1999/08/09 13:05:48 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_ioasic.c,v 1.1.2.7 1999/10/26 12:37:41 drochner Exp $");
 
 /*
  * Zilog Z8530 Dual UART driver (machine-dependent part).  This driver
@@ -619,10 +619,10 @@ zs_abort(cs)
 		rr0 = zs_read_csr(cs);
 	} while (rr0 & ZSRR0_BREAK);
 
-#if defined(KGDB)
+#if defined(KGDB) /* XXX doesn't work - we don't get called */
 	zskgdb(cs);
 #elif defined(DDB)
-	Debugger();
+	console_debugger();
 #else
 	printf("zs_abort: ignoring break on console\n");
 #endif
