@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_mips.c,v 1.3 1996/03/18 22:33:44 thorpej Exp $	*/
+/*	$NetBSD: kvm_mips.c,v 1.4 1997/06/18 01:41:31 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_mips.c	8.1 (Berkeley) 6/4/93";
 #else
-static char *rcsid = "$NetBSD: kvm_mips.c,v 1.3 1996/03/18 22:33:44 thorpej Exp $";
+static char *rcsid = "$NetBSD: kvm_mips.c,v 1.4 1997/06/18 01:41:31 jonathan Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -66,13 +66,15 @@ static char *rcsid = "$NetBSD: kvm_mips.c,v 1.3 1996/03/18 22:33:44 thorpej Exp 
 
 #include "kvm_private.h"
 
-#include <machine/machConst.h>
-#include <machine/pte.h>
-#include <machine/pmap.h>
+#include <mips/cpuregs.h>
+#include <mips/mips1_pte.h>
+#include <mips/mips3_pte.h>
+#include <mips/pmap.h>
 
 struct vmstate {
-	pt_entry_t	*Sysmap;
+	/*pt_entry_t*/u_int	*Sysmap;
 	u_int		Sysmapsize;
+	u_int		cpu_arch;
 };
 
 #define KREAD(kd, addr, p)\
@@ -91,26 +93,31 @@ _kvm_initvtop(kd)
 	kvm_t *kd;
 {
 	struct vmstate *vm;
-	struct nlist nlist[3];
+	struct nlist nlist[4];
 
 	vm = (struct vmstate *)_kvm_malloc(kd, sizeof(*vm));
 	if (vm == 0)
 		return (-1);
 	kd->vmst = vm;
 
-	nlist[0].n_name = "Sysmap";
-	nlist[1].n_name = "Sysmapsize";
-	nlist[2].n_name = 0;
+	nlist[0].n_name = "cpu_arch";
+	nlist[1].n_name = "Sysmap";
+	nlist[2].n_name = "Sysmapsize";
+	nlist[3].n_name = 0;
 
 	if (kvm_nlist(kd, nlist) != 0) {
 		_kvm_err(kd, kd->program, "bad namelist");
 		return (-1);
 	}
-	if (KREAD(kd, (u_long)nlist[0].n_value, &vm->Sysmap)) {
+	if (KREAD(kd, (u_long)nlist[0].n_value, &vm->cpu_arch)) {
+		_kvm_err(kd, kd->program, "cannot read cpu_arch");
+		return (-1);
+	}
+	if (KREAD(kd, (u_long)nlist[1].n_value, &vm->Sysmap)) {
 		_kvm_err(kd, kd->program, "cannot read Sysmap");
 		return (-1);
 	}
-	if (KREAD(kd, (u_long)nlist[1].n_value, &vm->Sysmapsize)) {
+	if (KREAD(kd, (u_long)nlist[2].n_value, &vm->Sysmapsize)) {
 		_kvm_err(kd, kd->program, "cannot read mmutype");
 		return (-1);
 	}
@@ -129,10 +136,32 @@ _kvm_kvatop(kd, va, pa)
 	register struct vmstate *vm;
 	u_long pte, addr, offset;
 
+	u_int pgshift, pg_v, pg_frame;
+
 	if (ISALIVE(kd)) {
 		_kvm_err(kd, 0, "vatop called in live kernel!");
 		return((off_t)0);
 	}
+
+	/* Compute TLB offsets for the level of mips cpu we're running on */
+	switch (vm->cpu_arch) {
+	case 1:
+		pgshift = MIPS1_PG_SHIFT;
+		pg_v = MIPS1_PG_V;
+		pg_frame = MIPS1_PG_FRAME;
+		break;
+
+	case 3:
+		pgshift = MIPS3_PG_SHIFT;
+		pg_v = MIPS3_PG_V;
+		pg_frame = MIPS3_PG_FRAME;
+		break;
+
+	default:
+		_kvm_err(kd, 0, "unknown or unsupported mips CPU family!");
+		return((off_t)0);
+	}
+	
 	vm = kd->vmst;
 	offset = va & PGOFSET;
 	/*
@@ -150,7 +179,9 @@ _kvm_kvatop(kd, va, pa)
 		*pa = MACH_CACHED_TO_PHYS(va);
 		return (NBPG - offset);
 	}
-	addr = (u_long)(vm->Sysmap + ((va - VM_MIN_KERNEL_ADDRESS) >> PGSHIFT));
+	addr = (u_long)(vm->Sysmap +
+	    ((va - VM_MIN_KERNEL_ADDRESS) >> pgshift));
+
 	/*
 	 * Can't use KREAD to read kernel segment table entries.
 	 * Fortunately it is 1-to-1 mapped so we don't have to. 
@@ -158,9 +189,9 @@ _kvm_kvatop(kd, va, pa)
 	if (lseek(kd->pmfd, (off_t)addr, 0) < 0 ||
 	    read(kd->pmfd, (char *)&pte, sizeof(pte)) < 0)
 		goto invalid;
-	if (!(pte & PG_V))
+	if (!(pte & pg_v))
 		goto invalid;
-	*pa = (pte & PG_FRAME) | offset;
+	*pa = (pte & pg_frame) | offset;
 	return (NBPG - offset);
 
 invalid:
