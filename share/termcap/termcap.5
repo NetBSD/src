@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)termcap.5	6.11 (Berkeley) 3/6/93
-.\"	$Id: termcap.5,v 1.8 1996/12/04 00:20:38 perry Exp $
+.\"	$Id: termcap.5,v 1.9 1997/03/08 14:13:54 mouse Exp $
 .\"
 .Dd March 6, 1993
 .Dt TERMCAP 5
@@ -123,13 +123,13 @@ New software should not rely on them at all.
 .Bl -column indent indent indent
 .Sy Name	Type	Notes	Description
 functions
-.It "ae	str	(P)	End alternate character set."
+.It "ae	str	(P)	End alternative character set."
 .It AL	str	(NP*)	Add"
 .Em n
 new blank lines
 .It "al	str	(P*)	Add new blank line."
 .It "am	bool		Terminal has automatic margins."
-.It "as	str	(P)	Start alternate character set."
+.It "as	str	(P)	Start alternative character set."
 .It "bc	str	(o)	Backspace if not."
 .Sy \&^H .
 .It "bl	str	(P)	Audible signal (bell)."
@@ -1150,9 +1150,9 @@ Other capabilities to enter various highlighting modes include
 .Em all
 attribute modes),
 .Sy \&as
-(enter alternate character set mode), and
+(enter alternative character set mode), and
 .Sy \&ae
-(exit alternate character set mode).
+(exit alternative character set mode).
 Turning on any of these modes singly may or may not turn off other modes.
 .Pp
 If there is a sequence to set arbitrary combinations of mode,
@@ -1162,7 +1162,7 @@ this should be given as
 Each parameter is either 0 or 1,
 as the corresponding attributes is on or off.
 The 9 parameters are, in order: standout, underline, reverse, blink,
-dim, bold, blank, protect, and alternate character set.
+dim, bold, blank, protect, and alternative character set.
 Not all modes need be supported by
 .Sy \&sa ,
 only those for which corresponding attribute commands exist.
