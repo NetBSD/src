@@ -1,4 +1,4 @@
-/*	$NetBSD: advcap.c,v 1.3 1999/12/08 04:51:04 itojun Exp $	*/
+/*	$NetBSD: advcap.c,v 1.4 2000/03/13 06:16:46 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983 The Regents of the University of California.
@@ -32,17 +32,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#if 0
-#ifndef lint
-static char sccsid[] = "@(#)remcap.c	5.5 (Berkeley) 2/2/91";
-#endif /* not lint */
-#else
-#include <sys/cdefs.h>
-#ifndef lint
-__RCSID("$NetBSD: advcap.c,v 1.3 1999/12/08 04:51:04 itojun Exp $");
-#endif
-#endif /* not lint */
 
 /*
  * remcap - routines for dealing with the remote host data base
