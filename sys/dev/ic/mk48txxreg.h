@@ -1,4 +1,4 @@
-/*	$NetBSD: mk48txxreg.h,v 1.1 2000/07/25 22:33:03 pk Exp $ */
+/*	$NetBSD: mk48txxreg.h,v 1.2 2000/10/03 13:54:02 tsutsui Exp $ */
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -41,7 +41,7 @@
  * The MK48T02 has 2KB of non-volatile memory. The time-of-day clock
  * registers start at offset 0x7f8.
  *
- * The MK48T02 has 8KB of non-volatile memory
+ * The MK48T08 has 8KB of non-volatile memory
  *
  * The MK48T59 also has 8KB of non-volatile memory but in addition it
  * has a battery low detection bit and a power supply wakeup alarm for
