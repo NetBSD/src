@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/sh  
 
 if [ x$new_broadcast_address != x ]; then
   new_broadcast_arg="broadcast $new_broadcast_address"
@@ -16,6 +16,12 @@ if [ x$alias_subnet_mask != x ]; then
   alias_subnet_arg="netmask $alias_subnet_mask"
 fi
 
+# For Solaris, ifconfig lives in /sbin
+OS=`uname -r`
+if [ $OS = "5.5.1" ]; then
+	PATH=/sbin:$PATH
+fi
+
 if [ x$reason = xMEDIUM ]; then
   ifconfig $interface $medium
   ifconfig $interface inet -alias 0.0.0.0 $medium >/dev/null 2>&1
@@ -29,8 +35,14 @@ if [ x$reason = xPREINIT ]; then
     ifconfig $interface inet -alias $alias_ip_address > /dev/null 2>&1
     route delete $alias_ip_address 127.0.0.1 > /dev/null 2>&1
   fi
-  ifconfig $interface inet 0.0.0.0 netmask 0.0.0.0 \
-		broadcast 255.255.255.255 up
+  if [ $OS = "5.5.1" ]; then
+	  # Turn the interface on
+	  ifconfig $interface plumb
+	  ifconfig $interface inet 10.0.0.1 up
+  else
+      ifconfig $interface inet 0.0.0.0 netmask 0.0.0.0 \
+              broadcast 255.255.255.255 up
+  fi 
   exit 0
 fi
 
@@ -85,7 +97,7 @@ if [ x$reason = xEXPIRE ] || [ x$reason = xFAIL ]; then
     for router in $old_routers; do
       route delete default $router >/dev/null 2>&1
     done
-    arp -n -a | sed -n -e 's/^.*(\(.*\)) at .*$/arp -n -d \1/p' \
+    arp -n -a | sed -n -e 's/^.*(\(.*\)) at .*$/arp -n -d \1/p'i \
 						|sh >/dev/null 2>&1
   fi
   if [ x$alias_ip_address != x ]; then
@@ -104,7 +116,7 @@ if [ x$reason = xTIMEOUT ]; then
 					$new_broadcast_arg $medium
   sleep 1
   set $new_routers
-  if ping -q -c 1 -w 1 $1; then
+  if ping -c 1 -w 1 $1; then
     if [ x$new_ip_address != x$alias_ip_address ] && \
 			[ x$alias_ip_address != x ]; then
       ifconfig $interface inet alias $alias_ip_address $alias_subnet_arg

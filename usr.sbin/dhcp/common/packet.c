@@ -42,7 +42,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: packet.c,v 1.1.1.1 1997/03/29 21:52:17 mellon Exp $ Copyright (c) 1996 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: packet.c,v 1.1.1.2 1997/06/03 02:49:30 mellon Exp $ Copyright (c) 1996 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -71,7 +71,7 @@ u_int32_t checksum (buf, nbytes, sum)
 #ifdef DEBUG_CHECKSUM_VERBOSE
 		debug ("sum = %x", sum);
 #endif
-		sum += (u_int16_t) ntohs(*((u_int16_t *)buf)++);
+		sum += (u_int16_t) ntohs(*((u_int16_t *)(buf + i)));
 	}	
 
 	/* If there's a single byte left over, checksum it, too.   Network
@@ -80,7 +80,7 @@ u_int32_t checksum (buf, nbytes, sum)
 #ifdef DEBUG_CHECKSUM_VERBOSE
 		debug ("sum = %x", sum);
 #endif
-		sum += (*buf) << 8;
+		sum += buf [i] << 8;
 	}
 	
 	return sum;

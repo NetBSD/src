@@ -42,7 +42,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: alloc.c,v 1.1.1.1 1997/03/29 21:52:16 mellon Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: alloc.c,v 1.1.1.2 1997/06/03 02:49:18 mellon Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -184,7 +184,7 @@ struct group *new_group (name)
 struct protocol *new_protocol (name)
 	char *name;
 {
-	struct protocol *rval = dmalloc (sizeof (struct group), name);
+	struct protocol *rval = dmalloc (sizeof (struct protocol), name);
 	return rval;
 }
 
@@ -203,6 +203,36 @@ struct lease_state *new_lease_state (name)
 		rval = dmalloc (sizeof (struct lease_state), name);
 	}
 	return rval;
+}
+
+struct domain_search_list *new_domain_search_list (name)
+	char *name;
+{
+	struct domain_search_list *rval =
+		dmalloc (sizeof (struct domain_search_list), name);
+	return rval;
+}
+
+struct name_server *new_name_server (name)
+	char *name;
+{
+	struct name_server *rval =
+		dmalloc (sizeof (struct name_server), name);
+	return rval;
+}
+
+void free_name_server (ptr, name)
+	struct name_server *ptr;
+	char *name;
+{
+	dfree ((VOIDPTR)ptr, name);
+}
+
+void free_domain_search_list (ptr, name)
+	struct domain_search_list *ptr;
+	char *name;
+{
+	dfree ((VOIDPTR)ptr, name);
 }
 
 void free_lease_state (ptr, name)

@@ -121,10 +121,6 @@ char *strerror PROTO ((int));
 
 #define NEED_INET_ATON
 
-/* SunOS select() doesn't work on streams, so we have to use poll -
-   as usual, SysV can't do networking to save its life. */
-#define USE_POLL
-
 /* By default, use NIT API for receiving and sending packets... */
 #if defined (USE_DEFAULT_NETWORK)
 #  define USE_NIT
@@ -134,6 +130,7 @@ char *strerror PROTO ((int));
 #define VOIDPTR	void *
 
 #include <time.h>
+#include <sys/time.h>
 
 #define TIME time_t
 #define GET_TIME(x)	time ((x))

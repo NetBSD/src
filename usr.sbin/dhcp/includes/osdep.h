@@ -105,6 +105,10 @@
 #  include "cf/qnx.h"
 #endif
 
+#ifdef __CYGWIN32__
+#  include "cf/cygwin32.h"
+#endif
+
 /* Porting::
 
    If you add a new network API, and have it set up so that it can be
