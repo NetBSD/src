@@ -16,7 +16,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$Id: ns_sign.c,v 1.1.1.2 2001/04/02 21:57:09 mellon Exp $";
+static const char rcsid[] = "$Id: ns_sign.c,v 1.1.1.3 2001/06/18 18:13:20 drochner Exp $";
 #endif
 
 #if defined (TRACING)
@@ -44,7 +44,7 @@ time_t trace_mr_time (time_t *);
 #include "minires/minires.h"
 #include "arpa/nameser.h"
 
-#include <isc/dst.h>
+#include <isc-dhcp/dst.h>
 
 #define BOUNDS_CHECK(ptr, count) \
 	do { \

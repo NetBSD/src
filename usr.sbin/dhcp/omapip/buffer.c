@@ -224,7 +224,7 @@ static isc_result_t omapi_connection_reader_trace (omapi_object_t *h,
 			else if (errno == EINVAL)
 				return ISC_R_INVALIDARG;
 			else if (errno == ECONNRESET) {
-				omapi_disconnect (h, 0);
+				omapi_disconnect (h, 1);
 				return ISC_R_SHUTTINGDOWN;
 			} else
 				return ISC_R_UNEXPECTED;
@@ -291,6 +291,12 @@ isc_result_t omapi_connection_copyin (omapi_object_t *h,
 	if (!h || h -> type != omapi_type_connection)
 		return ISC_R_INVALIDARG;
 	c = (omapi_connection_object_t *)h;
+
+	/* If the connection is closed, return an error if the caller
+	   tries to copy in. */
+	if (c -> state == omapi_connection_disconnecting ||
+	    c -> state == omapi_connection_closed)
+		return ISC_R_NOTCONNECTED;
 
 	if (c -> outbufs) {
 		for (buffer = c -> outbufs;
@@ -483,7 +489,11 @@ isc_result_t omapi_connection_writer (omapi_object_t *h)
 					return ISC_R_SUCCESS;
 				else if (errno == EPIPE)
 					return ISC_R_NOCONN;
+#ifdef EDQUOT
 				else if (errno == EFBIG || errno == EDQUOT)
+#else
+				else if (errno == EFBIG)
+#endif
 					return ISC_R_NORESOURCES;
 				else if (errno == ENOSPC)
 					return ISC_R_NOSPACE;

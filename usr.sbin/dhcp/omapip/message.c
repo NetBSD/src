@@ -54,13 +54,10 @@ isc_result_t omapi_message_new (omapi_object_t **o, const char *file, int line)
 	omapi_object_t *g;
 	isc_result_t status;
 
-	m = dmalloc (sizeof *m, file, line);
-	if (!m)
-		return ISC_R_NOMEMORY;
-	memset (m, 0, sizeof *m);
-	m -> type = omapi_type_message;
-	rc_register (file, line, &m, m, m -> refcnt);
-	m -> refcnt = 1;
+	m = (omapi_message_object_t *)0;
+	status = omapi_message_allocate (&m, file, line);
+	if (status != ISC_R_SUCCESS)
+		return status;
 
 	g = (omapi_object_t *)0;
 	status = omapi_generic_new (&g, file, line);
@@ -84,7 +81,7 @@ isc_result_t omapi_message_new (omapi_object_t **o, const char *file, int line)
 	}
 
 	status = omapi_object_reference (o, (omapi_object_t *)m, file, line);
-	omapi_object_dereference ((omapi_object_t **)&m, file, line);
+	omapi_message_dereference (&m, file, line);
 	omapi_object_dereference (&g, file, line);
 	if (status != ISC_R_SUCCESS)
 		return status;
@@ -233,11 +230,13 @@ isc_result_t omapi_message_destroy (omapi_object_t *h,
 	if (!m -> prev && omapi_registered_messages != m)
 		omapi_message_unregister (h);
 	if (m -> id_object)
-		omapi_object_dereference ((omapi_object_t **)&m -> id_object,
-					  file, line);
+		omapi_object_dereference (&m -> id_object, file, line);
 	if (m -> object)
-		omapi_object_dereference ((omapi_object_t **)&m -> object,
-					  file, line);
+		omapi_object_dereference (&m -> object, file, line);
+	if (m -> notify_object)
+		omapi_object_dereference (&m -> notify_object, file, line);
+	if (m -> protocol_object)
+		omapi_protocol_dereference (&m -> protocol_object, file, line);
 	return ISC_R_SUCCESS;
 }
 
@@ -369,7 +368,36 @@ static const char *omapi_message_op_name(int op) {
 }
 #endif
 
+static isc_result_t
+omapi_message_process_internal (omapi_object_t *, omapi_object_t *);
+
 isc_result_t omapi_message_process (omapi_object_t *mo, omapi_object_t *po)
+{
+	isc_result_t status;
+#if defined (DEBUG_MEMORY_LEAKAGE)
+	unsigned long previous_outstanding = dmalloc_outstanding;
+#endif
+
+	status = omapi_message_process_internal (mo, po);
+
+#if defined (DEBUG_MEMORY_LEAKAGE) && 0
+	log_info ("generation %ld: %ld new, %ld outstanding, %ld long-term",
+		  dmalloc_generation,
+		  dmalloc_outstanding - previous_outstanding,
+		  dmalloc_outstanding, dmalloc_longterm);
+#endif
+#if (defined (DEBUG_MEMORY_LEAKAGE) || defined (DEBUG_MALLOC_POOL)) && 0
+	dmalloc_dump_outstanding ();
+#endif
+#if defined (DEBUG_RC_HISTORY_EXHAUSTIVELY) && 0
+	dump_rc_history ();
+#endif
+
+	return status;
+}
+
+static isc_result_t
+omapi_message_process_internal (omapi_object_t *mo, omapi_object_t *po)
 {
 	omapi_message_object_t *message, *m;
 	omapi_object_t *object = (omapi_object_t *)0;
@@ -519,12 +547,6 @@ isc_result_t omapi_message_process (omapi_object_t *mo, omapi_object_t *po)
 				 "unsearchable object type");
 		}
 
-		if (!message -> object) {
-			return omapi_protocol_send_status
-				(po, message -> id_object,
-				 ISC_R_NOTFOUND, message -> id,
-				 "no lookup key specified");
-		}
 		status = (*(type -> lookup)) (&object, message -> id_object,
 					      message -> object);
 

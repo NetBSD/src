@@ -124,7 +124,9 @@ extern int h_errno;
 #  if defined (USE_DEFAULT_NETWORK)
 #   define USE_LPF
 #  endif
-#  define SIOCGIFCONF_NULL_BUF_GIVES_CORRECT_LEN
+#  if !defined (__sparc__)	/* XXX hopefully this will be fixed someday */
+#   define SIOCGIFCONF_ZERO_PROBE
+#  endif
 #  define LINUX_SLASHPROC_DISCOVERY
 #  define PROCDEV_DEVICE "/proc/net/dev"
 #  define HAVE_ARPHRD_TUNNEL
@@ -132,6 +134,9 @@ extern int h_errno;
 # endif
 # define HAVE_ARPHRD_METRICOM
 # define HAVE_ARPHRD_IEEE802
+# if (LINUX_MINOR >= 4)
+#  define HAVE_ARPHRD_IEEE802_TR
+# endif
 # define HAVE_ARPHRD_LOOPBACK
 # define HAVE_SO_BINDTODEVICE
 # define HAVE_SIOCGIFHWADDR

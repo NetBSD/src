@@ -44,7 +44,7 @@
 #define __ISC_DHCP_CDEFS_H__
 /* Delete attributes if not gcc or not the right version of gcc. */
 #if !defined(__GNUC__) || __GNUC__ < 2 || \
-        (__GNUC__ == 2 && __GNUC_MINOR__ < 5)
+        (__GNUC__ == 2 && __GNUC_MINOR__ < 5) || defined (darwin)
 #define __attribute__(x)
 #endif
 

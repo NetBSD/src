@@ -40,7 +40,7 @@ typedef struct dst_key {
 } DST_KEY;
 #define HAS_DST_KEY 
 
-#include <isc/dst.h>
+#include <isc-dhcp/dst.h>
 /* 
  * define what crypto systems are supported for RSA, 
  * BSAFE is prefered over RSAREF; only one can be set at any time

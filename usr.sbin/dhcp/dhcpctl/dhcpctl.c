@@ -267,7 +267,6 @@ dhcpctl_status dhcpctl_set_value (dhcpctl_handle h, dhcpctl_data_string value,
 	omapi_typed_data_t *tv = (omapi_typed_data_t *)0;
 	omapi_data_string_t *name = (omapi_data_string_t *)0;
 	int len;
-	int ip;
 
 	status = omapi_data_string_new (&name, strlen (value_name), MDL);
 	if (status != ISC_R_SUCCESS)
@@ -302,7 +301,6 @@ dhcpctl_status dhcpctl_set_string_value (dhcpctl_handle h, const char *value,
 	omapi_typed_data_t *tv = (omapi_typed_data_t *)0;
 	omapi_data_string_t *name = (omapi_data_string_t *)0;
 	int len;
-	int ip;
 
 	status = omapi_data_string_new (&name, strlen (value_name), MDL);
 	if (status != ISC_R_SUCCESS)
@@ -321,6 +319,65 @@ dhcpctl_status dhcpctl_set_string_value (dhcpctl_handle h, const char *value,
 	return status;
 }
 
+/* dhcpctl_set_buffer_value
+
+   Sets a value on an object referred to by a dhcpctl_handle.  like
+   dhcpctl_set_value, but saves the trouble of creating a data_string
+   for string for which we have a buffer and length.  Does not update
+   the server - just sets the value on the handle. */
+
+dhcpctl_status dhcpctl_set_data_value (dhcpctl_handle h,
+				       const char *value, unsigned len,
+				       const char *value_name)
+{
+	isc_result_t status;
+	omapi_typed_data_t *tv = (omapi_typed_data_t *)0;
+	omapi_data_string_t *name = (omapi_data_string_t *)0;
+	unsigned ll;
+
+	ll = strlen (value_name);
+	status = omapi_data_string_new (&name, ll, MDL);
+	if (status != ISC_R_SUCCESS)
+		return status;
+	memcpy (name -> value, value_name, ll);
+
+	status = omapi_typed_data_new (MDL, &tv,
+				       omapi_datatype_data, len, value);
+	if (status != ISC_R_SUCCESS) {
+		omapi_data_string_dereference (&name, MDL);
+		return status;
+	}
+	memcpy (tv -> u.buffer.value, value, len);
+
+	status = omapi_set_value (h, (omapi_object_t *)0, name, tv);
+	omapi_data_string_dereference (&name, MDL);
+	omapi_typed_data_dereference (&tv, MDL);
+	return status;
+}
+
+/* dhcpctl_set_null_value
+
+   Sets a null value on an object referred to by a dhcpctl_handle. */
+
+dhcpctl_status dhcpctl_set_null_value (dhcpctl_handle h,
+				       const char *value_name)
+{
+	isc_result_t status;
+	omapi_data_string_t *name = (omapi_data_string_t *)0;
+	unsigned ll;
+
+	ll = strlen (value_name);
+	status = omapi_data_string_new (&name, ll, MDL);
+	if (status != ISC_R_SUCCESS)
+		return status;
+	memcpy (name -> value, value_name, ll);
+
+	status = omapi_set_value (h, (omapi_object_t *)0, name,
+				  (omapi_typed_data_t *)0);
+	omapi_data_string_dereference (&name, MDL);
+	return status;
+}
+
 /* dhcpctl_set_boolean_value
 
    Sets a boolean value on an object - like dhcpctl_set_value,
@@ -333,7 +390,6 @@ dhcpctl_status dhcpctl_set_boolean_value (dhcpctl_handle h, int value,
 	omapi_typed_data_t *tv = (omapi_typed_data_t *)0;
 	omapi_data_string_t *name = (omapi_data_string_t *)0;
 	int len;
-	int ip;
 
 	status = omapi_data_string_new (&name, strlen (value_name), MDL);
 	if (status != ISC_R_SUCCESS)
@@ -364,7 +420,6 @@ dhcpctl_status dhcpctl_set_int_value (dhcpctl_handle h, int value,
 	omapi_typed_data_t *tv = (omapi_typed_data_t *)0;
 	omapi_data_string_t *name = (omapi_data_string_t *)0;
 	int len;
-	int ip;
 
 	status = omapi_data_string_new (&name, strlen (value_name), MDL);
 	if (status != ISC_R_SUCCESS)
@@ -471,6 +526,17 @@ dhcpctl_status dhcpctl_object_refresh (dhcpctl_handle connection,
 	status = omapi_protocol_send_message (connection -> outer,
 					      (omapi_object_t *)0,
 					      message, (omapi_object_t *)0);
+
+	/* We don't want to send the contents of the object down the
+	   wire, but we do need to reference it so that we know what
+	   to do with the update. */
+	status = omapi_set_object_value (message, (omapi_object_t *)0,
+					 "object", h);
+	if (status != ISC_R_SUCCESS) {
+		omapi_object_dereference (&message, MDL);
+		return status;
+	}
+
 	omapi_object_dereference (&message, MDL);
 	return status;
 }

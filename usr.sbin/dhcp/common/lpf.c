@@ -37,7 +37,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: lpf.c,v 1.1.1.8 2000/10/17 15:08:14 taca Exp $ Copyright (c) 1996-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: lpf.c,v 1.1.1.9 2001/06/18 18:13:16 drochner Exp $ Copyright (c) 1996-2000 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -346,7 +346,7 @@ ssize_t receive_packet (interface, buf, len, from, hfrom)
 	int nread;
 	int length = 0;
 	int offset = 0;
-	unsigned char ibuf [1500];
+	unsigned char ibuf [1536];
 	unsigned bufix = 0;
 
 	length = read (interface -> rfdesc, ibuf, sizeof ibuf);

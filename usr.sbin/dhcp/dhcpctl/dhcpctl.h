@@ -85,6 +85,9 @@ dhcpctl_status dhcpctl_set_value (dhcpctl_handle,
 				  dhcpctl_data_string, const char *);
 dhcpctl_status dhcpctl_set_string_value (dhcpctl_handle, const char *,
 					 const char *);
+dhcpctl_status dhcpctl_set_data_value (dhcpctl_handle,
+				       const char *, unsigned, const char *);
+dhcpctl_status dhcpctl_set_null_value (dhcpctl_handle, const char *);
 dhcpctl_status dhcpctl_set_boolean_value (dhcpctl_handle, int, const char *);
 dhcpctl_status dhcpctl_set_int_value (dhcpctl_handle, int, const char *);
 dhcpctl_status dhcpctl_object_update (dhcpctl_handle, dhcpctl_handle);
@@ -109,7 +112,7 @@ isc_result_t dhcpctl_callback_stuff_values (omapi_object_t *,
 
 dhcpctl_status dhcpctl_new_authenticator (dhcpctl_handle *,
 					  const char *, const char *,
-					  const char *, unsigned);
+					  const unsigned char *, unsigned);
 
 dhcpctl_status dhcpctl_open_object (dhcpctl_handle, dhcpctl_handle, int);
 dhcpctl_status dhcpctl_new_object (dhcpctl_handle *,

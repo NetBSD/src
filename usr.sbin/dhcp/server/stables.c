@@ -3,7 +3,7 @@
    Tables of information only used by server... */
 
 /*
- * Copyright (c) 1995-1999 Internet Software Consortium.
+ * Copyright (c) 1995-2001 Internet Software Consortium.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: stables.c,v 1.1.1.6 2001/04/02 21:57:24 mellon Exp $ Copyright (c) 1995-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: stables.c,v 1.1.1.7 2001/06/18 18:13:26 drochner Exp $ Copyright (c) 1995-2001 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -481,7 +481,7 @@ struct option server_options [256] = {
 	{ "limited-broadcast-address", "I",	&server_universe, 33 },
 	{ "remote-port", "S",			&server_universe, 34 },
 	{ "local-address", "I",			&server_universe, 35 },
-	{ "omapi-key", "t",			&server_universe, 36 },
+	{ "omapi-key", "d",			&server_universe, 36 },
 	{ "stash-agent-options", "f",		&server_universe, 37 },
 	{ "ddns-ttl", "T",			&server_universe, 38 },
 	{ "ddns-update-style", "Nddns-styles.",	&server_universe, 39 },

@@ -227,6 +227,26 @@ than the default requested lease time, which is two hours.  The other
 obvious use for this statement is to send information to the server
 that will allow it to differentiate between this client and other
 clients or kinds of clients.
+.SH DYNAMIC DNS
+The client now has some very limited support for doing DNS updates
+when a lease is acquired.   This is prototypical, and probably doesn't
+do what you want.   It also only works if you happen to have control
+over your DNS server, which isn't very likely.
+.PP
+To make it work, you have to declare a key and zone as in the DHCP
+server (see \fBdhcpd.conf\fR(5) for details).   You also need to
+configure the fqdn option on the client, as follows:
+.PP
+.nf
+  send fqdn.fqdn "grosse.fugue.com.";
+  send fqdn.encoded on;
+  send fqdn.server-update off;
+.fi
+.PP
+The \fIfqdn.fqdn\fR option \fBMUST\fR be a fully-qualified domain
+name.   You \fBMUST\fR define a zone statement for the zone to be
+updated.   The \fIfqdn.encoded\fR option may need to be set to
+\fIon\fR or \fIoff\fR, depending on the DHCP server you are using.
 .SH OPTION MODIFIERS
 In some cases, a client may receive option data from the server which
 is not really appropriate for that client, or may not receive

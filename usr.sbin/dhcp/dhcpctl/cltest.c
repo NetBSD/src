@@ -2,7 +2,7 @@
 
    Example program that uses the dhcpctl library. */
 
-/* Copyright (C) 2000 Internet Software Consortium
+/* Copyright (C) 2000-2001 Internet Software Consortium
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -42,7 +42,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
-#include <isc/result.h>
+#include <isc-dhcp/result.h>
 #include "dhcpctl.h"
 
 int main (int, char **);
@@ -68,7 +68,6 @@ int main (argc, argv)
 	dhcpctl_data_string result, groupname, identifier;
 	int i;
 	int mode = undefined;
-	const char *name = 0, *pass = 0, *algorithm = "hmac-md5";
 	const char *interface = 0;
 	const char *action;
 	
@@ -77,18 +76,6 @@ int main (argc, argv)
 			mode = up;
 		} else if (!strcmp (argv [i], "-d")) {
 			mode = down;
-		} else if (!strcmp (argv[i], "-n")) {
-			if (++i == argc)
-				usage(argv[0]);
-			name = argv[i];
-		} else if (!strcmp (argv[i], "-p")) {
-			if (++i == argc)
-				usage(argv[0]);
-			pass = argv[i];
-		} else if (!strcmp (argv[i], "-a")) {
-			if (++i == argc)
-				usage(argv[0]);
-			algorithm = argv[i];
 		} else if (argv[i][0] == '-') {
 			usage(argv[0]);
 		} else {
@@ -100,8 +87,6 @@ int main (argc, argv)
 		usage(argv[0]);
 	if (mode == undefined)
 		usage(argv[0]);
-	if ((name || pass) && !(name && pass))
-		usage(argv[0]);
 
 	status = dhcpctl_initialize ();
 	if (status != ISC_R_SUCCESS) {
@@ -111,19 +96,8 @@ int main (argc, argv)
 	}
 
 	authenticator = dhcpctl_null_handle;
-
-	if (name) {
-		status = dhcpctl_new_authenticator (&authenticator,
-						    name, algorithm, pass,
-						    strlen (pass) + 1);
-		if (status != ISC_R_SUCCESS) {
-			fprintf (stderr, "Cannot create authenticator: %s\n",
-				 isc_result_totext (status));
-			exit (1);
-		}
-	}
-
 	connection = dhcpctl_null_handle;
+
 	status = dhcpctl_connect (&connection, "127.0.0.1", 7911,
 				  authenticator);
 	if (status != ISC_R_SUCCESS) {

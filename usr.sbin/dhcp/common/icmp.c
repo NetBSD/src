@@ -44,7 +44,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: icmp.c,v 1.1.1.11 2001/04/02 21:56:55 mellon Exp $ Copyright (c) 1996-2001 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: icmp.c,v 1.1.1.12 2001/06/18 18:13:15 drochner Exp $ Copyright (c) 1996-2001 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -59,6 +59,7 @@ struct icmp_state {
 
 static struct icmp_state *icmp_state;
 static omapi_object_type_t *dhcp_type_icmp;
+static int no_icmp;
 
 #if defined (TRACING)
 trace_type_t *trace_icmp_input;
@@ -119,8 +120,11 @@ void icmp_startup (routep, handler)
 		
 		/* Get a raw socket for the ICMP protocol. */
 		new -> socket = socket (AF_INET, SOCK_RAW, protocol);
-		if (new -> socket < 0)
-			log_fatal ("unable to create icmp socket: %m");
+		if (new -> socket < 0) {
+			no_icmp = 1;
+			log_error ("unable to create icmp socket: %m");
+			return;
+		}
 
 #if defined (HAVE_SETFD)
 		if (fcntl (new -> socket, F_SETFD, 1) < 0)
@@ -164,6 +168,8 @@ int icmp_echorequest (addr)
 	trace_iov_t iov [2];
 #endif
 
+	if (no_icmp)
+		return 1;
 	if (!icmp_state)
 		log_fatal ("ICMP protocol used before initialization.");
 

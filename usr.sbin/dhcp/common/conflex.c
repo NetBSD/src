@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: conflex.c,v 1.1.1.12 2001/04/02 21:56:52 mellon Exp $ Copyright (c) 1995-2001 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: conflex.c,v 1.1.1.13 2001/06/18 18:13:14 drochner Exp $ Copyright (c) 1995-2001 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -57,12 +57,13 @@ static enum dhcp_token read_number PROTO ((int, struct parse *));
 static enum dhcp_token read_num_or_name PROTO ((int, struct parse *));
 static enum dhcp_token intern PROTO ((char *, enum dhcp_token));
 
-isc_result_t new_parse (cfile, file, inbuf, buflen, name)
+isc_result_t new_parse (cfile, file, inbuf, buflen, name, eolp)
 	struct parse **cfile;
 	int file;
 	char *inbuf;
 	unsigned buflen;
 	const char *name;
+	int eolp;
 {
 	struct parse *tmp;
 
@@ -80,6 +81,7 @@ isc_result_t new_parse (cfile, file, inbuf, buflen, name)
 	tmp -> cur_line [0] = tmp -> prev_line [0] = 0;
 	tmp -> warnings_occurred = 0;
 	tmp -> file = file;
+	tmp -> eol_token = eolp;
 
 	tmp -> bufix = 0;
 	tmp -> buflen = buflen;
@@ -588,8 +590,10 @@ static enum dhcp_token intern (atom, dfv)
 			if (!strcasecmp (atom + 6, "s"))
 				return CLIENTS;
 		}
-		if (!strncasecmp (atom + 1, "oncat", 5))
+		if (!strcasecmp (atom + 1, "oncat"))
 			return CONCAT;
+		if (!strcasecmp (atom + 1, "onnect"))
+			return CONNECT;
 		if (!strcasecmp (atom + 1, "ommunications-interrupted"))
 			return COMMUNICATIONS_INTERRUPTED;
 		if (!strcasecmp (atom + 1, "ltt"))
@@ -602,6 +606,8 @@ static enum dhcp_token intern (atom, dfv)
 			return DNS_DELETE;
 		if (!strcasecmp (atom + 1, "omain"))
 			return DOMAIN;
+		if (!strcasecmp (atom + 1, "omain-name"))
+			return DOMAIN_NAME;
 		if (!strcasecmp (atom + 1, "ebug"))
 			return TOKEN_DEBUG;
 		if (!strcasecmp (atom + 1, "eny"))
@@ -888,6 +894,8 @@ static enum dhcp_token intern (atom, dfv)
 			return RECOVER;
 		if (!strcasecmp (atom + 1, "ecover-done"))
 			return RECOVER_DONE;
+		if (!strcasecmp (atom + 1, "ecover-wait"))
+			return RECOVER_WAIT;
 		if (!strcasecmp (atom + 1, "econtact-interval"))
 			return RECONTACT_INTERVAL;
 		if (!strcasecmp (atom + 1, "equest"))
@@ -920,6 +928,10 @@ static enum dhcp_token intern (atom, dfv)
 			return TOKEN_RESET;
 		if (!strcasecmp (atom + 1, "eserved"))
 			return TOKEN_RESERVED;
+		if (!strcasecmp (atom + 1, "emove"))
+			return REMOVE;
+		if (!strcasecmp (atom + 1, "efresh"))
+			return REFRESH;
 		break;
 	      case 's':
 		if (!strcasecmp (atom + 1, "tate"))
@@ -950,6 +962,8 @@ static enum dhcp_token intern (atom, dfv)
 			return SERVER_NAME;
 		if (!strcasecmp (atom + 1, "erver-identifier"))
 			return SERVER_IDENTIFIER;
+		if (!strcasecmp (atom + 1, "erver"))
+			return SERVER;
 		if (!strcasecmp (atom + 1, "elect-timeout"))
 			return SELECT_TIMEOUT;
 		if (!strcasecmp (atom + 1, "elect"))

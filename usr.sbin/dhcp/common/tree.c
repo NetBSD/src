@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: tree.c,v 1.1.1.9 2001/04/02 21:57:01 mellon Exp $ Copyright (c) 1995-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: tree.c,v 1.1.1.10 2001/06/18 18:13:18 drochner Exp $ Copyright (c) 1995-2000 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -1414,6 +1414,24 @@ int evaluate_data_expression (result, packet, lease, client_state,
 
 		/* Combine the hardware type and address. */
 	      case expr_hardware:
+		/* On the client, hardware is our hardware. */
+		if (client_state) {
+			memset (result, 0, sizeof *result);
+			result -> data =
+				client_state -> interface -> hw_address.hbuf;
+			result -> len =
+				client_state -> interface -> hw_address.hlen;
+#if defined (DEBUG_EXPRESSIONS)
+			log_debug ("data: hardware = %s",
+				   print_hex_1 (result -> len,
+						result -> data, 60));
+#endif
+			return 1;
+		}
+
+		/* The server cares about the client's hardware address,
+		   so only in the case where we are examining a packet can
+		   we return anything. */
 		if (!packet || !packet -> raw) {
 			log_error ("data: hardware: raw packet not available");
 			return 0;
@@ -1721,7 +1739,7 @@ int evaluate_data_expression (result, packet, lease, client_state,
 							buflen += 2;
 						else
 							buflen += 3;
-					} else if (offset == 10) {
+					} else if (offset == 16) {
 						if (other.data [i] < 16)
 							buflen++;
 						else
