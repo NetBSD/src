@@ -1,10 +1,10 @@
-/*	$NetBSD: isapnpdevs.c,v 1.1 1998/07/23 19:31:36 christos Exp $	*/
+/*	$NetBSD: isapnpdevs.c,v 1.2 1998/07/30 09:47:49 drochner Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: isapnpdevs,v 1.1 1998/07/23 19:30:45 christos Exp 
+ *	NetBSD: isapnpdevs,v 1.2 1998/07/30 09:45:16 drochner Exp 
  */
 
 /*
@@ -58,6 +58,7 @@ static const char *isapnp_com_devlogic[] = {
 	"BDP3336",	/* Best Data Prods. 336F */
 	"OZO8039",	/* Zoom 56k flex */
 	"BRI1400",	/* Boca 33.6 PnP */
+	"BRIB400",	/* Boca 56k PnP */
 	"ROK0010",	/* Rockwell ? */
 	"USR2070",	/* USR Sportster 56k */
 	NULL
@@ -204,7 +205,7 @@ const struct isapnp_devinfo isapnp_wss_devinfo = {
 
 /* Yamaha Sound */
 static const char *isapnp_ym_devlogic[] = {
-	"YMH0021",	/* OPL3-SA3 */
+	"YMH0021",	/* OPL3-SA2, OPL3-SA3 */
 	NULL
 };
 static const char *isapnp_ym_devcompat[] = {
