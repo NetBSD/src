@@ -1,4 +1,4 @@
-/*	$NetBSD: alloc.c,v 1.17 2003/08/07 16:32:25 agc Exp $	*/
+/*	$NetBSD: alloc.c,v 1.18 2004/06/30 13:58:16 christos Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -214,7 +214,7 @@ alloc(u_int size)
 		if (top > (char*)HEAP_LIMIT)
 		        panic("heap full (0x%lx+%u)", help, size);
 #endif
-		*(unsigned *)help = ALIGN(size);
+		*(unsigned *)(void *)help = (unsigned)ALIGN(size);
 #ifdef ALLOC_TRACE
 		printf("=%lx\n", (u_long)help + ALIGN(sizeof(unsigned)));
 #endif
@@ -228,7 +228,7 @@ alloc(u_int size)
 found:
 #endif
         /* remove from freelist */
-        help = (char*)*f;
+        help = (char *)(void *)*f;
 	*f = (*f)->next;
 #ifdef ALLOC_TRACE
 	printf("=%lx (origsize %u)\n", (u_long)help + ALIGN(sizeof(unsigned)),
@@ -238,10 +238,11 @@ found:
 }
 
 void
+/*ARGSUSED*/
 free(void *ptr, u_int size)
 {
 	struct fl *f =
-	    (struct fl *)((char*)ptr - ALIGN(sizeof(unsigned)));
+	    (struct fl *)(void *)((char*)(void *)ptr - ALIGN(sizeof(unsigned)));
 #ifdef ALLOC_TRACE
 	printf("free(%lx, %u) (origsize %u)\n", (u_long)ptr, size, f->size);
 #endif
