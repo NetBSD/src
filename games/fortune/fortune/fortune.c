@@ -1,4 +1,4 @@
-/*	$NetBSD: fortune.c,v 1.17 1999/09/08 21:45:27 jsm Exp $	*/
+/*	$NetBSD: fortune.c,v 1.18 1999/09/08 21:57:16 jsm Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1993\n\
 #if 0
 static char sccsid[] = "@(#)fortune.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: fortune.c,v 1.17 1999/09/08 21:45:27 jsm Exp $");
+__RCSID("$NetBSD: fortune.c,v 1.18 1999/09/08 21:57:16 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -260,7 +260,7 @@ display(fp)
 	char	line[BUFSIZ];
 
 	open_fp(fp);
-	(void) fseek(fp->inf, (long)Seekpts[0], 0);
+	(void) fseek(fp->inf, (long)Seekpts[0], SEEK_SET);
 	for (Fort_len = 0; fgets(line, sizeof line, fp->inf) != NULL &&
 	    !STR_ENDSTRING(line, fp->tbl); Fort_len++) {
 		if (fp->tbl.str_flags & STR_ROTATED) {
@@ -289,7 +289,7 @@ fortlen()
 		nchar = (Seekpts[1] - Seekpts[0] <= SLEN);
 	else {
 		open_fp(Fortfile);
-		(void) fseek(Fortfile->inf, (long)Seekpts[0], 0);
+		(void) fseek(Fortfile->inf, (long)Seekpts[0], SEEK_SET);
 		nchar = 0;
 		while (fgets(line, sizeof line, Fortfile->inf) != NULL &&
 		       !STR_ENDSTRING(line, Fortfile->tbl))
@@ -990,7 +990,7 @@ get_fort()
 	get_pos(fp);
 	open_dat(fp);
 	(void) lseek(fp->datfd,
-		     (off_t) (sizeof fp->tbl + fp->pos * sizeof Seekpts[0]), 0);
+		     (off_t) (sizeof fp->tbl + fp->pos * sizeof Seekpts[0]), SEEK_SET);
 	read(fp->datfd, Seekpts, sizeof Seekpts);
 	BE64TOH(Seekpts[0]);
 	BE64TOH(Seekpts[1]);

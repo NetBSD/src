@@ -1,4 +1,4 @@
-/*	$NetBSD: cards.c,v 1.8 1999/09/08 21:17:51 jsm Exp $	*/
+/*	$NetBSD: cards.c,v 1.9 1999/09/08 21:57:18 jsm Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cards.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: cards.c,v 1.8 1999/09/08 21:17:51 jsm Exp $");
+__RCSID("$NetBSD: cards.c,v 1.9 1999/09/08 21:57:18 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -136,7 +136,7 @@ get_card(dp)
 	OWN *op;
 
 	do {
-		fseek(deckf, dp->offsets[dp->last_card], 0);
+		fseek(deckf, dp->offsets[dp->last_card], SEEK_SET);
 		dp->last_card = ++(dp->last_card) % dp->num_cards;
 		type_maj = getc(deckf);
 	} while (dp->gojf_used && type_maj == GOJF);
