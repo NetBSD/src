@@ -23,6 +23,7 @@ Boston, MA 02111-1307, USA.  */
 
 #include "config.h"
 #include "system.h"
+#include "insn-config.h"
 
 #include <stdio.h>
 
@@ -30,11 +31,15 @@ Boston, MA 02111-1307, USA.  */
 #include "tree.h"
 #include "flags.h"
 #include "insn-flags.h"
+#include "except.h"
 #include "expr.h"
+#include "function.h"
 #include "regs.h"
 #include "hard-reg-set.h"
 #include "output.h"
 #include "insn-attr.h"
+#include "toplev.h"
+#include "recog.h"
 
 int code_for_indirect_jump_scratch = CODE_FOR_indirect_jump_scratch;
 
@@ -133,7 +138,7 @@ print_operand_address (stream, x)
     {
     case REG:
     case SUBREG:
-      fprintf (stream, "@%s", reg_names[REGNO (x)]);
+      fprintf (stream, "@%s", reg_names[true_regnum (x)]);
       break;
 
     case PLUS:
@@ -145,14 +150,19 @@ print_operand_address (stream, x)
 	  {
 	  case CONST_INT:
 	    fprintf (stream, "@(%d,%s)", INTVAL (index),
-		     reg_names[REGNO (base)]);
+		     reg_names[true_regnum (base)]);
 	    break;
 
 	  case REG:
 	  case SUBREG:
-	    fprintf (stream, "@(r0,%s)",
-		     reg_names[MAX (REGNO (base), REGNO (index))]);
+	  {
+		  int base_num = true_regnum (base);
+		  int index_num = true_regnum (index);
+
+		  fprintf (stream, "@(r0,%s)",
+		     reg_names[MAX (base_num,index_num)]);
 	    break;
+	  }
 
 	  default:
 	    debug_rtx (x);
@@ -162,11 +172,11 @@ print_operand_address (stream, x)
       break;
 
     case PRE_DEC:
-      fprintf (stream, "@-%s", reg_names[REGNO (XEXP (x, 0))]);
+      fprintf (stream, "@-%s", reg_names[true_regnum (XEXP (x, 0))]);
       break;
 
     case POST_INC:
-      fprintf (stream, "@%s+", reg_names[REGNO (XEXP (x, 0))]);
+      fprintf (stream, "@%s+", reg_names[true_regnum (XEXP (x, 0))]);
       break;
 
     default:
@@ -420,6 +430,7 @@ prepare_scc_operands (code)
   if ((code != EQ && code != NE
        && (sh_compare_op1 != const0_rtx
 	   || code == GTU  || code == GEU || code == LTU || code == LEU))
+      || (mode == DImode && sh_compare_op1 != const0_rtx)
       || TARGET_SH3E && GET_MODE_CLASS (mode) == MODE_FLOAT)
     sh_compare_op1 = force_reg (mode, sh_compare_op1);
 
@@ -712,9 +723,9 @@ output_branchy_insn (code, template, insn, operands)
 
 char *
 output_ieee_ccmpeq (insn, operands)
-     rtx insn, operands;
+     rtx insn, *operands;
 {
-  output_branchy_insn (NE, "bt\t%l9\\;fcmp/eq\t%1,%0", insn, operands);
+  return output_branchy_insn (NE, "bt\t%l9\\;fcmp/eq\t%1,%0", insn, operands);
 }
 
 /* Output to FILE the start of the assembler file.  */
