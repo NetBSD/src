@@ -1,4 +1,4 @@
-#	$NetBSD: CATS,v 1.15 1999/09/09 12:33:44 augustss Exp $
+#	$NetBSD: CATS,v 1.16 1999/09/13 05:19:45 mark Exp $
 #
 #	CATS -- CHALTECH CATS Development kernel
 #
@@ -164,6 +164,7 @@ fcom0	at footbridge?
 # time-of-day device via footbridge or RTC
 todclock0	at todservice?
 
+# PCI bus support
 # PCI bus via footbridge
 pci0	at footbridge?			# PCI bus
 
@@ -184,6 +185,8 @@ ppb*	at pci? dev ? function ?	# PCI-PCI bridges
 # PCI SCSI Controllers and Buses
 #adv*	at pci? dev ? function ?	# AdvanSys 1200[A,B], ULTRA SCSI
 #scsibus* at adv?
+#adw*	at pci? dev ? function ?	# AdvanSys 9xxUW SCSI
+#scsibus* at adw?
 ahc*	at pci? dev ? function ?	# Adaptec [23]94x, aic78x0 SCSI controllers
 scsibus* at ahc?
 #bha*	at pci? dev ? function ?	# BusLogic 9xx SCSI
@@ -192,6 +195,8 @@ isp*	at pci? dev ? function ?	# Qlogic ISP 10x0 SCSI controllers
 scsibus* at isp?
 #ncr*	at pci? dev ? function ?	# NCR 53c8xx SCSI
 #scsibus* at ncr?
+#pcscp*	at pci? dev ? function ?	# AMD 53c974 PCscsi-PCI SCSI
+#scsibus* at pcscp?
 
 # SCSI devices
 sd*	at scsibus? target ? lun ?	# SCSI disk drives
@@ -218,6 +223,7 @@ sd*	at atapibus? drive ?		# ATAPI disk drives
 de*	at pci? dev ? function ?	# DC21X4X-based ethernet cards
 #en*	at pci? dev ? function ?	# ENI/Adaptec ATM
 #ep*	at pci? dev ? function ?	# 3C590 ethernet cards
+#ex*	at pci? dev ? function ?	# 3Com 90x[B]
 #epic*	at pci? dev ? function ?	# SMC EPIC/100 Ethernet
 #esh*	at pci? dev ? function ?	# Essential HIPPI card
 #fpa*	at pci? dev ? function ?	# DEC DEFPA FDDI
@@ -227,16 +233,21 @@ ne*	at pci? dev ? function ?	# NE2000 compat ethernet
 #tl*	at pci? dev ? function ?	# ThunderLAN-based Ethernet
 
 # MII/PHY support
+#exphy*	at mii? phy ?			# 3Com internal PHYs
+#icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS1890
 #inphy*	at mii? phy ?			# Intel 82555 PHYs
+#lxtphy*	at mii? phy ?			# Level One LXT-970 PHYs
 #nsphy*	at mii? phy ?			# NS83840 PHYs
 #qsphy*	at mii? phy ?			# Quality Semiconductor QS6612 PHYs
+#sqphy*	at mii? phy ?			# Seeq 80220/80221/80223 PHYs
 #tlphy*	at mii? phy ?			# ThunderLAN PHYs
+#ukphy*	at mii? phy ?			# generic unknown PHYs
 
 # USB Controller and Devices
 
 # PCI USB controllers
-#uhci* at pci?                         # Universal Host Controller (Intel)
-ohci* at pci?                         # Open Host Controller
+#uhci* at pci?				# Universal Host Controller (Intel)
+ohci* at pci?				# Open Host Controller
 
 # USB bus support
 #usb*  at uhci?
@@ -278,9 +289,15 @@ ugen* at uhub? port ?
 
 # PCI audio devices
 #eap*	at pci? dev ? function ?	# Ensoniq AudioPCI
+#sv*	at pci? dev ? function ?	# S3 SonicVibes
+
+# USB Audio devices
+#uaudio*	at uhub? port ?
 
 # Audio support
 #audio*	at eap?
+#audio*	at sv?
+#audio*	at uaudio?
 
 vga*		at pci?
 wsdisplay*	at vga? console ?
@@ -330,13 +347,16 @@ spkr0	at pcppi?			# PC speaker
 dsrtc0	at isa? port 0x72		# Dallas RTC
 
 # ISA Plug-and-Play audio devices
+ess*	at isapnp?			# ESS Tech ES1887, ES1888, ES888 audio
 sb*	at isapnp?			# SoundBlaster-compatible audio
 wss*	at isapnp?			# Windows Sound System
 
 # OPL[23] FM syntheziers
+opl*	at ess?
 opl*	at sb?
 
 # Audio support
+audio*	at ess?
 audio*	at sb?
 audio*	at wss?
 
@@ -375,3 +395,6 @@ pseudo-device	pty		64	# pseudo-terminals
 #pseudo-device	sequencer	1	# MIDI sequencer
 pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness as well (BROKEN)
+
+# mouse & keyboard multiplexor pseudo-devices
+pseudo-device	wsmux		2
