@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2003/02/18 09:35:31 uwe Exp $
+#	$NetBSD: Makefile,v 1.9 2003/02/20 21:09:40 uwe Exp $
 
 .include <bsd.own.mk>
 
@@ -8,7 +8,9 @@ ARCHSUBDIR=     ${MACHINE_ARCH}
 ARCHSUBDIR=     ${MACHINE_CPU}
 .else
 .BEGIN:
-	@echo "WARNING: no ARCHSUBDIR for ${MACHINE_ARCH}/${MACHINE_CPU}; skipping..."
+	@echo "WARNING: no ARCHSUBDIR for ${MACHINE_ARCH}/${MACHINE_CPU}"
+	@echo "*** REFUSING TO CONTINUE! (nag, nag, nag) ***"
+	@false	# this is intentional!
 .endif
 
 .if defined(ARCHSUBDIR)
