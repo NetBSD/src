@@ -173,9 +173,57 @@ is_probe(parent, cf, aux)
 		ia->ia_irq = isa_discoverintr(is_forceintr, aux);
 		if (ia->ia_irq == IRQNONE)
 			return 0;
+		if ((isrdcsr(iobase, 0) & IDON) == 0) {
+			printf("is%d: failed to initialize\n", cf->cf_unit);
+#ifdef DIAGNOSTIC
+			printf("is%d: state is %04x\n", cf->cf_unit,
+			       isrdcsr(iobase, 0));
+#endif
+			return 0;
+		}
+		/* had our fun; turn it off again */
+		iswrcsr(iobase, 0, IDON);
 	}
 
 	return 1;
+}
+
+/*
+ * Algorithm: send a bogus initialization packet.  LANCE asserts INTR when the
+ * initialization is complete.
+ */
+void
+is_forceintr(aux)
+	void *aux;
+{
+	struct isa_attach_args *ia = aux;
+	u_short iobase = ia->ia_iobase;
+	struct _init {
+		struct init_block i_init;
+		struct mds i_md;
+	} init;
+
+	bzero(&init, sizeof init);
+
+	/*
+	 * We aren't turning on receive or transmit, so this shouldn't matter,
+	 * but let's be careful anyway where the descriptor ring pointers point
+	 * to, lest we accidentally stomp something.
+	 */
+	init.i_init.tdra = init.i_init.rdra = kvtop(&init.i_md);
+	init.i_init.tlen = init.i_init.rlen = (kvtop(&init.i_md) >> 16) & 0xff;
+
+	/* No byte swapping etc */
+	iswrcsr(iobase, 3, 0);
+
+	/* Give lance the physical address of its memory area */
+	iswrcsr(iobase, 1, kvtop(init));
+	iswrcsr(iobase, 2, (kvtop(init) >> 16) & 0xff);
+
+	/* OK, let's try and initialise the Lance */
+	iswrcsr(iobase, 0, INIT|INEA);
+
+	/* expect an interrupt when it's done */
 }
 
 /*
