@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.97 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.98 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -278,3 +278,5 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 		from check_passwd and check_mtree.  [jhawk 20030213]
 	grep(1): upgraded to 2.5.1.  [wiz 20030213]
 	texinfo(1): upgraded to 4.5.  [wiz 20030213]
+	usb: add uax(4), a driver for the AX88172 Ethernet adapter chip.
+		The chip supports 10/100 and USB 2.0.  [augustss 20030216]
