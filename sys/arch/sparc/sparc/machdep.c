@@ -42,7 +42,7 @@
  *	@(#)machdep.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: machdep.c,v 1.41 93/05/27 04:39:05 torek Exp 
- * $Id: machdep.c,v 1.26 1994/08/20 01:29:49 deraadt Exp $
+ * $Id: machdep.c,v 1.27 1994/09/25 20:52:58 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -915,3 +915,67 @@ cpu_exec_aout_makecmds(p, epp)
 #endif
 	return error;
 }
+
+#ifdef SUN4
+void
+oldmon_w_trace(va)
+	u_long va;
+{
+	u_long stop;
+	extern u_long *par_err_reg;
+	volatile u_long *memreg = (u_long *) par_err_reg;
+	struct frame *fp;
+
+	if (curproc)
+		printf("curproc = %x, pid %d\n", curproc, curproc->p_pid);
+	else
+		printf("no curproc\n");
+
+	printf("cnt: swtch %d, trap %d, sys %d, intr %d, soft %d, faults %d\n",
+	    cnt.v_swtch, cnt.v_trap, cnt.v_syscall, cnt.v_intr, cnt.v_soft,
+	    cnt.v_faults);
+	write_user_windows();
+
+#define round_up(x) (( (x) + (NBPG-1) ) & (~(NBPG-1)) )
+
+	printf("\nstack trace with sp = %x\n", va);
+	stop = round_up(va);
+	printf("stop at %x\n", stop);
+	fp = (struct frame *) va;
+	while (round_up((u_long) fp) == stop) {
+		printf("  %x(%x, %x, %x, %x, %x, %x) fp %x\n", fp->fr_pc, 
+		    fp->fr_arg[0], fp->fr_arg[1], fp->fr_arg[2], fp->fr_arg[3], 
+		    fp->fr_arg[4], fp->fr_arg[5], fp->fr_arg[6], fp->fr_fp);
+		fp = fp->fr_fp;
+		if (fp == NULL)
+			break;
+	}
+	printf("end of stack trace\n"); 
+}
+
+void
+oldmon_w_cmd(va, ar)
+	u_long va;
+	char *ar;
+{
+	switch (*ar) {
+	case '\0':
+		switch (va) {
+		case 0:
+			panic("g0 panic");
+		case 4:
+			printf("w: case 4\n");
+			break;
+		default:
+			printf("w: unknown case %d\n", va);
+			break;
+		}
+		break;
+	case 't':
+		oldmon_w_trace(va);
+		break;
+	default:
+		printf("w: arg not allowed\n");
+	}
+}
+#endif /* SUN4 */
