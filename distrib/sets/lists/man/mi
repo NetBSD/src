@@ -424,6 +424,7 @@
 ./usr/share/man/cat8/mount_ados.0
 ./usr/share/man/cat8/mount_cd9660.0
 ./usr/share/man/cat8/mount_fdesc.0
+./usr/share/man/cat8/mount_ffs.0
 ./usr/share/man/cat8/mount_kernfs.0
 ./usr/share/man/cat8/mount_lfs.0
 ./usr/share/man/cat8/mount_mfs.0
@@ -432,6 +433,7 @@
 ./usr/share/man/cat8/mount_null.0
 ./usr/share/man/cat8/mount_portal.0
 ./usr/share/man/cat8/mount_procfs.0
+./usr/share/man/cat8/mount_ufs.0
 ./usr/share/man/cat8/mount_umap.0
 ./usr/share/man/cat8/mount_union.0
 ./usr/share/man/cat8/mountd.0
@@ -498,6 +500,7 @@
 ./usr/share/man/cat8/slip.0
 ./usr/share/man/cat8/sliplogin.0
 ./usr/share/man/cat8/slstats.0
+./usr/share/man/cat8/spray.0
 ./usr/share/man/cat8/sprayd.0
 ./usr/share/man/cat8/sticky.0
 ./usr/share/man/cat8/swapon.0
