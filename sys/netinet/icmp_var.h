@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp_var.h,v 1.10 1997/10/18 21:18:28 kml Exp $	*/
+/*	$NetBSD: icmp_var.h,v 1.11 1997/10/18 21:21:28 kml Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -68,5 +68,4 @@ struct	icmpstat {
 
 #ifdef _KERNEL
 struct	icmpstat icmpstat;
-extern int 	 icmp_do_mtudisc;
 #endif
