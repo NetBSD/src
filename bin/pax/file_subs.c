@@ -1,4 +1,4 @@
-/*	$NetBSD: file_subs.c,v 1.13 1999/11/01 01:35:58 mrg Exp $	*/
+/*	$NetBSD: file_subs.c,v 1.14 1999/11/07 09:44:11 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)file_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: file_subs.c,v 1.13 1999/11/01 01:35:58 mrg Exp $");
+__RCSID("$NetBSD: file_subs.c,v 1.14 1999/11/07 09:44:11 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -535,7 +535,7 @@ node_creat(arcn)
 
 	if (patime || pmtime)
 		set_ftime(arcn->name, arcn->sb.st_mtime, arcn->sb.st_atime, 0);
-	if (pfflags)
+	if (pfflags && arcn->type != PAX_SLK)
 		set_chflags(arcn->name, arcn->sb.st_flags);
 	return(0);
 }
@@ -799,7 +799,7 @@ void
 set_chflags(char *fnm, u_int32_t flags)
 #else
 void
-set_pmode(fnm, flags)
+set_chflags(fnm, flags)
 	char *fnm;
 	u_int32_t flags;
 #endif
