@@ -1,5 +1,5 @@
 #if !defined(lint) && !defined(SABER)
-static const char rcsid[] = "$Id: res_update.c,v 1.1.1.1 2000/04/22 07:11:55 mellon Exp $";
+static const char rcsid[] = "$Id: res_update.c,v 1.1.1.2 2000/06/10 18:05:19 mellon Exp $";
 #endif /* not lint */
 
 /*
@@ -76,7 +76,6 @@ static int	nsprom(struct sockaddr_in *, const struct in_addr *, int);
 static void	dprintf(const char *, ...);
 
 void tkey_free (ns_tsig_key **);
-int find_tsig_key (ns_tsig_key **, const char *);
 
 ns_rcode
 res_nupdate(res_state statp, ns_updrec *rrecp_in) {
@@ -89,7 +88,10 @@ res_nupdate(res_state statp, ns_updrec *rrecp_in) {
 	struct sockaddr_in nsaddrs[MAXNS];
 	ns_rcode rcode;
 	ns_tsig_key *key;
+	void *zcookie = 0;
+	void *zcookp = &zcookie;
 
+      again:
 	/* Make sure all the updates are in the same zone, and find out
 	   what zone they are in. */
 	zptr = NULL;
@@ -101,7 +103,7 @@ res_nupdate(res_state statp, ns_updrec *rrecp_in) {
 					RES_EXHAUSTIVE,
 					tgrp.z_origin,
 					sizeof tgrp.z_origin,
-					tgrp.z_nsaddrs, MAXNS);
+					tgrp.z_nsaddrs, MAXNS, zcookp);
 		if (tgrp.z_nscount <= 0) {
 			rcode = ns_r_notzone;
 			goto done;
@@ -149,7 +151,7 @@ res_nupdate(res_state statp, ns_updrec *rrecp_in) {
 
 	/* Send the update and remember the result. */
 	key = (ns_tsig_key *)0;
-	if (!find_tsig_key (&key, zptr->z_origin)) {
+	if (!find_tsig_key (&key, zptr->z_origin, zcookie)) {
 		rval = res_nsendsigned(statp, packet, n, key,
 				       answer, sizeof answer);
 		tkey_free (&key);
@@ -161,6 +163,9 @@ res_nupdate(res_state statp, ns_updrec *rrecp_in) {
 		goto undone;
 	}
 	rcode = ((HEADER *)answer)->rcode;
+	if (zcookie && rcode == ns_r_badsig) {
+		repudiate_zone (&zcookie);
+	}
 
  undone:
 	/* Restore resolver's nameserver set. */
@@ -173,6 +178,15 @@ res_nupdate(res_state statp, ns_updrec *rrecp_in) {
 		free(zptr);
 	}
 
+	/* If the update failed because we used a cached zone and it
+	   didn't work, try it again without the cached zone. */
+	if (zcookp && (rcode == ns_r_notzone || rcode == ns_r_badsig)) {
+		zcookp = 0;
+		goto again;
+	}
+
+	if (zcookie)
+		forget_zone (&zcookie);
 	return rcode;
 }
 

@@ -50,41 +50,42 @@
 /* Define this if you want exhaustive (and very slow) checking of the
    malloc pool for corruption. */
 
-/* #define DEBUG_MALLOC_POOL */
+#define DEBUG_MALLOC_POOL
 
 /* Define this if you want to maintain a history of the last N operations
    that changed reference counts on objects.   This can be used to debug
    cases where an object is dereferenced too often, or not often enough. */
 
-/* #define DEBUG_RC_HISTORY */
+#define DEBUG_RC_HISTORY
 
 /* Define this if you want to see the history every cycle. */
 
 /* #define DEBUG_RC_HISTORY_EXHAUSTIVELY */
+
 /* This is the number of history entries to maintain - by default, 256. */
 
-/* #define RC_HISTORY_MAX 1024 */
+#define RC_HISTORY_MAX 1024
 
 /* Define this if you want dhcpd to dump core when a non-fatal memory
    allocation error is detected (i.e., something that would cause a
    memory leak rather than a memory smash). */
 
-/* #define POINTER_DEBUG */
+#define POINTER_DEBUG
 
 /* Define this if you want debugging output for DHCP failover protocol
    messages. */
 
-/* #define DEBUG_FAILOVER_MESSAGES */
+#define DEBUG_FAILOVER_MESSAGES
 
 /* Define this if you want debugging output for DHCP failover protocol
    lease assignment timing. */
 
-/* #define DEBUG_FAILOVER_TIMING */
+#define DEBUG_FAILOVER_TIMING
 
 /* Define this if you want DHCP failover protocol support in the DHCP
    server. */
 
-/* #define FAILOVER_PROTOCOL */
+#define FAILOVER_PROTOCOL
 
 /* Define this if you want the dhcpd.pid file to go somewhere other than
    the default (which varies from system to system, but is usually either
@@ -152,8 +153,3 @@
 /* Define this to change the logging facility used by dhcpd. */
 
 /* #define DHCPD_LOG_FACILITY LOG_DAEMON */
-
-/* Define this to support the failover protocol.   This probably won't work
-   right now. */
-
-/* #define FAILOVER_PROTOCOL */

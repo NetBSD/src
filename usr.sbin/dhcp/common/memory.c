@@ -43,22 +43,135 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: memory.c,v 1.1.1.6 2000/04/22 07:11:35 mellon Exp $ Copyright (c) 1995-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: memory.c,v 1.1.1.7 2000/06/10 18:04:49 mellon Exp $ Copyright (c) 1995-2000 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
 
-struct group *clone_group (group, file, line)
-	struct group *group;
-	const char *file;
-	int line;
+struct group *root_group;
+struct hash_table *group_name_hash;
+int (*group_write_hook) (struct group_object *);
+
+isc_result_t delete_group (struct group_object *group, int writep)
 {
-	struct group *g = new_group (file, line);
-	if (!g)
-		log_fatal ("%s(%d): can't allocate new group", file, line);
-	*g = *group;
-	g -> statements = (struct executable_statement *)0;
-	g -> next = group;
-	return g;
+	struct group_object *d;
+
+	/* The group should exist and be hashed - if not, it's invalid. */
+	if (group_name_hash) {
+		d = (struct group_object *)0;
+		group_hash_lookup (&d, group_name_hash, group -> name,
+				   strlen (group -> name), MDL);
+	} else
+		return ISC_R_INVALIDARG;
+	if (!d)
+		return ISC_R_INVALIDARG;
+
+	/* Also not okay to delete a group that's not the one in
+	   the hash table. */
+	if (d != group)
+		return ISC_R_INVALIDARG;
+
+	/* If it's dynamic, and we're deleting it, we can just blow away the
+	   hash table entry. */
+	if ((group -> flags & GROUP_OBJECT_DYNAMIC) &&
+	    !(group -> flags & GROUP_OBJECT_STATIC)) {
+		group_hash_delete (group_name_hash,
+				   group -> name, strlen (group -> name), MDL);
+	} else {
+		group -> flags |= GROUP_OBJECT_DELETED;
+		if (group -> group)
+			group_dereference (&group -> group, MDL);
+	}
+
+	/* Store the group declaration in the lease file. */
+	if (writep && group_write_hook) {
+		if (!(*group_write_hook) (group))
+			return ISC_R_IOERROR;
+	}
+	return ISC_R_SUCCESS;
 }
 
+isc_result_t supersede_group (struct group_object *group, int writep)
+{
+	struct group_object *t, *u;
+	isc_result_t status;
+
+	/* Register the group in the group name hash table,
+	   so we can look it up later. */
+	if (group_name_hash) {
+		t = (struct group_object *)0;
+		group_hash_lookup (&t, group_name_hash,
+			group -> name,
+			     strlen (group -> name), MDL);
+		if (t && t != group) {
+			/* If this isn't a dynamic entry, then we need to flag
+			   the replacement as not dynamic either - otherwise,
+			   if the dynamic entry is deleted later, the static
+			   entry will come back next time the server is stopped
+			   and restarted. */
+			if (!(t -> flags & GROUP_OBJECT_DYNAMIC))
+				group -> flags |= GROUP_OBJECT_STATIC;
+
+			/* Delete the old object if it hasn't already been
+			   deleted.  If it has already been deleted, get rid of
+			   the hash table entry.  This is a legitimate
+			   situation - a deleted static object needs to be kept
+			   around so we remember it's deleted. */
+			if (!(t -> flags & GROUP_OBJECT_DELETED))
+				delete_group (t, 0);
+			else {
+				group_hash_delete (group_name_hash,
+						   group -> name,
+						   strlen (group -> name),
+						   MDL);
+				group_object_dereference (&t, MDL);
+			}
+		}
+	} else {
+		group_name_hash = new_hash ((hash_reference)
+					    group_object_reference,
+					    (hash_dereference)
+					    group_object_dereference, 0);
+		t = (struct group_object *)0;
+	}
+
+	/* Add the group to the group name hash if it's not
+	   already there, and also thread it into the list of
+	   dynamic groups if appropriate. */
+	if (!t) {
+		group_hash_add (group_name_hash, group -> name,
+				strlen (group -> name), group, MDL);
+	}
+
+	/* Store the group declaration in the lease file. */
+	if (writep && group_write_hook) {
+		if (!(*group_write_hook) (group))
+			return ISC_R_IOERROR;
+	}
+	return ISC_R_SUCCESS;
+}
+
+int clone_group (struct group **gp, struct group *group,
+		 const char *file, int line)
+{
+	isc_result_t status;
+	struct group *g = (struct group *)0;
+
+	/* Normally gp should contain the null pointer, but for convenience
+	   it's permissible to clone a group into itself. */
+	if (*gp && *gp != group)
+		return 0;
+	if (!group_allocate (&g, file, line))
+		return 0;
+	if (group == *gp)
+		*gp = (struct group *)0;
+	group_reference (gp, g, MDL);
+	g -> authoritative = group -> authoritative;
+	if (group -> shared_network) {
+		shared_network_reference (&g -> shared_network,
+					  group -> shared_network, MDL);
+	}
+	group_reference (&g -> next, group, MDL);
+	group_dereference (&g, MDL);
+	return 1;
+}
