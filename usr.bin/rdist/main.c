@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.12 2001/11/01 16:31:48 tron Exp $	*/
+/*	$NetBSD: main.c,v 1.13 2002/06/14 01:18:55 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/9/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.12 2001/11/01 16:31:48 tron Exp $");
+__RCSID("$NetBSD: main.c,v 1.13 2002/06/14 01:18:55 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -84,14 +84,12 @@ gid_t	groupid;	/* user's group ID */
 struct	passwd *pw;	/* pointer to static area used by getpwent */
 struct	group *gr;	/* pointer to static area used by getgrent */
 
-int	main __P((int, char **));
-static void usage __P((void));
-static void docmdargs __P((int, char *[]));
+int	main(int, char **);
+static void usage(void);
+static void docmdargs(int, char *[]);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char **argv)
 {
 	char *arg;
 	int cmdargs = 0;
@@ -241,7 +239,7 @@ main(argc, argv)
 }
 
 static void
-usage()
+usage(void)
 {
 	printf("Usage: rdist [-nqbRhivwyD] [-f distfile] [-d var=value] [-m host] [file ...]\n");
 	printf("or: rdist [-nqbRhivwyD] -c source [...] machine[:dest]\n");
@@ -252,9 +250,7 @@ usage()
  * rcp like interface for distributing files.
  */
 static void
-docmdargs(nargs, args)
-	int nargs;
-	char *args[];
+docmdargs(int nargs, char **args)
 {
 	struct namelist *nl, *prev;
 	char *cp;
@@ -309,8 +305,7 @@ docmdargs(nargs, args)
  * Print a list of NAME blocks (mostly for debugging).
  */
 void
-prnames(nl)
-	struct namelist *nl;
+prnames(struct namelist *nl)
 {
 	printf("( ");
 	while (nl != NULL) {

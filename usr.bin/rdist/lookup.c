@@ -1,4 +1,4 @@
-/*	$NetBSD: lookup.c,v 1.6 1997/10/19 13:59:04 lukem Exp $	*/
+/*	$NetBSD: lookup.c,v 1.7 2002/06/14 01:18:55 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)lookup.c	8.1 (Berkeley) 6/9/93";
 #else
-__RCSID("$NetBSD: lookup.c,v 1.6 1997/10/19 13:59:04 lukem Exp $");
+__RCSID("$NetBSD: lookup.c,v 1.7 2002/06/14 01:18:55 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -61,8 +61,7 @@ static struct syment *hashtab[HASHSIZE];
  * Define a variable from a command line argument.
  */
 void
-define(name)
-	char *name;
+define(char *name)
 {
 	char *cp, *s;
 	struct namelist *nl;
@@ -127,10 +126,7 @@ define(name)
  */
 
 struct namelist *
-lookup(name, action, value)
-	char *name;
-	int action;
-	struct namelist *value;
+lookup(char *name, int action, struct namelist *value)
 {
 	unsigned n;
 	char *cp;

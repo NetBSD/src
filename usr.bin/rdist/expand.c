@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.13 1998/12/19 20:32:17 christos Exp $	*/
+/*	$NetBSD: expand.c,v 1.14 2002/06/14 01:18:54 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)expand.c	8.1 (Berkeley) 6/9/93";
 #else
-__RCSID("$NetBSD: expand.c,v 1.13 1998/12/19 20:32:17 christos Exp $");
+__RCSID("$NetBSD: expand.c,v 1.14 2002/06/14 01:18:54 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -72,16 +72,16 @@ char	**sortbase;
 #define sort()	qsort((char *)sortbase, &eargv[eargc] - sortbase, \
 		      sizeof(*sortbase), argcmp), sortbase = &eargv[eargc]
 
-static void	Cat __P((char *, char *));
-static void	addpath __P((int));
-static int	amatch __P((char *, char *));
-static int	argcmp __P((const void *, const void *));
-static int	execbrc __P((char *, char *));
-static void	expsh __P((char *));
-static void	expstr __P((char *));
-static int	match __P((char *, char *));
-static void	matchdir __P((char *));
-static int	smatch __P((char *, char *));
+static void	Cat(char *, char *);
+static void	addpath(int);
+static int	amatch(char *, char *);
+static int	argcmp(const void *, const void *);
+static int	execbrc(char *, char *);
+static void	expsh(char *);
+static void	expstr(char *);
+static int	match(char *, char *);
+static void	matchdir(char *);
+static int	smatch(char *, char *);
 
 /*
  * Take a list of names and expand any macros, etc.
@@ -93,9 +93,7 @@ static int	smatch __P((char *, char *));
  * Major portions of this were snarfed from csh/sh.glob.c.
  */
 struct namelist *
-expand(list, wh)
-	struct namelist *list;
-	int wh;
+expand(struct namelist *list, int wh)
 {
 	struct namelist *nl, *prev;
 	int n;
@@ -152,8 +150,7 @@ expand(list, wh)
 }
 
 static void
-expstr(s)
-	char *s;
+expstr(char *s)
 {
 	char *cp, *cp1;
 	struct namelist *tp;
@@ -254,8 +251,7 @@ expstr(s)
 }
 
 static int
-argcmp(a1, a2)
-	const void *a1, *a2;
+argcmp(const void *a1, const void *a2)
 {
 
 	return (strcmp(*(char **)a1, *(char **)a2));
@@ -266,8 +262,7 @@ argcmp(a1, a2)
  * expand into a list, after searching directory
  */
 static void
-expsh(s)
-	char *s;
+expsh(char *s)
 {
 	char *cp;
 	char *spathp, *oldcp;
@@ -304,8 +299,7 @@ endit:
 }
 
 static void
-matchdir(pattern)
-	char *pattern;
+matchdir(char *pattern)
 {
 	struct stat stb;
 	struct dirent *dp;
@@ -345,8 +339,7 @@ patherr2:
 }
 
 static int
-execbrc(p, s)
-	char *p, *s;
+execbrc(char *p, char *s)
 {
 	char restbuf[BUFSIZ + 2];
 	char *pe, *pm, *pl;
@@ -425,8 +418,7 @@ doit:
 }
 
 static int
-match(s, p)
-	char *s, *p;
+match(char *s, char *p)
 {
 	int c;
 	char *sentp;
@@ -443,8 +435,7 @@ match(s, p)
 }
 
 static int
-amatch(s, p)
-	char *s, *p;
+amatch(char *s, char *p)
 {
 	int scc;
 	int ok, lc;
@@ -533,8 +524,7 @@ slash:
 }
 
 static int
-smatch(s, p)
-	char *s, *p;
+smatch(char *s, char *p)
 {
 	int scc;
 	int ok, lc;
@@ -592,8 +582,7 @@ smatch(s, p)
 }
 
 static void
-Cat(s1, s2)
-	char *s1, *s2;
+Cat(char *s1, char *s2)
 {
 	int len = strlen(s1) + strlen(s2) + 1;
 	char *s;
@@ -613,8 +602,7 @@ Cat(s1, s2)
 }
 
 static void
-addpath(c)
-	int c;
+addpath(int c)
 {
 
 	if (pathp >= lastpathp)
@@ -631,9 +619,7 @@ addpath(c)
  * part corresponding to `file'.
  */
 char *
-exptilde(buf, file)
-	char buf[];
-	char *file;
+exptilde(char *buf, char *file)
 {
 	char *s1, *s2, *s3;
 	extern char homedir[];

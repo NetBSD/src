@@ -1,4 +1,4 @@
-/*	$NetBSD: docmd.c,v 1.20 2000/06/12 04:43:11 mrg Exp $	*/
+/*	$NetBSD: docmd.c,v 1.21 2002/06/14 01:18:54 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)docmd.c	8.1 (Berkeley) 6/9/93";
 #else
-__RCSID("$NetBSD: docmd.c,v 1.20 2000/06/12 04:43:11 mrg Exp $");
+__RCSID("$NetBSD: docmd.c,v 1.21 2002/06/14 01:18:54 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -59,25 +59,22 @@ jmp_buf	env;
 
 static int	 remerr = -1;	/* Remote stderr */
 
-static int	 makeconn __P((char *));
-static int	 okname __P((char *));
-static void	 closeconn __P((void));
-static void	 cmptime __P((char *));
-static void	 doarrow __P((char **,
-		    struct namelist *, char *, struct subcmd *));
-static void	 dodcolon __P((char **,
-		    struct namelist *, char *, struct subcmd *));
-static void	 notify __P((char *, char *, struct namelist *, time_t));
-static void	 rcmptime __P((struct stat *));
+static int	 makeconn(char *);
+static int	 okname(char *);
+static void	 closeconn(void);
+static void	 cmptime(char *);
+static void	 doarrow(char **,
+		    struct namelist *, char *, struct subcmd *);
+static void	 dodcolon(char **,
+		    struct namelist *, char *, struct subcmd *);
+static void	 notify(char *, char *, struct namelist *, time_t);
+static void	 rcmptime(struct stat *);
 
 /*
  * Do the commands in cmds (initialized by yyparse).
  */
 void
-docmds(dhosts, argc, argv)
-	char **dhosts;
-	int argc;
-	char **argv;
+docmds(char **dhosts, int argc, char **argv)
 {
 	struct cmd *c;
 	struct namelist *f;
@@ -130,11 +127,7 @@ docmds(dhosts, argc, argv)
  * Process commands for sending files to other machines.
  */
 static void
-doarrow(filev, files, rhost, cmds)
-	char **filev;
-	struct namelist *files;
-	char *rhost;
-	struct subcmd *cmds;
+doarrow(char **filev, struct namelist *files, char *rhost, struct subcmd *cmds)
 {
 	struct namelist *f;
 	struct subcmd *sc;
@@ -218,8 +211,7 @@ done:
  * Create a connection to the rdist server on the machine rhost.
  */
 static int
-makeconn(rhost)
-	char *rhost;
+makeconn(char *rhost)
 {
 	char *ruser, *cp;
 	static char *cur_host = NULL;
@@ -306,7 +298,7 @@ makeconn(rhost)
  * Signal end of previous connection.
  */
 static void
-closeconn()
+closeconn(void)
 {
 	if (debug)
 		printf("closeconn()\n");
@@ -323,8 +315,7 @@ closeconn()
 }
 
 void
-lostconn(signo)
-	int signo;
+lostconn(int signo)
 {
 	char buf[BUFSIZ];
 	int nr = -1;
@@ -353,8 +344,7 @@ lostconn(signo)
 }
 
 static int
-okname(name)
-	char *name;
+okname(char *name)
 {
 	char *cp = name;
 	int c;
@@ -381,11 +371,7 @@ extern	char target[], *tp;
  * Process commands for comparing files to time stamp files.
  */
 static void
-dodcolon(filev, files, stamp, cmds)
-	char **filev;
-	struct namelist *files;
-	char *stamp;
-	struct subcmd *cmds;
+dodcolon(char **filev, struct namelist *files, char *stamp, struct subcmd *cmds)
 {
 	struct subcmd *sc;
 	struct namelist *f;
@@ -444,8 +430,7 @@ dodcolon(filev, files, stamp, cmds)
  * Compare the mtime of file to the list of time stamps.
  */
 static void
-cmptime(name)
-	char *name;
+cmptime(char *name)
 {
 	struct stat stb;
 
@@ -493,8 +478,7 @@ cmptime(name)
 }
 
 static void
-rcmptime(st)
-	struct stat *st;
+rcmptime(struct stat *st)
 {
 	DIR *d;
 	struct dirent *dp;
@@ -537,10 +521,7 @@ rcmptime(st)
  * stamp file.
  */
 static void
-notify(file, rhost, to, lmod)
-	char *file, *rhost;
-	struct namelist *to;
-	time_t lmod;
+notify(char *file, char *rhost, struct namelist *to, time_t lmod)
 {
 	int fd, len;
 	struct stat stb;
@@ -616,9 +597,7 @@ notify(file, rhost, to, lmod)
  * Return true if name is in the list.
  */
 int
-inlist(list, file)
-	struct namelist *list;
-	char *file;
+inlist(struct namelist *list, char *file)
 {
 	struct namelist *nl;
 
@@ -632,8 +611,7 @@ inlist(list, file)
  * Return TRUE if file is in the exception list.
  */
 int
-except(file)
-	char *file;
+except(char *file)
 {
 	struct	subcmd *sc;
 	struct	namelist *nl;
@@ -668,8 +646,7 @@ except(file)
 }
 
 char *
-colon(cp)
-	char *cp;
+colon(char *cp)
 {
 
 	while (*cp) {

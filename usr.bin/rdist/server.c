@@ -1,4 +1,4 @@
-/*	$NetBSD: server.c,v 1.22 2001/09/24 13:22:35 wiz Exp $	*/
+/*	$NetBSD: server.c,v 1.23 2002/06/14 01:18:55 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)server.c	8.1 (Berkeley) 6/9/93";
 #else
-__RCSID("$NetBSD: server.c,v 1.22 2001/09/24 13:22:35 wiz Exp $");
+__RCSID("$NetBSD: server.c,v 1.23 2002/06/14 01:18:55 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -46,9 +46,10 @@ __RCSID("$NetBSD: server.c,v 1.22 2001/09/24 13:22:35 wiz Exp $");
 #include <sys/wait.h>
 
 #include <errno.h>
-#include <pwd.h>
-#include <grp.h>
 #include <fcntl.h>
+#include <grp.h>
+#include <pwd.h>
+#include <stdarg.h>
 
 #include "defs.h"
 
@@ -66,23 +67,23 @@ int	oumask;			/* old umask for creating files */
 
 extern	FILE *lfp;		/* log file for mailing changes */
 
-static int	chkparent __P((char *));
-static void	clean __P((char *));
-static void	comment __P((char *));
-static void	dospecial __P((char *));
-static int	fchtogm __P((int, char *, time_t, char *, char *, mode_t));
-static void	hardlink __P((char *));
-static void	note __P((const char *, ...))
+static int	chkparent(char *);
+static void	clean(char *);
+static void	comment(char *);
+static void	dospecial(char *);
+static int	fchtogm(int, char *, time_t, char *, char *, mode_t);
+static void	hardlink(char *);
+static void	note(const char *, ...)
      __attribute__((__format__(__printf__, 1, 2)));
-static void	query __P((char *));
-static void	recvf __P((char *, int));
-static void	removeit __P((struct stat *));
-static int	response __P((void));
-static void	rmchk __P((int));
+static void	query(char *);
+static void	recvf(char *, int);
+static void	removeit(struct stat *);
+static int	response(void);
+static void	rmchk(int);
 static struct linkbuf *
-		    savelink __P((struct stat *));
-static void	sendf __P((char *, int));
-static int	update __P((char *, int, struct stat *));
+		    savelink(struct stat *);
+static void	sendf(char *, int);
+static int	update(char *, int, struct stat *);
 
 /*
  * Server routine to read requests and process them.
@@ -92,7 +93,7 @@ static int	update __P((char *, int, struct stat *));
  *	Qname	- Query if file exists. Return mtime & size if it does.
  */
 void
-server()
+server(void)
 {
 	char cmdbuf[BUFSIZ];
 	char *cp;
@@ -243,9 +244,7 @@ server()
  * (i.e., more than one source is being copied to the same destination).
  */
 void
-install(src, dest, destdir, opts)
-	char *src, *dest;
-	int destdir, opts;
+install(char *src, char *dest, int destdir, int opts)
 {
 	char *rname;
 	char destcopy[BUFSIZ];
@@ -316,9 +315,7 @@ install(src, dest, destdir, opts)
  * rname is the name of the file on the remote host.
  */
 static void
-sendf(rname, opts)
-	char *rname;
-	int opts;
+sendf(char *rname, int opts)
 {
 	struct subcmd *sc;
 	struct stat stb;
@@ -556,8 +553,7 @@ dospecial:
 }
 
 static struct linkbuf *
-savelink(stp)
-	struct stat *stp;
+savelink(struct stat *stp)
 {
 	struct linkbuf *lp;
 
@@ -590,10 +586,7 @@ savelink(stp)
  * and 3 if comparing binaries to determine if out of date.
  */
 static int
-update(rname, opts, stp)
-	char *rname;
-	int opts;
-	struct stat *stp;
+update(char *rname, int opts, struct stat *stp)
 {
 	char *cp, *s;
 	off_t size;
@@ -691,8 +684,7 @@ again:
  *	^Aerror message\n
  */
 static void
-query(name)
-	char *name;
+query(char *name)
 {
 	struct stat stb;
 
@@ -733,9 +725,7 @@ query(name)
 }
 
 static void
-recvf(cmd, type)
-	char *cmd;
-	int type;
+recvf(char *cmd, int type)
 {
 	char *cp = cmd;
 	int f = -1, opts = 0, wrerr, olderrno;
@@ -980,8 +970,7 @@ badtarget:	error("%s:%s: %s\n", host, target, strerror(errno));
  * Creat a hard link to existing file.
  */
 static void
-hardlink(cmd)
-	char *cmd;
+hardlink(char *cmd)
 {
 	char *cp;
 	struct stat stb;
@@ -1037,8 +1026,7 @@ hardlink(cmd)
  * Check to see if parent directory exists and create one if not.
  */
 static int
-chkparent(name)
-	char *name;
+chkparent(char *name)
 {
 	char *cp;
 	struct stat stb;
@@ -1065,12 +1053,7 @@ chkparent(name)
  * Change owner, group and mode of file.
  */
 static int
-fchtogm(fd, file, mtime, owner, group, mode)
-	int fd;
-	char *file;
-	time_t mtime;
-	char *owner, *group;
-	mode_t mode;
+fchtogm(int fd, char *file, time_t mtime, char *owner, char *group, __mode_t mode)
 {
 	int i;
 	struct timeval tv[2];
@@ -1138,8 +1121,7 @@ ok:
  * machine and remove them.
  */
 static void
-rmchk(opts)
-	int opts;
+rmchk(int opts)
 {
 	char *cp, *s;
 	struct stat stb;
@@ -1221,8 +1203,7 @@ rmchk(opts)
  * for extraneous files and remove them.
  */
 static void
-clean(cp)
-	char *cp;
+clean(char *cp)
 {
 	DIR *d;
 	struct dirent *dp;
@@ -1295,8 +1276,7 @@ clean(cp)
  * or an error message.
  */
 static void
-removeit(stp)
-	struct stat *stp;
+removeit(struct stat *stp)
 {
 	DIR *d;
 	struct dirent *dp;
@@ -1364,8 +1344,7 @@ removed:
  * Execute a shell command to handle special cases.
  */
 static void
-dospecial(cmd)
-	char *cmd;
+dospecial(char *cmd)
 {
 	int fd[2], status, pid, i;
 	char *cp, *s;
@@ -1430,55 +1409,29 @@ dospecial(cmd)
 		ack();
 }
 
-#if __STDC__
-#include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
 
 void
-#if __STDC__
 log(FILE *fp, const char *fmt, ...)
-#else
-log(fp, fmt, va_alist)
-	FILE *fp;
-	char *fmt;
-        va_dcl
-#endif
 {
 	va_list ap;
 
 	/* Print changes locally if not quiet mode */
 	if (!qflag) {
-#if __STDC__
 		va_start(ap, fmt);
-#else
-		va_start(ap);
-#endif
 		(void)vprintf(fmt, ap);
 		va_end(ap);
 	}
 
 	/* Save changes (for mailing) if really updating files */
 	if (!(options & VERIFY) && fp != NULL) {
-#if __STDC__
 		va_start(ap, fmt);
-#else
-		va_start(ap);
-#endif
 		(void)vfprintf(fp, fmt, ap);
 		va_end(ap);
 	}
 }
 
 void
-#if __STDC__
 error(const char *fmt, ...)
-#else
-error(fmt, va_alist)
-	char *fmt;
-        va_dcl
-#endif
 {
 	static FILE *fp;
 	va_list ap;
@@ -1486,11 +1439,7 @@ error(fmt, va_alist)
 	++nerrs;
 	if (!fp && !(fp = fdopen(rem, "w")))
 		return;
-#if __STDC__
 	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
 	if (iamremote) {
 		(void)fprintf(fp, "%crdist: ", 0x01);
 		(void)vfprintf(fp, fmt, ap);
@@ -1505,11 +1454,7 @@ error(fmt, va_alist)
 	va_end(ap);
 	if (lfp != NULL) {
 		(void)fprintf(lfp, "rdist: ");
-#if __STDC__
 		va_start(ap, fmt);
-#else
-		va_start(ap);
-#endif
 		(void)vfprintf(lfp, fmt, ap);
 		va_end(ap);
 		fflush(lfp);
@@ -1517,13 +1462,7 @@ error(fmt, va_alist)
 }
 
 void
-#if __STDC__
 fatal(const char *fmt, ...)
-#else
-fatal(fmt, va_alist)
-	char *fmt;
-        va_dcl
-#endif
 {
 	static FILE *fp;
 	va_list ap;
@@ -1531,11 +1470,7 @@ fatal(fmt, va_alist)
 	++nerrs;
 	if (!fp && !(fp = fdopen(rem, "w")))
 		return;
-#if __STDC__
 	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
 	if (iamremote) {
 		(void)fprintf(fp, "%crdist: ", 0x02);
 		(void)vfprintf(fp, fmt, ap);
@@ -1550,11 +1485,7 @@ fatal(fmt, va_alist)
 	va_end(ap);
 	if (lfp != NULL) {
 		(void)fprintf(lfp, "rdist: ");
-#if __STDC__
 		va_start(ap, fmt);
-#else
-		va_start(ap);
-#endif
 		(void)vfprintf(lfp, fmt, ap);
 		va_end(ap);
 		fflush(lfp);
@@ -1563,7 +1494,7 @@ fatal(fmt, va_alist)
 }
 
 static int
-response()
+response(void)
 {
 	char *cp, *s;
 	char resp[BUFSIZ];
@@ -1614,37 +1545,26 @@ response()
  * Remove temporary files and do any cleanup operations before exiting.
  */
 void
-cleanup(signo)
-	int signo;
+cleanup(int signo)
 {
 	(void) unlink(tempfile);
 	exit(1);
 }
 
 static void
-#if __STDC__
 note(const char *fmt, ...)
-#else
-note(fmt, va_alist)
-	char *fmt;
-        va_dcl
-#endif
 {
 	static char buf[BUFSIZ];
 	va_list ap;
-#if __STDC__
+
 	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
 	(void)vsnprintf(buf, sizeof(buf), fmt, ap);
 	va_end(ap);
 	comment(buf);
 }
 
 static void
-comment(s)
-	char *s;
+comment(char *s)
 {
 	char c;
 
