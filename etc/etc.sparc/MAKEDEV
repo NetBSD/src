@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.19 1996/11/11 22:34:51 pk Exp $
+#	$NetBSD: MAKEDEV,v 1.20 1996/11/12 00:00:45 pk Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -58,6 +58,7 @@
 #	audio
 #	openprom
 #	bwtwo*
+#	cgtwo*
 #	cgthree*
 #	cgfour*
 #	cgsix*
@@ -81,8 +82,8 @@ all)
 	sh -$- $0 cd0 st0 st1 fd0
 	sh -$- $0 pty0 vnd0 vnd1 vnd2 vnd3 audio tun0 tun1 tun2 tun3
 	sh -$- $0 ccd0 ccd1 ccd2 ccd3
-	sh -$- $0 bpf0 bpf1 bpf2 bpf3 bwtwo0 cgthree0 cgfour0 cgsix0
-	sh -$- $0 cgeight0
+	sh -$- $0 bpf0 bpf1 bpf2 bpf3 bwtwo0 cgtwo0 cgthree0 cgfour0 cgsix0
+	sh -$- $0 cgeight0 tcx0
 	sh -$- $0 lkm local
 	;;
 std)
@@ -120,6 +121,12 @@ bwtwo*)
 	unit=${i#bwtwo}
 	rm -f bwtwo$unit
 	mknod bwtwo$unit	c 27 $unit; chmod 666 bwtwo$unit
+	;;
+
+cgtwo*)
+	unit=${i#cgtwo}
+	rm -f cgtwo$unit
+	mknod cgtwo$unit	c 31 $unit; chmod 666 cgtwo$unit
 	;;
 
 cgthree*)
@@ -174,11 +181,12 @@ tun*)
 	;;
 
 rd*)
-	unit=${i#tun}
+	unit=${i#rd}
 	rm -f rd$unit
 	mknod rd$unit b 5 $unit
-	chown root.operator rd$unit
-	chmod 640 rd$unit
+	mknod rrd$unit c 61 $unit
+	chown root.operator rd$unit rrd$unit
+	chmod 640 rd$unit rrd$unit
 	;;
 
 ccd*|fd*|sd*|xd*|xy*|cd*|vnd*)
@@ -248,10 +256,21 @@ st*)
 	umask 77
 	;;
 
-ch*)
-	umask 2
+ss*)
+	case $i in
+	ss*) name=ss;	unit=${i#ss};	chr=59;;
+	esac
+	rm -f $name$unit n$name$unit
+	mknod $name$unit	c $chr $(($unit * 16 + 0))
+	mknod n$name$unit	c $chr $(($unit * 16 + 1))
+	chgrp operator $name$unit n$name$unit
+	chmod 640 $name$unit n$name$unit
+	;;
+
+ch*|uk*)
 	case $i in
 	ch*) name=ch;  unit=${i#ch}; chr=19;;
+	uk*) name=uk;  unit=${i#uk}; chr=60;;
 	esac
 	rm -f $name$unit
 	mknod ${name}${unit}	c $chr $(($unit * 16 + 0))
