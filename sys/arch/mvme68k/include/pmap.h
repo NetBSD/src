@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.24.4.3 2002/06/24 22:06:11 nathanw Exp $	*/
+/*	$NetBSD: pmap.h,v 1.24.4.4 2002/07/02 21:14:10 nathanw Exp $	*/
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -128,12 +128,10 @@ extern struct pmap	kernel_pmap_store;
 
 #define pmap_kernel()	(&kernel_pmap_store)
 #define	active_pmap(pm) \
-	((pm) == pmap_kernel() || \
-	    (pm) == curproc->p_vmspace->vm_map.pmap)
+	((pm) == pmap_kernel() || (pm) == curproc->p_vmspace->vm_map.pmap)
 #define	active_user_pmap(pm) \
 	(curproc && \
-	 (pm) != pmap_kernel() && \
-	     (pm) == curproc->p_vmspace->vm_map.pmap)
+	 (pm) != pmap_kernel() && (pm) == curproc->p_vmspace->vm_map.pmap)
 
 extern void _pmap_set_page_cacheable __P((struct pmap *, vaddr_t));
 extern void _pmap_set_page_cacheinhibit __P((struct pmap *, vaddr_t));
