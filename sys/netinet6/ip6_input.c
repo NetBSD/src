@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.71 2004/02/11 10:47:28 itojun Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.72 2004/02/11 10:54:29 itojun Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.71 2004/02/11 10:47:28 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.72 2004/02/11 10:54:29 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -466,7 +466,7 @@ ip6_input(m)
 	if (ip6_forward_rt.ro_rt != NULL &&
 	    (ip6_forward_rt.ro_rt->rt_flags & RTF_UP) != 0 &&
 	    IN6_ARE_ADDR_EQUAL(&ip6->ip6_dst,
-			       &((struct sockaddr_in6 *)(&ip6_forward_rt.ro_dst))->sin6_addr))
+	    &((struct sockaddr_in6 *)(&ip6_forward_rt.ro_dst))->sin6_addr))
 		ip6stat.ip6s_forward_cachehit++;
 	else {
 		struct sockaddr_in6 *dst6;
