@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.h,v 1.18 2003/10/27 13:44:20 junyoung Exp $	*/
+/*	$NetBSD: profile.h,v 1.19 2004/05/24 14:01:10 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -30,6 +30,8 @@
  *
  *	@(#)profile.h	8.1 (Berkeley) 6/11/93
  */
+
+#include <machine/cpufunc.h>
 
 #define	_MCOUNT_DECL static __inline void _mcount
 
@@ -64,6 +66,6 @@ mcount()								\
 }
 
 #ifdef _KERNEL
-#define	MCOUNT_ENTER	(void)&s; __asm__("cli");
-#define	MCOUNT_EXIT	__asm__("sti");
+#define	MCOUNT_ENTER	do { s = (int)read_psl(); disable_intr(); } while (0)
+#define	MCOUNT_EXIT	do { write_psl(s); } while (0)
 #endif /* _KERNEL */
