@@ -1,4 +1,4 @@
-/* $NetBSD: opb.c,v 1.14 2003/07/25 10:12:44 scw Exp $ */
+/* $NetBSD: opb.c,v 1.15 2003/09/23 15:26:46 shige Exp $ */
 
 /*
  * Copyright 2001,2002 Wasabi Systems, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opb.c,v 1.14 2003/07/25 10:12:44 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opb.c,v 1.15 2003/09/23 15:26:46 shige Exp $");
 
 #include "locators.h"
 
@@ -89,12 +89,21 @@ const struct opb_dev {
 	bus_addr_t addr;
 	int irq;
 } opb_devs [] = {
+	/* IBM405GP */
 	{ IBM405GP,	"com",	IBM405GP_UART0_BASE,	 0 },
 	{ IBM405GP,	"com",	IBM405GP_UART1_BASE,	 1 },
 	{ IBM405GP,	"emac",	IBM405GP_EMAC0_BASE,	 9 }, /* XXX: really irq 9..15 */
 	{ IBM405GP,	"gpio",	IBM405GP_GPIO0_BASE,	-1 },
 	{ IBM405GP,	"iic",	IBM405GP_IIC0_BASE,	 2 },
 	{ IBM405GP,	"wdog",	-1,	        	-1 },
+
+	/* IBM405GPR */
+	{ IBM405GPR,	"com",	IBM405GP_UART0_BASE,	 0 },
+	{ IBM405GPR,	"com",	IBM405GP_UART1_BASE,	 1 },
+	{ IBM405GPR,	"emac",	IBM405GP_EMAC0_BASE,	 9 }, /* XXX: really irq 9..15 */
+	{ IBM405GPR,	"gpio",	IBM405GP_GPIO0_BASE,	-1 },
+	{ IBM405GPR,	"iic",	IBM405GP_IIC0_BASE,	 2 },
+	{ IBM405GPR,	"wdog",	-1,	        	-1 },
 	{ 0,		 NULL }
 };
 
@@ -104,6 +113,7 @@ const struct opb_limit {
 	bus_addr_t limit;
 } opb_limits[] = {
 	{ IBM405GP,	IBM405GP_UART0_BASE,	IBM405GP_UART0_BASE + 0xfff },
+	{ IBM405GPR,	IBM405GP_UART0_BASE,	IBM405GP_UART0_BASE + 0xfff },
 	{ 0,		0,			0 }
 };
 
