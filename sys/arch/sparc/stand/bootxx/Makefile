@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 1995/10/10 20:07:54 pk Exp $
+#	$NetBSD: Makefile,v 1.6 1996/11/29 15:01:00 pk Exp $
 
 R=	..
 .PATH:	${.CURDIR}/${R}
@@ -15,10 +15,7 @@ KOBJDIR!= cd ${.CURDIR}/${R}; ${MAKE} kernlibdir
 _KOBJS=${KOBJS:S,^,${KOBJDIR}/,g}
 
 ${PROG}:${OBJS} ${_KOBJS} ${LIBS}
-	${LD} -N -T ${RELOC} -e start ${OBJS} ${_KOBJS} ${LIBS}
-	# convert to Sun magic
-	(echo -n 01 | tr 01 '\01\03'; tail +3c a.out) > ${.TARGET}
-	@rm a.out
+	${LD} -o ${.TARGET} -N -T ${RELOC} -e start ${OBJS} ${_KOBJS} ${LIBS}
 	@size ${.TARGET}
 
 .include <bsd.prog.mk>
