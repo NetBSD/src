@@ -31,7 +31,7 @@ up-to-date.  Many thanks.
 ******************************************************************/
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$Id: msgcat.c,v 1.10.2.1 1995/02/17 10:51:21 jtc Exp $";
+static char *rcsid = "$Id: msgcat.c,v 1.10.2.2 1995/03/25 02:21:46 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /* Edit History
@@ -141,6 +141,8 @@ int type;
 
     return(loadCat(catpath, type));
 }
+__weak_reference(_catopen,catopen);
+
 
 /*
  * We've got an odd situation here.  The odds are real good that the
@@ -251,6 +253,7 @@ char *dflt;
     else cptr = dflt;
     return(cptr);
 }
+__weak_reference(_catgets,catgets);
 
 
 int		catclose( catd)
@@ -276,6 +279,8 @@ nl_catd catd;
 
     return 0;
 }
+__weak_reference(_catclose,catclose);
+
 
 /*
  * Internal routines
