@@ -1,4 +1,4 @@
-/* $NetBSD: dec_axppci_33.c,v 1.39 1998/11/19 02:05:07 ross Exp $ */
+/* $NetBSD: dec_axppci_33.c,v 1.40 1998/11/20 03:58:22 ross Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 Carnegie-Mellon University.
@@ -31,7 +31,7 @@
  */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_axppci_33.c,v 1.39 1998/11/19 02:05:07 ross Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_axppci_33.c,v 1.40 1998/11/20 03:58:22 ross Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,10 +86,26 @@ lca_preinit()
 	return &lca_configuration;
 }
 
+#define	NSIO_PORT  0x26e	/* Hardware enabled option: 0x398 */
+#define	NSIO_BASE  0
+#define	NSIO_INDEX NSIO_BASE
+#define	NSIO_DATA  1
+#define	NSIO_SIZE  2
+#define	NSIO_CFG0  0
+#define	NSIO_CFG1  1
+#define	NSIO_CFG2  2
+#define	NSIO_IDE_ENABLE 0x40
+
 void
 dec_axppci_33_init()
 {
+	int cfg0val;
 	u_int64_t variation;
+	bus_space_tag_t iot;
+	struct lca_config *lcp;
+	bus_space_handle_t nsio;
+#define	A33_NSIOBARRIER(type) bus_space_barrier(iot, nsio,\
+				NSIO_BASE, NSIO_SIZE, (type))
 
 	platform.family = "DEC AXPpci";
 
@@ -104,7 +120,24 @@ dec_axppci_33_init()
 	platform.cons_init = dec_axppci_33_cons_init;
 	platform.device_register = dec_axppci_33_device_register;
 
-	enable_nsio_ide(&lca_preinit()->lc_iot);
+	lcp = lca_preinit();
+	iot = &lcp->lc_iot;
+	if (bus_space_map(iot, NSIO_PORT, NSIO_SIZE, 0, &nsio))
+		return;
+
+	bus_space_write_1(iot, nsio, NSIO_INDEX, NSIO_CFG0);
+	A33_NSIOBARRIER(BUS_SPACE_BARRIER_READ | BUS_SPACE_BARRIER_WRITE);
+	cfg0val = bus_space_read_1(iot, nsio, NSIO_DATA);
+
+	cfg0val |= NSIO_IDE_ENABLE;
+
+	bus_space_write_1(iot, nsio, NSIO_INDEX, NSIO_CFG0);
+	A33_NSIOBARRIER(BUS_SPACE_BARRIER_WRITE);
+	bus_space_write_1(iot, nsio, NSIO_DATA, cfg0val);
+	A33_NSIOBARRIER(BUS_SPACE_BARRIER_WRITE);
+	bus_space_write_1(iot, nsio, NSIO_DATA, cfg0val);
+
+	/* Leave nsio mapped to catch any accidental port space collisions  */
 }
 
 static void
