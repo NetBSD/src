@@ -1,4 +1,4 @@
-/*	$NetBSD: mappedcopy.c,v 1.8 1999/09/25 21:19:48 is Exp $	*/
+/*	$NetBSD: mappedcopy.c,v 1.9 1999/11/18 15:19:26 minoura Exp $	*/
 
 /*
  * XXX This doesn't work yet.  Soon.  --thorpej@netbsd.org
@@ -117,7 +117,7 @@ mappedcopyin(f, t, count)
 			panic("mappedcopyin: null page frame");
 		len = min(count, (PAGE_SIZE - off));
 		pmap_enter(pmap_kernel(), kva, upa,
-		    VM_PROT_READ, TRUE, VM_PROT_READ);
+		    VM_PROT_READ, VM_PROT_READ | PMAP_WIRED);
 		if (len == PAGE_SIZE && alignable && off == 0)
 			copypage((caddr_t)kva, top);
 		else
@@ -173,7 +173,8 @@ mappedcopyout(f, t, count)
 			panic("mappedcopyout: null page frame");
 		len = min(count, (PAGE_SIZE - off));
 		pmap_enter(pmap_kernel(), kva, upa,
-		    VM_PROT_READ|VM_PROT_WRITE, TRUE, VM_PROT_READ|VM_PROT_WRITE);
+		    VM_PROT_READ|VM_PROT_WRITE,
+		    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
 		if (len == PAGE_SIZE && alignable && off == 0)
 			copypage(fromp, (caddr_t)kva);
 		else
