@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.h,v 1.3 1998/08/13 02:10:44 eeh Exp $	*/
+/*	$NetBSD: openfirm.h,v 1.4 1998/08/27 06:23:31 eeh Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -35,6 +35,16 @@
  */
 
 #include <dev/ofw/openfirm.h>
+
+/* All cells are 8 byte slots */
+typedef u_int64_t cell_t;
+#ifdef _LP64
+#define HDL2CELL(x)	(cell_t)(u_int)(int)(x)
+#define ADR2CELL(x)	(cell_t)(x)
+#else
+#define HDL2CELL(x)	(cell_t)(u_int)(int)(x)
+#define ADR2CELL(x)	(cell_t)(u_int)(int)(x)
+#endif
 
 int OF_test __P((char* service));
 int OF_test_method __P((int handle, char* method));

@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_machdep.c,v 1.3 1998/08/23 15:52:43 eeh Exp $	*/
+/*	$NetBSD: ofw_machdep.c,v 1.4 1998/08/27 06:23:32 eeh Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -439,7 +439,7 @@ int len;
 	args.phys_hi = HDL2CELL(phys>>32);
 	args.phys_lo = HDL2CELL(phys);
 	if(openfirmware(&args) != 0)
-		return 0;
+		return -1;
 	return (paddr_t)((((paddr_t)args.phys_hi)<<32)|(int)args.phys_lo);
 }
 
@@ -525,13 +525,14 @@ int align;
 		} else prom_printf("prom_get_msgbuf: test-method failed\r\n");
 	} else prom_printf("prom_get_msgbuf: test failed\r\n");
 	/* Allocate random memory -- page zero avail?*/
-	addr = prom_claim_phys(0x2000, len);
+	addr = prom_claim_phys(0x000, len);
 	prom_printf("prom_get_msgbuf: allocated new buf at %08x\r\n", (int)addr); 
-	if( !addr ) {
+	if( addr != -1 ) {
 		prom_printf("prom_get_msgbuf: cannot get allocate physmem\r\n");
 		return -1;
 	}
-	prom_printf("prom_get_msgbuf: claiming new buf at %08x\r\n", (int)addr); 	
+	prom_printf("prom_get_msgbuf: claiming new buf at %08x\r\n", (int)addr);
+	{ int i; for (i=0; i<200000000; i++); }
 	return addr; /* Kluge till we go 64-bit */
 }
 

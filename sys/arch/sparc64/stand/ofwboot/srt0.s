@@ -1,4 +1,4 @@
-/*	$NetBSD: srt0.s,v 1.2 1998/08/23 02:48:28 eeh Exp $	*/
+/*	$NetBSD: srt0.s,v 1.3 1998/08/27 06:23:33 eeh Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -66,7 +66,7 @@ _start:
 	/*
 	 * Start by creating a stack for ourselves.
 	 */
-#if 1
+#ifdef _LP64
 	/* 64-bit stack */
 	btst	1, %sp
 	set	CC64FSZ, %g1	! Frame Size (negative)
