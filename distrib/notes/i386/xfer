@@ -1,4 +1,4 @@
-.\" $NetBSD: xfer,v 1.16 1999/02/01 16:16:09 he Exp $	
+.\" $NetBSD: xfer,v 1.16.2.1 2000/02/08 00:04:45 he Exp $	
 .\"(
 .Pp
 Installation is supported from several media types, including:
@@ -14,22 +14,47 @@ DOS floppies
 .El
 .\")
 .Pp
-No matter which installation medium you choose, you'll need to have a
-floppy disk (either 1.2M or 1.44M will work). You'll put the boot
-floppy image ("boot1.fs" and "boot2.fs" for 1.44M floppies,
-"boot-tiny.fs" for 1.2M floppies) onto this disk, which contains
-software to install or upgrade your
+No matter which installation medium you choose, you'll need to use
+one or two floppies to boot your system (that is, unless you are
+using a bootable CD-ROM).  There are three different boot floppy
+sets available, they are:
+.Bl -bullet
+.It 
+The two-floppy image set which consists of ``boot1.fs'' and
+``boot2.fs''.  This installation set is suitable for writing to
+1.44MB floppies, and supports the most devices of the boot floppy
+sets.  This is the set almost all users should pick.
+.It
+The one-floppy image called ``boot-small.fs''.  This image is
+suitable for writing to a 1.2MB floppy, so can be used on machines
+which do not have a 1.44MB floppy drive.  However, the kernel on this
+floppy does not support PCMCIA or PCI devices, and is thus only
+suitable for use on older machines.
+.It
+The one-floppy image called ``boot-tiny.fs''.  This image also
+fits on a 1.2MB floppy.  In addition to having the PCMCIA and PCI
+device driver support removed, it also does not support EISA or
+any SCSI controllers.  The kernel on this floppy also has a specially
+reduced set of buffer cache buffers, and is the only one which has
+any hope of being able to install
 .Nx
-system.  Note that the "boot-tiny.fs" image is tailored for "small"
-machines, this install image does not have drivers for PCI, PCMCIA,
-EISA or SCSI (i.e. ISA-only), but can be used on machines with only
-4MB of RAM.
+on 4MB machines.  This has not been tested recently, but an additional
+tip is to suspend sysinst before it starts extracting files, and
+turn on swapping on the newly labelled drive with .e.g ``swapon
+/dev/wd0b'' before continuing (if you get that far).  Also, remember
+to manually fetch and install netbsd.GENERIC_TINY (suitably renamed)
+before trying to boot from the hard disk (the default GENERIC kernel
+is way too large for 4MB machines).
+.El
 .Pp
-If you are using a UN*X-like system to write the floppy images to
+The ``boot-big.fs'' image is an image sized for 2.88MB floppies, and
+its primary intended use is as a boot image for CD-ROM images.
+.Pp
+If you are using a UN*X-like system to write the floppy image(s) to
 disks, you should use the
 .Xr dd
 command to copy the file system image(s)
-(.fs file) directly to the raw floppy disk. It is suggested that you
+(.fs files) directly to the raw floppy disk. It is suggested that you
 read the
 .Xr dd 1
 manual page or ask your system administrator to determine the correct
