@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysinst,v 1.5.4.10 2001/05/26 22:26:56 he Exp $
+.\"	$NetBSD: sysinst,v 1.5.4.11 2001/08/16 17:22:29 tv Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -393,7 +393,7 @@ The main menu will be displayed.
 .\} \" ! r_pmax
 .(disp
   .***********************************************.
-  * NetBSD-1.5.1 Install System                   *
+  * NetBSD-1.5.2 Install System                   *
   *                                               *
   *>a: Install NetBSD to hard disk                *
   * b: Upgrade NetBSD on a hard disk              *
