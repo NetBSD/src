@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.106.8.19 2003/01/03 17:25:10 thorpej Exp $ */
+/*	$NetBSD: trap.c,v 1.106.8.20 2003/01/03 17:40:56 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -516,7 +516,7 @@ badtrap:
 			struct cpu_info *cpi;
 			if (cpuinfo.fplwp != NULL) {	/* someone else had it*/
 				savefpstate(cpuinfo.fplwp->l_md.md_fpstate);
-				cpuinfo.fpproc->l_md.md_fpu = NULL;
+				cpuinfo.fplwp->l_md.md_fpu = NULL;
 			}
 			/*
 			 * On MP machines, some of the other FPUs might
@@ -530,7 +530,7 @@ badtrap:
 #if defined(MULTIPROCESSOR)
 				XCALL1(savefpstate, fs, 1 << cpi->ci_cpuid);
 #endif
-				cpi->fpproc = NULL;
+				cpi->fplwp = NULL;
 			}
 			loadfpstate(fs);
 			cpuinfo.fplwp = l;		/* now we do have it */
