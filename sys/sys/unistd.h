@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.30 2003/11/15 01:19:38 thorpej Exp $	*/
+/*	$NetBSD: unistd.h,v 1.31 2004/11/10 04:02:52 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -125,7 +125,7 @@
 #define	FFILESYNC	0x0020	/* sync data and metadata */
 #endif
 
-/* configurable pathname variables */
+/* configurable pathname variables; use as argument to pathconf(3) */
 #define	_PC_LINK_MAX		 1
 #define	_PC_MAX_CANON		 2
 #define	_PC_MAX_INPUT		 3
@@ -138,7 +138,7 @@
 #define	_PC_SYNC_IO		10
 #define	_PC_FILESIZEBITS	11
 
-/* configurable system variables */
+/* configurable system variables; use as argument to sysconf(3) */
 /*
  * XXX The value of _SC_CLK_TCK is embedded in <time.h>.
  * XXX The value of _SC_PAGESIZE is embedded in <sys/shm.h>.
@@ -190,6 +190,8 @@
 #define	_SC_TIMERS		44
 #define	_SC_SPIN_LOCKS		45
 #define	_SC_READER_WRITER_LOCKS	46
+#define	_SC_GETGR_R_SIZE_MAX	47
+#define	_SC_GETPW_R_SIZE_MAX	48
 
 /* configurable system strings */
 #define	_CS_PATH		 1
