@@ -33,7 +33,7 @@
  */
 /*
  * The console device driver for Alice.
- * $Id: console.c,v 1.10 1994/02/22 01:07:40 briggs Exp $
+ * $Id: console.c,v 1.11 1994/05/06 03:34:59 briggs Exp $
  *
  * April 11th, 1992 LK
  *  Original
@@ -70,6 +70,7 @@ char serial_boot_echo=0;
 #include <sys/errno.h>
 #include <sys/ioctl.h>
 #include <sys/types.h>
+#include <sys/time.h>
 #include <sys/systm.h>
 #include <sys/tty.h>
 #include <sys/conf.h>
@@ -1362,7 +1363,6 @@ coninit(register struct macdriver *md)
 void
 constart(register struct tty *tp)
 {
-   void		ttrstrt(struct tty *);
    int		s, unit, c, buflen, i;
    u_char	buf[CONBUFLEN];
  
@@ -1386,7 +1386,7 @@ constart(register struct tty *tp)
    tp->t_state &= ~TS_BUSY;
    if (tp->t_outq.c_cc) {
 	tp->t_state |= TS_TIMEOUT;
-	timeout((timeout_t) ttrstrt, (caddr_t) tp, 1);
+	timeout((void *) ttrstrt, (caddr_t) tp, 1);
    }
    if (tp->t_outq.c_cc <= tp->t_lowat) {
       if (tp->t_state&TS_ASLEEP) {
@@ -1437,7 +1437,7 @@ static void flashcursor(caddr_t unused)
   {
     if (cursoron)
       reversecursor(curvt);
-    timeout(flashcursor, 0, (cursortype & C_SLOW) ? 30 : 15);
+    timeout((void *) flashcursor, 0, (cursortype & C_SLOW) ? 30 : 15);
   }
 }
 
@@ -1564,7 +1564,7 @@ conioctl(dev_t dev, int cmd, caddr_t data, int flag, struct proc *p)
 				if (oldcursoron) drawcursor(curvt);
 				if ((oldcursortype & C_SOLID) &&
 					(cursortype & (C_SLOW | C_FAST)))
-					timeout(flashcursor, 0, 1);
+					timeout((void *) flashcursor, 0, 1);
 			}
 			break;
 		case CON_GETCURSOR: /* Get cursor type */
@@ -1874,7 +1874,7 @@ macconputchar(int vtnum, u_char c)
     if (!do_conintr)
     {
       do_conintr = 1;
-      timeout(con_intr, 0, 1);
+      timeout((void *) con_intr, 0, 1);
     }
   }
   else
