@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.233 2002/12/15 01:56:02 fvdl Exp $ */
+/*	$NetBSD: wd.c,v 1.234 2003/01/07 18:35:04 fvdl Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.233 2002/12/15 01:56:02 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.234 2003/01/07 18:35:04 fvdl Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -1034,8 +1034,9 @@ wdioctl(dev, xfer, addr, flag, p)
 		newlabel = malloc(sizeof *newlabel, M_TEMP, M_WAITOK);
 		if (newlabel == NULL)
 			return EIO;
+		*newlabel = *(wd->sc_dk.dk_label);
 		if (newlabel->d_npartitions <= OLDMAXPARTITIONS)
-			memcpy(addr, &newlabel, sizeof (struct olddisklabel));
+			memcpy(addr, newlabel, sizeof (struct olddisklabel));
 		else
 			error = ENOTTY;
 		free(newlabel, M_TEMP);
