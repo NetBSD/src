@@ -1,4 +1,4 @@
-/*	$NetBSD: if_we.c,v 1.13 1999/03/15 20:19:57 thomas Exp $	*/
+/*	$NetBSD: if_we.c,v 1.14 1999/03/23 21:41:08 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -684,7 +684,8 @@ we_write_mbuf(sc, m, buf)
 				    *(u_int16_t *)savebyte);
 				buf += 2;
 				leftover = 0;
-			} else if (ALIGNED_POINTER(data, u_int16_t) == 0) {
+			} else if (BUS_SPACE_ALIGNED_POINTER(data, u_int16_t)
+				   == 0) {
 				/*
 				 * Unaligned dta; buffer the next byte.
 				 */
