@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.31 1996/01/24 22:40:25 gwr Exp $	*/
+/*	$NetBSD: zs.c,v 1.32 1996/01/30 22:34:52 gwr Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -76,6 +76,7 @@
 #define ZSHARD_PRI	6	/* Wired on the CPU board... */
 #define ZSSOFT_PRI	3	/* Want tty pri (4) but this is OK. */
 
+#define ZS_DELAY()			delay2us()
 
 /* The layout of this is hardware-dependent (padding, order). */
 struct zschan {
@@ -283,7 +284,7 @@ zsc_attach(parent, self, aux)
 		 * so just do it on the A channel.
 		 */
 		if (channel == 0) {
-			ZS_WRITE(cs, 9, 0);
+			zs_write_reg(cs, 9, 0);
 		}
 
 		/*
@@ -297,7 +298,7 @@ zsc_attach(parent, self, aux)
 			reset = (channel == 0) ?
 				ZSWR9_A_RESET : ZSWR9_B_RESET;
 			s = splzs();
-			ZS_WRITE(cs,  9, reset);
+			zs_write_reg(cs,  9, reset);
 			splx(s);
 		}
 	}
@@ -316,9 +317,9 @@ zsc_attach(parent, self, aux)
 	cs = &zsc->zsc_cs[0];
 	s = splzs();
 	/* interrupt vector */
-	ZS_WRITE(cs, 2, zs_init_reg[2]);
+	zs_write_reg(cs, 2, zs_init_reg[2]);
 	/* master interrupt control (enable) */
-	ZS_WRITE(cs, 9, zs_init_reg[9]);
+	zs_write_reg(cs, 9, zs_init_reg[9]);
 	splx(s);
 }
 
@@ -412,6 +413,42 @@ zs_write_reg(cs, reg, val)
 	*cs->cs_reg_csr = reg;
 	ZS_DELAY();
 	*cs->cs_reg_csr = val;
+	ZS_DELAY();
+}
+
+u_char zs_read_csr(cs)
+	struct zs_chanstate *cs;
+{
+	register u_char v;
+
+	v = *cs->cs_reg_csr;
+	ZS_DELAY();
+	return v;
+}
+
+u_char zs_read_data(cs)
+	struct zs_chanstate *cs;
+{
+	register u_char v;
+
+	v = *cs->cs_reg_data;
+	ZS_DELAY();
+	return v;
+}
+
+void  zs_write_csr(cs, val)
+	struct zs_chanstate *cs;
+	u_char val;
+{
+	*cs->cs_reg_csr = val;
+	ZS_DELAY();
+}
+
+void  zs_write_data(cs, val)
+	struct zs_chanstate *cs;
+	u_char val;
+{
+	*cs->cs_reg_data = val;
 	ZS_DELAY();
 }
 

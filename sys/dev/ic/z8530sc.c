@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530sc.c,v 1.1 1996/01/24 01:07:23 gwr Exp $	*/
+/*	$NetBSD: z8530sc.c,v 1.2 1996/01/30 22:35:09 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -82,7 +82,7 @@ zs_break(cs, set)
 		cs->cs_preg[5] &= ~ZSWR5_BREAK;
 		cs->cs_creg[5] &= ~ZSWR5_BREAK;
 	}
-	ZS_WRITE(cs, 5, cs->cs_creg[5]);
+	zs_write_reg(cs, 5, cs->cs_creg[5]);
 	splx(s);
 }
 
@@ -96,8 +96,8 @@ zs_getspeed(cs)
 {
 	int tconst;
 
-	tconst = ZS_READ(cs, 12);
-	tconst |= ZS_READ(cs, 13) << 8;
+	tconst = zs_read_reg(cs, 12);
+	tconst |= zs_read_reg(cs, 13) << 8;
 	return (TCONST_TO_BPS(cs->cs_pclk_div16, tconst));
 }
 
@@ -112,21 +112,18 @@ zs_iflush(cs)
 
 	for (;;) {
 		/* Is there input available? */
-		rr0 = *(cs->cs_reg_csr);
-		ZS_DELAY();
+		rr0 = zs_read_csr(cs);
 		if ((rr0 & ZSRR0_RX_READY) == 0)
 			break;
 
 		/* Read the data. */
-		c = *(cs->cs_reg_data);
-		ZS_DELAY();
+		c = zs_read_data(cs);
 
 		/* Need to read status register too? */
-		rr1 = ZS_READ(cs, 1);
+		rr1 = zs_read_reg(cs, 1);
 		if (rr1 & (ZSRR1_FE | ZSRR1_DO | ZSRR1_PE)) {
 			/* Clear the receive error. */
-			*(cs->cs_reg_csr) = ZSWR0_RESET_ERRORS;
-			ZS_DELAY();
+			zs_write_csr(cs, ZSWR0_RESET_ERRORS);
 		}
 	}
 }
@@ -149,8 +146,7 @@ zs_loadchannelregs(cs)
 	bcopy((caddr_t)cs->cs_preg, (caddr_t)cs->cs_creg, 16);
 	reg = cs->cs_creg;	/* current regs */
 
-	*(cs->cs_reg_csr) = ZSM_RESET_ERR;	/* XXX: reset error condition */
-	ZS_DELAY();
+	zs_write_csr(cs, ZSM_RESET_ERR);	/* XXX: reset error condition */
 
 #if 1
 	/*
@@ -161,17 +157,17 @@ zs_loadchannelregs(cs)
 #endif
 
 	/* baud clock divisor, stop bits, parity */
-	ZS_WRITE(cs, 4, reg[4]);
+	zs_write_reg(cs, 4, reg[4]);
 
 	/* misc. TX/RX control bits */
-	ZS_WRITE(cs, 10, reg[10]);
+	zs_write_reg(cs, 10, reg[10]);
 
 	/* char size, enable (RX/TX) */
-	ZS_WRITE(cs, 3, reg[3] & ~ZSWR3_RX_ENABLE);
-	ZS_WRITE(cs, 5, reg[5] & ~ZSWR5_TX_ENABLE);
+	zs_write_reg(cs, 3, reg[3] & ~ZSWR3_RX_ENABLE);
+	zs_write_reg(cs, 5, reg[5] & ~ZSWR5_TX_ENABLE);
 
 	/* interrupt enables: TX, TX, STATUS */
-	ZS_WRITE(cs, 1, reg[1]);
+	zs_write_reg(cs, 1, reg[1]);
 
 #if 0
 	/*
@@ -182,27 +178,27 @@ zs_loadchannelregs(cs)
 	 * and they should not be touched thereafter.
 	 */
 	/* interrupt vector */
-	ZS_WRITE(cs, 2, reg[2]);
+	zs_write_reg(cs, 2, reg[2]);
 	/* master interrupt control */
-	ZS_WRITE(cs, 9, reg[9]);
+	zs_write_reg(cs, 9, reg[9]);
 #endif
 
 	/* clock mode control */
-	ZS_WRITE(cs, 11, reg[11]);
+	zs_write_reg(cs, 11, reg[11]);
 
 	/* baud rate (lo/hi) */
-	ZS_WRITE(cs, 12, reg[12]);
-	ZS_WRITE(cs, 13, reg[13]);
+	zs_write_reg(cs, 12, reg[12]);
+	zs_write_reg(cs, 13, reg[13]);
 
 	/* Misc. control bits */
-	ZS_WRITE(cs, 14, reg[14]);
+	zs_write_reg(cs, 14, reg[14]);
 
 	/* which lines cause status interrupts */
-	ZS_WRITE(cs, 15, reg[15]);
+	zs_write_reg(cs, 15, reg[15]);
 
 	/* char size, enable (RX/TX)*/
-	ZS_WRITE(cs, 3, reg[3]);
-	ZS_WRITE(cs, 5, reg[5]);
+	zs_write_reg(cs, 3, reg[3]);
+	zs_write_reg(cs, 5, reg[5]);
 }
 
 
@@ -233,7 +229,7 @@ zsc_intr_hard(arg)
 	soft = 0;
 
 	/* Note: only channel A has an RR3 */
-	rr3 = ZS_READ(cs_a, 3);
+	rr3 = zs_read_reg(cs_a, 3);
 
 	/* Handle receive interrupts first. */
 	if (rr3 & ZSRR3_IP_A_RX)
@@ -255,19 +251,17 @@ zsc_intr_hard(arg)
 
 	/* Clear interrupt. */
 	if (rr3 & (ZSRR3_IP_A_RX | ZSRR3_IP_A_TX | ZSRR3_IP_A_STAT)) {
-		*(cs_a->cs_reg_csr) = ZSWR0_CLR_INTR;
-		ZS_DELAY();
+		zs_write_csr(cs_a, ZSWR0_CLR_INTR);
 		rval |= 1;
 	}
 	if (rr3 & (ZSRR3_IP_B_RX | ZSRR3_IP_B_TX | ZSRR3_IP_B_STAT)) {
-		*(cs_b->cs_reg_csr) = ZSWR0_CLR_INTR;
-		ZS_DELAY();
+		zs_write_csr(cs_b, ZSWR0_CLR_INTR);
 		rval |= 2;
 	}
 
 	if ((cs_a->cs_softreq) || (cs_b->cs_softreq))
 	{
-		/* This is a machine-dependent function. */
+		/* This is a machine-dependent function (or macro). */
 		zsc_req_softint(zsc);
 	}
 
@@ -308,8 +302,8 @@ static int
 zsnull_intr(cs)
 	struct zs_chanstate *cs;
 {
-	ZS_WRITE(cs,  1, 0);
-	ZS_WRITE(cs, 15, 0);
+	zs_write_reg(cs,  1, 0);
+	zs_write_reg(cs, 15, 0);
 }
 
 static int
