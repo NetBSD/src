@@ -1,4 +1,4 @@
-.\"	$NetBSD: wsfontload.8,v 1.15 2002/01/19 11:45:04 wiz Exp $
+.\"	$NetBSD: wsfontload.8,v 1.16 2002/02/02 02:09:37 wiz Exp $
 .\"
 .Dd November 8, 2000
 .Os
@@ -93,6 +93,9 @@ utility will be executed in system startup by the
 script, controlled by the
 .Pa /etc/wscons.conf
 configuration file.
+.Sh FILES
+.Pa /etc/wscons.conf
+.Pa /usr/share/wscons/fonts
 .Sh EXAMPLES
 .Dl wsfontload -N myname -h 8 -e ibm /usr/share/wscons/fonts/vt220l.808
 .Pp
@@ -102,9 +105,6 @@ distribution. This (or another 8\(mu8-font) is necessary to use the
 50-line screen type on
 .Xr vga 4
 displays.
-.Sh FILES
-.Pa /etc/wscons.conf
-.Pa /usr/share/wscons/fonts
 .Sh SEE ALSO
 .Xr wscons 4 ,
 .Xr wsconscfg 8 ,
