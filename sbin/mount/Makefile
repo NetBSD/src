@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.24 2002/09/21 18:43:31 christos Exp $
+#	$NetBSD: Makefile,v 1.25 2002/10/01 08:56:40 jdolecek Exp $
 #	@(#)Makefile	8.6 (Berkeley) 5/8/95
 
 .include <bsd.own.mk>
@@ -7,9 +7,8 @@ PROG=	mount
 MAN=	mount.8
 SRCS=	mount.c vfslist.c
 # We do NOT install the getmntopts.3 man page.
-# getmntopts.c in this directory isn't used by mount anymore, but it
-# is used by other mount programs which use .PATH directives to use
-# the version here.
+# getmntopts.c in this directory is used by different mount programs which
+# use .PATH directives to get it.
 
 SRCS+= getmntopts.c fattr.c checkname.c
 CPPFLAGS+= -I${.CURDIR} -DMOUNT_NOMAIN
