@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: sendmail,v 1.15 2003/03/24 15:19:28 atatat Exp $
+# $NetBSD: sendmail,v 1.16 2003/04/02 18:00:13 atatat Exp $
 #
 
 # PROVIDE: mail
@@ -71,27 +71,23 @@ sendmail_precmd()
 
 	# check owner and mode of real sendmail binary
 	if [ "${_owner}" != "${_def_owner}" ]; then
-		warn "${name} not started; binary has wrong owner/mode"
-		return 1
+		warn "/usr/libexec/sendmail/sendmail has wrong owner/mode"
 	fi
 
 	# check .cf file version
 	if [ "${_cfversion}" != "${_def_version}" ]; then
-		warn "${name} not started; ${name}.cf has wrong version " \
+		warn "${name}.cf has wrong version " \
 			"(have ${_cfversion}, should be ${_def_version})"
-		return 1
 	fi
 
 	# check submit.cf existence
 	if ${_sm_root}; then
 		if [ -f "/etc/mail/submit.cf" ]; then
 			warn "${name} is suid root, but submit.cf exists"
-			return 1
 		fi
 	else
 		if [ ! -f "/etc/mail/submit.cf" ]; then
 			warn "${name} is sgid smmsp, but submit.cf is missing"
-			return 1
 		else
 			_cqueue=$(awk 'match($0,"^O *QueueDirectory=") {
 				print(substr($0, RSTART+RLENGTH))
@@ -103,7 +99,6 @@ sendmail_precmd()
 	# look at clientmqueue's owner, group, and mode
 	if [ "${_cqueuemode}" != "${_def_cqueuemode}" ]; then
 		warn "sendmail client queue ${_cqueue} has wrong owner/mode"
-		return 1
 	fi
 }
 
