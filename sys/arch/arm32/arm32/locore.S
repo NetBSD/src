@@ -1,4 +1,4 @@
-/* $NetBSD: locore.S,v 1.2 1996/02/02 02:35:45 mycroft Exp $ */
+/* $NetBSD: locore.S,v 1.3 1996/02/15 22:15:21 mark Exp $ */
 
 /*
  * Copyright (C) 1994 Mark Brinicombe
@@ -30,7 +30,7 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: locore.S,v 1.2 1996/02/02 02:35:45 mycroft Exp $
+ *	$Id: locore.S,v 1.3 1996/02/15 22:15:21 mark Exp $
  */
 
 #include "assym.h"
@@ -540,3 +540,23 @@ Lsigerr:
 	.align	0
         .globl  _esigcode
 _esigcode:
+
+/*
+ * setjump + longjmp
+ */
+	.global _setjmp
+ENTRY(setjmp)
+	add	r0, r0, #44
+        stmia	r0, {r4-r14}
+        mov	r0, #0x00000000
+        mov	r15, r14
+
+	.global _longjmp
+ENTRY(longjmp)
+	add	r2, r0, #44
+        ldmia	r2, {r4-r14}
+	mov	r0, #0x00000001
+	mov	r15, r14
+
+	.global _esym
+_esym:	.word	_end
