@@ -1,7 +1,7 @@
-/*	$NetBSD: macepci.c,v 1.13 2003/10/04 09:19:23 tsutsui Exp $	*/
+/*	$NetBSD: macepci.c,v 1.14 2003/10/05 15:38:08 tsutsui Exp $	*/
 
 /*
- * Copyright (c) 2001 Christopher Sekiya
+ * Copyright (c) 2001,2003 Christopher Sekiya
  * Copyright (c) 2000 Soren S. Jorvang
  * All rights reserved.
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: macepci.c,v 1.13 2003/10/04 09:19:23 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: macepci.c,v 1.14 2003/10/05 15:38:08 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -45,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: macepci.c,v 1.13 2003/10/04 09:19:23 tsutsui Exp $")
 #include <machine/autoconf.h>
 #include <machine/vmparam.h>
 #include <machine/bus.h>
+#include <machine/machtype.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
@@ -92,7 +93,7 @@ bus_addr_t pciaddr_ioaddr(u_int32_t val);
 
 int pciaddr_do_resource_allocate(pci_chipset_tag_t pc, pcitag_t tag, int mapreg, void *ctx, int type, bus_addr_t *addr, bus_size_t size);
 
-unsigned int ioaddr_base = 0x3000;
+unsigned int ioaddr_base = 0x1000;
 unsigned int memaddr_base = 0x80100000;
 
 CFATTACH_DECL(macepci, sizeof(struct macepci_softc),
@@ -104,7 +105,11 @@ macepci_match(parent, match, aux)
 	struct cfdata *match;
 	void *aux;
 {
-	return 1;
+
+	if (mach_type == MACH_SGI_IP32)
+		return (1);
+
+	return (0);
 }
 
 static void
@@ -121,25 +126,42 @@ macepci_attach(parent, self, aux)
 	pcitag_t devtag;
 	int device, rev;
 
-	rev = bus_space_read_4(maa->maa_st, maa->maa_sh, MACEPCI_REVISION);
+	if (bus_space_subregion(maa->maa_st, maa->maa_sh,
+	    maa->maa_offset, NULL, &pc->ioh) )
+		panic("macepci_attach: couldn't map");
+
+	pc->iot = maa->maa_st;
+
+	rev = bus_space_read_4(pc->iot, pc->ioh, MACEPCI_REVISION);
 	printf(": rev %d\n", rev);
 
 	pc->pc_conf_read = macepci_conf_read;
 	pc->pc_conf_write = macepci_conf_write;
 
-        *(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(MACE_PCI_ERROR_ADDR) = 0;
-        *(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(MACE_PCI_ERROR_FLAGS) = 0;
-        *(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(MACE_PCI_CONTROL) = 0xff008500;
-        *(volatile u_int64_t *)MIPS_PHYS_TO_KSEG1(CRIME_HARDINT) = 0;
-        *(volatile u_int64_t *)MIPS_PHYS_TO_KSEG1(CRIME_SOFTINT) = 0;
+	bus_space_write_4(pc->iot, pc->ioh, MACE_PCI_ERROR_ADDR, 0);
+	bus_space_write_4(pc->iot, pc->ioh, MACE_PCI_ERROR_FLAGS, 0);
 
-	/* Only fix up the PCI slot, leave SCSI 0 & 1 as is */
-	for (device = 3; device < 4; device++) {
+	/* Turn on PCI error interrupts */
+	bus_space_write_4(pc->iot, pc->ioh, MACE_PCI_CONTROL,
+	    MACE_PCI_CONTROL_SERR_ENA |
+	    MACE_PCI_CONTROL_PARITY_ERR |
+	    MACE_PCI_CONTROL_PARK_LIU |
+	    MACE_PCI_CONTROL_OVERRUN_INT |
+	    MACE_PCI_CONTROL_PARITY_INT |
+	    MACE_PCI_CONTROL_SERR_INT |
+	    MACE_PCI_CONTROL_IT_INT |
+	    MACE_PCI_CONTROL_RE_INT |
+	    MACE_PCI_CONTROL_DPED_INT |
+	    MACE_PCI_CONTROL_TAR_INT |
+	    MACE_PCI_CONTROL_MAR_INT);
+
+	/* Must fix up all PCI devices, ahc_pci expects proper i/o mapping */
+	for (device = 1; device < 4; device++) {
 		const struct pci_quirkdata *qd;
 		int function, nfuncs;
 		pcireg_t bhlcr, id;
 
-		devtag = pci_make_tag(0, 0, device, 0);
+		devtag = pci_make_tag(pc, 0, device, 0);
 		id = pci_conf_read(pc, devtag, PCI_ID_REG);
 
 		/* Invalid vendor ID value? */
@@ -160,7 +182,7 @@ macepci_attach(parent, self, aux)
 			nfuncs = 1;
 
 		for (function = 0; function < nfuncs; function++) {
-			devtag = pci_make_tag(0, 0, device, function);
+			devtag = pci_make_tag(pc, 0, device, function);
 			id = pci_conf_read(pc, devtag, PCI_ID_REG);
 
 			/* Invalid vendor ID value? */
@@ -170,7 +192,7 @@ macepci_attach(parent, self, aux)
 			if (PCI_VENDOR(id) == 0)
 				continue;
 
-			pciaddr_resource_manage(0, devtag, NULL, NULL);
+			pciaddr_resource_manage(pc, devtag, NULL, NULL);
 		}
 	}
 
@@ -178,15 +200,15 @@ macepci_attach(parent, self, aux)
 	 * Enable all MACE PCI interrupts. They will be masked by
 	 * the CRIME code.
 	 */
-	control = bus_space_read_4(maa->maa_st, maa->maa_sh, MACEPCI_CONTROL);
+	control = bus_space_read_4(pc->iot, pc->ioh, MACEPCI_CONTROL);
 	control |= CONTROL_INT_MASK;
-	bus_space_write_4(maa->maa_st, maa->maa_sh, MACEPCI_CONTROL, control);
+	bus_space_write_4(pc->iot, pc->ioh, MACEPCI_CONTROL, control);
 
 #if NPCI > 0
 	memset(&pba, 0, sizeof pba);
 	pba.pba_busname = "pci";
-/*XXX*/	pba.pba_iot = 4;
-/*XXX*/	pba.pba_memt = 2;
+/*XXX*/	pba.pba_iot = SGIMIPS_BUS_SPACE_IO;
+/*XXX*/	pba.pba_memt = SGIMIPS_BUS_SPACE_MEM;
 	pba.pba_dmat = &pci_bus_dma_tag;
 	pba.pba_dmat64 = NULL;
 	pba.pba_bus = 0;
@@ -200,8 +222,7 @@ macepci_attach(parent, self, aux)
 		pba.pba_flags &= ~PCI_FLAGS_IO_ENABLED;		/* Buggy? */
 #endif
 
-	mace_intr_establish(7, IPL_NONE, macepci_intr, sc);
-	/*mace_intr_establish(maa->maa_intr, IPL_NONE, macepci_intr, sc);*/
+	mace_intr_establish(maa->maa_intr, IPL_NONE, macepci_intr, sc);
 
 	config_found(self, &pba, macepci_print);
 #endif
@@ -220,9 +241,6 @@ macepci_print(aux, pnp)
 	else
 		aprint_normal(" bus %d", pba->pba_bus);
 
-	/* Mega XXX */
-	*(volatile u_int32_t *)0xb4000034 = 0;	/* prime timer */
-
 	return UNCONF;
 }
 
@@ -234,19 +252,9 @@ macepci_conf_read(pc, tag, reg)
 {
 	pcireg_t data;
 
-	/* This should be handled by a real interrupt handler */
-	if ((*(volatile u_int32_t *)0xbf080004 & ~0x00100000) != 6)
-		panic("pcierr: %x %x", *(volatile u_int32_t *)0xbf080000,
-		    *(volatile u_int32_t *)0xbf080004);
-
-	*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(0x1f080cf8) = tag | reg;
-	data = *(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(0x1f080cfc);
-	*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(0x1f080cf8) = 0;
-
-	if (*(volatile u_int32_t *)0xbf080004 & 0xf0000000) {
-		*(volatile u_int32_t *)0xbf080004 = 0;
-		return (pcireg_t)-1;
-	}
+	bus_space_write_4(pc->iot, pc->ioh, MACE_PCI_CONFIG_ADDR, (tag | reg));
+	data = bus_space_read_4(pc->iot, pc->ioh, MACE_PCI_CONFIG_DATA);
+	bus_space_write_4(pc->iot, pc->ioh, MACE_PCI_CONFIG_ADDR, 0);
 
 	return data;
 }
@@ -262,9 +270,9 @@ macepci_conf_write(pc, tag, reg, data)
 	if (tag == 0)
 		return;
 
-	*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(0x1f080cf8) = tag | reg;
-	*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(0x1f080cfc) = data;
-	*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(0x1f080cf8) = 0;
+	bus_space_write_4(pc->iot, pc->ioh, MACE_PCI_CONFIG_ADDR, (tag | reg));
+	bus_space_write_4(pc->iot, pc->ioh, MACE_PCI_CONFIG_DATA, data);
+	bus_space_write_4(pc->iot, pc->ioh, MACE_PCI_CONFIG_ADDR, 0);
 }
 
 
@@ -275,7 +283,88 @@ int
 macepci_intr(arg)
 	void *arg;
 {
-	printf("macepci_intr!\n");
+	struct macepci_softc *sc = (struct macepci_softc *)arg;
+	pci_chipset_tag_t pc = &sc->sc_pc;
+	u_int32_t error, address;
+
+	error = bus_space_read_4(pc->iot, pc->ioh, MACE_PCI_ERROR_FLAGS);
+	address = bus_space_read_4(pc->iot, pc->ioh, MACE_PCI_ERROR_ADDR);
+	while (error & 0xffc00000) {
+		if (error & MACE_PERR_MASTER_ABORT) {
+			/*
+			 * this seems to be a more-or-less normal error
+			 * condition (e.g., "pcictl pci0 list" generates
+			 * a _lot_ of these errors, so no message for now
+			 * while I figure out if I missed a trick somewhere.
+			 */
+			error &= ~MACE_PERR_MASTER_ABORT;
+			bus_space_write_4(pc->iot, pc->ioh,
+			    MACE_PCI_ERROR_FLAGS, error);
+		}
+
+		if (error & MACE_PERR_TARGET_ABORT) {
+			printf("mace: target abort at %x\n", address);
+			error &= ~MACE_PERR_TARGET_ABORT;
+			bus_space_write_4(pc->iot, pc->ioh,
+			    MACE_PCI_ERROR_FLAGS, error);
+		}
+
+		if (error & MACE_PERR_DATA_PARITY_ERR) {
+			printf("mace: parity error at %x\n", address);
+			error &= ~MACE_PERR_DATA_PARITY_ERR;
+			bus_space_write_4(pc->iot, pc->ioh,
+			    MACE_PCI_ERROR_FLAGS, error);
+		}
+
+		if (error & MACE_PERR_RETRY_ERR) {
+			printf("mace: retry error at %x\n", address);
+			error &= ~MACE_PERR_RETRY_ERR;
+			bus_space_write_4(pc->iot, pc->ioh,
+			    MACE_PCI_ERROR_FLAGS, error);
+		}
+
+		if (error & MACE_PERR_ILLEGAL_CMD) {
+			printf("mace: illegal command at %x\n", address);
+			error &= ~MACE_PERR_ILLEGAL_CMD;
+			bus_space_write_4(pc->iot, pc->ioh,
+			    MACE_PCI_ERROR_FLAGS, error);
+		}
+
+		if (error & MACE_PERR_SYSTEM_ERR) {
+			printf("mace: system error at %x\n", address);
+			error &= ~MACE_PERR_SYSTEM_ERR;
+			bus_space_write_4(pc->iot, pc->ioh,
+			    MACE_PCI_ERROR_FLAGS, error);
+		}
+
+		if (error & MACE_PERR_INTERRUPT_TEST) {
+			printf("mace: interrupt test at %x\n", address);
+			error &= ~MACE_PERR_INTERRUPT_TEST;
+			bus_space_write_4(pc->iot, pc->ioh,
+			    MACE_PCI_ERROR_FLAGS, error);
+		}
+
+		if (error & MACE_PERR_PARITY_ERR) {
+			printf("mace: parity error at %x\n", address);
+			error &= ~MACE_PERR_PARITY_ERR;
+			bus_space_write_4(pc->iot, pc->ioh,
+			    MACE_PCI_ERROR_FLAGS, error);
+		}
+
+		if (error & MACE_PERR_RSVD) {
+			printf("mace: reserved condition at %x\n", address);
+			error &= ~MACE_PERR_RSVD;
+			bus_space_write_4(pc->iot, pc->ioh,
+			    MACE_PCI_ERROR_FLAGS, error);
+		}
+
+		if (error & MACE_PERR_OVERRUN) {
+			printf("mace: overrun at %x\n", address);
+			error &= ~MACE_PERR_OVERRUN;
+			bus_space_write_4(pc->iot, pc->ioh,
+			    MACE_PCI_ERROR_FLAGS, error);
+		}
+	}
 	return 0;
 }
 
@@ -385,9 +474,11 @@ pciaddr_resource_manage(pc, tag, func, ctx)
 		error += pciaddr_do_resource_allocate(pc, tag, mapreg,
 		    ctx, type, &addr, size);
 
-/*		PCIBIOS_PRINTV(("\n\t%02xh %s 0x%08x 0x%08x",
+#if 0
+		PCIBIOS_PRINTV(("\n\t%02xh %s 0x%08x 0x%08x",
 		    mapreg, type ? "port" : "mem ",
-		    (unsigned int)addr, (unsigned int)size)); */
+		    (unsigned int)addr, (unsigned int)size));
+#endif
 	}
 
 	/* enable/disable PCI device */
@@ -409,7 +500,6 @@ pciaddr_resource_manage(pc, tag, func, ctx)
 
 	if (error)
 		pciaddr.nbogus++;
-
 }
 
 bus_addr_t
@@ -417,8 +507,8 @@ pciaddr_ioaddr(val)
 	u_int32_t val;
 {
 
-	return ((PCI_MAPREG_TYPE(val) == PCI_MAPREG_TYPE_MEM)
-	    ? PCI_MAPREG_MEM_ADDR(val) : PCI_MAPREG_IO_ADDR(val));
+	return ((PCI_MAPREG_TYPE(val) == PCI_MAPREG_TYPE_MEM) ?
+	    PCI_MAPREG_MEM_ADDR(val) : PCI_MAPREG_IO_ADDR(val));
 }
 
 int
@@ -444,7 +534,7 @@ pciaddr_do_resource_allocate(pc, tag, mapreg, ctx, type, addr, size)
 
 	default:
 		PCIBIOS_PRINTV(("attempt to remap unknown region (addr 0x%lx, "
-				"size 0x%lx, type %d)\n", *addr, size, type));
+		    "size 0x%lx, type %d)\n", *addr, size, type));
 		return 0;
 	}
 
