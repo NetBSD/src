@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.12 2000/11/27 08:53:55 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.13 2000/12/01 21:54:01 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -72,6 +72,11 @@
 #include "pc.h"
 #if (NPC > 0)
 #include <machine/pccons.h>
+#endif
+
+#include "gten.h"
+#if (NGTEN > 0)
+#include <machine/gtenvar.h>
 #endif
 
 #include "vga.h"
@@ -636,8 +641,12 @@ consinit()
 	}
 #endif
 
-#if (NPC > 0) || (NVGA > 0)
+#if (NPC > 0) || (NVGA > 0) || (NGTEN > 0)
 	if (!strcmp(consinfo->devname, "vga")) {
+#if (NGTEN > 0)
+		if (!gten_cnattach(&prep_mem_space_tag))
+			goto dokbd;
+#endif
 #if (NVGA > 0)
 		if (!vga_cnattach(&prep_io_space_tag, &prep_mem_space_tag,
 				-1, 1))
