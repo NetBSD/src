@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)bind.2	6.9 (Berkeley) 3/10/91
-.\"	$Id: bind.2,v 1.4 1993/11/29 21:25:00 jtc Exp $
+.\"	$Id: bind.2,v 1.5 1994/04/19 00:10:49 jtc Exp $
 .\"
 .Dd March 10, 1991
 .Dt BIND 2
@@ -102,8 +102,11 @@ A component of the path prefix is not a directory.
 .It Bq Er EINVAL
 The pathname contains a character with the high-order bit set.
 .It Bq Er ENAMETOOLONG
-A component of a pathname exceeded 255 characters,
-or an entire path name exceeded 1023 characters.
+A component of a pathname exceeded 
+.Dv {NAME_MAX}
+characters, or an entire path name exceeded 
+.Dv {PATH_MAX}
+characters.
 .It Bq Er ENOENT
 A prefix component of the path name does not exist.
 .It Bq Er ELOOP

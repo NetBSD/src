@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)mkdir.2	6.7 (Berkeley) 3/10/91
-.\"	$Id: mkdir.2,v 1.5 1993/12/15 17:40:20 jtc Exp $
+.\"	$Id: mkdir.2,v 1.6 1994/04/19 00:11:05 jtc Exp $
 .\"
 .Dd March 10, 1991
 .Dt MKDIR 2
@@ -68,8 +68,11 @@ A component of the path prefix is not a directory.
 .It Bq Er EINVAL
 The pathname contains a character with the high-order bit set.
 .It Bq Er ENAMETOOLONG
-A component of a pathname exceeded 255 characters,
-or an entire path name exceeded 1023 characters.
+A component of a pathname exceeded 
+.Dv {NAME_MAX}
+characters, or an entire path name exceeded 
+.Dv {PATH_MAX}
+characters.
 .It Bq Er ENOENT
 A component of the path prefix does not exist.
 .It Bq Er EACCES

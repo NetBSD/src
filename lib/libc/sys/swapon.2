@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)swapon.2	6.7 (Berkeley) 3/10/91
-.\"	$Id: swapon.2,v 1.4 1993/11/29 21:25:48 jtc Exp $
+.\"	$Id: swapon.2,v 1.5 1994/04/19 00:11:23 jtc Exp $
 .\"
 .Dd March 10, 1991
 .Dt SWAPON 2
@@ -66,8 +66,11 @@ A component of the path prefix is not a directory.
 .It Bq Er EINVAL
 The pathname contains a character with the high-order bit set.
 .It Bq Er ENAMETOOLONG
-A component of a pathname exceeded 255 characters,
-or an entire path name exceeded 1023 characters.
+A component of a pathname exceeded 
+.Dv {NAME_MAX}
+characters, or an entire path name exceeded 
+.Dv {PATH_MAX}
+characters.
 .It Bq Er ENOENT
 The named device does not exist.
 .It Bq Er EACCES
