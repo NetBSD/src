@@ -1,4 +1,4 @@
-/*	$NetBSD: savecore.c,v 1.39 1999/07/01 08:53:35 cgd Exp $	*/
+/*	$NetBSD: savecore.c,v 1.40 1999/08/02 00:33:01 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1992, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)savecore.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: savecore.c,v 1.39 1999/07/01 08:53:35 cgd Exp $");
+__RCSID("$NetBSD: savecore.c,v 1.40 1999/08/02 00:33:01 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -647,7 +647,7 @@ check_space()
 	needed = (dumpsize + kernelsize) / 1024;
  	if (minfree > 0 && spacefree - needed < minfree) {
 		syslog(LOG_WARNING,
-		    "no dump, not enough free space on device");
+		    "no dump, not enough free space in %s", dirname);
 		return (0);
 	}
 	if (spacefree - needed < minfree)
