@@ -39,7 +39,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)hash.c	5.2 (Berkeley) 4/18/93
+ *	from: @(#)hash.c	5.2 (Berkeley) 4/18/93
+ *	$Id: hash.c,v 1.4 1993/12/04 06:06:08 cgd Exp $
  */
 
 #include <sys/param.h>

@@ -39,7 +39,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)mkheaders.c	5.2 (Berkeley) 4/18/93
+ *	from: @(#)mkheaders.c	5.2 (Berkeley) 4/18/93
+ *	$Id: mkheaders.c,v 1.2 1993/12/04 06:06:11 cgd Exp $
  */
 
 #include <sys/param.h>

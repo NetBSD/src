@@ -1,4 +1,5 @@
-#	@(#)Makefile	5.1 (Berkeley) 1/12/93
+#	from: @(#)Makefile	5.1 (Berkeley) 1/12/93
+#	$Id: Makefile,v 1.8 1993/12/04 06:05:53 cgd Exp $
 
 PROG=	config.new
 SRCS=	files.c gram.y hash.c main.c mkheaders.c mkioconf.c mkmakefile.c \
