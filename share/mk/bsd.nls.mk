@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.nls.mk,v 1.3 1996/10/18 02:34:45 thorpej Exp $
+#	$NetBSD: bsd.nls.mk,v 1.4 1997/04/19 22:24:30 christos Exp $
 
 .if !target(.MAIN)
 .if exists(${.CURDIR}/../Makefile.inc)
@@ -26,22 +26,29 @@ NLSNAME=lib${LIB}
 .endif
 .endif
 
-nlsinstall:
-.if defined(NLSALL)
-	@for msg in ${NLSALL}; do \
-		NLSLANG=`basename $$msg .cat`; \
-		dir=${DESTDIR}${NLSDIR}/$${NLSLANG}; \
-		${INSTALL} -d $$dir; \
-		${INSTALL} ${COPY} -o ${NLSOWN} -g ${NLSGRP} -m ${NLSMODE} $$msg $$dir/${NLSNAME}.cat; \
-	done
-.endif
-
 .if defined(NLSALL)
 all: ${NLSALL}
-
-install:  nlsinstall
 
 cleandir: cleannls
 cleannls:
 	rm -f ${NLSALL}
+
+.for F in ${NLSALL}
+nlsinstall:: ${DESTDIR}${NLSDIR}/${F:T:R}/${NLSNAME}.cat
+.if !defined(UPDATE)
+.PHONY: ${DESTDIR}${NLSDIR}/${F:T:R}/${NLSNAME}.cat
 .endif
+.if !defined(BUILD)
+${DESTDIR}${NLSDIR}/${F:T:R}/${NLSNAME}.cat: .MADE
+.endif
+
+${DESTDIR}${NLSDIR}/${F:T:R}/${NLSNAME}.cat: ${F}
+	${INSTALL} -d ${.TARGET:H}
+	${INSTALL} ${COPY} -o ${NLSOWN} -g ${NLSGRP} -m ${NLSMODE} ${.ALLSRC} \
+		${.TARGET}
+.endfor
+.else
+nlsinstall::
+.endif
+
+install:  nlsinstall
