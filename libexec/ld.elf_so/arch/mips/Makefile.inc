@@ -1,8 +1,10 @@
-#	$NetBSD: Makefile.inc,v 1.7 1999/06/07 18:04:31 castor Exp $
+#	$NetBSD: Makefile.inc,v 1.8 2001/12/14 22:21:47 thorpej Exp $
 
 SRCS+=	rtld_start.S mips_reloc.c
 
-CPPFLAGS+= -mabicalls -G0 -fPIC -DELFSIZE=32 -I${.CURDIR}
+COPTS+=	-mabicalls -G0 -fPIC
+
+CPPFLAGS+= -DELFSIZE=32 -I${.CURDIR}
 CPPFLAGS+= -DRTLD_INHIBIT_COPY_RELOCS
 
 .if (${MACHINE_ARCH} == "mipseb")
