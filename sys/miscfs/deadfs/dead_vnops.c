@@ -31,16 +31,16 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)dead_vnops.c	7.13 (Berkeley) 4/15/91
- *	$Id: dead_vnops.c,v 1.5 1993/09/07 15:41:08 ws Exp $
+ *	$Id: dead_vnops.c,v 1.5.2.1 1993/11/14 22:34:35 mycroft Exp $
  */
 
-#include "param.h"
-#include "systm.h"
-#include "time.h"
-#include "vnode.h"
-#include "errno.h"
-#include "namei.h"
-#include "buf.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/time.h>
+#include <sys/vnode.h>
+#include <sys/errno.h>
+#include <sys/namei.h>
+#include <sys/buf.h>
 
 /*
  * Prototypes for dead operations on vnodes.

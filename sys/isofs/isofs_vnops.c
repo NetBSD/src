@@ -1,6 +1,7 @@
 /*
- *	$Id: isofs_vnops.c,v 1.8.2.2 1993/11/12 06:11:47 cgd Exp $
+ *	$Id: isofs_vnops.c,v 1.8.2.3 1993/11/14 22:40:50 mycroft Exp $
  */
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/namei.h>

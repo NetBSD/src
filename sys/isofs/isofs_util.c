@@ -1,6 +1,7 @@
 /*
- *	$Id: isofs_util.c,v 1.5.2.2 1993/11/12 06:11:39 cgd Exp $
+ *	$Id: isofs_util.c,v 1.5.2.3 1993/11/14 22:40:48 mycroft Exp $
  */
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/namei.h>
@@ -19,6 +20,7 @@
 #include <sys/dir.h>
 
 #include <isofs/iso.h>
+
 #include <machine/endian.h>
 
 #ifdef	__notanymore__

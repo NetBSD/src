@@ -33,29 +33,29 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: fdesc_vnops.c,v 1.6 1993/09/07 15:41:18 ws Exp $
+ *	$Id: fdesc_vnops.c,v 1.6.2.1 1993/11/14 22:34:41 mycroft Exp $
  */
 
 /*
  * /dev/fd Filesystem
  */
 
-#include "param.h"
-#include "systm.h"
-#include "types.h"
-#include "time.h"
-#include "proc.h"
-#include "resourcevar.h"
-#include "filedesc.h"
-#include "vnode.h"
-#include "file.h"
-#include "stat.h"
-#include "mount.h"
-#include "namei.h"
-#include "buf.h"
-#include "miscfs/fdesc/fdesc.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/types.h>
+#include <sys/time.h>
+#include <sys/proc.h>
+#include <sys/resourcevar.h>
+#include <sys/filedesc.h>
+#include <sys/vnode.h>
+#include <sys/file.h>
+#include <sys/stat.h>
+#include <sys/mount.h>
+#include <sys/namei.h>
+#include <sys/buf.h>
+#include <miscfs/fdesc/fdesc.h>
 
-#include "../ufs/dir.h"		/* For readdir() XXX */
+#include <ufs/dir.h>		/* For readdir() XXX */
 
 /*
  * vp is the current namei directory

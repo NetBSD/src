@@ -34,20 +34,20 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ufs_lookup.c	7.33 (Berkeley) 5/19/91
- *	$Id: isofs_lookup.c,v 1.7.2.3 1993/11/14 17:53:58 mycroft Exp $
+ *	$Id: isofs_lookup.c,v 1.7.2.4 1993/11/14 22:40:43 mycroft Exp $
  */
 
-#include "param.h"
-#include "namei.h"
-#include "buf.h"
-#include "file.h"
-#include "vnode.h"
-#include "mount.h"
+#include <sys/param.h>
+#include <sys/namei.h>
+#include <sys/buf.h>
+#include <sys/file.h>
+#include <sys/vnode.h>
+#include <sys/mount.h>
 
-#include "iso.h"
-#include "isofs_node.h"
-#include "iso_rrip.h"
-#include "isofs_rrip.h"
+#include <isofs/iso.h>
+#include <isofs/isofs_node.h>
+#include <isofs/iso_rrip.h>
+#include <isofs/isofs_rrip.h>
 
 struct	nchstats iso_nchstats;
 

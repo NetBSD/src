@@ -27,28 +27,31 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: procfs_subr.c,v 1.3 1993/08/24 16:47:24 pk Exp $
+ *	$Id: procfs_subr.c,v 1.3.2.1 1993/11/14 22:35:01 mycroft Exp $
  */
-#include "param.h"
-#include "systm.h"
-#include "time.h"
-#include "kernel.h"
-#include "ioctl.h"
-#include "proc.h"
-#include "buf.h"
-#include "vnode.h"
-#include "file.h"
-#include "resourcevar.h"
-#include "vm/vm.h"
-#include "vm/vm_page.h"
-#include "vm/vm_kern.h"
-#include "kinfo.h"
-#include "kinfo_proc.h"
 
-#include "procfs.h"
-#include "pfsnode.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/time.h>
+#include <sys/kernel.h>
+#include <sys/ioctl.h>
+#include <sys/proc.h>
+#include <sys/buf.h>
+#include <sys/vnode.h>
+#include <sys/file.h>
+#include <sys/resourcevar.h>
 
-#include "machine/vmparam.h"
+#include <vm/vm.h>
+#include <vm/vm_page.h>
+#include <vm/vm_kern.h>
+
+#include <sys/kinfo.h>
+#include <sys/kinfo_proc.h>
+
+#include <miscfs/procfs/procfs.h>
+#include <miscfs/procfs/pfsnode.h>
+
+#include <machine/vmparam.h>
 
 /*
  * Get process address map (PIOCGMAP)
