@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.120 2001/11/13 18:46:17 tv Exp $
+#	$NetBSD: Makefile.inc,v 1.121 2001/11/13 18:57:47 tv Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -8,15 +8,15 @@
 SRCS+=	Ovfork.S __clone.S __vfork14.S brk.S exect.S fork.S msgctl.S pipe.S \
 	ptrace.S sbrk.S __semctl.S setlogin.S shmat.S shmctl.S sigaction.S \
 	sigpending.S sigprocmask.S sigreturn.S __sigreturn14.S sigsuspend.S \
-	syscall.S __syscall.S __clone.S
-SRCS+=	cerror.S
+	syscall.S __syscall.S __clone.S cerror.S
 
-LSRCS+=	Lint_Ovfork.c Lint___clone.c Lint___vfork14.c Lint_brk.c Lint_clone.c \
+_LSRC=	Lint_Ovfork.c Lint___clone.c Lint___vfork14.c Lint_brk.c Lint_clone.c \
 	Lint_exect.c Lint_fork.c Lint_pipe.c Lint_ptrace.c Lint_sbrk.c \
-	Lint_setlogin.c Lint___sigreturn14.c Lint_syscall.c Lint___syscall.c
-DPSRCS+= Lint_Ovfork.c Lint___clone.c Lint___vfork14.c Lint_brk.c Lint_clone.c \
-	Lint_exect.c Lint_fork.c Lint_pipe.c Lint_ptrace.c Lint_sbrk.c \
-	Lint_setlogin.c Lint___sigreturn14.c Lint_syscall.c Lint___syscall.c
+	Lint_setlogin.c Lint___sigreturn14.c Lint_syscall.c Lint___syscall.c \
+	LintSysNormal.c LintSysNoerr.c LintSysPseudoNoerr.c
+
+LSRCS+=	${_LSRC}
+DPSRCS+=${_LSRC}
 
 # glue to provide compatibility between GCC 1.X and 2.X and for compat
 # with old syscall interfaces.
@@ -85,29 +85,23 @@ ${NOERR}: ${ARCHDIR}/SYS.h ${DESTDIR}/usr/include/sys/syscall.h
 	printf '#include "SYS.h"\nRSYSCALL_NOERROR(${.PREFIX})\n' >${.TARGET}
 
 ${PSEUDONOERR}: ${ARCHDIR}/SYS.h ${DESTDIR}/usr/include/sys/syscall.h
-	@printf '#include "SYS.h"\nPSEUDO_NOERROR(${.PREFIX},${.PREFIX:S/_//})\n' >${.TARGET}
+	printf '#include "SYS.h"\nPSEUDO_NOERROR(${.PREFIX},${.PREFIX:S/_//})\n' >${.TARGET}
 
-# Lint stubs for all automatically-generated assembly stubs (GENERATED)
-LSRCS+=		LintSysNormal.c LintSysNoerr.c LintSysPseudoNoerr.c
 DPSRCS+=	LintSysNormal.c LintSysNoerr.c LintSysPseudoNoerr.c
-CLEANFILES+=	LintSysNormal.c LintSysNoerr.c LintSysPseudoNoerr.c
 
 LintSysNormal.c: ${.CURDIR}/sys/makelintstub \
     ${DESTDIR}/usr/include/sys/syscall.h
-	@echo creating ${.TARGET}
-	@sh ${.CURDIR}/sys/makelintstub -o ${.TARGET} \
+	sh ${.CURDIR}/sys/makelintstub -o ${.TARGET} \
 	    -s ${DESTDIR}/usr/include/sys/syscall.h ${ASM}
 
 LintSysNoerr.c: ${.CURDIR}/sys/makelintstub \
     ${DESTDIR}/usr/include/sys/syscall.h
-	@echo creating ${.TARGET}
-	@sh ${.CURDIR}/sys/makelintstub -o ${.TARGET} -n \
+	sh ${.CURDIR}/sys/makelintstub -o ${.TARGET} -n \
 	    -s ${DESTDIR}/usr/include/sys/syscall.h ${NOERR}
 
 LintSysPseudoNoerr.c: ${.CURDIR}/sys/makelintstub \
     ${DESTDIR}/usr/include/sys/syscall.h
-	@echo creating ${.TARGET}
-	@sh ${.CURDIR}/sys/makelintstub -o ${.TARGET} -p \
+	sh ${.CURDIR}/sys/makelintstub -o ${.TARGET} -p \
 	    -s ${DESTDIR}/usr/include/sys/syscall.h ${PSEUDONOERR}
 
 MAN+=	accept.2 access.2 acct.2 adjtime.2 bind.2 brk.2 chdir.2 \
