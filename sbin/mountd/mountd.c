@@ -1,4 +1,4 @@
-/*	$NetBSD: mountd.c,v 1.36 1997/03/23 20:58:18 fvdl Exp $	*/
+/*	$NetBSD: mountd.c,v 1.37 1997/03/30 20:53:33 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -52,7 +52,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mountd.c  8.15 (Berkeley) 5/1/95";
 #else
-static char rcsid[] = "$NetBSD: mountd.c,v 1.36 1997/03/23 20:58:18 fvdl Exp $";
+static char rcsid[] = "$NetBSD: mountd.c,v 1.37 1997/03/30 20:53:33 fvdl Exp $";
 #endif
 #endif /* not lint */
 
@@ -111,7 +111,7 @@ struct dirlist {
 #define	DP_DEFSET	0x1
 #define DP_HOSTSET	0x2
 #define DP_KERB		0x4
-#define DP_NORESPORT	0x8
+#define DP_NORESMNT	0x8
 
 struct exportlist {
 	struct exportlist *ex_next;
@@ -227,14 +227,15 @@ struct ucred def_anon = {
 };
 int opt_flags;
 /* Bits for above */
-#define	OP_MAPROOT	0x01
-#define	OP_MAPALL	0x02
-#define	OP_KERB		0x04
-#define	OP_MASK		0x08
-#define	OP_NET		0x10
-#define	OP_ISO		0x20
-#define	OP_ALLDIRS	0x40
-#define OP_NORESPORT	0x80
+#define	OP_MAPROOT	0x001
+#define	OP_MAPALL	0x002
+#define	OP_KERB		0x004
+#define	OP_MASK		0x008
+#define	OP_NET		0x010
+#define	OP_ISO		0x020
+#define	OP_ALLDIRS	0x040
+#define OP_NORESPORT	0x080
+#define OP_NORESMNT	0x100
 
 int debug = 0;
 void	SYSLOG __P((int, const char *, ...));
@@ -387,7 +388,7 @@ mntsrv(rqstp, transp)
 		     (defset && scan_tree(ep->ex_defdir, saddr.s_addr) == 0 &&
 		      scan_tree(ep->ex_dirl, saddr.s_addr) == 0))) {
 			if (sport >= IPPORT_RESERVED &&
-			    !(hostset & DP_NORESPORT)) {
+			    !(hostset & DP_NORESMNT)) {
 				syslog(LOG_NOTICE,
 				       "Refused mount RPC from host %s port %d",
 				       inet_ntoa(saddr), sport);
@@ -1057,14 +1058,14 @@ hang_dirp(dp, grp, ep, flags)
 			ep->ex_defdir->dp_flag |= DP_DEFSET;
 			if (flags & OP_KERB)
 				ep->ex_defdir->dp_flag |= DP_KERB;
-			if (flags & OP_NORESPORT)
-				ep->ex_defdir->dp_flag |= DP_NORESPORT;
+			if (flags & OP_NORESMNT)
+				ep->ex_defdir->dp_flag |= DP_NORESMNT;
 		} else while (grp) {
 			hp = get_ht();
 			if (flags & OP_KERB)
 				hp->ht_flag |= DP_KERB;
-			if (flags & OP_NORESPORT)
-				hp->ht_flag |= DP_NORESPORT;
+			if (flags & OP_NORESMNT)
+				hp->ht_flag |= DP_NORESMNT;
 			hp->ht_grp = grp;
 			hp->ht_next = ep->ex_defdir->dp_hosts;
 			ep->ex_defdir->dp_hosts = hp;
@@ -1123,8 +1124,8 @@ add_dlist(dpp, newdp, grp, flags)
 			hp = get_ht();
 			if (flags & OP_KERB)
 				hp->ht_flag |= DP_KERB;
-			if (flags & OP_NORESPORT)
-				hp->ht_flag |= DP_NORESPORT;
+			if (flags & OP_NORESMNT)
+				hp->ht_flag |= DP_NORESMNT;
 			hp->ht_grp = grp;
 			hp->ht_next = dp->dp_hosts;
 			dp->dp_hosts = hp;
@@ -1134,8 +1135,8 @@ add_dlist(dpp, newdp, grp, flags)
 		dp->dp_flag |= DP_DEFSET;
 		if (flags & OP_KERB)
 			dp->dp_flag |= DP_KERB;
-		if (flags & OP_NORESPORT)
-			dp->dp_flag |= DP_NORESPORT;
+		if (flags & OP_NORESMNT)
+			dp->dp_flag |= DP_NORESMNT;
 	}
 }
 
@@ -1327,7 +1328,9 @@ do_opt(cpp, endcpp, ep, grp, has_hostp, exflagsp, cr)
 			opt_flags |= OP_NET;
 		} else if (!strcmp(cpopt, "alldirs")) {
 			opt_flags |= OP_ALLDIRS;
-		} else if (!strcmp(cpopt, "noresport")) {
+		} else if (!strcmp(cpopt, "noresvmnt")) {
+			opt_flags |= OP_NORESMNT;
+		} else if (!strcmp(cpopt, "noresvport")) {
 			opt_flags |= OP_NORESPORT;
 			*exflagsp |= MNT_EXNORESPORT;
 #ifdef ISO
@@ -1920,7 +1923,7 @@ del_mlist(hostp, dirp, saddr)
 	while (mlp) {
 		if (!strcmp(mlp->ml_host, hostp) &&
 		    (!dirp || !strcmp(mlp->ml_dirp, dirp))) {
-			if (!(mlp->ml_flag & DP_NORESPORT) &&
+			if (!(mlp->ml_flag & DP_NORESMNT) &&
 			    ntohs(sin->sin_port) >= IPPORT_RESERVED) {
 				syslog(LOG_NOTICE,
 				   "Umount request for %s:%s from %s refused\n",
