@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.15 1999/03/14 21:53:31 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.16 1999/03/27 01:26:37 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -213,8 +213,6 @@ static void InitBP(struct buf * bp, struct vnode *, unsigned rw_flag,
 int raidmarkclean(dev_t dev, struct vnode *b_vp, int);
 int raidmarkdirty(dev_t dev, struct vnode *b_vp, int);
 
-void  raid_shutdown(void *);
-
 void raidattach __P((int));
 int raidsize __P((dev_t));
 
@@ -256,7 +254,6 @@ struct raid_softc {
 	int     sc_cflags;	/* configuration flags */
 	size_t  sc_size;        /* size of the raid device */
 	dev_t   sc_dev;	        /* our device.. */
- 	void *  sc_sdhook;      /* our shutdown hook */
 	char    sc_xname[20];	/* XXX external name */
 	struct disk sc_dkdev;	/* generic disk device info */
 	struct pool sc_cbufpool;	/* component buffer pool */
@@ -799,15 +796,6 @@ raidioctl(dev, cmd, data, flag, p)
 		if (retcode == 0) {
 			retcode = raidinit(dev, raidPtrs[unit], unit);
 			rf_markalldirty( raidPtrs[unit] );
-#if 0
-			/* register our shutdown hook */
-			if ((rs->sc_sdhook = 
-			     shutdownhook_establish(raid_shutdown, 
-						raidPtrs[unit])) == NULL) {
-				printf("raid%d: WARNING: unable to establish shutdown hook\n",raidPtrs[unit]->raidid);
-			}
-#endif
-			
 		}
 		/* free the buffers.  No return code here. */
 		if (k_cfg->layoutSpecificSize) {
@@ -854,10 +842,7 @@ raidioctl(dev, cmd, data, flag, p)
 
 		/* It's no longer initialized... */
 		rs->sc_flags &= ~RAIDF_INITED;
-#if 0		
-		shutdownhook_disestablish( rs->sc_sdhook );
-		rs->sc_sdhook = NULL;
-#endif
+
 		/* Detach the disk. */
 		disk_detach(&rs->sc_dkdev);
 
@@ -1332,28 +1317,6 @@ raidinit(dev, raidPtr, unit)
 	return (retcode);
 }
 
-void 
-raid_shutdown(arg)
-	void *arg;
-{
-	RF_Raid_t *raidPtr = arg;
-	struct raid_softc *rs;
-     
-	/* This is called by out shutdown hook. 
-	   The lights are being turned out, so lets shutdown as
-	   gracefully as possible */
-
-	rs = &raid_softc[raidPtr->raidid];
-
-	printf("raid%d: shutdown hooks called\n",raidPtr->raidid);
-	rf_Shutdown(raidPtr);
-	
-	/* It's no longer initialized... */
-	rs->sc_flags &= ~RAIDF_INITED;
-
-
-}
-
 /*
  * This kernel thread never exits.  It is created once, and persists
  * until the system reboots.
@@ -1568,7 +1531,7 @@ rf_DispatchKernelIO(queue, req)
 	disk_busy(&rs->sc_dkdev);
 
 	bp = req->bp;
-
+#if 1
 	/* XXX when there is a physical disk failure, someone is passing us a
 	 * buffer that contains old stuff!!  Attempt to deal with this problem
 	 * without taking a performance hit... (not sure where the real bug
@@ -1580,6 +1543,7 @@ rf_DispatchKernelIO(queue, req)
 	if (bp->b_error != 0) {
 		bp->b_error = 0;
 	}
+#endif
 	raidbp = RAIDGETBUF(rs);
 
 	raidbp->rf_flags = 0;	/* XXX not really used anywhere... */
