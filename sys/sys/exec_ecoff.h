@@ -12,7 +12,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by Adam Glass
+ *      This product includes software developed by Adam Glass.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission
  *
@@ -27,13 +27,11 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: exec_ecoff.h,v 1.1 1994/05/27 09:19:40 glass Exp $
+ *	$Id: exec_ecoff.h,v 1.2 1994/05/27 15:30:45 glass Exp $
  */
 
 #ifndef	_SYS_EXEC_ECOFF_H_
 #define	_SYS_EXEC_ECOFF_H_
-
-#ifdef KERNEL
 
 #include <machine/ecoff.h>
 
@@ -85,6 +83,7 @@ struct ecoff_scnhdr {		/* needed for size info */
 	 ((ECOFF_HDR_SIZE + efp->ef_nsecs * sizeof(struct ecoff_scnhdr) + \
 	   ECOFF_TXTOFF_ROUND(eap)) & ~ECOFF_TXTOFF_ROUND(eap)))
 
+#ifdef KERNEL
 int	exec_ecoff_makecmds __P((struct proc *, struct exec_package *));
 #endif /* KERNEL */
 #endif /* !_SYS_EXEC_ECOFF_H_ */
