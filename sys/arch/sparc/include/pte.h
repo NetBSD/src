@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.8 1995/04/13 13:48:46 pk Exp $ */
+/*	$NetBSD: pte.h,v 1.9 1995/05/08 17:47:26 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -54,13 +54,15 @@
  * Segment maps contain `pmeg' (Page Map Entry Group) numbers.
  * A PMEG is simply an index that names a group of 32 (sun4) or
  * 64 (sun4c) PTEs.
+ * Depending on the CPU model, we need 7 (sun4c) to 10 (sun4/400) bits
+ * to hold the hardware MMU resource number.
  */
-typedef u_short pmeg_t;		/* 9 bits needed per Sun-4 segmap entry */
+typedef u_short pmeg_t;		/* 10 bits needed per Sun-4 segmap entry */
 /*
  * Region maps contain `smeg' (Segment Entry Group) numbers.
- * An SMEG is simply an index that names a group of 64 PMEGs
+ * An SMEG is simply an index that names a group of 64 PMEGs.
  */
-typedef u_char smeg_t;		/* 6 bits needed per Sun-4 regmap entry */
+typedef u_char smeg_t;		/* 8 bits needed per Sun-4 regmap entry */
 #endif
 
 /*
@@ -181,6 +183,15 @@ extern int nptesg;
 #define	VSTOVA(vr,vs)	((((int)vr << (RGSHIFT+2)) >> 2) + ((int)vs << SGSHIFT))
 #endif
 
+extern int mmu_has_hole;
+#define VA_INHOLE(va)	(mmu_has_hole \
+	? ( (unsigned int)(((int)(va) >> PG_VSHIFT) + 1) > 1) \
+	: 0)
+
+/* Define the virtual address space hole */
+#define MMU_HOLE_START	0x20000000
+#define MMU_HOLE_END	0xe0000000
+
 #if defined(SUN4) && defined(SUN4C)
 #define VA_VPG(va)	(cputyp==CPU_SUN4C ? VA_SUN4C_VPG(va) : VA_SUN4_VPG(va))
 #endif
@@ -239,7 +250,7 @@ struct pte {
  * These are needed in the register window code
  * to check the validity of (ostensible) user stack PTEs.
  */
-#define	PG_VSHIFT	30		/* (va>>vshift)==0 or -1 => valid */
+#define	PG_VSHIFT	29		/* (va>>vshift)==0 or -1 => valid */
 	/* XXX fix this name, it is a va shift not a pte bit shift! */
 
 #define	PG_PROTSHIFT	29
