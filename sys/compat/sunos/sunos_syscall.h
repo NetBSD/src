@@ -1,4 +1,4 @@
-/* $NetBSD: sunos_syscall.h,v 1.67 2002/01/03 01:11:28 mrg Exp $ */
+/* $NetBSD: sunos_syscall.h,v 1.68 2002/11/01 20:44:43 jdolecek Exp $ */
 
 /*
  * System call numbers.
@@ -444,3 +444,4 @@
 #define	SUNOS_SYS_uname	189
 
 #define	SUNOS_SYS_MAXSYSCALL	190
+#define	SUNOS_SYS_NSYSENT	256
