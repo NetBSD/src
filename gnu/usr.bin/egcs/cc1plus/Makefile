@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 1998/10/14 12:10:15 christos Exp $
+#	$NetBSD: Makefile,v 1.10 1998/10/14 12:19:15 christos Exp $
 
 
 PROG=		cc1plus
@@ -15,7 +15,7 @@ parse-h: parse.h
 	@touch parse-h
 
 parse.h: parse.c
-	grep '^#define[         ]*YYEMPTY' ${.ALLSRC} > ${.TARGET}
+	grep '^#define[         ]*YYEMPTY' ${.ALLSRC:M*.c} > ${.TARGET}
 
 # Needs to be before dist/gcc or tree.c comes from the wrong place.
 .PATH: ${.CURDIR}/../../../dist/gcc/cp
