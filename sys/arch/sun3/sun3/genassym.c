@@ -36,24 +36,35 @@
 
 #define KERNEL
 
-#include "../include/cpu.h"
-#include "../include/trap.h"
-#include "sys/types.h"
-#include "sys/cdefs.h"
-#include "sys/vm.h"
-#include "../include/pcb.h"
-#include "../include/psl.h"
-#include "../include/pte.h"
-#include "../include/control.h"
-#include "../include/param.h"
-#include "../include/memmap.h"
-#include "sys/errno.h"
+#include "types.h"
+#include "param.h"
+#include "cdefs.h"
+#include "errno.h"
+#include "proc.h"
+#include "vmmeter.h"
+
+#include "vm/vm.h"
+
+#include "machine/pcb.h"
+#include "machine/psl.h"
+#include "machine/pte.h"
+#include "machine/control.h"
+#include "machine/param.h"
+#include "machine/memmap.h"
+#include "machine/cpu.h"
+#include "machine/trap.h"
+
 
 main()
 {
     struct pcb *pcb = (struct pcb *) 0;
-    struct vmmeter *vm = (struct vmmeter *)0;    
+    struct vmmeter *vm = (struct vmmeter *)0;
+    struct proc *p = (struct proc *) 0;
+    struct vmspace *vms = (struct vmspace *) 0;
+    
+    
 				/* 68k isms */
+    printf("#define\tPSL_LOWIPL %d\n", PSL_LOWIPL);
     printf("#define\tPSL_HIGHIPL %d\n", PSL_HIGHIPL);
     printf("#define\tFC_CONTROL %d\n",  FC_CONTROL);
 
@@ -71,8 +82,28 @@ main()
 				/* errno-isms */
     printf("#define\tEFAULT %d\n",        EFAULT);
     printf("#define\tENAMETOOLONG %d\n",  ENAMETOOLONG);
-				/* unix structure-isms */
-    printf("#define\tPC_ONFAULT %d\n", &pcb->pcb_onfault);
+    /*
+     * unix structure-isms
+     */
+
+     /* pcb offsets */
+    printf("#define\tP_LINK %d\n", &p->p_link);
+    printf("#define\tP_RLINK %d\n", &p->p_rlink);
+    printf("#define\tP_VMSPACE %d\n", &p->p_vmspace);
+    printf("#define\tVM_PMAP %d\n", &vms->vm_pmap);
+    printf("#define\tP_ADDR %d\n", &p->p_addr);
+    printf("#define\tP_PRI %d\n", &p->p_pri);
+    printf("#define\tP_STAT %d\n", &p->p_stat);
+    printf("#define\tP_WCHAN %d\n", &p->p_wchan);
+    printf("#define\tP_FLAG %d\n", &p->p_flag);
+    printf("#define\tPCB_FLAGS %d\n", &pcb->pcb_flags);
+    printf("#define\tPCB_PS %d\n", &pcb->pcb_ps);
+    printf("#define\tPCB_USTP %d\n", &pcb->pcb_ustp);
+    printf("#define\tPCB_USP %d\n", &pcb->pcb_usp);
+    printf("#define\tPCB_REGS %d\n", pcb->pcb_regs);
+    printf("#define\tPCB_CMAP2 %d\n", &pcb->pcb_cmap2);
+    printf("#define\tPCB_ONFAULT %d\n", &pcb->pcb_onfault);
+    printf("#define\tPCB_FPCTX %d\n", &pcb->pcb_fpregs);
     printf("#define\tSIZEOF_PCB %d\n", sizeof(struct pcb));
 				/* vm statistics */
     printf("#define\tV_SWTCH %d\n", &vm->v_swtch);
