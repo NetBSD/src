@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.70 1997/01/31 01:45:40 thorpej Exp $
+#	$NetBSD: GENERIC,v 1.71 1997/01/31 22:55:44 mhitch Exp $
 
 #
 # GENERIC AMIGA
@@ -93,7 +93,6 @@ options		UCONSOLE	# anyone can redirect a virtual console
 #options	INSECURE	# allow, among other insecure stuff, LKM 
 				# loading in multi-user mode.
 
-options		GENERIC		# Mini-root boot support
 options		LKM		# Loadable kernel modules
 options		"NKMEMCLUSTERS=256"	# Size of kernel malloc area
 
