@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.7 2001/06/11 01:50:54 wiz Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.8 2001/07/08 04:25:36 wdk Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -104,7 +104,7 @@ readdisklabel(dev, strat, lp, clp)
 	dlp = (struct disklabel *)(bp->b_un.b_addr + LABELOFFSET);
 	if (dlp->d_magic == DISKMAGIC)
 		if (!dkcksum(dlp)) {
-			bcopy(dlp, lp, LABELSIZE(dlp));
+			memcpy(lp, dlp, LABELSIZE(dlp));
 			return NULL;	/* NetBSD label found */
 		}
 
@@ -134,7 +134,7 @@ readdisklabel(dev, strat, lp, clp)
 			    dkcksum(dlp) != 0)
 				return "disk label corrupted";
 			else {
-				bcopy(dlp, lp, sizeof *lp);
+				memcpy(lp, dlp, sizeof *lp);
 				return NULL; /* Found */
 			}
 		}
@@ -234,8 +234,8 @@ writedisklabel(dev, strat, lp, clp)
 		goto ioerror;
 	
 	/* Write NetBSD disk label to second sector */
-	bzero(bp->b_data, lp->d_secsize);
-	bcopy(lp, bp->b_data, sizeof(*lp));
+	memset(bp->b_data, 0, lp->d_secsize);
+	memcpy(bp->b_data, lp, sizeof(*lp));
 	bp->b_blkno = LABELSECTOR;
 	bp->b_bcount = lp->d_secsize;
 	bp->b_cylinder = bp->b_blkno / lp->d_secpercyl;
@@ -394,7 +394,7 @@ disklabel_bsd_to_mips(lp, vh)
 #if DIAGNOSTIC
 		printf("Warning: writing MIPS compatible label\n");
 #endif
-		bzero((void *)vh, sizeof *vh);
+		memset((void *)vh, 0, sizeof *vh);
 		vh->vh_magic = MIPS_VHMAGIC;
 		vh->vh_root = 0;	/* a*/
 		vh->vh_swap = 1;	/* b*/
