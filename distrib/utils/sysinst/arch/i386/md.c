@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.76 2003/05/16 19:48:29 dsl Exp $ */
+/*	$NetBSD: md.c,v 1.77 2003/05/18 07:52:57 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -71,8 +71,9 @@ static int count_mbr_parts(struct mbr_partition *);
 static int mbr_part_above_chs(struct mbr_partition *);
 static int mbr_partstart_above_chs(struct mbr_partition *);
 static void md_upgrade_mbrtype(void);
+#if defined(__i386__)
 static char *get_bootmodel(void);
-
+#endif
 
 
 int
@@ -482,13 +483,10 @@ md_cleanup_install(void)
 	char realfrom[STRSIZE];
 	char realto[STRSIZE];
 	char cmd[STRSIZE];
-	char *bootmodel;
-
-	bootmodel = get_bootmodel();
 
 	strncpy(realfrom, target_expand("/etc/rc.conf"), STRSIZE);
 	strncpy(realto, target_expand("/etc/rc.conf.install"), STRSIZE);
-	sprintf(cmd, "sed "
+	snprintf(cmd, sizeof cmd, "sed "
 			"-e 's/rc_configured=NO/rc_configured=YES/' "
 			" < %s > %s", realfrom, realto);
 	scripting_fprintf(logfp, "%s\n", cmd);
@@ -498,22 +496,25 @@ md_cleanup_install(void)
 	
 	add_rc_conf("wscons=YES\n");
 
+#if defined(__i386__)
 	/*
 	 * For GENERIC_TINY, do not enable any extra screens or wsmux.
 	 * Otherwise, run getty on 4 VTs.
 	 */
-	if (strcmp(bootmodel, "tiny") == 0) {
+	if (strcmp(get_bootmodel(), "tiny") == 0) {
 		strncpy(realfrom, target_expand("/etc/wscons.conf"), STRSIZE);
 		strncpy(realto, target_expand("/etc/wscons.conf.install"),
 		    STRSIZE);
-		sprintf(cmd, "sed"
+		snprintf(cmd, sizeof cmd, "sed"
 			    " -e '/^screen/s/^/#/'"
 			    " -e '/^mux/s/^/#/'"
 			    " < %s > %s", realfrom, realto);
-	} else {
+	} else
+#endif
+	       {
 		strncpy(realfrom, target_expand("/etc/ttys"), STRSIZE);
 		strncpy(realto, target_expand("/etc/ttys.install"), STRSIZE);
-		sprintf(cmd, "sed "
+		snprintf(cmd, sizeof cmd, "sed "
 				"-e '/^ttyE[1-9]/s/off/on/'"
 				" < %s > %s", realfrom, realto);
 	}
@@ -621,10 +622,10 @@ mbr_partstart_above_chs(mbr_partition_t *pt)
 	return (pt[bsdpart].mbrp_start >= bcyl * bhead * bsec);
 }
 
+#if defined(__i386__)
 char *
 get_bootmodel(void)
 {
-#if defined(__i386__)
 	struct utsname ut;
 #ifdef DEBUG
 	char *envstr;
@@ -645,9 +646,9 @@ get_bootmodel(void)
 		return "laptop";
 	else if (strstr(ut.version, "PS2") != NULL)
 		return "ps2";
-#endif
 	return "";
 }
+#endif
 
 void
 md_init(void)
