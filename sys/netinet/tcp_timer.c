@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_timer.c,v 1.41 1998/07/17 22:18:49 thorpej Exp $	*/
+/*	$NetBSD: tcp_timer.c,v 1.42 1998/09/04 22:29:55 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -176,12 +176,7 @@ tcp_slowtimo()
 tpgone:
 		;
 	}
-#if NRND == 0 /* Do we need to do this when using random() ? */
 	tcp_iss_seq += TCP_ISSINCR;			/* increment iss */
-	if (tcp_compat_42)
-		if ((int)tcp_iss_seq < 0)
-			tcp_iss_seq = 0;		/* XXX */
-#endif
 	tcp_now++;					/* for timestamps */
 	if (++syn_cache_last >= tcp_syn_cache_interval) {
 		syn_cache_timer();
