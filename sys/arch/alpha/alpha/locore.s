@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.81 2000/11/19 20:08:36 sommerfeld Exp $ */
+/* $NetBSD: locore.s,v 1.82 2000/11/19 20:11:12 sommerfeld Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.81 2000/11/19 20:08:36 sommerfeld Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.82 2000/11/19 20:11:12 sommerfeld Exp $");
 
 #include "assym.h"
 
@@ -772,10 +772,12 @@ LEAF(idle, 0)
 	/* Note: GET_CURPROC clobbers v0, t0, t8...t11. */
 	GET_CURPROC
 	stq	zero, 0(v0)			/* curproc <- NULL for stats */
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
+#if defined(MULTIPROCESSOR)
 	GET_IDLE_PCB(a0)
 	SWITCH_CONTEXT
 	mov	zero,s0				/* no outgoing proc */
+#endif
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	CALL(sched_unlock_idle)			/* release sched_lock */
 #endif
 	mov	zero, a0			/* enable all interrupts */
