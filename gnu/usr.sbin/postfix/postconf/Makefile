@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2000/05/01 01:07:42 simonb Exp $
+#	$NetBSD: Makefile,v 1.3 2000/05/12 18:05:44 christos Exp $
 
 # XXX Note we aren't building ../conf/main.cf.default
 # The shipped makefiles construct it using postconf -d after building
@@ -33,3 +33,5 @@ ${GENSRCS}: ${DIST}/../global/mail_params.h
 	awk -f ${DIST}/extract.awk ${DIST}/../*/*.c
 
 .include <bsd.prog.mk>
+
+${OBJS}: ${GENSRCS}
