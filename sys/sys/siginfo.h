@@ -1,4 +1,4 @@
-/*	$NetBSD: siginfo.h,v 1.9 2003/11/01 17:59:57 jdolecek Exp $	 */
+/*	$NetBSD: siginfo.h,v 1.10 2003/12/11 18:33:03 matt Exp $	 */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -110,19 +110,19 @@ do {									\
 /* Copy the part of ksiginfo_t without the queue pointers */
 #define	KSI_COPY(fksi, tksi)						\
 do {									\
-	tksi->ksi_info = fksi->ksi_info;				\
-	tksi->ksi_flags = fksi->ksi_flags;				\
+	(tksi)->ksi_info = (fksi)->ksi_info;				\
+	(tksi)->ksi_flags = (fksi)->ksi_flags;				\
 } while (/*CONSTCOND*/0)
+
+
+/* Predicate macros to test how a ksiginfo_t was generated. */
+#define	KSI_TRAP_P(ksi)		(((ksi)->ksi_flags & KSI_TRAP) != 0)
 
 /*
  * Old-style signal handler "code" arguments were only non-zero for
  * signals caused by traps.
  */
-#define	KSI_TRAPCODE(ksi)	(((ksi)->ksi_flags & KSI_TRAP) ?	\
-							ksi->ksi_trap : 0)
-
-/* Predicate macros to test how a ksiginfo_t was generated. */
-#define	KSI_TRAP_P(ksi)		(((ksi)->ksi_flags & KSI_TRAP) != 0)
+#define	KSI_TRAPCODE(ksi)	(KSI_TRAP_P(ksi) ? (ksi)->ksi_trap : 0)
 #endif /* _KERNEL */
 
 typedef union siginfo {
