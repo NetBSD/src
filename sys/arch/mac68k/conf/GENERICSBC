@@ -1,4 +1,4 @@
-#	$NetBSD: GENERICSBC,v 1.18 2002/06/17 05:14:15 lukem Exp $
+#	$NetBSD: GENERICSBC,v 1.19 2002/06/19 03:48:31 itojun Exp $
 #
 # GENERICSBC
 
@@ -6,7 +6,7 @@ include	"arch/mac68k/conf/std.mac68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERICSBC-$Revision: 1.18 $"
+#ident 		"GENERICSBC-$Revision: 1.19 $"
 
 maxusers	16		# estimated number of users
 
@@ -238,6 +238,7 @@ mc*	at obio?			# MACE-based
 ae*	at nubus?			# DP8390-based
 sn*	at nubus?			# SONIC-based (DP83932, DP83916)
 sm*	at nubus?			# SMC 91cxx-based
+netdock*	at nubus?		# Asante NetDock, Newer Ether MicroDock
 
 nsphy*	at mii? phy ?
 ukphy*	at mii? phy ?
