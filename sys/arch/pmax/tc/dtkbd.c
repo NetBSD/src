@@ -1,4 +1,4 @@
-/*	$NetBSD: dtkbd.c,v 1.3 2003/12/23 09:39:46 ad Exp $	*/
+/*	$NetBSD: dtkbd.c,v 1.4 2005/01/08 18:48:34 mhitch Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dtkbd.c,v 1.3 2003/12/23 09:39:46 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dtkbd.c,v 1.4 2005/01/08 18:48:34 mhitch Exp $");
 
 #include "locators.h"
 
@@ -101,7 +101,7 @@ const struct wskbd_mapdata dtkbd_keymapdata = {
 };
 
 int	dtkbd_isconsole;
-int	dtkbd_map[10];
+uint8_t	dtkbd_map[10];
 int	dtkbd_maplen;
 
 int
