@@ -1,4 +1,4 @@
-/*	$NetBSD: chown.c,v 1.30 2005/03/16 02:08:52 xtraeme Exp $	*/
+/*	$NetBSD: chown.c,v 1.31 2005/03/16 02:55:10 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994, 2003
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993, 1994, 2003\n\
 #if 0
 static char sccsid[] = "@(#)chown.c	8.8 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: chown.c,v 1.30 2005/03/16 02:08:52 xtraeme Exp $");
+__RCSID("$NetBSD: chown.c,v 1.31 2005/03/16 02:55:10 xtraeme Exp $");
 #endif
 #endif /* not lint */
 
@@ -76,7 +76,7 @@ main(int argc, char **argv)
 	FTSENT *p;
 	int Hflag, Lflag, Rflag, ch, fflag, fts_options, hflag, rval, vflag;
 	char *cp;
-	int (*change_owner) __P((const char *, uid_t, gid_t));
+	int (*change_owner)(const char *, uid_t, gid_t);
 
 	(void)setlocale(LC_ALL, "");
 
