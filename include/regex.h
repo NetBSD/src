@@ -1,4 +1,4 @@
-/*	$NetBSD: regex.h,v 1.6 1998/02/02 21:07:41 perry Exp $	*/
+/*	$NetBSD: regex.h,v 1.7 1998/05/06 18:12:12 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1992 Henry Spencer.
@@ -87,6 +87,7 @@ typedef struct {
 #define	REG_EMPTY	14
 #define	REG_ASSERT	15
 #define	REG_INVARG	16
+#define	REG_ENOSYS	17
 #define	REG_ATOI	255	/* convert name to number (!) */
 #define	REG_ITOA	0400	/* convert number to name (!) */
 
