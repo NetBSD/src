@@ -1,4 +1,4 @@
-/*	$NetBSD: lmcaudio.c,v 1.20 1998/08/17 21:16:10 augustss Exp $	*/
+/*	$NetBSD: lmcaudio.c,v 1.21 1998/08/31 02:34:36 mark Exp $	*/
 
 /*
  * Copyright (c) 1996, Danny C Tsen.
@@ -15,7 +15,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by Michael L. Hitch.
+ *	This product includes software developed by the RiscBSD team.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission
  *
@@ -263,7 +263,7 @@ lmcaudio_attach(parent, self, aux)
 	/* Install the irq handler for the DMA interrupt */
 	ag.ih.ih_func = lmcaudio_intr;
 	ag.ih.ih_arg = NULL;
-	ag.ih.ih_level = IPL_NONE;
+	ag.ih.ih_level = IPL_AUDIO;
 
 	ag.intr = NULL;
 
