@@ -28,7 +28,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Header: /cvsroot/src/sys/arch/sun3/include/Attic/obio.h,v 1.9 1994/05/04 05:24:36 gwr Exp $
+ * $Id: obio.h,v 1.10 1994/09/20 16:28:00 gwr Exp $
  */
 
 /*
@@ -80,21 +80,15 @@ struct obio_cf_loc {
     int obio_level;
 };
 
-caddr_t obio_alloc __P((caddr_t, int, int));
+caddr_t obio_alloc __P((int, int));
 caddr_t obio_vm_alloc __P((int));
-void obio_print __P((caddr_t addr, int level));
-void obio_probe __P((caddr_t addr));
+void obio_print __P((int addr, int level));
+void obio_probe __P((int addr));
 
 #define OBIO_DEFAULT_PARAM(cast, arg, default) \
      (cast) (arg == -1 ? default : arg)
 
 #define OBIO_LOC(device) (struct obio_cf_loc *) device->dv_cfdata->cf_loc
 
-#ifdef KERNEL
+caddr_t obio_find_mapping(int pa, int size);
 
-extern vm_offset_t eeprom_va;
-extern vm_offset_t memerr_va;
-extern vm_offset_t zs0_va;	/* ttya, ttyb */
-extern vm_offset_t zs1_va;	/* kbd, mouse */
-
-#endif
