@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_bmap.c,v 1.19 2003/02/09 03:26:59 perseant Exp $	*/
+/*	$NetBSD: ufs_bmap.c,v 1.20 2003/03/21 15:46:32 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_bmap.c,v 1.19 2003/02/09 03:26:59 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_bmap.c,v 1.20 2003/03/21 15:46:32 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -142,7 +142,7 @@ ufs_bmaparray(vp, bn, bnp, ap, nump, runp)
 	if (bn >= 0 && bn < NDADDR) {
 		if (nump != NULL)
 			*nump = 0;
-		*bnp = blkptrtodb(ump, ufs_rw32(ip->i_ffs_db[bn],
+		*bnp = blkptrtodb(ump, (int32_t)ufs_rw32(ip->i_ffs_db[bn],
 		    UFS_MPNEEDSWAP(vp->v_mount)));
 		if (*bnp == 0)
 			*bnp = -1;
