@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.22 1998/08/22 10:55:35 scw Exp $        */
+/*	$NetBSD: pmap.c,v 1.23 1998/08/22 18:11:25 scw Exp $        */
 
 /* 
  * Copyright (c) 1991, 1993
@@ -749,7 +749,7 @@ pmap_collect_pv()
 vaddr_t
 pmap_map(va, spa, epa, prot)
 	vaddr_t va;
-	paddr_t va, spa, epa;
+	paddr_t spa, epa;
 	int prot;
 {
 
