@@ -1,4 +1,4 @@
-/*	$NetBSD: klogin.c,v 1.16 2000/08/02 05:58:35 thorpej Exp $	*/
+/*	$NetBSD: klogin.c,v 1.17 2002/11/16 04:38:45 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)klogin.c	8.3 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: klogin.c,v 1.16 2000/08/02 05:58:35 thorpej Exp $");
+__RCSID("$NetBSD: klogin.c,v 1.17 2002/11/16 04:38:45 itojun Exp $");
 #endif /* not lint */
 
 #ifdef KERBEROS
@@ -154,8 +154,7 @@ klogin(pw, instance, localhost, password)
 	if (chown(TKT_FILE, pw->pw_uid, pw->pw_gid) < 0)
 		syslog(LOG_ERR, "chown tkfile (%s): %m", TKT_FILE);
 
-	(void)strncpy(savehost, krb_get_phost(localhost), sizeof(savehost));
-	savehost[sizeof(savehost)-1] = NULL;
+	(void)strlcpy(savehost, krb_get_phost(localhost), sizeof(savehost));
 
 	/*
 	 * if the "VERIFY_SERVICE" doesn't exist in the KDC for this host,
@@ -270,9 +269,8 @@ out:
 	/* 
 	 * handle the shared memory case 
 	 */
-	/* 5 == 4 (".shm") + 1 */
-	(void)strncpy(shmidname, file, sizeof(shmidname) - 5);
-	(void)strcat(shmidname, ".shm");	/* XXX strcat is safe */
+	(void)strlcpy(shmidname, file, sizeof(shmidname));
+	(void)strlcat(shmidname, ".shm", sizeof(shmidname));
 	if (krb_shm_dest(shmidname) != KSUCCESS)
 	    return;
 #endif /* TKT_SHMEM */
