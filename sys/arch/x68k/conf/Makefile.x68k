@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.x68k,v 1.11 1997/01/30 16:03:55 oki Exp $
+#	$NetBSD: Makefile.x68k,v 1.12 1997/02/03 22:18:38 oki Exp $
 
 # Makefile for NetBSD
 #
@@ -142,8 +142,7 @@ clean:
 
 lint:
 	@lint -hbxncez -DGENERIC -Dvolatile= ${CPPFLAGS} -UKGDB \
-	    ${X68K}/x68k/Locore.c ${CFILES} ${X68K}/x68k/swapgeneric.c \
-	    ioconf.c param.c | \
+	    ${X68K}/x68k/Locore.c ${CFILES} ioconf.c param.c | \
 	    grep -v 'static function .* unused'
 
 tags:
