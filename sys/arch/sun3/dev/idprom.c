@@ -1,6 +1,6 @@
 #include "systm.h"
-#include "../dev/idprom.h"
-#include "./idprom.h"
+#include "machine/idprom.h"
+#include "idprom.h"
 
 static int idprom_init = 0;
 
@@ -16,7 +16,7 @@ int idprom_open(dev, oflags, devtype, p)
 {
     int unit,s;
     
-    unit = UNIT(dev);
+    unit = minor(dev);
     if (unit >= NIDPROM)
 	return ENXIO;
     if (!idprom_init) idprom_ok = idprom_fetch(&idprom_copy, IDPROM_VERSION);
