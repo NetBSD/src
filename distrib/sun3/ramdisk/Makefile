@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.22 2002/02/23 17:27:42 chs Exp $
+#	$NetBSD: Makefile,v 1.23 2002/03/06 12:15:20 lukem Exp $
 
 TOP=		${.CURDIR}/..
 
-# This include just sets REV=XX
+# This include just sets DISTRIBREV=XX
 .include "${TOP}/Makefile.inc"
 
 IMAGE=	ramdisk
