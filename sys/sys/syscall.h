@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.h,v 1.90 1998/09/12 10:48:52 mycroft Exp $	*/
+/*	$NetBSD: syscall.h,v 1.91 1998/09/13 04:58:22 thorpej Exp $	*/
 
 /*
  * System call numbers.
@@ -31,7 +31,7 @@
 /* syscall: "wait4" ret: "int" args: "int" "int *" "int" "struct rusage *" */
 #define	SYS_wait4	7
 
-				/* 8 is compat_43 ocreat */
+#define	SYS_compat_43_ocreat	8
 
 /* syscall: "link" ret: "int" args: "const char *" "const char *" */
 #define	SYS_link	9
@@ -61,7 +61,7 @@
 /* syscall: "getfsstat" ret: "int" args: "struct statfs *" "long" "int" */
 #define	SYS_getfsstat	18
 
-				/* 19 is compat_43 olseek */
+#define	SYS_compat_43_olseek	19
 
 /* syscall: "getpid" ret: "pid_t" args: */
 #define	SYS_getpid	20
@@ -117,12 +117,12 @@
 /* syscall: "kill" ret: "int" args: "int" "int" */
 #define	SYS_kill	37
 
-				/* 38 is compat_43 stat43 */
+#define	SYS_compat_43_stat43	38
 
 /* syscall: "getppid" ret: "pid_t" args: */
 #define	SYS_getppid	39
 
-				/* 40 is compat_43 lstat43 */
+#define	SYS_compat_43_lstat43	40
 
 /* syscall: "dup" ret: "int" args: "int" */
 #define	SYS_dup	41
@@ -139,12 +139,12 @@
 /* syscall: "ktrace" ret: "int" args: "const char *" "int" "int" "int" */
 #define	SYS_ktrace	45
 
-				/* 46 is compat_13 sigaction13 */
+#define	SYS_compat_13_sigaction13	46
 
 /* syscall: "getgid" ret: "gid_t" args: */
 #define	SYS_getgid	47
 
-				/* 48 is compat_13 sigprocmask13 */
+#define	SYS_compat_13_sigprocmask13	48
 
 /* syscall: "__getlogin" ret: "int" args: "char *" "u_int" */
 #define	SYS___getlogin	49
@@ -155,14 +155,14 @@
 /* syscall: "acct" ret: "int" args: "const char *" */
 #define	SYS_acct	51
 
-				/* 52 is compat_13 sigpending13 */
+#define	SYS_compat_13_sigpending13	52
 
-				/* 53 is compat_13 sigaltstack13 */
+#define	SYS_compat_13_sigaltstack13	53
 
 /* syscall: "ioctl" ret: "int" args: "int" "u_long" "..." */
 #define	SYS_ioctl	54
 
-				/* 55 is compat_12 oreboot */
+#define	SYS_compat_12_oreboot	55
 
 /* syscall: "revoke" ret: "int" args: "const char *" */
 #define	SYS_revoke	56
@@ -182,13 +182,13 @@
 /* syscall: "chroot" ret: "int" args: "const char *" */
 #define	SYS_chroot	61
 
-				/* 62 is compat_43 fstat43 */
+#define	SYS_compat_43_fstat43	62
 
-				/* 63 is compat_43 ogetkerninfo */
+#define	SYS_compat_43_ogetkerninfo	63
 
-				/* 64 is compat_43 ogetpagesize */
+#define	SYS_compat_43_ogetpagesize	64
 
-				/* 65 is compat_12 msync */
+#define	SYS_compat_12_msync	65
 
 /* syscall: "vfork" ret: "int" args: */
 #define	SYS_vfork	66
@@ -201,7 +201,7 @@
 /* syscall: "sstk" ret: "int" args: "int" */
 #define	SYS_sstk	70
 
-				/* 71 is compat_43 ommap */
+#define	SYS_compat_43_ommap	71
 
 /* syscall: "vadvise" ret: "int" args: "int" */
 #define	SYS_vadvise	72
@@ -235,18 +235,18 @@
 /* syscall: "setitimer" ret: "int" args: "int" "const struct itimerval *" "struct itimerval *" */
 #define	SYS_setitimer	83
 
-				/* 84 is compat_43 owait */
+#define	SYS_compat_43_owait	84
 
-				/* 85 is compat_12 oswapon */
+#define	SYS_compat_12_oswapon	85
 
 /* syscall: "getitimer" ret: "int" args: "int" "struct itimerval *" */
 #define	SYS_getitimer	86
 
-				/* 87 is compat_43 ogethostname */
+#define	SYS_compat_43_ogethostname	87
 
-				/* 88 is compat_43 osethostname */
+#define	SYS_compat_43_osethostname	88
 
-				/* 89 is compat_43 ogetdtablesize */
+#define	SYS_compat_43_ogetdtablesize	89
 
 /* syscall: "dup2" ret: "int" args: "int" "int" */
 #define	SYS_dup2	90
@@ -269,16 +269,16 @@
 /* syscall: "connect" ret: "int" args: "int" "const struct sockaddr *" "int" */
 #define	SYS_connect	98
 
-				/* 99 is compat_43 oaccept */
+#define	SYS_compat_43_oaccept	99
 
 /* syscall: "getpriority" ret: "int" args: "int" "int" */
 #define	SYS_getpriority	100
 
-				/* 101 is compat_43 osend */
+#define	SYS_compat_43_osend	101
 
-				/* 102 is compat_43 orecv */
+#define	SYS_compat_43_orecv	102
 
-				/* 103 is compat_13 sigreturn13 */
+#define	SYS_compat_13_sigreturn13	103
 
 /* syscall: "bind" ret: "int" args: "int" "const struct sockaddr *" "int" */
 #define	SYS_bind	104
@@ -290,19 +290,19 @@
 #define	SYS_listen	106
 
 				/* 107 is obsolete vtimes */
-				/* 108 is compat_43 osigvec */
+#define	SYS_compat_43_osigvec	108
 
-				/* 109 is compat_43 osigblock */
+#define	SYS_compat_43_osigblock	109
 
-				/* 110 is compat_43 osigsetmask */
+#define	SYS_compat_43_osigsetmask	110
 
-				/* 111 is compat_13 sigsuspend13 */
+#define	SYS_compat_13_sigsuspend13	111
 
-				/* 112 is compat_43 osigstack */
+#define	SYS_compat_43_osigstack	112
 
-				/* 113 is compat_43 orecvmsg */
+#define	SYS_compat_43_orecvmsg	113
 
-				/* 114 is compat_43 osendmsg */
+#define	SYS_compat_43_osendmsg	114
 
 /* syscall: "vtrace" ret: "int" args: "int" "int" */
 #define	SYS_vtrace	115
@@ -333,7 +333,7 @@
 /* syscall: "fchmod" ret: "int" args: "int" "mode_t" */
 #define	SYS_fchmod	124
 
-				/* 125 is compat_43 orecvfrom */
+#define	SYS_compat_43_orecvfrom	125
 
 /* syscall: "setreuid" ret: "int" args: "uid_t" "uid_t" */
 #define	SYS_setreuid	126
@@ -344,9 +344,9 @@
 /* syscall: "rename" ret: "int" args: "const char *" "const char *" */
 #define	SYS_rename	128
 
-				/* 129 is compat_43 otruncate */
+#define	SYS_compat_43_otruncate	129
 
-				/* 130 is compat_43 oftruncate */
+#define	SYS_compat_43_oftruncate	130
 
 /* syscall: "flock" ret: "int" args: "int" "int" */
 #define	SYS_flock	131
@@ -376,17 +376,17 @@
 /* syscall: "adjtime" ret: "int" args: "const struct timeval *" "struct timeval *" */
 #define	SYS_adjtime	140
 
-				/* 141 is compat_43 ogetpeername */
+#define	SYS_compat_43_ogetpeername	141
 
-				/* 142 is compat_43 ogethostid */
+#define	SYS_compat_43_ogethostid	142
 
-				/* 143 is compat_43 osethostid */
+#define	SYS_compat_43_osethostid	143
 
-				/* 144 is compat_43 ogetrlimit */
+#define	SYS_compat_43_ogetrlimit	144
 
-				/* 145 is compat_43 osetrlimit */
+#define	SYS_compat_43_osetrlimit	145
 
-				/* 146 is compat_43 okillpg */
+#define	SYS_compat_43_okillpg	146
 
 /* syscall: "setsid" ret: "int" args: */
 #define	SYS_setsid	147
@@ -394,14 +394,14 @@
 /* syscall: "quotactl" ret: "int" args: "const char *" "int" "int" "caddr_t" */
 #define	SYS_quotactl	148
 
-				/* 149 is compat_43 oquota */
+#define	SYS_compat_43_oquota	149
 
-				/* 150 is compat_43 ogetsockname */
+#define	SYS_compat_43_ogetsockname	150
 
 /* syscall: "nfssvc" ret: "int" args: "int" "void *" */
 #define	SYS_nfssvc	155
 
-				/* 156 is compat_43 ogetdirentries */
+#define	SYS_compat_43_ogetdirentries	156
 
 /* syscall: "statfs" ret: "int" args: "const char *" "struct statfs *" */
 #define	SYS_statfs	157
@@ -412,20 +412,20 @@
 /* syscall: "getfh" ret: "int" args: "const char *" "fhandle_t *" */
 #define	SYS_getfh	161
 
-				/* 162 is compat_09 ogetdomainname */
+#define	SYS_compat_09_ogetdomainname	162
 
-				/* 163 is compat_09 osetdomainname */
+#define	SYS_compat_09_osetdomainname	163
 
-				/* 164 is compat_09 ouname */
+#define	SYS_compat_09_ouname	164
 
 /* syscall: "sysarch" ret: "int" args: "int" "void *" */
 #define	SYS_sysarch	165
 
-				/* 169 is compat_10 osemsys */
+#define	SYS_compat_10_osemsys	169
 
-				/* 170 is compat_10 omsgsys */
+#define	SYS_compat_10_omsgsys	170
 
-				/* 171 is compat_10 oshmsys */
+#define	SYS_compat_10_oshmsys	171
 
 /* syscall: "pread" ret: "ssize_t" args: "int" "void *" "size_t" "int" "off_t" */
 #define	SYS_pread	173
@@ -460,11 +460,11 @@
 /* syscall: "lfs_segwait" ret: "int" args: "fsid_t *" "struct timeval *" */
 #define	SYS_lfs_segwait	187
 
-				/* 188 is compat_12 stat12 */
+#define	SYS_compat_12_stat12	188
 
-				/* 189 is compat_12 fstat12 */
+#define	SYS_compat_12_fstat12	189
 
-				/* 190 is compat_12 lstat12 */
+#define	SYS_compat_12_lstat12	190
 
 /* syscall: "pathconf" ret: "long" args: "const char *" "int" */
 #define	SYS_pathconf	191
@@ -478,7 +478,7 @@
 /* syscall: "setrlimit" ret: "int" args: "int" "const struct rlimit *" */
 #define	SYS_setrlimit	195
 
-				/* 196 is compat_12 getdirentries */
+#define	SYS_compat_12_getdirentries	196
 
 /* syscall: "mmap" ret: "void *" args: "void *" "size_t" "int" "int" "int" "long" "off_t" */
 #define	SYS_mmap	197
