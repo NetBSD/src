@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: ntpd,v 1.6.2.1 2002/06/15 02:13:47 lukem Exp $
+# $NetBSD: ntpd,v 1.6.2.2 2002/06/18 14:23:25 lukem Exp $
 #
 
 # PROVIDE: ntpd
@@ -31,7 +31,9 @@ ntpd_precmd()
 	# exists and ntpd isn't running at this point (unless forcestart
 	# is used).
 	#
-	# This requires "pseudo-device clockctl" compiled in to kernel.
+	# Before enabling ntpd_chrootdir, ensure that:
+	#	- The kernel has "pseudo-device clockctl" compiled in
+	#	- /dev/clockctl is present
 	#
 	if [ ! -c "${ntpd_chrootdir}/dev/clockctl" ]; then
 		rm -f "${ntpd_chrootdir}/dev/clockctl"
