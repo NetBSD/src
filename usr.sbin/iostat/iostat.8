@@ -1,4 +1,4 @@
-.\"	$NetBSD: iostat.8,v 1.11 1997/03/08 14:29:58 mouse Exp $
+.\"	$NetBSD: iostat.8,v 1.12 1997/10/17 09:03:53 lukem Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -42,7 +42,7 @@
 .Tn I/O
 statistics
 .Sh SYNOPSIS
-.Nm iostat
+.Nm
 .Op Fl CdDIT
 .Op Fl c Ar count
 .Op Fl M Ar core
@@ -50,11 +50,11 @@ statistics
 .Op Fl w Ar wait
 .Op Ar drives
 .Sh DESCRIPTION
-.Nm Iostat
+.Nm
 displays kernel
 .Tn I/O
 statistics on terminal, disk and cpu operations.  By default,
-.Nm iostat
+.Nm
 displays one line of statistics averaged over the machine's run time.
 The use of 
 .Fl c
@@ -64,7 +64,7 @@ period.
 The
 .Fl I
 option causes
-.Nm iostat
+.Nm
 to print raw, unaveraged values.
 .Pp
 The options are as follows:
@@ -120,7 +120,7 @@ If no repeat
 is specified, the default is infinity.
 .El
 .Pp
-.Nm Iostat
+.Nm
 displays its information in the following format:
 .Bl -tag -width flag
 .It tty
@@ -134,10 +134,10 @@ characters written to terminals
 Disk operations. 
 The header of the field is the disk name and unit number.
 If more than four disk drives are configured in the system,
-.Nm iostat
+.Nm
 displays only the first four drives.
 To force
-.Nm iostat
+.Nm
 to display specific drives, their names may be supplied on the command
 line.
 .Pp
