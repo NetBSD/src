@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.190 2000/01/05 00:27:25 chopps Exp $
+# $NetBSD: mi,v 1.191 2000/01/16 10:46:56 augustss Exp $
 ./usr/share/info/am-utils.info
 ./usr/share/info/awk.info
 ./usr/share/info/bfd.info
@@ -359,6 +359,7 @@
 ./usr/share/man/cat4/atalk.0
 ./usr/share/man/cat4/atapi.0
 ./usr/share/man/cat4/audio.0
+./usr/share/man/cat4/aue.0
 ./usr/share/man/cat4/awi.0
 ./usr/share/man/cat4/bha.0
 ./usr/share/man/cat4/boca.0
@@ -373,6 +374,7 @@
 ./usr/share/man/cat4/clcs.0
 ./usr/share/man/cat4/cltp.0
 ./usr/share/man/cat4/cnw.0
+./usr/share/man/cat4/cue.0
 ./usr/share/man/cat4/cy.0
 ./usr/share/man/cat4/ddb.0
 ./usr/share/man/cat4/drum.0
@@ -423,6 +425,7 @@
 ./usr/share/man/cat4/iso.0
 ./usr/share/man/cat4/isp.0
 ./usr/share/man/cat4/iy.0
+./usr/share/man/cat4/kue.0
 ./usr/share/man/cat4/lc.0
 ./usr/share/man/cat4/le.0
 ./usr/share/man/cat4/lkm.0
@@ -1280,6 +1283,7 @@
 ./usr/share/man/man4/atalk.4
 ./usr/share/man/man4/atapi.4
 ./usr/share/man/man4/audio.4
+./usr/share/man/man4/aue.4
 ./usr/share/man/man4/awi.4
 ./usr/share/man/man4/bha.4
 ./usr/share/man/man4/boca.4
@@ -1294,6 +1298,7 @@
 ./usr/share/man/man4/clcs.4
 ./usr/share/man/man4/cltp.4
 ./usr/share/man/man4/cnw.4
+./usr/share/man/man4/cue.4
 ./usr/share/man/man4/cy.4
 ./usr/share/man/man4/ddb.4
 ./usr/share/man/man4/drum.4
@@ -1342,6 +1347,7 @@
 ./usr/share/man/man4/iso.4
 ./usr/share/man/man4/isp.4
 ./usr/share/man/man4/iy.4
+./usr/share/man/man4/kue.4
 ./usr/share/man/man4/lc.4
 ./usr/share/man/man4/le.4
 ./usr/share/man/man4/lkm.4
