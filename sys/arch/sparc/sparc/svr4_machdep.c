@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.3 1995/07/04 10:29:22 pk Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.4 1995/07/04 22:57:33 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -50,17 +50,10 @@
 #include <machine/cpu.h>
 #include <machine/psl.h>
 #include <machine/reg.h>
+#include <machine/trap.h>
 #include <machine/svr4_machdep.h>
 
 static void svr4_getsiginfo __P((union svr4_siginfo *, int, u_long, caddr_t));
-
-#ifdef DEBUG
-extern int sigdebug;
-extern int sigpid;
-#define SDB_FOLLOW	0x01		/* XXX: dup from machdep.c */
-#define SDB_KSTACK	0x02
-#define SDB_FPSTATE	0x04
-#endif
 
 void
 svr4_getcontext(p, uc, mask, oonstack)
@@ -210,6 +203,9 @@ svr4_setcontext(p, uc)
 	return EJUSTRETURN;
 }
 
+/*
+ * map the trap code into the svr4 siginfo as best we can
+ */
 static void
 svr4_getsiginfo(si, sig, code, addr)
 	union svr4_siginfo	*si;
@@ -220,10 +216,111 @@ svr4_getsiginfo(si, sig, code, addr)
 	si->si_signo = bsd_to_svr4_signum(sig);
 	si->si_errno = 0;
 	si->si_addr  = addr;
-	si->si_code  = code;	/* XXX */
-	si->si_trap  = 1;	/* XXX */
-}
+	/*
+	 * we can do this direct map as they are the same as all sparc
+	 * architectures.
+	 */
+	si->si_trap = code;
 
+	switch (code) {
+	case T_TEXTFAULT:
+		si->si_code = SVR4_BUS_ADRALN;
+		break;
+
+	case T_ILLINST:
+		si->si_code = SVR4_ILL_ILLOPC;
+		break;
+
+	case T_PRIVINST:
+		si->si_code = SVR4_ILL_PRVOPC;
+		break;
+
+	case T_FPDISABLED:
+		si->si_code = SVR4_FPE_FLTINV;
+		break;
+
+	case T_ALIGN:
+		si->si_code = SVR4_BUS_ADRALN;
+		break;
+
+	case T_FPE:
+		si->si_code = SVR4_FPE_FLTINV;
+		break;
+
+	case T_DATAFAULT:
+		si->si_code = SVR4_BUS_ADRALN;
+		break;
+
+	case T_TAGOF:
+		si->si_code = SVR4_EMT_TAGOVF;
+		break;
+
+	case T_CPDISABLED:
+		si->si_code = SVR4_FPE_FLTINV;
+		break;
+
+	case T_CPEXCEPTION:
+		si->si_code = SVR4_FPE_FLTINV;
+		break;
+
+	case T_DIV0:
+		si->si_code = SVR4_FPE_INTDIV;
+		break;
+
+	case T_INTOF:
+		si->si_code = SVR4_FPE_INTOVF;
+		break;
+
+	case T_BREAKPOINT:
+		si->si_code = SVR4_TRAP_BRKPT;
+		break;
+
+	/*
+	 * XXX - hardware traps with unknown code
+	 */
+	case T_WINOF:
+	case T_WINUF:
+	case T_L1INT:
+	case T_L2INT:
+	case T_L3INT:
+	case T_L4INT:
+	case T_L5INT:
+	case T_L6INT:
+	case T_L7INT:
+	case T_L8INT:
+	case T_L9INT:
+	case T_L10INT:
+	case T_L11INT:
+	case T_L12INT:
+	case T_L13INT:
+	case T_L14INT:
+	case T_L15INT:
+		si->si_code = 0;
+		break;
+
+	/*
+	 * XXX - software traps with unknown code
+	 */
+	case T_SUN_SYSCALL:
+	case T_FLUSHWIN:
+	case T_CLEANWIN:
+	case T_RANGECHECK:
+	case T_FIXALIGN:
+	case T_SVR4_SYSCALL:
+	case T_BSD_SYSCALL:
+	case T_KGDB_EXEC:
+		si->si_code = 0;
+		break;
+
+	default:
+		si->si_code = 0;
+#ifdef DIAGNOSTIC
+		printf("sig %d code %d\n", sig, code);
+		panic("svr4_getsiginfo");
+#endif
+		break;
+	}
+}
 
 /*
  * Send an interrupt to process.
@@ -300,12 +397,68 @@ svr4_sendsig(catcher, sig, mask, code)
 	 * Build context to run handler in.
 	 */
 	addr = (int)PS_STRINGS - (svr4_esigcode - svr4_sigcode);
-	tf->tf_global[1] = (int) catcher;
+	tf->tf_global[1] = (int)catcher;
 	tf->tf_pc = addr;
 	tf->tf_npc = addr + 4;
 	tf->tf_out[6] = newsp;
 }
 
+
+#define	ADVANCE (n = tf->tf_npc, tf->tf_pc = n, tf->tf_npc = n + 4)
+int
+svr4_trap(type, p)
+	int	type;
+	struct proc *p;
+{
+	int n;
+	struct trapframe *tf = p->p_md.md_tf;
+	extern struct emul emul_svr4;
+
+	if (p->p_emul != &emul_svr4)
+		return 0;
+
+	switch (type) {
+	case T_SVR4_GETCC:
+		uprintf("T_SVR4_GETCC\n");
+		break;
+
+	case T_SVR4_SETCC:
+		uprintf("T_SVR4_SETCC\n");
+		break;
+
+	case T_SVR4_GETPSR:
+		tf->tf_out[0] = tf->tf_psr;
+		break;
+
+	case T_SVR4_SETPSR:
+		uprintf("T_SVR4_SETPSR\n");
+		break;
+
+	case T_SVR4_GETHRTIME:
+		uprintf("T_SVR4_GETHRTIME\n");
+		break;
+
+	case T_SVR4_GETHRVTIME:
+		uprintf("T_SVR4_GETHRVTIME\n");
+		break;
+
+	case T_SVR4_GETHRESTIME:
+		{
+			struct timeval  tv;
+
+			microtime(&tv);
+			tf->tf_out[0] = tv.tv_sec;
+			tf->tf_out[1] = tv.tv_usec;
+		}
+		break;
+
+	default:
+		return 0;
+	}
+
+	ADVANCE;
+	return 1;
+}
 
 /*
  */
@@ -317,7 +470,7 @@ svr4_sysarch(p, uap, retval)
 {
 	switch (SCARG(uap, op)) {
 	default:
-		printf("svr4_sysarch(%d)\n", SCARG(uap, op));
+		printf("(sparc) svr4_sysarch(%d)\n", SCARG(uap, op));
 		return EINVAL;
 	}
 }
