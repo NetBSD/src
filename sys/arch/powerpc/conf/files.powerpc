@@ -1,9 +1,10 @@
-#	$NetBSD: files.powerpc,v 1.34 2002/07/24 04:59:32 chs Exp $
+#	$NetBSD: files.powerpc,v 1.35 2002/08/18 17:17:59 matt Exp $
 
 defflag	opt_altivec.h	ALTIVEC K_ALTIVEC
 defflag	opt_openpic.h	OPENPIC OPENPIC_SERIAL_MODE
 defparam		L2CR_CONFIG
 defflag	opt_ppcarch.h	PPC_MPC6XX PPC_MPC8XX PPC_IBM4XX
+defflag opt_pmap.h	PMAPDEBUG PMAPCHECK PMAPCOUNTERS
 
 file	arch/powerpc/powerpc/Locore.c
 file	arch/powerpc/powerpc/copystr.c
