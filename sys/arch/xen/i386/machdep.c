@@ -1,5 +1,5 @@
-/*	$NetBSD: machdep.c,v 1.11 2004/12/14 18:07:42 tls Exp $	*/
-/*	NetBSD: machdep.c,v 1.552 2004/03/24 15:34:49 atatat Exp 	*/
+/*	$NetBSD: machdep.c,v 1.12 2005/03/09 22:39:20 bouyer Exp $	*/
+/*	NetBSD: machdep.c,v 1.559 2004/07/22 15:12:46 mycroft Exp 	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.11 2004/12/14 18:07:42 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.12 2005/03/09 22:39:20 bouyer Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -145,6 +145,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.11 2004/12/14 18:07:42 tls Exp $");
 #include <machine/specialreg.h>
 #include <machine/bootinfo.h>
 #include <machine/mtrr.h>
+#include <machine/evtchn.h>
 
 #include <dev/isa/isareg.h>
 #include <machine/isa_machdep.h>
@@ -205,6 +206,7 @@ void ddb_trap_hook(int);
 /* #define	XENDEBUG_LOW */
 
 #ifdef XENDEBUG
+extern void printk(char *, ...);
 #define	XENPRINTF(x) printf x
 #define	XENPRINTK(x) printk x
 #else
@@ -461,7 +463,7 @@ i386_switch_context(struct pcb *new)
 
 	if (xen_start_info.flags & SIF_PRIVILEGED) {
 		op.cmd = DOM0_IOPL;
-		op.u.iopl.domain = xen_start_info.dom_id;
+		op.u.iopl.domain = DOMID_SELF;
 		op.u.iopl.iopl = new->pcb_tss.tss_ioopt & SEL_RPL; /* i/o pl */
 		HYPERVISOR_dom0_op(&op);
 	}
@@ -544,10 +546,12 @@ sysctl_machdep_diskinfo(SYSCTLFN_ARGS)
 	struct sysctlnode node;
 
 	node = *rnode;
+	if (!x86_alldisks)
+		return(EOPNOTSUPP);
 	node.sysctl_data = x86_alldisks;
 	node.sysctl_size = sizeof(struct disklist) +
 	    (x86_ndisks - 1) * sizeof(struct nativedisk_info);
-        return (sysctl_lookup(SYSCTLFN_CALL(&node)));
+	return (sysctl_lookup(SYSCTLFN_CALL(&node)));
 }
 
 /*
@@ -846,15 +850,14 @@ haltsys:
 		 * RB_POWERDOWN implies RB_HALT... fall into it...
 		 */
 #endif
+		HYPERVISOR_shutdown();
 	}
-#if 0
-	if (howto & RB_HALT) {
-#endif
-		printf("\n");
-		printf("The guest operating system has halted.\n");
-		printf("To reboot, recreate this Xen domain.\n\n");
 
-#if 0
+	if (howto & RB_HALT) {
+		printf("\n");
+		printf("The operating system has halted.\n");
+		printf("Please press any key to reboot.\n\n");
+
 #ifdef BEEP_ONHALT
 		{
 			int c;
@@ -879,9 +882,8 @@ haltsys:
 	}
 
 	printf("rebooting...\n");
-#endif
 	if (cpureset_delay > 0)
-		delay(cpureset_delay * 1000);	/* XXX not nice under Xen! */
+		delay(cpureset_delay * 1000);
 	cpu_reset();
 	for(;;) ;
 	/*NOTREACHED*/
@@ -958,7 +960,7 @@ cpu_dump()
 	/*
 	 * Add the machine-dependent header info.
 	 */
-	cpuhdrp->pdppaddr = PTDpaddr;
+	cpuhdrp->pdppaddr = PDPpaddr;
 	cpuhdrp->nmemsegs = mem_cluster_cnt;
 
 	/*
@@ -1035,7 +1037,7 @@ reserve_dumppages(vaddr_t p)
 void
 dumpsys()
 {
-	u_long totalbytesleft, bytes, i, n, memseg;
+	u_long totalbytesleft, bytes, i, n, m, memseg;
 	u_long maddr;
 	int psize;
 	daddr_t blkno;
@@ -1101,8 +1103,9 @@ dumpsys()
 			if (n > BYTES_PER_DUMP)
 				n = BYTES_PER_DUMP;
 
-			(void) pmap_map(dumpspace, maddr, maddr + n,
-			    VM_PROT_READ);
+			for (m = 0; m < n; m += NBPG)
+				pmap_kenter_pa(dumpspace + m, maddr + m,
+				    VM_PROT_READ);
 
 			error = (*dump)(dumpdev, blkno, (caddr_t)dumpspace, n);
 			if (error)
@@ -1477,7 +1480,7 @@ init386(paddr_t first_avail)
 
 	XENPRINTK(("proc0paddr %p pcb %p first_avail %p\n",
 	    proc0paddr, cpu_info_primary.ci_curpcb, (void *)first_avail));
-	XENPRINTK(("ptdpaddr %p atdevbase %p\n", (void *)PTDpaddr,
+	XENPRINTK(("ptdpaddr %p atdevbase %p\n", (void *)PDPpaddr,
 		      (void *)atdevbase));
 
 	x86_bus_space_init();
@@ -2061,7 +2064,6 @@ init386(paddr_t first_avail)
 #if NKSYMS || defined(DDB) || defined(LKM)
 	{
 		extern int end;
-		extern int *esym;
 		struct btinfo_symtab *symtab;
 
 #ifdef DDB
@@ -2077,7 +2079,10 @@ init386(paddr_t first_avail)
 			    (int *)symtab->esym);
 		}
 		else
-			ksyms_init(*(int *)&end, ((int *)&end) + 1, esym);
+			ksyms_init(*(int *)&end, ((int *)&end) + 1,
+				   xen_start_info.mod_start ?
+				   (void *)xen_start_info.mod_start :
+				   (void *)xen_start_info.mfn_list);
 	}
 #endif
 #ifdef DDB
@@ -2104,7 +2109,9 @@ init386(paddr_t first_avail)
 	mca_busprobe();
 #endif
 
-#if !defined(XEN)
+#if defined(XEN)
+	events_default_setup();
+#else
 	intr_default_setup();
 #endif
 
@@ -2259,7 +2266,7 @@ cpu_reset()
 	delay(100000);
 #endif
 
-	HYPERVISOR_exit();
+	HYPERVISOR_reboot();
 
 	for (;;);
 }
@@ -2551,6 +2558,9 @@ ddb_trap_hook(int where)
 
 	db_stack_trace_print((db_expr_t) db_dot, FALSE, 65535,
 	    "", db_printf);
+#ifdef DEBUG
+	db_show_regs((db_expr_t) db_dot, FALSE, 65535, "");
+#endif
 }
 
 #endif /* DDB || KGDB */

@@ -1,5 +1,5 @@
-/*	$NetBSD: spl.S,v 1.2 2004/05/07 13:52:37 cl Exp $	*/
-/*	NetBSD: spl.S,v 1.8 2004/02/20 17:35:01 yamt Exp 	*/
+/*	$NetBSD: spl.S,v 1.3 2005/03/09 22:39:20 bouyer Exp $	*/
+/*	NetBSD: spl.S,v 1.11 2004/02/20 17:35:01 yamt Exp 	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -92,29 +92,28 @@ _C_LABEL(splx):
  * (see pmap_tlb_shootnow).
  */
 IDTVEC(spllower)
-#ifdef DDB
+#if defined(DDB) || defined(GPROF)
 	pushl	%ebp
 	movl	%esp,%ebp
-#endif
+	MCOUNT_ASM
+#endif /* defined(DDB) || defined(GPROF) */
 	pushl	%ebx
 	pushl	%esi
 	pushl	%edi
 	pushl	%ecx
-#ifdef DDB
+#if defined(DDB) || defined(GPROF)
 	movl	8(%ebp),%ebx
-#else
+#else /* defined(DDB) || defined(GPROF) */
 	movl	16(%esp),%ebx
-#endif
+#endif /* defined(DDB) || defined(GPROF) */
 	movl	$1f,%esi		# address to resume loop at
 1:	movl	%ebx,%eax		# get cpl
 	movl	CPUVAR(IUNMASK)(,%eax,4),%eax
 	CLI(%ecx)
 	andl	CPUVAR(IPENDING),%eax		# any non-masked bits left?
 	jz	2f
-	STI(%ecx)
 	bsrl	%eax,%eax
 	btrl	%eax,CPUVAR(IPENDING)
-	jnc	1b
 	movl	CPUVAR(ISOURCES)(,%eax,4),%eax
 	jmp	*IS_RECURSE(%eax)
 2:
@@ -128,9 +127,9 @@ IDTVEC(spllower)
 	popl	%edi
 	popl	%esi
 	popl	%ebx
-#ifdef DDB
+#if defined(DDB) || defined(GPROF)
 	leave
-#endif
+#endif /* defined(DDB) || defined(GPROF) */
 	ret
 
 /*
@@ -151,10 +150,8 @@ IDTVEC(doreti)
 	CLI(%ecx)
 	andl	CPUVAR(IPENDING),%eax
 	jz	2f
-	STI(%ecx)
 	bsrl    %eax,%eax               # slow, but not worth optimizing
 	btrl    %eax,CPUVAR(IPENDING)
-	jnc     1b			# some intr cleared the in-memory bit
 	movl	CPUVAR(ISOURCES)(,%eax, 4),%eax
 	jmp	*IS_RESUME(%eax)
 2:	/* Check for ASTs on exit to user mode. */
