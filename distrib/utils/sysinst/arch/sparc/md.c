@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.8.2.1 1999/04/19 15:19:30 perry Exp $	*/
+/*	$NetBSD: md.c,v 1.8.2.2 1999/04/26 16:22:48 perry Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -113,7 +113,7 @@ md_get_info()
 int
 md_pre_disklabel()
 {
-	return 1;
+	return 0;
 }
 
 /*
@@ -133,15 +133,13 @@ int	md_post_disklabel (void)
  *
  * On the sparc, we use this opportunity to install the boot blocks.
  */
-void
+int
 md_post_newfs()
 {
-
-	printf(msg_string(MSG_dobootblks), diskdev);
-	if (run_prog(0, 1, NULL, "/sbin/disklabel -W %s", diskdev) != 0)
-		return 0;
-	run_prog(0, 1, NULL, "/usr/mdec/binstall ffs /mnt") ;
-	return 0;
+	/* boot blocks ... */
+	msg_display(MSG_dobootblks, diskdev);
+	return (run_prog(0, 1, NULL, "/sbin/disklabel -W %s", diskdev) ||
+		run_prog(0, 1, NULL, "/usr/mdec/binstall ffs /mnt"));
 }
 
 /*
