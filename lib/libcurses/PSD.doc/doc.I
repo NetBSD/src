@@ -29,7 +29,8 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	@(#)doc.I	8.1 (Berkeley) 6/4/93
+.\"	from: @(#)doc.I	8.1 (Berkeley) 6/4/93
+.\"	$Id: doc.I,v 1.2 1993/11/09 04:09:25 cgd Exp $
 .\"
 .Ds
 .Fd addch ch \*m
