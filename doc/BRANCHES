@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.14 2004/11/15 10:31:50 rtr Exp $
+#	$NetBSD: BRANCHES,v 1.15 2004/12/07 11:06:02 rtr Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -617,6 +617,7 @@ Maintainer:	Tyler R. Retzlaff <rtr@NetBSD.org>
 Scope:		x11
 		distrib/sets/lists
 		share/mk/bsd.x11.mk
+		share/mk/bsd.own.mk
 		etc/mtree/NetBSD.dist
 Notes:		Requires parts of xsrc/xfree (HEAD)
 		xsrc/local, xsrc/xfree/xc/programs/Xserver/hw/netbsd
