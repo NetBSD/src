@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.7 2002/08/02 00:10:40 christos Exp $	*/
+/*	$NetBSD: extern.h,v 1.8 2002/09/12 01:31:41 kim Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -42,6 +42,7 @@ extern DB *db;				/* Database. */
 extern int lflag;
 extern int oflag;
 extern int gflag;
+extern int eightflag;
 extern int pplan;
 
 void	 enter_lastlog __P((PERSON *));
