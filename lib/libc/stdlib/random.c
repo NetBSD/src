@@ -1,4 +1,4 @@
-/*	$NetBSD: random.c,v 1.20 2002/01/08 02:11:39 thorpej Exp $	*/
+/*	$NetBSD: random.c,v 1.21 2003/01/18 17:20:04 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)random.c	8.2 (Berkeley) 5/19/95";
 #else
-__RCSID("$NetBSD: random.c,v 1.20 2002/01/08 02:11:39 thorpej Exp $");
+__RCSID("$NetBSD: random.c,v 1.21 2003/01/18 17:20:04 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -59,7 +59,7 @@ __weak_alias(srandom,_srandom)
 static void srandom_unlocked __P((unsigned int));
 static long random_unlocked __P((void));
 
-#ifdef _REENT
+#ifdef _REENTRANT
 static mutex_t random_mutex = MUTEX_INITIALIZER;
 #endif
 
