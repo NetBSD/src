@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.108.4.1 2003/08/24 09:33:27 tron Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.108.4.2 2003/08/26 14:38:01 tron Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.108.4.1 2003/08/24 09:33:27 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.108.4.2 2003/08/26 14:38:01 tron Exp $");
 
 #include "opt_ddb.h"
 #include "opt_insecure.h"
@@ -681,7 +681,6 @@ proc_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
     void *newp, size_t newlen, struct proc *p)
 {
 	struct proc *ptmp = NULL;
-	const struct proclist_desc *pd;
 	int error = 0;
 	struct rlimit alim;
 	struct plimit *newplim;
@@ -693,23 +692,9 @@ proc_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 
 	if (name[0] == PROC_CURPROC) {
 		ptmp = p;
+	} else if ((ptmp = pfind((pid_t)name[0])) == NULL) {
+		return (ESRCH);
 	} else {
-		proclist_lock_read();
-		for (pd = proclists; pd->pd_list != NULL; pd++) {
-			for (ptmp = LIST_FIRST(pd->pd_list); ptmp != NULL;
-			    ptmp = LIST_NEXT(ptmp, p_list)) {
-				/* Skip embryonic processes. */
-				if (ptmp->p_stat == SIDL)
-					continue;
-				if (ptmp->p_pid == (pid_t)name[0])
-					break;
-			}
-			if (ptmp != NULL)
-				break;
-		}
-		proclist_unlock_read();
-		if (ptmp == NULL)
-			return(ESRCH);
 		if (p->p_ucred->cr_uid != 0) {
 			if(p->p_cred->p_ruid != ptmp->p_cred->p_ruid ||
 			    p->p_cred->p_ruid != ptmp->p_cred->p_svuid)
