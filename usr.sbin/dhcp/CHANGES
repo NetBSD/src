@@ -1,3 +1,10 @@
+970605
+
+- Add client-hostname token to lexer so that the parser can use it.
+  Fixes a serious lease database bug.
+
+- Disable log message on receipt of short ICMP Echo replies.
+
 970602
 
 - Added DHCP Client scripts for FreeBSD, Solaris, and Linux, but
