@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.boot,v 1.4 2003/05/24 03:38:58 thorpej Exp $
+# $NetBSD: Makefile.boot,v 1.5 2003/06/30 17:54:06 thorpej Exp $
 
 S=	${.CURDIR}/../../../../../
 
@@ -7,10 +7,10 @@ STRIPFLAG=
 BINDIR= /usr/mdec
 BINMODE= 0444
 PROG?= boot
-NEWVERSWHAT= BIOS
+NEWVERSWHAT?= BIOS
 VERSIONFILE?= ${.CURDIR}/../version
 
-SOURCES= biosboot.S boot2.c conf.c devopen.c exec.c
+SOURCES?= biosboot.S boot2.c conf.c devopen.c exec.c
 SRCS= ${SOURCES}
 .if !make(depend)
 SRCS+= vers.c
