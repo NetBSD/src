@@ -1,4 +1,4 @@
-.\"	$NetBSD: wiconfig.8,v 1.16 2001/11/21 22:29:20 enami Exp $
+.\"	$NetBSD: wiconfig.8,v 1.17 2002/01/16 06:54:17 onoe Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu> All rights reserved.
@@ -243,12 +243,13 @@ and updates the interface as well.
 Set the maximum receive and transmit frame size for a specified interface.
 The
 .Ar max data length
-can be any number from 350 to 2304. The default is 2304.
+can be any number from 256 to 2346. The default is 2304.
 .It Fl r Ar RTS threshold
 Set the RTS/CTS threshold for a given interface. This controls the
 number of bytes used for the RTS/CTS handshake boundary. The
 .Ar RTS threshold
-can be any value between 0 and 2047. The default is 2347.
+can be any value between 0 and 2347. The default is 2347,
+which indicates RTS/CTS mechanism never to be used.
 .It Fl f Ar frequency
 Set the radio frequency of a given interface. The
 .Ar frequency
