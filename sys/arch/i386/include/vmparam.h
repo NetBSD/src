@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vmparam.h	5.9 (Berkeley) 5/12/91
- *	$Id: vmparam.h,v 1.6 1993/09/04 22:21:28 cgd Exp $
+ *	$Id: vmparam.h,v 1.7 1993/11/14 13:22:17 cgd Exp $
  */
 
 
@@ -84,6 +84,13 @@
 #define	DMMIN	32			/* smallest swap allocation */
 #define	DMMAX	4096			/* largest potential swap allocation */
 #define	DMTEXT	1024			/* swap allocation for text */
+
+/* 
+ * Size of shared memory map
+ */
+#ifndef SHMMAXPGS
+#define SHMMAXPGS	512		/* XXXX should be 1024 */
+#endif
 
 /*
  * Sizes of the system and user portions of the system page table.
