@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.44 2000/03/16 18:08:23 jdolecek Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.45 2000/03/29 04:03:08 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -114,7 +114,6 @@ int
 cd9660_mountroot()
 {
 	struct mount *mp;
-	extern struct vnode *rootvp;
 	struct proc *p = curproc;	/* XXX */
 	int error;
 	struct iso_args args;
@@ -252,7 +251,6 @@ iso_mountfs(devvp, mp, p, argp)
 	int error = EINVAL;
 	int needclose = 0;
 	int ronly = (mp->mnt_flag & MNT_RDONLY) != 0;
-	extern struct vnode *rootvp;
 	int iso_bsize;
 	int iso_blknum;
 	int joliet_level;
