@@ -1,4 +1,4 @@
-/* $NetBSD: sfb.c,v 1.22 1999/10/22 07:42:05 nisimura Exp $ */
+/* $NetBSD: sfb.c,v 1.23 1999/10/26 10:57:04 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sfb.c,v 1.22 1999/10/22 07:42:05 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sfb.c,v 1.23 1999/10/26 10:57:04 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -938,9 +938,10 @@ sfb_cursor(id, on, row, col)
 	rmask = SFBSTIPPLEALL1 >> (-width & SFBSTIPPLEBITMASK);
 	sfb = rap->data;
 
-	SFBMODE(sfb, MODE_SIMPLE);
-	SFBPLANEMASK(sfb, 0x01010101);	/* LSB only */
-	SFBROP(sfb, 10);		/* ROP_INVERT */
+	SFBMODE(sfb, MODE_TRANSPARENTSTIPPLE);
+	SFBPLANEMASK(sfb, ~0);
+	SFBROP(sfb, 6);			/* ROP_XOR */
+	SFBFG(sfb, 0x01010101);		/* (fg ^ bg) to swap fg/bg */
 	if (width <= SFBSTIPPLEBITS) {
 		lmask = lmask & rmask;
 		while (height > 0) {
@@ -963,7 +964,7 @@ WRITE_MB();
 			height--;
 		}
 	}
-	SFBPLANEMASK(sfb, ~0);		/* entire pixel */
+	SFBMODE(sfb, MODE_SIMPLE);
 	SFBROP(sfb, 3);			/* ROP_COPY */
 
 	rc->rc_bits ^= RC_CURSOR;
@@ -1056,7 +1057,7 @@ WRITE_MB();
 		}
 	}
 	SFBMODE(sfb, MODE_SIMPLE);
-	SFBPIXELMASK(sfb, ~0);
+	SFBPIXELMASK(sfb, ~0);		/* entire pixel */
 }
 
 /*
@@ -1289,23 +1290,17 @@ sfb_copyrows(id, srcrow, dstrow, nrows)
 		caddr_t q = p;
 		while (height > 0) {
 			*(u_int32_t *)p = lmask;
-WRITE_MB();
 			*(u_int32_t *)(p + offset) = lmask;
-WRITE_MB();
 			width -= 2 * SFBCOPYBITS;
 			while (width > 0) {
 				p += SFBCOPYBYTESDONE;
 				*(u_int32_t *)p = SFBCOPYALL1;
-WRITE_MB();
 				*(u_int32_t *)(p + offset) = SFBCOPYALL1;
-WRITE_MB();
 				width -= SFBCOPYBITS;
 			}
 			p += SFBCOPYBYTESDONE;
 			*(u_int32_t *)p = rmask;
-WRITE_MB();
 			*(u_int32_t *)(p + offset) = rmask;
-WRITE_MB();
 
 			p = (q += scanspan);
 			width = w + align;
