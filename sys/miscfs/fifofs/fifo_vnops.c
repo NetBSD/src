@@ -1,4 +1,4 @@
-/*	$NetBSD: fifo_vnops.c,v 1.12 1994/11/14 06:05:45 christos Exp $	*/
+/*	$NetBSD: fifo_vnops.c,v 1.13 1994/12/13 20:14:39 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)fifo_vnops.c	8.2 (Berkeley) 1/4/94
+ *	@(#)fifo_vnops.c	8.4 (Berkeley) 8/10/94
  */
 
 #include <sys/param.h>
@@ -74,6 +74,7 @@ struct vnodeopv_entry_desc fifo_vnodeop_entries[] = {
 	{ &vop_setattr_desc, fifo_setattr },		/* setattr */
 	{ &vop_read_desc, fifo_read },			/* read */
 	{ &vop_write_desc, fifo_write },		/* write */
+	{ &vop_lease_desc, fifo_lease_check },		/* lease */
 	{ &vop_ioctl_desc, fifo_ioctl },		/* ioctl */
 	{ &vop_select_desc, fifo_select },		/* select */
 	{ &vop_mmap_desc, fifo_mmap },			/* mmap */
@@ -243,8 +244,8 @@ fifo_read(ap)
 		rso->so_state |= SS_NBIO;
 	startresid = uio->uio_resid;
 	VOP_UNLOCK(ap->a_vp);
-	error = soreceive(rso, (struct mbuf **)0, uio,
-		(struct mbuf **)0, (struct mbuf **)0, (int *)0);
+	error = soreceive(rso, (struct mbuf **)0, uio, (struct mbuf **)0,
+	    (struct mbuf **)0, (int *)0);
 	VOP_LOCK(ap->a_vp);
 	/*
 	 * Clear EOF indication after first such return.

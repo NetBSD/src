@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.25 1994/10/30 21:48:39 cgd Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.26 1994/12/13 20:16:50 mycroft Exp $	*/
 
 /*-
  * Copyright (C) 1994 Wolfgang Solfrank.
@@ -1687,7 +1687,8 @@ msdosfs_bmap(ap)
 		       ap->a_bnp, 0));
 }
 
-int msdosfs_reallocblks(ap)
+int
+msdosfs_reallocblks(ap)
 	struct vop_reallocblks_args /* {
 		struct vnode *a_vp;
 		struct cluster_save *a_buflist;
@@ -1820,6 +1821,7 @@ struct vnodeopv_entry_desc msdosfs_vnodeop_entries[] = {
 	{ &vop_setattr_desc, msdosfs_setattr },		/* setattr */
 	{ &vop_read_desc, msdosfs_read },		/* read */
 	{ &vop_write_desc, msdosfs_write },		/* write */
+	{ &vop_lease_desc, msdosfs_lease_check },	/* lease */
 	{ &vop_ioctl_desc, msdosfs_ioctl },		/* ioctl */
 	{ &vop_select_desc, msdosfs_select },		/* select */
 	{ &vop_mmap_desc, msdosfs_mmap },		/* mmap */

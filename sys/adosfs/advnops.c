@@ -1,4 +1,4 @@
-/*	$NetBSD: advnops.c,v 1.14 1994/10/30 21:43:03 cgd Exp $	*/
+/*	$NetBSD: advnops.c,v 1.15 1994/12/13 20:16:38 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -931,12 +931,13 @@ adnullop(sp)
 	return(0);
 }
 
-#define adosfs_close ((int (*) __P((struct  vop_close_args *)))adnullop)
-#define adosfs_fsync ((int (*) __P((struct  vop_fsync_args *)))adnullop)
-#define adosfs_seek ((int (*) __P((struct  vop_seek_args *)))adnullop)
+#define adosfs_close ((int (*) __P((struct vop_close_args *)))adnullop)
+#define adosfs_fsync ((int (*) __P((struct vop_fsync_args *)))adnullop)
+#define adosfs_lease_check ((int (*) __P((struct vop_lease_args *)))adnullop)
+#define adosfs_seek ((int (*) __P((struct vop_seek_args *)))adnullop)
 #define adosfs_vfree ((int (*) __P((struct vop_vfree_args *)))adnullop)
 
-#define adosfs_abortop ((int (*) __P((struct  vop_abortop_args *)))adenotsup)
+#define adosfs_abortop ((int (*) __P((struct vop_abortop_args *)))adenotsup)
 #define adosfs_advlock ((int (*) __P((struct vop_advlock_args *)))adenotsup)
 #define adosfs_blkatoff ((int (*) __P((struct vop_blkatoff_args *)))adenotsup)
 #define adosfs_bwrite ((int (*) __P((struct vop_bwrite_args *)))adenotsup)
@@ -966,6 +967,7 @@ struct vnodeopv_entry_desc adosfs_vnodeop_entries[] = {
 	{ &vop_setattr_desc,	adosfs_setattr },	/* setattr */
 	{ &vop_read_desc,	adosfs_read },		/* read */
 	{ &vop_write_desc,	adosfs_write },		/* write */
+	{ &vop_lease_desc,	adosfs_lease_check },	/* lease */
 	{ &vop_ioctl_desc,	adosfs_ioctl },		/* ioctl */
 	{ &vop_select_desc,	adosfs_select },	/* select */
 	{ &vop_mmap_desc,	adosfs_mmap },		/* mmap */

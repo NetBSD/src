@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.3 1994/10/20 04:21:13 cgd Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.4 1994/12/13 20:16:25 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -77,6 +77,7 @@ struct vnodeopv_entry_desc lfs_vnodeop_entries[] = {
 	{ &vop_setattr_desc, ufs_setattr },		/* setattr */
 	{ &vop_read_desc, lfs_read },			/* read */
 	{ &vop_write_desc, lfs_write },			/* write */
+	{ &vop_lease_desc, ufs_lease_check },		/* lease */
 	{ &vop_ioctl_desc, ufs_ioctl },			/* ioctl */
 	{ &vop_select_desc, ufs_select },		/* select */
 	{ &vop_mmap_desc, ufs_mmap },			/* mmap */
@@ -125,6 +126,7 @@ struct vnodeopv_entry_desc lfs_specop_entries[] = {
 	{ &vop_setattr_desc, ufs_setattr },		/* setattr */
 	{ &vop_read_desc, ufsspec_read },		/* read */
 	{ &vop_write_desc, ufsspec_write },		/* write */
+	{ &vop_lease_desc, spec_lease_check },		/* lease */
 	{ &vop_ioctl_desc, spec_ioctl },		/* ioctl */
 	{ &vop_select_desc, spec_select },		/* select */
 	{ &vop_mmap_desc, spec_mmap },			/* mmap */
@@ -174,6 +176,7 @@ struct vnodeopv_entry_desc lfs_fifoop_entries[] = {
 	{ &vop_setattr_desc, ufs_setattr },		/* setattr */
 	{ &vop_read_desc, ufsfifo_read },		/* read */
 	{ &vop_write_desc, ufsfifo_write },		/* write */
+	{ &vop_lease_desc, fifo_lease_check },		/* lease */
 	{ &vop_ioctl_desc, fifo_ioctl },		/* ioctl */
 	{ &vop_select_desc, fifo_select },		/* select */
 	{ &vop_mmap_desc, fifo_mmap },			/* mmap */
@@ -424,12 +427,9 @@ lfs_getattr(ap)
 	vap->va_gid = ip->i_gid;
 	vap->va_rdev = (dev_t)ip->i_rdev;
 	vap->va_size = ip->i_din.di_size;
-	vap->va_atime.ts_sec = ip->i_atime.ts_sec;
-	vap->va_atime.ts_nsec = ip->i_atime.ts_nsec;
-	vap->va_mtime.ts_sec = ip->i_mtime.ts_sec;
-	vap->va_mtime.ts_nsec = ip->i_mtime.ts_nsec;
-	vap->va_ctime.ts_sec = ip->i_ctime.ts_sec;
-	vap->va_ctime.ts_nsec = ip->i_ctime.ts_nsec;
+	vap->va_atime = ip->i_atime;
+	vap->va_mtime = ip->i_mtime;
+	vap->va_ctime = ip->i_ctime;
 	vap->va_flags = ip->i_flags;
 	vap->va_gen = ip->i_gen;
 	/* this doesn't belong here */
@@ -503,8 +503,7 @@ lfs_reclaim(ap)
 	register struct vnode *vp = ap->a_vp;
 	int error;
 
-	error = ufs_reclaim(vp);
-	if (error)
+	if (error = ufs_reclaim(vp))
 		return (error);
 	FREE(vp->v_data, M_LFSNODE);
 	vp->v_data = NULL;
