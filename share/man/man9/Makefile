@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.149 2003/10/21 22:01:24 hannken Exp $
+#       $NetBSD: Makefile,v 1.150 2003/11/16 15:07:25 yamt Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -389,6 +389,8 @@ MLINKS+=rt_timer.9 rt_timer_queue_create.9 rt_timer.9 rt_timer_queue_change.9 \
 MLINKS+=SCHED_LOCK.9 SCHED_UNLOCK.9 \
 	SCHED_LOCK.9 sched_lock_idle.9 \
 	SCHED_LOCK.9 sched_unlock_idle.9
+MAN+=	selrecord.9
+MLINKS+=selrecord.9 selwakeup.9
 MLINKS+=setjmp.9 longjmp.9
 MLINKS+=setrunqueue.9 remrunqueue.9 \
 	setrunqueue.9 nextrunqueue.9
