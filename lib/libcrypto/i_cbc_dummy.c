@@ -63,6 +63,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#ifdef __weak_alias
+#define idea_cbc_encrypt	_idea_cbc_encrypt
+#define idea_encrypt		_idea_encrypt
+
+__weak_alias(idea_cbc_encrypt,_idea_cbc_encrypt)
+__weak_alias(idea_encrypt,_idea_encrypt)
+#endif
+
 __warn_references(idea_cbc_encrypt,
     "IDEA is a patented algorithm; link against libcrypto_idea.a")
 __warn_references(idea_encrypt,

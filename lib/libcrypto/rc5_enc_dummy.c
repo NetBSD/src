@@ -64,6 +64,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#ifdef __weak_alias
+#define RC5_32_cbc_encrypt	_RC5_32_cbc_encrypt
+#define RC5_32_encrypt	_RC5_32_encrypt
+#define RC5_32_decrypt	_RC5_32_decrypt
+
+__weak_alias(RC5_32_cbc_encrypt,_RC5_32_cbc_encrypt)
+__weak_alias(RC5_32_encrypt,_RC5_32_encrypt)
+__weak_alias(RC5_32_decrypt,_RC5_32_decrypt)
+#endif
+
 __warn_references(RC5_32_cbc_encrypt,
     "RC5 is a patented algorithm; link against libcrypto_rc5.a")
 __warn_references(RC5_32_encrypt,
