@@ -6,7 +6,7 @@
 .\" *** DO NOT EDIT - any changes will be lost!!!
 .\" *** ------------------------------------------------------------------
 .\"
-.\" $NetBSD: MAKEDEV.8,v 1.28 2003/09/19 11:14:31 pooka Exp $
+.\" $NetBSD: MAKEDEV.8,v 1.29 2003/09/22 18:33:41 jandberg Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -42,7 +42,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd September 19, 2003
+.Dd September 22, 2003
 .Dt MAKEDEV 8 amiga
 .Os
 .Sh NAME
@@ -152,6 +152,9 @@ wscons
 . Bl -tag -width 0123456789 -compact
 . It Ar mouse#
 Amiga mice
+. It Ar wsmouse#
+wscons mouse events, see
+.Xr \&wsmouse 4
 . El
 .It Terminal ports :
 . Bl -tag -width 0123456789 -compact
