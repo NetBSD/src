@@ -1,4 +1,4 @@
-/*	$NetBSD: collect.c,v 1.12 1997/10/19 19:29:06 mycroft Exp $	*/
+/*	$NetBSD: collect.c,v 1.12.2.1 1997/11/26 03:57:33 mellon Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)collect.c	8.2 (Berkeley) 4/19/94";
 #else
-__RCSID("$NetBSD: collect.c,v 1.12 1997/10/19 19:29:06 mycroft Exp $");
+__RCSID("$NetBSD: collect.c,v 1.12.2.1 1997/11/26 03:57:33 mellon Exp $");
 #endif
 #endif /* not lint */
 
@@ -86,7 +86,7 @@ collect(hp, printheaders)
 	char linebuf[LINESIZE], *cp;
 	extern char *tempMail;
 	char getsub;
-	sigset_t oset, nset;
+	sigset_t nset;
 	int longline, lastlong, rc;	/* So we don't make 2 or more lines
 					   out of a long input line. */
 #if __GNUC__
@@ -105,7 +105,7 @@ collect(hp, printheaders)
 	sigemptyset(&nset);
 	sigaddset(&nset, SIGINT);
 	sigaddset(&nset, SIGHUP);
-	sigprocmask(SIG_BLOCK, &nset, &oset);
+	sigprocmask(SIG_BLOCK, &nset, NULL);
 	if ((saveint = signal(SIGINT, SIG_IGN)) != SIG_IGN)
 		signal(SIGINT, collint);
 	if ((savehup = signal(SIGHUP, SIG_IGN)) != SIG_IGN)
@@ -117,9 +117,7 @@ collect(hp, printheaders)
 		rm(tempMail);
 		goto err;
 	}
-	sigdelset(&oset, SIGINT);
-	sigdelset(&oset, SIGHUP);
-	sigprocmask(SIG_SETMASK, &oset, NULL);
+	sigprocmask(SIG_UNBLOCK, &nset, NULL);
 
 	noreset++;
 	if ((collf = Fopen(tempMail, "w+")) == NULL) {
@@ -400,16 +398,13 @@ out:
 	if (collf != NULL)
 		rewind(collf);
 	noreset--;
-	sigemptyset(&nset);
-	sigaddset(&nset, SIGINT);
-	sigaddset(&nset, SIGHUP);
-	sigprocmask(SIG_BLOCK, &nset, &oset);
+	sigprocmask(SIG_BLOCK, &nset, NULL);
 	signal(SIGINT, saveint);
 	signal(SIGHUP, savehup);
 	signal(SIGTSTP, savetstp);
 	signal(SIGTTOU, savettou);
 	signal(SIGTTIN, savettin);
-	sigprocmask(SIG_SETMASK, &oset, NULL);
+	sigprocmask(SIG_UNBLOCK, &nset, NULL);
 	return collf;
 }
 
@@ -439,7 +434,7 @@ exwrite(name, fp, f)
 		return(-1);
 	}
 	if ((of = Fopen(name, "w")) == NULL) {
-		perror(NOSTR);
+		perror(name);
 		return(-1);
 	}
 	lc = 0;
