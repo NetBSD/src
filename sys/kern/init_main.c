@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.131 1998/08/31 23:55:37 thorpej Exp $	*/
+/*	$NetBSD: init_main.c,v 1.132 1998/09/08 23:57:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -135,6 +135,7 @@ struct	timeval runtime;
 static void check_console __P((struct proc *p));
 static void start_init __P((struct proc *));
 static void start_pagedaemon __P((struct proc *));
+static void start_reaper __P((struct proc *));
 void main __P((void));
 
 extern char sigcode[], esigcode[];
@@ -418,6 +419,11 @@ main()
 		panic("fork pager");
 	cpu_set_kpc(p2, start_pagedaemon);
 
+	/* Create process 3 (the process reaper). */
+	if (fork1(p, FORK_SHAREVM, NULL, &p2))
+		panic("fork reaper");
+	cpu_set_kpc(p2, start_reaper);
+
 	/* The scheduler is an infinite loop. */
 #if defined(UVM)
 	uvm_scheduler();
@@ -594,5 +600,19 @@ start_pagedaemon(p)
 #else
 	vm_pageout();
 #endif
+	/* NOTREACHED */
+}
+
+static void
+start_reaper(p)
+	struct proc *p;
+{
+
+	/*
+	 * Now in process 3.
+	 */
+	p->p_flag |= P_INMEM | P_SYSTEM;	/* XXX */
+	memcpy(curproc->p_comm, "reaper", sizeof("reaper"));
+	reaper();
 	/* NOTREACHED */
 }
