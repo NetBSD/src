@@ -1,4 +1,4 @@
-/*	$NetBSD: au_icu.c,v 1.1 2002/07/29 15:39:11 simonb Exp $	*/
+/*	$NetBSD: au_icu.c,v 1.2 2002/07/29 16:25:02 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -59,22 +59,12 @@
 #include <mips/alchemy/include/aureg.h>
 #include <mips/alchemy/include/auvar.h>
 
-#if 0
-#include <evbmips/evbmips/clockvar.h>
-#include <mips/alchemy/include/aubusvar.h>
-#endif
-
-#include <dev/ic/mc146818reg.h>
-
 #define	REGVAL(x)	*((__volatile u_int32_t *)(MIPS_PHYS_TO_KSEG1((x))))
 
 /*
  * This is a mask of bits to clear in the SR when we go to a
  * given hardware interrupt priority level.
  */
-
-// #define ENABLE_AUMAC_HW1		/* XXX */
-#undef  ENABLE_AUMAC_HW1		/* XXX */
 
 const u_int32_t ipl_sr_bits[_IPL_N] = {
 	0,					/*  0: IPL_NONE */
@@ -89,9 +79,6 @@ const u_int32_t ipl_sr_bits[_IPL_N] = {
 
 	MIPS_SOFT_INT_MASK_0|
 		MIPS_SOFT_INT_MASK_1|
-
-	MIPS_SOFT_INT_MASK_0|
-		MIPS_SOFT_INT_MASK_1|
 		MIPS_INT_MASK_0,		/*  5: IPL_BIO */
 
 	MIPS_SOFT_INT_MASK_0|
@@ -100,29 +87,7 @@ const u_int32_t ipl_sr_bits[_IPL_N] = {
 
 	MIPS_SOFT_INT_MASK_0|
 		MIPS_SOFT_INT_MASK_1|
-		MIPS_INT_MASK_0|
-#ifdef ENABLE_AUMAC_HW1
-		MIPS_INT_MASK_1,		/*  7: IPL_AUMAC */
-#else
-		0,				/*  7: IPL_AUMAC */
-#endif
-
-	MIPS_SOFT_INT_MASK_0|
-		MIPS_SOFT_INT_MASK_1|
-		MIPS_INT_MASK_0,		/*  8: IPL_{SERIAL,TTY} */
-
-	MIPS_SOFT_INT_MASK_0|
-		MIPS_SOFT_INT_MASK_1|
-		MIPS_INT_MASK_0|
-#ifdef ENABLE_AUMAC_HW1
-		/* nothing */
-#else
-		MIPS_INT_MASK_1|	/* XXX */
-#endif
-		MIPS_INT_MASK_2|
-		MIPS_INT_MASK_3|
-		MIPS_INT_MASK_4|
-		MIPS_INT_MASK_5,		/*  9: IPL_{CLOCK,HIGH} */
+		MIPS_INT_MASK_0,		/*  7: IPL_{SERIAL,TTY} */
 
 	MIPS_SOFT_INT_MASK_0|
 		MIPS_SOFT_INT_MASK_1|
@@ -131,7 +96,7 @@ const u_int32_t ipl_sr_bits[_IPL_N] = {
 		MIPS_INT_MASK_2|
 		MIPS_INT_MASK_3|
 		MIPS_INT_MASK_4|
-		MIPS_INT_MASK_5,		/* 10: IPL_EXTREME */
+		MIPS_INT_MASK_5,		/*  8: IPL_{CLOCK,HIGH} */
 };
 
 /*
@@ -287,11 +252,7 @@ au_intr_establish(int irq, int req, int level, int type,
 	 * XXX do we want a separate list (really, should only be one item, not
 	 *     a list anyway) per irq, not per cpu interrupt?
 	 */
-#ifdef ENABLE_AUMAC_HW1
-	cpu_intr = (irq < 32 ? 0 : 2) + req;
-#else
 	cpu_intr = (irq < 32 ? 0 : 2);
-#endif
 	LIST_INSERT_HEAD(&au1000_cpuintrs[cpu_intr].cintr_list, ih, ih_q);
 
 	/*
