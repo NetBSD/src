@@ -1,4 +1,4 @@
-/*	$NetBSD: dosfs.c,v 1.3 2000/11/08 19:38:12 matt Exp $	*/
+/*	$NetBSD: dosfs.c,v 1.4 2000/11/09 01:55:31 matt Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Robert Nordier
@@ -169,6 +169,7 @@ dos_mount(DOS_FS * fs, struct open_file * fd)
 	return 0;
 }
 
+#ifndef LIBSA_NO_FS_CLOSE
 /*
  * Unmount mounted filesystem
  */
@@ -183,6 +184,7 @@ dos_unmount(DOS_FS * fs)
 		return (err);
 	return 0;
 }
+#endif
 
 /*
  * Common code shared by dos_mount() and dos_unmount()
