@@ -1,4 +1,4 @@
-/*	$NetBSD: dpt_eisa.c,v 1.1 1999/09/29 20:38:51 ad Exp $	*/
+/*	$NetBSD: dpt_eisa.c,v 1.2 1999/10/18 21:59:19 ad Exp $	*/
 
 /*
  * Copyright (c) 1999 Andy Doran <ad@NetBSD.org>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpt_eisa.c,v 1.1 1999/09/29 20:38:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpt_eisa.c,v 1.2 1999/10/18 21:59:19 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -146,16 +146,20 @@ dpt_eisa_attach(parent, self, aux)
 	printf(": ");
 
 	if (bus_space_map(iot, EISA_SLOT_ADDR(ea->ea_slot) +
-	    DPT_EISA_SLOT_OFFSET, DPT_EISA_IOSIZE, 0, &ioh))
-		panic("can't map i/o space");
+	    DPT_EISA_SLOT_OFFSET, DPT_EISA_IOSIZE, 0, &ioh)) {
+		printf("can't map i/o space\n");
+		return;
+	}
 
 	sc->sc_iot = iot;
 	sc->sc_ioh = ioh;
 	sc->sc_dmat = ea->ea_dmat;
 
 	/* Map and establish the interrupt. */
-	if (dpt_eisa_irq(iot, ioh, &irq))
-		panic("HBA on invalid IRQ");
+	if (dpt_eisa_irq(iot, ioh, &irq)) {
+		printf("HBA on invalid IRQ (%d)\n", irq);
+		return;
+	}
 
 	if (eisa_intr_map(ec, irq, &ih)) {
 		printf("can't map interrupt (%d)\n", irq);
