@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.24 2001/03/22 04:11:46 tsubai Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.25 2001/03/31 07:50:59 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -118,8 +118,10 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	/*
 	 * If specified, give the child a different stack.
 	 */
-	if (stack != NULL)
+	if (stack != NULL) {
+		tf = trapframe(p2);
 		tf->fixreg[1] = (register_t)stack + stacksize;
+	}
 
 	stktop2 = (caddr_t)((u_long)stktop2 & ~15);	/* Align stack pointer */
 
