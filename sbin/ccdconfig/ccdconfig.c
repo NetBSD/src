@@ -1,4 +1,4 @@
-/*	$NetBSD: ccdconfig.c,v 1.13 1997/07/31 00:11:53 jtc Exp $	*/
+/*	$NetBSD: ccdconfig.c,v 1.14 1997/09/14 08:39:43 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 __COPYRIGHT(
 "@(#) Copyright (c) 1996, 1997\
 	The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: ccdconfig.c,v 1.13 1997/07/31 00:11:53 jtc Exp $");
+__RCSID("$NetBSD: ccdconfig.c,v 1.14 1997/09/14 08:39:43 lukem Exp $");
 #endif
 
 #include <sys/param.h>
@@ -216,7 +216,7 @@ do_single(argc, argv, action)
 	int noflags = 0, i, ileave, flags, j;
 
 	flags = 0;
-	bzero(&ccio, sizeof(ccio));
+	memset(&ccio, 0, sizeof(ccio));
 
 	/*
 	 * If unconfiguring, all arguments are treated as ccds.
@@ -443,7 +443,7 @@ resolve_ccdname(name)
 	newlen = len + 8;
 	if ((path = malloc(newlen)) == NULL)
 		return (NULL);
-	bzero(path, newlen);
+	memset(path, 0, newlen);
 
 	if (isdigit(c)) {
 		if ((rawpart = getrawpartition()) < 0) {
@@ -510,7 +510,7 @@ dump_ccd(argc, argv, action)
 	int i, error, numccd, numconfiged = 0;
 	kvm_t *kd;
 
-	bzero(errbuf, sizeof(errbuf));
+	memset(errbuf, 0, sizeof(errbuf));
 
 	if ((kd = kvm_openfiles(kernel, core, NULL, O_RDONLY,
 	    errbuf)) == NULL) {
@@ -537,7 +537,7 @@ dump_ccd(argc, argv, action)
 		warnx("no memory for configuration data");
 		goto bad;
 	}
-	bzero(cs, readsize);
+	memset(cs, 0, readsize);
 
 	/*
 	 * Read the ccd configuration data from the kernel and dump
@@ -623,7 +623,7 @@ print_ccd_info(cs, kd)
 		    cs->sc_unit);
 		return;
 	}
-	bzero(cip, readsize);
+	memset(cip, 0, readsize);
 
 	/* Dump out softc information. */
 	printf("ccd%d\t\t%d\t%d\t", cs->sc_unit, cs->sc_ileave,
