@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.50 1995/10/10 03:49:04 briggs Exp $	*/
+/*	$NetBSD: locore.s,v 1.51 1995/10/10 04:14:18 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1756,38 +1756,6 @@ ENTRY(_remque)
 	movl	a0,a1@(4)		| e->next->prev = e->prev
 	movl	a1,a0@			| e->prev->next = e->next
 	movw	d0,sr
-	rts
-
-/*
- * bzero(addr, count)
- */
-ENTRY(blkclr)
-	movl	sp@(4),a0	| address
-	movl	sp@(8),d0	| count
-	jeq	Lbzdone		| if zero, nothing to do
-	movl	a0,d1
-	btst	#0,d1		| address odd?
-	jeq	Lbzeven		| no, can copy words
-	clrb	a0@+		| yes, zero byte to get to even boundary
-	subql	#1,d0		| decrement count
-	jeq	Lbzdone		| none left, all done
-Lbzeven:
-	movl	d0,d1
-	andl	#31,d0
-	lsrl	#5,d1		| convert count to 8*longword count
-	jeq	Lbzbyte		| no such blocks, zero byte at a time
-Lbzloop:
-	clrl	a0@+; clrl	a0@+; clrl	a0@+; clrl	a0@+
-	clrl	a0@+; clrl	a0@+; clrl	a0@+; clrl	a0@+
-	subql	#1,d1		| one more block zeroed
-	jne	Lbzloop		| more to go, do it
-	tstl	d0		| partial block left?
-	jeq	Lbzdone		| no, all done
-Lbzbyte:
-	clrb	a0@+
-	subql	#1,d0		| one more byte cleared
-	jne	Lbzbyte		| more to go, do it
-Lbzdone:
 	rts
 
 ENTRY(memcpy)
