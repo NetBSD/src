@@ -208,7 +208,7 @@ begin_output ()
 	      close (pipes[0]);
 	    }
 
-	  execl (PR_PROGRAM, PR_PROGRAM, "-f", "-h", name, 0);
+	  execl (PR_PROGRAM, PR_PROGRAM, "-F", "-h", name, 0);
 	  pfatal_with_name (PR_PROGRAM);
 	}
       else
