@@ -1,4 +1,4 @@
-/* $NetBSD: mkdep.c,v 1.17 2003/10/27 00:12:43 lukem Exp $ */
+/* $NetBSD: mkdep.c,v 1.18 2003/11/10 17:56:38 dsl Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -44,13 +44,15 @@
 #if !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1999 The NetBSD Foundation, Inc.\n\
 	All rights reserved.\n");
-__RCSID("$NetBSD: mkdep.c,v 1.17 2003/10/27 00:12:43 lukem Exp $");
+__RCSID("$NetBSD: mkdep.c,v 1.18 2003/11/10 17:56:38 dsl Exp $");
 #endif /* not lint */
 
+#include <sys/mman.h>
 #include <sys/param.h>
 #include <sys/wait.h>
 #include <ctype.h>
 #include <err.h>
+#include <fcntl.h>
 #include <locale.h>
 #include <paths.h>
 #include <signal.h>
@@ -64,106 +66,56 @@ __RCSID("$NetBSD: mkdep.c,v 1.17 2003/10/27 00:12:43 lukem Exp $");
 #define DEFAULT_PATH		_PATH_DEFPATH
 #define DEFAULT_FILENAME	".depend"
 
-int tmpfd;
-char tmpfilename[MAXPATHLEN];
 
-static void	finish __P((int));
-static void	usage __P((void));
-int		main __P((int, char **));
+static inline void *
+deconst(const void *p)
+{
+	return (const char *)p - (const char *)0 + (char *)0;
+}
 
 static void
-usage()
+usage(void)
 {
 	(void)fprintf(stderr,
-	    "usage: %s [-a] [-p] [-f file] flags file ...\n",
+	    "usage: %s [-acopq] [-f file] [-s suffix_list] flags file ...\n",
 	    getprogname());
 	exit(EXIT_FAILURE);
 }
 
-void
-finish(signo)
-	int signo;
+static int
+run_cc(int argc, char **argv, const char **fname)
 {
-
-	if (tmpfd != -1) {
-		(void)close(tmpfd);
-		(void)unlink(tmpfilename);
-	}
-	exit(EXIT_FAILURE);
-}
-
-int
-main(argc, argv)
-	int     argc;
-	char  **argv;
-{
-	/* LINTED local definition of index */
-	int 	aflag, pflag, index, status;
-	pid_t	cpid, pid;
-	char   *filename, *CC, *pathname, **args;
-	const char *tmpdir;
-	/* LINTED local definition of tmpfile */
-	FILE   *tmpfile, *dependfile;
-	char	buffer[32768];
-
-	setlocale(LC_ALL, "");
-	setprogname(argv[0]);
-
-	aflag = 0;
-	pflag = 0;
-	filename = DEFAULT_FILENAME;
-
-	/* XXX should use getopt(). */
-	for (index = 1; index < argc; index++) {
-		if (strcmp(argv[index], "-a") == 0)
-			aflag = 1;
-		else if (strcmp(argv[index], "-f") == 0) {
-			if (++index < argc)
-				filename = argv[index];
-		} else if (strcmp(argv[index], "-p") == 0)
-			pflag = 1;
-		else
-			break;
-	}
-
-	argc -= index;
-	argv += index;
-	if (argc == 0)
-		usage();
+	const char *CC, *pathname, *tmpdir;
+	static char tmpfilename[MAXPATHLEN];
+	char **args;
+	int tmpfd;
+	pid_t pid, cpid;
+	int status;
 
 	if ((CC = getenv("CC")) == NULL)
 		CC = DEFAULT_CC;
 	if ((pathname = findcc(CC)) == NULL)
 		if (!setenv("PATH", DEFAULT_PATH, 1))
 			pathname = findcc(CC);
-	if (pathname == NULL) {
-		(void)fprintf(stderr, "%s: %s: not found\n", getprogname(), CC);
-		exit(EXIT_FAILURE);
-	}
+	if (pathname == NULL)
+		err(EXIT_FAILURE, "%s: not found", CC);
+	if ((args = malloc((argc + 3) * sizeof(char *))) == NULL)
+		err(EXIT_FAILURE, "malloc");
 
-	if ((args = malloc((argc + 3) * sizeof(char *))) == NULL) {
-		perror(getprogname());
-		exit(EXIT_FAILURE);
-	}
-	args[0] = CC;
-	args[1] = "-M";
+	args[0] = deconst(CC);
+	args[1] = deconst("-M");
 	(void)memcpy(&args[2], argv, (argc + 1) * sizeof(char *));
 
 	if ((tmpdir = getenv("TMPDIR")) == NULL)
 		tmpdir = _PATH_TMP;
 	(void)snprintf(tmpfilename, sizeof (tmpfilename), "%s/%s", tmpdir,
 	    "mkdepXXXXXX");
-	/* set signal handler */
-	tmpfd = -1;
-	(void)signal(SIGINT, finish);
-	(void)signal(SIGHUP, finish);
-	(void)signal(SIGQUIT, finish);
-	(void)signal(SIGPIPE, finish);
-	(void)signal(SIGTERM, finish);
-	if ((tmpfd = mkstemp (tmpfilename)) < 0) {
+	if ((tmpfd = mkstemp(tmpfilename)) < 0) {
 		warn("unable to create temporary file %s", tmpfilename);
 		exit(EXIT_FAILURE);
 	}
+	(void)unlink(tmpfilename);
+	*fname = tmpfilename;
 
 	switch (cpid = vfork()) {
 	case 0:
@@ -175,64 +127,179 @@ main(argc, argv)
 		/* NOTREACHED */
 
 	case -1:
-		(void)fprintf(stderr, "%s: unable to fork.\n", getprogname());
-		(void)close(tmpfd);
-		(void)unlink(tmpfilename);
-		exit(EXIT_FAILURE);
+		err(EXIT_FAILURE, "unable to fork");
 	}
 
 	while (((pid = wait(&status)) != cpid) && (pid >= 0))
 		continue;
 
-	if (status) {
-		(void)fprintf(stderr, "%s: compile failed.\n", getprogname());
-		(void)close(tmpfd);
-		(void)unlink(tmpfilename);
-		exit(EXIT_FAILURE);
+	if (status)
+		errx(EXIT_FAILURE, "compile failed.");
+
+	return tmpfd;
+}
+
+int
+main(int argc, char **argv)
+{
+	int 	aflag, dflag, oflag, qflag;
+	const char *filename;
+	int	dependfile;
+	char	*buf, *ptr, *line, *suf, *colon, *eol;
+	int	ok_ind, ch;
+	int	sz;
+	int	fd;
+	const char *fname;
+	const char *suffixes = NULL, *s, *s1;
+
+	setlocale(LC_ALL, "");
+	setprogname(argv[0]);
+
+	aflag = O_WRONLY | O_APPEND | O_CREAT | O_TRUNC;
+	dflag = 0;
+	oflag = 0;
+	qflag = 0;
+	filename = DEFAULT_FILENAME;
+	dependfile = -1;
+
+	opterr = 0;	/* stop getopt() bleating about errors. */
+	ok_ind = 1;
+	for (; (ch = getopt(argc, argv, "adf:opqs:")) != -1; ok_ind = optind) {
+		switch (ch) {
+		case 'a':	/* Append to output file */
+			aflag &= ~O_TRUNC;
+			continue;
+		case 'd':	/* Process *.d files (don't run cc -M) */
+			dflag = 1;
+			opterr = 1;
+			continue;
+		case 'f':	/* Name of output file */
+			filename = optarg;
+			continue;
+		case 'o':	/* Mark dependant files .OPTIONAL */
+			oflag = 1;
+			continue;
+		case 'p':	/* Program mode (x.o: -> x:) */
+			suffixes = "";
+			continue;
+		case 'q':	/* Quiet */
+			qflag = 1;
+			continue;
+		case 's':	/* Suffix list */
+			suffixes = optarg;
+			continue;
+		default:
+			if (dflag)
+				usage();
+			/* Unknown arguments are passed to "${CC} -M" */
+			break;
+		}
+		break;
 	}
 
-	(void)lseek(tmpfd, (off_t)0, SEEK_SET);
-	if ((tmpfile = fdopen(tmpfd, "r")) == NULL) {
-		(void)fprintf(stderr, "%s: unable to read temporary file %s\n",
-		    getprogname(), tmpfilename);
-		(void)close(tmpfd);
-		(void)unlink(tmpfilename);
-		exit(EXIT_FAILURE);
-	}
+	argc -= ok_ind;
+	argv += ok_ind;
+	if (argc == 0 && !dflag)
+		usage();
 
-	if ((dependfile = fopen(filename, aflag ? "a" : "w")) == NULL) {
-		(void)fprintf(stderr, "%s: unable to %s to file %s\n",
-		    getprogname(), aflag ? "append" : "write", filename);
-		(void)fclose(tmpfile);
-		(void)unlink(tmpfilename);
-		exit(EXIT_FAILURE);
-	}
+	dependfile = open(filename, aflag, 0666);
+	if (dependfile == -1)
+		err(EXIT_FAILURE, "unable to %s to file %s\n",
+		    aflag & O_TRUNC ? "write" : "append", filename);
 
-	while (fgets(buffer, sizeof(buffer), tmpfile) != NULL) {
-		char   *ptr;
-
-		if (pflag && ((ptr = strstr(buffer, ".o")) != NULL)) {
-			char   *colon;
-
-			colon = ptr + 2;
-			while (isspace(*colon)) colon++;
-			if (*colon == ':')
-				(void)strcpy(ptr, colon);
+	for (; *argv != NULL; argv++) {
+		if (dflag) {
+			fname = *argv;
+			fd = open(fname, O_RDONLY, 0);
+			if (fd == -1) {
+				if (!qflag)
+					warn("ignoring %s", fname);
+				continue;
+			}
+		} else {
+			fd = run_cc(argc, argv, &fname);
+			/* consume all args... */
+			argv += argc - 1;
 		}
 
-		ptr = buffer;
-		while (*ptr) {
-			if (isspace(*ptr++))
-				if ((ptr[0] == '.') && (ptr[1] == '/'))
-					(void)strcpy(ptr, ptr + 2);
+		sz = lseek(fd, 0, SEEK_END);
+		if (sz == 0) {
+			close(fd);
+			continue;
+		}
+		buf = mmap(NULL, sz, PROT_READ|PROT_WRITE, MAP_PRIVATE, fd, 0);
+		close(fd);
+
+		if (buf == MAP_FAILED)
+			err(EXIT_FAILURE, "unable to mmap file %s",
+			    *argv);
+
+		/* Remove leading "./" from filenames */
+		for (ptr = buf; (ptr = strstr(ptr, "./")) != NULL; ptr += 2) {
+			if (ptr == buf)
+				continue;
+			if (!isspace((unsigned char)ptr[-1]))
+				continue;
+			ptr[0] = ' ';
+			ptr[1] = ' ';
 		}
 
-		(void)fputs(buffer, dependfile);
-	}
+		line = eol = buf;
+		for (; (eol = strchr(eol, '\n')) != NULL; line = eol) {
+			eol++;
+			if (line == eol - 1)
+				/* empty line - ignore */
+				continue;
+			if (eol[-2] == '\\')
+				/* Assemble continuation lines */
+				continue;
+			colon = strchr(line, ':');
+			if (colon > eol)
+				colon = NULL;
+			if (colon != NULL && suffixes != NULL) {
+				/* Find the .o: */
+				for (suf = colon - 2; ; suf--) {
+					if (suf <= line) {
+						colon = NULL;
+						break;
+					}
+					if (isspace((unsigned char)suf[1]))
+						continue;
+					if (suf[0] != '.' || suf[1] != 'o')
+						/* not a file.o: line */
+						colon = NULL;
+					break;
+				}
+			}
+			if (colon == NULL) {
+				/* No dependency - just transcribe line */
+				write(dependfile, line, eol - line);
+				line = eol;
+				continue;
+			}
+			if (suffixes != NULL) {
+				for (s = suffixes; ; s = s1 + 1) {
+					s1 = strpbrk(s, ", ");
+					if (s1 == NULL)
+						s1 = s + strlen(s);
+					write(dependfile, line, suf - line);
+					write(dependfile, s, s1 - s);
+					if (*s1 == 0)
+						break;
+					write(dependfile, " ", 1);
+				}
+				write(dependfile, colon, eol - colon);
+			} else
+				write(dependfile, line, eol - line);
 
-	(void)fclose(dependfile);
-	(void)fclose(tmpfile);
-	(void)unlink(tmpfilename);
+			if (oflag) {
+				write(dependfile, ".OPTIONAL", 9);
+				write(dependfile, colon, eol - colon);
+			}
+		}
+		munmap(buf, sz);
+	}
+	close(dependfile);
 
 	exit(EXIT_SUCCESS);
 }
