@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdspvar.h,v 1.31 1997/08/30 10:45:32 augustss Exp $	*/
+/*	$NetBSD: sbdspvar.h,v 1.32 1997/10/16 23:35:03 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -46,12 +46,12 @@
 #define SB_TREBLE	8
 #define SB_BASS		9
 #define SB_RECORD_CLASS	10
+#define SB_INPUT_CLASS	11
 
-#define SB_PCSPEAKER	11
-#define SB_INPUT_GAIN	12
-#define SB_OUTPUT_GAIN	13
-#define SB_AGC		14
-#define SB_INPUT_CLASS	15
+#define SB_PCSPEAKER	12
+#define SB_INPUT_GAIN	13
+#define SB_OUTPUT_GAIN	14
+#define SB_AGC		15
 #define SB_EQUALIZATION_CLASS 16
 
 #define SB_CD_IN_MUTE	17

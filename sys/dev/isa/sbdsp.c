@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdsp.c,v 1.74 1997/10/11 12:36:32 mycroft Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.75 1997/10/16 23:34:57 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -2192,6 +2192,13 @@ sbdsp_mixer_query_devinfo(addr, dip)
 		strcpy(dip->label.name, AudioCrecord);
 		return 0;
 
+	case SB_INPUT_CLASS:
+		dip->type = AUDIO_MIXER_CLASS;
+		dip->mixer_class = SB_INPUT_CLASS;
+		dip->next = dip->prev = AUDIO_MIXER_LAST;
+		strcpy(dip->label.name, AudioCinputs);
+		return 0;
+
 	}
 
 	if (sc->sc_mixer_model == SBM_CT1345)
@@ -2235,13 +2242,6 @@ sbdsp_mixer_query_devinfo(addr, dip)
 		dip->un.e.member[0].ord = 0;
 		strcpy(dip->un.e.member[1].label.name, AudioNon);
 		dip->un.e.member[1].ord = 1;
-		return 0;
-
-	case SB_INPUT_CLASS:
-		dip->type = AUDIO_MIXER_CLASS;
-		dip->mixer_class = SB_INPUT_CLASS;
-		dip->next = dip->prev = AUDIO_MIXER_LAST;
-		strcpy(dip->label.name, AudioCinputs);
 		return 0;
 
 	case SB_EQUALIZATION_CLASS:
