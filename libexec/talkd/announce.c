@@ -1,6 +1,8 @@
+/*	$NetBSD: announce.c,v 1.7 1997/06/29 18:01:13 christos Exp $	*/
+
 /*
- * Copyright (c) 1983 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1983, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -31,12 +33,18 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+
 #ifndef lint
-/*static char sccsid[] = "from: @(#)announce.c	5.9 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$Id: announce.c,v 1.6 1996/07/17 18:46:58 rat Exp $";
+#if 0
+static char sccsid[] = "@(#)announce.c	8.3 (Berkeley) 4/28/95";
+#else
+__RCSID("$NetBSD: announce.c,v 1.7 1997/06/29 18:01:13 christos Exp $");
+#endif
 #endif /* not lint */
 
 #include <sys/types.h>
+#include <sys/uio.h>
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/wait.h>
@@ -56,77 +64,30 @@ extern char hostname[];
 
 /*
  * Announce an invitation to talk.
- *
- * Because the tty driver insists on attaching a terminal-less
- * process to any terminal that it writes on, we must fork a child
- * to protect ourselves
+ */
+
+/*
+ * See if the user is accepting messages. If so, announce that 
+ * a talk is requested.
  */
 announce(request, remote_machine)
 	CTL_MSG *request;
 	char *remote_machine;
 {
-	int pid, val, status;
-
-	if (pid = fork()) {
-		/* we are the parent, so wait for the child */
-		if (pid == -1)		/* the fork failed */
-			return (FAILED);
-		do {
-			val = wait(&status);
-			if (val == -1) {
-				if (errno == EINTR)
-					continue;
-				/* shouldn't happen */
-				syslog(LOG_WARNING, "announce: wait: %m");
-				return (FAILED);
-			}
-		} while (val != pid);
-		if (status&0377 > 0)	/* we were killed by some signal */
-			return (FAILED);
-		/* Get the second byte, this is the exit/return code */
-		return ((status >> 8) & 0377);
-	}
-	/* we are the child, go and do it */
-	_exit(announce_proc(request, remote_machine));
-}
-	
-/*
- * See if the user is accepting messages. If so, announce that 
- * a talk is requested.
- */
-announce_proc(request, remote_machine)
-	CTL_MSG *request;
-	char *remote_machine;
-{
-	int pid, status;
 	char full_tty[32];
 	FILE *tf;
 	struct stat stbuf;
 
-	(void)snprintf(full_tty, sizeof(full_tty), "%s/%s", _PATH_DEV, 
-	    request->r_tty);
-	if (access(full_tty, 0) != 0)
-		return (FAILED);
-	if ((tf = fopen(full_tty, "w")) == NULL)
+	(void)snprintf(full_tty, sizeof(full_tty),
+	    "%s%s", _PATH_DEV, request->r_tty);
+	if (stat(full_tty, &stbuf) < 0 || (stbuf.st_mode&020) == 0)
 		return (PERMISSION_DENIED);
-	/*
-	 * On first tty open, the server will have
-	 * it's pgrp set, so disconnect us from the
-	 * tty before we catch a signal.
-	 */
-	ioctl(fileno(tf), TIOCNOTTY, (struct sgttyb *) 0);
-	if (fstat(fileno(tf), &stbuf) < 0)
-		return (PERMISSION_DENIED);
-	if ((stbuf.st_mode&020) == 0)
-		return (PERMISSION_DENIED);
-	print_mesg(tf, request, remote_machine);
-	fclose(tf);
-	return (SUCCESS);
+	return (print_mesg(request->r_tty, tf, request, remote_machine));
 }
 
 #define max(a,b) ( (a) > (b) ? (a) : (b) )
 #define N_LINES 5
-#define N_CHARS 120
+#define N_CHARS 256
 
 /*
  * Build a block of characters containing the message. 
@@ -134,7 +95,8 @@ announce_proc(request, remote_machine)
  * try to keep the message in one piece if the recipient
  * in in vi at the time
  */
-print_mesg(tf, request, remote_machine)
+print_mesg(tty, tf, request, remote_machine)
+	char *tty;
 	FILE *tf;
 	CTL_MSG *request;
 	char *remote_machine;
@@ -143,6 +105,7 @@ print_mesg(tf, request, remote_machine)
 	time_t clocktime;
 	struct timezone zone;
 	struct tm *localclock;
+	struct iovec iovec;
 	char line_buf[N_LINES][N_CHARS];
 	int sizes[N_LINES];
 	char big_buf[N_LINES*N_CHARS];
@@ -196,7 +159,15 @@ print_mesg(tf, request, remote_machine)
 		*(bptr++) = '\n';
 	}
 	*bptr = '\0';
-	fprintf(tf, big_buf);
-	fflush(tf);
-	ioctl(fileno(tf), TIOCNOTTY, (struct sgttyb *) 0);
+	iovec.iov_base = big_buf;
+	iovec.iov_len = bptr - big_buf;
+	/*
+	 * we choose a timeout of RING_WAIT-5 seconds so that we don't
+	 * stack up processes trying to write messages to a tty
+	 * that is permanently blocked.
+	 */
+	if (ttymsg(&iovec, 1, tty, RING_WAIT - 5) != NULL)
+		return (FAILED);
+
+	return (SUCCESS);
 }
