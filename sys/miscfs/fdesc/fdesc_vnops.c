@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vnops.c,v 1.64.2.4 2002/06/23 17:50:08 jdolecek Exp $	*/
+/*	$NetBSD: fdesc_vnops.c,v 1.64.2.5 2002/09/28 12:54:45 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.64.2.4 2002/06/23 17:50:08 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.64.2.5 2002/09/28 12:54:45 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -952,19 +952,31 @@ fdesc_kqfilter(v)
 		struct vnode *a_vp;
 		struct knote *a_kn;
 	} */ *ap = v;
-	int rv;
+	int error;
+	struct proc *p;
+	struct file *fp;
 
 	switch (VTOFDESC(ap->a_vp)->fd_type) {
 	case Fctty:
-		rv = cttykqfilter(devctty, ap->a_kn);
+		error = cttykqfilter(devctty, ap->a_kn);
+		break;
+
+	case Fdesc:
+		/* just invoke kqfilter for the underlying descriptor */
+		p = curproc;	/* XXX hopefully ok to use curproc here */
+		if ((fp = fd_getfile(p->p_fd, VTOFDESC(ap->a_vp)->fd_fd)) == NULL)
+			return (1);
+			
+		FILE_USE(fp);
+		error = (*fp->f_ops->fo_kqfilter)(fp, ap->a_kn);
+		FILE_UNUSE(fp, p);
 		break;
 
 	default:
-		rv = 1;		/* XXXLUKEM (thorpej) */
-		break;
+		return (genfs_kqfilter(v));
 	}
 
-	return (rv);
+	return (error);
 }
 
 int
