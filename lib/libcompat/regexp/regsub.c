@@ -21,7 +21,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: regsub.c,v 1.7 1998/09/14 20:25:05 tv Exp $");
+__RCSID("$NetBSD: regsub.c,v 1.8 1999/05/06 17:09:31 christos Exp $");
 #endif /* not lint */
 
 #include <regexp.h>
@@ -59,6 +59,7 @@ char *dest;
 		return;
 	}
 
+	/* LINTED const castaway */
 	src = (char *)source;
 	dst = dest;
 	while ((c = *src++) != '\0') {
@@ -74,7 +75,7 @@ char *dest;
  			*dst++ = c;
  		} else if (prog->startp[no] != NULL && prog->endp[no] != NULL) {
 			len = prog->endp[no] - prog->startp[no];
-			(void) strncpy(dst, prog->startp[no], len);
+			(void) strncpy(dst, prog->startp[no], (size_t)len);
 			dst += len;
 			if (len != 0 && *(dst-1) == '\0') {	/* strncpy hit NUL. */
 				regerror("damaged match string");
