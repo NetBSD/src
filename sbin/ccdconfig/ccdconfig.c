@@ -1,4 +1,4 @@
-/*	$NetBSD: ccdconfig.c,v 1.19 1998/02/03 09:13:49 mrg Exp $	*/
+/*	$NetBSD: ccdconfig.c,v 1.20 1998/07/06 07:50:19 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 __COPYRIGHT(
 "@(#) Copyright (c) 1996, 1997\
 	The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: ccdconfig.c,v 1.19 1998/02/03 09:13:49 mrg Exp $");
+__RCSID("$NetBSD: ccdconfig.c,v 1.20 1998/07/06 07:50:19 mrg Exp $");
 #endif
 
 #include <sys/param.h>
@@ -70,7 +70,9 @@ __RCSID("$NetBSD: ccdconfig.c,v 1.19 1998/02/03 09:13:49 mrg Exp $");
 
 extern	char *__progname;
 
+
 static	size_t lineno;
+static	gid_t egid;
 static	int verbose;
 static	char *ccdconf = _PATH_CCDCONF;
 
@@ -122,6 +124,8 @@ main(argc, argv)
 {
 	int ch, options = 0, action = CCD_CONFIG;
 
+	egid = getegid();
+	setegid(getgid());
 	while ((ch = getopt(argc, argv, "cCf:gM:N:suUv")) != -1) {
 		switch (ch) {
 		case 'c':
@@ -179,10 +183,15 @@ main(argc, argv)
 		usage();
 
 	/*
-	 * Discard setgid privileges if not the running kernel so that bad
-	 * guys can't print interesting stuff from kernel memory.
+	 * Discard setgid privileges.  If not the running kernel, we toss
+	 * them away totally so that bad guys can't print interesting stuff
+	 * from kernel memory, otherwise switch back to kmem for the
+	 * duration of the kvm_openfiles() call.
+	 *
+	 * We also do this if we aren't just looking...
 	 */
-	if (core != NULL || kernel != NULL)
+	if (core != NULL || kernel != NULL ||
+	    (action != CCD_DUMP && action != CCD_STATS))
 		setgid(getgid());
 
 	switch (action) {
@@ -335,11 +344,9 @@ do_all(action)
 	char *line, *cp, *vp, **argv;
 	int argc, rval;
 	size_t len;
-	gid_t egid;
 
 	rval = 0;
 
-	egid = getegid();
 	(void)setegid(getgid());
 	if ((f = fopen(ccdconf, "r")) == NULL) {
 		(void)setegid(egid);
@@ -520,11 +527,13 @@ dump_ccd(argc, argv, action)
 
 	memset(errbuf, 0, sizeof(errbuf));
 
+	(void)setegid(egid);
 	if ((kd = kvm_openfiles(kernel, core, NULL, O_RDONLY,
 	    errbuf)) == NULL) {
 		warnx("can't open kvm: %s", errbuf);
 		return (1);
 	}
+	(void)setgid(getgid());
 
 	if (kvm_nlist(kd, nl))
 		KVM_ABORT(kd, "ccd-related symbols not available");
