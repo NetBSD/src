@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.373 2001/11/07 18:55:29 thorpej Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.374 2001/11/07 21:13:26 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.368 2001/11/07 18:53:51 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.369 2001/11/07 21:12:49 thorpej Exp 
  */
 
 /*
@@ -1198,7 +1198,7 @@
 #define	PCI_PRODUCT_IMS_TT128M	0x9128		/* TwinTurbo 128M */
 
 /* Intel products */
-#define	PCI_PRODUCT_INTEL_80312	0x030d		/* 80310 I/O Companion Chip */
+#define	PCI_PRODUCT_INTEL_80312	0x030d		/* 80312 I/O Companion Chip */
 #define	PCI_PRODUCT_INTEL_PCEB	0x0482		/* 82375EB/SB PCI-EISA Bridge (PCEB) */
 #define	PCI_PRODUCT_INTEL_CDC	0x0483		/* 82424ZX Cache and DRAM controller (CDC) */
 #define	PCI_PRODUCT_INTEL_SIO	0x0484		/* 82378ZB System I/O (SIO) */
