@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.89 1997/09/10 04:38:50 scottr Exp $	*/
+/*	$NetBSD: locore.s,v 1.90 1997/11/04 03:44:56 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -320,6 +320,7 @@ Lnocache0:
 /* Final setup for call to main(). */
 	jbsr	_C_LABEL(setmachdep)	| Set some machine-dep stuff
 	jbsr	_C_LABEL(via_init)	| Initialize VIA hardware
+	jbsr	_C_LABEL(psc_init)	| Initialize PSC (if present)
 	movw	#PSL_LOWIPL,sr		| lower SPL ; enable interrupts
 
 /*
@@ -719,16 +720,7 @@ Lkbrkpt:
 /*
  * Interrupt handlers.
  *
- *	Level 0:	Spurious: ignored.
- *	Level 1:	HIL
- *	Level 2:
- *	Level 3:	Internal HP-IB
- *	Level 4:	"Fast" HP-IBs, SCSI
- *	Level 5:	DMA, Ethernet, Built-in RS232
- *	Level 6:	Clock
- *	Level 7:	Non-maskable: parity errors, RESET key
- *
- * ALICE: Here are our assignments:
+ * Most 68k-based Macintosh computers
  *
  *      Level 0:        Spurious: ignored
  *      Level 1:        VIA1 (clock, ADB)
@@ -737,9 +729,9 @@ Lkbrkpt:
  *      Level 4:        Serial (SCC)
  *      Level 5:
  *      Level 6:
- *      Level 7:        Non-maskable: parity errors, RESET button, FOO key
+ *      Level 7:        Non-maskable: parity errors, RESET button
  *
- * On the Q700, at least, in "A/UX mode," this should become:
+ * On the Q700, Q900 and Q950 in "A/UX mode": this should become:
  *
  *	Level 0:        Spurious: ignored
  *	Level 1:        Software
@@ -749,13 +741,20 @@ Lkbrkpt:
  *	Level 5:        Sound
  *	Level 6:        VIA1
  *	Level 7:        NMIs: parity errors, RESET button, YANCC error
+ *
+ * On the 660AV and 840AV:
+ *
+ *	Level 0:        Spurious: ignored
+ *	Level 1:        VIA1 (clock, ADB)
+ *	Level 2:        VIA2 (NuBus, SCSI)
+ *	Level 3:        PSC device interrupt
+ *	Level 4:        PSC DMA and serial
+ *	Level 5:        ???
+ *	Level 6:        ???
+ *	Level 7:        NMIs: parity errors?, RESET button
  */
-/* BARF We must re-configure this. */
 
 ENTRY_NOPROFILE(spurintr)
-ENTRY_NOPROFILE(lev3intr)
-ENTRY_NOPROFILE(lev5intr)
-ENTRY_NOPROFILE(lev6intr)
 	addql	#1,_C_LABEL(intrcnt)+0
 	addql	#1,_C_LABEL(cnt)+V_INTR
 	jra	_ASM_LABEL(rei)
@@ -785,17 +784,56 @@ ENTRY_NOPROFILE(lev2intr)
 	addql	#1,_C_LABEL(cnt)+V_INTR
 	jra	_ASM_LABEL(rei)
 
+ENTRY_NOPROFILE(lev3intr)
+	addql	#1,_C_LABEL(intrcnt)+24
+	clrl	sp@-
+	moveml	#0xFFFF,sp@-
+	movl	sp, sp@-
+	movl	_C_LABEL(lev3_intrvec),a2
+	jbsr	a2@
+	addql	#4,sp
+	moveml	sp@+, #0xFFFF
+	addql	#4,sp
+	addql	#1,_C_LABEL(cnt)+V_INTR
+	jra	_ASM_LABEL(rei)
+
 ENTRY_NOPROFILE(lev4intr)
-	/* handle level 4 (SCC) interrupt special... */
 	addql	#1,_C_LABEL(intrcnt)+12
 	clrl	sp@-
-	moveml	#0xFFFF,sp@-		| save registers
-	clrl	sp@-			| push 0
-	jsr	_C_LABEL(zshard)	| call dispatch routine
-	addl	#4,sp			| throw away arg
-	moveml	sp@+, #0xFFFF		| restore registers
+	moveml	#0xFFFF,sp@-
+	movl	sp, sp@-
+	movl	_C_LABEL(lev4_intrvec),a2
+	jbsr	a2@
 	addql	#4,sp
-	rte				| return from exception
+	moveml	sp@+, #0xFFFF
+	addql	#4,sp
+	rte
+
+ENTRY_NOPROFILE(lev5intr)
+	addql	#1,_C_LABEL(intrcnt)+28
+	clrl	sp@-
+	moveml	#0xFFFF,sp@-
+	movl	sp, sp@-
+	movl	_C_LABEL(lev5_intrvec),a2
+	jbsr	a2@
+	addql	#4,sp
+	moveml	sp@+, #0xFFFF
+	addql	#4,sp
+	addql	#1,_C_LABEL(cnt)+V_INTR
+	jra	_ASM_LABEL(rei)
+
+ENTRY_NOPROFILE(lev6intr)
+	addql	#1,_C_LABEL(intrcnt)+32
+	clrl	sp@-
+	moveml	#0xFFFF,sp@-
+	movl	sp, sp@-
+	movl	_C_LABEL(lev6_intrvec),a2
+	jbsr	a2@
+	addql	#4,sp
+	moveml	sp@+, #0xFFFF
+	addql	#4,sp
+	addql	#1,_C_LABEL(cnt)+V_INTR
+	jra	_ASM_LABEL(rei)
 
 ENTRY_NOPROFILE(lev7intr)
 	addql	#1,_C_LABEL(intrcnt)+16
@@ -1832,6 +1870,9 @@ GLOBAL(intrnames)
 	.asciz	"scc"
 	.asciz	"nmi"
 	.asciz	"clock"
+	.asciz	"unused1"
+	.asciz	"unused2"
+	.asciz	"unused3"
 GLOBAL(eintrnames)
 	.even
 
