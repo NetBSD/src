@@ -1,4 +1,4 @@
-/*	$NetBSD: com_vrip.c,v 1.14 2002/10/02 05:26:53 thorpej Exp $	*/
+/*	$NetBSD: com_vrip.c,v 1.15 2003/06/14 17:01:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 SASAKI Takesi. All rights reserved.
@@ -100,10 +100,12 @@ com_vrip_cndb_attach(bus_space_tag_t iot, int iobase, int rate, int frequency,
 		return (EIO);	/* I can't find appropriate error number. */
 #ifdef KGDB
 	if (kgdb)
-		return (com_kgdb_attach(iot, iobase, rate, frequency, cflag));
+		return (com_kgdb_attach(iot, iobase, rate, frequency,
+		    COM_TYPE_NORMAL, cflag));
 	else
 #endif
-		return (comcnattach(iot, iobase, rate, frequency, cflag));
+		return (comcnattach(iot, iobase, rate, frequency,
+		    COM_TYPE_NORMAL, cflag));
 }
 
 static int

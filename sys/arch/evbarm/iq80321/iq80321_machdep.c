@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80321_machdep.c,v 1.26 2003/05/22 05:47:09 thorpej Exp $	*/
+/*	$NetBSD: iq80321_machdep.c,v 1.27 2003/06/14 17:01:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -857,7 +857,7 @@ consinit(void)
 
 #if NCOM > 0
 	if (comcnattach(&obio_bs_tag, comcnaddrs[comcnunit], comcnspeed,
-	    COM_FREQ, comcnmode))
+	    COM_FREQ, COM_TYPE_NORMAL, comcnmode))
 		panic("can't init serial console @%lx", comcnaddrs[comcnunit]);
 #else
 	panic("serial console @%lx not configured", comcnaddrs[comcnunit]);
@@ -866,7 +866,7 @@ consinit(void)
 #if NCOM > 0
 	if (strcmp(kgdb_devname, "com") == 0) {
 		com_kgdb_attach(&obio_bs_tag, kgdb_devaddr, kgdb_devrate,
-				COM_FREQ, kgdb_devmode);
+				COM_FREQ, COM_TYPE_NORMAL, kgdb_devmode);
 	}
 #endif	/* NCOM > 0 */
 #endif	/* KGDB */

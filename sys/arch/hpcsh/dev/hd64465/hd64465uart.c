@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64465uart.c,v 1.8 2002/10/02 15:45:21 thorpej Exp $	*/
+/*	$NetBSD: hd64465uart.c,v 1.9 2003/06/14 17:01:13 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -114,7 +114,7 @@ hd64465uartcninit(struct consdev *cp)
 	hd64465uart_init();
 
 	comcnattach(hd64465uart_chip.io_tag, 0x0, COMCN_SPEED, COM_FREQ,
-	    CONMODE);	
+	    COM_TYPE_NORMAL, CONMODE);	
 
 	hd64465uart_chip.console = 1;
 }
@@ -133,7 +133,7 @@ hd64465uart_kgdb_init()
 	hd64465uart_init();
 
 	if (com_kgdb_attach(hd64465uart_chip.io_tag, 0x0, kgdb_rate,
-	    COM_FREQ, CONMODE) != 0) {
+	    COM_FREQ, COM_TYPE_NORMAL, CONMODE) != 0) {
 		printf("%s: KGDB console open failed.\n", __FUNCTION__);
 		return (1);
 	}

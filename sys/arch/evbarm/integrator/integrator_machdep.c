@@ -1,4 +1,4 @@
-/*	$NetBSD: integrator_machdep.c,v 1.40 2003/05/22 05:47:08 thorpej Exp $	*/
+/*	$NetBSD: integrator_machdep.c,v 1.41 2003/06/14 17:01:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001,2002 ARM Ltd
@@ -876,7 +876,7 @@ consinit(void)
 #endif
 #if (NCOM > 0)
 	if (comcnattach(&isa_io_bs_tag, CONCOMADDR, comcnspeed,
-	    COM_FREQ, comcnmode))
+	    COM_FREQ, COM_TYPE_NORMAL, comcnmode))
 		panic("can't init serial console @%x", CONCOMADDR);
 	return;
 #endif

@@ -1,4 +1,4 @@
-/* $NetBSD: kgdb_machdep.c,v 1.2 2001/11/20 08:43:19 lukem Exp $ */
+/* $NetBSD: kgdb_machdep.c,v 1.3 2003/06/14 17:01:08 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.2 2001/11/20 08:43:19 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.3 2003/06/14 17:01:08 thorpej Exp $");
 
 #include "com.h"
 
@@ -107,7 +107,7 @@ alpha_kgdb_init(const char **valid_devs, struct alpha_bus_space *bst)
 #if NCOM > 0
 	if (strcmp(kgdb_devname, "com") == 0) {
 		com_kgdb_attach(bst, kgdb_devaddr, kgdb_devrate, COM_FREQ,
-		    kgdb_devmode);
+		    COM_TYPE_NORMAL, kgdb_devmode);
 		return;
 	}
 #endif /* NCOM > 0 */

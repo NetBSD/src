@@ -1,4 +1,4 @@
-/*	$NetBSD: smdk2800_machdep.c,v 1.12 2003/05/22 05:47:10 thorpej Exp $ */
+/*	$NetBSD: smdk2800_machdep.c,v 1.13 2003/06/14 17:01:11 thorpej Exp $ */
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited
@@ -942,7 +942,7 @@ consinit(void)
 #endif				/* NSSCOM */
 #if NCOM>0 && defined(CONCOMADDR)
 	if (comcnattach(&isa_io_bs_tag, CONCOMADDR, comcnspeed,
-		COM_FREQ, comcnmode))
+		COM_FREQ, COM_TYPE_NORMAL, comcnmode))
 		panic("can't init serial console @%x", CONCOMADDR);
 	return;
 #endif
