@@ -1,4 +1,4 @@
-/*	$NetBSD: sequencervar.h,v 1.2 1998/08/08 11:00:33 augustss Exp $	*/
+/*	$NetBSD: sequencervar.h,v 1.3 1998/08/12 21:31:28 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@ struct syn_timer {
 	int	running;
 };
 
-#define SEQ_MAXQ 1024
+#define SEQ_MAXQ 256
 struct sequencer_queue {
 	seq_event_rec buf[SEQ_MAXQ];
 	u_int	in;		/* input index in buf */
@@ -96,6 +96,8 @@ struct sequencer_softc {
 	struct	selinfo wsel;	/* write selector */
 	struct	selinfo rsel;	/* read selector */
 	struct	proc *async;	/* process who wants audio SIGIO */
+
+	char	doingsysex;	/* doing a SEQ_SYSEX */
 
 	int	nmidi;		/* number of MIDI devices */
 	struct	midi_dev **devs;
