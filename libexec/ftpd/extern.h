@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.16 1999/05/17 15:14:54 lukem Exp $	*/
+/*	$NetBSD: extern.h,v 1.17 1999/05/18 08:14:18 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -129,3 +129,4 @@ extern	off_t		total_xfers_in, total_xfers_out, total_xfers;
 
 
 #define PLURAL(s)	((s) == 1 ? "" : "s")
+#define	INTERNAL_LS	"/bin/ls"
