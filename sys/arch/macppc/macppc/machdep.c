@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.79 2000/07/06 22:56:24 tsubai Exp $	*/
+/*	$NetBSD: machdep.c,v 1.80 2000/07/06 23:27:29 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -33,8 +33,9 @@
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
-#include "adb.h"
 #include "opt_ipkdb.h"
+#include "opt_multiprocessor.h"
+#include "adb.h"
 
 #include <sys/param.h>
 #include <sys/buf.h>
