@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.20 1997/03/26 01:51:25 thorpej Exp $	*/
+/*	$NetBSD: if.c,v 1.21 1997/04/03 04:46:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)if.c	8.2 (Berkeley) 2/21/94";
 #else
-static char *rcsid = "$NetBSD: if.c,v 1.20 1997/03/26 01:51:25 thorpej Exp $";
+static char *rcsid = "$NetBSD: if.c,v 1.21 1997/04/03 04:46:45 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -109,7 +109,7 @@ intpr(interval, ifnetaddr)
 		return;
 	ifnetaddr = (u_long)ifhead.tqh_first;
 
-	printf("%-5.5s %-5.5s %-11.11s %-17.17s %8.8s %5.5s %8.8s %5.5s",
+	printf("%-5.5s %-5.5s %-13.13s %-17.17s %8.8s %5.5s %8.8s %5.5s",
 		"Name", "Mtu", "Network", "Address", "Ipkts", "Ierrs",
 		"Opkts", "Oerrs");
 	printf(" %5s", "Coll");
@@ -138,9 +138,9 @@ intpr(interval, ifnetaddr)
 			*cp = '\0';
 			ifaddraddr = (u_long)ifnet.if_addrlist.tqh_first;
 		}
-		printf("%-5.5s %-5d ", name, ifnet.if_mtu);
+		printf("%-5.5s %-5ld ", name, ifnet.if_mtu);
 		if (ifaddraddr == 0) {
-			printf("%-11.11s ", "none");
+			printf("%-13.13s ", "none");
 			printf("%-15.15s ", "none");
 		} else {
 			char hexsep = '.';		/* for hexprint */
@@ -154,7 +154,7 @@ intpr(interval, ifnetaddr)
 				CP(&ifaddr); sa = (struct sockaddr *)cp;
 			switch (sa->sa_family) {
 			case AF_UNSPEC:
-				printf("%-11.11s ", "none");
+				printf("%-13.13s ", "none");
 				printf("%-17.17s ", "none");
 				break;
 			case AF_INET:
@@ -165,10 +165,10 @@ intpr(interval, ifnetaddr)
 				 */
 				in = inet_makeaddr(ifaddr.in.ia_subnet,
 					INADDR_ANY);
-				printf("%-11.11s ", netname(in.s_addr,
+				printf("%-13.13s ", netname(in.s_addr,
 				    ifaddr.in.ia_subnetmask));
 #else
-				printf("%-11.11s ",
+				printf("%-13.13s ",
 				    netname(ifaddr.in.ia_subnet,
 				    ifaddr.in.ia_subnetmask));
 #endif
@@ -189,6 +189,11 @@ intpr(interval, ifnetaddr)
 					}
 				}
 				break;
+			case AF_APPLETALK:
+				printf("atalk:%-12.12s ",
+				       atalk_print(sa,0x10));
+				printf("%-9.9s  ", atalk_print(sa,0x0b));
+				break;
 			case AF_NS:
 				{
 				struct sockaddr_ns *sns =
@@ -197,7 +202,7 @@ intpr(interval, ifnetaddr)
 				char netnum[8];
 
 				*(union ns_net *) &net = sns->sns_addr.x_net;
-		sprintf(netnum, "%lxH", ntohl(net));
+				sprintf(netnum, "%xH", (u_int32_t) ntohl(net));
 				upHex(netnum);
 				printf("ns:%-8s ", netnum);
 				printf("%-17s ",
@@ -233,7 +238,7 @@ intpr(interval, ifnetaddr)
 			}
 			ifaddraddr = (u_long)ifaddr.ifa.ifa_list.tqe_next;
 		}
-		printf("%8d %5d %8d %5d %5d",
+		printf("%8ld %5ld %8ld %5ld %5ld",
 		    ifnet.if_ipackets, ifnet.if_ierrors,
 		    ifnet.if_opackets, ifnet.if_oerrors,
 		    ifnet.if_collisions);
@@ -353,7 +358,7 @@ loop:
 			continue;
 		}
 		if (ip == interesting) {
-			printf("%8d %5d %8d %5d %5d",
+			printf("%8ld %5ld %8ld %5ld %5ld",
 				ifnet.if_ipackets - ip->ift_ip,
 				ifnet.if_ierrors - ip->ift_ie,
 				ifnet.if_opackets - ip->ift_op,

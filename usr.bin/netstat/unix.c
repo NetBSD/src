@@ -1,4 +1,4 @@
-/*	$NetBSD: unix.c,v 1.15 1997/02/27 05:41:19 mikel Exp $	*/
+/*	$NetBSD: unix.c,v 1.16 1997/04/03 04:46:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)unix.c	8.1 (Berkeley) 6/6/93";
 #else
-static char *rcsid = "$NetBSD: unix.c,v 1.15 1997/02/27 05:41:19 mikel Exp $";
+static char *rcsid = "$NetBSD: unix.c,v 1.16 1997/04/03 04:46:54 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -123,13 +123,13 @@ unixdomainpr(so, soaddr)
 		    "Inode", "Conn", "Refs", "Nextref");
 		first = 0;
 	}
-	printf("%8x %-6.6s %6d %6d %8x %8x %8x %8x",
-	    soaddr, socktype[so->so_type], so->so_rcv.sb_cc, so->so_snd.sb_cc,
-	    unp.unp_vnode, unp.unp_conn,
-	    unp.unp_refs, unp.unp_nextref);
+	printf("%8lx %-6.6s %6ld %6ld %8lx %8lx %8lx %8lx",
+	    (u_long) soaddr, socktype[so->so_type], so->so_rcv.sb_cc, so->so_snd.sb_cc,
+	    (u_long) unp.unp_vnode, (u_long) unp.unp_conn,
+	    (u_long) unp.unp_refs, (u_long) unp.unp_nextref);
 	if (unp.unp_addr)
 		printf(" %.*s",
-		    sun.sun_len - (sizeof(sun) - sizeof(sun.sun_path)),
+		    (int) (sun.sun_len - (sizeof(sun) - sizeof(sun.sun_path))),
 		    sun.sun_path);
 	putchar('\n');
 }
