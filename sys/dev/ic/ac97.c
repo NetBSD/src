@@ -1,4 +1,4 @@
-/*      $NetBSD: ac97.c,v 1.35 2002/10/22 13:48:30 kent Exp $ */
+/*      $NetBSD: ac97.c,v 1.36 2002/11/06 13:41:22 kent Exp $ */
 /*	$OpenBSD: ac97.c,v 1.8 2000/07/19 09:01:35 csapuntz Exp $	*/
 
 /*
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.35 2002/10/22 13:48:30 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.36 2002/11/06 13:41:22 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,14 +107,14 @@ static const struct audio_mixer_enum ac97_source = { 8,
 						 { { Ac97Nphone }, 7 }}};
 
 /*
- * Due to different values for each source that uses these structures, 
+ * Due to different values for each source that uses these structures,
  * the ac97_query_devinfo function sets delta in mixer_devinfo_t using
  * ac97_source_info.bits.
  */
-static const struct audio_mixer_value ac97_volume_stereo = { { AudioNvolume }, 
+static const struct audio_mixer_value ac97_volume_stereo = { { AudioNvolume },
 						       2 };
 
-static const struct audio_mixer_value ac97_volume_mono = { { AudioNvolume }, 
+static const struct audio_mixer_value ac97_volume_mono = { { AudioNvolume },
 						     1 };
 
 #define WRAP(a)  &a, sizeof(a)
@@ -344,6 +344,14 @@ static const struct ac97_codecid {
 	const char *name;
 	void (*init)(struct ac97_softc *);
 } ac97codecid[] = {
+	/*
+	 * Analog Devices SoundMAX
+	 * http://www.soundmax.com/products/information/codecs.html
+	 * http://www.analog.com/productSelection/pdf/AD1881A_0.pdf
+	 * http://www.analog.com/productSelection/pdf/AD1885_0.pdf
+	 * http://www.analog.com/productSelection/pdf/AD1981A_0.pdf
+	 * http://www.analog.com/productSelection/pdf/AD1981B_0.pdf
+	 */
 	{ AC97_CODEC_ID('A', 'D', 'S', 3),
 	  0xffffffff,			"Analog Devices AD1819B" },
 	{ AC97_CODEC_ID('A', 'D', 'S', 0x40),
@@ -358,6 +366,8 @@ static const struct ac97_codecid {
 	  0xffffffff,			"Analog Devices AD1886A" },
 	{ AC97_CODEC_ID('A', 'D', 'S', 0x72),
 	  0xffffffff,			"Analog Devices AD1981A" },
+	{ AC97_CODEC_ID('A', 'D', 'S', 0x74),
+	  0xffffffff,			"Analog Devices AD1981B" },
 	{ AC97_CODEC_ID('A', 'D', 'S', 0),
 	  AC97_VENDOR_ID_MASK,		"Analog Devices unknown" },
 
@@ -552,7 +562,7 @@ static const struct ac97_codecid {
 	  AC97_VENDOR_ID_MASK,		"Yamaha unknown",	},
 
 	/*
-	 * http://www.sigmatel.com/products.htm
+	 * http://www.sigmatel.com/audio/audio_codecs.htm
 	 */
 	{ 0x83847600, 0xffffffff,	"SigmaTel STAC9700",	},
 	{ 0x83847604, 0xffffffff,	"SigmaTel STAC9701/3/4/5", },
@@ -560,7 +570,9 @@ static const struct ac97_codecid {
 	{ 0x83847608, 0xffffffff,	"SigmaTel STAC9708",	},
 	{ 0x83847609, 0xffffffff,	"SigmaTel STAC9721/23",	},
 	{ 0x83847644, 0xffffffff,	"SigmaTel STAC9744/45",	},
+	{ 0x83847650, 0xffffffff,	"SigmaTel STAC9750/51",	},
 	{ 0x83847656, 0xffffffff,	"SigmaTel STAC9756/57",	},
+	{ 0x83847666, 0xffffffff,	"SigmaTel STAC9766/67",	},
 	{ 0x83847684, 0xffffffff,	"SigmaTel STAC9783/84",	},
 	{ 0x83847600, AC97_VENDOR_ID_MASK, "SigmaTel unknown",	},
 
@@ -752,7 +764,7 @@ ac97_setup_source_info(as)
 
 		switch (si->type) {
 		case AUDIO_MIXER_CLASS:
-		        si->mixer_class = ouridx;
+			si->mixer_class = ouridx;
 			ouridx++;
 			break;
 		case AUDIO_MIXER_VALUE:
@@ -795,7 +807,7 @@ ac97_setup_source_info(as)
 		for (idx2 = 0; idx2 < as->num_source_info; idx2++) {
 			si2 = &as->source_info[idx2];
 
-			if (si2->type == AUDIO_MIXER_CLASS && 
+			if (si2->type == AUDIO_MIXER_CLASS &&
 			    ac97_str_equal(si->class,
 					   si2->class)) {
 				si->mixer_class = idx2;
@@ -824,7 +836,7 @@ ac97_setup_source_info(as)
 			    ac97_str_equal(si->device, si2->device)) {
 				as->source_info[previdx].next = idx2;
 				as->source_info[idx2].prev = previdx;
-				
+
 				previdx = idx2;
 			}
 		}
@@ -1035,7 +1047,7 @@ ac97_attach(host_if)
 }
 
 
-int 
+int
 ac97_query_devinfo(codec_if, dip)
 	struct ac97_codec_if *codec_if;
 	mixer_devinfo_t *dip;
@@ -1050,7 +1062,7 @@ ac97_query_devinfo(codec_if, dip)
 		dip->mixer_class = si->mixer_class;
 		dip->prev = si->prev;
 		dip->next = si->next;
-		
+
 		if (si->qualifier)
 			name = si->qualifier;
 		else if (si->device)
@@ -1059,7 +1071,7 @@ ac97_query_devinfo(codec_if, dip)
 			name = si->class;
 		else
 			name = 0;
-		
+
 		if (name)
 			strcpy(dip->label.name, name);
 
@@ -1122,7 +1134,7 @@ ac97_mixer_set_port(codec_if, cp)
 		u_int16_t  l, r;
 
 		if ((cp->un.value.num_channels <= 0) ||
-		    (cp->un.value.num_channels > value->num_channels)) 
+		    (cp->un.value.num_channels > value->num_channels))
 			return (EINVAL);
 
 		if (cp->un.value.num_channels == 1) {
@@ -1142,7 +1154,7 @@ ac97_mixer_set_port(codec_if, cp)
 			l = 255 - l;
 			r = 255 - r;
 		}
-		
+
 		l = l >> (8 - si->bits);
 		r = r >> (8 - si->bits);
 
@@ -1209,7 +1221,8 @@ ac97_mixer_get_port(codec_if, cp)
 	switch (cp->type) {
 	case AUDIO_MIXER_ENUM:
 		cp->un.ord = (val >> si->ofs) & mask;
-		DPRINTFN(4, ("AUDIO_MIXER_ENUM: %x %d %x %d\n", val, si->ofs, mask, cp->un.ord));
+		DPRINTFN(4, ("AUDIO_MIXER_ENUM: %x %d %x %d\n",
+			     val, si->ofs, mask, cp->un.ord));
 		break;
 	case AUDIO_MIXER_VALUE:
 	{
@@ -1217,7 +1230,7 @@ ac97_mixer_get_port(codec_if, cp)
 		u_int16_t  l, r;
 
 		if ((cp->un.value.num_channels <= 0) ||
-		    (cp->un.value.num_channels > value->num_channels)) 
+		    (cp->un.value.num_channels > value->num_channels))
 			return (EINVAL);
 
 		if (value->num_channels == 1) {
