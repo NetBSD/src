@@ -1,4 +1,4 @@
-/* $NetBSD: param.h,v 1.28 2000/06/08 03:10:06 thorpej Exp $ */
+/* $NetBSD: param.h,v 1.29 2000/06/09 01:40:12 cgd Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -161,10 +161,6 @@
 
 void	delay(unsigned long);
 #define	DELAY(n)	delay(n)
-
-/* XXX THE FOLLOWING PROTOTYPE BELONGS IN INTR.H */
-int spl0(void);						/* drop ipl to zero */
-/* XXX END INTR.H */
 
 /* XXX THE FOLLOWING PROTOTYPE SHOULD BE A BUS.H INTERFACE */
 paddr_t alpha_XXX_dmamap(vaddr_t);
