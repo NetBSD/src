@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.29 1997/12/11 22:47:28 thorpej Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.30 1997/12/13 21:02:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993, 1994
@@ -239,7 +239,6 @@ struct	tcpstat {
 	u_long	tcps_keepdrops;		/* connections dropped in keepalive */
 	u_long	tcps_connsdrained;	/* connections drained due to memory
 					   shortage */
-	u_long	tcps_delwin;		/* window updates delayed */
 
 	u_long	tcps_sndtotal;		/* total packets sent */
 	u_long	tcps_sndpack;		/* data packets sent */
