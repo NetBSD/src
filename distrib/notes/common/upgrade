@@ -1,6 +1,6 @@
-.\"	$NetBSD: upgrade,v 1.2.8.3 2000/11/03 20:34:34 tv Exp $
+.\"	$NetBSD: upgrade,v 1.2.8.4 2001/05/06 21:50:31 he Exp $
 .\"
-.\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -74,7 +74,7 @@ section.
 As noted above, you must have the
 .Pa loadbsd.x
 utility and the installation kernel you chose, or, the
-boot floppy available to do the upgrade.
+boot floppies available to do the upgrade.
 .\}
 .el \{\
 To do the upgrade, you must have the boot floppy
@@ -108,11 +108,17 @@ another operating system's partition, before beginning the upgrade
 process.
 .Pp
 The upgrade procedure using the
-.Ic sysinst No tool is similar to
-an installation, but without the hard disk partitioning.
-Another difference is that existing configuration files in
+.Ic sysinst
+tool is similar to an installation, but without the hard disk partitioning.
+The original
 .Pa /etc
-are backed up and merged with the new files. Getting the binary
+directory is renamed to
+.Pa /etc.old ,
+and no attempt is made to merge any of the previous configuration into
+the new system except that the previous
+.Pa /etc/fstab
+file is copied into the new configuration.
+Getting the binary
 sets is done in the same manner as the installation procedure;
 refer to the installation part of the document
 for how to do this. Also, some sanity checks are done, i.e.
@@ -131,7 +137,7 @@ If you've changed the contents of
 by hand, you will need to be careful about this, but if
 not, you can just cd into
 .Pa /dev ,
-and run the command
+and run the command:
 .Pp
 .Dl # Ic "sh MAKEDEV all"
 .Pp
