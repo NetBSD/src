@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sig.c,v 1.7 2003/01/30 01:12:42 nathanw Exp $	*/
+/*	$NetBSD: pthread_sig.c,v 1.8 2003/02/15 04:38:58 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -56,8 +56,6 @@
 #include <sched.h>
 #include "pthread.h"
 #include "pthread_int.h"
-
-#undef PTHREAD_SIG_DEBUG
 
 #ifdef PTHREAD_SIG_DEBUG
 #define SDPRINTF(x) DPRINTF(x)
