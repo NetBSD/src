@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.49 2001/07/27 04:22:09 itojun Exp $	*/
+/*	$NetBSD: sysctl.c,v 1.50 2001/12/24 01:30:38 lukem Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.49 2001/07/27 04:22:09 itojun Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.50 2001/12/24 01:30:38 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -188,6 +188,9 @@ static int sysctl_proc __P((char *, char **, int[], int, int *));
 static int findname __P((char *, char *, char **, struct list *));
 static void usage __P((void));
 
+#define USEAPP(s, a) printf("%s: use '%s' to view this information\n", s, a)
+
+
 int
 main(argc, argv)
 	int argc;
@@ -327,7 +330,7 @@ parse(string, flags)
 		lp = &secondlevel[indx];
 		if (lp->list == 0) {
 			warnx("Class `%s' is not implemented",
-			topname[indx].ctl_name);
+			    topname[indx].ctl_name);
 			return;
 		}
 		if (bufp == NULL) {
@@ -352,7 +355,8 @@ parse(string, flags)
 					return;
 				if (!nflag)
 					printf("%s: ", string);
-				warnx("Kernel is not compiled for profiling");
+				printf(
+				    "kernel is not compiled for profiling\n");
 				return;
 			}
 			if (!nflag)
@@ -363,14 +367,14 @@ parse(string, flags)
 		case KERN_FILE:
 			if (flags == 0)
 				return;
-			warnx("Use pstat to view %s information", string);
+			USEAPP(string, "pstat");
 			return;
 		case KERN_PROC:
 		case KERN_PROC2:
 		case KERN_PROC_ARGS:
 			if (flags == 0)
 				return;
-			warnx("Use ps to view %s information", string);
+			USEAPP(string, "ps");
 			return;
 		case KERN_CLOCKRATE:
 			special |= CLOCK;
@@ -381,8 +385,7 @@ parse(string, flags)
 		case KERN_NTPTIME:
 			if (flags == 0)
 				return;
-			warnx("Use ntpdc -c kerninfo to view %s information",
-			    string);
+			USEAPP(string, "ntpdc -c kerninfo");
 			return;
 		case KERN_MBUF:
 			len = sysctl_mbuf(string, &bufp, mib, flags, &type);
@@ -395,7 +398,7 @@ parse(string, flags)
 		case KERN_MSGBUF:
 			if (flags == 0)
 				return;
-			warnx("Use dmesg to view %s information", string);
+			USEAPP(string, "dmesg");
 			return;
 		case KERN_CONSDEV:
 			special |= CONSDEV;
@@ -425,8 +428,7 @@ parse(string, flags)
 		case VM_UVMEXP:
 		case VM_UVMEXP2:
 			if (flags) {
-				warnx("Use vmstat or systat to view %s"
-				    "information", string);
+				USEAPP(string, "vmstat' or 'systat");
 			}
 			return;
 		}
@@ -457,7 +459,7 @@ parse(string, flags)
 #endif /* IPSEC */
 		if (flags == 0)
 			return;
-		warnx("Use netstat to view %s information", string);
+		USEAPP(string, "netstat");
 		return;
 
 	case CTL_DEBUG:
@@ -488,7 +490,7 @@ parse(string, flags)
 		if (mib[1] == 2 && mib[2] == NFS_NFSSTATS) {
 			if (flags == 0)
 				return;
-			warnx("Use nfsstat to view %s information", string);
+			USEAPP(string, "nfsstat");
 			return;
 		}
 		break;
@@ -540,18 +542,18 @@ parse(string, flags)
 			return;
 		switch (errno) {
 		case EOPNOTSUPP:
-			warnx("The value of %s is not available", string);
+			printf("%s: the value is not available\n", string);
 			return;
 		case ENOTDIR:
-			warnx("The specification of %s is incomplete",
-			    string);
+			printf("%s: the specification is incomplete\n", string);
 			return;
 		case ENOMEM:
-			warnx("The type %s is unknown to this program",
+			printf("%s: this type is unknown to this program\n",
 			    string);
 			return;
 		default:
-			warn("sysctl() for %s failed", string);
+			printf("%s: sysctl() failed with %s\n",
+			    string, strerror(errno));
 			return;
 		}
 	}
@@ -781,7 +783,7 @@ sysctl_inet(string, bufpp, mib, flags, typep)
 	else if (!flags)
 		return (-1);
 	else {
-		warnx("No variables defined for protocol %s", string);
+		printf("%s: no variables defined for protocol\n", string);
 		return (-1);
 	}
 	if (*bufpp == NULL) {
@@ -970,7 +972,7 @@ sysctl_vfs(string, bufpp, mib, flags, typep)
 
 	if (lp->list == NULL) {
 		if (flags)
-			warnx("No variables defined for file system %s",
+			printf("%s: no variables defined for file system\n",
 			    string);
 		return (-1);
 	}
@@ -1181,7 +1183,8 @@ usage()
 {
 	const char *progname = getprogname();
 
-	(void)fprintf(stderr, "Usage:\t%s %s\n\t%s %s\n\t%s %s\n\t%s %s\n\t%s %s\n",
+	(void)fprintf(stderr,
+	    "Usage:\t%s %s\n\t%s %s\n\t%s %s\n\t%s %s\n\t%s %s\n",
 	    progname, "[-n] variable ...", 
 	    progname, "[-n] -w variable=value ...",
 	    progname, "[-n] -a",
