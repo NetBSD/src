@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.37 1999/02/01 22:20:02 mrg Exp $ */
+/*	$NetBSD: param.h,v 1.38 1999/02/14 12:26:16 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -84,7 +84,7 @@
  * of the `options SUN4?' combination a particular kernel was configured with.
  * See also the definitions of NBPG, PGOFSET and PGSHIFT below.
  */
-#if defined(_KERNEL) && !defined(_LOCORE)
+#if (defined(_KERNEL) || defined(_STANDALONE)) && !defined(_LOCORE)
 extern int nbpg, pgofset, pgshift;
 #endif
 
@@ -167,7 +167,7 @@ extern int nbpg, pgofset, pgshift;
  * Note that `phys_map' can still be used to allocate memory-backed pages
  * in DVMA space.
  */
-#ifdef _KERNEL
+#if defined(_KERNEL) || defined(_STANDALONE)
 #ifndef _LOCORE
 
 extern void	delay __P((unsigned int));
