@@ -1,4 +1,4 @@
-/*	$NetBSD: envstat.c,v 1.8 2003/01/01 12:16:40 augustss Exp $ */
+/*	$NetBSD: envstat.c,v 1.9 2003/01/05 01:56:42 chris Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: envstat.c,v 1.8 2003/01/01 12:16:40 augustss Exp $");
+__RCSID("$NetBSD: envstat.c,v 1.9 2003/01/05 01:56:42 chris Exp $");
 #endif
 
 #include <fcntl.h>
@@ -185,8 +185,39 @@ main(int argc, char **argv)
 			}
 
 			printf("%*.*s:", (int)width, (int)width, ebis[i].desc);
-			printf(" %10.3f %s", etds[i].cur.data_s / 1000000.0,
-			    unit_str[ebis[i].units]);
+			/* different units need some magic */
+			switch (ebis[i].units)
+			{
+			     	case ENVSYS_INDICATOR:
+					printf(" %10s", etds[i].cur.data_us ? 
+					    "ON" : "OFF");
+					break;
+				case ENVSYS_STEMP:
+					{
+					     	double temp =
+						    (etds[i].cur.data_s / 1000000.0)
+						    - 273.15;
+						if (celsius)
+							printf(" %10.3f degC",
+							    temp);
+						else
+						{
+							temp = (9.0 / 5.0) * temp + 32.0;
+							printf(" %10.3f degF",
+							    temp);
+						}
+					}
+					break;
+				case ENVSYS_SFANRPM:
+					printf(" %10u RPM",
+					    etds[i].cur.data_us);
+					break;
+				default:
+					printf(" %10.3f %s",
+					    etds[i].cur.data_s / 1000000.0,
+					    unit_str[ebis[i].units]);
+					break;
+			}
 			if (etds[i].validflags & ENVSYS_FFRACVALID) {
 				printf(" (%5.2f%%)",
 				    (etds[i].cur.data_s * 100.0) /
