@@ -1,0 +1,32 @@
+Sushi will scan a number of directories looking for menus and submenus, if
+they exist.  The default directories that are currently searched for sushi
+menus are listed below:
+
+/usr/share/sushi/
+/usr/pkg/share/sushi/
+/usr/X11R6/share/sushi/
+/etc/sushi/
+$HOME/sushi/
+
+/usr/share/sushi is where system supplied menus will appear, such as those
+that ship with the NetBSD operating system.
+
+/usr/pkg/share/sushi and /usr/X11R6/share/sushi are designed for use with the
+package system, and menus can be installed there as part of packages that wish
+to use them.
+
+/etc/sushi is meant to be a user-configurable directory, where users can place
+menu items that will be seen system wide.  This is the preferred place to
+put menus local to the machine, or that you have written yourself.
+
+The menus are scanned in the above order, and will appear on the menu in
+that order.  No differentiation will be made for menus found in the
+various directories.  All menu directories will be combined into a single
+unified tree for the user.  If a directory does not exist, it is not an
+error, and will be ignored.
+
+The searchpath for sushi can be modified, by adding directories, one
+directory per line, to the file /etc/sushi.conf.  This file overrides the
+built in defaults, which are used if it does not exist.
+
+$NetBSD: help,v 1.1 2001/01/05 02:06:56 garbled Exp $
