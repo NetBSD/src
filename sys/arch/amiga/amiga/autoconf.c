@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.43 1996/10/13 03:06:31 christos Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.44 1996/12/17 11:43:12 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -54,6 +54,7 @@ int cold;	/* 1 if still booting */
 void
 configure()
 {
+	int s;
 	/*
 	 * this is the real thing baby (i.e. not console init)
 	 */
@@ -64,6 +65,7 @@ configure()
 	} else
 #endif
 	custom.intena = INTF_INTEN;
+	s = splhigh();
 
 	if (config_rootfound("mainbus", "mainbus") == NULL)
 		panic("no mainbus found");
@@ -84,6 +86,7 @@ configure()
 		/* also enable hardware aided software interrupts */
 		custom.intena = INTF_SETCLR | INTF_SOFTINT;
 	}
+	splx(s);
 #ifdef DEBUG_KERNEL_START
 	printf("survived interrupt enable\n");
 #endif
@@ -188,6 +191,11 @@ config_console()
 		panic("no mainbus");
 	}
 	/*
+	 * delay clock calibration.
+	 */
+	amiga_config_found(cf, NULL, "clock", NULL);
+
+	/*
 	 * internal grf.
 	 */
 #ifdef DRACO
@@ -241,6 +249,8 @@ mbattach(pdp, dp, auxp)
 	if (is_draco()) {
 		config_found(dp, "kbd", simple_devprint);
 		config_found(dp, "drsc", simple_devprint);
+		config_found(dp, "drcom", simple_devprint);
+		config_found(dp, "drcom", simple_devprint);
 		/*
 		 * XXX -- missing here:
 		 * SuperIO chip serial, parallel, floppy

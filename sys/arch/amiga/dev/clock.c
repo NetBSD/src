@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.22 1996/10/14 18:40:15 is Exp $	*/
+/*	$NetBSD: clock.c,v 1.23 1996/12/17 11:43:10 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -89,7 +89,7 @@ struct CIA *clockcia;
 int clockmatch __P((struct device *, void *, void *));
 void clockattach __P((struct device *, struct device *, void *));
 void cpu_initclocks __P((void));
-void calibrate_delay __P((void));
+void calibrate_delay __P((struct device *));
 
 struct cfattach clock_ca = {
 	sizeof(struct device), clockmatch, clockattach
@@ -142,7 +142,8 @@ clockattach(pdp, dp, auxp)
 		clockchip = "CIA B";
 	}
 
-	printf(": %s system hz %d hardware hz %d\n", clockchip, hz,
+	if (pdp)
+		printf(": %s system hz %d hardware hz %d\n", clockchip, hz,
 #ifdef DRACO
 		dracorev >= 4 ? eclockfreq / 7 : eclockfreq);
 #else
@@ -159,7 +160,7 @@ clockattach(pdp, dp, auxp)
 		draco_ioct->io_timerlo = CLK_INTERVAL & 0xff;
 		draco_ioct->io_timerhi = CLK_INTERVAL >> 8;
 
-		calibrate_delay();
+		calibrate_delay(pdp);
 
 		return;
 	}
@@ -188,7 +189,7 @@ clockattach(pdp, dp, auxp)
 	 */
 	clockcia->cra = (clockcia->cra & 0xc0) | 1;
 
-	calibrate_delay();
+	calibrate_delay(pdp);
 }
 
 /*
@@ -203,13 +204,15 @@ clockattach(pdp, dp, auxp)
  * off by 2.4%
  */
 
-void calibrate_delay()
+void calibrate_delay(pdp)
+	struct device *pdp;
 {
 	unsigned long t1, t2;
 	extern u_int32_t delaydivisor;
 		/* XXX this should be defined elsewhere */
 
-	printf("Calibrating delay loop... "); 
+	if (pdp)
+		printf("Calibrating delay loop... "); 
 
 	do {
 		t1 = clkread();
@@ -219,7 +222,8 @@ void calibrate_delay()
 	t2 -= t1;
 	delaydivisor = (delaydivisor * t2 + 1023) >> 10;
 #ifdef DIAGNOSTIC
-	printf("\ndiff %ld us, new divisor %u ns\n", t2, delaydivisor); 
+	if (pdp)
+		printf("\ndiff %ld us, new divisor %u ns\n", t2, delaydivisor); 
 	do {
 		t1 = clkread();
 		delay(1024);
@@ -227,7 +231,8 @@ void calibrate_delay()
 	} while (t2 <= t1);
 	t2 -= t1;
 	delaydivisor = (delaydivisor * t2 + 1023) >> 10;
-	printf("diff %ld us, new divisor %u ns\n", t2, delaydivisor); 
+	if (pdp)
+		printf("diff %ld us, new divisor %u ns\n", t2, delaydivisor); 
 #endif
 	do {
 		t1 = clkread();
@@ -237,9 +242,11 @@ void calibrate_delay()
 	t2 -= t1;
 	delaydivisor = (delaydivisor * t2 + 1023) >> 10;
 #ifdef DIAGNOSTIC
-	printf("diff %ld us, new divisor ", t2);
+	if (pdp)
+		printf("diff %ld us, new divisor ", t2);
 #endif
-	printf("%u ns\n", delaydivisor); 
+	if (pdp)
+		printf("%u ns\n", delaydivisor); 
 }
 
 void
