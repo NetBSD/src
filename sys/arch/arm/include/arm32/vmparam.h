@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.18 2003/05/21 18:04:44 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.19 2003/05/22 05:25:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -91,6 +91,15 @@
 
 #define	VM_MIN_KERNEL_ADDRESS	((vaddr_t) KERNEL_BASE)
 #define	VM_MAX_KERNEL_ADDRESS	((vaddr_t) 0xffffffff)
+
+/* XXX max. amount of KVM to be used by buffers. */
+#ifndef VM_MAX_KERNEL_BUF
+extern vaddr_t virtual_avail;
+extern vaddr_t virtual_end;
+
+#define	VM_MAX_KERNEL_BUF	\
+	((virtual_end - virtual_avail) * 4 / 10)
+#endif
 
 /*
  * pmap-specific data store in the vm_page structure.
