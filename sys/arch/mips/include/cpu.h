@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.58 2002/03/05 15:34:04 simonb Exp $	*/
+/*	$NetBSD: cpu.h,v 1.59 2002/03/06 07:31:38 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -59,6 +59,7 @@ struct cpu_info {
 	u_long ci_cpu_freq;		/* CPU frequency */
 	u_long ci_cycles_per_hz;	/* CPU freq / hz */
 	u_long ci_divisor_delay;	/* for delay/DELAY */
+	u_long ci_divisor_recip;	/* scaled reciprocal of previous */
 #if defined(DIAGNOSTIC) || defined(LOCKDEBUG)
 	u_long ci_spin_locks;		/* # of spin locks held */
 	u_long ci_simple_locks;		/* # of simple locks held */
