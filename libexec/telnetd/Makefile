@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.31 2002/03/22 18:10:22 thorpej Exp $
+#	$NetBSD: Makefile,v 1.32 2002/08/19 13:54:37 lukem Exp $
 #	from: @(#)Makefile	8.2 (Berkeley) 12/15/93
 
 .include <bsd.own.mk>
@@ -15,7 +15,7 @@ SRCS=	authenc.c global.c slc.c state.c sys_term.c telnetd.c \
 DPADD=	${LIBUTIL} ${LIBTERMCAP} ${LIBTELNET}
 LDADD+=	-lutil -ltermcap -ltelnet
 
-CPPFLAGS+=-I${.CURDIR}/../../lib
+CPPFLAGS+=-I${NETBSDSRCDIR}/lib
 CPPFLAGS+=-I${.CURDIR}
 
 .if (${USE_KERBEROS} != "no")
@@ -23,7 +23,7 @@ CPPFLAGS+=-DAUTHENTICATION -DENCRYPTION
 CPPFLAGS+=-I${DESTDIR}/usr/include/krb5
 CPPFLAGS+=-DKRB5
 
-VERS!=	cd ${.CURDIR}/../../lib/libvers && ${PRINTOBJDIR}
+VERS!=	cd ${NETBSDSRCDIR}/lib/libvers && ${PRINTOBJDIR}
 
 LDADD+=	-lkrb5 -lkrb -lcrypto -lasn1 -lcom_err -L${VERS} -lvers -lroken
 DPADD+=	${LIBKRB5} ${LIBKRB} ${LIBCRYPTO} ${LIBASN1} ${LIBCOM_ERR} ${LIBROKEN}

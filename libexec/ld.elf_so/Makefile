@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.50 2002/08/10 01:59:33 thorpej Exp $
+#	$NetBSD: Makefile,v 1.51 2002/08/19 13:54:36 lukem Exp $
 
 .include <bsd.own.mk>			# for OBJECT_FMT definition
 
@@ -27,7 +27,7 @@ PROG=	ld.elf_so
 .include "$M/Makefile.inc"
 .endif
 
-CLIBOBJ!=	cd ${.CURDIR}/../../lib/libc && ${PRINTOBJDIR}
+CLIBOBJ!=	cd ${NETBSDSRCDIR}/lib/libc && ${PRINTOBJDIR}
 
 SRCS+=	rtld.c reloc.c symbol.c malloc.c xmalloc.c xprintf.c debug.c \
 	map_object.c load.c search.c headers.c paths.c
