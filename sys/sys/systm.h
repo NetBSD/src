@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.150 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: systm.h,v 1.151 2002/09/13 14:16:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -189,6 +189,7 @@ int	snprintf __P((char *, size_t, const char *, ...))
 void	vprintf __P((const char *, _BSD_VA_LIST_));
 int	vsprintf __P((char *, const char *, _BSD_VA_LIST_));
 int	vsnprintf __P((char *, size_t, const char *, _BSD_VA_LIST_));
+int	humanize_number __P((char *, size_t, u_int64_t, const char *, int));
 #endif /* _KERNEL */
 
 void	panic __P((const char *, ...))
@@ -200,7 +201,6 @@ void	ttyprintf __P((struct tty *, const char *, ...))
 
 char	*bitmask_snprintf __P((u_quad_t, const char *, char *, size_t));
 
-int	humanize_number __P((char *, size_t, u_int64_t, const char *, int));
 int	format_bytes __P((char *, size_t, u_int64_t));
 
 void	tablefull __P((const char *, const char *));
