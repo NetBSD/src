@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2004/02/07 06:52:07 lukem Exp $
+#	$NetBSD: Makefile,v 1.5 2004/02/13 16:56:19 chris Exp $
 
 .include "../../../Makefile.serverlib"
 
@@ -36,6 +36,14 @@ CPPFLAGS.${_FN}=	-DWSCONS_SUPPORT -DUSESTDRES -DHAVE_SYSV_IPC
 .endfor
 .endif
 
+
+.if ${MACHINE} == "cats"
+SRCS.bsd+=      arm_video.c bsdResource.c pm_noop.c agp_noop.c ioperm_noop.c
+.for _FN in ${SRCS.bsd}
+CPPFLAGS.${_FN}=        -DWSCONS_SUPPORT -DUSESTDRES -DHAVE_SYSV_IPC
+.endfor
+.endif
+
 .PATH:	${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/os-support/bus
 SRCS.bus=	Pci.c
 
@@ -43,7 +51,7 @@ SRCS.bus=	Pci.c
 SRCS.bus+=	ix86Pci.c
 .endif
 
-.if ${MACHINE} == "macppc"
+.if ${MACHINE} == "macppc" || ${MACHINE} == "cats"
 SRCS.bus+=	netbsdPci.c
 .endif
 
@@ -58,7 +66,7 @@ CPPFLAGS.IODelay.S=	-DUSE_GAS
 CPPFLAGS.SlowBcopy.S=	-DUSE_GAS
 .endif
 
-.if ${MACHINE} == "amd64" || ${MACHINE} == "macppc"
+.if ${MACHINE} == "amd64" || ${MACHINE} == "macppc" || ${MACHINE} == "cats"
 SRCS.misc+=	CBUSmemcpy.c CIODelay.c CSlowBcopy.c
 .endif
 
