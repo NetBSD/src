@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.205 2002/08/31 20:02:09 sommerfeld Exp $	*/
+/*	$NetBSD: init_main.c,v 1.206 2002/09/04 01:32:31 matt Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.205 2002/08/31 20:02:09 sommerfeld Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.206 2002/09/04 01:32:31 matt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfsserver.h"
@@ -453,14 +453,14 @@ main(void)
 	} while (error != 0);
 	mountroothook_destroy();
 
-	mountlist.cqh_first->mnt_flag |= MNT_ROOTFS;
-	mountlist.cqh_first->mnt_op->vfs_refcount++;
+	CIRCLEQ_FIRST(&mountlist)->mnt_flag |= MNT_ROOTFS;
+	CIRCLEQ_FIRST(&mountlist)->mnt_op->vfs_refcount++;
 
 	/*
 	 * Get the vnode for '/'.  Set filedesc0.fd_fd.fd_cdir to
 	 * reference it.
 	 */
-	if (VFS_ROOT(mountlist.cqh_first, &rootvnode))
+	if (VFS_ROOT(CIRCLEQ_FIRST(&mountlist), &rootvnode))
 		panic("cannot find root vnode");
 	cwdi0.cwdi_cdir = rootvnode;
 	VREF(cwdi0.cwdi_cdir);
