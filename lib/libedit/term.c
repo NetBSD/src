@@ -1,4 +1,4 @@
-/*	$NetBSD: term.c,v 1.25 2000/11/11 22:18:58 christos Exp $	*/
+/*	$NetBSD: term.c,v 1.26 2000/11/28 22:37:51 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)term.c	8.2 (Berkeley) 4/30/95";
 #else
-__RCSID("$NetBSD: term.c,v 1.25 2000/11/11 22:18:58 christos Exp $");
+__RCSID("$NetBSD: term.c,v 1.26 2000/11/28 22:37:51 jmc Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -324,7 +324,7 @@ term_init(EditLine *el)
 
 	el->el_term.t_buf = (char *) el_malloc(TC_BUFSIZE);
 	el->el_term.t_cap = (char *) el_malloc(TC_BUFSIZE);
-	el->el_term.t_fkey = (fkey_t *) el_malloc(4 * sizeof(fkey_t));
+	el->el_term.t_fkey = (fkey_t *) el_malloc(A_K_NKEYS * sizeof(fkey_t));
 	el->el_term.t_loc = 0;
 	el->el_term.t_str = (char **) el_malloc(T_str * sizeof(char *));
 	(void) memset(el->el_term.t_str, 0, T_str * sizeof(char *));
