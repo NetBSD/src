@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.5 1999/12/22 18:57:47 thorpej Exp $	*/
+/*	$NetBSD: bootxx.c,v 1.6 2002/05/15 13:55:38 lukem Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -34,15 +34,23 @@
 #include <sys/types.h>
 #include <machine/bat.h>
 
+#include <sys/bootblock.h>
+
 int (*openfirmware)(void *);
 int stack[1024];
 
-#define MAXBLOCKNUM 30
+struct shared_bbinfo bbinfo = {
+	{ MACPPC_BBINFO_MAGIC },
+	0,
+	SHARED_BBINFO_MAXBLOCKS,
+	{ 0 }
+};
 
-void (*entry_point)(int, int, void *) = (void *)0;
-int block_size = 0;
-int block_count = MAXBLOCKNUM;
-int block_table[MAXBLOCKNUM] = { 0 };
+#ifndef DEFAULT_ENTRY_POINT
+#define	DEFAULT_ENTRY_POINT	0x600000
+#endif
+
+void (*entry_point)(int, int, void *) = (void *)DEFAULT_ENTRY_POINT;
 
 asm("
 	.text
@@ -213,8 +221,7 @@ startup(arg1, arg2, openfirm)
 	int arg1, arg2;
 	void *openfirm;
 {
-	int fd, blk, chosen, options;
-	int i, bs;
+	int fd, blk, chosen, options, i;
 	char *addr;
 	char bootpath[128];
 
@@ -239,13 +246,13 @@ startup(arg1, arg2, openfirm)
 	fd = OF_open(bootpath);
 
 	addr = (char *)entry_point;
-	bs = block_size;
-	for (i = 0; i < block_count; i++) {
-		blk = block_table[i];
+	for (i = 0; i < bbinfo.bbi_block_count; i++) {
+		if ((blk = bbinfo.bbi_block_table[i]) == 0)
+			break;
 
 		OF_seek(fd, (u_quad_t)blk * 512);
-		OF_read(fd, addr, bs);
-		addr += bs;
+		OF_read(fd, addr, bbinfo.bbi_block_size);
+		addr += bbinfo.bbi_block_size;
 	}
 
 	/*
