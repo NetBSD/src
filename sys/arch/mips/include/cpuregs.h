@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuregs.h,v 1.42 2001/05/30 12:52:06 soren Exp $	*/
+/*	$NetBSD: cpuregs.h,v 1.43 2001/05/31 02:06:26 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -656,7 +656,7 @@
 #define MIPS_R12000	0x0e	/* MIPS R12000			ISA IV	*/
 #define MIPS_R14000	0x0f	/* MIPS R14000			ISA IV	*/
 #define MIPS_R8000	0x10	/* MIPS R8000 Blackbird/TFP	ISA IV	*/
-#define MIPS_RC32334	0x18	/* IDT RC32332/RC32334		ISA 32  */
+#define MIPS_RC32300	0x18	/* IDT RC32334,332,355		ISA 32  */
 #define MIPS_R4600	0x20	/* QED R4600 Orion		ISA III */
 #define MIPS_R4700	0x21	/* QED R4700 Orion		ISA III */
 #define MIPS_R3SONY	0x21	/* Sony R3000 based 		ISA I	*/
@@ -664,14 +664,14 @@
 #define MIPS_TX3900	0x22	/* Toshiba TX39 family		ISA I	*/
 #define MIPS_R5000	0x23	/* MIPS R5000 			ISA IV	*/
 #define MIPS_R3NKK	0x23	/* NKK R3000 based 		ISA I	*/
-#define MIPS_RC32364	0x26	/* IDT RC32364 			ISA II	*/
+#define MIPS_RC32364	0x26	/* IDT RC32364 			ISA 32	*/
 #define MIPS_RM7000	0x27	/* QED RM7000			ISA IV  */
 #define MIPS_RM5200	0x28	/* QED RM5200s 			ISA IV	*/
 #define MIPS_TX4900	0x2d	/* Toshiba TX49 family		ISA III */
 #define MIPS_RC64470	0x30	/* IDT RC64474/RC64475 		ISA III */
 #define MIPS_R5400	0x54	/* NEC VR5400 			ISA IV	*/
-#define	MIPS_4Kc	0x80	/* MIPS 4Kc			ISA 32  */
-#define	MIPS_5Kc	0x81	/* MIPS 5Kc			ISA 32  */
+#define MIPS_4Kc	0x80	/* MIPS 4Kc			ISA 32  */
+#define MIPS_5Kc	0x81	/* MIPS 5Kc			ISA 64  */
 
 /*
  * FPU processor revision ID
