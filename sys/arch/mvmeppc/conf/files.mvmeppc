@@ -1,0 +1,105 @@
+#	$NetBSD: files.mvmeppc,v 1.1 2002/02/27 21:02:13 scw Exp $
+#
+# Motorola's MVMEPPC boards specific configuration info
+#
+maxpartitions 16
+
+maxusers 2 8 64
+
+defflag	opt_mvmetype.h		SUPPORT_MVME160X
+defflag	opt_mvmetype.h		SUPPORT_MVME210X
+defflag	opt_mvmetype.h		SUPPORT_MVME230X
+defflag	opt_mvmetype.h		SUPPORT_MVME240X
+
+file	arch/mvmeppc/mvmeppc/autoconf.c
+file	arch/mvmeppc/mvmeppc/bus_space.c
+file	arch/mvmeppc/mvmeppc/clock.c
+file	arch/mvmeppc/mvmeppc/conf.c
+file	arch/mvmeppc/mvmeppc/disksubr.c		disk
+file	arch/mvmeppc/mvmeppc/extintr.c
+file	arch/mvmeppc/mvmeppc/machdep.c
+file	arch/mvmeppc/mvmeppc/platform.c
+file	arch/mvmeppc/mvmeppc/platform_160x.c	support_mvme160x
+file	arch/mvmeppc/mvmeppc/procfs_machdep.c	procfs
+file	arch/powerpc/powerpc/bus_dma.c
+
+# General files
+file	dev/cons.c
+file	dev/clock_subr.c
+
+#
+# Machine-independent SCSI drivers
+#
+include "dev/scsipi/files.scsipi"
+major	{sd = 4}
+major	{cd = 6}
+
+#
+# Memory Disk for install floppy
+#
+file dev/md_root.c	memory_disk_hooks
+major	{md = 17}
+
+#
+# Compatibility modules
+#
+
+# Linux binary compatibility (COMPAT_LINUX)
+include "compat/linux/files.linux"
+include "compat/linux/arch/powerpc/files.linux_powerpc"
+file arch/powerpc/powerpc/linux_sigcode.S	compat_linux
+file arch/powerpc/powerpc/linux_trap.c		compat_linux
+
+#
+# RAIDframe
+#
+major	{raid = 18}
+
+#
+# System bus types
+#
+define mainbus { }
+device	mainbus: pcibus, mainbus
+attach	mainbus at root
+file	arch/mvmeppc/mvmeppc/mainbus.c	mainbus
+
+device	cpu
+attach	cpu at mainbus
+file	arch/mvmeppc/mvmeppc/cpu.c	cpu
+
+#
+# PCI-only drivers
+# XXX MUST BE INCLUDED BEFORE files.isa, as long as files.isa attaches
+# XXX devices to 'pci'.
+#
+include "dev/i2o/files.i2o"
+include "dev/pci/files.pci"
+file	arch/mvmeppc/pci/pci_machdep.c	pci
+
+# PCI-Host bridge chipsets
+device	pchb: pcibus
+attach	pchb at pci
+file	arch/mvmeppc/pci/pchb.c		pchb
+
+# PCI-ISA bridges
+device	pcib: isabus
+attach	pcib at pci
+file	arch/mvmeppc/pci/pcib.c		pcib
+
+# network devices MII bus
+include "dev/mii/files.mii"
+
+#
+# ISA and mixed ISA+PCI drivers
+#
+
+include "dev/isa/files.isa"
+major	{mcd = 7}
+#major	{scd = 15}
+
+file	arch/mvmeppc/isa/isa_machdep.c	isa
+file	arch/mvmeppc/isa/isadma_machdep.c	isa
+
+device	mkclock: mk48txx
+attach	mkclock at isa with mkclock_isa
+file	arch/mvmeppc/isa/mkclock_isa.c	mkclock_isa
