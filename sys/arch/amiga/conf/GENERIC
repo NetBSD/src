@@ -1,7 +1,7 @@
 #
 # GENERIC AMIGA
 #
-#	$Id: GENERIC,v 1.11 1994/05/22 07:22:24 chopps Exp $
+#	$Id: GENERIC,v 1.12 1994/05/22 19:33:23 chopps Exp $
 #
 # This configuration file contains all possible options
 #
@@ -112,8 +112,8 @@ options		"COMPAT_NOMID"	# Support to run nonvalid machine id executables
 
 # Support for System V IPC facilities.
 #options		SYSVSHM		# System V-like shared memory
-options		SYSVMSG		# System V-like messages
-options		SYSVSEM		# System V-like semaphores
+#options		SYSVMSG		# System V-like messages
+#options		SYSVSEM		# System V-like semaphores
 
 # Amiga graphics options
 options		GRF_ECS			# Enhanced Chip Set
