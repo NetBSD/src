@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.10 1996/01/06 20:11:01 leo Exp $
+#	$NetBSD: GENERIC,v 1.11 1996/02/19 09:05:49 leo Exp $
 #
 # Generic atari
 #
@@ -61,6 +61,7 @@ options		NFSCLIENT	# Network File System client side code
 #
 options		COMPAT_43	# 4.3 BSD compatible system calls (required)
 options		COMPAT_10	# Compatibility to NetBSD1.0
+options		COMPAT_11	# Compatibility to NetBSD1.1
 #options	COMPAT_09	# has no meaning on the atari
 #options	COMPAT_SUNOS	# Support to run Sun-3 executables
 #options	TCP_COMPAT_42	# Disable UDP checksums (not needed)
@@ -91,6 +92,8 @@ options		FALCON_SCSI		# SCSI-support for Falcon
 options		TT_VIDEO		# Graphics support for TT
 options		FALCON_VIDEO		# Graphics support for FALCON
 options		STATCLOCK		# Separate {stat,prof}clock
+options		DISKLABEL_NBDA		# NetBSD disklabels (required)
+options		DISKLABEL_AHDI		# NetBSD/AHDI disklabels
 
 #
 # Build one kernel that can boot from any disk.

@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.5 1995/11/30 00:57:35 jtc Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.6 1996/02/19 09:05:31 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -30,34 +30,32 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef DISKLABEL_NBDA
+#define	DISKLABEL_NBDA	/* required */
+#endif
+
 #include <sys/param.h>
 #include <sys/buf.h>
+#include <ufs/ffs/fs.h>
 #include <sys/disklabel.h>
-#include <machine/tospart.h>
+#include <machine/ahdilabel.h>
 
 /*
- * This is ugly, but as long as disklabel(8) uses
- * BBSIZE from ufs/ffs/fs.h, there's no alternative.
+ * BBSIZE in <ufs/ffs/fs.h> must be greater than
+ * or equal to BBMINSIZE in <machine/disklabel.h>
  */
-#include <ufs/ffs/fs.h>
-#if BBSIZE < 8192
-#error BBSIZE in /sys/ufs/ffs/fs.h must be at least 8192 bytes
+#if BBSIZE < BBMINSIZE
+#error BBSIZE smaller than BBMINSIZE
 #endif
 
-#if 0
-#define MACHDSBR_DEBUG(x)	printf x
-#else
-#define MACHDSBR_DEBUG(x)
-#endif
-
-static int  real_label __P((dev_t, void (*)(), u_int32_t, struct disklabel *));
-static void chck_label __P((struct disklabel *, struct cpu_disklabel *));
-static void fake_label __P((struct disklabel *, struct tos_table *));
-static int  rd_rootparts __P((dev_t, void (*)(), u_int32_t, u_int32_t,
-                                                        struct tos_table *));
-static int  rd_extparts  __P((dev_t, void (*)(), u_int32_t, u_int32_t,
-                                             u_int32_t, struct tos_table *));
-static int  add_tospart  __P((struct tos_part *, struct tos_table *));
+static void  ck_label __P((struct disklabel *, struct cpu_disklabel *));
+static int   bsd_label __P((dev_t, void (*)(),
+			struct disklabel *, u_int, u_int *));
+static int   ahdi_label __P((dev_t, void (*)(),
+			struct disklabel *, struct cpu_disklabel *));
+static void  ahdi_to_bsd __P((struct disklabel *, struct ahdi_ptbl *));
+static u_int ahdi_getparts __P((dev_t, void (*)(), u_int,
+					u_int, u_int, struct ahdi_ptbl *));
 
 /*
  * XXX unknown function but needed for /sys/scsi to link
@@ -75,19 +73,19 @@ dk_establish()
  */
 int
 bounds_check_with_label(bp, lp, wlabel)
-struct buf		*bp;
-struct disklabel	*lp;
-int			wlabel;
+	struct buf		*bp;
+	struct disklabel	*lp;
+	int			wlabel;
 {
 	struct partition	*pp;
-	u_int32_t		maxsz, sz;
+	u_int			maxsz, sz;
 
 	pp = &lp->d_partitions[DISKPART(bp->b_dev)];
 	if (bp->b_flags & B_RAW) {
 		if (bp->b_bcount & (lp->d_secsize - 1)) {
 			bp->b_error = EINVAL;
 			bp->b_flags |= B_ERROR;
-			return (-1);
+			return(-1);
 		}
 		maxsz = pp->p_size * (lp->d_secsize / DEV_BSIZE);
 		sz = (bp->b_bcount + DEV_BSIZE - 1) >> DEV_BSHIFT;
@@ -135,13 +133,12 @@ int			wlabel;
  */
 char *
 readdisklabel(dev, strat, lp, clp)
-dev_t			dev;
-void			(*strat)();
-struct disklabel	*lp;
-struct cpu_disklabel	*clp;
+	dev_t			dev;
+	void			(*strat)();
+	struct disklabel	*lp;
+	struct cpu_disklabel	*clp;
 {
-	struct tos_table	tt;
-	int			i;
+	int			e;
 
 	bzero(clp, sizeof *clp);
 
@@ -154,93 +151,34 @@ struct cpu_disklabel	*clp;
 		lp->d_secperunit = 0x1fffffff;
 	if (lp->d_secpercyl == 0)
 		return("Zero secpercyl");
-	for (i = 0; i < MAXPARTITIONS; ++i) {
-		lp->d_partitions[i].p_size   = 0;
-		lp->d_partitions[i].p_offset = 0;
-		lp->d_partitions[i].p_fstype = FS_UNUSED;
-	}
+	bzero(lp->d_partitions, sizeof lp->d_partitions);
 	lp->d_partitions[RAW_PART].p_size = lp->d_secperunit;
 	lp->d_npartitions                 = RAW_PART + 1;
 	lp->d_bbsize                      = BBSIZE;
 	lp->d_sbsize                      = SBSIZE;
 
-	MACHDSBR_DEBUG(("unit: %lu secsize: %lu secperunit: %lu\n",
-	(u_long)DISKUNIT(dev), (u_long)lp->d_secsize,
-	(u_long)lp->d_secperunit));
+#ifdef DISKLABEL_NBDA
+	/* Try the native NetBSD/Atari format first. */
+	e = bsd_label(dev, strat, lp, 0, &clp->cd_label);
+#endif
+#if 0
+	/* Other label formats go here. */
+	if (e > 0)
+		e = foo_label(dev, strat, lp, ...);
+#endif
+#ifdef DISKLABEL_AHDI
+	/* The unprotected AHDI format comes last. */
+	if (e > 0)
+		e = ahdi_label(dev, strat, lp, clp);
+#endif
+	if (e < 0)
+		return("I/O error");
 
-	/*
-	 * Try the simple case (boot block at sector 0) first.
-	 */
-	if(real_label(dev, strat, LABELSECTOR, lp)) {
-		MACHDSBR_DEBUG(("Normal volume: boot block at sector 0\n"));
-		return(NULL);
-	}
-	/*
-	 * The vendor specific (TOS) partition layout requires a 512
-	 * byte sector size.
-	 */
-	tt.tt_cdl    = clp;
-	tt.tt_nroots = tt.tt_nparts = 0;
-	if (lp->d_secsize != TOS_BSIZE || (i = rd_rootparts(dev, strat,
-			lp->d_secpercyl, lp->d_secperunit, &tt)) == 2) {
-		MACHDSBR_DEBUG(("Uninitialised volume\n"));
-		lp->d_partitions[RAW_PART+1].p_size
-				= lp->d_partitions[RAW_PART].p_size;
-		lp->d_partitions[RAW_PART+1].p_offset
-				= lp->d_partitions[RAW_PART].p_offset;
-		lp->d_partitions[RAW_PART+1].p_fstype = FS_BSDFFS;
-		lp->d_npartitions = RAW_PART + 2;
-		goto done;
-	}
-	if (!i)
-		return("Invalid TOS partition table");
-	/*
-	 * TOS format, search for a partition with id NBD or RAW, which
-	 * contains a NetBSD boot block with a valid disk label in it.
-	 */
-	MACHDSBR_DEBUG(("AHDI partition table: "));
-	clp->cd_bblock = NO_BOOT_BLOCK;
-	for (i = 0; i < tt.tt_nparts; ++i) {
-		struct tos_part	*tp = &tt.tt_parts[i];
-		u_int32_t	id = *((u_int32_t *)&tp->tp_flg);
-		if (id != PID_NBD && id != PID_RAW)
-			continue;
-		if (!real_label(dev, strat, tp->tp_st, lp)) {
-			/*
-			 * No disk label, but if this is the first NBD partition
-			 * on this volume, we'll mark it anyway as a possible
-			 * destination for future writedisklabel() calls, just
-			 * in case there is no valid disk label on any of the
-			 * other AHDI partitions.
-			 */
-			if (id == PID_NBD
-			  && clp->cd_bblock == NO_BOOT_BLOCK)
-				clp->cd_bblock = tp->tp_st;
-			continue;
-		}
-		/*
-		 * Found a valid disk label, mark this TOS partition for
-		 * writedisklabel(), and check for possibly dangerous
-		 * overlap between TOS and NetBSD partition layout.
-		 */
-		MACHDSBR_DEBUG(("found real disklabel\n"));
-		clp->cd_bblock = tp->tp_st;
-		chck_label(lp, clp);
-		return(NULL);
-	}
-	/*
-	 * No disk label on this volume, use the TOS partition
-	 * layout to create a fake disk label. If there is no
-	 * NBD partition on this volume either, subsequent
-	 * writedisklabel() calls will fail.
-	 */
-	MACHDSBR_DEBUG(("creating fake disklabel\n"));
-	fake_label(lp, &tt);
+	/* Unknown format or unitialised volume? */
+	if (e > 0)
+		uprintf("Warning: unknown disklabel format\n");
 
-	/*
-	 * Calulate new checksum.
-	 */
-done:
+	/* Calulate new checksum. */
 	lp->d_magic = lp->d_magic2 = DISKMAGIC;
 	lp->d_checksum = 0;
 	lp->d_checksum = dkcksum(lp);
@@ -253,9 +191,9 @@ done:
  */
 int
 setdisklabel(olp, nlp, openmask, clp)
-struct disklabel	*olp, *nlp;
-u_long			openmask;
-struct cpu_disklabel	*clp;
+	struct disklabel	*olp, *nlp;
+	u_long			openmask;
+	struct cpu_disklabel	*clp;
 {
 	/* special case to allow disklabel to be invalidated */
 	if (nlp->d_magic == 0xffffffff) {
@@ -264,14 +202,16 @@ struct cpu_disklabel	*clp;
 	}
 
 	/* sanity clause */
-	if (nlp->d_secpercyl == 0 || nlp->d_secsize == 0
-	  || (nlp->d_secsize % DEV_BSIZE) != 0 || dkcksum(nlp) != 0
-	  || nlp->d_magic != DISKMAGIC || nlp->d_magic2 != DISKMAGIC)
+	if (nlp->d_secpercyl == 0 || nlp->d_npartitions > MAXPARTITIONS
+	  || nlp->d_secsize  == 0 || (nlp->d_secsize % DEV_BSIZE) != 0
+	  || nlp->d_magic != DISKMAGIC || nlp->d_magic2 != DISKMAGIC
+	  || dkcksum(nlp) != 0)
 		return(EINVAL);
 
+#ifdef DISKLABEL_AHDI
 	if (clp->cd_bblock)
-		chck_label(nlp, clp);
-
+		ck_label(nlp, clp);
+#endif
 	while (openmask) {
 		struct partition *op, *np;
 		int i = ffs(openmask) - 1;
@@ -304,35 +244,45 @@ struct cpu_disklabel	*clp;
  */
 int
 writedisklabel(dev, strat, lp, clp)
-dev_t			dev;
-void			(*strat)();
-struct disklabel	*lp;
-struct cpu_disklabel	*clp;
+	dev_t			dev;
+	void			(*strat)();
+	struct disklabel	*lp;
+	struct cpu_disklabel	*clp;
 {
-	struct buf	*bp;
-	u_int32_t	bbo;
-	int		rv;
+	struct buf		*bp;
+	u_int			blk;
+	int			rv;
 
-	bbo = clp->cd_bblock;
-	if (bbo == NO_BOOT_BLOCK)
+	blk = clp->cd_bblock;
+	if (blk == NO_BOOT_BLOCK)
 		return(ENXIO);
 
-	bp = geteblk(BBSIZE);
+	bp = geteblk(BBMINSIZE);
 	bp->b_dev      = MAKEDISKDEV(major(dev), DISKUNIT(dev), RAW_PART);
 	bp->b_flags    = B_BUSY | B_READ;
-	bp->b_bcount   = BBSIZE;
-	bp->b_blkno    = bbo;
-	bp->b_cylinder = bbo / lp->d_secpercyl;
+	bp->b_bcount   = BBMINSIZE;
+	bp->b_blkno    = blk;
+	bp->b_cylinder = blk / lp->d_secpercyl;
 	(*strat)(bp);
 	rv = biowait(bp);
 	if (!rv) {
-		struct disklabel *nlp = (struct disklabel *)
-				((char *)bp->b_data + LABELOFFSET);
-		*nlp = *lp;
+		struct bootblock *bb = (struct bootblock *)bp->b_data;
+		/*
+		 * Allthough the disk pack label may appear anywhere
+		 * in the boot block while reading, it is always
+		 * written at a fixed location.
+		 */
+		if (clp->cd_label != LABELOFFSET) {
+			clp->cd_label = LABELOFFSET;
+			bzero(bb, sizeof(*bb));
+		}
+		bb->bb_magic = (blk == 0) ? NBDAMAGIC : AHDIMAGIC;
+		BBSETLABEL(bb, lp);
+
 		bp->b_flags    = B_BUSY | B_WRITE;
-		bp->b_bcount   = BBSIZE;
-		bp->b_blkno    = bbo;
-		bp->b_cylinder = bbo / lp->d_secpercyl;
+		bp->b_bcount   = BBMINSIZE;
+		bp->b_blkno    = blk;
+		bp->b_cylinder = blk / lp->d_secpercyl;
 		(*strat)(bp);
 		rv = biowait(bp);
 	}
@@ -342,68 +292,98 @@ struct cpu_disklabel	*clp;
 }
 
 /*
- * Read bootblock at block `offset' and check
- * if it contains a valid disklabel.
- * Returns 0 if an error occured, 1 if successfull.
+ * Read bootblock at block `blkno' and check
+ * if it contains a valid NetBSD disk label.
+ *
+ * Returns:  0 if successfull,
+ *          -1 if an I/O error occured,
+ *          +1 if no valid label was found.
  */
 static int
-real_label(dev, strat, offset, lp)
-dev_t			dev;
-void			(*strat)();
-u_int32_t		offset;
-struct disklabel	*lp;
+bsd_label(dev, strat, label, blkno, offset)
+	dev_t			dev;
+	void			(*strat)();
+	struct disklabel	*label;
+	u_int			blkno,
+				*offset;
 {
 	struct buf		*bp;
-	int			rv = 0;
+	int			rv;
 
-	bp = geteblk(BBSIZE);
+	bp = geteblk(BBMINSIZE);
 	bp->b_dev      = MAKEDISKDEV(major(dev), DISKUNIT(dev), RAW_PART);
 	bp->b_flags    = B_BUSY | B_READ;
-	bp->b_bcount   = BBSIZE;
-	bp->b_blkno    = offset;
-	bp->b_cylinder = offset / lp->d_secpercyl;
+	bp->b_bcount   = BBMINSIZE;
+	bp->b_blkno    = blkno;
+	bp->b_cylinder = blkno / label->d_secpercyl;
 	(*strat)(bp);
+
+	rv = -1;
 	if (!biowait(bp)) {
-		struct disklabel *nlp = (struct disklabel *)
-				((char *)bp->b_data + LABELOFFSET);
-		if (nlp->d_magic == DISKMAGIC && nlp->d_magic2 == DISKMAGIC
-	  	  && dkcksum(nlp) == 0 && nlp->d_npartitions <= MAXPARTITIONS) {
-			*lp = *nlp;
-			rv  = 1;
+		struct bootblock *bb;
+		u_int32_t   *p, *end;
+
+		rv  = 1;
+		bb  = (struct bootblock *)bp->b_data;
+		end = (u_int32_t *)((char *)&bb[1] - sizeof(struct disklabel));
+		for (p = (u_int32_t *)bb; p < end; ++p) {
+			struct disklabel *dl = (struct disklabel *)&p[1];
+			/*
+			 * Compatibility kludge: the boot block magic number is
+			 * new in 1.1A, in previous versions the disklabel was
+			 * stored at the end of the boot block (offset 7168).
+			 */
+			if (  (  (p[0] == NBDAMAGIC && blkno == 0)
+			      || (p[0] == AHDIMAGIC && blkno != 0)
+#if 1	/* #ifdef COMPAT_11 */
+			      || (char *)dl - (char *)bb == 7168
+#endif
+			      )
+			   && dl->d_npartitions <= MAXPARTITIONS
+			   && dl->d_magic2 == DISKMAGIC
+			   && dl->d_magic  == DISKMAGIC
+		  	   && dkcksum(dl)  == 0
+			   )	{
+				*offset = (char *)dl - (char *)bb;
+				*label  = *dl;
+				rv      = 0;
+				break;
+			}
 		}
 	}
+
 	bp->b_flags = B_INVAL | B_AGE | B_READ;
 	brelse(bp);
 	return(rv);
 }
 
+#ifdef DISKLABEL_AHDI
 /*
  * Check for consistency between the NetBSD partition table
- * and the TOS auxilary root sectors. There's no good reason
+ * and the AHDI auxilary root sectors. There's no good reason
  * to force such consistency, but issueing a warning may help
- * an inexperienced sysadmin to prevent corruption of TOS
+ * an inexperienced sysadmin to prevent corruption of AHDI
  * partitions.
  */
 static void
-chck_label(lp, clp)
-struct disklabel	*lp;
-struct cpu_disklabel	*clp;
+ck_label(dl, cdl)
+	struct disklabel	*dl;
+	struct cpu_disklabel	*cdl;
 {
-	u_int32_t	*rp;
-	int		i;
+	u_int			*rp, i;
 
-	for (i = 0; i < lp->d_npartitions; ++i) {
-		struct partition *p = &lp->d_partitions[i];
-		if (p->p_size == 0 || i == RAW_PART)
+	for (i = 0; i < dl->d_npartitions; ++i) {
+		struct partition *p = &dl->d_partitions[i];
+		if (i == RAW_PART || p->p_size == 0)
 			continue;
-		if ( (p->p_offset <= clp->cd_bslst
-		   && p->p_offset + p->p_size > clp->cd_bslst)
-		  || (p->p_offset > clp->cd_bslst
-		   && clp->cd_bslst + clp->cd_bslsize > p->p_offset)) {
+		if ( (p->p_offset >= cdl->cd_bslst
+		   && p->p_offset <= cdl->cd_bslend)
+		  || (cdl->cd_bslst >= p->p_offset
+		   && cdl->cd_bslst <  p->p_offset + p->p_size)) {
 			uprintf("Warning: NetBSD partition %c includes"
 				" AHDI bad sector list\n", 'a'+i);
 		}
-		for (rp = &clp->cd_roots[0]; *rp; ++rp) {
+		for (rp = &cdl->cd_roots[0]; *rp; ++rp) {
 			if (*rp >= p->p_offset
 			  && *rp < p->p_offset + p->p_size) {
 				uprintf("Warning: NetBSD partition %c"
@@ -414,7 +394,117 @@ struct cpu_disklabel	*clp;
 }
 
 /*
- * Map the partition table from TOS to the NetBSD table.
+ * Check volume for the existance of an AHDI label. Fetch
+ * NetBSD label from NBD or RAW partition, or otherwise
+ * create a fake NetBSD label based on the AHDI label.
+ *
+ * Returns:  0 if successful,
+ *          -1 if an I/O error occured,
+ *          +1 if no valid AHDI label was found.
+ */
+int
+ahdi_label(dev, strat, dl, cdl)
+	dev_t			dev;
+	void			(*strat)();
+	struct disklabel	*dl;
+	struct cpu_disklabel	*cdl;
+{
+	struct ahdi_ptbl	apt;
+	u_int			i;
+	int			j;
+
+	/*
+	 * The AHDI format requires a specific block size.
+	 */
+	if (dl->d_secsize != AHDI_BSIZE)
+		return(1);
+
+	/*
+	 * Fetch the AHDI partition descriptors.
+	 */
+	apt.at_cdl    = cdl;
+	apt.at_nroots = apt.at_nparts = 0;
+	i = ahdi_getparts(dev, strat, dl->d_secpercyl,
+			  AHDI_BBLOCK, AHDI_BBLOCK, &apt);
+	if (i) {
+		if (i < dl->d_secperunit)
+			return(-1);	/* disk read error		*/
+		else return(1);		/* reading past end of medium	*/
+	}
+
+	/*
+	 * Perform sanity checks.
+	 */
+	if (apt.at_bslst == 0 || apt.at_bslend == 0)	/* illegal */
+		return(1);
+	if (apt.at_hdsize == 0 || apt.at_nparts == 0)	/* unlikely */
+		return(1);
+	if (apt.at_nparts > AHDI_MAXPARTS)		/* XXX kludge */
+		return(-1);
+	for (i = 0; i < apt.at_nparts; ++i) {
+		struct ahdi_part *p1 = &apt.at_parts[i];
+
+		for (j = 0; j < apt.at_nroots; ++j) {
+			u_int	aux = apt.at_roots[j];
+			if (aux >= p1->ap_st && aux <= p1->ap_end)
+				return(1);
+		}
+		for (j = i + 1; j < apt.at_nparts; ++j) {
+			struct ahdi_part *p2 = &apt.at_parts[j];
+			if (p1->ap_st >= p2->ap_st && p1->ap_st <= p2->ap_end)
+				return(1);
+			if (p2->ap_st >= p1->ap_st && p2->ap_st <= p1->ap_end)
+				return(1);
+		}
+		if (p1->ap_st >= apt.at_bslst && p1->ap_st <= apt.at_bslend)
+			return(1);
+		if (apt.at_bslst >= p1->ap_st && apt.at_bslst <= p1->ap_end)
+			return(1);
+	}
+
+	/*
+	 * Search for a NetBSD disk label
+	 */
+	apt.at_bblock = NO_BOOT_BLOCK;
+	for (i = 0; i < apt.at_nparts; ++i) {
+		struct ahdi_part *pd = &apt.at_parts[i];
+		u_int		 id  = *((u_int32_t *)&pd->ap_flg);
+		if (id == AHDI_PID_NBD || id == AHDI_PID_RAW) {
+			u_int	blkno = pd->ap_st;
+			j = bsd_label(dev, strat, dl, blkno, &apt.at_label);
+			if (j < 0) {
+				return(j);		/* I/O error */
+			}
+			if (!j) {
+				apt.at_bblock = blkno;	/* got it */
+				ck_label(dl, cdl);
+				return(0);
+			}
+			/*
+			 * Not yet, but if this is the first NBD partition
+			 * on this volume, we'll mark it anyway as a possible
+			 * destination for future writedisklabel() calls, just
+			 * in case there is no valid disk label on any of the
+			 * other AHDI partitions.
+			 */
+			if (id == AHDI_PID_NBD
+			    && apt.at_bblock == NO_BOOT_BLOCK)
+				apt.at_bblock = blkno;
+		}
+	}
+
+	/*
+	 * No NetBSD disk label on this volume, use the AHDI
+	 * label to create a fake BSD label. If there is no
+	 * NBD partition on this volume either, subsequent
+	 * writedisklabel() calls will fail.
+	 */
+	ahdi_to_bsd(dl, &apt);
+	return(0);
+}
+
+/*
+ * Map the AHDI partition table to the NetBSD table.
  *
  * This means:
  *  Part 0   : Root
@@ -426,30 +516,30 @@ struct cpu_disklabel	*clp;
  * be recognized as such. The others are mapped as user partitions.
  */
 static void
-fake_label(lp, tt)
-struct disklabel	*lp;
-struct tos_table	*tt;
+ahdi_to_bsd(dl, apt)
+	struct disklabel	*dl;
+	struct ahdi_ptbl	*apt;
 {
 	int		i, have_root, user_part;
 
 	user_part = RAW_PART;
-	have_root = (tt->tt_bblock != NO_BOOT_BLOCK);
+	have_root = (apt->at_bblock != NO_BOOT_BLOCK);
 
-	for (i = 0; i < tt->tt_nparts; ++i) {
-		struct tos_part	*tp = &tt->tt_parts[i];
-		int		fst, pno = -1;
+	for (i = 0; i < apt->at_nparts; ++i) {
+		struct ahdi_part *pd = &apt->at_parts[i];
+		int		 fst, pno = -1;
 
-		switch (*((u_int32_t *)&tp->tp_flg)) {
-			case PID_NBD:
+		switch (*((u_int32_t *)&pd->ap_flg)) {
+			case AHDI_PID_NBD:
 				/*
 				 * If this partition has been marked as the
 				 * first NBD partition, it will be the root
 				 * partition.
 				 */
-				if (tp->tp_st == tt->tt_bblock)
+				if (pd->ap_st == apt->at_bblock)
 					pno = 0;
 				/* FALL THROUGH */
-			case PID_NBR:
+			case AHDI_PID_NBR:
 				/*
 				 * If there is no NBD partition and this is
 				 * the first NBR partition, it will be the
@@ -460,17 +550,17 @@ struct tos_table	*tt;
 					pno = 0;
 				}
 				/* FALL THROUGH */
-			case PID_NBU:
+			case AHDI_PID_NBU:
 				fst = FS_BSDFFS;
 				break;
-			case PID_NBS:
-			case PID_SWP:
-				if (lp->d_partitions[1].p_size == 0)
+			case AHDI_PID_NBS:
+			case AHDI_PID_SWP:
+				if (dl->d_partitions[1].p_size == 0)
 					pno = 1;
 				fst = FS_SWAP;
 				break;
-			case PID_BGM:
-			case PID_GEM:
+			case AHDI_PID_BGM:
+			case AHDI_PID_GEM:
 				fst = FS_MSDOS;
 				break;
 			default:
@@ -482,223 +572,79 @@ struct tos_table	*tt;
 				continue;
 			user_part = pno;
 		}
-		lp->d_partitions[pno].p_size   = tp->tp_size;
-		lp->d_partitions[pno].p_offset = tp->tp_st;
-		lp->d_partitions[pno].p_fstype = fst;
+		dl->d_partitions[pno].p_size   = pd->ap_end - pd->ap_st + 1;
+		dl->d_partitions[pno].p_offset = pd->ap_st;
+		dl->d_partitions[pno].p_fstype = fst;
 	}
-	lp->d_npartitions = user_part + 1;
+	dl->d_npartitions = user_part + 1;
 }
 
 /*
- * Create a list of TOS partitions in tos_table `tt'.
- * Returns 0 if an error occured, 1 if successfull,
- * or 2 if no TOS partition table exists.
+ * Fetch the AHDI partitions and auxilary roots.
+ *
+ * Returns:  0 if successful,
+ *           otherwise an I/O error occurred, and the
+ *           number of the offending block is returned.
  */
-static int
-rd_rootparts(dev, strat, spc, spu, tt)
-dev_t			dev;
-void			(*strat)();
-u_int32_t		spc, spu;
-struct tos_table	*tt;
+static u_int
+ahdi_getparts(dev, strat, secpercyl, rsec, esec, apt)
+	dev_t			dev;
+	void			(*strat)();
+	u_int			secpercyl,
+				rsec, esec;
+	struct ahdi_ptbl	*apt;
 {
-	struct tos_root	*root;
-	struct buf	*bp;
-	int		i, j, rv = 0;
+	struct ahdi_part	*part, *end;
+	struct ahdi_root	*root;
+	struct buf		*bp;
+	u_int			rv;
 
-	bp = geteblk(TOS_BSIZE);
+	bp = geteblk(AHDI_BSIZE);
 	bp->b_dev      = MAKEDISKDEV(major(dev), DISKUNIT(dev), RAW_PART);
 	bp->b_flags    = B_BUSY | B_READ;
-	bp->b_bcount   = TOS_BSIZE;
-	bp->b_blkno    = TOS_BBLOCK;
-	bp->b_cylinder = TOS_BBLOCK / spc;
+	bp->b_bcount   = AHDI_BSIZE;
+	bp->b_blkno    = rsec;
+	bp->b_cylinder = rsec / secpercyl;
 	(*strat)(bp);
-	if (biowait(bp))
+	if (biowait(bp)) {
+		rv = rsec + (rsec == 0);
 		goto done;
-	root = (struct tos_root *)bp->b_data;
-
-	MACHDSBR_DEBUG(("hdsize: %lu bsl-start: %lu bsl-size: %lu\n",
-	(u_long)root->tr_hdsize, (u_long)root->tr_bslst,
-	(u_long)root->tr_bslsize));
-
-	if (!root->tr_hdsize || (!root->tr_bslsize && root->tr_bslst)) {
-		rv = 2; goto done;
 	}
-	for (i = 0; i < NTOS_PARTS; ++i) {
-		struct tos_part	*part = &root->tr_parts[i];
-		if (!(part->tp_flg & 1)) /* skip invalid entries */
+	root = (struct ahdi_root *)bp->b_data;
+
+	if (rsec == AHDI_BBLOCK)
+		end = &root->ar_parts[AHDI_MAXRPD];
+	else end = &root->ar_parts[AHDI_MAXARPD];
+	for (part = root->ar_parts; part < end; ++part) {
+		u_int	id = *((u_int32_t *)&part->ap_flg);
+		if (!(id & 0x01000000))
 			continue;
-		MACHDSBR_DEBUG(("  %c%c%c %9lu %9lu\n",
-		  part->tp_id[0], part->tp_id[1], part->tp_id[2],
-		    (u_long)part->tp_st, (u_long)part->tp_size));
-		if (part->tp_st == 0 || part->tp_st >= spu
-		  || part->tp_size == 0 || part->tp_size >= spu
-		  || part->tp_st + part->tp_size > spu)
-			goto done;
-		if ( (part->tp_st <= root->tr_bslst
-		   && part->tp_st + part->tp_size > root->tr_bslst)
-		  || (part->tp_st >  root->tr_bslst
-		   && root->tr_bslst + root->tr_bslsize > part->tp_st))
-			goto done;
-		if (add_tospart(part, tt) && !rd_extparts(dev, strat,
-					spc, part->tp_st, part->tp_size, tt))
-			goto done;
-	}
-	if (tt->tt_nparts > MAX_TOS_PARTS)
-		goto done;	/* too many partitions for us */
-	/*
-	 * Allthough the AHDI 3.0 specifications do not prohibit
-	 * a root sector with only invalid partition entries in
-	 * it, this situation would be most unlikely.
-	 */
-	if (!tt->tt_nparts) {
-		rv = 2; goto done;
-	}
-	for (i = 0; i < tt->tt_nparts; ++i) {
-		struct tos_part	*p1 = &tt->tt_parts[i];
-		for (j = 0; j < i; ++j) {
-			struct tos_part	*p2 = &tt->tt_parts[j];
-			if ( (p1->tp_st <= p2->tp_st
-			   && p1->tp_st + p1->tp_size > p2->tp_st)
-			  || (p1->tp_st >  p2->tp_st
-			   && p2->tp_st + p2->tp_size > p1->tp_st))
+		if ((id &= 0x00ffffff) == AHDI_PID_XGM) {
+			u_int	offs = part->ap_st + esec;
+			if (apt->at_nroots < AHDI_MAXROOTS)
+				apt->at_roots[apt->at_nroots] = offs;
+			apt->at_nroots += 1;
+			rv = ahdi_getparts(dev, strat, secpercyl, offs,
+				(esec == AHDI_BBLOCK) ? offs : esec, apt);
+			if (rv)
 				goto done;
+			continue;
 		}
+		else if (apt->at_nparts < AHDI_MAXPARTS) {
+			struct ahdi_part *p = &apt->at_parts[apt->at_nparts];
+			*((u_int32_t *)&p->ap_flg) = id;
+			p->ap_st  = part->ap_st + rsec;
+			p->ap_end = p->ap_st + part->ap_size - 1;
+		}
+		apt->at_nparts += 1;
 	}
-	tt->tt_bslsize = root->tr_bslsize;
-	tt->tt_bslst   = root->tr_bslst;
-	rv = 1;
+	apt->at_hdsize = root->ar_hdsize;
+	apt->at_bslst  = root->ar_bslst;
+	apt->at_bslend = root->ar_bslst + root->ar_bslsize - 1;
+	rv = 0;
 done:
 	bp->b_flags = B_INVAL | B_AGE | B_READ;
 	brelse(bp);
 	return(rv);
 }
-
-/*
- * Add all subpartitions within an extended
- * partition to tos_table `tt'.
- * Returns 0 if an error occured, 1 if successfull.
- */
-static int
-rd_extparts(dev, strat, spc, extst, extsize, tt)
-dev_t			dev;
-void			(*strat)();
-u_int32_t		spc, extst, extsize;
-struct tos_table	*tt;
-{
-	struct buf	*bp;
-	u_int32_t	subst = extst, subsize = extsize;
-	int		rv = 0;
-
-	bp = geteblk(TOS_BSIZE);
-	bp->b_dev = MAKEDISKDEV(major(dev), DISKUNIT(dev), RAW_PART);
-
-	for (;;) {
-		struct tos_root	*root = (struct tos_root *)bp->b_data;
-		struct tos_part	*part = root->tr_parts;
-
-		MACHDSBR_DEBUG(("auxilary root at sector %lu\n",(u_long)subst));
-		bp->b_flags    = B_BUSY | B_READ;
-		bp->b_bcount   = TOS_BSIZE;
-		bp->b_blkno    = subst;
-		bp->b_cylinder = subst / spc;
-		(*strat)(bp);
-		if (biowait(bp))
-			goto done;
-		/*
-		 * The first entry in an auxilary root sector must be
-		 * marked as valid. The entry must describe a normal
-		 * partition. The partition must not extend beyond
-		 * the boundaries of the subpartition that it's
-		 * part of.
-		 */
-		MACHDSBR_DEBUG(("  %c%c%c %9lu %9lu\n",
-		  part->tp_id[0], part->tp_id[1], part->tp_id[2],
-		    (u_long)part->tp_st, (u_long)part->tp_size));
-		if (!(part->tp_flg & 1)
-#if 0 /* LWP: Temporary hack */
-		  || part->tp_st == 0 || part->tp_st >= subsize
-		  || part->tp_size == 0 || part->tp_size >= subsize
-		  || part->tp_st + part->tp_size > subsize) {
-#else
-		  || part->tp_st == 0
-		  || part->tp_size == 0
-		  || part->tp_size >= extsize) {
-#endif
-			MACHDSBR_DEBUG(("first entry exceeds parent\n"));
-			goto done;
-		}
-		part->tp_st += subst;
-		if (add_tospart(part++, tt)) {
-			MACHDSBR_DEBUG(("first entry is XGM\n"));
-			goto done;
-		}
-		/*
-		 * If the second entry in an auxilary rootsector is
-		 * marked as invalid, we've reached the end of the
-		 * linked list of subpartitions.
-		 */
-		if (!(part->tp_flg & 1)) {
-			rv = 1;
-			goto done;
-		}
-		/*
-		 * If marked valid, the second entry in an auxilary
-		 * rootsector must describe a subpartition (id XGM).
-		 * The subpartition must not extend beyond the
-		 * boundaries of the extended partition that
-		 * it's part of.
-		 */
-		MACHDSBR_DEBUG(("  %c%c%c %9lu %9lu\n",
-		  part->tp_id[0], part->tp_id[1], part->tp_id[2],
-		    (u_long)part->tp_st, (u_long)part->tp_size));
-#if 0 /* LWP: Temporary hack */
-		if (part->tp_st == 0 || part->tp_st >= extsize
-		  || part->tp_size == 0 || part->tp_size >= extsize
-		  || part->tp_st + part->tp_size > extsize) {
-#else
-		if (part->tp_st == 0
-		  || part->tp_st >= extsize
-		  || part->tp_size == 0) {
-#endif
-			MACHDSBR_DEBUG(("second entry exceeds parent\n"));
-			goto done;
-		}
-		part->tp_st += extst;
-		if (!add_tospart(part, tt)) {
-			MACHDSBR_DEBUG(("second entry is not XGM\n"));
-			goto done;
-		}
-		subst   = part->tp_st;
-		subsize = part->tp_size;
-	}
-done:
-	bp->b_flags = B_INVAL | B_AGE | B_READ;
-	brelse(bp);
-	return(rv);
-}
-
-/*
- * Add a TOS partition or an auxilary root sector
- * to the appropriate list in tos_table `tt'.
- * Returns 1 if `tp' is an XGM partition, otherwise 0.
- */
-static int
-add_tospart (tp, tt)
-struct tos_part		*tp;
-struct tos_table	*tt;
-{
-	u_int32_t	i;
-
-	tp->tp_flg = 0;
-	i = *((u_int32_t *)&tp->tp_flg);
-	if (i == PID_XGM) {
-		i = tt->tt_nroots++;
-		if (i < MAX_TOS_ROOTS)
-			tt->tt_roots[i] = tp->tp_st;
-		return 1;
-	}
-	i = tt->tt_nparts++;
-	if (i < MAX_TOS_PARTS)
-		tt->tt_parts[i] = *tp;
-	return 0;
-}
+#endif /* DISKLABEL_AHDI */
