@@ -1,4 +1,4 @@
-/*	$NetBSD: netslot.c,v 1.1.4.2 2002/01/08 00:22:47 nathanw Exp $	*/
+/*	$NetBSD: netslot.c,v 1.1.4.3 2002/08/01 02:40:56 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -35,7 +35,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(1, "$Id: netslot.c,v 1.1.4.2 2002/01/08 00:22:47 nathanw Exp $");
+__KERNEL_RCSID(1, "$NetBSD: netslot.c,v 1.1.4.3 2002/08/01 02:40:56 nathanw Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>

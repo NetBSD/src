@@ -1,4 +1,4 @@
-/* $NetBSD: conf.c,v 1.3.8.2 2002/06/20 03:39:18 nathanw Exp $ */
+/* $NetBSD: conf.c,v 1.3.8.3 2002/08/01 02:42:14 nathanw Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.3.8.2 2002/06/20 03:39:18 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.3.8.3 2002/08/01 02:42:14 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -178,11 +178,11 @@ struct cdevsw	cdevsw[] =
 	cdev_lkm_dummy(),		/* 30 */
 	cdev_scsibus_init(NSCSIBUS,scsibus), /* 31: SCSI bus */
 	cdev_disk_init(NRAID,raid),	/* 32: RAIDframe disk driver */
-	cdev_disk_init(NWSMUX,wsmux),	/* 33: ws multiplexor */
+	cdev_mouse_init(NWSMUX,wsmux),	/* 33: ws multiplexor */
 	cdev_rnd_init(NRND,rnd),	/* 34: random source pseudo-device */
 	cdev_clockctl_init(NCLOCKCTL, clockctl),/* 35: clockctl pseudo device */
 #ifdef SYSTRACE
-	cdev_systrace_init(1, systrace),/* 36: system call tracing */
+	cdev_clonemisc_init(1, systrace),/* 36: system call tracing */
 #else
 	cdev_notdef(),			/* 36: system call tracing */
 #endif

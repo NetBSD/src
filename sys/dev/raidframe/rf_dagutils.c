@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagutils.c,v 1.6.6.4 2002/04/01 07:47:04 nathanw Exp $	*/
+/*	$NetBSD: rf_dagutils.c,v 1.6.6.5 2002/08/01 02:45:35 nathanw Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagutils.c,v 1.6.6.4 2002/04/01 07:47:04 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagutils.c,v 1.6.6.5 2002/08/01 02:45:35 nathanw Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -58,13 +58,14 @@ RF_RedFuncs_t rf_xorRecoveryFuncs = {
 	rf_RecoveryXorFunc, "Recovery Xr",
 rf_RecoveryXorFunc, "Recovery Xr"};
 
+#if RF_DEBUG_VALIDATE_DAG
 static void rf_RecurPrintDAG(RF_DagNode_t *, int, int);
 static void rf_PrintDAG(RF_DagHeader_t *);
-static int 
-rf_ValidateBranch(RF_DagNode_t *, int *, int *,
-    RF_DagNode_t **, int);
+static int rf_ValidateBranch(RF_DagNode_t *, int *, int *,
+			     RF_DagNode_t **, int);
 static void rf_ValidateBranchVisitedBits(RF_DagNode_t *, int, int);
 static void rf_ValidateVisitedBits(RF_DagHeader_t *);
+#endif /* RF_DEBUG_VALIDATE_DAG */
 
 /******************************************************************************
  *
@@ -276,6 +277,7 @@ rf_AllocBuffer(
 	    (char *), allocList);
 	return ((void *) p);
 }
+#if RF_DEBUG_VALIDATE_DAG
 /******************************************************************************
  *
  * debug routines
@@ -735,6 +737,7 @@ validate_dag_bad:
 	return (retcode);
 }
 
+#endif /* RF_DEBUG_VALIDATE_DAG */
 
 /******************************************************************************
  *
@@ -1076,6 +1079,9 @@ rf_RangeRestrictPDA(
 		    rf_StripeUnitOffset(layoutPtr, dest->startSector);
 	}
 }
+
+#if (RF_INCLUDE_CHAINDECLUSTER > 0)
+
 /*
  * Want the highest of these primes to be the largest one
  * less than the max expected number of columns (won't hurt
@@ -1167,6 +1173,8 @@ rf_compute_workload_shift(
 	}
 	return (ret);
 }
+#endif /* (RF_INCLUDE_CHAINDECLUSTER > 0) */
+
 /*
  * Disk selection routines
  */

@@ -1,11 +1,3 @@
-/*	$NetBSD: proc.h,v 1.6.42.1 2001/11/18 18:12:02 scw Exp $	*/
+/*	$NetBSD: proc.h,v 1.6.42.2 2002/08/01 02:42:21 nathanw Exp $	*/
 
-#ifndef _MAC68K_PROC_H
-#define _MAC68K_PROC_H
-
-#include <m68k/lwp.h>
-
-struct mdproc {
-};
-
-#endif
+#include <m68k/proc.h>

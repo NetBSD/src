@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_raid1.c,v 1.5.6.2 2001/11/14 19:15:52 nathanw Exp $	*/
+/*	$NetBSD: rf_raid1.c,v 1.5.6.3 2002/08/01 02:45:37 nathanw Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_raid1.c,v 1.5.6.2 2001/11/14 19:15:52 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_raid1.c,v 1.5.6.3 2002/08/01 02:45:37 nathanw Exp $");
 
 #include "rf_raid.h"
 #include "rf_raid1.h"
@@ -394,11 +394,13 @@ rf_VerifyParityRAID1(
 	memset((char *) &tracerec, 0, sizeof(tracerec));
 	rd_dag_h->tracerec = &tracerec;
 
+#if 0
 	if (rf_verifyParityDebug > 1) {
 		printf("raid%d: RAID1 parity verify read dag:\n", 
 		       raidPtr->raidid);
 		rf_PrintDAGList(rd_dag_h);
 	}
+#endif
 	RF_LOCK_MUTEX(mcpair->mutex);
 	mcpair->flag = 0;
 	rf_DispatchDAG(rd_dag_h, (void (*) (void *)) rf_MCPairWakeupFunc,
@@ -500,10 +502,12 @@ rf_VerifyParityRAID1(
 		}
 		memset((char *) &tracerec, 0, sizeof(tracerec));
 		wr_dag_h->tracerec = &tracerec;
+#if 0
 		if (rf_verifyParityDebug > 1) {
 			printf("Parity verify write dag:\n");
 			rf_PrintDAGList(wr_dag_h);
 		}
+#endif
 		RF_LOCK_MUTEX(mcpair->mutex);
 		mcpair->flag = 0;
 		/* fire off the write DAG */

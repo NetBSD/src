@@ -1,4 +1,4 @@
-/*	$NetBSD: if_x25subr.c,v 1.23.2.4 2002/06/20 03:48:27 nathanw Exp $	*/
+/*	$NetBSD: if_x25subr.c,v 1.23.2.5 2002/08/01 02:46:44 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_x25subr.c,v 1.23.2.4 2002/06/20 03:48:27 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_x25subr.c,v 1.23.2.5 2002/08/01 02:46:44 nathanw Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -770,7 +770,13 @@ pk_rtattach(so, m0)
 	((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
 #define transfer_sockbuf(s, f, l) \
 	while ((m = (s)->sb_mb) != NULL) \
-		{(s)->sb_mb = m->m_nextpkt; m->m_nextpkt = 0; sbfree((s), m); f;}
+		{ \
+			(s)->sb_mb = m->m_nextpkt; \
+			SB_EMPTY_FIXUP((s)); \
+			m->m_nextpkt = 0; \
+			sbfree((s), m); \
+			f; \
+		}
 
 	if (rt)
 		rt->rt_refcnt--;

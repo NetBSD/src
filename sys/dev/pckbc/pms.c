@@ -1,4 +1,4 @@
-/* $NetBSD: pms.c,v 1.6.2.2 2002/06/20 03:45:59 nathanw Exp $ */
+/* $NetBSD: pms.c,v 1.6.2.3 2002/08/01 02:45:30 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1994 Charles M. Hannum.
@@ -24,12 +24,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pms.c,v 1.6.2.2 2002/06/20 03:45:59 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pms.c,v 1.6.2.3 2002/08/01 02:45:30 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/ioctl.h>
+#include <sys/kernel.h>
 #include <sys/kthread.h>
 
 #include <machine/bus.h>
@@ -74,6 +75,7 @@ struct pms_softc {		/* driver status information */
 	int sc_enabled;		/* input enabled? */
 #ifndef PMS_DISABLE_POWERHOOK
 	void *sc_powerhook;	/* cookie from power hook */
+	int sc_suspended;	/* suspended? */
 #endif /* !PMS_DISABLE_POWERHOOK */
 	int inputstate;		/* number of bytes received for this packet */
 	u_int buttons;		/* mouse button status */
@@ -244,6 +246,7 @@ pmsattach(parent, self, aux)
 
 #ifndef PMS_DISABLE_POWERHOOK
 	sc->sc_powerhook = powerhook_establish(pms_power, sc);
+	sc->sc_suspended = 0;
 #endif /* !PMS_DISABLE_POWERHOOK */
 }
 
@@ -253,9 +256,6 @@ do_enable(sc)
 {
 	u_char cmd[1];
 	int res;
-#ifdef PMS_PREFER_PROTOCOL
-	int i;
-#endif
 
 	sc->inputstate = 0;
 	sc->buttons = 0;
@@ -355,15 +355,19 @@ pms_power(why, v)
 	struct pms_softc *sc = v;
 
 	switch (why) {
-	case PWR_SUSPEND:
 	case PWR_STANDBY:
-		if (sc->sc_enabled)
+		break;
+	case PWR_SUSPEND:
+		if (sc->sc_enabled) {
 			do_disable(sc);
+			sc->sc_suspended = 1;
+		}
 		break;
 	case PWR_RESUME:
-		if (sc->sc_enabled) {
+		if (sc->sc_enabled && sc->sc_suspended) {
 			sc->protocol = PMS_UNKNOWN;	/* recheck protocol & init mouse */
-			do_enable(sc);
+			sc->sc_suspended = 0;
+			do_enable(sc); /* only if we were suspended */
 		}
 	case PWR_SOFTSUSPEND:
 	case PWR_SOFTSTANDBY:
@@ -431,6 +435,7 @@ pms_reset_thread(arg)
 	struct pms_softc *sc = arg;
 	u_char cmd[1], resp[2];
 	int res;
+	int save_protocol;
 
 	for (;;) {
 		tsleep(&sc->sc_enabled, PWAIT, "pmsreset", 0);
@@ -441,6 +446,7 @@ pms_reset_thread(arg)
 			printf("%s: resetting mouse interface\n", 
 			    sc->sc_dev.dv_xname);
 #endif
+		save_protocol = sc->protocol;
 		pms_disable(sc);
 		cmd[0] = PMS_RESET;
 		res = pckbc_enqueue_cmd(sc->sc_kbctag, sc->sc_kbcslot, cmd, 1,
@@ -448,8 +454,36 @@ pms_reset_thread(arg)
 		if (res)
 			DPRINTF(("%s: reset error %d\n", sc->sc_dev.dv_xname, 
 			    res));
-		sc->protocol = PMS_UNKNOWN;	/* reprobe protocol */
+		sc->protocol = PMS_UNKNOWN;
 		pms_enable(sc);
+		if (sc->protocol != save_protocol) {
+#if defined(PMSDEBUG) || defined(DIAGNOSTIC)
+			printf("%s: protocol change, sleeping and retrying\n",
+			    sc->sc_dev.dv_xname);
+#endif
+			pms_disable(sc);
+			cmd[0] = PMS_RESET;
+			res = pckbc_enqueue_cmd(sc->sc_kbctag,
+			    sc->sc_kbcslot, cmd, 1, 2, 1, resp);
+			if (res)
+				DPRINTF(("%s: reset error %d\n",
+				    sc->sc_dev.dv_xname, res));
+			tsleep(pms_reset_thread, PWAIT, "pmsreset", hz);
+			cmd[0] = PMS_RESET;
+			res = pckbc_enqueue_cmd(sc->sc_kbctag,
+			    sc->sc_kbcslot, cmd, 1, 2, 1, resp);
+			if (res)
+				DPRINTF(("%s: reset error %d\n",
+				    sc->sc_dev.dv_xname, res));
+			sc->protocol = PMS_UNKNOWN;	/* reprobe protocol */
+			pms_enable(sc);
+#if defined(PMSDEBUG) || defined(DIAGNOSTIC)
+			if (sc->protocol != save_protocol) {
+				printf("%s: protocol changed.\n",
+				    sc->sc_dev.dv_xname);
+			}
+#endif
+		}
 	}
 }
 

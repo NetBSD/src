@@ -1,4 +1,4 @@
-/*	$NetBSD: mbavar.h,v 1.7 2000/06/04 18:04:39 ragge Exp $ */
+/*	$NetBSD: mbavar.h,v 1.7.10.1 2002/08/01 02:43:58 nathanw Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden
  * All rights reserved.
@@ -100,7 +100,7 @@ struct	mba_device {
 	enum	xfer_action (*md_finish)(struct mba_device *, int, int *);
 	void	*md_softc;	/* Backpointer to this units softc. */
 	struct	mba_softc *md_mba;
-	struct	buf_queue md_q;	/* queue of I/O requests */
+	struct	bufq_state md_q;	/* queue of I/O requests */
 };
 
 struct	mba_softc {

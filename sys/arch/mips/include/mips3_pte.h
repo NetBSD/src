@@ -1,4 +1,4 @@
-/*	$NetBSD: mips3_pte.h,v 1.13.10.1 2002/04/01 07:40:58 nathanw Exp $	*/
+/*	$NetBSD: mips3_pte.h,v 1.13.10.2 2002/08/01 02:42:31 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -141,3 +141,5 @@ struct tlb {
 #define	MIPS3_PG_SIZE_1M	0x001fe000
 #define	MIPS3_PG_SIZE_4M	0x007fe000
 #define	MIPS3_PG_SIZE_16M	0x01ffe000
+#define	MIPS3_PG_SIZE_64M	0x07ffe000
+#define	MIPS3_PG_SIZE_256M	0x1fffe000

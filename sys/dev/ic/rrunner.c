@@ -1,4 +1,4 @@
-/*	$NetBSD: rrunner.c,v 1.21.2.8 2002/07/12 01:40:08 nathanw Exp $	*/
+/*	$NetBSD: rrunner.c,v 1.21.2.9 2002/08/01 02:44:45 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rrunner.c,v 1.21.2.8 2002/07/12 01:40:08 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rrunner.c,v 1.21.2.9 2002/08/01 02:44:45 nathanw Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -301,7 +301,7 @@ eshconfig(sc)
 	sc->sc_send.ec_offset = 0;
 	sc->sc_send.ec_descr = sc->sc_send_ring;
     	TAILQ_INIT(&sc->sc_send.ec_di_queue);
-	BUFQ_INIT(&sc->sc_send.ec_buf_queue);
+	bufq_alloc(&sc->sc_send.ec_buf_queue, BUFQ_FCFS);
 
 	for (i = 0; i < RR_MAX_SNAP_RECV_RING_SIZE; i++)
 		if (bus_dmamap_create(sc->sc_dmat, RR_DMA_MAX, 1, RR_DMA_MAX, 
@@ -1399,7 +1399,7 @@ esh_fpstrategy(bp)
 		 */
 
 		struct esh_send_ring_ctl *ring = &sc->sc_send;
-		BUFQ_INSERT_TAIL(&ring->ec_buf_queue, bp);
+		BUFQ_PUT(&ring->ec_buf_queue, bp);
 #ifdef ESH_PRINTF
 		printf("esh_fpstrategy:  ready to call eshstart to write!\n");
 #endif
@@ -2043,7 +2043,7 @@ eshstart(ifp)
 	if ((sc->sc_flags & ESH_FL_FP_RING_UP) != 0 &&
 	    send->ec_cur_mbuf == NULL && send->ec_cur_buf == NULL &&
 	    send->ec_cur_dmainfo == NULL &&
-	    BUFQ_FIRST(&send->ec_buf_queue) != NULL) {
+	    BUFQ_PEEK(&send->ec_buf_queue) != NULL) {
 		struct buf *bp;
 
 #ifdef ESH_PRINTF
@@ -2051,8 +2051,7 @@ eshstart(ifp)
 		       send->ec_queue);
 #endif
 
-		bp = send->ec_cur_buf = BUFQ_FIRST(&send->ec_buf_queue);
-		BUFQ_REMOVE(&send->ec_buf_queue, bp);
+		bp = send->ec_cur_buf = BUFQ_GET(&send->ec_buf_queue);
 		send->ec_offset = 0;
 		send->ec_len = bp->b_bcount;
 

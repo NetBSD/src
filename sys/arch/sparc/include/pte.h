@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.23.8.2 2002/01/08 00:27:40 nathanw Exp $ */
+/*	$NetBSD: pte.h,v 1.23.8.3 2002/08/01 02:43:24 nathanw Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -148,7 +148,7 @@ typedef u_char smeg_t;		/* 8 bits needed per Sun-4 regmap entry */
  *  2-dim arrays, but are sparsely allocated as needed, and point to each
  *  other.)
  *
- *	if (cputyp==CPU_SUN4M) 		// SPARC Reference MMU
+ *	if (cputyp==CPU_SUN4M || cputyp==CPU_SUN4D) // SPARC Reference MMU
  *		regptp = s4m_ctxmap[curr_ctx];
  *		if (!(regptp & SRMMU_TEPTD)) TRAP();
  *		segptp = *(u_int *)(((regptp & ~0x3) << 4) | va.va_reg);
@@ -194,7 +194,7 @@ typedef u_char smeg_t;		/* 8 bits needed per Sun-4 regmap entry */
 #define	SGOFSET	(NBPSG - 1)	/* mask for segment offset */
 
 /* number of PTEs that map one segment (not number that fit in one segment!) */
-#if defined(SUN4) && (defined(SUN4C) || defined(SUN4M))
+#if defined(SUN4) && (defined(SUN4C) || defined(SUN4M) || defined(SUN4D))
 extern int nptesg;
 #define	NPTESG	nptesg		/* (which someone will have to initialize) */
 #else
@@ -224,10 +224,10 @@ extern int nptesg;
 #define	VA_ROUNDDOWNTOSEG(va)	((int)(va) & ~SGOFSET)
 
 /* virtual segment to virtual address (must sign extend on holy MMUs!) */
-#define	VRTOVA(vr)	((CPU_ISSUN4M || HASSUN4_MMU3L)	\
-	? ((int)(vr) << RGSHIFT)			\
+#define	VRTOVA(vr)	((CPU_HAS_SRMMU || HASSUN4_MMU3L)	\
+	? ((int)(vr) << RGSHIFT)				\
 	: (((int)(vr) << (RGSHIFT+2)) >> 2))
-#define	VSTOVA(vr,vs)	((CPU_ISSUN4M || HASSUN4_MMU3L)	\
+#define	VSTOVA(vr,vs)	((CPU_HAS_SRMMU || HASSUN4_MMU3L)	\
 	? (((int)(vr) << RGSHIFT) + ((int)(vs) << SGSHIFT))	\
 	: ((((int)(vr) << (RGSHIFT+2)) >> 2) + ((int)(vs) << SGSHIFT)))
 
@@ -240,15 +240,17 @@ extern int mmu_has_hole;
 #define MMU_HOLE_START	0x20000000
 #define MMU_HOLE_END	0xe0000000
 
-#if defined(SUN4M)		/* Optimization: sun4m, sun4c have same page */
-#if defined(SUN4)		/* size, so they're used interchangeably */
+#if defined(SUN4M) || defined(SUN4D)	/* Optimization: sun4m, sun4d, sun4c
+					   have same page size, so they're
+					   used interchangeably */
+#if defined(SUN4)
 #define VA_VPG(va)	(cputyp==CPU_SUN4 ? VA_SUN4_VPG(va) : VA_SUN4C_VPG(va))
 #define VA_OFF(va)	(cputyp==CPU_SUN4 ? VA_SUN4_OFF(va) : VA_SUN4C_OFF(va))
 #else
 #define VA_VPG(va)	VA_SUN4M_VPG(va)
 #define VA_OFF(va)	VA_SUN4M_OFF(va)
 #endif /* defined SUN4 */
-#else /* 4m not defined */
+#else /* 4m/4d not defined */
 #if defined(SUN4) && defined(SUN4C)
 #define VA_VPG(va)	(cputyp==CPU_SUN4C ? VA_SUN4C_VPG(va) : VA_SUN4_VPG(va))
 #define VA_OFF(va)	(cputyp==CPU_SUN4C ? VA_SUN4C_OFF(va) : VA_SUN4_OFF(va))
@@ -275,7 +277,7 @@ extern int mmu_has_hole;
 #define	PG_OBIO		0x04000000	/* on board I/O (incl. Sbus on 4c) */
 #define	PG_VME16	0x08000000	/* 16-bit-data VME space */
 #define	PG_VME32	0x0c000000	/* 32-bit-data VME space */
-#if defined(SUN4M)
+#if defined(SUN4M) || defined(SUN4D)
 #define PG_SUN4M_OBMEM	0x0	       	/* No type bits=>obmem on 4m */
 #define PG_SUN4M_OBIO	0xf		/* obio maps to 0xf on 4M */
 #define SRMMU_PGTYPE	0xf0000000	/* Top 4 bits of pte PPN give type */
@@ -309,7 +311,7 @@ struct pte {
 		pg_mbz:5,
 		pg_pfnum:19;
 };
-#if defined(SUN4M)
+#if defined(SUN4M) || defined(SUN4D)
 struct srmmu_pte {
 	u_int	pg_pfnum:20,
 		pg_c:1,
@@ -409,11 +411,13 @@ struct srmmu_pte {
  */
 #define getcontext4()		lduba(AC_CONTEXT, ASI_CONTROL)
 #define getcontext4m()		lda(SRMMU_CXR, ASI_SRMMU)
-#define getcontext()		(CPU_ISSUN4M ? getcontext4m() : getcontext4())
+#define getcontext()		(CPU_HAS_SRMMU ? getcontext4m()		\
+					       : getcontext4())
 
 #define setcontext4(c)		stba(AC_CONTEXT, ASI_CONTROL, c)
 #define setcontext4m(c)		sta(SRMMU_CXR, ASI_SRMMU, c)
-#define setcontext(c)		(CPU_ISSUN4M ? setcontext4m(c) : setcontext4(c))
+#define setcontext(c)		(CPU_HAS_SRMMU ? setcontext4m(c)	\
+					       : setcontext4(c))
 
 /* sun4/sun4c access to MMU-resident PTEs */
 #define	getpte4(va)		lda(va, ASI_PTE)

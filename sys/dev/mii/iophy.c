@@ -1,4 +1,4 @@
-/*	$NetBSD: iophy.c,v 1.10.2.5 2002/04/01 07:46:10 nathanw Exp $	*/
+/*	$NetBSD: iophy.c,v 1.10.2.6 2002/08/01 02:45:04 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,13 +71,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iophy.c,v 1.10.2.5 2002/04/01 07:46:10 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iophy.c,v 1.10.2.6 2002/08/01 02:45:04 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/socket.h>
 
 #include <net/if.h>

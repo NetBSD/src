@@ -1,4 +1,4 @@
-/*	$NetBSD: uhid.c,v 1.42.2.7 2002/04/01 07:47:35 nathanw Exp $	*/
+/*	$NetBSD: uhid.c,v 1.42.2.8 2002/08/01 02:45:58 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.42.2.7 2002/04/01 07:47:35 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.42.2.8 2002/08/01 02:45:58 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -132,7 +132,7 @@ uhid_attach(struct device *parent, struct device *self, void *aux)
 	struct uhidev_attach_arg *uha = aux;
 	int size, repid;
 	void *desc;
-	
+
 	sc->sc_hdev.sc_intr = uhid_intr;
 	sc->sc_hdev.sc_parent = uha->parent;
 	sc->sc_hdev.sc_report_id = uha->reportid;
@@ -198,7 +198,7 @@ uhid_detach(struct device *self, int flags)
 	vdevgone(maj, mn, mn, VCHR);
 
 #if 0
-	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, 
+	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH,
 			   sc->sc_hdev.sc_parent->sc_udev,
 			   USBDEV(sc->sc_hdev.sc_dev));
 #endif
@@ -214,7 +214,7 @@ uhid_intr(struct uhidev *addr, void *data, u_int len)
 #ifdef UHID_DEBUG
 	if (uhiddebug > 5) {
 		u_int32_t i;
-		
+
 		DPRINTF(("uhid_intr: data ="));
 		for (i = 0; i < len; i++)
 			DPRINTF((" %02x", ((u_char *)data)[i]));
@@ -223,7 +223,7 @@ uhid_intr(struct uhidev *addr, void *data, u_int len)
 #endif
 
 	(void)b_to_q(data, len, &sc->sc_q);
-		
+
 	if (sc->sc_state & UHID_ASLP) {
 		sc->sc_state &= ~UHID_ASLP;
 		DPRINTFN(5, ("uhid_intr: waking %p\n", &sc->sc_q));
@@ -362,7 +362,7 @@ uhid_do_write(struct uhid_softc *sc, struct uio *uio, int flag)
 	usbd_status err;
 
 	DPRINTFN(1, ("uhidwrite\n"));
-	
+
 	if (sc->sc_dying)
 		return (EIO);
 

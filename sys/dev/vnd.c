@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.71.2.11 2002/07/12 01:40:07 nathanw Exp $	*/
+/*	$NetBSD: vnd.c,v 1.71.2.12 2002/08/01 02:44:34 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.71.2.11 2002/07/12 01:40:07 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.71.2.12 2002/08/01 02:44:34 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -202,12 +202,17 @@ vndattach(num)
 	numvnd = num;
 
 	for (i = 0; i < numvnd; i++)
-		BUFQ_INIT(&vnd_softc[i].sc_tab);
+		bufq_alloc(&vnd_softc[i].sc_tab,
+		    BUFQ_DISKSORT|BUFQ_SORT_RAWBLOCK);
 }
 
 void
 vnddetach()
 {
+	int i;
+
+	for (i = 0; i < numvnd; i++)
+		bufq_free(&vnd_softc[i].sc_tab);
 
 	free(vnd_softc, M_DEVBUF);
 }
@@ -477,7 +482,7 @@ vndstrategy(bp)
 		}
 		vnx->vx_pending++;
 		bgetvp(vp, &nbp->vb_buf);
-		disksort_blkno(&vnd->sc_tab, &nbp->vb_buf);
+		BUFQ_PUT(&vnd->sc_tab, &nbp->vb_buf);
 		vndstart(vnd);
 		splx(s);
 		bn += sz;
@@ -526,10 +531,9 @@ vndstart(vnd)
 	vnd->sc_flags |= VNF_BUSY;
 
 	while (vnd->sc_active < vnd->sc_maxactive) {
-		bp = BUFQ_FIRST(&vnd->sc_tab);
+		bp = BUFQ_GET(&vnd->sc_tab);
 		if (bp == NULL)
 			break;
-		BUFQ_REMOVE(&vnd->sc_tab, bp);
 		vnd->sc_active++;
 #ifdef DEBUG
 		if (vnddebug & VDB_IO)
@@ -759,18 +763,12 @@ vndioctl(dev, cmd, data, flag, p)
 		 * have to worry about them.
 		 */
 		NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, vio->vnd_file, p);
-		if ((error = vn_open(&nd, FREAD|FWRITE, 0)) != 0) {
-			vndunlock(vnd);
-			return(error);
-		}
+		if ((error = vn_open(&nd, FREAD|FWRITE, 0)) != 0)
+			goto unlock_and_exit;
 		error = VOP_GETATTR(nd.ni_vp, &vattr, p->p_ucred, p);
-		if (error) {
-			VOP_UNLOCK(nd.ni_vp, 0);
-			(void) vn_close(nd.ni_vp, FREAD|FWRITE, p->p_ucred, p);
-			vndunlock(vnd);
-			return(error);
-		}
 		VOP_UNLOCK(nd.ni_vp, 0);
+		if (error)
+			goto close_and_exit;
 		vnd->sc_vp = nd.ni_vp;
 		vnd->sc_size = btodb(vattr.va_size);	/* note truncation */
 
@@ -790,10 +788,8 @@ vndioctl(dev, cmd, data, flag, p)
 			 */
 			if (vnd->sc_geom.vng_secsize < DEV_BSIZE ||
 			    (vnd->sc_geom.vng_secsize % DEV_BSIZE) != 0) {
-				(void) vn_close(nd.ni_vp, FREAD|FWRITE,
-				    p->p_ucred, p);
-				vndunlock(vnd);
-				return (EINVAL);
+				error = EINVAL;
+				goto close_and_exit;
 			}
 
 			/*
@@ -810,10 +806,8 @@ vndioctl(dev, cmd, data, flag, p)
 			 * geometry.
 			 */
 			if (vnd->sc_size < geomsize) {
-				(void) vn_close(nd.ni_vp, FREAD|FWRITE,
-				    p->p_ucred, p);
-				vndunlock(vnd);
-				return (EINVAL);
+				error = EINVAL;
+				goto close_and_exit;
 			}
 		} else {
 			/*
@@ -821,8 +815,8 @@ vndioctl(dev, cmd, data, flag, p)
 			 * (1M) in order to use this geometry.
 			 */
 			if (vnd->sc_size < (32 * 64)) {
-				vndunlock(vnd);
-				return (EINVAL);
+				error = EINVAL;
+				goto close_and_exit;
 			}
 
 			vnd->sc_geom.vng_secsize = DEV_BSIZE;
@@ -843,11 +837,8 @@ vndioctl(dev, cmd, data, flag, p)
 		 */
 		vnd->sc_size = geomsize;
 
-		if ((error = vndsetcred(vnd, p->p_ucred)) != 0) {
-			(void) vn_close(nd.ni_vp, FREAD|FWRITE, p->p_ucred, p);
-			vndunlock(vnd);
-			return(error);
-		}
+		if ((error = vndsetcred(vnd, p->p_ucred)) != 0)
+			goto close_and_exit;
 		vndthrottle(vnd, vnd->sc_vp);
 		vio->vnd_size = dbtob(vnd->sc_size);
 		vnd->sc_flags |= VNF_INITED;
@@ -879,6 +870,12 @@ vndioctl(dev, cmd, data, flag, p)
 		vndunlock(vnd);
 
 		break;
+
+close_and_exit:
+		(void) vn_close(nd.ni_vp, FREAD|FWRITE, p->p_ucred, p);
+unlock_and_exit:
+		vndunlock(vnd);
+		return (error);
 
 	case VNDIOCCLR:
 		if ((error = vndlock(vnd)) != 0)
@@ -914,6 +911,37 @@ vndioctl(dev, cmd, data, flag, p)
 		vndunlock(vnd);
 
 		break;
+
+	case VNDIOCGET: {
+		struct vnd_user *vnu;
+		struct vattr va;
+
+		vnu = (struct vnd_user *)data;
+
+		if (vnu->vnu_unit == -1)
+			vnu->vnu_unit = unit;
+		if (vnu->vnu_unit >= numvnd)
+			return (ENXIO);
+		if (vnu->vnu_unit < 0)
+			return (EINVAL);
+
+		vnd = &vnd_softc[vnu->vnu_unit];
+
+		if (vnd->sc_flags & VNF_INITED) {
+			error = VOP_GETATTR(vnd->sc_vp, &va, p->p_ucred, p);
+			if (error)
+				return (error);
+			vnu->vnu_dev = va.va_fsid;
+			vnu->vnu_ino = va.va_fileid;
+		}
+		else {
+			/* unused is not an error */
+			vnu->vnu_dev = 0;
+			vnu->vnu_ino = 0;
+		}
+
+		break;
+	}
 
 	case DIOCGDINFO:
 		*(struct disklabel *)data = *(vnd->sc_dkdev.dk_label);

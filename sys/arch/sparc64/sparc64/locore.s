@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.139.4.12 2002/06/24 22:08:00 nathanw Exp $	*/
+/*	$NetBSD: locore.s,v 1.139.4.13 2002/08/01 02:43:46 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -4886,7 +4886,7 @@ rft_user:
 	rdpr	%canrestore, %g5		! DEBUG
 	tst	%g5				! DEBUG
 	tnz	%icc, 1; nop			! DEBUG
-!	mov	%g0, %g5			! There shoud be *NO* %canrestore
+!	mov	%g0, %g5			! There should be *NO* %canrestore
 	add	%g7, %g5, %g7			! DEBUG
 #endif
 	wrpr	%g0, %g7, %canrestore

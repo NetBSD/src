@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.86.2.12 2002/07/15 20:29:01 nathanw Exp $	*/
+/*	$NetBSD: if.c,v 1.86.2.13 2002/08/01 02:46:36 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.86.2.12 2002/07/15 20:29:01 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.86.2.13 2002/08/01 02:46:36 nathanw Exp $");
 
 #include "opt_inet.h"
 
@@ -986,7 +986,7 @@ ifa_ifwithnet(addr)
 			if (sat2->sat_addr.s_net == sat->sat_addr.s_net)
 				return (ifa); /* exact match */
 			if (ifa_maybe == NULL) {
-				/* else keep the if with the rigth range */
+				/* else keep the if with the right range */
 				ifa_maybe = ifa;
 			}
 		}

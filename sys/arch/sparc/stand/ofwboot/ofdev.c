@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdev.c,v 1.1 2000/08/20 14:58:41 mrg Exp $	*/
+/*	$NetBSD: ofdev.c,v 1.1.12.1 2002/08/01 02:43:33 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -51,6 +51,8 @@
 #include "ofdev.h"
 
 extern char bootdev[];
+
+#define RF_PROTECTED_SECTORS 64		/* XXX */
 
 /*
  * This is ugly.  A path on a sparc machine is something like this:
@@ -489,6 +491,13 @@ devopen(of, name, file)
 			printf("devopen: setting partition %d offset %x\n",
 			       part, ofdev.partoff);
 #endif
+			if (label.d_partitions[part].p_fstype == FS_RAID) {
+				ofdev.partoff += RF_PROTECTED_SECTORS;
+#ifdef NOTDEF_DEBUG
+				printf("devopen: found RAID partition, "
+				    "adjusting offset to %x", ofdev.partoff);
+#endif
+			}
 		}
 		
 		of->f_dev = devsw;

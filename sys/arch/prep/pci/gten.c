@@ -1,4 +1,4 @@
-/*	$NetBSD: gten.c,v 1.2.10.2 2002/04/01 07:42:12 nathanw Exp $	*/
+/*	$NetBSD: gten.c,v 1.2.10.3 2002/08/01 02:43:14 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -313,7 +313,7 @@ gten_alloc_screen(v, type, cookiep, curxp, curyp, attrp)
 	*cookiep = ri;			/* one and only for now */
 	*curxp = 0;
 	*curyp = 0;
-	(*ri->ri_ops.alloc_attr)(ri, 0, 0, 0, &defattr);
+	(*ri->ri_ops.allocattr)(ri, 0, 0, 0, &defattr);
 	*attrp = defattr;
 	gt->gt_nscreens++;
 	return 0;
@@ -381,7 +381,7 @@ gten_cnattach(pci_chipset_tag_t pc, bus_space_tag_t memt)
 
 	gten_common_init(ri);
 
-	(*ri->ri_ops.alloc_attr)(ri, 0, 0, 0, &defattr);
+	(*ri->ri_ops.allocattr)(ri, 0, 0, 0, &defattr);
 	wsdisplay_cnattach(&gten_stdscreen, ri, 0, 0, defattr);
 
 	gten_console_pcitag = tag;

@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.8.8.2 2001/11/05 19:46:17 briggs Exp $	*/
+/*	$NetBSD: pcb.h,v 1.8.8.3 2002/08/01 02:43:03 nathanw Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -46,11 +46,13 @@ struct pcb {
 	struct pmap *pcb_pmreal; /* real address of above */
 	register_t pcb_sp;	/* saved SP */
 	int pcb_spl;		/* saved SPL */
+	struct cpu_info * __volatile pcb_fpcpu; /* CPU with our FP state */
+	struct cpu_info * __volatile pcb_veccpu;/* CPU with our VECTOR state */
 	faultbuf *pcb_onfault;	/* For use during copyin/copyout */
 	int pcb_flags;
 #define	PCB_FPU		1	/* Process had FPU initialized */
+#define PCB_ALTIVEC	2	/* Process had AltiVec initialized */
 	struct fpu pcb_fpu;	/* Floating point processor */
-	struct cpu_info *pcb_fpcpu; /* CPU with our FP state */
 	struct vreg *pcb_vr;
 };
 
@@ -63,8 +65,6 @@ struct md_coredump {
 #if defined(_KERNEL) && !defined(MULTIPROCESSOR)
 extern struct pcb *curpcb;
 extern struct pmap *curpm;
-extern struct lwp *fpuproc, *vecproc;
-extern struct pool *vecpl;
 #endif
 
 #endif	/* _MACHINE_PCB_H_ */

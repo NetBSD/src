@@ -1,4 +1,4 @@
-/*	$NetBSD: genprom.c,v 1.3 1997/03/22 09:07:19 thorpej Exp $	 */
+/*	$NetBSD: genprom.c,v 1.3.36.1 2002/08/01 02:42:12 nathanw Exp $	 */
 
 /*
  * mainly from netbsd:sys/arch/i386/netboot/genprom.c
@@ -33,7 +33,7 @@ main(argc, argv)
 			errx(1, "bad arg");
 		}
 	} else {
-		errx(1, "arg: romsize / bytes\n");
+		errx(1, "arg: romsize / bytes");
 	}
 
 	memset(w, 0x0, PROM_SIZE);

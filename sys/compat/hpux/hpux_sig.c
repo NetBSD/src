@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_sig.c,v 1.20.2.6 2002/07/12 01:39:59 nathanw Exp $	*/
+/*	$NetBSD: hpux_sig.c,v 1.20.2.7 2002/08/01 02:44:11 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_sig.c,v 1.20.2.6 2002/07/12 01:39:59 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_sig.c,v 1.20.2.7 2002/08/01 02:44:11 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,7 +109,8 @@ hpux_sys_sigvec(l, v, retval)
 
 	error = sigaction1(l->l_proc, sig,
 	    SCARG(uap, nsv) ? &nsa : NULL,
-	    SCARG(uap, osv) ? &osa : NULL);
+	    SCARG(uap, osv) ? &osa : NULL,
+	    NULL, 0);
 
 	if (error)
 		return (error);
@@ -345,7 +346,7 @@ hpux_sys_sigaction(l, v, retval)
 		if (sa->sa_flags & HPUXSA_NOCLDSTOP)
 			act.sa_flags |= SA_NOCLDSTOP;
 
-		error = sigaction1(l->l_proc, sig, &act, NULL);
+		error = sigaction1(l->l_proc, sig, &act, NULL, NULL, 0);
 		if (error)
 			return (error);
 	}
@@ -386,7 +387,7 @@ hpux_sys_ssig_6x(l, v, retval)
 	sigemptyset(&sa->sa_mask);
 	sa->sa_flags = 0;
 	*retval = (register_t)SIGACTION(p, a).sa_handler;
-	sigaction1(p, a, sa, NULL);
+	sigaction1(p, a, sa, NULL, NULL, 0);
 #if 0
 	p->p_flag |= SOUSIG;		/* mark as simulating old stuff */
 #endif

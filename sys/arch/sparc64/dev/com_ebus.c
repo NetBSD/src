@@ -1,4 +1,4 @@
-/*	$NetBSD: com_ebus.c,v 1.8.4.2 2002/04/01 07:43:00 nathanw Exp $	*/
+/*	$NetBSD: com_ebus.c,v 1.8.4.3 2002/08/01 02:43:35 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -117,7 +117,7 @@ com_ebus_attach(parent, self, aux)
 	sc->sc_iot = ea->ea_bustag;
 	sc->sc_iobase = EBUS_ADDR_FROM_REG(&ea->ea_reg[0]);
 	/*
-	 * Addresses that shoud be supplied by the prom:
+	 * Addresses that should be supplied by the prom:
 	 *	- normal com registers
 	 *	- ns873xx configuration registers
 	 *	- DMA space

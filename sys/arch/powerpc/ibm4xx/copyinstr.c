@@ -1,4 +1,4 @@
-/*	$NetBSD: copyinstr.c,v 1.1.8.4 2002/07/12 01:39:44 nathanw Exp $	*/
+/*	$NetBSD: copyinstr.c,v 1.1.8.5 2002/08/01 02:43:00 nathanw Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -81,7 +81,7 @@ copyinstr(const void *udaddr, void *kaddr, size_t len, size_t *done)
 			"sync; isync;"
 			"addi %3,%3,1;"			/* Inc len */
 			"or. %2,%2,%2;"
-			"bdnzf 2,1b;"			/* 
+			"bdnzf 2,1b;"			/*
 							 * while(ctr-- && !zero)
 							 */
 

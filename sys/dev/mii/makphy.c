@@ -1,4 +1,4 @@
-/*	$NetBSD: makphy.c,v 1.2.4.6 2002/04/01 07:46:10 nathanw Exp $	*/
+/*	$NetBSD: makphy.c,v 1.2.4.7 2002/08/01 02:45:05 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -71,13 +71,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: makphy.c,v 1.2.4.6 2002/04/01 07:46:10 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: makphy.c,v 1.2.4.7 2002/08/01 02:45:05 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/socket.h>
 #include <sys/errno.h>
 

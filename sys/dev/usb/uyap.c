@@ -1,4 +1,4 @@
-/*	$NetBSD: uyap.c,v 1.3.2.2 2001/11/14 19:16:24 nathanw Exp $	*/
+/*	$NetBSD: uyap.c,v 1.3.2.3 2002/08/01 02:46:12 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uyap.c,v 1.3.2.2 2001/11/14 19:16:24 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uyap.c,v 1.3.2.3 2002/08/01 02:46:12 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,7 +66,7 @@ USB_DECLARE_DRIVER(uyap);
 USB_MATCH(uyap)
 {
 	USB_MATCH_START(uyap, uaa);
-	
+
 	if (uaa->iface != NULL)
 		return (UMATCH_NONE);
 
@@ -84,7 +84,7 @@ USB_ATTACH(uyap)
 	usbd_device_handle dev = uaa->device;
 	usbd_status err;
 	char devinfo[1024];
-	
+
 	usbd_devinfo(dev, 0, devinfo);
 	USB_ATTACH_SETUP;
 	printf("%s: %s\n", USBDEVNAME(sc->sc_dev), devinfo);
@@ -96,7 +96,7 @@ USB_ATTACH(uyap)
 		       USBDEVNAME(sc->sc_dev), usbd_errstr(err));
 		USB_ATTACH_ERROR_RETURN;
 	}
-	
+
 	printf("%s: firmware download complete, disconnecting.\n",
 	       USBDEVNAME(sc->sc_dev));
 	USB_ATTACH_SUCCESS_RETURN;

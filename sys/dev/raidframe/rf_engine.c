@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_engine.c,v 1.10.2.2 2001/11/14 19:15:48 nathanw Exp $	*/
+/*	$NetBSD: rf_engine.c,v 1.10.2.3 2002/08/01 02:45:36 nathanw Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -55,7 +55,7 @@
  ****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_engine.c,v 1.10.2.2 2001/11/14 19:15:48 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_engine.c,v 1.10.2.3 2002/08/01 02:45:36 nathanw Exp $");
 
 #include "rf_threadstuff.h"
 
@@ -659,7 +659,6 @@ rf_FinishNode(
     RF_DagNode_t * node,
     int context)
 {
-	/* as far as I can tell, retcode is not used -wvcii */
 	int     retcode = RF_FALSE;
 	node->dagHdr->numNodesCompleted++;
 	ProcessNode(node, context);
@@ -692,10 +691,14 @@ rf_DispatchDAG(
 	if (dag->tracerec) {
 		RF_ETIMER_START(dag->tracerec->timer);
 	}
+#if DEBUG
+#if RF_DEBUG_VALIDATE_DAG
 	if (rf_engineDebug || rf_validateDAGDebug) {
 		if (rf_ValidateDAG(dag))
 			RF_PANIC();
 	}
+#endif
+#endif
 	if (rf_engineDebug) {
 		printf("raid%d: Entering DispatchDAG\n", raidPtr->raidid);
 	}

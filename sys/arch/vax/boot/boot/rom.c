@@ -1,4 +1,4 @@
-/*	$NetBSD: rom.c,v 1.3 2000/07/19 00:58:25 matt Exp $ */
+/*	$NetBSD: rom.c,v 1.3.8.1 2002/08/01 02:43:56 nathanw Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -36,6 +36,8 @@
 #include "sys/param.h"
 #include "sys/reboot.h"
 #include "sys/disklabel.h"
+
+#define RF_PROTECTED_SECTORS	64	/* XXX <dev/raidframe/raidframevar.h> */
 
 #include "lib/libsa/stand.h"
 #include "lib/libsa/ufs.h"
@@ -106,6 +108,8 @@ romstrategy (f, func, dblk, size, buf, rsize)
 	block = dblk + lp->d_partitions[dpart].p_offset;
 	if (dunit >= 0 && dunit < 10)
 		bootrpb.unit = dunit;
+	if (lp->d_partitions[dpart].p_fstype == FS_RAID)
+		block += RF_PROTECTED_SECTORS;
 
 	if (func == F_WRITE)
 		romwrite_uvax(block, size, buf, &bootrpb);

@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.156.2.13 2002/07/12 01:40:11 nathanw Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.156.2.14 2002/08/01 02:45:43 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.156.2.13 2002/07/12 01:40:11 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.156.2.14 2002/08/01 02:45:43 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -496,6 +496,10 @@ const struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	 "HITACHI", "DK515C",            "CP16"}, PQUIRK_NOSTARTUNIT},
 	{{T_DIRECT, T_FIXED,
 	 "HITACHI", "DK515C",            "CP15"}, PQUIRK_NOSTARTUNIT},
+	{{T_DIRECT, T_FIXED,
+	/* improperly report DT-only sync mode */
+	 "HITACHI", "DX32DJ-72ME",	 ""},
+				PQUIRK_CAP_SYNC|PQUIRK_CAP_WIDE16},
 	{{T_DIRECT, T_FIXED,
 	 "MICROP",  "1548-15MZ1077801",  "HZ2P"}, PQUIRK_NOTAG},
 	{{T_DIRECT, T_FIXED,

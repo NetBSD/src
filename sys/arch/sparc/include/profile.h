@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.h,v 1.10.26.1 2002/01/08 00:27:39 nathanw Exp $ */
+/*	$NetBSD: profile.h,v 1.10.26.2 2002/08/01 02:43:24 nathanw Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -54,6 +54,17 @@
 
 #ifdef PIC
 /* Inline expansion of PICCY_SET() (see <machine/asm.h>). */
+#ifdef __arch64__
+#define MCOUNT \
+	__asm__(".global " _MCOUNT_ENTRY);\
+	__asm__(_MCOUNT_ENTRY ":");\
+	__asm__("add %o7, 8, %o1");\
+	__asm__("1: rd %pc, %o2");\
+	__asm__("add %o2," _MCOUNT_SYM "-1b, %o2");\
+	__asm__("ld [%o2], %o2");\
+	__asm__("jmpl %o2, %g0");\
+	__asm__("add %i7, 8, %o0");
+#else
 #define MCOUNT \
 	__asm__(".global " _MCOUNT_ENTRY);\
 	__asm__(_MCOUNT_ENTRY ":");\
@@ -63,6 +74,7 @@
 	__asm__("ld [%o2], %o2");\
 	__asm__("jmpl %o2, %g0");\
 	__asm__("add %i7, 8, %o0");
+#endif
 #else
 #define MCOUNT \
 	__asm__(".global " _MCOUNT_ENTRY);\

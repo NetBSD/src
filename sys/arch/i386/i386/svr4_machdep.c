@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.50.4.15 2002/07/12 01:39:32 nathanw Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.50.4.16 2002/08/01 02:42:07 nathanw Exp $	 */
 
 /*-
  * Copyright (c) 1994, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.50.4.15 2002/07/12 01:39:32 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.50.4.16 2002/08/01 02:42:07 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -369,8 +369,7 @@ svr4_getsiginfo(si, sig, code, addr)
  * will return to the user pc, psl.
  */
 void
-svr4_sendsig(catcher, sig, mask, code)
-	sig_t catcher;
+svr4_sendsig(sig, mask, code)
 	int sig;
 	sigset_t *mask;
 	u_long code;
@@ -380,6 +379,7 @@ svr4_sendsig(catcher, sig, mask, code)
 	register struct trapframe *tf;
 	struct svr4_sigframe *fp, frame;
 	int onstack;
+	sig_t catcher = SIGACTION(p, sig).sa_handler;
 
 	tf = l->l_md.md_regs;
 

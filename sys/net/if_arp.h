@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.h,v 1.21.2.1 2001/06/21 20:07:58 nathanw Exp $	*/
+/*	$NetBSD: if_arp.h,v 1.21.2.2 2002/08/01 02:46:38 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1986, 1993
@@ -76,9 +76,14 @@ struct	arphdr {
 	u_int8_t  ar_tpa[];	/* target protocol address */
 #endif
 #define ar_sha(ap) (((caddr_t)((ap)+1))+0)
-#define ar_spa(ap) (((caddr_t)((ap)+1))+  (ap)->ar_hln)
-#define ar_tha(ap) (((caddr_t)((ap)+1))+  (ap)->ar_hln+(ap)->ar_pln)
-#define ar_tpa(ap) (((caddr_t)((ap)+1))+2*(ap)->ar_hln+(ap)->ar_pln)
+#define ar_spa(ap) (((caddr_t)((ap)+1))+(ap)->ar_hln)
+#define ar_tha(ap) \
+	(ntohs((ap)->ar_hrd) == ARPHRD_IEEE1394 \
+		? NULL : (((caddr_t)((ap)+1))+(ap)->ar_hln+(ap)->ar_pln))
+#define ar_tpa(ap) \
+	(ntohs((ap)->ar_hrd) == ARPHRD_IEEE1394 \
+		? (((caddr_t)((ap)+1))+(ap)->ar_hln+(ap)->ar_pln) \
+		: (((caddr_t)((ap)+1))+(ap)->ar_hln+(ap)->ar_pln+(ap)->ar_hln))
 } __attribute__((__packed__));
 
 

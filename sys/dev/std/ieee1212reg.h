@@ -1,4 +1,4 @@
-/*        $NetBSD: ieee1212reg.h,v 1.1.8.4 2002/04/17 00:06:13 nathanw Exp $ */
+/*	$NetBSD: ieee1212reg.h,v 1.1.8.5 2002/08/01 02:45:48 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.

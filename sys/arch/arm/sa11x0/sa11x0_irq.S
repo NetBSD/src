@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_irq.S,v 1.1.8.2 2002/04/17 00:02:35 nathanw Exp $	*/
+/*	$NetBSD: sa11x0_irq.S,v 1.1.8.3 2002/08/01 02:41:19 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998 Mark Brinicombe.
@@ -43,7 +43,7 @@
 #include <machine/asm.h>
 #include <machine/cpu.h>
 #include <machine/frame.h>
-#include <hpcarm/sa11x0/sa11x0_reg.h>
+#include <arm/sa11x0/sa11x0_reg.h>
 
 
 	.text

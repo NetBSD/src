@@ -1,4 +1,4 @@
-/*	$NetBSD: bsd_fdintr.s,v 1.19.8.2 2002/06/20 03:41:05 nathanw Exp $ */
+/*	$NetBSD: bsd_fdintr.s,v 1.19.8.3 2002/08/01 02:43:26 nathanw Exp $ */
 
 /*
  * Copyright (c) 1995 Paul Kranenburg
@@ -143,7 +143,7 @@
 #define R_stat	%l3
 #define R_nstat	%l4
 #define R_stcnt	%l5
-/* use %l6 and %l7 as short term temporaries */
+/* use %l6 and %l7 as short-term temporaries */
 
 
 	.seg	"data"
@@ -167,7 +167,7 @@ _ENTRY(_C_LABEL(fdchwintr))
 	std	%l0, [%l7]
 	st	%l2, [%l7 + 8]
 
-	! tally interrupt
+	! tally interrupt (uvmexp.intrs++)
 	sethi	%hi(_C_LABEL(uvmexp)+V_INTR), %l7
 	ld	[%l7 + %lo(_C_LABEL(uvmexp)+V_INTR)], %l6
 	inc	%l6
@@ -177,10 +177,11 @@ _ENTRY(_C_LABEL(fdchwintr))
 	sethi	%hi(_C_LABEL(fdciop)), %l7
 	ld	[%l7 + %lo(_C_LABEL(fdciop))], R_fdc
 
-	! tally interrupt
-	ld	[R_fdc + FDC_EVCNT], %l6
-	inc	%l6
-	st	%l6, [R_fdc + FDC_EVCNT]
+	! tally interrupt (fdcio_intrcnt.ev_count++)
+	ldd	[R_fdc + FDC_EVCNT], %l6
+	addcc	%l7, 1, %l7
+	addx	%l6, 0, %l6
+	std	%l6, [R_fdc + FDC_EVCNT]
 
 	/*
 	 * load chips register addresses

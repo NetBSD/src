@@ -1,4 +1,4 @@
-/*	$NetBSD: keyboard.h,v 1.1.32.1 2002/06/20 03:39:35 nathanw Exp $	*/
+/*	$NetBSD: keyboard.h,v 1.1.32.2 2002/08/01 02:42:25 nathanw Exp $	*/
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -72,7 +72,7 @@
 				 (((key) & 0x7f) == ADBK_OPTION))
 
 #ifndef KEYBOARD_ARRAY
-unsigned char keyboard[128][3];
+extern unsigned char keyboard[128][3];
 #else
 unsigned char keyboard[128][3] = {
 		/* Scan code      Normal     Shifted     Controlled */

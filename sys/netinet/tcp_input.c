@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.122.2.8 2002/06/20 03:48:54 nathanw Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.122.2.9 2002/08/01 02:46:48 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -152,7 +152,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.122.2.8 2002/06/20 03:48:54 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.122.2.9 2002/08/01 02:46:48 nathanw Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -316,6 +316,14 @@ extern struct evcnt tcp_reass_fragdup;
 #define	TCP_REASS_COUNTER_INCR(ev)	/* nothing */
 
 #endif /* TCP_REASS_COUNTERS */
+
+#ifdef INET
+static void tcp4_log_refused __P((const struct ip *, const struct tcphdr *));
+#endif
+#ifdef INET6
+static void tcp6_log_refused
+    __P((const struct ip6_hdr *, const struct tcphdr *));
+#endif
 
 int
 tcp_reass(tp, th, m, tlen)
@@ -656,7 +664,7 @@ present:
 	if (so->so_state & SS_CANTRCVMORE)
 		m_freem(q->ipqe_m);
 	else
-		sbappend(&so->so_rcv, q->ipqe_m);
+		sbappendstream(&so->so_rcv, q->ipqe_m);
 	pool_put(&ipqent_pool, q);
 	sorwakeup(so);
 	return (pkt_flags);
@@ -690,6 +698,54 @@ tcp6_input(mp, offp, proto)
 
 	tcp_input(m, *offp, proto);
 	return IPPROTO_DONE;
+}
+#endif
+
+#ifdef INET
+static void
+tcp4_log_refused(ip, th)
+	const struct ip *ip;
+	const struct tcphdr *th;
+{
+	char src[4*sizeof "123"];
+	char dst[4*sizeof "123"];
+
+	if (ip) {
+		strcpy(src, inet_ntoa(ip->ip_src));
+		strcpy(dst, inet_ntoa(ip->ip_dst));
+	}
+	else {
+		strcpy(src, "(unknown)");
+		strcpy(dst, "(unknown)");
+	}
+	log(LOG_INFO,
+	    "Connection attempt to TCP %s:%d from %s:%d\n",
+	    dst, ntohs(th->th_dport),
+	    src, ntohs(th->th_sport));
+}
+#endif
+
+#ifdef INET6
+static void
+tcp6_log_refused(ip6, th)
+	const struct ip6_hdr *ip6;
+	const struct tcphdr *th;
+{
+	char src[INET6_ADDRSTRLEN];
+	char dst[INET6_ADDRSTRLEN];
+
+	if (ip6) {
+		strcpy(src, ip6_sprintf(&ip6->ip6_src));
+		strcpy(dst, ip6_sprintf(&ip6->ip6_dst));
+	}
+	else {
+		strcpy(src, "(unknown v6)");
+		strcpy(dst, "(unknown v6)");
+	}
+	log(LOG_INFO,
+	    "Connection attempt to TCP [%s]:%d from [%s]:%d\n",
+	    dst, ntohs(th->th_dport),
+	    src, ntohs(th->th_sport));
 }
 #endif
 
@@ -865,6 +921,8 @@ tcp_input(m, va_alist)
 		return;
 	}
 
+	KASSERT(TCP_HDR_ALIGNED_P(th));
+
 	/*
 	 * Check that TCP offset makes sense,
 	 * pull out TCP options and adjust length.		XXX
@@ -915,6 +973,7 @@ tcp_input(m, va_alist)
 		 * (as they're before toff) and we don't need to update those.
 		 */
 #endif
+		KASSERT(TCP_HDR_ALIGNED_P(th));
 		optlen = off - sizeof (struct tcphdr);
 		optp = ((caddr_t)th) + sizeof(struct tcphdr);
 		/*
@@ -982,21 +1041,7 @@ findpcb:
 		{
 			++tcpstat.tcps_noport;
 			if (tcp_log_refused && (tiflags & TH_SYN)) {
-				char src[4*sizeof "123"];
-				char dst[4*sizeof "123"];
-
-				if (ip) {
-					strcpy(src, inet_ntoa(ip->ip_src));
-					strcpy(dst, inet_ntoa(ip->ip_dst));
-				}
-				else {
-					strcpy(src, "(unknown)");
-					strcpy(dst, "(unknown)");
-				}
-				log(LOG_INFO,
-				    "Connection attempt to TCP %s:%d from %s:%d\n",
-				    dst, ntohs(th->th_dport),
-				    src, ntohs(th->th_sport));
+				tcp4_log_refused(ip, th);
 			}
 			TCP_FIELDS_TO_HOST(th);
 			goto dropwithreset_ratelim;
@@ -1035,21 +1080,7 @@ findpcb:
 		if (in6p == NULL) {
 			++tcpstat.tcps_noport;
 			if (tcp_log_refused && (tiflags & TH_SYN)) {
-				char src[INET6_ADDRSTRLEN];
-				char dst[INET6_ADDRSTRLEN];
-
-				if (ip6) {
-					strcpy(src, ip6_sprintf(&ip6->ip6_src));
-					strcpy(dst, ip6_sprintf(&ip6->ip6_dst));
-				}
-				else {
-					strcpy(src, "(unknown v6)");
-					strcpy(dst, "(unknown v6)");
-				}
-				log(LOG_INFO,
-				    "Connection attempt to TCP [%s]:%d from [%s]:%d\n",
-				    dst, ntohs(th->th_dport),
-				    src, ntohs(th->th_sport));
+				tcp6_log_refused(ip6, th);
 			}
 			TCP_FIELDS_TO_HOST(th);
 			goto dropwithreset_ratelim;
@@ -1493,7 +1524,7 @@ after_listen:
 			 * to socket buffer.
 			 */
 			m_adj(m, toff + off);
-			sbappend(&so->so_rcv, m);
+			sbappendstream(&so->so_rcv, m);
 			sorwakeup(so);
 			TCP_SETUP_ACK(tp, th);
 			if (tp->t_flags & TF_ACKNOW)
@@ -2232,7 +2263,7 @@ dodata:							/* XXX */
 			tcpstat.tcps_rcvbyte += tlen;
 			ND6_HINT(tp);
 			m_adj(m, hdroptlen);
-			sbappend(&(so)->so_rcv, m);
+			sbappendstream(&(so)->so_rcv, m);
 			sorwakeup(so);
 		} else {
 			m_adj(m, hdroptlen);
@@ -3238,6 +3269,7 @@ syn_cache_get(src, dst, th, hlen, tlen, so, m)
 #endif
 	else
 		tp = NULL;
+	tp->t_flags = sototcpcb(oso)->t_flags & TF_NODELAY;
 	if (sc->sc_request_r_scale != 15) {
 		tp->requested_s_scale = sc->sc_requested_s_scale;
 		tp->request_r_scale = sc->sc_request_r_scale;

@@ -1,4 +1,4 @@
-/*	$NetBSD: j720kbdmap.c,v 1.2.6.2 2002/02/28 04:09:49 nathanw Exp $	*/
+/*	$NetBSD: j720kbdmap.c,v 1.2.6.3 2002/08/01 02:41:44 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2001 The NetBSD Foundation, Inc.
@@ -119,6 +119,45 @@ static const keysym_t j720kbd_keydesc_us[] = {
     KC(106),			KS_Down,
 };
 
+static const keysym_t j720kbd_keydesc_fr[] = {
+/*  pos      normal		shifted		altgr		shift-altgr */
+    KC(17),  KS_ampersand,	KS_1,		KS_plusminus,
+    KC(18),  KS_eacute,		KS_2,		KS_asciitilde,
+    KC(19),  KS_quotedbl,	KS_3,		KS_numbersign,
+    KC(20),  KS_apostrophe,	KS_4,		KS_braceleft,
+    KC(21),  KS_parenleft,	KS_5,		KS_bracketleft,
+    KC(22),  KS_minus,		KS_6,		KS_bar,
+    KC(23),  KS_egrave,		KS_7,		KS_grave,
+    KC(24),  KS_underscore,	KS_8,		KS_backslash,
+    KC(25),  KS_ccedilla,	KS_9,		KS_asciicircum,
+    KC(26),  KS_agrave,		KS_0,		KS_at,
+    KC(27),  KS_parenright,	KS_degree,	KS_bracketright,
+    KC(28),  KS_equal,		KS_plus,	KS_braceright,
+    KC(33),  KS_a,
+    KC(34),  KS_z,
+    KC(36),  KS_r,		KS_R,		KS_onequarter,
+    KC(37),  KS_t,		KS_T,		KS_onehalf,
+    KC(38),  KS_y,		KS_Y,		KS_threequarters,
+    KC(43),  KS_dead_circumflex,KS_dead_diaeresis,
+    KC(50),  KS_s,		KS_S,		KS_guillemotleft,
+    KC(51),  KS_d,		KS_D,		KS_guillemotright,
+    KC(59),  KS_dollar,		KS_sterling,	KS_currency,
+    KC(49),  KS_q,		KS_Q,		KS_bar,
+    KC(58),  KS_m,
+    KC(60),  KS_asterisk,	KS_mu,
+    KC(75),  KS_ugrave,		KS_percent,	KS_apostrophe,
+    KC(65),  KS_w,		KS_W,		KS_less,
+    KC(66),  KS_x,		KS_X,		KS_greater,
+    KC(71),  KS_comma,		KS_question,	KS_mu,
+    KC(72),  KS_semicolon,	KS_period,
+    KC(73),  KS_colon,		KS_slash,
+    KC(74),  KS_exclam,		KS_section,	KS_eacute,
+    KC(83),  KS_Shift_L, 	KS_Shift_L,	KS_Caps_Lock,
+    KC(102), KS_twosuperior,	KS_twosuperior,	KS_threesuperior,
+    KC(114), KS_Cmd1,	KS_Control_L, KS_Control_L, KS_Num_Lock, 
+    KC(120), KS_Alt_R,		KS_Multi_key, 
+};
+
 static const keysym_t j720kbd_keydesc_jp[] = {
 /*  pos      normal		shifted		altgr		shift-altgr */
     KC(18),  KS_2,              KS_quotedbl,
@@ -153,6 +192,7 @@ static const keysym_t j720kbd_keydesc_jp[] = {
 const struct wscons_keydesc j720kbd_keydesctab[] = {
 	KBD_MAP(KB_US,			0,	j720kbd_keydesc_us),
 	KBD_MAP(KB_JP,			KB_US,	j720kbd_keydesc_jp),
+	KBD_MAP(KB_FR,			KB_US,	j720kbd_keydesc_fr),
 	{0, 0, 0, 0}
 };
 

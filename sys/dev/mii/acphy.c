@@ -1,4 +1,4 @@
-/*	$NetBSD: acphy.c,v 1.2.4.6 2002/06/20 03:45:15 nathanw Exp $	*/
+/*	$NetBSD: acphy.c,v 1.2.4.7 2002/08/01 02:45:01 nathanw Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,13 +40,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acphy.c,v 1.2.4.6 2002/06/20 03:45:15 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acphy.c,v 1.2.4.7 2002/08/01 02:45:01 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/socket.h>
 #include <sys/errno.h>
 

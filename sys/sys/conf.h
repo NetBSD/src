@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.84.2.8 2002/06/20 03:50:08 nathanw Exp $	*/
+/*	$NetBSD: conf.h,v 1.84.2.9 2002/08/01 02:46:57 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -333,8 +333,8 @@ extern struct cdevsw cdevsw[];
 	dev_init(c,n,write), dev_init(c,n,ioctl), \
 	dev_noimpl(stop,enodev), 0, seltrue, dev_init(c,n,mmap) }
 
-/* open, close, read, write, ioctl */
-#define	cdev_systrace_init(c,n) { \
+/* open -- everything else handled by fileops */
+#define	cdev_clonemisc_init(c,n) { \
 	dev_init(c,n,open), dev_noimpl(close,enodev), \
 	dev_noimpl(read,enodev), dev_noimpl(write,enodev), \
 	dev_noimpl(ioctl,enodev), dev_noimpl(stop,enodev), \

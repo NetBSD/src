@@ -1,4 +1,4 @@
-/*	$NetBSD: wsqms_iomd.c,v 1.1.4.2 2002/01/08 00:23:17 nathanw Exp $	*/
+/*	$NetBSD: wsqms_iomd.c,v 1.1.4.3 2002/08/01 02:41:18 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 Reinoud Zandijk
@@ -36,11 +36,14 @@
  * POSSIBILITY OF SUCH DAMAGE.
  *
  *
- * Quadratic mouse driver for the wscons as used in the IOMD; config glue...
+ * Quadrature mouse driver for the wscons as used in the IOMD; config glue...
  */
 
 
 #include <sys/param.h>
+
+__KERNEL_RCSID(0, "$NetBSD: wsqms_iomd.c,v 1.1.4.3 2002/08/01 02:41:18 nathanw Exp $");
+
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/types.h>
@@ -54,9 +57,8 @@
 #include <arm/iomd/wsqmsvar.h>
 #include <arm/iomd/iomdvar.h>
 
-static int  wsqms_iomd_probe     __P((struct device *, struct cfdata *, void *));
-static void wsqms_iomd_attach    __P((struct device *, struct device *, void *));
-static void wsqms_iomd_intenable __P((struct wsqms_softc *sc, int enable));
+static int  wsqms_iomd_probe(struct device *, struct cfdata *, void *);
+static void wsqms_iomd_attach(struct device *, struct device *, void *);
 
 
 struct cfattach wsqms_iomd_ca = {
@@ -65,14 +67,11 @@ struct cfattach wsqms_iomd_ca = {
 
 
 static int
-wsqms_iomd_probe(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+wsqms_iomd_probe(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct qms_attach_args *qa = aux;
 
-	if (strcmp(qa->qa_name, "wsqms") == 0)
+	if (strcmp(qa->qa_name, "qms") == 0)
 		return(1);
 
 	return(0);
@@ -80,41 +79,16 @@ wsqms_iomd_probe(parent, cf, aux)
 
 
 static void
-wsqms_iomd_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+wsqms_iomd_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct wsqms_softc *sc = (void *)self;
 	struct qms_attach_args *qa = aux;
 
-	sc->sc_device = *self;
-
 	sc->sc_iot = qa->qa_iot;
 	sc->sc_ioh = qa->qa_ioh;
 	sc->sc_butioh = qa->qa_ioh_but;
-	sc->sc_irqnum = qa->qa_irq;
 
-	sc->sc_intenable = wsqms_iomd_intenable;
-
-	wsqms_attach(sc, self);
+	wsqms_attach(sc);
 }
-
-
-static void
-wsqms_iomd_intenable(sc, enable)
-	struct wsqms_softc *sc;
-	int enable;
-{
-	if (enable) {
-		sc->sc_ih = intr_claim(sc->sc_irqnum, IPL_TTY, "wsqms", wsqms_intr, sc);
-		if (!sc->sc_ih)
-			panic("%s: Cannot claim interrupt\n", sc->sc_device.dv_xname);
-	} else {
-		if (intr_release(sc->sc_ih) != 0)
-			panic("%s: Cannot release IRQ\n", sc->sc_device.dv_xname);
-	}
-}
-
 
 /* End of wsqms_iomd.c */

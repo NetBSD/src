@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.3.6.4 2002/07/05 02:36:35 thorpej Exp $	*/
+/*	$NetBSD: frame.h,v 1.3.6.5 2002/08/01 02:41:16 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -82,10 +82,6 @@ typedef struct trapframe {
  */
 
 struct sigframe {
-	int	sf_signum;
-	int	sf_code;
-	struct	sigcontext *sf_scp;
-	sig_t	sf_handler;
 	struct	sigcontext sf_sc;
 };
 

@@ -1,4 +1,4 @@
-/*     $NetBSD: scsiio.h,v 1.9.2.1 2001/08/24 00:13:09 nathanw Exp $        */
+/*     $NetBSD: scsiio.h,v 1.9.2.2 2002/08/01 02:46:59 nathanw Exp $        */
 
 #ifndef _SYS_SCSIIO_H_
 #define _SYS_SCSIIO_H_
@@ -25,7 +25,7 @@ typedef struct	scsireq {
 	int	error;		/* error bits */
 } scsireq_t;
 
-/* bit defintions for flags */
+/* bit definitions for flags */
 #define SCCMD_READ		0x00000001
 #define SCCMD_WRITE		0x00000002
 #define SCCMD_IOV		0x00000004
@@ -73,7 +73,7 @@ struct	scsi_addr {
 
 #define SCIOCIDENTIFY	_IOR('Q', 4, struct scsi_addr) /* where are you? */
 #define  OSCIOCIDENTIFY	_IOR('Q', 4, struct oscsi_addr)
-#define SCIOCDECONFIG	_IO('Q', 5)	/* please dissappear */
+#define SCIOCDECONFIG	_IO('Q', 5)	/* please disappear */
 #define SCIOCRECONFIG	_IO('Q', 6)	/* please check again */
 #define SCIOCRESET	_IO('Q', 7)	/* reset the device */
 

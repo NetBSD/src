@@ -1,4 +1,4 @@
-/*	$NetBSD: ifpga.c,v 1.2.2.5 2002/06/20 03:38:30 nathanw Exp $ */
+/*	$NetBSD: ifpga.c,v 1.2.2.6 2002/08/01 02:41:33 nathanw Exp $ */
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -60,6 +60,8 @@
 #include <evbarm/ifpga/ifpgareg.h>
 #include <evbarm/ifpga/ifpga_pcivar.h>
 #include <evbarm/dev/v360reg.h>
+
+#include <evbarm/integrator/int_bus_dma.h>
 
 /* Prototypes */
 static int  ifpga_match		(struct device *, struct cfdata *, void *);
@@ -335,6 +337,8 @@ ifpga_attach(struct device *parent, struct device *self, void *aux)
 	config_search(ifpga_search, self, NULL);
 
 #if NPCI > 0
+	integrator_pci_dma_init(&ifpga_pci_bus_dma_tag);
+
 	pci_pba.pba_busname = "pci";
 	pci_pba.pba_pc = &ifpga_pci_chipset;
 	pci_pba.pba_iot = &ifpga_pci_io_tag;

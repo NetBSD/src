@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplayvar.h,v 1.18.2.1 2001/10/22 20:41:48 nathanw Exp $ */
+/* $NetBSD: wsdisplayvar.h,v 1.18.2.2 2002/08/01 02:46:15 nathanw Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -56,7 +56,7 @@ struct wsdisplay_emulops {
 	void	(*erasecols)(void *c, int row, int startcol, int ncols, long);
 	void	(*copyrows)(void *c, int srcrow, int dstrow, int nrows);
 	void	(*eraserows)(void *c, int row, int nrows, long);
-	int	(*alloc_attr)(void *c, int fg, int bg, int flags, long *);
+	int	(*allocattr)(void *c, int fg, int bg, int flags, long *);
 /* fg / bg values. Made identical to ANSI terminal color codes. */
 #define WSCOL_BLACK	0
 #define WSCOL_RED	1
@@ -89,6 +89,7 @@ struct wsscreen_descr {
 };
 
 struct wsdisplay_font;
+struct wsdisplay_char;
 /*
  * Display access functions, invoked by user-land programs which require
  * direct device access, such as X11.
@@ -107,6 +108,8 @@ struct wsdisplay_accessops {
 				    void (*) (void *, int, int), void *);
 	int	(*load_font)(void *, void *, struct wsdisplay_font *);
 	void	(*pollc)(void *, int);
+	int	(*getwschar)(void *, struct wsdisplay_char *);
+	int	(*putwschar)(void *, struct wsdisplay_char *);
 };
 
 /*
@@ -186,8 +189,13 @@ int wsdisplay_usl_ioctl1(struct wsdisplay_softc *,
 int wsdisplay_usl_ioctl2(struct wsdisplay_softc *, struct wsscreen *,
 			 u_long, caddr_t, int, struct proc *);
 
+int wsdisplay_stat_ioctl(struct wsdisplay_softc *sc, u_long cmd, caddr_t data,
+			 int flag, struct proc *p);
+
 int wsdisplay_cfg_ioctl(struct wsdisplay_softc *sc, u_long cmd, caddr_t data,
 			int flag, struct proc *p);
+
+int wsdisplay_stat_inject(struct device *dev, u_int type, int value);
 
 /*
  * for general use

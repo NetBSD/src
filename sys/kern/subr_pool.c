@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.50.2.8 2002/06/24 22:10:56 nathanw Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.50.2.9 2002/08/01 02:46:24 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.50.2.8 2002/06/24 22:10:56 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.50.2.9 2002/08/01 02:46:24 nathanw Exp $");
 
 #include "opt_pool.h"
 #include "opt_poollog.h"
@@ -415,7 +415,7 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 	if (size < sizeof(struct pool_item))
 		size = sizeof(struct pool_item);
 
-	size = ALIGN(size);
+	size = roundup(size, align);
 #ifdef DIAGNOSTIC
 	if (size > palloc->pa_pagesz)
 		panic("pool_init: pool item size (%lu) too large",
@@ -636,7 +636,7 @@ pool_get(struct pool *pp, int flags)
 #ifdef DIAGNOSTIC
 	if (__predict_false(curlwp == NULL && doing_shutdown == 0 &&
 			    (flags & PR_WAITOK) != 0))
-		panic("pool_get: must have NOWAIT");
+		panic("pool_get: %s: must have NOWAIT", pp->pr_wchan);
 
 #ifdef LOCKDEBUG
 	if (flags & PR_WAITOK)
@@ -1124,6 +1124,8 @@ pool_prime_page(struct pool *pp, caddr_t storage, struct pool_item_header *ph)
 
 	while (n--) {
 		pi = (struct pool_item *)cp;
+
+		KASSERT(((((vaddr_t)pi) + ioff) & (align - 1)) == 0);
 
 		/* Insert on page list */
 		TAILQ_INSERT_TAIL(&ph->ph_itemlist, pi, pi_list);

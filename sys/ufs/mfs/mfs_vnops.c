@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vnops.c,v 1.27.2.5 2002/07/12 01:40:42 nathanw Exp $	*/
+/*	$NetBSD: mfs_vnops.c,v 1.27.2.6 2002/08/01 02:47:06 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfs_vnops.c,v 1.27.2.5 2002/07/12 01:40:42 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfs_vnops.c,v 1.27.2.6 2002/08/01 02:47:06 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -176,7 +176,7 @@ mfs_strategy(v)
 		bp->b_resid = 0;
 		biodone(bp);
 	} else {
-		BUFQ_INSERT_TAIL(&mfsp->mfs_buflist, bp);
+		BUFQ_PUT(&mfsp->mfs_buflist, bp);
 		wakeup((caddr_t)vp);
 	}
 	return (0);
@@ -250,8 +250,7 @@ mfs_close(v)
 	/*
 	 * Finish any pending I/O requests.
 	 */
-	while ((bp = BUFQ_FIRST(&mfsp->mfs_buflist)) != NULL) {
-		BUFQ_REMOVE(&mfsp->mfs_buflist, bp);
+	while ((bp = BUFQ_GET(&mfsp->mfs_buflist)) != NULL) {
 		mfs_doio(bp, mfsp->mfs_baseoff);
 		wakeup((caddr_t)bp);
 	}
@@ -268,12 +267,12 @@ mfs_close(v)
 	 */
 	if (vp->v_usecount > 1)
 		printf("mfs_close: ref count %d > 1\n", vp->v_usecount);
-	if (vp->v_usecount > 1 || BUFQ_FIRST(&mfsp->mfs_buflist) != NULL)
+	if (vp->v_usecount > 1 || BUFQ_PEEK(&mfsp->mfs_buflist) != NULL)
 		panic("mfs_close");
 	/*
 	 * Send a request to the filesystem server to exit.
 	 */
-	BUFQ_FIRST(&mfsp->mfs_buflist) = (struct buf *) -1;
+	mfsp->mfs_shutdown = 1;
 	wakeup((caddr_t)vp);
 	return (0);
 }
@@ -293,10 +292,9 @@ mfs_inactive(v)
 	struct vnode *vp = ap->a_vp;
 	struct mfsnode *mfsp = VTOMFS(vp);
 
-	if (BUFQ_FIRST(&mfsp->mfs_buflist) != NULL &&
-	    BUFQ_FIRST(&mfsp->mfs_buflist) != (struct buf *) -1)
+	if (BUFQ_PEEK(&mfsp->mfs_buflist) != NULL)
 		panic("mfs_inactive: not inactive (mfs_buflist %p)",
-			BUFQ_FIRST(&mfsp->mfs_buflist));
+			BUFQ_PEEK(&mfsp->mfs_buflist));
 	VOP_UNLOCK(vp, 0);
 	return (0);
 }

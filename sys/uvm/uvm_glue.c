@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.44.2.16 2002/07/16 14:10:44 nathanw Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.44.2.17 2002/08/01 02:47:07 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -67,9 +67,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.44.2.16 2002/07/16 14:10:44 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.44.2.17 2002/08/01 02:47:07 nathanw Exp $");
 
 #include "opt_kgdb.h"
+#include "opt_kstack.h"
 #include "opt_sysv.h"
 #include "opt_uvmhist.h"
 
@@ -308,6 +309,13 @@ uvm_lwp_fork(l1, l2, stack, stacksize, func, arg)
 	    VM_FAULT_WIRE, VM_PROT_READ | VM_PROT_WRITE);
 	if (error)
 		panic("uvm_lwp_fork: uvm_fault_wire failed: %d", error);
+
+#ifdef KSTACK_CHECK_MAGIC
+	/*
+	 * fill stack with magic number
+	 */
+	kstack_setup_magic(p2);
+#endif
 
 	/*
 	 * cpu_lwp_fork() copy and update the pcb, and make the child ready

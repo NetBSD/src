@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.2.26.4 2002/07/03 20:35:22 nathanw Exp $	*/
+/*	$NetBSD: frame.h,v 1.2.26.5 2002/08/01 02:43:03 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -56,6 +56,7 @@ struct trapframe {
 	register_t dar;			/* dar & dsisr are only filled on a DSI trap */
 	int dsisr;
 	int exc;
+	uint32_t vrsave;
 };
 /*
  * This is to ensure alignment of the stackpointer
@@ -95,7 +96,7 @@ struct saframe {
 	register_t fill[2];	/* Pad to multiple of 16 bytes */
 };
 
-#define	IFRAMELEN	sizeof(struct intrframe)
+#define	IFRAMELEN	roundup(sizeof(struct intrframe), 16)
 struct intrframe {
 	register_t r1;			/*  0 */
 	register_t _pad4;		/*  4 */
@@ -105,7 +106,7 @@ struct intrframe {
 	register_t srr1;		/*  8 */
 	register_t srr0;		/* 12 */
 	int pri;			/* 16 */
-	int intr_depth;			/* 20 */
+	int intrdepth;			/* 20 */
 	register_t vrsave;		/* 24 */
 	register_t ctr;			/* 28 */
 	register_t xer;			/* 32 */

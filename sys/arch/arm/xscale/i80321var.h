@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321var.h,v 1.1.2.2 2002/04/01 07:39:17 nathanw Exp $	*/
+/*	$NetBSD: i80321var.h,v 1.1.2.3 2002/08/01 02:41:22 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -62,7 +62,6 @@ struct intrq {
 	int iq_mask;			/* IRQs to mask while handling */
 	int iq_levels;			/* IPL_*'s this IRQ has */
 	int iq_ist;			/* share type */
-	char iq_name[IRQNAMESIZE];	/* interrupt name */
 };
 
 struct i80321_softc {
@@ -129,13 +128,32 @@ struct i80321_softc {
 	struct arm32_bus_dma_tag sc_pci_dmat;
 	struct arm32_pci_chipset sc_pci_chipset;
 
+	/* DMA window info for PCI DMA. */
+	struct arm32_dma_range sc_pci_dma_range;
+
 	/* GPIO state */
 	uint8_t sc_gpio_dir;	/* GPIO pin direction (1 == output) */
 	uint8_t sc_gpio_val;	/* GPIO output pin value */
+
+	/* DMA tag for local devices. */
+	struct arm32_bus_dma_tag sc_local_dmat;
+};
+
+/*
+ * Arguments used to attach IOP built-ins.
+ */
+struct iopxs_attach_args {
+	const char *ia_name;	/* name of device */
+	bus_space_tag_t ia_st;	/* space tag */
+	bus_space_handle_t ia_sh;/* handle of IOP base */
+	bus_dma_tag_t ia_dmat;	/* DMA tag */
+	bus_addr_t ia_offset;	/* offset of device from IOP base */
+	bus_size_t ia_size;	/* size of sub-device */
 };
 
 extern struct bus_space i80321_bs_tag;
 extern struct i80321_softc *i80321_softc;
+extern const char *i80321_irqnames[];
 
 extern void (*i80321_hardclock_hook)(void);
 
@@ -152,6 +170,8 @@ void	i80321_intr_disestablish(void *);
 void	i80321_bs_init(bus_space_tag_t, void *);
 void	i80321_io_bs_init(bus_space_tag_t, void *);
 void	i80321_mem_bs_init(bus_space_tag_t, void *);
+
+void	i80321_local_dma_init(bus_dma_tag_t, void *);
 
 void	i80321_pci_dma_init(bus_dma_tag_t, void *);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.86.2.20 2002/07/12 01:40:19 nathanw Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.86.2.21 2002/08/01 02:46:22 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.86.2.20 2002/07/12 01:40:19 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.86.2.21 2002/08/01 02:46:22 nathanw Exp $");
 
 #include "opt_ddb.h"
 #include "opt_insecure.h"
@@ -51,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.86.2.20 2002/07/12 01:40:19 nathan
 #include "opt_pipe.h"
 #include "opt_sysv.h"
 #include "pty.h"
+#include "rnd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,6 +102,10 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.86.2.20 2002/07/12 01:40:19 nathan
 
 #ifndef PIPE_SOCKETPAIR
 #include <sys/pipe.h>
+#endif
+
+#if NRND > 0
+#include <sys/rnd.h>
 #endif
 
 #define PTRTOINT64(foo)	((u_int64_t)(uintptr_t)(foo))
@@ -331,6 +336,9 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 	int old_autonicetime;
 	int old_vnodes;
 	dev_t consdev;
+#if NRND > 0
+	int v;
+#endif
 
 	/* All sysctl names at this level, except for a few, are terminal. */
 	switch (name[0]) {
@@ -575,6 +583,16 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 		    newp));
 	case KERN_MONOTONIC_CLOCK:	/* XXX _POSIX_VERSION */
 		return (sysctl_rdint(oldp, oldlenp, newp, 200112));
+	case KERN_URND:
+#if NRND > 0
+		if (rnd_extract_data(&v, sizeof(v), RND_EXTRACT_ANY) ==
+		    sizeof(v))
+			return (sysctl_rdint(oldp, oldlenp, newp, v));
+		else
+			return (EIO);	/*XXX*/
+#else
+		return (EOPNOTSUPP);
+#endif
 	default:
 		return (EOPNOTSUPP);
 	}

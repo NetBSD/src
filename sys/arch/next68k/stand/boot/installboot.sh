@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: installboot.sh,v 1.1.1.1 1998/06/09 07:53:06 dbj Exp $
+#	$NetBSD: installboot.sh,v 1.1.1.1.32.1 2002/08/01 02:42:52 nathanw Exp $
 
 # simple installboot program we can use until we have disklabel to do the job.
 # (This one has the advantage that it runs on any architecture. However it
@@ -16,4 +16,5 @@ if [ ! -f $1 ]; then Usage "bootprog must be a regular file"; fi
 if [ ! -c $2 ]; then Usage "device must be a character special file"; fi
 
 dd if="$1" of="$2" obs=1024 seek=32 conv=osync
+dd if="$1" of="$2" obs=1024 seek=96 conv=osync
 exit $?

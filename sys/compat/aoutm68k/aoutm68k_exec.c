@@ -1,4 +1,4 @@
-/*	$NetBSD: aoutm68k_exec.c,v 1.4.4.3 2001/11/14 19:12:52 nathanw Exp $	*/
+/*	$NetBSD: aoutm68k_exec.c,v 1.4.4.4 2002/08/01 02:44:09 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aoutm68k_exec.c,v 1.4.4.3 2001/11/14 19:12:52 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aoutm68k_exec.c,v 1.4.4.4 2002/08/01 02:44:09 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
@@ -57,7 +57,7 @@ extern struct sysent aoutm68k_sysent[];
 extern const char * const aoutm68k_syscallnames[];
 #endif
 extern char sigcode[], esigcode[];
-void syscall __P((void));
+void aoutm68k_syscall_intern __P((struct proc *));
 
 struct emul emul_netbsd_aoutm68k = {
 	"aoutm68k",
@@ -80,5 +80,5 @@ struct emul emul_netbsd_aoutm68k = {
 	NULL,
 	NULL,
 	NULL,
-	syscall
+	aoutm68k_syscall_intern
 };

@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_machdep.c,v 1.4.2.8 2002/06/24 22:03:00 nathanw Exp $	*/
+/*	$NetBSD: rpc_machdep.c,v 1.4.2.9 2002/08/01 02:40:55 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Reinoud Zandijk.
@@ -55,7 +55,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.4.2.8 2002/06/24 22:03:00 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.4.2.9 2002/08/01 02:40:55 nathanw Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -935,6 +935,26 @@ initarm(void *cookie)
 #endif
 	undefined_init();
 	console_flush();
+
+	/* Load memory into UVM. */
+#ifdef VERBOSE_INIT_ARM
+	printf("page ");
+#endif
+	uvm_setpagesize();	/* initialize PAGE_SIZE-dependent variables */
+	for (loop = 0; loop < bootconfig.dramblocks; loop++) {
+		paddr_t start = (paddr_t)bootconfig.dram[loop].address;
+		paddr_t end = start + (bootconfig.dram[loop].pages * NBPG);
+
+		if (start < physical_freestart)
+			start = physical_freestart;
+		if (end > physical_freeend)
+			end = physical_freeend;
+
+		/* XXX Consider DMA range intersection checking. */
+
+		uvm_page_physload(atop(start), atop(end),
+		    atop(start), atop(end), VM_FREELIST_DEFAULT);
+	}
 
 	/* Boot strap pmap telling it where the kernel page table is */
 #ifdef VERBOSE_INIT_ARM

@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321_icu.c,v 1.2.2.2 2002/04/01 07:39:16 nathanw Exp $	*/
+/*	$NetBSD: i80321_icu.c,v 1.2.2.3 2002/08/01 02:41:21 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -97,6 +97,44 @@ static const int si_to_ipl[SI_NQUEUES] = {
 	IPL_SOFTCLOCK,		/* SI_SOFTCLOCK */
 	IPL_SOFTNET,		/* SI_SOFTNET */
 	IPL_SOFTSERIAL,		/* SI_SOFTSERIAL */
+};
+
+/*
+ * Interrupt bit names.
+ */
+const char *i80321_irqnames[] = {
+	"DMA0 EOT",
+	"DMA0 EOC",
+	"DMA1 EOT",
+	"DMA1 EOC",
+	"irq 4",
+	"irq 5",
+	"AAU EOT",
+	"AAU EOC",
+	"core PMU",
+	"TMR0 (hardclock)",
+	"TMR1",
+	"I2C0",
+	"I2C1",
+	"MU",
+	"BIST",
+	"periph PMU",
+	"XScale PMU",
+	"BIU error",
+	"ATU error",
+	"MCU error",
+	"DMA0 error",
+	"DMA1 error",
+	"irq 22",
+	"AAU error",
+	"MU error",
+	"SSP",
+	"irq 26",
+	"irq 27",
+	"irq 28",
+	"irq 29",
+	"irq 30",
+	"irq 31",
 };
 
 void	i80321_intr_dispatch(struct clockframe *frame);
@@ -396,9 +434,8 @@ i80321_intr_init(void)
 		iq = &intrq[i];
 		TAILQ_INIT(&iq->iq_list);
 
-		sprintf(iq->iq_name, "irq %d", i);
 		evcnt_attach_dynamic(&iq->iq_ev, EVCNT_TYPE_INTR,
-		    NULL, "iop321", iq->iq_name);
+		    NULL, "iop321", i80321_irqnames[i]);
 	}
 
 	i80321_intr_calculate_masks();

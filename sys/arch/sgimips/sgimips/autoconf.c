@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.4.4.3 2002/04/01 07:42:27 nathanw Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.4.4.4 2002/08/01 02:43:17 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -50,7 +50,7 @@
 #include <dev/scsipi/scsiconf.h>
 
 struct device	*booted_device = NULL;
-static struct device *booted_controller;
+static struct device *booted_controller = NULL;
 static int	booted_slot, booted_unit, booted_partition;
 static char	*booted_protocol = NULL;
 
@@ -177,8 +177,12 @@ device_register(dev, aux)
 	 * Check for WDC controller
 	 */
 	if (scsiboot && strcmp(cd->cd_name, "wdsc") == 0) {
-		/* XXX Check controller number == booted_slot */
-		booted_controller = dev;
+		/* 
+		 * XXX: this fails if the controllers were attached 
+		 * in an order other than the ARCS-imposed order.
+		 */
+		if (dev->dv_unit == booted_slot)
+			booted_controller = dev;
 		return;
 	}
 

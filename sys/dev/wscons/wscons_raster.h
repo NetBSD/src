@@ -1,4 +1,4 @@
-/* $NetBSD: wscons_raster.h,v 1.5.20.1 2001/10/22 20:41:47 nathanw Exp $ */
+/* $NetBSD: wscons_raster.h,v 1.5.20.2 2002/08/01 02:46:14 nathanw Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -91,6 +91,6 @@ void	rcons_copycols(void *, int, int, int, int);
 void	rcons_erasecols(void *, int, int, int, long);
 void	rcons_copyrows(void *, int, int, int);
 void	rcons_eraserows(void *, int, int, long);
-int	rcons_alloc_attr(void *, int, int, int, long *);
+int	rcons_allocattr(void *, int, int, int, long *);
 
 #endif /* _DEV_PSEUDO_RCONS_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.2.6.8 2002/07/12 01:39:45 nathanw Exp $	*/
+/*	$NetBSD: trap.c,v 1.2.6.9 2002/08/01 02:43:01 nathanw Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -115,9 +115,7 @@ volatile int astpending;
 volatile int want_resched;
 #endif
 
-void *syscall = NULL;	/* XXX dummy symbol for emul_netbsd */
-
-static int fix_unaligned __P((struct lwp *p, struct trapframe *frame));
+static int fix_unaligned __P((struct lwp *l, struct trapframe *frame));
 
 void trap __P((struct trapframe *));	/* Called from locore / trap_subr */
 int setfault __P((faultbuf));	/* defined in locore.S */
@@ -149,7 +147,7 @@ trap(struct trapframe *frame)
 
 	ftype = VM_PROT_READ;
 
-DBPRINTF(TDB_ALL, ("trap(%x) at %x from frame %p &frame %p\n", 
+DBPRINTF(TDB_ALL, ("trap(%x) at %x from frame %p &frame %p\n",
 	type, frame->srr0, frame, &frame));
 
 	switch (type) {
@@ -168,9 +166,9 @@ printf("debug reg is %x srr2 %x srr3 %x\n", rv, srr2, srr3);
 		trapsignal(l, SIGTRAP, EXC_TRC);
 		KERNEL_PROC_UNLOCK(l);
 		break;
-		
+
 	  /* If we could not find and install appropriate TLB entry, fall through */
-	  
+
 	case EXC_DSI:
 		/* FALLTHROUGH */
 	case EXC_DTMISS:
@@ -190,7 +188,7 @@ printf("debug reg is %x srr2 %x srr3 %x\n", rv, srr2, srr3);
 			if (frame->esr & (ESR_DST|ESR_DIZ))
 				ftype = VM_PROT_WRITE;
 
-DBPRINTF(TDB_ALL, ("trap(EXC_DSI) at %x %s fault on %p esr %x\n", 
+DBPRINTF(TDB_ALL, ("trap(EXC_DSI) at %x %s fault on %p esr %x\n",
 frame->srr0, (ftype&VM_PROT_WRITE) ? "write" : "read", (void *)va, frame->esr));
 			rv = uvm_fault(map, trunc_page(va), 0, ftype);
 			KERNEL_UNLOCK();
@@ -210,16 +208,16 @@ frame->srr0, (ftype&VM_PROT_WRITE) ? "write" : "read", (void *)va, frame->esr));
 			}
 		}
 		goto brain_damage;
-		
+
 	case EXC_DSI|EXC_USER:
 		/* FALLTHROUGH */
 	case EXC_DTMISS|EXC_USER:
 		KERNEL_PROC_LOCK(l);
-			
+
 		if (frame->esr & (ESR_DST|ESR_DIZ))
 			ftype = VM_PROT_WRITE;
 
-DBPRINTF(TDB_ALL, ("trap(EXC_DSI|EXC_USER) at %x %s fault on %x %x\n", 
+DBPRINTF(TDB_ALL, ("trap(EXC_DSI|EXC_USER) at %x %s fault on %x %x\n",
 frame->srr0, (ftype&VM_PROT_WRITE) ? "write" : "read", frame->dear, frame->esr));
 KASSERT(l == curlwp && (l->l_stat == LSONPROC));
 		rv = uvm_fault(&p->p_vmspace->vm_map,
@@ -244,7 +242,7 @@ KASSERT(l == curlwp && (l->l_stat == LSONPROC));
 	case EXC_ISI|EXC_USER:
 		KERNEL_PROC_LOCK(l);
 		ftype = VM_PROT_READ | VM_PROT_EXECUTE;
-DBPRINTF(TDB_ALL, ("trap(EXC_ISI|EXC_USER) at %x %s fault on %x tf %p\n", 
+DBPRINTF(TDB_ALL, ("trap(EXC_ISI|EXC_USER) at %x %s fault on %x tf %p\n",
 frame->srr0, (ftype&VM_PROT_WRITE) ? "write" : "read", frame->srr0, frame));
 		rv = uvm_fault(&p->p_vmspace->vm_map, trunc_page(frame->srr0), 0, ftype);
 		if (rv == 0) {
@@ -254,91 +252,9 @@ frame->srr0, (ftype&VM_PROT_WRITE) ? "write" : "read", frame->srr0, frame));
 		trapsignal(l, SIGSEGV, EXC_ISI);
 		KERNEL_PROC_UNLOCK(l);
 		break;
+
 	case EXC_SC|EXC_USER:
-		{
-			const struct sysent *callp;
-			size_t argsize;
-			register_t code, error;
-			register_t *params, rval[2];
-			int n;
-			register_t args[10];
-
-			KERNEL_PROC_LOCK(l);
-
-			uvmexp.syscalls++;
-
-			code = frame->fixreg[0];
-			callp = p->p_emul->e_sysent;
-			params = frame->fixreg + FIRSTARG;
-			n = NARGREG;
-
-			switch (code) {
-			case SYS_syscall:
-				/*
-				 * code is first argument,
-				 * followed by actual args.
-				 */
-				code = *params++;
-				n -= 1;
-				break;
-			case SYS___syscall:
-				params++;
-				code = *params++;
-				n -= 2;
-				break;
-			default:
-				break;
-			}
-
-			code &= (SYS_NSYSENT - 1);
-			callp += code;
-			argsize = callp->sy_argsize;
-
-			if (argsize > n * sizeof(register_t)) {
-				memcpy(args, params, n * sizeof(register_t));
-				error = copyin(MOREARGS(frame->fixreg[1]),
-					       args + n,
-					       argsize - n * sizeof(register_t));
-				if (error)
-					goto syscall_bad;
-				params = args;
-			}
-
-
-			if ((error = trace_enter(p, code, params, rval)) != 0)
-				goto syscall_bad;
-
-			rval[0] = 0;
-			rval[1] = 0;
-
-			error = (*callp->sy_call)(l, params, rval);
-			switch (error) {
-			case 0:
-				frame->fixreg[FIRSTARG] = rval[0];
-				frame->fixreg[FIRSTARG + 1] = rval[1];
-				frame->cr &= ~0x10000000;
-				break;
-			case ERESTART:
-				/*
-				 * Set user's pc back to redo the system call.
-				 */
-				frame->srr0 -= 4;
-				break;
-			case EJUSTRETURN:
-				/* nothing to do */
-				break;
-			default:
-syscall_bad:
-				if (p->p_emul->e_errno)
-					error = p->p_emul->e_errno[error];
-				frame->fixreg[FIRSTARG] = error;
-				frame->cr |= 0x10000000;
-				break;
-			}
-			KERNEL_PROC_UNLOCK(p);
-
-			trace_exit(p, code, args, rval, error);
-		}
+		(*p->p_md.md_syscall)(frame);
 		break;
 
 	case EXC_AST|EXC_USER:
@@ -366,10 +282,10 @@ syscall_bad:
 		break;
 
 	case EXC_PGM|EXC_USER:
-		/* 
-		 * Illegal insn: 
+		/*
+		 * Illegal insn:
 		 *
-		 * let's try to see if it's FPU and can be emulated. 
+		 * let's try to see if it's FPU and can be emulated.
 		 */
 		uvmexp.traps ++;
 		if (!(l->l_addr->u_pcb.pcb_flags & PCB_FPU)) {
@@ -378,7 +294,7 @@ syscall_bad:
 			l->l_addr->u_pcb.pcb_flags |= PCB_FPU;
 		}
 
-		if ((rv = fpu_emulate(frame, 
+		if ((rv = fpu_emulate(frame,
 			(struct fpreg *)&l->l_addr->u_pcb.pcb_fpu))) {
 			KERNEL_PROC_LOCK(l);
 			trapsignal(l, rv, EXC_PGM);
@@ -471,30 +387,6 @@ ctx_setup(int ctx, int srr1)
 	return (ctx);
 }
 
-void
-child_return(void *arg)
-{
-	struct lwp *l = arg;
-	struct proc *p = l->l_proc;
-	struct trapframe *tf = trapframe(l);
-
-	KERNEL_PROC_UNLOCK(l);
-
-	tf->fixreg[FIRSTARG] = 0;
-	tf->fixreg[FIRSTARG + 1] = 1;
-	tf->cr &= ~0x10000000;
-	tf->srr1 &= ~(PSL_FP|PSL_VEC);	/* Disable FP & AltiVec, as we can't be them */
-#ifdef	KTRACE
-	if (KTRPOINT(p, KTR_SYSRET)) {
-		KERNEL_PROC_LOCK(l);
-		ktrsysret(p, SYS_fork, 0, 0);
-		KERNEL_PROC_UNLOCK(l);
-	}
-#endif
-	/* Profiling?							XXX */
-	curcpu()->ci_schedstate.spc_curpriority = l->l_priority;
-}
-
 /*
  * Used by copyin()/copyout()
  */
@@ -565,7 +457,7 @@ bigcopyin(const void *udaddr, void *kaddr, size_t len)
 	p = l->l_proc;
 
 	/*
-	 * Stolen from physio(): 
+	 * Stolen from physio():
 	 */
 	PHOLD(l);
 	error = uvm_vslock(p, (caddr_t)udaddr, len, VM_PROT_READ);
@@ -580,7 +472,7 @@ bigcopyin(const void *udaddr, void *kaddr, size_t len)
 	uvm_vsunlock(p, (caddr_t)udaddr, len);
 	PRELE(l);
 
-	return 0; 
+	return 0;
 }
 
 int
@@ -645,7 +537,7 @@ bigcopyout(const void *kaddr, void *udaddr, size_t len)
 	p = l->l_proc;
 
 	/*
-	 * Stolen from physio(): 
+	 * Stolen from physio():
 	 */
 	PHOLD(l);
 	error = uvm_vslock(p, udaddr, len, VM_PROT_WRITE);
@@ -653,7 +545,7 @@ bigcopyout(const void *kaddr, void *udaddr, size_t len)
 		PRELE(l);
 		return EFAULT;
 	}
-	up = (char *)vmaprange(p, (vaddr_t)udaddr, len, 
+	up = (char *)vmaprange(p, (vaddr_t)udaddr, len,
 		VM_PROT_READ|VM_PROT_WRITE);
 
 	memcpy(up, kp, len);
@@ -661,7 +553,7 @@ bigcopyout(const void *kaddr, void *udaddr, size_t len)
 	uvm_vsunlock(p, udaddr, len);
 	PRELE(l);
 
-	return 0; 
+	return 0;
 }
 
 /*

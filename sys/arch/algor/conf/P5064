@@ -1,4 +1,4 @@
-#	$NetBSD: P5064,v 1.8.6.4 2002/06/20 03:37:26 nathanw Exp $
+#	$NetBSD: P5064,v 1.8.6.5 2002/08/01 02:40:57 nathanw Exp $
 #
 # Algorithmics P-5064 kernel.
 #
@@ -7,7 +7,7 @@ include	"arch/algor/conf/std.algor"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"P5064-$Revision: 1.8.6.4 $"
+#ident 		"P5064-$Revision: 1.8.6.5 $"
 
 maxusers 32
 
@@ -120,9 +120,9 @@ pci*	at	vtpbc?
 # PCI devices
 #adv*	at	pci? dev ? function ?		# AdvanSys SCSI
 #adw*	at	pci? dev ? function ?		# AdvanSys Wide SCSI
-#options 	ADW_WDTR_DISABLE		# 	disable WDTR
-#options 	ADW_SDTR_DISABLE		# 	disable SDTR
-#options 	ADW_TAGQ_DISABLE		# 	disable Tag Queuing
+#options 	SCSI_ADW_WDTR_DISABLE		# 	disable WDTR
+#options 	SCSI_ADW_SDTR_DISABLE		# 	disable SDTR
+#options 	SCSI_ADW_TAGQ_DISABLE		# 	disable Tag Queuing
 #ahc*	at	pci? dev ? function ?		# Adaptec [23]94x, aic78x0 SCSI
 #bha*	at	pci? dev ? function ?		# BusLogic 9xx SCSI (untested)
 #cac*	at	pci? dev ? function ?		# Compaq array controller (untested)

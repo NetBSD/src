@@ -1,4 +1,4 @@
-/*	$NetBSD: pnaphy.c,v 1.2.6.4 2002/04/01 07:46:13 nathanw Exp $	*/
+/*	$NetBSD: pnaphy.c,v 1.2.6.5 2002/08/01 02:45:07 nathanw Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -47,13 +47,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pnaphy.c,v 1.2.6.4 2002/04/01 07:46:13 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pnaphy.c,v 1.2.6.5 2002/08/01 02:45:07 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/socket.h>
 #include <sys/errno.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_obio.c,v 1.17.4.3 2002/02/28 04:10:39 nathanw Exp $	*/
+/*	$NetBSD: wdc_obio.c,v 1.17.4.4 2002/08/01 02:42:24 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -323,10 +323,12 @@ adjust_timing(chp)
 					(half_tick << 21) |
 					(inact_tick << 16) | (act_tick << 11);
 		}
+#ifdef DEBUG
 		if (conf) {
 			printf("conf[%d] = 0x%x, cyc = %d (%d ns), act = %d (%d ns), inact = %d\n",
 					drive, conf, cycle_tick, min_cycle, act_tick, min_active, inact_tick);
 		}
+#endif
 		sc->sc_dmaconf[drive] = conf;
 	}
 	sc->sc_wdcdev.cap &= ~WDC_CAPABILITY_SELECT;
@@ -391,10 +393,12 @@ ata4_adjust_timing(chp)
 			/* mask: 0x1ff00000 */
 			conf |= (cycle_tick << 21) | (act_tick << 25) | 0x100000;
 		}
+#ifdef DEBUG
 		if (conf) {
 			printf("ata4 conf[%d] = 0x%x, cyc = %d (%d ns), act = %d (%d ns), inact = %d\n",
 					drive, conf, cycle_tick, min_cycle, act_tick, min_active, inact_tick);
 		}
+#endif
 		sc->sc_dmaconf[drive] = conf;
 	}
 	sc->sc_wdcdev.cap &= ~WDC_CAPABILITY_SELECT;

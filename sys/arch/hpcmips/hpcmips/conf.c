@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.14.4.4 2002/06/20 03:38:51 nathanw Exp $	*/
+/*	$NetBSD: conf.c,v 1.14.4.5 2002/08/01 02:41:50 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -254,7 +254,7 @@ struct cdevsw	cdevsw[] =
 	cdev_lkm_init(NLKM,lkm),	/* 47: loadable module driver */
 	cdev_audio_init(NAUDIO,audio),		/* 48: VR4121 audio interface */
 #ifdef SYSTRACE
-	cdev_systrace_init(1, systrace),/* 49: system call tracing */
+	cdev_clonemisc_init(1, systrace),/* 49: system call tracing */
 #else
 	cdev_notdef(),			/* 49: system call tracing */
 #endif

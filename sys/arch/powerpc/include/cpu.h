@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.10.6.7 2002/06/24 22:07:04 nathanw Exp $	*/
+/*	$NetBSD: cpu.h,v 1.10.6.8 2002/08/01 02:43:03 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -38,6 +38,7 @@
 #if defined(_KERNEL_OPT)
 #include "opt_lockdebug.h"
 #include "opt_multiprocessor.h"
+#include "opt_ppcarch.h"
 #endif
 
 #include <sys/device.h>
@@ -69,7 +70,8 @@ struct cpu_info {
 
 	struct pcb *ci_curpcb;
 	struct pmap *ci_curpm;
-	struct lwp *ci_fpulwp;
+	struct lwp *ci_fprlwp;
+	struct lwp *ci_veclwp;
 	struct pcb *ci_idle_pcb;	/* PA of our idle pcb */
 	int ci_cpuid;
 
@@ -103,6 +105,7 @@ struct cpu_info {
 	struct evcnt ci_ev_scalls;	/* system call traps */
 	struct evcnt ci_ev_vec;		/* Altivec traps */
 	struct evcnt ci_ev_vecsw;	/* Altivec context switches */
+	struct evcnt ci_ev_umchk;	/* user MCHK events */
 };
 
 #ifdef MULTIPROCESSOR
@@ -130,12 +133,15 @@ extern struct cpu_info cpu_info[];
 
 #define CPU_IS_PRIMARY(ci)	((ci)->ci_cpuid == 0)
 #define curlwp			curcpu()->ci_curlwp
-#define fpulwp			curcpu()->ci_fpulwp
 #define curpcb			curcpu()->ci_curpcb
 #define curpm			curcpu()->ci_curpm
 #define want_resched		curcpu()->ci_want_resched
 #define astpending		curcpu()->ci_astpending
 #define	intr_depth		curcpu()->ci_intrdepth
+
+#define CPU_INFO_ITERATOR		int
+#define CPU_INFO_FOREACH(cii, ci)					\
+	cii = 0, ci = &cpu_info[0]; cii < CPU_MAXNUM; cii++, ci++
 
 #else
 extern struct cpu_info cpu_info_store;
@@ -146,9 +152,27 @@ extern volatile int intr_depth;
 #define curcpu()		(&cpu_info_store)
 #define cpu_number()		0
 
+#define CPU_INFO_ITERATOR		int
+#define CPU_INFO_FOREACH(cii, ci)					\
+	cii = 0, ci = curcpu(); ci != NULL; ci = NULL
+
 #endif /* MULTIPROCESSOR */
 
-#define ppc_cpuid(ci)		((ci)->ci_cpuid)
+static __inline int
+mfmsr(void)
+{
+	int msr;
+
+	asm volatile ("mfmsr %0" : "=r"(msr));
+	return msr;
+}
+
+static __inline void
+mtmsr(int msr)
+{
+
+	asm volatile ("mtmsr %0" : : "r"(msr));
+}
 
 #define	CLKF_USERMODE(frame)	(((frame)->srr1 & PSL_PR) != 0)
 #define	CLKF_BASEPRI(frame)	((frame)->pri == 0)
@@ -164,20 +188,36 @@ extern volatile int intr_depth;
 extern int powersave;
 extern int cpu_timebase;
 extern int cpu_printfataltraps;
+extern char cpu_model[];
 
-extern struct cpu_info *cpu_attach_common(struct device *, int);
-extern void cpu_identify(char *, size_t);
-extern void delay (unsigned int);
-extern void cpu_probe_cache(void);
-extern void dcache_flush_page(vaddr_t);
-extern void icache_flush_page(vaddr_t);
-extern void dcache_flush(vaddr_t, vsize_t);
-extern void icache_flush(vaddr_t, vsize_t);
+struct cpu_info *cpu_attach_common(struct device *, int);
+void cpu_setup(struct device *, struct cpu_info *);
+void cpu_identify(char *, size_t);
+void delay (unsigned int);
+void cpu_probe_cache(void);
+void dcache_flush_page(vaddr_t);
+void icache_flush_page(vaddr_t);
+void dcache_flush(vaddr_t, vsize_t);
+void icache_flush(vaddr_t, vsize_t);
+
 #define	DELAY(n)		delay(n)
 
 #define	need_resched(ci)	(want_resched = 1, astpending = 1)
 #define	need_proftick(p)	((p)->p_flag |= P_OWEUPC, astpending = 1)
 #define	signotify(p)		(astpending = 1)
+
+#ifdef PPC_MPC6XX
+void mpc6xx_init(void (*)(void));
+void mpc6xx_startup(const char *);
+void mpc6xx_dumpsys(void);
+void mpc6xx_install_extint(void (*)(void));
+void *mapiodev(paddr_t, psize_t);
+paddr_t kvtop(caddr_t); 
+void softnet(int);
+
+extern paddr_t msgbuf_paddr;
+extern int cpu_altivec;
+#endif
 
 #endif /* _KERNEL */
 
@@ -189,7 +229,6 @@ extern void icache_flush(vaddr_t, vsize_t);
 
 void __syncicache(void *, size_t);
 
-
 /*
  * CTL_MACHDEP definitions.
  */
@@ -198,7 +237,10 @@ void __syncicache(void *, size_t);
 #define	CPU_CPUTEMP		3
 #define	CPU_PRINTFATALTRAPS	4
 #define	CPU_CACHEINFO		5
-#define	CPU_MAXID		6
+#define	CPU_ALTIVEC		6
+#define	CPU_MODEL		7
+#define	CPU_POWERSAVE		8
+#define	CPU_MAXID		9
 
 #define	CTL_MACHDEP_NAMES { \
 	{ 0, 0 }, \
@@ -207,6 +249,9 @@ void __syncicache(void *, size_t);
 	{ "cputempature", CTLTYPE_INT }, \
 	{ "printfataltraps", CTLTYPE_INT }, \
 	{ "cacheinfo", CTLTYPE_STRUCT }, \
+	{ "altivec", CTLTYPE_INT }, \
+	{ "model", CTLTYPE_STRING }, \
+	{ "powersave", CTLTYPE_INT }, \
 }
 
 #endif	/* _POWERPC_CPU_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.187.4.12 2002/07/12 01:39:47 nathanw Exp $ */
+/*	$NetBSD: machdep.c,v 1.187.4.13 2002/08/01 02:43:29 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -338,7 +338,7 @@ cpu_startup()
         exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
                                  16*NCARGS, VM_MAP_PAGEABLE, FALSE, NULL);
 
-	if (CPU_ISSUN4OR4C) {
+	if (CPU_ISSUN4 || CPU_ISSUN4C) {
 		/*
 		 * Allocate dma map for 24-bit devices (le, ie)
 		 * [dvma_base - dvma_end] is for VME devices..
@@ -503,18 +503,19 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
  * Send an interrupt to process.
  */
 void
-sendsig(catcher, sig, mask, code)
-	sig_t catcher;
+sendsig(sig, mask, code)
 	int sig;
 	sigset_t *mask;
 	u_long code;
 {
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
+	struct sigacts *ps = p->p_sigacts;
 	struct sigframe *fp;
 	struct trapframe *tf;
 	int addr, onstack, oldsp, newsp;
 	struct sigframe sf;
+	sig_t catcher = SIGACTION(p, sig).sa_handler;
 
 	tf = l->l_md.md_tf;
 	oldsp = tf->tf_out[6];
@@ -604,7 +605,22 @@ sendsig(catcher, sig, mask, code)
 	 * Arrange to continue execution at the code copied out in exec().
 	 * It needs the function to call in %g1, and a new stack pointer.
 	 */
-	addr = (int)p->p_sigctx.ps_sigcode;
+	switch (ps->sa_sigdesc[sig].sd_vers) {
+#if 1 /* COMPAT_16 */
+	case 0:		/* legacy on-stack sigtramp */
+		addr = (int)p->p_sigctx.ps_sigcode;
+		break;
+#endif /* COMPAT_16 */
+
+	case 1:
+		addr = (int)ps->sa_sigdesc[sig].sd_tramp;
+		break;
+
+	default:
+		/* Don't know what trampoline version; kill it. */
+		sigexit(p, SIGILL);
+	}
+
 	tf->tf_global[1] = (int)catcher;
 	tf->tf_pc = addr;
 	tf->tf_npc = addr + 4;
@@ -1285,8 +1301,8 @@ caddr_t addr;
 	int res;
 	int s;
 
-	if (CPU_ISSUN4M) {
-		printf("warning: ldcontrolb called in sun4m\n");
+	if (CPU_ISSUN4M || CPU_ISSUN4D) {
+		printf("warning: ldcontrolb called on sun4m/sun4d\n");
 		return 0;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321.c,v 1.1.2.3 2002/06/20 03:38:14 nathanw Exp $	*/
+/*	$NetBSD: i80321.c,v 1.1.2.4 2002/08/01 02:41:20 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -61,7 +61,21 @@ struct bus_space i80321_bs_tag;
  */
 struct i80321_softc *i80321_softc;
 
+int	i80321_iopxs_print(void *, const char *);
 int	i80321_pcibus_print(void *, const char *);
+
+/* Built-in devices. */
+static const struct iopxs_device {
+	const char *id_name;
+	bus_addr_t id_offset;
+	bus_size_t id_size;
+} iopxs_devices[] = {
+	{ "iopaau",	VERDE_AAU_BASE,		VERDE_AAU_SIZE },
+	{ "iopdma",	VERDE_DMA_BASE,		VERDE_DMA_SIZE },
+	{ "iopssp",	VERDE_SSP_BASE,		VERDE_SSP_SIZE },
+	{ "iopwdog",	0,			0 },
+	{ NULL,		0,			0 }
+};
 
 /*
  * i80321_attach:
@@ -72,6 +86,8 @@ void
 i80321_attach(struct i80321_softc *sc)
 {
 	struct pcibus_attach_args pba;
+	const struct iopxs_device *id;
+	struct iopxs_attach_args ia;
 	pcireg_t preg;
 
 	i80321_softc = sc;
@@ -180,13 +196,30 @@ i80321_attach(struct i80321_softc *sc)
 		    PCI_COMMAND_STATUS_REG, preg);
 	}
 
-	/*
-	 * Initialize the bus space and DMA tags and the PCI chipset tag.
-	 */
+	/* Initialize the bus space tags. */
 	i80321_io_bs_init(&sc->sc_pci_iot, sc);
 	i80321_mem_bs_init(&sc->sc_pci_memt, sc);
-	i80321_pci_dma_init(&sc->sc_pci_dmat, sc);
+
+	/* Initialize the PCI chipset tag. */
 	i80321_pci_init(&sc->sc_pci_chipset, sc);
+
+	/* Initialize the DMA tags. */
+	i80321_pci_dma_init(&sc->sc_pci_dmat, sc);
+	i80321_local_dma_init(&sc->sc_local_dmat, sc);
+
+	/*
+	 * Attach all the IOP built-ins.
+	 */
+	for (id = iopxs_devices; id->id_name != NULL; id++) {
+		ia.ia_name = id->id_name;
+		ia.ia_st = sc->sc_st;
+		ia.ia_sh = sc->sc_sh;
+		ia.ia_dmat = &sc->sc_local_dmat;
+		ia.ia_offset = id->id_offset;
+		ia.ia_size = id->id_size;
+
+		(void) config_found(&sc->sc_dev, &ia, i80321_iopxs_print);
+	}
 
 	/*
 	 * Attach the PCI bus.
@@ -207,6 +240,19 @@ i80321_attach(struct i80321_softc *sc)
 	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED |
 	    PCI_FLAGS_MRL_OKAY | PCI_FLAGS_MRM_OKAY | PCI_FLAGS_MWI_OKAY;
 	(void) config_found(&sc->sc_dev, &pba, i80321_pcibus_print);
+}
+
+/*
+ * i80321_iopxs_print:
+ *
+ *	Autoconfiguration cfprint routine when attaching
+ *	to the "iopxs" device.
+ */
+int
+i80321_iopxs_print(void *aux, const char *pnp)
+{
+
+	return (QUIET);
 }
 
 /*

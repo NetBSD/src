@@ -1,4 +1,4 @@
-/* $NetBSD: conf.c,v 1.57.4.5 2002/06/20 03:37:28 nathanw Exp $ */
+/* $NetBSD: conf.c,v 1.57.4.6 2002/08/01 02:40:58 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.57.4.5 2002/06/20 03:37:28 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.57.4.6 2002/08/01 02:40:58 nathanw Exp $");
 
 #include "opt_systrace.h"
 #include <sys/param.h>
@@ -222,6 +222,12 @@ cdev_decl(stic);
 #include "clockctl.h"
 cdev_decl(clockctl);
 
+#include "bktr.h"
+cdev_decl(bktr);
+
+#include "kttcp.h"
+cdev_decl(kttcp);
+
 struct cdevsw	cdevsw[] =
 {
 	cdev_cn_init(1,cn),		/* 0: virtual console */
@@ -305,10 +311,12 @@ struct cdevsw	cdevsw[] =
 	cdev__ocm_init(NSTIC,stic),	/* 68: PixelStamp mmap interface */
 	cdev_clockctl_init(NCLOCKCTL, clockctl),/* 69: clockctl pseudo device */
 #ifdef SYSTRACE
-	cdev_systrace_init(1, systrace),/* 70: system call tracing */
+	cdev_clonemisc_init(1, systrace),/* 70: system call tracing */
 #else
 	cdev_notdef(),			/* 70: system call tracing */
 #endif
+	cdev_bktr_init(NBKTR, bktr),	/* 71: Bt848 video capture device */
+	cdev__oci_init(NKTTCP,kttcp),	/* 72: kernel ttcp helper */
 };
 int	nchrdev = sizeof (cdevsw) / sizeof (cdevsw[0]);
 
@@ -421,6 +429,8 @@ static int chrtoblktbl[] = {
 	/* 68 */	NODEV,
 	/* 69 */	NODEV,
 	/* 70 */	NODEV,
+	/* 71 */	NODEV,
+	/* 72 */	NODEV,
 };
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.1.2.12 2002/06/24 22:09:31 nathanw Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.1.2.13 2002/08/01 02:44:16 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1995, 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.1.2.12 2002/06/24 22:09:31 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.1.2.13 2002/08/01 02:44:16 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -122,8 +122,7 @@ linux_setregs(l, pack, stack)
  */
 
 void
-linux_sendsig(catcher, sig, mask, code)  /* XXX Check me */
-	sig_t catcher;
+linux_sendsig(sig, mask, code)  /* XXX Check me */
 	int sig;
 	sigset_t *mask;
 	u_long code;
@@ -133,6 +132,7 @@ linux_sendsig(catcher, sig, mask, code)  /* XXX Check me */
 	struct linux_sigframe *fp;
 	struct frame *f;
 	int i,onstack;
+	sig_t catcher = SIGACTION(p, sig).sa_handler;
 	struct linux_sigframe sf;
 
 #ifdef DEBUG_LINUX

@@ -1,4 +1,4 @@
-/*	$NetBSD: ldvar.h,v 1.4.2.1 2001/06/21 20:01:16 nathanw Exp $	*/
+/*	$NetBSD: ldvar.h,v 1.4.2.2 2002/08/01 02:44:33 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 struct ld_softc {
 	struct	device sc_dv;
 	struct	disk sc_dk;
-	struct	buf_queue sc_bufq;
+	struct	bufq_state sc_bufq;
 #if NRND > 0
 	rndsource_element_t	sc_rnd_source;
 #endif

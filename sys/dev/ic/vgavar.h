@@ -1,4 +1,4 @@
-/* $NetBSD: vgavar.h,v 1.6.2.2 2002/01/08 00:30:11 nathanw Exp $ */
+/* $NetBSD: vgavar.h,v 1.6.2.3 2002/08/01 02:44:50 nathanw Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,6 +29,8 @@
 
 #include <sys/callout.h>
 
+#include "opt_vga.h"
+
 struct vga_handle {
 	struct pcdisplay_handle vh_ph;
 	bus_space_handle_t vh_ioh_vga, vh_allmemh;
@@ -58,6 +60,7 @@ struct vga_config {
 	bus_space_tag_t vc_biostag;
 	bus_space_handle_t vc_bioshdl;
 
+	int vc_nfontslots;
 	struct egavga_font *vc_fonts[8]; /* currently loaded */
 	TAILQ_HEAD(, egavga_font) vc_fontlist; /* LRU queue */
 
@@ -69,6 +72,7 @@ struct vga_config {
 	const struct vga_funcs *vc_funcs;
 
 	struct callout vc_switch_callout;
+	int vc_quirks;
 };
 
 struct vga_softc {
@@ -183,12 +187,18 @@ _vga_crtc_write(struct vga_handle *vh, int reg, u_int8_t val)
 
 int	vga_common_probe(bus_space_tag_t, bus_space_tag_t);
 void	vga_common_attach(struct vga_softc *, bus_space_tag_t,
-			  bus_space_tag_t, int, const struct vga_funcs *);
+			  bus_space_tag_t, int, int, const struct vga_funcs *);
+#define VGA_QUIRK_ONEFONT	0x01
+#define VGA_QUIRK_NOFASTSCROLL	0x02
 int	vga_is_console(bus_space_tag_t, int);
 
 int	vga_cnattach(bus_space_tag_t, bus_space_tag_t, int, int);
 
 struct wsscreen_descr;
 void 	vga_loadchars(struct vga_handle *, int, int, int, int, char *);
+void 	vga_readoutchars(struct vga_handle *, int, int, int, int, char *);
+#ifdef VGA_CONSOLE_ATI_BROKEN_FONTSEL
+void 	vga_copyfont01(struct vga_handle *);
+#endif
 void 	vga_setfontset(struct vga_handle *, int, int);
 void 	vga_setscreentype(struct vga_handle *, const struct wsscreen_descr *);

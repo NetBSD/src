@@ -1,4 +1,4 @@
-/*	$NetBSD: in4_cksum.c,v 1.4.8.3 2002/01/08 00:34:02 nathanw Exp $	*/
+/*	$NetBSD: in4_cksum.c,v 1.4.8.4 2002/08/01 02:46:46 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1999 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in4_cksum.c,v 1.4.8.3 2002/01/08 00:34:02 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in4_cksum.c,v 1.4.8.4 2002/08/01 02:46:46 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -101,8 +101,10 @@ in4_cksum(m, nxt, off, len)
 	int sum = 0;
 	int mlen = 0;
 	int byte_swapped = 0;
-	struct ipovly ipov;
-
+	union {
+		struct ipovly ipov;
+		u_int16_t w[10];
+	} u;
 	union {
 		u_int8_t  c[2];
 		u_int16_t s;
@@ -118,12 +120,12 @@ in4_cksum(m, nxt, off, len)
 			panic("in4_cksum: offset too short");
 		if (m->m_len < sizeof(struct ip))
 			panic("in4_cksum: bad mbuf chain");
-		bzero(&ipov, sizeof(ipov));
-		ipov.ih_len = htons(len);
-		ipov.ih_pr = nxt;
-		ipov.ih_src = mtod(m, struct ip *)->ip_src;
-		ipov.ih_dst = mtod(m, struct ip *)->ip_dst;
-		w = (u_int16_t *)&ipov;
+		bzero(&u.ipov, sizeof(u.ipov));
+		u.ipov.ih_len = htons(len);
+		u.ipov.ih_pr = nxt;
+		u.ipov.ih_src = mtod(m, struct ip *)->ip_src;
+		u.ipov.ih_dst = mtod(m, struct ip *)->ip_dst;
+		w = u.w;
 		/* assumes sizeof(ipov) == 20 */
 		sum += w[0]; sum += w[1]; sum += w[2]; sum += w[3]; sum += w[4];
 		sum += w[5]; sum += w[6]; sum += w[7]; sum += w[8]; sum += w[9];

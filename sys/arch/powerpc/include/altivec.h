@@ -1,4 +1,4 @@
-/*	$NetBSD: altivec.h,v 1.1 2000/11/19 20:41:04 matt Exp $	*/
+/*	$NetBSD: altivec.h,v 1.1.10.1 2002/08/01 02:43:02 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,5 +41,18 @@
 
 #define	VSCR_SA		0x00000001	/* Saturation happended (sticky) */
 #define	VSCR_NJ		0x00010000	/* Non Java-IEEE-C9X FP mode */
+
+#ifdef _KERNEL
+void enable_vec(void);
+void save_vec_cpu(void);
+void save_vec_proc(struct proc *);
+#ifdef MULTIPROCESSOR
+void mp_save_vec_proc(struct proc *);
+#endif
+void init_vec(void);
+void vzeropage(paddr_t);
+void vcopypage(paddr_t, paddr_t);	/* dst, src */
+extern struct pool vecpool;
+#endif
 
 #endif	/* _MACHINE_ALTIVEC_H_ */

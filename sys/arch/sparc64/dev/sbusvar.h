@@ -1,4 +1,4 @@
-/*	$NetBSD: sbusvar.h,v 1.7.20.1 2002/04/01 07:43:06 nathanw Exp $ */
+/*	$NetBSD: sbusvar.h,v 1.7.20.2 2002/08/01 02:43:39 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -121,6 +121,8 @@ struct sbus_softc {
 	struct sysioreg		*sc_sysio;	/* SBUS control registers */
 	int			sc_ign;		/* Interrupt group number for this sysio */
 	struct iommu_state	sc_is;		/* IOMMU state, see iommureg.h */
+	struct strbuf_ctl	sc_sb;		/* Streaming buffer control */
+	int64_t			sc_flush;	/* Streaming buffer flush */
 };
 
 #endif /* _SBUS_VAR_SPARC64_H_ */

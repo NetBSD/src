@@ -1,7 +1,7 @@
-/*	$NetBSD: i80312var.h,v 1.4.4.2 2002/01/08 00:23:19 nathanw Exp $	*/
+/*	$NetBSD: i80312var.h,v 1.4.4.3 2002/08/01 02:41:20 nathanw Exp $	*/
 
 /*
- * Copyright (c) 2001 Wasabi Systems, Inc.
+ * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
  * All rights reserved.
  *
  * Written by Jason R. Thorpe for Wasabi Systems, Inc.
@@ -151,6 +151,9 @@ struct i80312_softc {
 	struct bus_space sc_pci_memt;
 	struct arm32_bus_dma_tag sc_pci_dmat;
 	struct arm32_pci_chipset sc_pci_chipset;
+
+	/* DMA window info for PCI DMA. */
+	struct arm32_dma_range sc_pci_dma_range;
 
 	/* GPIO state */
 	uint8_t sc_gpio_dir;	/* GPIO pin direction (1 == output) */

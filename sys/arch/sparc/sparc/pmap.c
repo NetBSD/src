@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.199.4.8 2002/06/24 22:07:42 nathanw Exp $ */
+/*	$NetBSD: pmap.c,v 1.199.4.9 2002/08/01 02:43:30 nathanw Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -334,7 +334,7 @@ void	ctx_alloc __P((struct pmap *));
 void	ctx_free __P((struct pmap *));
 
 caddr_t	vpage[2];		/* two reserved MD virtual pages */
-#if defined(SUN4M)
+#if defined(SUN4M) || defined(SUN4D)
 int	*vpage_pte[2];		/* pte location of vpage[] */
 #endif
 caddr_t	vmmap;			/* one reserved MI vpage for /dev/mem */
@@ -346,7 +346,7 @@ struct pmap	kernel_pmap_store;		/* the kernel's pmap */
 struct regmap	kernel_regmap_store[NKREG];	/* the kernel's regmap */
 struct segmap	kernel_segmap_store[NKREG*NSEGRG];/* the kernel's segmaps */
 
-#if defined(SUN4M)
+#if defined(SUN4M) || defined(SUN4D)
 u_int 	*kernel_regtable_store;		/* 1k of storage to map the kernel */
 u_int	*kernel_segtable_store;		/* 2k of storage to map the kernel */
 u_int	*kernel_pagtable_store;		/* 128k of storage to map the kernel */
@@ -430,7 +430,7 @@ static u_long segfixmask = 0xffffffff; /* all bits valid to start */
 #define	getregmap(va)		((unsigned)lduha((va)+2, ASI_REGMAP) >> 8)
 #define	setregmap(va, smeg)	stha((va)+2, ASI_REGMAP, (smeg << 8))
 
-#if defined(SUN4M)
+#if defined(SUN4M) || defined(SUN4D)
 void		setpgt4m __P((int *ptep, int pte));
 void		setpte4m __P((vaddr_t va, int pte));
 
@@ -459,7 +459,7 @@ void		setpgt4m_va __P((vaddr_t, int *, int, int));
  * to the run-time architecture in pmap_bootstrap. See also pmap.h.
  */
 
-#if defined(SUN4M)
+#if defined(SUN4M) || defined(SUN4D)
 static void mmu_setup4m_L1 __P((int, struct pmap *));
 static void mmu_setup4m_L2 __P((int, struct regmap *));
 static void  mmu_setup4m_L3 __P((int, struct segmap *));
@@ -491,11 +491,11 @@ static void  mmu_setup4m_L3 __P((int, struct segmap *));
 /*static*/ void pv_unlink4_4c __P((struct pvlist *, struct pmap *, vaddr_t));
 #endif
 
-#if !defined(SUN4M) && (defined(SUN4) || defined(SUN4C))
+#if !(defined(SUN4M) || defined(SUN4D)) && (defined(SUN4) || defined(SUN4C))
 #define		pmap_rmk	pmap_rmk4_4c
 #define		pmap_rmu	pmap_rmu4_4c
 
-#elif defined(SUN4M) && !(defined(SUN4) || defined(SUN4C))
+#elif (defined(SUN4M) || defined(SUN4D)) && !(defined(SUN4) || defined(SUN4C))
 #define		pmap_rmk	pmap_rmk4m
 #define		pmap_rmu	pmap_rmu4m
 
@@ -526,11 +526,11 @@ void 		(*pmap_rmu_p) __P((struct pmap *, vaddr_t, vaddr_t, int, int));
 /* --------------------------------------------------------------*/
 
 /*
- * Next we have some sun4m-specific routines which have no 4/4c
+ * Next we have some sun4m/4d-specific routines which have no 4/4c
  * counterparts, or which are 4/4c macros.
  */
 
-#if defined(SUN4M)
+#if defined(SUN4M) || defined(SUN4D)
 
 #if defined(MULTIPROCESSOR)
 /*
@@ -956,14 +956,14 @@ pgt_page_free(struct pool *pp, void *v)
 #define CTX_USABLE(pm,rp)	((pm)->pm_ctx != NULL )
 #endif
 
-#define GAP_WIDEN(pm,vr) do if (CPU_ISSUN4OR4C) {	\
-	if (vr + 1 == pm->pm_gap_start)			\
-		pm->pm_gap_start = vr;			\
-	if (vr == pm->pm_gap_end)			\
-		pm->pm_gap_end = vr + 1;		\
+#define GAP_WIDEN(pm,vr) do if (CPU_ISSUN4 || CPU_ISSUN4C) {	\
+	if (vr + 1 == pm->pm_gap_start)				\
+		pm->pm_gap_start = vr;				\
+	if (vr == pm->pm_gap_end)				\
+		pm->pm_gap_end = vr + 1;			\
 } while (0)
 
-#define GAP_SHRINK(pm,vr) do if (CPU_ISSUN4OR4C) {			\
+#define GAP_SHRINK(pm,vr) do if (CPU_ISSUN4 || CPU_ISSUN4C) {		\
 	int x;								\
 	x = pm->pm_gap_start + (pm->pm_gap_end - pm->pm_gap_start) / 2;	\
 	if (vr > x) {							\
@@ -1138,9 +1138,9 @@ mmu_reservemon4_4c(nrp, nsp)
 #endif
 	struct regmap *rp;
 
-#if defined(SUN4M)
-	if (CPU_ISSUN4M) {
-		panic("mmu_reservemon4_4c called on sun4m machine");
+#if defined(SUN4M) || defined(SUN4D)
+	if (CPU_HAS_SRMMU) {
+		panic("mmu_reservemon4_4c called on SRMMU machine");
 		return;
 	}
 #endif
@@ -1208,7 +1208,7 @@ mmu_reservemon4_4c(nrp, nsp)
 }
 #endif
 
-#if defined(SUN4M) /* sun4m versions of above */
+#if defined(SUN4M) || defined(SUN4D) /* SRMMU versions of above */
 
 u_long
 srmmu_bypass_read(paddr)
@@ -1447,7 +1447,7 @@ mmu_setup4m_L3(pagtblptd, sp)
 		}
 	}
 }
-#endif /* defined SUN4M */
+#endif /* defined SUN4M || defined SUN4D */
 
 /*----------------------------------------------------------------*/
 
@@ -1950,7 +1950,7 @@ ctx_alloc(pm)
 	if (pmapdebug & PDB_CTX_ALLOC)
 		printf("ctx_alloc(%p)\n", pm);
 #endif
-	if (CPU_ISSUN4OR4C) {
+	if (CPU_ISSUN4 || CPU_ISSUN4C) {
 		gap_start = pm->pm_gap_start;
 		gap_end = pm->pm_gap_end;
 	}
@@ -1979,7 +1979,7 @@ ctx_alloc(pm)
 #endif
 		c->c_pmap->pm_ctx = NULL;
 		doflush = (CACHEINFO.c_vactype != VAC_NONE);
-		if (CPU_ISSUN4OR4C) {
+		if (CPU_ISSUN4 || CPU_ISSUN4C) {
 			if (gap_start < c->c_pmap->pm_gap_start)
 				gap_start = c->c_pmap->pm_gap_start;
 			if (gap_end > c->c_pmap->pm_gap_end)
@@ -1992,7 +1992,7 @@ ctx_alloc(pm)
 	pm->pm_ctx = c;
 	pm->pm_ctxnum = cnum;
 
-	if (CPU_ISSUN4OR4C) {
+	if (CPU_ISSUN4 || CPU_ISSUN4C) {
 		/*
 		 * Write pmap's region (3-level MMU) or segment table into
 		 * the MMU.
@@ -2042,9 +2042,9 @@ ctx_alloc(pm)
 			}
 		}
 
-	} else if (CPU_ISSUN4M) {
+	} else if (CPU_HAS_SRMMU) {
 
-#if defined(SUN4M)
+#if defined(SUN4M) || defined(SUN4D)
 		/*
 		 * Reload page and context tables to activate the page tables
 		 * for this context.
@@ -2139,13 +2139,13 @@ ctx_free(pm)
 		newc = pm->pm_ctxnum;
 		CHANGE_CONTEXTS(oldc, newc);
 		cache_flush_context();
-#if defined(SUN4M)
-		if (CPU_ISSUN4M)
+#if defined(SUN4M) || defined(SUN4D)
+		if (CPU_HAS_SRMMU)
 			tlb_flush_context();
 #endif
 	} else {
-#if defined(SUN4M)
-		if (CPU_ISSUN4M) {
+#if defined(SUN4M) || defined(SUN4D)
+		if (CPU_HAS_SRMMU) {
 			/* Do any cache flush needed on context switch */
 			(*cpuinfo.pure_vcache_flush)();
 			newc = pm->pm_ctxnum;
@@ -2457,7 +2457,7 @@ pv_link4_4c(pv, pm, va, nc)
 
 #endif /* sun4, sun4c code */
 
-#if defined(SUN4M)		/* sun4m versions of above */
+#if defined(SUN4M) || defined(SUN4D)	/* SRMMU versions of above */
 /*
  * Walk the given pv list, and for each PTE, set or clear some bits
  * (e.g., PG_W or PG_NC).
@@ -2764,12 +2764,12 @@ pv_uncache(pv0)
 	for (pv = pv0; pv != NULL; pv = pv->pv_next)
 		pv->pv_flags |= PV_NC;
 
-#if defined(SUN4M)
-	if (CPU_ISSUN4M)
+#if defined(SUN4M) || defined(SUN4D)
+	if (CPU_HAS_SRMMU)
 		pv_changepte4m(pv, 0, SRMMU_PG_C);
 #endif
 #if defined(SUN4) || defined(SUN4C)
-	if (CPU_ISSUN4OR4C)
+	if (CPU_ISSUN4 || CPU_ISSUN4C)
 		pv_changepte4_4c(pv, PG_NC, 0);
 #endif
 }
@@ -2793,8 +2793,8 @@ pv_flushcache(pv)
 			if (pm->pm_ctx) {
 				setcontext(pm->pm_ctxnum);
 				cache_flush_page(pv->pv_va);
-#if defined(SUN4M)
-				if (CPU_ISSUN4M)
+#if defined(SUN4M) || defined(SUN4D)
+				if (CPU_HAS_SRMMU)
 					tlb_flush_page(pv->pv_va);
 #endif
 			}
@@ -2814,11 +2814,11 @@ pv_flushcache(pv)
  * At last, pmap code.
  */
 
-#if defined(SUN4) && (defined(SUN4C) || defined(SUN4M))
+#if defined(SUN4) && (defined(SUN4C) || defined(SUN4M) || defined(SUN4D))
 int nptesg;
 #endif
 
-#if defined(SUN4M)
+#if defined(SUN4M) || defined(SUN4D)
 static void pmap_bootstrap4m __P((void));
 #endif
 #if defined(SUN4) || defined(SUN4C)
@@ -2838,8 +2838,8 @@ pmap_bootstrap(nctx, nregion, nsegment)
 {
 	extern char etext[], kernel_data_start[];
 
-#if defined(SUN4M)
-	if (CPU_ISSUN4M) {
+#if defined(SUN4M) || defined(SUN4D)
+	if (CPU_HAS_SRMMU) {
 		/*
 		 * Compute `va2pa_offset'.
 		 * Since the kernel is loaded at address 0x4000 within
@@ -2856,7 +2856,7 @@ pmap_bootstrap(nctx, nregion, nsegment)
 	uvmexp.pagesize = NBPG;
 	uvm_setpagesize();
 
-#if defined(SUN4) && (defined(SUN4C) || defined(SUN4M))
+#if defined(SUN4) && (defined(SUN4C) || defined(SUN4M) || defined(SUN4D))
 	/* In this case NPTESG is a variable */
 	nptesg = (NBPSG >> pgshift);
 #endif
@@ -2877,11 +2877,11 @@ pmap_bootstrap(nctx, nregion, nsegment)
 	etext_gap_start = (vaddr_t)(etext + NBPG - 1) & ~PGOFSET;
 	etext_gap_end = (vaddr_t)kernel_data_start & ~PGOFSET;
 
-	if (CPU_ISSUN4M) {
-#if defined(SUN4M)
+	if (CPU_HAS_SRMMU) {
+#if defined(SUN4M) || defined(SUN4D)
 		pmap_bootstrap4m();
 #endif
-	} else if (CPU_ISSUN4OR4C) {
+	} else if (CPU_ISSUN4 || CPU_ISSUN4C) {
 #if defined(SUN4) || defined(SUN4C)
 		pmap_bootstrap4_4c(nctx, nregion, nsegment);
 #endif
@@ -2936,7 +2936,8 @@ pmap_bootstrap4_4c(nctx, nregion, nsegment)
 #endif
 #endif
 
-#if defined(SUN4M) /* We're in a dual-arch kernel. Setup 4/4c fn. ptrs */
+#if defined(SUN4M) || defined(SUN4D) /* We're in a dual-arch kernel.
+					Setup 4/4c fn. ptrs */
 	pmap_clear_modify_p 	=	pmap_clear_modify4_4c;
 	pmap_clear_reference_p 	= 	pmap_clear_reference4_4c;
 	pmap_enter_p 		=	pmap_enter4_4c;
@@ -2950,7 +2951,7 @@ pmap_bootstrap4_4c(nctx, nregion, nsegment)
 	pmap_changeprot_p	=	pmap_changeprot4_4c;
 	pmap_rmk_p		=	pmap_rmk4_4c;
 	pmap_rmu_p		=	pmap_rmu4_4c;
-#endif /* defined SUN4M */
+#endif /* defined SUN4M || defined SUN4D */
 
 	/*
 	 * Last segment is the `invalid' one (one PMEG of pte's with !pg_v).
@@ -3262,7 +3263,7 @@ pmap_bootstrap4_4c(nctx, nregion, nsegment)
 }
 #endif
 
-#if defined(SUN4M)		/* sun4m version of pmap_bootstrap */
+#if defined(SUN4M) || defined(SUN4D)	/* SRMMU version of pmap_bootstrap */
 /*
  * Bootstrap the system enough to run with VM enabled on a sun4m machine.
  *
@@ -3284,7 +3285,8 @@ pmap_bootstrap4m(void)
 
 	ncontext = cpuinfo.mmu_ncontext;
 
-#if defined(SUN4) || defined(SUN4C) /* setup 4M fn. ptrs for dual-arch kernel */
+#if defined(SUN4) || defined(SUN4C) /* setup SRMMU fn. ptrs for dual-arch
+				       kernel */
 	pmap_clear_modify_p 	=	pmap_clear_modify4m;
 	pmap_clear_reference_p 	= 	pmap_clear_reference4m;
 	pmap_enter_p 		=	pmap_enter4m;
@@ -3743,7 +3745,7 @@ pmap_alloc_cpu(sc)
 	sc->ctx_tbl = ctxtable;
 	sc->ctx_tbl_pa = (paddr_t)ctxtable_pa;
 }
-#endif /* SUN4M */
+#endif /* SUN4M || SUN4D */
 
 
 void
@@ -3791,8 +3793,8 @@ pmap_init()
 	pool_cache_init(&pmap_pmap_pool_cache, &pmap_pmap_pool,
 			pmap_pmap_pool_ctor, pmap_pmap_pool_dtor, NULL);
 
-#if defined(SUN4M)
-	if (CPU_ISSUN4M) {
+#if defined(SUN4M) || defined(SUN4D)
+	if (CPU_HAS_SRMMU) {
 		/*
 		 * The SRMMU only ever needs chunks in one of two sizes:
 		 * 1024 (for region level tables) and 256 (for segment
@@ -3843,7 +3845,7 @@ pmap_quiet_check(struct pmap *pm)
 {
 	int vs, vr;
 
-	if (CPU_ISSUN4OR4C) {
+	if (CPU_ISSUN4 || CPU_ISSUN4C) {
 #if defined(SUN4_MMU3L)
 		if (pm->pm_reglist.tqh_first)
 			panic("pmap_destroy: region list not empty");
@@ -3855,7 +3857,7 @@ pmap_quiet_check(struct pmap *pm)
 	for (vr = 0; vr < NUREG; vr++) {
 		struct regmap *rp = &pm->pm_regmap[vr];
 
-		if (CPU_ISSUN4OR4C) {
+		if (CPU_ISSUN4 || CPU_ISSUN4C) {
 #if defined(SUN4_MMU3L)
 			if (HASSUN4_MMU3L) {
 				if (rp->rg_smeg != reginval)
@@ -3864,7 +3866,7 @@ pmap_quiet_check(struct pmap *pm)
 			}
 #endif
 		}
-		if (CPU_ISSUN4M) {
+		if (CPU_HAS_SRMMU) {
 			int n;
 #if defined(MULTIPROCESSOR)
 			for (n = 0; n < ncpu; n++)
@@ -3923,7 +3925,7 @@ pmap_pmap_pool_ctor(void *arg, void *object, int flags)
 	/* pm->pm_ctx = NULL; */
 	simple_lock_init(&pm->pm_lock);
 
-	if (CPU_ISSUN4OR4C) {
+	if (CPU_ISSUN4 || CPU_ISSUN4C) {
 		TAILQ_INIT(&pm->pm_seglist);
 #if defined(SUN4_MMU3L)
 		TAILQ_INIT(&pm->pm_reglist);
@@ -3935,7 +3937,7 @@ pmap_pmap_pool_ctor(void *arg, void *object, int flags)
 #endif
 		pm->pm_gap_end = VA_VREG(VM_MAXUSER_ADDRESS);
 	}
-#if defined(SUN4M)
+#if defined(SUN4M) || defined(SUN4D)
 	else {
 		int i, n;
 
@@ -3944,7 +3946,6 @@ pmap_pmap_pool_ctor(void *arg, void *object, int flags)
 		 * pagetables. We must also map the kernel regions into this
 		 * pmap's pagetables, so that we can access the kernel from
 		 * this user context.
-		 *
 		 */
 #if defined(MULTIPROCESSOR)
 		for (n = 0; n < ncpu; n++)
@@ -3992,8 +3993,8 @@ pmap_pmap_pool_dtor(void *arg, void *object)
 		ctx_free(pm);
 	}
 
-#if defined(SUN4M)
-	if (CPU_ISSUN4M) {
+#if defined(SUN4M) || defined(SUN4D)
+	if (CPU_HAS_SRMMU) {
 		int n;
 
 #if defined(MULTIPROCESSOR)
@@ -4232,7 +4233,7 @@ pmap_rmk4_4c(pm, va, endva, vr, vs)
 
 #endif /* sun4, sun4c */
 
-#if defined(SUN4M)		/* 4M version of pmap_rmk */
+#if defined(SUN4M) || defined(SUN4D)	/* SRMMU version of pmap_rmk */
 /* remove from kernel (4m)*/
 /*static*/ void
 /* pm is already locked */
@@ -4300,7 +4301,7 @@ pmap_rmk4m(pm, va, endva, vr, vs)
 
 	sp->sg_npte = nleft;
 }
-#endif /* SUN4M */
+#endif /* SUN4M || SUN4D */
 
 /*
  * Just like pmap_rmk_magic, but we have a different threshold.
@@ -4467,7 +4468,7 @@ pmap_rmu4_4c(pm, va, endva, vr, vs)
 
 #endif /* sun4,4c */
 
-#if defined(SUN4M)		/* 4M version of pmap_rmu */
+#if defined(SUN4M) || defined(SUN4D)	/* SRMMU version of pmap_rmu */
 /* remove from user */
 /* Note: pm is already locked */
 /*static*/ void
@@ -4578,7 +4579,7 @@ pmap_rmu4m(pm, va, endva, vr, vs)
 		}
 	}
 }
-#endif /* SUN4M */
+#endif /* SUN4M || SUN4D */
 
 /*
  * Lower (make more strict) the protection on the specified
@@ -4945,7 +4946,7 @@ pmap_changeprot4_4c(pm, va, prot, wired)
 
 #endif /* sun4, 4c */
 
-#if defined(SUN4M)		/* 4M version of protection routines above */
+#if defined(SUN4M) || defined(SUN4D)	/* SRMMU version of protection routines above */
 /*
  * Lower (make more strict) the protection on the specified
  * physical page.
@@ -5249,7 +5250,7 @@ out:
 	simple_unlock(&pm->pm_lock);
 	splx(s);
 }
-#endif /* SUN4M */
+#endif /* SUN4M || SUN4D */
 
 /*
  * Insert (MI) physical page pa at virtual address va in the given pmap.
@@ -5834,7 +5835,7 @@ pmap_kremove4_4c(va, len)
 
 #endif /*sun4,4c*/
 
-#if defined(SUN4M)		/* sun4m versions of enter routines */
+#if defined(SUN4M) || defined(SUN4D)	/* SRMMU versions of enter routines */
 /*
  * Insert (MI) physical page pa at virtual address va in the given pmap.
  * NB: the pa parameter includes type bits PMAP_OBIO, PMAP_NC as necessary.
@@ -6295,7 +6296,7 @@ pmap_kremove4m(va, len)
 	setcontext(ctx);
 }
 
-#endif /* SUN4M */
+#endif /* SUN4M || SUN4D */
 
 /*
  * Clear the wiring attribute for a map/virtual-address pair.
@@ -6381,7 +6382,7 @@ pmap_extract4_4c(pm, va, pap)
 }
 #endif /*4,4c*/
 
-#if defined(SUN4M)		/* 4m version of pmap_extract */
+#if defined(SUN4M) || defined(SUN4D)	/* SRMMU version of pmap_extract */
 /*
  * Extract the physical page address associated
  * with the given map/virtual_address pair.
@@ -6472,7 +6473,7 @@ pmap_copy(dst_pmap, src_pmap, dst_addr, len, src_addr)
 	if (src_pmap == NULL)
 		return;
 
-	if (CPU_ISSUN4M) {
+	if (CPU_HAS_SRMMU) {
 		int i, npg, pte;
 		paddr_t pa;
 
@@ -6598,10 +6599,10 @@ pmap_is_referenced4_4c(pg)
 }
 #endif /*4,4c*/
 
-#if defined(SUN4M)
+#if defined(SUN4M) || defined(SUN4D)
 
 /*
- * 4m versions of bit test/set routines
+ * SRMMU versions of bit test/set routines
  *
  * Note that the 4m-specific routines should eventually service these
  * requests from their page tables, and the whole pvlist bit mess should
@@ -6760,7 +6761,7 @@ pmap_copy_page4_4c(src, dst)
 }
 #endif /* 4, 4c */
 
-#if defined(SUN4M)		/* sun4m version of copy/zero routines */
+#if defined(SUN4M) || defined(SUN4D)	/* SRMMU version of copy/zero routines */
 /*
  * Fill the given MI physical page with zero bytes.
  *
@@ -6995,7 +6996,7 @@ pmap_copy_page_hypersparc(src, dst)
 	tlb_flush_page(dva);
 	setpgt4m(vpage_pte[1], SRMMU_TEINVALID);
 }
-#endif /* SUN4M */
+#endif /* SUN4M || SUN4D */
 
 /*
  * Turn a cdevsw d_mmap value into a byte address for pmap_enter.
@@ -7025,8 +7026,8 @@ kvm_uncache(va, npages)
 	int pte;
 	u_int pfn;
 
-	if (CPU_ISSUN4M) {
-#if defined(SUN4M)
+	if (CPU_HAS_SRMMU) {
+#if defined(SUN4M) || defined(SUN4D)
 		int ctx = getcontext4m();
 
 		setcontext4m(0);
@@ -7083,9 +7084,13 @@ kvm_iocache(va, npages)
 	int npages;
 {
 
-#ifdef SUN4M
+#if defined(SUN4M)
 	if (CPU_ISSUN4M) /* %%%: Implement! */
 		panic("kvm_iocache: 4m iocache not implemented");
+#endif
+#if defined(SUN4D)
+	if (CPU_ISSUN4D) /* %%%: Implement! */
+		panic("kvm_iocache: 4d iocache not implemented");
 #endif
 #if defined(SUN4) || defined(SUN4C)
 	for (; --npages >= 0; va += NBPG) {
@@ -7224,15 +7229,15 @@ pm_check_u(s, pm)
 	if (pm->pm_regmap == NULL)
 		panic("%s: CHK(pmap %p): no region mapping", s, pm);
 
-#if defined(SUN4M)
-	if (CPU_ISSUN4M &&
+#if defined(SUN4M) || defined(SUN4D)
+	if (CPU_HAS_SRMMU &&
 	    (pm->pm_reg_ptps[0] == NULL ||
 	     pm->pm_reg_ptps_pa[0] != VA2PA((caddr_t)pm->pm_reg_ptps[0])))
 		panic("%s: CHK(pmap %p): no SRMMU region table or bad pa: "
 		      "tblva=%p, tblpa=0x%x",
 			s, pm, pm->pm_reg_ptps[0], pm->pm_reg_ptps_pa[0]);
 
-	if (CPU_ISSUN4M && pm->pm_ctx != NULL &&
+	if (CPU_HAS_SRMMU && pm->pm_ctx != NULL &&
 	    (cpuinfo.ctx_tbl[pm->pm_ctxnum] != ((VA2PA((caddr_t)pm->pm_reg_ptps[0])
 					      >> SRMMU_PPNPASHIFT) |
 					     SRMMU_TEPTD)))
@@ -7247,11 +7252,11 @@ pm_check_u(s, pm)
 		if (rp->rg_segmap == NULL)
 			panic("%s: CHK(vr %d): nsegmap = %d; sp==NULL",
 				s, vr, rp->rg_nsegmap);
-#if defined(SUN4M)
-		if (CPU_ISSUN4M && rp->rg_seg_ptps == NULL)
+#if defined(SUN4M) || defined(SUN4D)
+		if (CPU_HAS_SRMMU && rp->rg_seg_ptps == NULL)
 		    panic("%s: CHK(vr %d): nsegmap=%d; no SRMMU segment table",
 			  s, vr, rp->rg_nsegmap);
-		if (CPU_ISSUN4M &&
+		if (CPU_HAS_SRMMU &&
 		    pm->pm_reg_ptps[0][vr] != ((VA2PA((caddr_t)rp->rg_seg_ptps) >>
 					    SRMMU_PPNPASHIFT) | SRMMU_TEPTD))
 		    panic("%s: CHK(vr %d): SRMMU segtbl not installed",s,vr);
@@ -7268,8 +7273,8 @@ pm_check_u(s, pm)
 				if (sp->sg_pte == NULL)
 					panic("%s: CHK(vr %d, vs %d): npte=%d, "
 					   "pte=NULL", s, vr, vs, sp->sg_npte);
-#if defined(SUN4M)
-				if (CPU_ISSUN4M &&
+#if defined(SUN4M) || defined(SUN4D)
+				if (CPU_HAS_SRMMU &&
 				    rp->rg_seg_ptps[vs] !=
 				     ((VA2PA((caddr_t)sp->sg_pte)
 					>> SRMMU_PPNPASHIFT) |
@@ -7281,7 +7286,7 @@ pm_check_u(s, pm)
 				pte=sp->sg_pte;
 				m = 0;
 				for (j=0; j<NPTESG; j++,pte++)
-				    if ((CPU_ISSUN4M
+				    if ((CPU_HAS_SRMMU
 					 ?((*pte & SRMMU_TETYPE) == SRMMU_TEPTE)
 					 :(*pte & PG_V)))
 					m++;
@@ -7311,14 +7316,14 @@ pm_check_k(s, pm)		/* Note: not as extensive as pm_check_u. */
 	if (pm->pm_regmap == NULL)
 		panic("%s: CHK(pmap %p): no region mapping", s, pm);
 
-#if defined(SUN4M)
-	if (CPU_ISSUN4M &&
+#if defined(SUN4M) || defined(SUN4D)
+	if (CPU_HAS_SRMMU &&
 	    (pm->pm_reg_ptps[0] == NULL ||
 	     pm->pm_reg_ptps_pa[0] != VA2PA((caddr_t)pm->pm_reg_ptps[0])))
 	    panic("%s: CHK(pmap %p): no SRMMU region table or bad pa: tblva=%p, tblpa=0x%x",
 		  s, pm, pm->pm_reg_ptps[0], pm->pm_reg_ptps_pa[0]);
 
-	if (CPU_ISSUN4M &&
+	if (CPU_HAS_SRMMU &&
 	    (cpuinfo.ctx_tbl[0] != ((VA2PA((caddr_t)pm->pm_reg_ptps[0]) >>
 					     SRMMU_PPNPASHIFT) | SRMMU_TEPTD)))
 	    panic("%s: CHK(pmap %p): SRMMU region table at 0x%x not installed "
@@ -7331,16 +7336,16 @@ pm_check_k(s, pm)		/* Note: not as extensive as pm_check_u. */
 				s, vr, rp->rg_nsegmap);
 		if (rp->rg_nsegmap == 0)
 			continue;
-#if defined(SUN4M)
-		if (CPU_ISSUN4M && rp->rg_seg_ptps == NULL)
+#if defined(SUN4M) || defined(SUN4D)
+		if (CPU_HAS_SRMMU && rp->rg_seg_ptps == NULL)
 		    panic("%s: CHK(vr %d): nsegmap=%d; no SRMMU segment table",
 			  s, vr, rp->rg_nsegmap);
-		if (CPU_ISSUN4M &&
+		if (CPU_HAS_SRMMU &&
 		    pm->pm_reg_ptps[0][vr] != ((VA2PA((caddr_t)rp->rg_seg_ptps[0]) >>
 					    SRMMU_PPNPASHIFT) | SRMMU_TEPTD))
 		    panic("%s: CHK(vr %d): SRMMU segtbl not installed",s,vr);
 #endif
-		if (CPU_ISSUN4M) {
+		if (CPU_HAS_SRMMU) {
 			n = NSEGRG;
 		} else {
 			for (n = 0, vs = 0; vs < NSEGRG; vs++) {
@@ -7369,7 +7374,7 @@ pmap_dumpsize()
 	sz += npmemarr * sizeof(phys_ram_seg_t);
 	sz += sizeof(kernel_segmap_store);
 
-	if (CPU_ISSUN4OR4C)
+	if (CPU_ISSUN4 || CPU_ISSUN4C)
 		/* For each pmeg in the MMU, we'll write NPTESG PTEs. */
 		sz += (seginval + 1) * NPTESG * sizeof(int);
 
@@ -7440,7 +7445,7 @@ pmap_dumpmmu(dump, blkno)
 	kcpup->segmapoffset = segmapoffset =
 		memsegoffset + npmemarr * sizeof(phys_ram_seg_t);
 
-	kcpup->npmeg = (CPU_ISSUN4OR4C) ? seginval + 1 : 0;
+	kcpup->npmeg = (CPU_ISSUN4 || CPU_ISSUN4C) ? seginval + 1 : 0;
 	kcpup->pmegoffset = pmegoffset =
 		segmapoffset + kcpup->nsegmap * sizeof(struct segmap);
 
@@ -7463,7 +7468,7 @@ pmap_dumpmmu(dump, blkno)
 
 	EXPEDITE(&kernel_segmap_store, sizeof(kernel_segmap_store));
 
-	if (CPU_ISSUN4M)
+	if (CPU_HAS_SRMMU)
 		goto out;
 
 #if defined(SUN4C) || defined(SUN4)
@@ -7519,8 +7524,8 @@ pmap_writetext(dst, ch)
 	ctx = getcontext();
 	setcontext(0);
 
-#if defined(SUN4M)
-	if (CPU_ISSUN4M) {
+#if defined(SUN4M) || defined(SUN4D)
+	if (CPU_HAS_SRMMU) {
 		pte0 = getpte4m(va);
 		if ((pte0 & SRMMU_TETYPE) != SRMMU_TEPTE) {
 			splx(s);

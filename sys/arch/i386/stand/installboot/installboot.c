@@ -1,4 +1,4 @@
-/* $NetBSD: installboot.c,v 1.15 1999/09/10 16:45:27 drochner Exp $	 */
+/* $NetBSD: installboot.c,v 1.15.16.1 2002/08/01 02:42:12 nathanw Exp $	 */
 
 /*
  * Copyright (c) 1994 Paul Kranenburg
@@ -196,7 +196,7 @@ add_fsblk(fs, blk, blcnt)
 
 		/* need new entry */
 	        if (fraglist->numentries > fraglist->maxentries - 1) {
-			errx(1, "not enough fragment space in bootcode\n");
+			errx(1, "not enough fragment space in bootcode");
 			return (-1);
 		}
 
@@ -338,7 +338,7 @@ setup_contig_blocks(diskdev, blkno, bp, size)
 		printf("%s: block number %d, size %u table blocks: %d/%d\n",
 		       diskdev, blkno, size, ndb, fraglist->maxentries);
 	if (ndb > fraglist->maxentries) {
-		errx(1, "not enough fragment space in bootcode\n");
+		errx(1, "not enough fragment space in bootcode");
 		return (-1);
 	}
 

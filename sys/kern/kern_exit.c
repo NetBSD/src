@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.89.2.17 2002/07/26 01:19:55 nathanw Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.89.2.18 2002/08/01 02:46:18 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.89.2.17 2002/07/26 01:19:55 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.89.2.18 2002/08/01 02:46:18 nathanw Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -288,6 +288,27 @@ exit1(struct lwp *l, int rv)
 			q->p_flag &= ~(P_TRACED|P_WAITED|P_FSTRACE);
 			psignal(q, SIGKILL);
 		}
+	}
+
+	/*
+	 * Reset p_opptr pointer of all former children which got
+	 * traced by another process and were reparented. We reset
+	 * it to NULL here; the trace detach code then reparents
+	 * the child to initproc. We only check allproc list, since
+	 * eventual former children on zombproc list won't reference
+	 * p_opptr anymore.
+	 */
+	if (p->p_flag & P_CHTRACED) {
+		struct proc *t;
+
+		proclist_lock_read();
+
+		LIST_FOREACH(t, &allproc, p_list) {
+			if (t->p_opptr == p)
+				t->p_opptr = NULL;
+		}
+
+		proclist_unlock_read();
 	}
 
 	/*
@@ -601,11 +622,10 @@ sys_wait4(struct lwp *l, void *v, register_t *retval)
 			 * parent the exit signal.  The rest of the cleanup
 			 * will be done when the old parent waits on the child.
 			 */
-			if ((p->p_flag & P_TRACED) &&
-			    p->p_oppid != p->p_pptr->p_pid) {
-				t = pfind(p->p_oppid);
+			if ((p->p_flag & P_TRACED) && p->p_opptr != p->p_pptr){
+				t = p->p_opptr;
 				proc_reparent(p, t ? t : initproc);
-				p->p_oppid = 0;
+				p->p_opptr = NULL;
 				p->p_flag &= ~(P_TRACED|P_WAITED|P_FSTRACE);
 				if (p->p_exitsig != 0)
 					psignal(p->p_pptr, P_EXITSIG(p));

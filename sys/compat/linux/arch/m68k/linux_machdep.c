@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.8.2.7 2002/07/12 01:40:00 nathanw Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.8.2.8 2002/08/01 02:44:15 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.8.2.7 2002/07/12 01:40:00 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.8.2.8 2002/08/01 02:44:15 nathanw Exp $");
 
 #define COMPAT_LINUX 1
 
@@ -451,8 +451,7 @@ setup_linux_rt_sigframe(frame, sig, mask, usp, l)
  * Send an interrupt to Linux process.
  */
 void
-linux_sendsig(catcher, sig, mask, code)
-	sig_t catcher;
+linux_sendsig(sig, mask, code)
 	int sig;
 	sigset_t *mask;
 	u_long code;
@@ -462,6 +461,7 @@ linux_sendsig(catcher, sig, mask, code)
 	struct frame *frame;
 	caddr_t usp;		/* user stack for signal context */
 	int onstack;
+	sig_t catcher = SIGACTION(p, sig).sa_handler;
 
 	frame = (struct frame *)l->l_md.md_regs;
 

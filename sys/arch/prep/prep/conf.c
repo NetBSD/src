@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.5.8.5 2002/06/20 03:40:40 nathanw Exp $	*/
+/*	$NetBSD: conf.c,v 1.5.8.6 2002/08/01 02:43:14 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -270,7 +270,7 @@ struct cdevsw cdevsw[] =
 	cdev_pci_init(NPCI,pci),	/* 72: PCI bus access device */
 	cdev_clockctl_init(NCLOCKCTL, clockctl),/* 73: clockctl pseudo device */
 #ifdef SYSTRACE
-	cdev_systrace_init(1, systrace),/* 74: system call tracing */
+	cdev_clonemisc_init(1, systrace),/* 74: system call tracing */
 #else
 	cdev_notdef(),			/* 74: system call tracing */
 #endif

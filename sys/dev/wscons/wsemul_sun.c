@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_sun.c,v 1.12.2.1 2001/10/22 20:41:48 nathanw Exp $ */
+/* $NetBSD: wsemul_sun.c,v 1.12.2.2 2002/08/01 02:46:16 nathanw Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -33,7 +33,7 @@
 /* XXX DESCRIPTION/SOURCE OF INFORMATION */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsemul_sun.c,v 1.12.2.1 2001/10/22 20:41:48 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsemul_sun.c,v 1.12.2.2 2002/08/01 02:46:16 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -143,12 +143,12 @@ wsemul_sun_cnattach(const struct wsscreen_descr *type, void *cookie,
 #define WS_KERNEL_MONOATTR 0
 #endif
 	if (type->capabilities & WSSCREEN_WSCOLORS)
-		res = (*edp->emulops->alloc_attr)(cookie,
+		res = (*edp->emulops->allocattr)(cookie,
 					    WS_KERNEL_FG, WS_KERNEL_BG,
 					    WS_KERNEL_COLATTR | WSATTR_WSCOLORS,
 					    &edp->kernattr);
 	else
-		res = (*edp->emulops->alloc_attr)(cookie, 0, 0,
+		res = (*edp->emulops->allocattr)(cookie, 0, 0,
 					    WS_KERNEL_MONOATTR,
 					    &edp->kernattr);
 	if (res)
@@ -201,14 +201,14 @@ wsemul_sun_attach(int console, const struct wsscreen_descr *type,
 
 	/* XXX This assumes that the default attribute is wob. */
 	if ((!(edp->scrcapabilities & WSSCREEN_WSCOLORS) ||
-		(*edp->emulops->alloc_attr)(edp->emulcookie,
-					    WSCOL_BLACK, WSCOL_WHITE,
-					    WSATTR_WSCOLORS,
-					    &edp->bowattr)) &&
+		(*edp->emulops->allocattr)(edp->emulcookie,
+					   WSCOL_BLACK, WSCOL_WHITE,
+					   WSATTR_WSCOLORS,
+					   &edp->bowattr)) &&
 	    (!(edp->scrcapabilities & WSSCREEN_REVERSE) ||
-		(*edp->emulops->alloc_attr)(edp->emulcookie, 0, 0,
-					    WSATTR_REVERSE,
-					    &edp->bowattr)))
+		(*edp->emulops->allocattr)(edp->emulcookie, 0, 0,
+					   WSATTR_REVERSE,
+					   &edp->bowattr)))
 		edp->bowattr = edp->defattr;
 
 	edp->curattr = edp->defattr;
@@ -566,36 +566,36 @@ wsemul_sun_translate(void *cookie, keysym_t in, char **out)
 	}
 
 	switch (in) {
-	    case KS_Home:
-	    case KS_KP_Home:
-	    case KS_KP_Begin:
+	case KS_Home:
+	case KS_KP_Home:
+	case KS_KP_Begin:
 		*out = "\033[214z";
 		return (6);
-	    case KS_Prior:
-	    case KS_KP_Prior:
+	case KS_Prior:
+	case KS_KP_Prior:
 		*out = "\033[216z";
 		return (6);
-	    case KS_Next:
-	    case KS_KP_Next:
+	case KS_Next:
+	case KS_KP_Next:
 		*out = "\033[222z";
 		return (6);
-	    case KS_Up:
-	    case KS_KP_Up:
+	case KS_Up:
+	case KS_KP_Up:
 		*out = "\033[A";
 		return (3);
-	    case KS_Down:
-	    case KS_KP_Down:
+	case KS_Down:
+	case KS_KP_Down:
 		*out = "\033[B";
 		return (3);
-	    case KS_Left:
-	    case KS_KP_Left:
+	case KS_Left:
+	case KS_KP_Left:
 		*out = "\033[D";
 		return (3);
-	    case KS_Right:
-	    case KS_KP_Right:
+	case KS_Right:
+	case KS_KP_Right:
 		*out = "\033[C";
 		return (3);
-	    case KS_KP_Delete:
+	case KS_KP_Delete:
 		*out = "\177";
 		return (1);
 	}

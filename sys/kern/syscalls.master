@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.108.2.8 2002/06/20 03:47:23 nathanw Exp $
+	$NetBSD: syscalls.master,v 1.108.2.9 2002/08/01 02:46:25 nathanw Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -656,3 +656,7 @@
 337	UNIMPL
 338	UNIMPL
 339	UNIMPL
+340	STD		{ int sys___sigaction_sigtramp(int signum, \
+			    const struct sigaction *nsa, \
+			    struct sigaction *osa, \
+			    void *tramp, int vers); }

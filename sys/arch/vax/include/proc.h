@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.2.50.1 2002/03/29 23:31:41 ragge Exp $	*/
+/*	$NetBSD: proc.h,v 1.2.50.2 2002/08/01 02:43:57 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1991 Regents of the University of California.
@@ -51,5 +51,14 @@ struct mdlwp {
 struct mdproc {
 	int md_dummy;			/* Must be at least one field */
 };
+
+/* md_flags */
+#define	MDP_AST		0x0001	/* async trap pending */
+
+/* kernel stack params */
+#define	KSTACK_LOWEST_ADDR(p)	\
+	((caddr_t)(p)->p_addr + (REDZONEADDR + VAX_NBPG))
+#define	KSTACK_SIZE	\
+	(USPACE - (REDZONEADDR + VAX_NBPG))
 
 #endif /* _VAX_PROC_H_ */

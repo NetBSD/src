@@ -1,4 +1,4 @@
-# $NetBSD: files.wscons,v 1.21.2.3 2002/01/08 00:32:24 nathanw Exp $
+# $NetBSD: files.wscons,v 1.21.2.4 2002/08/01 02:46:14 nathanw Exp $
 
 #
 # "Workstation Console" glue; attaches frame buffer to emulator & keyboard,
@@ -19,6 +19,7 @@ defparam opt_wskernattr.h	WS_KERNEL_FG WS_KERNEL_BG
 defflag	opt_wsdisplay_compat.h	WSDISPLAY_COMPAT_USL
 				WSDISPLAY_COMPAT_RAWKBD
 				WSDISPLAY_COMPAT_PCVT WSDISPLAY_COMPAT_SYSCONS
+				WSDISPLAY_CHARFUNCS
 				WSCONS_SUPPORT_PCVTFONTS
 				WSCONS_SUPPORT_ISO7FONTS
 defparam opt_wsdisplay_compat.h	WSCOMPAT_USL_SYNCTIMEOUT
@@ -42,7 +43,7 @@ file	dev/wscons/wsemul_vt100.c	wsdisplay & wsemul_vt100
 file	dev/wscons/wsemul_vt100_subr.c	wsdisplay & wsemul_vt100
 file	dev/wscons/wsemul_vt100_chars.c	wsdisplay & wsemul_vt100
 file	dev/wscons/wsemul_vt100_keys.c	wsdisplay & wsemul_vt100
-file	dev/wscons/wsevent.c		wskbd | wsmouse | wsmux
+file	dev/wscons/wsevent.c		wsdisplay | wskbd | wsmouse | wsmux
 file	dev/wscons/wskbd.c		wskbd			needs-flag
 file	dev/wscons/wskbdutil.c		wskbd			needs-flag
 file	dev/wscons/wsmouse.c		wsmouse			needs-flag

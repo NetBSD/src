@@ -1,4 +1,4 @@
-#	$NetBSD: files.powerpc,v 1.24.6.5 2002/04/01 07:42:00 nathanw Exp $
+#	$NetBSD: files.powerpc,v 1.24.6.6 2002/08/01 02:42:59 nathanw Exp $
 
 defflag	opt_altivec.h	ALTIVEC K_ALTIVEC
 defflag	opt_openpic.h	OPENPIC OPENPIC_SERIAL_MODE
@@ -7,7 +7,6 @@ defflag	opt_ppcarch.h	PPC_MPC6XX PPC_MPC8XX PPC_IBM4XX
 
 file	arch/powerpc/powerpc/Locore.c
 file	arch/powerpc/powerpc/copystr.c
-file	arch/powerpc/powerpc/altivec.c			altivec
 file	arch/powerpc/powerpc/fubyte.c
 file	arch/powerpc/powerpc/fuswintr.c
 file	arch/powerpc/powerpc/in_cksum.c
@@ -15,6 +14,7 @@ file	arch/powerpc/powerpc/ipkdb_glue.c		ipkdb
 file	arch/powerpc/powerpc/kgdb_machdep.c		kgdb
 file	arch/powerpc/powerpc/mem.c
 file	arch/powerpc/powerpc/openpic.c			openpic
+file	arch/powerpc/powerpc/pmap_subr.c		ppc_mpc6xx & !oldpmap
 file	arch/powerpc/powerpc/powerpc_machdep.c
 file	arch/powerpc/powerpc/process_machdep.c
 file	arch/powerpc/powerpc/sig_machdep.c
@@ -23,6 +23,7 @@ file	arch/powerpc/powerpc/subyte.c
 file	arch/powerpc/powerpc/suword.c
 file	arch/powerpc/powerpc/suswintr.c
 file	arch/powerpc/powerpc/sys_machdep.c
+file	arch/powerpc/powerpc/syscall.c
 file	arch/powerpc/powerpc/vm_machdep.c
 file	arch/powerpc/powerpc/setjmp.S			ddb | kgdb
 file	arch/powerpc/powerpc/db_memrw.c			ddb | kgdb
@@ -40,13 +41,13 @@ file	arch/powerpc/ibm4xx/intr.c			ppc_ibm4xx
 
 # MPC (Motorola PowerPC) 6xx Family files (60x,74x,75x,74xx)
 #
-file	arch/powerpc/mpc6xx/pmap.c			ppc_mpc6xx & !oldpmap
+file	arch/powerpc/mpc6xx/altivec.c			ppc_mpc6xx & altivec
 file	arch/powerpc/mpc6xx/cpu_subr.c			ppc_mpc6xx
+file	arch/powerpc/mpc6xx/mpc6xx_machdep.c		ppc_mpc6xx
+file	arch/powerpc/mpc6xx/pmap.c			ppc_mpc6xx & !oldpmap
 file	arch/powerpc/powerpc/fpu.c			ppc_mpc6xx
 file	arch/powerpc/powerpc/pmap.c			ppc_mpc6xx & oldpmap
 file	arch/powerpc/powerpc/trap.c			ppc_mpc6xx
-file	arch/powerpc/powerpc/copyinstr.c		ppc_mpc6xx
-file	arch/powerpc/powerpc/copyoutstr.c		ppc_mpc6xx
 
 # Binary compatibility with previous NetBSD releases (COMPAT_XX)
 file	arch/powerpc/powerpc/compat_13_machdep.c	compat_13

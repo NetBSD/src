@@ -1,4 +1,4 @@
-/*	$NetBSD: intmmu.S,v 1.1.2.4 2002/04/17 00:02:57 nathanw Exp $ */
+/*	$NetBSD: intmmu.S,v 1.1.2.5 2002/08/01 02:41:35 nathanw Exp $ */
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -34,7 +34,7 @@
 #include <arm/armreg.h>
 #include <arm/arm32/pte.h>
 
-	.text
+	.section .start,"ax",%progbits
 
 ASENTRY_NP(integrator_start)
 	mov	r6, #0x16000000		/* UART0 Physical base*/
@@ -64,16 +64,16 @@ Lflat:
 	bgt	Lflat
 
 /*
- * Map VA 0xc0100000->0xc03fffff to PA 0x00000000->0x002fffff
+ * Map VA 0xc0000000->0xc03fffff to PA 0x00000000->0x003fffff
  */
 	mov	r3, #(L1_S_AP(AP_KRW))
 	add	r3, r3, #(L1_TYPE_S)
 	mov	r1, #0x8000		/* page table start */
 	add	r1, r1, #(0xc00 * 4)	/* offset to 0xc00xxxxx */
-	add	r1, r1, #(0x001 * 4)	/* offset to 0xc01xxxxx */
-	mov	r0, #47
+#	add	r1, r1, #(0x001 * 4)	/* offset to 0xc01xxxxx */
+	mov	r0, #63
 Lkern:
-	str	r3, [r1], #0x0004	/* 0xa010000-0xa03fffff */
+	str	r3, [r1], #0x0004	/* 0xc000000-0xc03fffff */
 	add	r3, r3, r2
 	subs	r0, r0, #1
 	bgt	Lkern

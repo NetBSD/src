@@ -1,4 +1,4 @@
-/*	$NetBSD: sdvar.h,v 1.9 2000/10/10 19:58:43 he Exp $	*/
+/*	$NetBSD: sdvar.h,v 1.9.8.1 2002/08/01 02:41:40 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -58,7 +58,7 @@ struct	sd_softc {
 	int	sc_blksize;	/* device block size in bytes */
 	u_int	sc_heads;	/* number of heads (tracks) */
 	u_int	sc_cyls;	/* number of cylinders */
-	struct buf_queue sc_tab;/* buffer queue */
+	struct bufq_state sc_tab;/* buffer queue */
 	int	sc_active;	/* number of active requests */
 	int	sc_errcnt;	/* error count for current transfer */
 	struct sdstats sc_stats; /* debugging stats */

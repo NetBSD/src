@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmreg.h,v 1.1.2.2 2002/04/01 07:46:28 nathanw Exp $	*/
+/*	$NetBSD: if_wmreg.h,v 1.1.2.3 2002/08/01 02:45:21 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -145,8 +145,8 @@ struct livengood_tcpip_ctxdesc {
 };
 
 /* commands for context descriptors */
-#define	WTX_TCPIP_CMD_TCP	(1U << 24)	/* TCP context valid */
-#define	WTX_TCPIP_CMD_IP	(1U << 25)	/* IP context valid */
+#define	WTX_TCPIP_CMD_TCP	(1U << 24)	/* 1 = TCP, 0 = UDP */
+#define	WTX_TCPIP_CMD_IP	(1U << 25)	/* 1 = IPv4, 0 = IPv6 */
 #define	WTX_TCPIP_CMD_TSE	(1U << 26)	/* segmentation context valid */
 
 #define	WTX_TCPIP_IPCSS(x)	((x) << 0)	/* checksum start */

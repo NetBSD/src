@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_memchunk.c,v 1.4.14.3 2001/11/14 19:15:50 nathanw Exp $	*/
+/*	$NetBSD: rf_memchunk.c,v 1.4.14.4 2002/08/01 02:45:36 nathanw Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -59,11 +59,10 @@
  ********************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_memchunk.c,v 1.4.14.3 2001/11/14 19:15:50 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_memchunk.c,v 1.4.14.4 2002/08/01 02:45:36 nathanw Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
-#include "rf_threadstuff.h"
 #include "rf_debugMem.h"
 #include "rf_memchunk.h"
 #include "rf_general.h"

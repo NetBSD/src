@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.h,v 1.3.2.2 2002/02/28 04:12:56 nathanw Exp $	*/
+/*	$NetBSD: linux_machdep.h,v 1.3.2.3 2002/08/01 02:44:17 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #ifdef _KERNEL
 __BEGIN_DECLS
-void linux_sendsig __P((sig_t, int, sigset_t *, u_long));
+void linux_sendsig __P((int, sigset_t *, u_long));
 dev_t linux_fakedev __P((dev_t, int));
 __END_DECLS
 #endif /* !_KERNEL */

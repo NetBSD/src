@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.57.2.5 2002/05/29 21:32:49 nathanw Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.57.2.6 2002/08/01 02:44:19 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.57.2.5 2002/05/29 21:32:49 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.57.2.6 2002/08/01 02:44:19 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -1451,24 +1451,6 @@ netbsd32_getfh(p, v, retval)
 	return (sys_getfh(p, &ua, retval));
 }
 #endif
-
-int
-netbsd32_sysarch(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	struct netbsd32_sysarch_args /* {
-		syscallarg(int) op;
-		syscallarg(netbsd32_voidp) parms;
-	} */ *uap = v;
-
-	switch (SCARG(uap, op)) {
-	default:
-		printf("(%s) netbsd32_sysarch(%d)\n", MACHINE, SCARG(uap, op));
-		return EINVAL;
-	}
-}
 
 int
 netbsd32_pread(p, v, retval)

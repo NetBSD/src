@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.62.8.4 2002/06/20 03:37:49 nathanw Exp $	*/
+/*	$NetBSD: conf.c,v 1.62.8.5 2002/08/01 02:41:04 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.62.8.4 2002/06/20 03:37:49 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.62.8.5 2002/08/01 02:41:04 nathanw Exp $");
 
 #include "opt_compat_svr4.h"
 #include "opt_systrace.h"
@@ -198,7 +198,7 @@ struct cdevsw	cdevsw[] =
 	cdev_mouse_init(NWSKBD,wskbd),  /* 54: keyboard */
 	cdev_clockctl_init(NCLOCKCTL, clockctl),/* 55: clockctl pseudo device */
 #ifdef SYSTRACE
-	cdev_systrace_init(1, systrace),/* 56: system call tracing */
+	cdev_clonemisc_init(1, systrace),/* 56: system call tracing */
 #else
 	cdev_notdef(),			/* 56: system call tracing */
 #endif

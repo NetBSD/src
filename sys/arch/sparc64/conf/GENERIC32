@@ -1,10 +1,10 @@
-# 	$NetBSD: GENERIC32,v 1.23.2.5 2002/06/20 03:41:17 nathanw Exp $
+# 	$NetBSD: GENERIC32,v 1.23.2.6 2002/08/01 02:43:34 nathanw Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.23.2.5 $"
+#ident 		"GENERIC-$Revision: 1.23.2.6 $"
 
 maxusers	64
 
@@ -268,19 +268,10 @@ cz*	at pci? dev ? function ?	# Cyclades-Z multi-port serial boards
 dma*	at sbus? slot ? offset ?		# SBus
 esp*	at dma? flags 0x0000			# SBus
 
-## FAS supported by esp driver
 esp*	at sbus? slot ? offset ?
-
-scsibus* at esp?
-
-## Qlogic ISP SBus or PCI SCSI Card
 isp*	at sbus? slot ? offset ?
-isp*	at pci?
-scsibus* at isp?
-
-## GLM support
-siop*	at pci?					# 53C875 "glm" compatible
-scsibus* at siop?
+isp*	at pci? dev ? function ?	# Qlogic ISP [12]0x0 SCSI/FibreChannel
+siop*	at pci? 			# 53C875 "glm" compatible
 
 # PCI SCSI controllers
 # 	UT marks untested.

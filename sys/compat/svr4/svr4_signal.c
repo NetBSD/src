@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_signal.c,v 1.41.2.6 2002/07/12 01:40:05 nathanw Exp $	 */
+/*	$NetBSD: svr4_signal.c,v 1.41.2.7 2002/08/01 02:44:25 nathanw Exp $	 */
 
 /*-
  * Copyright (c) 1994, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_signal.c,v 1.41.2.6 2002/07/12 01:40:05 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_signal.c,v 1.41.2.7 2002/08/01 02:44:25 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -233,7 +233,8 @@ svr4_sys_sigaction(l, v, retval)
 		svr4_to_native_sigaction(&nssa, &nbsa);
 	}
 	error = sigaction1(p, svr4_to_native_signo[SCARG(uap, signum)],
-	    SCARG(uap, nsa) ? &nbsa : 0, SCARG(uap, osa) ? &obsa : 0);
+	    SCARG(uap, nsa) ? &nbsa : 0, SCARG(uap, osa) ? &obsa : 0,
+	    NULL, 0);
 	if (error)
 		return (error);
 	if (SCARG(uap, osa)) {
@@ -310,7 +311,7 @@ svr4_sys_signal(l, v, retval)
 		nbsa.sa_handler = (sig_t)SCARG(uap, handler);
 		sigemptyset(&nbsa.sa_mask);
 		nbsa.sa_flags = 0;
-		error = sigaction1(p, signum, &nbsa, &obsa);
+		error = sigaction1(p, signum, &nbsa, &obsa, NULL, 0);
 		if (error)
 			return (error);
 		*retval = (u_int)(u_long)obsa.sa_handler;
@@ -331,7 +332,7 @@ svr4_sys_signal(l, v, retval)
 		nbsa.sa_handler = SIG_IGN;
 		sigemptyset(&nbsa.sa_mask);
 		nbsa.sa_flags = 0;
-		return (sigaction1(p, signum, &nbsa, 0));
+		return (sigaction1(p, signum, &nbsa, 0, NULL, 0));
 
 	case SVR4_SIGPAUSE_MASK:
 		ss = p->p_sigctx.ps_sigmask;

@@ -1,5 +1,5 @@
 #
-# 	$NetBSD: NULLCONF,v 1.9.8.5 2002/06/20 03:38:46 nathanw Exp $
+# 	$NetBSD: NULLCONF,v 1.9.8.6 2002/08/01 02:41:49 nathanw Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
@@ -18,7 +18,7 @@ options 	WINCE_DEFAULT_SETTING	# Debugging use
 options 	DUMP_GIU_LEVEL2_INTR	# Debugging use
 options 	DEBUG_FIND_PCIC		# Debugging use XXX harmful don't define until read source.
 #options 	DEBUG_FIND_PCIC_I82365SL_ONLY
-makeoptions	DEFWARNINGS=no	# override DEFWARNINGS?=yes
+makeoptions	DEFWARNINGS="no"	# override DEFWARNINGS?=yes
 
 file-system 	FFS		# fast filesystem with user and group quotas
 options 	COMPAT_386BSD_MBRPART # recognize old partition ID

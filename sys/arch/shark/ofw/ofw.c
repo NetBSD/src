@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw.c,v 1.7.2.6 2002/06/24 22:07:24 nathanw Exp $	*/
+/*	$NetBSD: ofw.c,v 1.7.2.7 2002/08/01 02:43:20 nathanw Exp $	*/
 
 /*
  * Copyright 1997
@@ -50,6 +50,7 @@
 
 #include <dev/cons.h>
 
+#define	_ARM32_BUS_DMA_PRIVATE
 #include <machine/bus.h>
 #include <machine/frame.h>
 #include <machine/bootconfig.h>
@@ -675,6 +676,11 @@ ofw_configvl(vl, pio, pmem)
 		panic("bad OFW /isa ranges property");
 }
 
+#if NISADMA > 0
+struct arm32_dma_range *shark_isa_dma_ranges;
+int shark_isa_dma_nranges;
+#endif
+
 void
 ofw_configisadma(pdma)
 	vm_offset_t *pdma;
@@ -683,10 +689,6 @@ ofw_configisadma(pdma)
 	int rangeidx;
 	int size;
 	struct dma_range *dr;
-#if NISADMA > 0
-	extern bus_dma_segment_t *pmap_isa_dma_ranges;
-	extern int pmap_isa_dma_nranges;
-#endif
 
 	if ((root = OF_finddevice("/")) == -1 ||
 	    (size = OF_getproplen(root, "dma-ranges")) <= 0 ||
@@ -698,11 +700,11 @@ ofw_configisadma(pdma)
 
 #if NISADMA > 0
 	/* Allocate storage for non-OFW representation of the range. */
-	pmap_isa_dma_ranges = ofw_malloc(nOFdmaranges *
-	    sizeof(bus_dma_segment_t));
-	if (pmap_isa_dma_ranges == NULL)
-		panic("unable to allocate pmap_isa_dma_ranges");
-	pmap_isa_dma_nranges = nOFdmaranges;
+	shark_isa_dma_ranges = ofw_malloc(nOFdmaranges *
+	    sizeof(*shark_isa_dma_ranges));
+	if (shark_isa_dma_ranges == NULL)
+		panic("unable to allocate shark_isa_dma_ranges");
+	shark_isa_dma_nranges = nOFdmaranges;
 #endif
 
 	for (rangeidx = 0, dr = OFdmaranges; rangeidx < nOFdmaranges; 
@@ -710,8 +712,9 @@ ofw_configisadma(pdma)
 		dr->start = of_decode_int((unsigned char *)&dr->start);
 		dr->size = of_decode_int((unsigned char *)&dr->size);
 #if NISADMA > 0
-		pmap_isa_dma_ranges[rangeidx].ds_addr = dr->start;
-		pmap_isa_dma_ranges[rangeidx].ds_len  = dr->size;
+		shark_isa_dma_ranges[rangeidx].dr_sysbase = dr->start;
+		shark_isa_dma_ranges[rangeidx].dr_busbase = dr->start;
+		shark_isa_dma_ranges[rangeidx].dr_len  = dr->size;
 #endif
 	}
 
@@ -753,6 +756,7 @@ ofw_configmem(void)
 {
 	pv_addr_t proc0_ttbbase;
 	pv_addr_t proc0_ptpt;
+	int i;
 
 	/* Set-up proc0 address space. */
 	ofw_construct_proc0_addrspace(&proc0_ttbbase, &proc0_ptpt);
@@ -786,7 +790,6 @@ ofw_configmem(void)
 		struct mem_region *mp;
 		int totalcnt;
 		int availcnt;
-		int i;
 
 		/* physmem, physical_start, physical_end */
 		physmem = 0;
@@ -864,6 +867,80 @@ ofw_configmem(void)
 			bootconfig.dram[i].pages = btoc(mp->size);
 		}
 		bootconfig.dramblocks = availcnt;
+	}
+
+	/* Load memory into UVM. */
+	uvm_setpagesize();	/* initialize PAGE_SIZE-dependent variables */
+
+	/* XXX Please kill this code dead. */
+	for (i = 0; i < bootconfig.dramblocks; i++) {
+		paddr_t start = (paddr_t)bootconfig.dram[i].address;
+		paddr_t end = start + (bootconfig.dram[i].pages * NBPG);
+#if NISADMA > 0
+		paddr_t istart, isize;
+#endif
+
+		if (start < physical_freestart)
+			start = physical_freestart;
+		if (end > physical_freeend)
+			end = physical_freeend;
+
+#if 0
+		printf("%d: %lx -> %lx\n", loop, start, end - 1);
+#endif
+
+#if NISADMA > 0
+		if (arm32_dma_range_intersect(shark_isa_dma_ranges,
+					      shark_isa_dma_nranges,
+					      start, end - start,
+					      &istart, &isize)) {
+			/*
+			 * Place the pages that intersect with the
+			 * ISA DMA range onto the ISA DMA free list.
+			 */
+#if 0
+			printf("    ISADMA 0x%lx -> 0x%lx\n", istart,
+			    istart + isize - 1);
+#endif
+			uvm_page_physload(atop(istart),
+			    atop(istart + isize), atop(istart),
+			    atop(istart + isize), VM_FREELIST_ISADMA);
+
+			/*
+			 * Load the pieces that come before the
+			 * intersection onto the default free list.
+			 */
+			if (start < istart) {
+#if 0
+				printf("    BEFORE 0x%lx -> 0x%lx\n",
+				    start, istart - 1);
+#endif
+				uvm_page_physload(atop(start),
+				    atop(istart), atop(start),
+				    atop(istart), VM_FREELIST_DEFAULT);
+			}
+
+			/*
+			 * Load the pieces that come after the
+			 * intersection onto the default free list.
+			 */
+			if ((istart + isize) < end) {
+#if 0
+				printf("     AFTER 0x%lx -> 0x%lx\n",
+				    (istart + isize), end - 1);
+#endif
+				uvm_page_physload(atop(istart + isize),
+				    atop(end), atop(istart + isize),
+				    atop(end), VM_FREELIST_DEFAULT);
+			}
+		} else {
+			uvm_page_physload(atop(start), atop(end),
+			    atop(start), atop(end), VM_FREELIST_DEFAULT);
+		}
+#else /* NISADMA > 0 */
+		uvm_page_physload(atop(start), atop(end),
+		    atop(start), atop(end), VM_FREELIST_DEFAULT);
+#endif /* NISADMA > 0 */
 	}
 
 	/* Initialize pmap module. */

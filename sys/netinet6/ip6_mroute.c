@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_mroute.c,v 1.17.2.7 2002/06/20 03:49:21 nathanw Exp $	*/
+/*	$NetBSD: ip6_mroute.c,v 1.17.2.8 2002/08/01 02:46:52 nathanw Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.49 2001/07/25 09:21:18 jinmei Exp $	*/
 
 /*
@@ -40,13 +40,13 @@
  * Modified by Mark J. Steiglitz, Stanford, May, 1991
  * Modified by Van Jacobson, LBL, January 1993
  * Modified by Ajit Thyagarajan, PARC, August 1993
- * Modified by Bill Fenenr, PARC, April 1994
+ * Modified by Bill Fenner, PARC, April 1994
  *
  * MROUTING Revision: 3.5.1.2 + PIM-SMv2 (pimd) Support
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.17.2.7 2002/06/20 03:49:21 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.17.2.8 2002/08/01 02:46:52 nathanw Exp $");
 
 #include "opt_inet.h"
 
@@ -1477,7 +1477,7 @@ phyint_send(ip6, mifp, m)
 	 * if it would fit in the MTU of the interface.
 	 */
 	linkmtu = IN6_LINKMTU(ifp);
-	if (mb_copy->m_pkthdr.len < linkmtu || linkmtu < IPV6_MMTU) {
+	if (mb_copy->m_pkthdr.len <= linkmtu || linkmtu < IPV6_MMTU) {
 		dst6->sin6_len = sizeof(struct sockaddr_in6);
 		dst6->sin6_family = AF_INET6;
 		dst6->sin6_addr = ip6->ip6_dst;

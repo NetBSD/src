@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gem_pci.c,v 1.1.2.6 2002/06/20 03:45:25 nathanw Exp $ */
+/*	$NetBSD: if_gem_pci.c,v 1.1.2.7 2002/08/01 02:45:16 nathanw Exp $ */
 
 /*
  * 
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gem_pci.c,v 1.1.2.6 2002/06/20 03:45:25 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gem_pci.c,v 1.1.2.7 2002/08/01 02:45:16 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h> 
@@ -107,7 +107,8 @@ gem_match_pci(parent, cf, aux)
 
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_APPLE && 
 	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_APPLE_GMAC ||
-	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_APPLE_GMAC2))
+	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_APPLE_GMAC2 ||
+	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_APPLE_GMAC3))
 		return (1);
 
 

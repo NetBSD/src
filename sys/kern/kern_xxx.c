@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_xxx.c,v 1.45.2.6 2002/07/12 01:40:20 nathanw Exp $	*/
+/*	$NetBSD: kern_xxx.c,v 1.45.2.7 2002/08/01 02:46:23 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_xxx.c,v 1.45.2.6 2002/07/12 01:40:20 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_xxx.c,v 1.45.2.7 2002/08/01 02:46:23 nathanw Exp $");
 
 #include "opt_syscall_debug.h"
 
@@ -122,8 +122,7 @@ scdebug_call(l, code, args)
 		printf("%ld call: %s", (long)code, em->e_syscallnames[code]);
 		if (scdebug & SCDEBUG_SHOWARGS) {
 			printf("(");
-			for (i = 0; i < sy->sy_argsize / sizeof(register_t);
-			    i++)
+			for (i = 0; i < sy->sy_narg; i++)
 				printf("%s0x%lx", i == 0 ? "" : ", ",
 				    (long)args[i]);
 			printf(")");

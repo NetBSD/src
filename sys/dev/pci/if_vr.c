@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.46.2.3 2001/11/14 19:15:19 nathanw Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.46.2.4 2002/08/01 02:45:19 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.46.2.3 2001/11/14 19:15:19 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.46.2.4 2002/08/01 02:45:19 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -871,6 +871,15 @@ vr_intr(arg)
 			if (sc->vr_txpending) {
 				VR_SETBIT16(sc, VR_COMMAND, VR_CMD_TX_ON);
 				VR_SETBIT16(sc, VR_COMMAND, VR_CMD_TX_GO);
+			}
+			/*
+			 * Unfortunately many cards get stuck after
+			 * aborted transmits, so we reset them.
+			 */
+			if (status & VR_ISR_TX_ABRT) {
+				printf("%s: restarting\n", sc->vr_dev.dv_xname);
+				dotx = 0;
+				(void) vr_init(ifp);
 			}
 		}
 

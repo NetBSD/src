@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee1394subr.c,v 1.9.2.5 2002/06/20 03:48:15 nathanw Exp $	*/
+/*	$NetBSD: if_ieee1394subr.c,v 1.9.2.6 2002/08/01 02:46:38 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ieee1394subr.c,v 1.9.2.5 2002/06/20 03:48:15 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ieee1394subr.c,v 1.9.2.6 2002/08/01 02:46:38 nathanw Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -66,7 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_ieee1394subr.c,v 1.9.2.5 2002/06/20 03:48:15 nath
 #ifdef INET
 #include <netinet/in.h>
 #include <netinet/in_var.h>
-#include <netinet/if_ieee1394arp.h>
+#include <netinet/if_inarp.h>
 #endif /* INET */
 #ifdef INET6
 #include <netinet/in.h>
@@ -93,10 +93,10 @@ ieee1394_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 	struct rtentry *rt;
 	struct mbuf *mcopy = NULL;
 	struct ieee1394_hwaddr hwdst, *myaddr;
-#ifdef INET
-	struct ieee1394_arphdr *ah;
-#endif /* INET */
 	ALTQ_DECL(struct altq_pktattr pktattr;)
+#ifdef INET
+	struct arphdr *ah;
+#endif /* INET */
 
 	if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) != (IFF_UP|IFF_RUNNING))
 		senderr(ENETDOWN);
@@ -139,14 +139,14 @@ ieee1394_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 	 * If the queueing discipline needs packet classification,
 	 * do it before prepending link headers.
 	 */
-	IFQ_CLASSIFY(&ifp->if_snd, m, dst->sa_family, &pktattr);
+	IFQ_CLASSIFY(&ifp->if_snd, m0, dst->sa_family, &pktattr);
 
 	switch (dst->sa_family) {
 #ifdef INET
 	case AF_INET:
 		if (m0->m_flags & (M_BCAST | M_MCAST))
 			memcpy(&hwdst, ifp->if_broadcastaddr, sizeof(hwdst));
-		else if (!ieee1394arpresolve(ifp, rt, m0, dst, &hwdst))
+		else if (!arpresolve(ifp, rt, m0, dst, (u_char *)&hwdst))
 			return 0;	/* if not yet resolved */
 		/* if broadcasting on a simplex interface, loopback a copy */
 		if ((m0->m_flags & M_BCAST) && (ifp->if_flags & IFF_SIMPLEX))
@@ -154,8 +154,9 @@ ieee1394_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 		etype = htons(ETHERTYPE_IP);
 		break;
 	case AF_ARP:
-		ah = mtod(m0, struct ieee1394_arphdr *);
+		ah = mtod(m0, struct arphdr *);
 		memcpy(&hwdst, ifp->if_broadcastaddr, sizeof(hwdst));
+		ah->ar_hrd = htons(ARPHRD_IEEE1394);
 		etype = htons(ETHERTYPE_ARP);
 		break;
 #endif /* INET */
@@ -388,8 +389,9 @@ ieee1394_input(struct ifnet *ifp, struct mbuf *m)
 		break;
 
 	case ETHERTYPE_ARP:
-		in_ieee1394arpinput(m);
-		return;
+		schednetisr(NETISR_ARP);
+		inq = &arpintrq;
+		break;
 #endif /* INET */
 
 #ifdef INET6
@@ -703,7 +705,7 @@ ieee1394_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			if ((error = fw_init(ifp)) != 0)
 #endif
 				break;
-			ieee1394arp_ifinit(ifp, ifa);
+			arp_ifinit(ifp, ifa);
 			break;
 #endif /* INET */
 		default:

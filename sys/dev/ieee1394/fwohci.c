@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.16.2.10 2002/04/17 00:05:55 nathanw Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.16.2.11 2002/08/01 02:44:51 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.16.2.10 2002/04/17 00:05:55 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.16.2.11 2002/08/01 02:44:51 nathanw Exp $");
 
 #define DOUBLEBUF 1
 #define NO_THREAD 1
@@ -2930,8 +2930,6 @@ fwohci_if_input_iso(struct fwohci_softc *sc, void *arg, struct fwohci_pkt *pkt)
 		mtod(m, u_int8_t *)[9] =
 		    (*pkt->fp_trail >> (16 + OHCI_CTXCTL_SPD_BITPOS)) &
 		    ((1 << OHCI_CTXCTL_SPD_BITLEN) - 1);
-	} else {
-		m->m_flags |= M_LINK0;
 	}
 	mtod(m, u_int8_t *)[14] = chan;
 	mtod(m, u_int8_t *)[15] = tag;

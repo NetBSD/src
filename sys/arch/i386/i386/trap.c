@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.154.2.11 2002/07/12 01:39:33 nathanw Exp $	*/
+/*	$NetBSD: trap.c,v 1.154.2.12 2002/08/01 02:42:08 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -79,13 +79,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.154.2.11 2002/07/12 01:39:33 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.154.2.12 2002/08/01 02:42:08 nathanw Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_math_emulate.h"
 #include "opt_vm86.h"
+#include "opt_kvm86.h"
 #include "opt_cputype.h"
+#include "opt_kstack_dr0.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,6 +130,13 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.154.2.11 2002/07/12 01:39:33 nathanw Exp 
 void trap __P((struct trapframe));
 #if defined(I386_CPU)
 int trapwrite __P((unsigned));
+#endif
+
+#ifdef KVM86
+#include <machine/kvm86.h>
+#define KVM86MODE (kvm86_incall)
+#else
+#define KVM86MODE (0)
 #endif
 
 const char *trap_type[] = {
@@ -199,7 +208,7 @@ trap(frame)
 	}
 #endif
 
-	if (!KERNELMODE(frame.tf_cs, frame.tf_eflags)) {
+	if (!KVM86MODE && !KERNELMODE(frame.tf_cs, frame.tf_eflags)) {
 		type |= T_USER;
 		l->l_md.md_regs = &frame;
 		pcb->pcb_cr2 = 0;		
@@ -209,6 +218,21 @@ trap(frame)
 
 	default:
 	we_re_toast:
+#ifdef KSTACK_CHECK_DR0
+		if (type == T_TRCTRAP) {
+			u_int mask, dr6 = rdr6();
+
+			mask = 1 << 0; /* dr0 */
+			if (dr6 & mask) {
+				panic("trap on DR0: maybe kernel stack overflow\n");
+#if 0
+				dr6 &= ~mask;
+				ldr6(dr6);
+				return;
+#endif
+			}
+		}
+#endif
 #ifdef KGDB
 		if (kgdb_trap(type, &frame))
 			return;
@@ -239,6 +263,12 @@ trap(frame)
 		/*NOTREACHED*/
 
 	case T_PROTFLT:
+#ifdef KVM86
+		if (KVM86MODE) {
+			kvm86_gpfault(&frame);
+			return;
+		}
+#endif
 	case T_SEGNPFLT:
 	case T_ALIGNFLT:
 	case T_TSSFLT:

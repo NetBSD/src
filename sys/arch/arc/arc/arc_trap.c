@@ -1,4 +1,4 @@
-/*	$NetBSD: arc_trap.c,v 1.20.8.2 2002/06/24 22:03:38 nathanw Exp $	*/
+/*	$NetBSD: arc_trap.c,v 1.20.8.3 2002/08/01 02:41:09 nathanw Exp $	*/
 /*	$OpenBSD: trap.c,v 1.22 1999/05/24 23:08:59 jason Exp $	*/
 
 /*
@@ -155,7 +155,9 @@ cpu_intr(status, cause, pc, ipending)
 		if (!USERMODE(status))
 			panic("kernel used FPU: PC %x, CR %x, SR %x",
 			    pc, cause, status);
-		MachFPInterrupt(status, cause, pc, curlwp->p_md.md_regs);
+#if !defined(SOFTFLOAT)
+		MachFPInterrupt(status, cause, pc, curlwp->l_md.md_regs);
+#endif
 	}
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_misc.c,v 1.68.2.7 2002/07/12 01:40:05 nathanw Exp $	*/
+/*	$NetBSD: ultrix_misc.c,v 1.68.2.8 2002/08/01 02:44:29 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_misc.c,v 1.68.2.7 2002/07/12 01:40:05 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_misc.c,v 1.68.2.8 2002/08/01 02:44:29 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
@@ -750,7 +750,8 @@ ultrix_sys_sigvec(l, v, retval)
 		native_sigset13_to_sigset(&nsv.sv_mask, &nsa.sa_mask);
 	}
 	error = sigaction1(l->l_proc, SCARG(uap, signum),
-	    SCARG(uap, nsv) ? &nsa : 0, SCARG(uap, osv) ? &osa : 0);
+	    SCARG(uap, nsv) ? &nsa : 0, SCARG(uap, osv) ? &osa : 0,
+	    NULL, 0);
 	if (error)
 		return (error);
 	if (SCARG(uap, osv)) {

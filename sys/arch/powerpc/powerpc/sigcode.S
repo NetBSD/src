@@ -1,4 +1,4 @@
-/*	$NetBSD: sigcode.S,v 1.1.16.2 2002/07/19 22:20:39 nathanw Exp $	*/
+/*	$NetBSD: sigcode.S,v 1.1.16.3 2002/08/01 02:43:11 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -45,7 +45,7 @@
 _C_LABEL(sigcode):
 	addi	1,1,-16			/* reserved space for callee */
 	blrl
-	addi	3,1,16+8		/* compute &sf_sc */
+	addi	3,1,16			/* compute &sf_sc */
 	li	0,SYS___sigreturn14
 	sc				/* sigreturn(scp) */
 	li	0,SYS_exit

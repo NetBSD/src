@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.3.4.2 2002/02/28 04:07:32 nathanw Exp $	*/
+/*	$NetBSD: bus.h,v 1.3.4.3 2002/08/01 02:41:15 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -661,13 +661,19 @@ struct arm32_bus_dma_segment {
 	 */
 	bus_addr_t	ds_addr;	/* DMA address */
 	bus_size_t	ds_len;		/* length of transfer */
-	/*
-	 * PRIVATE MEMBERS: not for use by machine-independent code.
-	 */
-	bus_addr_t	_ds_vaddr;	/* Virtual mapped address
-					 * Used by bus_dmamem_sync() */
 };
 typedef struct arm32_bus_dma_segment	bus_dma_segment_t;
+
+/*
+ *	arm32_dma_range
+ *
+ *	This structure describes a valid DMA range.
+ */
+struct arm32_dma_range {
+	bus_addr_t	dr_sysbase;	/* system base address */
+	bus_addr_t	dr_busbase;	/* appears here on bus */
+	bus_size_t	dr_len;		/* length of range */
+};
 
 /*
  *	bus_dma_tag_t
@@ -683,7 +689,7 @@ struct arm32_bus_dma_tag {
 	 * may then decide what to do with the transfer.  If the
 	 * range pointer is NULL, it is ignored.
 	 */
-	bus_dma_segment_t *_ranges;
+	struct arm32_dma_range *_ranges;
 	int _nranges;
 
 	/*
@@ -761,6 +767,9 @@ struct arm32_bus_dmamap {
 	bus_size_t	_dm_maxsegsz;	/* largest possible segment */
 	bus_size_t	_dm_boundary;	/* don't cross this */
 	int		_dm_flags;	/* misc. flags */
+
+	void		*_dm_origbuf;	/* pointer to original buffer */
+	int		_dm_buftype;	/* type of buffer */
 	struct proc	*_dm_proc;	/* proc that owns the mapping */
 
 	void		*_dm_cookie;	/* cookie for bus-specific functions */
@@ -774,6 +783,17 @@ struct arm32_bus_dmamap {
 };
 
 #ifdef _ARM32_BUS_DMA_PRIVATE
+
+/* _dm_buftype */
+#define	ARM32_BUFTYPE_INVALID		0
+#define	ARM32_BUFTYPE_LINEAR		1
+#define	ARM32_BUFTYPE_MBUF		2
+#define	ARM32_BUFTYPE_UIO		3
+#define	ARM32_BUFTYPE_RAW		4
+
+int	arm32_dma_range_intersect(struct arm32_dma_range *, int,
+	    paddr_t pa, psize_t size, paddr_t *pap, psize_t *sizep);
+
 int	_bus_dmamap_create __P((bus_dma_tag_t, bus_size_t, int, bus_size_t,
 	    bus_size_t, int, bus_dmamap_t *));
 void	_bus_dmamap_destroy __P((bus_dma_tag_t, bus_dmamap_t));

@@ -1,4 +1,4 @@
-/*	$NetBSD: usscanner.c,v 1.6.2.2 2001/11/14 19:16:23 nathanw Exp $	*/
+/*	$NetBSD: usscanner.c,v 1.6.2.3 2002/08/01 02:46:11 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usscanner.c,v 1.6.2.2 2001/11/14 19:16:23 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usscanner.c,v 1.6.2.3 2002/08/01 02:46:11 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -226,7 +226,7 @@ USB_ATTACH(usscanner)
 			sc->sc_out_addr = ed->bEndpointAddress;
 		}
 	}
-	if (sc->sc_in_addr == -1 || sc->sc_intr_addr == -1 || 
+	if (sc->sc_in_addr == -1 || sc->sc_intr_addr == -1 ||
 	    sc->sc_out_addr == -1) {
 		printf("%s: missing endpoint\n", USBDEVNAME(sc->sc_dev));
 		USB_ATTACH_ERROR_RETURN;
@@ -268,7 +268,7 @@ USB_ATTACH(usscanner)
 	}
 
 	/* XXX too big */
-	sc->sc_cmd_buffer = usbd_alloc_buffer(sc->sc_cmd_xfer, 
+	sc->sc_cmd_buffer = usbd_alloc_buffer(sc->sc_cmd_xfer,
 					     USSCANNER_MAX_TRANSFER_SIZE);
 	if (sc->sc_cmd_buffer == NULL) {
 		printf("%s: alloc cmd buffer failed, err=%d\n",
@@ -292,7 +292,7 @@ USB_ATTACH(usscanner)
 		usscanner_cleanup(sc);
 		USB_ATTACH_ERROR_RETURN;
 	}
-	sc->sc_data_buffer = usbd_alloc_buffer(sc->sc_data_xfer, 
+	sc->sc_data_buffer = usbd_alloc_buffer(sc->sc_data_xfer,
 					      USSCANNER_MAX_TRANSFER_SIZE);
 	if (sc->sc_data_buffer == NULL) {
 		printf("%s: alloc data buffer failed, err=%d\n",
@@ -310,7 +310,7 @@ USB_ATTACH(usscanner)
 	sc->sc_adapter.adapt_openings = 1;
 	sc->sc_adapter.adapt_max_periph = 1;
 	sc->sc_adapter.adapt_minphys = usscanner_scsipi_minphys;
-	
+
 	/*
 	 * fill in the scsipi_channel.
 	 */
@@ -432,7 +432,7 @@ usscanner_sense(struct usscanner_softc *sc)
 	sc->sc_state = UAS_SENSECMD;
 	memcpy(sc->sc_cmd_buffer, &sense_cmd, sizeof sense_cmd);
 	usbd_setup_xfer(sc->sc_cmd_xfer, sc->sc_out_pipe, sc, sc->sc_cmd_buffer,
-	    sizeof sense_cmd, USBD_NO_COPY, USSCANNER_TIMEOUT, 
+	    sizeof sense_cmd, USBD_NO_COPY, USSCANNER_TIMEOUT,
 	    usscanner_sensecmd_cb);
 	err = usbd_transfer(sc->sc_cmd_xfer);
 	if (err == USBD_IN_PROGRESS)
@@ -462,7 +462,7 @@ usscanner_intr_cb(usbd_xfer_handle xfer, usbd_private_handle priv,
 	/* XXX what should we do on non-0 status */
 
 	sc->sc_state = UAS_IDLE;
-		
+
 	s = splbio();
 	scsipi_done(sc->sc_xs);
 	splx(s);
@@ -690,7 +690,7 @@ usscanner_scsipi_request(chan, req, arg)
 		xs = arg;
 		periph = xs->xs_periph;
 
-		DPRINTFN(8, ("%s: usscanner_scsi_request: %d:%d "
+		DPRINTFN(8, ("%s: usscanner_scsipi_request: %d:%d "
 		    "xs=%p cmd=0x%02x datalen=%d (quirks=0x%x, poll=%d)\n",
 		    USBDEVNAME(sc->sc_dev),
 		    periph->periph_target, periph->periph_lun,
@@ -717,13 +717,15 @@ usscanner_scsipi_request(chan, req, arg)
 #endif
 
 		if (xs->datalen > USSCANNER_MAX_TRANSFER_SIZE) {
-			printf("umass_cmd: large datalen, %d\n", xs->datalen);
+			printf("%s: usscanner_scsipi_request: large datalen,"
+			    " %d\n", USBDEVNAME(sc->sc_dev), xs->datalen);
 			xs->error = XS_DRIVER_STUFFUP;
 			goto done;
 		}
 
-		DPRINTFN(4, ("usscanner_scsi_cmd: async cmdlen=%d datalen=%d\n",
-			    xs->cmdlen, xs->datalen));
+		DPRINTFN(4, ("%s: usscanner_scsipi_request: async cmdlen=%d"
+		    " datalen=%d\n", USBDEVNAME(sc->sc_dev), xs->cmdlen,
+		    xs->datalen));
 		sc->sc_state = UAS_CMD;
 		sc->sc_xs = xs;
 		memcpy(sc->sc_cmd_buffer, xs->cmd, xs->cmdlen);

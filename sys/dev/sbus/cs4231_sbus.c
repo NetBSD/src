@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4231_sbus.c,v 1.15.2.2 2002/04/01 07:47:09 nathanw Exp $	*/
+/*	$NetBSD: cs4231_sbus.c,v 1.15.2.3 2002/08/01 02:45:40 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4231_sbus.c,v 1.15.2.2 2002/04/01 07:47:09 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4231_sbus.c,v 1.15.2.3 2002/08/01 02:45:40 nathanw Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -309,11 +309,11 @@ cs4231_sbus_trigger_output(addr, start, end, blksize, intr, arg, param)
 	/* load next block if we can */
 	csr = bus_space_read_4(sbsc->sc_bt, sbsc->sc_bh, (vaddr_t)&dma->dmacsr);
 	if (csr & APC_PD) {
-	    cs4231_transfer_advance(t, &dmaaddr, &dmasize);
-	    bus_space_write_4(sbsc->sc_bt, sbsc->sc_bh, (vaddr_t)&dma->dmapnva, dmaaddr);
-	    bus_space_write_4(sbsc->sc_bt, sbsc->sc_bh, (vaddr_t)&dma->dmapnc, dmasize);
+		cs4231_transfer_advance(t, &dmaaddr, &dmasize);
+		bus_space_write_4(sbsc->sc_bt, sbsc->sc_bh, (vaddr_t)&dma->dmapnva, dmaaddr);
+		bus_space_write_4(sbsc->sc_bt, sbsc->sc_bh, (vaddr_t)&dma->dmapnc, dmasize);
 
-	    DPRINTF(("trigger_output: 2nd: %x %d, %x %d\n",
+		DPRINTF(("trigger_output: 2nd: %x %d, %x %d\n",
 		    bus_space_read_4(sbsc->sc_bt, sbsc->sc_bh, (vaddr_t)&dma->dmapva),
 		    bus_space_read_4(sbsc->sc_bt, sbsc->sc_bh, (vaddr_t)&dma->dmapc),
 		    bus_space_read_4(sbsc->sc_bt, sbsc->sc_bh, (vaddr_t)&dma->dmapnva),
@@ -434,11 +434,12 @@ cs4231_sbus_trigger_input(addr, start, end, blksize, intr, arg, param)
 	}
 
 	/* supply next block if we can */
-	if (dma->dmacsr & APC_CD) {
-	    cs4231_transfer_advance(t, &dmaaddr, &dmasize);
-	    bus_space_write_4(sbsc->sc_bt, sbsc->sc_bh, (vaddr_t)&dma->dmacnva, dmaaddr);
-	    bus_space_write_4(sbsc->sc_bt, sbsc->sc_bh, (vaddr_t)&dma->dmacnc, dmasize);
-	    DPRINTF(("trigger_input: 2nd: %x %d, %x %d\n",
+	csr = bus_space_read_4(sbsc->sc_bt, sbsc->sc_bh, (vaddr_t)&dma->dmacsr);
+	if (csr & APC_CD) {
+		cs4231_transfer_advance(t, &dmaaddr, &dmasize);
+		bus_space_write_4(sbsc->sc_bt, sbsc->sc_bh, (vaddr_t)&dma->dmacnva, dmaaddr);
+		bus_space_write_4(sbsc->sc_bt, sbsc->sc_bh, (vaddr_t)&dma->dmacnc, dmasize);
+		DPRINTF(("trigger_input: 2nd: %x %d, %x %d\n",
 		    bus_space_read_4(sbsc->sc_bt, sbsc->sc_bh, (vaddr_t)&dma->dmacva),
 		    bus_space_read_4(sbsc->sc_bt, sbsc->sc_bh, (vaddr_t)&dma->dmacc),
 		    bus_space_read_4(sbsc->sc_bt, sbsc->sc_bh, (vaddr_t)&dma->dmacnva),

@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.47.2.5 2002/06/20 03:38:38 nathanw Exp $	*/
+/*	$NetBSD: conf.c,v 1.47.2.6 2002/08/01 02:41:41 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.47.2.5 2002/06/20 03:38:38 nathanw Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.47.2.6 2002/08/01 02:41:41 nathanw Exp $");                                                  
 
 #include "opt_compat_svr4.h"
 #include "opt_systrace.h"
@@ -201,7 +201,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 41: wsfont pseudo-device */
 	cdev_clockctl_init(NCLOCKCTL, clockctl),/* 42: clockctl pseudo device */
 #ifdef SYSTRACE
-	cdev_systrace_init(1, systrace),/* 43: system call tracing */
+	cdev_clonemisc_init(1, systrace),/* 43: system call tracing */
 #else
 	cdev_notdef(),			/* 43: system call tracing */
 #endif
