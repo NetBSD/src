@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	7.4 (Berkeley) 6/3/91
- *	machdep.c,v 1.47 1993/09/05 03:54:11 sef Exp
+ *	$Id: machdep.c,v 1.73 1994/01/11 17:51:40 mycroft Exp $
  */
 
 #include <stddef.h>
@@ -68,8 +68,6 @@
 #ifdef SYSVSHM
 #include <sys/shm.h>
 #endif
-
-#include <net/netisr.h>
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
@@ -217,7 +215,7 @@ cpu_startup()
 				   M_MBUF, M_NOWAIT);
 	bzero(mclrefcnt, NMBCLUSTERS+CLBYTES/MCLBYTES);
 	mb_map = kmem_suballoc(kernel_map, (vm_offset_t *)&mbutl, &maxaddr,
-			       VM_MBUF_SIZE, FALSE);
+	    VM_MBUF_SIZE, FALSE);
 
 	/*
 	 * Initialize callouts
@@ -420,7 +418,7 @@ sendsig(catcher, sig, mask, code)
 		fp = (struct sigframe *)(tf->tf_esp - sizeof(struct sigframe));
 	}
 
-	if ((unsigned)fp <= USRSTACK - ctob(p->p_vmspace->vm_ssize)) 
+	if ((unsigned)fp <= USRSTACK - ctob(p->p_vmspace->vm_ssize))
 		(void)grow(p, (unsigned)fp);
 
 	if (useracc((caddr_t)fp, sizeof (struct sigframe), B_WRITE) == 0) {
@@ -437,7 +435,7 @@ sendsig(catcher, sig, mask, code)
 		return;
 	}
 
-	/* 
+	/*
 	 * Build the argument list for the signal handler.
 	 */
 	fp->sf_signum = sig;
@@ -510,7 +508,7 @@ sigreturn(p, uap, retval)
 	 */
 	scp = uap->sigcntxp;
 	fp = (struct sigframe *)
-	     ((caddr_t)scp - offsetof(struct sigframe, sf_sc));
+	    ((caddr_t)scp - offsetof(struct sigframe, sf_sc));
 
 	if (useracc((caddr_t)fp, sizeof(*fp), 0) == 0)
 		return(EFAULT);
@@ -621,7 +619,7 @@ boot(arghowto)
 		if (howto & RB_DUMP) {
 			savectx(&dumppcb, 0);
 			dumppcb.pcb_ptd = rcr3();
-			dumpsys();	
+			dumpsys();
 			/*NOTREACHED*/
 		}
 	}
@@ -906,7 +904,7 @@ void
 init386(first_avail)
 	vm_offset_t first_avail;
 {
-	extern ssdtosd(), lgdt(), etext; 
+	extern ssdtosd(), lgdt(), etext;
 	int x, *pi;
 	unsigned biosbasemem, biosextmem;
 	struct gate_descriptor *gdp;
@@ -936,7 +934,7 @@ init386(first_avail)
 	setidt(0, &IDTVEC(div), SDT_SYS386TGT, SEL_KPL);
 	setidt(1, &IDTVEC(dbg), SDT_SYS386TGT, SEL_KPL);
 	setidt(2, &IDTVEC(nmi), SDT_SYS386TGT, SEL_KPL);
- 	setidt(3, &IDTVEC(bpt), SDT_SYS386TGT, SEL_UPL);	/* XXXX */
+	setidt(3, &IDTVEC(bpt), SDT_SYS386TGT, SEL_UPL);	/* XXXX */
 	setidt(4, &IDTVEC(ofl), SDT_SYS386TGT, SEL_KPL);
 	setidt(5, &IDTVEC(bnd), SDT_SYS386TGT, SEL_KPL);
 	setidt(6, &IDTVEC(ill), SDT_SYS386TGT, SEL_KPL);
@@ -993,10 +991,8 @@ init386(first_avail)
 	 * Use BIOS values stored in RTC CMOS RAM, since probing
 	 * breaks certain 386 AT relics.
 	 */
-	biosbasemem = (rtcin(RTC_BASEHI)<<8) |
-		      (rtcin(RTC_BASELO));
-	biosextmem = (rtcin(RTC_EXTHI)<<8) |
-		     (rtcin(RTC_EXTLO));
+	biosbasemem = (rtcin(RTC_BASEHI)<<8) | (rtcin(RTC_BASELO));
+	biosextmem = (rtcin(RTC_EXTHI)<<8) | (rtcin(RTC_EXTLO));
 
 #ifndef BIOS_BASEMEM
 #define	BIOS_BASEMEM 640
@@ -1004,15 +1000,15 @@ init386(first_avail)
 
 	if (biosbasemem == 0 || biosbasemem > 640) {
 		printf("warning: nvram reports %dk base memory; assuming %dk\n",
-		       biosbasemem, BIOS_BASEMEM);
+		    biosbasemem, BIOS_BASEMEM);
 		biosbasemem = BIOS_BASEMEM;
 	}
 
 	avail_start = NBPG;	/* BIOS leaves data in low memory */
 				/* and VM system doesn't work with phys 0 */
 	avail_end = biosextmem ? IOM_END + biosextmem * 1024
-			       : biosbasemem * 1024;
-	
+	    : biosbasemem * 1024;
+
 	/* number of pages of physmem addr space */
 	physmem = btoc((biosbasemem + biosextmem) * 1024);
 
@@ -1026,10 +1022,10 @@ init386(first_avail)
 	avail_next = avail_start;
 	avail_remaining = i386_btop((avail_end - avail_start) -
 				    (hole_end - hole_start));
-	
+
 	if (avail_remaining < i386_btop(2 * 1024 * 1024)) {
 		printf("warning: too little memory available; running in degraded mode\n"
-		       "press a key to confirm\n\n");
+		    "press a key to confirm\n\n");
 		/*
 		 * People with less than 2 Meg have to press a key; this way
 		 * we see the messages and can tell them why they blow up later.
@@ -1041,7 +1037,7 @@ init386(first_avail)
 
 	/* call pmap initialization to make new kernel address space */
 	pmap_bootstrap((vm_offset_t)atdevbase + IOM_SIZE);
-	
+
 	/* now running on new page tables, configured,and u/iom is accessible */
 
 	/* make a initial tss so microp can get interrupt stack on syscall! */
@@ -1049,14 +1045,14 @@ init386(first_avail)
 	proc0.p_addr->u_pcb.pcb_tss.tss_ss0 = GSEL(GDATA_SEL, SEL_KPL);
 	_gsel_tss = GSEL(GPROC0_SEL, SEL_KPL);
 
-	((struct i386tss *)gdt_segs[GPROC0_SEL].ssd_base)->tss_ioopt = 
+	((struct i386tss *)gdt_segs[GPROC0_SEL].ssd_base)->tss_ioopt =
 		(sizeof(tss))<<16;
 
 	ltr(_gsel_tss);
 
 	/* make a call gate to reenter kernel with */
 	gdp = &ldt[LSYS5CALLS_SEL].gd;
-	
+
 	x = (int) &IDTVEC(syscall);
 	gdp->gd_looffset = x++;
 	gdp->gd_selector = GSEL(GCODE_SEL,SEL_KPL);
@@ -1076,7 +1072,7 @@ init386(first_avail)
 }
 
 /*
- * insert an element into a queue 
+ * insert an element into a queue
  */
 #undef insque
 _insque(element, head)
@@ -1103,7 +1099,7 @@ _remque(element)
 /*
  * cpu_exec_aout_makecmds():
  *	cpu-dependent a.out format hook for execve().
- * 
+ *
  * Determine of the given exec package refers to something which we
  * understand and, if so, set up the vmcmds for it.
  *
@@ -1229,11 +1225,11 @@ pmap_next_page(addrp)
 
 	if (avail_next == avail_end)
 		return FALSE;
-	
+
 	/* skip the hole */
 	if (avail_next == hole_start)
 		avail_next = hole_end;
-	
+
 	*addrp = avail_next;
 	avail_next += NBPG;
 	avail_remaining--;
