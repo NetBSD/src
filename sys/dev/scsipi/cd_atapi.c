@@ -1,4 +1,4 @@
-/*	$NetBSD: cd_atapi.c,v 1.24 2003/07/10 18:18:41 martin Exp $	*/
+/*	$NetBSD: cd_atapi.c,v 1.25 2003/09/05 09:04:26 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd_atapi.c,v 1.24 2003/07/10 18:18:41 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd_atapi.c,v 1.25 2003/09/05 09:04:26 mycroft Exp $");
 
 #include "rnd.h"
 
@@ -150,8 +150,8 @@ cd_atapibus_setchan(cd, p0, p1, p2, p3, flags)
 	struct atapi_cd_mode_data data;
 	int error;
 
-	if ((error = scsipi_mode_sense_big(cd->sc_periph, 0, ATAPI_AUDIO_PAGE,
-	    &data.header, AUDIOPAGESIZE,
+	if ((error = scsipi_mode_sense_big(cd->sc_periph, SMS_DBD,
+	    ATAPI_AUDIO_PAGE, &data.header, AUDIOPAGESIZE,
 	    flags | XS_CTL_DATA_ONSTACK, CDRETRIES, 20000)) != 0)
 		return (error);
 	data.pages.audio.port[LEFT_PORT].channels = p0;
@@ -172,8 +172,8 @@ cd_atapibus_getvol(cd, arg, flags)
 	struct atapi_cd_mode_data data;
 	int error;
 
-	if ((error = scsipi_mode_sense_big(cd->sc_periph, 0, ATAPI_AUDIO_PAGE,
-	    &data.header, AUDIOPAGESIZE,
+	if ((error = scsipi_mode_sense_big(cd->sc_periph, SMS_DBD,
+	    ATAPI_AUDIO_PAGE, &data.header, AUDIOPAGESIZE,
 	    flags | XS_CTL_DATA_ONSTACK, CDRETRIES, 20000)) != 0)
 		return (error);
 	arg->vol[0] = data.pages.audio.port[0].volume;
@@ -192,11 +192,11 @@ cd_atapibus_setvol(cd, arg, flags)
 	struct atapi_cd_mode_data data, mask;
 	int error;
 
-	if ((error = scsipi_mode_sense_big(cd->sc_periph, 0, ATAPI_AUDIO_PAGE,
-	    &data.header, AUDIOPAGESIZE,
+	if ((error = scsipi_mode_sense_big(cd->sc_periph, SMS_DBD,
+	    ATAPI_AUDIO_PAGE, &data.header, AUDIOPAGESIZE,
 	    flags | XS_CTL_DATA_ONSTACK, CDRETRIES, 20000)) != 0)
 		return (error);
-	if ((error = scsipi_mode_sense_big(cd->sc_periph, 0,
+	if ((error = scsipi_mode_sense_big(cd->sc_periph, SMS_DBD,
 	    ATAPI_AUDIO_PAGE_MASK, &mask.header, AUDIOPAGESIZE,
 	    flags | XS_CTL_DATA_ONSTACK, CDRETRIES, 20000)) != 0)
 		return (error);

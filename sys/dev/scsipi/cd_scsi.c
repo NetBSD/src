@@ -1,7 +1,7 @@
-/*	$NetBSD: cd_scsi.c,v 1.28 2003/07/10 18:18:41 martin Exp $	*/
+/*	$NetBSD: cd_scsi.c,v 1.29 2003/09/05 09:04:26 mycroft Exp $	*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd_scsi.c,v 1.28 2003/07/10 18:18:41 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd_scsi.c,v 1.29 2003/09/05 09:04:26 mycroft Exp $");
 
 #include "rnd.h"
 
@@ -167,7 +167,7 @@ cd_scsibus_set_pa_immed(cd, flags)
 	struct scsi_cd_mode_data data;
 	int error;
 
-	if ((error = scsipi_mode_sense(cd->sc_periph, 0, AUDIO_PAGE,
+	if ((error = scsipi_mode_sense(cd->sc_periph, SMS_DBD, AUDIO_PAGE,
 	    &data.header, AUDIOPAGESIZE, flags | XS_CTL_DATA_ONSTACK,
 	    CDRETRIES, 20000)) != 0)
 		return (error);
@@ -188,7 +188,7 @@ cd_scsibus_setchan(cd, p0, p1, p2, p3, flags)
 	struct scsi_cd_mode_data data;
 	int error;
 
-	if ((error = scsipi_mode_sense(cd->sc_periph, 0, AUDIO_PAGE,
+	if ((error = scsipi_mode_sense(cd->sc_periph, SMS_DBD, AUDIO_PAGE,
 	    &data.header, AUDIOPAGESIZE, flags | XS_CTL_DATA_ONSTACK,
 	    CDRETRIES, 20000)) != 0)
 		return (error);
@@ -212,7 +212,7 @@ cd_scsibus_getvol(cd, arg, flags)
 	struct scsi_cd_mode_data data;
 	int error;
 
-	if ((error = scsipi_mode_sense(cd->sc_periph, 0, AUDIO_PAGE,
+	if ((error = scsipi_mode_sense(cd->sc_periph, SMS_DBD, AUDIO_PAGE,
 	    &data.header, AUDIOPAGESIZE,
 	    flags | XS_CTL_DATA_ONSTACK, CDRETRIES, 20000)) != 0)
 		return (error);
@@ -232,7 +232,7 @@ cd_scsibus_setvol(cd, arg, flags)
 	struct scsi_cd_mode_data data;
 	int error;
 
-	if ((error = scsipi_mode_sense(cd->sc_periph, 0, AUDIO_PAGE,
+	if ((error = scsipi_mode_sense(cd->sc_periph, SMS_DBD, AUDIO_PAGE,
 	    &data.header, AUDIOPAGESIZE,
 	    flags | XS_CTL_DATA_ONSTACK, CDRETRIES, 20000)) != 0)
 		return (error);
@@ -264,20 +264,19 @@ int
 cd_scsibus_setblksize(cd)
 	struct cd_softc *cd;
 {
-	struct scsi_cd_mode_data data;
+	struct {
+		struct scsipi_mode_header header;
+		struct scsi_blk_desc blk_desc;
+	} data;
 	int error;
 
-	if ((error = scsipi_mode_sense(cd->sc_periph, 0, 0,
-	    &data.header, sizeof(struct scsipi_mode_header)
-	    + sizeof(struct scsi_blk_desc),
-	    XS_CTL_DATA_ONSTACK, CDRETRIES, 20000)) != 0)
+	if ((error = scsipi_mode_sense(cd->sc_periph, 0, 0, &data.header,
+	    sizeof(data), XS_CTL_DATA_ONSTACK, CDRETRIES,20000)) != 0)
 		return (error);
 
 	_lto3b(2048, data.blk_desc.blklen);
 	data.header.data_length = 0;
 
-	return (scsipi_mode_select(cd->sc_periph, SMS_PF,
-	    &data.header, sizeof(struct scsipi_mode_header)
-	    + sizeof(struct scsi_blk_desc),
-	    XS_CTL_DATA_ONSTACK, CDRETRIES, 20000));
+	return (scsipi_mode_select(cd->sc_periph, SMS_PF, &data.header,
+	    sizeof(data), XS_CTL_DATA_ONSTACK, CDRETRIES, 20000));
 }
