@@ -1,4 +1,4 @@
-.\"$NetBSD: hardware,v 1.3.4.10 2001/07/29 19:40:26 he Exp $
+.\"$NetBSD: hardware,v 1.3.4.11 2001/08/17 14:26:33 tv Exp $
 .
 Currently,
 .Nx*M
@@ -119,9 +119,12 @@ Apple PowerMacintosh (G4 (PCI), G4 (AGP), G4 (Gigabit Ethernet), G4
 (Digital Audio), and G4 Cube)
 .bullet)
 .(Note
-There have been some reports that PowerBook G4 (Titanium) models that have
-BootROM version 4.1.8 do not boot
-.Nx No .
+The PowerBook (FireWire) and PowerBook G4 (Titanium) models that have
+BootROM version 4.1.8 are not supported by \*V.
+You will need to use a kernel from the -current branch of
+.Nx .
+See
+.Lk http://www.netbsd.org/Documentation/kernel
 .Note)
 .(Note
 Some iMac (Bondi Blue) and PowerMacintosh G3 (Blue and
@@ -170,6 +173,13 @@ release of
 .
 .Ss2 Supported devices
 .(bullet -offset indent
+CPU upgrades
+.(bullet -compact
+Most CPU upgrades are supported.  Some older models will not automatically
+enable the L2 cache on a G3 or G4 processor.  See the FAQ entry
+.Lk http://www.netbsd.org/Ports/macppc/faq.html#cpu-upgrade
+.bullet)
+.It
 Ethernet
 .(bullet -compact
 On-board 79C950-based MACE Ethernet interface
@@ -208,6 +218,9 @@ RealTek 8029 Ethernet
 VIA Technologies VT86C926
 .Pq Em ne
 .It
+D-Link DFE-530TX+
+.Pq Em rtk
+.It
 RealTek 8139
 .Pq Em rtk
 .It
@@ -218,7 +231,7 @@ Lite-On PNIC
 .Pq Em tlp
 .It
 D-Link DFE-530TX
-.Pq Em rtk
+.Pq Em vr
 .It
 Many other PCI and Cardbus Ethernet interfaces, such as
 Tulip-compatable
@@ -441,7 +454,11 @@ CPUs
 .Note)
 .Pp
 .It
-AirPort
+AirPort/AirMac 802.11b wireless interface
+.(Note
+This interface is supported in the -current branch of
+.Nx .
+.Note)
 .It
 On-board video capture
 .bullet)

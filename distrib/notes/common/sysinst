@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysinst,v 1.5.4.11 2001/08/16 17:22:29 tv Exp $
+.\"	$NetBSD: sysinst,v 1.5.4.12 2001/08/17 14:26:33 tv Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -442,7 +442,9 @@ Once the system reaches the PROM prompt, you will need to type the correct
 command to boot from your hard drive.
 .\}
 .Nx
-will now boot. If you haven't already done so in sysinst, you should log in as
+will now boot. If you haven't already done so in 
+.Ic sysinst ,
+you should log in as
 .Li root ,
 and set a password for that account. You are also
 advised to edit the file
@@ -819,6 +821,15 @@ If you are
 .Em sure
 that it does, reply affirmatively. Otherwise, the install
 program will automatically reserve space for bad144 tables.
+.\}
+.if r_macppc \{\
+If 
+.Ic sysinst 
+reports 
+.Dl "I can not find any hard disk for use by NetBSD"
+or the drive you wish to install onto is missing, then you should look at 
+the FAQ entry
+.Lk http://www.netbsd.org/Ports/macppc/faq.html#nodisk 
 .\}
 .\}
 .It
