@@ -1,5 +1,7 @@
+/*	$NetBSD: pch.c,v 1.5 1998/02/22 13:33:50 christos Exp $	*/
+#include <sys/cdefs.h>
 #ifndef lint
-static char rcsid[] = "$NetBSD: pch.c,v 1.4 1997/07/29 19:49:35 phil Exp $";
+__RCSID("$NetBSD: pch.c,v 1.5 1998/02/22 13:33:50 christos Exp $");
 #endif /* not lint */
 
 #include "EXTERN.h"
@@ -7,6 +9,9 @@ static char rcsid[] = "$NetBSD: pch.c,v 1.4 1997/07/29 19:49:35 phil Exp $";
 #include "util.h"
 #include "INTERN.h"
 #include "pch.h"
+
+#include <stdlib.h>
+#include <unistd.h>
 
 /* Patch (diff listing) abstract type. */
 
@@ -33,6 +38,7 @@ static LINENUM p_efake = -1;		/* end of faked up lines--don't free */
 static LINENUM p_bfake = -1;		/* beg of faked up lines */
 
 /* Prepare to look for the next patch in the patch file. */
+static void malformed __P((void));
 
 void
 re_patch()
@@ -180,7 +186,7 @@ intuit_diff_type()
     Reg4 long this_line = 0;
     Reg5 long previous_line;
     Reg6 long first_command_line = -1;
-    long fcl_line;
+    long fcl_line = -1;
     Reg7 bool last_line_was_command = FALSE;
     Reg8 bool this_is_a_command = FALSE;
     Reg9 bool stars_last_line = FALSE;
@@ -426,15 +432,15 @@ another_hunk()
 					/* file pos of the current line */
 	LINENUM repl_beginning = 0;	/* index of --- line */
 	Reg4 LINENUM fillcnt = 0;	/* #lines of missing ptrn or repl */
-	Reg5 LINENUM fillsrc;		/* index of first line to copy */
-	Reg6 LINENUM filldst;		/* index of first missing line */
+	Reg5 LINENUM fillsrc = 0;	/* index of first line to copy */
+	Reg6 LINENUM filldst = 0;	/* index of first missing line */
 	bool ptrn_spaces_eaten = FALSE;	/* ptrn was slightly misformed */
 	Reg9 bool repl_could_be_missing = TRUE;
 					/* no + or ! lines in this hunk */
 	bool repl_missing = FALSE;	/* we are now backtracking */
 	long repl_backtrack_position = 0;
 					/* file pos of first repl line */
-	LINENUM repl_patch_line;	/* input line number for same */
+	LINENUM repl_patch_line = 0;	/* input line number for same */
 	Reg7 LINENUM ptrn_copiable = 0;
 					/* # of copiable lines in ptrn */
 
@@ -1220,7 +1226,7 @@ do_ed_script()
     Reg1 char *t;
     Reg2 long beginning_of_this_line;
     Reg3 bool this_line_is_command = FALSE;
-    Reg4 FILE *pipefp;
+    Reg4 FILE *pipefp = NULL;
 
     if (!skip_rest_of_patch) {
 	Unlink(TMPOUTNAME);

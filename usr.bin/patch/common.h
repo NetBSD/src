@@ -1,4 +1,4 @@
-/*	$NetBSD: common.h,v 1.7 1997/11/22 22:27:12 augustss Exp $	*/
+/*	$NetBSD: common.h,v 1.8 1998/02/22 13:33:48 christos Exp $	*/
 
 #define DEBUGGING
 
@@ -158,6 +158,7 @@ EXT char *revision INIT(Nullch);	/* prerequisite revision, if any */
 extern int errno;
 #endif
 
+#ifndef __STDC__
 FILE *popen();
 char *malloc();
 char *realloc();
@@ -173,6 +174,7 @@ char *sprintf();
 int sprintf();
 #endif
 #endif
+#endif
 
 #if !defined(S_ISDIR) && defined(S_IFDIR)
 #define	S_ISDIR(m) (((m) & S_IFMT) == S_IFDIR)
@@ -180,3 +182,6 @@ int sprintf();
 #if !defined(S_ISREG) && defined(S_IFREG)
 #define	S_ISREG(m) (((m) & S_IFMT) == S_IFREG)
 #endif
+
+void my_exit __P((int)) __attribute__((__noreturn__));
+char *basename __P((char *));

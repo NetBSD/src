@@ -1,12 +1,11 @@
-/*	$NetBSD: inp.h,v 1.3 1996/09/19 06:27:10 thorpej Exp $	*/
+/*	$NetBSD: inp.h,v 1.4 1998/02/22 13:33:49 christos Exp $	*/
 
 EXT LINENUM input_lines INIT(0);	/* how long is input file in lines */
 EXT LINENUM last_frozen_line INIT(0);	/* how many input lines have been */
 					/* irretractibly output */
-
-bool rev_in_string();
-void scan_input();
-bool plan_a();			/* returns false if insufficient memory */
-void plan_b();
-char *ifetch();
-
+void re_input __P((void));
+void scan_input __P((char *));
+bool plan_a __P((char *));
+void plan_b __P((char *));
+char *ifetch __P((Reg1 LINENUM, int));
+bool rev_in_string __P((char *));

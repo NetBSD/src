@@ -1,4 +1,4 @@
-/*	$NetBSD: gprof.h,v 1.13 1996/04/01 21:54:06 mark Exp $	*/
+/*	$NetBSD: gprof.h,v 1.14 1998/02/22 12:55:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -268,76 +268,87 @@ struct stringlist	*ktolist;
     /*
      *	function declarations
      */
-/*
-		addarc();
-*/
-int		arccmp();
-arctype		*arclookup();
-/*
-		asgnsamples();
-		printblurb();
-		cyclelink();
-		dfn();
-*/
-bool		dfn_busy();
-/*
-		dfn_findcycle();
-*/
-bool		dfn_numbered();
-/*
-		dfn_post_visit();
-		dfn_pre_visit();
-		dfn_self_cycle();
-*/
-nltype		**doarcs();
-/*
-		done();
-		findcalls();
-		flatprofheader();
-		flatprofline();
-*/
-bool		funcsymbol();
-/*
-		getnfile();
-		getpfile();
-		getstrtab();
-		getsymtab();
-		gettextspace();
-		gprofheader();
-		gprofline();
-		main();
-*/
-unsigned long	max();
-int		membercmp();
-unsigned long	min();
-nltype		*nllookup();
-FILE		*openpfile();
-long		operandlength();
-operandenum	operandmode();
-char		*operandname();
-/*
-		printchildren();
-		printcycle();
-		printgprof();
-		printmembers();
-		printname();
-		printparents();
-		printprof();
-		readsamples();
-*/
-unsigned long	reladdr();
-/*
-		sortchildren();
-		sortmembers();
-		sortparents();
-		tally();
-		timecmp();
-		topcmp();
-*/
-int		totalcmp();
-/*
-		valcmp();
-*/
+/* ${MACHINE}.c */
+void findcall __P((nltype *, unsigned long, unsigned long));
+
+/* arcs.c */
+void addarc __P((nltype *, nltype *, long));
+int topcmp __P((const void *, const void *));
+nltype **doarcs __P((void));
+void dotime __P((void));
+void timepropagate __P((nltype *));
+void cyclelink __P((void));
+bool cycleanalyze __P((void));
+bool descend __P((nltype *, arctype **, arctype **));
+bool addcycle __P((arctype **, arctype **));
+void compresslist __P((void));
+void printsubcycle __P((cltype *));
+void cycletime __P((void));
+void doflags __P((void));
+void inheritflags __P((nltype *));
+
+/* dfn.c */
+void dfn_init __P((void));
+void dfn __P((nltype *));
+void dfn_pre_visit __P((nltype *));
+bool dfn_numbered __P((nltype *));
+bool dfn_busy __P((nltype *));
+void dfn_findcycle __P((nltype *));
+void dfn_self_cycle __P((nltype *));
+void dfn_post_visit __P((nltype *));
+
+/* gprof.c */
+int main __P((int, char **));
+void getnfile __P((void));
+void getstrtab __P((FILE *));
+void getsymtab __P((FILE *));
+void gettextspace __P((FILE *));
+void getpfile __P((char *));
+FILE *openpfile __P((char *));
+void tally __P((struct rawarc *));
+void dumpsum __P((char *));
+int valcmp __P((const void *, const void *));
+void readsamples __P((FILE *));
+void asgnsamples __P((void));
+unsigned long min __P((unsigned long, unsigned long ));
+unsigned long max __P((unsigned long, unsigned long ));
+void alignentries __P((void));
+bool funcsymbol __P((struct nlist *));
+void done __P((void));
+
+/* hertz.c */
+int hertz __P((void));
+
+/* lookup.c */
+nltype *nllookup __P((unsigned long));
+arctype *arclookup __P((nltype *, nltype *));
+
+/* printgprof.c */
+void printprof __P((void));
+int timecmp __P((const void *, const void *));
+void flatprofheader __P((void));
+void flatprofline __P((nltype *));
+void gprofheader __P((void));
+void gprofline __P((nltype *));
+void printgprof __P((nltype **));
+int totalcmp __P((const void *, const void *));
+void printparents __P((nltype *));
+void printchildren __P((nltype *));
+void printname __P((nltype *));
+void sortchildren __P((nltype *));
+void sortparents __P((nltype *));
+void printcycle __P((nltype *));
+void printmembers __P((nltype *));
+void sortmembers __P((nltype *));
+int membercmp __P((const void *, const void *));
+int arccmp __P((const void *, const void *));
+void printblurb __P((char *));
+int namecmp __P((const void *, const void *));
+void printindex __P((void));
+
+/* printlist.c */
+void addlist __P((struct stringlist *, char *));
+bool onlist __P((struct stringlist *, char *));
 
 #define	LESSTHAN	-1
 #define	EQUALTO		0

@@ -1,4 +1,4 @@
-/*	$NetBSD: vax.c,v 1.6 1996/04/20 14:56:37 ragge Exp $	*/
+/*	$NetBSD: vax.c,v 1.7 1998/02/22 12:55:46 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)vax.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: vax.c,v 1.6 1996/04/20 14:56:37 ragge Exp $";
+__RCSID("$NetBSD: vax.c,v 1.7 1998/02/22 12:55:46 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -69,6 +70,12 @@ nltype	indirectchild = {
 	(arctype *) 0 ,			/* list of caller arcs */
 	(arctype *) 0 			/* list of callee arcs */
     };
+
+
+operandenum operandmode __P((unsigned char *));
+char *operandname __P((operandenum));
+long operandlength __P((unsigned char *));
+unsigned long reladdr __P((char *));
 
 operandenum
 operandmode( modep )
@@ -224,6 +231,7 @@ reladdr( modep )
     }
 }
 
+void
 findcall( parentp , p_lowpc , p_highpc )
     nltype		*parentp;
     unsigned long	p_lowpc;
@@ -245,12 +253,12 @@ findcall( parentp , p_lowpc , p_highpc )
     if ( p_highpc > s_highpc ) {
 	p_highpc = s_highpc;
     }
-#   ifdef DEBUG
+#ifdef DEBUG
 	if ( debug & CALLDEBUG ) {
 	    printf( "[findcall] %s: 0x%x to 0x%x\n" ,
 		    parentp -> name , p_lowpc , p_highpc );
 	}
-#   endif DEBUG
+#endif /* DEBUG */
     for (   instructp = textspace + p_lowpc ;
 	    instructp < textspace + p_highpc ;
 	    instructp += length ) {
@@ -260,11 +268,11 @@ findcall( parentp , p_lowpc , p_highpc )
 		 *	maybe a calls, better check it out.
 		 *	skip the count of the number of arguments.
 		 */
-#	    ifdef DEBUG
+#ifdef DEBUG
 		if ( debug & CALLDEBUG ) {
 		    printf( "[findcall]\t0x%x:calls" , instructp - textspace );
 		}
-#	    endif DEBUG
+#endif /* DEBUG */
 	    firstmode = operandmode( (struct modebyte *) (instructp+length) );
 	    switch ( firstmode ) {
 		case literal:
@@ -275,12 +283,12 @@ findcall( parentp , p_lowpc , p_highpc )
 	    }
 	    length += operandlength( (struct modebyte *) (instructp+length) );
 	    mode = operandmode( (struct modebyte *) ( instructp + length ) );
-#	    ifdef DEBUG
+#ifdef DEBUG
 		if ( debug & CALLDEBUG ) {
 		    printf( "\tfirst operand is %s", operandname( firstmode ) );
 		    printf( "\tsecond operand is %s\n" , operandname( mode ) );
 		}
-#	    endif DEBUG
+#endif /* DEBUG */
 	    switch ( mode ) {
 		case regdef:
 		case bytedispdef:
@@ -313,14 +321,14 @@ findcall( parentp , p_lowpc , p_highpc )
 				- (unsigned long) textspace;
 		    if ( destpc >= s_lowpc && destpc <= s_highpc ) {
 			childp = nllookup( destpc );
-#			ifdef DEBUG
+#ifdef DEBUG
 			    if ( debug & CALLDEBUG ) {
 				printf( "[findcall]\tdestpc 0x%x" , destpc );
 				printf( " childp->name %s" , childp -> name );
 				printf( " childp->value 0x%x\n" ,
 					childp -> value );
 			    }
-#			endif DEBUG
+#endif /* DEBUG */
 			if ( childp -> value == destpc ) {
 				/*
 				 *	a hit
@@ -343,11 +351,11 @@ findcall( parentp , p_lowpc , p_highpc )
 			/*
 			 *	something funny going on.
 			 */
-#		    ifdef DEBUG
+#ifdef DEBUG
 			if ( debug & CALLDEBUG ) {
 			    printf( "[findcall]\tbut it's a botch\n" );
 			}
-#		    endif DEBUG
+#endif /* DEBUG */
 		    length = 1;
 		    continue;
 	    }

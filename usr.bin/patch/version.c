@@ -1,5 +1,7 @@
+/*	$NetBSD: version.c,v 1.4 1998/02/22 13:33:51 christos Exp $	*/
+#include <sys/cdefs.h>
 #ifndef lint
-static char rcsid[] = "$NetBSD: version.c,v 1.3 1996/09/19 06:27:18 thorpej Exp $";
+__RCSID("$NetBSD: version.c,v 1.4 1998/02/22 13:33:51 christos Exp $");
 #endif /* not lint */
 
 #include "EXTERN.h"
@@ -8,8 +10,6 @@ static char rcsid[] = "$NetBSD: version.c,v 1.3 1996/09/19 06:27:18 thorpej Exp 
 #include "INTERN.h"
 #include "patchlevel.h"
 #include "version.h"
-
-void my_exit();
 
 /* Print out the version number and die. */
 

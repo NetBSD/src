@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.3 1996/09/19 06:27:09 thorpej Exp $	*/
+/*	$NetBSD: config.h,v 1.4 1998/02/22 13:33:49 christos Exp $	*/
 
 /* config.h
  * This file was produced by running the config.h.SH script, which
@@ -22,8 +22,8 @@
  *	This symbol, if defined, indicates that the program is running under
  *	VMS.  It is currently only set in conjunction with the EUNICE symbol.
  */
-#/*undef	EUNICE		/**/
-#/*undef	VMS		/**/
+#undef	EUNICE
+#undef	VMS
 
 /* CPPSTDIN:
  *	This symbol contains the first part of the string which will invoke
@@ -45,13 +45,13 @@
  *	is up to the package author to declare sprintf correctly based on the
  *	symbol.
  */
-/* #	CHARSPRINTF 	/**/
+#undef	CHARSPRINTF
 
 /* FLEXFILENAMES:
  *	This symbol, if defined, indicates that the system supports filenames
  *	longer than 14 characters.
  */
-#define	FLEXFILENAMES		/**/
+#define	FLEXFILENAMES
 
 /* index:
  *	This preprocessor symbol is defined, along with rindex, if the system
@@ -61,8 +61,10 @@
  *	This preprocessor symbol is defined, along with index, if the system
  *	uses the strchr and strrchr routines instead.
  */
-#/*undef	index strchr	/* cultural */
-#/*undef	rindex strrchr	/*  differences? */
+#if 0
+#define	index strchr	/* cultural */
+#define	rindex strrchr	/* differences? */
+#endif
 
 /* VOIDSIG:
  *	This symbol is defined if this system declares "void (*signal())()" in

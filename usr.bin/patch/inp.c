@@ -1,5 +1,7 @@
+/*	$NetBSD: inp.c,v 1.4 1998/02/22 13:33:49 christos Exp $	*/
+#include <sys/cdefs.h>
 #ifndef lint
-static char rcsid[] = "$NetBSD: inp.c,v 1.3 1996/09/19 06:27:10 thorpej Exp $";
+__RCSID("$NetBSD: inp.c,v 1.4 1998/02/22 13:33:49 christos Exp $");
 #endif /* not lint */
 
 #include "EXTERN.h"
@@ -8,6 +10,10 @@ static char rcsid[] = "$NetBSD: inp.c,v 1.3 1996/09/19 06:27:10 thorpej Exp $";
 #include "pch.h"
 #include "INTERN.h"
 #include "inp.h"
+
+#include <stdlib.h>
+#include <unistd.h>
+#include <fcntl.h>
 
 /* Input-file-with-indexable-lines abstract type */
 
@@ -102,8 +108,9 @@ char *filename;
 	strncpy(s, filename, pathlen);
 
 #define try(f, a1, a2) (Sprintf(s + pathlen, f, a1, a2), stat(s, &cstat) == 0)
+#define try1(f, a1) (Sprintf(s + pathlen, f, a1), stat(s, &cstat) == 0)
 	if (   try("RCS/%s%s", filebase, RCSSUFFIX)
-	    || try("RCS/%s"  , filebase,         0)
+	    || try1("RCS/%s"  , filebase)
 	    || try(    "%s%s", filebase, RCSSUFFIX)) {
 	    Sprintf(buf, CHECKOUT, filename);
 	    Sprintf(lbuf, RCSDIFF, filename);
