@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.87 1999/12/05 11:56:35 ragge Exp $ */
+/*	$NetBSD: trap.c,v 1.88 2000/02/08 03:16:00 mycroft Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -336,6 +336,18 @@ trap(type, psr, pc, tf)
 	pcb = &p->p_addr->u_pcb;
 	p->p_md.md_tf = tf;	/* for ptrace/signals */
 
+#ifdef FPU_DEBUG
+	if (type != T_FPDISABLED && (tf->tf_psr & PSR_EF) != 0) {
+		if (cpuinfo.fpproc != p)
+			panic("FPU enabled but wrong proc (0)");
+		savefpstate(p->p_md.md_fpstate);
+		p->p_md.md_fpumid = -1;
+		cpuinfo.fpproc = NULL;
+		tf->tf_psr &= ~PSR_EF;
+		setpsr(getpsr() & ~PSR_EF);
+	}
+#endif
+
 	switch (type) {
 
 	default:
@@ -391,6 +403,15 @@ badtrap:
 
 	case T_FPDISABLED: {
 		struct fpstate *fs = p->p_md.md_fpstate;
+
+#ifdef FPU_DEBUG
+		if ((tf->tf_psr & PSR_PS) != 0) {
+			printf("FPU fault from kernel mode, pc=%x\n", pc);
+#if DDB
+			Debugger();
+#endif
+		}
+#endif
 
 		if (fs == NULL) {
 			fs = malloc(sizeof *fs, M_SUBPROC, M_WAITOK);
@@ -719,6 +740,18 @@ mem_access_fault(type, ser, v, pc, psr, tf)
 		p = &proc0;
 	sticks = p->p_sticks;
 
+#ifdef FPU_DEBUG
+	if ((tf->tf_psr & PSR_EF) != 0) {
+		if (cpuinfo.fpproc != p)
+			panic("FPU enabled but wrong proc (1)");
+		savefpstate(p->p_md.md_fpstate);
+		p->p_md.md_fpumid = -1;
+		cpuinfo.fpproc = NULL;
+		tf->tf_psr &= ~PSR_EF;
+		setpsr(getpsr() & ~PSR_EF);
+	}
+#endif
+
 	/*
 	 * Figure out what to pass the VM code, and ignore the sva register
 	 * value in v on text faults (text faults are always at pc).
@@ -883,6 +916,18 @@ mem_access_fault4m(type, sfsr, sfva, tf)
 	if ((p = curproc) == NULL)	/* safety check */
 		p = &proc0;
 	sticks = p->p_sticks;
+
+#ifdef FPU_DEBUG
+	if ((tf->tf_psr & PSR_EF) != 0) {
+		if (cpuinfo.fpproc != p)
+			panic("FPU enabled but wrong proc (2)");
+		savefpstate(p->p_md.md_fpstate);
+		p->p_md.md_fpumid = -1;
+		cpuinfo.fpproc = NULL;
+		tf->tf_psr &= ~PSR_EF;
+		setpsr(getpsr() & ~PSR_EF);
+	}
+#endif
 
 	pc = tf->tf_pc;			/* These are needed below */
 	psr = tf->tf_psr;
@@ -1125,6 +1170,18 @@ syscall(code, tf, pc)
 	p->p_md.md_tf = tf;
 	new = code & (SYSCALL_G7RFLAG | SYSCALL_G2RFLAG);
 	code &= ~(SYSCALL_G7RFLAG | SYSCALL_G2RFLAG);
+
+#ifdef FPU_DEBUG
+	if ((tf->tf_psr & PSR_EF) != 0) {
+		if (cpuinfo.fpproc != p)
+			panic("FPU enabled but wrong proc (3)");
+		savefpstate(p->p_md.md_fpstate);
+		p->p_md.md_fpumid = -1;
+		cpuinfo.fpproc = NULL;
+		tf->tf_psr &= ~PSR_EF;
+		setpsr(getpsr() & ~PSR_EF);
+	}
+#endif
 
 	callp = p->p_emul->e_sysent;
 	nsys = p->p_emul->e_nsysent;
