@@ -1,4 +1,4 @@
-/*	$NetBSD: tcds.c,v 1.10 1996/06/05 00:30:56 cgd Exp $	*/
+/*	$NetBSD: tcds.c,v 1.11 1996/06/05 01:32:00 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -209,7 +209,7 @@ tcdsprint(aux, pnp)
 
 	if (pnp)
 		printf("%s at %s", ta->ta_modname, pnp);
-	printf(" slot 0x%lx", ta->ta_slot);
+	printf(" slot %d", ta->ta_slot);
 	return (UNCONF);
 }
 
