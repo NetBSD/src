@@ -1,4 +1,4 @@
-$NetBSD: README,v 1.27 2002/12/09 12:29:17 scw Exp $
+$NetBSD: README,v 1.28 2002/12/09 14:57:47 scw Exp $
 
 acorn26:	Acorn ARM2- and ARM3-based machines (arm, 20000509)
 acorn32:	Acorn computers Ltd. ARM 6/7/SA based machines (arm, 20011118)
@@ -55,7 +55,6 @@ sparc64:	Sun Microsystems UltraSPARC 64 bit machines (sparc64/sparc, 19980620)
 sun2:		Sun m68010 based machines (m68k, 20010328)
 sun3:		Sun m680[23]0 based machines (m68k, 19930625)
 vax:		Digital Equipment Corp. VAX machines (vax, 19940802)
-walnut:		IBM's PowerPC 405GP Reference Board (powerpc, 20010613)
 x68k:		Sharp X68000, X68030 (m68k, 19960505)
 x86_64:		AMD's x86 64 bit architecture on the simics simulator (x86_64, 20010619)
 
