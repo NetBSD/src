@@ -1,4 +1,4 @@
-/*	$NetBSD: ls.c,v 1.33 1998/11/04 18:50:22 christos Exp $	*/
+/*	$NetBSD: ls.c,v 1.34 1998/11/04 18:53:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)ls.c	8.7 (Berkeley) 8/5/94";
 #else
-__RCSID("$NetBSD: ls.c,v 1.33 1998/11/04 18:50:22 christos Exp $");
+__RCSID("$NetBSD: ls.c,v 1.34 1998/11/04 18:53:17 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -535,7 +535,7 @@ display(p, list)
 	d.maxlen = maxlen;
 	if (needstats) {
 		d.btotal = btotal;
-		(void)snprintf(buf, sizeof(buf), "%qu", (long long)maxblock);
+		(void)snprintf(buf, sizeof(buf), "%llu", (long long)maxblock);
 		d.s_block = strlen(buf);
 		d.s_flags = maxflags;
 		d.s_group = maxgroup;
@@ -543,7 +543,7 @@ display(p, list)
 		d.s_inode = strlen(buf);
 		(void)snprintf(buf, sizeof(buf), "%u", maxnlink);
 		d.s_nlink = strlen(buf);
-		(void)snprintf(buf, sizeof(buf), "%qu", (long long)maxsize);
+		(void)snprintf(buf, sizeof(buf), "%llu", (long long)maxsize);
 		d.s_size = strlen(buf);
 		d.s_user = maxuser;
 		if (bcfile) {
