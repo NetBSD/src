@@ -1,10 +1,9 @@
-#	$NetBSD: Makefile,v 1.14 1995/06/20 22:25:51 christos Exp $
-#	@(#)Makefile	8.1 (Berkeley) 6/19/93
+#	$NetBSD: Makefile,v 1.15 1996/08/10 01:28:58 thorpej Exp $
+#	from: @(#)Makefile	8.1 (Berkeley) 6/19/93
 
 PROG=	routed
-SRCS=	af.c if.c input.c main.c output.c startup.c tables.c timer.c \
-	trace.c inet.c
+SRCS=	if.c input.c main.c output.c parms.c radix.c rdisc.c table.c trace.c
 MAN=	routed.8
-#SUBDIR=	query trace
+SUBDIR=	rtquery
 
 .include <bsd.prog.mk>

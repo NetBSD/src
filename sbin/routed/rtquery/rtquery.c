@@ -1,3 +1,5 @@
+/*	$NetBSD: rtquery.c,v 1.2 1996/08/10 01:30:36 thorpej Exp $	*/
+
 /*-
  * Copyright (c) 1982, 1986, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -36,7 +38,11 @@ char copyright[] =
 	The Regents of the University of California.  All rights reserved.\n";
 
 #if !defined(lint) && !defined(sgi)
+#if 0
 static char sccsid[] = "@(#)query.c	8.1 (Berkeley) 6/5/93";
+#else
+static char rcsid[] = "$NetBSD: rtquery.c,v 1.2 1996/08/10 01:30:36 thorpej Exp $";
+#endif
 #endif /* not lint */
 
 #include <sys/param.h>
