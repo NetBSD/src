@@ -1,4 +1,4 @@
-/*	$NetBSD: iso2022.c,v 1.2 2000/12/21 12:17:35 itojun Exp $	*/
+/*	$NetBSD: iso2022.c,v 1.3 2000/12/23 11:53:46 itojun Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: iso2022.c,v 1.2 2000/12/21 12:17:35 itojun Exp $");
+__RCSID("$NetBSD: iso2022.c,v 1.3 2000/12/23 11:53:46 itojun Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -170,10 +170,8 @@ F_LS1R,	F_LS2R,	F_LS3R,	F_SS2,	F_SS3,	F_SS2R,	F_SS3R,	0 };
 	_Iso2022Charset cs;
 
 	/* sanity check to avoid overruns */
-	if (sizeof(_Iso2022State) > sizeof(mbstate_t)) {
-		free(rl);
+	if (sizeof(_Iso2022State) > sizeof(mbstate_t))
 		return (EINVAL);
-	}
 
 	rl->__rune_sgetrune = _ISO2022_sgetrune;
 	rl->__rune_sputrune = _ISO2022_sputrune;
@@ -181,16 +179,12 @@ F_LS1R,	F_LS2R,	F_LS3R,	F_SS2,	F_SS3,	F_SS2R,	F_SS3R,	0 };
 	/*
 	 * parse VARIABLE section.
 	 */
-	if (!rl->__rune_variable) {
-		free(rl);
+	if (!rl->__rune_variable)
 		return (EFTYPE);
-	}
 	v = (char *) rl->__rune_variable;
 
-	if ((ii = malloc(sizeof(_Iso2022Info))) == NULL) {
-		free(rl);
+	if ((ii = malloc(sizeof(_Iso2022Info))) == NULL)
 		return (ENOMEM);
-	}
 	ii->maxcharset = 0;
 	for (i = 0; i < 4; i++) {
 		ii->recommend[i] = NULL;
@@ -236,7 +230,6 @@ F_LS1R,	F_LS2R,	F_LS3R,	F_SS2,	F_SS3,	F_SS2R,	F_SS3R,	0 };
 				cs.type = CS96MULTI;
 			} else {
 parsefail:
-				free(rl);
 				free(ii->recommend[0]);
 				free(ii->recommend[1]);
 				free(ii->recommend[2]);

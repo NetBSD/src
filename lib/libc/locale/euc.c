@@ -1,4 +1,4 @@
-/*	$NetBSD: euc.c,v 1.2 2000/12/21 12:17:35 itojun Exp $	*/
+/*	$NetBSD: euc.c,v 1.3 2000/12/23 11:53:46 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)euc.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: euc.c,v 1.2 2000/12/21 12:17:35 itojun Exp $");
+__RCSID("$NetBSD: euc.c,v 1.3 2000/12/23 11:53:46 itojun Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -87,23 +87,18 @@ _EUC_init(rl)
 	rl->__rune_sgetrune = _EUC_sgetrune;
 	rl->__rune_sputrune = _EUC_sputrune;
 
-	if (!rl->__rune_variable) {
-		free(rl);
+	if (!rl->__rune_variable)
 		return (EFTYPE);
-	}
 	v = (char *) rl->__rune_variable;
 
 	while (*v == ' ' || *v == '\t')
 		++v;
 
-	if ((ei = malloc(sizeof(_EucInfo))) == NULL) {
-		free(rl);
+	if ((ei = malloc(sizeof(_EucInfo))) == NULL)
 		return (ENOMEM);
-	}
 	for (x = 0; x < 4; ++x) {
 		ei->count[x] = (int) strtol(v, &e, 0);
 		if (v == e || !(v = e)) {
-			free(rl);
 			free(ei);
 			return (EFTYPE);
 		}
@@ -111,7 +106,6 @@ _EUC_init(rl)
 			++v;
 		ei->bits[x] = (int) strtol(v, &e, 0);
 		if (v == e || !(v = e)) {
-			free(rl);
 			free(ei);
 			return (EFTYPE);
 		}
@@ -120,7 +114,6 @@ _EUC_init(rl)
 	}
 	ei->mask = (int)strtol(v, &e, 0);
 	if (v == e || !(v = e)) {
-		free(rl);
 		free(ei);
 		return (EFTYPE);
 	}
