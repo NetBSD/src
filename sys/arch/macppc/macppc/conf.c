@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.21 2000/06/09 17:11:30 tsubai Exp $	*/
+/*	$NetBSD: conf.c,v 1.21.2.1 2000/07/24 22:49:43 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -105,6 +105,12 @@ cdev_decl(cd);
 cdev_decl(zs);
 #include "ipfilter.h"
 #include "ch.h"
+cdev_decl(ch);
+#include "audio.h"
+cdev_decl(audio);
+#include "midi.h"
+cdev_decl(midi);
+#include "sequencer.h"
 #include "ss.h"
 #include "uk.h"
 #include "ite.h"
@@ -200,6 +206,9 @@ struct cdevsw cdevsw[] = {
 	cdev_tty_init(NCOM,com),	/* 45: NS16x50 compatible ports */
 	cdev_tty_init(NCZ,cztty),	/* 46: Cyclades-Z serial port */
 	cdev_tty_init(NCY,cy),		/* 47: Cyclom-Y serial port */
+	cdev_audio_init(NAUDIO,audio),	/* 48: generic audio I/O */
+	cdev_midi_init(NMIDI,midi),	/* 49: MIDI I/O */
+	cdev_midi_init(NSEQUENCER,sequencer),	/* 50: sequencer I/O */
 };
 int nchrdev = sizeof cdevsw / sizeof cdevsw[0];
 
@@ -282,6 +291,9 @@ static int chrtoblktbl[] = {
 	/* 45 */	NODEV,
 	/* 46 */	NODEV,
 	/* 47 */	NODEV,
+	/* 48 */	NODEV,
+	/* 49 */	NODEV,
+	/* 50 */	NODEV,
 };
 
 /*
