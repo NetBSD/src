@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.37 1996/06/23 11:52:49 mycroft Exp $
+#	$NetBSD: Makefile.inc,v 1.38 1996/08/09 14:10:45 mrg Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/17/93
 
 # sys sources
@@ -19,8 +19,8 @@ ASM=	accept.o access.o acct.o adjtime.o bind.o chdir.o chflags.o chmod.o \
 	fchflags.o fchmod.o fchown.o fcntl.o flock.o fpathconf.o fstat.o \
 	fstatfs.o fsync.o futimes.o \
 	getdirentries.o getegid.o geteuid.o getfh.o \
-	getfsstat.o getgid.o getgroups.o getitimer.o getpeername.o getpgrp.o \
-	getpid.o getppid.o getpriority.o getrlimit.o getrusage.o \
+	getfsstat.o getgid.o getgroups.o getitimer.o getpeername.o getpgid.o \
+	getpgrp.o getpid.o getppid.o getpriority.o getrlimit.o getrusage.o \
 	getsockname.o getsockopt.o gettimeofday.o getuid.o ioctl.o kill.o \
 	ktrace.o lfs_bmapv.o lfs_markv.o lfs_segclean.o lfs_segwait.o link.o \
 	listen.o lstat.o madvise.o mincore.o mkdir.o mkfifo.o mknod.o mlock.o \
@@ -110,6 +110,7 @@ MLINKS+=chflags.2 fchflags.2
 MLINKS+=chmod.2 fchmod.2
 MLINKS+=chown.2 fchown.2
 MLINKS+=getgid.2 getegid.2
+MLINKS+=getpgrp.2 getpgid.2
 MLINKS+=getitimer.2 setitimer.2
 MLINKS+=getlogin.2 setlogin.2
 MLINKS+=getpid.2 getppid.2
