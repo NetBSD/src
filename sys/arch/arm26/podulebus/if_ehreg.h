@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ehreg.h,v 1.1 2000/12/01 14:28:37 bjh21 Exp $	*/
+/*	$NetBSD: if_ehreg.h,v 1.2 2000/12/16 18:23:14 bjh21 Exp $	*/
 
 /*
  * This file is in the public domain
@@ -19,8 +19,9 @@
 #define EH_CTRL		0x200	/* FAST space */
 
 /* Bits of the control register */
-#define EH_CTRL_IE	0x01	/* Interrupt enable */
-#define EH_CTRL_MEDIA	0x02	/* Media select (0 = 10b2, 1 = 10bT) */
-#define EH_CTRL_LINK	0x02	/* Link beat detect */
+#define EH_CTRL_IE	0x01	/* Interrupt enable (W) */
+#define EH_CTRL_IS	0x01	/* Interrupt status (R) */
+#define EH_CTRL_MEDIA	0x02	/* Media select (0 = 10b2, 1 = 10bT) (W) */
+#define EH_CTRL_LINK	0x02	/* Link beat detect (R) */
 
 #endif
