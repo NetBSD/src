@@ -1,4 +1,4 @@
-/*	$NetBSD: sftp-server.c,v 1.9 2001/04/10 08:08:01 itojun Exp $	*/
+/*	$NetBSD: sftp-server.c,v 1.10 2001/05/15 14:50:53 itojun Exp $	*/
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -57,7 +57,53 @@ struct Stat {
 	Attrib attrib;
 };
 
-static int
+/* prototypes */
+int errno_to_portable(int);
+int flags_from_portable(int);
+Attrib *get_attrib(void);
+void handle_init(void);
+int handle_new(int, char *, int, DIR *);
+int handle_is_ok(int, int);
+int handle_to_string(int, char **, int *);
+int handle_from_string(char *, u_int);
+char *handle_to_name(int);
+DIR *handle_to_dir(int);
+int handle_to_fd(int);
+int handle_close(int);
+int get_handle(void);
+void send_msg(Buffer *);
+void send_status(u_int32_t, u_int32_t);
+void send_data_or_handle(char, u_int32_t, char *, int);
+void send_data(u_int32_t, char *, int);
+void send_handle(u_int32_t, int);
+void send_names(u_int32_t, int, Stat *);
+void send_attrib(u_int32_t, Attrib *);
+void process_init(void);
+void process_open(void);
+void process_close(void);
+void process_read(void);
+void process_write(void);
+void process_do_stat(int);
+void process_stat(void);
+void process_lstat(void);
+void process_fstat(void);
+struct timeval *attrib_to_tv(Attrib *);
+void process_setstat(void);
+void process_fsetstat(void);
+void process_opendir(void);
+char *ls_file(char *, struct stat *);
+void process_readdir(void);
+void process_remove(void);
+void process_mkdir(void);
+void process_rmdir(void);
+void process_realpath(void);
+void process_rename(void);
+void process_readlink(void);
+void process_symlink(void);
+void process_extended(void);
+void process(void);
+
+int
 errno_to_portable(int unixerrno)
 {
 	int ret = 0;
@@ -88,7 +134,7 @@ errno_to_portable(int unixerrno)
 	return ret;
 }
 
-static int
+int
 flags_from_portable(int pflags)
 {
 	int flags = 0;
@@ -110,7 +156,7 @@ flags_from_portable(int pflags)
 	return flags;
 }
 
-static Attrib *
+Attrib *
 get_attrib(void)
 {
 	return decode_attrib(&iqueue);
@@ -134,7 +180,7 @@ enum {
 
 Handle	handles[100];
 
-static void
+void
 handle_init(void)
 {
 	int i;
@@ -143,7 +189,7 @@ handle_init(void)
 		handles[i].use = HANDLE_UNUSED;
 }
 
-static int
+int
 handle_new(int use, char *name, int fd, DIR *dirp)
 {
 	int i;
@@ -160,14 +206,14 @@ handle_new(int use, char *name, int fd, DIR *dirp)
 	return -1;
 }
 
-static int
+int
 handle_is_ok(int i, int type)
 {
 	return i >= 0 && i < sizeof(handles)/sizeof(Handle) &&
 	    handles[i].use == type;
 }
 
-static int
+int
 handle_to_string(int handle, char **stringp, int *hlenp)
 {
 	if (stringp == NULL || hlenp == NULL)
@@ -178,7 +224,7 @@ handle_to_string(int handle, char **stringp, int *hlenp)
 	return 0;
 }
 
-static int
+int
 handle_from_string(char *handle, u_int hlen)
 {
 	int val;
@@ -192,7 +238,7 @@ handle_from_string(char *handle, u_int hlen)
 	return -1;
 }
 
-static char *
+char *
 handle_to_name(int handle)
 {
 	if (handle_is_ok(handle, HANDLE_DIR)||
@@ -201,7 +247,7 @@ handle_to_name(int handle)
 	return NULL;
 }
 
-static DIR *
+DIR *
 handle_to_dir(int handle)
 {
 	if (handle_is_ok(handle, HANDLE_DIR))
@@ -209,7 +255,7 @@ handle_to_dir(int handle)
 	return NULL;
 }
 
-static int
+int
 handle_to_fd(int handle)
 {
 	if (handle_is_ok(handle, HANDLE_FILE))
@@ -217,7 +263,7 @@ handle_to_fd(int handle)
 	return -1;
 }
 
-static int
+int
 handle_close(int handle)
 {
 	int ret = -1;
@@ -234,7 +280,7 @@ handle_close(int handle)
 	return ret;
 }
 
-static int
+int
 get_handle(void)
 {
 	char *handle;
@@ -250,7 +296,7 @@ get_handle(void)
 
 /* send replies */
 
-static void
+void
 send_msg(Buffer *m)
 {
 	int mlen = buffer_len(m);
@@ -260,7 +306,7 @@ send_msg(Buffer *m)
 	buffer_consume(m, mlen);
 }
 
-static void
+void
 send_status(u_int32_t id, u_int32_t error)
 {
 	Buffer msg;
@@ -290,7 +336,7 @@ send_status(u_int32_t id, u_int32_t error)
 	send_msg(&msg);
 	buffer_free(&msg);
 }
-static void
+void
 send_data_or_handle(char type, u_int32_t id, char *data, int dlen)
 {
 	Buffer msg;
@@ -303,14 +349,14 @@ send_data_or_handle(char type, u_int32_t id, char *data, int dlen)
 	buffer_free(&msg);
 }
 
-static void
+void
 send_data(u_int32_t id, char *data, int dlen)
 {
 	TRACE("sent data id %d len %d", id, dlen);
 	send_data_or_handle(SSH2_FXP_DATA, id, data, dlen);
 }
 
-static void
+void
 send_handle(u_int32_t id, int handle)
 {
 	char *string;
@@ -322,7 +368,7 @@ send_handle(u_int32_t id, int handle)
 	xfree(string);
 }
 
-static void
+void
 send_names(u_int32_t id, int count, Stat *stats)
 {
 	Buffer msg;
@@ -342,7 +388,7 @@ send_names(u_int32_t id, int count, Stat *stats)
 	buffer_free(&msg);
 }
 
-static void
+void
 send_attrib(u_int32_t id, Attrib *a)
 {
 	Buffer msg;
@@ -358,7 +404,7 @@ send_attrib(u_int32_t id, Attrib *a)
 
 /* parse incoming */
 
-static void
+void
 process_init(void)
 {
 	Buffer msg;
@@ -372,7 +418,7 @@ process_init(void)
 	buffer_free(&msg);
 }
 
-static void
+void
 process_open(void)
 {
 	u_int32_t id, pflags;
@@ -404,7 +450,7 @@ process_open(void)
 	xfree(name);
 }
 
-static void
+void
 process_close(void)
 {
 	u_int32_t id;
@@ -418,7 +464,7 @@ process_close(void)
 	send_status(id, status);
 }
 
-static void
+void
 process_read(void)
 {
 	char buf[64*1024];
@@ -458,7 +504,7 @@ process_read(void)
 		send_status(id, status);
 }
 
-static void
+void
 process_write(void)
 {
 	u_int32_t id;
@@ -496,7 +542,7 @@ process_write(void)
 	xfree(data);
 }
 
-static void
+void
 process_do_stat(int do_lstat)
 {
 	Attrib a;
@@ -521,19 +567,19 @@ process_do_stat(int do_lstat)
 	xfree(name);
 }
 
-static void
+void
 process_stat(void)
 {
 	process_do_stat(0);
 }
 
-static void
+void
 process_lstat(void)
 {
 	process_do_stat(1);
 }
 
-static void
+void
 process_fstat(void)
 {
 	Attrib a;
@@ -559,7 +605,7 @@ process_fstat(void)
 		send_status(id, status);
 }
 
-static struct timeval *
+struct timeval *
 attrib_to_tv(Attrib *a)
 {
 	static struct timeval tv[2];
@@ -571,7 +617,7 @@ attrib_to_tv(Attrib *a)
 	return tv;
 }
 
-static void
+void
 process_setstat(void)
 {
 	Attrib *a;
@@ -603,7 +649,7 @@ process_setstat(void)
 	xfree(name);
 }
 
-static void
+void
 process_fsetstat(void)
 {
 	Attrib *a;
@@ -638,7 +684,7 @@ process_fsetstat(void)
 	send_status(id, status);
 }
 
-static void
+void
 process_opendir(void)
 {
 	DIR *dirp = NULL;
@@ -670,7 +716,7 @@ process_opendir(void)
 /*
  * drwxr-xr-x    5 markus   markus       1024 Jan 13 18:39 .ssh
  */
-static char *
+char *
 ls_file(char *name, struct stat *st)
 {
 	int sz = 0;
@@ -706,7 +752,7 @@ ls_file(char *name, struct stat *st)
 	return xstrdup(buf);
 }
 
-static void
+void
 process_readdir(void)
 {
 	DIR *dirp;
@@ -760,7 +806,7 @@ process_readdir(void)
 	}
 }
 
-static void
+void
 process_remove(void)
 {
 	char *name;
@@ -777,7 +823,7 @@ process_remove(void)
 	xfree(name);
 }
 
-static void
+void
 process_mkdir(void)
 {
 	Attrib *a;
@@ -797,7 +843,7 @@ process_mkdir(void)
 	xfree(name);
 }
 
-static void
+void
 process_rmdir(void)
 {
 	u_int32_t id;
@@ -813,7 +859,7 @@ process_rmdir(void)
 	xfree(name);
 }
 
-static void
+void
 process_realpath(void)
 {
 	char resolvedname[MAXPATHLEN];
@@ -838,7 +884,7 @@ process_realpath(void)
 	xfree(path);
 }
 
-static void
+void
 process_rename(void)
 {
 	u_int32_t id;
@@ -860,7 +906,7 @@ process_rename(void)
 	xfree(newpath);
 }
 
-static void
+void
 process_readlink(void)
 {
 	u_int32_t id;
@@ -883,7 +929,7 @@ process_readlink(void)
 	xfree(path);
 }
 
-static void
+void
 process_symlink(void)
 {
 	u_int32_t id;
@@ -905,7 +951,7 @@ process_symlink(void)
 	xfree(newpath);
 }
 
-static void
+void
 process_extended(void)
 {
 	u_int32_t id;
@@ -919,7 +965,7 @@ process_extended(void)
 
 /* stolen from ssh-agent */
 
-static void
+void
 process(void)
 {
 	u_int msg_len;

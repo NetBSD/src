@@ -1,4 +1,4 @@
-/*	$NetBSD: dh.c,v 1.4 2001/04/10 08:07:57 itojun Exp $	*/
+/*	$NetBSD: dh.c,v 1.5 2001/05/15 14:50:51 itojun Exp $	*/
 /*
  * Copyright (c) 2000 Niels Provos.  All rights reserved.
  *
@@ -40,7 +40,10 @@ RCSID("$OpenBSD: dh.c,v 1.13 2001/04/04 23:09:17 markus Exp $");
 #include "log.h"
 #include "misc.h"
 
-static int
+/* prototype */
+int parse_prime(int, char *, struct dhgroup *);
+
+int
 parse_prime(int linenum, char *line, struct dhgroup *dhg)
 {
 	char *cp, *arg;

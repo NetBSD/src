@@ -1,4 +1,4 @@
-/*	$NetBSD: canohost.c,v 1.6 2001/04/10 08:07:55 itojun Exp $	*/
+/*	$NetBSD: canohost.c,v 1.7 2001/05/15 14:50:49 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -20,14 +20,17 @@ RCSID("$OpenBSD: canohost.c,v 1.24 2001/04/05 15:48:19 stevesk Exp $");
 #include "log.h"
 #include "canohost.h"
 
-void	check_ip_options(int socket, char *ipaddr);
+char *get_remote_hostname(int, int);
+void	check_ip_options(int, char *);
+int get_sock_port(int, int);
+int get_port(int);
 
 /*
  * Return the canonical name of the host at the other end of the socket. The
  * caller should free the returned string with xfree.
  */
 
-static char *
+char *
 get_remote_hostname(int socket, int reverse_mapping_check)
 {
 	struct sockaddr_storage from;
@@ -243,7 +246,7 @@ get_remote_name_or_ip(u_int utmp_len, int reverse_mapping_check)
 
 /* Returns the local/remote port for the socket. */
 
-static int
+int
 get_sock_port(int sock, int local)
 {
 	struct sockaddr_storage from;
@@ -273,7 +276,7 @@ get_sock_port(int sock, int local)
 
 /* Returns remote/local port number for the current connection. */
 
-static int
+int
 get_port(int local)
 {
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: hostfile.c,v 1.3 2001/04/10 08:07:57 itojun Exp $	*/
+/*	$NetBSD: hostfile.c,v 1.4 2001/05/15 14:50:51 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -45,12 +45,16 @@ RCSID("$OpenBSD: hostfile.c,v 1.25 2001/04/06 22:12:47 stevesk Exp $");
 #include "hostfile.h"
 #include "log.h"
 
+/* prototype */
+int hostfile_read_key(char **, u_int *, Key *);
+int hostfile_check_key(int, Key *, const char *, const char *, int);
+
 /*
  * Parses an RSA (number of bits, e, n) or DSA key from a string.  Moves the
  * pointer over the key.  Skips any whitespace at the beginning and at end.
  */
 
-static int
+int
 hostfile_read_key(char **cpp, u_int *bitsp, Key *ret)
 {
 	char *cp;
@@ -83,7 +87,7 @@ auth_rsa_read_key(char **cpp, u_int *bitsp, BIGNUM * e, BIGNUM * n)
 	return ret;
 }
 
-static int
+int
 hostfile_check_key(int bits, Key *key, const char *host, const char *filename, int linenum)
 {
 	if (key == NULL || key->type != KEY_RSA1 || key->rsa == NULL)

@@ -1,4 +1,4 @@
-/*	$NetBSD: sshconnect1.c,v 1.12 2001/04/17 12:27:37 itojun Exp $	*/
+/*	$NetBSD: sshconnect1.c,v 1.13 2001/05/15 14:50:54 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -56,11 +56,20 @@ u_int supported_authentications = 0;
 extern Options options;
 extern char *__progname;
 
+/* prototypes */
+int try_agent_authentication(void);
+void respond_to_rsa_challenge(BIGNUM *, RSA *);
+int try_rsa_authentication(const char *);
+int try_rhosts_rsa_authentication(const char *, Key *);
+int try_krb4_authentication(void);
+int try_challenge_reponse_authentication(void);
+int try_password_authentication(char *);
+
 /*
  * Checks if the user has an authentication agent, and if so, tries to
  * authenticate using the agent.
  */
-static int
+int
 try_agent_authentication(void)
 {
 	int type;
@@ -160,7 +169,7 @@ try_agent_authentication(void)
  * Computes the proper response to a RSA challenge, and sends the response to
  * the server.
  */
-static void
+void
 respond_to_rsa_challenge(BIGNUM * challenge, RSA * prv)
 {
 	u_char buf[32], response[16];
@@ -205,7 +214,7 @@ respond_to_rsa_challenge(BIGNUM * challenge, RSA * prv)
  * Checks if the user has authentication file, and if so, tries to authenticate
  * the user using it.
  */
-static int
+int
 try_rsa_authentication(const char *authfile)
 {
 	BIGNUM *challenge;
@@ -326,7 +335,7 @@ try_rsa_authentication(const char *authfile)
  * Tries to authenticate the user using combined rhosts or /etc/hosts.equiv
  * authentication and RSA host authentication.
  */
-static int
+int
 try_rhosts_rsa_authentication(const char *local_user, Key * host_key)
 {
 	int type;
@@ -384,7 +393,7 @@ try_rhosts_rsa_authentication(const char *local_user, Key * host_key)
 }
 
 #ifdef KRB4
-static int
+int
 try_krb4_authentication(void)
 {
 	KTEXT_ST auth;		/* Kerberos data */
@@ -823,7 +832,7 @@ send_afs_tokens(void)
  * Tries to authenticate with any string-based challenge/response system.
  * Note that the client code is not tied to s/key or TIS.
  */
-static int
+int
 try_challenge_reponse_authentication(void)
 {
 	int type, i;
@@ -885,7 +894,7 @@ try_challenge_reponse_authentication(void)
 /*
  * Tries to authenticate with plain passwd authentication.
  */
-static int
+int
 try_password_authentication(char *prompt)
 {
 	int type, i, payload_len;

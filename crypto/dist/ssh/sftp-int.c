@@ -1,4 +1,4 @@
-/*	$NetBSD: sftp-int.c,v 1.7 2001/04/10 08:08:01 itojun Exp $	*/
+/*	$NetBSD: sftp-int.c,v 1.8 2001/05/15 14:50:52 itojun Exp $	*/
 /*
  * Copyright (c) 2001 Damien Miller.  All rights reserved.
  *
@@ -50,6 +50,22 @@ int version;
 
 /* Seperators for interactive commands */
 #define WHITESPACE " \t\r\n"
+
+/* prototype */
+void help(void);
+void local_do_shell(const char *);
+void local_do_ls(const char *);
+char *path_append(char *, char *);
+char *make_absolute(char *, char *);
+int infer_path(const char *, char **);
+int parse_getput_flags(const char **, int *);
+int get_pathname(const char **, char **);
+int is_dir(char *);
+int remote_is_dir(int, int, char *path);
+int process_get(int, int, char *, char *, char *, int);
+int process_put(int, int, char *, char *, char *, int);
+int parse_args(const char **, int *, unsigned long *, char **, char **);
+int parse_dispatch_command(int, int, const char *, char **);
 
 /* Commands for interactive mode */
 #define I_CHDIR		1
@@ -112,7 +128,7 @@ const struct CMD cmds[] = {
 	{ NULL,			-1}
 };
 
-static void
+void
 help(void)
 {
 	printf("Available commands:\n");
@@ -144,7 +160,7 @@ help(void)
 	printf("?                             Synonym for help\n");
 }
 
-static void
+void
 local_do_shell(const char *args)
 {
 	int ret, status;
@@ -181,7 +197,7 @@ local_do_shell(const char *args)
 		error("Shell exited with status %d", WEXITSTATUS(status));
 }
 
-static void
+void
 local_do_ls(const char *args)
 {
 	if (!args || !*args)
@@ -197,7 +213,7 @@ local_do_ls(const char *args)
 	}
 }
 
-static char *
+char *
 path_append(char *p1, char *p2)
 {
 	char *ret;
@@ -211,7 +227,7 @@ path_append(char *p1, char *p2)
 	return(ret);
 }
 
-static char *
+char *
 make_absolute(char *p, char *pwd)
 {
 	char *abs;
@@ -225,7 +241,7 @@ make_absolute(char *p, char *pwd)
 		return(p);
 }
 
-static int
+int
 infer_path(const char *p, char **ifp)
 {
 	char *cp;
@@ -245,7 +261,7 @@ infer_path(const char *p, char **ifp)
 	return(0);
 }
 
-static int
+int
 parse_getput_flags(const char **cpp, int *pflag)
 {
 	const char *cp = *cpp;
@@ -268,7 +284,7 @@ parse_getput_flags(const char **cpp, int *pflag)
 	return(0);
 }
 
-static int
+int
 get_pathname(const char **cpp, char **path)
 {
 	const char *cp = *cpp, *end;
@@ -316,7 +332,7 @@ get_pathname(const char **cpp, char **path)
 	return (-1);
 }
 
-static int
+int
 is_dir(char *path)
 {
 	struct stat sb;
@@ -328,7 +344,7 @@ is_dir(char *path)
 	return(sb.st_mode & S_IFDIR);
 }
 
-static int
+int
 remote_is_dir(int in, int out, char *path)
 {
 	Attrib *a;
@@ -341,7 +357,7 @@ remote_is_dir(int in, int out, char *path)
 	return(a->perm & S_IFDIR);
 }
 
-static int
+int
 process_get(int in, int out, char *src, char *dst, char *pwd, int pflag)
 {
 	char *abs_src = NULL;
@@ -418,7 +434,7 @@ out:
 	return(err);
 }
 
-static int
+int
 process_put(int in, int out, char *src, char *dst, char *pwd, int pflag)
 {
 	char *tmp_dst = NULL;
@@ -498,7 +514,7 @@ out:
 	return(err);
 }
 
-static int
+int
 parse_args(const char **cpp, int *pflag, unsigned long *n_arg,
     char **path1, char **path2)
 {
@@ -643,7 +659,7 @@ parse_args(const char **cpp, int *pflag, unsigned long *n_arg,
 	return(cmdnum);
 }
 
-static int
+int
 parse_dispatch_command(int in, int out, const char *cmd, char **pwd)
 {
 	char *path1, *path2, *tmp;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh-keygen.c,v 1.7 2001/04/10 08:08:02 itojun Exp $	*/
+/*	$NetBSD: ssh-keygen.c,v 1.8 2001/05/15 14:50:53 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1994 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -76,7 +76,20 @@ extern char *__progname;
 
 char hostname[MAXHOSTNAMELEN];
 
-static void
+/* prototype */
+void ask_filename(struct passwd *, const char *);
+Key *try_load_pem_key(char *);
+void do_convert_to_ssh2(struct passwd *);
+void buffer_get_bignum_bits(Buffer *, BIGNUM *);
+Key *do_convert_private_ssh2_from_blob(char *, int);
+void do_convert_from_ssh2(struct passwd *);
+void do_print_public(struct passwd *);
+void do_fingerprint(struct passwd *);
+void do_change_passphrase(struct passwd *);
+void do_change_comment(struct passwd *);
+void usage(void);
+
+void
 ask_filename(struct passwd *pw, const char *prompt)
 {
 	char buf[1024];
@@ -109,7 +122,7 @@ ask_filename(struct passwd *pw, const char *prompt)
 	have_identity = 1;
 }
 
-static Key *
+Key *
 try_load_pem_key(char *filename)
 {
 	char *pass;
@@ -130,7 +143,7 @@ try_load_pem_key(char *filename)
 #define SSH_COM_PRIVATE_BEGIN		"---- BEGIN SSH2 ENCRYPTED PRIVATE KEY ----"
 #define	SSH_COM_PRIVATE_KEY_MAGIC	0x3f6ff9eb
 
-static void
+void
 do_convert_to_ssh2(struct passwd *pw)
 {
 	Key *prv;
@@ -162,7 +175,7 @@ do_convert_to_ssh2(struct passwd *pw)
 	exit(0);
 }
 
-static void
+void
 buffer_get_bignum_bits(Buffer *b, BIGNUM *value)
 {
 	int bits = buffer_get_int(b);
@@ -175,7 +188,7 @@ buffer_get_bignum_bits(Buffer *b, BIGNUM *value)
 	buffer_consume(b, bytes);
 }
 
-static Key *
+Key *
 do_convert_private_ssh2_from_blob(char *blob, int blen)
 {
 	Buffer b;
@@ -259,7 +272,7 @@ do_convert_private_ssh2_from_blob(char *blob, int blen)
 	return key;
 }
 
-static void
+void
 do_convert_from_ssh2(struct passwd *pw)
 {
 	Key *k;
@@ -332,7 +345,7 @@ do_convert_from_ssh2(struct passwd *pw)
 	exit(0);
 }
 
-static void
+void
 do_print_public(struct passwd *pw)
 {
 	Key *prv;
@@ -356,7 +369,7 @@ do_print_public(struct passwd *pw)
 	exit(0);
 }
 
-static void
+void
 do_fingerprint(struct passwd *pw)
 {
 	FILE *f;
@@ -453,7 +466,7 @@ do_fingerprint(struct passwd *pw)
  * Perform changing a passphrase.  The argument is the passwd structure
  * for the current user.
  */
-static void
+void
 do_change_passphrase(struct passwd *pw)
 {
 	char *comment;
@@ -530,7 +543,7 @@ do_change_passphrase(struct passwd *pw)
 /*
  * Change the comment of a private key file.
  */
-static void
+void
 do_change_comment(struct passwd *pw)
 {
 	char new_comment[1024], *comment, *passphrase;
@@ -624,7 +637,7 @@ do_change_comment(struct passwd *pw)
 	exit(0);
 }
 
-static void
+void
 usage(void)
 {
 	printf("Usage: %s [-lBpqxXyc] [-t type] [-b bits] [-f file] [-C comment] "

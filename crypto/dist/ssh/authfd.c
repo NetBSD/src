@@ -1,4 +1,4 @@
-/*	$NetBSD: authfd.c,v 1.4 2001/04/10 08:07:55 itojun Exp $	*/
+/*	$NetBSD: authfd.c,v 1.5 2001/05/15 14:50:49 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -61,6 +61,11 @@ int	decode_reply(int type);
 #define agent_failed(x) \
     ((x == SSH_AGENT_FAILURE) || (x == SSH_COM_AGENT2_FAILURE))
 
+/* prototype */
+int ssh_request_reply(AuthenticationConnection *, Buffer *, Buffer *);
+void ssh_encode_identity_rsa1(Buffer *, RSA *, const char *);
+void ssh_encode_identity_ssh2(Buffer *, Key *, const char *);
+
 /* Returns the number of the authentication fd, or -1 if there is none. */
 
 int
@@ -95,7 +100,7 @@ ssh_get_authentication_socket(void)
 	return sock;
 }
 
-static int
+int
 ssh_request_reply(AuthenticationConnection *auth, Buffer *request, Buffer *reply)
 {
 	int l, len;
@@ -418,7 +423,7 @@ ssh_agent_sign(AuthenticationConnection *auth,
 
 /* Encode key for a message to the agent. */
 
-static void
+void
 ssh_encode_identity_rsa1(Buffer *b, RSA *key, const char *comment)
 {
 	buffer_clear(b);
@@ -434,7 +439,7 @@ ssh_encode_identity_rsa1(Buffer *b, RSA *key, const char *comment)
 	buffer_put_string(b, comment, strlen(comment));
 }
 
-static void
+void
 ssh_encode_identity_ssh2(Buffer *b, Key *key, const char *comment)
 {
 	buffer_clear(b);

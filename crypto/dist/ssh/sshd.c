@@ -1,4 +1,4 @@
-/*	$NetBSD: sshd.c,v 1.9 2001/04/10 08:08:04 itojun Exp $	*/
+/*	$NetBSD: sshd.c,v 1.10 2001/05/15 14:50:55 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -177,6 +177,21 @@ int session_id2_len = 0;
 u_int utmp_len = MAXHOSTNAMELEN;
 
 /* Prototypes for various functions defined later in this file. */
+void close_listen_socks(void);
+void sighup_handler(int);
+void sighup_restart(void);
+void sighterm_handler(int);
+void sigterm_handler(int);
+void main_sigchld_handler(int);
+void grace_alarm_handler(int);
+void generate_ephemeral_server_key(void);
+void key_regeneration_alarm(int);
+void sshd_exchange_identification(int, int);
+void destroy_sensitive_data(void);
+char *list_hostkey_types(void);
+Key *get_hostkey_by_type(int);
+int drop_connection(int);
+
 void do_ssh1_kex(void);
 void do_ssh2_kex(void);
 
@@ -186,7 +201,7 @@ void ssh_dhgex_server(Kex *, Buffer *_kexinit, Buffer *);
 /*
  * Close all listening sockets
  */
-static void
+void
 close_listen_socks(void)
 {
 	int i;
@@ -200,7 +215,7 @@ close_listen_socks(void)
  * the effect is to reread the configuration file (and to regenerate
  * the server key).
  */
-static void
+void
 sighup_handler(int sig)
 {
 	received_sighup = 1;
@@ -211,7 +226,7 @@ sighup_handler(int sig)
  * Called from the main program after receiving SIGHUP.
  * Restarts the server.
  */
-static void
+void
 sighup_restart(void)
 {
 	log("Received SIGHUP; restarting.");
@@ -226,7 +241,7 @@ sighup_restart(void)
  * These close the listen socket; not closing it seems to cause "Address
  * already in use" problems on some machines, which is inconvenient.
  */
-static void
+void
 sigterm_handler(int sig)
 {
 	log("Received signal %d; terminating.", sig);
@@ -239,7 +254,7 @@ sigterm_handler(int sig)
  * SIGCHLD handler.  This is called whenever a child dies.  This will then
  * reap any zombies left by exited c.
  */
-static void
+void
 main_sigchld_handler(int sig)
 {
 	int save_errno = errno;
@@ -255,7 +270,7 @@ main_sigchld_handler(int sig)
 /*
  * Signal handler for the alarm after the login grace period has expired.
  */
-static void
+void
 grace_alarm_handler(int sig)
 {
 	/* Close the connection. */
@@ -272,7 +287,7 @@ grace_alarm_handler(int sig)
  * Thus there should be no concurrency control/asynchronous execution
  * problems.
  */
-static void
+void
 generate_ephemeral_server_key(void)
 {
 	u_int32_t rand = 0;
@@ -295,7 +310,7 @@ generate_ephemeral_server_key(void)
 	arc4random_stir();
 }
 
-static void
+void
 key_regeneration_alarm(int sig)
 {
 	int save_errno = errno;
@@ -304,7 +319,7 @@ key_regeneration_alarm(int sig)
 	key_do_regen = 1;
 }
 
-static void
+void
 sshd_exchange_identification(int sock_in, int sock_out)
 {
 	int i, mismatch;
@@ -437,7 +452,7 @@ sshd_exchange_identification(int sock_in, int sock_out)
 
 
 /* Destroy the host and server keys.  They will no longer be needed. */
-static void
+void
 destroy_sensitive_data(void)
 {
 	int i;
@@ -456,7 +471,7 @@ destroy_sensitive_data(void)
 	memset(sensitive_data.ssh1_cookie, 0, SSH_SESSION_KEY_LENGTH);
 }
 
-static char *
+char *
 list_hostkey_types(void)
 {
 	static char buf[1024];
@@ -481,7 +496,7 @@ list_hostkey_types(void)
 	return buf;
 }
 
-static Key *
+Key *
 get_hostkey_by_type(int type)
 {
 	int i;
@@ -499,7 +514,7 @@ get_hostkey_by_type(int type)
  * of (max_startups_rate/100). the probability increases linearly until
  * all connections are dropped for startups > max_startups
  */
-static int
+int
 drop_connection(int startups)
 {
 	double p, r;

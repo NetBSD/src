@@ -1,4 +1,4 @@
-/*	$NetBSD: cli.c,v 1.5 2001/04/10 08:07:56 itojun Exp $	*/
+/*	$NetBSD: cli.c,v 1.6 2001/05/15 14:50:50 itojun Exp $	*/
 /*	$OpenBSD: cli.c,v 1.11 2001/03/06 00:33:04 deraadt Exp $	*/
 
 /*
@@ -48,6 +48,8 @@ int echo_modified;
 
 volatile int intr;
 
+void intrcatch(int);
+
 static int
 cli_open(int from_stdin)
 {
@@ -82,7 +84,7 @@ cli_close(void)
 	return;
 }
 
-static void
+void
 intrcatch(int sig)
 {
 	intr = 1;

@@ -1,4 +1,4 @@
-/*	$NetBSD: serverloop.c,v 1.7 2001/04/10 08:08:00 itojun Exp $	*/
+/*	$NetBSD: serverloop.c,v 1.8 2001/05/15 14:50:52 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -90,9 +90,29 @@ static pid_t child_pid;			/* Pid of the child. */
 static volatile int child_terminated;	/* The child has terminated. */
 static volatile int child_wait_status;	/* Status from wait(). */
 
-void	server_init_dispatch(void);
+/* prototypes */
+void sigchld_handler(int sig);
+void sigchld_handler2(int sig);
+void make_packets_from_stderr_data(void);
+void make_packets_from_stdout_data(void);
+void wait_until_can_do_something(fd_set **, fd_set **, int *, u_int);
+void process_input(fd_set *);
+void process_output(fd_set *);
+void drain_output(void);
+void process_buffered_input_packets(void);
+void server_input_stdin_data(int, int, void *);
+void server_input_eof(int, int, void *);
+void server_input_window_size(int, int, void *);
+Channel * server_request_direct_tcpip(char *);
+Channel * server_request_session(char *);
+void server_input_channel_open(int, int, void *);
+void server_input_global_request(int, int, void *);
+void server_init_dispatch_20(void);
+void server_init_dispatch_13(void);
+void server_init_dispatch_15(void);
+void server_init_dispatch(void);
 
-static void
+void
 sigchld_handler(int sig)
 {
 	int save_errno = errno;
@@ -111,7 +131,7 @@ sigchld_handler(int sig)
 	signal(SIGCHLD, sigchld_handler);
 	errno = save_errno;
 }
-static void
+void
 sigchld_handler2(int sig)
 {
 	int save_errno = errno;
@@ -125,7 +145,7 @@ sigchld_handler2(int sig)
  * Make packets from buffered stderr data, and buffer it for sending
  * to the client.
  */
-static void
+void
 make_packets_from_stderr_data(void)
 {
 	int len;
@@ -154,7 +174,7 @@ make_packets_from_stderr_data(void)
  * Make packets from buffered stdout data, and buffer it for sending to the
  * client.
  */
-static void
+void
 make_packets_from_stdout_data(void)
 {
 	int len;
@@ -185,7 +205,7 @@ make_packets_from_stdout_data(void)
  * have data or can accept data.  Optionally, a maximum time can be specified
  * for the duration of the wait (0 = infinite).
  */
-static void
+void
 wait_until_can_do_something(fd_set **readsetp, fd_set **writesetp, int *maxfdp,
     u_int max_time_milliseconds)
 {
@@ -268,7 +288,7 @@ retry_select:
  * Processes input from the client and the program.  Input data is stored
  * in buffers and processed later.
  */
-static void
+void
 process_input(fd_set * readset)
 {
 	int len;
@@ -324,7 +344,7 @@ process_input(fd_set * readset)
 /*
  * Sends data from internal buffers to client program stdin.
  */
-static void
+void
 process_output(fd_set * writeset)
 {
 	struct termios tio;
@@ -372,7 +392,7 @@ process_output(fd_set * writeset)
  * Wait until all buffered output has been sent to the client.
  * This is used when the program terminates.
  */
-static void
+void
 drain_output(void)
 {
 	/* Send any buffered stdout data to the client. */
@@ -397,7 +417,7 @@ drain_output(void)
 	packet_write_wait();
 }
 
-static void
+void
 process_buffered_input_packets(void)
 {
 	dispatch_run(DISPATCH_NONBLOCK, NULL, compat20 ? xxx_kex : NULL);
@@ -701,7 +721,7 @@ server_loop2(void)
 	channel_stop_listening();
 }
 
-static void
+void
 server_input_stdin_data(int type, int plen, void *ctxt)
 {
 	char *data;
@@ -718,7 +738,7 @@ server_input_stdin_data(int type, int plen, void *ctxt)
 	xfree(data);
 }
 
-static void
+void
 server_input_eof(int type, int plen, void *ctxt)
 {
 	/*
@@ -731,7 +751,7 @@ server_input_eof(int type, int plen, void *ctxt)
 	stdin_eof = 1;
 }
 
-static void
+void
 server_input_window_size(int type, int plen, void *ctxt)
 {
 	int row = packet_get_int();
@@ -745,7 +765,7 @@ server_input_window_size(int type, int plen, void *ctxt)
 		pty_change_window_size(fdin, row, col, xpixel, ypixel);
 }
 
-static Channel *
+Channel *
 server_request_direct_tcpip(char *ctype)
 {
 	int sock, newch;
@@ -773,7 +793,7 @@ server_request_direct_tcpip(char *ctype)
 	return (newch >= 0) ? channel_lookup(newch) : NULL;
 }
 
-static Channel *
+Channel *
 server_request_session(char *ctype)
 {
 	int newch;
@@ -801,7 +821,7 @@ server_request_session(char *ctype)
 	return NULL;
 }
 
-static void
+void
 server_input_channel_open(int type, int plen, void *ctxt)
 {
 	Channel *c = NULL;
@@ -848,7 +868,7 @@ server_input_channel_open(int type, int plen, void *ctxt)
 	xfree(ctype);
 }
 
-static void
+void
 server_input_global_request(int type, int plen, void *ctxt)
 {
 	char *rtype;
@@ -898,7 +918,7 @@ server_input_global_request(int type, int plen, void *ctxt)
 	xfree(rtype);
 }
 
-static void
+void
 server_init_dispatch_20(void)
 {
 	debug("server_init_dispatch_20");
@@ -917,7 +937,7 @@ server_init_dispatch_20(void)
 	/* rekeying */
 	dispatch_set(SSH2_MSG_KEXINIT, &kex_input_kexinit);
 }
-static void
+void
 server_init_dispatch_13(void)
 {
 	debug("server_init_dispatch_13");
@@ -932,7 +952,7 @@ server_init_dispatch_13(void)
 	dispatch_set(SSH_MSG_CHANNEL_OPEN_FAILURE, &channel_input_open_failure);
 	dispatch_set(SSH_MSG_PORT_OPEN, &channel_input_port_open);
 }
-static void
+void
 server_init_dispatch_15(void)
 {
 	server_init_dispatch_13();

@@ -1,4 +1,4 @@
-/*	$NetBSD: packet.c,v 1.8 2001/04/10 08:07:58 itojun Exp $	*/
+/*	$NetBSD: packet.c,v 1.9 2001/05/15 14:50:51 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -124,6 +124,18 @@ int use_ssh2_packet_format = 0;
 
 /* Session key information for Encryption and MAC */
 Newkeys *newkeys[MODE_MAX];
+
+/* prototypes */
+void packet_init_compression(void);
+void packet_encrypt(CipherContext *, void *, void *, u_int);
+void packet_decrypt(CipherContext *, void *, void *, u_int);
+void packet_start1(int);
+void packet_start2(int);
+void packet_send1(void);
+void set_newkeys(int);
+void packet_send2(void);
+int packet_read_poll1(int *);
+int packet_read_poll2(int *);
 
 void
 packet_set_ssh2_format(void)
@@ -279,7 +291,7 @@ packet_get_protocol_flags(void)
  * Level is compression level 1 (fastest) - 9 (slow, best) as in gzip.
  */
 
-static void
+void
 packet_init_compression(void)
 {
 	if (compression_buffer_ready == 1)
@@ -304,7 +316,7 @@ packet_start_compression(int level)
  * known to be a multiple of 8.
  */
 
-static void
+void
 packet_encrypt(CipherContext * cc, void *dest, void *src,
     u_int bytes)
 {
@@ -316,7 +328,7 @@ packet_encrypt(CipherContext * cc, void *dest, void *src,
  * known to be a multiple of 8.
  */
 
-static void
+void
 packet_decrypt(CipherContext *context, void *dest, void *src, u_int bytes)
 {
 	/*
@@ -352,7 +364,7 @@ packet_set_encryption_key(const u_char *key, u_int keylen,
 
 /* Starts constructing a packet to send. */
 
-static void
+void
 packet_start1(int type)
 {
 	char buf[9];
@@ -363,7 +375,7 @@ packet_start1(int type)
 	buffer_append(&outgoing_packet, buf, 9);
 }
 
-static void
+void
 packet_start2(int type)
 {
 	char buf[4+1+1];
@@ -441,7 +453,7 @@ packet_put_bignum2(BIGNUM * value)
  * encrypts the packet before sending.
  */
 
-static void
+void
 packet_send1(void)
 {
 	char buf[8], *cp;
@@ -512,7 +524,7 @@ packet_send1(void)
 	 */
 }
 
-static void
+void
 set_newkeys(int mode)
 {
 	Enc *enc;
@@ -565,7 +577,7 @@ set_newkeys(int mode)
 /*
  * Finalize packet in SSH2 format (compress, mac, encrypt, enqueue)
  */
-static void
+void
 packet_send2(void)
 {
 	static u_int32_t seqnr = 0;
@@ -769,7 +781,7 @@ packet_read_expect(int *payload_len_ptr, int expected_type)
  * 	Check bytes
  */
 
-static int
+int
 packet_read_poll1(int *payload_len_ptr)
 {
 	u_int len, padded_len;
@@ -844,7 +856,7 @@ packet_read_poll1(int *payload_len_ptr)
 	return (u_char) buf[0];
 }
 
-static int
+int
 packet_read_poll2(int *payload_len_ptr)
 {
 	static u_int32_t seqnr = 0;

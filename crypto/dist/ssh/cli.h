@@ -1,4 +1,4 @@
-/*	$NetBSD: cli.h,v 1.3 2001/04/10 08:07:56 itojun Exp $	*/
+/*	$NetBSD: cli.h,v 1.4 2001/05/15 14:50:50 itojun Exp $	*/
 /*	$OpenBSD: cli.h,v 1.4 2001/03/01 03:38:33 deraadt Exp $	*/
 
 /*
@@ -36,8 +36,8 @@
  * of response depending on arg.  Tries to ensure that no other userland
  * buffer is storing the response.
  */
-char*	cli_read_passphrase(char* prompt, int from_stdin, int echo_enable);
-char*	cli_prompt(char* prompt, int echo_enable);
-void	cli_mesg(char* mesg);
+char *	cli_read_passphrase(char*, int, int);
+char *	cli_prompt(char*, int);
+void	cli_mesg(char*);
 
 #endif /* CLI_H */
