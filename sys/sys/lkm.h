@@ -36,7 +36,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: lkm.h,v 1.2 1994/01/08 05:50:42 mycroft Exp $
+ *	$Id: lkm.h,v 1.3 1994/05/05 06:34:18 cgd Exp $
  */
 
 #ifndef _SYS_LKM_H_
@@ -56,7 +56,11 @@ typedef enum loadmod {
 
 
 #define	LKM_VERSION	1		/* version of module loader*/
+#define	MAXLKMNAME	32
+
 /****************************************************************************/
+
+#ifdef KERNEL
 
 /*
  * Loadable system call
@@ -185,7 +189,6 @@ union lkm_all {
 /*
  * Per module information structure
  */
-#define	MAXLKMNAME	32
 struct lkm_table {
 	int		type;
 	unsigned long	size;
@@ -286,9 +289,9 @@ extern int	nosys();
 	}								\
 	return( lkmdispatch( lkmtp, cmd));
 
+#endif /* KERNEL */
 
 /****************************************************************************/
-
 
 /*
  * IOCTL's recognized by /dev/lkm
