@@ -1,4 +1,4 @@
-/*	$NetBSD: bfd.h,v 1.5 1998/05/22 14:08:22 tv Exp $	*/
+/*	$NetBSD: bfd.h,v 1.6 1998/05/25 18:57:24 tv Exp $	*/
 
 /* Main header file for the bfd library -- portable access to object files.
    Copyright 1990, 91, 92, 93, 94, 95, 96, 1997 Free Software Foundation, Inc.
@@ -267,10 +267,6 @@ typedef enum bfd_format {
 /* This flag indicates that the BFD contents are actually cached in
    memory.  If this is set, iostream points to a bfd_in_memory struct.  */
 #define BFD_IN_MEMORY 0x800
-
-/* This tells the BFD that certain structures (such as ar(1) headers) need
-   not be aligned to word or other boundaries in output files. */
-#define BFD_DATA_MISALIGN 0x8000
 
 /* symbols and relocation */
 
