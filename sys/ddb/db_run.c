@@ -24,11 +24,15 @@
  * rights to redistribute these changes.
  */
 /*
- * $Id: db_run.c,v 1.2 1993/05/20 03:39:28 cgd Exp $
+ * $Id: db_run.c,v 1.3 1993/12/15 15:08:11 briggs Exp $
  *
  * HISTORY
  * $Log: db_run.c,v $
- * Revision 1.2  1993/05/20 03:39:28  cgd
+ * Revision 1.3  1993/12/15 15:08:11  briggs
+ * Non i386 machines are polite and don't point at instructions.  They
+ * count 'em.  Just to be nice, access the program counter with a macro...
+ *
+ * Revision 1.2  1993/05/20  03:39:28  cgd
  * add explicit rcs id
  *
  * Revision 1.1.1.1  1993/03/21  09:46:27  cgd
@@ -144,7 +148,7 @@ db_stop_at_pc(is_breakpoint)
 		return (TRUE);	/* stop here */
 	    }
 	} else if (*is_breakpoint) {
-		ddb_regs.tf_eip += 1;
+		PC_REGS(&ddb_regs) += BKPT_SIZE;
 	}
 		
 	*is_breakpoint = FALSE;
