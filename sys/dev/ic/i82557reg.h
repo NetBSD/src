@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557reg.h,v 1.6 2001/05/22 00:27:01 thorpej Exp $	*/
+/*	$NetBSD: i82557reg.h,v 1.7 2001/05/22 01:23:25 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -386,3 +386,13 @@ struct fxp_stats {
 #define FXP_PHY_82555		7
 #define FXP_PHY_DP83840A	10
 #define	FXP_PHY_DP82555B	11
+
+/*
+ * PCI revisions.
+ */
+#define	FXP_REV_82558_A4	4
+#define	FXP_REV_82558_B0	5
+#define	FXP_REV_82559_A0	8
+#define	FXP_REV_82559S_A	9
+#define	FXP_REV_82550		12
+#define	FXP_REV_82550_C		13
