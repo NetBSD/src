@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.42 2001/10/29 01:46:25 perry Exp $
+$NetBSD: UPDATING,v 1.43 2001/10/29 01:53:56 mason Exp $
 
 This file is intended to be a brief introduction to the build
 process and a reference on what to do if something doesn't work.
@@ -11,6 +11,16 @@ automatically generated for them.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20011028:
+        /usr/src/build.sh exists as of 2001.10.19. From the cvs log:
+
+        "Script to automate bootstrapping a build on any host platform.
+         Creates a bmake (rebuilds, if necessary) and invokes that to
+         start the build."
+
+        This should, incidentally, allow 1.5.x hosts to build -current
+        using the new toolchain, on USE_NEW_TOOLCHAIN-enabled platforms.
 
 20011028:
 	src/etc/Makefile now needs install to be able to handle
