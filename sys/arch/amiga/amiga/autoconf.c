@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.57 1997/10/16 21:39:10 is Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.57.2.1 1997/11/14 00:03:35 mellon Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -252,12 +252,11 @@ mbattach(pdp, dp, auxp)
 	config_found(dp, "clock", simple_devprint);
 	if (is_a3000() || is_a4000()) {
 		config_found(dp, "a34kbbc", simple_devprint);
-	} else if (
+	} else
 #ifdef DRACO
-	    !is_draco() &&
+	if (!is_draco())
 #endif
-	    !is_a1200()) {
-
+	{
 		config_found(dp, "a2kbbc", simple_devprint);
 	}
 #ifdef DRACO
