@@ -1,4 +1,4 @@
-/*	$NetBSD: adb.c,v 1.27.4.1 1999/11/21 15:02:46 he Exp $	*/
+/*	$NetBSD: adb.c,v 1.27.4.2 1999/11/29 21:21:20 he Exp $	*/
 
 /*
  * Copyright (C) 1994	Bradley A. Grantham
@@ -156,7 +156,7 @@ adbattach(parent, dev, aux)
 
 	totaladbs = CountADBs();
 
-	printf(": %d targets\n", totaladbs);
+	printf(": %d target%s\n", totaladbs, (totaladbs == 1) ? "" : "s");
 
 #if NAED > 0
 	/* ADB event device for compatibility */
