@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.165 2003/02/01 06:23:43 thorpej Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.166 2003/04/10 19:38:26 manu Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.165 2003/02/01 06:23:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.166 2003/04/10 19:38:26 manu Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -410,7 +410,7 @@ sys_execve(struct lwp *l, void *v, register_t *retval)
 	/* see if we can run it. */
 #ifdef VERIFIED_EXEC
         if ((error = check_exec(p, &pack, 1)) != 0)
-        //if ((error = check_exec(p, &pack, 0)) != 0)
+        /* if ((error = check_exec(p, &pack, 0)) != 0) */
 #else 
         if ((error = check_exec(p, &pack)) != 0)
 #endif
