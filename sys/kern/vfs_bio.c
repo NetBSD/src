@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.119 2004/03/24 15:34:53 atatat Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.120 2004/03/25 08:22:31 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -81,7 +81,7 @@
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.119 2004/03/24 15:34:53 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.120 2004/03/25 08:22:31 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -401,7 +401,7 @@ buf_lotsfree(void)
 
 	/* If there's anything on the AGE list, it should be eaten. */
 
-	if(TAILQ_FIRST(&bufqueues[BQ_AGE]) != NULL)
+	if (TAILQ_FIRST(&bufqueues[BQ_AGE]) != NULL)
 		return 0;
 
 	try = random() & 0x0000000fL;
