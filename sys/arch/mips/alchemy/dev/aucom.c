@@ -1,6 +1,4 @@
-#define	AU1x00_UART	/* XXX */
-
-/*	$NetBSD: aucom.c,v 1.12 2003/11/08 05:10:11 simonb Exp $	*/
+/*	$NetBSD: aucom.c,v 1.13 2003/11/08 05:12:51 simonb Exp $	*/
 /*	 NetBSD: com.c,v 1.222 2003/11/08 02:54:47 simonb Exp	*/
 
 /*-
@@ -77,7 +75,7 @@
  * XXX: hacked to work with almost 16550-alike Alchemy Au1X00 on-chip uarts
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aucom.c,v 1.12 2003/11/08 05:10:11 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aucom.c,v 1.13 2003/11/08 05:12:51 simonb Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -122,11 +120,11 @@ __KERNEL_RCSID(0, "$NetBSD: aucom.c,v 1.12 2003/11/08 05:10:11 simonb Exp $");
 #include <machine/intr.h>
 #include <machine/bus.h>
 
-#ifdef AU1x00_UART
+#ifdef COM_AU1x00
 #include <mips/alchemy/include/aureg.h>
 #include <mips/alchemy/dev/aucomreg.h>
 #include <mips/alchemy/dev/aucomvar.h>
-#else	/* AU1x00_UART */
+#else	/* COM_AU1x00 */
 #include <dev/ic/comreg.h>
 #include <dev/ic/comvar.h>
 #include <dev/ic/ns16550reg.h>
@@ -134,12 +132,12 @@ __KERNEL_RCSID(0, "$NetBSD: aucom.c,v 1.12 2003/11/08 05:10:11 simonb Exp $");
 #ifdef COM_HAYESP
 #include <dev/ic/hayespreg.h>
 #endif
-#endif	/* AU1x00_UART */
+#endif	/* COM_AU1x00 */
 
 #define	com_lcr	com_cfcr
 #include <dev/cons.h>
 
-#ifdef AU1x00_UART
+#ifdef COM_AU1x00
 /* Renamed local functions (from cdev_decl) */
 #define	com_cdevsw	aucom_cdevsw
 #define	comopen		aucomopen
@@ -176,7 +174,7 @@ __KERNEL_RCSID(0, "$NetBSD: aucom.c,v 1.12 2003/11/08 05:10:11 simonb Exp $");
 #define	comdiag			aucomdiag
 #define	comstatus		aucomstatus
 #define	comprobeHAYESP		aucomprobeHAYESP
-#endif	/* AU1x00_UART */
+#endif	/* COM_AU1x00 */
 
 #ifdef COM_HAYESP
 int comprobeHAYESP(bus_space_handle_t hayespioh, struct com_softc *sc);
@@ -524,11 +522,13 @@ com_attach_subr(struct com_softc *sc)
 	/* No ESP; look for other things. */
 	if (sc->sc_type != COM_TYPE_HAYESP) {
 #endif
-#ifdef AU1x00_UART
-	fifo_msg = "Au1X00 UART, working fifo";
-	sc->sc_fifolen = 16;
-	SET(sc->sc_hwflags, COM_HW_FIFO);
-#else /* !AU1x00_UART */
+#ifdef COM_AU1x00
+	if (sc->sc_type == COM_TYPE_AU1x00) {
+		fifo_msg = "Au1X00 UART, working fifo";
+		sc->sc_fifolen = 16;
+		SET(sc->sc_hwflags, COM_HW_FIFO);
+	} else {
+#endif /* !COM_AU1x00 */
 	sc->sc_fifolen = 1;
 	/* look for a NS 16550AF UART with FIFOs */
 	bus_space_write_1(iot, ioh, com_fifo,
@@ -582,7 +582,9 @@ com_attach_subr(struct com_softc *sc)
 			fifo_msg = "ns16550, broken fifo";
 	else
 		fifo_msg = "ns8250 or ns16450, no fifo";
-#endif /* !AU1x00_UART */
+#ifdef COM_AU1x00
+	}
+#endif /* !COM_AU1x00 */
 	bus_space_write_1(iot, ioh, com_fifo, 0);
 	/*
 	 * Some chips will clear down both Tx and Rx FIFOs when zero is
