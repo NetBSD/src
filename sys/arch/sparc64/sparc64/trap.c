@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.44.2.1 2000/07/18 16:23:31 mrg Exp $ */
+/*	$NetBSD: trap.c,v 1.44.2.2 2000/07/31 02:10:22 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -1262,29 +1262,13 @@ data_access_error(type, sfva, sfsr, afva, afsr, tf)
 	 */
 	if ((afsr) != 0 ||
 	    (type == T_DATAFAULT && !(sfsr & SFSR_FV))) {
-#ifdef not4u
-		memerr4m(type, sfsr, sfva, afsr, afva, tf);
-		/*
-		 * If we get here, exit the trap handler and wait for the
-		 * trap to reoccur
-		 */
-		goto out;
-#else
 		printf("data memory error type %x sfsr=%p sfva=%p afsr=%p afva=%p tf=%p\n",
 		       type, sfsr, sfva, afsr, afva, tf);
-		if (tstate & (PSTATE_PRIV<<TSTATE_PSTATE_SHIFT)) {
-#ifdef DDB
-DEBUGGER(type, tf);
-#endif
-			/* User fault -- Berr */
-			trapsignal(p, SIGBUS, (u_long)sfva);
-		} else {
-#ifdef DDB
-			DEBUGGER(type, tf);
-#endif
+		if (tstate & (PSTATE_PRIV<<TSTATE_PSTATE_SHIFT))
 			panic("trap: memory error");
-		}
-#endif
+
+		/* User fault -- Berr */
+		trapsignal(p, SIGBUS, (u_long)sfva);
 	}
 
 	/*
@@ -1643,23 +1627,19 @@ text_access_error(type, pc, sfsr, afva, afsr, tf)
 	tstate = tf->tf_tstate;
 
 	if ((afsr) != 0) {
-#ifdef not4u
-		/* Async text fault??? */
-		memerr4m(type, sfsr, pc, afsr, afva, tf);
-		/*
-		 * If we get here, exit the trap handler and wait for the
-		 * trap to reoccur
-		 */
-		goto out;
-#else
 		extern int trap_trace_dis;
-		trap_trace_dis = 1; /* Disable traptrace for printf */
-		printf("text_access_error: memory error...");
+
+		trap_trace_dis++; /* Disable traptrace for printf */
+		printf("text_access_error: memory error...\n");
 		printf("text memory error type %d sfsr=%p sfva=%p afsr=%p afva=%p tf=%p\n",
 		       type, sfsr, pc, afsr, afva, tf);
-		DEBUGGER(type, tf);
-		panic("text_access_error: memory error");
-#endif
+		trap_trace_dis--; /* Reenable traptrace for printf */
+
+		if (tstate & (PSTATE_PRIV<<TSTATE_PSTATE_SHIFT))
+			panic("text_access_error: kernel memory error");
+
+		/* User fault -- Berr */
+		trapsignal(p, SIGBUS, (u_long)pc);
 	}
 
 	if ((sfsr & SFSR_FV) == 0 || (sfsr & SFSR_FT) == 0)
