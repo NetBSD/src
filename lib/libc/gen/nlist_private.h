@@ -1,4 +1,4 @@
-/*	$NetBSD: nlist_private.h,v 1.1 1996/09/27 22:23:07 cgd Exp $	*/
+/*	$NetBSD: nlist_private.h,v 1.2 1996/09/27 22:41:59 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -30,11 +30,15 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* XXX could optimize */
-#define	NLIST_AOUT
+#ifdef __alpha__
 #define	NLIST_ECOFF
-#define	NLIST_ELF32
 #define	NLIST_ELF64
+#else
+#define	NLIST_AOUT
+/* #define	NLIST_ECOFF */
+/* #define	NLIST_ELF32 */
+/* #define	NLIST_ELF64 */
+#endif
 
 #define	ISLAST(p)	(p->n_un.n_name == 0 || p->n_un.n_name[0] == 0)
 
