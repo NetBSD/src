@@ -1,4 +1,4 @@
-/*	$NetBSD: mlxio.h,v 1.2 2002/08/26 15:27:13 ad Exp $	*/
+/*	$NetBSD: mlxio.h,v 1.3 2002/08/26 17:02:15 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999 Michael Smith
@@ -103,6 +103,6 @@ struct mlx_cinfo {
 #define MLX_REBUILDASYNC	_IOWR('M', 3, struct mlx_rebuild_request)
 #define MLX_REBUILDSTAT		_IOR('M', 4, struct mlx_rebuild_status)
 #define MLX_GET_SYSDRIVE	_IOWR('M', 5, int)
-#define	MLX_GET_CINFO		_IOR('M', 6, struct mlx_cinfo);
+#define	MLX_GET_CINFO		_IOR('M', 6, struct mlx_cinfo)
 
 #endif	/* !_IC_MLXIO_H_ */

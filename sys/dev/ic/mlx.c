@@ -1,4 +1,4 @@
-/*	$NetBSD: mlx.c,v 1.18 2002/08/26 15:27:13 ad Exp $	*/
+/*	$NetBSD: mlx.c,v 1.19 2002/08/26 17:02:15 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mlx.c,v 1.18 2002/08/26 15:27:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mlx.c,v 1.19 2002/08/26 17:02:15 ad Exp $");
 
 #include "ld.h"
 
@@ -888,6 +888,13 @@ mlxioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 				}
 		}
 		return (ENOENT);
+
+	case MLX_GET_CINFO:
+		/*
+		 * Return controller info.
+		 */
+		memcpy(arg, &mlx->mlx_ci, sizeof(mlx->mlx_ci));
+		return (0);
 	}
 
 	switch (cmd) {
