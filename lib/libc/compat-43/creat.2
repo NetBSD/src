@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)creat.2	6.10 (Berkeley) 6/23/91
-.\"	$Id: creat.2,v 1.4 1993/11/25 02:48:32 jtc Exp $
+.\"	$Id: creat.2,v 1.5 1993/12/15 17:36:23 jtc Exp $
 .\"
 .Dd June 23, 1991
 .Dt CREAT 2
@@ -39,6 +39,7 @@
 .Nm creat
 .Nd create a new file
 .Sh SYNOPSIS
+.Fd #include <fcntl.h>
 .Fn creat "char *path" "mode_t mode"
 .Sh DESCRIPTION
 .Bf -symbolic
