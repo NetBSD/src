@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.118.2.7 2004/09/24 10:53:58 skrll Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.118.2.8 2004/10/27 06:24:01 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.118.2.7 2004/09/24 10:53:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.118.2.8 2004/10/27 06:24:01 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1360,7 +1360,7 @@ loop:
 		}
 	}
 #ifdef QUOTA
-	qsync(l, mp);
+	qsync(mp);
 #endif
 	/*
 	 * Write back modified superblock.

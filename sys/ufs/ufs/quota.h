@@ -1,4 +1,4 @@
-/*	$NetBSD: quota.h,v 1.16.2.4 2004/09/21 13:39:22 skrll Exp $	*/
+/*	$NetBSD: quota.h,v 1.16.2.5 2004/10/27 06:24:01 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -193,7 +193,7 @@ void	dqrele __P((struct vnode *, struct dquot *));
 int	dqsync __P((struct vnode *, struct dquot *));
 int	getinoquota __P((struct inode *));
 int	getquota __P((struct mount *, u_long, int, caddr_t));
-int	qsync __P((struct lwp *, struct mount *mp));
+int	qsync __P((struct mount *mp));
 int	quotaoff __P((struct lwp *, struct mount *, int));
 int	quotaon __P((struct lwp *, struct mount *, int, caddr_t));
 int	setquota __P((struct mount *, u_long, int, caddr_t));

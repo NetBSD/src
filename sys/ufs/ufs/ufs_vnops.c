@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.102.2.7 2004/09/24 10:53:58 skrll Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.102.2.8 2004/10/27 06:24:01 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.102.2.7 2004/09/24 10:53:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.102.2.8 2004/10/27 06:24:01 skrll Exp $");
 
 #ifndef _LKM
 #include "opt_quota.h"
@@ -986,7 +986,7 @@ ufs_rename(void *v)
 		if (xp != NULL)
 			vput(tvp);
 		vref(tdvp);	/* compensate for the ref checkpath looses */
-		if ((error = ufs_checkpath(ip, dp, tcnp->cn_cred, tcnp->cn_lwp)) != 0) {
+		if ((error = ufs_checkpath(ip, dp, tcnp->cn_cred)) != 0) {
 			vrele(tdvp);
 			goto out;
 		}
