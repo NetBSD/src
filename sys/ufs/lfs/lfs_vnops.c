@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.112 2003/07/12 16:17:09 yamt Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.113 2003/07/12 16:19:00 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.112 2003/07/12 16:17:09 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.113 2003/07/12 16:19:00 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -307,7 +307,9 @@ lfs_fsync(void *v)
 	 * activity from the pagedaemon.
 	 */
 	if (ap->a_flags & FSYNC_LAZY) {
+		simple_lock(&lfs_subsys_lock);
 		wakeup(&lfs_writer_daemon);
+		simple_unlock(&lfs_subsys_lock);
 		return 0;
 	}
 
@@ -391,28 +393,40 @@ lfs_set_dirop(struct vnode *vp, struct vnode *vp2)
 
 	if (fs->lfs_dirops == 0)
 		lfs_check(vp, LFS_UNUSED_LBN, 0);
-	while (fs->lfs_writer || lfs_dirvcount > LFS_MAX_DIROP) {
-		if (fs->lfs_writer)
-			tsleep(&fs->lfs_dirops, PRIBIO + 1, "lfs_sdirop", 0);
-		if (lfs_dirvcount > LFS_MAX_DIROP && fs->lfs_dirops == 0) {
-			wakeup(&lfs_writer_daemon);
-			preempt(NULL);
-		}
+restart:
+	simple_lock(&fs->lfs_interlock);
+	if (fs->lfs_writer) {
+		ltsleep(&fs->lfs_dirops, (PRIBIO + 1) | PNORELOCK,
+		    "lfs_sdirop", 0, &fs->lfs_interlock);
+		goto restart;
+	}
+	simple_lock(&lfs_subsys_lock);
+	if (lfs_dirvcount > LFS_MAX_DIROP && fs->lfs_dirops == 0) {
+		wakeup(&lfs_writer_daemon);
+		simple_unlock(&lfs_subsys_lock);
+		simple_unlock(&fs->lfs_interlock);
+		preempt(NULL);
+		goto restart;
+	}
 
-		if (lfs_dirvcount > LFS_MAX_DIROP) {
+	if (lfs_dirvcount > LFS_MAX_DIROP) {
+		simple_unlock(&fs->lfs_interlock);
 #ifdef DEBUG_LFS
-			printf("lfs_set_dirop: sleeping with dirops=%d, "
-			       "dirvcount=%d\n", fs->lfs_dirops,
-			       lfs_dirvcount); 
+		printf("lfs_set_dirop: sleeping with dirops=%d, "
+		       "dirvcount=%d\n", fs->lfs_dirops, lfs_dirvcount); 
 #endif
-			if ((error = tsleep(&lfs_dirvcount, PCATCH|PUSER,
-					   "lfs_maxdirop", 0)) != 0) {
-				goto unreserve;
-			}
-		}							
-	}								
+		if ((error = ltsleep(&lfs_dirvcount,
+		    PCATCH | PUSER | PNORELOCK, "lfs_maxdirop", 0,
+		    &lfs_subsys_lock)) != 0) {
+			goto unreserve;
+		}
+		goto restart;
+	}							
+	simple_unlock(&lfs_subsys_lock);
+
 	++fs->lfs_dirops;						
 	fs->lfs_doifile = 1;						
+	simple_unlock(&fs->lfs_interlock);
 
 	/* Hold a reference so SET_ENDOP will be happy */
 	vref(vp);
