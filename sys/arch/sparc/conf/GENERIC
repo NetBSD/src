@@ -1,4 +1,4 @@
-# 	$NetBSD: GENERIC,v 1.90 1999/10/04 19:02:55 hubertf Exp $
+# 	$NetBSD: GENERIC,v 1.91 1999/10/14 16:09:31 phil Exp $
 
 include "arch/sparc/conf/std.sparc"
 
@@ -142,6 +142,7 @@ file-system	PROCFS		# /proc
 file-system	CD9660		# ISO 9660 + Rock Ridge file system
 file-system	UNION		# union file system
 file-system	MSDOSFS		# MS-DOS FAT filesystem(s).
+file-system	CODA		# Coda File System; also needs vcoda (below)
 
 ## File system options.
 options 	NFSSERVER	# Sun NFS-compatible filesystem server
@@ -541,3 +542,6 @@ pseudo-device	pty		32	# pseudo-ttys (for network, etc.)
 ## and generate randomness for some kernel formulae.
 
 pseudo-device	rnd
+
+# a pseudo device needed for Coda	# also needs CODA (above)
+pseudo-device	vcoda		4	# coda minicache <-> venus comm.
