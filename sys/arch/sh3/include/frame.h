@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.1 1999/09/13 10:31:18 itojun Exp $	*/
+/*	$NetBSD: frame.h,v 1.2 2000/09/08 10:15:23 tsubai Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -53,7 +53,7 @@
  */
 struct trapframe {
 	int	tf_trapno;
-	int	dummy;
+	int	tf_ubc;
 	int	tf_spc;
 	int	tf_ssr;
 	int	tf_macl;
