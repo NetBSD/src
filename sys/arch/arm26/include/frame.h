@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.3 2001/01/18 21:48:26 bjh21 Exp $	*/
+/*	$NetBSD: frame.h,v 1.4 2001/01/20 17:14:20 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1999 Ben Harris.
@@ -94,25 +94,6 @@ typedef struct irqframe {
 /* True if we took the interrupt from inside another interrupt handler. */
 /* Non-trivial to check because we handle interrupts in SVC mode. */
 #define CLKF_INTR(frame)	0	/* FIXME */
-
-typedef struct trapframe {
-	register_t tf_r0;
-	register_t tf_r1;
-	register_t tf_r2;
-	register_t tf_r3;
-	register_t tf_r4;
-	register_t tf_r5;
-	register_t tf_r6;
-	register_t tf_r7;
-	register_t tf_r8;
-	register_t tf_r9;
-	register_t tf_r10;
-	register_t tf_r11;
-	register_t tf_r12;
-	register_t tf_r13;
-	register_t tf_r14;
-	register_t tf_r15;
-} trapframe_t;
 
 /*
  * Switch frame
