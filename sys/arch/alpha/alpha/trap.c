@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.42.2.2 1999/06/18 18:02:11 perry Exp $ */
+/* $NetBSD: trap.c,v 1.42.2.3 1999/06/21 19:20:13 cgd Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -64,7 +64,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.42.2.2 1999/06/18 18:02:11 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.42.2.3 1999/06/21 19:20:13 cgd Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -303,6 +303,13 @@ trap(a0, a1, a2, entry, framep)
 		 * user has requested that.
 		 */
 		if (user) {
+#ifdef COMPAT_OSF1
+			extern struct emul emul_osf1;
+
+			/* just punt on OSF/1.  XXX THIS IS EVIL */
+			if (p->p_emul == &emul_osf1) 
+				goto out;
+#endif
 			i = SIGFPE;
 			ucode =  a0;		/* exception summary */
 			break;
@@ -669,6 +676,8 @@ syscall(code, framep)
 	case EJUSTRETURN:
 		break;
 	default:
+		if (p->p_emul->e_errno)
+			error = p->p_emul->e_errno[error];
 		framep->tf_regs[FRAME_V0] = error;
 		framep->tf_regs[FRAME_A3] = 1;
 		break;
