@@ -1,4 +1,4 @@
-/*	$NetBSD: util.h,v 1.32 2004/08/03 23:29:04 thorpej Exp $	*/
+/*	$NetBSD: util.h,v 1.33 2004/11/19 21:39:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995
@@ -59,6 +59,7 @@ struct passwd;
 struct termios;
 struct utmp;
 struct winsize;
+struct sockaddr;
 
 pid_t		forkpty(int *, char *, struct termios *, struct winsize *);
 const char     *getbootfile(void);
@@ -95,6 +96,8 @@ void		pw_prompt(void);
 int		pw_setprefix(const char *);
 int		secure_path(const char *);
 int		snprintb(char *, size_t, const char *, uint64_t);
+int		sockaddr_snprintf(char *, size_t, const char *,
+    const struct sockaddr *);
 int		ttyaction(const char *, const char *, const char *);
 int		ttylock(const char *, int, pid_t *);
 char	       *ttymsg(struct iovec *, int, const char *, int);
