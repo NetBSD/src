@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.14 2002/05/02 15:09:48 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.15 2002/05/09 17:06:01 mason Exp $
 #
 #	etc.sparc64/Makefile.inc -- sparc64-specific etc Makefile targets
 #
@@ -91,8 +91,11 @@ snap_md_post:
 .for f in ofwboot.net
 	cp -p $(DESTDIR)/usr/mdec/$f $(RELEASEDIR)/installation/netboot
 .endfor
-.for f in ofwboot bootblk installboot
+.for f in ofwboot bootblk
 	cp -p $(DESTDIR)/usr/mdec/$f $(RELEASEDIR)/installation/misc
+.endfor
+.for f in installboot
+	cp -p $(DESTDIR)/usr/sbin/$f $(RELEASEDIR)/installation/misc
 .endfor
 
 	# compute checksums
