@@ -1,4 +1,4 @@
-.\" $NetBSD: acpi.4,v 1.5 2002/10/06 11:38:41 dsainty Exp $
+.\" $NetBSD: acpi.4,v 1.6 2003/01/05 20:58:38 jmcneill Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -44,7 +44,14 @@
 .Cd "acpibut*  at acpi?"
 .Cd "acpiec*   at acpi?"
 .Cd "acpilid*  at acpi?"
+.Cd "acpitz*   at acpi?"
+.Cd "com*      at acpi?"
+.Cd "fdc*      at acpi?"
+.Cd "lpt*      at acpi?"
+.Cd "npx*      at acpi?"
+.Cd "pckbc*    at acpi?"
 .Cd "spic*     at acpi?"
+.Cd "wss*      at acpi?"
 .Pp
 .Cd "options   ACPI_PCI_FIXUP=1"
 .Cd "options   ACPI_ACTIVATE_DEV=0"
@@ -69,9 +76,16 @@ inactive devices.  The default is off.
 .Xr acpibut 4 ,
 .Xr acpiec 4 ,
 .Xr acpilid 4 ,
+.Xr acpitz 4 ,
 .Xr apm 4 ,
+.Xr com 4 ,
+.Xr fdc 4 ,
+.Xr lpt 4 ,
+.Xr npx 4 ,
 .Xr pci 4 ,
-.Xr spic 4
+.Xr pckbc 4 ,
+.Xr spic 4 ,
+.Xr wss 4
 .Sh HISTORY
 The
 .Nm
