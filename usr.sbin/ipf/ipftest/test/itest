@@ -1,4 +1,7 @@
 #!/bin/sh
+#
+#	$NetBSD: itest,v 1.4 1998/05/29 21:01:47 veego Exp $
+#
 if [ -f /usr/ucb/touch ] ; then
 	TOUCH=/usr/ucb/touch
 else
