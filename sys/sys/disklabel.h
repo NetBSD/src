@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.27 1994/06/30 20:37:31 cgd Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.28 1994/07/15 21:09:38 cgd Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988 Regents of the University of California.
@@ -340,8 +340,10 @@ struct cpu_disklabel {
 #endif /* i386 */
 
 #if defined(hp300) || defined(mac68k) || defined(vax) || defined(pc532) || \
-    defined(sun3) || defined(sparc) || defined(da30) || defined(pmax)
+    defined(sun3) || defined(sparc) || defined(da30) || defined(pmax) || \
+    defined(alpha)
 struct cpu_disklabel {
+	int	cd_dummy;		/* must have one element. */
 };
 #endif
 
