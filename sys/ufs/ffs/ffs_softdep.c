@@ -918,10 +918,6 @@ softdep_mount(devvp, mp, fs, cred)
 	int needswap = UFS_FSNEEDSWAP(fs);
 #endif
 
-#if 1
-	printf("%s: enabling softupdates\n", fs->fs_fsmnt);
-#endif
-
 	mp->mnt_flag |= MNT_SOFTDEP;
 	/*
 	 * When doing soft updates, the counters in the

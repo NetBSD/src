@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.77.4.1 1999/10/19 12:50:29 fvdl Exp $	*/
+/*	$NetBSD: mount.h,v 1.77.4.2 1999/10/21 19:21:31 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -132,6 +132,7 @@ struct mount {
 	struct statfs	mnt_stat;		/* cache of filesystem stats */
 	qaddr_t		mnt_data;		/* private data */
 	int		mnt_wcnt;		/* count of vfs_busy waiters */
+	struct proc	*mnt_unmounter;		/* who is unmounting */
 };
 
 /*
