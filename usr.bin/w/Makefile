@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2000/05/26 03:10:31 simonb Exp $
+#	$NetBSD: Makefile,v 1.16 2000/09/28 18:20:29 jdolecek Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/6/93
 
 PROG=	w
@@ -7,6 +7,7 @@ MAN=	w.1 uptime.1
 DPADD=	${LIBKVM}
 LDADD=	-lkvm
 LINKS=	${BINDIR}/w ${BINDIR}/uptime
+CPPFLAGS+= -DSUPPORT_FTPD_UTMP
 
 .PATH: ${.CURDIR}/../../bin/ps
 
