@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stat.c,v 1.44 2002/03/16 20:43:57 christos Exp $	 */
+/*	$NetBSD: svr4_stat.c,v 1.45 2002/09/23 05:51:19 simonb Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_stat.c,v 1.44 2002/03/16 20:43:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_stat.c,v 1.45 2002/09/23 05:51:19 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -713,7 +713,6 @@ svr4_sys_utssys(p, v, retval)
 	default:
 		return ENOSYS;
 	}
-	return ENOSYS;
 }
 
 
