@@ -1,4 +1,4 @@
-/* $NetBSD: ioasic.c,v 1.2 1999/12/01 08:39:21 nisimura Exp $ */
+/* $NetBSD: ioasic.c,v 1.3 1999/12/06 11:52:36 simonb Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -82,7 +82,7 @@ static int xine_ioasic_ndevs = ARRAY_SIZEOF(xine_ioasic_devs);
 static struct ioasic_dev kn03_ioasic_devs[] = {
 	{ "lance",	0x0C0000, C(KN03_LANCE_SLOT),	IOASIC_INTR_LANCE, },
 	{ "z8530   ",	0x100000, C(KN03_SCC0_SLOT),	IOASIC_INTR_SCC_0, },
-	{ "z8530   ",	0x180000, C(KN03_SCC0_SLOT),	IOASIC_INTR_SCC_1, },
+	{ "z8530   ",	0x180000, C(KN03_SCC1_SLOT),	IOASIC_INTR_SCC_1, },
 	{ "mc146818",	0x200000, C(-1),		0,		},
 	{ "asc",	0x300000, C(KN03_SCSI_SLOT),	IOASIC_INTR_SCSI, },
 	{ "(TC0)",	0x0,	  C(0),			KN03_INTR_TC_0,	},
