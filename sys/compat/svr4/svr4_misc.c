@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_misc.c,v 1.36 1996/03/30 22:38:02 christos Exp $	 */
+/*	$NetBSD: svr4_misc.c,v 1.36.4.1 1996/06/11 01:12:40 jtc Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -33,7 +33,6 @@
  * SVR4 system calls that are implemented differently in BSD are
  * handled here.
  */
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/namei.h>
@@ -910,8 +909,14 @@ svr4_setinfo(p, st, s)
 
 	if (p) {
 		i.si_pid = p->p_pid;
-		i.si_stime = p->p_ru->ru_stime.tv_sec;
-		i.si_utime = p->p_ru->ru_utime.tv_sec;
+		if (p->p_stat == SZOMB) {
+			i.si_stime = p->p_ru->ru_stime.tv_sec;
+			i.si_utime = p->p_ru->ru_utime.tv_sec;
+		}
+		else {
+			i.si_stime = p->p_stats->p_ru.ru_stime.tv_sec;
+			i.si_utime = p->p_stats->p_ru.ru_utime.tv_sec;
+		}
 	}
 
 	if (WIFEXITED(st)) {
