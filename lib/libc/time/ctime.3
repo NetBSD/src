@@ -1,9 +1,11 @@
-.\"	$NetBSD: ctime.3,v 1.10 1996/01/30 19:54:34 jtc Exp $
+.\"	$NetBSD: ctime.3,v 1.11 1997/04/18 17:32:04 is Exp $
 .TH CTIME 3
 .SH NAME
 asctime, ctime, difftime, gmtime, localtime, mktime \- convert date and time to ASCII
 .SH SYNOPSIS
 .nf
+.B #include <time.h>
+.PP
 .B extern char *tzname[2];
 .PP
 .B void tzset()
@@ -16,8 +18,6 @@ asctime, ctime, difftime, gmtime, localtime, mktime \- convert date and time to 
 .B double difftime(time1, time0)
 .B time_t time1;
 .B time_t time0;
-.PP
-.B #include <time.h>
 .PP
 .B char *asctime(tm)
 .B const struct tm *tm;
