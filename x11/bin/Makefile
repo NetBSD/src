@@ -1,6 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2003/09/11 18:37:08 lukem Exp $
-
-.include <bsd.own.mk>
+#	$NetBSD: Makefile,v 1.2 2003/09/13 07:11:36 lukem Exp $
 
 SUBDIR=	appres bdftopcf bdftruncate beforelight bitmap cxpm dpsexec dpsinfo \
 	editres fc-cache fc-list fslsfonts fstobdf glxgears glxinfo iceauth \
@@ -16,4 +14,3 @@ SUBDIR=	appres bdftopcf bdftruncate beforelight bitmap cxpm dpsexec dpsinfo \
 	xterm xtrap xvidtune xvinfo xwd xwininfo xwud
 
 .include <bsd.subdir.mk>
-.include <bsd.x11.mk>
