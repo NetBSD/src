@@ -1,4 +1,4 @@
-/*	$NetBSD: stp4020.c,v 1.11.2.9 2003/01/03 17:27:42 thorpej Exp $ */
+/*	$NetBSD: stp4020.c,v 1.11.2.10 2003/01/07 20:41:55 martin Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stp4020.c,v 1.11.2.9 2003/01/03 17:27:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stp4020.c,v 1.11.2.10 2003/01/07 20:41:55 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -390,7 +390,7 @@ stp4020attach(parent, self, aux)
 	tag->sparc_write_8 = stp4020_write_8;
 #else
 	tag = sa->sa_bustag;
-#endif
+#endif	/* __FULL_SPARC_BUS_SPACE */
 	sc->sc_bustag = tag;
 
 	/* Set up per-socket static initialization */
@@ -873,6 +873,12 @@ stp4020_chip_mem_map(pch, kind, card_addr, size, pcmhp, offsetp, windowp)
 
 	pcmhp->memt = h->pcmciat;
 	bus_space_subregion(h->pcmciat, h->windows[win].winaddr, card_addr, size, &pcmhp->memh);
+#ifdef SUN4U
+	if ((u_int8_t)pcmhp->memh._asi == ASI_PHYS_NON_CACHED)
+		pcmhp->memh._asi = ASI_PHYS_NON_CACHED_LITTLE;
+	else if ((u_int8_t)pcmhp->memh._asi == ASI_PRIMARY)
+		pcmhp->memh._asi = ASI_PRIMARY_LITTLE;
+#endif
 	pcmhp->size = size;
 	pcmhp->realsize = STP4020_WINDOW_SIZE - card_addr;
 	*offsetp = 0;
@@ -923,6 +929,12 @@ stp4020_chip_io_map(pch, width, offset, size, pcihp, windowp)
 
 	pcihp->iot = h->pcmciat;
 	bus_space_subregion(h->pcmciat, h->windows[STP_WIN_IO].winaddr, offset, size, &pcihp->ioh);
+#ifdef SUN4U
+	if ((u_int8_t)pcihp->ioh._asi == ASI_PHYS_NON_CACHED)
+		pcihp->ioh._asi = ASI_PHYS_NON_CACHED_LITTLE;
+	else if ((u_int8_t)pcihp->ioh._asi == ASI_PRIMARY)
+		pcihp->ioh._asi = ASI_PRIMARY_LITTLE;
+#endif
 	*windowp = 0;
 	return 0;
 }
