@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.7 1994/10/26 08:47:11 cgd Exp $	*/
+/*	$NetBSD: mem.c,v 1.8 1995/04/10 05:57:41 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -59,6 +59,26 @@
 #include <vm/lock.h>
 #include <vm/vm_prot.h>
 #include <vm/pmap.h>
+
+/*ARGSUSED*/
+int
+mmopen(dev, flag, mode)
+	dev_t dev;
+	int flag, mode;
+{
+
+	return (0);
+}
+
+/*ARGSUSED*/
+int
+mmclose(dev, flag, mode)
+	dev_t dev;
+	int flag, mode;
+{
+
+	return (0);
+}
 
 /*ARGSUSED*/
 mmrw(dev, uio, flags)
@@ -147,4 +167,30 @@ mmrw(dev, uio, flags)
 	if (zbuf)
 		free(zbuf, M_TEMP);
 	return (error);
+}
+
+int
+mmmmap(dev, off, prot)
+	dev_t dev;
+	int off, prot;
+{
+	/*
+	 * /dev/mem is the only one that makes sense through this
+	 * interface.  For /dev/kmem any physaddr we return here
+	 * could be transient and hence incorrect or invalid at
+	 * a later time.  /dev/null just doesn't make any sense
+	 * and /dev/zero is a hack that is handled via the default
+	 * pager in mmap().
+	 */
+	if (minor(dev) != 0)
+		return (-1);
+	/*
+	 * Allow access only in RAM.
+	 *
+	 * XXX could be extended to allow access to IO space but must
+	 * be very careful.
+	if ((unsigned)off < lowram || (unsigned)off >= 0xFFFFFFFC)
+		return (-1);
+	 */
+	return (mac68k_btop(off));
 }
