@@ -1,4 +1,4 @@
-/*      $NetBSD: run.c,v 1.5 2002/04/02 18:57:01 christos Exp $       */
+/*      $NetBSD: run.c,v 1.5.2.1 2002/07/29 14:38:48 lukem Exp $       */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -132,6 +132,7 @@ launch_subwin(actionwin, args, win, display)
 	x = -1; /* we inc x before using it */
 
 	command = (char *)malloc(MAXBUF * sizeof(char));
+	command[0] = '\0';
 	for (p = *args; p != NULL; p = *++args) {
 		strcat(command, p);
 		strcat(command, " ");
