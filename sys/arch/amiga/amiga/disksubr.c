@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.23 1996/04/21 21:06:58 veego Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.24 1996/04/29 06:15:32 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -385,7 +385,7 @@ readdisklabel(dev, strat, lp, clp)
 		/*
 		 * store this partitions block number
 		 */
-		clp->pblist[clp->pbindex[i] = cindex++];
+		clp->pblist[clp->pbindex[i] = cindex++] = nextb;
 	}
 	/*
 	 * calulate new checksum.
