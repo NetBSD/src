@@ -1,4 +1,4 @@
-/*	$NetBSD: va-ppc.h,v 1.4 1998/12/02 14:23:03 tsubai Exp $	*/
+/*	$NetBSD: va-ppc.h,v 1.5 2000/02/03 16:16:09 kleink Exp $	*/
 
 /* GNU C varargs support for the PowerPC with V.4 calling sequence */
 
@@ -151,6 +151,9 @@ __extension__ ({							\
 									\
   __ptr;								\
 })))
+
+#define __va_copy(dest, src) \
+  (*(dest) = *(src))
 
 #define va_end(AP)	((void)0)
 
