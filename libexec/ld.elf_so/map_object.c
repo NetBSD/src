@@ -1,4 +1,4 @@
-/*	$NetBSD: map_object.c,v 1.1 1996/12/16 20:38:01 cgd Exp $	*/
+/*	$NetBSD: map_object.c,v 1.2 1996/12/17 03:42:44 jonathan Exp $	*/
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -145,6 +145,13 @@ _rtld_map_object(
 	switch(phdr->p_type) {
 
 	case Elf_pt_load:
+#ifdef __mips__
+	    /* NetBSD/pmax 1.1 elf toolchain peculiarity */
+	    if (nsegs >= 2) {
+		    _rtld_error("%s: too many sections\n", path);
+		    return NULL;
+	    }
+#endif
 	    assert(nsegs < 2);
 	    segs[nsegs] = phdr;
 	    ++nsegs;
