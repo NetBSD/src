@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.35 2000/07/09 20:57:51 pk Exp $ */
+/*	$NetBSD: sbus.c,v 1.36 2000/10/19 12:25:04 mrg Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -658,16 +658,18 @@ sbus_intr_establish(t, pri, level, flags, handler, arg)
 			if (sbus_debug & SDB_INTR) {
 				int64_t intrmap = *ih->ih_map;
 				
-				printf("Found SBUS %lx IRQ as %llx in slot %d\n", 
+				printf("SBUS %lx IRQ as %llx in slot %d\n", 
 				       (long)vec, (long long)intrmap, slot);
-				printf("\tmap addr %p clr addr %p\n", ih->ih_map, ih->ih_clr);
+				printf("\tmap addr %p clr addr %p\n",
+				    ih->ih_map, ih->ih_clr);
 			}
 #endif
 			/* Enable the interrupt */
 			vec |= INTMAP_V;
 			/* Insert IGN */
 			vec |= sc->sc_ign;
-			bus_space_write_8(sc->sc_bustag, ih->ih_map, 0, vec);
+			bus_space_write_8(sc->sc_bustag,
+			    (bus_space_handle_t)ih->ih_map, 0, vec);
 		} else {
 			int64_t *intrptr = &sc->sc_sysio->scsi_int_map;
 			int64_t intrmap = 0;
@@ -681,7 +683,7 @@ sbus_intr_establish(t, pri, level, flags, handler, arg)
 				;
 			if (INTVEC(intrmap) == INTVEC(vec)) {
 				DPRINTF(SDB_INTR,
-				    ("Found OBIO %lx IRQ as %lx in slot %d\n", 
+				    ("OBIO %lx IRQ as %lx in slot %d\n", 
 				    vec, (long)intrmap, i));
 				/* Register the map and clear intr registers */
 				ih->ih_map = &intrptr[i];
@@ -689,7 +691,9 @@ sbus_intr_establish(t, pri, level, flags, handler, arg)
 				ih->ih_clr = &intrptr[i];
 				/* Enable the interrupt */
 				intrmap |= INTMAP_V;
-				bus_space_write_8(sc->sc_bustag, ih->ih_map, 0, (u_long)intrmap);
+				bus_space_write_8(sc->sc_bustag,
+				    (bus_space_handle_t)ih->ih_map, 0,
+				    (u_long)intrmap);
 			} else
 				panic("IRQ not found!");
 		}
