@@ -1,13 +1,9 @@
-#	$NetBSD: Makefile,v 1.6 1999/03/29 11:40:36 kleink Exp $
+#	$NetBSD: Makefile,v 1.7 2001/01/09 03:13:40 lukem Exp $
 #
 # This is the Makefile for Taylor UUCP
 
-SUBDIR=	libunix libuucp libuuconf \
+SUBDIR=	libunix libuucp libuuconf doc .WAIT \
 	cu uuchk uucico uuconv uucp uulog uuname uupick uusched \
-	uustat uuto uux uuxqt doc
-
-all-cu all-uuchk all-uucico all-uuconv all-uucp all-uulog all-uuname \
-all-uupick all-uusched all-uustat all-uuto all-uux all-uuxqt: \
-	all-libunix all-libuucp all-libuuconf
+	uustat uuto uux uuxqt
 
 .include <bsd.subdir.mk>

@@ -30,8 +30,6 @@
 # OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-SUBDIR=	common omapip minires server client relay dhcpctl
-
-all-server all-client all-relay: all-common
+SUBDIR= dhcpctl minires omapip common .WAIT server client relay
 
 .include <bsd.subdir.mk>
