@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcmips,v 1.75 2002/03/05 16:16:03 simonb Exp $
+#	$NetBSD: files.hpcmips,v 1.76 2002/03/06 15:00:04 uch Exp $
 
 # maxpartitions must be first item in files.${ARCH}.
 maxpartitions 8
@@ -180,7 +180,7 @@ file arch/hpcmips/dev/mq200machdep.c		mqvideo
 attach mqvideo at pci with mqvideo_pci
 file arch/hpcmips/pci/mq200_pci.c		mqvideo_pci
 
-device ite8181video: hpcfbif
+device ite8181video: hpcfbif, hpccmap
 attach ite8181video at vripif with ite8181video_vrip
 file arch/hpcmips/vr/ite8181_vrip.c		ite8181video_vrip
 file arch/hpcmips/dev/ite8181.c			ite8181video
