@@ -30,6 +30,7 @@ port-pc532
 port-pmax
 port-powerpc
 port-prep
+port-sgimips
 port-sh3
 port-sparc
 port-sparc64
