@@ -1,10 +1,10 @@
-# 	$NetBSD: GENERIC,v 1.13 2000/09/24 15:59:35 jdolecek Exp $
+# 	$NetBSD: GENERIC,v 1.14 2000/10/04 16:35:43 tsutsui Exp $
 
 #	news68k GENERIC config file;
 #
 include		"arch/news68k/conf/std.news68k"
 
-#ident 		"GENERIC-$Revision: 1.13 $"
+#ident 		"GENERIC-$Revision: 1.14 $"
 
 maxusers	8
 
@@ -106,8 +106,8 @@ hb0	at mainbus0 systype NEWS1700
 hb1	at mainbus0 systype NEWS1200
 
 # MK48T02 realtime clock
-clock0	at hb0 addr 0xe0d807f8 ipl 6			# news1700
-clock0	at hb1 addr 0xe14207f8 ipl 6			# news1200
+clock0	at hb0 addr 0xe0d80000 ipl 6			# news1700
+clock0	at hb1 addr 0xe1420000 ipl 6			# news1200
 
 # onboard LANCE ethernet
 le0	at hb0 addr 0xe0f00000 ipl 4			# news1700

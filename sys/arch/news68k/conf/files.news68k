@@ -1,4 +1,4 @@
-#	$NetBSD: files.news68k,v 1.8 2000/10/04 16:26:43 tsutsui Exp $
+#	$NetBSD: files.news68k,v 1.9 2000/10/04 16:35:43 tsutsui Exp $
 
 #	NEWS68K-specific configuration info
 
@@ -47,7 +47,7 @@ file arch/news68k/dev/hb.c			hb
 #file arch/news68k/dev/iop.c			iop
 
 # MK48T02 RTC and NVRAM
-device clock
+device clock: mk48txx
 attach clock at hb with clock_hb
 file arch/news68k/dev/clock_hb.c		clock_hb
 
