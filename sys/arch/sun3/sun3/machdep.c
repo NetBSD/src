@@ -38,7 +38,7 @@
  *	from: Utah Hdr: machdep.c 1.63 91/04/24
  *	from: @(#)machdep.c	7.16 (Berkeley) 6/3/91
  *	machdep.c,v 1.3 1993/07/07 07:20:03 cgd Exp
- *	$Id: machdep.c,v 1.27 1994/05/09 00:47:21 gwr Exp $
+ *	$Id: machdep.c,v 1.28 1994/05/10 05:26:16 gwr Exp $
  */
 
 #include <sys/param.h>
@@ -56,14 +56,26 @@
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/msgbuf.h>
+#include <sys/ioctl.h>
+#include <sys/tty.h>
+#include <sys/mount.h>
 #include <sys/user.h>
 #include <sys/exec.h>
+#include <sys/sysctl.h>
+#ifdef SYSVMSG
+#include <sys/msg.h>
+#endif
+#ifdef SYSVSEM
+#include <sys/sem.h>
+#endif
 #ifdef SYSVSHM
 #include <sys/shm.h>
 #endif
 #ifdef COMPAT_HPUX
 #include <../../hp300/hpux/hpux.h>
 #endif
+
+#include <dev/cons.h>
 
 #include <vm/vm.h>
 #include <vm/vm_map.h>
@@ -107,6 +119,14 @@ int *nofault;
 
 extern vm_offset_t u_area_va;
 caddr_t allocsys __P((caddr_t));
+  
+/*
+ * Info for CTL_HW
+ */
+char	machine[] = "sun3";		/* cpu "architecture" */
+char	cpu_model[120];
+extern	char version[];
+
 
 void identifycpu()
 {
@@ -115,9 +135,12 @@ void identifycpu()
      * and i believe i will need the info to deal with some VAC, and awful
      * framebuffer placement problems.  could be moved later.
      */
+	strcpy(cpu_model, "Sun 3/");
 
-    printf("Model: Sun 3/%s\n", cpu_string);
     /* should eventually include whether it has a VAC, mc6888x version, etc */
+	strcat(cpu_model, cpu_string);
+
+	printf("Model: %s\n", cpu_model);
 }
 
 void save_u_area(pcbp, va)
@@ -275,6 +298,18 @@ allocsys(v)
 #ifdef SYSVSHM
 	valloc(shmsegs, struct shmid_ds, shminfo.shmmni);
 #endif
+#ifdef SYSVSEM
+	valloc(sema, struct semid_ds, seminfo.semmni);
+	valloc(sem, struct sem, seminfo.semmns);
+	/* This is pretty disgusting! */
+	valloc(semu, int, (seminfo.semmnu * seminfo.semusz) / sizeof(int));
+#endif
+#ifdef SYSVMSG
+	valloc(msgpool, char, msginfo.msgmax);
+	valloc(msgmaps, struct msgmap, msginfo.msgseg);
+	valloc(msghdrs, struct msg, msginfo.msgtql);
+	valloc(msqids, struct msqid_ds, msginfo.msgmni);
+#endif
 
 	/*
 	 * Determine how many buffers to allocate (enough to
@@ -322,6 +357,38 @@ void consinit()
 void cpu_reset()
 {
     sun3_rom_reboot();
+}
+
+/*
+ * machine dependent system variables.
+ */
+cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
+	int *name;
+	u_int namelen;
+	void *oldp;
+	size_t *oldlenp;
+	void *newp;
+	size_t newlen;
+	struct proc *p;
+{
+	dev_t consdev;
+
+	/* all sysctl names at this level are terminal */
+	if (namelen != 1)
+		return (ENOTDIR);		/* overloaded */
+
+	switch (name[0]) {
+	case CPU_CONSDEV:
+		if (cn_tab != NULL)
+			consdev = cn_tab->cn_dev;
+		else
+			consdev = NODEV;
+		return (sysctl_rdstruct(oldp, oldlenp, newp, &consdev,
+		    sizeof consdev));
+	default:
+		return (EOPNOTSUPP);
+	}
+	/* NOTREACHED */
 }
 
 #ifdef COMPAT_HPUX
@@ -494,7 +561,7 @@ sendsig(catcher, sig, mask, code)
 
 	frame = (struct frame *)p->p_md.md_regs;
 	ft = frame->f_format;
-	oonstack = ps->ps_sigstk.ss_onstack;
+	oonstack = ps->ps_sigstk.ss_flags & SA_ONSTACK;
 
 #ifdef COMPAT_SUNOS
 	if (p->p_emul == EMUL_SUNOS)
@@ -531,9 +598,11 @@ sendsig(catcher, sig, mask, code)
 	else
 #endif
 	fsize = sizeof(struct sigframe);
-	if (!ps->ps_sigstk.ss_onstack && (ps->ps_sigonstack & sigmask(sig))) {
-		fp = (struct sigframe *)(ps->ps_sigstk.ss_sp - fsize);
-		ps->ps_sigstk.ss_onstack = 1;
+	if ((ps->ps_flags & SAS_ALTSTACK) && !oonstack &&
+	    (ps->ps_sigonstack & sigmask(sig))) {
+		fp = (struct sigframe *)(ps->ps_sigstk.ss_base +
+					 ps->ps_sigstk.ss_size - fsize);
+		ps->ps_sigstk.ss_flags |= SA_ONSTACK;
 	} else
 		fp = (struct sigframe *)(frame->f_regs[SP] - fsize);
 	if ((unsigned)fp <= USRSTACK - ctob(p->p_vmspace->vm_ssize)) 
@@ -699,7 +768,7 @@ sun_sendsig(catcher, sig, mask, code)
 
 	frame = (struct frame *)p->p_md.md_regs;
 	ft = frame->f_format;
-	oonstack = ps->ps_sigstk.ss_onstack;
+	oonstack = ps->ps_sigstk.ss_flags & SA_ONSTACK;
 	/*
 	 * Allocate and validate space for the signal handler
 	 * context. Note that if the stack is in P0 space, the
@@ -708,9 +777,11 @@ sun_sendsig(catcher, sig, mask, code)
 	 * the space with a `brk'.
 	 */
 	fsize = sizeof(struct sun_sigframe);
-	if (!ps->ps_sigstk.ss_onstack && (ps->ps_sigonstack & sigmask(sig))) {
-		fp = (struct sun_sigframe *)(ps->ps_sigstk.ss_sp - fsize);
-		ps->ps_sigstk.ss_onstack = 1;
+	if ((ps->ps_flags & SAS_ALTSTACK) && !oonstack &&
+	    (ps->ps_sigonstack & sigmask(sig))) {
+		fp = (struct sun_sigframe *)(ps->ps_sigstk.ss_base +
+					 ps->ps_sigstk.ss_size - fsize);
+		ps->ps_sigstk.ss_flags |= SA_ONSTACK;
 	} else
 		fp = (struct sun_sigframe *)(frame->f_regs[SP] - fsize);
 	if ((unsigned)fp <= USRSTACK - ctob(p->p_vmspace->vm_ssize)) 
@@ -833,7 +904,10 @@ sigreturn(p, uap, retval)
 		    (scp = hscp->hsc_realsc) == 0 ||
 		    useracc((caddr_t)scp, sizeof (*scp), B_WRITE) == 0 ||
 		    copyin((caddr_t)scp, (caddr_t)&tsigc, sizeof tsigc)) {
-			p->p_sigacts->ps_sigstk.ss_onstack = hscp->hsc_onstack & 01;
+			if (hscp->hsc_onstack & 01)
+				p->p_sigacts->ps_sigstk.ss_flags |= SA_ONSTACK;
+			else
+				p->p_sigacts->ps_sigstk.ss_flags &= ~SA_ONSTACK;
 			p->p_sigmask = hscp->hsc_mask &~ sigcantmask;
 			frame = (struct frame *) p->p_md.md_regs;
 			frame->f_regs[SP] = hscp->hsc_sp;
@@ -865,7 +939,10 @@ sigreturn(p, uap, retval)
 	/*
 	 * Restore the user supplied information
 	 */
-	p->p_sigacts->ps_sigstk.ss_onstack = scp->sc_onstack & 01;
+	if (scp->sc_onstack & 01)
+		p->p_sigacts->ps_sigstk.ss_flags |= SA_ONSTACK;
+	else
+		p->p_sigacts->ps_sigstk.ss_flags &= ~SA_ONSTACK;
 	p->p_sigmask = scp->sc_mask &~ sigcantmask;
 	frame = (struct frame *) p->p_md.md_regs;
 	frame->f_regs[SP] = scp->sc_sp;
