@@ -1,4 +1,4 @@
-/*	$NetBSD: fixunsdfsi.S,v 1.1 1998/09/11 04:56:22 eeh Exp $	*/
+/*	$NetBSD: fixunsdfsi.S,v 1.2 1999/04/04 21:01:39 eeh Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,11 +40,13 @@
  */
 
 #include <machine/asm.h>
+#define _LOCORE
+#include <machine/frame.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 	.asciz "@(#)fixunsdfsi.s	8.1 (Berkeley) 6/4/93"
 #else
-	RCSID("$NetBSD: fixunsdfsi.S,v 1.1 1998/09/11 04:56:22 eeh Exp $")
+	RCSID("$NetBSD: fixunsdfsi.S,v 1.2 1999/04/04 21:01:39 eeh Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -93,5 +95,43 @@ ENTRY(__fixunsdfsi)
 1:
 	st	%f0, [%sp + 64 + BIAS]	! return result
 	ld	[%sp + 64 + BIAS], %o0
+	retl
+	add	%sp, 8, %sp
+
+/*
+ * Same as above but to unsigned long
+ */
+ENTRY(__dtoul)
+	sub	%sp, 8, %sp
+	stx	%o0, [%sp + 64 + BIAS]	! get argument into fpu reg
+	ldd	[%sp + 64 + BIAS], %f0
+#ifdef PIC
+	PICCY_SET(Lbig, %g1, %o0)
+	ldd	[%g1], %f2
+#else
+	sethi	%hi(Lbig), %g1
+	ldd	[%g1 + %lo(Lbig)], %f2
+#endif
+	fcmped	%f0, %f2		! d < 2^31, or NaN, or -Inf?
+	nop				! (fpop2 delay)
+	fbul,a	1f			! if so, use fdtoi to convert to int
+	fdtox	%f0, %f0		!        (this includes negatives!)
+
+	! d does not fit in an int, so subtract 2^31, convert,
+	! and add 2^31 again (sigh).  Just hope the intermediate
+	! fits (if not, the result is undefined anyway).
+
+	fsubd	%f0, %f2, %f0		! d -= 2^31
+	fdtox	%f0, %f0		! convert to int
+	std	%f0, [%sp + 64 + BIAS]	! move into return reg
+	ldx	[%sp + 64 + BIAS], %o0
+	sethi	%hi(0x80000000), %o1
+	add	%o0, %o1, %o0		! add 2^31
+	retl
+	add	%sp, 8, %sp
+
+1:
+	std	%f0, [%sp + 64 + BIAS]	! return result
+	ldx	[%sp + 64 + BIAS], %o0
 	retl
 	add	%sp, 8, %sp
