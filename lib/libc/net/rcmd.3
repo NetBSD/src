@@ -1,4 +1,4 @@
-.\"	$NetBSD: rcmd.3,v 1.18 1999/07/04 00:43:44 itojun Exp $
+.\"	$NetBSD: rcmd.3,v 1.19 2000/01/27 05:33:06 itojun Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -38,11 +38,14 @@
 .Os
 .Sh NAME
 .Nm rcmd ,
+.Nm orcmd ,
+.Nm rcmd_af ,
+.Nm orcmd_af ,
 .Nm rresvport ,
 .Nm rresvport_af ,
 .Nm iruserok ,
 .Nm ruserok ,
-.Nm orcmd
+.Nm iruserok_sa
 .Nd routines for returning a stream to a remote command
 .Sh LIBRARY
 .Lb libc
@@ -53,6 +56,10 @@
 .Ft int
 .Fn orcmd "char **ahost" "int inport" "const char *locuser" "const char *remuser" "const char *cmd" "int *fd2p"
 .Ft int
+.Fn rcmd_af "char **ahost" "int inport" "const char *locuser" "const char *remuser" "const char *cmd" "int *fd2p" "int af"
+.Ft int
+.Fn orcmd_af "char **ahost" "int inport" "const char *locuser" "const char *remuser" "const char *cmd" "int *fd2p" "int af"
+.Ft int
 .Fn rresvport "int *port"
 .Ft int
 .Fn rresvport_af "int *port" "int family"
@@ -60,6 +67,8 @@
 .Fn iruserok "u_int32_t raddr" "int superuser" "const char *ruser" "const char *luser"
 .Ft int
 .Fn ruserok "const char *rhost" "int superuser" "const char *ruser" "const char *luser"
+.Ft int
+.Fn iruserok_sa "const void *raddr" "int rlen" "int superuser" "const char *ruser" "const char *luser"
 .Sh DESCRIPTION
 The
 .Fn rcmd
@@ -80,6 +89,15 @@ function
 is used by the super-user to execute a command on
 a remote machine using an authentication scheme based
 on reserved port numbers.
+While
+.Fn rcmd
+and
+.Fn orcmd
+can only handle IPv4 address in the first argument,
+.Fn rcmd_af
+and
+.Fn orcmd_af
+can handle other cases as well.
 The
 .Fn rresvport
 function
@@ -107,6 +125,9 @@ All six functions are present in the same file and are used
 by the
 .Xr rshd 8
 server (among others).
+.Fn iruserok_sa
+is an address family independent variant of
+.Fn iruserok .
 .Pp
 The
 .Fn rcmd
@@ -153,6 +174,16 @@ command) will be made the same as the
 and no
 provision is made for sending arbitrary signals to the remote process,
 although you may be able to get its attention by using out-of-band data.
+.Pp
+.Fn rcmd_af
+and
+.Fn orcmd_af
+take address family in the last argument.
+If the last argument is
+.Dv PF_UNSPEC ,
+interpretation of
+.Fa *ahost
+will obey the underlying address resolution like DNS.
 .Pp
 The protocol is described in detail in
 .Xr rshd 8 .
@@ -207,6 +238,22 @@ If the IP address of the remote host is known,
 should be used in preference to
 .Fn ruserok ,
 as it does not require trusting the DNS server for the remote host's domain.
+.Pp
+While
+.Fn iruserok
+can handle IPv4 addresses only,
+.Fn iruserok_sa
+and
+.Fn ruserok
+can handle other address families as well, like IPv6.
+The first argument of
+.Fn iruserok_sa
+is typed as
+.Fa "void *"
+to avoid dependency between
+.Aq Li unistd.h
+and
+.Aq Li sys/socket.h .
 .Sh DIAGNOSTICS
 The
 .Fn rcmd
@@ -244,7 +291,7 @@ function, this variable is used as the program to run instead of
 .Xr rhosts 5 , 
 .Xr rexecd 8 ,
 .Xr rlogind 8 ,
-.Xr rshd 8 .
+.Xr rshd 8
 .Sh HISTORY
 The
 .Fn orcmd ,
@@ -257,13 +304,15 @@ functions appeared in
 where the
 .Fn orcmd
 function was called
-.Fn rcmd.
+.Fn rcmd .
 The (newer)
 .Fn rcmd
 function appeared in
 .Nx 1.3 .
+.Fn rcmd_af
+and
 .Fn rresvport_af
-was defined in RFC2292.
+were defined in RFC2292.
 .Sh BUGS
 As the
 .Nm
