@@ -1,4 +1,4 @@
-/*	$NetBSD: resize.c,v 1.7 2003/02/17 11:07:21 dsl Exp $	*/
+/*	$NetBSD: resize.c,v 1.8 2003/06/26 17:17:10 dsl Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)resize.c   blymn 2001/08/26";
 #else
-__RCSID("$NetBSD: resize.c,v 1.7 2003/02/17 11:07:21 dsl Exp $");
+__RCSID("$NetBSD: resize.c,v 1.8 2003/06/26 17:17:10 dsl Exp $");
 #endif
 #endif				/* not lint */
 
@@ -145,7 +145,7 @@ resizeterm(int nlines, int ncols)
 
 	  /* tweak the flags now that we have updated the LINES and COLS */
 	for (list = __winlistp; list != NULL; list = list->nextp) {
-		if (!win->flags & __ISPAD)
+		if (!(win->flags & __ISPAD))
 			__swflags(list->winp);
 	}
 
