@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.25 1998/07/26 12:58:17 lukem Exp $	*/
+/*	$NetBSD: fetch.c,v 1.26 1998/07/26 12:59:40 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.25 1998/07/26 12:58:17 lukem Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.26 1998/07/26 12:59:40 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -637,7 +637,7 @@ auto_fetch(argc, argv, outfile)
 			cp = line + sizeof(ABOUT_URL) -1;
 			if (strcasecmp(cp, "ftp") == 0) {
 				fprintf(ttyout, "%s\n%s\n",
-"The version of ftp has been enhanced by Luke Mewburn <lukem@netbsd.org>.",
+"This version of ftp has been enhanced by Luke Mewburn <lukem@netbsd.org>.",
 "Execute 'man ftp' for more details");
 			} else if (strcasecmp(cp, "netbsd") == 0) {
 				fprintf(ttyout, "%s\n%s\n",
