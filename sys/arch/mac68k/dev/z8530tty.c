@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.11 1997/07/17 02:01:26 jtk Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.12 1997/07/23 07:20:01 scottr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -1302,7 +1302,7 @@ zstty_softint(cs)
 	register struct zstty_softc *zst;
 	register struct linesw *line;
 	register struct tty *tp;
-	register int get, c, s;
+	register int get, c, s, t;
 	int ringmask, overrun;
 	register u_short ring_data;
 	register u_char rr0, delta, flag;
@@ -1360,11 +1360,11 @@ zstty_softint(cs)
 	 * so unblock here ONLY if TS_TBLOCK has not been set.
 	 */
 	if (zst->zst_rx_blocked && ((tp->t_state & TS_TBLOCK) == 0)) {
-		(void) splzs();
+		t = splzs();
 		zst->zst_rx_blocked = 0;
 		zs_hwiflow(zst, 0);	/* unblock input */
 		z8530tty_stats.ring_unblock++;
-		(void) spltty();
+		splx(t);
 	}
 
 	/*
