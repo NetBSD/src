@@ -1,4 +1,4 @@
-/*	$NetBSD: ahb.c,v 1.14 1998/01/12 08:57:20 thorpej Exp $	*/
+/*	$NetBSD: ahb.c,v 1.15 1998/01/28 02:28:02 thorpej Exp $	*/
 
 #undef	AHBDEBUG
 #ifdef DDB
@@ -193,9 +193,6 @@ struct cfattach ahb_ca = {
 };
 
 #define	AHB_ABORT_TIMEOUT	2000	/* time to wait for abort (mSec) */
-
-/* XXX Should put this in a better place. */
-#define	offsetof(type, member)	((size_t)(&((type *)0)->member))
 
 /*
  * Check the slots looking for a board we recognise

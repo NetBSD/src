@@ -1,4 +1,4 @@
-/*	$NetBSD: podule.h,v 1.2 1996/03/14 23:11:31 mark Exp $	*/
+/*	$NetBSD: podule.h,v 1.3 1998/01/28 02:23:29 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1994 Wolfgang Solfrank.
@@ -81,8 +81,5 @@ extern void podule_set_bytes __P((void *sp, volatile void *dp, int cnt));
 
 extern void podule_get_shorts __P((volatile void *sp, void *dp, int cnt));
 extern void podule_set_shorts __P((void *sp, volatile void *dp, int cnt));
-
-/* XXX Shouldn't this be somewhere else? */
-#define	offsetof(type, member)	((size_t)&((type *)0)->member)
 
 #endif	/* _ARM_PODULE_H_ */

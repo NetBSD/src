@@ -1,4 +1,4 @@
-/*	$NetBSD: cgtwo.c,v 1.24 1998/01/25 16:38:01 pk Exp $ */
+/*	$NetBSD: cgtwo.c,v 1.25 1998/01/28 02:27:16 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -208,9 +208,6 @@ cgtwoattach(parent, self, aux)
 		sc->sc_fb.fb_pixels = (caddr_t)bh;
 	}
 
-#ifndef offsetof
-#define	offsetof(type, member)  ((size_t)(&((type *)0)->member))
-#endif
 	if (vme_bus_map(ct, sc->sc_paddr + CG2_ROPMEM_OFF +
 				offsetof(struct cg2fb, status.reg),
 			sizeof(struct cg2statusreg), mod, bt, &bh) != 0)

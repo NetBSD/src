@@ -1,4 +1,4 @@
-/*	$NetBSD: wds.c,v 1.27 1998/01/12 09:43:52 thorpej Exp $	*/
+/*	$NetBSD: wds.c,v 1.28 1998/01/28 02:31:29 thorpej Exp $	*/
 
 #undef WDSDIAG
 #ifdef DDB
@@ -231,9 +231,6 @@ struct cfattach wds_ca = {
 };
 
 #define	WDS_ABORT_TIMEOUT	2000	/* time to wait for abort (mSec) */
-
-/* XXX Should put this in a better place. */ 
-#define	offsetof(type, member)	((size_t)(&((type *)0)->member))
 
 /*
  * Insert a scsipi_xfer into the software queue.  We overload xs->free_list
