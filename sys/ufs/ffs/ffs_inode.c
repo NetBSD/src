@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.68 2004/08/15 07:19:56 mycroft Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.69 2004/08/15 16:17:37 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.68 2004/08/15 07:19:56 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.69 2004/08/15 16:17:37 mycroft Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -241,17 +241,19 @@ ffs_truncate(v)
 		if (lblkno(fs, osize) < NDADDR &&
 		    lblkno(fs, osize) != lblkno(fs, length) &&
 		    blkroundup(fs, osize) != osize) {
-			error = ufs_balloc_range(ovp, osize,
-			    blkroundup(fs, osize) - osize, ap->a_cred, aflag);
+			off_t eob;
+
+			eob = blkroundup(fs, osize);
+			error = ufs_balloc_range(ovp, osize, eob - osize,
+			    ap->a_cred, aflag);
 			if (error)
 				return error;
 			if (ioflag & IO_SYNC) {
-				ovp->v_size = blkroundup(fs, osize);
+				ovp->v_size = eob;
 				simple_lock(&ovp->v_interlock);
 				VOP_PUTPAGES(ovp,
-				    trunc_page(osize & ~(fs->fs_bsize - 1)),
-				    round_page(ovp->v_size),
-				    PGO_CLEANIT | PGO_SYNCIO);
+				    trunc_page(osize & fs->fs_bmask),
+				    round_page(eob), PGO_CLEANIT | PGO_SYNCIO);
 			}
 		}
 		error = ufs_balloc_range(ovp, length - 1, 1, ap->a_cred,
