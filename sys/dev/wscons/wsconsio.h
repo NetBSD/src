@@ -1,4 +1,4 @@
-/* $NetBSD: wsconsio.h,v 1.17 1999/05/03 15:43:25 ad Exp $ */
+/* $NetBSD: wsconsio.h,v 1.18 1999/05/15 14:22:46 drochner Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -261,7 +261,7 @@ struct wsdisplay_cursor {
 
 /*
  * XXX WARNING
- * XXX The following 3 definitions are very preliminary and are likely
+ * XXX The following definitions are very preliminary and are likely
  * XXX to be changed without care about backwards compatibility!
  */
 struct wsdisplay_font {
@@ -294,6 +294,14 @@ struct wsdisplay_usefontdata {
 	char *name;
 };
 #define WSDISPLAYIO_USEFONT	_IOW('W', 80, struct wsdisplay_usefontdata)
+
+struct wsdisplay_kbddata {
+	int op;
+#define WSDISPLAY_KBD_ADD 0
+#define WSDISPLAY_KBD_DEL 1
+	int idx;
+};
+#define WSDISPLAYIO_SETKEYBOARD _IOWR('W', 81, struct wsdisplay_kbddata)
 
 /* XXX NOT YET DEFINED */
 /* Mapping information retrieval. */

@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.21 1999/05/14 16:01:12 drochner Exp $ */
+/* $NetBSD: wskbd.c,v 1.22 1999/05/15 14:22:46 drochner Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -36,7 +36,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$NetBSD: wskbd.c,v 1.21 1999/05/14 16:01:12 drochner Exp $";
+    "$NetBSD: wskbd.c,v 1.22 1999/05/15 14:22:46 drochner Exp $";
 
 /*
  * Copyright (c) 1992, 1993
@@ -187,6 +187,7 @@ static inline void update_leds __P((struct wskbd_internal *));
 static inline void update_modifier __P((struct wskbd_internal *, u_int, int, int));
 static int internal_command __P((struct wskbd_softc *, u_int *, keysym_t));
 static keysym_t wskbd_translate __P((struct wskbd_internal *, u_int, int));
+static int wskbd_enable __P((struct wskbd_softc *, int));
 #if NWSDISPLAY > 0
 static void wskbd_holdscreen __P((struct wskbd_softc *, int));
 #endif
@@ -289,8 +290,22 @@ wskbd_attach(parent, self, aux)
 	struct wskbd_softc *sc = (struct wskbd_softc *)self;
 	struct wskbddev_attach_args *ap = aux;
 
-	if (ap->console)
+#if NWSDISPLAY > 0
+	sc->sc_displaydv = NULL;
+#endif
+	sc->sc_isconsole = ap->console;
+
+	if (ap->console) {
+		KASSERT(wskbd_console_initted); 
+		KASSERT(wskbd_console_device == NULL);
+
+		wskbd_console_device = sc;
+
 		printf(": console keyboard");
+
+		if ((sc->sc_displaydv = wsdisplay_set_console_kbd(self)))
+			printf(", using %s", sc->sc_displaydv->dv_xname);
+	}
 	printf("\n");
 
 	if (ap->console) {
@@ -316,16 +331,6 @@ wskbd_attach(parent, self, aux)
 		panic("cannot load keymap");
 
 	sc->sc_layout = sc->id->t_keymap->layout;
-
-	if (ap->console) {
-		KASSERT(wskbd_console_initted); 
-		KASSERT(wskbd_console_device == NULL);
-		wskbd_console_device = sc;
-	}
-	sc->sc_isconsole = ap->console;
-#if NWSDISPLAY > 0
-	sc->sc_displaydv = NULL;
-#endif
 
 	/* set default bell and key repeat data */
 	sc->sc_bell_data = wskbd_default_bell_data;
@@ -485,12 +490,11 @@ wskbd_holdscreen(sc, hold)
 }
 #endif
 
-int
-wskbd_enable(dev, on)
-	struct device *dev;
+static int
+wskbd_enable(sc, on)
+	struct wskbd_softc *sc;
 	int on;
 {
-	struct wskbd_softc *sc = (struct wskbd_softc *)dev;
 	int res;
 
 	/* XXX reference count? */
@@ -528,7 +532,7 @@ wskbdopen(dev, flags, mode, p)
 	sc->sc_translating = 0;
 	sc->sc_ready = 1;			/* start accepting events */
 
-	wskbd_enable((struct device *)sc, 1);
+	wskbd_enable(sc, 1);
 	return (0);
 }
 
@@ -546,7 +550,7 @@ wskbdclose(dev, flags, mode, p)
 	wsevent_fini(&sc->sc_events);
 	sc->sc_events.io = NULL;
 
-	wskbd_enable((struct device *)sc, 0);
+	wskbd_enable(sc, 0);
 	return (0);
 }
 
@@ -786,36 +790,62 @@ wskbdpoll(dev, events, p)
 	return (wsevent_poll(&sc->sc_events, events, p));
 }
 
-int
-wskbd_is_console(dv)
-	struct device *dv;
-{
-	struct wskbd_softc *sc = (struct wskbd_softc *)dv;
-
-	KASSERT(sc != NULL);
-	return (sc->sc_isconsole);
-}
-
 #if NWSDISPLAY > 0
 
-struct device *
-wskbd_display(dv)
-	struct device *dv;
+int
+wskbd_pickfree()
 {
-	struct wskbd_softc *sc = (struct wskbd_softc *)dv;
+	int i;
+	struct wskbd_softc *sc;
 
-	KASSERT(sc != NULL);
-	return (sc->sc_displaydv);
+	for (i = 0; i < wskbd_cd.cd_ndevs; i++) {
+		if ((sc = wskbd_cd.cd_devs[i]) == NULL)
+			continue;
+		if (sc->sc_displaydv == NULL)
+			return (i);
+	}
+	return (-1);
 }
 
-void
-wskbd_set_display(dv, displaydv)
-	struct device *dv, *displaydv;
+int
+wskbd_set_display(idx, displaydv, kbddv)
+	int idx;
+	struct device *displaydv, **kbddv;
 {
-	struct wskbd_softc *sc = (struct wskbd_softc *)dv;
+	struct wskbd_softc *sc;
 
-	KASSERT(sc != NULL);
+	if (idx >= wskbd_cd.cd_ndevs ||	/* make sure it was attached */
+	    (sc = wskbd_cd.cd_devs[idx]) == NULL)
+		return (ENXIO);
+
+	if (sc->sc_isconsole)
+		return (EBUSY);
+	if (displaydv) {
+		if (sc->sc_displaydv)
+			return (EBUSY);
+		printf("%s: connecting to %s\n",
+		       sc->sc_dv.dv_xname, displaydv->dv_xname);
+	} else {
+		if (sc->sc_displaydv == NULL)
+			return (ENXIO);
+		printf("%s: disconnecting\n", sc->sc_dv.dv_xname);
+	}
+
 	sc->sc_displaydv = displaydv;
+	wskbd_enable(sc, displaydv != NULL);
+	if (kbddv)
+		*kbddv = &sc->sc_dv;
+	return (0);
+}
+
+struct device *
+wskbd_set_console_display(displaydv)
+	struct device *displaydv;
+{
+	if (!wskbd_console_device)
+		return (0);
+	wskbd_console_device->sc_displaydv = displaydv;
+	return (&wskbd_console_device->sc_dv);
 }
 
 #endif /* NWSDISPLAY > 0 */
