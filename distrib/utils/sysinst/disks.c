@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.30 1999/07/04 21:52:11 cgd Exp $ */
+/*	$NetBSD: disks.c,v 1.31 2000/05/20 00:45:45 wiz Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -440,7 +440,7 @@ do_fsck(const char *diskpart)
 	}
 
 	/*endwin();*/
-#ifdef	DEBUG_SETS
+#ifndef	DEBUG_SETS
 	err = run_prog(0, 1, NULL, "/sbin/fsck_ffs %s%s", upgr, raw);
 #else
 	err = run_prog(0, 1, NULL, "/sbin/fsck_ffs -f %s%s", upgr, raw);
