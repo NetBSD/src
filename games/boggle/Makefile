@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2002/09/18 02:51:46 lukem Exp $
+#	$NetBSD: Makefile,v 1.20 2003/10/19 01:01:44 lukem Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/11/93
 
 .include <bsd.own.mk>
@@ -26,11 +26,17 @@ ${MKINDEX}:
 	@cd ${.CURDIR}/mkindex && ${MAKE}
 
 dictionary: ${WORDS} ${MKDICT}
+	${_MKMSG} " create  ${.TARGET}"
+	${_MKCMD}\
 	rm -f ${.TARGET}
+	${_MKCMD}\
 	${MKDICT} < ${WORDS} > ${.TARGET}
 
 dictindex: dictionary ${MKINDEX}
+	${_MKMSG} " create  ${.TARGET}"
+	${_MKCMD}\
 	rm -f ${.TARGET}
+	${_MKCMD}\
 	${MKINDEX} < dictionary > ${.TARGET}
 
 .include <bsd.prog.mk>
