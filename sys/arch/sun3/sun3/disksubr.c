@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: i386/disksubr.c,v 1.4 1994/01/11 16:38:48 mycroft
- *	$Id: disksubr.c,v 1.5 1994/05/13 21:24:57 gwr Exp $
+ *	$Id: disksubr.c,v 1.6 1994/07/23 03:27:28 gwr Exp $
  */
 
 #include <sys/param.h>
@@ -107,12 +107,10 @@ readdisklabel(dev, strat, lp, osdep)
 	(*strat)(bp);
 
 	/* if successful, locate disk label within block and validate */
-	/* readdisklabel+0x9c */
 	if (biowait(bp)) {
 		msg = "disk label read error";
 		goto done;
 	}
-	/* readdisklabel+0xb2 */
 
 	slp = (struct sun_disklabel *) bp->b_un.b_addr;
 	if (slp->sl_magic == SUN_DKMAGIC) {
@@ -285,9 +283,22 @@ bad:
 	return(-1);
 }
 
+/* What partition types to assume for Sun disklabels: */
+static u_char
+sun_fstypes[8] = {
+	FS_BSDFFS,	/* a */
+	FS_SWAP,	/* b */
+	FS_OTHER,	/* c */
+	FS_OTHER,	/* d */
+	FS_OTHER,	/* e */
+	FS_OTHER,	/* f */
+	FS_BSDFFS,	/* g */
+	FS_BSDFFS,	/* h */
+};
 
 /*
  * The rest of this was taken from arch/sparc/scsi/sun_disklabel.c
+ * (and then hacked severely:-)
  */
 
 /*
@@ -299,9 +310,11 @@ sun_disklabel_to_bsd(cp, lp)
 	register caddr_t cp;
 	register struct disklabel *lp;
 {
-	register u_short *sp;
-	register struct sun_disklabel *sl;
-	register int i, v;
+	u_short *sp;
+	struct sun_disklabel *sl;
+	struct partition *npp;
+	struct sun_dkpart *spp;
+	int i, v;
 
 	sp = (u_short *)(cp + sizeof(struct sun_disklabel));
 	--sp;
@@ -318,10 +331,14 @@ sun_disklabel_to_bsd(cp, lp)
 	    (lp->d_nsectors = sl->sl_nsectors);
 	lp->d_secpercyl = v;
 	lp->d_npartitions = 8;
+
 	for (i = 0; i < 8; i++) {
-		lp->d_partitions[i].p_offset =
-		    sl->sl_part[i].sdkp_cyloffset * v;
-		lp->d_partitions[i].p_size = sl->sl_part[i].sdkp_nsectors;
+		spp = &sl->sl_part[i];
+		npp = &lp->d_partitions[i];
+		npp->p_offset = spp->sdkp_cyloffset * v;
+		npp->p_size = spp->sdkp_nsectors;
+		if (npp->p_size)
+			npp->p_fstype = sun_fstypes[i];
 	}
 	return 0;
 }
