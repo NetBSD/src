@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs.c,v 1.40 2003/08/22 21:33:52 dsl Exp $	*/
+/*	$NetBSD: ufs.c,v 1.41 2003/08/27 22:42:08 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -403,7 +403,7 @@ buf_read_file(struct open_file *f, char **buf_p, size_t *size_p)
 			return (rc);
 
 		if (disk_block == 0) {
-			bzero(fp->f_buf, block_size);
+			memset(fp->f_buf, 0, block_size);
 			fp->f_buf_size = block_size;
 		} else {
 			twiddle();
@@ -528,7 +528,7 @@ ufs_open(const char *path, struct open_file *f)
 
 	/* allocate file system specific data structure */
 	fp = alloc(sizeof(struct file));
-	bzero(fp, sizeof(struct file));
+	memset(fp, 0, sizeof(struct file));
 	f->f_fsdata = (void *)fp;
 
 	/* allocate space and read super block */
