@@ -1,4 +1,4 @@
-/*	$NetBSD: zsms.c,v 1.5 1999/10/26 18:20:44 drochner Exp $	*/
+/*	$NetBSD: zsms.c,v 1.6 2000/01/08 02:57:22 takemura Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -305,7 +305,7 @@ zsms_input(vsc, data)
 		else
 			sc->dy = data;
 		wsmouse_input(sc->sc_wsmousedev, sc->buttons,
-		    sc->dx, sc->dy, 0);
+		    sc->dx, sc->dy, 0, WSMOUSE_INPUT_DELTA);
 	}
 
 	return;

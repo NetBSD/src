@@ -1,4 +1,4 @@
-/* $NetBSD: vsxxx.c,v 1.1 1999/11/20 04:55:30 nisimura Exp $ */
+/* $NetBSD: vsxxx.c,v 1.2 2000/01/08 02:57:22 takemura Exp $ */
 
 /*
  * Copyright (c) 1999 Tohru Nishimura.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vsxxx.c,v 1.1 1999/11/20 04:55:30 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vsxxx.c,v 1.2 2000/01/08 02:57:22 takemura Exp $");
 
 /*
  * Common machinary for VSXXX mice and tablet
@@ -141,5 +141,6 @@ vsxxx_input(data)
 		x = -x;
 	if ((sc->sc_report.raw[0] & VS_Y_SIGN) != 0)
 		y = -y;					/* Eeeh? */
-	wsmouse_input(sc->sc_wsmousedev, sc->sc_report.raw[0] & 07, x, y, 0);
+	wsmouse_input(sc->sc_wsmousedev, sc->sc_report.raw[0] & 07, x, y, 0,
+		      WSMOUSE_INPUT_DELTA);
 }

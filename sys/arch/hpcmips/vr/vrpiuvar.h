@@ -1,4 +1,4 @@
-/*	$NetBSD: vrpiuvar.h,v 1.1 1999/12/28 03:15:19 takemura Exp $	*/
+/*	$NetBSD: vrpiuvar.h,v 1.2 2000/01/08 02:57:25 takemura Exp $	*/
 
 /*
  * Copyright (c) 1999 Shin Takemura All rights reserved.
@@ -31,7 +31,6 @@ enum vrpiu_stat {
 	VRPIU_STAT_DISABLE,
 	VRPIU_STAT_RELEASE,
 	VRPIU_STAT_TOUCH,
-	VRPIU_STAT_DRAG,
 };
 
 struct vrpiu_softc {
@@ -43,9 +42,6 @@ struct vrpiu_softc {
 
 	enum vrpiu_stat sc_stat;
 	struct device *sc_wsmousedev;
-	int sc_x, sc_y;
-	int sc_timeout;
-	int sc_releasecount;
 
 	/* correction parameters */
 	int sc_prmax, sc_prmbx, sc_prmcx, sc_prmxs;

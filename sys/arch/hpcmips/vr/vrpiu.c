@@ -1,4 +1,4 @@
-/*	$NetBSD: vrpiu.c,v 1.1 1999/12/28 03:15:18 takemura Exp $	*/
+/*	$NetBSD: vrpiu.c,v 1.2 2000/01/08 02:57:24 takemura Exp $	*/
 
 /*
  * Copyright (c) 1999 Shin Takemura All rights reserved.
@@ -71,7 +71,6 @@ static u_short	vrpiu_read __P((struct vrpiu_softc *, int));
 
 static int	vrpiu_intr __P((void *));
 static void	vrpiu_reset_param __P((struct vrpiu_softc *sc));
-static void	vrpiu_timeout __P((void *));
 #ifdef DEBUG
 static void	vrpiu_dump_cntreg __P((unsigned int cmd));
 #endif
@@ -260,8 +259,6 @@ vrpiu_enable(v)
 	sc->sc_stat = (cnt & PIUCNT_PENSTC) ?
 		VRPIU_STAT_TOUCH : VRPIU_STAT_RELEASE;
 
-	sc->sc_timeout = 1;
-
 	splx(s);
 
 	return 0;
@@ -272,7 +269,6 @@ vrpiu_disable(v)
 	void *v;
 {
 	struct vrpiu_softc *sc = v;
-	int s;
 
 	DPRINTF(("%s(%d): vrpiu_disable()\n", __FILE__, __LINE__));
 
@@ -286,12 +282,6 @@ vrpiu_disable(v)
 
 	/* mask clock to PIU */
 	__vrcmu_supply(CMUMSKPIU, 1);
-
-	s = spltty();
-	if (!sc->sc_timeout) {
-		untimeout(vrpiu_timeout, sc);
-	}
-	splx(s);
 }
 
 int
@@ -308,7 +298,7 @@ vrpiu_ioctl(v, cmd, data, flag, p)
 
 	switch (cmd) {
 	case WSMOUSEIO_GTYPE:
-		*(u_int *)data = WSMOUSE_TYPE_PS2;
+		*(u_int *)data = WSMOUSE_TYPE_TPANEL;
 		break;
 		
 	case WSMOUSEIO_SRES:
@@ -391,34 +381,22 @@ vrpiu_intr(arg)
 			 */
 			DPRINTF(("PEN TOUCH\n"));
 			sc->sc_stat = VRPIU_STAT_TOUCH;
-			if (sc->sc_timeout) {
-				sc->sc_timeout = 0;
-				sc->sc_releasecount = 0;
-				timeout(vrpiu_timeout, sc, hz/3);
-			}
+			/* button 0 DOWN */
+			wsmouse_input(sc->sc_wsmousedev,
+				      (1 << 0),
+				      0, 0, 0, 0);
 		}
 	} else {
-		if (sc->sc_stat == VRPIU_STAT_TOUCH ||
-		    sc->sc_stat == VRPIU_STAT_DRAG) {
+		if (sc->sc_stat == VRPIU_STAT_TOUCH) {
 			/*
 			 * pen release
 			 */
 			DPRINTF(("RELEASE\n"));
 			sc->sc_stat = VRPIU_STAT_RELEASE;
-			if (!sc->sc_timeout) {
-				if (++sc->sc_releasecount == 2) {
-					untimeout(vrpiu_timeout, sc);
-					sc->sc_timeout = 1;
-					DPRINTF(("TAP!\n"));
-					/* button 0 DOWN */
-					wsmouse_input(sc->sc_wsmousedev,
-						      (1 << 0),
-						      0, 0, 0);
-					/* button 0 UP */
-					wsmouse_input(sc->sc_wsmousedev,
-						      0, 0, 0, 0);
-				}
-			}
+			/* button 0 UP */
+			wsmouse_input(sc->sc_wsmousedev,
+				      0,
+				      0, 0, 0, 0);
 		}
 	}
 
@@ -455,22 +433,13 @@ vrpiu_intr(arg)
 				if (sc->sc_prmys <= y)
 					y = sc->sc_prmys - 1;
 				DPRINTF(("->%4d %4d", x, y));
-				if (sc->sc_stat == VRPIU_STAT_TOUCH) {
-					sc->sc_stat = VRPIU_STAT_DRAG;
-					sc->sc_x = x;
-					sc->sc_y = y;
-				} else
-				if (sc->sc_stat == VRPIU_STAT_DRAG) {
-					DPRINTF((" delta %d %d",
-						 x - sc->sc_x, y - sc->sc_y));
-					wsmouse_input(sc->sc_wsmousedev,
-						      0, /* all buttons up */
-						      x - sc->sc_x, /* dx */
-						      y - sc->sc_y, /* dy */
-						      0); /* dz */
-					sc->sc_x = x;
-					sc->sc_y = y;
-				}
+				wsmouse_input(sc->sc_wsmousedev,
+					      (cnt & PIUCNT_PENSTC) ? 1 : 0,
+					      x, /* x */
+					      y, /* y */
+					      0, /* z */
+					      WSMOUSE_INPUT_ABSOLUTE_X |
+					      WSMOUSE_INPUT_ABSOLUTE_Y);
 				DPRINTF(("\n"));
 			}
 		}
@@ -496,14 +465,6 @@ vrpiu_reset_param(sc)
 	sc->sc_prmby = SCALE;
 	sc->sc_prmcy = 0;
 	sc->sc_prmys = PIUPB_PADDATA_MAX;
-}
-
-void
-vrpiu_timeout(arg)
-	void *arg;
-{
-        struct vrpiu_softc *sc = arg;
-	sc->sc_timeout = 1;
 }
 
 #ifdef DEBUG
