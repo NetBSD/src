@@ -640,8 +640,11 @@ static int vstream_buf_get_ready(VBUF *bp)
      * allocation gives the application a chance to override the default
      * buffering policy.
      */
-    if (bp->data == 0)
+    if (bp->data == 0) {
 	vstream_buf_alloc(bp, VSTREAM_BUFSIZE);
+	if (bp->flags & VSTREAM_FLAG_DOUBLE) 
+	    VSTREAM_SAVE_STATE(stream, read_buf, read_fd);
+    }
 
     /*
      * If the stream is double-buffered and the write buffer is not empty,
@@ -724,6 +727,8 @@ static int vstream_buf_put_ready(VBUF *bp)
      */
     if (bp->data == 0) {
 	vstream_buf_alloc(bp, VSTREAM_BUFSIZE);
+	if (bp->flags & VSTREAM_FLAG_DOUBLE) 
+	    VSTREAM_SAVE_STATE(stream, write_buf, write_fd);
     } else if (bp->cnt <= 0) {
 	if (VSTREAM_FFLUSH_SOME(stream))
 	    return (VSTREAM_EOF);

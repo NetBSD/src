@@ -57,6 +57,17 @@
 /*	This overrides the optional nexthop information that is specified
 /*	with \fB$relayhost\fR.
 /*	The default nexthop is the recipient domain.
+/* SERVER PROCESS MANAGEMENT
+/* .ad
+/* .fi
+/*	The trivial-rewrite servers run under control by the Postfix master
+/*	server.  Each server can handle multiple simultaneous connections.
+/*	When all servers are busy while a client connects, the master
+/*	creates a new server process, provided that the trivial-rewrite
+/*	server process limit is not exceeded.
+/*	Each trivial-rewrite server terminates after
+/*	serving at least \fB$max_use\fR clients of after \fB$max_idle\fR
+/*	seconds of idle time.
 /* STANDARDS
 /* .ad
 /* .fi

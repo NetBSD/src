@@ -674,7 +674,7 @@ to send mail only to <i>user@domain.com</i>.
 Specify what recipients exist (so that your queue does not fill up
 with undeliverable mail from spammers).
 
-<p.
+<p>
 
 Specify <tt>local_recipient_maps =</tt> if maintaining recipient
 information is not practical.
@@ -2015,7 +2015,7 @@ systems for performance and/or security reasons.
 
 <p>
 
-The Postfix warning message means that new mail notificiation failed
+The Postfix warning message means that new mail notification failed
 because the <b>comsat</b> network service is turned off.
 
 <p>
@@ -2034,7 +2034,7 @@ specify:
 
 Note: recent versions of <b>procmail</b> also produce <b>biff</b>
 notifications. To silence <b>biff</b> completely you may also have
-to updte <b>procmail</b> configuration files.
+to update <b>procmail</b> configuration files.
 
 <p>
 
@@ -2090,8 +2090,14 @@ you use the default Postfix local delivery agent:
 
 <pre>
     /etc/postfix/main.cf:
-        local_recipient_maps = $alias_maps, unix:passwd.byname
+        local_recipient_maps = $alias_maps, proxy:unix:passwd.byname
 </pre>
+
+<p>
+
+You need the <b>proxy:</b> part only if <b>master.cf</b> specifies
+that the Postfix SMTP server runs chrooted. As distributed by the
+author, Postfix runs no daemons chrooted.
 
 <p>
 
@@ -2107,10 +2113,12 @@ To stop Postfix from rejecting local mail incorrectly:
 
 <ul>
 
-<li> If you run the Postfix SMTP server chrooted, it may be necessary
-to place a copy of the passwd file inside the chroot jail (typically:
-in <b>/var/spool/postfix/etc</b>).  This is system dependent. The
-only way to find out is to try.
+<li> If you run the Postfix SMTP server chrooted, you need to access
+the system password database through the Postfix <a href="proxymap.8.html">
+proxymap</a> service, as shown in the above example. The alternative
+is simply not practical:  placing a copy of the passwd file inside
+the chroot jail (typically:  in <b>/var/spool/postfix/etc</b>)
+together with a list of system dependent files.
 
 <p>
 
@@ -2313,21 +2321,30 @@ database" mean?</h3></a>
 This message is logged when, for example, the Postfix SMTP server
 is unable to access the UNIX password database.
 
+<p>
+
 <ul>
 
 <li> If you're running the Postfix SMTP server chrooted (see
-<b>master.cf</b>) then you may have to copy the password file and
-perhaps a bunch of other files into Postfix queue directory; a
-typical destination would be <b>/var/spool/postfix/etc</b>. See also
-the chroot setup scripts in the <b>examples</b> directory of the
-Postfix source code distribution.
+<b>master.cf</b>) then you need to access the system password
+database through the Postfix <a href="proxymap.8.html">proxymap</a>
+service. The alternative is not practical: copying the password
+file and perhaps a bunch of other system dependent files into the
+Postfix queue directory.
 
 <p>
 
-<li> Be sure that you have world execute permissions on directories
-and world read permission on the passwd file and any auxiliary
-files that may be needed (such as <b>/etc/nsswitch.conf</b> and
-<b>libnss*.so*</b> files referenced by <b>/etc/nsswitch.conf</b>).
+<pre>
+    /etc/postfix/main.cf:
+	local_recipient_maps = proxy:unix:passwd.byname $alias_maps ...
+</pre>
+
+<p>
+
+<li> Chrooted or not, be sure that you have world execute permissions
+on directories and world read permission on the passwd file and
+any auxiliary files that may be needed (such as <b>/etc/nsswitch.conf</b>
+and <b>libnss*.so*</b> files referenced by <b>/etc/nsswitch.conf</b>).
 
 </ul>
 
@@ -2638,25 +2655,32 @@ destinations don't work in virtual domains</h3>
 
 <p>
 
-Quick answer: set up a transport map entry that gives the mail to
-the Postfix local delivery agent:
+Quick answer: set up "punch through" virtual aliases that redirect
+the mail to local Postfix aliases:
 
 <p>
 
 <pre>
     /etc/postfix/main.cf:
-        transport_maps = hash:/etc/postfix/transport
+        virtual_alias_maps = hash:/etc/postfix/virtual
 
-    /etc/postfix/transport:
-        listname@virtual.tld            local:
-        owner-listname@virtual.tld      local:
-        listname-request@virtual.tld    local:
+    /etc/postfix/virtual:
+        listname@virtual.tld            listname
+        owner-listname@virtual.tld      owner-listname
+        listname-request@virtual.tld    listname-request
 
     /etc/aliases:
         listname: "|whatever"
         owner-listname: user@domain
         listname-request: "|whatever"
 </pre>
+
+<p>
+
+This redirects mail for virtual address <i>listname@virtual.tld</i>
+etc. to local address <i>listname@your.domain.tld</i> etc.. Mail
+for these local aliases is then delivered to external commands or
+files etc. by the Postfix local delivery agent.
 
 <p>
 

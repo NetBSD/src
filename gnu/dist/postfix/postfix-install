@@ -72,7 +72,7 @@
 #	default settings is as follows:
 # .IP install_root
 #	Prefix that is prepended to the pathnames of installed files.
-#	This is useful for creating a pre-built package for distribution to
+#	Specify this ONLY when creating pre-built packages for distribution to
 #	other systems. The built-in default is "/", the local root directory.
 #	This parameter setting is not recorded in the installed main.cf file.
 # .IP tempdir
@@ -191,17 +191,6 @@ test -x bin/postconf || {
     exit 1
 }
 
-#
-# LINUX by default does not synchronously update directories -
-# that's dangerous for mail.
-#
-if [ -f /usr/bin/chattr ]
-then
-    CHATTR="/usr/bin/chattr +S"
-else
-    CHATTR=echo
-fi
-
 case `uname -s` in
 HP-UX*) FMT=cat;;
      *) FMT=fmt;;
@@ -290,9 +279,9 @@ esac
 
 # Prompts.
 
-install_root_prompt="the prefix for installed file names. This is
-useful if you are building ready-to-install packages for distribution
-to other machines."
+install_root_prompt="the prefix for installed file names. Specify
+this ONLY if you are building ready-to-install packages for
+distribution to other machines."
 
 tempdir_prompt="a directory for scratch files while installing
 Postfix.  You must have write permission in this directory."
@@ -600,7 +589,6 @@ do
 	      test -z "$owner" || chown $owner $path || exit 1
 	      test -z "$group" || chgrp $group $path || exit 1
 	      chmod $mode $path || exit 1
-	      $CHATTR $path >/dev/null 2>/dev/null
 	  }
 	  continue;;
     [fl]) ;;

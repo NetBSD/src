@@ -84,6 +84,11 @@
 /* .IP DICT_FLAG_NO_REGSUB
 /*      Disallow regular expression substitution from left-hand side data 
 /*	into the right-hand side.
+/* .IP DICT_FLAG_NO_PROXY
+/*	Disallow access through the \fBproxymap\fR service.
+/* .IP DICT_FLAG_PARANOID
+/*	A combination of all the paranoia flags: DICT_FLAG_NO_REGSUB
+/*	and DICT_FLAG_NO_PROXY.
 /* .PP
 /*	Specify DICT_FLAG_NONE for no special processing.
 /*

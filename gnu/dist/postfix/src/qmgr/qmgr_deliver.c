@@ -149,10 +149,15 @@ static int qmgr_deliver_send_request(QMGR_ENTRY *entry, VSTREAM *stream)
      * queue name is user@nexthop, so that we can implement per-recipient
      * concurrency limits. However, the delivery agent protocol expects
      * nexthop only, so we must strip off the recipient local part.
+     * 
+     * XXX Should have separate fields for queue name and for destination, so
+     * that we don't have to make a special case for the error delivery agent
+     * (where nexthop is arbitrary text). See also: qmgr_message.c.
      */
     flags = message->inspect_xport ?
 	DEL_REQ_FLAG_BOUNCE : DEL_REQ_FLAG_DEFLT;
-    nexthop = (cp = strrchr(entry->queue->name, '@')) != 0 && cp[1] ?
+    nexthop = strcmp(entry->queue->transport->name, MAIL_SERVICE_ERROR) != 0
+	&& (cp = strrchr(entry->queue->name, '@')) != 0 && cp[1] ?
 	cp + 1 : entry->queue->name;
     attr_print(stream, ATTR_FLAG_MORE,
 	       ATTR_TYPE_NUM, MAIL_ATTR_FLAGS, flags,
