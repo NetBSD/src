@@ -1,4 +1,4 @@
-/*	$NetBSD: if_dl.h,v 1.12 2003/08/07 16:32:51 agc Exp $	*/
+/*	$NetBSD: if_dl.h,v 1.13 2004/11/20 00:53:13 wiz Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -64,7 +64,7 @@ typedef __sa_family_t	sa_family_t;
  */
 struct sockaddr_dl {
 	u_char	    sdl_len;	/* Total length of sockaddr */
-	sa_family_t sdl_family;	/* AF_DLI */
+	sa_family_t sdl_family;	/* AF_LINK */
 	u_int16_t   sdl_index;	/* if != 0, system given index for interface */
 	u_char	    sdl_type;	/* interface type */
 	u_char	    sdl_nlen;	/* interface name length, no trailing 0 reqd. */
