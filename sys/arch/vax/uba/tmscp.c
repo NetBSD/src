@@ -1,4 +1,4 @@
-/*	$NetBSD: tmscp.c,v 1.2 1995/03/30 20:55:23 ragge Exp $ */
+/*	$NetBSD: tmscp.c,v 1.3 1995/06/16 15:23:53 ragge Exp $ */
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -310,12 +310,6 @@ struct  uba_driver tmscpdriver =
 /*************************************************************************/
 
 #define DELAYTEN 1000
-#define       DELAY(n) { \
-              int delay_xxx; \
-              delay_xxx = todr() + (n) / 10000; \
-              while (todr() < delay_xxx) \
-                      ; \
-      }
 
 
 /*
@@ -494,12 +488,12 @@ tmscpattach (ui)
 tmscpintr(uba,vector,level,d)
 {
 	register struct uba_ctlr *um = tmscpminfo[d];
-	register volatile struct tmscpdevice *tmscpaddr =
+	volatile struct tmscpdevice *tmscpaddr =
 		(struct tmscpdevice *)um->um_addr;
 	struct buf *bp;
-	register volatile int i;
+	volatile int i;
 	register struct tmscp_softc *sc = &tmscp_softc[d];
-	register volatile struct tmscp *tm = &tmscp[d];
+	volatile struct tmscp *tm = &tmscp[d];
 	struct tmscp *ttm;
 	volatile struct mscp *mp;
 
