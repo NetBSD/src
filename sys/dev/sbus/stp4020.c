@@ -1,4 +1,4 @@
-/*	$NetBSD: stp4020.c,v 1.8 2000/01/13 10:03:25 joda Exp $ */
+/*	$NetBSD: stp4020.c,v 1.9 2000/02/22 12:12:21 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -281,7 +281,7 @@ stp4020attach(parent, self, aux)
 	sc->sc_socks[0].sc = sc->sc_socks[1].sc = sc;
 	sc->sc_socks[0].tag = sc->sc_socks[1].tag = sa->sa_bustag;
 
-	if (sa->sa_nreg < 7) {
+	if (sa->sa_nreg < 8) {
 		printf("%s: only %d register sets\n",
 			self->dv_xname, sa->sa_nreg);
 		return;
@@ -293,6 +293,7 @@ stp4020attach(parent, self, aux)
 		return;
 	}
 
+#define STP4020_BANK_PROM	0
 #define STP4020_BANK_CTRL	4
 	for (i = 0; i < 8; i++) {
 		int s, w;
@@ -303,6 +304,10 @@ stp4020attach(parent, self, aux)
 		 *	bank  4:   control registers
 		 *	banks 5-7: socket 1, windows 0-2
 		 */
+		if (i == STP4020_BANK_PROM)
+			/* Skip the PROM */
+			continue;
+
 		if (i == STP4020_BANK_CTRL) {
 			if (sbus_bus_map(sa->sa_bustag,
 					 sa->sa_reg[i].sbr_slot,
@@ -319,12 +324,13 @@ stp4020attach(parent, self, aux)
 			 * for easy access in control/status IO functions.
 			 */
 			sc->sc_socks[0].regs = sc->sc_socks[1].regs = bh;
+			continue;
 		}
 
 		if (i < STP4020_BANK_CTRL)
-			s = 0, w = i;		/* banks 0-2 */
+			s = 0, w = i - 1;		/* banks 1-3 */
 		else
-			s = 1, w = i - 4;	/* banks 4-6 */
+			s = 1, w = i - 5;		/* banks 5-7 */
 
 		if (sbus_bus_map(sa->sa_bustag,
 				 sa->sa_reg[i].sbr_slot,
@@ -396,6 +402,7 @@ stp4020_attach_socket(h)
 	h->winalloc = 0;
 
 	/* Configure one pcmcia device per socket */
+	paa.paa_busname = "pcmcia";
 	paa.pct = (pcmcia_chipset_tag_t)h->sc->sc_pct;
 	paa.pch = (pcmcia_chipset_handle_t)h;
 	paa.iobase = 0;
