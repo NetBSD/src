@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.56 2001/07/08 17:41:14 wiz Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.57 2001/09/22 22:36:30 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
 void	lock_printf(const char *fmt, ...)
     __attribute__((__format__(__printf__,1,2)));
 
-int	lock_debug_syslog = 0;	/* defaults to syslog, but can be patched */
+int	lock_debug_syslog = 0;	/* defaults to printf, but can be patched */
 
 #ifdef DDB
 #include <ddb/ddbvar.h>
