@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.174 2002/07/23 10:35:29 mjl Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.175 2002/07/23 23:12:49 rjs Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.174 2002/07/23 10:35:06 mjl Exp 
+ *	NetBSD: pcmciadevs,v 1.175 2002/07/23 23:11:04 rjs Exp 
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -708,6 +708,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "NewMedia BusToaster",	}
 	,
 	{
+	    PCMCIA_VENDOR_NETGEAR, PCMCIA_PRODUCT_NETGEAR_FA410TX,
+	    PCMCIA_CIS_NETGEAR_FA410TX,
+	    0,
+	    "Netgear",
+	    "Netgear FA410TX",	}
+	,
+	{
 	    PCMCIA_VENDOR_NETGEAR, PCMCIA_PRODUCT_NETGEAR_FA410TXC,
 	    PCMCIA_CIS_NETGEAR_FA410TXC,
 	    0,
@@ -741,6 +748,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "Olicom",
 	    "GoCard Token Ring 16/4",	}
+	,
+	{
+	    PCMCIA_VENDOR_OSITECH, PCMCIA_PRODUCT_OSITECH_TRUMPCARD_SOD,
+	    PCMCIA_CIS_OSITECH_TRUMPCARD_SOD,
+	    0,
+	    "Ositech",
+	    "Ositech Seven of Diamonds Ethernet Card",	}
 	,
 	{
 	    PCMCIA_VENDOR_PANASONIC, PCMCIA_PRODUCT_PANASONIC_KXLC002,
@@ -1629,6 +1643,14 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_CIS_INVALID,
 	    0,
 	    "Compaq",
+	    NULL,
+	},
+	{
+	    PCMCIA_VENDOR_OSITECH,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    0,
+	    "Ositech",
 	    NULL,
 	},
 	{
