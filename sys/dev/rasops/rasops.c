@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops.c,v 1.20 1999/10/23 23:14:13 ad Exp $	*/
+/*	 $NetBSD: rasops.c,v 1.21 1999/11/05 10:16:11 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.20 1999/10/23 23:14:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.21 1999/11/05 10:16:11 ad Exp $");
 
 #include "opt_rasops.h"
 #include "rasops_glue.h"
@@ -736,7 +736,7 @@ static void
 rasops_do_cursor(ri)
 	struct rasops_info *ri;
 {
-	int full1, height, cnt, slop1, slop2, row, col, mask;
+	int full1, height, cnt, slop1, slop2, row, col;
 	u_char *dp, *rp;
 	
 	row = ri->ri_crow;
@@ -744,8 +744,6 @@ rasops_do_cursor(ri)
 	
 	rp = ri->ri_bits + row * ri->ri_yscale + col * ri->ri_xscale;
 	height = ri->ri_font->fontheight;
-	mask = ri->ri_devcmap[(ri->ri_flg & RI_FORCEMONO) != 0 ? 1 : 15];
-	
 	slop1 = (4 - ((int)rp & 3)) & 3;
 	
 	if (slop1 > ri->ri_xscale)
@@ -761,7 +759,7 @@ rasops_do_cursor(ri)
 			rp += ri->ri_stride;
 	
 			for (cnt = full1; cnt; cnt--) {
-				*(int32_t *)dp ^= mask;
+				*(int32_t *)dp ^= ~0;
 				dp += 4;
 			}
 		}
@@ -772,23 +770,23 @@ rasops_do_cursor(ri)
 			rp += ri->ri_stride;
 	
 			if (slop1 & 1)
-				*dp++ ^= mask;
+				*dp++ ^= ^0;
 
 			if (slop1 & 2) {
-				*(int16_t *)dp ^= mask;
+				*(int16_t *)dp ^= ~0;
 				dp += 2;
 			}
 	
 			for (cnt = full1; cnt; cnt--) {
-				*(int32_t *)dp ^= mask;
+				*(int32_t *)dp ^= ~0;
 				dp += 4;
 			}
 
 			if (slop2 & 1)
-				*dp++ ^= mask;
+				*dp++ ^= ~0;
 
 			if (slop2 & 2)
-				*(int16_t *)dp ^= mask;
+				*(int16_t *)dp ^= ~0;
 		}
 	}
 }
