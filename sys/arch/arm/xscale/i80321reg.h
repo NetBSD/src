@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321reg.h,v 1.4 2002/07/29 17:28:06 thorpej Exp $	*/
+/*	$NetBSD: i80321reg.h,v 1.5 2002/08/02 00:33:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -447,31 +447,5 @@ struct dma_chain_desc {
 #define	SSP_SSITR_TTFS		(1U << 5)/* Test Tx FIFO service */
 #define	SSP_SSITR_TRFS		(1U << 6)/* Test Rx FIFO service */
 #define	SSP_SSITR_TROR		(1U << 7)/* Test Rx overrun */
-
-/*
- * Application Accelerator Unit
- */
-
-#define	AAU_ACR		0x00		/* accelerator control */
-#define	AAU_ASR		0x04		/* accelerator status */
-#define	AAU_ADAR	0x08		/* descriptor address */
-#define	AAU_ANDAR	0x0c		/* next descriptor address */
-#define	AAU_DAR		0x20		/* destination address */
-#define	AAU_ABCR	0x24		/* byte count */
-#define	AAU_ADCR	0x28		/* descriptor control */
-#define	AAU_EDCR0	0x3c		/* extended descriptor control 0 */
-#define	AAU_EDCR1	0x60		/* extended descriptor control 1 */
-#define	AAU_EDCR2	0x84		/* extended descriptor control 2 */
-
-#define	AAU_ACR_AAE	(1U << 0)	/* accelerator enable */
-#define	AAU_ACR_CR	(1U << 1)	/* chain resume */
-#define	AAU_ACR_512	(1U << 2)	/* 512-byte buffer enable */
-
-#define	AAU_ASR_MA	(1U << 5)	/* master abort */
-#define	AAU_ASR_ECIF	(1U << 8)	/* end of chain interrupt */
-#define	AAU_ASR_ETIF	(1U << 9)	/* end of transfer interrupt */
-#define	AAU_ASR_AAF	(1U << 10)	/* acellerator active */
-
-#define	AAU_ABCR_MASK	0x00ffffff	/* 24-bit count */
 
 #endif /* _ARM_XSCALE_I80321REG_H_ */
