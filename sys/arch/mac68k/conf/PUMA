@@ -1,4 +1,4 @@
-#	$NetBSD: PUMA,v 1.22 1997/06/12 18:42:08 mrg Exp $
+#	$NetBSD: PUMA,v 1.23 1997/07/23 06:36:59 scottr Exp $
 #
 # PUMA
 
@@ -34,7 +34,6 @@ options 	GATEWAY		# IP packet forwarding
 options 	COMPAT_42
 options 	COMPAT_43
 options 	NS
-options 	MAPMEM
 options 	SYSVSHM,SYSVSEM,SYSVMSG
 
 # Mac-specific options
