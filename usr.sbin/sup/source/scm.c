@@ -1,4 +1,4 @@
-/*	$NetBSD: scm.c,v 1.18 2004/09/30 02:17:14 enami Exp $	*/
+/*	$NetBSD: scm.c,v 1.19 2004/09/30 02:17:53 enami Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -592,11 +592,11 @@ samehost(void)
 			continue;
 		if (getnameinfo(ifa->ifa_addr,
 #ifdef BSD4_4
-		ifa->ifa_addr->sa_len,
+		    ifa->ifa_addr->sa_len,
 #else
-		sizeof(struct sockaddr),
+		    sizeof(struct sockaddr),
 #endif
-			h2, sizeof(h2), NULL, 0, niflags))
+		    h2, sizeof(h2), NULL, 0, niflags))
 			continue;
 		if (strcmp(h1, h2) == 0) {
 			freeifaddrs(ifap);
