@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld_start.S,v 1.2 1999/02/26 22:01:31 pk Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.3 1999/03/01 03:39:39 kim Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@ _rtld_bind_start:	# (obj, reloff)
 	ld	[%i7 + 8], %o0		! obj id is in second PLT slot
 	srl	%g1, 10, %o1		! offset is in high 22 bits
 	call	_rtld_bind		! Call _rtld_bind(obj, offset)
-	 sub	%o1, 12*4, %o1		! first 4 `pltrel' entries are missing!
+	 sub	%o1, 12*4, %o1		! first 4 'pltrel' entries are missing!
 
 	mov	%o0, %g1		! return value == function address
 	restore				! get rid of our context
