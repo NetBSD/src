@@ -1,4 +1,4 @@
-/*      $NetBSD: grf_cl.c,v 1.9 1996/04/21 21:11:11 veego Exp $        */
+/*      $NetBSD: grf_cl.c,v 1.10 1996/04/28 06:31:47 mhitch Exp $        */
 
 /*
  * Copyright (c) 1995 Ezra Story
@@ -181,7 +181,9 @@ grfclmatch(pdp, match, auxp)
 	struct device *pdp;
 	void   *match, *auxp;
 {
+#ifdef CL5426CONSOLE
 	struct cfdata *cfp = match;
+#endif
 	struct zbus_args *zap;
 	static int regprod, fbprod;
 
