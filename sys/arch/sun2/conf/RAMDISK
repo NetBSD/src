@@ -1,4 +1,4 @@
-# $NetBSD: RAMDISK,v 1.1 2001/05/03 15:39:48 fredette Exp $
+# $NetBSD: RAMDISK,v 1.2 2001/06/11 01:50:56 wiz Exp $
 
 # RAMDISK: Root/swap on ramdisk
 # This kernel is used to:
@@ -43,7 +43,7 @@ maxusers	2
 #options 	SCSIDEBUG
 #options 	SCSIVERBOSE		# Verbose SCSI errors
 
-# Compatability options
+# Compatibility options
 #options 	COMPAT_SUNOS	# can run SunOS 4.1.1 executables
 #options 	COMPAT_43	# and 4.3BSD and ...
 

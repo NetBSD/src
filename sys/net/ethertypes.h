@@ -1,4 +1,4 @@
-/*	$NetBSD: ethertypes.h,v 1.10 1999/09/29 23:00:21 ad Exp $	*/
+/*	$NetBSD: ethertypes.h,v 1.11 2001/06/11 01:50:57 wiz Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -75,7 +75,7 @@
 #define	ETHERTYPE_CHAOS 	0x0804	/* CHAOSnet */
 #define	ETHERTYPE_X25		0x0805	/* X.25 Level 3 */
 #define	ETHERTYPE_ARP		0x0806	/* Address resolution protocol */
-#define	ETHERTYPE_NSCOMPAT	0x0807	/* XNS Compatability */
+#define	ETHERTYPE_NSCOMPAT	0x0807	/* XNS Compatibility */
 #define	ETHERTYPE_FRARP 	0x0808	/* Frame Relay ARP (RFC1701) */
 			     /* 0x081C	   Symbolics Private */
 		    /* 0x0888 - 0x088A	   Xyplex */

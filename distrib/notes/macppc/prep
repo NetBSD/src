@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.18 2001/05/25 08:04:14 mbw Exp $
+.\"	$NetBSD: prep,v 1.19 2001/06/11 01:50:49 wiz Exp $
 .
 .Ss2 Prepare yourself
 .
@@ -1506,7 +1506,7 @@ Skip forward to
 .br
 (All Open Firmware versions)
 .Pp
-Set up the DHCP daemon in BOOTP compatable mode, the TFTP daemon, and
+Set up the DHCP daemon in BOOTP compatible mode, the TFTP daemon, and
 the NFS daemons on your netboot server.
 Tell Open Firmware to boot over ethernet, and it will send a BOOTP
 request, which will tell Open Firmware what your system's IP address
