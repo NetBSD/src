@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.188 2001/06/30 11:00:31 darcy Exp $
+# $NetBSD: GENERIC,v 1.189 2001/07/07 17:09:47 tsutsui Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
 #
@@ -6,7 +6,7 @@
 
 include	"arch/alpha/conf/std.alpha"
 
-#ident 		"GENERIC-$Revision: 1.188 $"
+#ident 		"GENERIC-$Revision: 1.189 $"
 
 maxusers 32
 
@@ -230,7 +230,6 @@ gsip*	at	pci? dev ? function ?		# NS DP83820 Gigabit Ethernet
 iha*	at	pci? dev ? function ?		# Initio INIC-940/950 SCSI
 isp*	at	pci? dev ? function ?		# Qlogic ISP 10x0 SCSI
 le*	at	pci? dev ? function ?		# PCI LANCE Ethernet (untested)
-#ncr*	at	pci? dev ? function ?		# NCR 53c8xx SCSI
 sf*	at	pci? dev ? function ?		# Adaptec AIC-6915 Ethernet
 siop*	at	pci? dev ? function ?		# Symbios 53c8xx SCSI
 mlx*	at	pci? dev ? function ?		# Mylex DAC960 / DEC SWXCR (untested)
@@ -372,7 +371,6 @@ scsibus* at	bha?
 scsibus* at	dpt?
 scsibus* at	iha?
 scsibus* at	isp?
-#scsibus* at	ncr?
 scsibus* at	siop?
 scsibus* at	pcscp?
 scsibus* at	uha?

@@ -1,4 +1,4 @@
-#	$NetBSD: CARDBUS,v 1.35 2001/05/10 22:12:38 tron Exp $
+#	$NetBSD: CARDBUS,v 1.36 2001/07/07 17:09:48 tsutsui Exp $
 #
 #	CARDBUS: GENERIC + CardBus support.  Additionally, some
 #	things typically not found on laptops have been commented out.
@@ -8,7 +8,7 @@
 
 include "arch/i386/conf/std.i386"
 
-#ident		"CARDBUS-$Revision: 1.35 $"
+#ident		"CARDBUS-$Revision: 1.36 $"
 
 maxusers	32		# estimated number of users
 
@@ -401,7 +401,6 @@ lpt2	at isa? port 0x3bc
 #bha*	at pci? dev ? function ?	# BusLogic 9xx SCSI
 #dpt*	at pci? dev ? function ?	# DPT SmartCache/SmartRAID
 #isp*	at pci? dev ? function ?	# Qlogic ISP [12]0x0 SCSI/FibreChannel
-#ncr*	at pci? dev ? function ?	# NCR 53c8xx SCSI (old driver)
 #siop*	at pci? dev ? function ?	# Symbios 53c8xx SCSI
 #pcscp*	at pci? dev ? function ?	# AMD 53c974 PCscsi-PCI SCSI
 
@@ -454,7 +453,6 @@ scsibus* at esp?
 #scsibus* at iopsp?
 #scsibus* at isp?
 #scsibus* at nca?
-#scsibus* at ncr?
 #scsibus* at pcscp?
 #scsibus* at sea?
 #scsibus* at siop?
