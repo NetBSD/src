@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: security,v 1.77 2002/06/18 22:21:43 itojun Exp $
+#	$NetBSD: security,v 1.78 2002/06/18 22:43:53 itojun Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -205,8 +205,8 @@ if checkyesno check_passwd; then
 			printf "Login %s has no password.\n", $1;
 		if (length($2) != 13 &&
 		    length($2) != 20 &&
-		    $2 !~ /\$1/ &&
-		    $2 !~ /\$2/ &&
+		    $2 !~ /^\$1/ &&
+		    $2 !~ /^\$2/ &&
 		    $2 != "" &&
 		    $2 !~ /^\*[A-z-]+$/ &&
 		    $1 != "toor") {
