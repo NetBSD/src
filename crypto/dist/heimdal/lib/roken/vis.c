@@ -1,4 +1,4 @@
-/*	$NetBSD: vis.c,v 1.1.1.2 2001/09/17 12:25:07 assar Exp $	*/
+/*	$NetBSD: vis.c,v 1.2 2001/09/17 12:32:39 assar Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #if 1
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$Id: vis.c,v 1.1.1.2 2001/09/17 12:25:07 assar Exp $");
+RCSID("$Id: vis.c,v 1.2 2001/09/17 12:32:39 assar Exp $");
 #endif
 #include <roken.h>
 #ifndef _DIAGASSERT
@@ -47,7 +47,7 @@ RCSID("$Id: vis.c,v 1.1.1.2 2001/09/17 12:25:07 assar Exp $");
 #else
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: vis.c,v 1.1.1.2 2001/09/17 12:25:07 assar Exp $");
+__RCSID("$NetBSD: vis.c,v 1.2 2001/09/17 12:32:39 assar Exp $");
 #endif /* not lint */
 #endif
 

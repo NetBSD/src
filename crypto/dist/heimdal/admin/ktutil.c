@@ -34,13 +34,13 @@
 #include "ktutil_locl.h"
 #include <err.h>
 
-RCSID("$Id: ktutil.c,v 1.4 2001/06/19 22:39:52 assar Exp $");
+RCSID("$Id: ktutil.c,v 1.5 2001/09/17 12:32:34 assar Exp $");
 
 static int help_flag;
 static int version_flag;
 int verbose_flag;
 char *keytab_string; 
-char keytab_buf[256];
+static char keytab_buf[256];
 
 static int help(int argc, char **argv);
 
@@ -59,6 +59,8 @@ static SL_cmd cmds[] = {
       "remove old and superceeded entries" },
     { "remove", 	kt_remove,	"remove",
       "remove key from keytab" },
+    { "rename", 	kt_rename,	"rename from to",
+      "rename entry" },
     { "srvconvert",	srvconv,	"srvconvert [flags]",
       "convert v4 srvtab to keytab" },
     { "srv2keytab" },
@@ -107,6 +109,31 @@ static struct getargs args[] = {
 static int num_args = sizeof(args) / sizeof(args[0]);
 
 krb5_context context;
+
+krb5_keytab
+ktutil_open_keytab(void)
+{
+    krb5_error_code ret;
+    krb5_keytab keytab;
+    if (keytab_string == NULL) {
+	ret = krb5_kt_default_modify_name (context, keytab_buf,
+					   sizeof(keytab_buf));
+	if (ret) {
+	    krb5_warn(context, ret, "krb5_kt_default_modify_name");
+	    return NULL;
+	}
+	keytab_string = keytab_buf;
+    }
+    ret = krb5_kt_resolve(context, keytab_string, &keytab);
+    if (ret) {
+	krb5_warn(context, ret, "resolving keytab %s", keytab_string);
+	return NULL;
+    }
+    if (verbose_flag)
+	fprintf (stderr, "Using keytab %s\n", keytab_string);
+	
+    return keytab;
+}
 
 static int
 help(int argc, char **argv)
