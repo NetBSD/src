@@ -1,6 +1,8 @@
-# $NetBSD: Makefile,v 1.20 2003/12/12 06:08:30 jmc Exp $
+# $NetBSD: Makefile,v 1.21 2004/06/24 04:38:29 jmc Exp $
 
 # $FreeBSD: src/gnu/usr.bin/groff/tmac/Makefile,v 1.41 2003/05/01 13:22:21 ru Exp $
+
+SUBDIR=	man
 
 TMACOWN?=	${BINOWN}
 TMACGRP?=	${BINGRP}
@@ -9,17 +11,7 @@ TMACMODE?=	${NOBINMODE}
 TMACDIR?=	/usr/share/tmac
 MDOCDIR?=	${TMACDIR}/mdoc
 
-# For ms.7
-USETBL=
-
-MAN=		groff_ms.7 groff_man.7 groff_me.7 groff_mdoc.7
-MAN+=		groff_trace.7 groff_www.7
-MLINKS=		groff_ms.7 ms.7
-MLINKS+=	groff_man.7 man.7
-MLINKS+=	groff_me.7 me.7
-MLINKS+=	groff_mdoc.7 mdoc.7 groff_mdoc.7 mdoc.samples.7
-
-CLEANFILES=	${MAN} ${MDOCFILES:S/$/-s/} ${STRIPFILES:S/$/-s/} ${SPECIALFILES:S/$/-s/}
+CLEANFILES=	${MDOCFILES:S/$/-s/} ${STRIPFILES:S/$/-s/} ${SPECIALFILES:S/$/-s/}
 
 # XXX: hyphen.ru
 NORMALFILES=	mandoc.tmac andoc.tmac an-old.tmac \
@@ -86,3 +78,4 @@ FILES+=	${NORMALFILES}
 .endif
 
 .include <bsd.prog.mk>
+.include <bsd.subdir.mk>
