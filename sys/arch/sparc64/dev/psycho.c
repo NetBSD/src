@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho.c,v 1.18 2000/07/03 17:42:37 eeh Exp $	*/
+/*	$NetBSD: psycho.c,v 1.19 2000/07/05 12:11:59 pk Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -855,7 +855,7 @@ static int pci_ino_to_ipl_table[] = {
 	0, 0, 0, 0,	/* PCI A, Slot 2, INTA#/B#/C#/D# (unavailable) */
 	0, 0, 0, 0,	/* PCI A, Slot 3, INTA#/B#/C#/D# (unavailable) */
 	0, 0, 0, 0,	/* PCI B, Slot 0, INTA#/B#/C#/D# */
-	0, 0, 0, 0,	/* PCI B, Slot 0, INTA#/B#/C#/D# */
+	0, 0, 0, 0,	/* PCI B, Slot 1, INTA#/B#/C#/D# */
 	0, 0, 0, 0,	/* PCI B, Slot 2, INTA#/B#/C#/D# */
 	0, 0, 0, 0,	/* PCI B, Slot 3, INTA#/B#/C#/D# */
 	PIL_SCSI,	/* SCSI */
@@ -942,7 +942,7 @@ psycho_intr_establish(t, level, flags, handler, arg)
 			i = INTPCIINOX(vec);
 
 			intrmapptr = &((&sc->sc_regs->pcia_slot0_int)[i]);
-			intrclrptr = &sc->sc_regs->pcia0_clr_int[i<<2];
+			intrclrptr = &sc->sc_regs->pcia0_clr_int[ino];
 
 			DPRINTF(PDB_INTR, ("- turning on PCI intr %d", i));
 		} else {
@@ -992,8 +992,11 @@ psycho_intr_establish(t, level, flags, handler, arg)
 	ih->ih_arg = arg;
 	ih->ih_number = ino | 0x7c0;
 	ih->ih_pil = pci_ino_to_ipl_table[ino];
-	DPRINTF(PDB_INTR, ("; installing handler %p with ino %u pil %u\n",
-	    handler, (u_int)ino, (u_int)ih->ih_pil));
+
+	DPRINTF(PDB_INTR, (
+	    "; installing handler %p arg %p with ino %u pil %u\n",
+	    handler, arg, (u_int)ino, (u_int)ih->ih_pil));
+
 	intr_establish(ih->ih_pil, ih);
 	return (ih);
 }
