@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fea.c,v 1.1.1.1 1996/05/20 00:20:39 thorpej Exp $	*/
+/*	$NetBSD: if_fea.c,v 1.2 1996/05/20 00:34:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -445,7 +445,6 @@ pdq_eisa_match(
 {
     const struct eisa_attach_args * const ea = (struct eisa_attach_args *) aux;
 
-    /* must match one of our known ID strings */
     if (strncmp(ea->ea_idstring, "DEC300", 6) == 0)
 	return 1;
 
@@ -463,14 +462,27 @@ pdq_eisa_attach(
     pdq_uint32_t irq, maddr, msize;
     eisa_intr_handle_t ih;
     const char *intrstr;
+    const char *model;
 
     sc->sc_bc = ea->ea_bc;
     bcopy(sc->sc_dev.dv_xname, sc->sc_if.if_xname, IFNAMSIZ);
     sc->sc_if.if_flags = 0;
     sc->sc_if.if_softc = sc;
 
+    if (strcmp(ea->ea_idstring, "DEC3001") == 0)
+	model = EISA_PRODUCT_DEC3001;
+    else if (strcmp(ea->ea_idstring, "DEC3002") == 0)
+	model = EISA_PRODUCT_DEC3002;
+    else if (strcmp(ea->ea_idstring, "DEC3003") == 0)
+	model = EISA_PRODUCT_DEC3003;
+    else if (strcmp(ea->ea_idstring, "DEC3004") == 0)
+	model = EISA_PRODUCT_DEC3004;
+    else
+	model = "unknown model!";
+    printf(": %s\n", model);
+
     if (bus_io_map(sc->sc_bc, EISA_SLOT_ADDR(ea->ea_slot), EISA_SLOT_SIZE, &sc->sc_iobase)) {
-	printf(": failed to map I/O!\n");
+	printf("%s: failed to map I/O!\n", sc->sc_dev.dv_xname);
 	return;
     }
 
@@ -478,14 +490,14 @@ pdq_eisa_attach(
 
 #if !defined(PDQ_IOMAPPED)
     if (maddr == 0 || msize == 0) {
-	printf("\n%s: error: memory not enabled! ECU reconfiguration required\n",
+	printf("%s: error: memory not enabled! ECU reconfiguration required\n",
 	       sc->sc_dev.dv_xname);
 	return;
     }
 
     if (bus_mem_map(sc->sc_bc, maddr, msize, 0, &sc->sc_membase)) {
 	bus_io_unmap(sc->sc_bc, sc->sc_iobase, EISA_SLOT_SIZE);
-	printf(": failed to map memory!\n");
+	printf("%s: failed to map memory!\n", sc->sc_dev.dv_xname);
 	return;
     }
 #endif
