@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2002/04/11 23:36:49 thorpej Exp $
+#	$NetBSD: Makefile,v 1.3 2002/04/13 16:40:33 thorpej Exp $
 
 .include <bsd.own.mk>
 .include "${_SRC_TOP_}/distrib/Makefile.inc"
@@ -38,5 +38,12 @@ CLEANFILES+=	netbsd.tmp netbsd.tmp.gz gzboot.sym \
 #	do the work
 #
 realall: ${GZIMGS}
+
+ITARGET=	${RELEASEDIR}/binary/gzimg
+
+release: check_RELEASEDIR
+.for img in ${GZIMGS}
+	${RELINSTALL} ${img} ${ITARGET}/.
+.endfor
 
 .include <bsd.prog.mk>
