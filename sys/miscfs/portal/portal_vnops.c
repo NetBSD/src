@@ -1,4 +1,4 @@
-/*	$NetBSD: portal_vnops.c,v 1.44 2003/01/18 09:18:06 thorpej Exp $	*/
+/*	$NetBSD: portal_vnops.c,v 1.45 2003/04/10 21:53:33 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: portal_vnops.c,v 1.44 2003/01/18 09:18:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: portal_vnops.c,v 1.45 2003/04/10 21:53:33 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,8 +75,8 @@ static void	portal_closefd __P((struct lwp *, int));
 static int	portal_connect __P((struct socket *, struct socket *));
 
 int	portal_lookup	__P((void *));
-#define	portal_create	genfs_eopnotsupp_rele
-#define	portal_mknod	genfs_eopnotsupp_rele
+#define	portal_create	genfs_eopnotsupp
+#define	portal_mknod	genfs_eopnotsupp
 int	portal_open	__P((void *));
 #define	portal_close	genfs_nullop
 #define	portal_access	genfs_nullop
@@ -90,11 +90,11 @@ int	portal_setattr	__P((void *));
 #define portal_revoke	genfs_revoke
 #define	portal_fsync	genfs_nullop
 #define	portal_seek	genfs_seek
-#define	portal_remove	genfs_eopnotsupp_rele
+#define	portal_remove	genfs_eopnotsupp
 int	portal_link	__P((void *));
-#define	portal_rename	genfs_eopnotsupp_rele
-#define	portal_mkdir	genfs_eopnotsupp_rele
-#define	portal_rmdir	genfs_eopnotsupp_rele
+#define	portal_rename	genfs_eopnotsupp
+#define	portal_mkdir	genfs_eopnotsupp
+#define	portal_rmdir	genfs_eopnotsupp
 int	portal_symlink	__P((void *));
 int	portal_readdir	__P((void *));
 #define	portal_readlink	genfs_eopnotsupp

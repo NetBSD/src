@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vnops.c,v 1.73 2003/02/23 14:37:35 pk Exp $	*/
+/*	$NetBSD: fdesc_vnops.c,v 1.74 2003/04/10 21:53:32 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.73 2003/02/23 14:37:35 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.74 2003/04/10 21:53:32 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,8 +89,8 @@ LIST_HEAD(fdhashhead, fdescnode) *fdhashtbl;
 u_long fdhash;
 
 int	fdesc_lookup	__P((void *));
-#define	fdesc_create	genfs_eopnotsupp_rele
-#define	fdesc_mknod	genfs_eopnotsupp_rele
+#define	fdesc_create	genfs_eopnotsupp
+#define	fdesc_mknod	genfs_eopnotsupp
 int	fdesc_open	__P((void *));
 #define	fdesc_close	genfs_nullop
 #define	fdesc_access	genfs_nullop
@@ -105,11 +105,11 @@ int	fdesc_kqfilter	__P((void *));
 #define	fdesc_fcntl	genfs_fcntl
 #define	fdesc_fsync	genfs_nullop
 #define	fdesc_seek	genfs_seek
-#define	fdesc_remove	genfs_eopnotsupp_rele
+#define	fdesc_remove	genfs_eopnotsupp
 int	fdesc_link	__P((void *));
-#define	fdesc_rename	genfs_eopnotsupp_rele
-#define	fdesc_mkdir	genfs_eopnotsupp_rele
-#define	fdesc_rmdir	genfs_eopnotsupp_rele
+#define	fdesc_rename	genfs_eopnotsupp
+#define	fdesc_mkdir	genfs_eopnotsupp
+#define	fdesc_rmdir	genfs_eopnotsupp
 int	fdesc_symlink	__P((void *));
 int	fdesc_readdir	__P((void *));
 int	fdesc_readlink	__P((void *));

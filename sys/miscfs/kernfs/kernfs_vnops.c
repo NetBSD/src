@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.84 2002/10/12 14:04:45 jdolecek Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.85 2003/04/10 21:53:33 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.84 2002/10/12 14:04:45 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.85 2003/04/10 21:53:33 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,8 +103,8 @@ const struct kern_target kern_targets[] = {
 static int nkern_targets = sizeof(kern_targets) / sizeof(kern_targets[0]);
 
 int	kernfs_lookup	__P((void *));
-#define	kernfs_create	genfs_eopnotsupp_rele
-#define	kernfs_mknod	genfs_eopnotsupp_rele
+#define	kernfs_create	genfs_eopnotsupp
+#define	kernfs_mknod	genfs_eopnotsupp
 #define	kernfs_open	genfs_nullop
 #define	kernfs_close	genfs_nullop
 int	kernfs_access	__P((void *));
@@ -118,11 +118,11 @@ int	kernfs_write	__P((void *));
 #define kernfs_revoke	genfs_revoke
 #define	kernfs_fsync	genfs_nullop
 #define	kernfs_seek	genfs_nullop
-#define	kernfs_remove	genfs_eopnotsupp_rele
+#define	kernfs_remove	genfs_eopnotsupp
 int	kernfs_link	__P((void *));
-#define	kernfs_rename	genfs_eopnotsupp_rele
-#define	kernfs_mkdir	genfs_eopnotsupp_rele
-#define	kernfs_rmdir	genfs_eopnotsupp_rele
+#define	kernfs_rename	genfs_eopnotsupp
+#define	kernfs_mkdir	genfs_eopnotsupp
+#define	kernfs_rmdir	genfs_eopnotsupp
 int	kernfs_symlink	__P((void *));
 int	kernfs_readdir	__P((void *));
 #define	kernfs_readlink	genfs_eopnotsupp
