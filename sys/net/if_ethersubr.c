@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.99 2002/09/11 05:36:26 itojun Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.100 2003/01/12 12:26:23 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.99 2002/09/11 05:36:26 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.100 2003/01/12 12:26:23 jdolecek Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -1092,7 +1092,7 @@ ether_ifdetach(struct ifnet *ifp)
 	s = splnet();
 	while ((enm = LIST_FIRST(&ec->ec_multiaddrs)) != NULL) {
 		LIST_REMOVE(enm, enm_list);
-		free(enm, M_IFADDR);
+		free(enm, M_IFMADDR);
 		ec->ec_multicnt--;
 	}
 	splx(s);
