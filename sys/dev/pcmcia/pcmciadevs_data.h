@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.52 1999/10/11 17:51:45 thorpej Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.53 1999/10/27 19:10:58 is Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.49 1999/10/11 17:51:24 thorpej Exp 
+ *	NetBSD: pcmciadevs,v 1.50 1999/10/27 19:10:02 is Exp 
  */
 
 /*-
@@ -162,6 +162,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "Fujitsu Corporation",
 	    "Fujitsu Towa LA501 Ethernet"	},
+	},
+	{
+	    PCMCIA_VENDOR_FUJITSU, PCMCIA_PRODUCT_FUJITSU_LA10S,
+	    PCMCIA_CIS_FUJITSU_LA10S,
+	    0,
+	    "Fujitsu Corporation",
+	    "Fujitsu Compact Flash Ethernet"	},
 	},
 	{
 	    PCMCIA_VENDOR_IBM, PCMCIA_PRODUCT_IBM_INFOMOVER,
