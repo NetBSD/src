@@ -42,7 +42,7 @@
  *	@(#)sun_misc.c	8.1 (Berkeley) 6/18/93
  *
  * from: Header: sun_misc.c,v 1.16 93/04/07 02:46:27 torek Exp 
- * $Id: sun_misc.c,v 1.27 1994/06/10 09:26:18 pk Exp $
+ * $Id: sun_misc.c,v 1.28 1994/06/15 19:38:05 deraadt Exp $
  */
 
 /*
@@ -269,6 +269,7 @@ sun_mount(p, uap, retval)
 	return (mount(p, uap, retval));
 }
 
+#if defined(NFSCLIENT)
 async_daemon(p, uap, retval)
 	struct proc *p;
 	void *uap;
@@ -282,6 +283,7 @@ async_daemon(p, uap, retval)
 	args.flag = NFSSVC_BIOD;
 	return nfssvc(p, &args, retval);
 }
+#endif /* NFSCLIENT */
 
 struct sun_sigpending_args {
 	int	*mask;
