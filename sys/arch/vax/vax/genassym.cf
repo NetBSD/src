@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.26 2003/01/19 22:29:23 ragge Exp $
+#	$NetBSD: genassym.cf,v 1.27 2003/09/29 21:04:53 matt Exp $
 #
 # Copyright (c) 1997 Ludd, University of Lule}, Sweden.
 # All rights reserved.
@@ -40,11 +40,12 @@ include	<sys/device.h>
 
 include <uvm/uvm.h>
 
+include	<machine/cpu.h>
 include	<machine/mtpr.h>
 include	<machine/pcb.h>
 include	<machine/sid.h>
+include <machine/signal.h>
 include	<machine/trap.h>
-include	<machine/cpu.h>
 include	<machine/uvax.h>
 
 define	L_PRIORITY	offsetof(struct lwp, l_priority)
@@ -125,7 +126,7 @@ define	EFAULT		EFAULT
 
 define	EV_COUNT	offsetof(struct evcnt, ev_count)
 
-define	SYS___sigreturn14	SYS___sigreturn14
+define	SYS_compat_16___sigreturn14	SYS_compat_16___sigreturn14
 define	SYS_exit	SYS_exit
 
 define	VAX_TYP_UV2	VAX_TYP_UV2

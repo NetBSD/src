@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.82 2003/09/18 22:38:36 cl Exp $     */
+/*	$NetBSD: trap.c,v 1.83 2003/09/29 21:04:53 matt Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -33,7 +33,7 @@
  /* All bugs are subject to removal without further notice */
 		
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.82 2003/09/18 22:38:36 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.83 2003/09/29 21:04:53 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -163,7 +163,7 @@ userret(struct lwp *l, struct trapframe *frame, u_quad_t oticks)
 void
 trap(struct trapframe *frame)
 {
-	u_int	sig = 0, type = frame->trap, trapsig = 1;
+	u_int	sig = 0, type = frame->trap, trapsig = 1, code = 0;
 	u_int	rv, addr, umode;
 	struct	lwp *l = curlwp;
 	struct	proc *p = l->l_proc;
@@ -223,6 +223,7 @@ fram:
 	case T_ACCFLT|T_USER:
 		if (frame->code < 0) { /* Check for kernel space */
 			sig = SIGSEGV;
+			code = SEGV_ACCERR;
 			break;
 		}
 
@@ -293,6 +294,7 @@ if(faultdebug)printf("trap accflt type %lx, code %lx, pc %lx, psl %lx\n",
 				panic("Segv in kernel mode: pc %x addr %x",
 				    (u_int)frame->pc, (u_int)frame->code);
 			}
+			code = SEGV_ACCERR;
 			if (rv == ENOMEM) {
 				printf("UVM: pid %d (%s), uid %d killed: "
 				       "out of swap\n",
@@ -302,6 +304,8 @@ if(faultdebug)printf("trap accflt type %lx, code %lx, pc %lx, psl %lx\n",
 				sig = SIGKILL;
 			} else {
 				sig = SIGSEGV;
+				if (rv != EACCES)
+					code = SEGV_MAPERR;
 			}
 		} else {
 			trapsig = 0;
@@ -316,15 +320,26 @@ if(faultdebug)printf("trap accflt type %lx, code %lx, pc %lx, psl %lx\n",
 		break;
 
 	case T_BPTFLT|T_USER:
+		sig = SIGTRAP;
+		code = TRAP_BRKPT;
+		break;
 	case T_TRCTRAP|T_USER:
 		sig = SIGTRAP;
+		code = TRAP_TRACE;
 		frame->psl &= ~PSL_T;
 		break;
 
 	case T_PRIVINFLT|T_USER:
+		sig = SIGILL;
+		code = ILL_PRVOPC;
+		break;
 	case T_RESADFLT|T_USER:
+		sig = SIGILL;
+		code = ILL_ILLADR;
+		break;
 	case T_RESOPFLT|T_USER:
 		sig = SIGILL;
+		code = ILL_ILLOPC;
 		break;
 
 	case T_XFCFLT|T_USER:
@@ -350,12 +365,17 @@ if(faultdebug)printf("trap accflt type %lx, code %lx, pc %lx, psl %lx\n",
 #endif
 	}
 	if (trapsig) {
+		ksiginfo_t ksi;
 		if ((sig == SIGSEGV || sig == SIGILL) && cpu_printfataltraps)
 			printf("pid %d.%d (%s): sig %d: type %lx, code %lx, pc %lx, psl %lx\n",
 			       p->p_pid, l->l_lid, p->p_comm, sig, frame->trap,
 			       frame->code, frame->pc, frame->psl);
 		KERNEL_PROC_LOCK(l);
-		trapsignal(l, sig, frame->code);
+		memset(&ksi, 0, sizeof(ksi));
+		ksi.ksi_signo = sig;
+		ksi.ksi_trap = frame->code;
+		ksi.ksi_code = code;
+		trapsignal(l, &ksi);
 		KERNEL_PROC_UNLOCK(l);
 	}
 
