@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.10 1998/10/13 11:30:47 tsubai Exp $	*/
+/*	$NetBSD: pmap.c,v 1.11 1999/01/10 10:24:17 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -395,7 +395,7 @@ pmap_bootstrap(kernelstart, kernelend)
 			if (s < mp1->start)
 				break;
 		if (mp1 < mp) {
-			bcopy(mp1, mp1 + 1, (void *)mp - (void *)mp1);
+			bcopy(mp1, mp1 + 1, (char *)mp - (char *)mp1);
 			mp1->start = s;
 			mp1->size = sz;
 		} else {
