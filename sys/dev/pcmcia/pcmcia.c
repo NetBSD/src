@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia.c,v 1.14 1999/10/15 06:07:31 haya Exp $	*/
+/*	$NetBSD: pcmcia.c,v 1.15 2000/01/23 20:44:04 aymeric Exp $	*/
 
 #define	PCMCIADEBUG
 
@@ -212,7 +212,8 @@ pcmcia_card_attach(dev)
 			DPRINTF(("%s: function %d CCR at %d "
 			     "offset %lx: %x %x %x %x, %x %x %x %x, %x\n",
 			     sc->dev.dv_xname, pf->number,
-			     pf->pf_ccr_window, pf->pf_ccr_offset,
+			     pf->pf_ccr_window,
+			     (unsigned long) pf->pf_ccr_offset,
 			     pcmcia_ccr_read(pf, 0x00),
 			pcmcia_ccr_read(pf, 0x02), pcmcia_ccr_read(pf, 0x04),
 			pcmcia_ccr_read(pf, 0x06), pcmcia_ccr_read(pf, 0x0A),
@@ -486,7 +487,8 @@ pcmcia_function_enable(pf)
 			printf("%s: function %d CCR at %d offset %lx: "
 			       "%x %x %x %x, %x %x %x %x, %x\n",
 			       tmp->sc->dev.dv_xname, tmp->number,
-			       tmp->pf_ccr_window, tmp->pf_ccr_offset,
+			       tmp->pf_ccr_window,
+			       (unsigned long) tmp->pf_ccr_offset,
 			       pcmcia_ccr_read(tmp, 0x00),
 			       pcmcia_ccr_read(tmp, 0x02),
 			       pcmcia_ccr_read(tmp, 0x04),
