@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.145 2000/12/08 23:14:05 mycroft Exp $	*/
+/*	$NetBSD: trap.c,v 1.146 2000/12/09 02:18:16 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -140,18 +140,9 @@ userret(p, pc, oticks)
 {
 	int sig;
 
-	/* take pending signals */
+	/* Take pending signals. */
 	while ((sig = CURSIG(p)) != 0)
 		postsig(sig);
-	p->p_priority = p->p_usrpri;
-	if (want_resched) {
-		/*
-		 * We are being preempted.
-		 */
-		preempt(NULL);
-		while ((sig = CURSIG(p)) != 0)
-			postsig(sig);
-	}
 
 	/*
 	 * If profiling, charge recent system time to the trapped pc.
@@ -162,7 +153,7 @@ userret(p, pc, oticks)
 		addupc_task(p, pc, (int)(p->p_sticks - oticks) * psratio);
 	}                   
 
-	curcpu()->ci_schedstate.spc_curpriority = p->p_priority;
+	curcpu()->ci_schedstate.spc_curpriority = p->p_priority = p->p_usrpri;
 }
 
 const char *trap_type[] = {
@@ -344,6 +335,9 @@ trap(frame)
 			p->p_flag &= ~P_OWEUPC;
 			ADDUPROF(p);
 		}
+		/* Allow a forced task switch. */
+		if (want_resched)
+			preempt(NULL);
 		goto out;
 
 	case T_DNA|T_USER: {
@@ -582,7 +576,7 @@ syscall(frame)
 	register caddr_t params;
 	register const struct sysent *callp;
 	register struct proc *p;
-	int error, opc, nsys;
+	int error, nsys;
 	size_t argsize;
 	register_t code, args[8], rval[2];
 	u_quad_t sticks;
@@ -601,7 +595,6 @@ syscall(frame)
 
 	sticks = p->p_sticks;
 	p->p_md.md_regs = &frame;
-	opc = frame.tf_eip;
 	code = frame.tf_eax;
 
 	nsys = p->p_emul->e_nsysent;
@@ -673,7 +666,7 @@ syscall(frame)
 		 * the kernel through the trap or call gate.  We pushed the
 		 * size of the instruction into tf_err on entry.
 		 */
-		frame.tf_eip = opc - frame.tf_err;
+		frame.tf_eip -= frame.tf_err;
 		break;
 	case EJUSTRETURN:
 		/* nothing to do */
