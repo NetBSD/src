@@ -1,4 +1,4 @@
-/* $NetBSD: radioctl.c,v 1.3 2002/01/02 20:23:01 briggs Exp $ */
+/* $NetBSD: radioctl.c,v 1.4 2002/01/03 18:23:09 augustss Exp $ */
 /* $OpenBSD: radioctl.c,v 1.5 2001/12/18 18:42:19 mickey Exp $ */
 /* $RuOBSD: radioctl.c,v 1.4 2001/10/20 18:09:10 pva Exp $ */
 
@@ -105,18 +105,13 @@ int
 main(int argc, char **argv)
 {
 	struct opt_t opt;
-
 	char *radiodev = NULL;
 	int rd = -1;
-
 	int optchar;
 	char *param = NULL;
-
 	int show_vars = 0;
 	int set_param = 0;
 	int silent = 0;
-
-	int optv = 0;
 
 	if (argc < 2) {
 		usage();
@@ -131,29 +126,24 @@ main(int argc, char **argv)
 		switch (optchar) {
 		case 'a':
 			show_vars = 1;
-			optv = 1;
 			break;
 		case 'f':
 			radiodev = optarg;
-			optv = 2;
 			break;
 		case 'n':
 			silent = 1;
-			optv = 1;
 			break;
 		case 'w':
 			set_param = 1;
 			param = optarg;
-			optv = 2;
 			break;
 		default:
 			usage();
 			/* NOTREACHED */
 		}
-
-		argc -= optv;
-		argv += optv;
 	}
+	argc -= optind;
+	argv += optind;
 
 	rd = open(radiodev, O_RDONLY);
 	if (rd < 0)
@@ -320,7 +310,7 @@ str_to_opt(const char *topt)
 			return res;
 	}
 
-	warnx("bad name `%s'", topt);
+	warnx("name not found `%s'", topt);
 	return OPTION_NONE;
 }
 
@@ -506,6 +496,8 @@ show_char_val(const char *val, const char *nick, int silent)
 static void
 print_vars(int silent)
 {
+	const char *delim;
+
 	show_int_val(ri.volume, varname[OPTION_VOLUME], "", silent);
 	show_float_val((float)ri.freq / 1000., varname[OPTION_FREQUENCY],
 			"MHz", silent);
@@ -526,11 +518,17 @@ print_vars(int silent)
 	}
 
 	if (!silent)
-		puts("card capabilities:");
+		printf("card capabilities:");
+	delim = "";
+	if (ri.caps & RADIO_CAPS_DETECT_STEREO)
+		printf("%s stereo detect", delim), delim=",";
+	if (ri.caps & RADIO_CAPS_DETECT_SIGNAL)
+		printf("%s signal detect", delim), delim=",";
 	if (ri.caps & RADIO_CAPS_SET_MONO)
-		puts("\tmanageable mono/stereo");
+		printf("%s manageable mono/stereo", delim), delim=",";
 	if (ri.caps & RADIO_CAPS_HW_SEARCH)
-		puts("\thardware search");
+		printf("%s hardware search", delim), delim=",";
 	if (ri.caps & RADIO_CAPS_HW_AFC)
-		puts("\thardware AFC");
+		printf("%s hardware AFC", delim), delim=",";
+	printf("\n");
 }
