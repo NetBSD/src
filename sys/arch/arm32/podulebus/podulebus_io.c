@@ -1,4 +1,4 @@
-/*	$NetBSD: podulebus_io.c,v 1.2 1997/01/26 01:55:02 mark Exp $	*/
+/*	$NetBSD: podulebus_io.c,v 1.3 1997/07/30 23:49:54 mark Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -48,7 +48,7 @@ bs_protos(podulebus);
 
 struct bus_space podulebus_bs_tag = {
 	/* cookie */
-	NULL,
+	(void *) 2,			/* shift to apply to registers */
 
 	/* mapping/unmapping */
 	podulebus_map,
@@ -181,7 +181,7 @@ podulebus_subregion(t, bsh, offset, size, nbshp)
 	bus_space_handle_t *nbshp;
 {
 
-	*nbshp = bsh + offset;
+	*nbshp = bsh + (offset << ((int)t));
 	return (0);
 }
 
