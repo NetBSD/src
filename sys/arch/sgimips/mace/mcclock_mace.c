@@ -1,4 +1,4 @@
-/*	$NetBSD: mcclock_mace.c,v 1.1 2004/01/18 04:06:43 sekiya Exp $	*/
+/*	$NetBSD: mcclock_mace.c,v 1.2 2004/01/19 00:30:17 sekiya Exp $	*/
 
 /*
  * Copyright (c) 2001 Antti Kantee.  All Rights Reserved.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcclock_mace.c,v 1.1 2004/01/18 04:06:43 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock_mace.c,v 1.2 2004/01/19 00:30:17 sekiya Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,8 +113,9 @@ CFATTACH_DECL(mcclock_mace, sizeof(struct mcclock_mace_softc),
 static int
 mcclock_mace_match(struct device *parent, struct cfdata *match, void *aux)
 {
-
-	return 1;
+	if (mach_type == MACH_SGI_IP32)
+		return 1;
+	return 0;
 }
 
 void
