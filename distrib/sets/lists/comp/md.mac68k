@@ -1,4 +1,4 @@
-# $NetBSD: md.mac68k,v 1.46 2001/11/28 13:29:29 kleink Exp $
+# $NetBSD: md.mac68k,v 1.47 2002/03/25 14:03:07 shiba Exp $
 ./usr/include/mac68k	comp-c-include
 ./usr/include/mac68k/_G_config.h	comp-c-include
 ./usr/include/mac68k/adbsys.h	comp-c-include
@@ -54,5 +54,3 @@
 ./usr/include/mac68k/vmparam.h	comp-c-include
 ./usr/include/mac68k/z8530var.h	comp-c-include
 ./usr/include/ieeefp.h		comp-c-include
-./usr/lib/c++rt0.o		comp-cxx-lib
-./usr/lib/scrt0.o		comp-c-lib
