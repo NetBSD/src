@@ -1,4 +1,4 @@
-/*	$NetBSD: df.c,v 1.65 2004/07/07 01:14:13 enami Exp $	*/
+/*	$NetBSD: df.c,v 1.66 2004/07/17 00:29:08 enami Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993, 1994
@@ -45,7 +45,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)df.c	8.7 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: df.c,v 1.65 2004/07/07 01:14:13 enami Exp $");
+__RCSID("$NetBSD: df.c,v 1.66 2004/07/17 00:29:08 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -74,6 +74,8 @@ long	 regetmntinfo(struct statvfs **, long);
 void	 usage(void);
 void	 prthumanval(int64_t, char *);
 void	 prthuman(struct statvfs *, int64_t, int64_t);
+const char *
+	strpct64(uint64_t, uint64_t, u_int);
 
 int	aflag, gflag, hflag, iflag, kflag, lflag, mflag, nflag, Pflag;
 char	**typelist = NULL;
@@ -374,14 +376,16 @@ prtstat(struct statvfs *sfsp, int maxwidth)
 		    fsbtoblk(used, sfsp->f_frsize, blocksize),
 		    fsbtoblk(bavail, sfsp->f_frsize, blocksize));
 	(void)printf("%7s",
-	    availblks == 0 ? full : strpct((u_long)used, (u_long)availblks, 0));
+	    availblks == 0 ? full :
+	    /* We know that these values are never negative */
+	    strpct64((uint64_t)used, (uint64_t)availblks, 0));
 	if (iflag) {
 		inodes = sfsp->f_files;
 		used = inodes - sfsp->f_ffree;
 		(void)printf(" %8ld %8ld %6s ",
 		    (u_long)used, (u_long)sfsp->f_ffree,
 		    inodes == 0 ? (used == 0 ? empty : full) :
-		    strpct((u_long)used, (u_long)inodes, 0));
+		    strpct64((uint64_t)used, (uint64_t)inodes, 0));
 	} else
 		(void)printf("  ");
 	(void)printf("  %s\n", sfsp->f_mntonname);
@@ -396,4 +400,15 @@ usage(void)
 	    getprogname());
 	exit(1);
 	/* NOTREACHED */
+}
+
+const char *
+strpct64(uint64_t numerator, uint64_t denominator, u_int digits)
+{
+
+	while (denominator > ULONG_MAX) {
+		numerator >>= 1;
+		denominator >>= 1;
+	}
+	return (strpct((u_long)numerator, (u_long)denominator, digits));
 }
