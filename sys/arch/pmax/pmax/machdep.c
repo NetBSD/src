@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.20 1995/02/01 04:53:13 mellon Exp $	*/
+/*	$NetBSD: machdep.c,v 1.21 1995/04/03 04:38:04 mellon Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -610,7 +610,9 @@ mach_init(argc, argv, code, cv)
 	    (name) = (type *)v; v = (caddr_t)((name)+(num))
 #define	valloclim(name, type, num, lim) \
 	    (name) = (type *)v; v = (caddr_t)((lim) = ((name)+(num)))
+#ifdef REAL_CLISTS
 	valloc(cfree, struct cblock, nclist);
+#endif
 	valloc(callout, struct callout, ncallout);
 	valloc(swapmap, struct map, nswapmap = maxproc * 2);
 #ifdef SYSVSHM
@@ -2143,81 +2145,3 @@ asic_init(isa_maxine)
 	*decoder = KMIN_LANCE_CONFIG;
 }
 #endif /* DS5000 */
-
-/*
- * cpu_exec_aout_makecmds():
- *	cpu-dependent a.out format hook for execve().
- * 
- * Determine of the given exec package refers to something which we
- * understand and, if so, set up the vmcmds for it.
- *
- */
-int
-cpu_exec_aout_makecmds(p, epp)
-	struct proc *p;
-	struct exec_package *epp;
-{
-  /* If COMPAT_09 is defined, allow loading of old-style 4.4bsd a.out
-     executables. */
-#ifdef COMPAT_09
-  struct bsd_aouthdr *hdr = (struct bsd_aouthdr *)epp -> ep_hdr;
-
-  /* Only handle paged files (laziness). */
-  if (hdr -> a_magic != BSD_ZMAGIC)
-#endif
-  /* If it's not a.out, maybe it's ELF.   (This wants to be moved up to
-     the machine independent code as soon as possible.)   XXX */
-    return pmax_elf_makecmds (p, epp);
-
-#ifdef COMPAT_09
-  epp -> ep_taddr = 0x1000;
-  epp -> ep_entry = hdr -> a_entry;
-  epp -> ep_tsize = hdr -> a_text;
-  epp -> ep_daddr = epp -> ep_taddr + hdr -> a_text;
-  epp -> ep_dsize = hdr -> a_data + hdr -> a_bss;
-
-  /* Use the stock NetBSD a.out ZMAGIC code from here... */
-  return exec_aout_map_zmagic (p, epp, hdr -> a_text,
-			       hdr -> a_data, hdr -> a_bss); 
-#endif
-}
-
-#ifdef COMPAT_ULTRIX
-exec_setup_fcn cpu_exec_setup;	/* make sure  function has correct type */
-
-void cpu_exec_ecoff_setup(code, p, epp)
-	int code;
-	struct proc *p;
-	struct exec_package *epp;
-{
-	struct ecoff_aouthdr *eap;
-
-	switch(code) {
-	case EXEC_SETUP_FINISH:
-		eap = (struct ecoff_aouthdr *)
-		    ((caddr_t)epp->ep_hdr + sizeof(struct ecoff_filehdr));
-		p->p_md.md_regs[GP] = eap->ea_gp_value;
-		break;
-	default:
-	}
-}
-
-/*
- * cpu_exec_ecoff_hook():
- *	cpu-dependent ECOFF format hook for execve().
- * 
- * Do any machine-dependent diddling of the exec package when doing ECOFF.
- *
- */
-int
-cpu_exec_ecoff_hook(p, epp, eap)
-	struct proc *p;
-	struct exec_package *epp;
-	struct ecoff_aouthdr *eap;
-{
-
-	epp->ep_emul = EMUL_ULTRIX;
-	epp->ep_setup = cpu_exec_ecoff_setup;
-	return 0;
-}
-#endif
