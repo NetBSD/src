@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.563 2002/10/10 22:12:53 thorpej Exp $
+#	$NetBSD: files,v 1.564 2002/10/10 22:17:59 thorpej Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -68,6 +68,7 @@ defflag	opt_compat_netbsd.h	COMPAT_09 COMPAT_10 COMPAT_11 COMPAT_12
 # Networking protocols
 #
 include "netatalk/files.netatalk"
+include "netccitt/files.netccitt"
 
 defflag	opt_tcp_debug.h		TCP_DEBUG
 defparam opt_tcp_debug.h	TCP_NDEBUG
@@ -80,9 +81,6 @@ defflag	opt_iso.h		ISO TPIP	# ISO network stack
 defflag opt_smb.h		SMB		# SMB network stack
 defflag				IPX		# IPX network stack
 defflag				EON		# ISO clnp over IP
-defflag				CCITT		#
-defflag				HDLC		# CCITT over HDLC
-defflag				LLC		# CCITT over LLC2 (& IEEE LLC?)
 defflag				NATM		# "native" ATM protocols
 defflag				PFIL_HOOKS	# pfil(9)
 defflag				IPFILTER_LOG	# logging of ip packets
@@ -1148,25 +1146,6 @@ file	net/route.c
 file	net/rtsock.c
 file	net/slcompress.c		sl | ppp | strip | irip
 file	net/zlib.c			(ppp & ppp_deflate) | ipsec
-file	netccitt/ccitt_proto.c		ccitt
-file	netccitt/hd_debug.c		hdlc
-file	netccitt/hd_input.c		hdlc
-file	netccitt/hd_output.c		hdlc
-file	netccitt/hd_subr.c		hdlc
-file	netccitt/hd_timer.c		hdlc
-file	netccitt/if_x25subr.c		ccitt
-file	netccitt/llc_input.c		llc
-file	netccitt/llc_output.c		llc
-file	netccitt/llc_subr.c		llc
-file	netccitt/llc_timer.c		llc
-file	netccitt/pk_acct.c		ccitt
-file	netccitt/pk_debug.c		ccitt
-file	netccitt/pk_input.c		ccitt
-file	netccitt/pk_llcsubr.c		llc | hdlc
-file	netccitt/pk_output.c		ccitt
-file	netccitt/pk_subr.c		ccitt
-file	netccitt/pk_timer.c		ccitt
-file	netccitt/pk_usrreq.c		ccitt
 file	netinet/fil.c			ipfilter
 file	netinet/if_arp.c		arp | netatalk		needs-flag
 file	netinet/if_atm.c		atm
