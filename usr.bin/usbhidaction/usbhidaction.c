@@ -1,4 +1,4 @@
-/*      $NetBSD: usbhidaction.c,v 1.15 2004/10/20 13:56:53 augustss Exp $ */
+/*      $NetBSD: usbhidaction.c,v 1.16 2004/10/31 21:10:59 augustss Exp $ */
 
 /*
  * Copyright (c) 2000, 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: usbhidaction.c,v 1.15 2004/10/20 13:56:53 augustss Exp $");
+__RCSID("$NetBSD: usbhidaction.c,v 1.16 2004/10/31 21:10:59 augustss Exp $");
 #endif
 
 #include <stdio.h>
@@ -100,6 +100,8 @@ main(int argc, char **argv)
 	struct command *cmd;
 	int reportid;
 	const char *table = NULL;
+
+	setlinebuf(stdout);
 
 	demon = 1;
 	ignore = 0;
