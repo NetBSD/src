@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.15 2003/07/28 09:25:28 scw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.16 2003/07/28 21:45:13 scw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.15 2003/07/28 09:25:28 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.16 2003/07/28 21:45:13 scw Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_mvmetype.h"
@@ -393,9 +393,9 @@ halt_sys:
 
 	printf("rebooting...\n\n");
 
-#if 0
 	(*platform->reset)();
-#endif
+
+	printf("Oops! Board reset failed!\n");
 
 	for (;;)
 		continue;
