@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.45 1999/04/08 05:07:35 gwr Exp $	*/
+/*	$NetBSD: pmap.c,v 1.46 1999/06/17 18:21:37 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -2407,26 +2407,6 @@ pmap_change_wiring(pmap, va, wire)
 			}
 		}
 	}
-}
-
-/* pmap_pageable			INTERFACE
- **
- * Make the specified range of addresses within the given pmap,
- * 'pageable' or 'not-pageable'.  A pageable page must not cause
- * any faults when referenced.  A non-pageable page may.
- *
- * This routine is only advisory.  The VM system will call pmap_enter()
- * to wire or unwire pages that are going to be made pageable before calling
- * this function.  By the time this routine is called, everything that needs
- * to be done has already been done.
- */
-void
-pmap_pageable(pmap, start, end, pageable)
-	pmap_t pmap;
-	vm_offset_t start, end;
-	boolean_t pageable;
-{
-	/* not implemented. */
 }
 
 /* pmap_copy				INTERFACE

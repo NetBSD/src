@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.31 1999/05/20 23:25:42 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.32 1999/06/17 18:21:21 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -172,8 +172,6 @@ void		 pmap_page_protect __P((struct vm_page *, vm_prot_t));
 void		 pmap_page_protect __P((paddr_t, vm_prot_t));
 #endif
 
-void		 pmap_pageable __P((pmap_t,
-		    vaddr_t, vaddr_t, boolean_t));
 #if !defined(pmap_phys_address)
 paddr_t	 pmap_phys_address __P((int));
 #endif
