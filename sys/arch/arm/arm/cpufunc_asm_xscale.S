@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_xscale.S,v 1.7 2001/11/26 22:26:45 thorpej Exp $	*/
+/*	$NetBSD: cpufunc_asm_xscale.S,v 1.8 2002/01/24 04:23:19 briggs Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -513,5 +513,17 @@ ENTRY(xscale_context_switch)
 	mcr	p15, 0, r0, c8, c7, 0	/* flush the I+D tlb */
 
 	CPWAIT(r0)
+
+	mov	pc, lr
+
+/*
+ * xscale_cpusleep
+ *
+ * This is called when there is nothing on any of the run queues.
+ * We go into IDLE mode so that any IRQ or FIQ will awaken us.
+ */
+ENTRY(xscale_cpu_sleep)
+	mov	r0, #0x1
+	mcr	p14, 0, r0, c7, c0, 0
 
 	mov	pc, lr

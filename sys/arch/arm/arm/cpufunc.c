@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.25 2002/01/23 21:03:07 thorpej Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.26 2002/01/24 04:23:19 briggs Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -47,6 +47,7 @@
 
 #include "opt_compat_netbsd.h"
 #include "opt_cputypes.h"
+#include "opt_cpuoptions.h"
 #include "opt_pmap_debug.h"
 
 #include <sys/types.h>
@@ -627,7 +628,7 @@ struct cpu_functions xscale_cpufuncs = {
 	cpufunc_nullop,			/* flush_brnchtgt_C	*/
 	(void *)cpufunc_nullop,		/* flush_brnchtgt_E	*/
 
-	(void *)cpufunc_nullop,		/* sleep		*/
+	xscale_cpu_sleep,		/* sleep		*/
 
 	/* Soft functions */
 
@@ -695,7 +696,7 @@ struct cpu_functions xscale_writethrough_cpufuncs = {
 	cpufunc_nullop,			/* flush_brnchtgt_C	*/
 	(void *)cpufunc_nullop,		/* flush_brnchtgt_E	*/
 
-	(void *)cpufunc_nullop,		/* sleep		*/
+	xscale_cpu_sleep,		/* sleep		*/
 
 	/* Soft functions */
 
@@ -886,6 +887,15 @@ set_cpufuncs()
 			:
 			: "r" (PMNC_P|PMNC_C|PMNC_PMN0_IF|PMNC_PMN1_IF|
 			       PMNC_CC_IF));
+
+#ifdef XSCALE_CCLKCFG
+		/*
+		 * Crank CCLKCFG to maximum legal value.
+		 */
+		__asm __volatile ("mcr p14, 0, %0, c6, c0, 0"
+			:
+			: "r" (XSCALE_CCLKCFG));
+#endif
 
 		/*
 		 * XXX Disable ECC in the Bus Controller Unit; we
