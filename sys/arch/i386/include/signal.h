@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.23 2003/09/12 01:13:35 christos Exp $	*/
+/*	$NetBSD: signal.h,v 1.24 2003/09/27 03:14:31 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991 Regents of the University of California.
@@ -39,6 +39,11 @@
 typedef int sig_atomic_t;
 
 #define __HAVE_SIGINFO
+#ifdef COMPAT_16
+#define SIGTRAMP_VALID(vers)	((unsigned)(vers) <= 2)
+#else
+#define SIGTRAMP_VALID(vers)	((vers) == 2)
+#endif
 
 #if defined(_NETBSD_SOURCE)
 /*
@@ -112,57 +117,6 @@ struct sigcontext {
 
 	sigset_t sc_mask;		/* signal mask to restore (new style) */
 };
-
-/*
- * The following macros are used to convert from a ucontext to sigcontext,
- * and vice-versa.  This is for building a sigcontext to deliver to old-style
- * signal handlers, and converting back (in the event the handler modifies
- * the context).
- */
-#define	_MCONTEXT_TO_SIGCONTEXT(uc, sc)					\
-do {									\
-	(sc)->sc_gs  = (uc)->uc_mcontext.__gregs[_REG_GS];		\
-	(sc)->sc_fs  = (uc)->uc_mcontext.__gregs[_REG_FS];		\
-	(sc)->sc_es  = (uc)->uc_mcontext.__gregs[_REG_ES];		\
-	(sc)->sc_ds  = (uc)->uc_mcontext.__gregs[_REG_DS];		\
-	(sc)->sc_edi = (uc)->uc_mcontext.__gregs[_REG_EDI];		\
-	(sc)->sc_esi = (uc)->uc_mcontext.__gregs[_REG_ESI];		\
-	(sc)->sc_ebp = (uc)->uc_mcontext.__gregs[_REG_EBP];		\
-	(sc)->sc_ebx = (uc)->uc_mcontext.__gregs[_REG_EBX];		\
-	(sc)->sc_edx = (uc)->uc_mcontext.__gregs[_REG_EDX];		\
-	(sc)->sc_ecx = (uc)->uc_mcontext.__gregs[_REG_ECX];		\
-	(sc)->sc_eax = (uc)->uc_mcontext.__gregs[_REG_EAX];		\
-	(sc)->sc_eip = (uc)->uc_mcontext.__gregs[_REG_EIP];		\
-	(sc)->sc_cs  = (uc)->uc_mcontext.__gregs[_REG_CS];		\
-	(sc)->sc_eflags = (uc)->uc_mcontext.__gregs[_REG_EFL];		\
-	(sc)->sc_esp = (uc)->uc_mcontext.__gregs[_REG_UESP];		\
-	(sc)->sc_ss  = (uc)->uc_mcontext.__gregs[_REG_SS];		\
-	(sc)->sc_trapno = (uc)->uc_mcontext.__gregs[_REG_TRAPNO];	\
-	(sc)->sc_err = (uc)->uc_mcontext.__gregs[_REG_ERR];		\
-} while (/*CONSTCOND*/0)
-
-#define	_SIGCONTEXT_TO_MCONTEXT(sc, uc)					\
-do {									\
-	(uc)->uc_mcontext.__gregs[_REG_GS]  = (sc)->sc_gs;		\
-	(uc)->uc_mcontext.__gregs[_REG_FS]  = (sc)->sc_fs;		\
-	(uc)->uc_mcontext.__gregs[_REG_ES]  = (sc)->sc_es;		\
-	(uc)->uc_mcontext.__gregs[_REG_DS]  = (sc)->sc_ds;		\
-	(uc)->uc_mcontext.__gregs[_REG_EDI] = (sc)->sc_edi;		\
-	(uc)->uc_mcontext.__gregs[_REG_ESI] = (sc)->sc_esi;		\
-	(uc)->uc_mcontext.__gregs[_REG_EBP] = (sc)->sc_ebp;		\
-	(uc)->uc_mcontext.__gregs[_REG_EBX] = (sc)->sc_ebx;		\
-	(uc)->uc_mcontext.__gregs[_REG_EDX] = (sc)->sc_edx;		\
-	(uc)->uc_mcontext.__gregs[_REG_ECX] = (sc)->sc_ecx;		\
-	(uc)->uc_mcontext.__gregs[_REG_EAX] = (sc)->sc_eax;		\
-	(uc)->uc_mcontext.__gregs[_REG_EIP] = (sc)->sc_eip;		\
-	(uc)->uc_mcontext.__gregs[_REG_CS]  = (sc)->sc_cs;		\
-	(uc)->uc_mcontext.__gregs[_REG_EFL] = (sc)->sc_eflags;		\
-	(uc)->uc_mcontext.__gregs[_REG_UESP] = (sc)->sc_esp;		\
-	(uc)->uc_mcontext.__gregs[_REG_UESP] = (sc)->sc_esp;		\
-	(uc)->uc_mcontext.__gregs[_REG_SS]  = (sc)->sc_ss;		\
-	(uc)->uc_mcontext.__gregs[_REG_TRAPNO] = (sc)->sc_trapno;	\
-	(uc)->uc_mcontext.__gregs[_REG_ERR] = (sc)->sc_err;		\
-} while (/*CONSTCOND*/0)
 
 #define sc_sp sc_esp
 #define sc_fp sc_ebp
