@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.16 1999/11/27 06:45:52 simonb Exp $	*/
+/*	$NetBSD: conf.c,v 1.17 2002/02/23 21:43:59 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -49,6 +49,12 @@
 #include <lib/libsa/ustarfs.h>
 #include <machine/dec_prom.h>
 #include "../common/rz.h"
+
+#ifdef DEBUG_VAL
+int debug = DEBUG_VAL;
+#else
+int debug = 0;
+#endif
 
 #ifndef LIBSA_SINGLE_DEVICE
 
