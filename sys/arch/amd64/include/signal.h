@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.3 2003/08/07 16:26:36 agc Exp $	*/
+/*	$NetBSD: signal.h,v 1.4 2003/10/18 18:34:09 briggs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991 Regents of the University of California.
@@ -81,6 +81,12 @@ do {									\
 		    sizeof ((uc)->uc_mcontext.__fpregs));		\
 	}								\
 } while (/*CONSTCOND*/0)
+
+#ifdef COMPAT_16
+#define SIGTRAMP_VALID(vers)	((unsigned)(vers) <= 2)
+#else
+#define SIGTRAMP_VALID(vers)	((vers) == 2)
+#endif
 
 #endif	/* _NETBSD_SOURCE */
 #endif	/* !_AMD64_SIGNAL_H_ */
