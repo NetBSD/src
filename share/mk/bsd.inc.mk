@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.inc.mk,v 1.30 2004/01/29 01:48:45 lukem Exp $
+#	$NetBSD: bsd.inc.mk,v 1.31 2004/07/06 12:07:34 mycroft Exp $
 
 .include <bsd.init.mk>
 
@@ -40,7 +40,7 @@ incinstall::	${_F}
 .undef _FNAME
 .undef _F
 
-inclinkinstall::
+inclinkinstall:	.PHONY
 .if !empty(INCSYMLINKS)
 	@(set ${INCSYMLINKS}; \
 	 while test $$# -ge 2; do \
