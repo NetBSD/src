@@ -1,4 +1,4 @@
-/*	$NetBSD: consio.c,v 1.6 1997/03/22 12:47:30 ragge Exp $ */
+/*	$NetBSD: consio.c,v 1.7 1997/04/10 21:25:21 ragge Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -102,8 +102,12 @@ setup()
 	 */
         switch (vax_cputype) {
 
-	case VAX_650:
-	case VAX_78032:
+	case VAX_TYP_UV2:
+	case VAX_TYP_CVAX:
+	case VAX_TYP_RIGEL:
+	case VAX_TYP_MARIAH:
+	case VAX_TYP_NVAX:
+	case VAX_TYP_SOC:
 		is_mvax = 1;
 		vax_boardtype = (vax_cputype << 24) |
 		    ((*(int*)0x20040004 >> 24) & 0377);
