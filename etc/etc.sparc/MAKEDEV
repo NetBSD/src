@@ -187,7 +187,7 @@ fd*|sd*)
 st*)
 	umask 2 ; unit=`expr $i : '..\(.*\)'`
 	case $i in
-	st*) name=st; blk=12; chr=18;;
+	st*) name=st; blk=11; chr=18;;
 	esac
 	rm -f $name$unit n$name$unit e$name$unit en$name$unit \
 		r$name$unit nr$name$unit er$name$unit enr$name$unit 
