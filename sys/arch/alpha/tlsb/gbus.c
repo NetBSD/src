@@ -1,4 +1,4 @@
-/* $NetBSD: gbus.c,v 1.7 1998/05/13 02:50:29 thorpej Exp $ */
+/* $NetBSD: gbus.c,v 1.8 1998/05/13 22:13:35 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: gbus.c,v 1.7 1998/05/13 02:50:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gbus.c,v 1.8 1998/05/13 22:13:35 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,6 +52,8 @@ __KERNEL_RCSID(0, "$NetBSD: gbus.c,v 1.7 1998/05/13 02:50:29 thorpej Exp $");
 #include <alpha/tlsb/tlsbreg.h>
 #include <alpha/tlsb/tlsbvar.h>
 
+#include "locators.h"
+
 extern int	cputype;
 
 #define KV(_addr)	((caddr_t)ALPHA_PHYS_TO_K0SEG((_addr)))
@@ -63,11 +65,13 @@ struct gbus_softc {
 
 static int	gbusmatch __P((struct device *, struct cfdata *, void *));
 static void	gbusattach __P((struct device *, struct device *, void *));
+
 struct cfattach gbus_ca = {
 	sizeof(struct gbus_softc), gbusmatch, gbusattach
 };
 
 static int	gbusprint __P((void *, const char *));
+static int	gbussubmatch __P((struct device *, struct cfdata *, void *));
 
 struct gbus_attach_args gbus_children[] = {
 	{ "zsc",	GBUS_DUART0_OFFSET },
@@ -126,5 +130,20 @@ gbusattach(parent, self, aux)
 
 	/* Attach the children. */
 	for (ga = gbus_children; ga->ga_name != NULL; ga++)
-		(void) config_found(self, ga, gbusprint);
+		(void) config_found_sm(self, ga, gbusprint, gbussubmatch);
+}
+
+static int
+gbussubmatch(parent, cf, aux)
+	struct device *parent;
+	struct cfdata *cf;
+	void *aux;
+{
+	struct gbus_attach_args *ga = aux;
+
+	if (cf->cf_loc[GBUSCF_OFFSET] != GBUSCF_OFFSET_DEFAULT &&
+	    cf->cf_loc[GBUSCF_OFFSET] != ga->ga_offset)
+		return (0);
+
+	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
 }
