@@ -38,7 +38,7 @@
  * from: Utah $Hdr: machdep.c 1.63 91/04/24$
  *
  *	@(#)machdep.c	7.16 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.10 1994/02/28 06:05:48 chopps Exp $
+ *	$Id: machdep.c,v 1.11 1994/03/08 07:52:10 chopps Exp $
  */
 
 #include <sys/param.h>
@@ -177,6 +177,12 @@ consinit()
 	 * Initialize the console before we print anything out.
 	 */
 	cninit();
+
+#if defined (DDB)
+        ddb_init();
+        if (boothowto & RB_KDB)
+                Debugger();
+#endif
 }
 
 /*
