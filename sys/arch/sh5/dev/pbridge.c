@@ -1,4 +1,4 @@
-/*	$NetBSD: pbridge.c,v 1.7 2002/10/24 13:48:44 scw Exp $	*/
+/*	$NetBSD: pbridge.c,v 1.8 2003/01/01 02:11:57 thorpej Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -154,14 +154,14 @@ pbridgeprint(void *arg, const char *cp)
 	struct pbridge_attach_args *pa = arg;
 
 	if (cp)
-		printf("%s at %s", pa->pa_name, cp);
+		aprint_normal("%s at %s", pa->pa_name, cp);
 
-	printf(" offset 0x%x", pa->pa_offset - pa->_pa_base);
+	aprint_normal(" offset 0x%x", pa->pa_offset - pa->_pa_base);
 
 	if (pa->pa_ipl != -1)
-		printf(" ipl %d", pa->pa_ipl);
+		aprint_normal(" ipl %d", pa->pa_ipl);
 	if (pa->pa_intevt != -1)
-		printf(" intevt 0x%x", pa->pa_intevt);
+		aprint_normal(" intevt 0x%x", pa->pa_intevt);
 
 	return (UNCONF);
 }
