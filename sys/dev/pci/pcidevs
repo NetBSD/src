@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.186 2000/01/24 15:49:50 joda Exp $
+$NetBSD: pcidevs,v 1.187 2000/01/25 09:04:03 haya Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1319,6 +1319,7 @@ product TI	PCI1211		0xac1e	PCI1211 PCI-CardBus Bridge
 product TI	PCI1251B	0xac1f	PCI1251B PCI-CardBus Bridge
 product TI	PCI2030		0xac20	PCI2030 PCI-PCI Bridge
 product TI	PCI1420		0xac51	PCI1420 PCI-CardBus Bridge
+product TI	PCI1451		0xac52	PCI1451 PCI-CardBus Bridge
 
 /* Toshiba America products */
 product TOSHIBA R4X00		0x0009	R4x00 Host-PCI Bridge
