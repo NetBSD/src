@@ -1,4 +1,4 @@
-/*	$NetBSD: icp_ioctl.h,v 1.2 2003/06/13 05:57:30 thorpej Exp $	*/
+/*	$NetBSD: icp_ioctl.h,v 1.3 2003/06/29 01:28:23 thorpej Exp $	*/
 
 /*
  *       Copyright (c) 2000-03 Intel Corporation
@@ -67,7 +67,7 @@ typedef struct gdt_ucmd {
 #define	GDT_IOCTL_GENERAL	_IOWR('J', 0, gdt_ucmd_t)
 
 /* get driver version */
-#define	GDT_IOCTL_DRVERS	_IOWR('J', 1, int)
+#define	GDT_IOCTL_DRVERS	_IOR('J', 1, int)
 
 /* get controller type */
 typedef struct gdt_ctrt {
@@ -81,7 +81,7 @@ typedef struct gdt_ctrt {
 	u_int16_t	device_id;
 	u_int16_t	sub_device_id;
 } __attribute__((__packed__)) gdt_ctrt_t;
-#define	GDT_IOCTL_CTRTYPE	_IOR('J', 2, gdt_ctrt_t)
+#define	GDT_IOCTL_CTRTYPE	_IOWR('J', 2, gdt_ctrt_t)
 
 /* get OS version */
 typedef struct gdt_osv {
