@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.92 2000/06/30 16:44:34 itojun Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.93 2000/09/19 18:21:41 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -258,9 +258,19 @@ tcp_template(tp)
 		hlen = 0;	/*pacify gcc*/
 		return NULL;	/*EAFNOSUPPORT*/
 	}
-	if ((m = tp->t_template) == 0) {
+#ifdef DIAGNOSTIC
+	if (hlen + sizeof(struct tcphdr) > MCLBYTES)
+		panic("mclbytes too small for t_template");
+#endif
+	m = tp->t_template;
+	if (m && m->m_len == hlen + sizeof(struct tcphdr))
+		;
+	else {
+		if (m)
+			m_freem(m);
+		m = tp->t_template = NULL;
 		MGETHDR(m, M_DONTWAIT, MT_HEADER);
-		if (m) {
+		if (m && hlen + sizeof(struct tcphdr) > MHLEN) {
 			MCLGET(m, M_DONTWAIT);
 			if ((m->m_flags & M_EXT) == 0) {
 				m_free(m);
