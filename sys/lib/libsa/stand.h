@@ -1,4 +1,4 @@
-/*	$NetBSD: stand.h,v 1.11 1995/09/17 00:49:45 pk Exp $	*/
+/*	$NetBSD: stand.h,v 1.12 1995/09/18 21:19:47 pk Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -116,8 +116,9 @@ void	printf __P((const char *, ...));
 void	sprintf __P((char *, const char *, ...));
 void	twiddle __P((void));
 void	gets __P((char *));
-__dead void	panic __P((const char *, ...))
-			__attribute__((noreturn));
+__dead void	panic __P((const char *, ...)) __attribute__((noreturn));
+__dead void _rtt __P((void)) __attribute__((noreturn));
+void	bcopy __P((const void *, void *, size_t));
 int	getchar __P((void));
 void	exec __P((char *, char *, int));
 int	open __P((const char *, int));

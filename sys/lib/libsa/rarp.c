@@ -1,4 +1,4 @@
-/*	$NetBSD: rarp.c,v 1.8 1995/09/14 23:45:34 pk Exp $	*/
+/*	$NetBSD: rarp.c,v 1.9 1995/09/18 21:19:40 pk Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -58,7 +58,7 @@ static ssize_t rarprecv __P((struct iodesc *, void *, size_t, time_t));
 /*
  * Ethernet (Reverse) Address Resolution Protocol (see RFC 903, and 826).
  */
-n_long
+int
 rarp_getipaddress(sock)
 	int sock;
 {
@@ -85,7 +85,7 @@ rarp_getipaddress(sock)
 #endif
 	if (!(d = socktodesc(sock))) {
 		printf("rarp: bad socket. %d\n", sock);
-		return(INADDR_ANY);
+		return (-1);
 	}
 #ifdef RARP_DEBUG
  	if (debug)
@@ -106,10 +106,10 @@ rarp_getipaddress(sock)
 	    rarpsend, &wbuf.data, sizeof(wbuf.data),
 	    rarprecv, &rbuf.data, sizeof(rbuf.data)) < 0) {
 		printf("No response for RARP request\n");
-		return(INADDR_ANY);
+		return (-1);
 	}
 
-	return (myip);
+	return (0);
 }
 
 /*

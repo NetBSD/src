@@ -1,4 +1,4 @@
-/*	$NetBSD: iodesc.h,v 1.2 1994/10/26 05:44:50 cgd Exp $	*/
+/*	$NetBSD: iodesc.h,v 1.3 1995/09/18 21:19:28 pk Exp $	*/
 
 /*
  * Copyright (c) 1993 Adam Glass 
@@ -42,8 +42,8 @@
 #define __SYS_LIBNETBOOT_IODESC_H
 
 struct iodesc {
-	n_long	destip;			/* destination ip address */
-	n_long	myip;			/* my ip address */
+	struct	in_addr destip;		/* destination ip address */
+	struct	in_addr myip;		/* my ip address */
 	u_short	destport;		/* destination port */
 	u_short	myport;			/* destination port */
 	u_long	xid;			/* transaction identification */

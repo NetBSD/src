@@ -1,4 +1,4 @@
-/*	$NetBSD: arp.c,v 1.9 1995/09/14 23:45:21 pk Exp $	*/
+/*	$NetBSD: arp.c,v 1.10 1995/09/18 21:19:18 pk Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -56,8 +56,8 @@
 #define ARP_NUM 8			/* need at most 3 arp entries */
 
 static struct arp_list {
-	n_long	addr;
-	u_char	ea[6];
+	struct in_addr	addr;
+	u_char		ea[6];
 } arp_list[ARP_NUM] = {
 	{ INADDR_BROADCAST, BA }
 };
@@ -71,7 +71,7 @@ static	ssize_t arprecv __P((struct iodesc *, void *, size_t, time_t));
 u_char *
 arpwhohas(d, addr)
 	register struct iodesc *d;
-	n_long addr;
+	struct in_addr addr;
 {
 	register int i;
 	register struct ether_arp *ah;
@@ -93,11 +93,11 @@ arpwhohas(d, addr)
 
 #ifdef ARP_DEBUG
  	if (debug)
- 	    printf("arpwhohas: called for %s\n", intoa(addr));
+ 	    printf("arpwhohas: called for %s\n", inet_ntoa(addr));
 #endif
 	/* Try for cached answer first */
 	for (i = 0, al = arp_list; i < arp_num; ++i, ++al)
-		if (addr == al->addr)
+		if (addr.s_addr == al->addr.s_addr)
 			return (al->ea);
 
 	/* Don't overflow cache */

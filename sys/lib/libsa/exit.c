@@ -1,4 +1,4 @@
-/*	$NetBSD: exit.c,v 1.6 1995/09/17 00:49:40 pk Exp $	*/
+/*	$NetBSD: exit.c,v 1.7 1995/09/18 21:19:25 pk Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -44,7 +44,6 @@ panic(fmt /*, va_alist */)
 #endif
 {
     extern void closeall __P((void));
-    extern __dead void _rtt __P((void)) __attribute__((noreturn));
     va_list ap;
     static int paniced;
     

@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc.h,v 1.5 1995/09/14 23:45:38 pk Exp $	*/
+/*	$NetBSD: rpc.h,v 1.6 1995/09/18 21:19:44 pk Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -49,13 +49,12 @@
 #define	PMAPPROC_CALLIT		5
 
 /* RPC functions: */
-ssize_t	rpc_call __P((struct iodesc *d, n_long prog, n_long ver, n_long func,
-	    void *sdata, size_t slen, void *rdata, size_t rlen));
-int 	rpc_getport __P((struct iodesc *d, n_long prog, n_long vers));
-void	rpc_fromaddr(void *pkt, n_long *addr, u_short *port);
-void	rpc_pmap_putcache __P((n_long addr, n_long pr, n_long v, int port));
+ssize_t	rpc_call __P((struct iodesc *, n_long, n_long, n_long,
+		     void *, size_t, void *, size_t));
+void	rpc_fromaddr __P((void *, struct in_addr *, u_short *));
+int	rpc_pmap_getcache __P((struct in_addr, u_long, u_long));
+void	rpc_pmap_putcache __P((struct in_addr, u_long, u_long, n_long));
 
-extern int rpc_xid; 	/* increment before call */
 extern int rpc_port;	/* decrement before bind */
 
 /*
@@ -67,4 +66,3 @@ extern int rpc_port;	/* decrement before bind */
  *  2: Auth NULL
  */
 #define	RPC_HEADER_WORDS 28
-

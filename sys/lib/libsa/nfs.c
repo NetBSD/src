@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.c,v 1.10 1995/09/17 00:49:42 pk Exp $	*/
+/*	$NetBSD: nfs.c,v 1.11 1995/09/18 21:19:36 pk Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -271,7 +271,7 @@ nfs_readdata(d, off, addr, len)
 int
 nfs_mount(sock, ip, path)
 	int sock;
-	n_long ip;
+	struct in_addr ip;
 	char *path;
 {
 	struct iodesc *desc;
