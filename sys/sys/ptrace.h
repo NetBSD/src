@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ptrace.h	7.4 (Berkeley) 2/22/91
- *	$Id: ptrace.h,v 1.10 1994/01/20 21:23:18 ws Exp $
+ *	$Id: ptrace.h,v 1.11 1994/01/30 17:44:58 mycroft Exp $
  */
 
 #ifndef _SYS_PTRACE_H_
@@ -62,6 +62,15 @@ int	process_read_regs __P((struct proc *p, struct reg *regs));
 #endif
 #ifdef PT_SETREGS
 int	process_write_regs __P((struct proc *p, struct reg *regs));
+#endif
+#if defined(PT_GETFPREGS) || defined(PT_SETFPREGS)
+struct fpreg;
+#endif
+#ifdef PT_GETFPREGS
+int	process_read_fpregs __P((struct proc *p; struct fpreg *regs));
+#endif
+#ifdef PT_SETFPREGS
+int	process_write_fpregs __P((struct proc *p; struct fpreg *regs));
 #endif
 int	process_sstep __P((struct proc *p, int sstep));
 int	process_fix_sstep __P((struct proc *p));
