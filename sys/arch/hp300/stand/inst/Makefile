@@ -1,10 +1,12 @@
-#	$NetBSD: Makefile,v 1.5 2001/11/08 07:45:25 gmcgarry Exp $
+#	$NetBSD: Makefile,v 1.6 2001/12/14 07:36:32 gmcgarry Exp $
 
 PROGAOUT=	inst
 PROGSOURCE=	inst.c
 NEWVERSWHAT=	"Miniroot Installer"
 
 CPPFLAGS+=	-DSUPPORT_ETHERNET -DSUPPORT_TAPE -DSUPPORT_DISK
+
+.include "../Makefile.buildboot"
 
 install:
 	${INSTALL} -d -m 755 -o ${BINOWN} -g ${BINGRP} ${INSTPRIV} \
@@ -26,4 +28,3 @@ release: inst.lif
 	    $(RELEASEDIR)/installation/misc/SYS_INST
 .endif # RELEASEDIR check
 
-.include "../Makefile.buildboot"
