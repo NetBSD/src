@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.396 2004/08/12 20:12:37 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.397 2004/08/12 20:46:57 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -6484,3 +6484,32 @@ libexec/ftpd/ftpcmd.y				1.79
 
 	Correctly clamp illegal "SITE CHMOD" mode values.
 	[lukem, ticket #756]
+
+libexec/ftpd/conf.c				1.52
+libexec/ftpd/extern.h				1.50
+libexec/ftpd/ftpcmd.y				1.80
+libexec/ftpd/ftpd.c				1.158
+libexec/ftpd/logutmp.c				1.8
+libexec/ftpd/logwtmp.c				1.22
+libexec/ftpd/popen.c				1.30
+libexec/ftpd/version.h				1.57
+
+	* Fix yacc parser error recovery so that setjmp(3)/longjmp(3) is 
+	  unnecessary.
+	* Fix SIGURG handler to set an urgflag that's later tested, rather than
+	  abusing setjmp(3)/longjmp(3).
+	* Use "volatile sig_atomic_t" as the type of variables modified by sig 
+	  handlers.
+	* Use sigaction(3) instead of signal(3) to set the signal handlers.
+	* Only set the main SIGALRM handler once.  If we need to change it,
+	  cache the old handler and restore appropriately...
+	* Remove a bunch of signal races by improving the signal handlers.
+	* Fix memory leak with 'ESPV ALL'.
+	* Clean up the debug message in reply(); use vsnprintf(3) instead of 
+	  vsyslog(3).
+	* Rework parsing of OOB commands to _not_ use the yacc parser, since 
+	  the latter isn't reentrant and the hacks to work around that are ugly.
+	  We now examine urgflag at appropriate locations and call 
+	  handleoobcmd() if it's set.  Since the only OOB commands we currently
+	  implement are ABOR and STAT, this isn't an issue.
+	[lukem, ticket #757]
