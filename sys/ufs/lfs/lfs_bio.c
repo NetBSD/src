@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.65 2003/04/02 10:39:40 fvdl Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.66 2003/04/27 04:18:29 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.65 2003/04/02 10:39:40 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.66 2003/04/27 04:18:29 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -457,8 +457,6 @@ lfs_bwrite_ext(struct buf *bp, int flags)
 			LFS_SET_UINO(ip, IN_CLEANING);
 		} else {
 			LFS_SET_UINO(ip, IN_MODIFIED);
-			if (bp->b_lblkno >= 0)
-				LFS_SET_UINO(ip, IN_UPDATE);
 		}
 		fs->lfs_avail -= fsb;
 		bp->b_flags |= B_DELWRI;
