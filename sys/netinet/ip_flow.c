@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_flow.c,v 1.7 1998/10/08 01:41:45 thorpej Exp $	*/
+/*	$NetBSD: ip_flow.c,v 1.8 1999/01/24 12:57:38 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -198,11 +198,10 @@ ipflow_fastforward(
 	 * 16 bits and a carry).  
 	 */
 	ip->ip_ttl -= IPTTLDEC;
-	if (ip->ip_sum >= htons(0xffff - (IPTTLDEC << 8))) {
+	if (ip->ip_sum >= 0xffff - htons(IPTTLDEC << 8))
 		ip->ip_sum += htons(IPTTLDEC << 8) + 1;
-	} else {
+	else
 		ip->ip_sum += htons(IPTTLDEC << 8);
-	}
 
 	/*
 	 * Trim the packet in case it's too long.. 
