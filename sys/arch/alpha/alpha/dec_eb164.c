@@ -1,4 +1,4 @@
-/* $NetBSD: dec_eb164.c,v 1.24 1998/02/13 00:12:48 thorpej Exp $ */
+/* $NetBSD: dec_eb164.c,v 1.25 1998/04/15 21:06:46 drochner Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 Carnegie-Mellon University.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_eb164.c,v 1.24 1998/02/13 00:12:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_eb164.c,v 1.25 1998/04/15 21:06:46 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: dec_eb164.c,v 1.24 1998/02/13 00:12:48 thorpej Exp $
 #include <dev/ic/comvar.h>
 
 #include <dev/isa/isavar.h>
+#include <dev/isa/pckbcvar.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 
@@ -119,6 +120,8 @@ dec_eb164_cons_init()
 	case 3:
 		/* display console ... */
 		/* XXX */
+		(void) pckbc_cnattach(&ccp->cc_iot, PCKBC_KBD_SLOT);
+
 		if ((ctb->ctb_turboslot & 0xffff) == 0)
 			isa_display_console(&ccp->cc_iot, &ccp->cc_memt);
 		else
