@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.3 2001/09/03 05:02:18 matt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.4 2001/09/09 08:07:36 toshii Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -48,6 +48,8 @@
 
 #include <machine/bootconfig.h>
 #include <machine/irqhandler.h>
+
+#include "sacom.h"
 
 struct device *booted_device;
 int booted_partition;
