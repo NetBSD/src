@@ -1,7 +1,7 @@
 # standard Macintosh information.
 # roughly copied from std.sparc 14 Oct 1993.
 
-machine	mac68k
+machine	mac68k m68k
 
 mainbus0 at root
 
