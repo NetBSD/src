@@ -1,4 +1,4 @@
-/*	$NetBSD: interwave.c,v 1.21 2004/07/09 01:13:53 mycroft Exp $	*/
+/*	$NetBSD: interwave.c,v 1.22 2004/07/09 02:05:09 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interwave.c,v 1.21 2004/07/09 01:13:53 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interwave.c,v 1.22 2004/07/09 02:05:09 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -219,18 +219,8 @@ iwopen(sc, flags)
 	struct	iw_softc *sc;
 	int	flags;
 {
-	int	s;
 
-	s = splaudio();
-	if (sc->sc_open) {
-		splx(s);
-		DPRINTF(("iwopen: open %x sc %p\n", sc->sc_open, sc));
-		return EBUSY;
-	} else
-		sc->sc_open = 1;
-	splx(s);
-
-	DPRINTF(("iwopen: open %x sc %p\n", sc->sc_open, sc));
+	DPRINTF(("iwopen: sc %p\n", sc));
 
 #ifdef DIAGNOSTIC
 	outputs = 0;
@@ -240,19 +230,6 @@ iwopen(sc, flags)
 #endif
 
 	iwreset(sc, 1);
-
-	/* READ/WRITE or both */
-
-	if (flags == FWRITE) {
-		sc->sc_mode |= IW_WRITE;
-		sc->sc_playdma_cnt = 0;
-		sc->sc_playintr = 0;
-	}
-	if (flags == FREAD) {
-		sc->sc_mode |= IW_READ;
-		sc->sc_recdma_cnt = 0;
-		sc->sc_recintr = 0;
-	}
 
 	return 0;
 }
@@ -271,11 +248,6 @@ iwclose(addr)
 	DPRINTF(("iwclose: outputs %d ints %d inputs %d in_ints %d\n",
 		outputs, iw_ints, inputs, iw_inints));
 #endif
-
-	/* close hardware */
-	sc->sc_open = 0;
-	sc->sc_flags = 0;
-	sc->sc_mode = 0;
 }
 
 #define RAM_STEP          64*1024
