@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.23.2.11 2003/08/05 11:35:04 msaitoh Exp $	*/
+/*	$NetBSD: key.c,v 1.23.2.12 2003/08/05 12:01:12 msaitoh Exp $	*/
 /*	$KAME: key.c,v 1.180 2001/01/10 16:35:27 sakane Exp $	*/
 
 /*
@@ -2874,10 +2874,12 @@ key_setsaval(sav, m, mhp)
 		sav->replay = NULL;
 	}
 	if (sav->key_auth != NULL) {
+		bzero(_KEYBUF(sav->key_auth), _KEYLEN(sav->key_auth));
 		KFREE(sav->key_auth);
 		sav->key_auth = NULL;
 	}
 	if (sav->key_enc != NULL) {
+		bzero(_KEYBUF(sav->key_enc), _KEYLEN(sav->key_enc));
 		KFREE(sav->key_enc);
 		sav->key_enc = NULL;
 	}
