@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.50 2003/11/01 03:45:48 mycroft Exp $	*/
+/*	$NetBSD: acpi.c,v 1.51 2003/11/01 08:03:24 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.50 2003/11/01 03:45:48 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.51 2003/11/01 08:03:24 mycroft Exp $");
 
 #include "opt_acpi.h"
 
@@ -276,34 +276,6 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ic = aa->aa_ic;
 
 	acpi_softc = sc;
-
-	/*
-	 * Install the default address space handlers.
-	 */
-
-	rv = AcpiInstallAddressSpaceHandler(ACPI_ROOT_OBJECT,
-	    ACPI_ADR_SPACE_SYSTEM_MEMORY, ACPI_DEFAULT_HANDLER, NULL, NULL);
-	if (rv != AE_OK) {
-		printf("%s: unable to install SYSTEM MEMORY handler: %d\n",
-		    sc->sc_dev.dv_xname, rv);
-		return;
-	}
-
-	rv = AcpiInstallAddressSpaceHandler(ACPI_ROOT_OBJECT,
-	    ACPI_ADR_SPACE_SYSTEM_IO, ACPI_DEFAULT_HANDLER, NULL, NULL);
-	if (rv != AE_OK) {
-		printf("%s: unable to install SYSTEM IO handler: %d\n",
-		    sc->sc_dev.dv_xname, rv);
-		return;
-	}
-
-	rv = AcpiInstallAddressSpaceHandler(ACPI_ROOT_OBJECT,
-	    ACPI_ADR_SPACE_PCI_CONFIG, ACPI_DEFAULT_HANDLER, NULL, NULL);
-	if (rv != AE_OK) {
-		printf("%s: unable to install PCI CONFIG handler: %d\n",
-		    sc->sc_dev.dv_xname, rv);
-		return;
-	}
 
 	/*
 	 * Bring ACPI on-line.
