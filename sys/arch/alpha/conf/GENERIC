@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.211 2002/07/22 14:51:01 wiz Exp $
+# $NetBSD: GENERIC,v 1.212 2002/09/14 00:58:55 nathanw Exp $
 #
 # GENERIC machine description file
 # 
@@ -25,7 +25,7 @@ include		"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.211 $"
+#ident 		"GENERIC-$Revision: 1.212 $"
 
 maxusers 32
 
@@ -243,6 +243,7 @@ adw*	at	pci? dev ? function ?		# AdvanSys Wide SCSI
 #options 	SCSI_ADW_SDTR_DISABLE		# 	disable SDTR
 #options 	SCSI_ADW_TAGQ_DISABLE		# 	disable Tag Queuing
 ahc*	at	pci? dev ? function ?		# Adaptec [23]94x, aic78x0 SCSI
+autri*	at	pci? dev ? function ?		# Trident 4DWAVE based AC'97 Audio
 bha*	at	pci? dev ? function ?		# BusLogic 9xx SCSI (untested)
 cac*	at	pci? dev ? function ?		# Compaq array controller (untested)
 cmpci*	at	pci? dev ? function ?		# C-Media CMI8338/8738 Audio
