@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.28 1998/08/01 01:35:20 thorpej Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.29 1998/08/01 01:47:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1991, 1993
@@ -126,7 +126,7 @@ m_retry(i, t)
 {
 	struct mbuf *m;
 
-	m_reclaim();
+	m_reclaim(i);
 #define m_retry(i, t)	(struct mbuf *)0
 	MGET(m, i, t);
 #undef m_retry
@@ -146,7 +146,7 @@ m_retryhdr(i, t)
 {
 	struct mbuf *m;
 
-	m_reclaim();
+	m_reclaim(i);
 #define m_retryhdr(i, t) (struct mbuf *)0
 	MGETHDR(m, i, t);
 #undef m_retryhdr
@@ -158,17 +158,27 @@ m_retryhdr(i, t)
 }
 
 void
-m_reclaim()
+m_reclaim(how)
+	int how;
 {
 	struct domain *dp;
 	struct protosw *pr;
 	struct ifnet *ifp;
 	int s = splimp();
 
-	for (dp = domains; dp; dp = dp->dom_next)
-		for (pr = dp->dom_protosw; pr < dp->dom_protoswNPROTOSW; pr++)
-			if (pr->pr_drain)
-				(*pr->pr_drain)();
+	/*
+	 * Don't call the protocol drain routines if how == M_NOWAIT, which
+	 * typically means we're in interrupt context.  Since we can be
+	 * called from a network hardware interrupt, we could corrupt the
+	 * protocol queues we try to drain them at that time.
+	 */
+	if (how == M_WAIT) {
+		for (dp = domains; dp; dp = dp->dom_next)
+			for (pr = dp->dom_protosw;
+			     pr < dp->dom_protoswNPROTOSW; pr++)
+				if (pr->pr_drain)
+					(*pr->pr_drain)();
+	}
 	for (ifp = TAILQ_FIRST(&ifnet); ifp; ifp = TAILQ_NEXT(ifp, if_list))
 		if (ifp->if_drain)
 			(*ifp->if_drain)(ifp);
