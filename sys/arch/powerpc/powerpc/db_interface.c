@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.8 2000/11/24 21:49:06 tsubai Exp $ */
+/*	$NetBSD: db_interface.c,v 1.9 2001/02/04 17:38:11 briggs Exp $ */
 /*	$OpenBSD: db_interface.c,v 1.2 1996/12/28 06:21:50 rahnds Exp $	*/
 
 #include "opt_ddb.h"
@@ -19,6 +19,9 @@
 
 extern label_t *db_recover;
 
+void ddb_trap __P((void));		     /* Call into trap_subr.S */
+int ddb_trap_glue __P((struct trapframe *)); /* Called from trap_subr.S */
+
 void
 cpu_Debugger()
 {
@@ -29,8 +32,6 @@ int
 ddb_trap_glue(frame)
 	struct trapframe *frame;
 {
-	int msr;
-
 	if (!(frame->srr1 & PSL_PR)
 	    && (frame->exc == EXC_TRC
 		|| (frame->exc == EXC_PGM
