@@ -14,7 +14,7 @@
  *
  * Ported to run under 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
  *
- *	$Id: scsiconf.h,v 1.4.3.2 1993/11/24 09:45:12 mycroft Exp $
+ *	$Id: scsiconf.h,v 1.4.3.3 1993/11/24 19:19:47 mycroft Exp $
  */
 #ifndef	SCSI_SCSICONF_H
 #define SCSI_SCSICONF_H 1
@@ -221,6 +221,8 @@ struct scsi_xfer
 #define XS_TIMEOUT	0x03	/* The device timed out.. turned off?	  */
 #define XS_SWTIMEOUT	0x04	/* The Timeout reported was caught by SW  */
 #define XS_BUSY		0x08	/* The device busy, try again later?	  */
+
+int scsi_targmatch __P((struct device *, struct cfdata *, void *));
 
 struct scsi_xfer *get_xs __P((struct scsi_link *, u_int32));
 void free_xs __P((struct scsi_xfer *, struct scsi_link *, u_int32));
