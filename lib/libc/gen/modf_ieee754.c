@@ -1,4 +1,4 @@
-/* $NetBSD: modf_ieee754.c,v 1.1 2003/05/12 15:15:16 kleink Exp $ */
+/* $NetBSD: modf_ieee754.c,v 1.2 2003/10/27 00:05:46 kleink Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -42,39 +42,36 @@
 double
 modf(double val, double *iptr)
 {
-	union doub {
-		double v;
-		struct ieee_double s;
-	} u, v;
+	union ieee_double_u u, v;
 	u_int64_t frac;
 
 	/*
 	 * If input is Inf or NaN, return it and leave i alone.
 	 */
-	u.v = val;
-	if (u.s.dbl_exp == DBL_EXP_INFNAN)
-		return (u.v);
+	u.dblu_d = val;
+	if (u.dblu_dbl.dbl_exp == DBL_EXP_INFNAN)
+		return (u.dblu_d);
 
 	/*
 	 * If input can't have a fractional part, return
 	 * (appropriately signed) zero, and make i be the input.
 	 */
-	if ((int)u.s.dbl_exp - DBL_EXP_BIAS > DBL_FRACBITS - 1) {
-		*iptr = u.v;
-		v.v = 0.0;
-		v.s.dbl_sign = u.s.dbl_sign;
-		return (v.v);
+	if ((int)u.dblu_dbl.dbl_exp - DBL_EXP_BIAS > DBL_FRACBITS - 1) {
+		*iptr = u.dblu_d;
+		v.dblu_d = 0.0;
+		v.dblu_dbl.dbl_sign = u.dblu_dbl.dbl_sign;
+		return (v.dblu_d);
 	}
 
 	/*
 	 * If |input| < 1.0, return it, and set i to the appropriately
 	 * signed zero.
 	 */
-	if (u.s.dbl_exp < DBL_EXP_BIAS) {
-		v.v = 0.0;
-		v.s.dbl_sign = u.s.dbl_sign;
-		*iptr = v.v;
-		return (u.v);
+	if (u.dblu_dbl.dbl_exp < DBL_EXP_BIAS) {
+		v.dblu_d = 0.0;
+		v.dblu_dbl.dbl_sign = u.dblu_dbl.dbl_sign;
+		*iptr = v.dblu_d;
+		return (u.dblu_d);
 	}
 
 	/*
@@ -88,16 +85,16 @@ modf(double val, double *iptr)
 	 * normalization.  Therefore, we take the easy way out, and
 	 * just use subtraction to get the fractional part.
 	 */
-	v.v = u.v;
+	v.dblu_d = u.dblu_d;
 	/* Zero the low bits of the fraction, the sleazy way. */
-	frac = ((u_int64_t)v.s.dbl_frach << 32) + v.s.dbl_fracl;
-	frac >>= DBL_FRACBITS - (u.s.dbl_exp - DBL_EXP_BIAS);
-	frac <<= DBL_FRACBITS - (u.s.dbl_exp - DBL_EXP_BIAS);
-	v.s.dbl_fracl = frac & 0xffffffff;
-	v.s.dbl_frach = frac >> 32;
-	*iptr = v.v;
+	frac = ((u_int64_t)v.dblu_dbl.dbl_frach << 32) + v.dblu_dbl.dbl_fracl;
+	frac >>= DBL_FRACBITS - (u.dblu_dbl.dbl_exp - DBL_EXP_BIAS);
+	frac <<= DBL_FRACBITS - (u.dblu_dbl.dbl_exp - DBL_EXP_BIAS);
+	v.dblu_dbl.dbl_fracl = frac & 0xffffffff;
+	v.dblu_dbl.dbl_frach = frac >> 32;
+	*iptr = v.dblu_d;
 
-	u.v -= v.v;
-	u.s.dbl_sign = v.s.dbl_sign;
-	return (u.v);
+	u.dblu_d -= v.dblu_d;
+	u.dblu_dbl.dbl_sign = v.dblu_dbl.dbl_sign;
+	return (u.dblu_d);
 }
