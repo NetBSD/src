@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.120.2.12 1999/05/12 05:46:41 nisimura Exp $ */
+/*	$NetBSD: machdep.c,v 1.120.2.13 1999/05/21 02:18:27 nisimura Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.120.2.12 1999/05/12 05:46:41 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.120.2.13 1999/05/21 02:18:27 nisimura Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -170,6 +170,7 @@ struct platform platform = {
 };
 
 extern caddr_t esym;
+extern struct user *proc0paddr;
 extern struct consdev promcd;
 
 /*
@@ -333,9 +334,13 @@ mach_init(argc, argv, code, cv, bim, bip)
 #endif
 
 	/*
-	 * Init mapping for u page(s) for proc0, pm_tlbpid 1.
+	 * Alloc u pages for proc0 stealing KSEG0 memory.
 	 */
-	mips_init_proc0(kernend);
+	proc0.p_addr = proc0paddr = (struct user *)kernend;
+	proc0.p_md.md_regs =
+	    (struct frame *)((caddr_t)kernend + UPAGES * PAGE_SIZE) - 1;
+	curpcb = &proc0.p_addr->u_pcb;
+	memset(kernend, 0, UPAGES * PAGE_SIZE);
 
 	kernend += UPAGES * PAGE_SIZE;
 
@@ -436,9 +441,9 @@ mach_init(argc, argv, code, cv, bim, bip)
 	 * memory is directly addressable.  We don't have to map these into
 	 * virtual address space.
 	 */
-	size = (unsigned)allocsys(0);
+	size = (unsigned)allocsys(NULL, NULL);
 	v = (caddr_t)pmap_steal_memory(size, NULL, NULL);
-	if ((allocsys(v) - v) != size)
+	if ((allocsys(v, NULL) - v) != size)
 		panic("mach_init: table size inconsistency");
 
 	/*
@@ -459,6 +464,7 @@ cpu_startup()
 	int base, residual;
 	vaddr_t minaddr, maxaddr;
 	vsize_t size;
+	char pbuf[9];
 #ifdef DEBUG
 	extern int pmapdebug;
 	int opmapdebug = pmapdebug;
@@ -471,7 +477,8 @@ cpu_startup()
 	 */
 	printf(version);
 	printf("%s\n", cpu_model);
-	printf("real mem  = %d\n", ctob(physmem));
+	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
+	printf("total memory = %s\n", pbuf);
 
 	/*
 	 * Allocate virtual address space for file I/O buffers.
@@ -553,9 +560,10 @@ cpu_startup()
 #ifdef DEBUG
 	pmapdebug = opmapdebug;
 #endif
-	printf("avail mem = %ld\n", ptoa(uvmexp.free));
-	printf("using %d buffers containing %d bytes of memory\n",
-		nbuf, bufpages * CLBYTES);
+	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
+	printf("avail memory = %s\n", pbuf);
+	format_bytes(pbuf, sizeof(pbuf), bufpages * CLBYTES);
+	printf("using %d buffers containing %s of memory\n", nbuf, pbuf);
 
 	/*
 	 * Set up buffers, so they can be used to read disk labels.
