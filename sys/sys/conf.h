@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.23 1995/04/19 18:04:57 mycroft Exp $	*/
+/*	$NetBSD: conf.h,v 1.24 1995/04/19 21:32:32 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -158,7 +158,7 @@ extern struct cdevsw cdevsw[];
 #define	dev_type_read(n)	int n __P((dev_t, struct uio *, int))
 #define	dev_type_write(n)	int n __P((dev_t, struct uio *, int))
 #define	dev_type_stop(n)	int n __P((struct tty *, int))
-#define	dev_type_tty(n)		struct tty * __P((dev_t))
+#define	dev_type_tty(n)		struct tty *n __P((dev_t))
 #define	dev_type_select(n)	int n __P((dev_t, int, struct proc *))
 #define	dev_type_mmap(n)	int n __P(())
 
