@@ -1,4 +1,4 @@
-/*	$NetBSD: mld6.c,v 1.3 1999/07/03 21:30:19 thorpej Exp $	*/
+/*	$NetBSD: mld6.c,v 1.4 1999/07/04 02:01:15 itojun Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -137,7 +137,7 @@ void
 mld6_start_listening(in6m)
 	struct in6_multi *in6m;
 {
-	int s = splnet();
+	int s = splsoftnet();
 
 	/*
 	 * (draft-ietf-ipngwg-mld, page 10)
@@ -335,7 +335,7 @@ mld6_fasttimeo()
 	if (!mld6_timers_are_running)
 		return;
 
-	s = splnet();
+	s = splsoftnet();
 	mld6_timers_are_running = 0;
 	IN6_FIRST_MULTI(step, in6m);
 	while (in6m != NULL) {

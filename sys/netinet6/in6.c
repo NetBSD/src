@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.3 1999/07/03 21:30:18 thorpej Exp $	*/
+/*	$NetBSD: in6.c,v 1.4 1999/07/04 02:01:15 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1281,7 +1281,7 @@ in6_addmulti(maddr6, ifp, errorp)
 	struct	in6_ifaddr *ia;
 	struct	in6_ifreq ifr;
 	struct	in6_multi *in6m;
-	int	s = splnet();
+	int	s = splsoftnet();
 
 	*errorp = 0;
 	/*
@@ -1356,7 +1356,7 @@ in6_delmulti(in6m)
 	struct in6_multi *in6m;
 {
 	struct	in6_ifreq ifr;
-	int	s = splnet();
+	int	s = splsoftnet();
 
 	if (--in6m->in6m_refcount == 0) {
 		/*

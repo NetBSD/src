@@ -1,4 +1,4 @@
-/*	$NetBSD: keysock.c,v 1.3 1999/07/03 21:32:48 thorpej Exp $	*/
+/*	$NetBSD: keysock.c,v 1.4 1999/07/04 02:01:16 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -29,7 +29,7 @@
  * SUCH DAMAGE.
  */
 
-/* KAME @(#)$Id: keysock.c,v 1.3 1999/07/03 21:32:48 thorpej Exp $ */
+/* KAME @(#)$Id: keysock.c,v 1.4 1999/07/04 02:01:16 itojun Exp $ */
 
 #if defined(__FreeBSD__) && __FreeBSD__ >= 3
 #include "opt_inet.h"
@@ -125,7 +125,7 @@ key_usrreq(so, req, m, nam, control, p)
 	register struct keycb *kp = (struct keycb *)sotorawcb(so);
 	int s;
 
-	s = splnet();
+	s = splsoftnet();
 	if (req == PRU_ATTACH) {
 		MALLOC(kp, struct keycb *, sizeof(*kp), M_PCB, M_WAITOK);
 		so->so_pcb = (caddr_t)kp;
@@ -268,7 +268,7 @@ key_output(m, va_alist)
 	}
 	m_copydata(m, 0, len, (caddr_t)msg);
 
-	s = splnet();	/*XXX giant lock*/
+	s = splsoftnet();	/*XXX giant lock*/
 	if ((len = key_parse(&msg, so, &target)) == 0) {
 		/* discard. i.e. no need to reply. */
 		error = 0;
