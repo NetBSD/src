@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_machdep.c,v 1.4 1995/09/01 20:06:29 mycroft Exp $	*/
+/*	$NetBSD: sunos_machdep.c,v 1.5 1995/09/21 11:41:04 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -219,11 +219,12 @@ sunos_sendsig(catcher, sig, mask, code)
  * a machine fault.
  */           
 int
-sunos_sigreturn(p, uap, retval)
+sunos_sigreturn(p, uap_arg, retval)
 	struct proc *p;
-	struct sunos_sigreturn_args *uap;
+	void *uap_arg;
 	register_t *retval;
 {
+	struct sunos_sigreturn_args *uap = uap_arg;
 	register struct sunos_sigcontext *scp;
 	register struct frame *frame;
 	struct sunos_sigcontext tsigc;
