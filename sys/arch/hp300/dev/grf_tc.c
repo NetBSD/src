@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_tc.c,v 1.6 1996/02/26 23:40:48 thorpej Exp $	*/
+/*	$NetBSD: grf_tc.c,v 1.7 1996/03/03 16:49:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -540,12 +540,16 @@ topcat_console_scan(scode, va, arg)
 	}
 #endif
 
+	/* Only raise priority. */
+	if (pri > cp->cn_pri)
+		cp->cn_pri = pri;
+
 	/*
 	 * If our priority is higher than the currently-remembered
 	 * console, stash our priority.
 	 */
-	if ((cp->cn_pri > conpri) || force) {
-		conpri = cp->cn_pri = pri;
+	if (((cn_tab == NULL) || (cp->cn_pri > cn_tab->cn_pri)) || force) {
+		cn_tab = cp;
 		if (scode >= 132) {
 			dioiidev = (u_char *)va;
 			return ((dioiidev[0x101] + 1) * 0x100000);
@@ -576,52 +580,45 @@ topcatcnprobe(cp)
 
 	/* Look for "internal" framebuffer. */
 	va = (caddr_t)IIOV(GRFIADDR);
-	if (!badaddr(va)) {
-		grf = (struct grfreg *)va;
-		if (grf->gr_id != GRFHWID)
-			goto not_internal;
-
+	grf = (struct grfreg *)va;
+	if (!badaddr(va) && (grf->gr_id == GRFHWID)) {
 		switch (grf->gr_id2) {
 		case GID_TOPCAT:
 		case GID_LRCATSEYE:
 		case GID_HRCCATSEYE:
 		case GID_HRMCATSEYE:
 			cp->cn_pri = CN_INTERNAL;
-			break;
 
-		default:
-			goto not_internal;
+#ifdef CONSCODE
+			/*
+			 * Raise our priority and save some work,
+			 * if appropriate.
+			 */
+			if (CONSCODE == -1) {
+				cp->cn_pri = CN_REMOTE;
+				force = conforced = 1;
+			}
+#endif
+
+			/*
+			 * If our priority is higher than the currently
+			 * remembered console, stash our priority, and unmap
+			 * whichever device might be currently mapped.
+			 * Since we're internal, we set the saved size to 0
+			 * so they don't attempt to unmap our fixed VA later.
+			 */
+			if (((cn_tab == NULL) || (cp->cn_pri > cn_tab->cn_pri))
+			    || force) {
+				cn_tab = cp;
+				if (convasize)
+					iounmap(conaddr, convasize);
+				conscode = -1;
+				conaddr = va;
+				convasize = 0;
+			}
 		}
 	}
 
-#ifdef CONSCODE
-	/*
-	 * Raise our priority and save some work, if appropriate.
-	 */
-	if (CONSCODE == -1) {
-		cp->cn_pri = CN_REMOTE;
-		force = conforced = 1;
-	}
-#endif
-
-	/*
-	 * If our priority is higher than the currently-remembered
-	 * console, stash our priority, and unmap whichever device
-	 * might be currently mapped.  Since we're internal, we
-	 * set the saved size to 0 so they don't attempt to unmap
-	 * our fixed VA later.
-	 */
-	if ((cp->cn_pri > conpri) || force) {
-		conpri = cp->cn_pri;
-		if (convasize)
-			iounmap(conaddr, convasize);
-		conscode = -1;
-		conaddr = va;
-		convasize = 0;
-		cn_tab = cp;
-	}
-
- not_internal:
 	console_scan(topcat_console_scan, cp);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: dca.c,v 1.22 1996/02/26 23:40:29 thorpej Exp $	*/
+/*	$NetBSD: dca.c,v 1.23 1996/03/03 16:48:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Jason R. Thorpe.  All rights reserved.
@@ -916,12 +916,16 @@ dca_console_scan(scode, va, arg)
 	}
 #endif
 
+	/* Only raise priority. */
+	if (pri > cp->cn_pri)
+		cp->cn_pri = pri;
+
 	/*
 	 * If our priority is higher than the currently-remembered
 	 * console, stash our priority, for the benefit of dcacninit().
 	 */
-	if ((cp->cn_pri > conpri) || force) {
-		conpri = cp->cn_pri = pri;
+	if (((cn_tab == NULL) || (cp->cn_pri > cn_tab->cn_pri)) || force) {
+		cn_tab = cp;
 		if (scode >= 132) {
 			dioiidev = (u_char *)va;
 			return ((dioiidev[0x101] + 1) * 0x100000);
