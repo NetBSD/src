@@ -1,5 +1,5 @@
-#	$NetBSD: Makefile,v 1.3 2001/02/23 14:08:55 uch Exp $
+#	$NetBSD: Makefile,v 1.4 2003/01/06 17:40:33 lukem Exp $
 
-SUBDIR=	include
+SUBDIR=	compile include # stand
 
 .include <bsd.kinc.mk>
