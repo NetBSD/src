@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.73 2002/11/16 22:22:23 gson Exp $	*/
+/*	$NetBSD: job.c,v 1.74 2002/11/26 05:30:01 enami Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: job.c,v 1.73 2002/11/16 22:22:23 gson Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.74 2002/11/26 05:30:01 enami Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.73 2002/11/16 22:22:23 gson Exp $");
+__RCSID("$NetBSD: job.c,v 1.74 2002/11/26 05:30:01 enami Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2601,8 +2601,8 @@ Job_Init(int maxproc, int maxlocal)
 
     if (pipe(exit_pipe) < 0)
 	Fatal("error in pipe: %s", strerror(errno));
-    fcntl(job_pipe[0], F_SETFD, 1);
-    fcntl(job_pipe[1], F_SETFD, 1);
+    fcntl(exit_pipe[0], F_SETFD, 1);
+    fcntl(exit_pipe[1], F_SETFD, 1);
 
     childExitJob.inPipe = exit_pipe[0];
 
