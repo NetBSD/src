@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctlutil.c,v 1.5 2004/03/24 15:34:56 atatat Exp $ */
+/*	$NetBSD: sysctlutil.c,v 1.6 2004/03/24 16:34:34 atatat Exp $ */
 
 #include <sys/param.h>
 #define __USE_NEW_SYSCTL
@@ -59,6 +59,7 @@ compar(const void *a, const void *b)
 int
 learn_tree(int *name, u_int namelen, struct sysctlnode *pnode)
 {
+	struct sysctlnode qnode;
 	int rc;
 	size_t sz;
 
@@ -82,7 +83,10 @@ learn_tree(int *name, u_int namelen, struct sysctlnode *pnode)
 	name[namelen] = CTL_QUERY;
 	pnode->sysctl_clen = 0;
 	pnode->sysctl_csize = 0;
-	rc = sysctl(name, namelen + 1, pnode->sysctl_child, &sz, NULL, 0);
+	memset(&qnode, 0, sizeof(qnode));
+	qnode.sysctl_flags = SYSCTL_VERSION;
+	rc = sysctl(name, namelen + 1, pnode->sysctl_child, &sz,
+		    &qnode, sizeof(qnode));
 	if (sz == 0) {
 		free(pnode->sysctl_child);
 		pnode->sysctl_child = NULL;
@@ -103,7 +107,7 @@ learn_tree(int *name, u_int namelen, struct sysctlnode *pnode)
 			return (-1);
 
 		rc = sysctl(name, namelen + 1, pnode->sysctl_child, &sz,
-			    NULL, 0);
+			    &qnode, sizeof(qnode));
 		if (rc) {
 			free(pnode->sysctl_child);
 			pnode->sysctl_child = NULL;
@@ -178,7 +182,7 @@ free_children(struct sysctlnode *rnode)
 static void
 relearnhead(void)
 {
-	struct sysctlnode *h, *i, *o;
+	struct sysctlnode *h, *i, *o, qnode;
 	size_t si, so;
 	int rc, name, nlen, olen, ni, oi, t;
 
@@ -197,10 +201,12 @@ relearnhead(void)
 	si = 0;
 	so = sysctl_mibroot.sysctl_clen * sizeof(struct sysctlnode);
 	name = CTL_QUERY;
+	memset(&qnode, 0, sizeof(qnode));
+	qnode.sysctl_flags = SYSCTL_VERSION;
 	do {
 		si = so;
 		h = malloc(si);
-		rc = sysctl(&name, 1, h, &so, NULL, 0);
+		rc = sysctl(&name, 1, h, &so, &qnode, sizeof(qnode));
 		if (rc == -1 && errno != ENOMEM)
 			return;
 		if (si < so)
