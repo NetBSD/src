@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.25 1996/06/12 22:11:30 cgd Exp $	*/
+/*	$NetBSD: machdep.c,v 1.26 1996/06/13 00:24:52 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -546,17 +546,25 @@ alpha_init(pfn, ptb)
 	boothowto |= RB_KDB;
 #endif
 	for (p = boot_flags; p && *p != '\0'; p++) {
+		/*
+		 * Note that we'd really like to differentiate case here,
+		 * but the Alpha AXP Architecture Reference Manual
+		 * says that we shouldn't.
+		 */
 		switch (*p) {
-		case 'a': /* askname */
-			boothowto |= RB_ASKNAME;
+		case 'a': /* autoboot */
+		case 'A':
+			boothowto &= ~RB_SINGLE;
 			break;
 
-		case 'A': /* DEC's notion of autoboot */
-			boothowto &= ~RB_SINGLE;
+		case 'n': /* askname */
+		case 'N':
+			boothowto |= RB_ASKNAME;
 			break;
 
 #if 0
 		case 'm': /* mini root present in memory */
+		case 'M':
 			boothowto |= RB_MINIROOT;
 			break;
 #endif
