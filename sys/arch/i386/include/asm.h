@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.8 1996/11/30 02:48:59 jtc Exp $	*/
+/*	$NetBSD: asm.h,v 1.9 1996/12/04 00:03:41 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -68,8 +68,13 @@
 #endif
 #define	_ASM_LABEL(x)	x
 
+/* let kernels and others override entrypoint alignment */
+#ifndef _ALIGN_TEXT
+# define _ALIGN_TEXT .align 2
+#endif
+
 #define _ENTRY(x) \
-	.text; .align 2; .globl x; .type x,@function; x:
+	.text; _ALIGN_TEXT; .globl x; .type x,@function; x:
 
 #ifdef GPROF
 # define _PROF_PROLOGUE	\
@@ -79,6 +84,7 @@
 #endif
 
 #define	ENTRY(y)	_ENTRY(_C_LABEL(y)); _PROF_PROLOGUE
+#define	NENTRY(y)	_ENTRY(_C_LABEL(y))
 #define	ASENTRY(y)	_ENTRY(_ASM_LABEL(y)); _PROF_PROLOGUE
 
 #define	ASMSTR		.asciz
