@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.87 2003/01/06 13:05:13 wiz Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.88 2003/01/24 20:46:45 pk Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: z8530tty.c,v 1.87 2003/01/06 13:05:13 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: z8530tty.c,v 1.88 2003/01/24 20:46:45 pk Exp $");
 
 #include "opt_kgdb.h"
 
@@ -469,8 +469,20 @@ zs_shutdown(zst)
 	 */
 	if (ISSET(tp->t_cflag, HUPCL)) {
 		zs_modem(zst, 0);
+		splx(s);
+		/*
+		 * XXX -    another process is not prevented from opening
+		 *	    the device during our sleep.
+		 * XXXSMP - another process isn't prevented from opening
+		 *	    at even if it was waiting for t_wopen.
+		 */
 		(void) tsleep(cs, TTIPRI, ttclos, hz);
+		s = splzs();
 	}
+
+	/* Re-check state in case we were opened during our sleep */
+	if (ISSET(tp->t_state, TS_ISOPEN) || tp->t_wopen != 0)
+		goto out;
 
 	/* Turn off interrupts if not the console. */
 	if (!ISSET(zst->zst_hwflags, ZS_HWFLAG_CONSOLE)) {
@@ -488,6 +500,7 @@ zs_shutdown(zst)
 		(*cs->disable)(zst->zst_cs);
 	}
 
+out:
 	splx(s);
 }
 
