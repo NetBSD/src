@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_exec.c,v 1.39 2000/12/09 12:38:25 jdolecek Exp $	 */
+/*	$NetBSD: svr4_exec.c,v 1.40 2000/12/09 12:44:26 jdolecek Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -52,6 +52,7 @@
 extern char svr4_sigcode[], svr4_esigcode[];
 extern struct sysent svr4_sysent[];
 extern const char * const svr4_syscallnames[];
+void svr4_syscall __P((void));
 void syscall __P((void));
 
 const struct emul emul_svr4 = {
