@@ -1,4 +1,4 @@
-/*	$NetBSD: mca.c,v 1.4 2001/03/31 09:50:14 jdolecek Exp $	*/
+/*	$NetBSD: mca.c,v 1.5 2001/04/27 17:52:51 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -176,7 +176,8 @@ mca_attach(parent, self, aux)
 		if (ma.ma_id == 0xffff)	/* no adapter here */
 			continue;
 
-		if (ma.ma_pos[2] & MCA_POS2_ENABLE)
+		if (ma.ma_pos[2] & MCA_POS2_ENABLE
+		    || mca_match_disabled(ma.ma_id))
 			config_found_sm(self, &ma, mca_print, mca_submatch);
 		else {
 			mca_print(&ma, self->dv_xname);
