@@ -1,4 +1,4 @@
-/*	$NetBSD: vacation.c,v 1.7 1995/04/29 05:58:27 cgd Exp $	*/
+/*	$NetBSD: vacation.c,v 1.8 1997/05/17 20:24:26 pk Exp $	*/
 
 /*
  * Copyright (c) 1983, 1987, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)vacation.c	8.2 (Berkeley) 1/26/94";
 #endif
-static char rcsid[] = "$NetBSD: vacation.c,v 1.7 1995/04/29 05:58:27 cgd Exp $";
+static char rcsid[] = "$NetBSD: vacation.c,v 1.8 1997/05/17 20:24:26 pk Exp $";
 #endif /* not lint */
 
 /*
@@ -289,9 +289,13 @@ junkmail()
 		char	*name;
 		int	len;
 	} ignore[] = {
-		"-request", 8,		"postmaster", 10,	"uucp", 4,
-		"mailer-daemon", 13,	"mailer", 6,		"-relay", 6,
-		NULL, NULL,
+		{ "-request", 8 },
+		{ "postmaster", 10 },
+		{ "uucp", 4 },
+		{ "mailer-daemon", 13 },
+		{ "mailer", 6 },
+		{ "-relay", 6 },
+		{NULL, 0 }
 	};
 	register struct ignore *cur;
 	register int len;
