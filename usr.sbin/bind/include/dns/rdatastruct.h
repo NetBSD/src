@@ -22,6 +22,8 @@
  ***************
  ***************/
 
+/*	$NetBSD: rdatastruct.h,v 1.1.1.2 2004/11/07 01:07:27 christos Exp $	*/
+
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
@@ -39,7 +41,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: rdatastruct.h,v 1.1.1.1 2004/05/18 00:06:57 christos Exp $ */
+/* Id: rdatastructpre.h,v 1.13.206.1 2004/03/06 08:14:02 marka Exp */
 
 #ifndef DNS_RDATASTRUCT_H
 #define DNS_RDATASTRUCT_H 1
@@ -64,6 +66,8 @@ typedef struct dns_rdatacommon {
 		(_data)->common.rdclass = (_rdclass); \
 		ISC_LINK_INIT(&(_data)->common, link); \
 	} while (0)
+/*	$NetBSD: rdatastruct.h,v 1.1.1.2 2004/11/07 01:07:27 christos Exp $	*/
+
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001  Internet Software Consortium.
@@ -84,7 +88,7 @@ typedef struct dns_rdatacommon {
 #ifndef IN_1_A_1_H
 #define IN_1_A_1_H 1
 
-/* $Id: rdatastruct.h,v 1.1.1.1 2004/05/18 00:06:57 christos Exp $ */
+/* Id: a_1.h,v 1.23.206.1 2004/03/06 08:14:16 marka Exp */
 
 typedef struct dns_rdata_in_a {
 	dns_rdatacommon_t	common;
@@ -92,6 +96,8 @@ typedef struct dns_rdata_in_a {
 } dns_rdata_in_a_t;
 
 #endif /* IN_1_A_1_H */
+/*	$NetBSD: rdatastruct.h,v 1.1.1.2 2004/11/07 01:07:27 christos Exp $	*/
+
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
@@ -112,7 +118,7 @@ typedef struct dns_rdata_in_a {
 #ifndef HS_4_A_1_H
 #define HS_4_A_1_H 1
 
-/* $Id: rdatastruct.h,v 1.1.1.1 2004/05/18 00:06:57 christos Exp $ */
+/* Id: a_1.h,v 1.7.206.1 2004/03/06 08:14:15 marka Exp */
 
 typedef struct dns_rdata_hs_a {
 	dns_rdatacommon_t	common;
@@ -120,6 +126,8 @@ typedef struct dns_rdata_hs_a {
 } dns_rdata_hs_a_t;
 
 #endif /* HS_4_A_1_H */
+/*	$NetBSD: rdatastruct.h,v 1.1.1.2 2004/11/07 01:07:27 christos Exp $	*/
+
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001  Internet Software Consortium.
@@ -140,7 +148,7 @@ typedef struct dns_rdata_hs_a {
 #ifndef GENERIC_NS_2_H
 #define GENERIC_NS_2_H 1
 
-/* $Id: rdatastruct.h,v 1.1.1.1 2004/05/18 00:06:57 christos Exp $ */
+/* Id: ns_2.h,v 1.22.206.1 2004/03/06 08:14:09 marka Exp */
 
 typedef struct dns_rdata_ns {
 	dns_rdatacommon_t	common;
@@ -150,6 +158,8 @@ typedef struct dns_rdata_ns {
 
 
 #endif /* GENERIC_NS_2_H */
+/*	$NetBSD: rdatastruct.h,v 1.1.1.2 2004/11/07 01:07:27 christos Exp $	*/
+
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001  Internet Software Consortium.
@@ -170,7 +180,7 @@ typedef struct dns_rdata_ns {
 #ifndef GENERIC_MD_3_H
 #define GENERIC_MD_3_H 1
 
-/* $Id: rdatastruct.h,v 1.1.1.1 2004/05/18 00:06:57 christos Exp $ */
+/* Id: md_3.h,v 1.23.206.1 2004/03/06 08:14:07 marka Exp */
 
 typedef struct dns_rdata_md {
 	dns_rdatacommon_t	common;
@@ -180,6 +190,8 @@ typedef struct dns_rdata_md {
 
 
 #endif /* GENERIC_MD_3_H */
+/*	$NetBSD: rdatastruct.h,v 1.1.1.2 2004/11/07 01:07:27 christos Exp $	*/
+
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001  Internet Software Consortium.
@@ -200,7 +212,7 @@ typedef struct dns_rdata_md {
 #ifndef GENERIC_MF_4_H
 #define GENERIC_MF_4_H 1
 
-/* $Id: rdatastruct.h,v 1.1.1.1 2004/05/18 00:06:57 christos Exp $ */
+/* Id: mf_4.h,v 1.21.206.1 2004/03/06 08:14:07 marka Exp */
 
 typedef struct dns_rdata_mf {
 	dns_rdatacommon_t	common;
@@ -209,6 +221,8 @@ typedef struct dns_rdata_mf {
 } dns_rdata_mf_t;
 
 #endif /* GENERIC_MF_4_H */
+/*	$NetBSD: rdatastruct.h,v 1.1.1.2 2004/11/07 01:07:27 christos Exp $	*/
+
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001  Internet Software Consortium.
@@ -226,7 +240,7 @@ typedef struct dns_rdata_mf {
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: rdatastruct.h,v 1.1.1.1 2004/05/18 00:06:57 christos Exp $ */
+/* Id: cname_5.h,v 1.23.206.1 2004/03/06 08:14:04 marka Exp */
 
 #ifndef GENERIC_CNAME_5_H
 #define GENERIC_CNAME_5_H 1
@@ -238,6 +252,8 @@ typedef struct dns_rdata_cname {
 } dns_rdata_cname_t;
 
 #endif /* GENERIC_CNAME_5_H */
+/*	$NetBSD: rdatastruct.h,v 1.1.1.2 2004/11/07 01:07:27 christos Exp $	*/
+
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001  Internet Software Consortium.
@@ -258,7 +274,7 @@ typedef struct dns_rdata_cname {
 #ifndef GENERIC_SOA_6_H
 #define GENERIC_SOA_6_H 1
 
-/* $Id: rdatastruct.h,v 1.1.1.1 2004/05/18 00:06:57 christos Exp $ */
+/* Id: soa_6.h,v 1.27.206.1 2004/03/06 08:14:12 marka Exp */
 
 typedef struct dns_rdata_soa {
 	dns_rdatacommon_t	common;
@@ -274,6 +290,8 @@ typedef struct dns_rdata_soa {
 
 
 #endif /* GENERIC_SOA_6_H */
+/*	$NetBSD: rdatastruct.h,v 1.1.1.2 2004/11/07 01:07:27 christos Exp $	*/
+
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001  Internet Software Consortium.
@@ -294,7 +312,7 @@ typedef struct dns_rdata_soa {
 #ifndef GENERIC_MB_7_H
 #define GENERIC_MB_7_H 1
 
-/* $Id: rdatastruct.h,v 1.1.1.1 2004/05/18 00:06:57 christos Exp $ */
+/* Id: mb_7.h,v 1.22.206.1 2004/03/06 08:14:06 marka Exp */
 
 typedef struct dns_rdata_mb {
 	dns_rdatacommon_t	common;
@@ -303,6 +321,8 @@ typedef struct dns_rdata_mb {
 } dns_rdata_mb_t;
 
 #endif /* GENERIC_MB_7_H */
+/*	$NetBSD: rdatastruct.h,v 1.1.1.2 2004/11/07 01:07:27 christos Exp $	*/
+
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001  Internet Software Consortium.
@@ -323,7 +343,7 @@ typedef struct dns_rdata_mb {
 #ifndef GENERIC_MG_8_H
 #define GENERIC_MG_8_H 1
 
-/* $Id: rdatastruct.h,v 1.1.1.1 2004/05/18 00:06:57 christos Exp $ */
+/* Id: mg_8.h,v 1.21.206.1 2004/03/06 08:14:07 marka Exp */
 
 typedef struct dns_rdata_mg {
 	dns_rdatacommon_t	common;
@@ -332,6 +352,8 @@ typedef struct dns_rdata_mg {
 } dns_rdata_mg_t;
 
 #endif /* GENERIC_MG_8_H */
+/*	$NetBSD: rdatastruct.h,v 1.1.1.2 2004/11/07 01:07:27 christos Exp $	*/
+
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001  Internet Software Consortium.
@@ -352,7 +374,7 @@ typedef struct dns_rdata_mg {
 #ifndef GENERIC_MR_9_H
 #define GENERIC_MR_9_H 1
 
-/* $Id: rdatastruct.h,v 1.1.1.1 2004/05/18 00:06:57 christos Exp $ */
+/* Id: mr_9.h,v 1.21.206.1 2004/03/06 08:14:08 marka Exp */
 
 typedef struct dns_rdata_mr {
 	dns_rdatacommon_t	common;
@@ -361,6 +383,8 @@ typedef struct dns_rdata_mr {
 } dns_rdata_mr_t;
 
 #endif /* GENERIC_MR_9_H */
+/*	$NetBSD: rdatastruct.h,v 1.1.1.2 2004/11/07 01:07:27 christos Exp $	*/
+
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001  Internet Software Consortium.
@@ -381,7 +405,7 @@ typedef struct dns_rdata_mr {
 #ifndef GENERIC_NULL_10_H
 #define GENERIC_NULL_10_H 1
 
-/* $Id: rdatastruct.h,v 1.1.1.1 2004/05/18 00:06:57 christos Exp $ */
+/* Id: null_10.h,v 1.20.206.1 2004/03/06 08:14:09 marka Exp */
 
 typedef struct dns_rdata_null {
 	dns_rdatacommon_t	common;
@@ -392,6 +416,8 @@ typedef struct dns_rdata_null {
 
 
 #endif /* GENERIC_NULL_10_H */
+/*	$NetBSD: rdatastruct.h,v 1.1.1.2 2004/11/07 01:07:27 christos Exp $	*/
+
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
@@ -412,7 +438,7 @@ typedef struct dns_rdata_null {
 #ifndef IN_1_WKS_11_H
 #define IN_1_WKS_11_H 1
 
-/* $Id: rdatastruct.h,v 1.1.1.1 2004/05/18 00:06:57 christos Exp $ */
+/* Id: wks_11.h,v 1.19.206.1 2004/03/06 08:14:19 marka Exp */
 
 typedef	struct dns_rdata_in_wks {
 	dns_rdatacommon_t	common;
@@ -424,6 +450,8 @@ typedef	struct dns_rdata_in_wks {
 } dns_rdata_in_wks_t;
 
 #endif /* IN_1_WKS_11_H */
+/*	$NetBSD: rdatastruct.h,v 1.1.1.2 2004/11/07 01:07:27 christos Exp $	*/
+
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001  Internet Software Consortium.
@@ -444,7 +472,7 @@ typedef	struct dns_rdata_in_wks {
 #ifndef GENERIC_PTR_12_H
 #define GENERIC_PTR_12_H 1
 
-/* $Id: rdatastruct.h,v 1.1.1.1 2004/05/18 00:06:57 christos Exp $ */
+/* Id: ptr_12.h,v 1.22.206.1 2004/03/06 08:14:11 marka Exp */
 
 typedef struct dns_rdata_ptr {
         dns_rdatacommon_t       common;
@@ -453,6 +481,8 @@ typedef struct dns_rdata_ptr {
 } dns_rdata_ptr_t;
 
 #endif /* GENERIC_PTR_12_H */
+/*	$NetBSD: rdatastruct.h,v 1.1.1.2 2004/11/07 01:07:27 christos Exp $	*/
+
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001  Internet Software Consortium.
@@ -473,7 +503,7 @@ typedef struct dns_rdata_ptr {
 #ifndef GENERIC_HINFO_13_H
 #define GENERIC_HINFO_13_H 1
 
-/* $Id: rdatastruct.h,v 1.1.1.1 2004/05/18 00:06:57 christos Exp $ */
+/* Id: hinfo_13.h,v 1.22.206.1 2004/03/06 08:14:05 marka Exp */
 
 typedef struct dns_rdata_hinfo {
 	dns_rdatacommon_t	common;
@@ -485,6 +515,8 @@ typedef struct dns_rdata_hinfo {
 } dns_rdata_hinfo_t;
 
 #endif /* GENERIC_HINFO_13_H */
+/*	$NetBSD: rdatastruct.h,v 1.1.1.2 2004/11/07 01:07:27 christos Exp $	*/
+
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001  Internet Software Consortium.
@@ -505,7 +537,7 @@ typedef struct dns_rdata_hinfo {
 #ifndef GENERIC_MINFO_14_H
 #define GENERIC_MINFO_14_H 1
 
-/* $Id: rdatastruct.h,v 1.1.1.1 2004/05/18 00:06:57 christos Exp $ */
+/* Id: minfo_14.h,v 1.22.206.1 2004/03/06 08:14:08 marka Exp */
 
 typedef struct dns_rdata_minfo {
 	dns_rdatacommon_t	common;
@@ -515,6 +547,8 @@ typedef struct dns_rdata_minfo {
 } dns_rdata_minfo_t;
 
 #endif /* GENERIC_MINFO_14_H */
+/*	$NetBSD: rdatastruct.h,v 1.1.1.2 2004/11/07 01:07:27 christos Exp $	*/
+
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001  Internet Software Consortium.
@@ -535,7 +569,7 @@ typedef struct dns_rdata_minfo {
 #ifndef GENERIC_MX_15_H
 #define GENERIC_MX_15_H 1
 
-/* $Id: rdatastruct.h,v 1.1.1.1 2004/05/18 00:06:57 christos Exp $ */
+/* Id: mx_15.h,v 1.24.206.1 2004/03/06 08:14:09 marka Exp */
 
 typedef struct dns_rdata_mx {
 	dns_rdatacommon_t	common;
@@ -545,6 +579,8 @@ typedef struct dns_rdata_mx {
 } dns_rdata_mx_t;
 
 #endif /* GENERIC_MX_15_H */
+/*	$NetBSD: rdatastruct.h,v 1.1.1.2 2004/11/07 01:07:27 christos Exp $	*/
+
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001  Internet Software Consortium.
@@ -565,7 +601,7 @@ typedef struct dns_rdata_mx {
 #ifndef GENERIC_TXT_16_H
 #define GENERIC_TXT_16_H 1
 
-/* $Id: rdatastruct.h,v 1.1.1.1 2004/05/18 00:06:57 christos Exp $ */
+/* Id: txt_16.h,v 1.23.206.1 2004/03/06 08:14:14 marka Exp */
 
 typedef struct dns_rdata_txt_string {
                 isc_uint8_t    length;
@@ -596,6 +632,8 @@ isc_result_t
 dns_rdata_txt_current(dns_rdata_txt_t *, dns_rdata_txt_string_t *);
 
 #endif /* GENERIC_TXT_16_H */
+/*	$NetBSD: rdatastruct.h,v 1.1.1.2 2004/11/07 01:07:27 christos Exp $	*/
+
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
@@ -616,7 +654,7 @@ dns_rdata_txt_current(dns_rdata_txt_t *, dns_rdata_txt_string_t *);
 #ifndef GENERIC_RP_17_H
 #define GENERIC_RP_17_H 1
 
-/* $Id: rdatastruct.h,v 1.1.1.1 2004/05/18 00:06:57 christos Exp $ */
+/* Id: rp_17.h,v 1.16.206.1 2004/03/06 08:14:11 marka Exp */
 
 /* RFC 1183 */
 
@@ -629,6 +667,8 @@ typedef struct dns_rdata_rp {
 
 
 #endif /* GENERIC_RP_17_H */
+/*	$NetBSD: rdatastruct.h,v 1.1.1.2 2004/11/07 01:07:27 christos Exp $	*/
+
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
@@ -649,7 +689,7 @@ typedef struct dns_rdata_rp {
 #ifndef GENERIC_AFSDB_18_H
 #define GENERIC_AFSDB_18_H 1
 
-/* $Id: rdatastruct.h,v 1.1.1.1 2004/05/18 00:06:57 christos Exp $ */
+/* Id: afsdb_18.h,v 1.15.206.1 2004/03/06 08:14:03 marka Exp */
 
 /* RFC 1183 */
 
@@ -661,6 +701,8 @@ typedef struct dns_rdata_afsdb {
 } dns_rdata_afsdb_t;
 
 #endif /* GENERIC_AFSDB_18_H */
+
+/*	$NetBSD: rdatastruct.h,v 1.1.1.2 2004/11/07 01:07:27 christos Exp $	*/
 
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
@@ -682,7 +724,7 @@ typedef struct dns_rdata_afsdb {
 #ifndef GENERIC_X25_19_H
 #define GENERIC_X25_19_H 1
 
-/* $Id: rdatastruct.h,v 1.1.1.1 2004/05/18 00:06:57 christos Exp $ */
+/* Id: x25_19.h,v 1.13.206.1 2004/03/06 08:14:14 marka Exp */
 
 /* RFC 1183 */
 
@@ -694,6 +736,8 @@ typedef struct dns_rdata_x25 {
 } dns_rdata_x25_t;
 
 #endif /* GENERIC_X25_19_H */
+/*	$NetBSD: rdatastruct.h,v 1.1.1.2 2004/11/07 01:07:27 christos Exp $	*/
+
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
@@ -714,7 +758,7 @@ typedef struct dns_rdata_x25 {
 #ifndef GENERIC_ISDN_20_H
 #define GENERIC_ISDN_20_H 1
 
-/* $Id: rdatastruct.h,v 1.1.1.1 2004/05/18 00:06:57 christos Exp $ */
+/* Id: isdn_20.h,v 1.13.206.1 2004/03/06 08:14:05 marka Exp */
 
 /* RFC 1183 */
 
@@ -728,6 +772,8 @@ typedef struct dns_rdata_isdn {
 } dns_rdata_isdn_t;
 
 #endif /* GENERIC_ISDN_20_H */
+/*	$NetBSD: rdatastruct.h,v 1.1.1.2 2004/11/07 01:07:27 christos Exp $	*/
+
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
@@ -748,7 +794,7 @@ typedef struct dns_rdata_isdn {
 #ifndef GENERIC_RT_21_H
 #define GENERIC_RT_21_H 1
 
-/* $Id: rdatastruct.h,v 1.1.1.1 2004/05/18 00:06:57 christos Exp $ */
+/* Id: rt_21.h,v 1.16.206.1 2004/03/06 08:14:12 marka Exp */
 
 /* RFC 1183 */
 
@@ -760,6 +806,8 @@ typedef struct dns_rdata_rt {
 } dns_rdata_rt_t;
 
 #endif /* GENERIC_RT_21_H */
+/*	$NetBSD: rdatastruct.h,v 1.1.1.2 2004/11/07 01:07:27 christos Exp $	*/
+
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
@@ -780,7 +828,7 @@ typedef struct dns_rdata_rt {
 #ifndef IN_1_NSAP_22_H
 #define IN_1_NSAP_22_H 1
 
-/* $Id: rdatastruct.h,v 1.1.1.1 2004/05/18 00:06:57 christos Exp $ */
+/* Id: nsap_22.h,v 1.13.206.1 2004/03/06 08:14:18 marka Exp */
 
 /* RFC 1706 */
 
@@ -792,6 +840,8 @@ typedef struct dns_rdata_in_nsap {
 } dns_rdata_in_nsap_t;
 
 #endif /* IN_1_NSAP_22_H */
+/*	$NetBSD: rdatastruct.h,v 1.1.1.2 2004/11/07 01:07:27 christos Exp $	*/
+
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
@@ -812,7 +862,7 @@ typedef struct dns_rdata_in_nsap {
 #ifndef IN_1_NSAP_PTR_23_H
 #define IN_1_NSAP_PTR_23_H 1
 
-/* $Id: rdatastruct.h,v 1.1.1.1 2004/05/18 00:06:57 christos Exp $ */
+/* Id: nsap-ptr_23.h,v 1.14.206.1 2004/03/06 08:14:18 marka Exp */
 
 /* RFC 1348.  Obsoleted in RFC 1706 - use PTR instead. */
 
@@ -823,6 +873,8 @@ typedef struct dns_rdata_in_nsap_ptr {
 } dns_rdata_in_nsap_ptr_t;
 
 #endif /* IN_1_NSAP_PTR_23_H */
+/*	$NetBSD: rdatastruct.h,v 1.1.1.2 2004/11/07 01:07:27 christos Exp $	*/
+
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
@@ -843,7 +895,7 @@ typedef struct dns_rdata_in_nsap_ptr {
 #ifndef GENERIC_SIG_24_H
 #define GENERIC_SIG_24_H 1
 
-/* $Id: rdatastruct.h,v 1.1.1.1 2004/05/18 00:06:57 christos Exp $ */
+/* Id: sig_24.h,v 1.21.206.1 2004/03/06 08:14:12 marka Exp */
 
 /* RFC 2535 */
 
@@ -864,6 +916,8 @@ typedef struct dns_rdata_sig_t {
 
 
 #endif /* GENERIC_SIG_24_H */
+/*	$NetBSD: rdatastruct.h,v 1.1.1.2 2004/11/07 01:07:27 christos Exp $	*/
+
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
@@ -884,7 +938,7 @@ typedef struct dns_rdata_sig_t {
 #ifndef GENERIC_KEY_25_H
 #define GENERIC_KEY_25_H 1
 
-/* $Id: rdatastruct.h,v 1.1.1.1 2004/05/18 00:06:57 christos Exp $ */
+/* Id: key_25.h,v 1.14.206.1 2004/03/06 08:14:06 marka Exp */
 
 /* RFC 2535 */
 
@@ -900,6 +954,8 @@ typedef struct dns_rdata_key_t {
 
 
 #endif /* GENERIC_KEY_25_H */
+/*	$NetBSD: rdatastruct.h,v 1.1.1.2 2004/11/07 01:07:27 christos Exp $	*/
+
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
@@ -920,7 +976,7 @@ typedef struct dns_rdata_key_t {
 #ifndef IN_1_PX_26_H
 #define IN_1_PX_26_H 1
 
-/* $Id: rdatastruct.h,v 1.1.1.1 2004/05/18 00:06:57 christos Exp $ */
+/* Id: px_26.h,v 1.14.206.1 2004/03/06 08:14:18 marka Exp */
 
 /* RFC 2163 */
 
@@ -933,6 +989,8 @@ typedef struct dns_rdata_in_px {
 } dns_rdata_in_px_t;
 
 #endif /* IN_1_PX_26_H */
+/*	$NetBSD: rdatastruct.h,v 1.1.1.2 2004/11/07 01:07:27 christos Exp $	*/
+
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
@@ -953,7 +1011,7 @@ typedef struct dns_rdata_in_px {
 #ifndef GENERIC_GPOS_27_H
 #define GENERIC_GPOS_27_H 1
 
-/* $Id: rdatastruct.h,v 1.1.1.1 2004/05/18 00:06:57 christos Exp $ */
+/* Id: gpos_27.h,v 1.12.206.1 2004/03/06 08:14:04 marka Exp */
 
 /* RFC 1712 */
 
@@ -969,6 +1027,8 @@ typedef struct dns_rdata_gpos {
 } dns_rdata_gpos_t;
 
 #endif /* GENERIC_GPOS_27_H */
+/*	$NetBSD: rdatastruct.h,v 1.1.1.2 2004/11/07 01:07:27 christos Exp $	*/
+
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
@@ -989,7 +1049,7 @@ typedef struct dns_rdata_gpos {
 #ifndef IN_1_AAAA_28_H
 #define IN_1_AAAA_28_H 1
 
-/* $Id: rdatastruct.h,v 1.1.1.1 2004/05/18 00:06:57 christos Exp $ */
+/* Id: aaaa_28.h,v 1.16.206.1 2004/03/06 08:14:16 marka Exp */
 
 /* RFC 1886 */
 
@@ -999,6 +1059,8 @@ typedef struct dns_rdata_in_aaaa {
 } dns_rdata_in_aaaa_t;
 
 #endif /* IN_1_AAAA_28_H */
+/*	$NetBSD: rdatastruct.h,v 1.1.1.2 2004/11/07 01:07:27 christos Exp $	*/
+
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
@@ -1019,7 +1081,7 @@ typedef struct dns_rdata_in_aaaa {
 #ifndef GENERIC_LOC_29_H
 #define GENERIC_LOC_29_H 1
 
-/* $Id: rdatastruct.h,v 1.1.1.1 2004/05/18 00:06:57 christos Exp $ */
+/* Id: loc_29.h,v 1.14.206.1 2004/03/06 08:14:06 marka Exp */
 
 /* RFC 1876 */
 
@@ -1041,6 +1103,8 @@ typedef struct dns_rdata_loc {
 } dns_rdata_loc_t;
 
 #endif /* GENERIC_LOC_29_H */
+/*	$NetBSD: rdatastruct.h,v 1.1.1.2 2004/11/07 01:07:27 christos Exp $	*/
+
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
@@ -1061,7 +1125,7 @@ typedef struct dns_rdata_loc {
 #ifndef GENERIC_NXT_30_H
 #define GENERIC_NXT_30_H 1
 
-/* $Id: rdatastruct.h,v 1.1.1.1 2004/05/18 00:06:57 christos Exp $ */
+/* Id: nxt_30.h,v 1.18.12.3 2004/03/08 09:04:41 marka Exp */
 
 /* RFC 2535 */
 
@@ -1074,6 +1138,8 @@ typedef struct dns_rdata_nxt {
 } dns_rdata_nxt_t;
 
 #endif /* GENERIC_NXT_30_H */
+/*	$NetBSD: rdatastruct.h,v 1.1.1.2 2004/11/07 01:07:27 christos Exp $	*/
+
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
@@ -1094,7 +1160,7 @@ typedef struct dns_rdata_nxt {
 #ifndef IN_1_SRV_33_H
 #define IN_1_SRV_33_H 1
 
-/* $Id: rdatastruct.h,v 1.1.1.1 2004/05/18 00:06:57 christos Exp $ */
+/* Id: srv_33.h,v 1.14.206.1 2004/03/06 08:14:19 marka Exp */
 
 /* Reviewed: Fri Mar 17 13:01:00 PST 2000 by bwelling */
 
@@ -1110,6 +1176,8 @@ typedef struct dns_rdata_in_srv {
 } dns_rdata_in_srv_t;
 
 #endif /* IN_1_SRV_33_H */
+/*	$NetBSD: rdatastruct.h,v 1.1.1.2 2004/11/07 01:07:27 christos Exp $	*/
+
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
@@ -1130,7 +1198,7 @@ typedef struct dns_rdata_in_srv {
 #ifndef IN_1_NAPTR_35_H
 #define IN_1_NAPTR_35_H 1
 
-/* $Id: rdatastruct.h,v 1.1.1.1 2004/05/18 00:06:57 christos Exp $ */
+/* Id: naptr_35.h,v 1.18.206.1 2004/03/06 08:14:17 marka Exp */
 
 /* RFC 2915 */
 
@@ -1149,6 +1217,8 @@ typedef struct dns_rdata_in_naptr {
 } dns_rdata_in_naptr_t;
 
 #endif /* IN_1_NAPTR_35_H */
+/*	$NetBSD: rdatastruct.h,v 1.1.1.2 2004/11/07 01:07:27 christos Exp $	*/
+
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
@@ -1169,7 +1239,7 @@ typedef struct dns_rdata_in_naptr {
 #ifndef IN_1_KX_36_H
 #define IN_1_KX_36_H 1
 
-/* $Id: rdatastruct.h,v 1.1.1.1 2004/05/18 00:06:57 christos Exp $ */
+/* Id: kx_36.h,v 1.15.206.1 2004/03/06 08:14:17 marka Exp */
 
 /* RFC 2230 */
 
@@ -1181,6 +1251,8 @@ typedef struct dns_rdata_in_kx {
 } dns_rdata_in_kx_t;
 
 #endif /* IN_1_KX_36_H */
+/*	$NetBSD: rdatastruct.h,v 1.1.1.2 2004/11/07 01:07:27 christos Exp $	*/
+
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
@@ -1198,7 +1270,7 @@ typedef struct dns_rdata_in_kx {
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: rdatastruct.h,v 1.1.1.1 2004/05/18 00:06:57 christos Exp $ */
+/* Id: cert_37.h,v 1.15.206.1 2004/03/06 08:14:03 marka Exp */
 
 /* RFC 2538 */
 #ifndef GENERIC_CERT_37_H
@@ -1215,6 +1287,8 @@ typedef struct dns_rdata_cert {
 } dns_rdata_cert_t;
 
 #endif /* GENERIC_CERT_37_H */
+/*	$NetBSD: rdatastruct.h,v 1.1.1.2 2004/11/07 01:07:27 christos Exp $	*/
+
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
@@ -1235,7 +1309,7 @@ typedef struct dns_rdata_cert {
 #ifndef IN_1_A6_38_H
 #define IN_1_A6_38_H 1
 
-/* $Id: rdatastruct.h,v 1.1.1.1 2004/05/18 00:06:57 christos Exp $ */
+/* Id: a6_38.h,v 1.19.206.1 2004/03/06 08:14:15 marka Exp */
 
 /* RFC2874 */
 
@@ -1248,6 +1322,8 @@ typedef struct dns_rdata_in_a6 {
 } dns_rdata_in_a6_t;
 
 #endif /* IN_1_A6_38_H */
+/*	$NetBSD: rdatastruct.h,v 1.1.1.2 2004/11/07 01:07:27 christos Exp $	*/
+
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
@@ -1268,7 +1344,7 @@ typedef struct dns_rdata_in_a6 {
 #ifndef GENERIC_DNAME_39_H
 #define GENERIC_DNAME_39_H 1
 
-/* $Id: rdatastruct.h,v 1.1.1.1 2004/05/18 00:06:57 christos Exp $ */
+/* Id: dname_39.h,v 1.16.206.1 2004/03/06 08:14:04 marka Exp */
 
 /* RFC2672 */
 
@@ -1279,6 +1355,8 @@ typedef struct dns_rdata_dname {
 } dns_rdata_dname_t;
 
 #endif /* GENERIC_DNAME_39_H */
+/*	$NetBSD: rdatastruct.h,v 1.1.1.2 2004/11/07 01:07:27 christos Exp $	*/
+
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001  Internet Software Consortium.
@@ -1299,7 +1377,7 @@ typedef struct dns_rdata_dname {
 #ifndef GENERIC_OPT_41_H
 #define GENERIC_OPT_41_H 1
 
-/* $Id: rdatastruct.h,v 1.1.1.1 2004/05/18 00:06:57 christos Exp $ */
+/* Id: opt_41.h,v 1.13.206.1 2004/03/06 08:14:10 marka Exp */
 
 /* RFC 2671 */
 
@@ -1333,6 +1411,8 @@ isc_result_t
 dns_rdata_opt_current(dns_rdata_opt_t *, dns_rdata_opt_opcode_t *);
 
 #endif /* GENERIC_OPT_41_H */
+/*	$NetBSD: rdatastruct.h,v 1.1.1.2 2004/11/07 01:07:27 christos Exp $	*/
+
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2002  Internet Software Consortium.
@@ -1353,7 +1433,7 @@ dns_rdata_opt_current(dns_rdata_opt_t *, dns_rdata_opt_opcode_t *);
 #ifndef IN_1_APL_42_H
 #define IN_1_APL_42_H 1
 
-/* $Id: rdatastruct.h,v 1.1.1.1 2004/05/18 00:06:57 christos Exp $ */
+/* Id: apl_42.h,v 1.1.202.3 2004/03/08 09:04:44 marka Exp */
 
 typedef struct dns_rdata_apl_ent {
 	isc_boolean_t	negative;
@@ -1388,6 +1468,8 @@ isc_result_t
 dns_rdata_apl_current(dns_rdata_in_apl_t *, dns_rdata_apl_ent_t *);
 
 #endif /* IN_1_APL_42_H */
+/*	$NetBSD: rdatastruct.h,v 1.1.1.2 2004/11/07 01:07:27 christos Exp $	*/
+
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2002  Internet Software Consortium.
@@ -1405,7 +1487,7 @@ dns_rdata_apl_current(dns_rdata_in_apl_t *, dns_rdata_apl_ent_t *);
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: rdatastruct.h,v 1.1.1.1 2004/05/18 00:06:57 christos Exp $ */
+/* Id: ds_43.h,v 1.3.2.1 2004/03/08 02:08:03 marka Exp */
 
 /* draft-ietf-dnsext-delegation-signer-05.txt */
 #ifndef GENERIC_DS_43_H
@@ -1422,6 +1504,8 @@ typedef struct dns_rdata_ds {
 } dns_rdata_ds_t;
 
 #endif /* GENERIC_DS_43_H */
+/*	$NetBSD: rdatastruct.h,v 1.1.1.2 2004/11/07 01:07:27 christos Exp $	*/
+
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2003  Internet Software Consortium.
@@ -1439,7 +1523,7 @@ typedef struct dns_rdata_ds {
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: rdatastruct.h,v 1.1.1.1 2004/05/18 00:06:57 christos Exp $ */
+/* Id: sshfp_44.h,v 1.1.8.2 2004/03/06 08:14:13 marka Exp */
 
 /* draft-ietf-secsh-dns-05.txt */
 
@@ -1456,6 +1540,8 @@ typedef struct dns_rdata_sshfp {
 } dns_rdata_sshfp_t;
 
 #endif /* GENERIC_SSHFP_44_H */
+/*	$NetBSD: rdatastruct.h,v 1.1.1.2 2004/11/07 01:07:27 christos Exp $	*/
+
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2003  Internet Software Consortium.
@@ -1476,7 +1562,7 @@ typedef struct dns_rdata_sshfp {
 #ifndef GENERIC_DNSSIG_46_H
 #define GENERIC_DNSSIG_46_H 1
 
-/* $Id: rdatastruct.h,v 1.1.1.1 2004/05/18 00:06:57 christos Exp $ */
+/* Id: rrsig_46.h,v 1.3.2.1 2004/03/08 02:08:04 marka Exp */
 
 /* RFC 2535 */
 typedef struct dns_rdata_rrsig {
@@ -1496,6 +1582,8 @@ typedef struct dns_rdata_rrsig {
 
 
 #endif /* GENERIC_DNSSIG_46_H */
+/*	$NetBSD: rdatastruct.h,v 1.1.1.2 2004/11/07 01:07:27 christos Exp $	*/
+
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2003  Internet Software Consortium.
@@ -1516,7 +1604,7 @@ typedef struct dns_rdata_rrsig {
 #ifndef GENERIC_NSEC_47_H
 #define GENERIC_NSEC_47_H 1
 
-/* $Id: rdatastruct.h,v 1.1.1.1 2004/05/18 00:06:57 christos Exp $ */
+/* Id: nsec_47.h,v 1.4.2.1 2004/03/08 02:08:03 marka Exp */
 
 /* draft-ietf-dnsext-nsec-rdata-01.txt */
 
@@ -1529,6 +1617,8 @@ typedef struct dns_rdata_nsec {
 } dns_rdata_nsec_t;
 
 #endif /* GENERIC_NSEC_47_H */
+/*	$NetBSD: rdatastruct.h,v 1.1.1.2 2004/11/07 01:07:27 christos Exp $	*/
+
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2003  Internet Software Consortium.
@@ -1549,7 +1639,7 @@ typedef struct dns_rdata_nsec {
 #ifndef GENERIC_DNSKEY_48_H
 #define GENERIC_DNSKEY_48_H 1
 
-/* $Id: rdatastruct.h,v 1.1.1.1 2004/05/18 00:06:57 christos Exp $ */
+/* Id: dnskey_48.h,v 1.3.2.1 2004/03/08 02:08:02 marka Exp */
 
 /* RFC 2535 */
 
@@ -1565,6 +1655,8 @@ typedef struct dns_rdata_dnskey {
 
 
 #endif /* GENERIC_DNSKEY_48_H */
+/*	$NetBSD: rdatastruct.h,v 1.1.1.2 2004/11/07 01:07:27 christos Exp $	*/
+
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
@@ -1585,7 +1677,7 @@ typedef struct dns_rdata_dnskey {
 #ifndef GENERIC_UNSPEC_103_H
 #define GENERIC_UNSPEC_103_H 1
 
-/* $Id: rdatastruct.h,v 1.1.1.1 2004/05/18 00:06:57 christos Exp $ */
+/* Id: unspec_103.h,v 1.12.206.1 2004/03/06 08:14:14 marka Exp */
 
 typedef struct dns_rdata_unspec_t {
 	dns_rdatacommon_t	common;
@@ -1595,6 +1687,8 @@ typedef struct dns_rdata_unspec_t {
 } dns_rdata_unspec_t;
 
 #endif /* GENERIC_UNSPEC_103_H */
+/*	$NetBSD: rdatastruct.h,v 1.1.1.2 2004/11/07 01:07:27 christos Exp $	*/
+
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001, 2003  Internet Software Consortium.
@@ -1615,7 +1709,7 @@ typedef struct dns_rdata_unspec_t {
 #ifndef GENERIC_TKEY_249_H
 #define GENERIC_TKEY_249_H 1
 
-/* $Id: rdatastruct.h,v 1.1.1.1 2004/05/18 00:06:57 christos Exp $ */
+/* Id: tkey_249.h,v 1.18.206.2 2004/03/06 08:14:13 marka Exp */
 
 /* draft-ietf-dnsind-tkey-00.txt */
 
@@ -1635,6 +1729,8 @@ typedef struct dns_rdata_tkey {
 
 
 #endif /* GENERIC_TKEY_249_H */
+/*	$NetBSD: rdatastruct.h,v 1.1.1.2 2004/11/07 01:07:27 christos Exp $	*/
+
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
@@ -1652,7 +1748,7 @@ typedef struct dns_rdata_tkey {
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: rdatastruct.h,v 1.1.1.1 2004/05/18 00:06:57 christos Exp $ */
+/* Id: tsig_250.h,v 1.20.206.1 2004/03/06 08:14:02 marka Exp */
 
 /* RFC 2845 */
 
@@ -1674,6 +1770,8 @@ typedef struct dns_rdata_any_tsig {
 } dns_rdata_any_tsig_t;
 
 #endif /* ANY_255_TSIG_250_H */
+/*	$NetBSD: rdatastruct.h,v 1.1.1.2 2004/11/07 01:07:27 christos Exp $	*/
+
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  *
@@ -1690,7 +1788,7 @@ typedef struct dns_rdata_any_tsig {
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: rdatastruct.h,v 1.1.1.1 2004/05/18 00:06:57 christos Exp $ */
+/* Id: dlv_65323.h,v 1.2.2.3 2004/03/15 01:02:55 marka Exp */
 
 /* draft-ietf-dnsext-delegation-signer-05.txt */
 #ifndef GENERIC_DLV_65323_H
@@ -1707,6 +1805,8 @@ typedef struct dns_rdata_dlv {
 } dns_rdata_dlv_t;
 
 #endif /* GENERIC_DLV_65323_H */
+/*	$NetBSD: rdatastruct.h,v 1.1.1.2 2004/11/07 01:07:27 christos Exp $	*/
+
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
@@ -1724,7 +1824,7 @@ typedef struct dns_rdata_dlv {
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: rdatastruct.h,v 1.1.1.1 2004/05/18 00:06:57 christos Exp $ */
+/* Id: rdatastructsuf.h,v 1.7.206.1 2004/03/06 08:14:02 marka Exp */
 
 ISC_LANG_ENDDECLS
 
