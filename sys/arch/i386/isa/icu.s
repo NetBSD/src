@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)icu.s	7.2 (Berkeley) 5/21/91
- *	$Id: icu.s,v 1.18 1993/07/11 14:03:53 mycroft Exp $
+ *	$Id: icu.s,v 1.19 1993/07/11 14:12:40 mycroft Exp $
  */
 
 /*
@@ -71,6 +71,8 @@ _ttymask:	.long	0
 _biomask:	.long	0
 	.globl	_netmask
 _netmask:	.long	0
+	.globl	_impmask
+_impmask:	.long	0
 	.globl  _ipending
 _ipending:	.long   0
 vec:
