@@ -1,4 +1,4 @@
-/*	$NetBSD: pucdata.c,v 1.22 2001/11/18 20:20:25 christos Exp $	*/
+/*	$NetBSD: pucdata.c,v 1.23 2001/11/26 00:41:24 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christopher G. Demetriou.  All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.22 2001/11/18 20:20:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.23 2001/11/26 00:41:24 jonathan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,8 +69,8 @@ const struct puc_device_description puc_devices[] = {
 	},
 
 	/*
-	 * XXX no entry because I have no data:
 	 * XXX Dolphin Peripherals 4025 (single serial)
+	 * (clashes with Dolphin Peripherals  4036 (2s variant)
 	 */
 
 	/*
@@ -85,6 +85,19 @@ const struct puc_device_description puc_devices[] = {
 	    {
 		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ },
 		{ PUC_PORT_TYPE_COM, 0x1c, 0x00, COM_FREQ },
+	    },
+	},
+
+	/*
+	 * Dolphin Peripherals 4036 (dual serial port) card.
+	 * (Dolpin 4025 has the same ID but only one port)
+	 */
+	{   "Dolphin Peripherals 4036",
+	    {	0x1409,	0x7168,	0x0,	0x0	},
+	    {	0xffff,	0xffff,	0x0,	0x0	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_COM, 0x10, 0x08, COM_FREQ * 8},
 	    },
 	},
 
