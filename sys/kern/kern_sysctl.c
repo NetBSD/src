@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.43 1999/03/24 05:51:25 mrg Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.44 1999/04/26 21:56:23 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -222,9 +222,17 @@ kern_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	int old_shortcorename;
 	extern char ostype[], osrelease[], version[];
 
-	/* all sysctl names at this level are terminal */
-	if (namelen != 1 && !(name[0] == KERN_PROC || name[0] == KERN_PROF))
-		return (ENOTDIR);		/* overloaded */
+	/* All sysctl names at this level, except for a few, are terminal. */
+	switch (name[0]) {
+	case KERN_PROC:
+	case KERN_PROF:
+	case KERN_MBUF:
+		/* Not terminal. */
+		break;
+	default:
+		if (namelen != 1)
+			return (ENOTDIR);	/* overloaded */
+	}
 
 	switch (name[0]) {
 	case KERN_OSTYPE:
@@ -373,6 +381,9 @@ kern_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		return (sysctl_rdint(oldp, oldlenp, newp, 1));
 	case KERN_IOV_MAX:
 		return (sysctl_rdint(oldp, oldlenp, newp, IOV_MAX));
+	case KERN_MBUF:
+		return (sysctl_dombuf(name + 1, namelen - 1, oldp, oldlenp,
+		    newp, newlen));
 	default:
 		return (EOPNOTSUPP);
 	}
@@ -819,4 +830,3 @@ fill_eproc(p, ep)
 		ep->e_flag |= EPROC_SLEADER;
 	strncpy(ep->e_login, ep->e_sess->s_login, MAXLOGNAME);
 }
-
