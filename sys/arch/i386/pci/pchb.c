@@ -1,7 +1,7 @@
-/*	$NetBSD: pchb.c,v 1.12 1998/01/12 18:59:23 thorpej Exp $	*/
+/*	$NetBSD: pchb.c,v 1.13 1998/02/06 08:00:53 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1996 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -65,7 +65,11 @@
 #define I82424_BCTL_PCIMEM_BURSTEN	0x01
 #define I82424_BCTL_PCI_BURSTEN		0x02
 
+#ifdef __BROKEN_INDIRECT_CONFIG
 int	pchbmatch __P((struct device *, void *, void *));
+#else
+int	pchbmatch __P((struct device *, struct cfdata *, void *));
+#endif
 void	pchbattach __P((struct device *, struct device *, void *));
 
 int	pchb_print __P((void *, const char *));
@@ -77,7 +81,12 @@ struct cfattach pchb_ca = {
 int
 pchbmatch(parent, match, aux)
 	struct device *parent;
-	void *match, *aux;
+#ifdef __BROKEN_INDIRECT_CONFIG
+	void *match;
+#else
+	struct cfdata *match;
+#endif
+	void *aux;
 {
 	struct pci_attach_args *pa = aux;
 

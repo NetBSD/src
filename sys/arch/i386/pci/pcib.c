@@ -1,7 +1,7 @@
-/*	$NetBSD: pcib.c,v 1.10 1998/01/12 18:59:24 thorpej Exp $	*/
+/*	$NetBSD: pcib.c,v 1.11 1998/02/06 08:00:54 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1996 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -52,7 +52,11 @@
 
 #include "isa.h"
 
+#ifdef __BROKEN_INDIRECT_CONFIG
 int	pcibmatch __P((struct device *, void *, void *));
+#else
+int	pcibmatch __P((struct device *, struct cfdata *, void *));
+#endif
 void	pcibattach __P((struct device *, struct device *, void *));
 
 struct cfattach pcib_ca = {
@@ -65,7 +69,12 @@ int	pcib_print __P((void *, const char *));
 int
 pcibmatch(parent, match, aux)
 	struct device *parent;
-	void *match, *aux;
+#ifdef __BROKEN_INDIRECT_CONFIG
+	void *match;
+#else
+	struct cfdata *match;
+#endif
+	void *aux;
 {
 	struct pci_attach_args *pa = aux;
 
