@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.1 2002/06/06 19:48:06 fredette Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.2 2002/08/11 19:39:38 fredette Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -161,7 +161,7 @@ int mbus_dmamap_load_mbuf __P((void *, bus_dmamap_t, struct mbuf *, int));
 int mbus_dmamap_load_uio __P((void *, bus_dmamap_t, struct uio *, int));
 int mbus_dmamap_load_raw __P((void *, bus_dmamap_t, bus_dma_segment_t *, int, bus_size_t, int));
 void mbus_dmamap_unload __P((void *, bus_dmamap_t));
-void mbus_dmamap_sync __P((void *, bus_dmamap_t, bus_addr_t, bus_size_t, bus_dmasync_op_t));
+void mbus_dmamap_sync __P((void *, bus_dmamap_t, bus_addr_t, bus_size_t, int));
 int mbus_dmamem_alloc __P((void *, bus_size_t, bus_size_t, bus_size_t, bus_dma_segment_t *, int, int *, int));
 void mbus_dmamem_free __P((void *, bus_dma_segment_t *, int));
 int mbus_dmamem_map __P((void *, bus_dma_segment_t *, int, size_t, caddr_t *, int));
@@ -954,35 +954,26 @@ mbus_dmamap_unload(void *v, bus_dmamap_t map)
 }
 
 void
-mbus_dmamap_sync(void *v, bus_dmamap_t map, bus_addr_t addr, bus_size_t size, bus_dmasync_op_t ops)
+mbus_dmamap_sync(void *v, bus_dmamap_t map, bus_addr_t addr, bus_size_t size, int ops)
 {
 	/*
 	 * XXX - for now, we flush the whole map.
 	 */
 
-	/* fdc for BUS_DMASYNC_PREWRITE. */
-	if (ops & BUS_DMASYNC_PREWRITE) {
+	/*
+	 * For everything except BUS_DMASYNC_POSTWRITE, flush 
+	 * the map from the cache.  For BUS_DMASYNC_PREREAD and 
+	 * BUS_DMASYNC_POSTREAD we should only need to purge the 
+	 * map, but this isn't good enough for the osiop driver, 
+	 * at least.
+	 */
+	if (ops & (BUS_DMASYNC_PREWRITE |
+		   BUS_DMASYNC_PREREAD |
+		   BUS_DMASYNC_POSTREAD)) {
 		fdcache(HPPA_SID_KERNEL, map->dm_segs[0]._ds_va,
 		    map->dm_mapsize);
 		sync_caches();
 	}
-
-	/*
-	 * Purging on both BUS_DMASYNC_PREREAD and BUS_DMASYNC_POSTREAD
-	 * is hopefully only wasteful, as opposed to necessary.  (It is
-	 * necessary if, for some reason, between PREREAD and POSTREAD,
-	 * some code makes a reference to the DMA region.)  Otherwise,
-	 * ideally I think the purge should only happen on PREREAD.
-	 */
-	if (ops & (BUS_DMASYNC_PREREAD | BUS_DMASYNC_POSTREAD)) {
-		pdcache(HPPA_SID_KERNEL, map->dm_segs[0]._ds_va,
-		    map->dm_mapsize);
-		sync_caches();
-	}
-
-	/* syncdma for a POSTREAD or a POSTWRITE. */
-	if (ops & (BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE))
-		__asm __volatile ("syncdma");
 }
 
 /*
