@@ -1,7 +1,7 @@
 #
 #	ALL -- everything that's currently supported
 #
-#	$Id: ALL,v 1.53 1994/07/01 20:09:56 mycroft Exp $
+#	$Id: ALL,v 1.54 1994/07/04 20:22:26 cgd Exp $
 #
 
 # architecture type and name of kernel; REQUIRED
@@ -65,7 +65,7 @@ options		NFSSERVER
 options		NFSCLIENT
 
 # ISO 9660 file system, with Rock Ridge
-options		ISOFS
+options		"CD9660"
 
 # MS-DOS file system
 options		MSDOSFS
@@ -73,7 +73,7 @@ options		MSDOSFS
 # /dev/fd
 options		FDESC
 
-# kernel file system; RECOMMENDED
+# kernel file system
 options		KERNFS
 
 # various types of networks and protocols
