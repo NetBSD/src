@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.37 2000/11/27 08:40:06 chs Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.38 2000/11/30 11:04:44 simonb Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -70,8 +70,6 @@
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_vnode.h>
-
-extern u_long uvm_pgcnt_vnode;
 
 /*
  * functions
@@ -943,13 +941,13 @@ uvn_findpage(uobj, offset, pgp, flags)
 				UVMHIST_LOG(ubchist, "noalloc", 0,0,0,0);
 				return 0;
 			}
-			if (uvm_pgcnt_vnode > 
+			if (uvmexp.vnodepages > 
 			    (uvmexp.active + uvmexp.inactive + uvmexp.wired +
 			     uvmexp.free) * 7 / 8) {
 				pg = NULL;
 			} else {
 				pg = uvm_pagealloc(uobj, offset, NULL, 0);
-				uvm_pgcnt_vnode++;
+				uvmexp.vnodepages++;
 			}
 			if (pg == NULL) {
 				if (flags & UFP_NOWAIT) {

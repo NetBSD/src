@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_meter.c,v 1.15 2000/11/29 09:52:19 simonb Exp $	*/
+/*	$NetBSD: uvm_meter.c,v 1.16 2000/11/30 11:04:44 simonb Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -169,6 +169,9 @@ sysctl_uvmexp(oldp, oldlenp)
 {
 	struct uvmexp_sysctl u;
 
+	memset(&u, 0, sizeof(u));
+
+	/* Entries here are in order of uvmexp_sysctl, not uvmexp */
 	u.pagesize = uvmexp.pagesize;
 	u.pagemask = uvmexp.pagemask;
 	u.pageshift = uvmexp.pageshift;
@@ -187,7 +190,6 @@ sysctl_uvmexp(oldp, oldlenp)
 	u.wiredmax = uvmexp.wiredmax;
 	u.nswapdev = uvmexp.nswapdev;
 	u.swpages = uvmexp.swpages;
-	u.swpguniq = uvmexp.swpguniq;
 	u.swpginuse = uvmexp.swpginuse;
 	u.swpgonly = uvmexp.swpgonly;
 	u.nswget = uvmexp.nswget;
@@ -241,6 +243,9 @@ sysctl_uvmexp(oldp, oldlenp)
 	u.pdpageouts = uvmexp.pdpageouts;
 	u.pdpending = uvmexp.pdpending;
 	u.pddeact = uvmexp.pddeact;
+	u.anonpages = uvmexp.anonpages;
+	u.vnodepages = uvmexp.vnodepages;
+	u.vtextpages = uvmexp.vtextpages;
 
 	return (sysctl_rdminstruct(oldp, oldlenp, NULL, &u, sizeof(u)));
 }

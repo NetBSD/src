@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.44 2000/11/27 08:40:04 chs Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.45 2000/11/30 11:04:44 simonb Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -103,8 +103,6 @@ int vm_nphysseg = 0;				/* XXXCDC: uvm.nphysseg */
  */
 boolean_t vm_page_zero_enable = FALSE;
 
-u_long uvm_pgcnt_anon;
-u_long uvm_pgcnt_vnode;
 extern struct uvm_pagerops uvm_vnodeops;
 
 /*
@@ -195,7 +193,7 @@ uvm_pageremove(pg)
 	splx(s);
 
 	if (pg->uobject->pgops == &uvm_vnodeops) {
-		uvm_pgcnt_vnode--;
+		uvmexp.vnodepages--;
 	}
 
 	/* object should be locked */
@@ -1009,7 +1007,7 @@ uvm_pagealloc_strat(obj, off, anon, flags, strat, free_list)
 	if (anon) {
 		anon->u.an_page = pg;
 		pg->pqflags = PQ_ANON;
-		uvm_pgcnt_anon++;
+		uvmexp.anonpages++;
 	} else {
 		if (obj)
 			uvm_pageinsert(pg);
@@ -1167,7 +1165,7 @@ uvm_pagefree(pg)
 		uvmexp.wired--;
 	}
 	if (pg->uanon) {
-		uvm_pgcnt_anon--;
+		uvmexp.anonpages--;
 	}
 
 	/*
