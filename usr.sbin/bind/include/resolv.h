@@ -1,4 +1,4 @@
-/*	$NetBSD: resolv.h,v 1.1.1.1 1998/10/05 18:01:58 tron Exp $	*/
+/*	$NetBSD: resolv.h,v 1.2 1999/01/04 00:04:06 tron Exp $	*/
 
 /*
  * Copyright (c) 1983, 1987, 1989
@@ -197,6 +197,7 @@ extern struct __res_state _res;
 extern const struct res_sym __p_class_syms[];
 extern const struct res_sym __p_type_syms[];
 
+#ifndef __NetBSD__
 #define res_hnok		__res_hnok
 #define res_ownok		__res_ownok
 #define res_mailok		__res_mailok
@@ -245,6 +246,7 @@ extern const struct res_sym __p_type_syms[];
 #define res_mkupdate		__res_mkupdate
 #define res_mkupdrec		__res_mkupdrec
 #define res_freeupdrec		__res_freeupdrec
+#endif
 __BEGIN_DECLS
 int		res_hnok __P((const char *));
 int		res_ownok __P((const char *));
