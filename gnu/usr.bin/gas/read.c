@@ -19,7 +19,7 @@
    the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. */
 
 #ifndef lint
-static char rcsid[] = "$Id: read.c,v 1.9 1994/05/25 21:07:15 phil Exp $";
+static char rcsid[] = "$Id: read.c,v 1.10 1994/08/24 20:12:12 pk Exp $";
 #endif
 
 #define MASK_CHAR (0xFF)	/* If your chars aren't 8 bits, you will
@@ -773,6 +773,10 @@ void s_app_file(appfile)
 		 */
 		new_logical_line (s, appfile ? -2 : -1);
 		demand_empty_rest_of_line();
+#ifdef LISTING
+		if (listing)
+			listing_source_file (s);
+#endif
 	}
 #ifdef OBJ_COFF
 	c_dot_file_symbol(s);
