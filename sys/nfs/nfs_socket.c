@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.43 1998/04/25 17:41:01 matt Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.44 1998/06/25 22:18:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -43,6 +43,7 @@
  */
 
 #include "fs_nfs.h"
+#include "opt_nfsserver.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
