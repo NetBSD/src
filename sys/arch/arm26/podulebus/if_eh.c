@@ -1,4 +1,4 @@
-/* $NetBSD: if_eh.c,v 1.16 2001/03/18 15:56:04 bjh21 Exp $ */
+/* $NetBSD: if_eh.c,v 1.17 2001/04/19 13:47:07 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -53,7 +53,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: if_eh.c,v 1.16 2001/03/18 15:56:04 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eh.c,v 1.17 2001/04/19 13:47:07 bjh21 Exp $");
 
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -83,7 +83,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_eh.c,v 1.16 2001/03/18 15:56:04 bjh21 Exp $");
 #include <dev/ic/dp8390reg.h>
 #include <dev/ic/dp8390var.h>
 
-#include <arch/arm26/podulebus/podulebus.h>
+#include <dev/podulebus/podulebus.h>
 #include <dev/podulebus/podules.h>
 #include <arch/arm26/podulebus/if_ehreg.h>
 
