@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.53 1996/05/09 20:30:39 is Exp $	*/
+/*	$NetBSD: locore.s,v 1.54 1996/05/17 12:56:49 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -523,8 +523,9 @@ _lev5intr:
 	addql	#1,_cnt+V_INTR
 	jra	rei
 
-_lev2intr:
 #ifdef DRACO
+	.globl _DraCoLev2intr
+_DraCoLev2intr:
 	moveml	#0xC0C0,sp@-
 
 	CIAAADDR(a0)
@@ -550,17 +551,15 @@ Ldraciaend:
 	moveml	sp@+,#0x0303
 	addql	#1,_cnt+V_INTR
 	jra	rei
-
 #endif
+
 _lev1intr:
+_lev2intr:
 _lev3intr:
 #ifndef LEV6_DEFER
 _lev4intr:
 #endif
-#ifdef DRACO
-	/* for now: */
-_lev6intr:
-#endif
+/* XXX on the DraCo, lev 4, 5 and 6 are vectored here by initcpu() */
 	moveml	#0xC0C0,sp@-
 Lintrcommon:
 	lea	_intrcnt,a0
@@ -575,7 +574,8 @@ Lintrcommon:
 	addql	#1,_cnt+V_INTR
 	jra	rei
 
-#ifndef DRACO
+/* XXX used to be ifndef DRACO; vector will be overwritten by initcpu() */
+
 _lev6intr:
 #ifdef LEV6_DEFER
 	/*
@@ -674,7 +674,7 @@ Lexterdone:
 #endif
 	addql	#1,_intrcnt+24		| count EXTER interrupts
 	jra	Llev6done
-#endif
+/* XXX endifndef DRACO used to be here */
 
 _lev7intr:
 	addql	#1,_intrcnt+28
