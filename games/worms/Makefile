@@ -1,8 +1,8 @@
 #	from: @(#)Makefile	5.3 (Berkeley) 5/11/90
-#	$Id: Makefile,v 1.3 1993/08/01 05:43:42 mycroft Exp $
+#	$Id: Makefile,v 1.4 1994/12/22 09:36:35 cgd Exp $
 
 PROG=	worms
-MAN6=	worms.0
+MAN=	worms.6
 DPADD=	${LIBCURSES} ${LIBTERM}
 LDADD=	-lcurses -ltermcap
 

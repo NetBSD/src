@@ -1,7 +1,7 @@
 #	from: @(#)Makefile	5.2 (Berkeley) 5/11/90
-#	$Id: Makefile,v 1.2 1993/08/01 05:44:54 mycroft Exp $
+#	$Id: Makefile,v 1.3 1994/12/22 09:35:02 cgd Exp $
 
 PROG=	number
-MAN6=	number.0
+MAN=	number.6
 
 .include <bsd.prog.mk>

@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.8 (Berkeley) 5/11/90
-#	$Id: Makefile,v 1.5 1994/05/24 23:54:16 jtc Exp $
+#	$Id: Makefile,v 1.6 1994/12/22 09:36:26 cgd Exp $
 
 PROG=	trek
 SRCS=	abandon.c attack.c autover.c capture.c check_out.c checkcond.c \
@@ -10,7 +10,7 @@ SRCS=	abandon.c attack.c autover.c capture.c check_out.c checkcond.c \
 	ranf.c rest.c schedule.c score.c setup.c setwarp.c \
 	shield.c snova.c srscan.c systemname.c torped.c utility.c \
 	visual.c warp.c win.c cgetc.c
-MAN6=	trek.0
+MAN=	trek.6
 DPADD=	${LIBM}
 LDADD=	-lm
 HIDEGAME=hidegame

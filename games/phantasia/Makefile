@@ -5,10 +5,10 @@ SRCS=	main.c fight.c io.c interplayer.c gamesupport.c misc.c phantglobs.c
 DPADD=	${LIBM} ${LIBCURSES} ${LIBTERM} ${LIBCOMPAT}
 LDADD=	-lm -lcurses -ltermlib -lcompat
 HIDEGAME=hidegame
-MAN6=	phantasia.0
+MAN=	phantasia.6
 CLEANFILES+=map setup setup.o
 
-all: setup phantasia ${MAN6}
+all: setup phantasia
 
 setup: phantglobs.o setup.o monsters.asc ${LIBM} 
 	${CC} phantglobs.o setup.o -o ${.TARGET} -lm
@@ -24,7 +24,8 @@ map: map.c
 	${CC} -O ${.CURDIR}/map.c -lplot -o ${.TARGET}
 	./map | plot > /dev/tty
 
-phantasia.0: phantasia.6
+# XXX this rule shouldn't be here.
+phantasia.cat6: phantasia.6
 	tbl ${.CURDIR}/phantasia.6 | nroff -man > ${.TARGET}
 
 .include <bsd.prog.mk>

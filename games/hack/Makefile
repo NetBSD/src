@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.10 (Berkeley) 12/8/90
-#	$Id: Makefile,v 1.14 1994/05/23 05:37:22 cgd Exp $
+#	$Id: Makefile,v 1.15 1994/12/22 09:34:30 cgd Exp $
 
 PROG=	hack
 CFLAGS+=-I.
@@ -15,7 +15,7 @@ SRCS+=	alloc.c hack.Decl.c hack.apply.c hack.bones.c hack.c hack.cmd.c \
 	hack.timeout.c hack.topl.c hack.track.c hack.trap.c hack.tty.c \
 	hack.u_init.c hack.unix.c hack.vault.c hack.version.c hack.wield.c \
 	hack.wizard.c hack.worm.c hack.worn.c hack.zap.c rnd.c
-MAN6=	hack.0
+MAN=	hack.6
 DPADD+=	${LIBTERM} ${LIBCOMPAT}
 LDADD+=	-ltermcap -lcompat
 HIDEGAME=hidegame

@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.3 1993/10/07 07:24:13 cgd Exp $
+#	$Id: Makefile,v 1.4 1994/12/22 09:33:36 cgd Exp $
 
 PROG=		awk
 SRCS=		main.c eval.c builtin.c msg.c iop.c io.c field.c array.c \
@@ -8,7 +8,5 @@ CFLAGS+=	-DGAWK
 LDADD=		-lm -lgnumalloc
 DPADD=		${LIBM} /usr/lib/libgnumalloc.a
 CLEANFILES+=	awk.c y.tab.h
-
-MAN1=		awk.0
 
 .include <bsd.prog.mk>
