@@ -3,7 +3,7 @@
    Persistent database management routines for DHCPD... */
 
 /*
- * Copyright (c) 1995-2001 Internet Software Consortium.
+ * Copyright (c) 1995-2002 Internet Software Consortium.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: db.c,v 1.1.1.1 2001/08/03 11:35:41 drochner Exp $ Copyright (c) 1995-2001 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: db.c,v 1.1.1.1.4.1 2003/10/27 04:41:54 jmc Exp $ Copyright (c) 1995-2002 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -65,7 +65,6 @@ int write_lease (lease)
 	struct tm *t;
 	char tbuf [64];
 	int errors = 0;
-	int i;
 	struct binding *b;
 	char *s;
 
@@ -152,25 +151,39 @@ int write_lease (lease)
 		}
 	}
 
-	fprintf (db_file, "\n  binding state %s;",
-		 ((lease -> binding_state > 0 &&
-		   lease -> binding_state <= FTS_BOOTP)
-		  ? binding_state_names [lease -> binding_state - 1]
-		  : "abandoned"));
+	if (lease -> binding_state == FTS_ACTIVE &&
+	    (lease -> flags & BOOTP_LEASE)) {
+		fprintf (db_file, "\n  binding state bootp;\n");
+	} else {
+		fprintf (db_file, "\n  binding state %s;",
+			 ((lease -> binding_state > 0 &&
+			   lease -> binding_state <= FTS_LAST)
+			  ? binding_state_names [lease -> binding_state - 1]
+			  : "abandoned"));
+	}
 
-	if (lease -> binding_state != lease -> next_binding_state)
+	if (lease -> binding_state != lease -> next_binding_state) {
+	    if (lease -> next_binding_state == FTS_ACTIVE &&
+		(lease -> flags & BOOTP_LEASE))
+		fprintf (db_file, "\n  next binding state bootp;\n");
+	    else
 		fprintf (db_file, "\n  next binding state %s;",
 			 ((lease -> next_binding_state > 0 &&
-			   lease -> next_binding_state <= FTS_BOOTP)
+			   lease -> next_binding_state <= FTS_LAST)
 			  ? (binding_state_names
 			     [lease -> next_binding_state - 1])
 		  : "abandoned"));
+	}
 
 	/* If this lease is billed to a class and is still valid,
 	   write it out. */
-	if (lease -> billing_class && lease -> ends > cur_time)
-		if (!write_billing_class (lease -> billing_class))
+	if (lease -> billing_class && lease -> ends > cur_time) {
+		if (!write_billing_class (lease -> billing_class)) {
+			log_error ("unable to write class %s",
+				   lease -> billing_class -> name);
 			++errors;
+		}
+	}
 
 	if (lease -> hardware_addr.hlen) {
 		errno = 0;
@@ -184,7 +197,6 @@ int write_lease (lease)
 		}
 	}
 	if (lease -> uid_len) {
-		int i;
 		s = quotify_buf (lease -> uid, lease -> uid_len, MDL);
 		if (s) {
 			fprintf (db_file, "\n  uid \"%s\";", s);
@@ -243,21 +255,17 @@ int write_lease (lease)
 	    pair p;
 
 	    memset (&ds, 0, sizeof ds);
-	    if (lease -> agent_options) {
-		for (p = lease -> agent_options -> first; p; p = p -> cdr) {
-		    oc = (struct option_cache *)p -> car;
-		    if (oc -> data.len) {
-			errno = 0;
-			fprintf (db_file, "\n  option agent.%s %s;",
-				 oc -> option -> name,
-				 pretty_print_option (oc -> option,
-						      oc -> data.data,
-						      oc -> data.len,
-						      1, 1));
-			if (errno)
-			    ++errors;
-		    }
-		}
+	    for (p = lease -> agent_options -> first; p; p = p -> cdr) {
+	        oc = (struct option_cache *)p -> car;
+	        if (oc -> data.len) {
+	    	errno = 0;
+	    	fprintf (db_file, "\n  option agent.%s %s;",
+	    		 oc -> option -> name,
+	    		 pretty_print_option (oc -> option, oc -> data.data,
+				      		oc -> data.len, 1, 1));
+	    	if (errno)
+		    ++errors;
+	        }
 	    }
 	}
 	if (lease -> client_hostname &&
@@ -456,7 +464,6 @@ int write_group (group)
 	struct group_object *group;
 {
 	int errors = 0;
-	int i;
 
 	/* If the lease file is corrupt, don't try to write any more leases
 	   until we've written a good lease file. */
@@ -614,8 +621,6 @@ void write_billing_classes ()
 {
 	struct collection *lp;
 	struct class *cp;
-	struct hash_bucket *bp;
-	int i;
 
 	for (lp = collections; lp; lp = lp -> next) {
 	    for (cp = lp -> classes; cp; cp = cp -> nic) {
@@ -683,6 +688,12 @@ int write_billing_class (class)
 	if (errors)
 		lease_file_is_corrupt = 1;
 	return !errors;
+}
+
+/* Commit leases after a timeout. */
+void commit_leases_timeout (void *foo)
+{
+	commit_leases ();
 }
 
 /* Commit any leases that have been written out... */

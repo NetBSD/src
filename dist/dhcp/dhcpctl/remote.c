@@ -3,7 +3,7 @@
    The dhcpctl remote object. */
 
 /*
- * Copyright (c) 1999-2000 Internet Software Consortium.
+ * Copyright (c) 1999-2003 Internet Software Consortium.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -126,7 +126,7 @@ dhcpctl_status dhcpctl_new_object (dhcpctl_handle *h,
 	isc_result_t status;
 
 	m = (dhcpctl_remote_object_t *)0;
-	status = omapi_object_allocate ((omapi_object_t **)&m,
+	status = omapi_object_allocate ((void *)&m,
 					dhcpctl_remote_type, 0, MDL);
 	if (status != ISC_R_SUCCESS)
 		return status;
@@ -139,7 +139,7 @@ dhcpctl_status dhcpctl_new_object (dhcpctl_handle *h,
 	}
 	status = omapi_object_reference (&m -> inner, g, MDL);
 	if (status != ISC_R_SUCCESS) {
-		omapi_object_dereference ((omapi_object_t **)&m, MDL);
+		omapi_object_dereference ((void *)&m, MDL);
 		omapi_object_dereference (&g, MDL);
 		return status;
 	}
@@ -147,7 +147,7 @@ dhcpctl_status dhcpctl_new_object (dhcpctl_handle *h,
 					 (omapi_object_t *)m, MDL);
 
 	if (status != ISC_R_SUCCESS) {
-		omapi_object_dereference ((omapi_object_t **)&m, MDL);
+		omapi_object_dereference ((void *)&m, MDL);
 		omapi_object_dereference (&g, MDL);
 		return status;
 	}
@@ -156,13 +156,13 @@ dhcpctl_status dhcpctl_new_object (dhcpctl_handle *h,
 				       omapi_datatype_string,
 				       object_type);
 	if (status != ISC_R_SUCCESS) {
-		omapi_object_dereference ((omapi_object_t **)&m, MDL);
+		omapi_object_dereference ((void *)&m, MDL);
 		omapi_object_dereference (&g, MDL);
 		return status;
 	}
 
 	status = omapi_object_reference (h, (omapi_object_t *)m, MDL);
-	omapi_object_dereference ((omapi_object_t **)&m, MDL);
+	omapi_object_dereference ((void *)&m, MDL);
 	omapi_object_dereference (&g, MDL);
 	if (status != ISC_R_SUCCESS)
 		return status;
@@ -248,9 +248,16 @@ dhcpctl_status dhcpctl_open_object (dhcpctl_handle h,
 		omapi_object_dereference (&message, MDL);
 		return status;
 	}
-	return omapi_protocol_send_message (connection -> outer,
+
+	status = omapi_protocol_send_message (connection -> outer,
 					    (omapi_object_t *)0,
 					    message, (omapi_object_t *)0);
+
+	if (status != ISC_R_SUCCESS)
+		omapi_message_unregister (message);
+
+	omapi_object_dereference (&message, MDL);
+	return status;
 }
 
 /* Callback methods (not meant to be called directly) */
@@ -338,6 +345,9 @@ isc_result_t dhcpctl_remote_destroy (omapi_object_t *h,
 	if (p -> handle)
 		omapi_object_dereference ((omapi_object_t **)&p -> handle,
 					  file, line);
+	if (p -> rtype)
+		omapi_typed_data_dereference ((omapi_typed_data_t **)&p->rtype,
+					      file, line);
 	return ISC_R_SUCCESS;
 }
 
@@ -348,7 +358,6 @@ isc_result_t dhcpctl_remote_stuff_values (omapi_object_t *c,
 					  omapi_object_t *id,
 					  omapi_object_t *p)
 {
-	int i;
 
 	if (p -> type != dhcpctl_remote_type)
 		return ISC_R_INVALIDARG;

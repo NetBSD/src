@@ -77,12 +77,9 @@ isc_result_t omapi_listen_addr (omapi_object_t *h,
 				omapi_addr_t *addr,
 				int max)
 {
-	struct hostent *he;
-	int hix;
 	isc_result_t status;
 	omapi_listener_object_t *obj;
 	int i;
-	struct in_addr ia;
 
 	/* Get the handle. */
 	obj = (omapi_listener_object_t *)0;
@@ -108,6 +105,7 @@ isc_result_t omapi_listen_addr (omapi_object_t *h,
 		return ISC_R_INVALIDARG;
 
 	/* Set up the address on which we will listen... */
+	memset (&obj -> address, 0, sizeof obj -> address);
 	obj -> address.sin_port = htons (addr -> port);
 	memcpy (&obj -> address.sin_addr,
 		addr -> address, sizeof obj -> address.sin_addr);
@@ -116,8 +114,6 @@ isc_result_t omapi_listen_addr (omapi_object_t *h,
 		sizeof (struct sockaddr_in);
 #endif
 	obj -> address.sin_family = AF_INET;
-	memset (&(obj -> address.sin_zero), 0,
-		sizeof obj -> address.sin_zero);
 
 #if defined (TRACING)
 	/* If we're playing back a trace file, we remember the object
@@ -209,8 +205,6 @@ isc_result_t omapi_accept (omapi_object_t *h)
 	SOCKLEN_T len;
 	omapi_connection_object_t *obj;
 	omapi_listener_object_t *listener;
-	omapi_addr_t remote_addr;
-	int i;
 	struct sockaddr_in addr;
 	int socket;
 
@@ -232,7 +226,6 @@ isc_result_t omapi_accept (omapi_object_t *h)
 	/* If we're recording a trace, remember the connection. */
 	if (trace_record ()) {
 		trace_iov_t iov [3];
-		u_int32_t lsock;
 		iov [0].buf = (char *)&addr.sin_port;
 		iov [0].len = sizeof addr.sin_port;
 		iov [1].buf = (char *)&addr.sin_addr;
@@ -464,7 +457,6 @@ isc_result_t omapi_listener_stuff_values (omapi_object_t *c,
 					  omapi_object_t *id,
 					  omapi_object_t *l)
 {
-	int i;
 
 	if (l -> type != omapi_type_listener)
 		return ISC_R_INVALIDARG;

@@ -3,7 +3,7 @@
    DHCP/BOOTP Relay Agent. */
 
 /*
- * Copyright (c) 1997-2001 Internet Software Consortium.
+ * Copyright (c) 1997-2002 Internet Software Consortium.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char ocopyright[] =
-"$Id: dhcrelay.c,v 1.2 2001/08/03 13:39:05 drochner Exp $ Copyright (c) 1997-2000 Internet Software Consortium.  All rights reserved.\n";
+"$Id: dhcrelay.c,v 1.2.4.1 2003/10/27 04:41:53 jmc Exp $ Copyright (c) 1997-2002 Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -107,7 +107,7 @@ struct server_list {
 	struct sockaddr_in to;
 } *servers;
 
-static const char copyright [] = "Copyright 1997-2000 Internet Software Consortium.";
+static const char copyright [] = "Copyright 1997-2002 Internet Software Consortium.";
 static const char arr [] = "All rights reserved.";
 static const char message [] = "Internet Software Consortium DHCP Relay Agent";
 static const char url [] = "For info, please visit http://www.isc.org/products/DHCP";
@@ -423,6 +423,8 @@ void relay (ip, packet, length, from_port, from, hfrom)
 	   that set giaddr, so we won't see it. */
 	if (!packet -> giaddr.s_addr)
 		packet -> giaddr = ip -> primary_address;
+	if (packet -> hops != 255)
+		packet -> hops = packet -> hops + 1;
 
 	/* Otherwise, it's a BOOTREQUEST, so forward it to all the
 	   servers. */
@@ -505,6 +507,14 @@ isc_result_t find_class (struct class **class, const char *c1,
 int parse_allow_deny (struct option_cache **oc, struct parse *p, int i)
 {
 	return 0;
+}
+
+/* As a wise man once said in dhcpctl/omshell.c: */
+/* Sigh */
+isc_result_t dhcp_set_control_state (control_object_state_t oldstate,
+				     control_object_state_t newstate)
+{
+	return ISC_R_SUCCESS;
 }
 
 #endif
@@ -700,7 +710,7 @@ int add_relay_agent_options (ip, packet, length, giaddr)
 	unsigned length;
 	struct in_addr giaddr;
 {
-	int is_dhcp = 0, agent_options_present = 0;
+	int is_dhcp = 0;
 	u_int8_t *op, *sp, *max, *end_pad = 0;
 
 	/* If we're not adding agent options to packets, we can skip

@@ -3,7 +3,7 @@
    Parser for dhclient config and lease files... */
 
 /*
- * Copyright (c) 1996-2001 Internet Software Consortium.
+ * Copyright (c) 1996-2002 Internet Software Consortium.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -43,12 +43,10 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: clparse.c,v 1.2 2001/08/03 13:07:03 drochner Exp $ Copyright (c) 1996-2001 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: clparse.c,v 1.2.4.1 2003/10/27 04:41:52 jmc Exp $ Copyright (c) 1996-2001 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
-
-static TIME parsed_time;
 
 struct client_config top_level_config;
 
@@ -71,7 +69,6 @@ u_int32_t default_requested_options [] = {
 isc_result_t read_client_conf ()
 {
 	struct client_config *config;
-	struct client_state *state;
 	struct interface_info *ip;
 	isc_result_t status;
 
@@ -92,6 +89,7 @@ isc_result_t read_client_conf ()
 	top_level_config.script_name = path_dhclient_script;
 	top_level_config.requested_options = default_requested_options;
 	top_level_config.omapi_port = -1;
+	top_level_config.do_forward_update = 1;
 
 	group_allocate (&top_level_config.on_receipt, MDL);
 	if (!top_level_config.on_receipt)
@@ -255,11 +253,9 @@ void parse_client_statement (cfile, ip, config)
 	int token;
 	const char *val;
 	struct option *option;
-	struct executable_statement *stmt, **p;
-	enum statement_op op;
+	struct executable_statement *stmt;
 	int lose;
 	char *name;
-	struct data_string key_id;
 	enum policy policy;
 	int known;
 	int tmp, i;
@@ -467,6 +463,23 @@ void parse_client_statement (cfile, ip, config)
 		parse_semi (cfile);
 		return;
 		
+	      case DO_FORWARD_UPDATE:
+		token = next_token (&val, (unsigned *)0, cfile);
+		token = next_token (&val, (unsigned *)0, cfile);
+		if (!strcasecmp (val, "on") ||
+		    !strcasecmp (val, "true"))
+			config -> do_forward_update = 1;
+		else if (!strcasecmp (val, "off") ||
+			 !strcasecmp (val, "false"))
+			config -> do_forward_update = 0;
+		else {
+			parse_warn (cfile, "expecting boolean value.");
+			skip_to_semi (cfile);
+			return;
+		}
+		parse_semi (cfile);
+		return;
+
 	      case REBOOT:
 		token = next_token (&val, (unsigned *)0, cfile);
 		parse_lease_time (cfile, &config -> reboot_timeout);
@@ -952,11 +965,9 @@ void parse_client_lease_declaration (cfile, lease, ipp, clientp)
 {
 	int token;
 	const char *val;
-	char *t, *n;
 	struct interface_info *ip;
 	struct option_cache *oc;
 	struct client_state *client = (struct client_state *)0;
-	struct data_string key_id;
 
 	switch (next_token (&val, (unsigned *)0, cfile)) {
 #if !defined (SMALL)
@@ -1148,11 +1159,6 @@ int parse_allow_deny (oc, cfile, flag)
 	struct parse *cfile;
 	int flag;
 {
-	enum dhcp_token token;
-	const char *val;
-	unsigned char rf = flag;
-	struct expression *data = (struct expression *)0;
-	int status;
 
 	parse_warn (cfile, "allow/deny/ignore not permitted here.");
 	skip_to_semi (cfile);

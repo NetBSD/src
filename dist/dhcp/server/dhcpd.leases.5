@@ -1,6 +1,6 @@
 .\"	dhcpd.leases.5
 .\"
-.\" Copyright (c) 1996-2001 Internet Software Consortium.
+.\" Copyright (c) 1996-2002 Internet Software Consortium.
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
 .\" are met:
@@ -34,6 +34,9 @@
 .\" ``http://www.isc.org/''.  To learn more about Vixie Enterprises,
 .\" see ``http://www.vix.com''.   To learn more about Nominum, Inc., see
 .\" ``http://www.nominum.com''.
+.\"
+.\" $Id: dhcpd.leases.5,v 1.2.4.1 2003/10/27 04:41:54 jmc Exp $
+.\"
 .TH dhcpd.leases 5
 .SH NAME
 dhcpd.leases - DHCP client lease database
@@ -120,7 +123,7 @@ specified starting with 1.  The hour is a number between 0 and 23, the
 minute a number between 0 and 59, and the second also a number between
 0 and 59.
 .PP
-Lease times are specified in Universal Coordinated Time (UTC), not in
+Lease times are specified in Coordinated Universal Time (UTC), not in
 the local time zone.  There is probably nowhere in the world where the
 times recorded on a lease are always the same as wall clock times.  On
 most unix machines, you can display the current time in UTC by typing
@@ -253,7 +256,7 @@ possible: \fBunknown-state\fR, \fBpartner-down\fR, \fBnormal\fR,
 dhcpd(8), dhcp-options(5), dhcp-eval(5), dhcpd.conf(5), RFC2132, RFC2131.
 .SH AUTHOR
 .B dhcpd(8)
-was written by Ted Lemon <mellon@vix.com>
+was written by Ted Lemon
 under a contract with Vixie Labs.   Funding
 for this project was provided by the Internet Software Consortium.
 Information about the Internet Software Consortium can be found at:

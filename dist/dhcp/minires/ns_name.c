@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1996,1999 by Internet Software Consortium.
+ * Copyright (c) 1996,1999-2003 by Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,7 +16,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$Id: ns_name.c,v 1.1.1.1 2001/08/03 11:35:36 drochner Exp $";
+static const char rcsid[] = "$Id: ns_name.c,v 1.1.1.1.4.1 2003/10/27 04:41:53 jmc Exp $";
 #endif
 
 #include <sys/types.h>
@@ -64,6 +64,11 @@ ns_name_ntop(const u_char *src, char *dst, size_t dstsiz) {
 	cp = src;
 	dn = dst;
 	eom = dst + dstsiz;
+
+	if (dn >= eom) {
+		errno = EMSGSIZE;
+		return (-1);
+	}
 
 	while ((n = *cp++) != 0) {
 		if ((n & NS_CMPRSFLGS) != 0) {
@@ -255,6 +260,10 @@ ns_name_ntol(const u_char *src, u_char *dst, size_t dstsiz) {
 	dn = dst;
 	eom = dst + dstsiz;
 
+	if (dn >= eom) {
+		errno = EMSGSIZE;
+		return (-1);
+	}
 	while ((n = *cp++) != 0) {
 		if ((n & NS_CMPRSFLGS) != 0) {
 			/* Some kind of compression pointer. */

@@ -3,7 +3,7 @@
    Packet assembly code, originally contributed by Archie Cobbs. */
 
 /*
- * Copyright (c) 1996-2000 Internet Software Consortium.
+ * Copyright (c) 1996-2002 Internet Software Consortium.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: fddi.c,v 1.2 2001/08/03 13:07:04 drochner Exp $ Copyright (c) 1996-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: fddi.c,v 1.2.4.1 2003/10/27 04:41:52 jmc Exp $ Copyright (c) 1996-2002 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -57,7 +57,7 @@ static char copyright[] =
 #if defined (NETBSD_FDDI)
 #include <net/if_fddi.h>
 #include <net/if_llc.h>
-#define	LLC_SNAP_LEN	LLC_SNAPFRAMELEN
+#define       LLC_SNAP_LEN    LLC_SNAPFRAMELEN
 #endif /* NETBSD_FDDI */
 
 #if defined (PACKET_ASSEMBLY) || defined (PACKET_DECODING)
@@ -67,11 +67,8 @@ static char copyright[] =
 #if defined (PACKET_ASSEMBLY)
 /* Assemble an hardware header... */
 
-void assemble_fddi_header (interface, buf, bufix, to)
-	struct interface_info *interface;
-	unsigned char *buf;
-	unsigned *bufix;
-	struct hardware *to;
+void assemble_fddi_header (struct interface_info *interface,
+	unsigned char *buf, unsigned *bufix, struct hardware *to)
 {
 	struct fddi_header   fh;
 	struct llc     lh;
@@ -98,14 +95,10 @@ void assemble_fddi_header (interface, buf, bufix, to)
 #ifdef PACKET_DECODING
 /* Decode a hardware header... */
 
-ssize_t decode_fddi_header (interface, buf, bufix, from)
-     struct interface_info *interface;
-     unsigned char *buf;
-     unsigned bufix;
-     struct hardware *from;
+ssize_t decode_fddi_header (struct interface_info *interface,
+     unsigned char *buf, unsigned bufix, struct hardware *from)
 {
 	struct fddi_header   fh;
-	struct llc     lh;
 
 	memcpy(&fh, buf + bufix, FDDI_HEADER_SIZE);
 

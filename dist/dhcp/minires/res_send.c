@@ -10,11 +10,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- * 	This product includes software developed by the University of
- * 	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  * 
@@ -70,7 +66,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 static const char sccsid[] = "@(#)res_send.c	8.1 (Berkeley) 6/4/93";
-static const char rcsid[] = "$Id: res_send.c,v 1.1.1.1 2001/08/03 11:35:36 drochner Exp $";
+static const char rcsid[] = "$Id: res_send.c,v 1.1.1.1.4.1 2003/10/27 04:41:53 jmc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /* Rename the I/O functions in case we're tracing. */
@@ -600,7 +596,7 @@ res_nsend(res_state statp,
 							   (unsigned)len);
 					}
 					Dprint(statp->options & RES_DEBUG,
-					       (stdout, ";; new DG socket\n"))
+					       (stdout, ";; new DG socket\n"));
 #endif /* CAN_RECONNECT */
 					statp->_flags &= ~RES_F_CONN;
 					errno = 0;

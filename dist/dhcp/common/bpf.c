@@ -3,7 +3,7 @@
    BPF socket interface code, originally contributed by Archie Cobbs. */
 
 /*
- * Copyright (c) 1996-2000 Internet Software Consortium.
+ * Copyright (c) 1996-2002 Internet Software Consortium.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -47,7 +47,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: bpf.c,v 1.3 2001/08/24 15:28:47 eeh Exp $ Copyright (c) 1995-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: bpf.c,v 1.3.2.1 2003/10/27 04:41:52 jmc Exp $ Copyright (c) 1995-2002 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -238,9 +238,10 @@ void if_register_receive (info)
 {
 	int flag = 1;
 	struct bpf_version v;
-	u_int32_t addr;
 	struct bpf_program p;
+#ifdef NEED_OSF_PFILT_HACKS
 	u_int32_t bits;
+#endif
 	u_int32_t len;
 #if defined(DEC_FDDI) || defined(NETBSD_FDDI)
 	int link_layer;
@@ -370,7 +371,6 @@ ssize_t send_packet (interface, packet, raw, len, from, to, hto)
 	double ip [32];
 	struct iovec iov [3];
 	int result;
-	int fudge;
 
 	if (!strcmp (interface -> name, "fallback"))
 		return send_fallback (interface, packet, raw,
@@ -423,9 +423,13 @@ ssize_t receive_packet (interface, buf, len, from, hfrom)
 		if (interface -> rbuf_offset == interface -> rbuf_len) {
 			length = read (interface -> rfdesc,
 				       interface -> rbuf,
-				       interface -> rbuf_max);
+				       (size_t)interface -> rbuf_max);
 			if (length <= 0) {
+#ifdef __FreeBSD__
+				if (errno == ENXIO) {
+#else
 				if (errno == EIO) {
+#endif
 					dhcp_interface_remove
 						((omapi_object_t *)interface,
 						 (omapi_object_t *)0);
