@@ -1,0 +1,26 @@
+* The following are a list of values which exist within IP Filter and which
+* might be suitable for setting at bootup.
+*
+* ICMP_UNREACH_FILTER - default used for return-icmp
+set ipf:ipl_unreach = 13
+set ipf:fr_flags = 0
+* FR_NOMATCH | FR_PASS
+set ipf:fr_pass = 0x0202
+
+* Connection state timeouts.
+* the following are all measure of time in half-seconds.
+set ipf:fr_tcpidletimeout = 864000
+set ipf:fr_tcpclosewait = 60
+set ipf:fr_tcplastack = 20
+set ipf:fr_tcptimeout = 120
+set ipf:fr_tcpclosed = 1
+set ipf:fr_udptimeout = 120
+set ipf:fr_icmptimeout = 120
+
+* NAT timeouts
+set ipf:fr_defnaticmpage = 600
+set ipf:fr_defnatage = 6
+
+* Fragment timeouts
+set ipf:fr_ipfrttl = 1200
+*

@@ -1,0 +1,32 @@
+*** tcp_output.c.dist	Wed Oct 15 17:47:56 1997
+--- tcp_output.c	Wed May 20 13:57:00 1998
+***************
+*** 45,50 ****
+--- 45,57 ----
+  #include <linux/random.h>
+  #endif
+  
++ #if !defined(CONFIG_FIREWALL_IPFILTER) && defined(CONFIG_FIREWALL_IPFILTER_MODULE)
++ # define CONFIG_FIREWALL_IPFILTER
++ #endif
++ #ifdef CONFIG_FIREWALL_IPFILTER
++ extern int (*fr_checkp)(struct iphdr *, struct device *, int, struct sk_buff **);
++ #endif
++ 
+  /*
+   * RFC 1122 says:
+   *
+***************
+*** 620,625 ****
+--- 628,638 ----
+  			th->window = ntohs(tcp_select_window(sk));
+  			tcp_send_check(th, sk->saddr, sk->daddr, size, skb);
+  		
++ #ifdef	CONFIG_FIREWALL_IPFILTER
++ 			/* eww, TCP output separate from IP output. */
++ 			if (fr_checkp && ((*fr_checkp)(iph, skb->dev, 1, &skb) || !skb))
++ 				break;
++ #endif
+  			/*
+  			 *	If the interface is (still) up and running, kick it.
+  			 */

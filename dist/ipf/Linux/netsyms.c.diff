@@ -1,0 +1,38 @@
+*** netsyms.c.dist	Wed Dec 10 21:14:27 1997
+--- netsyms.c	Wed May 20 13:56:59 1998
+***************
+*** 60,65 ****
+--- 60,72 ----
+  extern int (*dlci_ioctl_hook)(unsigned int, void *);
+  #endif
+  
++ #if !defined(CONFIG_FIREWALL_IPFILTER) && defined(CONFIG_FIREWALL_IPFILTER_MODULE)
++ # define CONFIG_FIREWALL_IPFILTER
++ #endif 
++ #ifdef CONFIG_FIREWALL_IPFILTER
++ extern int (*fr_checkp)();
++ #endif
++ 
+  static struct symbol_table net_syms = {
+  #include <linux/symtab_begin.h>
+  
+***************
+*** 190,196 ****
+  	X(netlink_donothing),
+  	X(netlink_post),
+  #endif /* CONFIG_NETLINK */
+! 	
+  #include <linux/symtab_end.h>
+  };
+  
+--- 198,207 ----
+  	X(netlink_donothing),
+  	X(netlink_post),
+  #endif /* CONFIG_NETLINK */
+! 
+! #ifdef CONFIG_FIREWALL_IPFILTER
+! 	X(fr_checkp),
+! #endif /* CONFIG_FIREWALL_IPFILTER */
+  #include <linux/symtab_end.h>
+  };
+  

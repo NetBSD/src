@@ -1,0 +1,27 @@
+#!/bin/sh
+
+dir=`pwd`
+karch=`uname -m`
+
+if [ `basename $dir` = Linux ] ; then cd ..; fi
+echo "Creating device files..."
+
+minor=0
+major=95
+
+for i in ipl ipnat ipstate ipauth; do
+	echo ".../dev/$i"
+	mknod /dev/$i c $major $minor
+	minor=`expr $minor + 1`
+done
+
+echo "Patching netsyms.c, Config.in"
+cat Linux/netsyms.c.diff Linux/Config.in.diff | (cd /usr/src/linux/net; patch)
+
+echo "Patching ip_input.c, ip_output.c, ip_forward.c and tcp_output.c"
+cat Linux/{ip_{{in,out}put,forward},tcp_output}.c.diff | \
+(cd /usr/src/linux/net/ipv4; patch)
+
+echo "You now need to reconfigure your kernel and enable IP Filter as a"
+echo "KERNEL MODULE (m) ONLY!"
+exit 0

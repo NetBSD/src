@@ -1,0 +1,12 @@
+*** Config.in.dist	Tue Aug 12 14:30:22 1997
+--- Config.in	Wed May 20 13:56:59 1998
+***************
+*** 3,8 ****
+--- 3,9 ----
+  #
+  mainmenu_option next_comment
+  comment 'Networking options'
++ tristate 'IP Filter Firewall' CONFIG_FIREWALL_IPFILTER
+  bool 'Network firewalls' CONFIG_FIREWALL
+  bool 'Network aliasing'  CONFIG_NET_ALIAS
+  bool 'TCP/IP networking' CONFIG_INET
