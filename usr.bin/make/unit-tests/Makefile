@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.6 2003/08/01 04:57:20 sjg Exp $
+# $Id: Makefile,v 1.7 2003/08/08 06:42:38 sjg Exp $
 #
 # Unit tests for make(1)
 # The main targets are:
@@ -13,6 +13,8 @@
 # 
 
 .MAIN: all
+
+UNIT_TESTS:= ${.PARSEDIR}
 
 all: mod-ts varcmd
 
@@ -42,7 +44,7 @@ mod-ts:
 
 .PHONY: varcmd
 varcmd:
-	@${.MAKE} -f ${MAKEFILE:H}/varcmd
+	@${.MAKE} -f ${UNIT_TESTS}/varcmd
 
 clean:
 	rm -f *.out *.fail *.core
@@ -57,7 +59,7 @@ test:
 	@cd ${.OBJDIR} && ${TEST_MAKE} -f ${MAKEFILE} 2>&1 | \
 	sed 's,^${TEST_MAKE:T}:,make:,' > ${.TARGET}.out || { \
 	tail ${.TARGET}.out; mv ${.TARGET}.out ${.TARGET}.fail; exit 1; }
-	diff -u ${.CURDIR}/${.TARGET}.exp ${.TARGET}.out
+	diff -u ${UNIT_TESTS}/${.TARGET}.exp ${.TARGET}.out
 
 accept:
 	mv test.out ${.CURDIR}/test.exp
