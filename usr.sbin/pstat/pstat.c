@@ -1,4 +1,4 @@
-/*	$NetBSD: pstat.c,v 1.69 2002/02/22 05:43:20 enami Exp $	*/
+/*	$NetBSD: pstat.c,v 1.70 2002/02/22 11:25:37 enami Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)pstat.c	8.16 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: pstat.c,v 1.69 2002/02/22 05:43:20 enami Exp $");
+__RCSID("$NetBSD: pstat.c,v 1.70 2002/02/22 11:25:37 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -482,7 +482,7 @@ ufs_getflags(vp, ip, flags)
 	if (flag & IN_CLEANING)
 		*flags++ = 'c';
 	if (flag & IN_ADIROP)
-		*flags++ = 'a';
+		*flags++ = 'D';
 	if (flag & IN_SPACECOUNTED)
 		*flags++ = 's';
 	if (flag == 0)
