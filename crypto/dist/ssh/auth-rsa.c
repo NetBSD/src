@@ -1,4 +1,4 @@
-/*	$NetBSD: auth-rsa.c,v 1.1.1.7 2001/09/27 02:00:36 itojun Exp $	*/
+/*	$NetBSD: auth-rsa.c,v 1.1.1.8 2001/12/06 03:46:04 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -15,7 +15,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: auth-rsa.c,v 1.44 2001/07/23 18:14:58 stevesk Exp $");
+RCSID("$OpenBSD: auth-rsa.c,v 1.45 2001/11/29 22:08:48 markus Exp $");
 
 #include <openssl/rsa.h>
 #include <openssl/md5.h>
@@ -241,7 +241,11 @@ auth_rsa(struct passwd *pw, BIGNUM *client_n)
 			/* Wrong response. */
 			verbose("Wrong response to RSA authentication challenge.");
 			packet_send_debug("Wrong response to RSA authentication challenge.");
-			continue;
+			/*
+			 * Break out of the loop. Otherwise we might send
+			 * another challenge and break the protocol.
+			 */
+			break;
 		}
 		/*
 		 * Correct response.  The client has been successfully

@@ -1,4 +1,4 @@
-/*	$NetBSD: bufaux.c,v 1.1.1.4 2001/04/10 07:13:51 itojun Exp $	*/
+/*	$NetBSD: bufaux.c,v 1.1.1.5 2001/12/06 03:46:06 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -38,7 +38,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: bufaux.c,v 1.17 2001/01/21 19:05:45 markus Exp $");
+RCSID("$OpenBSD: bufaux.c,v 1.18 2001/12/05 10:06:12 deraadt Exp $");
 
 #include <openssl/bn.h>
 #include "bufaux.h"
@@ -122,7 +122,7 @@ buffer_put_bignum2(Buffer *buffer, BIGNUM *value)
 		log("negativ!");
 		for(i = bytes-1, carry = 1; i>=0; i--) {
 			uc[i] ^= 0xff;
-			if(carry)
+			if (carry)
 				carry = !++uc[i];
 		}
 	}
