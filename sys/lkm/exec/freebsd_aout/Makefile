@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2001/12/12 01:50:09 tv Exp $
+#	$NetBSD: Makefile,v 1.4 2001/12/12 11:49:05 lukem Exp $
 
 .include "../Makefile.inc"
 
@@ -6,8 +6,6 @@
 .PATH:	$S/compat/common
 
 CPPFLAGS+=	-nostdinc -I$S -D_KERNEL -DEXEC_AOUT
-
-NOMAN=	# defined
 
 KMOD=	exec_freebsd_aout
 
