@@ -1,4 +1,4 @@
-/*	$NetBSD: dc.c,v 1.51 1999/11/19 02:17:01 simonb Exp $	*/
+/*	$NetBSD: dc.c,v 1.52 1999/11/29 15:02:38 ad Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.51 1999/11/19 02:17:01 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.52 1999/11/29 15:02:38 ad Exp $");
 
 /*
  * devDC7085.c --
@@ -753,7 +753,10 @@ dcrint(sc)
 	int c, cc;
 	int overrun = 0;
 	struct tty **dc_tty;
+#if NRASTERCONSOLE > 0
 	char *cp;
+	int cl;
+#endif
 
 	dc_tty = ((struct dc_softc*)dc_cd.cd_devs[0])->dc_tty;	/* XXX */
 
@@ -786,9 +789,9 @@ dcrint(sc)
 				return;
 			}
 #if NRASTERCONSOLE > 0
-			if ((cp = kbdMapChar(cc)) == NULL)
+			if ((cp = kbdMapChar(cc, &cl)) == NULL)
 				return;
-			while (*cp)
+			while (cl--)
 				rcons_input(0, *cp++);
 #endif
 			return;
