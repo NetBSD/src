@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vnops.c,v 1.8 1994/07/18 13:13:46 mycroft Exp $	*/
+/*	$NetBSD: cd9660_vnops.c,v 1.9 1994/07/19 14:14:18 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -287,8 +287,8 @@ cd9660_read(ap)
 	ip->i_flag |= IN_ACCESS;
 	imp = ip->i_mnt;
 	do {
-		lbn = iso_lblkno(imp, uio->uio_offset);
-		on = iso_blkoff(imp, uio->uio_offset);
+		lbn = lblkno(imp, uio->uio_offset);
+		on = blkoff(imp, uio->uio_offset);
 		n = min((u_int)(imp->logical_block_size - on),
 			uio->uio_resid);
 		diff = (off_t)ip->i_size - uio->uio_offset;
@@ -296,18 +296,18 @@ cd9660_read(ap)
 			return (0);
 		if (diff < n)
 			n = diff;
-		size = iso_blksize(imp, ip, lbn);
+		size = blksize(imp, ip, lbn);
 		rablock = lbn + 1;
 		if (doclusterread) {
-			if (iso_lblktosize(imp, rablock) <= ip->i_size)
+			if (lblktosize(imp, rablock) <= ip->i_size)
 				error = cluster_read(vp, (off_t)ip->i_size,
 						     lbn, size, NOCRED, &bp);
 			else
 				error = bread(vp, lbn, size, NOCRED, &bp);
 		} else {
 			if (vp->v_lastr + 1 == lbn &&
-			    iso_lblktosize(imp, rablock) < ip->i_size) {
-				rasize = iso_blksize(imp, ip, rablock);
+			    lblktosize(imp, rablock) < ip->i_size) {
+				rasize = blksize(imp, ip, rablock);
 				error = breadn(vp, lbn, size, &rablock,
 					       &rasize, 1, NOCRED, &bp);
 			} else
@@ -513,6 +513,7 @@ cd9660_readdir(ap)
 		int a_ncookies;
 	} */ *ap;
 {
+	struct vnode *vp = ap->a_vp;
 	register struct uio *uio = ap->a_uio;
 	struct isoreaddir *idp;
 	int entryoffsetinblock;
@@ -525,7 +526,7 @@ cd9660_readdir(ap)
 	struct iso_node *ip;
 	struct buf *bp = NULL;
 
-	ip = VTOI(ap->a_vp);
+	ip = VTOI(vp);
 	imp = ip->i_mnt;
 
 	MALLOC(idp, struct isoreaddir *, sizeof(*idp), M_TEMP, M_WAITOK);
@@ -542,14 +543,14 @@ cd9660_readdir(ap)
 	idp->ncookies = ap->a_ncookies;
 	idp->curroff = uio->uio_offset;
 
-	entryoffsetinblock = iso_blkoff(imp, idp->curroff);
+	entryoffsetinblock = blkoff(imp, idp->curroff);
 	if (entryoffsetinblock != 0) {
-		if (error = iso_blkatoff(ip, idp->curroff, &bp)) {
+		if (error = VOP_BLKATOFF(vp, idp->curroff, NULL, &bp)) {
 			FREE(idp,M_TEMP);
 			return (error);
 		}
 	}
-	endsearch = roundup(ip->i_size, imp->logical_block_size);
+	endsearch = ip->i_size;
 
 	while (idp->curroff < endsearch) {
 		/*
@@ -557,10 +558,10 @@ cd9660_readdir(ap)
 		 * read the next directory block.
 		 * Release previous if it exists.
 		 */
-		if (iso_blkoff(imp, idp->curroff) == 0) {
+		if (blkoff(imp, idp->curroff) == 0) {
 			if (bp != NULL)
 				brelse(bp);
-			if (error = iso_blkatoff(ip, idp->curroff, &bp))
+			if (error = VOP_BLKATOFF(vp, idp->curroff, NULL, &bp))
 				break;
 			entryoffsetinblock = 0;
 		}
@@ -574,7 +575,7 @@ cd9660_readdir(ap)
 		if (reclen == 0) {
 			/* skip to next block, if any */
 			idp->curroff =
-				roundup(idp->curroff, imp->logical_block_size);
+			    (idp->curroff + imp->im_bmask) & ~imp->im_bmask;
 			continue;
 		}
 
@@ -599,7 +600,7 @@ cd9660_readdir(ap)
 		}
 
 		if (isonum_711(ep->flags)&2)
-			isodirino(&idp->current.d_fileno,ep,imp);
+			idp->current.d_fileno = isodirino(ep, imp);
 		else
 			idp->current.d_fileno = dbtob(bp->b_blkno) +
 				entryoffsetinblock;
@@ -698,10 +699,9 @@ cd9660_readlink(ap)
 	 * Get parents directory record block that this inode included.
 	 */
 	error = bread(imp->im_devvp,
-		      (daddr_t)((ip->i_number&~imp->im_bmask) / DEV_BSIZE),
-		      imp->logical_block_size,
-		      NOCRED,
-		      &bp);
+		      (ip->i_number >> imp->im_bshift) <<
+		      (imp->im_bshift - DEV_BSHIFT),
+		      imp->logical_block_size, NOCRED, &bp);
 	if (error) {
 		brelse(bp);
 		return (EINVAL);
@@ -957,8 +957,6 @@ cd9660_enotsupp()
 	((int (*) __P((struct vop_pathconf_args *)))cd9660_enotsupp)
 #define cd9660_advlock \
 	((int (*) __P((struct vop_advlock_args *)))cd9660_enotsupp)
-#define cd9660_blkatoff \
-	((int (*) __P((struct  vop_blkatoff_args *)))cd9660_enotsupp)
 #define cd9660_valloc ((int(*) __P(( \
 		struct vnode *pvp, \
 		int mode, \
