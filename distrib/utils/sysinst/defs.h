@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.116 2004/06/12 19:18:24 dsl Exp $	*/
+/*	$NetBSD: defs.h,v 1.117 2004/07/15 21:06:45 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -347,7 +347,6 @@ int	file_mode_match(const char *, unsigned int);
 int	distribution_sets_exist_p(const char *);
 void	get_ramsize(void);
 void	ask_sizemult(int);
-void	reask_sizemult(int);
 void	run_makedev(void);
 int	get_via_floppy(void);
 int	get_via_cdrom(void);

@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.122 2004/06/12 19:18:24 dsl Exp $	*/
+/*	$NetBSD: util.c,v 1.123 2004/07/15 21:06:45 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -195,27 +195,14 @@ get_ramsize(void)
 	rammb = ((unsigned int)ramsize + MEG - 1) / MEG;
 }
 
-static int asked = 0;
-
 void
 ask_sizemult(int cylsize)
 {
 
 	current_cylsize = cylsize;	/* XXX */
 
-	if (!asked) {
-		msg_display(MSG_sizechoice);
-		process_menu(MENU_sizechoice, NULL);
-	}
-	asked = 1;
-}
-
-void
-reask_sizemult(int cylsize)
-{
-
-	asked = 0;
-	ask_sizemult(cylsize);
+	msg_display(MSG_sizechoice);
+	process_menu(MENU_sizechoice, NULL);
 }
 
 void
