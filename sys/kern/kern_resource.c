@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1982, 1986, 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1986, 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  * (c) UNIX System Laboratories, Inc.
  * All or some portions of this file are derived from material licensed
  * to the University of California by American Telephone and Telegraph
@@ -35,20 +35,18 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)kern_resource.c	7.13 (Berkeley) 5/9/91
- *	$Id: kern_resource.c,v 1.18 1994/05/18 05:12:39 cgd Exp $
+ *	from: @(#)kern_resource.c	8.5 (Berkeley) 1/21/94
+ *	$Id: kern_resource.c,v 1.19 1994/05/19 08:13:22 cgd Exp $
  */
 
 #include <sys/param.h>
-#include <sys/systm.h>
 #include <sys/kernel.h>
+#include <sys/file.h>
 #include <sys/resourcevar.h>
 #include <sys/malloc.h>
 #include <sys/proc.h>
 
 #include <vm/vm.h>
-
-int dosetrlimit __P((struct proc *p, u_int which, struct rlimit *limp));
 
 /*
  * Resource controls and accounting.
@@ -58,8 +56,6 @@ struct getpriority_args {
 	int	which;
 	int	who;
 };
-
-int
 getpriority(curp, uap, retval)
 	struct proc *curp;
 	register struct getpriority_args *uap;
@@ -118,9 +114,7 @@ struct setpriority_args {
 	int	who;
 	int	prio;
 };
-
 /* ARGSUSED */
-int
 setpriority(curp, uap, retval)
 	struct proc *curp;
 	register struct setpriority_args *uap;
@@ -174,7 +168,6 @@ setpriority(curp, uap, retval)
 	return (error);
 }
 
-int
 donice(curp, chgp, n)
 	register struct proc *curp, *chgp;
 	register int n;
@@ -192,7 +185,7 @@ donice(curp, chgp, n)
 	if (n < chgp->p_nice && suser(pcred->pc_ucred, &curp->p_acflag))
 		return (EACCES);
 	chgp->p_nice = n;
-	(void) resetpriority(chgp);
+	(void)resetpriority(chgp);
 	return (0);
 }
 
@@ -202,7 +195,6 @@ struct osetrlimit_args {
 	struct	orlimit *lim;
 };
 /* ARGSUSED */
-int
 osetrlimit(p, uap, retval)
 	struct proc *p;
 	struct osetrlimit_args *uap;
@@ -212,7 +204,8 @@ osetrlimit(p, uap, retval)
 	struct rlimit lim;
 	int error;
 
-	if (error = copyin((caddr_t)uap->lim, (caddr_t)&olim, sizeof(olim)))
+	if (error =
+	    copyin((caddr_t)uap->lim, (caddr_t)&olim, sizeof (struct orlimit)))
 		return (error);
 	lim.rlim_cur = olim.rlim_cur;
 	lim.rlim_max = olim.rlim_max;
@@ -224,7 +217,6 @@ struct ogetrlimit_args {
 	struct	orlimit *rlp;
 };
 /* ARGSUSED */
-int
 ogetrlimit(p, uap, retval)
 	struct proc *p;
 	register struct ogetrlimit_args *uap;
@@ -234,7 +226,7 @@ ogetrlimit(p, uap, retval)
 
 	if (uap->which >= RLIM_NLIMITS)
 		return (EINVAL);
-	olim.rlim_cur =  p->p_rlimit[uap->which].rlim_cur;
+	olim.rlim_cur = p->p_rlimit[uap->which].rlim_cur;
 	if (olim.rlim_cur == -1)
 		olim.rlim_cur = 0x7fffffff;
 	olim.rlim_max = p->p_rlimit[uap->which].rlim_max;
@@ -242,26 +234,25 @@ ogetrlimit(p, uap, retval)
 		olim.rlim_max = 0x7fffffff;
 	return (copyout((caddr_t)&olim, (caddr_t)uap->rlp, sizeof(olim)));
 }
-#endif
+#endif /* COMPAT_43 || COMPAT_SUNOS */
 
 struct setrlimit_args {
 	u_int	which;
 	struct	rlimit *lim;
 };
-
 /* ARGSUSED */
-int
 setrlimit(p, uap, retval)
 	struct proc *p;
 	register struct setrlimit_args *uap;
 	int *retval;
 {
-	struct rlimit lim;
+	struct rlimit alim;
 	int error;
 
-	if (error = copyin((caddr_t)uap->lim, (caddr_t)&lim, sizeof(lim)))
+	if (error =
+	    copyin((caddr_t)uap->lim, (caddr_t)&alim, sizeof (struct rlimit)))
 		return (error);
-	return (dosetrlimit(p, uap->which, &lim));
+	return (dosetrlimit(p, uap->which, &alim));
 }
 
 int
@@ -271,13 +262,13 @@ dosetrlimit(p, which, limp)
 	struct rlimit *limp;
 {
 	register struct rlimit *alimp;
-	extern int maxfdescs;
+	extern unsigned maxdmap, maxsmap;
 	int error;
 
 	if (which >= RLIM_NLIMITS)
 		return (EINVAL);
 	alimp = &p->p_rlimit[which];
-	if (limp->rlim_cur > alimp->rlim_max ||
+	if (limp->rlim_cur > alimp->rlim_max || 
 	    limp->rlim_max > alimp->rlim_max)
 		if (error = suser(p->p_ucred, &p->p_acflag))
 			return (error);
@@ -293,24 +284,17 @@ dosetrlimit(p, which, limp)
 	switch (which) {
 
 	case RLIMIT_DATA:
-		if (limp->rlim_cur > MAXDSIZ)
-			limp->rlim_cur = MAXDSIZ;
-		if (limp->rlim_max > MAXDSIZ)
-			limp->rlim_max = MAXDSIZ;
-		break;
-
-	case RLIMIT_NOFILE:
-		if (limp->rlim_cur > maxfdescs)
-			limp->rlim_cur = maxfdescs;
-		if (limp->rlim_max > maxfdescs)
-			limp->rlim_max = maxfdescs;
+		if (limp->rlim_cur > maxdmap)
+			limp->rlim_cur = maxdmap;
+		if (limp->rlim_max > maxdmap)
+			limp->rlim_max = maxdmap;
 		break;
 
 	case RLIMIT_STACK:
-		if (limp->rlim_cur > MAXSSIZ)
-			limp->rlim_cur = MAXSSIZ;
-		if (limp->rlim_max > MAXSSIZ)
-			limp->rlim_max = MAXSSIZ;
+		if (limp->rlim_cur > maxsmap)
+			limp->rlim_cur = maxsmap;
+		if (limp->rlim_max > maxsmap)
+			limp->rlim_max = maxsmap;
 		/*
 		 * Stack is allocated to the max at exec time with only
 		 * "rlim_cur" bytes accessible.  If stack limit is going
@@ -336,6 +320,20 @@ dosetrlimit(p, which, limp)
 					      addr, addr+size, prot, FALSE);
 		}
 		break;
+
+	case RLIMIT_NOFILE:
+		if (limp->rlim_cur > maxfiles)
+			limp->rlim_cur = maxfiles;
+		if (limp->rlim_max > maxfiles)
+			limp->rlim_max = maxfiles;
+		break;
+
+	case RLIMIT_NPROC:
+		if (limp->rlim_cur > maxproc)
+			limp->rlim_cur = maxproc;
+		if (limp->rlim_max > maxproc)
+			limp->rlim_max = maxproc;
+		break;
 	}
 	*alimp = *limp;
 	return (0);
@@ -345,9 +343,7 @@ struct getrlimit_args {
 	u_int	which;
 	struct	rlimit *rlp;
 };
-
 /* ARGSUSED */
-int
 getrlimit(p, uap, retval)
 	struct proc *p;
 	register struct getrlimit_args *uap;
@@ -421,7 +417,6 @@ struct getrusage_args {
 	struct	rusage *rusage;
 };
 /* ARGSUSED */
-int
 getrusage(p, uap, retval)
 	register struct proc *p;
 	register struct getrusage_args *uap;
@@ -431,11 +426,10 @@ getrusage(p, uap, retval)
 
 	switch (uap->who) {
 
-	case RUSAGE_SELF: {
+	case RUSAGE_SELF:
 		rup = &p->p_stats->p_ru;
 		calcru(p, &rup->ru_utime, &rup->ru_stime, NULL);
 		break;
-	}
 
 	case RUSAGE_CHILDREN:
 		rup = &p->p_stats->p_cru;
@@ -448,7 +442,6 @@ getrusage(p, uap, retval)
 	    sizeof (struct rusage)));
 }
 
-void
 ruadd(ru, ru2)
 	register struct rusage *ru, *ru2;
 {
