@@ -1,4 +1,4 @@
-/*	$NetBSD: reloc.c,v 1.41 2001/08/14 20:17:25 eeh Exp $	 */
+/*	$NetBSD: reloc.c,v 1.42 2001/09/10 06:09:41 mycroft Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -506,6 +506,7 @@ _rtld_relocate_nonplt_object(obj, rela, dodebug)
 }
 
 
+#if !defined(__powerpc__)
 
 int
 _rtld_relocate_plt_object(obj, rela, addrp, bind_now, dodebug)
@@ -519,10 +520,6 @@ _rtld_relocate_plt_object(obj, rela, addrp, bind_now, dodebug)
 	Elf_Addr new_value;
 
 	/* Fully resolve procedure addresses now */
-
-#if defined(__powerpc__)
-	return _rtld_reloc_powerpc_plt(obj, rela, bind_now);
-#endif
 
 #if defined(__alpha__) || defined(__arm__) || defined(__i386__) || \
     defined(__m68k__) || defined(__vax__)
@@ -573,7 +570,10 @@ _rtld_relocate_plt_object(obj, rela, addrp, bind_now, dodebug)
 	}
 	return 0;
 }
-#endif /* __sparc__ */
+
+#endif /* __powerpc__ */
+
+#endif /* __sparc__ || __x86_64__ */
 
 caddr_t
 _rtld_bind(obj, reloff)
