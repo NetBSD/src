@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuconf.h,v 1.7 2003/05/23 00:57:24 ichiro Exp $	*/
+/*	$NetBSD: cpuconf.h,v 1.8 2003/09/06 08:55:42 rearnsha Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -57,6 +57,7 @@
 			 defined(CPU_ARM6) + defined(CPU_ARM7) +	\
 			 defined(CPU_ARM7TDMI) +			\
 			 defined(CPU_ARM8) + defined(CPU_ARM9) +	\
+			 defined(CPU_ARM10) +				\
 			 defined(CPU_SA110) + defined(CPU_SA1100) +	\
 			 defined(CPU_SA1110) +				\
 			 defined(CPU_IXP12X0) +				\
@@ -87,8 +88,8 @@
 
 #if !defined(_KERNEL_OPT) ||						\
     (defined(CPU_ARM7TDMI) || defined(CPU_ARM8) || defined(CPU_ARM9) ||	\
-     defined(CPU_SA110) || defined(CPU_SA1100) || defined(CPU_SA1110) || \
-     defined(CPU_IXP12X0) || defined(CPU_XSCALE_IXP425))
+     defined(CPU_ARM10) || defined(CPU_SA110) || defined(CPU_SA1100) || \
+     defined(CPU_SA1110) || defined(CPU_IXP12X0) || defined(CPU_XSCALE_IXP425))
 #define	ARM_ARCH_4	1
 #else
 #define	ARM_ARCH_4	0
@@ -131,7 +132,7 @@
 
 #if !defined(_KERNEL_OPT) ||						\
     (defined(CPU_ARM6) || defined(CPU_ARM7) || defined(CPU_ARM7TDMI) ||	\
-     defined(CPU_ARM8) || defined(CPU_ARM9))
+     defined(CPU_ARM8) || defined(CPU_ARM9) || defined(CPU_ARM10))
 #define	ARM_MMU_GENERIC		1
 #else
 #define	ARM_MMU_GENERIC		0
