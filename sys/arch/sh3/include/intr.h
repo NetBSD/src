@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.6 2000/07/06 04:31:04 msaitoh Exp $	*/
+/*	$NetBSD: intr.h,v 1.7 2000/08/17 00:01:53 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Charles M. Hannum.  All rights reserved.
@@ -148,6 +148,8 @@ softintr(mask)
 #define INTEVT_SCI0_RXI	0x500
 #define INTEVT_SCI0_TXI	0x520
 #define INTEVT_SCI0_TEI	0x540
+
+#define INTEVT_WDT	0x560
 
 #define IS_INTEVT_SCI0(x) ((x == INTEVT_SCI0_ERI) || (x == INTEVT_SCI0_RXI) \
 			|| (x == INTEVT_SCI0_TXI) || (x == INTEVT_SCI0_TEI))
