@@ -1,6 +1,6 @@
 #! /bin/sh
 #	@(#)stests	8.1 (Berkeley) 6/6/93
-#	$NetBSD: stests,v 1.4 2001/01/11 22:18:38 jdolecek Exp $
+#	$NetBSD: stests,v 1.5 2001/01/11 22:26:55 jdolecek Exp $
 
 # This code is derived from software contributed to Berkeley by
 # Peter McIlroy.
@@ -45,10 +45,7 @@ else
 	o="not_tested +POS/-POS"
 fi
 if sort /dev/null -o xx 2>/dev/null; then
-	o=
 	echo '	displaced -o';
-else
-	o="not_tested displaced_-o"
 fi
 if sort -g </dev/null 2>/dev/null; then
 	g=
