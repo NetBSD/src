@@ -1,4 +1,4 @@
-# $NetBSD: files.next68k,v 1.16 2000/03/27 21:47:47 scottr Exp $
+# $NetBSD: files.next68k,v 1.17 2000/09/29 06:33:37 deberg Exp $
 
 # next68k-specific configuration info
 
@@ -8,8 +8,7 @@ maxpartitions 8
 maxusers 2 8 64
 
 # serial console options
-defopt opt_serial.h ZS_CONSOLE_ABORT
-defopt opt_serial.h SERCONSOLE
+defopt opt_serial.h ZS_CONSOLE_ABORT SERCONSOLE
 
 device mainbus { }
 attach mainbus at root
