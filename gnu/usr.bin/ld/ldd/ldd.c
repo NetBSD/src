@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: ldd.c,v 1.4 1993/12/08 10:17:18 pk Exp $
+ *	$Id: ldd.c,v 1.5 1993/12/16 08:33:36 pk Exp $
  */
 
 #include <sys/param.h>
@@ -107,6 +107,7 @@ char	*argv[];
 		(void)close(fd);
 
 		printf("%s:\n", *argv);
+		fflush(stdout);
 
 		switch (fork()) {
 		case -1:
