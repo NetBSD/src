@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.2 1998/09/05 15:28:10 christos Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.3 1998/09/11 00:16:59 eeh Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -549,7 +549,7 @@ svr4_sendsig(catcher, sig, mask, code)
 	write_user_windows();
 
 	if (rwindow_save(p) || copyout(&frame, fp, sizeof(frame)) != 0 ||
-	    suword(&((struct rwindow32 *)newsp)->rw_in[6], oldsp)) {
+	    copyout(&oldsp, &((struct rwindow32 *)newsp)->rw_in[6], sizeof(oldsp))) {
 		/*
 		 * Process has trashed its stack; give it an illegal
 		 * instruction to halt it in its tracks.

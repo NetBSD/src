@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.11 1998/09/07 23:59:07 eeh Exp $ */
+/*	$NetBSD: machdep.c,v 1.12 1998/09/11 00:16:59 eeh Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -476,7 +476,7 @@ allocsys(v)
 #else
 #define rwindow		rwindow32
 #define STACK_OFFSET	0
-#define CPOUTREG(l,v)	suword((l), (v))
+#define CPOUTREG(l,v)	copyout(&(v), (l), sizeof(v))
 #endif
 
 /* ARGSUSED */

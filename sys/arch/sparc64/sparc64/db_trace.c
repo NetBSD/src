@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.4 1998/09/05 23:57:27 eeh Exp $ */
+/*	$NetBSD: db_trace.c,v 1.5 1998/09/11 00:16:59 eeh Exp $ */
 
 /*
  * Mach Operating System
@@ -175,9 +175,21 @@ u_int64_t frame;
 				  f->fr_arg[0], f->fr_arg[1], f->fr_fp, f->fr_pc);
 			db_printsym(f->fr_pc, DB_STGY_PROC);
 			db_printf("\n");
-		} else
-			db_printf("frame64 in user space not supported\n");
-	 
+		} else {
+			struct frame64 fr;
+
+			if (copyin(f, &fr, sizeof(fr))) return;
+			f = &fr;
+			db_printf("%llx %llx %llx %llx ",
+				  f->fr_local[0], f->fr_local[1], f->fr_local[2], f->fr_local[3]);
+			db_printf("%llx %llx %llx %llx\n",
+				  f->fr_local[4], f->fr_local[5], f->fr_local[6], f->fr_local[7]);
+			db_printf("%llx %llx %llx %llx ",
+				  f->fr_arg[0], f->fr_arg[1], f->fr_arg[2], f->fr_arg[3]);
+			db_printf("%llx %llx %llxsp %llxpc=",
+				  f->fr_arg[0], f->fr_arg[1], f->fr_fp, f->fr_pc);
+			db_printf("\n");	 
+		}
 	} else {
 		struct frame32* f = (struct frame32*)frame;
 
@@ -192,16 +204,20 @@ u_int64_t frame;
 			db_printsym(f->fr_pc, DB_STGY_PROC);
 			db_printf("\n");
 		} else {
+			struct frame32 fr;
+
+			if (copyin(f, &fr, sizeof(fr))) return;
+			f = &fr;
 			db_printf("%8x %8x %8x %8x %8x %8x %8x %8x\n",
-				  fuword(&f->fr_local[0]), fuword(&f->fr_local[1]), 
-				  fuword(&f->fr_local[2]), fuword(&f->fr_local[3]),
-				  fuword(&f->fr_local[4]), fuword(&f->fr_local[5]), 
-				  fuword(&f->fr_local[6]), fuword(&f->fr_local[7]));
+				  f->fr_local[0], f->fr_local[1], 
+				  f->fr_local[2], f->fr_local[3],
+				  f->fr_local[4], f->fr_local[5], 
+				  f->fr_local[6], f->fr_local[7]);
 			db_printf("%8x %8x %8x %8x %8x %8x %8x=sp %8x=pc\n",
-				  fuword(&f->fr_arg[0]), fuword(&f->fr_arg[1]), 
-				  fuword(&f->fr_arg[2]), fuword(&f->fr_arg[3]),
-				  fuword(&f->fr_arg[0]), fuword(&f->fr_arg[1]), 
-				  fuword(&f->fr_fp), fuword(&f->fr_pc));
+				  f->fr_arg[0], f->fr_arg[1], 
+				  f->fr_arg[2], f->fr_arg[3],
+				  f->fr_arg[0], f->fr_arg[1], 
+				  f->fr_fp, f->fr_pc);
 		}
 	}
 }
@@ -247,17 +263,19 @@ db_dump_stack(addr, have_addr, count, modif)
 			db_printf("Window %x ", i);
 			db_print_window(frame - BIAS);
 			if (!INKERNEL(((struct frame64 *)(frame))))
-				frame = fuword(((caddr_t)&((struct frame64 *)frame)->fr_fp)+4);
+				copyin(((caddr_t)&((struct frame64 *)frame)->fr_fp)+4, &frame, sizeof(frame));
 			else
 				frame = ((struct frame64 *)frame)->fr_fp;
 		} else {
+			u_int32_t tmp;
 			if (!INKERNEL(((struct frame32 *)frame))
 			    && kernel_only) break;
 			db_printf("Window %x ", i);
 			db_print_window(frame);
-			if (!INKERNEL(((struct frame32 *)frame)))
-				frame = (u_int64_t)fuword(&((struct frame32 *)frame)->fr_fp);
-			else
+			if (!INKERNEL(((struct frame32 *)frame))) {
+				copyin(&((struct frame32 *)frame)->fr_fp, &tmp, sizeof(tmp));
+				frame = (u_int64_t)tmp;
+			} else
 				frame = (u_int64_t)((struct frame32 *)frame)->fr_fp;
 		}
 	}
