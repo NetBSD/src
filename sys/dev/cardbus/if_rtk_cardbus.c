@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rtk_cardbus.c,v 1.19 2004/03/11 12:19:14 kanaoka Exp $	*/
+/*	$NetBSD: if_rtk_cardbus.c,v 1.20 2004/06/06 04:10:49 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2000 Masanori Kanaoka
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtk_cardbus.c,v 1.19 2004/03/11 12:19:14 kanaoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtk_cardbus.c,v 1.20 2004/06/06 04:10:49 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -314,7 +314,8 @@ rtk_cardbus_setup(csc)
 	 */
 	if (cardbus_get_capability(cc, cf, csc->sc_tag,
 	    PCI_CAP_PWRMGMT, &pmreg, 0)) {
-		command = cardbus_conf_read(cc, cf, csc->sc_tag, pmreg + 4);
+		command = cardbus_conf_read(cc, cf, csc->sc_tag,
+		    pmreg + PCI_PMCSR);
 		if (command & RTK_PSTATE_MASK) {
 			pcireg_t		iobase, membase, irq;
 
@@ -330,9 +331,9 @@ rtk_cardbus_setup(csc)
 			printf("%s: chip is in D%d power mode "
 			    "-- setting to D0\n", sc->sc_dev.dv_xname,
 			    command & RTK_PSTATE_MASK);
-			command &= 0xFFFFFFFC;
+			command &= ~RTK_PSTATE_MASK;
 			cardbus_conf_write(cc, cf, csc->sc_tag,
-			    pmreg + 4, command);
+			    pmreg + PCI_PMCSR, command);
 
 			/* Restore PCI config data. */
 			cardbus_conf_write(cc, cf, csc->sc_tag,
