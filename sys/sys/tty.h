@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.h,v 1.57 2003/02/05 20:34:56 pk Exp $	*/
+/*	$NetBSD: tty.h,v 1.58 2003/02/12 03:46:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -111,12 +111,8 @@ struct tty {
 
 #define __TTY_ENABLE_SLOCK
 #ifdef __TTY_ENABLE_SLOCK
-#define TTY_LOCK(tp) do {			\
-	simple_lock(&(tp)->t_slock);		\
-} while (/*CONSTCOND*/ 0);
-#define TTY_UNLOCK(tp) do {			\
-	simple_unlock(&(tp)->t_slock);		\
-} while (/*CONSTCOND*/ 0);
+#define TTY_LOCK(tp) simple_lock(&(tp)->t_slock)
+#define TTY_UNLOCK(tp) simple_unlock(&(tp)->t_slock)
 #else /* __TTY_ENABLE_SLOCK */
 #define TTY_LOCK(tp)	/**/
 #define TTY_UNLOCK(tp)	/**/
