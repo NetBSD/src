@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_ioctl.c,v 1.17 1995/01/23 17:56:26 mycroft Exp $	*/
+/*	$NetBSD: scsi_ioctl.c,v 1.18 1995/01/30 15:54:42 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -240,7 +240,7 @@ scsistrategy(bp)
 	error = scsi_scsi_cmd(sc_link, (struct scsi_generic *)screq->cmd,
 	    screq->cmdlen, (u_char *)bp->b_data, screq->datalen,
 	    0, /* user must do the retries *//* ignored */
-	    screq->timeout, bp, flags | SCSI_USER);
+	    screq->timeout, bp, flags | SCSI_USER | SCSI_NOSLEEP);
 
 	/* because there is a bp, scsi_scsi_cmd will return immediatly */
 	if (error)
