@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.30 1997/09/26 15:22:46 lukem Exp $	*/
+/*	$NetBSD: cmds.c,v 1.31 1997/11/01 14:36:49 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: cmds.c,v 1.30 1997/09/26 15:22:46 lukem Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.31 1997/11/01 14:36:49 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -781,9 +781,12 @@ sethash(argc, argv)
 	else if (strcasecmp(argv[1], "off") == 0)
 		hash = 0;
 	else {
-		int nmark = atol(argv[1]);
-		if (nmark < 1) {
-			printf("%s: bad bytecount value.\n", argv[1]);
+		int nmark;
+		char *ep;
+
+		nmark = strtol(argv[1], &ep, 10);
+		if (nmark < 1 || *ep == '\0') {
+			printf("mark: bad bytecount value `%s'.\n", argv[1]);
 			code = -1;
 			return;
 		}
@@ -1994,13 +1997,26 @@ restart(argc, argv)
 	char *argv[];
 {
 
-	if (argc != 2)
-		puts("restart: offset not specified.");
-	else {
-		restart_point = atol(argv[1]);
-		printf("Restarting at %qd. Execute get, put or append to "
-			"initiate transfer\n", (long long)restart_point);
+	if (argc > 2) {
+		printf("usage: %s [restart_point]\n", argv[0]);
+		code = -1;
+		return;
 	}
+	if (argc == 2) {
+		quad_t	rp;
+		char *ep;
+
+		rp = strtoq(argv[1], &ep, 10);
+		if (rp < 0 || *ep != '\0')
+			printf("restart: Invalid offset `%s'\n", argv[1]);
+		else
+			restart_point = rp;
+	}
+	if (restart_point == 0)
+		puts("No restart point defined");
+	else
+		printf("Restarting at %qd for next get, put or append\n",
+		    (long long)restart_point);
 }
 
 /* 
@@ -2152,7 +2168,7 @@ page(argc, argv)
 	int argc;
 	char *argv[];
 {
-	int orestart_point, ohash, overbose;
+	int ohash, overbose;
 	char *p, *pager, *oldargv1;
 
 	if ((argc < 2 && !another(&argc, &argv, "filename")) || argc > 2) {
@@ -2172,13 +2188,11 @@ page(argc, argv)
 		errx(1, "Can't allocate memory for $PAGER");
 	(void)sprintf(pager, "|%s", p);
 
-	orestart_point = restart_point;
 	ohash = hash;
 	overbose = verbose;
-	restart_point = hash = verbose = 0;
+	hash = verbose = 0;
 	recvrequest("RETR", pager, argv[1], "r+w", 1, 0);
 	(void)free(pager);
-	restart_point = orestart_point;
 	hash = ohash;
 	verbose = overbose;
 	if (oldargv1 != argv[1])	/* free up after globulize() */

@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.17 1997/08/18 10:20:19 lukem Exp $	*/
+/*	$NetBSD: extern.h,v 1.18 1997/11/01 14:36:53 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -161,17 +161,12 @@ int	togglevar __P((int, char **, int *, const char *));
 void	usage __P((void));
 void	user __P((int, char **));
 
-
-extern jmp_buf	abortprox;
-extern int	abrtflag;
 extern struct	cmd cmdtab[];
 extern FILE    *cout;
 extern int	data;
 extern char    *home;
-extern jmp_buf	jabort;
 extern int	proxy;
 extern char	reply_string[];
-extern off_t	restart_point;
 extern int	NCMDS;
 
 extern char *__progname;		/* from crt0.o */
