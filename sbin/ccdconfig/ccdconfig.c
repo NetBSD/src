@@ -1,4 +1,4 @@
-/*	$NetBSD: ccdconfig.c,v 1.24 1998/11/13 00:27:04 thorpej Exp $	*/
+/*	$NetBSD: ccdconfig.c,v 1.25 1999/01/12 00:22:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 __COPYRIGHT(
 "@(#) Copyright (c) 1996, 1997\
 	The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: ccdconfig.c,v 1.24 1998/11/13 00:27:04 thorpej Exp $");
+__RCSID("$NetBSD: ccdconfig.c,v 1.25 1999/01/12 00:22:00 thorpej Exp $");
 #endif
 
 #include <sys/param.h>
@@ -630,7 +630,7 @@ print_ccd_info(cs, kd)
 
 	/* Dump out softc information. */
 	printf("ccd%d\t\t%d\t%d\t", cs->sc_unit, cs->sc_ileave,
-	    cs->sc_cflags & CCDF_USERMASK);
+	    cs->sc_flags & CCDF_USERMASK);
 	fflush(stdout);
 
 	/* Read in the component info. */
