@@ -1,4 +1,4 @@
-/*	$NetBSD: yp_passwd.c,v 1.11 1996/12/28 04:30:08 tls Exp $	*/
+/*	$NetBSD: yp_passwd.c,v 1.12 1997/02/11 09:36:01 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from:  @(#)local_passwd.c    8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$NetBSD: yp_passwd.c,v 1.11 1996/12/28 04:30:08 tls Exp $";
+static char rcsid[] = "$NetBSD: yp_passwd.c,v 1.12 1997/02/11 09:36:01 mrg Exp $";
 #endif
 #endif /* not lint */
 
@@ -228,7 +228,7 @@ getnewpasswd(pw, old_pass)
 				     suggested.\n");
 			continue;
 		}
-		(void)strcpy(buf, p);
+		(void)strncpy(buf, p, sizeof(buf) - 1);
 		if (!strcmp(buf, getpass("Retype new password:")))
 			break;
 		(void)printf("Mismatch; try again, EOF to quit.\n");
@@ -313,7 +313,7 @@ ypgetpwnam(nam)
 		break;
 	}
 	val[vallen] = '\0';
-	strcpy(line, val);
+	(void)strncpy(line, val, sizeof(line) - 1);
 	free(val);
 
 	return(interpret(&pwent, line));

@@ -1,4 +1,4 @@
-/*	$NetBSD: quota.c,v 1.12 1997/01/09 20:20:53 tls Exp $	*/
+/*	$NetBSD: quota.c,v 1.13 1997/02/11 09:29:26 mrg Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -44,7 +44,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)quota.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$NetBSD: quota.c,v 1.12 1997/01/09 20:20:53 tls Exp $";
+static char rcsid[] = "$NetBSD: quota.c,v 1.13 1997/02/11 09:29:26 mrg Exp $";
 #endif /* not lint */
 
 /*
@@ -411,14 +411,14 @@ timeprt(seconds)
 	minutes = (seconds + 30) / 60;
 	hours = (minutes + 30) / 60;
 	if (hours >= 36) {
-		sprintf(buf, "%ddays", (hours + 12) / 24);
+		(void)snprintf(buf, sizeof buf, "%ddays", (hours + 12) / 24);
 		return (buf);
 	}
 	if (minutes >= 60) {
-		sprintf(buf, "%2d:%d", minutes / 60, minutes % 60);
+		(void)snprintf(buf, sizeof buf, "%2d:%d", minutes / 60, minutes % 60);
 		return (buf);
 	}
-	sprintf(buf, "%2d", minutes);
+	(void)snprintf(buf, sizeof buf, "%2d", minutes);
 	return (buf);
 }
 
@@ -470,7 +470,8 @@ getprivs(id, quotatype)
 				continue;
 		} else
 			continue;
-		strcpy(qup->fsname, fst[i].f_mntonname);
+		(void)strncpy(qup->fsname, fst[i].f_mntonname,
+		    sizeof(qup->fsname) - 1);
 		if (quphead == NULL)
 			quphead = qup;
 		else
@@ -498,11 +499,13 @@ ufshasquota(fs, type, qfnamep)
 	char *opt, *cp;
 
 	if (!initname) {
-		sprintf(usrname, "%s%s", qfextension[USRQUOTA], qfname);
-		sprintf(grpname, "%s%s", qfextension[GRPQUOTA], qfname);
+		(void)snprintf(usrname, sizeof usrname, "%s%s",
+		    qfextension[USRQUOTA], qfname);
+		(void)snprintf(grpname, sizeof grpname, "%s%s",
+		    qfextension[GRPQUOTA], qfname);
 		initname = 1;
 	}
-	strcpy(buf, fs->fs_mntops);
+	(void)strncpy(buf, fs->fs_mntops, sizeof(buf) - 1);
 	for (opt = strtok(buf, ","); opt; opt = strtok(NULL, ",")) {
 		if (cp = index(opt, '='))
 			*cp++ = '\0';
@@ -517,7 +520,8 @@ ufshasquota(fs, type, qfnamep)
 		*qfnamep = cp;
 		return (1);
 	}
-	(void) sprintf(buf, "%s/%s.%s", fs->fs_file, qfname, qfextension[type]);
+	(void)snprintf(buf, sizeof buf, "%s/%s.%s", fs->fs_file, qfname,
+	    qfextension[type]);
 	*qfnamep = buf;
 	return (1);
 }

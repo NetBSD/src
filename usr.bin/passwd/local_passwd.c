@@ -1,4 +1,4 @@
-/*	$NetBSD: local_passwd.c,v 1.10 1996/12/28 04:30:05 tls Exp $	*/
+/*	$NetBSD: local_passwd.c,v 1.11 1997/02/11 09:35:59 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)local_passwd.c    8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$NetBSD: local_passwd.c,v 1.10 1996/12/28 04:30:05 tls Exp $";
+static char rcsid[] = "$NetBSD: local_passwd.c,v 1.11 1997/02/11 09:35:59 mrg Exp $";
 #endif
 #endif /* not lint */
 
@@ -107,7 +107,7 @@ getnewpasswd(pw)
 				     suggested.\n");
 			continue;
 		}
-		(void)strcpy(buf, p);
+		(void)strncpy(buf, p, sizeof(buf) - 1);
 		if (!strcmp(buf, getpass("Retype new password:")))
 			break;
 		(void)printf("Mismatch; try again, EOF to quit.\n");
