@@ -1,7 +1,7 @@
-/*	$NetBSD: usb.c,v 1.61 2001/12/31 15:55:51 augustss Exp $	*/
+/*	$NetBSD: usb.c,v 1.62 2002/01/02 20:55:58 augustss Exp $	*/
 
 /*
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.61 2001/12/31 15:55:51 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.62 2002/01/02 20:55:58 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,7 +96,7 @@ struct usb_softc {
 	usbd_bus_handle sc_bus;		/* USB controller */
 	struct usbd_port sc_port;	/* dummy port for root hub */
 
-	struct proc    *sc_event_thread;
+	usb_proc_ptr	*sc_event_thread;
 
 	char		sc_dying;
 };
@@ -109,7 +109,7 @@ Static void	usb_discover(void *);
 Static void	usb_create_event_thread(void *);
 Static void	usb_event_thread(void *);
 Static void	usb_task_thread(void *);
-Static struct proc *usb_task_thread_proc = NULL;
+Static usb_proc_ptr *usb_task_thread_proc = NULL;
 
 #define USB_MAX_EVENTS 100
 struct usb_event_q {
@@ -250,7 +250,7 @@ usb_create_event_thread(void *arg)
 }
 
 /*
- * Add a task to be performed by the event thread.  This function can be
+ * Add a task to be performed by the task thread.  This function can be
  * called from any context and the task will be executed in a process
  * context ASAP.
  */
@@ -264,8 +264,9 @@ usb_add_task(usbd_device_handle dev, struct usb_task *task)
 		DPRINTFN(2,("usb_add_task: task=%p\n", task));
 		TAILQ_INSERT_TAIL(&usb_all_tasks, task, next);
 		task->onqueue = 1;
-	} else
+	} else {
 		DPRINTFN(3,("usb_add_task: task=%p on q\n", task));
+	}
 	wakeup(&usb_all_tasks);
 	splx(s);
 }
@@ -703,7 +704,7 @@ usb_activate(device_ptr_t self, enum devact act)
 
 	case DVACT_DEACTIVATE:
 		sc->sc_dying = 1;
-		if (dev && dev->cdesc && dev->subdevs) {
+		if (dev != NULL && dev->cdesc != NULL && dev->subdevs != NULL) {
 			for (i = 0; dev->subdevs[i]; i++)
 				rv |= config_deactivate(dev->subdevs[i]);
 		}
@@ -723,11 +724,11 @@ usb_detach(device_ptr_t self, int flags)
 	sc->sc_dying = 1;
 
 	/* Make all devices disconnect. */
-	if (sc->sc_port.device)
+	if (sc->sc_port.device != NULL)
 		usb_disconnect_port(&sc->sc_port, self);
 
 	/* Kill off event thread. */
-	if (sc->sc_event_thread) {
+	if (sc->sc_event_thread != NULL) {
 		wakeup(&sc->sc_bus->needs_explore);
 		if (tsleep(sc, PWAIT, "usbdet", hz * 60))
 			printf("%s: event thread didn't die\n",
