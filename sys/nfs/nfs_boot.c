@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_boot.c,v 1.28 1996/10/13 01:39:05 christos Exp $	*/
+/*	$NetBSD: nfs_boot.c,v 1.29 1996/10/20 13:13:25 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1995 Adam Glass, Gordon Ross
@@ -102,7 +102,7 @@ static int bp_getfile __P((struct sockaddr_in *bpsin, char *key,
 
 /* mountd RPC */
 static int md_mount __P((struct sockaddr_in *mdsin, char *path,
-	u_char *fh));
+	struct nfs_args *argp));
 
 char	*nfsbootdevname;
 
@@ -256,12 +256,42 @@ nfs_boot_getfh(bpsin, key, ndmntp)
 	char *key;			/* root or swap */
 	struct nfs_dlmount *ndmntp;	/* output */
 {
+	struct nfs_args *args;
 	char pathname[MAXPATHLEN];
 	char *sp, *dp, *endp;
 	struct sockaddr_in *sin;
 	int error;
 
-	sin = &ndmntp->ndm_saddr;
+	args = &ndmntp->ndm_args;
+
+	/* Initialize mount args. */
+	bzero((caddr_t) args, sizeof(*args));
+	args->addr     = &ndmntp->ndm_saddr;
+	args->addrlen  = args->addr->sa_len;
+#ifdef NFS_BOOT_TCP
+	args->sotype   = SOCK_STREAM;
+#else
+	args->sotype   = SOCK_DGRAM;
+#endif
+	args->fh       = ndmntp->ndm_fh;
+	args->hostname = ndmntp->ndm_host;
+	args->flags    = NFSMNT_RESVPORT | NFSMNT_NFSV3;
+
+#ifdef	NFS_BOOT_OPTIONS
+	args->flags    |= NFS_BOOT_OPTIONS;
+#endif
+#ifdef	NFS_BOOT_RWSIZE
+	/*
+	 * Reduce rsize,wsize for interfaces that consistently
+	 * drop fragments of long UDP messages.  (i.e. wd8003).
+	 * You can always change these later via remount.
+	 */
+	args->flags   |= NFSMNT_WSIZE | NFSMNT_RSIZE;
+	args->wsize    = NFS_BOOT_RWSIZE;
+	args->rsize    = NFS_BOOT_RWSIZE;
+#endif
+
+	sin = (void*)&ndmntp->ndm_saddr;
 
 	/*
 	 * Get server:pathname for "key" (root or swap)
@@ -275,15 +305,29 @@ nfs_boot_getfh(bpsin, key, ndmntp)
 	 * Get file handle for "key" (root or swap)
 	 * using RPC to mountd/mount
 	 */
-	error = md_mount(sin, pathname, ndmntp->ndm_fh);
+	error = md_mount(sin, pathname, args);
 	if (error)
 		panic("nfs_boot: mountd %s, error=%d", key, error);
 
 	/* Set port number for NFS use. */
 	/* XXX: NFS port is always 2049, right? */
-	error = krpc_portmap(sin, NFS_PROG, NFS_VER2, &sin->sin_port);
-	if (error)
-		panic("nfs_boot: portmap NFS/v2, error=%d", error);
+#ifdef NFS_BOOT_TCP
+retry:
+#endif
+	error = krpc_portmap(sin, NFS_PROG,
+		    (args->flags & NFSMNT_NFSV3) ? NFS_VER3 : NFS_VER2,
+		    (args->sotype == SOCK_STREAM) ? IPPROTO_TCP : IPPROTO_UDP,
+		    &sin->sin_port);
+
+	if (error || (sin->sin_port == htons(0))) {
+#ifdef NFS_BOOT_TCP
+		if (args->sotype == SOCK_STREAM) {
+			args->sotype = SOCK_DGRAM;
+			goto retry;
+		}
+#endif
+		panic("nfs_boot: portmap NFS, error=%d", error);
+	}
 
 	/* Construct remote path (for getmntinfo(3)) */
 	dp = ndmntp->ndm_host;
@@ -500,33 +544,48 @@ out:
  * Also, sets sin->sin_port to the NFS service port.
  */
 static int
-md_mount(mdsin, path, fhp)
+md_mount(mdsin, path, argp)
 	struct sockaddr_in *mdsin;		/* mountd server address */
 	char *path;
-	u_char *fhp;
+	struct nfs_args *argp;
 {
 	/* The RPC structures */
 	struct rdata {
 		u_int32_t errno;
-		u_int8_t  fh[NFSX_V2FH];
+		union {
+			u_int8_t  v2fh[NFSX_V2FH];
+			struct {
+				u_int32_t fhlen;
+				u_int8_t  fh[1];
+			} v3fh;
+		} fh;
 	} *rdata;
 	struct mbuf *m;
-	int error;
+	u_int8_t *fh;
+	int minlen, error;
 
+retry:
 	/* Get port number for MOUNTD. */
-	error = krpc_portmap(mdsin, RPCPROG_MNT, RPCMNT_VER1,
-						 &mdsin->sin_port);
-	if (error) return error;
+	error = krpc_portmap(mdsin, RPCPROG_MNT,
+		     (argp->flags & NFSMNT_NFSV3) ? RPCMNT_VER3 : RPCMNT_VER1,
+		     IPPROTO_UDP, &mdsin->sin_port);
+	if (error)
+		return error;
 
 	m = xdr_string_encode(path, strlen(path));
 	if (m == NULL)
 		return ENOMEM;
 
 	/* Do RPC to mountd. */
-	error = krpc_call(mdsin, RPCPROG_MNT, RPCMNT_VER1,
-			RPCMNT_MOUNT, &m, NULL);
-	if (error)
+	error = krpc_call(mdsin, RPCPROG_MNT, (argp->flags & NFSMNT_NFSV3) ?
+			  RPCMNT_VER3 : RPCMNT_VER1, RPCMNT_MOUNT, &m, NULL);
+	if (error) {
+		if ((error==RPC_PROGMISMATCH) && (argp->flags & NFSMNT_NFSV3)) {
+			argp->flags &= ~NFSMNT_NFSV3;
+			goto retry;
+		}
 		return error;	/* message already freed */
+	}
 
 	/* The reply might have only the errno. */
 	if (m->m_len < 4)
@@ -538,13 +597,26 @@ md_mount(mdsin, path, fhp)
 		goto out;
 
 	 /* Have errno==0, so the fh must be there. */
-	if (m->m_len < sizeof(*rdata)) {
-		m = m_pullup(m, sizeof(*rdata));
-		if (m == NULL)
+	if (argp->flags & NFSMNT_NFSV3){
+		argp->fhsize   = fxdr_unsigned(u_int32_t, rdata->fh.v3fh.fhlen);
+		if (argp->fhsize > NFSX_V3FHMAX)
 			goto bad;
+		minlen = 2 * sizeof(u_int32_t) + argp->fhsize;
+	} else {
+		argp->fhsize   = NFSX_V2FH;
+		minlen = sizeof(u_int32_t) + argp->fhsize;
+	}
+
+	if (m->m_len < minlen) {
+		m = m_pullup(m, minlen);
+		if (m == NULL)
+			return(EBADRPC);
 		rdata = mtod(m, struct rdata *);
 	}
-	bcopy(rdata->fh, fhp, NFSX_V2FH);
+
+	fh = (argp->flags & NFSMNT_NFSV3) ? rdata->fh.v3fh.fh : rdata->fh.v2fh;
+	bcopy(fh, argp->fh, argp->fhsize);
+
 	goto out;
 
 bad:

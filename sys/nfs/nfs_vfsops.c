@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.51 1996/10/13 01:39:10 christos Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.52 1996/10/20 13:13:26 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -394,7 +394,6 @@ nfs_mount_diskless(ndmntp, mntname, mntflag, vpp)
 	int mntflag;
 	struct vnode **vpp;
 {
-	struct nfs_args args;
 	struct mount *mp;
 	struct mbuf *m;
 	int error;
@@ -405,43 +404,20 @@ nfs_mount_diskless(ndmntp, mntname, mntflag, vpp)
 	/* Create the mount point. */
 	mp = (struct mount *)malloc((u_long)sizeof(struct mount),
 	    M_MOUNT, M_WAITOK);
-	if (mp == NULL)
-		panic("nfs_mountroot: malloc mount for %s", mntname);
 	bzero((char *)mp, (u_long)sizeof(struct mount));
 #endif
 	mp->mnt_op = &nfs_vfsops;
 	mp->mnt_flag = mntflag;
 
-	/* Initialize mount args. */
-	bzero((caddr_t) &args, sizeof(args));
-	args.addr     = (struct sockaddr *)&ndmntp->ndm_saddr;
-	args.addrlen  = args.addr->sa_len;
-	args.sotype   = SOCK_DGRAM;
-	args.fh       = ndmntp->ndm_fh;
-	args.fhsize   = NFSX_V2FH;
-	args.hostname = ndmntp->ndm_host;
-	args.flags    = NFSMNT_RESVPORT;
-
-#ifdef	NFS_BOOT_OPTIONS
-	args.flags    |= NFS_BOOT_OPTIONS;
-#endif
-#ifdef	NFS_BOOT_RWSIZE
-	/*
-	 * Reduce rsize,wsize for interfaces that consistently
-	 * drop fragments of long UDP messages.  (i.e. wd8003).
-	 * You can always change these later via remount.
-	 */
-	args.flags   |= NFSMNT_WSIZE | NFSMNT_RSIZE;
-	args.wsize    = NFS_BOOT_RWSIZE;
-	args.rsize    = NFS_BOOT_RWSIZE;
-#endif
-
 	/* Get mbuf for server sockaddr. */
 	m = m_get(M_WAIT, MT_SONAME);
-	bcopy((caddr_t)args.addr, mtod(m, caddr_t),
-	      (m->m_len = args.addr->sa_len));
+	if (m == NULL)
+		panic("nfs_mountroot: mget soname for %s", mntname);
+	bcopy((caddr_t)ndmntp->ndm_args.addr, mtod(m, caddr_t),
+	      (m->m_len = ndmntp->ndm_args.addr->sa_len));
 
-	error = mountnfs(&args, mp, m, mntname, args.hostname, vpp);
+	error = mountnfs(&ndmntp->ndm_args, mp, m, mntname,
+			 ndmntp->ndm_args.hostname, vpp);
 	if (error)
 		panic("nfs_mountroot: mount %s failed: %d", mntname, error);
 
@@ -542,6 +518,11 @@ nfs_decode_args(nmp, argp)
 	if ((argp->flags & NFSMNT_DEADTHRESH) && argp->deadthresh >= 1 &&
 		argp->deadthresh <= NQ_NEVERDEAD)
 		nmp->nm_deadthresh = argp->deadthresh;
+
+	adjsock |= ((nmp->nm_sotype != argp->sotype) ||
+		    (nmp->nm_soproto != argp->proto));
+	nmp->nm_sotype = argp->sotype;
+	nmp->nm_soproto = argp->proto;
 
 	if (nmp->nm_so && adjsock) {
 		nfs_disconnect(nmp);
@@ -683,11 +664,12 @@ mountnfs(argp, mp, nam, pth, hst, vpp)
 	bcopy(hst, mp->mnt_stat.f_mntfromname, MNAMELEN);
 	bcopy(pth, mp->mnt_stat.f_mntonname, MNAMELEN);
 	nmp->nm_nam = nam;
-	nfs_decode_args(nmp, argp);
 
 	/* Set up the sockets and per-host congestion */
 	nmp->nm_sotype = argp->sotype;
 	nmp->nm_soproto = argp->proto;
+
+	nfs_decode_args(nmp, argp);
 
 	/*
 	 * For Connection based sockets (TCP,...) defer the connect until
