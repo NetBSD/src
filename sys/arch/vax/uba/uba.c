@@ -1,4 +1,4 @@
-/*	$NetBSD: uba.c,v 1.32 1998/01/24 14:16:33 ragge Exp $	   */
+/*	$NetBSD: uba.c,v 1.33 1998/03/02 17:00:02 ragge Exp $	   */
 /*
  * Copyright (c) 1996 Jonathan Stone.
  * Copyright (c) 1994, 1996 Ludd, University of Lule}, Sweden.
@@ -434,8 +434,13 @@ qba_attach(parent, self, aux)
 	 * Map in the UBA page map into kernel space. On other UBAs,
 	 * the map registers are in the bus IO space.
 	 */
+#if defined(UVM)
+	(void)uvm_km_suballoc(kernel_map, &mini, &maxi,
+	    QBAPAGES * sizeof(struct pte), FALSE, FALSE, NULL);
+#else
 	(void)kmem_suballoc(kernel_map, &mini, &maxi,
 	    QBAPAGES * sizeof(struct pte), FALSE);
+#endif
 	pmap_map(mini,	QBAMAP, QBAMAP + QBAPAGES * sizeof(struct pte),
 	    VM_PROT_READ | VM_PROT_WRITE);
 	sc->uh_mr = (void *)mini;
@@ -849,8 +854,13 @@ uba_attach(sc, iopagephys)
 		vm_offset_t	iarea;
 		int	i;
 
+#if defined(UVM)
+		iarea = uvm_km_valloc(kernel_map,
+		    NO_IVEC * sizeof(struct ivec_dsp));
+#else
 		iarea = kmem_alloc(kernel_map,
 		    NO_IVEC * sizeof(struct ivec_dsp));
+#endif
 		sc->uh_idsp = (struct ivec_dsp *)iarea;
 
 		for (i = 0; i < NO_IVEC; i++) {
@@ -866,7 +876,12 @@ uba_attach(sc, iopagephys)
 	 * This is done with kmem_suballoc() but after that
 	 * never used in the vm system. Is it OK to do so?
 	 */
+#if defined(UVM)
+	(void)uvm_km_suballoc(kernel_map, &mini, &maxi, UBAIOPAGES * NBPG,
+	    FALSE, FALSE, NULL);
+#else
 	(void)kmem_suballoc(kernel_map, &mini, &maxi, UBAIOPAGES * NBPG, FALSE);
+#endif
 	pmap_map(mini, iopagephys, iopagephys + UBAIOPAGES * NBPG,
 	    VM_PROT_READ|VM_PROT_WRITE);
 	sc->uh_iopage = (void *)mini;
