@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.1 2001/06/05 09:25:05 bjh21 Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.2 2001/09/09 10:33:42 toshii Exp $	*/
 
 /* 
  * Copyright (c) 2000, 2001 Ben Harris
@@ -31,7 +31,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: db_trace.c,v 1.1 2001/06/05 09:25:05 bjh21 Exp $");
+__RCSID("$NetBSD: db_trace.c,v 1.2 2001/09/09 10:33:42 toshii Exp $");
 
 #include <sys/proc.h>
 #include <sys/user.h>
@@ -122,7 +122,7 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 #ifdef arm26
 			frame = (u_int32_t *)(u->u_pcb.pcb_sf->sf_r11);
 #else
-			frame = (u_int32_t *)(u->u_pcb.pcb_r11);
+			frame = (u_int32_t *)(u->u_pcb.pcb_un.un_32.pcb32_r11);
 #endif
 			(*pr)("at %p\n", frame);
 		} else
