@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.amigappc,v 1.6 2001/11/20 12:56:21 lukem Exp $
+#	$NetBSD: Makefile.amigappc,v 1.7 2001/12/01 14:12:58 aymeric Exp $
 
 # Makefile for NetBSD
 #
@@ -43,11 +43,11 @@ S!=	cd ../../../..; pwd
 .endif
 AMIGA=	$S/arch/amigappc
 
-HAVE_GCC28!=	${CC} --version | egrep "^(2\.8|egcs)" ; echo
+HAVE_EGCS!=	${CC} --version | egrep "^(2\.[89]|egcs)" ; echo
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -D_KERNEL_OPT -Damiga -DFPCOPROC
 CWARNFLAGS?=	 -Werror -Wreturn-type -Wpointer-arith
-.if (${HAVE_GCC28} != "")
+.if (${HAVE_EGCS} != "")
 CWARNFLAGS+=	-Wno-main
 .endif
 .if empty(IDENT:M-DPPC604E)
