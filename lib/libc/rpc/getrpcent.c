@@ -1,4 +1,4 @@
-/*	$NetBSD: getrpcent.c,v 1.10 1998/02/12 01:57:36 lukem Exp $	*/
+/*	$NetBSD: getrpcent.c,v 1.11 1998/02/13 05:52:22 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 #if 0
 static char *sccsid = "@(#)getrpcent.c 1.14 91/03/11 Copyr 1984 Sun Micro";
 #else
-__RCSID("$NetBSD: getrpcent.c,v 1.10 1998/02/12 01:57:36 lukem Exp $");
+__RCSID("$NetBSD: getrpcent.c,v 1.11 1998/02/13 05:52:22 lukem Exp $");
 #endif
 #endif
 
@@ -44,13 +44,18 @@ __RCSID("$NetBSD: getrpcent.c,v 1.10 1998/02/12 01:57:36 lukem Exp $");
  */
 
 #include "namespace.h"
+
+#include <sys/types.h>
+
+#include <netinet/in.h>
+#include <arpa/inet.h>
+
+#include <netdb.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <sys/types.h>
 #include <string.h>
+
 #include <rpc/rpc.h>
-#include <netdb.h>
-#include <arpa/inet.h>
 
 #ifdef __weak_alias
 __weak_alias(endrpcent,_endrpcent);
@@ -81,7 +86,7 @@ static struct rpcdata *_rpcdata __P((void));
 static struct rpcdata *
 _rpcdata()
 {
-	register struct rpcdata *d = rpcdata;
+	struct rpcdata *d = rpcdata;
 
 	if (d == 0) {
 		d = (struct rpcdata *)calloc(1, sizeof (struct rpcdata));
@@ -92,7 +97,7 @@ _rpcdata()
 
 struct rpcent *
 getrpcbynumber(number)
-	register int number;
+	int number;
 {
 	struct rpcent *rpc;
 
@@ -129,7 +134,7 @@ void
 setrpcent(f)
 	int f;
 {
-	register struct rpcdata *d = _rpcdata();
+	struct rpcdata *d = _rpcdata();
 
 	if (d == 0)
 		return;
@@ -143,7 +148,7 @@ setrpcent(f)
 void
 endrpcent()
 {
-	register struct rpcdata *d = _rpcdata();
+	struct rpcdata *d = _rpcdata();
 
 	if (d == 0)
 		return;
@@ -156,7 +161,7 @@ endrpcent()
 struct rpcent *
 getrpcent()
 {
-	register struct rpcdata *d = _rpcdata();
+	struct rpcdata *d = _rpcdata();
 
 	if (d == 0)
 		return(NULL);
@@ -172,9 +177,9 @@ interpret(val, len)
 	char *val;
 	int len;
 {
-	register struct rpcdata *d = _rpcdata();
+	struct rpcdata *d = _rpcdata();
 	char *p;
-	register char *cp, **q;
+	char *cp, **q;
 
 	if (d == 0)
 		return (0);
