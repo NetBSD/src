@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.50 1998/02/14 20:39:26 kleink Exp $	*/
+/*	$NetBSD: unistd.h,v 1.51 1998/02/18 18:24:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -125,6 +125,7 @@ mode_t	 getmode __P((const void *, mode_t));
 __pure int
 	 getpagesize __P((void));
 char	*getpass __P((const char *));
+pid_t	 getsid __P((pid_t));
 char	*getusershell __P((void));
 char	*getwd __P((char *));			/* obsoleted by getcwd() */
 int	 initgroups __P((const char *, gid_t));
