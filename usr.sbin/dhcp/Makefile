@@ -1,6 +1,6 @@
-# $NetBSD: Makefile,v 1.12 2001/08/03 14:13:55 drochner Exp $
+# $NetBSD: Makefile,v 1.13 2002/02/09 21:13:31 thorpej Exp $
 
 SUBDIR=	common minires dst omapip clientscript dhcpctl .WAIT
-SUBDIR+=	server client relay omshell
+SUBDIR+=	server client relay omshell share
 
 .include <bsd.subdir.mk>
