@@ -1,4 +1,4 @@
-/*	$NetBSD: idp_usrreq.c,v 1.6 1995/03/08 02:14:50 cgd Exp $	*/
+/*	$NetBSD: idp_usrreq.c,v 1.7 1995/06/13 08:36:58 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -80,7 +80,8 @@ idp_input(m, nsp)
 	if (ns_neteqnn(idp->idp_sna.x_net, ns_zeronet) && ifp) {
 		register struct ifaddr *ifa;
 
-		for (ifa = ifp->if_addrlist; ifa; ifa = ifa->ifa_next) {
+		for (ifa = ifp->if_addrlist.tqh_first; ifa != 0;
+		    ifa = ifa->ifa_list.tqe_next) {
 			if (ifa->ifa_addr->sa_family == AF_NS) {
 				idp_ns.sns_addr.x_net =
 					IA_SNS(ifa)->sns_addr.x_net;
@@ -94,8 +95,8 @@ idp_input(m, nsp)
 		m->m_pkthdr.len -= sizeof (struct idp);
 		m->m_data += sizeof (struct idp);
 	}
-	if (sbappendaddr(&nsp->nsp_socket->so_rcv, (struct sockaddr *)&idp_ns,
-	    m, (struct mbuf *)0) == 0)
+	if (sbappendaddr(&nsp->nsp_socket->so_rcv, snstosa(&idp_ns), m,
+	    (struct mbuf *)0) == 0)
 		goto bad;
 	sorwakeup(nsp->nsp_socket);
 	return;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_ip.c,v 1.12 1995/04/11 04:25:21 mycroft Exp $	*/
+/*	$NetBSD: ns_ip.c,v 1.13 1995/06/13 08:37:05 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -314,8 +314,8 @@ nsip_route(m)
 	register struct mbuf *m;
 {
 	register struct nsip_req *rq = mtod(m, struct nsip_req *);
-	struct sockaddr_ns *ns_dst = (struct sockaddr_ns *)&rq->rq_ns;
-	struct sockaddr_in *ip_dst = (struct sockaddr_in *)&rq->rq_ip;
+	struct sockaddr_ns *ns_dst = satosns(&rq->rq_ns);
+	struct sockaddr_in *ip_dst = satosin(&rq->rq_ip);
 	struct route ro;
 	struct ifnet_en *ifn;
 	struct sockaddr_in *src;
@@ -329,7 +329,7 @@ nsip_route(m)
 	 * Now, determine if we can get to the destination
 	 */
 	bzero((caddr_t)&ro, sizeof (ro));
-	ro.ro_dst = *(struct sockaddr *)ip_dst;
+	ro.ro_dst = *sintosa(ip_dst);
 	rtalloc(&ro);
 	if (ro.ro_rt == 0 || ro.ro_rt->rt_ifp == 0) {
 		return (ENETUNREACH);
@@ -343,7 +343,8 @@ nsip_route(m)
 		register struct in_ifaddr *ia;
 		struct ifnet *ifp = ro.ro_rt->rt_ifp;
 
-		for (ia = in_ifaddr; ia; ia = ia->ia_next)
+		for (ia = in_ifaddr.tqh_first; ia != 0;
+		    ia = ia->ia_list.tqe_next)
 			if (ia->ia_ifp == ifp)
 				break;
 		if (ia == 0)
@@ -352,7 +353,7 @@ nsip_route(m)
 			RTFREE(ro.ro_rt);
 			return (EADDRNOTAVAIL);
 		}
-		src = (struct sockaddr_in *)&ia->ia_addr;
+		src = satosin(&ia->ia_addr);
 	}
 
 	/*
@@ -376,7 +377,7 @@ nsip_route(m)
 	 * now configure this as a point to point link
 	 */
 	ifr.ifr_name[4] = '0' + nsipif.if_unit - 1;
-	ifr.ifr_dstaddr = * (struct sockaddr *) ns_dst;
+	ifr.ifr_dstaddr = *snstosa(ns_dst);
 	(void)ns_control((struct socket *)0, SIOCSIFDSTADDR, (caddr_t)&ifr,
 			(struct ifnet *)ifn);
 	satons_addr(ifr.ifr_addr).x_host = ns_thishost;
@@ -410,7 +411,7 @@ nsip_ctlinput(cmd, sa)
 		return;
 	if (sa->sa_family != AF_INET && sa->sa_family != AF_IMPLINK)
 		return;
-	sin = (struct sockaddr_in *)sa;
+	sin = satosin(sa);
 	if (sin->sin_addr.s_addr == INADDR_ANY)
 		return;
 
