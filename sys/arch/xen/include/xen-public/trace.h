@@ -1,11 +1,8 @@
-/*	$NetBSD: kbd.h,v 1.1 2004/03/11 21:44:08 cl Exp $	*/
+/* $NetBSD: trace.h,v 1.2 2005/03/09 22:39:20 bouyer Exp $ */
 
 /*
- *
- * Copyright (c) 2003, 2004 Keir Fraser (on behalf of the Xen team)
- * Copyright (c) 2003 James Scott, Intel Research Cambridge
- * All rights reserved.
- *
+ * Mark Williamson, (C) 2004 Intel Research Cambridge
+ * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
  * deal in the Software without restriction, including without limitation the
@@ -26,22 +23,33 @@
  */
 
 /******************************************************************************
- * kbd.h
- *
- * PS/2 interface definitions
- * Copyright (c) 2003 James Scott, Intel Research Cambridge
+ * trace.h
  */
 
-#ifndef __HYPERVISOR_KBD_H__
-#define __HYPERVISOR_KBD_H__
+#ifndef __XEN_PUBLIC_TRACE_H__
+#define __XEN_PUBLIC_TRACE_H__
 
-			 
-#define KBD_OP_WRITEOUTPUT   0
-#define KBD_OP_WRITECOMMAND  1
-#define KBD_OP_READ          2
+/* This structure represents a single trace buffer record. */
+struct t_rec {
+    u64 cycles;               /* 64 bit cycle counter timestamp */
+    u32 event;                /* 32 bit event ID                */
+    u32 d1, d2, d3, d4, d5;   /* event data items               */
+};
 
-#define KBD_CODE_SCANCODE(_r) ((unsigned char)((_r) & 0xff))
-#define KBD_CODE_STATUS(_r) ((unsigned char)(((_r) >> 8) & 0xff))
-#define KBD_CODE(_c, _s) ((int)(((_c) & 0xff)  | (((_s) & 0xff) << 8)))
+/*
+ * This structure contains the metadata for a single trace buffer.  The head
+ * field, indexes into an array of struct t_rec's.
+ */
+struct t_buf {
+    unsigned long data;      /* pointer to data area.  machine address
+                              * for convenience in user space code           */
 
-#endif
+    unsigned long size;      /* size of the data area, in t_recs             */
+    unsigned long head;      /* array index of the most recent record        */
+
+    /* Xen-private elements follow... */
+    struct t_rec *head_ptr; /* pointer to the head record                    */
+    struct t_rec *vdata;    /* virtual address pointer to data               */
+};
+
+#endif /* __XEN_PUBLIC_TRACE_H__ */

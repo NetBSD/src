@@ -1,4 +1,4 @@
-/* $NetBSD: xenkbcvar.h,v 1.1 2004/04/24 21:33:32 cl Exp $ */
+/*	$NetBSD: evtchn.h,v 1.2 2005/03/09 22:39:20 bouyer Exp $	*/
 
 /*
  *
@@ -31,19 +31,37 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef _XEN_EVENTS_H_
+#define _XEN_EVENTS_H_
 
-#ifndef _XEN_XENKBCVAR_H_
-#define _XEN_XENKBCVAR_H_
+#define	NR_IRQS		32
+#define NR_PIRQS	32 /* XXX is this enouth ? */
 
-struct xenkbc_softc {
-	struct device		sc_dev;		/* base device glue */
-	struct xenkbc_internal	*sc_xi;
+extern int evtchn_to_irq[];
+
+/* typedef unsigned int (*ev_handler_t)(int, struct pt_regs *); */
+typedef int (*ev_handler_t)(void *);
+
+void events_default_setup(void);
+void init_events(void);
+unsigned int do_event(int, struct intrframe *);
+int event_set_handler(int, ev_handler_t, void *, int);
+int event_remove_handler(int, ev_handler_t, void *);
+
+int bind_virq_to_irq(int);
+int bind_pirq_to_irq(int);
+void unbind_pirq_from_irq(int);
+void unbind_virq_from_irq(int);
+int bind_evtchn_to_irq(int);
+int unbind_evtchn_to_irq(int);
+
+struct pintrhand {
+	int pirq;
+	int irq;
+	int (*func)(void *);
+	void *arg;
 };
 
-struct xenkbc_attach_args {
-	const char 		*xa_device;
-};
+struct pintrhand *pirq_establish(int, int, int (*)(void *), void *, int);
 
-int xenkbc_cnattach(pckbport_slot_t);
-
-#endif /* _XEN_XENKBCVAR_H_ */
+#endif /*  _XEN_EVENTS_H_ */
