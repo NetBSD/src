@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.140 2002/03/05 16:01:25 simonb Exp $	*/
+/*	$NetBSD: pmap.c,v 1.141 2002/03/08 20:48:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.140 2002/03/05 16:01:25 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.141 2002/03/08 20:48:32 thorpej Exp $");
 
 /*
  *	Manages physical address maps.
@@ -248,8 +248,12 @@ pt_entry_t *pmap_pte(pmap_t, vaddr_t);
 /*
  * PV table management functions.
  */
-void	*pmap_pv_page_alloc(u_long, int, int);
-void	pmap_pv_page_free(void *, u_long, int);
+void	*pmap_pv_page_alloc(struct pool *, int);
+void	pmap_pv_page_free(struct pool *, void *);
+
+struct pool_allocator pmap_pv_page_allocator = {
+	pmap_pv_page_alloc, pmap_pv_page_free, 0,
+};
 
 #define	pmap_pv_alloc()		pool_get(&pmap_pv_pool, PR_NOWAIT)
 #define	pmap_pv_free(pv)	pool_put(&pmap_pv_pool, (pv))
@@ -352,9 +356,9 @@ pmap_bootstrap()
 	 * Initialize the pools.
 	 */
 	pool_init(&pmap_pmap_pool, sizeof(struct pmap), 0, 0, 0, "pmappl",
-	    0, pool_page_alloc_nointr, pool_page_free_nointr, M_VMPMAP);
+	    &pool_allocator_nointr);
 	pool_init(&pmap_pv_pool, sizeof(struct pv_entry), 0, 0, 0, "pvpl",
-	    0, pmap_pv_page_alloc, pmap_pv_page_free, M_VMPMAP);
+	    &pmap_pv_page_allocator);
 
 	/*
 	 * Initialize the kernel pmap.
@@ -2081,7 +2085,7 @@ pmap_remove_pv(pmap, va, pa)
  *	Allocate a page for the pv_entry pool.
  */
 void *
-pmap_pv_page_alloc(u_long size, int flags, int mtype)
+pmap_pv_page_alloc(struct pool *pp, int flags)
 {
 	struct vm_page *pg;
 
@@ -2098,7 +2102,7 @@ pmap_pv_page_alloc(u_long size, int flags, int mtype)
  *	Free a pv_entry pool page.
  */
 void
-pmap_pv_page_free(void *v, u_long size, int mtype)
+pmap_pv_page_free(struct pool *pp, void *v)
 {
 	uvm_pagefree(PHYS_TO_VM_PAGE(MIPS_KSEG0_TO_PHYS((vaddr_t)v)));
 }

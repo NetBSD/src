@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_node.c,v 1.9 2001/11/12 23:04:10 lukem Exp $	*/
+/*	$NetBSD: filecore_node.c,v 1.10 2002/03/08 20:48:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 Andrew McMurry
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_node.c,v 1.9 2001/11/12 23:04:10 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_node.c,v 1.10 2002/03/08 20:48:40 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,8 +80,7 @@ filecore_init()
 	    M_WAITOK, &filecorehash);
 	simple_lock_init(&filecore_ihash_slock);
 	pool_init(&filecore_node_pool, sizeof(struct filecore_node),
-	    0, 0, 0, "filecrnopl", 0, pool_page_alloc_nointr,
-	    pool_page_free_nointr, M_FILECORENODE);
+	    0, 0, 0, "filecrnopl", &pool_allocator_nointr);
 }
 
 /*

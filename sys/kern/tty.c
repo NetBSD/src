@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.132 2002/03/04 02:32:58 simonb Exp $	*/
+/*	$NetBSD: tty.c,v 1.133 2002/03/08 20:48:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.132 2002/03/04 02:32:58 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.133 2002/03/08 20:48:41 thorpej Exp $");
 
 #include "opt_uconsole.h"
 
@@ -2102,7 +2102,7 @@ tty_init(void)
 	tty_count = 0;
 
 	pool_init(&tty_pool, sizeof(struct tty), 0, 0, 0, "ttypl",
-	    0, pool_page_alloc_nointr, pool_page_free_nointr, M_TTYS);
+	    &pool_allocator_nointr);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: advfsops.c,v 1.50 2001/11/12 22:59:18 lukem Exp $	*/
+/*	$NetBSD: advfsops.c,v 1.51 2002/03/08 20:48:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.50 2001/11/12 22:59:18 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.51 2002/03/08 20:48:27 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -811,8 +811,7 @@ adosfs_init()
 	simple_lock_init(&adosfs_hashlock);
 
 	pool_init(&adosfs_node_pool, sizeof(struct anode), 0, 0, 0,
-	    "adosndpl", 0, pool_page_alloc_nointr, pool_page_free_nointr,
-	    M_ANODE);
+	    "adosndpl", &pool_allocator_nointr);
 }
 
 void
