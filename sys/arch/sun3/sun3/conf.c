@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.24 1994/11/23 06:45:48 gwr Exp $	*/
+/*	$NetBSD: conf.c,v 1.25 1994/11/23 08:15:58 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1994 Adam Glass, Gordon W. Ross
@@ -845,18 +845,20 @@ int promcnprobe(), promcninit(), promcngetc(), promcnputc();
 int zscnprobe_a(), zscnprobe_b(), zscninit(), zscngetc(), zscnputc();
 #endif
 
+extern void nullcnpollc();
+
 struct	consdev constab[] = {
 #if	NKD
-	{ kdcnprobe, kdcninit, kdcngetc, kdcnputc },
+	{ kdcnprobe, kdcninit, kdcngetc, kdcnputc, nullcnpollc },
 #endif
 #if NZS
-	{ zscnprobe_a, zscninit, zscngetc, zscnputc },
+	{ zscnprobe_a, zscninit, zscngetc, zscnputc, nullcnpollc },
 #endif
 #if	NZS
-	{ zscnprobe_b, zscninit, zscngetc, zscnputc },
+	{ zscnprobe_b, zscninit, zscngetc, zscnputc, nullcnpollc },
 #endif
 #if NPROM
-	{ promcnprobe, promcninit, promcngetc, promcnputc },
+	{ promcnprobe, promcninit, promcngetc, promcnputc, nullcnpollc },
 #endif
     { 0 }	/* End marker. */
 };
