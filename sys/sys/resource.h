@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)resource.h	7.5 (Berkeley) 3/17/91
- *	$Id: resource.h,v 1.4 1993/08/23 16:01:56 mycroft Exp $
+ *	$Id: resource.h,v 1.5 1993/12/20 12:43:27 cgd Exp $
  */
 
 #ifndef _SYS_RESOURCE_H_
@@ -97,6 +97,12 @@ struct rlimit {
 	long	rlim_max;		/* maximum value for rlim_cur */
 };
 
+/* Load average structure. */
+struct loadavg {
+	fixpt_t ldavg[3];
+	long fscale;
+};
+
 #ifndef KERNEL
 #include <sys/cdefs.h>
 
@@ -107,6 +113,13 @@ int	getrusage __P((int, struct rusage *));
 int	setpriority __P((int, int, int));
 int	setrlimit __P((int, const struct rlimit *));
 __END_DECLS
+
+#else /* !KERNEL */
+
+extern struct loadavg averunnable;
+#if defined(COMPAT_43) && (defined(vax) || defined(tahoe))
+extern double avenrun[3];
+#endif /* COMPAT_43 */
 
 #endif	/* !KERNEL */
 
