@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.15 2003/08/07 10:04:23 agc Exp $	 */
+/* $NetBSD: main.c,v 1.16 2003/10/20 12:04:38 dsl Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -64,7 +64,7 @@ main(int argc, char **argv)
 {
 	int ch;
 	int ret = 0;
-	char *optstring = "b:dfi:m:npy";
+	char *optstring = "b:dfi:m:npqy";
 
 	sync();
 	skipclean = 1;
@@ -104,6 +104,9 @@ main(int argc, char **argv)
 
 		case 'p':
 			preen++;
+			break;
+
+		case 'q':		/* Quiet not implemented */
 			break;
 
 		case 'y':
