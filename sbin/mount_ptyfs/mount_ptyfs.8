@@ -1,0 +1,58 @@
+.\"	$NetBSD: mount_ptyfs.8,v 1.1 2004/11/11 01:42:17 christos Exp $
+.\"
+.Dd November 8, 2004
+.Dt MOUNT_PTYFS 8
+.Os
+.Sh NAME
+.Nm mount_ptyfs
+.Nd mount the /dev/pts file system
+.Sh SYNOPSIS
+.Nm
+.Op Fl o Ar options
+.Ar ptyfs
+.Ar mount_point
+.Sh DESCRIPTION
+The
+.Nm
+command attaches an instance of the pseudo terminal device filesystem
+the global filesystem namespace.
+The conventional mount point is
+.Pa /dev/pts .
+This command is normally executed by
+.Xr mount 8
+at boot time.
+.Pp
+The filesystem contains pseudo terminal slave device nodes which are
+allocated dynamically via 
+.Xr ptm 4 ,
+or they are already open via traditional BSD style ptys.
+.Pp
+The options are as follows:
+.Bl -tag -width indent
+.It Fl o
+Options are specified with a
+.Fl o
+flag followed by a comma separated string of options.
+See the
+.Xr mount 8
+man page for possible options and their meanings.
+.El
+.Sh FILES
+.Bl -tag -width n -compact
+.It Pa n
+The 'nth pseudo terminal device in use.
+.El
+.Sh SEE ALSO
+.Xr mount 2 ,
+.Xr unmount 2 ,
+.Xr ptm 4 ,
+.Xr fstab 5 ,
+.Xr mount 8 ,
+.Sh HISTORY
+The
+.Nm
+utility first appeared in
+.Nx 3.0 .
+.Sh BUGS
+This filesystem may not be NFS-exported.
+This filesystem is experimental.
