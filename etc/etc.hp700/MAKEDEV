@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.5 2002/10/04 18:53:30 elric Exp $
+#	$NetBSD: MAKEDEV,v 1.6 2002/10/21 03:58:38 lukem Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -67,6 +67,16 @@
 PATH=/sbin:/bin:/usr/sbin:/usr/bin
 umask 77
 
+# Check if we have fdesc mounted
+if [ -d fd ]; then
+	case "`df fd`" in
+	*fdesc*) nofdesc=false;;
+	*) nofdesc=true;;
+	esac
+else
+	nofdesc=true
+fi
+
 # set this to echo for Echo-Only debugging
 eo=
 
@@ -79,6 +89,9 @@ mk() {
 	return 0
 }
 
+makedev()
+{
+
 for arg
 do
 
@@ -88,18 +101,18 @@ unit=`expr $arg : '[a-z][a-z]*\([0-9][0-9]*\)'`
 case $arg in
 
 all)
-	sh $0 std pty0 pty1 pty2 pty3
-	sh $0 raid0 raid1 raid2 raid3
-	sh $0 sd0 sd1 sd2 sd3 sd4 sd5 sd6
-	sh $0 cd0 cd1 st0 st1 st2 md0 md1
-	sh $0 vnd0 vnd1 vnd2 vnd3 ccd0 ccd1 ccd2 ccd3
-	sh $0 cgd0 cgd1 cgd2 cgd3
-	sh $0 bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7
-	sh $0 tun0 tun1
-	sh $0 lkm random
-	sh $0 scsibus0 scsibus1 scsibus2 scsibus3
-	sh $0 local
-	sh $0 systrace
+	makedev std pty0 pty1 pty2 pty3
+	makedev raid0 raid1 raid2 raid3
+	makedev sd0 sd1 sd2 sd3 sd4 sd5 sd6
+	makedev cd0 cd1 st0 st1 st2 md0 md1
+	makedev vnd0 vnd1 vnd2 vnd3 ccd0 ccd1 ccd2 ccd3
+	makedev cgd0 cgd1 cgd2 cgd3
+	makedev bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7
+	makedev tun0 tun1
+	makedev lkm random
+	makedev scsibus0 scsibus1 scsibus2 scsibus3
+	makedev local
+	makedev systrace
 	;;
 
 std)
@@ -127,45 +140,30 @@ tun*)
 	;;
 
 pty*)
-	class=${arg#pty}
-	case $unit in
-	0)      name=p;;
-	1)      name=q;;
-	2)      name=r;;
-	3)      name=s;;
-	4)      name=t;;
-	5)      name=u;;
-	6)      name=v;;
-	7)      name=w;;
-	8)      name=x;;
-	9)      name=y;;
-	10)     name=z;;
-	11)     name=P;;
-	12)     name=Q;;
-	13)     name=R;;
-	14)     name=S;;
-	15)     name=T;;
-	*)      echo "$0: $i: pty unit must be between 0 and 15"
-	        continue ;;
+	class=${i#pty}
+	name=`echo pqrstuvwxyzPQRST | dd bs=1 count=1 skip=$class 2>/dev/null`
+	case $name in
+	v)	echo "$0: $i: pty unit conflicts with console ttyv0 device."
+		continue;;
+	?)	;;
+	*)	echo "$0: $i: pty unit must be between 0 and 15"
+		continue ;;
 	esac
-	rm -f tty$name[0-9a-f] pty$name[0-9a-f]
-	for j in 0 1 2 3 4 5 6 7 8 9 a b c d e f
+	rm -f tty$name[0-9a-zA-Z] pty$name[0-9a-zA-Z]
+	jn=0
+	while [ $jn -lt 62 ]
 	do
-		case $j in
-		[0-9])  jn=$j ;;
-		a)      jn=10 ;;
-		b)      jn=11 ;;
-		c)      jn=12 ;;
-		d)      jn=13 ;;
-		e)      jn=14 ;;
-		f)      jn=15 ;;
-		esac
-		unit=$(($class * 16 + $jn))
+		j=`echo 0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ | dd bs=1 count=1 skip=$jn 2>/dev/null`
+		skip=0
+		if [ $jn -ge 16 ]; then
+			skip=$(($class * 30 + 256 - 16))
+		fi
+		unit=$(($class * 62 + $jn + $skip))
 		mknod tty$name$j c 4 $unit
 		mknod pty$name$j c 5 $unit
+		jn=$(($jn + 1))
 	done
-        chgrp wheel tty$name? pty$name?
-        chmod 666 tty$name? pty$name?
+	chmod 666 tty$name[0-9a-zA-Z] pty$name[0-9a-zA-Z]
 	;;
 
 raid*)
@@ -200,18 +198,32 @@ ccd*|cgd*|cd*|fd*|sd*|vnd*)
 	;;
 
 st*)
-	name=st; blk=5; chr=11;
+	name=st; blk=5; chr=11
 	mk   r$name$unit c $chr $(($unit * 16 + 0)) 660 operator
 	mk  nr$name$unit c $chr $(($unit * 16 + 1)) 660 operator
 	mk  er$name$unit c $chr $(($unit * 16 + 2)) 660 operator
 	mk enr$name$unit c $chr $(($unit * 16 + 3)) 660 operator
 	;;
 
+fd)
+	if $nofdesc; then
+		rm -f fd/*
+		mkdir fd 2>/dev/null
+		n=0
+		while [ $n -lt 64 ]; do
+			mknod fd/$n c 16 $n
+			n=$(($n + 1))
+		done
+		chmod 755 fd
+		chmod 666 fd/*
+	fi
+	;;
+
 # XXX fredette - MD devices could go here:
 
 md*)
 # XXX fredette - need to put in MD:
-#	name=md; blk=13; chr=52;
+#	name=md; blk=13; chr=52
 #	mk  md${unit}a b $blk $(($unit * 8 + 0)) 640 operator
 #	mk  md${unit}c b $blk $(($unit * 8 + 2)) 640 operator
 ##	mk rmd${unit}a c $chr $(($unit * 8 + 0)) 640 operator
@@ -229,7 +241,7 @@ random)
 
 scsibus*)
 # XXX fredette - need to put in scsibus:
-#	mk scsibus${unit} c 81 $unit 644 wheel
+#	mk scsibus${unit} c 81 $unit 644
 	;;
 
 systrace)
@@ -252,3 +264,6 @@ local)
 esac
 done
 
+}
+
+makedev $*
