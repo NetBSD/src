@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.44 2000/01/27 23:39:40 christos Exp $	*/
+/*	$NetBSD: parser.c,v 1.44.4.1 2001/11/25 20:20:46 he Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.44 2000/01/27 23:39:40 christos Exp $");
+__RCSID("$NetBSD: parser.c,v 1.44.4.1 2001/11/25 20:20:46 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -86,6 +86,7 @@ struct heredoc {
 
 
 
+static int noalias = 0;		/* when set, don't handle aliases */
 struct heredoc *heredoclist;	/* list of here documents to read */
 int parsebackquote;		/* nonzero if we are inside backquotes */
 int doprompt;			/* if set, prompt the user */
@@ -416,6 +417,7 @@ TRACE(("expecting DO got %s %s\n", tokname[got], got == TWORD ? wordtext : ""));
 		if (lasttoken != TWORD || ! equal(wordtext, "in"))
 			synerror("expecting \"in\"");
 		cpp = &n1->ncase.cases;
+		noalias = 1;
 		checkkwd = 2, readtoken();
 		do {
 			*cpp = cp = (union node *)stalloc(sizeof (struct nclist));
@@ -432,19 +434,26 @@ TRACE(("expecting DO got %s %s\n", tokname[got], got == TWORD ? wordtext : ""));
 				readtoken();
 			}
 			ap->narg.next = NULL;
-			if (lasttoken != TRP)
+			noalias = 0;
+			if (lasttoken != TRP) {
 				synexpect(TRP);
+			}
 			cp->nclist.body = list(0);
 
 			checkkwd = 2;
 			if ((t = readtoken()) != TESAC) {
-				if (t != TENDCASE)
+				if (t != TENDCASE) {
+					noalias = 0;
 					synexpect(TENDCASE);
-				else
-					checkkwd = 2, readtoken();
+				} else {
+					noalias = 1;
+					checkkwd = 2;
+					readtoken();
+				}
 			}
 			cpp = &cp->nclist.next;
 		} while(lasttoken != TESAC);
+		noalias = 0;
 		*cpp = NULL;
 		checkkwd = 1;
 		break;
@@ -704,10 +713,10 @@ STATIC int
 readtoken() {
 	int t;
 	int savecheckkwd = checkkwd;
-	struct alias *ap;
 #ifdef DEBUG
 	int alreadyseen = tokpushback;
 #endif
+	struct alias *ap;
 
 	top:
 	t = xxreadtoken();
@@ -740,7 +749,8 @@ readtoken() {
 					goto out;
 				}
 			}
-			if ((ap = lookupalias(wordtext, 1)) != NULL) {
+			if(!noalias &&
+			    (ap = lookupalias(wordtext, 1)) != NULL) {
 				pushstring(ap->val, strlen(ap->val), ap);
 				checkkwd = savecheckkwd;
 				goto top;
