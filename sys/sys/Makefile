@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.27 2001/06/16 12:02:14 jdolecek Exp $
+#	$NetBSD: Makefile,v 1.28 2001/09/11 06:53:59 simonb Exp $
 
 KDIR=	/sys/sys
 INCSDIR= /usr/include/sys
 
-INCS=	acct.h ansi.h ataio.h audioio.h buf.h bswap.h callout.h cdefs.h \
-	cdefs_aout.h \
+INCS=	acct.h agpio.h ansi.h ataio.h audioio.h buf.h bswap.h \
+	callout.h cdefs.h cdefs_aout.h \
 	cdefs_elf.h cdio.h chio.h clist.h conf.h core.h device.h dir.h \
 	dirent.h disk.h disklabel.h disklabel_mbr.h dkbad.h dkio.h dkstat.h \
 	domain.h dvdio.h endian.h envsys.h errno.h exec.h exec_aout.h \
