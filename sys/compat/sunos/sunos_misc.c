@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_misc.c,v 1.61 1996/02/18 14:46:25 pk Exp $	*/
+/*	$NetBSD: sunos_misc.c,v 1.62 1996/02/25 13:27:01 pk Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -303,6 +303,10 @@ sunos_sys_mount(p, v, retval)
 				na.flags |= sunnfs_flgtab[n].bsd_flg;
 		na.wsize = sna.wsize;
 		na.rsize = sna.rsize;
+		if (na.flags & NFSMNT_RSIZE) {
+			na.flags |= NFSMNT_READDIRSIZE;
+			na.readdirsize = na.rsize;
+		}
 		na.timeo = sna.timeo;
 		na.retrans = sna.retrans;
 		na.hostname = sna.hostname;
