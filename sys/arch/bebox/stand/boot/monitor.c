@@ -1,4 +1,4 @@
-/*	$Id: monitor.c,v 1.1 1998/01/16 04:17:56 sakamoto Exp $	*/
+/*	$NetBSD: monitor.c,v 1.2 1999/02/15 04:38:06 sakamoto Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.

@@ -1,4 +1,4 @@
-/*	$Id: ld.script,v 1.1 1998/01/16 04:17:54 sakamoto Exp $	*/
+/*	$NetBSD: ld.script,v 1.2 1999/02/15 04:38:06 sakamoto Exp $	*/
 
 OUTPUT_ARCH(powerpc)
 SEARCH_DIR(.); SEARCH_DIR(libc);

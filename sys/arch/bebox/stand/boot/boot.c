@@ -1,4 +1,4 @@
-/*	$Id: boot.c,v 1.5 1998/10/28 02:47:35 sakamoto Exp $	*/
+/*	$NetBSD: boot.c,v 1.6 1999/02/15 04:38:06 sakamoto Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.

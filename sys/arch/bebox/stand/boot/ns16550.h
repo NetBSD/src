@@ -1,4 +1,4 @@
-/*	$Id: ns16550.h,v 1.2 1998/01/19 03:01:03 sakamoto Exp $	*/
+/*	$NetBSD: ns16550.h,v 1.3 1999/02/15 04:38:06 sakamoto Exp $	*/
 
 /*-
  * Copyright (C) 1995-1997 Gary Thomas (gdt@linuxppc.org)

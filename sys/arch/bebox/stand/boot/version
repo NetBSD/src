@@ -1,4 +1,4 @@
-$Id: version,v 1.2 1998/01/19 03:01:05 sakamoto Exp $
+$NetBSD: version,v 1.3 1999/02/15 04:38:06 sakamoto Exp $
 
 1.1:		Boot program for BeBox; initial revision
 1.2:		check BUS FREQ, add clock information

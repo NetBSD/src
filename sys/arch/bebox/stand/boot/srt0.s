@@ -1,4 +1,4 @@
-/*	$Id: srt0.s,v 1.1 1998/01/16 04:18:02 sakamoto Exp $	*/
+/*	$NetBSD: srt0.s,v 1.2 1999/02/15 04:38:06 sakamoto Exp $	*/
 
 /*-
  * Copyright (C) 1995-1997 Gary Thomas (gdt@linuxppc.org)

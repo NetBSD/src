@@ -1,4 +1,4 @@
-/*	$Id: kbd.c,v 1.1 1998/10/26 00:45:47 sakamoto Exp $	*/
+/*	$NetBSD: kbd.c,v 1.2 1999/02/15 04:38:06 sakamoto Exp $	*/
 
 /*-
  * Copyright (C) 1995-1997 Gary Thomas (gdt@linuxppc.org)

@@ -1,4 +1,4 @@
-/*	$Id: inkernel.c,v 1.1 1998/01/16 04:17:49 sakamoto Exp $	*/
+/*	$NetBSD: inkernel.c,v 1.2 1999/02/15 04:38:06 sakamoto Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.

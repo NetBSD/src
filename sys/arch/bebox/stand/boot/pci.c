@@ -1,4 +1,4 @@
-/*	$Id: pci.c,v 1.2 1998/10/28 02:47:35 sakamoto Exp $	*/
+/*	$NetBSD: pci.c,v 1.3 1999/02/15 04:38:06 sakamoto Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
