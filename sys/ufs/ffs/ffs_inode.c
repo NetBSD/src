@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.24 1998/10/23 00:31:28 thorpej Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.25 1998/11/12 19:54:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -36,6 +36,7 @@
  */
 
 #if defined(_KERNEL) && !defined(_LKM)
+#include "opt_ffs.h"
 #include "opt_quota.h"
 #include "opt_uvm.h"
 #endif
