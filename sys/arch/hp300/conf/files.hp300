@@ -1,4 +1,4 @@
-#	$NetBSD: files.hp300,v 1.22 1997/01/30 22:11:19 scottr Exp $
+#	$NetBSD: files.hp300,v 1.23 1997/03/17 19:46:43 gwr Exp $
 #
 # hp300-specific configuration info
 
@@ -176,6 +176,8 @@ file	arch/hp300/hp300/disksubr.c
 file	arch/hp300/dev/dma.c
 
 file	arch/m68k/m68k/copy.s
+file	arch/m68k/m68k/bcopy.s
+file	arch/m68k/m68k/copypage.s
 
 file	dev/cons.c
 file	dev/cninit.c
