@@ -1,4 +1,4 @@
-/*	$NetBSD: utilities.c,v 1.9 2000/06/22 07:11:11 thorpej Exp $	*/
+/*	$NetBSD: utilities.c,v 1.10 2002/06/14 00:30:57 wiz Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)utilities.c	8.3 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: utilities.c,v 1.9 2000/06/22 07:11:11 thorpej Exp $");
+__RCSID("$NetBSD: utilities.c,v 1.10 2002/06/14 00:30:57 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -87,9 +87,9 @@ int	prettydump;
 
     void
 upcase(argument)
-    register char *argument;
+    char *argument;
 {
-    register int c;
+    int c;
 
     while ((c = *argument) != 0) {
 	if (islower(c)) {
@@ -130,7 +130,7 @@ unsigned char NetTraceFile[256] = "(standard output)";
 
     void
 SetNetTrace(file)
-    register char *file;
+    char *file;
 {
     if (NetTrace && NetTrace != stdout)
 	fclose(NetTrace);
@@ -210,7 +210,7 @@ printoption(direction, cmd, option)
 		else
 		    fprintf(NetTrace, "%s IAC %d", direction, option);
 	} else {
-		register char *fmt;
+		char *fmt;
 		fmt = (cmd == WILL) ? "WILL" : (cmd == WONT) ? "WONT" :
 			(cmd == DO) ? "DO" : (cmd == DONT) ? "DONT" : 0;
 		if (fmt) {
@@ -236,7 +236,7 @@ printoption(direction, cmd, option)
     void
 optionstatus()
 {
-    register int i;
+    int i;
     extern char will_wont_resp[], do_dont_resp[];
 
     for (i = 0; i < 256; i++) {
@@ -316,7 +316,7 @@ printsub(direction, pointer, length)
     unsigned char *pointer;	/* where suboption data sits */
     int		  length;	/* length of suboption data */
 {
-    register int i;
+    int i;
 #ifdef	ENCRYPTION
     char buf[512];
 #endif	/* ENCRYPTION */
@@ -328,7 +328,7 @@ printsub(direction, pointer, length)
 	    fprintf(NetTrace, "%s IAC SB ",
 				(direction == '<')? "RCVD":"SENT");
 	    if (length >= 3) {
-		register int j;
+		int j;
 
 		i = pointer[length-2];
 		j = pointer[length-1];
@@ -682,8 +682,8 @@ printsub(direction, pointer, length)
 	    break;
 
 	case TELOPT_STATUS: {
-	    register char *cp;
-	    register int j, k;
+	    char *cp;
+	    int j, k;
 
 	    fprintf(NetTrace, "STATUS");
 
@@ -796,7 +796,7 @@ printsub(direction, pointer, length)
 		fprintf(NetTrace, "INFO ");
 	    env_common:
 		{
-		    register int noquote = 2;
+		    int noquote = 2;
 #if defined(ENV_HACK) && defined(OLD_ENVIRON)
 		    extern int old_env_var, old_env_value;
 #endif
