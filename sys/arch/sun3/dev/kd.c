@@ -1,4 +1,4 @@
-/*	$NetBSD: kd.c,v 1.25 1997/02/10 23:26:21 gwr Exp $	*/
+/*	$NetBSD: kd.c,v 1.26 1998/02/26 16:02:02 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -61,6 +61,8 @@
 #include <dev/cons.h>
 #include <dev/sun/kbd_xlate.h>
 #include <sun3/dev/zs_cons.h>
+
+#include "fb.h"
 
 extern void fb_unblank __P((void)); /* XXX */
 
@@ -494,7 +496,9 @@ kdcnpollc(dev, on)
 
 	if (on) {
 		/* Entering debugger. */
+#if NFB > 0
 		fb_unblank();
+#endif
 		/* Clear shift keys too. */
 		ks->kbd_modbits = 0;
 	} else {
