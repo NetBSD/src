@@ -1,4 +1,4 @@
-/*	$NetBSD: print-udp.c,v 1.5 2002/05/31 09:45:46 itojun Exp $	*/
+/*	$NetBSD: print-udp.c,v 1.6 2002/09/10 01:47:31 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -27,7 +27,7 @@
 static const char rcsid[] =
     "@(#) Header: /tcpdump/master/tcpdump/print-udp.c,v 1.103 2001/12/03 02:06:10 itojun Exp (LBL)";
 #else
-__RCSID("$NetBSD: print-udp.c,v 1.5 2002/05/31 09:45:46 itojun Exp $");
+__RCSID("$NetBSD: print-udp.c,v 1.6 2002/09/10 01:47:31 itojun Exp $");
 #endif
 #endif
 
@@ -601,7 +601,7 @@ udp_print(register const u_char *bp, u_int length,
 
 	if (!qflag) {
 #define ISPORT(p) (dport == (p) || sport == (p))
-		if (ISPORT(NAMESERVER_PORT))
+		if (ISPORT(NAMESERVER_PORT) || ISPORT(MULTICASTDNS_PORT))
 			ns_print((const u_char *)(up + 1), length);
 		else if (ISPORT(TIMED_PORT))
 			timed_print((const u_char *)(up + 1), length);
