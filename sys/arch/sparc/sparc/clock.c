@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.56 1997/12/03 22:32:05 mjacob Exp $ */
+/*	$NetBSD: clock.c,v 1.57 1997/12/19 22:53:10 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -288,6 +288,10 @@ oclockattach(parent, self, aux)
 			break;
 		}
 	}
+
+	/* link interrupt handlers */
+	intr_establish(10, &level10);
+	intr_establish(14, &level14);
 #endif /* SUN4 */
 }
 
