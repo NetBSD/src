@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_new.c,v 1.1 2003/04/18 11:08:25 scw Exp $	*/
+/*	$NetBSD: pmap_new.c,v 1.2 2003/04/18 11:55:26 scw Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -210,9 +210,8 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_new.c,v 1.1 2003/04/18 11:08:25 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_new.c,v 1.2 2003/04/18 11:55:26 scw Exp $");
 
-#define PMAP_DEBUG
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
 	if (pmap_debug_level >= (_lev_)) \
