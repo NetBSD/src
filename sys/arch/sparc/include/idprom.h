@@ -28,29 +28,28 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: idprom.h,v 1.1 1994/08/08 05:43:56 deraadt Exp $
+ * $Id: idprom.h,v 1.2 1994/08/20 01:20:28 deraadt Exp $
  */
 
 /*
- * structure/definitions for the 32 byte id prom found in Sun3 and
- * Sun4 machines.
+ * ID prom format.  The ``host id'' is set up by taking the machine
+ * ID as the top byte and the hostid field as the remaining three.
+ * The id_xxx0 field appears to contain some other number.  The id_xxx1
+ * contains a bunch of 00's and a5's on my machines, suggesting it is
+ * not actually used.  The checksum seems to include them, however.
  */
 struct idprom {
-	u_char	idp_format;
-	u_char	idp_machtype;
-	u_char	idp_etheraddr[6];
-	u_long	idp_date;
-	u_char	idp_serialnum[3];
-	u_char	idp_checksum;
-	u_char	idp_reserved[16];
+	u_char	id_format;		/* format identifier (= 1) */
+	u_char	id_machine;		/* machine type (see cpu.h) */
+	u_char	id_ether[6];		/* ethernet address */
+	long	id_date;		/* date of manufacture */
+	u_char	id_hostid[3];		/* ``host id'' bytes */
+	u_char	id_checksum;		/* xor of everything else */
+	char	id_undef[16];		/* undefined */
 };
 
 #define IDPROM_VERSION 1
-#define IDPROM_SIZE	(sizeof(struct idprom))
 #define SUN4_100	0x22
 #define SUN4_200	0x21
 #define SUN4_300	0x23
 #define SUN4_400	0x24
-
-int idprom_fetch __P((struct idprom *, int));
-void idprom_etheraddr __P((u_char *));
