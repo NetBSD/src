@@ -1,4 +1,4 @@
-/* $NetBSD: xd.c,v 1.8 1995/09/25 16:02:09 chuck Exp $ */
+/* $NetBSD: xd.c,v 1.9 1995/09/25 20:12:44 chuck Exp $ */
 
 /*
  *
@@ -36,7 +36,7 @@
  * x d . c   x y l o g i c s   7 5 3 / 7 0 5 3   v m e / s m d   d r i v e r
  *
  * author: Chuck Cranor <chuck@ccrc.wustl.edu>
- * id: $Id: xd.c,v 1.8 1995/09/25 16:02:09 chuck Exp $
+ * id: $Id: xd.c,v 1.9 1995/09/25 20:12:44 chuck Exp $
  * started: 27-Feb-95
  * references: [1] Xylogics Model 753 User's Manual
  *                 part number: 166-753-001, Revision B, May 21, 1988.
@@ -246,7 +246,7 @@ int	xdmatch __P((struct device *, void *, void *));
 void	xdattach __P((struct device *, struct device *, void *));
 
 static	void xddummystrat __P((struct buf *));
-void	xdgetdisklabel __P((struct xd_softc *, void *));
+int	xdgetdisklabel __P((struct xd_softc *, void *));
 
 /*
  * cfdrivers: device driver interface to autoconfig
@@ -267,6 +267,16 @@ struct xdc_attach_args {	/* this is the "aux" args to xdattach */
 	int	booting;	/* are we booting or not? */
 };
 
+/*
+ * dkdriver
+ */
+
+struct dkdriver xddkdriver = {xdstrategy};
+
+/*
+ * start: disk label fix code (XXX)
+ */
+
 static void *xd_labeldata;
 
 static void
@@ -280,7 +290,7 @@ xddummystrat(bp)
 	bp->b_flags &= ~B_BUSY;
 }
 
-void
+int
 xdgetdisklabel(xd, b)
 	struct xd_softc *xd;
 	void *b;
@@ -299,15 +309,21 @@ xdgetdisklabel(xd, b)
 			    &xd->sc_dk.dk_label, &xd->sc_dk.dk_cpulabel);
 	if (err) {
 		printf("%s: %s\n", xd->sc_dev.dv_xname, err);
-		return;
+		return(XD_ERR_FAIL);
 	}
 
 	/* Ok, we have the label; fill in `pcyl' if there's SunOS magic */
 	sdl = (struct sun_disklabel *)xd->sc_dk.dk_cpulabel.cd_block;
 	if (sdl->sl_magic == SUN_DKMAGIC)
 		xd->pcyl = sdl->sl_pcylinders;
-	else
-		printf("%s: no `pcyl' in label\n", xd->sc_dev.dv_xname);
+	else {
+		printf("%s: WARNING: no `pcyl' in disk label.\n", 
+							xd->sc_dev.dv_xname);
+		xd->pcyl = xd->sc_dk.dk_label.d_ncylinders +
+			xd->sc_dk.dk_label.d_acylinders;
+		printf("%s: WARNING: guessing pcyl=%d (ncyl+acyl)\n", 
+			xd->sc_dev.dv_xname, xd->pcyl);
+	}
 
 	xd->ncyl = xd->sc_dk.dk_label.d_ncylinders;
 	xd->acyl = xd->sc_dk.dk_label.d_acylinders;
@@ -316,12 +332,12 @@ xdgetdisklabel(xd, b)
 	xd->sectpercyl = xd->nhead * xd->nsect;
 	xd->sc_dk.dk_label.d_secsize = XDFM_BPS; /* not handled by
 						  * sun->bsd */
+	return(XD_ERR_AOK);
 }
 
 /*
- * dkdriver
+ * end: disk label fix code (XXX)
  */
-struct dkdriver xddkdriver = {xdstrategy};
 
 /*
  * a u t o c o n f i g   f u n c t i o n s
@@ -637,7 +653,8 @@ xdattach(parent, self, aux)
 	newstate = XD_DRIVE_NOLABEL;
 
 	xd->hw_spt = spt;
-	xdgetdisklabel(xd, xa->dvmabuf);
+	if (xdgetdisklabel(xd, xa->dvmabuf) != XD_ERR_AOK)
+		goto done;
 
 	/* inform the user of what is up */
 	printf("%s: <%s>, pcyl %d, hw_spt %d\n", xd->sc_dev.dv_xname,
