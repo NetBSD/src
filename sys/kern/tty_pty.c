@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.56.2.7 2002/09/24 18:53:27 jdolecek Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.56.2.8 2002/09/29 09:59:15 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.56.2.7 2002/09/24 18:53:27 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.56.2.8 2002/09/29 09:59:15 jdolecek Exp $");
 
 #include "opt_compat_sunos.h"
 
@@ -719,7 +719,7 @@ filt_ptcrdetach(struct knote *kn)
 	struct pt_softc *pti;
 	int		s;
 
-	pti = (void *) kn->kn_hook;
+	pti = kn->kn_hook;
 	s = spltty();
 	SLIST_REMOVE(&pti->pt_selr.si_klist, kn, knote, kn_selnext);
 	splx(s);
@@ -732,7 +732,7 @@ filt_ptcread(struct knote *kn, long hint)
 	struct tty	*tp;
 	int canread;
 
-	pti = (void *) kn->kn_hook;
+	pti = kn->kn_hook;
 	tp = pti->pt_tty;
 
 	canread = (ISSET(tp->t_state, TS_ISOPEN) &&
@@ -761,7 +761,7 @@ filt_ptcwdetach(struct knote *kn)
 	struct pt_softc *pti;
 	int		s;
 
-	pti = (void *) kn->kn_hook;
+	pti = kn->kn_hook;
 	s = spltty();
 	SLIST_REMOVE(&pti->pt_selw.si_klist, kn, knote, kn_selnext);
 	splx(s);
@@ -775,7 +775,7 @@ filt_ptcwrite(struct knote *kn, long hint)
 	int canwrite;
 	int nwrite;
 
-	pti = (void *) kn->kn_hook;
+	pti = kn->kn_hook;
 	tp = pti->pt_tty;
 
 	canwrite = (ISSET(tp->t_state, TS_ISOPEN) &&
@@ -823,7 +823,7 @@ ptckqfilter(dev_t dev, struct knote *kn)
 		return (1);
 	}
 
-	kn->kn_hook = (void *) pti;
+	kn->kn_hook = pti;
 
 	s = spltty();
 	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
