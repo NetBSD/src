@@ -1,4 +1,4 @@
-/*	$NetBSD: apmsubr.c,v 1.1 1996/08/25 23:41:05 jtk Exp $ */
+/*	$NetBSD: apmsubr.c,v 1.2 1996/08/30 02:37:32 jtk Exp $ */
 /*-
  * Copyright (c) 1995,1996 John T. Kohl.  All rights reserved.
  *
@@ -57,7 +57,7 @@ battstate(int state)
 	return "CRITICAL";
     case APM_BATT_CHARGING:
 	return "charging";
-    case APM_BATTERY_ABSENT:
+    case APM_BATT_ABSENT:
 	return "absent";
     case APM_BATT_UNKNOWN:
 	return "unknown (absent?)";
