@@ -1,4 +1,4 @@
-/*	$NetBSD: adv.c,v 1.11 1999/03/04 20:16:56 dante Exp $	*/
+/*	$NetBSD: adv.c,v 1.12 1999/06/06 17:33:18 dante Exp $	*/
 
 /*
  * Generic driver for the Advanced Systems Inc. Narrow SCSI controllers
@@ -108,11 +108,6 @@ struct scsipi_device adv_dev =
 
 #define ADV_ABORT_TIMEOUT       2000	/* time to wait for abort (mSec) */
 #define ADV_WATCH_TIMEOUT       1000	/* time to wait for watchdog (mSec) */
-
-
-/******************************************************************************/
-/*                            scsipi_xfer queue routines                      */
-/******************************************************************************/
 
 
 /******************************************************************************/
@@ -437,8 +432,10 @@ adv_init(sc)
 {
 	int             warn;
 
-	if (!AscFindSignature(sc->sc_iot, sc->sc_ioh))
-		panic("adv_init: adv_find_signature failed");
+	if (!AscFindSignature(sc->sc_iot, sc->sc_ioh)) {
+		printf("adv_init: failed to find signature\n");
+		return (1);
+	}
 
 	/*
          * Read the board configuration
@@ -507,7 +504,7 @@ adv_init(sc)
 
 	if (!(sc->overrun_buf = adv_alloc_overrunbuf(sc->sc_dev.dv_xname,
 						     sc->sc_dmat))) {
-		return (1);
+		panic("adv_init: adv_alloc_overrunbuf failed");
 	}
 
 	return (0);
@@ -577,7 +574,7 @@ adv_attach(sc)
          */
 	error = adv_alloc_ccbs(sc);
 	if (error)
-		return; /* (error) */ ;
+		return; /* (error) */
 
 	/*
          * Create and initialize the Control Blocks.
