@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.93 2000/12/29 20:13:44 bjh21 Exp $
+#	$NetBSD: Makefile,v 1.94 2001/01/04 06:53:45 itojun Exp $
 #	@(#)Makefile	8.2 (Berkeley) 2/3/94
 #
 # All library objects contain sccsid strings by default; they may be
@@ -27,7 +27,7 @@ CPPFLAGS+=	-DINET6
 #LINTFLAGS+=	-w
 LINTFLAGS+=-X 272
 
-ARCHSUBDIR=	${MACHINE_ARCH:C/mipse[bl]/mips/:S/arm26/arm/}
+ARCHSUBDIR=	${MACHINE_ARCH:C/mipse[bl]/mips/:S/arm26/arm/:C/sh3e[bl]/sh3/}
 ARCHDIR=	${.CURDIR}/arch/${ARCHSUBDIR}
 AINC=		-I${ARCHDIR}
 .if defined(DESTDIR)
