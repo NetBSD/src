@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.72 1996/05/19 14:55:31 is Exp $	*/
+/*	$NetBSD: machdep.c,v 1.72.4.1 1996/05/26 16:23:23 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -431,7 +431,7 @@ again:
 		    phys_segs[i].first_page);
 #endif
 
-#ifdef DEBUG
+#ifdef DEBUG_KERNEL_START
 	printf("calling initcpu...\n");
 #endif
 	/*
@@ -439,7 +439,7 @@ again:
 	 */
 	initcpu();
 
-#ifdef DEBUG
+#ifdef DEBUG_KERNEL_START
 	printf("survived initcpu...\n");
 #endif
 	/*
@@ -447,14 +447,14 @@ again:
 	 */
 	bufinit();
 
-#ifdef DEBUG
+#ifdef DEBUG_KERNEL_START
 	printf("survived bufinit...\n");
 #endif
 	/*
 	 * Configure the system.
 	 */
 	configure();
-#ifdef DEBUG
+#ifdef DEBUG_KERNEL_START
 	printf("survived configure...\n");
 #endif
 }
@@ -1205,10 +1205,11 @@ initcpu()
 #else
 	extern u_int8_t illinst;
 #endif
+	extern u_int8_t fpfault;
 #endif
 
 #ifdef DRACO
-	extern u_int8_t DraCoLev2intr, lev2intr;
+	extern u_int8_t DraCoIntr, DraCoLev2intr;
 #endif
 
 #ifdef M68060
@@ -1235,15 +1236,18 @@ initcpu()
 #else
 		vectab[61] = &illinst;
 #endif
+		vectab[48] = &fpfault;
 	}
 #endif
 
 #ifdef DRACO
 	if (is_draco()) {
+		vectab[24+1] = &DraCoIntr;
 		vectab[24+2] = &DraCoLev2intr;
-		vectab[24+4] = &lev2intr;
-		vectab[24+5] = &lev2intr;
-		vectab[24+6] = &lev2intr;
+		vectab[24+3] = &DraCoIntr;
+		vectab[24+4] = &DraCoIntr;
+		vectab[24+5] = &DraCoIntr;
+		vectab[24+6] = &DraCoIntr;
 	}
 #endif
 	DCIS();

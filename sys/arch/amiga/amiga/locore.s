@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.56 1996/05/21 18:22:13 is Exp $	*/
+/*	$NetBSD: locore.s,v 1.56.2.1 1996/05/26 16:23:29 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -533,7 +533,7 @@ _DraCoLev2intr:
 	CIAAADDR(a0)
 	movb	a0@(CIAICR),d0		| read irc register (clears ints!)
 	tstb	d0			| check if CIAB was source
-	jeq	Lintrcommon
+	jeq	Ldrintrcommon
 	movel	_draco_intpen,a0
 |	andib	#4,a0@
 |XXX this would better be 
@@ -553,7 +553,24 @@ Ldraciaend:
 	moveml	sp@+,#0x0303
 	addql	#1,_cnt+V_INTR
 	jra	rei
+/* XXX on the DraCo, lev 1, 3, 4, 5 and 6 are vectored here by initcpu() */
+	.globl _DraCoIntr
+_DraCoIntr:
+	moveml  #0xC0C0,sp@-
+Ldrintrcommon:
+	lea	Drintrcnt-4,a0
+	movw	sp@(22),d0		| use vector offset
+	andw	#0xfff,d0		|   sans frame type
+	addql	#1,a0@(-0x60,d0:w)	|     to increment apropos counter
+	movw	sr,sp@-			| push current SR value
+	clrw	sp@-			|    padded to longword
+	jbsr	_intrhand		| handle interrupt
+	addql	#4,sp			| pop SR
+	moveml	sp@+,#0x0303
+	addql	#1,_cnt+V_INTR
+	jra	rei
 #endif
+	
 
 _lev1intr:
 _lev2intr:
@@ -561,7 +578,6 @@ _lev3intr:
 #ifndef LEV6_DEFER
 _lev4intr:
 #endif
-/* XXX on the DraCo, lev 4, 5 and 6 are vectored here by initcpu() */
 	moveml	#0xC0C0,sp@-
 Lintrcommon:
 	lea	_intrcnt,a0
@@ -823,6 +839,7 @@ start:
 | we dont need the AGA mode register.
 	movel	#100000,d3
 LisDraco0:
+#ifdef DEBUG_KERNEL_START
 	movb	#0,0x200003c8
 	movb	#00,0x200003c9
 	movb	#40,0x200003c9
@@ -834,6 +851,7 @@ LisDraco0:
 	movb	#00,0x200003c9
 	subql	#1,d3
 	jcc	LisDraco0
+#endif
 
 	RELOC(_chipmem_start, a0)
 	movl	#0,a0@
@@ -2264,8 +2282,21 @@ _intrnames:
 	.asciz	"nmi"		| non-maskable
 	.asciz	"clock"		| clock interrupts
 	.asciz	"spur6"		| spurious level 6
+#ifdef DRACO
+	.asciz	"kbd/soft"	| 1: native keyboard, soft ints
+	.asciz	"cia/zbus"	| 2: cia, PORTS
+	.asciz	"lclbus"	| 3: local bus, e.g. Altais vbl
+	.asciz	"drscsi"	| 4: mainboard scsi
+	.asciz	"superio"	| 5: superio chip
+	.asciz	"lcl/zbus"	| 6: lcl/zorro lev6
+	.asciz	"buserr"	| 7: nmi: bus timeout
+#endif
 _eintrnames:
 	.align	2
 _intrcnt:
 	.long	0,0,0,0,0,0,0,0,0,0
+#ifdef DRACO
+Drintrcnt:
+	.long	0,0,0,0,0,0,0
+#endif
 _eintrcnt:
