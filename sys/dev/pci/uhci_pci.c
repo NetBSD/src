@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci_pci.c,v 1.19 2001/10/25 01:46:26 augustss Exp $	*/
+/*	$NetBSD: uhci_pci.c,v 1.20 2001/11/06 03:17:36 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,6 +37,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "ehci.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -47,6 +49,7 @@
 #include <machine/bus.h>
 
 #include <dev/pci/pcivar.h>
+#include <dev/pci/usb_pci.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
@@ -62,6 +65,9 @@ int	uhci_pci_detach(device_ptr_t, int);
 
 struct uhci_pci_softc {
 	uhci_softc_t		sc;
+#if NEHCI > 0
+	struct usb_pci		sc_pci;
+#endif
 	pci_chipset_tag_t	sc_pc;
 	pcitag_t		sc_tag;
 	void 			*sc_ih;		/* interrupt vectoring */
@@ -172,6 +178,10 @@ uhci_pci_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
+#if NEHCI > 0
+	usb_pci_add(&sc->sc_pci, pa, &sc->sc.sc_bus);
+#endif
+
 	/* Attach usb device. */
 	sc->sc.sc_child = config_found((void *)sc, &sc->sc.sc_bus,
 				       usbctlprint);
@@ -194,5 +204,8 @@ uhci_pci_detach(device_ptr_t self, int flags)
 		bus_space_unmap(sc->sc.iot, sc->sc.ioh, sc->sc.sc_size);
 		sc->sc.sc_size = 0;
 	}
+#if NEHCI > 0
+	usb_pci_rem(&sc->sc_pci);
+#endif
 	return (0);
 }
