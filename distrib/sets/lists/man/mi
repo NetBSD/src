@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.170 1999/11/05 21:38:18 thorpej Exp $
+# $NetBSD: mi,v 1.171 1999/11/07 08:32:16 sommerfeld Exp $
 ./usr/share/info/am-utils.info
 ./usr/share/info/awk.info
 ./usr/share/info/bfd.info
@@ -357,6 +357,7 @@
 ./usr/share/man/cat4/atalk.0
 ./usr/share/man/cat4/atapi.0
 ./usr/share/man/cat4/audio.0
+./usr/share/man/cat4/awi.0
 ./usr/share/man/cat4/bha.0
 ./usr/share/man/cat4/boca.0
 ./usr/share/man/cat4/bpf.0
@@ -438,6 +439,7 @@
 ./usr/share/man/cat4/options.0
 ./usr/share/man/cat4/pcdisplay.0
 ./usr/share/man/cat4/pci.0
+./usr/share/man/cat4/pcic.0
 ./usr/share/man/cat4/pciide.0
 ./usr/share/man/cat4/pckbc.0
 ./usr/share/man/cat4/pckbd.0
@@ -644,6 +646,7 @@
 ./usr/share/man/cat8/compat_freebsd.0
 ./usr/share/man/cat8/compat_ibcs2.0
 ./usr/share/man/cat8/compat_linux.0
+./usr/share/man/cat8/compat_osf1.0
 ./usr/share/man/cat8/compat_sco.0
 ./usr/share/man/cat8/compat_solaris.0
 ./usr/share/man/cat8/compat_sunos.0
@@ -1246,6 +1249,7 @@
 ./usr/share/man/man4/atalk.4
 ./usr/share/man/man4/atapi.4
 ./usr/share/man/man4/audio.4
+./usr/share/man/man4/awi.4
 ./usr/share/man/man4/bha.4
 ./usr/share/man/man4/boca.4
 ./usr/share/man/man4/bpf.4
@@ -1327,6 +1331,7 @@
 ./usr/share/man/man4/options.4
 ./usr/share/man/man4/pcdisplay.4
 ./usr/share/man/man4/pci.4
+./usr/share/man/man4/pcic.4
 ./usr/share/man/man4/pciide.4
 ./usr/share/man/man4/pckbc.4
 ./usr/share/man/man4/pckbd.4
@@ -1533,6 +1538,7 @@
 ./usr/share/man/man8/compat_freebsd.8
 ./usr/share/man/man8/compat_ibcs2.8
 ./usr/share/man/man8/compat_linux.8
+./usr/share/man/man8/compat_osf1.8
 ./usr/share/man/man8/compat_sco.8
 ./usr/share/man/man8/compat_solaris.8
 ./usr/share/man/man8/compat_sunos.8
