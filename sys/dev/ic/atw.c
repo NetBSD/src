@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.25 2004/05/31 08:52:53 dyoung Exp $	*/
+/*	$NetBSD: atw.c,v 1.26 2004/05/31 09:00:24 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.25 2004/05/31 08:52:53 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.26 2004/05/31 09:00:24 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -249,24 +249,24 @@ const struct atw_txthresh_tab atw_txthresh_tab_hi[] = ATW_TXTHRESH_TAB_HI_RATE;
 
 const char *atw_tx_state[] = {
 	"STOPPED",
-	"RUNNING - FETCH",
-	"RUNNING - WAIT",
-	"RUNNING - READING",
-	"-- RESERVED1 --",
-	"-- RESERVED2 --",
+	"RUNNING - read descriptor",
+	"RUNNING - transmitting",
+	"RUNNING - filling fifo",	/* XXX */
 	"SUSPENDED",
-	"RUNNING - CLOSE"
+	"RUNNING -- write descriptor",
+	"RUNNING -- write last descriptor",
+	"RUNNING - fifo full"
 };
 
 const char *atw_rx_state[] = {
 	"STOPPED",
-	"RUNNING - FETCH",
-	"RUNNING - CHECK",
-	"RUNNING - WAIT",
+	"RUNNING - read descriptor",
+	"RUNNING - check this packet, pre-fetch next",
+	"RUNNING - wait for reception",
 	"SUSPENDED",
-	"RUNNING - CLOSE",
-	"RUNNING - FLUSH",
-	"RUNNING - QUEUE"
+	"RUNNING - write descriptor",
+	"RUNNING - flush fifo",
+	"RUNNING - fifo drain"
 };
 
 int
