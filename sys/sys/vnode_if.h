@@ -1,13 +1,13 @@
-/*	$NetBSD: vnode_if.h,v 1.47 2004/09/10 09:38:17 yamt Exp $	*/
+/*	$NetBSD: vnode_if.h,v 1.48 2004/09/21 03:11:53 thorpej Exp $	*/
 
 /*
  * Warning: This file is generated automatically.
  * (Modifications made here may easily be lost!)
  *
  * Created from the file:
- *	NetBSD: vnode_if.src,v 1.40 2004/09/10 09:37:41 yamt Exp 
+ *	NetBSD: vnode_if.src,v 1.41 2004/09/21 03:10:35 thorpej Exp 
  * by the script:
- *	NetBSD: vnode_if.sh,v 1.34 2004/01/25 18:02:04 hannken Exp 
+ *	NetBSD: vnode_if.sh,v 1.35 2004/09/21 03:10:35 thorpej Exp 
  */
 
 /*
@@ -48,7 +48,10 @@
 #define	VNODE_OP_NOINLINE
 #else
 #include "opt_vnode_op_noinline.h"
-#endif
+#endif /* _LKM || LKM */
+#ifdef _KERNEL_OPT
+#include "opt_vnode_lockdebug.h"
+#endif /* _KERNEL_OPT */
 #endif /* _KERNEL */
 
 extern const struct vnodeop_desc vop_default_desc;
@@ -76,6 +79,8 @@ static __inline int VOP_LOOKUP(dvp, vpp, cnp)
 	struct componentname *cnp;
 {
 	struct vop_lookup_args a;
+#ifdef VNODE_LOCKDEBUG
+#endif
 	a.a_desc = VDESC(vop_lookup);
 	a.a_dvp = dvp;
 	a.a_vpp = vpp;
@@ -109,8 +114,16 @@ static __inline int VOP_CREATE(dvp, vpp, cnp, vap)
 	struct vattr *vap;
 {
 	struct vop_create_args a;
+#ifdef VNODE_LOCKDEBUG
+	int islocked_dvp;
+#endif
 	a.a_desc = VDESC(vop_create);
 	a.a_dvp = dvp;
+#ifdef VNODE_LOCKDEBUG
+	islocked_dvp = (dvp->v_flag & VLOCKSWORK) ? (VOP_ISLOCKED(dvp) == LK_EXCLUSIVE) : 1;
+	if (islocked_dvp != 1)
+		panic("vop_create: dvp: locked %d, expected %d", islocked_dvp, 1);
+#endif
 	a.a_vpp = vpp;
 	a.a_cnp = cnp;
 	a.a_vap = vap;
@@ -143,8 +156,16 @@ static __inline int VOP_MKNOD(dvp, vpp, cnp, vap)
 	struct vattr *vap;
 {
 	struct vop_mknod_args a;
+#ifdef VNODE_LOCKDEBUG
+	int islocked_dvp;
+#endif
 	a.a_desc = VDESC(vop_mknod);
 	a.a_dvp = dvp;
+#ifdef VNODE_LOCKDEBUG
+	islocked_dvp = (dvp->v_flag & VLOCKSWORK) ? (VOP_ISLOCKED(dvp) == LK_EXCLUSIVE) : 1;
+	if (islocked_dvp != 1)
+		panic("vop_mknod: dvp: locked %d, expected %d", islocked_dvp, 1);
+#endif
 	a.a_vpp = vpp;
 	a.a_cnp = cnp;
 	a.a_vap = vap;
@@ -176,8 +197,16 @@ static __inline int VOP_OPEN(vp, mode, cred, p)
 	struct proc *p;
 {
 	struct vop_open_args a;
+#ifdef VNODE_LOCKDEBUG
+	int islocked_vp;
+#endif
 	a.a_desc = VDESC(vop_open);
 	a.a_vp = vp;
+#ifdef VNODE_LOCKDEBUG
+	islocked_vp = (vp->v_flag & VLOCKSWORK) ? (VOP_ISLOCKED(vp) == LK_EXCLUSIVE) : 1;
+	if (islocked_vp != 1)
+		panic("vop_open: vp: locked %d, expected %d", islocked_vp, 1);
+#endif
 	a.a_mode = mode;
 	a.a_cred = cred;
 	a.a_p = p;
@@ -209,8 +238,16 @@ static __inline int VOP_CLOSE(vp, fflag, cred, p)
 	struct proc *p;
 {
 	struct vop_close_args a;
+#ifdef VNODE_LOCKDEBUG
+	int islocked_vp;
+#endif
 	a.a_desc = VDESC(vop_close);
 	a.a_vp = vp;
+#ifdef VNODE_LOCKDEBUG
+	islocked_vp = (vp->v_flag & VLOCKSWORK) ? (VOP_ISLOCKED(vp) == LK_EXCLUSIVE) : 1;
+	if (islocked_vp != 1)
+		panic("vop_close: vp: locked %d, expected %d", islocked_vp, 1);
+#endif
 	a.a_fflag = fflag;
 	a.a_cred = cred;
 	a.a_p = p;
@@ -242,8 +279,16 @@ static __inline int VOP_ACCESS(vp, mode, cred, p)
 	struct proc *p;
 {
 	struct vop_access_args a;
+#ifdef VNODE_LOCKDEBUG
+	int islocked_vp;
+#endif
 	a.a_desc = VDESC(vop_access);
 	a.a_vp = vp;
+#ifdef VNODE_LOCKDEBUG
+	islocked_vp = (vp->v_flag & VLOCKSWORK) ? (VOP_ISLOCKED(vp) == LK_EXCLUSIVE) : 1;
+	if (islocked_vp != 1)
+		panic("vop_access: vp: locked %d, expected %d", islocked_vp, 1);
+#endif
 	a.a_mode = mode;
 	a.a_cred = cred;
 	a.a_p = p;
@@ -275,6 +320,8 @@ static __inline int VOP_GETATTR(vp, vap, cred, p)
 	struct proc *p;
 {
 	struct vop_getattr_args a;
+#ifdef VNODE_LOCKDEBUG
+#endif
 	a.a_desc = VDESC(vop_getattr);
 	a.a_vp = vp;
 	a.a_vap = vap;
@@ -308,8 +355,16 @@ static __inline int VOP_SETATTR(vp, vap, cred, p)
 	struct proc *p;
 {
 	struct vop_setattr_args a;
+#ifdef VNODE_LOCKDEBUG
+	int islocked_vp;
+#endif
 	a.a_desc = VDESC(vop_setattr);
 	a.a_vp = vp;
+#ifdef VNODE_LOCKDEBUG
+	islocked_vp = (vp->v_flag & VLOCKSWORK) ? (VOP_ISLOCKED(vp) == LK_EXCLUSIVE) : 1;
+	if (islocked_vp != 1)
+		panic("vop_setattr: vp: locked %d, expected %d", islocked_vp, 1);
+#endif
 	a.a_vap = vap;
 	a.a_cred = cred;
 	a.a_p = p;
@@ -341,8 +396,16 @@ static __inline int VOP_READ(vp, uio, ioflag, cred)
 	struct ucred *cred;
 {
 	struct vop_read_args a;
+#ifdef VNODE_LOCKDEBUG
+	int islocked_vp;
+#endif
 	a.a_desc = VDESC(vop_read);
 	a.a_vp = vp;
+#ifdef VNODE_LOCKDEBUG
+	islocked_vp = (vp->v_flag & VLOCKSWORK) ? (VOP_ISLOCKED(vp) == LK_EXCLUSIVE) : 1;
+	if (islocked_vp != 1)
+		panic("vop_read: vp: locked %d, expected %d", islocked_vp, 1);
+#endif
 	a.a_uio = uio;
 	a.a_ioflag = ioflag;
 	a.a_cred = cred;
@@ -374,8 +437,16 @@ static __inline int VOP_WRITE(vp, uio, ioflag, cred)
 	struct ucred *cred;
 {
 	struct vop_write_args a;
+#ifdef VNODE_LOCKDEBUG
+	int islocked_vp;
+#endif
 	a.a_desc = VDESC(vop_write);
 	a.a_vp = vp;
+#ifdef VNODE_LOCKDEBUG
+	islocked_vp = (vp->v_flag & VLOCKSWORK) ? (VOP_ISLOCKED(vp) == LK_EXCLUSIVE) : 1;
+	if (islocked_vp != 1)
+		panic("vop_write: vp: locked %d, expected %d", islocked_vp, 1);
+#endif
 	a.a_uio = uio;
 	a.a_ioflag = ioflag;
 	a.a_cred = cred;
@@ -412,8 +483,16 @@ static __inline int VOP_IOCTL(vp, command, data, fflag, cred, p)
 	struct proc *p;
 {
 	struct vop_ioctl_args a;
+#ifdef VNODE_LOCKDEBUG
+	int islocked_vp;
+#endif
 	a.a_desc = VDESC(vop_ioctl);
 	a.a_vp = vp;
+#ifdef VNODE_LOCKDEBUG
+	islocked_vp = (vp->v_flag & VLOCKSWORK) ? (VOP_ISLOCKED(vp) == LK_EXCLUSIVE) : 0;
+	if (islocked_vp != 0)
+		panic("vop_ioctl: vp: locked %d, expected %d", islocked_vp, 0);
+#endif
 	a.a_command = command;
 	a.a_data = data;
 	a.a_fflag = fflag;
@@ -452,8 +531,16 @@ static __inline int VOP_FCNTL(vp, command, data, fflag, cred, p)
 	struct proc *p;
 {
 	struct vop_fcntl_args a;
+#ifdef VNODE_LOCKDEBUG
+	int islocked_vp;
+#endif
 	a.a_desc = VDESC(vop_fcntl);
 	a.a_vp = vp;
+#ifdef VNODE_LOCKDEBUG
+	islocked_vp = (vp->v_flag & VLOCKSWORK) ? (VOP_ISLOCKED(vp) == LK_EXCLUSIVE) : 1;
+	if (islocked_vp != 1)
+		panic("vop_fcntl: vp: locked %d, expected %d", islocked_vp, 1);
+#endif
 	a.a_command = command;
 	a.a_data = data;
 	a.a_fflag = fflag;
@@ -485,8 +572,16 @@ static __inline int VOP_POLL(vp, events, p)
 	struct proc *p;
 {
 	struct vop_poll_args a;
+#ifdef VNODE_LOCKDEBUG
+	int islocked_vp;
+#endif
 	a.a_desc = VDESC(vop_poll);
 	a.a_vp = vp;
+#ifdef VNODE_LOCKDEBUG
+	islocked_vp = (vp->v_flag & VLOCKSWORK) ? (VOP_ISLOCKED(vp) == LK_EXCLUSIVE) : 0;
+	if (islocked_vp != 0)
+		panic("vop_poll: vp: locked %d, expected %d", islocked_vp, 0);
+#endif
 	a.a_events = events;
 	a.a_p = p;
 	return (VCALL(vp, VOFFSET(vop_poll), &a));
@@ -513,8 +608,16 @@ static __inline int VOP_KQFILTER(vp, kn)
 	struct knote *kn;
 {
 	struct vop_kqfilter_args a;
+#ifdef VNODE_LOCKDEBUG
+	int islocked_vp;
+#endif
 	a.a_desc = VDESC(vop_kqfilter);
 	a.a_vp = vp;
+#ifdef VNODE_LOCKDEBUG
+	islocked_vp = (vp->v_flag & VLOCKSWORK) ? (VOP_ISLOCKED(vp) == LK_EXCLUSIVE) : 0;
+	if (islocked_vp != 0)
+		panic("vop_kqfilter: vp: locked %d, expected %d", islocked_vp, 0);
+#endif
 	a.a_kn = kn;
 	return (VCALL(vp, VOFFSET(vop_kqfilter), &a));
 }
@@ -540,8 +643,16 @@ static __inline int VOP_REVOKE(vp, flags)
 	int flags;
 {
 	struct vop_revoke_args a;
+#ifdef VNODE_LOCKDEBUG
+	int islocked_vp;
+#endif
 	a.a_desc = VDESC(vop_revoke);
 	a.a_vp = vp;
+#ifdef VNODE_LOCKDEBUG
+	islocked_vp = (vp->v_flag & VLOCKSWORK) ? (VOP_ISLOCKED(vp) == LK_EXCLUSIVE) : 0;
+	if (islocked_vp != 0)
+		panic("vop_revoke: vp: locked %d, expected %d", islocked_vp, 0);
+#endif
 	a.a_flags = flags;
 	return (VCALL(vp, VOFFSET(vop_revoke), &a));
 }
@@ -571,6 +682,8 @@ static __inline int VOP_MMAP(vp, fflags, cred, p)
 	struct proc *p;
 {
 	struct vop_mmap_args a;
+#ifdef VNODE_LOCKDEBUG
+#endif
 	a.a_desc = VDESC(vop_mmap);
 	a.a_vp = vp;
 	a.a_fflags = fflags;
@@ -609,8 +722,16 @@ static __inline int VOP_FSYNC(vp, cred, flags, offlo, offhi, p)
 	struct proc *p;
 {
 	struct vop_fsync_args a;
+#ifdef VNODE_LOCKDEBUG
+	int islocked_vp;
+#endif
 	a.a_desc = VDESC(vop_fsync);
 	a.a_vp = vp;
+#ifdef VNODE_LOCKDEBUG
+	islocked_vp = (vp->v_flag & VLOCKSWORK) ? (VOP_ISLOCKED(vp) == LK_EXCLUSIVE) : 1;
+	if (islocked_vp != 1)
+		panic("vop_fsync: vp: locked %d, expected %d", islocked_vp, 1);
+#endif
 	a.a_cred = cred;
 	a.a_flags = flags;
 	a.a_offlo = offlo;
@@ -644,6 +765,8 @@ static __inline int VOP_SEEK(vp, oldoff, newoff, cred)
 	struct ucred *cred;
 {
 	struct vop_seek_args a;
+#ifdef VNODE_LOCKDEBUG
+#endif
 	a.a_desc = VDESC(vop_seek);
 	a.a_vp = vp;
 	a.a_oldoff = oldoff;
@@ -675,9 +798,23 @@ static __inline int VOP_REMOVE(dvp, vp, cnp)
 	struct componentname *cnp;
 {
 	struct vop_remove_args a;
+#ifdef VNODE_LOCKDEBUG
+	int islocked_dvp;
+	int islocked_vp;
+#endif
 	a.a_desc = VDESC(vop_remove);
 	a.a_dvp = dvp;
+#ifdef VNODE_LOCKDEBUG
+	islocked_dvp = (dvp->v_flag & VLOCKSWORK) ? (VOP_ISLOCKED(dvp) == LK_EXCLUSIVE) : 1;
+	if (islocked_dvp != 1)
+		panic("vop_remove: dvp: locked %d, expected %d", islocked_dvp, 1);
+#endif
 	a.a_vp = vp;
+#ifdef VNODE_LOCKDEBUG
+	islocked_vp = (vp->v_flag & VLOCKSWORK) ? (VOP_ISLOCKED(vp) == LK_EXCLUSIVE) : 1;
+	if (islocked_vp != 1)
+		panic("vop_remove: vp: locked %d, expected %d", islocked_vp, 1);
+#endif
 	a.a_cnp = cnp;
 	return (VCALL(dvp, VOFFSET(vop_remove), &a));
 }
@@ -705,9 +842,23 @@ static __inline int VOP_LINK(dvp, vp, cnp)
 	struct componentname *cnp;
 {
 	struct vop_link_args a;
+#ifdef VNODE_LOCKDEBUG
+	int islocked_dvp;
+	int islocked_vp;
+#endif
 	a.a_desc = VDESC(vop_link);
 	a.a_dvp = dvp;
+#ifdef VNODE_LOCKDEBUG
+	islocked_dvp = (dvp->v_flag & VLOCKSWORK) ? (VOP_ISLOCKED(dvp) == LK_EXCLUSIVE) : 1;
+	if (islocked_dvp != 1)
+		panic("vop_link: dvp: locked %d, expected %d", islocked_dvp, 1);
+#endif
 	a.a_vp = vp;
+#ifdef VNODE_LOCKDEBUG
+	islocked_vp = (vp->v_flag & VLOCKSWORK) ? (VOP_ISLOCKED(vp) == LK_EXCLUSIVE) : 0;
+	if (islocked_vp != 0)
+		panic("vop_link: vp: locked %d, expected %d", islocked_vp, 0);
+#endif
 	a.a_cnp = cnp;
 	return (VCALL(dvp, VOFFSET(vop_link), &a));
 }
@@ -742,11 +893,31 @@ static __inline int VOP_RENAME(fdvp, fvp, fcnp, tdvp, tvp, tcnp)
 	struct componentname *tcnp;
 {
 	struct vop_rename_args a;
+#ifdef VNODE_LOCKDEBUG
+	int islocked_fdvp;
+	int islocked_fvp;
+	int islocked_tdvp;
+#endif
 	a.a_desc = VDESC(vop_rename);
 	a.a_fdvp = fdvp;
+#ifdef VNODE_LOCKDEBUG
+	islocked_fdvp = (fdvp->v_flag & VLOCKSWORK) ? (VOP_ISLOCKED(fdvp) == LK_EXCLUSIVE) : 0;
+	if (islocked_fdvp != 0)
+		panic("vop_rename: fdvp: locked %d, expected %d", islocked_fdvp, 0);
+#endif
 	a.a_fvp = fvp;
+#ifdef VNODE_LOCKDEBUG
+	islocked_fvp = (fvp->v_flag & VLOCKSWORK) ? (VOP_ISLOCKED(fvp) == LK_EXCLUSIVE) : 0;
+	if (islocked_fvp != 0)
+		panic("vop_rename: fvp: locked %d, expected %d", islocked_fvp, 0);
+#endif
 	a.a_fcnp = fcnp;
 	a.a_tdvp = tdvp;
+#ifdef VNODE_LOCKDEBUG
+	islocked_tdvp = (tdvp->v_flag & VLOCKSWORK) ? (VOP_ISLOCKED(tdvp) == LK_EXCLUSIVE) : 1;
+	if (islocked_tdvp != 1)
+		panic("vop_rename: tdvp: locked %d, expected %d", islocked_tdvp, 1);
+#endif
 	a.a_tvp = tvp;
 	a.a_tcnp = tcnp;
 	return (VCALL(fdvp, VOFFSET(vop_rename), &a));
@@ -778,8 +949,16 @@ static __inline int VOP_MKDIR(dvp, vpp, cnp, vap)
 	struct vattr *vap;
 {
 	struct vop_mkdir_args a;
+#ifdef VNODE_LOCKDEBUG
+	int islocked_dvp;
+#endif
 	a.a_desc = VDESC(vop_mkdir);
 	a.a_dvp = dvp;
+#ifdef VNODE_LOCKDEBUG
+	islocked_dvp = (dvp->v_flag & VLOCKSWORK) ? (VOP_ISLOCKED(dvp) == LK_EXCLUSIVE) : 1;
+	if (islocked_dvp != 1)
+		panic("vop_mkdir: dvp: locked %d, expected %d", islocked_dvp, 1);
+#endif
 	a.a_vpp = vpp;
 	a.a_cnp = cnp;
 	a.a_vap = vap;
@@ -809,9 +988,23 @@ static __inline int VOP_RMDIR(dvp, vp, cnp)
 	struct componentname *cnp;
 {
 	struct vop_rmdir_args a;
+#ifdef VNODE_LOCKDEBUG
+	int islocked_dvp;
+	int islocked_vp;
+#endif
 	a.a_desc = VDESC(vop_rmdir);
 	a.a_dvp = dvp;
+#ifdef VNODE_LOCKDEBUG
+	islocked_dvp = (dvp->v_flag & VLOCKSWORK) ? (VOP_ISLOCKED(dvp) == LK_EXCLUSIVE) : 1;
+	if (islocked_dvp != 1)
+		panic("vop_rmdir: dvp: locked %d, expected %d", islocked_dvp, 1);
+#endif
 	a.a_vp = vp;
+#ifdef VNODE_LOCKDEBUG
+	islocked_vp = (vp->v_flag & VLOCKSWORK) ? (VOP_ISLOCKED(vp) == LK_EXCLUSIVE) : 1;
+	if (islocked_vp != 1)
+		panic("vop_rmdir: vp: locked %d, expected %d", islocked_vp, 1);
+#endif
 	a.a_cnp = cnp;
 	return (VCALL(dvp, VOFFSET(vop_rmdir), &a));
 }
@@ -844,8 +1037,16 @@ static __inline int VOP_SYMLINK(dvp, vpp, cnp, vap, target)
 	char *target;
 {
 	struct vop_symlink_args a;
+#ifdef VNODE_LOCKDEBUG
+	int islocked_dvp;
+#endif
 	a.a_desc = VDESC(vop_symlink);
 	a.a_dvp = dvp;
+#ifdef VNODE_LOCKDEBUG
+	islocked_dvp = (dvp->v_flag & VLOCKSWORK) ? (VOP_ISLOCKED(dvp) == LK_EXCLUSIVE) : 1;
+	if (islocked_dvp != 1)
+		panic("vop_symlink: dvp: locked %d, expected %d", islocked_dvp, 1);
+#endif
 	a.a_vpp = vpp;
 	a.a_cnp = cnp;
 	a.a_vap = vap;
@@ -883,8 +1084,16 @@ static __inline int VOP_READDIR(vp, uio, cred, eofflag, cookies, ncookies)
 	int *ncookies;
 {
 	struct vop_readdir_args a;
+#ifdef VNODE_LOCKDEBUG
+	int islocked_vp;
+#endif
 	a.a_desc = VDESC(vop_readdir);
 	a.a_vp = vp;
+#ifdef VNODE_LOCKDEBUG
+	islocked_vp = (vp->v_flag & VLOCKSWORK) ? (VOP_ISLOCKED(vp) == LK_EXCLUSIVE) : 1;
+	if (islocked_vp != 1)
+		panic("vop_readdir: vp: locked %d, expected %d", islocked_vp, 1);
+#endif
 	a.a_uio = uio;
 	a.a_cred = cred;
 	a.a_eofflag = eofflag;
@@ -916,8 +1125,16 @@ static __inline int VOP_READLINK(vp, uio, cred)
 	struct ucred *cred;
 {
 	struct vop_readlink_args a;
+#ifdef VNODE_LOCKDEBUG
+	int islocked_vp;
+#endif
 	a.a_desc = VDESC(vop_readlink);
 	a.a_vp = vp;
+#ifdef VNODE_LOCKDEBUG
+	islocked_vp = (vp->v_flag & VLOCKSWORK) ? (VOP_ISLOCKED(vp) == LK_EXCLUSIVE) : 1;
+	if (islocked_vp != 1)
+		panic("vop_readlink: vp: locked %d, expected %d", islocked_vp, 1);
+#endif
 	a.a_uio = uio;
 	a.a_cred = cred;
 	return (VCALL(vp, VOFFSET(vop_readlink), &a));
@@ -944,6 +1161,8 @@ static __inline int VOP_ABORTOP(dvp, cnp)
 	struct componentname *cnp;
 {
 	struct vop_abortop_args a;
+#ifdef VNODE_LOCKDEBUG
+#endif
 	a.a_desc = VDESC(vop_abortop);
 	a.a_dvp = dvp;
 	a.a_cnp = cnp;
@@ -971,8 +1190,16 @@ static __inline int VOP_INACTIVE(vp, p)
 	struct proc *p;
 {
 	struct vop_inactive_args a;
+#ifdef VNODE_LOCKDEBUG
+	int islocked_vp;
+#endif
 	a.a_desc = VDESC(vop_inactive);
 	a.a_vp = vp;
+#ifdef VNODE_LOCKDEBUG
+	islocked_vp = (vp->v_flag & VLOCKSWORK) ? (VOP_ISLOCKED(vp) == LK_EXCLUSIVE) : 1;
+	if (islocked_vp != 1)
+		panic("vop_inactive: vp: locked %d, expected %d", islocked_vp, 1);
+#endif
 	a.a_p = p;
 	return (VCALL(vp, VOFFSET(vop_inactive), &a));
 }
@@ -998,8 +1225,16 @@ static __inline int VOP_RECLAIM(vp, p)
 	struct proc *p;
 {
 	struct vop_reclaim_args a;
+#ifdef VNODE_LOCKDEBUG
+	int islocked_vp;
+#endif
 	a.a_desc = VDESC(vop_reclaim);
 	a.a_vp = vp;
+#ifdef VNODE_LOCKDEBUG
+	islocked_vp = (vp->v_flag & VLOCKSWORK) ? (VOP_ISLOCKED(vp) == LK_EXCLUSIVE) : 0;
+	if (islocked_vp != 0)
+		panic("vop_reclaim: vp: locked %d, expected %d", islocked_vp, 0);
+#endif
 	a.a_p = p;
 	return (VCALL(vp, VOFFSET(vop_reclaim), &a));
 }
@@ -1025,8 +1260,16 @@ static __inline int VOP_LOCK(vp, flags)
 	int flags;
 {
 	struct vop_lock_args a;
+#ifdef VNODE_LOCKDEBUG
+	int islocked_vp;
+#endif
 	a.a_desc = VDESC(vop_lock);
 	a.a_vp = vp;
+#ifdef VNODE_LOCKDEBUG
+	islocked_vp = (vp->v_flag & VLOCKSWORK) ? (VOP_ISLOCKED(vp) == LK_EXCLUSIVE) : 0;
+	if (islocked_vp != 0)
+		panic("vop_lock: vp: locked %d, expected %d", islocked_vp, 0);
+#endif
 	a.a_flags = flags;
 	return (VCALL(vp, VOFFSET(vop_lock), &a));
 }
@@ -1052,8 +1295,16 @@ static __inline int VOP_UNLOCK(vp, flags)
 	int flags;
 {
 	struct vop_unlock_args a;
+#ifdef VNODE_LOCKDEBUG
+	int islocked_vp;
+#endif
 	a.a_desc = VDESC(vop_unlock);
 	a.a_vp = vp;
+#ifdef VNODE_LOCKDEBUG
+	islocked_vp = (vp->v_flag & VLOCKSWORK) ? (VOP_ISLOCKED(vp) == LK_EXCLUSIVE) : 1;
+	if (islocked_vp != 1)
+		panic("vop_unlock: vp: locked %d, expected %d", islocked_vp, 1);
+#endif
 	a.a_flags = flags;
 	return (VCALL(vp, VOFFSET(vop_unlock), &a));
 }
@@ -1085,8 +1336,16 @@ static __inline int VOP_BMAP(vp, bn, vpp, bnp, runp)
 	int *runp;
 {
 	struct vop_bmap_args a;
+#ifdef VNODE_LOCKDEBUG
+	int islocked_vp;
+#endif
 	a.a_desc = VDESC(vop_bmap);
 	a.a_vp = vp;
+#ifdef VNODE_LOCKDEBUG
+	islocked_vp = (vp->v_flag & VLOCKSWORK) ? (VOP_ISLOCKED(vp) == LK_EXCLUSIVE) : 1;
+	if (islocked_vp != 1)
+		panic("vop_bmap: vp: locked %d, expected %d", islocked_vp, 1);
+#endif
 	a.a_bn = bn;
 	a.a_vpp = vpp;
 	a.a_bnp = bnp;
@@ -1115,6 +1374,8 @@ static __inline int VOP_STRATEGY(vp, bp)
 	struct buf *bp;
 {
 	struct vop_strategy_args a;
+#ifdef VNODE_LOCKDEBUG
+#endif
 	a.a_desc = VDESC(vop_strategy);
 	a.a_vp = vp;
 	a.a_bp = bp;
@@ -1140,6 +1401,8 @@ static __inline int VOP_PRINT(vp)
 	struct vnode *vp;
 {
 	struct vop_print_args a;
+#ifdef VNODE_LOCKDEBUG
+#endif
 	a.a_desc = VDESC(vop_print);
 	a.a_vp = vp;
 	return (VCALL(vp, VOFFSET(vop_print), &a));
@@ -1164,6 +1427,8 @@ static __inline int VOP_ISLOCKED(vp)
 	struct vnode *vp;
 {
 	struct vop_islocked_args a;
+#ifdef VNODE_LOCKDEBUG
+#endif
 	a.a_desc = VDESC(vop_islocked);
 	a.a_vp = vp;
 	return (VCALL(vp, VOFFSET(vop_islocked), &a));
@@ -1192,8 +1457,16 @@ static __inline int VOP_PATHCONF(vp, name, retval)
 	register_t *retval;
 {
 	struct vop_pathconf_args a;
+#ifdef VNODE_LOCKDEBUG
+	int islocked_vp;
+#endif
 	a.a_desc = VDESC(vop_pathconf);
 	a.a_vp = vp;
+#ifdef VNODE_LOCKDEBUG
+	islocked_vp = (vp->v_flag & VLOCKSWORK) ? (VOP_ISLOCKED(vp) == LK_EXCLUSIVE) : 1;
+	if (islocked_vp != 1)
+		panic("vop_pathconf: vp: locked %d, expected %d", islocked_vp, 1);
+#endif
 	a.a_name = name;
 	a.a_retval = retval;
 	return (VCALL(vp, VOFFSET(vop_pathconf), &a));
@@ -1226,8 +1499,16 @@ static __inline int VOP_ADVLOCK(vp, id, op, fl, flags)
 	int flags;
 {
 	struct vop_advlock_args a;
+#ifdef VNODE_LOCKDEBUG
+	int islocked_vp;
+#endif
 	a.a_desc = VDESC(vop_advlock);
 	a.a_vp = vp;
+#ifdef VNODE_LOCKDEBUG
+	islocked_vp = (vp->v_flag & VLOCKSWORK) ? (VOP_ISLOCKED(vp) == LK_EXCLUSIVE) : 0;
+	if (islocked_vp != 0)
+		panic("vop_advlock: vp: locked %d, expected %d", islocked_vp, 0);
+#endif
 	a.a_id = id;
 	a.a_op = op;
 	a.a_fl = fl;
@@ -1260,8 +1541,16 @@ static __inline int VOP_BLKATOFF(vp, offset, res, bpp)
 	struct buf **bpp;
 {
 	struct vop_blkatoff_args a;
+#ifdef VNODE_LOCKDEBUG
+	int islocked_vp;
+#endif
 	a.a_desc = VDESC(vop_blkatoff);
 	a.a_vp = vp;
+#ifdef VNODE_LOCKDEBUG
+	islocked_vp = (vp->v_flag & VLOCKSWORK) ? (VOP_ISLOCKED(vp) == LK_EXCLUSIVE) : 1;
+	if (islocked_vp != 1)
+		panic("vop_blkatoff: vp: locked %d, expected %d", islocked_vp, 1);
+#endif
 	a.a_offset = offset;
 	a.a_res = res;
 	a.a_bpp = bpp;
@@ -1293,8 +1582,16 @@ static __inline int VOP_VALLOC(pvp, mode, cred, vpp)
 	struct vnode **vpp;
 {
 	struct vop_valloc_args a;
+#ifdef VNODE_LOCKDEBUG
+	int islocked_pvp;
+#endif
 	a.a_desc = VDESC(vop_valloc);
 	a.a_pvp = pvp;
+#ifdef VNODE_LOCKDEBUG
+	islocked_pvp = (pvp->v_flag & VLOCKSWORK) ? (VOP_ISLOCKED(pvp) == LK_EXCLUSIVE) : 1;
+	if (islocked_pvp != 1)
+		panic("vop_valloc: pvp: locked %d, expected %d", islocked_pvp, 1);
+#endif
 	a.a_mode = mode;
 	a.a_cred = cred;
 	a.a_vpp = vpp;
@@ -1330,8 +1627,16 @@ static __inline int VOP_BALLOC(vp, startoffset, size, cred, flags, bpp)
 	struct buf **bpp;
 {
 	struct vop_balloc_args a;
+#ifdef VNODE_LOCKDEBUG
+	int islocked_vp;
+#endif
 	a.a_desc = VDESC(vop_balloc);
 	a.a_vp = vp;
+#ifdef VNODE_LOCKDEBUG
+	islocked_vp = (vp->v_flag & VLOCKSWORK) ? (VOP_ISLOCKED(vp) == LK_EXCLUSIVE) : 1;
+	if (islocked_vp != 1)
+		panic("vop_balloc: vp: locked %d, expected %d", islocked_vp, 1);
+#endif
 	a.a_startoffset = startoffset;
 	a.a_size = size;
 	a.a_cred = cred;
@@ -1361,8 +1666,16 @@ static __inline int VOP_REALLOCBLKS(vp, buflist)
 	struct cluster_save *buflist;
 {
 	struct vop_reallocblks_args a;
+#ifdef VNODE_LOCKDEBUG
+	int islocked_vp;
+#endif
 	a.a_desc = VDESC(vop_reallocblks);
 	a.a_vp = vp;
+#ifdef VNODE_LOCKDEBUG
+	islocked_vp = (vp->v_flag & VLOCKSWORK) ? (VOP_ISLOCKED(vp) == LK_EXCLUSIVE) : 1;
+	if (islocked_vp != 1)
+		panic("vop_reallocblks: vp: locked %d, expected %d", islocked_vp, 1);
+#endif
 	a.a_buflist = buflist;
 	return (VCALL(vp, VOFFSET(vop_reallocblks), &a));
 }
@@ -1390,8 +1703,16 @@ static __inline int VOP_VFREE(pvp, ino, mode)
 	int mode;
 {
 	struct vop_vfree_args a;
+#ifdef VNODE_LOCKDEBUG
+	int islocked_pvp;
+#endif
 	a.a_desc = VDESC(vop_vfree);
 	a.a_pvp = pvp;
+#ifdef VNODE_LOCKDEBUG
+	islocked_pvp = (pvp->v_flag & VLOCKSWORK) ? (VOP_ISLOCKED(pvp) == LK_EXCLUSIVE) : 1;
+	if (islocked_pvp != 1)
+		panic("vop_vfree: pvp: locked %d, expected %d", islocked_pvp, 1);
+#endif
 	a.a_ino = ino;
 	a.a_mode = mode;
 	return (VCALL(pvp, VOFFSET(vop_vfree), &a));
@@ -1424,8 +1745,16 @@ static __inline int VOP_TRUNCATE(vp, length, flags, cred, p)
 	struct proc *p;
 {
 	struct vop_truncate_args a;
+#ifdef VNODE_LOCKDEBUG
+	int islocked_vp;
+#endif
 	a.a_desc = VDESC(vop_truncate);
 	a.a_vp = vp;
+#ifdef VNODE_LOCKDEBUG
+	islocked_vp = (vp->v_flag & VLOCKSWORK) ? (VOP_ISLOCKED(vp) == LK_EXCLUSIVE) : 1;
+	if (islocked_vp != 1)
+		panic("vop_truncate: vp: locked %d, expected %d", islocked_vp, 1);
+#endif
 	a.a_length = length;
 	a.a_flags = flags;
 	a.a_cred = cred;
@@ -1458,8 +1787,16 @@ static __inline int VOP_UPDATE(vp, access, modify, flags)
 	int flags;
 {
 	struct vop_update_args a;
+#ifdef VNODE_LOCKDEBUG
+	int islocked_vp;
+#endif
 	a.a_desc = VDESC(vop_update);
 	a.a_vp = vp;
+#ifdef VNODE_LOCKDEBUG
+	islocked_vp = (vp->v_flag & VLOCKSWORK) ? (VOP_ISLOCKED(vp) == LK_EXCLUSIVE) : 1;
+	if (islocked_vp != 1)
+		panic("vop_update: vp: locked %d, expected %d", islocked_vp, 1);
+#endif
 	a.a_access = access;
 	a.a_modify = modify;
 	a.a_flags = flags;
@@ -1491,6 +1828,8 @@ static __inline int VOP_LEASE(vp, p, cred, flag)
 	int flag;
 {
 	struct vop_lease_args a;
+#ifdef VNODE_LOCKDEBUG
+#endif
 	a.a_desc = VDESC(vop_lease);
 	a.a_vp = vp;
 	a.a_p = p;
@@ -1522,8 +1861,16 @@ static __inline int VOP_WHITEOUT(dvp, cnp, flags)
 	int flags;
 {
 	struct vop_whiteout_args a;
+#ifdef VNODE_LOCKDEBUG
+	int islocked_dvp;
+#endif
 	a.a_desc = VDESC(vop_whiteout);
 	a.a_dvp = dvp;
+#ifdef VNODE_LOCKDEBUG
+	islocked_dvp = (dvp->v_flag & VLOCKSWORK) ? (VOP_ISLOCKED(dvp) == LK_EXCLUSIVE) : 1;
+	if (islocked_dvp != 1)
+		panic("vop_whiteout: dvp: locked %d, expected %d", islocked_dvp, 1);
+#endif
 	a.a_cnp = cnp;
 	a.a_flags = flags;
 	return (VCALL(dvp, VOFFSET(vop_whiteout), &a));
@@ -1563,6 +1910,8 @@ static __inline int VOP_GETPAGES(vp, offset, m, count, centeridx, access_type, a
 	int flags;
 {
 	struct vop_getpages_args a;
+#ifdef VNODE_LOCKDEBUG
+#endif
 	a.a_desc = VDESC(vop_getpages);
 	a.a_vp = vp;
 	a.a_offset = offset;
@@ -1600,6 +1949,8 @@ static __inline int VOP_PUTPAGES(vp, offlo, offhi, flags)
 	int flags;
 {
 	struct vop_putpages_args a;
+#ifdef VNODE_LOCKDEBUG
+#endif
 	a.a_desc = VDESC(vop_putpages);
 	a.a_vp = vp;
 	a.a_offlo = offlo;
@@ -1630,6 +1981,8 @@ static __inline int VOP_BWRITE(bp)
 	struct buf *bp;
 {
 	struct vop_bwrite_args a;
+#ifdef VNODE_LOCKDEBUG
+#endif
 	a.a_desc = VDESC(vop_bwrite);
 	a.a_bp = bp;
 	return (VCALL(bp->b_vp, VOFFSET(vop_bwrite), &a));
