@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.28 2001/08/26 12:00:17 simonb Exp $
+.\"	$NetBSD: install,v 1.29 2001/08/26 12:08:07 simonb Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -180,7 +180,7 @@ To mount the CD-ROM from a
 .Nx*M
 host, type
 .Pp
-.Dl # Ic "mount -r -t cd9660 /dev/rz" Ns Ar X Ns Ic " c /mnt"
+.Dl # Ic "mount -r -t cd9660 /dev/cd" Ns Ar X Ns Ic " c /mnt"
 .Pp
 and from an
 .Tn Ultrix
@@ -297,13 +297,13 @@ It is shipped compressed and is around 1150 kbytes, uncompressing to
 exactly 2 MB.
 .Pp
 To install the diskimage onto disk
-.Li rz Ns Ar X
+.Li sd Ns Ar X
 on a
 .Nx*M
 system, do:
 .Pp
-.Dl # Ic "disklabel -W /dev/rrz" Ns Ar X Ns Ic "c"
-.Dl # Ic "gunzip -c diskimage.gz\ |\ dd of=/dev/rrz" Ns Ar X Ns Ic "c bs=10240"
+.Dl # Ic "disklabel -W /dev/rsd" Ns Ar X Ns Ic "c"
+.Dl # Ic "gunzip -c diskimage.gz\ |\ dd of=/dev/rsd" Ns Ar X Ns Ic "c bs=10240"
 .Pp
 When installing on a disk with no
 .Nx
