@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.30 2000/03/12 04:34:29 mycroft Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.31 2000/03/12 11:31:53 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -692,8 +692,6 @@ pccbb_chipinit(sc)
 {
 	pci_chipset_tag_t pc = sc->sc_pc;
 	pcitag_t tag = sc->sc_tag;
-	bus_space_tag_t base_memt = sc->sc_base_memt;	/* socket regs memory */
-	bus_space_handle_t base_memh = sc->sc_base_memh;
 	pcireg_t reg;
 
 	/* 
@@ -770,18 +768,6 @@ pccbb_chipinit(sc)
 		/* functional intr prohibit */
 		reg &= ~PCI113X_CBCTRL_PCI_INTR;
 		pci_conf_write(pc, tag, PCI_CBCTRL, reg);
-
-		/* FALLTHROUGH */
-	case CB_TI12XX:
-		/*
-		 * Register 03 bits 0-3 contain the functional IRQ number.
-		 * Register 05 bits 4-7 contain the CSC IRQ number.
-		 * Setting these to 0 disables ISA interrupt routing.
-		 * Setting register 03 bit 4 is required to enable PCI
-		 * interrupt routing on some chips.
-		 */
-		bus_space_write_1(base_memt, base_memh, 0x0803, 0x10);
-		bus_space_write_1(base_memt, base_memh, 0x0805, 0x08);
 		break;
 
 	case CB_TOPIC95B:
@@ -842,7 +828,19 @@ pccbb_pcmcia_attach_setup(sc, paa)
 	ph->ph_write = pccbb_pcmcia_write;
 	sc->sc_pct = &pccbb_pcmcia_funcs;
 
-	Pcic_write(ph, PCIC_CSC_INTR, 0);
+	/*
+	 * We need to do a few things here:
+	 * 1) Disable routing of CSC and functional interrupts to ISA IRQs by
+	 *    setting the IRQ numbers to 0.
+	 * 2) Set bit 4 of PCIC_INTR, which is needed on some chips to enable
+	 *    routing of CSC interrupts (e.g. card removal) to PCI while in
+	 *    PCMCIA mode.  We just leave this set all the time.
+	 * 3) Enable card insertion/removal interrupts in case the chip also
+	 *    needs that while in PCMCIA mode.
+	 * 4) Clear any pending CSC interrupt.
+	 */
+	Pcic_write(ph, PCIC_INTR, PCIC_INTR_ENABLE | PCIC_INTR_RESET);
+	Pcic_write(ph, PCIC_CSC_INTR, PCIC_CSC_INTR_CD_ENABLE);
 	Pcic_read(ph, PCIC_CSC);
 
 	/* initialise pcmcia bus attachment */
@@ -902,22 +900,22 @@ pccbbintr(arg)
 	void *arg;
 {
 	struct pccbb_softc *sc = (struct pccbb_softc *)arg;
-	u_int32_t sockevent;
+	u_int32_t sockevent, sockstate;
 	bus_space_tag_t memt = sc->sc_base_memt;
 	bus_space_handle_t memh = sc->sc_base_memh;
-	u_int32_t sockstate;
+	struct pcic_handle *ph = &sc->sc_pcmcia_h;
 
 	sockevent = bus_space_read_4(memt, memh, CB_SOCKET_EVENT);
-	if (0 == sockevent) {
+	bus_space_write_4(memt, memh, CB_SOCKET_EVENT, sockevent);
+	Pcic_read(ph, PCIC_CSC);
+
+	if (sockevent == 0) {
 		/* This intr is not for me: it may be for my child devices. */
 		return pccbbintr_function(sc);
-	} else {
-		/* reset bit */
-		bus_space_write_4(memt, memh, CB_SOCKET_EVENT, sockevent);
 	}
-	sockstate = bus_space_read_4(memt, memh, CB_SOCKET_STAT);
 
 	if (sockevent & CB_SOCKET_EVENT_CD) {
+		sockstate = bus_space_read_4(memt, memh, CB_SOCKET_STAT);
 		if (CB_SOCKET_STAT_CD == (sockstate & CB_SOCKET_STAT_CD)) {
 			/* A card should be removed. */
 			if (sc->sc_flags & CBB_CARDEXIST) {
@@ -954,11 +952,6 @@ pccbbintr(arg)
 			timeout(pci113x_insert, sc, hz / 10);
 			sc->sc_flags |= CBB_INSERTING;
 		}
-	} else {
-		DPRINTF(("%s: sockevent = %b\n",
-		    sc->sc_dev.dv_xname, sockevent, PCCBB_SOCKEVENT_BITS));
-		DPRINTF(("%s: sockstate = %b\n",
-		    sc->sc_dev.dv_xname, sockstate, PCCBB_SOCKSTATE_BITS));
 	}
 
 	return 1;
@@ -2148,7 +2141,6 @@ pccbb_pcmcia_socket_enable(pch)
 	u_int8_t power, intr;
 	pcireg_t spsr;
 	int voltage;
-#define PCIC_INTR_PCI PCIC_INTR_ENABLE
 
 	/* this bit is mostly stolen from pcic_attach_card */
 
@@ -2172,7 +2164,7 @@ pccbb_pcmcia_socket_enable(pch)
 
 	/* assert reset bit */
 	intr = Pcic_read(ph, PCIC_INTR);
-	intr &= ~(PCIC_INTR_RESET | PCIC_INTR_ENABLE | PCIC_INTR_CARDTYPE_MASK);
+	intr &= ~(PCIC_INTR_RESET | PCIC_INTR_CARDTYPE_MASK);
 	Pcic_write(ph, PCIC_INTR, intr);
 
 	/* disable socket i/o: negate output enable bit */
@@ -2235,7 +2227,6 @@ pccbb_pcmcia_socket_enable(pch)
 
 	cardtype = pcmcia_card_gettype(ph->pcmcia);
 
-	intr |= PCIC_INTR_PCI;
 	intr |= ((cardtype == PCMCIA_IFTYPE_IO) ?
 	    PCIC_INTR_CARDTYPE_IO : PCIC_INTR_CARDTYPE_MEM);
 	Pcic_write(ph, PCIC_INTR, intr);
@@ -2278,7 +2269,7 @@ pccbb_pcmcia_socket_disable(pch)
 	/* reset signal asserting... */
 
 	intr = Pcic_read(ph, PCIC_INTR);
-	intr &= ~(PCIC_INTR_RESET | PCIC_INTR_ENABLE | PCIC_INTR_CARDTYPE_MASK);
+	intr &= ~(PCIC_INTR_CARDTYPE_MASK);
 	Pcic_write(ph, PCIC_INTR, intr);
 	delay(2 * 1000);
 
