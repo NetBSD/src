@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.19 1998/02/21 22:51:43 mark Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.20 1998/06/17 19:40:50 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -52,6 +52,17 @@
 #include <sys/malloc.h>
 #include <machine/bootconfig.h>
 #include <machine/irqhandler.h>
+
+#ifdef SHARK
+#include <arm32/shark/sequoia.h>
+extern void	ofrootfound __P((void));
+extern void	startrtclock __P((void));
+#endif
+
+#if defined(OFWGENCFG) || defined(SHARK)
+/* Temporary for SHARK! */
+#include <machine/ofw.h>
+#endif
 
 #include "wdc.h"
 #include "fdc.h"
@@ -177,10 +188,19 @@ configure()
 	 * We have to have a mainbus
 	 */
 
+#ifdef SHARK
+	sequoiaInit();
+	startrtclock();
+#endif
+
 	config_rootfound("mainbus", NULL);
 #if NPODULEBUS > 0
 	config_rootfound("podulebus", NULL);
 #endif	/* NPODULEBUS */
+#if defined(OFWGENCFG) || defined(SHARK)
+	/* Temporary for SHARK! */
+	ofrootfound();
+#endif
 
 	/* Debugging information */
 
