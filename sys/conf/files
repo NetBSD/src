@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.281 1999/03/22 17:13:34 sommerfe Exp $
+#	$NetBSD: files,v 1.282 1999/03/22 22:33:35 bad Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -147,6 +147,7 @@ define	atm
 define	ether
 define	fddi
 define	hippi
+define	token
 
 # devices ARPing IPv4 pull this in:
 define	arp
@@ -238,6 +239,10 @@ file	dev/ic/lance.c			le24 | le32
 # 8390-family Ethernet controllers
 define	dp8390nic
 file	dev/ic/dp8390.c			dp8390nic
+
+# TROPIC Token-Ring controller
+device	tr: arp, token, ifnet
+file	dev/ic/tropic.c			tr
 
 # NCR 5380 SCSI Bus Controller
 define	ncr5380sbc
@@ -634,7 +639,7 @@ file net/bsd-comp.c			ppp & ppp_bsdcomp
 file net/if.c
 file net/if_arcsubr.c			arc
 file net/if_atmsubr.c			atm
-file net/if_ethersubr.c			ether | fddi | netatalk
+file net/if_ethersubr.c			ether | fddi | netatalk | token
 file net/if_fddisubr.c			fddi
 file net/if_hippisubr.c                 hippi                   needs-flag
 file net/if_gre.c			gre			needs-count	
@@ -643,6 +648,7 @@ file net/if_media.c
 file net/if_sl.c			sl			needs-count
 file net/if_strip.c			strip			needs-count
 file net/if_ppp.c			ppp			needs-count
+file net/if_tokensubr.c			token			needs-flag
 file net/if_tun.c			tun			needs-count
 file net/pfil.c				pfil_hooks | ipfilter
 file net/ppp-deflate.c			ppp & ppp_deflate
