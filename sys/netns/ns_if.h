@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)ns_if.h	7.6 (Berkeley) 6/28/90
+ *	from: @(#)ns_if.h	7.6 (Berkeley) 6/28/90
+ *	$Id: ns_if.h,v 1.3 1993/05/20 04:35:54 cgd Exp $
  */
 
 #ifndef _NETNS_NS_IF_H_
