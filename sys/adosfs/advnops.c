@@ -1,4 +1,4 @@
-/*	$NetBSD: advnops.c,v 1.40 1998/06/25 22:20:39 thorpej Exp $	*/
+/*	$NetBSD: advnops.c,v 1.41 1998/08/03 14:19:57 kleink Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -996,6 +996,9 @@ adosfs_pathconf(v)
 		return (0);
 	case _PC_VDISABLE:
 		*sp->a_retval = _POSIX_VDISABLE;
+		return (0);
+	case _PC_SYNC_IO:
+		*sp->a_retval = 1;
 		return (0);
 	default:
 		return (EINVAL);

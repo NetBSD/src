@@ -1,4 +1,4 @@
-/*	$NetBSD: fifo_vnops.c,v 1.25 1998/03/01 02:21:30 fvdl Exp $	*/
+/*	$NetBSD: fifo_vnops.c,v 1.26 1998/08/03 14:19:59 kleink Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993, 1995
@@ -496,6 +496,9 @@ fifo_pathconf(v)
 		*ap->a_retval = PIPE_BUF;
 		return (0);
 	case _PC_CHOWN_RESTRICTED:
+		*ap->a_retval = 1;
+		return (0);
+	case _PC_SYNC_IO:
 		*ap->a_retval = 1;
 		return (0);
 	default:
