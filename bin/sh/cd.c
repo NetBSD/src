@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.24 1998/02/17 02:57:16 christos Exp $	*/
+/*	$NetBSD: cd.c,v 1.25 1998/05/21 16:50:40 ross Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)cd.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: cd.c,v 1.24 1998/02/17 02:57:16 christos Exp $");
+__RCSID("$NetBSD: cd.c,v 1.25 1998/05/21 16:50:40 ross Exp $");
 #endif
 #endif /* not lint */
 
@@ -237,23 +237,21 @@ updatepwd(dir)
 	 * any more because we traversed a symbolic link or something
 	 * we couldn't stat().
 	 */
-	if (dir == NULL)  {
+	if (dir == NULL || curdir == NULL)  {
 		if (prevdir)
 			ckfree(prevdir);
 		INTOFF;
 		prevdir = curdir;
 		curdir = NULL;
 		getpwd();
+		setvar("PWD", curdir, VEXPORT|VTEXTFIXED);
 		INTON;
 		return;
 	}
-
 	cdcomppath = stalloc(strlen(dir) + 1);
 	scopy(dir, cdcomppath);
 	STARTSTACKSTR(new);
 	if (*dir != '/') {
-		if (curdir == NULL)
-			return;
 		p = curdir;
 		while (*p)
 			STPUTC(*p++, new);
