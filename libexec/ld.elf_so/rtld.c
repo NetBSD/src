@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.79 2002/09/26 13:43:52 mycroft Exp $	 */
+/*	$NetBSD: rtld.c,v 1.80 2002/09/26 20:35:56 mycroft Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -141,52 +141,32 @@ static void
 _rtld_init(mapbase, relocbase)
 	caddr_t mapbase, relocbase;
 {
-	Obj_Entry objself;/* The dynamic linker shared object */
 	const Elf_Ehdr *hdr = (Elf_Ehdr *) mapbase;
-	int i;
-
-	memset(&objself, 0, sizeof objself);
 
 	/* Conjure up an Obj_Entry structure for the dynamic linker. */
-	objself.path = NULL;
-	objself.rtld = true;
-	objself.mapbase = mapbase;
-	objself.relocbase = relocbase;
-	objself.phdr = (Elf_Phdr *) (mapbase + hdr->e_phoff);
-	for (i = 0; i < hdr->e_phnum; i++) {
-		if (objself.phdr[i].p_type == PT_LOAD) {
-			objself.textsize = round_up(objself.phdr[i].p_vaddr + 
-			    objself.phdr[i].p_memsz) - 
-			    round_down(objself.phdr[i].p_vaddr);
-			break;
-		}
-	}
-
-	objself.pltgot = NULL;
-
-	objself.dynamic = (Elf_Dyn *) &_DYNAMIC;
+	_rtld_objself.path = _rtld_path;
+	_rtld_objself.rtld = true;
+	_rtld_objself.mapbase = mapbase;
+	_rtld_objself.relocbase = relocbase;
+	_rtld_objself.phdr = (Elf_Phdr *) (mapbase + hdr->e_phoff);
+	_rtld_objself.dynamic = (Elf_Dyn *) &_DYNAMIC;
 
 #ifdef RTLD_RELOCATE_SELF
 #error platform still uses RTLD_RELOCATE_SELF
 #endif
 
-	_rtld_digest_dynamic(&objself);
-
-	assert(objself.needed == NULL);
-
+	_rtld_digest_dynamic(&_rtld_objself);
+	assert(!_rtld_objself.needed && !_rtld_objself.pltrel &&
+	    !_rtld_objself.pltrela);
 #ifndef __mips__
-	/* no relocation for mips/i386 */
-	assert(!objself.textrel);
+	/* MIPS has a bogus DT_TEXTREL. */
+	assert(!_rtld_objself.pltgot && !_rtld_objself.textrel);
 #endif
 
-	_rtld_relocate_objects(&objself, true, true);
+#ifdef __vax__
+	_rtld_relocate_nonplt_objects(&_rtld_objself, true);
+#endif
 
-	/*
-	 * Now that we relocated ourselves, we can use globals.
-	 */
-	_rtld_objself = objself;
-
-	_rtld_objself.path = _rtld_path;
 	_rtld_add_paths(&_rtld_default_paths, RTLD_DEFAULT_LIBRARY_PATH);
 
 	/*
