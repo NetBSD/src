@@ -1,4 +1,4 @@
-/*	$NetBSD: __sigsetjmp14.S,v 1.5 2002/05/07 01:34:21 eeh Exp $	*/
+/*	$NetBSD: __sigsetjmp14.S,v 1.6 2004/01/02 22:30:36 martin Exp $	*/
 /*
  * Copyright (c) 1995 Paul Kranenburg
  * All rights reserved.
@@ -42,8 +42,8 @@ ENTRY(__sigsetjmp14)
 	sethi	%hi(_C_LABEL(_setjmp)), %o3
 	or	%o2, %lo(_C_LABEL(__setjmp14)), %o2
 	or	%o3, %lo(_C_LABEL(_setjmp)), %o3
-	brnz	%o1, 1f	
-	 ldx	[%g1+%o3], %o3		! if (%o1 != 0) goto _setjmp;
+	brz	%o1, 1f	
+	 ldx	[%g1+%o3], %o3		! if (%o1 == 0) goto _setjmp;
 	ldx	[%g1+%o2], %o3		! else goto __setjmp;
 1:
 	jmp	%o3
@@ -56,8 +56,8 @@ ENTRY(__siglongjmp14)
 	sethi	%hi(_C_LABEL(_longjmp)), %o4
 	or	%o3, %lo(_C_LABEL(__longjmp14)), %o3
 	or	%o4, %lo(_C_LABEL(_longjmp)), %o4
-	brnz,a	%o2, 1f	
-	 ldx	[%g1+%o4], %o4		! if (%o2 != 0) goto _longjmp;
+	brz,a	%o2, 1f	
+	 ldx	[%g1+%o4], %o4		! if (%o2 == 0) goto _longjmp;
 	ldx	[%g1+%o3], %o4		! else goto __longjmp;
 1:
 	jmp	%o4	
@@ -70,8 +70,8 @@ ENTRY(__sigsetjmp14)
 	cmp	%o1,0
 	st	%o1,[%o0+0x48]			! jmpbuf[JBLEN]
 	bne,a	1f
-	 ldx	[%g1+_C_LABEL(__setjmp14)], %g1	! if (%o1 != 0) goto _setjmp;
-	ldx	[%g1+_C_LABEL(_setjmp)], %g1	! else goto __setjmp;
+	 ldx	[%g1+_C_LABEL(__setjmp14)], %g1	! if (%o1 != 0) goto __setjmp;
+	ldx	[%g1+_C_LABEL(_setjmp)], %g1	! else goto _setjmp;
 1:
 	jmp %g1
 	 nop
@@ -81,8 +81,8 @@ ENTRY(__siglongjmp14)
 	ld	[%o0+0x48],%o2			! jmpbuf[JBLEN]
 	cmp	%o2,0
 	bne,a	1f
-	 ldx	[%g1+_C_LABEL(__longjmp14)], %g1 ! if (%g1 != 0) goto _longjmp;
-	ldx	[%g1+_C_LABEL(_longjmp)], %g1	! else goto __longjmp;
+	 ldx	[%g1+_C_LABEL(__longjmp14)], %g1 ! if (%o2 != 0) goto __longjmp;
+	ldx	[%g1+_C_LABEL(_longjmp)], %g1	! else goto _longjmp;
 1:
 	jmp %g1
 	 nop
