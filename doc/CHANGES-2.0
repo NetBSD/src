@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.246 2004/06/01 17:54:16 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.247 2004/06/03 21:07:28 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -960,7 +960,7 @@ sys/netinet/tcp_input.c				1.192
 
 sys/kern/kern_systrace.c			1.38
 
-	Check process flags.
+	Check process flags. SA#2004-007
 	[provos, ticket #151]
 
 lib/libc/time/strftime.3			1.22
@@ -2645,7 +2645,7 @@ gnu/dist/cvs/src/stack.h			new file
 gnu/usr.bin/cvs/include/config.h		patch
 gnu/usr.bin/cvs/cvs/Makefile			patch
 
-	Pullup to version 1.11.16
+	Pullup to version 1.11.16. SA#2004-008
 	[christos, ticket #366]
 
 sys/dev/microcode/siop/ncr53cxxx.c		1.13
