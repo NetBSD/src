@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.480 2002/10/21 14:45:19 soren Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.481 2002/10/24 06:40:56 grant Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.476 2002/10/21 14:45:00 soren Exp 
+ *	NetBSD: pcidevs,v 1.477 2002/10/24 06:40:07 grant Exp 
  */
 
 /*
@@ -563,7 +563,7 @@
 #define	PCI_VENDOR_ANTARES	0x1754		/* Antares Microsystems, Inc. */
 #define	PCI_VENDOR_SYMPHONY2	0x1c1c		/* Symphony Labs (2nd PCI Vendor ID) */
 #define	PCI_VENDOR_TEKRAM2	0x1de1		/* Tekram Technology (2nd PCI Vendor ID) */
-#define	PCI_VENDOR_COREGA	0x15e8		/* Corega */
+#define	PCI_VENDOR_NDC	0x15e8		/* National Datacomm Corp. */
 #define	PCI_VENDOR_ACTIONTEC	0x1668		/* Action Tec Electronics, Inc. */
 #define	PCI_VENDOR_GLOBALSUN	0x16ab		/* Global Sun Tech */
 #define	PCI_VENDOR_ALTIMA	0x173b		/* Altima */
@@ -1097,9 +1097,6 @@
 /* Contaq Microsystems products */
 #define	PCI_PRODUCT_CONTAQ_82C599	0x0600		/* 82C599 PCI-VLB Bridge */
 #define	PCI_PRODUCT_CONTAQ_82C693	0xc693		/* 82C693 PCI-ISA Bridge */
-
-/* Corega products */
-#define	PCI_PRODUCT_COREGA_CGWLPCIA11	0x0130		/* CGWLPCIA11 */
 
 /* Corollary Products */
 #define	PCI_PRODUCT_COROLLARY_CBUSII_PCIB	0x0014		/* \"C-Bus II\"-PCI Bridge */
@@ -1656,6 +1653,10 @@
 
 /* Mutech products */
 #define	PCI_PRODUCT_MUTECH_MV1000	0x0001		/* MV1000 */
+
+/* National Datacomm Corp. products */
+#define	PCI_PRODUCT_NDC_NCP130	0x0130		/* NCP130 Wireless NIC */
+#define	PCI_PRODUCT_NDC_NCP130A2	0x0131		/* NCP130 rev A2 Wireless NIC */
 
 /* NetVin products - XXX better descriptions */
 #define	PCI_PRODUCT_NETVIN_5000	0x5000		/* 5000 Ethernet */

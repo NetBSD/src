@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.478 2002/10/21 14:45:20 soren Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.479 2002/10/24 06:40:58 grant Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.476 2002/10/21 14:45:00 soren Exp 
+ *	NetBSD: pcidevs,v 1.477 2002/10/24 06:40:07 grant Exp 
  */
 
 /*
@@ -2360,12 +2360,6 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Contaq Microsystems",
 	    "82C693 PCI-ISA Bridge",
-	},
-	{
-	    PCI_VENDOR_COREGA, PCI_PRODUCT_COREGA_CGWLPCIA11,
-	    0,
-	    "Corega",
-	    "CGWLPCIA11",
 	},
 	{
 	    PCI_VENDOR_COROLLARY, PCI_PRODUCT_COROLLARY_CBUSII_PCIB,
@@ -4940,6 +4934,18 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Mutech",
 	    "MV1000",
+	},
+	{
+	    PCI_VENDOR_NDC, PCI_PRODUCT_NDC_NCP130,
+	    0,
+	    "National Datacomm Corp.",
+	    "NCP130 Wireless NIC",
+	},
+	{
+	    PCI_VENDOR_NDC, PCI_PRODUCT_NDC_NCP130A2,
+	    0,
+	    "National Datacomm Corp.",
+	    "NCP130 rev A2 Wireless NIC",
 	},
 	{
 	    PCI_VENDOR_NETVIN, PCI_PRODUCT_NETVIN_5000,
@@ -11074,9 +11080,9 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    NULL,
 	},
 	{
-	    PCI_VENDOR_COREGA, 0,
+	    PCI_VENDOR_NDC, 0,
 	    PCI_KNOWNDEV_NOPROD,
-	    "Corega",
+	    "National Datacomm Corp.",
 	    NULL,
 	},
 	{
