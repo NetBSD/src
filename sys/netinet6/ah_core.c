@@ -1,4 +1,4 @@
-/*	$NetBSD: ah_core.c,v 1.12 1999/12/15 06:28:44 itojun Exp $	*/
+/*	$NetBSD: ah_core.c,v 1.13 2000/01/06 07:31:10 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -33,20 +33,13 @@
  * RFC1826/2402 authentication header.
  */
 
-#if (defined(__FreeBSD__) && __FreeBSD__ >= 3) || defined(__NetBSD__)
 #include "opt_inet.h"
-#ifdef __NetBSD__	/*XXX*/
 #include "opt_ipsec.h"
-#endif
-#endif
 
 /* Some of operating systems have standard crypto checksum library */
 #ifdef __NetBSD__
 #define HAVE_MD5
 #define HAVE_SHA1
-#endif
-#ifdef __FreeBSD__
-#define HAVE_MD5
 #endif
 
 #include <sys/param.h>
@@ -72,9 +65,7 @@
 
 #ifdef INET6
 #include <netinet6/ip6.h>
-#if !(defined(__FreeBSD__) && __FreeBSD__ >= 3)
 #include <netinet6/in6_pcb.h>
-#endif
 #include <netinet6/ip6_var.h>
 #include <netinet6/icmp6.h>
 #endif
@@ -86,17 +77,9 @@
 #endif
 #include <netkey/keyv2.h>
 #include <netkey/keydb.h>
-#ifdef HAVE_MD5
 #include <sys/md5.h>
-#else
-#include <crypto/md5.h>
-#endif
-#ifdef HAVE_SHA1
 #include <sys/sha1.h>
 #define SHA1_RESULTLEN	20
-#else
-#include <crypto/sha1.h>
-#endif
 
 #define	HMACSIZE	16
 
@@ -225,24 +208,14 @@ ah_keyed_md5_init(state, sa)
 		panic("ah_keyed_md5_init: what?");
 
 	state->sa = sa;
-#ifdef HAVE_MD5
 	state->foo = (void *)malloc(sizeof(MD5_CTX), M_TEMP, M_NOWAIT);
 	if (state->foo == NULL)
 		panic("ah_keyed_md5_init: what?");
 	MD5Init((MD5_CTX *)state->foo);
-#else
-	state->foo = NULL;
-	md5_init();
-#endif
 	if (state->sa) {
-#ifdef HAVE_MD5
 		MD5Update((MD5_CTX *)state->foo, 
 			(u_int8_t *)_KEYBUF(state->sa->key_auth),
 			(u_int)_KEYLEN(state->sa->key_auth));
-#else
-		md5_loop((u_int8_t *)_KEYBUF(state->sa->key_auth),
-			(u_int)_KEYLEN(state->sa->key_auth));
-#endif
 
 	    {
 		/*
@@ -262,39 +235,23 @@ ah_keyed_md5_init(state, sa)
 		keybitlen *= 8;
 
 		buf[0] = 0x80;
-#ifdef HAVE_MD5
 		MD5Update((MD5_CTX *)state->foo, &buf[0], 1);
-#else
-		md5_loop(&buf[0], 1);
-#endif
 		padlen--;
 
 		bzero(buf, sizeof(buf));
 		while (sizeof(buf) < padlen) {
-#ifdef HAVE_MD5
 			MD5Update((MD5_CTX *)state->foo, &buf[0], sizeof(buf));
-#else
-			md5_loop(&buf[0], sizeof(buf));
-#endif
 			padlen -= sizeof(buf);
 		}
 		if (padlen) {
-#ifdef HAVE_MD5
 			MD5Update((MD5_CTX *)state->foo, &buf[0], padlen);
-#else
-			md5_loop(&buf[0], padlen);
-#endif
 		}
 
 		buf[0] = (keybitlen >> 0) & 0xff;
 		buf[1] = (keybitlen >> 8) & 0xff;
 		buf[2] = (keybitlen >> 16) & 0xff;
 		buf[3] = (keybitlen >> 24) & 0xff;
-#ifdef HAVE_MD5
 		MD5Update((MD5_CTX *)state->foo, buf, 8);
-#else
-		md5_loop(buf, 8);
-#endif
 	    }
 	}
 }
@@ -308,11 +265,7 @@ ah_keyed_md5_loop(state, addr, len)
 	if (!state)
 		panic("ah_keyed_md5_loop: what?");
 
-#ifdef HAVE_MD5
 	MD5Update((MD5_CTX *)state->foo, addr, len);
-#else
-	md5_loop((u_int8_t *)addr, (u_int)len);
-#endif
 }
 
 static void
@@ -326,22 +279,12 @@ ah_keyed_md5_result(state, addr)
 		panic("ah_keyed_md5_result: what?");
 
 	if (state->sa) {
-#ifdef HAVE_MD5
 		MD5Update((MD5_CTX *)state->foo, 
 			(u_int8_t *)_KEYBUF(state->sa->key_auth),
 			(u_int)_KEYLEN(state->sa->key_auth));
-#else
-		md5_loop((u_int8_t *)_KEYBUF(state->sa->key_auth),
-			(u_int)_KEYLEN(state->sa->key_auth));
-#endif
 	}
-#ifdef HAVE_MD5
 	MD5Final(&digest[0], (MD5_CTX *)state->foo);
 	free(state->foo, M_TEMP);
-#else
-	md5_pad();
-	md5_result(&digest[0]);
-#endif
 	bcopy(&digest[0], (void *)addr, sizeof(digest));
 }
 
@@ -371,40 +314,22 @@ ah_keyed_sha1_init(state, sa)
 	struct ah_algorithm_state *state;
 	struct secas *sa;
 {
-#ifdef HAVE_SHA1
 	SHA1_CTX *ctxt;
-#else
-	struct sha1_ctxt *ctxt;
-#endif
 
 	if (!state)
 		panic("ah_keyed_sha1_init: what?");
 
 	state->sa = sa;
-#ifdef HAVE_SHA1
 	state->foo = (void *)malloc(sizeof(SHA1_CTX), M_TEMP, M_NOWAIT);
-#else
-	state->foo = (void *)malloc(sizeof(struct sha1_ctxt), M_TEMP, M_NOWAIT);
-#endif
 	if (!state->foo)
 		panic("ah_keyed_sha1_init: what?");
 
-#ifdef HAVE_SHA1
 	ctxt = (SHA1_CTX *)state->foo;
 	SHA1Init(ctxt);
-#else
-	ctxt = (struct sha1_ctxt *)state->foo;
-	sha1_init(ctxt);
-#endif
 
 	if (state->sa) {
-#ifdef HAVE_SHA1
 		SHA1Update(ctxt, (u_int8_t *)_KEYBUF(state->sa->key_auth),
 			(u_int)_KEYLEN(state->sa->key_auth));
-#else
-		sha1_loop(ctxt, (u_int8_t *)_KEYBUF(state->sa->key_auth),
-			(u_int)_KEYLEN(state->sa->key_auth));
-#endif
 
 	    {
 		/*
@@ -422,39 +347,23 @@ ah_keyed_sha1_init(state, sa)
 		keybitlen *= 8;
 
 		buf[0] = 0x80;
-#ifdef HAVE_SHA1
 		SHA1Update(ctxt, &buf[0], 1);
-#else
-		sha1_loop(ctxt, &buf[0], 1);
-#endif
 		padlen--;
 
 		bzero(buf, sizeof(buf));
 		while (sizeof(buf) < padlen) {
-#ifdef HAVE_SHA1
 			SHA1Update(ctxt, &buf[0], sizeof(buf));
-#else
-			sha1_loop(ctxt, &buf[0], sizeof(buf));
-#endif
 			padlen -= sizeof(buf);
 		}
 		if (padlen) {
-#ifdef HAVE_SHA1
 			SHA1Update(ctxt, &buf[0], padlen);
-#else
-			sha1_loop(ctxt, &buf[0], padlen);
-#endif
 		}
 
 		buf[0] = (keybitlen >> 0) & 0xff;
 		buf[1] = (keybitlen >> 8) & 0xff;
 		buf[2] = (keybitlen >> 16) & 0xff;
 		buf[3] = (keybitlen >> 24) & 0xff;
-#ifdef HAVE_SHA1
 		SHA1Update(ctxt, buf, 8);
-#else
-		sha1_loop(ctxt, buf, 8);
-#endif
 	    }
 	}
 }
@@ -465,25 +374,13 @@ ah_keyed_sha1_loop(state, addr, len)
 	caddr_t addr;
 	size_t len;
 {
-#ifdef HAVE_SHA1
 	SHA1_CTX *ctxt;
-#else
-	struct sha1_ctxt *ctxt;
-#endif
 
 	if (!state || !state->foo)
 		panic("ah_keyed_sha1_loop: what?");
-#ifdef HAVE_SHA1
 	ctxt = (SHA1_CTX *)state->foo;
-#else
-	ctxt = (struct sha1_ctxt *)state->foo;
-#endif
 
-#ifdef HAVE_SHA1
 	SHA1Update(ctxt, (caddr_t)addr, (size_t)len);
-#else
-	sha1_loop(ctxt, (caddr_t)addr, (size_t)len);
-#endif
 }
 
 static void
@@ -492,34 +389,17 @@ ah_keyed_sha1_result(state, addr)
 	caddr_t addr;
 {
 	u_char digest[SHA1_RESULTLEN];	/* SHA-1 generates 160 bits */
-#ifdef HAVE_SHA1
 	SHA1_CTX *ctxt;
-#else
-	struct sha1_ctxt *ctxt;
-#endif
 
 	if (!state || !state->foo)
 		panic("ah_keyed_sha1_result: what?");
-#ifdef HAVE_SHA1
 	ctxt = (SHA1_CTX *)state->foo;
-#else
-	ctxt = (struct sha1_ctxt *)state->foo;
-#endif
 
 	if (state->sa) {
-#ifdef HAVE_SHA1
 		SHA1Update(ctxt, (u_int8_t *)_KEYBUF(state->sa->key_auth),
 			(u_int)_KEYLEN(state->sa->key_auth));
-#else
-		sha1_loop(ctxt, (u_int8_t *)_KEYBUF(state->sa->key_auth),
-			(u_int)_KEYLEN(state->sa->key_auth));
-#endif
 	}
-#ifdef HAVE_SHA1
 	SHA1Final((caddr_t)&digest[0], ctxt);
-#else
-	sha1_result(ctxt, (caddr_t)&digest[0]);
-#endif
 	bcopy(&digest[0], (void *)addr, HMACSIZE);
 
 	free(state->foo, M_TEMP);
@@ -557,42 +437,26 @@ ah_hmac_md5_init(state, sa)
 	u_char *key;
 	size_t keylen;
 	size_t i;
-#ifdef HAVE_MD5
 	MD5_CTX *ctxt;
-#endif
 
 	if (!state)
 		panic("ah_hmac_md5_init: what?");
 
 	state->sa = sa;
-#ifdef HAVE_MD5
 	state->foo = (void *)malloc(64 + 64 + sizeof(MD5_CTX), M_TEMP, M_NOWAIT);
-#else
-	state->foo = (void *)malloc(64 + 64, M_TEMP, M_NOWAIT);
-#endif
 	if (!state->foo)
 		panic("ah_hmac_md5_init: what?");
 
 	ipad = (u_char *)state->foo;
 	opad = (u_char *)(ipad + 64);
-#ifdef HAVE_MD5
 	ctxt = (MD5_CTX *)(opad + 64);
-#endif
 
 	/* compress the key if necessery */
 	if (64 < _KEYLEN(state->sa->key_auth)) {
-#ifdef HAVE_MD5
 		MD5Init(ctxt);
 		MD5Update(ctxt, _KEYBUF(state->sa->key_auth),
 			_KEYLEN(state->sa->key_auth));
 		MD5Final(&tk[0], ctxt);
-#else
-		md5_init();
-		md5_loop(_KEYBUF(state->sa->key_auth),
-			_KEYLEN(state->sa->key_auth));
-		md5_pad();
-		md5_result(&tk[0]);
-#endif
 		key = &tk[0];
 		keylen = 16;
 	} else {
@@ -609,13 +473,8 @@ ah_hmac_md5_init(state, sa)
 		opad[i] ^= 0x5c;
 	}
 
-#ifdef HAVE_MD5
 	MD5Init(ctxt);
 	MD5Update(ctxt, ipad, 64);
-#else
-	md5_init();
-	md5_loop(ipad, 64);
-#endif
 }
 
 static void
@@ -624,18 +483,12 @@ ah_hmac_md5_loop(state, addr, len)
 	caddr_t addr;
 	size_t len;
 {
-#ifdef HAVE_MD5
 	MD5_CTX *ctxt;
-#endif
 
 	if (!state || !state->foo)
 		panic("ah_hmac_md5_loop: what?");
-#ifdef HAVE_MD5
 	ctxt = (MD5_CTX *)(((caddr_t)state->foo) + 128);
 	MD5Update(ctxt, addr, len);
-#else
-	md5_loop((u_int8_t *)addr, (u_int)len);
-#endif
 }
 
 static void
@@ -646,16 +499,13 @@ ah_hmac_md5_result(state, addr)
 	u_char digest[16];
 	u_char *ipad;
 	u_char *opad;
-#ifdef HAVE_MD5
 	MD5_CTX *ctxt;
-#endif
 
 	if (!state || !state->foo)
 		panic("ah_hmac_md5_result: what?");
 
 	ipad = (u_char *)state->foo;
 	opad = (u_char *)(ipad + 64);
-#ifdef HAVE_MD5
 	ctxt = (MD5_CTX *)(opad + 64);
 
 	MD5Final(&digest[0], ctxt);
@@ -664,16 +514,6 @@ ah_hmac_md5_result(state, addr)
 	MD5Update(ctxt, opad, 64);
 	MD5Update(ctxt, &digest[0], sizeof(digest));
 	MD5Final(&digest[0], ctxt);
-#else
-	md5_pad();
-	md5_result(&digest[0]);
-
-	md5_init();
-	md5_loop(opad, 64);
-	md5_loop(&digest[0], sizeof(digest));
-	md5_pad();
-	md5_result(&digest[0]);
-#endif
 
 	bcopy(&digest[0], (void *)addr, HMACSIZE);
 
@@ -708,11 +548,7 @@ ah_hmac_sha1_init(state, sa)
 {
 	u_char *ipad;
 	u_char *opad;
-#ifdef HAVE_SHA1
 	SHA1_CTX *ctxt;
-#else
-	struct sha1_ctxt *ctxt;
-#endif
 	u_char tk[SHA1_RESULTLEN];	/* SHA-1 generates 160 bits */
 	u_char *key;
 	size_t keylen;
@@ -722,37 +558,21 @@ ah_hmac_sha1_init(state, sa)
 		panic("ah_hmac_sha1_init: what?");
 
 	state->sa = sa;
-#ifdef HAVE_SHA1
 	state->foo = (void *)malloc(64 + 64 + sizeof(SHA1_CTX),
 			M_TEMP, M_NOWAIT);
-#else
-	state->foo = (void *)malloc(64 + 64 + sizeof(struct sha1_ctxt),
-			M_TEMP, M_NOWAIT);
-#endif
 	if (!state->foo)
 		panic("ah_hmac_sha1_init: what?");
 
 	ipad = (u_char *)state->foo;
 	opad = (u_char *)(ipad + 64);
-#ifdef HAVE_SHA1
 	ctxt = (SHA1_CTX *)(opad + 64);
-#else
-	ctxt = (struct sha1_ctxt *)(opad + 64);
-#endif
 
 	/* compress the key if necessery */
 	if (64 < _KEYLEN(state->sa->key_auth)) {
-#ifdef HAVE_SHA1
 		SHA1Init(ctxt);
 		SHA1Update(ctxt, _KEYBUF(state->sa->key_auth),
 			_KEYLEN(state->sa->key_auth));
 		SHA1Final(&tk[0], ctxt);
-#else
-		sha1_init(ctxt);
-		sha1_loop(ctxt, _KEYBUF(state->sa->key_auth),
-			_KEYLEN(state->sa->key_auth));
-		sha1_result(ctxt, &tk[0]);
-#endif
 		key = &tk[0];
 		keylen = SHA1_RESULTLEN;
 	} else {
@@ -769,13 +589,8 @@ ah_hmac_sha1_init(state, sa)
 		opad[i] ^= 0x5c;
 	}
 
-#ifdef HAVE_SHA1
 	SHA1Init(ctxt);
 	SHA1Update(ctxt, ipad, 64);
-#else
-	sha1_init(ctxt);
-	sha1_loop(ctxt, ipad, 64);
-#endif
 }
 
 static void
@@ -784,22 +599,13 @@ ah_hmac_sha1_loop(state, addr, len)
 	caddr_t addr;
 	size_t len;
 {
-#ifdef HAVE_SHA1
 	SHA1_CTX *ctxt;
-#else
-	struct sha1_ctxt *ctxt;
-#endif
 
 	if (!state || !state->foo)
 		panic("ah_hmac_sha1_loop: what?");
 
-#ifdef HAVE_SHA1
 	ctxt = (SHA1_CTX *)(((u_char *)state->foo) + 128);
 	SHA1Update(ctxt, (caddr_t)addr, (size_t)len);
-#else
-	ctxt = (struct sha1_ctxt *)(((u_char *)state->foo) + 128);
-	sha1_loop(ctxt, (caddr_t)addr, (size_t)len);
-#endif
 }
 
 static void
@@ -810,18 +616,13 @@ ah_hmac_sha1_result(state, addr)
 	u_char digest[SHA1_RESULTLEN];	/* SHA-1 generates 160 bits */
 	u_char *ipad;
 	u_char *opad;
-#ifdef HAVE_SHA1
 	SHA1_CTX *ctxt;
-#else
-	struct sha1_ctxt *ctxt;
-#endif
 
 	if (!state || !state->foo)
 		panic("ah_hmac_sha1_result: what?");
 
 	ipad = (u_char *)state->foo;
 	opad = (u_char *)(ipad + 64);
-#ifdef HAVE_SHA1
 	ctxt = (SHA1_CTX *)(opad + 64);
 
 	SHA1Final((caddr_t)&digest[0], ctxt);
@@ -830,16 +631,6 @@ ah_hmac_sha1_result(state, addr)
 	SHA1Update(ctxt, opad, 64);
 	SHA1Update(ctxt, (caddr_t)&digest[0], sizeof(digest));
 	SHA1Final((caddr_t)&digest[0], ctxt);
-#else
-	ctxt = (struct sha1_ctxt *)(opad + 64);
-
-	sha1_result(ctxt, (caddr_t)&digest[0]);
-
-	sha1_init(ctxt);
-	sha1_loop(ctxt, opad, 64);
-	sha1_loop(ctxt, (caddr_t)&digest[0], sizeof(digest));
-	sha1_result(ctxt, (caddr_t)&digest[0]);
-#endif
 
 	bcopy(&digest[0], (void *)addr, HMACSIZE);
 

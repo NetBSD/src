@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.h,v 1.5 1999/12/02 05:08:16 itojun Exp $	*/
+/*	$NetBSD: esp.h,v 1.6 2000/01/06 07:31:11 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -36,10 +36,8 @@
 #ifndef _NETINET6_ESP_H_
 #define _NETINET6_ESP_H_
 
-#if (defined(__FreeBSD__) && __FreeBSD__ >= 3) || defined(__NetBSD__)
 #if defined(_KERNEL) && !defined(_LKM)
 #include "opt_inet.h"
-#endif
 #endif
 
 #include <netkey/keydb.h>		/* for struct secas */
