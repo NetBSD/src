@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)extern.h	8.1 (Berkeley) 5/31/93
+ *	from: @(#)extern.h	8.1 (Berkeley) 5/31/93
+ *	$Id: extern.h,v 1.2 1994/09/22 09:24:50 mycroft Exp $
  */
 
 int	netsettime __P((time_t));

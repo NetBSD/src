@@ -1,6 +1,8 @@
-#	from: @(#)Makefile	5.3 (Berkeley) 5/11/90
-#	$Id: Makefile,v 1.4 1993/08/01 05:47:26 mycroft Exp $
+#	from: @(#)Makefile	8.2 (Berkeley) 5/31/93
+#	$Id: Makefile,v 1.5 1994/09/22 09:25:29 mycroft Exp $
 
 PROG=	ln
+MAN1=	ln.0
+MAN7=	symlink.0
 
 .include <bsd.prog.mk>

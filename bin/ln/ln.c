@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1987 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1987, 1993, 1994
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,49 +32,51 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1987 Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1987, 1993, 1994\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)ln.c	4.15 (Berkeley) 2/24/91";*/
-static char rcsid[] = "$Id: ln.c,v 1.8 1994/02/08 05:09:26 mycroft Exp $";
+/*static char sccsid[] = "from: @(#)ln.c	8.2 (Berkeley) 3/31/94";*/
+static char *rcsid = "$Id: ln.c,v 1.9 1994/09/22 09:25:32 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/stat.h>
-#include <stdio.h>
-#include <errno.h>
-#include <string.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <err.h>
 
-static int	forceflag,		/* force link by removing target */
-		dirflag,		/* allow hard links to directories */
-		sflag,			/* symbolic, not hard, link */
-		(*linkf)();		/* system link call */
-static int	linkit();
-static void	usage();
+#include <err.h>
+#include <errno.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+
+int	dirflag;			/* Undocumented directory flag. */
+int	fflag;				/* Unlink existing files. */
+int	sflag;				/* Symbolic, not hard, link. */
+					/* System link call. */
+int (*linkf) __P((const char *, const char *));
+
+int	linkit __P((char *, char *, int));
+void	usage __P((void));
 
 int
 main(argc, argv)
 	int argc;
-	char **argv;
+	char *argv[];
 {
-	extern int optind;
-	struct stat buf;
+	struct stat sb;
 	int ch, exitval;
 	char *sourcedir;
 
-	while ((ch = getopt(argc, argv, "fFs")) != EOF)
-		switch((char)ch) {
-		case 'f':
-			forceflag = 1;
-			break;
+	while ((ch = getopt(argc, argv, "Ffs")) != -1)
+		switch (ch) {
 		case 'F':
-			dirflag = 1;
+			dirflag = 1;	/* XXX: deliberately undocumented. */
+			break;
+		case 'f':
+			fflag = 1;
 			break;
 		case 's':
 			sflag = 1;
@@ -92,76 +94,70 @@ main(argc, argv)
 	switch(argc) {
 	case 0:
 		usage();
-		/* NOTREACHED */
 	case 1:				/* ln target */
 		exit(linkit(argv[0], ".", 1));
-		/* NOTREACHED */
 	case 2:				/* ln target source */
 		exit(linkit(argv[0], argv[1], 0));
-		/* NOTREACHED */
-	default:			/* ln target1 target2 directory */
-		sourcedir = argv[argc - 1];
-		if (stat(sourcedir, &buf)) {
-			err(1, "%s", sourcedir);
-			/* NOTREACHED */
-		}
-		if (!S_ISDIR(buf.st_mode))
-			usage();
-		for (exitval = 0; *argv != sourcedir; ++argv)
-			exitval |= linkit(*argv, sourcedir, 1);
-		exit(exitval);
 	}
-	/* NOTREACHED */
+					/* ln target1 target2 directory */
+	sourcedir = argv[argc - 1];
+	if (stat(sourcedir, &sb))
+		err(1, "%s", sourcedir);
+	if (!S_ISDIR(sb.st_mode))
+		usage();
+	for (exitval = 0; *argv != sourcedir; ++argv)
+		exitval |= linkit(*argv, sourcedir, 1);
+	exit(exitval);
 }
 
-static int
-linkit(source, target, isdir)
-	char *source, *target;
+int
+linkit(target, source, isdir)
+	char *target, *source;
 	int isdir;
 {
-	struct stat buf;
-	char path[MAXPATHLEN], *cp;
+	struct stat sb;
+	char *p, path[MAXPATHLEN];
 
 	if (!sflag) {
-		/* if source doesn't exist, quit now */
-		if (stat(source, &buf)) {
-			warn("%s", source);
-			return(1);
+		/* If target doesn't exist, quit now. */
+		if (stat(target, &sb)) {
+			warn("%s", target);
+			return (1);
 		}
-		/* only symbolic links to directories, unless -F option used */
-		if (!dirflag && S_ISDIR(buf.st_mode)) {
-			warnx("%s: %s", source, strerror(EISDIR));
-			return(1);
+		/* Only symbolic links to directories, unless -F option used. */
+		if (!dirflag && S_ISDIR(sb.st_mode)) {
+			warnx("%s: is a directory", target);
+			return (1);
 		}
 	}
 
-	/* if the target is a directory, append the source's name */
-	if (isdir || !stat(target, &buf) && S_ISDIR(buf.st_mode)) {
-		if (!(cp = rindex(source, '/')))
-			cp = source;
+	/* If the source is a directory, append the target's name. */
+	if (isdir || !stat(source, &sb) && S_ISDIR(sb.st_mode)) {
+		if ((p = strrchr(target, '/')) == NULL)
+			p = target;
 		else
-			++cp;
-		(void)sprintf(path, "%s/%s", target, cp);
-		target = path;
+			++p;
+		(void)snprintf(path, sizeof(path), "%s/%s", source, p);
+		source = path;
 	}
 
-	/* Remove existing file if -f is was specified */
-	if (forceflag && unlink (target) && errno != ENOENT) {
-		warn("%s", target);
+	/*
+	 * If the file exists, and -f was specified, unlink it.
+	 * Attempt the link.
+	 */
+	if (fflag && unlink(source) < 0 && errno != ENOENT ||
+	    (*linkf)(target, source)) {
+		warn("%s", source);
 		return (1);
 	}
 
-	if ((*linkf)(source, target)) {
-		warn("%s", target);
-		return(1);
-	}
-
-	return(0);
+	return (0);
 }
 
-static void
+void
 usage()
 {
+
 	(void)fprintf(stderr,
 	    "usage:\tln [-fs] file1 file2\n\tln [-fs] file ... directory\n");
 	exit(1);
