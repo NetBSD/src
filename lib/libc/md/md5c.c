@@ -1,4 +1,4 @@
-/*	$NetBSD: md5c.c,v 1.16 2000/01/22 22:19:14 mycroft Exp $	*/
+/*	$NetBSD: md5c.c,v 1.17 2002/03/31 12:58:56 bjh21 Exp $	*/
 
 /*
  * This file is derived from the RSA Data Security, Inc. MD5 Message-Digest
@@ -41,6 +41,12 @@
 #include <string.h>
 #include <md5.h>
 #endif /* _KERNEL || _STANDALONE */
+
+#if HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#if !HAVE_MD5_H
 
 #define	ZEROIZE(d, l)		memset((d), 0, (l))
 
@@ -354,3 +360,5 @@ MD5Transform(state, block)
 	/* Zeroize sensitive information. */
 	ZEROIZE((POINTER)(void *)x, sizeof (x));
 }
+
+#endif /* HAVE_MD5_H */
