@@ -1,4 +1,4 @@
-/*	$NetBSD: inetd.c,v 1.93 2003/08/07 11:25:21 agc Exp $	*/
+/*	$NetBSD: inetd.c,v 1.94 2003/10/21 02:43:37 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)inetd.c	8.4 (Berkeley) 4/13/94";
 #else
-__RCSID("$NetBSD: inetd.c,v 1.93 2003/08/07 11:25:21 agc Exp $");
+__RCSID("$NetBSD: inetd.c,v 1.94 2003/10/21 02:43:37 fvdl Exp $");
 #endif
 #endif /* not lint */
 
@@ -507,7 +507,7 @@ main(int argc, char *argv[])
 
 			ev = allocchange();
 			EV_SET(ev, signum, EVFILT_SIGNAL, EV_ADD | EV_ENABLE,
-			    0, 0, NULL);
+			    0, 0, 0);
 		}
 	}
 
