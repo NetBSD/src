@@ -31,7 +31,8 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-#	@(#)nologin.sh	8.1 (Berkeley) 6/5/93
+#	from: @(#)nologin.sh	8.1 (Berkeley) 6/5/93
+#	$Id: nologin.sh,v 1.2 1994/09/23 01:47:34 mycroft Exp $
 #
 
 echo 'This account is currently not available.'
