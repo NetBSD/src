@@ -1,12 +1,25 @@
-#	$NetBSD: CHANGES-1.5.1,v 1.1.2.1 2000/12/12 20:23:25 he Exp $
+#	$NetBSD: CHANGES-1.5.1,v 1.1.2.2 2000/12/12 21:31:20 he Exp $
 
 A complete list of changes from NetBSD 1.5 to NetBSD 1.5.1:
 
-File						Version(s)
-----						----------
+File						Revision(s)
+----						--------
 
 sys/sys/param.h					patch
 sys/conf/osrelease.sh				patch
 share/tmac/doc-common				patch
 
   Mark this as 1.5.1_ALPHA.
+
+sys/dev/ic/an.c					1.1-1.3 + patch (new)
+sys/dev/ic/anreg.h				1.1-1.2 (new)
+sys/dev/ic/anvar.h				1.1 (new)
+sys/dev/pcmcia/if_an_pcmcia.c			1.1-1.2 (new)
+sys/dev/DEVNAMES				1.24
+sys/conf/files					1.409
+sys/dev/pcmcia/files.pcmcia			1.30
+sys/arch/i386/conf/GENERIC			1.382
+sys/arch/i386/conf/GENERIC_LAPTOP		1.7
+sys/arch/i386/conf/INSTALL_LAPTOP		1.7
+
+  Add a driver for an(4), Aironet and Cisco wireless pcmcia cards.
