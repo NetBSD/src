@@ -24,7 +24,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: aout_machdep.h,v 1.1 1993/06/02 02:47:05 cgd Exp $
+ *	$Id: aout_machdep.h,v 1.2 1993/06/03 01:31:16 cgd Exp $
  */
 
 #ifndef _I386_EXEC_H_
@@ -37,5 +37,12 @@
  * machine-specific ones can be defined using this function.
  */
 #define cpu_exec_makecmds(p,epp)        ENOEXEC
+
+/*
+ * the following function checks to see if a given machine
+ * type (a_mid) field is valid for this architecture
+ * a non-zero return value indicates that the machine type is correct.
+ */
+int cpu_exec_checkmid(int mid);
 
 #endif  /* _I386_EXEC_H_ */
