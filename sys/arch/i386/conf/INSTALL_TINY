@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_TINY,v 1.72 2003/09/06 03:25:27 itojun Exp $
+#	$NetBSD: INSTALL_TINY,v 1.73 2003/09/07 09:33:57 tron Exp $
 #
 #	INSTALL_TINY - Tiny Installation kernel, suitable for 4M machines.
 #
@@ -92,6 +92,7 @@ options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory
 #options 	COMPAT_13	# NetBSD 1.3, 386BSD, and BSDI
 #options 	COMPAT_14	# NetBSD 1.4
 #options 	COMPAT_15	# NetBSD 1.5
+#options 	COMPAT_16	# NetBSD 1.6
 #options 	COMPAT_43	# 4.3BSD, 386BSD, and BSDI
 options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
