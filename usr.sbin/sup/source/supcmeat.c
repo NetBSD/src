@@ -1,4 +1,4 @@
-/*	$NetBSD: supcmeat.c,v 1.17 1998/09/12 07:36:49 kim Exp $	*/
+/*	$NetBSD: supcmeat.c,v 1.18 1998/10/12 05:19:48 kim Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -115,6 +115,7 @@
 
 #include "supcdefs.h"
 #include "supextern.h"
+#include <sys/param.h>
 #include <sys/wait.h>
 
 TREE *lastT;				/* last filenames in collection */
@@ -598,9 +599,10 @@ static int deleteone (t, v)
 TREE *t;
 void *v;
 {
-	struct stat sbuf;
+	struct stat sbuf, pbuf;
 	register int x;
 	register char *name = t->Tname;
+	char pname[MAXPATHLEN];
 
 	if (t->Tflags&FUPDATE)		/* in current upgrade list */
 		return (SCMOK);
@@ -648,7 +650,12 @@ void *v;
 			return (SCMOK);
 		}
 		if (rmdir (name) < 0) {
-			lchmod (name,sbuf.st_mode|S_IRWXU);
+			(void) chmod (name,sbuf.st_mode|S_IRWXU);
+			if (strlen(name) < MAXPATHLEN - 3) {
+				sprintf (pname,"%s/..",name);
+				if (stat (pname,&pbuf) == 0)
+					(void) chmod (pname,pbuf.st_mode|S_IRWXU);
+			}
 			runp ("rm","rm","-rf",name,0);
 		}
 		if (lstat(name,&sbuf) == 0) {
@@ -731,6 +738,8 @@ int mode,*newp;
 struct stat *statp;
 {
 	register char *type;
+	char pname[MAXPATHLEN];
+	struct stat pbuf;
 
 	if (mode == S_IFLNK)
 		*newp = (lstat (name,statp) < 0);
@@ -765,8 +774,15 @@ struct stat *statp;
 		return (FALSE);
 	}
 	if (S_ISDIR(statp->st_mode)) {
-		if (rmdir (name) < 0)
+		if (rmdir (name) < 0) {
+			(void) chmod (name,statp->st_mode|S_IRWXU);
+			if (strlen(name) < MAXPATHLEN - 3) {
+				sprintf(pname,"%s/..",name);
+				if (stat(pname,&pbuf) == 0)
+					(void) chmod (pname,pbuf.st_mode|S_IRWXU);
+			}
 			runp ("rm","rm","-rf",name,0);
+		}
 	} else
 		(void) unlink (name);
 	if (stat (name,statp) < 0) {
