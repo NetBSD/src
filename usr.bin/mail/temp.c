@@ -1,4 +1,4 @@
-/*	$NetBSD: temp.c,v 1.9 2002/03/04 03:07:27 wiz Exp $	*/
+/*	$NetBSD: temp.c,v 1.10 2002/03/05 20:14:02 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)temp.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: temp.c,v 1.9 2002/03/04 03:07:27 wiz Exp $");
+__RCSID("$NetBSD: temp.c,v 1.10 2002/03/05 20:14:02 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,7 +52,6 @@ __RCSID("$NetBSD: temp.c,v 1.9 2002/03/04 03:07:27 wiz Exp $");
  */
 
 char	*tempMail;
-char	*tempQuit;
 char	*tempEdit;
 char	*tempResid;
 char	*tempMesg;
@@ -62,14 +61,23 @@ void
 tinit(void)
 {
 	const char *cp;
+	char *p;
 
-	if ((tmpdir = getenv("TMPDIR")) == NULL) {
+	if ((tmpdir = getenv("TMPDIR")) == NULL || *tmpdir == '\0')
 		tmpdir = _PATH_TMP;
+
+	if ((tmpdir = strdup(tmpdir)) == NULL)
+		errx(1, "Out of memory");
+
+	/* Remove trailing slashes. */
+	p = tmpdir + strlen(tmpdir) - 1;
+	while (p > tmpdir && *p == '/') {
+		*p = '\0';
+		p--;
 	}
 
 	tempMail  = tempnam (tmpdir, "Rs");
 	tempResid = tempnam (tmpdir, "Rq");
-	tempQuit  = tempnam (tmpdir, "Rm");
 	tempEdit  = tempnam (tmpdir, "Re");
 	tempMesg  = tempnam (tmpdir, "Rx");
 
