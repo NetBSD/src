@@ -64,9 +64,10 @@
 #define	R7	(0)
 
 #define	SP	(8)
-#define	FP	(9)
-#define	PC	(10)
-#define	PSR	(11)
+#define SB	(9)
+#define	FP	(10)
+#define	PC	(11)
+#define	PSR	(12)
 
 #define	PS	PSR
 
@@ -83,6 +84,7 @@ struct reg {
 	unsigned int 	r_r0;
 
 	unsigned int 	r_sp;
+	unsigned int 	r_sb;
 	unsigned int 	r_fp;
 	unsigned int 	r_pc;
 	unsigned int 	r_psr;
@@ -92,10 +94,10 @@ struct reg {
 /*
  * Registers accessible to ptrace(2) syscall for debugger
  */
-#define	NIPCREG 12
+#define	NIPCREG 13
 #ifdef IPCREG
 int ipcreg[NIPCREG] =
-  { R0,R1,R2,R3,R4,R5,R6,R7,SP,FP,PC,PSR };
+  { R0,R1,R2,R3,R4,R5,R6,R7,SP,SB,FP,PC,PSR };
 #endif
 
 #endif

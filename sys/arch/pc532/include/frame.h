@@ -58,6 +58,7 @@ struct trapframe {
 	long	tf_trapno;
 	long    tf_reg[8];	/* R7 - R0 from enter */
 	long	tf_usp;
+	long	tf_sb;
 	long    tf_fp;		/* From enter */
 	/* below portion defined in 532 hardware */
 	long	tf_pc;
@@ -72,6 +73,7 @@ struct intrframe {
 	long	if_pl;		/* the "processor level" for clock. */
 	long    if_reg[8];	/* R7 - R0 from enter */
 	long	if_usp;
+	long	if_sb;
 	long    if_fp;		/* From enter */
 	/* below portion defined in 532 hardware */
 	long	if_pc;
@@ -86,6 +88,7 @@ struct intrframe {
 struct syscframe {
 	long    sf_reg[8];	/* R7 - R0 from enter */
 	long	sf_usp;
+	long	sf_sb;
 	long    sf_fp;		/* From enter */
 	/* below portion defined in 532 hardware */
 	long	sf_pc;
