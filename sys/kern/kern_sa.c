@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.2 2003/01/18 10:06:22 thorpej Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.3 2003/01/19 12:59:59 scw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.2 2003/01/18 10:06:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.3 2003/01/19 12:59:59 scw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -422,7 +422,7 @@ sa_upcall_getstate(struct sadata_upcall *sau, struct lwp *event,
 	if (event) {
 		getucontext(event, &sau->sau_state.captured.e_ctx);
 		sau->sau_state.captured.e_sa.sa_context = (ucontext_t *)
-		    ((_UC_MACHINE_SP(&sau->sau_state.captured.e_ctx) -
+		    (intptr_t)((_UC_MACHINE_SP(&sau->sau_state.captured.e_ctx) -
 			sizeof(ucontext_t))
 #ifdef _UC_UCONTEXT_ALIGN
 			& _UC_UCONTEXT_ALIGN
@@ -436,7 +436,7 @@ sa_upcall_getstate(struct sadata_upcall *sau, struct lwp *event,
 	if (interrupted) {
 		getucontext(interrupted, &sau->sau_state.captured.i_ctx);
 		sau->sau_state.captured.i_sa.sa_context = (ucontext_t *)
-		    ((_UC_MACHINE_SP(&sau->sau_state.captured.i_ctx) -
+		    (intptr_t)((_UC_MACHINE_SP(&sau->sau_state.captured.i_ctx) -
 			sizeof(ucontext_t))
 #ifdef _UC_UCONTEXT_ALIGN
 			& _UC_UCONTEXT_ALIGN
