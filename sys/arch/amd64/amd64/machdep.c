@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.14 2003/10/19 18:14:42 fvdl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.15 2003/12/01 00:00:07 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.14 2003/10/19 18:14:42 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.15 2003/12/01 00:00:07 fvdl Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_ddb.h"
@@ -1568,7 +1568,7 @@ init_x86_64(first_avail)
 
 	/* exceptions */
 	for (x = 0; x < 32; x++) {
-		ist = (x == 8 || x == 3) ? 1 : 0;
+		ist = (x == 8) ? 1 : 0;
 		setgate(&idt[x], IDTVEC(exceptions)[x], ist, SDT_SYS386IGT,
 		    (x == 3 || x == 4) ? SEL_UPL : SEL_KPL,
 		    GSEL(GCODE_SEL, SEL_KPL));
