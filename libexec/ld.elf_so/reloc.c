@@ -1,4 +1,4 @@
-/*	$NetBSD: reloc.c,v 1.80 2003/07/24 10:12:26 skrll Exp $	 */
+/*	$NetBSD: reloc.c,v 1.81 2003/08/12 09:18:46 skrll Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -196,11 +196,11 @@ _rtld_relocate_objects(Obj_Entry *first, bool bind_now)
 		obj->version = RTLD_VERSION;
 
 		/* Fill in the dynamic linker entry points. */
-		obj->dlopen = _rtld_dlopen;
-		obj->dlsym = _rtld_dlsym;
-		obj->dlerror = _rtld_dlerror;
-		obj->dlclose = _rtld_dlclose;
-		obj->dladdr = _rtld_dladdr;
+		obj->dlopen = dlopen;
+		obj->dlsym = dlsym;
+		obj->dlerror = dlerror;
+		obj->dlclose = dlclose;
+		obj->dladdr = dladdr;
 
 		dbg(("fixing up PLTGOT"));
 		/* Set the special PLTGOT entries. */

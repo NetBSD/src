@@ -1,4 +1,4 @@
-/*	$NetBSD: ldd.c,v 1.19 2003/05/28 20:45:39 dsl Exp $	*/
+/*	$NetBSD: ldd.c,v 1.20 2003/08/12 09:18:38 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -197,7 +197,7 @@ _rtld_error(const char *fmt, ...)
 }
 
 char *
-_rtld_dlerror()
+dlerror()
 {
 	char *msg = error_message;
 	error_message = NULL;

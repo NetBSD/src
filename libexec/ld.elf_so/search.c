@@ -1,4 +1,4 @@
-/*	$NetBSD: search.c,v 1.17 2003/07/24 10:12:26 skrll Exp $	 */
+/*	$NetBSD: search.c,v 1.18 2003/08/12 09:18:50 skrll Exp $	 */
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -127,7 +127,7 @@ _rtld_load_library(const char *name, const Obj_Entry *refobj, int mode)
 	}
 	dbg((" Searching for \"%s\" (%p)", name, refobj));
 
-	tmperrorp = _rtld_dlerror();
+	tmperrorp = dlerror();
 	if (tmperrorp != NULL) {
 		strncpy(tmperror, tmperrorp, sizeof tmperror);
 		tmperrorp = tmperror;
@@ -165,7 +165,7 @@ pathfound:
 	if (tmperrorp)
 		_rtld_error("%s", tmperror);
 	else
-		(void)_rtld_dlerror();
+		(void)dlerror();
 	return obj;
 
 found:

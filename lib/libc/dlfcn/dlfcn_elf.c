@@ -1,4 +1,4 @@
-/*	$NetBSD: dlfcn_elf.c,v 1.3 2002/07/20 08:54:04 yamt Exp $	*/
+/*	$NetBSD: dlfcn_elf.c,v 1.4 2003/08/12 09:18:43 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 Takuya SHIOZAKI
@@ -27,18 +27,13 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: dlfcn_elf.c,v 1.3 2002/07/20 08:54:04 yamt Exp $");
+__RCSID("$NetBSD: dlfcn_elf.c,v 1.4 2003/08/12 09:18:43 skrll Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 
 #define ELFSIZE ARCH_ELFSIZE
 #include "rtld.h"
-
-#ifdef __weak_extern
-__weak_extern(__mainprog_obj)
-#endif
-extern const Obj_Entry *__mainprog_obj;
 
 #ifdef __weak_alias
 __weak_alias(dlopen,__dlopen)
@@ -48,4 +43,54 @@ __weak_alias(dlerror,__dlerror)
 __weak_alias(dladdr,__dladdr)
 #endif
 
-#include <dlfcn_stubs.c>
+/*
+ * For ELF, the dynamic linker directly resolves references to its
+ * services to functions inside the dynamic linker itself.  These
+ * weak-symbol stubs are necessary so that "ld" won't complain about
+ * undefined symbols.  The stubs are executed only when the program is
+ * linked statically, or when a given service isn't implemented in the
+ * dynamic linker.  They must return an error if called, and they must
+ * be weak symbols so that the dynamic linker can override them.
+ */
+
+static char dlfcn_error[] = "Service unavailable";
+
+/*ARGSUSED*/
+void *
+dlopen(const char *name, int mode)
+{
+
+	return NULL;
+}
+
+/*ARGSUSED*/
+int
+dlclose(void *fd)
+{
+
+	return -1;
+}
+
+/*ARGSUSED*/
+void *
+dlsym(void *handle, const char *name)
+{
+
+	return NULL;
+}
+
+/*ARGSUSED*/
+__aconst char *
+dlerror()
+{
+
+	return dlfcn_error;
+}
+
+/*ARGSUSED*/
+int
+dladdr(const void *addr, Dl_info *dli)
+{
+
+	return 0;
+}

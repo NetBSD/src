@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.98 2003/07/24 10:12:26 skrll Exp $	 */
+/*	$NetBSD: rtld.c,v 1.99 2003/08/12 09:18:48 skrll Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -433,6 +433,9 @@ _rtld(Elf_Addr *sp, Elf_Addr relocbase)
 	real_environ = _rtld_objmain_sym("environ");
 	if (real_environ)
 		*real_environ = environ;
+	/*
+	 * Set __mainprog_obj for old binaries.
+	 */
 	real___mainprog_obj = _rtld_objmain_sym("__mainprog_obj");
 	if (real___mainprog_obj)
 		*real___mainprog_obj = _rtld_objmain;
@@ -458,7 +461,7 @@ _rtld(Elf_Addr *sp, Elf_Addr relocbase)
 void
 _rtld_die(void)
 {
-	const char *msg = _rtld_dlerror();
+	const char *msg = dlerror();
 
 	if (msg == NULL)
 		msg = "Fatal error";
@@ -573,7 +576,7 @@ _rtld_unref_dag(Obj_Entry *root)
 }
 
 int
-_rtld_dlclose(void *handle)
+dlclose(void *handle)
 {
 	Obj_Entry *root = _rtld_dlcheck(handle);
 
@@ -593,7 +596,7 @@ _rtld_dlclose(void *handle)
 }
 
 char *
-_rtld_dlerror(void)
+dlerror(void)
 {
 	char *msg = error_message;
 
@@ -602,7 +605,7 @@ _rtld_dlerror(void)
 }
 
 void *
-_rtld_dlopen(const char *name, int mode)
+dlopen(const char *name, int mode)
 {
 	Obj_Entry **old_obj_tail = _rtld_objtail;
 	Obj_Entry *obj = NULL;
@@ -659,7 +662,7 @@ _rtld_objmain_sym(const char *name)
 }
 
 void *
-_rtld_dlsym(void *handle, const char *name)
+dlsym(void *handle, const char *name)
 {
 	const Obj_Entry *obj;
 	unsigned long hash;
@@ -745,7 +748,7 @@ _rtld_dlsym(void *handle, const char *name)
 }
 
 int
-_rtld_dladdr(const void *addr, Dl_info *info)
+dladdr(const void *addr, Dl_info *info)
 {
 	const Obj_Entry *obj;
 	const Elf_Sym *def, *best_def;
