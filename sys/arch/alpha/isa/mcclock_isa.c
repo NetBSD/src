@@ -1,4 +1,4 @@
-/*	$NetBSD: mcclock_isa.c,v 1.3 1996/10/23 04:12:19 cgd Exp $	*/
+/*	$NetBSD: mcclock_isa.c,v 1.4 1996/11/23 06:21:43 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -67,13 +67,21 @@ mcclock_isa_match(parent, match, aux)
 	void *match, *aux;
 {
 	struct isa_attach_args *ia = aux;
+	bus_space_handle_t ioh;
 
-	if (ia->ia_iobase != 0x70 && ia->ia_iobase != -1)
+        if ((ia->ia_iobase != IOBASEUNK && ia->ia_iobase != 0x70) ||
+            /* (ia->ia_iosize != 0 && ia->ia_iosize != 0x2) || XXX isa.c */
+            ia->ia_maddr != MADDRUNK || ia->ia_msize != 0 ||
+            ia->ia_irq != IRQUNK || ia->ia_drq != DRQUNK)
+                return (0);
+
+	if (bus_space_map(ia->ia_iot, 0x70, 0x2, 0, &ioh))
 		return (0);
 
-	ia->ia_iobase = 0x70;		/* XXX */
-	ia->ia_iosize = 2;		/* XXX */
-	ia->ia_msize = 0;
+	bus_space_unmap(ia->ia_iot, ioh, 0x2);
+
+	ia->ia_iobase = 0x70;
+	ia->ia_iosize = 0x2;
 
 	return (1);
 }
