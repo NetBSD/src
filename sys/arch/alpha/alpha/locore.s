@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.19 1996/07/11 20:14:17 cgd Exp $	*/
+/*	$NetBSD: locore.s,v 1.20 1996/07/11 23:01:09 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -64,26 +64,25 @@ NESTED_NOPROFILE(__start,1,0,ra,0,0)
 	br	pv,1f
 1:	SETGP(pv)
 
-	/* Save a0, used by alpha_pal_wrkgp. */
-	or	a0,zero,s0
-
-	/* Load KGP with current GP. */
-	or	gp,zero,a0
-	CALL(alpha_pal_wrkgp)
-
 	/* Switch to the boot stack. */
 	lda	sp,bootstack
 
+	/* Load KGP with current GP. */
+	or	a0,zero,s0		/* save pfn */
+	or	gp,zero,a0
+	call_pal PAL_OSF1_wrkgp		/* clobbers a0, t0, t8-t11 */
+	or	s0,zero,a0		/* restore pfn */
+
 	/*
-	 * Call alpha_init() to do pre-main initialization.  Restore
-	 * a0, and pass alpha_init the arguments we were called with.
+	 * Call alpha_init() to do pre-main initialization.
+	 * alpha_init() gets the arguments we were called with,
+	 * which are already in a0 and a1.
 	 */
-	or	s0,zero,a0
 	CALL(alpha_init)
 
 	/* Set up the virtual page table pointer. */
 	CONST(VPTBASE, a0)
-	CALL(alpha_pal_wrvptptr)
+	call_pal PAL_OSF1_wrvptptr	/* clobbers a0, t0, t8-t11 */
 
 	/*
 	 * Switch to proc0's PCB, which is at U_PCB off of proc0paddr.
@@ -95,28 +94,19 @@ NESTED_NOPROFILE(__start,1,0,ra,0,0)
 	call_pal PAL_OSF1_tbi
 
 	/*
-	 * put a fake RA (0 XXX) on the stack, to panic if anything
-	 * ever tries to return off the end of the stack
-	 */
-	lda	sp,-8(sp)
-	stq	zero,0(sp)
-
-	/*
 	 * Construct a fake trap frame, so execve() can work normally.
 	 * Note that setregs() is responsible for setting its contents
 	 * to 'reasonable' values.
 	 */
 	lda	sp,-(FRAME_SIZE * 8)(sp)	/* space for struct trapframe */
-
 	mov	sp, a0				/* main()'s arg is frame ptr */
 	CALL(main)				/* go to main()! */
 
 	/*
-	 * Call REI, to restore the faked up trap frame and return
-	 * to proc 1 == init!
+	 * Call exception_return, to simulate return from (fake)
+	 * exception to user-land, running process 1, init!
 	 */
-	mov	zero, a0
-	JMP(rei)			/* "And that's all she wrote." */
+	JMP(exception_return)		/* "And that's all she wrote." */
 	END(__start)
 
 /**************************************************************************/
@@ -176,13 +166,13 @@ XNESTED(esigcode,0)
 /**************************************************************************/
 
 /*
- * rei: pseudo-emulation of VAX REI.
+ * exception_return: return from trap, exception, or syscall
  */
 
 BSS(ssir, 8)
 IMPORT(astpending, 8)
 
-LEAF(rei, 1)					/* XXX should be NESTED */
+LEAF(exception_return, 1)			/* XXX should be NESTED */
 	br	pv, 1f
 1:	SETGP(pv)
 
@@ -227,8 +217,56 @@ Lsetfpenable:
 
 Lrestoreregs:
 	/* restore the registers, and return */
+	bsr	ra, exception_restore_regs	/* jmp/CALL trashes pv/t12 */
+	ldq	ra,(FRAME_RA*8)(sp)
 	.set noat
+	ldq	at_reg,(FRAME_AT*8)(sp)
+
+	lda	sp,(FRAME_SW_SIZE*8)(sp)
+	call_pal PAL_OSF1_rti
+	.set at
+	END(exception_return)
+
+LEAF(exception_save_regs, 0)
+	stq	v0,(FRAME_V0*8)(sp)
+	stq	a3,(FRAME_A3*8)(sp)
+	stq	a4,(FRAME_A4*8)(sp)
+	stq	a5,(FRAME_A5*8)(sp)
+	stq	s0,(FRAME_S0*8)(sp)
+	stq	s1,(FRAME_S1*8)(sp)
+	stq	s2,(FRAME_S2*8)(sp)
+	stq	s3,(FRAME_S3*8)(sp)
+	stq	s4,(FRAME_S4*8)(sp)
+	stq	s5,(FRAME_S5*8)(sp)
+	stq	s6,(FRAME_S6*8)(sp)
+	stq	t0,(FRAME_T0*8)(sp)
+	stq	t1,(FRAME_T1*8)(sp)
+	stq	t2,(FRAME_T2*8)(sp)
+	stq	t3,(FRAME_T3*8)(sp)
+	stq	t4,(FRAME_T4*8)(sp)
+	stq	t5,(FRAME_T5*8)(sp)
+	stq	t6,(FRAME_T6*8)(sp)
+	stq	t7,(FRAME_T7*8)(sp)
+	stq	t8,(FRAME_T8*8)(sp)
+	stq	t9,(FRAME_T9*8)(sp)
+	stq	t10,(FRAME_T10*8)(sp)
+	stq	t11,(FRAME_T11*8)(sp)
+	stq	t12,(FRAME_T12*8)(sp)
+	RET
+	END(exception_save_regs)
+
+LEAF(exception_restore_regs, 0)
 	ldq	v0,(FRAME_V0*8)(sp)
+	ldq	a3,(FRAME_A3*8)(sp)
+	ldq	a4,(FRAME_A4*8)(sp)
+	ldq	a5,(FRAME_A5*8)(sp)
+	ldq	s0,(FRAME_S0*8)(sp)
+	ldq	s1,(FRAME_S1*8)(sp)
+	ldq	s2,(FRAME_S2*8)(sp)
+	ldq	s3,(FRAME_S3*8)(sp)
+	ldq	s4,(FRAME_S4*8)(sp)
+	ldq	s5,(FRAME_S5*8)(sp)
+	ldq	s6,(FRAME_S6*8)(sp)
 	ldq	t0,(FRAME_T0*8)(sp)
 	ldq	t1,(FRAME_T1*8)(sp)
 	ldq	t2,(FRAME_T2*8)(sp)
@@ -237,27 +275,15 @@ Lrestoreregs:
 	ldq	t5,(FRAME_T5*8)(sp)
 	ldq	t6,(FRAME_T6*8)(sp)
 	ldq	t7,(FRAME_T7*8)(sp)
-	ldq	s0,(FRAME_S0*8)(sp)
-	ldq	s1,(FRAME_S1*8)(sp)
-	ldq	s2,(FRAME_S2*8)(sp)
-	ldq	s3,(FRAME_S3*8)(sp)
-	ldq	s4,(FRAME_S4*8)(sp)
-	ldq	s5,(FRAME_S5*8)(sp)
-	ldq	s6,(FRAME_S6*8)(sp)
-	ldq	a3,(FRAME_A3*8)(sp)
-	ldq	a4,(FRAME_A4*8)(sp)
-	ldq	a5,(FRAME_A5*8)(sp)
 	ldq	t8,(FRAME_T8*8)(sp)
 	ldq	t9,(FRAME_T9*8)(sp)
 	ldq	t10,(FRAME_T10*8)(sp)
 	ldq	t11,(FRAME_T11*8)(sp)
-	ldq	ra,(FRAME_RA*8)(sp)
 	ldq	t12,(FRAME_T12*8)(sp)
-	ldq	at_reg,(FRAME_AT*8)(sp)
-
-	lda	sp,(FRAME_SW_SIZE*8)(sp)
-	call_pal PAL_OSF1_rti
-	END(rei)
+#ifndef __OpenBSD__
+	RET
+#endif
+	END(exception_restore_regs)
 
 /**************************************************************************/
 
@@ -269,39 +295,13 @@ Lrestoreregs:
 LEAF(XentArith, 2)				/* XXX should be NESTED */
 	.set noat
 	lda	sp,-(FRAME_SW_SIZE*8)(sp)
-	stq	v0,(FRAME_V0*8)(sp)
-	stq	t0,(FRAME_T0*8)(sp)
-	stq	t1,(FRAME_T1*8)(sp)
-	stq	t2,(FRAME_T2*8)(sp)
-	stq	t3,(FRAME_T3*8)(sp)
-	stq	t4,(FRAME_T4*8)(sp)
-	stq	t5,(FRAME_T5*8)(sp)
-	stq	t6,(FRAME_T6*8)(sp)
-	stq	t7,(FRAME_T7*8)(sp)
-	stq	s0,(FRAME_S0*8)(sp)
-	stq	s1,(FRAME_S1*8)(sp)
-	stq	s2,(FRAME_S2*8)(sp)
-	mov	a0,s0
-	stq	s3,(FRAME_S3*8)(sp)
-	stq	s4,(FRAME_S4*8)(sp)
-	stq	s5,(FRAME_S5*8)(sp)
-	stq	s6,(FRAME_S6*8)(sp)
-	mov	a1,s1
-	stq	a3,(FRAME_A3*8)(sp)
-	stq	a4,(FRAME_A4*8)(sp)
-	stq	a5,(FRAME_A5*8)(sp)
-	stq	t8,(FRAME_T8*8)(sp)
-	stq	t9,(FRAME_T9*8)(sp)
-	stq	t10,(FRAME_T10*8)(sp)
-	stq	t11,(FRAME_T11*8)(sp)
-	stq	ra,(FRAME_RA*8)(sp)
-	stq	t12,(FRAME_T12*8)(sp)
 	stq	at_reg,(FRAME_AT*8)(sp)
-
 	.set at
+	stq	ra,(FRAME_RA*8)(sp)
+	bsr	ra, exception_save_regs		/* jmp/CALL trashes pv/t12 */
 
-	br	pv, 1f
-1:	SETGP(pv)
+	mov	a0,s0
+	mov	a1,s1
 
 	CONST(T_ARITHFLT, a0)			/* type = T_ARITHFLT */
 	mov	s0, a1				/* code = "summary" */
@@ -309,7 +309,7 @@ LEAF(XentArith, 2)				/* XXX should be NESTED */
 	mov	sp, a3				/* frame */
 	CALL(trap)
 
-	JMP(rei)
+	JMP(exception_return)
 	END(XentArith)
 
 /**************************************************************************/
@@ -322,38 +322,12 @@ LEAF(XentArith, 2)				/* XXX should be NESTED */
 LEAF(XentIF, 1)					/* XXX should be NESTED */
 	.set noat
 	lda	sp,-(FRAME_SW_SIZE*8)(sp)
-	stq	v0,(FRAME_V0*8)(sp)
-	stq	t0,(FRAME_T0*8)(sp)
-	stq	t1,(FRAME_T1*8)(sp)
-	stq	t2,(FRAME_T2*8)(sp)
-	stq	t3,(FRAME_T3*8)(sp)
-	stq	t4,(FRAME_T4*8)(sp)
-	stq	t5,(FRAME_T5*8)(sp)
-	stq	t6,(FRAME_T6*8)(sp)
-	stq	t7,(FRAME_T7*8)(sp)
-	stq	s0,(FRAME_S0*8)(sp)
-	stq	s1,(FRAME_S1*8)(sp)
-	stq	s2,(FRAME_S2*8)(sp)
-	mov	a0,s0
-	stq	s3,(FRAME_S3*8)(sp)
-	stq	s4,(FRAME_S4*8)(sp)
-	stq	s5,(FRAME_S5*8)(sp)
-	stq	s6,(FRAME_S6*8)(sp)
-	stq	a3,(FRAME_A3*8)(sp)
-	stq	a4,(FRAME_A4*8)(sp)
-	stq	a5,(FRAME_A5*8)(sp)
-	stq	t8,(FRAME_T8*8)(sp)
-	stq	t9,(FRAME_T9*8)(sp)
-	stq	t10,(FRAME_T10*8)(sp)
-	stq	t11,(FRAME_T11*8)(sp)
-	stq	ra,(FRAME_RA*8)(sp)
-	stq	t12,(FRAME_T12*8)(sp)
 	stq	at_reg,(FRAME_AT*8)(sp)
-
 	.set at
+	stq	ra,(FRAME_RA*8)(sp)
+	bsr	ra, exception_save_regs		/* jmp/CALL trashes pv/t12 */
 
-	br	pv, 1f
-1:	SETGP(pv)
+	mov	a0,s0
 
 	or	s0, T_IFLT, a0			/* type = T_IFLT|type*/
 	mov	s0, a1				/* code = type */
@@ -361,7 +335,7 @@ LEAF(XentIF, 1)					/* XXX should be NESTED */
 	mov	sp, a3				/* frame */
 	CALL(trap)
 
-	JMP(rei)
+	JMP(exception_return)
 	END(XentIF)
 
 /**************************************************************************/
@@ -374,40 +348,14 @@ LEAF(XentIF, 1)					/* XXX should be NESTED */
 LEAF(XentInt, 2)				/* XXX should be NESTED */
 	.set noat
 	lda	sp,-(FRAME_SW_SIZE*8)(sp)
-	stq	v0,(FRAME_V0*8)(sp)
-	stq	t0,(FRAME_T0*8)(sp)
-	stq	t1,(FRAME_T1*8)(sp)
-	stq	t2,(FRAME_T2*8)(sp)
-	stq	t3,(FRAME_T3*8)(sp)
-	stq	t4,(FRAME_T4*8)(sp)
-	stq	t5,(FRAME_T5*8)(sp)
-	stq	t6,(FRAME_T6*8)(sp)
-	stq	t7,(FRAME_T7*8)(sp)
-	stq	s0,(FRAME_S0*8)(sp)
-	stq	s1,(FRAME_S1*8)(sp)
-	stq	s2,(FRAME_S2*8)(sp)
-	mov	a0,s0
-	stq	s3,(FRAME_S3*8)(sp)
-	stq	s4,(FRAME_S4*8)(sp)
-	stq	s5,(FRAME_S5*8)(sp)
-	stq	s6,(FRAME_S6*8)(sp)
-	mov	a1,s1
-	stq	a3,(FRAME_A3*8)(sp)
-	stq	a4,(FRAME_A4*8)(sp)
-	stq	a5,(FRAME_A5*8)(sp)
-	stq	t8,(FRAME_T8*8)(sp)
-	mov	a2,s2
-	stq	t9,(FRAME_T9*8)(sp)
-	stq	t10,(FRAME_T10*8)(sp)
-	stq	t11,(FRAME_T11*8)(sp)
-	stq	ra,(FRAME_RA*8)(sp)
-	stq	t12,(FRAME_T12*8)(sp)
 	stq	at_reg,(FRAME_AT*8)(sp)
-
 	.set at
+	stq	ra,(FRAME_RA*8)(sp)
+	bsr	ra, exception_save_regs		/* jmp/CALL trashes pv/t12 */
 
-	br	pv, 1f
-1:	SETGP(pv)
+	mov	a0,s0
+	mov	a1,s1
+	mov	a2,s2
 
 	mov	s2,a3
 	mov	s1,a2
@@ -415,7 +363,7 @@ LEAF(XentInt, 2)				/* XXX should be NESTED */
 	mov	sp,a0
 	CALL(interrupt)
 
-	JMP(rei)
+	JMP(exception_return)
 	END(XentInt)
 
 /**************************************************************************/
@@ -428,40 +376,14 @@ LEAF(XentInt, 2)				/* XXX should be NESTED */
 LEAF(XentMM, 3)					/* XXX should be NESTED */
 	.set noat
 	lda	sp,-(FRAME_SW_SIZE*8)(sp)
-	stq	v0,(FRAME_V0*8)(sp)
-	stq	t0,(FRAME_T0*8)(sp)
-	stq	t1,(FRAME_T1*8)(sp)
-	stq	t2,(FRAME_T2*8)(sp)
-	stq	t3,(FRAME_T3*8)(sp)
-	stq	t4,(FRAME_T4*8)(sp)
-	stq	t5,(FRAME_T5*8)(sp)
-	stq	t6,(FRAME_T6*8)(sp)
-	stq	t7,(FRAME_T7*8)(sp)
-	stq	s0,(FRAME_S0*8)(sp)
-	stq	s1,(FRAME_S1*8)(sp)
-	stq	s2,(FRAME_S2*8)(sp)
-	mov	a0,s0
-	stq	s3,(FRAME_S3*8)(sp)
-	stq	s4,(FRAME_S4*8)(sp)
-	stq	s5,(FRAME_S5*8)(sp)
-	stq	s6,(FRAME_S6*8)(sp)
-	mov	a1,s1
-	stq	a3,(FRAME_A3*8)(sp)
-	stq	a4,(FRAME_A4*8)(sp)
-	stq	a5,(FRAME_A5*8)(sp)
-	stq	t8,(FRAME_T8*8)(sp)
-	mov	a2,s2
-	stq	t9,(FRAME_T9*8)(sp)
-	stq	t10,(FRAME_T10*8)(sp)
-	stq	t11,(FRAME_T11*8)(sp)
-	stq	ra,(FRAME_RA*8)(sp)
-	stq	t12,(FRAME_T12*8)(sp)
 	stq	at_reg,(FRAME_AT*8)(sp)
-
 	.set at
+	stq	ra,(FRAME_RA*8)(sp)
+	bsr	ra, exception_save_regs		/* jmp/CALL trashes pv/t12 */
 
-	br	pv, 1f
-1:	SETGP(pv)
+	mov	a0,s0
+	mov	a1,s1
+	mov	a2,s2
 
 	or	s1, T_MMFLT, a0			/* type = T_MMFLT|MMCSR */
 	mov	s2, a1				/* code = "cause" */
@@ -469,7 +391,7 @@ LEAF(XentMM, 3)					/* XXX should be NESTED */
 	mov	sp, a3				/* frame */
 	CALL(trap)
 
-	JMP(rei)
+	JMP(exception_return)
 	END(XentMM)
 
 /**************************************************************************/
@@ -480,7 +402,6 @@ LEAF(XentMM, 3)					/* XXX should be NESTED */
  */
 
 LEAF(XentSys, 0)				/* XXX should be NESTED */
-	.set noat
 	lda	sp,-(FRAME_SW_SIZE*8)(sp)
 	stq	v0,(FRAME_V0*8)(sp)		/* in case we need to restart */
 	stq	s0,(FRAME_S0*8)(sp)
@@ -490,27 +411,20 @@ LEAF(XentSys, 0)				/* XXX should be NESTED */
 	stq	s4,(FRAME_S4*8)(sp)
 	stq	s5,(FRAME_S5*8)(sp)
 	stq	s6,(FRAME_S6*8)(sp)
-	stq	a0,(FRAME_A0 * 8)(sp)
-	stq	a1,(FRAME_A1 * 8)(sp)
-	stq	a2,(FRAME_A2 * 8)(sp)
+	stq	a0,(FRAME_A0*8)(sp)
+	stq	a1,(FRAME_A1*8)(sp)
+	stq	a2,(FRAME_A2*8)(sp)
 	stq	a3,(FRAME_A3*8)(sp)
 	stq	a4,(FRAME_A4*8)(sp)
 	stq	a5,(FRAME_A5*8)(sp)
 	stq	ra,(FRAME_RA*8)(sp)
 
 	/* save syscall number, which was passed in v0. */
-	mov	v0,s0
-
-	.set at
-
-	br	pv, 1f
-1:	SETGP(pv)
-
-	mov	s0,a0
+	mov	v0,a0
 	mov	sp,a1
 	CALL(syscall)
 
-	JMP(rei)
+	JMP(exception_return)
 	END(XentSys)
 
 /**************************************************************************/
@@ -523,40 +437,14 @@ LEAF(XentSys, 0)				/* XXX should be NESTED */
 LEAF(XentUna, 3)				/* XXX should be NESTED */
 	.set noat
 	lda	sp,-(FRAME_SW_SIZE*8)(sp)
-	stq	v0,(FRAME_V0*8)(sp)
-	stq	t0,(FRAME_T0*8)(sp)
-	stq	t1,(FRAME_T1*8)(sp)
-	stq	t2,(FRAME_T2*8)(sp)
-	stq	t3,(FRAME_T3*8)(sp)
-	stq	t4,(FRAME_T4*8)(sp)
-	stq	t5,(FRAME_T5*8)(sp)
-	stq	t6,(FRAME_T6*8)(sp)
-	stq	t7,(FRAME_T7*8)(sp)
-	stq	s0,(FRAME_S0*8)(sp)
-	stq	s1,(FRAME_S1*8)(sp)
-	stq	s2,(FRAME_S2*8)(sp)
-	mov	a0,s0
-	stq	s3,(FRAME_S3*8)(sp)
-	stq	s4,(FRAME_S4*8)(sp)
-	stq	s5,(FRAME_S5*8)(sp)
-	stq	s6,(FRAME_S6*8)(sp)
-	mov	a1,s1
-	stq	a3,(FRAME_A3*8)(sp)
-	stq	a4,(FRAME_A4*8)(sp)
-	stq	a5,(FRAME_A5*8)(sp)
-	stq	t8,(FRAME_T8*8)(sp)
-	mov	a2,s2
-	stq	t9,(FRAME_T9*8)(sp)
-	stq	t10,(FRAME_T10*8)(sp)
-	stq	t11,(FRAME_T11*8)(sp)
-	stq	ra,(FRAME_RA*8)(sp)
-	stq	t12,(FRAME_T12*8)(sp)
 	stq	at_reg,(FRAME_AT*8)(sp)
-
 	.set at
+	stq	ra,(FRAME_RA*8)(sp)
+	bsr	ra, exception_save_regs		/* jmp/CALL trashes pv/t12 */
 
-	br	pv, 1f
-1:	SETGP(pv)
+	mov	a0,s0
+	mov	a1,s1
+	mov	a2,s2
 
 	CONST(T_UNAFLT, a0)			/* type = T_UNAFLT */
 	mov	zero, a1			/* code = 0 */
@@ -564,7 +452,7 @@ LEAF(XentUna, 3)				/* XXX should be NESTED */
 	mov	sp, a3				/* frame */
 	CALL(trap)
 
-	JMP(rei)
+	JMP(exception_return)
 	END(XentUna)
 
 /**************************************************************************/
@@ -861,7 +749,7 @@ sw1:
 	END(cpu_switch)
 
 /*
- * proc_trampoline()
+ * switch_trampoline()
  *
  * Arrange for a function to be invoked neatly, after a cpu_switch().
  *
@@ -869,12 +757,12 @@ sw1:
  * address specified by the s1 register and with one argument, a
  * pointer to the executing process's proc structure.
  */
-LEAF(proc_trampoline, 0)
+LEAF(switch_trampoline, 0)
 	mov	s0, pv
 	mov	s1, ra
 	ldq	a0, curproc
 	jmp	zero, (pv)
-	END(proc_trampoline)
+	END(switch_trampoline)
 
 /*
  * switch_exit(struct proc *p)
