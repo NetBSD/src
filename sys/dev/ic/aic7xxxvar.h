@@ -37,7 +37,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aic7xxxvar.h,v 1.40 2003/07/08 10:06:30 itojun Exp $
+ * $Id: aic7xxxvar.h,v 1.41 2003/09/02 21:02:58 fvdl Exp $
  *
  * $FreeBSD: /repoman/r/ncvs/src/sys/dev/aic7xxx/aic7xxx.h,v 1.44 2003/01/20 20:44:55 gibbs Exp $
  */
@@ -1023,8 +1023,6 @@ struct ahc_softc {
 
 	bus_space_tag_t           tag;
 	bus_space_handle_t        bsh;
-
-	scsipi_adapter_req_t	  sc_req;
 
 #ifndef __linux__
 	bus_dma_tag_t		  buffer_dmat;   /* dmat for buffer I/O */
