@@ -1,6 +1,6 @@
-.\"	$NetBSD: wsfontload.8,v 1.10 2000/10/27 11:31:32 wiz Exp $
+.\"	$NetBSD: wsfontload.8,v 1.11 2001/01/26 20:25:25 hubertf Exp $
 .\"
-.Dd January 13, 1999
+.Dd November 8, 2000
 .Os
 .Dt WSFONTLOAD 8
 .Sh NAME
@@ -28,6 +28,9 @@
 .Ek
 .Bk -words
 .Op Fl B
+.Ek
+.Bk -words
+.Op Fl v
 .Ek
 .Op Ar fontfile
 .Sh DESCRIPTION
@@ -79,6 +82,8 @@ is left-to-right.
 .It Fl B
 Specifies that the font data is ordered right-to-left byte wise. The default
 is left-to-right.
+.It Fl v
+Prints the font's properties before loading it.
 .El
 .Pp
 Typically, the
