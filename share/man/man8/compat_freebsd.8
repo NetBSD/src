@@ -1,4 +1,4 @@
-.\"	$NetBSD: compat_freebsd.8,v 1.7 2000/06/21 22:06:33 itojun Exp $
+.\"	$NetBSD: compat_freebsd.8,v 1.8 2000/06/21 23:29:10 itojun Exp $
 .\"	from: compat_linux.8,v 1.1 1995/03/05 23:30:36 fvdl Exp
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
@@ -332,8 +332,10 @@ ioctls.
 In this case, create a symbolic link from
 .Pa /emul/freebsd/dev/ttyv0
 to
+.Xr wscons 4
+device file like
 .Pa /dev/ttyE0 ,
-or similar device file which provides
+or to similar device file which provides
 .Xr pcvt 4
 ioctls.
 .El
