@@ -33,13 +33,18 @@
 
 #if defined(SYSLIBC_SCCS) && !defined(lint)
 	/* .asciz "@(#)ptrace.s	8.1 (Berkeley) 6/4/93" */
-	.asciz "$NetBSD: ptrace.S,v 1.2 1997/02/04 18:38:19 ragge Exp $"
+	.asciz "$NetBSD: ptrace.S,v 1.3 2000/02/05 19:20:53 kleink Exp $"
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
 
 ENTRY(ptrace, 0)
+#ifdef _REENTRANT
+	calls	$0,___errno
+	clrl	(r0)
+#else
 	clrl	_errno
+#endif
 	chmk	$ SYS_ptrace
 	jcs	err
 	ret
