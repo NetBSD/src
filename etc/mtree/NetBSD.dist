@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.88 1999/09/19 22:33:42 perry Exp $
+#	$NetBSD: NetBSD.dist,v 1.89 1999/09/20 06:14:57 veego Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -1337,6 +1337,11 @@ atari
 # ./usr/share/man/cat8/atari
 ..
 
+# ./usr/share/man/cat8/bebox
+bebox
+# ./usr/share/man/cat8/bebox
+..
+
 # ./usr/share/man/cat8/hp300
 hp300
 # ./usr/share/man/cat8/hp300
@@ -1626,6 +1631,11 @@ arm32
 # ./usr/share/man/man8/atari
 atari
 # ./usr/share/man/man8/atari
+..
+
+# ./usr/share/man/man8/bebox
+bebox
+# ./usr/share/man/man8/bebox
 ..
 
 # ./usr/share/man/man8/hp300
