@@ -1,4 +1,4 @@
-/*	$NetBSD: scanner.c,v 1.5 1998/08/25 20:59:43 ross Exp $	*/
+/*	$NetBSD: scanner.c,v 1.6 1998/10/14 00:58:48 wsanchez Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,14 +41,14 @@
 #if 0
 static char sccsid[] = "@(#)scanner.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: scanner.c,v 1.5 1998/08/25 20:59:43 ross Exp $");
+__RCSID("$NetBSD: scanner.c,v 1.6 1998/10/14 00:58:48 wsanchez Exp $");
 #endif
 #endif /* not lint */
 
 #include "defs.h"
 #include "token.h"
 #include "context.h"
-#include "string.h"
+#include "window_string.h"
 
 int	s_getc __P((void));
 int	s_gettok1 __P((void));

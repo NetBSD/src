@@ -1,4 +1,4 @@
-/*	$NetBSD: parser2.c,v 1.5 1998/08/25 20:59:42 ross Exp $	*/
+/*	$NetBSD: parser2.c,v 1.6 1998/10/14 00:58:48 wsanchez Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,15 +41,18 @@
 #if 0
 static char sccsid[] = "@(#)parser2.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: parser2.c,v 1.5 1998/08/25 20:59:42 ross Exp $");
+__RCSID("$NetBSD: parser2.c,v 1.6 1998/10/14 00:58:48 wsanchez Exp $");
 #endif
 #endif /* not lint */
 
+#define EXTERN
+#include "ww.h"
 #include "defs.h"
+#include "alias.h"
+#undef  EXTERN
 #include "parser.h"
 #include "var.h"
 #include "lcmd.h"
-#include "alias.h"
 
 /*
  * name == 0 means we don't have a function name but

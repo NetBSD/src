@@ -1,4 +1,4 @@
-/*	$NetBSD: tt.h,v 1.4 1997/11/21 08:36:24 lukem Exp $	*/
+/*	$NetBSD: tt.h,v 1.5 1998/10/14 00:58:48 wsanchez Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,6 +37,12 @@
  *
  *	@(#)tt.h	8.1 (Berkeley) 6/6/93
  */
+
+#include <unistd.h>
+
+#ifndef EXTERN
+#define EXTERN extern
+#endif
 
 /*
  * Interface structure for the terminal drivers.
@@ -102,7 +108,7 @@ struct tt {
 		/* ttflush() hook */
 	void	(*tt_flush) __P((void));
 };
-struct tt tt;
+EXTERN struct tt tt;
 
 /*
  * tt_padc is used by the compression routine.
@@ -118,14 +124,14 @@ struct tt_tab {
 	int tt_len;
 	int (*tt_func) __P((void));
 };
-extern struct tt_tab tt_tab[];
+EXTERN struct tt_tab tt_tab[];
 
 /*
  * Clean interface to termcap routines.
  * Too may t's.
  */
-char tt_strings[1024];		/* string buffer */
-char *tt_strp;			/* pointer for it */
+EXTERN char tt_strings[1024];		/* string buffer */
+EXTERN char *tt_strp;			/* pointer for it */
 
 struct tt_str {
 	char *ts_str;
@@ -163,9 +169,9 @@ void	ttxputc __P((int));
  * These variables have different meanings from the ww_ob* variables.
  * But I'm too lazy to think up different names.
  */
-char *tt_ob;
-char *tt_obp;
-char *tt_obe;
+EXTERN char *tt_ob;
+EXTERN char *tt_obp;
+EXTERN char *tt_obe;
 #define ttputc(c)	(tt_obp < tt_obe ? (*tt_obp++ = (c)) \
 				: (ttflush(), *tt_obp++ = (c)))
 

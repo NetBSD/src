@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.h,v 1.4 1997/11/21 08:36:09 lukem Exp $	*/
+/*	$NetBSD: parser.h,v 1.5 1998/10/14 00:58:48 wsanchez Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -40,7 +40,7 @@
 
 #include "context.h"
 #include "token.h"
-#include "string.h"
+#include "window_string.h"
 
 #define p_erred()	(cx.x_erred)
 #define p_synerred()	(cx.x_synerred)

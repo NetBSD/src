@@ -1,4 +1,4 @@
-/*	$NetBSD: ww.h,v 1.12 1998/07/26 15:28:20 mycroft Exp $	*/
+/*	$NetBSD: ww.h,v 1.13 1998/10/14 00:58:49 wsanchez Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,6 +38,9 @@
  *	@(#)ww.h	8.1 (Berkeley) 6/6/93
  */
 
+#ifndef __WW_H__
+#define __WW_H__
+
 #include <sys/types.h>
 #ifdef OLD_TTY
 #include <sgtty.h>
@@ -52,6 +55,10 @@
 #include <varargs.h>
 #endif
 #include <stdio.h>
+
+#ifndef EXTERN
+#define EXTERN extern
+#endif
 
 #define NWW	30		/* maximum number of windows */
 
@@ -219,44 +226,44 @@ struct ww_update {
 #define WWU_TOUCHED	0x01		/* touched */
 
 	/* the window structures */
-struct ww wwhead;
-struct ww *wwindex[NWW + 1];		/* last location is for wwnobody */
-struct ww wwnobody;
+EXTERN struct ww wwhead;
+EXTERN struct ww *wwindex[NWW + 1];	/* last location is for wwnobody */
+EXTERN struct ww wwnobody;
 
 	/* tty things */
-struct ww_tty wwoldtty;		/* the old (saved) terminal settings */
-struct ww_tty wwnewtty;		/* the new (current) terminal settings */
-struct ww_tty wwwintty;		/* the terminal settings for windows */
-char *wwterm;			/* the terminal name */
-char wwtermcap[1024];		/* place for the termcap */
+EXTERN struct ww_tty wwoldtty;		/* the old (saved) terminal settings */
+EXTERN struct ww_tty wwnewtty;		/* the new (current) terminal settings */
+EXTERN struct ww_tty wwwintty;		/* the terminal settings for windows */
+EXTERN char *wwterm;			/* the terminal name */
+EXTERN char wwtermcap[1024];		/* place for the termcap */
 
 	/* generally useful variables */
-int wwnrow, wwncol;		/* the screen size */
-char wwavailmodes;		/* actually supported modes */
-char wwcursormodes;		/* the modes for the fake cursor */
-char wwwrap;			/* terminal has auto wrap around */
-int wwdtablesize;		/* result of getdtablesize() call */
-unsigned char **wwsmap;		/* the screen map */
-union ww_char **wwos;		/* the old (current) screen */
-union ww_char **wwns;		/* the new (desired) screen */
-union ww_char **wwcs;		/* the checkpointed screen */
-char *wwtouched;		/* wwns changed flags */
-struct ww_update *wwupd;	/* for display update */
-int wwospeed;			/* output baud rate, copied from wwoldtty */
-int wwbaud;			/* wwospeed converted into actual number */
-int wwcursorrow, wwcursorcol;	/* where we want the cursor to be */
-int wwerrno;			/* error number */
+EXTERN int wwnrow, wwncol;		/* the screen size */
+EXTERN char wwavailmodes;		/* actually supported modes */
+EXTERN char wwcursormodes;		/* the modes for the fake cursor */
+EXTERN char wwwrap;			/* terminal has auto wrap around */
+EXTERN int wwdtablesize;		/* result of getdtablesize() call */
+EXTERN unsigned char **wwsmap;		/* the screen map */
+EXTERN union ww_char **wwos;		/* the old (current) screen */
+EXTERN union ww_char **wwns;		/* the new (desired) screen */
+EXTERN union ww_char **wwcs;		/* the checkpointed screen */
+EXTERN char *wwtouched;			/* wwns changed flags */
+EXTERN struct ww_update *wwupd;		/* for display update */
+EXTERN int wwospeed;			/* output baud rate, copied from wwoldtty */
+EXTERN int wwbaud;			/* wwospeed converted into actual number */
+EXTERN int wwcursorrow, wwcursorcol;	/* where we want the cursor to be */
+EXTERN int wwerrno;			/* error number */
 
 	/* statistics */
-int wwnflush, wwnwr, wwnwre, wwnwrz, wwnwrc;
-int wwnwwr, wwnwwra, wwnwwrc;
-int wwntokdef, wwntokuse, wwntokbad, wwntoksave, wwntokc;
-int wwnupdate, wwnupdline, wwnupdmiss;
-int wwnupdscan, wwnupdclreol, wwnupdclreos, wwnupdclreosmiss, wwnupdclreosline;
-int wwnread, wwnreade, wwnreadz;
-int wwnreadc, wwnreadack, wwnreadnack, wwnreadstat, wwnreadec;
-int wwnwread, wwnwreade, wwnwreadz, wwnwreadd, wwnwreadc, wwnwreadp;
-int wwnselect, wwnselecte, wwnselectz;
+EXTERN int wwnflush, wwnwr, wwnwre, wwnwrz, wwnwrc;
+EXTERN int wwnwwr, wwnwwra, wwnwwrc;
+EXTERN int wwntokdef, wwntokuse, wwntokbad, wwntoksave, wwntokc;
+EXTERN int wwnupdate, wwnupdline, wwnupdmiss;
+EXTERN int wwnupdscan, wwnupdclreol, wwnupdclreos, wwnupdclreosmiss, wwnupdclreosline;
+EXTERN int wwnread, wwnreade, wwnreadz;
+EXTERN int wwnreadc, wwnreadack, wwnreadnack, wwnreadstat, wwnreadec;
+EXTERN int wwnwread, wwnwreade, wwnwreadz, wwnwreadd, wwnwreadc, wwnwreadp;
+EXTERN int wwnselect, wwnselecte, wwnselectz;
 
 	/* quicky macros */
 #define wwsetcursor(r,c) (wwcursorrow = (r), wwcursorcol = (c))
@@ -267,27 +274,27 @@ int wwnselect, wwnselecte, wwnselectz;
 #define wwupdate()	wwupdate1(0, wwnrow);
 
 	/* things for handling input */
-struct ww *wwcurwin;	/* window to copy input into */
-char *wwib;		/* input (keyboard) buffer */
-char *wwibe;		/* wwib + sizeof buffer */
-char *wwibp;		/* current read position in buffer */
-char *wwibq;		/* current write position in buffer */
+EXTERN struct ww *wwcurwin;	/* window to copy input into */
+EXTERN char *wwib;		/* input (keyboard) buffer */
+EXTERN char *wwibe;		/* wwib + sizeof buffer */
+EXTERN char *wwibp;		/* current read position in buffer */
+EXTERN char *wwibq;		/* current write position in buffer */
 #define wwmaskc(c)	((c) & 0x7f)
 #define wwgetc()	(wwibp < wwibq ? wwmaskc(*wwibp++) : -1)
 #define wwpeekc()	(wwibp < wwibq ? wwmaskc(*wwibp) : -1)
 #define wwungetc(c)	(wwibp > wwib ? *--wwibp = (c) : -1)
 
 	/* things for short circuiting wwiomux() */
-char wwintr;		/* interrupting */
-char wwsetjmp;		/* want a longjmp() from wwrint() and wwchild() */
-jmp_buf wwjmpbuf;	/* jmpbuf for above */
+EXTERN char wwintr;		/* interrupting */
+EXTERN char wwsetjmp;		/* want a longjmp() from wwrint() and wwchild() */
+EXTERN jmp_buf wwjmpbuf;	/* jmpbuf for above */
 #define wwinterrupt()	wwintr
 #define wwsetintr()	do { wwintr = 1; if (wwsetjmp) longjmp(wwjmpbuf, 1); } \
 			while (0)
 #define wwclrintr()	(wwintr = 0)
 
 	/* checkpointing */
-int wwdocheckpoint;
+EXTERN int wwdocheckpoint;
 
 	/* the window virtual terminal */
 #define WWT_TERM	"window-v2"
@@ -305,11 +312,11 @@ int wwdocheckpoint;
 #define WWT_IMEI	"im=\\E@:ei=\\EO:ic=:mi:" /* XXX, ic for emacs bug */
 #define WWT_IC		"ic=\\EP:"
 #define WWT_DC		"dc=\\EN:"
-char wwwintermcap[1024];	/* terminal-specific but window-independent
+EXTERN char wwwintermcap[1024];	/* terminal-specific but window-independent
 				   part of the window termcap */
 #ifdef TERMINFO
 	/* where to put the temporary terminfo directory */
-char wwterminfopath[1024];
+EXTERN char wwterminfopath[1024];
 #endif
 
 struct ww *wwopen __P((int, int, int, int, int, int, int));
@@ -388,3 +395,5 @@ int	wwterminfoend __P((void));
 #undef MAX
 #define MIN(x, y)	((x) > (y) ? (y) : (x))
 #define MAX(x, y)	((x) > (y) ? (x) : (y))
+
+#endif __WW_H__

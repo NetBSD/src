@@ -1,4 +1,4 @@
-/*	$NetBSD: xx.h,v 1.4 1997/11/21 08:38:03 lukem Exp $	*/
+/*	$NetBSD: xx.h,v 1.5 1998/10/14 00:58:49 wsanchez Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,6 +38,10 @@
  *	@(#)xx.h	8.1 (Berkeley) 6/6/93
  */
 
+#ifndef EXTERN
+#define EXTERN extern
+#endif
+
 struct xx {
 	enum { xc_move, xc_scroll, xc_inschar, xc_insspace, xc_delchar,
 		xc_clear, xc_clreos, xc_clreol, xc_write } cmd;
@@ -49,11 +53,11 @@ struct xx {
 	struct xx *link;
 };
 
-struct xx *xx_head, *xx_tail;
-struct xx *xx_freelist;
+EXTERN struct xx *xx_head, *xx_tail;
+EXTERN struct xx *xx_freelist;
 
-char *xxbuf, *xxbufp, *xxbufe;
-int xxbufsize;
+EXTERN char *xxbuf, *xxbufp, *xxbufe;
+EXTERN int xxbufsize;
 
 #define char_sep '\0'
 
