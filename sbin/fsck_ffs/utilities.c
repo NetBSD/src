@@ -1,4 +1,4 @@
-/*	$NetBSD: utilities.c,v 1.44 2004/01/15 14:49:28 dbj Exp $	*/
+/*	$NetBSD: utilities.c,v 1.45 2004/01/15 14:52:04 dbj Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)utilities.c	8.6 (Berkeley) 5/19/95";
 #else
-__RCSID("$NetBSD: utilities.c,v 1.44 2004/01/15 14:49:28 dbj Exp $");
+__RCSID("$NetBSD: utilities.c,v 1.45 2004/01/15 14:52:04 dbj Exp $");
 #endif
 #endif /* not lint */
 
@@ -278,7 +278,7 @@ ckfini()
 	if (havesb && bflag != 0 &&
 	    (preen || reply("UPDATE STANDARD SUPERBLOCK"))) {
 		if (preen)
-			pwarn("UPDATING STANDARD SUPERBLOCK");
+			pwarn("UPDATING STANDARD SUPERBLOCK\n");
 		if (!is_ufs2 && (sblock->fs_old_flags & FS_FLAGS_UPDATED) == 0)
 			sblk.b_bno = SBLOCK_UFS1 / dev_bsize;
 		else
