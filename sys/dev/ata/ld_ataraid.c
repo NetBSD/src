@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_ataraid.c,v 1.11 2004/04/22 00:17:10 itojun Exp $	*/
+/*	$NetBSD: ld_ataraid.c,v 1.12 2004/09/17 23:21:53 enami Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_ataraid.c,v 1.11 2004/04/22 00:17:10 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_ataraid.c,v 1.12 2004/09/17 23:21:53 enami Exp $");
 
 #include "rnd.h"
 
@@ -102,6 +102,9 @@ struct cbuf {
 	struct ld_ataraid_softc *cb_sc;	/* pointer to ld softc */
 	u_int		cb_comp;	/* target component */
 	SIMPLEQ_ENTRY(cbuf) cb_q;	/* fifo of component buffers */
+	struct cbuf	*cb_other;	/* other cbuf in case of mirror */
+	int		cb_flags;
+#define	CBUF_IODONE	0x00000001	/* I/O is already successfully done */
 };
 
 #define	CBUF_GET()	pool_get(&ld_ataraid_cbufpl, PR_NOWAIT);
@@ -154,10 +157,14 @@ ld_ataraid_attach(struct device *parent, struct device *self, void *aux)
 
 	case AAI_L_RAID1:
 		level = "RAID-1";
+		ld->sc_start = ld_ataraid_start_raid0;
+		sc->sc_iodone = ld_ataraid_iodone_raid0;
 		break;
 
 	case AAI_L_RAID0 | AAI_L_RAID1:
 		level = "RAID-10";
+		ld->sc_start = ld_ataraid_start_raid0;
+		sc->sc_iodone = ld_ataraid_iodone_raid0;
 		break;
 
 	default:
@@ -248,6 +255,8 @@ ld_ataraid_make_cbuf(struct ld_ataraid_softc *sc, struct buf *bp,
 	cbp->cb_obp = bp;
 	cbp->cb_sc = sc;
 	cbp->cb_comp = comp;
+	cbp->cb_other = NULL;
+	cbp->cb_flags = 0;
 
 	return (cbp);
 }
@@ -322,12 +331,16 @@ ld_ataraid_start_raid0(struct ld_softc *ld, struct buf *bp)
 {
 	struct ld_ataraid_softc *sc = (void *) ld;
 	struct ataraid_array_info *aai = sc->sc_aai;
+	struct ataraid_disk_info *adi;
 	SIMPLEQ_HEAD(, cbuf) cbufq;
-	struct cbuf *cbp;
+	struct cbuf *cbp, *other_cbp;
 	caddr_t addr;
 	daddr_t bn, cbn, tbn, off;
 	long bcount, rcount;
 	u_int comp;
+	const int read = bp->b_flags & B_READ;
+	const int mirror = aai->aai_level & AAI_L_RAID1;
+	int error;
 
 	/* Allocate component buffers. */
 	SIMPLEQ_INIT(&cbufq);
@@ -357,16 +370,50 @@ ld_ataraid_start_raid0(struct ld_softc *ld, struct buf *bp)
 			rcount = min(bcount, dbtob(aai->aai_interleave - off));
 		}
 
+		/*
+		 * See if a component is valid.
+		 */
+try_mirror:
+		adi = &aai->aai_disks[comp];
+		if ((adi->adi_status & ADI_S_ONLINE) == 0) {
+			if (mirror && comp < aai->aai_width) {
+				comp += aai->aai_width;
+				goto try_mirror;
+			}
+
+			/*
+			 * No component available.
+			 */
+			error = EIO;
+			goto free_and_exit;
+		}
+
 		cbp = ld_ataraid_make_cbuf(sc, bp, comp, cbn, addr, rcount);
 		if (cbp == NULL) {
+resource_shortage:
+			error = EAGAIN;
+free_and_exit:
 			/* Free the already allocated component buffers. */
 			while ((cbp = SIMPLEQ_FIRST(&cbufq)) != NULL) {
 				SIMPLEQ_REMOVE_HEAD(&cbufq, cb_q);
 				CBUF_PUT(cbp);
 			}
-			return (EAGAIN);
+			return (error);
 		}
 		SIMPLEQ_INSERT_TAIL(&cbufq, cbp, cb_q);
+		if (mirror && !read && comp < aai->aai_width) {
+			comp += aai->aai_width;
+			adi = &aai->aai_disks[comp];
+			if (adi->adi_status & ADI_S_ONLINE) {
+				other_cbp = ld_ataraid_make_cbuf(sc, bp,
+				    comp, cbn, addr, rcount);
+				if (other_cbp == NULL)
+					goto resource_shortage;
+				SIMPLEQ_INSERT_TAIL(&cbufq, other_cbp, cb_q);
+				other_cbp->cb_other = cbp;
+				cbp->cb_other = other_cbp;
+			}
+		}
 		bn += btodb(rcount);
 		addr += rcount;
 	}
@@ -389,26 +436,78 @@ ld_ataraid_start_raid0(struct ld_softc *ld, struct buf *bp)
 static void
 ld_ataraid_iodone_raid0(struct buf *vbp)
 {
-	struct cbuf *cbp = (struct cbuf *) vbp;
+	struct cbuf *cbp = (struct cbuf *) vbp, *other_cbp;
 	struct buf *bp = cbp->cb_obp;
 	struct ld_ataraid_softc *sc = cbp->cb_sc;
+	struct ataraid_array_info *aai = sc->sc_aai;
+	struct ataraid_disk_info *adi;
 	long count;
-	int s;
+	int s, iodone;
 
 	s = splbio();
 
+	iodone = cbp->cb_flags & CBUF_IODONE;
+	other_cbp = cbp->cb_other;
+	if (other_cbp != NULL)
+		/* You are alone */
+		other_cbp->cb_other = NULL;
+
 	if (cbp->cb_buf.b_flags & B_ERROR) {
-		bp->b_flags |= B_ERROR;
-		bp->b_error = cbp->cb_buf.b_error ?
-		    cbp->cb_buf.b_error : EIO;
+		/*
+		 * Mark this component broken.
+		 */
+		adi = &aai->aai_disks[cbp->cb_comp];
+		adi->adi_status &= ~ADI_S_ONLINE;
+
+		printf("%s: error %d on component %d (%s)\n",
+		    sc->sc_ld.sc_dv.dv_xname, bp->b_error, cbp->cb_comp,
+		    adi->adi_dev->dv_xname);
+
+		/*
+		 * If we didn't see an error yet and we are reading
+		 * RAID1 disk, try another component.
+		 */
+		if ((bp->b_flags & B_ERROR) == 0 &&
+		    (cbp->cb_buf.b_flags & B_READ) != 0 &&
+		    (aai->aai_level & AAI_L_RAID1) != 0 &&
+		    cbp->cb_comp < aai->aai_width) {
+			cbp->cb_comp += aai->aai_width;
+			adi = &aai->aai_disks[cbp->cb_comp];
+			if (adi->adi_status & ADI_S_ONLINE) {
+				cbp->cb_buf.b_flags &= ~B_ERROR;
+				VOP_STRATEGY(cbp->cb_buf.b_vp, &cbp->cb_buf);
+				goto out;
+			}
+		}
+
+		if (iodone || other_cbp != NULL)
+			/*
+			 * If I/O on other component successfully done
+			 * or the I/O is still in progress, no need
+			 * to tell an error to upper layer.
+			 */
+			;
+		else {
+			bp->b_flags |= B_ERROR;
+			bp->b_error = cbp->cb_buf.b_error ?
+			    cbp->cb_buf.b_error : EIO;
+		}
 
 		/* XXX Update component config blocks. */
 
-		printf("%s: error %d on component %d\n",
-		    sc->sc_ld.sc_dv.dv_xname, bp->b_error, cbp->cb_comp);
+	} else {
+		/*
+		 * If other I/O is still in progress, tell it that
+		 * our I/O is successfully done.
+		 */
+		if (other_cbp != NULL)
+			other_cbp->cb_flags |= CBUF_IODONE;
 	}
 	count = cbp->cb_buf.b_bcount;
 	CBUF_PUT(cbp);
+
+	if (other_cbp != NULL)
+		goto out;
 
 	/* If all done, "interrupt". */
 	bp->b_resid -= count;
@@ -416,6 +515,8 @@ ld_ataraid_iodone_raid0(struct buf *vbp)
 		panic("ld_ataraid_iodone_raid0: count");
 	if (bp->b_resid == 0)
 		lddone(&sc->sc_ld, bp);
+
+out:
 	splx(s);
 }
 
