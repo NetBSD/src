@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.17.2.7 2002/01/08 00:30:13 nathanw Exp $	*/
+/*	$NetBSD: wi.c,v 1.17.2.8 2002/01/09 00:36:29 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -68,6 +68,9 @@
  * FreeBSD driver ported to NetBSD by Bill Sommerfeld in the back of the
  * Oslo IETF plenary meeting.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.17.2.8 2002/01/09 00:36:29 nathanw Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -296,6 +299,9 @@ static void wi_rxeof(sc)
 		return;
 	}
 
+	/*
+	 * Drop undecryptable or packets with receive errors here
+	 */
 	if (le16toh(rx_frame.wi_status) & WI_STAT_ERRSTAT) {
 		ifp->if_ierrors++;
 		return;
@@ -419,8 +425,6 @@ void wi_inquire(xsc)
 		return;
 
 	wi_cmd(sc, WI_CMD_INQUIRE, WI_INFO_COUNTERS);
-
-	return;
 }
 
 void wi_update_stats(sc)
@@ -581,6 +585,20 @@ wi_reset(sc)
 
 	/* Calibrate timer. */
 	WI_SETVAL(WI_RID_TICK_TIME, 8);
+
+	return;
+}
+
+void
+wi_pci_reset(sc)
+	struct wi_softc		*sc;
+{
+	bus_space_write_2(sc->sc_iot, sc->sc_ioh,
+			  WI_PCI_COR, WI_PCI_SOFT_RESET);
+	DELAY(100*1000); /* 100 m sec */
+
+	bus_space_write_2(sc->sc_iot, sc->sc_ioh, WI_PCI_COR, 0x0);
+	DELAY(100*1000); /* 100 m sec */
 
 	return;
 }
@@ -933,7 +951,7 @@ static void wi_setmulti(sc)
 allmulti:
 		ifp->if_flags |= IFF_ALLMULTI;
 		memset((char *)&mcast, 0, sizeof(mcast));
-		mcast.wi_type = WI_RID_MCAST;
+		mcast.wi_type = WI_RID_MCAST_LIST;
 		mcast.wi_len = ((ETHER_ADDR_LEN / 2) * 16) + 1;
 
 		wi_write_record(sc, (struct wi_ltv_gen *)&mcast);
@@ -956,7 +974,7 @@ allmulti:
 	}
 
 	ifp->if_flags &= ~IFF_ALLMULTI;
-	mcast.wi_type = WI_RID_MCAST;
+	mcast.wi_type = WI_RID_MCAST_LIST;
 	mcast.wi_len = ((ETHER_ADDR_LEN / 2) * i) + 1;
 	wi_write_record(sc, (struct wi_ltv_gen *)&mcast);
 }
@@ -1662,7 +1680,7 @@ wi_get_id(sc)
 
 	/* getting chip identity */
 	memset(&ver, 0, sizeof(ver));
-	ver.wi_type = WI_RID_CARDID;
+	ver.wi_type = WI_RID_CARD_ID;
 	ver.wi_len = 5;
 	wi_read_record(sc, (struct wi_ltv_gen *)&ver);
 	printf("%s: using ", sc->sc_dev.dv_xname);
@@ -1699,6 +1717,10 @@ wi_get_id(sc)
 		printf("RF:PRISM2.5 MAC:ISL3873");
 		sc->sc_prism2 = 1;
 		break;
+	case WI_NIC_3874A:
+		printf("RF:PRISM2.5 MAC:ISL3874A(PCI)");
+		sc->sc_prism2 = 1;
+		break;
 	default:
 		printf("Lucent chip or unknown chip\n");
 		sc->sc_prism2 = 0;
@@ -1708,7 +1730,7 @@ wi_get_id(sc)
 	if (sc->sc_prism2) {
 		/* try to get prism2 firm version */
 		memset(&ver, 0, sizeof(ver));
-		ver.wi_type = WI_RID_IDENT;
+		ver.wi_type = WI_RID_STA_IDENTITY;
 		ver.wi_len = 5;
 		wi_read_record(sc, (struct wi_ltv_gen *)&ver);
 		LE16TOH(ver.wi_ver[1]);
