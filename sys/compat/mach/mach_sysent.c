@@ -1,4 +1,4 @@
-/* $NetBSD: mach_sysent.c,v 1.13 2003/11/20 07:12:34 manu Exp $ */
+/* $NetBSD: mach_sysent.c,v 1.14 2003/12/30 00:15:46 manu Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_sysent.c,v 1.13 2003/11/20 07:12:34 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_sysent.c,v 1.14 2003/12/30 00:15:46 manu Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ntp.h"
@@ -99,7 +99,7 @@ struct sysent mach_sysent[] = {
 	    mach_sys_semaphore_signal_trap },	/* 33 = semaphore_signal_trap */
 	{ 1, s(struct mach_sys_semaphore_signal_all_trap_args), 0,
 	    mach_sys_semaphore_signal_all_trap },/* 34 = semaphore_signal_all_trap */
-	{ 1, s(struct mach_sys_semaphore_signal_thread_trap_args), 0,
+	{ 2, s(struct mach_sys_semaphore_signal_thread_trap_args), 0,
 	    mach_sys_semaphore_signal_thread_trap },/* 35 = semaphore_signal_thread_trap */
 	{ 1, s(struct mach_sys_semaphore_wait_trap_args), 0,
 	    mach_sys_semaphore_wait_trap },	/* 36 = semaphore_wait_trap */
