@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.3 2002/09/01 11:40:54 scw Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.4 2002/09/02 13:55:03 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -201,6 +201,7 @@ int
 kdb_trap(int type, void *v)
 {
 	struct trapframe *frame = v;
+	int s;
 
         switch (type) {
 	case T_BREAK:
@@ -215,6 +216,7 @@ kdb_trap(int type, void *v)
 		}
 	}
 
+	s = splhigh();
 	ddb_regs = *frame;
 	db_active++;
 	cnpollc(1);
@@ -230,6 +232,7 @@ kdb_trap(int type, void *v)
 	}
 
 	*frame = ddb_regs;
+	splx(s);
 
 	return (1);
 }
