@@ -1,5 +1,5 @@
-	$NetBSD: INSTALL,v 1.58 1998/07/05 14:20:03 ross Exp $
-
+	$NetBSD: INSTALL,v 1.59 1998/07/07 03:40:32 ross Exp $
+#define	_FOR_RELEASE 0			/* 0 == snapshot; 1 == release */
 INSTALLATION NOTES for NetBSD/_MACH _VER
 
 
@@ -21,7 +21,7 @@ NetBSD is a creation of the members of the Internet community.
 Without the unique cooperation and coordination the net makes
 possible, it's likely that this release wouldn't have come about.
 
-#if 0
+#if _FOR_RELEASE
 The NetBSD _VER release is a landmark. Building upon the successful
 NetBSD 1.2 release, we have provided numerous and significant
 functional enhancements, including support for many new devices,
@@ -153,7 +153,6 @@ In the near future, we hope to integrate a fully rewritten Virtual
 Memory subsystem, kernel threads, and SMP support.
 
 #include "whatis"
-
 #endif
 
 The Future of NetBSD:
@@ -212,7 +211,7 @@ NetBSD _VER Release Contents:
 ------ --- ------- --------
 
 The NetBSD _VER release is organized in the following way:
-
+#if _FOR_RELEASE
 .../NetBSD-_VER/
 		BUGS			Known bugs list (incomplete
 					and out of date).
@@ -319,7 +318,19 @@ check the integrity of the archives, if you suspect that one of the
 files is corrupt and have access to a cksum binary. Checksums based on
 other algorithms may also be present -- see the release(7) man page
 for details.
+#else
+.../NetBSD-current/tar_files/
+			    doc.tar.gz
+			    pkgsrc.tar.gz
+			    src/
+				*.tar.gz
+			    xsrc.tar.gz
 
+Other directories provide unpacked source trees for distribution via
+the source update protocol, for more information see:
+
+	http://www.netbsd.org/Sites/net.html#sup
+#endif
 #include "contents"
 
 
