@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.87 2003/07/04 04:56:28 atatat Exp $
+# $NetBSD: mi,v 1.88 2003/07/08 05:17:12 itojun Exp $
 ./usr/share/dict/README				misc-reference-share
 ./usr/share/dict/eign				misc-reference-share
 ./usr/share/dict/propernames			misc-reference-share
@@ -469,16 +469,19 @@
 ./usr/share/examples/openssl/CA.sh		misc-crypto-examples
 ./usr/share/examples/openssl/der_chop		misc-crypto-examples
 ./usr/share/examples/openssl/openssl.cnf	misc-crypto-examples
+./usr/share/examples/postfix/ADDRESS_CLASS_README	misc-postfix-examples
 ./usr/share/examples/postfix/DEBUG_README		misc-postfix-examples
 ./usr/share/examples/postfix/ETRN_README		misc-postfix-examples
 ./usr/share/examples/postfix/FILTER_README		misc-postfix-examples
 ./usr/share/examples/postfix/LDAP_README		misc-postfix-examples
 ./usr/share/examples/postfix/LICENSE			misc-postfix-examples
 ./usr/share/examples/postfix/LMTP_README		misc-postfix-examples
+./usr/share/examples/postfix/LOCAL_RECIPIENT_README	misc-postfix-examples
 ./usr/share/examples/postfix/MAILDROP_README		misc-postfix-examples
 ./usr/share/examples/postfix/MYSQL_README		misc-postfix-examples
 ./usr/share/examples/postfix/NFS_README			misc-postfix-examples
 ./usr/share/examples/postfix/PCRE_README		misc-postfix-examples
+./usr/share/examples/postfix/QMQP_README		misc-postfix-examples
 ./usr/share/examples/postfix/RELEASE_NOTES		misc-postfix-examples
 ./usr/share/examples/postfix/RESTRICTION_CLASS_README	misc-postfix-examples
 ./usr/share/examples/postfix/SASL_README		misc-postfix-examples
