@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.17 1995/12/24 02:30:45 mycroft Exp $	*/
+/*	$NetBSD: if_ie.c,v 1.18 1996/01/12 23:08:59 chuck Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -397,7 +397,6 @@ iematch(parent, cf, aux)
 		/*
 		 * XXX need better probe here so we can figure out what we've got
 		 */
-		ra->ra_len = NBPG;
 		if (ca->ca_bustype == BUS_OBIO) {
 			if (probeget(ra->ra_vaddr, 1) == -1)
 				return (0);
