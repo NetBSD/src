@@ -1,4 +1,4 @@
-/*	$NetBSD: kdump.c,v 1.51 2003/06/29 22:35:35 fvdl Exp $	*/
+/*	$NetBSD: kdump.c,v 1.52 2003/07/11 10:59:28 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: kdump.c,v 1.51 2003/06/29 22:35:35 fvdl Exp $");
+__RCSID("$NetBSD: kdump.c,v 1.52 2003/07/11 10:59:28 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -73,6 +73,7 @@ __RCSID("$NetBSD: kdump.c,v 1.51 2003/06/29 22:35:35 fvdl Exp $");
 #include <sys/syscall.h>
 
 int timestamp, decimal, plain, tail, maxdata = -1, numeric;
+int hexdump;
 pid_t do_pid = -1;
 const char *tracefile = NULL;
 struct ktr_header ktr_header;
@@ -126,7 +127,7 @@ main(argc, argv)
 	int trpoints = ALL_POINTS;
 	const char *emul_name = "netbsd";
 
-	while ((ch = getopt(argc, argv, "e:f:dlm:Nnp:RTt:")) != -1)
+	while ((ch = getopt(argc, argv, "e:f:dlm:Nnp:RTt:x")) != -1)
 		switch (ch) {
 		case 'e':
 			emul_name = strdup(optarg); /* it's safer to copy it */
@@ -162,6 +163,9 @@ main(argc, argv)
 			trpoints = getpoints(optarg);
 			if (trpoints < 0)
 				errx(1, "unknown trace point in %s", optarg);
+			break;
+		case 'x':
+			hexdump = 1;
 			break;
 		default:
 			usage();
@@ -544,6 +548,32 @@ ktremul(name, len, bufsize)
 	(void)printf("\"%s\"\n", name);
 }
 
+static void
+hexdump_buf(void *vdp, int datalen)
+{
+	char chars[16];
+	unsigned char *dp = vdp;
+	int line_len, i, l, c;
+	char *cp;
+
+	for (; datalen > 0; datalen -= 16) {
+		line_len = 16;
+		printf("\t");
+		if (line_len > datalen)
+			line_len = datalen;
+		cp = chars;
+		l = 0;
+		for (i = 0; i < line_len; i++) {
+			c = *dp++;
+			if (i == 8)
+				l += printf(" ");
+			l += printf("%2.2x ", c);
+			*cp++ = isgraph(c) ? c : '.';
+		} while (--i);
+		printf("%*s %.*s\n", 50 - l, "", cp - chars, chars);
+	}
+}
+
 void
 ktrgenio(ktr, len)
 	struct ktr_genio *ktr;
@@ -572,6 +602,10 @@ ktrgenio(ktr, len)
 		return;
 	if (maxdata > 0 && datalen > maxdata)
 		datalen = maxdata;
+	if (hexdump) {
+		hexdump_buf(dp, datalen);
+		return;
+	}
 	(void)printf("       \"");
 	col = 8;
 	for (; datalen > 0; datalen--, dp++) {
