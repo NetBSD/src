@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: fgen.l,v 1.12 2001/06/13 10:46:05 wiz Exp $	*/
+/*	$NetBSD: fgen.l,v 1.13 2001/10/04 18:53:15 eeh Exp $	*/
 /* FLEX input for FORTH input file scanner */
 /*  
  * Copyright (c) 1998 Eduardo Horvath.
@@ -45,9 +45,9 @@
 
 %option yylineno
 
-decimal	[0-9]
-hex	[0-9A-Fa-f]
-octal	[0-7]
+decimal	[0-9.]
+hex	[0-9A-Fa-f.]
+octal	[0-7.]
 white	[ \t\n\r\f]
 tail	{white}
 
@@ -297,6 +297,7 @@ int spit __P((long));
 void sspit __P((char *));
 int apply_macros __P((YY_BUFFER_STATE, char *));
 int main __P((int argc, char *argv[]));
+long cvt __P((char *, char **, int base));
 
 /*
  * Standard FCode names and numbers.  Includes standard
@@ -717,6 +718,48 @@ struct macro macros[] = {
 };
 
 /*
+ * Utility functions.
+ */
+
+/*
+ * ASCII -> long int converter, eats `.'s
+ */
+#define strtol(x, y, z)		cvt(x, y, z)
+long
+cvt(s, e, base)
+char *s, **e; 
+int base;
+{
+	long v = 0;
+	int c, n = 0;
+
+	c = *s;
+	if (c == '-') { n = 1; s++; }
+
+	for (c = *s; (c = *s); s++) {
+
+		/* Ignore `.' */
+		if (c == '.') 
+			continue;
+		if (c >= '0' && c <= '9')
+			c -= '0';
+		else if (c >= 'a' && c <= 'f')
+			c += 10 - 'a';
+		else if (c >= 'A' && c <= 'F')
+			c += 10 - 'A';
+		if (c >= base)
+			break;
+		v *= base;
+		v += c;
+	}
+	if (e)
+		*e = s;
+	if (n)
+		return (-v);
+	return (v);
+}
+
+/*
  * Parser stack control functions.
  */
 
@@ -1067,10 +1110,19 @@ tokenize(input)
 			 * project.
 			 */
 			emit("b(lit)");
-			spit(value>>24);
+			spit((value>>24)&0x0ff);
 			spit((value>>16)&0x0ff);
 			spit((value>>8)&0x0ff);
 			spit(value&0x0ff);
+			if ((value>>32) != value && (value>>32) != 0 && 
+				(value>>32) != -1) {
+				emit("b(lit)");
+				spit((value>>56)&0x0ff);
+				spit((value>>48)&0x0ff);
+				spit((value>>40)&0x0ff);
+				spit((value>>32)&0x0ff);
+				emit("lxjoin");
+			}
 		}
 		break;
 		case TOK_C_LIT:
@@ -1397,10 +1449,19 @@ tokenize(input)
 				 * project.
 				 */
 				emit("b(lit)");
-				spit(value>>24);
+				spit((value>>24)&0x0ff);
 				spit((value>>16)&0x0ff);
 				spit((value>>8)&0x0ff);
 				spit(value&0x0ff);
+				if ((value>>32) != value && (value>>32) != 0 &&
+					(value>>32) != (-1L>>32)) {
+					emit("b(lit)");
+					spit((value>>56)&0x0ff);
+					spit((value>>48)&0x0ff);
+					spit((value>>40)&0x0ff);
+					spit((value>>32)&0x0ff);
+					emit("lxjoin");
+				}
 			}
 			break;
 		case TOK_DEFER:
@@ -1598,10 +1659,19 @@ tokenize(input)
 				 * project.
 				 */
 				emit("b(lit)");
-				spit(value>>24);
+				spit((value>>24)&0x0ff);
 				spit((value>>16)&0x0ff);
 				spit((value>>8)&0x0ff);
 				spit(value&0x0ff);
+				if ((value>>32) != value && (value>>32) != 0 &&
+					(value>>32) != (-1L>>32)) {
+					emit("b(lit)");
+					spit((value>>56)&0x0ff);
+					spit((value>>48)&0x0ff);
+					spit((value>>40)&0x0ff);
+					spit((value>>32)&0x0ff);
+					emit("lxjoin");
+				}
 			}
 			break;
 		case TOK_HEADERLESS:
@@ -1688,10 +1758,19 @@ tokenize(input)
 				 * project.
 				 */
 				emit("b(lit)");
-				spit(value>>24);
+				spit((value>>24)&0x0ff);
 				spit((value>>16)&0x0ff);
 				spit((value>>8)&0x0ff);
 				spit(value&0x0ff);
+				if ((value>>32) != value && (value>>32) != 0 &&
+					(value>>32) != (-1L>>32)) {
+					emit("b(lit)");
+					spit((value>>56)&0x0ff);
+					spit((value>>48)&0x0ff);
+					spit((value>>40)&0x0ff);
+					spit((value>>32)&0x0ff);
+					emit("lxjoin");
+				}
 			}
 			break;
 		case TOK_OF:
@@ -1965,6 +2044,7 @@ spit(n)
 			exit(1);
 		}
 	}
+	if (debug > 1) printf("spitting %2.2x\n", (unsigned char)n);
 	outbuf[outpos++] = n;
 	return (count);
 }
