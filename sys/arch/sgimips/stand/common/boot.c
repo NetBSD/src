@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.7 2003/11/13 08:06:25 sekiya Exp $	*/
+/*	$NetBSD: boot.c,v 1.8 2003/11/13 14:31:54 sekiya Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -173,9 +173,9 @@ main(int argc, char **argv)
 		i = (strrchr(bootfile, ')') - bootfile);
 		bootfile[i-1] = '0';
 		if (strstr(bootfile, "ip3x"))
-			sprintf( (strrchr(bootfile, ')') + 1), "netbsd-INSTALL32_IP3x");
+			sprintf( (strrchr(bootfile, ')') + 1), "ip3x");
 		else
-			sprintf( (strrchr(bootfile, ')') + 1), "netbsd-INSTALL32_IP2x");
+			sprintf( (strrchr(bootfile, ')') + 1), "ip2x");
 		if ( (loadfile(bootfile, marks, LOAD_KERNEL)) >= 0 )
 			goto finish;
 	}
