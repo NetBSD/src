@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_debug.h,v 1.6 1996/10/10 23:34:18 christos Exp $	*/
+/*	$NetBSD: scsipi_debug.h,v 1.7 1996/10/12 23:23:16 christos Exp $	*/
 
 /*
  * Written by Julian Elischer (julian@tfs.com)
@@ -28,11 +28,11 @@
 #define	SC_DEBUG(sc_link,Level,Printstuff) \
 	if ((sc_link)->flags & (Level)) {	\
 		sc_print_addr(sc_link);		\
- 		kprintf Printstuff;		\
+ 		printf Printstuff;		\
 	}
 #define	SC_DEBUGN(sc_link,Level,Printstuff) \
 	if ((sc_link)->flags & (Level)) {	\
- 		kprintf Printstuff;		\
+ 		printf Printstuff;		\
 	}
 #else
 #define SC_DEBUG(A,B,C)

@@ -1,4 +1,4 @@
-/*	$NetBSD: uk.c,v 1.16 1996/10/10 23:31:40 christos Exp $	*/
+/*	$NetBSD: uk.c,v 1.17 1996/10/12 23:23:25 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -109,8 +109,8 @@ ukattach(parent, self, aux)
 	sc_link->device_softc = uk;
 	sc_link->openings = 1;
 
-	kprintf("\n");
-	kprintf("%s: unknown device\n", uk->sc_dev.dv_xname);
+	printf("\n");
+	printf("%s: unknown device\n", uk->sc_dev.dv_xname);
 }
 
 /*
@@ -142,7 +142,7 @@ ukopen(dev, flag, fmt, p)
 	 * Only allow one at a time
 	 */
 	if (sc_link->flags & SDEV_OPEN) {
-		kprintf("%s: already open\n", uk->sc_dev.dv_xname);
+		printf("%s: already open\n", uk->sc_dev.dv_xname);
 		return EBUSY;
 	}
 

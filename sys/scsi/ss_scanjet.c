@@ -1,4 +1,4 @@
-/*	$NetBSD: ss_scanjet.c,v 1.7 1996/10/10 23:30:58 christos Exp $	*/
+/*	$NetBSD: ss_scanjet.c,v 1.8 1996/10/12 23:23:22 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -99,17 +99,17 @@ scanjet_attach(ss, sa)
 	SC_DEBUG(sc_link, SDEV_DB1, ("scanjet_attach: start\n"));
 	ss->sio.scan_scanner_type = 0;
 
-	kprintf("\n%s: ", ss->sc_dev.dv_xname);
+	printf("\n%s: ", ss->sc_dev.dv_xname);
 
 	/* first, check the model (which determines nothing yet) */
 
 	if (!bcmp(sa->sa_inqbuf->product, "C1750A", 6)) {
 		ss->sio.scan_scanner_type = HP_SCANJET_IIC;
-		kprintf("HP ScanJet IIc");
+		printf("HP ScanJet IIc");
 	}
 	if (!bcmp(sa->sa_inqbuf->product, "C2500A", 6)) {
 		ss->sio.scan_scanner_type = HP_SCANJET_IIC;
-		kprintf("HP ScanJet IIcx");
+		printf("HP ScanJet IIcx");
 	}
 
 	SC_DEBUG(sc_link, SDEV_DB1, ("scanjet_attach: scanner_type = %d\n",
@@ -134,16 +134,16 @@ scanjet_attach(ss, sa)
 
 	error = scanjet_set_window(ss);
 	if (error) {
-		kprintf(" set_window failed\n");
+		printf(" set_window failed\n");
 		return;
 	}
 	error = scanjet_compute_sizes(ss);
 	if (error) {
-		kprintf(" compute_sizes failed\n");
+		printf(" compute_sizes failed\n");
 		return;
 	}
 
-	kprintf("\n");
+	printf("\n");
 }
 
 int
@@ -279,7 +279,7 @@ scanjet_read(ss, bp)
 	if (scsi_scsi_cmd(sc_link, (struct scsi_generic *) &cmd, sizeof(cmd),
 	    (u_char *) bp->b_data, bp->b_bcount, SCANJET_RETRIES, 100000, bp,
 	    SCSI_NOSLEEP | SCSI_DATA_IN) != SUCCESSFULLY_QUEUED)
-		kprintf("%s: not queued\n", ss->sc_dev.dv_xname);
+		printf("%s: not queued\n", ss->sc_dev.dv_xname);
 	else {
 		ss->sio.scan_window_size -= bp->b_bcount;
 		if (ss->sio.scan_window_size < 0)
@@ -338,12 +338,12 @@ static void show_es(char *es)
   char *p = es;
   while (*p) {
     if (*p == '\033')
-      kprintf("[Esc]");
+      printf("[Esc]");
     else
-      kprintf("%c", *p);
+      printf("%c", *p);
     ++p;
   }
-  kprintf("\n");
+  printf("\n");
 }
 #endif
 
@@ -358,12 +358,12 @@ scanjet_set_window(ss)
 
 	p = escape_codes;
 
-	p += ksprintf(p, "\033*f%ldP", ss->sio.scan_width / 4);
-	p += ksprintf(p, "\033*f%ldQ", ss->sio.scan_height / 4);
-	p += ksprintf(p, "\033*f%ldX", ss->sio.scan_x_origin / 4);
-	p += ksprintf(p, "\033*f%ldY", ss->sio.scan_y_origin / 4);
-	p += ksprintf(p, "\033*a%dR", ss->sio.scan_x_resolution);
-	p += ksprintf(p, "\033*a%dS", ss->sio.scan_y_resolution);
+	p += sprintf(p, "\033*f%ldP", ss->sio.scan_width / 4);
+	p += sprintf(p, "\033*f%ldQ", ss->sio.scan_height / 4);
+	p += sprintf(p, "\033*f%ldX", ss->sio.scan_x_origin / 4);
+	p += sprintf(p, "\033*f%ldY", ss->sio.scan_y_origin / 4);
+	p += sprintf(p, "\033*a%dR", ss->sio.scan_x_resolution);
+	p += sprintf(p, "\033*a%dS", ss->sio.scan_y_resolution);
      
 	switch (ss->sio.scan_image_mode) {
 	case SIM_BINARY_MONOCHROME:
@@ -407,9 +407,9 @@ scanjet_set_window(ss)
 		break;
 	}
 
-	p += ksprintf(p, "\033*a%dG", ss->sio.scan_bits_per_pixel);
-	p += ksprintf(p, "\033*a%dL", (int)(ss->sio.scan_brightness) - 128);
-	p += ksprintf(p, "\033*a%dK", (int)(ss->sio.scan_contrast) - 128);
+	p += sprintf(p, "\033*a%dG", ss->sio.scan_bits_per_pixel);
+	p += sprintf(p, "\033*a%dL", (int)(ss->sio.scan_brightness) - 128);
+	p += sprintf(p, "\033*a%dK", (int)(ss->sio.scan_contrast) - 128);
 
 	return (scanjet_ctl_write(ss, escape_codes, p - escape_codes, 0));
 }
