@@ -1,4 +1,4 @@
-/*	$NetBSD: mq200machdep.c,v 1.2 2003/07/15 02:29:29 lukem Exp $	*/
+/*	$NetBSD: mq200machdep.c,v 1.3 2003/10/04 18:05:09 imp Exp $	*/
 
 /*-
  * Copyright (c) 2001 TAKEMURA Shin
@@ -31,7 +31,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mq200machdep.c,v 1.2 2003/07/15 02:29:29 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mq200machdep.c,v 1.3 2003/10/04 18:05:09 imp Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -125,6 +125,30 @@ static struct mq200_clock_setting mcr530_clocks[] = {
 static struct mq200_md_param machdep_params[] = {
 	{ 
 		&platid_mask_MACH_NEC_MCR_530,
+		640, 240,	/* flat panel size		*/
+		12288,		/* base clock is 12.288 MHz	*/
+		MQ200_MD_HAVECRT | MQ200_MD_HAVEFP,
+#if MQ200_SETUPREGS
+		mcr530_init_ops,
+#else
+		NULL,
+#endif /* MQ200_SETUPREGS */
+		mcr530_clocks,
+		/* DCMISC	*/
+		MQ200_DCMISC_OSC_ENABLE |
+		MQ200_DCMISC_FASTPOWSEQ_DISABLE |
+		MQ200_DCMISC_OSCFREQ_12_25,
+		/* PMC		*/
+		0,
+		/* MM01		*/
+		MQ200_MM01_DRAM_AUTO_REFRESH_EN |
+		MQ200_MM01_GE_PB_EN |
+		MQ200_MM01_CPU_PB_EN |
+		MQ200_MM01_SLOW_REFRESH_EN |
+		(0x143e << MQ200_MM01_REFRESH_SHIFT),
+	},
+	{ 
+		&platid_mask_MACH_NEC_MCR_530A,
 		640, 240,	/* flat panel size		*/
 		12288,		/* base clock is 12.288 MHz	*/
 		MQ200_MD_HAVECRT | MQ200_MD_HAVEFP,
