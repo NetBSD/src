@@ -1,12 +1,6 @@
-#	$NetBSD: TODO,v 1.18 1999/05/05 01:21:37 simonb Exp $
+#	$NetBSD: TODO,v 1.19 2000/12/04 20:27:02 wiz Exp $
 
 Things to do ....  in no specific order.
-
-	-- On upgrade, remove /usr/include/machine and the machine-
-	   dependent name e.g. /usr/include/i386.  On 1.3, machine
-	   is a directory and e.g. i386 is a symlink, whereas in 1.4
-	   the reverse is true.  Without this fix, extraction of base
-	   and comp will fail.
 
 	-- On error messages, do something to allow the user to
 	   see any errors from anything run by run_prog().
@@ -47,10 +41,10 @@ Things to do ....  in no specific order.
            distribution set from.  Maybe just allowing the user to shell
            out and look around is good enough (this needs more thought).
 
-	-- check for already-mouned fileystems before install newfs.
+	-- check for already-mounted filesystems before install newfs.
 	   Abort with message.
 
-	-- check for already-moutend fileystems  before upgrade fsck.
+	-- check for already-mounted filesystems before upgrade fsck.
 	   (ignore?)
 
 	-- check for already-mounted filesystems before upgrade mount.
@@ -67,7 +61,7 @@ Things to do ....  in no specific order.
         -- Use bootp or dhcp to get network info (hostname, domain name,
            name servers, ...)
 
-	--  Things like having config_network()
+	-- Things like having config_network()
            possibly use the information on the fixed disk instead of having
            to ask everything.
 
@@ -78,8 +72,6 @@ Things to do ....  in no specific order.
            and then remove the file before going on to the next set to
            save disk space.
 
-        -- Add setting timezone
-
         -- Set current time and date.
 
 	-- Configure NTP servers, set NTP in rc.conf
@@ -88,7 +80,7 @@ Things to do ....  in no specific order.
 	   Need to patch kernel variable with offset from UTC.  Any
 	   other kernel variables we might want to patch as well???
 
-        -- A little more clean-up of the run_prog suite so things worke
+        -- A little more clean-up of the run_prog suite so things work
            nicely for all ports.
 
         -- Check-in of files for amiga and other ports that will use
@@ -97,10 +89,10 @@ Things to do ....  in no specific order.
 	-- fix "disklabel -r -w" vs. "disklabel -w": I still don't grok why
            the  -r, and the manpage says it will lose totally on sparcs.
            Phil, was there some reason to bypass the incore label on i386?
-           Can we jst do "disklabel -w" everywhere?
+           Can we just do "disklabel -w" everywhere?
 
 	-- Michael bumped the in-memory disklabel struct up to 16 entries.
- 	   Also add  a runtime check in case that grows in future 
+ 	   Also add a runtime check in case that grows in future 
 	   (e.g., slices).  Maybe bump to 32 entries just in case.
 
 	-- Fix sanity-check message code. It currently gets over-written
@@ -115,14 +107,14 @@ Things to do ....  in no specific order.
 
 	-- Full configuration of rc.conf?
 
-	-- Set root's shell and password
+	-- Set root's shell
 
 	-- If we're doing a fresh install and there's already a label
-	   on the disk, maybe use that intsead  of the compiled-in default
+	   on the disk, maybe use that instead of the compiled-in default
 	   label?
 
 	-- symlinks for /tmp (/tmp -> /var/tmp or some such)
-	   Or configure tmp on   mfs.
+	   Or configure tmp on mfs.
 
 	-- Add support for SLIP (for pc532) and/or PPP.
 
