@@ -1,4 +1,4 @@
-/*	$NetBSD: filter.c,v 1.21 2003/06/03 01:20:06 provos Exp $	*/
+/*	$NetBSD: filter.c,v 1.22 2003/06/03 04:33:44 provos Exp $	*/
 /*	$OpenBSD: filter.c,v 1.16 2002/08/08 21:18:20 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -30,7 +30,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: filter.c,v 1.21 2003/06/03 01:20:06 provos Exp $");
+__RCSID("$NetBSD: filter.c,v 1.22 2003/06/03 04:33:44 provos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -304,13 +304,11 @@ filter_policyrecord(struct policy *policy, struct filter *filter,
     const char *emulation, const char *name, char *rule)
 {
 	/* Record the filter in the policy */
-	if (filter == NULL) {
-		filter = calloc(1, sizeof(struct filter));
-		if (filter == NULL)
-			err(1, "%s:%d: calloc", __func__, __LINE__);
-		if ((filter->rule = strdup(rule)) == NULL)
-			err(1, "%s:%d: strdup", __func__, __LINE__);
-	}
+	filter = calloc(1, sizeof(struct filter));
+	if (filter == NULL)
+		err(1, "%s:%d: calloc", __func__, __LINE__);
+	if ((filter->rule = strdup(rule)) == NULL)
+		err(1, "%s:%d: strdup", __func__, __LINE__);
 
 	strlcpy(filter->name, name, sizeof(filter->name));
 	strlcpy(filter->emulation, emulation, sizeof(filter->emulation));

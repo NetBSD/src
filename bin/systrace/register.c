@@ -1,4 +1,4 @@
-/*	$NetBSD: register.c,v 1.8 2003/03/25 22:58:24 provos Exp $	*/
+/*	$NetBSD: register.c,v 1.9 2003/06/03 04:33:44 provos Exp $	*/
 /*	$OpenBSD: register.c,v 1.11 2002/08/05 14:49:27 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -325,4 +325,5 @@ systrace_initcb(void)
 #endif
 
 	X(intercept_register_execcb(execres_cb, NULL));
+	X(intercept_register_pfreecb(policyfree_cb, NULL));
 }
