@@ -6,7 +6,7 @@
  * to the original author and the contributors.
  */
 #if !defined(lint) && defined(LIBC_SCCS)
-static	char	rcsid[] = "$Id: ip_proxy.c,v 1.1.1.1 1997/05/26 15:18:15 darrenr Exp $";
+static	char	rcsid[] = "$Id: ip_proxy.c,v 1.2 1997/05/27 01:22:52 thorpej Exp $";
 #endif
 
 #if defined(__FreeBSD__) && defined(KERNEL) && !defined(_KERNEL)
@@ -110,6 +110,8 @@ tcphdr_t *tcp;
 	register u_short sp, dp;
 	register ap_session_t *aps;
 	register u_char p = ip->ip_p;
+
+	sp = dp = 0;			/* XXX gcc -Wunitialized */
 
 	hv = ip->ip_src.s_addr ^ ip->ip_dst.s_addr;
 	hv *= 651733;
@@ -264,7 +266,7 @@ void ap_unload()
 	int i;
 
 	for (i = 0; i < AP_SESS_SIZE; i++)
-		while (aps = ap_sess_tab[i]) {
+		while ((aps = ap_sess_tab[i]) != NULL) {
 			ap_sess_tab[i] = aps->aps_next;
 			aps_free(aps);
 		}
