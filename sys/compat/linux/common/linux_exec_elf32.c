@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec_elf32.c,v 1.17 1996/09/26 20:52:42 cgd Exp $	*/
+/*	$NetBSD: linux_exec_elf32.c,v 1.18 1996/09/27 18:14:25 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -30,7 +30,7 @@
  * based on exec_aout.c, sunos_exec.c and svr4_exec.c
  */
 
-#define	ELFSIZE		32				/* XXX */
+#define	ELFSIZE		32				/* XXX should die */
 #define	EXEC_ELF32					/* XXX should die */
 
 #include <sys/param.h>
