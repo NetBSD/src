@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.5.8.3 2001/11/17 22:14:17 briggs Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.5.8.4 2002/04/02 00:53:10 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -197,8 +197,7 @@ cpu_getmcontext(l, mcp, flagp)
 		if (l == fpuproc)
 			save_fpu(l);
 		(void)memcpy(mcp->__fpregs.__fpu_regs, pcb->pcb_fpu.fpr,
-		    sizeof (mcp->__fpregs.__fpu_regs) /
-		    sizeof (mcp->__fpregs.__fpu_regs[0]));
+		    sizeof (mcp->__fpregs.__fpu_regs));
 		mcp->__fpregs.__fpu_fpscr =
 		    ((int *)&pcb->pcb_fpu.fpscr)[_QUAD_LOWWORD];
 		mcp->__fpregs.__fpu_valid = 1;
@@ -243,8 +242,7 @@ cpu_setmcontext(l, mcp, flags)
 	/* Restore FPR context, if any. */
 	if ((flags & _UC_FPU) && mcp->__fpregs.__fpu_valid != 0) {
 		(void)memcpy(&pcb->pcb_fpu.fpr, &mcp->__fpregs.__fpu_regs,
-		    sizeof (pcb->pcb_fpu.fpr) /
-		    sizeof (pcb->pcb_fpu.fpr[0]));
+		    sizeof (pcb->pcb_fpu.fpr));
 		pcb->pcb_fpu.fpscr = *(double *)&mcp->__fpregs.__fpu_fpscr;
 
 		/* If we're the FPU owner, force a reload from the PCB. */
