@@ -1,4 +1,4 @@
-/* $NetBSD: j720ssp.c,v 1.19 2003/08/07 16:27:47 agc Exp $ */
+/* $NetBSD: j720ssp.c,v 1.20 2003/10/27 16:18:18 mycroft Exp $ */
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: j720ssp.c,v 1.19 2003/08/07 16:27:47 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: j720ssp.c,v 1.20 2003/10/27 16:18:18 mycroft Exp $");
 
 #include "apm.h"
 
@@ -355,11 +355,6 @@ j720ssp_kthread(arg)
 	int ssp_status;
 
 	while (1) {
-		if (ssp_status & J720_SSP_STATUS_TP)
-			tsleep(&sc->sc_ssp_kthread, PRIBIO, "j720ssp", hz / 25);
-		else
-			tsleep(&sc->sc_ssp_kthread, PRIBIO, "j720ssp", 0);
-			
 		simple_lock(&sc->sc_ssp_status_lock);
 		ssp_status = sc->sc_ssp_status;
 		sc->sc_ssp_status &= ~J720_SSP_STATUS_KBD;
@@ -374,7 +369,9 @@ j720ssp_kthread(arg)
 				sc->sc_ssp_status &= ~J720_SSP_STATUS_TP;
 				simple_unlock(&sc->sc_ssp_status_lock);
 			}
-		}
+			tsleep(&sc->sc_ssp_kthread, PRIBIO, "j720ssp", hz / 25);
+		} else
+			tsleep(&sc->sc_ssp_kthread, PRIBIO, "j720ssp", 0);
 	}
 
 	/* NOTREACHED */
