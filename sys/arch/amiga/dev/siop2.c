@@ -1,4 +1,4 @@
-/*	$NetBSD: siop2.c,v 1.5 1999/03/22 19:30:57 is Exp $	*/
+/*	$NetBSD: siop2.c,v 1.6 1999/03/26 22:50:23 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1994,1998 Michael L. Hitch
@@ -93,6 +93,7 @@ const
 
 /* default to not inhibit sync negotiation on any drive */
 u_char siopng_inhibit_sync[16] = { 0, 0, 0, 0, 0, 0, 0 }; /* initialize, so patchable */
+u_char siopng_inhibit_wide[16] = { 0, 0, 0, 0, 0, 0, 0 }; /* initialize, so patchable */
 u_char siopng_allow_disc[16] = {3, 3, 3, 3, 3, 3, 3, 3};
 int siopng_no_dma = 0;
 
@@ -103,43 +104,6 @@ int siopng_data_wait = SCSI_DATA_WAIT;
 int siopng_init_wait = SCSI_INIT_WAIT;
 
 #define DEBUG_SYNC
-
-#ifdef DEBUG_SYNC
-/*
- * sync period transfer lookup - only valid for 66Mhz clock
- */
-#ifdef FIXME
-static struct {
-	unsigned char p;	/* period from sync request message */
-	unsigned char r;	/* siop_period << 4 | sbcl */
-} sync_tab[] = {
-	{ 60/4, 0<<4 | 1},
-	{ 76/4, 1<<4 | 1},
-	{ 92/4, 2<<4 | 1},
-	{ 92/4, 0<<4 | 2},
-	{108/4, 3<<4 | 1},
-	{116/4, 1<<4 | 2},
-	{120/4, 4<<4 | 1},
-	{120/4, 0<<4 | 3},
-	{136/4, 5<<4 | 1},
-	{140/4, 2<<4 | 2},
-	{152/4, 6<<4 | 1},
-	{152/4, 1<<4 | 3},
-	{164/4, 3<<4 | 2},
-	{168/4, 7<<4 | 1},
-	{180/4, 2<<4 | 3},
-	{184/4, 4<<4 | 2},
-	{208/4, 5<<4 | 2},
-	{212/4, 3<<4 | 3},
-	{232/4, 6<<4 | 2},
-	{240/4, 4<<4 | 3},
-	{256/4, 7<<4 | 2},
-	{272/4, 5<<4 | 3},
-	{300/4, 6<<4 | 3},
-	{332/4, 7<<4 | 3}
-};
-#endif
-#endif
 
 #ifdef DEBUG
 /*
@@ -177,7 +141,7 @@ void siopng_dump_trace __P((void));
 
 static char *siopng_chips[] = {
 	"720", "720SE", "770", "0x3",
-	"810A", "0x5", "0x6", "0x7",
+	"0x4", "0x5", "0x6", "0x7",
 	"0x8", "0x9", "0xA", "0xB",
 	"0xC", "0xD", "0xE", "0xF",
 };
@@ -576,6 +540,7 @@ siopnginitialize(sc)
 	sc->sc_minsync = sc->sc_tcp[1];		/* in 4ns units */
 	if (sc->sc_minsync < 25)
 		sc->sc_minsync = 25;
+	sc->sc_minsync >>= 1;			/* Using clock doubler, allow Ultra */
 	if (sc->sc_clock_freq <= 25) {
 		sc->sc_dcntl |= 0x80;		/* SCLK/1 */
 		sc->sc_tcp[0] = sc->sc_tcp[1];
@@ -591,14 +556,14 @@ siopnginitialize(sc)
 	}
 
 	if (scsi_nosync) {
-		inhibit_sync = (scsi_nosync >> shift_nosync) & 0xff;
-		shift_nosync += 8;
+		inhibit_sync = (scsi_nosync >> shift_nosync) & 0xffff;
+		shift_nosync += 16;		/* XXX maxtarget */
 #ifdef DEBUG
 		if (inhibit_sync)
 			printf("%s: Inhibiting synchronous transfer %02x\n",
 				sc->sc_dev.dv_xname, inhibit_sync);
 #endif
-		for (i = 0; i < 8; ++i)
+		for (i = 0; i < 16; ++i)		/* XXX maxtarget */
 			if (inhibit_sync & (1 << i))
 				siopng_inhibit_sync[i] = 1;
 	}
@@ -642,18 +607,19 @@ siopngreset(sc)
 	/*
 	 * Set up various chip parameters
 	 */
-	rp->siop_stest1 |= 0x08;	/* SCLK doubler enable */
+	rp->siop_stest1 |= SIOP_STEST1_DBLEN;	/* SCLK doubler enable */
 	delay(20);
-	rp->siop_stest3 |= 0x20;	/* Halt SCSI clock */
-	rp->siop_scntl3 = 0x15;		/* SCF/CCF*/
-	rp->siop_stest1 |= 0x04;	/* SCLK doubler select */
-	rp->siop_stest3 &= ~0x20;	/* Clear Halt SCSI clock */
+	rp->siop_stest3 |= SIOP_STEST3_HSC;	/* Halt SCSI clock */
+	rp->siop_scntl3 = 0x15;			/* SCF/CCF*/
+	rp->siop_stest1 |= SIOP_STEST1_DBLSEL;	/* SCLK doubler select */
+	rp->siop_stest3 &= ~SIOP_STEST3_HSC;	/* Clear Halt SCSI clock */
 	rp->siop_scntl0 = SIOP_ARB_FULL | /*SIOP_SCNTL0_EPC |*/ SIOP_SCNTL0_EPG;
 	rp->siop_dcntl = sc->sc_dcntl;
 	rp->siop_dmode = 0xc0;		/* XXX burst length */
 	rp->siop_sien = 0x00;	/* don't enable interrupts yet */
 	rp->siop_dien = 0x00;	/* don't enable interrupts yet */
-	rp->siop_scid = sc->sc_link.scsipi_scsi.adapter_target | 0x60;
+	rp->siop_scid = sc->sc_link.scsipi_scsi.adapter_target |
+	    SIOP_SCID_RRE | SIOP_SCID_SRE;
 	rp->siop_respid = 1 << sc->sc_link.scsipi_scsi.adapter_target;
 	rp->siop_dwt = 0x00;
 	rp->siop_stime0 = 0x0c;		/* XXXXX check */
@@ -676,8 +642,12 @@ siopngreset(sc)
 	 */
 	if ((rp->siop_sbdl & 0xff00) == 0xff00) {
 		printf(" NO WIDE TERM");
-		for (i = 0; i < 16; ++i)
+		/* XXX need to restrict maximum target ID as well? */
+		sc->sc_link.scsipi_scsi.max_target = 7;
+		for (i = 0; i < 16; ++i) {
 			siopng_allow_disc[i] = 0;
+			siopng_inhibit_wide[i] |= 0x80;
+		}
 	}
 
 	printf("siopng type %s id %d reset V%d\n",
@@ -764,7 +734,7 @@ siopng_start (sc, target, lun, cbuf, clen, buf, len)
 	acb->stat[0] = -1;
 	acb->msg[0] = -1;
 	acb->ds.scsi_addr = (target << 16) | (sc->sc_sync[target].sxfer << 8) |
-	    (sc->sc_sync[target].sbcl << 24);
+	    (sc->sc_sync[target].scntl3 << 24);
 	acb->ds.idlen = 1;
 	acb->ds.idbuf = (char *) kvtop(&acb->msgout[0]);
 	acb->ds.cmdlen = clen;
@@ -777,15 +747,42 @@ siopng_start (sc, target, lun, cbuf, clen, buf, len)
 	acb->ds.msginlen = 1;
 	acb->ds.extmsglen = 1;
 	acb->ds.synmsglen = 3;
-	acb->ds.msginbuf = (char *) kvtop(&acb->msg[1]);
-	acb->ds.extmsgbuf = (char *) kvtop(&acb->msg[2]);
-	acb->ds.synmsgbuf = (char *) kvtop(&acb->msg[3]);
+	acb->ds.msginbuf = acb->ds.msgbuf + 1;
+	acb->ds.extmsgbuf = acb->ds.msginbuf + 1;
+	acb->ds.synmsgbuf = acb->ds.extmsgbuf + 1;
 	bzero(&acb->ds.chain, sizeof (acb->ds.chain));
 
-	if (sc->sc_sync[target].state == SYNC_START) {
+	if (sc->sc_sync[target].state == NEG_WIDE) {
+		if (siopng_inhibit_wide[target]) {
+			sc->sc_sync[target].state = NEG_SYNC;
+			sc->sc_sync[target].scntl3 &= ~SIOP_SCNTL3_EWS;
+#ifdef DEBUG
+			if (siopngsync_debug)
+				printf ("Forcing target %d narrow\n", target);
+#endif
+		}
+		else {
+			sc->sc_sync[target].scntl3 = 0x15 |	/* XXX */
+			    (sc->sc_sync[target].scntl3 & 0x88);	/* XXX */
+			acb->msg[2] = -1;
+			acb->msgout[1] = MSG_EXT_MESSAGE;
+			acb->msgout[2] = 2;
+			acb->msgout[3] = MSG_WIDE_REQ;
+			acb->msgout[4] = 1;
+			acb->ds.idlen = 5;
+			acb->ds.synmsglen = 2;
+			sc->sc_sync[target].state = NEG_WAITW;
+#ifdef DEBUG
+			if (siopngsync_debug)
+				printf("Sending wide request to target %d\n", target);
+#endif
+		}
+	}
+	if (sc->sc_sync[target].state == NEG_SYNC) {
 		if (siopng_inhibit_sync[target]) {
-			sc->sc_sync[target].state = SYNC_DONE;
-			sc->sc_sync[target].sbcl = 5;		/* XXX */
+			sc->sc_sync[target].state = NEG_DONE;
+			sc->sc_sync[target].scntl3 = 5 |		/* XXX */
+			    (sc->sc_sync[target].scntl3 & 0x88);	/* XXX */
 			sc->sc_sync[target].sxfer = 0;
 #ifdef DEBUG
 			if (siopngsync_debug)
@@ -793,6 +790,8 @@ siopng_start (sc, target, lun, cbuf, clen, buf, len)
 #endif
 		}
 		else {
+			sc->sc_sync[target].scntl3 = 0x15 |	/* XXX */
+			    (sc->sc_sync[target].scntl3 & 0x88);	/* XXX */
 			acb->msg[2] = -1;
 			acb->msgout[1] = MSG_EXT_MESSAGE;
 			acb->msgout[2] = 3;
@@ -804,7 +803,7 @@ siopng_start (sc, target, lun, cbuf, clen, buf, len)
 #endif
 			acb->msgout[5] = SIOP_MAX_OFFSET;
 			acb->ds.idlen = 6;
-			sc->sc_sync[target].state = SYNC_SENT;
+			sc->sc_sync[target].state = NEG_WAITS;
 #ifdef DEBUG
 			if (siopngsync_debug)
 				printf ("Sending sync request to target %d\n", target);
@@ -884,7 +883,7 @@ siopng_start (sc, target, lun, cbuf, clen, buf, len)
 			    sc->sc_dev.dv_xname);
 		rp->siop_temp = 0;
 #ifndef FIXME
-		rp->siop_scntl3 = sc->sc_sync[target].sbcl;
+		rp->siop_scntl3 = sc->sc_sync[target].scntl3;
 #endif
 		rp->siop_dsa = kvtop((caddr_t)&acb->ds);
 		rp->siop_dsp = sc->sc_scriptspa;
@@ -964,22 +963,98 @@ siopng_checkintr(sc, istat, dstat, sist, status)
 		}
 #endif
 		target = acb->xs->sc_link->scsipi_scsi.target;
-		if (sc->sc_sync[target].state == SYNC_SENT) {
-#ifdef DEBUG
-			if (siopngsync_debug)
-				printf ("sync msg in: %02x %02x %02x %02x %02x %02x\n",
-				    acb->msg[0], acb->msg[1], acb->msg[2],
-				    acb->msg[3], acb->msg[4], acb->msg[5]);
-#endif
+		if (sc->sc_sync[target].state == NEG_WAITW) {
+			if (acb->msg[1] == 0xff)
+				printf ("%s: target %d ignored wide request\n",
+				    sc->sc_dev.dv_xname, target);
+			else if (acb->msg[1] == MSG_REJECT)
+				printf ("%s: target %d rejected wide request\n",
+				    sc->sc_dev.dv_xname, target);
+			else {
+				printf("%s: target %d (wide) %02x %02x %02x %02x\n",
+				    sc->sc_dev.dv_xname, target, acb->msg[1],
+				    acb->msg[2], acb->msg[3], acb->msg[4]);
+				if (acb->msg[1] == MSG_EXT_MESSAGE &&
+				    acb->msg[2] == 2 &&
+				    acb->msg[3] == MSG_WIDE_REQ)
+					sc->sc_sync[target].scntl3 = acb->msg[4] ?
+					    sc->sc_sync[target].scntl3 | SIOP_SCNTL3_EWS :
+					    sc->sc_sync[target].scntl3 & ~SIOP_SCNTL3_EWS;
+			}
+			sc->sc_sync[target].state = NEG_SYNC;
+		}
+		if (sc->sc_sync[target].state == NEG_WAITS) {
 			if (acb->msg[1] == 0xff)
 				printf ("%s: target %d ignored sync request\n",
 				    sc->sc_dev.dv_xname, target);
 			else if (acb->msg[1] == MSG_REJECT)
 				printf ("%s: target %d rejected sync request\n",
 				    sc->sc_dev.dv_xname, target);
-			sc->sc_sync[target].state = SYNC_DONE;
+			else
+/* XXX - need to set sync transfer parameters */
+				printf("%s: target %d (sync) %02x %02x %02x\n",
+				    sc->sc_dev.dv_xname, target, acb->msg[1],
+				    acb->msg[2], acb->msg[3]);
+			sc->sc_sync[target].state = NEG_DONE;
+		}
+		dma_cachectl(&acb->stat[0], 1);
+		*status = acb->stat[0];
+#ifdef DEBUG
+		if (rp->siop_sbcl & SIOP_BSY) {
+			/*printf ("ACK! siop was busy at end: rp %x script %x dsa %x\n",
+			    rp, &siopng_scripts, &acb->ds);*/
+#ifdef DDB
+			/*Debugger();*/
+#endif
+		}
+		if (acb->msg[0] != 0x00)
+			printf("%s: message was not COMMAND COMPLETE: %x\n",
+			    sc->sc_dev.dv_xname, acb->msg[0]);
+#endif
+		if (sc->nexus_list.tqh_first)
+			rp->siop_dcntl |= SIOP_DCNTL_STD;
+		return 1;
+	}
+	if (dstat & SIOP_DSTAT_SIR && rp->siop_dsps == 0xff0b) {
+		target = acb->xs->sc_link->scsipi_scsi.target;
+		if (acb->msg[1] == MSG_EXT_MESSAGE && acb->msg[2] == 2 &&
+		    acb->msg[3] == MSG_WIDE_REQ) {
+#ifdef DEBUG
+			if (siopngsync_debug)
+				printf ("wide msg in: %02x %02x %02x %02x %02x %02x\n",
+				    acb->msg[0], acb->msg[1], acb->msg[2],
+				    acb->msg[3], acb->msg[4], acb->msg[5]);
+#endif
+			sc->sc_sync[target].scntl3 &= ~(SIOP_SCNTL3_EWS);
+			if (acb->msg[2] == 2 &&
+			    acb->msg[3] == MSG_WIDE_REQ &&
+			    acb->msg[4] != 0) {
+				sc->sc_sync[target].scntl3 |= SIOP_SCNTL3_EWS;
+				printf ("%s: target %d now wide %d\n",
+				    sc->sc_dev.dv_xname, target,
+				    acb->msg[4]);
+			}
+			rp->siop_scntl3 = sc->sc_sync[target].scntl3;
+			if (sc->sc_sync[target].state == NEG_WAITW) {
+				sc->sc_sync[target].state = NEG_SYNC;
+				rp->siop_dsp = sc->sc_scriptspa + Ent_clear_ack;
+				return(0);
+			}
+			rp->siop_dcntl |= SIOP_DCNTL_STD;
+			sc->sc_sync[target].state = NEG_SYNC;
+			return (0);
+		}
+		if (acb->msg[1] == MSG_EXT_MESSAGE && acb->msg[2] == 3 &&
+		    acb->msg[3] == MSG_SYNC_REQ) {
+#ifdef DEBUG
+			if (siopngsync_debug)
+				printf ("sync msg in: %02x %02x %02x %02x %02x %02x\n",
+				    acb->msg[0], acb->msg[1], acb->msg[2],
+				    acb->msg[3], acb->msg[4], acb->msg[5]);
+#endif
 			sc->sc_sync[target].sxfer = 0;
-			sc->sc_sync[target].sbcl = 5;		/* XXX */
+			sc->sc_sync[target].scntl3 = 5 |		/* XXX */
+			    (sc->sc_sync[target].scntl3 & 0x88);	/* XXX */
 			if (acb->msg[2] == 3 &&
 			    acb->msg[3] == MSG_SYNC_REQ &&
 			    acb->msg[5] != 0) {
@@ -1010,24 +1085,18 @@ siopng_checkintr(sc, istat, dstat, sist, status)
 				    acb->msg[4] * 4, acb->msg[5]);
 				scsi_period_to_siopng (sc, target);
 			}
-		}
-		dma_cachectl(&acb->stat[0], 1);
-		*status = acb->stat[0];
-#ifdef DEBUG
-		if (rp->siop_sbcl & SIOP_BSY) {
-			/*printf ("ACK! siop was busy at end: rp %x script %x dsa %x\n",
-			    rp, &siopng_scripts, &acb->ds);*/
-#ifdef DDB
-			/*Debugger();*/
-#endif
-		}
-		if (acb->msg[0] != 0x00)
-			printf("%s: message was not COMMAND COMPLETE: %x\n",
-			    sc->sc_dev.dv_xname, acb->msg[0]);
-#endif
-		if (sc->nexus_list.tqh_first)
+			rp->siop_sxfer = sc->sc_sync[target].sxfer;
+			rp->siop_scntl3 = sc->sc_sync[target].scntl3;
+			if (sc->sc_sync[target].state == NEG_WAITS) {
+				sc->sc_sync[target].state = NEG_DONE;
+				rp->siop_dsp = sc->sc_scriptspa + Ent_clear_ack;
+				return(0);
+			}
 			rp->siop_dcntl |= SIOP_DCNTL_STD;
-		return 1;
+			sc->sc_sync[target].state = NEG_DONE;
+			return (0);
+		}
+		/* XXX - not SDTR message */
 	}
 	if (sist & SIOP_SIST_MA) {		/* Phase mismatch */
 #ifdef DEBUG
@@ -1039,13 +1108,13 @@ siopng_checkintr(sc, istat, dstat, sist, status)
 		if (acb->iob_len) {
 			int adjust;
 			adjust = ((dfifo - (dbc & 0x7f)) & 0x7f);
-			if (sstat0 & (1<<5))	/* sstat0 SODL lsb */
+			if (sstat0 & SIOP_SSTAT0_OLF)	/* sstat0 SODL lsb */
 				++adjust;
-			if (sstat0 & (1<<6))	/* sstat0 SODR lsb */
+			if (sstat0 & SIOP_SSTAT0_ILF)	/* sstat0 SODR lsb */
 				++adjust;
-			if (sstat2 & (1<<5))	/* sstat2 SODL msb */
+			if (sstat2 & SIOP_SSTAT2_OLF1)	/* sstat2 SODL msb */
 				++adjust;
-			if (sstat2 & (1<<6))	/* sstat2 SODR msb */
+			if (sstat2 & SIOP_SSTAT2_ILF1)	/* sstat2 SODR msb */
 				++adjust;
 			acb->iob_curlen = *((long *)&rp->siop_dcmd) & 0xffffff;
 			acb->iob_curlen += adjust;
@@ -1322,7 +1391,7 @@ siopng_dump(sc);
 				sc->sc_sync[acb->xs->sc_link->scsipi_scsi.target].sxfer;
 #ifndef FIXME
 			rp->siop_scntl3 =
-				sc->sc_sync[acb->xs->sc_link->scsipi_scsi.target].sbcl;
+				sc->sc_sync[acb->xs->sc_link->scsipi_scsi.target].scntl3;
 #endif
 			break;
 		}
@@ -1368,7 +1437,7 @@ siopng_dump(sc);
 		rp->siop_dsa = kvtop((caddr_t)&sc->sc_nexus->ds);
 		rp->siop_sxfer = sc->sc_sync[target].sxfer;
 #ifndef FIXME
-		rp->siop_scntl3 = sc->sc_sync[target].sbcl;
+		rp->siop_scntl3 = sc->sc_sync[target].scntl3;
 #endif
 		rp->siop_dsp = sc->sc_scriptspa;
 		return (0);
@@ -1567,30 +1636,10 @@ scsi_period_to_siopng (sc, target)
 	int target;
 {
 	int period, offset, sxfer, scntl3 = 0;
-#ifdef DEBUG_SYNC
-#ifdef FIXME
-	int i;
-#endif
-#endif
 
 	period = sc->sc_nexus->msg[4];
 	offset = sc->sc_nexus->msg[5];
 #ifdef FIXME
-#ifdef DEBUG_SYNC
-	sxfer = 0;
-	if (offset <= SIOP_MAX_OFFSET)
-		sxfer = offset;
-	else
-		sxfer = SIOP_MAX_OFFSET;
-	for (i = 0; i < sizeof (sync_tab) / 2; ++i) {
-		if (period <= sync_tab[i].p) {
-			sxfer |= sync_tab[i].r & 0x70;
-			scntl3 = sync_tab[i].r & 0x03;
-			break;
-		}
-	}
-	printf ("siopng sync old: siop_sxfr %02x, siop_scntl3 %02x\n", sxfer, scntl3);
-#endif /* DEBUG_SYNC */
 	for (scntl3 = 1; scntl3 < 4; ++scntl3) {
 		sxfer = (period * 4 - 1) / sc->sc_tcp[scntl3] - 3;
 		if (sxfer >= 0 && sxfer <= 7)
@@ -1615,15 +1664,23 @@ scsi_period_to_siopng (sc, target)
 	}
 #else /* FIXME */
 	sxfer = offset <= SIOP_MAX_OFFSET ? offset : SIOP_MAX_OFFSET;
-	sxfer |= 0xc0;		/* XXX */
+	sxfer |= 0x20;		/* XXX XFERP: 5 */
 #ifndef FIXME
-	scntl3 = 0x15;
+	if (period <= (50 / 4))	/* XXX */
+		scntl3 = 0x95;	/* Ultra, SCF: /1, CCF: /4 */
+	else if (period <= (100 / 4))
+		scntl3 = 0x35;	/* SCF: /2, CCF: /4 */
+	else if (period <= (200 / 4))
+		scntl3 = 0x55;	/* SCF: /4, CCF: /4 */
+	else
+		scntl3 = 0xff;	/* XXX ??? */
 #else
 	scntl3 = 5;
 #endif
 #endif
 	sc->sc_sync[target].sxfer = sxfer;
-	sc->sc_sync[target].sbcl = scntl3;
+	sc->sc_sync[target].scntl3 = scntl3 |
+	    (sc->sc_sync[target].scntl3 & SIOP_SCNTL3_EWS);
 #ifdef DEBUG_SYNC
 	printf ("siopng sync: siop_sxfr %02x, siop_scntl3 %02x\n", sxfer, scntl3);
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: siopvar.h,v 1.17 1999/03/09 20:31:34 is Exp $	*/
+/*	$NetBSD: siopvar.h,v 1.18 1999/03/26 22:50:26 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -149,7 +149,11 @@ struct	siop_softc {
 	struct siop_acb *sc_nexus;	/* current command */
 #define SIOP_NACB 16
 	struct siop_acb *sc_acb;	/* the real command blocks */
+#ifndef ARCH_720
 	struct siop_tinfo sc_tinfo[8];
+#else
+	struct siop_tinfo sc_tinfo[16];
+#endif
 
 	u_short	sc_clock_freq;
 	u_char	sc_dcntl;
@@ -167,7 +171,11 @@ struct	siop_softc {
 	struct syncpar {
 		u_char state;
 		u_char sxfer;
+#ifndef ARCH_720
 		u_char sbcl;
+#else
+		u_char scntl3;
+#endif
 	} sc_sync[16];
 };
 
@@ -178,11 +186,12 @@ struct	siop_softc {
 #define SIOP_SELECTED	0x04	/* bus is in selected state. Needed for
 				   correct abort procedure. */
 
-/* sync states */
-#define SYNC_START	0	/* no sync handshake started */
-#define SYNC_SENT	1	/* we sent sync request, no answer yet */
-#define SYNC_DONE	2	/* target accepted our (or inferior) settings,
-				   or it rejected the request and we stay async */
+/* negotiation states */
+#define NEG_WIDE	0	/* Negotiate wide transfers */
+#define	NEG_WAITW	1	/* Waiting for wide negotation response */
+#define NEG_SYNC	2	/* Negotiate synch transfers */
+#define	NEG_WAITS	3	/* Waiting for synch negoation response */
+#define NEG_DONE	4	/* Wide and/or sync negotation done */
 
 #define	MSG_CMD_COMPLETE	0x00
 #define MSG_EXT_MESSAGE		0x01
@@ -198,6 +207,7 @@ struct	siop_softc {
 #define	MSG_IDENTIFY		0x80
 #define	MSG_IDENTIFY_DR		0xc0	/* (disconnect/reconnect allowed) */
 #define	MSG_SYNC_REQ		0x01
+#define	MSG_WIDE_REQ		0x03
 
 #define	STS_CHECKCOND	0x02	/* Check Condition (ie., read sense) */
 #define	STS_CONDMET	0x04	/* Condition Met (ie., search worked) */
