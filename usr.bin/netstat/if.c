@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.26 1998/03/19 02:42:57 kml Exp $	*/
+/*	$NetBSD: if.c,v 1.27 1998/05/14 22:48:49 kml Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)if.c	8.2 (Berkeley) 2/21/94";
 #else
-__RCSID("$NetBSD: if.c,v 1.26 1998/03/19 02:42:57 kml Exp $");
+__RCSID("$NetBSD: if.c,v 1.27 1998/05/14 22:48:49 kml Exp $");
 #endif
 #endif /* not lint */
 
@@ -147,7 +147,7 @@ intpr(interval, ifnetaddr)
 			*cp = '\0';
 			ifaddraddr = (u_long)ifnet.if_addrlist.tqh_first;
 		}
-		printf("%-5.5s %-5ld ", name, ifnet.if_mtu);
+		printf("%-5.5s %-5lu ", name, ifnet.if_mtu);
 		if (ifaddraddr == 0) {
 			printf("%-13.13s ", "none");
 			printf("%-17.17s ", "none");
@@ -248,10 +248,10 @@ intpr(interval, ifnetaddr)
 			ifaddraddr = (u_long)ifaddr.ifa.ifa_list.tqe_next;
 		}
 		if (bflag) {
-			printf("%10ld %10ld", 
+			printf("%10lu %10lu", 
 			       ifnet.if_ibytes, ifnet.if_obytes);
 		} else {
-			printf("%8ld %5ld %8ld %5ld %5ld",
+			printf("%8lu %5lu %8lu %5lu %5lu",
 			       ifnet.if_ipackets, ifnet.if_ierrors,
 			       ifnet.if_opackets, ifnet.if_oerrors,
 			       ifnet.if_collisions);
@@ -267,13 +267,13 @@ intpr(interval, ifnetaddr)
 #define	MAXIF	100
 struct	iftot {
 	char	ift_name[IFNAMSIZ];	/* interface name */
-	int	ift_ip;			/* input packets */
-	int	ift_ib;			/* input bytes */
-	int	ift_ie;			/* input errors */
-	int	ift_op;			/* output packets */
-	int	ift_ob;			/* output bytes */
-	int	ift_oe;			/* output errors */
-	int	ift_co;			/* collisions */
+	u_long	ift_ip;			/* input packets */
+	u_long	ift_ib;			/* input bytes */
+	u_long	ift_ie;			/* input errors */
+	u_long	ift_op;			/* output packets */
+	u_long	ift_ob;			/* output bytes */
+	u_long	ift_oe;			/* output errors */
+	u_long	ift_co;			/* collisions */
 	int	ift_dr;			/* drops */
 } iftot[MAXIF];
 
@@ -389,11 +389,11 @@ loop:
 		}
 		if (ip == interesting) {
 			if (bflag) {
-				printf("%10ld %8.8s %10ld %5.5s",
+				printf("%10lu %8.8s %10lu %5.5s",
 					ifnet.if_ibytes - ip->ift_ib, " ",
 					ifnet.if_obytes - ip->ift_ob, " ");
 			} else {
-				printf("%8ld %5ld %8ld %5ld %5ld",
+				printf("%8lu %5lu %8lu %5lu %5lu",
 					ifnet.if_ipackets - ip->ift_ip,
 					ifnet.if_ierrors - ip->ift_ie,
 					ifnet.if_opackets - ip->ift_op,
@@ -424,11 +424,11 @@ loop:
 	}
 	if (lastif - iftot > 0) {
 		if (bflag) {
-			printf("  %10d %8.8s %10d %5.5s",
+			printf("  %10lu %8.8s %10lu %5.5s",
 				sum->ift_ib - total->ift_ib, " ",
 				sum->ift_ob - total->ift_ob, " ");
 		} else {
-			printf("  %8d %5d %8d %5d %5d",
+			printf("  %8lu %5lu %8lu %5lu %5lu",
 				sum->ift_ip - total->ift_ip,
 				sum->ift_ie - total->ift_ie,
 				sum->ift_op - total->ift_op,
