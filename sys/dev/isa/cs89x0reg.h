@@ -1,4 +1,4 @@
-/*	$NetBSD: cs89x0reg.h,v 1.4 1998/07/21 22:04:13 thorpej Exp $	*/
+/*	$NetBSD: cs89x0reg.h,v 1.5 1998/07/21 22:27:33 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -306,6 +306,25 @@
 #define BUF_EVENT_RX_MISS	0x0400
 #define BUF_EVENT_RX_128	0x0800
 #define BUF_EVENT_RX_DEST	0x8000
+
+
+/* Autonegotiation Control Register */
+
+#define	AUTOCTL_NEG_NOW		0x0040
+#define	AUTOCTL_ALLOW_FDX	0x0080
+#define	AUTOCTL_NEG_ENABLE	0x0100
+#define	AUTOCTL_NLP_ENABLE	0x0200
+#define	AUTOCTL_FORCE_FDX	0x8000
+
+
+/* Autonegotiation Status Register */
+
+#define	AUTOST_NEG_BUSY		0x0080
+#define	AUTOST_FLP_LINK		0x0100
+#define	AUTOST_FLP_LINK_GOOD	0x0800
+#define	AUTOST_LINK_FAULT	0x1000
+#define	AUTOST_HDX_ACTIVE	0x4000
+#define	AUTOST_FDX_ACTIVE	0x8000
 
 
 /* ISA Configuration from EEPROM */
