@@ -1,25 +1,13 @@
-# $NetBSD: md.sparc64,v 1.8 2005/03/24 09:49:07 martin Exp $
+# $NetBSD: md.sparc64,v 1.9 2005/03/26 11:37:08 martin Exp $
 ./usr/X11R6/bin/X
+./usr/X11R6/bin/XFree86
 ./usr/X11R6/bin/Xsun
 ./usr/X11R6/bin/Xsun24
 ./usr/X11R6/bin/XsunMono
 ./usr/X11R6/bin/Xvfb
 ./usr/X11R6/bin/constype
-./usr/X11R6/bin/kbd_mode
-./usr/X11R6/man/cat1/Xsun.0			-unknown-		.cat
-./usr/X11R6/man/cat1/Xsun24.0			-unknown-		.cat
-./usr/X11R6/man/cat1/XsunMono.0			-unknown-		.cat
-./usr/X11R6/man/cat1/Xvfb.0			-unknown-		.cat
-./usr/X11R6/man/cat1/constype.0			-unknown-		.cat
-./usr/X11R6/man/cat1/kbd_mode.0			-unknown-		.cat
-./usr/X11R6/man/man1/Xsun.1			-unknown-		.man
-./usr/X11R6/man/man1/Xsun24.1			-unknown-		.man
-./usr/X11R6/man/man1/XsunMono.1			-unknown-		.man
-./usr/X11R6/man/man1/Xvfb.1			-unknown-		.man
-./usr/X11R6/man/man1/constype.1			-unknown-		.man
-./usr/X11R6/man/man1/kbd_mode.1			-unknown-		.man
-./usr/X11R6/bin/XFree86
 ./usr/X11R6/bin/gtf
+./usr/X11R6/bin/kbd_mode
 ./usr/X11R6/bin/mmapr
 ./usr/X11R6/bin/mmapw
 ./usr/X11R6/bin/pcitweak
@@ -91,6 +79,17 @@
 ./usr/X11R6/lib/modules/drivers/sunleo_drv.o
 ./usr/X11R6/lib/modules/drivers/suntcx_drv.o
 ./usr/X11R6/lib/modules/drivers/vga_drv.o
+./usr/X11R6/lib/modules/extensions/libGLcore.a
+./usr/X11R6/lib/modules/extensions/libdbe.a
+./usr/X11R6/lib/modules/extensions/libextmod.a
+./usr/X11R6/lib/modules/extensions/libglx.a
+./usr/X11R6/lib/modules/extensions/librecord.a
+./usr/X11R6/lib/modules/extensions/libxtrap.a
+./usr/X11R6/lib/modules/fonts/libbitmap.a
+./usr/X11R6/lib/modules/fonts/libfreetype.a
+./usr/X11R6/lib/modules/fonts/libspeedo.a
+./usr/X11R6/lib/modules/fonts/libtype1.a
+./usr/X11R6/lib/modules/fonts/libxtt.a
 ./usr/X11R6/lib/modules/input/acecad_drv.o
 ./usr/X11R6/lib/modules/input/calcomp_drv.o
 ./usr/X11R6/lib/modules/input/citron_drv.o
@@ -113,13 +112,21 @@
 ./usr/X11R6/lib/modules/input/tek4957_drv.o
 ./usr/X11R6/lib/modules/input/void_drv.o
 ./usr/X11R6/lib/modules/input/wacom_drv.o
+./usr/X11R6/lib/modules/libcfb.a
+./usr/X11R6/lib/modules/libcfb16.a
+./usr/X11R6/lib/modules/libcfb24.a
+./usr/X11R6/lib/modules/libcfb32.a
 ./usr/X11R6/lib/modules/libddc.a
+./usr/X11R6/lib/modules/libfb.a
 ./usr/X11R6/lib/modules/libi2c.a
 ./usr/X11R6/lib/modules/libint10.a
+./usr/X11R6/lib/modules/liblayer.a
+./usr/X11R6/lib/modules/libmfb.a
 ./usr/X11R6/lib/modules/libpcidata.a
 ./usr/X11R6/lib/modules/librac.a
 ./usr/X11R6/lib/modules/libramdac.a
 ./usr/X11R6/lib/modules/libscanpci.a
+./usr/X11R6/lib/modules/libshadow.a
 ./usr/X11R6/lib/modules/libshadowfb.a
 ./usr/X11R6/lib/modules/libvbe.a
 ./usr/X11R6/lib/modules/libvgahw.a
@@ -130,7 +137,13 @@
 ./usr/X11R6/lib/modules/libxf8_16bpp.a
 ./usr/X11R6/lib/modules/libxf8_32bpp.a
 ./usr/X11R6/man/cat1/XFree86.0			-unknown-		.cat
+./usr/X11R6/man/cat1/Xsun.0			-unknown-		.cat
+./usr/X11R6/man/cat1/Xsun24.0			-unknown-		.cat
+./usr/X11R6/man/cat1/XsunMono.0			-unknown-		.cat
+./usr/X11R6/man/cat1/Xvfb.0			-unknown-		.cat
+./usr/X11R6/man/cat1/constype.0			-unknown-		.cat
 ./usr/X11R6/man/cat1/gtf.0			-unknown-		.cat
+./usr/X11R6/man/cat1/kbd_mode.0			-unknown-		.cat
 ./usr/X11R6/man/cat1/pcitweak.0			-unknown-		.cat
 ./usr/X11R6/man/cat1/scanpci.0			-unknown-		.cat
 ./usr/X11R6/man/cat1/xf86cfg.0			-unknown-		.cat
@@ -164,7 +177,13 @@
 ./usr/X11R6/man/cat4/wacom.0			-unknown-		.cat
 ./usr/X11R6/man/cat5/XF86Config.0		-unknown-		.cat
 ./usr/X11R6/man/man1/XFree86.1			-unknown-		.man
+./usr/X11R6/man/man1/Xsun.1			-unknown-		.man
+./usr/X11R6/man/man1/Xsun24.1			-unknown-		.man
+./usr/X11R6/man/man1/XsunMono.1			-unknown-		.man
+./usr/X11R6/man/man1/Xvfb.1			-unknown-		.man
+./usr/X11R6/man/man1/constype.1			-unknown-		.man
 ./usr/X11R6/man/man1/gtf.1			-unknown-		.man
+./usr/X11R6/man/man1/kbd_mode.1			-unknown-		.man
 ./usr/X11R6/man/man1/pcitweak.1			-unknown-		.man
 ./usr/X11R6/man/man1/scanpci.1			-unknown-		.man
 ./usr/X11R6/man/man1/xf86cfg.1			-unknown-		.man
