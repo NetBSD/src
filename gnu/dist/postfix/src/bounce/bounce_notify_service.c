@@ -6,9 +6,11 @@
 /* SYNOPSIS
 /*	#include "bounce_service.h"
 /*
-/*	int     bounce_notify_service(queue_name, queue_id, sender, flush)
+/*	int     bounce_notify_service(queue_name, queue_id, encoding,
+/*					sender, flush)
 /*	char	*queue_name;
 /*	char	*queue_id;
+/*	char	*encoding;
 /*	char	*sender;
 /*	int	flush;
 /* DESCRIPTION
@@ -78,7 +80,8 @@
 /* bounce_notify_service - send a bounce */
 
 int     bounce_notify_service(char *service, char *queue_name,
-			         char *queue_id, char *recipient, int flush)
+			              char *queue_id, char *encoding,
+			              char *recipient, int flush)
 {
     BOUNCE_INFO *bounce_info;
     int     bounce_status = 1;
@@ -91,7 +94,8 @@ int     bounce_notify_service(char *service, char *queue_name,
     /*
      * Initialize. Open queue file, bounce log, etc.
      */
-    bounce_info = bounce_mail_init(service, queue_name, queue_id, flush);
+    bounce_info = bounce_mail_init(service, queue_name, queue_id,
+				   encoding, flush);
 
 #define NULL_SENDER		MAIL_ADDR_EMPTY	/* special address */
 #define NULL_CLEANUP_FLAGS	0

@@ -66,6 +66,7 @@ typedef struct DELIVER_ATTR {
     char   *queue_id;			/* mail queue id */
     long    offset;			/* data offset */
     char   *sender;			/* taken from envelope */
+    char   *orig_rcpt;			/* taken from sender */
     char   *recipient;			/* taken from resolver */
     char   *user;			/* recipient lookup handle */
     char   *delivered;			/* for loop detection */
@@ -92,11 +93,12 @@ typedef struct LOCAL_STATE {
  /*
   * Bundle up some often-user attributes.
   */
-#define BOUNCE_ATTR(attr)	attr.queue_id, attr.recipient, attr.relay, \
-					attr.arrival_time
-#define SENT_ATTR(attr)		attr.queue_id, attr.recipient, attr.relay, \
-					attr.arrival_time
-#define COPY_ATTR(attr)		attr.sender, attr.delivered, attr.fp
+#define BOUNCE_ATTR(attr)	attr.queue_id, attr.orig_rcpt, attr.recipient, \
+					attr.relay, attr.arrival_time
+#define SENT_ATTR(attr)		attr.queue_id, attr.orig_rcpt, attr.recipient, \
+					attr.relay, attr.arrival_time
+#define COPY_ATTR(attr)		attr.sender, attr.orig_rcpt, attr.delivered, \
+					attr.fp
 
 #define MSG_LOG_STATE(m, p) \
 	msg_info("%s[%d]: recip %s deliver %s", m, \

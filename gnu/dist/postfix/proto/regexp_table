@@ -4,7 +4,11 @@
 # SUMMARY
 #	format of Postfix regular expression tables
 # SYNOPSIS
-#	regexp:/etc/postfix/filename
+#	\fBregexp:/etc/postfix/\fIfilename\fR
+#
+#	\fBpostmap -q "\fIstring\fB" regexp:/etc/postfix/\fIfilename\fR
+#
+#	\fBpostmap -q - regexp:/etc/postfix/\fIfilename\fR <\fIinputfile\fR
 # DESCRIPTION
 #	The Postfix mail system uses optional tables for address
 #	rewriting or mail routing. These tables are usually in
@@ -14,18 +18,27 @@
 #	To find out what types of lookup tables your Postfix system
 #	supports use the \fBpostconf -m\fR command.
 #
+#	To test lookup tables, use the \fBpostmap\fR command as
+#	described in the SYNOPSIS above.
+#
 #	The general form of a Postfix regular expression table is:
-# .IP "\fIpattern result\fR"
-#	When \fIpattern\fR matches a search string, use the corresponding
-#	\fIresult\fR.
+# .IP "\fB/\fIpattern\fB/\fIflags result\fR"
+# .IP "\fB!/\fIpattern\fB/\fIflags result\fR"
+#	When \fIpattern\fR matches (does not match) a search string,
+#	use the corresponding \fIresult\fR value.
 # .IP "blank lines and comments"
 #	Empty lines and whitespace-only lines are ignored, as
 #	are lines whose first non-whitespace character is a `#'.
 # .IP "multi-line text"
 #	A logical line starts with non-whitespace text. A line that
 #	starts with whitespace continues a logical line.
-# .IP "\fIpattern1!pattern2 result\fR"
-#	Matches \fIpattern1\fR but not \fIpattern2\fR.
+# .IP "\fBif /\fIpattern\fB/\fIflags\fR"
+# .IP "\fBif !/\fIpattern\fB/\fIflags\fR"
+# .IP "\fBendif\fR"
+#       Examine the lines between \fBif\fR..\fBendif\fR only if
+#       \fIpattern\fR matches (does not match). The \fBif\fR..\fBendif\fR
+#	can nest.
+#       Do not prepend whitespace to patterns inside \fBif\fR..\fBendif\fR.
 # .PP
 #	Each pattern is a regular expression enclosed by a pair of delimiters.
 #	The regular expression syntax is described in \fIre_format\fR(7).
@@ -36,7 +49,7 @@
 #	By default, matching is case-insensitive, although following
 #	the second slash with an `i' flag will reverse this. Other flags
 #	are `x' (disable extended expression syntax), and `m' (enable
-#	multi-line mode).
+#	multi-line mode, that is, treat newline characters as special).
 #
 #	Each pattern is applied to the entire lookup key string.
 #	Depending on the application, that string is an entire client
@@ -68,6 +81,11 @@
 #	# These were once common in junk mail.
 #	/^Subject: make money fast/     REJECT
 #	/^To: friend@public\\.com/	 REJECT
+# EXAMPLE BODY FILTER MAP
+#	# First skip over base 64 encoded text to save CPU cycles.
+#	~^[[:alnum:]+/]{60,}$~		OK
+#
+#	# Put your own body patterns here.
 # SEE ALSO
 #	pcre_table(5) format of PCRE tables
 # AUTHOR(S)

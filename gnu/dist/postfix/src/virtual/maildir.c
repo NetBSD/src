@@ -101,7 +101,8 @@ int     deliver_maildir(LOCAL_STATE state, USER_ATTR usr_attr)
     buf = vstring_alloc(100);
     why = vstring_alloc(100);
 
-    copy_flags = MAIL_COPY_TOFILE | MAIL_COPY_RETURN_PATH | MAIL_COPY_DELIVERED;
+    copy_flags = MAIL_COPY_TOFILE | MAIL_COPY_RETURN_PATH
+	| MAIL_COPY_DELIVERED | MAIL_COPY_ORIG_RCPT;
 
     newdir = concatenate(usr_attr.mailbox, "new/", (char *) 0);
     tmpdir = concatenate(usr_attr.mailbox, "tmp/", (char *) 0);

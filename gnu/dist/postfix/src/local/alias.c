@@ -82,8 +82,6 @@
 /* Global library. */
 
 #include <mail_params.h>
-#include <mail_addr.h>
-#include <sent.h>
 #include <defer.h>
 #include <maps.h>
 #include <bounce.h>
@@ -129,7 +127,6 @@ int     deliver_alias(LOCAL_STATE state, USER_ATTR usr_attr,
     const char *alias_result;
     char   *expansion;
     char   *owner;
-    static MAPS *maps;
     char  **cpp;
     uid_t   alias_uid;
     struct mypasswd *alias_pwd;
@@ -144,12 +141,6 @@ int     deliver_alias(LOCAL_STATE state, USER_ATTR usr_attr,
     state.level++;
     if (msg_verbose)
 	MSG_LOG_STATE(myname, state);
-
-    /*
-     * Do this only once.
-     */
-    if (maps == 0)
-	maps = maps_create("aliases", var_alias_maps, DICT_FLAG_LOCK);
 
     /*
      * DUPLICATE/LOOP ELIMINATION
@@ -192,16 +183,10 @@ int     deliver_alias(LOCAL_STATE state, USER_ATTR usr_attr,
      * With aliases that have an owner- alias, the latter is used to set the
      * sender and owner attributes. Otherwise, the owner attribute is reset
      * (the alias is globally visible and could be sent to by anyone).
-     * 
-     * Don't match aliases that are based on regexps.
      */
-    for (cpp = maps->argv->argv; *cpp; cpp++) {
+    for (cpp = alias_maps->argv->argv; *cpp; cpp++) {
 	if ((dict = dict_handle(*cpp)) == 0)
 	    msg_panic("%s: dictionary not found: %s", myname, *cpp);
-	if ((dict->flags & DICT_FLAG_FIXED) == 0) {
-	    msg_warn("invalid alias map type: %s", *cpp);
-	    continue;
-	}
 	if ((alias_result = dict_get(dict, name)) != 0) {
 	    if (msg_verbose)
 		msg_info("%s: %s: %s = %s", myname, *cpp, name, alias_result);
@@ -252,7 +237,7 @@ int     deliver_alias(LOCAL_STATE state, USER_ATTR usr_attr,
 
 	    expansion = mystrdup(alias_result);
 	    if (OWNER_ASSIGN(owner) != 0
-	    && (owner_rhs = maps_find(maps, owner, DICT_FLAG_FIXED)) != 0) {
+	    && (owner_rhs = maps_find(alias_maps, owner, DICT_FLAG_NONE)) != 0) {
 		canon_owner = canon_addr_internal(vstring_alloc(10),
 				     var_exp_own_alias ? owner_rhs : owner);
 		SET_OWNER_ATTR(state.msg_attr, STR(canon_owner), state.level);
@@ -308,19 +293,6 @@ int     deliver_alias(LOCAL_STATE state, USER_ATTR usr_attr,
 	    if (msg_verbose)
 		msg_info("%s: %s: %s not found", myname, *cpp, name);
 	}
-    }
-
-    /*
-     * If no alias was found for a required reserved name, toss the message
-     * into the bit bucket, and issue a warning instead.
-     */
-#define STREQ(x,y) (strcasecmp(x,y) == 0)
-
-    if (STREQ(name, MAIL_ADDR_MAIL_DAEMON)
-	|| STREQ(name, MAIL_ADDR_POSTMASTER)) {
-	msg_warn("required alias not found: %s", name);
-	*statusp = sent(SENT_ATTR(state.msg_attr), "discarded");
-	return (YES);
     }
 
     /*

@@ -39,7 +39,10 @@
 /*	The \fBvirtual\fR delivery agent prepends a "\fBFrom \fIsender
 /*	time_stamp\fR" envelope header to each message, prepends a
 /*	\fBDelivered-To:\fR message header with the envelope recipient
-/*	address, prepends a \fBReturn-Path:\fR message header with the
+/*	address,
+/*	prepends an \fBX-Original-To:\fR header with the recipient address as
+/*	given to Postfix,
+/*	prepends a \fBReturn-Path:\fR message header with the
 /*	envelope sender address, prepends a \fB>\fR character to lines
 /*	beginning with "\fBFrom \fR", and appends an empty line.
 /*
@@ -53,7 +56,9 @@
 /*	in qmail \fBmaildir\fR format. This format stores one message per file.
 /*
 /*	The \fBvirtual\fR delivery agent daemon prepends a \fBDelivered-To:\fR
-/*	message header with the envelope recipient address and prepends a
+/*	message header with the final envelope recipient address,
+/*	prepends an \fBX-Original-To:\fR header with the recipient address as
+/*	given to Postfix, and prepends a
 /*	\fBReturn-Path:\fR message header with the envelope sender address.
 /*
 /*	By definition, \fBmaildir\fR format does not require file locking
@@ -68,7 +73,7 @@
 /*
 /*	The \fBvirtual_minimum_uid\fR parameter imposes a lower bound on
 /*	numerical user ID values that may be specified in any
-/*	\fBvirtual_owner_maps\fR or \fBvirtual_uid_maps\fR.
+/*	\fBvirtual_uid_maps\fR.
 /* SECURITY
 /* .ad
 /* .fi
@@ -109,25 +114,62 @@
 /*	This is a safety measure to ensure that an out of control map in
 /*	\fBvirtual_mailbox_maps\fR doesn't litter the filesystem with mailboxes.
 /*	While it could be set to "/", this setting isn't recommended.
-/* .IP "\fBvirtual_mailbox_maps\fR (regexp maps disallowed)"
+/* .IP \fBvirtual_mailbox_maps\fR
 /*	Recipients are looked up in these maps to determine the path to
 /*	their mailbox or maildir. If the returned path ends in a slash
 /*	("/"), maildir-style delivery is carried out, otherwise the
 /*	path is assumed to specify a UNIX-style mailbox file.
 /*
+/*	While searching a lookup table, an address extension
+/*	(\fIuser+foo@domain.tld\fR) is ignored.
+/*
+/*	In a lookup table, specify a left-hand side of \fI@domain.tld\fR
+/*	to match any user in the specified domain that does not have a
+/*	specific \fIuser@domain.tld\fR entry.
+/*
 /*	Note that \fBvirtual_mailbox_base\fR is unconditionally prepended
 /*	to this path.
+/*
+/*	For security reasons, regular expression maps are allowed but
+/*	regular expression substitution of $1 etc. is disallowed,
+/*	because that would open a security hole.
+/* .IP \fBvirtual_mailbox_domains\fR
+/*	The list of domains that should be delivered via the Postfix virtual
+/*	delivery agent. This uses the same syntax as the \fBmydestination\fR
+/*	configuration parameter.
 /* .IP \fBvirtual_minimum_uid\fR
 /*	Specifies a minimum uid that will be accepted as a return from
 /*	a \fBvirtual_owner_maps\fR or \fBvirtual_uid_maps\fR lookup.
 /*	Returned values less than this will be rejected, and the message
 /*	will be deferred.
-/* .IP "\fBvirtual_uid_maps\fR (regexp maps disallowed)"
+/* .IP \fBvirtual_uid_maps\fR
 /*	Recipients are looked up in these maps to determine the user ID to be
 /*	used when writing to the target mailbox.
-/* .IP "\fBvirtual_gid_maps\fR (regexp maps disallowed)"
+/*
+/*	While searching a lookup table, an address extension
+/*	(\fIuser+foo@domain.tld\fR) is ignored.
+/*
+/*	In a lookup table, specify a left-hand side of \fI@domain.tld\fR
+/*	to match any user in the specified domain that does not have a
+/*	specific \fIuser@domain.tld\fR entry.
+/*
+/*	For security reasons, regular expression maps are allowed but
+/*	regular expression substitution of $1 etc. is disallowed,
+/*	because that would open a security hole.
+/* .IP \fBvirtual_gid_maps\fR
 /*	Recipients are looked up in these maps to determine the group ID to be
 /*	used when writing to the target mailbox.
+/*
+/*	While searching a lookup table, an address extension
+/*	(\fIuser+foo@domain.tld\fR) is ignored.
+/*
+/*	In a lookup table, specify a left-hand side of \fI@domain.tld\fR
+/*	to match any user in the specified domain that does not have a
+/*	specific \fIuser@domain.tld\fR entry.
+/*
+/*	For security reasons, regular expression maps are allowed but
+/*	regular expression substitution of $1 etc. is disallowed,
+/*	because that would open a security hole.
 /* .SH "Locking controls"
 /* .ad
 /* .fi
@@ -184,6 +226,8 @@
 /*	The \fBmaildir\fR structure appears in the \fBqmail\fR system
 /*	by Daniel Bernstein.
 /* SEE ALSO
+/*	regexp_table(5) POSIX regular expression table format
+/*	pcre_table(5) Perl Compatible Regular Expression table format
 /*	bounce(8) non-delivery status reports
 /*	syslogd(8) system logging
 /*	qmgr(8) queue manager
@@ -208,6 +252,9 @@
 
 #include <sys_defs.h>
 #include <stdlib.h>
+#ifdef USE_PATHS_H
+#include <paths.h>			/* XXX mail_spool_dir dependency */
+#endif
 
 /* Utility library. */
 
@@ -227,6 +274,7 @@
 #include <mail_params.h>
 #include <mail_conf.h>
 #include <mail_params.h>
+#include <virtual8_maps.h>
 
 /* Single server skeleton. */
 
@@ -246,6 +294,7 @@ int     var_virt_minimum_uid;
 char   *var_virt_mailbox_base;
 char   *var_virt_mailbox_lock;
 int     var_virt_mailbox_limit;
+char   *var_mail_spool_dir;		/* XXX dependency fix */
 
  /*
   * Mappings.
@@ -296,6 +345,7 @@ static int local_deliver(DELIVER_REQUEST *rqst, char *service)
      * recipient. Update the per-message delivery status.
      */
     for (msg_stat = 0, rcpt = rqst->rcpt_list.info; rcpt < rcpt_end; rcpt++) {
+	state.msg_attr.orig_rcpt = rcpt->orig_addr;
 	state.msg_attr.recipient = rcpt->address;
 	rcpt_stat = deliver_recipient(state, usr_attr);
 	if (rcpt_stat == 0)
@@ -353,14 +403,16 @@ static void post_init(char *unused_name, char **unused_argv)
     set_eugid(var_owner_uid, var_owner_gid);
 
     virtual_mailbox_maps =
-	maps_create(VAR_VIRT_MAILBOX_MAPS, var_virt_mailbox_maps,
-		    DICT_FLAG_LOCK);
+	virtual8_maps_create(VAR_VIRT_MAILBOX_MAPS, var_virt_mailbox_maps,
+			     DICT_FLAG_LOCK);
 
     virtual_uid_maps =
-	maps_create(VAR_VIRT_UID_MAPS, var_virt_uid_maps, DICT_FLAG_LOCK);
+	virtual8_maps_create(VAR_VIRT_UID_MAPS, var_virt_uid_maps,
+			     DICT_FLAG_LOCK);
 
     virtual_gid_maps =
-	maps_create(VAR_VIRT_GID_MAPS, var_virt_gid_maps, DICT_FLAG_LOCK);
+	virtual8_maps_create(VAR_VIRT_GID_MAPS, var_virt_gid_maps,
+			     DICT_FLAG_LOCK);
 
     virtual_mbox_lock_mask = mbox_lock_mask(var_virt_mailbox_lock);
 }
@@ -396,10 +448,11 @@ int     main(int argc, char **argv)
 	0,
     };
     static CONFIG_STR_TABLE str_table[] = {
+	VAR_MAIL_SPOOL_DIR, DEF_MAIL_SPOOL_DIR, &var_mail_spool_dir, 0, 0,
 	VAR_VIRT_MAILBOX_MAPS, DEF_VIRT_MAILBOX_MAPS, &var_virt_mailbox_maps, 0, 0,
 	VAR_VIRT_UID_MAPS, DEF_VIRT_UID_MAPS, &var_virt_uid_maps, 0, 0,
 	VAR_VIRT_GID_MAPS, DEF_VIRT_GID_MAPS, &var_virt_gid_maps, 0, 0,
-	VAR_VIRT_MAILBOX_BASE, DEF_VIRT_MAILBOX_BASE, &var_virt_mailbox_base, 0, 0,
+	VAR_VIRT_MAILBOX_BASE, DEF_VIRT_MAILBOX_BASE, &var_virt_mailbox_base, 1, 0,
 	VAR_VIRT_MAILBOX_LOCK, DEF_VIRT_MAILBOX_LOCK, &var_virt_mailbox_lock, 1, 0,
 	0,
     };

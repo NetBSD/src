@@ -12,11 +12,21 @@
 /* .in -4
 /*	} BOUNCE_INFO;
 /*
-/*	BOUNCE_INFO *bounce_mail_init(service, queue_name, queue_id, flush)
+/*	BOUNCE_INFO *bounce_mail_init(service, queue_name, queue_id,
+/*					encoding, flush)
 /*	const char *service;
 /*	const char *queue_name;
 /*	const char *queue_id;
+/*	const char *encoding;
 /*	int	flush;
+/*
+/*	BOUNCE_INFO *bounce_mail_one_init(queue_name, queue_id,
+/*					encoding, orig_recipient, why)
+/*	const char *queue_name;
+/*	const char *queue_id;
+/*	const char *encoding;
+/*	const char *orig_recipient;
+/*	const char *why;
 /*
 /*	void	bounce_mail_free(bounce_info)
 /*	BOUNCE_INFO *bounce_info;
@@ -63,6 +73,9 @@
 /*	open the corresponding logfile and message file. A BOUNCE_INFO
 /*	structure contains all the necessary information about an
 /*	undeliverable message.
+/*
+/*	bounce_mail_one_init() provides the same function for only
+/*	one recipient that is not read from bounce logfile.
 /*
 /*	bounce_mail_free() releases memory allocated by bounce_mail_init()
 /*	and closes any files opened by bounce_mail_init().
@@ -152,6 +165,8 @@
 #include <mail_error.h>
 #include <bounce_log.h>
 #include <mail_date.h>
+#include <mail_proto.h>
+#include <lex_822.h>
 
 /* Application-specific. */
 
@@ -159,10 +174,14 @@
 
 #define STR vstring_str
 
-/* bounce_mail_init - initialize */
+/* bounce_mail_alloc - initialize */
 
-BOUNCE_INFO *bounce_mail_init(const char *service, const char *queue_name,
-			              const char *queue_id, int flush)
+static BOUNCE_INFO *bounce_mail_alloc(const char *service,
+					             const char *queue_name,
+					             const char *queue_id,
+					             const char *encoding,
+					             int flush,
+					             BOUNCE_LOG *log_handle)
 {
     BOUNCE_INFO *bounce_info;
     int     rec_type;
@@ -175,10 +194,21 @@ BOUNCE_INFO *bounce_mail_init(const char *service, const char *queue_name,
     bounce_info->service = service;
     bounce_info->queue_name = queue_name;
     bounce_info->queue_id = queue_id;
+    if (strcmp(encoding, MAIL_ATTR_ENC_8BIT) == 0) {
+	bounce_info->mime_encoding = "8bit";
+    } else if (strcmp(encoding, MAIL_ATTR_ENC_7BIT) == 0) {
+	bounce_info->mime_encoding = "7bit";
+    } else {
+	if (strcmp(encoding, MAIL_ATTR_ENC_NONE) != 0)
+	    msg_warn("%s: unknown encoding: %.200s",
+		     bounce_info->queue_id, encoding);
+	bounce_info->mime_encoding = 0;
+    }
     bounce_info->flush = flush;
     bounce_info->buf = vstring_alloc(100);
     bounce_info->arrival_time = 0;
     bounce_info->orig_offs = 0;
+    bounce_info->log_handle = log_handle;
 
     /*
      * Compute a supposedly unique boundary string. This assumes that a queue
@@ -188,21 +218,6 @@ BOUNCE_INFO *bounce_mail_init(const char *service, const char *queue_name,
     vstring_sprintf(bounce_info->buf, "%s.%lu/%s",
 		    queue_id, (unsigned long) event_time(), var_myhostname);
     bounce_info->mime_boundary = mystrdup(STR(bounce_info->buf));
-
-    /*
-     * If the bounce log cannot be found, do not raise a fatal run-time
-     * error. There is nothing we can do about the error, and all we are
-     * doing is to inform the sender of a delivery problem, Bouncing a
-     * message does not have to be a perfect job. But if the system IS
-     * running out of resources, raise a fatal run-time error and force a
-     * backoff.
-     */
-    if ((bounce_info->log_handle = bounce_log_open(bounce_info->service,
-						   bounce_info->queue_id,
-						   O_RDWR, 0)) == 0
-	&& errno != ENOENT)
-	msg_fatal("open %s %s: %m", bounce_info->service,
-		  bounce_info->queue_id);
 
     /*
      * If the original message cannot be found, do not raise a run-time
@@ -234,6 +249,56 @@ BOUNCE_INFO *bounce_mail_init(const char *service, const char *queue_name,
 	    }
 	}
     }
+    return (bounce_info);
+}
+
+/* bounce_mail_init - initialize */
+
+BOUNCE_INFO *bounce_mail_init(const char *service,
+			              const char *queue_name,
+			              const char *queue_id,
+			              const char *encoding,
+			              int flush)
+{
+    BOUNCE_INFO *bounce_info;
+    BOUNCE_LOG *log_handle;
+
+    /*
+     * Initialize the bounce_info structure. If the bounce log cannot be
+     * found, do not raise a fatal run-time error. There is nothing we can do
+     * about the error, and all we are doing is to inform the sender of a
+     * delivery problem, Bouncing a message does not have to be a perfect
+     * job. But if the system IS running out of resources, raise a fatal
+     * run-time error and force a backoff.
+     */
+    if ((log_handle = bounce_log_open(service, queue_id, O_RDWR, 0)) == 0
+	&& errno != ENOENT)
+	msg_fatal("open %s %s: %m", service, queue_id);
+    bounce_info = bounce_mail_alloc(service, queue_name, queue_id,
+				    encoding, flush, log_handle);
+    return (bounce_info);
+}
+
+/* bounce_mail_one_init - initialize */
+
+BOUNCE_INFO *bounce_mail_one_init(const char *queue_name,
+				          const char *queue_id,
+				          const char *encoding,
+				          const char *orig_recipient,
+				          const char *why)
+{
+    BOUNCE_INFO *bounce_info;
+    BOUNCE_LOG *log_handle;
+
+    /*
+     * Initialize the bounce_info structure. Forge a logfile record for just
+     * one recipient.
+     */
+#define REALLY_BOUNCE	1
+
+    log_handle = bounce_log_forge(orig_recipient, "5.0.0", why);
+    bounce_info = bounce_mail_alloc("none", queue_name, queue_id,
+				    encoding, REALLY_BOUNCE, log_handle);
     return (bounce_info);
 }
 
@@ -297,6 +362,9 @@ int     bounce_header(VSTREAM *bounce, BOUNCE_INFO *bounce_info,
     post_mail_fprintf(bounce, "Content-Type: %s; report-type=%s;",
 		      "multipart/report", "delivery-status");
     post_mail_fprintf(bounce, "\tboundary=\"%s\"", bounce_info->mime_boundary);
+    if (bounce_info->mime_encoding)
+	post_mail_fprintf(bounce, "Content-Transfer-Encoding: %s",
+			  bounce_info->mime_encoding);
     post_mail_fputs(bounce, "");
     post_mail_fputs(bounce, "This is a MIME-encapsulated message.");
 
@@ -521,6 +589,9 @@ int     bounce_original(VSTREAM *bounce, BOUNCE_INFO *bounce_info,
 		      "Undelivered Message Headers" : "Undelivered Message");
     post_mail_fprintf(bounce, "Content-Type: %s", headers_only ?
 		      "text/rfc822-headers" : "message/rfc822");
+    if (bounce_info->mime_encoding)
+	post_mail_fprintf(bounce, "Content-Transfer-Encoding: %s",
+			  bounce_info->mime_encoding);
     post_mail_fputs(bounce, "");
 
     /*
@@ -538,7 +609,7 @@ int     bounce_original(VSTREAM *bounce, BOUNCE_INFO *bounce_info,
      * raw record output here so that we don't throw away binary transparency
      * yet.
      */
-#define IS_HEADER(s) (ISSPACE(*(s)) || is_header(s))
+#define IS_HEADER(s) (IS_SPACE_TAB(*(s)) || is_header(s))
 
     bounce_length = 0;
     while (status == 0 && (rec_type = rec_get(bounce_info->orig_fp, bounce_info->buf, 0)) > 0) {

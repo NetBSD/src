@@ -21,6 +21,7 @@
 
 extern int valid_hostname(const char *, int);
 extern int valid_hostaddr(const char *, int);
+extern int valid_hostliteral(const char *, int);
 
 /* LICENSE
 /* .ad

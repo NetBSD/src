@@ -24,6 +24,8 @@ Makefile: Makefile.in
 
 test:	$(TESTPROG)
 
+tests:	test
+
 $(LIB):	$(OBJS)
 	$(AR) $(ARFL) $(LIB) $?
 	$(RANLIB) $(LIB)

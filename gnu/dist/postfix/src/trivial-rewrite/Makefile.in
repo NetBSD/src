@@ -28,6 +28,8 @@ Makefile: Makefile.in
 
 test:	$(TESTPROG)
 
+tests:	test
+
 $(BIN_DIR)/$(PROG): $(PROG)
 	cp $(PROG) $@
 
@@ -68,11 +70,12 @@ resolve.o: ../../include/vstream.h
 resolve.o: ../../include/vstring_vstream.h
 resolve.o: ../../include/split_at.h
 resolve.o: ../../include/valid_hostname.h
+resolve.o: ../../include/stringops.h
+resolve.o: ../../include/mymalloc.h
 resolve.o: ../../include/mail_params.h
 resolve.o: ../../include/mail_proto.h
 resolve.o: ../../include/iostuff.h
 resolve.o: ../../include/attr.h
-resolve.o: ../../include/mail_addr.h
 resolve.o: ../../include/rewrite_clnt.h
 resolve.o: ../../include/resolve_local.h
 resolve.o: ../../include/mail_conf.h
@@ -80,6 +83,15 @@ resolve.o: ../../include/quote_822_local.h
 resolve.o: ../../include/quote_flags.h
 resolve.o: ../../include/tok822.h
 resolve.o: ../../include/resolve_clnt.h
+resolve.o: ../../include/domain_list.h
+resolve.o: ../../include/match_list.h
+resolve.o: ../../include/match_ops.h
+resolve.o: ../../include/string_list.h
+resolve.o: ../../include/match_parent_style.h
+resolve.o: ../../include/maps.h
+resolve.o: ../../include/dict.h
+resolve.o: ../../include/argv.h
+resolve.o: ../../include/mail_addr_find.h
 resolve.o: trivial-rewrite.h
 resolve.o: transport.h
 rewrite.o: rewrite.c
@@ -110,10 +122,14 @@ transport.o: ../../include/split_at.h
 transport.o: ../../include/dict.h
 transport.o: ../../include/vstream.h
 transport.o: ../../include/argv.h
+transport.o: ../../include/strip_addr.h
 transport.o: ../../include/mail_params.h
 transport.o: ../../include/maps.h
 transport.o: ../../include/match_parent_style.h
 transport.o: ../../include/match_ops.h
+transport.o: ../../include/mail_proto.h
+transport.o: ../../include/iostuff.h
+transport.o: ../../include/attr.h
 transport.o: transport.h
 trivial-rewrite.o: trivial-rewrite.c
 trivial-rewrite.o: ../../include/sys_defs.h
@@ -135,6 +151,7 @@ trivial-rewrite.o: ../../include/mail_conf.h
 trivial-rewrite.o: ../../include/resolve_clnt.h
 trivial-rewrite.o: ../../include/rewrite_clnt.h
 trivial-rewrite.o: ../../include/tok822.h
+trivial-rewrite.o: ../../include/mail_addr.h
 trivial-rewrite.o: ../../include/mail_server.h
 trivial-rewrite.o: trivial-rewrite.h
 trivial-rewrite.o: transport.h

@@ -8,6 +8,12 @@
 # system where groups and/or users have been added, this script checks
 # if the users/groups are there and if not creates them with free id's.
 
+# 17 Jul 2002 GW: Fixed two bugs
+# 1. Typo in createuser would always have uid 88 for postfix
+# 2. Add to netinfo domain . instead of / so that it also works on systems
+#    where the / domain is actually network-wide (not very useful to add
+#    a postfix user to all systems in that netinfo domain...)
+
 print <<_WARNING
 
 This script massages your netinfo database.  This can severely break
@@ -76,7 +82,7 @@ warn "\n";
 sub creategroup
 {
 	my $name = shift;
-	open( NIDUMP, "nidump group /|") or die "Cannot run nidump\n";
+	open( NIDUMP, "nidump group .|") or die "Cannot run nidump\n";
 	my @groups=<NIDUMP>;
 	close( NIDUMP);
 
@@ -91,10 +97,10 @@ sub creategroup
 	}
 	die "Cannot find free gid\n" if $tryno == 65536;
 	warn "Will create $name as gid $tryno\n"; 
-	system "niutil -create / /groups/$name";
-	system "niutil -createprop / /groups/$name name $name";
-	system "niutil -createprop / /groups/$name gid $tryno";
-	system "niutil -createprop / /groups/$name passwd '*'";
+	system "niutil -create . /groups/$name";
+	system "niutil -createprop . /groups/$name name $name";
+	system "niutil -createprop . /groups/$name gid $tryno";
+	system "niutil -createprop . /groups/$name passwd '*'";
 	return $tryno;
 }
 
@@ -102,12 +108,12 @@ sub addusertogroup
 {
 	my $user = shift;
 	my $group = shift;
-	system "niutil -appendprop / /groups/$group users $user";
+	system "niutil -appendprop . /groups/$group users $user";
 }
 
 sub readgroups
 {
-	open( NIDUMP, "nidump group /|") or die "Cannot run nidump\n";
+	open( NIDUMP, "nidump group .|") or die "Cannot run nidump\n";
 	my @groups=<NIDUMP>;
 	close( NIDUMP);
 	return @groups;
@@ -116,7 +122,7 @@ sub readgroups
 sub readusers
 {
 	my @passwd;
-	open( NIDUMP, "nidump passwd /|") or die "Cannot run nidump\n";
+	open( NIDUMP, "nidump passwd .|") or die "Cannot run nidump\n";
 	@passwd=<NIDUMP>;
 	close( NIDUMP);
 	return @passwd;
@@ -130,8 +136,8 @@ sub createuser
 	my $home = shift;
 	my $gid = shift;
 
-	open( NIDUMP, "nidump passwd /|") or die "Cannot run nidump\n";
-	my @passwd=<NIDUMP>;
+	open( NIDUMP, "nidump passwd .|") or die "Cannot run nidump\n";
+	my @passwds=<NIDUMP>;
 	close( NIDUMP);
 
 	my $tryno;
@@ -145,14 +151,14 @@ sub createuser
 	}
 	die "Cannot find free uid\n" if $tryno == 65536;
 	warn "Will create $name as uid $tryno\n"; 
-	system "niutil -create / /users/$name";
-	system "niutil -createprop / /users/$name realname $realname";
-	system "niutil -createprop / /users/$name shell $shell";
-	system "niutil -createprop / /users/$name uid $tryno";
-	system "niutil -createprop / /users/$name gid $gid";
-	system "niutil -createprop / /users/$name home $home";
-	system "niutil -createprop / /users/$name _shadow_passwd";
-	system "niutil -createprop / /users/$name passwd '*'";
+	system "niutil -create . /users/$name";
+	system "niutil -createprop . /users/$name realname $realname";
+	system "niutil -createprop . /users/$name shell $shell";
+	system "niutil -createprop . /users/$name uid $tryno";
+	system "niutil -createprop . /users/$name gid $gid";
+	system "niutil -createprop . /users/$name home $home";
+	system "niutil -createprop . /users/$name _shadow_passwd";
+	system "niutil -createprop . /users/$name passwd '*'";
 	return $tryno;
 }
 

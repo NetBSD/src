@@ -20,7 +20,7 @@ address without requiring the list owner to parse bounce messages.
 The VERP concept was popularized by the qmail MTA and by the ezmlm
 mailing list manager.
 
-The whole process is controlled by two configuration parameters.
+The whole process is controlled by four configuration parameters.
 
 - default_verp_delimiters (default value:  +=) controls what VERP
 delimiter characters Postfix uses when VERP style delivery is
@@ -34,6 +34,17 @@ meaning in email addresses (such as the @ or the %), because they
 are used as part of a username or domain name (such as alphanumerics),
 or because they are non-ASCII or control characters.  And who knows,
 some characters may tickle bugs in vulnerable software.
+
+- authorized_verp_clients (default value: $mynetworks) controls
+what network clients are allowed to request VERP style delivery.
+Exceptions:  the Postfix QMQP server uses its own access control
+mechanism, and local submission (via /usr/sbin/sendmail etc.) is
+always authorized. To authorize a host, list its name, IP address,
+subnet (net/mask) or parent .domain.
+
+- disable_verp_bounces (default: no) controls if Postfix sends one
+bounce report for multi-recipient VERP mail, or one bounce report
+per recipient. The default, one per recipient, is what ezmlm needs.
 
 Using VERP with majordomo etc. mailing lists
 ============================================

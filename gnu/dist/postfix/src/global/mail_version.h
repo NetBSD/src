@@ -20,15 +20,17 @@
   * Patches change the patchlevel and the release date. Snapshots change the
   * release date only, unless they include the same bugfix as a patch release.
   */
+#define MAIL_RELEASE_DATE	"20021223"
+
 #define VAR_MAIL_VERSION	"mail_version"
-#define DEF_MAIL_VERSION	"1.1.12"
+#define DEF_MAIL_VERSION	"2.0.0.1"
 extern char *var_mail_version;
 
  /*
   * Release date.
   */
 #define VAR_MAIL_RELEASE	"mail_release_date"
-#define DEF_MAIL_RELEASE	"20021122"
+#define DEF_MAIL_RELEASE	MAIL_RELEASE_DATE
 extern char *var_mail_release;
 
 /* LICENSE

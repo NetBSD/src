@@ -18,10 +18,6 @@ NQMGR(8)                                                 NQMGR(8)
        silently discarded.  This stops potential loops caused  by
        undeliverable bounce notifications.
 
-       Mail  addressed to a user listed in the optional <b>relocated</b>
-       database is bounced with a "user has  moved  to  <i>new_loca-</i>
-       <i>tion</i>" message. See <a href="relocated.5.html"><b>relocated</b>(5)</a> for a precise description.
-
 <b>MAIL</b> <b>QUEUES</b>
        The <b>nqmgr</b> daemon maintains the following queues:
 
@@ -29,20 +25,23 @@ NQMGR(8)                                                 NQMGR(8)
               Inbound mail from the network, or mail picked up by
               the local <b>pickup</b> agent from the <b>maildrop</b> directory.
 
-       <b>active</b> Messages that the  queue  manager  has  opened  for
-              delivery.  Only  a  limited  number  of messages is
-              allowed to enter the  <b>active</b>  queue  (leaky  bucket
+       <b>active</b> Messages  that  the  queue  manager  has opened for
+              delivery. Only a  limited  number  of  messages  is
+              allowed  to  enter  the  <b>active</b> queue (leaky bucket
               strategy, for a fixed delivery rate).
 
        <b>deferred</b>
-              Mail  that  could  not  be delivered upon the first
-              attempt. The queue manager  implements  exponential
+              Mail that could not be  delivered  upon  the  first
+              attempt.  The  queue manager implements exponential
               backoff  by  doubling  the  time  between  delivery
               attempts.
 
        <b>corrupt</b>
-              Unreadable or damaged queue files  are  moved  here
+              Unreadable  or  damaged  queue files are moved here
               for inspection.
+
+       <b>hold</b>   Messages that are kept  "on  hold"  are  kept  here
+              until someone sets them free.
 
 <b>DELIVERY</b> <b>STATUS</b> <b>REPORTS</b>
        The <b>nqmgr</b> daemon keeps an eye on per-message delivery sta-
@@ -181,16 +180,17 @@ NQMGR(8)                                                 NQMGR(8)
               Do  not  bounce recipient addresses that begin with
               '-'.
 
-       <b>relocated</b><i>_</i><b>maps</b>
-              Tables with contact information for users, hosts or
-              domains that no longer exist. See <a href="relocated.5.html"><b>relocated</b>(5)</a>.
-
        <b>queue</b><i>_</i><b>directory</b>
               Top-level directory of the Postfix queue.
 
 <b>Active</b> <b>queue</b> <b>controls</b>
-       In  the text below, <i>transport</i> is the first field in a <b>mas-</b>
+       In the text below, <i>transport</i> is the first field in a  <b>mas-</b>
        <b>ter.cf</b> entry.
+
+       <b>qmgr</b><i>_</i><b>clog</b><i>_</i><b>warn</b><i>_</i><b>time</b>
+              Minimal delay between warnings that a specific des-
+              tination is clogging up the active queue. Specify 0
+              to disable.
 
        <b>qmgr</b><i>_</i><b>message</b><i>_</i><b>active</b><i>_</i><b>limit</b>
               Limit the number of messages in the active queue.
@@ -198,7 +198,7 @@ NQMGR(8)                                                 NQMGR(8)
        <b>qmgr</b><i>_</i><b>message</b><i>_</i><b>recipient</b><i>_</i><b>limit</b>
               Limit the number of in-memory recipients.
 
-              This parameter also limits the size of  the  short-
+              This  parameter  also limits the size of the short-
               term, in-memory destination cache.
 
        <b>qmgr</b><i>_</i><b>message</b><i>_</i><b>recipient</b><i>_</i><b>minimum</b>
@@ -209,34 +209,34 @@ NQMGR(8)                                                 NQMGR(8)
               per transport.
 
        <i>transport_</i><b>recipient</b><i>_</i><b>limit</b>
-              Limit on the number of  in-memory  recipients,  for
+              Limit  on  the  number of in-memory recipients, for
               the named message <i>transport</i>.
 
        <b>default</b><i>_</i><b>extra</b><i>_</i><b>recipient</b><i>_</i><b>limit</b>
-              Default  limit on the total number of per transport
-              in-memory recipients that the  preempting  messages
+              Default limit on the total number of per  transport
+              in-memory  recipients  that the preempting messages
               can have.
 
        <i>transport_</i><b>extra</b><i>_</i><b>recipient</b><i>_</i><b>limit</b>
-              Limit  on  the number of in-memory recipients which
-              all preempting messages delivered by the  transport
+              Limit on the number of in-memory  recipients  which
+              all  preempting messages delivered by the transport
               <i>transport</i> can have.
 
 <b>Timing</b> <b>controls</b>
        <b>minimal</b><i>_</i><b>backoff</b><i>_</i><b>time</b>
-              Minimal  time  in seconds between delivery attempts
+              Minimal time in seconds between  delivery  attempts
               of a deferred message.
 
-              This parameter also limits the time an  unreachable
-              destination  is  kept  in the short-term, in-memory
+              This  parameter also limits the time an unreachable
+              destination is kept in  the  short-term,  in-memory
               destination status cache.
 
        <b>maximal</b><i>_</i><b>backoff</b><i>_</i><b>time</b>
-              Maximal time in seconds between  delivery  attempts
+              Maximal  time  in seconds between delivery attempts
               of a deferred message.
 
        <b>maximal</b><i>_</i><b>queue</b><i>_</i><b>lifetime</b>
-              Maximal  time in days a message is queued before it
+              Maximal time in days a message is queued before  it
               is sent back as undeliverable.
 
        <b>queue</b><i>_</i><b>run</b><i>_</i><b>delay</b>
@@ -244,52 +244,52 @@ NQMGR(8)                                                 NQMGR(8)
               scans do not overlap.
 
        <b>transport</b><i>_</i><b>retry</b><i>_</i><b>time</b>
-              Time  in seconds between attempts to contact a bro-
+              Time in seconds between attempts to contact a  bro-
               ken delivery transport.
 
 <b>Concurrency</b> <b>controls</b>
        <b>initial</b><i>_</i><b>destination</b><i>_</i><b>concurrency</b>
-              Initial per-destination concurrency level for  par-
+              Initial  per-destination concurrency level for par-
               allel delivery to the same destination.
 
        <b>default</b><i>_</i><b>destination</b><i>_</i><b>concurrency</b><i>_</i><b>limit</b>
-              Default  limit on the number of parallel deliveries
+              Default limit on the number of parallel  deliveries
               to the same destination.
 
        <i>transport_</i><b>destination</b><i>_</i><b>concurrency</b><i>_</i><b>limit</b>
-              Limit on the number of parallel deliveries  to  the
-              same  destination,  for delivery via the named mes-
+              Limit  on  the number of parallel deliveries to the
+              same destination, for delivery via the  named  mes-
               sage <i>transport</i>.
 
 <b>Recipient</b> <b>controls</b>
        <b>default</b><i>_</i><b>destination</b><i>_</i><b>recipient</b><i>_</i><b>limit</b>
-              Default limit on the number of recipients per  mes-
+              Default  limit on the number of recipients per mes-
               sage transfer.
 
        <i>transport_</i><b>destination</b><i>_</i><b>recipient</b><i>_</i><b>limit</b>
-              Limit  on  the  number  of  recipients  per message
+              Limit on  the  number  of  recipients  per  message
               transfer, for the named message <i>transport</i>.
 
 <b>Message</b> <b>scheduling</b>
        <i>transport_</i><b>delivery</b><i>_</i><b>slot</b><i>_</i><b>cost</b> (valid range: 0,2,3...)
-              This parameter basically controls how often a  mes-
-              sage  delivered  by  <i>transport</i>  can be preempted by
+              This  parameter basically controls how often a mes-
+              sage delivered by <i>transport</i>  can  be  preempted  by
               another message.  An internal per-message/transport
-              counter  is  incremented  by  one  for  each <i>trans-</i>
+              counter is  incremented  by  one  for  each  <i>trans-</i>
               <i>port_</i><b>delivery</b><i>_</i><b>slot</b><i>_</i><b>cost</b>   deliveries   handled   by
-              <i>transport</i>.  This  counter  represents the number of
-              "available delivery slots" for use  by  other  mes-
+              <i>transport</i>. This counter represents  the  number  of
+              "available  delivery  slots"  for use by other mes-
               sages.  Current message can be preempted by another
-              message when that other message  can  be  delivered
-              using  less  <i>transport</i> agents than the value of the
+              message  when  that  other message can be delivered
+              using less <i>transport</i> agents than the value  of  the
               "available delivery slots" counter.
 
-              Value equal to 0 disables  the  message  preemption
+              Value  equal  to  0 disables the message preemption
               for <i>transport</i>.
 
        <i>transport_</i><b>minimum</b><i>_</i><b>delivery</b><i>_</i><b>slots</b>
               Message preemption is not attempted at all whenever
-              a message  that  can't  ever  accumulate  at  least
+              a  message  that  can't  ever  accumulate  at least
               <i>transport_</i><b>minimum</b><i>_</i><b>delivery</b><i>_</i><b>slots</b> available delivery
               slots is being delivered by <i>transport</i>.
 
@@ -297,13 +297,13 @@ NQMGR(8)                                                 NQMGR(8)
 
        <i>transport_</i><b>delivery</b><i>_</i><b>slot</b><i>_</i><b>loan</b>
               These parameters speed up the moment when a message
-              preemption  can  happen.   Instead of waiting until
-              the full  amount  of  delivery  slots  required  is
-              available,  the  preemption  can happen when <i>trans-</i>
+              preemption can happen.  Instead  of  waiting  until
+              the  full  amount  of  delivery  slots  required is
+              available, the preemption can  happen  when  <i>trans-</i>
               <i>port_</i><b>delivery</b><i>_</i><b>slot</b><i>_</i><b>discount</b> percent of the required
-              amount   plus   <i>transport_</i><b>delivery</b><i>_</i><b>slot</b><i>_</i><b>loan</b>  still
-              remains to  be  accumulated.  Note  that  the  full
-              amount  will  still  have  to be accumulated before
+              amount  plus   <i>transport_</i><b>delivery</b><i>_</i><b>slot</b><i>_</i><b>loan</b>   still
+              remains  to  be  accumulated.  Note  that  the full
+              amount will still have  to  be  accumulated  before
               another preemption can take place later.
 
        <b>default</b><i>_</i><b>delivery</b><i>_</i><b>slot</b><i>_</i><b>cost</b>
@@ -313,17 +313,16 @@ NQMGR(8)                                                 NQMGR(8)
        <b>default</b><i>_</i><b>delivery</b><i>_</i><b>slot</b><i>_</i><b>discount</b>
 
        <b>default</b><i>_</i><b>delivery</b><i>_</i><b>slot</b><i>_</i><b>loan</b>
-              Default values for the transport  specific  parame-
+              Default  values  for the transport specific parame-
               ters described above.
 
 <b>SEE</b> <b>ALSO</b>
        <a href="master.8.html">master(8)</a>, process manager
-       <a href="relocated.5.html">relocated(5)</a>, format of the "user has moved" table
        syslogd(8) system logging
        <a href="trivial-rewrite.8.html">trivial-rewrite(8)</a>, address routing
 
 <b>LICENSE</b>
-       The  Secure  Mailer  license must be distributed with this
+       The Secure Mailer license must be  distributed  with  this
        software.
 
 <b>AUTHOR(S)</b>

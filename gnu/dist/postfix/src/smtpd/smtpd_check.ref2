@@ -9,7 +9,7 @@ OK
 OK
 >>> relay_domains porcupine.org
 OK
->>> maps_rbl_domains blackholes.mail-abuse.org
+>>> maps_rbl_domains socks.relays.osirusoft.com
 OK
 >>> #
 >>> # Test the client restrictions.
@@ -17,22 +17,22 @@ OK
 >>> client_restrictions permit_mynetworks,reject_unknown_client,check_client_access,hash:./smtpd_check_access
 OK
 >>> client unknown 131.155.210.17
-./smtpd_check: reject: CONNECT from unknown[131.155.210.17]: 450 Client host rejected: cannot find your hostname, [131.155.210.17]
+./smtpd_check: <queue id>: reject: CONNECT from unknown[131.155.210.17]: 450 Client host rejected: cannot find your hostname, [131.155.210.17]; proto=SMTP
 450 Client host rejected: cannot find your hostname, [131.155.210.17]
 >>> client unknown 168.100.189.13
 OK
 >>> client random.bad.domain 123.123.123.123
-./smtpd_check: reject: CONNECT from random.bad.domain[123.123.123.123]: 554 <random.bad.domain[123.123.123.123]>: Client host rejected: match bad.domain
+./smtpd_check: <queue id>: reject: CONNECT from random.bad.domain[123.123.123.123]: 554 <random.bad.domain[123.123.123.123]>: Client host rejected: match bad.domain; proto=SMTP
 554 <random.bad.domain[123.123.123.123]>: Client host rejected: match bad.domain
 >>> client friend.bad.domain 123.123.123.123
 OK
 >>> client bad.domain 123.123.123.123
-./smtpd_check: reject: CONNECT from bad.domain[123.123.123.123]: 554 <bad.domain[123.123.123.123]>: Client host rejected: match bad.domain
+./smtpd_check: <queue id>: reject: CONNECT from bad.domain[123.123.123.123]: 554 <bad.domain[123.123.123.123]>: Client host rejected: match bad.domain; proto=SMTP
 554 <bad.domain[123.123.123.123]>: Client host rejected: match bad.domain
 >>> client wzv.win.tue.nl 131.155.210.17
 OK
 >>> client aa.win.tue.nl 131.155.210.18
-./smtpd_check: reject: CONNECT from aa.win.tue.nl[131.155.210.18]: 554 <aa.win.tue.nl[131.155.210.18]>: Client host rejected: match 131.155.210
+./smtpd_check: <queue id>: reject: CONNECT from aa.win.tue.nl[131.155.210.18]: 554 <aa.win.tue.nl[131.155.210.18]>: Client host rejected: match 131.155.210; proto=SMTP
 554 <aa.win.tue.nl[131.155.210.18]>: Client host rejected: match 131.155.210
 >>> client_restrictions permit_mynetworks
 OK
@@ -44,22 +44,22 @@ OK
 >>> client unknown 131.155.210.17
 OK
 >>> helo foo.
-./smtpd_check: reject: HELO from unknown[131.155.210.17]: 450 Client host rejected: cannot find your hostname, [131.155.210.17]
+./smtpd_check: <queue id>: reject: HELO from unknown[131.155.210.17]: 450 Client host rejected: cannot find your hostname, [131.155.210.17]; proto=SMTP helo=<foo.>
 450 Client host rejected: cannot find your hostname, [131.155.210.17]
 >>> client foo 123.123.123.123
 OK
 >>> helo foo.
-./smtpd_check: reject: HELO from foo[123.123.123.123]: 450 <foo.>: Helo command rejected: Host not found
+./smtpd_check: <queue id>: reject: HELO from foo[123.123.123.123]: 450 <foo.>: Helo command rejected: Host not found; proto=SMTP helo=<foo.>
 450 <foo.>: Helo command rejected: Host not found
 >>> helo foo
-./smtpd_check: reject: HELO from foo[123.123.123.123]: 450 <foo>: Helo command rejected: Host not found
+./smtpd_check: <queue id>: reject: HELO from foo[123.123.123.123]: 450 <foo>: Helo command rejected: Host not found; proto=SMTP helo=<foo>
 450 <foo>: Helo command rejected: Host not found
 >>> helo spike.porcupine.org
 OK
 >>> helo_restrictions permit_mynetworks,reject_unknown_client,reject_invalid_hostname,check_helo_access,hash:./smtpd_check_access
 OK
 >>> helo random.bad.domain
-./smtpd_check: reject: HELO from foo[123.123.123.123]: 554 <random.bad.domain>: Helo command rejected: match bad.domain
+./smtpd_check: <queue id>: reject: HELO from foo[123.123.123.123]: 554 <random.bad.domain>: Helo command rejected: match bad.domain; proto=SMTP helo=<random.bad.domain>
 554 <random.bad.domain>: Helo command rejected: match bad.domain
 >>> helo friend.bad.domain
 OK
@@ -71,7 +71,7 @@ OK
 >>> client unknown 131.155.210.17
 OK
 >>> mail foo@watson.ibm.com
-./smtpd_check: reject: MAIL from unknown[131.155.210.17]: 450 Client host rejected: cannot find your hostname, [131.155.210.17]; from=<foo@watson.ibm.com>
+./smtpd_check: <queue id>: reject: MAIL from unknown[131.155.210.17]: 450 Client host rejected: cannot find your hostname, [131.155.210.17]; from=<foo@watson.ibm.com> proto=SMTP helo=<friend.bad.domain>
 450 Client host rejected: cannot find your hostname, [131.155.210.17]
 >>> client unknown 168.100.189.13
 OK
@@ -86,29 +86,29 @@ OK
 >>> mail foo@watson.ibm.com
 OK
 >>> mail foo@bad.domain
-./smtpd_check: reject: MAIL from foo[123.123.123.123]: 450 <foo@bad.domain>: Sender address rejected: Domain not found; from=<foo@bad.domain>
+./smtpd_check: <queue id>: reject: MAIL from foo[123.123.123.123]: 450 <foo@bad.domain>: Sender address rejected: Domain not found; from=<foo@bad.domain> proto=SMTP helo=<friend.bad.domain>
 450 <foo@bad.domain>: Sender address rejected: Domain not found
 >>> sender_restrictions check_sender_access,hash:./smtpd_check_access
 OK
 >>> mail bad-sender@any.domain
-./smtpd_check: reject: MAIL from foo[123.123.123.123]: 554 <bad-sender@any.domain>: Sender address rejected: match bad-sender@; from=<bad-sender@any.domain>
+./smtpd_check: <queue id>: reject: MAIL from foo[123.123.123.123]: 554 <bad-sender@any.domain>: Sender address rejected: match bad-sender@; from=<bad-sender@any.domain> proto=SMTP helo=<friend.bad.domain>
 554 <bad-sender@any.domain>: Sender address rejected: match bad-sender@
 >>> mail bad-sender@good.domain
 OK
 >>> mail reject@this.address
-./smtpd_check: reject: MAIL from foo[123.123.123.123]: 554 <reject@this.address>: Sender address rejected: match reject@this.address; from=<reject@this.address>
+./smtpd_check: <queue id>: reject: MAIL from foo[123.123.123.123]: 554 <reject@this.address>: Sender address rejected: match reject@this.address; from=<reject@this.address> proto=SMTP helo=<friend.bad.domain>
 554 <reject@this.address>: Sender address rejected: match reject@this.address
 >>> mail Reject@this.address
-./smtpd_check: reject: MAIL from foo[123.123.123.123]: 554 <Reject@this.address>: Sender address rejected: match reject@this.address; from=<Reject@this.address>
+./smtpd_check: <queue id>: reject: MAIL from foo[123.123.123.123]: 554 <Reject@this.address>: Sender address rejected: match reject@this.address; from=<Reject@this.address> proto=SMTP helo=<friend.bad.domain>
 554 <Reject@this.address>: Sender address rejected: match reject@this.address
 >>> mail foo@bad.domain
-./smtpd_check: reject: MAIL from foo[123.123.123.123]: 554 <foo@bad.domain>: Sender address rejected: match bad.domain; from=<foo@bad.domain>
+./smtpd_check: <queue id>: reject: MAIL from foo[123.123.123.123]: 554 <foo@bad.domain>: Sender address rejected: match bad.domain; from=<foo@bad.domain> proto=SMTP helo=<friend.bad.domain>
 554 <foo@bad.domain>: Sender address rejected: match bad.domain
 >>> mail foo@Bad.domain
-./smtpd_check: reject: MAIL from foo[123.123.123.123]: 554 <foo@Bad.domain>: Sender address rejected: match bad.domain; from=<foo@Bad.domain>
+./smtpd_check: <queue id>: reject: MAIL from foo[123.123.123.123]: 554 <foo@Bad.domain>: Sender address rejected: match bad.domain; from=<foo@Bad.domain> proto=SMTP helo=<friend.bad.domain>
 554 <foo@Bad.domain>: Sender address rejected: match bad.domain
 >>> mail foo@random.bad.domain
-./smtpd_check: reject: MAIL from foo[123.123.123.123]: 554 <foo@random.bad.domain>: Sender address rejected: match bad.domain; from=<foo@random.bad.domain>
+./smtpd_check: <queue id>: reject: MAIL from foo[123.123.123.123]: 554 <foo@random.bad.domain>: Sender address rejected: match bad.domain; from=<foo@random.bad.domain> proto=SMTP helo=<friend.bad.domain>
 554 <foo@random.bad.domain>: Sender address rejected: match bad.domain
 >>> mail foo@friend.bad.domain
 OK
@@ -120,7 +120,7 @@ OK
 >>> client unknown 131.155.210.17
 OK
 >>> rcpt foo@watson.ibm.com
-./smtpd_check: reject: RCPT from unknown[131.155.210.17]: 450 Client host rejected: cannot find your hostname, [131.155.210.17]; from=<foo@friend.bad.domain> to=<foo@watson.ibm.com>
+./smtpd_check: <queue id>: reject: RCPT from unknown[131.155.210.17]: 450 Client host rejected: cannot find your hostname, [131.155.210.17]; from=<foo@friend.bad.domain> to=<foo@watson.ibm.com> proto=SMTP helo=<friend.bad.domain>
 450 Client host rejected: cannot find your hostname, [131.155.210.17]
 >>> client unknown 168.100.189.13
 OK
@@ -129,7 +129,8 @@ OK
 >>> client foo 123.123.123.123
 OK
 >>> rcpt foo@watson.ibm.com
-./smtpd_check: reject: RCPT from foo[123.123.123.123]: 554 <foo@watson.ibm.com>: Recipient address rejected: Relay access denied; from=<foo@friend.bad.domain> to=<foo@watson.ibm.com>
+./smtpd_check: warning: the "check_relay_domains" restriction is going away; use "reject_unauth_destination" instead
+./smtpd_check: <queue id>: reject: RCPT from foo[123.123.123.123]: 554 <foo@watson.ibm.com>: Recipient address rejected: Relay access denied; from=<foo@friend.bad.domain> to=<foo@watson.ibm.com> proto=SMTP helo=<friend.bad.domain>
 554 <foo@watson.ibm.com>: Recipient address rejected: Relay access denied
 >>> rcpt foo@porcupine.org
 OK
@@ -144,25 +145,25 @@ OK
 >>> client foo 123.123.123.123
 OK
 >>> rcpt foo@watson.ibm.com
-./smtpd_check: reject: RCPT from foo[123.123.123.123]: 554 <foo@watson.ibm.com>: Recipient address rejected: Relay access denied; from=<foo@friend.bad.domain> to=<foo@watson.ibm.com>
+./smtpd_check: <queue id>: reject: RCPT from foo[123.123.123.123]: 554 <foo@watson.ibm.com>: Recipient address rejected: Relay access denied; from=<foo@friend.bad.domain> to=<foo@watson.ibm.com> proto=SMTP helo=<friend.bad.domain>
 554 <foo@watson.ibm.com>: Recipient address rejected: Relay access denied
 >>> rcpt foo@porcupine.org
 OK
 >>> recipient_restrictions check_recipient_access,hash:./smtpd_check_access
 OK
 >>> mail bad-sender@any.domain
-./smtpd_check: reject: MAIL from foo[123.123.123.123]: 554 <bad-sender@any.domain>: Sender address rejected: match bad-sender@; from=<bad-sender@any.domain>
+./smtpd_check: <queue id>: reject: MAIL from foo[123.123.123.123]: 554 <bad-sender@any.domain>: Sender address rejected: match bad-sender@; from=<bad-sender@any.domain> proto=SMTP helo=<friend.bad.domain>
 554 <bad-sender@any.domain>: Sender address rejected: match bad-sender@
 >>> mail bad-sender@good.domain
 OK
 >>> mail reject@this.address
-./smtpd_check: reject: MAIL from foo[123.123.123.123]: 554 <reject@this.address>: Sender address rejected: match reject@this.address; from=<reject@this.address>
+./smtpd_check: <queue id>: reject: MAIL from foo[123.123.123.123]: 554 <reject@this.address>: Sender address rejected: match reject@this.address; from=<reject@this.address> proto=SMTP helo=<friend.bad.domain>
 554 <reject@this.address>: Sender address rejected: match reject@this.address
 >>> mail foo@bad.domain
-./smtpd_check: reject: MAIL from foo[123.123.123.123]: 554 <foo@bad.domain>: Sender address rejected: match bad.domain; from=<foo@bad.domain>
+./smtpd_check: <queue id>: reject: MAIL from foo[123.123.123.123]: 554 <foo@bad.domain>: Sender address rejected: match bad.domain; from=<foo@bad.domain> proto=SMTP helo=<friend.bad.domain>
 554 <foo@bad.domain>: Sender address rejected: match bad.domain
 >>> mail foo@random.bad.domain
-./smtpd_check: reject: MAIL from foo[123.123.123.123]: 554 <foo@random.bad.domain>: Sender address rejected: match bad.domain; from=<foo@random.bad.domain>
+./smtpd_check: <queue id>: reject: MAIL from foo[123.123.123.123]: 554 <foo@random.bad.domain>: Sender address rejected: match bad.domain; from=<foo@random.bad.domain> proto=SMTP helo=<friend.bad.domain>
 554 <foo@random.bad.domain>: Sender address rejected: match bad.domain
 >>> mail foo@friend.bad.domain
 OK
@@ -172,10 +173,11 @@ OK
 >>> client_restrictions reject_maps_rbl
 OK
 >>> client spike.porcupine.org 168.100.189.2
+./smtpd_check: warning: restriction reject_maps_rbl is going away. Please use reject_rbl_client <domain> instead
 OK
 >>> client foo 127.0.0.2
-./smtpd_check: reject: CONNECT from foo[127.0.0.2]: 554 Service unavailable; [127.0.0.2] blocked using blackholes.mail-abuse.org, reason: Blackholed - see <URL:http://mail-abuse.org/cgi-bin/lookup?127.0.0.2>; from=<foo@friend.bad.domain>
-554 Service unavailable; [127.0.0.2] blocked using blackholes.mail-abuse.org, reason: Blackholed - see <URL:http://mail-abuse.org/cgi-bin/lookup?127.0.0.2>
+./smtpd_check: <queue id>: reject: CONNECT from foo[127.0.0.2]: 554 Service unavailable; Client host [127.0.0.2] blocked using socks.relays.osirusoft.com; Proxy List Test; from=<foo@friend.bad.domain> proto=SMTP helo=<friend.bad.domain>
+554 Service unavailable; Client host [127.0.0.2] blocked using socks.relays.osirusoft.com; Proxy List Test
 >>> #
 >>> # unknown sender/recipient domain
 >>> #
@@ -188,12 +190,12 @@ OK
 >>> rcpt wietse@porcupine.org
 OK
 >>> rcpt wietse@no.recipient.domain
-./smtpd_check: reject: RCPT from foo[127.0.0.2]: 554 <wietse@no.recipient.domain>: Recipient address rejected: Domain not found; from=<wietse@porcupine.org> to=<wietse@no.recipient.domain>
+./smtpd_check: <queue id>: reject: RCPT from foo[127.0.0.2]: 554 <wietse@no.recipient.domain>: Recipient address rejected: Domain not found; from=<wietse@porcupine.org> to=<wietse@no.recipient.domain> proto=SMTP helo=<friend.bad.domain>
 554 <wietse@no.recipient.domain>: Recipient address rejected: Domain not found
 >>> mail wietse@no.sender.domain
 OK
 >>> rcpt wietse@porcupine.org
-./smtpd_check: reject: RCPT from foo[127.0.0.2]: 554 <wietse@no.sender.domain>: Sender address rejected: Domain not found; from=<wietse@no.sender.domain> to=<wietse@porcupine.org>
+./smtpd_check: <queue id>: reject: RCPT from foo[127.0.0.2]: 554 <wietse@no.sender.domain>: Sender address rejected: Domain not found; from=<wietse@no.sender.domain> to=<wietse@porcupine.org> proto=SMTP helo=<friend.bad.domain>
 554 <wietse@no.sender.domain>: Sender address rejected: Domain not found
 >>> #
 >>> # {permit_auth,reject_unauth}_destination
@@ -205,14 +207,14 @@ OK
 >>> recipient_restrictions permit_auth_destination,reject
 OK
 >>> rcpt user@foo.org
-./smtpd_check: reject: RCPT from foo[127.0.0.2]: 554 <user@foo.org>: Recipient address rejected: Access denied; from=<user@some.where> to=<user@foo.org>
+./smtpd_check: <queue id>: reject: RCPT from foo[127.0.0.2]: 554 <user@foo.org>: Recipient address rejected: Access denied; from=<user@some.where> to=<user@foo.org> proto=SMTP helo=<friend.bad.domain>
 554 <user@foo.org>: Recipient address rejected: Access denied
 >>> rcpt user@foo.com
 OK
 >>> recipient_restrictions reject_unauth_destination,permit
 OK
 >>> rcpt user@foo.org
-./smtpd_check: reject: RCPT from foo[127.0.0.2]: 554 <user@foo.org>: Relay access denied; from=<user@some.where> to=<user@foo.org>
+./smtpd_check: <queue id>: reject: RCPT from foo[127.0.0.2]: 554 <user@foo.org>: Relay access denied; from=<user@some.where> to=<user@foo.org> proto=SMTP helo=<friend.bad.domain>
 554 <user@foo.org>: Relay access denied
 >>> rcpt user@foo.com
 OK
@@ -226,8 +228,8 @@ OK
 >>> client spike.porcupine.org 160.100.189.2 2
 OK
 >>> client unknown 1.1.1.1 4
-./smtpd_check: reject: CONNECT from unknown[1.1.1.1]: 450 Client host rejected: cannot find your hostname, [1.1.1.1]; from=<user@some.where>
+./smtpd_check: <queue id>: reject: CONNECT from unknown[1.1.1.1]: 450 Client host rejected: cannot find your hostname, [1.1.1.1]; from=<user@some.where> proto=SMTP helo=<friend.bad.domain>
 450 Client host rejected: cannot find your hostname, [1.1.1.1]
 >>> client unknown 1.1.1.1 5
-./smtpd_check: reject: CONNECT from unknown[1.1.1.1]: 550 Client host rejected: cannot find your hostname, [1.1.1.1]; from=<user@some.where>
+./smtpd_check: <queue id>: reject: CONNECT from unknown[1.1.1.1]: 550 Client host rejected: cannot find your hostname, [1.1.1.1]; from=<user@some.where> proto=SMTP helo=<friend.bad.domain>
 550 Client host rejected: cannot find your hostname, [1.1.1.1]

@@ -6,6 +6,8 @@
 /* SYNOPSIS
 /*	#include <dict_db.h>
 /*
+/*	int	dict_db_cache_size;
+/*
 /*	DICT	*dict_hash_open(path, open_flags, dict_flags)
 /*	const char *path;
 /*	int	open_flags;
@@ -19,6 +21,11 @@
 /*	dict_XXX_open() opens the specified DB database.  The result is
 /*	a pointer to a structure that can be used to access the dictionary
 /*	using the generic methods documented in dict_open(3).
+/*
+/*	The dict_db_cache_size variable specifies a non-default per-table
+/*	I/O buffer size.  The default buffer size is adequate for reading.
+/*	For better performance while creating a large table, specify a large
+/*	buffer size before opening the file.
 /*
 /*	Arguments:
 /* .IP path
@@ -104,7 +111,17 @@ typedef struct {
     DB     *db;				/* open db file */
 } DICT_DB;
 
-#define DICT_DB_CACHE_SIZE	(1024 * 1024)
+ /*
+  * You can override the default dict_db_cache_size setting before calling
+  * dict_hash_open() or dict_btree_open(). This is done in mkmap_db_open() to
+  * set a larger memory pool for database (re)builds.
+  * 
+  * XXX This should be specified via the DICT interface so that it becomes an
+  * object property, instead of being specified by poking a global variable
+  * so that it becomes a class property.
+  */
+int     dict_db_cache_size = (128 * 1024);	/* 128K default memory pool */
+
 #define DICT_DB_NELM		4096
 
 #if DB_VERSION_MAJOR > 1
@@ -285,6 +302,8 @@ static int dict_db_delete(DICT *dict, const char *name)
     int     status = 1;
     int     flags = 0;
 
+    memset(&db_key, 0, sizeof(db_key));
+
     /*
      * Acquire an exclusive lock.
      */
@@ -447,9 +466,9 @@ static DICT *dict_db_open(const char *class, const char *path, int open_flags,
     int     patch_version;
 
     (void) db_version(&major_version, &minor_version, &patch_version);
-    if (major_version != DB_VERSION_MAJOR)
+    if (major_version != DB_VERSION_MAJOR || minor_version != DB_VERSION_MINOR)
 	msg_fatal("incorrect version of Berkeley DB: "
-		  "compiled against %d.%d.%d, linked against %d.%d.%d",
+	      "compiled against %d.%d.%d, run-time linked against %d.%d.%d",
 		  DB_VERSION_MAJOR, DB_VERSION_MINOR, DB_VERSION_PATCH,
 		  major_version, minor_version, patch_version);
 #endif
@@ -462,12 +481,21 @@ static DICT *dict_db_open(const char *class, const char *path, int open_flags,
      * 
      * Programs such as postmap/postalias use their own large-grained (in the
      * time domain) locks while rewriting the entire file.
+     * 
+     * XXX DB version 4.1 will not open a zero-length file. This means we must
+     * open an existing file without O_CREAT|O_TRUNC, and that we must let
+     * db_open() create a non-existent file for us.
      */
+#define LOCK_OPEN_FLAGS(f) ((f) & ~(O_CREAT|O_TRUNC))
+
     if (dict_flags & DICT_FLAG_LOCK) {
-	if ((lock_fd = open(db_path, open_flags, 0644)) < 0)
-	    msg_fatal("open database %s: %m", db_path);
-	if (myflock(lock_fd, INTERNAL_LOCK, MYFLOCK_OP_SHARED) < 0)
-	    msg_fatal("shared-lock database %s for open: %m", db_path);
+	if ((lock_fd = open(db_path, LOCK_OPEN_FLAGS(open_flags), 0644)) < 0) {
+	    if (errno != ENOENT)
+		msg_fatal("open database %s: %m", db_path);
+	} else {
+	    if (myflock(lock_fd, INTERNAL_LOCK, MYFLOCK_OP_SHARED) < 0)
+		msg_fatal("shared-lock database %s for open: %m", db_path);
+	}
     }
 
     /*
@@ -516,16 +544,23 @@ static DICT *dict_db_open(const char *class, const char *path, int open_flags,
 	msg_fatal("create DB database: %m");
     if (db == 0)
 	msg_panic("db_create null result");
-    if ((errno = db->set_cachesize(db, 0, DICT_DB_CACHE_SIZE, 0)) != 0)
-	msg_fatal("set DB cache size %d: %m", DICT_DB_CACHE_SIZE);
+    if ((errno = db->set_cachesize(db, 0, dict_db_cache_size, 0)) != 0)
+	msg_fatal("set DB cache size %d: %m", dict_db_cache_size);
     if (type == DB_HASH && db->set_h_nelem(db, DICT_DB_NELM) != 0)
 	msg_fatal("set DB hash element count %d: %m", DICT_DB_NELM);
+#if (DB_VERSION_MAJOR == 4 && DB_VERSION_MINOR > 0)
+    if ((errno = db->open(db, 0, db_path, 0, type, db_flags, 0644)) != 0)
+	msg_fatal("open database %s: %m", db_path);
+#elif (DB_VERSION_MAJOR == 3 || DB_VERSION_MAJOR == 4)
     if ((errno = db->open(db, db_path, 0, type, db_flags, 0644)) != 0)
 	msg_fatal("open database %s: %m", db_path);
+#else
+#error "Unsupported Berkeley DB version"
+#endif
     if ((errno = db->fd(db, &dbfd)) != 0)
 	msg_fatal("get database file descriptor: %m");
 #endif
-    if (dict_flags & DICT_FLAG_LOCK) {
+    if ((dict_flags & DICT_FLAG_LOCK) && lock_fd >= 0) {
 	if (myflock(lock_fd, INTERNAL_LOCK, MYFLOCK_OP_NONE) < 0)
 	    msg_fatal("unlock database %s for open: %m", db_path);
 	if (close(lock_fd) < 0)
@@ -572,14 +607,14 @@ DICT   *dict_hash_open(const char *path, int open_flags, int dict_flags)
 
     memset((char *) &tweak, 0, sizeof(tweak));
     tweak.nelem = DICT_DB_NELM;
-    tweak.cachesize = DICT_DB_CACHE_SIZE;
+    tweak.cachesize = dict_db_cache_size;
 #endif
 #if DB_VERSION_MAJOR == 2
     DB_INFO tweak;
 
     memset((char *) &tweak, 0, sizeof(tweak));
     tweak.h_nelem = DICT_DB_NELM;
-    tweak.db_cachesize = DICT_DB_CACHE_SIZE;
+    tweak.db_cachesize = dict_db_cache_size;
 #endif
 #if DB_VERSION_MAJOR > 2
     void   *tweak;
@@ -598,13 +633,13 @@ DICT   *dict_btree_open(const char *path, int open_flags, int dict_flags)
     BTREEINFO tweak;
 
     memset((char *) &tweak, 0, sizeof(tweak));
-    tweak.cachesize = DICT_DB_CACHE_SIZE;
+    tweak.cachesize = dict_db_cache_size;
 #endif
 #if DB_VERSION_MAJOR == 2
     DB_INFO tweak;
 
     memset((char *) &tweak, 0, sizeof(tweak));
-    tweak.db_cachesize = DICT_DB_CACHE_SIZE;
+    tweak.db_cachesize = dict_db_cache_size;
 #endif
 #if DB_VERSION_MAJOR > 2
     void   *tweak;

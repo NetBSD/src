@@ -5,10 +5,9 @@
 /*	Postfix control program
 /* SYNOPSIS
 /* .fi
-/*	\fBpostfix\fR [\fB-c \fIconfig_dir\fR] [\fB-D\fR] [\fB-v\fR]
-/*		\fIcommand\fR
+/*	\fBpostfix\fR [\fB-Dv\fR] [\fB-c \fIconfig_dir\fR] \fIcommand\fR
 /* DESCRIPTION
-/*	This command is reserved for the super-user. To submit mail,
+/*	This command is reserved for the superuser. To submit mail,
 /*	use the Postfix \fBsendmail\fR command.
 /*
 /*	The \fBpostfix\fR command controls the operation of the Postfix
@@ -59,19 +58,17 @@
 /* ENVIRONMENT
 /* .ad
 /* .fi
-/*	The \fBpostfix\fR command sets the following environment
-/*	variables:
+/*	The \fBpostfix\fR command exports the following environment
+/*	variables before executing the \fBpostfix-script\fR file:
 /* .IP \fBMAIL_CONFIG\fR
-/*	Directory with Postfix configuration files.
+/*	This is set when the -c command-line option is present.
 /* .IP \fBMAIL_VERBOSE\fR
 /*	This is set when the -v command-line option is present.
 /* .IP \fBMAIL_DEBUG\fR
 /*	This is set when the -D command-line option is present.
-/* CONFIGURATION PARAMETERS
-/* .ad
-/* .fi
-/*	The following \fBmain.cf\fR configuration parameters are made
-/*	available as process environment variables with the same names:
+/* .PP
+/*	The following \fBmain.cf\fR configuration parameters are
+/*	exported as environment variables with the same names:
 /* .IP \fBcommand_directory\fR
 /*	Directory with Postfix administrative commands.
 /* .IP \fBdaemon_directory\fR
@@ -88,11 +85,11 @@
 /* .IP \fBsetgid_group\fR
 /*      The group for mail submission and queue management commands.
 /* .IP \fBsendmail_path
-/*       The full pathname for the Postfix sendmail command.
+/*       The full pathname for the Postfix \fBsendmail\fR command.
 /* .IP \fBnewaliases_path
-/*       The full pathname for the Postfix newaliases command.
+/*       The full pathname for the Postfix \fBnewaliases\fR command.
 /* .IP \fBmailq_path
-/*       The full pathname for the Postfix mailq command.
+/*       The full pathname for the Postfix \fBmailq\fR command.
 /* .IP \fBmanpage_directory
 /*       The directory for the Postfix on-line manual pages.
 /* .IP \fBsample_directory
@@ -110,7 +107,16 @@
 /*	$\fBconfig_directory/main.cf\fR, configuration parameters
 /*	$\fBconfig_directory/master.cf\fR, Postfix daemon processes
 /* SEE ALSO
-/*	master(8) Postfix master program
+/*	postconf(1) Postfix configuration management
+/*	postsuper(1) Postfix housekeeping
+/*	sendmail(1) Sendmail-compatible interface
+/*	postmap(1) Postfix lookup table management
+/*	master(8) Postfix master daemon
+/* .ad
+/* .fi
+/*	The respective manual pages for the daemon processes
+/*	specified in the \fBmaster.cf\fR file, and the manual
+/*	pages referenced by those manual pages.
 /* LICENSE
 /* .ad
 /* .fi

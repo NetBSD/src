@@ -82,8 +82,10 @@ void    cleanup_masquerade_external(VSTRING *addr, ARGV *masq_domains)
     char   *domain;
     int     domain_len;
     char  **masqp;
+    char   *masq;
     int     masq_len;
     char   *parent;
+    int     truncate;
 
     /* Stuff for excluded names. */
     static HTABLE *masq_except_table = 0;
@@ -127,18 +129,24 @@ void    cleanup_masquerade_external(VSTRING *addr, ARGV *masq_domains)
      * the domain in the address and terminate. If the domain matches a
      * masquerade domain, leave it alone. Order of specification matters.
      */
-    for (masqp = masq_domains->argv; *masqp; masqp++) {
-	masq_len = strlen(*masqp);
+    for (masqp = masq_domains->argv; (masq = *masqp) != 0; masqp++) {
+	for (truncate = 1; *masq == '!'; masq++)
+	    truncate = !truncate;
+	masq_len = strlen(masq);
+	if (masq_len == 0)
+	    continue;
 	if (masq_len == domain_len) {
-	    if (strcasecmp(*masqp, domain) == 0)
+	    if (strcasecmp(masq, domain) == 0)
 		break;
 	} else if (masq_len < domain_len) {
 	    parent = domain + domain_len - masq_len;
-	    if (parent[-1] == '.' && strcasecmp(*masqp, parent) == 0) {
-		if (msg_verbose)
-		    msg_info("masquerade: %s -> %s", domain, *masqp);
-		vstring_truncate(addr, domain - STR(addr));
-		vstring_strcat(addr, *masqp);
+	    if (parent[-1] == '.' && strcasecmp(masq, parent) == 0) {
+		if (truncate) {
+		    if (msg_verbose)
+			msg_info("masquerade: %s -> %s", domain, masq);
+		    vstring_truncate(addr, domain - STR(addr));
+		    vstring_strcat(addr, masq);
+		}
 		break;
 	    }
 	}
@@ -171,3 +179,47 @@ void    cleanup_masquerade_internal(VSTRING *addr, ARGV *masq_domains)
 
     vstring_free(temp);
 }
+
+ /*
+  * Code for stand-alone testing. Instead of using main.cf, specify the strip
+  * list and the candidate domain on the command line. Specify null arguments
+  * for data that should be empty.
+  */
+#ifdef TEST
+
+#include <vstream.h>
+
+char *var_masq_exceptions;
+
+int main(int argc, char **argv)
+{
+    VSTRING *addr;
+    ARGV   *masq_domains;
+
+    if (argc != 4)
+	msg_fatal("usage: %s exceptions masquerade_list address", argv[0]);
+
+    var_masq_exceptions = argv[1];
+    masq_domains = argv_split(argv[2], " ,\t\r\n");
+    addr = vstring_alloc(1);
+    if (strchr(argv[3], '@') == 0)
+	msg_fatal("address must be in user@domain form");
+    vstring_strcpy(addr, argv[3]);
+
+    vstream_printf("----------\n");
+    vstream_printf("exceptions: %s\n", argv[1]);
+    vstream_printf("masq_list:  %s\n", argv[2]);
+    vstream_printf("address:    %s\n", argv[3]);
+
+    cleanup_masquerade_external(addr, masq_domains);
+
+    vstream_printf("result:     %s\n", STR(addr));
+    vstream_fflush(VSTREAM_OUT);
+
+    vstring_free(addr);
+    argv_free(masq_domains);
+
+    return (0);
+}
+
+#endif

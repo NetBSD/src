@@ -80,7 +80,8 @@
 /* bounce_notify_verp - send a bounce */
 
 int     bounce_notify_verp(char *service, char *queue_name,
-			           char *queue_id, char *recipient,
+			           char *queue_id, char *encoding,
+				   char *recipient,
 			           char *verp_delims, int flush)
 {
     char   *myname = "bounce_notify_verp";
@@ -105,7 +106,8 @@ int     bounce_notify_verp(char *service, char *queue_name,
     /*
      * Initialize. Open queue file, bounce log, etc.
      */
-    bounce_info = bounce_mail_init(service, queue_name, queue_id, flush);
+    bounce_info = bounce_mail_init(service, queue_name, queue_id,
+				   encoding, flush);
 
 #define NULL_SENDER		MAIL_ADDR_EMPTY	/* special address */
 #define NULL_CLEANUP_FLAGS	0

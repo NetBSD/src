@@ -49,7 +49,7 @@
 /*	argument. The result is null-terminated. This routine uses mymalloc().
 /*
 /*	mymemdup() makes a copy of the memory pointed to by \fIptr\fR
-/*	with length \fIlen\fR. The result is null-terminated.
+/*	with length \fIlen\fR. The result is NOT null-terminated.
 /*	This routine uses mymalloc().
 /* SEE ALSO
 /*	msg(3) diagnostics interface

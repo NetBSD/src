@@ -1,0 +1,39 @@
+The following information was kindly provided by Russell Mosemann,
+with tips by Victor Duchovni for supporting user+foo@domain addresses.
+
+In order to use the maildrop transport for some domain, add an entry
+to transport_maps for each domain similar to the following.
+
+/etc/postfix/transport:
+    some.domain       maildrop:
+    someother.domain  maildrop:
+
+Define the following variable in main.cf so that pipe will provide one
+recipient at a time to maildrop.
+
+/etc/postfix/main.cf:
+    maildrop_destination_recipient_limit = 1
+
+The vmail userid as used below is the user that maildrop should
+run as.  This would be the owner of the virtual mailboxes if they
+all have the same owner.  If maildrop is suid (see maildrop
+documentation), then maildrop will change to the appropriate owner
+to deliver the mail.  Do not use the postfix user as the maildrop
+user.
+
+/etc/postfix/master.cf:
+    maildrop  unix  -       n       n       -       -       pipe
+      flags=DRhu user=vmail argv=/usr/local/bin/maildrop -d ${recipient}
+
+If you want to support user+extension@domain style addresses, use
+the following instead:
+
+/etc/postfix/master.cf:
+    maildrop  unix  -       n       n       -       -       pipe
+      flags=DRhu user=vmail argv=/usr/local/bin/maildrop 
+	-d ${user}@${nexthop} ${extension} ${recipient} ${user} ${nexthop}
+
+The mail is delivered to ${user}@${nexthop} (match key for maildrop
+userdb lookup). The ${extension} and the other address components
+are available to maildrop rules as $1, $2, $3, ...  and can be
+omitted from master.cf or ignored by maildrop when not needed.

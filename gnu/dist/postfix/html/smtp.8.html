@@ -42,11 +42,15 @@ SMTP(8)                                                   SMTP(8)
 
 <b>STANDARDS</b>
        <a href="http://www.faqs.org/rfcs/rfc821.html">RFC 821</a> (SMTP protocol)
+       <a href="http://www.faqs.org/rfcs/rfc822.html">RFC 822</a> (ARPA Internet Text Messages)
        <a href="http://www.faqs.org/rfcs/rfc1651.html">RFC 1651</a> (SMTP service extensions)
+       <a href="http://www.faqs.org/rfcs/rfc1652.html">RFC 1652</a> (8bit-MIME transport)
        <a href="http://www.faqs.org/rfcs/rfc1870.html">RFC 1870</a> (Message Size Declaration)
-       <a href="http://www.faqs.org/rfcs/rfc2197.html">RFC 2197</a> (Pipelining)
+       <a href="http://www.faqs.org/rfcs/rfc2045.html">RFC 2045</a> (MIME: Format of Internet Message Bodies)
+       <a href="http://www.faqs.org/rfcs/rfc2046.html">RFC 2046</a> (MIME: Media Types)
        <a href="http://www.faqs.org/rfcs/rfc2554.html">RFC 2554</a> (AUTH command)
        <a href="http://www.faqs.org/rfcs/rfc2821.html">RFC 2821</a> (SMTP protocol)
+       <a href="http://www.faqs.org/rfcs/rfc2920.html">RFC 2920</a> (SMTP Pipelining)
 
 <b>DIAGNOSTICS</b>
        Problems and transactions are logged to <b>syslogd</b>(8).   Cor-
@@ -103,12 +107,21 @@ SMTP(8)                                                   SMTP(8)
               tem  receives  mail on. When any of those addresses
               appears in the list of mail exchangers for a remote
               destination,  the  list  is truncated to avoid mail
-              delivery loops.
+              delivery  loops.   See  also  the  <b>proxy</b><i>_</i><b>interfaces</b>
+              parameter.
 
        <b>notify</b><i>_</i><b>classes</b>
-              When this parameter includes  the  <b>protocol</b>  class,
-              send  mail  to  the  postmaster with transcripts of
+              When  this  parameter  includes the <b>protocol</b> class,
+              send mail to the  postmaster  with  transcripts  of
               SMTP sessions with protocol errors.
+
+       <b>proxy</b><i>_</i><b>interfaces</b>
+              Network  interfaces  that this mail system receives
+              mail on by way of a proxy or network address trans-
+              lator.  When  any of those addresses appears in the
+              list of mail exchangers for a  remote  destination,
+              the list is truncated to avoid mail delivery loops.
+              See also the <b>inet</b><i>_</i><b>interfaces</b> parameter.
 
        <b>smtp</b><i>_</i><b>always</b><i>_</i><b>send</b><i>_</i><b>ehlo</b>
               Always send EHLO at the start of a connection.
@@ -125,25 +138,47 @@ SMTP(8)                                                   SMTP(8)
               means no limit.  Some  SMTP  servers  misbehave  on
               long lines.
 
+       <b>smtp</b><i>_</i><b>helo</b><i>_</i><b>name</b>
+              The  hostname to be used in HELO and EHLO commands.
+
        <b>smtp</b><i>_</i><b>skip</b><i>_</i><b>4xx</b><i>_</i><b>greeting</b>
-              Skip  servers that greet us with a 4xx status code.
+              Skip servers that greet us with a 4xx status  code.
 
        <b>smtp</b><i>_</i><b>skip</b><i>_</i><b>5xx</b><i>_</i><b>greeting</b>
-              Skip servers that greet us with a 5xx status  code.
+              Skip  servers that greet us with a 5xx status code.
 
        <b>smtp</b><i>_</i><b>skip</b><i>_</i><b>quit</b><i>_</i><b>response</b>
-              Do  not  wait for the server response after sending
+              Do not wait for the server response  after  sending
               QUIT.
 
        <b>smtp</b><i>_</i><b>pix</b><i>_</i><b>workaround</b><i>_</i><b>delay</b><i>_</i><b>time</b>
-              The time to pause before sending  .&lt;CR&gt;&lt;LF&gt;,  while
-              working    around    the    CISCO    PIX   firewall
+              The  time  to pause before sending .&lt;CR&gt;&lt;LF&gt;, while
+              working   around    the    CISCO    PIX    firewall
               &lt;CR&gt;&lt;LF&gt;.&lt;CR&gt;&lt;LF&gt; bug.
 
        <b>smtp</b><i>_</i><b>pix</b><i>_</i><b>workaround</b><i>_</i><b>threshold</b><i>_</i><b>time</b>
-              The time a message must be queued before the  CISCO
-              PIX  firewall  &lt;CR&gt;&lt;LF&gt;.&lt;CR&gt;&lt;LF&gt;  bug workaround is
+              The  time a message must be queued before the CISCO
+              PIX firewall &lt;CR&gt;&lt;LF&gt;.&lt;CR&gt;&lt;LF&gt;  bug  workaround  is
               turned on.
+
+<b>MIME</b> <b>Conversion</b>
+       <b>disable</b><i>_</i><b>mime</b><i>_</i><b>output</b><i>_</i><b>conversion</b>
+              Disable  the  conversion of 8BITMIME format to 7BIT
+              format when the remote system  does  not  advertise
+              8BITMIME support.
+
+       <b>mime</b><i>_</i><b>boundary</b><i>_</i><b>length</b><i>_</i><b>limit</b>
+              The amount of space that will be allocated for MIME
+              multipart boundary strings. The MIME  processor  is
+              unable to distinguish between boundary strings that
+              do   not   differ   in   the   first   <b>$mime</b><i>_</i><b>bound-</b>
+              <b>ary</b><i>_</i><b>length</b><i>_</i><b>limit</b> characters.
+
+       <b>mime</b><i>_</i><b>nesting</b><i>_</i><b>limit</b>
+              The  maximal  nesting  level of multipart mail that
+              the MIME processor can handle. Refuse mail that  is
+              nested deeper, when converting from 8BITMIME format
+              to 7BIT format.
 
 <b>Authentication</b> <b>controls</b>
        <b>smtp</b><i>_</i><b>sasl</b><i>_</i><b>auth</b><i>_</i><b>enable</b>

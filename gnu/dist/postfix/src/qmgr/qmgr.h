@@ -15,11 +15,6 @@
 #include <scan_dir.h>
 
  /*
-  * Global library.
-  */
-#include <maps.h>
-
- /*
   * The queue manager is built around lots of mutually-referring structures.
   * These typedefs save some typing.
   */
@@ -154,6 +149,7 @@ struct QMGR_QUEUE {
     QMGR_ENTRY_LIST busy;		/* messages on the wire */
     QMGR_QUEUE_LIST peers;		/* neighbor queues */
     char   *reason;			/* why unavailable */
+    time_t  clog_time_to_warn;		/* time of next warning */
 };
 
 #define	QMGR_QUEUE_TODO	1		/* waiting for service */
@@ -177,6 +173,7 @@ extern QMGR_QUEUE *qmgr_queue_find(QMGR_TRANSPORT *, const char *);
   */
 struct QMGR_RCPT {
     long    offset;			/* REC_TYPE_RCPT byte */
+    char   *orig_rcpt;			/* null or original recipient */
     char   *address;			/* complete address */
     QMGR_QUEUE *queue;			/* resolved queue */
 };
@@ -188,7 +185,7 @@ struct QMGR_RCPT_LIST {
 };
 
 extern void qmgr_rcpt_list_init(QMGR_RCPT_LIST *);
-extern void qmgr_rcpt_list_add(QMGR_RCPT_LIST *, long, const char *);
+extern void qmgr_rcpt_list_add(QMGR_RCPT_LIST *, long, const char *, const char *);
 extern void qmgr_rcpt_list_free(QMGR_RCPT_LIST *);
 
  /*
@@ -226,6 +223,7 @@ struct QMGR_MESSAGE {
     long    data_offset;		/* data seek offset */
     char   *queue_name;			/* queue name */
     char   *queue_id;			/* queue file */
+    char   *encoding;			/* content encoding */
     char   *sender;			/* complete address */
     char   *verp_delims;		/* VERP delimiters */
     char   *errors_to;			/* error report address */
@@ -241,8 +239,6 @@ struct QMGR_MESSAGE {
 
 extern int qmgr_message_count;
 extern int qmgr_recipient_count;
-extern MAPS *qmgr_relocated;
-extern MAPS *qmgr_virtual;
 
 extern void qmgr_message_free(QMGR_MESSAGE *);
 extern void qmgr_message_update_warn(QMGR_MESSAGE *);
@@ -254,7 +250,7 @@ extern QMGR_MESSAGE *qmgr_message_realloc(QMGR_MESSAGE *);
   */
 extern void qmgr_defer_transport(QMGR_TRANSPORT *, const char *);
 extern void qmgr_defer_todo(QMGR_QUEUE *, const char *);
-extern void qmgr_defer_recipient(QMGR_MESSAGE *, const char *, const char *);
+extern void qmgr_defer_recipient(QMGR_MESSAGE *, QMGR_RCPT *, const char *);
 
  /*
   * qmgr_bounce.c

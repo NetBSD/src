@@ -139,6 +139,7 @@ void    smtpd_chat_query(SMTPD_STATE *state)
 void    smtpd_chat_reply(SMTPD_STATE *state, char *format,...)
 {
     va_list ap;
+    int     delay = 0;
 
     va_start(ap, format);
     vstring_vsprintf(state->buffer, format, ap);
@@ -157,9 +158,10 @@ void    smtpd_chat_reply(SMTPD_STATE *state, char *format,...)
      * errors within a session.
      */
     if (state->error_count > var_smtpd_soft_erlim)
-	sleep(state->error_count);
+	sleep(delay = (state->error_count > var_smtpd_err_sleep ?
+		       state->error_count : var_smtpd_err_sleep));
     else if (STR(state->buffer)[0] == '4' || STR(state->buffer)[0] == '5')
-	sleep(var_smtpd_err_sleep);
+	sleep(delay = var_smtpd_err_sleep);
 
     smtp_fputs(STR(state->buffer), LEN(state->buffer), state->client);
 
@@ -168,8 +170,16 @@ void    smtpd_chat_reply(SMTPD_STATE *state, char *format,...)
      * timeouts with pipelined SMTP sessions that have lots of server-side
      * delays (tarpit delays or DNS lookups for UCE restrictions).
      */
-    if (time((time_t *) 0) - vstream_ftime(state->client) > 10)
+    if (delay || time((time_t *) 0) - vstream_ftime(state->client) > 10)
 	vstream_fflush(state->client);
+
+    /*
+     * Abort immediately if the connection is broken.
+     */
+    if (vstream_ftimeout(state->client))
+	vstream_longjmp(state->client, SMTP_ERR_TIME);
+    if (vstream_ferror(state->client))
+	vstream_longjmp(state->client, SMTP_ERR_EOF);
 }
 
 /* print_line - line_wrap callback */

@@ -110,6 +110,52 @@
  */
 #define STR(s)	vstring_str(s)
 
+ /*
+  * Macros to handle API differences between SASLv1 and SASLv2. Specifics:
+  * 
+  * The SASL_LOG_* constants were renamed in SASLv2.
+  * 
+  * SASLv2's sasl_server_new takes two new parameters to specify local and
+  * remote IP addresses for auth mechs that use them.
+  * 
+  * SASLv2's sasl_server_start and sasl_server_step no longer have the errstr
+  * parameter.
+  * 
+  * SASLv2's sasl_decode64 function takes an extra parameter for the length of
+  * the output buffer.
+  * 
+  * The other major change is that SASLv2 now takes more responsibility for
+  * deallocating memory that it allocates internally.  Thus, some of the
+  * function parameters are now 'const', to make sure we don't try to free
+  * them too.  This is dealt with in the code later on.
+  */
+
+#if SASL_VERSION_MAJOR < 2
+/* SASL version 1.x */
+#define SASL_LOG_WARN SASL_LOG_WARNING
+#define SASL_LOG_NOTE SASL_LOG_INFO
+#define SASL_SERVER_NEW(srv, fqdn, rlm, lport, rport, cb, secflags, pconn) \
+	sasl_server_new(srv, fqdn, rlm, cb, secflags, pconn)
+#define SASL_SERVER_START(conn, mech, clin, clinlen, srvout, srvoutlen, err) \
+	sasl_server_start(conn, mech, clin, clinlen, srvout, srvoutlen, err)
+#define SASL_SERVER_STEP(conn, clin, clinlen, srvout, srvoutlen, err) \
+	sasl_server_step(conn, clin, clinlen, srvout, srvoutlen, err)
+#define SASL_DECODE64(in, inlen, out, outmaxlen, outlen) \
+	sasl_decode64(in, inlen, out, outlen)
+#endif
+
+#if SASL_VERSION_MAJOR >= 2
+/* SASL version > 2.x */
+#define SASL_SERVER_NEW(srv, fqdn, rlm, lport, rport, cb, secflags, pconn) \
+	sasl_server_new(srv, fqdn, rlm, lport, rport, cb, secflags, pconn)
+#define SASL_SERVER_START(conn, mech, clin, clinlen, srvout, srvoutlen, err) \
+	sasl_server_start(conn, mech, clin, clinlen, srvout, srvoutlen)
+#define SASL_SERVER_STEP(conn, clin, clinlen, srvout, srvoutlen, err) \
+	sasl_server_step(conn, clin, clinlen, srvout, srvoutlen)
+#define SASL_DECODE64(in, inlen, out, outmaxlen, outlen) \
+	sasl_decode64(in, inlen, out, outmaxlen, outlen)
+#endif
+
 /* smtpd_sasl_log - SASL logging callback */
 
 static int smtpd_sasl_log(void *unused_context, int priority,
@@ -117,13 +163,18 @@ static int smtpd_sasl_log(void *unused_context, int priority,
 {
     switch (priority) {
 	case SASL_LOG_ERR:
-	case SASL_LOG_WARNING:
+	case SASL_LOG_WARN:
 	msg_warn("SASL authentication problem: %s", message);
 	break;
-    case SASL_LOG_INFO:
+    case SASL_LOG_NOTE:
 	if (msg_verbose)
 	    msg_info("SASL authentication info: %s", message);
 	break;
+#if SASL_VERSION_MAJOR >= 2
+    case SASL_LOG_FAIL:
+	msg_warn("SASL authentication failure: %s", message);
+	break;
+#endif
     }
     return SASL_OK;
 }
@@ -144,11 +195,13 @@ static NAME_MASK smtpd_sasl_mask[] = {
     "noactive", SASL_SEC_NOACTIVE,
     "nodictionary", SASL_SEC_NODICTIONARY,
     "noanonymous", SASL_SEC_NOANONYMOUS,
+#if SASL_VERSION_MAJOR >= 2
+    "mutual_auth", SASL_SEC_MUTUAL_AUTH,
+#endif
     0,
 };
 
 static int smtpd_sasl_opts;
-
 
 /* smtpd_sasl_initialize - per-process initialization */
 
@@ -172,8 +225,16 @@ void    smtpd_sasl_initialize(void)
 
 void    smtpd_sasl_connect(SMTPD_STATE *state)
 {
+#if SASL_VERSION_MAJOR < 2
     unsigned sasl_mechanism_count;
+
+#else
+    int     sasl_mechanism_count;
+
+#endif
     sasl_security_properties_t sec_props;
+    char   *server_address;
+    char   *client_address;
 
     /*
      * Initialize SASL-specific state variables. Use long-lived storage for
@@ -194,8 +255,28 @@ void    smtpd_sasl_connect(SMTPD_STATE *state)
      */
 #define NO_SECURITY_LAYERS	(0)
 #define NO_SESSION_CALLBACKS	((sasl_callback_t *) 0)
+#define NO_AUTH_REALM		((char *) 0)
 
-    if (sasl_server_new("smtp", var_myhostname, var_smtpd_sasl_realm,
+#if SASL_VERSION_MAJOR >= 2 && defined(USE_SASL_IP_AUTH)
+
+    /*
+     * Get IP addresses of local and remote endpoints for SASL.
+     */
+#error "USE_SASL_IP_AUTH is not implemented"
+
+#else
+
+    /*
+     * Don't give any IP address information to SASL.  SASLv1 doesn't use it,
+     * and in SASLv2 this will disable any mechaniams that do.
+     */
+    server_address = 0;
+    client_address = 0;
+#endif
+
+    if (SASL_SERVER_NEW("smtp", var_myhostname, *var_smtpd_sasl_realm ?
+			var_smtpd_sasl_realm : NO_AUTH_REALM,
+			server_address, client_address,
 			NO_SESSION_CALLBACKS, NO_SECURITY_LAYERS,
 			&state->sasl_conn) != SASL_OK)
 	msg_fatal("SASL per-connection server initialization");
@@ -239,7 +320,10 @@ void    smtpd_sasl_connect(SMTPD_STATE *state)
 void    smtpd_sasl_disconnect(SMTPD_STATE *state)
 {
     if (state->sasl_mechanism_list) {
+#if SASL_VERSION_MAJOR < 2
+	/* SASL version 1 doesn't free memory that it allocates. */
 	free(state->sasl_mechanism_list);
+#endif
 	state->sasl_mechanism_list = 0;
     }
     if (state->sasl_conn) {
@@ -262,10 +346,21 @@ char   *smtpd_sasl_authenticate(SMTPD_STATE *state,
     unsigned enc_length;
     unsigned enc_length_out;
     unsigned reply_len;
-    char   *serverout = 0;
     unsigned serveroutlen;
     int     result;
+
+#if SASL_VERSION_MAJOR < 2
+    char   *serverout = 0;
+
+#else
+    const char *serverout = 0;
+
+#endif
+
+#if SASL_VERSION_MAJOR < 2
     const char *errstr = 0;
+
+#endif
 
 #define IFELSE(e1,e2,e3) ((e1) ? (e2) : (e3))
 
@@ -288,8 +383,8 @@ char   *smtpd_sasl_authenticate(SMTPD_STATE *state,
 	reply_len = strlen(init_response);
 	VSTRING_SPACE(state->sasl_decoded, reply_len);
 	dec_buffer = STR(state->sasl_decoded);
-	if (sasl_decode64(init_response, reply_len,
-			  dec_buffer, &dec_length) != SASL_OK)
+	if (SASL_DECODE64(init_response, reply_len,
+			  dec_buffer, reply_len, &dec_length) != SASL_OK)
 	    return ("501 Authentication failed: malformed initial response");
 	if (msg_verbose)
 	    msg_info("%s: decoded initial response %s", myname, dec_buffer);
@@ -297,7 +392,7 @@ char   *smtpd_sasl_authenticate(SMTPD_STATE *state,
 	dec_buffer = 0;
 	dec_length = 0;
     }
-    result = sasl_server_start(state->sasl_conn, sasl_method, dec_buffer,
+    result = SASL_SERVER_START(state->sasl_conn, sasl_method, dec_buffer,
 			    dec_length, &serverout, &serveroutlen, &errstr);
 
     /*
@@ -327,7 +422,10 @@ char   *smtpd_sasl_authenticate(SMTPD_STATE *state,
 	if (sasl_encode64(serverout, serveroutlen, STR(state->sasl_encoded),
 			  enc_length, &enc_length_out) != SASL_OK)
 	    msg_panic("%s: sasl_encode64 botch", myname);
+#if SASL_VERSION_MAJOR < 2
+	/* SASL version 1 doesn't free memory that it allocates. */
 	free(serverout);
+#endif
 	serverout = 0;
 	smtpd_chat_reply(state, "334 %s", STR(state->sasl_encoded));
 
@@ -342,21 +440,24 @@ char   *smtpd_sasl_authenticate(SMTPD_STATE *state,
 	    return ("501 Authentication aborted");	/* XXX */
 	reply_len = VSTRING_LEN(state->buffer);
 	VSTRING_SPACE(state->sasl_decoded, reply_len);
-	if (sasl_decode64(vstring_str(state->buffer), reply_len,
-			  STR(state->sasl_decoded), &dec_length) != SASL_OK)
+	if (SASL_DECODE64(vstring_str(state->buffer), reply_len,
+			  STR(state->sasl_decoded), reply_len,
+			  &dec_length) != SASL_OK)
 	    return ("501 Error: malformed authentication response");
 	if (msg_verbose)
 	    msg_info("%s: decoded response: %.*s",
 		     myname, (int) dec_length, STR(state->sasl_decoded));
-	result = sasl_server_step(state->sasl_conn, STR(state->sasl_decoded),
+	result = SASL_SERVER_STEP(state->sasl_conn, STR(state->sasl_decoded),
 			    dec_length, &serverout, &serveroutlen, &errstr);
     }
 
     /*
      * Cleanup. What an awful interface.
      */
+#if SASL_VERSION_MAJOR < 2
     if (serverout)
 	free(serverout);
+#endif
 
     /*
      * The authentication protocol was completed.
@@ -369,8 +470,13 @@ char   *smtpd_sasl_authenticate(SMTPD_STATE *state,
      * accounting purposes. For the sake of completeness we also record the
      * authentication method that was used. XXX Do not free(serverout).
      */
+#if SASL_VERSION_MAJOR >= 2
+    result = sasl_getprop(state->sasl_conn, SASL_USERNAME,
+			  (const void **) &serverout);
+#else
     result = sasl_getprop(state->sasl_conn, SASL_USERNAME,
 			  (void **) &serverout);
+#endif
     if (result != SASL_OK || serverout == 0)
 	msg_panic("%s: sasl_getprop SASL_USERNAME botch", myname);
     state->sasl_username = mystrdup(serverout);
