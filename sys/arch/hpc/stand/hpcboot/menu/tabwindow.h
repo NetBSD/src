@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: tabwindow.h,v 1.1 2001/02/09 18:35:03 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: tabwindow.h,v 1.2 2001/05/08 18:51:24 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@ private:
 
 public:
 	explicit TabWindowBase(HpcBootApp &app, HWND parent,
-			       RECT &rect, int id)
+	    RECT &rect, int id)
 		: Window(app, parent) {
 		_rect = rect;
 		_id = id;
@@ -106,7 +106,7 @@ public:
 	// adjust my dialog size to tab-control
 	void adjust(void) {
 		MoveWindow(_window, _rect.left, 0, _rect.right - _rect.left,
-			   _rect.bottom - _rect.top, TRUE);
+		    _rect.bottom - _rect.top, TRUE);
 	}
 	virtual void hide(void) {
 		ShowWindow(_window, SW_HIDE);

@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: memory.h,v 1.2 2001/03/25 17:14:53 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: memory.h,v 1.3 2001/05/08 18:51:23 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -131,7 +131,7 @@ public:
 	// get tagged page from low address of pool.
 	BOOL getTaggedPage(vaddr_t &vaddr, paddr_t &paddr);
 	BOOL getTaggedPage(vaddr_t &v, paddr_t &p, struct PageTag **pvec,
-			   paddr_t &pvec_paddr);
+	    paddr_t &pvec_paddr);
 };
 
 //
@@ -145,8 +145,7 @@ private:
 
 public:
 	MemoryManager_LockPages(BOOL(*)(LPVOID, DWORD, PDWORD, int),
-				BOOL(*)(LPVOID, DWORD),
-				Console *&, size_t, int = 0);
+	    BOOL(*)(LPVOID, DWORD), Console *&, size_t, int = 0);
 	virtual ~MemoryManager_LockPages(void);
 	paddr_t searchPage(vaddr_t vaddr);
 };
@@ -177,14 +176,14 @@ private:
 	}
 	BOOL checkMagic(vaddr_t v) {
 		volatile u_int32_t *marker =(u_int32_t *)v;
-		return(marker[0] == _magic0) &&(marker[1] == _magic1); 
+		return (marker[0] == _magic0) && (marker[1] == _magic1); 
 	}
 	void clearMagic(void) {
 		_magic_addr[0] = MAGIC_CHECK_DONE;
 		_magic_addr[1] = MAGIC_CHECK_DONE;
 	}
 	vaddr_t checkMagicRegion(vaddr_t start, vsize_t size,
-				 vsize_t step = 8) {
+	    vsize_t step = 8) {
 		for (vaddr_t ref = start; ref < start + size; ref += step)
 			if (checkMagic(ref))
 				return ref - start;

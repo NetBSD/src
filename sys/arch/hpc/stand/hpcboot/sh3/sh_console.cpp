@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: sh_console.cpp,v 1.5 2001/04/24 19:28:01 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: sh_console.cpp,v 1.6 2001/05/08 18:51:25 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -131,5 +131,3 @@ SHConsole::HD64461COMPrint(const char *buf)
 {
 	HD64461COM_PRINT(buf);
 }
-
-

@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: tabwindow.cpp,v 1.1 2001/02/09 18:35:02 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: tabwindow.cpp,v 1.2 2001/05/08 18:51:24 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -50,19 +50,19 @@ TabWindowBase::create(LPCREATESTRUCT aux)
 	int cx = _rect.right - _rect.left;
 	int cy = _rect.bottom - _rect.top;
 	_window = CreateWindow(WC_TABCONTROL, L"",
-			       WS_CHILD | WS_VISIBLE | WS_TABSTOP |
-			       WS_CLIPSIBLINGS | TCS_MULTILINE | TCS_VERTICAL,
-			       _rect.left, _rect.top, cx, cy, _parent_window,
-			       reinterpret_cast <HMENU>(_id), aux->hInstance,
-			       NULL); // this is system window class
+	    WS_CHILD | WS_VISIBLE | WS_TABSTOP |
+	    WS_CLIPSIBLINGS | TCS_MULTILINE | TCS_VERTICAL,
+	    _rect.left, _rect.top, cx, cy, _parent_window,
+	    reinterpret_cast <HMENU>(_id), aux->hInstance,
+	    NULL); // this is system window class
 
 	if (!IsWindow(_window))
 		return FALSE;
 
 	// set tab image.
 	HIMAGELIST img = ImageList_Create(TABCTRL_TAB_IMAGE_WIDTH,
-					  TABCTRL_TAB_IMAGE_HEIGHT,
-					  ILC_COLOR, 3, 0);
+	    TABCTRL_TAB_IMAGE_HEIGHT,
+	    ILC_COLOR, 3, 0);
 	_load_bitmap(img, L"IDI_HPCMENU_MAIN");
 	_load_bitmap(img, L"IDI_HPCMENU_OPTION");
 	_load_bitmap(img, L"IDI_HPCMENU_CONSOLE");
@@ -88,9 +88,9 @@ BOOL
 TabWindow::create(LPCREATESTRUCT unused)
 {
 	_window = CreateDialogParam 
-		(_app._instance, _name, _base._window,
-		 reinterpret_cast <DLGPROC>(Window::_dlg_proc),
-		 reinterpret_cast <LPARAM>(this));
+	    (_app._instance, _name, _base._window,
+		reinterpret_cast <DLGPROC>(Window::_dlg_proc),
+		reinterpret_cast <LPARAM>(this));
 
 	return _window ? TRUE : FALSE;
 }
@@ -130,12 +130,12 @@ BOOL
 TabWindow::_is_checked(int id)
 {
 	return SendDlgItemMessage(_window, id, BM_GETCHECK, 0, 0)
-		? TRUE : FALSE;
+	    ? TRUE : FALSE;
 }
 
 void
 TabWindow::_set_check(int id, BOOL onoff)
 {
 	SendDlgItemMessage(_window, id, BM_SETCHECK,
-			   onoff ? BST_CHECKED : BST_UNCHECKED, 0);
+	    onoff ? BST_CHECKED : BST_UNCHECKED, 0);
 }
