@@ -1,4 +1,4 @@
-/*	$NetBSD: via.c,v 1.16 1995/03/25 22:30:39 briggs Exp $	*/
+/*	$NetBSD: via.c,v 1.17 1995/04/08 13:16:33 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -49,6 +49,7 @@ static int	scsi_drq_intr(void), scsi_irq_intr(void);
 long	via1_noint(), via2_noint();
 long	mrg_adbintr(), mrg_pmintr(), rtclock_intr(), profclock();
 long	via2_nubus_intr();
+long	rbv_nubus_intr();
 int	slot_noint();
 int	VIA2 = 1;		/* default for II, IIx, IIcx, SE/30. */
 
@@ -120,8 +121,17 @@ void VIA_initialize()
 		/* turn off timer latch */
 		via_reg(VIA2, vACR) &= 0x3f;
 
+		/*
+		 * Turn off SE/30 video interrupts.
+		 */
+		if (mac68k_machine.machineid == MACH_MACSE30) {
+			via_reg(VIA1, vBufB) |= (0x40);
+			via_reg(VIA1, vDirB) |= (0x40);
+		}
 #if 1
-		/* unlock nubus */
+		/*
+		 * unlock nubus
+		 */
 		via_reg(VIA2, vPCR)   = 0x06;
 		via_reg(VIA2, vBufB) |= 0x02;
 		via_reg(VIA2, vDirB) |= 0x02;
@@ -134,6 +144,8 @@ void VIA_initialize()
 			someday. -- BG */
 		/* enable specific interrupts */
 		/* via_reg(VIA2, rIER) = RBV_INTS | 0x80; */
+		real_via2_intr = rbv_intr;
+		via2itab[1] = rbv_nubus_intr;
 	}
 	via_inited=1;
 }
@@ -152,10 +164,6 @@ void via1_intr(struct frame *fp)
 
 	if (intbits == 0)
 		return;
-
-	if (intbits & 0x04) {
-		asm("movw #0x2400, sr");
-	}
 
 	via_reg(VIA1, vIFR) = intbits;
 
