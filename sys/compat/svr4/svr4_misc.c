@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_misc.c,v 1.99 2003/01/18 08:44:26 thorpej Exp $	 */
+/*	$NetBSD: svr4_misc.c,v 1.100 2003/01/28 21:57:45 atatat Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_misc.c,v 1.99 2003/01/18 08:44:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_misc.c,v 1.100 2003/01/28 21:57:45 atatat Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -542,11 +542,6 @@ svr4_sys_mmap(l, v, retval)
 	SCARG(&mm, addr) = SCARG(uap, addr);
 	SCARG(&mm, pos) = SCARG(uap, pos);
 
-	rp = (void *) round_page((vaddr_t)l->l_proc->p_vmspace->vm_daddr + MAXDSIZ);
-	if ((SCARG(&mm, flags) & MAP_FIXED) == 0 &&
-	    SCARG(&mm, addr) != 0 && SCARG(&mm, addr) < rp)
-		SCARG(&mm, addr) = rp;
-
 	return sys_mmap(l, &mm, retval);
 }
 
@@ -577,11 +572,6 @@ svr4_sys_mmap64(l, v, retval)
 	SCARG(&mm, fd) = SCARG(uap, fd);
 	SCARG(&mm, addr) = SCARG(uap, addr);
 	SCARG(&mm, pos) = SCARG(uap, pos);
-
-	rp = (void *) round_page((vaddr_t)l->l_proc->p_vmspace->vm_daddr + MAXDSIZ);
-	if ((SCARG(&mm, flags) & MAP_FIXED) == 0 &&
-	    SCARG(&mm, addr) != 0 && SCARG(&mm, addr) < rp)
-		SCARG(&mm, addr) = rp;
 
 	return sys_mmap(l, &mm, retval);
 }
