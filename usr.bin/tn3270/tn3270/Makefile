@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.34 2003/08/01 17:04:05 lukem Exp $
+#	$NetBSD: Makefile,v 1.35 2003/10/19 04:30:30 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -18,50 +18,64 @@ MKASTOSCDIR !=cd $(.CURDIR)/../tools/mkastosc && ${PRINTOBJDIR}
 MKASTOSC= ${MKASTOSCDIR}/mkastosc
 
 ${MKASTOSC}:
-	cd ${.CURDIR}/../tools/mkastosc; ${MAKE}
+	@cd ${.CURDIR}/../tools/mkastosc && ${MAKE}
 
 MKASTODSDIR!=cd $(.CURDIR)/../tools/mkastods && ${PRINTOBJDIR}
 MKASTODS= ${MKASTODSDIR}/mkastods
 
 ${MKASTODS}:
-	cd ${.CURDIR}/../tools/mkastods; ${MAKE}
+	@cd ${.CURDIR}/../tools/mkastods && ${MAKE}
 
 MKDSTOASDIR!=cd $(.CURDIR)/../tools/mkdstoas && ${PRINTOBJDIR}
 MKDSTOAS= ${MKDSTOASDIR}/mkdstoas
 
 ${MKDSTOAS}:
-	cd ${.CURDIR}/../tools/mkdstoas; ${MAKE}
+	@cd ${.CURDIR}/../tools/mkdstoas && ${MAKE}
 
 MKHITSDIR!=cd $(.CURDIR)/../tools/mkhits && ${PRINTOBJDIR}
 MKHITS= ${MKHITSDIR}/mkhits
 
 ${MKHITS}:
-	cd ${.CURDIR}/../tools/mkhits; ${MAKE}
+	@cd ${.CURDIR}/../tools/mkhits && ${MAKE}
 
 astosc.out: ${.CURDIR}/../ctlr/hostctlr.h ${.CURDIR}/../ctlr/function.h \
 	    ${.CURDIR}/../ctlr/${KBD} ${MKASTOSC}
+	${_MKMSGCREATE}
+	${_MKCMD}\
 	${MKASTOSC} \
 	    ${.CURDIR}/../ctlr/hostctlr.h ${.CURDIR}/../ctlr/function.h \
 	    < ${.CURDIR}/../ctlr/${KBD} > astosc.tmp
+	${_MKCMD}\
 	mv -f astosc.tmp ${.TARGET}
 CLEANFILES+=	astosc.tmp astosc.out
 
 asc_disp.out: ${MKASTODS}
+	${_MKMSGCREATE}
+	${_MKCMD}\
 	${MKASTODS} > asc_disp.tmp
+	${_MKCMD}\
 	mv -f asc_disp.tmp ${.TARGET}
 CLEANFILES+=	asc_disp.tmp asc_disp.out
 
 disp_asc.out: ${MKDSTOAS}
+	${_MKMSGCREATE}
+	${_MKCMD}\
 	${MKDSTOAS} > disp_asc.tmp
+	${_MKCMD}\
 	mv -f disp_asc.tmp ${.TARGET}
 CLEANFILES+=	disp_asc.tmp disp_asc.out
 
 kbd.out: ${.CURDIR}/../ctlr/hostctlr.h ${.CURDIR}/../ctlr/${KBD} ${MKHITS}
+	${_MKMSGCREATE}
+	${_MKCMD}\
 	${CC} ${CPPFLAGS} -E ${.CURDIR}/../ctlr/function.c > TMPfunc.out
+	${_MKCMD}\
 	${MKHITS} \
 	    ${.CURDIR}/../ctlr/hostctlr.h TMPfunc.out \
 	    < ${.CURDIR}/../ctlr/${KBD} > kbd.tmp
+	${_MKCMD}\
 	rm -f TMPFunc.out
+	${_MKCMD}\
 	mv -f kbd.tmp ${.TARGET}
 CLEANFILES+=	TMPfunc.out kbd.tmp kbd.out
 

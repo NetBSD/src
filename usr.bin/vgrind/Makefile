@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2003/07/10 10:34:45 lukem Exp $
+#	$NetBSD: Makefile,v 1.18 2003/10/19 04:30:30 lukem Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/9/93
 
 .include <bsd.own.mk>
@@ -34,6 +34,8 @@ CAP_MKDB_ENDIAN=
 
 .if ${MKSHARE} != "no"
 vgrindefs.src.db: vgrindefs.src
+	${_MKMSGCREATE}
+	${_MKCMD}\
 	${TOOL_CAP_MKDB} ${CAP_MKDB_ENDIAN} -f vgrindefs.src \
 	    ${.CURDIR}/vgrindefs.src
 .else

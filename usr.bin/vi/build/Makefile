@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21 2003/08/28 22:04:23 dsl Exp $
+#	$NetBSD: Makefile,v 1.22 2003/10/19 04:30:30 lukem Exp $
 #
 #	@(#)Makefile.in	8.75 (Berkeley) 10/23/96
 
@@ -41,6 +41,8 @@ DPSRCS+=options_def.h
 CLEANFILES+=options_def.h
 
 options_def.h: options.awk options.c
+	${_MKMSGCREATE}
+	${_MKCMD}\
 	awk -f ${.ALLSRC} >${.TARGET}
 
 .include "../../Makefile.inc"

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.24 2003/08/01 17:04:04 lukem Exp $
+#	$NetBSD: Makefile,v 1.25 2003/10/19 04:30:30 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -11,14 +11,17 @@ MKASTOSCDIR!=cd $(.CURDIR)/../tools/mkastosc && ${PRINTOBJDIR}
 MKASTOSC=${MKASTOSCDIR}/mkastosc
 
 ${MKASTOSC}:
-	cd ${.CURDIR}/../tools/mkastosc; ${MAKE}
+	@cd ${.CURDIR}/../tools/mkastosc && ${MAKE}
 
 CLEANFILES+= astosc.out
 astosc.out: ${.CURDIR}/../ctlr/hostctlr.h ${.CURDIR}/../ctlr/function.h \
 	    ${.CURDIR}/../ctlr/${KBD} ${MKASTOSC}
+	${_MKMSGCREATE}
+	${_MKCMD}\
 	${MKASTOSC} \
 	    ${.CURDIR}/../ctlr/hostctlr.h ${.CURDIR}/../ctlr/function.h \
 	    < ${.CURDIR}/../ctlr/${KBD} > tmp
+	${_MKCMD}\
 	mv -f tmp ${.TARGET}
 
 .include <bsd.prog.mk>
