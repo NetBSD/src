@@ -1,0 +1,93 @@
+#	$NetBSD: files.ev64260,v 1.1 2003/03/05 22:08:25 matt Exp $
+#
+# Marvell (Galileo) "EV64260" evaluation board's specific configuration info
+#
+file	dev/cninit.c
+
+file	arch/evbppc/ev64260/autoconf.c
+file	arch/evbppc/ev64260/bus_space.c
+file	arch/evbppc/ev64260/clock.c
+file	arch/evbppc/ev64260/machdep.c
+#file	arch/evbppc/ev64260/pci_machdep.c
+
+#file	arch/powerpc/marvell/bus_dma.c
+file	arch/powerpc/marvell/extintr.c
+file	arch/powerpc/powerpc/bus_dma.c
+
+include "dev/marvell/files.discovery"
+
+#
+# Machine-independent SCSI drivers
+#
+include "dev/scsipi/files.scsipi"
+
+#
+# Machine-independent ATA drivers
+#
+
+include "dev/ata/files.ata"
+
+include	"dev/usb/files.usb"
+
+#
+# Memory Disk for install floppy
+#
+file	dev/md_root.c				memory_disk_hooks
+
+#
+# Compatibility modules
+#
+
+#
+# System bus types
+#
+define mainbus { }
+device	mainbus: isabus, pcibus, mainbus
+attach	mainbus at root
+file	arch/evbppc/ev64260/mainbus.c		mainbus|cpu needs-flag
+
+attach	gt at mainbus
+file	arch/evbppc/ev64260/gt_mainbus.c	gt
+
+device	cpu
+attach	cpu at mainbus
+
+#
+# PCI-only drivers
+# XXX MUST BE INCLUDED BEFORE files.isa, as long as files.isa attaches
+# XXX devices to 'pci'.
+#
+include "dev/i2o/files.i2o"
+include "dev/pci/files.pci"
+
+# PCI-ISA bridges
+device	pcib: isabus
+attach	pcib at pci
+file	arch/evbppc/pci/pcib.c			pcib
+
+#
+# ISA and mixed ISA+PCI drivers
+#
+
+include "dev/isa/files.isa"
+
+file	arch/evbppc/isa/isa_machdep.c		isa
+file	arch/evbppc/isa/isadma_machdep.c	isa
+
+# PC clock
+file	arch/evbppc/isa/isaclock.c		isa
+
+include	"dev/wscons/files.wscons"
+include	"dev/wsfont/files.wsfont"
+
+include "dev/pckbc/files.pckbc"
+
+# Floppy disk controller
+device	fdc {drive = -1}: isadma
+file	dev/isa/fd.c				fdc needs-flag
+
+attach	fdc at isa with fdc_isa
+file	dev/isa/fdc_isa.c			fdc_isa
+
+device	fd: disk
+attach	fd at fdc

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.5 2003/01/28 01:08:05 kent Exp $	*/
+/*	$NetBSD: bus.h,v 1.6 2003/03/05 22:08:27 matt Exp $	*/
 /*	$OpenBSD: bus.h,v 1.1 1997/10/13 10:53:42 pefo Exp $	*/
 
 /*-
@@ -114,11 +114,18 @@ typedef u_int32_t bus_size_t;
 typedef	u_int32_t bus_space_handle_t;
 typedef	const struct powerpc_bus_space *bus_space_tag_t;
 
+struct extent;
+
 struct powerpc_bus_space {
-	u_int32_t pbs_type;
+	int pbs_flags;
+#define	_BUS_SPACE_BIG_ENDIAN		0x00000001
+#define	_BUS_SPACE_LITTLE_ENDIAN	0x00000000
+#define	_BUS_SPACE_IO_TYPE		0x00000002
+#define	_BUS_SPACE_MEM_TYPE		0x00000000
 	bus_addr_t pbs_offset;
 	bus_addr_t pbs_base;
 	bus_addr_t pbs_limit;
+	struct extent *pbs_extent;
 	paddr_t (*pbs_mmap) __P((bus_space_tag_t, bus_addr_t, off_t, int, int));
 	int (*pbs_map) __P((bus_space_tag_t, bus_addr_t, bus_size_t, int,
 	    bus_space_handle_t *));
@@ -233,6 +240,8 @@ static __inline CAT3(u_int,m,_t)					      \
 CAT(bus_space_read_,n)(bus_space_tag_t tag, bus_space_handle_t bsh,	      \
      bus_size_t offset)							      \
 {									      \
+	if ((tag)->pbs_flags & _BUS_SPACE_BIG_ENDIAN)			      \
+	    return CAT(in,m)((volatile CAT3(u_int,m,_t) *)(bsh + (offset)));  \
 	return CAT3(in,m,rb)((volatile CAT3(u_int,m,_t) *)(bsh + (offset)));  \
 }
 
@@ -275,8 +284,12 @@ static __inline void							      \
 CAT(bus_space_read_multi_,n)(bus_space_tag_t tag, bus_space_handle_t bsh,     \
      bus_size_t offset, CAT3(u_int,m,_t) *addr, size_t count)		      \
 {									      \
-	CAT3(ins,m,rb)((volatile CAT3(u_int,m,_t) *)(bsh + (offset)),	      \
-	    (CAT3(u_int,m,_t) *)addr, (size_t)count);			      \
+	if ((tag)->pbs_flags & _BUS_SPACE_BIG_ENDIAN)			      \
+		CAT(ins,m)((volatile CAT3(u_int,m,_t) *)(bsh + (offset)),     \
+		    (CAT3(u_int,m,_t) *)addr, (size_t)count);		      \
+	else								      \
+		CAT3(ins,m,rb)((volatile CAT3(u_int,m,_t) *)(bsh + (offset)), \
+		    (CAT3(u_int,m,_t) *)addr, (size_t)count);		      \
 }
 
 bus_space_read_multi(1,8)
@@ -322,7 +335,10 @@ static __inline void							      \
 CAT(bus_space_write_,n)(bus_space_tag_t tag, bus_space_handle_t bsh,	      \
      bus_size_t offset, CAT3(u_int,m,_t) x)				      \
 {									      \
-	CAT3(out,m,rb)((volatile CAT3(u_int,m,_t) *)(bsh + (offset)), x);     \
+	if ((tag)->pbs_flags & _BUS_SPACE_BIG_ENDIAN)			      \
+		CAT(out,m)((volatile CAT3(u_int,m,_t) *)(bsh + (offset)), x); \
+	else								      \
+	     CAT3(out,m,rb)((volatile CAT3(u_int,m,_t) *)(bsh + (offset)), x);\
 }
 
 bus_space_write(1,8)
@@ -365,8 +381,12 @@ static __inline void							      \
 CAT(bus_space_write_multi_,n)(bus_space_tag_t tag, bus_space_handle_t bsh,    \
      bus_size_t offset, const CAT3(u_int,m,_t) *addr, size_t count)	      \
 {									      \
-	CAT3(outs,m,rb)((volatile CAT3(u_int,m,_t) *)(bsh + (offset)),	      \
-	    (CAT3(u_int,m,_t) *)addr, (size_t)count);			      \
+	if ((tag)->pbs_flags & _BUS_SPACE_BIG_ENDIAN)			      \
+		CAT(outs,m)((volatile CAT3(u_int,m,_t) *)(bsh + (offset)),    \
+		    (CAT3(u_int,m,_t) *)addr, (size_t)count);		      \
+	else								      \
+		CAT3(outs,m,rb)((volatile CAT3(u_int,m,_t) *)(bsh + (offset)),\
+		    (CAT3(u_int,m,_t) *)addr, (size_t)count);		      \
 }
 
 bus_space_write_multi(1,8)
