@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.2 1997/01/17 16:27:18 gwr Exp $	*/
+/*	$NetBSD: locore.s,v 1.3 1997/01/17 16:30:05 gwr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1079,7 +1079,7 @@ Lswnofpsave:
 	movc	d0,cacr			| invalidate cache(s)
 	pflusha				| flush entire TLB
 
-	movl	a1@(PCB_MMUCRP),a0	| get CRP phys. addr.
+	movl	a1@(PCB_MMUCRP),a0	| get CRP virtual address
 	pmove	a0@,crp			| load new user root pointer
 
 	| Reload registers of new process.
