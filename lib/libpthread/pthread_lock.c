@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_lock.c,v 1.1.2.8 2002/03/01 01:23:53 nathanw Exp $	*/
+/*	$NetBSD: pthread_lock.c,v 1.1.2.9 2002/10/16 18:34:40 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -79,7 +79,8 @@ pthread_spinlock(pthread_t thread, pthread_spin_t *lock)
 		if (ret == 1)
 			break;
 
-		/* As long as this is uniprocessor, encountering a
+		/*
+		 * As long as this is uniprocessor, encountering a
 		 * locked spinlock is a bug. 
 		 */
 		assert (ret == 1);
@@ -88,7 +89,8 @@ pthread_spinlock(pthread_t thread, pthread_spin_t *lock)
 		thread, thread->pt_spinlocks));
 		--thread->pt_spinlocks;
 			
-		/* We may be preempted while spinning. If so, we will
+		/*
+		 * We may be preempted while spinning. If so, we will
 		 * be restarted here if thread->pt_spinlocks is
 		 * nonzero, which can happen if:
 		 * a) we just got the lock
@@ -145,6 +147,7 @@ pthread_spintrylock(pthread_t thread, pthread_spin_t *lock)
 void
 pthread_spinunlock(pthread_t thread, pthread_spin_t *lock)
 {
+
 	__cpu_simple_unlock(lock);
 	SDPRINTF(("(pthread_spinunlock %p) decrementing spinlock from %d\n",
 		thread, thread->pt_spinlocks));
@@ -152,7 +155,8 @@ pthread_spinunlock(pthread_t thread, pthread_spin_t *lock)
 
 	PTHREADD_ADD(PTHREADD_SPINUNLOCKS);
 
-	/* If we were preempted while holding a spinlock, the
+	/*
+	 * If we were preempted while holding a spinlock, the
 	 * scheduler will notice this and continue us. To be good
 	 * citzens, we must now get out of here if that was our
 	 * last spinlock.
@@ -184,7 +188,8 @@ pthread_spin_init(pthread_spinlock_t *lock, int pshared)
 		return EINVAL;
 #endif
 	lock->pts_magic = _PT_SPINLOCK_MAGIC;
-	/* We don't actually use the pshared flag for anything;
+	/*
+	 * We don't actually use the pshared flag for anything;
 	 * cpu simple locks have all the process-shared properties 
 	 * that we want anyway.
 	 */
