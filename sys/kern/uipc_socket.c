@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1982, 1986, 1988, 1990 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1986, 1988, 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,8 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)uipc_socket.c	7.28 (Berkeley) 5/4/91
- *	$Id: uipc_socket.c,v 1.14 1994/05/04 11:24:06 mycroft Exp $
+ *	from: @(#)uipc_socket.c	8.3 (Berkeley) 4/15/94
+ *	$Id: uipc_socket.c,v 1.15 1994/05/13 06:01:37 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -71,7 +71,7 @@ socreate(dom, aso, type, proto)
 		prp = pffindproto(dom, proto, type);
 	else
 		prp = pffindtype(dom, type);
-	if (!prp || !prp->pr_usrreq)
+	if (prp == 0 || prp->pr_usrreq == 0)
 		return (EPROTONOSUPPORT);
 	if (prp->pr_type != type)
 		return (EPROTOTYPE);
@@ -299,6 +299,7 @@ bad:
 	return (error);
 }
 
+#define	SBLOCKWAIT(f)	(((f) & MSG_DONTWAIT) ? M_NOWAIT : M_WAITOK)
 /*
  * Send on a socket.
  * If send must go all at once and message is larger than
@@ -325,7 +326,7 @@ sosend(so, addr, uio, top, control, flags)
 	struct mbuf *control;
 	int flags;
 {
-	struct proc *p = curproc;	/* XXX */
+	struct proc *p = curproc;		/* XXX */
 	struct mbuf **mp;
 	register struct mbuf *m;
 	register long space, len, resid;
@@ -354,7 +355,7 @@ sosend(so, addr, uio, top, control, flags)
 #define	snderr(errno)	{ error = errno; splx(s); goto release; }
 
 restart:
-	if (error = sblock(&so->so_snd))
+	if (error = sblock(&so->so_snd, SBLOCKWAIT(flags)))
 		goto out;
 	do {
 		s = splnet();
@@ -408,15 +409,25 @@ restart:
 				MGET(m, M_WAIT, MT_DATA);
 				mlen = MLEN;
 			}
-			if (resid >= MINCLSIZE) {
+			if (resid >= MINCLSIZE && space >= MCLBYTES) {
 				MCLGET(m, M_WAIT);
 				if ((m->m_flags & M_EXT) == 0)
 					goto nopages;
 				mlen = MCLBYTES;
-				len = min(min(mlen, resid), space);
+#ifdef	MAPPED_MBUFS
+				len = min(MCLBYTES, resid);
+#else
+				if (atomic && top == 0) {
+					len = min(MCLBYTES - max_hdr, resid);
+					m->m_data += max_hdr;
+				} else
+					len = min(MCLBYTES, resid);
+#endif
+				space -= MCLBYTES;
 			} else {
 nopages:
 				len = min(min(mlen, resid), space);
+				space -= len;
 				/*
 				 * For datagram protocols, leave room
 				 * for protocol headers in first mbuf.
@@ -424,7 +435,6 @@ nopages:
 				if (atomic && top == 0 && len < mlen)
 					MH_ALIGN(m, len);
 			}
-			space -= len;
 			error = uiomove(mtod(m, caddr_t), (int)len, uio);
 			resid = uio->uio_resid;
 			m->m_len = len;
@@ -492,7 +502,6 @@ soreceive(so, paddr, uio, mp0, controlp, flagsp)
 	struct mbuf **controlp;
 	int *flagsp;
 {
-	struct proc *p = curproc;	/* XXX */
 	register struct mbuf *m, **mp;
 	register int flags, len, error, s, offset;
 	struct protosw *pr = so->so_proto;
@@ -532,7 +541,7 @@ bad:
 		    (struct mbuf *)0, (struct mbuf *)0);
 
 restart:
-	if (error = sblock(&so->so_rcv))
+	if (error = sblock(&so->so_rcv, SBLOCKWAIT(flags)))
 		return (error);
 	s = splnet();
 
@@ -540,14 +549,16 @@ restart:
 	/*
 	 * If we have less data than requested, block awaiting more
 	 * (subject to any timeout) if:
-	 *   1. the current count is less than the low water mark, or
+	 *   1. the current count is less than the low water mark,
 	 *   2. MSG_WAITALL is set, and it is possible to do the entire
-	 *	receive operation at once if we block (resid <= hiwat).
+	 *	receive operation at once if we block (resid <= hiwat), or
+	 *   3. MSG_DONTWAIT is not set.
 	 * If MSG_WAITALL is set but resid is larger than the receive buffer,
 	 * we have to do the receive in sections, and thus risk returning
 	 * a short count if a timeout or signal occurs after we start.
 	 */
-	while (m == 0 || so->so_rcv.sb_cc < uio->uio_resid &&
+	if (m == 0 || ((flags & MSG_DONTWAIT) == 0 &&
+	    so->so_rcv.sb_cc < uio->uio_resid) &&
 	    (so->so_rcv.sb_cc < so->so_rcv.sb_lowat ||
 	    ((flags & MSG_WAITALL) && uio->uio_resid <= so->so_rcv.sb_hiwat)) &&
 	    m->m_nextpkt == 0 && (pr->pr_flags & PR_ATOMIC) == 0) {
@@ -557,7 +568,7 @@ restart:
 #endif
 		if (so->so_error) {
 			if (m)
-				break;
+				goto dontblock;
 			error = so->so_error;
 			if ((flags & MSG_PEEK) == 0)
 				so->so_error = 0;
@@ -565,7 +576,7 @@ restart:
 		}
 		if (so->so_state & SS_CANTRCVMORE) {
 			if (m)
-				break;
+				goto dontblock;
 			else
 				goto release;
 		}
@@ -581,7 +592,7 @@ restart:
 		}
 		if (uio->uio_resid == 0)
 			goto release;
-		if (so->so_state & SS_NBIO) {
+		if ((so->so_state & SS_NBIO) || (flags & MSG_DONTWAIT)) {
 			error = EWOULDBLOCK;
 			goto release;
 		}
@@ -593,7 +604,10 @@ restart:
 		goto restart;
 	}
 dontblock:
-	p->p_stats->p_ru.ru_msgrcv++;
+#ifdef notyet /* XXXX */
+	if (uio->uio_procp)
+		uio->uio_procp->p_stats->p_ru.ru_msgrcv++;
+#endif
 	nextrecord = m->m_nextpkt;
 	if (pr->pr_flags & PR_ADDR) {
 #ifdef DIAGNOSTIC
@@ -806,7 +820,7 @@ sorflush(so)
 	struct sockbuf asb;
 
 	sb->sb_flags |= SB_NOINTR;
-	(void) sblock(sb);
+	(void) sblock(sb, M_WAITOK);
 	s = splimp();
 	socantrcvmore(so);
 	sbunlock(sb);
@@ -849,6 +863,7 @@ sosetopt(so, level, optname, m0)
 		case SO_USELOOPBACK:
 		case SO_BROADCAST:
 		case SO_REUSEADDR:
+		case SO_REUSEPORT:
 		case SO_OOBINLINE:
 			if (m == NULL || m->m_len < sizeof (int)) {
 				error = EINVAL;
@@ -922,6 +937,11 @@ sosetopt(so, level, optname, m0)
 			error = ENOPROTOOPT;
 			break;
 		}
+		if (error == 0 && so->so_proto && so->so_proto->pr_ctloutput) {
+			(void) ((*so->so_proto->pr_ctloutput)
+				  (PRCO_SETOPT, so, level, optname, &m0));
+			m = NULL;	/* freed by protocol */
+		}
 	}
 bad:
 	if (m)
@@ -961,6 +981,7 @@ sogetopt(so, level, optname, mp)
 		case SO_DEBUG:
 		case SO_KEEPALIVE:
 		case SO_REUSEADDR:
+		case SO_REUSEPORT:
 		case SO_BROADCAST:
 		case SO_OOBINLINE:
 			*mtod(m, int *) = so->so_options & optname;
