@@ -1,4 +1,4 @@
-/*	$NetBSD: bsd_fdintr.s,v 1.21 2002/06/24 09:24:37 pk Exp $ */
+/*	$NetBSD: bsd_fdintr.s,v 1.22 2002/12/06 15:37:55 pk Exp $ */
 
 /*
  * Copyright (c) 1995 Paul Kranenburg
@@ -35,6 +35,7 @@
 #include "assym.h"
 #include <machine/param.h>
 #include <machine/asm.h>
+#include <machine/intr.h>
 #include <machine/psl.h>
 #include <sparc/sparc/intreg.h>
 #include <sparc/sparc/auxreg.h>
@@ -48,9 +49,9 @@
 	or	%l6, IE_L4, %l6;			\
 	stb	%l6, [%l5 + %lo(INTRREG_VA)]
 
-! raise(0,PIL_FDSOFT)	! NOTE: CPU#0 and PIL_FDSOFT=4
+! raise(0,IPL_SOFTFDC)	! NOTE: CPU#0
 #define FD_SET_SWINTR_4M				\
-	sethi	%hi(PINTR_SINTRLEV(PIL_FDSOFT)), %l5;	\
+	sethi	%hi(PINTR_SINTRLEV(IPL_SOFTFDC)), %l5;	\
 	set	ICR_PI_SET, %l6;			\
 	st	%l5, [%l6]
 
