@@ -1,4 +1,4 @@
-/*	$NetBSD: kdump.c,v 1.33 2000/12/20 22:11:16 itojun Exp $	*/
+/*	$NetBSD: kdump.c,v 1.34 2000/12/28 11:11:34 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: kdump.c,v 1.33 2000/12/20 22:11:16 itojun Exp $");
+__RCSID("$NetBSD: kdump.c,v 1.34 2000/12/28 11:11:34 jdolecek Exp $");
 #endif
 #endif /* not lint */
 
@@ -104,7 +104,7 @@ void	ktremul __P((char *, int, int));
 void	ktrgenio __P((struct ktr_genio *, int));
 void	ktrpsig __P((struct ktr_psig *));
 void	ktrcsw __P((struct ktr_csw *));
-void	ktruser __P((char *, int));
+void	ktruser __P((struct ktr_user *, int));
 void	usage __P((void));
 void	eprint __P((int));
 char	*ioctlname __P((long));
@@ -208,7 +208,7 @@ main(argc, argv)
 			ktremul(m, ktrlen, size);
 			break;
 		case KTR_USER:
-			ktruser(m, ktrlen);
+			ktruser((struct ktr_user *)m, ktrlen);
 			break;
 		}
 		if (tail)
@@ -567,14 +567,17 @@ ktrcsw(cs)
 }
 
 void
-ktruser(name, len)
-	char *name;
+ktruser(usr, len)
+	struct ktr_user *usr;
 	int len;
 {
 	int i;
-	printf("\"%d, ", len);
-	for(i=0; i < len; i++)
-		printf("%x", name[i]);
+	char *dta;
+
+	printf("\"%.*s: %d, ", KTR_USER_MAXIDLEN, usr->ktr_id, len);
+	dta = (char *)usr;
+	for(i=sizeof(struct ktr_user); i < len; i++)
+		printf("%x", dta[i]);
 	printf("\"\n");
 }
 
