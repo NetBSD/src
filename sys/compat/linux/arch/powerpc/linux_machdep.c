@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.10 2001/05/30 11:37:27 mrg Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.11 2001/06/13 23:09:01 wiz Exp $ */
 
 /*-
  * Copyright (c) 1995, 2000, 2001 The NetBSD Foundation, Inc.
@@ -73,6 +73,7 @@
 #include <compat/linux/linux_syscallargs.h>
 
 #include <machine/cpu.h>
+#include <machine/fpu.h>
 #include <machine/psl.h>
 #include <machine/reg.h>
 #include <machine/vmparam.h>
@@ -443,6 +444,7 @@ linux_sys_sigreturn(p, v, retval)
 }
 
 
+#if 0
 int
 linux_sys_modify_ldt(p, v, retval)
 	struct proc *p;
@@ -458,6 +460,7 @@ linux_sys_modify_ldt(p, v, retval)
 #endif
   return 0;
 }
+#endif
 
 /* 
  * major device numbers remapping
@@ -499,6 +502,7 @@ linux_machdepioctl(p, v, retval)
 	SCARG(&bia, com) = com;
 	return sys_ioctl(p, &bia, retval);
 }
+#if 0
 /*
  * Set I/O permissions for a process. Just set the maximum level
  * right away (ignoring the argument), otherwise we would have
@@ -518,6 +522,7 @@ linux_sys_iopl(p, v, retval)
 #endif
 	return 0;
 }
+#endif
 
 /*
  * See above. If a root process tries to set access to an I/O port,
