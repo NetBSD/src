@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.36 2002/04/12 14:56:38 lukem Exp $
+#	$NetBSD: Makefile,v 1.37 2002/04/26 15:50:47 lukem Exp $
 #
 # ramdisk.fs is the microroot filesystem intended for use with
 # the INSTALL kernel. It provides just enough tools to extract the
@@ -7,7 +7,7 @@
 #
 
 .include <bsd.own.mk>
-.include "${_SRC_TOP_}/distrib/Makefile.inc"
+.include "${NETBSDSRCDIR}/distrib/Makefile.inc"
 
 IMAGE=		ramdisk.fs
 IMAGESIZE=	1360b

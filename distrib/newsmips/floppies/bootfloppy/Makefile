@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.8 2002/04/19 10:40:23 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.9 2002/04/26 15:50:41 lukem Exp $
 
 .include <bsd.own.mk>
-.include "${_SRC_TOP_}/distrib/Makefile.inc"
+.include "${NETBSDSRCDIR}/distrib/Makefile.inc"
 
 FLOPPYBASE=	boot
 FLOPPYSIZE=	2880

@@ -1,5 +1,5 @@
 #
-#	$NetBSD: list,v 1.3 2002/04/26 03:38:19 lukem Exp $
+#	$NetBSD: list,v 1.4 2002/04/26 15:50:48 lukem Exp $
 #
 # ramdisk/list - packing list for the ramdisk.
 #
@@ -98,7 +98,7 @@ COPY	${CURDIR}/services	etc/services
 COPY	${CURDIR}/sshrc		.sshrc
 COPY	${CURDIR}/welcome	.welcome
 
-COPY	${_SRC_TOP_}/etc/netconfig	etc/netconfig
+COPY	${NETBSDSRCDIR}/etc/netconfig	etc/netconfig
 
 # Fake /usr
 SYMLINK . usr

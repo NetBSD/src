@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.bootfloppy,v 1.8 2002/04/16 09:06:51 lukem Exp $
+#	$NetBSD: Makefile.bootfloppy,v 1.9 2002/04/26 15:50:32 lukem Exp $
 #
 # Makefile snippet to create a set of USTAR floppies
 #
@@ -15,7 +15,7 @@
 #
 
 .include <bsd.own.mk>
-.include "${_SRC_TOP_}/distrib/Makefile.inc"
+.include "${NETBSDSRCDIR}/distrib/Makefile.inc"
 
 FLOPPYSIZE?=		2880
 MDEC=			${DESTDIR}/usr/mdec

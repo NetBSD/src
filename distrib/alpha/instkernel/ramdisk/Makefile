@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.18 2002/04/12 02:13:49 lukem Exp $
+#	$NetBSD: Makefile,v 1.19 2002/04/26 15:50:24 lukem Exp $
 
 .include <bsd.own.mk>
-.include "${_SRC_TOP_}/distrib/Makefile.inc"
+.include "${NETBSDSRCDIR}/distrib/Makefile.inc"
 
 IMAGE=		ramdisk.fs
 IMAGESIZE=	4480k
@@ -21,9 +21,9 @@ IMAGEDEPENDS=	${CRUNCHBIN} \
 		${DESTDIR}/usr/share/misc/termcap \
 		${DISTRIBDIR}/utils/script-installer/dot.commonutils \
 		${DISTRIBDIR}/utils/script-installer/dot.instutils \
-		${_SRC_TOP_}/etc/group ${_SRC_TOP_}/etc/master.passwd \
-		${_SRC_TOP_}/etc/netconfig ${_SRC_TOP_}/etc/protocols \
-		${_SRC_TOP_}/etc/services
+		${NETBSDSRCDIR}/etc/group ${NETBSDSRCDIR}/etc/master.passwd \
+		${NETBSDSRCDIR}/etc/netconfig ${NETBSDSRCDIR}/etc/protocols \
+		${NETBSDSRCDIR}/etc/services
 
 INSTALLNOTES!=	cd ${DISTRIBDIR}/notes/alpha && ${MAKE} echomore 
 IMAGEDEPENDS+=	${INSTALLNOTES}
