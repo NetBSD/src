@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.h,v 1.46 2000/05/01 12:30:30 blymn Exp $	*/
+/*	$NetBSD: curses.h,v 1.47 2000/05/11 12:05:39 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -487,77 +487,75 @@ __END_DECLS
 /* Public function prototypes. */
 __BEGIN_DECLS
 int	 beep(void);
-int	 box(WINDOW *win, chtype vert, chtype horiz);
+int	 box(WINDOW *, chtype, chtype);
 bool	 can_change_colors(void);
 int	 cbreak(void);
-int	 clearok(WINDOW *win, bool flag);
-int	 color_content(short colour, short *redp, short *greenp, short *bluep);
-int	 copywin(const WINDOW *srcwin, WINDOW *dstwin, int sminrow,
-		 int smincol, int dminrow, int dmincol, int dmaxrow, 
-		 int dmaxcol, int overlay);
-int	 curs_set(int visibility);
+int	 clearok(WINDOW *, bool);
+int	 color_content(short, short *, short *, short *);
+int	 copywin(const WINDOW *, WINDOW *, int, int, int, int, int, int, int);
+int	 curs_set(int);
 int	 def_prog_mode(void);
 int	 def_shell_mode(void);
-int	 delwin(WINDOW *win);
-WINDOW	*derwin(WINDOW *orig, int nlines, int ncols, int by, int bx);
-WINDOW	*dupwin(WINDOW *win);
+int	 delwin(WINDOW *);
+WINDOW	*derwin(WINDOW *, int, int, int, int);
+WINDOW	*dupwin(WINDOW *);
 int	 doupdate(void);
 int	 echo(void);
 int	 endwin(void);
 char     erasechar(void);
 int	 flash(void);
 int	 flushinp(void);
-int	 flushok(WINDOW *win, bool bf);
-char	*fullname(const char *bp, char *def);
-chtype	 getbkgd(WINDOW *win);
-char	*getcap(char *name);
-int	 getcury(WINDOW *win);
-int	 getcurx(WINDOW *win);
-int	 getbegy(WINDOW *win);
-int	 getbegx(WINDOW *win);
-int	 getmaxy(WINDOW *win);
-int	 getmaxx(WINDOW *win);
+int	 flushok(WINDOW *, bool);
+char	*fullname(const char *, char *);
+chtype	 getbkgd(WINDOW *);
+char	*getcap(char *);
+int	 getcury(WINDOW *);
+int	 getcurx(WINDOW *);
+int	 getbegy(WINDOW *);
+int	 getbegx(WINDOW *);
+int	 getmaxy(WINDOW *);
+int	 getmaxx(WINDOW *);
 int	 gettmode(void);
 bool	 has_colors(void);
-int	 hline(chtype ch, int count);
-int	 idlok(WINDOW *win, bool bf);
-int	 init_color(short colour, short red, short green, short blue);
-int	 init_pair(short pair, short fore, short back);
+int	 hline(chtype, int);
+int	 idlok(WINDOW *, bool);
+int	 init_color(short, short, short, short);
+int	 init_pair(short, short, short);
 WINDOW	*initscr(void);
-int	 intrflush(WINDOW *win, bool bf);
+int	 intrflush(WINDOW *, bool);
 bool	 isendwin(void);
-bool	 is_linetouched(WINDOW *win, int line);
-bool	 is_wintouched(WINDOW *win);
-void	 keypad(WINDOW *win, bool bf);
+bool	 is_linetouched(WINDOW *, int);
+bool	 is_wintouched(WINDOW *);
+void	 keypad(WINDOW *, bool);
 char     killchar(void);
-int	 leaveok(WINDOW *win, bool bf);
+int	 leaveok(WINDOW *, bool);
 char	*longname(void);
-int	 meta(WINDOW *win, bool bf);
-int	 mvcur(int ly, int lx, int y, int x);
-int	 mvhline(int y, int x, chtype ch, int count);
-int	 mvprintw(int y, int x, const char *fmt, ...)
+int	 meta(WINDOW *, bool);
+int	 mvcur(int, int, int, int);
+int	 mvhline(int, int, chtype, int);
+int	 mvprintw(int, int, const char *, ...)
 		__attribute__((__format__(__printf__, 3, 4)));
-int	 mvscanw(int y, int x, const char *fmt, ...)
+int	 mvscanw(int, int, const char *, ...)
 		__attribute__((__format__(__scanf__, 3, 4)));
-int	 mvvline(int y, int x, chtype ch, int count);
-int	 mvwhline(WINDOW *win, int y, int x, chtype ch, int count);
-int	 mvwvline(WINDOW *win, int y, int x, chtype ch, int count);
-int	 mvwin(WINDOW *win, int y, int x);
-int	 mvwprintw(WINDOW *win, int y, int x, const char *fmt, ...)
+int	 mvvline(int, int, chtype, int);
+int	 mvwhline(WINDOW *, int, int, chtype, int);
+int	 mvwvline(WINDOW *, int, int, chtype, int);
+int	 mvwin(WINDOW *, int, int);
+int	 mvwprintw(WINDOW *, int, int, const char *, ...)
 		__attribute__((__format__(__printf__, 4, 5)));
-int	 mvwscanw(WINDOW *win, int y, int x, const char *fmt, ...)
+int	 mvwscanw(WINDOW *, int, int, const char *, ...)
 		__attribute__((__format__(__scanf__, 4, 5)));
-WINDOW	*newwin(int nlines, int ncols, int by, int bx);
+WINDOW	*newwin(int, int, int, int);
 int	 nl(void);
 int	 nocbreak(void);
-void	 nodelay(WINDOW *win, bool bf);
+void	 nodelay(WINDOW *, bool);
 int	 noecho(void);
 int	 nonl(void);
 int	 noraw(void);
-int	 notimeout(WINDOW *win, bool bf);
-int	 overlay(const WINDOW *win1, WINDOW *win2);
-int	 overwrite(const WINDOW *win1, WINDOW *win2);
-int	 pair_content(short pair, short *forep, short *backp);
+int	 notimeout(WINDOW *, bool);
+int	 overlay(const WINDOW *, WINDOW *);
+int	 overwrite(const WINDOW *, WINDOW *);
+int	 pair_content(short, short *, short *);
 int	 printw(const char *, ...)
 		__attribute__((__format__(__printf__, 1, 2)));
 int	 raw(void);
@@ -567,63 +565,62 @@ int	 resetty(void);
 int	 savetty(void);
 int	 scanw(const char *, ...)
 		__attribute__((__format__(__scanf__, 1, 2)));
-int	 scroll(WINDOW *win);
-int	 scrollok(WINDOW *win, bool bf);
+int	 scroll(WINDOW *);
+int	 scrollok(WINDOW *, bool);
 int	 setterm(char *);
 int	 start_color(void);
-WINDOW	*subwin(WINDOW *orig, int nlines, int ncols, int by, int bx);
-int	 touchline(WINDOW *win, int start, int count);
-int	 touchoverlap(WINDOW *win1, WINDOW *win2);
-int	 touchwin(WINDOW *win);
-int	 ungetch(int c);
-int	 untouchwin(WINDOW *win);
-int	 vline(chtype ch, int count);
-int	 vwprintw(WINDOW *win, const char *fmt, _BSD_VA_LIST_)
+WINDOW	*subwin(WINDOW *, int, int, int, int);
+int	 touchline(WINDOW *, int, int);
+int	 touchoverlap(WINDOW *, WINDOW *);
+int	 touchwin(WINDOW *);
+int	 ungetch(int);
+int	 untouchwin(WINDOW *);
+int	 vline(chtype, int);
+int	 vwprintw(WINDOW *, const char *, _BSD_VA_LIST_)
 		__attribute__((__format__(__printf__, 2, 0)));
-int	 vwscanw(WINDOW *win, const char *fmt, _BSD_VA_LIST_)
+int	 vwscanw(WINDOW *, const char *, _BSD_VA_LIST_)
 		__attribute__((__format__(__scanf__, 2, 0)));
-int	 waddch(WINDOW *win, chtype ch);
-int	 waddnstr(WINDOW *win, const char *s, int n);
-int	 wattron(WINDOW *win, int attr);
-int	 wattroff(WINDOW *win, int attr);
-int	 wattrset(WINDOW *win, int attr);
-int	 wbkgd(WINDOW *win, chtype ch);
-void	 wbkgdset(WINDOW *win, chtype ch);
-int	 wborder(WINDOW *win, chtype left, chtype right, chtype top,
-		 chtype bottom,	chtype topleft, chtype topright,
-		 chtype botleft, chtype botright);
-int	 wclear(WINDOW *win);
-int	 wclrtobot(WINDOW *win);
-int	 wclrtoeol(WINDOW *win);
-int	 wdelch(WINDOW *win);
-int	 wdeleteln(WINDOW *win);
-int	 werase(WINDOW *win);
-int	 wgetch(WINDOW *win);
-int	 wgetstr(WINDOW *win, char *str);
-int	 whline(WINDOW *win, chtype ch, int count);
-chtype	 winch(WINDOW *win);
-int	 winsch(WINDOW *win, chtype ch);
-int	 winsdelln(WINDOW *win, int lines);
-int	 winsertln(WINDOW *win);
-int	 wmove(WINDOW *win, int y, int x);
-int	 wnoutrefresh(WINDOW *win);
-int	 wprintw(WINDOW *win, const char *fmt, ...)
+int	 waddch(WINDOW *, chtype);
+int	 waddnstr(WINDOW *, const char *, int);
+int	 wattron(WINDOW *, int);
+int	 wattroff(WINDOW *, int);
+int	 wattrset(WINDOW *, int);
+int	 wbkgd(WINDOW *, chtype);
+void	 wbkgdset(WINDOW *, chtype);
+int	 wborder(WINDOW *, chtype, chtype, chtype, chtype, chtype, chtype,
+		chtype, chtype);
+int	 wclear(WINDOW *);
+int	 wclrtobot(WINDOW *);
+int	 wclrtoeol(WINDOW *);
+int	 wdelch(WINDOW *);
+int	 wdeleteln(WINDOW *);
+int	 werase(WINDOW *);
+int	 wgetch(WINDOW *);
+int	 wgetstr(WINDOW *, char *);
+int	 whline(WINDOW *, chtype, int);
+chtype	 winch(WINDOW *);
+int	 winsch(WINDOW *, chtype);
+int	 winsdelln(WINDOW *, int);
+int	 winsertln(WINDOW *);
+int	 wmove(WINDOW *, int, int);
+int	 wnoutrefresh(WINDOW *);
+int	 wprintw(WINDOW *, const char *, ...)
 		__attribute__((__format__(__printf__, 2, 3)));
-int	 wrefresh(WINDOW *win);
-int	 wscanw(WINDOW *win, const char *fmt, ...)
+int	 wrefresh(WINDOW *);
+int	 wscanw(WINDOW *, const char *, ...)
 		__attribute__((__format__(__scanf__, 2, 3)));
-int	 wscrl(WINDOW *win, int lines);
-int	 wstandend(WINDOW *win);
-int	 wstandout(WINDOW *win);
-void	 wtimeout(WINDOW *win, int delay);
-int	 wtouchln(WINDOW *win, int line, int n, int changed);
-int	 wunderend(WINDOW *win);
-int	 wunderscore(WINDOW *win);
-int	 wvline(WINDOW *win, chtype ch, int count);
+int	 wscrl(WINDOW *, int);
+int	 wstandend(WINDOW *);
+int	 wstandout(WINDOW *);
+void	 wtimeout(WINDOW *, int);
+int	 wtouchln(WINDOW *, int, int, int);
+int	 wunderend(WINDOW *);
+int	 wunderscore(WINDOW *);
+int	 wvline(WINDOW *, chtype, int);
 
 /* Private functions that are needed for user programs prototypes. */
 int	 __cputchar(int);
-int	 __waddbytes(WINDOW *win, const char *bytes, int count, attr_t attr);
+int	 __waddbytes(WINDOW *, const char *, int, attr_t);
 __END_DECLS
 
 #endif /* !_CURSES_H_ */
