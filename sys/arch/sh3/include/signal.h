@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.2 2002/04/28 17:10:37 uch Exp $	*/
+/*	$NetBSD: signal.h,v 1.3 2002/05/09 12:25:41 uch Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991 Regents of the University of California.
@@ -42,10 +42,6 @@ typedef int sig_atomic_t;
 
 #if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) && \
     !defined(_XOPEN_SOURCE)
-/*
- * Get the "code" values
- */
-#include <machine/trap.h>
 
 /*
  * Information pushed on stack when a signal is delivered.
@@ -79,7 +75,7 @@ struct sigcontext13 {
 	int	sc_onstack;		/* sigstack state to restore */
 	int	sc_mask;		/* signal mask to restore (old style) */
 
-	int	sc_trapno;		/* XXX should be above */
+	int	sc_expevt;		/* XXX should be above */
 	int	sc_err;
 };
 #endif
@@ -108,7 +104,7 @@ struct sigcontext {
 	int	sc_onstack;	/* sigstack state to restore */
 	int	__sc_mask13;	/* signal mask to restore (old style) */
 
-	int	sc_trapno;	/* XXX should be above */
+	int	sc_expevt;	/* XXX should be above */
 	int	sc_err;
 
 	sigset_t sc_mask;	/* signal mask to restore (new style) */

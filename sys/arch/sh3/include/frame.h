@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.7 2002/04/28 17:10:34 uch Exp $	*/
+/*	$NetBSD: frame.h,v 1.8 2002/05/09 12:25:41 uch Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -50,7 +50,7 @@
  */
 struct trapframe {
 	/* software member */
-	int	tf_trapno;
+	int	tf_expevt;
 	int	tf_ubc;
 	/* hardware registers */
 	int	tf_spc;
@@ -91,6 +91,7 @@ struct switchframe {
 	int	sf_pr;
 	int	sf_r6_bank;
 	int	sf_sr;
+	int	sf_r7_bank;
 };
 
 /*
