@@ -1,4 +1,4 @@
-/*	$NetBSD: named-xfer.c,v 1.1.1.1.8.1 2000/10/17 19:50:38 tv Exp $	*/
+/*	$NetBSD: named-xfer.c,v 1.1.1.1.8.2 2000/11/13 22:00:10 tv Exp $	*/
 
 /*
  * The original version of named-xfer by Kevin Dunlap.
