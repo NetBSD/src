@@ -59,6 +59,15 @@
 ./usr/lib/libss_p.a
 ./usr/lib/libtelnet.a
 ./usr/lib/libtelnet_p.a
+./usr/libdata/lint/llib-lacl.ln
+./usr/libdata/lint/llib-lcom_err.ln
+./usr/libdata/lint/llib-ldes.ln
+./usr/libdata/lint/llib-lkadm.ln
+./usr/libdata/lint/llib-lkafs.ln
+./usr/libdata/lint/llib-lkdb.ln
+./usr/libdata/lint/llib-lkrb.ln
+./usr/libdata/lint/llib-lkstream.ln
+./usr/libdata/lint/llib-lss.ln
 ./usr/libexec/telnetd
 ./usr/sbin/ext_srvtab
 ./usr/sbin/kadmin
@@ -140,6 +149,8 @@
 ./usr/share/man/cat8/kdb_init.0
 ./usr/share/man/cat8/kdb_util.0
 ./usr/share/man/cat8/kerberos.0
+./usr/share/man/cat8/kprop.0
+./usr/share/man/cat8/kpropd.0
 ./usr/share/man/cat8/ksrvutil.0
 ./usr/share/man/cat8/kstash.0
 ./usr/share/man/man1/bdes.1
@@ -210,6 +221,8 @@
 ./usr/share/man/man8/kdb_init.8
 ./usr/share/man/man8/kdb_util.8
 ./usr/share/man/man8/kerberos.8
+./usr/share/man/man8/kprop.8
+./usr/share/man/man8/kpropd.8
 ./usr/share/man/man8/ksrvutil.8
 ./usr/share/man/man8/kstash.8
 ./usr/share/man/whatis.db
