@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.517 2003/03/25 19:37:16 jmmv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.518 2003/04/01 20:54:23 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.517 2003/03/25 19:37:16 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.518 2003/04/01 20:54:23 thorpej Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -1505,11 +1505,6 @@ init386(first_avail)
 	 * Initailize PAGE_SIZE-dependent variables.
 	 */
 	uvm_setpagesize();
-	/*
-	 * A quick sanity check.
-	 */
-	if (PAGE_SIZE != NBPG)
-		panic("init386: PAGE_SIZE != NBPG");
 
 	/*
 	 * Saving SSE registers won't work if the save area isn't

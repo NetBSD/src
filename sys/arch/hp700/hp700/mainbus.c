@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.9 2003/01/01 01:35:43 thorpej Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.10 2003/04/01 20:48:27 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -224,7 +224,7 @@ mbus_add_mapping(bus_addr_t bpa, bus_size_t size, int flags,
 		 * Enter another single-page mapping.
 		 */
 		pmap_kenter_pa(bpa, bpa, VM_PROT_ALL);
-		bpa += NBPG;
+		bpa += PAGE_SIZE;
 		frames--;
 	}
 
@@ -282,8 +282,8 @@ mbus_remove_mapping(bus_space_handle_t bsh, bus_size_t size, bus_addr_t *bpap)
 		/*
 		 * Remove another single-page mapping.
 		 */
-		pmap_kremove(bpa, NBPG);
-		bpa += NBPG;
+		pmap_kremove(bpa, PAGE_SIZE);
+		bpa += PAGE_SIZE;
 		frames--;
 	}
 
@@ -382,8 +382,8 @@ mbus_alloc(void *v, bus_addr_t rstart, bus_addr_t rend, bus_size_t size,
 	/*
 	 * Force the allocated region to be page-aligned.
 	 */
-	if (align < NBPG)
-		align = NBPG;
+	if (align < PAGE_SIZE)
+		align = PAGE_SIZE;
 	size = hppa_round_page(size);
 
 	/*

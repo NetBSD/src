@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_gsc.c,v 1.7 2002/10/02 05:17:50 thorpej Exp $	*/
+/*	$NetBSD: if_ie_gsc.c,v 1.8 2003/04/01 20:48:27 thorpej Exp $	*/
 
 /*	$OpenBSD: if_ie_gsc.c,v 1.6 2001/01/12 22:57:04 mickey Exp $	*/
 
@@ -45,6 +45,8 @@
 #include <sys/device.h>
 #include <sys/socket.h>
 #include <sys/sockio.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -436,7 +438,7 @@ ie_gsc_attach(parent, self, aux)
 	 * chip in i82586 mode, we're restricted to 24-bit
 	 * physical addresses.
 	 */
-	if (bus_dmamem_alloc(gsc->iemt, sc->sc_msize, NBPG, 0,
+	if (bus_dmamem_alloc(gsc->iemt, sc->sc_msize, PAGE_SIZE, 0,
 			     &seg, 1, &rseg, BUS_DMA_NOWAIT | BUS_DMA_24BIT)) {
 		printf (": cannot allocate %d bytes of DMA memory\n",
 			sc->sc_msize);
