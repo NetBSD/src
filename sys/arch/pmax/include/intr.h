@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.5 1998/08/25 01:55:40 nisimura Exp $	*/
+/*	$NetBSD: intr.h,v 1.6 1999/05/25 04:17:58 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -46,27 +46,53 @@
 #ifdef _KERNEL
 #ifndef _LOCORE
 
-typedef int spl_t;
-extern spl_t splx __P((spl_t));
-extern spl_t splsoftnet __P((void)), splsoftclock __P((void));
-extern spl_t splhigh __P((void));
-extern spl_t spl0 __P((void));	/* XXX should not enable TC on 3min */
+#include <mips/cpuregs.h>
 
-extern void setsoftnet __P((void)), clearsoftnet __P((void));
-extern void setsoftclock __P((void)), clearsoftclock __P((void));
+extern int _splraise __P((int));
+extern int _spllower __P((int));
+extern int _splset __P((int));
+extern int _splget __P((void));
+extern void _setsoftintr __P((int));
+extern void _clrsoftintr __P((int));
 
+#define setsoftclock()	_setsoftintr(MIPS_SOFT_INT_MASK_0)
+#define setsoftnet()	_setsoftintr(MIPS_SOFT_INT_MASK_1)
+#define clearsoftclock() _clrsoftintr(MIPS_SOFT_INT_MASK_0)
+#define clearsoftnet()	 _clrsoftintr(MIPS_SOFT_INT_MASK_1)
 
-extern int (*Mach_splnet) __P((void)), (*Mach_splbio) __P((void)),
-	   (*Mach_splimp) __P((void)), (*Mach_spltty) __P((void)),
-	   (*Mach_splclock) __P((void)), (*Mach_splstatclock) __P((void)),
-	   (*Mach_splnone) __P((void));
+#define splhigh()	_splraise(MIPS_INT_MASK)
+#define spl0()		(void)_spllower(0)
+#define splx(s)		(void)_splset(s)
+#define splbio()	(_splraise(splvec.splbio))
+#define splnet()	(_splraise(splvec.splnet))
+#define spltty()	(_splraise(splvec.spltty))
+#define splimp()	(_splraise(splvec.splimp))
+#define splpmap()	(_splraise(splvec.splimp))
+#define splclock()	(_splraise(splvec.splclock))
+#define splstatclock()	(_splraise(splvec.splstatclock))
+#define splsoftclock()	_spllower(MIPS_SOFT_INT_MASK_0)
+#define splsoftnet()	_splraise(MIPS_SOFT_INT_MASK_1) 
 
-#define	splnet()	(*Mach_splnet)()
-#define	splbio()	(*Mach_splbio)()
-#define	splimp()	(*Mach_splimp)()
-#define	spltty()	(*Mach_spltty)()
-#define	splclock()	(*Mach_splclock)()
-#define	splstatclock()	(*Mach_splstatclock)()
+struct splvec {
+	int	splbio;
+	int	splnet;
+	int	spltty;
+	int	splimp;
+	int	splclock;
+	int	splstatclock;
+};
+extern struct splvec splvec;
+
+/* Conventionals ... */
+
+#define MIPS_SPLHIGH (MIPS_INT_MASK)
+#define MIPS_SPL0 (MIPS_INT_MASK_0|MIPS_SOFT_INT_MASK_0|MIPS_SOFT_INT_MASK_1)
+#define MIPS_SPL1 (MIPS_INT_MASK_1|MIPS_SOFT_INT_MASK_0|MIPS_SOFT_INT_MASK_1)
+#define MIPS_SPL3 (MIPS_INT_MASK_3|MIPS_SOFT_INT_MASK_0|MIPS_SOFT_INT_MASK_1)
+#define MIPS_SPL_0_1	 (MIPS_INT_MASK_1|MIPS_SPL0)
+#define MIPS_SPL_0_1_2	 (MIPS_INT_MASK_2|MIPS_SPL_0_1)
+#define MIPS_SPL_0_1_3	 (MIPS_INT_MASK_3|MIPS_SPL_0_1)
+#define MIPS_SPL_0_1_2_3 (MIPS_INT_MASK_3|MIPS_SPL_0_1_2)
 
 /*
  * Index into intrcnt[], which is defined in locore

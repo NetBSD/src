@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_5100.c,v 1.6 1999/04/26 09:23:22 nisimura Exp $	*/
+/*	$NetBSD: dec_5100.c,v 1.7 1999/05/25 04:17:57 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -86,7 +86,7 @@ void	dec_5100_intr_establish __P((void * cookie, int level,
 			 int (*handler) __P((intr_arg_t)), intr_arg_t arg));
 void	dec_5100_intr_disestablish __P((struct ibus_attach_args *ia));
 
-extern void dec_mips1_wbflush __P((void));
+extern void kn230_wbflush __P((void));
 
 extern unsigned nullclkread __P((void));
 extern unsigned (*clkread) __P((void));
@@ -98,8 +98,7 @@ extern unsigned (*clkread) __P((void));
 void
 dec_5100_init()
 {
-
-	platform.iobus = "ibus";
+	platform.iobus = "baseboard";
 
 	platform.os_init = dec_5100_os_init;
 	platform.bus_reset = dec_5100_bus_reset;
@@ -107,6 +106,7 @@ dec_5100_init()
 	platform.device_register = dec_5100_device_register;
 
 	dec_5100_os_init();
+
 	sprintf(cpu_model, "DECsystem 5100 (MIPSMATE)");
 }
 
@@ -115,29 +115,27 @@ dec_5100_os_init()
 {
 
 	/* set correct wbflush routine for this motherboard */
-	 mips_set_wbflush(dec_mips1_wbflush);
+	 mips_set_wbflush(kn230_wbflush);
 
 	/*
 	 * Set up interrupt handling and I/O addresses.
 	 */
 	mips_hardware_intr = dec_5100_intr;
 	tc_enable_interrupt = dec_5100_enable_intr; /*XXX*/
-
-	/* NB: note inversion, ether, disk on hard int 1, tty on hard int 0 */
-	Mach_splbio = Mach_spl1;	/* just block hard int 1 */
-	Mach_splnet = Mach_spl1;	/* just block hard int 1 */
-	Mach_spltty = cpu_spl1;		/* block hard int 0 and 1 */
-	Mach_splimp = cpu_spl3;		/* block 0,1,2 */
-					/* XXX blocks out reset button? */
-	Mach_splclock = cpu_spl2;
-	Mach_splstatclock = cpu_spl2;
-
 	mcclock_addr = (volatile struct chiptime *)
 		MIPS_PHYS_TO_KSEG1(KN01_SYS_CLOCK);
-	mc_cpuspeed(mcclock_addr, MIPS_INT_MASK_2);
 
 	/* no high resolution timer circuit; possibly never called */
 	clkread = nullclkread;
+
+	splvec.splbio = MIPS_SPL1;
+	splvec.splnet = MIPS_SPL1;
+	splvec.spltty = MIPS_SPL_0_1;
+	splvec.splimp = MIPS_SPL_0_1_2;
+	splvec.splclock = MIPS_SPL_0_1_2;
+	splvec.splstatclock = MIPS_SPL_0_1_2;
+
+	mc_cpuspeed(mcclock_addr, MIPS_INT_MASK_2);
 }
 
 
@@ -153,7 +151,7 @@ dec_5100_bus_reset()
 	*icsr_addr |= KN230_CSR_INTR_WMERR ;
 
 	/* nothing else to do */
-	dec_mips1_wbflush();
+	kn230_wbflush();
 }
 
 void
@@ -257,7 +255,7 @@ dec_5100_intr(mask, pc, statusReg, causeReg)
 	}
 
 	/* If clock interrupts were enabled, re-enable them ASAP. */
-	splx(MIPS_SR_INT_ENA_CUR | (statusReg & MIPS_INT_MASK_2));
+	_splset(MIPS_SR_INT_IE | (statusReg & MIPS_INT_MASK_2));
 
 #define CALLINTR(slot, icnt) \
 	if (tc_slot_info[slot].intr) {					\
@@ -291,7 +289,7 @@ dec_5100_intr(mask, pc, statusReg, causeReg)
 	}
 
 	return ((statusReg & ~causeReg & MIPS_HARD_INT_MASK) |
-		MIPS_SR_INT_ENA_CUR);
+		MIPS_SR_INT_IE);
 }
 
 
@@ -313,7 +311,7 @@ dec_5100_memintr()
 	/* read icsr and clear error  */
 	icsr = *icsr_addr;
 	*icsr_addr = icsr | KN230_CSR_INTR_WMERR;
-	dec_mips1_wbflush();
+	kn230_wbflush();
 
 #ifdef DIAGNOSTIC
 		printf("\nMemory interrupt\n");

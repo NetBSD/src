@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_3max.c,v 1.11 1999/05/21 01:09:50 nisimura Exp $	*/
+/*	$NetBSD: dec_3max.c,v 1.12 1999/05/25 04:17:57 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.11 1999/05/21 01:09:50 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.12 1999/05/25 04:17:57 nisimura Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -123,8 +123,7 @@ extern unsigned (*clkread) __P((void));
 void
 dec_3max_init()
 {
-
-	platform.iobus = "tcbus";
+	platform.iobus = "tc3max";
 
 	platform.os_init = dec_3max_os_init;
 	platform.bus_reset = dec_3max_bus_reset;
@@ -140,10 +139,7 @@ dec_3max_init()
 void
 dec_3max_os_init()
 {
-	int i;
-
-	volatile int *csr_addr =
-		(volatile int *)MIPS_PHYS_TO_KSEG1(KN02_SYS_CSR);
+	u_int32_t csr;
 
 	/* clear any memory errors from new-config probes */
 	*(volatile u_int *)MIPS_PHYS_TO_KSEG1(KN02_SYS_ERRADR) = 0;
@@ -153,24 +149,26 @@ dec_3max_os_init()
 	 * Enable ECC memory correction, turn off LEDs, and
 	 * disable all TURBOchannel interrupts.
 	 */
-	i = *csr_addr;
-	*csr_addr = (i & ~(KN02_CSR_WRESERVED | KN02_CSR_IOINTEN)) |
-		KN02_CSR_CORRECT | 0xff;
+	csr = *(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN02_SYS_CSR);
+	csr &= ~(KN02_CSR_WRESERVED|KN02_CSR_IOINTEN|KN02_CSR_CORRECT|0xff);
+	*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(KN02_SYS_CSR) = csr;
+
 	mips_hardware_intr = dec_3max_intr;
 	tc_enable_interrupt = dec_3max_enable_intr;
-	Mach_splbio = Mach_spl0;
-	Mach_splnet = Mach_spl0;
-	Mach_spltty = Mach_spl0;
-	Mach_splimp = Mach_spl0;
-	Mach_splclock = cpu_spl1;
-	Mach_splstatclock = cpu_spl1;
 	mcclock_addr = (volatile struct chiptime *)
 		MIPS_PHYS_TO_KSEG1(KN02_SYS_CLOCK);
 
-	mc_cpuspeed(mcclock_addr, MIPS_INT_MASK_1);
-
 	/* no high resolution timer circuit; possibly never called */
 	clkread = nullclkread;
+
+	splvec.splbio = MIPS_SPL0;
+	splvec.splnet = MIPS_SPL0;
+	splvec.spltty = MIPS_SPL0;
+	splvec.splimp = MIPS_SPL0;
+	splvec.splclock = MIPS_SPL_0_1;
+	splvec.splstatclock = MIPS_SPL_0_1;
+
+	mc_cpuspeed(mcclock_addr, MIPS_INT_MASK_1);
 }
 
 /*
@@ -237,7 +235,7 @@ dec_3max_enable_intr(slotno, handler, sc, on)
 	}
 
 	slotno = 1 << (slotno + KN02_CSR_IOINTEN_SHIFT);
-	s = Mach_spl0();
+	s = splhigh();
 	csr = *p_csr & ~(KN02_CSR_WRESERVED | 0xFF);
 	if (on)
 		*p_csr = csr | slotno;
@@ -288,7 +286,7 @@ dec_3max_intr(mask, pc, statusReg, causeReg)
 	}
 
 	/* If clock interrups were enabled, re-enable them ASAP. */
-	splx(MIPS_SR_INT_IE | (statusReg & MIPS_INT_MASK_1));
+	_splset(MIPS_SR_INT_IE | (statusReg & MIPS_INT_MASK_1));
 
 	if (mask & MIPS_INT_MASK_0) {
 		static int intr_map[8] = { SLOT0_INTR, SLOT1_INTR, SLOT2_INTR,
