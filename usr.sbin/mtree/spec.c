@@ -1,4 +1,4 @@
-/*	$NetBSD: spec.c,v 1.35 2001/10/25 03:00:14 lukem Exp $	*/
+/*	$NetBSD: spec.c,v 1.36 2001/10/26 16:01:46 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -74,7 +74,7 @@
 #if 0
 static char sccsid[] = "@(#)spec.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: spec.c,v 1.35 2001/10/25 03:00:14 lukem Exp $");
+__RCSID("$NetBSD: spec.c,v 1.36 2001/10/26 16:01:46 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -130,7 +130,7 @@ spec(FILE *fp)
 			continue;
 
 #ifdef DEBUG
-		(void)fprintf(stderr, "line %d: {%s}\n", lineno, p);
+		(void)fprintf(stderr, "line %lu: {%s}\n", (u_long)lineno, p);
 #endif
 		/* Grab file name, "$", "set", or "unset". */
 		next = buf;
