@@ -1,4 +1,4 @@
-/*	$NetBSD: dev_net.c,v 1.11 1997/12/10 20:19:00 gwr Exp $	*/
+/*	$NetBSD: dev_net.c,v 1.12 1997/12/10 20:38:37 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -241,8 +241,10 @@ net_getparams(sock)
 		/* Got it!  Parse the netmask. */
 		smask = ip_convertaddr(buf);
 	}
-	if (smask)
+	if (smask) {
+		netmask = smask;
 		printf("net_open: subnet mask: %s\n", intoa(netmask));
+	}
 	if (gateip.s_addr)
 		printf("net_open: net gateway: %s\n", inet_ntoa(gateip));
 
