@@ -1729,7 +1729,7 @@
 ./usr/share/man/man9/m_adj.9
 ./usr/share/man/man9/m_align.9
 ./usr/share/man/man9/m_cat.9
-./usr/share/man/mat9/m_copy_pkthdr.9
+./usr/share/man/man9/m_copy_pkthdr.9
 ./usr/share/man/man9/m_copyback.9
 ./usr/share/man/man9/m_copydata.9
 ./usr/share/man/man9/m_copym.9
