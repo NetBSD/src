@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)subr.c	8.1 (Berkeley) 6/4/93";*/
-static char rcsid[] = "$Id: subr.c,v 1.16 1995/10/05 00:54:45 mycroft Exp $";
+static char rcsid[] = "$Id: subr.c,v 1.17 1995/10/05 07:16:25 mycroft Exp $";
 #endif /* not lint */
 
 /*
@@ -171,6 +171,11 @@ setchars()
 	}
 }
 
+/* Macros to clear/set/test flags. */
+#define	SET(t, f)	(t) |= (f)
+#define	CLR(t, f)	(t) &= ~(f)
+#define	ISSET(t, f)	((t) & (f))
+
 void
 setflags(n)
 	int n;
@@ -230,31 +235,33 @@ setflags(n)
 		break;
 	}
 
-#define BIC(v,c)	(v) &= ~(c)
-#define BIS(v,s)	(v) |= (s)
-#define BICS(v,c,s)	BIC(v,c),BIS(v,s)
-
 	iflag = omode.c_iflag;
 	oflag = omode.c_oflag;
 	cflag = omode.c_cflag;
 	lflag = omode.c_lflag;
 
 	if (NP) {
-		BIC(iflag, ISTRIP|INPCK|IGNPAR);
-		BICS(cflag, CSIZE|PARENB|PARODD, CS8);
-	} else if (OP && !EP) {
-		BIS(iflag, ISTRIP|INPCK|IGNPAR);
-		BICS(cflag, CSIZE, PARENB|PARODD|CS7);
-		if (AP)
-			BIC(iflag, INPCK);
-	} else if (EP && !OP) {
-		BIS(iflag, ISTRIP|INPCK|IGNPAR);
-		BICS(cflag, CSIZE|PARODD, PARENB|CS7);
-		if (AP)
-			BIC(iflag, INPCK);
-	} else if (AP || EP && OP) {
-		BICS(iflag, INPCK|IGNPAR, ISTRIP);
-		BICS(cflag, CSIZE|PARODD, PARENB|CS7);
+		CLR(cflag, CSIZE|PARENB);
+		SET(cflag, CS8);
+		CLR(iflag, ISTRIP|INPCK|IGNPAR);
+	} else if (AP || EP || OP) {
+		CLR(cflag, CSIZE);
+		SET(cflag, CS7|PARENB);
+		SET(iflag, ISTRIP);
+		if (OP && !EP) {
+			SET(iflag, INPCK|IGNPAR);
+			SET(cflag, PARODD);
+			if (AP)
+				CLR(iflag, INPCK);
+		} else if (EP && !OP) {
+			SET(iflag, INPCK|IGNPAR);
+			CLR(cflag, PARODD);
+			if (AP)
+				CLR(iflag, INPCK);
+		} else if (AP || EP && OP) {
+			CLR(iflag, INPCK|IGNPAR);
+			CLR(cflag, PARODD);
+		}
 	} /* else, leave as is */
 
 #if 0
@@ -263,40 +270,41 @@ setflags(n)
 #endif
 
 	if (HC)
-		cflag |= HUPCL;
+		SET(cflag, HUPCL);
 	else
-		cflag &= ~HUPCL;
+		CLR(cflag, HUPCL);
 
 	if (MB)
-		cflag |= MDMBUF;
+		SET(cflag, MDMBUF);
 	else
-		cflag &= ~MDMBUF;
+		CLR(cflag, MDMBUF);
 
 	if (NL) {
-		iflag |= ICRNL;
-		oflag |= ONLCR|OPOST;
+		SET(iflag, ICRNL);
+		SET(oflag, ONLCR|OPOST);
 	} else {
-		iflag &= ~ICRNL;
-		oflag &= ~ONLCR;
+		CLR(iflag, ICRNL);
+		CLR(oflag, ONLCR);
 	}
 
 	if (!HT)
-		oflag |= OXTABS|OPOST;
+		SET(oflag, OXTABS|OPOST);
 	else
-		oflag &= ~OXTABS;
+		CLR(oflag, OXTABS);
 
 #ifdef XXX_DELAY
-	f |= delaybits();
+	SET(f, delaybits());
 #endif
 
 	if (n == 1) {		/* read mode flags */
 		if (RW) {
 			iflag = 0;
-			oflag &= ~OPOST;
-			BICS(cflag, CSIZE|PARENB|PARODD, CS8);
+			CLR(oflag, OPOST);
+			CLR(cflag, CSIZE|PARENB);
+			SET(cflag, CS8);
 			lflag = 0;
 		} else {
-			lflag &= ~ICANON;
+			CLR(lflag, ICANON);
 		}
 		goto out;
 	}
@@ -306,38 +314,38 @@ setflags(n)
 
 #if 0
 	if (CB)
-		f |= CRTBS;
+		SET(f, CRTBS);
 #endif
 
 	if (CE)
-		lflag |= ECHOE;
+		SET(lflag, ECHOE);
 	else
-		lflag &= ~ECHOE;
+		CLR(lflag, ECHOE);
 
 	if (CK)
-		lflag |= ECHOKE;
+		SET(lflag, ECHOKE);
 	else
-		lflag &= ~ECHOKE;
+		CLR(lflag, ECHOKE);
 
 	if (PE)
-		lflag |= ECHOPRT;
+		SET(lflag, ECHOPRT);
 	else
-		lflag &= ~ECHOPRT;
+		CLR(lflag, ECHOPRT);
 
 	if (EC)
-		lflag |= ECHO;
+		SET(lflag, ECHO);
 	else
-		lflag &= ~ECHO;
+		CLR(lflag, ECHO);
 
 	if (XC)
-		lflag |= ECHOCTL;
+		SET(lflag, ECHOCTL);
 	else
-		lflag &= ~ECHOCTL;
+		CLR(lflag, ECHOCTL);
 
 	if (DX)
-		lflag |= IXANY;
+		SET(lflag, IXANY);
 	else
-		lflag &= ~IXANY;
+		CLR(lflag, IXANY);
 
 out:
 	tmode.c_iflag = iflag;
@@ -356,122 +364,107 @@ register long flags;
 {
 	register tcflag_t iflag, oflag, cflag, lflag;
 
-	iflag = (BRKINT|ICRNL|IMAXBEL|IXON|IXANY);
-	oflag = (OPOST|ONLCR|OXTABS);
-	cflag = (CREAD);
-	lflag = (ICANON|ISIG|IEXTEN);
+	iflag = BRKINT|ICRNL|IMAXBEL|IXON|IXANY;
+	oflag = OPOST|ONLCR|OXTABS;
+	cflag = CREAD;
+	lflag = ICANON|ISIG|IEXTEN;
 
-	if (flags & TANDEM)
-		iflag |= IXOFF;
+	if (ISSET(flags, TANDEM))
+		SET(iflag, IXOFF);
 	else
-		iflag &= ~IXOFF;
-	if (flags & ECHO)
-		lflag |= ECHO;
+		CLR(iflag, IXOFF);
+	if (ISSET(flags, ECHO))
+		SET(lflag, ECHO);
 	else
-		lflag &= ~ECHO;
-	if (flags & CRMOD) {
-		iflag |= ICRNL;
-		oflag |= ONLCR;
+		CLR(lflag, ECHO);
+	if (ISSET(flags, CRMOD)) {
+		SET(iflag, ICRNL);
+		SET(oflag, ONLCR);
 	} else {
-		iflag &= ~ICRNL;
-		oflag &= ~ONLCR;
+		CLR(iflag, ICRNL);
+		CLR(oflag, ONLCR);
 	}
-	if (flags & XTABS)
-		oflag |= OXTABS;
+	if (ISSET(flags, XTABS))
+		SET(oflag, OXTABS);
 	else
-		oflag &= ~OXTABS;
+		CLR(oflag, OXTABS);
 
-	if (flags & RAW) {
+
+	if (ISSET(flags, RAW)) {
 		iflag &= IXOFF;
-		lflag &= ~(ISIG|ICANON|IEXTEN);
+		CLR(lflag, ISIG|ICANON|IEXTEN);
 	} else {
-		iflag |= BRKINT|IXON|IMAXBEL;
-		lflag |= ISIG|IEXTEN;
-		if (flags & CBREAK)
-			lflag &= ~ICANON;
+		SET(iflag, BRKINT|IXON|IMAXBEL);
+		SET(lflag, ISIG|IEXTEN);
+		if (ISSET(flags, CBREAK))
+			CLR(lflag, ICANON);
 		else
-			lflag |= ICANON;
+			SET(lflag, ICANON);
 	}
-		
-	switch (flags & ANYP) {
+
+	switch (ISSET(flags, ANYP)) {
 	case EVENP:
-		iflag |= INPCK;
-		cflag &= ~PARODD;
+		SET(iflag, INPCK);
+		CLR(cflag, PARODD);
 		break;
 	case ODDP:
-		iflag |= INPCK;
-		cflag |= PARODD;
+		SET(iflag, INPCK);
+		SET(cflag, PARODD);
 		break;
 	default:
-		iflag &= ~INPCK;
+		CLR(iflag, INPCK);
 		break;
 	}
 
-	if (flags & (RAW|LITOUT|PASS8)) {
-		cflag &= ~(CSIZE|PARENB);
-		cflag |= CS8;
-		if ((flags & (RAW|PASS8)) == 0)
-			iflag |= ISTRIP;
-		else
-			iflag &= ~ISTRIP;
-		if ((flags & (RAW|LITOUT)) == 0)
-			oflag |= OPOST;
-		else
-			oflag &= ~OPOST;
-	} else {
-		cflag &= ~CSIZE;
-		cflag |= CS7|PARENB;
-		iflag |= ISTRIP;
-		oflag |= OPOST;
-	}
+	/* Nothing we can do with CRTBS. */
+	if (ISSET(flags, PRTERA))
+		SET(lflag, ECHOPRT);
+	else
+		CLR(lflag, ECHOPRT);
+	if (ISSET(flags, CRTERA))
+		SET(lflag, ECHOE);
+	else
+		CLR(lflag, ECHOE);
+	/* Nothing we can do with TILDE. */
+	if (ISSET(flags, MDMBUF))
+		SET(cflag, MDMBUF);
+	else
+		CLR(cflag, MDMBUF);
+	if (ISSET(flags, NOHANG))
+		CLR(cflag, HUPCL);
+	else
+		SET(cflag, HUPCL);
+	if (ISSET(flags, CRTKIL))
+		SET(lflag, ECHOKE);
+	else
+		CLR(lflag, ECHOKE);
+	if (ISSET(flags, CTLECH))
+		SET(lflag, ECHOCTL);
+	else
+		CLR(lflag, ECHOCTL);
+	if (!ISSET(flags, DECCTQ))
+		SET(iflag, IXANY);
+	else
+		CLR(iflag, IXANY);
+	CLR(lflag, TOSTOP|FLUSHO|PENDIN|NOFLSH);
+	SET(lflag, ISSET(flags, TOSTOP|FLUSHO|PENDIN|NOFLSH));
 
-	if (flags & PRTERA)
-		lflag |= ECHOPRT;
-	else
-		lflag &= ~ECHOPRT;
-	if (flags & CRTERA)
-		lflag |= ECHOE;
-	else
-		lflag &= ~ECHOE;
-	if (flags & MDMBUF)
-		cflag |= MDMBUF;
-	else
-		cflag &= ~MDMBUF;
-	if (flags & NOHANG)
-		cflag &= ~HUPCL;
-	else
-		cflag |= HUPCL;
-	if (flags & CRTKIL)
-		lflag |= ECHOKE;
-	else
-		lflag &= ~ECHOKE;
-	if (flags & CTLECH)
-		lflag |= ECHOCTL;
-	else
-		lflag &= ~ECHOCTL;
-	if ((flags & DECCTQ) == 0)
-		lflag |= IXANY;
-	else
-		lflag &= ~IXANY;
-	lflag &= ~(TOSTOP|FLUSHO|PENDIN|NOFLSH);
-	lflag |= flags & (TOSTOP|FLUSHO|PENDIN|NOFLSH);
-
-	if (flags & (RAW|LITOUT|PASS8)) {
-		cflag &= ~(CSIZE|PARENB);
-		cflag |= CS8;
-		if ((flags & (RAW|PASS8)) == 0)
-			iflag |= ISTRIP;
+	if (ISSET(flags, RAW|LITOUT|PASS8)) {
+		CLR(cflag, CSIZE|PARENB);
+		SET(cflag, CS8);
+		if (!ISSET(flags, RAW|PASS8))
+			SET(iflag, ISTRIP);
 		else
-			iflag &= ~ISTRIP;
-		if ((flags & (RAW|LITOUT)) == 0)
-			oflag |= OPOST;
+			CLR(iflag, ISTRIP);
+		if (!ISSET(flags, RAW|LITOUT))
+			SET(oflag, OPOST);
 		else
-			oflag &= ~OPOST;
+			CLR(oflag, OPOST);
 	} else {
-		cflag &= ~CSIZE;
-		cflag |= CS7|PARENB;
-		iflag |= ISTRIP;
-		oflag |= OPOST;
+		CLR(cflag, CSIZE);
+		SET(cflag, CS7|PARENB);
+		SET(iflag, ISTRIP);
+		SET(oflag, OPOST);
 	}
 
 	tmode.c_iflag = iflag;
