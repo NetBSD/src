@@ -1,4 +1,4 @@
-/*	$NetBSD: soelim.c,v 1.3 1994/12/21 08:11:26 jtc Exp $	*/
+/*	$NetBSD: soelim.c,v 1.4 1997/10/19 23:25:51 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -33,17 +33,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1980, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)soelim.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: soelim.c,v 1.3 1994/12/21 08:11:26 jtc Exp $";
+__RCSID("$NetBSD: soelim.c,v 1.4 1997/10/19 23:25:51 lukem Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -65,6 +65,10 @@ static char rcsid[] = "$NetBSD: soelim.c,v 1.3 1994/12/21 08:11:26 jtc Exp $";
  */
 #define	STDIN_NAME	"-"
 
+int	main __P((int, char **));
+int	process __P((char *));
+
+int
 main(argc, argv)
 	int argc;
 	char *argv[];
@@ -84,11 +88,12 @@ main(argc, argv)
 	exit(0);
 }
 
-int process(file)
+int
+process(file)
 	char *file;
 {
-	register char *cp;
-	register int c;
+	char *cp;
+	int c;
 	char fname[BUFSIZ];
 	FILE *soee;
 	int isfile;
