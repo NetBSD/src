@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee80211subr.c,v 1.19 2002/10/04 04:25:05 onoe Exp $	*/
+/*	$NetBSD: if_ieee80211subr.c,v 1.20 2002/10/11 01:34:43 onoe Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ieee80211subr.c,v 1.19 2002/10/04 04:25:05 onoe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ieee80211subr.c,v 1.20 2002/10/11 01:34:43 onoe Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -1058,8 +1058,7 @@ ieee80211_watchdog(struct ifnet *ifp)
 				IEEE80211_SEND_MGMT(ic, ni,
 				    IEEE80211_FC0_SUBTYPE_DEAUTH,
 				    IEEE80211_REASON_AUTH_EXPIRE);
-				TAILQ_REMOVE(&ic->ic_node, ni, ni_list);
-				free(ni, M_DEVBUF);
+				ieee80211_free_node(ic, ni);
 				ni = nextbs;
 			}
 			if (!TAILQ_EMPTY(&ic->ic_node))
@@ -1160,10 +1159,8 @@ ieee80211_end_scan(struct ifnet *ifp)
 			 * during my scan.  So delete the entry for the AP
 			 * and retry to associate if there is another beacon.
 			 */
-			if (ni->ni_fails++ > 2) {
-				TAILQ_REMOVE(&ic->ic_node, ni, ni_list);
-				free(ni, M_DEVBUF);
-			}
+			if (ni->ni_fails++ > 2)
+				ieee80211_free_node(ic, ni);
 			continue;
 		}
 		fail = 0;
