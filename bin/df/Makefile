@@ -1,8 +1,12 @@
-#	@(#)Makefile	5.3 (Berkeley) 5/11/90
+#	@(#)Makefile	8.3 (Berkeley) 5/8/95
 
 PROG=	df
-CFLAGS+=-DCOMPAT_43
+SRCS=	df.c vfslist.c
 BINGRP=	operator
 BINMODE=2555
+
+MOUNT=	${.CURDIR}/../../sbin/mount
+CFLAGS+= -I${MOUNT}
+.PATH:	${MOUNT}
 
 .include <bsd.prog.mk>
