@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbbvar.h,v 1.8 2000/03/12 01:15:04 thorpej Exp $	*/
+/*	$NetBSD: pccbbvar.h,v 1.9 2000/03/12 04:27:12 mycroft Exp $	*/
 /*
  * Copyright (c) 1999 HAYAKAWA Koichi.  All rights reserved.
  *
@@ -170,7 +170,6 @@ struct pccbb_softc {
 
 	/* interrupt handler list on the bridge */
 	struct pccbb_intrhand_list *sc_pil;
-	int sc_pil_intr_enable;
 };
 
 /*
