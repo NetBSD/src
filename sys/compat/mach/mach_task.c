@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_task.c,v 1.39 2003/11/24 14:31:40 manu Exp $ */
+/*	$NetBSD: mach_task.c,v 1.40 2003/11/24 16:51:33 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -36,16 +36,18 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_ktrace.h"
 #include "opt_compat_darwin.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.39 2003/11/24 14:31:40 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.40 2003/11/24 16:51:33 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/exec.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
+#include <sys/ktrace.h>
 #include <sys/resourcevar.h>
 #include <sys/malloc.h>
 
@@ -101,11 +103,6 @@ mach_task_get_special_port(args)
 	case MACH_TASK_BOOTSTRAP_PORT:
 		mr = mach_right_get(med->med_bootstrap, 
 		    l, MACH_PORT_TYPE_SEND, 0);
-#ifdef DEBUG_MACH
-		printf("*** get bootstrap right %p, port %p, recv %p [%p]\n",
-		    mr, mr->mr_port, mr->mr_port->mp_recv,
-		    mr->mr_port->mp_recv->mr_sethead);
-#endif
 		break;
 
 	case MACH_TASK_WIRED_LEDGER_PORT:
@@ -179,18 +176,16 @@ mach_ports_lookup(args)
 	mr = mach_right_get(med->med_bootstrap, l, MACH_PORT_TYPE_SEND, 0);
 	mnp[MACH_TASK_BOOTSTRAP_PORT] = mr->mr_name;
 
-#ifdef DEBUG_MACH
-	printf("mach_ports_lookup: kernel %08x, host %08x, boostrap %08x\n",
-	    mnp[MACH_TASK_KERNEL_PORT],
-	    mnp[MACH_TASK_HOST_PORT],
-	    mnp[MACH_TASK_BOOTSTRAP_PORT]);
-#endif
 	/*
 	 * On Darwin, the data seems always null...
 	 */
 	if ((error = copyout(mnp, (void *)va, sizeof(mnp))) != 0)
 		return mach_msg_error(args, error);
 
+#ifdef KTRACE
+	if (KTRPOINT(l->l_proc, KTR_MOOL) && error == 0) 
+		ktrmool(l->l_proc, mnp, sizeof(mnp), (void *)va);
+#endif
 	rep->rep_msgh.msgh_bits =
 	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE) |
 	    MACH_MSGH_BITS_COMPLEX;
@@ -349,6 +344,10 @@ mach_task_threads(args)
 	}
 	free(mnp, M_TEMP);
 
+#ifdef KTRACE
+	if (KTRPOINT(l->l_proc, KTR_MOOL) && error == 0)
+		ktrmool(l->l_proc, mnp, size, (void *)va);
+#endif
 	rep->rep_msgh.msgh_bits =
 	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE) |
 	    MACH_MSGH_BITS_COMPLEX;

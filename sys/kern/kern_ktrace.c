@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.82 2003/11/12 21:07:38 dsl Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.83 2003/11/24 16:51:33 manu Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.82 2003/11/12 21:07:38 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.83 2003/11/24 16:51:33 manu Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h"
@@ -402,6 +402,35 @@ ktrmmsg(p, msgh, size)
 	(void) ktrwrite(p, &kth);
 	p->p_traceflag &= ~KTRFAC_ACTIVE;
 }
+
+void
+ktrmool(p, kaddr, size, uaddr)
+	struct proc *p;
+	const void *kaddr;
+	size_t size;
+	const void *uaddr;
+{
+	struct ktr_header kth;
+	struct ktr_mool *kp;
+	struct ktr_mool *buf;
+
+	p->p_traceflag |= KTRFAC_ACTIVE;
+	ktrinitheader(&kth, p, KTR_MOOL);
+
+	kp = malloc(size + sizeof(*kp), M_TEMP, M_WAITOK);
+	kp->uaddr = uaddr;
+	kp->size = size;
+	buf = kp + 1; /* Skip uaddr and size */
+	memcpy(buf, kaddr, size);
+	
+	kth.ktr_buf = (caddr_t)kp;
+	kth.ktr_len = size + sizeof(*kp);
+	(void) ktrwrite(p, &kth);
+	free(kp, M_TEMP);
+
+	p->p_traceflag &= ~KTRFAC_ACTIVE;
+}
+
 
 /* Interface and common routines */
 
