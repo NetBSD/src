@@ -1,4 +1,4 @@
-/*	$NetBSD: irframe.c,v 1.14 2001/12/26 10:56:58 augustss Exp $	*/
+/*	$NetBSD: irframe.c,v 1.15 2001/12/29 14:25:47 augustss Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -161,6 +161,8 @@ irframe_detach(struct device *self, int flags)
 {
 	/*struct irframe_softc *sc = (struct irframe_softc *)self;*/
 	int maj, mn;
+
+	/* XXX needs reference count */
 
 	/* locate the major number */
 	for (maj = 0; maj < nchrdev; maj++)
