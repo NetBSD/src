@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_exec.c,v 1.33 2003/08/24 17:52:44 chs Exp $	 */
+/*	$NetBSD: mach_exec.c,v 1.34 2003/09/10 16:45:22 christos Exp $	 */
 
 /*-
  * Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.33 2003/08/24 17:52:44 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.34 2003/09/10 16:45:22 christos Exp $");
 
 #include "opt_syscall_debug.h"
 
@@ -67,7 +67,6 @@ static void mach_e_proc_exec(struct proc *, struct exec_package *);
 static void mach_e_proc_fork(struct proc *, struct proc *);
 static void mach_init(void);
 
-extern char sigcode[], esigcode[];
 extern struct sysent sysent[];
 #ifdef SYSCALL_DEBUG
 extern const char * const syscallnames[];
@@ -78,7 +77,10 @@ void syscall(void);
 void mach_syscall_intern(struct proc *);
 #endif
 
+#if !defined(__HAVE_SIGINFO) || defined(COMPAT_16)
+extern char sigcode[], esigcode[];
 struct uvm_object *emul_mach_object;
+#endif
 
 const struct emul emul_mach = {
 	"mach",
@@ -97,9 +99,15 @@ const struct emul emul_mach = {
 #endif
 	sendsig,
 	trapsignal,
+#if !defined(__HAVE_SIGINFO) || defined(COMPAT_16)
 	sigcode,
 	esigcode,
 	&emul_mach_object,
+#else
+	NULL,
+	NULL,
+	NULL,
+#endif
 	setregs,
 	mach_e_proc_exec,
 	mach_e_proc_fork,
