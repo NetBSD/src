@@ -1,4 +1,4 @@
-# 	$NetBSD: GENERIC,v 1.10 1999/01/23 19:06:59 eeh Exp $
+# 	$NetBSD: GENERIC,v 1.11 1999/01/23 19:09:00 eeh Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
@@ -124,11 +124,11 @@ options 	COMPAT_10	# NetBSD 1.0 binary compatibility
 options 	COMPAT_11	# NetBSD 1.1 binary compatibility
 options 	COMPAT_12	# NetBSD 1.2 binary compatibility
 options 	COMPAT_13	# NetBSD 1.3 binary compatibility
-options 	COMPAT_SPARC32	# NetBSD/sparc binary compatibility
+#options 	COMPAT_SPARC32	# NetBSD/sparc binary compatibility -- 64-bit only
 options 	COMPAT_SUNOS	# SunOS 4.x binary compatibility
 options 	COMPAT_SVR4	# SunOS 5.x binary compatibility
 options 	EXEC_ELF32	# Exec module for SunOS 5.x binaries.
-#options		EXEC_ELF64	# Exec module for sparc64 & SunOs 5.x binaries.
+#options		EXEC_ELF64	# Exec module for sparc64 & SunOs 5.x binaries. -- 64-bit only
 #options		SYSCALL_DEBUG
 
 ## File systems.  You probably need at least one of FFS or NFS.
