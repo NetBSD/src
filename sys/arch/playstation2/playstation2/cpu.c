@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.1 2001/10/16 15:38:54 uch Exp $	*/
+/*	$NetBSD: cpu.c,v 1.2 2001/10/19 05:47:40 shin Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -38,7 +38,7 @@ struct cfattach cpu_ca = {
 };
 
 extern struct cfdriver cpu_cd;
-static int __attached; /* PlayStation has only one CPU */
+static int __attached; /* PlayStation 2 has only one CPU */
 
 static int
 cpumatch(struct device *parent, struct cfdata *cf, void *aux)
