@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.9 1997/01/09 20:18:59 tls Exp $	*/
+/*	$NetBSD: print.c,v 1.10 1997/01/28 00:49:46 christos Exp $	*/
 
 /*
  * print.c - debugging printout routines
@@ -42,7 +42,7 @@
 
 #ifndef lint
 static char *moduleid =
-	"@(#)$NetBSD: print.c,v 1.9 1997/01/09 20:18:59 tls Exp $";
+	"@(#)$NetBSD: print.c,v 1.10 1997/01/28 00:49:46 christos Exp $";
 #endif  /* lint */
 
 #define SZOF(a)	(sizeof(a) / sizeof(a[0]))
@@ -60,7 +60,7 @@ struct magic *m;
 		       m->offset);
 
 	if (m->flag & INDIR)
-		(void) fprintf(stderr, "(%s,%ld),",
+		(void) fprintf(stderr, "(%s,%d),",
 			       (m->in.type >= 0 && m->in.type < SZOF(typ)) ? 
 					typ[(unsigned char) m->in.type] :
 					"*bad*",
@@ -71,7 +71,7 @@ struct magic *m;
 				typ[(unsigned char) m->type] : 
 				"*bad*");
 	if (m->mask != ~0L)
-		(void) fprintf(stderr, " & %.8lx", m->mask);
+		(void) fprintf(stderr, " & %.8x", m->mask);
 
 	(void) fprintf(stderr, ",%c", m->reln);
 
@@ -84,7 +84,7 @@ struct magic *m;
 	    case LELONG:
 	    case BESHORT:
 	    case BELONG:
-		    (void) fprintf(stderr, "%ld", m->value.l);
+		    (void) fprintf(stderr, "%d", m->value.l);
 		    break;
 	    case STRING:
 		    showstr(stderr, m->value.s, -1);
