@@ -42,7 +42,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)traceroute.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: traceroute.c,v 1.4 1995/01/04 04:28:20 mycroft Exp $";
+static char *rcsid = "$Id: traceroute.c,v 1.5 1995/01/04 04:42:09 mycroft Exp $";
 #endif /* not lint */
 
 /*
@@ -232,6 +232,7 @@ static char *rcsid = "$Id: traceroute.c,v 1.4 1995/01/04 04:28:20 mycroft Exp $"
 #include <arpa/inet.h>
 
 #include <ctype.h>
+#include <err.h>
 #include <errno.h>
 #include <netdb.h>
 #include <stdio.h>
@@ -312,21 +313,13 @@ main(argc, argv)
 			dump = 1;
 			break;
 		case 'g':
-			if (lsrr >= MAX_LSRR) {
-				Fprintf(stderr,
-				    "traceroute: too many gateways; max %d\n",
-				    MAX_LSRR);
-				exit(1);
-			}
+			if (lsrr >= MAX_LSRR)
+				errx(1, "too many gateways; max %d", MAX_LSRR);
 			gw = inet_addr(optarg);
 			if (gw == -1) {
 				hp = gethostbyname(optarg);
-				if (hp == 0) {
-					Fprintf(stderr,
-					    "traceroute: unknown host %s\n",
-					    optarg);
-					exit(1);
-				}
+				if (hp == 0)
+					errx(1, "unknown host %s", optarg);
 				bcopy(hp->h_addr, &gw, 4);
 			}
 			gateway[lsrr++].s_addr = gw;
@@ -336,31 +329,21 @@ main(argc, argv)
 			break;
 		case 'm':
 			max_ttl = atoi(optarg);
-			if (max_ttl < 1 || max_ttl > MAXTTL) {
-				Fprintf(stderr,
-				    "traceroute: max ttl must be >0 and <%d.\n",
-				    MAXTTL);
-				exit(1);
-			}
+			if (max_ttl < 1 || max_ttl > MAXTTL)
+				errx(1, "max ttl must be 1 to %d.", MAXTTL);
 			break;
 		case 'n':
 			nflag++;
 			break;
 		case 'p':
 			port = atoi(optarg);
-			if (port < 1) {
-				Fprintf(stderr,
-				    "traceroute: port must be >0.\n");
-				exit(1);
-			}
+			if (port < 1)
+				errx(1, "port must be >0.");
 			break;
 		case 'q':
 			nprobes = atoi(optarg);
-			if (nprobes < 1) {
-				Fprintf(stderr,
-				    "traceroute: nprobes must be >0.\n");
-				exit(1);
-			}
+			if (nprobes < 1)
+				errx(1, "nprobes must be >0.");
 			break;
 		case 'r':
 			options |= SO_DONTROUTE;
@@ -374,22 +357,16 @@ main(argc, argv)
 			break;
 		case 't':
 			tos = atoi(optarg);
-			if (tos < 0 || tos > 255) {
-				Fprintf(stderr,
-				    "traceroute: tos must be 0 to 255.\n");
-				exit(1);
-			}
+			if (tos < 0 || tos > 255)
+				errx(1, "tos must be 0 to 255.");
 			break;
 		case 'v':
 			verbose++;
 			break;
 		case 'w':
 			waittime = atoi(optarg);
-			if (waittime <= 1) {
-				Fprintf(stderr,
-				    "traceroute: wait must be >1 sec.\n");
-				exit(1);
-			}
+			if (waittime <= 1)
+				errx(1, "wait must be >1 sec.");
 			break;
 		default:
 			usage();
@@ -409,23 +386,17 @@ main(argc, argv)
 		hostname = *argv;
 	else {
 		hp = gethostbyname(*argv);
-		if (hp == 0) {
-			(void)fprintf(stderr,
-			    "traceroute: unknown host %s\n", *argv);
-			exit(1);
-		}
+		if (hp == 0)
+			errx(1, "unknown host %s", *argv);
 		to.sin_family = hp->h_addrtype;
 		bcopy(hp->h_addr, (caddr_t)&to.sin_addr, hp->h_length);
 		hostname = hp->h_name;
 	}
 	if (*++argv)
 		datalen = atoi(*argv);
-	if (datalen < 0 || datalen >= IP_MAXPACKET - HEADERSIZE) {
-		Fprintf(stderr,
-		    "traceroute: packet size must be 0 <= s < %ld.\n",
+	if (datalen < 0 || datalen > IP_MAXPACKET - HEADERSIZE)
+		errx(1, "packet size must be 0 to %d.",
 		    IP_MAXPACKET - HEADERSIZE);
-		exit(1);
-	}
 	datalen += HEADERSIZE;
 	outpacket = (u_char *)malloc(datalen);
 	if (outpacket == 0) {
@@ -880,4 +851,5 @@ usage()
 	(void)fprintf(stderr,
 "usage: traceroute [-dDnrv] [-g gateway_addr] ... [-m max_ttl] [-p port#]\n\t\
 [-q nqueries] [-s src_addr] [-t tos] [-w wait] host [data size]\n");
-	exit(1)
+	exit(1);
+}
