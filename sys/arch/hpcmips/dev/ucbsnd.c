@@ -1,4 +1,4 @@
-/*	$NetBSD: ucbsnd.c,v 1.11 2002/10/02 05:26:47 thorpej Exp $ */
+/*	$NetBSD: ucbsnd.c,v 1.12 2002/10/10 22:33:16 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -180,12 +180,11 @@ dev_type_close(ucbsndclose);
 dev_type_read(ucbsndread);
 dev_type_write(ucbsndwrite);
 dev_type_ioctl(ucbsndioctl);
-dev_type_poll(ucbsndpoll);
 dev_type_mmap(ucbsndmmap);
 
 const struct cdevsw ucbsnd_cdevsw = {
 	ucbsndopen, ucbsndclose, ucbsndread, ucbsndwrite, ucbsndioctl,
-	nostop, notty, ucbsndpoll, ucbsndmmap,
+	nostop, notty, nopoll, ucbsndmmap,
 };
 
 int
@@ -647,16 +646,6 @@ ucbsndwrite(dev_t dev, struct uio *uio, int ioflag)
 
 int
 ucbsndioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
-{
-	int error = 0;
-
-	/* not coded yet */
-
-	return (error);
-}
-
-int
-ucbsndpoll(dev_t dev, int events, struct proc *p)
 {
 	int error = 0;
 
