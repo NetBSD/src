@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_pcmcia.c,v 1.3 1997/11/30 15:16:56 drochner Exp $	*/
+/*	$NetBSD: if_ep_pcmcia.c,v 1.4 1998/01/11 22:22:12 marc Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -201,8 +201,11 @@ ep_pcmcia_attach(parent, self, aux)
 	if (pa->product == PCMCIA_PRODUCT_3COM_3C562) {
 		bus_addr_t maxaddr = (pa->pf->sc->iobase + pa->pf->sc->iosize);
 
-		for (i = roundup(pa->pf->sc->iobase, 0x100); i < maxaddr;
-		    i += ((i % 0x100) == 0x70) ? 0x90 : 0x10) {
+		for (i = ((pa->pf->sc->iobase % 0x100) <= 0x70)?
+			     pa->pf->sc->iobase:
+			     roundup(pa->pf->sc->iobase, 0x100);
+		     i < maxaddr;
+		     i += ((i % 0x100) == 0x70) ? 0x90 : 0x10) {
 			if (pcmcia_io_alloc(pa->pf, i, cfe->iospace[0].length,
 			    0, &psc->sc_pcioh) == 0)
 				break;
