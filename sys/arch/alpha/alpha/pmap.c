@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.139 2000/08/13 18:41:15 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.140 2000/08/13 22:30:19 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -154,7 +154,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.139 2000/08/13 18:41:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.140 2000/08/13 22:30:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -641,6 +641,7 @@ do {									\
 #define	PMAP_SYNC_ISTREAM_USER(pmap)					\
 do {									\
 	(pmap)->pm_needisync = ~0UL;					\
+	alpha_mb();							\
 	alpha_multicast_ipi((pmap)->pm_cpus, ALPHA_IPI_AST);		\
 } while (0)
 #else
@@ -734,6 +735,21 @@ do {									\
 })
 #else
 #define	PMAP_KERNEL_PTE(va)	(&VPT[VPT_INDEX((va))])
+#endif
+
+/*
+ * PMAP_SET_PTE:
+ *
+ *	Set a PTE to a specified value.
+ */
+#if defined(MULTIPROCESSOR)
+#define	PMAP_SET_PTE(ptep, val)						\
+do {									\
+	*(ptep) = (val);						\
+	alpha_mb();							\
+} while (0)
+#else
+#define	PMAP_SET_PTE(ptep, val)	*(ptep) = (val)
 #endif
 
 /*
@@ -1452,7 +1468,7 @@ pmap_page_protect(vm_page_t pg, vm_prot_t prot)
 	pmap_t pmap;
 	struct pv_head *pvh;
 	pv_entry_t pv, nextpv;
-	boolean_t needisync = FALSE;
+	boolean_t needkisync = FALSE;
 	long cpu_id = cpu_number();
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
 
@@ -1494,9 +1510,15 @@ pmap_page_protect(vm_page_t pg, vm_prot_t prot)
 		    pmap_pte_pa(pv->pv_pte) != pa)
 			panic("pmap_page_protect: bad mapping");
 #endif
-		if (pmap_pte_w(pv->pv_pte) == 0)
-			needisync |= pmap_remove_mapping(pmap,
-			    pv->pv_va, pv->pv_pte, FALSE, cpu_id, NULL);
+		if (pmap_pte_w(pv->pv_pte) == 0) {
+			if (pmap_remove_mapping(pmap, pv->pv_va, pv->pv_pte,
+			    FALSE, cpu_id, NULL) == TRUE) {
+				if (pmap == pmap_kernel())
+					needkisync |= TRUE;
+				else
+					PMAP_SYNC_ISTREAM_USER(pmap);
+			}
+		}
 #ifdef DEBUG
 		else {
 			if (pmapdebug & PDB_PARANOIA) {
@@ -1510,8 +1532,8 @@ pmap_page_protect(vm_page_t pg, vm_prot_t prot)
 		PMAP_UNLOCK(pmap);
 	}
 
-	if (needisync)			/* XXXSMP */
-		alpha_pal_imb();
+	if (needkisync)
+		PMAP_SYNC_ISTREAM_KERNEL();
 
 	simple_unlock(&pvh->pvh_slock);
 	PMAP_HEAD_TO_MAP_UNLOCK();
@@ -1633,7 +1655,8 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 
 	managed = PAGE_IS_MANAGED(pa);
 	isactive = PMAP_ISACTIVE(pmap, cpu_id);
-	needisync = isactive && (prot & VM_PROT_EXECUTE) != 0;
+	needisync = ((prot & VM_PROT_EXECUTE) != 0) &&
+	    (pmap->pm_cpus != 0 || pmap == pmap_kernel());
 	wired = (flags & PMAP_WIRED) != 0;
 
 	PMAP_MAP_TO_HEAD_LOCK();
@@ -1882,7 +1905,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	/*
 	 * Set the new PTE.
 	 */
-	*pte = npte;
+	PMAP_SET_PTE(pte, npte);
 
 	/*
 	 * Invalidate the TLB entry for this VA and any appropriate
@@ -1952,7 +1975,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 	/*
 	 * Set the new PTE.
 	 */
-	*pte = npte;
+	PMAP_SET_PTE(pte, npte);
 
 	/*
 	 * Invalidate the TLB entry for this VA and any appropriate
@@ -2029,7 +2052,7 @@ pmap_kremove(vaddr_t va, vsize_t size)
 				needisync = TRUE;
 
 			/* Zap the mapping. */
-			*pte = PG_NV;
+			PMAP_SET_PTE(pte, PG_NV);
 			PMAP_INVALIDATE_TLB(pmap, va, TRUE, TRUE, cpu_id);
 #if defined(MULTIPROCESSOR) && 0
 			pmap_tlb_shootdown(pmap, va, PG_ASM);
@@ -2609,7 +2632,8 @@ pmap_remove_mapping(pmap_t pmap, vaddr_t va, pt_entry_t *pte,
 	onpv = (pmap_pte_pv(pte) != 0);
 	hadasm = (pmap_pte_asm(pte) != 0);
 	isactive = PMAP_ISACTIVE(pmap, cpu_id);
-	needisync = isactive && (pmap_pte_exec(pte) != 0);
+	needisync = (pmap_pte_exec(pte) != 0) &&
+	    (pmap->pm_cpus != 0 || pmap == pmap_kernel());
 
 	/*
 	 * Update statistics
@@ -2625,7 +2649,7 @@ pmap_remove_mapping(pmap_t pmap, vaddr_t va, pt_entry_t *pte,
 	if (pmapdebug & PDB_REMOVE)
 		printf("remove: invalidating pte at %p\n", pte);
 #endif
-	*pte = PG_NV;
+	PMAP_SET_PTE(pte, PG_NV);
 
 	PMAP_INVALIDATE_TLB(pmap, va, hadasm, isactive, cpu_id);
 #if defined(MULTIPROCESSOR) && 0
@@ -2673,6 +2697,9 @@ pmap_remove_mapping(pmap_t pmap, vaddr_t va, pt_entry_t *pte,
  *	Note: we assume that the pv_head is already locked, and that
  *	the caller has acquired a PV->pmap mutex so that we can lock
  *	the pmaps as we encounter them.
+ *
+ *	XXX This routine could stand to have some I-stream
+ *	XXX optimization done.
  */
 void
 pmap_changebit(paddr_t pa, u_long set, u_long mask, long cpu_id)
@@ -2682,7 +2709,7 @@ pmap_changebit(paddr_t pa, u_long set, u_long mask, long cpu_id)
 	pt_entry_t *pte, npte;
 	vaddr_t va;
 	boolean_t hadasm, isactive;
-	boolean_t needisync = FALSE;
+	boolean_t needisync, needkisync = FALSE;
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_BITS)
@@ -2716,8 +2743,16 @@ pmap_changebit(paddr_t pa, u_long set, u_long mask, long cpu_id)
 		if (*pte != npte) {
 			hadasm = (pmap_pte_asm(pte) != 0);
 			isactive = PMAP_ISACTIVE(pv->pv_pmap, cpu_id);
-			needisync |= (isactive && (pmap_pte_exec(pte) != 0));
-			*pte = npte;
+			needisync = (pmap_pte_exec(pte) != 0) &&
+			    (pv->pv_pmap->pm_cpus != 0 ||
+			     pv->pv_pmap == pmap_kernel());
+			PMAP_SET_PTE(pte, npte);
+			if (needisync) {
+				if (pv->pv_pmap == pmap_kernel())
+					needkisync |= TRUE;
+				else
+					PMAP_SYNC_ISTREAM_USER(pv->pv_pmap);
+			}
 			PMAP_INVALIDATE_TLB(pv->pv_pmap, va, hadasm, isactive,
 			    cpu_id);
 #if defined(MULTIPROCESSOR) && 0
@@ -2728,12 +2763,8 @@ pmap_changebit(paddr_t pa, u_long set, u_long mask, long cpu_id)
 		PMAP_UNLOCK(pv->pv_pmap);
 	}
 
-	if (needisync) {		/* XXXSMP */
-		alpha_pal_imb();
-#if defined(MULTIPROCESSOR) && 0
-		alpha_broadcast_ipi(ALPHA_IPI_IMB);
-#endif
-	}
+	if (needkisync)
+		PMAP_SYNC_ISTREAM_KERNEL();
 }
 
 /*
@@ -3433,9 +3464,9 @@ pmap_ptpage_alloc(pmap_t pmap, pt_entry_t *pte, int usage)
 	/*
 	 * Initialize the referencing PTE.
 	 */
-	*pte = ((ptpa >> PGSHIFT) << PG_SHIFT) | \
+	PMAP_SET_PTE(pte, ((ptpa >> PGSHIFT) << PG_SHIFT) |
 	    PG_V | PG_KRE | PG_KWE | PG_WIRED |
-	    (pmap == pmap_kernel() ? PG_ASM : 0);
+	    (pmap == pmap_kernel() ? PG_ASM : 0));
 
 	return (KERN_SUCCESS);
 }
@@ -3458,7 +3489,7 @@ pmap_ptpage_free(pmap_t pmap, pt_entry_t *pte, pt_entry_t **ptp)
 	 * and clear the entry.
 	 */
 	ptpa = pmap_pte_pa(pte);
-	*pte = PG_NV;
+	PMAP_SET_PTE(pte, PG_NV);
 
 	/*
 	 * Check to see if we're stealing the PT page.  If we are,
