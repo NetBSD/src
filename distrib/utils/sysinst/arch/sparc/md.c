@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.27 2001/01/14 02:38:22 mrg Exp $	*/
+/*	$NetBSD: md.c,v 1.28 2001/01/23 01:22:32 jmc Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -383,7 +383,7 @@ move_aout_libs()
 	 */
 	if (target_realpath("/emul", prefix) == NULL || stat(prefix, &st) < 0) {
 		strcpy(prefix, target_expand("/emul"));
-		scripting_fprintf(NULl, "mkdir %s\n", prefix);
+		scripting_fprintf(NULL, "mkdir %s\n", prefix);
 		mkdir(prefix, 0755);
 	}
 
@@ -451,7 +451,7 @@ void
 md_set_sizemultname()
 {
 
-	set_sizemultname_cyl()
+	set_sizemultname_cyl();
 }
 
 void
