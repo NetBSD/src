@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.21 1999/10/13 08:10:57 augustss Exp $	*/
+/*	$NetBSD: umass.c,v 1.21.2.1 1999/10/19 17:54:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -141,8 +141,8 @@ typedef struct umass_softc {
 	u_int8_t		sc_bulkin;	/* bulk-in Endpoint Address */
 	usbd_pipe_handle	sc_bulkin_pipe;
 
-	struct scsipi_link	sc_link;	/* prototype for devs */
 	struct scsipi_adapter	sc_adapter;
+	struct scsipi_channel	sc_channel;
 
 	device_ptr_t		sc_child;	/* child device, for detach */
 
@@ -209,16 +209,9 @@ usbd_status umass_bulk_transfer	__P((umass_softc_t *sc, int lun,
 		    		void *data, int datalen,
 				int dir, int *residue));
 
-/* SCSIPI related functions */
-struct scsipi_device umass_dev = {
-	NULL,			/* Use default error handler */
-	NULL,			/* have a queue, served by this */
-	NULL,			/* have no async handler */
-	NULL,			/* Use default `done' routine */
-};
-
 void	umass_scsipi_minphys	__P((struct buf *));
-int	umass_scsipi_scsi_cmd	__P((struct scsipi_xfer *));
+void	umass_scsipi_request	__P((struct scsipi_channel *,
+				scsipi_adapter_req_t, void *));
 
 
 
@@ -346,20 +339,20 @@ USB_ATTACH(umass)
 	}
 
 	/* attach the device to the SCSIPI layer */
-	sc->sc_adapter.scsipi_cmd = umass_scsipi_scsi_cmd;
-	sc->sc_adapter.scsipi_minphys = umass_scsipi_minphys;
+	sc->sc_adapter.adapt_dev = &sc->sc_dev;
+	sc->sc_adapter.adapt_nchannels = 1;
+	sc->sc_adapter.adapt_openings = 1;
+	sc->sc_adapter.adapt_max_periph = 1;
+	sc->sc_adapter.adapt_request = umass_scsipi_request;
+	sc->sc_adapter.adapt_minphys = umass_scsipi_minphys;
 
-	sc->sc_link.scsipi_scsi.channel = SCSI_CHANNEL_ONLY_ONE;
-	sc->sc_link.adapter_softc = sc;
-	sc->sc_link.scsipi_scsi.adapter_target = UMASS_SCSIID_HOST;
-	sc->sc_link.adapter = &sc->sc_adapter;
-	sc->sc_link.device = &umass_dev;
-	sc->sc_link.openings = 1;
-	sc->sc_link.scsipi_scsi.max_target = UMASS_SCSIID_DEVICE; /* XXX */
-	sc->sc_link.scsipi_scsi.max_lun = maxlun;
-	sc->sc_link.type = BUS_SCSI;
+	sc->sc_channel.chan_adapter = &sc->sc_adapter;
+	sc->sc_channel.chan_bustype = &scsi_bustype;
+	sc->sc_channel.chan_ntargets = 2;
+	sc->sc_channel.chan_nluns = maxlun + 1;
+	sc->sc_channel.chan_id = UMASS_SCSIID_HOST;
 
-	sc->sc_child = config_found(&sc->sc_dev, &sc->sc_link, scsiprint);
+	sc->sc_child = config_found(&sc->sc_dev, &sc->sc_channel, scsiprint);
 	if (sc->sc_child == NULL) {
 		usbd_close_pipe(sc->sc_bulkout_pipe);
 		usbd_close_pipe(sc->sc_bulkin_pipe);
@@ -808,119 +801,135 @@ umass_bulk_transfer(umass_softc_t *sc, int lun, void *cmd, int cmdlen,
  * SCSIPI specific functions
  */
 
-int
-umass_scsipi_scsi_cmd(xs)
-	struct scsipi_xfer *xs;
+void
+umass_scsipi_request(chan, req, arg)
+	struct scsipi_channel *chan;
+	scsipi_adapter_req_t req;
+	void *arg;
 {
-	struct scsipi_link *sc_link = xs->sc_link;
-	struct umass_softc *sc = sc_link->adapter_softc;
+	struct scsipi_xfer *xs;
+	struct scsipi_periph *periph;
+	struct umass_softc *sc = (void *)chan->chan_adapter->adapt_dev;
 	int residue, dir;
 	usbd_status err;
 	struct scsipi_sense sense_cmd;
 
-	DPRINTF(UDMASS_SCSI, ("%s: umass_scsi_cmd %d:%d\n",
-	    USBDEVNAME(sc->sc_dev),
-	    sc_link->scsipi_scsi.target, sc_link->scsipi_scsi.lun));
+	switch (req) {
+	case ADAPTER_REQ_RUN_XFER:
+		xs = arg;
+		periph = xs->xs_periph;
 
-	if (sc->sc_dying) {
-		xs->xs_status |= XS_STS_DONE;
-		xs->error = XS_DRIVER_STUFFUP;
-		scsipi_done(xs);
-		if (xs->xs_control & XS_CTL_POLL)
-			return (SUCCESSFULLY_QUEUED);
-		else
-			return (COMPLETE);
-	}
+		DPRINTF(UDMASS_SCSI, ("%s: umass_scsipi_request %d:%d\n",
+		    USBDEVNAME(sc->sc_dev),
+		    periph->periph_target, periph->periph_lun));
+
+		if (sc->sc_dying) {
+			xs->error = XS_DRIVER_STUFFUP;
+			scsipi_done(xs);
+			return;
+		}
 
 #ifdef UMASS_DEBUG
-	if (sc_link->scsipi_scsi.target != UMASS_SCSIID_DEVICE) {
-		DPRINTF(UDMASS_SCSI, ("%s: Wrong SCSI ID %d\n",
-		    USBDEVNAME(sc->sc_dev),
-		    sc_link->scsipi_scsi.target));
-		xs->error = XS_DRIVER_STUFFUP;
-		return (COMPLETE);
-	}
+		if (periph->periph_target != UMASS_SCSIID_DEVICE) {
+			DPRINTF(UDMASS_SCSI, ("%s: Wrong SCSI ID %d\n",
+			    USBDEVNAME(sc->sc_dev),
+			    periph->periph_target));
+			xs->error = XS_DRIVER_STUFFUP;
+			scsipi_done(xs);
+		}
 #endif
 
-	dir = DIR_NONE;
-	if (xs->datalen) {
-		switch (xs->xs_control & (XS_CTL_DATA_IN|XS_CTL_DATA_OUT)) {
-		case XS_CTL_DATA_IN:
-			dir = DIR_IN;
-			break;
-		case XS_CTL_DATA_OUT:
-			dir = DIR_OUT;
-			break;
+		dir = DIR_NONE;
+		if (xs->datalen) {
+			switch (xs->xs_control &
+			    (XS_CTL_DATA_IN|XS_CTL_DATA_OUT)) {
+			case XS_CTL_DATA_IN:
+				dir = DIR_IN;
+				break;
+			case XS_CTL_DATA_OUT:
+				dir = DIR_OUT;
+				break;
+			}
 		}
-	}
 
-	/* Make sure we don't lose our softc. */
-	sc->sc_refcnt++;
+		/* Make sure we don't lose our softc. */
+		sc->sc_refcnt++;
 
-	err = umass_bulk_transfer(sc, sc_link->scsipi_scsi.lun,
-	    xs->cmd, xs->cmdlen, xs->data, xs->datalen, dir, &residue);
-
-	/*
-	 * FAILED commands are supposed to be SCSI failed commands
-	 * and are therefore considered to be successfull CDW/CSW  
-	 * transfers.  PHASE errors are more serious and should return
-	 * an error to the SCSIPI system.
-	 *
-	 * XXX This is however more based on empirical evidence than on
-	 * hard proof from the Bulk-Only spec.
-	 */
-	if (err == USBD_NORMAL_COMPLETION) {
-		xs->error = XS_NOERROR;
-	} else if (sc->sc_dying) {
-		/* We are being detached, no use talking to the device. */
-		xs->error = XS_DRIVER_STUFFUP;
-	} else {
-		DPRINTF(UDMASS_USB|UDMASS_SCSI, ("%s: bulk transfer completed "
-		    "with error %s\n", USBDEVNAME(sc->sc_dev),
-		    usbd_errstr(err)));
+		err = umass_bulk_transfer(sc, periph->periph_lun,
+		    xs->cmd, xs->cmdlen, xs->data, xs->datalen, dir, &residue);
 
 		/*
-		 * Probably have a CHECK CONDITION here.  Issue a
-		 * REQUEST SENSE.
+		 * FAILED commands are supposed to be SCSI failed commands
+		 * and are therefore considered to be successfull CDW/CSW  
+		 * transfers.  PHASE errors are more serious and should return
+		 * an error to the SCSIPI system.
+		 *
+		 * XXX This is however more based on empirical evidence than on
+		 * hard proof from the Bulk-Only spec.
 		 */
-		memset(&sense_cmd, 0, sizeof(sense_cmd));
-		sense_cmd.opcode = REQUEST_SENSE;
-		sense_cmd.byte2 = sc_link->scsipi_scsi.lun <<
-		    SCSI_CMD_LUN_SHIFT;
-		sense_cmd.length = sizeof(xs->sense);
+		if (err == USBD_NORMAL_COMPLETION) {
+			xs->error = XS_NOERROR;
+		} else if (sc->sc_dying) {
+			/*
+			 * We are being detached, no use talking to the
+			 * device.
+			 */
+			xs->error = XS_DRIVER_STUFFUP;
+		} else {
+			DPRINTF(UDMASS_USB|UDMASS_SCSI,
+			    ("%s: bulk transfer completed "
+			    "with error %s\n", USBDEVNAME(sc->sc_dev),
+			    usbd_errstr(err)));
 
-		if ((err = umass_bulk_transfer(sc, sc_link->scsipi_scsi.lun,
-		    (struct scsipi_generic *)&sense_cmd, sizeof(sense_cmd),
-		    &xs->sense, sizeof(xs->sense), DIR_IN, NULL)) !=
-		    USBD_NORMAL_COMPLETION) {
-			DPRINTF(UDMASS_SCSI, ("%s: REQUEST SENSE failed: %s\n",
-			    USBDEVNAME(sc->sc_dev), usbd_errstr(err)));
-			xs->error = XS_DRIVER_STUFFUP;	/* XXX */
-		} else
-			xs->error = XS_SENSE;
+			/*
+			 * Probably have a CHECK CONDITION here.  Issue a
+			 * REQUEST SENSE.
+			 */
+			memset(&sense_cmd, 0, sizeof(sense_cmd));
+			sense_cmd.opcode = REQUEST_SENSE;
+			sense_cmd.byte2 = periph->periph_lun <<
+			    SCSI_CMD_LUN_SHIFT;
+			sense_cmd.length = sizeof(xs->sense);
+
+			if ((err = umass_bulk_transfer(sc,
+			    periph->periph_lun,
+			    (struct scsipi_generic *)&sense_cmd,
+			    sizeof(sense_cmd), &xs->sense, sizeof(xs->sense),
+			    DIR_IN, NULL)) != USBD_NORMAL_COMPLETION) {
+				DPRINTF(UDMASS_SCSI,
+				    ("%s: REQUEST SENSE failed: %s\n",
+				    USBDEVNAME(sc->sc_dev), usbd_errstr(err)));
+				xs->error = XS_DRIVER_STUFFUP;	/* XXX */
+			} else
+				xs->error = XS_SENSE;
+		}
+		xs->resid = residue;
+
+		DPRINTF(UDMASS_SCSI,
+		    ("%s: umass_scsi_cmd: error = %d, resid = 0x%x\n",
+		    USBDEVNAME(sc->sc_dev), xs->error, xs->resid));
+
+		scsipi_done(xs);
+
+		/* We are done with the softc for now. */
+		if (--sc->sc_refcnt < 0)
+			usb_detach_wakeup(USBDEV(sc->sc_dev));
+
+		return;
+	
+	case ADAPTER_REQ_GROW_RESOURCES:
+		/*
+		 * We're only allowed one command, so don't do this.
+		 */
+		return;
+
+	case ADAPTER_REQ_SET_XFER_MODE:
+	case ADAPTER_REQ_GET_XFER_MODE:
+		/*
+		 * Nothing in the proctol for this.
+		 */
+		return;
 	}
-	xs->resid = residue;
-
-	DPRINTF(UDMASS_SCSI, ("%s: umass_scsi_cmd: error = %d, resid = 0x%x\n",
-	    USBDEVNAME(sc->sc_dev), xs->error, xs->resid));
-
-	xs->xs_status |= XS_STS_DONE;
-	scsipi_done(xs);
-
-	/* We are done with the softc for now. */
-	if (--sc->sc_refcnt < 0)
-		usb_detach_wakeup(USBDEV(sc->sc_dev));
-
-	/*
-	 * XXXJRT We must return successfully queued if we're an
-	 * XXXJRT `asynchronous' command, otherwise `xs' will be
-	 * XXXJRT freed twice: once in scsipi_done(), and once in
-	 * XXXJRT scsi_scsipi_cmd().
-	 */
-	if ((xs->xs_control & XS_CTL_POLL) == 0)
-		return (SUCCESSFULLY_QUEUED);
-
-	return (COMPLETE);
 }
 
 void
