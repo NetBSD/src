@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.113 1997/10/20 20:07:59 thorpej Exp $	*/
+/*	$NetBSD: fd.c,v 1.114 1997/12/16 07:35:45 mikel Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -605,7 +605,7 @@ fdstrategy(bp)
  	bp->b_cylin = bp->b_blkno / (FDC_BSIZE / DEV_BSIZE) / fd->sc_type->seccyl;
 
 #ifdef FD_DEBUG
-	printf("fdstrategy: b_blkno %d b_bcount %d blkno %d cylin %d sz %d\n",
+	printf("fdstrategy: b_blkno %d b_bcount %ld blkno %d cylin %ld sz %d\n",
 	    bp->b_blkno, bp->b_bcount, fd->sc_blkno, bp->b_cylin, sz);
 #endif
 
