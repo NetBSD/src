@@ -1,4 +1,4 @@
-/*	$NetBSD: ls.c,v 1.18 1996/07/09 09:16:29 mycroft Exp $	*/
+/*	$NetBSD: ls.c,v 1.19 1997/07/20 18:53:07 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -36,17 +36,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1989, 1993, 1994\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)ls.c	8.7 (Berkeley) 8/5/94";
 #else
-static char rcsid[] = "$NetBSD: ls.c,v 1.18 1996/07/09 09:16:29 mycroft Exp $";
+__RCSID("$NetBSD: ls.c,v 1.19 1997/07/20 18:53:07 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -68,6 +68,7 @@ static char rcsid[] = "$NetBSD: ls.c,v 1.18 1996/07/09 09:16:29 mycroft Exp $";
 
 char	*group_from_gid __P((u_int, int));
 char	*user_from_uid __P((u_int, int));
+int	main __P((int, char *[]));
 
 static void	 display __P((FTSENT *, FTSENT *));
 static int	 mastercmp __P((const FTSENT **, const FTSENT **));
@@ -325,7 +326,7 @@ traverse(argc, argv, options)
 
 	if ((ftsp =
 	    fts_open(argv, options, f_nosort ? NULL : mastercmp)) == NULL)
-		err(1, NULL);
+		err(1, "%s", "");
 
 	display(NULL, fts_children(ftsp, 0));
 	if (f_listdir)
@@ -391,7 +392,8 @@ display(p, list)
 	u_long btotal, maxblock, maxinode, maxlen, maxnlink;
 	int bcfile, flen, glen, ulen, maxflags, maxgroup, maxuser;
 	int entries, needstats;
-	char *user, *group, *flags, buf[20];	/* 32 bits == 10 digits */
+	char *user, *group, buf[20];	/* 32 bits == 10 digits */
+	char *flags = NULL;	/* pacify gcc */
 
 	/*
 	 * If list is NULL there are two possibilities: that the parent
@@ -467,7 +469,7 @@ display(p, list)
 
 				if ((np = malloc(sizeof(NAMES) +
 				    ulen + glen + flen + 3)) == NULL)
-					err(1, NULL);
+					err(1, "%s", "");
 
 				np->user = &np->data[0];
 				(void)strcpy(np->user, user);
