@@ -1,4 +1,4 @@
-#	$NetBSD: files.acpi,v 1.1 2001/09/28 02:09:24 thorpej Exp $
+#	$NetBSD: files.acpi,v 1.2 2001/09/29 05:36:03 thorpej Exp $
 
 include "dev/acpi/acpica/files.acpica"
 
@@ -7,6 +7,12 @@ defopt	opt_acpi.h ACPI_DEBUG
 device	acpi { }
 attach	acpi at acpibus
 file	dev/acpi/acpi.c			acpi		needs-flag
+file	dev/acpi/acpi_resource.c	acpi
+
+# ACPI Embedded Controller
+device	acpiec
+attach	acpiec at acpi
+file	dev/acpi/acpi_ec.c		acpiec
 
 # ACPI Lid Switch
 device	acpilid
@@ -19,6 +25,6 @@ attach	acpibut at acpi
 file	dev/acpi/acpi_button.c		acpibut
 
 # ACPI AC Adapter
-#device	aacad
-#attach	aacad at acpi
-#file	dev/acpi/acpi_acad.c		aacad
+device	acpiacad
+attach	acpiacad at acpi
+file	dev/acpi/acpi_acad.c		acpiacad
