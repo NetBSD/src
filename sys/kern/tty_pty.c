@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)tty_pty.c	7.21 (Berkeley) 5/30/91
- *	$Id: tty_pty.c,v 1.12 1993/08/29 13:47:47 deraadt Exp $
+ *	$Id: tty_pty.c,v 1.13 1993/09/29 02:36:27 cgd Exp $
  */
 
 /*
@@ -143,10 +143,12 @@ ptsclose(dev, flag, mode, p)
 	ttyclose(tp);
 	ptcwakeup(tp, FREAD|FWRITE);
 	pt_ioctl[minor(dev)].pt_flags &= ~PF_SOPEN;
+#ifdef broken /* session holds a ref to the tty; can't deallocate */
 	if ((pt_ioctl[minor(dev)].pt_flags & PF_COPEN) == 0) {
 		ttyfree(tp);
 		pt_tty[minor(dev)] = (struct tty *)NULL;
 	}
+#endif
 	return(0);
 }
 
@@ -307,10 +309,12 @@ ptcclose(dev)
 		constty = 0;
 
 	pt_ioctl[minor(dev)].pt_flags &= ~PF_COPEN;
+#ifdef broken
 	if ((pt_ioctl[minor(dev)].pt_flags & PF_SOPEN) == 0) {
 		ttyfree(tp);
 		pt_tty[minor(dev)] = (struct tty *)NULL;
 	}
+#endif
 	return (0);
 }
 
