@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.fr,v 1.47 2003/05/16 16:28:10 dsl Exp $	*/
+/*	$NetBSD: msg.mi.fr,v 1.48 2003/05/16 19:29:18 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -337,6 +337,13 @@ message dotarfail
 {L'installation des programmes d'ammorcage et fichiers de configuration a
 échoué. Impossible de continuer ...}
 
+message extractcomplete	/* XXX translate */
+{The extraction of the selected sets for NetBSD-@@VERSION@@ is complete.
+The system is now able to boot from the selected harddisk. To complete
+the installation, sysinst will give you the opportunity to configure
+some essential things first.
+}
+
 message instcomplete
 {L'installation de NetBSD-@@VERSION@@ est terminée. L'ordinateur devrait
 redémarrer depuis le disque dur. Suivez les instructions du document
@@ -665,6 +672,21 @@ effacer /etc et renommer /etc.old en /etc.
 Arrêt de la mise à jour.
 }
 
+message X_oldexists	/* XXX translate */
+{I cannot save /usr/X11R6/bin/X as /usr/X11R6/bin/X.old, because the
+target disk already has an /usr/X11R6/bin/X.old. Please fix this before
+continuing.
+
+One way is to start a shell from the Utilities menu, examine the
+target /usr/X11R6/bin/X and /usr/X11R6/bin/X.old.  If
+/usr/X11R6/bin/X.old is from a completed upgrade, you can rm -f
+/usr/X11R6/bin/X.old and restart.  Or if /usr/X11R6/bin/X.old is from
+a recent, incomplete upgrade, you can rm -f /usr/X11R6/bin/X and mv
+/usr/X11R6/bin/X.old to /usr/X11R6/bin/X.
+
+Aborting upgrade.}
+
+
 message netnotup
 {Il y'a eu un problème lors de la configuration de votre réseau. Ou votre
 serveur de noms, ou bien votre gateway ne peuvent être atteint par un ping
@@ -786,6 +808,11 @@ message cmdfail
 	%s
 ne s'est pas executée correctement. Impossible de continuer.}
 
+message aoutfail 	/* XXX translate */
+{The directory where the old a.out shared libraries should be moved to could  
+not be created. Please try the upgrade procedure again and make sure you
+have mounted all file systems.}
+
 message noactivepart
 {Vous n'avez pas choisi de partition active. Cela peut empêcher votre système
 de démarrer correctement. Dois-je marquer la partition NetBSD active?}
@@ -797,6 +824,67 @@ dédié à NetBSD ?}
 
 message continue
 {Continuez?}
+
+message choose_timezone	/* XXX translate */
+{Please choose the timezone that fits you best from the list below.
+Press RETURN to select an entry. Press 'x' followed by RETURN to quit
+the timezone selection. 
+
+ Default:	%s 
+ Selected:	%s 
+ Local time: 	%s %s 
+}
+
+message choose_crypt	/* XXX translate */
+{Please choose the password cipher to use. NetBSD can be configured to use
+either the DES, MD5 or Blowfish schemes.
+
+The traditional DES scheme is compatible with most other Unix-like operating
+systems, but only the first 8 characters of any password will be recognised.
+The MD5 and Blowfish scheme allows for longer passwords, and some would
+argue that it's more secure.
+
+If you have a network and intend to use NIS, please bear in mind the
+capabilities of other machines on your network.
+
+If you are upgrading and would like to keep configuration unchanged,
+choose the last option "do not change".
+}
+
+message swapactive	/* XXX translate */
+{The disk that you selected has a swap partition that may currently be
+in use if your system is low on memory. Because you are going to
+repartition this disk, this swap partition will be disabled now. Please
+beware that this might lead to out of swap errors. Should you get such
+an error, please restart the system and try again.}
+
+message swapdelfailed	/* XXX translate */
+{Sysinst failed to deactivate the swap partition on the disk that you
+chose for installation. Please reboot and try again.}
+
+message rootpw	/* XXX translate */
+{The root password of the newly installed system has not yet been initialized,
+and is thus empty.  Do you want to set a root password for the system now?}
+
+message rootsh	/* XXX translate */
+{You can now select which shell to use for the root user. The default is
+/bin/csh, but you may prefer another one.}
+
+message label_size_special	/* XXX translate */
+{
+Special values that can be entered for the size value:
+    -1:   use until the end of the NetBSD part of the disk
+   a-%c:   end this partition where partition X starts
+
+}
+
+message label_offset_special	/* XXX translate */
+{
+Special values that can be entered for the offset value:
+    -1:   start at the beginning of the NetBSD part of the disk
+   a-%c:   start at the end of previous partition (a, b, ..., %c)
+
+}
 
 /* XXX translate me all below here */
 message postuseexisting
