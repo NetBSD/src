@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.33 2001/04/05 04:38:06 thorpej Exp $	*/
+/*	$NetBSD: libkern.h,v 1.34 2001/04/30 02:34:58 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -214,7 +214,11 @@ tolower(ch)
 #endif
 
 #ifndef DIAGNOSTIC
+#ifdef lint
+#define	KASSERT(e)	/* NOTHING */
+#else /* !lint */
 #define	KASSERT(e)	((void)0)
+#endif /* !lint */
 #else
 #ifdef __STDC__
 #define	KASSERT(e)	(__predict_true((e)) ? (void)0 :		    \
@@ -226,7 +230,11 @@ tolower(ch)
 #endif
 
 #ifndef DEBUG
+#ifdef lint
+#define	KDASSERT(e)	/* NOTHING */
+#else /* lint */
 #define	KDASSERT(e)	((void)0)
+#endif /* lint */
 #else
 #ifdef __STDC__
 #define	KDASSERT(e)	(__predict_true((e)) ? (void)0 :		    \
