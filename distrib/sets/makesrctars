@@ -1,8 +1,10 @@
 #! /bin/sh
 #
-#	$NetBSD: makesrctars,v 1.12 2001/12/18 10:19:14 wiz Exp $
+#	$NetBSD: makesrctars,v 1.13 2002/04/11 06:04:42 lukem Exp $
 #
 # Make source code tarballs.
+
+: ${CKSUM=cksum}
 
 GZIP=--best
 export GZIP
@@ -61,8 +63,9 @@ find -s share \
 	> ${DESTDIR}/sets/sharesrc.tgz
 
 (cd ${DESTDIR}/sets
- cksum -o1 *.tgz > BSDSUM
- cksum *.tgz > CKSUM
- cksum -o2 *.tgz > SYSVSUM
- md5 *.tgz > MD5)
+	${CKSUM} -o1 *.tgz > BSDSUM
+	${CKSUM}     *.tgz > CKSUM
+	${CKSUM} -m  *.tgz > MD5
+	${CKSUM} -o2 *.tgz > SYSVSUM
+)
 chmod 444 ${DESTDIR}/sets/*
