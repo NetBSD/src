@@ -1,3 +1,5 @@
+/*	$NetBSD: ld.c,v 1.50.2.1 1998/10/29 20:07:10 cgd Exp $	*/
+
 /*-
  * This code is derived from software copyrighted by the Free Software
  * Foundation.
@@ -31,10 +33,6 @@ static char sccsid[] = "@(#)ld.c	6.10 (Berkeley) 5/22/91";
 /* Written by Richard Stallman with some help from Eric Albert.
    Set, indirect, and warning symbol features added by Randy Smith. */
 
-/*
- *	$Id: ld.c,v 1.50 1997/04/08 23:16:27 pk Exp $
- */
-   
 /* Define how to initialize system-dependent header fields.  */
 
 #include <sys/param.h>
@@ -54,6 +52,9 @@ static char sccsid[] = "@(#)ld.c	6.10 (Berkeley) 5/22/91";
 #include <a.out.h>
 #include <stab.h>
 #include <string.h>
+
+#define GNU_BINUTIL_COMPAT	/* forwards compatiblity with binutils 2.x */
+/*#define DEBUG_COMPAT*/
 
 #include "ld.h"
 
@@ -232,6 +233,18 @@ int	specified_data_size;
 
 long	*set_vectors;
 int	setv_fill_count;
+
+/*
+ * Control warnings if we see syntax obsolete in GNU binutils, or if
+ * our forwards-compatible emulation of binutils flags is not
+ * completely faithful.
+ */
+int	warn_obsolete_syntax = 0;
+#ifdef DEBUG_COMPAT
+int	warn_forwards_compatible_inexact = 1;
+#else
+int	warn_forwards_compatible_inexact = 0;
+#endif
 
 static void	decode_option __P((char *, char *));
 static void	decode_command __P((int, char **));
@@ -449,6 +462,21 @@ classify_arg(arg)
 		if (!strcmp(&arg[2], "data"))
 			return 2;
 		return 1;
+
+	/* GNU binutils 2.x  forward-compatible flags. */
+	case 'r':
+		/* Ignore "-rpath" and hope ld.so.conf will cover our sins. */
+		if (!strcmp(&arg[1], "rpath"))
+			return 2;
+		return 1;
+
+	case 's':
+		/* Treat "-shared" and "-soname' like binutils 2.x does. */
+		if (!strcmp(&arg[1], "shared"))
+			return 1;
+		if (!strcmp(&arg[1], "soname"))
+			return 2;
+		break;
 	}
 
 	return 1;
@@ -626,10 +654,51 @@ decode_option(swt, arg)
 		return;
 	if (!strcmp(swt + 1, "Bforcearchive"))
 		return;
-	if (!strcmp(swt + 1, "Bshareable"))
+	if (!strcmp(swt + 1, "Bshareable")) {
+		if (warn_obsolete_syntax)
+			warnx("-Bshareable: obsolete syntax");
 		return;
+	}			
 	if (!strcmp(swt + 1, "assert"))
 		return;
+#ifdef GNU_BINUTIL_COMPAT
+	if (strcmp(swt + 1, "-export-dynamic") == 0) {
+		if (warn_forwards_compatible_inexact)
+			warnx("%s ignored", swt + 1);
+		return;
+	}
+	if (strcmp(swt + 1, "-whole-archive") == 0) {
+		/* XXX incomplete emulation */
+		link_mode |= FORCEARCHIVE;
+		if (warn_forwards_compatible_inexact)
+			warnx("-no-whole-archive treated as -Bshareable");
+		return;
+	}
+	if (strcmp(swt + 1, "-no-whole-archive") == 0) {
+		/* XXX incomplete emulation */
+		if (warn_forwards_compatible_inexact)
+			warnx("-no-whole-archive ignored");
+		return;
+	}
+	if (strcmp(swt + 1, "shared") == 0) {
+		link_mode |= SHAREABLE;
+#ifdef DEBUG_COMPAT
+		warnx("-shared treated as -Bshareable");
+#endif
+		return;
+	}
+	if (strcmp(swt + 1, "soname") == 0) {
+		if (warn_forwards_compatible_inexact)
+			warnx("-soname %s ignored", arg);
+		return;
+	}
+	if (strcmp(swt + 1, "rpath") == 0) {
+		if (warn_forwards_compatible_inexact)
+			warnx("%s %s ignored", swt, arg);
+		goto do_rpath;
+	}
+#endif /* GNU_BINUTIL_COMPAT */
+
 #ifdef SUN_COMPAT
 	if (!strcmp(swt + 1, "Bsilly"))
 		return;
@@ -689,6 +758,7 @@ decode_option(swt, arg)
 		return;
 
 	case 'R':
+do_rpath:
 		rrs_search_paths = (rrs_search_paths == NULL)
 			? strdup(arg)
 			: concat(rrs_search_paths, ":", arg);
