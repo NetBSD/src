@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.33 1997/07/20 20:37:56 christos Exp $	*/
+/*	$NetBSD: print.c,v 1.34 1997/08/03 01:57:04 mikel Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.33 1997/07/20 20:37:56 christos Exp $");
+__RCSID("$NetBSD: print.c,v 1.34 1997/08/03 01:57:04 mikel Exp $");
 #endif
 #endif /* not lint */
 
@@ -444,7 +444,7 @@ lstarted(k, ve)
 		return;
 	}
 	startt = k->ki_u.u_start.tv_sec;
-	(void)strftime(buf, sizeof(buf) -1, "%C",
+	(void)strftime(buf, sizeof(buf) -1, "%c",
 	    localtime(&startt));
 	(void)printf("%-*s", v->width, buf);
 }
