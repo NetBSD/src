@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_machdep.c,v 1.14 1998/08/25 03:10:25 mark Exp $	*/
+/*	$NetBSD: rpc_machdep.c,v 1.15 1998/08/25 22:03:07 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -91,6 +91,15 @@
 
 u_int cpu_reset_address = 0;
 
+/* Define various stack sizes in pages */
+#define IRQ_STACK_SIZE	1
+#define ABT_STACK_SIZE	1
+#if NIPKDB > 0
+#define UND_STACK_SIZE	2
+#else
+#define UND_STACK_SIZE	1
+#endif
+
 BootConfig bootconfig;		/* Boot config storage */
 videomemory_t videomemory;	/* Video memory descriptor */
 
@@ -126,8 +135,6 @@ pv_addr_t kernelstack;
 pv_addr_t hydrascratch;
 #endif	/* NHYDRABUS */
 
-pt_entry_t kernel_pt_table[15];
-
 char *boot_args;
 
 vm_offset_t msgbufphys;
@@ -140,28 +147,24 @@ extern u_int undefined_handler_address;
 extern int pmap_debug_level;
 #endif	/* PMAP_DEBUG */
 
-#define KERNEL_PT_PAGEDIR   0	/* Page table for mapping proc0 pagetables */
-#define KERNEL_PT_PDE       1	/* Page table for mapping L1 page dirs */
-#define KERNEL_PT_PTE       2	/* */
-#define KERNEL_PT_VMEM      3	/* Page table for mapping video memory */
-#define KERNEL_PT_SYS       4	/* Page table for mapping proc0 zero page */
-#define KERNEL_PT_KERNEL    5	/* Page table for mapping kernel */
-#define KERNEL_PT_VMDATA0   6	/* Page tables for mapping kernel VM */
-#define KERNEL_PT_VMDATA1   7
-#define KERNEL_PT_VMDATA2   8
-#define KERNEL_PT_VMDATA3   9
-#define KERNEL_PT_VMDATA4  10
-#define KERNEL_PT_VMDATA5  11
-#define KERNEL_PT_VMDATA6  12
-#define KERNEL_PT_VMDATA7  13
-#define NUM_KERNEL_PTS	   14
+#define	KERNEL_PT_PAGEDIR	0	/* Page table for mapping proc0 pagetables */
+#define	KERNEL_PT_PDE		1	/* Page table for mapping L1 page dirs */
+#define	KERNEL_PT_PTE		2	/* */
+#define	KERNEL_PT_VMEM		3	/* Page table for mapping video memory */
+#define	KERNEL_PT_SYS		4	/* Page table for mapping proc0 zero page */
+#define	KERNEL_PT_KERNEL	5	/* Page table for mapping kernel */
+#define	KERNEL_PT_VMDATA	6	/* Page tables for mapping kernel VM */
+#define	KERNEL_PT_VMDATA_NUM	8
+#define	NUM_KERNEL_PTS		(KERNEL_PT_VMDATA + KERNEL_PT_VMDATA_NUM)
+
+pt_entry_t kernel_pt_table[NUM_KERNEL_PTS];
 
 struct user *proc0paddr;
 
 /* Prototypes */
 
 void physcon_display_base	__P((u_int addr));
-extern void consinit			__P((void));
+extern void consinit		__P((void));
 
 void map_section	__P((vm_offset_t pt, vm_offset_t va, vm_offset_t pa,
 			     int cacheable));
@@ -334,8 +337,6 @@ cpu_reboot(howto, bootstr)
 	/*NOTREACHED*/
 }
 
-
-
 /*
  * u_int initarm(BootConfig *bootconf)
  *
@@ -373,17 +374,15 @@ initarm(bootconf)
 	u_int l1pagetable;
 	u_int l2pagetable;
 	extern char page0[], page0_end[];
-	struct exec *kernexec = (struct exec *)KERNEL_BASE;
+	struct exec *kernexec = (struct exec *)KERNEL_TEXT_BASE;
 	int id;
 
 	/*
 	 * Heads up ... Setup the CPU / MMU / TLB functions
 	 */
-
 	set_cpufuncs();
 
 	/* Copy the boot configuration structure */
-
 	bootconfig = *bootconf;
 
 	/*
@@ -423,15 +422,12 @@ initarm(bootconf)
 	 * This is done in main() but for the moment we do it here so that
 	 * we can use printf in initarm() before main() has been called.
 	 */
-
 	consinit();
 
 	/* Talk to the user */
-
 	printf("initarm...\n");
 
 	/* Tell the user if his boot loader is too old */
-
 	if (bootconfig.magic != BOOTCONFIG_MAGIC) {
 		printf("\nNO MAGIC NUMBER IN BOOTCONFIG. PLEASE UPGRADE YOUR BOOT LOADER\n\n");
 		delay(5000000);
@@ -459,7 +455,6 @@ initarm(bootconf)
 /*	printf("  videomem: VA=%08x PA=%08x\n", videomemory.vidm_vbase, videomemory.vidm_pbase);*/
 
 	/* Check to make sure the page size is correct */
-
 	if (NBPG != bootconfig.pagesize)
 		panic("Page size is not %d bytes\n", NBPG);
 
@@ -493,16 +488,15 @@ initarm(bootconf)
 	if ((bootconfig.scratchsize < 0xc000) != 0)
 		panic("initarm: Scratch area too small (need >= 48KB)\n");
 
-/*
- * Ok start the primary bootstrap.
- * The primary bootstrap basically replaces the booter page tables with
- * new ones that it creates in the boot scratch area. These page tables
- * map the rest of the physical memory into the virtaul memory map.
- * This allows low physical memory to be accessed to create the
- * kernels page tables, relocate the kernel code from high physical
- * memory to low physical memory etc.
- */
-
+	/*
+	 * Ok start the primary bootstrap.
+	 * The primary bootstrap basically replaces the booter page tables with
+	 * new ones that it creates in the boot scratch area. These page tables
+	 * map the rest of the physical memory into the virtaul memory map.
+	 * This allows low physical memory to be accessed to create the
+	 * kernels page tables, relocate the kernel code from high physical
+	 * memory to low physical memory etc.
+	 */
 	printf("initarm: Primary bootstrap ... ");
 
 	kerneldatasize = bootconfig.kernsize + bootconfig.argsize;
@@ -514,7 +508,6 @@ initarm(bootconf)
 		/*
 		 * Now we construct a L2 pagetables for the VRAM
  		 */
-
 		for (logical = 0; logical < 0x200000; logical += NBPG) {
 			map_entry(l2pagetable + 0x1000, logical,
 			    bootconfig.vram[0].address + logical);
@@ -523,9 +516,9 @@ initarm(bootconf)
 		}
 
 		/*
-		 * Update the videomemory structure to reflect the mapping changes
+		 * Update the videomemory structure to reflect the mapping
+		 * changes
 		 */
-
 		videomemory.vidm_vbase = VMEM_VBASE;
 		videomemory.vidm_pbase = VRAM_BASE;
 		videomemory.vidm_type = VIDEOMEM_TYPE_VRAM;
@@ -537,16 +530,16 @@ initarm(bootconf)
 		/*
 		 * Now we construct a L2 pagetables for the DRAM
  		 */
-
-		for (logical = 0; logical < bootconfig.display_size; logical += NBPG) {
+		for (logical = 0; logical < bootconfig.display_size;
+		    logical += NBPG) {
 			map_entry(l2pagetable + 0x1000, logical,
 			    bootconfig.display_phys + logical);
 		}
 
 		/*
-		 * Update the videomemory structure to reflect the mapping changes
+		 * Update the videomemory structure to reflect the mapping
+		 * changes
 		 */
-
 		videomemory.vidm_vbase = VMEM_VBASE;
 		videomemory.vidm_pbase = bootconfig.display_phys;
 		videomemory.vidm_type = VIDEOMEM_TYPE_DRAM;
@@ -557,7 +550,6 @@ initarm(bootconf)
 	 * Now map L2 page tables for the current kernel memory
 	 * and the new kernel memory
 	 */
-
 	for (logical = 0; logical < kerneldatasize + bootconfig.scratchsize;
 	    logical += NBPG) {
 		map_entry(l2pagetable + 0x3000, logical,
@@ -569,7 +561,6 @@ initarm(bootconf)
 	 * If we have the hydra nick the first physical page for hydra booting
 	 * Needs to be 2MB aligned
 	 */
- 
 	for (logical = 0; logical < 0x400000; logical += NBPG) {
 		map_entry(l2pagetable + 0x2000, logical,
 		    bootconfig.dram[0].address + logical + NBPG);
@@ -585,7 +576,6 @@ initarm(bootconf)
 	 * Now we construct the L1 pagetable. This only needs the minimum to
 	 * keep us going until we can contruct the proper kernel L1 page table.
 	 */
-
 	map_section(l1pagetable, VIDC_BASE,  VIDC_HW_BASE, 0);
 	map_section(l1pagetable, IOMD_BASE,  IOMD_HW_BASE, 0);
 
@@ -618,7 +608,6 @@ initarm(bootconf)
 	}*/
 
 	/* If no VRAM kill the VIDC DAC's until the end of the bootstrap */
-	
 	if (bootconfig.vram[0].pages == 0)
 		vidcconsole_blank(vconsole_current, BLANK_OFF);
 
@@ -635,8 +624,8 @@ initarm(bootconf)
 	 */
  
 	/* Switch tables */
-
 	setttb(bootconfig.scratchphysicalbase + 0x4000);
+
 	/*
 	 * We must now clean the cache again....
 	 * Cleaning may be done by reading new data to displace any
@@ -650,10 +639,9 @@ initarm(bootconf)
 	cpu_cache_cleanID();
 
 	/*
-	 * Since we have mapped the VRAM up into kernel space we must now update the
-	 * the bootconfig and display structures by hand.
+	 * Since we have mapped the VRAM up into kernel space we must
+	 * now update the the bootconfig and display structures by hand.
 	 */
-
 	if (bootconfig.vram[0].pages != 0) {
 		bootconfig.display_start = VMEM_VBASE;
 		physcon_display_base(VMEM_VBASE);
@@ -677,31 +665,31 @@ initarm(bootconf)
 		break;
 	}
 
-/*
- * Ok we have finished the primary boot strap. All this has done is to
- * allow us to access all the physical memory from known virtual
- * location. We also now know that all the used pages are at the top
- * of the physical memory and where they are in the virtual memory map.
- *
- * This should be the stage we are at at the end of the bootstrap when
- * we have a two stage booter.
- *
- * The secondary bootstrap has the responcibility to sort locating the
- * kernel to the correct address and for creating the kernel page tables.
- * It must also set up various memory pointers that are used by pmap etc.  
- */
-
+	/*
+	 * Ok we have finished the primary boot strap. All this has done is to
+	 * allow us to access all the physical memory from known virtual
+	 * location. We also now know that all the used pages are at the top
+	 * of the physical memory and where they are in the virtual memory map.
+	 *
+	 * This should be the stage we are at at the end of the bootstrap when
+	 * we have a two stage booter.
+	 *
+	 * The secondary bootstrap has the responcibility to sort locating the
+	 * kernel to the correct address and for creating the kernel page tables.
+	 * It must also set up various memory pointers that are used by pmap etc.  
+	 */
 	process_kernel_args();
 
 	if (bootconfig.vram[0].pages != 0)
 		printf("initarm: Secondary bootstrap ... ");
 
 	/* Zero down the memory we mapped in for the secondary bootstrap */
-
 	bzero(0x00000000, 0x400000);	/* XXX */
 
-	/* Set up the variables that define the availablilty of physcial memory */
-
+	/*
+	 * Set up the variables that define the availablilty of physcial
+	 * memory
+	 */
 	physical_start = bootconfig.dram[0].address;
 	physical_freestart = physical_start;
 	physical_end = bootconfig.dram[bootconfig.dramblocks - 1].address
@@ -713,18 +701,17 @@ initarm(bootconf)
 	for (loop = 0; loop < bootconfig.dramblocks; ++loop)
 		physmem += bootconfig.dram[loop].pages;
     
-/*
- * Reserve some pages at the top of the memory for later use
- *
- * This area is not currently used but could be used for the allocation
- * of L1 page tables for each process.
- * The size of this memory would be determined by the maximum number of
- * processes.
- *
- * For the moment we just reserve a few pages just to make sure the
- * system copes.
- */
-
+	/*
+	 * Reserve some pages at the top of the memory for later use
+	 *
+	 * This area is not currently used but could be used for the allocation
+	 * of L1 page tables for each process.
+	 * The size of this memory would be determined by the maximum number of
+	 * processes.
+	 *
+	 * For the moment we just reserve a few pages just to make sure the
+	 * system copes.
+	 */
 	physical_freeend -= videodram_size;
 	free_pages -= (videodram_size / NBPG);
 	videodram_start = physical_freeend;
@@ -736,47 +723,48 @@ initarm(bootconf)
 		videomemory.vidm_size = videodram_size;
 	}
 
-/* Right We have the bottom meg of memory mapped to 0x00000000
- * so was can get at it. The kernel will ocupy the start of it.
- * After the kernel/args we allocate some the the fixed page tables
- * we need to get the system going.
- * We allocate one page directory and 8 page tables and store the
- * physical addresses in the kernel_pt_table array.
- * Must remember that neither the page L1 or L2 page tables are the same
- * size as a page !
- *
- * Ok the next bit of physical allocate may look complex but it is
- * simple really. I have done it like this so that no memory gets wasted
- * during the allocate of various pages and tables that are all different
- * sizes.
- * The start address will be page aligned.
- * We allocate the kernel page directory on the first free 16KB boundry
- * we find.
- * We allocate the kernel page tables on the first 1KB boundry we find.
- * We allocate 9 PT's. This means that in the process we
- * KNOW that we will encounter at least 1 16KB boundry.
- *
- * Eventually if the top end of the memory gets used for process L1 page
- * tables the kernel L1 page table may be moved up there.
- */
-
-/*
- * The Simtec Hydra board needs a 2MB aligned page for bootstrapping.
- * Simplest thing is to nick the bottom page of physical memory.
- */
+	/*
+	 * Right We have the bottom meg of memory mapped to 0x00000000
+	 * so was can get at it. The kernel will ocupy the start of it.
+	 * After the kernel/args we allocate some the the fixed page tables
+	 * we need to get the system going.
+	 * We allocate one page directory and 8 page tables and store the
+	 * physical addresses in the kernel_pt_table array.	
+	 * Must remember that neither the page L1 or L2 page tables are the
+	 * same size as a page !
+	 *
+	 * Ok the next bit of physical allocate may look complex but it is
+	 * simple really. I have done it like this so that no memory gets
+	 * wasted during the allocate of various pages and tables that are
+	 * all different sizes.
+	 * The start address will be page aligned.
+	 * We allocate the kernel page directory on the first free 16KB
+	 * boundry we find.
+	 * We allocate the kernel page tables on the first 1KB boundry we find.
+	 * We allocate 9 PT's. This means that in the process we
+	 * KNOW that we will encounter at least 1 16KB boundry.
+	 *
+	 * Eventually if the top end of the memory gets used for process L1
+	 * page tables the kernel L1 page table may be moved up there.
+	 */
 
 #if NHYDRABUS > 0
+	/*
+	 * The Simtec Hydra board needs a 2MB aligned page for bootstrapping.
+	 * Simplest thing is to nick the bottom page of physical memory.
+	 */
+
 	hydrascratch.physical = physical_start;
 	physical_start += NBPG;
 	--free_pages;
 #endif	/* NHYDRABUS */
 
 	physical = physical_start + kerneldatasize;
-/*	printf("physical=%08x next_phys=%08x\n", physical, pmap_next_phys_page(physical - NBPG));*/
 	loop1 = 1;
-	kernel_pt_table[0] = 0;
+	kernel_pt_table[KERNEL_PT_PAGEDIR] = 0;
 	for (loop = 0; loop < NUM_KERNEL_PTS; ++loop) {
-		if ((physical & (PD_SIZE-1)) == 0 && kernel_pt_table[0] == 0) {
+		if ((physical & (PD_SIZE-1)) == 0
+		    && kernel_pt_table[KERNEL_PT_PAGEDIR] == 0) {
 			kernel_pt_table[KERNEL_PT_PAGEDIR] = physical;
 			bzero((char *)physical - physical_start, PD_SIZE);
 			physical += PD_SIZE; 
@@ -788,61 +776,50 @@ initarm(bootconf)
 		}
 	}
 
+#ifdef DIAGNOSTIC
 	/* This should never be able to happen but better confirm that. */
-
-	if ((kernel_pt_table[0] & (PD_SIZE-1)) != 0)
+	if ((kernel_pt_table[KERNEL_PT_PAGEDIR] & (PD_SIZE-1)) != 0)
 		panic("initarm: Failed to align the kernel page directory\n");
+#endif
 
 	/* Update the address of the first free page of physical memory */
-
 	physical_freestart = physical;
 	free_pages -= (physical - physical_start) / NBPG;
 
-	/* Allocate a page for the system page mapped to 0x00000000 */
+	/* Define a macro to simplfy memory allocation */
+#define alloc_pages(var, np)			\
+	(var) = physical_freestart;		\
+	physical_freestart += ((np) * NBPG);	\
+	free_pages -= (np);			\
+	bzero((char *)((var) - physical_start), ((np) * NBPG));
 
-	systempage.physical = physical_freestart;
-	physical_freestart += NBPG;
-	--free_pages;
-	bzero((char *)systempage.physical - physical_start, NBPG);
+	/*
+	 * Allocate a page for the system page mapped to V0x00000000
+	 * This page will just contain the system vectors and can be
+	 * shared by all processes.
+	 */
+	alloc_pages(systempage.physical, 1);
 
-	/* Allocate another 3 pages for the stacks in different CPU modes. */
+	/* Allocate stacks for all modes */
+	alloc_pages(irqstack.physical, IRQ_STACK_SIZE);
+	alloc_pages(abtstack.physical, ABT_STACK_SIZE);
+	alloc_pages(undstack.physical, UND_STACK_SIZE);
+	alloc_pages(kernelstack.physical, UPAGES);
 
-	irqstack.physical = physical_freestart;
-	physical_freestart += NBPG;
-	abtstack.physical = physical_freestart;
-	physical_freestart += NBPG;
-	undstack.physical = physical_freestart;
-#if NIPKDB > 0
-	/* Use a bigger UND32 stack when running with ipkdb */
-
-	physical_freestart += 2*NBPG;
-	bzero((char *)irqstack.physical - physical_start, 4*NBPG);
-	free_pages -= 4;
-#else	/* NIPKDB */
-	physical_freestart += NBPG;
-	bzero((char *)irqstack.physical - physical_start, 3*NBPG);
-	free_pages -= 3;
-#endif	/* NIPKDB */
-	irqstack.virtual = KERNEL_BASE + irqstack.physical-physical_start;
-	abtstack.virtual = KERNEL_BASE + abtstack.physical-physical_start;
-	undstack.virtual = KERNEL_BASE + undstack.physical-physical_start;
-
-	kernelstack.physical = physical_freestart;
-	physical_freestart += UPAGES * NBPG;
-	bzero((char *)kernelstack.physical - physical_start, UPAGES * NBPG);
-	free_pages -= UPAGES;
-
+	irqstack.virtual = KERNEL_BASE + irqstack.physical - physical_start;
+	abtstack.virtual = KERNEL_BASE + abtstack.physical - physical_start;
+	undstack.virtual = KERNEL_BASE + undstack.physical - physical_start;
 	kernelstack.virtual = KERNEL_BASE + kernelstack.physical
 	    - physical_start;
 
-	msgbufphys = physical_freestart;
-	physical_freestart += round_page(MSGBUFSIZE);
-	free_pages -= round_page(MSGBUFSIZE) / NBPG;
+	alloc_pages(msgbufphys, round_page(MSGBUFSIZE) / NBPG);
 
-	/* Ok we have allocated physical pages for the primary kernel page tables */
-
-	/* Now we fill in the L2 pagetable for the kernel code/data */
-
+	/*
+	 * Ok we have allocated physical pages for the primary kernel
+	 * page tables
+	 *
+	 * Now we fill in the L2 pagetable for the kernel code/data
+	 */
 	l2pagetable = kernel_pt_table[KERNEL_PT_KERNEL] - physical_start;
 
 	if (N_GETMAGIC(kernexec[0]) == ZMAGIC) {
@@ -862,38 +839,31 @@ initarm(bootconf)
 			    + logical);
 
 	/* Map the stack pages */
-
-	map_entry(l2pagetable, irqstack.physical-physical_start,
+	map_entry(l2pagetable, irqstack.physical - physical_start,
 	    irqstack.physical);
-	map_entry(l2pagetable, abtstack.physical-physical_start,
+	map_entry(l2pagetable, abtstack.physical - physical_start,
 	    abtstack.physical); 
-	map_entry(l2pagetable, undstack.physical-physical_start,
-	    undstack.physical); 
-#if NIPKDB > 0
-	/* Use a bigger UND32 stack when running with ipkdb */
-
-	map_entry(l2pagetable, NBPG+undstack.physical-physical_start,
-	    NBPG+undstack.physical); 
-#endif	/* NIPKDB */
-	map_entry(l2pagetable, kernelstack.physical - physical_start,
-	    kernelstack.physical); 
-	map_entry(l2pagetable, kernelstack.physical + NBPG - physical_start,
-	    kernelstack.physical + NBPG); 
+ 	for (loop = 0; loop < UND_STACK_SIZE; ++loop)
+		map_entry(l2pagetable, undstack.physical - physical_start + NBPG * loop,
+		    undstack.physical + NBPG * loop); 
+	for (loop = 0; loop < UPAGES; ++loop)
+		map_entry(l2pagetable, kernelstack.physical - physical_start + NBPG * loop,
+		    kernelstack.physical + NBPG * loop); 
 
 	/* Now we fill in the L2 pagetable for the VRAM */
 
-/*
- * Current architectures mean that the VRAM is always in 1 continuous
- * bank.
- * This means that we can just map the 2 meg that the VRAM would occupy.
- * In theory we don't need a page table for VRAM, we could section map
- * it but we would need the page tables if DRAM was in use.
- */
-
+	/*
+	 * Current architectures mean that the VRAM is always in 1 continuous
+	 * bank.
+	 * This means that we can just map the 2 meg that the VRAM would occupy.
+	 * In theory we don't need a page table for VRAM, we could section map
+	 * it but we would need the page tables if DRAM was in use.
+	 */
 	l2pagetable = kernel_pt_table[KERNEL_PT_VMEM] - physical_start;
 
 	if (videodram_size > 0) {
-		for (logical = 0; logical < videomemory.vidm_size; logical += NBPG) {
+		for (logical = 0; logical < videomemory.vidm_size;
+		    logical += NBPG) {
 			map_entry(l2pagetable, logical, videomemory.vidm_pbase
 			    + logical);
 			map_entry(l2pagetable, logical + videomemory.vidm_size,
@@ -901,30 +871,32 @@ initarm(bootconf)
 		}
 	} else {
 		for (logical = 0; logical < 0x200000; logical += NBPG) {
-			map_entry(l2pagetable, logical, bootconfig.vram[0].address
-			    + logical);
+			map_entry(l2pagetable, logical,
+			    bootconfig.vram[0].address + logical);
 			map_entry(l2pagetable, logical + 0x200000,
 			    bootconfig.vram[0].address + logical);
 		}
 	}
 
 	/* Map entries in the page table used to map PDE's */
-
 	l2pagetable = kernel_pt_table[KERNEL_PT_PDE] - physical_start;
-	map_entry_nc(l2pagetable, 0x0000000,
+/*	map_entry_nc(l2pagetable, 0x0000000,
 	    kernel_pt_table[KERNEL_PT_PAGEDIR]);
 	map_entry_nc(l2pagetable, 0x0001000,
 	    kernel_pt_table[KERNEL_PT_PAGEDIR] + 0x1000);
 	map_entry_nc(l2pagetable, 0x0002000,
 	    kernel_pt_table[KERNEL_PT_PAGEDIR] + 0x2000);
 	map_entry_nc(l2pagetable, 0x0003000,
-	    kernel_pt_table[KERNEL_PT_PAGEDIR] + 0x3000);
+	    kernel_pt_table[KERNEL_PT_PAGEDIR] + 0x3000);*/
+	for (loop = 0; loop < 4; ++loop)
+		map_entry_nc(l2pagetable, loop * 0x1000,
+		    kernel_pt_table[KERNEL_PT_PAGEDIR] + loop * 0x1000);
 
 	/*
 	 * Map entries in the page table used to map PTE's
 	 * Basically every kernel page table gets mapped here
 	 */
-
+	/* The -2 is slightly bogus, it should be -log2(sizeof(pt_entry_t)) */
 	l2pagetable = kernel_pt_table[KERNEL_PT_PTE] - physical_start;
 	map_entry_nc(l2pagetable, (KERNEL_BASE >> (PGSHIFT-2)),
 	    kernel_pt_table[KERNEL_PT_KERNEL]);
@@ -936,80 +908,44 @@ initarm(bootconf)
 	    kernel_pt_table[KERNEL_PT_VMEM]);
 	map_entry_nc(l2pagetable, (0x00000000 >> (PGSHIFT-2)),
 	    kernel_pt_table[KERNEL_PT_SYS]);
-	map_entry_nc(l2pagetable, ((KERNEL_VM_BASE + 0x00000000) >> (PGSHIFT-2)),
-	    kernel_pt_table[KERNEL_PT_VMDATA0]);
-	map_entry_nc(l2pagetable, ((KERNEL_VM_BASE + 0x00400000) >> (PGSHIFT-2)),
-	    kernel_pt_table[KERNEL_PT_VMDATA1]);
-	map_entry_nc(l2pagetable, ((KERNEL_VM_BASE + 0x00800000) >> (PGSHIFT-2)),
-	    kernel_pt_table[KERNEL_PT_VMDATA2]);
-	map_entry_nc(l2pagetable, ((KERNEL_VM_BASE + 0x00c00000) >> (PGSHIFT-2)),
-	    kernel_pt_table[KERNEL_PT_VMDATA3]);
-	map_entry_nc(l2pagetable, ((KERNEL_VM_BASE + 0x01000000) >> (PGSHIFT-2)),
-	    kernel_pt_table[KERNEL_PT_VMDATA4]);
-	map_entry_nc(l2pagetable, ((KERNEL_VM_BASE + 0x01400000) >> (PGSHIFT-2)),
-	    kernel_pt_table[KERNEL_PT_VMDATA5]);
-	map_entry_nc(l2pagetable, ((KERNEL_VM_BASE + 0x01800000) >> (PGSHIFT-2)),
-	    kernel_pt_table[KERNEL_PT_VMDATA6]);
-	map_entry_nc(l2pagetable, ((KERNEL_VM_BASE + 0x01c00000) >> (PGSHIFT-2)),
-	    kernel_pt_table[KERNEL_PT_VMDATA7]);
-
-	map_entry_nc(l2pagetable, (0xf5000000 >> (PGSHIFT-2)),
-	    kernel_pt_table[KERNEL_PT_PAGEDIR] + 0x0000);
-	map_entry_nc(l2pagetable, (0xf5400000 >> (PGSHIFT-2)),
-	    kernel_pt_table[KERNEL_PT_PAGEDIR] + 0x1000);
-	map_entry_nc(l2pagetable, (0xf5800000 >> (PGSHIFT-2)),
-	    kernel_pt_table[KERNEL_PT_PAGEDIR] + 0x2000);
-	map_entry_nc(l2pagetable, (0xf5c00000 >> (PGSHIFT-2)),
-	    kernel_pt_table[KERNEL_PT_PAGEDIR] + 0x3000);
+	for (loop = 0; loop < KERNEL_PT_VMDATA_NUM; ++loop) {
+		map_entry_nc(l2pagetable, ((KERNEL_VM_BASE +
+		    (loop * 0x00400000)) >> (PGSHIFT-2)),
+		    kernel_pt_table[KERNEL_PT_VMDATA + loop]);
+	}
+	for (loop = 0; loop < 4; ++loop)
+		map_entry_nc(l2pagetable, ((CURRENT_PAGEDIR_HOLE + loop * 0x400000) >> (PGSHIFT-2)),
+		    kernel_pt_table[KERNEL_PT_PAGEDIR] + loop * 0x1000);
 
 	/*
 	 * Map the system page in the kernel page table for the bottom 1Meg
 	 * of the virtual memory map.
 	 */
-
 	l2pagetable = kernel_pt_table[KERNEL_PT_SYS] - physical_start;
 	map_entry(l2pagetable, 0x0000000, systempage.physical);
 
 	/* Now we construct the L1 pagetable */
-
 	l1pagetable = kernel_pt_table[KERNEL_PT_PAGEDIR] - physical_start;
 
 	/* Map the VIDC20, IOMD, COMBO and podules */
 
 	/* Map the VIDC20 */
-
 	map_section(l1pagetable, VIDC_BASE, VIDC_HW_BASE, 0);
 
 	/* Map the IOMD (and SLOW and MEDIUM simple podules) */
-
 	map_section(l1pagetable, IOMD_BASE, IOMD_HW_BASE, 0);
 
 	/* Map the COMBO (and module space) */
-
 	map_section(l1pagetable, IO_BASE, IO_HW_BASE, 0);
 
 	/* Map the L2 pages tables in the L1 page table */
-
 	map_pagetable(l1pagetable, 0x00000000,
 	    kernel_pt_table[KERNEL_PT_SYS]);
 	map_pagetable(l1pagetable, KERNEL_BASE,
 	    kernel_pt_table[KERNEL_PT_KERNEL]);
-	map_pagetable(l1pagetable, KERNEL_VM_BASE + 0x00000000,
-	    kernel_pt_table[KERNEL_PT_VMDATA0]);
-	map_pagetable(l1pagetable, KERNEL_VM_BASE + 0x00400000,
-	    kernel_pt_table[KERNEL_PT_VMDATA1]);
-	map_pagetable(l1pagetable, KERNEL_VM_BASE + 0x00800000,
-	    kernel_pt_table[KERNEL_PT_VMDATA2]);
-	map_pagetable(l1pagetable, KERNEL_VM_BASE + 0x00c00000,
-	    kernel_pt_table[KERNEL_PT_VMDATA3]);
-	map_pagetable(l1pagetable, KERNEL_VM_BASE + 0x01000000,
-	    kernel_pt_table[KERNEL_PT_VMDATA4]);
-	map_pagetable(l1pagetable, KERNEL_VM_BASE + 0x01400000,
-	    kernel_pt_table[KERNEL_PT_VMDATA5]);
-	map_pagetable(l1pagetable, KERNEL_VM_BASE + 0x01800000,
-	    kernel_pt_table[KERNEL_PT_VMDATA6]);
-	map_pagetable(l1pagetable, KERNEL_VM_BASE + 0x01c00000,
-	    kernel_pt_table[KERNEL_PT_VMDATA7]);
+	for (loop = 0; loop < KERNEL_PT_VMDATA_NUM; ++loop)
+		map_pagetable(l1pagetable, KERNEL_VM_BASE + loop * 0x00400000,
+		    kernel_pt_table[KERNEL_PT_VMDATA + loop]);
 	map_pagetable(l1pagetable, PAGE_DIRS_BASE,
 	    kernel_pt_table[KERNEL_PT_PDE]);
 	map_pagetable(l1pagetable, PROCESS_PAGE_TBLS_BASE,
@@ -1034,21 +970,21 @@ initarm(bootconf)
 /*	printf("V0xefc00000 - %08x\n", ReadWord(l1pagetable + 0x3bf8));
 	printf("V0xef800000 - %08x\n", ReadWord(l1pagetable + 0x3bfc));*/
 
-/*
- * Now we have the real page tables in place so we can switch to them.
- * Once this is done we will be running with the REAL kernel page tables.
- */
+	/*
+	 * Now we have the real page tables in place so we can switch to them.
+	 * Once this is done we will be running with the REAL kernel page
+	 * tables.
+	 */
 
-/*
- * The last thing we must do is copy the kernel down to the new memory.
- * This copies all our kernel data structures and variables as well
- * which is why it is left to the last moment.
- */
-
+	/*
+	 * The last thing we must do is copy the kernel down to the new memory.
+	 * This copies all our kernel data structures and variables as well
+	 * which is why it is left to the last moment.
+	 */
 	if (bootconfig.vram[0].pages != 0)
 		printf("mapping ... ");
 
-	bcopy((char *)KERNEL_BASE, (char *)0x00000000, kerneldatasize);
+	bcopy((char *)KERNEL_TEXT_BASE, (char *)0x00000000, kerneldatasize);
 
 	/* Switch tables */
 	setttb(kernel_pt_table[KERNEL_PT_PAGEDIR]);
@@ -1071,7 +1007,6 @@ initarm(bootconf)
 		vidcconsole_reinit();
 
 		/* Turn the VIDC DAC's on again. */
-	
 		vidcconsole_blank(vconsole_current, BLANK_NONE);
 		printf("\x0cSecondary bootstrap: ");
 	}
@@ -1079,55 +1014,49 @@ initarm(bootconf)
 	printf("done.\n");
 
 	/* Right set up the vectors at the bottom of page 0 */
-
 	bcopy(page0, (char *)0x00000000, page0_end - page0);
 
 	/* We have modified a text page so sync the icache */
 	cpu_cache_syncI_rng(0, page0_end - page0);
 
-/*
- * Pages were allocated during the secondary bootstrap for the
- * stacks for different CPU modes.
- * We must now set the r13 registers in the different CPU modes to
- * point to these stacks.
- * Since the ARM stacks use STMFD etc. we must set r13 to the top end
- * of the stack memory.
- */
+	/*
+	 * Pages were allocated during the secondary bootstrap for the
+	 * stacks for different CPU modes.
+	 * We must now set the r13 registers in the different CPU modes to
+	 * point to these stacks.
+	 * Since the ARM stacks use STMFD etc. we must set r13 to the top end
+	 * of the stack memory.
+	 */
 
 #if defined(DIAGNOSTIC) && 0
-	printf("IRQ stack V%08x P%08x\n", (u_int) irqstack.virtual,
-	    (u_int) irqstack.physical);
-	printf("ABT stack V%08x P%08x\n", (u_int) abtstack.virtual,
-	    (u_int) abtstack.physical);
-	printf("UND stack V%08x P%08x\n", (u_int) undstack.virtual,
-	    (u_int) undstack.physical);
+	printf("IRQ stack V%08lx P%08lx\n", irqstack.virtual,
+	    irqstack.physical);
+	printf("ABT stack V%08lx P%08lx\n", abtstack.virtual,
+	    abtstack.physical);
+	printf("UND stack V%08lx P%08lx\n", undstack.virtual,
+	    undstack.physical);
 #endif
 
 	printf("init subsystems: stacks ");
 	console_flush();
 
-	set_stackptr(PSR_IRQ32_MODE, irqstack.virtual + NBPG);
-	set_stackptr(PSR_ABT32_MODE, abtstack.virtual + NBPG);
-#if NIPKDB > 0
-	/* Use a bigger UND32 stack when running with ipkdb */
-	set_stackptr(PSR_UND32_MODE, undstack.virtual + 2*NBPG);
-#else	/* NIPKDB */
-	set_stackptr(PSR_UND32_MODE, undstack.virtual + NBPG);
-#endif	/* NIPKDB */
+	set_stackptr(PSR_IRQ32_MODE, irqstack.virtual + IRQ_STACK_SIZE * NBPG);
+	set_stackptr(PSR_ABT32_MODE, abtstack.virtual + ABT_STACK_SIZE * NBPG);
+	set_stackptr(PSR_UND32_MODE, undstack.virtual + UND_STACK_SIZE * NBPG);
 #ifdef PMAP_DEBUG
 	if (pmap_debug_level >= 0)
-		printf("kstack V%08x P%08x\n", (int) kernelstack.virtual,
-		    (int) kernelstack.physical);
+		printf("kstack V%08lx P%08lx\n", kernelstack.virtual,
+		    kernelstack.physical);
 #endif	/* PMAP_DEBUG */
 
-/*
- * Well we should set a data abort handler.
- * Once things get going this will change as we will need a proper handler.
- * Until then we will use a handler that just panics but tells us
- * why.
- * Initialisation of the vectors will just panic on a data abort.
- * This just fills in a slighly better one.
- */
+	/*
+	 * Well we should set a data abort handler.
+	 * Once things get going this will change as we will need a proper
+	 * handler. Until then we will use a handler that just panics but
+	 * tells us why.
+	 * Initialisation of the vectors will just panic on a data abort.
+	 * This just fills in a slighly better one.
+	 */
 
 	printf("vectors ");
 	data_abort_handler_address = (u_int)data_abort_handler;
@@ -1135,49 +1064,45 @@ initarm(bootconf)
 	undefined_handler_address = (u_int)undefinedinstruction_bounce;
 	console_flush();
 
-/* Diagnostic stuff. while writing the boot code */
-
-/*	for (loop = 0x0; loop < 0x1000; ++loop) {
+#if 0
+	/* Diagnostic stuff. while writing the boot code */
+	for (loop = 0x0; loop < 0x1000; ++loop) {
 		if (ReadWord(PAGE_DIRS_BASE + loop * 4) != 0)
 			printf("Pagetable for V%08x = %08x\n", loop << 20,
 			    ReadWord(0xf2000000 + loop * 4));
-	}*/
+	}
  
-/* Diagnostic stuff. while writing the boot code */
-
-/*	for (loop = 0x0; loop < 0x400; ++loop) {
+	for (loop = 0x0; loop < 0x400; ++loop) {
 		if (ReadWord(kernel_pt_table[KERNEL_PT_PTE] + loop * 4) != 0)
 			printf("Pagetable for V%08x P%08x = %08x\n",
 			    loop << 22, kernel_pt_table[KERNEL_PT_PTE]+loop*4,
 			    ReadWord(kernel_pt_table[KERNEL_PT_PTE]+loop * 4));
-	}*/
+	}
+#endif
 
-/* At last !
- * We now have the kernel in physical memory from the bottom upwards.
- * Kernel page tables are physically above this.
- * The kernel is mapped to 0xf0000000
- * The kernel data PTs will handle the mapping of 0xf1000000-0xf1ffffff
- * 2Meg of VRAM is mapped to 0xf4000000
- * The kernel page directory is mapped to 0xf3000000
- * The page tables are mapped to 0xefc00000
- * The IOMD is mapped to 0xf6000000
- * The VIDC is mapped to 0xf6100000
- */
+	/* At last !
+	 * We now have the kernel in physical memory from the bottom upwards.
+	 * Kernel page tables are physically above this.
+	 * The kernel is mapped to 0xf0000000
+	 * The kernel data PTs will handle the mapping of 0xf1000000-0xf1ffffff
+	 * 2Meg of VRAM is mapped to 0xf4000000
+	 * The kernel page directory is mapped to 0xf3000000
+	 * The page tables are mapped to 0xefc00000
+	 * The IOMD is mapped to 0xf6000000
+	 * The VIDC is mapped to 0xf6100000
+	 */
 
 	/* Initialise the undefined instruction handlers */
-
 	printf("undefined ");
 	undefined_init();
 	console_flush();
 
 	/* Boot strap pmap telling it where the kernel page table is */
-
 	printf("pmap ");
-	pmap_bootstrap(PAGE_DIRS_BASE, kernel_pt_table[2]);
+	pmap_bootstrap(PAGE_DIRS_BASE, kernel_pt_table[KERNEL_PT_PTE]);
 	console_flush();
 
 	/* Setup the IRQ system */
-
 	printf("irq ");
 	console_flush();
 	irq_init();
@@ -1223,12 +1148,10 @@ process_kernel_args(void)
 	char *args;
 
 	/* Ok now we will check the arguments for interesting parameters. */
-
 	args = (char *)bootconfig.argvirtualbase;
 	boothowto = 0;
     
 	/* Skip the first parameter (the boot loader filename) */
-
 	while (*args != ' ' && *args != 0)
 		++args;
 
@@ -1236,7 +1159,6 @@ process_kernel_args(void)
 		++args;
 
 	/* Skip the kernel image filename */
-
 	while (*args != ' ' && *args != 0)
 		++args;
 
@@ -1286,16 +1208,13 @@ vmem_mapdram()
 		return(ENOMEM);
 
 	/* flush existing video data */
-
 	cpu_cache_purgeD();
 
 	/* Get the level 2 pagetable for the video memory */
-
 	l2pagetable = (u_int)pmap_pte(kernel_pmap,
 	    (vm_offset_t)videomemory.vidm_vbase);
 
 	/* Map a block of DRAM into the video memory area */
-
 	for (logical = 0; logical < 0x200000; logical += NBPG) {
 		map_entry(l2pagetable, logical, videodram_start
 		    + logical);
@@ -1304,18 +1223,15 @@ vmem_mapdram()
 	}
 
 	/* Flush the TLB so we pick up the new mappings */
-
 	cpu_tlb_flushD();
 
 	/* Rebuild the video memory descriptor */
-
 	videomemory.vidm_vbase = VMEM_VBASE;
 	videomemory.vidm_pbase = videodram_start;
 	videomemory.vidm_type = VIDEOMEM_TYPE_DRAM;
 	videomemory.vidm_size = videodram_size;
 
 	/* Reinitialise the video system */
-
 /*	video_reinit();*/
 	return(0);
 }
@@ -1333,16 +1249,13 @@ vmem_mapvram()
 		return(ENOMEM);
 
 	/* flush existing video data */
-
 	cpu_cache_purgeD();
 
 	/* Get the level 2 pagetable for the video memory */
-
 	l2pagetable = (u_int)pmap_pte(kernel_pmap,
 	    (vm_offset_t)videomemory.vidm_vbase);
 
 	/* Map the VRAM into the video memory area */
-
 	for (logical = 0; logical < 0x200000; logical += NBPG) {
 		map_entry(l2pagetable, logical, bootconfig.vram[0].address
 		    + logical);
@@ -1351,18 +1264,15 @@ vmem_mapvram()
 	}
 
 	/* Flush the TLB so we pick up the new mappings */
-
 	cpu_tlb_flushD();
 
 	/* Rebuild the video memory descriptor */
-
 	videomemory.vidm_vbase = VMEM_VBASE;
 	videomemory.vidm_pbase = VRAM_BASE;
 	videomemory.vidm_type = VIDEOMEM_TYPE_VRAM;
 	videomemory.vidm_size = bootconfig.vram[0].pages * NBPG;
 
 	/* Reinitialise the video system */
-
 /*	video_reinit();*/
 	return(0);
 }
@@ -1382,17 +1292,15 @@ vmem_cachectl(flag)
 		return(ENOMEM);
 
 	/* Get the level 2 pagetable for the video memory */
-
 	l2pagetable = (u_int)pmap_pte(kernel_pmap,
 	    (vm_offset_t)videomemory.vidm_vbase);
 
 	/* Map the VRAM into the video memory area */
-
 	if (flag == 0) {
 		printf("Disabling caching and buffering of VRAM\n");
 		for (logical = 0; logical < 0x200000; logical += NBPG) {
-			map_entry_nc(l2pagetable, logical, bootconfig.vram[0].address
-			    + logical);
+			map_entry_nc(l2pagetable, logical,
+			    bootconfig.vram[0].address + logical);
 			map_entry_nc(l2pagetable, logical + 0x200000,
 			    bootconfig.vram[0].address + logical);
 		}
@@ -1414,23 +1322,20 @@ vmem_cachectl(flag)
 			WriteWord(l2pagetable + (((logical+0x200000) >> 10) & 0x00000ffc),
 			    L2_PTE_NC_NB((pa & PG_FRAME), AP_KRW)|PT_C);
 		}
-	}
-	else {
+	} else {
 		printf("Enabling caching and buffering of VRAM\n");
 		for (logical = 0; logical < 0x200000; logical += NBPG) {
-			map_entry(l2pagetable, logical, bootconfig.vram[0].address
-			    + logical);
+			map_entry(l2pagetable, logical,
+			    bootconfig.vram[0].address + logical);
 			map_entry(l2pagetable, logical + 0x200000,
 			    bootconfig.vram[0].address + logical);
 		}
 	}
 
 	/* clean out any existing cached video data */
-
 	cpu_cache_purgeD();
 
 	/* Flush the TLB so we pick up the new mappings */
-
 	cpu_tlb_flushD();
 
 	return(0);
@@ -1474,4 +1379,3 @@ rpc_sa110_cc_setup(void)
 #endif	/* CPU_SA110 */
 
 /* End of machdep.c */
-
