@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.35 1997/04/20 20:31:18 scottr Exp $	*/
+/*	$NetBSD: ite.c,v 1.36 1997/05/12 07:53:58 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -139,7 +139,7 @@ enum vt100state_e {
 long		videoaddr;
 long		videorowbytes;
 long		videobitdepth;
-unsigned long	videosize;
+u_long		videosize;
 
 /* Calculated by itecninit() */
 static int	ite_initted = 0;
@@ -187,10 +187,10 @@ putpixel1(xx, yy, c, num)
 	int *c;
 	int num;
 {
-	unsigned int i, mask;
-	unsigned char *sc;
+	u_int i, mask;
+	u_char *sc;
 
-	sc = (unsigned char *) videoaddr;
+	sc = (u_char *)videoaddr;
 
 	i = 7 - (xx & 7);
 	mask = ~(1 << i);
@@ -208,10 +208,10 @@ putpixel2(xx, yy, c, num)
 	int *c;
 	int num;
 {
-	unsigned int i, mask;
-	unsigned char *sc;
+	u_int i, mask;
+	u_char *sc;
 
-	sc = (unsigned char *) videoaddr;
+	sc = (u_char *)videoaddr;
 
 	i = 6 - ((xx & 3) << 1);
 	mask = ~(3 << i);
@@ -229,10 +229,10 @@ putpixel4(xx, yy, c, num)
 	int *c;
 	int num;
 {
-	unsigned int i, mask;
-	unsigned char *sc;
+	u_int i, mask;
+	u_char *sc;
 
-	sc = (unsigned char *) videoaddr;
+	sc = (u_char *)videoaddr;
 
 	i = 4 - ((xx & 1) << 2);
 	mask = ~(15 << i);
@@ -250,9 +250,9 @@ putpixel8(xx, yy, c, num)
 	int *c;
 	int num;
 {
-	unsigned char *sc;
+	u_char *sc;
 
-	sc = (unsigned char *) videoaddr;
+	sc = (u_char *)videoaddr;
 
 	sc += yy * videorowbytes + xx;
 	while (num--) {
@@ -267,11 +267,11 @@ putpixel16(xx, yy, c, num)
 	int *c;
 	int num;
 {
-	unsigned short	*sc;
-	int		videorowshorts;
-	unsigned char	uc;
+	u_short	*sc;
+	int videorowshorts;
+	u_char uc;
 
-	sc = (unsigned short *)videoaddr;
+	sc = (u_short *)videoaddr;
 
 	videorowshorts = videorowbytes >> 1;
 	sc += yy * videorowshorts + xx;
@@ -288,11 +288,11 @@ putpixel32(xx, yy, c, num)
 	int *c;
 	int num;
 {
-	unsigned long	*sc;
-	int		videorowlongs;
-	unsigned char	uc;
+	u_long *sc;
+	int videorowlongs;
+	u_char uc;
 
-	sc = (unsigned long *)videoaddr;
+	sc = (u_long *)videoaddr;
 
 	videorowlongs = videorowbytes >> 2;
 	sc += yy * videorowlongs + xx;
@@ -300,21 +300,21 @@ putpixel32(xx, yy, c, num)
 		uc = (*c++ & 0xff);
 		*sc = (uc << 24) | (uc << 16) | (uc << 8) | uc;
 		sc += videorowlongs;
-}
+	}
 }
 
 static void 
 reversepixel1(xx, yy, num)
 	int xx, yy, num;
 {
-	unsigned int mask;
-	unsigned char *sc;
-	unsigned long *sl;
-	unsigned short *ss;
-	int		videorowshorts;
-	int		videorowlongs;
+	u_int mask;
+	u_char *sc;
+	u_long *sl;
+	u_short *ss;
+	int videorowshorts;
+	int videorowlongs;
 
-	sc = (unsigned char *) videoaddr;
+	sc = (u_char *)videoaddr;
 	mask = 0;		/* Get rid of warning from compiler */
 
 	switch (videobitdepth) {
@@ -336,7 +336,7 @@ reversepixel1(xx, yy, num)
 		break;
 	case 16:
 		videorowshorts = videorowbytes >> 1;
-		ss = (unsigned short *) videoaddr;
+		ss = (u_short *)videoaddr;
 		ss += yy * videorowshorts + xx;
 		while (num--) {
 			*ss ^= 0xffff;
@@ -345,7 +345,7 @@ reversepixel1(xx, yy, num)
 		return;
 	case 32:
 		videorowlongs = videorowbytes >> 2;
-		sl = (unsigned long *) videoaddr;
+		sl = (u_long *)videoaddr;
 		sl += yy * videorowlongs + xx;
 		while (num--) {
 			*sl ^= 0xffffffff;
@@ -368,7 +368,7 @@ writechar(ch, x, y, attr)
 	int x, y, attr;
 {
 	int i, j, mask, rev, col[CHARHEIGHT];
-	unsigned char *c;
+	u_char *c;
 
 	ch &= 0x7F;
 	x *= CHARWIDTH;
@@ -415,7 +415,7 @@ writechar(ch, x, y, attr)
 static void 
 drawcursor()
 {
-	unsigned int j, X, Y;
+	u_int j, X, Y;
 
 	X = x * CHARWIDTH;
 	Y = y * CHARHEIGHT;
@@ -427,7 +427,7 @@ drawcursor()
 static void 
 erasecursor()
 {
-	unsigned int j, X, Y;
+	u_int j, X, Y;
 
 	X = x * CHARWIDTH;
 	Y = y * CHARHEIGHT;
@@ -439,12 +439,12 @@ erasecursor()
 static void 
 scrollup()
 {
-	unsigned char *from, *to;
-	unsigned int linebytes;
-	unsigned short i;
+	u_char *from, *to;
+	u_int linebytes;
+	u_short i;
 
 	linebytes = videorowbytes * CHARHEIGHT;
-	to = (unsigned char *) videoaddr + (scrreg_top * linebytes);
+	to = (u_char *)videoaddr + (scrreg_top * linebytes);
 	from = to + linebytes;
 
 	for (i = (scrreg_bottom - scrreg_top) * CHARHEIGHT; i > 0; i--) {
@@ -461,12 +461,12 @@ scrollup()
 static void 
 scrolldown()
 {
-	unsigned char *from, *to;
-	unsigned int linebytes;
-	unsigned short i;
+	u_char *from, *to;
+	u_int linebytes;
+	u_short i;
 
 	linebytes = videorowbytes * CHARHEIGHT;
-	to = (unsigned char *) videoaddr + ((scrreg_bottom + 1) * linebytes);
+	to = (u_char *)videoaddr + ((scrreg_bottom + 1) * linebytes);
 	from = to - linebytes;
 
 	for (i = (scrreg_bottom - scrreg_top) * CHARHEIGHT; i > 0; i--) {
@@ -484,10 +484,10 @@ static void
 clear_screen(which)
 	int which;
 {
-	unsigned char *p;
-	unsigned short len, i;
+	u_char *p;
+	u_short len, i;
 
-	p = (unsigned char *) videoaddr;
+	p = (u_char *)videoaddr;
 
 	switch (which) {
 	case 0:		/* To end of screen	 */
@@ -525,8 +525,8 @@ static void
 clear_line(which)
 	int which;
 {
-	unsigned char *to;
-	unsigned int linebytes;
+	u_char *to;
+	u_int linebytes;
 	int start, end, i;
 
 
@@ -549,7 +549,7 @@ clear_line(which)
 		break;
 	case 2:		/* Whole line		 */
 		linebytes = videorowbytes * CHARHEIGHT;
-		to = (unsigned char *) videoaddr + (y * linebytes);
+		to = (u_char *)videoaddr + (y * linebytes);
 
 		for (i = CHARHEIGHT; i > 0; i--) {
 			bzero(to, screenrowbytes);
@@ -827,7 +827,7 @@ static void
 putc_square(ch)
 	char ch;
 {
-	unsigned short i;
+	u_short i;
 
 	for (i = 0; i < MAXPARS; i++)
 		par[i] = 0;
@@ -962,7 +962,7 @@ iteopen(dev, mode, devtype, p)
 	register struct tty *tp;
 	register int error;
 
-	dprintf("iteopen(): enter(0x%x)\n", (int) dev);
+	dprintf("iteopen(): enter(0x%x)\n", (int)dev);
 
 	if (!ite_initted)
 		return (ENXIO);
@@ -1005,7 +1005,7 @@ iteclose(dev, flag, mode, p)
 	int mode;
 	struct proc *p;
 {
-	dprintf("iteclose: enter (%d)\n", (int) dev);
+	dprintf("iteclose: enter (%d)\n", (int)dev);
 
 	(*linesw[ite_tty->t_line].l_close) (ite_tty, flag);
 	ttyclose(ite_tty);
@@ -1075,7 +1075,7 @@ iteioctl(dev, cmd, addr, flag, p)
 		return mac68k_ring_bell(bell_freq, bell_length, bell_volume);
 	case ITEIOC_SETBELL:
 		{
-			struct bellparams *bp = (void *) addr;
+			struct bellparams *bp = (void *)addr;
 
 			/* Do some sanity checks. */
 			if (bp->freq < 10 || bp->freq > 40000)
@@ -1092,7 +1092,7 @@ iteioctl(dev, cmd, addr, flag, p)
 		}
 	case ITEIOC_GETBELL:
 		{
-			struct bellparams *bp = (void *) addr;
+			struct bellparams *bp = (void *)addr;
 
 			bell_freq = bp->freq;
 			bell_length = bp->len;
