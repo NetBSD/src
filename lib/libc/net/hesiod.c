@@ -1,4 +1,4 @@
-/*	$NetBSD: hesiod.c,v 1.2 1999/01/15 12:53:23 lukem Exp $	*/
+/*	$NetBSD: hesiod.c,v 1.3 1999/01/15 22:03:57 thorpej Exp $	*/
 
 /* This file is part of the Hesiod library.
  *
@@ -177,7 +177,7 @@ _hes_res_scan(msg)
 		}
 	}
 
-	mess->len = (int)cp - (int)msg;
+	mess->len = (long)cp - (long)msg;
 
 	return(mess);
 }
