@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_machdep.c,v 1.33 2002/04/09 22:37:00 thorpej Exp $	*/
+/*	$NetBSD: rpc_machdep.c,v 1.34 2002/04/10 22:30:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Reinoud Zandijk.
@@ -57,7 +57,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.33 2002/04/09 22:37:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.34 2002/04/10 22:30:44 thorpej Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -130,24 +130,22 @@ extern int       *vidc_base;
 extern u_int32_t  iomd_base;
 extern struct bus_space iomd_bs_tag;
 
-vm_offset_t physical_start;
-vm_offset_t physical_freestart;
-vm_offset_t physical_freeend;
-vm_offset_t physical_end;
-vm_offset_t dma_range_begin;
-vm_offset_t dma_range_end;
+paddr_t physical_start;
+paddr_t physical_freestart;
+paddr_t physical_freeend;
+paddr_t physical_end;
+paddr_t dma_range_begin;
+paddr_t dma_range_end;
 
 u_int free_pages;
-vm_offset_t pagetables_start;
 int physmem = 0;
-vm_offset_t memoryblock_end;
+paddr_t memoryblock_end;
 
 #ifndef PMAP_STATIC_L1S
 int max_processes = 64;			/* Default number */
 #endif	/* !PMAP_STATIC_L1S */
 
 u_int videodram_size = 0;		/* Amount of DRAM to reserve for video */
-vm_offset_t videodram_start;
 
 /* Physical and virtual addresses for some global pages */
 pv_addr_t systempage;
@@ -156,7 +154,7 @@ pv_addr_t undstack;
 pv_addr_t abtstack;
 pv_addr_t kernelstack;
 
-vm_offset_t msgbufphys;
+paddr_t msgbufphys;
 
 extern u_int data_abort_handler_address;
 extern u_int prefetch_abort_handler_address;
@@ -371,9 +369,9 @@ cpu_reboot(howto, bootstr)
 #define ONE_MB	0x100000
 
 struct l1_sec_map {
-	vm_offset_t	va;
-	vm_offset_t	pa;
-	vm_size_t	size;
+	vaddr_t		va;
+	paddr_t		pa;
+	vsize_t		size;
 	vm_prot_t	prot;
 	int		cache;
 } l1_sec_table[] = {
@@ -582,8 +580,8 @@ initarm(void *cookie)
 	physical_freeend = physical_end;
 
 	/* constants for now, but might be changed/configured */
-	dma_range_begin = (vm_offset_t) physical_start;
-	dma_range_end   = (vm_offset_t) MIN(physical_end, 512*1024*1024);
+	dma_range_begin = (paddr_t) physical_start;
+	dma_range_end   = (paddr_t) MIN(physical_end, 512*1024*1024);
 /* XXX HACK HACK XXX */
 /* dma_range_end   = 0x18000000; */
 
