@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.95 1998/08/07 11:02:39 kleink Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.96 1998/08/08 11:39:20 kleink Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -3000,12 +3000,7 @@ nfs_pathconf(v)
 	case _PC_CHOWN_RESTRICTED:
 	case _PC_NO_TRUNC:
 		if (!v3) {
-			/*
-			 * The pathconf name is not invalid, we just don't
-			 * have a limit for these.  Per POSIX, this is not
-			 * an error.
-			 */
-			*ap->a_retval = -1;
+			error = EINVAL;
 			break;
 		}
 		nfsstats.rpccnt[NFSPROC_PATHCONF]++;
