@@ -1,4 +1,4 @@
-/*	$NetBSD: atari_init.c,v 1.53 2001/02/09 21:47:45 leo Exp $	*/
+/*	$NetBSD: atari_init.c,v 1.54 2001/05/14 11:58:30 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -33,6 +33,7 @@
  */
 
 #include "opt_ddb.h"
+#include "opt_mbtype.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -198,6 +199,17 @@ char	*esym_addr;		/* Address of kernel '_esym' symbol	*/
 	u_long		kbase;
 	u_int		kstsize;
 
+#if defined(_MILANHW_)
+	/* XXX
+	 * XXX The right place todo this is probably the booter (Leo)
+	 * XXX More than 16MB memory is not yet supported on the Milan!
+	 * The Milan Lies about the presence of TT-RAM. If you insert
+	 * 16MB it is split in 14MB ST starting at address 0 and 2MB TT RAM,
+	 * starting at address 16MB. 
+	 */
+	stphysize += ttphysize;
+	ttphysize  = ttphystart = 0;
+#endif
 	boot_segs[0].start       = 0;
 	boot_segs[0].end         = stphysize;
 	boot_segs[1].start       = ttphystart;
@@ -287,6 +299,8 @@ char	*esym_addr;		/* Address of kernel '_esym' symbol	*/
 	 */
 	if (machineid & ATARI_HADES)
 		ptextra += btoc(PCI_CONF_SIZE + PCI_IO_SIZE + PCI_VGA_SIZE);
+	if (machineid & ATARI_MILAN)
+		ptextra += btoc(PCI_IO_SIZE + PCI_VGA_SIZE);
 	ptextra += btoc(BOOTM_VA_POOL);
 
 	/*
@@ -598,6 +612,10 @@ char	*esym_addr;		/* Address of kernel '_esym' symbol	*/
 static void
 set_machtype()
 {
+#ifdef _MILANHW_
+	machineid |= ATARI_MILAN;
+
+#else
 	stio_addr = 0xff8000;	/* XXX: For TT & Falcon only */
 	if(badbaddr((caddr_t)&MFP2->mf_gpip, sizeof(char))) {
 		/*
@@ -612,11 +630,13 @@ set_machtype()
 	if(!badbaddr((caddr_t)(PCI_CONFB_PHYS + PCI_CONFM_PHYS), sizeof(char)))
 		machineid |= ATARI_HADES;
 	else machineid |= ATARI_TT;
+#endif /* _MILANHW_ */
 }
 
 static void
 atari_hwinit()
 {
+#if defined(_ATARIHW_)
 	/*
 	 * Initialize the sound chip
 	 */
@@ -629,6 +649,7 @@ atari_hwinit()
 	 * booter...
 	 */
 	MDI->ac_cs = 0;
+#endif /* defined(_ATARIHW_) */
 
 	/*
 	 * Initialize both MFP chips (if both present!) to generate
@@ -640,12 +661,15 @@ atari_hwinit()
 	MFP->mf_imra  = MFP->mf_imrb = 0;
 	MFP->mf_aer   = MFP->mf_ddr  = 0;
 	MFP->mf_vr    = 0x40;
+
+#if defined(_ATARIHW_)
 	if(machineid & (ATARI_TT|ATARI_HADES)) {
 		MFP2->mf_iera = MFP2->mf_ierb = 0;
 		MFP2->mf_imra = MFP2->mf_imrb = 0;
 		MFP2->mf_aer  = 0x80;
 		MFP2->mf_vr   = 0x50;
 	}
+
 	if(machineid & ATARI_TT) {
 		/*
 		 * Initialize the SCU, to enable interrupts on the SCC (ipl5),
@@ -661,9 +685,10 @@ atari_hwinit()
 		SCU->sys_mask |= SCU_IRQ7;
 #endif
 	}
+#endif /* defined(_ATARIHW_) */
 
 #if NPCI > 0
-	if(machineid & ATARI_HADES) {
+	if(machineid & (ATARI_HADES|ATARI_MILAN)) {
 		/*
 		 * Configure PCI-bus
 		 */
@@ -699,7 +724,17 @@ u_int		ptextra;	/* #of additional I/O pte's	*/
 	ioaddr   += STIO_SIZE;
 	pg        = &pt[stio_addr / NBPG];
 	epg       = &pg[btoc(STIO_SIZE)];
+#ifdef _MILANHW_
+	/*
+	 * Turn on byte swaps in the ST I/O area. On the Milan, the
+	 * U0 signal of the MMU controls the BigEndian signal
+	 * of the PLX9080. We use this setting so we can read/write the
+	 * PLX registers (and PCI-config space) in big-endian mode.
+	 */
+	pg_proto  = STIO_PHYS | PG_RW | PG_CI | PG_V | 0x100;
+#else
 	pg_proto  = STIO_PHYS | PG_RW | PG_CI | PG_V;
+#endif
 	while(pg < epg) {
 		*pg++     = pg_proto;
 		pg_proto += NBPG;
@@ -709,7 +744,9 @@ u_int		ptextra;	/* #of additional I/O pte's	*/
 	 * Map PCI areas
 	 */
 	if (machineid & ATARI_HADES) {
-
+		/*
+		 * Only Hades maps the PCI-config space!
+		 */
 		pci_conf_addr = ioaddr;
 		ioaddr       += PCI_CONF_SIZE;
 		pg            = &pt[pci_conf_addr / NBPG];
@@ -718,9 +755,13 @@ u_int		ptextra;	/* #of additional I/O pte's	*/
 		pg_proto      = PCI_CONFB_PHYS | PG_RW | PG_CI | PG_V;
 		for(; pg < epg; mask <<= 1)
 			*pg++ = pg_proto | mask;
+	}
+	else pci_conf_addr = 0; /* XXX: should crash */
 
+	if (machineid & (ATARI_HADES|ATARI_MILAN)) {
 		pci_io_addr   = ioaddr;
 		ioaddr       += PCI_IO_SIZE;
+		pg	      = &pt[pci_io_addr / NBPG];
 		epg           = &pg[btoc(PCI_IO_SIZE)];
 		pg_proto      = PCI_IO_PHYS | PG_RW | PG_CI | PG_V;
 		while(pg < epg) {
@@ -729,6 +770,8 @@ u_int		ptextra;	/* #of additional I/O pte's	*/
 		}
 
 		pci_mem_addr  = ioaddr;
+		/* Provide an uncached PCI address for the MILAN */
+		pci_mem_uncached = ioaddr;
 		ioaddr       += PCI_VGA_SIZE;
 		epg           = &pg[btoc(PCI_VGA_SIZE)];
 		pg_proto      = PCI_VGA_PHYS | PG_RW | PG_CI | PG_V;
