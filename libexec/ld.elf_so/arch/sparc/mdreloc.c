@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.2 1999/02/26 22:13:49 pk Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.3 1999/02/26 22:50:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -190,7 +190,7 @@ _rtld_relocate_nonplt_object(
 	 * be able to access globals yet
 	 */
 	if (!dodebug && type == R_TYPE(RELATIVE)) {
-		*where += (Elf_Addr) obj->relocbase;
+		*where += (Elf_Addr)(obj->relocbase + rela->r_addend);
 		return (0);
 	}
 
