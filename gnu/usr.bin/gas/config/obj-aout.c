@@ -101,6 +101,7 @@ const pseudo_typeS obj_pseudo_table[] = {
 	{ "type",	s_type, 0 },
 	{ "val",	s_ignore, 0 },
 	{ "version",	s_ignore, 0 },
+	{ "weak",	s_weak, 0 },
 	
 	/* stabs-in-coff (?) debug pseudos (ignored) */
 	{ "optim",	s_ignore, 0 }, /* For sun386i cc (?) */
@@ -232,8 +233,8 @@ symbolS *symbol_rootP;
 		 * Do this only now, because things like S_IS_DEFINED()
 		 * depend on S_GET_OTHER() for some unspecified reason.
 		 */
-		if (symbolP->sy_aux)
-			S_SET_OTHER(symbolP, (symbolP->sy_aux & 0xf));
+		S_SET_OTHER(symbolP,
+			(symbolP->sy_weak << 4) | (symbolP->sy_aux & 0xf) );
 
 		/* Any symbol still undefined and is not a dbg symbol is made N_EXT. */
 		if (!S_IS_DEBUG(symbolP) && !S_IS_DEFINED(symbolP))
@@ -468,10 +469,15 @@ object_headers *headers;
 	/* JF deal with forward references first... */
 	for (symbolP = symbol_rootP; symbolP; symbolP = symbol_next(symbolP)) {
 		if (symbolP->sy_forward) {
+			S_SET_SEGMENT(symbolP,
+				      S_GET_SEGMENT(symbolP->sy_forward));
 			S_SET_VALUE(symbolP, S_GET_VALUE(symbolP)
 				    + S_GET_VALUE(symbolP->sy_forward)
 				    + symbolP->sy_forward->sy_frag->fr_address);
 			
+			symbolP->sy_aux |= symbolP->sy_forward->sy_aux;
+			if (S_IS_EXTERNAL(symbolP->sy_forward))
+				S_SET_EXTERNAL(symbolP);
 			symbolP->sy_forward=0;
 		} /* if it has a forward reference */
 	} /* walk the symbol chain */
