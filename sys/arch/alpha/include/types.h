@@ -1,4 +1,4 @@
-/* $NetBSD: types.h,v 1.8 1997/04/06 08:47:45 cgd Exp $ */
+/* $NetBSD: types.h,v 1.9 1998/04/15 21:12:45 drochner Exp $ */
 
 /*-
  * Copyright (c) 1990, 1993
@@ -68,5 +68,7 @@ typedef	long			  int64_t;
 typedef	unsigned long		u_int64_t;
 
 typedef int64_t			register_t;
+
+#define __HAVE_NWSCONS
 
 #endif	/* _MACHTYPES_H_ */
