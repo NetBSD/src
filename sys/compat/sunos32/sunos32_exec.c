@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_exec.c,v 1.5 2001/05/30 11:37:31 mrg Exp $	 */
+/*	$NetBSD: sunos32_exec.c,v 1.6 2001/06/16 21:44:32 manu Exp $	 */
 
 /*
  * Copyright (c) 2001 Matthew R. Green
@@ -50,7 +50,7 @@ void syscall __P((void));
 struct emul emul_sunos = {
 	"sunos32",
 	"/emul/sunos",
-	EMUL_NO_BSD_ASYNCIO_PIPE | EMUL_NO_SIGIO_ON_READ,
+	0,
 	NULL,
 	SUNOS32_SYS_syscall,
 	SUNOS32_SYS_MAXSYSCALL,
