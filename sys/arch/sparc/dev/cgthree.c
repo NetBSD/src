@@ -1,4 +1,4 @@
-/*	$NetBSD: cgthree.c,v 1.18 1995/12/11 12:43:18 pk Exp $ */
+/*	$NetBSD: cgthree.c,v 1.19 1996/02/25 21:46:05 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -157,13 +157,12 @@ cgthreeattach(parent, self, args)
 	sc->sc_fb.fb_type.fb_type = FBTYPE_SUN3COLOR;
 	switch (ca->ca_bustype) {
 	case BUS_OBIO:
-#if defined(SUN4M)
-		if (cputyp == CPU_SUN4M) {   /* 4m has framebuffer on obio */
+		if (CPU_ISSUN4M) {	/* 4m has framebuffer on obio */
+			sbus = 0;
 			node = ca->ca_ra.ra_node;
 			nam = getpropstring(node, "model");
 			break;
 		}
-#endif
 	case BUS_VME32:
 	case BUS_VME16:
 		sbus = node = 0;

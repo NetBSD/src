@@ -1,4 +1,4 @@
-/*	$NetBSD: cgtwo.c,v 1.8 1995/12/11 12:43:19 pk Exp $ */
+/*	$NetBSD: cgtwo.c,v 1.9 1996/02/25 21:46:08 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -132,7 +132,7 @@ cgtwomatch(parent, vcf, aux)
 		return (0);
 
 #if defined(SUN4)
-	if (cputyp != CPU_SUN4 || cf->cf_unit != 0)
+	if (!CPU_ISSUN4 || cf->cf_unit != 0)
 		return (0);
 
 	/* XXX - Must do our own mapping at CG2_CTLREG_OFF */
@@ -191,7 +191,7 @@ cgtwoattach(parent, self, args)
 	 * going to print characters via rconsole.
 	 */
 #if defined(SUN4)
-	if (cputyp == CPU_SUN4) {
+	if (CPU_ISSUN4) {
 		struct eeprom *eep = (struct eeprom *)eeprom_va;
 		/*
 		 * Assume this is the console if there's no eeprom info
@@ -233,7 +233,8 @@ cgtwoattach(parent, self, args)
 #endif
 	} else
 		printf("\n");
-	if (node == fbnode || cputyp == CPU_SUN4)
+
+	if (node == fbnode || CPU_ISSUN4)
 		fb_attach(&sc->sc_fb, isconsole);
 }
 
