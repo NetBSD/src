@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.127 1999/09/12 01:19:25 chs Exp $
+#	$NetBSD: bsd.own.mk,v 1.128 1999/09/14 01:31:11 perry Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -142,11 +142,11 @@ MACHINE_GNU_ARCH=${MACHINE_ARCH}
 MACHINE_GNU_ARCH=${GNU_ARCH.${MACHINE_ARCH}}
 .endif
 
-TARGETS+=	all clean cleandir depend distclean includes install lint obj \
-		regress tags
-.PHONY:		all clean cleandir depend distclean includes install lint obj \
-		regress tags beforedepend afterdepend beforeinstall \
-		afterinstall realinstall
+TARGETS+=	all clean cleandir depend dependall distclean includes \
+		install lint obj regress tags
+.PHONY:		all clean cleandir depend dependall distclean includes \
+		install lint obj regress tags beforedepend afterdepend \
+		beforeinstall afterinstall realinstall
 
 # set NEED_OWN_INSTALL_TARGET, if it's not already set, to yes
 # this is used by bsd.pkg.mk to stop "install" being defined
