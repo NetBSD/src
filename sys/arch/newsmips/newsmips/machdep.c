@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.32 1999/12/18 08:01:26 tsubai Exp $	*/
+/*	$NetBSD: machdep.c,v 1.33 1999/12/22 05:55:26 tsubai Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.32 1999/12/18 08:01:26 tsubai Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.33 1999/12/22 05:55:26 tsubai Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -87,6 +87,8 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.32 1999/12/18 08:01:26 tsubai Exp $");
 #include <machine/pte.h>
 #include <machine/autoconf.h>
 #include <machine/bootinfo.h>
+#include <machine/apbus.h>
+#include <machine/apcall.h>
 #include <mips/locore.h>		/* wbflush() */
 
 #ifdef DDB
@@ -115,47 +117,36 @@ vm_map_t mb_map = NULL;
 vm_map_t phys_map = NULL;
 
 char *bootinfo = NULL;		/* pointer to bootinfo structure */
-int maxmem;			/* max memory per process */
 int physmem;			/* max supported memory, changes to actual */
+int systype;			/* what type of NEWS we are */
+struct apbus_sysinfo *_sip = NULL;
 
 phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
 int mem_cluster_cnt;
+
+struct idrom idrom;
+void (*enable_intr) __P((void));
+void (*disable_intr) __P((void));
+
+/* System type dependent initializations. */
+extern void news3400_init __P((void));
+extern void news5000_init __P((void));
 
 /*
  * Interrupt-blocking functions defined in locore. These names aren't used
  * directly except here and in interrupt handlers.
  */
 
-/* Block out one hardware interrupt-enable bit. */
-extern int	Mach_spl0 __P((void)), Mach_spl1 __P((void));
-extern int	Mach_spl2 __P((void)), Mach_spl3 __P((void));
-
 /* Block out nested interrupt-enable bits. */
 extern int	cpu_spl0 __P((void)), cpu_spl1 __P((void));
 extern int	cpu_spl2 __P((void)), cpu_spl3 __P((void));
 extern int	splhigh __P((void));
-
-/*
- * Instead, we declare the standard splXXX names as function pointers,
- * and initialie them to point to the above functions to match
- * the way a specific motherboard is  wired up.
- */
-int	(*Mach_splbio) __P((void)) = splhigh;
-int	(*Mach_splnet)__P((void)) = splhigh;
-int	(*Mach_spltty)__P((void)) = splhigh;
-int	(*Mach_splimp)__P((void)) = splhigh;
-int	(*Mach_splclock)__P((void)) = splhigh;
-int	(*Mach_splstatclock)__P((void)) = splhigh;
 
 void to_monitor __P((int)) __attribute__((__noreturn__));
 
 /*
  *  Local functions.
  */
-int initcpu __P((void));
-int atoi __P((const char *cp));
-void configure __P((void));
-int readidrom __P((u_char *));
 
 /* initialize bss, etc. from kernel start, before main() is called. */
 void mach_init __P((int, int, int, int));
@@ -174,8 +165,6 @@ extern void stacktrace __P((void)); /*XXX*/
  * disables mips1 FPU interrupts.
  */
 int safepri = MIPS3_PSL_LOWIPL;		/* XXX */
-
-struct idrom idrom;
 
 extern struct user *proc0paddr;
 extern u_long bootdev;
@@ -199,6 +188,7 @@ mach_init(x_boothowto, x_bootdev, x_bootname, x_maxmem)
 	vsize_t size;
 	struct btinfo_magic *bi_magic;
 	struct btinfo_bootarg *bi_arg;
+	struct btinfo_systype *bi_systype;
 #ifdef DDB
 	struct btinfo_symtab *bi_sym;
 	int nsym = 0;
@@ -208,7 +198,9 @@ mach_init(x_boothowto, x_bootdev, x_bootname, x_maxmem)
 	/* clear the BSS segment */
 	bzero(edata, end - edata);
 
-	bootinfo = (char *)BOOTINFO_ADDR;	/* XXX */
+	systype = NEWS3400;			/* XXX compatibility */
+
+	bootinfo = (void *)BOOTINFO_ADDR;	/* XXX */
 	bi_magic = lookup_bootinfo(BTINFO_MAGIC);
 	if (bi_magic && bi_magic->magic == BOOTINFO_MAGIC) {
 		bi_arg = lookup_bootinfo(BTINFO_BOOTARG);
@@ -225,7 +217,22 @@ mach_init(x_boothowto, x_bootdev, x_bootname, x_maxmem)
 			esym = (void *)bi_sym->esym;
 		}
 #endif
+
+		bi_systype = lookup_bootinfo(BTINFO_SYSTYPE);
+		if (bi_systype)
+			systype = bi_systype->type;
 	}
+
+#ifdef news5000
+	if (systype == NEWS5000) {
+		_sip = (void *)bi_arg->sip;
+		x_maxmem = _sip->apbsi_memsize;
+		x_maxmem -= 0x00100000;	/* reserve 1MB for ROM monitor */
+		apcall_write(1, "Hello APbus\n", 12);
+
+		consinit();
+	}
+#endif
 
 	/*
 	 * Save parameters into kernel work area.
@@ -234,10 +241,11 @@ mach_init(x_boothowto, x_bootdev, x_bootname, x_maxmem)
 	*(int *)(MIPS_PHYS_TO_KSEG1(MACH_BOOTDEV_ADDR)) = x_bootdev;
 	*(int *)(MIPS_PHYS_TO_KSEG1(MACH_BOOTSW_ADDR)) = x_boothowto;
 
+	kernend = (caddr_t)mips_round_page(end);
+#ifdef DDB
 	if (nsym)
 		kernend = (caddr_t)mips_round_page(esym);
-	else
-		kernend = (caddr_t)mips_round_page(end);
+#endif
 
 	/*
 	 * Set the VM page size.
@@ -246,7 +254,7 @@ mach_init(x_boothowto, x_bootdev, x_bootname, x_maxmem)
 
 	boothowto = x_boothowto;
 	bootdev = x_bootdev;
-	maxmem = physmem = btoc(x_maxmem);
+	physmem = btoc(x_maxmem);
 
 	/*
 	 * Now that we know how much memory we have, initialize the
@@ -262,6 +270,12 @@ mach_init(x_boothowto, x_bootdev, x_bootname, x_maxmem)
 	 * Clear out the I and D caches.
 	 */
 	mips_vector_init();
+#if 0
+	if (systype == NEWS5000) {
+		mips_L2CacheSize = 1024 * 1024;		/* XXX to be safe */
+		mips3_FlushCache();
+	}
+#endif
 
 #ifdef DDB
 	/*
@@ -326,7 +340,20 @@ mach_init(x_boothowto, x_bootdev, x_bootname, x_maxmem)
 	/*
 	 * Determine what model of computer we are running on.
 	 */
-	readidrom((u_char *)&idrom);
+	switch (systype) {
+#ifdef news3400
+	case NEWS3400:
+		news3400_init();
+		break;
+#endif
+
+#ifdef news5000
+	case NEWS5000:
+		news5000_init();
+		break;
+#endif
+	}
+
 	i = idrom.id_modelid;
 
 	switch (i) {
@@ -335,6 +362,21 @@ mach_init(x_boothowto, x_bootdev, x_bootname, x_maxmem)
 		printf("kernel not configured for systype 0x%x\n", i);
 		/* cpu_reboot(RB_HALT | RB_NOSYNC, NULL); */
 
+#ifdef news5000
+	case 2: /* NWS-5000U/W */
+	case 5: /* NWS-5000R */
+	case 7: /* NWS-5000X */
+	case 9: /* NWS-5900X */
+	case 11:/* NWS-5000G */
+		/*
+		 * Set up interrupt handling and I/O addresses.
+		 */
+		mips_hardware_intr = news5000_intr;
+		strcpy(cpu_model, "news5000");
+		cpuspeed = 50;	/* ??? XXX */
+		break;
+#endif
+
 #ifdef news3400
 	case 3: /* NWS-3410 */
 	case 6: /* NWS-3470 */
@@ -342,12 +384,6 @@ mach_init(x_boothowto, x_bootdev, x_bootname, x_maxmem)
 		 * Set up interrupt handling and I/O addresses.
 		 */
 		mips_hardware_intr = news3400_intr;
-		Mach_splbio = cpu_spl0;		/* Lite2 was spl3 */
-		Mach_splnet = cpu_spl1;		/*           spl2 */
-		Mach_spltty = cpu_spl1;		/*           spl4 */
-		Mach_splimp = cpu_spl1;		/*           spl4 */
-		Mach_splclock = cpu_spl2;	/*           spl5 */
-		Mach_splstatclock = cpu_spl2;	/*           spl5 */
 		strcpy(cpu_model, "news3400");
 		cpuspeed = 10;
 		break;
@@ -517,8 +553,6 @@ lookup_bootinfo(type)
 	return (NULL);
 }
 
-int	waittime = -1;
-
 /*
  * call PROM to halt or reboot.
  */
@@ -527,8 +561,20 @@ prom_halt(howto)
 	int howto;
 
 {
-	to_monitor(howto);
+#ifdef news5000
+	if (systype == NEWS5000) {
+		howto = RB_HALT;	/* XXX */
+		apcall_exit(howto);
+	}
+#endif
+#ifdef news3400
+	if (systype == NEWS3400)
+		to_monitor(howto);
+#endif
+	for (;;);
 }
+
+int	waittime = -1;
 
 void
 cpu_reboot(howto, bootstr)
@@ -571,6 +617,8 @@ cpu_reboot(howto, bootstr)
 	}
 
 	/* Disable interrupts. */
+	disable_intr();
+
 	splhigh();
 
 	/* If rebooting and a dump is requested do it. */
@@ -627,103 +675,6 @@ microtime(tvp)
 	splx(s);
 }
 
-int
-initcpu()
-{
-	/*
-	 * clear LEDs
-	 */
-	*(char *)DEBUG_PORT = (char)DP_WRITE|DP_LED0|DP_LED1|DP_LED2|DP_LED3;
-
-	/*
-	 * clear all interrupts
-	 */
-	*(char *)INTCLR0 = 0;
-	*(char *)INTCLR1 = 0;
-
-	*(char *)INTCLR0 = INTCLR0_BERR;	/* XXX (why?) */
-
-	/*
-	 * It's not a time to enable timer yet.
-	 *
-	 *	INTEN0:  PERR ABORT BERR TIMER KBD  MS    CFLT CBSY
-	 *		  o     o    o     x    o    o     x    x
-	 *	INTEN1:  BEEP SCC  LANCE DMA  SLOT1 SLOT3 EXT1 EXT3
-	 *		  x     o    o     o    o    o     x    x
-	 */
-
-	*(char *)INTEN0 = (char) INTEN0_PERR|INTEN0_ABORT|INTEN0_BERR|
-				 INTEN0_KBDINT|INTEN0_MSINT;
-
-	*(char *)INTEN1 = (char) INTEN1_SCC|INTEN1_LANCE|INTEN1_DMA|
-				 INTEN1_SLOT1|INTEN1_SLOT3;
-
-	spl0();		/* safe to turn interrupts on now */
-	return 0;
-}
-
-/*
- * Convert an ASCII string into an integer.
- */
-int
-atoi(s)
-	const char *s;
-{
-	int c;
-	unsigned base = 10, d;
-	int neg = 0, val = 0;
-
-	if (s == 0 || (c = *s++) == 0)
-		goto out;
-
-	/* skip spaces if any */
-	while (c == ' ' || c == '\t')
-		c = *s++;
-
-	/* parse sign, allow more than one (compat) */
-	while (c == '-') {
-		neg = !neg;
-		c = *s++;
-	}
-
-	/* parse base specification, if any */
-	if (c == '0') {
-		c = *s++;
-		switch (c) {
-		case 'X':
-		case 'x':
-			base = 16;
-			break;
-		case 'B':
-		case 'b':
-			base = 2;
-			break;
-		default:
-			base = 8;
-		}
-	}
-
-	/* parse number proper */
-	for (;;) {
-		if (c >= '0' && c <= '9')
-			d = c - '0';
-		else if (c >= 'a' && c <= 'z')
-			d = c - 'a' + 10;
-		else if (c >= 'A' && c <= 'Z')
-			d = c - 'A' + 10;
-		else
-			break;
-		val *= base;
-		val += d;
-		c = *s++;
-	}
-	if (neg)
-		val = -val;
-out:
-	return val;	
-}
-
-
 void
 delay(n)
 	int n;
@@ -746,15 +697,3 @@ cpu_exec_ecoff_hook(p, epp)
 	return 0;
 }
 #endif
-
-int
-readidrom(rom)
-	register u_char *rom;
-{
-	register u_char *p = (u_char *)IDROM;
-	register int i;
-
-	for (i = 0; i < sizeof (struct idrom); i++, p += 2)
-		*rom++ = ((*p & 0x0f) << 4) + (*(p + 1) & 0x0f);
-	return (0);
-}

@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.5 1999/12/05 15:50:46 tsubai Exp $	*/
+/*	$NetBSD: clock.c,v 1.6 1999/12/22 05:55:26 tsubai Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,48 +44,28 @@
  */
 
 #include <sys/param.h>
-#include <sys/kernel.h>
 #include <sys/device.h>
+#include <sys/kernel.h>
 #include <sys/systm.h>
 
 #include <dev/clock_subr.h>
 
-#include <machine/autoconf.h>
-#include <machine/adrsmap.h>
+#include <newsmips/newsmips/clockvar.h>
 
-#include <newsmips/newsmips/clockreg.h>
-
-static int clockmatch __P((struct device *, struct cfdata *, void *));
-static void clockattach __P((struct device *, struct device *, void *));
-void setstatclockrate __P((int));
-void cpu_initclocks __P((void));
-void inittodr __P((time_t));
-void resettodr __P((void));
-
-struct cfattach mkclock_ca = {
-	sizeof(struct device), clockmatch, clockattach
-};
-
-int
-clockmatch(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
-{
-	struct confargs *ca = aux;
-
-	if (strcmp(ca->ca_name, "mkclock") != 0)
-		return 0;
-
-	return 1;
-}
+static struct clockfns *clockfns;
+static struct device *clockdev;
+static int clockinitted;
 
 void
-clockattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+clockattach(dev, fns)
+	struct device *dev;
+	struct clockfns *fns;
 {
-	printf("\n");
+	if (clockfns != NULL)
+		panic("clockattach: multiple clocks");
+
+	clockdev = dev;
+	clockfns = fns;
 }
 
 /*
@@ -121,20 +101,8 @@ setstatclockrate(newhz)
 void
 cpu_initclocks()
 {
-
-	/*
-	 * Start the real-time clock.
-	 */
-	*(char *)ITIMER = IOCLOCK / 6144 / 100 - 1;
-
-	/*
-	 * Enable the real-time clock.
-	 */
-	*(char *)INTEN0 |= (char)INTEN0_TIMINT;
+	(*clockfns->cf_init)(clockdev);
 }
-
-#define	bcd_to_int(BCD)	(i = BCD, (((i) >> 4) & 0xf) * 10 + ((i) & 0xf))
-#define	int_to_bcd(INT)	(i = INT, ((((i) / 10) % 10) << 4) + (i) % 10)
 
 /*
  * Initialze the time of day register, based on the time base which is, e.g.
@@ -145,11 +113,7 @@ void
 inittodr(base)
 	time_t base;
 {
-	register volatile u_char *rtc_port = (u_char *)RTC_PORT;
-	register volatile u_char *rtc_data = (u_char *)DATA_PORT;
-	int sec, min, hour, week, day, mon, year;
 	int deltat, badbase = 0;
-	register u_int i;
 	struct clock_ymdhms dt;
 
 	if (base < 5*SECYR) {
@@ -159,19 +123,13 @@ inittodr(base)
 		badbase = 1;
 	}
 
-	*rtc_port = READ_CLOCK;
-	sec  = bcd_to_int(*rtc_data++);
-	min  = bcd_to_int(*rtc_data++);
-	hour = bcd_to_int(*rtc_data++);
-	week = bcd_to_int(*rtc_data++);
-	day  = bcd_to_int(*rtc_data++);
-	mon  = bcd_to_int(*rtc_data++);
-	year = bcd_to_int(*rtc_data++);
-	*rtc_port = 0;
+	(*clockfns->cf_get)(clockdev, &dt);
+	clockinitted = 1;
 
 	/* simple sanity checks */
-	if (mon < 1 || mon > 12 || day < 1 || day > 31 ||
-	    hour > 23 || min > 59 || sec > 59) {
+	if (dt.dt_mon < 1 || dt.dt_mon > 12 ||
+	    dt.dt_day < 1 || dt.dt_day > 31 ||
+	    dt.dt_hour > 23 || dt.dt_min > 59 || dt.dt_sec > 59) {
 		printf("WARNING: preposterous clock chip time\n");
 		/*
 		 * Believe the time in the file system for lack of
@@ -182,13 +140,6 @@ inittodr(base)
 			resettodr();
 		return;
 	}
-
-	dt.dt_year = year + (year >= 70 ? 1900 : 2000);
-	dt.dt_mon = mon;
-	dt.dt_day = day;
-	dt.dt_hour = hour;
-	dt.dt_min = min;
-	dt.dt_sec = sec;
 
 	time.tv_sec = clock_ymdhms_to_secs(&dt);
 
@@ -218,20 +169,11 @@ inittodr(base)
 void
 resettodr()
 {
-	register volatile u_char *rtc_port = (u_char *)RTC_PORT;
-	register volatile u_char *rtc_data = (u_char *)DATA_PORT;
-	register int i;
 	struct clock_ymdhms dt;
 
-	clock_secs_to_ymdhms(time.tv_sec, &dt);
+	if (! clockinitted)
+		return;
 
-	*rtc_port = SET_CLOCK;
-	*rtc_data++ = int_to_bcd(dt.dt_sec);
-	*rtc_data++ = int_to_bcd(dt.dt_min);
-	*rtc_data++ = int_to_bcd(dt.dt_hour);
-	*rtc_data++ = int_to_bcd(dt.dt_wday);
-	*rtc_data++ = int_to_bcd(dt.dt_day);
-	*rtc_data++ = int_to_bcd(dt.dt_mon);
-	*rtc_data   = int_to_bcd(dt.dt_year);
-	*rtc_port = 0;
+	clock_secs_to_ymdhms(time.tv_sec, &dt);
+	(*clockfns->cf_set)(clockdev, &dt);
 }

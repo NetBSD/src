@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_cons.c,v 1.2 1998/12/26 00:53:49 tsubai Exp $	*/
+/*	$NetBSD: cpu_cons.c,v 1.3 1999/12/22 05:55:26 tsubai Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,6 +43,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <machine/adrsmap.h>
+#include <machine/cpu.h>
 #include <dev/cons.h>
 
 /*
@@ -61,7 +62,7 @@
 #define	SW_AUTOSEL	0x07
 
 struct consdev *cn_tab = NULL;
-extern struct consdev consdev_bm, consdev_zs;
+extern struct consdev consdev_bm, consdev_zs, consdev_zs_ap;
 
 int tty00_is_console = 0;
 
@@ -75,35 +76,55 @@ extern int vt100_write();
 void
 consinit()
 {
-	int dipsw = (int)*(volatile u_char *)DIP_SWITCH;
+	static int initted = 0;
 
+	if (initted)
+		return;
+
+	initted = 1;
+
+#ifdef news5000
+	/* currently only serial console is available on news5000 */
+	if (systype == NEWS5000) {
+		tty00_is_console = 1;
+		cn_tab = &consdev_zs_ap;
+		(*cn_tab->cn_init)(cn_tab);
+		return;
+	}
+#endif
+
+#ifdef news3400
+	if (systype == NEWS3400) {
+		int dipsw = (int)*(volatile u_char *)DIP_SWITCH;
 #if NFB > 0
 #if defined(news3200) || defined(news3400)	/* KU:XXX */
-	fbbm_probe(dipsw|2);
+		fbbm_probe(dipsw|2);
 #else
-	fbbm_probe(dipsw);
+		fbbm_probe(dipsw);
 #endif
-	vt100_open();
-	setup_fnt();
-	setup_fnt24();
+		vt100_open();
+		setup_fnt();
+		setup_fnt24();
 #else
-	dipsw &= ~SW_CONSOLE;
-#endif /* NFB > 0 */
+		dipsw &= ~SW_CONSOLE;
+#endif /* NFB */
 
-	switch (dipsw & SW_CONSOLE) {
-	    case 0:
-		tty00_is_console = 1;
-		cn_tab = &consdev_zs;
-		(*cn_tab->cn_init)(cn_tab);
-		break;
+		switch (dipsw & SW_CONSOLE) {
+		case 0:
+			tty00_is_console = 1;
+			cn_tab = &consdev_zs;
+			(*cn_tab->cn_init)(cn_tab);
+			break;
 
-	    default:
+		default:
 #if NFB > 0
-		cn_tab = &consdev_bm;
-		(*cn_tab->cn_init)(cn_tab);
+			cn_tab = &consdev_bm;
+			(*cn_tab->cn_init)(cn_tab);
 #endif
-		break;
+			break;
+		}
 	}
+#endif
 }
 
 #if NFB > 0
