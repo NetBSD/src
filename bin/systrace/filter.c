@@ -1,4 +1,4 @@
-/*	$NetBSD: filter.c,v 1.20 2003/05/20 22:45:13 provos Exp $	*/
+/*	$NetBSD: filter.c,v 1.21 2003/06/03 01:20:06 provos Exp $	*/
 /*	$OpenBSD: filter.c,v 1.16 2002/08/08 21:18:20 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -30,7 +30,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: filter.c,v 1.20 2003/05/20 22:45:13 provos Exp $");
+__RCSID("$NetBSD: filter.c,v 1.21 2003/06/03 01:20:06 provos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -49,6 +49,7 @@ __RCSID("$NetBSD: filter.c,v 1.20 2003/05/20 22:45:13 provos Exp $");
 #include "intercept.h"
 #include "systrace.h"
 #include "filter.h"
+#include "util.h"
 
 extern int allow;
 extern int noalias;
@@ -174,7 +175,7 @@ filter_evaluate(struct intercept_tlq *tls, struct filterq *fls,
     struct intercept_pid *icpid)
 {
 	struct filter *filter, *last = NULL;
-	short action, laction = 0;
+	short action;
 
 	TAILQ_FOREACH(filter, fls, next) {
 		action = filter->match_action;
@@ -202,7 +203,6 @@ filter_evaluate(struct intercept_tlq *tls, struct filterq *fls,
 
 		/* Keep track of last processed filtered in a group */
 		last = filter;
-		laction = action;
 	}
 
 	return (ICPOLICY_ASK);
@@ -529,7 +529,7 @@ filter_ask(int fd, struct intercept_tlq *tls, struct filterq *fls,
 				    "%s%s eq \"%s\"",
 				    tl->name,
 				    lst && !strcmp(tl->name, lst) ? "[1]" : "",
-				    l);
+				    strescape(l));
 
 				lst = tl->name;
 
