@@ -220,7 +220,7 @@ main(argc, argv)
 #endif
 
 	from = NULL;
-	while ((ch = getopt(argc, argv, "df:r:")) != EOF)
+	while ((ch = getopt(argc, argv, "df:r:")) != -1)
 		switch(ch) {
 		case 'd':		/* Backward compatible. */
 			break;
