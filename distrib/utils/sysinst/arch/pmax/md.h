@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.3 1997/10/29 03:06:38 jonathan Exp $	*/
+/*	$NetBSD: md.h,v 1.4 1997/11/01 23:39:57 jonathan Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -67,7 +67,8 @@ EXTERN distinfo dist_list[]
     {"misc%s%s",    1, NULL, "Miscellaneous: "},
     {"text%s%s",    1, NULL, "Text tools   : "},
     {"xbase%s%s",   1, NULL, "X11 clients  : "},
-    {"xserver%s%s", 1, NULL, "X11 servers  : "},
+    {"xfont%s%s",   1, NULL, "X11 fonts    : "},
+    {"xcontrib%s%s",1, NULL, "X11 contrib  : "},
     {"xcomp%s%s",   1, NULL, "X programming: "},
 
     {NULL, 0, NULL }
