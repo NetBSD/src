@@ -1,4 +1,4 @@
-/*	$NetBSD: tlphy.c,v 1.20 1999/11/12 18:13:01 thorpej Exp $	*/
+/*	$NetBSD: tlphy.c,v 1.21 2000/01/27 16:44:30 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -106,7 +106,8 @@ int	tlphymatch __P((struct device *, struct cfdata *, void *));
 void	tlphyattach __P((struct device *, struct device *, void *));
 
 struct cfattach tlphy_ca = {
-	sizeof(struct tlphy_softc), tlphymatch, tlphyattach
+	sizeof(struct tlphy_softc), tlphymatch, tlphyattach, mii_detach,
+	    mii_activate
 };
 
 int	tlphy_service __P((struct mii_softc *, struct mii_data *, int));
@@ -200,6 +201,9 @@ tlphy_service(self, mii, cmd)
 	struct tlphy_softc *sc = (struct tlphy_softc *)self;
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 	int reg;
+
+	if ((sc->sc_mii.mii_dev.dv_flags & DVF_ACTIVE) == 0)
+		return (ENXIO);
 
 	if ((sc->sc_mii.mii_flags & MIIF_DOINGAUTO) == 0 && sc->sc_need_acomp)
 		tlphy_acomp(sc);

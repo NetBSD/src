@@ -1,7 +1,7 @@
-/*	$NetBSD: mii.c,v 1.16 1999/11/12 18:13:00 thorpej Exp $	*/
+/*	$NetBSD: mii.c,v 1.17 2000/01/27 16:44:30 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -148,6 +148,72 @@ mii_phy_probe(parent, mii, capmask, phyloc, offloc)
 			mii->mii_instance++;
 		}
 		offset++;
+	}
+}
+
+void
+mii_phy_activate(mii, act, phyloc, offloc)
+	struct mii_data *mii;
+	enum devact act;
+	int phyloc, offloc;
+{
+	struct mii_softc *child;
+
+	if (phyloc != MII_PHY_ANY && offloc != MII_PHY_ANY)
+		panic("mii_phy_detach: phyloc and offloc specified");
+
+	if ((mii->mii_flags & MIIF_INITDONE) == 0)
+		return;
+
+	for (child = LIST_FIRST(&mii->mii_phys);
+	     child != NULL; child = LIST_NEXT(child, mii_list)) {
+		if (phyloc != MII_PHY_ANY || offloc != MII_OFFSET_ANY) {
+			if (phyloc != MII_PHY_ANY &&
+			    phyloc != child->mii_phy)
+				continue;
+			if (offloc != MII_OFFSET_ANY &&
+			    offloc != child->mii_offset)
+				continue;
+		}
+		switch (act) {
+		case DVACT_ACTIVATE:
+			panic("mii_phy_activate: DVACT_ACTIVATE");
+			break;
+
+		case DVACT_DEACTIVATE:
+			if (config_deactivate(&child->mii_dev) != 0)
+				panic("%s: config_activate(%d) failed\n",
+				    child->mii_dev.dv_xname, act);
+		}
+	}
+}
+
+void
+mii_phy_detach(mii, phyloc, offloc)
+	struct mii_data *mii;
+	int phyloc, offloc;
+{
+	struct mii_softc *child, *nchild;
+
+	if (phyloc != MII_PHY_ANY && offloc != MII_PHY_ANY)
+		panic("mii_phy_detach: phyloc and offloc specified");
+
+	if ((mii->mii_flags & MIIF_INITDONE) == 0)
+		return;
+
+	for (child = LIST_FIRST(&mii->mii_phys);
+	     child != NULL; child = nchild) {
+		nchild = LIST_NEXT(child, mii_list);
+		if (phyloc != MII_PHY_ANY || offloc != MII_OFFSET_ANY) {
+			if (phyloc != MII_PHY_ANY &&
+			    phyloc != child->mii_phy)
+				continue;
+			if (offloc != MII_OFFSET_ANY &&
+			    offloc != child->mii_offset)
+				continue;
+		}
+		LIST_REMOVE(child, mii_list);
+		(void) config_detach(&child->mii_dev, DETACH_FORCE);
 	}
 }
 

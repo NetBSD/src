@@ -1,4 +1,4 @@
-/*	$NetBSD: exphy.c,v 1.18 1999/11/12 18:12:59 thorpej Exp $	*/
+/*	$NetBSD: exphy.c,v 1.19 2000/01/27 16:44:30 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -88,7 +88,8 @@ int	exphymatch __P((struct device *, struct cfdata *, void *));
 void	exphyattach __P((struct device *, struct device *, void *));
 
 struct cfattach exphy_ca = {
-	sizeof(struct mii_softc), exphymatch, exphyattach
+	sizeof(struct mii_softc), exphymatch, exphyattach, mii_detach,
+	    mii_activate
 };
 
 int	exphy_service __P((struct mii_softc *, struct mii_data *, int));
@@ -164,6 +165,9 @@ exphy_service(sc, mii, cmd)
 	int cmd;
 {
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
+
+	if ((sc->mii_dev.dv_flags & DVF_ACTIVE) == 0)
+		return (ENXIO);
 
 	/*
 	 * We can't isolate the 3Com PHY, so it has to be the only one!
