@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.156 1999/08/28 09:22:58 augustss Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.157 1999/09/01 11:42:32 drochner Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.149 1999/08/28 09:18:08 augustss Exp 
+ *	NetBSD: pcidevs,v 1.150 1999/09/01 11:40:42 drochner Exp 
  */
 
 /*
@@ -517,6 +517,7 @@
 #define	PCI_VENDOR_PICTUREEL	0x12c5		/* Picture Elements */
 #define	PCI_VENDOR_NVIDIA_SGS	0x12d2		/* Nvidia Corporation & SGS Thomson Microelectric */
 #define	PCI_VENDOR_LMC	0x1376		/* LAN Media Corporation */
+#define	PCI_VENDOR_NETGEAR	0x1385		/* Netgear */
 #define	PCI_VENDOR_DELTA	0x1500		/* Delta Electronics */
 #define	PCI_VENDOR_SOLIDUM	0x1588		/* Solidum Systems Corp. www.solidum.com/pcisig.html */
 #define	PCI_VENDOR_GEOCAST	0x15a1		/* Geocast Network Systems */
@@ -547,6 +548,7 @@
  */
 
 /* 3COM Products */
+#define	PCI_PRODUCT_3COM_3C985	0x0001		/* 3c985 Gigabit Ethernet */
 #define	PCI_PRODUCT_3COM_3C590	0x5900		/* 3c590 Ethernet */
 #define	PCI_PRODUCT_3COM_3C595TX	0x5950		/* 3c595-TX 10/100 Ethernet */
 #define	PCI_PRODUCT_3COM_3C595T4	0x5951		/* 3c595-T4 10/100 Ethernet */
@@ -1034,17 +1036,6 @@
 #define	PCI_PRODUCT_NS_DP83810	0x0001		/* DP83810 10/100 Ethernet */
 #define	PCI_PRODUCT_NS_NS87410	0xd001		/* NS87410 */
 
-/* Olicom products */
-#define	PCI_PRODUCT_OLICOM_OC2183	0x0013		/* Olicom OC-2183/2185 Ethernet */
-#define	PCI_PRODUCT_OLICOM_OC2325	0x0012		/* Olicom OC-2325 Ethernet */
-#define	PCI_PRODUCT_OLICOM_OC2326	0x0014		/* Olicom OC-2326 10/100-TX Ethernet */
-
-/* Sun Microsystems products */
-#define	PCI_PRODUCT_SUN_EBUS	0x1000		/* SPARC Ebus */
-#define	PCI_PRODUCT_SUN_HMENETWORK	0x1001		/* SUNW,hme compatible Ethernet */
-#define	PCI_PRODUCT_SUN_SIMBA	0x5000		/* Simba PCI bridge */
-#define	PCI_PRODUCT_SUN_US_IIi	0xa000		/* UltraSPARC IIi PCI */
-
 /* NCR/Symbios Logic products */
 #define	PCI_PRODUCT_SYMBIOS_810	0x0001		/* 53c810 */
 #define	PCI_PRODUCT_SYMBIOS_820	0x0002		/* 53c820 */
@@ -1068,6 +1059,9 @@
 #define	PCI_PRODUCT_NEOMAGIC_NMMM256AV_VGA	0x0005		/* MagicMedia 256AV VGA */
 #define	PCI_PRODUCT_NEOMAGIC_NMMM256AV_AU	0x8005		/* MagicMedia 256AV Audio */
 
+/* Netgear products */
+#define	PCI_PRODUCT_NETGEAR_GA620	0x620a		/* GA620 Gigabit Ethernet */
+
 /* NexGen products */
 #define	PCI_PRODUCT_NEXGEN_NX82C501	0x4e78		/* NX82C501 Host-PCI Bridge */
 
@@ -1086,6 +1080,11 @@
 
 /* Oak Technologies products */
 #define	PCI_PRODUCT_OAKTECH_OTI1007	0x0107		/* OTI107 */
+
+/* Olicom products */
+#define	PCI_PRODUCT_OLICOM_OC2183	0x0013		/* Olicom OC-2183/2185 Ethernet */
+#define	PCI_PRODUCT_OLICOM_OC2325	0x0012		/* Olicom OC-2325 Ethernet */
+#define	PCI_PRODUCT_OLICOM_OC2326	0x0014		/* Olicom OC-2326 10/100-TX Ethernet */
 
 /* Opti products */
 #define	PCI_PRODUCT_OPTI_82C557	0xc557		/* 82C557 */
@@ -1164,8 +1163,11 @@
 #define	PCI_PRODUCT_S3_VIRGE_MXP	0x8c03		/* ViRGE/MXP */
 #define	PCI_PRODUCT_S3_SONICVIBES	0xca00		/* SonicVibes */
 
-/* Samgsung Semiconductor products */
+/* Samsung Semiconductor products */
 #define	PCI_PRODUCT_SAMSUNGSEMI_KS8920	0x8920		/* KS8920 10/100 Ethernet */
+
+/* SGI products */
+#define	PCI_PRODUCT_SGI_TIGON	0x0009		/* Tigon Gigabit Ethernet */
 
 /* SGS Thomson products */
 #define	PCI_PRODUCT_SGSTHOMSON_2000	0x0008		/* STG 2000X */
@@ -1201,6 +1203,15 @@
 /* Solidum Systems Corporation */
 #define	PCI_PRODUCT_SOLIDUM_AMD971	0x2000		/* SNP8023: AMD 971 */
 #define	PCI_PRODUCT_SOLIDUM_CLASS802	0x8023		/* SNP8023: Classifier Engine */
+  
+/* Sony products */
+#define	PCI_PRODUCT_SONY_CXD1947A	0x8009		/* CXD1947A FireWire Host Controller */
+
+/* Sun Microsystems products */
+#define	PCI_PRODUCT_SUN_EBUS	0x1000		/* SPARC Ebus */
+#define	PCI_PRODUCT_SUN_HMENETWORK	0x1001		/* SUNW,hme compatible Ethernet */
+#define	PCI_PRODUCT_SUN_SIMBA	0x5000		/* Simba PCI bridge */
+#define	PCI_PRODUCT_SUN_US_IIi	0xa000		/* UltraSPARC IIi PCI */
 
 /* Surecom Technology products */
 #define	PCI_PRODUCT_SURECOM_NE34	0x0e34		/* NE-34 Ethernet */
@@ -1231,9 +1242,6 @@
 #define	PCI_PRODUCT_TI_PCI1251	0xac1d		/* PCI1251 PCI-CardBus Bridge */
 #define	PCI_PRODUCT_TI_PCI1211	0xac1e		/* PCI1211 PCI-CardBus Bridge */
 #define	PCI_PRODUCT_TI_PCI2030	0xac20		/* PCI2030 PCI-CardBus Bridge */
-
-/* Sony products */
-#define	PCI_PRODUCT_SONY_CXD1947A	0x8009		/* CXD1947A FireWire Host Controller */
 
 /* Toshiba America products */
 #define	PCI_PRODUCT_TOSHIBA_R4X00	0x0009		/* R4x00 Host-PCI Bridge */
