@@ -1,4 +1,4 @@
-/*	$NetBSD: mailwrapper.c,v 1.8 2003/03/08 22:57:51 mjl Exp $	*/
+/*	$NetBSD: mailwrapper.c,v 1.9 2003/03/09 08:10:43 mjl Exp $	*/
 
 /*
  * Copyright (c) 1998
@@ -56,7 +56,15 @@ initarg(al)
 	al->argc = 0;
 	al->maxc = 10;
 	if ((al->argv = malloc(al->maxc * sizeof(char *))) == NULL)
-		err(1, "malloc");
+		/*
+		 * This (using err("mailwrapper")) is intentional.
+		 * Mailwrapper plays ugly games with argv[0] and thus it
+		 * is often difficult for people to know that the error
+		 * isn't from "mailq" or "sendmail" but from mailwrapper
+		 * -- having mailwrapper add an indication that it was really
+		 * mailwrapper running was a requested feature.
+		 */
+		err(1, "mailwrapper");
 }
 
 static void
@@ -69,11 +77,11 @@ addarg(al, arg, copy)
 	    al->maxc <<= 1;
 	    if ((al->argv = realloc(al->argv,
 		al->maxc * sizeof(char *))) == NULL)
-		    err(1, "realloc");
+		    err(1, "mailwrapper");
 	}
 	if (copy) {
 		if ((al->argv[al->argc++] = strdup(arg)) == NULL)
-			err(1, "strdup");
+			err(1, "mailwrapper:");
 	} else
 		al->argv[al->argc++] = (char *)arg;
 }
@@ -94,13 +102,14 @@ main(argc, argv, envp)
 	addarg(&al, argv[0], 0);
 
 	if ((config = fopen(_PATH_MAILERCONF, "r")) == NULL)
-		err(1, "can't open %s", _PATH_MAILERCONF);
+		err(1, "mailwrapper: can't open %s", _PATH_MAILERCONF);
 
 	for (;;) {
 		if ((line = fparseln(config, &len, &lineno, NULL, 0)) == NULL) {
 			if (feof(config))
-				errx(1, "no mapping in %s", _PATH_MAILERCONF);
-			err(1, "fparseln");
+				errx(1, "mailwrapper: no mapping in %s",
+				    _PATH_MAILERCONF);
+			err(1, "mailwrapper");
 		}
 
 #define	WS	" \t\n"
@@ -139,10 +148,10 @@ main(argc, argv, envp)
 
 	addarg(&al, NULL, 0);
 	execve(to, al.argv, envp);
-	err(1, "execing %s", to);
+	err(1, "mailwrapper: execing %s", to);
 	/*NOTREACHED*/
 parse_error:
-	errx(1, "parse error in %s at line %lu",
+	errx(1, "mailwrapper: parse error in %s at line %lu",
 	    _PATH_MAILERCONF, (u_long)lineno);
 	/*NOTREACHED*/
 }
