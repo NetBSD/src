@@ -87,12 +87,9 @@
 ./sbin/mount_ufs
 ./sbin/mount_umap
 ./sbin/mount_union
-./sbin/mountd
 ./sbin/newfs
 ./sbin/newfs_msdos
 ./sbin/newlfs
-./sbin/nfsd
-./sbin/nfsiod
 ./sbin/nologin
 ./sbin/ping
 ./sbin/quotacheck
@@ -492,6 +489,7 @@
 ./usr/sbin/mopd
 ./usr/sbin/mopprobe
 ./usr/sbin/moptrace
+./usr/sbin/mountd
 ./usr/sbin/mrinfo
 ./usr/sbin/mrouted
 ./usr/sbin/mtrace
@@ -501,6 +499,8 @@
 ./usr/sbin/named.restart
 ./usr/sbin/ndc
 ./usr/sbin/netgroup_mkdb
+./usr/sbin/nfsd
+./usr/sbin/nfsiod
 ./usr/sbin/nslookup
 ./usr/sbin/pac
 ./usr/sbin/portmap
