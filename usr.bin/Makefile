@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.8.1.1 (Berkeley) 5/8/91
-#	$Id: Makefile,v 1.56 1995/09/28 08:57:17 tls Exp $
+#	$Id: Makefile,v 1.57 1995/10/09 12:05:42 pk Exp $
 
 SUBDIR=	apply apropos asa at banner basename bdes biff cal calendar cap_mkdb \
 	checknr chflags chpass cksum cmp col colcrt colrm column comm \
@@ -23,6 +23,9 @@ SUBDIR=	apply apropos asa at banner basename bdes biff cal calendar cap_mkdb \
 # Don't use the standard tool chain on the alpha.
 .if (${MACHINE_ARCH} != "alpha")
 SUBDIR+= ar gprof nm ranlib size strip
+.endif
+.if (${MACHINE_ARCH} == "sparc")
+SUBDIR+= fdeject
 .endif
 
 .include <bsd.subdir.mk>
