@@ -2,9 +2,9 @@
 
 PROG=	rcp
 SRCS=	rcp.c krcmd.c kcmd.c util.c
-CFLAGS+=-DKERBEROS -DCRYPT
-DPADD=	${LIBKRB} ${LIBDES}
-LDADD=	-lkrb -ldes
+#CFLAGS+=-DKERBEROS -DCRYPT
+#DPADD=	${LIBKRB} ${LIBDES}
+#LDADD=	-lkrb -ldes
 BINOWN=	root
 BINMODE=4555
 INSTALLFLAGS=-fschg
