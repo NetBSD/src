@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.14 1995/08/12 23:59:27 mycroft Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.15 1995/08/17 02:57:23 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988, 1991, 1993
@@ -85,8 +85,8 @@ route_usrreq(so, req, m, nam, control)
 
 	if (req == PRU_ATTACH) {
 		MALLOC(rp, struct rawcb *, sizeof(*rp), M_PCB, M_WAITOK);
-		if (so->so_pcb = (caddr_t)rp)
-			bzero(so->so_pcb, sizeof(*rp));
+		if (so->so_pcb = rp)
+			bzero((caddr_t)so->so_pcb, sizeof(*rp));
 
 	}
 	if (req == PRU_DETACH && rp) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: esis.c,v 1.10 1995/06/13 08:12:33 mycroft Exp $	*/
+/*	$NetBSD: esis.c,v 1.11 1995/08/17 02:57:31 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -189,8 +189,8 @@ struct mbuf		*control;	/* optional control */
 			break;
 		}
 		MALLOC(rp, struct rawcb *, sizeof(*rp), M_PCB, M_WAITOK);
-		if (so->so_pcb = (caddr_t)rp) {
-			bzero(so->so_pcb, sizeof(*rp));
+		if (so->so_pcb = rp) {
+			bzero((caddr_t)so->so_pcb, sizeof(*rp));
 			LIST_INSERT_HEAD(&esis_pcb, rp, rcb_list);
 			rp->rcb_socket = so;
 			error = soreserve(so, esis_sendspace, esis_recvspace);

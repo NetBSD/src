@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.14 1995/08/16 00:29:50 mycroft Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.15 1995/08/17 02:57:20 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -345,7 +345,7 @@ unp_attach(so)
 		return (ENOBUFS);
 	bzero((caddr_t)unp, sizeof(*unp));
 	unp->unp_socket = so;
-	so->so_pcb = (caddr_t)unp;
+	so->so_pcb = unp;
 	return (0);
 }
 
@@ -584,7 +584,7 @@ unp_drop(unp, errno)
 	so->so_error = errno;
 	unp_disconnect(unp);
 	if (so->so_head) {
-		so->so_pcb = (caddr_t)0;
+		so->so_pcb = 0;
 		sofree(so);
 		m_freem(unp->unp_addr);
 		free(unp, M_PCB);

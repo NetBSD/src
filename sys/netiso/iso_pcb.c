@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_pcb.c,v 1.7 1995/06/13 07:13:32 mycroft Exp $	*/
+/*	$NetBSD: iso_pcb.c,v 1.8 1995/08/17 02:57:33 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -123,7 +123,7 @@ iso_pcballoc(so, head)
 	isop->isop_socket = so;
 	insque(isop, head);
 	if (so)
-		so->so_pcb = (caddr_t)isop;
+		so->so_pcb = isop;
 	return 0;
 }
 	
