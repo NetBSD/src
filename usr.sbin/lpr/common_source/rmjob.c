@@ -1,4 +1,4 @@
-/*	$NetBSD: rmjob.c,v 1.15 1999/12/07 14:54:45 mrg Exp $	*/
+/*	$NetBSD: rmjob.c,v 1.16 2000/04/16 14:43:58 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)rmjob.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: rmjob.c,v 1.15 1999/12/07 14:54:45 mrg Exp $");
+__RCSID("$NetBSD: rmjob.c,v 1.16 2000/04/16 14:43:58 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -404,7 +404,7 @@ alarmer(s)
  */
 int
 iscf(d)
-	struct dirent *d;
+	const struct dirent *d;
 {
 	return(d->d_name[0] == 'c' && d->d_name[1] == 'f');
 }

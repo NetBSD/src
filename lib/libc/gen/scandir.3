@@ -1,4 +1,4 @@
-.\"	$NetBSD: scandir.3,v 1.6 1999/03/22 19:44:44 garbled Exp $
+.\"	$NetBSD: scandir.3,v 1.7 2000/04/16 14:43:57 mrg Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -46,7 +46,7 @@
 .Fd #include <sys/types.h>
 .Fd #include <dirent.h>
 .Ft int
-.Fn scandir "const char *dirname" "struct dirent ***namelist" "int \\*(lp*select\\*(rp\\*(lpstruct dirent *\\*(rp" "int \\*(lp*compar\\*(rp\\*(lpconst void *, const void *\\*(rp"
+.Fn scandir "const char *dirname" "struct dirent ***namelist" "int \\*(lp*select\\*(rp\\*(lpconst struct dirent *\\*(rp" "int \\*(lp*compar\\*(rp\\*(lpconst void *, const void *\\*(rp"
 .Ft int
 .Fn alphasort "const void *d1" "const void *d2"
 .Sh DESCRIPTION

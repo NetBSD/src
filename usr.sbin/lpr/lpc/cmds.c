@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.12 1997/10/05 15:12:06 mrg Exp $	*/
+/*	$NetBSD: cmds.c,v 1.13 2000/04/16 14:43:58 mrg Exp $	*/
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: cmds.c,v 1.12 1997/10/05 15:12:06 mrg Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.13 2000/04/16 14:43:58 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -74,7 +74,7 @@ static void	abortpr __P((int));
 static void	cleanpr __P((void));
 static void	disablepr __P((void));
 static int	doarg __P((char *));
-static int	doselect __P((struct dirent *));
+static int	doselect __P((const struct dirent *));
 static void	enablepr __P((void));
 static void	prstat __P((void));
 static void	putmsg __P((int, char **));
@@ -267,7 +267,7 @@ clean(argc, argv)
 
 static int
 doselect(d)
-	struct dirent *d;
+	const struct dirent *d;
 {
 	int c = d->d_name[0];
 
@@ -284,11 +284,11 @@ static int
 sortq(a, b)
 	const void *a, *b;
 {
-	struct dirent **d1, **d2;
+	const struct dirent **d1, **d2;
 	int c1, c2;
 
-	d1 = (struct dirent **)a;
-	d2 = (struct dirent **)b;
+	d1 = (const struct dirent **)a;
+	d2 = (const struct dirent **)b;
 	if ((c1 = strcmp((*d1)->d_name + 3, (*d2)->d_name + 3)) != 0)
 		return(c1);
 	c1 = (*d1)->d_name[0];
