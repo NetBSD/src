@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.h,v 1.5 1997/06/15 17:33:53 mhitch Exp $	*/
+/*	$NetBSD: locore.h,v 1.6 1997/06/16 06:17:25 jonathan Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -124,5 +124,26 @@ extern mips_locore_jumpvec_t r4000_locore_vec;
 #define MachTLBWriteIndexed	(*(mips_locore_jumpvec.tlbWriteIndexed))
 #define wbflush			(*(mips_locore_jumpvec.wbflush))
 #define proc_trampoline		(mips_locore_jumpvec.proc_trampoline)
+
+#ifdef _KERNEL
+
+/*
+ * Global variables used to communicate CPU type, and parameters
+ * such as cache size, from locore to higher-level code (e.g., pmap).
+ */
+union	cpuprid cpu_id;
+union	cpuprid fpu_id;
+int	cpu_arch;
+u_int	machDataCacheSize;
+u_int	machInstCacheSize;
+u_int	machPrimaryDataCacheSize;
+u_int	machPrimaryInstCacheSize;
+u_int	machPrimaryDataCacheLSize;
+u_int	machPrimaryInstCacheLSize;
+u_int	machCacheAliasMask;
+u_int	machSecondaryCacheSize;
+u_int	machSecondaryCacheLSize;
+extern	struct intr_tab intr_tab[];
+#endif
 
 #endif	/* _MIPS_LOCORE_H */
