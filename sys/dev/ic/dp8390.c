@@ -1,4 +1,4 @@
-/*	$NetBSD: dp8390.c,v 1.43 2001/02/12 18:52:22 thorpej Exp $	*/
+/*	$NetBSD: dp8390.c,v 1.44 2001/02/12 18:56:26 thorpej Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -245,6 +245,9 @@ dp8390_stop(sc)
 	while (((NIC_GET(regt, regh,
 	    ED_P0_ISR) & ED_ISR_RST) == 0) && --n)
 		DELAY(1);
+
+	if (sc->stop_card != NULL)
+		(*sc->stop_card)(sc);
 }
 
 /*
