@@ -1,4 +1,4 @@
-/*	$NetBSD: iso2022.c,v 1.8 2000/12/30 05:05:57 itojun Exp $	*/
+/*	$NetBSD: iso2022.c,v 1.9 2001/01/03 15:23:26 lukem Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: iso2022.c,v 1.8 2000/12/30 05:05:57 itojun Exp $");
+__RCSID("$NetBSD: iso2022.c,v 1.9 2001/01/03 15:23:26 lukem Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -51,6 +51,7 @@ __RCSID("$NetBSD: iso2022.c,v 1.8 2000/12/30 05:05:57 itojun Exp $");
 #include <sys/types.h>
 #include <machine/limits.h>
 
+#include <assert.h>
 #include <errno.h>
 #include "rune.h"
 #include <stddef.h>
@@ -135,6 +136,10 @@ getcs(p, cs)
 	char *p;
 	_Iso2022Charset *cs;
 {
+
+	_DIAGASSERT(p != NULL);
+	_DIAGASSERT(cs != NULL);
+
 	if (!strncmp(p, "94$", 3) && p[3] && !p[4]) {
 		cs->final = (u_char)(p[3] & 0xff);
 		cs->interm = '\0';
@@ -184,6 +189,8 @@ _ISO2022_init(rl)
 F_SI,	F_SO,	F_LS0,	F_LS1,	F_LS2,	F_LS3,
 F_LS1R,	F_LS2R,	F_LS3R,	F_SS2,	F_SS3,	F_SS2R,	F_SS3R,	0 };
 	_Iso2022Charset cs;
+
+	_DIAGASSERT(rl != NULL);
 
 	/* sanity check to avoid overruns */
 	if (sizeof(_Iso2022State) > sizeof(mbstate_t))
@@ -345,6 +352,8 @@ _ISO2022_init_stream(rl)
 	size_t s;
 	_Iso2022State *pst;
 
+	_DIAGASSERT(rl != NULL);
+
 	s = FOPEN_MAX * 2 * (sizeof(void *) + sizeof(_Iso2022State));
 	_StreamStateTable = malloc(s);
 	if (!_StreamStateTable)
@@ -417,6 +426,9 @@ seqmatch(s, n, sp)
 {
 	const int *p;
 
+	_DIAGASSERT(s != NULL);
+	_DIAGASSERT(sp != NULL);
+
 	p = sp->chars;
 	while (p - sp->chars < n && p - sp->chars < sp->len) {
 		switch (*p) {
@@ -470,6 +482,10 @@ _ISO2022_sgetrune(rl, string, n, result, state)
 	struct seqtable *sp;
 	int nmatch;
 	int i;
+
+	_DIAGASSERT(rl != NULL);
+	_DIAGASSERT(string != NULL);
+	/* result may be NULL */
 
 	while (1) {
 		/* SI/SO */
@@ -551,6 +567,7 @@ _ISO2022_sgetrune(rl, string, n, result, state)
 		}
 
 		/* LS1/2/3R */
+			/* XXX: { for vi showmatch */
 		if (2 <= n && string[0] == '\033'
 		 && string[1] && strchr("~}|", string[1])) {
 			CES(rl)->gr = 3 - (string[1] - '|');
@@ -736,6 +753,9 @@ recommendation(rl, cs)
 	int i, j;
 	_Iso2022Charset *recommend;
 
+	_DIAGASSERT(rl != NULL);
+	_DIAGASSERT(cs != NULL);
+
 	/* first, try a exact match. */
 	for (i = 0; i < 4; i++) {
 		recommend = CEI(rl)->recommend[i];
@@ -799,6 +819,11 @@ _ISO2022_sputrune(rl, c, string, n, result, state)
 	int target;
 	u_char mask;
 	int bit8;
+
+	_DIAGASSERT(rl != NULL);
+	_DIAGASSERT(string != NULL);
+	/* result may be NULL */
+	/* state appears to be unused */
 
 	if (iscntl(c & 0xff)) {
 		/* go back to ASCII on control chars */
@@ -964,6 +989,11 @@ _ISO2022_mbrtowc(rl, pwcs, s, n, state)
 	const char *p, *result;
 	int c;
 
+	_DIAGASSERT(rl != NULL);
+	/* pwcs may be NULL */
+	_DIAGASSERT(s != NULL);
+	_DIAGASSERT(state != NULL);
+
 	ps = state;
 
 	/*
@@ -1036,7 +1066,6 @@ output:
 		return 0;
 	else
 		return c;
-
 }
 
 /* s is non-null */
@@ -1051,6 +1080,10 @@ _ISO2022_wcrtomb(rl, s, n, wc, state)
 	char buf[MB_LEN_MAX];
 	char *result;
 	int len;
+
+	_DIAGASSERT(rl != NULL);
+	_DIAGASSERT(s != NULL);
+	_DIAGASSERT(state != NULL);
 
 	/* XXX state will be modified after this operation... */
 	len = _ISO2022_sputrune(rl, wc, buf, sizeof(buf), &result, state);
@@ -1075,6 +1108,8 @@ _ISO2022_initstate(rl, s)
 {
 	_Iso2022State *state;
 	size_t i;
+
+	_DIAGASSERT(rl != NULL);
 
 	if (!s)
 		return;
@@ -1101,6 +1136,10 @@ _ISO2022_packstate(rl, dst, src)
 	void* src;
 {
 
+	/* rl appears to be unused */
+	_DIAGASSERT(dst != NULL);
+	_DIAGASSERT(src != NULL);
+
 	memcpy((caddr_t)dst, (caddr_t)src, sizeof(_Iso2022State));
 	return;
 }
@@ -1111,6 +1150,10 @@ _ISO2022_unpackstate(rl, dst, src)
 	void* dst;
 	const mbstate_t *src;
 {
+
+	/* rl appears to be unused */
+	_DIAGASSERT(dst != NULL);
+	_DIAGASSERT(src != NULL);
 
 	memcpy((caddr_t)dst, (caddr_t)src, sizeof(_Iso2022State));
 	return;

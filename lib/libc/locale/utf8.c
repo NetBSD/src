@@ -1,4 +1,4 @@
-/*	$NetBSD: utf8.c,v 1.6 2000/12/30 05:06:03 itojun Exp $	*/
+/*	$NetBSD: utf8.c,v 1.7 2001/01/03 15:23:27 lukem Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -69,11 +69,12 @@
 #if 0
 static char sccsid[] = "@(#)utf2.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: utf8.c,v 1.6 2000/12/30 05:06:03 itojun Exp $");
+__RCSID("$NetBSD: utf8.c,v 1.7 2001/01/03 15:23:27 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
+#include <assert.h>
 #include <errno.h>
 #include "rune.h"
 #include <stddef.h>
@@ -117,6 +118,8 @@ _UTF8_init(rl)
 	_RuneLocale *rl;
 {
 	int i;
+
+	_DIAGASSERT(rl != NULL);
 
 	/* sanity check to avoid overruns */
 	if (sizeof(_UTF8State) > sizeof(mbstate_t))
@@ -172,6 +175,11 @@ _UTF8_mbrtowc(rl, pwcs, s, n, state)
 	rune_t rune;
 	int c;
 	int i;
+
+	/* rl appears to be unused */
+	/* pwcs may be NULL */
+	_DIAGASSERT(s != NULL);
+	_DIAGASSERT(state != NULL);
 
 	ps = state;
 
@@ -249,6 +257,10 @@ _UTF8_wcrtomb(rl, s, n, wc, state)
 	int cnt, i;
 	rune_t c;
 
+	/* rl appears to be unused */
+	/* s may be NULL (actually, it's checked below) */
+	/* state appears to be unused */
+
 	cnt = findlen(wc);
 	if (cnt <= 0 || cnt > 6) {
 		/* invalid UCS4 value */
@@ -286,6 +298,8 @@ _UTF8_initstate(rl, s)
 {
 	_UTF8State *state;
 
+	/* rl appears to be unused */
+
 	if (!s)
 		return;
 	state = s;
@@ -299,6 +313,10 @@ _UTF8_packstate(rl, dst, src)
 	void* src;
 {
 
+	/* rl appears to be unused */
+	_DIAGASSERT(dst != NULL);
+	_DIAGASSERT(src != NULL);
+
 	memcpy((caddr_t)dst, (caddr_t)src, sizeof(_UTF8State));
 	return;
 }
@@ -309,6 +327,10 @@ _UTF8_unpackstate(rl, dst, src)
 	void* dst;
 	const mbstate_t *src;
 {
+
+	/* rl appears to be unused */
+	_DIAGASSERT(dst != NULL);
+	_DIAGASSERT(src != NULL);
 
 	memcpy((caddr_t)dst, (caddr_t)src, sizeof(_UTF8State));
 	return;
