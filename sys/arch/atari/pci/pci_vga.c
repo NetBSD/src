@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_vga.c,v 1.1 1999/03/15 15:47:22 leo Exp $	*/
+/*	$NetBSD: pci_vga.c,v 1.2 2001/05/21 14:30:42 leo Exp $	*/
 
 /*
  * Copyright (c) 1999 Leo Weppelman.  All rights reserved.
@@ -105,6 +105,11 @@ check_for_vga()
 		return (0);
 
 	/*
+	 * Assume the device is in CGA mode. Wscons expects this too...
+	 */
+	fb = fb + 0x18000;
+
+	/*
 	 * Generic parts of the initialization...
 	 */
 	
@@ -156,7 +161,7 @@ loadfont(ba, fb)
 	WSeq(ba, SEQ_ID_MEMORY_MODE,	 0x06);
 	WGfx(ba, GCT_ID_READ_MAP_SELECT, 0x02);
 	WGfx(ba, GCT_ID_GRAPHICS_MODE,	 0x00);
-	WGfx(ba, GCT_ID_MISC,		 0x04);
+	WGfx(ba, GCT_ID_MISC,		 0x0c);
 	
 	/*
 	 * load text font into beginning of display memory. Each
@@ -180,7 +185,7 @@ loadfont(ba, fb)
 	WSeq(ba, SEQ_ID_MEMORY_MODE,	 0x03);
 	WGfx(ba, GCT_ID_READ_MAP_SELECT, 0x00);
 	WGfx(ba, GCT_ID_GRAPHICS_MODE,	 0x10);
-	WGfx(ba, GCT_ID_MISC,		 0x06);
+	WGfx(ba, GCT_ID_MISC,		 0x0e);
 
 	/*
 	 * Font height + underline location
