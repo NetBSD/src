@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.54 2001/05/10 02:19:32 thorpej Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.55 2001/05/10 04:51:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -148,7 +148,8 @@ struct pool_cache_group {
 static void	pool_cache_reclaim(struct pool_cache *);
 
 static int	pool_catchup(struct pool *);
-static int	pool_prime_page(struct pool *, caddr_t, int);
+static void	pool_prime_page(struct pool *, caddr_t,
+		    struct pool_item_header *);
 static void	*pool_page_alloc(unsigned long, int, int);
 static void	pool_page_free(void *, unsigned long, int);
 
@@ -548,6 +549,24 @@ pool_destroy(struct pool *pp)
 		free(pp, M_POOL);
 }
 
+static __inline struct pool_item_header *
+pool_alloc_item_header(struct pool *pp, caddr_t storage, int flags)
+{
+	struct pool_item_header *ph;
+	int s;
+
+	LOCK_ASSERT(simple_lock_held(&pp->pr_slock) == 0);
+
+	if ((pp->pr_roflags & PR_PHINPAGE) != 0)
+		ph = (struct pool_item_header *) (storage + pp->pr_phoffset);
+	else {
+		s = splhigh();
+		ph = pool_get(&phpool, flags);
+		splx(s);
+	}
+
+	return (ph);
+}
 
 /*
  * Grab an item from the pool; must be called at appropriate spl level
@@ -555,9 +574,9 @@ pool_destroy(struct pool *pp)
 void *
 _pool_get(struct pool *pp, int flags, const char *file, long line)
 {
-	void *v;
 	struct pool_item *pi;
 	struct pool_item_header *ph;
+	void *v;
 
 #ifdef DIAGNOSTIC
 	if (__predict_false((pp->pr_roflags & PR_STATIC) &&
@@ -625,8 +644,6 @@ _pool_get(struct pool *pp, int flags, const char *file, long line)
 	 * has no items in its bucket.
 	 */
 	if ((ph = pp->pr_curpage) == NULL) {
-		void *v;
-
 #ifdef DIAGNOSTIC
 		if (pp->pr_nitems != 0) {
 			simple_unlock(&pp->pr_slock);
@@ -644,15 +661,20 @@ _pool_get(struct pool *pp, int flags, const char *file, long line)
 		pr_leave(pp);
 		simple_unlock(&pp->pr_slock);
 		v = (*pp->pr_alloc)(pp->pr_pagesz, flags, pp->pr_mtype);
+		if (__predict_true(v != NULL))
+			ph = pool_alloc_item_header(pp, v, flags);
 		simple_lock(&pp->pr_slock);
 		pr_enter(pp, file, line);
 
-		if (v == NULL) {
+		if (__predict_false(v == NULL || ph == NULL)) {
+			if (v != NULL)
+				(*pp->pr_free)(v, pp->pr_pagesz, pp->pr_mtype);
+
 			/*
-			 * We were unable to allocate a page, but
-			 * we released the lock during allocation,
-			 * so perhaps items were freed back to the
-			 * pool.  Check for this case.
+			 * We were unable to allocate a page or item
+			 * header, but we released the lock during
+			 * allocation, so perhaps items were freed
+			 * back to the pool.  Check for this case.
 			 */
 			if (pp->pr_curpage != NULL)
 				goto startover;
@@ -686,17 +708,7 @@ _pool_get(struct pool *pp, int flags, const char *file, long line)
 		}
 
 		/* We have more memory; add it to the pool */
-		if (pool_prime_page(pp, v, flags & PR_WAITOK) != 0) {
-			/*
-			 * Probably, we don't allowed to wait and
-			 * couldn't allocate a page header.
-			 */
-			(*pp->pr_free)(v, pp->pr_pagesz, pp->pr_mtype);
-			pp->pr_nfail++;
-			pr_leave(pp);
-			simple_unlock(&pp->pr_slock);
-			return (NULL);
-		}
+		pool_prime_page(pp, v, ph);
 		pp->pr_npagealloc++;
 
 		/* Start the allocation process over. */
@@ -938,34 +950,65 @@ _pool_put(struct pool *pp, void *v, const char *file, long line)
 }
 
 /*
+ * Add N items to the pool.
+ */
+int
+pool_prime(struct pool *pp, int n)
+{
+	struct pool_item_header *ph;
+	caddr_t cp;
+	int newpages, error = 0;
+
+	simple_lock(&pp->pr_slock);
+
+	newpages = roundup(n, pp->pr_itemsperpage) / pp->pr_itemsperpage;
+
+	while (newpages-- > 0) {
+		simple_unlock(&pp->pr_slock);
+		cp = (*pp->pr_alloc)(pp->pr_pagesz, PR_NOWAIT, pp->pr_mtype);
+		if (__predict_true(cp != NULL))
+			ph = pool_alloc_item_header(pp, cp, PR_NOWAIT);
+		simple_lock(&pp->pr_slock);
+
+		if (__predict_false(cp == NULL || ph == NULL)) {
+			error = ENOMEM;
+			if (cp != NULL)
+				(*pp->pr_free)(cp, pp->pr_pagesz, pp->pr_mtype);
+			break;
+		}
+
+		pool_prime_page(pp, cp, ph);
+		pp->pr_npagealloc++;
+		pp->pr_minpages++;
+	}
+
+	if (pp->pr_minpages >= pp->pr_maxpages)
+		pp->pr_maxpages = pp->pr_minpages + 1;	/* XXX */
+
+	simple_unlock(&pp->pr_slock);
+	return (0);
+}
+
+/*
  * Add a page worth of items to the pool.
  *
  * Note, we must be called with the pool descriptor LOCKED.
  */
-static int
-pool_prime_page(struct pool *pp, caddr_t storage, int flags)
+static void
+pool_prime_page(struct pool *pp, caddr_t storage, struct pool_item_header *ph)
 {
 	struct pool_item *pi;
-	struct pool_item_header *ph;
 	caddr_t cp = storage;
 	unsigned int align = pp->pr_align;
 	unsigned int ioff = pp->pr_itemoffset;
-	int s, n;
+	int n;
 
 	if (((u_long)cp & (pp->pr_pagesz - 1)) != 0)
 		panic("pool_prime_page: %s: unaligned page", pp->pr_wchan);
 
-	if ((pp->pr_roflags & PR_PHINPAGE) != 0) {
-		ph = (struct pool_item_header *)(cp + pp->pr_phoffset);
-	} else {
-		s = splhigh();
-		ph = pool_get(&phpool, flags);
-		splx(s);
-		if (ph == NULL)
-			return (ENOMEM);
+	if ((pp->pr_roflags & PR_PHINPAGE) == 0)
 		LIST_INSERT_HEAD(&pp->pr_hashtab[PR_HASH_INDEX(pp, cp)],
-				 ph, ph_hashlist);
-	}
+		    ph, ph_hashlist);
 
 	/*
 	 * Insert page header.
@@ -1016,8 +1059,6 @@ pool_prime_page(struct pool *pp, caddr_t storage, int flags)
 
 	if (++pp->pr_npages > pp->pr_hiwat)
 		pp->pr_hiwat = pp->pr_npages;
-
-	return (0);
 }
 
 /*
@@ -1034,6 +1075,7 @@ pool_prime_page(struct pool *pp, caddr_t storage, int flags)
 static int
 pool_catchup(struct pool *pp)
 {
+	struct pool_item_header *ph;
 	caddr_t cp;
 	int error = 0;
 
@@ -1057,16 +1099,17 @@ pool_catchup(struct pool *pp)
 		 * the pool descriptor?
 		 */
 		simple_unlock(&pp->pr_slock);
-		cp = (*pp->pr_alloc)(pp->pr_pagesz, 0, pp->pr_mtype);
+		cp = (*pp->pr_alloc)(pp->pr_pagesz, PR_NOWAIT, pp->pr_mtype);
+		if (__predict_true(cp != NULL))
+			ph = pool_alloc_item_header(pp, cp, PR_NOWAIT);
 		simple_lock(&pp->pr_slock);
-		if (__predict_false(cp == NULL)) {
+		if (__predict_false(cp == NULL || ph == NULL)) {
+			if (cp != NULL)
+				(*pp->pr_free)(cp, pp->pr_pagesz, pp->pr_mtype);
 			error = ENOMEM;
 			break;
 		}
-		if ((error = pool_prime_page(pp, cp, PR_NOWAIT)) != 0) {
-			(*pp->pr_free)(cp, pp->pr_pagesz, pp->pr_mtype);
-			break;
-		}
+		pool_prime_page(pp, cp, ph);
 		pp->pr_npagealloc++;
 	}
 
