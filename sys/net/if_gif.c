@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.c,v 1.26 2001/02/21 00:17:09 itojun Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.26.2.1 2001/03/05 22:49:54 nathanw Exp $	*/
 /*	$KAME: if_gif.c,v 1.43 2001/02/20 08:51:07 itojun Exp $	*/
 
 /*
@@ -43,6 +43,7 @@
 #include <sys/ioctl.h>
 #include <sys/time.h>
 #include <sys/syslog.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/protosw.h>
 #include <machine/cpu.h>
@@ -476,7 +477,7 @@ gif_ioctl(ifp, cmd, data)
 	u_long cmd;
 	caddr_t data;
 {
-	struct proc *p = curproc;	/* XXX */
+	struct proc *p = curproc->l_proc;	/* XXX */
 	struct gif_softc *sc  = (struct gif_softc*)ifp;
 	struct ifreq     *ifr = (struct ifreq*)data;
 	int error = 0, size;

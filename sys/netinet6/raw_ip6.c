@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.31 2001/03/04 16:49:17 itojun Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.31.2.1 2001/03/05 22:49:58 nathanw Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.69 2001/03/04 15:55:44 itojun Exp $	*/
 
 /*
@@ -75,6 +75,7 @@
 #include <sys/socketvar.h>
 #include <sys/errno.h>
 #include <sys/systm.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 
 #include <net/if.h>
@@ -390,7 +391,7 @@ rip6_output(m, va_alist)
 
 	priv = 0;
     {
-	struct proc *p = curproc;	/* XXX */
+	struct proc *p = curproc->l_proc;	/* XXX */
 
 	if (p && !suser(p->p_ucred, &p->p_acflag))
 		priv = 1;

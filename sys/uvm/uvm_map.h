@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.h,v 1.24 2001/02/18 21:19:08 chs Exp $	*/
+/*	$NetBSD: uvm_map.h,v 1.24.2.1 2001/03/05 22:50:11 nathanw Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -380,6 +380,7 @@ int		uvm_unmap_remove __P((vm_map_t, vaddr_t, vaddr_t,
 #ifdef _KERNEL
 /* XXX: clean up later */
 #include <sys/time.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>	/* for tsleep(), wakeup() */
 #include <sys/systm.h>	/* for panic() */
 

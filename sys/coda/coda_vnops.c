@@ -6,7 +6,7 @@ mkdir
 rmdir
 symlink
 */
-/*	$NetBSD: coda_vnops.c,v 1.23 2001/01/22 12:17:35 jdolecek Exp $	*/
+/*	$NetBSD: coda_vnops.c,v 1.23.2.1 2001/03/05 22:49:18 nathanw Exp $	*/
 
 /*
  * 
@@ -838,7 +838,7 @@ coda_inactive(v)
     struct vnode *vp = ap->a_vp;
     struct cnode *cp = VTOC(vp);
     struct ucred *cred __attribute__((unused)) = NULL;
-    struct proc *p __attribute__((unused)) = curproc;
+    struct proc *p __attribute__((unused)) = curproc->l_proc;
 /* upcall decl */
 /* locals */
 
@@ -1759,7 +1759,7 @@ coda_bmap(v)
     daddr_t bn __attribute__((unused)) = ap->a_bn;	/* fs block number */
     struct vnode **vpp = ap->a_vpp;			/* RETURN vp of device */
     daddr_t *bnp __attribute__((unused)) = ap->a_bnp;	/* RETURN device block number */
-    struct proc *p __attribute__((unused)) = curproc;
+    struct proc *p __attribute__((unused)) = curproc->l_proc;
 /* upcall decl */
 /* locals */
 
@@ -1782,7 +1782,7 @@ coda_strategy(v)
 /* true args */
     struct vop_strategy_args *ap = v;
     struct buf *bp __attribute__((unused)) = ap->a_bp;
-    struct proc *p __attribute__((unused)) = curproc;
+    struct proc *p __attribute__((unused)) = curproc->l_proc;
 /* upcall decl */
 /* locals */
 

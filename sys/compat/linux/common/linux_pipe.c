@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_pipe.c,v 1.51 2000/06/29 02:40:39 mrg Exp $	*/
+/*	$NetBSD: linux_pipe.c,v 1.51.2.1 2001/03/05 22:49:27 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -61,8 +61,8 @@
  * Linux directly passes the pointer.
  */
 int
-linux_sys_pipe(p, v, retval)
-	struct proc *p;
+linux_sys_pipe(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -71,7 +71,7 @@ linux_sys_pipe(p, v, retval)
 	} */ *uap = v;
 	int error;
 
-	if ((error = sys_pipe(p, 0, retval)))
+	if ((error = sys_pipe(l, 0, retval)))
 		return error;
 
 	/* Assumes register_t is an int */

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_boot.c,v 1.56 2001/01/19 14:26:01 enami Exp $	*/
+/*	$NetBSD: nfs_boot.c,v 1.56.2.1 2001/03/05 22:49:59 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -50,6 +50,7 @@
 #include <sys/device.h>
 #include <sys/ioctl.h>
 #include <sys/proc.h>
+#include <sys/lwp.h>
 #include <sys/mount.h>
 #include <sys/mbuf.h>
 #include <sys/reboot.h>
@@ -362,7 +363,7 @@ nfs_boot_sobind_ipport(so, port)
 	sin->sin_family = AF_INET;
 	sin->sin_addr.s_addr = INADDR_ANY;
 	sin->sin_port = htons(port);
-	error = sobind(so, m, curproc);
+	error = sobind(so, m, curproc->l_proc);
 	m_freem(m);
 	return (error);
 }

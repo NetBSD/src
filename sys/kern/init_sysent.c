@@ -1,4 +1,4 @@
-/* $NetBSD: init_sysent.c,v 1.124 2001/01/27 07:48:28 thorpej Exp $ */
+/* $NetBSD: init_sysent.c,v 1.124.2.1 2001/03/05 22:49:38 nathanw Exp $ */
 
 /*
  * System call switch table.
@@ -812,22 +812,22 @@ struct sysent sysent[] = {
 	    sys_issetugid },			/* 305 = issetugid */
 	{ 3, s(struct sys_utrace_args), 0,
 	    sys_utrace },			/* 306 = utrace */
+	{ 1, s(struct sys_getcontext_args), 0,
+	    sys_getcontext },			/* 307 = getcontext */
+	{ 1, s(struct sys_setcontext_args), 0,
+	    sys_setcontext },			/* 308 = setcontext */
+	{ 3, s(struct sys__lwp_create_args), 0,
+	    sys__lwp_create },			/* 309 = _lwp_create */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 307 = unimplemented */
+	    sys__lwp_exit },			/* 310 = _lwp_exit */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 308 = unimplemented */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 309 = unimplemented */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 310 = unimplemented */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 311 = unimplemented */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 312 = unimplemented */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 313 = unimplemented */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 314 = unimplemented */
+	    sys__lwp_self },			/* 311 = _lwp_self */
+	{ 2, s(struct sys__lwp_wait_args), 0,
+	    sys__lwp_wait },			/* 312 = _lwp_wait */
+	{ 1, s(struct sys__lwp_suspend_args), 0,
+	    sys__lwp_suspend },			/* 313 = _lwp_suspend */
+	{ 1, s(struct sys__lwp_continue_args), 0,
+	    sys__lwp_continue },		/* 314 = _lwp_continue */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 315 = unimplemented */
 	{ 0, 0, 0,
@@ -858,18 +858,18 @@ struct sysent sysent[] = {
 	    sys_nosys },			/* 328 = unimplemented */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 329 = unimplemented */
+	{ 2, s(struct sys_sa_register_args), 0,
+	    sys_sa_register },			/* 330 = sa_register */
+	{ 2, s(struct sys_sa_stacks_args), 0,
+	    sys_sa_stacks },			/* 331 = sa_stacks */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 330 = unimplemented */
+	    sys_sa_enable },			/* 332 = sa_enable */
+	{ 1, s(struct sys_sa_setconcurrency_args), 0,
+	    sys_sa_setconcurrency },		/* 333 = sa_setconcurrency */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 331 = unimplemented */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 332 = unimplemented */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 333 = unimplemented */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 334 = unimplemented */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 335 = unimplemented */
+	    sys_sa_yield },			/* 334 = sa_yield */
+	{ 1, s(struct sys_sa_preempt_args), 0,
+	    sys_sa_preempt },			/* 335 = sa_preempt */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 336 = unimplemented */
 	{ 0, 0, 0,

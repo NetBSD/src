@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vfsops.c,v 1.11 2001/01/22 12:17:35 jdolecek Exp $	*/
+/*	$NetBSD: coda_vfsops.c,v 1.11.2.1 2001/03/05 22:49:17 nathanw Exp $	*/
 
 /*
  * 
@@ -335,7 +335,7 @@ coda_root(vfsp, vpp)
     struct coda_mntinfo *mi = vftomi(vfsp);
     struct vnode **result;
     int error;
-    struct proc *p = curproc;    /* XXX - bnoble */
+    struct proc *p = curproc->l_proc;    /* XXX - bnoble */
     ViceFid VFid;
 
     ENTRY;
@@ -492,7 +492,7 @@ coda_fhtovp(vfsp, fhp, nam, vpp, exflagsp, creadanonp)
     struct cfid *cfid = (struct cfid *)fhp;
     struct cnode *cp = 0;
     int error;
-    struct proc *p = curproc; /* XXX -mach */
+    struct proc *p = curproc->l_proc; /* XXX -mach */
     ViceFid VFid;
     int vtype;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.21 1996/02/09 18:25:26 christos Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.21.42.1 2001/03/05 22:50:03 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1984, 1993
@@ -62,18 +62,18 @@ struct fpreg;
 
 void	proc_reparent __P((struct proc *child, struct proc *newparent));
 #ifdef PT_GETFPREGS
-int	process_read_fpregs __P((struct proc *p, struct fpreg *regs));
+int	process_read_fpregs __P((struct lwp *l, struct fpreg *regs));
 #endif
 #ifdef PT_GETREGS
-int	process_read_regs __P((struct proc *p, struct reg *regs));
+int	process_read_regs __P((struct lwp *l, struct reg *regs));
 #endif
-int	process_set_pc __P((struct proc *p, caddr_t addr));
-int	process_sstep __P((struct proc *p, int sstep));
+int	process_set_pc __P((struct lwp *l, caddr_t addr));
+int	process_sstep __P((struct lwp *l, int sstep));
 #ifdef PT_SETFPREGS
-int	process_write_fpregs __P((struct proc *p, struct fpreg *regs));
+int	process_write_fpregs __P((struct lwp *l, struct fpreg *regs));
 #endif
 #ifdef PT_SETREGS
-int	process_write_regs __P((struct proc *p, struct reg *regs));
+int	process_write_regs __P((struct lwp *l, struct reg *regs));
 #endif
 
 #ifndef FIX_SSTEP

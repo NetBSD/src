@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_machdep.c,v 1.13 2000/12/22 22:58:53 jdolecek Exp $	*/
+/*	$NetBSD: ibcs2_machdep.c,v 1.13.4.1 2001/03/05 22:49:12 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2000 The NetBSD Foundation, Inc.
@@ -42,6 +42,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/exec.h>
 #include <sys/user.h>
@@ -66,17 +67,17 @@
 #include <compat/ibcs2/ibcs2_syscallargs.h>
 
 void
-ibcs2_setregs(p, epp, stack)
-	struct proc *p;
+ibcs2_setregs(l, epp, stack)
+	struct lwp *l;
 	struct exec_package *epp;
 	u_long stack;
 {
-	register struct pcb *pcb = &p->p_addr->u_pcb;
+	register struct pcb *pcb = &l->l_addr->u_pcb;
 	register struct trapframe *tf;
 
-	setregs(p, epp, stack);
+	setregs(l, epp, stack);
 	pcb->pcb_savefpu.sv_env.en_cw = __iBCS2_NPXCW__;
-	tf = p->p_md.md_regs;
+	tf = l->l_md.md_regs;
 	tf->tf_eax = 0x2000000;		/* XXX base of heap */
 }
 
@@ -98,12 +99,13 @@ ibcs2_sendsig(catcher, sig, mask, code)
 	u_long code;
 {
 	/* XXX Need SCO sigframe format. */
-	struct proc *p = curproc;
+	struct lwp *l = curproc;
+	struct proc *p = l->l_proc;
 	struct trapframe *tf;
 	struct sigframe *fp, frame;
 	int onstack;
 
-	tf = p->p_md.md_regs;
+	tf = l->l_md.md_regs;
 
 	/* Do we need to jump onto the signal stack? */
 	onstack =
@@ -131,7 +133,7 @@ ibcs2_sendsig(catcher, sig, mask, code)
 		frame.sf_sc.sc_fs = tf->tf_vm86_fs;
 		frame.sf_sc.sc_es = tf->tf_vm86_es;
 		frame.sf_sc.sc_ds = tf->tf_vm86_ds;
-		frame.sf_sc.sc_eflags = get_vflags(p);
+		frame.sf_sc.sc_eflags = get_vflags(l);
 		(*p->p_emul->e_syscall_intern)(p);
 	} else
 #endif
@@ -167,7 +169,7 @@ ibcs2_sendsig(catcher, sig, mask, code)
 		 * Process has trashed its stack; give it an illegal
 		 * instruction to halt it in its tracks.
 		 */
-		sigexit(p, SIGILL);
+		sigexit(l, SIGILL);
 		/* NOTREACHED */
 	}
 
@@ -190,8 +192,8 @@ ibcs2_sendsig(catcher, sig, mask, code)
 }
 
 int
-ibcs2_sys_sysmachine(p, v, retval)
-	struct proc *p;
+ibcs2_sys_sysmachine(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_prefix.c,v 1.14 2001/02/10 04:14:27 itojun Exp $	*/
+/*	$NetBSD: in6_prefix.c,v 1.14.2.1 2001/03/05 22:49:56 nathanw Exp $	*/
 /*	$KAME: in6_prefix.c,v 1.29 2000/06/07 05:59:38 itojun Exp $	*/
 
 /*
@@ -74,6 +74,7 @@
 #include <sys/sockio.h>
 #include <sys/systm.h>
 #include <sys/syslog.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 
 #include <net/if.h>
@@ -633,7 +634,7 @@ add_each_addr(struct socket *so, struct rr_prefix *rpp, struct rp_addr *rap)
 	if (rap->ra_flags.anycast != 0)
 		ifra.ifra_flags |= IN6_IFF_ANYCAST;
 	error = in6_control(so, SIOCAIFADDR_IN6, (caddr_t)&ifra, rpp->rp_ifp
-			    , curproc);
+			    , curproc->l_proc);
 	if (error != 0)
 		log(LOG_ERR, "in6_prefix.c: add_each_addr: addition of an addr"
 		    "%s/%d failed because in6_control failed for error %d\n",

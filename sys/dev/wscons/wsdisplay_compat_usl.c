@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay_compat_usl.c,v 1.15 2000/09/10 10:43:53 simonb Exp $ */
+/* $NetBSD: wsdisplay_compat_usl.c,v 1.15.2.1 2001/03/05 22:49:37 nathanw Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -40,6 +40,7 @@
 #include <sys/callout.h>
 #include <sys/ioctl.h>
 #include <sys/kernel.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/signalvar.h>
 #include <sys/malloc.h>
@@ -437,7 +438,8 @@ wsdisplay_usl_ioctl2(sc, scr, cmd, data, flag, p)
 #if defined(__i386__)
 #if defined(COMPAT_10) || defined(COMPAT_11) || defined(COMPAT_FREEBSD)
 		{
-		struct trapframe *fp = (struct trapframe *)p->p_md.md_regs;
+			/* XXX NJWLWP */
+		struct trapframe *fp = (struct trapframe *)curproc->l_md.md_regs;
 		if (cmd == KDENABIO)
 			fp->tf_eflags |= PSL_IOPL;
 		else

@@ -1,4 +1,4 @@
-/*	$NetBSD: rrunner.c,v 1.21 2000/12/14 06:27:25 thorpej Exp $	*/
+/*	$NetBSD: rrunner.c,v 1.21.2.1 2001/03/05 22:49:35 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -57,6 +57,7 @@
 #include <sys/syslog.h>
 #include <sys/select.h>
 #include <sys/device.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/kernel.h>
 
@@ -999,7 +1000,8 @@ esh_fpread(dev, uio, ioflag)
 	struct uio *uio;
 	int ioflag;
 {
-	struct proc *p = curproc;
+	struct lwp *l = curproc;
+	struct proc *p = l->l_proc;
 	struct iovec *iovp;
 	struct esh_softc *sc;
 	struct esh_fp_ring_ctl *ring;
@@ -1047,7 +1049,7 @@ esh_fpread(dev, uio, ioflag)
 		}
 	}
 	
-	PHOLD(p);	/* Lock process info into memory */
+	PHOLD(l);	/* Lock process info into memory */
 
 	/* Lock down the pages */
 
@@ -1152,7 +1154,7 @@ esh_fpread(dev, uio, ioflag)
 		uvm_vsunlock(p, iovp->iov_base, iovp->iov_len);
 	}
 
-	PRELE(p);	/* Release process info */
+	PRELE(l);	/* Release process info */
 	esh_free_dmainfo(sc, di);
 
 fpread_done:
@@ -1170,7 +1172,8 @@ esh_fpwrite(dev, uio, ioflag)
 	struct uio *uio;
 	int ioflag;
 {
-	struct proc *p = curproc;
+	struct lwp *l = curproc;
+	struct proc *p = l->l_proc;
 	struct iovec *iovp;
 	struct esh_softc *sc;
 	struct esh_send_ring_ctl *ring;
@@ -1218,7 +1221,7 @@ esh_fpwrite(dev, uio, ioflag)
 		}
 	}
 	
-	PHOLD(p);	/* Lock process info into memory */
+	PHOLD(l);	/* Lock process info into memory */
 
 	/* Lock down the pages */
 
@@ -1319,7 +1322,7 @@ esh_fpwrite(dev, uio, ioflag)
 		uvm_vsunlock(p, iovp->iov_base, iovp->iov_len);
 	}
 
-	PRELE(p);	/* Release process info */
+	PRELE(l);	/* Release process info */
 	esh_free_dmainfo(sc, di);
 
 fpwrite_done:

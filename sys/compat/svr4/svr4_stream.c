@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stream.c,v 1.41 2000/08/30 01:13:22 sommerfeld Exp $	 */
+/*	$NetBSD: svr4_stream.c,v 1.41.2.1 2001/03/05 22:49:30 nathanw Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -290,7 +290,8 @@ clean_pipe(p, path)
 
 	SCARG(&la, path) = tpath;
 
-	if ((error = sys___lstat13(p, &la, &retval)) != 0)
+	/* XXX NJWLWP */
+	if ((error = sys___lstat13(curproc, &la, &retval)) != 0)
 		return 0;
 
 	if ((error = copyin(SCARG(&la, ub), &st, sizeof(st))) != 0)
@@ -305,9 +306,11 @@ clean_pipe(p, path)
 	if ((st.st_mode & ALLPERMS) != 0)
 		return 0;
 
+
 	SCARG(&ua, path) = SCARG(&la, path);
 
-	if ((error = sys_unlink(p, &ua, &retval)) != 0) {
+	/* XXX NJWLWP */
+	if ((error = sys_unlink(curproc, &ua, &retval)) != 0) {
 		DPRINTF(("clean_pipe: unlink failed %d\n", error));
 		return error;
 	}
@@ -537,7 +540,8 @@ si_listen(fp, fd, ioc, p)
 	DPRINTF(("SI_LISTEN: fileno %d backlog = %d\n", fd, 5));
 	SCARG(&la, backlog) = 5;
 
-	if ((error = sys_listen(p, &la, &retval)) != 0) {
+	/* XXX NJWLWP */
+	if ((error = sys_listen(curproc, &la, &retval)) != 0) {
 		DPRINTF(("SI_LISTEN: listen failed %d\n", error));
 		return error;
 	}
@@ -650,7 +654,8 @@ si_shutdown(fp, fd, ioc, p)
 
 	SCARG(&ap, s) = fd;
 
-	return sys_shutdown(p, &ap, &retval);
+	/* XXX NJWLWP */
+	return sys_shutdown(curproc, &ap, &retval);
 }
 
 
@@ -837,7 +842,8 @@ ti_bind(fp, fd, ioc, p)
 	SCARG(&ba, name) = (void *) sup;
 	SCARG(&ba, namelen) = sasize;
 
-	if ((error = sys_bind(p, &ba, &retval)) != 0) {
+	/* XXX NJWLWP */
+	if ((error = sys_bind(curproc, &ba, &retval)) != 0) {
 		DPRINTF(("TI_BIND: bind failed %d\n", error));
 		return error;
 	}
@@ -953,7 +959,8 @@ svr4_stream_ti_ioctl(fp, p, retval, fd, cmd, dat)
 			SCARG(&ap, fdes) = fd;
 			SCARG(&ap, asa) = sup;
 			SCARG(&ap, alen) = lenp;
-			if ((error = sys_getsockname(p, &ap, retval)) != 0) {
+			/* XXX NJWLWP */
+			if ((error = sys_getsockname(curproc, &ap, retval)) != 0) {
 				DPRINTF(("ti_ioctl: getsockname error\n"));
 				return error;
 			}
@@ -967,7 +974,8 @@ svr4_stream_ti_ioctl(fp, p, retval, fd, cmd, dat)
 			SCARG(&ap, fdes) = fd;
 			SCARG(&ap, asa) = sup;
 			SCARG(&ap, alen) = lenp;
-			if ((error = sys_getpeername(p, &ap, retval)) != 0) {
+			/* XXX NJWLWP */
+			if ((error = sys_getpeername(curproc, &ap, retval)) != 0) {
 				DPRINTF(("ti_ioctl: getpeername error\n"));
 				return error;
 			}
@@ -1101,7 +1109,8 @@ i_fdinsert(fp, p, retval, fd, cmd, dat)
 	SCARG(&d2p, from) = st->s_afd;
 	SCARG(&d2p, to) = fdi.fd;
 
-	if ((error = sys_dup2(p, &d2p, retval)) != 0) {
+	/* XXX NJWLWP */
+	if ((error = sys_dup2(curproc, &d2p, retval)) != 0) {
 		DPRINTF(("fdinsert: dup2(%d, %d) failed %d\n", 
 		    st->s_afd, fdi.fd, error));
 		return error;
@@ -1109,7 +1118,8 @@ i_fdinsert(fp, p, retval, fd, cmd, dat)
 
 	SCARG(&clp, fd) = st->s_afd;
 
-	if ((error = sys_close(p, &clp, retval)) != 0) {
+	/* XXX NJWLWP */
+	if ((error = sys_close(curproc, &clp, retval)) != 0) {
 		DPRINTF(("fdinsert: close(%d) failed %d\n", 
 		    st->s_afd, error));
 		return error;
@@ -1143,7 +1153,8 @@ _i_bind_rsvd(fp, p, retval, fd, cmd, dat)
 	SCARG(&ap, path) = dat;
 	SCARG(&ap, mode) = S_IFIFO;
 
-	return sys_mkfifo(p, &ap, retval);
+	/* XXX NJWLWP */
+	return sys_mkfifo(curproc, &ap, retval);
 }
 
 static int
@@ -1163,7 +1174,8 @@ _i_rele_rsvd(fp, p, retval, fd, cmd, dat)
 	 */
 	SCARG(&ap, path) = dat;
 
-	return sys_unlink(p, &ap, retval);
+	/* XXXNJWLWP */
+	return sys_unlink(curproc, &ap, retval);
 }
 
 static int
@@ -1245,7 +1257,8 @@ i_setsig(fp, p, retval, fd, cmd, dat)
 	/* get old status flags */
 	SCARG(&fa, fd) = fd;
 	SCARG(&fa, cmd) = F_GETFL;
-	if ((error = sys_fcntl(p, &fa, &oflags)) != 0)
+	/* XXX NJWLWP */
+	if ((error = sys_fcntl(curproc, &fa, &oflags)) != 0)
 		return error;
 
 	/* update the flags */
@@ -1269,7 +1282,8 @@ i_setsig(fp, p, retval, fd, cmd, dat)
 	if (flags != oflags) {
 		SCARG(&fa, cmd) = F_SETFL;
 		SCARG(&fa, arg) = (void *) flags;
-		if ((error = sys_fcntl(p, &fa, &flags)) != 0)
+		/* XXX NJWLWP */
+		if ((error = sys_fcntl(curproc, &fa, &flags)) != 0)
 			return error;
 	}
 
@@ -1277,7 +1291,8 @@ i_setsig(fp, p, retval, fd, cmd, dat)
 	if (dat != NULL) {
 		SCARG(&fa, cmd) = F_SETOWN;
 		SCARG(&fa, arg) = (void *)(u_long)p->p_pid;
-		return sys_fcntl(p, &fa, &flags);
+		/* XXX NJWLWP */
+		return sys_fcntl(curproc, &fa, &flags);
 	}
 	return 0;
 }
@@ -1485,12 +1500,13 @@ svr4_stream_ioctl(fp, p, retval, fd, cmd, dat)
 
 
 int
-svr4_sys_putmsg(p, v, retval)
-	struct proc *p;
+svr4_sys_putmsg(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct svr4_sys_putmsg_args *uap = v;
+	struct proc *p = l->l_proc;
 	struct filedesc	*fdp = p->p_fd;
 	struct file	*fp;
 	struct svr4_strbuf dat, ctl;
@@ -1569,7 +1585,7 @@ svr4_sys_putmsg(p, v, retval)
 				SCARG(&wa, fd) = SCARG(uap, fd);
 				SCARG(&wa, buf) = dat.buf;
 				SCARG(&wa, nbyte) = dat.len;
-				return sys_write(p, &wa, retval);
+				return sys_write(l, &wa, retval);
 			}
 #endif
 	                DPRINTF(("putmsg: Invalid inet length %ld\n", sc.len));
@@ -1622,7 +1638,7 @@ svr4_sys_putmsg(p, v, retval)
 			SCARG(&co, s) = SCARG(uap, fd);
 			SCARG(&co, name) = (void *) sup;
 			SCARG(&co, namelen) = (int) sasize;
-			return sys_connect(p, &co, retval);
+			return sys_connect(l, &co, retval);
 		}
 
 	case SVR4_TI_SENDTO_REQUEST:	/* sendto 	*/
@@ -1653,12 +1669,13 @@ svr4_sys_putmsg(p, v, retval)
 
 
 int
-svr4_sys_getmsg(p, v, retval)
-	struct proc *p;
+svr4_sys_getmsg(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct svr4_sys_getmsg_args *uap = v;
+	struct proc *p = l->l_proc;
 	struct filedesc	*fdp = p->p_fd;
 	struct file	*fp;
 	struct sys_getpeername_args ga;
@@ -1775,7 +1792,7 @@ svr4_sys_getmsg(p, v, retval)
 		SCARG(&ga, asa) = (void *) sup;
 		SCARG(&ga, alen) = flen;
 		
-		if ((error = sys_getpeername(p, &ga, retval)) != 0) {
+		if ((error = sys_getpeername(l, &ga, retval)) != 0) {
 			DPRINTF(("getmsg: getpeername failed %d\n", error));
 			return error;
 		}
@@ -1834,7 +1851,7 @@ svr4_sys_getmsg(p, v, retval)
 		SCARG(&aa, name) = (void *) sup;
 		SCARG(&aa, anamelen) = flen;
 		
-		if ((error = sys_accept(p, &aa, retval)) != 0) {
+		if ((error = sys_accept(l, &aa, retval)) != 0) {
 			DPRINTF(("getmsg: accept failed %d\n", error));
 			return error;
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_mem.c,v 1.27 2000/11/24 18:58:37 chs Exp $	*/
+/*	$NetBSD: procfs_mem.c,v 1.27.2.1 2001/03/05 22:49:51 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -49,6 +49,7 @@
 #include <sys/systm.h>
 #include <sys/time.h>
 #include <sys/kernel.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/vnode.h>
 
@@ -65,9 +66,9 @@
  * from the kernel address space.
  */
 int
-procfs_domem(curp, p, pfs, uio)
+procfs_domem(curp, l, pfs, uio)
 	struct proc *curp;		/* tracer */
-	struct proc *p;			/* traced */
+	struct lwp *l;			/* traced */
 	struct pfsnode *pfs;
 	struct uio *uio;
 {
@@ -75,6 +76,7 @@ procfs_domem(curp, p, pfs, uio)
 
 	size_t len;
 	vaddr_t	addr;
+	struct proc *p = l->l_proc;
 
 	len = uio->uio_resid;
 

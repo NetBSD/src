@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.54 2001/02/27 04:44:51 lukem Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.54.2.1 2001/03/05 22:49:44 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -47,6 +47,7 @@
 #include <sys/filedesc.h>
 #include <sys/ioctl.h>
 #include <sys/file.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/socketvar.h>
 #include <sys/signalvar.h>
@@ -70,7 +71,7 @@ int pollscan __P((struct proc *, struct pollfd *, int, register_t *));
  */
 /* ARGSUSED */
 int
-sys_read(struct proc *p, void *v, register_t *retval)
+sys_read(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_read_args /* {
 		syscallarg(int)		fd;
@@ -79,9 +80,11 @@ sys_read(struct proc *p, void *v, register_t *retval)
 	} */ *uap = v;
 	int		fd;
 	struct file	*fp;
+	struct proc	*p;
 	struct filedesc	*fdp;
 
 	fd = SCARG(uap, fd);
+	p = l->l_proc;
 	fdp = p->p_fd;
 	if ((u_int)fd >= fdp->fd_nfiles ||
 	    (fp = fdp->fd_ofiles[fd]) == NULL ||
@@ -155,7 +158,7 @@ dofileread(struct proc *p, int fd, struct file *fp, void *buf, size_t nbyte,
  * Scatter read system call.
  */
 int
-sys_readv(struct proc *p, void *v, register_t *retval)
+sys_readv(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_readv_args /* {
 		syscallarg(int)				fd;
@@ -164,9 +167,11 @@ sys_readv(struct proc *p, void *v, register_t *retval)
 	} */ *uap = v;
 	int		fd;
 	struct file	*fp;
+	struct proc	*p;
 	struct filedesc	*fdp;
 
 	fd = SCARG(uap, fd);
+	p = l->l_proc;
 	fdp = p->p_fd;
 	if ((u_int)fd >= fdp->fd_nfiles ||
 	    (fp = fdp->fd_ofiles[fd]) == NULL ||
@@ -272,7 +277,7 @@ dofilereadv(struct proc *p, int fd, struct file *fp, const struct iovec *iovp,
  * Write system call
  */
 int
-sys_write(struct proc *p, void *v, register_t *retval)
+sys_write(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_write_args /* {
 		syscallarg(int)			fd;
@@ -281,9 +286,11 @@ sys_write(struct proc *p, void *v, register_t *retval)
 	} */ *uap = v;
 	int		fd;
 	struct file	*fp;
+	struct proc	*p;
 	struct filedesc	*fdp;
 
 	fd = SCARG(uap, fd);
+	p = l->l_proc;
 	fdp = p->p_fd;
 	if ((u_int)fd >= fdp->fd_nfiles ||
 	    (fp = fdp->fd_ofiles[fd]) == NULL ||
@@ -360,7 +367,7 @@ dofilewrite(struct proc *p, int fd, struct file *fp, const void *buf,
  * Gather write system call
  */
 int
-sys_writev(struct proc *p, void *v, register_t *retval)
+sys_writev(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_writev_args /* {
 		syscallarg(int)				fd;
@@ -369,9 +376,11 @@ sys_writev(struct proc *p, void *v, register_t *retval)
 	} */ *uap = v;
 	int		fd;
 	struct file	*fp;
+	struct proc	*p;
 	struct filedesc	*fdp;
 
 	fd = SCARG(uap, fd);
+	p = l->l_proc;
 	fdp = p->p_fd;
 	if ((u_int)fd >= fdp->fd_nfiles ||
 	    (fp = fdp->fd_ofiles[fd]) == NULL ||
@@ -479,7 +488,7 @@ dofilewritev(struct proc *p, int fd, struct file *fp, const struct iovec *iovp,
  */
 /* ARGSUSED */
 int
-sys_ioctl(struct proc *p, void *v, register_t *retval)
+sys_ioctl(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_ioctl_args /* {
 		syscallarg(int)		fd;
@@ -487,6 +496,7 @@ sys_ioctl(struct proc *p, void *v, register_t *retval)
 		syscallarg(caddr_t)	data;
 	} */ *uap = v;
 	struct file	*fp;
+	struct proc	*p;
 	struct filedesc	*fdp;
 	u_long		com;
 	int		error;
@@ -497,6 +507,7 @@ sys_ioctl(struct proc *p, void *v, register_t *retval)
 	u_long		stkbuf[STK_PARAMS/sizeof(u_long)];
 
 	error = 0;
+	p = l->l_proc;
 	fdp = p->p_fd;
 	if ((u_int)SCARG(uap, fd) >= fdp->fd_nfiles ||
 	    (fp = fdp->fd_ofiles[SCARG(uap, fd)]) == NULL ||
@@ -626,7 +637,7 @@ int	selwait, nselcoll;
  * Select system call.
  */
 int
-sys_select(struct proc *p, void *v, register_t *retval)
+sys_select(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_select_args /* {
 		syscallarg(int)			nd;
@@ -635,6 +646,7 @@ sys_select(struct proc *p, void *v, register_t *retval)
 		syscallarg(fd_set *)		ex;
 		syscallarg(struct timeval *)	tv;
 	} */ *uap = v;
+	struct proc	*p;
 	caddr_t		bits;
 	char		smallbits[howmany(FD_SETSIZE, NFDBITS) *
 			    sizeof(fd_mask) * 6];
@@ -643,6 +655,7 @@ sys_select(struct proc *p, void *v, register_t *retval)
 	size_t		ni;
 
 	error = 0;
+	p = l->l_proc;
 	if (SCARG(uap, nd) < 0)
 		return (EINVAL);
 	if (SCARG(uap, nd) > p->p_fd->fd_nfiles) {
@@ -683,7 +696,7 @@ sys_select(struct proc *p, void *v, register_t *retval)
 		timo = 0;
  retry:
 	ncoll = nselcoll;
-	p->p_flag |= P_SELECT;
+	l->l_flag |= L_SELECT;
 	error = selscan(p, (fd_mask *)(bits + ni * 0),
 			   (fd_mask *)(bits + ni * 3), SCARG(uap, nd), retval);
 	if (error || *retval)
@@ -697,17 +710,17 @@ sys_select(struct proc *p, void *v, register_t *retval)
 			goto done;
 	}
 	s = splsched();
-	if ((p->p_flag & P_SELECT) == 0 || nselcoll != ncoll) {
+	if ((l->l_flag & L_SELECT) == 0 || nselcoll != ncoll) {
 		splx(s);
 		goto retry;
 	}
-	p->p_flag &= ~P_SELECT;
+	l->l_flag &= ~L_SELECT;
 	error = tsleep((caddr_t)&selwait, PSOCK | PCATCH, "select", timo);
 	splx(s);
 	if (error == 0)
 		goto retry;
  done:
-	p->p_flag &= ~P_SELECT;
+	l->l_flag &= ~L_SELECT;
 	/* select is not restarted after signals... */
 	if (error == ERESTART)
 		error = EINTR;
@@ -774,13 +787,14 @@ selscan(struct proc *p, fd_mask *ibitp, fd_mask *obitp, int nfd,
  * Poll system call.
  */
 int
-sys_poll(struct proc *p, void *v, register_t *retval)
+sys_poll(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_poll_args /* {
 		syscallarg(struct pollfd *)	fds;
 		syscallarg(u_int)		nfds;
 		syscallarg(int)			timeout;
 	} */ *uap = v;
+	struct proc	*p;
 	caddr_t		bits;
 	char		smallbits[32 * sizeof(struct pollfd)];
 	struct timeval	atv;
@@ -788,6 +802,7 @@ sys_poll(struct proc *p, void *v, register_t *retval)
 	size_t		ni;
 
 	error = 0;
+	p = l->l_proc;
 	if (SCARG(uap, nfds) > p->p_fd->fd_nfiles) {
 		/* forgiving; slightly wrong */
 		SCARG(uap, nfds) = p->p_fd->fd_nfiles;
@@ -816,7 +831,7 @@ sys_poll(struct proc *p, void *v, register_t *retval)
 		timo = 0;
  retry:
 	ncoll = nselcoll;
-	p->p_flag |= P_SELECT;
+	l->l_flag |= L_SELECT;
 	error = pollscan(p, (struct pollfd *)bits, SCARG(uap, nfds), retval);
 	if (error || *retval)
 		goto done;
@@ -829,17 +844,17 @@ sys_poll(struct proc *p, void *v, register_t *retval)
 			goto done;
 	}
 	s = splsched();
-	if ((p->p_flag & P_SELECT) == 0 || nselcoll != ncoll) {
+	if ((l->l_flag & L_SELECT) == 0 || nselcoll != ncoll) {
 		splx(s);
 		goto retry;
 	}
-	p->p_flag &= ~P_SELECT;
+	l->l_flag &= ~L_SELECT;
 	error = tsleep((caddr_t)&selwait, PSOCK | PCATCH, "select", timo);
 	splx(s);
 	if (error == 0)
 		goto retry;
  done:
-	p->p_flag &= ~P_SELECT;
+	l->l_flag &= ~L_SELECT;
 	/* poll is not restarted after signals... */
 	if (error == ERESTART)
 		error = EINTR;
@@ -903,16 +918,20 @@ seltrue(dev_t dev, int events, struct proc *p)
 void
 selrecord(struct proc *selector, struct selinfo *sip)
 {
+	struct lwp	*l;
 	struct proc	*p;
 	pid_t		mypid;
 
 	mypid = selector->p_pid;
 	if (sip->si_pid == mypid)
 		return;
-	if (sip->si_pid && (p = pfind(sip->si_pid)) &&
-	    p->p_wchan == (caddr_t)&selwait)
-		sip->si_flags |= SI_COLL;
-	else
+	if (sip->si_pid && (p = pfind(sip->si_pid))) {
+		for (l = LIST_FIRST(&p->p_lwps); l != NULL;
+		     l = LIST_NEXT(l, l_sibling)) {
+			if (l->l_wchan == (caddr_t)&selwait)
+				sip->si_flags |= SI_COLL;
+		}
+	} else
 		sip->si_pid = mypid;
 }
 
@@ -923,6 +942,7 @@ void
 selwakeup(sip)
 	struct selinfo *sip;
 {
+	struct lwp *l;
 	struct proc *p;
 	int s;
 
@@ -936,14 +956,17 @@ selwakeup(sip)
 	p = pfind(sip->si_pid);
 	sip->si_pid = 0;
 	if (p != NULL) {
-		SCHED_LOCK(s);
-		if (p->p_wchan == (caddr_t)&selwait) {
-			if (p->p_stat == SSLEEP)
-				setrunnable(p);
-			else
-				unsleep(p);
-		} else if (p->p_flag & P_SELECT)
-			p->p_flag &= ~P_SELECT;
-		SCHED_UNLOCK(s);
+		for (l = LIST_FIRST(&p->p_lwps); l != NULL;
+		     l = LIST_NEXT(l, l_sibling)) {
+			SCHED_LOCK(s);
+			if (l->l_wchan == (caddr_t)&selwait) {
+				if (l->l_stat == LSSLEEP)
+					setrunnable(l);
+				else
+					unsleep(l);
+			} else if (l->l_flag & L_SELECT)
+				l->l_flag &= ~L_SELECT;
+			SCHED_UNLOCK(s);
+		}
 	}
 }

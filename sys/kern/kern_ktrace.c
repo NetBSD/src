@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.53 2001/01/05 22:25:26 jdolecek Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.53.2.1 2001/03/05 22:49:40 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,6 +39,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/file.h>
 #include <sys/namei.h>
@@ -211,9 +212,12 @@ ktrgenio(struct proc *p, int fd, enum uio_rw rw, struct iovec *iov,
 	buflen -= sizeof(struct ktr_genio);
 
 	while (resid > 0) {
+#if 0 /* XXX NJWLWP */
 		KDASSERT(p->p_cpu != NULL);
 		KDASSERT(p->p_cpu == curcpu());
-		if (p->p_cpu->ci_schedstate.spc_flags & SPCF_SHOULDYIELD)
+#endif
+		/* XXX NJWLWP */
+		if (curcpu()->ci_schedstate.spc_flags & SPCF_SHOULDYIELD)
 			preempt(NULL);
 
 		cnt = min(iov->iov_len, buflen);
@@ -407,7 +411,7 @@ done:
  */
 /* ARGSUSED */
 int
-sys_fktrace(struct proc *curp, void *v, register_t *retval)
+sys_fktrace(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_fktrace_args /* {
 		syscallarg(int) fd;
@@ -415,6 +419,7 @@ sys_fktrace(struct proc *curp, void *v, register_t *retval)
 		syscallarg(int) facs;
 		syscallarg(int) pid;
 	} */ *uap = v;
+	struct proc *curp = l->l_proc;
 	struct file *fp = NULL;
 	struct filedesc *fdp = curp->p_fd;
 
@@ -432,7 +437,7 @@ sys_fktrace(struct proc *curp, void *v, register_t *retval)
  */
 /* ARGSUSED */
 int
-sys_ktrace(struct proc *curp, void *v, register_t *retval)
+sys_ktrace(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_ktrace_args /* {
 		syscallarg(const char *) fname;
@@ -440,6 +445,7 @@ sys_ktrace(struct proc *curp, void *v, register_t *retval)
 		syscallarg(int) facs;
 		syscallarg(int) pid;
 	} */ *uap = v;
+	struct proc *curp = l->l_proc;
 	struct vnode *vp = NULL;
 	struct file *fp = NULL;
 	int fd;
@@ -658,8 +664,8 @@ ktrcanset(struct proc *callp, struct proc *targetp)
  * Put user defined entry to ktrace records.
  */
 int
-sys_utrace(p, v, retval)
-	struct proc *p;
+sys_utrace(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -669,7 +675,7 @@ sys_utrace(p, v, retval)
 		syscallarg(void *) addr;
 		syscallarg(size_t) len;
 	} */ *uap = v;
-
+	struct proc *p = l->l_proc;
 	if (!KTRPOINT(p, KTR_USER))
 		return (0);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.41 2001/02/05 10:55:02 chs Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.41.2.1 2001/03/05 22:50:05 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -1778,5 +1778,5 @@ ffs_fserr(fs, uid, cp)
 {
 
 	log(LOG_ERR, "uid %d comm %s on %s: %s\n",
-	    uid, curproc->p_comm, fs->fs_fsmnt, cp);
+	    uid, curproc->l_proc->p_comm, fs->fs_fsmnt, cp);
 }

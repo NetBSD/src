@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_oldselect.c,v 1.51 2000/06/29 02:40:39 mrg Exp $	*/
+/*	$NetBSD: linux_oldselect.c,v 1.51.2.1 2001/03/05 22:49:26 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -59,8 +59,8 @@
  * in registers on the i386 like Linux wants to.
  */
 int
-linux_sys_oldselect(p, v, retval)
-	struct proc *p;
+linux_sys_oldselect(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -73,7 +73,7 @@ linux_sys_oldselect(p, v, retval)
 	if ((error = copyin(SCARG(uap, lsp), &ls, sizeof(ls))))
 		return error;
 
-	return linux_select1(p, retval, ls.nfds, ls.readfds, ls.writefds,
+	return linux_select1(l, retval, ls.nfds, ls.readfds, ls.writefds,
 	    ls.exceptfds, ls.timeout);
 }
 

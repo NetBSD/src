@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.93 2001/02/11 01:34:23 eeh Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.93.2.1 2001/03/05 22:50:10 nathanw Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -77,6 +77,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mman.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/malloc.h>
 #include <sys/pool.h>
@@ -524,7 +525,6 @@ uvm_map(map, startp, size, uobj, uoffset, align, flags)
 	/*
 	 * step 0: sanity check of protection code
 	 */
-
 	if ((prot & maxprot) != prot) {
 		UVMHIST_LOG(maphist, "<- prot. failure:  prot=0x%x, max=0x%x", 
 		prot, maxprot,0,0);
@@ -534,7 +534,6 @@ uvm_map(map, startp, size, uobj, uoffset, align, flags)
 	/*
 	 * step 1: figure out where to put new VM range
 	 */
-
 	if (vm_map_lock_try(map) == FALSE) {
 		if (flags & UVM_FLAG_TRYLOCK)
 			return(KERN_FAILURE);
@@ -557,7 +556,6 @@ uvm_map(map, startp, size, uobj, uoffset, align, flags)
 			uvm_maxkaddr = pmap_growkernel(*startp + size);
 	}
 #endif
-
 	UVMCNT_INCR(uvm_map_call);
 
 	/*
@@ -2737,9 +2735,10 @@ uvmspace_share(p1, p2)
  */
 
 void
-uvmspace_unshare(p)
-	struct proc *p; 
+uvmspace_unshare(l)
+	struct lwp *l; 
 {
+	struct proc *p = l->l_proc;
 	struct vmspace *nvm, *ovm = p->p_vmspace;
 
 	if (ovm->vm_refcnt == 1)
@@ -2749,9 +2748,9 @@ uvmspace_unshare(p)
 	/* make a new vmspace, still holding old one */
 	nvm = uvmspace_fork(ovm);
 
-	pmap_deactivate(p);		/* unbind old vmspace */
+	pmap_deactivate(l);		/* unbind old vmspace */
 	p->p_vmspace = nvm; 
-	pmap_activate(p);		/* switch to new vmspace */
+	pmap_activate(l);		/* switch to new vmspace */
 
 	uvmspace_free(ovm);		/* drop reference to old vmspace */
 }
@@ -2763,10 +2762,11 @@ uvmspace_unshare(p)
  */
 
 void
-uvmspace_exec(p, start, end)
-	struct proc *p;
+uvmspace_exec(l, start, end)
+	struct lwp *l;
 	vaddr_t start, end;
 {
+	struct proc *p = l->l_proc;
 	struct vmspace *nvm, *ovm = p->p_vmspace;
 	vm_map_t map = &ovm->vm_map;
 
@@ -2830,9 +2830,9 @@ uvmspace_exec(p, start, end)
 		 * install new vmspace and drop our ref to the old one.
 		 */
 
-		pmap_deactivate(p);
+		pmap_deactivate(l);
 		p->p_vmspace = nvm;
-		pmap_activate(p);
+		pmap_activate(l);
 
 		uvmspace_free(ovm);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.13 2001/01/10 04:47:10 chs Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.13.2.1 2001/03/05 22:50:06 nathanw Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,6 +38,7 @@
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/mount.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/syslog.h>
 #include <sys/systm.h>
@@ -96,8 +97,8 @@ extern char *memname[];
 /*
  * Finding the current process.
  */
-#define CURPROC curproc
-#define CURPROC_PID (curproc ? curproc->p_pid : 0)
+#define CURPROC (curproc ? curproc->l_proc : 0)
+#define CURPROC_PID (curproc ? curproc->l_proc->p_pid : 0)
 /*
  * End system adaptaion definitions.
  */
@@ -4941,8 +4942,8 @@ softdep_flush_indir(vp)
 				continue;
 			}
 
-			VOP_FSYNC(bp->b_vp, curproc->p_ucred, FSYNC_WAIT, 0, 0,
-				  curproc);
+			VOP_FSYNC(bp->b_vp, curproc->l_proc->p_ucred, 
+			    FSYNC_WAIT, 0, 0, curproc->l_proc);
 			return;
 		}
 	}

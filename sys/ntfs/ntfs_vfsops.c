@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.33 2001/02/13 19:53:52 jdolecek Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.33.2.1 2001/03/05 22:50:01 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -32,6 +32,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/namei.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/kernel.h>
 #include <sys/vnode.h>
@@ -154,7 +155,7 @@ static int
 ntfs_mountroot()
 {
 	struct mount *mp;
-	struct proc *p = curproc;	/* XXX */
+	struct proc *p = curproc->l_proc;	/* XXX */
 	int error;
 	struct ntfs_args args;
 
@@ -848,7 +849,8 @@ ntfs_fhtovp(
 		ntfhp->ntfid_ino));
 
 	error = ntfs_vgetex(mp, ntfhp->ntfid_ino, ntfhp->ntfid_attr, NULL,
-			LK_EXCLUSIVE | LK_RETRY, 0, curproc, vpp); /* XXX */
+			LK_EXCLUSIVE | LK_RETRY, 0, curproc->l_proc, 
+			vpp); /* XXX */
 	if (error != 0) {
 		*vpp = NULLVP;
 		return (error);
@@ -1002,7 +1004,8 @@ ntfs_vget(
 	struct vnode **vpp) 
 {
 	return ntfs_vgetex(mp, ino, NTFS_A_DATA, NULL,
-			LK_EXCLUSIVE | LK_RETRY, 0, curproc, vpp); /* XXX */
+			LK_EXCLUSIVE | LK_RETRY, 0, curproc->l_proc, 
+			vpp); /* XXX */
 }
 
 #if defined(__FreeBSD__)

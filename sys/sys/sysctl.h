@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.60 2001/01/09 21:30:25 fvdl Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.60.2.1 2001/03/05 22:50:04 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -46,6 +46,8 @@
  */
 #include <sys/time.h>
 #include <sys/ucred.h>
+#include <sys/ucontext.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <uvm/uvm_extern.h>
 

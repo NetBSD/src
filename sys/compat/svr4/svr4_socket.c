@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_socket.c,v 1.8 1999/09/07 18:20:19 christos Exp $	*/
+/*	$NetBSD: svr4_socket.c,v 1.8.14.1 2001/03/05 22:49:30 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -181,8 +181,8 @@ svr4_add_socket(p, path, st)
 
 
 int
-svr4_sys_socket(p, v, retval)
-	struct proc *p;
+svr4_sys_socket(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -211,5 +211,5 @@ svr4_sys_socket(p, v, retval)
 	default:
 		return EINVAL;
 	}
-	return sys_socket(p, uap, retval);
+	return sys_socket(l, uap, retval);
 }

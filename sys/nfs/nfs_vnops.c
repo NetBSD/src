@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.130 2001/02/11 01:09:04 enami Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.130.2.1 2001/03/05 22:50:00 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -46,6 +46,7 @@
 #include "opt_uvmhist.h"
 
 #include <sys/param.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
@@ -2791,7 +2792,7 @@ nfs_strategy(v)
 	if (bp->b_flags & B_ASYNC)
 		p = NULL;
 	else
-		p = curproc;	/* XXX */
+		p = curproc->l_proc;	/* XXX */
 
 	/*
 	 * If the op is asynchronous and an i/o daemon is waiting
@@ -2930,7 +2931,7 @@ nfs_pathconf(v)
 		nfsm_reqhead(vp, NFSPROC_PATHCONF, NFSX_FH(1));
 		nfsm_fhtom(vp, 1);
 		nfsm_request(vp, NFSPROC_PATHCONF,
-		    curproc, curproc->p_ucred);	/* XXX */
+		    curproc->l_proc, curproc->l_proc->p_ucred);	/* XXX */
 		nfsm_postop_attr(vp, attrflag);
 		if (!error) {
 			nfsm_dissect(pcp, struct nfsv3_pathconf *,
@@ -2961,7 +2962,8 @@ nfs_pathconf(v)
 			nmp = VFSTONFS(vp->v_mount);
 			if ((nmp->nm_iflag & NFSMNT_GOTFSINFO) == 0)
 				if ((error = nfs_fsinfo(nmp, vp,
-				    curproc->p_ucred, curproc)) != 0) /* XXX */
+				    curproc->l_proc->p_ucred, 
+				    curproc->l_proc)) != 0) /* XXX */
 					break;
 			for (l = 0, maxsize = nmp->nm_maxfilesize;
 			    (maxsize >> l) > 0; l++)

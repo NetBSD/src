@@ -1,4 +1,4 @@
-/*	$NetBSD: iopsp.c,v 1.4 2001/02/07 17:05:46 ad Exp $	*/
+/*	$NetBSD: iopsp.c,v 1.4.2.1 2001/03/05 22:49:33 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -48,6 +48,7 @@
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/queue.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/buf.h>
 #include <sys/endian.h>
@@ -406,7 +407,7 @@ iopsp_rescan(struct iopsp_softc *sc)
 	}
 
 	/* XXX If it's boot time, the bus will already have been scanned. */
-	if (curproc != &proc0) {
+	if (curproc->l_proc != &proc0) {
 		if ((rv = iop_msg_alloc(iop, &sc->sc_ii, &im, IM_NOINTR)) != 0)
 			goto done;
 

@@ -1,4 +1,4 @@
-/* $NetBSD: linux_sysent.c,v 1.34 2001/01/27 07:54:43 thorpej Exp $ */
+/* $NetBSD: linux_sysent.c,v 1.34.2.1 2001/03/05 22:49:24 nathanw Exp $ */
 
 /*
  * System call switch table.

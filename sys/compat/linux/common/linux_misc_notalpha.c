@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc_notalpha.c,v 1.60 2000/12/22 22:58:58 jdolecek Exp $	*/
+/*	$NetBSD: linux_misc_notalpha.c,v 1.60.2.1 2001/03/05 22:49:26 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -75,14 +75,15 @@
  * Fiddle with the timers to make it work.
  */
 int
-linux_sys_alarm(p, v, retval)
-	struct proc *p;
+linux_sys_alarm(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct linux_sys_alarm_args /* {
 		syscallarg(unsigned int) secs;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	int s;
 	struct itimerval *itp, it;
 
@@ -139,8 +140,8 @@ linux_sys_alarm(p, v, retval)
 }
 
 int
-linux_sys_nice(p, v, retval)
-	struct proc *p;
+linux_sys_nice(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -152,7 +153,7 @@ linux_sys_nice(p, v, retval)
         SCARG(&bsa, which) = PRIO_PROCESS;
         SCARG(&bsa, who) = 0;
 	SCARG(&bsa, prio) = SCARG(uap, incr);
-        return sys_setpriority(p, &bsa, retval);
+        return sys_setpriority(l, &bsa, retval);
 }
 
 /*
@@ -165,8 +166,8 @@ linux_sys_nice(p, v, retval)
  * really is the reclen, not the namelength.
  */
 int
-linux_sys_readdir(p, v, retval)
-	struct proc *p;
+linux_sys_readdir(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -177,7 +178,7 @@ linux_sys_readdir(p, v, retval)
 	} */ *uap = v;
 
 	SCARG(uap, count) = 1;
-	return linux_sys_getdents(p, uap, retval);
+	return linux_sys_getdents(l, uap, retval);
 }
 
 /*
@@ -185,8 +186,8 @@ linux_sys_readdir(p, v, retval)
  * need to deal with it.
  */
 int
-linux_sys_time(p, v, retval)
-	struct proc *p;
+linux_sys_time(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -212,8 +213,8 @@ linux_sys_time(p, v, retval)
  * and pass it on.
  */
 int
-linux_sys_utime(p, v, retval)
-	struct proc *p;
+linux_sys_utime(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -221,6 +222,7 @@ linux_sys_utime(p, v, retval)
 		syscallarg(const char *) path;
 		syscallarg(struct linux_utimbuf *)times;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	caddr_t sg;
 	int error;
 	struct sys_utimes_args ua;
@@ -246,7 +248,7 @@ linux_sys_utime(p, v, retval)
 	else
 		SCARG(&ua, tptr) = NULL;
 
-	return sys_utimes(p, &ua, retval);
+	return sys_utimes(l, &ua, retval);
 }
 
 /*
@@ -255,8 +257,8 @@ linux_sys_utime(p, v, retval)
  * it to what Linux wants.
  */
 int
-linux_sys_waitpid(p, v, retval)
-	struct proc *p;
+linux_sys_waitpid(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -265,6 +267,7 @@ linux_sys_waitpid(p, v, retval)
 		syscallarg(int *) status;
 		syscallarg(int) options;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	struct sys_wait4_args w4a;
 	int error, *status, tstat;
 	caddr_t sg;
@@ -280,7 +283,7 @@ linux_sys_waitpid(p, v, retval)
 	SCARG(&w4a, options) = SCARG(uap, options);
 	SCARG(&w4a, rusage) = NULL;
 
-	if ((error = sys_wait4(p, &w4a, retval)))
+	if ((error = sys_wait4(l, &w4a, retval)))
 		return error;
 
 	sigdelset(&p->p_sigctx.ps_siglist, SIGCHLD);
@@ -297,8 +300,8 @@ linux_sys_waitpid(p, v, retval)
 }
 
 int
-linux_sys_setresgid(p, v, retval)
-	struct proc *p;
+linux_sys_setresgid(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -307,6 +310,7 @@ linux_sys_setresgid(p, v, retval)
 		syscallarg(gid_t) egid;
 		syscallarg(gid_t) sgid;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	struct pcred *pc = p->p_cred;
 	gid_t rgid, egid, sgid;
 	int error;
@@ -364,8 +368,8 @@ linux_sys_setresgid(p, v, retval)
 }
 
 int
-linux_sys_getresgid(p, v, retval)
-	struct proc *p;
+linux_sys_getresgid(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -374,6 +378,7 @@ linux_sys_getresgid(p, v, retval)
 		syscallarg(gid_t *) egid;
 		syscallarg(gid_t *) sgid;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	struct pcred *pc = p->p_cred;
 	int error;
 
@@ -400,14 +405,15 @@ linux_sys_getresgid(p, v, retval)
  * need to deal with it.
  */
 int
-linux_sys_stime(p, v, retval)
-	struct proc *p;
+linux_sys_stime(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct linux_sys_time_args /* {
 		linux_time_t *t;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	struct timeval atv;
 	linux_time_t tt;
 	int error;

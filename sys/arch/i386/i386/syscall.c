@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.10 2000/12/18 20:40:25 jdolecek Exp $	*/
+/*	$NetBSD: syscall.c,v 1.10.4.1 2001/03/05 22:49:14 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -43,6 +43,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
+#include <sys/lwp.h>
 #include <sys/user.h>
 #include <sys/signal.h>
 #ifdef KTRACE
@@ -87,13 +88,15 @@ syscall_plain(frame)
 {
 	register caddr_t params;
 	register const struct sysent *callp;
+	register struct lwp *l;
 	register struct proc *p;
 	int error;
 	size_t argsize;
 	register_t code, args[8], rval[2];
 
 	uvmexp.syscalls++;
-	p = curproc;
+	l = curproc;
+	p = l->l_proc;
 
 	code = frame.tf_eax;
 	callp = p->p_emul->e_sysent;
@@ -134,7 +137,7 @@ syscall_plain(frame)
 
 	rval[0] = 0;
 	rval[1] = 0;
-	error = (*callp->sy_call)(p, args, rval);
+	error = (*callp->sy_call)(l, args, rval);
 	switch (error) {
 	case 0:
 		frame.tf_eax = rval[0];
@@ -160,9 +163,9 @@ syscall_plain(frame)
 	}
 
 #ifdef SYSCALL_DEBUG
-	scdebug_ret(p, code, error, rval);
+	scdebug_ret(l, code, error, rval);
 #endif /* SYSCALL_DEBUG */
-	userret(p);
+	userret(l);
 }
 
 void
@@ -171,13 +174,15 @@ syscall_fancy(frame)
 {
 	register caddr_t params;
 	register const struct sysent *callp;
+	register struct lwp *l;
 	register struct proc *p;
 	int error;
 	size_t argsize;
 	register_t code, args[8], rval[2];
 
 	uvmexp.syscalls++;
-	p = curproc;
+	l = curproc;
+	p = l->l_proc;
 
 	code = frame.tf_eax;
 	callp = p->p_emul->e_sysent;
@@ -213,7 +218,7 @@ syscall_fancy(frame)
 	}
 
 #ifdef SYSCALL_DEBUG
-	scdebug_call(p, code, args);
+	scdebug_call(l, code, args);
 #endif /* SYSCALL_DEBUG */
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSCALL))
@@ -222,7 +227,7 @@ syscall_fancy(frame)
 
 	rval[0] = 0;
 	rval[1] = 0;
-	error = (*callp->sy_call)(p, args, rval);
+	error = (*callp->sy_call)(l, args, rval);
 	switch (error) {
 	case 0:
 		frame.tf_eax = rval[0];
@@ -248,9 +253,9 @@ syscall_fancy(frame)
 	}
 
 #ifdef SYSCALL_DEBUG
-	scdebug_ret(p, code, error, rval);
+	scdebug_ret(l, code, error, rval);
 #endif /* SYSCALL_DEBUG */
-	userret(p);
+	userret(l);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
 		ktrsysret(p, code, error, rval[0]);
@@ -262,11 +267,11 @@ void
 syscall_vm86(frame)
 	struct trapframe frame;
 {
-	register struct proc *p;
+	register struct lwp *l;
 
-	p = curproc;
-	trapsignal(p, SIGBUS, T_PROTFLT);
-	userret(p);
+	l = curproc;
+	trapsignal(l, SIGBUS, T_PROTFLT);
+	userret(l);
 }
 #endif
 
@@ -274,13 +279,14 @@ void
 child_return(arg)
 	void *arg;
 {
-	struct proc *p = arg;
-	struct trapframe *tf = p->p_md.md_regs;
+	struct lwp *l = arg;
+	struct proc *p = l->l_proc;
+	struct trapframe *tf = l->l_md.md_regs;
 
 	tf->tf_eax = 0;
 	tf->tf_eflags &= ~PSL_C;
 
-	userret(p);
+	userret(l);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
 		ktrsysret(p, SYS_fork, 0, 0);

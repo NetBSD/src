@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_oldmmap.c,v 1.53 2000/12/29 20:08:54 fvdl Exp $	*/
+/*	$NetBSD: linux_oldmmap.c,v 1.53.2.1 2001/03/05 22:49:26 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -58,8 +58,8 @@
  * They just pass everything in a structure.
  */
 int
-linux_sys_old_mmap(p, v, retval)
-	struct proc *p;
+linux_sys_old_mmap(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -80,6 +80,6 @@ linux_sys_old_mmap(p, v, retval)
 	SCARG(&nlmap,fd) = lmap.lm_fd;
 	SCARG(&nlmap,offset) = (unsigned)lmap.lm_pos;
 
-	return linux_sys_mmap(p, &nlmap, retval);
+	return linux_sys_mmap(l, &nlmap, retval);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_xxx.c,v 1.45 2000/11/21 00:37:56 jdolecek Exp $	*/
+/*	$NetBSD: kern_xxx.c,v 1.45.2.1 2001/03/05 22:49:43 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -40,6 +40,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/reboot.h>
 #include <uvm/uvm_extern.h>
@@ -49,8 +50,8 @@
 
 /* ARGSUSED */
 int
-sys_reboot(p, v, retval)
-	struct proc *p;
+sys_reboot(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -58,6 +59,7 @@ sys_reboot(p, v, retval)
 		syscallarg(int) opt;
 		syscallarg(char *) bootstr;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	int error;
 	char *bootstr, bs[128];
 
@@ -92,10 +94,11 @@ int	scdebug = SCDEBUG_CALLS|SCDEBUG_RETURNS|SCDEBUG_SHOWARGS|SCDEBUG_ALL;
 #endif
 
 void
-scdebug_call(p, code, args)
-	struct proc *p;
+scdebug_call(l, code, args)
+	struct lwp *l;
 	register_t code, args[];
 {
+	struct proc *p = l->l_proc
 	const struct sysent *sy;
 	const struct emul *em;
 	int i;
@@ -127,12 +130,13 @@ scdebug_call(p, code, args)
 }
 
 void
-scdebug_ret(p, code, error, retval)
-	struct proc *p;
+scdebug_ret(l, code, error, retval)
+	struct lwp *l;
 	register_t code;
 	int error;
 	register_t retval[];
 {
+	struct proc *p = l->l_proc;
 	const struct sysent *sy;
 	const struct emul *em;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_balloc.c,v 1.27 2000/11/21 00:00:31 perseant Exp $	*/
+/*	$NetBSD: lfs_balloc.c,v 1.27.2.1 2001/03/05 22:50:07 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -359,7 +359,7 @@ lfs_fragextend(vp, osize, nsize, lbn, bpp)
     top:
 	lfs_seglock(fs, SEGM_PROT);
 
-	if (!ISSPACE(fs, bb, curproc->p_ucred)) {
+	if (!ISSPACE(fs, bb, curproc->l_proc->p_ucred)) {
 		error = ENOSPC;
 		goto out;
 	}
@@ -368,7 +368,7 @@ lfs_fragextend(vp, osize, nsize, lbn, bpp)
 		goto out;
 	}
 #ifdef QUOTA
-	if ((error = chkdq(ip, bb, curproc->p_ucred, 0))) {
+	if ((error = chkdq(ip, bb, curproc->l_proc->p_ucred, 0))) {
 		brelse(*bpp);
 		goto out;
 	}
@@ -383,7 +383,7 @@ lfs_fragextend(vp, osize, nsize, lbn, bpp)
 		if (!lfs_fits(fs, bb)) {
 			brelse(*bpp);
 #ifdef QUOTA
-			chkdq(ip, -bb, curproc->p_ucred, 0);
+			chkdq(ip, -bb, curproc->l_proc->p_ucred, 0);
 #endif
 			lfs_segunlock(fs);
 			lfs_availwait(fs, bb);

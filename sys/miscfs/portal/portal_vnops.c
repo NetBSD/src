@@ -1,4 +1,4 @@
-/*	$NetBSD: portal_vnops.c,v 1.37 2001/01/22 12:17:39 jdolecek Exp $	*/
+/*	$NetBSD: portal_vnops.c,v 1.37.2.1 2001/03/05 22:49:50 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -68,7 +68,7 @@
 
 static int portal_fileid = PORTAL_ROOTFILEID+1;
 
-static void	portal_closefd __P((struct proc *, int));
+static void	portal_closefd __P((struct lwp *, int));
 static int	portal_connect __P((struct socket *, struct socket *));
 
 int	portal_lookup	__P((void *));
@@ -165,8 +165,8 @@ const struct vnodeopv_desc portal_vnodeop_opv_desc =
 	{ &portal_vnodeop_p, portal_vnodeop_entries };
 
 static void
-portal_closefd(p, fd)
-	struct proc *p;
+portal_closefd(l, fd)
+	struct lwp *l;
 	int fd;
 {
 	struct sys_close_args /* {
@@ -176,7 +176,7 @@ portal_closefd(p, fd)
 	int error;
 
 	SCARG(&ua, fd) = fd;
-	error = sys_close(p, &ua, retval);
+	error = sys_close(l, &ua, retval);
 	/*
 	 * We should never get an error, and there isn't anything
 	 * we could do if we got one, so just print a message.
@@ -492,7 +492,7 @@ portal_open(v)
 		int i;
 		printf("portal_open: %d extra fds\n", newfds - 1);
 		for (i = 1; i < newfds; i++) {
-			portal_closefd(p, *ip);
+			portal_closefd(curproc, *ip); /* XXXNJWLWP */
 			ip++;
 		}
 	}
@@ -503,7 +503,7 @@ portal_open(v)
 	 */
  	fp = p->p_fd->fd_ofiles[fd];
 	if (((ap->a_mode & (FREAD|FWRITE)) | fp->f_flag) != fp->f_flag) {
-		portal_closefd(p, fd);
+		portal_closefd(curproc, fd); /* XXXNJWLWP */
 		error = EACCES;
 		goto bad;
 	}

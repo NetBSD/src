@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_map.c,v 1.10 2001/01/17 00:09:08 fvdl Exp $	*/
+/*	$NetBSD: procfs_map.c,v 1.10.2.1 2001/03/05 22:49:51 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -43,6 +43,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/vnode.h>
 #include <miscfs/procfs/procfs.h>
@@ -83,7 +84,7 @@ procfs_domap(curp, p, pfs, uio)
 		return (0);
 	
 	error = 0;
-	if (map != &curproc->p_vmspace->vm_map)
+	if (map != &curproc->l_proc->p_vmspace->vm_map)
 		vm_map_lock_read(map);
 	for (entry = map->header.next;
 		((uio->uio_resid > 0) && (entry != &map->header));
@@ -114,15 +115,15 @@ procfs_domap(curp, p, pfs, uio)
 		if (error)
 			break;
 	}
-	if (map != &curproc->p_vmspace->vm_map)
+	if (map != &curproc->l_proc->p_vmspace->vm_map)
 		vm_map_unlock_read(map);
 	return error;
 }
 
 int
-procfs_validmap(p, mp)
-	struct proc *p;
+procfs_validmap(l, mp)
+	struct lwp *l;
 	struct mount *mp;
 {
-	return ((p->p_flag & P_SYSTEM) == 0);
+	return ((l->l_proc->p_flag & P_SYSTEM) == 0);
 }

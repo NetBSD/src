@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_xxx_12.c,v 1.2 1997/03/26 23:44:27 gwr Exp $	*/
+/*	$NetBSD: kern_xxx_12.c,v 1.2.34.1 2001/03/05 22:49:19 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -40,6 +40,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/reboot.h>
 #include <sys/mount.h>
@@ -47,14 +48,12 @@
 
 /* ARGSUSED */
 int
-compat_12_sys_reboot(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+compat_12_sys_reboot(struct lwp *l, void *v, register_t *retval)
 {
 	struct compat_12_sys_reboot_args /* {
 		syscallarg(int) opt;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	int error;
 
 	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)

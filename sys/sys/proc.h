@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.124 2001/03/04 20:49:34 matt Exp $	*/
+/*	$NetBSD: proc.h,v 1.124.2.1 2001/03/05 22:50:02 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -47,9 +47,6 @@
 #include "opt_multiprocessor.h"
 #endif
 
-#if defined(_KERNEL)
-#include <machine/cpu.h>		/* curcpu() and cpu_info */
-#endif
 #include <machine/proc.h>		/* Machine-dependent proc substruct */
 #include <sys/lock.h>
 #include <sys/queue.h>
@@ -133,8 +130,6 @@ struct emul {
  * is running.
  */
 struct proc {
-	struct proc	*p_forw;	/* Doubly-linked run/sleep queue */
-	struct proc	*p_back;
 	LIST_ENTRY(proc) p_list;	/* List of all processes */
 
 	/* Substructures: */
@@ -149,57 +144,55 @@ struct proc {
 #define	p_ucred		p_cred->pc_ucred
 #define	p_rlimit	p_limit->pl_rlimit
 
-	int		p_exitsig;	/* Signal to sent to parent on exit */
-	int		p_flag;		/* P_* flags */
-	struct cpu_info	* __volatile p_cpu;
-					/* CPU we're running on if SONPROC */
-	char		p_stat;		/* S* process status */
+	int		p_exitsig;	/* signal to sent to parent on exit */
+	int		p_flag;		/* P_* flags. */
+	char		p_stat;		/* S* process status. */
 	char		p_pad1[3];
 
-	pid_t		p_pid;		/* Process identifier */
-	LIST_ENTRY(proc) p_hash;	/* Hash chain */
-	LIST_ENTRY(proc) p_pglist;	/* List of processes in pgrp */
-	struct proc	*p_pptr;	/* Pointer to parent process */
-	LIST_ENTRY(proc) p_sibling;	/* List of sibling processes */
-	LIST_HEAD(, proc) p_children;	/* Pointer to list of children */
+	pid_t		p_pid;		/* Process identifier. */
+	LIST_ENTRY(proc) p_hash;	/* Hash chain. */
+	LIST_ENTRY(proc) p_pglist;	/* List of processes in pgrp. */
+	struct proc 	*p_pptr;	/* Pointer to parent process. */
+	LIST_ENTRY(proc) p_sibling;	/* List of sibling processes. */
+	LIST_HEAD(, proc) p_children;	/* Pointer to list of children. */
 
-/*
- * The following fields are all zeroed upon creation in fork.
- */
-#define	p_startzero	p_oppid
+	struct simplelock p_lwplock;	/* Lock on LWP-related state. */
 
-	pid_t		p_oppid;	/* Save parent pid during ptrace. XXX */
-	int		p_dupfd;	/* Sideways return value from filedescopen. XXX */
+	LIST_HEAD(, lwp) p_lwps;	/* Pointer to list of LWPs. */
 
-	/* Scheduling */
-	u_int		p_estcpu;	/* Time averaged value of p_cpticks. XXX belongs in p_startcopy section */
+/* The following fields are all zeroed upon creation in fork. */
+#define	p_startzero	p_nlwps
+
+	int 		p_nlwps;	/* Number of LWPs */
+	int 		p_nrlwps;	/* Number of running LWPs */
+	int 		p_nzlwps;	/* Number of zombie LWPs */
+	int 		p_nlwpid;	/* Next LWP ID */
+
+	struct sadata 	*p_sa;		/* Scheduler activation information */
+
+	/* scheduling */
+	u_int		p_estcpu;	/* Time averaged value of p_cpticks XXX belongs in p_startcopy section */
 	int		p_cpticks;	/* Ticks of cpu time */
-	fixpt_t		p_pctcpu;	/* %cpu for this proc during p_swtime */
-	void		*p_wchan;	/* Sleep address */
-	struct callout	p_tsleep_ch;	/* Callout for tsleep */
-	const char	*p_wmesg;	/* Reason for sleep */
-	u_int		p_swtime;	/* Time swapped in or out */
-	u_int		p_slptime;	/* Time since last blocked */
+	fixpt_t		p_pctcpu;	/* %cpu for this process during p_swtime */
 
-	struct callout	p_realit_ch;	/* Real time callout */
+	pid_t		p_oppid;	/* Save parent pid during ptrace XXX */
+	int		p_dupfd;	/* Sideways return value from filedescopen XXX */
+	struct callout 	p_realit_ch;	/* real time callout */
 	struct itimerval p_realtimer;	/* Alarm timer */
-	struct timeval	p_rtime;	/* Real time */
-	u_quad_t	p_uticks;	/* Statclock hits in user mode */
-	u_quad_t	p_sticks;	/* Statclock hits in system mode */
-	u_quad_t	p_iticks;	/* Statclock hits processing intr */
+	struct timeval 	p_rtime;	/* Real time */
+	u_quad_t 	p_uticks;	/* Statclock hits in user mode */
+	u_quad_t 	p_sticks;	/* Statclock hits in system mode */
+	u_quad_t 	p_iticks;	/* Statclock hits processing intr */
 
 	int		p_traceflag;	/* Kernel trace points */
-	struct file	*p_tracep;	/* Trace to file */
+	struct file 	*p_tracep;	/* Trace to file */
 
-	struct vnode	*p_textvp;	/* Vnode of executable */
+	struct vnode 	*p_textvp;	/* Vnode of executable */
 
-	int		p_locks;	/* DEBUG: lockmgr count of held locks */
-
-	int		p_holdcnt;	/* If non-zero, don't swap */
+	int		p_locks;       	/* DEBUG: lockmgr count of held locks */
 	const struct emul *p_emul;	/* Emulation information */
-	void		*p_emuldata;	/*
-					 * Per-process emulation data, or NULL.
-					 * Malloc type M_EMULDATA
+	void		*p_emuldata;	/* Per-process emulation data, or NULL.
+					 * Malloc type M_EMULDATA 
 					 */
 
 /*
@@ -212,34 +205,29 @@ struct proc {
  */
 #define	p_startcopy	p_sigctx.ps_startcopy
 
-	struct sigctx	p_sigctx;	/* Signal state */
+	struct sigctx 	p_sigctx;	/* Signal state */
 
-	u_char		p_priority;	/* Process priority */
-	u_char		p_usrpri;	/* User-priority based on p_cpu and p_nice */
 	u_char		p_nice;		/* Process "nice" value */
 	char		p_comm[MAXCOMLEN+1];
 
-	struct pgrp	*p_pgrp;	/* Pointer to process group */
-	void		*p_ctxlink;	/* uc_link {get,set}context */
+	struct pgrp 	*p_pgrp;	/* Pointer to process group */
 
-	struct ps_strings *p_psstr;	/* Address of process's ps_strings */
-	size_t		p_psargv;	/* Offset of ps_argvstr in above */
-	size_t		p_psnargv;	/* Offset of ps_nargvstr in above */
-	size_t		p_psenv;	/* Offset of ps_envstr in above */
-	size_t		p_psnenv;	/* Offset of ps_nenvstr in above */
+	struct ps_strings *p_psstr;	/* address of process's ps_strings */
+	size_t 		p_psargv;	/* offset of ps_argvstr in above */
+	size_t 		p_psnargv;	/* offset of ps_nargvstr in above */
+	size_t 		p_psenv;	/* offset of ps_envstr in above */
+	size_t 		p_psnenv;	/* offset of ps_nenvstr in above */
 
-/*
+/* 
  * End area that is copied on creation
  */
-#define	p_endcopy	p_thread
-
-	void		*p_thread;	/* Id for this "thread"; Mach glue. XXX */
-	struct user	*p_addr;	/* Kernel virtual addr of u-area (PROC ONLY) */
-	struct mdproc	p_md;		/* Any machine-dependent fields */
+#define	p_endcopy	p_xstat
 
 	u_short		p_xstat;	/* Exit status for wait; also stop signal */
 	u_short		p_acflag;	/* Accounting flags */
-	struct rusage	*p_ru;		/* Exit information. XXX */
+	struct rusage 	*p_ru;		/* Exit information. XXX */
+
+	struct mdproc	p_md;		/* Any machine-dependent fields */
 };
 
 #define	p_session	p_pgrp->pg_session
@@ -248,33 +236,24 @@ struct proc {
 /*
  * Status values.
  *
- * A note about SRUN and SONPROC: SRUN indicates that a process is
- * runnable but *not* yet running, i.e. is on a run queue.  SONPROC
- * indicates that the process is actually executing on a CPU, i.e.
- * it is no longer on a run queue.
  */
 #define	SIDL		1		/* Process being created by fork */
-#define	SRUN		2		/* Currently runnable */
-#define	SSLEEP		3		/* Sleeping on an address */
+#define	SACTIVE		2		/* Process is not stopped */
 #define	SSTOP		4		/* Process debugging or suspension */
 #define	SZOMB		5		/* Awaiting collection by parent */
 #define	SDEAD		6		/* Process is almost a zombie */
-#define	SONPROC		7		/* Process is currently on a CPU */
 
 #define	P_ZOMBIE(p)	((p)->p_stat == SZOMB || (p)->p_stat == SDEAD)
 
 /* These flags are kept in p_flag. */
 #define	P_ADVLOCK	0x00001	/* Process may hold a POSIX advisory lock */
 #define	P_CONTROLT	0x00002	/* Has a controlling terminal */
-#define	P_INMEM		0x00004	/* Loaded into memory */
 #define	P_NOCLDSTOP	0x00008	/* No SIGCHLD when children stop */
 #define	P_PPWAIT	0x00010	/* Parent is waiting for child to exec/exit */
 #define	P_PROFIL	0x00020	/* Has started profiling */
-#define	P_SELECT	0x00040	/* Selecting; wakeup/waiting danger */
-#define	P_SINTR		0x00080	/* Sleep is interruptible */
 #define	P_SUGID		0x00100	/* Had set id privileges since last exec */
 #define	P_SYSTEM	0x00200	/* System proc: no sigs, stats or swapping */
-#define	P_TIMEOUT	0x00400	/* Timing out during sleep */
+#define	P_SA		0x00400	/* Using scheduler activations */
 #define	P_TRACED	0x00800	/* Debugged process being traced */
 #define	P_WAITED	0x01000	/* Debugging process has waited for child */
 #define	P_WEXIT		0x02000	/* Working on exiting */
@@ -336,12 +315,6 @@ do {									\
 		FREE(s, M_SESSION);					\
 } while (0)
 
-#define	PHOLD(p)							\
-do {									\
-	if ((p)->p_holdcnt++ == 0 && ((p)->p_flag & P_INMEM) == 0)	\
-		uvm_swapin(p);						\
-} while (0)
-#define	PRELE(p)	(--(p)->p_holdcnt)
 
 /*
  * Flags passed to fork1().
@@ -368,7 +341,7 @@ extern u_long		pgrphash;
 #if defined(MULTIPROCESSOR)
 #define	curproc		curcpu()->ci_curproc	/* Current running proc */
 #else
-extern struct proc	*curproc;		/* Current running proc */
+extern struct lwp	*curproc;		/* Current running proc. */
 #endif /* MULTIPROCESSOR */
 #endif /* ! curproc */
 
@@ -391,56 +364,43 @@ extern const struct proclist_desc proclists[];
 extern struct pool	proc_pool;	/* Memory pool for procs */
 extern struct pool	pcred_pool;	/* Memory pool for pcreds */
 extern struct pool	plimit_pool;	/* Memory pool for plimits */
+extern struct pool 	pstats_pool;	/* memory pool for pstats */
 extern struct pool	rusage_pool;	/* Memory pool for rusages */
 
 struct proc *pfind(pid_t);		/* Find process by id */
 struct pgrp *pgfind(pid_t);		/* Find process group by id */
 
 struct simplelock;
-
 int	chgproccnt(uid_t uid, int diff);
 int	enterpgrp(struct proc *p, pid_t pgid, int mksess);
 void	fixjobc(struct proc *p, struct pgrp *pgrp, int entering);
 int	inferior(struct proc *p, struct proc *q);
 int	leavepgrp(struct proc *p);
 void	yield(void);
-void	preempt(struct proc *);
-void	mi_switch(struct proc *);
 void	pgdelete(struct pgrp *pgrp);
 void	procinit(void);
-#ifndef remrunqueue
-void	remrunqueue(struct proc *);
-#endif
-void	resetpriority(struct proc *);
-void	setrunnable(struct proc *);
-#ifndef setrunqueue
-void	setrunqueue(struct proc *);
-#endif
+void	resetprocpriority(struct proc *);
 void	suspendsched(void);
 int	ltsleep(void *chan, int pri, const char *wmesg, int timo,
 	    __volatile struct simplelock *);
-void	unsleep(struct proc *);
 void	wakeup(void *chan);
 void	wakeup_one(void *chan);
 void	reaper(void *);
-void	exit1(struct proc *, int);
-void	exit2(struct proc *);
-int	fork1(struct proc *, int, int, void *, size_t,
+void	exit1(struct lwp *, int);
+void	exit2(struct lwp *);
+int	fork1(struct lwp *, int, int, void *, size_t,
 	    void (*)(void *), void *, register_t *, struct proc **);
 void	rqinit(void);
 int	groupmember(gid_t, struct ucred *);
-#ifndef cpu_switch
-void	cpu_switch(struct proc *);
-#endif
-void	cpu_exit(struct proc *);
-void	cpu_fork(struct proc *, struct proc *, void *, size_t,
+void	cpu_exit(struct lwp *, int);
+void	cpu_fork(struct lwp *, struct lwp *, void *, size_t,
 	    void (*)(void *), void *);
 
 		/*
 		 * XXX: use __P() to allow ports to have as a #define.
 		 * XXX: we need a better way to solve this.
 		 */
-void	cpu_wait __P((struct proc *));
+void	cpu_wait __P((struct lwp *));
 
 void	child_return(void *);
 

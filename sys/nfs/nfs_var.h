@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_var.h,v 1.19 2000/11/27 08:39:50 chs Exp $	*/
+/*	$NetBSD: nfs_var.h,v 1.19.2.1 2001/03/05 22:50:00 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -279,14 +279,14 @@ void nfs_cookieheuristic __P((struct vnode *, int *, struct proc *,
 			      struct ucred *));
 
 /* nfs_syscalls.c */
-int sys_getfh __P((struct proc *, void *, register_t *));
-int sys_nfssvc __P((struct proc *, void *, register_t *));
+int sys_getfh __P((struct lwp *, void *, register_t *));
+int sys_nfssvc __P((struct lwp *, void *, register_t *));
 int nfssvc_addsock __P((struct file *, struct mbuf *));
-int nfssvc_nfsd __P((struct nfsd_srvargs *, caddr_t, struct proc *));
+int nfssvc_nfsd __P((struct nfsd_srvargs *, caddr_t, struct lwp *));
 void nfsrv_zapsock __P((struct nfssvc_sock *));
 void nfsrv_slpderef __P((struct nfssvc_sock *));
 void nfsrv_init __P((int));
-int nfssvc_iod __P((struct proc *));
+int nfssvc_iod __P((struct lwp *));
 void start_nfsio __P((void *));
 void nfs_getset_niothreads __P((int));
 int nfs_getauth __P((struct nfsmount *, struct nfsreq *, struct ucred *,

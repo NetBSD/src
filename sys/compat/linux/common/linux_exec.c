@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.c,v 1.45 2001/01/19 01:44:46 manu Exp $	*/
+/*	$NetBSD: linux_exec.c,v 1.45.2.1 2001/03/05 22:49:24 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995, 1998, 2000 The NetBSD Foundation, Inc.
@@ -82,8 +82,8 @@ static void linux_e_proc_exit __P((struct proc *));
  * to the NetBSD execve().
  */
 int
-linux_sys_execve(p, v, retval)
-	struct proc *p;
+linux_sys_execve(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -92,6 +92,7 @@ linux_sys_execve(p, v, retval)
 		syscallarg(char **) argv;
 		syscallarg(char **) envp;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	struct sys_execve_args ap;
 	caddr_t sg;
 
@@ -102,7 +103,7 @@ linux_sys_execve(p, v, retval)
 	SCARG(&ap, argp) = SCARG(uap, argp);
 	SCARG(&ap, envp) = SCARG(uap, envp);
 
-	return sys_execve(p, &ap, retval);
+	return sys_execve(l, &ap, retval);
 }
 
 /*

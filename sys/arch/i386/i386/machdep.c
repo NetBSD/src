@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.429 2001/02/11 19:03:50 chs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.429.2.1 2001/03/05 22:49:12 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -90,6 +90,7 @@
 #include <sys/signalvar.h>
 #include <sys/kernel.h>
 #include <sys/map.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/exec.h>
@@ -106,7 +107,10 @@
 #include <sys/syscallargs.h>
 #include <sys/core.h>
 #include <sys/kcore.h>
+#include <sys/ucontext.h>
 #include <machine/kcore.h>
+#include <sys/sa.h>
+#include <sys/savar.h>
 
 #ifdef IPKDB
 #include <ipkdb/ipkdb.h>
@@ -160,7 +164,7 @@
 #include "isadma.h"
 #include "npx.h"
 #if NNPX > 0
-extern struct proc *npxproc;
+extern struct lwp *npxproc;
 #endif
 
 #include "mca.h"
@@ -490,7 +494,7 @@ i386_proc0_tss_ldt_init()
 	int x;
 
 	gdt_init();
-	curpcb = pcb = &proc0.p_addr->u_pcb;
+	curpcb = pcb = &lwp0.l_addr->u_pcb;
 	pcb->pcb_flags = 0;
 	pcb->pcb_tss.tss_ioopt =
 	    ((caddr_t)pcb->pcb_iomap - (caddr_t)&pcb->pcb_tss) << 16;
@@ -500,13 +504,13 @@ i386_proc0_tss_ldt_init()
 	pcb->pcb_ldt_sel = pmap_kernel()->pm_ldt_sel = GSEL(GLDT_SEL, SEL_KPL);
 	pcb->pcb_cr0 = rcr0();
 	pcb->pcb_tss.tss_ss0 = GSEL(GDATA_SEL, SEL_KPL);
-	pcb->pcb_tss.tss_esp0 = (int)proc0.p_addr + USPACE - 16;
-	tss_alloc(&proc0);
+	pcb->pcb_tss.tss_esp0 = (int)lwp0.l_addr + USPACE - 16;
+	tss_alloc(&lwp0);
 
-	ltr(proc0.p_md.md_tss_sel);
+	ltr(lwp0.l_md.md_tss_sel);
 	lldt(pcb->pcb_ldt_sel);
 
-	proc0.p_md.md_regs = (struct trapframe *)pcb->pcb_tss.tss_esp0 - 1;
+	lwp0.l_md.md_regs = (struct trapframe *)pcb->pcb_tss.tss_esp0 - 1;
 }
 
 /*
@@ -1160,12 +1164,21 @@ sendsig(catcher, sig, mask, code)
 	sigset_t *mask;
 	u_long code;
 {
-	struct proc *p = curproc;
+	struct lwp *l = curproc;
+	struct proc *p = l->l_proc;
 	struct trapframe *tf;
 	struct sigframe *fp, frame;
 	int onstack;
 
-	tf = p->p_md.md_regs;
+	if (p->p_flag & P_SA) {
+		if (code)
+			sa_upcall(l, SA_UPCALL_SIGNAL, l, NULL, sig, code);
+		else
+			sa_upcall(l, SA_UPCALL_SIGNAL, NULL, l, sig, 0);
+		return;
+	}
+
+	tf = l->l_md.md_regs;
 
 	/* Do we need to jump onto the signal stack? */
 	onstack =
@@ -1193,7 +1206,7 @@ sendsig(catcher, sig, mask, code)
 		frame.sf_sc.sc_fs = tf->tf_vm86_fs;
 		frame.sf_sc.sc_es = tf->tf_vm86_es;
 		frame.sf_sc.sc_ds = tf->tf_vm86_ds;
-		frame.sf_sc.sc_eflags = get_vflags(p);
+		frame.sf_sc.sc_eflags = get_vflags(l);
 		(*p->p_emul->e_syscall_intern)(p);
 	} else
 #endif
@@ -1239,7 +1252,7 @@ sendsig(catcher, sig, mask, code)
 		 * Process has trashed its stack; give it an illegal
 		 * instruction to halt it in its tracks.
 		 */
-		sigexit(p, SIGILL);
+		sigexit(l, SIGILL);
 		/* NOTREACHED */
 	}
 
@@ -1261,6 +1274,101 @@ sendsig(catcher, sig, mask, code)
 		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
 }
 
+/* Save the user-level ucontext_t on the LWP's own stack. */
+ucontext_t *
+cpu_stashcontext(struct lwp *l)
+{
+	ucontext_t u, *up;
+	struct trapframe *tf;
+	void *stack;
+
+	tf = l->l_md.md_regs;
+	stack = (char *)tf->tf_esp - sizeof(ucontext_t);
+	getucontext(l, &u);
+	up = stack;
+
+	if (copyout(&u, stack, sizeof(ucontext_t)) != 0) {
+		/* Copying onto the stack didn't work. Die. */
+		sigexit(l, SIGILL);
+		/* NOTREACHED */
+	}
+
+	return up;
+}
+
+
+void 
+cpu_upcall(struct lwp *l, stack_t *st, int type, int events, int interrupted, 
+    struct sa_t *sas[])
+{
+	struct proc *p = l->l_proc;
+	
+	struct sadata *sd = p->p_sa;
+	struct saframe *sf, frame;
+	struct sa_t **sapp, *sap;
+	struct trapframe *tf;
+	void *stack;
+	ucontext_t u, *up;
+	int i, nsas;
+	
+	extern char sigcode[], upcallcode[];
+
+	tf = l->l_md.md_regs;
+	
+	stack = (char *)st->ss_sp + st->ss_size;
+
+	/* First, copy out the activation's ucontext */
+	u.uc_stack = *st;
+	u.uc_flags = _UC_STACK;
+	up = stack;
+	up--;
+	if (copyout(&u, up, sizeof(ucontext_t)) != 0) {
+		sigexit(l, SIGILL);
+		/* NOTREACHED */
+	}
+	stack = up;
+	sas[0]->sa_context = up;
+
+	/* Next, copy out the sa_t's and pointers to them. */
+	sap = stack;
+	nsas = events + interrupted;
+	sapp = (struct sa_t **)(sap - (nsas + 1));
+	for (i = nsas; i >= 0; i--) {
+		sap--;
+		sapp--;
+		if ((copyout(sas[i], sap, sizeof(struct sa_t)) != 0) ||
+		    (copyout(&sap, sapp, sizeof(struct sa_t *)) != 0)) {
+			/* Copying onto the stack didn't work. Die. */
+			sigexit(l, SIGILL);
+			/* NOTREACHED */
+		}
+	}
+
+	/* Finally, copy out the rest of the frame. */
+	sf = (struct saframe *)sapp - 1;
+	frame.sa_type = type;
+	frame.sa_sas = sapp;
+	frame.sa_events = events;
+	frame.sa_interrupted = interrupted;
+	frame.sa_upcall = sd->sa_upcall;
+
+	if (copyout(&frame, sf, sizeof(frame)) != 0) {
+		/* Copying onto the stack didn't work. Die. */
+		sigexit(l, SIGILL);
+		/* NOTREACHED */
+	}
+
+	/* XXX hack-o-matic */
+	tf->tf_eip = (int)((caddr_t) p->p_sigctx.ps_sigcode + (
+		(caddr_t)upcallcode - (caddr_t)sigcode));
+	tf->tf_esp = (int) sf;
+	tf->tf_es = GSEL(GUDATA_SEL, SEL_UPL);
+	tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
+	tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
+	tf->tf_ss = GSEL(GUDATA_SEL, SEL_UPL);
+	tf->tf_eflags &= ~(PSL_T|PSL_VM|PSL_AC);
+}
+
 /*
  * System call to cleanup state after a signal
  * has been taken.  Reset signal mask and
@@ -1272,14 +1380,15 @@ sendsig(catcher, sig, mask, code)
  * a machine fault.
  */
 int
-sys___sigreturn14(p, v, retval)
-	struct proc *p;
+sys___sigreturn14(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct sys___sigreturn14_args /* {
 		syscallarg(struct sigcontext *) sigcntxp;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	struct sigcontext *scp, context;
 	struct trapframe *tf;
 
@@ -1293,7 +1402,7 @@ sys___sigreturn14(p, v, retval)
 		return (EFAULT);
 
 	/* Restore register context. */
-	tf = p->p_md.md_regs;
+	tf = l->l_md.md_regs;
 #ifdef VM86
 	if (context.sc_eflags & PSL_VM) {
 		void syscall_vm86 __P((struct trapframe));
@@ -1302,7 +1411,7 @@ sys___sigreturn14(p, v, retval)
 		tf->tf_vm86_fs = context.sc_fs;
 		tf->tf_vm86_es = context.sc_es;
 		tf->tf_vm86_ds = context.sc_ds;
-		set_vflags(p, context.sc_eflags);
+		set_vflags(l, context.sc_eflags);
 		p->p_md.md_syscall = syscall_vm86;
 	} else
 #endif
@@ -1345,6 +1454,7 @@ sys___sigreturn14(p, v, retval)
 
 	return (EJUSTRETURN);
 }
+
 
 int	waittime = -1;
 struct pcb dumppcb;
@@ -1679,29 +1789,29 @@ dumpsys()
  * Clear registers on exec
  */
 void
-setregs(p, pack, stack)
-	struct proc *p;
+setregs(l, pack, stack)
+	struct lwp *l;
 	struct exec_package *pack;
 	u_long stack;
 {
-	struct pcb *pcb = &p->p_addr->u_pcb;
+	struct pcb *pcb = &l->l_addr->u_pcb;
 	struct trapframe *tf;
 
 #if NNPX > 0
 	/* If we were using the FPU, forget about it. */
-	if (npxproc == p)
+	if (npxproc == l)
 		npxdrop();
 #endif
 
 #ifdef USER_LDT
-	pmap_ldt_cleanup(p);
+	pmap_ldt_cleanup(l);
 #endif
 
-	p->p_md.md_flags &= ~MDP_USEDFPU;
+	l->l_md.md_flags &= ~MDP_USEDFPU;
 	pcb->pcb_flags = 0;
 	pcb->pcb_savefpu.sv_env.en_cw = __NetBSD_NPXCW__;
 
-	tf = p->p_md.md_regs;
+	tf = l->l_md.md_regs;
 	__asm("movl %w0,%%gs" : : "r" (LSEL(LUDATA_SEL, SEL_UPL)));
 	__asm("movl %w0,%%fs" : : "r" (LSEL(LUDATA_SEL, SEL_UPL)));
 	tf->tf_es = LSEL(LUDATA_SEL, SEL_UPL);
@@ -1803,8 +1913,8 @@ init386(first_avail)
 	u_int64_t seg_start, seg_end;
 	u_int64_t seg_start1, seg_end1;
 
-	proc0.p_addr = proc0paddr;
-	curpcb = &proc0.p_addr->u_pcb;
+	lwp0.l_addr = proc0paddr;
+	curpcb = &lwp0.l_addr->u_pcb;
 
 	i386_bus_space_init();
 
@@ -2457,4 +2567,152 @@ cpu_reset()
 #endif
 
 	for (;;);
+}
+
+void
+cpu_getmcontext(l, mcp, flags)
+	struct lwp *l;
+	mcontext_t *mcp;
+	unsigned int *flags;
+{
+	const struct trapframe *tf = l->l_md.md_regs;
+	__greg_t *gr = mcp->__gregs;
+
+	/* Save register context. */
+#ifdef VM86
+	if (tf->tf_eflags & PSL_VM) {
+		gr[_REG_GS]  = tf->tf_vm86_gs;
+		gr[_REG_FS]  = tf->tf_vm86_fs;
+		gr[_REG_ES]  = tf->tf_vm86_es;
+		gr[_REG_DS]  = tf->tf_vm86_ds;
+		gr[_REG_EFL] = get_vflags(l);
+	} else
+#endif
+	{
+		__asm("movl %%gs,%w0" : "=r" (gr[_REG_GS]));
+		__asm("movl %%fs,%w0" : "=r" (gr[_REG_FS]));
+		gr[_REG_ES]  = tf->tf_es;
+		gr[_REG_DS]  = tf->tf_ds;
+		gr[_REG_EFL] = tf->tf_eflags;
+	}
+	gr[_REG_EDI]    = tf->tf_edi;
+	gr[_REG_ESI]    = tf->tf_esi;
+	gr[_REG_EBP]    = tf->tf_ebp;
+	gr[_REG_EBX]    = tf->tf_ebx;
+	gr[_REG_EDX]    = tf->tf_edx;
+	gr[_REG_ECX]    = tf->tf_ecx;
+	gr[_REG_EAX]    = tf->tf_eax;
+	gr[_REG_EIP]    = tf->tf_eip;
+	gr[_REG_CS]     = tf->tf_cs;
+	gr[_REG_ESP]    = tf->tf_esp;
+	gr[_REG_UESP]   = tf->tf_esp;
+	gr[_REG_SS]     = tf->tf_ss;
+	gr[_REG_TRAPNO] = tf->tf_trapno;
+	gr[_REG_ERR]    = tf->tf_err;
+	*flags |= _UC_CPU;
+
+	/* Save floating point register context, if any. */
+	if ((l->l_md.md_flags & MDP_USEDFPU) != 0) {
+#if NNPX > 0
+		/*
+		 * If this process is the current FP owner, dump its
+		 * context to the PCB first.
+		 * XXX npxsave() also clears the FPU state; depending on the
+		 * XXX application this might be a penalty.
+		 */
+		if (l == npxproc) {
+			npxsave();
+		}
+#endif
+		memcpy(&mcp->__fpregs.__fp_reg_set.__fpchip_state.__fp_state,
+		 &l->l_addr->u_pcb.pcb_savefpu,
+		 sizeof (mcp->__fpregs.__fp_reg_set.__fpchip_state.__fp_state));
+#if 0
+		/* Apparently nothing ever touches this. */
+		ucp->mcp.mc_fp.fp_emcsts = l->l_addr->u_pcb.pcb_saveemc;
+#endif
+		*flags |= _UC_FPU;
+	}
+}
+
+int
+cpu_setmcontext(l, mcp, flags)
+	struct lwp *l;
+	const mcontext_t *mcp;
+	unsigned int flags;
+{
+	struct trapframe *tf = l->l_md.md_regs;
+	__greg_t *gr = mcp->__gregs;
+
+	/* Restore register context, if any. */
+	if ((flags & _UC_CPU) != 0) {
+#ifdef VM86
+		if (tf->tf_eflags & PSL_VM) {
+			tf->tf_vm86_gs = gr[_REG_GS];
+			tf->tf_vm86_fs = gr[_REG_FS];
+			tf->tf_vm86_es = gr[_REG_ES];
+			tf->tf_vm86_ds = gr[_REG_DS];
+			set_vflags(l, gr[_REG_EFL]);
+		} else
+#endif
+		{
+			/*
+			 * Check for security violations.  If we're returning
+			 * to protected mode, the CPU will validate the segment
+			 * registers automatically and generate a trap on
+			 * violations.  We handle the trap, rather than doing
+			 * all of the checking here.
+			 */
+			if (!USERMODE(gr[_REG_CS], gr[_REG_EFL])) {
+				printf("cpu_setmcontext error: uc EFL: %08x  tf EFL: %08x uc CS: %d",
+				    gr[_REG_EFL], tf->tf_eflags, gr[_REG_CS]);
+				return (EINVAL);
+			}
+			__asm("movl %w0,%%gs" : : "r" (gr[_REG_GS]));
+			__asm("movl %w0,%%fs" : : "r" (gr[_REG_FS]));
+			tf->tf_es = gr[_REG_ES];
+			tf->tf_ds = gr[_REG_DS];
+			/* Only change the user-alterable part of eflags */
+			tf->tf_eflags &= ~PSL_USER;
+			tf->tf_eflags |= (gr[_REG_EFL] & PSL_USER);
+		}
+		tf->tf_edi    = gr[_REG_EDI];
+		tf->tf_esi    = gr[_REG_ESI];
+		tf->tf_ebp    = gr[_REG_EBP];
+		tf->tf_ebx    = gr[_REG_EBX];
+		tf->tf_edx    = gr[_REG_EDX];
+		tf->tf_ecx    = gr[_REG_ECX];
+		tf->tf_eax    = gr[_REG_EAX];
+		tf->tf_eip    = gr[_REG_EIP];
+		tf->tf_cs     = gr[_REG_CS];
+		tf->tf_esp    = gr[_REG_UESP];
+		tf->tf_ss     = gr[_REG_SS];
+#if 0 /* XXX nonzero trapno/err values will crash the box with "unknown trap" */
+		tf->tf_trapno = gr[_REG_TRAPNO];
+		tf->tf_err    = gr[_REG_ERR];
+#endif
+	}
+
+	/* Restore floating point register context, if any. */
+	if ((flags & _UC_FPU) != 0) {
+#if NNPX > 0
+		/*
+		 * If this process happens to be the current FPU owner,
+		 * forget about its (to be overwritten) context.
+		 */
+		if (l == npxproc)
+			npxdrop();
+#endif
+		(void)memcpy(&l->l_addr->u_pcb.pcb_savefpu,
+		    &mcp->__fpregs.__fp_reg_set.__fpchip_state.__fp_state,
+		    sizeof (l->l_addr->u_pcb.pcb_savefpu));
+		/* If not set already. */
+		l->l_md.md_flags |= MDP_USEDFPU;
+#if 0
+		/* Apparently unused. */
+		l->l_addr->u_pcb.pcb_saveemc = mcp->mc_fp.fp_emcsts;
+#endif
+	}
+
+	return (0);
 }

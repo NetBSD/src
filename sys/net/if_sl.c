@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sl.c,v 1.72 2001/01/17 00:30:51 thorpej Exp $	*/
+/*	$NetBSD: if_sl.c,v 1.72.2.1 2001/03/05 22:49:54 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1987, 1989, 1992, 1993
@@ -70,6 +70,7 @@
 #include "bpfilter.h"
 
 #include <sys/param.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
@@ -253,7 +254,7 @@ slopen(dev, tp)
 	dev_t dev;
 	struct tty *tp;
 {
-	struct proc *p = curproc;		/* XXX */
+	struct proc *p = curproc->l_proc;		/* XXX */
 	struct sl_softc *sc;
 	int nsl;
 	int error;

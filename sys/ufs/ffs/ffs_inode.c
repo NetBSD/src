@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.40 2001/01/27 04:23:21 augustss Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.40.2.1 2001/03/05 22:50:06 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -43,6 +43,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mount.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/file.h>
 #include <sys/buf.h>
@@ -478,7 +479,7 @@ ffs_indirtrunc(ip, lbn, dbn, lastbn, level, countp)
 		trace(TR_BREADHIT, pack(vp, fs->fs_bsize), lbn);
 	} else {
 		trace(TR_BREADMISS, pack(vp, fs->fs_bsize), lbn);
-		curproc->p_stats->p_ru.ru_inblock++;	/* pay for read */
+		curproc->l_proc->p_stats->p_ru.ru_inblock++;	/* pay for read */
 		bp->b_flags |= B_READ;
 		if (bp->b_bcount > bp->b_bufsize)
 			panic("ffs_indirtrunc: bad buffer size");

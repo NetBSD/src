@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.78 2001/02/14 18:21:42 eeh Exp $	*/
+/*	$NetBSD: exec.h,v 1.78.2.1 2001/03/05 22:50:02 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -99,6 +99,7 @@ struct ps_strings {
  * in creating the new process's vmspace.
  */
 
+struct lwp;
 struct proc;
 struct exec_package;
 
@@ -120,7 +121,7 @@ struct execsw {
 	void	*(*es_copyargs) __P((struct exec_package *, struct ps_strings *,
 				    void *, void *));
 					/* Set registers before execution */
-	void	(*es_setregs) __P((struct proc *, struct exec_package *,
+	void	(*es_setregs) __P((struct lwp *, struct exec_package *,
 				  u_long));
 };
 
@@ -200,7 +201,7 @@ int	vmcmd_readvn		__P((struct proc *, struct exec_vmcmd *));
 int	vmcmd_map_zero		__P((struct proc *, struct exec_vmcmd *));
 void	*copyargs		__P((struct exec_package *, struct ps_strings *,
 				     void *, void *));
-void	setregs			__P((struct proc *, struct exec_package *,
+void	setregs			__P((struct lwp *, struct exec_package *,
 				     u_long));
 int	check_exec		__P((struct proc *, struct exec_package *));
 int	exec_init		__P((int));

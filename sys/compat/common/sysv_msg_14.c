@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_msg_14.c,v 1.3 2000/12/21 19:30:26 jdolecek Exp $	*/
+/*	$NetBSD: sysv_msg_14.c,v 1.3.2.1 2001/03/05 22:49:19 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -40,6 +40,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/signal.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/mount.h>
 #include <sys/msg.h>
@@ -97,16 +98,14 @@ native_to_msqid_ds14(msqbuf, omsqbuf)
 }
 
 int
-compat_14_sys_msgctl(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+compat_14_sys_msgctl(struct lwp *l, void *v, register_t *retval)
 {
 	struct compat_14_sys_msgctl_args /* {
 		syscallarg(int) msqid;
 		syscallarg(int) cmd;
 		syscallarg(struct msqid_ds14 *) buf;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	struct msqid_ds msqbuf;
 	struct msqid_ds14 omsqbuf;
 	int cmd, error;

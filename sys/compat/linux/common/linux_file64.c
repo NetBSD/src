@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file64.c,v 1.2 2000/12/12 22:24:56 jdolecek Exp $	*/
+/*	$NetBSD: linux_file64.c,v 1.2.4.1 2001/03/05 22:49:25 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2000 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 #include <compat/linux/linux_syscallargs.h>
 
 static void bsd_to_linux_stat __P((struct stat *, struct linux_stat64 *));
-static int linux_do_stat64 __P((struct proc *, void *, register_t *, int));
+static int linux_do_stat64 __P((struct lwp *, void *, register_t *, int));
 
 /*
  * Convert a NetBSD stat structure to a Linux stat structure.
@@ -104,8 +104,8 @@ bsd_to_linux_stat(bsp, lsp)
  * by one function to avoid code duplication.
  */
 int
-linux_sys_fstat64(p, v, retval)
-	struct proc *p;
+linux_sys_fstat64(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -113,6 +113,7 @@ linux_sys_fstat64(p, v, retval)
 		syscallarg(int) fd;
 		syscallarg(linux_stat64 *) sp;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	struct sys___fstat13_args fsa;
 	struct linux_stat64 tmplst;
 	struct stat *st,tmpst;
@@ -126,7 +127,7 @@ linux_sys_fstat64(p, v, retval)
 	SCARG(&fsa, fd) = SCARG(uap, fd);
 	SCARG(&fsa, sb) = st;
 
-	if ((error = sys___fstat13(p, &fsa, retval)))
+	if ((error = sys___fstat13(l, &fsa, retval)))
 		return error;
 
 	if ((error = copyin(st, &tmpst, sizeof tmpst)))
@@ -141,12 +142,13 @@ linux_sys_fstat64(p, v, retval)
 }
 
 static int
-linux_do_stat64(p, v, retval, dolstat)
-	struct proc *p;
+linux_do_stat64(l, v, retval, dolstat)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 	int dolstat;
 {
+	struct proc *p = l->l_proc;
 	struct sys___stat13_args sa;
 	struct linux_stat64 tmplst;
 	struct stat *st, tmpst;
@@ -161,8 +163,8 @@ linux_do_stat64(p, v, retval, dolstat)
 	SCARG(&sa, ub) = st;
 	SCARG(&sa, path) = SCARG(uap, path);
 
-	if ((error = (dolstat ? sys___lstat13(p, &sa, retval) :
-				sys___stat13(p, &sa, retval))))
+	if ((error = (dolstat ? sys___lstat13(l, &sa, retval) :
+				sys___stat13(l, &sa, retval))))
 		return error;
 
 	if ((error = copyin(st, &tmpst, sizeof tmpst)))
@@ -177,8 +179,8 @@ linux_do_stat64(p, v, retval, dolstat)
 }
 
 int
-linux_sys_stat64(p, v, retval)
-	struct proc *p;
+linux_sys_stat64(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -187,12 +189,12 @@ linux_sys_stat64(p, v, retval)
 		syscallarg(struct linux_stat64 *) sp;
 	} */ *uap = v;
 
-	return linux_do_stat64(p, uap, retval, 0);
+	return linux_do_stat64(l, uap, retval, 0);
 }
 
 int
-linux_sys_lstat64(p, v, retval)
-	struct proc *p;
+linux_sys_lstat64(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -201,12 +203,12 @@ linux_sys_lstat64(p, v, retval)
 		syscallarg(struct linux_stat64 *) sp;
 	} */ *uap = v;
 
-	return linux_do_stat64(p, uap, retval, 1);
+	return linux_do_stat64(l, uap, retval, 1);
 }
 
 int
-linux_sys_truncate64(p, v, retval)
-	struct proc *p;
+linux_sys_truncate64(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -214,9 +216,10 @@ linux_sys_truncate64(p, v, retval)
 		syscallarg(const char *) path;
 		syscallarg(off_t) length;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	caddr_t sg = stackgap_init(p->p_emul);
 
 	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
-	return sys_truncate(p, uap, retval);
+	return sys_truncate(l, uap, retval);
 }

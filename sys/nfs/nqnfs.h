@@ -1,4 +1,4 @@
-/*	$NetBSD: nqnfs.h,v 1.7 2000/06/09 00:00:18 fvdl Exp $	*/
+/*	$NetBSD: nqnfs.h,v 1.7.4.1 2001/03/05 22:50:01 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -210,7 +210,7 @@ int	nqnfs_getlease __P((struct vnode *, int, struct ucred *,struct proc *));
 int	nqnfs_callback __P((struct nfsmount *, struct mbuf *, struct mbuf *,
 		caddr_t));
 int	nqnfs_clientd __P((struct nfsmount *, struct ucred *,
-		struct nfsd_cargs *, int, caddr_t, struct proc *));
+		struct nfsd_cargs *, int, caddr_t, struct lwp *));
 #endif
 
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.50 2001/01/22 12:17:43 jdolecek Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.50.2.1 2001/03/05 22:50:08 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -498,7 +498,8 @@ lfs_mknod(v)
 	 * return.  But, that leaves this vnode in limbo, also not good.
 	 * Can this ever happen (barring hardware failure)?
 	 */
-	if ((error = VOP_FSYNC(*vpp, NOCRED, FSYNC_WAIT, 0, 0, curproc)) != 0) {
+	if ((error = VOP_FSYNC(*vpp, NOCRED, FSYNC_WAIT, 0, 0, 
+	    curproc->l_proc)) != 0) {
 		printf("Couldn't fsync in mknod (ino %d)---what do I do?\n",
 		       VTOI(*vpp)->i_number);
 		return (error);

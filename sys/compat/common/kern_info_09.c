@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_info_09.c,v 1.8 2000/07/14 07:12:47 thorpej Exp $	*/
+/*	$NetBSD: kern_info_09.c,v 1.8.2.1 2001/03/05 22:49:18 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -39,6 +39,7 @@
 #include <sys/systm.h>
 #include <sys/filedesc.h>
 #include <sys/kernel.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/syslog.h>
 #include <sys/unistd.h>
@@ -50,15 +51,13 @@
 
 /* ARGSUSED */
 int
-compat_09_sys_getdomainname(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+compat_09_sys_getdomainname(struct lwp *l, void *v, register_t *retval)
 {
 	struct compat_09_sys_getdomainname_args /* {
 		syscallarg(char *) domainname;
 		syscallarg(int) len;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	int name;
 	size_t sz;
 
@@ -70,15 +69,13 @@ compat_09_sys_getdomainname(p, v, retval)
 
 /* ARGSUSED */
 int
-compat_09_sys_setdomainname(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+compat_09_sys_setdomainname(struct lwp *l, void *v, register_t *retval)
 {
 	struct compat_09_sys_setdomainname_args /* {
 		syscallarg(char *) domainname;
 		syscallarg(int) len;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	int name;
 	int error;
 
@@ -99,10 +96,7 @@ struct outsname {
 
 /* ARGSUSED */
 int
-compat_09_sys_uname(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+compat_09_sys_uname(struct lwp *l, void *v, register_t *retval)
 {
 	struct compat_09_sys_uname_args /* {
 		syscallarg(struct outsname *) name;

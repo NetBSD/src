@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.101 2001/02/12 20:02:30 fvdl Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.101.2.1 2001/03/05 22:50:00 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -46,6 +46,7 @@
 #include <sys/param.h>
 #include <sys/ioctl.h>
 #include <sys/signal.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/namei.h>
 #include <sys/device.h>
@@ -291,7 +292,7 @@ nfs_mountroot()
 	long n;
 	int error;
 
-	procp = curproc; /* XXX */
+	procp = curproc->l_proc; /* XXX */
 
 	if (root_device->dv_class != DV_IFNET)
 		return (ENODEV);

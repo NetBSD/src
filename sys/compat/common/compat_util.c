@@ -1,4 +1,4 @@
-/* 	$NetBSD: compat_util.c,v 1.20 2001/02/02 21:17:45 jdolecek Exp $	*/
+/* 	$NetBSD: compat_util.c,v 1.20.2.1 2001/03/05 22:49:18 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -39,6 +39,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/namei.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/file.h>
 #include <sys/stat.h>
@@ -238,7 +239,7 @@ caddr_t
 stackgap_init(e)
 	const struct emul *e;
 {
-	struct proc *p = curproc;		/* XXX */
+	struct proc *p = curproc->l_proc;		/* XXX */
 
 #define szsigcode ((caddr_t)(e->e_esigcode - e->e_sigcode))
 	return (caddr_t)(((unsigned long)p->p_psstr - (unsigned long)szsigcode
@@ -254,7 +255,7 @@ stackgap_alloc(sgp, sz)
 {
 	void *n = (void *) *sgp;
 	caddr_t nsgp;
-	struct proc *p = curproc;		/* XXX */
+	struct proc *p = curproc->l_proc;		/* XXX */
 	const struct emul *e = p->p_emul;
 	int sigsize = e->e_esigcode - e->e_sigcode;
 	

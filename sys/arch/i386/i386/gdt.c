@@ -1,4 +1,4 @@
-/*	$NetBSD: gdt.c,v 1.23 2000/08/16 04:44:35 thorpej Exp $	*/
+/*	$NetBSD: gdt.c,v 1.23.2.1 2001/03/05 22:49:11 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -38,6 +38,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/lock.h>
 #include <sys/user.h>
@@ -103,14 +104,14 @@ gdt_unlock()
 void
 gdt_compact()
 {
-	struct proc *p;
+	struct lwp *l;
 	pmap_t pmap;
 	int slot = NGDT, oslot;
 
 	proclist_lock_read();
-	for (p = allproc.lh_first; p != 0; p = p->p_list.le_next) {
-		pmap = p->p_vmspace->vm_map.pmap;
-		oslot = IDXSEL(p->p_md.md_tss_sel);
+	for (l = alllwp.lh_first; l != 0; l = l->l_list.le_next) {
+		pmap = l->l_proc->p_vmspace->vm_map.pmap;
+		oslot = IDXSEL(l->l_md.md_tss_sel);
 		if (oslot >= gdt_count) {
 			while (gdt[slot].sd.sd_type != SDT_SYSNULL) {
 				if (++slot >= gdt_count)
@@ -118,7 +119,7 @@ gdt_compact()
 			}
 			gdt[slot] = gdt[oslot];
 			gdt[oslot].gd.gd_type = SDT_SYSNULL;
-			p->p_md.md_tss_sel = GSEL(slot, SEL_KPL);
+			l->l_md.md_tss_sel = GSEL(slot, SEL_KPL);
 		}
 		simple_lock(&pmap->pm_lock);
 		oslot = IDXSEL(pmap->pm_ldt_sel);
@@ -272,24 +273,24 @@ gdt_put_slot(slot)
 }
 
 void
-tss_alloc(p)
-	struct proc *p;
+tss_alloc(l)
+	struct lwp *l;
 {
-	struct pcb *pcb = &p->p_addr->u_pcb;
+	struct pcb *pcb = &l->l_addr->u_pcb;
 	int slot;
 
 	slot = gdt_get_slot();
 	setsegment(&gdt[slot].sd, &pcb->pcb_tss, sizeof(struct pcb) - 1,
 	    SDT_SYS386TSS, SEL_KPL, 0, 0);
-	p->p_md.md_tss_sel = GSEL(slot, SEL_KPL);
+	l->l_md.md_tss_sel = GSEL(slot, SEL_KPL);
 }
 
 void
-tss_free(p)
-	struct proc *p;
+tss_free(l)
+	struct lwp *l;
 {
 
-	gdt_put_slot(IDXSEL(p->p_md.md_tss_sel));
+	gdt_put_slot(IDXSEL(l->l_md.md_tss_sel));
 }
 
 void

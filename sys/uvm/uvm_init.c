@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_init.c,v 1.14 2000/06/27 17:29:23 mrg Exp $	*/
+/*	$NetBSD: uvm_init.c,v 1.14.2.1 2001/03/05 22:50:10 nathanw Exp $	*/
 
 /*
  *
@@ -82,7 +82,6 @@ uvm_init()
 	/*
 	 * step 1: zero the uvm structure
 	 */
-
 	memset(&uvm, 0, sizeof(uvm));
 	averunnable.fscale = FSCALE;
 
@@ -93,7 +92,6 @@ uvm_init()
 	 * kvm_start and kvm_end will be set to the area of kernel virtual
 	 * memory which is available for general use.
 	 */
-
 	uvm_page_init(&kvm_start, &kvm_end);
 
 	/*
@@ -101,7 +99,6 @@ uvm_init()
 	 * vm_map_entry structures that are used for "special" kernel maps
 	 * (e.g. kernel_map, kmem_map, etc...).
 	 */
-
 	uvm_map_init();
 
 	/*
@@ -109,33 +106,28 @@ uvm_init()
 	 * includes setting up the kernel_map/kernel_object and the kmem_map/
 	 * kmem_object.
 	 */
-
 	uvm_km_init(kvm_start, kvm_end);
 
 	/*
 	 * step 5: init the pmap module.   the pmap module is free to allocate
 	 * memory for its private use (e.g. pvlists).
 	 */
-
 	pmap_init();
 
 	/*
 	 * step 6: init the kernel memory allocator.   after this call the
 	 * kernel memory allocator (malloc) can be used.
 	 */
-
 	kmeminit();
 
 	/*
 	 * step 7: init all pagers and the pager_map.
 	 */
-
 	uvm_pager_init();
 
 	/*
 	 * step 8: init anonymous memory systems (both amap and anons)
 	 */
-
 	amap_init();		/* init amap module */
 	uvm_anon_init();	/* allocate initial anons */
 
@@ -144,7 +136,6 @@ uvm_init()
 	 * <obj,off> => <page> hash table for general use and enable paging
 	 * of kernel objects.
 	 */
-
 	uvm_page_rehash();
 	uao_create(VM_MAX_KERNEL_ADDRESS - VM_MIN_KERNEL_ADDRESS,
 	    UAO_FLAG_KERNSWAP);

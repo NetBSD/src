@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.35 2000/12/03 06:43:36 perseant Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.35.2.1 2001/03/05 22:50:07 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -239,7 +239,8 @@ lfs_availwait(fs, db)
 		wakeup(&lfs_allclean_wakeup);
 		wakeup(&fs->lfs_nextseg);
 #ifdef DIAGNOSTIC
-		if (fs->lfs_seglock && fs->lfs_lockpid == curproc->p_pid)
+		if (fs->lfs_seglock && 
+		    fs->lfs_lockpid == curproc->l_proc->p_pid)
 			panic("lfs_availwait: deadlock");
 #endif
 		error = tsleep(&fs->lfs_avail, PCATCH | PUSER, "cleaner", 0);

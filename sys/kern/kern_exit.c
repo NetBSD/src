@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.89 2001/02/26 21:09:57 lukem Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.89.2.1 2001/03/05 22:49:39 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -84,6 +84,7 @@
 #include <sys/systm.h>
 #include <sys/map.h>
 #include <sys/ioctl.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/tty.h>
 #include <sys/time.h>
@@ -110,6 +111,8 @@
 #ifdef SYSVSEM
 #include <sys/sem.h>
 #endif
+#include <sys/sa.h>
+#include <sys/savar.h>
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
@@ -118,18 +121,20 @@
 
 #include <uvm/uvm_extern.h>
 
+#define DPRINTF(x)
+
 /*
  * exit --
  *	Death of process.
  */
 int
-sys_exit(struct proc *p, void *v, register_t *retval)
+sys_exit(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_exit_args /* {
 		syscallarg(int)	rval;
 	} */ *uap = v;
 
-	exit1(p, W_EXITCODE(SCARG(uap, rval), 0));
+	exit1(l, W_EXITCODE(SCARG(uap, rval), 0));
 	/* NOTREACHED */
 	return (0);
 }
@@ -140,14 +145,27 @@ sys_exit(struct proc *p, void *v, register_t *retval)
  * status and rusage for wait().  Check for child processes and orphan them.
  */
 void
-exit1(struct proc *p, int rv)
+exit1(struct lwp *l, int rv)
 {
-	struct proc	*q, *nq;
-	int		s;
+	struct lwp	*l2;
+	struct proc	*p, *q, *nq;
+	int		s, error;
+	lwpid_t		waited;
+
+	p = l->l_proc;
 
 	if (__predict_false(p == initproc))
 		panic("init died (signal %d, exit %d)",
-		    WTERMSIG(rv), WEXITSTATUS(rv));
+		      WTERMSIG(rv), WEXITSTATUS(rv));
+
+	/*
+	 * Disable scheduler activation upcalls. 
+	 * We're trying to get out of here. 
+	 */
+	if (l->l_flag & L_SA) {
+		l->l_flag &= ~L_SA;
+		DPRINTF(("exit1: %d.%d exiting.\n", p->p_pid, l->l_lid));
+	}
 
 #ifdef PGINPROF
 	vmsizmon();
@@ -169,6 +187,63 @@ exit1(struct proc *p, int rv)
 	p->p_sigctx.ps_sigcheck = 0;
 	callout_stop(&p->p_realit_ch);
 
+	/* XXX SMP 
+	 * This would be the right place to IPI any LWPs running on 
+	 * other processors so that they can notice P_WEXIT.
+	 */
+	/* Make SA-cached LWPs normal process runnable LWPs so that they'll
+	 * also self-destruct.
+	 */
+	if (p->p_sa && p->p_sa->sa_ncached > 0) {
+		DPRINTF(("exit1: Placing cached LWPs of %d on run queue: ",
+		    p->p_pid));
+		while (!LIST_EMPTY(&p->p_sa->sa_lwpcache)) {
+			l2 = LIST_FIRST(&p->p_sa->sa_lwpcache);
+			LIST_REMOVE(l2, l_sibling);
+			p->p_sa->sa_ncached--;
+			l2->l_priority = l2->l_usrpri;
+			l2->l_stat = LSRUN;
+			SCHED_LOCK(s);
+			setrunqueue(l2);
+			SCHED_UNLOCK(s);
+
+			LIST_INSERT_HEAD(&p->p_lwps, l2, l_sibling);
+			p->p_nlwps++;
+			p->p_nrlwps++;
+			DPRINTF(("%d ", l2->l_lid));
+
+		}
+		DPRINTF(("\n"));
+	}
+
+	
+	/* Interrupt LWPs in interruptable sleep, unsuspend suspended
+	 * LWPs, make detached LWPs undeached (so we can wait for
+	 * them) and then wait for everyone else to finish.  
+	 */
+	LIST_FOREACH(l2, &p->p_lwps, l_sibling) {
+		l2->l_flag &= ~(L_DETACHED|L_SA);
+		if ((l2->l_stat == LSSLEEP && (l2->l_flag & L_SINTR)) ||
+		    l2->l_stat == LSSUSPENDED) {
+			SCHED_LOCK(s);
+			setrunnable(l2);
+			SCHED_UNLOCK(s);
+			p->p_nrlwps++;
+			DPRINTF(("exit1: Made %d.%d runnable\n",
+			    p->p_pid, l2->l_lid));
+		}
+	}
+
+	
+	while (p->p_nlwps > 1) {
+		DPRINTF(("exit1: waiting for %d LWPs (%d runnable, %d zombies)\n", 
+		    p->p_nlwps, p->p_nrlwps, p->p_nzlwps));
+		error = lwp_wait1(l, 0, &waited, LWPWAIT_EXITCONTROL);
+		if (error)
+			panic("exit1: lwp_wait1 failed with error %d\n",
+			    error);
+		DPRINTF(("exit1: Got LWP %d from lwp_wait1()\n", waited));
+	}	
 	/*
 	 * Close open files and release open-file table.
 	 * This may block!
@@ -223,6 +298,9 @@ exit1(struct proc *p, int rv)
 	 * NOTE: WE ARE NO LONGER ALLOWED TO SLEEP!
 	 */
 	p->p_stat = SDEAD;
+	p->p_nrlwps--;
+	l->l_stat = SDEAD;
+
 
 	/*
 	 * Remove proc from pidhash chain so looking it up won't
@@ -235,6 +313,8 @@ exit1(struct proc *p, int rv)
 	LIST_REMOVE(p, p_hash);
 	LIST_REMOVE(p, p_list);
 	LIST_INSERT_HEAD(&zombproc, p, p_list);
+	LIST_REMOVE(l, l_list);
+	l->l_flag |= L_DETACHED;
 	proclist_unlock_write(s);
 
 	/*
@@ -299,6 +379,7 @@ exit1(struct proc *p, int rv)
 	 */
 	curproc = NULL;
 	limfree(p->p_limit);
+	pstatsfree(p->p_stats);
 	p->p_limit = NULL;
 
 	/*
@@ -320,7 +401,8 @@ exit1(struct proc *p, int rv)
 	 * Note that cpu_exit() will end with a call equivalent to
 	 * cpu_switch(), finishing our execution (pun intended).
 	 */
-	cpu_exit(p);
+
+	cpu_exit(l, 1);
 }
 
 /*
@@ -336,14 +418,16 @@ exit1(struct proc *p, int rv)
  * list (using the p_hash member), and wake up the reaper.
  */
 void
-exit2(struct proc *p)
+exit2(struct lwp *l)
 {
+	struct proc *p = l->l_proc;
 
 	simple_lock(&deadproc_slock);
 	LIST_INSERT_HEAD(&deadproc, p, p_hash);
 	simple_unlock(&deadproc_slock);
 
-	wakeup(&deadproc);
+	/* lwp_exit2() will wake up deadproc for us. */
+	lwp_exit2(l);
 }
 
 /*
@@ -355,48 +439,75 @@ void
 reaper(void *arg)
 {
 	struct proc *p;
+	struct lwp *l;
 
 	for (;;) {
 		simple_lock(&deadproc_slock);
 		p = LIST_FIRST(&deadproc);
-		if (p == NULL) {
+		l = LIST_FIRST(&deadlwp);
+		if (p == NULL && l == NULL) {
 			/* No work for us; go to sleep until someone exits. */
 			(void) ltsleep(&deadproc, PVM|PNORELOCK,
 			    "reaper", 0, &deadproc_slock);
 			continue;
 		}
 
-		/* Remove us from the deadproc list. */
-		LIST_REMOVE(p, p_hash);
-		simple_unlock(&deadproc_slock);
+		if (l != NULL ) {
+			p = l->l_proc;
 
-		/*
-		 * Give machine-dependent code a chance to free any
-		 * resources it couldn't free while still running on
-		 * that process's context.  This must be done before
-		 * uvm_exit(), in case these resources are in the PCB.
-		 */
-		cpu_wait(p);
+			/* Remove us from the deadlwp list. */
+			LIST_REMOVE(l, l_list);
+			simple_unlock(&deadproc_slock);
+			
+			/*
+			 * Give machine-dependent code a chance to free any
+			 * resources it couldn't free while still running on
+			 * that process's context.  This must be done before
+			 * uvm_lwp_exit(), in case these resources are in the 
+			 * PCB.
+			 */
+			cpu_wait(l);
 
-		/*
-		 * Free the VM resources we're still holding on to.
-		 * We must do this from a valid thread because doing
-		 * so may block.
-		 */
-		uvm_exit(p);
+			/*
+			 * Free the VM resources we're still holding on to.
+			 */
+			uvm_lwp_exit(l);
 
-		/* Process is now a true zombie. */
-		p->p_stat = SZOMB;
+			l->l_stat = LSZOMB;
+			if (l->l_flag & L_DETACHED) {
+				/* Nobody waits for detached LWPs. */
+				LIST_REMOVE(l, l_sibling);
+				p->p_nlwps--;
+				pool_put(&lwp_pool, l);
+			} else {
+				p->p_nzlwps++;
+				wakeup((caddr_t)&p->p_nlwps);
+			}
+		} else {
+			/* Remove us from the deadproc list. */
+			LIST_REMOVE(p, p_hash);
+			simple_unlock(&deadproc_slock);
 
-		/* Wake up the parent so it can get exit status. */
-		if ((p->p_flag & P_FSTRACE) == 0 && p->p_exitsig != 0)
-			psignal(p->p_pptr, P_EXITSIG(p));
-		wakeup((caddr_t)p->p_pptr);
+			/*
+			 * Free the VM resources we're still holding on to.
+			 * We must do this from a valid thread because doing
+			 * so may block.
+			 */
+			uvm_proc_exit(p);
+			
+			/* Process is now a true zombie. */
+			p->p_stat = SZOMB;
+			
+			/* Wake up the parent so it can get exit status. */
+			if ((p->p_flag & P_FSTRACE) == 0 && p->p_exitsig != 0)
+				psignal(p->p_pptr, P_EXITSIG(p));
+			wakeup((caddr_t)p->p_pptr);
+		}
 	}
 }
 
 int
-sys_wait4(struct proc *q, void *v, register_t *retval)
+sys_wait4(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_wait4_args /* {
 		syscallarg(int)			pid;
@@ -404,7 +515,7 @@ sys_wait4(struct proc *q, void *v, register_t *retval)
 		syscallarg(int)			options;
 		syscallarg(struct rusage *)	rusage;
 	} */ *uap = v;
-	struct proc	*p, *t;
+	struct proc	*p, *q, *t;
 	int		nfound, status, error, s;
 
 	if (SCARG(uap, pid) == 0)
@@ -412,6 +523,7 @@ sys_wait4(struct proc *q, void *v, register_t *retval)
 	if (SCARG(uap, options) &~ (WUNTRACED|WNOHANG|WALTSIG))
 		return (EINVAL);
 
+	q = l->l_proc;
  loop:
 	nfound = 0;
 	for (p = q->p_children.lh_first; p != 0; p = p->p_sibling.le_next) {
@@ -499,6 +611,14 @@ sys_wait4(struct proc *q, void *v, register_t *retval)
 			 */
 			if (p->p_textvp)
 				vrele(p->p_textvp);
+
+			/*
+			 * Release any SA state
+			 */
+			if (p->p_sa) {
+				free(p->p_sa->sa_stacks, M_SA);
+				pool_put(&sadata_pool, p->p_sa);
+			}
 
 			pool_put(&proc_pool, p);
 			nprocs--;

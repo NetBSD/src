@@ -1,5 +1,0 @@
-.\"	$NetBSD: install,v 1.2 2000/10/10 12:55:16 lukem Exp $
-.
-.Nx*M
-doesn't currently have a nice GUI installer.
-This is a problem.

@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.48 2000/06/05 16:29:45 thorpej Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.48.4.1 2001/03/05 22:49:47 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -75,6 +75,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/filedesc.h>
 #include <sys/domain.h>
@@ -801,7 +802,7 @@ int
 unp_externalize(rights)
 	struct mbuf *rights;
 {
-	struct proc *p = curproc;		/* XXX */
+	struct proc *p = curproc->l_proc;		/* XXX */
 	struct cmsghdr *cm = mtod(rights, struct cmsghdr *);
 	int i, *fdp;
 	struct file **rp;

@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.125 2000/12/22 22:59:00 jdolecek Exp $	*/
+/*	$NetBSD: tty.c,v 1.125.2.1 2001/03/05 22:49:46 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -45,6 +45,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/ioctl.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #define	TTYDEFCHARS
 #include <sys/tty.h>
@@ -769,7 +770,7 @@ ttioctl(tp, cmd, data, flag, p)
 	case  TIOCSETP:
 	case  TIOCSLTC:
 #endif
-		while (isbackground(curproc, tp) &&
+		while (isbackground(curproc->l_proc, tp) &&
 		    p->p_pgrp->pg_jobc && (p->p_flag & P_PPWAIT) == 0 &&
 		    !sigismasked(p, SIGTTOU)) {
 			pgsignal(p->p_pgrp, SIGTTOU, 1);
@@ -1337,7 +1338,7 @@ ttread(tp, uio, flag)
 	int c;
 	long lflag;
 	u_char *cc = tp->t_cc;
-	struct proc *p = curproc;
+	struct proc *p = curproc->l_proc;
 	int s, first, error = 0;
 	struct timeval stime;
 	int has_stime = 0, last_cc = 0;
@@ -1603,7 +1604,7 @@ loop:
 	/*
 	 * Hang the process if it's in the background.
 	 */
-	p = curproc;
+	p = curproc->l_proc;
 	if (isbackground(p, tp) &&
 	    ISSET(tp->t_lflag, TOSTOP) && (p->p_flag & P_PPWAIT) == 0 &&
 	    !sigismember(&p->p_sigctx.ps_sigignore, SIGTTOU) &&
@@ -1959,6 +1960,7 @@ void
 ttyinfo(tp)
 	struct tty *tp;
 {
+	struct lwp *l;
 	struct proc *p, *pick;
 	struct timeval utime, stime;
 	int tmp;
@@ -1982,10 +1984,13 @@ ttyinfo(tp)
 			if (proc_compare(pick, p))
 				pick = p;
 
-		ttyprintf(tp, " cmd: %s %d [%s] ", pick->p_comm, pick->p_pid,
-		    pick->p_stat == SONPROC ? "running" :
-		    pick->p_stat == SRUN ? "runnable" :
-		    pick->p_wmesg ? pick->p_wmesg : "iowait");
+		ttyprintf(tp, " cmd: %s %d [", pick->p_comm, pick->p_pid);
+		LIST_FOREACH(l, &p->p_lwps, l_sibling)
+		    ttyprintf(tp, "%s%s",
+		    l->l_stat == LSONPROC ? "running" :
+		    l->l_stat == LSRUN ? "runnable" :
+		    l->l_wmesg ? l->l_wmesg : "iowait",
+			(LIST_NEXT(l, l_sibling) != NULL) ? " " : "] ");
 
 		calcru(pick, &utime, &stime, NULL);
 
@@ -2037,8 +2042,7 @@ ttyinfo(tp)
  *	   we pick out just "short-term" sleepers (P_SINTR == 0).
  *	4) Further ties are broken by picking the highest pid.
  */
-#define ISRUN(p)	(((p)->p_stat == SRUN) || ((p)->p_stat == SIDL) || \
-			 ((p)->p_stat == SONPROC))
+#define ISRUN(p)	((p)->p_nrlwps > 0)
 #define TESTAB(a, b)    ((a)<<1 | (b))
 #define ONLYA   2
 #define ONLYB   1
@@ -2080,6 +2084,7 @@ proc_compare(p1, p2)
 	case BOTH:
 		return (p2->p_pid > p1->p_pid); /* tie - return highest pid */
 	}
+#if 0 /* XXX NJWLWP */
 	/*
 	 * pick the one with the smallest sleep time
 	 */
@@ -2094,6 +2099,7 @@ proc_compare(p1, p2)
 		return (1);
 	if (p2->p_flag & P_SINTR && (p1->p_flag & P_SINTR) == 0)
 		return (0);
+#endif
 	return (p2->p_pid > p1->p_pid);		/* tie - return highest pid */
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.66 2001/02/21 21:39:57 jdolecek Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.66.2.1 2001/03/05 22:49:59 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -50,6 +50,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/callout.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/mount.h>
 #include <sys/kernel.h>
@@ -501,7 +502,7 @@ nfs_receive(rep, aname, mp)
 	u_int32_t len;
 	struct mbuf **getnam;
 	int error, sotype, rcvflg;
-	struct proc *p = curproc;	/* XXX */
+	struct proc *p = curproc->l_proc;	/* XXX */
 
 	/*
 	 * Set up arguments for soreceive()

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.50 2000/12/22 22:58:54 jdolecek Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.50.4.1 2001/03/05 22:49:14 nathanw Exp $	 */
 
 /*-
  * Copyright (c) 1994, 2000 The NetBSD Foundation, Inc.
@@ -44,6 +44,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/namei.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/exec.h>
 #include <sys/user.h>
@@ -115,35 +116,35 @@ svr4_printmcontext(fun, mc)
 #endif
 
 void
-svr4_setregs(p, epp, stack)
-	struct proc *p;
+svr4_setregs(l, epp, stack)
+	struct lwp *l;
 	struct exec_package *epp;
 	u_long stack;
 {
-	register struct pcb *pcb = &p->p_addr->u_pcb;
+	register struct pcb *pcb = &l->l_addr->u_pcb;
 
-	setregs(p, epp, stack);
+	setregs(l, epp, stack);
 	pcb->pcb_savefpu.sv_env.en_cw = __SVR4_NPXCW__;
 }
 
 void *
-svr4_getmcontext(p, mc, flags)
-	struct proc *p;
+svr4_getmcontext(l, mc, flags)
+	struct lwp *l;
 	svr4_mcontext_t *mc;
 	u_long *flags;
 {
-	register struct trapframe *tf = p->p_md.md_regs;
+	register struct trapframe *tf = l->l_md.md_regs;
 	svr4_greg_t *r = mc->greg;
 
 	/* Save register context. */
-	tf = p->p_md.md_regs;
+	tf = l->l_md.md_regs;
 #ifdef VM86
 	if (tf->tf_eflags & PSL_VM) {
 		r[SVR4_X86_GS] = tf->tf_vm86_gs;
 		r[SVR4_X86_FS] = tf->tf_vm86_fs;
 		r[SVR4_X86_ES] = tf->tf_vm86_es;
 		r[SVR4_X86_DS] = tf->tf_vm86_ds;
-		r[SVR4_X86_EFL] = get_vflags(p);
+		r[SVR4_X86_EFL] = get_vflags(l);
 	} else
 #endif
 	{
@@ -187,12 +188,13 @@ svr4_getmcontext(p, mc, flags)
  * a machine fault.
  */
 int
-svr4_setmcontext(p, mc, flags)
-	struct proc *p;
+svr4_setmcontext(l, mc, flags)
+	struct lwp *l;
 	svr4_mcontext_t *mc;
 	u_long flags;
 {
 	register struct trapframe *tf;
+	struct proc *p = l->l_proc;
 	svr4_greg_t *r = mc->greg;
 
 #ifdef DEBUG_SVR4
@@ -205,7 +207,7 @@ svr4_setmcontext(p, mc, flags)
 		return 0;
 
 	/* Restore register context. */
-	tf = p->p_md.md_regs;
+	tf = l->l_md.md_regs;
 #ifdef VM86
 	if (r[SVR4_X86_EFL] & PSL_VM) {
 		void syscall_vm86 __P((struct trapframe));
@@ -214,7 +216,7 @@ svr4_setmcontext(p, mc, flags)
 		tf->tf_vm86_fs = r[SVR4_X86_FS];
 		tf->tf_vm86_es = r[SVR4_X86_ES];
 		tf->tf_vm86_ds = r[SVR4_X86_DS];
-		set_vflags(p, r[SVR4_X86_EFL]);
+		set_vflags(l, r[SVR4_X86_EFL]);
 		p->p_md.md_syscall = syscall_vm86;
 	} else
 #endif
@@ -366,12 +368,13 @@ svr4_sendsig(catcher, sig, mask, code)
 	sigset_t *mask;
 	u_long code;
 {
-	register struct proc *p = curproc;
+	register struct lwp *l = curproc;
+	struct proc *p = l->l_proc;
 	register struct trapframe *tf;
 	struct svr4_sigframe *fp, frame;
 	int onstack;
 
-	tf = p->p_md.md_regs;
+	tf = l->l_md.md_regs;
 
 	/* Do we need to jump onto the signal stack? */
 	onstack =
@@ -395,7 +398,7 @@ svr4_sendsig(catcher, sig, mask, code)
 	 *	- we don't pass the correct signal address [we need to
 	 *	  modify many kernel files to enable that]
 	 */
-	svr4_getcontext(p, &frame.sf_uc, mask);
+	svr4_getcontext(l, &frame.sf_uc);
 	svr4_getsiginfo(&frame.sf_si, sig, code, (caddr_t) tf->tf_eip);
 
 	/* Build stack frame for signal trampoline. */
@@ -414,7 +417,7 @@ svr4_sendsig(catcher, sig, mask, code)
 		 * Process has trashed its stack; give it an illegal
 		 * instruction to halt it in its tracks.
 		 */
-		sigexit(p, SIGILL);
+		sigexit(l, SIGILL);
 		/* NOTREACHED */
 	}
 
@@ -438,12 +441,13 @@ svr4_sendsig(catcher, sig, mask, code)
  * sysi86
  */
 int
-svr4_sys_sysarch(p, v, retval)
-	struct proc *p;
+svr4_sys_sysarch(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct svr4_sys_sysarch_args *uap = v;
+	struct proc *p = l->l_proc;
 #ifdef USER_LDT
 	caddr_t sg = stackgap_init(p->p_emul);
 	int error;
@@ -516,7 +520,7 @@ svr4_sys_sysarch(p, v, retval)
 				return error;
 			}
 
-			return sys_sysarch(p, &ua, retval);
+			return sys_sysarch(l, &ua, retval);
 		}
 #endif
 
@@ -535,12 +539,13 @@ svr4_fasttrap(frame)
 	struct trapframe frame;
 {
 	extern struct emul emul_svr4;
-	struct proc *p = curproc;
+	struct lwp *l = curproc;
+	struct proc *p = l->l_proc;
 
-	p->p_md.md_regs = &frame;
+	l->l_md.md_regs = &frame;
 
 	if (p->p_emul != &emul_svr4) {
-		trapsignal(p, SIGBUS, 0);
+		trapsignal(l, SIGBUS, 0);
 		return;
 	}
 

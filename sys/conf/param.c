@@ -1,4 +1,4 @@
-/*	$NetBSD: param.c,v 1.37 2000/11/11 02:24:55 mycroft Exp $	*/
+/*	$NetBSD: param.c,v 1.37.2.1 2001/03/05 22:49:32 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1989 Regents of the University of California.
@@ -49,6 +49,7 @@
 #include <sys/systm.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/vnode.h>
 #include <sys/file.h>

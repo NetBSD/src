@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.56 2001/02/06 17:01:52 eeh Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.56.2.1 2001/03/05 22:50:09 nathanw Exp $	*/
 
 /*
  *
@@ -506,10 +506,10 @@ void		vmapbuf __P((struct buf *, vsize_t));
 void		vunmapbuf __P((struct buf *, vsize_t));
 void		pagemove __P((caddr_t, caddr_t, size_t));
 #ifndef	cpu_swapin
-void		cpu_swapin __P((struct proc *));
+void		cpu_swapin __P((struct lwp *));
 #endif
 #ifndef	cpu_swapout
-void		cpu_swapout __P((struct proc *));
+void		cpu_swapout __P((struct lwp *));
 #endif
 
 /* uvm_aobj.c */
@@ -535,13 +535,15 @@ int			uvm_fault __P((vm_map_t, vaddr_t, vm_fault_t,
 #if defined(KGDB)
 void			uvm_chgkprot __P((caddr_t, size_t, int));
 #endif
-void			uvm_fork __P((struct proc *, struct proc *, boolean_t,
+void			uvm_proc_fork __P((struct proc *, struct proc *, boolean_t));
+void			uvm_lwp_fork __P((struct lwp *, struct lwp *,
 			    void *, size_t, void (*)(void *), void *));
-void			uvm_exit __P((struct proc *));
+void			uvm_proc_exit __P((struct proc *));
+void			uvm_lwp_exit __P((struct lwp *));
 void			uvm_init_limits __P((struct proc *));
 boolean_t		uvm_kernacc __P((caddr_t, size_t, int));
 __dead void		uvm_scheduler __P((void)) __attribute__((noreturn));
-void			uvm_swapin __P((struct proc *));
+void			uvm_swapin __P((struct lwp *));
 boolean_t		uvm_useracc __P((caddr_t, size_t, int));
 int			uvm_vslock __P((struct proc *, caddr_t, size_t,
 			    vm_prot_t));
@@ -593,11 +595,11 @@ struct vmspace		*uvmspace_alloc __P((vaddr_t, vaddr_t,
 				boolean_t));
 void			uvmspace_init __P((struct vmspace *, struct pmap *,
 				vaddr_t, vaddr_t, boolean_t));
-void			uvmspace_exec __P((struct proc *, vaddr_t, vaddr_t));
+void			uvmspace_exec __P((struct lwp *, vaddr_t, vaddr_t));
 struct vmspace		*uvmspace_fork __P((struct vmspace *));
 void			uvmspace_free __P((struct vmspace *));
 void			uvmspace_share __P((struct proc *, struct proc *));
-void			uvmspace_unshare __P((struct proc *));
+void			uvmspace_unshare __P((struct lwp *));
 
 
 /* uvm_meter.c */

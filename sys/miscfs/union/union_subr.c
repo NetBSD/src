@@ -1,4 +1,4 @@
-/*	$NetBSD: union_subr.c,v 1.40 2000/08/03 20:41:28 thorpej Exp $	*/
+/*	$NetBSD: union_subr.c,v 1.40.2.1 2001/03/05 22:49:52 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994 Jan-Simon Pendry
@@ -398,8 +398,9 @@ loop:
 #ifdef DIAGNOSTIC
 			if ((un->un_flags & UN_LOCKED) == 0)
 				panic("union: . not locked");
-			else if (curproc && un->un_pid != curproc->p_pid &&
-				    un->un_pid > -1 && curproc->p_pid > -1)
+			else if (curproc && 
+			    un->un_pid != curproc->l_proc->p_pid &&
+			    un->un_pid > -1 && curproc->l_proc->p_pid > -1)
 				panic("union: allocvp not lock owner");
 #endif
 		} else {
@@ -414,7 +415,7 @@ loop:
 
 #ifdef DIAGNOSTIC
 			if (curproc)
-				un->un_pid = curproc->p_pid;
+				un->un_pid = curproc->l_proc->p_pid;
 			else
 				un->un_pid = -1;
 #endif
@@ -515,7 +516,7 @@ loop:
 		un->un_flags |= UN_ULOCK;
 #ifdef DIAGNOSTIC
 	if (curproc)
-		un->un_pid = curproc->p_pid;
+		un->un_pid = curproc->l_proc->p_pid;
 	else
 		un->un_pid = -1;
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_llseek.c,v 1.25 1998/10/04 00:02:36 fvdl Exp $	*/
+/*	$NetBSD: linux_llseek.c,v 1.25.24.1 2001/03/05 22:49:25 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -59,8 +59,8 @@
  * This appears to be part of a Linux attempt to switch to 64 bits file sizes.
  */
 int
-linux_sys_llseek(p, v, retval)
-	struct proc *p;
+linux_sys_llseek(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -81,7 +81,7 @@ linux_sys_llseek(p, v, retval)
 	SCARG(&bla, offset) = off;
 	SCARG(&bla, whence) = SCARG(uap, whence);
 
-	if ((error = sys_lseek(p, &bla, retval)))
+	if ((error = sys_lseek(l, &bla, retval)))
 		return error;
 
 	if ((error = copyout(retval, SCARG(uap, res), sizeof (off_t))))

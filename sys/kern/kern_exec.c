@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.138 2001/02/26 20:43:25 lukem Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.138.2.1 2001/03/05 22:49:39 nathanw Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -39,6 +39,7 @@
 #include <sys/systm.h>
 #include <sys/filedesc.h>
 #include <sys/kernel.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/mount.h>
 #include <sys/malloc.h>
@@ -305,7 +306,7 @@ bad1:
  */
 /* ARGSUSED */
 int
-sys_execve(struct proc *p, void *v, register_t *retval)
+sys_execve(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_execve_args /* {
 		syscallarg(const char *)	path;
@@ -316,6 +317,7 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 	struct exec_package	pack;
 	struct nameidata	nid;
 	struct vattr		attr;
+	struct proc		*p;
 	struct ucred		*cred;
 	char			*argp;
 	char * const		*cpp;
@@ -329,6 +331,7 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 	int			szsigcode;
 	struct exec_vmcmd	*base_vcp;
 
+	p = l->l_proc;
 	cred = p->p_ucred;
 	base_vcp = NULL;
 	/*
@@ -464,7 +467,7 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 	 * for remapping.  Note that this might replace the current
 	 * vmspace with another!
 	 */
-	uvmspace_exec(p, pack.ep_vm_minaddr, pack.ep_vm_maxaddr);
+	uvmspace_exec(l, pack.ep_vm_minaddr, pack.ep_vm_maxaddr);
 
 	/* Now map address space */
 	vm = p->p_vmspace;
@@ -569,7 +572,12 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 	stopprofclock(p);	/* stop profiling */
 	fdcloseexec(p);		/* handle close on exec */
 	execsigs(p);		/* reset catched signals */
-	p->p_ctxlink = NULL;	/* reset ucontext link */
+	
+	/* XXX NJWLWP the rest of this function probably needs its
+	 * head examined in the context of a multilwp process.  
+	 */
+
+	l->l_ctxlink = NULL;	/* reset ucontext link */
 
 	/* set command name & other accounting info */
 	len = min(nid.ni_cnd.cn_namelen, MAXCOMLEN);
@@ -624,7 +632,7 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 	vput(pack.ep_vp);
 
 	/* setup new registers and do misc. setup. */
-	(*pack.ep_es->es_setregs)(p, &pack, (u_long) stack);
+	(*pack.ep_es->es_setregs)(l, &pack, (u_long) stack);
 
 	if (p->p_flag & P_TRACED)
 		psignal(p, SIGTRAP);
@@ -705,8 +713,8 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 	vput(pack.ep_vp);
 	uvm_km_free_wakeup(exec_map, (vaddr_t) argp, NCARGS);
 	free(pack.ep_hdr, M_EXEC);
-	exit1(p, W_EXITCODE(0, SIGABRT));
-	exit1(p, -1);
+	exit1(l, W_EXITCODE(0, SIGABRT));
+	exit1(l, -1);
 
 	/* NOTREACHED */
 	return 0;

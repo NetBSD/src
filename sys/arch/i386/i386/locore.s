@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.233 2001/02/11 19:03:49 chs Exp $	*/
+/*	$NetBSD: locore.s,v 1.233.2.1 2001/03/05 22:49:12 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -724,6 +724,14 @@ NENTRY(sigcode)
 	int	$0x80	 		# enter kernel with args on stack
 	movl	$SYS_exit,%eax
 	int	$0x80			# exit if sigreturn fails
+
+/* 
+ *  Scheduler activations upcall trampoline.
+ */ 	
+NENTRY(upcallcode)
+	call	SAF_UPCALL(%esp)
+	movl	$SYS_sa_yield,%eax
+	int	$0x80			# upcalls should not return.
 	.globl	_C_LABEL(esigcode)
 _C_LABEL(esigcode):
 
@@ -1641,28 +1649,28 @@ ENTRY(longjmp)
 	.globl	_C_LABEL(uvmexp),_C_LABEL(panic)
 
 /*
- * setrunqueue(struct proc *p);
+ * setrunqueue(struct lwp *l);
  * Insert a process on the appropriate queue.  Should be called at splclock().
  */
 NENTRY(setrunqueue)
 	movl	4(%esp),%eax
 #ifdef DIAGNOSTIC
-	cmpl	$0,P_BACK(%eax)	# should not be on q already
+	cmpl	$0,L_BACK(%eax)	# should not be on q already
 	jne	1f
-	cmpl	$0,P_WCHAN(%eax)
+	cmpl	$0,L_WCHAN(%eax)
 	jne	1f
-	cmpb	$SRUN,P_STAT(%eax)
+	cmpb	$LSRUN,L_STAT(%eax)
 	jne	1f
 #endif /* DIAGNOSTIC */
-	movzbl	P_PRIORITY(%eax),%edx
+	movzbl	L_PRIORITY(%eax),%edx
 	shrl	$2,%edx
 	btsl	%edx,_C_LABEL(sched_whichqs)	# set q full bit
 	leal	_C_LABEL(sched_qs)(,%edx,8),%edx # locate q hdr
-	movl	P_BACK(%edx),%ecx
-	movl	%edx,P_FORW(%eax)	# link process on tail of q
-	movl	%eax,P_BACK(%edx)
-	movl	%eax,P_FORW(%ecx)
-	movl	%ecx,P_BACK(%eax)
+	movl	L_BACK(%edx),%ecx
+	movl	%edx,L_FORW(%eax)	# link process on tail of q
+	movl	%eax,L_BACK(%edx)
+	movl	%eax,L_FORW(%ecx)
+	movl	%ecx,L_BACK(%eax)
 	ret
 #ifdef DIAGNOSTIC
 1:	pushl	$2f
@@ -1672,22 +1680,22 @@ NENTRY(setrunqueue)
 #endif /* DIAGNOSTIC */
 
 /*
- * remrunqueue(struct proc *p);
+ * remrunqueue(struct lwp *l);
  * Remove a process from its queue.  Should be called at splclock().
  */
 NENTRY(remrunqueue)
 	movl	4(%esp),%ecx
-	movzbl	P_PRIORITY(%ecx),%eax
+	movzbl	L_PRIORITY(%ecx),%eax
 #ifdef DIAGNOSTIC
 	shrl	$2,%eax
 	btl	%eax,_C_LABEL(sched_whichqs)
 	jnc	1f
 #endif /* DIAGNOSTIC */
-	movl	P_BACK(%ecx),%edx	# unlink process
-	movl	$0,P_BACK(%ecx)		# zap reverse link to indicate off list
-	movl	P_FORW(%ecx),%ecx
-	movl	%ecx,P_FORW(%edx)
-	movl	%edx,P_BACK(%ecx)
+	movl	L_BACK(%ecx),%edx	# unlink process
+	movl	$0,L_BACK(%ecx)		# zap reverse link to indicate off list
+	movl	L_FORW(%ecx),%ecx
+	movl	%ecx,L_FORW(%edx)
+	movl	%edx,L_BACK(%ecx)
 	cmpl	%ecx,%edx		# q still has something?
 	jne	2f
 #ifndef DIAGNOSTIC
@@ -1807,14 +1815,14 @@ sw1:	bsfl	%ecx,%ebx		# find a full q
 
 	leal	_C_LABEL(sched_qs)(,%ebx,8),%eax # select q
 
-	movl	P_FORW(%eax),%edi	# unlink from front of process q
+	movl	L_FORW(%eax),%edi	# unlink from front of process q
 #ifdef	DIAGNOSTIC
 	cmpl	%edi,%eax		# linked to self (i.e. nothing queued)?
 	je	_C_LABEL(switch_error)	# not possible
 #endif /* DIAGNOSTIC */
-	movl	P_FORW(%edi),%edx
-	movl	%edx,P_FORW(%eax)
-	movl	%eax,P_BACK(%edx)
+	movl	L_FORW(%edi),%edx
+	movl	%edx,L_FORW(%eax)
+	movl	%eax,L_BACK(%edx)
 
 	cmpl	%edx,%eax		# q empty?
 	jne	3f
@@ -1827,14 +1835,14 @@ sw1:	bsfl	%ecx,%ebx		# find a full q
 	movl	%eax,_C_LABEL(want_resched)
 
 #ifdef	DIAGNOSTIC
-	cmpl	%eax,P_WCHAN(%edi)	# Waiting for something?
+	cmpl	%eax,L_WCHAN(%edi)	# Waiting for something?
 	jne	_C_LABEL(switch_error)	# Yes; shouldn't be queued.
-	cmpb	$SRUN,P_STAT(%edi)	# In run state?
+	cmpb	$LSRUN,L_STAT(%edi)	# In run state?
 	jne	_C_LABEL(switch_error)	# No; shouldn't be queued.
 #endif /* DIAGNOSTIC */
 
 	/* Isolate process.  XXX Is this necessary? */
-	movl	%eax,P_BACK(%edi)
+	movl	%eax,L_BACK(%edi)
 
 #if defined(LOCKDEBUG)
 	/*
@@ -1851,7 +1859,7 @@ sw1:	bsfl	%ecx,%ebx		# find a full q
 #endif
 
 	/* Record new process. */
-	movb	$SONPROC,P_STAT(%edi)	# p->p_stat = SONPROC
+	movb	$LSONPROC,L_STAT(%edi)	# l->l_stat = LSONPROC
 	movl	%edi,_C_LABEL(curproc)
 
 	/* It's okay to take interrupts here. */
@@ -1874,7 +1882,7 @@ sw1:	bsfl	%ecx,%ebx		# find a full q
 	 *   %edi - new process
 	 */
 
-	movl	P_ADDR(%esi),%esi
+	movl	L_ADDR(%esi),%esi
 
 	/* Save segment registers. */
 	movl	%fs,%ax
@@ -1898,7 +1906,7 @@ switch_exited:
 
 	/* No interrupts while loading new state. */
 	cli
-	movl	P_ADDR(%edi),%esi
+	movl	L_ADDR(%edi),%esi
 
 	/* Restore stack pointers. */
 	movl	PCB_ESP(%esi),%esp
@@ -1906,7 +1914,7 @@ switch_exited:
 
 #if 0
 	/* Don't bother with the rest if switching to a system process. */
-	testl	$P_SYSTEM,P_FLAG(%edi)
+	testl	$P_SYSTEM,L_FLAG(%edi);  XXX NJWLWP lwp's don't have P_SYSTEM!
 	jnz	switch_restored
 #endif
 
@@ -1922,7 +1930,7 @@ switch_exited:
 
 	/* Load TSS info. */
 	movl	_C_LABEL(gdt),%eax
-	movl	P_MD_TSS_SEL(%edi),%edx
+	movl	L_MD_TSS_SEL(%edi),%edx
 
 	/* Switch TSS. Reset "task busy" flag before */
 	andl	$~0x0200,4(%eax,%edx, 1)
@@ -1970,23 +1978,240 @@ switch_return:
 	popl	%ebx
 	ret
 
+
+
+#ifdef DIAGNOSTIC
+NENTRY(preempt_error)
+	pushl	$1f
+	call	_C_LABEL(panic)
+	/* NOTREACHED */
+1:	.asciz	"cpu_preempt"
+#endif /* DIAGNOSTIC */
+	
 /*
- * switch_exit(struct proc *p);
+ * void cpu_preempt(struct lwp *current, struct lwp *next)
+ * Switch to the specified next LWP. 
+ */
+ENTRY(cpu_preempt)
+	pushl	%ebx
+	pushl	%esi
+	pushl	%edi
+	pushl	_C_LABEL(cpl)
+
+	movl	_C_LABEL(curproc),%esi	# why don't we look on the stack here?
+	movl	24(%esp),%edi		# next
+
+	/*
+	 * Clear curproc so that we don't accumulate system time while idle.
+	 * This also insures that schedcpu() will move the old process to
+	 * the correct queue if it happens to get called from the spllower()
+	 * below and changes the priority.  (See corresponding comment in
+	 * userret()).
+	 */
+	movl	$0,_C_LABEL(curproc)
+
+#if defined(LOCKDEBUG)
+	/* Release the sched_lock before processing interrupts. */
+	call	_C_LABEL(sched_unlock_idle)
+#endif
+
+	movl	$0,_C_LABEL(cpl)	# spl0()
+	call	_C_LABEL(Xspllower)	# process pending interrupts
+
+preempt_search:
+	/*
+	 * First phase: remove new process from queue.
+	 */
+	
+	/* Lock the scheduler. */
+	cli				# splhigh doesn't do a cli
+#if defined(LOCKDEBUG)
+	call	_C_LABEL(sched_lock_idle)
+#endif
+
+	movzbl	L_PRIORITY(%edi),%eax
+#ifdef DIAGNOSTIC
+	shrl	$2,%eax
+	btl	%eax,_C_LABEL(sched_whichqs)
+	jnc	_C_LABEL(preempt_error)
+#endif /* DIAGNOSTIC */
+	movl	L_BACK(%edi),%edx	# unlink process
+	movl	$0,L_BACK(%edi)		# zap reverse link to indicate off list
+	movl	L_FORW(%edi),%ecx
+	movl	%ecx,L_FORW(%edx)
+	movl	%edx,L_BACK(%ecx)
+	cmpl	%ecx,%edx		# q still has something?
+	jne	3f
+#ifndef DIAGNOSTIC
+	shrl	$2,%eax
+#endif
+	btrl	%eax,_C_LABEL(sched_whichqs)	# no; clear bit
+
+3:
+	xorl	%eax,%eax
+
+#ifdef	DIAGNOSTIC
+	cmpl	%eax,L_WCHAN(%edi)	# Waiting for something?
+	jne	_C_LABEL(preempt_error)	# Yes; shouldn't be queued.
+	cmpb	$LSRUN,L_STAT(%edi)	# In run state?
+	jne	_C_LABEL(preempt_error)	# No; shouldn't be queued.
+#endif /* DIAGNOSTIC */
+
+	/* Isolate process.  XXX Is this necessary? */
+	movl	%eax,L_BACK(%edi)
+
+#if defined(LOCKDEBUG)
+	/*
+	 * Unlock the sched_lock, but leave interrupts off, for now.
+	 */
+	call	_C_LABEL(sched_unlock_idle)
+#endif
+
+#if defined(MULTIPROCESSOR)
+	/*
+	 * p->p_cpu = curcpu()
+	 * XXXSMP
+	 */
+#endif
+
+	/* Record new process. */
+	movb	$LSONPROC,L_STAT(%edi)	# l->l_stat = LSONPROC
+	movl	%edi,_C_LABEL(curproc)
+
+	/* It's okay to take interrupts here. */
+	sti
+
+	/* Skip context switch if same process. */
+	cmpl	%edi,%esi
+	je	switch_return
+
+	/* If old process exited, don't bother. */
+	testl	%esi,%esi
+	jz	switch_exited
+
+	/*
+	 * Second phase: save old context.
+	 *
+	 * Registers:
+	 *   %eax, %ecx - scratch
+	 *   %esi - old process, then old pcb
+	 *   %edi - new process
+	 */
+
+	movl	L_ADDR(%esi),%esi
+
+	/* Save segment registers. */
+	movl	%fs,%ax
+	movl	%gs,%cx
+	movl	%eax,PCB_FS(%esi)
+	movl	%ecx,PCB_GS(%esi)
+
+	/* Save stack pointers. */
+	movl	%esp,PCB_ESP(%esi)
+	movl	%ebp,PCB_EBP(%esi)
+
+preempt_exited:
+	/*
+	 * Third phase: restore saved context.
+	 *
+	 * Registers:
+	 *   %eax, %ecx, %edx - scratch
+	 *   %esi - new pcb
+	 *   %edi - new process
+	 */
+
+	/* No interrupts while loading new state. */
+	cli
+	movl	L_ADDR(%edi),%esi
+
+	/* Restore stack pointers. */
+	movl	PCB_ESP(%esi),%esp
+	movl	PCB_EBP(%esi),%ebp
+
+#if 0
+	/* Don't bother with the rest if switching to a system process. */
+	testl	$P_SYSTEM,L_FLAG(%edi);  XXX NJWLWP lwp's don't have P_SYSTEM!
+	jnz	switch_restored
+#endif
+
+	/*
+	 * Activate the address space.  We're curproc, so %cr3 will
+	 * be reloaded, but we're not yet curpcb, so the LDT won't
+	 * be reloaded, although the PCB copy of the selector will
+	 * be refreshed from the pmap.
+	 */
+	pushl	%edi
+	call	_C_LABEL(pmap_activate)
+	addl	$4,%esp
+
+	/* Load TSS info. */
+	movl	_C_LABEL(gdt),%eax
+	movl	L_MD_TSS_SEL(%edi),%edx
+
+	/* Switch TSS. Reset "task busy" flag before */
+	andl	$~0x0200,4(%eax,%edx, 1)
+	ltr	%dx
+
+#ifdef USER_LDT
+	/*
+	 * Switch LDT.
+	 *
+	 * XXX
+	 * Always do this, because the LDT could have been swapped into a
+	 * different selector after a process exited.  (See gdt_compact().)
+	 */
+	movl	PCB_LDT_SEL(%esi),%edx
+	lldt	%dx
+#endif /* USER_LDT */
+
+	/* Restore segment registers. */
+	movl	PCB_FS(%esi),%eax
+	movl	PCB_GS(%esi),%ecx
+	movl	%ax,%fs
+	movl	%cx,%gs
+
+preempt_restored:
+	/* Restore cr0 (including FPU state). */
+	movl	PCB_CR0(%esi),%ecx
+	movl	%ecx,%cr0
+
+	/* Record new pcb. */
+	movl	%esi,_C_LABEL(curpcb)
+
+	/* Interrupts are okay again. */
+	sti
+
+preempt_return:
+	/*
+	 * Restore old cpl from stack.  Note that this is always an increase,
+	 * due to the spl0() on entry.
+	 */
+	popl	_C_LABEL(cpl)
+
+	movl	%edi,%eax		# return (p);
+	popl	%edi
+	popl	%esi
+	popl	%ebx
+	ret
+/* NJW */
+	
+/*
+ * switch_exit(struct lwp *l);
  * Switch to proc0's saved context and deallocate the address space and kernel
  * stack for p.  Then jump into cpu_switch(), as if we were in proc0 all along.
  */
-	.globl	_C_LABEL(proc0),_C_LABEL(uvmspace_free),_C_LABEL(kernel_map)
+	.globl	_C_LABEL(lwp0),_C_LABEL(uvmspace_free),_C_LABEL(kernel_map)
 	.globl	_C_LABEL(uvm_km_free),_C_LABEL(tss_free)
 ENTRY(switch_exit)
 	movl	4(%esp),%edi		# old process
-	movl	$_C_LABEL(proc0),%ebx
+	movl	$_C_LABEL(lwp0),%ebx
 
 	/* In case we fault... */
 	movl	$0,_C_LABEL(curproc)
 
-	/* Restore proc0's context. */
+	/* Restore lwp0's context. */
 	cli
-	movl	P_ADDR(%ebx),%esi
+	movl	L_ADDR(%ebx),%esi
 
 	/* Restore stack pointers. */
 	movl	PCB_ESP(%esi),%esp
@@ -1994,7 +2219,7 @@ ENTRY(switch_exit)
 
 	/* Load TSS info. */
 	movl	_C_LABEL(gdt),%eax
-	movl	P_MD_TSS_SEL(%ebx),%edx
+	movl	L_MD_TSS_SEL(%ebx),%edx
 
 	/* Switch address space. */
 	movl	PCB_CR3(%esi),%ecx
@@ -2024,8 +2249,72 @@ ENTRY(switch_exit)
 	/*
 	 * Schedule the dead process's vmspace and stack to be freed.
 	 */
-	pushl	%edi			/* exit2(p) */
+	pushl	%edi			/* exit2(l) */
 	call	_C_LABEL(exit2)
+	addl	$4,%esp
+
+	/* Jump into cpu_switch() with the right state. */
+	movl	%ebx,%esi
+	movl	$0,_C_LABEL(curproc)
+	jmp	switch_search
+
+
+
+/* switch_lwp_exit(struct lwp *l);
+ * Switch to lwp0's saved context and deallocate the address space and kernel
+ * stack for p.  Then jump into cpu_switch(), as if we were in proc0 all along.
+ */
+	.globl	_C_LABEL(lwp0),_C_LABEL(uvmspace_free),_C_LABEL(kernel_map)
+	.globl	_C_LABEL(uvm_km_free),_C_LABEL(tss_free)
+ENTRY(switch_lwp_exit)
+	movl	4(%esp),%edi		# old process
+	movl	$_C_LABEL(lwp0),%ebx
+
+	/* In case we fault... */
+	movl	$0,_C_LABEL(curproc)
+
+	/* Restore lwp0's context. */
+	cli
+	movl	L_ADDR(%ebx),%esi
+
+	/* Restore stack pointers. */
+	movl	PCB_ESP(%esi),%esp
+	movl	PCB_EBP(%esi),%ebp
+
+	/* Load TSS info. */
+	movl	_C_LABEL(gdt),%eax
+	movl	L_MD_TSS_SEL(%ebx),%edx
+
+	/* Switch address space. */
+	movl	PCB_CR3(%esi),%ecx
+	movl	%ecx,%cr3
+
+	/* Switch TSS. */
+	andl	$~0x0200,4-SEL_KPL(%eax,%edx,1)
+	ltr	%dx
+
+	/* We're always in the kernel, so we don't need the LDT. */
+
+	/* Clear segment registers; always null in proc0. */
+	xorl	%ecx,%ecx
+	movl	%cx,%fs
+	movl	%cx,%gs
+
+	/* Restore cr0 (including FPU state). */
+	movl	PCB_CR0(%esi),%ecx
+	movl	%ecx,%cr0
+
+	/* Record new pcb. */
+	movl	%esi,_C_LABEL(curpcb)
+
+	/* Interrupts are okay again. */
+	sti
+
+	/*
+	 * Schedule the dead process's vmspace and stack to be freed.
+	 */
+	pushl	%edi			/* lwp_exit2(l) */
+	call	_C_LABEL(lwp_exit2)
 	addl	$4,%esp
 
 	/* Jump into cpu_switch() with the right state. */
@@ -2362,7 +2651,8 @@ syscall1:
 #ifdef DIAGNOSTIC
 	movl	_C_LABEL(cpl),%ebx
 #endif /* DIAGNOSTIC */
-	movl	%esp,P_MD_REGS(%edx)	# save pointer to frame
+	movl	%esp,L_MD_REGS(%edx)	# save pointer to frame
+	movl	L_PROC(%edx),%edx
 	call	P_MD_SYSCALL(%edx)	# get pointer to syscall() function
 2:	/* Check for ASTs on exit to user mode. */
 	cli

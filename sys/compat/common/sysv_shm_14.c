@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_shm_14.c,v 1.3 2000/12/17 15:55:47 jdolecek Exp $	*/
+/*	$NetBSD: sysv_shm_14.c,v 1.3.2.1 2001/03/05 22:49:19 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -40,6 +40,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/signal.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/mount.h>
 #include <sys/shm.h>  
@@ -92,16 +93,14 @@ native_to_shmid_ds14(shmbuf, oshmbuf)
 }
 
 int
-compat_14_sys_shmctl(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+compat_14_sys_shmctl(struct lwp *l, void *v, register_t *retval)
 {
 	struct compat_14_sys_shmctl_args /* {
 		syscallarg(int) shmid;
 		syscallarg(int) cmd;
 		syscallarg(struct shmid_ds14 *) buf;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	struct shmid_ds shmbuf;
 	struct shmid_ds14 oshmbuf;
 	int cmd, error;

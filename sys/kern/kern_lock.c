@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.51 2000/12/24 23:56:24 jmc Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.51.2.1 2001/03/05 22:49:40 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -84,6 +84,7 @@
 #include "opt_ddb.h"
 
 #include <sys/param.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/lock.h>
 #include <sys/systm.h>
@@ -452,7 +453,8 @@ lockmgr(__volatile struct lock *lkp, u_int flags,
 	pid_t pid;
 	int extflags;
 	cpuid_t cpu_id;
-	struct proc *p = curproc;
+	struct lwp *l = curproc;
+	struct proc *p = (l == NULL) ? NULL : l->l_proc;
 	int lock_shutdown_noblock = 0;
 	int s;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.31 2001/02/28 02:59:19 chs Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.31.2.1 2001/03/05 22:49:49 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -38,6 +38,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/kernel.h>
 #include <sys/mount.h>
@@ -254,7 +255,7 @@ genfs_revoke(v)
 		int a_flags;
 	} */ *ap = v;
 	struct vnode *vp, *vq;
-	struct proc *p = curproc;	/* XXX */
+	struct proc *p = curproc->l_proc;	/* XXX */
 
 #ifdef DIAGNOSTIC
 	if ((ap->a_flags & REVOKEALL) == 0)
@@ -451,7 +452,7 @@ genfs_getpages(v)
 	struct vnode *vp = ap->a_vp;
 	struct uvm_object *uobj = &vp->v_uvm.u_obj;
 	struct vm_page *pgs[16];			/* XXXUBC 16 */
-	struct ucred *cred = curproc->p_ucred;		/* XXXUBC curproc */
+	struct ucred *cred = curproc->l_proc->p_ucred;		/* XXXUBC curproc */
 	boolean_t async = (flags & PGO_SYNCIO) == 0;
 	boolean_t write = (ap->a_access_type & VM_PROT_WRITE) != 0;
 	boolean_t sawhole = FALSE;

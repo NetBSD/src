@@ -1,4 +1,4 @@
-/*	$NetBSD: math_emulate.c,v 1.21 1999/04/22 00:23:33 fvdl Exp $	*/
+/*	$NetBSD: math_emulate.c,v 1.21.16.1 2001/03/05 22:49:13 nathanw Exp $	*/
 
 /*
  * expediant "port" of linux 8087 emulator to 386BSD, with apologies -wfj
@@ -38,6 +38,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/acct.h>
@@ -85,11 +86,11 @@ math_emulate(info)
 		panic("math emulator called from supervisor mode");
 
 	/* ever used fp? */
-	if ((curproc->p_md.md_flags & MDP_USEDFPU) == 0) {
-		cw = curproc->p_addr->u_pcb.pcb_savefpu.sv_env.en_cw;
+	if ((curproc->l_md.md_flags & MDP_USEDFPU) == 0) {
+		cw = curproc->l_addr->u_pcb.pcb_savefpu.sv_env.en_cw;
 		fninit();
 		I387.cwd = cw;
-		curproc->p_md.md_flags |= MDP_USEDFPU;
+		curproc->l_md.md_flags |= MDP_USEDFPU;
 	}
 
 	if (I387.cwd & I387.swd & 0x3f)
@@ -576,7 +577,7 @@ static int __regoffset[] = {
 	tEAX, tECX, tEDX, tEBX, tESP, tEBP, tESI, tEDI
 };
 
-#define REG(x) (((int *)curproc->p_md.md_regs)[__regoffset[(x)]])
+#define REG(x) (((int *)curproc->l_md.md_regs)[__regoffset[(x)]])
 
 static char * sib(struct trapframe * info, int mod)
 {

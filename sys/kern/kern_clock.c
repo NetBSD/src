@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.74 2001/01/17 18:21:41 thorpej Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.74.2.1 2001/03/05 22:49:38 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -84,6 +84,7 @@
 #include <sys/dkstat.h>
 #include <sys/callout.h>
 #include <sys/kernel.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/resourcevar.h>
 #include <sys/signalvar.h>
@@ -509,6 +510,7 @@ initclocks(void)
 void
 hardclock(struct clockframe *frame)
 {
+	struct lwp *l;
 	struct proc *p;
 	int delta;
 	extern int tickdelta;
@@ -519,10 +521,10 @@ hardclock(struct clockframe *frame)
 	int ltemp;
 #endif
 
-	p = curproc;
-	if (p) {
+	l = curproc;
+	if (l) {
 		struct pstats *pstats;
-
+		p = l->l_proc;
 		/*
 		 * Run current process's virtual and profile time, as needed.
 		 */
@@ -1264,6 +1266,7 @@ statclock(struct clockframe *frame)
 #endif
 	struct cpu_info *ci = curcpu();
 	struct schedstate_percpu *spc = &ci->ci_schedstate;
+	struct lwp *l;
 	struct proc *p;
 
 	/*
@@ -1279,7 +1282,8 @@ statclock(struct clockframe *frame)
 			setstatclockrate(profhz);			
 		}
 	}
-	p = curproc;
+	l = curproc;
+	p = (l ? l->l_proc : 0);
 	if (CLKF_USERMODE(frame)) {
 		if (p->p_flag & P_PROFIL)
 			addupc_intr(p, CLKF_PC(frame));
@@ -1308,9 +1312,9 @@ statclock(struct clockframe *frame)
 			}
 		}
 #endif
-#ifdef PROC_PC
+#ifdef LWP_PC
 		if (p && p->p_flag & P_PROFIL)
-			addupc_intr(p, PROC_PC(p));
+			addupc_intr(p, LWP_PC(l));
 #endif
 		if (--spc->spc_pscnt > 0)
 			return;
@@ -1338,7 +1342,7 @@ statclock(struct clockframe *frame)
 	}
 	spc->spc_pscnt = psdiv;
 
-	if (p != NULL) {
+	if (l != NULL) {
 		++p->p_cpticks;
 		/*
 		 * If no separate schedclock is provided, call it here 
@@ -1346,7 +1350,7 @@ statclock(struct clockframe *frame)
 		 */
 		if (schedhz == 0)
 			if ((++ci->ci_schedstate.spc_schedticks & 3) == 0)
-				schedclock(p);
+				schedclock(l);
 	}
 }
 

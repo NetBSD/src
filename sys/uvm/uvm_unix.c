@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_unix.c,v 1.18 2000/09/13 15:00:25 thorpej Exp $	*/
+/*	$NetBSD: uvm_unix.c,v 1.18.2.1 2001/03/05 22:50:11 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -52,6 +52,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/resourcevar.h>
 #include <sys/vnode.h>
@@ -67,14 +68,15 @@
  */
 
 int
-sys_obreak(p, v, retval)
-	struct proc *p;
+sys_obreak(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct sys_obreak_args /* {
 		syscallarg(char *) nsize;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	struct vmspace *vm = p->p_vmspace;
 	vaddr_t new, old;
 	ssize_t diff;
@@ -157,8 +159,8 @@ uvm_grow(p, sp)
 
 /* ARGSUSED */
 int
-sys_ovadvise(p, v, retval)
-	struct proc *p;
+sys_ovadvise(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {

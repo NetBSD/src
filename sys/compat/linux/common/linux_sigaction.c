@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sigaction.c,v 1.20 2000/08/09 20:20:49 tv Exp $	*/
+/*	$NetBSD: linux_sigaction.c,v 1.20.2.1 2001/03/05 22:49:28 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -65,8 +65,8 @@
  * and just call sigaction().
  */
 int
-linux_sys_sigaction(p, v, retval)
-	struct proc *p;
+linux_sys_sigaction(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -75,6 +75,7 @@ linux_sys_sigaction(p, v, retval)
 		syscallarg(const struct linux_old_sigaction *) nsa;
 		syscallarg(struct linux_old_sigaction *) osa;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	struct linux_old_sigaction nlsa, olsa;
 	struct sigaction nbsa, obsa;
 	int error, sig;

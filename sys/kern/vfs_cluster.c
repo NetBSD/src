@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cluster.c,v 1.26 2000/11/30 20:56:53 nathanw Exp $	*/
+/*	$NetBSD: vfs_cluster.c,v 1.26.2.1 2001/03/05 22:49:47 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -36,6 +36,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/buf.h>
 #include <sys/vnode.h>
@@ -143,7 +144,7 @@ cluster_read(vp, filesize, lblkno, size, cred, bpp)
 		bp->b_flags |= B_READ;
 		ioblkno = lblkno;
 		alreadyincore = 0;
-		curproc->p_stats->p_ru.ru_inblock++;		/* XXX */
+		curproc->l_proc->p_stats->p_ru.ru_inblock++;   	/* XXX */
 	}
 	/*
 	 * XXX
@@ -241,7 +242,7 @@ cluster_read(vp, filesize, lblkno, size, cred, bpp)
 		else if (rbp) {			/* case 2, 5 */
 			trace(TR_BREADMISSRA,
 			    pack(vp, (num_ra + 1) * size), ioblkno);
-			curproc->p_stats->p_ru.ru_inblock++;	/* XXX */
+			curproc->l_proc->p_stats->p_ru.ru_inblock++; /* XXX */
 		}
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.86 2000/12/22 22:59:00 jdolecek Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.86.2.1 2001/03/05 22:49:43 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -62,6 +62,7 @@
 #include <sys/mount.h>
 #include <sys/msgbuf.h>
 #include <sys/pool.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/resource.h>
 #include <sys/resourcevar.h>
@@ -110,6 +111,8 @@ static int sysctl_procargs __P((int *, u_int, void *, size_t *, struct proc *));
 static int sysctl_pty __P((void *, size_t *, void *, size_t));
 #endif
 
+static struct lwp *proc_representative_lwp(struct proc *);
+
 /*
  * The `sysctl_memlock' is intended to keep too many processes from
  * locking down memory by doing sysctls at once.  Whether or not this
@@ -126,8 +129,8 @@ sysctl_init(void)
 }
 
 int
-sys___sysctl(p, v, retval)
-	struct proc *p;
+sys___sysctl(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -139,6 +142,7 @@ sys___sysctl(p, v, retval)
 		syscallarg(void *) new;
 		syscallarg(size_t) newlen;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	int error;
 	size_t savelen = 0, oldlen = 0;
 	sysctlfn *fn;
@@ -1496,6 +1500,10 @@ fill_eproc(p, ep)
 	struct eproc *ep;
 {
 	struct tty *tp;
+	struct lwp *l;
+
+	/* Pick a "representative" LWP */
+	l = proc_representative_lwp(p);
 
 	ep->e_paddr = p;
 	ep->e_sess = p->p_session;
@@ -1529,8 +1537,9 @@ fill_eproc(p, ep)
 		ep->e_tsess = tp->t_session;
 	} else
 		ep->e_tdev = NODEV;
-	if (p->p_wmesg)
-		strncpy(ep->e_wmesg, p->p_wmesg, WMESGLEN);
+	if (l->l_wmesg)
+		strncpy(ep->e_wmesg, l->l_wmesg, WMESGLEN);
+
 	ep->e_xsize = ep->e_xrssize = 0;
 	ep->e_xccount = ep->e_xswrss = 0;
 	ep->e_flag = ep->e_sess->s_ttyvp ? EPROC_CTTY : 0;
@@ -1548,14 +1557,22 @@ fill_kproc2(p, ki)
 	struct kinfo_proc2 *ki;
 {
 	struct tty *tp;
-
+	struct lwp *l;
 	memset(ki, 0, sizeof(*ki));
 
-	ki->p_forw = PTRTOINT64(p->p_forw);
-	ki->p_back = PTRTOINT64(p->p_back);
+	/* Pick a "representative" LWP */
+	l = proc_representative_lwp(p);
+
+	/* XXX NJWLWP
+	* These are likely not what the caller was looking for.
+	* The perils of playing with the kernel data structures...
+	*/
+	ki->p_forw = PTRTOINT64(l->l_forw);
+	ki->p_back = PTRTOINT64(l->l_back);
+
 	ki->p_paddr = PTRTOINT64(p);
 
-	ki->p_addr = PTRTOINT64(p->p_addr);
+	ki->p_addr = PTRTOINT64(l->l_addr);
 	ki->p_fd = PTRTOINT64(p->p_fd);
 	ki->p_cwdi = PTRTOINT64(p->p_cwdi);
 	ki->p_stats = PTRTOINT64(p->p_stats);
@@ -1603,11 +1620,11 @@ fill_kproc2(p, ki)
 	ki->p_rtime_usec = p->p_rtime.tv_usec;
 	ki->p_cpticks = p->p_cpticks;
 	ki->p_pctcpu = p->p_pctcpu;
-	ki->p_swtime = p->p_swtime;
-	ki->p_slptime = p->p_slptime;
-	if (p->p_stat == SONPROC) {
-		KDASSERT(p->p_cpu != NULL);
-		ki->p_schedflags = p->p_cpu->ci_schedstate.spc_flags;
+	ki->p_swtime = l->l_swtime;
+	ki->p_slptime = l->l_slptime;
+	if (l->l_stat == LSONPROC) {
+		KDASSERT(l->l_cpu != NULL);
+		ki->p_schedflags = l->l_cpu->ci_schedstate.spc_flags;
 	} else
 		ki->p_schedflags = 0;
 
@@ -1618,7 +1635,7 @@ fill_kproc2(p, ki)
 	ki->p_tracep = PTRTOINT64(p->p_tracep);
 	ki->p_traceflag = p->p_traceflag;
 
-	ki->p_holdcnt = p->p_holdcnt;
+	ki->p_holdcnt = l->l_holdcnt;
 
 	memcpy(&ki->p_siglist, &p->p_sigctx.ps_siglist, sizeof(ki_sigset_t));
 	memcpy(&ki->p_sigmask, &p->p_sigctx.ps_sigmask, sizeof(ki_sigset_t));
@@ -1626,8 +1643,8 @@ fill_kproc2(p, ki)
 	memcpy(&ki->p_sigcatch, &p->p_sigctx.ps_sigcatch, sizeof(ki_sigset_t));
 
 	ki->p_stat = p->p_stat;
-	ki->p_priority = p->p_priority;
-	ki->p_usrpri = p->p_usrpri;
+	ki->p_priority = l->l_priority;
+	ki->p_usrpri = l->l_usrpri;
 	ki->p_nice = p->p_nice;
 
 	ki->p_xstat = p->p_xstat;
@@ -1636,9 +1653,9 @@ fill_kproc2(p, ki)
 	strncpy(ki->p_comm, p->p_comm,
 	    min(sizeof(ki->p_comm), sizeof(p->p_comm)));
 
-	if (p->p_wmesg)
-		strncpy(ki->p_wmesg, p->p_wmesg, sizeof(ki->p_wmesg));
-	ki->p_wchan = PTRTOINT64(p->p_wchan);
+	if (l->l_wmesg)
+		strncpy(ki->p_wmesg, l->l_wmesg, sizeof(ki->p_wmesg));
+	ki->p_wchan = PTRTOINT64(l->l_wchan);
 
 	strncpy(ki->p_login, p->p_session->s_login, sizeof(ki->p_login));
 
@@ -1662,7 +1679,7 @@ fill_kproc2(p, ki)
 		ki->p_eflag |= EPROC_SLEADER;
 
 	/* XXX Is this double check necessary? */
-	if ((p->p_flag & P_INMEM) == 0 || P_ZOMBIE(p)) {
+	if ((l->l_flag & L_INMEM) == 0 || P_ZOMBIE(p)) {
 		ki->p_uvalid = 0;
 	} else {
 		ki->p_uvalid = 1;
@@ -1701,7 +1718,66 @@ fill_kproc2(p, ki)
 	else
 #endif
 		ki->p_cpuid = KI_NOCPU;
+
 }
+
+
+/* 
+ * Pick a LWP to represent the process for those operations which 
+ * want information about a "process" that is actually associated 
+ * with a LWP.
+ */
+static struct lwp *proc_representative_lwp(p)
+	struct proc *p;
+{
+	struct lwp *l = NULL;
+
+	/* Trivial case: only one LWP */
+	if (p->p_nrlwps == 1)
+		return (LIST_FIRST(&p->p_lwps));
+
+	switch (p->p_stat) {
+	case SSTOP: 
+		/* Pick the first stopped LWP */
+		LIST_FOREACH(l, &p->p_lwps, l_sibling) {
+			if (l->l_stat == LSSTOP)
+				return (l);
+		}
+		/* NOTREACHED */
+		break;
+	case SACTIVE:
+		/* Pick the first live LWP */
+		LIST_FOREACH(l, &p->p_lwps, l_sibling) {
+			if (l->l_stat == LSRUN ||
+			    l->l_stat == LSSLEEP ||
+			    l->l_stat == LSONPROC)
+				return (l);
+		}
+		break;
+	case SDEAD:
+	case SZOMB:
+		/* Doesn't really matter... */
+		l = LIST_FIRST(&p->p_lwps);
+		break;
+#ifdef DIAGNOSTIC
+	case SIDL:
+		/* We have more than one LWP and we're in SIDL?
+		 * How'd that happen?
+		 */
+		panic("Too many LWPs (%d) in SIDL process %d (%s)",
+		    p->p_nrlwps, p->p_pid, p->p_comm);
+	default:
+		panic("Process %d (%s) in unknown state %d",
+		    p->p_pid, p->p_comm, p->p_stat);
+#endif
+	}
+
+	panic("proc_representative_lwp: couldn't find a lwp for process"
+		" %d (%s)", p->p_pid, p->p_comm);
+	/* NOTREACHED */
+	return NULL;
+}
+
 
 int
 sysctl_procargs(name, namelen, where, sizep, up)
@@ -1774,6 +1850,7 @@ sysctl_procargs(name, namelen, where, sizep, up)
 	/* XXXCDC: how should locking work here? */
 	if ((p->p_flag & P_WEXIT) || (p->p_vmspace->vm_refcnt < 1))
 		return (EFAULT);
+
 	p->p_vmspace->vm_refcnt++;	/* XXX */
 
 	/*

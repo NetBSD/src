@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.67 2001/01/17 00:30:51 thorpej Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.67.2.1 2001/03/05 22:49:54 nathanw Exp $	*/
 /*	Id: if_ppp.c,v 1.6 1997/03/04 03:33:00 paulus Exp 	*/
 
 /*
@@ -89,6 +89,7 @@
 #define PPP_COMPRESS
 
 #include <sys/param.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
@@ -608,7 +609,7 @@ pppsioctl(ifp, cmd, data)
     u_long cmd;
     caddr_t data;
 {
-    struct proc *p = curproc;	/* XXX */
+    struct proc *p = curproc->l_proc;	/* XXX */
     struct ppp_softc *sc = ifp->if_softc;
     struct ifaddr *ifa = (struct ifaddr *)data;
     struct ifreq *ifr = (struct ifreq *)data;

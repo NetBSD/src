@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_oldolduname.c,v 1.55 2000/12/29 21:07:16 fvdl Exp $	*/
+/*	$NetBSD: linux_oldolduname.c,v 1.55.2.1 2001/03/05 22:49:26 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -54,8 +54,8 @@
 /* Not used on: alpha, m68k, sparc, sparc64 */
 
 int
-linux_sys_oldolduname(p, v, retval)
-	struct proc *p;
+linux_sys_oldolduname(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {

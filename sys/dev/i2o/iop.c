@@ -1,4 +1,4 @@
-/*	$NetBSD: iop.c,v 1.10 2001/01/03 21:17:05 ad Exp $	*/
+/*	$NetBSD: iop.c,v 1.10.2.1 2001/03/05 22:49:33 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -2048,7 +2048,6 @@ iopioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 
 	sc = device_lookup(&iop_cd, minor(dev));
 
-	PHOLD(p);
 
 	switch (cmd) {
 	case IOPIOCPT:
@@ -2175,6 +2174,6 @@ iopioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	}
 
 bad:
-	PRELE(p);
+
 	return (rv);
 }

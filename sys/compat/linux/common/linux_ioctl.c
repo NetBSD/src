@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ioctl.c,v 1.25 2001/01/10 02:28:38 fvdl Exp $	*/
+/*	$NetBSD: linux_ioctl.c,v 1.25.2.1 2001/03/05 22:49:25 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -73,8 +73,8 @@
  * work there and converting back the data afterwards.
  */
 int
-linux_sys_ioctl(p, v, retval)
-	struct proc *p;
+linux_sys_ioctl(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -83,6 +83,7 @@ linux_sys_ioctl(p, v, retval)
 		syscallarg(u_long) com;
 		syscallarg(caddr_t) data;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 
 	switch (LINUX_IOCGROUP(SCARG(uap, com))) {
 	case 'M':

@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.32 2000/12/11 17:36:03 mycroft Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.32.2.1 2001/03/05 22:49:14 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -65,6 +65,7 @@
 #include <sys/systm.h>
 #include <sys/time.h>
 #include <sys/kernel.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/vnode.h>
@@ -80,32 +81,28 @@
 #include <machine/vm86.h>
 #endif
 
-static __inline struct trapframe *process_frame __P((struct proc *));
-static __inline struct save87 *process_fpframe __P((struct proc *));
+static __inline struct trapframe *process_frame (struct lwp *);
+static __inline struct save87 *process_fpframe (struct lwp *);
 
 static __inline struct trapframe *
-process_frame(p)
-	struct proc *p;
+process_frame(struct lwp *l)
 {
 
-	return (p->p_md.md_regs);
+	return (l->l_md.md_regs);
 }
 
 static __inline struct save87 *
-process_fpframe(p)
-	struct proc *p;
+process_fpframe(struct lwp *l)
 {
 
-	return (&p->p_addr->u_pcb.pcb_savefpu);
+	return (&l->l_addr->u_pcb.pcb_savefpu);
 }
 
 int
-process_read_regs(p, regs)
-	struct proc *p;
-	struct reg *regs;
+process_read_regs(struct lwp *l, struct reg *regs)
 {
-	struct trapframe *tf = process_frame(p);
-	struct pcb *pcb = &p->p_addr->u_pcb;
+	struct trapframe *tf = process_frame(l);
+	struct pcb *pcb = &l->l_addr->u_pcb;
 
 #ifdef VM86
 	if (tf->tf_eflags & PSL_VM) {
@@ -113,7 +110,7 @@ process_read_regs(p, regs)
 		regs->r_fs = tf->tf_vm86_fs;
 		regs->r_es = tf->tf_vm86_es;
 		regs->r_ds = tf->tf_vm86_ds;
-		regs->r_eflags = get_vflags(p);
+		regs->r_eflags = get_vflags(l);
 	} else
 #endif
 	{
@@ -139,17 +136,15 @@ process_read_regs(p, regs)
 }
 
 int
-process_read_fpregs(p, regs)
-	struct proc *p;
-	struct fpreg *regs;
+process_read_fpregs(struct lwp *l, struct fpreg *regs)
 {
-	struct save87 *frame = process_fpframe(p);
+	struct save87 *frame = process_fpframe(l);
 
-	if (p->p_md.md_flags & MDP_USEDFPU) {
+	if (l->l_md.md_flags & MDP_USEDFPU) {
 #if NNPX > 0
-		extern struct proc *npxproc;
+		extern struct lwp *npxproc;
 
-		if (npxproc == p)
+		if (npxproc == l)
 			npxsave();
 #endif
 	} else {
@@ -165,7 +160,7 @@ process_read_fpregs(p, regs)
 		frame->sv_env.en_cw = cw;
 		frame->sv_env.en_sw = 0x0000;
 		frame->sv_env.en_tw = 0xffff;
-		p->p_md.md_flags |= MDP_USEDFPU;
+		l->l_md.md_flags |= MDP_USEDFPU;
 	}
 
 	memcpy(regs, frame, sizeof(*regs));
@@ -173,13 +168,11 @@ process_read_fpregs(p, regs)
 }
 
 int
-process_write_regs(p, regs)
-	struct proc *p;
-	struct reg *regs;
+process_write_regs(struct lwp *l, struct reg *regs)
 {
-	struct trapframe *tf = process_frame(p);
-	struct pcb *pcb = &p->p_addr->u_pcb;
-	pmap_t pmap = p->p_vmspace->vm_map.pmap;
+	struct trapframe *tf = process_frame(l);
+	struct pcb *pcb = &l->l_addr->u_pcb;
+	pmap_t pmap = l->l_proc->p_vmspace->vm_map.pmap;
 
 #ifdef VM86
 	if (regs->r_eflags & PSL_VM) {
@@ -189,8 +182,8 @@ process_write_regs(p, regs)
 		tf->tf_vm86_fs = regs->r_fs;
 		tf->tf_vm86_es = regs->r_es;
 		tf->tf_vm86_ds = regs->r_ds;
-		set_vflags(p, regs->r_eflags);
-		p->p_md.md_syscall = syscall_vm86;
+		set_vflags(l, regs->r_eflags);
+		l->l_proc->p_md.md_syscall = syscall_vm86;
 	} else
 #endif
 	{
@@ -230,7 +223,7 @@ process_write_regs(p, regs)
 		tf->tf_ds = regs->r_ds;
 #ifdef VM86
 		if (tf->tf_eflags & PSL_VM)
-			(*p->p_emul->e_syscall_intern)(p);
+			(*l->l_proc->p_emul->e_syscall_intern)(l->l_proc);
 #endif
 		tf->tf_eflags = regs->r_eflags;
 	}
@@ -250,21 +243,19 @@ process_write_regs(p, regs)
 }
 
 int
-process_write_fpregs(p, regs)
-	struct proc *p;
-	struct fpreg *regs;
+process_write_fpregs(struct lwp *l, struct fpreg *regs)
 {
-	struct save87 *frame = process_fpframe(p);
+	struct save87 *frame = process_fpframe(l);
 
-	if (p->p_md.md_flags & MDP_USEDFPU) {
+	if (l->l_md.md_flags & MDP_USEDFPU) {
 #if NNPX > 0
-		extern struct proc *npxproc;
+		extern struct lwp *npxproc;
 
-		if (npxproc == p)
+		if (npxproc == l)
 			npxdrop();
 #endif
 	} else {
-		p->p_md.md_flags |= MDP_USEDFPU;
+		l->l_md.md_flags |= MDP_USEDFPU;
 	}
 
 	memcpy(frame, regs, sizeof(*regs));
@@ -272,10 +263,9 @@ process_write_fpregs(p, regs)
 }
 
 int
-process_sstep(p, sstep)
-	struct proc *p;
+process_sstep(struct lwp *l, int sstep)
 {
-	struct trapframe *tf = process_frame(p);
+	struct trapframe *tf = process_frame(l);
 
 	if (sstep)
 		tf->tf_eflags |= PSL_T;
@@ -286,11 +276,9 @@ process_sstep(p, sstep)
 }
 
 int
-process_set_pc(p, addr)
-	struct proc *p;
-	caddr_t addr;
+process_set_pc(struct lwp *l, caddr_t addr)
 {
-	struct trapframe *tf = process_frame(p);
+	struct trapframe *tf = process_frame(l);
 
 	tf->tf_eip = (int)addr;
 

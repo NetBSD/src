@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_ioctl.c,v 1.5 2000/12/01 12:28:31 jdolecek Exp $	*/
+/*	$NetBSD: freebsd_ioctl.c,v 1.5.2.1 2001/03/05 22:49:20 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -33,6 +33,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/mount.h>
 #include <sys/sockio.h>
@@ -109,8 +110,8 @@ freebsd_to_netbsd_ifioctl(uap, nap)
 }
 
 int
-freebsd_sys_ioctl(p, v, retval)
-	struct proc *p;
+freebsd_sys_ioctl(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -119,6 +120,7 @@ freebsd_sys_ioctl(p, v, retval)
 		syscallarg(u_long) com;
 		syscallarg(caddr_t) data;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
         struct oss_sys_ioctl_args ap;
 	struct sys_ioctl_args nap;
 
@@ -143,8 +145,8 @@ freebsd_sys_ioctl(p, v, retval)
 		return oss_ioctl_audio(p, &ap, retval);
 	case 'i':
 		freebsd_to_netbsd_ifioctl(uap, &nap);
-		return sys_ioctl(p, &nap, retval);
+		return sys_ioctl(l, &nap, retval);
 	default:
-		return sys_ioctl(p, uap, retval);
+		return sys_ioctl(l, uap, retval);
 	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_olduname.c,v 1.56 2000/12/29 21:07:16 fvdl Exp $	*/
+/*	$NetBSD: linux_olduname.c,v 1.56.2.1 2001/03/05 22:49:27 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -57,8 +57,8 @@
 /* Alpha: XXX Only if we assume osf_utsname is used by Linux programs. */
 
 int
-linux_sys_olduname(p, v, retval)
-	struct proc *p;
+linux_sys_olduname(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_net.c,v 1.24 2001/02/11 01:16:42 eeh Exp $	 */
+/*	$NetBSD: svr4_net.c,v 1.24.2.1 2001/03/05 22:49:30 nathanw Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -265,7 +265,7 @@ svr4_ptm_alloc(p)
 		if ((error = copyout(ptyname, path, sizeof(ptyname))) != 0)
 			return error;
 
-		switch (error = sys_open(p, &oa, &fd)) {
+		switch (error = sys_open(curproc, &oa, &fd)) { /* XXX NJWLWP */
 		case ENOENT:
 		case ENXIO:
 			return error;

@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.188 2001/01/01 20:18:34 thorpej Exp $	*/
+/*	$NetBSD: init_main.c,v 1.188.2.1 2001/03/05 22:49:37 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -59,6 +59,7 @@
 #include <sys/kernel.h>
 #include <sys/mount.h>
 #include <sys/map.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/kthread.h>
 #include <sys/resourcevar.h>
@@ -119,14 +120,16 @@ Copyright (c) 1982, 1986, 1989, 1991, 1993
 struct	session session0;
 struct	pgrp pgrp0;
 struct	proc proc0;
+struct	lwp lwp0;
 struct	pcred cred0;
 struct	filedesc0 filedesc0;
 struct	cwdinfo cwdi0;
 struct	plimit limit0;
+struct	pstats pstat0;
 struct	vmspace vmspace0;
 struct	sigacts sigacts0;
 #ifndef curproc
-struct	proc *curproc = &proc0;
+struct	lwp *curproc = &lwp0;
 #endif
 struct	proc *initproc;
 
@@ -155,6 +158,7 @@ extern const struct emul emul_netbsd;	/* defined in kern_exec.c */
 void
 main(void)
 {
+	struct lwp *l;
 	struct proc *p;
 	struct pdevinit *pdev;
 	int i, s, error;
@@ -173,9 +177,10 @@ main(void)
 	 * Initialize the current process pointer (curproc) before
 	 * any possible traps/probes to simplify trap processing.
 	 */
-	p = &proc0;
-	curproc = p;
-	p->p_cpu = curcpu();
+	l = &lwp0;
+	curproc = l;
+	l->l_cpu = curcpu();
+	l->l_proc = &proc0;
 	/*
 	 * Attempt to find console and initialize
 	 * in case of early panic or other messages.
@@ -222,9 +227,15 @@ main(void)
 	/*
 	 * Create process 0 (the swapper).
 	 */
+	p = &proc0;
+	LIST_INIT(&p->p_lwps);
+	LIST_INSERT_HEAD(&p->p_lwps, l, l_sibling);
+	p->p_nlwps = 1;
+
 	s = proclist_lock_write();
 	LIST_INSERT_HEAD(&allproc, p, p_list);
 	LIST_INSERT_HEAD(PIDHASH(p->p_pid), p, p_hash);
+	LIST_INSERT_HEAD(&alllwp, l, l_list);
 	proclist_unlock_write(s);
 
 	p->p_pgrp = &pgrp0;
@@ -242,8 +253,8 @@ main(void)
 	 * init(8) when they exit.  init(8) can easily wait them out
 	 * for us.
 	 */
-	p->p_flag = P_INMEM | P_SYSTEM | P_NOCLDWAIT;
-	p->p_stat = SONPROC;
+	p->p_flag = P_SYSTEM | P_NOCLDWAIT;
+	p->p_stat = SACTIVE;
 	p->p_nice = NZERO;
 	p->p_emul = &emul_netbsd;
 #ifdef __HAVE_SYSCALL_INTERN
@@ -251,8 +262,12 @@ main(void)
 #endif
 	strncpy(p->p_comm, "swapper", MAXCOMLEN);
 
+	l->l_flag = L_INMEM;
+	l->l_stat = LSONPROC;
+
+
 	callout_init(&p->p_realit_ch);
-	callout_init(&p->p_tsleep_ch);
+	callout_init(&l->l_tsleep_ch);
 
 	/* Create credentials. */
 	cred0.p_refcnt = 1;
@@ -300,13 +315,9 @@ main(void)
 	    trunc_page(VM_MAX_ADDRESS), TRUE);
 	p->p_vmspace = &vmspace0;
 
-	p->p_addr = proc0paddr;				/* XXX */
+	l->l_addr = proc0paddr;				/* XXX */
 
-	/*
-	 * We continue to place resource usage info in the
-	 * user struct so they're pageable.
-	 */
-	p->p_stats = &p->p_addr->u_stats;
+	p->p_stats = &pstat0;
 
 	/*
 	 * Charge root for one process.
@@ -388,7 +399,7 @@ main(void)
 	 * wait for us to inform it that the root file system has been
 	 * mounted.
 	 */
-	if (fork1(p, 0, SIGCHLD, NULL, 0, start_init, NULL, NULL, &initproc))
+	if (fork1(l, 0, SIGCHLD, NULL, 0, start_init, NULL, NULL, &initproc))
 		panic("fork init");
 
 	/*
@@ -458,8 +469,10 @@ main(void)
 	for (p = LIST_FIRST(&allproc); p != NULL;
 	     p = LIST_NEXT(p, p_list)) {
 		p->p_stats->p_start = mono_time = boottime = time;
-		if (p->p_cpu != NULL)
-			p->p_cpu->ci_schedstate.spc_runtime = time;
+		for (l = LIST_FIRST(&p->p_lwps); l != NULL;
+		     l = LIST_NEXT(l, l_sibling)) 
+			if (l->l_cpu != NULL)
+				l->l_cpu->ci_schedstate.spc_runtime = time;
 		p->p_rtime.tv_sec = p->p_rtime.tv_usec = 0;
 	}
 	splx(s);
@@ -545,7 +558,8 @@ static const char *initpaths[] = {
 static void
 start_init(void *arg)
 {
-	struct proc *p = arg;
+	struct lwp *l = arg;
+	struct proc *p = l->l_proc;
 	vaddr_t addr;
 	struct sys_execve_args /* {
 		syscallarg(const char *) path;
@@ -659,7 +673,7 @@ start_init(void *arg)
 		 * Now try to exec the program.  If can't for any reason
 		 * other than it doesn't exist, complain.
 		 */
-		error = sys_execve(p, &args, retval);
+		error = sys_execve(LIST_FIRST(&p->p_lwps), &args, retval);
 		if (error == 0 || error == EJUSTRETURN) {
 			KERNEL_PROC_UNLOCK(p);
 			return;

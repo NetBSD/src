@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.42 2001/01/22 12:17:42 jdolecek Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.42.2.1 2001/03/05 22:50:05 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -44,6 +44,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/namei.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/kernel.h>
 #include <sys/vnode.h>
@@ -144,7 +145,7 @@ ext2fs_mountroot()
 	extern struct vnode *rootvp;
 	struct m_ext2fs *fs;
 	struct mount *mp;
-	struct proc *p = curproc;	/* XXX */
+	struct proc *p = curproc->l_proc;	/* XXX */
 	struct ufsmount *ump;
 	int error;
 

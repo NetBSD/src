@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.56 2000/12/03 07:34:49 perseant Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.56.2.1 2001/03/05 22:50:08 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -135,8 +135,8 @@ extern TAILQ_HEAD(bqueues, buf) bufqueues[BQUEUES];
  * -1/errno is return on error.
  */
 int
-sys_lfs_markv(p, v, retval)
-    struct proc *p;
+sys_lfs_markv(l, v, retval)
+    struct lwp *l;
     void *v;
     register_t *retval;
 {
@@ -145,6 +145,7 @@ sys_lfs_markv(p, v, retval)
 		syscallarg(struct block_info *) blkiov;
 		syscallarg(int) blkcnt;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	BLOCK_INFO *blkp;
 	IFILE *ifp;
 	struct buf *bp, *nbp;
@@ -541,8 +542,8 @@ sys_lfs_markv(p, v, retval)
  */
 
 int
-sys_lfs_bmapv(p, v, retval)
-	struct proc *p;
+sys_lfs_bmapv(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -551,6 +552,7 @@ sys_lfs_bmapv(p, v, retval)
 		syscallarg(struct block_info *) blkiov;
 		syscallarg(int) blkcnt;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	BLOCK_INFO *blkp;
 	IFILE *ifp;
 	struct buf *bp;
@@ -774,8 +776,8 @@ sys_lfs_bmapv(p, v, retval)
  * -1/errno is return on error.
  */
 int
-sys_lfs_segclean(p, v, retval)
-	struct proc *p;
+sys_lfs_segclean(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -783,6 +785,7 @@ sys_lfs_segclean(p, v, retval)
 		syscallarg(fsid_t *) fsidp;
 		syscallarg(u_long) segment;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	CLEANERINFO *cip;
 	SEGUSE *sup;
 	struct buf *bp;
@@ -855,8 +858,8 @@ sys_lfs_segclean(p, v, retval)
  * -1/errno is return on error.
  */
 int
-sys_lfs_segwait(p, v, retval)
-	struct proc *p;
+sys_lfs_segwait(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -864,6 +867,7 @@ sys_lfs_segwait(p, v, retval)
 		syscallarg(fsid_t *) fsidp;
 		syscallarg(struct timeval *) tv;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	extern int lfs_allclean_wakeup;
 	struct mount *mntp;
 	struct timeval atv;

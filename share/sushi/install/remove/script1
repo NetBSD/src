@@ -1,3 +1,0 @@
-#!/bin/sh
-# $NetBSD: script1,v 1.1 2001/01/05 02:06:58 garbled Exp $
-pkg_info -e \* | sort

@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.53 2001/01/22 12:17:40 jdolecek Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.53.2.1 2001/03/05 22:49:52 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -36,6 +36,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -258,7 +259,8 @@ spec_read(v)
 #ifdef DIAGNOSTIC
 	if (uio->uio_rw != UIO_READ)
 		panic("spec_read mode");
-	if (uio->uio_segflg == UIO_USERSPACE && uio->uio_procp != curproc)
+	if (uio->uio_segflg == UIO_USERSPACE && 
+	    uio->uio_procp != curproc->l_proc)
 		panic("spec_read proc");
 #endif
 	if (uio->uio_resid == 0)
@@ -344,7 +346,8 @@ spec_write(v)
 #ifdef DIAGNOSTIC
 	if (uio->uio_rw != UIO_WRITE)
 		panic("spec_write mode");
-	if (uio->uio_segflg == UIO_USERSPACE && uio->uio_procp != curproc)
+	if (uio->uio_segflg == UIO_USERSPACE && 
+	    uio->uio_procp != curproc->l_proc)
 		panic("spec_write proc");
 #endif
 

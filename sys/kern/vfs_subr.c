@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.146 2001/02/21 21:40:00 jdolecek Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.146.2.1 2001/03/05 22:49:48 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -87,6 +87,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/kernel.h>
 #include <sys/mount.h>
@@ -212,7 +213,7 @@ vfs_busy(mp, flags, interlkp)
 		if (flags & LK_NOWAIT)
 			return (ENOENT);
 		if ((flags & LK_RECURSEFAIL) && mp->mnt_unmounter != NULL
-		    && mp->mnt_unmounter == curproc)
+		    && mp->mnt_unmounter == curproc->l_proc)
 			return (EDEADLK);
 		if (interlkp)
 			simple_unlock(interlkp);
@@ -415,7 +416,7 @@ getnewvnode(tag, mp, vops, vpp)
 {
 	extern struct uvm_pagerops uvm_vnodeops;
 	struct uvm_object *uobj;
-	struct proc *p = curproc;	/* XXX */
+	struct proc *p = curproc->l_proc;	/* XXX */
 	struct freelst *listhd;
 	static int toggle;
 	struct vnode *vp;
@@ -1040,7 +1041,7 @@ checkalias(nvp, nvp_rdev, mp)
 	dev_t nvp_rdev;
 	struct mount *mp;
 {
-	struct proc *p = curproc;       /* XXX */
+	struct proc *p = curproc->l_proc;       /* XXX */
 	struct vnode *vp;
 	struct vnode **vpp;
 
@@ -1189,7 +1190,7 @@ void
 vput(vp)
 	struct vnode *vp;
 {
-	struct proc *p = curproc;	/* XXX */
+	struct proc *p = curproc->l_proc;	/* XXX */
 
 #ifdef DIAGNOSTIC
 	if (vp == NULL)
@@ -1230,7 +1231,7 @@ void
 vrele(vp)
 	struct vnode *vp;
 {
-	struct proc *p = curproc;	/* XXX */
+	struct proc *p = curproc->l_proc;	/* XXX */
 
 #ifdef DIAGNOSTIC
 	if (vp == NULL)
@@ -1374,7 +1375,7 @@ vflush(mp, skipvp, flags)
 	struct vnode *skipvp;
 	int flags;
 {
-	struct proc *p = curproc;	/* XXX */
+	struct proc *p = curproc->l_proc;	/* XXX */
 	struct vnode *vp, *nvp;
 	int busy = 0;
 
@@ -1599,7 +1600,7 @@ void
 vgone(vp)
 	struct vnode *vp;
 {
-	struct proc *p = curproc;	/* XXX */
+	struct proc *p = curproc->l_proc;	/* XXX */
 
 	simple_lock(&vp->v_interlock);
 	vgonel(vp, p);
@@ -2402,7 +2403,8 @@ vfs_shutdown()
 {
 	struct buf *bp;
 	int iter, nbusy, nbusy_prev = 0, dcount, s;
-	struct proc *p = curproc;
+	struct lwp *l = curproc;
+	struct proc *p = l->l_proc;
 
 	/* XXX we're certainly not running in proc0's context! */
 	if (p == NULL)
@@ -2417,7 +2419,7 @@ vfs_shutdown()
 	/* avoid coming back this way again if we panic. */
 	doing_shutdown = 1;
 
-	sys_sync(p, NULL, NULL);
+	sys_sync(l, NULL, NULL);
 
 	/* Wait for sync to finish. */
 	dcount = 10000;

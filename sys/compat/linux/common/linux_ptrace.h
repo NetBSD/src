@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ptrace.h,v 1.3 2000/11/01 21:02:09 jdolecek Exp $	*/
+/*	$NetBSD: linux_ptrace.h,v 1.3.4.1 2001/03/05 22:49:27 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -58,11 +58,11 @@
 #define LINUX_PTRACE_SYSCALL		24
 
 #if defined(__i386__)
-int linux_sys_ptrace_arch __P((struct proc *, void *, register_t *));
+int linux_sys_ptrace_arch __P((struct lwp *, void *, register_t *));
 
-#define LINUX_SYS_PTRACE_ARCH(p,v,r)	linux_sys_ptrace_arch((p),(v),(r))
+#define LINUX_SYS_PTRACE_ARCH(l,v,r)	linux_sys_ptrace_arch((l),(v),(r))
 #else
-#define LINUX_SYS_PTRACE_ARCH(p,v,r)	EIO
+#define LINUX_SYS_PTRACE_ARCH(l,v,r)	EIO
 #endif
 
 #endif /* !_LINUX_PTRACE_H */

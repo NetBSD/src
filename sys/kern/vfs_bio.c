@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.74 2000/12/13 17:48:46 jdolecek Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.74.2.1 2001/03/05 22:49:47 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -50,6 +50,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/buf.h>
 #include <sys/vnode.h>
@@ -187,9 +188,16 @@ bio_doread(vp, blkno, size, cred, async)
 	int async;
 {
 	struct buf *bp;
-	struct proc *p = (curproc != NULL ? curproc : &proc0);	/* XXX */
+	struct lwp *l  = (curproc != NULL ? curproc : &lwp0);	/* XXX */
+	struct proc *p = l->l_proc;
 
 	bp = getblk(vp, blkno, size, 0, 0);
+
+#ifdef DIAGNOSTIC
+	if (bp == NULL) {
+		panic("bio_doread: no such buf");
+	}
+#endif
 
 	/*
 	 * If buffer does not have data valid, start a read.
@@ -312,7 +320,8 @@ bwrite(bp)
 	struct buf *bp;
 {
 	int rv, sync, wasdelayed, s;
-	struct proc *p = (curproc != NULL ? curproc : &proc0);	/* XXX */
+	struct lwp *l  = (curproc != NULL ? curproc : &lwp0);	/* XXX */
+	struct proc *p = l->l_proc;
 	struct vnode *vp;
 	struct mount *mp;
 
@@ -408,7 +417,8 @@ void
 bdwrite(bp)
 	struct buf *bp;
 {
-	struct proc *p = (curproc != NULL ? curproc : &proc0);	/* XXX */
+	struct lwp *l  = (curproc != NULL ? curproc : &lwp0);	/* XXX */
+	struct proc *p = l->l_proc;
 	int s;
 
 	/* If this is a tape block, write the block now. */
@@ -473,7 +483,8 @@ void
 bdirty(bp)
 	struct buf *bp;
 {
-	struct proc *p = (curproc != NULL ? curproc : &proc0);	/* XXX */
+	struct lwp *l  = (curproc != NULL ? curproc : &lwp0);	/* XXX */
+	struct proc *p = l->l_proc;
 	int s;
 
 	s = splbio();
