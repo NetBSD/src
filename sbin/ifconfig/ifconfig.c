@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)ifconfig.c	5.1 (Berkeley) 2/28/91";*/
-static char rcsid[] = "$Id: ifconfig.c,v 1.9 1993/08/01 18:26:52 mycroft Exp $";
+static char rcsid[] = "$Id: ifconfig.c,v 1.10 1993/12/10 11:24:07 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -107,12 +107,12 @@ struct	cmd {
 	{ "-arp",	IFF_NOARP,	setifflags },
 	{ "debug",	IFF_DEBUG,	setifflags },
 	{ "-debug",	-IFF_DEBUG,	setifflags },
-	{ "llc0",	IFF_LLC0,	setifflags },	/* 10 Mar 93 */
-	{ "-llc0",	-IFF_LLC0,	setifflags },
-	{ "llc1",	IFF_LLC1,	setifflags },
-	{ "-llc1",	-IFF_LLC1,	setifflags },
-	{ "llc2",	IFF_LLC2,	setifflags },
-	{ "-llc2",	-IFF_LLC2,	setifflags },
+	{ "link0",	IFF_LINK0,	setifflags },
+	{ "-link0",	-IFF_LINK0,	setifflags },
+	{ "link1",	IFF_LINK1,	setifflags },
+	{ "-link1",	-IFF_LINK1,	setifflags },
+	{ "link2",	IFF_LINK2,	setifflags },
+	{ "-link2",	-IFF_LINK2,	setifflags },
 	{ "alias",	IFF_UP,		notealias },
 	{ "-alias",	-IFF_UP,	notealias },
 	{ "delete",	-IFF_UP,	notealias },
@@ -464,7 +464,7 @@ setsnpaoffset(val)
 
 #define	IFFBITS \
 "\020\1UP\2BROADCAST\3DEBUG\4LOOPBACK\5POINTOPOINT\6NOTRAILERS\7RUNNING\10NOARP\
-\11PROMISC\12ALLMULTI\13OACTIVE\14SIMPLEX\15LLC0\16LLC1\17LLC2\
+\11PROMISC\12ALLMULTI\13OACTIVE\14SIMPLEX\15LINK0\16LINK1\17LINK2\
 "
 
 /*
