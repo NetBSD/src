@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.179.2.8 2002/07/09 14:53:32 lukem Exp $
+.\"	$NetBSD: main,v 1.179.2.9 2002/07/10 01:24:27 lukem Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1211,13 +1211,13 @@ including
 files and the
 host key files
 .Pa ssh_host*_key* .
-.Pa /etc/ssh_config
+.Pa /etc/ssh.conf
 was renamed to
-.Pa /etc/ssh/ssh.conf ,
+.Pa /etc/ssh/ssh_config ,
 and
-.Pa /etc/sshd_config
+.Pa /etc/sshd.conf
 was renamed to
-.Pa /etc/ssh/sshd.conf .
+.Pa /etc/ssh/sshd_config .
 .
 .It
 The
