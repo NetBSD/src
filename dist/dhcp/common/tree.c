@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: tree.c,v 1.1.1.1 2001/08/03 11:35:34 drochner Exp $ Copyright (c) 1995-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: tree.c,v 1.2 2002/06/10 00:30:34 itojun Exp $ Copyright (c) 1995-2000 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -257,7 +257,6 @@ int make_limit (new, expr, limit)
 	struct expression *expr;
 	int limit;
 {
-	struct expression *rv;
 
 	/* Allocate a node to enforce a limit on evaluation. */
 	if (!expression_allocate (new, MDL))
@@ -652,11 +651,10 @@ int evaluate_dns_expression (result, packet, lease, client_state, in_options,
 	struct binding_scope **scope;
 	struct expression *expr;
 {
-	ns_updrec *foo;
 	unsigned long ttl = 0;
 	char *tname;
 	struct data_string name, data;
-	int r0, r1, r2, r3;
+	int r0, r1, r2;
 
 	if (!result || *result) {
 		log_error ("evaluate_dns_expression called with non-null %s",
@@ -906,10 +904,7 @@ int evaluate_boolean_expression (result, packet, lease, client_state,
 	struct binding_scope **scope;
 	struct expression *expr;
 {
-	struct data_string left, right;
-	struct data_string rrtype, rrname, rrdata;
-	unsigned long ttl;
-	int srrtype, srrname, srrdata, sttl;
+	struct data_string left;
 	int bleft, bright;
 	int sleft, sright;
 	struct binding *binding;
@@ -1278,11 +1273,10 @@ int evaluate_data_expression (result, packet, lease, client_state,
 	int line;
 {
 	struct data_string data, other;
-	unsigned long offset, len, i;
+	unsigned long offset, len;
 	int s0, s1, s2, s3;
 	int status;
 	struct binding *binding;
-	char *s;
 	struct binding_value *bv;
 
 	switch (expr -> op) {
@@ -1828,7 +1822,6 @@ int evaluate_data_expression (result, packet, lease, client_state,
 					       MDL);
 
 		if (s0 && s1) {
-			char *upper;
 			int i;
 
 			/* The buffer must be a multiple of the number's
@@ -3125,7 +3118,6 @@ static int op_val (op)
 int op_precedence (op1, op2)
 	enum expr_op op1, op2;
 {
-	int ov1, ov2;
 
 	return op_val (op1) - op_val (op2);
 }
@@ -3740,7 +3732,6 @@ int binding_scope_dereference (ptr, file, line)
 	const char *file;
 	int line;
 {
-	int i;
 	struct binding_scope *binding_scope;
 
 	if (!ptr || !*ptr) {

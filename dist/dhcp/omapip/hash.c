@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: hash.c,v 1.1.1.1 2001/08/03 11:35:37 drochner Exp $ Copyright (c) 1995-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: hash.c,v 1.2 2002/06/10 00:30:36 itojun Exp $ Copyright (c) 1995-2000 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include <omapip/omapip_p.h>
@@ -72,11 +72,11 @@ void free_hash_table (ptr, file, line)
 	const char *file;
 	int line;
 {
+#if defined (DEBUG_MEMORY_LEAKAGE) || \
+		defined (DEBUG_MEMORY_LEAKAGE_ON_EXIT)
 	int i;
 	struct hash_bucket *hbc, *hbn = (struct hash_bucket *)0;
 
-#if defined (DEBUG_MEMORY_LEAKAGE) || \
-		defined (DEBUG_MEMORY_LEAKAGE_ON_EXIT)
 	for (i = 0; i < ptr -> hash_count; i++) {
 	    for (hbc = ptr -> buckets [i]; hbc; hbc = hbn) {
 		hbn = hbc -> next;
@@ -164,8 +164,9 @@ void free_hash_bucket (ptr, file, line)
 	const char *file;
 	int line;
 {
-	struct hash_bucket *hp;
 #if defined (DEBUG_MALLOC_POOL)
+	struct hash_bucket *hp;
+
 	for (hp = free_hash_buckets; hp; hp = hp -> next) {
 		if (hp == ptr) {
 			log_error ("hash bucket freed twice!");

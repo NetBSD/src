@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char ocopyright[] =
-"$Id: dhcrelay.c,v 1.2 2001/08/03 13:39:05 drochner Exp $ Copyright (c) 1997-2000 Internet Software Consortium.  All rights reserved.\n";
+"$Id: dhcrelay.c,v 1.3 2002/06/10 00:30:36 itojun Exp $ Copyright (c) 1997-2000 Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -700,7 +700,7 @@ int add_relay_agent_options (ip, packet, length, giaddr)
 	unsigned length;
 	struct in_addr giaddr;
 {
-	int is_dhcp = 0, agent_options_present = 0;
+	int is_dhcp = 0;
 	u_int8_t *op, *sp, *max, *end_pad = 0;
 
 	/* If we're not adding agent options to packets, we can skip
