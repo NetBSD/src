@@ -32,12 +32,12 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: bcopy.S,v 1.2 1993/10/21 01:40:28 jtc Exp $
+ *	$Id: bcopy.S,v 1.3 1993/12/10 10:45:18 mycroft Exp $
  */
 
 #if defined(LIBC_SCCS)
 	.text
-	.asciz "$Id: bcopy.S,v 1.2 1993/10/21 01:40:28 jtc Exp $"
+	.asciz "$Id: bcopy.S,v 1.3 1993/12/10 10:45:18 mycroft Exp $"
 #endif
 
 #include "DEFS.h"
@@ -47,11 +47,24 @@
 	 *  ws@tools.de     (Wolfgang Solfrank, TooLs GmbH) +49-228-985800
 	 */
 
+#ifdef MEMCOPY
+ENTRY(memcpy)
+#else
+#ifdef MEMMOVE
+ENTRY(memmove)
+#else
 ENTRY(bcopy)
+#endif
+#endif
 	pushl	%esi
 	pushl	%edi
+#if defined(MEMCOPY) || defined(MEMMOVE)
+	movl	12(%esp),%edi
+	movl	16(%esp),%esi
+#else
 	movl	12(%esp),%esi
 	movl	16(%esp),%edi
+#endif
 	movl	20(%esp),%ecx
 	cmpl	%esi,%edi	/* potentially overlapping? */
 	jnb	1f
@@ -63,6 +76,9 @@ ENTRY(bcopy)
 	andl	$3,%ecx		/* any bytes left? */
 	rep
 	movsb
+#if defined(MEMCOPY) || defined(MEMMOVE)
+	movl	12(%esp),%eax
+#endif
 	popl	%edi
 	popl	%esi
 	ret
@@ -81,6 +97,9 @@ ENTRY(bcopy)
 	subl	$3,%edi
 	rep
 	movsl
+#if defined(MEMCOPY) || defined(MEMMOVE)
+	movl	12(%esp),%eax
+#endif
 	popl	%edi
 	popl	%esi
 	cld
