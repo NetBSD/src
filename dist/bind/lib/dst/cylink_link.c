@@ -1,7 +1,7 @@
-/*	$NetBSD: cylink_link.c,v 1.3 2001/05/17 23:00:18 itojun Exp $	*/
+/*	$NetBSD: cylink_link.c,v 1.3.2.1 2002/06/28 11:42:54 lukem Exp $	*/
 
 #ifdef CYLINK_DSS
-static const char rcsid[] = "Header: /proj/cvs/isc/bind8/src/lib/dst/cylink_link.c,v 1.8 2001/04/05 22:00:00 bwelling Exp";
+static const char rcsid[] = "Header: /proj/cvs/isc/bind8/src/lib/dst/cylink_link.c,v 1.9 2001/05/29 05:48:05 marka Exp";
 
 /*
  * Portions Copyright (c) 1995-1998 by Trusted Information Systems, Inc.
@@ -149,7 +149,7 @@ dst_cylink_sign(const int mode, DST_KEY *dkey, void **context,
 		SHAInit(ctx);
 
 	if ((mode & SIG_MODE_UPDATE) && (data && len > 0)) {
-		status = SHAUpdate(ctx, (u_char *) data, len);
+		status = SHAUpdate(ctx, data, len);
 		if (status != SUCCESS)
 			return (SIGN_UPDATE_FAILURE);
 	}
@@ -230,7 +230,7 @@ dst_cylink_verify(const int mode, DST_KEY *dkey, void **context,
 		SHAInit(ctx);
 
 	if ((mode & SIG_MODE_UPDATE) && (data && len > 0)) {
-		status = SHAUpdate(ctx, (u_char *) data, len);
+		status = SHAUpdate(ctx, data, len);
 		if (status != SUCCESS)
 			return (VERIFY_UPDATE_FAILURE);
 	}
@@ -577,6 +577,8 @@ dst_cylink_generate_keypair(DST_KEY *key, int nothing)
 	int status, n;
 	DSA_Key *dsa;
 	u_char rand[SHA_LENGTH];
+
+	UNUSED(nothing);
 
 	if (key == NULL || key->dk_alg != KEY_DSA)
 		return (0);
