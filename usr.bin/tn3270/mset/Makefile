@@ -1,4 +1,4 @@
-# $Header: /cvsroot/src/usr.bin/tn3270/mset/Attic/Makefile,v 1.4 1993/04/27 09:51:52 cgd Exp $
+# $Header: /cvsroot/src/usr.bin/tn3270/mset/Attic/Makefile,v 1.5 1993/04/29 11:05:59 cgd Exp $
 
 .include <../../Makefile.inc>
 
@@ -23,6 +23,7 @@ astosc.OUT: ${.CURDIR}/../ctlr/hostctlr.h ${.CURDIR}/../ctlr/function.h \
 	${.CURDIR}/../tools/mkastosc/obj/mkastosc \
 		${.CURDIR}/../ctlr/hostctlr.h ${.CURDIR}/../ctlr/function.h \
 		< ${.CURDIR}/../ctlr/${KBD} > ${.TARGET}
+	/bin/rm -f astosc.out
 	ln -s astosc.OUT astosc.out
 
 # astosc.out
