@@ -1,4 +1,4 @@
-.\"	$NetBSD: isa.4,v 1.29 2001/10/28 16:28:39 jdolecek Exp $
+.\"	$NetBSD: isa.4,v 1.30 2002/01/01 22:34:06 augustss Exp $
 .\"
 .\" Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
 .\" Copyright (c) 1997 Jonathan Stone
@@ -249,6 +249,8 @@ compatible chips.
 .El
 .Ss Miscellaneous devices
 .Bl -tag -width pcdisplay -offset indent
+.It az
+Aztech/PackardBell radio card.
 .It ega
 EGA graphics boards.
 .It lm
@@ -267,6 +269,12 @@ PC control and timer ports.
 PS/2 auxiliary port mice.
 .It pmsi
 PS/2 auxiliary port wheel mice.
+.It rt
+AIMS Lab Radiotrack FM radio.
+.It rtii
+AIMS Lab Radiotrack II FM radio.
+.It sf2r
+SoundForte RadioLink SF16-FMR2 FM radio.
 .It tcic
 Databook DB86082, DB86084, DB86184, and DB86072
 .Tn PCMCIA
