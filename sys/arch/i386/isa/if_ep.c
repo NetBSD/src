@@ -21,7 +21,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: if_ep.c,v 1.9 1994/01/25 10:46:29 deraadt Exp $
+ *	$Id: if_ep.c,v 1.10 1994/01/28 10:36:59 deraadt Exp $
  */
 /*
  * TODO:
@@ -88,22 +88,14 @@ struct ep_softc {
 	char    ep_connectors;		/* Connectors on this card.	*/
 #define MAX_MBS  4			/* # of mbufs we keep around	*/
 	struct mbuf *mb[MAX_MBS];	/* spare mbuf storage.		*/
-	int     next_mb;		/* Which mbuf to use next. 	*/
-	int     last_mb;		/* Last mbuf.			*/
-	int     tx_start_thresh;	/* Current TX_start_thresh.	*/
+	int	next_mb;		/* Which mbuf to use next. 	*/
+	int	last_mb;		/* Last mbuf.			*/
+	int	tx_start_thresh;	/* Current TX_start_thresh.	*/
 	caddr_t bpf;			/* BPF  "magic cookie"		*/
-}       ep_softc[NEP];
+} ep_softc[NEP];
 
 static int epprobe __P((struct isa_device *));
 static int epattach __P((struct isa_device *));
-int epintr __P((int));
-static int epinit __P((int));
-static int epioctl __P((struct ifnet * ifp, int, caddr_t));
-static int epstart __P((struct ifnet *));
-static int epreset __P((int));
-static int epwatchdog __P((int));
-static int epmbufqueue __P((struct ep_softc *));
-static int epstop __P((int));
 
 struct isa_driver epdriver = {
 	epprobe,
@@ -111,9 +103,19 @@ struct isa_driver epdriver = {
 	"ep"
 };
 
-static int send_ID_sequence();
-static u_short get_eeprom_data __P((int id_port, int offset));
-static int is_eeprom_busy __P((struct isa_device * is));
+int epintr __P((int));
+static int epinit __P((int));
+static int epioctl __P((struct ifnet * ifp, int, caddr_t));
+static int epstart __P((struct ifnet *));
+static int epwatchdog __P((int));
+static void epreset __P((int));
+static void epread __P((struct ep_softc *));
+static void epmbufqueue __P((struct ep_softc *));
+static void epstop __P((int));
+
+static void epsendidseq __P((u_short port));
+static u_short epreadeeprom __P((int id_port, int offset));
+static int epbusyeeprom __P((struct isa_device * is));
 
 /*
  * Rudimentary support for multiple cards is here but is not
@@ -128,33 +130,32 @@ epprobe(is)
 {
 	struct ep_softc *sc = &ep_softc[is->id_unit];
 	u_short k;
-	char    buf[8];
-	int     id_port = 0x100;/* XXX */
+	int	id_port = 0x100;/* XXX */
 
 	outw(BASE + EP_COMMAND, GLOBAL_RESET);
 	DELAY(1000);
 	outb(id_port, 0xc0);	/* Global reset to id_port. */
 	DELAY(1000);
-	send_ID_sequence(id_port);
+	epsendidseq(id_port);
 	DELAY(1000);
 
 	/*
 	 * MFG_ID should have 0x6d50.
 	 * PROD_ID should be 0x9[0-f]50
 	 */
-	k = get_eeprom_data(id_port, EEPROM_MFG_ID);
+	k = epreadeeprom(id_port, EEPROM_MFG_ID);
 	if (k != MFG_ID)
 		return (0);
-	k = get_eeprom_data(id_port, EEPROM_PROD_ID);
+	k = epreadeeprom(id_port, EEPROM_PROD_ID);
 	if ((k & 0xf0ff) != (PROD_ID & 0xf0ff))
 		return (0);
 
-	k = get_eeprom_data(id_port, EEPROM_ADDR_CFG);	/* get addr cfg */
+	k = epreadeeprom(id_port, EEPROM_ADDR_CFG);	/* get addr cfg */
 	k = (k & 0x1f) * 0x10 + 0x200;			/* decode base addr. */
 	if (k != is->id_iobase)
 		return (0);
 
-	k = get_eeprom_data(id_port, EEPROM_RESOURCE_CFG);
+	k = epreadeeprom(id_port, EEPROM_RESOURCE_CFG);
 	k >>= 12;
 	if (is->id_irq != (1 << ((k == 2) ? 9 : k)))
 		return (0);
@@ -205,11 +206,11 @@ epattach(is)
 	for (i = 0; i < 3; i++) {
 		u_short *p;
 		GO_WINDOW(0);
-		if (is_eeprom_busy(is))
-			return;
+		if (epbusyeeprom(is))
+			return (0);
 		outw(BASE + EP_W0_EEPROM_COMMAND, READ_EEPROM | i);
-		if (is_eeprom_busy(is))
-			return;
+		if (epbusyeeprom(is))
+			return (0);
 		p = (u_short *) & sc->ep_addr[i * 2];
 		*p = htons(inw(BASE + EP_W0_EEPROM_DATA));
 		GO_WINDOW(2);
@@ -249,6 +250,7 @@ epattach(is)
 #if NBPFILTER > 0
 	bpfattach(&sc->bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
 #endif
+	return (1);
 }
 
 
@@ -265,7 +267,7 @@ epinit(unit)
 	int     s, i;
 
 	if (ifp->if_addrlist == (struct ifaddr *) 0)
-		return;
+		return (0);
 
 	s = splimp();
 	while (inb(BASE + EP_STATUS) & S_COMMAND_IN_PROGRESS)
@@ -332,8 +334,8 @@ epinit(unit)
 	epmbufqueue(sc);
 
 	epstart(ifp);
-
 	splx(s);
+	return (0);
 }
 
 static const char padmap[] = {0, 3, 2, 1};
@@ -349,14 +351,14 @@ epstart(ifp)
 	s = splimp();
 	if (sc->ep_if.if_flags & IFF_OACTIVE) {
 		splx(s);
-		return;
+		return (0);
 	}
 
 startagain:
 	m = sc->ep_if.if_snd.ifq_head;	/* Sneak a peek at the next packet */
 	if (m == 0) {
 		splx(s);
-		return;
+		return (0);
 	}
 #if 0
 	len = m->m_pkthdr.len;
@@ -385,12 +387,12 @@ startagain:
 		outw(BASE + EP_COMMAND, SET_TX_AVAIL_THRESH | (len + pad + 4));
 		sc->ep_if.if_flags |= IFF_OACTIVE;
 		splx(s);
-		return;
+		return (0);
 	}
 	IF_DEQUEUE(&sc->ep_if.if_snd, m);
 	if (m == 0) {		/* not really needed */
 		splx(s);
-		return;
+		return (0);
 	}
 	outw(BASE + EP_COMMAND, SET_TX_START_THRESH |
 	    (len / 4 + sc->tx_start_thresh));
@@ -483,7 +485,7 @@ startagain:
 readcheck:
 	if (inw(BASE + EP_W1_RX_STATUS) & RX_BYTES_MASK) {
 		splx(s);
-		return;
+		return (0);
 	}
 	goto startagain;
 }
@@ -495,7 +497,6 @@ epintr(unit)
 	int     status, i;
 	register struct ep_softc *sc = &ep_softc[unit];
 	struct ifnet *ifp = &sc->ep_if;
-	struct mbuf *m;
 
 	status = 0;
 checkintr:
@@ -504,7 +505,7 @@ checkintr:
 	if (status == 0) {
 		/* No interrupts. */
 		outw(BASE + EP_COMMAND, C_INTR_LATCH);
-		return;
+		return (1);
 	}
 	/* important that we do this first. */
 	outw(BASE + EP_COMMAND, ACK_INTR | status);
@@ -523,7 +524,7 @@ checkintr:
 		printf("ep%d: reset (status: %x)\n", unit, status);
 		outw(BASE + EP_COMMAND, C_INTR_LATCH);
 		epinit(unit);
-		return;
+		return (1);
 	}
 	if (status & S_TX_COMPLETE) {
 		status &= ~S_TX_COMPLETE;
@@ -556,18 +557,15 @@ checkintr:
 	goto checkintr;
 }
 
-int
+static void
 epread(sc)
 	register struct ep_softc *sc;
 {
 	struct ether_header *eh;
 	struct mbuf *mcur, *m, *m0, *top;
 	int     totlen, lenthisone;
-	int     save_totlen;
+	int     save_totlen, off;
 	u_short etype;
-	int     off, resid;
-	int     count, spinwait;
-	int     i;
 
 	totlen = inw(BASE + EP_W1_RX_STATUS);
 	off = 0;
@@ -723,7 +721,7 @@ epioctl(ifp, cmd, data)
 	register struct ifaddr *ifa = (struct ifaddr *) data;
 	struct ep_softc *sc = &ep_softc[ifp->if_unit];
 	struct ifreq *ifr = (struct ifreq *) data;
-	int s, error = 0;
+	int error = 0;
 
 	switch (cmd) {
 	case SIOCSIFADDR:
@@ -779,7 +777,7 @@ epioctl(ifp, cmd, data)
 	return (error);
 }
 
-static int
+static void
 epreset(unit)
 	int     unit;
 {
@@ -788,7 +786,6 @@ epreset(unit)
 	epstop(unit);
 	epinit(unit);
 	splx(s);
-	return;
 }
 
 static int
@@ -797,9 +794,10 @@ epwatchdog(unit)
 {
 	log(LOG_ERR, "ep%d: watchdog\n", unit);
 	epreset(unit);
+	return 0;
 }
 
-static int
+static void
 epstop(unit)
 	int     unit;
 {
@@ -817,15 +815,14 @@ epstop(unit)
 	outw(BASE + EP_COMMAND, SET_RD_0_MASK);
 	outw(BASE + EP_COMMAND, SET_INTR_MASK);
 	outw(BASE + EP_COMMAND, SET_RX_FILTER);
-	return;
 }
 
 
 /*
  * This is adapted straight from the book. There's probably a better way.
  */
-static int
-send_ID_sequence(port)
+static void
+epsendidseq(port)
 	u_short port;
 {
 	char    cx, al;
@@ -848,7 +845,6 @@ loop1:	cx--;
 	al ^= 0xcf;
 	if (cx)
 		goto loop1;
-
 }
 
 
@@ -867,7 +863,7 @@ loop1:	cx--;
  * bit of data with each read.
  */
 static u_short
-get_eeprom_data(id_port, offset)
+epreadeeprom(id_port, offset)
 	int     id_port;
 	int     offset;
 {
@@ -880,7 +876,7 @@ get_eeprom_data(id_port, offset)
 }
 
 static int
-is_eeprom_busy(is)
+epbusyeeprom(is)
 	struct isa_device *is;
 {
 	int     i = 0, j;
@@ -904,14 +900,15 @@ is_eeprom_busy(is)
 	return (0);
 }
 
-static int
+static void
 epmbufqueue(sc)
 	struct ep_softc *sc;
 {
 	int     i = 0;
-	if (sc->mb[sc->last_mb])
-		return;
+
 	i = sc->last_mb;
+	if (sc->mb[i])
+		return;
 	do {
 		MGET(sc->mb[i], M_DONTWAIT, MT_DATA);
 		if (!sc->mb[i])
