@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_extern.h,v 1.15 2000/03/16 18:20:06 jdolecek Exp $	*/
+/*	$NetBSD: ffs_extern.h,v 1.16 2000/04/04 09:23:20 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -42,7 +42,8 @@
 #define FFS_CLUSTERWRITE	2	/* cluster writing enabled */
 #define FFS_REALLOCBLKS		3	/* block reallocation enabled */
 #define FFS_ASYNCFREE		4	/* asynchronous block freeing enabled */
-#define FFS_MAXID		5	/* number of valid ffs ids */
+#define FFS_LOG_CHANGEOPT	5	/* log optimalization strategy change */
+#define FFS_MAXID		6	/* number of valid ffs ids */
 
 #define FFS_NAMES { \
 	{ 0, 0 }, \
@@ -50,6 +51,7 @@
 	{ "doclusterwrite", CTLTYPE_INT }, \
 	{ "doreallocblks", CTLTYPE_INT }, \
 	{ "doasyncfree", CTLTYPE_INT }, \
+	{ "log_changeopt", CTLTYPE_INT }, \
 }
 
 struct buf;
