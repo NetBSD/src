@@ -33,7 +33,7 @@
 
 #include "krb_locl.h"
 
-RCSID("$Id: mk_safe.c,v 1.1.1.2 2000/12/29 01:43:17 assar Exp $");
+RCSID("$Id: mk_safe.c,v 1.2 2001/02/04 18:04:03 christos Exp $");
 
 /* application include files */
 #include "krb-archaeology.h"
@@ -50,7 +50,6 @@ RCSID("$Id: mk_safe.c,v 1.1.1.2 2000/12/29 01:43:17 assar Exp $");
 
 /* from rd_safe.c */
 extern int dqc_type;
-void fixup_quad_cksum(void*, size_t, des_cblock*, void*, void*, int);
 
 /*
  * krb_mk_safe() constructs an AUTH_MSG_SAFE message.  It takes some
