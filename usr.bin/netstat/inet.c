@@ -229,12 +229,24 @@ udp_stats(off, name)
 	if (off == 0)
 		return;
 	kvm_read(off, (char *)&udpstat, sizeof (udpstat));
-	printf("%s:\n\t%u incomplete header%s\n", name,
+	printf("%s:\n\t%u packet%s sent\n", name,
+		udpstat.udps_opackets, plural(udpstat.udps_opackets));
+	printf("\t%u packet%s received\n",
+		udpstat.udps_ipackets, plural(udpstat.udps_ipackets));
+	printf("\t%u incomplete header%s\n",
 		udpstat.udps_hdrops, plural(udpstat.udps_hdrops));
 	printf("\t%u bad data length field%s\n",
 		udpstat.udps_badlen, plural(udpstat.udps_badlen));
 	printf("\t%u bad checksum%s\n",
 		udpstat.udps_badsum, plural(udpstat.udps_badsum));
+	printf("\t%u packet%s received on unbound ports\n",
+		udpstat.udps_noport, plural(udpstat.udps_noport));
+	printf("\t%u packet%s received (arrived as bcast) on unbound ports\n",
+		udpstat.udps_noportbcast, plural(udpstat.udps_noportbcast));
+	printf("\t%u packet%s dropped, socket full\n",
+	       udpstat.udps_fullsock, plural(udpstat.udps_fullsock));
+	printf("\t%u packet%s missed pcb cache\n",
+	       udpstat.udpps_pcbcachemiss, plural(udpstat.udpps_pcbcachemiss));
 }
 
 /*
