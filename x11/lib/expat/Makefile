@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2004/03/06 03:05:39 rtr Exp $
+#	$NetBSD: Makefile,v 1.5.2.1 2004/04/29 05:46:38 jmc Exp $
 
 .include <bsd.own.mk>
 
@@ -9,9 +9,10 @@ DIST=	${X11SRCDIR.xc}/lib/${LIB}
 
 SRCS=	xmlparse.c xmlrole.c xmltok.c
 
-.include "Makefile.expatdefs"
+INCS=	expat.h
+INCSDIR=${X11INCDIR}
 
-CPPFLAGS+=	${EXPAT_FLAGS} -I${DIST}
+CPPFLAGS+=	-DXML_BYTE_ORDER=0 -I${DIST}
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>
