@@ -1,4 +1,4 @@
-/*	$NetBSD: mb8795.c,v 1.12 1999/06/23 04:17:11 abs Exp $	*/
+/*	$NetBSD: mb8795.c,v 1.13 1999/08/03 06:55:21 dbj Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -364,8 +364,6 @@ mb8795_rint(sc)
 #endif
 		
 			{
-				struct ether_header *eh;
-
 				ifp->if_ipackets++;
 				debugipkt++;
 
