@@ -1,6 +1,5 @@
-#	$NetBSD: Makefile,v 1.3 1999/11/01 20:40:48 jdolecek Exp $
+#	$NetBSD: Makefile,v 1.4 2002/11/26 23:30:34 lukem Exp $
 
-KDIR=	/sys/ntfs
 INCSDIR= /usr/include/ntfs
 
 INCS=	ntfs.h ntfs_inode.h ntfsmount.h

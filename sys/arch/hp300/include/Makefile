@@ -1,6 +1,5 @@
-#	$NetBSD: Makefile,v 1.17 2002/08/07 05:15:18 briggs Exp $
+#	$NetBSD: Makefile,v 1.18 2002/11/26 23:30:15 lukem Exp $
 
-KDIR=	/sys/arch/hp300/include
 INCSDIR= /usr/include/hp300
 
 INCS=	ansi.h aout_machdep.h asm.h autoconf.h \

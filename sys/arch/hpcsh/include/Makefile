@@ -1,6 +1,5 @@
-#	$NetBSD: Makefile,v 1.10 2002/09/06 13:18:43 gehenna Exp $
+#	$NetBSD: Makefile,v 1.11 2002/11/26 23:30:26 lukem Exp $
 
-KDIR=	/sys/arch/hpcsh/include
 INCSDIR= /usr/include/hpcsh
 
 INCS=	ansi.h aout_machdep.h asm.h \

@@ -1,6 +1,5 @@
-#	$NetBSD: Makefile,v 1.1 2001/06/27 02:53:39 fredette Exp $
+#	$NetBSD: Makefile,v 1.2 2002/11/26 23:30:29 lukem Exp $
 
-KDIR=	/sys/arch/sun68k/include
 INCSDIR= /usr/include/sun68k
 
 INCS=	\

@@ -1,6 +1,5 @@
-#	$NetBSD: Makefile,v 1.3 2002/08/07 05:15:39 briggs Exp $
+#	$NetBSD: Makefile,v 1.4 2002/11/26 23:30:27 lukem Exp $
 
-KDIR=	/sys/arch/mvmeppc/include
 INCSDIR= /usr/include/mvmeppc
 
 INCS=   ansi.h aout_machdep.h asm.h \

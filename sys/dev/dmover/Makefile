@@ -1,6 +1,5 @@
-#	$NetBSD: Makefile,v 1.1 2002/08/02 00:30:37 thorpej Exp $
+#	$NetBSD: Makefile,v 1.2 2002/11/26 23:30:30 lukem Exp $
 
-KDIR=	/sys/dev/dmover
 INCSDIR= /usr/include/dev/dmover
 
 # Only install includes which are used by userland

@@ -1,6 +1,5 @@
-#	$NetBSD: Makefile,v 1.22 2002/11/23 05:33:11 lha Exp $
+#	$NetBSD: Makefile,v 1.23 2002/11/26 23:30:16 lukem Exp $
 
-KDIR=	/sys/arch/i386/include
 INCSDIR= /usr/include/i386
 
 INCS=	ansi.h aout_machdep.h apmvar.h asm.h atomic.h \

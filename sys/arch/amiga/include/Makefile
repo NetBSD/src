@@ -1,6 +1,5 @@
-#	$NetBSD: Makefile,v 1.17 2002/09/06 13:18:43 gehenna Exp $
+#	$NetBSD: Makefile,v 1.18 2002/11/26 23:30:10 lukem Exp $
 
-KDIR=	/sys/arch/amiga/include
 INCSDIR= /usr/include/amiga
 
 INCS=	ansi.h aout_machdep.h asm.h \

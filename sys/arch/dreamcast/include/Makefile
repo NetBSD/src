@@ -1,6 +1,5 @@
-#	$NetBSD: Makefile,v 1.10 2002/09/06 13:18:43 gehenna Exp $
+#	$NetBSD: Makefile,v 1.11 2002/11/26 23:30:25 lukem Exp $
 
-KDIR=	/sys/arch/dreamcast/include
 INCSDIR= /usr/include/dreamcast
 
 INCS=	ansi.h aout_machdep.h asm.h \

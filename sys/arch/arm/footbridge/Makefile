@@ -1,6 +1,5 @@
-#	$NetBSD: Makefile,v 1.3 2002/10/25 07:57:39 jdolecek Exp $
+#	$NetBSD: Makefile,v 1.4 2002/11/26 23:30:11 lukem Exp $
 
-KDIR=	/sys/arch/arm/footbridge
 INCSDIR= /usr/include/arm/footbridge
 INCS=	footbridge_intr.h
 

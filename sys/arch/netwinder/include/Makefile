@@ -1,6 +1,5 @@
-#	$NetBSD: Makefile,v 1.14 2002/08/07 05:15:41 briggs Exp $
+#	$NetBSD: Makefile,v 1.15 2002/11/26 23:30:27 lukem Exp $
 
-KDIR=	/sys/arch/netwinder/include
 INCSDIR= /usr/include/netwinder
 
 INCS=	ansi.h aout_machdep.h asm.h \

@@ -1,6 +1,5 @@
-#	$NetBSD: Makefile,v 1.3 2002/08/07 05:15:49 briggs Exp $
+#	$NetBSD: Makefile,v 1.4 2002/11/26 23:30:27 lukem Exp $
 
-KDIR=	/sys/arch/playstation2/include
 INCSDIR= /usr/include/playstation2
 
 INCS=	ansi.h aout_machdep.h asm.h \

@@ -1,6 +1,5 @@
-#	$NetBSD: Makefile,v 1.25 2002/09/06 13:18:43 gehenna Exp $
+#	$NetBSD: Makefile,v 1.26 2002/11/26 23:30:20 lukem Exp $
 
-KDIR=	/sys/arch/newsmips/include
 INCSDIR= /usr/include/newsmips
 
 INCS=	adrsmap.h ansi.h asm.h aout_machdep.h autoconf.h \

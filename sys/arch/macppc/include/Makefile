@@ -1,6 +1,5 @@
-#	$NetBSD: Makefile,v 1.15 2002/08/07 05:15:31 briggs Exp $
+#	$NetBSD: Makefile,v 1.16 2002/11/26 23:30:17 lukem Exp $
 
-KDIR=	/sys/arch/macppc/include
 INCSDIR= /usr/include/macppc
 
 INCS=	adbsys.h ansi.h aout_machdep.h apmvar.h asm.h autoconf.h \

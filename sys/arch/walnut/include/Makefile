@@ -1,6 +1,5 @@
-#	$NetBSD: Makefile,v 1.4 2002/10/08 17:43:10 thorpej Exp $
+#	$NetBSD: Makefile,v 1.5 2002/11/26 23:30:29 lukem Exp $
 
-KDIR=	/sys/arch/walnut/include
 INCSDIR= /usr/include/walnut
 
 INCS=	ansi.h aout_machdep.h asm.h \
