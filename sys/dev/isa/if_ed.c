@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ed.c,v 1.81 1995/07/23 23:42:47 mycroft Exp $	*/
+/*	$NetBSD: if_ed.c,v 1.82 1995/07/24 02:40:38 mycroft Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -111,17 +111,18 @@ struct ed_softc {
 int edprobe __P((struct device *, void *, void *));
 void edattach __P((struct device *, struct device *, void *));
 int edintr __P((void *));
-int ed_ioctl __P((struct ifnet *, u_long, caddr_t));
-void ed_start __P((struct ifnet *));
-void ed_watchdog __P((int));
-void ed_reset __P((struct ed_softc *));
-void ed_init __P((struct ed_softc *));
-void ed_stop __P((struct ed_softc *));
-void ed_getmcaf __P((struct arpcom *, u_long *));
+int edioctl __P((struct ifnet *, u_long, caddr_t));
+void edstart __P((struct ifnet *));
+void edwatchdog __P((int));
+void edreset __P((struct ed_softc *));
+void edinit __P((struct ed_softc *));
+void edstop __P((struct ed_softc *));
 
 #define inline	/* XXX for debugging porpoises */
 
-void ed_get_packet __P((struct ed_softc *, caddr_t, u_short));
+void ed_getmcaf __P((struct arpcom *, u_long *));
+void edread __P((struct ed_softc *, caddr_t, int));
+struct mbuf *edget __P((struct ed_softc *, caddr_t, int));
 static inline void ed_rint __P((struct ed_softc *));
 static inline void ed_xmit __P((struct ed_softc *));
 static inline caddr_t ed_ring_copy __P((struct ed_softc *, caddr_t, caddr_t,
@@ -673,7 +674,7 @@ ed_probe_3Com(sc, cf, ia)
 
 	/*
 	 * Unmap PROM - select NIC registers.  The proper setting of the
-	 * tranceiver is set in ed_init so that the attach code is given a
+	 * tranceiver is set in edinit so that the attach code is given a
 	 * chance to set the default based on a compile-time config option.
 	 */
 	outb(sc->asic_addr + ED_3COM_CR, ED_3COM_CR_XSEL);
@@ -1031,14 +1032,14 @@ edattach(parent, self, aux)
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 
 	/* Set interface to stopped condition (reset). */
-	ed_stop(sc);
+	edstop(sc);
 
 	/* Initialize ifnet structure. */
 	ifp->if_unit = sc->sc_dev.dv_unit;
 	ifp->if_name = edcd.cd_name;
-	ifp->if_start = ed_start;
-	ifp->if_ioctl = ed_ioctl;
-	ifp->if_watchdog = ed_watchdog;
+	ifp->if_start = edstart;
+	ifp->if_ioctl = edioctl;
+	ifp->if_watchdog = edwatchdog;
 	ifp->if_flags =
 	    IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
 
@@ -1099,14 +1100,14 @@ edattach(parent, self, aux)
  * Reset interface.
  */
 void
-ed_reset(sc)
+edreset(sc)
 	struct ed_softc *sc;
 {
 	int s;
 
 	s = splimp();
-	ed_stop(sc);
-	ed_init(sc);
+	edstop(sc);
+	edinit(sc);
 	splx(s);
 }
 
@@ -1114,7 +1115,7 @@ ed_reset(sc)
  * Take interface offline.
  */
 void
-ed_stop(sc)
+edstop(sc)
 	struct ed_softc *sc;
 {
 	int n = 5000;
@@ -1135,7 +1136,7 @@ ed_stop(sc)
  * an interrupt after a transmit has been started on it.
  */
 void
-ed_watchdog(unit)
+edwatchdog(unit)
 	int unit;
 {
 	struct ed_softc *sc = edcd.cd_devs[unit];
@@ -1143,14 +1144,14 @@ ed_watchdog(unit)
 	log(LOG_ERR, "%s: device timeout\n", sc->sc_dev.dv_xname);
 	++sc->sc_arpcom.ac_if.if_oerrors;
 
-	ed_reset(sc);
+	edreset(sc);
 }
 
 /*
  * Initialize device.
  */
 void
-ed_init(sc)
+edinit(sc)
 	struct ed_softc *sc;
 {
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
@@ -1165,7 +1166,7 @@ ed_init(sc)
 	 */
 
 	/* Reset transmitter flags. */
-	sc->sc_arpcom.ac_if.if_timer = 0;
+	ifp->if_timer = 0;
 
 	sc->txb_inuse = 0;
 	sc->txb_new = 0;
@@ -1287,7 +1288,7 @@ ed_init(sc)
 	ifp->if_flags &= ~IFF_OACTIVE;
 
 	/* ...and attempt to start output. */
-	ed_start(ifp);
+	edstart(ifp);
 }
 
 /*
@@ -1335,7 +1336,7 @@ ed_xmit(sc)
  *     (i.e. that the output part of the interface is idle)
  */
 void
-ed_start(ifp)
+edstart(ifp)
 	struct ifnet *ifp;
 {
 	struct ed_softc *sc = edcd.cd_devs[ifp->if_unit];
@@ -1360,7 +1361,7 @@ outloop:
 
 	/* We need to use m->m_pkthdr.len, so require the header */
 	if ((m0->m_flags & M_PKTHDR) == 0)
-		panic("ed_start: no header mbuf");
+		panic("edstart: no header mbuf");
 
 #if NBPFILTER > 0
 	/* Tap off here if there is a BPF listener. */
@@ -1529,16 +1530,15 @@ loop:
 		    packet_hdr.next_packet >= sc->rec_page_start &&
 		    packet_hdr.next_packet < sc->rec_page_stop) {
 			/* Go get packet. */
-			ed_get_packet(sc, packet_ptr + sizeof(struct ed_ring),
+			edread(sc, packet_ptr + sizeof(struct ed_ring),
 			    len - sizeof(struct ed_ring));
-			++sc->sc_arpcom.ac_if.if_ipackets;
 		} else {
 			/* Really BAD.  The ring pointers are corrupted. */
 			log(LOG_ERR,
 			    "%s: NIC memory corrupt - invalid packet length %d\n",
 			    sc->sc_dev.dv_xname, len);
 			++sc->sc_arpcom.ac_if.if_ierrors;
-			ed_reset(sc);
+			edreset(sc);
 			return;
 		}
 
@@ -1667,7 +1667,7 @@ edintr(arg)
 				    sc->sc_dev.dv_xname);
 #endif
 				/* Stop/reset/re-init NIC. */
-				ed_reset(sc);
+				edreset(sc);
 			} else {
 				/*
 				 * Receiver Error.  One or more of: CRC error,
@@ -1725,7 +1725,7 @@ edintr(arg)
 		 * to start output on the interface.  This is done after
 		 * handling the receiver to give the receiver priority.
 		 */
-		ed_start(ifp);
+		edstart(ifp);
 
 		/*
 		 * Return NIC CR to standard state: page 0, remote DMA
@@ -1756,9 +1756,9 @@ edintr(arg)
  * Process an ioctl request.  This code needs some work - it looks pretty ugly.
  */
 int
-ed_ioctl(ifp, command, data)
+edioctl(ifp, cmd, data)
 	register struct ifnet *ifp;
-	u_long command;
+	u_long cmd;
 	caddr_t data;
 {
 	struct ed_softc *sc = edcd.cd_devs[ifp->if_unit];
@@ -1768,7 +1768,7 @@ ed_ioctl(ifp, command, data)
 
 	s = splimp();
 
-	switch (command) {
+	switch (cmd) {
 
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
@@ -1776,7 +1776,7 @@ ed_ioctl(ifp, command, data)
 		switch (ifa->ifa_addr->sa_family) {
 #ifdef INET
 		case AF_INET:
-			ed_init(sc);
+			edinit(sc);
 			arp_ifinit(&sc->sc_arpcom, ifa);
 			break;
 #endif
@@ -1794,12 +1794,12 @@ ed_ioctl(ifp, command, data)
 				    sc->sc_arpcom.ac_enaddr,
 				    sizeof(sc->sc_arpcom.ac_enaddr));
 			/* Set new address. */
-			ed_init(sc);
+			edinit(sc);
 			break;
 		    }
 #endif
 		default:
-			ed_init(sc);
+			edinit(sc);
 			break;
 		}
 		break;
@@ -1811,7 +1811,7 @@ ed_ioctl(ifp, command, data)
 			 * If interface is marked down and it is running, then
 			 * stop it.
 			 */
-			ed_stop(sc);
+			edstop(sc);
 			ifp->if_flags &= ~IFF_RUNNING;
 		} else if ((ifp->if_flags & IFF_UP) != 0 &&
 		    	   (ifp->if_flags & IFF_RUNNING) == 0) {
@@ -1819,21 +1819,21 @@ ed_ioctl(ifp, command, data)
 			 * If interface is marked up and it is stopped, then
 			 * start it.
 			 */
-			ed_init(sc);
+			edinit(sc);
 		} else {
 			/*
 			 * Reset the interface to pick up changes in any other
 			 * flags that affect hardware registers.
 			 */
-			ed_stop(sc);
-			ed_init(sc);
+			edstop(sc);
+			edinit(sc);
 		}
 		break;
 
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
 		/* Update our multicast list. */
-		error = (command == SIOCADDMULTI) ?
+		error = (cmd == SIOCADDMULTI) ?
 		    ether_addmulti(ifr, &sc->sc_arpcom) :
 		    ether_delmulti(ifr, &sc->sc_arpcom);
 
@@ -1842,8 +1842,8 @@ ed_ioctl(ifp, command, data)
 			 * Multicast list has changed; set the hardware filter
 			 * accordingly.
 			 */
-			ed_stop(sc); /* XXX for ds_setmcaf? */
-			ed_init(sc);
+			edstop(sc); /* XXX for ds_setmcaf? */
+			edinit(sc);
 			error = 0;
 		}
 		break;
@@ -1861,62 +1861,41 @@ ed_ioctl(ifp, command, data)
  * ether_input().  If there is a BPF listener, give a copy to BPF, too.
  */
 void
-ed_get_packet(sc, buf, len)
+edread(sc, buf, len)
 	struct ed_softc *sc;
 	caddr_t buf;
-	u_short len;
+	int len;
 {
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+    	struct mbuf *m;
 	struct ether_header *eh;
-    	struct mbuf *m, *ed_ring_to_mbuf();
-
-	/* Allocate a header mbuf. */
-	MGETHDR(m, M_DONTWAIT, MT_DATA);
-	if (m == 0)
-		return;
-	m->m_pkthdr.rcvif = &sc->sc_arpcom.ac_if;
-	m->m_pkthdr.len = len;
-	m->m_len = 0;
-
-	/* The following silliness is to make NFS happy. */
-#define EROUND	((sizeof(struct ether_header) + 3) & ~3)
-#define EOFF	(EROUND - sizeof(struct ether_header))
-
-	/*
-	 * The following assumes there is room for the ether header in the
-	 * header mbuf.
-	 */
-	m->m_data += EOFF;
-	eh = mtod(m, struct ether_header *);
-
-	if (sc->mem_shared)
-		bcopy(buf, mtod(m, caddr_t), sizeof(struct ether_header));
-	else
-		ed_pio_readmem(sc, (long)buf, mtod(m, caddr_t),
-		    sizeof(struct ether_header));
-	buf += sizeof(struct ether_header);
-	m->m_len += sizeof(struct ether_header);
-	len -= sizeof(struct ether_header);
 
 	/* Pull packet off interface. */
-	if (ed_ring_to_mbuf(sc, buf, m, len) == 0) {
-		m_freem(m);
+	m = edget(sc, buf, len);
+	if (m == 0) {
+		ifp->if_ierrors++;
 		return;
 	}
 
+	ifp->if_ipackets++;
+
+	/* We assume that the header fit entirely in one mbuf. */
+	eh = mtod(m, struct ether_header *);
+
 #if NBPFILTER > 0
 	/*
-	 * Check if there's a BPF listener on this interface.  If so, hand off
-	 * the raw packet to bpf.
+	 * Check if there's a BPF listener on this interface.
+	 * If so, hand off the raw packet to BPF.
 	 */
-	if (sc->sc_arpcom.ac_if.if_bpf) {
-		bpf_mtap(sc->sc_arpcom.ac_if.if_bpf, m);
+	if (ifp->if_bpf) {
+		bpf_mtap(ifp->if_bpf, m);
 
 		/*
 		 * Note that the interface cannot be in promiscuous mode if
 		 * there are no BPF listeners.  And if we are in promiscuous
 		 * mode, we have to check if this packet is really ours.
 		 */
-		if ((sc->sc_arpcom.ac_if.if_flags & IFF_PROMISC) &&
+		if ((ifp->if_flags & IFF_PROMISC) &&
 		    (eh->ether_dhost[0] & 1) == 0 && /* !mcast and !bcast */
 		    bcmp(eh->ether_dhost, sc->sc_arpcom.ac_enaddr,
 			    sizeof(eh->ether_dhost)) != 0) {
@@ -1926,9 +1905,9 @@ ed_get_packet(sc, buf, len)
 	}
 #endif
 
-	/* Fix up data start offset in mbuf to point past ether header. */
+	/* We assume that the header fit entirely in one mbuf. */
 	m_adj(m, sizeof(struct ether_header));
-	ether_input(&sc->sc_arpcom.ac_if, eh, m);
+	ether_input(ifp, eh, m);
 }
 
 /*
@@ -2115,7 +2094,7 @@ ed_pio_write_mbufs(sc, m, dst)
 		log(LOG_WARNING,
 		    "%s: remote transmit DMA failed to complete\n",
 		    sc->sc_dev.dv_xname);
-		ed_reset(sc);
+		edreset(sc);
 	}
 
 	return (len);
@@ -2165,51 +2144,46 @@ ed_ring_copy(sc, src, dst, amount)
  * amount = amount of data to copy
  */
 struct mbuf *
-ed_ring_to_mbuf(sc, src, dst, total_len)
+edget(sc, src, total_len)
 	struct ed_softc *sc;
 	caddr_t src;
-	struct mbuf *dst;
 	u_short total_len;
 {
-	register struct mbuf *m = dst;
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	struct mbuf *tmp, **mp, *m;
+	int len;
 
-	while (total_len) {
-		register u_short amount = min(total_len, M_TRAILINGSPACE(m));
+	MGETHDR(m, M_DONTWAIT, MT_DATA);
+	if (m == 0)
+		return 0;
+	m->m_pkthdr.rcvif = ifp;
+	m->m_pkthdr.len = total_len;
+	len = MHLEN;
+	top = 0;
+	mp = &top;
 
-		if (amount == 0) {
-			/*
-			 * No more data in this mbuf; alloc another.
-			 *
-			 * If there is enough data for an mbuf cluster, attempt
-			 * to allocate one of those, otherwise, a regular mbuf
-			 * will do.
-			 * Note that a regular mbuf is always required, even if
-			 * we get a cluster - getting a cluster does not
-			 * allocate any mbufs, and one is needed to assign the
-			 * cluster to.  The mbuf that has a cluster extension
-			 * can not be used to contain data - only the cluster
-			 * can contain data.
-			 */
-			dst = m;
+	while (total_len > 0) {
+		if (top) {
 			MGET(m, M_DONTWAIT, MT_DATA);
-			if (m == 0)
-				return (0);
-
-			if (total_len >= MINCLSIZE)
-				MCLGET(m, M_DONTWAIT);
-
-			m->m_len = 0;
-			dst->m_next = m;
-			amount = min(total_len, M_TRAILINGSPACE(m));
+			if (m == 0) {
+				m_freem(top);
+				return 0;
+			}
+			len = MLEN;
 		}
-
-		src = ed_ring_copy(sc, src, mtod(m, caddr_t) + m->m_len,
-		    amount);
-
-		m->m_len += amount;
-		total_len -= amount;
+		if (total_len >= MINCLSIZE) {
+			MCLGET(m, M_DONTWAIT);
+			if (m->m_flags & M_EXT)
+				len = MCLBYTES;
+		}
+		m->m_len = len = min(total_len, len);
+		src = ed_ring_copy(sc, src, mtod(m, caddr_t), len);
+		total_len -= len;
+		*mp = m;
+		mp = &m->m_next;
 	}
-	return (m);
+
+	return top;
 }
 
 /*
