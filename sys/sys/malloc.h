@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.h,v 1.25 1996/12/10 10:07:26 mycroft Exp $	*/
+/*	$NetBSD: malloc.h,v 1.26 1997/01/30 22:07:44 tls Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -38,7 +38,9 @@
 #ifndef _SYS_MALLOC_H_
 #define	_SYS_MALLOC_H_
 
+#ifdef DEBUG
 #define	KMEMSTATS
+#endif
 
 /*
  * flags to malloc
@@ -293,13 +295,13 @@ struct kmembuckets {
 /*
  * Macro versions for the usual cases of malloc/free
  */
-#if defined(KMEMSTATS) || defined(DIAGNOSTIC)
+#if defined(KMEMSTATS) || defined(DEBUG)
 #define	MALLOC(space, cast, size, type, flags) \
 	(space) = (cast)malloc((u_long)(size), type, flags)
 #define	FREE(addr, type) free((caddr_t)(addr), type)
 
 #else /* do not collect statistics */
-#define	MALLOC(space, cast, size, type, flags) { \
+#define	MALLOC(space, cast, size, type, flags) do { \
 	register struct kmembuckets *kbp = &bucket[BUCKETINDX(size)]; \
 	long s = splimp(); \
 	if (kbp->kb_next == NULL) { \
@@ -309,9 +311,9 @@ struct kmembuckets {
 		kbp->kb_next = *(caddr_t *)(space); \
 	} \
 	splx(s); \
-}
+} while (0)
 
-#define	FREE(addr, type) { \
+#define	FREE(addr, type) do { \
 	register struct kmembuckets *kbp; \
 	register struct kmemusage *kup = btokup(addr); \
 	long s = splimp(); \
@@ -327,7 +329,7 @@ struct kmembuckets {
 		kbp->kb_last = (caddr_t)(addr); \
 	} \
 	splx(s); \
-}
+} while(0)
 #endif /* do not collect statistics */
 
 extern struct kmemstats kmemstats[];
