@@ -1,4 +1,4 @@
-/*	$NetBSD: cg2.c,v 1.8 1996/12/17 21:10:38 gwr Exp $	*/
+/*	$NetBSD: cg2.c,v 1.9 1997/10/17 03:43:56 gwr Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -124,26 +124,29 @@ static int cg2intr __P((void*));
  * Match a cg2.
  */
 static int
-cg2match(parent, cf, args)
+cg2match(parent, cf, aux)
 	struct device *parent;
 	struct cfdata *cf;
-	void *args;
+	void *aux;
 {
-	struct confargs *ca = args;
-	int x;
+	struct confargs *ca = aux;
+	int probe_addr;
 
+	/* No default VME address. */
 	if (ca->ca_paddr == -1)
 		return (0);
 
-	if (ca->ca_bustype != BUS_VME16)
+	/* Make sure something is there... */
+	probe_addr = ca->ca_paddr + CTLREGS_OFF;
+	if (bus_peek(ca->ca_bustype, probe_addr, 1) == -1)
 		return (0);
 
-	x = bus_peek(ca->ca_bustype, ca->ca_paddr + CTLREGS_OFF, 1);
-	if (x == -1)
-		return (0);
-
-	/* XXX */
+	/* XXX: look at the ID reg? */
 	/* printf("cg2: id=0x%x\n", x); */
+
+	/* Default interrupt priority. */
+	if (ca->ca_intpri == -1)
+		ca->ca_intpri = 4;
 
 	return (1);
 }
