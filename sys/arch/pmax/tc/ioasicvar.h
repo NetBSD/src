@@ -1,4 +1,4 @@
-/*	$NetBSD: ioasicvar.h,v 1.3.4.2 1998/10/15 05:31:59 nisimura Exp $	*/
+/*	$NetBSD: ioasicvar.h,v 1.3.4.3 1999/03/05 02:59:25 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -29,16 +29,17 @@
 
 struct ioasic_softc {
 	struct	device sc_dv;
-   
-	tc_addr_t sc_base;
 	void	*sc_cookie;
+	bus_space_tag_t sc_bst;
+	bus_space_handle_t sc_bsh;
+	bus_dma_tag_t sc_dmat;
+	bus_dmamap_t sc_lance_dmam;
 
+	/* XXX XXX XXX */
+	tc_addr_t sc_base;
 	unsigned sc_ioasic_imsk;
 	unsigned sc_ioasic_intr;
 	unsigned sc_ioasic_rtc;
-
-	bus_dma_tag_t sc_dmat;
-	bus_dmamap_t sc_lance_dmam;
 };
 extern struct cfdriver ioasic_cd;
 
