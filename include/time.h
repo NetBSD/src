@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.15 1998/02/02 21:08:05 perry Exp $	*/
+/*	$NetBSD: time.h,v 1.16 1998/07/26 12:55:17 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -107,7 +107,7 @@ time_t time __P((time_t *));
 
 #if !defined(_ANSI_SOURCE)
 #define CLK_TCK		100
-extern char *tzname[2];
+extern const char *tzname[2];
 void tzset __P((void));
 #endif /* not ANSI */
 
