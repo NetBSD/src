@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_main.c,v 1.12 1997/10/11 21:01:37 christos Exp $	*/
+/*	$NetBSD: rpc_main.c,v 1.13 1997/10/17 15:51:55 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 #if 0
 static char sccsid[] = "@(#)rpc_main.c 1.30 89/03/30 (C) 1987 SMI";
 #else
-__RCSID("$NetBSD: rpc_main.c,v 1.12 1997/10/11 21:01:37 christos Exp $");
+__RCSID("$NetBSD: rpc_main.c,v 1.13 1997/10/17 15:51:55 lukem Exp $");
 #endif
 #endif
 
@@ -651,14 +651,8 @@ s_output(argc, argv, infile, define, extend, outfile, nomain, netflag)
 	}
 	if (/*timerflag &&*/ tirpcflag)
 		f_print(fout, "#include <sys/resource.h> /* rlimit */\n");
-	if (logflag || inetdflag || pmflag) {
-		f_print(fout, "#ifdef SYSLOG\n");
+	if (logflag || inetdflag || pmflag)
 		f_print(fout, "#include <syslog.h>\n");
-		f_print(fout, "#else\n");
-		f_print(fout, "#define LOG_ERR 1\n");
-		f_print(fout, "#define openlog(a, b, c)\n");
-		f_print(fout, "#endif\n");
-	}
 
 	/* for ANSI-C */
 	f_print(fout, "\n#ifdef __STDC__\n#define SIG_PF void(*)(int)\n#endif\n");

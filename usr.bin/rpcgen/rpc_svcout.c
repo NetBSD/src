@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_svcout.c,v 1.8 1997/10/11 21:01:52 christos Exp $	*/
+/*	$NetBSD: rpc_svcout.c,v 1.9 1997/10/17 15:52:00 lukem Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)rpc_svcout.c 1.29 89/03/30 (C) 1987 SMI";
 #else
-__RCSID("$NetBSD: rpc_svcout.c,v 1.8 1997/10/11 21:01:52 christos Exp $");
+__RCSID("$NetBSD: rpc_svcout.c,v 1.9 1997/10/17 15:52:00 lukem Exp $");
 #endif
 #endif
 
@@ -128,7 +128,7 @@ write_most(infile, netflag, nomain)
 	} else {
 	  if( tirpcflag ) {
 		if (netflag) {
-			f_print(fout, "\tregister SVCXPRT *%s;\n", TRANSP);
+			f_print(fout, "\tSVCXPRT *%s;\n", TRANSP);
 			f_print(fout, "\tstruct netconfig *nconf = NULL;\n");
 		}
 		f_print(fout, "\tpid_t pid;\n");
@@ -139,7 +139,7 @@ write_most(infile, netflag, nomain)
 		write_rpc_svc_fg(infile, "\t\t");
 		f_print(fout, "\t}\n");
 	      } else {
-		f_print(fout, "\tregister SVCXPRT *%s;\n", TRANSP);
+		f_print(fout, "\tSVCXPRT *%s;\n", TRANSP);
 		f_print(fout, "\n");
 		print_pmapunset("\t");
 	      }
@@ -360,6 +360,17 @@ write_program(def, storage)
 	int filled;
 
 	for (vp = def->def.pr.versions; vp != NULL; vp = vp->next) {
+		if (Cflag) {
+			f_print(fout, "\n");
+			if (storage != NULL) {
+				f_print(fout, "%s ", storage);
+			}
+			f_print(fout, "void ");
+			pvname(def->def_name, vp->vers_num);
+			f_print(fout, "(struct svc_req *%s, ", RQSTP);
+			f_print(fout, "SVCXPRT *%s);\n", TRANSP);
+		}
+
 		f_print(fout, "\n");
 		if (storage != NULL) {
 			f_print(fout, "%s ", storage);
@@ -369,11 +380,11 @@ write_program(def, storage)
 
 		if (Cflag) {
 		   f_print(fout, "(struct svc_req *%s, ", RQSTP);
-		   f_print(fout, "register SVCXPRT *%s)\n", TRANSP);
+		   f_print(fout, "SVCXPRT *%s)\n", TRANSP);
 		} else {
 		   f_print(fout, "(%s, %s)\n", RQSTP, TRANSP);
 		   f_print(fout, "	struct svc_req *%s;\n", RQSTP);
-		   f_print(fout, "	register SVCXPRT *%s;\n", TRANSP);
+		   f_print(fout, "	SVCXPRT *%s;\n", TRANSP);
 		}
 
 		f_print(fout, "{\n");
@@ -528,7 +539,7 @@ static void
 write_inetmost(infile)
 	char *infile;
 {
-	f_print(fout, "\tregister SVCXPRT *%s;\n", TRANSP);
+	f_print(fout, "\tSVCXPRT *%s;\n", TRANSP);
 	f_print(fout, "\tint sock;\n");
 	f_print(fout, "\tint proto;\n");
 	f_print(fout, "\tstruct sockaddr_in saddr;\n");

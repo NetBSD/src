@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_cout.c,v 1.11 1997/10/11 21:01:31 christos Exp $	*/
+/*	$NetBSD: rpc_cout.c,v 1.12 1997/10/17 15:51:48 lukem Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)rpc_cout.c 1.13 89/02/22 (C) 1987 SMI";
 #else
-__RCSID("$NetBSD: rpc_cout.c,v 1.11 1997/10/11 21:01:31 christos Exp $");
+__RCSID("$NetBSD: rpc_cout.c,v 1.12 1997/10/17 15:51:48 lukem Exp $");
 #endif
 #endif
 
@@ -450,7 +450,7 @@ emit_struct(def)
 	};
 
 	/* May cause lint to complain. but  ... */
-	f_print(fout, "\tregister int32_t *buf;\n");
+	f_print(fout, "\tint32_t *buf;\n");
 
 	flag = PUT;
 	f_print(fout, "\n\tif (xdrs->x_op == XDR_ENCODE) {\n");
@@ -658,8 +658,8 @@ emit_inline(decl, flag)
 		break;
 	case REL_VECTOR:
 		f_print(fout, "\t\t\t{\n");
-		f_print(fout, "\t\t\t\tregister int i;\n");
-		f_print(fout, "\t\t\t\tregister %s *genp;\n", decl->type);
+		f_print(fout, "\t\t\t\tint i;\n");
+		f_print(fout, "\t\t\t\t%s *genp;\n", decl->type);
 		f_print(fout, "\n");
 		f_print(fout, "\t\t\t\tfor (i = 0, genp = objp->%s;\n",
 		    decl->name);
