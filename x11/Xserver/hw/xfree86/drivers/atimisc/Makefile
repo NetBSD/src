@@ -1,17 +1,19 @@
-#	$NetBSD: Makefile,v 1.2 2004/02/07 06:52:05 lukem Exp $
+#	$NetBSD: Makefile,v 1.3 2004/03/11 01:09:35 rtr Exp $
 
 XMODULEDIR=	${X11USRLIBDIR}/modules/drivers
 
 .include "../../../../Makefile.serverlib"
 
 MODULE=	atimisc_drv
-.PATH:	${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/drivers/ati
 
-# atiload.c atimisc.c only if loadable server
-SRCS=	atiaccel.c atiadjust.c aticlock.c aticonfig.c aticonsole.c \
-        aticursor.c atidac.c atidsp.c atilock.c atimach64.c atimach64io.c \
-        atimode.c atipreinit.c atiprint.c atirgb514.c atiscreen.c atiutil.c \
-        ativalid.c atixv.c atibank.c ativga.c atiwonder.c atiwonderio.c \
+.PATH:	${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/drivers/ati
+SRCS=	atiaccel.c atiadjust.c atiaudio.c aticlock.c aticonfig.c \
+	aticonsole.c aticursor.c atidac.c atidecoder.c atidsp.c \
+	atii2c.c atilock.c atimach64.c atimach64accel.c \
+	atimach64cursor.c atimach64i2c.c atimach64io.c \
+	atimach64xv.c atimode.c atipreinit.c atiprint.c \
+	atirgb514.c atiscreen.c atituner.c atiutil.c ativalid.c \
+        atixv.c atibank.c ativga.c atiwonder.c atiwonderio.c \
 	atidga.c atiload.c atimisc.c
 
 CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/drivers/ati \
