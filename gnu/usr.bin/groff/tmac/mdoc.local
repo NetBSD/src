@@ -1,4 +1,4 @@
-.\" $NetBSD: mdoc.local,v 1.8 2003/09/08 17:55:22 wiz Exp $
+.\" $NetBSD: mdoc.local,v 1.9 2003/09/08 18:07:30 wiz Exp $
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -144,5 +144,3 @@
 .ds operating-system-NetBSD-2.0    2.0
 .ds str-At-V.3 \*[Tn-font-size]AT&T\*[str-At] System\~V.3
 .as str-At-V.3 " \*[Tn-font-size]UNIX\*[str-At]
-.\" For easier converting
-.nr hyphen-flags 1
