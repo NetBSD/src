@@ -1,4 +1,4 @@
-/*	$NetBSD: tcic2_isa.c,v 1.9 2002/10/02 03:10:50 thorpej Exp $	*/
+/*	$NetBSD: tcic2_isa.c,v 1.10 2004/08/11 06:56:57 mycroft Exp $	*/
 
 /*
  *
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcic2_isa.c,v 1.9 2002/10/02 03:10:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcic2_isa.c,v 1.10 2004/08/11 06:56:57 mycroft Exp $");
 
 #undef	TCICISADEBUG
 
@@ -136,6 +136,7 @@ static struct pcmcia_chip_functions tcic_isa_functions = {
 
 	tcic_chip_socket_enable,
 	tcic_chip_socket_disable,
+	tcic_chip_socket_settype,
 };
 
 int
