@@ -1,4 +1,4 @@
-/*	$NetBSD: termin.c,v 1.4 1998/03/04 13:16:06 christos Exp $	*/
+/*	$NetBSD: termin.c,v 1.5 1998/11/06 20:05:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)termin.c	4.2 (Berkeley) 4/26/91";
 #else
-__RCSID("$NetBSD: termin.c,v 1.4 1998/03/04 13:16:06 christos Exp $");
+__RCSID("$NetBSD: termin.c,v 1.5 1998/11/06 20:05:12 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -61,7 +61,7 @@ __RCSID("$NetBSD: termin.c,v 1.4 1998/03/04 13:16:06 christos Exp $");
 
 #include "../general/globals.h"
 
-#define IsControl(c)	(!isprint(c) || (isspace(c) && ((c) != ' ')))
+#define IsControl(c)	(!isprint((unsigned char)c) || (isspace((unsigned char)c) && ((c) != ' ')))
 
 #define NextState(x)	(x->next)
 
