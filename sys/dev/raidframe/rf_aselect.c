@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_aselect.c,v 1.7 2002/08/02 01:15:22 oster Exp $	*/
+/*	$NetBSD: rf_aselect.c,v 1.8 2003/07/01 22:05:39 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_aselect.c,v 1.7 2002/08/02 01:15:22 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_aselect.c,v 1.8 2003/07/01 22:05:39 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -53,7 +53,6 @@ static void TransferDagMemory(RF_DagHeader_t *, RF_DagHeader_t *);
 #endif
 
 static int InitHdrNode(RF_DagHeader_t **, RF_Raid_t *);
-static void UpdateNodeHdrPtr(RF_DagHeader_t *, RF_DagNode_t *);
 int     rf_SelectAlgorithm(RF_RaidAccessDesc_t *, RF_RaidAccessFlags_t);
 
 
@@ -81,27 +80,6 @@ InitHdrNode(hdr, raidPtr)
 	return (0);
 }
 
-/*****************************************************************************************
- *
- * Ensure that all node->dagHdr fields in a dag are consistent
- *
- * IMPORTANT: This routine recursively searches all succedents of the node.  If a
- * succedent is encountered whose dagHdr ptr does not require adjusting, that node's
- * succedents WILL NOT BE EXAMINED.
- *
- ****************************************************************************************/
-static void 
-UpdateNodeHdrPtr(hdr, node)
-	RF_DagHeader_t *hdr;
-	RF_DagNode_t *node;
-{
-	int     i;
-	RF_ASSERT(hdr != NULL && node != NULL);
-	for (i = 0; i < node->numSuccedents; i++)
-		if (node->succedents[i]->dagHdr != hdr)
-			UpdateNodeHdrPtr(hdr, node->succedents[i]);
-	node->dagHdr = hdr;
-}
 /******************************************************************************
  *
  * Create a DAG to do a read or write operation.
