@@ -1,4 +1,4 @@
-#	$NetBSD: files.pc532,v 1.22 1996/10/09 07:34:42 matthias Exp $
+#	$NetBSD: files.pc532,v 1.23 1996/10/23 07:50:03 matthias Exp $
 #
 # new style config file for pc532 architecture
 #
@@ -40,12 +40,6 @@ major	{cd = 4}
 device	ncr: scsi, ncr5380sbc
 attach	ncr at membus
 file	arch/pc532/dev/ncr.c		ncr needs-count
-device	oldncr: scsi
-attach	oldncr at membus
-file	arch/pc532/dev/oldncr.c 	oldncr needs-count
-device	dp: scsi
-attach	dp at membus
-file	arch/pc532/dev/dp.c		dp needs-count
 device	aic: scsi
 attach	aic at membus
 file	arch/pc532/dev/aic.c		aic needs-count
