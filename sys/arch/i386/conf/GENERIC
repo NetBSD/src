@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.481 2002/04/12 17:58:17 mycroft Exp $
+# $NetBSD: GENERIC,v 1.482 2002/04/14 01:42:52 mycroft Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include 	"arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.481 $"
+#ident 		"GENERIC-$Revision: 1.482 $"
 
 maxusers	32		# estimated number of users
 
@@ -338,11 +338,9 @@ npx0	at isa? port 0xf0 irq 13	# x86 math coprocessor
 # wscons
 pckbc0		at isa?			# pc keyboard controller
 pckbd*		at pckbc?		# PC keyboard
-# "opms" should not be enabled together with "pms" or "pmsi"
+# "opms" should not be enabled together with "pms"
 pms*		at pckbc?		# PS/2 mouse for wsmouse
 #options	PMS_DISABLE_POWERHOOK
-pmsi*		at pckbc?		# PS/2 "Intelli"mouse for wsmouse
-#options	PMSI_DISABLE_POWERHOOK
 #opms*		at pckbc?		# backwards compatible PS/2 mouse
 vga0		at isa?
 vga*		at pci? dev ? function ?
@@ -351,7 +349,6 @@ wsdisplay*	at vga? console ?
 wsdisplay*	at pcdisplay? console ?
 wskbd* 		at pckbd? console ?
 wsmouse*	at pms? mux 0
-wsmouse*	at pmsi? mux 0
 
 pcppi0		at isa?
 sysbeep0	at pcppi?
