@@ -1,4 +1,4 @@
-.\"	$NetBSD: leds.4,v 1.5 1999/04/06 04:54:20 cgd Exp $
+.\"	$NetBSD: leds.4,v 1.6 2001/12/07 18:56:03 wiz Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -89,26 +89,26 @@ corresponding LED should be be extinguished,
 while a reset bit indicates an LED to be illuminated.
 On the 3/80 the polarity of the bits is reversed and only the lowest order bit
 is used.
+.Sh FILES
+.Bl -tag -width /dev/leds -compact
+.It Pa /dev/leds
+.El
 .Sh EXAMPLES
 The following example uses
 .Xr awk 1
 to display the repeating animation of a single lit LED scrolling from one end
 of the display to the other, using six clock ticks between each update.
-.Bd -ragged -offset -ident
+.Bd -ragged -offset indent
 # echo 5 8 254 253 250 247 239 223 191 127 |
   awk '{ for (i=1;i<=NF;i++) printf("%c",$i+0); }' > /dev/leds
 .Ed
-.Sh "ERRORS"
+.Sh ERRORS
 An I/O transfer to
 .Pa /dev/leds
 will complete successfully unless:
 .Bl -tag -width Er
 .It Bq Er EIO
 A read or write starting beyond the end of the file was attempted.
-.El
-.Sh FILES
-.Bl -tag -width /dev/leds -compact
-.It Pa /dev/leds
 .El
 .Sh SEE ALSO
 .Xr ppt 6
