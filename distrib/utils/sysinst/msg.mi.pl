@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.41 2004/08/14 16:06:38 dsl Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.42 2004/08/20 21:23:08 hubertf Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.pl,v 1.36 2004/04/17 18:55:35 atatat Exp       */
 
@@ -968,12 +968,12 @@ message Megabytes {Megabajty}
 message Cylinders {Cylindry}
 message Sectors {Sektory}
 message Select_medium {Wybierz medium}
-message ftp {ftp}
-message nfs {nfs}
-message cdrom {cdrom}
-message floppy {dyskietka}
-message local_fs {niezamontowany SP}
-message local_dir {lokalny katalog}
+message ftp {FTP}
+message nfs {NFS}
+message cdrom {CD-ROM / DVD}
+message floppy {Dyskietka}
+message local_fs {Niezamontowany SP}
+message local_dir {Lokalny katalog}
 message Select_your_distribution {Wybierz swoja dystrybucje}
 message Full_installation {Pelna instalacja}
 message Custom_installation {Inna instalacja}
