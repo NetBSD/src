@@ -1,10 +1,10 @@
-/*	$NetBSD: uplcom.c,v 1.11 2001/01/30 13:17:43 ichiro Exp $	*/
+/*	$NetBSD: uplcom.c,v 1.12 2001/03/14 15:53:01 ichiro Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by FUKUHARA ichiro (ichiro@ichiro.org).
+ * by Ichiro FUKUHARA (ichiro@ichiro.org).
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -46,6 +46,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
+#include <sys/malloc.h>
 #include <sys/ioctl.h>
 #include <sys/conf.h>
 #include <sys/tty.h>
@@ -69,7 +70,7 @@
 
 #ifdef UPLCOM_DEBUG
 #define DPRINTFN(n, x)  if (uplcomdebug > (n)) logprintf x
-int	uplcomdebug = 0xff;
+int	uplcomdebug = 0;
 #else
 #define DPRINTFN(n, x)
 #endif
@@ -80,6 +81,9 @@ int	uplcomdebug = 0xff;
 #define	UPLCOM_SECOND_IFACE_INDEX	1
 #define	UPLCOM_RESET		0
 
+#define RSAQ_STATUS_DSR		0x02
+#define RSAQ_STATUS_DCD		0x01
+
 struct	uplcom_softc {
 	USBBASEDEVICE		sc_dev;		/* base device */
 	usbd_device_handle	sc_udev;	/* USB device */
@@ -87,13 +91,22 @@ struct	uplcom_softc {
 	usbd_interface_handle	sc_sec_iface;	/* second interface */
 	int			sc_iface_number;	/* interface number */
 
+	int			sc_intr_number;	/* interrupt number */
+	usbd_pipe_handle	sc_intr_pipe;	/* interrupt pipe */
+	u_char			*sc_intr_buf;	/* interrupt buffer */
+	int			sc_isize;
+
 	usb_cdc_line_state_t	sc_line_state;	/* current line state */
 	u_char			sc_dtr;		/* current DTR state */
 	u_char			sc_rts;		/* current RTS state */
+	u_char			sc_status;
 
-	device_ptr_t		sc_subdev;
+	device_ptr_t		sc_subdev;	/* ucom device */
 
 	u_char			sc_dying;
+
+	u_char			sc_lsr;		/* Local status register */
+	u_char			sc_msr;		/* uplcom status register */
 };
 
 /*
@@ -106,21 +119,26 @@ struct	uplcom_softc {
 Static	usbd_status uplcom_reset(struct uplcom_softc *);
 Static	usbd_status uplcom_set_line_coding(struct uplcom_softc *sc,
 					   usb_cdc_line_state_t *state);
+Static	void uplcom_intr(usbd_xfer_handle, usbd_private_handle, usbd_status);
 
-Static	void	uplcom_set(void *, int, int, int);
-Static	void	uplcom_dtr(struct uplcom_softc *, int);
-Static	void	uplcom_rts(struct uplcom_softc *, int);
-Static	void	uplcom_break(struct uplcom_softc *, int);
-Static	void	uplcom_set_line_state(struct uplcom_softc *);
-Static	int	uplcom_param(void *, int, struct termios *);
-Static	int	uplcom_open(void *, int);
-Static	void	uplcom_close(void *, int);
+Static	void uplcom_set(void *, int, int, int);
+Static	void uplcom_dtr(struct uplcom_softc *, int);
+Static	void uplcom_rts(struct uplcom_softc *, int);
+Static	void uplcom_break(struct uplcom_softc *, int);
+Static	void uplcom_set_line_state(struct uplcom_softc *);
+Static	void uplcom_get_status(void *, int portno, u_char *lsr, u_char *msr);
+#if TODO
+Static	int  uplcom_ioctl(void *, int, u_long, caddr_t, int, struct proc *);
+#endif
+Static	int  uplcom_param(void *, int, struct termios *);
+Static	int  uplcom_open(void *, int);
+Static	void uplcom_close(void *, int);
 
 struct	ucom_methods uplcom_methods = {
-	NULL,
+	uplcom_get_status,
 	uplcom_set,
 	uplcom_param,
-	NULL,
+	NULL, /* uplcom_ioctl, TODO */
 	uplcom_open,
 	uplcom_close,
 	NULL,
@@ -161,7 +179,6 @@ USB_ATTACH(uplcom)
 {
 	USB_ATTACH_START(uplcom, sc, uaa);
 	usbd_device_handle dev = uaa->device;
-	usbd_interface_handle iface;
 	usb_config_descriptor_t *cdesc;
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
@@ -206,7 +223,7 @@ USB_ATTACH(uplcom)
 		USB_ATTACH_ERROR_RETURN;
 	}
 	/*
-	 * check second of interface
+	 * check second interface
 	 * USB-RSAQ has two interface
 	 */
 	if (cdesc->bNumInterface == 2) {
@@ -217,18 +234,19 @@ USB_ATTACH(uplcom)
 							devname, usbd_errstr(err));
 			USB_ATTACH_ERROR_RETURN;
 		}
-		iface = sc->sc_sec_iface;
-	} else 
-		iface = sc->sc_iface;
+		sc->sc_iface = sc->sc_sec_iface;
+	} 
 
 	/* Find the bulk endpoints */
 
-	id = usbd_get_interface_descriptor(iface);
+	id = usbd_get_interface_descriptor(sc->sc_iface);
 	sc->sc_iface_number = id->bInterfaceNumber;
 
 	uca.bulkin = uca.bulkout = -1;
+	sc->sc_intr_number = -1;
+	sc->sc_intr_pipe = NULL;
 	for (i = 0; i < id->bNumEndpoints; i++) {
-		ed = usbd_interface2endpoint_descriptor(iface, i);
+		ed = usbd_interface2endpoint_descriptor(sc->sc_iface, i);
 		if (ed == NULL) {
 			printf("%s: no endpoint descriptor for %d\n",
 				USBDEVNAME(sc->sc_dev), i);
@@ -240,8 +258,8 @@ USB_ATTACH(uplcom)
 			uca.bulkin = ed->bEndpointAddress;
 		} else if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN &&
 		    UE_GET_XFERTYPE(ed->bmAttributes) == UE_INTERRUPT) {
-			DPRINTF(("interrupt endpoint addr = 0x%x\n",
-				 ed->bEndpointAddress));
+			sc->sc_intr_number = ed->bEndpointAddress;
+			sc->sc_isize = UGETW(ed->wMaxPacketSize);
 		} else if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_OUT &&
 		    UE_GET_XFERTYPE(ed->bmAttributes) == UE_BULK) {
 			uca.bulkout = ed->bEndpointAddress;
@@ -260,7 +278,13 @@ USB_ATTACH(uplcom)
 		USB_ATTACH_ERROR_RETURN;
 	}
 
-	sc->sc_dtr = -1;
+	if (sc->sc_intr_number== -1) {
+		printf("%s: Could not find interrupt in\n",
+			USBDEVNAME(sc->sc_dev));
+		USB_ATTACH_ERROR_RETURN;
+	}
+
+	sc->sc_dtr = sc->sc_rts = -1;
 	uca.portno = UCOM_UNK_PORTNO;
 	/* bulkin, bulkout set above */
 	uca.ibufsize = UPLCOMIBUFSIZE;
@@ -268,7 +292,7 @@ USB_ATTACH(uplcom)
 	uca.ibufsizepad = UPLCOMIBUFSIZE;
 	uca.opkthdrlen = 0;
 	uca.device = dev;
-	uca.iface = iface;
+	uca.iface = sc->sc_iface;
 	uca.methods = &uplcom_methods;
 	uca.arg = sc;
 	uca.info = NULL;
@@ -284,7 +308,8 @@ USB_ATTACH(uplcom)
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
 			   USBDEV(sc->sc_dev));
 
-	DPRINTF(("uplcom: in=0x%x out=0x%x\n", uca.bulkin, uca.bulkout));
+	DPRINTF(("uplcom: in=0x%x out=0x%x intr=0x%x\n",
+			uca.bulkin, uca.bulkout, sc->sc_intr_number ));
 	sc->sc_subdev = config_found_sm(self, &uca, ucomprint, ucomsubmatch);
 
 	USB_ATTACH_SUCCESS_RETURN;
@@ -296,6 +321,14 @@ USB_DETACH(uplcom)
 	int rv = 0;
 
 	DPRINTF(("uplcom_detach: sc=%p flags=%d\n", sc, flags));
+
+        if (sc->sc_intr_pipe != NULL) {
+                usbd_abort_pipe(sc->sc_intr_pipe);
+                usbd_close_pipe(sc->sc_intr_pipe);
+		free(sc->sc_intr_buf, M_USBDEV);
+                sc->sc_intr_pipe = NULL;
+        }
+
 	sc->sc_dying = 1;
 	if (sc->sc_subdev != NULL) {
 		rv = config_detach(sc->sc_subdev, flags);
@@ -508,18 +541,26 @@ int
 uplcom_open(void *addr, int portno)
 {
 	struct uplcom_softc *sc = addr;
-	usbd_status err;
+	int err;
 	
 	if (sc->sc_dying)
 		return (EIO);
 
-	err = uplcom_reset(sc);
-        if (err) {
-                printf("%s: reset failed, %s\n", USBDEVNAME(sc->sc_dev),
-                        usbd_errstr(err));
-        }
+	DPRINTF(("uplcom_open: sc=%p\n", sc));
 
-	DPRINTF(("uplcom_open: open\n"));
+	if (sc->sc_intr_number != -1 && sc->sc_intr_pipe == NULL) {
+		sc->sc_status = 0; /* clear status bit */
+		sc->sc_intr_buf = malloc(sc->sc_isize, M_USBDEV, M_WAITOK);
+		err = usbd_open_pipe_intr(sc->sc_iface, sc->sc_intr_number,
+			USBD_SHORT_XFER_OK, &sc->sc_intr_pipe, sc,
+			sc->sc_intr_buf, sc->sc_isize,
+			uplcom_intr, USBD_DEFAULT_INTERVAL);
+		if (err) {
+			DPRINTF(("%s: cannot open interrupt pipe (addr %d)\n",
+				USBDEVNAME(sc->sc_dev), sc->sc_intr_number));
+					return (EIO);
+		}
+	}
 
 	return (0);
 }
@@ -528,16 +569,98 @@ void
 uplcom_close(void *addr, int portno) 
 {
 	struct uplcom_softc *sc = addr;
-	usbd_status err;
+	int err;
 
 	if (sc->sc_dying)
 		return;
 
-	err = uplcom_reset(sc);
-	if (err) {
-		printf("%s: reset failed, %s\n", USBDEVNAME(sc->sc_dev),
-			usbd_errstr(err));
+	DPRINTF(("uplcom_close: close\n"));
+
+	if (sc->sc_intr_pipe != NULL) {
+		err = usbd_abort_pipe(sc->sc_intr_pipe);
+		if (err)
+			printf("%s: abort interrupt pipe failed: %s\n",
+				USBDEVNAME(sc->sc_dev), usbd_errstr(err));
+		err = usbd_close_pipe(sc->sc_intr_pipe);
+		if (err)
+			printf("%s: close interrupt pipe failed: %s\n",
+				USBDEVNAME(sc->sc_dev), usbd_errstr(err));
+		free(sc->sc_intr_buf, M_USBDEV);
+		sc->sc_intr_pipe = NULL;
+	}
+}
+
+void
+uplcom_intr(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
+{
+	struct uplcom_softc *sc = priv;
+	u_char *buf = sc->sc_intr_buf;
+	u_char pstatus;
+
+	if (sc->sc_dying)
+		return;
+
+	if (status != USBD_NORMAL_COMPLETION) {
+		if (status == USBD_NOT_STARTED || status == USBD_CANCELLED)
+			return;
+
+		DPRINTF(("%s: abnormal status: %s\n", USBDEVNAME(sc->sc_dev),
+			usbd_errstr(status)));
+		usbd_clear_endpoint_stall_async(sc->sc_intr_pipe);
+		return;
 	}
 
-	DPRINTF(("uplcom_close: close\n"));
+	DPRINTF(("%s: uplcom status = %02x\n", USBDEVNAME(sc->sc_dev), buf[8]));
+
+		sc->sc_lsr = sc->sc_msr = 0;
+		pstatus = buf[8];
+		if (ISSET(pstatus, RSAQ_STATUS_DSR))
+			sc->sc_msr |= UMSR_DSR;
+		if (ISSET(pstatus, RSAQ_STATUS_DCD))
+			sc->sc_msr |= UMSR_DCD;
+		ucom_status_change((struct ucom_softc *) sc->sc_subdev);
 }
+
+void
+uplcom_get_status(void *addr, int portno, u_char *lsr, u_char *msr)
+{
+	struct uplcom_softc *sc = addr;
+
+	DPRINTF(("uplcom_get_status:\n"));
+
+	if (lsr != NULL)
+		*lsr = sc->sc_lsr;
+	if (msr != NULL)
+		*msr = sc->sc_msr;
+}
+
+#if TODO
+int
+uplcom_ioctl(void *addr, int portno, u_long cmd, caddr_t data, int flag,
+	     struct proc *p)
+{
+	struct uplcom_softc *sc = addr;
+	int error = 0;
+
+	if (sc->sc_dying)
+		return (EIO);
+
+	DPRINTF(("uplcom_ioctl: cmd=0x%08lx\n", cmd));
+
+	switch (cmd) {
+	case TIOCNOTTY:
+	case TIOCMGET:
+	case TIOCMSET:
+	case USB_GET_CM_OVER_DATA:
+	case USB_SET_CM_OVER_DATA:
+		break;
+
+	default:
+		DPRINTF(("uplcom_ioctl: unknown\n"));
+		error = ENOTTY;
+		break;
+	}
+
+	return (error);
+}
+#endif
