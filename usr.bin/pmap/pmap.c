@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.20 2004/01/29 22:19:12 yamt Exp $ */
+/*	$NetBSD: pmap.c,v 1.21 2004/01/31 20:53:55 atatat Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pmap.c,v 1.20 2004/01/29 22:19:12 yamt Exp $");
+__RCSID("$NetBSD: pmap.c,v 1.21 2004/01/31 20:53:55 atatat Exp $");
 #endif
 
 #include <string.h>
@@ -74,7 +74,7 @@ PMAPFUNC(process_map,VERSION)(kvm_t *kd, struct kinfo_proc2 *proc,
 		A(vmspace) = (u_long)proc->p_vmspace;
 		S(vmspace) = sizeof(struct vmspace);
 		thing = "proc->p_vmspace.vm_map";
-	} else if (S(vmspace) == -1) {
+	} else if (S(vmspace) == (size_t)-1) {
 		heapfound = 0;
 		/* A(vmspace) set by caller */
 		S(vmspace) = sizeof(struct vmspace);
@@ -111,7 +111,7 @@ PMAPFUNC(dump_vm_map,VERSION)(kvm_t *kd, struct kinfo_proc2 *proc,
 	size_t total;
 	u_long addr, end;
 
-	if (S(vm_map) == -1) {
+	if (S(vm_map) == (size_t)-1) {
 		heapfound = 1;
 		S(vm_map) = sizeof(struct vm_map);
 		KDEREF(kd, vm_map);
@@ -280,7 +280,7 @@ PMAPFUNC(dump_vm_map_entry,VERSION)(kvm_t *kd,
 	dev_t dev;
 	ino_t inode;
 
-	if (S(vm_map_entry) == -1) {
+	if (S(vm_map_entry) == (size_t)-1) {
 		heapfound = 1;
 		S(vm_map_entry) = sizeof(struct vm_map_entry);
 		KDEREF(kd, vm_map_entry);
@@ -564,7 +564,7 @@ PMAPFUNC(dump_amap,VERSION)(kvm_t *kd, struct kbit *amap)
 	int *am_ppref;
 	size_t i, r, l, e;
 
-	if (S(amap) == -1) {
+	if (S(amap) == (size_t)-1) {
 		heapfound = 1;
 		S(amap) = sizeof(struct vm_amap);
 		KDEREF(kd, amap);
@@ -622,7 +622,7 @@ PMAPFUNC(dump_amap,VERSION)(kvm_t *kd, struct kbit *amap)
 		printf("  %8s               ", "am_ppref");
 	printf("  %10s\n", "am_anon");
 
-	l = 0;
+	l = r = 0;
 	e = verbose > 1 ? D(amap, amap)->am_maxslot : D(amap, amap)->am_nslot;
 	for (i = 0; i < e; i++) {
 		printf("  %4lx", (unsigned long)i);
@@ -659,7 +659,7 @@ PMAPFUNC(dump_amap,VERSION)(kvm_t *kd, struct kbit *amap)
 			l--;
 		}
 
-		dump_vm_anon(kd, am_anon, i);
+		dump_vm_anon(kd, am_anon, (int)i);
 	}
 
 	free(am_anon);
