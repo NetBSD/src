@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.59 2003/03/13 10:24:38 dsl Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.60 2003/05/01 07:52:59 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -15,7 +15,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.59 2003/03/13 10:24:38 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.60 2003/05/01 07:52:59 itojun Exp $");
 
 #include "tun.h"
 
@@ -472,6 +472,7 @@ tun_output(ifp, m0, dst, rt)
 		struct mbuf m;
 		u_int32_t af = dst->sa_family;
 
+		m.m_flags = 0;
 		m.m_next = m0;
 		m.m_len = sizeof(af);
 		m.m_data = (char *)&af;
@@ -834,6 +835,7 @@ tunwrite(dev, uio, ioflag)
 		struct mbuf m;
 		u_int32_t af = AF_INET;
 
+		m.m_flags = 0;
 		m.m_next = top;
 		m.m_len = sizeof(af);
 		m.m_data = (char *)&af;

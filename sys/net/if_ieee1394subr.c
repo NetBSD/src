@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee1394subr.c,v 1.20 2003/05/01 07:41:59 itojun Exp $	*/
+/*	$NetBSD: if_ieee1394subr.c,v 1.21 2003/05/01 07:52:58 itojun Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ieee1394subr.c,v 1.20 2003/05/01 07:41:59 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ieee1394subr.c,v 1.21 2003/05/01 07:52:58 itojun Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -189,14 +189,13 @@ ieee1394_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 	if (ifp->if_bpf) {
 		struct mbuf mb;
 
-		M_COPY_PKTHDR(&mb, m0);
+		mb.m_flags = 0;
 		mb.m_next = m0;
 		mb.m_len = 14;
 		((u_int32_t *)mb.m_data)[0] = 0;
 		((u_int32_t *)mb.m_data)[1] = 0;
 		((u_int32_t *)mb.m_data)[2] = 0;
 		((u_int16_t *)mb.m_data)[6] = etype;
-		mb.m_pkthdr.len += mb.m_len;
 		bpf_mtap(ifp->if_bpf, &mb);
 	}
 #endif
@@ -370,14 +369,13 @@ ieee1394_input(struct ifnet *ifp, struct mbuf *m)
 	if (ifp->if_bpf) {
 		struct mbuf mb;
 
-		M_COPY_PKTHDR(&mb, m);
+		mb.m_flags = 0;
 		mb.m_next = m;
 		mb.m_len = 14;
 		((u_int32_t *)mb.m_data)[0] = 0;
 		((u_int32_t *)mb.m_data)[1] = 0;
 		((u_int32_t *)mb.m_data)[2] = 0;
 		((u_int16_t *)mb.m_data)[6] = iuh->iuh_etype;
-		mb.m_pkthdr.len += mb.m_len;
 		bpf_mtap(ifp->if_bpf, &mb);
 	}
 #endif
