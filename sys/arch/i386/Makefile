@@ -1,12 +1,12 @@
 #	from: @(#)Makefile	7.3 (Berkeley) 6/9/91
-#	$Id: Makefile,v 1.5.2.1 1994/07/18 08:02:25 cgd Exp $
+#	$Id: Makefile,v 1.5.2.2 1994/08/29 23:12:16 cgd Exp $
 
 # Makefile for i386 tags file and boot blocks
 
 NOPROG=	noprog
 NOMAN=	noman
 
-SUBDIR=	boot floppy
+SUBDIR=	boot
 
 TI386=	../i386/tags
 SI386=	../i386/i386/*.[ch] ../i386/include/*.h ../i386/isa/*.[ch]
