@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365.c,v 1.65 2001/12/15 13:23:21 soren Exp $	*/
+/*	$NetBSD: i82365.c,v 1.66 2002/06/01 23:50:58 lukem Exp $	*/
 
 /*
  * Copyright (c) 2000 Christian E. Hopps.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82365.c,v 1.65 2001/12/15 13:23:21 soren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82365.c,v 1.66 2002/06/01 23:50:58 lukem Exp $");
 
 #define	PCICDEBUG
 
@@ -501,7 +501,7 @@ pcic_event_thread(arg)
 			    "pcicss", hz/4);
 		}
 		s = splhigh();
-		SIMPLEQ_REMOVE_HEAD(&h->events, pe, pe_q);
+		SIMPLEQ_REMOVE_HEAD(&h->events, pe_q);
 		splx(s);
 
 		switch (pe->pe_type) {
@@ -517,11 +517,9 @@ pcic_event_thread(arg)
 				if ((pe2 = SIMPLEQ_NEXT(pe1, pe_q)) == NULL)
 					break;
 				if (pe2->pe_type == PCIC_EVENT_INSERTION) {
-					SIMPLEQ_REMOVE_HEAD(&h->events, pe1,
-					    pe_q);
+					SIMPLEQ_REMOVE_HEAD(&h->events, pe_q);
 					free(pe1, M_TEMP);
-					SIMPLEQ_REMOVE_HEAD(&h->events, pe2,
-					    pe_q);
+					SIMPLEQ_REMOVE_HEAD(&h->events, pe_q);
 					free(pe2, M_TEMP);
 				}
 			}
@@ -544,11 +542,9 @@ pcic_event_thread(arg)
 				if ((pe2 = SIMPLEQ_NEXT(pe1, pe_q)) == NULL)
 					break;
 				if (pe2->pe_type == PCIC_EVENT_REMOVAL) {
-					SIMPLEQ_REMOVE_HEAD(&h->events, pe1,
-					    pe_q);
+					SIMPLEQ_REMOVE_HEAD(&h->events, pe_q);
 					free(pe1, M_TEMP);
-					SIMPLEQ_REMOVE_HEAD(&h->events, pe2,
-					    pe_q);
+					SIMPLEQ_REMOVE_HEAD(&h->events, pe_q);
 					free(pe2, M_TEMP);
 				}
 			}

@@ -1,4 +1,4 @@
-/*	$NetBSD: multicpu.c,v 1.9 2001/06/04 21:37:11 ragge Exp $	*/
+/*	$NetBSD: multicpu.c,v 1.10 2002/06/01 23:50:56 lukem Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -70,7 +70,7 @@ cpu_boot_secondary_processors()
 	struct cpuq *q;
 
 	while ((q = SIMPLEQ_FIRST(&cpuq))) {
-		SIMPLEQ_REMOVE_HEAD(&cpuq, q, cq_q);
+		SIMPLEQ_REMOVE_HEAD(&cpuq, cq_q);
 		(*mp_dep_call->cpu_startslave)(q->cq_dev, q->cq_ci);
 		free(q, M_TEMP);
 	}
