@@ -1,4 +1,4 @@
-.\"	$NetBSD: ulimit.3,v 1.1 1999/09/13 18:38:06 kleink Exp $
+.\"	$NetBSD: ulimit.3,v 1.2 1999/10/11 11:03:27 kleink Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -73,7 +73,7 @@ the caller is the super-user.
 If successful, the
 .Fn ulimit
 function will not change the setting of
-.Dv errno .
+.Va errno .
 .Pp
 The
 .Fn ulimit
@@ -90,12 +90,12 @@ Otherwise, it returns -1, sets
 .Va errno
 to indicate an error, and the limit is not changed.
 Therefore, to detect an error condition applications should set
-.Dv errno
+.Va errno
 to 0, call
 .Fn ulimit ,
 and check if -1 is returned and
-.Dv errno
-is non-zero .
+.Va errno
+is non-zero.
 .Sh ERRORS
 The
 .Fn ulimit
