@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.15 1999/03/22 03:20:51 minoura Exp $	*/
+/*	$NetBSD: ite.c,v 1.16 1999/03/24 14:11:47 minoura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -63,6 +63,7 @@
 #include <sys/device.h>
 #include <sys/malloc.h>
 
+#include <machine/cpu.h>
 #include <machine/kbio.h>
 #include <machine/bus.h>
 #include <machine/grfioctl.h>
@@ -72,6 +73,9 @@
 #include <arch/x68k/dev/itevar.h>
 #include <arch/x68k/dev/kbdmap.h>
 #include <arch/x68k/dev/mfp.h>
+#if NBELL > 0
+void opm_bell __P((void));
+#endif
 
 #define SUBR_CNPROBE(min)	itesw[min].ite_cnprobe(min)
 #define SUBR_INIT(ip)		ip->isw->ite_init(ip)
@@ -116,8 +120,8 @@ int iteon __P((dev_t, int));
 void iteoff __P((dev_t, int));
 
 struct itesw itesw[] = {
-	0,	tv_init,	tv_deinit,	0,
-	0,	0,		0,
+	{0,	tv_init,	tv_deinit,	0,
+	 0,	0,		0}
 };
 int	nitesw = sizeof(itesw) / sizeof(itesw[0]);
 
@@ -164,7 +168,9 @@ itematch(pdp, cdp, auxp)
 	void *auxp;
 {
 	struct grf_softc *gp;
+#if 0
 	int maj;
+#endif
 	
 	gp = auxp;
 
@@ -523,7 +529,7 @@ itestart(tp)
 	struct clist *rbp;
 	struct ite_softc *ip;
 	u_char buf[ITEBURST];
-	int s, len, n;
+	int s, len;
 
 	ip = getitesp(tp->t_dev);
 	/*
@@ -622,15 +628,13 @@ ite_reset(ip)
 
 /* Used in console at startup only */
 int
-ite_cnfilter(c, caller)
+ite_cnfilter(c)
 	u_char c;
-	enum caller caller;
 {
-	struct tty *kbd_tty;
 	static u_char mod = 0;
 	struct key key;
 	u_char code, up, mask;
-	int s, i;
+	int s;
 
 	up = c & 0x80 ? 1 : 0;
 	c &= 0x7f;
@@ -736,21 +740,6 @@ ite_cnfilter(c, caller)
 }
 
 /* And now the old stuff. */
-
-/* these are used to implement repeating keys.. */
-static u_char last_char = 0;
-static u_char tout_pending = 0;
-
-/*ARGSUSED*/
-static void
-repeat_handler (arg)
-	void *arg;
-{
-	tout_pending = 0;
-	if (last_char)
-		add_sicallback(ite_filter, last_char, ITEFILT_REPEATER);
-}
-
 __inline static void
 itesendch (ch)
 	int ch;
@@ -760,9 +749,8 @@ itesendch (ch)
 
 
 void
-ite_filter(c, caller)
+ite_filter(c)
 	u_char c;
-	enum caller caller;
 {
 	static u_short mod = 0;
 	register unsigned char code, *str;
@@ -776,15 +764,6 @@ ite_filter(c, caller)
 
 	/* have to make sure we're at spltty in here */
 	s = spltty ();
-
-#if 0 /* XXX? x68k */
-	/* keyboard interrupts come at priority 2, while softint-
-	   generated keyboard-repeat interrupts come at level 1.
-	   So, to not allow a key-up event to get thru before
-	   a repeat for the key-down, we remove any outstanding
-	   callout requests.. */
-	rem_sicallback (ite_filter);
-#endif
 
 	up = c & 0x80 ? 1 : 0;
 	c &= 0x7f;
@@ -852,11 +831,6 @@ ite_filter(c, caller)
 		} else mod |= mask;
 
 		/*
-		 * these keys should not repeat, so it's the Right Thing
-		 * dealing with repeaters only after this block.
-		 */
-
-		/*
 		 * return even if it wasn't a modifier key, the other
 		 * codes up here are either special (like reset warning),
 		 * or not yet defined
@@ -865,33 +839,16 @@ ite_filter(c, caller)
 		return;
 	}
 
-	/*
-	 * no matter which character we're repeating, stop it if we
-	 * get a key-up event. I think this is the same thing amigados does.
-	 */
 	if (up) {
-		if (tout_pending) {
-			untimeout (repeat_handler, 0);
-			tout_pending = 0;
-			last_char = 0;
-		}
 		splx (s);
 		return;
-	} else if (tout_pending && last_char != c) {
-		/*
-		 * not the same character remove the repeater and continue
-		 * to process this key. -ch
-		 */
-		untimeout (repeat_handler, 0);
-		tout_pending = 0;
-		last_char = 0;
 	}
 
 	/*
 	 * intercept LAlt-LMeta-F1 here to switch back to original ascii-keymap.
 	 * this should probably be configurable..
 	 */
-	if (mod == (KBD_MOD_LALT|KBD_MOD_LMETA) && c == 0x50) {
+	if (mod == (KBD_MOD_LALT|KBD_MOD_LMETA) && c == 0x63) {
 		bcopy (&ascii_kbdmap, &kbdmap, sizeof (struct kbdmap));
 		splx (s);
 		return;
@@ -914,23 +871,6 @@ ite_filter(c, caller)
 			key = kbdmap.shift_keys[c];
 	}
 	code = key.code;
-
-	/*
-	 * arrange to repeat the keystroke. By doing this at the level of scan-codes,
-	 * we can have function keys, and keys that send strings, repeat too. This
-	 * also entitles an additional overhead, since we have to do the conversion
-	 * each time, but I guess that's ok.
-	 */
-	if (!tout_pending && caller == ITEFILT_TTY && kbd_ite->key_repeat) {
-		tout_pending = 1;
-		last_char = c;
-		timeout (repeat_handler, 0, start_repeat_timeo);
-	} else if (!tout_pending && caller == ITEFILT_REPEATER &&
-		   kbd_ite->key_repeat) {
-		tout_pending = 1;
-		last_char = c;
-		timeout (repeat_handler, 0, next_repeat_timeo);
-	}
  
 	/* handle dead keys */
 	if (key.mode & KBD_MODE_DEAD) {
@@ -2530,7 +2470,7 @@ itecngetc(dev)
 
 	do {
 		c = kbdcngetc();
-		c = ite_cnfilter(c, ITEFILT_CONSOLE);
+		c = ite_cnfilter(c);
 	} while (c == -1);
 	return (c);
 }
