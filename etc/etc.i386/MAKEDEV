@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.112 2000/05/17 18:14:10 thorpej Exp $
+#	$NetBSD: MAKEDEV,v 1.113 2000/05/22 17:01:30 thorpej Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -103,6 +103,7 @@
 #	joy*	joystick device
 #	satlink* PlanetConnect satellite receiver driver
 #	scsibus* SCSI busses, see scsi(4), scsictl(8)
+#	ses*	SES/SAF-TE SCSI Devices
 #	ss*	SCSI scanner
 #	uk*	unknown SCSI device
 #	ch*	SCSI changer
@@ -517,10 +518,11 @@ st*)
 		r$name$unit nr$name$unit er$name$unit enr$name$unit 
 	;;
 
-ch*|uk*)
+ses*|ch*|uk*)
 	case $i in
 	ch*) name=ch;	unit=${i#ch};	chr=17;;
 	uk*) name=uk;	unit=${i#uk};	chr=20;;
+	ses*) name=ses;	unit=${i#ses};	chr=74;;
 	esac
 	rm -f $name$unit
 	mknod $name$unit	c $chr $unit
