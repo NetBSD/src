@@ -1,4 +1,4 @@
-/*	$NetBSD: exphy.c,v 1.29 2002/03/25 20:51:24 thorpej Exp $	*/
+/*	$NetBSD: exphy.c,v 1.30 2002/07/03 06:25:50 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,13 +71,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exphy.c,v 1.29 2002/03/25 20:51:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exphy.c,v 1.30 2002/07/03 06:25:50 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/socket.h>
 
 #include <net/if.h>
