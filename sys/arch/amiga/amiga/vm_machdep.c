@@ -38,7 +38,7 @@
  * from: Utah $Hdr: vm_machdep.c 1.21 91/04/06$
  *
  *	@(#)vm_machdep.c	7.10 (Berkeley) 5/7/91
- *	$Id: vm_machdep.c,v 1.13 1994/05/25 07:58:36 chopps Exp $
+ *	$Id: vm_machdep.c,v 1.14 1994/05/29 06:58:29 chopps Exp $
  */
 
 #include <sys/param.h>
@@ -124,8 +124,9 @@ cpu_exit(p)
 {
 
 	vmspace_free(p->p_vmspace);
-
+	
 	(void) splimp();
+	cnt.v_swtch++;
 	kmem_free(kernel_map, (vm_offset_t)p->p_addr, ctob(UPAGES));
 	switch_exit();
 	/* NOTREACHED */

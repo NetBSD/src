@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)genassym.c	7.8 (Berkeley) 5/7/91
- *	$Id: genassym.c,v 1.13 1994/05/25 07:58:26 chopps Exp $
+ *	$Id: genassym.c,v 1.14 1994/05/29 06:58:25 chopps Exp $
  */
 
 #define KERNEL
@@ -77,7 +77,6 @@ main()
 	printf("#define\tPM_STCHG %d\n", &pmap->pm_stchanged);
 
 	printf("#define\tVM_PMAP %d\n", &vms->vm_pmap);
-	printf("#define\tV_SWTCH %d\n", &vm->v_swtch);
 	printf("#define\tV_INTR %d\n", &vm->v_intr);
 	
 	printf("#define\tUPAGES %d\n", UPAGES);
