@@ -26,7 +26,7 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-/* $NetBSD: gen.c,v 1.13 1998/10/10 20:48:04 itohy Exp $ */
+/* $NetBSD: gen.c,v 1.14 1999/01/18 22:18:17 christos Exp $ */
 
 #include "flexdef.h"
 
@@ -1353,7 +1353,7 @@ void make_tables()
 			outn( "\t\tresult = n; \\" );
 			outn( "\t\t} \\" );
 			outn(
-	"\telse if ( ((result = fread( buf, 1, max_size, yyin )) == 0) \\" );
+	"\telse if ( ((result = fread( buf, 1, (size_t)max_size, yyin )) == 0) \\" );
 			outn( "\t\t  && ferror( yyin ) ) \\" );
 			outn(
 		"\t\tYY_FATAL_ERROR( \"input in flex scanner failed\" );" );
