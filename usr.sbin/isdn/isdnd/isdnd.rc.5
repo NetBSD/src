@@ -1,4 +1,4 @@
-.\" $NetBSD: isdnd.rc.5,v 1.15 2003/05/14 12:12:31 wiz Exp $
+.\" $NetBSD: isdnd.rc.5,v 1.16 2003/09/25 09:21:48 pooka Exp $
 .\"
 .\" Copyright (c) 1997, 2000 Hellmuth Michaelis. All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$Id: isdnd.rc.5,v 1.15 2003/05/14 12:12:31 wiz Exp $
+.\"	$Id: isdnd.rc.5,v 1.16 2003/09/25 09:21:48 pooka Exp $
 .\"
 .\" $FreeBSD$
 .\"
@@ -259,6 +259,12 @@ have a parameter and may be used once for every controller. The keyword
 is optional. The following keywords are valid in a controller
 configuration section:
 .Bl -tag -width useacctfile -compact
+.It Li firmware
+This keyword is used to specify the path of the firmware file that
+will be loaded to the card once
+.Nm isdnd
+is started.
+This keyword is useful with active ISDN cards.
 .It Li protocol
 This keyword is used to set the D-channel protocol for the S0-bus a
 controller is connected to. The following parameters are currently
