@@ -1,4 +1,4 @@
-/*	$NetBSD: llc_var.h,v 1.11 2000/03/30 13:53:35 augustss Exp $	*/
+/*	$NetBSD: llc_var.h,v 1.11.6.1 2001/10/22 20:41:56 nathanw Exp $	*/
 
 /* 
  * Copyright (c) 1990, 1991, 1992
@@ -389,7 +389,7 @@ struct sdl_hdr {
 		MGETHDR (_m,M_DONTWAIT,MT_HEADER); \
 		if (_m != NULL) { \
 			_m->m_pkthdr.len = _m->m_len = LLC_UFRAMELEN; \
-			_m->m_next = _m->m_act = NULL; \
+			_m->m_next = _m->m_nextpkt = NULL; \
 			bzero(mtod(_m,caddr_t),LLC_UFRAMELEN); \
 		} else return; \
 	} \

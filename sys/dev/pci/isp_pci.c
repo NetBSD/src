@@ -1,4 +1,4 @@
-/* $NetBSD: isp_pci.c,v 1.66.2.4 2001/09/21 22:35:57 nathanw Exp $ */
+/* $NetBSD: isp_pci.c,v 1.66.2.5 2001/10/22 20:41:24 nathanw Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -707,6 +707,10 @@ isp_pci_rd_isr_2300(struct ispsoftc *isp, u_int16_t *isrp,
 	struct isp_pcisoftc *pcs = (struct isp_pcisoftc *) isp;
 	u_int32_t r2hisr;
 
+	if (!(BXR2(pcs, IspVirt2Off(isp, BIU_ISR)) & BIU2100_ISR_RISC_INT)) {
+		*isrp = 0;
+		return (0);
+	}
 	r2hisr = bus_space_read_4(pcs->pci_st, pcs->pci_sh,
 	    IspVirt2Off(pcs, BIU_R2HSTSLO));
 	isp_prt(isp, ISP_LOGDEBUG3, "RISC2HOST ISR 0x%x", r2hisr);

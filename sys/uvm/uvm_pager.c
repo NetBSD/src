@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.41.2.4 2001/09/21 22:37:16 nathanw Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.41.2.5 2001/10/22 20:42:14 nathanw Exp $	*/
 
 /*
  *
@@ -325,7 +325,8 @@ uvm_aio_aiodone(bp)
 		simple_lock(slock);
 		uvm_lock_pageq();
 	} else if (error) {
-		if (pgs[0]->pqflags & PQ_ANON) {
+		pg = pgs[0];
+		if (pg->pqflags & PQ_ANON) {
 			swslot = pg->uanon->an_swslot;
 		} else {
 			swslot = uao_find_swslot(pg->uobject, pg->offset);

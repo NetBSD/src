@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.63.2.5 2001/09/21 22:36:56 nathanw Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.63.2.6 2001/10/22 20:42:09 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -81,7 +81,6 @@ nfs_bioread(vp, uio, ioflag, cred, cflag)
 	struct ucred *cred;
 {
 	struct nfsnode *np = VTONFS(vp);
-	int biosize;
 	struct buf *bp = NULL, *rabp;
 	struct vattr vattr;
 	struct proc *p;
@@ -110,7 +109,6 @@ nfs_bioread(vp, uio, ioflag, cred, cflag)
 	if (vp->v_type != VDIR &&
 	    (uio->uio_offset + uio->uio_resid) > nmp->nm_maxfilesize)
 		return (EFBIG);
-	biosize = nmp->nm_rsize;
 
 	/*
 	 * For nfs, cache consistency can only be maintained approximately.

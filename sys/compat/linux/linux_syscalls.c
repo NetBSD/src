@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_syscalls.c,v 1.37 2001/01/19 01:46:23 manu Exp $	*/
+/*	$NetBSD: linux_syscalls.c,v 1.37.2.1 2001/10/22 20:41:12 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -46,6 +46,8 @@
 #include "../../sys/compat/linux/arch/alpha/linux_syscalls.c"
 #elif defined(__powerpc__)
 #include "../../sys/compat/linux/arch/powerpc/linux_syscalls.c"
+#elif defined(__mips__)
+#include "../../sys/compat/linux/arch/mips/linux_syscalls.c"
 #else
 const char * const linux_syscallnames[] = { 0 };
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagutils.c,v 1.6.6.1 2001/08/24 00:10:34 nathanw Exp $	*/
+/*	$NetBSD: rf_dagutils.c,v 1.6.6.2 2001/10/22 20:41:34 nathanw Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -32,8 +32,9 @@
  *
  *****************************************************************************/
 
+#include <dev/raidframe/raidframevar.h>
+
 #include "rf_archs.h"
-#include "rf_types.h"
 #include "rf_threadstuff.h"
 #include "rf_raid.h"
 #include "rf_dag.h"

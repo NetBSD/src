@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_chksum.c,v 1.13.6.1 2001/06/21 20:09:13 nathanw Exp $	*/
+/*	$NetBSD: iso_chksum.c,v 1.13.6.2 2001/10/22 20:42:07 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -332,7 +332,7 @@ m_compress(in, out)
 		return -1;
 	}
 	(*out)->m_len = 0;
-	(*out)->m_act = NULL;
+	(*out)->m_nextpkt = NULL;
 
 	while (in) {
 #ifdef ARGO_DEBUG
@@ -383,7 +383,7 @@ m_compress(in, out)
 				return -1;
 			}
 			(*out)->m_len = 0;
-			(*out)->m_act = NULL;
+			(*out)->m_nextpkt = NULL;
 			*out = (*out)->m_next;
 		}
 	}

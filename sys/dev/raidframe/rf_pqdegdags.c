@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_pqdegdags.c,v 1.5.14.1 2001/08/24 00:10:38 nathanw Exp $	*/
+/*	$NetBSD: rf_pqdegdags.c,v 1.5.14.2 2001/10/22 20:41:39 nathanw Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -36,7 +36,8 @@
 
 #if (RF_INCLUDE_DECL_PQ > 0) || (RF_INCLUDE_RAID6 > 0)
 
-#include "rf_types.h"
+#include <dev/raidframe/raidframevar.h>
+
 #include "rf_raid.h"
 #include "rf_dag.h"
 #include "rf_dagdegrd.h"

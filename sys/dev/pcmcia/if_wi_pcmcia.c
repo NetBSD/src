@@ -1,4 +1,4 @@
-/* $NetBSD: if_wi_pcmcia.c,v 1.3.2.4 2001/09/21 22:36:06 nathanw Exp $ */
+/* $NetBSD: if_wi_pcmcia.c,v 1.3.2.5 2001/10/22 20:41:30 nathanw Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -119,6 +119,11 @@ static const struct wi_pcmcia_product {
 	  PCMCIA_PRODUCT_COREGA_WIRELESS_LAN_PCCA_11,
 	  PCMCIA_CIS_COREGA_WIRELESS_LAN_PCCA_11,
 	  PCMCIA_STR_COREGA_WIRELESS_LAN_PCCA_11 },
+
+	{ PCMCIA_VENDOR_COREGA,
+	  PCMCIA_PRODUCT_COREGA_WIRELESS_LAN_PCCB_11,
+	  PCMCIA_CIS_COREGA_WIRELESS_LAN_PCCB_11,
+	  PCMCIA_STR_COREGA_WIRELESS_LAN_PCCB_11 },
 
 	{ PCMCIA_VENDOR_INTERSIL,
 	  PCMCIA_PRODUCT_INTERSIL_PRISM2,
@@ -352,6 +357,7 @@ wi_pcmcia_attach(parent, self, aux)
 	if (pp == NULL)
 		panic("wi_pcmcia_attach: impossible");
 
+	sc->sc_pci = 0;
 	sc->sc_enabled = 1;
 	sc->sc_enable = wi_pcmcia_enable;
 	sc->sc_disable = wi_pcmcia_disable;

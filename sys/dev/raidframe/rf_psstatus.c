@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_psstatus.c,v 1.5.6.1 2001/08/24 00:10:38 nathanw Exp $	*/
+/*	$NetBSD: rf_psstatus.c,v 1.5.6.2 2001/10/22 20:41:39 nathanw Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -36,7 +36,8 @@
  *
  *****************************************************************************/
 
-#include "rf_types.h"
+#include <dev/raidframe/raidframevar.h>
+
 #include "rf_raid.h"
 #include "rf_general.h"
 #include "rf_debugprint.h"

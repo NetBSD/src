@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.37.2.5 2001/08/24 00:12:41 nathanw Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.37.2.6 2001/10/22 20:42:02 nathanw Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -251,7 +251,7 @@ ip6_input(m)
 #endif
 
 	/*
-	 * mbuf statistics by kazu
+	 * mbuf statistics
 	 */
 	if (m->m_flags & M_EXT) {
 		if (m->m_next)
@@ -262,7 +262,7 @@ ip6_input(m)
 #define M2MMAX	(sizeof(ip6stat.ip6s_m2m)/sizeof(ip6stat.ip6s_m2m[0]))
 		if (m->m_next) {
 			if (m->m_flags & M_LOOP) {
-				ip6stat.ip6s_m2m[loif[0].if_index]++;	/*XXX*/
+				ip6stat.ip6s_m2m[loif[0].if_index]++; /* XXX */
 			} else if (m->m_pkthdr.rcvif->if_index < M2MMAX)
 				ip6stat.ip6s_m2m[m->m_pkthdr.rcvif->if_index]++;
 			else
@@ -325,11 +325,9 @@ ip6_input(m)
 	}
 #endif /* PFIL_HOOKS */
 
-
 	ip6stat.ip6s_nxthist[ip6->ip6_nxt]++;
 
 #ifdef ALTQ
-	/* XXX Temporary until ALTQ is changed to use a pfil hook */
 	if (altq_input != NULL && (*altq_input)(m, AF_INET6) == 0) {
 		/* packet is dropped by traffic conditioner */
 		return;
@@ -337,7 +335,7 @@ ip6_input(m)
 #endif
 
 	/*
-	 * Scope check
+	 * Check against address spoofing/corruption.
 	 */
 	if (IN6_IS_ADDR_MULTICAST(&ip6->ip6_src) ||
 	    IN6_IS_ADDR_UNSPECIFIED(&ip6->ip6_dst)) {
@@ -346,16 +344,16 @@ ip6_input(m)
 		goto bad;
 	}
 	/*
-	 * The following check is not documented in the spec.  Malicious party
-	 * may be able to use IPv4 mapped addr to confuse tcp/udp stack and
-	 * bypass security checks (act as if it was from 127.0.0.1 by using
-	 * IPv6 src ::ffff:127.0.0.1).	Be cautious.
+	 * The following check is not documented in specs.  A malicious
+	 * party may be able to use IPv4 mapped addr to confuse tcp/udp stack
+	 * and bypass security checks (act as if it was from 127.0.0.1 by using
+	 * IPv6 src ::ffff:127.0.0.1).  Be cautious.
 	 *
-	 * This check chokes if we are in SIIT cloud.  As none of BSDs support
-	 * IPv4-less kernel compilation, we cannot support SIIT environment
-	 * at all.  So, it makes more sense for us to reject any malicious
-	 * packets for non-SIIT environment, than try to do a partical support
-	 * for SIIT environment.
+	 * This check chokes if we are in an SIIT cloud.  As none of BSDs
+	 * support IPv4-less kernel compilation, we cannot support SIIT
+	 * environment at all.  So, it makes more sense for us to reject any
+	 * malicious packets for non-SIIT environment, than try to do a
+	 * partical support for SIIT environment.
 	 */
 	if (IN6_IS_ADDR_V4MAPPED(&ip6->ip6_src) ||
 	    IN6_IS_ADDR_V4MAPPED(&ip6->ip6_dst)) {
@@ -1454,10 +1452,11 @@ ip6_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 				&ip6_use_deprecated);
 	case IPV6CTL_RR_PRUNE:
 		return sysctl_int(oldp, oldlenp, newp, newlen, &ip6_rr_prune);
-#ifndef INET6_BINDV6ONLY
-	case IPV6CTL_BINDV6ONLY:
-		return sysctl_int(oldp, oldlenp, newp, newlen,
-				&ip6_bindv6only);
+	case IPV6CTL_V6ONLY:
+#ifdef INET6_BINDV6ONLY
+		return sysctl_rdint(oldp, oldlenp, newp, ip6_v6only);
+#else
+		return sysctl_int(oldp, oldlenp, newp, newlen, &ip6_v6only);
 #endif
 	case IPV6CTL_ANONPORTMIN:
 		old = ip6_anonportmin;

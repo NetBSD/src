@@ -1,4 +1,4 @@
-/*	$NetBSD: mulaw.c,v 1.15.2.1 2001/10/08 20:10:55 nathanw Exp $	*/
+/*	$NetBSD: mulaw.c,v 1.15.2.2 2001/10/22 20:41:15 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -39,7 +39,7 @@
 #include <dev/mulaw.h>
 
 /*
- * This table converts a (8 bit) mulaw value two a 16 bit value.
+ * This table converts a (8 bit) mulaw value to a 16 bit value.
  * The 16 bits are represented as an array of two bytes for easier access
  * to the individual bytes.
  */

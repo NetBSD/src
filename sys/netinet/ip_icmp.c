@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.59.2.1 2001/04/09 01:58:24 nathanw Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.59.2.2 2001/10/22 20:41:57 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -901,8 +901,8 @@ icmp_mtudisc(icp, faddr)
 
 	/* Table of common MTUs: */
 
-	static u_long mtu_table[] = {65535, 65280, 32000, 17914, 9180, 8166, 
-				     4352, 2002, 1492, 1006, 508, 296, 68, 0};
+	static const u_int mtu_table[] = { 65535, 65280, 32000, 17914, 9180,
+	    8166, 4352, 2002, 1492, 1006, 508, 296, 68, 0};
     
 	rt = rtalloc1(dst, 1);
 	if (rt == 0)
@@ -997,7 +997,7 @@ ip_next_mtu(mtu, dir)	/* XXX */
 	int mtu;
 	int dir;
 {
-	static int mtutab[] = {
+	static const u_int mtutab[] = {
 		65535, 32000, 17914, 8166, 4352, 2002, 1492, 1006, 508, 296,
 		68, 0
 	};

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_evenodd_dags.h,v 1.2 1999/02/05 00:06:11 oster Exp $	*/
+/*	$NetBSD: rf_evenodd_dags.h,v 1.2.20.1 2001/10/22 20:41:36 nathanw Exp $	*/
 /*
  * rf_evenodd_dags.h
  */
@@ -32,7 +32,7 @@
 #ifndef _RF__RF_EVENODD_DAGS_H_
 #define _RF__RF_EVENODD_DAGS_H_
 
-#include "rf_types.h"
+#include <dev/raidframe/raidframevar.h>
 
 #if RF_UTILITY == 0
 #include "rf_dag.h"

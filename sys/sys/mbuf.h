@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.56.2.2 2001/08/24 00:13:05 nathanw Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.56.2.3 2001/10/22 20:42:12 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2001 The NetBSD Foundation, Inc.
@@ -115,7 +115,7 @@ struct m_hdr {
  * record/packet header in first mbuf of chain; valid if M_PKTHDR set
  *
  * A note about csum_data: For the out-bound direction, this indicates the
- * offset after the L3 header where the final L4 checksum value is to be
+ * offset after the L4 header where the final L4 checksum value is to be
  * stored.  For the in-bound direction, it is only valid if the M_CSUM_DATA
  * flag is set.  In this case, an L4 checksum has been calculated by
  * hardware, but it is up to software to perform final verification.
@@ -183,7 +183,6 @@ struct mbuf {
 #define	m_type		m_hdr.mh_type
 #define	m_flags		m_hdr.mh_flags
 #define	m_nextpkt	m_hdr.mh_nextpkt
-#define	m_act		m_nextpkt
 #define	m_pkthdr	M_dat.MH.MH_pkthdr
 #define	m_ext		M_dat.MH.MH_dat.MH_ext
 #define	m_pktdat	M_dat.MH.MH_dat.MH_databuf

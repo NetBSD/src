@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.101.2.4 2001/09/21 22:36:57 nathanw Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.101.2.5 2001/10/22 20:42:10 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -884,11 +884,11 @@ loop:
 		 */
 		if (vp->v_mount != mp)
 			goto loop;
-		if (waitfor == MNT_LAZY ||
+		if (waitfor == MNT_LAZY || VOP_ISLOCKED(vp) ||
 		    (LIST_EMPTY(&vp->v_dirtyblkhd) &&
 		     vp->v_uobj.uo_npages == 0))
 			continue;
-		if (vget(vp, LK_EXCLUSIVE | LK_NOWAIT))
+		if (vget(vp, LK_EXCLUSIVE))
 			goto loop;
 		error = VOP_FSYNC(vp, cred,
 		    waitfor == MNT_WAIT ? FSYNC_WAIT : 0, 0, 0, p);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.33.2.3 2001/09/21 22:36:52 nathanw Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.33.2.4 2001/10/22 20:42:04 nathanw Exp $	*/
 /*	$KAME: ipsec.c,v 1.125 2001/09/12 23:01:16 sakane Exp $	*/
 
 /*
@@ -320,7 +320,7 @@ ipsec_invalpcbcacheall()
  *		0	: bypass
  *		EACCES	: discard packet.
  *		ENOENT	: ipsec_acquire() in progress, maybe.
- *		others	: error occurred.
+ *		others	: error occured.
  *	others:	a pointer to SP
  *
  * NOTE: IPv6 mapped adddress concern is implemented here.
@@ -512,7 +512,7 @@ ipsec4_getpolicybysock(m, dir, so, error)
  *		0	: bypass
  *		EACCES	: discard packet.
  *		ENOENT	: ipsec_acquire() in progress, maybe.
- *		others	: error occurred.
+ *		others	: error occured.
  */
 struct secpolicy *
 ipsec4_getpolicybyaddr(m, dir, flag, error)
@@ -572,7 +572,7 @@ ipsec4_getpolicybyaddr(m, dir, flag, error)
  *		0	: bypass
  *		EACCES	: discard packet.
  *		ENOENT	: ipsec_acquire() in progress, maybe.
- *		others	: error occurred.
+ *		others	: error occured.
  *	others:	a pointer to SP
  */
 struct secpolicy *
@@ -742,7 +742,7 @@ ipsec6_getpolicybysock(m, dir, so, error)
  *		0	: bypass
  *		EACCES	: discard packet.
  *		ENOENT	: ipsec_acquire() in progress, maybe.
- *		others	: error occurred.
+ *		others	: error occured.
  */
 #ifndef IP_FORWARDING
 #define IP_FORWARDING 1
@@ -3848,4 +3848,4 @@ ipsec6_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 	}
 	/* NOTREACHED */
 }
-#endif /*INET6*/
+#endif /* INET6 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.48.4.2 2001/06/21 20:07:09 nathanw Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.48.4.3 2001/10/22 20:41:51 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -1257,7 +1257,7 @@ unp_scan(m0, op, discard)
 				break;		/* XXX, but saves time */
 			}
 		}
-		m0 = m0->m_act;
+		m0 = m0->m_nextpkt;
 	}
 }
 

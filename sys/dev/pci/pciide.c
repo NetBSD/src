@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.107.2.5 2001/09/26 19:54:56 nathanw Exp $	*/
+/*	$NetBSD: pciide.c,v 1.107.2.6 2001/10/22 20:41:27 nathanw Exp $	*/
 
 
 /*
@@ -180,11 +180,12 @@ void cy693_setup_channel __P((struct channel_softc*));
 
 void sis_chip_map __P((struct pciide_softc*, struct pci_attach_args*));
 void sis_setup_channel __P((struct channel_softc*));
+static int sis_hostbr_match __P(( struct pci_attach_args *));
 
 void acer_chip_map __P((struct pciide_softc*, struct pci_attach_args*));
 void acer_setup_channel __P((struct channel_softc*));
 int  acer_pci_intr __P((void *));
-int  acer_isabr_match __P(( struct pci_attach_args *));
+static int acer_isabr_match __P(( struct pci_attach_args *));
 
 void pdc202xx_chip_map __P((struct pciide_softc*, struct pci_attach_args*));
 void pdc202xx_setup_channel __P((struct channel_softc*));
@@ -537,7 +538,8 @@ const struct pciide_vendor_desc pciide_vendors[] = {
 };
 
 /* options passed via the 'flags' config keyword */
-#define PCIIDE_OPTIONS_DMA	0x01
+#define	PCIIDE_OPTIONS_DMA	0x01
+#define	PCIIDE_OPTIONS_NODMA	0x02
 
 int	pciide_match __P((struct device *, struct cfdata *, void *));
 void	pciide_attach __P((struct device *, struct device *, void *));
@@ -822,7 +824,8 @@ pciide_mapreg_dma(sc, pa)
 		if ((sc->sc_pp->ide_flags & IDE_16BIT_IOSPACE)
 		    && addr >= 0x10000) {
 			sc->sc_dma_ok = 0;
-			printf(", but unused (registers at unsafe address %#lx)", (unsigned long)addr);
+			printf(", but unused (registers at unsafe address "
+			    "%#lx)", (unsigned long)addr);
 			break;
 		}
 		/* FALLTHROUGH */
@@ -839,6 +842,12 @@ pciide_mapreg_dma(sc, pa)
 			sc->sc_wdcdev.dma_init = pciide_dma_init;
 			sc->sc_wdcdev.dma_start = pciide_dma_start;
 			sc->sc_wdcdev.dma_finish = pciide_dma_finish;
+		}
+
+		if (sc->sc_wdcdev.sc_dev.dv_cfdata->cf_flags &
+		    PCIIDE_OPTIONS_NODMA) {
+			printf(", but unused (forced off by config file)");
+			sc->sc_dma_ok = 0;
 		}
 		break;
 
@@ -1304,9 +1313,9 @@ default_chip_map(sc, pa)
 			sc->sc_dma_ok = 0;
 		} else {
 			pciide_mapreg_dma(sc, pa);
-		if (sc->sc_dma_ok != 0)
-			printf(", used without full driver "
-			    "support");
+			if (sc->sc_dma_ok != 0)
+				printf(", used without full driver "
+				    "support");
 		}
 	} else {
 		printf("%s: hardware does not support DMA",
@@ -2737,6 +2746,17 @@ cy693_setup_channel(chp)
 	}
 }
 
+static int
+sis_hostbr_match(pa)
+	struct pci_attach_args *pa;
+{
+	return ((PCI_VENDOR(pa->pa_id) == PCI_VENDOR_SIS) &&
+	   ((PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_SIS_645) ||
+	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_SIS_650) ||
+	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_SIS_730) ||
+	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_SIS_735)));
+}
+
 void
 sis_chip_map(sc, pa)
 	struct pciide_softc *sc;
@@ -2782,7 +2802,12 @@ sis_chip_map(sc, pa)
 	sc->sc_wdcdev.PIO_cap = 4;
 	sc->sc_wdcdev.DMA_cap = 2;
 	if (sc->sc_wdcdev.cap & WDC_CAPABILITY_UDMA)
-		sc->sc_wdcdev.UDMA_cap = 2;
+		/*
+		 * Use UDMA/100 on SiS 735 chipset and UDMA/33 on other
+		 * chipsets.
+		 */
+		sc->sc_wdcdev.UDMA_cap = 
+		    pci_find_device(pa, sis_hostbr_match) ? 5 : 2;
 	sc->sc_wdcdev.set_modes = sis_setup_channel;
 
 	sc->sc_wdcdev.channels = sc->wdc_chanarray;
@@ -2888,16 +2913,13 @@ pio:		sis_tim |= sis_pio_act[drvp->PIO_mode] <<
 	pciide_print_modes(cp);
 }
 
-int
+static int
 acer_isabr_match(pa)
 	struct pci_attach_args *pa;
 {
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_ALI &&
-	   PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ALI_M1543)
-		return 1;
-	return 0;
+	return ((PCI_VENDOR(pa->pa_id) == PCI_VENDOR_ALI) &&
+	   (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ALI_M1543));
 }
-
 
 void
 acer_chip_map(sc, pa)

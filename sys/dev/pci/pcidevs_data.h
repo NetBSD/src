@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.310.2.6 2001/10/08 20:11:17 nathanw Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.310.2.7 2001/10/22 20:41:26 nathanw Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.361 2001/10/03 12:05:49 simonb Exp 
+ *	NetBSD: pcidevs,v 1.364 2001/10/16 08:14:15 tron Exp 
  */
 
 /*
@@ -3412,6 +3412,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "Powerstorm 4D50T",
 	},
 	{
+	    PCI_VENDOR_INTERSIL, PCI_PRODUCT_INTERSIL_MINI_PCI_WLAN,
+	    0,
+	    "Intersil",
+	    "Intersil PRISM2.5 Mini-PCI WLAN",
+	},
+	{
 	    PCI_VENDOR_INVERTEX, PCI_PRODUCT_INVERTEX_AEON,
 	    0,
 	    "Invertex",
@@ -4898,6 +4904,30 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Silicon Integrated System",
 	    "85C601",
+	},
+	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_645,
+	    0,
+	    "Silicon Integrated System",
+	    "SiS 645 Host Bridge",
+	},
+	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_650,
+	    0,
+	    "Silicon Integrated System",
+	    "SiS 650 Host Bridge",
+	},
+	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_730,
+	    0,
+	    "Silicon Integrated System",
+	    "SiS 730 Host Bridge",
+	},
+	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_735,
+	    0,
+	    "Silicon Integrated System",
+	    "SiS 735 Host Bridge",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_900,
@@ -9121,6 +9151,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_ESSTECH, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "ESS Technology Inc",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_INTERSIL, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Intersil",
 	    NULL,
 	},
 	{

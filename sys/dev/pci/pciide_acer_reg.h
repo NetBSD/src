@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_acer_reg.h,v 1.3.6.1 2001/08/24 00:10:21 nathanw Exp $	*/
+/*	$NetBSD: pciide_acer_reg.h,v 1.3.6.2 2001/10/22 20:41:28 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1999 Manuel Bouyer.
@@ -99,8 +99,11 @@
 #define ACER_IDE_CLK	0x78 
 
 /* acer UDMA3/4/5 from FreeBSD */
-static int8_t acer_udma[] = {0x4, 0x3, 0x2, 0x1, 0x0, 0x7};
-static int8_t acer_pio[] = {0x0c, 0x58, 0x44, 0x33, 0x31};
+static const int8_t acer_udma[] __attribute__((__unused__)) =
+    {0x4, 0x3, 0x2, 0x1, 0x0, 0x7};
+static const int8_t acer_pio[] __attribute__((__unused__)) =
+    {0x0c, 0x58, 0x44, 0x33, 0x31};
 #ifdef unused
-static int8_t acer_dma[] = {0x08, 0x33, 0x31};
+static const int8_t acer_dma[] __attribute__((__unused__)) =
+    {0x08, 0x33, 0x31};
 #endif

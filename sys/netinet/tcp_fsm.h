@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_fsm.h,v 1.10 1998/07/09 05:49:56 mycroft Exp $	*/
+/*	$NetBSD: tcp_fsm.h,v 1.10.26.1 2001/10/22 20:41:57 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -72,7 +72,7 @@
  * determined by state, with the proviso that TH_FIN is sent only
  * if all data queued for output is included in the segment.
  */
-u_char	tcp_outflags[TCP_NSTATES] = {
+const u_char	tcp_outflags[TCP_NSTATES] = {
     TH_RST|TH_ACK, 0, TH_SYN, TH_SYN|TH_ACK,
     TH_ACK, TH_ACK,
     TH_FIN|TH_ACK, TH_FIN|TH_ACK, TH_FIN|TH_ACK, TH_ACK, TH_ACK,
@@ -84,7 +84,7 @@ int	tcp_acounts[TCP_NSTATES][PRU_NREQ];
 #endif
 
 #ifdef	TCPSTATES
-char *tcpstates[] = {
+const char * const tcpstates[] = {
 	"CLOSED",	"LISTEN",	"SYN_SENT",	"SYN_RCVD",
 	"ESTABLISHED",	"CLOSE_WAIT",	"FIN_WAIT_1",	"CLOSING",
 	"LAST_ACK",	"FIN_WAIT_2",	"TIME_WAIT",

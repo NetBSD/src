@@ -1,4 +1,4 @@
-/*	$NetBSD: ofbus.c,v 1.10 1998/02/24 05:44:39 mycroft Exp $	*/
+/*	$NetBSD: ofbus.c,v 1.10.26.1 2001/10/22 20:41:22 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -102,15 +102,8 @@ ofbus_attach(parent, dev, aux)
 			units = 2;
 	}
 
-	for (child = OF_child(oba->oba_phandle); child;
-	    child = OF_peer(child)) {
-		/*
-		 * This is a hack to skip all the entries in the tree
-		 * that aren't devices (packages, openfirmware etc.).
-		 */
-		if (OF_getprop(child, "device_type", name, sizeof name) < 0 &&
-		    OF_getprop(child, "compatible", name, sizeof name) < 0)
-			continue;
+	for (child = OF_child(oba->oba_phandle); child != 0;
+	     child = OF_peer(child)) {
 		oba2.oba_busname = "ofw";
 		oba2.oba_phandle = child;
 		for (oba2.oba_unit = 0; oba2.oba_unit < units; oba2.oba_unit++)

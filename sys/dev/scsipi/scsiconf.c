@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.156.2.4 2001/09/21 22:36:13 nathanw Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.156.2.5 2001/10/22 20:41:42 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -492,6 +492,8 @@ const struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	{{T_DIRECT, T_FIXED,
 	 "HITACHI", "DK515C",		"CP15"},  PQUIRK_NOSTARTUNIT},
 	{{T_DIRECT, T_FIXED,
+	 "MICROP",  "1548-15MZ1077801", "HZ2P"},  PQUIRK_NOTAG},
+	{{T_DIRECT, T_FIXED,
 	 "HP      ", "C372",             ""},     PQUIRK_NOTAG},
 	{{T_DIRECT, T_FIXED,
 	 "IBMRAID ", "0662S",		 ""},     PQUIRK_AUTOSAVE},
@@ -550,6 +552,8 @@ const struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	 "SEAGATE ", "ST296           ", ""},     PQUIRK_NOLUNS},
 	{{T_DIRECT, T_FIXED,
 	 "SEAGATE ", "ST296N          ", ""},     PQUIRK_NOLUNS},
+	{{T_DIRECT, T_FIXED,
+	 "SEAGATE ", "ST15150N        ", ""},     PQUIRK_NOTAG},
 	{{T_DIRECT, T_FIXED,
 	 "SEAGATE ", "ST19171",          ""},     PQUIRK_NOMODESENSE},
 	{{T_DIRECT, T_FIXED,

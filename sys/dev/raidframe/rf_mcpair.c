@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_mcpair.c,v 1.4.2.1 2001/09/26 19:54:59 nathanw Exp $	*/
+/*	$NetBSD: rf_mcpair.c,v 1.4.2.2 2001/10/22 20:41:37 nathanw Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -31,7 +31,8 @@
  * it's used to block the current thread until some event occurs.
  */
 
-#include "rf_types.h"
+#include <dev/raidframe/raidframevar.h>
+
 #include "rf_archs.h"
 #include "rf_threadstuff.h"
 #include "rf_mcpair.h"

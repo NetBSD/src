@@ -1,4 +1,4 @@
-/*	$NetBSD: ethertypes.h,v 1.10.14.1 2001/06/21 20:07:54 nathanw Exp $	*/
+/*	$NetBSD: ethertypes.h,v 1.10.14.2 2001/10/22 20:41:53 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -293,6 +293,8 @@
 #define	ETHERTYPE_SECUREDATA	0x876D	/* Secure Data (RFC1701) */
 #define	ETHERTYPE_PPP		0x880B	/* PPP (obsolete by PPPOE) */
 #define	ETHERTYPE_HITACHI	0x8820	/* Hitachi Cable (Optoelectronic Systems Laboratory) */
+#define	ETHERTYPE_MPLS		0x8847	/* MPLS Unicast */
+#define	ETHERTYPE_MPLS_MCAST	0x8848	/* MPLS Multicast */
 #define	ETHERTYPE_AXIS		0x8856	/* Axis Communications AB proprietary bootstrap/config */
 #define	ETHERTYPE_PPPOEDISC	0x8863	/* PPP Over Ethernet Discovery Stage */
 #define	ETHERTYPE_PPPOE		0x8864	/* PPP Over Ethernet Session Stage */

@@ -1,4 +1,4 @@
-/*	$NetBSD: memset.S,v 1.2 1999/03/15 06:34:10 jonathan Exp $	*/
+/*	$NetBSD: memset.S,v 1.2.20.1 2001/10/22 20:41:52 nathanw Exp $	*/
 #include <machine/cdefs.h>
 #include <mips/asm.h>
 #include <machine/endian.h>
@@ -32,6 +32,12 @@ LEAF(memset)
 	addu	t0, t0, a0		# compute ending address
 2:
 	addu	a0, a0, 4		# clear words
+#ifdef MIPS3_5900
+	nop
+	nop
+	nop
+	nop
+#endif	
 	bne	a0, t0, 2b		#  unrolling loop does not help
 	sw	t1, -4(a0)		#  since we are limited by memory speed
 
@@ -40,6 +46,12 @@ smallclr:
 	addu	t0, a2, a0		# compute ending address
 1:
 	addu	a0, a0, 1		# clear bytes
+#ifdef MIPS3_5900	
+	nop
+	nop
+	nop
+	nop
+#endif	
 	bne	a0, t0, 1b
 	sb	a1, -1(a0)
 2:

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_init.c,v 1.18 2001/01/22 12:17:41 jdolecek Exp $	*/
+/*	$NetBSD: vfs_init.c,v 1.18.2.1 2001/10/22 20:41:51 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -324,10 +324,11 @@ vfsinit()
 	int i;
 
 	/*
-	 * Initialize the namei pathname buffer pool.
+	 * Initialize the namei pathname buffer pool and cache.
 	 */
 	pool_init(&pnbuf_pool, MAXPATHLEN, 0, 0, 0, "pnbufpl",
 	     0, pool_page_alloc_nointr,  pool_page_free_nointr, M_NAMEI);
+	pool_cache_init(&pnbuf_cache, &pnbuf_pool, NULL, NULL, NULL);
 
 	/*
 	 * Initialize the vnode table

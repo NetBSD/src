@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.75.2.3 2001/08/24 00:12:09 nathanw Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.75.2.4 2001/10/22 20:41:54 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -283,15 +283,10 @@ ether_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 #endif
 #ifdef INET6
 	case AF_INET6:
-#ifdef OLDIP6OUTPUT
-		if (!nd6_resolve(ifp, rt, m, dst, (u_char *)edst))
-			return(0);	/* if not yet resolves */
-#else
 		if (!nd6_storelladdr(ifp, rt, m, dst, (u_char *)edst)){
 			/* something bad happened */
 			return(0);
 		}
-#endif /* OLDIP6OUTPUT */
 		etype = htons(ETHERTYPE_IPV6);
 		break;
 #endif
