@@ -9,8 +9,8 @@ really isn't usable on a 4M system.)
 
 Here is a table of recommended HD partition sizes for a full install:
 	partition:	advise,	with X,	needed,	with X
-	root (/)	15M	15M	10M	10M
-	user (/usr)	65M	100M	45M 	80M
+	root (/)	20M	20M	15M	15M
+	user (/usr)	65M	100M	55M 	90M
 	swap		----- 2M for every M ram -----
 	local (/local)	up to you
 
@@ -64,7 +64,8 @@ Supported devices include:
 	Serial cards:
 		MultiFaceCard II and III
 		A2232
-	Amiga floppy drives.
+	Amiga floppy drives with Amiga (880/1760kB) and 
+		IBM (720/1440kB) encoding. ****)
 	Amiga parallel port.
 	Amiga serial port.
 	Amiga mouse.
@@ -90,3 +91,8 @@ Known problems with some hardware:
 	There are reports that it Mustek and HP Scanjet hang if
 	accessed from the A3000. This might apply to other
 	33C93-Adapters, too.
+
+	****) Our floppy driver doesn't notice when mounted floppies are 
+	write-protected at the moment. Your floppy will stay
+	unchanged, but you might not notice that you didn't write
+	anything due to the buffer cache.
