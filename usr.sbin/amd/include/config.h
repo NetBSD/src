@@ -49,6 +49,9 @@
 /* Define if have union filesystem */
 #define HAVE_AM_FS_UNION 1
 
+/* Define if have Sun's autofs filesystem */
+/* #undef HAVE_AM_FS_AUTOFS */
+
 
 /*
  * Check for types of maps available.
@@ -189,8 +192,6 @@
 #define MOUNT_TYPE_UMAPFS MOUNT_UMAP
 
 
-  /*
-   * Check for the string name for the mount-table of a filesystem.
 /*
  * Check for the string name for the mount-table of a filesystem.
  */
@@ -489,6 +490,9 @@
  * NFS-specific mount(2) options (hex numbers)
  */
 
+/* hide mount type from df(1) */
+/* #undef MNT2_NFS_OPT_AUTO */
+
 /* set max secs for dir attr cache */
 /* #undef MNT2_NFS_OPT_ACDIRMAX */
 
@@ -706,6 +710,12 @@
 /* does struct sockaddr have field sa_len? */
 #define HAVE_FIELD_STRUCT_SOCKADDR_SA_LEN 1
 
+/* does struct autofs_args have an addr field? */
+/* #undef HAVE_FIELD_AUTOFS_ARGS_T_ADDR */
+
+/* does umntrequest have an rdevid field? */
+/* #undef HAVE_FIELD_UMNTREQUEST_RDEVID */
+
 
 /* should signal handlers be reinstalled? */
 /* #undef REINSTALL_SIGNAL_HANDLER */
@@ -796,9 +806,13 @@
 
 /* Define if your processor stores words with the most significant
    byte first (like Motorola and SPARC, unlike Intel and VAX).  */
+#include <sys/types.h>
 #if BYTE_ORDER == BIG_ENDIAN
 #define WORDS_BIGENDIAN 
 #endif
+
+/* Define if lex declares yytext as a char * by default, not a char[].  */
+#define YYTEXT_POINTER 1
 
 /* Turn off general debugging by default */
 /* #undef DEBUG */
@@ -813,7 +827,7 @@
 #define PACKAGE "am-utils"
 
 /* Define version of package (must be defined by configure.in) */
-#define VERSION "6.0a8"
+#define VERSION "6.0a10"
 
 /* Define name of host machine's cpu (eg. sparc) */
 #define HOST_CPU MACHINE
@@ -881,6 +895,9 @@
 /* Type of the 3rd argument to yp_order() */
 #define YP_ORDER_OUTORDER_TYPE int
 
+/* Type of the 5rd argument to authunix_create() */
+#define AUTH_CREATE_GIDLIST_TYPE gid_t
+
 /* The string used in printf to print the mount-type field of mount(2) */
 #define MTYPE_PRINTF_TYPE "%s"
 
@@ -914,6 +931,9 @@
 /* Define a type for the rfs_args structure */
 /* #undef rfs_args_t */
 
+/* define if have a bad version of memcmp() */
+/* #undef HAVE_BAD_MEMCMP */
+
 /* Define if you have the __seterr_reply function.  */
 /* #undef HAVE___SETERR_REPLY */
 
@@ -931,6 +951,9 @@
 
 /* Define if you have the clnt_sperrno function.  */
 #define HAVE_CLNT_SPERRNO 1
+
+/* Define if you have the clnt_tp_create_timed function.  */
+/* #undef HAVE_CLNT_TP_CREATE_TIMED */
 
 /* Define if you have the cnodeid function.  */
 /* #undef HAVE_CNODEID */
@@ -983,14 +1006,14 @@
 /* Define if you have the hasmntopt function.  */
 /* #undef HAVE_HASMNTOPT */
 
-/* Define if you have the hes_resolve function.  */
-/* #undef HAVE_HES_RESOLVE */
+/* Define if you have the hes_init function.  */
+/* #undef HAVE_HES_INIT */
+
+/* Define if you have the hesiod_init function.  */
+/* #undef HAVE_HESIOD_INIT */
 
 /* Define if you have the hesiod_reload function.  */
 /* #undef HAVE_HESIOD_RELOAD */
-
-/* Define if you have the hesiod_resolve function.  */
-/* #undef HAVE_HESIOD_RESOLVE */
 
 /* Define if you have the hesiod_to_bind function.  */
 /* #undef HAVE_HESIOD_TO_BIND */
@@ -1100,6 +1123,9 @@
 /* Define if you have the umount function.  */
 /* #undef HAVE_UMOUNT */
 
+/* Define if you have the uname function.  */
+#define HAVE_UNAME 1
+
 /* Define if you have the unmount function.  */
 #define HAVE_UNMOUNT 1
 
@@ -1175,6 +1201,12 @@
 /* Define if you have the xdr_linkargs function.  */
 #define HAVE_XDR_LINKARGS 1
 
+/* Define if you have the xdr_mntrequest function.  */
+/* #undef HAVE_XDR_MNTREQUEST */
+
+/* Define if you have the xdr_mntres function.  */
+/* #undef HAVE_XDR_MNTRES */
+
 /* Define if you have the xdr_mountbody function.  */
 #define HAVE_XDR_MOUNTBODY 1
 
@@ -1241,6 +1273,12 @@
 /* Define if you have the xdr_symlinkargs function.  */
 #define HAVE_XDR_SYMLINKARGS 1
 
+/* Define if you have the xdr_umntrequest function.  */
+/* #undef HAVE_XDR_UMNTREQUEST */
+
+/* Define if you have the xdr_umntres function.  */
+/* #undef HAVE_XDR_UMNTRES */
+
 /* Define if you have the xdr_writeargs function.  */
 #define HAVE_XDR_WRITEARGS 1
 
@@ -1258,6 +1296,9 @@
 
 /* Define if you have the <assert.h> header file.  */
 #define HAVE_ASSERT_H 1
+
+/* Define if you have the <bsd/rpc/rpc.h> header file.  */
+/* #undef HAVE_BSD_RPC_RPC_H */
 
 /* Define if you have the <cluster.h> header file.  */
 /* #undef HAVE_CLUSTER_H */
@@ -1294,6 +1335,9 @@
 
 /* Define if you have the <libgen.h> header file.  */
 /* #undef HAVE_LIBGEN_H */
+
+/* Define if you have the <linux/auto_fs.h> header file.  */
+/* #undef HAVE_LINUX_AUTO_FS_H */
 
 /* Define if you have the <linux/fs.h> header file.  */
 /* #undef HAVE_LINUX_FS_H */
@@ -1350,7 +1394,7 @@
 /* #undef HAVE_NETDIR_H */
 
 /* Define if you have the <netinet/if_ether.h> header file.  */
-/* #undef HAVE_NETINET_IF_ETHER_H */
+#define HAVE_NETINET_IF_ETHER_H 1
 
 /* Define if you have the <netinet/in.h> header file.  */
 #define HAVE_NETINET_IN_H 1
@@ -1472,6 +1516,9 @@
 /* Define if you have the <sys/fs/autofs.h> header file.  */
 /* #undef HAVE_SYS_FS_AUTOFS_H */
 
+/* Define if you have the <sys/fs/autofs_prot.h> header file.  */
+/* #undef HAVE_SYS_FS_AUTOFS_PROT_H */
+
 /* Define if you have the <sys/fs/cachefs_fs.h> header file.  */
 /* #undef HAVE_SYS_FS_CACHEFS_FS_H */
 
@@ -1592,6 +1639,9 @@
 /* Define if you have the <sys/uio.h> header file.  */
 #define HAVE_SYS_UIO_H 1
 
+/* Define if you have the <sys/utsname.h> header file.  */
+#define HAVE_SYS_UTSNAME_H 1
+
 /* Define if you have the <sys/vfs.h> header file.  */
 /* #undef HAVE_SYS_VFS_H */
 
@@ -1622,8 +1672,8 @@
 /* Define if you have the <varargs.h> header file.  */
 #define HAVE_VARARGS_H 1
 
-/* Define if you have the c library (-lc).  */
-#define HAVE_LIBC 1
+/* Define if you have the gdbm library (-lgdbm).  */
+/* #undef HAVE_LIBGDBM */
 
 /* Define if you have the rpc library (-lrpc).  */
 /* #undef HAVE_LIBRPC */
@@ -1659,6 +1709,9 @@
 
 /* does gethostname() exist? */
 #define HAVE_EXTERN_GETHOSTNAME 1
+
+/* does getlogin() exist? */
+#define HAVE_EXTERN_GETLOGIN 1
 
 /* does gettablesize() exist? */
 /* #undef HAVE_EXTERN_GETTABLESIZE */
