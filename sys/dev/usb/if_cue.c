@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cue.c,v 1.20 2000/03/30 08:53:30 augustss Exp $	*/
+/*	$NetBSD: if_cue.c,v 1.21 2000/04/02 21:25:41 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -1191,6 +1191,8 @@ cue_send(sc, m, idx)
 	/* Transmit */
 	err = usbd_transfer(c->cue_xfer);
 	if (err != USBD_IN_PROGRESS) {
+		printf("%s: cue_send error=%s\n", USBDEVNAME(sc->cue_dev),
+		       usbd_errstr(err));
 		cue_stop(sc);
 		return (EIO);
 	}
