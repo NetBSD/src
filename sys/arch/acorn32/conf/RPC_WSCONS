@@ -1,4 +1,4 @@
-#	$NetBSD: RPC_WSCONS,v 1.14.4.1 2002/08/01 04:15:04 lukem Exp $
+#	$NetBSD: RPC_WSCONS,v 1.14.4.2 2002/08/07 23:44:29 lukem Exp $
 #
 #	RPC_WSCONS -- Full RiscPC config with wscons
 #
@@ -22,7 +22,7 @@ include		"arch/acorn32/conf/std.acorn32"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.14.4.1 $"
+#ident		"GENERIC-$Revision: 1.14.4.2 $"
 
 # estimated number of users
 maxusers	32
@@ -266,8 +266,8 @@ scsibus* at cosc?
 ptsc*	at podulebus?			# Power-Tec SCSI II card
 scsibus* at ptsc?
 
-#csc*	at podulebus?			# Cumana SCSI II card
-#scsibus* at csc?			# Not currently working
+csc*	at podulebus?			# Cumana SCSI II card
+scsibus* at csc?
 
 oak*	at podulebus?			# Oak SCSI I card
 scsibus* at oak?
