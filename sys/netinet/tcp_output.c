@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.128 2005/03/16 00:39:56 yamt Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.129 2005/03/29 20:09:24 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -140,7 +140,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.128 2005/03/16 00:39:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.129 2005/03/29 20:09:24 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -672,6 +672,7 @@ tcp_output(struct tcpcb *tp)
 	txsegsize_nosack = txsegsize;
 again:
 	use_tso = has_tso;
+	TCP_REASS_LOCK(tp);
 	sack_numblks = tcp_sack_numblks(tp);
 	if (sack_numblks) {
 		if ((tp->rcv_sack_flags & TCPSACK_HAVED) != 0) {
@@ -985,6 +986,7 @@ again:
 	 * No reason to send a segment, just return.
 	 */
 just_return:
+	TCP_REASS_UNLOCK(tp);
 	return (0);
 
 send:
@@ -1105,6 +1107,7 @@ send:
 		}
 		optlen += sack_len + 2;
 	}
+	TCP_REASS_UNLOCK(tp);
 
 #ifdef TCP_SIGNATURE
 #if defined(INET6) && defined(FAST_IPSEC)
