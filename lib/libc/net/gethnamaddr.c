@@ -1,4 +1,4 @@
-/*	$NetBSD: gethnamaddr.c,v 1.59 2004/05/21 02:30:03 christos Exp $	*/
+/*	$NetBSD: gethnamaddr.c,v 1.60 2004/05/23 16:54:13 christos Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1988, 1993
@@ -57,7 +57,7 @@
 static char sccsid[] = "@(#)gethostnamadr.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: gethnamaddr.c,v 8.21 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: gethnamaddr.c,v 1.59 2004/05/21 02:30:03 christos Exp $");
+__RCSID("$NetBSD: gethnamaddr.c,v 1.60 2004/05/23 16:54:13 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -512,13 +512,11 @@ gethostbyname(const char *name)
 	struct hostent *hp;
 	res_state res = __res_get_state();
 
+	if (res == NULL)
+		return NULL;
+
 	_DIAGASSERT(name != NULL);
 
-	if ((res->options & RES_INIT) == 0 && res_ninit(res) == -1) {
-		h_errno = NETDB_INTERNAL;
-		__res_put_state(res);
-		return NULL;
-	}
 	if (res->options & RES_USE_INET6) {
 		hp = gethostbyname_internal(name, AF_INET6, res);
 		if (hp) {
@@ -536,6 +534,9 @@ gethostbyname2(const char *name, int af)
 {
 	struct hostent *hp;
 	res_state res = __res_get_state();
+
+	if (res == NULL)
+		return NULL;
 	hp = gethostbyname_internal(name, af, res);
 	__res_put_state(res);
 	return hp;
@@ -765,6 +766,8 @@ _gethtent(void)
 		len = IN6ADDRSZ;
 	} else if (inet_pton(AF_INET, p, (char *)(void *)host_addr) > 0) {
 		res_state res = __res_get_state();
+		if (res == NULL)
+			return NULL;
 		if (res->options & RES_USE_INET6) {
 			map_v4v6_address((char *)(void *)host_addr,
 			    (char *)(void *)host_addr);
@@ -827,6 +830,8 @@ _gethtbyname(void *rv, void *cb_data, va_list ap)
 #if 0
 	{
 		res_state res = __res_get_state();
+		if (res == NULL)
+			return NS_NOTFOUND;
 		if (res->options & RES_USE_INET6)
 			hp = _gethtbyname2(name, AF_INET6);
 		if (hp==NULL)
@@ -1140,6 +1145,8 @@ _dns_gethtbyname(rv, cb_data, ap)
 		return NS_NOTFOUND;
 	}
 	res = __res_get_state();
+	if (res == NULL)
+		return NS_NOTFOUND;
 	n = res_nsearch(res, name, C_IN, type, buf->buf, sizeof(buf->buf));
 	if (n < 0) {
 		free(buf);
@@ -1217,6 +1224,8 @@ _dns_gethtbyaddr(void *rv, void	*cb_data, va_list ap)
 		return NS_NOTFOUND;
 	}
 	res = __res_get_state();
+	if (res == NULL)
+		return NS_NOTFOUND;
 	n = res_nquery(res, qbuf, C_IN, T_PTR, buf->buf, sizeof(buf->buf));
 	if (n < 0 && af == AF_INET6) {
 		*qp = '\0';
