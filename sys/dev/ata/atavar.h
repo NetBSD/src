@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.5 1998/11/20 01:23:52 thorpej Exp $	*/
+/*	$NetBSD: atavar.h,v 1.6 1998/11/23 23:00:26 kenh Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -111,6 +111,7 @@ struct wdc_command {
 #define AT_ERROR    0x0040 /* command is done with error */
 #define AT_TIMEOU   0x0040 /* command timed out */
 #define AT_DF       0x0080 /* Drive fault */
+#define AT_READREG  0x0100 /* Read registers on completion */
     int timeout;	 /* timeout (in ms) */
     void *data;          /* Data buffer address */
     int bcount;           /* number of bytes to transfer */
