@@ -1,4 +1,4 @@
-.\"	$NetBSD: pidfile.3,v 1.5 2002/05/22 07:31:44 itojun Exp $
+.\"	$NetBSD: pidfile.3,v 1.6 2002/05/22 07:37:26 itojun Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -69,6 +69,10 @@ causes a pid file to be written; subsequent invocations have no effect
 unless a new
 .Ar basename
 is supplied.
+If called with a new
+.Ar basename ,
+.Fn pidfile
+will remove the old pid file and writes the new one.
 .Sh RETURN VALUES
 .Fn pidfile
 returns 0 on success and -1 on failure.
@@ -80,11 +84,6 @@ The
 function call appeared in
 .Nx 1.5 .
 .Sh BUGS
-If
-.Fn pidfile
-is called multiple times with different
-.Ar basename ,
-only the last pidfile will be removed upon exit.
 .Pp
 .Fn pidfile
 uses
