@@ -1,4 +1,4 @@
-.\"	$NetBSD: mk.conf.5,v 1.18 2003/07/18 16:30:49 lukem Exp $
+.\"	$NetBSD: mk.conf.5,v 1.18.2.1 2004/07/10 13:11:37 tron Exp $
 .\"
 .\"  Copyright (c) 1999-2003 The NetBSD Foundation, Inc.
 .\"  All rights reserved.
@@ -31,7 +31,7 @@
 .\"  TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 .\"  USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 18, 2003
+.Dd July 1, 2004
 .Dt MK.CONF 5
 .Os
 .\" turn off hyphenation
@@ -211,6 +211,13 @@ Indicates whether RC5 support will be built into
 .Sy libcrypto_rc5.a.
 .DFLTn
 .
+.It Sy MKCVS
+.YorN
+Indicates whether
+.Xr cvs 1
+is built.
+.DFLTy
+.
 .It Sy MKDOC
 .YorN
 Indicates whether system documentation destined for
@@ -293,9 +300,15 @@ most of the compilation tools, will be created and installed during a
 build.
 .DFLTy
 .
+.It Sy MKKERBEROS4
+.YorN
+Indicates whether the Kerberos v4 infrastructure
+(libraries and support programs) is built.
+.DFLTy
+.
 .It Sy MKKERBEROS
 .YorN
-Indicates whether the Kerberos (v4 or v5) infrastructure
+Indicates whether the Kerberos v5 infrastructure
 (libraries and support programs) is built.
 .DFLTy
 .
@@ -393,7 +406,7 @@ Platform dependent.
 As of this writing, all platforms except
 .Sy m68000
 and
-.Sy sh3 
+.Sy sh3
 default to
 .Dq yes .
 .Pp
@@ -420,6 +433,11 @@ format libraries
 used to generate shared libraries.
 .DFLTy
 .
+.It Sy MKPOSTFIX
+.YonN
+Indicates whether Postfix is built.
+.DFLTy
+.
 .It Sy MKPROFILE
 .YorN
 Indicates whether profiled libraries
@@ -430,6 +448,11 @@ will be built and installed during a build.
 however, some platforms turn off
 .Sy MKPROFILE
 by default at times due to toolchain problems with profiled code.
+.
+.It Sy MKSENDMAIL
+.YonN
+Indicates whether Sendmail is built.
+.DFLTy
 .
 .It Sy MKSHARE
 .YorN
@@ -479,6 +502,13 @@ will compare file timestamps before installing, and skip the install
 phase if the destination files are up-to-date.
 This also has implications on full builds (see next subsection).
 .DFLTn
+.
+.It Sy MKUUCP
+.YonN
+Indicates whether
+.Xr uucp 1
+and related programs are built.
+.DFLTy
 .
 .It Sy MKYP
 .YorN
