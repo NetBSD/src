@@ -1,4 +1,4 @@
-/* $NetBSD: genassym.c,v 1.5 1996/04/26 20:48:23 mark Exp $ */
+/* $NetBSD: genassym.c,v 1.6 1996/05/06 00:16:25 mark Exp $ */
 
 /*-
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -61,6 +61,7 @@ main()
 	struct sigframe *sigf = 0;
 	struct uprof *uprof = 0;
 	irqhandler_t *ih = 0;
+	fiqhandler_t *fh = 0;
 	struct vmspace *vms = 0;
 
 #define	def(N,V)	printf("#define\t%s %d\n", N, (u_int)V)
@@ -121,6 +122,15 @@ main()
 	def("IH_MASK", &ih->ih_irqmask);
 	def("IH_BIT", &ih->ih_irqbit);
 	def("IH_NEXT", &ih->ih_next);
+
+	def("FH_FUNC", &fh->fh_func);
+	def("FH_MASK", &fh->fh_mask);
+	def("FH_R8", &fh->fh_r8);
+	def("FH_R9", &fh->fh_r9);
+	def("FH_R10", &fh->fh_r10);
+	def("FH_R11", &fh->fh_r11);
+	def("FH_R12", &fh->fh_r12);
+	def("FH_R13", &fh->fh_r13);
 
 	def("SIGF_HANDLER", &sigf->sf_handler);
 	def("SIGF_SC", &sigf->sf_sc);
