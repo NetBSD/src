@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.46 2001/06/26 15:32:02 bouyer Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.47 2001/06/27 13:21:30 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -1330,10 +1330,16 @@ scsipi_complete(xs)
 		/* request sense for a request sense ? */
 		if (xs->xs_control & XS_CTL_REQSENSE) {
 			scsipi_printaddr(periph);
+			printf("request sense for a request sense ?\n");
 			/* XXX maybe we should reset the device ? */
 			/* we've been frozen because xs->error != XS_NOERROR */
 			scsipi_periph_thaw(periph, 1);
 			splx(s);
+			if (xs->resid < xs->datalen) {
+				printf("we read %d bytes of sense anyway:\n",
+				    xs->datalen - xs->resid);
+				scsipi_print_sense_data((void *)xs->data, 0);
+			}
 			return EINVAL;
 		}
 		scsipi_request_sense(xs);
