@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.689 2005/01/27 21:48:37 jdolecek Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.690 2005/02/01 18:21:58 abs Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.690 2005/01/27 21:48:15 jdolecek Exp 
+ *	NetBSD: pcidevs,v 1.691 2005/02/01 18:21:14 abs Exp 
  */
 
 /*
@@ -9500,6 +9500,10 @@ const struct pci_product pci_products[] = {
 	    "VT8237 Integrated SATA Controller",
 	},
 	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT642_RAID,
+	    "VT642 SATA RAID Controller",
+	},
+	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8235,
 	    "VT8235 (Apollo KT400) PCI-ISA Bridge",
 	},
@@ -10028,4 +10032,4 @@ const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 1928;
+const int pci_nproducts = 1929;
