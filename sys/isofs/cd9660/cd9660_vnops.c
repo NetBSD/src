@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vnops.c,v 1.10 1994/07/19 15:07:41 mycroft Exp $	*/
+/*	$NetBSD: cd9660_vnops.c,v 1.11 1994/07/19 15:14:09 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -558,7 +558,7 @@ cd9660_readdir(ap)
 		 * read the next directory block.
 		 * Release previous if it exists.
 		 */
-		if ((idp->curroff & bmask) == 0)
+		if ((idp->curroff & bmask) == 0) {
 			if (bp != NULL)
 				brelse(bp);
 			if (error =
