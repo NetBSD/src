@@ -1,4 +1,4 @@
-/*	$NetBSD: kd.c,v 1.6 2000/03/06 21:36:11 thorpej Exp $	*/
+/*	$NetBSD: kd.c,v 1.7 2000/03/19 13:22:14 pk Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,17 +37,18 @@
  */
 
 /*
- * Keyboard/Display device.
+ * Console driver based on PROM primitives.
  *
- * This driver exists simply to provide a tty device that
- * the indirect console driver can point to.
- * The kbd driver sends its input here.
- * Output goes to the screen via PROM printf.
+ * This driver exists to provide a tty device that the indirect
+ * console driver can point to. It also provides a hook that
+ * allows another device to serve console input. This will normally
+ * be a keyboard driver (see sys/dev/sun/kbd.c)
  */
 
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
+#include <sys/kernel.h>
 #include <sys/ioctl.h>
 #include <sys/tty.h>
 #include <sys/file.h>
@@ -68,14 +69,14 @@
 #include <machine/fbvar.h>
 #endif
 
-
 #include <dev/cons.h>
-#include <dev/sun/kbd_xlate.h>
 #include <sparc/dev/cons.h>
 
+#include <dev/sun/event_var.h>
+#include <dev/sun/kbd_xlate.h>
+#include <dev/sun/kbdvar.h>
+
 struct	tty *fbconstty = 0;	/* tty structure for frame buffer console */
-int cnrom __P((void));
-void cnrint __P((void));
 
 #define	KDMAJOR 1
 #define PUT_WSIZE	64
@@ -84,6 +85,9 @@ struct kd_softc {
 	struct	device kd_dev;		/* required first: base device */
 	struct  tty *kd_tty;
 	int rows, cols;
+
+	/* Console input hook */
+	struct cons_channel *kd_in;
 };
 
 /*
@@ -91,94 +95,73 @@ struct kd_softc {
  * more than one keyboard/display device.
  */
 static struct kd_softc kd_softc;
-static int kd_is_console;
 
 static int kdparam(struct tty *, struct termios *);
 static void kdstart(struct tty *);
+static void kd_init __P((struct kd_softc *));
+static void kd_cons_input __P((int));
 
-int	rom_console_input;	/* when set, hardclock calls cnrom() */
-int	cons_ocount;		/* output byte count */
-
-/* Now talking directly to the zs, so this is not needed. */
-int
-cnrom()
-{
-  return (0);
-}
-void
-cnrint()
-{
-}
 
 /*
- * This is called by kbd_attach() 
- * XXX - Make this a proper child of kbd?
+ * Prepare the console tty; called on first open of /dev/console
  */
 void
-kd_init(unit)
-	int unit;
-{
+kd_init(kd)
 	struct kd_softc *kd;
+{
 	struct tty *tp;
-
-	if (unit != 0)
-		return;
-	kd = &kd_softc; 	/* XXX */
 
 	tp = ttymalloc();
 	tp->t_oproc = kdstart;
 	tp->t_param = kdparam;
-	tp->t_dev = makedev(KDMAJOR, unit);
-
-#if 1	/* XXX - Why? */
-	clalloc(&tp->t_rawq, 1024, 1);
-	clalloc(&tp->t_canq, 1024, 1);
-	/* output queue doesn't need quoting */
-	clalloc(&tp->t_outq, 1024, 0);
-#endif
+	tp->t_dev = makedev(KDMAJOR, 0);
 
 	tty_attach(tp);
 	kd->kd_tty = tp;
 
 	/*
-	 * get the console struct winsize.
+	 * Get the console struct winsize.
 	 */
-	if (kd_is_console) {
-		fbconstty = tp;
 #ifdef RASTERCONSOLE
-		kd->rows = fbrcons_rows();
-		kd->cols = fbrcons_cols();
+	/* If the raster console driver is attached, copy its size */
+	kd->rows = fbrcons_rows();
+	kd->cols = fbrcons_cols();
 #endif
-	}
 
-	if (CPU_ISSUN4COR4M) {
-		int i;
-		char *prop;
+	/* else, consult the PROM */
+	switch (prom_version()) {
+	char *prop;
+	struct eeprom *ep;
+	case PROM_OLDMON:
+		if ((ep = (struct eeprom *)eeprom_va) == NULL)
+			break;
+		if (kd->rows == 0)
+			kd->rows = (u_short)ep->eeTtyRows;
+		if (kd->cols == 0)
+			kd->cols = (u_short)ep->eeTtyCols;
+		break;
+	case PROM_OBP_V0:
+	case PROM_OBP_V2:
+	case PROM_OBP_V3:
+	case PROM_OPENFIRM:
 
 		if (kd->rows == 0 &&
 		    (prop = getpropstring(optionsnode, "screen-#rows"))) {
-			i = 0;
+			int i = 0;
+
 			while (*prop != '\0')
 				i = i * 10 + *prop++ - '0';
 			kd->rows = (unsigned short)i;
 		}
 		if (kd->cols == 0 &&
 		    (prop = getpropstring(optionsnode, "screen-#columns"))) {
-			i = 0;
+			int i = 0;
+
 			while (*prop != '\0')
 				i = i * 10 + *prop++ - '0';
 			kd->cols = (unsigned short)i;
 		}
-	}
-	if (CPU_ISSUN4) {
-		struct eeprom *ep = (struct eeprom *)eeprom_va;
-
-		if (ep) {
-			if (kd->rows == 0)
-				kd->rows = (u_short)ep->eeTtyRows;
-			if (kd->cols == 0)
-				kd->cols = (u_short)ep->eeTtyCols;
-		}
+		break;
 	}
 
 	return;
@@ -203,19 +186,19 @@ kdopen(dev, flag, mode, p)
 	struct kd_softc *kd;
 	int error, s, unit;
 	struct tty *tp;
-	
+static	int firstopen = 1;
+
 	unit = minor(dev);
 	if (unit != 0)
 		return ENXIO;
-	kd = &kd_softc; 	/* XXX */
-	tp = kd->kd_tty;
 
-	if ((error = kbd_iopen(unit)) != 0) {
-#ifdef	DIAGNOSTIC
-		printf("kd: kbd_iopen, error=%d\n", error);
-#endif
-		return (error);
+	kd = &kd_softc; 	/* XXX */
+	if (firstopen) {
+		kd_init(kd);
+		firstopen = 0;
 	}
+
+	tp = kd->kd_tty;
 
 	/* It's simpler to do this up here. */
 	if (((tp->t_state & (TS_ISOPEN | TS_XCLUDE))
@@ -226,9 +209,16 @@ kdopen(dev, flag, mode, p)
 	}
 
 	s = spltty();
-
 	if ((tp->t_state & TS_ISOPEN) == 0) {
 		/* First open. */
+
+		/* Notify the input device that serves us */
+		struct cons_channel *cc = kd->kd_in;
+		if (cc != NULL &&
+		    (error = (*cc->cc_iopen)(cc)) != 0) {
+			return (error);
+		}
+
 		ttychars(tp);
 		tp->t_iflag = TTYDEF_IFLAG;
 		tp->t_oflag = TTYDEF_OFLAG;
@@ -257,6 +247,7 @@ kdclose(dev, flag, mode, p)
 {
 	struct kd_softc *kd;
 	struct tty *tp;
+	struct cons_channel *cc;
 
 	kd = &kd_softc; 	/* XXX */
 	tp = kd->kd_tty;
@@ -267,6 +258,10 @@ kdclose(dev, flag, mode, p)
 
 	(*linesw[tp->t_line].l_close)(tp, flag);
 	ttyclose(tp);
+
+	if ((cc = kd->kd_in) != NULL)
+		(void)(*cc->cc_iclose)(cc->cc_dev);
+
 	return (0);
 }
 
@@ -359,7 +354,7 @@ kdstart(tp)
 	struct tty *tp;
 {
 	struct clist *cl;
-	register int s;
+	int s;
 
 	s = spltty();
 	if (tp->t_state & (TS_BUSY|TS_TTSTOP|TS_TIMEOUT))
@@ -367,26 +362,16 @@ kdstart(tp)
 
 	cl = &tp->t_outq;
 	if (cl->c_cc) {
-		if (kd_is_console) {
-			tp->t_state |= TS_BUSY;
-			if ((s & PSR_PIL) == 0) {
-				/* called at level zero - update screen now. */
-				(void) spllowersoftclock();
-				kd_putfb(tp);
-				(void) spltty();
-				tp->t_state &= ~TS_BUSY;
-			} else {
-				/* called at interrupt level - do it later */
-				timeout(kd_later, (void*)tp, 0);
-			}
+		tp->t_state |= TS_BUSY;
+		if ((s & PSR_PIL) == 0) {
+			/* called at level zero - update screen now. */
+			(void) spllowersoftclock();
+			kd_putfb(tp);
+			(void) spltty();
+			tp->t_state &= ~TS_BUSY;
 		} else {
-			/*
-			 * This driver uses the PROM for writing the screen,
-			 * and that only works if this is the console device.
-			 * If this is not the console, just flush the output.
-			 * Sorry.  (In that case, use xdm instead of getty.)
-			 */
-			ndflush(cl, cl->c_cc);
+			/* called at interrupt level - do it later */
+			timeout(kd_later, (void*)tp, 0);
 		}
 	}
 	if (cl->c_cc <= tp->t_lowat) {
@@ -405,11 +390,11 @@ out:
  * Called at splsoftclock when requested by kdstart.
  */
 static void
-kd_later(tpaddr)
-	void *tpaddr;
+kd_later(arg)
+	void *arg;
 {
-	struct tty *tp = tpaddr;
-	register int s;
+	struct tty *tp = arg;
+	int s;
 
 	kd_putfb(tp);
 
@@ -450,7 +435,7 @@ kd_putfb(tp)
  * the keyboard driver (dev/sun/kbd.c) at spltty.
  */
 void
-kd_input(c)
+kd_cons_input(c)
 	int c;
 {
 	struct kd_softc *kd = &kd_softc;
@@ -466,97 +451,149 @@ kd_input(c)
 	(*linesw[tp->t_line].l_rint)(c, tp);
 }
 
+void
+cons_attach_input(cc)
+	struct cons_channel *cc;
+{
+	struct kd_softc *kd = &kd_softc;
 
-/****************************************************************
- * kd console support
- ****************************************************************/
+	kd->kd_in = cc;
+	cc->cc_upstream = kd_cons_input;
+}
 
-/* The debugger gets its own key translation state. */
-static struct kbd_state kdcn_state;
 
-static void kdcnprobe __P((struct consdev *));
-static void kdcninit __P((struct consdev *));
-static int  kdcngetc __P((dev_t));
-static void kdcnputc __P((dev_t, int));
-static void kdcnpollc __P((dev_t, int));
+/*
+ * Default PROM-based console input stream
+ * Since the PROM does not notify us when data is available on the
+ * input channel these functions periodically poll the PROM.
+ */
+static int kd_rom_iopen __P((struct cons_channel *));
+static int kd_rom_iclose __P((struct cons_channel *));
+static void kd_rom_intr __P((void *));
 
-struct consdev consdev_kd = {
-	kdcnprobe,
-	kdcninit,
-	kdcngetc,
-	kdcnputc,
-	kdcnpollc,
+static struct cons_channel prom_cons_channel;
+
+int
+kd_rom_iopen(cc)
+	struct cons_channel *cc;
+{
+	/* Poll for ROM input 4 times per second */
+	timeout(kd_rom_intr, cc, hz/4);
+	return (0);
+}
+
+int
+kd_rom_iclose(cc)
+	struct cons_channel *cc;
+{
+
+	untimeout(kd_rom_intr, cc);
+	return (0);
+}
+
+/*
+ * "Interrupt" routine for input through ROM vectors
+ */
+void
+kd_rom_intr(arg)
+	void *arg;
+{
+	struct cons_channel *cc = arg;
+	int s, c;
+
+	/* Re-schedule */
+	timeout(kd_rom_intr, arg, hz/4);
+
+	s = spltty();
+
+	while ((c = prom_peekchar()) >= 0)
+		(*cc->cc_upstream)(c);
+
+	splx(s);
+}
+
+/*****************************************************************/
+
+int prom_stdin_node;
+int prom_stdout_node;
+char prom_stdin_args[16];
+char prom_stdout_args[16];
+
+extern void prom_cnprobe __P((struct consdev *));
+static void prom_cninit __P((struct consdev *));
+static int  prom_cngetc __P((dev_t));
+static void prom_cnputc __P((dev_t, int));
+extern void prom_cnpollc __P((dev_t, int));
+
+/*
+ * The console is set to this one initially,
+ * which lets us use the PROM until consinit()
+ * is called to select a real console.
+ */
+struct consdev consdev_prom = {
+	prom_cnprobe,
+	prom_cninit,
+	prom_cngetc,
+	prom_cnputc,
+	prom_cnpollc,
 	NULL,
 };
 
-/* We never call this. */
-static void
-kdcnprobe(cn)
+/*
+ * The console table pointer is statically initialized
+ * to point to the PROM table, so that early calls to printf will work.
+ */
+struct consdev *cn_tab = &consdev_prom;
+
+void
+prom_cnprobe(cn)
 	struct consdev *cn;
 {
 }
 
 static void
-kdcninit(cn)
+prom_cninit(cn)
 	struct consdev *cn;
 {
-	struct kbd_state *ks = &kdcn_state;
-
-	cn->cn_dev = makedev(KDMAJOR, 0);
-	cn->cn_pri = CN_INTERNAL;
-
-	/* This prepares kbd_translate() */
-	ks->kbd_id = KBD_MIN_TYPE;
-	kbd_xlate_init(ks);
-
-	/* Indicate that it is OK to use the PROM fbwrite */
-	kd_is_console = 1;
 }
 
+void
+prom_cnpollc(dev, on)
+	dev_t dev;
+	int on;
+{
+
+	if (on) {
+		/* Entering debugger. */
+#if NFB > 0
+		fb_unblank();
+#endif
+	} else {
+		/* Resuming kernel. */
+	}
+}
+
+
+/*
+ * PROM console input putchar.
+ */
 static int
-kdcngetc(dev)
+prom_cngetc(dev)
 	dev_t dev;
 {
-	struct kbd_state *ks = &kdcn_state;
-	int code, class, data, keysym;
+	int s, c;
 
-	for (;;) {
-		code = zs_getc(zs_conschan);
-		keysym = kbd_code_to_keysym(ks, code);
-		class = KEYSYM_CLASS(keysym);
-
-		switch (class) {
-		case KEYSYM_ASCII:
-			goto out;
-
-		case KEYSYM_CLRMOD:
-		case KEYSYM_SETMOD:
-			data = (keysym & 0x1F);
-			/* Only allow ctrl or shift. */
-			if (data > KBMOD_SHIFT_R)
-				break;
-			data = 1 << data;
-			if (class == KEYSYM_SETMOD)
-				ks->kbd_modbits |= data;
-			else
-				ks->kbd_modbits &= ~data;
-			break;
-
-		case KEYSYM_ALL_UP:
-			/* No toggle keys here. */
-			ks->kbd_modbits = 0;
-			break;
-
-		default:	/* ignore all other keysyms */
-			break;
-		}
-	}
-out:
-	return (keysym);
+	s = splhigh();
+	c = prom_getchar();
+	splx(s);
+	return (c);
 }
 
+/*
+ * PROM console output putchar.
+ */
 static void
-kdcnputc(dev, c)
+prom_cnputc(dev, c)
 	dev_t dev;
 	int c;
 {
@@ -564,22 +601,93 @@ kdcnputc(dev, c)
 	prom_putchar(c);
 }
 
-static void
-kdcnpollc(dev, on)
-	dev_t dev;
-	int on;
-{
-	struct kbd_state *ks = &kdcn_state;
 
-	if (on) {
-		/* Entering debugger. */
-#if NFB > 0
-		fb_unblank();
-#endif
-		/* Clear shift keys too. */
-		ks->kbd_modbits = 0;
-	} else {
-		/* Resuming kernel. */
+/*****************************************************************/
+
+static void prom_get_device_args __P((const char *, char *, unsigned int));
+
+void
+prom_get_device_args(prop, args, sz)
+	const char *prop;
+	char *args;
+	unsigned int sz;
+{
+	char *cp, buffer[128];
+
+	cp = getpropstringA(findroot(), (char *)prop, buffer, sizeof buffer);
+
+	/*
+	 * Extract device-specific arguments from a PROM device path (if any)
+	 */
+	cp = buffer + strlen(buffer);
+	while (cp >= buffer) {
+		if (*cp == ':') {
+			strncpy(args, cp+1, sz);
+			break;
+		}
+		cp--;
 	}
 }
 
+/*
+ *
+ */
+void
+consinit()
+{
+	int inSource, outSink;
+
+	switch (prom_version()) {
+	case PROM_OLDMON:
+	case PROM_OBP_V0:
+		/* The stdio handles identify the device type */
+		inSource = prom_stdin();
+		outSink  = prom_stdout();
+		break;
+
+	case PROM_OBP_V2:
+	case PROM_OBP_V3:
+	case PROM_OPENFIRM:
+
+		/* Save PROM arguments for device matching */
+		prom_get_device_args("stdin-path", prom_stdin_args,
+				     sizeof(prom_stdin_args));
+		prom_get_device_args("stdout-path", prom_stdout_args,
+				    sizeof(prom_stdout_args));
+
+		/*
+		 * Translate the STDIO package instance (`ihandle') -- that
+		 * the PROM has already opened for us -- to a device tree
+		 * node (i.e. a `phandle'). 
+		 */
+
+		prom_stdin_node = prom_instance_to_package(prom_stdin());
+		if (prom_stdin_node == 0)
+			printf("consinit: cannot convert stdin ihandle\n");
+
+		prom_stdout_node = prom_instance_to_package(prom_stdout());
+		if (prom_stdout_node == 0) {
+			printf("consinit: cannot convert stdout ihandle\n");
+			break;
+		}
+
+		break;
+
+	default:
+		break;
+	}
+
+	/* Wire up /dev/console */
+	cn_tab->cn_dev = makedev(KDMAJOR, 0);
+	cn_tab->cn_pri = CN_INTERNAL;
+
+	/* Set up initial PROM input channel for /dev/console */
+	prom_cons_channel.cc_dev = NULL;
+	prom_cons_channel.cc_iopen = kd_rom_iopen;
+	prom_cons_channel.cc_iclose = kd_rom_iclose;
+	cons_attach_input(&prom_cons_channel);
+
+#ifdef	KGDB
+	zs_kgdb_init();	/* XXX */
+#endif
+}
