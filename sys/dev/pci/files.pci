@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.39 1998/06/02 01:29:41 thorpej Exp $
+#	$NetBSD: files.pci,v 1.40 1998/06/26 18:52:41 cgd Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -118,3 +118,21 @@ file	dev/pci/eap.c			eap
 # SMC EPIC/100 Fast Ethernet on PCI
 attach	epic at pci with epic_pci
 file	dev/pci/if_epic_pci.c		epic_pci
+
+# PCI "universal" communication device driver, for PCI com, lpt, etc. ports
+# (see documentation in the driver for what, exactly, should be supported)
+device	puc { port = -1 }
+attach	puc at pci
+file	dev/pci/puc.c		puc
+file	dev/pci/pucdata.c	puc
+
+attach	com at puc with com_puc
+file	dev/pci/com_puc.c	com_puc
+
+# XXX THE FOLLOWING BLOCK SHOULD GO INTO dev/pci/files.pci, BUT CANNOT
+# XXX BECAUSE NOT 'lpt' IS DEFINED IN files.isa, RATHER THAN files.
+# XXX (when the conf/files and files.isa bogons are fixed, this can
+# XXX be fixed as well.)
+
+# attach	lpt at puc with lpt_puc
+# file	dev/pci/lpt_puc.c	lpt_puc
