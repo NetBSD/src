@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.85 2000/11/08 23:12:17 lukem Exp $
+.\"	$NetBSD: main,v 1.86 2000/11/10 06:21:07 lukem Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -164,17 +164,17 @@ sgimips,
 and
 sparc64.
 .It
-The performance and stability of the UVM virtual memory subsystem has improved.
+Improved performance and stability of the UVM virtual memory subsystem.
 .It
 Implementation of generic kernel locking code, as well as a
 restructure and re-tuning of the scheduler, to by used by the
 future symmetric multi-processing (SMP) implementation.
 .It
-Compatibility support for Linux, OSF1, and SVR4 programs has been
-improved, and added for Win32 programs.
+Improved compatibility support for Linux, OSF1, and SVR4 programs.
 .It
-Dynamically loaded ELF kernel modules are now supported
-(on ports which use ELF).
+New compatibility support for Win32 programs.
+.It
+Support for dynamically loaded ELF kernel modules.
 .It
 Kernel process tracing using
 .Xr ktruss 1 .
@@ -212,9 +212,10 @@ The KAME IPv6 part includes result from unified-ipv6 effort.
 Significant Fast file system (FFS) performance enhancements via
 integration of Kirk McKusick's soft updates and trickle sync code.
 .It
+Support for the 
 .Tn "Windows NT"
 .Sq NTFS
-file system support added (read-only at this stage).
+file system (read-only at this stage).
 .It
 Support for the
 .Tn Linux
@@ -231,13 +232,14 @@ file system
 .Pq Pa /
 on a RAID set.
 .It
+Support for
 .Tn Microsoft
-Joliet extensions to the ISO9660 CD file system supported.
+Joliet extensions to the ISO9660 CD file system.
 .It
-The file system vnode locking mechanisms have been improved,
+Improved file system vnode locking mechanisms,
 thus resolving a source of many panics in the past.
 .It
-NFS (and RPC) over IPv6 is now supported.
+Support for NFS (and RPC) over IPv6.
 .It
 The NFS locking protocol (implemented with
 .Xr rpc.lockd 8 )
@@ -252,7 +254,6 @@ including the AES cipher Rijndael, the OpenSSL library, more
 complete Kerberos IV and Kerberos V support, and an SSH server
 and client.
 .It
-Provide
 .Xr sysctl 3
 interfaces to various elements of process and system information,
 allowing programs such as
@@ -269,7 +270,7 @@ disabled daemons to a higher level of logging.
 .Ss2 System administration and user tools
 .
 .(bullet
-Convert the
+Conversion of the
 .Xr rc 8
 system startup and shutdown scripts to an
 .Sq rc.d
@@ -296,7 +297,7 @@ Incorporation of a login class capability database
 from
 .Tn BSD/OS .
 .It
-Improve support for usernames longer than eight characters in programs
+Improved support for usernames longer than eight characters in programs
 such as
 .Xr at 1
 and
@@ -319,7 +320,7 @@ See the man page for details.
 .Ss2 Miscellaneous
 .
 .(bullet
-Update the
+Updates to the
 .Nx
 source code style code (located in
 .Pa /usr/share/misc/style )
@@ -332,13 +333,14 @@ Implementation of many SUSv2 features to the
 .Xr curses 3
 library, including support for color.
 .It
-Most third party packages that are shipped in the base system, including
+Updates of most third party packages that are shipped in the base
+system, including
 .Xr file 1 ,
 .Xr ipfilter 4 ,
 .Xr ppp 4 ,
 and
 .Xr sendmail 8
-have been updated to the latest stable release.
+to the latest stable release.
 .It
 Many new packages in the
 .Em pkgsrc
