@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.51 1999/06/24 23:21:02 christos Exp $	*/
+/*	$NetBSD: util.c,v 1.52 1999/06/26 00:17:02 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.51 1999/06/24 23:21:02 christos Exp $");
+__RCSID("$NetBSD: util.c,v 1.52 1999/06/26 00:17:02 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -809,29 +809,29 @@ static const char prefixes[] = " KMGTP";
  *   with flag = 0
  * - After the transfer, call with flag = 1
  */
-#ifndef	NO_PROGRESS
 static struct timeval start;
 static struct timeval lastupdate;
-#endif
 
 void
 progressmeter(flag)
 	int flag;
 {
-#ifndef	NO_PROGRESS
 	static off_t lastsize;
+#ifndef NO_PROGRESS
 	struct timeval now, td, wait;
 	off_t cursize, abbrevsize, bytespersec;
 	double elapsed;
 	int ratio, barlength, i, len, remaining;
 	char buf[256];
+#endif
 
-	len = 0;
 	if (flag == -1) {
 		(void)gettimeofday(&start, NULL);
 		lastupdate = start;
 		lastsize = restart_point;
 	}
+#ifndef NO_PROGRESS
+	len = 0;
 	if (!progress || filesize <= 0)
 		return;
 
@@ -937,7 +937,7 @@ progressmeter(flag)
 		(void)putc('\n', ttyout);
 	}
 	fflush(ttyout);
-#endif	/* NO_PROGRESS */
+#endif	/* !NO_PROGRESS */
 }
 
 /*
@@ -952,14 +952,13 @@ void
 ptransfer(siginfo)
 	int siginfo;
 {
-#ifndef	NO_PROGRESS
 	struct timeval now, td, wait;
 	double elapsed;
 	off_t bytespersec;
 	int remaining, hh, i, len;
 	char buf[100];
 
-	if (!verbose && !siginfo)
+	if (!verbose && !progress && !siginfo)
 		return;
 
 	(void)gettimeofday(&now, NULL);
@@ -1025,7 +1024,6 @@ ptransfer(siginfo)
 	}
 	len += snprintf(buf + len, sizeof(buf) - len, "\n");
 	(void)write(siginfo ? STDERR_FILENO : fileno(ttyout), buf, len);
-#endif	/* NO_PROGRESS */
 }
 
 /*
