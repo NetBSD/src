@@ -1,4 +1,4 @@
-/* $NetBSD: linux_syscall.c,v 1.1 2000/12/14 18:06:13 mycroft Exp $ */
+/* $NetBSD: linux_syscall.c,v 1.2 2000/12/14 18:34:59 mycroft Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.1 2000/12/14 18:06:13 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.2 2000/12/14 18:34:59 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -117,9 +117,11 @@ __KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.1 2000/12/14 18:06:13 mycroft Ex
 #include <machine/reg.h>
 #include <machine/alpha.h>
 
-#include <compat/linux/arch/alpha/linux_errno.h>
+#include <compat/linux/common/linux_types.h>
+#include <compat/linux/common/linux_errno.h>
 #include <compat/linux/linux_syscall.h>
-#include <compat/linux/arch/alpha/linux_signal.h>
+#include <compat/linux/common/linux_signal.h>
+#include <compat/linux/common/linux_siginfo.h>
 #include <compat/linux/arch/alpha/linux_machdep.h>
 
 void	userret __P((struct proc *));
@@ -234,7 +236,7 @@ linux_syscall_plain(p, code, framep)
 		break;
 	default:
 	bad:
-		error = linux_errno_rxlist[error];
+		error = native_to_linux_errno[error];
 		framep->tf_regs[FRAME_V0] = error;
 		framep->tf_regs[FRAME_A3] = 1;
 		break;
@@ -332,7 +334,7 @@ linux_syscall_fancy(p, code, framep)
 		break;
 	default:
 	bad:
-		error = linux_errno_rxlist[error];
+		error = native_to_linux_errno[error];
 		framep->tf_regs[FRAME_V0] = error;
 		framep->tf_regs[FRAME_A3] = 1;
 		break;
