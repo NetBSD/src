@@ -38,9 +38,11 @@ REQUIREMENTS
 FILES
    Source tree layout
 
-     BUILDING       This document (in formatted plaintext).
+     BUILDING.mdoc  This document (in -mdoc troff format; the original copy).
 
-     BUILDING.mdoc  This document (in -mdoc troff format).
+     BUILDING.html  This document (in formatted HTML).
+
+     BUILDING.txt   This document (in plaintext).
 
      Makefile       The main Makefile for NetBSD; should only be run for na-
                     tive builds with an appropriately up-to-date version of
