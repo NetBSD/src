@@ -1,18 +1,19 @@
-/*	$NetBSD: usbdevs_data.h,v 1.12 1998/12/29 15:21:33 augustss Exp $	*/
+/*	$NetBSD: usbdevs_data.h,v 1.13 1998/12/30 03:55:49 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: usbdevs,v 1.12 1998/12/29 15:19:40 augustss Exp 
+ *	NetBSD: usbdevs,v 1.14 1998/12/30 03:52:30 augustss Exp 
  */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
- * Author: Lennart Augustsson <augustss@carlstedt.se>
- *         Carlstedt Research & Technology
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Lennart Augustsson (augustss@carlstedt.se) at
+ * Carlstedt Research & Technology.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -46,6 +47,12 @@
 struct usb_knowndev usb_knowndevs[] = {
 	{
 	    USB_VENDOR_NEC, USB_PRODUCT_NEC_HUB,
+	    0,
+	    "NEC",
+	    "hub",
+	},
+	{
+	    USB_VENDOR_NEC, USB_PRODUCT_NEC_HUB_B,
 	    0,
 	    "NEC",
 	    "hub",
@@ -187,6 +194,18 @@ struct usb_knowndev usb_knowndevs[] = {
 	    0,
 	    "Belkin",
 	    "Parallel printer adapter",
+	},
+	{
+	    USB_VENDOR_LOGITECH, USB_PRODUCT_LOGITECH_M2452,
+	    0,
+	    "Logitech",
+	    "M2452 keyboard",
+	},
+	{
+	    USB_VENDOR_LOGITECH, USB_PRODUCT_LOGITECH_M4848,
+	    0,
+	    "Logitech",
+	    "M4848 mouse",
 	},
 	{
 	    USB_VENDOR_EIZONANAO, USB_PRODUCT_EIZONANAO_HUB,
@@ -342,6 +361,12 @@ struct usb_knowndev usb_knowndevs[] = {
 	    USB_VENDOR_BELKIN, 0,
 	    USB_KNOWNDEV_NOPROD,
 	    "Belkin",
+	    NULL,
+	},
+	{
+	    USB_VENDOR_LOGITECH, 0,
+	    USB_KNOWNDEV_NOPROD,
+	    "Logitech",
 	    NULL,
 	},
 	{
