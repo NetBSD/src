@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.1 2003/12/04 19:38:23 atatat Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.2 2003/12/06 02:52:29 atatat Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,6 +37,7 @@
  */
 
 #include "opt_sysv.h"
+#include "opt_multiprocessor.h"
 #include "pty.h"
 #include "rnd.h"
 
