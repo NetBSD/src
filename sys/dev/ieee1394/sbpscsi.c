@@ -1,4 +1,4 @@
-/*	$NetBSD: sbpscsi.c,v 1.1 2002/11/22 16:28:58 jmc Exp $	*/
+/*	$NetBSD: sbpscsi.c,v 1.2 2002/12/01 12:12:09 jmc Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbpscsi.c,v 1.1 2002/11/22 16:28:58 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbpscsi.c,v 1.2 2002/12/01 12:12:09 jmc Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -132,6 +132,7 @@ sbpscsi_attach(struct device *parent, struct device *self, void *aux)
 	
 	sc->sc_channel.chan_adapter = &sc->sc_adapter;
 	sc->sc_channel.chan_bustype = &scsi_bustype;
+	sc->sc_channel.chan_defquirks = PQUIRK_ONLYBIG;
 	sc->sc_channel.chan_channel = 0;
 	sc->sc_channel.chan_flags = SCSIPI_CHAN_CANGROW | SCSIPI_CHAN_NOSETTLE;
 
