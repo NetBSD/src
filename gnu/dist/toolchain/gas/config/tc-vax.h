@@ -58,6 +58,9 @@ enum reloc_type
 #define tc_aout_pre_write_hook(x)	{;}	/* not used */
 #define tc_crawl_symbol_chain(a)	{;}	/* not used */
 #define md_operand(x)
+#ifdef OBJ_ELF
+#define md_apply_fix(a,b)		{;}	/* not used for ELF */
+#endif
 
 long md_chars_to_number PARAMS ((unsigned char *, int));
 
