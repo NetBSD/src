@@ -1,4 +1,4 @@
-/*	$NetBSD: humanize_number.c,v 1.4 2002/11/11 18:00:43 thorpej Exp $	*/
+/*	$NetBSD: humanize_number.c,v 1.5 2003/12/26 11:30:36 simonb Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 #ifndef __lint
 __COPYRIGHT("@(#) Copyright (c) 2002\n\
 	The NetBSD Foundation, inc. All rights reserved.\n");
-__RCSID("$NetBSD: humanize_number.c,v 1.4 2002/11/11 18:00:43 thorpej Exp $");
+__RCSID("$NetBSD: humanize_number.c,v 1.5 2003/12/26 11:30:36 simonb Exp $");
 #endif /* !__lint */
 
 #include <assert.h>
@@ -133,15 +133,24 @@ humanize_number(char *buf, size_t len, int64_t bytes,
 			s1++;
 			s2 = 0;
 		}
-		r = snprintf(buf, len, "%lld%s%lld%s%c%s",
-		    /* LONGLONG */
-		    (long long)(sign * s1),
-		    localeconv()->decimal_point,
-		    /* LONGLONG */
-		    (long long)s2,
-		    (i == 0 && !(flags & HN_B)) || flags & HN_NOSPACE ?
-		    "" : " ", (i == 0 && (flags & HN_B)) ? 'B' :
-		    prefixes[i], suffix);
+		if (s1 < 10 && i == 0)
+			/* Don't ever use .0 for a number less than 10. */
+			r = snprintf(buf, len, "%lld%s%c%s",
+			    /* LONGLONG */
+			    (long long)(sign * s1),
+			    (i == 0 && !(flags & HN_B)) || flags & HN_NOSPACE ?
+			    "" : " ", (i == 0 && (flags & HN_B)) ? 'B' :
+			    prefixes[i], suffix);
+		else
+			r = snprintf(buf, len, "%lld%s%lld%s%c%s",
+			    /* LONGLONG */
+			    (long long)(sign * s1),
+			    localeconv()->decimal_point,
+			    /* LONGLONG */
+			    (long long)s2,
+			    (i == 0 && !(flags & HN_B)) || flags & HN_NOSPACE ?
+			    "" : " ", (i == 0 && (flags & HN_B)) ? 'B' :
+			    prefixes[i], suffix);
 
 	} else
 		r = snprintf(buf, len, "%lld%s%c%s",
