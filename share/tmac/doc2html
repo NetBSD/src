@@ -1,4 +1,4 @@
-.\" $NetBSD: doc2html,v 1.8 1999/03/09 06:25:58 ross Exp $
+.\" $NetBSD: doc2html,v 1.9 1999/03/18 18:57:42 ross Exp $
 .\"
 .\" Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -172,6 +172,7 @@ TODO:
 .ds close-mode
 .ds recurse-prepend
 .ds doc-anchor
+.ds Nm-save
 .ds T " x
 .chop T
 .nr doc-dosep 0
