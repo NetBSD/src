@@ -1,7 +1,7 @@
 #
 # TRINITY -- Mycroft's 386 box
 #
-#	$Id: TRINITY,v 1.21 1993/10/18 16:25:42 mycroft Exp $
+#	$Id: TRINITY,v 1.22 1993/10/20 23:04:57 cgd Exp $
 #
 
 machine		"i386"
@@ -19,7 +19,6 @@ options		SWAPPAGER
 options		VNODEPAGER,DEVPAGER
 options		DDB
 #options	DIAGNOSTIC
-options		ACCOUNTING
 options		KTRACE
 options		FIFO
 #options	SYSVSHM
