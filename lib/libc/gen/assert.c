@@ -1,4 +1,4 @@
-/*	$NetBSD: assert.c,v 1.7 1997/07/13 19:45:38 christos Exp $	*/
+/*	$NetBSD: assert.c,v 1.8 1999/09/15 23:57:21 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,14 +38,16 @@
 #if 0
 static char sccsid[] = "@(#)assert.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: assert.c,v 1.7 1997/07/13 19:45:38 christos Exp $");
+__RCSID("$NetBSD: assert.c,v 1.8 1999/09/15 23:57:21 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
+
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <syslog.h>
 
 void
 __assert(file, line, failedexpr)
@@ -57,4 +59,23 @@ __assert(file, line, failedexpr)
 	    failedexpr, file, line);
 	abort();
 	/* NOTREACHED */
+}
+
+void
+__diagassert(file, line, failedexpr)
+	const char *file, *failedexpr;
+	int line;
+{
+	extern char *__progname;
+
+		/*
+		 * XXX: check $DIAGASSERT here, and do user-defined actions
+		 */
+	(void)fprintf(stderr,
+	    "%s: assertion \"%s\" failed: file \"%s\", line %d\n",
+	    __progname, failedexpr, file, line);
+	syslog(LOG_DEBUG|LOG_USER,
+	    "assertion \"%s\" failed: file \"%s\", line %d",
+	    failedexpr, file, line);
+	return;
 }
