@@ -1,4 +1,4 @@
-/*	$NetBSD: portal_vnops.c,v 1.16 1996/02/09 22:40:43 christos Exp $	*/
+/*	$NetBSD: portal_vnops.c,v 1.17 1996/02/13 13:12:57 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -69,9 +69,9 @@ static int portal_fileid = PORTAL_ROOTFILEID+1;
 static void	portal_closefd __P((struct proc *, int));
 static int	portal_connect __P((struct socket *, struct socket *));
 
-int	portal_enotsupp	__P((void *));
 int	portal_badop	__P((void *));
-int	portal_nullop	__P((void *));
+int	portal_enotsupp	__P((void *));
+
 int	portal_lookup	__P((void *));
 #define	portal_create	portal_enotsupp
 #define	portal_mknod	portal_enotsupp
@@ -755,16 +755,3 @@ portal_badop(v)
 	panic("portal: bad op");
 	/* NOTREACHED */
 }
-
-/*
- * Portal vnode null operation
- */
-/*ARGSUSED*/
-int
-portal_nullop(v)
-	void *v;
-{
-
-	return (0);
-}
-
