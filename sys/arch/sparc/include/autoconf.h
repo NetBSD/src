@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.30 1998/10/06 20:50:18 thorpej Exp $ */
+/*	$NetBSD: autoconf.h,v 1.31 1999/02/14 12:26:16 pk Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -86,6 +86,7 @@
 
 #include <machine/bus.h>
 #include <machine/bsd_openprom.h>
+#include <machine/promlib.h>
 #include <dev/sbus/sbusvar.h>
 
 /*
