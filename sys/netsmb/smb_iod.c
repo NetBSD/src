@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_iod.c,v 1.7 2003/02/25 09:12:11 jdolecek Exp $	*/
+/*	$NetBSD: smb_iod.c,v 1.8 2003/02/26 19:30:51 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_iod.c,v 1.7 2003/02/25 09:12:11 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_iod.c,v 1.8 2003/02/26 19:30:51 jdolecek Exp $");
  
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -388,11 +388,7 @@ smb_iod_request(struct smbiod *iod, int event, void *ident)
 		return 0;
 	}
 	smb_iod_wakeup(iod);
-#ifdef __NetBSD__
-	ltsleep(evp, PWAIT | PNORELOCK, "90evw", 0, SMB_IOD_EVLOCKPTR(iod));
-#else
-	msleep(evp, SMB_IOD_EVLOCKPTR(iod), PWAIT | PDROP, "90evw", 0);
-#endif
+	ltsleep(evp, PWAIT | PNORELOCK, "smbevw", 0, SMB_IOD_EVLOCKPTR(iod));
 	error = evp->ev_error;
 	free(evp, M_SMBIOD);
 	return error;
@@ -425,7 +421,7 @@ smb_iod_addrq(struct smb_rq *rqp)
 			 */
 			if (rqp->sr_state != SMBRQ_NOTSENT)
 				break;
-			tsleep(&iod->iod_flags, PWAIT, "90sndw", hz);
+			tsleep(&iod->iod_flags, PWAIT, "smbsndw", hz);
 		}
 		if (rqp->sr_lerror)
 			smb_iod_removerq(rqp);
@@ -453,13 +449,8 @@ smb_iod_addrq(struct smb_rq *rqp)
 		if (iod->iod_muxcnt < vcp->vc_maxmux)
 			break;
 		iod->iod_muxwant++;
-#ifdef __NetBSD__
-		ltsleep(&iod->iod_muxwant, PWAIT, "90mux", 
+		ltsleep(&iod->iod_muxwant, PWAIT, "smbmux", 
 			0, SMB_IOD_RQLOCKPTR(iod));
-#else
-		msleep(&iod->iod_muxwant, SMB_IOD_RQLOCKPTR(iod),
-		    PWAIT, "90mux", 0);
-#endif
 	}
 	iod->iod_muxcnt++;
 	TAILQ_INSERT_TAIL(&iod->iod_rqlist, rqp, sr_link);
@@ -484,11 +475,7 @@ smb_iod_removerq(struct smb_rq *rqp)
 	SMB_IOD_RQLOCK(iod);
 	while (rqp->sr_flags & SMBR_XLOCK) {
 		rqp->sr_flags |= SMBR_XLOCKWANT;
-#ifdef __NetBSD__
-		ltsleep(rqp, PWAIT, "90xrm", 0, SMB_IOD_RQLOCKPTR(iod));
-#else
-		msleep(rqp, SMB_IOD_RQLOCKPTR(iod), PWAIT, "90xrm", 0);
-#endif
+		ltsleep(rqp, PWAIT, "smbxrm", 0, SMB_IOD_RQLOCKPTR(iod));
 	}
 	TAILQ_REMOVE(&iod->iod_rqlist, rqp, sr_link);
 	iod->iod_muxcnt--;
@@ -513,7 +500,7 @@ smb_iod_waitrq(struct smb_rq *rqp)
 			smb_iod_recvall(iod);
 			if (rqp->sr_rpgen != rqp->sr_rplast)
 				break;
-			tsleep(&iod->iod_flags, PWAIT, "90irq", hz);
+			tsleep(&iod->iod_flags, PWAIT, "smbirq", hz);
 		}
 		smb_iod_removerq(rqp);
 		return rqp->sr_lerror;
@@ -521,12 +508,8 @@ smb_iod_waitrq(struct smb_rq *rqp)
 	}
 	SMBRQ_SLOCK(rqp);
 	if (rqp->sr_rpgen == rqp->sr_rplast)
-#ifdef __NetBSD__
-		ltsleep(&rqp->sr_state, PWAIT, "90wrq", 0, 
+		ltsleep(&rqp->sr_state, PWAIT, "smbwrq", 0, 
 			SMBRQ_SLOCKPTR(rqp));
-#else
-		msleep(&rqp->sr_state, SMBRQ_SLOCKPTR(rqp), PWAIT, "90wrq", 0);
-#endif
 	rqp->sr_rplast++;
 	SMBRQ_SUNLOCK(rqp);
 	error = rqp->sr_lerror;
@@ -676,7 +659,7 @@ smb_iod_thread(void *arg)
 /*		mtx_unlock(&Giant, MTX_DEF);*/
 		if (iod->iod_flags & SMBIOD_SHUTDOWN)
 			break;
-		tsleep(&iod->iod_flags, PWAIT, "90idle", iod->iod_sleeptimo);
+		tsleep(&iod->iod_flags, PWAIT, "smbidle", iod->iod_sleeptimo);
 	}
 /*	mtx_lock(&Giant, MTX_DEF);*/
 	kthread_exit(0);
@@ -696,9 +679,9 @@ smb_iod_create(struct smb_vc *vcp)
 	iod->iod_pingtimo.tv_sec = SMBIOD_PING_TIMO;
 	microtime(&iod->iod_lastrqsent);
 	vcp->vc_iod = iod;
-	smb_sl_init(&iod->iod_rqlock, "90rql");
+	smb_sl_init(&iod->iod_rqlock, "smbrql");
 	TAILQ_INIT(&iod->iod_rqlist);
-	smb_sl_init(&iod->iod_evlock, "90evl");
+	smb_sl_init(&iod->iod_evlock, "smbevl");
 	SIMPLEQ_INIT(&iod->iod_evlist);
 #ifdef __NetBSD__
 	error = kthread_create1(smb_iod_thread, iod, &iod->iod_p,
