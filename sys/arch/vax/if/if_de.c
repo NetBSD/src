@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.4 1995/02/13 00:42:29 ragge Exp $	*/
+/*	$NetBSD: if_de.c,v 1.5 1995/03/30 20:26:32 ragge Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989 Regents of the University of California.
@@ -438,8 +438,7 @@ destart(ifp)
 /*
  * Command done interrupt.
  */
-deintr(unit)
-	int unit;
+deintr(uba,vector,level,unit)
 {
 	struct uba_device *ui;
 	volatile struct dedevice *addr;
@@ -448,7 +447,6 @@ deintr(unit)
 	register struct ifxmt *ifxp;
 	short csr0;
 
-	unit=0; /* XXX J{tteful grej f|r att f} igenom... */
 	ui = deinfo[unit];
 	addr = (struct dedevice *)ui->ui_addr;
 	ds = &de_softc[unit];
