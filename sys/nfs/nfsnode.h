@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfsnode.h	7.12 (Berkeley) 4/16/91
- *	$Id: nfsnode.h,v 1.8 1994/04/21 23:23:45 cgd Exp $
+ *	$Id: nfsnode.h,v 1.9 1994/04/25 03:50:23 cgd Exp $
  */
 
 #ifndef _NFS_NFSNODE_H_
@@ -62,8 +62,8 @@ struct nfsnode {
 	time_t	n_ctime;	/* Prev create time for name cache consistency*/
 	int	n_error;	/* Save write error value */
 	u_long	n_direofoffset;	/* Dir. EOF offset cache */
-	struct timeval n_delayed_atime;	/* Non-urgent access/modified time */
-	struct timeval n_delayed_mtime;	/* updates are stored here. */
+	struct timespec n_delayed_atime; /* Non-urgent access/modified time */
+	struct timespec n_delayed_mtime; /* updates are stored here. */
 };
 
 #define	n_forw		n_chain[0]

@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ufs_lookup.c	7.33 (Berkeley) 5/19/91
- *	$Id: isofs_lookup.c,v 1.16 1994/03/15 21:37:29 ws Exp $
+ *	$Id: isofs_lookup.c,v 1.17 1994/04/25 03:49:27 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -159,11 +159,11 @@ isofs_lookup(vdp, ndp, p)
 			error = 0;
 		} else if (ndp->ni_isdotdot) {
 			ISO_IUNLOCK(pdp);
-			error = vget(vdp);
+			error = vget(vdp, 1);
 			if (!error && lockparent && *ndp->ni_next == '\0')
 				ISO_ILOCK(pdp);
 		} else {
-			error = vget(vdp);
+			error = vget(vdp, 1);
 			if (!lockparent || error || *ndp->ni_next != '\0')
 				ISO_IUNLOCK(pdp);
 		}
