@@ -1,4 +1,4 @@
-/*	$NetBSD: portal_vfsops.c,v 1.41 2004/04/21 01:05:41 christos Exp $	*/
+/*	$NetBSD: portal_vfsops.c,v 1.42 2004/04/21 02:40:42 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: portal_vfsops.c,v 1.41 2004/04/21 01:05:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: portal_vfsops.c,v 1.42 2004/04/21 02:40:42 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -62,6 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: portal_vfsops.c,v 1.41 2004/04/21 01:05:41 christos 
 #include <sys/socketvar.h>
 #include <sys/protosw.h>
 #include <sys/domain.h>
+#include <sys/dirent.h>
 #include <sys/un.h>
 #include <miscfs/portal/portal.h>
 
