@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6360.c,v 1.61 1998/12/05 19:43:50 mjacob Exp $	*/
+/*	$NetBSD: aic6360.c,v 1.62 1999/09/26 08:14:57 enami Exp $	*/
 
 #include "opt_ddb.h"
 #ifdef DDB
@@ -154,7 +154,6 @@ int aic_debug = 0x00; /* AIC_SHOWSTART|AIC_SHOWMISC|AIC_SHOWTRACE; */
 
 void	aicattach	__P((struct aic_softc *));
 void	aic_minphys	__P((struct buf *));
-void	aic_init	__P((struct aic_softc *));
 void	aic_done	__P((struct aic_softc *, struct aic_acb *));
 void	aic_dequeue	__P((struct aic_softc *, struct aic_acb *));
 int	aic_scsi_cmd	__P((struct scsipi_xfer *));
@@ -270,7 +269,7 @@ aicattach(sc)
 	sc->sc_minsync = (2 * 250) / sc->sc_freq;
 	sc->sc_maxsync = (9 * 250) / sc->sc_freq;
 
-	aic_init(sc);	/* Init chip and driver */
+	aic_init(sc, 1);	/* Init chip and driver */
 
 	/*
 	 * Fill in the adapter.
@@ -294,9 +293,46 @@ aicattach(sc)
 	/*
 	 * ask the adapter what subunits are present
 	 */
-	config_found(&sc->sc_dev, &sc->sc_link, scsiprint);
+	sc->sc_child = config_found(&sc->sc_dev, &sc->sc_link, scsiprint);
 }
 
+int
+aic_activate(self, act)
+	struct device *self;
+	enum devact act;
+{
+	struct aic_softc *sc = (struct aic_softc *) self;
+	int s, rv = 0;
+
+	s = splhigh();
+	switch (act) {
+	case DVACT_ACTIVATE:
+		rv = EOPNOTSUPP;
+		break;
+
+	case DVACT_DEACTIVATE:
+		if (sc->sc_child != NULL)
+			rv = config_deactivate(sc->sc_child);
+		break;
+	}
+	splx(s);
+
+	return (rv);
+}
+
+int
+aic_detach(self, flags)
+	struct device *self;
+	int flags;
+{
+	struct aic_softc *sc = (struct aic_softc *) self;
+	int rv = 0;
+
+	if (sc->sc_child != NULL)
+		rv = config_detach(sc->sc_child, flags);
+	
+	return (rv);
+}
 
 /* Initialize AIC6360 chip itself
  * The following conditions should hold:
@@ -367,14 +403,17 @@ aic_scsi_reset(sc)
  * Initialize aic SCSI driver.
  */
 void
-aic_init(sc)
+aic_init(sc, bus_reset)
 	struct aic_softc *sc;
+	int bus_reset;
 {
 	struct aic_acb *acb;
 	int r;
 
-	aic_reset(sc);
-	aic_scsi_reset(sc);
+	if (bus_reset) {
+		aic_reset(sc);
+		aic_scsi_reset(sc);
+	}
 	aic_reset(sc);
 
 	if (sc->sc_state == AIC_INIT) {
@@ -1996,7 +2035,7 @@ dophase:
 	printf("%s: unexpected bus phase; resetting\n", sc->sc_dev.dv_xname);
 	AIC_BREAK();
 reset:
-	aic_init(sc);
+	aic_init(sc, 1);
 	return 1;
 
 finish:
