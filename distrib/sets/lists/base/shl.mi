@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.31 1999/07/04 20:07:52 fvdl Exp $
+# $NetBSD: shl.mi,v 1.32 1999/08/16 08:31:04 blymn Exp $
 ./usr/lib/libamu.so.1.1
 ./usr/lib/libbfd.so.3.0
 ./usr/lib/libbz2.so.0.0
@@ -20,7 +20,7 @@
 ./usr/lib/libskey.so.0.0
 ./usr/lib/libstdc++.so.2.0
 ./usr/lib/libtelnet.so.2.0
-./usr/lib/libtermcap.so.0.0
+./usr/lib/libtermcap.so.0.1
 ./usr/lib/libtermlib.so.0.0
 ./usr/lib/libusb.so.0.0
 ./usr/lib/libutil.so.5.1
