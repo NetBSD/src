@@ -315,5 +315,5 @@ char *syscallnames[] = {
 	"#237 (unimplemented timer_settime)",		/* 237 = unimplemented timer_settime */
 	"#238 (unimplemented timer_gettime)",		/* 238 = unimplemented timer_gettime */
 	"#239 (unimplemented timer_getoverrun)",		/* 239 = unimplemented timer_getoverrun */
-	"#240 (unimplemented nanosleep)",		/* 240 = unimplemented nanosleep */
+	"nanosleep",			/* 240 = nanosleep */
 };

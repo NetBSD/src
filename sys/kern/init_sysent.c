@@ -626,7 +626,7 @@ struct sysent sysent[] = {
 	    sys_nosys },			/* 238 = unimplemented timer_gettime */
 	{ 0, 0,
 	    sys_nosys },			/* 239 = unimplemented timer_getoverrun */
-	{ 0, 0,
-	    sys_nosys },			/* 240 = unimplemented nanosleep */
+	{ 2, s(struct sys_nanosleep_args),
+	    sys_nanosleep },			/* 240 = nanosleep */
 };
 
