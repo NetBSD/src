@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.S,v 1.17 2002/10/01 20:41:52 scw Exp $	*/
+/*	$NetBSD: exception.S,v 1.18 2002/10/31 14:24:16 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -43,6 +43,8 @@
  *
  * ##########
  */
+
+#include "opt_ddb.h"
 
 /*
  * SH5 Exception Handling 101
@@ -795,7 +797,7 @@ Ltrapexit:
 Lsh5_event_interrupt:
 	_INTR_FRAME_SAVE(SZ_INTRFRAME)
 
-#ifdef DEBUG
+#ifdef DDB
 	/*
 	 * Catch NMIs early so that we can convert the interrupt frame
 	 * to a regular trapframe and drop into DDB if the NMI button
@@ -866,6 +868,11 @@ Lsh5_event_interrupt:
 	 */
 	addi	r15, -(SZ_TRAPFRAME - SZ_INTRFRAME), r15
 	_TRAP_FRAME_SAVE(SZ_TRAPFRAME)
+	add	r15, r63, r14		/* Adjust the frame-pointer too */
+	getcon	sr, r0
+	movi	SH5_CONREG_SR_IMASK_ALL, r1
+	andc	r0, r1, r0
+	putcon	r0, sr			/* Drop to ipl 0 */
 	pta/l	Ltrapagain, tr0
 	movi	T_AST, r0		/* Fabricate an "AST" event */
 	st.q	r15, SFO(SF_EXPEVT, SZ_TRAPFRAME), r0
@@ -877,18 +884,19 @@ Lintrexit:
 	/* NOTREACHED */
 
 
-#ifdef DEBUG
+#ifdef DDB
 Lsh5_event_nmi:
 	/*
 	 * Convert the interrupt frame to a trapframe
 	 */
 	addi	r15, -(SZ_TRAPFRAME - SZ_INTRFRAME), r15
 	_TRAP_FRAME_SAVE(SZ_TRAPFRAME)
+	add	r15, r63, r14		/* Adjust the frame-pointer too */
 	pta/l	Ltrapagain, tr0
 	movi	T_NMI, r0		/* Fabricate an "NMI" event */
 	st.q	r15, SFO(SF_EXPEVT, SZ_TRAPFRAME), r0
 	blink	tr0, r63		/* Go back around to deal with it */
-#endif /* DEBUG */
+#endif /* DDB */
 
 
 /******************************************************************************
