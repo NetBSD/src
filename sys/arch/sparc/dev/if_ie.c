@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.14 1995/04/11 06:03:36 mycroft Exp $	*/
+/*	$NetBSD: if_ie.c,v 1.15 1995/04/11 09:18:09 pk Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -1393,13 +1393,13 @@ iestart(ifp)
 	u_short len;
 
 	if ((ifp->if_flags & IFF_RUNNING) == 0)
-		return 0;
+		return;
 
 	if (sc->xmit_free == 0) {
 		ifp->if_flags |= IFF_OACTIVE;
 		if (!sc->xmit_busy)
 			iexmit(sc);
-		return 0;
+		return;
 	}
 
 	do {
@@ -1431,7 +1431,7 @@ iestart(ifp)
 	if ((sc->xmit_free < NTXBUF) && (!sc->xmit_busy))
 		iexmit(sc);
 
-	return 1;
+	return;
 }
 
 /*
