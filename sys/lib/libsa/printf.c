@@ -1,4 +1,4 @@
-/*	$NetBSD: printf.c,v 1.12 1997/06/26 19:11:48 drochner Exp $	*/
+/*	$NetBSD: printf.c,v 1.13 1998/06/16 19:10:15 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -200,6 +200,10 @@ reswitch:	switch (ch = *fmt++) {
 			    va_arg(ap, u_long) : va_arg(ap, u_int);
 			kprintn(put, ul, 10);
 			break;
+		case 'p':
+			put('0');
+			put('x');
+			/* fall through */
 		case 'x':
 			ul = lflag ?
 			    va_arg(ap, u_long) : va_arg(ap, u_int);
