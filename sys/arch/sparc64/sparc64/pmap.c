@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.136 2003/03/11 21:28:23 martin Exp $	*/
+/*	$NetBSD: pmap.c,v 1.137 2003/03/30 00:28:19 thorpej Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
 /*
@@ -2567,7 +2567,7 @@ pmap_clear_modify(pg)
 		Debugger();
 	}
 #endif
-	if (pv->pv_pmap != NULL)
+	if (pv->pv_pmap != NULL) {
 		for (; pv; pv = pv->pv_next) {
 			int64_t data;
 			struct pmap *pmap = pv->pv_pmap;
@@ -2602,6 +2602,7 @@ pmap_clear_modify(pg)
 			pv->pv_va &= ~(PV_MOD);
 			simple_unlock(&pmap->pm_lock);
 		}
+	}
 
 	/*
 	 * XXX
