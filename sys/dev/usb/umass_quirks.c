@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_quirks.c,v 1.56 2003/09/17 07:49:11 mycroft Exp $	*/
+/*	$NetBSD: umass_quirks.c,v 1.57 2003/10/16 00:36:46 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_quirks.c,v 1.56 2003/09/17 07:49:11 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_quirks.c,v 1.57 2003/10/16 00:36:46 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,6 +112,27 @@ Static const struct umass_quirk umass_quirks[] = {
 	  UMASS_WPROTO_CBI_I, UMASS_CPROTO_ATAPI,
 	  0,
 	  0,
+	  UMATCH_VENDOR_PRODUCT,
+	  NULL, NULL
+	},
+
+	/*
+	 * The DiskOnKey does not reject commands it doesn't recognize in a
+	 * sane way -- rather than STALLing the bulk pipe, it continually NAKs
+	 * until we time out.  To prevent being screwed by this, for now we
+	 * disable 10-byte MODE SENSE the klugy way.  - mycroft, 2003/10/16
+	 */
+	{ { USB_VENDOR_MSYSTEMS, USB_PRODUCT_MSYSTEMS_DISKONKEY },
+	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC,
+	  0,
+	  PQUIRK_NOBIGMODESENSE,
+	  UMATCH_VENDOR_PRODUCT,
+	  NULL, NULL
+	},
+	{ { USB_VENDOR_MSYSTEMS, USB_PRODUCT_MSYSTEMS_DISKONKEY2 },
+	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC,
+	  0,
+	  PQUIRK_NOBIGMODESENSE,
 	  UMATCH_VENDOR_PRODUCT,
 	  NULL, NULL
 	},
