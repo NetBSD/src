@@ -1,4 +1,4 @@
-/*	$NetBSD: strcat.S,v 1.7 1997/01/04 03:26:24 jtc Exp $	*/
+/*	$NetBSD: strcat.S,v 1.8 1999/05/02 20:34:04 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -43,7 +43,7 @@
 #if 0
 	RCSID("from: @(#)strcpy.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: strcat.S,v 1.7 1997/01/04 03:26:24 jtc Exp $")
+	RCSID("$NetBSD: strcat.S,v 1.8 1999/05/02 20:34:04 kleink Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -58,4 +58,7 @@ Lslloop:
 Lscloop:
 	movb	a0@+,a1@+		| copy a byte
 	jne	Lscloop			| copied non-null, keep going
+#ifdef __SVR4_ABI__
+	moveal	d0,a0
+#endif
 	rts
