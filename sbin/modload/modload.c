@@ -1,6 +1,4 @@
 /*
- * modload.c
- *
  * This is the interface for the kernel module loader for statically
  * loadable kernel modules.  The interface is nearly identical to the
  * SunOS 4.1.3 not because I lack imagination but because I liked Sun's
@@ -46,11 +44,13 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: modload.c,v 1.6 1994/03/31 20:29:58 ws Exp $
+ *	$Id: modload.c,v 1.7 1994/03/31 23:26:15 mycroft Exp $
  */
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <err.h>
 #include <sys/param.h>
 #include <sys/ioctl.h>
 #include <sys/systm.h>
@@ -61,21 +61,13 @@
 #include <a.out.h>
 #include <sys/file.h>
 #include <sys/errno.h>
-#include <paths.h>
-
-#ifdef sun
-/* these are defined in stdlib.h for everything but sun*/
-extern char *optarg;
-extern int optind;
-#endif	/* sun*/
-
-#ifndef DFLT_KERNEL
-#define	DFLT_KERNEL	_PATH_UNIX
-#endif	/* !DFLT_KERNEL*/
+#include "pathnames.h"
 
 #ifndef DFLT_ENTRY
 #define	DFLT_ENTRY	"xxxinit"
-#endif	/* !DFLT_ENTRY*/
+#endif	/* !DFLT_ENTRY */
+
+#define	min(a, b)	((a) < (b) ? (a) : (b))
 
 /*
  * Expected linker options:
@@ -85,44 +77,30 @@ extern int optind;
  * -o		output file
  * -T		address to link to in hex (assumes it's a page boundry)
  * <target>	object file
- *
  */
-/*
-#define	LINKCMD		"ld -f %s -e _%s -o %s -T %x %s"
-*/
 #define	LINKCMD		"ld -A %s -e _%s -o %s -T %x %s"
 
-#define	LKM_DEV		"/dev/lkm"
+int debug = 0;
+int verbose = 0;
 
-#ifdef MIN
-#undef MIN
-#endif	/* MIN*/
-#define	MIN(x,y)	((x)>(y) ? (y) : (x))
-
-
-int	debug = 0;
-int	verbose = 0;
-
-
-linkcmd( kernel, entry, outfile, address, object)
-char		*kernel;
-char		*entry;
-char		*outfile;
-unsigned int	address;
-char		*object;
+int
+linkcmd(kernel, entry, outfile, address, object)
+	char *kernel, *entry, *outfile;
+	u_int address;	/* XXX */
+	char *object;
 {
-	char	cmdbuf[ 1024];
-	int	err = 0;
+	char cmdbuf[1024];
+	int error = 0;
 
-	sprintf( cmdbuf, LINKCMD, kernel, entry, outfile, address, object);
+	sprintf(cmdbuf, LINKCMD, kernel, entry, outfile, address, object);
 
-	if( debug)
-		printf( "%s\n", cmdbuf);
+	if (debug)
+		printf("%s\n", cmdbuf);
 
-	switch( system( cmdbuf)) {
-	case 0:				/* SUCCESS!*/
+	switch (system(cmdbuf)) {
+	case 0:				/* SUCCESS! */
 		break;
-	case 1:				/* uninformitive error*/
+	case 1:				/* uninformitive error */
 		/*
 		 * Someone needs to fix the return values from the NetBSD
 		 * ld program -- it's totally uninformative.
@@ -132,103 +110,124 @@ char		*object;
 		 * Undefined symbol	(1 on SunOS)
 		 * etc.
 		 */
-	case 127:			/* can't load shell*/
+	case 127:			/* can't load shell */
 	case 32512:
 	default:
-		err = 1;
+		error = 1;
 		break;
 	}
 
-	return( err);
+	return error;
 }
 
-
+void
 usage()
 {
-	fprintf( stderr, "usage:\n");
-	fprintf( stderr,
-		 "modload [-d] [-v] [-A <kernel>] [-e <entry]\n");
-	fprintf( stderr,
-		 "[-p <postinstall>] [-o <output file>] <input file>\n");
-	exit( 1);
+
+	fprintf(stderr, "usage:\n");
+	fprintf(stderr, "modload [-d] [-v] [-A <kernel>] [-e <entry]\n");
+	fprintf(stderr,
+	    "[-p <postinstall>] [-o <output file>] <input file>\n");
+	exit(1);
 }
 
-int	filopen = 0;
+int fileopen = 0;
 #define	DEV_OPEN	0x01
 #define	MOD_OPEN	0x02
 #define	PART_RESRV	0x04
+int devfd, modfd;
+struct lmc_resrv resrv;
 
-main( ac, av)
-int	ac;
-char	*av[];
+void
+cleanup()
 {
-	int	ch;
-	char	*kname = DFLT_KERNEL;
-	char	*entry = DFLT_ENTRY;
-	char	*post = NULL;
-	char	*out = NULL;
-	char	*modobj;
-	int	devfd;
-	int	modfd;
-	char	modout[ 80];
-	char	*p;
-	struct exec	info_buf;
-	int	err = 0;
-	unsigned long	modsize;
-	unsigned long	modentry;
+	if (fileopen & PART_RESRV) {
+		/*
+		 * Free up kernel memory
+		 */
+		if (ioctl(devfd, LMUNRESRV, 0) == -1)
+			warn("can't release slot 0x%08x memory", resrv.slot);
+	}
 
-	struct lmc_resrv	resrv;
-	struct lmc_loadbuf	ldbuf;
-	int			i;
-	int			sz;
-	char			buf[ MODIOBUF];
-	int			bytesleft;
+	if (fileopen & DEV_OPEN)
+		close(devfd);
 
+	if (fileopen & MOD_OPEN)
+		close(modfd);
+}
 
-	while( ( ch = getopt( ac, av, "dvA:e:p:o:")) != EOF) {
-		switch(ch) {
-		case 'd':	debug = 1;	break;	/* debug*/
-		case 'v':	verbose = 1;	break;	/* verbose*/
-		case 'A':	kname = optarg;	break;	/* kernel*/
-		case 'e':	entry = optarg;	break;	/* entry point*/
-		case 'p':	post = optarg;	break;	/* postinstall*/
-		case 'o':	out = optarg;	break;	/* output file*/
-		case '?':	usage();
-		default:	printf( "default!\n");
+int
+main(argc, argv)
+	int argc;
+	char *argv[];
+{
+	int c;
+	char *kname = _PATH_UNIX;
+	char *entry = DFLT_ENTRY;
+	char *post = NULL;
+	char *out = NULL;
+	char *modobj;
+	char modout[80], *p;
+	struct exec info_buf;
+	u_int modsize;	/* XXX */
+	u_int modentry;	/* XXX */
+
+	struct lmc_loadbuf ldbuf;
+	int sz, bytesleft;
+	char buf[MODIOBUF];
+
+	while ((c = getopt(argc, argv, "dvA:e:p:o:")) != EOF) {
+		switch (c) {
+		case 'd':
+			debug = 1;
+			break;	/* debug */
+		case 'v':
+			verbose = 1;
+			break;	/* verbose */
+		case 'A':
+			kname = optarg;
+			break;	/* kernel */
+		case 'e':
+			entry = optarg;
+			break;	/* entry point */
+		case 'p':
+			post = optarg;
+			break;	/* postinstall */
+		case 'o':
+			out = optarg;
+			break;	/* output file */
+		case '?':
+			usage();
+		default:
+			printf("default!\n");
+			break;
 		}
 	}
-	ac -= optind;
-	av += optind;
+	argc -= optind;
+	argv += optind;
 
-	if( ac != 1)
+	if (argc != 1)
 		usage();
 
-	modobj = av[ 0];
+	modobj = argv[0];
+
+	atexit(cleanup);
 
 	/*
 	 * Open the virtual device device driver for exclusive use (needed
 	 * to write the new module to it as our means of getting it in the
 	 * kernel).
 	 */
-	if( ( devfd = open( LKM_DEV, O_RDWR, 0)) == -1) {
-		perror( LKM_DEV);
-		err = 3;
-		goto done;
-	}
-	filopen |= DEV_OPEN;
+	if ((devfd = open(_PATH_LKM, O_RDWR, 0)) == -1)
+		err(3, _PATH_LKM);
+	fileopen |= DEV_OPEN;
 
-	strcpy( modout, modobj);
+	strcpy(modout, modobj);
 
-	for( p = modout; *p && *p != '.'; p++)
-		continue;
-
-	if( !*p || strcmp( p, ".o")) {
-		fprintf( stderr, "Module object must end in .o\n");
-		err = 2;
-		goto done;
-	}
-
-	if( out == NULL) {
+	p = strchr(modout, '.');
+	if (!p || strcmp(p, ".o"))
+		errx(2, "module object must end in .o");
+	if (out == NULL) {
 		out = modout;
 		*p == 0;
 	}
@@ -236,137 +235,97 @@ char	*av[];
 	/*
 	 * Prelink to get file size
 	 */
-	if( linkcmd( kname, entry, out, 0, modobj)) {
-		fprintf( stderr,
-			 "Can't prelink %s creating %s!\n", modobj, out);
-		err = 1;
-		goto done;
-	}
+	if (linkcmd(kname, entry, out, 0, modobj))
+		errx(1, "can't prelink `%s' creating `%s'", modobj, out);
 
 	/*
 	 * Pre-open the 0-linked module to get the size information
 	 */
-	if( ( modfd = open( out, O_RDONLY, 0)) == -1) {
-		perror( out);
-		err = 4;
-		goto done;
-	}
-	filopen |= MOD_OPEN;
+	if ((modfd = open(out, O_RDONLY, 0)) == -1)
+		err(4, out);
+	fileopen |= MOD_OPEN;
 
 	/*
 	 * Get the load module post load size... do this by reading the
 	 * header and doing page counts.
 	 */
-	if( read( modfd, &info_buf, sizeof(struct exec)) == -1) {
-		perror( "read");
-		err = 3;
-		goto done;
-	}
+	if (read(modfd, &info_buf, sizeof(struct exec)) == -1)
+		err(3, "read `%s'", out);
 
 	/*
 	 * Close the dummy module -- we have our sizing information.
 	 */
-	close( modfd);
-	filopen &= ~MOD_OPEN;
-
+	close(modfd);
+	fileopen &= ~MOD_OPEN;
 
 	/*
 	 * Magic number...
 	 */
-	if( N_BADMAG( info_buf)) {
-		fprintf( stderr, "Not an a.out format file\n");
-		err = 4;
-		goto done;
-	}
-
+	if (N_BADMAG(info_buf))
+		errx(4, "not an a.out format file");
 
 	/*
 	 * Calculate the size of the module
 	 */
- 	modsize = info_buf.a_text + info_buf.a_data	/* amount to load*/
-		  + info_buf.a_bss;
-
+ 	modsize = info_buf.a_text + info_buf.a_data + info_buf.a_bss;
 
 	/*
 	 * Reserve the required amount of kernel memory -- this may fail
 	 * to be successful.
 	 */
-	resrv.size = modsize;				/* size in bytes*/
-	resrv.name = modout;				/* objname w/o ".o"*/
-	resrv.slot = -1;				/* returned*/
-	resrv.addr = 0;					/* returned*/
-	if( ioctl( devfd, LMRESERV, &resrv) == -1) {
-		perror( "LMRESERV");
-		fprintf( stderr, "Can't reserve memory\n");
-		err = 9;
-		goto done;
-	}
-	filopen |= PART_RESRV;
+	resrv.size = modsize;	/* size in bytes */
+	resrv.name = modout;	/* objname w/o ".o" */
+	resrv.slot = -1;	/* returned */
+	resrv.addr = 0;		/* returned */
+	if (ioctl(devfd, LMRESERV, &resrv) == -1)
+		err(9, "can't reserve memory");
+	fileopen |= PART_RESRV;
 
 	/*
 	 * Relink at kernel load address
 	 */
-	if( linkcmd( kname, entry, out, resrv.addr, modobj)) {
-		fprintf( stderr,
-			 "Can't link %s creating %s bound to 0x%08x!\n",
-			 modobj, out, resrv.addr);
-		err = 1;
-		goto done;
-	}
+	if (linkcmd(kname, entry, out, resrv.addr, modobj))
+		errx(1, "can't link `%s' creating `%s' bound to 0x%08x",
+		    modobj, out, resrv.addr);
 
 	/*
 	 * Open the relinked module to load it...
 	 */
-	if( ( modfd = open( out, O_RDONLY, 0)) == -1) {
-		perror( out);
-		err = 4;
-		goto done;
-	}
-	filopen |= MOD_OPEN;
-
+	if ((modfd = open(out, O_RDONLY, 0)) == -1)
+		err(4, out);
+	fileopen |= MOD_OPEN;
 
 	/*
 	 * Reread the header to get the actual entry point *after* the
 	 * relink.
 	 */
-	if( read( modfd, &info_buf, sizeof(struct exec)) == -1) {
-		perror( "read");
-		err = 3;
-		goto done;
-	}
+	if (read(modfd, &info_buf, sizeof(struct exec)) == -1)
+		err(3, "read `%s'", out);
 
 	/*
 	 * Get the entry point (for initialization)
 	 */
-	modentry = info_buf.a_entry;			/* place to call*/
+	modentry = info_buf.a_entry;			/* place to call */
 
 	/*
 	 * Seek to the text offset to start loading...
 	 */
-	if( lseek( modfd, N_TXTOFF(info_buf), 0) == -1) {
-		perror( "lseek");
-		err = 12;
-		goto done;
-	}
+	if (lseek(modfd, N_TXTOFF(info_buf), 0) == -1)
+		err(12, "lseek");
 
 	/*
 	 * Transfer the relinked module to kernel memory in chunks of
 	 * MODIOBUF size at a time.
 	 */
 	for (bytesleft = info_buf.a_text + info_buf.a_data;
-	     bytesleft > 0;
-	     bytesleft -= sz) {
-		sz = MIN(bytesleft,MODIOBUF);
+	    bytesleft > 0;
+	    bytesleft -= sz) {
+		sz = min(bytesleft, MODIOBUF);
 		read(modfd, buf, sz);
 		ldbuf.cnt = sz;
 		ldbuf.data = buf;
-		if (ioctl( devfd, LMLOADBUF, &ldbuf) == -1) {
-			perror( "LMLOADBUF");
-			/* error*/
-			fprintf( stderr, "Error transferring buffer\n");
-			err = 11;
-			goto done;
-		}
+		if (ioctl(devfd, LMLOADBUF, &ldbuf) == -1)
+			err(11, "error transferring buffer");
 	}
 
 	/*
@@ -380,34 +339,14 @@ char	*av[];
 	 * is maintained on success, or blow everything back to ground
 	 * zero on failure.
 	 */
-	if( ioctl( devfd, LMREADY, &modentry) == -1) {
-		perror( "LMREADY");
-		err = 14;
-		goto done;
-	}
+	if (ioctl(devfd, LMREADY, &modentry) == -1)
+		err(14, "error initializing module");
 
 	/*
 	 * Success!
 	 */
-	filopen &= ~PART_RESRV;		/* loaded*/
-	printf( "Module loaded as ID %d\n", resrv.slot);
+	fileopen &= ~PART_RESRV;	/* loaded */
+	printf("Module loaded as ID %d\n", resrv.slot);
 
-done:
-	if( filopen & PART_RESRV) {
-		/*
-		 * Free up kernel memory
-		 */
-		if( ioctl( devfd, LMUNRESRV, 0) == -1) {
-			fprintf( stderr, "Can't release slot 0x%08x memory\n",
-					 resrv.slot);
-		}
-	}
-
-	if( filopen & DEV_OPEN)
-		close( devfd);
-
-	if( filopen & MOD_OPEN)
-		close( modfd);
-
-	exit( err);
+	return 0;
 }
