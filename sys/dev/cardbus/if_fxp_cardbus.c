@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp_cardbus.c,v 1.9 2000/03/10 07:11:47 thorpej Exp $	*/
+/*	$NetBSD: if_fxp_cardbus.c,v 1.10 2000/03/12 17:05:23 veego Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -156,18 +156,18 @@ fxp_cardbus_attach(parent, self, aux)
 	/*
          * Map control/status registers.
          */
-	if (Cardbus_mapreg_map(csc->ct, CARDBUS_BASE0_REG,
+	if (Cardbus_mapreg_map(csc->ct, CARDBUS_BASE1_REG,
+	    PCI_MAPREG_TYPE_IO, 0, &iot, &ioh, &adr, &size) == 0) {
+		csc->base1_reg = adr | 1;
+		sc->sc_st = iot;
+		sc->sc_sh = ioh;
+		csc->size = size;
+	} else if (Cardbus_mapreg_map(csc->ct, CARDBUS_BASE0_REG,
 	    PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT,
 	    0, &memt, &memh, &adr, &size) == 0) {
 		csc->base0_reg = adr;
 		sc->sc_st = memt;
 		sc->sc_sh = memh;
-		csc->size = size;
-	} else if (Cardbus_mapreg_map(csc->ct, CARDBUS_BASE1_REG,
-	    PCI_MAPREG_TYPE_IO, 0, &iot, &ioh, &adr, &size) == 0) {
-		csc->base1_reg = adr | 1;
-		sc->sc_st = iot;
-		sc->sc_sh = ioh;
 		csc->size = size;
 	} else
 		panic("%s: failed to allocate mem and io space", __func__);
