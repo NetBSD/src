@@ -1,3 +1,5 @@
+/*	$NetBSD: pr.h,v 1.2 1997/01/09 15:01:37 tls Exp $	*/
+
 /*-
  * Copyright (c) 1991 Keith Muller.
  * Copyright (c) 1993
@@ -34,7 +36,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *      @(#)pr.h	8.1 (Berkeley) 6/6/93
+ *      from: @(#)pr.h	8.1 (Berkeley) 6/6/93
+ *	$NetBSD: pr.h,v 1.2 1997/01/09 15:01:37 tls Exp $
  */
 
 /*

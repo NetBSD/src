@@ -1,3 +1,5 @@
+/*	$NetBSD: egetopt.c,v 1.2 1997/01/09 15:01:33 tls Exp $	*/
+
 /*-
  * Copyright (c) 1991 Keith Muller.
  * Copyright (c) 1993
@@ -36,7 +38,8 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)egetopt.c	8.1 (Berkeley) 6/6/93";
+/* from: static char sccsid[] = "@(#)egetopt.c	8.1 (Berkeley) 6/6/93"; */
+static char *rcsid = "$NetBSD: egetopt.c,v 1.2 1997/01/09 15:01:33 tls Exp $";
 #endif /* not lint */
 
 #include <ctype.h>

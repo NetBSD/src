@@ -1,3 +1,5 @@
+/*	$NetBSD: pr.c,v 1.4 1997/01/09 15:01:36 tls Exp $	*/
+
 /*-
  * Copyright (c) 1991 Keith Muller.
  * Copyright (c) 1993
@@ -43,7 +45,7 @@ static char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)pr.c	8.1 (Berkeley) 6/6/93"; */
-static char *rcsid = "$Id: pr.c,v 1.3 1995/06/07 16:10:11 cgd Exp $";
+static char *rcsid = "$NetBSD: pr.c,v 1.4 1997/01/09 15:01:36 tls Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
