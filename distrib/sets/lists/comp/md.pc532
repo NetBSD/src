@@ -1,4 +1,5 @@
 ./usr/include/machine/ansi.h
+./usr/include/machine/aout_machdep.h
 ./usr/include/machine/asm.h
 ./usr/include/machine/cdefs.h
 ./usr/include/machine/cpu.h
@@ -6,7 +7,6 @@
 ./usr/include/machine/db_machdep.h
 ./usr/include/machine/disklabel.h
 ./usr/include/machine/endian.h
-./usr/include/machine/exec.h
 ./usr/include/machine/float.h
 ./usr/include/machine/fpu.h
 ./usr/include/machine/frame.h
