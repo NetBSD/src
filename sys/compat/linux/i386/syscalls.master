@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.10 1995/08/23 20:17:30 fvdl Exp $
+	$NetBSD: syscalls.master,v 1.11 1995/08/27 20:51:53 fvdl Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -151,7 +151,12 @@
 				u_int offset, u_int scale); }
 99	STD		{ int linux_statfs(char *path, struct linux_statfs *sp); }
 100	STD		{ int linux_fstatfs(int fd, struct linux_statfs *sp); }
+#ifdef __i386__
+101	STD		{ int linux_ioperm(unsigned int lo, unsigned int hi, \
+				int val); }
+#else
 101	UNIMPL		linux_ioperm
+#endif
 102	STD		{ int linux_socketcall(int what, void *args); }
 103	UNIMPL		linux_klog
 104	NOARGS		{ int setitimer(u_int which, struct itimerval *itv, \
@@ -161,7 +166,11 @@
 107	STD		{ int linux_lstat(char *path, struct linux_stat *sp); }
 108	STD		{ int linux_fstat(int fd, struct linux_stat *sp); }
 109	STD		{ int linux_olduname(struct linux_old_utsname *up); }
+#ifdef __i386__
+110	STD		{ int linux_iopl(int level); }
+#else
 110	UNIMPL		linux_iopl
+#endif
 111	UNIMPL		linux_vhangup
 112	UNIMPL		linux_idle
 113	UNIMPL		linux_vm86

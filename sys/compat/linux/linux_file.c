@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file.c,v 1.8 1995/08/14 01:27:50 mycroft Exp $	*/
+/*	$NetBSD: linux_file.c,v 1.9 1995/08/27 20:51:48 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -362,7 +362,10 @@ linux_fcntl(p, uap, retval)
 /*
  * Convert a NetBSD stat structure to a Linux stat structure.
  * Only the order of the fields and the padding in the structure
- * is different.
+ * is different. linux_fakedev is a machine-dependent function
+ * which optionally converts device driver major/minor numbers
+ * (XXX horrible, but what can you do against code that compares
+ * things against constant major device numbers? sigh)
  */
 static void
 bsd_to_linux_stat(bsp, lsp)
@@ -375,7 +378,7 @@ bsd_to_linux_stat(bsp, lsp)
 	lsp->lst_nlink   = bsp->st_nlink;
 	lsp->lst_uid     = bsp->st_uid;
 	lsp->lst_gid     = bsp->st_gid;
-	lsp->lst_rdev    = bsp->st_rdev;
+	lsp->lst_rdev    = linux_fakedev(bsp->st_rdev);
 	lsp->lst_size    = bsp->st_size;
 	lsp->lst_blksize = bsp->st_blksize;
 	lsp->lst_blocks  = bsp->st_blocks;
