@@ -1,4 +1,4 @@
-/*	$NetBSD: sum2.c,v 1.8 2002/03/31 14:43:23 bjh21 Exp $	*/
+/*	$NetBSD: sum2.c,v 1.8.2.1 2003/12/21 08:13:25 tron Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)sum2.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sum2.c,v 1.8 2002/03/31 14:43:23 bjh21 Exp $");
+__RCSID("$NetBSD: sum2.c,v 1.8.2.1 2003/12/21 08:13:25 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -50,9 +50,11 @@ __RCSID("$NetBSD: sum2.c,v 1.8 2002/03/31 14:43:23 bjh21 Exp $");
 int
 csum2(fd, cval, clen)
 	register int fd;
-	u_int32_t *cval, *clen;
+	u_int32_t *cval;
+	off_t *clen;
 {
-	register u_int32_t thecrc, total;
+	register u_int32_t thecrc;
+	register off_t total;
 	register int nr;
 	register u_char *p;
 	u_char buf[8192];
@@ -64,7 +66,8 @@ csum2(fd, cval, clen)
 	 *      r = s % 2^16 + (s % 2^32) / 2^16
 	 * thecrc = (r % 2^16) + r / 2^16
 	 */
-	thecrc = total = 0;
+	thecrc = 0;
+	total = 0;
 	while ((nr = read(fd, buf, sizeof(buf))) > 0)
 		for (total += nr, p = buf; nr--; ++p)
 			thecrc += *p;
