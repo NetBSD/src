@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.19.2.1 1997/11/24 00:30:49 thorpej Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.19.2.2 1997/11/28 08:13:24 mellon Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -30,14 +30,11 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "opt_i486_pci_mem_enabled.h"
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 
 #include <machine/bus.h>
-#include <machine/cpu.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/eisa/eisavar.h>
@@ -85,19 +82,6 @@ union mainbus_attach_args {
  */
 int	isa_has_been_seen;
 
-#ifdef I486_CPU
-/*
- * Some i486 PCI chipsets have problem with memory-mapped access.
- * On those, we disable memory-mapped access by default, but allow
- * this to be patched to enable memory-mapped access.
- */
-#ifdef I486_PCI_MEM_ENABLED
-int	i486_pci_mem_enabled = 1;
-#else
-int	i486_pci_mem_enabled = 0;
-#endif
-#endif /* I486_CPU */
-
 /*
  * Probe for the mainbus; always succeeds.
  */
@@ -136,10 +120,6 @@ mainbus_attach(parent, self, aux)
 		mba.mba_pba.pba_dmat = &pci_bus_dma_tag;
 		mba.mba_pba.pba_flags =
 		    PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
-#ifdef I486_CPU
-		if (cpu_class == CPUCLASS_486 && i486_pci_mem_enabled == 0)
-			mba.mba_pba.pba_flags &= ~PCI_FLAGS_MEM_ENABLED;
-#endif
 		mba.mba_pba.pba_bus = 0;
 		config_found(self, &mba.mba_pba, mainbus_print);
 	}
