@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.1 1997/10/14 06:48:42 sakamoto Exp $	*/
+/*	$NetBSD: signal.h,v 1.2 1998/05/25 20:59:02 kleink Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -33,9 +33,11 @@
 #ifndef	_MACHINE_SIGNAL_H_
 #define	_MACHINE_SIGNAL_H_
 
-#include <machine/frame.h>
-
 typedef int sig_atomic_t;
+
+#if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) && \
+    !defined(_XOPEN_SOURCE)
+#include <machine/frame.h>
 
 struct sigcontext {
 	int sc_onstack;			/* saved onstack flag */
@@ -48,4 +50,5 @@ struct sigframe {
 	int sf_code;
 	struct sigcontext sf_sc;
 };
-#endif	/* _MACHINE_SIGNAL_H_ */
+#endif	/* !_ANSI_SOURCE && !_POSIX_C_SOURCE && !_XOPEN_SOURCE */
+#endif	/* !_MACHINE_SIGNAL_H_ */
