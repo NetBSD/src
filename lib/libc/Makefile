@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.52 1997/01/30 01:02:17 thorpej Exp $
+#	$NetBSD: Makefile,v 1.53 1997/03/10 19:07:19 hpeyerl Exp $
 #	@(#)Makefile	8.2 (Berkeley) 2/3/94
 #
 # All library objects contain sccsid strings by default; they may be
@@ -51,7 +51,7 @@ LLIBS=
 .include "${.CURDIR}/sys/Makefile.inc"
 .include "${.CURDIR}/yp/Makefile.inc"
 
-NLS=	C.msg Pig.msg de.msg es.msg fr.msg
+NLS=	C.msg Pig.msg de.msg es.msg fr.msg ed.msg
 
 LIBKERN=	${.CURDIR}/../../sys/lib/libkern
 
