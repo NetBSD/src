@@ -1,4 +1,4 @@
-# 	$NetBSD: Makefile.sparc64,v 1.38 2001/07/19 23:31:06 eeh Exp $
+# 	$NetBSD: Makefile.sparc64,v 1.39 2001/10/21 19:46:16 thorpej Exp $
 
 # Makefile for NetBSD
 #
@@ -12,43 +12,25 @@
 #	/sys/arch/sparc64/conf/Makefile.sparc64
 # after which config should be rerun for all machines of that type.
 
+.include <bsd.own.mk>
+
 # DEBUG is set to -g if debugging.
 # PROF is set to -pg if profiling.
 
-.if defined(MAKECONF) && exists(${MAKECONF})
-.include "${MAKECONF}"
-.elif exists(/etc/mk.conf)
-.include "/etc/mk.conf"
-.endif
-
+AR?=	ar
+AS?=	as
 CC?=	cc
-.if exists(/usr/ccs/bin/ld)
-LD?=	/usr/ccs/bin/ld #Need to use Solaris ld to use the solaris loader
-.endif
-MKDEP?=	mkdep
-STRIP?=strip
-SIZE?=	size
-COPTS?= 	-O2
-#### Stuff for cross compiling
-NM?=nm
+CPP?=	cpp
+LD?=	ld
 LORDER?=lorder
-TSORT?=tsort
+MKDEP?=	mkdep
+NM?=	nm
+RANLIB?=ranlib
+SIZE?=	size
+STRIP?=	strip
+TSORT?=	tsort -q
 
-
-# deal with Solaris vs. NetBSD build environments for now ..
-OS!=uname -s
-.if (${OS} == "NetBSD")
-USE_GENASSYM?=	no
-.else
-USE_GENASSYM?=	no
-AWK=nawk
-.endif
-
-.if exists(/usr/ccs/bin/ld)
-SVR4=-U__SVR4 -U__svr4__ -D__NetBSD__
-.else
-SVR4=
-.endif
+COPTS?= 	-O2
 
 # source tree is located via $S relative to the compilation directory
 .ifndef S
@@ -57,11 +39,13 @@ S!=	cd ../../../..; pwd
 SPARC64=	$S/arch/sparc64
 
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
-CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -D_KERNEL_OPT -Dsparc64 ${SVR4}
-#CWARNFLAGS=	-Wimplicit -Wunused -Wswitch -Wcomment -Wtrigraphs -Wchar-subscripts -Wparentheses -Wstrict-prototypes -Wmissing-prototypes -Wpointer-arith -Wno-main -Werror
-#CWARNFLAGS=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes
-CWARNFLAGS=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes -Wpointer-arith -Wno-main
+CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -D_KERNEL_OPT -Dsparc64
+CWARNFLAGS=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes \
+		-Wpointer-arith
+# XXX Delete -Wuninitialized for now, since the compiler doesn't
+# XXX always get it right.  --thorpej
 CWARNFLAGS+=	-Wno-uninitialized
+CWARNFLAGS+=	-Wno-main
 CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS} -Wa,-Av9a -mno-fpu
 .if defined(PROF)
 # We need to run the compiler in medlow memory model.
@@ -143,27 +127,10 @@ LINKFLAGS+=	-S
 
 %LOAD
 
-.if ${USE_GENASSYM} == "no"
 assym.h: $S/kern/genassym.sh ${SPARC64}/sparc64/genassym.cf
 	sh $S/kern/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} \
 	    < ${SPARC64}/sparc64/genassym.cf > assym.h.tmp && \
 	mv -f assym.h.tmp assym.h
-.else
-HOSTED_CC=	${CC}
-HOSTED_CPPFLAGS=${CPPFLAGS:S/^-nostdinc$//}
-HOSTED_CFLAGS=	${CFLAGS}
-
-HOSTED_C=	${HOSTED_CC} ${HOSTED_CFLAGS} ${HOSTED_CPPFLAGS} -c $<
-
-assym.h: genassym
-	./genassym >assym.h
-
-genassym: genassym.o
-	${CC} -o $@ genassym.o
-
-genassym.o: ${SPARC64}/sparc64/genassym.c
-	${HOSTED_C}
-.endif
 
 param.c: $S/conf/param.c
 	rm -f param.c
