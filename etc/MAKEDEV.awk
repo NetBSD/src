@@ -1,6 +1,6 @@
 #!/usr/bin/awk -
 #
-#	$NetBSD: MAKEDEV.awk,v 1.14 2004/03/18 22:51:59 enami Exp $
+#	$NetBSD: MAKEDEV.awk,v 1.15 2004/04/22 23:02:39 enami Exp $
 #
 # Copyright (c) 2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -211,7 +211,7 @@ BEGIN {
 	print "# Generated from:"
 
 	# MAKEDEV.awk (this script) RCS Id
-	ARCSID = "$NetBSD: MAKEDEV.awk,v 1.14 2004/03/18 22:51:59 enami Exp $"
+	ARCSID = "$NetBSD: MAKEDEV.awk,v 1.15 2004/04/22 23:02:39 enami Exp $"
 	gsub(/\$/, "", ARCSID)
 	print "#	" ARCSID
 	
@@ -281,7 +281,7 @@ BEGIN {
 			} else
 				id = gid[nam];
 		}
-		parsed = parsed substr(line, 0, RSTART - 1) id
+		parsed = parsed substr(line, 1, RSTART - 1) id
 		line = substr(line, RSTART + RLENGTH)
 	}
 	$0 = parsed line
@@ -317,7 +317,7 @@ BEGIN {
 				} else
 					dev = chr[nam];
 			}
-			parsed = parsed substr(deventry, 0, RSTART - 1) dev
+			parsed = parsed substr(deventry, 1, RSTART - 1) dev
 			deventry = substr(deventry, RSTART + RLENGTH)
 		}
 
