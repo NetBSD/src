@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)kern_kinfo.c	7.17 (Berkeley) 6/26/91
- *	$Id: kern_kinfo.c,v 1.15 1994/05/05 05:38:11 cgd Exp $
+ *	$Id: kern_kinfo.c,v 1.16 1994/05/05 08:50:25 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -328,7 +328,7 @@ kinfo_file(op, where, acopysize, arg, aneeded)
 	return (0);
 }
 
-/* XXX THE FOLLOWING DO NOT BLEONG HERE */
+/* XXX THE FOLLOWING DO NOT BELONG HERE */
 char hostname[MAXHOSTNAMELEN];
 int hostnamelen;
 char domainname[MAXHOSTNAMELEN];
