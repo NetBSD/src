@@ -1,4 +1,4 @@
-.\"	$NetBSD: wdogctl.8,v 1.9 2005/01/09 22:51:32 smb Exp $
+.\"	$NetBSD: wdogctl.8,v 1.10 2005/01/11 11:29:22 wiz Exp $
 .\"
 .\" Copyright (c) 2000 Zembu Labs, Inc.
 .\" All rights reserved.
@@ -31,7 +31,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 29, 2002
+.Dd January 11, 2005
 .Dt WDOGCTL 8
 .Os
 .Sh NAME
@@ -40,24 +40,24 @@
 .Sh SYNOPSIS
 .Nm
 .Nm
-.Fl k
-.Op Fl A
-.Op Fl p Ar seconds
-.Ar timer
-.Nm
-.Fl u
-.Op Fl A
-.Op Fl p Ar seconds
-.Ar timer
+.Fl d
 .Nm
 .Fl e
 .Op Fl A
 .Op Fl p Ar seconds
 .Ar timer
 .Nm
+.Fl k
+.Op Fl A
+.Op Fl p Ar seconds
+.Ar timer
+.Nm
 .Fl t
 .Nm
-.Fl d
+.Fl u
+.Op Fl A
+.Op Fl p Ar seconds
+.Ar timer
 .Sh DESCRIPTION
 .Nm
 is used to manipulate watchdog timers.
@@ -112,38 +112,38 @@ to arm a timer when one is already armed, an error message
 will be displayed and no action will be taken.
 .Pp
 The options are as follows:
-.Bl -tag -width indent
-.It Fl k
-Arm
-.Ar timer
-in kernel tickle mode.
-.It Fl u
-Arm
-.Ar timer
-in user tickle mode.
-.It Fl e
-Arm
-.Ar timer
-in external tickle mode.
+.Bl -tag -offset indent -width XpXperiodXX
 .It Fl A
 When arming a timer, this flag indicates that an audible alarm is
 to sound when the watchdog timer expires and resets the system.
 If the selected timer does not support an audible alarm, this
 option will be silently ignored.
-.It Fl p Ar period
-When arming a timer, this flag configures the timer period to
-.Ar period
-seconds.
-If the specified period it outside the timer's range,
-an error message will be displayed and no action will be taken.
 .It Fl d
 This flag disarms the currently active timer.
 Note that not all watchdog timers can be disabled once armed.
 If the selected timer can not be disabled,
 an error message will be displayed and the
 timer will remain armed.
+.It Fl e
+Arm
+.Ar timer
+in external tickle mode.
+.It Fl k
+Arm
+.Ar timer
+in kernel tickle mode.
+.It Fl p Ar period
+When arming a timer, this flag configures the timer period to
+.Ar period
+seconds.
+If the specified period is outside the timer's range,
+an error message will be displayed and no action will be taken.
 .It Fl t
 This flag tickles an external mode timer.
+.It Fl u
+Arm
+.Ar timer
+in user tickle mode.
 .El
 .Sh FILES
 .Pa /dev/watchdog
