@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.48 2003/05/04 01:27:53 gmcgarry Exp $
+# $NetBSD: GENERIC,v 1.49 2003/08/06 12:32:06 bouyer Exp $
 #
 # GENERIC machine description file
 # 
@@ -230,6 +230,8 @@ pcscp*	at pci? dev ? function ?	# AMD 53c974 PCscsi-PCI SCSI
 scsibus* at pcscp?
 siop*	at pci? dev ? function ?	# NCR 53c8xx SCSI
 scsibus* at siop?
+esiop*	at pci? dev ? function ?	# NCR 53c875 SCSI and newer
+scsibus* at esiop?
 
 # SCSI devices
 sd*	at scsibus? target ? lun ?	# SCSI disk drives
