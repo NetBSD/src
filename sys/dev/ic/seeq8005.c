@@ -1,4 +1,4 @@
-/* $NetBSD: seeq8005.c,v 1.20 2001/04/02 22:25:17 bjh21 Exp $ */
+/* $NetBSD: seeq8005.c,v 1.21 2001/04/05 22:55:46 bjh21 Exp $ */
 
 /*
  * Copyright (c) 2000 Ben Harris
@@ -66,7 +66,7 @@
 #include <sys/types.h>
 #include <sys/param.h>
 
-__RCSID("$NetBSD: seeq8005.c,v 1.20 2001/04/02 22:25:17 bjh21 Exp $");
+__RCSID("$NetBSD: seeq8005.c,v 1.21 2001/04/05 22:55:46 bjh21 Exp $");
 
 #include <sys/systm.h>
 #include <sys/endian.h>
@@ -624,6 +624,16 @@ ea_readbuf(struct seeq8005_softc *sc, u_char *buf, int addr, size_t len)
 		ea_await_fifo_empty(sc);
 
 		ea_select_buffer(sc, SEEQ_BUFCODE_LOCAL_MEM);
+
+		/*
+		 * 80C04 bug workaround.  I found this in the old arm32 "eb"
+		 * driver.  I've no idea what it does, but it seems to stop
+		 * the chip mangling data so often.
+		 */
+		bus_space_write_2(iot, ioh, SEEQ_COMMAND,
+		    sc->sc_command | SEEQ_CMD_FIFO_WRITE);
+		ea_await_fifo_empty(sc);
+
 		bus_space_write_2(iot, ioh, SEEQ_DMA_ADDR, addr - runup);
 		bus_space_write_2(iot, ioh, SEEQ_COMMAND,
 		    sc->sc_command | SEEQ_CMD_FIFO_READ);
