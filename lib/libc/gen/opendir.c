@@ -1,4 +1,4 @@
-/*	$NetBSD: opendir.c,v 1.22 2003/05/28 20:03:37 christos Exp $	*/
+/*	$NetBSD: opendir.c,v 1.23 2003/05/29 18:29:59 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)opendir.c	8.7 (Berkeley) 12/10/94";
 #else
-__RCSID("$NetBSD: opendir.c,v 1.22 2003/05/28 20:03:37 christos Exp $");
+__RCSID("$NetBSD: opendir.c,v 1.23 2003/05/29 18:29:59 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -305,7 +305,6 @@ retry:
 	/*
 	 * Set up seek point for rewinddir.
 	 */
-	dirp->dd_rewind = telldir(dirp);
 #ifdef _REENTRANT
 	if (__isthreaded) {
 		if ((dirp->dd_lock = malloc(sizeof(mutex_t))) == NULL)
@@ -313,6 +312,7 @@ retry:
 		mutex_init((mutex_t *)dirp->dd_lock, NULL);
 	}
 #endif
+	dirp->dd_rewind = telldir(dirp);
 	return (dirp);
 error:
 	serrno = errno;
