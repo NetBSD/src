@@ -1,4 +1,4 @@
-# $NetBSD: files.next68k,v 1.30 2002/11/03 01:12:02 chs Exp $
+# $NetBSD: files.next68k,v 1.31 2002/11/03 02:29:42 chs Exp $
 
 # next68k-specific configuration info
 
@@ -33,6 +33,7 @@ file	arch/next68k/dev/zs_kgdb.c	kgdb
 file	arch/m68k/m68k/cacheops.c
 file	arch/m68k/m68k/db_memrw.c		ddb | kgdb
 file	arch/m68k/m68k/kgdb_machdep.c		kgdb
+file	arch/m68k/m68k/sys_machdep.c
 file	arch/m68k/m68k/vm_machdep.c
 
 # include "arch/m68k/fpe/files.fpe"
@@ -45,7 +46,6 @@ file	arch/next68k/next68k/procfs_machdep.c	procfs
 file	arch/next68k/next68k/machdep.c
 file	arch/next68k/next68k/clock.c
 file	arch/next68k/next68k/conf.c
-file 	arch/next68k/next68k/sys_machdep.c
 file	arch/next68k/next68k/isr.c
 file	arch/next68k/next68k/autoconf.c
 file	arch/next68k/next68k/mainbus.c
