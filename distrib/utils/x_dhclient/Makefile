@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2000/06/12 02:36:18 jtk Exp $
+#	$NetBSD: Makefile,v 1.2.2.1 2000/07/13 00:44:42 thorpej Exp $
 
 PROG=	dhclient
 MKMAN=	no
@@ -23,7 +23,7 @@ SRCS+= ${OMSRCS}
 COMOBJS+= ${COMSRCS:N*.h:N*.sh:N*.fth:R:S/$/.o/g}
 SRCS+= ${COMSRCS}
 
-CPPFLAGS+=-I${RSRCDIR} -I${RSRCDIR}/includes
+CPPFLAGS+=-DSMALL -I${RSRCDIR} -I${RSRCDIR}/includes
 COPTS+=	-Os
 
 all: ${PROG}
