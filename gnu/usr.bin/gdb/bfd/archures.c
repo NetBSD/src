@@ -19,7 +19,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-	$Id: archures.c,v 1.1 1994/01/28 12:37:37 pk Exp $
+	$Id: archures.c,v 1.2 1994/04/28 17:10:40 phil Exp $
 */
 
 /*
@@ -108,6 +108,7 @@ DESCRIPTION
 .  bfd_arch_h8500,     {* Hitachi H8/500 *}
 .  bfd_arch_sh,        {* Hitachi SH *}
 .  bfd_arch_alpha,     {* Dec Alpha *}
+.  bfd_arch_ns32k,
 .  bfd_arch_last
 .  };
 
@@ -425,6 +426,7 @@ extern void bfd_sparc_arch PARAMS ((void));
 extern void bfd_vax_arch PARAMS ((void));
 extern void bfd_we32k_arch PARAMS ((void));
 extern void bfd_z8k_arch PARAMS ((void));
+extern void bfd_ns32k_arch PARAMS ((void));
 
 static void (*archures_init_table[]) PARAMS ((void)) = 
 {
@@ -447,6 +449,7 @@ static void (*archures_init_table[]) PARAMS ((void)) =
   bfd_vax_arch,
   bfd_we32k_arch,
   bfd_z8k_arch,
+  bfd_ns32k_arch,
 #endif
   0
   };

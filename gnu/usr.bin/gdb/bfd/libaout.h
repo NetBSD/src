@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-	$Id: libaout.h,v 1.2 1994/02/04 18:08:09 mycroft Exp $
+	$Id: libaout.h,v 1.3 1994/04/28 17:10:44 phil Exp $
 */
 
 /* We try to encapsulate the differences in the various a.out file
@@ -132,6 +132,7 @@ enum machine_type {
   M_386_NETBSD = 134,		/* NetBSD/386 binary */
   M_M68K_NETBSD = 135,		/* NetBSD/m68k binary */
   M_M68K4K_NETBSD = 136,	/* NetBSD/m68k4k binary */
+  M_NS32K_NETBSD = 137,		/* NetBSD/ns32k binary */
   M_MIPS1 = 151,        /* MIPS R2000/R3000 binary */
   M_MIPS2 = 152,        /* MIPS R4000/R6000 binary */
   M_HP200 = 200,	/* HP 200 (68010) BSD binary */
