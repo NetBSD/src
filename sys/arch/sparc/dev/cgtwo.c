@@ -1,4 +1,4 @@
-/*	$NetBSD: cgtwo.c,v 1.34.4.2 2002/06/28 07:50:44 jdolecek Exp $ */
+/*	$NetBSD: cgtwo.c,v 1.34.4.3 2002/06/28 08:04:23 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -106,7 +106,8 @@ extern struct cfdriver cgtwo_cd;
 
 /* frame buffer generic driver */
 static struct fbdriver cgtwofbdriver = {
-	cgtwounblank, cgtwoopen, cgtwoclose, cgtwoioctl, cgtwopoll, cgtwommap
+	cgtwounblank, cgtwoopen, cgtwoclose, cgtwoioctl, cgtwopoll, cgtwommap,
+	cgtwokqfilter
 };
 
 /*

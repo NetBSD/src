@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.3.2.2 2002/06/23 17:48:52 jdolecek Exp $ */
+/*	$NetBSD: fb.c,v 1.3.2.3 2002/06/28 08:04:13 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fb.c,v 1.3.2.2 2002/06/23 17:48:52 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fb.c,v 1.3.2.3 2002/06/28 08:04:13 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -240,6 +240,15 @@ fbpoll(dev, events, p)
 {
 
 	return (devfb->fb_driver->fbd_poll)(dev, events, p);
+}
+
+int
+fbkqfilter(dev, kn)
+	dev_t dev;
+	struct knote *kn;
+{
+
+	return (devfb->fb_driver->fbd_kqfilter)(dev, kn);
 }
 
 paddr_t

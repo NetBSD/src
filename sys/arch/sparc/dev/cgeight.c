@@ -1,4 +1,4 @@
-/*	$NetBSD: cgeight.c,v 1.24.4.3 2002/06/28 07:50:41 jdolecek Exp $	*/
+/*	$NetBSD: cgeight.c,v 1.24.4.4 2002/06/28 08:04:20 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -143,7 +143,7 @@ extern struct cfdriver cgeight_cd;
 /* frame buffer generic driver */
 static struct fbdriver cgeightfbdriver = {
 	cgeightunblank, cgeightopen, cgeightclose, cgeightioctl, 
-	cgeightpoll, cgeightmmap
+	cgeightpoll, cgeightmmap, cgeightkqfilter
 };
 
 static void cgeightloadcmap __P((struct cgeight_softc *, int, int));

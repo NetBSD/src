@@ -1,4 +1,4 @@
-/*	$NetBSD: bwtwo.c,v 1.2.6.2 2002/06/28 07:50:46 jdolecek Exp $ */
+/*	$NetBSD: bwtwo.c,v 1.2.6.3 2002/06/28 08:04:09 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bwtwo.c,v 1.2.6.2 2002/06/28 07:50:46 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bwtwo.c,v 1.2.6.3 2002/06/28 08:04:09 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -122,7 +122,8 @@ static void	bwtwounblank(struct device *);
 
 /* frame buffer generic driver */
 static struct fbdriver bwtwofbdriver = {
-	bwtwounblank, bwtwoopen, bwtwoclose, bwtwoioctl, bwtwopoll, bwtwommap
+	bwtwounblank, bwtwoopen, bwtwoclose, bwtwoioctl, bwtwopoll, bwtwommap,
+	bwtwokqfilter
 };
 
 int

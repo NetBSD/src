@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix.c,v 1.5.4.2 2002/06/28 07:50:46 jdolecek Exp $ */
+/*	$NetBSD: cgsix.c,v 1.5.4.3 2002/06/28 08:04:11 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.5.4.2 2002/06/28 07:50:46 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.5.4.3 2002/06/28 08:04:11 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -135,7 +135,8 @@ extern struct cfdriver cgsix_cd;
 
 /* frame buffer generic driver */
 static struct fbdriver cg6_fbdriver = {
-	cg6_unblank, cgsixopen, cgsixclose, cgsixioctl, cgsixpoll, cgsixmmap
+	cg6_unblank, cgsixopen, cgsixclose, cgsixioctl, cgsixpoll, cgsixmmap,
+	cgsixkqfilter
 };
 
 static void cg6_reset (struct cgsix_softc *);

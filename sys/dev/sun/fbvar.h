@@ -1,4 +1,4 @@
-/*	$NetBSD: fbvar.h,v 1.3 2000/08/23 12:02:47 pk Exp $ */
+/*	$NetBSD: fbvar.h,v 1.3.6.1 2002/06/28 08:04:14 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -49,6 +49,8 @@
  * following in order to participate.
  */
 
+#include <sys/event.h>
+
 #ifdef RASTERCONSOLE
 #include <dev/rcons/rcons.h>
 #include <dev/wscons/wsdisplayvar.h>
@@ -63,6 +65,7 @@ struct fbdriver {
 	int	(*fbd_ioctl)(dev_t, u_long, caddr_t, int, struct proc *);
 	int	(*fbd_poll)(dev_t, int, struct proc *);
 	paddr_t	(*fbd_mmap)(dev_t, off_t, int);
+	int	(*fbd_kqfilter)(dev_t, struct knote *);
 #ifdef notyet
 	/* 
 	 * XXX redundant idea? these can hook into rasops on a per-device 
