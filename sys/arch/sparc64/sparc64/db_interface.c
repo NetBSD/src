@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.58 2001/05/26 16:32:45 chs Exp $ */
+/*	$NetBSD: db_interface.c,v 1.59 2001/06/04 20:56:52 mrg Exp $ */
 
 /*
  * Mach Operating System
@@ -407,11 +407,15 @@ db_dump_dtlb(addr, have_addr, count, modif)
 		p = buf;
 		for (i=0; i<64;) {
 #ifdef __arch64__
-			db_printf("%2d:%16.16lx %16.16lx ", i++, *p++, *p++);
-			db_printf("%2d:%16.16lx %16.16lx\n", i++, *p++, *p++);
+			db_printf("%2d:%16.16lx %16.16lx ", i++, p[0], p[1]);
+			p += 2;
+			db_printf("%2d:%16.16lx %16.16lx\n", i++, p[0], p[1]);
+			p += 2;
 #else
-			db_printf("%2d:%16.16qx %16.16qx ", i++, *p++, *p++);
-			db_printf("%2d:%16.16qx %16.16qx\n", i++, *p++, *p++);
+			db_printf("%2d:%16.16qx %16.16qx ", i++, p[0], p[1]);
+			p += 2;
+			db_printf("%2d:%16.16qx %16.16qx\n", i++, p[0], p[1]);
+			p += 2;
 #endif
 		}
 	} else {

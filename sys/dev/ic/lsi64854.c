@@ -1,4 +1,4 @@
-/*	$NetBSD: lsi64854.c,v 1.17 2001/04/08 11:45:45 tsutsui Exp $ */
+/*	$NetBSD: lsi64854.c,v 1.18 2001/06/04 20:56:51 mrg Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -270,6 +270,7 @@ lsi64854_reset(sc)
 			csr |= D_ESC_BURST;
 		break;
 	default:
+		break;
 	}
 	L64854_SCSR(sc, csr);
 
