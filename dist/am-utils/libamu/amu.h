@@ -1,7 +1,7 @@
-/*	$NetBSD: amu.h,v 1.1.1.4 2001/05/13 17:50:32 veego Exp $	*/
+/*	$NetBSD: amu.h,v 1.1.1.5 2002/11/29 22:59:04 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2001 Erez Zadok
+ * Copyright (c) 1997-2002 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,9 +38,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *      %W% (Berkeley) %G%
  *
- * Id: amu.h,v 1.3.2.1 2001/01/10 03:23:38 ezk Exp
+ * Id: amu.h,v 1.7 2002/02/02 20:59:04 ezk Exp
  *
  */
 
@@ -76,5 +75,7 @@ extern int *amqproc_setopt_1(amq_setopt *argp, CLIENT *rqstp);
 extern amq_mount_info_list *amqproc_getmntfs_1(voidp argp, CLIENT *rqstp);
 extern int *amqproc_mount_1(voidp argp, CLIENT *rqstp);
 extern amq_string *amqproc_getvers_1(voidp argp, CLIENT *rqstp);
+
+extern long get_server_pid(void);
 
 #endif /* not _AMU_H */

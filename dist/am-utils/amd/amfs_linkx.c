@@ -1,7 +1,7 @@
-/*	$NetBSD: amfs_linkx.c,v 1.1.1.4 2001/05/13 17:50:12 veego Exp $	*/
+/*	$NetBSD: amfs_linkx.c,v 1.1.1.5 2002/11/29 22:58:11 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2001 Erez Zadok
+ * Copyright (c) 1997-2002 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,9 +38,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *      %W% (Berkeley) %G%
  *
- * Id: amfs_linkx.c,v 1.3.2.1 2001/01/10 03:23:02 ezk Exp
+ * Id: amfs_linkx.c,v 1.11 2002/03/29 20:01:26 ib42 Exp
  *
  */
 
@@ -55,7 +54,7 @@
 #include <amd.h>
 
 /* forward declarations */
-static int amfs_linkx_mount(am_node *mp);
+static int amfs_linkx_mount(am_node *mp, mntfs *mf);
 
 /*
  * linkx operations
@@ -66,21 +65,23 @@ struct am_ops amfs_linkx_ops =
   amfs_link_match,
   0,				/* amfs_linkx_init */
   amfs_linkx_mount,
-  0,
-  amfs_auto_fumount,
-  amfs_link_fumount,
-  amfs_error_lookuppn,
+  amfs_link_umount,
+  amfs_error_lookup_child,
+  amfs_error_mount_child,
   amfs_error_readdir,
   0,				/* amfs_linkx_readlink */
   0,				/* amfs_linkx_mounted */
   0,				/* amfs_linkx_umounted */
   find_amfs_auto_srvr,
-  FS_MBACKGROUND
+  FS_MBACKGROUND,
+#ifdef HAVE_FS_AUTOFS
+  AUTOFS_LINKX_FS_FLAGS,
+#endif /* HAVE_FS_AUTOFS */
 };
 
 
 static int
-amfs_linkx_mount(am_node *mp)
+amfs_linkx_mount(am_node *mp, mntfs *mf)
 {
   /*
    * Check for existence of target.
@@ -91,7 +92,7 @@ amfs_linkx_mount(am_node *mp)
   if (mp->am_link)
     ln = mp->am_link;
   else				/* should never occur */
-    ln = mp->am_mnt->mf_mount;
+    ln = mf->mf_mount;
 
   /*
    * Use lstat, not stat, since we don't

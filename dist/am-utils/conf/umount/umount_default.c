@@ -1,7 +1,7 @@
-/*	$NetBSD: umount_default.c,v 1.1.1.4 2001/05/13 17:50:23 veego Exp $	*/
+/*	$NetBSD: umount_default.c,v 1.1.1.5 2002/11/29 22:58:40 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2001 Erez Zadok
+ * Copyright (c) 1997-2002 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,9 +38,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *      %W% (Berkeley) %G%
  *
- * Id: umount_default.c,v 1.3.2.1 2001/01/10 03:23:28 ezk Exp
+ * Id: umount_default.c,v 1.7 2002/03/29 20:01:30 ib42 Exp
  *
  */
 
@@ -56,28 +55,32 @@
 
 
 int
-umount_fs(char *fs_name, const char *mnttabname)
+umount_fs(char *mntdir, const char *mnttabname)
+{
+  return umount_fs2(mntdir, mntdir, mnttabname);
+}
+
+int
+umount_fs2(char *mntdir, char *real_mntdir, const char *mnttabname)
 {
   mntlist *mlist, *mp, *mp_save = 0;
   int error = 0;
+  char *mnt_dir_save;
 
-  mp = mlist = read_mtab(fs_name, mnttabname);
+  mp = mlist = read_mtab(mntdir, mnttabname);
 
   /*
    * Search the mount table looking for
    * the correct (ie last) matching entry
    */
   while (mp) {
-    if (STREQ(mp->mnt->mnt_fsname, fs_name) ||
-	STREQ(mp->mnt->mnt_dir, fs_name))
+    if (STREQ(mp->mnt->mnt_dir, mntdir))
       mp_save = mp;
     mp = mp->mnext;
   }
 
   if (mp_save) {
-#ifdef DEBUG
     dlog("Trying unmount(%s)", mp_save->mnt->mnt_dir);
-#endif /* DEBUG */
 
 #ifdef MOUNT_TABLE_ON_FILE
     /*
@@ -88,7 +91,11 @@ umount_fs(char *fs_name, const char *mnttabname)
     unlock_mntlist();
 #endif /* MOUNT_TABLE_ON_FILE */
 
-    if (UNMOUNT_TRAP(mp_save->mnt) < 0) {
+    mnt_dir_save = mp_save->mnt->mnt_dir;
+    mp_save->mnt->mnt_dir = real_mntdir;
+    error = UNMOUNT_TRAP(mp_save->mnt);
+    mp_save->mnt->mnt_dir = mnt_dir_save;
+    if (error < 0) {
       switch (error = errno) {
       case EINVAL:
       case ENOTBLK:
@@ -102,20 +109,16 @@ umount_fs(char *fs_name, const char *mnttabname)
 	break;
 
       default:
-#ifdef DEBUG
 	dlog("%s: unmount: %m", mp_save->mnt->mnt_dir);
-#endif /* DEBUG */
 	break;
       }
     }
-#ifdef DEBUG
     dlog("Finished unmount(%s)", mp_save->mnt->mnt_dir);
-#endif /* DEBUG */
 
 #ifdef MOUNT_TABLE_ON_FILE
     if (!error) {
       free_mntlist(mlist);
-      mp = mlist = read_mtab(fs_name, mnttabname);
+      mp = mlist = read_mtab(mntdir, mnttabname);
 
       /*
        * Search the mount table looking for
@@ -123,8 +126,7 @@ umount_fs(char *fs_name, const char *mnttabname)
        */
       mp_save = 0;
       while (mp) {
-	if (STREQ(mp->mnt->mnt_fsname, fs_name) ||
-	    STREQ(mp->mnt->mnt_dir, fs_name))
+	if (STREQ(mp->mnt->mnt_dir, mntdir))
 	  mp_save = mp;
 	mp = mp->mnext;
       }
@@ -139,7 +141,7 @@ umount_fs(char *fs_name, const char *mnttabname)
 
   } else {
 
-    plog(XLOG_ERROR, "Couldn't find how to unmount %s", fs_name);
+    plog(XLOG_ERROR, "Couldn't find how to unmount %s", mntdir);
     /*
      * Assume it is already unmounted
      */
