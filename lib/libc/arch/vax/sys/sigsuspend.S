@@ -33,7 +33,7 @@
 
 #if defined(SYSLIBC_SCCS) && !defined(lint)
 	/* .asciz "@(#)sigsuspend.s	8.1 (Berkeley) 6/4/93" */
-	.asciz "$NetBSD: sigsuspend.S,v 1.2 1997/02/04 18:38:23 ragge Exp $"
+	.asciz "$NetBSD: sigsuspend.S,v 1.3 1998/09/30 18:37:39 ragge Exp $"
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
@@ -43,7 +43,7 @@ err:
 
 ENTRY(sigsuspend, 0)
 	movl	*4(ap),4(ap)		# indirect to mask arg
-	chmk	$ SYS_sigsuspend
+	chmk	$ SYS_compat_13_sigsuspend13
 	jcs	err
 	clrl	r0			# shouldnt happen
 	ret
