@@ -1,4 +1,4 @@
-/*	$NetBSD: nqnfs.h,v 1.6 1996/02/18 11:54:10 fvdl Exp $	*/
+/*	$NetBSD: nqnfs.h,v 1.7 2000/06/09 00:00:18 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -138,6 +138,7 @@ struct nqlease {
 #define	LC_VACATED	0x0200	/* Host has vacated lease */
 #define	LC_WRITTEN	0x0400	/* Recently wrote to the leased file */
 #define	LC_SREF		0x0800	/* Holds a nfssvc_sock reference */
+#define LC_UDP6		0x1000	/* Host address for udp6 socket */
 
 struct nqm {
 	struct nqm	*lpm_next;
