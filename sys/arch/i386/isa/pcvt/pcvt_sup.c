@@ -94,11 +94,6 @@ static void scrnsv_timedout ( void *arg );
 static u_short *savedscreen = (u_short *)0;	/* ptr to screen contents */
 static size_t scrnsv_size = (size_t)-1;		/* size of saved image */
 
-#ifndef XSERVER
-static unsigned scrnsv_timeout = 0;		/* initially off */
-static void pcvt_set_scrnsv_tmo ( int timeout );/* else declared global */
-#endif /* XSERVER */
-
 #if PCVT_PRETTYSCRNS
 static u_short *scrnsv_current = (u_short *)0;	/* attention char ptr */
 static void scrnsv_blink ( void );
@@ -1836,13 +1831,8 @@ scrnsv_blink(void)
 /*---------------------------------------------------------------------------*
  *	set timeout time
  *---------------------------------------------------------------------------*/
-#ifndef XSERVER
-static void
-pcvt_set_scrnsv_tmo(int timeout)
-#else
 void
 pcvt_set_scrnsv_tmo(int timeout)
-#endif /* XSERVER */
 {
 	int x = splhigh();
 
