@@ -1,7 +1,7 @@
-/*	$NetBSD: ext.h,v 1.4 1996/09/23 16:27:59 christos Exp $	*/
+/*	$NetBSD: ext.h,v 1.5 1997/10/17 11:19:48 ws Exp $	*/
 
 /*
- * Copyright (C) 1995, 1996 Wolfgang Solfrank
+ * Copyright (C) 1995, 1996, 1997 Wolfgang Solfrank
  * Copyright (c) 1995 Martin Husemann
  *
  * Redistribution and use in source and binary forms, with or without
@@ -53,7 +53,7 @@ extern char *fname;	/* filesystem currently checked */
 
 extern struct dosDirEntry *rootDir;
 
-/* 
+/*
  * function declarations
  */
 int ask __P((int, const char *, ...));
@@ -67,10 +67,11 @@ int checkfilesys __P((const char *));
  * Return values of various functions
  */
 #define	FSOK		0		/* Check was OK */
-#define	FSDIRMOD	1		/* Some directory was modified */
-#define	FSFATMOD	2		/* The FAT was modified */
-#define	FSERROR		4		/* Some unrecovered error remains */
-#define	FSFATAL		8		/* Some unrecoverable error occured */
+#define	FSBOOTMOD	1		/* Boot block was modified */
+#define	FSDIRMOD	2		/* Some directory was modified */
+#define	FSFATMOD	4		/* The FAT was modified */
+#define	FSERROR		8		/* Some unrecovered error remains */
+#define	FSFATAL		16		/* Some unrecoverable error occured */
 
 /*
  * read a boot block in a machine independend fashion and translate
@@ -78,10 +79,14 @@ int checkfilesys __P((const char *));
  */
 int readboot __P((int, struct bootblock *));
 
+/*
+ * Correct the FSInfo block.
+ */
+int writefsinfo __P((int, struct bootblock *));
 
 /*
  * Read one of the FAT copies and return a pointer to the new
- * allocated array holding our description of it. 
+ * allocated array holding our description of it.
  */
 int readfat __P((int, struct bootblock *, int, struct fatEntry **));
 
@@ -104,7 +109,7 @@ int writefat __P((int, struct bootblock *, struct fatEntry *));
 /*
  * Read a directory
  */
-int resetDosDirSection __P((struct bootblock *));
+int resetDosDirSection __P((struct bootblock *, struct fatEntry *));
 void finishDosDirSection __P((void));
 int handleDirTree __P((int, struct bootblock *, struct fatEntry *));
 
@@ -120,7 +125,7 @@ int checklost __P((int, struct bootblock *, struct fatEntry *));
  */
 int reconnect __P((int, struct bootblock *, struct fatEntry *, cl_t));
 void finishlf __P((void));
-	
+
 /*
  * Small helper functions
  */
