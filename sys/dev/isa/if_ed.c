@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ed.c,v 1.96 1996/05/03 19:05:30 christos Exp $	*/
+/*	$NetBSD: if_ed.c,v 1.97 1996/05/05 01:28:52 thorpej Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -74,6 +74,7 @@ struct ed_softc {
 
 	bus_chipset_tag_t sc_bc;  /* bus identifier */
 	bus_io_handle_t sc_ioh;   /* io handle */
+	bus_io_handle_t sc_delayioh; /* io handle for `delay port' */
 	bus_mem_handle_t sc_memh; /* bus memory handle */
 
 	bus_io_size_t	asic_base;	/* offset of ASIC I/O port */
@@ -249,6 +250,7 @@ ed_find_WD80x3(sc, cf, ia)
 {
 	bus_chipset_tag_t bc;
 	bus_io_handle_t ioh;
+	bus_io_handle_t delayioh = ia->ia_delayioh;
 	bus_mem_handle_t memh;
 	u_int memsize;
 	u_char iptr, isa16bit, sum;
@@ -335,7 +337,8 @@ ed_find_WD80x3(sc, cf, ia)
 		isa16bit = 1;
 		break;
 	case ED_TYPE_WD8013EP:		/* also WD8003EP */
-		if (inb(asicbase + ED_WD_ICR) & ED_WD_ICR_16BIT) {
+		if (bus_io_read_1(bc, ioh, asicbase + ED_WD_ICR)
+		    & ED_WD_ICR_16BIT) {
 			isa16bit = 1;
 			memsize = 16384;
 			sc->type_str = "WD8013EP";
@@ -586,8 +589,8 @@ ed_find_WD80x3(sc, cf, ia)
 	bus_io_write_1(bc, ioh, asicbase + ED_WD_MSR,
 	    sc->wd_msr_proto | ED_WD_MSR_MENB);
 
-	(void) bus_io_read_1(bc, ioh, 0x84);		/* XXX */
-	(void) bus_io_read_1(bc, ioh, 0x84);		/* XXX */
+	(void) bus_io_read_1(bc, delayioh, 0);
+	(void) bus_io_read_1(bc, delayioh, 0);
 
 	/* Now zero memory and verify that it is clear. */
 	for (i = 0; i < memsize; ++i)
@@ -605,8 +608,8 @@ ed_find_WD80x3(sc, cf, ia)
 			if (isa16bit)
 				bus_io_write_1(bc, ioh, asicbase + ED_WD_LAAR,
 				    sc->wd_laar_proto);
-			(void) bus_io_read_1(bc, ioh, 0x84);	/* XXX */
-			(void) bus_io_read_1(bc, ioh, 0x84);	/* XXX */
+			(void) bus_io_read_1(bc, delayioh, 0);
+			(void) bus_io_read_1(bc, delayioh, 0);
 			goto out;
 		}
 
@@ -622,8 +625,8 @@ ed_find_WD80x3(sc, cf, ia)
 	if (isa16bit)
 		bus_io_write_1(bc, ioh, asicbase + ED_WD_LAAR,
 		    sc->wd_laar_proto);
-	(void) bus_io_read_1(bc, ioh, 0x84);	/* XXX */
-	(void) bus_io_read_1(bc, ioh, 0x84);	/* XXX */
+	(void) bus_io_read_1(bc, delayioh, 0);
+	(void) bus_io_read_1(bc, delayioh, 0);
 
 	ia->ia_iosize = ED_WD_IO_PORTS;
 	rv = 1;
@@ -1197,6 +1200,7 @@ edattach(parent, self, aux)
 	ioh = sc->sc_ioh;		/* XXX */
 
 	asicbase = sc->asic_base;
+	sc->sc_delayioh = ia->ia_delayioh;
 
 	/* Set interface to stopped condition (reset). */
 	edstop(sc);
@@ -1588,8 +1592,8 @@ outloop:
 				    sc->wd_laar_proto | ED_WD_LAAR_M16EN);
 			bus_io_write_1(bc, ioh, asicbase + ED_WD_MSR,
 			    sc->wd_msr_proto | ED_WD_MSR_MENB);
-			(void) bus_io_read_1(bc, ioh, 0x84);	/* XXX */
-			(void) bus_io_read_1(bc, ioh, 0x84);	/* XXX */
+			(void) bus_io_read_1(bc, sc->sc_delayioh, 0);
+			(void) bus_io_read_1(bc, sc->sc_delayioh, 0);
 			break;
 		}
 
@@ -1614,8 +1618,8 @@ outloop:
 			if (sc->isa16bit)
 				bus_io_write_1(bc, ioh, asicbase + ED_WD_LAAR,
 				    sc->wd_laar_proto);
-			(void) bus_io_read_1(bc, ioh, 0x84);	/* XXX */
-			(void) bus_io_read_1(bc, ioh, 0x84);	/* XXX */
+			(void) bus_io_read_1(bc, sc->sc_delayioh, 0);
+			(void) bus_io_read_1(bc, sc->sc_delayioh, 0);
 			break;
 		}
 	} else
@@ -1910,9 +1914,10 @@ edintr(arg)
 					bus_io_write_1(bc, ioh,
 					    asicbase + ED_WD_MSR,
 					    sc->wd_msr_proto | ED_WD_MSR_MENB);
-					/* XXX */
-					(void) bus_io_read_1(bc, ioh, 0x84);
-					(void) bus_io_read_1(bc, ioh, 0x84);
+					(void) bus_io_read_1(bc,
+					    sc->sc_delayioh, 0);
+					(void) bus_io_read_1(bc,
+					    sc->sc_delayioh, 0);
 				}
 
 				ed_rint(sc);
@@ -1926,9 +1931,10 @@ edintr(arg)
 						bus_io_write_1(bc, ioh,
 						    asicbase + ED_WD_LAAR,
 						    sc->wd_laar_proto);
-					/* XXX */
-					(void) bus_io_read_1(bc, ioh, 0x84);
-					(void) bus_io_read_1(bc, ioh, 0x84);
+					(void) bus_io_read_1(bc,
+					    sc->sc_delayioh, 0);
+					(void) bus_io_read_1(bc,
+					    sc->sc_delayioh, 0);
 				}
 			}
 		}
