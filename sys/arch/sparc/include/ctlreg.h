@@ -1,4 +1,4 @@
-/*	$NetBSD: ctlreg.h,v 1.19 1999/01/19 23:04:02 pk Exp $ */
+/*	$NetBSD: ctlreg.h,v 1.20 2000/04/30 14:18:52 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -174,10 +174,34 @@
 
 
 /*
- * [4m] Bits in ASI_CONTROL? space, sun4m only.
+ * [4m] Bits in ASI_CONTROL space, sun4m only.
  */
-#define MXCC_ENABLE_ADDR	0x1c00a00	/* Enable register for MXCC */
-#define MXCC_ENABLE_BIT		0x4		/* Enable bit for MXCC */
+#define MXCC_STREAM_DATA	0x1c00000	/* Stream data register */
+#define MXCC_STREAM_SRC		0x1c00100	/* Stream source register */
+#define MXCC_STREAM_DST		0x1c00200	/* Stream dest register */
+#define MXCC_CTRLREG		0x1c00a00	/* Control register for MXCC */
+
+/* Bits in MXCC_CTRLREG */
+#define MXCC_CTRLREG_CE		0x4		/* Enable e-cache */
+
+#define MXCC_STREAM_BLKSZ	32		/* Unit for stream ops */
+#define MXCC_STREAM_C		0x1000000000ULL	/* Cacheable bit for stream ops */
+/*
+ * Stream register usage:
+ *	To fill a block with some value, load that value into the 64 byte
+ *	stream data register (using double-word access; on Mbus only the
+ *	lower 32 bytes are used), then write the physical address of
+ *	the destination into the stream destination register.
+ *
+ *	To copy a block, write the physical address of the source into
+ *	the stream source register causing the block to be transferred
+ *	into the stream data register, then write the physical address of
+ *	the destination into the stream destination register.
+ *
+ *	In both cases, or in the MXCC_STREAM_CE bit to make the transactions
+ *	cache-coherent. Note that stream operations do not cause cache
+ *	lines to be allocated.
+ */
 
 /*
  * Bits in ASI_SRMMUFP space.
