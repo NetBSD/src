@@ -37,7 +37,7 @@
  * From:
  *	Id: procfs_regs.c,v 4.1 1993/12/17 10:47:45 jsp Rel
  *
- *	$Id: procfs_regs.c,v 1.2 1994/01/08 10:47:06 cgd Exp $
+ *	$Id: procfs_regs.c,v 1.3 1994/01/28 07:03:28 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -56,6 +56,7 @@ pfs_doregs(curp, p, pfs, uio)
 	struct pfsnode *pfs;
 	struct uio *uio;
 {
+#if defined(PT_GETREGS) || defined(PT_SETREGS)
 	int error;
 	struct reg r;
 	char *kv;
@@ -84,4 +85,47 @@ pfs_doregs(curp, p, pfs, uio)
 
 	uio->uio_offset = 0;
 	return (error);
+#else
+	return EINVAL;
+#endif
+}
+
+pfs_dofpregs(curp, p, pfs, uio)
+	struct proc *curp;
+	struct proc *p;
+	struct pfsnode *pfs;
+	struct uio *uio;
+{
+#if defined(PT_GETFPREGS) || defined(PT_SETFPREGS)
+	int error;
+	struct fpreg r;
+	char *kv;
+	int kl;
+
+	kl = sizeof(r);
+	kv = (char *) &r;
+
+	kv += uio->uio_offset;
+	kl -= uio->uio_offset;
+	if (kl > uio->uio_resid)
+		kl = uio->uio_resid;
+
+	if (kl < 0)
+		error = EINVAL;
+	else
+		error = process_read_fpregs(p, &r);
+	if (error == 0)
+		error = uiomove(kv, kl, uio);
+	if (error == 0 && uio->uio_rw == UIO_WRITE) {
+		if ((p->p_flag & SSTOP) == 0)
+			error = EBUSY;
+		else
+			error = process_write_fpregs(p, &r);
+	}
+
+	uio->uio_offset = 0;
+	return (error);
+#else
+	return EINVAL;
+#endif
 }
