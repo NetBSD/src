@@ -46,8 +46,9 @@ MAN3+=	alarm.0 clock.0 crypt.0 ctermid.0 ctime.0 ctype.0 directory.0 err.0 \
 	islower.0 isprint.0 ispunct.0 isspace.0 isupper.0 isxdigit.0 \
 	ldexp.0 modf.0 nice.0 nlist.0 pause.0 popen.0 psignal.0 \
 	raise.0 regexp.0 scandir.0 setjmp.0 setmode.0 setuid.0 \
-	siginterrupt.0 signal.0 sigsetops.0 sleep.0 syslog.0 time.0 \
-	times.0 timezone.0 tolower.0 toupper.0 ttyname.0 tzset.0 \
+	siginterrupt.0 signal.0 sigsetops.0 sleep.0 syslog.0 tcgetpgrp.0 \
+	tcsendbreak.0 tcsetattr.0 tcsetpgrp.0 time.0 times.0 timezone.0 \
+	tolower.0 toupper.0 ttyname.0 tzset.0 \
 	ualarm.0 unvis.0 usleep.0 utime.0 valloc.0 vis.0
 
 MLINKS=	crypt.3 encrypt.3 crypt.3 setkey.3
@@ -90,6 +91,12 @@ MLINKS+=sigsetops.3 sigemptyset.3 sigsetops.3 sigfillset.3 \
 	sigsetops.3 sigismember.3
 MLINKS+=syslog.3 closelog.3 syslog.3 openlog.3 syslog.3 setlogmask.3 \
 	syslog.3 vsyslog.3
+MLINKS+=tcsendbreak.3 tcdrain.3 tcsendbreak.3 tcflow.3 tcsendbreak.3 \
+	tcflush.3
+MLINKS+=tcsetattr.3 cfgetispeed.3 tcsetattr.3 cfsetispeed.3 \
+	tcsetattr.3 cfgetospeed.3 tcsetattr.3 cfsetospeed.3 \
+	tcsetattr.3 cfsetspeed.3 tcsetattr.3 cfmakeraw.3 \
+	tcsetattr.3 tcgetattr.3
 MLINKS+=ttyname.3 isatty.3 ttyname.3 ttyslot.3
 MLINKS+=tzset.3 tzsetwall.3
 
