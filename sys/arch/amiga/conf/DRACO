@@ -1,4 +1,4 @@
-#	$NetBSD: DRACO,v 1.12 1997/03/30 11:06:40 is Exp $
+#	$NetBSD: DRACO,v 1.13 1997/07/06 23:17:54 is Exp $
 
 #
 # Macro System GmbH "DraCo", currently 68060-only until FPE is integrated.
@@ -8,7 +8,7 @@
 include "arch/amiga/conf/std.draco"
 
 maxusers	8
-options		RTC_OFFSET=300
+options		RTC_OFFSET=0
 
 #
 # mainboards to support (in addition to Amiga)
