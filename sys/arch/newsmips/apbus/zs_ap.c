@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_ap.c,v 1.14 2003/05/09 17:39:12 tsutsui Exp $	*/
+/*	$NetBSD: zs_ap.c,v 1.15 2003/05/25 14:02:47 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -311,6 +311,7 @@ zs_ap_attach(parent, self, aux)
 	if (!didintr) {
 		didintr = 1;
 
+		zsc->zsc_si = softintr_establish(IPL_SOFTSERIAL, zssoft, zsc);
 		apbus_intr_establish(1, /* interrupt level ( 0 or 1 ) */
 				     NEWS5000_INT1_SCC,
 				     0, /* priority */
