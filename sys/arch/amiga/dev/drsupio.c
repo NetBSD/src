@@ -1,4 +1,4 @@
-/*	$NetBSD: drsupio.c,v 1.13 2002/10/02 04:55:49 thorpej Exp $ */
+/*	$NetBSD: drsupio.c,v 1.14 2003/01/01 00:28:57 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drsupio.c,v 1.13 2002/10/02 04:55:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drsupio.c,v 1.14 2003/01/01 00:28:57 thorpej Exp $");
 
 /*
  * DraCo multi-io chip bus space stuff
@@ -151,7 +151,7 @@ drsupprint(void *auxp, const char *pnp)
 	if (pnp == NULL)
 		return(QUIET);
 
-	printf("%s at %s port 0x%02x",
+	aprint_normal("%s at %s port 0x%02x",
 	    supa->supio_name, pnp, supa->supio_iobase);
 
 	return(UNCONF);
