@@ -1,4 +1,4 @@
-/* $NetBSD: rpb.h,v 1.35 2000/06/03 14:12:28 thorpej Exp $ */
+/* $NetBSD: rpb.h,v 1.36 2000/07/03 01:47:48 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -45,7 +45,8 @@ struct rpb {
 	u_int64_t	rpb_size;		/*  18: HWRPB size in bytes */
 	u_int64_t	rpb_primary_cpu_id;	/*  20 */
 	u_int64_t	rpb_page_size;		/*  28: (8192) */
-	u_int64_t	rpb_phys_addr_size;	/*  30:   (34) */
+	u_int32_t	rpb_phys_addr_size;	/*  30: physical address size */
+	u_int32_t	rpb_extended_va_size;	/*  34: extended VA size (4L) */
 	u_int64_t	rpb_max_asn;		/*  38:   (16) */
 	char		rpb_ssn[16];		/*  40: only first 10 valid */
 
