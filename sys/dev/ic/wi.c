@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.11 2001/05/16 10:45:36 tsubai Exp $	*/
+/*	$NetBSD: wi.c,v 1.12 2001/05/16 14:33:21 ichiro Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1705,6 +1705,10 @@ wi_get_id(sc)
 			break;
 		case WI_NIC_P2_SST:
 			printf("PRISM II HWB3163 SST-flash");
+			sc->sc_prism2 = 1;
+			break;
+		case WI_NIC_PRISM2_5:
+			printf("PRISM 2.5 ISL3873");
 			sc->sc_prism2 = 1;
 			break;
 		default:
