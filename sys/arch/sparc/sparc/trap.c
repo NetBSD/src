@@ -43,7 +43,7 @@
  *	@(#)trap.c	8.1 (Berkeley) 6/16/93
  *
  * from: Header: trap.c,v 1.34 93/05/28 04:34:50 torek Exp 
- * $Id: trap.c,v 1.13 1994/04/22 22:52:44 pk Exp $
+ * $Id: trap.c,v 1.14 1994/05/05 05:59:14 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -168,7 +168,7 @@ userret(struct proc *p, int pc, struct timeval oticks)
 	p->p_pri = p->p_usrpri;
 	if (want_ast) {
 		want_ast = 0;
-		if (p->p_flag & SOWEUPC) {
+		if (p->p_flag & P_OWEUPC) {
 			int ticks;
 			extern int profscale;
 			struct timeval *tv = &p->p_stime;
@@ -180,7 +180,7 @@ userret(struct proc *p, int pc, struct timeval oticks)
 #else
 			addupc(pc, &p->p_stats->p_prof, ticks);
 #endif
-			p->p_flag &= ~SOWEUPC;
+			p->p_flag &= ~P_OWEUPC;
 		}
 	}
 	if (want_resched) {
