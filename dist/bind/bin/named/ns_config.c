@@ -1,7 +1,7 @@
-/*	$NetBSD: ns_config.c,v 1.2.8.2 2001/01/28 15:52:47 he Exp $	*/
+/*	$NetBSD: ns_config.c,v 1.2.8.3 2002/07/01 17:15:26 he Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
-static const char rcsid[] = "Id: ns_config.c,v 8.118 2000/12/23 08:14:37 vixie Exp";
+static const char rcsid[] = "Id: ns_config.c,v 8.135 2002/05/24 03:04:59 marka Exp";
 #endif /* not lint */
 
 /*
@@ -91,7 +91,6 @@ static int default_logging_installed;
 static int options_installed = 0;
 static int logging_installed = 0;
 static int default_options_installed;
-static int initial_configuration = 1;
 
 static char **logging_categories;
 static char *current_pid_filename = NULL;
@@ -104,7 +103,7 @@ static symbol_table zone_symbol_table;
 void
 free_zone_timerinfo(struct zoneinfo *zp) {
 	if (zp->z_timerinfo != NULL) {
-		freestr(zp->z_timerinfo->name);
+		zp->z_timerinfo->name = freestr(zp->z_timerinfo->name);
 		memput(zp->z_timerinfo, sizeof *zp->z_timerinfo);
 		zp->z_timerinfo = NULL;
 	} else
@@ -127,17 +126,13 @@ free_zone_contents(struct zoneinfo *zp, int undefine_sym) {
 				 strerror(errno));
 	}
 	if (zp->z_origin != NULL)
-		freestr(zp->z_origin);
-	zp->z_origin = NULL;
+		zp->z_origin = freestr(zp->z_origin);
 	if (zp->z_source != NULL)
-		freestr(zp->z_source);
-	zp->z_source = NULL;
+		zp->z_source = freestr(zp->z_source);
 	if (zp->z_ixfr_base != NULL)
-		freestr(zp->z_ixfr_base);
-	zp->z_ixfr_base = NULL;
+		zp->z_ixfr_base = freestr(zp->z_ixfr_base);
 	if (zp->z_ixfr_tmp != NULL)
-		freestr(zp->z_ixfr_tmp);
-	zp->z_ixfr_tmp = NULL;
+		zp->z_ixfr_tmp = freestr(zp->z_ixfr_tmp);
 	if (zp->z_update_acl != NULL)
 		free_ip_match_list(zp->z_update_acl);
 	zp->z_update_acl = NULL;
@@ -149,8 +144,7 @@ free_zone_contents(struct zoneinfo *zp, int undefine_sym) {
 	zp->z_transfer_acl = NULL;
 #ifdef BIND_UPDATE
 	if (zp->z_updatelog != NULL)
-		freestr(zp->z_updatelog);
-	zp->z_updatelog = NULL;
+		zp->z_updatelog = freestr(zp->z_updatelog);
 #endif /* BIND_UPDATE */
 #ifdef BIND_NOTIFY
 	if (zp->z_also_notify != NULL)
@@ -158,6 +152,9 @@ free_zone_contents(struct zoneinfo *zp, int undefine_sym) {
 		       zp->z_notify_count * sizeof *zp->z_also_notify);
 	zp->z_also_notify = NULL;
 #endif
+	if (zp->z_fwdtab != NULL)
+		free_forwarders(zp->z_fwdtab);
+	zp->z_fwdtab = NULL;
 	block_signals();
 	if (LINKED(zp, z_reloadlink))
 		UNLINK(reloadingzones, zp, z_reloadlink);
@@ -191,7 +188,7 @@ find_zone(const char *name, int class) {
 }
 
 static struct zoneinfo *
-new_zone(int class, int type) {
+new_zone(void) {
 	struct zoneinfo *zp;
 
 	if (EMPTY(freezones))
@@ -305,9 +302,16 @@ validate_zone(struct zoneinfo *zp) {
 	if (zp->z_query_acl) {
 		if (zp->z_type != z_master &&
 		    zp->z_type != z_slave &&
+#ifdef FORWARD_ALLOWS
+		    zp->z_type != z_forward &&
+#endif
 		    zp->z_type != z_stub) {
 			ns_error(ns_log_config,
+#ifdef FORWARD_ALLOWS
+		  "'allow-query' option for hint zone '%s'",
+#else
 		  "'allow-query' option for non-{master,slave,stub} zone '%s'",
+#endif
 				 zp->z_origin);
 			return (0);
 		}
@@ -315,7 +319,7 @@ validate_zone(struct zoneinfo *zp) {
 
 #ifdef BIND_NOTIFY
 	/* Check notify */
-	if (zp->z_notify != znotify_use_default) {
+	if (zp->z_notify != notify_use_default) {
 		if (zp->z_type != z_master && zp->z_type != z_slave) {
 			ns_error(ns_log_config,
 			"'notify' given for non-master, non-slave zone '%s'",
@@ -474,7 +478,7 @@ update_zone_info(struct zoneinfo *zp, struct zoneinfo *new_zp) {
 	 * any data that was dynamically allocated.
 	 */
 	if (zp->z_origin != NULL)
-		freestr(zp->z_origin);
+		(void)freestr(zp->z_origin);
 	zp->z_origin = new_zp->z_origin;
 	new_zp->z_origin = NULL;
 	zp->z_maintain_ixfr_base = new_zp->z_maintain_ixfr_base;
@@ -482,8 +486,10 @@ update_zone_info(struct zoneinfo *zp, struct zoneinfo *new_zp) {
 	zp->z_class = new_zp->z_class;
 	zp->z_type = new_zp->z_type;
 	zp->z_checknames = new_zp->z_checknames;
-	for (i = 0; i < new_zp->z_addrcnt; i++)
+	for (i = 0; i < new_zp->z_addrcnt; i++) {
 		zp->z_addr[i] = new_zp->z_addr[i];
+		zp->z_keys[i] = new_zp->z_keys[i];
+	}
 	zp->z_addrcnt = new_zp->z_addrcnt;
 	if (zp->z_update_acl)
 		free_ip_match_list(zp->z_update_acl);
@@ -531,7 +537,7 @@ update_zone_info(struct zoneinfo *zp, struct zoneinfo *new_zp) {
 	zp->z_dumpintvl = new_zp->z_dumpintvl;
 	zp->z_deferupdcnt = new_zp->z_deferupdcnt;
 	if (zp->z_updatelog)
-		freestr(zp->z_updatelog);
+		(void)freestr(zp->z_updatelog);
 	zp->z_updatelog = new_zp->z_updatelog;
 	new_zp->z_updatelog = NULL;
 #endif /* BIND_UPDATE */
@@ -556,7 +562,7 @@ update_zone_info(struct zoneinfo *zp, struct zoneinfo *new_zp) {
 
 		/* File has changed, or hasn't been loaded yet. */
 		if (zp->z_source) {
-			freestr(zp->z_source);
+			zp->z_source = freestr(zp->z_source);
 			ns_stopxfrs(zp);
 			purge_zone(zp->z_origin, fcachetab, zp->z_class);
 		}
@@ -564,12 +570,12 @@ update_zone_info(struct zoneinfo *zp, struct zoneinfo *new_zp) {
 		new_zp->z_source = NULL;
 
 		if (zp->z_ixfr_base)
-			freestr(zp->z_ixfr_base);
+			(void)freestr(zp->z_ixfr_base);
 		zp->z_ixfr_base = new_zp->z_ixfr_base;
 		new_zp->z_ixfr_base = NULL;	
 
 		if (zp->z_ixfr_tmp)
-			freestr(zp->z_ixfr_tmp);
+			(void)freestr(zp->z_ixfr_tmp);
 		zp->z_ixfr_tmp = new_zp->z_ixfr_tmp;
 		new_zp->z_ixfr_tmp = NULL;	
 
@@ -599,17 +605,17 @@ update_zone_info(struct zoneinfo *zp, struct zoneinfo *new_zp) {
 	primary_reload:
 #endif /* BIND_UPDATE */
 		if (zp->z_source != NULL)
-			freestr(zp->z_source);
+			(void)freestr(zp->z_source);
 		zp->z_source = new_zp->z_source;
 		new_zp->z_source = NULL;
 
 		if (zp->z_ixfr_base != NULL)
-			freestr(zp->z_ixfr_base);
+			(void)freestr(zp->z_ixfr_base);
 		zp->z_ixfr_base = new_zp->z_ixfr_base;
 		new_zp->z_ixfr_base = NULL;
 
 		if (zp->z_ixfr_tmp != NULL)
-			freestr(zp->z_ixfr_tmp);
+			(void)freestr(zp->z_ixfr_tmp);
 		zp->z_ixfr_tmp = new_zp->z_ixfr_tmp;
 		new_zp->z_ixfr_tmp = NULL;
 
@@ -651,8 +657,7 @@ update_zone_info(struct zoneinfo *zp, struct zoneinfo *new_zp) {
 		     ((!reconfiging) && zonefile_changed_p(zp)))) {
 			ns_debug(ns_log_config, 1,
 				 "backup file changed or missing");
-			freestr(zp->z_source);
-			zp->z_source = NULL;
+			zp->z_source = freestr(zp->z_source);
 			zp->z_serial = 0;	/* force xfer */
 			ns_stopxfrs(zp);
 			/*
@@ -676,7 +681,7 @@ update_zone_info(struct zoneinfo *zp, struct zoneinfo *new_zp) {
 		}
 
 		if (zp->z_ixfr_base != NULL)
-			freestr(zp->z_ixfr_base);
+			(void)freestr(zp->z_ixfr_base);
 		zp->z_ixfr_base = new_zp->z_ixfr_base;
 		new_zp->z_ixfr_base = NULL;
 
@@ -690,8 +695,7 @@ update_zone_info(struct zoneinfo *zp, struct zoneinfo *new_zp) {
 			zoneinit(zp);
 		else {
 			/* 
-			** Force secondary to try transfer soon
-			** after SIGHUP.
+			** Force slave to try transfer soon after SIGHUP.
 			*/
 			if ((zp->z_flags & (Z_QSERIAL|Z_XFER_RUNNING)) == 0 &&
 			    reloading && !reconfiging) {
@@ -730,7 +734,7 @@ update_zone_info(struct zoneinfo *zp, struct zoneinfo *new_zp) {
 void
 end_zone(zone_config zh, int should_install) {
 	struct zoneinfo *zp, *new_zp;
-	char *zname;
+	const char *zname;
 	symbol_value value;
 
 	new_zp = zh.opaque;
@@ -756,11 +760,11 @@ end_zone(zone_config zh, int should_install) {
 		zp = NULL;
 	}
 	if (zp == NULL) {
-		zp = new_zone(new_zp->z_class, new_zp->z_type);
+		zp = new_zone();
 		INSIST(zp != NULL);
 		value.integer = (zp - zones);
-		define_symbol(zone_symbol_table, savestr(new_zp->z_origin, 1),
-			      new_zp->z_class, value, SYMBOL_FREE_KEY);
+		define_symbol(zone_symbol_table, new_zp->z_origin,
+			      new_zp->z_class, value, 0);
 	}
 	ns_debug(ns_log_config, 5, "zone '%s', type = %d, class = %d", zname,
 		 new_zp->z_type, new_zp->z_class);
@@ -870,7 +874,7 @@ set_zone_dialup(zone_config zh, int value) {
 	if (value) {
 		zp->z_dialup = zdialup_yes;
 #ifdef BIND_NOTIFY
-		zp->z_notify = znotify_yes;
+		zp->z_notify = notify_yes;
 #endif
 	} else
 		zp->z_dialup = zdialup_no;
@@ -879,17 +883,14 @@ set_zone_dialup(zone_config zh, int value) {
 }
 
 int
-set_zone_notify(zone_config zh, int value) {
+set_zone_notify(zone_config zh, enum notify value) {
 #ifdef BIND_NOTIFY
 	struct zoneinfo *zp;
 
 	zp = zh.opaque;
 	INSIST(zp != NULL);
 
-	if (value)
-		zp->z_notify = znotify_yes;
-	else
-		zp->z_notify = znotify_no;
+	zp->z_notify = value;
 #endif
 	return (1);
 }
@@ -933,7 +934,7 @@ set_zone_query_acl(zone_config zh, ip_match_list iml) {
 	zp = zh.opaque;
 	INSIST(zp != NULL);
 
-	/* Fail if checknames already set for this zone */
+	/* Fail if allow-query acl already set for this zone */
 	if (zp->z_query_acl != NULL)
 		return (0);
 	zp->z_query_acl = iml;
@@ -963,7 +964,7 @@ set_zone_transfer_acl(zone_config zh, ip_match_list iml) {
 	zp = zh.opaque;
 	INSIST(zp != NULL);
 
-	/* Fail if checknames already set for this zone */
+	/* Fail if allow-transfer acl already set for this zone */
 	if (zp->z_transfer_acl != NULL)
 		return (0);
 	zp->z_transfer_acl = iml;
@@ -977,7 +978,7 @@ set_zone_transfer_time_in(zone_config zh, long max_time) {
 	zp = zh.opaque;
 	INSIST(zp != NULL);
 
-	/* Fail if checknames already set for this zone */
+	/* Fail if max-transfer-time-in already set for this zone */
 	if (zp->z_max_transfer_time_in)
 		return (0);
 	zp->z_max_transfer_time_in = max_time;
@@ -1016,13 +1017,14 @@ set_trusted_key(const char *name, const int flags, const int proto,
 }
 
 int
-add_zone_master(zone_config zh, struct in_addr address) {
+add_zone_master(zone_config zh, struct in_addr address, struct dst_key * key) {
 	struct zoneinfo *zp;
 
 	zp = zh.opaque;
 	INSIST(zp != NULL);
 
 	zp->z_addr[zp->z_addrcnt] = address;
+	zp->z_keys[zp->z_addrcnt] = key;
 	zp->z_addrcnt++;
 	if (zp->z_addrcnt >= NSMAX) {
 		ns_warning(ns_log_config, "NSMAX reached for zone '%s'",
@@ -1087,12 +1089,17 @@ add_zone_notify(zone_config zh, struct in_addr address) {
 options
 new_options() {
 	options op;
+	char hostname[256];
 
 	op = (options)memget(sizeof (struct options));
 	if (op == NULL)
 		panic("memget failed in new_options()", NULL);
 
 	op->version = savestr(ShortVersion, 1);
+	if (gethostname(hostname, sizeof(hostname)) == 0)
+		op->hostname = savestr(hostname, 1);
+	else
+		op->hostname = NULL;
 	op->directory = savestr(".", 1);
 	op->pid_filename = savestr(_PATH_PIDFILE, 1);
 	op->named_xfer = savestr(_PATH_XFER, 1);
@@ -1139,8 +1146,12 @@ new_options() {
 	op->max_host_stats = 0;
 	op->lame_ttl = NTTL;
 	op->heartbeat_interval = 3600;
-	op->max_log_size_ixfr = 20;
+	op->max_log_size_ixfr = 0;
 	op->minroots = MINROOTS;
+	op->preferred_glue = 0;
+#ifdef BIND_NOTIFY
+	op->notify = notify_yes;
+#endif
 	return (op);
 }
 
@@ -1148,20 +1159,22 @@ void
 free_options(options op) {
 	INSIST(op != NULL);
 
+	if (op->hostname)
+		op->hostname = freestr(op->hostname);
 	if (op->version)
-		freestr(op->version);
+		op->version = freestr(op->version);
 	if (op->directory)
-		freestr(op->directory);
+		op->directory = freestr(op->directory);
 	if (op->pid_filename)
-		freestr(op->pid_filename);
+		op->pid_filename = freestr(op->pid_filename);
 	if (op->named_xfer)
-		freestr(op->named_xfer);
+		op->named_xfer = freestr(op->named_xfer);
 	if (op->dump_filename)
-		freestr(op->dump_filename);
+		op->dump_filename = freestr(op->dump_filename);
 	if (op->stats_filename)
-		freestr(op->stats_filename);
+		op->stats_filename = freestr(op->stats_filename);
 	if (op->memstats_filename)
-		freestr(op->memstats_filename);
+		op->memstats_filename = freestr(op->memstats_filename);
 #ifdef BIND_NOTIFY
 	if (op->also_notify)
 		free_also_notify(op);
@@ -1199,7 +1212,7 @@ set_boolean_option(u_int *op_flags, int bool_opt, int value) {
 	case OPTION_NOFETCHGLUE:
 	case OPTION_FORWARD_ONLY:
 	case OPTION_FAKE_IQUERY:
-	case OPTION_NONOTIFY:
+	case OPTION_SUPNOTIFY_INITIAL:
 	case OPTION_NONAUTH_NXDOMAIN:
 	case OPTION_MULTIPLE_CNAMES:
 	case OPTION_USE_IXFR:
@@ -1293,7 +1306,7 @@ ns_rlimit(enum limit limit, u_long limit_value) {
 	struct rlimit limits, old_limits;
 	int rlimit = -1;
 	int fdlimit = evHighestFD(ev) + 1;
-	char *name;
+	const char *name;
 	rlimit_type value;
 
 	if (limit_value == ULONG_MAX) {
@@ -1340,7 +1353,7 @@ ns_rlimit(enum limit limit, u_long limit_value) {
 		name = "max number of open files";
 		if (value == 0)
 			limits = initial_num_files;
-		if (value > fdlimit)
+		if ((int)value > fdlimit)
 			limits.rlim_cur = limits.rlim_max = value = fdlimit;
 		break;
 	default:
@@ -1458,8 +1471,10 @@ write_open(char *filename) {
 		return (NULL);
 	(void) fchown(fd, user_id, group_id);
 	stream = fdopen(fd, "w");
-	if (stream == NULL)
+	if (stream == NULL) {
+		(void)unlink(filename);
 		(void)close(fd);
+	}
 	return (stream);
 }
 
@@ -1473,8 +1488,7 @@ update_pid_file() {
 	/* XXX */ ns_debug(ns_log_default, 1, "update_pid_file()");
 	if (current_pid_filename != NULL) {
 		(void)unlink(current_pid_filename);
-		freestr(current_pid_filename);
-		current_pid_filename = NULL;
+		current_pid_filename = freestr(current_pid_filename);
 	}
 	current_pid_filename = savestr(server_options->pid_filename, 0);
 	if (current_pid_filename == NULL) {
@@ -1524,28 +1538,51 @@ static void
 periodic_getnetconf(evContext ctx, void *uap, struct timespec due,
 		    struct timespec inter)
 {
+	UNUSED(ctx);
+	UNUSED(uap);
+	UNUSED(due);
+	UNUSED(inter);
+
 	getnetconf(1);
 }
+
+static int clean_interval = 0;
+static int interface_interval = 0;
+static int stats_interval = 0;
+static int heartbeat_interval = 0;
 
 static void
 set_interval_timer(int which_timer, int interval) {
 	evTimerID *tid = NULL;
 	evTimerFunc func = NULL;
+	int changed = 0;
 
 	switch (which_timer) {
 	case CLEAN_TIMER:
+		if (clean_interval != interval)
+			changed = 1;
+		clean_interval = interval;
 		tid = &clean_timer;
 		func = ns_cleancache;
 		break;
 	case INTERFACE_TIMER:
+		if (interface_interval != interval)
+			changed = 1;
+		interface_interval = interval;
 		tid = &interface_timer;
 		func = periodic_getnetconf;
 		break;
 	case STATS_TIMER:
+		if (stats_interval != interval)
+			changed = 1;
+		stats_interval = interval;
 		tid = &stats_timer;
 		func = ns_logstats;
 		break;
 	case HEARTBEAT_TIMER:
+		if (heartbeat_interval != interval)
+			changed = 1;
+		heartbeat_interval = interval;
 		tid = &heartbeat_timer;
 		func = ns_heartbeat;
 		break;
@@ -1555,7 +1592,8 @@ set_interval_timer(int which_timer, int interval) {
 	}
 	if ((active_timers & which_timer) != 0) {
 		if (interval > 0) {
-			if (evResetTimer(ev, *tid, func, NULL, 
+			if (changed &&
+			    evResetTimer(ev, *tid, func, NULL, 
 					 evAddTime(evNowTime(), 
 						   evConsTime(interval, 0)),
 					 evConsTime(interval, 0)) < 0)
@@ -1693,11 +1731,11 @@ use_default_options() {
  * rrset order types
  */
 static struct res_sym order_table [] = {
-	{ unknown_order, " unknown " }, /* can't match */
-	{ fixed_order, "fixed" },
-	{ cyclic_order, "cyclic" },
-	{ random_order, "random" },
-	{ unknown_order, NULL }
+	{ unknown_order, " unknown ", NULL }, /* can't match */
+	{ fixed_order, "fixed", NULL },
+	{ cyclic_order, "cyclic", NULL },
+	{ random_order, "random", NULL },
+	{ unknown_order, NULL, NULL }
 };
 
 /*
@@ -1743,7 +1781,7 @@ free_rrset_order_list(rrset_order_list rol) {
 
 	for (roe = rol->first; roe != NULL; roe = next_element) {
 		next_element = roe->next;
-		freestr(roe->name);
+		roe->name = freestr(roe->name);
 		memput(roe, sizeof (*roe));
 	}
 	memput(rol, sizeof (*rol));
@@ -1762,6 +1800,7 @@ add_to_rrset_order_list(rrset_order_list rol, rrset_order_element roe) {
 		rol->first = roe;
 }
 
+#ifdef notyet
 /* XXX this isn't being used yet, but it probably should be. Where? */
 void
 dprint_rrset_order_list(int category, rrset_order_list rol, int indent,
@@ -1783,7 +1822,7 @@ dprint_rrset_order_list(int category, rrset_order_list rol, int indent,
 			 roe->name, p_order(roe->order));
 	}
 }
-
+#endif
 
 rrset_order_element
 new_rrset_order_element(int class, int type, char *name, enum ordering order)
@@ -1970,7 +2009,7 @@ add_to_ip_match_list(ip_match_list iml, ip_match_element ime) {
 
 void
 dprint_ip_match_list(int category, ip_match_list iml, int indent,
-		     char *allow, char *deny) {
+		     const char *allow, const char *deny) {
 	ip_match_element ime;
 	char spaces[40+1];
 	char addr_text[sizeof "255.255.255.255"];
@@ -2067,6 +2106,7 @@ ip_match_addr_or_key(ip_match_list iml, struct in_addr address,
 					continue;
 			}
 		default:
+			indirect = 0;
 			panic("unexpected ime type in ip_match_addr_or_key()",
 			      NULL);
 		}
@@ -2261,41 +2301,49 @@ static struct fwddata *
 find_forwarder(struct in_addr address)
 {
 	struct fwddata *fdp;
-	struct databuf *ns, *nsdata;
+	struct fwddata **fdpp = NULL;
 	register int i;
 
-	for (i=0;i<fwddata_count; i++) {
-		fdp=fwddata[i];
-		if (memcmp(&fdp->fwdaddr.sin_addr,&address,sizeof(address))==0) {
+	for (i = 0; i < fwddata_count; i++) {
+		fdp = fwddata[i];
+		if (fdp == NULL) {
+			if (fdpp == NULL)
+				fdpp = &fwddata[i];
+			continue;
+		}
+		if (memcmp(&fdp->fwdaddr.sin_addr, &address,
+			   sizeof(address)) == 0) {
 			fdp->ref_count++;
-			return fdp;
+			return (fdp);
 		}
 	}
 
 	fdp = (struct fwddata *)memget(sizeof(struct fwddata));
 	if (!fdp)
 		panic("memget failed in find_forwarder", NULL);
+
+	memset(&fdp->fwdaddr, 0, sizeof(fdp->fwdaddr));
 	fdp->fwdaddr.sin_family = AF_INET;
 	fdp->fwdaddr.sin_addr = address;
 	fdp->fwdaddr.sin_port = ns_port;
-	ns = fdp->ns = (struct databuf *)memget(sizeof(*ns));
-	if (!ns)
+
+	fdp->ns = savedata(C_IN, T_NS, 0, NULL, 0);
+	if (!fdp->ns)
 		panic("memget failed in find_forwarder", NULL);
-	memset(ns,0,sizeof(*ns));
-	nsdata = fdp->nsdata = (struct databuf *)memget(sizeof(*nsdata));
-	if (!nsdata)
+
+	fdp->nsdata = savedata(C_IN, T_A, 0, NULL, 0);
+	if (!fdp->nsdata)
 		panic("memget failed in find_forwarder", NULL);
-	memset(nsdata,0,sizeof(*nsdata));
-	ns->d_type = T_NS; 
-	ns->d_class = C_IN;
-	ns->d_rcnt=1;
-	nsdata->d_type = T_A;
-	nsdata->d_class = C_IN;
-	nsdata->d_nstime = 1 + (int)(25.0*rand()/(RAND_MAX + 1.0));
-	nsdata->d_rcnt=1;
-	fdp->ref_count=1;
+	fdp->nsdata->d_nstime = 1 + (int)(25.0*rand()/(RAND_MAX + 1.0));
+
+	fdp->ref_count = 1;
+
+	if (fdpp != NULL) {
+		*fdpp = fdp;
+		return (fdp);
+	}
 	
-	i=0;
+	i = 0;
 	if (fwddata == NULL) {
 		fwddata = memget(sizeof *fwddata);
 		if (fwddata == NULL)
@@ -2303,6 +2351,7 @@ find_forwarder(struct in_addr address)
 	} else {
 		register size_t size;
 		register struct fwddata **an_tmp;
+
 		size = fwddata_count * sizeof *fwddata;
 		an_tmp = memget(size + sizeof *fwddata);
 		if (an_tmp == NULL) {
@@ -2318,13 +2367,13 @@ find_forwarder(struct in_addr address)
 		fwddata[fwddata_count] = fdp;
 		fwddata_count++;
 	} else {
-		ns_warning(ns_log_config,
-		     "forwarder add failed (memget) [%s]",
-			inet_ntoa(address));
+		ns_warning(ns_log_config, "forwarder add failed (memget) [%s]",
+			   inet_ntoa(address));
 	}
 
-	return fdp;
+	return (fdp);
 }
+
 /*
  * Forwarder glue
  *
@@ -2445,7 +2494,7 @@ set_zone_forward(zone_config zh) {
 void
 add_zone_forwarder(zone_config zh, struct in_addr address) {
 	struct zoneinfo *zp;
-	char *zname;
+	const char *zname;
 
 	zp = zh.opaque;
 	INSIST(zp != NULL);
@@ -2462,14 +2511,19 @@ add_zone_forwarder(zone_config zh, struct in_addr address) {
 void
 free_forwarders(struct fwdinfo *fwdtab) {
 	struct fwdinfo *ftp, *fnext;
+	int i;
 
 	for (ftp = fwdtab; ftp != NULL; ftp = fnext) {
 		fnext = ftp->next;
-		if (!--ftp->fwddata->ref_count) {
-			memput(ftp->fwddata->ns, sizeof *ftp->fwddata->ns);
-			memput(ftp->fwddata->nsdata,
-					sizeof *ftp->fwddata->nsdata);
-			memput(ftp->fwddata,sizeof *ftp->fwddata);
+		if (--ftp->fwddata->ref_count == 0) {
+			for (i = 0 ; i < fwddata_count; i++)
+				if (fwddata[i] == ftp->fwddata) {
+					fwddata[i] = NULL;
+					break;
+				}
+			db_detach(&ftp->fwddata->ns);
+			db_detach(&ftp->fwddata->nsdata);
+			memput(ftp->fwddata, sizeof *ftp->fwddata);
 		}
 		memput(ftp, sizeof *ftp);
 	}
@@ -2497,12 +2551,14 @@ new_server(struct in_addr address) {
 		si->flags |= SERVER_INFO_SUPPORT_IXFR;
 	else
 		si->flags &= ~SERVER_INFO_SUPPORT_IXFR;	
+	si->flags |= SERVER_INFO_EDNS;
 	return (si);
 }
 
 static void
 free_server(server_info si) {
-	/* Don't free key; it'll be done when the auth table is freed. */
+	if (si->key_list)
+		free_key_info_list(si->key_list);
 	memput(si, sizeof *si);
 }
 
@@ -2596,6 +2652,7 @@ set_server_option(server_config sc, int bool_opt, int value) {
 	switch (bool_opt) {
 	case SERVER_INFO_BOGUS:
 	case SERVER_INFO_SUPPORT_IXFR:
+	case SERVER_INFO_EDNS:
 		if (value)
 			si->flags |= bool_opt;
 		else
@@ -2958,7 +3015,7 @@ use_default_logging() {
 static void
 init_default_log_channels() {
 	u_int flags;
-	char *name;
+	const char *name;
 	FILE *stream;
 
 	syslog_channel = log_new_syslog_channel(0, log_info, ISC_FACILITY);
@@ -3031,7 +3088,8 @@ shutdown_logging() {
 	log_free_context(log_ctx);
 
 	for (s = category_constants; s != NULL && s->name != NULL; s++)
-		freestr(logging_categories[s->number]);
+		logging_categories[s->number] =
+			freestr(logging_categories[s->number]);
 	size = ns_log_max_category * (sizeof (char *));
 	memput(logging_categories, size);
 	logging_categories = NULL;
@@ -3067,11 +3125,15 @@ shutdown_configuration() {
 		server_options = NULL;
 	}
 	if (current_pid_filename != NULL)
-		freestr(current_pid_filename);
+		current_pid_filename = freestr(current_pid_filename);
 	free_nameserver_info();
 	free_secretkey_info();
 	free_symbol_table(zone_symbol_table);
 	parser_shutdown();
+	if (fwddata != NULL)
+		memput(fwddata, fwddata_count * sizeof *fwddata);
+	fwddata = NULL;
+	fwddata_count = 0;
 	config_initialized = 0;
 }
 
