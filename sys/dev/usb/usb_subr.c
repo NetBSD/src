@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.58 1999/12/06 21:07:00 augustss Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.59 1999/12/15 20:05:08 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -453,7 +453,7 @@ usbd_fill_iface_data(dev, ifaceidx, altidx)
 	ifc->index = ifaceidx;
 	ifc->altindex = altidx;
 	nendpt = ifc->idesc->bNumEndpoints;
-	DPRINTFN(10,("usbd_fill_iface_data: found idesc n=%d\n", nendpt));
+	DPRINTFN(4,("usbd_fill_iface_data: found idesc nendpt=%d\n", nendpt));
 	if (nendpt != 0) {
 		ifc->endpoints = malloc(nendpt * sizeof(struct usbd_endpoint),
 					M_USB, M_NOWAIT);
@@ -475,11 +475,15 @@ usbd_fill_iface_data(dev, ifaceidx, altidx)
 			if (p + ed->bLength <= end && ed->bLength != 0 &&
 			    ed->bDescriptorType == UDESC_ENDPOINT)
 				goto found;
-			if (ed->bDescriptorType == UDESC_INTERFACE ||
-			    ed->bLength == 0)
+			if (ed->bLength == 0 ||
+			    ed->bDescriptorType == UDESC_INTERFACE)
 				break;
 		}
 		/* passed end, or bad desc */
+		DPRINTF(("usbd_fill_iface_data: bad descriptor(s): %s\n",
+			 ed->bLength == 0 ? "0 length" :
+			 ed->bDescriptorType == UDESC_INTERFACE ? "iface desc":
+			 "out of data"));
 		goto bad;
 	found:
 		ifc->endpoints[endpt].edesc = ed;
@@ -491,7 +495,8 @@ usbd_fill_iface_data(dev, ifaceidx, altidx)
 	return (USBD_NORMAL_COMPLETION);
 
  bad:
-	free(ifc->endpoints, M_USB);
+	if (ifc->endpoints != NULL)
+		free(ifc->endpoints, M_USB);
 	return (USBD_INVAL);
 }
 
