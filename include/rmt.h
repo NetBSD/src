@@ -1,4 +1,4 @@
-/*	$NetBSD: rmt.h,v 1.4 1997/10/22 06:59:35 thorpej Exp $	*/
+/*	$NetBSD: rmt.h,v 1.5 2005/02/03 04:39:32 perry Exp $	*/
 
 /*
  *	rmt.h
@@ -20,20 +20,20 @@
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-int	rmtaccess __P((const char *, int));
-int	rmtclose __P((int));
-int	rmtcreat __P((const char *, mode_t));
-int	rmtdup __P((int));
-int	rmtfcntl __P((int, int, ...));
-int	rmtfstat __P((int, struct stat *));
-int	rmtioctl __P((int, unsigned long, ...));
-int	rmtisatty __P((int));
-off_t	rmtlseek __P((int, off_t, int));
-int	rmtlstat __P((const char *, struct stat *));
-int	rmtopen __P((const char *, int, ...));
-ssize_t	rmtread __P((int, void *, size_t));
-int	rmtstat __P((const char *, struct stat *));
-ssize_t	rmtwrite __P((int, const void *, size_t));
+int	rmtaccess(const char *, int);
+int	rmtclose(int);
+int	rmtcreat(const char *, mode_t);
+int	rmtdup(int);
+int	rmtfcntl(int, int, ...);
+int	rmtfstat(int, struct stat *);
+int	rmtioctl(int, unsigned long, ...);
+int	rmtisatty(int);
+off_t	rmtlseek(int, off_t, int);
+int	rmtlstat(const char *, struct stat *);
+int	rmtopen(const char *, int, ...);
+ssize_t	rmtread(int, void *, size_t);
+int	rmtstat(const char *, struct stat *);
+ssize_t	rmtwrite(int, const void *, size_t);
 __END_DECLS
 
 #ifndef __RMTLIB_PRIVATE	/* don't remap if building librmt */

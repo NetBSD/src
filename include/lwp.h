@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.3 2004/10/02 07:59:11 kent Exp $	*/
+/*	$NetBSD: lwp.h,v 1.4 2005/02/03 04:39:32 perry Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -44,17 +44,17 @@
 #include <sys/ucontext.h>
 
 __BEGIN_DECLS
-lwpid_t	_lwp_self __P((void));
-int	_lwp_create __P((const ucontext_t *, unsigned  long, lwpid_t *));
-int	_lwp_exit __P((void));
-int	_lwp_wait __P((lwpid_t, lwpid_t *));
-int	_lwp_suspend __P((lwpid_t));
-int	_lwp_continue __P((lwpid_t));
-int	_lwp_wakeup __P((lwpid_t));
-void	_lwp_makecontext __P((ucontext_t *, void (*)(void *), void *, void *, 
-	    caddr_t, size_t));
-void	*_lwp_getprivate __P((void));
-void	_lwp_setprivate __P((void *));
+lwpid_t	_lwp_self(void);
+int	_lwp_create(const ucontext_t *, unsigned  long, lwpid_t *);
+int	_lwp_exit(void);
+int	_lwp_wait(lwpid_t, lwpid_t *);
+int	_lwp_suspend(lwpid_t);
+int	_lwp_continue(lwpid_t);
+int	_lwp_wakeup(lwpid_t);
+void	_lwp_makecontext(ucontext_t *, void (*)(void *), void *, void *, 
+	    caddr_t, size_t);
+void	*_lwp_getprivate(void);
+void	_lwp_setprivate(void *);
 __END_DECLS
 
 #endif /* !_LWP_H_ */

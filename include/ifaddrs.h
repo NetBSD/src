@@ -1,4 +1,4 @@
-/*	$NetBSD: ifaddrs.h,v 1.4 2000/06/13 01:21:53 simonb Exp $	*/
+/*	$NetBSD: ifaddrs.h,v 1.5 2005/02/03 04:39:32 perry Exp $	*/
 
 /*
  * Copyright (c) 1995, 1999
@@ -49,8 +49,8 @@ struct ifaddrs {
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-int getifaddrs __P((struct ifaddrs **));
-void freeifaddrs __P((struct ifaddrs *));
+int getifaddrs(struct ifaddrs **);
+void freeifaddrs(struct ifaddrs *);
 __END_DECLS
 
 #endif /* !_IFADDRS_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ctype.h,v 1.26 2004/11/05 22:55:19 dsl Exp $	*/
+/*	$NetBSD: ctype.h,v 1.27 2005/02/03 04:39:32 perry Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -57,30 +57,30 @@ extern const short	*_toupper_tab_;
 
 
 __BEGIN_DECLS
-int	isalnum __P ((int));
-int	isalpha __P ((int));
-int	iscntrl __P ((int));
-int	isdigit __P ((int));
-int	isgraph __P ((int));
-int	islower __P ((int));
-int	isprint __P ((int));
-int	ispunct __P ((int));
-int	isspace __P ((int));
-int	isupper __P ((int));
-int	isxdigit __P ((int));
-int	tolower __P ((int));
-int	toupper __P ((int));
+int	isalnum(int);
+int	isalpha(int);
+int	iscntrl(int);
+int	isdigit(int);
+int	isgraph(int);
+int	islower(int);
+int	isprint(int);
+int	ispunct(int);
+int	isspace(int);
+int	isupper(int);
+int	isxdigit(int);
+int	tolower(int);
+int	toupper(int);
 
 #if defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE)
-int	isascii __P ((int));
-int	toascii __P ((int));
-int	_tolower __P ((int));
-int	_toupper __P ((int));
+int	isascii(int);
+int	toascii(int);
+int	_tolower(int);
+int	_toupper(int);
 #endif
 
 #if defined(_ISOC99_SOURCE) || (_POSIX_C_SOURCE - 0) > 200112L || \
     (_XOPEN_SOURCE - 0) > 600 || defined(_NETBSD_SOURCE)
-int	isblank __P ((int));
+int	isblank(int);
 #endif
 __END_DECLS
 

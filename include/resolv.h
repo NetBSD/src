@@ -1,4 +1,4 @@
-/*	$NetBSD: resolv.h,v 1.29 2004/11/07 01:48:01 christos Exp $	*/
+/*	$NetBSD: resolv.h,v 1.30 2005/02/03 04:39:32 perry Exp $	*/
 
 /*
  * Copyright (c) 1983, 1987, 1989
@@ -113,21 +113,13 @@ __END_DECLS
 typedef enum { res_goahead, res_nextns, res_modified, res_done, res_error }
 	res_sendhookact;
 
-#ifndef __PMT
-#if defined(__STDC__) || defined(__cplusplus)
-#define __PMT(args) args
-#else
-#define __PMT(args) ()
-#endif
-#endif
-
-typedef res_sendhookact (*res_send_qhook)__PMT((struct sockaddr * const *,
+typedef res_sendhookact (*res_send_qhook)(struct sockaddr * const *,
 					      const u_char **, int *,
-					      u_char *, int, int *));
+					      u_char *, int, int *);
 
-typedef res_sendhookact (*res_send_rhook)__PMT((const struct sockaddr *,
+typedef res_sendhookact (*res_send_rhook)(const struct sockaddr *,
 					      const u_char *, int, u_char *,
-					      int, int *));
+					      int, int *);
 
 struct res_sym {
 	int		number;	   /* Identifying number, like T_MX */
@@ -321,23 +313,23 @@ __END_DECLS
 #endif
 
 __BEGIN_DECLS
-void		fp_nquery __P((const u_char *, int, FILE *));
-void		fp_query __P((const u_char *, FILE *));
-const char *	hostalias __P((const char *));
-void		p_query __P((const u_char *));
-void		res_close __P((void));
-int		res_init __P((void));
-int		res_opt __P((int, u_char *, int, int));
-int		res_isourserver __P((const struct sockaddr_in *));
-int		res_mkquery __P((int, const char *, int, int, const u_char *,
-				 int, const u_char *, u_char *, int));
-int		res_query __P((const char *, int, int, u_char *, int));
-int		res_querydomain __P((const char *, const char *, int, int,
-				     u_char *, int));
-int		res_search __P((const char *, int, int, u_char *, int));
-int		res_send __P((const u_char *, int, u_char *, int));
-int		res_sendsigned __P((const u_char *, int, ns_tsig_key *,
-				    u_char *, int));
+void		fp_nquery(const u_char *, int, FILE *);
+void		fp_query(const u_char *, FILE *);
+const char *	hostalias(const char *);
+void		p_query(const u_char *);
+void		res_close(void);
+int		res_init(void);
+int		res_opt(int, u_char *, int, int);
+int		res_isourserver(const struct sockaddr_in *);
+int		res_mkquery(int, const char *, int, int, const u_char *,
+				 int, const u_char *, u_char *, int);
+int		res_query(const char *, int, int, u_char *, int);
+int		res_querydomain(const char *, const char *, int, int,
+				     u_char *, int);
+int		res_search(const char *, int, int, u_char *, int);
+int		res_send(const u_char *, int, u_char *, int);
+int		res_sendsigned(const u_char *, int, ns_tsig_key *,
+				    u_char *, int);
 __END_DECLS
 #endif
 
@@ -420,91 +412,86 @@ extern const struct res_sym __p_rcode_syms[];
 #define	res_servicename		__res_servicename
 #define	res_servicenumber	__res_servicenumber
 __BEGIN_DECLS
-int		res_hnok __P((const char *));
-int		res_ownok __P((const char *));
-int		res_mailok __P((const char *));
-int		res_dnok __P((const char *));
-int		sym_ston __P((const struct res_sym *, const char *, int *));
-const char *	sym_ntos __P((const struct res_sym *, int, int *));
-const char *	sym_ntop __P((const struct res_sym *, int, int *));
-int		b64_ntop __P((u_char const *, size_t, char *, size_t));
-int		b64_pton __P((char const *, u_char *, size_t));
-int		loc_aton __P((const char *, u_char *));
-const char *	loc_ntoa __P((const u_char *, char *));
-int		dn_skipname __P((const u_char *, const u_char *));
-void		putlong __P((u_int32_t, u_char *));
-void		putshort __P((u_int16_t, u_char *));
+int		res_hnok(const char *);
+int		res_ownok(const char *);
+int		res_mailok(const char *);
+int		res_dnok(const char *);
+int		sym_ston(const struct res_sym *, const char *, int *);
+const char *	sym_ntos(const struct res_sym *, int, int *);
+const char *	sym_ntop(const struct res_sym *, int, int *);
+int		b64_ntop(u_char const *, size_t, char *, size_t);
+int		b64_pton(char const *, u_char *, size_t);
+int		loc_aton(const char *, u_char *);
+const char *	loc_ntoa(const u_char *, char *);
+int		dn_skipname(const u_char *, const u_char *);
+void		putlong(u_int32_t, u_char *);
+void		putshort(u_int16_t, u_char *);
 #ifndef __ultrix__
-u_int16_t	_getshort __P((const u_char *));
-u_int32_t	_getlong __P((const u_char *));
+u_int16_t	_getshort(const u_char *);
+u_int32_t	_getlong(const u_char *);
 #endif
-const char *	p_class __P((int));
-const char *	p_time __P((u_int32_t));
-const char *	p_type __P((int));
-const char *	p_rcode __P((int));
-const char *	p_sockun __P((union res_sockaddr_union, char *, size_t));
-const u_char *	p_cdnname __P((const u_char *, const u_char *, int, FILE *));
-const u_char *	p_cdname __P((const u_char *, const u_char *, FILE *));
-const u_char *	p_fqnname __P((const u_char *, const u_char *,
-			       int, char *, int));
-const u_char *	p_fqname __P((const u_char *, const u_char *, FILE *));
-const char *	p_option __P((u_long));
-char *		p_secstodate __P((u_long));
-int		dn_count_labels __P((const char *));
-int		dn_comp __P((const char *, u_char *, int,
-			     u_char **, u_char **));
-int		dn_expand __P((const u_char *, const u_char *, const u_char *,
-			       char *, int));
-u_int		res_randomid __P((void));
-int		res_nameinquery __P((const char *, int, int, const u_char *,
-				     const u_char *));
-int		res_queriesmatch __P((const u_char *, const u_char *,
-				      const u_char *, const u_char *));
-const char *	p_section __P((int, int));
+const char *	p_class(int);
+const char *	p_time(u_int32_t);
+const char *	p_type(int);
+const char *	p_rcode(int);
+const char *	p_sockun(union res_sockaddr_union, char *, size_t);
+const u_char *	p_cdnname(const u_char *, const u_char *, int, FILE *);
+const u_char *	p_cdname(const u_char *, const u_char *, FILE *);
+const u_char *	p_fqnname(const u_char *, const u_char *,
+			       int, char *, int);
+const u_char *	p_fqname(const u_char *, const u_char *, FILE *);
+const char *	p_option(u_long);
+char *		p_secstodate(u_long);
+int		dn_count_labels(const char *);
+int		dn_comp(const char *, u_char *, int, u_char **, u_char **);
+int		dn_expand(const u_char *, const u_char *, const u_char *,
+			       char *, int);
+u_int		res_randomid(void);
+int		res_nameinquery(const char *, int, int, const u_char *,
+				     const u_char *);
+int		res_queriesmatch(const u_char *, const u_char *,
+				      const u_char *, const u_char *);
+const char *	p_section(int, int);
 /* Things involving a resolver context. */
-int		res_ninit __P((res_state));
-int		res_nisourserver __P((const res_state,
-				      const struct sockaddr_in *));
-void		fp_resstat __P((const res_state, FILE *));
-void		res_pquery __P((const res_state, const u_char *, int, FILE *));
-const char *	res_hostalias __P((const res_state, const char *,
-				   char *, size_t));
-int		res_nquery __P((res_state, const char *, int, int,
-				u_char *, int));
-int		res_nsearch __P((res_state, const char *, int, int, u_char *,
-				 int));
-int		res_nquerydomain __P((res_state, const char *, const char *,
-				      int, int, u_char *, int));
-int		res_nmkquery __P((res_state, int, const char *, int, int,
+int		res_ninit(res_state);
+int		res_nisourserver(const res_state, const struct sockaddr_in *);
+void		fp_resstat(const res_state, FILE *);
+void		res_pquery(const res_state, const u_char *, int, FILE *);
+const char *	res_hostalias(const res_state, const char *, char *, size_t);
+int		res_nquery(res_state, const char *, int, int, u_char *, int);
+int		res_nsearch(res_state, const char *, int, int, u_char *, int);
+int		res_nquerydomain(res_state, const char *, const char *,
+				      int, int, u_char *, int);
+int		res_nmkquery(res_state, int, const char *, int, int,
 				  const u_char *, int, const u_char *,
-				  u_char *, int));
-int		res_nsend __P((res_state, const u_char *, int, u_char *, int));
-int		res_nsendsigned __P((res_state, const u_char *, int,
-				     ns_tsig_key *, u_char *, int));
-int		res_findzonecut __P((res_state, const char *, ns_class, int,
-				     char *, size_t, struct in_addr *, int));
-int		res_findzonecut2 __P((res_state, const char *, ns_class, int,
+				  u_char *, int);
+int		res_nsend(res_state, const u_char *, int, u_char *, int);
+int		res_nsendsigned(res_state, const u_char *, int,
+				     ns_tsig_key *, u_char *, int);
+int		res_findzonecut(res_state, const char *, ns_class, int,
+				     char *, size_t, struct in_addr *, int);
+int		res_findzonecut2(res_state, const char *, ns_class, int,
 				      char *, size_t,
-				      union res_sockaddr_union *, int));
-void		res_nclose __P((res_state));
-int		res_nopt __P((res_state, int, u_char *, int, int));
-void		res_send_setqhook __P((res_send_qhook));
-void		res_send_setrhook __P((res_send_rhook));
-int		__res_vinit __P((res_state, int));
-void		res_destroyservicelist __P((void));
-const char *	res_servicename __P((u_int16_t, const char *));
-const char *	res_protocolname __P((int));
-void		res_destroyprotolist __P((void));
-void		res_buildprotolist __P((void));
-const char *	res_get_nibblesuffix __P((res_state));
-const char *	res_get_nibblesuffix2 __P((res_state));
-void		res_ndestroy __P((res_state));
-u_int16_t	res_nametoclass __P((const char *, int *));
-u_int16_t	res_nametotype __P((const char *, int *));
-void		res_setservers __P((res_state,
-				    const union res_sockaddr_union *, int));
-int		res_getservers __P((res_state,
-				    union res_sockaddr_union *, int));
+				      union res_sockaddr_union *, int);
+void		res_nclose(res_state);
+int		res_nopt(res_state, int, u_char *, int, int);
+void		res_send_setqhook(res_send_qhook);
+void		res_send_setrhook(res_send_rhook);
+int		__res_vinit(res_state, int);
+void		res_destroyservicelist(void);
+const char *	res_servicename(u_int16_t, const char *);
+const char *	res_protocolname(int);
+void		res_destroyprotolist(void);
+void		res_buildprotolist(void);
+const char *	res_get_nibblesuffix(res_state);
+const char *	res_get_nibblesuffix2(res_state);
+void		res_ndestroy(res_state);
+u_int16_t	res_nametoclass(const char *, int *);
+u_int16_t	res_nametotype(const char *, int *);
+void		res_setservers(res_state,
+				    const union res_sockaddr_union *, int);
+int		res_getservers(res_state,
+				    union res_sockaddr_union *, int);
 __END_DECLS
 
 #endif /* !_RESOLV_H_ */

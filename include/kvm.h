@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm.h,v 1.12 2003/08/07 09:44:10 agc Exp $	*/
+/*	$NetBSD: kvm.h,v 1.13 2005/02/03 04:39:32 perry Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -56,30 +56,29 @@ typedef struct __kvm kvm_t;
 
 struct kinfo_proc;
 struct kinfo_proc2;
-int	  kvm_close __P((kvm_t *));
-int	  kvm_dump_inval __P((kvm_t *));
-int	  kvm_dump_mkheader __P((kvm_t *, off_t));
-int	  kvm_dump_wrtheader __P((kvm_t *, FILE *, int));
-char	**kvm_getargv __P((kvm_t *, const struct kinfo_proc *, int));
-char	**kvm_getargv2 __P((kvm_t *, const struct kinfo_proc2 *, int));
-char	**kvm_getenvv __P((kvm_t *, const struct kinfo_proc *, int));
-char	**kvm_getenvv2 __P((kvm_t *, const struct kinfo_proc2 *, int));
-char	 *kvm_geterr __P((kvm_t *));
-int	  kvm_getloadavg __P((kvm_t *, double [], int));
-char	 *kvm_getfiles __P((kvm_t *, int, int, int *));
+int	  kvm_close(kvm_t *);
+int	  kvm_dump_inval(kvm_t *);
+int	  kvm_dump_mkheader(kvm_t *, off_t);
+int	  kvm_dump_wrtheader(kvm_t *, FILE *, int);
+char	**kvm_getargv(kvm_t *, const struct kinfo_proc *, int);
+char	**kvm_getargv2(kvm_t *, const struct kinfo_proc2 *, int);
+char	**kvm_getenvv(kvm_t *, const struct kinfo_proc *, int);
+char	**kvm_getenvv2(kvm_t *, const struct kinfo_proc2 *, int);
+char	 *kvm_geterr(kvm_t *);
+int	  kvm_getloadavg(kvm_t *, double [], int);
+char	 *kvm_getfiles(kvm_t *, int, int, int *);
 struct kinfo_lwp *
-	  kvm_getlwps __P((kvm_t *, int, u_long, size_t, int *));
+	  kvm_getlwps(kvm_t *, int, u_long, size_t, int *);
 struct kinfo_proc2 *
-	  kvm_getproc2 __P((kvm_t *, int, int, size_t, int *));
+	  kvm_getproc2(kvm_t *, int, int, size_t, int *);
 struct kinfo_proc *
-	  kvm_getprocs __P((kvm_t *, int, int, int *));
-int	  kvm_nlist __P((kvm_t *, struct nlist *));
+	  kvm_getprocs(kvm_t *, int, int, int *);
+int	  kvm_nlist(kvm_t *, struct nlist *);
 kvm_t	 *kvm_open
-	    __P((const char *, const char *, const char *, int, const char *));
-kvm_t	 *kvm_openfiles
-	    __P((const char *, const char *, const char *, int, char *));
-ssize_t	  kvm_read __P((kvm_t *, u_long, void *, size_t));
-ssize_t	  kvm_write __P((kvm_t *, u_long, const void *, size_t));
+	    (const char *, const char *, const char *, int, const char *);
+kvm_t	 *kvm_openfiles(const char *, const char *, const char *, int, char *);
+ssize_t	  kvm_read(kvm_t *, u_long, void *, size_t);
+ssize_t	  kvm_write(kvm_t *, u_long, const void *, size_t);
 
 __END_DECLS
 

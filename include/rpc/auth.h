@@ -1,4 +1,4 @@
-/*	$NetBSD: auth.h,v 1.15 2000/06/02 22:57:55 fvdl Exp $	*/
+/*	$NetBSD: auth.h,v 1.16 2005/02/03 04:39:32 perry Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -80,7 +80,7 @@ union des_block {
 };
 typedef union des_block des_block;
 __BEGIN_DECLS
-extern bool_t xdr_des_block __P((XDR *, des_block *));
+extern bool_t xdr_des_block(XDR *, des_block *);
 __END_DECLS
 
 /*
@@ -101,16 +101,16 @@ typedef struct __rpc_auth {
 	struct	opaque_auth	ah_verf;
 	union	des_block	ah_key;
 	const struct auth_ops {
-		void	(*ah_nextverf) __P((struct __rpc_auth *));
+		void	(*ah_nextverf)(struct __rpc_auth *);
 		/* nextverf & serialize */
-		int	(*ah_marshal) __P((struct __rpc_auth *, XDR *));
+		int	(*ah_marshal)(struct __rpc_auth *, XDR *);
 		/* validate varifier */
-		int	(*ah_validate) __P((struct __rpc_auth *,
-			    struct opaque_auth *));
+		int	(*ah_validate)(struct __rpc_auth *,
+			    struct opaque_auth *);
 		/* refresh credentials */
-		int	(*ah_refresh) __P((struct __rpc_auth *));
+		int	(*ah_refresh)(struct __rpc_auth *);
 		/* destroy this structure */
-		void	(*ah_destroy) __P((struct __rpc_auth *));
+		void	(*ah_destroy)(struct __rpc_auth *);
 	} *ah_ops;
 	void *ah_private;
 } AUTH;
@@ -168,21 +168,21 @@ extern struct opaque_auth _null_auth;
  */
 __BEGIN_DECLS
 struct sockaddr_in;
-extern AUTH *authunix_create		__P((char *, int, int, int, int *));
-extern AUTH *authunix_create_default	__P((void));
-extern AUTH *authnone_create		__P((void));
-extern AUTH *authdes_create		__P((char *, u_int,
-					    struct sockaddr_in *, des_block *));
-extern bool_t xdr_opaque_auth		__P((XDR *, struct opaque_auth *));
+extern AUTH *authunix_create		(char *, int, int, int, int *);
+extern AUTH *authunix_create_default	(void);
+extern AUTH *authnone_create		(void);
+extern AUTH *authdes_create		(char *, u_int,
+					    struct sockaddr_in *, des_block *);
+extern bool_t xdr_opaque_auth		(XDR *, struct opaque_auth *);
 
 #define authsys_create(c,i1,i2,i3,ip) authunix_create((c),(i1),(i2),(i3),(ip))
 #define authsys_create_default() authunix_create_default()
 
 struct svc_req;
 struct rpc_msg;
-enum auth_stat _svcauth_null __P((struct svc_req *, struct rpc_msg *));
-enum auth_stat _svcauth_short __P((struct svc_req *, struct rpc_msg *));
-enum auth_stat _svcauth_unix __P((struct svc_req *, struct rpc_msg *));
+enum auth_stat _svcauth_null(struct svc_req *, struct rpc_msg *);
+enum auth_stat _svcauth_short(struct svc_req *, struct rpc_msg *);
+enum auth_stat _svcauth_unix(struct svc_req *, struct rpc_msg *);
 __END_DECLS
 
 #define AUTH_NONE	0		/* no authentication */

@@ -1,4 +1,4 @@
-/*	$NetBSD: setjmp.h,v 1.20 2003/08/07 09:44:11 agc Exp $	*/
+/*	$NetBSD: setjmp.h,v 1.21 2005/02/03 04:39:32 perry Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -59,29 +59,29 @@ typedef long jmp_buf[_JBLEN] _JB_ATTRIBUTES;
 
 __BEGIN_DECLS
 #ifdef __LIBC12_SOURCE__
-int	__setjmp14 __P((jmp_buf));
-void	__longjmp14 __P((jmp_buf, int));
+int	__setjmp14(jmp_buf);
+void	__longjmp14(jmp_buf, int);
 
-int	__sigsetjmp14 __P((sigjmp_buf, int));
-void	__siglongjmp14 __P((sigjmp_buf, int));
+int	__sigsetjmp14(sigjmp_buf, int);
+void	__siglongjmp14(sigjmp_buf, int);
 #else /* !__LIBC12_SOURCE__ */
-int	setjmp __P((jmp_buf)) __RENAME(__setjmp14);
-void	longjmp __P((jmp_buf, int)) __RENAME(__longjmp14);
+int	setjmp(jmp_buf) __RENAME(__setjmp14);
+void	longjmp(jmp_buf, int) __RENAME(__longjmp14);
 
 #if defined(_POSIX_C_SOURCE) || defined(_XOPEN_SOURCE) || \
     defined(_NETBSD_SOURCE)
-int	sigsetjmp __P((sigjmp_buf, int)) __RENAME(__sigsetjmp14);
-void	siglongjmp __P((sigjmp_buf, int)) __RENAME(__siglongjmp14);
+int	sigsetjmp(sigjmp_buf, int) __RENAME(__sigsetjmp14);
+void	siglongjmp(sigjmp_buf, int) __RENAME(__siglongjmp14);
 #endif /* not ANSI */
 #endif /* __LIBC12_SOURCE__ */
 
 #if defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE)
-int	_setjmp __P((jmp_buf));
-void	_longjmp __P((jmp_buf, int));
+int	_setjmp(jmp_buf);
+void	_longjmp(jmp_buf, int);
 #endif
 
 #if defined(_NETBSD_SOURCE)
-void	longjmperror __P((void));
+void	longjmperror(void);
 #endif
 __END_DECLS
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: utime.h,v 1.7 2003/08/07 09:44:12 agc Exp $	*/
+/*	$NetBSD: utime.h,v 1.8 2005/02/03 04:39:32 perry Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -49,7 +49,7 @@ struct utimbuf {
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-int utime __P((const char *, const struct utimbuf *));
+int utime(const char *, const struct utimbuf *);
 __END_DECLS
 
 #endif /* !_UTIME_H_ */

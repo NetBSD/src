@@ -1,4 +1,4 @@
-/*	$NetBSD: sched.h,v 1.6 2004/12/13 16:08:12 nathanw Exp $	*/
+/*	$NetBSD: sched.h,v 1.7 2005/02/03 04:39:32 perry Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -79,8 +79,8 @@ __END_DECLS
  */
 
 __BEGIN_DECLS
-pid_t	 clone __P((int (*)(void *), void *, int, void *));
-pid_t	__clone __P((int (*)(void *), void *, int, void *));
+pid_t	 clone(int (*)(void *), void *, int, void *);
+pid_t	__clone(int (*)(void *), void *, int, void *);
 __END_DECLS
 
 #endif /* _NETBSD_SOURCE */
