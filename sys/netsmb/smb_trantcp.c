@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_trantcp.c,v 1.4 2003/01/06 20:30:38 wiz Exp $	*/
+/*	$NetBSD: smb_trantcp.c,v 1.5 2003/02/15 23:26:57 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -154,6 +154,7 @@ nbssn_rselect(struct nbpcb *nbp, struct timeval *tv, int events,
 	struct timeval atv, rtv, ttv;
 	int timo, error;
 	int s, sl;
+	struct lwp *l = curlwp;
 
 	if (tv) {
 		atv = *tv;
@@ -172,7 +173,7 @@ nbssn_rselect(struct nbpcb *nbp, struct timeval *tv, int events,
 
 	PROC_LOCK(p);
 	SCHED_LOCK(sl);
-	p->p_flag |= P_SELECT;
+	l->l_flag |= L_SELECT;
 	SCHED_UNLOCK(sl);
 	PROC_UNLOCK(p);
 	error = nb_poll(nbp, events, p);
@@ -188,12 +189,12 @@ nbssn_rselect(struct nbpcb *nbp, struct timeval *tv, int events,
 			/*
 			 * An event of our interest may occur during locking a process.
 			 * In order to avoid missing the event that occured during locking
-			 * the process, test P_SELECT and rescan file descriptors if
+			 * the process, test L_SELECT and rescan file descriptors if
 			 * necessary.
 			 */
 			SCHED_LOCK(sl);
-			if ((p->p_flag & P_SELECT) == 0) {
-				p->p_flag |= P_SELECT;
+			if ((l->l_flag & L_SELECT) == 0) {
+				l->l_flag |= L_SELECT;
 				SCHED_UNLOCK(sl);
 				PROC_UNLOCK(p);
 				error = nb_poll(nbp, events, p);
@@ -209,7 +210,7 @@ nbssn_rselect(struct nbpcb *nbp, struct timeval *tv, int events,
 		timo = hzto(&ttv);
 	}
 	SCHED_LOCK(sl);
-	p->p_flag &= ~P_SELECT;
+	l->l_flag &= ~L_SELECT;
 	SCHED_UNLOCK(sl);
 	if (timo > 0)
 		error = tsleep((caddr_t)&selwait, PSOCK, "nbssn_rselect", 
@@ -221,7 +222,7 @@ nbssn_rselect(struct nbpcb *nbp, struct timeval *tv, int events,
 
 done:
 	SCHED_LOCK(sl);
-	p->p_flag &= ~P_SELECT;
+	l->l_flag &= ~L_SELECT;
 	SCHED_UNLOCK(sl);
 	PROC_UNLOCK(p);
 
