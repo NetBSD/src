@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_ctl.c,v 1.15 1997/04/28 02:28:39 mycroft Exp $	*/
+/*	$NetBSD: procfs_ctl.c,v 1.16 1997/04/28 04:49:34 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -156,13 +156,20 @@ procfs_control(curp, p, op, sig)
 	case PROCFS_CTL_WAIT:
 		/*
 		 * You can't do what you want to the process if:
-		 *      (1) It's not being traced at all, or
+		 *      (1) It's not being traced at all,
 		 */
 		if (!ISSET(p->p_flag, P_TRACED))
 			return (EPERM);
 
 		/*
-		 *      (2) it's not being traced by _you_.
+		 *	(2) it's being traced by ptrace(2) (which has
+		 *	    different signal delivery semantics), or
+		 */
+		if (!ISSET(p->p_flag, P_FSTRACE))
+			return (EBUSY);
+
+		/*
+		 *      (3) it's not being traced by _you_.
 		 */
 		if (p->p_pptr != curp)
 			return (EBUSY);
@@ -177,13 +184,20 @@ procfs_control(curp, p, op, sig)
 			return (EPERM);
 
 		/*
-		 *      (2) it's not being traced by _you_, or
+		 *	(2) it's being traced by ptrace(2) (which has
+		 *	    different signal delivery semantics),
+		 */
+		if (!ISSET(p->p_flag, P_FSTRACE))
+			return (EBUSY);
+
+		/*
+		 *      (3) it's not being traced by _you_, or
 		 */
 		if (p->p_pptr != curp)
 			return (EBUSY);
 
 		/*
-		 *      (3) it's not currently stopped.
+		 *      (4) it's not currently stopped.
 		 */
 		if (p->p_stat != SSTOP || !ISSET(p->p_flag, P_WAITED))
 			return (EBUSY);
@@ -203,7 +217,7 @@ procfs_control(curp, p, op, sig)
 		 *   proc gets to see all the action.
 		 * Stop the target.
 		 */
-		SET(p->p_flag, P_TRACED);
+		SET(p->p_flag, P_TRACED|P_FSTRACE);
 		p->p_oppid = p->p_pptr->p_pid;
 		if (p->p_pptr != curp)
 			proc_reparent(p, curp);
@@ -237,7 +251,7 @@ procfs_control(curp, p, op, sig)
 
 			/* not being traced any more */
 			p->p_oppid = 0;
-			CLR(p->p_flag, P_TRACED|P_WAITED);
+			CLR(p->p_flag, P_TRACED|P_FSTRACE|P_WAITED);
 		}
 
 	sendsig:
@@ -255,14 +269,15 @@ procfs_control(curp, p, op, sig)
 		/*
 		 * Wait for the target process to stop.
 		 */
-		error = 0;
-		while (error == 0 && p->p_stat != SSTOP)
+		while (p->p_stat != SSTOP && p->p_stat != SZOMB) {
 			error = tsleep(p, PWAIT|PCATCH, "procfsx", 0);
-		return (error);
-
-	default:
-		panic("procfs_control");
+			if (error)
+				return (error);
+		}
+		return (0);
 	}
+
+	panic("procfs_control");
 }
 
 int

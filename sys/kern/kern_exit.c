@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.43 1997/04/28 02:51:41 mycroft Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.44 1997/04/28 04:49:27 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -240,7 +240,8 @@ exit1(p, rv)
 	/*
 	 * Notify parent that we're gone.
 	 */
-	psignal(p->p_pptr, SIGCHLD);
+	if ((p->p_flag & P_FSTRACE) == 0)
+		psignal(p->p_pptr, SIGCHLD);
 	wakeup((caddr_t)p->p_pptr);
 
 	/*
