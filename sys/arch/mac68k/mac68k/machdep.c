@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.49 1995/06/30 05:25:01 briggs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.50 1995/07/04 12:14:32 paulus Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1130,6 +1130,13 @@ netintr()
 	if (netisr & (1 << NETISR_ISO)) {
 		netisr &= ~(1 << NETISR_ISO);
 		clnlintr();
+	}
+#endif
+#include "ppp.h"
+#if NPPP > 0
+	if (netisr & (1 << NETISR_PPP)) {
+		netisr &= ~(1 << NETISR_PPP);
+		pppintr();
 	}
 #endif
 }
