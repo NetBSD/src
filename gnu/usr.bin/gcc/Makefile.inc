@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.1 2001/06/18 16:18:31 tv Exp $
+#	$NetBSD: Makefile.inc,v 1.2 2001/11/26 18:19:48 jmc Exp $
 
 TOP=		${.CURDIR}/../../..
 DIST=		${TOP}/dist/toolchain
@@ -6,8 +6,5 @@ DIST=		${TOP}/dist/toolchain
 GCCARCH=	${.CURDIR}/../arch/${MACHINE_ARCH}
 
 CPPFLAGS+=	-DLOCALEDIR=\"/usr/share/locale\" -DNETBSD_NATIVE
-
-# Don't auto-frob .y or .l files.
-.l.c .y.c .y.h:
 
 .include "${GCCARCH}/defs.mk"
