@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.214 2003/07/02 17:33:33 heas Exp $
+.\"	$NetBSD: options.4,v 1.215 2003/07/03 20:13:26 ragge Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -1346,6 +1346,10 @@ and received over (currently) internet and appletalk addresses.
 .\"This can be a fairly expensive operation, so you probably want to
 .\"keep this disabled.
 The option is not recommended as it degrades system stability.
+.It Cd options IFQ_MAXLEN=value
+Increases the allowed size of the network interface packet queues.
+The default queue size is 50 packets, and you do not normally need
+to increase it.
 .It Cd options MROUTING
 Includes support for IP multicast routers.
 You certainly want
@@ -1636,6 +1640,19 @@ is set.
 Number of packets to record for
 .Em TCP_DEBUG .
 Defaults to 100.
+.It Cd options TCP_SENDSPACE=value
+.It Cd options TCP_RECVSPACE=value
+These options sets the max TCP window size to other sizes than the default.
+The TCP window sizes can be altered via
+.Xr sysctl 8
+as well.
+.It Cd options TCP_INIT_WIN=value
+This option sets the initial TCP window size for non-local connections,
+which is used when the transmission starts. The default size is 1,
+but if the machine should act more aggressive the initial size can be
+set to some other value. The initial TCP window size can be set via
+.Xr sysctl 8
+as well.
 .It Cd options PFIL_HOOKS
 This option turns on the packet filter interface hooks.
 See
@@ -1773,6 +1790,19 @@ These options are provided in the event the computed value is
 insufficient resulting in an
 .Dq out of space in kmem_map
 panic.
+.It Cd options SB_MAX=value
+Sets the max size in bytes that a socket buffer is allowed to occupy.
+The default is 256k, but sometimes it need to be increased, for example
+when using large TCP windows.  This option can be changed via
+.Xr sysctl 8
+as well.
+.It Cd options SOMAXKVA=value 
+Sets the maximum size of kernel virtual memory that the socket buffers
+are allowed to use. The default is 16MB, but in situations where for
+example large TCP windows are used this value must also be increased.
+This option can be changed via
+.Xr sysctl 8
+as well.
 .It Cd options BUFCACHE=value
 Size of the buffer cache as a percentage of total available
 .Tn RAM .
