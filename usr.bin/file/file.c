@@ -1,4 +1,4 @@
-/*	$NetBSD: file.c,v 1.1.1.7 2001/03/17 11:06:46 pooka Exp $	*/
+/*	$NetBSD: file.c,v 1.1.1.8 2001/07/22 22:31:49 pooka Exp $	*/
 
 /*
  * file - find type of a file or files - main program.
@@ -58,14 +58,14 @@
 #include "patchlevel.h"
 
 #ifndef	lint
-FILE_RCSID("@(#)Id: file.c,v 1.56 2001/03/11 20:29:16 christos Exp ")
+FILE_RCSID("@(#)Id: file.c,v 1.58 2001/07/22 21:04:15 christos Exp ")
 #endif	/* lint */
 
 
 #ifdef S_IFLNK
-# define USAGE  "Usage: %s [-bciknvzL] [-f namefile] [-m magicfiles] file...\n"
+# define USAGE  "Usage: %s [-bciknsvzL] [-f namefile] [-m magicfiles] file...\n"
 #else
-# define USAGE  "Usage: %s [-bciknvz] [-f namefile] [-m magicfiles] file...\n"
+# define USAGE  "Usage: %s [-bciknsvz] [-f namefile] [-m magicfiles] file...\n"
 #endif
 
 #ifndef MAGIC
@@ -91,7 +91,7 @@ int			/* Misc globals				*/
 
 struct  magic *magic;	/* array of magic entries		*/
 
-const char *magicfile;	/* where magic be found 		*/
+const char *magicfile = 0;	/* where the magic is		*/
 const char *default_magicfile = MAGIC;
 
 char *progname;		/* used throughout 			*/
@@ -117,7 +117,8 @@ main(argc, argv)
 {
 	int c;
 	int action = 0, didsomefiles = 0, errflg = 0, ret = 0, app = 0;
-	char *mime;
+	char *mime, *home, *usermagic;
+	struct stat sb;
 
 #ifdef LC_CTYPE
 	setlocale(LC_CTYPE, ""); /* makes islower etc work for other langs */
@@ -128,8 +129,20 @@ main(argc, argv)
 	else
 		progname = argv[0];
 
-	if (!(magicfile = getenv("MAGIC")))
-		magicfile = default_magicfile;
+	magicfile = default_magicfile;
+	if ((usermagic = getenv("MAGIC")) != NULL)
+		magicfile = usermagic;
+	else
+		if (home = getenv("HOME")) {
+			if ((usermagic = malloc(strlen(home) + 8)) != NULL) {
+				(void)strcpy(usermagic, home);
+				(void)strcat(usermagic, "/.magic");
+				if (stat(usermagic, &sb)<0) 
+					free(usermagic);
+				else
+					magicfile = usermagic;
+			}
+		}
 
 	while ((c = getopt(argc, argv, "bcdf:ikm:nsvzCL")) != EOF)
 		switch (c) {
@@ -157,7 +170,7 @@ main(argc, argv)
 			break;
 		case 'i':
 			iflag++;
-			if ((mime = malloc(strlen(magicfile) + 5)) != NULL) {
+			if ((mime = malloc(strlen(magicfile) + 6)) != NULL) {
 				(void)strcpy(mime, magicfile);
 				(void)strcat(mime, ".mime");
 				magicfile = mime;
@@ -460,8 +473,6 @@ static void
 usage()
 {
 	(void)fprintf(stderr, USAGE, progname);
-#ifdef QUICK
 	(void)fprintf(stderr, "Usage: %s -C [-m magic]\n", progname);
-#endif
 	exit(1);
 }
