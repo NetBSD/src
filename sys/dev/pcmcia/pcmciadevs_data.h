@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.193 2003/12/28 06:47:23 itohy Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.194 2004/01/25 02:43:38 sekiya Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.191 2003/12/28 06:46:23 itohy Exp 
+ *	NetBSD: pcmciadevs,v 1.192 2004/01/25 02:42:49 sekiya Exp 
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -531,6 +531,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "I-O DATA",
 	    "I-O DATA WN-B11/PCM",	}
+	,
+	{
+	    PCMCIA_VENDOR_IODATA2, PCMCIA_PRODUCT_IODATA2_WCF12,
+	    PCMCIA_CIS_IODATA2_WCF12,
+	    0,
+	    "I-O DATA",
+	    "Wireless CF Card",	}
 	,
 	{
 	    PCMCIA_VENDOR_KINGSTON, PCMCIA_PRODUCT_KINGSTON_KNE2,

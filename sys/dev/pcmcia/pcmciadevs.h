@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.193 2003/12/28 06:47:23 itohy Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.194 2004/01/25 02:43:38 sekiya Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.191 2003/12/28 06:46:23 itohy Exp 
+ *	NetBSD: pcmciadevs,v 1.192 2004/01/25 02:42:49 sekiya Exp 
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -375,6 +375,9 @@
 #define	PCMCIA_CIS_IODATA2_WNB11PCM	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_IODATA2_WNB11PCM	0x0002
 #define	PCMCIA_STR_IODATA2_WNB11PCM	"I-O DATA WN-B11/PCM"
+#define	PCMCIA_CIS_IODATA2_WCF12	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_IODATA2_WCF12	0x0673
+#define	PCMCIA_STR_IODATA2_WCF12	"Wireless CF Card"
 
 /* Kingston Products */
 #define	PCMCIA_CIS_KINGSTON_KNE2	{ NULL, NULL, NULL, NULL }
