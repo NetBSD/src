@@ -1,4 +1,4 @@
-/*	$NetBSD: sii.c,v 1.22 1997/05/22 03:26:16 mhitch Exp $	*/
+/*	$NetBSD: sii.c,v 1.23 1997/05/29 19:26:06 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -828,6 +828,7 @@ again:
 				cstat, dstat); /* XXX */
 			if (cstat & SII_DST) {
 				sc->sc_target = regs->destat;
+				state = &sc->sc_st[sc->sc_target];
 				state->prevComm = 0;
 			} else {
 #ifdef DEBUG
