@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.68 2004/03/21 12:50:14 martin Exp $ */
+/*	$NetBSD: sbus.c,v 1.69 2004/06/30 21:37:49 pk Exp $ */
 
 /*
  * Copyright (c) 1999-2002 Eduardo Horvath
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.68 2004/03/21 12:50:14 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.69 2004/06/30 21:37:49 pk Exp $");
 
 #include "opt_ddb.h"
 
@@ -71,7 +71,6 @@ int sbus_debug = 0;
 
 void sbusreset __P((int));
 
-static bus_space_tag_t sbus_alloc_bustag __P((struct sbus_softc *));
 static bus_dma_tag_t sbus_alloc_dmatag __P((struct sbus_softc *));
 static int sbus_get_intr __P((struct sbus_softc *, int,
 			      struct openprom_intr **, int *, int));
@@ -232,7 +231,11 @@ sbus_attach(parent, self, aux)
 		25*1000*1000);
 	printf(": clock = %s MHz\n", clockfreq(sc->sc_clockfreq));
 
-	sbt = sbus_alloc_bustag(sc);
+	sbt = bus_space_tag_alloc(sc->sc_bustag, sc);
+	sbt->type = SBUS_BUS_SPACE;
+	sbt->sparc_bus_map = _sbus_bus_map;
+	sbt->sparc_intr_establish = sbus_intr_establish;
+
 	sc->sc_dmatag = sbus_alloc_dmatag(sc);
 
 	/*
@@ -244,7 +247,7 @@ sbus_attach(parent, self, aux)
 	 * Collect address translations from the OBP.
 	 */
 	error = prom_getprop(node, "ranges", sizeof(struct openprom_range),
-			 &sc->sc_nrange, &sc->sc_range);
+			 &sbt->nranges, &sbt->ranges);
 	if (error)
 		panic("%s: error getting ranges property", sc->sc_dev.dv_xname);
 
@@ -405,29 +408,13 @@ _sbus_bus_map(t, addr, size, flags, v, hp)
 	vaddr_t v;
 	bus_space_handle_t *hp;
 {
-	struct sbus_softc *sc = t->cookie;
-	int64_t slot = BUS_ADDR_IOSPACE(addr);
-	int64_t offset = BUS_ADDR_PADDR(addr);
-	int i;
+	int error;
 
-	for (i = 0; i < sc->sc_nrange; i++) {
-		bus_addr_t paddr;
+	if ((error = bus_space_translate_address_generic(
+			t->ranges, t->nranges, &addr)) != 0)
+		return (error);
 
-		if (sc->sc_range[i].or_child_space != slot)
-			continue;
-
-		/* We've found the connection to the parent bus */
-		paddr = sc->sc_range[i].or_parent_base + offset;
-		paddr |= ((bus_addr_t)sc->sc_range[i].or_parent_space<<32);
-		DPRINTF(SDB_DVMA,
-("\n_sbus_bus_map: mapping paddr slot %lx offset %lx poffset %lx paddr %lx\n",
-		    (long)slot, (long)offset,
-		    (long)sc->sc_range[i].or_parent_base,
-		    (long)paddr));
-		return (bus_space_map(sc->sc_bustag, paddr, size, flags, hp));
-	}
-
-	return (EINVAL);
+	return (bus_space_map(t->parent, addr, size, flags, hp));
 }
 
 
@@ -437,20 +424,20 @@ sbus_bus_addr(t, btype, offset)
 	u_int btype;
 	u_int offset;
 {
-	bus_addr_t baddr = 0;
 	int slot = btype;
-	struct sbus_softc *sc = t->cookie;
+	struct openprom_range *rp;
 	int i;
 
-	for (i = 0; i < sc->sc_nrange; i++) {
-		if (sc->sc_range[i].or_child_space != slot)
+	for (i = 0; i < t->nranges; i++) {
+		rp = &t->ranges[i];
+		if (rp->or_child_space != slot)
 			continue;
 
-		baddr = sc->sc_range[i].or_parent_base + offset;
-		baddr |= ((bus_addr_t)sc->sc_range[i].or_parent_space<<32);
+		return BUS_ADDR(rp->or_parent_base + offset,
+				rp->or_parent_space);
 	}
 
-	return (baddr);
+	return (0);
 }
 
 
@@ -696,28 +683,6 @@ sbus_intr_establish(t, pri, level, handler, arg, fastvec)
 	intr_establish(ipl, ih);
 	return (ih);
 }
-
-static bus_space_tag_t
-sbus_alloc_bustag(sc)
-	struct sbus_softc *sc;
-{
-	bus_space_tag_t sbt;
-
-	sbt = (bus_space_tag_t)
-		malloc(sizeof(struct sparc_bus_space_tag), M_DEVBUF, M_NOWAIT);
-	if (sbt == NULL)
-		return (NULL);
-
-	memset(sbt, 0, sizeof *sbt);
-	sbt->cookie = sc;
-	sbt->parent = sc->sc_bustag;
-	sbt->type = SBUS_BUS_SPACE;
-	sbt->sparc_bus_map = _sbus_bus_map;
-	sbt->sparc_bus_mmap = sc->sc_bustag->sparc_bus_mmap;
-	sbt->sparc_intr_establish = sbus_intr_establish;
-	return (sbt);
-}
-
 
 static bus_dma_tag_t
 sbus_alloc_dmatag(sc)
