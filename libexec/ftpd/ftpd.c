@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.29 1997/07/21 05:13:10 mrg Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.30 1997/08/14 02:06:17 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1988, 1990, 1992, 1993, 1994
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.29 1997/07/21 05:13:10 mrg Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.30 1997/08/14 02:06:17 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -245,7 +245,7 @@ main(argc, argv, envp)
 	debug = 0;
 
 	/* set this here so klogin can use it... */
-	(void)snprintf(ttyline, sizeof ttyline, "ftp%d", getpid());
+	(void)snprintf(ttyline, sizeof(ttyline), "ftp%d", getpid());
 
 	while ((ch = getopt(argc, argv, "a:dlt:T:u:v")) != EOF) {
 		switch (ch) {
@@ -759,7 +759,7 @@ retrieve(cmd, name)
 	if (cmd) {
 		char line[BUFSIZ];
 
-		(void)snprintf(line, sizeof line, cmd, name), name = line;
+		(void)snprintf(line, sizeof(line), cmd, name), name = line;
 		fin = ftpd_popen(line, "r", 1), closefunc = ftpd_pclose;
 		st.st_size = -1;
 		st.st_blksize = BUFSIZ;
@@ -939,7 +939,7 @@ dataconn(name, size, mode)
 	file_size = size;
 	byte_count = 0;
 	if (size != (off_t) -1)
-		(void)snprintf(sizebuf, sizeof sizebuf, " (%qd bytes)",
+		(void)snprintf(sizebuf, sizeof(sizebuf), " (%qd bytes)",
 		    (long long)size);
 	else
 		sizebuf[0] = '\0';
@@ -1737,11 +1737,11 @@ send_file_list(whichf)
 			    dir->d_namlen == 2)
 				continue;
 
-			(void)snprintf(nbuf, sizeof nbuf, "%s/%s", dirname,
+			(void)snprintf(nbuf, sizeof(nbuf), "%s/%s", dirname,
 			    dir->d_name);
 
 			/*
-			 * We have to do a stat to insure it's
+			 * We have to do a stat to ensure it's
 			 * not a directory or special file.
 			 */
 			if (simple || (stat(nbuf, &st) == 0 &&
