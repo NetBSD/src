@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.9.2.1 1999/06/23 15:08:34 perry Exp $	 */
+/*	$NetBSD: rtld.h,v 1.9.2.2 2000/10/10 21:48:02 he Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -177,7 +177,8 @@ extern const char *_rtld_error_message;
 void _rtld_bind_start __P((void));
 
 /* rtld.c */
-void _rtld_error __P((const char *, ...));
+void _rtld_error __P((const char *, ...))
+     __attribute__((__format__(__printf__,1,2)));
 void _rtld_die __P((void));
 char *_rtld_dlerror __P((void));
 void *_rtld_dlopen __P((const char *, int));
