@@ -1,4 +1,4 @@
-/*	$NetBSD: badsect.c,v 1.26 2004/03/21 19:13:59 dsl Exp $	*/
+/*	$NetBSD: badsect.c,v 1.27 2004/03/27 12:52:16 dsl Exp $	*/
 
 /*
  * Copyright (c) 1981, 1983, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1981, 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)badsect.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: badsect.c,v 1.26 2004/03/21 19:13:59 dsl Exp $");
+__RCSID("$NetBSD: badsect.c,v 1.27 2004/03/27 12:52:16 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -173,7 +173,7 @@ main(argc, argv)
 		}
 
 		/* Ensure we don't use 1st alternate if ffsv1 and bs=64k */
-		if (fs->fs_old_flags & FS_FLAGS_UPDATED) {
+		if (is_ufs2 || fs->fs_old_flags & FS_FLAGS_UPDATED) {
 			if (fs->fs_sblockloc != sblock_try[i])
 				continue;
 		} else {
