@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.133 1998/11/05 15:59:00 mellon Exp $	*/
+/*	$NetBSD: pccons.c,v 1.134 1999/02/06 18:46:21 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -106,6 +106,19 @@
 #if (NPCCONSKBD > 0)
 #include <machine/bus.h>
 #include <dev/isa/pckbcvar.h>
+#else
+/* consistency check: plain pccons can't coexist with pckbc */
+#include "pckbc.h"
+#if (NPCKBC > 0)
+#error "(pc without pcconskbd) and pckbc can't coexist"
+#endif
+#endif /* NPCCONSKBD */
+
+/* consistency check: pccons can't coexist with vga or pcdisplay */
+#include "vga.h"
+#include "pcdisplay.h"
+#if (NVGA > 0) || (NPCDISPLAY > 0)
+#error "pc and (vga or pcdisplay) can't coexist"
 #endif
 
 #include <machine/cpu.h>

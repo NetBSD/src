@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.336 1999/01/28 20:06:31 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.337 1999/02/06 18:46:21 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -184,16 +184,6 @@
 extern struct proc *npxproc;
 #endif
 
-#include "pc.h"
-#if (NPC > 0)
-#include <machine/pccons.h>
-#endif
-
-#include "vt.h"
-#if (NVT > 0)
-#include <i386/isa/pcvt/pcvt_cons.h>
-#endif
-
 #include "vga.h"
 #include "pcdisplay.h"
 #if (NVGA > 0) || (NPCDISPLAY > 0)
@@ -211,6 +201,16 @@ extern struct proc *npxproc;
 #include "pckbc.h"
 #if (NPCKBC > 0)
 #include <dev/isa/pckbcvar.h>
+#endif
+
+#include "pc.h"
+#if (NPC > 0)
+#include <machine/pccons.h>
+#endif
+
+#include "vt.h"
+#if (NVT > 0)
+#include <i386/isa/pcvt/pcvt_cons.h>
 #endif
 
 #include "com.h"
@@ -2223,7 +2223,7 @@ pckbc_machdep_cnattach(kbctag, kbcslot)
 	pckbc_tag_t kbctag;
 	pckbc_slot_t kbcslot;
 {
-#if (NPC > 0)
+#if (NPC > 0) && (NPCCONSKBD > 0)
 	return (pcconskbd_cnattach(kbctag, kbcslot));
 #else
 	return (ENXIO);
