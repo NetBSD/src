@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_extern.h,v 1.5 2001/12/04 00:05:05 darrenr Exp $	*/
+/*	$NetBSD: fpu_extern.h,v 1.6 2003/01/18 06:45:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -54,11 +54,11 @@ struct fpn;
 
 /* fpu.c */
 #ifndef SUN4U
-void fpu_cleanup __P((struct proc *, struct fpstate *));
-int fpu_emulate __P((struct proc *, struct trapframe *, struct fpstate *));
+void fpu_cleanup __P((struct lwp *, struct fpstate *));
+int fpu_emulate __P((struct lwp *, struct trapframe *, struct fpstate *));
 #else /* SUN4U */
-void fpu_cleanup __P((struct proc *, struct fpstate64 *));
-int fpu_emulate __P((struct proc *, struct trapframe64 *, struct fpstate64 *));
+void fpu_cleanup __P((struct lwp *, struct fpstate64 *));
+int fpu_emulate __P((struct lwp *, struct trapframe64 *, struct fpstate64 *));
 #endif /* SUN4U */
 int fpu_execute __P((struct fpemu *, union instr));
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.64 2003/01/11 03:40:31 mrg Exp $ */
+/*	$NetBSD: pmap.h,v 1.65 2003/01/18 06:44:57 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -247,9 +247,8 @@ int             pmap_dumpmmu __P((int (*)__P((dev_t, daddr_t, caddr_t, size_t)),
 
 /* FUNCTION DECLARATIONS FOR COMMON PMAP MODULE */
 
-struct proc;
-void		pmap_activate __P((struct proc *));
-void		pmap_deactivate __P((struct proc *));
+void		pmap_activate __P((struct lwp *));
+void		pmap_deactivate __P((struct lwp *));
 void		pmap_bootstrap __P((int nmmu, int nctx, int nregion));
 int		pmap_count_ptes __P((struct pmap *));
 void		pmap_prefer __P((vaddr_t, vaddr_t *));

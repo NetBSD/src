@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.70 2003/01/12 16:29:01 pk Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.71 2003/01/18 06:45:07 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -180,16 +180,16 @@ vunmapbuf(bp, len)
 #define	TOPFRAMEOFF (USPACE-sizeof(struct trapframe)-sizeof(struct frame))
 
 /*
- * Finish a fork operation, with process p2 nearly set up.
+ * Finish a fork operation, with process l2 nearly set up.
  * Copy and update the pcb and trap frame, making the child ready to run.
  * 
  * Rig the child's kernel stack so that it will start out in
- * proc_trampoline() and call child_return() with p2 as an
+ * proc_trampoline() and call child_return() with l2 as an
  * argument. This causes the newly-created child process to go
  * directly to user level with an apparent return value of 0 from
  * fork(), while the parent process returns normally.
  *
- * p1 is the process being forked; if p1 == &proc0, we are creating
+ * l1 is the process being forked; if l1 == &lwp0, we are creating
  * a kernel thread, and the return path and argument are specified with
  * `func' and `arg'.
  *
@@ -198,73 +198,73 @@ vunmapbuf(bp, len)
  * accordingly.
  */
 void
-cpu_fork(p1, p2, stack, stacksize, func, arg)
-	struct proc *p1, *p2;
+cpu_lwp_fork(l1, l2, stack, stacksize, func, arg)
+	struct lwp *l1, *l2;
 	void *stack;
 	size_t stacksize;
 	void (*func) __P((void *));
 	void *arg;
 {
-	struct pcb *opcb = &p1->p_addr->u_pcb;
-	struct pcb *npcb = &p2->p_addr->u_pcb;
+	struct pcb *opcb = &l1->l_addr->u_pcb;
+	struct pcb *npcb = &l2->l_addr->u_pcb;
 	struct trapframe *tf2;
 	struct rwindow *rp;
 
 	/*
-	 * Save all user registers to p1's stack or, in the case of
+	 * Save all user registers to l1's stack or, in the case of
 	 * user registers and invalid stack pointers, to opcb.
 	 * We then copy the whole pcb to p2; when switch() selects p2
 	 * to run, it will run at the `proc_trampoline' stub, rather
 	 * than returning at the copying code below.
 	 *
-	 * If process p1 has an FPU state, we must copy it.  If it is
+	 * If process l1 has an FPU state, we must copy it.  If it is
 	 * the FPU user, we must save the FPU state first.
 	 */
 
-	if (p1 == curproc) {
+	if (l1 == curlwp) {
 		write_user_windows();
 		opcb->pcb_psr = getpsr();
 	}
 #ifdef DIAGNOSTIC
-	else if (p1 != &proc0)
-		panic("cpu_fork: curproc");
+	else if (l1 != &lwp0)
+		panic("cpu_lwp_fork: curlwp");
 #endif
 
 	bcopy((caddr_t)opcb, (caddr_t)npcb, sizeof(struct pcb));
-	if (p1->p_md.md_fpstate != NULL) {
+	if (l1->l_md.md_fpstate != NULL) {
 		struct cpu_info *cpi;
 		int s;
 
-		p2->p_md.md_fpstate = malloc(sizeof(struct fpstate),
+		l2->l_md.md_fpstate = malloc(sizeof(struct fpstate),
 		    M_SUBPROC, M_WAITOK);
 
 		FPU_LOCK(s);
-		if ((cpi = p1->p_md.md_fpu) != NULL) {
-			if (cpi->fpproc != p1)
-				panic("FPU(%d): fpproc %p",
-					cpi->ci_cpuid, cpi->fpproc);
-			if (p1 == cpuinfo.fpproc)
-				savefpstate(p1->p_md.md_fpstate);
+		if ((cpi = l1->l_md.md_fpu) != NULL) {
+			if (cpi->fplwp != l1)
+				panic("FPU(%d): fplwp %p",
+					cpi->ci_cpuid, cpi->fplwp);
+			if (l1 == cpuinfo.fplwp)
+				savefpstate(l1->l_md.md_fpstate);
 #if defined(MULTIPROCESSOR)
 			else
-				XCALL1(savefpstate, p1->p_md.md_fpstate,
+				XCALL1(savefpstate, l1->l_md.md_fpstate,
 					1 << cpi->ci_cpuid);
 #endif
 		}
-		bcopy(p1->p_md.md_fpstate, p2->p_md.md_fpstate,
+		bcopy(l1->l_md.md_fpstate, l2->l_md.md_fpstate,
 		    sizeof(struct fpstate));
 		FPU_UNLOCK(s);
 	} else
-		p2->p_md.md_fpstate = NULL;
+		l2->l_md.md_fpstate = NULL;
 
-	p2->p_md.md_fpu = NULL;
+	l2->l_md.md_fpu = NULL;
 
 	/*
 	 * Setup (kernel) stack frame that will by-pass the child
 	 * out of the kernel. (The trap frame invariably resides at
 	 * the tippity-top of the u. area.)
 	 */
-	tf2 = p2->p_md.md_tf = (struct trapframe *)
+	tf2 = l2->l_md.md_tf = (struct trapframe *)
 			((int)npcb + USPACE - sizeof(*tf2));
 
 	/* Copy parent's trapframe */
@@ -309,35 +309,61 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
  * as an argument.  switchexit() switches to the idle context, schedules
  * the old vmspace and stack to be freed, then selects a new process to
  * run.
+ *
+ * If proc==0, we're an exiting lwp, and call switch_lwp_exit() instead of
+ * switch_exit(), and only do LWP-appropriate cleanup (e.g. don't deactivate
+ * the pmap).
  */
 void
-cpu_exit(p)
-	struct proc *p;
+cpu_exit(l, proc)
+	struct lwp *l;
+	int proc;
 {
 	struct fpstate *fs;
 
-	if ((fs = p->p_md.md_fpstate) != NULL) {
+	if ((fs = l->l_md.md_fpstate) != NULL) {
 		struct cpu_info *cpi;
 		int s;
 
 		FPU_LOCK(s);
-		if ((cpi = p->p_md.md_fpu) != NULL) {
-			if (cpi->fpproc != p)
-				panic("FPU(%d): fpproc %p",
-					cpi->ci_cpuid, cpi->fpproc);
-			if (p == cpuinfo.fpproc)
+		if ((cpi = l->l_md.md_fpu) != NULL) {
+			if (cpi->fplwp != l)
+				panic("FPU(%d): fplwp %p",
+					cpi->ci_cpuid, cpi->fplwp);
+			if (l == cpuinfo.fplwp)
 				savefpstate(fs);
 #if defined(MULTIPROCESSOR)
 			else
 				XCALL1(savefpstate, fs, 1 << cpi->ci_cpuid);
 #endif
-			cpi->fpproc = NULL;
+			cpi->fplwp = NULL;
 		}
 		FPU_UNLOCK(s);
 		free((void *)fs, M_SUBPROC);
 	}
-	switchexit(p);
+	switchexit(l, proc ? exit2 : lwp_exit2);
 	/* NOTREACHED */
+}
+
+void
+cpu_setfunc(l, func, arg)
+	struct lwp *l;
+	void (*func) __P((void *));
+	void *arg;
+{
+	struct pcb *pcb = &l->l_addr->u_pcb;
+	/*struct trapframe *tf = l->l_md.md_tf;*/
+	struct rwindow *rp;
+
+	/* Construct kernel frame to return to in cpu_switch() */
+	rp = (struct rwindow *)((u_int)pcb + TOPFRAMEOFF);
+	rp->rw_local[0] = (int)func;		/* Function to call */
+	rp->rw_local[1] = (int)arg;		/* and its argument */
+
+	pcb->pcb_pc = (int)proc_trampoline - 8;
+	pcb->pcb_sp = (int)rp;
+	pcb->pcb_psr &= ~PSR_CWP;	/* Run in window #0 */
+	pcb->pcb_wim = 1;		/* Fence at window #1 */
 }
 
 /*
@@ -345,8 +371,8 @@ cpu_exit(p)
  * (should this be defined elsewhere?  machdep.c?)
  */
 int
-cpu_coredump(p, vp, cred, chdr)
-	struct proc *p;
+cpu_coredump(l, vp, cred, chdr)
+	struct lwp *l;
 	struct vnode *vp;
 	struct ucred *cred;
 	struct core *chdr;
@@ -354,17 +380,20 @@ cpu_coredump(p, vp, cred, chdr)
 	int error;
 	struct md_coredump md_core;
 	struct coreseg cseg;
+	struct proc *p;
+
+	p = l->l_proc;
 
 	CORE_SETMAGIC(*chdr, COREMAGIC, MID_MACHINE, 0);
 	chdr->c_hdrsize = ALIGN(sizeof(*chdr));
 	chdr->c_seghdrsize = ALIGN(sizeof(cseg));
 	chdr->c_cpusize = sizeof(md_core);
 
-	md_core.md_tf = *p->p_md.md_tf;
-	if (p->p_md.md_fpstate) {
-		if (p == cpuinfo.fpproc)
-			savefpstate(p->p_md.md_fpstate);
-		md_core.md_fpstate = *p->p_md.md_fpstate;
+	md_core.md_tf = *l->l_md.md_tf;
+	if (l->l_md.md_fpstate) {
+		if (l == cpuinfo.fplwp)
+			savefpstate(l->l_md.md_fpstate);
+		md_core.md_fpstate = *l->l_md.md_fpstate;
 	} else
 		bzero((caddr_t)&md_core.md_fpstate, sizeof(struct fpstate));
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.129 2003/01/13 20:00:34 pk Exp $ */
+/*	$NetBSD: trap.c,v 1.130 2003/01/18 06:45:07 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -61,9 +61,12 @@
 #include <sys/user.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
+#include <sys/pool.h>
 #include <sys/resource.h>
 #include <sys/signal.h>
 #include <sys/wait.h>
+#include <sys/sa.h>
+#include <sys/savar.h>
 #include <sys/syscall.h>
 #include <sys/syslog.h>
 #ifdef KTRACE
@@ -194,9 +197,9 @@ const char *trap_type[] = {
 
 #define	N_TRAP_TYPES	(sizeof trap_type / sizeof *trap_type)
 
-static __inline void userret __P((struct proc *, int,  u_quad_t));
+static __inline void userret __P((struct lwp *, int,  u_quad_t));
 void trap __P((unsigned, int, int, struct trapframe *));
-static __inline void share_fpu __P((struct proc *, struct trapframe *));
+static __inline void share_fpu __P((struct lwp *, struct trapframe *));
 void mem_access_fault __P((unsigned, int, u_int, int, int, struct trapframe *));
 void mem_access_fault4m __P((unsigned, u_int, u_int, struct trapframe *));
 void syscall __P((register_t, struct trapframe *, register_t));
@@ -208,17 +211,18 @@ int ignore_bogus_traps = 1;
  * trap, mem_access_fault, and syscall.
  */
 static __inline void
-userret(p, pc, oticks)
-	struct proc *p;
+userret(l, pc, oticks)
+	struct lwp *l;
 	int pc;
 	u_quad_t oticks;
 {
+	struct proc *p = l->l_proc;
 	int sig;
 
 	/* take pending signals */
-	while ((sig = CURSIG(p)) != 0)
+	while ((sig = CURSIG(l)) != 0)
 		postsig(sig);
-	p->p_priority = p->p_usrpri;
+	l->l_priority = l->l_usrpri;
 	if (cpuinfo.want_ast) {
 		cpuinfo.want_ast = 0;
 		if (p->p_flag & P_OWEUPC) {
@@ -230,10 +234,14 @@ userret(p, pc, oticks)
 		/*
 		 * We are being preempted.
 		 */
-		preempt(NULL);
-		while ((sig = CURSIG(p)) != 0)
+		preempt(0);
+		while ((sig = CURSIG(l)) != 0)
 			postsig(sig);
 	}
+
+	/* Invoke any pending upcalls. */
+	while (l->l_flag & L_SA_UPCALL)
+		sa_upcall_userret(l);
 
 	/*
 	 * If profiling, charge recent system time to the trapped pc.
@@ -241,7 +249,40 @@ userret(p, pc, oticks)
 	if (p->p_flag & P_PROFIL)
 		addupc_task(p, pc, (int)(p->p_sticks - oticks));
 
-	curcpu()->ci_schedstate.spc_curpriority = p->p_priority;
+	curcpu()->ci_schedstate.spc_curpriority = l->l_priority;
+}
+
+/* 
+ * Start a new LWP
+ */
+void
+startlwp(arg)
+	void *arg;
+{
+	int err;
+	ucontext_t *uc = arg;
+	struct lwp *l = curlwp;
+
+	err = cpu_setmcontext(l, &uc->uc_mcontext, uc->uc_flags);
+#if DIAGNOSTIC
+	if (err) {
+		printf("Error %d from cpu_setmcontext.", err);
+	}
+#endif
+	pool_put(&lwp_uc_pool, uc);
+
+	userret(l, l->l_md.md_tf->tf_pc, 0);
+}
+
+/*
+ * XXX This is a terrible name.
+ */
+void
+upcallret(l)
+	struct lwp *l;
+{
+
+	userret(l, l->l_md.md_tf->tf_pc, 0);
 }
 
 /*
@@ -251,10 +292,10 @@ userret(p, pc, oticks)
  * ktrsysret should occur before the call to userret.
  */
 static __inline void share_fpu(p, tf)
-	struct proc *p;
+	struct lwp *p;
 	struct trapframe *tf;
 {
-	if ((tf->tf_psr & PSR_EF) != 0 && cpuinfo.fpproc != p)
+	if ((tf->tf_psr & PSR_EF) != 0 && cpuinfo.fplwp != p)
 		tf->tf_psr &= ~PSR_EF;
 }
 
@@ -269,6 +310,7 @@ trap(type, psr, pc, tf)
 	struct trapframe *tf;
 {
 	struct proc *p;
+	struct lwp *l;
 	struct pcb *pcb;
 	int n, s;
 	char bits[64];
@@ -351,19 +393,20 @@ trap(type, psr, pc, tf)
 		panic(type < N_TRAP_TYPES ? trap_type[type] : T);
 		/* NOTREACHED */
 	}
-	if ((p = curproc) == NULL)
-		p = &proc0;
+	if ((l = curlwp) == NULL)
+		l = &lwp0;
+	p = l->l_proc;
 	sticks = p->p_sticks;
-	pcb = &p->p_addr->u_pcb;
-	p->p_md.md_tf = tf;	/* for ptrace/signals */
+	pcb = &l->l_addr->u_pcb;
+	l->l_md.md_tf = tf;	/* for ptrace/signals */
 
 #ifdef FPU_DEBUG
 	if (type != T_FPDISABLED && (tf->tf_psr & PSR_EF) != 0) {
-		if (cpuinfo.fpproc != p)
+		if (cpuinfo.fplwp != l)
 			panic("FPU enabled but wrong proc (0)");
-		savefpstate(p->p_md.md_fpstate);
-		p->p_md.md_fpu = NULL;
-		cpuinfo.fpproc = NULL;
+		savefpstate(l->l_md.md_fpstate);
+		l->l_md.md_fpumid = -1;
+		cpuinfo.fplwp = NULL;
 		tf->tf_psr &= ~PSR_EF;
 		setpsr(getpsr() & ~PSR_EF);
 	}
@@ -406,7 +449,7 @@ badtrap:
 	case T_SVR4_GETHRTIME:
 	case T_SVR4_GETHRVTIME:
 	case T_SVR4_GETHRESTIME:
-		if (!svr4_trap(type, p))
+		if (!svr4_trap(type, l))
 			goto badtrap;
 		break;
 #endif
@@ -429,7 +472,7 @@ badtrap:
 		break;
 
 	case T_FPDISABLED: {
-		struct fpstate *fs = p->p_md.md_fpstate;
+		struct fpstate *fs = l->l_md.md_fpstate;
 
 #ifdef FPU_DEBUG
 		if ((tf->tf_psr & PSR_PS) != 0) {
@@ -441,18 +484,18 @@ badtrap:
 #endif
 
 		if (fs == NULL) {
-			KERNEL_PROC_LOCK(p);
+			KERNEL_PROC_LOCK(l);
 			fs = malloc(sizeof *fs, M_SUBPROC, M_WAITOK);
-			KERNEL_PROC_UNLOCK(p);
+			KERNEL_PROC_UNLOCK(l);
 			*fs = initfpstate;
-			p->p_md.md_fpstate = fs;
+			l->l_md.md_fpstate = fs;
 		}
 		/*
 		 * If we have not found an FPU, we have to emulate it.
 		 */
 		if (!cpuinfo.fpupresent) {
 #ifdef notyet
-			fpu_emulate(p, tf, fs);
+			fpu_emulate(l, tf, fs);
 #else
 			sig = SIGFPE;
 			/* XXX - ucode? */
@@ -465,46 +508,74 @@ badtrap:
 		 * resolve the FPU state, turn it on, and try again.
 		 */
 		if (fs->fs_qsize) {
-			fpu_cleanup(p, fs);
+			fpu_cleanup(l, fs);
 			break;
 		}
-
-		if (cpuinfo.fpproc != p) {		/* we do not have it */
+#if 1
+		if (cpuinfo.fplwp != l) {		/* we do not have it */
 			struct cpu_info *cpi;
 
 			FPU_LOCK(s);
-			if (cpuinfo.fpproc != NULL) {	/* someone else had it*/
-				savefpstate(cpuinfo.fpproc->p_md.md_fpstate);
-				cpuinfo.fpproc->p_md.md_fpu = NULL;
+			if (cpuinfo.fplwp != NULL) {	/* someone else had it*/
+				savefpstate(cpuinfo.fplwp->l_md.md_fpstate);
+				cpuinfo.fplwp->l_md.md_fpu = NULL;
 			}
 			/*
 			 * On MP machines, some of the other FPUs might
 			 * still have our state. Tell the owning processor
 			 * to save the process' FPU state.
 			 */
-			if ((cpi = p->p_md.md_fpu) != NULL) {
+			if ((cpi = l->l_md.md_fpu) != NULL) {
 				if (cpi->ci_cpuid == cpuinfo.ci_cpuid)
 					panic("FPU(%d): state for %p",
-							cpi->ci_cpuid, p);
+							cpi->ci_cpuid, l);
 #if defined(MULTIPROCESSOR)
 				XCALL1(savefpstate, fs, 1 << cpi->ci_cpuid);
 #endif
-				cpi->fpproc = NULL;
+				cpi->fplwp = NULL;
 			}
 			loadfpstate(fs);
-			cpuinfo.fpproc = p;		/* now we do have it */
-			p->p_md.md_fpu = curcpu();
+			cpuinfo.fplwp = l;		/* now we do have it */
+			l->l_md.md_fpu = curcpu();
 			FPU_UNLOCK(s);
 		}
+#else
+		if (cpuinfo.fplwp != l) {		/* we do not have it */
+			int mid;
+
+			FPU_LOCK(s);
+			mid = l->l_md.md_fpumid;
+			if (cpuinfo.fplwp != NULL) {	/* someone else had it*/
+				savefpstate(cpuinfo.fplwp->l_md.md_fpstate);
+				cpuinfo.fplwp->l_md.md_fpumid = -1;
+			}
+			/*
+			 * On MP machines, some of the other FPUs might
+			 * still have our state. We can't handle that yet,
+			 * so panic if it happens. Possible solutions:
+			 * (1) send an inter-processor message to have the
+			 * other FPU save the state, or (2) don't do lazy FPU
+			 * context switching at all.
+			 */
+			if (mid != -1 && mid != cpuinfo.mid) {
+				printf("own FPU on module %d\n", mid);
+				panic("fix this");
+			}
+			loadfpstate(fs);
+			cpuinfo.fplwp = l;		/* now we do have it */
+			l->l_md.md_fpu = curcpu();
+			FPU_UNLOCK(s);
+		}
+#endif
 		tf->tf_psr |= PSR_EF;
 		break;
 	}
 
 	case T_WINOF:
-		KERNEL_PROC_LOCK(p);
-		if (rwindow_save(p))
-			sigexit(p, SIGILL);
-		KERNEL_PROC_UNLOCK(p);
+		KERNEL_PROC_LOCK(l);
+		if (rwindow_save(l))
+			sigexit(l, SIGILL);
+		KERNEL_PROC_UNLOCK(l);
 		break;
 
 #define read_rw(src, dst) \
@@ -519,7 +590,7 @@ badtrap:
 		 * nsaved to -1.  If we decide to deliver a signal on
 		 * our way out, we will clear nsaved.
 		 */
-		KERNEL_PROC_LOCK(p);
+		KERNEL_PROC_LOCK(l);
 		if (pcb->pcb_uw || pcb->pcb_nsaved)
 			panic("trap T_RWRET 1");
 #ifdef DEBUG
@@ -529,11 +600,11 @@ badtrap:
 				tf->tf_out[6]);
 #endif
 		if (read_rw(tf->tf_out[6], &pcb->pcb_rw[0]))
-			sigexit(p, SIGILL);
+			sigexit(l, SIGILL);
 		if (pcb->pcb_nsaved)
 			panic("trap T_RWRET 2");
 		pcb->pcb_nsaved = -1;		/* mark success */
-		KERNEL_PROC_UNLOCK(p);
+		KERNEL_PROC_UNLOCK(l);
 		break;
 
 	case T_WINUF:
@@ -546,7 +617,7 @@ badtrap:
 		 * in the pcb.  The restore's window may still be in
 		 * the cpu; we need to force it out to the stack.
 		 */
-		KERNEL_PROC_LOCK(p);
+		KERNEL_PROC_LOCK(l);
 #ifdef DEBUG
 		if (rwindow_debug)
 			printf("cpu%d:%s[%d]: rwindow: T_WINUF 0: pcb<-stack: 0x%x\n",
@@ -554,8 +625,8 @@ badtrap:
 				tf->tf_out[6]);
 #endif
 		write_user_windows();
-		if (rwindow_save(p) || read_rw(tf->tf_out[6], &pcb->pcb_rw[0]))
-			sigexit(p, SIGILL);
+		if (rwindow_save(l) || read_rw(tf->tf_out[6], &pcb->pcb_rw[0]))
+			sigexit(l, SIGILL);
 #ifdef DEBUG
 		if (rwindow_debug)
 			printf("cpu%d:%s[%d]: rwindow: T_WINUF 1: pcb<-stack: 0x%x\n",
@@ -563,18 +634,18 @@ badtrap:
 				pcb->pcb_rw[0].rw_in[6]);
 #endif
 		if (read_rw(pcb->pcb_rw[0].rw_in[6], &pcb->pcb_rw[1]))
-			sigexit(p, SIGILL);
+			sigexit(l, SIGILL);
 		if (pcb->pcb_nsaved)
 			panic("trap T_WINUF");
 		pcb->pcb_nsaved = -1;		/* mark success */
-		KERNEL_PROC_UNLOCK(p);
+		KERNEL_PROC_UNLOCK(l);
 		break;
 
 	case T_ALIGN:
-		if ((p->p_md.md_flags & MDP_FIXALIGN) != 0) {
-			KERNEL_PROC_LOCK(p);
-			n = fixalign(p, tf);
-			KERNEL_PROC_UNLOCK(p);
+		if ((l->l_md.md_flags & MDP_FIXALIGN) != 0) {
+			KERNEL_PROC_LOCK(l);
+			n = fixalign(l, tf);
+			KERNEL_PROC_UNLOCK(l);
 			if (n == 0) {
 				ADVANCE;
 				break;
@@ -593,15 +664,17 @@ badtrap:
 		 * will not match once fpu_cleanup does its job, so
 		 * we must not save again later.)
 		 */
-		if (p != cpuinfo.fpproc)
+		KERNEL_PROC_LOCK(l);
+		if (l != cpuinfo.fplwp)
 			panic("fpe without being the FP user");
 		FPU_LOCK(s);
-		savefpstate(p->p_md.md_fpstate);
-		cpuinfo.fpproc = NULL;
-		p->p_md.md_fpu = NULL;
+		savefpstate(l->l_md.md_fpstate);
+		cpuinfo.fplwp = NULL;
+		l->l_md.md_fpu = NULL;
 		FPU_UNLOCK(s);
 		/* tf->tf_psr &= ~PSR_EF; */	/* share_fpu will do this */
-		fpu_cleanup(p, p->p_md.md_fpstate);
+		fpu_cleanup(l, l->l_md.md_fpstate);
+		KERNEL_PROC_UNLOCK(l);
 		/* fpu_cleanup posts signals if needed */
 #if 0		/* ??? really never??? */
 		ADVANCE;
@@ -633,10 +706,10 @@ badtrap:
 	case T_FLUSHWIN:
 		write_user_windows();
 #ifdef probably_slower_since_this_is_usually_false
-		KERNEL_PROC_LOCK(p);
+		KERNEL_PROC_LOCK(l);
 		if (pcb->pcb_nsaved && rwindow_save(p))
-			sigexit(p, SIGILL);
-		KERNEL_PROC_UNLOCK(p);
+			sigexit(l, SIGILL);
+		KERNEL_PROC_UNLOCK(l);
 #endif
 		ADVANCE;
 		break;
@@ -658,7 +731,7 @@ badtrap:
 		uprintf("T_FIXALIGN\n");
 #endif
 		/* User wants us to fix alignment faults */
-		p->p_md.md_flags |= MDP_FIXALIGN;
+		l->l_md.md_flags |= MDP_FIXALIGN;
 		ADVANCE;
 		break;
 
@@ -670,12 +743,12 @@ badtrap:
 		break;
 	}
 	if (sig != 0) {
-		KERNEL_PROC_LOCK(p);
-		trapsignal(p, sig, ucode);
-		KERNEL_PROC_UNLOCK(p);
+		KERNEL_PROC_LOCK(l);
+		trapsignal(l, sig, ucode);
+		KERNEL_PROC_UNLOCK(l);
 	}
-	userret(p, pc, sticks);
-	share_fpu(p, tf);
+	userret(l, pc, sticks);
+	share_fpu(l, tf);
 #undef ADVANCE
 }
 
@@ -689,10 +762,10 @@ badtrap:
  * If the windows cannot be saved, pcb_nsaved is restored and we return -1.
  */
 int
-rwindow_save(p)
-	struct proc *p;
+rwindow_save(l)
+	struct lwp *l;
 {
-	struct pcb *pcb = &p->p_addr->u_pcb;
+	struct pcb *pcb = &l->l_addr->u_pcb;
 	struct rwindow *rw = &pcb->pcb_rw[0];
 	int i;
 
@@ -706,7 +779,7 @@ rwindow_save(p)
 #ifdef DEBUG
 	if (rwindow_debug)
 		printf("cpu%d:%s[%d]: rwindow: pcb->stack:",
-			cpuinfo.ci_cpuid, p->p_comm, p->p_pid);
+			cpuinfo.ci_cpuid, l->l_proc->p_comm, l->l_proc->p_pid);
 #endif
 	do {
 #ifdef DEBUG
@@ -732,12 +805,12 @@ rwindow_save(p)
  * the registers into the new process after the exec.
  */
 void
-kill_user_windows(p)
-	struct proc *p;
+kill_user_windows(l)
+	struct lwp *l;
 {
 
 	write_user_windows();
-	p->p_addr->u_pcb.pcb_nsaved = 0;
+	l->l_addr->u_pcb.pcb_nsaved = 0;
 }
 
 /*
@@ -761,6 +834,7 @@ mem_access_fault(type, ser, v, pc, psr, tf)
 {
 #if defined(SUN4) || defined(SUN4C)
 	struct proc *p;
+	struct lwp *l;
 	struct vmspace *vm;
 	vaddr_t va;
 	int rv = EFAULT;
@@ -770,20 +844,21 @@ mem_access_fault(type, ser, v, pc, psr, tf)
 	char bits[64];
 
 	uvmexp.traps++;
-	if ((p = curproc) == NULL)	/* safety check */
-		p = &proc0;
+	if ((l = curlwp) == NULL)	/* safety check */
+		l = &lwp0;
+	p = l->l_proc;
 	sticks = p->p_sticks;
 
 	if ((psr & PSR_PS) == 0)
-		KERNEL_PROC_LOCK(p);
+		KERNEL_PROC_LOCK(l);
 
 #ifdef FPU_DEBUG
 	if ((tf->tf_psr & PSR_EF) != 0) {
-		if (cpuinfo.fpproc != p)
+		if (cpuinfo.fplwp != l)
 			panic("FPU enabled but wrong proc (1)");
-		savefpstate(p->p_md.md_fpstate);
-		p->p_md.md_fpu = NULL;
-		cpuinfo.fpproc = NULL;
+		savefpstate(l->l_md.md_fpstate);
+		l->l_md.md_fpu = NULL;
+		cpuinfo.fplwp = NULL;
 		tf->tf_psr &= ~PSR_EF;
 		setpsr(getpsr() & ~PSR_EF);
 	}
@@ -819,7 +894,7 @@ mem_access_fault(type, ser, v, pc, psr, tf)
 		 * If this was an access that we shouldn't try to page in,
 		 * resume at the fault handler without any action.
 		 */
-		if (p->p_addr && p->p_addr->u_pcb.pcb_onfault == Lfsbail)
+		if (l->l_addr && l->l_addr->u_pcb.pcb_onfault == Lfsbail)
 			goto kfault;
 
 		/*
@@ -836,7 +911,7 @@ mem_access_fault(type, ser, v, pc, psr, tf)
 			goto kfault;
 		}
 	} else
-		p->p_md.md_tf = tf;
+		l->l_md.md_tf = tf;
 
 	/*
 	 * mmu_pagein returns -1 if the page is already valid, in which
@@ -894,8 +969,8 @@ mem_access_fault(type, ser, v, pc, psr, tf)
 fault:
 		if (psr & PSR_PS) {
 kfault:
-			onfault = p->p_addr ?
-			    (int)p->p_addr->u_pcb.pcb_onfault : 0;
+			onfault = l->l_addr ?
+			    (int)l->l_addr->u_pcb.pcb_onfault : 0;
 			if (!onfault) {
 				(void) splhigh();
 				printf("data fault: pc=0x%x addr=0x%x ser=%s\n",
@@ -914,15 +989,15 @@ kfault:
 			       p->p_pid, p->p_comm,
 			       p->p_cred && p->p_ucred ?
 			       p->p_ucred->cr_uid : -1);
-			trapsignal(p, SIGKILL, (u_int)v);
+			trapsignal(l, SIGKILL, (u_int)v);
 		} else
-			trapsignal(p, SIGSEGV, (u_int)v);
+			trapsignal(l, SIGSEGV, (u_int)v);
 	}
 out:
 	if ((psr & PSR_PS) == 0) {
-		KERNEL_PROC_UNLOCK(p);
-		userret(p, pc, sticks);
-		share_fpu(p, tf);
+		KERNEL_PROC_UNLOCK(l);
+		userret(l, pc, sticks);
+		share_fpu(l, tf);
 	}
 #endif /* SUN4 || SUN4C */
 }
@@ -939,6 +1014,7 @@ mem_access_fault4m(type, sfsr, sfva, tf)
 {
 	int pc, psr;
 	struct proc *p;
+	struct lwp *l;
 	struct vmspace *vm;
 	vaddr_t va;
 	int rv = EFAULT;
@@ -949,17 +1025,18 @@ mem_access_fault4m(type, sfsr, sfva, tf)
 
 	uvmexp.traps++;	/* XXXSMP */
 
-	if ((p = curproc) == NULL)	/* safety check */
-		p = &proc0;
+	if ((l = curlwp) == NULL)	/* safety check */
+		l = &lwp0;
+	p = l->l_proc;
 	sticks = p->p_sticks;
 
 #ifdef FPU_DEBUG
 	if ((tf->tf_psr & PSR_EF) != 0) {
-		if (cpuinfo.fpproc != p)
+		if (cpuinfo.fplwp != l)
 			panic("FPU enabled but wrong proc (2)");
-		savefpstate(p->p_md.md_fpstate);
-		p->p_md.md_fpu = NULL;
-		cpuinfo.fpproc = NULL;
+		savefpstate(l->l_md.md_fpstate);
+		l->l_md.md_fpu = NULL;
+		cpuinfo.fplwp = NULL;
 		tf->tf_psr &= ~PSR_EF;
 		setpsr(getpsr() & ~PSR_EF);
 	}
@@ -994,7 +1071,7 @@ mem_access_fault4m(type, sfsr, sfva, tf)
 	}
 
 	if ((psr & PSR_PS) == 0)
-		KERNEL_PROC_LOCK(p);
+		KERNEL_PROC_LOCK(l);
 	else
 		KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
 
@@ -1102,7 +1179,7 @@ mem_access_fault4m(type, sfsr, sfva, tf)
 		 * If this was an access that we shouldn't try to page in,
 		 * resume at the fault handler without any action.
 		 */
-		if (p->p_addr && p->p_addr->u_pcb.pcb_onfault == Lfsbail)
+		if (l->l_addr && l->l_addr->u_pcb.pcb_onfault == Lfsbail)
 			goto kfault;
 
 		/*
@@ -1121,7 +1198,7 @@ mem_access_fault4m(type, sfsr, sfva, tf)
 			goto kfault;
 		}
 	} else
-		p->p_md.md_tf = tf;
+		l->l_md.md_tf = tf;
 
 	vm = p->p_vmspace;
 
@@ -1152,8 +1229,8 @@ mem_access_fault4m(type, sfsr, sfva, tf)
 fault:
 		if (psr & PSR_PS) {
 kfault:
-			onfault = p->p_addr ?
-			    (int)p->p_addr->u_pcb.pcb_onfault : 0;
+			onfault = l->l_addr ?
+			    (int)l->l_addr->u_pcb.pcb_onfault : 0;
 			if (!onfault) {
 				(void) splhigh();
 				printf("data fault: pc=0x%x addr=0x%x sfsr=%s\n",
@@ -1173,16 +1250,16 @@ kfault:
 			       p->p_pid, p->p_comm,
 			       p->p_cred && p->p_ucred ?
 			       p->p_ucred->cr_uid : -1);
-			trapsignal(p, SIGKILL, (u_int)sfva);
+			trapsignal(l, SIGKILL, (u_int)sfva);
 		} else
-			trapsignal(p, SIGSEGV, (u_int)sfva);
+			trapsignal(l, SIGSEGV, (u_int)sfva);
 	}
 out:
 	if ((psr & PSR_PS) == 0) {
-		KERNEL_PROC_UNLOCK(p);
+		KERNEL_PROC_UNLOCK(l);
 out_nounlock:
-		userret(p, pc, sticks);
-		share_fpu(p, tf);
+		userret(l, pc, sticks);
+		share_fpu(l, tf);
 	}
 	else
 		KERNEL_UNLOCK();
@@ -1206,6 +1283,7 @@ syscall(code, tf, pc)
 	int i, nsys, *ap, nap;
 	const struct sysent *callp;
 	struct proc *p;
+	struct lwp *l;
 	int error, new;
 	struct args {
 		register_t i[8];
@@ -1214,29 +1292,29 @@ syscall(code, tf, pc)
 	u_quad_t sticks;
 
 	uvmexp.syscalls++;	/* XXXSMP */
-	p = curproc;
-
+	l = curlwp;
+	p = l->l_proc;
 
 #ifdef DIAGNOSTIC
 	if (tf->tf_psr & PSR_PS)
 		panic("syscall");
-	if (cpuinfo.curpcb != &p->p_addr->u_pcb)
+	if (cpuinfo.curpcb != &l->l_addr->u_pcb)
 		panic("syscall cpcb/ppcb");
 	if (tf != (struct trapframe *)((caddr_t)cpuinfo.curpcb + USPACE) - 1)
 		panic("syscall trapframe");
 #endif
 	sticks = p->p_sticks;
-	p->p_md.md_tf = tf;
+	l->l_md.md_tf = tf;
 	new = code & (SYSCALL_G7RFLAG | SYSCALL_G2RFLAG);
 	code &= ~(SYSCALL_G7RFLAG | SYSCALL_G2RFLAG);
 
 #ifdef FPU_DEBUG
 	if ((tf->tf_psr & PSR_EF) != 0) {
-		if (cpuinfo.fpproc != p)
+		if (cpuinfo.fplwp != p)
 			panic("FPU enabled but wrong proc (3)");
 		savefpstate(p->p_md.md_fpstate);
-		p->p_md.md_fpumid = -1;
-		cpuinfo.fpproc = NULL;
+		l->l_md.md_fpumid = -1;
+		cpuinfo.fplwp = NULL;
 		tf->tf_psr &= ~PSR_EF;
 		setpsr(getpsr() & ~PSR_EF);
 	}
@@ -1293,20 +1371,20 @@ syscall(code, tf, pc)
 
 	/* Lock the kernel if the syscall isn't MP-safe. */
 	if ((callp->sy_flags & SYCALL_MPSAFE) == 0)
-		KERNEL_PROC_LOCK(p);
+		KERNEL_PROC_LOCK(l);
 
-	if ((error = trace_enter(p, code, code, NULL, args.i, rval)) != 0) {
+	if ((error = trace_enter(l, code, code, NULL, args.i, rval)) != 0) {
 		if ((callp->sy_flags & SYCALL_MPSAFE) == 0)
-			KERNEL_PROC_UNLOCK(p);
+			KERNEL_PROC_UNLOCK(l);
 		goto bad;
 	}
 
 	rval[0] = 0;
 	rval[1] = tf->tf_out[1];
-	error = (*callp->sy_call)(p, &args, rval);
+	error = (*callp->sy_call)(l, &args, rval);
 
 	if ((callp->sy_flags & SYCALL_MPSAFE) == 0)
-		KERNEL_PROC_UNLOCK(p);
+		KERNEL_PROC_UNLOCK(l);
 
 	switch (error) {
 	case 0:
@@ -1346,10 +1424,10 @@ syscall(code, tf, pc)
 		break;
 	}
 
-	trace_exit(p, code, args.i, rval, error);
+	trace_exit(l, code, args.i, rval, error);
 
-	userret(p, pc, sticks);
-	share_fpu(p, tf);
+	userret(l, pc, sticks);
+	share_fpu(l, tf);
 }
 
 /*
@@ -1359,19 +1437,23 @@ void
 child_return(arg)
 	void *arg;
 {
-	struct proc *p = arg;
+	struct lwp *l = arg;
+#ifdef KTRACE
+	struct proc *p;
+#endif
 
 	/*
 	 * Return values in the frame set by cpu_fork().
 	 */
-	KERNEL_PROC_UNLOCK(p);
-	userret(p, p->p_md.md_tf->tf_pc, 0);
+	KERNEL_PROC_UNLOCK(l);
+	userret(l, l->l_md.md_tf->tf_pc, 0);
 #ifdef KTRACE
+	p = l->l_proc;
 	if (KTRPOINT(p, KTR_SYSRET)) {
-		KERNEL_PROC_LOCK(p);
+		KERNEL_PROC_LOCK(l);
 		ktrsysret(p,
 			  (p->p_flag & P_PPWAIT) ? SYS_vfork : SYS_fork, 0, 0);
-		KERNEL_PROC_UNLOCK(p);
+		KERNEL_PROC_UNLOCK(l);
 	}
 #endif
 }

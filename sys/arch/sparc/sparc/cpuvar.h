@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuvar.h,v 1.53 2003/01/12 01:16:06 pk Exp $ */
+/*	$NetBSD: cpuvar.h,v 1.54 2003/01/18 06:45:02 thorpej Exp $ */
 
 /*
  *  Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -189,8 +189,8 @@ struct cpu_info {
 	 * associated with this CPU--running on it, using its FPU,
 	 * etc.
 	 */
-	struct	proc	*ci_curproc;		/* CPU owner */
-	struct	proc 	*fpproc;		/* FPU owner */
+	struct	lwp	*ci_curlwp;		/* CPU owner */
+	struct	lwp 	*fplwp;			/* FPU owner */
 
 	/*
 	 * Idle PCB and Interrupt stack;

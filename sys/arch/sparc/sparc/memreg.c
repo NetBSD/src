@@ -1,4 +1,4 @@
-/*	$NetBSD: memreg.c,v 1.35 2002/10/02 16:02:11 thorpej Exp $ */
+/*	$NetBSD: memreg.c,v 1.36 2003/01/18 06:45:05 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -257,7 +257,7 @@ hypersparc_memerr(type, sfsr, sfva, tf)
 	u_int afva;
 
 	if ((tf->tf_psr & PSR_PS) == 0)
-		KERNEL_PROC_LOCK(curproc);
+		KERNEL_PROC_LOCK(curlwp);
 	else
 		KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
 
@@ -276,7 +276,7 @@ hypersparc_memerr(type, sfsr, sfva, tf)
 	}
 out:
 	if ((tf->tf_psr & PSR_PS) == 0)
-		KERNEL_PROC_UNLOCK(curproc);
+		KERNEL_PROC_UNLOCK(curlwp);
 	else
 		KERNEL_UNLOCK();
 	return;
@@ -297,7 +297,7 @@ viking_memerr(type, sfsr, sfva, tf)
 	u_int afva=0;
 
 	if ((tf->tf_psr & PSR_PS) == 0)
-		KERNEL_PROC_LOCK(curproc);
+		KERNEL_PROC_LOCK(curlwp);
 	else
 		KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
 
@@ -335,7 +335,7 @@ viking_memerr(type, sfsr, sfva, tf)
 
 out:
 	if ((tf->tf_psr & PSR_PS) == 0)
-		KERNEL_PROC_UNLOCK(curproc);
+		KERNEL_PROC_UNLOCK(curlwp);
 	else
 		KERNEL_UNLOCK();
 	return;
@@ -356,7 +356,7 @@ memerr4m(type, sfsr, sfva, tf)
 	u_int afva;
 
 	if ((tf->tf_psr & PSR_PS) == 0)
-		KERNEL_PROC_LOCK(curproc);
+		KERNEL_PROC_LOCK(curlwp);
 	else
 		KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
 
@@ -369,7 +369,7 @@ memerr4m(type, sfsr, sfva, tf)
 
 	hardmemerr4m(type, sfsr, sfva, afsr, afva);
 	if ((tf->tf_psr & PSR_PS) == 0)
-		KERNEL_PROC_UNLOCK(curproc);
+		KERNEL_PROC_UNLOCK(curlwp);
 	else
 		KERNEL_UNLOCK();
 }

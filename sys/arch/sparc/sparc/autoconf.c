@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.187 2003/01/01 02:20:48 thorpej Exp $ */
+/*	$NetBSD: autoconf.c,v 1.188 2003/01/18 06:45:00 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -257,7 +257,7 @@ bootstrap()
 	ncpu = find_cpus();
 
 	/* Attach user structure to proc0 */
-	proc0.p_addr = proc0paddr;
+	lwp0.l_addr = proc0paddr;
 
 	cpuinfo.master = 1;
 	getcpuinfo(&cpuinfo, 0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.184 2003/01/17 14:49:45 pk Exp $	*/
+/*	$NetBSD: locore.s,v 1.185 2003/01/18 06:45:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -212,8 +212,8 @@ _C_LABEL(kgdb_stack):
  */
 cpcb = CPUINFO_VA + CPUINFO_CURPCB
 
-/* curproc points to the current process that has the CPU */
-curproc = CPUINFO_VA + CPUINFO_CURPROC
+/* curlwp points to the current LWP that has the CPU */
+curlwp = CPUINFO_VA + CPUINFO_CURLWP
 
 /*
  * cputyp is the current cpu type, used to distinguish between
@@ -4283,7 +4283,7 @@ _C_LABEL(cpu_hatch):
 	clr	%l4
 	sethi	%hi(cpcb), %l6
 	b	idle_enter
-	 sethi	%hi(curproc), %l7
+	 sethi	%hi(curlwp), %l7
 #else /* ALT_SWITCH_CODE */
 	/* Idle here .. */
 9:	ba 9b
@@ -4315,6 +4315,7 @@ _C_LABEL(sigcode):
 	! sigreturn does not return unless it fails
 	mov	SYS_exit, %g1		! exit(errno)
 	t	ST_SYSCALL
+	/* NOTREACHED */
 _C_LABEL(esigcode):
 
 /*
@@ -4547,13 +4548,14 @@ ENTRY(write_user_windows)
 /*
  * switchexit is called only from cpu_exit() before the current process
  * has freed its vmspace and kernel stack; we must schedule them to be
- * freed.  (curproc is already NULL.)
+ * freed.  (curlwp is already NULL.)
  *
  * We lay the process to rest by changing to the `idle' kernel stack,
  * and note that the `last loaded process' is nonexistent.
  */
 ENTRY(switchexit)
 	mov	%o0, %g2		! save proc for exit2() call
+	mov	%o1, %g1		! exit2() or lwp_exit2()
 
 	/*
 	 * Change pcb to idle u. area, i.e., set %sp to top of stack
@@ -4587,7 +4589,7 @@ ENTRY(switchexit)
 #endif
 	wr	%g0, PSR_S|PSR_ET, %psr	! and then enable traps
 	 nop
-	call	_C_LABEL(exit2)		! exit2(p)
+	call	%g1			! {lwp}exit2(p)
 	 mov	%g2, %o0
 
 	/*
@@ -4600,7 +4602,7 @@ ENTRY(switchexit)
 	 *	%l2 = %hi(whichqs)
 	 *	%l4 = lastproc
 	 *	%l6 = %hi(cpcb)
-	 *	%l7 = %hi(curproc)
+	 *	%l7 = %hi(curlwp)
 	 *	%o0 = tmp 1
 	 *	%o1 = tmp 2
 	 */
@@ -4614,9 +4616,9 @@ ENTRY(switchexit)
 	clr	%l4			! lastproc = NULL;
 #endif
 	sethi	%hi(cpcb), %l6
-	sethi	%hi(curproc), %l7
+	sethi	%hi(curlwp), %l7
 	b	idle_enter
-	 st	%g0, [%l7 + %lo(curproc)]	! curproc = NULL;
+	 st	%g0, [%l7 + %lo(curlwp)]	! curlwp = NULL;
 
 /*
  * When no processes are on the runq, switch
@@ -4662,7 +4664,7 @@ idle_switch:
 	sethi	%hi(_C_LABEL(sched_whichqs)), %l2
 	clr	%l4			! lastproc = NULL;
 	sethi	%hi(cpcb), %l6
-	sethi	%hi(curproc), %l7
+	sethi	%hi(curlwp), %l7
 	/* FALLTHROUGH*/
 
 idle:
@@ -4737,8 +4739,8 @@ Lsw_panic_srun:
  * SAVE LATER WHEN SOMEONE ELSE IS READY ... MUST MEASURE!
  */
 	.globl	_C_LABEL(__ffstab)
-ENTRY(cpu_switchto)
 ENTRY(cpu_switch)
+ENTRY(cpu_switchto)
 	/*
 	 * REGISTER USAGE AT THIS POINT:
 	 *	%l1 = oldpsr (excluding ipl bits)
@@ -4747,7 +4749,7 @@ ENTRY(cpu_switch)
 	 *	%l4(%g4) = lastproc
 	 *	%l5 = tmp 0
 	 *	%l6 = %hi(cpcb)
-	 *	%l7 = %hi(curproc)
+	 *	%l7 = %hi(curlwp)
 	 *	%o0 = tmp 1
 	 *	%o1 = tmp 2
 	 *	%o2 = tmp 3
@@ -4761,10 +4763,10 @@ ENTRY(cpu_switch)
 	ld	[%l6 + %lo(cpcb)], %o0
 	std	%i6, [%o0 + PCB_SP]		! cpcb->pcb_<sp,pc> = <fp,pc>;
 	rd	%psr, %l1			! oldpsr = %psr;
-	sethi	%hi(curproc), %l7
+	sethi	%hi(curlwp), %l7
 	st	%l1, [%o0 + PCB_PSR]		! cpcb->pcb_psr = oldpsr;
 	andn	%l1, PSR_PIL, %l1		! oldpsr &= ~PSR_PIL;
-	st	%g0, [%l7 + %lo(curproc)]	! curproc = NULL;
+	st	%g0, [%l7 + %lo(curlwp)]	! curlwp = NULL;
 	/*
 	 * Save the old process: write back all windows (excluding
 	 * the current one).  XXX crude; knows nwindows <= 8
@@ -4853,7 +4855,7 @@ Lsw_load:
 	 *	%l4 = lastproc
 	 *	%l5 =
 	 *	%l6 = %hi(cpcb)
-	 *	%l7 = %hi(curproc)
+	 *	%l7 = %hi(curlwp)
 	 *	%o0 = tmp 1
 	 *	%o1 = tmp 2
 	 *	%o2 = tmp 3
@@ -4861,12 +4863,12 @@ Lsw_load:
 	 */
 
 	/* firewalls */
-	ld	[%l3 + P_WCHAN], %o0	! if (p->p_wchan)
+	ld	[%l3 + L_WCHAN], %o0	! if (p->p_wchan)
 	tst	%o0
 	bne	Lsw_panic_wchan		!	panic("switch wchan");
 	 EMPTY
-	ldsb	[%l3 + P_STAT], %o0	! if (p->p_stat != SRUN)
-	cmp	%o0, SRUN
+	ld	[%l3 + L_STAT], %o0	! if (p->p_stat != LSRUN)
+	cmp	%o0, LSRUN
 	bne	Lsw_panic_srun		!	panic("switch SRUN");
 	 EMPTY
 
@@ -4874,19 +4876,19 @@ Lsw_load:
 	 * Committed to running process p.
 	 * It may be the same as the one we were running before.
 	 */
-	mov	SONPROC, %o0			! p->p_stat = SONPROC;
-	stb	%o0, [%l3 + P_STAT]
+	mov	LSONPROC, %o0			! p->p_stat = LSONPROC;
+	st	%o0, [%l3 + L_STAT]
 
 	/* p->p_cpu initialized in fork1() for single-processor */
 #if defined(MULTIPROCESSOR)
 	sethi	%hi(_CISELFP), %o0		! p->p_cpu = cpuinfo.ci_self;
 	ld	[%o0 + %lo(_CISELFP)], %o0
-	st	%o0, [%l3 + P_CPU]
+	st	%o0, [%l3 + L_CPU]
 #endif
 
-	ld	[%l3 + P_ADDR], %g5		! newpcb = p->p_addr;
+	ld	[%l3 + L_ADDR], %g5		! newpcb = p->p_addr;
 	st	%g0, [%l3 + 4]			! p->p_back = NULL;
-	st	%l3, [%l7 + %lo(curproc)]	! curproc = p;
+	st	%l3, [%l7 + %lo(curlwp)]	! curlwp = p;
 
 	/*
 	 * Load the new process.  To load, we must change stacks and
@@ -4968,7 +4970,8 @@ Lsw_load:
 #endif
 
 	INCR(_C_LABEL(nswitchdiff))	! clobbers %o0,%o1
-	ld	[%g3 + P_VMSPACE], %o3	! vm = p->p_vmspace;
+	ld	[%g3 + L_PROC], %o2	! p = l->l_proc;
+	ld	[%o2 + P_VMSPACE], %o3	! vm = p->p_vmspace;
 	ld	[%o3 + VM_PMAP], %o3	! pm = vm->vm_map.vm_pmap;
 #if defined(MULTIPROCESSOR)
 	sethi	%hi(CPUINFO_VA + CPUINFO_CPUNO), %o0
@@ -5030,6 +5033,7 @@ Lsw_sameproc:
 	ret
 	 restore %g0, %g0, %o0		! return (0)
 #endif /* !MULTIPROCESSOR */
+
 
 /*
  * Snapshot the current process so that stack frames are up to date.
@@ -5110,7 +5114,7 @@ ENTRY(proc_trampoline)
  *	%g4 = lastproc
  *	%g5 = <free>; newpcb
  *	%g6 = %hi(cpcb)
- *	%g7 = %hi(curproc)
+ *	%g7 = %hi(curlwp)
  *	%o0 = tmp 1
  *	%o1 = tmp 2
  *	%o2 = tmp 3
@@ -5146,13 +5150,14 @@ ENTRY(proc_trampoline)
 /*
  * switchexit is called only from cpu_exit() before the current process
  * has freed its vmspace and kernel stack; we must schedule them to be
- * freed.  (curproc is already NULL.)
+ * freed.  (curlwp is already NULL.)
  *
  * We lay the process to rest by changing to the `idle' kernel stack,
  * and note that the `last loaded process' is nonexistent.
  */
 ENTRY(switchexit)
 	mov	%o0, %g2		! save proc for exit2() call
+	mov	%o1, %g1		! exit2() or lwp_exit2()
 
 	/*
 	 * Change pcb to idle u. area, i.e., set %sp to top of stack
@@ -5186,7 +5191,7 @@ ENTRY(switchexit)
 #endif
 
 	wr	%g0, PSR_S|PSR_ET, %psr	! and then enable traps
-	call	_C_LABEL(exit2)		! exit2(p)
+	call	%g1			! {lwp}exit2(p)
 	 mov	%g2, %o0
 
 	/*
@@ -5199,7 +5204,7 @@ ENTRY(switchexit)
 	 *	%g2 = %hi(whichqs)
 	 *	%g4 = lastproc
 	 *	%g6 = %hi(cpcb)
-	 *	%g7 = %hi(curproc)
+	 *	%g7 = %hi(curlwp)
 	 *	%o0 = tmp 1
 	 *	%o1 = tmp 2
 	 *	%o3 = whichqs
@@ -5212,8 +5217,8 @@ ENTRY(switchexit)
 	sethi	%hi(_C_LABEL(sched_whichqs)), %g2
 	clr	%g4			! lastproc = NULL;
 	sethi	%hi(cpcb), %g6
-	sethi	%hi(curproc), %g7
-	st	%g0, [%g7 + %lo(curproc)]	! curproc = NULL;
+	sethi	%hi(curlwp), %g7
+	st	%g0, [%g7 + %lo(curlwp)]	! curlwp = NULL;
 	b,a	idle_enter_no_schedlock
 	/* FALLTHROUGH */
 
@@ -5335,7 +5340,7 @@ ENTRY(cpu_switch)
 	 *	%g4 = lastproc
 	 *	%g5 = tmp 0
 	 *	%g6 = %hi(cpcb)
-	 *	%g7 = %hi(curproc)
+	 *	%g7 = %hi(curlwp)
 	 *	%o0 = tmp 1
 	 *	%o1 = tmp 2
 	 *	%o2 = tmp 3
@@ -5351,8 +5356,8 @@ ENTRY(cpu_switch)
 	rd	%psr, %g1			! oldpsr = %psr;
 	st	%g1, [%o0 + PCB_PSR]		! cpcb->pcb_psr = oldpsr;
 	andn	%g1, PSR_PIL, %g1		! oldpsr &= ~PSR_PIL;
-	sethi	%hi(curproc), %g7
-	st	%g0, [%g7 + %lo(curproc)]	! curproc = NULL;
+	sethi	%hi(curlwp), %g7
+	st	%g0, [%g7 + %lo(curlwp)]	! curlwp = NULL;
 
 Lsw_scan:
 	nop; nop; nop				! paranoia
@@ -5408,6 +5413,7 @@ Lsw_scan:
 	andn	%o3, %o1, %o3
 	st	%o3, [%g2 + %lo(_C_LABEL(sched_whichqs))]
 1:
+cpu_switch0:
 	/*
 	 * PHASE TWO: NEW REGISTER USAGE:
 	 *	%g1 = oldpsr (excluding ipl bits)
@@ -5416,7 +5422,7 @@ Lsw_scan:
 	 *	%g4 = lastproc
 	 *	%g5 = newpcb
 	 *	%g6 = %hi(cpcb)
-	 *	%g7 = %hi(curproc)
+	 *	%g7 = %hi(curlwp)
 	 *	%o0 = tmp 1
 	 *	%o1 = tmp 2
 	 *	%o2 = tmp 3
@@ -5424,12 +5430,12 @@ Lsw_scan:
 	 */
 
 	/* firewalls */
-	ld	[%g3 + P_WCHAN], %o0	! if (p->p_wchan)
+	ld	[%g3 + L_WCHAN], %o0	! if (p->p_wchan)
 	tst	%o0
 	bne	Lsw_panic_wchan		!	panic("switch wchan");
 	 EMPTY
-	ldsb	[%g3 + P_STAT], %o0	! if (p->p_stat != SRUN)
-	cmp	%o0, SRUN
+	ld	[%g3 + L_STAT], %o0	! if (p->p_stat != LSRUN)
+	cmp	%o0, LSRUN
 	bne	Lsw_panic_srun		!	panic("switch SRUN");
 	 EMPTY
 
@@ -5437,14 +5443,14 @@ Lsw_scan:
 	 * Committed to running process p.
 	 * It may be the same as the one we were running before.
 	 */
-	mov	SONPROC, %o0			! p->p_stat = SONPROC;
-	stb	%o0, [%g3 + P_STAT]
+	mov	LSONPROC, %o0			! p->p_stat = LSONPROC;
+	st	%o0, [%g3 + L_STAT]
 
 	/* p->p_cpu initialized in fork1() for single-processor */
 #if defined(MULTIPROCESSOR)
 	sethi	%hi(_CISELFP), %o0		! p->p_cpu = cpuinfo.ci_self;
 	ld	[%o0 + %lo(_CISELFP)], %o0
-	st	%o0, [%g3 + P_CPU]
+	st	%o0, [%g3 + L_CPU]
 #endif
 
 	sethi	%hi(_WANT_RESCHED), %o0		! want_resched = 0;
@@ -5453,10 +5459,10 @@ Lsw_scan:
 	/* Done with the run queues; release the scheduler lock */
 	SAVE_GLOBALS_AND_CALL(sched_unlock_idle)
 #endif
-	ld	[%g3 + P_ADDR], %g5		! newpcb = p->p_addr;
+	ld	[%g3 + L_ADDR], %g5		! newpcb = p->p_addr;
 	st	%g0, [%g3 + 4]			! p->p_back = NULL;
 	ld	[%g5 + PCB_PSR], %g2		! newpsr = newpcb->pcb_psr;
-	st	%g3, [%g7 + %lo(curproc)]	! curproc = p;
+	st	%g3, [%g7 + %lo(curlwp)]	! curlwp = p;
 
 	cmp	%g3, %g4		! p == lastproc?
 	be,a	Lsw_sameproc		! yes, go return 0
@@ -5527,12 +5533,14 @@ Lsw_load:
 	 * can talk about user space stuff.  (Its pcb_uw is currently
 	 * zero so it is safe to have interrupts going here.)
 	 */
-	ld	[%g3 + P_VMSPACE], %o3	! vm = p->p_vmspace;
+	mov	1, %o0			! return value
+	ld	[%g3 + L_PROC], %o3	! p = l->l_proc;
+	ld	[%o3 + P_VMSPACE], %o3	! vm = p->p_vmspace;
 	ld	[%o3 + VM_PMAP], %o3	! pm = vm->vm_map.vm_pmap;
-	ld	[%o3 + PMAP_CTX], %o0	! if (pm->pm_ctx != NULL)
-	tst	%o0
+	ld	[%o3 + PMAP_CTX], %o1	! if (pm->pm_ctx != NULL)
+	tst	%o1
 	bnz,a	Lsw_havectx		!	goto havecontext;
-	 ld	[%o3 + PMAP_CTXNUM], %o0	! load context number
+	 ld	[%o3 + PMAP_CTXNUM], %o1	! load context number
 
 	/* p does not have a context: call ctx_alloc to get one */
 	save	%sp, -CCFSZ, %sp
@@ -5540,12 +5548,11 @@ Lsw_load:
 	 mov	%i3, %o0
 
 	ret
-	 restore
+	 restore	%g0, 1, %o0	! set return value to 1
 
 	/* p does have a context: just switch to it */
 Lsw_havectx:
-	! context is in %o0
-	! pmap is in %o3
+	! context is in %o1
 #if (defined(SUN4) || defined(SUN4C)) && defined(SUN4M)
 NOP_ON_4M_15:
 	b,a	1f
@@ -5553,9 +5560,9 @@ NOP_ON_4M_15:
 #endif
 1:
 #if defined(SUN4) || defined(SUN4C)
-	set	AC_CONTEXT, %o1
+	set	AC_CONTEXT, %o2
 	retl
-	 stba	%o0, [%o1] ASI_CONTROL	! setcontext(vm->vm_pmap.pm_ctxnum);
+	 stba	%o1, [%o2] ASI_CONTROL	! setcontext(vm->vm_pmap.pm_ctxnum);
 #endif
 2:
 #if defined(SUN4M)
@@ -5566,12 +5573,12 @@ NOP_ON_4M_15:
 	set	CPUINFO_VA+CPUINFO_PURE_VCACHE_FLS, %o2
 	ld	[%o2], %o2
 	mov	%o7, %g7	! save return address
-	jmpl	%o2, %o7	! this function must not clobber %o0 and %g7
+	jmpl	%o2, %o7	! this function must not clobber %o0,%o1 and %g7
 	 nop
 
-	set	SRMMU_CXR, %o1
+	set	SRMMU_CXR, %o2
 	jmp	%g7 + 8
-	 sta	%o0, [%o1] ASI_SRMMU	! setcontext(vm->vm_pmap.pm_ctxnum);
+	 sta	%o1, [%o2] ASI_SRMMU	! setcontext(vm->vm_pmap.pm_ctxnum);
 #endif
 
 Lsw_sameproc:
@@ -5582,8 +5589,25 @@ Lsw_sameproc:
 !	wr	%g2, 0 %psr		! %psr = newpsr; (done earlier)
 	nop
 	retl
-	 nop
+	 mov	%g0, %o0	! return value = 0
 
+ENTRY(cpu_switchto)
+	/*
+	 * Like cpu_switch, but we're passed the process to switch to.
+	 *
+	 * Use the same register usage convention as in cpu_switch().
+	 */
+	mov	%o0, %g4			! lastproc = arg1;
+	mov	%o1, %g3			! newproc = arg2;
+	sethi	%hi(cpcb), %g6
+	ld	[%g6 + %lo(cpcb)], %o0
+	std	%o6, [%o0 + PCB_SP]		! cpcb->pcb_<sp,pc> = <sp,pc>;
+	rd	%psr, %g1			! oldpsr = %psr;
+	st	%g1, [%o0 + PCB_PSR]		! cpcb->pcb_psr = oldpsr;
+	andn	%g1, PSR_PIL, %g1		! oldpsr &= ~PSR_PIL;
+	sethi	%hi(curlwp), %g7
+	st	%g0, [%g7 + %lo(curlwp)]	! curlwp = NULL;
+	b,a	cpu_switch0
 
 /*
  * Snapshot the current process so that stack frames are up to date.

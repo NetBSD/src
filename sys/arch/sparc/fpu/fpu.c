@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.16 2003/01/06 18:32:33 pk Exp $ */
+/*	$NetBSD: fpu.c,v 1.17 2003/01/18 06:45:00 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -117,8 +117,8 @@ static u_char fpu_codes[] = {
  * unknown FPops do enter the queue, however.
  */
 void
-fpu_cleanup(p, fs)
-	register struct proc *p;
+fpu_cleanup(l, fs)
+	register struct lwp *l;
 #ifndef SUN4U
 	register struct fpstate *fs;
 #else /* SUN4U */
@@ -126,6 +126,7 @@ fpu_cleanup(p, fs)
 #endif /* SUN4U */
 {
 	register int i, fsr = fs->fs_fsr, error;
+	struct proc *p = l->l_proc;
 	union instr instr;
 	struct fpemu fe;
 
@@ -140,9 +141,9 @@ fpu_cleanup(p, fs)
 		/* XXX missing trap address! */
 		if ((i = fsr & FSR_CX) == 0)
 			panic("fpu ieee trap, but no exception");
-		KERNEL_PROC_LOCK(p);
-		trapsignal(p, SIGFPE, fpu_codes[i - 1]);
-		KERNEL_PROC_UNLOCK(p);
+		KERNEL_PROC_LOCK(l);
+		trapsignal(l, SIGFPE, fpu_codes[i - 1]);
+		KERNEL_PROC_UNLOCK(l);
 		break;		/* XXX should return, but queue remains */
 
 	case FSR_TT_UNFIN:
@@ -171,9 +172,9 @@ fpu_cleanup(p, fs)
 		log(LOG_ERR, "fpu hardware error (%s[%d])\n",
 		    p->p_comm, p->p_pid);
 		uprintf("%s[%d]: fpu hardware error\n", p->p_comm, p->p_pid);
-		KERNEL_PROC_LOCK(p);
-		trapsignal(p, SIGFPE, -1);	/* ??? */
-		KERNEL_PROC_UNLOCK(p);
+		KERNEL_PROC_LOCK(l);
+		trapsignal(l, SIGFPE, -1);	/* ??? */
+		KERNEL_PROC_UNLOCK(l);
 		goto out;
 
 	default:
@@ -193,10 +194,10 @@ fpu_cleanup(p, fs)
 		if (error == 0)
 			continue;
 
-		KERNEL_PROC_LOCK(p);
+		KERNEL_PROC_LOCK(l);
 		switch (error) {
 		case FPE:
-			trapsignal(p, SIGFPE,
+			trapsignal(l, SIGFPE,
 			    fpu_codes[(fs->fs_fsr & FSR_CX) - 1]);
 			break;
 
@@ -207,14 +208,14 @@ fpu_cleanup(p, fs)
 			Debugger();
 #endif
 #endif /* SUN4U */
-			trapsignal(p, SIGILL, 0);	/* ??? code?  */
+			trapsignal(l, SIGILL, 0);	/* ??? code?  */
 			break;
 
 		default:
 			panic("fpu_cleanup 3");
 			/* NOTREACHED */
 		}
-		KERNEL_PROC_UNLOCK(p);
+		KERNEL_PROC_UNLOCK(l);
 		/* XXX should stop here, but queue remains */
 	}
 out:
@@ -229,8 +230,8 @@ out:
  * We know the `queue' is empty, though; we just want to emulate
  * the instruction at tf->tf_pc.
  */
-fpu_emulate(p, tf, fs)
-	struct proc *p;
+fpu_emulate(l, tf, fs)
+	struct lwp *l;
 	register struct trapframe *tf;
 #ifndef SUN4U
 	register struct fpstate *fs;
@@ -247,10 +248,10 @@ fpu_emulate(p, tf, fs)
 			 * We do this here, rather than earlier, to avoid
 			 * losing even more badly than usual.
 			 */
-			if (p->p_addr->u_pcb.pcb_uw) {
+			if (l->l_addr->u_pcb.pcb_uw) {
 				write_user_windows();
-				if (rwindow_save(p))
-					sigexit(p, SIGILL);
+				if (rwindow_save(l))
+					sigexit(l, SIGILL);
 			}
 			if (loadstore) {
 				do_it;
@@ -366,64 +367,64 @@ fpu_execute(fe, instr)
 			rs1 = fs->fs_regs[rs2];
 			goto mov;
 		case FMVIC >> 2:
-			/* Presume we're curproc */
+			/* Presume we're curlwp */
 			DPRINTF(FPE_INSN, ("fpu_execute: FMVIC\n"));
-			cond = (curproc->p_md.md_tf->tf_tstate>>TSTATE_CCR_SHIFT)&PSR_ICC;
+			cond = (curlwp->l_md.md_tf->tf_tstate>>TSTATE_CCR_SHIFT)&PSR_ICC;
 			if (instr.i_fmovcc.i_cond != cond) return(0); /* success */
 			rs1 = fs->fs_regs[rs2];
 			goto mov;			
 		case FMVXC >> 2:
-			/* Presume we're curproc */
+			/* Presume we're curlwp */
 			DPRINTF(FPE_INSN, ("fpu_execute: FMVXC\n"));
-			cond = (curproc->p_md.md_tf->tf_tstate>>(TSTATE_CCR_SHIFT+XCC_SHIFT))&PSR_ICC;
+			cond = (curlwp->l_md.md_tf->tf_tstate>>(TSTATE_CCR_SHIFT+XCC_SHIFT))&PSR_ICC;
 			if (instr.i_fmovcc.i_cond != cond) return(0); /* success */
 			rs1 = fs->fs_regs[rs2];
 			goto mov;			
 		case FMVRZ >> 2:
-			/* Presume we're curproc */
+			/* Presume we're curlwp */
 			DPRINTF(FPE_INSN, ("fpu_execute: FMVRZ\n"));
 			rs1 = instr.i_fmovr.i_rs1;
-			if (rs1 != 0 && (int64_t)curproc->p_md.md_tf->tf_global[rs1] != 0)
+			if (rs1 != 0 && (int64_t)curlwp->l_md.md_tf->tf_global[rs1] != 0)
 				return (0); /* success */
 			rs1 = fs->fs_regs[rs2];
 			goto mov;			
 		case FMVRLEZ >> 2:
-			/* Presume we're curproc */
+			/* Presume we're curlwp */
 			DPRINTF(FPE_INSN, ("fpu_execute: FMVRLEZ\n"));
 			rs1 = instr.i_fmovr.i_rs1;
-			if (rs1 != 0 && (int64_t)curproc->p_md.md_tf->tf_global[rs1] > 0)
+			if (rs1 != 0 && (int64_t)curlwp->l_md.md_tf->tf_global[rs1] > 0)
 				return (0); /* success */
 			rs1 = fs->fs_regs[rs2];
 			goto mov;			
 		case FMVRLZ >> 2:
-			/* Presume we're curproc */
+			/* Presume we're curlwp */
 			DPRINTF(FPE_INSN, ("fpu_execute: FMVRLZ\n"));
 			rs1 = instr.i_fmovr.i_rs1;
-			if (rs1 == 0 || (int64_t)curproc->p_md.md_tf->tf_global[rs1] >= 0)
+			if (rs1 == 0 || (int64_t)curlwp->l_md.md_tf->tf_global[rs1] >= 0)
 				return (0); /* success */
 			rs1 = fs->fs_regs[rs2];
 			goto mov;			
 		case FMVRNZ >> 2:
-			/* Presume we're curproc */
+			/* Presume we're curlwp */
 			DPRINTF(FPE_INSN, ("fpu_execute: FMVRNZ\n"));
 			rs1 = instr.i_fmovr.i_rs1;
-			if (rs1 == 0 || (int64_t)curproc->p_md.md_tf->tf_global[rs1] == 0)
+			if (rs1 == 0 || (int64_t)curlwp->l_md.md_tf->tf_global[rs1] == 0)
 				return (0); /* success */
 			rs1 = fs->fs_regs[rs2];
 			goto mov;			
 		case FMVRGZ >> 2:
-			/* Presume we're curproc */
+			/* Presume we're curlwp */
 			DPRINTF(FPE_INSN, ("fpu_execute: FMVRGZ\n"));
 			rs1 = instr.i_fmovr.i_rs1;
-			if (rs1 == 0 || (int64_t)curproc->p_md.md_tf->tf_global[rs1] <= 0)
+			if (rs1 == 0 || (int64_t)curlwp->l_md.md_tf->tf_global[rs1] <= 0)
 				return (0); /* success */
 			rs1 = fs->fs_regs[rs2];
 			goto mov;			
 		case FMVRGEZ >> 2:
-			/* Presume we're curproc */
+			/* Presume we're curlwp */
 			DPRINTF(FPE_INSN, ("fpu_execute: FMVRGEZ\n"));
 			rs1 = instr.i_fmovr.i_rs1;
-			if (rs1 != 0 && (int64_t)curproc->p_md.md_tf->tf_global[rs1] < 0)
+			if (rs1 != 0 && (int64_t)curlwp->l_md.md_tf->tf_global[rs1] < 0)
 				return (0); /* success */
 			rs1 = fs->fs_regs[rs2];
 			goto mov;		
