@@ -1,4 +1,4 @@
-/*	$NetBSD: files.c,v 1.11 2000/06/08 21:22:55 eeh Exp $	*/
+/*	$NetBSD: files.c,v 1.12 2000/06/09 05:06:12 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -93,7 +93,7 @@ addfile(path, optx, flags, rule)
 	int flags;
 	const char *rule;
 {
-	struct files *fi, *ofi;
+	struct files *fi;
 	const char *dotp, *tail;
 	size_t baselen;
 	int needc, needf;
@@ -130,25 +130,27 @@ addfile(path, optx, flags, rule)
 	 */
 	fi = emalloc(sizeof *fi);
 	if (ht_insert(pathtab, path, fi)) {
-		if ((ofi = ht_lookup(pathtab, path)) == NULL)
+		free(fi);
+		if ((fi = ht_lookup(pathtab, path)) == NULL)
 			panic("addfile: ht_lookup(%s)", path);
+
 		/*
-		 * It is okay to re-define foo/bar/baz.c as long as the
-		 * re-definition comes from a different source file.  This
-		 * This allows MD "files.machine" files to change a
-		 * "compile-with" directive, for instance.
+		 * If it's a duplicate entry, it is must specify a make
+		 * rule, and only a make rule, and must come from
+		 * a different source file than the original entry.
+		 * If it does otherwise, it is disallowed.  This allows
+		 * machine-dependent files to override the compilation
+		 * options for specific files.
 		 */
-		if (ofi->fi_srcfile != fi->fi_srcfile) {
-			if (ht_replace(pathtab, path, fi) != 1)
-				panic("addfile: ht_replace(%s)", path);
-			ofi->fi_flags |= FI_HIDDEN;
-		} else {
-			free(fi);
-			error("duplicate file %s", path);
-			xerror(ofi->fi_srcfile, ofi->fi_srcline,
-			    "here is the original definition");
-			goto bad;
+		if (rule != NULL && optx == NULL && flags == 0 &&
+		    yyfile != fi->fi_srcfile) {
+			fi->fi_mkrule = rule;
+			return;
 		}
+		error("duplicate file %s", path);
+		xerror(fi->fi_srcfile, fi->fi_srcline,
+		    "here is the original definition");
+		goto bad;
 	}
 	memcpy(base, tail, baselen);
 	base[baselen] = 0;
@@ -284,7 +286,7 @@ fixfiles()
 			 * If the new file comes from a different source,
 			 * allow the new one to override the old one.
 			 */
-			if (fi->fi_srcfile != ofi->fi_srcfile) {
+			if (fi->fi_path != ofi->fi_path) {
 				if (ht_replace(basetab, fi->fi_base, fi) != 1)
 					panic("fixfiles ht_replace(%s)",
 					    fi->fi_base);
