@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: install.sh,v 1.19 1999/02/07 19:39:07 is Exp $
+#	$NetBSD: install.sh,v 1.20 1999/04/12 22:17:21 is Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -71,7 +71,7 @@ MODE="install"
 . install.sub
 
 # which sets?
-THESETS="$ALLSETS"
+THESETS="$ALLSETS $MDSETS"
 
 # Good {morning,afternoon,evening,night}.
 md_welcome_banner
@@ -380,7 +380,7 @@ mount | while read line; do
 	fi
 done
 
-install_sets $ALLSETS $MDSETS
+install_sets
 
 # Copy in configuration information and make devices in target root.
 (
