@@ -1,4 +1,4 @@
-/* $NetBSD: user.c,v 1.23 2000/09/29 10:37:26 agc Exp $ */
+/* $NetBSD: user.c,v 1.24 2000/10/01 08:56:28 simonb Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -36,7 +36,7 @@
 __COPYRIGHT(
 	"@(#) Copyright (c) 1999 \
 	        The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: user.c,v 1.23 2000/09/29 10:37:26 agc Exp $");
+__RCSID("$NetBSD: user.c,v 1.24 2000/10/01 08:56:28 simonb Exp $");
 #endif
 
 #include <sys/types.h>
@@ -48,6 +48,7 @@ __RCSID("$NetBSD: user.c,v 1.23 2000/09/29 10:37:26 agc Exp $");
 #include <err.h>
 #include <fcntl.h>
 #include <grp.h>
+#include <paths.h>
 #include <pwd.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -105,7 +106,7 @@ typedef struct user_t {
 #endif
 
 #ifndef DEF_SHELL
-#define DEF_SHELL	"/bin/csh"
+#define DEF_SHELL	_PATH_CSHELL
 #endif
 
 #ifndef DEF_COMMENT
@@ -125,7 +126,7 @@ typedef struct user_t {
 #endif
 
 #ifndef DEF_EXPIRE
-#define DEF_EXPIRE	(char *) NULL
+#define DEF_EXPIRE	NULL
 #endif
 
 #ifndef WAITSECS
@@ -166,7 +167,7 @@ static int	verbose;
 static void
 memsave(char **cpp, char *s, size_t n)
 {
-	if (*cpp != (char *) NULL) {
+	if (*cpp != NULL) {
 		FREE(*cpp);
 	}
 	NEWARRAY(char, *cpp, n + 1, exit(1));
@@ -244,11 +245,11 @@ copydotfiles(char *skeldir, int uid, int gid, char *dir)
 	DIR		*dirp;
 	int		n;
 
-	if ((dirp = opendir(skeldir)) == (DIR *) NULL) {
+	if ((dirp = opendir(skeldir)) == NULL) {
 		warn("can't open source . files dir `%s'", skeldir);
 		return 0;
 	}
-	for (n = 0; (dp = readdir(dirp)) != (struct dirent *) NULL && n == 0 ; ) {
+	for (n = 0; (dp = readdir(dirp)) != NULL && n == 0 ; ) {
 		if (strcmp(dp->d_name, ".") == 0 ||
 		    strcmp(dp->d_name, "..") == 0) {
 			continue;
@@ -278,11 +279,11 @@ creategid(char *group, int gid, char *name)
 	int		fd;
 	int		cc;
 
-	if (getgrnam(group) != (struct group *) NULL) {
+	if (getgrnam(group) != NULL) {
 		warnx("group `%s' already exists", group);
 		return 0;
 	}
-	if ((from = fopen(_PATH_GROUP, "r")) == (FILE *) NULL) {
+	if ((from = fopen(_PATH_GROUP, "r")) == NULL) {
 		warn("can't create gid for %s: can't open %s", name, _PATH_GROUP);
 		return 0;
 	}
@@ -296,7 +297,7 @@ creategid(char *group, int gid, char *name)
 		warn("can't create gid: mkstemp failed");
 		return 0;
 	}
-	if ((to = fdopen(fd, "w")) == (FILE *) NULL) {
+	if ((to = fdopen(fd, "w")) == NULL) {
 		(void) fclose(from);
 		(void) close(fd);
 		(void) unlink(f);
@@ -338,7 +339,7 @@ modify_gid(char *group, char *newent)
 	int		fd;
 	int		cc;
 
-	if ((from = fopen(_PATH_GROUP, "r")) == (FILE *) NULL) {
+	if ((from = fopen(_PATH_GROUP, "r")) == NULL) {
 		warn("can't create gid for %s: can't open %s", group, _PATH_GROUP);
 		return 0;
 	}
@@ -352,7 +353,7 @@ modify_gid(char *group, char *newent)
 		warn("can't create gid: mkstemp failed");
 		return 0;
 	}
-	if ((to = fdopen(fd, "w")) == (FILE *) NULL) {
+	if ((to = fdopen(fd, "w")) == NULL) {
 		(void) fclose(from);
 		(void) close(fd);
 		(void) unlink(f);
@@ -422,7 +423,7 @@ append_group(char *user, int ngroups, char **groups)
 			}
 		}
 	}
-	if ((from = fopen(_PATH_GROUP, "r")) == (FILE *) NULL) {
+	if ((from = fopen(_PATH_GROUP, "r")) == NULL) {
 		warn("can't append group for %s: can't open %s", user, _PATH_GROUP);
 		return 0;
 	}
@@ -436,7 +437,7 @@ append_group(char *user, int ngroups, char **groups)
 		warn("can't create gid: mkstemp failed");
 		return 0;
 	}
-	if ((to = fdopen(fd, "w")) == (FILE *) NULL) {
+	if ((to = fdopen(fd, "w")) == NULL) {
 		(void) fclose(from);
 		(void) close(fd);
 		(void) unlink(f);
@@ -517,7 +518,7 @@ static int
 getnextgid(int *gidp, int lo, int hi)
 {
 	for (*gidp = lo ; *gidp < hi ; *gidp += 1) {
-		if (getgrgid((gid_t)*gidp) == (struct group *) NULL) {
+		if (getgrgid((gid_t)*gidp) == NULL) {
 			return 1;
 		}
 	}
@@ -574,7 +575,7 @@ setdefaults(user_t *up)
 		warnx("can't mkstemp `%s' for writing", CONFFILE);
 		return 0;
 	}
-	if ((fp = fdopen(fd, "w")) == (FILE *) NULL) {
+	if ((fp = fdopen(fd, "w")) == NULL) {
 		warn("can't fdopen `%s' for writing", CONFFILE);
 		return 0;
 	}
@@ -584,7 +585,8 @@ setdefaults(user_t *up)
 	    fprintf(fp, "skel_dir\t%s\n", up->u_skeldir) <= 0 ||
 	    fprintf(fp, "shell\t\t%s\n", up->u_shell) <= 0 ||
 	    fprintf(fp, "inactive\t%d\n", up->u_inactive) <= 0 ||
-	    fprintf(fp, "expire\t\t%s\n", (up->u_expire == NULL) ? UNSET_EXPIRY : up->u_expire) <= 0) {
+	    fprintf(fp, "expire\t\t%s\n", (up->u_expire == NULL) ?  UNSET_EXPIRY : up->u_expire) <= 0 ||
+	    fprintf(fp, "preserve\t%s\n", (up->u_preserve == 0) ? "false" : "true") <= 0) {
 		warn("can't write to `%s'", CONFFILE);
 		ret = 0;
 	}
@@ -623,13 +625,13 @@ read_defaults(user_t *up)
 	NEWARRAY(range_t, up->u_rv, up->u_rsize, exit(1));
 	up->u_inactive = DEF_INACTIVE;
 	up->u_expire = DEF_EXPIRE;
-	if ((fp = fopen(CONFFILE, "r")) == (FILE *) NULL) {
+	if ((fp = fopen(CONFFILE, "r")) == NULL) {
 		if (stat(CONFFILE, &st) < 0 && !setdefaults(up)) {
 			warn("can't create `%s' defaults file", CONFFILE);
 		}
 		fp = fopen(CONFFILE, "r");
 	}
-	if (fp != (FILE *) NULL) {
+	if (fp != NULL) {
 		while ((s = fparseln(fp, &len, &lineno, NULL, 0)) != NULL) {
 			if (strncmp(s, "group", 5) == 0) {
 				for (cp = s + 5 ; *cp && isspace(*cp) ; cp++) {
@@ -694,9 +696,9 @@ static int
 getnextuid(int sync_uid_gid, int *uid, int low_uid, int high_uid)
 {
 	for (*uid = low_uid ; *uid <= high_uid ; (*uid)++) {
-		if (getpwuid((uid_t)(*uid)) == (struct passwd *) NULL && *uid != NOBODY_UID) {
+		if (getpwuid((uid_t)(*uid)) == NULL && *uid != NOBODY_UID) {
 			if (sync_uid_gid) {
-				if (getgrgid((gid_t)(*uid)) == (struct group *) NULL) {
+				if (getgrgid((gid_t)(*uid)) == NULL) {
 					return 1;
 				}
 			} else {
@@ -762,23 +764,23 @@ adduser(char *login, user_t *up)
 		}
 	}
 	/* check uid isn't already allocated */
-	if (!up->u_dupuid && getpwuid((uid_t)(up->u_uid)) != (struct passwd *) NULL) {
+	if (!up->u_dupuid && getpwuid((uid_t)(up->u_uid)) != NULL) {
 		(void) close(ptmpfd);
 		(void) pw_abort();
 		errx(EXIT_FAILURE, "uid %d is already in use", up->u_uid);
 	}
 	/* if -g=uid was specified, check gid is unused */
 	if (sync_uid_gid) {
-		if (getgrgid((gid_t)(up->u_uid)) != (struct group *) NULL) {
+		if (getgrgid((gid_t)(up->u_uid)) != NULL) {
 			(void) close(ptmpfd);
 			(void) pw_abort();
 			errx(EXIT_FAILURE, "gid %d is already in use", up->u_uid);
 		}
 		gid = up->u_uid;
-	} else if ((grp = getgrnam(up->u_primgrp)) != (struct group *) NULL) {
+	} else if ((grp = getgrnam(up->u_primgrp)) != NULL) {
 		gid = grp->gr_gid;
 	} else if (is_number(up->u_primgrp) &&
-		   (grp = getgrgid((gid_t)atoi(up->u_primgrp))) != (struct group *) NULL) {
+		   (grp = getgrgid((gid_t)atoi(up->u_primgrp))) != NULL) {
 		gid = grp->gr_gid;
 	} else {
 		(void) close(ptmpfd);
@@ -786,7 +788,7 @@ adduser(char *login, user_t *up)
 		errx(EXIT_FAILURE, "group %s not found", up->u_primgrp);
 	}
 	/* check name isn't already in use */
-	if (!up->u_dupuid && getpwnam(login) != (struct passwd *) NULL) {
+	if (!up->u_dupuid && getpwnam(login) != NULL) {
 		(void) close(ptmpfd);
 		(void) pw_abort();
 		errx(EXIT_FAILURE, "already a `%s' user", login);
@@ -846,7 +848,7 @@ adduser(char *login, user_t *up)
 		(void) copydotfiles(up->u_skeldir, up->u_uid, gid, home);
 	}
 	if (strcmp(up->u_primgrp, "=uid") == 0 &&
-	    getgrnam(login) == (struct group *) NULL &&
+	    getgrnam(login) == NULL &&
 	    !creategid(login, gid, login)) {
 		(void) close(ptmpfd);
 		(void) pw_abort();
@@ -883,7 +885,7 @@ moduser(char *login, char *newlogin, user_t *up)
 	if (!valid_login(newlogin)) {
 		errx(EXIT_FAILURE, "`%s' is not a valid login name", login);
 	}
-	if ((pwp = getpwnam(login)) == (struct passwd *) NULL) {
+	if ((pwp = getpwnam(login)) == NULL) {
 		errx(EXIT_FAILURE, "No such user `%s'", login);
 	}
 	if ((masterfd = open(_PATH_MASTERPASSWD, O_RDONLY)) < 0) {
@@ -897,13 +899,13 @@ moduser(char *login, char *newlogin, user_t *up)
 		(void) close(masterfd);
 		err(EXIT_FAILURE, "can't obtain pw_lock");
 	}
-	if ((master = fdopen(masterfd, "r")) == (FILE *) NULL) {
+	if ((master = fdopen(masterfd, "r")) == NULL) {
 		(void) close(masterfd);
 		(void) close(ptmpfd);
 		(void) pw_abort();
 		err(EXIT_FAILURE, "can't fdopen fd for %s", _PATH_MASTERPASSWD);
 	}
-	if (up != (user_t *) NULL) {
+	if (up != NULL) {
 		if (up->u_mkdir) {
 			(void) strcpy(oldhome, pwp->pw_dir);
 		}
@@ -912,16 +914,16 @@ moduser(char *login, char *newlogin, user_t *up)
 		}
 		/* if -g=uid was specified, check gid is unused */
 		if (strcmp(up->u_primgrp, "=uid") == 0) {
-			if (getgrgid((gid_t)(up->u_uid)) != (struct group *) NULL) {
+			if (getgrgid((gid_t)(up->u_uid)) != NULL) {
 				(void) close(ptmpfd);
 				(void) pw_abort();
 				errx(EXIT_FAILURE, "gid %d is already in use", up->u_uid);
 			}
 			gid = up->u_uid;
-		} else if ((grp = getgrnam(up->u_primgrp)) != (struct group *) NULL) {
+		} else if ((grp = getgrnam(up->u_primgrp)) != NULL) {
 			gid = grp->gr_gid;
 		} else if (is_number(up->u_primgrp) &&
-			   (grp = getgrgid((gid_t)atoi(up->u_primgrp))) != (struct group *) NULL) {
+			   (grp = getgrgid((gid_t)atoi(up->u_primgrp))) != NULL) {
 			gid = grp->gr_gid;
 		} else {
 			(void) close(ptmpfd);
@@ -929,7 +931,7 @@ moduser(char *login, char *newlogin, user_t *up)
 			errx(EXIT_FAILURE, "group %s not found", up->u_primgrp);
 		}
 		/* if changing name, check new name isn't already in use */
-		if (strcmp(login, newlogin) != 0 && getpwnam(newlogin) != (struct passwd *) NULL) {
+		if (strcmp(login, newlogin) != 0 && getpwnam(newlogin) != NULL) {
 			(void) close(ptmpfd);
 			(void) pw_abort();
 			errx(EXIT_FAILURE, "already a `%s' user", newlogin);
@@ -970,7 +972,7 @@ moduser(char *login, char *newlogin, user_t *up)
 		}
 		colonc = (size_t)(colon - buf);
 		if (strncmp(login, buf, loginc) == 0 && loginc == colonc) {
-			if (up != (user_t *) NULL) {
+			if (up != NULL) {
 				cc = snprintf(buf, sizeof(buf), "%s:%s:%d:%d::%d:%ld:%s:%s:%s\n",
 					newlogin,
 					password,
@@ -996,7 +998,7 @@ moduser(char *login, char *newlogin, user_t *up)
 				cc);
 		}
 	}
-	if (up != (user_t *) NULL) {
+	if (up != NULL) {
 		if (up->u_mkdir &&
 		    asystem("%s %s %s", MV, oldhome, home) != 0) {
 			(void) close(ptmpfd);
@@ -1028,13 +1030,13 @@ find_user_info(char *name)
 {
 	struct passwd	*pwp;
 
-	if ((pwp = getpwnam(name)) != (struct passwd *) NULL) {
+	if ((pwp = getpwnam(name)) != NULL) {
 		return pwp;
 	}
-	if (is_number(name) && (pwp = getpwuid((uid_t)atoi(name))) != (struct passwd *) NULL) {
+	if (is_number(name) && (pwp = getpwuid((uid_t)atoi(name))) != NULL) {
 		return pwp;
 	}
-	return (struct passwd *) NULL;
+	return NULL;
 }
 #endif
 
@@ -1045,13 +1047,13 @@ find_group_info(char *name)
 {
 	struct group	*grp;
 
-	if ((grp = getgrnam(name)) != (struct group *) NULL) {
+	if ((grp = getgrnam(name)) != NULL) {
 		return grp;
 	}
-	if (is_number(name) && (grp = getgrgid((gid_t)atoi(name))) != (struct group *) NULL) {
+	if (is_number(name) && (grp = getgrgid((gid_t)atoi(name))) != NULL) {
 		return grp;
 	}
-	return (struct group *) NULL;
+	return NULL;
 }
 #endif
 
@@ -1368,7 +1370,7 @@ userdel(int argc, char **argv)
 		usermgmt_usage("userdel");
 	}
 	checkeuid();
-	if ((pwp = getpwnam(argv[optind])) == (struct passwd *) NULL) {
+	if ((pwp = getpwnam(argv[optind])) == NULL) {
 		warnx("No such user `%s'", argv[optind]);
 		return EXIT_FAILURE;
 	}
@@ -1386,7 +1388,7 @@ userdel(int argc, char **argv)
 		memsave(&u.u_password, password, PasswordLength);
 		return moduser(argv[optind], argv[optind], &u) ? EXIT_SUCCESS : EXIT_FAILURE;
 	}
-	return moduser(argv[optind], argv[optind], (user_t *) NULL) ? EXIT_SUCCESS : EXIT_FAILURE;
+	return moduser(argv[optind], argv[optind], NULL) ? EXIT_SUCCESS : EXIT_FAILURE;
 }
 
 #ifdef EXTENSIONS
@@ -1430,7 +1432,7 @@ groupadd(int argc, char **argv)
 	if (gid < 0 && !getnextgid(&gid, LowGid, HighGid)) {
 		err(EXIT_FAILURE, "can't add group: can't get next gid");
 	}
-	if (!dupgid && getgrgid((gid_t) gid) != (struct group *) NULL) {
+	if (!dupgid && getgrgid((gid_t) gid) != NULL) {
 		errx(EXIT_FAILURE, "can't add group: gid %d is a duplicate", gid);
 	}
 	if (!valid_group(argv[optind])) {
@@ -1526,7 +1528,7 @@ groupmod(int argc, char **argv)
 	if (dupgid && gid < 0) {
 		err(EXIT_FAILURE, "Duplicate which gid?");
 	}
-	if ((grp = getgrnam(argv[optind])) == (struct group *) NULL) {
+	if ((grp = getgrnam(argv[optind])) == NULL) {
 		err(EXIT_FAILURE, "can't find group `%s' to modify", argv[optind]);
 	}
 	if (newname != NULL && !valid_group(newname)) {
@@ -1577,20 +1579,20 @@ userinfo(int argc, char **argv)
 	if (exists) {
 		exit((pwp) ? EXIT_SUCCESS : EXIT_FAILURE);
 	}
-	if (pwp == (struct passwd *) NULL) {
+	if (pwp == NULL) {
 		errx(EXIT_FAILURE, "can't find user `%s'", argv[optind]);
 	}
 	(void) printf("login\t%s\n", pwp->pw_name);
 	(void) printf("passwd\t%s\n", pwp->pw_passwd);
 	(void) printf("uid\t%d\n", pwp->pw_uid);
-	for (cc = 0 ; (grp = getgrent()) != (struct group *) NULL ; ) {
+	for (cc = 0 ; (grp = getgrent()) != NULL ; ) {
 		for (cpp = grp->gr_mem ; *cpp ; cpp++) {
 			if (strcmp(*cpp, argv[optind]) == 0 && grp->gr_gid != pwp->pw_gid) {
 				cc += snprintf(&buf[cc], sizeof(buf) - cc, "%s ", grp->gr_name);
 			}
 		}
 	}
-	if ((grp = getgrgid(pwp->pw_gid)) == (struct group *) NULL) {
+	if ((grp = getgrgid(pwp->pw_gid)) == NULL) {
 		(void) printf("groups\t%d %s\n", pwp->pw_gid, buf);
 	} else {
 		(void) printf("groups\t%s %s\n", grp->gr_name, buf);
@@ -1633,7 +1635,7 @@ groupinfo(int argc, char **argv)
 	if (exists) {
 		exit((grp) ? EXIT_SUCCESS : EXIT_FAILURE);
 	}
-	if (grp == (struct group *) NULL) {
+	if (grp == NULL) {
 		errx(EXIT_FAILURE, "can't find group `%s'", argv[optind]);
 	}
 	(void) printf("name\t%s\n", grp->gr_name);
