@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.32 2002/09/18 14:00:42 lukem Exp $
+#	$NetBSD: Makefile,v 1.33 2002/09/18 20:55:24 lha Exp $
 
 .include <bsd.own.mk>
 
-CPPFLAGS+=-I${NETBSDSRCDIR}/lib -I${NETBSDSRCDIR}/telnet
+CPPFLAGS+=-I${NETBSDSRCDIR}/lib -I${NETBSDSRCDIR}/usr.bin/telnet
 LDADD+=	-lcurses -lcrypt
 DPADD+=	${LIBCURSES} ${LIBCRYPT}
 
