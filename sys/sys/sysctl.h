@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.68 2001/10/04 19:03:59 eeh Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.69 2001/10/05 05:46:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -239,7 +239,7 @@ struct ctlname {
 	{ "pipe", CTLTYPE_NODE }, \
 	{ "maxphys", CTLTYPE_INT }, \
 	{ "sbmax", CTLTYPE_INT }, \
-	{ "db", CLTYPE_NODE }, \
+	{ "db", CTLTYPE_NODE }, \
 }
 
 /*
