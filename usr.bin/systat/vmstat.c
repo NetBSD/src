@@ -1,4 +1,4 @@
-/*	$NetBSD: vmstat.c,v 1.12 1998/02/09 14:14:43 mrg Exp $	*/
+/*	$NetBSD: vmstat.c,v 1.13 1998/02/09 15:29:52 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1989, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
 #endif
-__RCSID("$NetBSD: vmstat.c,v 1.12 1998/02/09 14:14:43 mrg Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.13 1998/02/09 15:29:52 mrg Exp $");
 #endif /* not lint */
 
 /*
@@ -278,6 +278,17 @@ labelkre()
 
 	clear();
 	mvprintw(STATROW, STATCOL + 4, "users    Load");
+#if defined(UVM)
+	mvprintw(MEMROW, MEMCOL,     "          memory totals (in KB)");
+	mvprintw(MEMROW + 1, MEMCOL, "         real   virtual    free");
+	mvprintw(MEMROW + 2, MEMCOL, "Active");
+	mvprintw(MEMROW + 3, MEMCOL, "All");
+
+	mvprintw(PAGEROW, PAGECOL, "        PAGING   SWAPPING ");
+	mvprintw(PAGEROW + 1, PAGECOL, "        in  out   in  out ");
+	mvprintw(PAGEROW + 2, PAGECOL, "ops");
+	mvprintw(PAGEROW + 3, PAGECOL, "pages");
+#else
 	mvprintw(MEMROW, MEMCOL, "Mem:KB  REAL        VIRTUAL");
 	mvprintw(MEMROW + 1, MEMCOL, "      Tot Share    Tot  Share");
 	mvprintw(MEMROW + 2, MEMCOL, "Act");
@@ -289,6 +300,7 @@ labelkre()
 	mvprintw(PAGEROW + 1, PAGECOL, "        in  out   in  out ");
 	mvprintw(PAGEROW + 2, PAGECOL, "count");
 	mvprintw(PAGEROW + 3, PAGECOL, "pages");
+#endif
 
 	mvprintw(INTSROW, INTSCOL + 3, " Interrupts");
 	mvprintw(INTSROW + 1, INTSCOL + 9, "total");
@@ -337,7 +349,11 @@ labelkre()
 
 	mvprintw(GRAPHROW, GRAPHCOL,
 		"    . %% Sys    . %% User    . %% Nice    . %% Idle");
-	mvprintw(PROCSROW, PROCSCOL, "Proc:r  p  d  s  w");
+#if defined(UVM)
+	mvprintw(PROCSROW, PROCSCOL, "Proc:r  d  s  w");
+#else
+	mvprintw(PROCSROW, PROCSCOL, "Proc:r  d  s  w  p");
+#endif
 	mvprintw(GRAPHROW + 1, GRAPHCOL,
 		"|    |    |    |    |    |    |    |    |    |    |");
 
@@ -462,19 +478,15 @@ showkre()
 #endif
 
 #if defined(UVM)
-	putint(pgtokb(s.uvmexp.active), MEMROW + 2, MEMCOL + 3, 6);
-	putint(pgtokb(total.t_armshr), MEMROW + 2, MEMCOL + 9, 6); /* XXX */
+	putint(pgtokb(s.uvmexp.active), MEMROW + 2, MEMCOL + 6, 7);
 	putint(pgtokb(s.uvmexp.active + s.uvmexp.swpginuse),	/* XXX */
-	    MEMROW + 2, MEMCOL + 15, 7);
-	putint(pgtokb(total.t_avmshr), MEMROW + 2, MEMCOL + 22, 7);/* XXX */
-	putint(pgtokb(s.uvmexp.npages - s.uvmexp.free), MEMROW + 3, MEMCOL + 3, 6);
-	putint(pgtokb(total.t_rmshr), MEMROW + 3, MEMCOL + 9, 6); /* XXX */
+	    MEMROW + 2, MEMCOL + 16, 7);
+	putint(pgtokb(s.uvmexp.npages - s.uvmexp.free), MEMROW + 3, MEMCOL + 6, 7);
 	putint(pgtokb(s.uvmexp.npages - s.uvmexp.free + s.uvmexp.swpginuse),
-	    MEMROW + 3, MEMCOL + 15, 7);
-	putint(pgtokb(total.t_vmshr), MEMROW + 3, MEMCOL + 22, 7); /* XXX */
-	putint(pgtokb(s.uvmexp.free), MEMROW + 2, MEMCOL + 29, 6);
+	    MEMROW + 3, MEMCOL + 16, 7);
+	putint(pgtokb(s.uvmexp.free), MEMROW + 2, MEMCOL + 24, 7);
 	putint(pgtokb(s.uvmexp.free + s.uvmexp.swpages - s.uvmexp.swpginuse),
-	    MEMROW + 3, MEMCOL + 29, 6);
+	    MEMROW + 3, MEMCOL + 24, 7);
 #else
 	putint(pgtokb(total.t_arm), MEMROW + 2, MEMCOL + 3, 6);
 	putint(pgtokb(total.t_armshr), MEMROW + 2, MEMCOL + 9, 6);
@@ -487,10 +499,12 @@ showkre()
 	putint(pgtokb(total.t_free), MEMROW + 2, MEMCOL + 29, 6);
 #endif
 	putint(total.t_rq - 1, PROCSROW + 1, PROCSCOL + 3, 3);
-	putint(total.t_pw, PROCSROW + 1, PROCSCOL + 6, 3);
-	putint(total.t_dw, PROCSROW + 1, PROCSCOL + 9, 3);
-	putint(total.t_sl, PROCSROW + 1, PROCSCOL + 12, 3);
-	putint(total.t_sw, PROCSROW + 1, PROCSCOL + 15, 3);
+	putint(total.t_dw, PROCSROW + 1, PROCSCOL + 6, 3);
+	putint(total.t_sl, PROCSROW + 1, PROCSCOL + 9, 3);
+	putint(total.t_sw, PROCSROW + 1, PROCSCOL + 12, 3);
+#if !defined(UVM)
+	putint(total.t_pw, PROCSROW + 1, PROCSCOL + 15, 3);
+#endif
 #if defined(UVM)
 	PUTRATE(uvmexp.forks, VMSTATROW + 0, VMSTATCOL + 3, 6);
 	PUTRATE(uvmexp.forks_ppwait, VMSTATROW + 1, VMSTATCOL + 3, 6);
