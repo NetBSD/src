@@ -1,7 +1,7 @@
-/*	$NetBSD: ip22.c,v 1.11 2002/05/03 01:13:55 rafal Exp $	*/
+/*	$NetBSD: ip22.c,v 1.12 2002/05/03 01:49:21 rafal Exp $	*/
 
 /*
- * Copyright (c) 2001 Rafal K. Boni
+ * Copyright (c) 2001, 2002 Rafal K. Boni
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
