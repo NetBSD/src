@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.48 2000/04/30 14:19:37 pk Exp $ */
+/*	$NetBSD: cache.c,v 1.49 2000/04/30 14:23:29 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -936,12 +936,6 @@ smp_cache_flush(va, size)
 		if (cpuinfo.mid == cpi->mid)
 			continue;
 		s = splhigh();
-#ifdef DEBUG
-		if (cpi->msg.lock.lock_data != 0) {
-			printf("smp_cache_flush:warning: cpu #%d locked\n",
-				cpi->cpu_no);
-		}
-#endif
 		simple_lock(&cpi->msg.lock);
 		cpi->msg.tag = XPMSG_VCACHE_FLUSH_RANGE;
 		p->ctx = getcontext4m();
