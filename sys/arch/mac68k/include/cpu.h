@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.50 1997/06/29 18:56:11 scottr Exp $	*/
+/*	$NetBSD: cpu.h,v 1.51 1997/10/02 13:31:13 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -181,8 +181,10 @@ int	want_resched;	/* resched() was called */
 #define MACH_MACPB165		84
 #define MACH_MACTV		88
 #define MACH_MACLC475		89
+#define MACH_MACLC475_33	90
 #define MACH_MACLC575		92
 #define MACH_MACQ605		94
+#define MACH_MACQ605_33		95
 #define MACH_MACQ630		98
 #define MACH_MACPB280		102
 #define MACH_MACPB280C		103
