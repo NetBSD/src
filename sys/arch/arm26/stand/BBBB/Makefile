@@ -1,7 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2000/11/22 00:18:47 bjh21 Exp $
-
-MAN=	BBBB.8
-MANSUBDIR=	/arm26
+#	$NetBSD: Makefile,v 1.3 2000/11/22 00:32:54 bjh21 Exp $
 
 .if !defined(BASTOK)
 .ifnmake(print-objdir)
