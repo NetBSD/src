@@ -35,11 +35,13 @@
 
 #include <machine/asm.h>
 
-RCSID("$Id: e_scalb.S,v 1.1 1995/02/18 01:24:43 jtc Exp $")
+RCSID("$Id: e_scalb.S,v 1.2 1995/02/18 01:39:51 jtc Exp $")
 
 ENTRY(__ieee754_scalb)
 	fmoved	sp@(4),fp0
+	fbeq	Ldone
 	fscaled	sp@(12),fp0
+Ldone:
 	fmoved	fp0,sp@-
 	movel	sp@+,d0
 	movel	sp@+,d1
