@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.h,v 1.49 2002/03/31 17:56:54 mjacob Exp $ */
+/* $NetBSD: isp_netbsd.h,v 1.50 2002/04/04 23:38:48 mjacob Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -141,7 +141,7 @@ struct isposinfo {
 
 #define	INLINE			__inline
 
-#define	ISP2100_SCRLEN		0x400
+#define	ISP2100_SCRLEN		0x800
 
 #define	MEMZERO(dst, amt)	memset((dst), 0, (amt))
 #define	MEMCPY(dst, src, amt)	memcpy((dst), (src), (amt))
