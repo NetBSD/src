@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.118.2.11 2002/10/18 02:37:47 nathanw Exp $	*/
+/*	$NetBSD: pmap.c,v 1.118.2.12 2002/10/18 04:08:34 nathanw Exp $	*/
 
 /*
  *
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.118.2.11 2002/10/18 02:37:47 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.118.2.12 2002/10/18 04:08:34 nathanw Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
@@ -1910,7 +1910,7 @@ void
 pmap_deactivate(l)
 	struct lwp *l;
 {
-	struct pmap *pmap = p->p_vmspace->vm_map.pmap;
+	struct pmap *pmap = l->l_proc->p_vmspace->vm_map.pmap;
 
 	/*
 	 * mark the pmap no longer in use by this processor.
