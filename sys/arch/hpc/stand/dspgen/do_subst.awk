@@ -1,4 +1,4 @@
-# $NetBSD: do_subst.awk,v 1.3 2001/03/13 16:31:31 uch Exp $
+# $NetBSD: do_subst.awk,v 1.4 2001/04/15 12:27:32 takemura Exp $
 #
 # Copyright (c) 1999, 2000 Christopher G. Demetriou.  All rights reserved.
 #
@@ -96,7 +96,9 @@ BEGIN {
 		if (CPPDEFS != "") {
 			CPPDEFS=CPPDEFS " "
 		}
-		CPPDEFS=CPPDEFS "/D \"" a[i] "\""
+		a[i] = gensub("([^\\\\]|^)#", "\\1 ", "g", a[i])
+		a[i] = gensub("\\\\#", "#", "g", a[i])
+		CPPDEFS=CPPDEFS "/D " a[i]
 	}
 	sz = split(ENVIRON["CPPDEF_LIST"], a, "[ \t\n]+");
 	for (i = 1; i <= sz; i++) {
@@ -106,7 +108,9 @@ BEGIN {
 		if (CPPDEFS != "") {
 			CPPDEFS=CPPDEFS " "
 		}
-		CPPDEFS=CPPDEFS "/D \"" a[i] "\""
+		a[i] = gensub("([^\\\\]|^)#", "\\1 ", "g", a[i])
+		a[i] = gensub("\\\\#", "#", "g", a[i])
+		CPPDEFS=CPPDEFS "/D " a[i]
 	}
 
 	INCDIRS=""
