@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.61 1999/12/18 22:51:58 augustss Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.62 2000/01/16 23:11:43 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -998,17 +998,13 @@ usbd_new_device(parent, bus, depth, lowspeed, port, up)
 
 	USETW(dev->def_ep_desc.wMaxPacketSize, dd->bMaxPacketSize);
 
-	/* Get the full device descriptor. */
-	err = usbd_get_device_desc(dev, dd);
+	err = usbd_reload_device_desc(dev);
 	if (err) {
 		DPRINTFN(-1, ("usbd_new_device: addr=%d, getting full desc "
 			      "failed\n", addr));
 		usbd_remove_device(dev, up);
 		return (err);
 	}
-
-	/* Figure out what's wrong with this device. */
-	dev->quirks = usbd_find_quirk(dd);
 
 	/* Set the address */
 	err = usbd_set_address(dev, addr);
@@ -1040,6 +1036,23 @@ usbd_new_device(parent, bus, depth, lowspeed, port, up)
   
 	usbd_add_event(USB_EVENT_ATTACH, dev);
   	return (USBD_NORMAL_COMPLETION);
+}
+
+usbd_status
+usbd_reload_device_desc(dev)
+	usbd_device_handle dev;
+{
+	usbd_status err;
+
+	/* Get the full device descriptor. */
+	err = usbd_get_device_desc(dev, &dev->ddesc);
+	if (err)
+		return (err);
+
+	/* Figure out what's wrong with this device. */
+	dev->quirks = usbd_find_quirk(&dev->ddesc);
+
+	return (USBD_NORMAL_COMPLETION);
 }
 
 void

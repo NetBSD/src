@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.h,v 1.37 2000/01/16 13:12:05 augustss Exp $	*/
+/*	$NetBSD: usbdi.h,v 1.38 2000/01/16 23:11:43 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.h,v 1.18 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -174,6 +174,13 @@ const char *usbd_errstr __P((usbd_status err));
 
 void usbd_add_event __P((int, usbd_device_handle));
 
+void usbd_devinfo __P((usbd_device_handle, int, char *));
+struct usbd_quirks *usbd_get_quirks __P((usbd_device_handle));
+usb_endpoint_descriptor_t *usbd_get_endpoint_descriptor
+	__P((usbd_interface_handle iface, u_int8_t address));
+
+usbd_status usbd_reload_device_desc __P((usbd_device_handle));
+
 /* NetBSD attachment information */
 
 /* Attach data */
@@ -232,11 +239,6 @@ struct usb_attach_arg {
 #define UMATCH_NONE					(ENXIO)
 
 #endif
-
-void usbd_devinfo __P((usbd_device_handle, int, char *));
-struct usbd_quirks *usbd_get_quirks __P((usbd_device_handle));
-usb_endpoint_descriptor_t *usbd_get_endpoint_descriptor
-	__P((usbd_interface_handle iface, u_int8_t address));
 
 #if defined(__FreeBSD__)
 int usbd_driver_load    __P((module_t mod, int what, void *arg));
