@@ -1,4 +1,4 @@
-#	$NetBSD: files.sh3,v 1.14 2001/11/20 14:34:22 lukem Exp $
+#	$NetBSD: files.sh3,v 1.15 2002/02/11 18:03:05 uch Exp $
 #
 # new style config file for sh3 architecture
 #
@@ -23,6 +23,9 @@ file	arch/sh3/sh3/sh3_machdep.c
 file	arch/sh3/sh3/sys_machdep.c
 file	arch/sh3/sh3/trap.c
 file	arch/sh3/sh3/vm_machdep.c
+file	arch/sh3/sh3/cache.c
+file	arch/sh3/sh3/cache_sh3.c
+file	arch/sh3/sh3/cache_sh4.c
 file	dev/clock_subr.c
 file	dev/cninit.c
 file	dev/cons.c

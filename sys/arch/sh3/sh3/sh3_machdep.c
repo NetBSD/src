@@ -1,4 +1,4 @@
-/*	$NetBSD: sh3_machdep.c,v 1.21 2002/02/03 22:28:09 thorpej Exp $	*/
+/*	$NetBSD: sh3_machdep.c,v 1.22 2002/02/11 18:03:06 uch Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -97,6 +97,8 @@
 
 #include <uvm/uvm_extern.h>
 
+#include <sh3/cache.h>
+
 char cpu_model[120];
 
 /* 
@@ -124,6 +126,8 @@ sh3_startup()
 	vsize_t size;
 	struct pcb *pcb;
 	char pbuf[9];
+
+	sh_cache_config(0); /* XXX should call more early stage. */
 
 	printf(version);
 
@@ -206,6 +210,11 @@ sh3_startup()
 	format_bytes(pbuf, sizeof(pbuf), bufpages * NBPG);
 	printf("using %d buffers containing %s of memory\n", nbuf, pbuf);
 
+	/* 
+	 * Print cache configuration.
+	 */
+	sh_cache_information();
+	
 	/*
 	 * Set up buffers, so they can be used to read disk labels.
 	 */
