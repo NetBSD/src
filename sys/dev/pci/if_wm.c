@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.30 2003/01/17 08:11:52 itojun Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.31 2003/01/21 05:43:26 itojun Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -1306,7 +1306,7 @@ wm_start(struct ifnet *ifp)
 			sc->sc_txdescs[lasttx].wtx_cmdlen |=
 			    htole32(WTX_CMD_VLE);
 			sc->sc_txdescs[lasttx].wtx_fields.wtxu_fields.wtxu_vlan
-			    = htole16(*mtod(m, int *) & 0xffff);
+			    = htole16(*(u_int *)(mtag + 1) & 0xffff);
 		}
 #endif /* XXXJRT */
 
