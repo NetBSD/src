@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_extern.h,v 1.29 2003/06/28 14:22:25 darrenr Exp $	*/
+/*	$NetBSD: ffs_extern.h,v 1.30 2003/06/29 05:43:57 enami Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -57,23 +57,23 @@
 	{ "log_changeopt", CTLTYPE_INT }, \
 }
 
+struct cg;
 struct buf;
 struct fid;
 struct fs;
 struct inode;
-struct ufs1_dinode;
-struct ufs2_dinode;
+struct lwp;
+struct mbuf;
 struct mount;
 struct nameidata;
-struct proc;
 struct statfs;
 struct timeval;
 struct ucred;
+struct ufs1_dinode;
+struct ufs2_dinode;
 struct ufsmount;
 struct uio;
 struct vnode;
-struct mbuf;
-struct cg;
 
 extern struct pool ffs_inode_pool;	/* memory pool for inodes */
 extern struct pool ffs_dinode1_pool;	/* memory pool for UFS1 dinodes */
