@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.9 2000/08/20 21:50:08 thorpej Exp $ */
+/* $NetBSD: locore.s,v 1.10 2000/11/21 13:54:14 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1070,8 +1070,8 @@ Lsw2:
 #if defined(M68030) || defined(M68040)
 	tstb	a2@			| null state frame?
 	jeq	Lswnofpsave		| yes, all done
-	fmovem	fp0-fp7,a2@(216)	| save FP general registers
-	fmovem	fpcr/fpsr/fpi,a2@(312)	| save FP control registers
+	fmovem	fp0-fp7,a2@(FPF_REGS)	| save FP general registers
+	fmovem	fpcr/fpsr/fpi,a2@(FPF_FPCR) | save FP control registers
 #endif  
 Lswnofpsave:
 
@@ -1122,8 +1122,8 @@ Lswnofpsave:
 	frestore sp@+			| ...magic!
 Lresnot040:
 #endif
-	fmovem	a0@(312),fpcr/fpsr/fpi	| restore FP control registers
-	fmovem	a0@(216),fp0-fp7	| restore FP general registers
+	fmovem	a0@(FPF_FPCR),fpcr/fpsr/fpi | restore FP control registers
+	fmovem	a0@(FPF_REGS),fp0-fp7	| restore FP general registers
 #endif  
 Lresfprest:
 	frestore a0@			| restore state
@@ -1149,8 +1149,8 @@ ENTRY(savectx)
 	fsave	a0@			| save FP state
 	tstb	a0@			| null state frame?
 	jeq	Lsvnofpsave		| yes, all done
-	fmovem	fp0-fp7,a0@(216)	| save FP general registers
-	fmovem	fpcr/fpsr/fpi,a0@(312)	| save FP control registers
+	fmovem	fp0-fp7,a0@(FPF_REGS)	| save FP general registers
+	fmovem	fpcr/fpsr/fpi,a0@(FPF_FPCR) | save FP control registers
 Lsvnofpsave:
 	moveq	#0,d0			| return 0
 	rts
@@ -1292,8 +1292,8 @@ ENTRY(m68881_save)
 	fsave	a0@			| save state
 	tstb	a0@			| null state frame?
 	jeq	Lm68881sdone		| yes, all done
-	fmovem fp0-fp7,a0@(216)		| save FP general registers
-	fmovem fpcr/fpsr/fpi,a0@(312)	| save FP control registers
+	fmovem fp0-fp7,a0@(FPF_REGS)	| save FP general registers
+	fmovem fpcr/fpsr/fpi,a0@(FPF_FPCR) | save FP control registers
 Lm68881sdone:
 	rts
 
@@ -1301,8 +1301,8 @@ ENTRY(m68881_restore)
 	movl	sp@(4),a0		| save area pointer
 	tstb	a0@			| null state frame?
 	jeq	Lm68881rdone		| yes, easy
-	fmovem	a0@(312),fpcr/fpsr/fpi	| restore FP control registers
-	fmovem	a0@(216),fp0-fp7	| restore FP general registers
+	fmovem	a0@(FPF_FPCR),fpcr/fpsr/fpi | restore FP control registers
+	fmovem	a0@(FPF_REGS),fp0-fp7	| restore FP general registers
 Lm68881rdone:
 	frestore a0@			| restore state
 	rts
