@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1988 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1988, 1993, 1994
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,23 +32,23 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1988 The Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1988, 1993, 1994\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)env.c	5.3 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: env.c,v 1.7 1993/12/31 19:26:21 jtc Exp $";
+/*static char sccsid[] = "@(#)env.c	8.3 (Berkeley) 4/2/94";*/
+static char rcsid[] = "$NetBSD: env.c,v 1.8 1995/09/28 07:34:39 perry Exp $";
 #endif /* not lint */
 
+#include <err.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
+#include <stdlib.h>
+#include <unistd.h>
 #include <locale.h>
 #include <errno.h>
-#include <unistd.h>
-#include <err.h>
 
 static void usage __P((void));
 
@@ -59,7 +59,7 @@ main(argc, argv)
 {
 	extern char **environ;
 	extern int errno, optind;
-	register char **ep, *p;
+	char **ep, *p;
 	char *cleanenv[1];
 	int ch;
 
@@ -77,7 +77,7 @@ main(argc, argv)
 			usage();
 		}
 
-	for (argv += optind; *argv && (p = index(*argv, '=')); ++argv)
+	for (argv += optind; *argv && (p = strchr(*argv, '=')); ++argv)
 		(void)setenv(*argv, ++p, 1);
 
 	if (*argv) {
