@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.156.2.5 2001/09/27 13:57:12 fvdl Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.156.2.6 2001/09/28 20:36:23 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -174,6 +174,7 @@ static int vfs_hang_addrlist __P((struct mount *, struct netexport *,
 				  struct export_args *));
 static int vfs_free_netcred __P((struct radix_node *, void *));
 static void vfs_free_addrlist __P((struct netexport *));
+static void vdev_freespecinfo __P((struct vnode *));
 
 #ifdef DEBUG
 void printlockedvnodes __P((void));
@@ -1326,6 +1327,12 @@ vrele(vp)
 		simple_unlock(&vp->v_interlock);
 		return;
 	}
+
+	if (vp->v_flag & VSPECINF) {
+		vdev_freespecinfo(vp);
+		vp->v_flag &= ~(VSPECINF | VCLONED);
+	}
+
 #ifdef DIAGNOSTIC
 	if (vp->v_usecount < 0 || vp->v_writecount != 0) {
 		vprint("vrele: bad ref count", vp);
@@ -1731,10 +1738,16 @@ vgonel(vp, p)
 	 */
 	if ((vp->v_type == VBLK || vp->v_type == VCHR) && vp->v_specinfo != 0) {
 		vdev_remhash(vp);
-		if ((vp->v_flag & VCLONED) != 0 && vp->v_cloneattr != NULL)
-			FREE(vp->v_cloneattr, M_VNODE);
-		FREE(vp->v_specinfo, M_VNODE);
-		vp->v_specinfo = NULL;
+		/*
+		 * Delay freeing the specinfo until the last vrele
+		 * if the vnode is still active. Device entry points
+		 * may reference it while the vnode is not locked.
+		 */
+		if (vp->v_usecount == 0) {
+			vdev_freespecinfo(vp);
+			vp->v_flag &= ~VCLONED;
+		} else
+			vp->v_flag |= VSPECINF;
 	}
 	/*
 	 * If it is on the freelist and not already at the head,
@@ -1802,6 +1815,16 @@ vdevgone(maj, minl, minh, type)
 	for (mn = minl; mn <= minh; mn++)
 		if (vfinddev(makedev(maj, mn), type, &vp))
 			VOP_REVOKE(vp, REVOKEALIAS | REVOKECLONE);
+}
+
+static void
+vdev_freespecinfo(vp)
+	struct vnode *vp;
+{
+	if ((vp->v_flag & VCLONED) != 0 && vp->v_cloneattr != NULL)
+		FREE(vp->v_cloneattr, M_VNODE);
+	FREE(vp->v_specinfo, M_VNODE);
+	vp->v_specinfo = NULL;
 }
 
 void
