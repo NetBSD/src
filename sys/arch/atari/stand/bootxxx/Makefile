@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2001/10/13 20:06:57 leo Exp $
+#	$NetBSD: Makefile,v 1.2 2001/10/14 19:43:44 leo Exp $
 
 # for OBJECT_FMT
 .include <bsd.own.mk>
 
-PROG=	boot
+PROG=	boot.atari
 #
 # Warning: bootxxx.c should be the first source!
 #
