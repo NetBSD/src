@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	7.4 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.96 1994/04/08 19:10:18 mycroft Exp $
+ *	$Id: machdep.c,v 1.97 1994/04/08 19:15:52 mycroft Exp $
  */
 
 #include <stddef.h>
@@ -743,9 +743,11 @@ setregs(p, entry, stack, retval)
 	tf->tf_cs = _ucodesel;
 
 	p->p_addr->u_pcb.pcb_flags &= 0 /* FM_SYSCTRC */; /* no fp at all */
-	lcr0(rcr0() | CR0_TS);	/* start emulating */
 #if NNPX > 0
+	npxexit();
 	npxinit(__INITIAL_NPXCW__);
+#else
+	lcr0(rcr0() | CR0_TS);	/* start emulating */
 #endif
 
 	retval[1] = 0;
