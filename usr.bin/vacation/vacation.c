@@ -1,4 +1,4 @@
-/*	$NetBSD: vacation.c,v 1.27 2004/04/04 01:19:35 christos Exp $	*/
+/*	$NetBSD: vacation.c,v 1.28 2004/04/04 10:29:20 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1987, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vacation.c	8.2 (Berkeley) 1/26/94";
 #endif
-__RCSID("$NetBSD: vacation.c,v 1.27 2004/04/04 01:19:35 christos Exp $");
+__RCSID("$NetBSD: vacation.c,v 1.28 2004/04/04 10:29:20 wiz Exp $");
 #endif /* not lint */
 
 /*
@@ -117,6 +117,7 @@ main(int argc, char **argv)
 	int ch, iflag, rv;
 	char *p;
 
+	setprogname(argv[0]);
 	opterr = iflag = 0;
 	interval = -1;
 	openlog(getprogname(), 0, LOG_USER);
@@ -546,7 +547,7 @@ void
 usage(void)
 {
 
-	syslog(LOG_ERR, "uid %u: Usage: %s [-id] [-a alias] [-t A|D] [-f F|R|S]"
+	syslog(LOG_ERR, "uid %u: Usage: %s [-di] [-a alias] [-f F|R|S] [-t A|D]"
 	    " login", getuid(), getprogname());
 	exit(1);
 }
