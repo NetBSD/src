@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.41 1998/11/19 04:07:54 kenh Exp $ */
+/*	$NetBSD: wdc.c,v 1.42 1998/11/19 19:52:42 thorpej Exp $ */
 
 
 /*
@@ -181,27 +181,26 @@ wdcprobe(chp)
 	 * Sanity check to see if the wdc channel responds at all.
 	 */
 
-	if ((chp->wdc->cap & WDC_CAPABILITY_NO_EXTRA_RESETS) == 0) {
-		bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_sdh,
-		    WDSD_IBM);
-		delay(1);
-		st0 = bus_space_read_1(chp->cmd_iot, chp->cmd_ioh, wd_status);
-		bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_sdh,
-		    WDSD_IBM | 0x10);
-		delay(1);
-		st1 = bus_space_read_1(chp->cmd_iot, chp->cmd_ioh, wd_status);
+	bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_sdh,
+	    WDSD_IBM);
+	delay(1);
+	st0 = bus_space_read_1(chp->cmd_iot, chp->cmd_ioh, wd_status);
+	bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_sdh,
+	    WDSD_IBM | 0x10);
+	delay(1);
+	st1 = bus_space_read_1(chp->cmd_iot, chp->cmd_ioh, wd_status);
 
-		WDCDEBUG_PRINT(("%s:%d: before reset, st0=0x%x, st1=0x%x\n",
-		    chp->wdc ? chp->wdc->sc_dev.dv_xname : "wdcprobe", chp->channel,
-		    st0, st1), DEBUG_PROBE);
+	WDCDEBUG_PRINT(("%s:%d: before reset, st0=0x%x, st1=0x%x\n",
+	    chp->wdc ? chp->wdc->sc_dev.dv_xname : "wdcprobe", chp->channel,
+	    st0, st1), DEBUG_PROBE);
 
-		if (st0 == 0xff)
-			ret_value &= ~0x01;
-		if (st1 == 0xff)
-			ret_value &= ~0x02;
-		if (ret_value == 0)
-			return 0;
-	}
+	if (st0 == 0xff)
+		ret_value &= ~0x01;
+	if (st1 == 0xff)
+		ret_value &= ~0x02;
+	if (ret_value == 0)
+		return 0;
+
 	/* assert SRST, wait for reset to complete */
 	bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_sdh,
 	    WDSD_IBM);
