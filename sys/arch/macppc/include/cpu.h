@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.11 2000/05/26 21:19:53 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.12 2000/07/06 22:56:22 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995-1997 Wolfgang Solfrank.
@@ -35,12 +35,14 @@
 
 #if defined(_KERNEL) && !defined(_LKM)
 #include "opt_lockdebug.h"
+#include "opt_multiprocessor.h"
 #endif
 
 #include <machine/frame.h>
 #include <machine/psl.h>
 #include <machine/intr.h>
 
+#ifdef _KERNEL
 #include <sys/sched.h>
 struct cpu_info {
 	struct schedstate_percpu ci_schedstate; /* scheduler state */
@@ -48,13 +50,41 @@ struct cpu_info {
 	u_long ci_spin_locks;		/* # of spin locks held */
 	u_long ci_simple_locks;		/* # of simple locks held */
 #endif
+	struct proc *ci_curproc;	/* current owner of the processor */
+
+	struct pcb *ci_curpcb;
+	struct pmap *ci_curpm;
+	struct proc *ci_fpuproc;
+	struct pcb *ci_idle_pcb;	/* PA of our idle pcb */
+	int ci_cpuid;
 };
 
-#ifdef _KERNEL
+#ifdef MULTIPROCESSOR
+static __inline int
+cpu_number()
+{
+	int pir;
+
+	asm ("mfspr %0,1023" : "=r"(pir));
+	return pir;
+}
+
+extern struct cpu_info cpu_info[];
+
+#define CPU_IS_PRIMARY(ci)	((ci)->ci_cpuid == 0)
+#define curcpu()		(&cpu_info[cpu_number()])
+#define curproc			curcpu()->ci_curproc
+#define fpuproc			curcpu()->ci_fpuproc
+#define curpcb			curcpu()->ci_curpcb
+#define curpm			curcpu()->ci_curpm
+
+#else
 extern struct cpu_info cpu_info_store;
 
-#define	curcpu()		(&cpu_info_store)
-#endif
+#define curcpu()		(&cpu_info_store)
+#define cpu_number()		0
+
+#endif /* MULTIPROCESSOR */
 
 #define	CLKF_USERMODE(frame)	(((frame)->srr1 & PSL_PR) != 0)
 #define	CLKF_BASEPRI(frame)	((frame)->pri == 0)
@@ -63,7 +93,6 @@ extern struct cpu_info cpu_info_store;
 
 #define	cpu_swapout(p)
 #define cpu_wait(p)
-#define	cpu_number()		0
 
 extern void delay __P((unsigned));
 #define	DELAY(n)		delay(n)
@@ -76,6 +105,8 @@ extern __volatile int astpending;
 #define	signotify(p)		(astpending = 1)
 
 extern char bootpath[];
+
+#endif /* _KERNEL */
 
 #if defined(_KERNEL) || defined(_STANDALONE)
 #define	CACHELINESIZE	32

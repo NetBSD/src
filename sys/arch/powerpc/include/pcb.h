@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.4 2000/06/04 11:57:17 tsubai Exp $	*/
+/*	$NetBSD: pcb.h,v 1.5 2000/07/06 22:57:08 tsubai Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -54,9 +54,10 @@ struct md_coredump {
 	struct fpu fpstate;
 };
 
-#ifdef	_KERNEL
+#if defined(_KERNEL) && !defined(MULTIPROCESSOR)
 extern struct pcb *curpcb;
 extern struct pmap *curpm;
 extern struct proc *fpuproc;
 #endif
+
 #endif	/* _MACHINE_PCB_H_ */
