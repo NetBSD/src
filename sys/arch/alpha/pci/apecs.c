@@ -1,4 +1,4 @@
-/*	$NetBSD: apecs.c,v 1.1 1995/06/28 01:25:18 cgd Exp $	*/
+/*	$NetBSD: apecs.c,v 1.2 1995/08/03 00:44:57 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -80,6 +80,24 @@ apecsmatch(parent, match, aux)
 	return (1);
 }
 
+/*
+ * Set up the chipset's function pointers.
+ */
+void
+apecs_init()
+{
+	int pass2_epic;
+
+	pass2_epic = (REGVAL(EPIC_DCSR) & EPIC_DCSR_PASS2) != 0;
+
+	isadma_fcns = &apecs_isadma_fcns;
+	isa_pio_fcns = &apecs_pio_fcns;
+	if (!pass2_epic)
+		pci_cs_fcns = &apecs_p1e_cs_fcns;
+	else
+		pci_cs_fcns = &apecs_p2e_cs_fcns;
+}
+
 void
 apecsattach(parent, self, aux)
 	struct device *parent, *self;
@@ -107,12 +125,7 @@ apecsattach(parent, self, aux)
 		printf("WARNING: 21071-DA NOT PASS2... NO BETS...\n");
 
 	/* set up the chipset's functions */
-	isadma_fcns = &apecs_isadma_fcns;
-	isa_pio_fcns = &apecs_pio_fcns;
-	if (!pass2_epic)
-		pci_cs_fcns = &apecs_p1e_cs_fcns;
-	else
-		pci_cs_fcns = &apecs_p2e_cs_fcns;
+	apecs_init();
 
 	switch (hwrpb->rpb_type) {
 #if defined(DEC_2100_A50)
