@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.24 1996/10/13 03:14:26 christos Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.25 1996/10/14 07:20:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -9,6 +9,18 @@
  * This code is derived from software contributed to Berkeley by
  * the Systems Programming Group of the University of Utah Computer
  * Science Department.
+ *
+ * Copyright (c) 1992, 1993
+ *	The Regents of the University of California.  All rights reserved.
+ *
+ * This software was developed by the Computer Systems Engineering group
+ * at Lawrence Berkeley Laboratory under DARPA contract BG 91-66 and
+ * contributed to Berkeley.
+ *
+ * All advertising materials mentioning features or use of this software
+ * must display the following acknowledgement:
+ *	This product includes software developed by the University of
+ *	California, Lawrence Berkeley Laboratory.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -54,12 +66,15 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/map.h>
+#include <sys/malloc.h>
 #include <sys/buf.h>
-#include <sys/dkstat.h>
+#include <sys/disklabel.h>
+#include <sys/device.h>
 #include <sys/conf.h>
 #include <sys/dmap.h>
 #include <sys/reboot.h>
 #include <sys/device.h>
+#include <sys/queue.h>
 
 #include <dev/cons.h>
 
@@ -92,10 +107,108 @@ extern	char *extiobase;
 int	acdebug = 0;
 #endif
 
+/* The boot device. */
+struct	device *booted_device;
+
+/* The device we mount as root. */
+struct	device *root_device;
+
+/* How we were booted. */
+u_int	bootdev;
+
+/*
+ * This information is built during the autoconfig process.
+ * A little explanation about the way this works is in order.
+ *
+ *	device_register() links all devices into dev_data_list.
+ *	If the device is an hpib controller, it is also linked
+ *	into dev_data_list_hpib.  If the device is a scsi controller,
+ *	it is also linked into dev_data_list_scsi.
+ *
+ *	dev_data_list_hpib and dev_data_list_scsi are sorted
+ *	by select code, from lowest to highest.
+ *
+ *	After autoconfiguration is complete, we need to determine
+ *	which device was the boot device.  The boot block assigns
+ *	controller unit numbers in order of select code.  Thus,
+ *	providing the controller is configured in the kernel, we
+ *	can determine our version of controller unit number from
+ *	the sorted hpib/scsi list.
+ *
+ *	At this point, we know the controller (device type
+ *	encoded in bootdev tells us "scsi disk", or "hpib tape",
+ *	etc.).  The next step is to find the device which
+ *	has the following properties:
+ *
+ *		- A child of the boot controller.
+ *		- Same slave as encoded in bootdev.
+ *		- Same physical unit as encoded in bootdev.
+ *
+ *	Later, after we've set the root device in stone, we
+ *	reverse the process to re-encode bootdev so it can be
+ *	passed back to the boot block.
+ */
+struct dev_data {
+	LIST_ENTRY(dev_data)	dd_list;  /* dev_data_list */
+	LIST_ENTRY(dev_data)	dd_clist; /* ctlr list */
+	struct device		*dd_dev;  /* device described by this entry */
+	int			dd_scode; /* select code of device */
+	int			dd_slave; /* ...or slave */
+	int			dd_punit; /* and punit... */
+};
+typedef LIST_HEAD(, dev_data) ddlist_t;
+ddlist_t	dev_data_list;	  	/* all dev_datas */
+ddlist_t	dev_data_list_hpib;	/* hpib controller dev_datas */
+ddlist_t	dev_data_list_scsi;	/* scsi controller dev_datas */
+
 #ifndef NEWCONFIG	/* XXX */
 struct	devicelist alldevs;
 struct	evcntlist allevents;
 #endif
+
+#ifndef NEWCONFIG	/* XXX */
+struct dio_attach_args {
+	int	da_scode;
+};
+
+struct scsi_link {
+	int	target;
+	int	lun;
+};
+
+struct scsibus_attach_args {
+	struct	scsi_link *sa_scsi_link;
+};
+
+struct hpib_attach_args {
+	int	ha_slave;
+	int	ha_punit;
+};
+
+struct	dio_attach_args hp300_dio_attach_args;
+struct	scsi_link hp300_scsi_link;
+struct	scsibus_attach_args hp300_scsibus_attach_args;
+struct	hpib_attach_args hp300_hpib_attach_args;
+
+void	device_register __P((struct device *, void *));	/* here for now */
+#endif
+
+void	setroot __P((void));
+void	swapconf __P((void));
+void	findbootdev __P((void));
+void	findbootdev_slave __P((ddlist_t *, int, int, int));
+void	setbootdev __P((void));
+
+static	struct dev_data *dev_data_lookup __P((struct device *));
+static	void dev_data_insert __P((struct dev_data *, ddlist_t *));
+
+static	struct device *parsedisk __P((char *str, int len, int defpart,
+	    dev_t *devp));
+static	struct device *getdisk __P((char *str, int len, int defpart,
+	    dev_t *devp));
+static	int findblkmajor __P((struct device *dv));
+static	char *findblkname __P((int));
+static	int getstr __P((char *cp, int size));  
 
 /*
  * Determine mass storage and memory configuration for a machine.
@@ -104,6 +217,13 @@ configure()
 {
 	register struct hp_hw *hw;
 	int found;
+
+	/*
+	 * Initialize the dev_data_lists.
+	 */
+	LIST_INIT(&dev_data_list);
+	LIST_INIT(&dev_data_list_hpib);
+	LIST_INIT(&dev_data_list_scsi);
 
 	/*
 	 * Find out what hardware is attached to the machine.
@@ -150,15 +270,321 @@ configure()
 
 	/* XXX Should enable interrupts here. */
 
-#if GENERIC
-	if ((boothowto & RB_ASKNAME) == 0)
-		setroot();
-	setconf();
-#else
+	/*
+	 * Find boot device.
+	 */
+	if ((bootdev & B_MAGICMASK) != B_DEVMAGIC) {
+		printf("WARNING: boot program didn't supply boot device.\n");
+		printf("Please update your boot program.\n");
+	} else {
+		findbootdev();
+		if (booted_device == NULL) {
+			printf("WARNING: can't find match for bootdev:\n");
+			printf(
+		    "type = %d, ctlr = %d, slave = %d, punit = %d, part = %d\n",
+			    B_TYPE(bootdev), B_ADAPTOR(bootdev),
+			    B_CONTROLLER(bootdev), B_UNIT(bootdev),
+			    B_PARTITION(bootdev));
+			bootdev = 0;		/* invalidate bootdev */
+		} else {
+			printf("boot device: %s\n", booted_device->dv_xname);
+		}
+	}
+
 	setroot();
-#endif
 	swapconf();
+
+	/*
+	 * Set bootdev based on how we mounted root.
+	 * This is given to the boot program when we reboot.
+	 */
+	setbootdev();
+
 	cold = 0;
+}
+
+void
+findbootdev()
+{
+	int type, ctlr, slave, punit;
+	int scsiboot, hpibboot, netboot;
+	struct dev_data *dd;
+
+	booted_device = NULL;
+
+	if ((bootdev & B_MAGICMASK) != B_DEVMAGIC)
+		return;
+
+	type  = B_TYPE(bootdev);
+	ctlr  = B_ADAPTOR(bootdev);
+	slave = B_CONTROLLER(bootdev);
+	punit = B_UNIT(bootdev);
+
+	scsiboot = (type == 4);			/* sd major */
+	hpibboot = (type == 0 || type == 2);	/* ct/rd major */
+	netboot  = (type == 6);			/* le - special */
+
+	/*
+	 * Check for network boot first, since it's a little
+	 * different.  The BOOTROM/boot program can only boot
+	 * off of the first (lowest select code) ethernet
+	 * device.  device_register() knows this and only
+	 * registers one DV_IFNET.  This is a safe assumption
+	 * since the code that finds devices on the DIO bus
+	 * always starts at scode 0 and works its way up.
+	 */
+	if (netboot) {
+		for (dd = dev_data_list.lh_first; dd != NULL;
+		    dd = dd->dd_list.le_next) {
+			if (dd->dd_dev->dv_class == DV_IFNET) {
+				/*
+				 * Found it!
+				 */
+				booted_device = dd->dd_dev;
+				break;
+			}
+		}
+		return;
+	}
+
+	/*
+	 * Check for HP-IB boots next.
+	 */
+	if (hpibboot) {
+		findbootdev_slave(&dev_data_list_hpib, ctlr,
+		    slave, punit);
+		if (booted_device == NULL)
+			return;
+
+		/*
+		 * Sanity check.
+		 */
+		if ((type == 0 && bcmp(booted_device->dv_xname, "ct", 2)) ||
+		    (type == 2 && bcmp(booted_device->dv_xname, "rd", 2))) {
+			printf("WARNING: boot device/type mismatch!\n");
+			printf("device = %s, type = %d\n",
+			    booted_device->dv_xname, type);
+			booted_device = NULL;
+		}
+		return;
+	}
+
+	/*
+	 * Check for SCSI boots last.
+	 */
+	if (scsiboot) {
+		findbootdev_slave(&dev_data_list_scsi, ctlr,
+		     slave, punit);
+		if (booted_device == NULL)  
+			return; 
+
+		/*
+		 * Sanity check.
+		 */
+		if ((type == 4 && bcmp(booted_device->dv_xname, "sd", 2))) {
+			printf("WARNING: boot device/type mismatch!\n");
+			printf("device = %s, type = %d\n",
+			    booted_device->dv_xname, type);
+			booted_device = NULL; 
+		}
+		return;
+	}
+
+	/* Oof! */
+	printf("WARNING: UNKNOWN BOOT DEVICE TYPE = %d\n", type);
+}
+
+void
+findbootdev_slave(ddlist, ctlr, slave, punit)
+	ddlist_t *ddlist;
+	int ctlr, slave, punit;
+{
+	struct dev_data *cdd, *dd;
+
+	/*
+	 * Find the booted controller.
+	 */
+	for (cdd = ddlist->lh_first; ctlr != 0 && cdd != NULL;
+	    cdd = cdd->dd_clist.le_next)
+		ctlr--;
+	if (cdd == NULL) {
+		/*
+		 * Oof, couldn't find it...
+		 */
+		return;
+	}
+
+	/*
+	 * Now find the device with the right slave/punit
+	 * that's a child of the controller.
+	 */
+	for (dd = dev_data_list.lh_first; dd != NULL;
+	    dd = dd->dd_list.le_next) {
+		if (dd->dd_dev->dv_parent == cdd->dd_dev &&
+		    dd->dd_slave == slave &&
+		    dd->dd_punit == punit) {
+			/*
+			 * Found it!
+			 */
+			booted_device = dd->dd_dev;
+			break;
+		}
+	}
+}
+
+void
+setbootdev()
+{
+	struct dev_data *cdd, *dd;
+	int type, ctlr;
+
+	/*
+	 * Note our magic numbers for type:
+	 *
+	 *	0 == ct
+	 *	2 == rd
+	 *	4 == sd
+	 *	6 == le
+	 *
+	 * Allare bdevsw major numbers, except for le, which
+	 * is just special.
+	 *
+	 * We can't mount root on a tape, so we ignore those.
+	 */
+
+	/*
+	 * Start with a clean slate.
+	 */
+	bootdev = 0;
+
+	dd = dev_data_lookup(root_device);
+
+	/*
+	 * If the root device is network, we're done
+	 * early.
+	 */
+	if (root_device->dv_class == DV_IFNET) {
+		bootdev = MAKEBOOTDEV(6, 0, 0, 0, 0);
+		goto out;
+	}
+
+	/*
+	 * Determine device type.
+	 */
+	if (bcmp(root_device->dv_xname, "rd", 2) == 0)
+		type = 2;
+	else if (bcmp(root_device->dv_xname, "sd", 2) == 0)
+		type = 4;
+	else {
+		printf("WARNING: strange root device!\n");
+		goto out;
+	}
+
+	/*
+	 * Get parent's info.
+	 */
+	cdd = dev_data_lookup(root_device->dv_parent);
+	switch (type) {
+	case 2:
+		for (cdd = dev_data_list_hpib.lh_first, ctlr = 0;
+		    cdd != NULL; cdd = cdd->dd_clist.le_next, ctlr++) {
+			if (cdd->dd_dev == root_device->dv_parent) {
+				/*
+				 * Found it!
+				 */
+				bootdev = MAKEBOOTDEV(type,
+				    ctlr, dd->dd_slave, dd->dd_punit,
+				    DISKPART(rootdev));
+				break;
+			}
+		}
+		break;
+
+	case 4:
+		for (cdd = dev_data_list_scsi.lh_first, ctlr = 0;
+		    cdd != NULL; cdd = cdd->dd_clist.le_next, ctlr++) { 
+			if (cdd->dd_dev == root_device->dv_parent) {
+				/*
+				 * Found it!
+				 */
+				bootdev = MAKEBOOTDEV(type,
+				    ctlr, dd->dd_slave, dd->dd_punit,
+				    DISKPART(rootdev));
+				break;
+			}
+		}
+		break;
+	}
+
+ out:
+	/* Don't need this anymore. */
+	for (dd = dev_data_list.lh_first; dd != NULL; ) {
+		cdd = dd;
+		dd = dd->dd_list.le_next;
+		free(cdd, M_DEVBUF);
+	}
+}
+
+/*
+ * Return the dev_data corresponding to the given device.
+ */
+static struct dev_data *
+dev_data_lookup(dev)
+	struct device *dev;
+{
+	struct dev_data *dd;
+
+	for (dd = dev_data_list.lh_first; dd != NULL; dd = dd->dd_list.le_next)
+		if (dd->dd_dev == dev)
+			return (dd);
+
+	panic("dev_data_lookup");
+}
+
+/*
+ * Insert a dev_data into the provided list, sorted by select code.
+ */
+static void
+dev_data_insert(dd, ddlist)
+	struct dev_data *dd;
+	ddlist_t *ddlist;
+{
+	struct dev_data *de;
+
+#ifdef DIAGNOSTIC
+	if (dd->dd_scode < 0 || dd->dd_scode > 255) {
+		printf("bogus select code for %s\n", dd->dd_dev->dv_xname);
+		panic("dev_data_insert");
+	}
+#endif
+
+	de = ddlist->lh_first;
+
+	/*
+	 * Just insert at head if list is empty.
+	 */
+	if (de == NULL) {
+		LIST_INSERT_HEAD(ddlist, dd, dd_clist);
+		return;
+	}
+
+	/*
+	 * Traverse the list looking for a device who's select code
+	 * is greater than ours.  When we find it, insert ourselves
+	 * into the list before it.
+	 */
+	for (; de->dd_clist.le_next != NULL; de = de->dd_clist.le_next) {
+		if (de->dd_scode > dd->dd_scode) {
+			LIST_INSERT_BEFORE(de, dd, dd_clist);
+			return;
+		}
+	}
+
+	/*
+	 * Our select code is greater than everyone else's.  We go
+	 * onto the end.
+	 */
+	LIST_INSERT_AFTER(de, dd, dd_clist);
 }
 
 #define dr_type(d, s)	\
@@ -233,10 +659,15 @@ find_controller(hw)
 	if ((*hc->hp_driver->d_match)(hc)) {
 		hc->hp_alive = 1;
 
-		/* Set up external name. */
-		bzero(hc->hp_xname, sizeof(hc->hp_xname));
-		sprintf(hc->hp_xname, "%s%d", hc->hp_driver->d_name,
+		/*
+		 * Fill in fake device structure.
+		 */
+		bzero(&hc->hp_dev, sizeof(hc->hp_dev));
+		hc->hp_dev.dv_unit = hc->hp_unit;
+		sprintf(hc->hp_dev.dv_xname, "%s%d", hc->hp_driver->d_name,
 		    hc->hp_unit);
+		hc->hp_dev.dv_class = DV_DULL;	/* all controllers are dull */
+		TAILQ_INSERT_TAIL(&alldevs, &hc->hp_dev, dv_list);
 
 		/* Print what we've found. */
 		printf("%s at ", hc->hp_xname);
@@ -254,6 +685,14 @@ find_controller(hw)
 		 * newline for us.
 		 */
 		(*hc->hp_driver->d_attach)(hc);
+
+		/*
+		 * Register device.  Do this after attach because
+		 * we need dv_class.
+		 */
+		hp300_dio_attach_args.da_scode = sc;
+		device_register(&hc->hp_dev, &hp300_dio_attach_args);
+
 		find_slaves(hc);	/* XXX do this in attach? */
 	} else
 		hc->hp_addr = oaddr;
@@ -336,10 +775,19 @@ find_device(hw)
 	if ((*hd->hp_driver->d_match)(hd)) {
 		hd->hp_alive = 1;
 
-		/* Set up external name. */
-		bzero(hd->hp_xname, sizeof(hd->hp_xname));
-		sprintf(hd->hp_xname, "%s%d", hd->hp_driver->d_name,
+		/*
+		 * Fill in fake device structure.
+		 */
+		bzero(&hd->hp_dev, sizeof(sizeof hd->hp_dev));
+		hd->hp_dev.dv_unit = hd->hp_unit;
+		sprintf(hd->hp_dev.dv_xname, "%s%d", hd->hp_driver->d_name,
 		    hd->hp_unit);
+		/*
+		 * Default to dull, driver attach will override if
+		 * necessary.
+		 */
+		hd->hp_dev.dv_class = DV_DULL;
+		TAILQ_INSERT_TAIL(&alldevs, &hd->hp_dev, dv_list);
 
 		/* Print what we've found. */
 		printf("%s at ", hd->hp_xname);
@@ -358,6 +806,13 @@ find_device(hw)
 		 * newline for us.
 		 */
 		(*hd->hp_driver->d_attach)(hd);
+
+		/*
+		 * Register device.  Do this after attach because we
+		 * need dv_class.
+		 */
+		hp300_dio_attach_args.da_scode = sc;
+		device_register(&hd->hp_dev, &hp300_dio_attach_args);
 	} else
 		hd->hp_addr = oaddr;
 	return(1);
@@ -507,18 +962,36 @@ find_busslaves(hc, startslave, endslave)
 				if (acdebug)
 					printf("found\n");
 #endif
-				/* Set up external name. */
-				bzero(hd->hp_xname, sizeof(hd->hp_xname));
-				sprintf(hd->hp_xname, "%s%d",
+				/*
+				 * Fill in fake device strcuture.
+				 */
+				bzero(&hd->hp_dev, sizeof(hd->hp_dev));
+				hd->hp_dev.dv_unit = hd->hp_unit;
+				sprintf(hd->hp_dev.dv_xname, "%s%d",
 				    hd->hp_driver->d_name,
 				    hd->hp_unit);
+				/*
+				 * Default to dull, driver attach will
+				 * override if necessary.
+				 */
+				hd->hp_dev.dv_class = DV_DULL;
+				hd->hp_dev.dv_parent = &hc->hp_dev;
+				TAILQ_INSERT_TAIL(&alldevs, &hd->hp_dev,
+				    dv_list);
 
-				/* Print what we've found. */
-				printf("%s at %s slave %d",
+				/*
+				 * Print what we've found.  Note that
+				 * for `slave' devices, the flags are
+				 * overloaded with the phys. unit
+				 * locator.  They aren't used for anything
+				 * else, so we always treat them as
+				 * such.  This is a hack to make things
+				 * a little more clear to folks configuring
+				 * kernels and reading boot messages.
+				 */
+				printf("%s at %s slave %d punit %d",
 				       hd->hp_xname, hc->hp_xname,
-				       hd->hp_slave);
-				if (hd->hp_flags)
-					printf(" flags 0x%x", hd->hp_flags);
+				       hd->hp_slave, hd->hp_flags);
 				hd->hp_alive = 1;
 				rescan = 1;
 
@@ -527,6 +1000,26 @@ find_busslaves(hc, startslave, endslave)
 				 * It will print the newline for us.
 				 */
 				 (*hd->hp_driver->d_attach)(hd);
+
+				/*
+				 * Register device.  Do this after attach
+				 * because we need dv_class.
+				 */
+				if (dr_type(hc->hp_driver, "scsi")) {
+					hp300_scsi_link.target = hd->hp_slave;
+					hp300_scsi_link.lun = hd->hp_flags;
+					hp300_scsibus_attach_args.sa_scsi_link=
+					    &hp300_scsi_link;
+					device_register(&hd->hp_dev,
+					    &hp300_scsibus_attach_args);
+				} else {
+					hp300_hpib_attach_args.ha_slave =
+					    hd->hp_slave;
+					hp300_hpib_attach_args.ha_punit =
+					    hd->hp_flags;
+					device_register(&hd->hp_dev,
+					    &hp300_hpib_attach_args);
+				}
 			} else {
 #ifdef DEBUG
 				if (acdebug)
@@ -1067,123 +1560,345 @@ iounmap(kva, size)
 /*
  * Configure swap space and related parameters.
  */
+void
 swapconf()
 {
-	register struct swdevt *swp;
-	register int nblks;
+	struct swdevt *swp;
+	int nblks, maj;
 
-	for (swp = swdevt; swp->sw_dev != NODEV; swp++)
-		if (bdevsw[major(swp->sw_dev)].d_psize) {
-			nblks =
-			  (*bdevsw[major(swp->sw_dev)].d_psize)(swp->sw_dev);
+	for (swp = swdevt; swp->sw_dev != NODEV; swp++) {
+		maj = major(swp->sw_dev);
+		if (maj > nblkdev)
+			break;
+		if (bdevsw[maj].d_psize) {
+			nblks = (*bdevsw[maj].d_psize)(swp->sw_dev);
 			if (nblks != -1 &&
 			    (swp->sw_nblks == 0 || swp->sw_nblks > nblks))
 				swp->sw_nblks = nblks;
+			swp->sw_nblks = ctod(dtoc(swp->sw_nblks));
 		}
+	}
 	dumpconf();
 }
 
-#define	DOSWAP			/* Change swdevt and dumpdev too */
-u_long	bootdev;		/* should be dev_t, but not until 32 bits */
-
-static	char devname[][2] = {
-	0,0,		/* 0 = ct */
-	0,0,		/* 1 = xx */
-	'r','d',	/* 2 = rd */
-	0,0,		/* 3 = sw */
-	's','d',	/* 4 = rd */
+struct nam2blk {
+	char *name;
+	int maj;
+} nam2blk[] = {
+	{ "ct",		0 },
+	{ "rd",		2 },
+	{ "sd",		4 },
 };
 
-#define	PARTITIONMASK	0x7
-#define	PARTITIONSHIFT	3
+static int
+findblkmajor(dv)
+	struct device *dv;
+{
+	char *name = dv->dv_xname;
+	register int i;
+
+	for (i = 0; i < sizeof(nam2blk) / sizeof(nam2blk[0]); ++i)
+		if (strncmp(name, nam2blk[i].name, strlen(nam2blk[0].name))
+		    == 0)
+			return (nam2blk[i].maj);
+	return (-1);
+}
+
+static char *
+findblkname(maj)
+	int maj;
+{
+	register int i;
+
+	for (i = 0; i < sizeof(nam2blk) / sizeof(nam2blk[0]); ++i)
+		if (maj == nam2blk[i].maj)
+			return (nam2blk[i].name);
+	return (NULL);
+}
+
+static struct device *
+getdisk(str, len, defpart, devp)
+	char *str;
+	int len, defpart;
+	dev_t *devp;
+{
+	register struct device *dv;
+
+	if ((dv = parsedisk(str, len, defpart, devp)) == NULL) {
+		printf("use one of:");
+		for (dv = alldevs.tqh_first; dv != NULL;
+		    dv = dv->dv_list.tqe_next) {
+			if (dv->dv_class == DV_DISK)
+				printf(" %s[a-h]", dv->dv_xname);
+#ifdef NFSCLIENT
+			if (dv->dv_class == DV_IFNET)
+				printf(" %s", dv->dv_xname);
+#endif
+		}
+		printf(" halt\n");
+	}
+	return (dv);
+}
+
+static struct device *
+parsedisk(str, len, defpart, devp)
+	char *str;
+	int len, defpart;
+	dev_t *devp;
+{
+	register struct device *dv;
+	register char *cp, c;
+	int majdev, part;
+
+	if (len == 0)
+		return (NULL);
+
+	if (len == 4 && !strcmp(str, "halt"))
+		boot(RB_HALT, NULL);
+
+	cp = str + len - 1;
+	c = *cp;
+	if (c >= 'a' && c <= ('a' + MAXPARTITIONS - 1)) {
+		part = c - 'a';
+		*cp = '\0';
+	} else
+		part = defpart;
+
+	for (dv = alldevs.tqh_first; dv != NULL; dv = dv->dv_list.tqe_next) {
+		if (dv->dv_class == DV_DISK &&
+		    strcmp(str, dv->dv_xname) == 0) {
+			majdev = findblkmajor(dv);
+			if (majdev < 0)
+				panic("parsedisk");
+			*devp = MAKEDISKDEV(majdev, dv->dv_unit, part);
+			break;
+		}
+#ifdef NFSCLIENT
+		if (dv->dv_class == DV_IFNET &&
+		    strcmp(str, dv->dv_xname) == 0) {
+			*devp = NODEV;
+			break;
+		}
+#endif
+	}
+
+	*cp = c;
+	return (dv);
+}
 
 /*
  * Attempt to find the device from which we were booted.
  * If we can do so, and not instructed not to do so,
  * change rootdev to correspond to the load device.
+ *
+ * XXX Actually, swap and root must be on the same type of device,
+ * (ie. DV_DISK or DV_IFNET) because of how (*mountroot) is written.
+ * That should be fixed.
  */
+void
 setroot()
 {
-	register struct hp_ctlr *hc;
-	register struct hp_device *hd;
-	int  majdev, mindev, unit, part, controller, adaptor;
-	dev_t temp, orootdev;
 	struct swdevt *swp;
+	struct device *dv;
+	register int len;
+	dev_t nrootdev, nswapdev = NODEV;
+	char buf[128], *rootdevname;
+	extern int (*mountroot) __P((void *));
+	dev_t temp;
+	struct device *bootdv, *rootdv, *swapdv;
+	int bootpartition = 0;
+#ifdef NFSCLIENT
+	extern char *nfsbootdevname;
+	extern int nfs_mountroot __P((void *));
+#endif
+#ifdef FFS
+	extern int ffs_mountroot __P((void *));
+#endif
 
-	if (boothowto & RB_DFLTROOT || (bootdev == 0) ||
-	    (bootdev & B_MAGICMASK) != (u_long)B_DEVMAGIC)
-		return;
-	majdev = B_TYPE(bootdev);
-	if (majdev >= sizeof(devname) / sizeof(devname[0]))
-		return;
-	adaptor = B_ADAPTOR(bootdev);
-	controller = B_CONTROLLER(bootdev);
-	part = B_PARTITION(bootdev);
-	unit = B_UNIT(bootdev);
-	/*
-	 * First, find the controller type which supports this device.
-	 */
-	for (hd = hp_dinit; hd->hp_driver; hd++)
-		if (hd->hp_driver->d_name[0] == devname[majdev][0] &&
-		    hd->hp_driver->d_name[1] == devname[majdev][1])
-			break;
-	if (hd->hp_driver == 0)
-		return;
-	/*
-	 * Next, find the "controller" (bus adaptor) of that type
-	 * corresponding to the adaptor number.
-	 */
-	for (hc = hp_cinit; hc->hp_driver; hc++)
-		if (hc->hp_alive && hc->hp_unit == adaptor &&
-		    hc->hp_driver == hd->hp_cdriver)
-			break;
-	if (hc->hp_driver == 0)
-		return;
-	/*
-	 * Finally, find the "device" (controller or slave) in question
-	 * attached to that "controller".
-	 */
-	for (hd = hp_dinit; hd->hp_driver; hd++)
-		if (hd->hp_alive && hd->hp_slave == controller &&
-		    hd->hp_cdriver == hc->hp_driver &&
-		    hd->hp_ctlr == hc->hp_unit)
-			break;
-	if (hd->hp_driver == 0)
-		return;
-	/*
-	 * XXX note that we are missing one level, the unit, here.
-	 * Most HP drives come with one controller per disk.  There
-	 * are some older drives (e.g. 7946) which have two units
-	 * on the same controller but those are typically a disk as
-	 * unit 0 and a tape as unit 1.  This would have to be
-	 * rethought if you ever wanted to boot from other than unit 0.
-	 */
-	if (unit != 0)
-		printf("WARNING: using device at unit 0 of controller\n");
+	bootdv = booted_device;
 
-	mindev = hd->hp_unit;
 	/*
-	 * Form a new rootdev
+	 * If 'swap generic' and we couldn't determine root device,
+	 * ask the user.
 	 */
-	mindev = (mindev << PARTITIONSHIFT) + part;
-	orootdev = rootdev;
-	rootdev = makedev(majdev, mindev);
+	if (mountroot == NULL && bootdv == NULL)
+		boothowto |= RB_ASKNAME;
+
 	/*
-	 * If the original rootdev is the same as the one
-	 * just calculated, don't need to adjust the swap configuration.
+	 * If bootdev is bogus, ask the user anyhow.
 	 */
-	if (rootdev == orootdev)
+	if (bootdev == 0)
+		boothowto |= RB_ASKNAME;
+	else
+		bootpartition = B_PARTITION(bootdev);
+
+	/*
+	 * If we booted from tape, ask the user.
+	 */
+	if (bootdv != NULL && bootdv->dv_class == DV_TAPE)
+		boothowto |= RB_ASKNAME;
+
+	if (boothowto & RB_ASKNAME) {
+		for (;;) {
+			printf("root device");
+			if (bootdv != NULL) {
+				printf(" (default %s", bootdv->dv_xname);
+				if (bootdv->dv_class == DV_DISK)
+					printf("%c", bootpartition + 'a');
+				printf(")");
+			}
+			printf(": ");
+			len = getstr(buf, sizeof(buf));
+			if (len == 0 && bootdv != NULL) {
+				strcpy(buf, bootdv->dv_xname);
+				len = strlen(buf);
+			}
+			if (len > 0 && buf[len - 1] == '*') {
+				buf[--len] = '\0';
+				dv = getdisk(buf, len, 1, &nrootdev);
+				if (dv != NULL) {
+					rootdv = dv;
+					nswapdev = nrootdev;
+					goto gotswap;
+				}
+			}
+			dv = getdisk(buf, len, bootpartition, &nrootdev);
+			if (dv != NULL) {
+				rootdv = dv;
+				break;
+			}
+		}
+
+		/*
+		 * Because swap must be on the same device type as root,
+		 * for network devices this is easy.
+		 */
+		if (rootdv->dv_class == DV_IFNET) {
+			swapdv = NULL;
+			goto gotswap;
+		}
+		for (;;) {
+			printf("swap device");
+			printf(" (default %s", rootdv->dv_xname);
+			if (rootdv->dv_class == DV_DISK)
+				printf("b");
+			printf(")");
+			printf(": ");
+			len = getstr(buf, sizeof(buf));
+			if (len == 0) {
+				switch (rootdv->dv_class) {
+				case DV_IFNET:
+					nswapdev = NODEV;
+					break;
+				case DV_DISK:
+					nswapdev = MAKEDISKDEV(major(nrootdev),
+					    DISKUNIT(nrootdev), 1);
+					break;
+				case DV_TAPE:
+				case DV_TTY:
+				case DV_DULL:
+				case DV_CPU:
+					break;
+				}
+				swapdv = rootdv;
+				break;
+			}
+			dv = getdisk(buf, len, 1, &nswapdev);
+			if (dv) {
+				if (dv->dv_class == DV_IFNET)
+					nswapdev = NODEV;
+				swapdv = dv;
+				break;
+			}
+		}
+ gotswap:
+		rootdev = nrootdev;
+		dumpdev = nswapdev;
+		swdevt[0].sw_dev = nswapdev;
+		swdevt[1].sw_dev = NODEV;
+	} else if (mountroot == NULL) {
+		int majdev;
+
+		/*
+		 * "swap generic"
+		 */
+		majdev = findblkmajor(bootdv);
+		if (majdev >= 0) {
+			/*
+			 * Root and swap are on a disk.
+			 */
+			rootdv = swapdv = bootdv;
+			rootdev = MAKEDISKDEV(majdev, bootdv->dv_unit,
+			    bootpartition);
+			nswapdev = dumpdev =
+			    MAKEDISKDEV(majdev, bootdv->dv_unit, 1);
+		} else {
+			/*
+			 * Root and swap are on a net.
+			 */
+			rootdv = swapdv = bootdv;
+			nswapdev = dumpdev = NODEV;
+		}
+		swdevt[0].sw_dev = nswapdev;
+		swdevt[1].sw_dev = NODEV;
+	} else {
+		/*
+		 * `root DEV swap DEV': honor rootdev/swdevt.
+		 * rootdev/swdevt/mountroot already properly set.
+		 */
+
+		rootdevname = findblkname(major(rootdev));
+		bzero(buf, sizeof(buf));
+		sprintf(buf, "%s%d", rootdevname, DISKUNIT(rootdev));
+		
+		for (dv = alldevs.tqh_first; dv != NULL;
+		    dv = dv->dv_list.tqe_next) {
+			if (strcmp(buf, dv->dv_xname) == 0) {
+				root_device = dv;
+				break;
+			}
+		}
+		if (dv == NULL) {
+			printf("device %s (0x%x) not configured\n",
+			    buf, rootdev);
+			panic("setroot");
+		}
+
 		return;
+	}
 
-	printf("Changing root device to %c%c%d%c\n",
-		devname[majdev][0], devname[majdev][1],
-		mindev >> PARTITIONSHIFT, part + 'a');
+	root_device = rootdv;
 
-#ifdef DOSWAP
-	mindev &= ~PARTITIONMASK;
+	switch (rootdv->dv_class) {
+#ifdef NFSCLIENT
+	case DV_IFNET:
+		mountroot = nfs_mountroot;
+		nfsbootdevname = rootdv->dv_xname;
+		return;
+#endif
+#ifdef FFS
+	case DV_DISK:
+		mountroot = ffs_mountroot;
+		printf("root on %s%c", rootdv->dv_xname,
+		    DISKPART(rootdev) + 'a');
+		if (nswapdev != NODEV)
+		    printf(" swap on %s%c", swapdv->dv_xname,
+			DISKPART(nswapdev) + 'a');
+		printf("\n");
+		break;
+#endif
+	default:
+		printf("can't figure root, hope your kernel is right\n");
+		return;
+	}
+
+	/*
+	 * Make the swap partition on the root drive the primary swap.
+	 */
+	temp = NODEV;
 	for (swp = swdevt; swp->sw_dev != NODEV; swp++) {
-		if (majdev == major(swp->sw_dev) &&
-		    mindev == (minor(swp->sw_dev) & ~PARTITIONMASK)) {
+		if (major(rootdev) == major(swp->sw_dev) &&
+		    DISKUNIT(rootdev) == DISKUNIT(swp->sw_dev)) {
 			temp = swdevt[0].sw_dev;
 			swdevt[0].sw_dev = swp->sw_dev;
 			swp->sw_dev = temp;
@@ -1194,12 +1909,58 @@ setroot()
 		return;
 
 	/*
-	 * If dumpdev was the same as the old primary swap
-	 * device, move it to the new primary swap device.
+	 * If dumpdev was the same as the old primary swap device, move
+	 * it to the new primary swap device.
 	 */
 	if (temp == dumpdev)
 		dumpdev = swdevt[0].sw_dev;
-#endif
+
+}
+
+static int
+getstr(cp, size) 
+	register char *cp;
+	register int size;
+{
+	register char *lp;
+	register int c; 
+	register int len;
+
+	lp = cp;         
+	len = 0;
+	for (;;) {
+		c = cngetc();
+		switch (c) {
+		case '\n':
+		case '\r':
+			printf("\n");
+			*lp++ = '\0';
+			return (len);
+		case '\b':
+		case '\177':
+		case '#':
+			if (len) {
+				--len;
+				--lp;
+				printf("\b \b");
+			}
+			continue;
+		case '@':
+		case 'u'&037:
+			len = 0;
+			lp = cp;
+			printf("\n");
+			continue;
+		default:
+			if (len + 1 >= size || c < ' ') {
+				printf("\007");
+				continue;
+			}
+			printf("%c", c);
+			++len;
+			*lp++ = c;
+		}
+	}
 }
 
 #ifndef NEWCONFIG	/* XXX */
@@ -1211,3 +1972,88 @@ config_init()
 	TAILQ_INIT(&allevents);
 }
 #endif
+
+/*
+ * Register a device.  We're passed the device and the arguments
+ * used to attach it.  This is used to find the boot device.
+ */
+void
+device_register(dev, aux)
+	struct device *dev;
+	void *aux;
+{
+	struct dev_data *dd;
+	static int seen_netdevice;
+
+	/*
+	 * Allocate a dev_data structure and fill it in.
+	 * This means making some tests twice, but we don't
+	 * care; this doesn't really have to be fast.
+	 *
+	 * Note that we only really care about devices that
+	 * we can mount as root.
+	 */
+	dd = (struct dev_data *)malloc(sizeof(struct dev_data),
+	    M_DEVBUF, M_NOWAIT);
+	if (dd == NULL)
+		panic("device_register: can't allocate dev_data");
+	bzero(dd, sizeof(struct dev_data));
+
+	dd->dd_dev = dev;
+
+	/*
+	 * BOOTROM and boot program can really only understand
+	 * using the lowest select code network interface,
+	 * so we ignore all but the first.
+	 */
+	if (dev->dv_class == DV_IFNET && seen_netdevice == 0) {
+		struct dio_attach_args *da = aux;
+
+		seen_netdevice = 1;
+		dd->dd_scode = da->da_scode;
+		goto linkup;
+	}
+
+	if (bcmp(dev->dv_xname, "hpib", 4) == 0 ||
+	    bcmp(dev->dv_xname, "scsi", 4) == 0) {
+		struct dio_attach_args *da = aux;
+
+		dd->dd_scode = da->da_scode;
+		goto linkup;
+	}
+
+	if (bcmp(dev->dv_xname, "rd", 2) == 0) {
+		struct hpib_attach_args *ha = aux;
+
+		dd->dd_slave = ha->ha_slave;
+		dd->dd_punit = ha->ha_punit;
+		goto linkup;
+	}
+
+	if (bcmp(dev->dv_xname, "sd", 2) == 0) {
+		struct scsibus_attach_args *sa = aux;
+
+		dd->dd_slave = sa->sa_scsi_link->target;
+		dd->dd_punit = sa->sa_scsi_link->lun;
+		goto linkup;
+	}
+
+	/*
+	 * Didn't need the dev_data.
+	 */
+	free(dd, M_DEVBUF);
+	return;
+
+ linkup:
+	LIST_INSERT_HEAD(&dev_data_list, dd, dd_list);
+
+	if (bcmp(dev->dv_xname, "hpib", 4) == 0) {
+		dev_data_insert(dd, &dev_data_list_hpib);
+		return;
+	}
+
+	if (bcmp(dev->dv_xname, "scsi", 4) == 0) {
+		dev_data_insert(dd, &dev_data_list_scsi);
+		return;
+	}
+}
