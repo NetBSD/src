@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.151 2000/05/26 21:19:26 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.152 2000/06/05 23:44:56 jhawk Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -723,7 +723,6 @@ dumpsys()
 	cpu_kcore_hdr_t *chdr_p;
 	char	dump_hdr[dbtob(1)];	/* XXX assume hdr fits in 1 block */
 
-	msgbufenabled = 0;
 	if (dumpdev == NODEV)
 		return;
 	/*
