@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2000/10/17 21:08:43 fvdl Exp $
+#	$NetBSD: Makefile,v 1.11 2001/11/08 02:10:26 christos Exp $
 
 TOP=	${.CURDIR}/..
 
@@ -34,8 +34,6 @@ MOUNT_POINT?=	/mnt
 VND?=		vnd0
 VND_DEV=	/dev/${VND}a
 VND_RDEV=	/dev/r${VND}a
-VND_CDEV=	/dev/${VND}d
-VND_CRDEV=	/dev/r${VND}d
 MDEC=		${DESTDIR}/usr/mdec
 BOOTCODE=	${MDEC}/biosboot.sym
 STRIP?=		strip
@@ -57,9 +55,9 @@ CLEANFILES+=	netbsd
 realall:	netbsd
 	-rm -f ${IMAGE}.tmp
 	dd if=/dev/zero of=${IMAGE}.tmp count=${DISKSIZE}
-	vnconfig -t ${DISKTYPE} -v -c ${VND_CDEV} ${IMAGE}.tmp
-	disklabel -rw ${VND_CDEV} ${DISKTYPE}
-	newfs -B le -m 0 -o space -i ${INO_BYTES} -c 80 ${VND_RDEV} ${DISKTYPE}
+	vnconfig -t ${DISKTYPE} -v -c ${VND} ${IMAGE}.tmp
+	disklabel -rw ${VND} ${DISKTYPE}
+	newfs -B le -m 0 -o space -i ${INO_BYTES} -c 80 ${VND_RDEV}
 	${MDEC}/installboot -v -f ${BOOTCODE} ${VND_RDEV}
 	mount ${VND_DEV} ${MOUNT_POINT}
 	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
@@ -67,12 +65,12 @@ realall:	netbsd
 	@echo ""
 	@df -i ${MOUNT_POINT}
 	umount ${MOUNT_POINT}
-	vnconfig -u ${VND_CDEV}
+	vnconfig -u ${VND}
 	mv -f ${IMAGE}.tmp ${IMAGE}
 
 unconfig:
 	-umount -f ${MOUNT_POINT}
-	-vnconfig -u ${VND_DEV}
+	-vnconfig -u ${VND}
 	-/bin/rm -f ${IMAGE} ${IMAGE}.tmp
 
 netbsd: ${KERN}
