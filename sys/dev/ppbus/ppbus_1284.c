@@ -1,4 +1,4 @@
-/* $NetBSD: ppbus_1284.c,v 1.5 2004/01/25 00:41:02 bjh21 Exp $ */
+/* $NetBSD: ppbus_1284.c,v 1.6 2004/02/24 15:12:52 wiz Exp $ */
 
 /*-
  * Copyright (c) 1997 Nicolas Souchu
@@ -32,7 +32,7 @@
 /* General purpose routines for the IEEE1284-1994 Standard */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppbus_1284.c,v 1.5 2004/01/25 00:41:02 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppbus_1284.c,v 1.6 2004/02/24 15:12:52 wiz Exp $");
 
 #include "opt_ppbus_1284.h"
 
@@ -82,7 +82,7 @@ ppbus_1284_get_state(struct device * dev)
 }
 
 
-/* Set IEEE1284 state if no error occured */
+/* Set IEEE1284 state if no error occurred */
 int
 ppbus_1284_set_state(struct device * dev, int state)
 {
@@ -649,7 +649,7 @@ ppbus_1284_terminate(struct device * dev)
 #endif
 
 	/* do not reset error here to keep the error that
-	 * may occured before the ppbus_1284_terminate() call */
+	 * may occurred before the ppbus_1284_terminate() call */
 	ppbus_1284_set_state(dev, PPBUS_TERMINATION);
 
 #ifdef PERIPH_1284
