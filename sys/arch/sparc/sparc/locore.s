@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.148.4.21 2003/01/05 22:38:16 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.148.4.22 2003/01/06 22:12:28 martin Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -2468,12 +2468,12 @@ softintr_common:
 	ld	[%l4 + %l5], %l4
 
 #if defined(MULTIPROCESSOR)
-	cmp	%l3, IPL_SCHED
-	bgu	0f
-	 nop
+	/* Grab the kernel lock for interrupt levels <= IPL_CLOCK */
+	cmp	%l3, IPL_CLOCK
+	bgu	3f
+	 st	%fp, [%sp + CCFSZ + 16]
 	call	_C_LABEL(intr_lock_kernel)
 	 nop
-0:
 #endif
 
 	b	3f
@@ -2496,7 +2496,7 @@ softintr_common:
 	 nop
 
 #if defined(MULTIPROCESSOR)
-	cmp	%l3, IPL_SCHED
+	cmp	%l3, IPL_CLOCK
 	bgu	0f
 	 nop
 	call	_C_LABEL(intr_unlock_kernel)
@@ -2643,14 +2643,13 @@ sparc_interrupt_common:
 	ld	[%l4 + %l5], %l4
 
 #if defined(MULTIPROCESSOR)
-	cmp	%l3, IPL_SCHED
-	bgu	0f
-	 nop
+	/* Grab the kernel lock for interrupt levels <= IPL_CLOCK */
+	cmp	%l3, IPL_CLOCK
+	bgu	3f
+	 st	%fp, [%sp + CCFSZ + 16]
 	call	_C_LABEL(intr_lock_kernel)
 	 nop
-0:
 #endif
-
 	b	3f
 	 st	%fp, [%sp + CCFSZ + 16]
 
@@ -2685,7 +2684,7 @@ sparc_interrupt_common:
 	/* all done: restore registers and go return */
 4:
 #if defined(MULTIPROCESSOR)
-	cmp	%l3, IPL_SCHED
+	cmp	%l3, IPL_CLOCK
 	bgu	0f
 	 nop
 	call	_C_LABEL(intr_unlock_kernel)
@@ -4688,7 +4687,7 @@ idle_enter:
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 idle_leave:
 	/* Before we leave the idle loop, detain the scheduler lock */
-	nop;nop;nop;	! just wrote to %psr; delay before doing a `save'
+	nop	! just wrote to %psr; observe psr delay before doing a `save'
 	call	_C_LABEL(sched_lock_idle)
 	 nop
 	b,a	Lsw_scan
@@ -4921,6 +4920,7 @@ Lsw_load:
 	 *	%g3 = p
 	 *	%g4 = lastproc
 	 *	%g5 = newpcb
+	 *	%l0 = return value
 	 *	%l1 = oldpsr (excluding ipl bits)
 	 *	%l6 = %hi(cpcb)
 	 *	%o0 = tmp 1
@@ -4967,10 +4967,15 @@ Lsw_load:
 	 * Now running p.  Make sure it has a context so that it
 	 * can talk about user space stuff.  (Its pcb_uw is currently
 	 * zero so it is safe to have interrupts going here.)
+	 *
+	 * On multi-processor machines, the context might have changed
+	 * (e.g. by exec(2)) even if we pick up the same process here.
 	 */
-	cmp	%g3, %g4		! p == lastproc?
+	subcc	%g3, %g4, %l0		! p == lastproc?
+#if !defined(MULTIPROCESSOR)
 	be	Lsw_sameproc		! yes, context is still set for p
 	 EMPTY
+#endif
 
 	INCR(_C_LABEL(nswitchdiff))	! clobbers %o0,%o1
 	ld	[%g3 + L_PROC], %o2	! p = l->l_proc;
@@ -4986,7 +4991,7 @@ Lsw_load:
 	 mov	%o3, %o0
 
 	ret
-	 restore %g0, 1, %o0	! return (1)
+	 restore %g0, %l0, %o0		! return (p != lastproc)
 
 	/* p does have a context: just switch to it */
 Lsw_havectx:
@@ -5001,10 +5006,10 @@ NOP_ON_4M_15:
 	set	AC_CONTEXT, %o1
 	stba	%i1, [%o1] ASI_CONTROL	! setcontext(vm->vm_pmap.pm_ctxnum);
 	ret
-	 restore %g0, 1, %o0	! return (1)
+	 restore %g0, %l0, %o0		! return (p != lastproc)
 #endif
 2:
-#if defined(SUN4M)
+#if defined(SUN4M) || defined(SUN4D)
 	/*
 	 * Flush caches that need to be flushed on context switch.
 	 * We know this is currently only necessary on the sun4m hypersparc.
@@ -5015,16 +5020,18 @@ NOP_ON_4M_15:
 	 set	SRMMU_CXR, %i2
 	sta	%i1, [%i2] ASI_SRMMU	! setcontext(vm->vm_pmap.pm_ctxnum);
 	ret
-	 restore %g0, 1, %o0	! return (1)
+	 restore %g0, %l0, %o0		! return (p != lastproc)
 #endif
 
+#if !defined(MULTIPROCESSOR)
 Lsw_sameproc:
 	/*
 	 * We are resuming the process that was running at the
-	 * call to switch().  Just set psr ipl and return.
+	 * call to switch().
 	 */
 	ret
-	 restore %g0, %g0, %o0	! return (0)
+	 restore %g0, %g0, %o0		! return (0)
+#endif /* !MULTIPROCESSOR */
 
 
 /*

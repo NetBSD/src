@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.199.4.16 2003/01/03 17:40:17 thorpej Exp $ */
+/*	$NetBSD: pmap.c,v 1.199.4.17 2003/01/06 22:12:31 martin Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -531,60 +531,43 @@ void 		(*pmap_rmu_p) __P((struct pmap *, vaddr_t, vaddr_t, int, int));
  */
 
 #if defined(SUN4M) || defined(SUN4D)
-#ifdef MULTIPROCESSOR
-/* XXX - should be optimised by hand-coding */
-#define trapoff()	do { setpsr(getpsr() & ~PSR_ET); } while(0)
-#define trapon()	do { setpsr(getpsr() | PSR_ET); } while(0)
-#else
-#define trapoff()
-#define trapon()
-#endif
 /*
- * SP versions of the tlb flush routines.
+ * SP versions of the tlb flush operations.
+ *
+ * Turn off traps to prevent register window overflows
+ * from writing user windows to the wrong stack.
  */
-static __inline__ void sp_tlb_flush_page(int va, int ctx)
+static void sp_tlb_flush(int va, int ctx, int lvl)
 {
-	int octx = getcontext4m();
-	trapoff();
-	setcontext4m(ctx);
-	tlb_flush_page_real(va);
-	setcontext4m(octx);
-	trapon();
-}
+	/* Traps off */
+	__asm("rd	%psr, %o3");
+	__asm("wr	%%o3, %0, %%psr" :: "n" (PSR_ET));
 
-static __inline__ void sp_tlb_flush_segment(int va, int ctx)
-{
-	int octx = getcontext4m();
-	trapoff();
-	setcontext4m(ctx);
-	tlb_flush_segment_real(va);
-	setcontext4m(octx);
-	trapon();
-}
+	/* Save context */
+	__asm("mov	%0, %%o4" :: "n"(SRMMU_CXR));
+	__asm("lda	[%%o4]%0, %%o5" :: "n"(ASI_SRMMU));
 
-static __inline__ void sp_tlb_flush_region(int va, int ctx)
-{
-	int octx = getcontext4m();
-	trapoff();
-	setcontext4m(ctx);
-	tlb_flush_region_real(va);
-	setcontext4m(octx);
-	trapon();
-}
+	/* Set new context and flush type bits */
+	__asm("andn	%o0, 0xfff, %o0");
+	__asm("sta	%%o1, [%%o4]%0" :: "n"(ASI_SRMMU));
+	__asm("or	%o0, %o2, %o0");
 
-static __inline__ void sp_tlb_flush_context(int ctx)
-{
-	int octx = getcontext4m();
-	trapoff();
-	setcontext4m(ctx);
-	tlb_flush_context_real();
-	setcontext4m(octx);
-	trapon();
+	/* Do the TLB flush */
+	__asm("sta	%%g0, [%%o0]%0" :: "n"(ASI_SRMMUFP));
+
+	/* Restore context */
+	__asm("sta	%%o5, [%%o4]%0" :: "n"(ASI_SRMMU));
+
+	/* and turn traps on again */
+	__asm("wr	%o3, 0, %psr");
+	__asm("nop");
+	__asm("retl");
+	__asm("nop");
 }
 
 static __inline__ void sp_tlb_flush_all(void)
 {
-	tlb_flush_all_real();
+	sta(ASI_SRMMUFP_LN, ASI_SRMMUFP, 0);
 }
 
 #if defined(MULTIPROCESSOR)
@@ -615,10 +598,10 @@ smp_tlb_flush_page(int va, int ctx)
 {
 	if (CPU_ISSUN4D) {
 		LOCK_4DTLB();
-		sp_tlb_flush_page(va, ctx);
+		sp_tlb_flush(va, ctx, ASI_SRMMUFP_L3);
 		UNLOCK_4DTLB();
 	} else
-		XCALL2(sp_tlb_flush_page, va, ctx, CPUSET_ALL);
+		XCALL3(sp_tlb_flush, va, ctx, ASI_SRMMUFP_L3, CPUSET_ALL);
 }
 
 static __inline__ void
@@ -626,10 +609,10 @@ smp_tlb_flush_segment(int va, int ctx)
 {
 	if (CPU_ISSUN4D) {
 		LOCK_4DTLB();
-		sp_tlb_flush_segment(va, ctx);
+		sp_tlb_flush(va, ctx, ASI_SRMMUFP_L2);
 		UNLOCK_4DTLB();
 	} else
-		XCALL2(sp_tlb_flush_segment, va, ctx, CPUSET_ALL);
+		XCALL3(sp_tlb_flush, va, ctx, ASI_SRMMUFP_L2, CPUSET_ALL);
 }
 
 static __inline__ void
@@ -637,10 +620,10 @@ smp_tlb_flush_region(int va, int ctx)
 {
 	if (CPU_ISSUN4D) {
 		LOCK_4DTLB();
-		sp_tlb_flush_region(va, ctx);
+		sp_tlb_flush(va, ctx, ASI_SRMMUFP_L1);
 		UNLOCK_4DTLB();
 	} else
-		XCALL2(sp_tlb_flush_region, va, ctx, CPUSET_ALL);
+		XCALL3(sp_tlb_flush, va, ctx, ASI_SRMMUFP_L1, CPUSET_ALL);
 }
 
 static __inline__ void
@@ -648,10 +631,10 @@ smp_tlb_flush_context(int ctx)
 {
 	if (CPU_ISSUN4D) {
 		LOCK_4DTLB();
-		sp_tlb_flush_context(ctx);
+		sp_tlb_flush(ctx, 0, ASI_SRMMUFP_L0);
 		UNLOCK_4DTLB();
 	} else
-		XCALL1(sp_tlb_flush_context, ctx, CPUSET_ALL);
+		XCALL3(sp_tlb_flush, 0, ctx, ASI_SRMMUFP_L0, CPUSET_ALL);
 }
 
 static __inline__ void
@@ -664,7 +647,7 @@ smp_tlb_flush_all()
 	} else
 		XCALL0(sp_tlb_flush_all, CPUSET_ALL);
 }
-#endif
+#endif /* MULTIPROCESSOR */
 
 #if defined(MULTIPROCESSOR)
 #define tlb_flush_page(va,ctx)		smp_tlb_flush_page(va,ctx)
@@ -673,10 +656,10 @@ smp_tlb_flush_all()
 #define tlb_flush_context(ctx)		smp_tlb_flush_context(ctx)
 #define tlb_flush_all()			smp_tlb_flush_all()
 #else
-#define tlb_flush_page(va,ctx)		sp_tlb_flush_page(va,ctx)
-#define tlb_flush_segment(va,ctx)	sp_tlb_flush_segment(va,ctx)
-#define tlb_flush_region(va,ctx)	sp_tlb_flush_region(va,ctx)
-#define tlb_flush_context(ctx)		sp_tlb_flush_context(ctx)
+#define tlb_flush_page(va,ctx)		sp_tlb_flush(va,ctx,ASI_SRMMUFP_L3)
+#define tlb_flush_segment(va,ctx)	sp_tlb_flush(va,ctx,ASI_SRMMUFP_L2)
+#define tlb_flush_region(va,ctx)	sp_tlb_flush(va,ctx,ASI_SRMMUFP_L1)
+#define tlb_flush_context(ctx)		sp_tlb_flush(ctx,0,ASI_SRMMUFP_L0)
 #define tlb_flush_all()			sp_tlb_flush_all()
 #endif
 
@@ -1901,7 +1884,7 @@ ctx_alloc(pm)
 	if (pm->pm_ctx)
 		panic("ctx_alloc pm_ctx");
 	if (pmapdebug & PDB_CTX_ALLOC)
-		printf("ctx_alloc(%p)\n", pm);
+		printf("ctx_alloc[%d](%p)\n", cpu_number(), pm);
 #endif
 	if (CPU_ISSUN4 || CPU_ISSUN4C) {
 		gap_start = pm->pm_gap_start;
@@ -1927,8 +1910,8 @@ ctx_alloc(pm)
 		if (c->c_pmap == NULL)
 			panic("ctx_alloc cu_pmap");
 		if (pmapdebug & (PDB_CTX_ALLOC | PDB_CTX_STEAL))
-			printf("ctx_alloc: steal context %d from %p\n",
-			    cnum, c->c_pmap);
+			printf("ctx_alloc[%d]: steal context %d from %p\n",
+			    cpu_number(), cnum, c->c_pmap);
 #endif
 		c->c_pmap->pm_ctx = NULL;
 		c->c_pmap->pm_ctxnum = 0;
@@ -3985,7 +3968,7 @@ pmap_create()
 	pm->pm_refcount = 1;
 #ifdef DEBUG
 	if (pmapdebug & PDB_CREATE)
-		printf("pmap_create: created %p\n", pm);
+		printf("pmap_create[%d]: created %p\n", cpu_number(), pm);
 	pmap_quiet_check(pm);
 #endif
 	return (pm);
@@ -4003,7 +3986,7 @@ pmap_destroy(pm)
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_DESTROY)
-		printf("pmap_destroy(%p)\n", pm);
+		printf("pmap_destroy[%d](%p)\n", cpu_number(), pm);
 #endif
 	simple_lock(&pm->pm_lock);
 	count = --pm->pm_refcount;
@@ -4050,7 +4033,8 @@ pmap_remove(pm, va, endva)
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_REMOVE)
-		printf("pmap_remove(%p, 0x%lx, 0x%lx)\n", pm, va, endva);
+		printf("pmap_remove[%d](%p, 0x%lx, 0x%lx)\n",
+			cpu_number(), pm, va, endva);
 #endif
 
 	if (pm == pmap_kernel()) {
@@ -4935,7 +4919,8 @@ pmap_page_protect4m(pg, prot)
 #ifdef DEBUG
 	if ((pmapdebug & PDB_CHANGEPROT) ||
 	    (pmapdebug & PDB_REMOVE && prot == VM_PROT_NONE))
-		printf("pmap_page_protect(0x%lx, 0x%x)\n", pa, prot);
+		printf("pmap_page_protect[%d](0x%lx, 0x%x)\n",
+			cpu_number(), pa, prot);
 #endif
 	/*
 	 * Skip unmanaged pages, or operations that do not take
@@ -5070,7 +5055,8 @@ pmap_protect4m(pm, sva, eva, prot)
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_CHANGEPROT)
-		printf("pmap_protect[curpid %d, ctx %d](%lx, %lx, %x)\n",
+		printf("pmap_protect[%d][curpid %d, ctx %d,%d](%lx, %lx, %x)\n",
+			cpu_number(), getcontext4m(),
 			curproc==NULL ? -1 : curproc->p_pid,
 			pm->pm_ctx ? pm->pm_ctxnum : -1, sva, eva, prot);
 #endif
@@ -5155,8 +5141,8 @@ pmap_changeprot4m(pm, va, prot, wired)
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_CHANGEPROT)
-		printf("pmap_changeprot(%p, 0x%lx, 0x%x, 0x%x)\n",
-		    pm, va, prot, wired);
+		printf("pmap_changeprot[%d](%p, 0x%lx, 0x%x, 0x%x)\n",
+		    cpu_number(), pm, va, prot, wired);
 #endif
 
 	write_user_windows();	/* paranoia */
@@ -5816,10 +5802,10 @@ pmap_enter4m(pm, va, pa, prot, flags)
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_ENTER)
-		printf("pmap_enter[curpid %d, ctx %d]"
+		printf("pmap_enter[curcpu %d, curpid %d, ctx %d,%d]"
 			"(%p, 0x%lx, 0x%lx, 0x%x, 0x%x)\n",
-			curproc==NULL ? -1 : curproc->p_pid,
-			pm->pm_ctx==NULL ? -1 : pm->pm_ctxnum,
+			cpu_number(), curproc==NULL ? -1 : curproc->p_pid,
+			getcontext4m(), pm->pm_ctx==NULL ? -1 : pm->pm_ctxnum,
 			pm, va, pa, prot, flags);
 #endif
 
@@ -7232,7 +7218,6 @@ pm_check_u(s, pm)
 					 :(*pte & PG_V)))
 					m++;
 				if (m != sp->sg_npte)
-				    /*if (pmapdebug & 0x10000)*/
 					printf("%s: cpu %d: user CHK(vr %d, vs %d): "
 					    "npte(%d) != # valid(%d)\n",
 						s, cpu, vr, vs, sp->sg_npte, m);
@@ -7254,7 +7239,7 @@ pm_check_k(s, pm)		/* Note: not as extensive as pm_check_u. */
 	struct regmap *rp;
 	int cpu, vr, vs, n;
 
-	cpu = cpuinfo.ci_cpuid;
+	cpu = cpu_number();
 
 	if (pm->pm_regmap == NULL)
 		panic("%s: CHK(pmap %p): no region mapping", s, pm);
