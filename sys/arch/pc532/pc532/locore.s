@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.41 1996/11/07 07:31:20 matthias Exp $	*/
+/*	$NetBSD: locore.s,v 1.42 1996/11/24 13:35:15 matthias Exp $	*/
 
 /*
  * Copyright (c) 1993 Philip A. Nelson.
@@ -81,7 +81,7 @@
  */
 	.data
 
-	.globl	_cold, _esym, _bootdev, _boothowto, _inttab, __have_fpu
+	.globl	_cold, _esym, _bootdev, _boothowto, __have_fpu
 	.globl	_proc0paddr, _PTDpaddr
 _cold:		.long	1	/* cold till we are not */
 _esym:		.long	0	/* pointer to end of symbols */
@@ -139,6 +139,9 @@ ENTRY(delay)			/* bsr  2 cycles;  80 ns */
 	cmpqd	0,S_ARG0	/*	2 cycles;  80 ns */
 	beq	2f		/*	2 cycles;  80 ns */
 	nop; nop; nop; nop	/*	8 cycles; 320 ns */
+#ifdef CPU30MHZ
+	nop; nop
+#endif
 	movd	S_ARG0,r0	/* 	2 cycles;  80 ns */
 	acbd	-1,r0,1f	/*      5 cycles; 200 ns */
 				/*                ====== */
@@ -149,6 +152,9 @@ ENTRY(delay)			/* bsr  2 cycles;  80 ns */
 				/*		  840 ns */
 1:	nop; nop; nop; nop; nop	/*     10 cycles; 400 ns */
 	nop; nop; nop; nop; nop	/*     10 cycles; 400 ns */
+#ifdef CPU30MHZ
+	nop; nop
+#endif
 	acbd	-1,r0,1b	/* 	5 cycles; 200 ns */
 2:	ret	0		/* 	4 cycles; 160 ns */
 
@@ -947,7 +953,7 @@ _ENTRY(flush_icache)
 	rett	0
 #else
 	.globl	_cinvstart, _cinvend
-	addqd	1,tos			/* Increment return address */
+	addqd	1,tos			/* Increment return address. */
 	addd	r0,r1
 	movd	r1,tos			/* Save address of second line. */
 	sprw	psr,tos			/* Push psr. */
@@ -987,36 +993,64 @@ _ENTRY(interrupt)
 	KENTER
 	lprd    sb,0			/* Kernel code expects sb to be 0 */
 	movd	_Cur_pl(pc),tos
-	movb	@ICU_ADR+HVCT,r0	/* fetch vector */
+	movb	@ICU_ADR+HVCT,r0	/* Fetch vector */
 	andd	0x0f,r0
 	movd	r0,tos
+	/*
+	 * Disable software interrupts and the current
+	 * interrupt by setting the corresponding bits
+	 * in the ICU's IMSK registern and in Cur_pl.
+	 */
 	movqd	1,r1
 	lshd	r0,r1
-	orw	r1,_Cur_pl(pc)		/* or bit to Cur_pl */
-	orw	r1,@ICU_ADR+IMSK	/* and to IMSK */
-	ints_off			/* flush pending writes */
-	ints_on				/* and now turn ints on */
+	orw	1 << IR_SOFT,r1
+	orw	r1,_Cur_pl(pc)
+	orw	r1,@ICU_ADR+IMSK
+	/* 
+	 * Flush pending writes and then enable CPU interrupts. 
+	 */
+	ints_off ; ints_on
+	/* 
+	 * Increment interrupt counters.
+	 */
 	addqd	1,_intrcnt(pc)[r0:d]
 	lshd	4,r0
 	addqd	1,_cnt+V_INTR(pc)
-	addqd	1,_ivt+IV_CNT(r0)	/* increment counters */
-	movd	_ivt+IV_ARG(r0),r1	/* get argument */
+	addqd	1,_ivt+IV_CNT(r0)
+
+	movd	_ivt+IV_ARG(r0),r1	/* Get argument */
 	cmpqd	0,r1
 	bne	1f
 	addr	0(sp),r1		/* NULL -> push frame address */
 1:	movd	r1,tos
-	movd	_ivt+IV_VEC(r0),r0	/* call the handler */
+	movd	_ivt+IV_VEC(r0),r0	/* Call the handler */
 	jsr	0(r0)
-
 	adjspd	-8			/* Remove arg and vec from stack */
-	bsr	_splx_di		/* Restore Cur_pl */
-	cmpqd	0,tos
-	CHECKAST
+	/*
+	 * If we are switching back to spl0 and there
+	 * are pending software interrupts, switch to
+	 * splsoft and call check_sir now.
+	 */
+	movd	tos,r3
+	cmpd	r3,_imask(pc)
+	bne	1f
+	cmpqd	0,_sirpending(pc)
+	beq	1f
+	addr	1 << IR_SOFT(r3),r0
+	movd	r0,_Cur_pl(pc)
+	movw	r0,@ICU_ADR+IMSK
+	bsr	_check_sir
+
+1:	CHECKAST
+	ints_off
+	movd	r3,_Cur_pl(pc)
+	movw	r3,@ICU_ADR+IMSK	/* Restore Cur_pl */
 	KEXIT
 
 /*
  * Finally the interrupt vector table.
  */
+	.globl	_inttab
 	.align 2
 _inttab:
 	.long _interrupt
