@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.16 2001/03/21 13:43:58 tsutsui Exp $
+#	$NetBSD: Makefile.inc,v 1.17 2001/03/21 14:08:03 tsutsui Exp $
 
 # Must have S=/usr/src/sys (or equivalent)
 # But note: this is w.r.t. a subdirectory
@@ -6,8 +6,9 @@ S=	${.CURDIR}/../../../..
 
 .if defined(SA_PROG)
 
-LIBSA!=cd ${.CURDIR}/../libsa; \
-	printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}\n" | ${MAKE} -s -f-
+.include <bsd.own.mk>
+
+LIBSA!=cd ${.CURDIR}/../libsa && ${PRINTOBJDIR}
 
 MDEC_DIR?=/usr/mdec
 
@@ -30,7 +31,7 @@ ${SA_PROG}.bin : ${SA_PROG}
 ${SA_PROG} : ${OBJS} ${DPADD} ${SRTLIB}
 	${LD} -N -Ttext ${RELOC} -e start -o $@ \
 	  ${SRTOBJ} ${OBJS} ${LDADD} ${SRTLIB}
-	@size $@
+	@${SIZE} $@
 
 .if !target(proginstall)
 realall: ${SA_PROG} ${SA_PROG}.bin
