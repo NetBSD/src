@@ -1,4 +1,4 @@
-/*	$NetBSD: byte_swap_4.S,v 1.2 1999/01/22 10:59:18 mycroft Exp $	*/
+/*	$NetBSD: byte_swap_4.S,v 1.3 1999/01/22 11:01:04 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -34,7 +34,7 @@
  *
  * Argument is an unsigned 4-byte integer (u_int32_t).
  */
-LEAF(__bswap32, 1)			/* a0 contains 0x01234567 */
+LEAF(__bswap32, 1)		/* a0 contains 0x01234567 */
 XLEAF(htonl, 1)
 XLEAF(ntohl, 1)
 	insbl	a0, 3, t0	/* t0 = 0x67       */
