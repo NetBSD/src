@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.en,v 1.19.4.1 2000/10/18 17:51:22 tv Exp $	*/
+/*	$NetBSD: msg.md.en,v 1.19.4.2 2000/11/13 20:08:01 tv Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -317,3 +317,10 @@ message bootsel_header
 
 message bootsel_row
 {%-6d %-32s %s\n}
+
+message emulbackup
+{Either the /emul/aout or /emul directory on your system was a symbolic link
+pointing to an unmounted filesystem. It has been given a '.old' extension.
+Once you bring your upgraded system back up, you may need to take care
+of merging the newly created /emul/aout directory with the old one.
+}
