@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stat.c,v 1.50 2003/12/04 19:38:23 atatat Exp $	 */
+/*	$NetBSD: svr4_stat.c,v 1.50.2.1 2004/04/21 03:12:23 jmc Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_stat.c,v 1.50 2003/12/04 19:38:23 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_stat.c,v 1.50.2.1 2004/04/21 03:12:23 jmc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -620,7 +620,8 @@ svr4_sys_systeminfo(l, v, retval)
 		break;
 
 	case SVR4_SI_HW_SERIAL:
-		str = "0";
+		snprintf(buf, sizeof(buf), "%lu", hostid);
+		str = buf;
 		break;
 
 	case SVR4_SI_HW_PROVIDER:
