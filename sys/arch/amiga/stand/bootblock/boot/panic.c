@@ -1,11 +1,11 @@
-/* $NetBSD: libstubs.h,v 1.4 2001/12/17 05:41:12 mhitch Exp $ */
+/* $NetBSD: panic.c,v 1.1 2001/12/17 05:41:13 mhitch Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Ignatios Souvatzis.
+ * by Michael Hitch.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,69 +36,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "amigaio.h"
-#include "amigagraph.h"
-#include "amigatypes.h"
-#include <sys/types.h>
+/*
+ * A dummy panic() to reduce size of bootblock.
+ */
 
-extern struct ExecBase *SysBase;
-extern struct Library *IntuitionBase;
-extern struct Library *ExpansionBase;
-
-void *AllocMem (size_t, u_int32_t);
-void FreeMem (void *, size_t);
-
-struct Library *OpenLibrary (const char *, u_int32_t);
-void CloseLibrary (struct Library *);
-struct MsgPort *CreateMsgPort(void);
-void *CreateIORequest(struct MsgPort *, u_int32_t);
-void DeleteIORequest(void *);
-void DeleteMsgPort(struct MsgPort *);
-
-u_int8_t DoIO(struct AmigaIO *);
-void SendIO(struct AmigaIO *);
-struct AmigaIO *CheckIO(struct AmigaIO *);
-void *WaitPort(struct MsgPort *);
-void AbortIO(struct AmigaIO *);
-u_int8_t WaitIO(struct AmigaIO *);
-
-int OpenDevice(const char *, u_int32_t, struct AmigaIO *, u_int32_t);
-#ifdef _PRIMARY_BOOT
-void CloseDevice(struct AmigaIO *);
-#endif
-
-void *FindResident(const char *);
-void *OpenResource(const char *);
-
-u_int32_t CachePreDMA(u_int32_t, u_int32_t *, int);
-#define DMAF_Continue		2
-#define DMAF_NoModify		4
-#define DMAF_ReadFromRAM	8
-
-void Forbid(void);
-void Permit(void);
-
-struct Screen *OpenScreenTagList(struct NewScreen *, const u_int32_t *);
-struct Screen *OpenScreenTag(struct NewScreen *, ...);
-struct Window *OpenWindowTagList(struct Window *, const u_int32_t *);
-struct Window *OpenWindowTag(struct Window *, ...);
-#ifdef _PRIMARY_BOOT
-void CloseScreen(struct Screen *);
-void CloseWindow(struct Window *);
-#endif
-
-#ifdef nomore
-u_int32_t mytime(void);
-#endif
-
-struct cfdev *FindConfigDev(struct cfdev *, int, int);
-
-#ifndef DOINLINES
-void CacheClearU(void);
-#else
-#define LibCallNone(lib, what)  \
-	asm("movl a6,sp@-; movl %0,a6; " what "; movl sp@+,a6" :: \
-	    "r"(lib) : "d0", "d1", "a0", "a1")
-
-#define CacheClearU() LibCallNone(SysBase, "jsr a6@(-0x27c)")
-#endif
+void
+panic(char *p)
+{
+}

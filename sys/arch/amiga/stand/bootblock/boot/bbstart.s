@@ -1,4 +1,4 @@
-/* $NetBSD: bbstart.s,v 1.9 2001/09/24 20:27:08 is Exp $ */
+/* $NetBSD: bbstart.s,v 1.10 2001/12/17 05:41:12 mhitch Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -52,7 +52,11 @@
 #define Cmd_Rd	2
 
 	.text
+#if defined(_PRIMARY_BOOT) || defined(AUTOLOAD)
 Lzero:	.asciz "DOS"			| "DOS type"
+#else
+Lzero:	.ascii	"BOOT"			| Secondary Boot
+#endif
 	/*
 	 * We put the relocator version here, for aout2bb, which replaces
 	 * it with the bootblock checksum.
@@ -175,8 +179,16 @@ Lendtab:
 
 	movl	%a6,_C_LABEL(SysBase)
 
+#ifndef _PRIMARY_BOOT
+	movl	%a5,%sp@-		| Console info
+#endif
 	movl	%a1,%sp@-
 	bsr	_C_LABEL(pain)
+#ifdef _PRIMARY_BOOT
+	addql	#4,%sp
+#else
+	addql	#8,%sp
+#endif
 
 Lerr:
 	movq	#1,%d0
