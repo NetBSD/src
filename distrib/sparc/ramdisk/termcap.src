@@ -1,0 +1,86 @@
+adm+sgr|adm style highlight capabilities:\
+	:me=\EG0:mk=\EG1:mr=\EG4:se=\EG0:so=\EG4:ue=\EG0:us=\EG8:
+dumb|80-column dumb tty:\
+	:am:\
+	:co#80:\
+	:bl=^G:cr=^M:do=^J:sf=^J:
+unknown|unknown terminal type:\
+	:gn:tc=dumb:
+lpr|printer|line printer:\
+	:bs:hc:os:\
+	:co#132:li#66:\
+	:bl=^G:cr=^M:do=^J:ff=^L:le=^H:sf=^J:
+glasstty|classic glass tty interpreting ASCII control characters:\
+	:am:\
+	:co#80:\
+	:bl=^G:cl=^L:cr=^M:do=^J:kb=^H:kd=^J:kl=^H:le=^H:nw=^M^J:\
+	:ta=^I:
+vt52|dec vt52:\
+	:bs:\
+	:co#80:it#8:li#24:\
+	:ac=``aaffggjjkkllmmnnooppqqrrssttuuvvwwxxyyzz{{||}}~~:\
+	:ae=\EG:as=\EF:bl=^G:cd=\EJ:ce=\EK:cl=\EH\EJ:cm=\EY%+ %+ :\
+	:cr=^M:do=\EB:ho=\EH:kb=^H:kd=\EB:kl=\ED:kr=\EC:ku=\EA:\
+	:le=\ED:nd=\EC:nw=^M^J:sf=^J:sr=\EI:ta=^I:up=\EA:
+vt100|vt100-am|dec vt100 (w/advanced video):\
+	:am:bs:ms:xn:xo:\
+	:co#80:it#8:li#24:vt#3:\
+	:@8=\EOM:DO=\E[%dB:K1=\EOq:K2=\EOr:K3=\EOs:K4=\EOp:K5=\EOn:\
+	:LE=\E[%dD:RA=\E[?7l:RI=\E[%dC:SA=\E[?7h:UP=\E[%dA:\
+	:ac=``aaffggjjkkllmmnnooppqqrrssttuuvvwwxxyyzz{{||}}~~:\
+	:ae=^O:as=^N:bl=^G:cb=\E[1K:cd=\E[J:ce=\E[K:cl=\E[H\E[J:\
+	:cm=\E[%i%d;%dH:cr=^M:cs=\E[%i%d;%dr:ct=\E[3g:do=^J:\
+	:eA=\E(B\E)0:ho=\E[H:k0=\EOy:k1=\EOP:k2=\EOQ:k3=\EOR:\
+	:k4=\EOS:k5=\EOt:k6=\EOu:k7=\EOv:k8=\EOl:k9=\EOw:k;=\EOx:\
+	:kb=^H:kd=\EOB:ke=\E[?1l\E>:kl=\EOD:kr=\EOC:ks=\E[?1h\E=:\
+	:ku=\EOA:le=^H:mb=\E[5m:md=\E[1m:me=\E[m\017:mr=\E[7m:\
+	:nd=\E[C:r2=\E>\E[?3l\E[?4l\E[?5l\E[?7h\E[?8h:rc=\E8:\
+	:..sa=\E[0%?%p1%p6%|%t;1%;%?%p2%t;4%;%?%p1%p3%|%t;7%;%?%p4%t;5%;m%?%p9%t\016%e\017%;:\
+	:sc=\E7:se=\E[m:sf=^J:so=\E[7m:sr=\EM:st=\EH:ta=^I:ue=\E[m:\
+	:up=\E[A:us=\E[4m:
+wy50|wyse50|Wyse 50:\
+	:5i:am:bs:bw:hs:mi:ms:xo:\
+	:Nl#8:co#80:lh#1:li#24:lw#8:ma#1:ws#45:\
+	:#2=\E{:%9=\EP:&3=\Er:@8=\E7:F1=^AJ\r:F2=^AK\r:F3=^AL\r:\
+	:F4=^AM\r:F5=^AN\r:F6=^AO\r:LF=\EA11:LO=\EA10:\
+	:ac=0wa_h[jukslrmqnxqzttuyv]wpxv:ae=\EH^C:al=\EE:\
+	:as=\EH^B:bl=^G:bt=\EI:cd=\EY:ce=\ET:cl=\E+:cm=\E=%+ %+ :\
+	:cr=^M:ct=\E0:dc=\EW:dl=\ER:do=^J:ds=\EF\r:ei=\Er:fs=^M:\
+	:ho=^^:i1=\E`\072\E`9:im=\Eq:ip=:is=\016\024\E'\E(:\
+	:k1=^A@\r:k2=^AA\r:k3=^AB\r:k4=^AC\r:k5=^AD\r:k6=^AE\r:\
+	:k7=^AF\r:k8=^AG\r:k9=^AH\r:k;=^AI\r:kA=\EE:kB=\EI:kD=\EW:\
+	:kE=\ET:kI=\EQ:kL=\ER:kN=\EK:kP=\EJ:kS=\EY:kb=^H:kd=^J:kh=^^:\
+	:kl=^H:kr=^L:ku=^K:le=^H:ll=^^^K:me=\E(\EH\003:mh=\E`7\E):\
+	:mp=\E`7\E):mr=\E`6\E):nd=^L:nw=^M^J:pf=^T:pn=\Ez%+/%s\r:\
+	:po=^X:ps=\EP:px=\Ez%+?%s\177:\
+	:..sa=%?%p1%p3%|%t\E`6\E)\n%e%p5%p8%|%t\E`7\E)%e\E(%;\n%?%p9%t\EH\002%e\EH\003%;:\
+	:se=\E(:sf=\n:so=\E`6\E):sr=\Ej:st=\E1:ta=^I:ts=\EF:up=^K:\
+	:vb=\E`8\E`9:ve=\E`1:vi=\E`0:
+wy60|wyse60|Wyse 60:\
+	:am:bs:bw:hs:km:mi:ms:\
+	:co#80:li#24:ws#45:\
+	:ae=\EcD:al=\EE:as=\EcE:bl=^G:bt=\EI:cd=\EY:ce=\ET:cl=\E+:\
+	:cm=\E=%+ %+ :cr=^M:ct=\E0:dc=\EW:dl=\ER:do=^J:ds=\EF\r:\
+	:ei=\Er:fs=^M:ho=\E{:i1=\EcB0\EcC1:i2=\EwJ\Ew1:im=\Eq:ip=:\
+	:is=\Ed$\EcD\E'\Er\EH\003\Ed/\EO\Ee1\Ed*\E`@\E`9\E`1\016\024\El:\
+	:k1=^A@\r:k2=^AA\r:k3=^AB\r:k4=^AC\r:k5=^AD\r:k6=^AE\r:\
+	:k7=^AF\r:k8=^AG\r:k9=^AH\r:kD=\EW:kI=\EQ:kN=\EK:kP=\EJ:\
+	:kb=^H:kd=^J:kh=^^:kl=^H:kr=^L:ku=^K:le=^H:ll=\E{^K:mb=\EG2:\
+	:me=\E(\EH\003\EG0\EcD:mh=\EGp:nd=^L:nw=\r\n:sf=\n:\
+	:so=\EGt:sr=\Ej:st=\E1:ta=\011:te=\Ew1:ti=\Ew0:ts=\EF:up=^K:\
+	:vb=\E`8\E`9:ve=\E`1:vi=\E`0:\
+	:tc=adm+sgr:
+wy160|wyse160|Wyse 160:\
+	:am:bw:hs:km:mi:ms:\
+	:co#80:li#24:ws#38:\
+	:ae=\EcD:al=\EE:as=\EcE:bl=^G:bt=\EI:cd=\EY:ce=\ET:cl=\E+:\
+	:cm=\E=%+ %+ :cr=^M:ct=\E0:dc=\EW:dl=\ER:do=^J:ds=\EF\r:\
+	:ei=\Er:fs=^M:ho=\E{:i1=\EcB0\EcC1:i2=\Ew0:im=\Eq:ip=:\
+	:is=\Ed$\EcD\E'\Er\EH\003\Ed/\EO\Ee1\Ed*\E`@\E`9\E`1\016\024\El:\
+	:k1=^A@\r:k2=^AA\r:k3=^AB\r:k4=^AC\r:k5=^AD\r:k6=^AE\r:\
+	:k7=^AF\r:k8=^AG\r:k9=^AH\r:kD=\EW:kI=\EQ:kN=\EK:kP=\EJ:\
+	:kb=^H:kd=^J:kh=^^:kl=^H:kr=^L:ku=^K:le=^H:ll=\E{^K:mb=\EG2:\
+	:me=\E(\EH\003\EG0\EcD:mh=\EGp:nd=^L:nw=\r\n:sf=\n:\
+	:so=\EGt:sr=\Ej:st=\E1:ta=^I:te=\Ew0:ti=\Ew1:ts=\EF:up=^K:\
+	:vb=\E`8\E`9:ve=\E`1:vi=\E`0:\
+	:tc=adm+sgr:
