@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.76 1997/05/12 23:42:11 fvdl Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.77 1997/06/30 20:23:56 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1425,7 +1425,9 @@ nfs_remove(v)
 	if (vp->v_usecount < 1)
 		panic("nfs_remove: bad v_usecount");
 #endif
-	if (vp->v_usecount == 1 || (np->n_sillyrename &&
+	if (vp->v_type == VDIR)
+		error = EPERM;
+	else if (vp->v_usecount == 1 || (np->n_sillyrename &&
 	    VOP_GETATTR(vp, &vattr, cnp->cn_cred, cnp->cn_proc) == 0 &&
 	    vattr.va_nlink > 1)) {
 		/*
