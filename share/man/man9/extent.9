@@ -1,4 +1,4 @@
-.\"	$NetBSD: extent.9,v 1.1 1996/09/24 06:03:12 ghudson Exp $
+.\"	$NetBSD: extent.9,v 1.2 1996/10/17 08:33:42 thorpej Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -76,7 +76,7 @@ inclusive.  All memory allocation will use the memory type
 The extent map will have the name
 .Fa name ,
 used for identification in case of an error.  If the flag
-.Dv EX_NOBLOB
+.Dv EX_NOCOALESCE
 is specified, only entire regions may be freed within the extent map,
 but internal coalescing of regions is disabled so that
 .Fn extent_free
@@ -85,8 +85,8 @@ never fail.  The caller must specify one of the flags
 .Dv EX_NOWAIT
 or
 .Dv EX_WAITOK ,
-specifying whether it is okay to wait for memory allocated for the
-extent map.
+specifying whether it is okay to wait for memory allocated for
+extent map overhead.
 .Pp
 There are some applications which may want to use an extent map but
 can't use
@@ -142,9 +142,16 @@ thus minimizing fragmentation of the extent.
 .Pp
 The caller must specify if waiting for space in the extent is allowed
 using the flag
+.Dv EX_WAITSPACE .
+If
+.Dv EX_WAITSPACE
+is not specified, the allocation will fail if the request can not be
+satisfied without sleeping.
+The caller must also specify, using the
 .Dv EX_NOWAIT
 or
-.Dv EX_WAITOK .
+.Dv EX_WAITOK
+flags, if waiting for overhead allocation is allowed.
 The request will be aligned to
 .Fa alignment
 boundaries.  Alignment values must be a power of 2.  If no alignment
@@ -152,8 +159,11 @@ is necessary, the value 1 should be specified.  If
 .Fa boundary
 is nonzero, the allocated region will not cross any of the numbers
 which are a multiple of
-.Fa boundary
-from the beginning of the extent.  The allocated region may begin on a
+.Fa boundary .
+If the caller specifies the
+.Dv EX_BOUNDZERO
+flag, the boundary lines begin at zero.  Otherwise, the boundary lines
+begin at the beginning of the extent.  The allocated region may begin on a
 boundary address, but the end of the region will not touch nor cross
 it.  A boundary argument smaller than the size of the request is
 invalid.  Upon successful completion,
@@ -182,9 +192,16 @@ with the size
 .Fa size .
 The caller must specify whether it is okay to wait for the indicated
 region to be free using the flag
-.Dv EX_NOWAIT
+.Dv EX_WAITSPACE .
+If
+.Dv EX_WAITSPACE
+is not specified, the allocation will fail if the request can not be
+satisfied without sleeping.
+The caller must also specify, using the
+.Dv EX_NOWAIT 
 or
-.Dv EX_WAITOK .
+.Dv EX_WAITOK
+flags, if waiting for overhead allocation is allowed.
 .Pp
 .Fn extent_free
 frees a region of
@@ -194,9 +211,9 @@ bytes in extent
 starting at
 .Fa start .
 If the extent has the
-.Dv EX_NOBLOB
+.Dv EX_NOCOALESCE
 property, only entire regions may be freed.  If the extent has the
-.Dv EX_NOBLOB
+.Dv EX_NOCOALESCE
 property and the caller attempts to free a partial region, behavior is
 undefined.  The caller must specify one of the flags
 .Dv EX_NOWAIT
@@ -232,13 +249,15 @@ return one of the following values:
 .It Dv 0
 Operation was successful.
 .It Dv ENOMEM
-The extent manager was not able to allocate a region descriptor for
-the new region or to split a region when freeing a partial region.
+If
+.Dv EX_NOWAIT
+is specified, the extent manager was not able to allocate a region
+descriptor for the new region or to split a region when freeing a
+partial region.
 .It Dv EAGAIN
 Requested region is not available and
-.Dv EX_NOWAIT
-was specified.  Does not apply to
-.Fn extent_free .
+.Dv EX_WAITSPACE
+was not specified.
 .It Dv EINTR
 Process received a signal while waiting for the requested region to
 become available in the extent.  Does not apply to
@@ -261,7 +280,7 @@ func()
 	 * extent_free() never needs to allocate memory.
 	 */
 	foo_ex = extent_create("foo", 0x0, 0x3ffff, M_DEVBUF,
-	    NULL, 0, EX_WAITOK | EX_NOBLOB);
+	    NULL, 0, EX_WAITOK | EX_NOCOALESCE);
 
 	/*
 	 * Allocate an 8k region, aligned to a 4k boundary, which
@@ -302,4 +321,5 @@ testing and optimization of the implementation.  Chris Demetriou
 .Sh SEE ALSO
 .Xr malloc 9 .
 .Sh HISTORY
-The NetBSD extent manager appeared in NetBSD 1.2A.
+The NetBSD extent manager appeared in
+.Nx 1.2A .
