@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.8 2001/08/30 09:32:23 mrg Exp $ */
+/*	$NetBSD: pte.h,v 1.9 2001/12/04 00:53:19 darrenr Exp $ */
 
 /*
  * Copyright (c) 1996-1999 Eduardo Horvath
@@ -22,6 +22,10 @@
  * SUCH DAMAGE.
  *
  */
+
+#if defined(_KERNEL_OPT)
+#include "opt_sparc_arch.h"
+#endif
 
 /*
  * Address translation works as follows:
