@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.12 2004/03/23 19:39:42 drochner Exp $	*/
+/*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -652,23 +652,6 @@ longmode_hi:
 	call 	_C_LABEL(main)
 
 /*****************************************************************************/
-
-/*
- * Signal trampoline; copied to top of user stack.
- */
-NENTRY(sigcode)
-	/*
-	 * Handler has returned here as if we called it.  The sigcontext
-	 * is now the first thing on the stack.
-	 */
-	movq	%rsp,%rdi
-	pushq	%rdi			/* fake return address */
-	movq	$SYS___sigreturn14,%rax
-	syscall
-	movq	$SYS_exit,%rax
-	syscall
-	.globl	_C_LABEL(esigcode)
-_C_LABEL(esigcode):
 
 /*
  * void lgdt(struct region_descriptor *rdp);
