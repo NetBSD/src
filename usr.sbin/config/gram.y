@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: gram.y,v 1.17 1997/10/10 10:27:55 mycroft Exp $	*/
+/*	$NetBSD: gram.y,v 1.18 1997/10/10 10:41:18 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -100,7 +100,7 @@ static	void	check_maxpart __P((void));
 }
 
 %token	AND AT ATTACH BUILD COMPILE_WITH CONFIG DEFINE DEFOPT DEVICE DUMPS
-%token	ENDFILE XFILE XOBJECT XLIBRARY FILE_SYSTEM FLAGS INCLUDE XMACHINE
+%token	ENDFILE XFILE XOBJECT FILE_SYSTEM FLAGS INCLUDE XMACHINE
 %token	MAJOR MAKEOPTIONS
 %token	MAXUSERS MAXPARTITIONS MINOR ON OPTIONS PSEUDO_DEVICE ROOT SOURCE
 %token	TYPE WITH NEEDS_COUNT NEEDS_FLAG
@@ -175,8 +175,7 @@ file:
 	XFILE PATHNAME fopts fflgs rule	{ addfile($2, $3, $4, $5); };
 
 object:
-	XOBJECT PATHNAME fopts oflgs	{ addobject($2, $3, $4); } |
-	XLIBRARY PATHNAME fopts oflgs	{ addobject($2, $3, $4); };
+	XOBJECT PATHNAME fopts oflgs	{ addobject($2, $3, $4); };
 
 /* order of options is important, must use right recursion */
 fopts:
