@@ -1,4 +1,4 @@
-.\"	$NetBSD: pciide.4,v 1.34 2001/10/21 18:57:39 thorpej Exp $
+.\"	$NetBSD: pciide.4,v 1.35 2001/12/16 23:40:23 bouyer Exp $
 .\"
 .\" Copyright (c) 1998 Manuel Bouyer.
 .\"
@@ -73,7 +73,8 @@ Intel 82801 (ICH/ICH0/ICH2) IDE Controllers
 .It
 OPTi 82c621 (plus a few of its derivatives) IDE Controllers
 .It
-Promise PDC20246 (Ultra/33), PDC20262 (Ultra/66), and PDC20265/PDC20267 (Ultra100) PCI IDE controllers
+Promise PDC20246 (Ultra/33), PDC20262 (Ultra/66), PDC20265/PDC20267 (Ultra100),
+PDC20268 (Ultra/100TX2 and Ultra/100TX2v2) and Ultra/133 PCI IDE controllers
 .It
 Silicon Integrated System 5597/5598 IDE controller
 .It
@@ -126,3 +127,6 @@ The timings used for the PIO and DMA modes for controllers listed above
 are for a PCI bus running at 30 or 33 MHz (except the OPTi controller,
 which supports both 25 and 33 MHz PCI bus timings). This driver may not
 work properly on overclocked systems.
+.Pp
+The core wdc doens't support modes highter than UltraDMA 5, so the Promise
+Ultra/133 is only used at Ultra/100.
