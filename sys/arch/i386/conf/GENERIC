@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.600 2004/04/30 02:47:16 christos Exp $
+# $NetBSD: GENERIC,v 1.601 2004/04/30 15:55:10 fredb Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.600 $"
+#ident 		"GENERIC-$Revision: 1.601 $"
 
 maxusers	32		# estimated number of users
 
@@ -40,7 +40,7 @@ options 	USER_LDT	# user-settable LDT; used by WINE
 #options 	PIC_DELAY
 
 # Enhanced SpeedStep Technology in the Pentium M
-options		ENHANCED_SPEEDSTEP
+options 	ENHANCED_SPEEDSTEP
 
 options 	MTRR		# memory-type range register syscall support
 # doesn't work with MP just yet..
@@ -123,7 +123,7 @@ options 	COMPAT_13	# NetBSD 1.3, 386BSD, and BSDI
 options 	COMPAT_14	# NetBSD 1.4
 options 	COMPAT_15	# NetBSD 1.5
 options 	COMPAT_16	# NetBSD 1.6
-#options 	COMPAT_20	# NetBSD 2.0
+options 	COMPAT_20	# NetBSD 2.0
 options 	COMPAT_43	# 4.3BSD, 386BSD, and BSDI
 options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
