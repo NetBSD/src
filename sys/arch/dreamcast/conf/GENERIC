@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.42 2004/06/26 07:32:06 abs Exp $
+# $NetBSD: GENERIC,v 1.43 2004/06/28 21:07:47 bouyer Exp $
 #
 # GENERIC machine description file
 # 
@@ -45,6 +45,7 @@ options 	SYSVSEM		# System V-like semaphores
 #options 	SEMMNU=30	# number of undo structures in system
 options 	SYSVSHM		# System V-like memory sharing
 #options 	SHMMAXPGS=1024	# 1024 pages is the default
+options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 
 # Diagnostic/debugging support options
 options 	DIAGNOSTIC	# cheap kernel consistency checks
