@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)psl.h	5.2 (Berkeley) 1/18/91
- *	$Id: psl.h,v 1.2.4.6 1993/10/11 01:47:04 mycroft Exp $
+ *	$Id: psl.h,v 1.2.4.7 1993/11/08 20:13:01 mycroft Exp $
  */
 
 /*
@@ -53,12 +53,11 @@
 #define	PSL_NT		0x00004000	/* nested task bit */
 #define	PSL_RF		0x00010000	/* restart flag bit */
 #define	PSL_VM		0x00020000	/* virtual 8086 mode bit */
+#define	PSL_AC		0x00040000	/* alignment checking */
+#define	PSL_ID		0x00200000	/* identification bit */
 
-#define	PSL_MBZ		0xfffc4028	/* must be zero bits */
+#define	PSL_MBZ		0xfff84028	/* must be zero bits */
 #define	PSL_MBO		0x00000202	/* must be one bits */
-
-#define	PSL_USERSET	(PSL_IOPL|PSL_I)
-#define	PSL_USERCLR	(PSL_NT)
 
 #if defined(KERNEL) && !defined(LOCORE)
 /*
