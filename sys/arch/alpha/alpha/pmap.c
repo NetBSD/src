@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.72 1998/09/22 03:58:10 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.73 1998/09/24 23:07:06 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -154,7 +154,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.72 1998/09/22 03:58:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.73 1998/09/24 23:07:06 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -395,7 +395,7 @@ struct lock pmap_main_lock;
 struct simplelock pmap_pvalloc_slock;
 struct simplelock pmap_all_pmaps_slock;
 
-#if NCPU > 1 || defined(LOCKDEBUG)
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 #define	PMAP_MAP_TO_HEAD_LOCK() \
 	lockmgr(&pmap_main_lock, LK_SHARED, NULL)
 #define	PMAP_MAP_TO_HEAD_UNLOCK() \
@@ -409,7 +409,7 @@ struct simplelock pmap_all_pmaps_slock;
 #define	PMAP_MAP_TO_HEAD_UNLOCK()	/* nothing */
 #define	PMAP_HEAD_TO_MAP_LOCK()		/* nothing */
 #define	PMAP_HEAD_TO_MAP_UNLOCK()	/* nothing */
-#endif /* NCPU > 1 || LOCK_DEBUG */
+#endif /* MULTIPROCESSOR || LOCKDEBUG */
 
 #define	PAGE_IS_MANAGED(pa)	(vm_physseg_find(atop(pa), NULL) != -1)
 
