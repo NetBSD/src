@@ -1,3 +1,5 @@
+/*	$NetBSD: if_wi_ieee.h,v 1.3 2000/02/01 08:43:25 enami Exp $	*/
+
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
