@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: sendmail,v 1.12 2000/10/09 06:11:38 nisimura Exp $
+# $NetBSD: sendmail,v 1.13 2000/12/18 07:56:41 jmc Exp $
 #
 
 # PROVIDE: mail
@@ -33,10 +33,16 @@ sendmail_precmd()
 	fi
 
 	# check modifications on /etc/mail/aliases
-	if [ "/etc/mail/aliases" -nt "/etc/mail/aliases.db" ]; then
+	if [ -f "/etc/mail/aliases.db" ]; then
+		if [ "/etc/mail/aliases" -nt "/etc/mail/aliases.db" ]; then
+			echo \
+	    "${name}: /etc/mail/aliases newer than /etc/mail/aliases.db, regenerating"
+			/usr/bin/newaliases
+		fi
+	else
 		echo \
-    "${name}: /etc/mail/aliases newer than /etc/mail/aliases.db, regenerating"
-		/usr/bin/newaliases
+	    "${name}: /etc/mail/aliases.db not present, generating"
+			/usr/bin/newaliases
 	fi
 
 	# check couple of common db files, too
