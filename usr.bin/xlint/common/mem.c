@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.3 2002/01/31 19:36:53 tv Exp $	*/
+/*	$NetBSD: mem.c,v 1.4 2003/10/16 06:35:26 itojun Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: mem.c,v 1.3 2002/01/31 19:36:53 tv Exp $");
+__RCSID("$NetBSD: mem.c,v 1.4 2003/10/16 06:35:26 itojun Exp $");
 #endif
 
 #include <stdlib.h>
@@ -64,9 +64,13 @@ xcalloc(size_t n, size_t s)
 void *
 xrealloc(void *p, size_t s)
 {
+	void *n;
 
-	if ((p = realloc(p, s)) == NULL)
+	if ((n = realloc(p, s)) == NULL) {
+		free(p);
 		nomem();
+	}
+	p = n;
 	return (p);
 }
 

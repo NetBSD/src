@@ -1,4 +1,4 @@
-/*	$NetBSD: read.c,v 1.9 2003/08/07 11:16:02 agc Exp $	*/
+/*	$NetBSD: read.c,v 1.10 2003/10/16 06:39:56 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)read.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: read.c,v 1.9 2003/08/07 11:16:02 agc Exp $");
+__RCSID("$NetBSD: read.c,v 1.10 2003/10/16 06:39:56 itojun Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -141,7 +141,7 @@ lines(FILE *fp, __off_t off)
 	int ch;
 	char *p;
 	int blen, cnt, recno, wrap;
-	char *sp;
+	char *sp, *n;
 
 	p = NULL;
 	if ((lines = malloc(off * sizeof(*lines))) == NULL)
@@ -154,17 +154,20 @@ lines(FILE *fp, __off_t off)
 
 	while ((ch = getc(fp)) != EOF) {
 		if (++cnt > blen) {
-			if ((sp = realloc(sp, blen += 1024)) == NULL)
+			if ((n = realloc(sp, blen + 1024)) == NULL)
 				err(1, "%s", strerror(errno));
+			sp = n;
+			blen += 1024;
 			p = sp + cnt - 1;
 		}
 		*p++ = ch;
 		if (ch == '\n') {
 			if (lines[recno].blen < cnt) {
-				lines[recno].blen = cnt + 256;
-				if ((lines[recno].l = realloc(lines[recno].l,
-				    lines[recno].blen)) == NULL)
+				if ((n = realloc(lines[recno].l,
+				    cnt + 256)) == NULL)
 					err(1, "%s", strerror(errno));
+				lines[recno].l = n;
+				lines[recno].blen = cnt + 256;
 			}
 			memmove(lines[recno].l, sp, lines[recno].len = cnt);
 			cnt = 0;
