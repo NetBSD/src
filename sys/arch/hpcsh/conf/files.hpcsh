@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcsh,v 1.6 2001/02/09 19:54:11 uch Exp $
+#	$NetBSD: files.hpcsh,v 1.7 2001/02/21 16:28:02 uch Exp $
 #
 maxpartitions 8
 
@@ -9,12 +9,14 @@ file	arch/hpcsh/hpcsh/machdep.c
 file	arch/hpcsh/hpcsh/autoconf.c
 file	arch/hpcsh/hpcsh/bus_space.c
 file	arch/hpcsh/hpcsh/procfs_machdep.c	procfs
+file	arch/hpcsh/hpcsh/debug.c
 
 #
 # H/PC Platform common files.
 #
 include "arch/hpc/conf/files.hpc"
 include "dev/hpc/files.bicons"
+file	arch/hpc/hpc/disksubr.c			disk
 
 #
 # Machine-independent SCSI drivers
@@ -45,7 +47,22 @@ device	mainbus:  mainbus
 attach	mainbus at root
 file	arch/hpcsh/hpcsh/mainbus.c	mainbus
 
+#
+# SH3 bus
+#
 include "arch/hpcsh/conf/files.shbus"
+
+#
+# HD64461
+#
+define	hd64461if {}
+device	hd64461if: hd64461if
+attach	hd64461if at shb
+file	arch/hpcsh/dev/hd64461/hd64461.c	hd64461if
+
+device	hd64461pcmcia: pcmciabus
+attach	hd64461pcmcia at hd64461if
+file	arch/hpcsh/dev/hd64461/hd64461pcmcia.c	hd64461pcmcia
 
 # network devices MII bus
 include "dev/mii/files.mii"

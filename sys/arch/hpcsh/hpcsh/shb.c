@@ -1,4 +1,4 @@
-/*	$NetBSD: shb.c,v 1.1 2001/01/17 05:21:49 itojun Exp $	*/
+/*	$NetBSD: shb.c,v 1.2 2001/02/21 16:28:03 uch Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.  All rights reserved.
@@ -307,27 +307,6 @@ shb_intr_establish(irq, type, level, ih_fun, ih_arg)
 	if (ih == NULL)
 		panic("shb_intr_establish: can't malloc handler info");
 
-#ifdef TODO
-	if (type == IST_NONE)
-		panic("intr_establish: bogus irq or type");
-
-	switch (intrtype[irq]) {
-	case IST_NONE:
-		intrtype[irq] = type;
-		break;
-	case IST_EDGE:
-	case IST_LEVEL:
-		if (type == intrtype[irq])
-			break;
-	case IST_PULSE:
-		if (type != IST_NONE)
-			panic("intr_establish: can't share %s with %s",
-			    shb_intr_typename(intrtype[irq]),
-			    shb_intr_typename(type));
-		break;
-	}
-#endif
-
 	/*
 	 * Figure out where to put the handler.
 	 * This is O(N^2), but we want to preserve the order, and N is
@@ -387,12 +366,20 @@ intrhandler(p1, p2, p3, p4, frame)
 	int ocpl;
 
 #if 0
+	u_int32_t intevt = *(volatile u_int32_t *)0xffffffd8;
+	u_int32_t intevt2 = *(volatile u_int32_t *)0xa4000000;
+	if (intevt < 0xf00 && intevt != 0x420)
+		printf("INTEVT=%08x INTEVT2=%08x\n", intevt, intevt2);
+#endif
+
+#if 0
 	printf("intr_handler:int_no %x spc %x ssr %x r15 %x curproc %x\n",
 	       frame.tf_trapno, frame.tf_spc, frame.tf_ssr, frame.tf_r15,
 	       (int)curproc);
 #endif
 
 	irl = (unsigned int)frame.tf_trapno;
+
 	if (irl >= INTEVT_SOFT) {
 		/* This is software interrupt */
 		irq_num = (irl - INTEVT_SOFT);
@@ -404,8 +391,9 @@ intrhandler(p1, p2, p3, p4, frame)
 	} else if ((irl & 0x0f00) == INTEVT_SCIF) {
 		irq_num = SCIF_IRQ;
 #endif
-	} else
-		irq_num = (irl - 0x200) >> 5;
+	} else {
+		irq_num = (irl - 0x200) >> 5;		
+	}
 
 	mask_irq(irq_num);
 
@@ -500,8 +488,6 @@ check_ipending(p1, p2, p3, p4, frame)
 	return 1;
 }
 
-#if !defined(SH4)
-
 #ifdef SH7709A_BROKEN_IPR	/* broken IPR patch */
 
 #define IPRA	0
@@ -545,20 +531,14 @@ mask_irq(irq)
 #endif
 		break;
 #endif
-#if 0
-	case IRQ0_IRQ:
-		SHREG_IPRC &= ~(15);
-		break;
-	case IRQ1_IRQ:
-		SHREG_IPRC &= ~((15)<<4);
-		break;
-	case IRQ2_IRQ:
-		SHREG_IPRC &= ~((15)<<8);
-		break;
-	case DMAC_IRQ:
-		SHREG_IPRE &= ~((15)<<12);
-		break;
+	case IRQ4_IRQ:
+#ifdef SH7709A_BROKEN_IPR
+		ipr[IPRD] &= ~15;
+		SHREG_IPRD = ipr[IPRD];
+#else
+		SHREG_IPRD &= ~0xf;
 #endif
+		break;
 	default:
 		if (irq < SHB_MAX_HARDINTR)
 			printf("masked unknown irq(%d)!\n", irq);
@@ -597,95 +577,19 @@ unmask_irq(irq)
 #endif
 		break;
 #endif
-#if 0
-	case IRQ0_IRQ:
-		SHREG_IPRC |= (15 - irq);
-		break;
-	case IRQ1_IRQ:
-		SHREG_IPRC |= ((15 - irq)<<4);
-		break;
-	case IRQ2_IRQ:
-		SHREG_IPRC |= ((15 - irq)<<8);
-		break;
-	case DMAC_IRQ:
-		SHREG_IPRE |= ((15 - irq)<<12);
-		break;
-#endif
-	default:
-		if (irq < SHB_MAX_HARDINTR)
-			printf("unmasked unknown irq(%d)!\n", irq);
-	}
-}
+	case IRQ4_IRQ:
+#ifdef SH7709A_BROKEN_IPR
+		ipr[IPRD] |= (15 - irq);
+		SHREG_IPRD = ipr[IPRD];
 #else
-void
-mask_irq(irq)
-	int irq;
-{
-	switch (irq) {
-	case TMU1_IRQ:
-		SHREG_IPRA &= ~((15)<<8);
-		break;
-	case SCI_IRQ:
-		SHREG_IPRB &= ~((15)<<4);
-		break;
-	case SCIF_IRQ:
-		SHREG_IPRC &= ~((15)<<4);
-		break;
-#if 0
-	case IRQ0_IRQ:
-		SHREG_IPRC &= ~(15);
-		break;
-	case IRQ1_IRQ:
-		SHREG_IPRC &= ~((15)<<4);
-		break;
-	case IRQ2_IRQ:
-		SHREG_IPRC &= ~((15)<<8);
-		break;
-	case DMAC_IRQ:
-		SHREG_IPRE &= ~((15)<<12);
-		break;
+		SHREG_IPRD |= (15 - irq);
 #endif
-	default:
-		if (irq < SHB_MAX_HARDINTR)
-			printf("masked unknown irq(%d)!\n", irq);
-	}
-}
-
-void
-unmask_irq(irq)
-	int irq;
-{
-
-	switch (irq) {
-	case TMU1_IRQ:
-		SHREG_IPRA |= ((15 - irq)<<8);
 		break;
-	case SCI_IRQ:
-		SHREG_IPRB |= ((15 - irq)<<4);
-		break;
-	case SCIF_IRQ:
-		SHREG_IPRC |= ((15 - irq)<<4);
-		break;
-#if 0
-	case IRQ0_IRQ:
-		SHREG_IPRC |= (15 - irq);
-		break;
-	case IRQ1_IRQ:
-		SHREG_IPRC |= ((15 - irq)<<4);
-		break;
-	case IRQ2_IRQ:
-		SHREG_IPRC |= ((15 - irq)<<8);
-		break;
-	case DMAC_IRQ:
-		SHREG_IPRE |= ((15 - irq)<<12);
-		break;
-#endif
 	default:
 		if (irq < SHB_MAX_HARDINTR)
 			printf("unmasked unknown irq(%d)!\n", irq);
 	}
 }
-#endif
 
 void
 init_soft_intr_handler(void)

@@ -1,3 +1,5 @@
+/*	$NetBSD: shl.x,v 1.3 2001/02/21 16:28:02 uch Exp $	*/
+
 OUTPUT_FORMAT("coff-shl")
 OUTPUT_ARCH(sh)
 MEMORY

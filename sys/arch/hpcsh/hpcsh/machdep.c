@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.3 2001/02/09 19:54:11 uch Exp $	*/
+/*	$NetBSD: machdep.c,v 1.4 2001/02/21 16:28:03 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -128,6 +128,13 @@ int cpu_debug_mode = 0;
 #define	SCDEBUG_ALL 0x0004
 extern int	scdebug;
 #endif
+
+/*
+ * These variables are needed by /sbin/savecore
+ */
+u_long	dumpmag = 0x8fca0101;	/* magic number */
+int 	dumpsize = 0;		/* pages */
+long	dumplo = 0; 		/* blocks */
 
 /* VM */
 static psize_t	mem_cluster_init(paddr_t);

@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.2 2001/02/07 15:29:21 uch Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.3 2001/02/21 16:28:03 uch Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -70,8 +70,8 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 	printf("\n");
 
 	mba.mba_sba.iba_busname = "shb";
-	mba.mba_sba.iba_iot = 0;
-	mba.mba_sba.iba_memt = 0;
+	mba.mba_sba.iba_iot = BUS_SPACE_TAG_ANONYMOUS;
+	mba.mba_sba.iba_memt = BUS_SPACE_TAG_ANONYMOUS;
 
 	config_found(self, &mba.mba_sba, mainbus_print);
 }
