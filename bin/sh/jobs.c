@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)jobs.c	8.1 (Berkeley) 5/31/93";*/
-static char *rcsid = "$Id: jobs.c,v 1.13 1994/12/04 07:12:15 cgd Exp $";
+static char *rcsid = "$Id: jobs.c,v 1.14 1994/12/23 13:24:41 cgd Exp $";
 #endif /* not lint */
 
 #include "shell.h"
@@ -509,7 +509,8 @@ makejob(node, nprocs)
 		jp->ps = &jp->ps0;
 	}
 	INTON;
-	TRACE(("makejob(0x%x, %d) returns %%%d\n", (int)node, nprocs, jp - jobtab + 1));
+	TRACE(("makejob(0x%lx, %d) returns %%%d\n", (long)node, nprocs,
+	    jp - jobtab + 1));
 	return jp;
 }	
 
@@ -538,7 +539,8 @@ forkshell(jp, n, mode)
 	int pid;
 	int pgrp;
 
-	TRACE(("forkshell(%%%d, 0x%x, %d) called\n", jp - jobtab, (int)n, mode));
+	TRACE(("forkshell(%%%d, 0x%lx, %d) called\n", jp - jobtab, (long)n,
+	    mode));
 	INTOFF;
 	pid = fork();
 	if (pid == -1) {

@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)trap.c	8.1 (Berkeley) 5/31/93";*/
-static char *rcsid = "$Id: trap.c,v 1.10 1994/12/05 19:07:57 cgd Exp $";
+static char *rcsid = "$Id: trap.c,v 1.11 1994/12/23 13:24:43 cgd Exp $";
 #endif /* not lint */
 
 #include "shell.h"
@@ -146,7 +146,7 @@ clear_traps() {
  * out what it should be set to.
  */
 
-int
+long
 setsignal(signo) 
 	int signo;
 {
@@ -215,7 +215,7 @@ setsignal(signo)
 		case S_IGN:	sigact = SIG_IGN;	break;
 	}
 	*t = action;
-	return (int)signal(signo, sigact);
+	return (long)signal(signo, sigact);
 }
 
 /*
