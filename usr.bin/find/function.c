@@ -1,4 +1,4 @@
-/*	$NetBSD: function.c,v 1.41 2002/09/27 15:56:27 provos Exp $	*/
+/*	$NetBSD: function.c,v 1.42 2003/01/26 07:07:31 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "from: @(#)function.c	8.10 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: function.c,v 1.41 2002/09/27 15:56:27 provos Exp $");
+__RCSID("$NetBSD: function.c,v 1.42 2003/01/26 07:07:31 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -1292,6 +1292,7 @@ f_printx(plan, entry)
 
 	for (cp = entry->fts_path; *cp; cp++) {
 		if (*cp == '\'' || *cp == '\"' || *cp == ' ' ||
+		    *cp == '$'  || *cp == '`'  ||
 		    *cp == '\t' || *cp == '\n' || *cp == '\\')
 			fputc('\\', stdout);
 
