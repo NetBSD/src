@@ -1,4 +1,4 @@
-/*	$NetBSD: hdfd.c,v 1.22 2000/04/07 16:58:55 thorpej Exp $	*/
+/*	$NetBSD: hdfd.c,v 1.23 2000/05/09 10:29:01 leo Exp $	*/
 
 /*-
  * Copyright (c) 1996 Leo Weppelman
@@ -79,6 +79,9 @@
 #include <sys/fdio.h>
 #include <sys/conf.h>
 #include <sys/device.h>
+
+#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/cpu.h>
 #include <machine/bus.h>
