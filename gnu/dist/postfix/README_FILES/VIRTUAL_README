@@ -270,11 +270,11 @@ domains):
         virtual_maps = hash:/etc/postfix/virtual
 
     /etc/postfix/virtual:
-        user@domain.name	user@domain.name, user@autoreply.domain.name
+        user@domain.tld	user@domain.tld, user@autoreply.domain.tld
 
 This delivers mail to the recipient, and sends a copy of the mail
 to the address that produces automatic replies. The address can be
 serviced on a different machine, or it can be serviced locally by
 setting up a transport map entry that pipes all mail for the
-autoreply.domain.name into some script that sends an automatic
+autoreply.domain.tld into some script that sends an automatic
 reply back to the sender.

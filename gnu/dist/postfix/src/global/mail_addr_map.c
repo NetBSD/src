@@ -94,7 +94,7 @@ ARGV   *mail_addr_map(MAPS *path, const char *address, int propagate)
 	 */
 	if (*string == '@') {
 	    buffer = vstring_alloc(100);
-	    if ((ratsign = strchr(address, '@')) != 0)
+	    if ((ratsign = strrchr(address, '@')) != 0)
 		vstring_strncpy(buffer, address, ratsign - address);
 	    else
 		vstring_strcpy(buffer, address);

@@ -113,6 +113,9 @@
 
 int     rec_put_type(VSTREAM *stream, int type, long offset)
 {
+    if (type < 0 || type > 255)
+	msg_panic("rec_put_type: bad record type %d", type);
+
     if (msg_verbose > 2)
 	msg_info("rec_put_type: %d at %ld", type, offset);
 
@@ -130,6 +133,9 @@ int     rec_put(VSTREAM *stream, int type, const char *data, int len)
 {
     int     len_rest;
     int     len_byte;
+
+    if (type < 0 || type > 255)
+	msg_panic("rec_put: bad record type %d", type);
 
     if (msg_verbose > 2)
 	msg_info("rec_put: type %c len %d data %.10s", type, len, data);

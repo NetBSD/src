@@ -1,3 +1,5 @@
+#	$NetBSD: sample-regexp-header.cf,v 1.1.1.2 2002/06/08 22:36:16 itojun Exp $
+#
 # Sample regexp message header filter lookup "table". See regexp_table(5)
 # for a description of the syntax.
 #
@@ -22,6 +24,7 @@
 #   REJECT text.... The text is sent to the originator.
 #   IGNORE          the header line is silently discarded.
 #   WARN            the header is logged (not rejected) with a warning.
+#   WARN text...    As above, and the text is logged, too.
 
 /^Subject: Make Money Fast/	REJECT
 /^To: friend@public.com/	REJECT

@@ -77,6 +77,7 @@
 #include <record.h>
 #include <rec_type.h>
 #include <cleanup_user.h>
+#include <mail_params.h>
 
 /* Application-specific. */
 
@@ -86,16 +87,42 @@
 
 void    cleanup_out(CLEANUP_STATE *state, int type, char *string, int len)
 {
-    if (CLEANUP_OUT_OK(state)) {
-	if (rec_put(state->dst, type, string, len) < 0) {
-	    if (errno == EFBIG) {
-		msg_warn("%s: queue file size limit exceeded",
-			 state->queue_id);
-		state->errs |= CLEANUP_STAT_SIZE;
-	    } else {
-		msg_warn("%s: write queue file: %m", state->queue_id);
-		state->errs |= CLEANUP_STAT_WRITE;
-	    }
+    int     err = 0;
+
+    /*
+     * Long message header lines have to be read and written as multiple
+     * records. Other header/body content, and envelope data, is copied one
+     * record at a time. Be sure to not skip a zero-length request.
+     * 
+     * XXX We don't know if we're writing a message header or not, but that is
+     * not a problem. A REC_TYPE_NORM or REC_TYPE_CONT record can always be
+     * chopped up into an equivalent set of REC_TYPE_CONT plus REC_TYPE_NORM
+     * records.
+     */
+    if (CLEANUP_OUT_OK(state) == 0)
+	return;
+
+#define TEXT_RECORD(t)	((t) == REC_TYPE_NORM || (t) == REC_TYPE_CONT)
+
+    do {
+	if (len > var_line_limit && TEXT_RECORD(type)) {
+	    err = rec_put(state->dst, REC_TYPE_CONT, string, var_line_limit);
+	    string += var_line_limit;
+	    len -= var_line_limit;
+	} else {
+	    err = rec_put(state->dst, type, string, len);
+	    break;
+	}
+    } while (len > 0 && err >= 0);
+
+    if (err < 0) {
+	if (errno == EFBIG) {
+	    msg_warn("%s: queue file size limit exceeded",
+		     state->queue_id);
+	    state->errs |= CLEANUP_STAT_SIZE;
+	} else {
+	    msg_warn("%s: write queue file: %m", state->queue_id);
+	    state->errs |= CLEANUP_STAT_WRITE;
 	}
     }
 }

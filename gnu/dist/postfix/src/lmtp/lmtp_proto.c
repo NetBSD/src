@@ -294,12 +294,12 @@ static int lmtp_loop(LMTP_STATE *state, int send_state, int recv_state)
      * Macros for readability. XXX Aren't LMTP addresses supposed to be case
      * insensitive?
      */
-#define REWRITE_ADDRESS(addr) do { \
-	  if (*(addr)) { \
-	      quote_821_local(state->scratch, addr); \
-	      myfree(addr); \
-	      addr = mystrdup(vstring_str(state->scratch)); \
-	      lowercase(addr); \
+#define REWRITE_ADDRESS(dst, src) do { \
+	  if (*(src)) { \
+	      quote_821_local(dst, src); \
+	      lowercase(vstring_str(dst)); \
+	  } else { \
+	      vstring_strcpy(dst, src); \
 	  } \
     } while (0)
 
@@ -357,10 +357,10 @@ static int lmtp_loop(LMTP_STATE *state, int send_state, int recv_state)
 	     * Build the MAIL FROM command.
 	     */
 	case LMTP_STATE_MAIL:
-	    if (*request->sender)
-		REWRITE_ADDRESS(request->sender);
-	    vstring_sprintf(next_command, "MAIL FROM:<%s>", request->sender);
-	    if (state->features & LMTP_FEATURE_SIZE)
+	    REWRITE_ADDRESS(state->scratch, request->sender);
+	    vstring_sprintf(next_command, "MAIL FROM:<%s>",
+			    vstring_str(state->scratch));
+	    if (state->features & LMTP_FEATURE_SIZE)	/* RFC 1652 */
 		vstring_sprintf_append(next_command, " SIZE=%lu",
 				       request->data_size);
 	    next_state = LMTP_STATE_RCPT;
@@ -372,8 +372,9 @@ static int lmtp_loop(LMTP_STATE *state, int send_state, int recv_state)
 	     */
 	case LMTP_STATE_RCPT:
 	    rcpt = request->rcpt_list.info + send_rcpt;
-	    REWRITE_ADDRESS(rcpt->address);
-	    vstring_sprintf(next_command, "RCPT TO:<%s>", rcpt->address);
+	    REWRITE_ADDRESS(state->scratch, rcpt->address);
+	    vstring_sprintf(next_command, "RCPT TO:<%s>",
+			    vstring_str(state->scratch));
 	    if ((next_rcpt = send_rcpt + 1) == request->rcpt_list.len)
 		next_state = LMTP_STATE_DATA;
 	    break;

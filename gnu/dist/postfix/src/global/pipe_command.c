@@ -368,6 +368,7 @@ int     pipe_command(VSTREAM *src, VSTRING *why,...)
 	 * system a chance to recover, and try again later.
 	 */
     case -1:
+	msg_warn("fork: %m");
 	vstring_sprintf(why, "Delivery failed: %m");
 	return (PIPE_STAT_DEFER);
 

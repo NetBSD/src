@@ -6052,7 +6052,288 @@ Apologies for any names omitted.
 	and /usr/sbin/sendmail differ, and will propose to replace
 	one by a symlink to the other. File: conf/postfix-script.
 
+20020204
+
+	Sanity: additional permission checks for "postfix check"
+	that warn for setgid_group group ownership mismatches.  by
+	Matthias Andree, uni-dortmund.de. File: conf/postfix-script.
+
+	Bugfix: "postfix check" used a too simplistic way to
+	recognize file ownership (grepping ls output). It now uses
+	the recently discovered "find -prune".  Peter Bieringer,
+	Matthias Andree. File: conf/postfix-script.
+
+20020218
+
+	Workaround: log a warning and disconnect when an SMTP client
+	ignores our negative replies and starts sending message
+	content without permission. File: smtpd/smtpd.c.
+
+20020220
+
+	Bugfix: mismatch in the file being locked by dict_dbm and
+	the file being locked by postmap, so that locks did not
+	work correctly.  Victor Duchovni, Morgan Stanley.
+
+20020222
+
+	Workaround: Solaris bug 4380626: strcasecmp() and strncasecmp()
+	produce incorrect results with 8-bit characters. For example,
+	non-ASCII characters could compare equal to ASCII characters,
+	and that could result in any number of security problems.
+	Files:  util/strcasecmp.c, COPYRIGHT (the BSD license).
+
+	Bugfix: off-by-one error, causing a null byte to be written
+	outside dynamically allocated memory in the queue manager
+	with addresses of exactly 100 bytes long, resulting in
+	SIGSEGV on systems with an "exact fit" malloc routine.
+	Experienced by Ralf Hildebrandt; diagnosed by Victor
+	Duchovny. Files:  *qmgr/qmgr_message.c.  This is not a
+	security problem.
+
+	Bugfix: make all recipient comparisons transitive, because
+	Solaris qsort() causes SIGSEGV errors otherwise. Victor
+	Duchovny, Morgan Stanley. File: *qmgr/qmgr_message.c.
+
+20020302
+
+	Bugfix: don't strip source route (@domain...:) when the
+	result would be an empty address. This avoids problems when
+	append_at_myorigin is set to "no" (which is not supported).
+	Problem reported by Charles McColgan, Big Fish Communications.
+	File:  trivial-rewrite/rewrite.c.
+
+20020304
+
+	Cleanup: postqueue should not not complain when output
+	fails with "broken pipe".
+
+20020308
+
+	Bugfix? reply with 550 not 552 when content is rejected.
+	552 is reserved for "too much mail".
+
+	Documentation: add note to sendmail manual page that running
+	"sendmail -bs" as $mail_owner enables SMTP server UCE and
+	access control checks. This is meant for use from inetd etc.
+	Matthias Andree.
+
+20020311
+
+	Bugfix: DBM maps should use different files for locking
+	and for change detection.  Problem reported by Victor
+	Duchovny, Morgan Stanley.  Files: util/dict.h util/dict.c
+	util/dict_db.c util/dict_dbm.c global/mkmap.c local/alias.c.
+
+20020313
+
+	Bugfix: mailq could show addresses with unusual characters
+	twice.  Problem reported by Victor Duchovny, Morgan Stanley.
+	File: showq/showq.c.
+
+	Bugfix: null recipients weren't properly recorded in
+	bounce/defer logfiles. Such recipient addresses are not
+	accepted in SMTP mail, but they could appear within locally
+	submitted mail.  File: bounce/bounce_append_service.c.
+
+20020318
+
+	Workaround: Berkeley DB can't handle null key lookups,
+	which happen with HELO names ending in ".".  Victor Duchovni,
+	Morgan Stanley. File: smtpd/smtpd_check.c.
+
+	Logging: log a hint when mail is deferred because the
+	soft_bounce parameter is set. People sometimes forget to
+	turn it off. File: global/bounce.c.
+
+20020319
+
+	Cleanup: add a msg_warn() call when fork() fails in
+	pipe_command(), to make problems easier to investigate.
+	Chris Wedgwood. File:  global/pipe_command.c.
+
+20020324
+
+	Cleanup: more graceful handling of long physical message
+	header lines upon input. Physical header lines can now
+	extend up to $header_size_limit characters. When a logical
+	message header is too long, the excess text is discarded
+	and Postfix no longer switches to body mode, to avoid
+	breaking MIME encapsulation.  Based on code by Victor
+	Duchovni, Morgan Stanley.  Files:  cleanup/cleanup_out.c,
+	cleanup/cleanup_message.c.
+
+	Cleanup: more graceful handling of long physical message
+	header or body lines upon output by the SMTP client. The
+	SMTP client output line length is controlled by a new
+	parameter smtp_line_length_limit (default: 990; specify 0
+	to disable the limit). Long lines are folded by inserting
+	<CR> <LF> <SPACE>, to avoid breaking MIME encapsulation.
+	Based on code by Victor Duchovni, Morgan Stanley.  File:
+	smtp/smtp_proto.c.
+
+20020325
+
+	Cleanup: allow additional text after a WARN command in a
+	header/body_checks pattern file, so that one can change
+	REJECT+text into WARN+text and vice versa. Based on code
+	by Fredrik Thulin, Stockholm University.
+
+	Cleanup: log a warning when an unknown command is found in
+	a header/body_checks pattern file, or when additional text
+	is found after a command that does not expect additional
+	text. Based on code by Fredrik Thulin, Stockholm University.
+
+	Bugfix: sendmail should not recognize "." as the end of
+	input when the current read operation started in the middle
+	of a line.  Victor Duchovni, Morgan Stanley. File:
+	sendmail/sendmail.c.
+
+20020328
+
+	Portability fix for OPENSTEP and NEXTSTEP by Gerben Wierda.
+	File: util/sys_defs.h.
+
+20020329
+
+	Bugfix: defer_transports broke because the flush server
+	triggered mail delivery (as if ETRN was sent) while doing
+	some internal housekeeping of per-destination logfiles.
+	Problem experienced by LaMont Jones, HP. File: flush/flush.c.
+
+	Bugfix: virtual mapping broke for addresses with embedded
+	whitespace. Fix by Victor Duchovni, Morgan Stanley. File:
+	cleanup/cleanup_map1n.c.
+
+20020330
+
+	Bugfix: postqueue did not pass on non-default configuration
+	directory settings when running showq while the mail system
+	is down.  The super-user is now exempted from environment
+	stripping in postqueue/postqueue.c. Problem reported by
+	Victor Duchovni, Morgan Stanley.
+
+20020414
+
+	Portability: Postfix will no longer attempt to build with
+	gdbm support, because gdbm is broken. File:  makedefs.
+
+20020417
+
+	Bugfix: the post-install script failed to upgrade master.cf
+	settings from private to public if the service was explicitly
+	configured as private.
+
+20020426
+
+	Bugfix: the SMTP client forgot to quote whitespace etc.
+	in a sender/recipient address when DNS lookup was turned
+	off (disable_dns_lookups = yes). Problem experienced by
+	Chip Paswater. Files: smtp/smtp_proto.c.
+
+20020503
+
+	Cleanup: postqueue silently ignored command-line arguments
+	following -p or -f options, instead of complaining; postqueue
+	produced an incorrect error message (mail system down) when
+	the command was installed with incorrect privileges.  File:
+	postqueue/postqueue.c.
+
+	Bugfix: while reporting a domain name or IP address syntax
+	error, postqueue could dereference a dangling pointer with
+	some getopt() implementations. LaMont Jones, HP.  File:
+	postqueue/postqueue.c.
+
+20020504
+
+	Portability: run-time test to avoid GDBM trouble.  File:
+	util/dict_dbm.c.
+
+20020508
+
+	Bugfix: close user@domain@postfix-style.virtual.domain
+	source routing relaying loophole involving postfix-style
+	virtual domains with @virtual.domain catch-all patterns.
+	Problem reported by Victor Duchovny. File:  smtpd/smtpd_check.c.
+
+	Bugfix: mail_addr_map() used the "wrong" @ character in
+	addresses with multiple @. Victor Duchovny. File:
+	global/mail_addr_map.c.
+
+	Bugfix: for address localpart quoting, now quote @ as a
+	special character everywhere, except when resolving addresses.
+	Previously, the @ was nowhere quoted as a special character,
+	not even in SMTP commands.  Files:  global/quote_82[12]_local.c
+	and some clients.
+
+20020509
+
+	Safety: don't allow an OK access rule lookup result for
+	user@domain@postfix-style.virtual.domain. Suggested by
+	Victor Duchovny, Morgan Stanley. File: smtpd/smtpd_check.c.
+
+	Bugfix: quote unquoted address localparts that need quoting.
+	Files: global/tok822_parse.c, global/quote_82[12]_local.c.
+
+20020512
+
+	Cleanup: the SMTP client logged and bounced the CNAME
+	expanded recipient address, and thereby complicated trouble
+	shooting.  File:  src/smtp_proto.c.
+
+	Bugfix: the SMTP and LMTP clients bounced the quoted
+	recipient address, resulting in too much quoting in bounce
+	reports.  Files:  src/smtp_proto.c, lmtp/lmtp_proto.c.
+
+20020513
+
+	Bugfix: the LDAP client used the "wrong" @ character in
+	addresses with multiple @. LaMont Jones, HP. File:
+	util/dict_ldap.c.
+
+	Compatibility: forwards "postqueue -r" compatibility with
+	the additional queue file records that are stored by snapshot
+	20050512.
+
+	Cleanup: specify "resolve_dequoted_address = no" to prevent
+	Postfix from looking inside quotes for extra @ etc. characters
+	when resolving an address. This behavior is technically
+	more correct, but it opens a mail relay loophole with "user
+	@domain"@domain when relaying mail to a Sendmail system.
+
+20020514
+
+	Bugfix: the new code for header address quoting sometimes
+	did not null terminate strings so that arbitrary garbage
+	could appear at the end of message headers.  Reported by
+	Ralf Hildebrandt.  File:  global/tok822_parse.c.
+
+	Safety: user@domain@domain is no longer accepted by the
+	permit_mx_backup uce restriction (unless Postfix is configured
+	with "resolve_dequoted_address = no"). Victor Duchovny,
+	Morgan Stanley. File: smtpd/smtpd_check.c.
+
+20020517
+
+	Cleanup: Mailbox-Line: message header labels should be
+	X-Mailbox-Line:  labels. Files: smtpd/smtpd.c, qmqpd/qmqpd.c.
+
+20020526
+
+	Bugfix: the SMTP server now disallows RCPT TO:<"">, just
+	like it disallows RCPT TO:<>.  File: smtpd/smtpd.c.
+
+	Documentation: replace domain.name by domain.tld in the
+	example config files. The domain exists. They were getting
+	mail from poorly configured Postfix boxes.
+
+	Bugfix: The Postfix sendmail command did not export the
+	MAIL_CONFIG environment setting to the postdrop command.
+	File: global/mail_config.h.
+
 Open problems:
+
+	Low: sendmail does not store null command-line recipients.
 
 	Low: don't do user@domain and @domain lookups in
 	local_recipient_maps queries.

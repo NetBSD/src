@@ -58,7 +58,7 @@
   */
 #define REC_TYPE_ENVELOPE	"MCTFILSDROWVA"
 #define REC_TYPE_CONTENT	"XLN"
-#define REC_TYPE_EXTRACT	"EDROPre"	/* NOT A */
+#define REC_TYPE_EXTRACT	"EDROPreA"
 #define REC_TYPE_NOEXTRACT	"E"
 
  /*

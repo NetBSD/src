@@ -83,4 +83,5 @@ pipe.o: ../../include/canon_addr.h
 pipe.o: ../../include/split_addr.h
 pipe.o: ../../include/off_cvt.h
 pipe.o: ../../include/quote_822_local.h
+pipe.o: ../../include/quote_flags.h
 pipe.o: ../../include/mail_server.h

@@ -53,16 +53,16 @@
 #        user@domain
 #               Matches the specified mail address.
 # 
-#        domain.name
-#               Matches  domain.name as the domain part of an email
+#        domain.tld
+#               Matches  domain.tld  as the domain part of an email
 #               address.
 # 
-#               The pattern domain.name  also  matches  subdomains,
-#               but  only  when  the  string  smtpd_access_maps  is
-#               listed in the Postfix  parent_domain_matches_subdo-
-#               mains  configuration  setting.   Otherwise, specify
-#               .domain.name (note the initial  dot)  in  order  to
-#               match subdomains.
+#               The pattern domain.tld also matches subdomains, but
+#               only when the string smtpd_access_maps is listed in
+#               the Postfix  parent_domain_matches_subdomains  con-
+#               figuration setting.  Otherwise, specify .domain.tld
+#               (note the initial dot) in  order  to  match  subdo-
+#               mains.
 # 
 #        user@  Matches  all mail addresses with the specified user
 #               part.
@@ -85,15 +85,15 @@
 #        networked  tables  such as NIS, LDAP or SQL, the following
 #        lookup patterns are examined in the order as listed:
 # 
-#        domain.name
-#               Matches domain.name.
+#        domain.tld
+#               Matches domain.tld.
 # 
-#               The pattern domain.name  also  matches  subdomains,
-#               but  only  when  the  string  smtpd_access_maps  is
-#               listed in the Postfix  parent_domain_matches_subdo-
-#               mains  configuration  setting.   Otherwise, specify
-#               .domain.name (note the initial  dot)  in  order  to
-#               match subdomains.
+#               The pattern domain.tld also matches subdomains, but
+#               only when the string smtpd_access_maps is listed in
+#               the Postfix  parent_domain_matches_subdomains  con-
+#               figuration setting.  Otherwise, specify .domain.tld
+#               (note the initial dot) in  order  to  match  subdo-
+#               mains.
 # 
 #        net.work.addr.ess
 # 

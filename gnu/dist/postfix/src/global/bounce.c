@@ -150,9 +150,10 @@ int     vbounce_append(int flags, const char *id, const char *recipient,
 			    ATTR_TYPE_STR, MAIL_ATTR_RECIP, recipient,
 			    ATTR_TYPE_STR, MAIL_ATTR_WHY, vstring_str(why),
 			    ATTR_TYPE_END) == 0) {
-	msg_info("%s: to=<%s>, relay=%s, delay=%d, status=%s (%s)",
+	msg_info("%s: to=<%s>, relay=%s, delay=%d, status=%s (%s%s)",
 		 id, recipient, relay, delay, var_soft_bounce ? "deferred" :
-		 "bounced", vstring_str(why));
+		 "bounced", var_soft_bounce ? "SOFT BOUNCE - " : "",
+		 vstring_str(why));
 	status = (var_soft_bounce ? -1 : 0);
     } else if ((flags & BOUNCE_FLAG_CLEAN) == 0) {
 	status = defer_append(flags, id, recipient, "bounce", delay,

@@ -174,7 +174,7 @@ do
     case $arg in
       *=*) IFS= eval $arg; IFS="$BACKUP_IFS";;
 -non-int*) non_interactive=1;;
-        *) echo $0: Error: $USAGE 1>&2; exit 1;;
+        *) echo "$0: Error: $USAGE" 1>&2; exit 1;;
     esac
     shift
 done

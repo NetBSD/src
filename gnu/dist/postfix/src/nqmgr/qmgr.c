@@ -184,13 +184,13 @@
 /* .SH "Timing controls"
 /* .ad
 /* .fi
-/* .IP \fBmin_backoff\fR
+/* .IP \fBminimal_backoff_time\fR
 /*	Minimal time in seconds between delivery attempts
 /*	of a deferred message.
 /* .sp
 /*	This parameter also limits the time an unreachable destination
 /*	is kept in the short-term, in-memory destination status cache.
-/* .IP \fBmax_backoff\fR
+/* .IP \fBmaximal_backoff_time\fR
 /*	Maximal time in seconds between delivery attempts
 /*	of a deferred message.
 /* .IP \fBmaximal_queue_lifetime\fR

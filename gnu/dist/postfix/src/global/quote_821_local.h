@@ -14,9 +14,16 @@
 #include <vstring.h>
 
  /*
+  * Global library.
+  */
+#include <quote_flags.h>
+
+ /*
   * External interface.
   */
-extern VSTRING *quote_821_local(VSTRING *, char *);
+extern VSTRING *quote_821_local_flags(VSTRING *, char *, int);
+#define quote_821_local(dst, src) \
+	quote_821_local_flags((dst), (src), QUOTE_FLAG_8BITCLEAN)
 
 /* LICENSE
 /* .ad

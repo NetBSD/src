@@ -111,9 +111,9 @@
 /*	Remove an empty "fast flush" logfile that was not updated in
 /*	this amount of time (default time unit: days).
 /* .IP \fBparent_domain_matches_subdomains\fR
-/*	List of Postfix features that use \fIdomain.name\fR patterns
-/*	to match \fIsub.domain.name\fR (as opposed to
-/*	requiring \fI.domain.name\fR patterns).
+/*	List of Postfix features that use \fIdomain.tld\fR patterns
+/*	to match \fIsub.domain.tld\fR (as opposed to
+/*	requiring \fI.domain.tld\fR patterns).
 /* SEE ALSO
 /*	smtpd(8) Postfix SMTP server
 /*	qmgr(8) Postfix queue manager
@@ -203,7 +203,15 @@ static DOMAIN_LIST *flush_domains;
   * name space: domain names versus safe-to-use pathnames.
   */
 static int flush_add_path(const char *, const char *);
-static int flush_send_path(const char *);
+static int flush_send_path(const char *, int);
+
+ /*
+  * Do we only refresh the per-destination logfile, or do we really request
+  * mail delivery as if someone sent ETRN? If the latter, we must override
+  * information about unavailable hosts or unavailable transports.
+  */
+#define REFRESH_ONLY		0
+#define REFRESH_AND_DELIVER	1
 
 /* flush_site_to_path - convert domain or [addr] to harmless string */
 
@@ -318,7 +326,7 @@ static int flush_add_path(const char *path, const char *queue_id)
 
 /* flush_send_service - flush mail queued for site */
 
-static int flush_send_service(const char *site)
+static int flush_send_service(const char *site, int how)
 {
     char   *myname = "flush_send_service";
     VSTRING *site_path;
@@ -337,7 +345,7 @@ static int flush_send_service(const char *site)
      * Map site name to path name and flush the log.
      */
     site_path = flush_site_to_path((VSTRING *) 0, site);
-    status = flush_send_path(STR(site_path));
+    status = flush_send_path(STR(site_path), how);
     vstring_free(site_path);
 
     return (status);
@@ -345,16 +353,19 @@ static int flush_send_service(const char *site)
 
 /* flush_send_path - flush logfile file */
 
-static int flush_send_path(const char *path)
+static int flush_send_path(const char *path, int how)
 {
     const char *myname = "flush_send_path";
     VSTRING *queue_id;
     VSTRING *queue_file;
     VSTREAM *log;
     struct utimbuf tbuf;
-    static char qmgr_trigger[] = {
+    static char qmgr_deliver_trigger[] = {
 	QMGR_REQ_SCAN_INCOMING,		/* scan incoming queue */
 	QMGR_REQ_FLUSH_DEAD,		/* flush dead site/transport cache */
+    };
+    static char qmgr_refresh_trigger[] = {
+	QMGR_REQ_SCAN_INCOMING,		/* scan incoming queue */
     };
     HTABLE *dup_filter;
     int     count;
@@ -463,8 +474,12 @@ static int flush_send_path(const char *path)
     if (count > 0) {
 	if (msg_verbose)
 	    msg_info("%s: requesting delivery for logfile %s", myname, path);
-	mail_trigger(MAIL_CLASS_PUBLIC, MAIL_SERVICE_QUEUE,
-		     qmgr_trigger, sizeof(qmgr_trigger));
+	if (how == REFRESH_ONLY)
+	    mail_trigger(MAIL_CLASS_PUBLIC, MAIL_SERVICE_QUEUE,
+			 qmgr_refresh_trigger, sizeof(qmgr_refresh_trigger));
+	else
+	    mail_trigger(MAIL_CLASS_PUBLIC, MAIL_SERVICE_QUEUE,
+			 qmgr_deliver_trigger, sizeof(qmgr_deliver_trigger));
     }
     return (FLUSH_STAT_OK);
 }
@@ -503,7 +518,7 @@ static int flush_refresh_service(int max_age)
 	} else if (st.st_atime + max_age < event_time()) {
 	    if (msg_verbose)
 		msg_info("%s: flush logfile %s", myname, site_path);
-	    flush_send_path(site_path);
+	    flush_send_path(site_path, REFRESH_ONLY);
 	} else {
 	    if (msg_verbose)
 		msg_info("%s: skip logfile %s, unread for <%d hours(s) ",
@@ -608,7 +623,8 @@ static void flush_service(VSTREAM *client_stream, char *unused_service,
 	    if (attr_scan(client_stream, ATTR_FLAG_STRICT,
 			  ATTR_TYPE_STR, MAIL_ATTR_SITE, site,
 			  ATTR_TYPE_END) == 1)
-		status = flush_send_service(lowercase(STR(site)));
+		status = flush_send_service(lowercase(STR(site)),
+					    REFRESH_AND_DELIVER);
 	    attr_print(client_stream, ATTR_FLAG_NONE,
 		       ATTR_TYPE_NUM, MAIL_ATTR_STATUS, status,
 		       ATTR_TYPE_END);

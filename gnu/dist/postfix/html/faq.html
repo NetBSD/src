@@ -1748,10 +1748,10 @@ all you need:
 
 <pre>
     DNS:
-        the.backed-up.domain.name        IN      MX 100 your.machine.name
+        the.backed-up.domain.tld        IN      MX 100 your.machine.tld
 
     /etc/postfix/main.cf:
-        relay_domains = $mydestination the.backed-up.domain.name
+        relay_domains = $mydestination the.backed-up.domain.tld
 	smtpd_recipient_restrictions = permit_mynetworks check_relay_domains
 </pre>
 
@@ -1767,7 +1767,7 @@ need:
         transport_maps = hash:/etc/postfix/transport
 
     /etc/postfix/transport:
-        the.backed-up.domain.name       smtp:[their.mail.host.name]
+        the.backed-up.domain.tld       smtp:[their.mail.host.tld]
 </pre>
 
 <p>
@@ -2208,14 +2208,14 @@ mail as user@domain</h3></a>
 
 <ul>
 
-<li>In order to send mail as <i>user@domain.name</i>, specify what
+<li>In order to send mail as <i>user@domain.tld</i>, specify what
 domain is to be appended to addresses that do not have a domain:
 
 <p>
 
 <pre>
 /etc/postfix/main.cf:
-    myorigin = domain.name
+    myorigin = domain.tld
 </pre>
 
 <p>
@@ -2720,7 +2720,7 @@ your system supports, use the command <b>postconf -m</b>.
 <a name="virtual_logging"><h3>Postfix logs delivery to virtual
 address with the wrong name</h3></a>
 
-When Postfix delivers mail for a virtual address <i>vuser@vdomain.name</i>
+When Postfix delivers mail for a virtual address <i>vuser@vdomain.tld</i>
 that is aliased to a local user, then Postfix logs the local username
 instead of the virtual one.
 
@@ -2743,15 +2743,15 @@ can be expensive if you have many virtual domains.
     recipient_delimiter = +
 
 /etc/postfix/virtual_regexp:
-    /^vdomain\.name$/            whatever
-    /(.*)@vdomain\.name$/        localuser+$1=vdomain.name
+    /^vdomain\.tld$/            whatever
+    /(.*)@vdomain\.tld$/        localuser+$1=vdomain.tld
 </pre>
 </blockquote>
 
 <p>
 
 This delivers the mail as
-<i>localuser+vuser=vdomain.name@your.domain</i>.
+<i>localuser+vuser=vdomain.tld@your.domain</i>.
 
 <hr>
 

@@ -72,6 +72,7 @@ CLEANUP_STATE *cleanup_state_alloc(void)
     state->err_mask = 0;
     state->header_buf = vstring_alloc(100);
     state->headers_seen = 0;
+    state->long_header = 0;
     state->hop_count = 0;
     state->recipients = argv_alloc(2);
     state->resent_recip = argv_alloc(2);

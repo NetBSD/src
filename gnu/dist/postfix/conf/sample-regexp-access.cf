@@ -1,3 +1,5 @@
+#	$NetBSD: sample-regexp-access.cf,v 1.1.1.2 2002/06/08 22:36:16 itojun Exp $
+#
 # Sample regexp SMTPD access lookup "table". See regexp_table(5)
 # and access(5) for a description of the syntax.
 #

@@ -111,6 +111,10 @@ List the mail queue. See the \fBmailq\fR command above.
 .IP \fB-bs\fR
 Stand-alone SMTP server mode. Read SMTP commands from
 standard input, and write responses to standard output.
+In stand-alone SMTP server mode, UCE restrictions and
+access controls are disabled by default. To enable them,
+run the process as the \fBmail_owner\fR user.
+.sp
 This mode of operation is implemented by running the
 \fBsmtpd\fR(8) daemon.
 .IP "\fB-f \fIsender\fR"

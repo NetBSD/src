@@ -51,7 +51,7 @@ The /some/where/filter program can be a simple shell script like this:
     exit $?
 
 The idea is to first capture the message to file and then run the
-content through run a third-party content filter program.  If the
+content through a third-party content filter program.  If the
 mail cannot be captured to file, mail delivery is deferred by
 terminating with exit status 75 (EX_TEMPFAIL).  If the content
 filter program finds a problem, the mail is bounced by terminating
@@ -213,7 +213,7 @@ a dedicated listener on port localhost 10026:
         localhost:10026     inet  n      -      n      -      10      smtpd
 	    -o content_filter= 
 	    -o local_recipient_maps=
-	    -o myhostname=localhost.domain.name
+	    -o myhostname=localhost.domain.tld
 
 This is just another SMTP server. It is configured NOT to request
 content filtering for incoming mail. The server has the same process

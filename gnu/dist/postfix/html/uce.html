@@ -48,6 +48,10 @@ command.
 
 <p>
 
+<li> <a href="#body_checks">Body filtering</a>
+
+<p>
+
 <li> <a href="#smtpd_client_restrictions">Client hostname/address
 restrictions</a>
 
@@ -93,8 +97,9 @@ restrictions</a>
 
 <h2> Header filtering</h2>
 
-The <b>header_checks</b> parameter restricts what
-is allowed in message headers.
+The <b>header_checks</b> parameter restricts what is allowed in
+message headers. Patterns are applied to entire logical message
+headers, even when a header spans multiple lines of text.
 
 <p>
 
@@ -124,6 +129,8 @@ the originator.
 
 <dt>WARN <dd> Log (but do not reject) the header with a warning.
 
+<dt>WARN text... <dd> As above, and also log the text.
+
 </dl>
 
 <p>
@@ -148,6 +155,70 @@ mail still to be rejected.</i>
 <dt>Example (header_checks):
 
 <dd> <tt>/^to: *friend@public\.com$/ REJECT</tt>
+
+<p>
+
+<a name="body_checks">
+
+<h2> Body filtering</h2>
+
+The <b>body_checks</b> parameter restricts what text is
+is allowed in message body lines (including MIME headers
+within the message body).
+
+<p>
+
+Note: the message body is matched one line at a time.
+There is no multi-line concept as with message headers.
+
+<p>
+
+<dl>
+
+<dt>Default:
+
+<dd>Allow anything in message body lines.
+
+<p>
+
+<dt>Syntax:
+
+<dd>Specify a list of zero or more lookup tables. Whenever a body
+line matches a table, the action depends on the lookup result:
+
+<p>
+
+<dl>
+
+<dt>REJECT <dd> Reject the message, and log the matched line.
+
+<dt>REJECT text... <dd> As above, and also send the text to
+the originator.
+
+<dt>IGNORE <dd> Delete the matched line from the message.
+
+<dt>WARN <dd> Log (but do not reject) the matched line with a warning.
+
+<dt>WARN text... <dd> As above, and also log the text.
+
+</dl>
+
+<p>
+
+<i>At present, specifying a pattern with OK serves no useful
+purpose. A rule ending in OK affects only the line being matched.
+The next line may still result in a REJECT match, causing the
+mail still to be rejected.</i>
+
+</dl>
+
+<p>
+
+<dt>Examples (main.cf):
+
+<dd> <b>body_checks = regexp:/etc/postfix/body_checks</b>
+
+<dd> <b>body_checks = pcre:/etc/postfix/body_checks</b>
 
 <p>
 
