@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.42 2004/03/21 14:22:52 pk Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.43 2004/03/21 14:28:47 pk Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.42 2004/03/21 14:22:52 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.43 2004/03/21 14:28:47 pk Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -191,7 +191,7 @@ pci_make_tag(pc, b, d, f)
 
 #ifdef DEBUG
 		if (sparc_pci_debug & SPDB_PROBE) {
-			printf("checking node %x %s\n", node
+			printf("checking node %x %s\n", node,
 			prom_getpropstringA(node, "name", name, sizeof(name)));
 			
 		}
@@ -210,8 +210,7 @@ pci_make_tag(pc, b, d, f)
 #ifdef DEBUG
 			if (sparc_pci_debug & SPDB_PROBE) {
 				OF_getprop(node, "name", &name, sizeof(name));
-				printf("going down to node %x %s\n",
-					node
+				printf("going down to node %x %s\n", node,
 					prom_getpropstringA(node, "name",
 							name, sizeof(name)));
 			}
