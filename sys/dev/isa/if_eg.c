@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eg.c,v 1.52 2000/12/14 06:59:02 thorpej Exp $	*/
+/*	$NetBSD: if_eg.c,v 1.53 2001/07/18 20:39:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993 Dean Huxley <dean@fsa.ca>
@@ -276,7 +276,7 @@ egreadPCB(iot, ioh, pcb)
 	bus_space_write_1(iot, ioh, EG_CONTROL,
 	    (bus_space_read_1(iot, ioh, EG_CONTROL) & ~EG_PCB_STAT) | EG_PCB_NULL);
 
-	bzero(pcb, EG_PCBLEN);
+	memset(pcb, 0, EG_PCBLEN);
 
 	if (egreadPCBready(iot, ioh))
 		return 1;
