@@ -1,4 +1,4 @@
-/*	$NetBSD: i82801lpcreg.h,v 1.1 2004/03/14 08:04:38 minoura Exp $	*/
+/*	$NetBSD: i82801lpcreg.h,v 1.2 2004/07/31 17:28:36 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -66,6 +66,7 @@
 #define LPCIB_PCI_D31_ERR_STS	0x8a
 #define LPCIB_PCI_PCI_DMA_C	0x90
 #define LPCIB_PCI_GEN_PMCON_1	0xa0
+# define LPCIB_PCI_GEN_PMCON_1_SS_EN	0x08
 #define LPCIB_PCI_GEN_PMCON_2	0xa2
 #define LPCIB_PCI_GEN_PMCON_3	0xa4
 #define LPCIB_PCI_STPCLK_DEL	0xa8
@@ -104,6 +105,8 @@
 #define LPCIB_PM1_TMR		0x08 /* ACPI PMTMR_BLK power mgmt timer */
 #define LPCIB_PROC_CNT		0x10 /* ACPI P_BLK processor control */
 #define LPCIB_LV2		0x14 /* ACPI P_BLK processor C2 control */
+#define LPCIB_PM_CTRL		0x20 /* ACPI Power Management Control */
+# define LPCIB_PM_SS_STATE_LOW	0x01 /* SpeedStep Low Power State */
 #define LPCIB_GPE0_STS		0x28 /* ACPI GPE0_BLK GPE0 status */
 #define LPCIB_GPE0_EN		0x2c /* ACPI GPE0_BLK GPE0 enable */
 #define LPCIB_SMI_EN		0x30
@@ -128,6 +131,8 @@
 #define LPCIB_DEVTRAP_EN	0x48
 #define LPCIB_BUS_ADDR_TRACK	0x4c
 #define LPCIB_BUS_CYC_TRACK	0x4e
+#define LPCIB_PM_SS_CNTL	0x50		/* SpeedStep control */
+# define LPCIB_PM_SS_CNTL_ARB_DIS	0x01	/* disable arbiter */
 
 /*
  * System management TCO registers
