@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.45 2002/03/02 16:23:42 martin Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.46 2002/04/29 16:29:29 martin Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.45 2002/03/02 16:23:42 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.46 2002/04/29 16:29:29 martin Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipx.h"
@@ -1640,12 +1640,13 @@ sppp_cp_input(const struct cp *cp, struct sppp *sp, struct mbuf *m)
 		if (upper == NULL)
 			catastrophic++;
 
-		log(LOG_INFO,
-		    SPP_FMT "%s: RXJ%c (%s) for proto 0x%x (%s/%s)\n",
-		    SPP_ARGS(ifp), cp->name, catastrophic ? '-' : '+',
-		    sppp_cp_type_name(h->type), proto,
-		    upper ? upper->name : "unknown",
-		    upper ? sppp_state_name(sp->state[upper->protoidx]) : "?");
+		if (debug)
+			log(LOG_INFO,
+			    SPP_FMT "%s: RXJ%c (%s) for proto 0x%x (%s/%s)\n",
+			    SPP_ARGS(ifp), cp->name, catastrophic ? '-' : '+',
+			    sppp_cp_type_name(h->type), proto,
+			    upper ? upper->name : "unknown",
+			    upper ? sppp_state_name(sp->state[upper->protoidx]) : "?");
 
 		/*
 		 * if we got RXJ+ against conf-req, the peer does not implement
@@ -2066,9 +2067,10 @@ sppp_lcp_down(struct sppp *sp)
 	 * try to reopen the connection here?
 	 */
 	if ((ifp->if_flags & (IFF_AUTO | IFF_PASSIVE)) == 0) {
-		log(LOG_INFO,
-		    SPP_FMT "Down event (carrier loss), taking interface down.\n",
-		    SPP_ARGS(ifp));
+		if (debug)
+			log(LOG_INFO,
+			    SPP_FMT "Down event (carrier loss), taking interface down.\n",
+			    SPP_ARGS(ifp));
 		if_down(ifp);
 	} else {
 		if (debug)
