@@ -1,4 +1,4 @@
-/*	$NetBSD: omron12x20.h,v 1.1 2000/11/24 15:47:15 tsutsui Exp $	*/
+/*	$NetBSD: omron12x20.h,v 1.2 2003/02/09 10:29:36 jdolecek Exp $	*/
 /*
  * Copyright (c) 1992 OMRON Corporation.
  * Copyright (c) 1992, 1993
@@ -44,7 +44,7 @@
  *	This file is generated from sys/luna68k/font/font.c in 4.4BSD-Lite2.
  */
 
-extern u_char omron12x20_data[];
+extern const u_char omron12x20_data[];
 
 struct wsdisplay_font omron12x20 = {
 	"omron12x20",			/* typeface name */
@@ -59,7 +59,7 @@ struct wsdisplay_font omron12x20 = {
 	omron12x20_data			/* data */
 };
 
-static u_char omron12x20_data[] = {
+static const u_char omron12x20_data[] = {
 
 			/* 0x20   (' ') */
 	0x00, 0x00,	/* ............ */

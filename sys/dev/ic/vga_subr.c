@@ -1,4 +1,4 @@
-/* $NetBSD: vga_subr.c,v 1.14 2003/01/31 21:57:26 tsutsui Exp $ */
+/* $NetBSD: vga_subr.c,v 1.15 2003/02/09 10:29:36 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga_subr.c,v 1.14 2003/01/31 21:57:26 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga_subr.c,v 1.15 2003/02/09 10:29:36 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,7 +95,7 @@ textram(struct vga_handle *vh)
 #ifndef VGA_RASTERCONSOLE
 void
 vga_loadchars(struct vga_handle *vh, int fontset, int first, int num, int lpc,
-	      char *data)
+	      const char *data)
 {
 	int offset, i, j, s;
 
