@@ -1,4 +1,4 @@
-/*	$NetBSD: pcictl.c,v 1.1 2001/09/13 23:51:04 thorpej Exp $	*/
+/*	$NetBSD: pcictl.c,v 1.2 2001/09/14 17:28:36 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -196,7 +196,7 @@ cmd_dump(int argc, char *argv[])
 	func = 0;
 	dev = -1;
 
-	while ((ch = getopt(argc, argv, "b:d:f")) != -1) {
+	while ((ch = getopt(argc, argv, "b:d:f:")) != -1) {
 		switch (ch) {
 		case 'b':
 			bus = parse_bdf(optarg);
