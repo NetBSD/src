@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.69 2002/12/22 02:17:26 mrg Exp $ */
+/*	$NetBSD: autoconf.c,v 1.70 2003/01/01 02:22:57 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -541,11 +541,11 @@ mbprint(aux, name)
 	struct mainbus_attach_args *ma = aux;
 
 	if (name)
-		printf("%s at %s", ma->ma_name, name);
+		aprint_normal("%s at %s", ma->ma_name, name);
 	if (ma->ma_address)
-		printf(" addr 0x%08lx", (u_long)ma->ma_address[0]);
+		aprint_normal(" addr 0x%08lx", (u_long)ma->ma_address[0]);
 	if (ma->ma_pri)
-		printf(" ipl %d", ma->ma_pri);
+		aprint_normal(" ipl %d", ma->ma_pri);
 	return (UNCONF);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.10 2002/10/02 16:02:31 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.11 2003/01/01 02:26:48 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -261,12 +261,12 @@ sun68k_bus_print(args, name)
 	struct mainbus_attach_args *ma = args;
 
 	if (name)
-		printf("%s:", name);
+		aprint_normal("%s:", name);
 
 	if (ma->ma_paddr != -1)
-		printf(" addr 0x%x", (unsigned int) ma->ma_paddr);
+		aprint_normal(" addr 0x%x", (unsigned int) ma->ma_paddr);
 	if (ma->ma_pri != -1)
-		printf(" ipl %d", ma->ma_pri);
+		aprint_normal(" ipl %d", ma->ma_pri);
 
 	return(UNCONF);
 }

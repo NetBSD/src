@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.58 2002/10/02 16:02:15 thorpej Exp $	*/
+/*	$NetBSD: obio.c,v 1.59 2003/01/01 02:20:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997,1998 The NetBSD Foundation, Inc.
@@ -217,9 +217,9 @@ obioprint(args, busname)
 	union obio_attach_args *uoba = args;
 	struct obio4_attach_args *oba = &uoba->uoba_oba4;
 
-	printf(" addr 0x%lx", (u_long)BUS_ADDR_PADDR(oba->oba_paddr));
+	aprint_normal(" addr 0x%lx", (u_long)BUS_ADDR_PADDR(oba->oba_paddr));
 	if (oba->oba_pri != -1)
-		printf(" level %d", oba->oba_pri);
+		aprint_normal(" level %d", oba->oba_pri);
 
 	return (UNCONF);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: hdc9224.c,v 1.24 2002/10/23 09:12:40 jdolecek Exp $ */
+/*	$NetBSD: hdc9224.c,v 1.25 2003/01/01 02:29:39 thorpej Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -257,7 +257,7 @@ hdcprint(void *aux, const char *name)
 	struct hdc_attach_args *ha = aux;
 
 	if (name)
-		printf ("RD?? at %s drive %d", name, ha->ha_drive);
+		aprint_normal ("RD?? at %s drive %d", name, ha->ha_drive);
 	return UNCONF;
 }
 

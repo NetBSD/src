@@ -1,4 +1,4 @@
-/*	$NetBSD: ibus.c,v 1.10 2002/10/02 16:02:35 thorpej Exp $ */
+/*	$NetBSD: ibus.c,v 1.11 2003/01/01 02:29:38 thorpej Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -52,7 +52,7 @@ ibus_print(void *aux, const char *name)
 	struct bp_conf *bp = aux;
 
 	if (name)
-		printf("device %s at %s", bp->type, name);
+		aprint_normal("device %s at %s", bp->type, name);
 
 	return (UNCONF);
 }

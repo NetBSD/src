@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.76 2002/10/02 16:02:34 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.77 2003/01/01 02:29:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -125,7 +125,7 @@ mainbus_print(aux, hej)
 	const char *hej;
 {
 	if (hej)
-		printf("nothing at %s", hej);
+		aprint_normal("nothing at %s", hej);
 	return (UNCONF);
 }
 

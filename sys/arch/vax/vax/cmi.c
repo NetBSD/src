@@ -1,4 +1,4 @@
-/*	$NetBSD: cmi.c,v 1.6 2002/10/02 16:02:35 thorpej Exp $ */
+/*	$NetBSD: cmi.c,v 1.7 2003/01/01 02:29:38 thorpej Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -53,9 +53,9 @@ cmi_print(void *aux, const char *name)
 	struct sbi_attach_args *sa = (struct sbi_attach_args *)aux;
 
 	if (name)
-		printf("unknown device 0x%x at %s", sa->sa_type, name);
+		aprint_normal("unknown device 0x%x at %s", sa->sa_type, name);
 
-	printf(" tr%d", sa->sa_nexnum);
+	aprint_normal(" tr%d", sa->sa_nexnum);
 	return (UNCONF);
 }
 
