@@ -1,4 +1,4 @@
-/*	$NetBSD: iic.c,v 1.1 2000/05/09 21:56:02 bjh21 Exp $	*/
+/*	$NetBSD: iic.c,v 1.2 2000/11/26 18:53:12 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -47,7 +47,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: iic.c,v 1.1 2000/05/09 21:56:02 bjh21 Exp $");
+__RCSID("$NetBSD: iic.c,v 1.2 2000/11/26 18:53:12 bjh21 Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -184,6 +184,7 @@ iic_getack(struct device *self)
 	ack = iic_get_state(self);
 	delay(4);
 	iic_set_state(self, 1, 0);
+	delay(5); /* Clock low time (4.7 us) */
 
 	return (ack & 1) == 0;
 }
