@@ -5,8 +5,8 @@ KEYCAPSRC=	keycap.src
 CFLAGS	+=	-DKEYCAP_PATH=\"$(CAPPATH)\"
 SRCS	=	keycap.c
 MAN3	=	keycap.${MAN3EXT}
-MAN5	=	man5/keycap.${MAN5EXT}
-#CLEANFILES+=	keycap.0 man5/keycap.0
+MAN5	=	keycap.${MAN5EXT}
+#CLEANFILES+=	keycap.0 keycap.0
 
 beforeinstall:
 	@if [ ! -d ${DESTDIR}${LIBDIR} ]; then mkdir ${DESTDIR}${LIBDIR};fi
