@@ -38,7 +38,7 @@
  * from: Utah $Hdr: machdep.c 1.63 91/04/24$
  *
  *	@(#)machdep.c	7.16 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.32 1994/06/21 03:59:29 chopps Exp $
+ *	$Id: machdep.c,v 1.33 1994/06/22 16:20:01 chopps Exp $
  */
 
 #include <sys/param.h>
@@ -440,6 +440,8 @@ identifycpu()
 		mach = "Amiga 4000";
 	else if (is_a3000())
 		mach = "Amiga 3000";
+	else if (is_a1200())
+		mach = "Amiga 1200";
 	else
 		mach = "Amiga 500/2000";
 

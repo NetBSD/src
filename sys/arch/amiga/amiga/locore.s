@@ -38,7 +38,7 @@
  * from: Utah $Hdr: locore.s 1.58 91/04/22$
  *
  *	@(#)locore.s	7.11 (Berkeley) 5/9/91
- *	$Id: locore.s,v 1.29 1994/06/16 15:05:02 chopps Exp $
+ *	$Id: locore.s,v 1.30 1994/06/22 16:19:58 chopps Exp $
  *
  * Original (hp300) Author: unknown, maybe Mike Hibler?
  * Amiga author: Markus Wild
@@ -1362,7 +1362,6 @@ Lres1:
 	pflusha				| flush entire TLB
 	jra	Lres3
 Lres2:
-|	.word	0xf4f8		| cpusha bc
 	.word	0xf518		| pflusha (68040)
 	movl	#CACHE40_ON,d0
 	movc	d0,cacr			| invalidate cache(s)
@@ -1526,7 +1525,6 @@ Lmc68851a:
 	rts
 Ltbia040:
 	.word	0xf518		| pflusha
-|	.word	0xf478		| cpush dc [cinv or cpush ??]
 	rts
 
 /*
@@ -1556,7 +1554,6 @@ Ltbis040:
 	moveq	#FC_USERD,d0		| select user
 	movc	d0,dfc
 	.word	0xf508		| pflush a0@
-|	.word	0xf478		| cpusha dc [cinv or cpush ??]
 	rts
 
 /*
@@ -1581,7 +1578,6 @@ Lmc68851c:
 Ltbias040:
 | 68040 can't specify supervisor/user on pflusha, so we flush all
 	.word	0xf518		| pflusha
-|	.word	0xf478		| cpusha dc [cinv or cpush ??]
 	rts
 
 /*
@@ -1606,7 +1602,6 @@ Lmc68851d:
 Ltbiau040:
 | 68040 can't specify supervisor/user on pflusha, so we flush all
 	.word	0xf518		| pflusha
-|	.word	0xf478		| cpusha dc [cinv or cpush ??]
 	rts
 
 /*
@@ -1775,7 +1770,6 @@ ENTRY(loadustp)
 	movc	d0,cacr			| invalidate on-chip d-cache
 	rts				|   since pmove flushes TLB
 Lldustp040:
-	.word	0xf478		| cpush dc
 	.word	0x4e7b,0x0806	| movec d0,URP
 	rts
 
@@ -2077,7 +2071,6 @@ Lm68881rdone:
 /*
  * Handle the nitty-gritty of rebooting the machine.
  *
- * DOES NOT YET WORK !!!!
  */
 	.globl	_doboot
 _doboot:
@@ -2209,6 +2202,13 @@ Lreload040:
 	.word	0x4e7b,0x3807	| movc d3,SRP
 Lreload2:
 
+	moveq	#0,d2			| clear unused registers
+	moveq	#0,d3
+	moveq	#0,d6
+	subl	a1,a1
+	subl	a2,a2
+	subl	a3,a3
+	subl	a5,a5
 	jmp	a6@			| start new kernel
 
 
