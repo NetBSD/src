@@ -1,4 +1,4 @@
-/*	$NetBSD: ucb1200reg.h,v 1.2 2000/01/12 14:56:22 uch Exp $ */
+/*	$NetBSD: ucb1200reg.h,v 1.3 2000/02/27 16:37:51 uch Exp $ */
 
 /*
  * Copyright (c) 2000, by UCHIYAMA Yasushi
@@ -51,6 +51,7 @@
 /*
  * I/O port data register
  */
+#define UCB1200_IOPORT_MAX		10
 #define UCB1200_IO_DATA_SPEAKER		0x100 /* XXX general? */
 
 /*
