@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.60 1996/02/17 16:00:22 jtk Exp $	*/
+/*	$NetBSD: st.c,v 1.61 1996/02/18 20:30:53 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -913,9 +913,9 @@ ststart(v)
 			return;
 		}
 
-		bp = st->buf_queue.b_actf;
-		if (!bp)
-			return;	/* no work to bother with */
+		dp = &st->buf_queue;
+		if ((bp = dp->b_actf) == NULL)
+			return;
 		if ((dp = bp->b_actf) != NULL)
 			dp->b_actb = bp->b_actb;
 		else
