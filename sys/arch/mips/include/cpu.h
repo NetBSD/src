@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.25.2.2 1998/10/30 08:33:37 nisimura Exp $	*/
+/*	$NetBSD: cpu.h,v 1.25.2.3 1998/11/14 15:49:05 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -175,6 +175,7 @@ struct user;
 
 /* trap.c */
 void	child_return __P((struct proc *));
+int	kdbpeek __P((vm_offset_t addr));
 
 /* mips_machdep.c */
 caddr_t	allocsys __P((caddr_t));

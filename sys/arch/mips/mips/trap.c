@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.93.2.2 1998/10/30 08:33:36 nisimura Exp $	*/
+/*	$NetBSD: trap.c,v 1.93.2.3 1998/11/14 15:49:05 drochner Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.93.2.2 1998/10/30 08:33:36 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.93.2.3 1998/11/14 15:49:05 drochner Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_inet.h"
@@ -854,7 +854,7 @@ interrupt(status, cause, pc)
 	/* simulated interrupt */
 	if ((mask & MIPS_SOFT_INT_MASK_1)
 		    || ((netisr|softisr) && (status & MIPS_SOFT_INT_MASK_1))) {
-		register isr, sisr;
+		register int isr, sisr;
 		isr = netisr; netisr = 0;
 		sisr = softisr; softisr = 0;
 		clearsoftnet();
@@ -931,7 +931,7 @@ ast(pc)
 /* XXX XXX XXX */
 #define	set_cp0sr(x)		\
 {				\
-	register _r = (x);	\
+	register int _r = (x);	\
 	__asm __volatile("	\
 		.set noreorder	; \
 		mtc0	%0, $12	; \
@@ -942,7 +942,7 @@ ast(pc)
 
 #define	get_fpcsr()		\
 ({				\
-	register _r;		\
+	register int _r;	\
 	__asm __volatile("	\
 		.set noreorder	; \
 		cfc1	%0, $31	; \
@@ -964,7 +964,7 @@ dealfpu(status, cause, opc)
 	unsigned opc;
 {
 	struct frame *f = (struct frame *)curproc->p_md.md_regs;
-	unsigned v0;
+	unsigned int v0;
 
 	set_cp0sr(status | MIPS_SR_COP_1_BIT);
 	v0 = get_fpcsr();
@@ -1304,7 +1304,6 @@ mips_singlestep(p)
 }
 
 #if defined(DEBUG) || defined(DDB)
-int	kdbpeek __P((vm_offset_t addr));
 extern void stacktrace __P((void)); /*XXX*/
 extern void logstacktrace __P((void)); /*XXX*/
 

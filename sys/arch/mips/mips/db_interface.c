@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.5.4.2 1998/10/21 11:27:45 nisimura Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.5.4.3 1998/11/14 15:49:05 drochner Exp $	*/
 
 /* 
  * Mach Operating System
@@ -69,7 +69,6 @@ void db_trapdump_cmd __P((db_expr_t addr, int have_addr, db_expr_t count,
 void db_tlbdump_cmd __P((db_expr_t addr, int have_addr, db_expr_t count,
 	 char *modif));
 
-extern int	kdbpeek __P((vm_offset_t addr));
 extern void	kdbpoke __P((vm_offset_t addr, int newval));
 extern unsigned MachEmulateBranch __P((unsigned *regsPtr,
      unsigned instPC, unsigned fpcCSR, int allowNonBranch));
@@ -295,7 +294,7 @@ db_tlbdump_cmd(addr, have_addr, count, modif)
 			u_int32_t tlb_lo;
 		} tlb;
 		int i;
-		extern mips1_TLBRead __P((int, struct mips1_tlb *));
+		extern void mips1_TLBRead __P((int, struct mips1_tlb *));
 
 		for (i = 0; i < MIPS1_TLB_NUM_TLB_ENTRIES; i++) {
 			mips1_TLBRead(i, &tlb);
@@ -442,10 +441,10 @@ inst_call(inst)
 	InstFmt i;
 	i.word = inst;
 
-	if (i.JType.op == OP_SPECIAL)
+	if (i.JType.op == OP_SPECIAL) {
 		if (i.RType.func == OP_JR || i.RType.func == OP_JAL)
 			rv = 1;
-	else if (i.JType.op == OP_JAL)
+	} else if (i.JType.op == OP_JAL)
 		rv = 1;
 
 #ifdef DEBUG_DDB
