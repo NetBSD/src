@@ -1,5 +1,5 @@
 /*
- * $NetBSD: main.c,v 1.6 1997/03/24 19:51:28 mycroft Exp $
+ * $NetBSD: main.c,v 1.7 1998/05/08 19:08:18 chopps Exp $
  *
  *
  * Copyright (c) 1996 Ignatios Souvatzis
@@ -94,7 +94,6 @@ pain()
 	u_int32_t I_flag = 0;
 	int	k_flag = 0;
 	int	p_flag = 0;
-	int	Z_flag = 0;
 	int	m_value = 0;
 	int	S_flag = 0;
 	int	t_flag = 0;
@@ -201,9 +200,6 @@ pain()
 					break;
 				case 'S':	/* include debug symbols */
 					S_flag = 1;
-					break;
-				case 'Z':	/* force chip memory load */
-					Z_flag = 1;
 					break;
 				}
 			}
@@ -370,6 +366,10 @@ pain()
                 printf("\nnewer bootblock required: %ld\n", (long)*kvers);
 		goto freeall;
 	}
+	if (*kvers < KERNEL_STARTUP_VERSION || *kvers == 0x4e73) {
+                printf("\nkernel too old for bootblock\n");
+		goto freeall;
+	}
 #if 0
         if (*kvers > KERNEL_STARTUP_VERSION)
 		printf("\nKernel V%ld newer than bootblock V%ld\n",
@@ -411,47 +411,34 @@ pain()
 	while (nseg-- > 0)
 		*kmemseg++ = *memseg++;
 
-	if (*kvers > 2 && Z_flag == 0) {
-		/*
-		 * Kernel supports direct load to fastmem, and the -Z
-		 * option was not specified.  Copy startup code to end
-		 * of kernel image and set start_it.
-		 */
-		if ((u_int32_t)kp < fmem) {
-			errno = EFBIG;
-			goto err;
-		}
-		memcpy(kp + ksize + 256, (char *)startit,
-		    (char *)startit_end - (char *)startit);
-		CacheClearU();
-		(caddr_t)start_it = kp + ksize + 256;
-		printf("*** Loading from %08lx to Fastmem %08lx ***\n",
-		    (u_long)kp, (u_long)fmem);
-		/* sleep(2); */
-	} else {
-		/*
-		 * Either the kernel doesn't suppport loading directly to
-		 * fastmem or the -Z flag was given.  Verify kernel image
-		 * fits into chipmem.
-		 */
-		if (ksize >= cmemsz) {
-			printf("Kernel size %d exceeds Chip Memory of %d\n",
-			    ksize, cmemsz);
-			return 20;
-		}
-		Z_flag = 1;
-		printf("*** Loading from %08lx to Chipmem ***\n", (u_long)kp);
+	/*
+	 * Kernel supports direct load to fastmem, and the -Z
+	 * option was not specified.  Copy startup code to end
+	 * of kernel image and set start_it.
+	 */
+#if 0
+	if ((u_int32_t)kp < fmem) {
+		errno = EFBIG;
+		goto err;
 	}
+#endif
+	memcpy(kp + ksize + 256, (char *)startit,
+	    (char *)startit_end - (char *)startit);
+	CacheClearU();
+	(caddr_t)start_it = kp + ksize + 256;
+	printf("*** Loading from %08lx to Fastmem %08lx ***\n",
+	    (u_long)kp, (u_long)fmem);
+	/* sleep(2); */
 
 #if 0
 	printf("would start(kp=0x%lx, ksize=%ld, entry=0x%lx,\n"
 		"fmem=0x%lx, fmemsz=%ld, cmemsz=%ld\n"
 		"boothow=0x%lx, esym=0x%lx, cpuid=0x%lx, eclock=%ld\n"
-		"amigaflags=0x%lx, I_flags=0x%lx, Zflag=%ld, ok?\n",
+		"amigaflags=0x%lx, I_flags=0x%lx, ok?\n",
 	    (u_long)kp, (u_long)ksize, eh->a_entry,
 	    (u_long)fmem, (u_long)fmemsz, (u_long)cmemsz,
 	    (u_long)boothowto, (u_long)esym, (u_long)cpuid, (u_long)eclock,
-	    (u_long)amiga_flags, (u_long)I_flag, (u_long)(Z_flag == 0));
+	    (u_long)amiga_flags, (u_long)I_flag);
 #endif
 #ifdef DEBUG_MEMORY_LIST
 	timelimit = 0;
@@ -462,7 +449,7 @@ pain()
 
 	start_it(kp, ksize, eh->a_entry, (void *)fmem, fmemsz, cmemsz,
 	    boothowto, esym, cpuid, eclock, amiga_flags, I_flag,
-	    aio_base >> 9, Z_flag == 0);
+	    aio_base >> 9, 1);
 	/*NOTREACHED*/
 
 freeall:
