@@ -1,4 +1,4 @@
-/*	$NetBSD: arp.c,v 1.34 2002/03/02 03:45:07 tv Exp $ */
+/*	$NetBSD: arp.c,v 1.34.2.1 2004/03/29 05:38:54 jmc Exp $ */
 
 /*
  * Copyright (c) 1984, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1984, 1993\n\
 #if 0
 static char sccsid[] = "@(#)arp.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: arp.c,v 1.34 2002/03/02 03:45:07 tv Exp $");
+__RCSID("$NetBSD: arp.c,v 1.34.2.1 2004/03/29 05:38:54 jmc Exp $");
 #endif
 #endif /* not lint */
 
@@ -466,6 +466,7 @@ dump(addr)
 		}
 		(void)printf("\n");
 	}
+	free(buf);
 }
 
 /*
@@ -505,6 +506,7 @@ delete_all(void)
 		snprintf(addr, sizeof(addr), "%s", inet_ntoa(sin->sin_addr));
 		delete(addr, NULL);
 	}
+	free(buf);
 }
 
 void
