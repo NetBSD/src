@@ -1,4 +1,4 @@
-/*	$NetBSD: if_el.c,v 1.27 1995/07/23 17:50:56 mycroft Exp $	*/
+/*	$NetBSD: if_el.c,v 1.28 1995/07/23 17:57:39 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, Matthew E. Kimmel.  Permission is hereby granted
@@ -88,9 +88,9 @@ static void el_start __P((struct ifnet *));
 static void el_watchdog __P((int));
 static void el_reset __P((struct el_softc *));
 static void el_stop __P((struct el_softc *));
-static int el_xmit __P((struct el_softc *, int));
-static inline void elread __P((struct el_softc *, caddr_t, int));
-static struct mbuf *elget __P((caddr_t, int, struct ifnet *));
+static int el_xmit __P((struct el_softc *));
+static inline void elread __P((struct el_softc *, int));
+static struct mbuf *elget __P((struct el_softc *, int, struct ifnet *));
 static inline void el_hardreset __P((struct el_softc *));
 
 int elprobe __P((struct device *, void *, void *));
