@@ -1,32 +1,86 @@
-Before you start you should familiarize yourself with the boot PROM
-of your machine.  The older Decstation 2100 and 3100 cannot select
-a kernel from the command line. You need to set the bootpath
-environment variable to point to the disk and kernel you intend to boot.
+Currently NetBSD/pmax supports three different installation methods.
+From most convenient to least convenient, they are:
 
-You should also examine the guide on the NetBSD/pmax web site, which
-has more complete and more up-to-date instructions than are given in
-the install document.
+	1. Booting as a diskless workstation via Ethernet,
+	   followed by initialization of the local disk and
+	   installing onto the local disk over NFS.
 
-	NOTE that the instructions on old versions of the web site
-	are incorrect. The installation miniroot image for both NetBSD 1.1
-	and 1.2 include the 8Kbytes reserved for bootblocks and disklabel.
-	The dd commands to write the miniroot to a freshly-labeleld
-	disk should have an 'skip=16' added to them, if the 'skip=16'
-	option is already present.
+	2. Copying a bootable diskimage onto the beginning of a disk
+	   and installing onto that disk 
+	3. installation using a helper machine to set up a bootable
+	   NetBSD/pmax  root filesystem, and moving the disk
+	   to the target.
+
+Before you start, you must choose an installation method.  If you have
+an Ethernet connection to an NFS server that can provide even ~30M for
+a diskless-root filesystem, then insatllation via the net is best.
+Next best, if your DECstation is already running Ultrix and has two
+disk drives (or one, if you live dangerously), is to copy a diskimage
+onto one drive.  Finally, you can install by using a second machine as
+a helper to prepare a bootable NetBSD/pmax disk.
+
+If your target is going to run diskless, then installation proceeds as for
+method 1.
+
+You should examine the guide on the NetBSD/pmax web site, which has
+more complete and more up-to-date instructions and tips than are given in
+this document.
+
+You should familiarize yourself with the console PROM environment
+and the hardware configuration. The PROMs on the older Decstation
+2100 and 3100 one syntax. The PROMs on the TurboChannel machines
+use a completely different syntax.  Be sure you know how to print
+the configuration of your machine, and how boot from disk or
+network, as appropriate.
+
+On the 2100/3100, that's
+	boot -f rz(0,N,0)netbsd		(boot from rzN)
+	boot -f tftp()			(boot diskless via TFTP)
+	boot -f tftp()			(boot via MOP from an Ultrix server)
+
+On the 5000/200, the equivalent is
+	boot 5/rzN/netbsd
+	boot 6/tftp
+	boot 6/mop
+
+and on other  5000 series machines,
+	boot 3/rzN/netbsd
+	boot 3/tftp
+	boot 3/mop
+
+You will also need to know the total size (in sectors) and the
+approximate geometry of the disks you are installing onto, so that
+you can label your disks for the BSD fast filesystem (FFS).  The
+system comes with sample disk labels for DEC-supplied SCSI drives.
+For third-party drives you will need to get head/sector/cylinder
+information.  For newer ZBR drives you can safely make this
+information up.
 
 
-If you're installing NetBSD/pmax for the first time it's a very good idea
-to look at the partition sizes of disk you intend installing NetBSD on.
-Changing the size of partitions after you've installed is difficult.
-If you do not have a spare bootable disk, it may be simpler to  re-install
-NetBSD again from scratch.
 
+If you're installing NetBSD/pmax for the first time it's a very good
+idea to pre-plan partition sizes for the disks on which you're
+installing NetBSD.  Changing the size of partitions after you've
+installed is difficult.  If you do not have a spare bootable disk, it
+may be simpler to re-install NetBSD again from scratch.
 
-Asumming a classic partition scheme with root (`/') and /usr filesystems,
-a comfortable size for the NetBSD root filesystem partition is about 20MB;
-a good initial size for the swap partition is twice the amount of physical
-memory in your machine (though, unlike Ultrix, there are no restrictions on
-the size of the swap partition that would render part of your memory
-unusable). A full binary installation, without X11 or other additional
-software, takes about 130MB in `/usr'.  This will be substantially reduced in
-the next release with support fo dynamically-linked shared libraries.
+If you install by copying a disk image, and you want to change the size
+of the root partition from the default 32Mbytes, you will need a second
+`scratch' disk. You should copy the diskimage onto the `scratch' disk,
+boot the scratch disk, and use it to create a tailored root filesystem.
+This is because you cannot change the size of an active partition (i.e.,
+the root filesysem you booted). The standard trick to get around this is
+to put a cut-down miniroot into the swap partition, boot the miniroot,
+and use that system to change the root filesystem size.  DECstation
+PROMs don't reliably support booting off partitions other than the 'a'
+partition, which is why you need two disks to tailor the root filesystem
+size.
+
+Assuming a classic partition scheme with separate root (`/') and /usr
+filesystems, a comfortable size for the NetBSD root filesystem partition
+is about 32M.  A good initial size for the swap partition is twice the
+amount of physical memory in your machine (though, unlike Ultrix, there
+are no restrictions on the size of the swap partition that would render
+part of your memory unusable).  The default swap size is 64Mbytes, which
+is adequate for doing a full system build.  A full binary installation,
+with X11R6.3, takes about 130MB in `/usr'.
