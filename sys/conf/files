@@ -1,25 +1,29 @@
-#	$NetBSD: files,v 1.125.2.4 1997/08/14 11:06:07 bouyer Exp $
+#	$NetBSD: files,v 1.125.2.5 1997/08/26 15:20:33 bouyer Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 # options understood by the machine-independent part of the kernel
 # (note, these are case-sensitive)
 defopt	KMEMSTATS
-defopt    TCP_RECVSPACE
-defopt    TCP_SENDSPACE
+defopt	TCP_RECVSPACE
+defopt	TCP_SENDSPACE
 
 # generic attributes
 define	disk
 define	tape
 define	ifnet
 define	tty
-define	audio
+define	audio { }
 define	scsi { [channel = -1] }
 define  atapi {}
 
 # audio device attributes
 define	mulaw
 define	auconv
+
+# audio device, attaches to audio hardware driver
+device	audio
+attach	audio at audio
 
 # net device attributes - we have generic code for arc(net), ether(net),
 # fddi, and atm.
@@ -65,8 +69,8 @@ file	dev/ic/bha.c		bha
 
 # Adaptec AHA-154x and AHA-164x controllers
 # (must be after bha, see above)
-device    aha: scsi
-file  dev/ic/aha.c        aha
+device	aha: scsi
+file  dev/ic/aha.c		aha
 
 # Qlogic ISP 10x0 SCSI Controllers
 device	isp: scsi
@@ -114,8 +118,8 @@ define	ncr53c9x
 file	dev/ic/ncr53c9x.c	ncr53c9x
 
 # Intel 82586 Ethernet Controller
-define    i82586
-file  dev/ic/i82586.c     i82586
+define	i82586
+file  dev/ic/i82586.c	 i82586
 
 # Attributes which machine-independent bus support can be attached to.
 # These should be defined here, because some of these busses can have
@@ -347,7 +351,7 @@ file netinet/tcp_subr.c			inet
 file netinet/tcp_timer.c		inet
 file netinet/tcp_usrreq.c		inet
 file netinet/udp_usrreq.c		inet
-file netinet/ip_auth.c			ipfilter    needs-flag
+file netinet/ip_auth.c			ipfilter	needs-flag
 file netinet/ip_fil.c			ipfilter
 file netinet/fil.c			ipfilter
 file netinet/ip_nat.c			ipfilter
