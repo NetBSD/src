@@ -1,7 +1,7 @@
-make: "cond1" line 18: warning: extra else
-make: "cond1" line 28: warning: extra else
+make: "cond1" line 55: warning: extra else
+make: "cond1" line 65: warning: extra else
 2 is  prime
-A='other' B='unknown'
+A='other' B='unknown' o='no,no'
 LIB=a X_LIBS:M${LIB${LIB:tu}} is "/tmp/liba.a"
 LIB=a X_LIBS:M*/lib${LIB}.a is "/tmp/liba.a"
 LIB=a X_LIBS:M*/lib${LIB}.a:tu is "/TMP/LIBA.A"
