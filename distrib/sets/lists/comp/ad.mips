@@ -45,4 +45,5 @@
 ./usr/include/mips/varargs.h
 ./usr/include/mips/vmparam.h
 ./usr/lib/c++rt0.o
+./usr/lib/crtn.o
 ./usr/share/man/cat1/objcopy.0
