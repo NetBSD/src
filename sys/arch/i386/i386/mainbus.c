@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.47 2003/01/01 01:24:19 thorpej Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.48 2003/01/07 18:54:08 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.47 2003/01/01 01:24:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.48 2003/01/07 18:54:08 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,13 +52,16 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.47 2003/01/01 01:24:19 thorpej Exp $")
 #include "mca.h"
 #include "apm.h"
 #include "pnpbios.h"
-#include "mpbios.h"
 #include "acpi.h"
 #include "vesabios.h"
+
+#include "opt_mpacpi.h"
+#include "opt_mpbios.h"
 
 #include <machine/cpuvar.h>
 #include <machine/i82093var.h>
 #include <machine/mpbiosvar.h>
+#include <machine/mpacpi.h>
 
 #if NAPM > 0
 #include <machine/bioscall.h>
@@ -71,6 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.47 2003/01/01 01:24:19 thorpej Exp $")
 
 #if NACPI > 0
 #include <dev/acpi/acpivar.h>
+#include <dev/acpi/acpi_madt.h>
 #endif
 
 #if NMCA > 0
@@ -133,6 +137,23 @@ struct isabus_attach_args mba_iba = {
  */
 int	eisa_has_been_seen;
 
+#if defined(MPBIOS) || defined(MPACPI)
+struct mp_bus *mp_busses;
+int mp_nbus;
+struct mp_intr_map *mp_intrs;
+int mp_nintr;
+ 
+int mp_isa_bus = -1;            /* XXX */
+int mp_eisa_bus = -1;           /* XXX */
+
+#ifdef MPVERBOSE
+int mp_verbose = 1;
+#else
+int mp_verbose = 0;
+#endif
+#endif
+
+
 /*
  * Probe for the mainbus; always succeeds.
  */
@@ -155,31 +176,18 @@ mainbus_attach(parent, self, aux)
 	void *aux;
 {
 	union mainbus_attach_args mba;
+#if NACPI > 0
+	int acpi_present = 0;
+#endif
+#ifdef MPBIOS
+	int mpbios_present = 0;
+#endif
+	int mpacpi_active = 0;
 
 	printf("\n");
 
-#if NMPBIOS > 0
-	if (mpbios_probe(self))
-		mpbios_scan(self);
-	else
-#endif
-	{
-		struct cpu_attach_args caa;
-		
-		memset(&caa, 0, sizeof(caa));
-		caa.caa_name = "cpu";
-		caa.cpu_number = 0;
-		caa.cpu_role = CPU_ROLE_SP;
-		caa.cpu_func = 0;
-		
-		config_found(self, &caa, mainbus_print);
-	}
-
-#if NVESABIOS > 0
-	if (vbeprobe()) {
-		mba.mba_vba.vaa_busname = "vesabios";
-		config_found(self, &mba.mba_vba, mainbus_print);
-	}
+#ifdef MPBIOS
+	mpbios_present = mpbios_probe(self);
 #endif
 
 #if NPCI > 0
@@ -187,6 +195,45 @@ mainbus_attach(parent, self, aux)
 	 * ACPI needs to be able to access PCI configuration space.
 	 */
 	pci_mode = pci_mode_detect();
+#endif
+
+#if NACPI > 0
+	acpi_present = acpi_probe();
+#ifdef MPACPI
+	/*
+	 * First, see if the MADT contains CPUs, and possibly I/O APICs.
+	 * Building the interrupt routing structures can only
+	 * be done later (via a callback).
+	 */
+	if (acpi_present)
+		mpacpi_active = mpacpi_scan_apics(self);
+#endif
+#endif
+
+	if (!mpacpi_active) {
+#ifdef MPBIOS
+		if (mpbios_present)
+			mpbios_scan(self);
+		else
+#endif
+		{
+			struct cpu_attach_args caa;
+			
+			memset(&caa, 0, sizeof(caa));
+			caa.caa_name = "cpu";
+			caa.cpu_number = 0;
+			caa.cpu_role = CPU_ROLE_SP;
+			caa.cpu_func = 0;
+			
+			config_found(self, &caa, mainbus_print);
+		}
+	}
+
+#if NVESABIOS > 0
+	if (vbeprobe()) {
+		mba.mba_vba.vaa_busname = "vesabios";
+		config_found(self, &mba.mba_vba, mainbus_print);
+	}
 #endif
 
 #if NISADMA > 0 && (NACPI > 0 || NPNPBIOS > 0)
@@ -198,7 +245,7 @@ mainbus_attach(parent, self, aux)
 #endif
 
 #if NACPI > 0
-	if (acpi_probe()) {
+	if (acpi_present) {
 		mba.mba_acpi.aa_busname = "acpi";
 		mba.mba_acpi.aa_iot = I386_BUS_SPACE_IO;
 		mba.mba_acpi.aa_memt = I386_BUS_SPACE_MEM;
