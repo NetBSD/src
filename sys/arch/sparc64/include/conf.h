@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.5 1999/06/05 20:38:25 eeh Exp $	*/
+/*	$NetBSD: conf.h,v 1.6 2000/04/14 08:36:39 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -93,6 +93,9 @@ cdev_decl(raid);
 
 bdev_decl(md);
 cdev_decl(md);
+
+cdev_decl(bpp);
+cdev_decl(lpt);
 
 cdev_decl(scsibus);
 
