@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socketcall.c,v 1.1 1995/02/28 23:25:17 fvdl Exp $	*/
+/*	$NetBSD: linux_socketcall.c,v 1.2 1995/05/28 08:09:51 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -72,7 +72,7 @@
 /*
  * Convert between Linux and BSD socket domain values
  */
-static int
+int
 linux_to_bsd_domain(ldom)
 	int ldom;
 {
@@ -94,7 +94,7 @@ linux_to_bsd_domain(ldom)
 	}
 }
 
-static int
+int
 linux_socket(p, args, retval)
 	struct proc *p;
 	struct linux_socket_args /* {
@@ -119,7 +119,7 @@ linux_socket(p, args, retval)
 	return socket(p, &bsa, retval);
 }
 
-static int
+int
 linux_bind(p, args, retval)
 	struct proc *p;
 	struct linux_bind_args /* {
@@ -143,7 +143,7 @@ linux_bind(p, args, retval)
 	return bind(p, &bba, retval);
 }
 
-static int
+int
 linux_connect(p, args, retval)
 	struct proc *p;
 	struct linux_connect_args /* {
@@ -167,7 +167,7 @@ linux_connect(p, args, retval)
 	return connect(p, &bca, retval);
 }
 
-static int
+int
 linux_listen(p, args, retval)
 	struct proc *p;
 	struct linux_listen_args /* {
@@ -189,7 +189,7 @@ linux_listen(p, args, retval)
 	return listen(p, &bla, retval);
 }
 
-static int
+int
 linux_accept(p, args, retval)
 	struct proc *p;
 	struct linux_accept_args /* {
@@ -213,7 +213,7 @@ linux_accept(p, args, retval)
 	return compat_43_accept(p, &baa, retval);
 }
 
-static int
+int
 linux_getsockname(p, args, retval)
 	struct proc *p;
 	struct linux_getsockname_args /* {
@@ -237,7 +237,7 @@ linux_getsockname(p, args, retval)
 	return compat_43_getsockname(p, &bga, retval);
 }
 
-static int
+int
 linux_getpeername(p, args, retval)
 	struct proc *p;
 	struct linux_getpeername_args /* {
@@ -261,7 +261,7 @@ linux_getpeername(p, args, retval)
 	return compat_43_getpeername(p, &bga, retval);
 }
 
-static int
+int
 linux_socketpair(p, args, retval)
 	struct proc *p;
 	struct linux_socketpair_args /* {
@@ -289,7 +289,7 @@ linux_socketpair(p, args, retval)
 	return socketpair(p, &bsa, retval);
 }
 
-static int
+int
 linux_send(p, args, retval)
 	struct proc *p;
 	struct linux_send_args /* {
@@ -315,7 +315,7 @@ linux_send(p, args, retval)
 	return compat_43_send(p, &bsa, retval);
 }
 
-static int
+int
 linux_recv(p, args, retval)
 	struct proc *p;
 	struct linux_recv_args *args;
@@ -336,7 +336,7 @@ linux_recv(p, args, retval)
 	return compat_43_recv(p, &bra, retval);
 }
 
-static int
+int
 linux_sendto(p, args, retval)
 	struct proc *p;
 	struct linux_sendto_args /* {
@@ -366,7 +366,7 @@ linux_sendto(p, args, retval)
 	return sendto(p, &bsa, retval);
 }
 
-static int
+int
 linux_recvfrom(p, args, retval)
 	struct proc *p;
 	struct linux_recvfrom_args /* {
@@ -395,7 +395,7 @@ linux_recvfrom(p, args, retval)
 	return compat_43_recvfrom(p, &bra, retval);
 }
 
-static int
+int
 linux_shutdown(p, args, retval)
 	struct proc *p;
 	struct linux_shutdown_args /* {
@@ -421,7 +421,7 @@ linux_shutdown(p, args, retval)
  * Convert socket option level from Linux to NetBSD value. Only SOL_SOCKET
  * is different, the rest matches IPPROTO_* on both systems.
  */
-static int
+int
 linux_to_bsd_sopt_level(llevel)
 	int llevel;
 {
@@ -437,7 +437,8 @@ linux_to_bsd_sopt_level(llevel)
  * Convert Linux IP level socket option number to NetBSD values.
  * Linux only implements IP_TOS and IP_TTL
  */
-static int linux_to_bsd_ip_sockopt(lopt)
+int
+linux_to_bsd_ip_sockopt(lopt)
 	int lopt;
 {
 	switch (lopt) {
@@ -453,7 +454,7 @@ static int linux_to_bsd_ip_sockopt(lopt)
 /*
  * Convert Linux socket level socket option numbers to NetBSD values.
  */
-static int
+int
 linux_to_bsd_so_sockopt(lopt)
 	int lopt;
 {
@@ -494,7 +495,7 @@ linux_to_bsd_so_sockopt(lopt)
  * are not (yet) converted, the ones currently implemented don't
  * need conversion, as they are the same on both systems.
  */
-static int
+int
 linux_setsockopt(p, args, retval)
 	struct proc *p;
 	struct linux_setsockopt_args /* {
@@ -540,7 +541,7 @@ linux_setsockopt(p, args, retval)
 /*
  * getsockopt(2) is very much the same as setsockopt(2) (see above)
  */
-static int
+int
 linux_getsockopt(p, args, retval)
 	struct proc *p;
 	struct linux_getsockopt_args /* {
