@@ -13,18 +13,15 @@
  * or in pipe mode.
  */
 
-/* $Id: minigzip.c,v 1.1.1.1 1996/09/12 15:33:10 gwr Exp $ */
+/* $Id: minigzip.c,v 1.2 1996/09/12 19:26:44 gwr Exp $ */
 
 #include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+
 #include "zlib.h"
 
-#ifdef STDC
-#  include <string.h>
-#  include <stdlib.h>
-#else
-   extern void exit  OF((int));
-#endif
-
+#define	OF(args) __P(args)
 
 #if defined(MSDOS) || defined(OS2) || defined(WIN32)
 #  include <fcntl.h>
