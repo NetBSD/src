@@ -1,4 +1,4 @@
-#	$NetBSD: majors.amiga,v 1.3 2002/10/04 18:28:26 elric Exp $
+#	$NetBSD: majors.amiga,v 1.4 2003/04/25 21:10:48 ragge Exp $
 #
 # Device majors for amiga
 #
@@ -54,3 +54,4 @@ device-major	wskbd		char 54			wskbd
 device-major	clockctl	char 55			clockctl
 device-major	systrace	char 56			systrace
 device-major	cgd		char 57  block 18	cgd
+device-major	ksyms		char 58			ksyms

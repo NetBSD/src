@@ -1,4 +1,4 @@
-#	$NetBSD: majors.evbsh3,v 1.3 2002/10/04 18:28:28 elric Exp $
+#	$NetBSD: majors.evbsh3,v 1.4 2003/04/25 21:10:52 ragge Exp $
 #
 # Device majors for evbsh3
 #
@@ -46,3 +46,4 @@ device-major	wdog		char 51			wdog
 device-major	clockctl	char 52			clockctl
 device-major	systrace	char 53			systrace
 device-major	cgd		char 54  block 19	cgd
+device-major	ksyms		char 55			ksyms

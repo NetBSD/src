@@ -1,4 +1,4 @@
-#	$NetBSD: majors.mvme68k,v 1.3 2002/10/04 18:28:31 elric Exp $
+#	$NetBSD: majors.mvme68k,v 1.4 2003/04/25 21:10:56 ragge Exp $
 #
 # Device majors for mvme68k
 #
@@ -37,3 +37,4 @@ device-major	svr4_net	char 38			compat_svr4
 device-major	clockctl	char 39			clockctl
 device-major	systrace	char 40			systrace
 device-major	cgd		char 41  block 17	cgd
+device-major	ksyms		char 42			ksyms

@@ -1,4 +1,4 @@
-#	$NetBSD: majors.playstation2,v 1.3 2002/10/04 18:28:33 elric Exp $
+#	$NetBSD: majors.playstation2,v 1.4 2003/04/25 21:11:00 ragge Exp $
 #
 # Device majors for playstation2
 #
@@ -43,3 +43,4 @@ device-major	uscanner	char 37			uscanner
 device-major	clockctl	char 38			clockctl
 device-major	systrace	char 39			systrace
 device-major	cgd		char 40  block 10	cgd
+device-major	ksyms		char 41			ksyms

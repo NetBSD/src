@@ -1,4 +1,4 @@
-#	$NetBSD: majors.acorn32,v 1.3 2002/10/04 18:28:25 elric Exp $
+#	$NetBSD: majors.acorn32,v 1.4 2003/04/25 21:10:47 ragge Exp $
 #
 # Device majors for acorn32
 #
@@ -67,3 +67,4 @@ device-major	isdntrc		char 82			isdntrc
 device-major	isdntel		char 83			isdntel
 device-major	clockctl	char 84			clockctl
 device-major	systrace	char 85			systrace
+device-major	ksyms		char 86			ksyms
