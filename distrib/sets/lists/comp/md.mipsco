@@ -1,4 +1,4 @@
-# $NetBSD: md.mipsco,v 1.4 2001/04/14 22:53:35 kleink Exp $
+# $NetBSD: md.mipsco,v 1.5 2001/04/15 15:33:09 kleink Exp $
 ./usr/include/mipsco	comp-c-include
 ./usr/include/mipsco/_G_config.h	comp-c-include
 ./usr/include/mipsco/ansi.h	comp-c-include
@@ -22,6 +22,7 @@
 ./usr/include/mipsco/ieee.h	comp-c-include
 ./usr/include/mipsco/ieeefp.h	comp-c-include
 ./usr/include/mipsco/int_const.h	comp-c-include
+./usr/include/mipsco/int_limits.h	comp-c-include
 ./usr/include/mipsco/int_mwgwtypes.h	comp-c-include
 ./usr/include/mipsco/int_types.h	comp-c-include
 ./usr/include/mipsco/intr.h	comp-c-include
