@@ -1,4 +1,4 @@
-/* $NetBSD: darwin_syscall.h,v 1.25 2003/06/05 12:28:01 manu Exp $ */
+/* $NetBSD: darwin_syscall.h,v 1.26 2003/09/02 21:31:03 manu Exp $ */
 
 /*
  * System call numbers.
@@ -34,7 +34,7 @@
 /* syscall: "break" ret: "int" args: "char *" */
 #define	DARWIN_SYS_break	17
 
-/* syscall: "getfsstat" ret: "int" args: "struct statfs *" "long" "int" */
+/* syscall: "getfsstat" ret: "int" args: "struct darwin_statfs *" "long" "int" */
 #define	DARWIN_SYS_getfsstat	18
 
 /* syscall: "olseek" ret: "long" args: "int" "long" "int" */
@@ -341,7 +341,10 @@
 /* syscall: "ogetdirentries" ret: "int" args: "int" "char *" "u_int" "long *" */
 #define	DARWIN_SYS_ogetdirentries	156
 
-/* syscall: "fstatfs" ret: "int" args: "int" "struct statfs *" */
+/* syscall: "statfs" ret: "int" args: "const char *" "struct darwin_statfs *" */
+#define	DARWIN_SYS_statfs	157
+
+/* syscall: "fstatfs" ret: "int" args: "int" "struct darwin_statfs *" */
 #define	DARWIN_SYS_fstatfs	158
 
 				/* 161 is excluded getfh */
