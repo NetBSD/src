@@ -1,4 +1,4 @@
-/*      $NetBSD: catman.c,v 1.18 2002/09/13 20:40:04 mycroft Exp $       */
+/*      $NetBSD: catman.c,v 1.19 2002/10/19 20:33:19 provos Exp $       */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -297,7 +297,7 @@ uniquepath(void)
 					}
 				} else {
 					len = readlink(manpaths.gl_pathv[i],
-							path, PATH_MAX);
+							path, PATH_MAX - 1);
 					if (len == -1)
 						continue;
 					if (!strcmp(path, manpaths.gl_pathv[j]))
