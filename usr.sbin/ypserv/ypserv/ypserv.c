@@ -1,4 +1,4 @@
-/*	$NetBSD: ypserv.c,v 1.15 2001/10/16 01:51:27 itojun Exp $	*/
+/*	$NetBSD: ypserv.c,v 1.16 2002/07/06 00:18:48 wiz Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ypserv.c,v 1.15 2001/10/16 01:51:27 itojun Exp $");
+__RCSID("$NetBSD: ypserv.c,v 1.16 2002/07/06 00:18:48 wiz Exp $");
 #endif
 
 #include <sys/types.h>
@@ -70,9 +70,7 @@ const char *clientstr;
 const char *svcname;
 #endif /* LIBWRAP */
 
-#ifdef __STDC__
 #define SIG_PF void(*)(int)
-#endif
 
 int	usedns;
 #ifdef DEBUG
@@ -85,10 +83,10 @@ int	foreground;
 int	lflag;
 #endif
 
-int	main __P((int, char *[]));
-void	usage __P((void));
+int	main(int, char *[]);
+void	usage(void);
 
-void	sighandler __P((int));
+void	sighandler(int);
 
 
 static
@@ -117,7 +115,7 @@ ypprog_2(struct svc_req *rqstp, SVCXPRT *transp)
 	} argument;
 	char *result;
 	xdrproc_t xdr_argument, xdr_result;
-	void *(*local) __P((void *, struct svc_req *));
+	void *(*local)(void *, struct svc_req *);
 #ifdef LIBWRAP
 	struct request_info req;
 	struct sockaddr *caller;
