@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.40 2001/11/10 13:33:41 lukem Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.41 2001/11/30 15:18:39 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.40 2001/11/10 13:33:41 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.41 2001/11/30 15:18:39 christos Exp $");
 
 #include "opt_nfsserver.h"
 
@@ -65,6 +65,8 @@ __KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.40 2001/11/10 13:33:41 lukem Exp $
 #include <nfs/nqnfs.h>
 #include <nfs/nfs_var.h>
 #endif
+
+#define MAX_READ_AHEAD	16 	/* XXXUBC 16 */
 
 int
 genfs_poll(v)
@@ -464,7 +466,7 @@ genfs_getpages(v)
 	struct vnode *devvp;
 	struct genfs_node *gp = VTOG(vp);
 	struct uvm_object *uobj = &vp->v_uobj;
-	struct vm_page *pg, *pgs[16];			/* XXXUBC 16 */
+	struct vm_page *pg, *pgs[MAX_READ_AHEAD];
 	struct ucred *cred = curproc->p_ucred;		/* XXXUBC curproc */
 	boolean_t async = (flags & PGO_SYNCIO) == 0;
 	boolean_t write = (ap->a_access_type & VM_PROT_WRITE) != 0;
@@ -476,7 +478,7 @@ genfs_getpages(v)
 		    vp, ap->a_offset >> 32, ap->a_offset, *ap->a_count);
 
 	/* XXXUBC temp limit */
-	if (*ap->a_count > 16) {
+	if (*ap->a_count > MAX_READ_AHEAD) {
 		panic("genfs_getpages: too many pages");
 	}
 
@@ -851,15 +853,19 @@ loopdone:
 raout:
 	if (!error && !async && !write && ((int)raoffset & 0xffff) == 0 &&
 	    PAGE_SHIFT <= 16) {
+		off_t rasize;
 		int racount;
 
-		racount = 1 << (16 - PAGE_SHIFT);
+		/* XXXUBC temp limit, from above */
+		racount = MIN(1 << (16 - PAGE_SHIFT), MAX_READ_AHEAD);
+		rasize = racount << PAGE_SHIFT;
 		(void) VOP_GETPAGES(vp, raoffset, NULL, &racount, 0,
 				    VM_PROT_READ, 0, 0);
 		simple_lock(&uobj->vmobjlock);
 
-		racount = 1 << (16 - PAGE_SHIFT);
-		(void) VOP_GETPAGES(vp, raoffset + 0x10000, NULL, &racount, 0,
+		/* XXXUBC temp limit, from above */
+		racount = MIN(1 << (16 - PAGE_SHIFT), MAX_READ_AHEAD);
+		(void) VOP_GETPAGES(vp, raoffset + rasize, NULL, &racount, 0,
 				    VM_PROT_READ, 0, 0);
 		simple_lock(&uobj->vmobjlock);
 	}
