@@ -1,4 +1,4 @@
-/*	$NetBSD: verify.c,v 1.19 2001/10/04 04:51:27 lukem Exp $	*/
+/*	$NetBSD: verify.c,v 1.20 2001/10/09 04:50:01 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)verify.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: verify.c,v 1.19 2001/10/04 04:51:27 lukem Exp $");
+__RCSID("$NetBSD: verify.c,v 1.20 2001/10/09 04:50:01 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -197,6 +197,7 @@ miss(NODE *p, char *tail)
 
 		if (!create)
 			continue;
+	/* XXXLUKEM: what about devices? */
 		if (chown(path, p->st_uid, p->st_gid)) {
 			(void)printf("%s: user/group/mode not modified: %s\n",
 			    path, strerror(errno));

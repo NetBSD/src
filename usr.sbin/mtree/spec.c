@@ -1,4 +1,4 @@
-/*	$NetBSD: spec.c,v 1.31 2001/10/05 15:32:57 lukem Exp $	*/
+/*	$NetBSD: spec.c,v 1.32 2001/10/09 04:50:01 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -74,7 +74,7 @@
 #if 0
 static char sccsid[] = "@(#)spec.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: spec.c,v 1.31 2001/10/05 15:32:57 lukem Exp $");
+__RCSID("$NetBSD: spec.c,v 1.32 2001/10/09 04:50:01 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -94,9 +94,11 @@ __RCSID("$NetBSD: spec.c,v 1.31 2001/10/05 15:32:57 lukem Exp $");
 
 #include "mtree.h"
 #include "extern.h"
+#include "pack_dev.h"
 
 size_t lineno;				/* Current spec line number. */
 
+static dev_t	 parsedev(char *);
 static void	 set(char *, NODE *);
 static void	 unset(char *, NODE *);
 
@@ -273,6 +275,9 @@ dump_nodes(const char *dir, NODE *root)
 		}
 		if (MATCHFLAG(F_MODE))
 			printf("mode=%#o ", cur->st_mode);
+		if (MATCHFLAG(F_DEV) &&
+		    (cur->type == F_BLOCK || cur->type == F_CHAR))
+			printf("device=%#x ", cur->st_rdev);
 		if (MATCHFLAG(F_NLINK))
 			printf("nlink=%d ", cur->st_nlink);
 		if (MATCHFLAG(F_SLINK))
@@ -302,16 +307,50 @@ dump_nodes(const char *dir, NODE *root)
 	}
 }
 
+static dev_t
+parsedev(char *arg)
+{
+#define MAX_PACK_ARGS	3
+	u_long	numbers[MAX_PACK_ARGS];
+	char	*p, *ep, *dev;
+	int	argc;
+	pack_t	*pack;
+	dev_t	result;
+
+	if ((dev = strchr(arg, ',')) != NULL) {
+		*dev++='\0';
+		if ((pack = pack_find(arg)) == NULL)
+			mtree_err("unknown format `%s'", arg);
+		argc = 0;
+		while ((p = strsep(&dev, ",")) != NULL) {
+			if (*p == '\0')
+				mtree_err("missing number");
+			numbers[argc++] = strtoul(p, &ep, 0);
+			if (*ep != '\0')
+				mtree_err("invalid number `%s'",
+				    p);
+			if (argc > MAX_PACK_ARGS)
+				mtree_err("too many arguments");
+		}
+		if (argc < 2)
+			mtree_err("not enough arguments");
+		result = (*pack)(argc, numbers);
+	} else {
+		result = (dev_t)strtoul(arg, &ep, 0);
+		if (*ep != '\0')
+			mtree_err("invalid device `%s'", arg);
+	}
+	return (result);
+}
+
 static void
 set(char *t, NODE *ip)
 {
-	int type;
-	gid_t gid;
-	uid_t uid;
-	char *kw, *val, *md;
-	void *m;
-	int value, len;
-	char *ep;
+	int	type, value, len;
+	gid_t	gid;
+	uid_t	uid;
+	char	*kw, *val, *md, *ep;
+	void	*m;
 
 	val = NULL;
 	for (; (kw = strtok(t, "= \t\n")) != NULL; t = NULL) {
@@ -326,10 +365,14 @@ set(char *t, NODE *ip)
 			if (*ep)
 				mtree_err("invalid checksum `%s'", val);
 			break;
+		case F_DEV:
+			ip->st_rdev = parsedev(val);
+			break;
 		case F_FLAGS:
 			if (strcmp("none", val) == 0)
 				ip->st_flags = 0;
-			else if (string_to_flags(&val, &ip->st_flags, NULL) != 0)
+			else if (string_to_flags(&val, &ip->st_flags, NULL)
+			    != 0)
 				mtree_err("invalid flag `%s'", val);
 			break;
 		case F_GID:
@@ -343,7 +386,6 @@ set(char *t, NODE *ip)
 			ip->st_gid = gid;
 			break;
 		case F_IGN:
-		case F_OPT:
 			/* just set flag bit */
 			break;
 		case F_MD5:
@@ -364,6 +406,9 @@ set(char *t, NODE *ip)
 			ip->st_nlink = (nlink_t)strtoul(val, &ep, 10);
 			if (*ep)
 				mtree_err("invalid link count `%s'", val);
+			break;
+		case F_OPT:
+			/* just set flag bit */
 			break;
 		case F_SIZE:
 			ip->st_size = (off_t)strtoq(val, &ep, 10);

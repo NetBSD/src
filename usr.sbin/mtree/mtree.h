@@ -1,4 +1,4 @@
-/*	$NetBSD: mtree.h,v 1.14 2001/10/05 01:03:25 lukem Exp $	*/
+/*	$NetBSD: mtree.h,v 1.15 2001/10/09 04:50:01 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -58,6 +58,7 @@ typedef struct _node {
 	gid_t	st_gid;				/* gid */
 #define	MBITS	(S_ISUID|S_ISGID|S_ISTXT|S_IRWXU|S_IRWXG|S_IRWXO)
 	mode_t	st_mode;			/* mode */
+	dev_t	st_rdev;			/* device type */
 	u_long	st_flags;			/* flags */
 	nlink_t	st_nlink;			/* link count */
 	char	*md5sum;			/* md5 checksum */
@@ -82,6 +83,7 @@ typedef struct _node {
 #define	F_FLAGS	0x00010000			/* file flags */
 #define F_MD5	0x00020000			/* md5 check sum */
 #define F_TAGS	0x00040000			/* tags */
+#define F_DEV	0x00080000			/* device type */
 	int	flags;				/* items set */
 
 #define	F_BLOCK	0x001				/* block special */
