@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_iop.c,v 1.14 2004/04/19 12:44:10 wiz Exp $	*/
+/*	$NetBSD: ld_iop.c,v 1.15 2004/10/28 07:07:40 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_iop.c,v 1.14 2004/04/19 12:44:10 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_iop.c,v 1.15 2004/10/28 07:07:40 yamt Exp $");
 
 #include "opt_i2o.h"
 #include "rnd.h"
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: ld_iop.c,v 1.14 2004/04/19 12:44:10 wiz Exp $");
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/buf.h>
+#include <sys/bufq.h>
 #include <sys/endian.h>
 #include <sys/dkio.h>
 #include <sys/disk.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: ss_scanjet.c,v 1.36 2004/09/18 00:21:03 mycroft Exp $	*/
+/*	$NetBSD: ss_scanjet.c,v 1.37 2004/10/28 07:07:45 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ss_scanjet.c,v 1.36 2004/09/18 00:21:03 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ss_scanjet.c,v 1.37 2004/10/28 07:07:45 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: ss_scanjet.c,v 1.36 2004/09/18 00:21:03 mycroft Exp 
 #include <sys/ioctl.h>
 #include <sys/malloc.h>
 #include <sys/buf.h>
+#include <sys/bufq.h>
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/device.h>
