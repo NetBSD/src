@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_exec_elf32.c,v 1.8 2001/11/13 02:09:05 lukem Exp $	*/
+/*	$NetBSD: netbsd32_exec_elf32.c,v 1.9 2002/05/31 00:49:42 eeh Exp $	*/
 /*	from: NetBSD: exec_aout.c,v 1.15 1996/09/26 23:34:46 cgd Exp */
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_exec_elf32.c,v 1.8 2001/11/13 02:09:05 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_exec_elf32.c,v 1.9 2002/05/31 00:49:42 eeh Exp $");
 
 #define	ELFSIZE		32
 
@@ -69,17 +69,40 @@ ELFNAME2(netbsd32,probe)(p, epp, eh, itp, pos)
 	vaddr_t *pos;
 {
 	int error;
-	size_t i;
-	const char *bp;
 
 	if ((error = ELFNAME2(netbsd,signature)(p, epp, eh)) != 0)
 		return error;
 
+	return ELFNAME2(netbsd32,probe_noteless)(p, epp, eh, itp, pos);
+}
+
+int
+ELFNAME2(netbsd32,probe_noteless)(p, epp, eh, itp, pos)
+	struct proc *p;
+	struct exec_package *epp;
+	void *eh;
+	char *itp;
+	vaddr_t *pos;
+{
+	int error;
+	size_t i;
+	const char *bp;
+
 	if (itp[0]) {
+		/* Translate interpreter name if needed */
 		if ((error = emul_find(p, NULL, epp->ep_esch->es_emul->e_path,
-				       itp, &bp, 0)) && 
-		    (error = emul_find(p, NULL, "", itp, &bp, 0)))
-			return error;
+			itp, &bp, 0)) != 0) {
+			/* 
+			 * See if we're chroot-ed.  Since it's the same OS,
+			 * there really shouldn't be any device node issues
+			 * so we might as well support chroot-ing to a 32-bit
+			 * installation.
+			 */
+			if ((error = emul_find(p, NULL, "/", itp, &bp, 0)) 
+				!= 0) {
+				return error;
+			}
+		}
 		if ((error = copystr(bp, itp, MAXPATHLEN, &i)) != 0)
 			return error;
 		free((void *)bp, M_TEMP);
