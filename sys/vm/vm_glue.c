@@ -71,6 +71,7 @@
 #include <vm/vm.h>
 #include <vm/vm_page.h>
 #include <vm/vm_kern.h>
+#include <vm/vm_user.h>
 
 #include <machine/cpu.h>
 
