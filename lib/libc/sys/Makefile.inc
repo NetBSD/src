@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.68 1997/10/16 23:12:32 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.69 1997/10/18 12:27:08 enami Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/17/93
 
 # sys sources
@@ -201,7 +201,6 @@ MLINKS+=setuid.2 setegid.2 setuid.2 seteuid.2 setuid.2 setgid.2
 MLINKS+=shmat.2 shmdt.2
 MLINKS+=stat.2 fstat.2 stat.2 lstat.2
 MLINKS+=statfs.2 fstatfs.2
-MLINKS+=swapctl.2
 MLINKS+=syscall.2 __syscall.2
 MLINKS+=truncate.2 ftruncate.2
 MLINKS+=utimes.2 futimes.2 utimes.2 lutimes.2
