@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.126 2003/10/30 01:43:10 simonb Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.127 2003/11/05 10:18:38 hannken Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.126 2003/10/30 01:43:10 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.127 2003/11/05 10:18:38 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -302,8 +302,7 @@ ffs_mount(mp, path, data, ndp, p)
 			/*
 			 * Changing from r/w to r/o
 			 */
-			if ((error = vn_start_write(NULL, &mp, V_WAIT)) != 0)
-				return (error);
+			vn_start_write(NULL, &mp, V_WAIT);
 			flags = WRITECLOSE;
 			if (mp->mnt_flag & MNT_FORCE)
 				flags |= FORCECLOSE;
@@ -343,8 +342,7 @@ ffs_mount(mp, path, data, ndp, p)
 		if ((fs->fs_flags & FS_DOSOFTDEP) &&
 		    !(mp->mnt_flag & MNT_SOFTDEP) && fs->fs_ronly == 0) {
 #ifdef notyet
-			if ((error = vn_start_write(NULL, &mp, V_WAIT)) != 0)
-				return (error);
+			vn_start_write(NULL, &mp, V_WAIT);
 			flags = WRITECLOSE;
 			if (mp->mnt_flag & MNT_FORCE)
 				flags |= FORCECLOSE;
@@ -365,8 +363,7 @@ ffs_mount(mp, path, data, ndp, p)
 		if (!(fs->fs_flags & FS_DOSOFTDEP) &&
 		    (mp->mnt_flag & MNT_SOFTDEP) && fs->fs_ronly == 0) {
 #ifdef notyet
-			if ((error = vn_start_write(NULL, &mp, V_WAIT)) != 0)
-				return (error);
+			vn_start_write(NULL, &mp, V_WAIT);
 			flags = WRITECLOSE;
 			if (mp->mnt_flag & MNT_FORCE)
 				flags |= FORCECLOSE;
