@@ -1,7 +1,8 @@
-$NetBSD: acronyms.comp,v 1.25 2003/10/29 13:47:39 wennmach Exp $
+$NetBSD: acronyms.comp,v 1.26 2003/10/29 13:52:25 wennmach Exp $
 
 ABI	application binary interface
 ACPI	advanced configuration and power interface
+ADC	analog [to] digital converter
 AGP	accelerated graphics port
 ANSI	American National Standards Institute
 API	application programming interface
@@ -29,7 +30,7 @@ CRLF	carriage return line feed
 CRT	cathode ray tube
 CSS	cascading style sheets
 CVS	concurrent versions system
-DAC	digital to analog conversor
+DAC	digital [to] analog converter
 DDC	display data channel
 DDR	double data rate
 DDWG	digital display working group
