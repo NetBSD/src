@@ -1,4 +1,4 @@
-#	$NetBSD: SHARKINST,v 1.4 1999/07/29 10:37:15 augustss Exp $
+#	$NetBSD: SHARKINST,v 1.5 1999/12/24 00:15:51 tron Exp $
 # From:  NetBSD: SHARK,v 1.23 1999/06/26 06:56:26 cgd Exp
 #
 #	SHARK Install Kernel
@@ -200,7 +200,7 @@ pseudo-device	bpfilter 8		# packet filter
 
 pseudo-device	pty	32		# pseudo-terminals
 #pseudo-device	tb	1		# tablet line discipline
-pseudo-device	vnd	4		# paging to files
+pseudo-device	vnd	4		# disk-like interface to files
 #pseudo-device	ccd	2		# concatenated disk devices
 pseudo-device	rnd			# /dev/random and /dev/urandom
 
