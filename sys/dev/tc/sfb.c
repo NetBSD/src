@@ -1,4 +1,4 @@
-/* $NetBSD: sfb.c,v 1.40 2001/01/15 09:37:42 nisimura Exp $ */
+/* $NetBSD: sfb.c,v 1.41 2001/01/15 09:41:57 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sfb.c,v 1.40 2001/01/15 09:37:42 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sfb.c,v 1.41 2001/01/15 09:41:57 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -887,7 +887,7 @@ bt459_set_curpos(sc)
 
 #if defined(alpha)
 #define	WRITE_MB() tc_wmb()
-/* registers is replicated in 128B stride; rap round 8th iteration */
+/* SFB registers replicated in 128B stride; cycle after eight iterations */
 #define	BUMP(p) ((p) = (caddr_t)(((long)(p) + 0x80) & ~0x400))
 #endif
 
