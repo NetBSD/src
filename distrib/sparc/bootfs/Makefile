@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 1999/10/18 20:13:56 pk Exp $
+#	$NetBSD: Makefile,v 1.13 2000/01/10 15:17:31 pk Exp $
 
 TOP=		${.CURDIR}/..
 MINIROOT=	${.CURDIR}/../../miniroot
@@ -15,12 +15,12 @@ VND_CDEV=	/dev/${VND}c
 VND_CRDEV=	/dev/r${VND}c
 FD?=		fd0
 FD_RDEV=	/dev/r${FD}a
-IMAGE?=		boot-${REV}.fs
+IMAGE?=		boot.fs
 MDEC=		${DESTDIR}/usr/mdec
 
 LISTS=		${.CURDIR}/list
 RAMDISK!=	cd ${TOP}/ramdisk/; \
-		printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}/ramdisk-${REV}.fs\n" |\
+		printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}/ramdisk.fs\n" |\
 		${MAKE} -s -f-
 
 DISKTYPE=	floppy
@@ -76,8 +76,8 @@ release:
 	@false
 .else
 release: $(IMAGE)
-	gzip -c -9 < $(.OBJDIR)/boot-${REV}.fs \
-		> $(RELEASEDIR)/installation/bootfs/boot-${REV}.fs.gz
+	gzip -c -9 < $(.OBJDIR)/boot.fs \
+		> $(RELEASEDIR)/installation/bootfs/boot.fs.gz
 .endif	# RELEASEDIR check
 
 .include <bsd.obj.mk>
