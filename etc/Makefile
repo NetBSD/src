@@ -1,5 +1,5 @@
+#	$NetBSD: Makefile,v 1.49.2.1 1995/11/01 14:00:44 pk Exp $
 #	from: @(#)Makefile	5.11 (Berkeley) 5/21/91
-#	$Id: Makefile,v 1.49 1995/10/08 04:09:06 tls Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	US/Pacific
@@ -132,8 +132,8 @@ snap_tar:
 	cd ${DESTDIR} && tar cf - usr/lib | gzip -9 > snapshot/usr.lib.tar.gz
 	cd ${DESTDIR} && tar cf - usr/libexec | gzip -9 > \
 	    snapshot/usr.libexec.tar.gz
-	cd ${DESTDIR} && tar cf - usr/mdec usr/local usr/src usr/obj | \
-	    gzip -9 > snapshot/usr.misc.tar.gz
+	cd ${DESTDIR} && tar cf - usr/mdec usr/libdata usr/local usr/src \
+	    usr/obj | gzip -9 > snapshot/usr.misc.tar.gz
 	cd ${DESTDIR} && tar cf - usr/sbin | gzip -9 > snapshot/usr.sbin.tar.gz
 	cd ${DESTDIR} && tar cf - usr/share | gzip -9 > \
 	    snapshot/usr.share.tar.gz
