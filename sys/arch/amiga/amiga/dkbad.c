@@ -31,13 +31,13 @@
  * SUCH DAMAGE.
  *
  *	@(#)dkbad.c	7.2 (Berkeley) 12/16/90
- *	$Id: dkbad.c,v 1.4 1994/02/11 06:59:36 chopps Exp $
+ *	$Id: dkbad.c,v 1.5 1994/02/13 21:13:19 chopps Exp $
  */
 
 #ifndef NOBADSECT
-#include "sys/param.h"
-#include "sys/buf.h"
-#include "sys/dkbad.h"
+#include <sys/param.h>
+#include <sys/buf.h>
+#include <sys/dkbad.h>
 
 /*
  * Search the bad sector table looking for

@@ -1,42 +1,42 @@
 /* Authors: Markus Wild, Bryan Ford, Niklas Hallqvist 
  *          Michael L. Hitch - initial 68040 support
  *
- *	$Id: amiga_init.c,v 1.7 1994/02/11 06:59:19 chopps Exp $
+ *	$Id: amiga_init.c,v 1.8 1994/02/13 21:13:08 chopps Exp $
  */
 
 
-#include "pte.h"
-#include "machine/cpu.h"
-#include "param.h"
-#include "machine/vmparam.h"
+#include <machine/pte.h>
+#include <machine/cpu.h>
+#include <sys/param.h>
+#include <machine/vmparam.h>
 
-#include "sys/param.h"
-#include "sys/systm.h"
-#include "sys/proc.h"
-#include "sys/user.h"
-#include "vm/vm.h"
-#include "sys/ioctl.h"
-#include "sys/select.h"
-#include "sys/tty.h"
-#include "sys/proc.h"
-#include "sys/buf.h"
-#include "sys/msgbuf.h"
-#include "sys/mbuf.h"
-#include "sys/protosw.h"
-#include "sys/domain.h"
-#include "vm/pmap.h"
-#include "sys/dkbad.h"
-#include "sys/reboot.h"
-#include "sys/exec.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/proc.h>
+#include <sys/user.h>
+#include <vm/vm.h>
+#include <sys/ioctl.h>
+#include <sys/select.h>
+#include <sys/tty.h>
+#include <sys/proc.h>
+#include <sys/buf.h>
+#include <sys/msgbuf.h>
+#include <sys/mbuf.h>
+#include <sys/protosw.h>
+#include <sys/domain.h>
+#include <vm/pmap.h>
+#include <sys/dkbad.h>
+#include <sys/reboot.h>
+#include <sys/exec.h>
 
-#include "custom.h"
-#include "cia.h" 
+#include <amiga/amiga/custom.h>
+#include <amiga/amiga/cia.h> 
 
-#include "configdev.h"
-#include "memlist.h"
+#include <amiga/amiga/configdev.h>
+#include <amiga/amiga/memlist.h>
 
 #ifdef DEBUG
-#include "color.h"
+#include <amiga/amiga/color.h>
 #define ROLLCOLOR(a) rollcolor(a)
 void rollcolor (u_int);
 #else

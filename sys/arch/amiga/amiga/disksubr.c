@@ -1,12 +1,12 @@
 /*
- *	$Id: disksubr.c,v 1.5 1994/02/11 06:59:35 chopps Exp $
+ *	$Id: disksubr.c,v 1.6 1994/02/13 21:13:18 chopps Exp $
  */
 
-#include "param.h"
-#include "systm.h"
-#include "buf.h"
-#include "disklabel.h"
-#include "syslog.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/buf.h>
+#include <sys/disklabel.h>
+#include <sys/syslog.h>
 
 
 /*
