@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.25 2002/02/01 01:32:20 ross Exp $
+#	$NetBSD: Makefile,v 1.26 2002/02/01 05:44:40 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -38,9 +38,12 @@ LINT1?=		./${PROG}
 ${MAN}:		makeman ${LINT1:C/^\.\///} Makefile
 	sh ${.ALLSRC:M*makeman} ${LINT1} -m >${.TARGET}
 
+LDADD+=		-lm
+DPADD+=		${LIBM}
+
 .ifndef HOSTPROG
-LDADD+=		-ll -lm
-DPADD+=		${LIBL} ${LIBM}
+LDADD+=		-ll
+DPADD+=		${LIBL}
 
 .include <bsd.prog.mk>
 .endif
