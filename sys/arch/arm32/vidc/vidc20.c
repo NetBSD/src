@@ -1,4 +1,4 @@
-/*	$NetBSD: vidc20.c,v 1.2 1998/01/13 02:10:45 thorpej Exp $	*/
+/*	$NetBSD: vidc20.c,v 1.3 1998/01/18 03:48:37 mark Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe
@@ -80,7 +80,7 @@ vidcmatch(parent, cf, aux)
 	struct cfdata *cf;
 	void *aux;
 {
-	struct mainbus_attach_args *mb = aux;
+/*	struct mainbus_attach_args *mb = aux;*/
 
 	return(1);
 }
