@@ -12,7 +12,7 @@ install or upgrade your NetBSD system.
 
 [Note: previous versions of NetBSD used several floppy images,
 including several kernel/boot floppies depending on hardware
-configuration, an install floppy, and an upgrade floppy. NetBSD 1.2G
+configuration, an install floppy, and an upgrade floppy. NetBSD _VER
 only requires a single floppy for all tasks and configurations.]
 
 If you are using a UN*X-like system to write the floppy images to
@@ -93,7 +93,7 @@ following:
 	order to do the absolute minimum installation to a new disk),
 	you would do the following:
 
-		cd .../NetBSD-1.2G		# the top of the tree
+		cd .../NetBSD-_VER		# the top of the tree
 		cd i386/binary
 		tar cf <tape_device> base12G etc12G kern12G
 
