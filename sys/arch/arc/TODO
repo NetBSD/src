@@ -1,4 +1,4 @@
-$NetBSD: TODO,v 1.13 2000/06/17 09:18:39 soda Exp $
+$NetBSD: TODO,v 1.13.2.1 2000/08/10 22:07:46 soda Exp $
 
 To do list (not in any particular order).
 
@@ -7,6 +7,12 @@ To do list (not in any particular order).
 	Userland commands dumps	core randomly.
 	This version is before _MIPS_PADDR_T_64BIT changes
 	and MIPS3_TLB_WIRED_UPAGES changes.	
+
+	"vm_page_zero_enable = FALSE" makes this problem disappeared.
+
+	currently, page zero in the idle loop is also disabled on
+	untested platforms like ESCstation rPC44/Tyne, SNI, Algorithmics
+	for safety.
 
     o	XXX sudden hang up in a few minutes or dozens of minutes.
 	2000 Mar 17 -current is OK. Mar 29 is NG.
