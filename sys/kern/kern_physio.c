@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_physio.c,v 1.26 1996/02/04 02:15:51 christos Exp $	*/
+/*	$NetBSD: kern_physio.c,v 1.27 1996/06/13 22:30:18 pk Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -92,10 +92,12 @@ physio(strategy, bp, dev, flags, minphys, uio)
 	 * writing, so we ignore the uio's rw parameter.  Also note that if
 	 * we're doing a read, that's a *write* to user-space.
 	 */
-	for (i = 0; i < uio->uio_iovcnt; i++)
-		if (!useracc(uio->uio_iov[i].iov_base, uio->uio_iov[i].iov_len,
-		    (flags == B_READ) ? B_WRITE : B_READ))
-			return (EFAULT);
+	if (uio->uio_segflg == UIO_USERSPACE)
+		for (i = 0; i < uio->uio_iovcnt; i++)
+			if (!useracc(uio->uio_iov[i].iov_base,
+				     uio->uio_iov[i].iov_len,
+				     (flags == B_READ) ? B_WRITE : B_READ))
+				return (EFAULT);
 
 	/* Make sure we have a buffer, creating one if necessary. */
 	if ((nobuf = (bp == NULL)) != 0)
