@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_conf.c,v 1.17 1996/09/10 22:05:03 thorpej Exp $	*/
+/*	$NetBSD: exec_conf.c,v 1.18 1996/09/26 20:51:04 cgd Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -30,20 +30,20 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#undef EXEC_SCRIPT			/* XXX */
-#define EXEC_SCRIPT			/* XXX */
-#undef EXEC_AOUT			/* XXX */
-#define EXEC_AOUT			/* XXX */
+#undef EXEC_SCRIPT					/* XXX should die */
+#define EXEC_SCRIPT					/* XXX should die */
+#undef EXEC_AOUT					/* XXX should die */
+#define EXEC_AOUT					/* XXX should die */
 
-#if defined(COMPAT_ULTRIX) || defined(COMPAT_OSF1)
-#undef EXEC_ECOFF
-#define EXEC_ECOFF
-#endif
+#if defined(COMPAT_ULTRIX) || defined(COMPAT_OSF1)	/* XXX should die */
+#undef EXEC_ECOFF					/* XXX should die */
+#define EXEC_ECOFF					/* XXX should die */
+#endif							/* XXX should die */
 
-#if defined(COMPAT_SVR4) || defined(COMPAT_LINUX)
-#undef EXEC_ELF
-#define EXEC_ELF
-#endif
+#if defined(COMPAT_SVR4) || defined(COMPAT_LINUX)	/* XXX should die */
+#undef EXEC_ELF32					/* XXX should die */
+#define EXEC_ELF32					/* XXX should die */
+#endif							/* XXX should die */
 
 #include <sys/param.h>
 #include <sys/exec.h>
@@ -60,7 +60,7 @@
 #include <sys/exec_ecoff.h>
 #endif
 
-#ifdef EXEC_ELF
+#if defined(EXEC_ELF32) || defined(EXEC_ELF64)
 #include <sys/exec_elf.h>
 #endif
 
@@ -105,8 +105,11 @@ struct execsw execsw[] = {
 #ifdef EXEC_ECOFF
 	{ ECOFF_HDR_SIZE, exec_ecoff_makecmds, },	/* ecoff binaries */
 #endif
-#ifdef EXEC_ELF
-	{ ELF_HDR_SIZE, exec_elf_makecmds, },	/* elf binaries */
+#ifdef EXEC_ELF32
+	{ ELF32_HDR_SIZE, exec_elf32_makecmds, },	/* 32bit ELF bins */
+#endif
+#ifdef EXEC_ELF64
+	{ ELF64_HDR_SIZE, exec_elf64_makecmds, },	/* 64bit ELF bins */
 #endif
 #ifdef COMPAT_LINUX
 	{ LINUX_AOUT_HDR_SIZE, exec_linux_aout_makecmds, }, /* linux a.out */
