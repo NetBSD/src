@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.61.2.35 2001/06/10 18:21:28 he Exp $
+.\"	$NetBSD: main,v 1.61.2.36 2001/06/10 19:13:33 he Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -355,7 +355,7 @@ Lastly, it should be noted that the X11 binaries shipped in
 .Nx
 \*V
 is still based on XFree86 version 3.3.6.
-Several newer graphics cards are inadequatly supported
+Several newer graphics cards are inadequately supported
 by that code base, but on the other hand support for several
 older graphics cards is not available in newer XFree86 code.
 .Nx
