@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.161 2002/02/08 16:11:18 lukem Exp $
+#	$NetBSD: Makefile,v 1.162 2002/02/14 19:17:32 tv Exp $
 
 # This is the top-level makefile for building NetBSD. For an outline of
 # how to build a snapshot or release, as well as other release engineering
@@ -74,7 +74,12 @@
 .endif
 
 .if defined(NBUILDJOBS)
-_J=		-j${NBUILDJOBS}
+.if !target(.BEGIN)
+.BEGIN:
+	@echo 'NBUILDJOBS is currently broken; see PR toolchain/14837.'
+	@false
+.endif
+#_J=		-j${NBUILDJOBS}
 .endif
 
 _SUBDIR=	tools lib include gnu bin games libexec sbin usr.bin \
