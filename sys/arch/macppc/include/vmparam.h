@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.10 1999/12/04 21:20:46 ragge Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.11 2000/02/11 19:25:16 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -94,7 +94,6 @@
 #define VM_MAX_KERNEL_BUF	(SEGMENT_LENGTH * 7 / 10)
 #endif
 
-#define	VM_KMEM_SIZE		(NKMEMCLUSTERS * NBPG)
 #define	VM_PHYS_SIZE		(USRIOSIZE * NBPG)
 
 struct pmap_physseg {
