@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_swiz_bus_mem_chipdep.c,v 1.11 1996/11/25 03:37:25 cgd Exp $	*/
+/*	$NetBSD: pci_swiz_bus_mem_chipdep.c,v 1.12 1996/12/02 06:12:41 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -58,13 +58,13 @@ void		__C(CHIP,_mem_free) __P((void *, bus_space_handle_t,
 		    bus_size_t));
 
 /* read (single) */
-u_int8_t	__C(CHIP,_mem_read_1) __P((void *, bus_space_handle_t,
+inline u_int8_t	__C(CHIP,_mem_read_1) __P((void *, bus_space_handle_t,
 		    bus_size_t));
-u_int16_t	__C(CHIP,_mem_read_2) __P((void *, bus_space_handle_t,
+inline u_int16_t __C(CHIP,_mem_read_2) __P((void *, bus_space_handle_t,
 		    bus_size_t));
-u_int32_t	__C(CHIP,_mem_read_4) __P((void *, bus_space_handle_t,
+inline u_int32_t __C(CHIP,_mem_read_4) __P((void *, bus_space_handle_t,
 		    bus_size_t));
-u_int64_t	__C(CHIP,_mem_read_8) __P((void *, bus_space_handle_t,
+inline u_int64_t __C(CHIP,_mem_read_8) __P((void *, bus_space_handle_t,
 		    bus_size_t));
 
 /* read multiple */
@@ -88,13 +88,13 @@ void		__C(CHIP,_mem_read_region_8) __P((void *, bus_space_handle_t,
 		    bus_size_t, u_int64_t *, bus_size_t));
 
 /* write (single) */
-void		__C(CHIP,_mem_write_1) __P((void *, bus_space_handle_t,
+inline void	__C(CHIP,_mem_write_1) __P((void *, bus_space_handle_t,
 		    bus_size_t, u_int8_t));
-void		__C(CHIP,_mem_write_2) __P((void *, bus_space_handle_t,
+inline void	__C(CHIP,_mem_write_2) __P((void *, bus_space_handle_t,
 		    bus_size_t, u_int16_t));
-void		__C(CHIP,_mem_write_4) __P((void *, bus_space_handle_t,
+inline void	__C(CHIP,_mem_write_4) __P((void *, bus_space_handle_t,
 		    bus_size_t, u_int32_t));
-void		__C(CHIP,_mem_write_8) __P((void *, bus_space_handle_t,
+inline void	__C(CHIP,_mem_write_8) __P((void *, bus_space_handle_t,
 		    bus_size_t, u_int64_t));
 
 /* write multiple */
@@ -608,7 +608,7 @@ __C(CHIP,_mem_free)(v, bsh, size)
 	panic("%s not implemented", __S(__C(CHIP,_mem_free)));
 }
 
-u_int8_t
+inline u_int8_t
 __C(CHIP,_mem_read_1)(v, memh, off)
 	void *v;
 	bus_space_handle_t memh;
@@ -633,7 +633,7 @@ __C(CHIP,_mem_read_1)(v, memh, off)
 	return rval;
 }
 
-u_int16_t
+inline u_int16_t
 __C(CHIP,_mem_read_2)(v, memh, off)
 	void *v;
 	bus_space_handle_t memh;
@@ -658,7 +658,7 @@ __C(CHIP,_mem_read_2)(v, memh, off)
 	return rval;
 }
 
-u_int32_t
+inline u_int32_t
 __C(CHIP,_mem_read_4)(v, memh, off)
 	void *v;
 	bus_space_handle_t memh;
@@ -687,7 +687,7 @@ __C(CHIP,_mem_read_4)(v, memh, off)
 	return rval;
 }
 
-u_int64_t
+inline u_int64_t
 __C(CHIP,_mem_read_8)(v, memh, off)
 	void *v;
 	bus_space_handle_t memh;
@@ -742,7 +742,7 @@ CHIP_mem_read_region_N(2,u_int16_t)
 CHIP_mem_read_region_N(4,u_int32_t)
 CHIP_mem_read_region_N(8,u_int64_t)
 
-void
+inline void
 __C(CHIP,_mem_write_1)(v, memh, off, val)
 	void *v;
 	bus_space_handle_t memh;
@@ -765,7 +765,7 @@ __C(CHIP,_mem_write_1)(v, memh, off, val)
         alpha_mb();
 }
 
-void
+inline void
 __C(CHIP,_mem_write_2)(v, memh, off, val)
 	void *v;
 	bus_space_handle_t memh;
@@ -788,7 +788,7 @@ __C(CHIP,_mem_write_2)(v, memh, off, val)
         alpha_mb();
 }
 
-void
+inline void
 __C(CHIP,_mem_write_4)(v, memh, off, val)
 	void *v;
 	bus_space_handle_t memh;
@@ -811,7 +811,7 @@ __C(CHIP,_mem_write_4)(v, memh, off, val)
         alpha_mb();
 }
 
-void
+inline void
 __C(CHIP,_mem_write_8)(v, memh, off, val)
 	void *v;
 	bus_space_handle_t memh;
