@@ -1,4 +1,4 @@
-/*	$NetBSD: ipaq_saip.c,v 1.2 2001/07/10 17:24:35 ichiro Exp $	*/
+/*	$NetBSD: ipaq_saip.c,v 1.3 2001/07/11 00:10:04 ichiro Exp $	*/
 
 /*-
  * Copyright (c) 2001, The NetBSD Foundation, Inc.  All rights reserved.
@@ -34,13 +34,10 @@
 #include <machine/cpu.h>
 #include <machine/bus.h>
 
-#include <hpcarm/sa11x0/sa11x0_reg.h>
 #include <hpcarm/sa11x0/sa11x0_var.h>
 #include <hpcarm/sa11x0/sa11x0_dmacreg.h>
 #include <hpcarm/sa11x0/sa11x0_ppcreg.h>
 #include <hpcarm/sa11x0/sa11x0_gpioreg.h>
-
-#include <hpcarm/dev/ipaq_gpioreg.h>
 
 /* ipaq softc */
 struct ipaq_softc {
@@ -79,7 +76,7 @@ ipaq_match(parent, match, aux)
 	struct cfdata *match;
 	void *aux;
 {
-	return 1;
+	return (1);
 }
 
 void
@@ -97,6 +94,7 @@ ipaq_attach(parent, self, aux)
 	sc->sc_ioh = psc->sc_ioh;
 	sc->sc_gpioh = psc->sc_gpioh;
 
+	/* Map the Extended GPIO registers */
 	if (bus_space_map(sc->sc_iot, SAEGPIO_BASE, 1, 0, &sc->sc_egpioh))
 		panic("%s: unable to map Extended GPIO registers\n",
 			self->dv_xname);
