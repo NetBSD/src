@@ -1,4 +1,4 @@
-/*	$NetBSD: link_aout.h,v 1.6 1994/12/23 20:16:59 pk Exp $	*/
+/*	$NetBSD: link_aout.h,v 1.7 1995/06/04 21:57:18 pk Exp $	*/
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -111,7 +111,7 @@ struct nzlist {
 struct section_dispatch_table {
 	struct so_map *sdt_loaded;	/* List of loaded objects */
 	long	sdt_sods;		/* List of shared objects descriptors */
-	long	sdt_filler1;		/* Unused (was: search rules) */
+	long	sdt_paths;		/* Library search paths */
 	long	sdt_got;		/* Global offset table */
 	long	sdt_plt;		/* Procedure linkage table */
 	long	sdt_rel;		/* Relocation table */
@@ -223,6 +223,7 @@ struct	_dynamic {
 #define LD_STRINGS(x)	((x)->d_un.d_sdt->sdt_strings)
 #define LD_NEED(x)	((x)->d_un.d_sdt->sdt_sods)
 #define LD_BUCKETS(x)	((x)->d_un.d_sdt->sdt_buckets)
+#define LD_PATHS(x)	((x)->d_un.d_sdt->sdt_paths)
 
 #define LD_GOTSZ(x)	((x)->d_un.d_sdt->sdt_plt - (x)->d_un.d_sdt->sdt_got)
 #define LD_RELSZ(x)	((x)->d_un.d_sdt->sdt_hash - (x)->d_un.d_sdt->sdt_rel)
