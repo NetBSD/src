@@ -36,7 +36,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)ns_addr.c	6.7 (Berkeley) 2/24/91";*/
-static char *rcsid = "$Id: ns_addr.c,v 1.3 1993/08/26 00:46:10 jtc Exp $";
+static char *rcsid = "$Id: ns_addr.c,v 1.4 1994/05/25 20:37:52 cgd Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -56,8 +56,8 @@ ns_addr(name)
 	char *hostname, *socketname, *cp;
 	char buf[50];
 
-	(void)strncpy(buf, name, sizeof(buf - 1));
-	buf[sizeof(buf - 1)] = '\0';
+	(void)strncpy(buf, name, sizeof(buf) - 1);
+	buf[sizeof(buf) - 1] = '\0';
 
 	/*
 	 * First, figure out what he intends as a field separtor.
