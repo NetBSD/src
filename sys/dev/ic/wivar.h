@@ -1,4 +1,4 @@
-/*	$NetBSD: wivar.h,v 1.11 2002/03/30 16:44:59 ichiro Exp $	*/
+/*	$NetBSD: wivar.h,v 1.12 2002/04/04 07:06:17 ichiro Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -96,6 +96,12 @@ struct wi_softc	{
 	struct wi_apinfo	wi_aps[MAXAPINFO];
 	int 			wi_naps;
 	int			wi_scanning;	/* scan mode */
+};
+
+struct wi_card_ident {
+	u_int16_t	card_id;
+	char		*card_name;
+	u_int8_t	firm_type;
 };
 
 int	wi_attach __P((struct wi_softc *));
