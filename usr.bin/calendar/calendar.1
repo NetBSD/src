@@ -1,4 +1,4 @@
-.\"	$NetBSD: calendar.1,v 1.14 2004/02/01 01:03:57 snj Exp $
+.\"	$NetBSD: calendar.1,v 1.15 2004/11/29 17:58:07 jwise Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -61,8 +61,17 @@ only for purposes of determining wether the given date falls on a Friday
 in that year (see below).
 If the year is not specified, the current year is assumed.
 .It Fl f Ar file
-Display matching calendar files from the given filename, by default
-.Pa calendar .
+Display matching calendar files from the given filename.
+By default, the following filenames are checked for:
+.Bl -item -compact
+.It
+.Pa ./calendar
+.It
+.Pa ./.calendar
+.It
+.Pa /etc/calendar
+.El
+and the first which is found is used.
 The filename may be absolute.
 If not absolute, it is taken relative to the current directory or the
 directory specified by the
