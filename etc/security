@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: security,v 1.16 1997/02/14 08:52:05 mikel Exp $
+#	$NetBSD: security,v 1.17 1997/03/10 09:45:58 mycroft Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -38,7 +38,7 @@ MP=/etc/master.passwd
 awk -F: '{ print $1 " " $3 }' $MP | sort -n +1 > $TMP1
 
 # Check the master password file syntax.
-if [ X"$check_passwd" = XYES ]; then
+if [ "$check_passwd" = YES ]; then
 	awk -F: '{
 		if ($0 ~ /^[	 ]*$/) {
 			printf("Line %d is a blank line.\n", NR);
@@ -100,7 +100,7 @@ else
 fi
 
 # Check the group file syntax.
-if [ X"$check_group" = XYES ]; then
+if [ "$check_group" = YES ]; then
 	GRP=/etc/group
 	awk -F: '{
 		if ($0 ~ /^[	 ]*$/) {
@@ -132,7 +132,7 @@ fi
 # The check for the root paths is problematical -- it's likely to fail
 # in other environments.  Once the shells have been modified to warn
 # of '.' in the path, the path tests should go away.
-if [ X"$check_rootdotfiles" = XYES ]; then
+if [ "$check_rootdotfiles" = YES ]; then
 	cp /dev/null $OUTPUT
 	rhome=`csh -fc "echo ~root"`
 	umaskset=no
@@ -221,7 +221,7 @@ end-of-sh
 fi
 
 # Root and uucp should both be in /etc/ftpusers.
-if [ X"$check_ftpusers" = XYES ]; then
+if [ "$check_ftpusers" = YES ]; then
 	if egrep root /etc/ftpusers > /dev/null ; then
 		:
 	else
@@ -235,14 +235,14 @@ if [ X"$check_ftpusers" = XYES ]; then
 fi
 
 # Uudecode should not be in the /etc/aliases file.
-if [ X"$check_aliases" = XYES ]; then
+if [ "$check_aliases" = YES ]; then
 	if egrep 'uudecode|decode' /etc/aliases; then
 		printf "\nThere is an entry for uudecode in the /etc/aliases file.\n"
 	fi
 fi
 
 # Files that should not have + signs.
-if [ X"$check_rhosts" = XYES ]; then
+if [ "$check_rhosts" = YES ]; then
 	list="/etc/hosts.equiv /etc/hosts.lpd"
 	for f in $list ; do
 		if [ -f $f ] && egrep '\+' $f > /dev/null ; then
@@ -281,7 +281,7 @@ fi
 
 # Check home directories.  Directories should not be owned by someone else
 # or writeable.
-if [ X"$check_homes" = XYES ]; then
+if [ "$check_homes" = YES ]; then
 	awk -F: '{ print $1 " " $9 }' /etc/master.passwd | \
 	while read uid homedir; do
 		if [ -d ${homedir}/ ] ; then
@@ -347,7 +347,7 @@ if [ X"$check_homes" = XYES ]; then
 fi
 
 # Mailboxes should be owned by user and unreadable.
-if [ X"$check_varmail" = XYES ]; then
+if [ "$check_varmail" = YES ]; then
 	ls -l /var/mail | sed 1d | \
 	awk '$3 != $9 \
 		{ print "user " $9 " mailbox is owned by " $3 }
@@ -359,7 +359,7 @@ if [ X"$check_varmail" = XYES ]; then
 	fi
 fi
 
-if [ X"$check_nfs" = XYES ]; then
+if [ "$check_nfs" = YES ]; then
 	if [ -f /etc/exports ]; then
 	    # File systems should not be globally exported.
 	    awk '{
@@ -383,7 +383,7 @@ if [ X"$check_nfs" = XYES ]; then
 fi
 
 # Display any changes in setuid files and devices.
-if [ X"$check_devices" = XYES ]; then
+if [ "$check_devices" = YES ]; then
 	printf "\nChecking setuid files and devices:\n"
 	(find / \( ! -fstype local -o -fstype fdesc -o -fstype kernfs \
 			-o -fstype procfs \) -a -prune -o \
@@ -529,7 +529,7 @@ fi
 # the hacker can modify the tree specification to match the replaced binary.
 # For details on really protecting yourself against modified binaries, see
 # the mtree(8) manual page.
-if [ X"$check_mtree" = XYES ]; then
+if [ "$check_mtree" = YES ]; then
 	mtree -e -p / -f /etc/mtree/special > $OUTPUT
 	if [ -s $OUTPUT ]; then
 		printf "\nChecking special files and directories.\n"
@@ -555,7 +555,7 @@ fi
 # List of files that get backed up and checked for any modifications.  Each
 # file is expected to have two backups, /var/backups/file.{current,backup}.
 # Any changes cause the files to rotate.
-if [ X"$check_changelist" = XYES -a -s /etc/changelist ] ; then
+if [ "$check_changelist" = YES ] && [ -s /etc/changelist ] ; then
 	for file in `cat /etc/changelist`; do
 		CUR=/var/backups/`basename $file`.current
 		BACK=/var/backups/`basename $file`.backup
