@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.24 2001/04/02 16:49:42 tshiozak Exp $
+# $NetBSD: obsolete.mi,v 1.25 2001/04/04 13:13:59 wiz Exp $
 /bin/rcorder
 /dev/log
 /etc/disklabels
@@ -66,8 +66,10 @@
 /usr/share/locale/ru_SU.ISO8859-5/LC_CTYPE
 /usr/share/locale/ru_SU.KOI8-R
 /usr/share/locale/ru_SU.KOI8-R/LC_CTYPE
+/usr/share/man/cat3/atari
 /usr/share/man/cat4/tahoe
 /usr/share/man/cat8/tahoe
+/usr/share/man/man3/atari
 /usr/share/man/man4/tahoe
 /usr/share/man/man8/tahoe
 /usr/share/misc/getopt
