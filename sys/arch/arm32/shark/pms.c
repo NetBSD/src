@@ -1,4 +1,4 @@
-/*      $NetBSD: pms.c,v 1.5 1999/01/24 18:58:12 sommerfe Exp $        */
+/*      $NetBSD: pms.c,v 1.6 2000/03/25 21:26:47 scw Exp $        */
 
 /*
  * Copyright 1997
@@ -291,7 +291,7 @@ pmsprobe(parent, match, aux)
                 else
                 {
                     KERN_DEBUG(pmsdebug, KERN_DEBUG_ERROR,
-                               ("pmsprobe: aux test failed %x\n", status ));
+                               ("pmsprobe: aux test failed\n"));
                 }
                 /* 
                 ** Disable the mouse.  It is enabled when 
@@ -364,7 +364,7 @@ pmsattach(parent, self, aux)
     sc->sc_ih     = isa_intr_establish(ia->ia_ic, irq, IST_LEVEL, 
                                        IPL_TTY, pmsintr, sc);
     KERN_DEBUG(pmsdebug, KERN_DEBUG_INFO,
-               ("pmsattach: IOT 0x%x: IOH 0x%x\n", sc->sc_iot, sc->sc_ioh));
+               ("pmsattach: IOT 0x%p: IOH 0x%lx\n", sc->sc_iot, sc->sc_ioh));
 
     return;
 } /* End pmsattach */
