@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)spec_vnops.c	7.37 (Berkeley) 5/30/91
- *	$Id: spec_vnops.c,v 1.6 1993/10/29 19:25:18 cgd Exp $
+ *	$Id: spec_vnops.c,v 1.7 1993/10/30 16:11:07 glass Exp $
  */
 
 #include "param.h"
@@ -208,7 +208,7 @@ spec_read(vp, uio, ioflag, cred)
 				    dpart.part->p_fsize;
 		}
 		if (bsize > MAXBSIZE)
-			bsize = MAXBSIZE
+			bsize = MAXBSIZE;
 		bscale = bsize / DEV_BSIZE;
 		do {
 			bn = (uio->uio_offset / DEV_BSIZE) &~ (bscale - 1);
