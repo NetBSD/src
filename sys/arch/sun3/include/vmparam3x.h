@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam3x.h,v 1.5 1998/06/10 02:42:14 gwr Exp $	*/
+/*	$NetBSD: vmparam3x.h,v 1.6 1998/06/17 15:33:27 gwr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -106,6 +106,10 @@
 #define VM_KMEM_SIZE		(NKMEMCLUSTERS*CLBYTES)
 #define VM_PHYS_SIZE		(USRIOSIZE*CLBYTES)
 
+#if 1	/* XXX */
+#define MACHINE_NONCONTIG	/* VM <=> pmap interface modifier */
+#else	/* XXX */
+/* XXX - This does not work correctly yet... */
 #define MACHINE_NEW_NONCONTIG	/* VM <=> pmap interface modifier */
 
 #define VM_PHYSSEG_MAX		4
@@ -115,3 +119,4 @@
 struct pmap_physseg {
 	/* NULL */
 };
+#endif	/* XXX */
