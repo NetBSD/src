@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.54 2000/11/14 22:55:05 thorpej Exp $ */
+/*	$NetBSD: apm.c,v 1.55 2000/11/15 01:59:35 enami Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -67,6 +67,8 @@
 #include <sys/select.h>
 #include <sys/poll.h>
 #include <sys/conf.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <machine/bus.h>
 #include <machine/stdarg.h>
