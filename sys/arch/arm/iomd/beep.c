@@ -1,4 +1,4 @@
-/*	$NetBSD: beep.c,v 1.18 2003/05/03 18:10:45 wiz Exp $	*/
+/*	$NetBSD: beep.c,v 1.19 2004/01/17 21:24:29 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -42,7 +42,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: beep.c,v 1.18 2003/05/03 18:10:45 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: beep.c,v 1.19 2004/01/17 21:24:29 bjh21 Exp $");
 
 #include <sys/systm.h>
 #include <sys/conf.h>
@@ -115,15 +115,15 @@ beepprobe(struct device *parent, struct cfdata *cf, void *aux)
 	case ARM7500_IOC_ID:
 	case ARM7500FE_IOC_ID:
 		sdma_channel = IRQ_SDMA;
-		return(1);
+		return 1;
 	case RPC600_IOMD_ID:
 		sdma_channel = IRQ_DMASCH0;
-		return(1);
+		return 1;
 	default:
 		printf("beep: Unknown IOMD id=%04x\n", id);
 		break;
 	}
-	return(0);
+	return 0;
 }
 
 
@@ -200,22 +200,22 @@ beepopen(dev_t dev, int flag, int mode, struct proc *p)
 	int s;
     
 	if (unit >= beep_cd.cd_ndevs)
-		return(ENXIO);
+		return ENXIO;
 
 	sc = beep_cd.cd_devs[unit];
-	if (!sc) return(ENXIO);
+	if (!sc) return ENXIO;
 
 	/* HACK hack hack */
 	s = splhigh();
 	if (sc->sc_open) {
-		(void)splx(s);
-		return(EBUSY);
+		splx(s);
+		return EBUSY;
 	}
 
 	++sc->sc_open;   
-	(void)splx(s); 
+	splx(s); 
 
-	return(0);
+	return 0;
 }
 
 
@@ -226,14 +226,14 @@ beepclose(dev_t dev, int flag, int mode, struct proc *p)
 	struct beep_softc *sc = beep_cd.cd_devs[unit];
 	int s;
 
-	if (sc->sc_open == 0) return(ENXIO);
+	if (sc->sc_open == 0) return ENXIO;
 
 	/* HACK hack hack */
 	s = splhigh();
 	--sc->sc_open;
-	(void)splx(s);
+	splx(s);
       
-	return(0);
+	return 0;
 }
 
 
