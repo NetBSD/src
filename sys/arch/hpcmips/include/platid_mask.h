@@ -1,4 +1,4 @@
-/* $Id: platid_mask.h,v 1.19 2000/05/20 05:16:07 takemura Exp $ */
+/* $Id: platid_mask.h,v 1.20 2000/05/22 15:05:39 uch Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000
@@ -289,6 +289,10 @@ extern platid_t platid_mask_MACH_SHARP_TELIOS_HCAJ1;
 #ifdef PLATID_DEFINE_MASK_NICKNAME
 #  define SHARP_TELIOS_HCAJ1 ((int)&platid_mask_MACH_SHARP_TELIOS_HCAJ1)
 #endif
+extern platid_t platid_mask_MACH_SHARP_TELIOS_HCVJ1C_JP;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define SHARP_TELIOS_HCVJ1C_JP ((int)&platid_mask_MACH_SHARP_TELIOS_HCVJ1C_JP)
+#endif
 extern platid_t platid_mask_MACH_SHARP_MOBILON;
 #ifdef PLATID_DEFINE_MASK_NICKNAME
 #  define SHARP_MOBILON ((int)&platid_mask_MACH_SHARP_MOBILON)
@@ -300,6 +304,10 @@ extern platid_t platid_mask_MACH_SHARP_MOBILON_HC;
 extern platid_t platid_mask_MACH_SHARP_MOBILON_HC4100;
 #ifdef PLATID_DEFINE_MASK_NICKNAME
 #  define SHARP_MOBILON_HC4100 ((int)&platid_mask_MACH_SHARP_MOBILON_HC4100)
+#endif
+extern platid_t platid_mask_MACH_SHARP_MOBILON_HC4500;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define SHARP_MOBILON_HC4500 ((int)&platid_mask_MACH_SHARP_MOBILON_HC4500)
 #endif
 extern platid_t platid_mask_MACH_SHARP_MOBILON_HC1200;
 #ifdef PLATID_DEFINE_MASK_NICKNAME
