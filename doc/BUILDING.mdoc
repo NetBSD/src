@@ -1,4 +1,4 @@
-.\"	$NetBSD: BUILDING.mdoc,v 1.37 2004/10/12 04:07:09 jmc Exp $
+.\"	$NetBSD: BUILDING.mdoc,v 1.38 2005/02/15 18:41:18 reed Exp $
 .\"
 .\" Copyright (c) 2001-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -94,6 +94,8 @@ compilers in order to create the toolchain
 is not required); all other tools are created as part of the
 .Nx
 build process.
+(See the environment variables section below if you need
+to override or manually select your compilers.)
 .
 .Sh FILES
 .
@@ -186,6 +188,13 @@ Several environment variables control the behaviour of
 builds.
 .
 .Bl -tag -width "MAKEOBJDIRPREFIX"
+.
+.
+.It Sy HOST_CC
+Path name to C compiler used to create the toolchain.
+.
+.It Sy HOST_CXX
+Path name to C++ compiler used to create the toolchain.
 .
 .It Sy MACHINE
 Machine type.
