@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.16 2003/09/26 18:00:47 matt Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.17 2003/09/27 03:51:54 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.16 2003/09/26 18:00:47 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.17 2003/09/27 03:51:54 matt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ppcarch.h"
@@ -119,7 +119,7 @@ sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	switch (sd->sd_vers) {
 	case 2:		/* siginfo sigtramp */
 		tf->fixreg[1]  = (register_t)sp - CALLFRAMELEN;
-		tf->fixreg[3]  = (register_t)ksi->_signo;
+		tf->fixreg[3]  = (register_t)ksi->ksi_signo;
 		tf->fixreg[4]  = (register_t)sip;
 		tf->fixreg[5]  = (register_t)ucp;
 		/* Preserve ucp across call to signal function */
@@ -140,7 +140,7 @@ sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
  nosupport:
 	/* Don't know what trampoline version; kill it. */
 	printf("sendsig_siginfo(sig %d): bad version %d\n",
-	    ksi->_signo, sd->sd_vers);
+	    ksi->ksi_signo, sd->sd_vers);
 	sigexit(l, SIGILL);
 	/* NOTREACHED */
 }
