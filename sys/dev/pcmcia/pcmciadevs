@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.74 2000/02/01 05:50:18 enami Exp $
+$NetBSD: pcmciadevs,v 1.75 2000/02/01 10:19:51 enami Exp $
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -214,6 +214,7 @@ vendor SVEC			-1	SVEC/Hawking Technology
 vendor AMBICOM			-1	AmbiCom Inc
 vendor EPSON			-1	Seiko Epson Corporation
 vendor EXP			-1	EXP Computer Inc
+vendor MELCO			-1	Melco Inc
 
 product MEGAHERTZ XJ2288 	{ "MEGAHERTZ", "MODEM&spXJ2288", NULL, NULL } Megahertz XJ2288 Modem
 product PREMAX PE200		{ "PMX&sp&sp&sp", "PE-200", NULL, NULL } PreMax PE-200
@@ -245,3 +246,4 @@ product AMBICOM AMB8002T	{ "AmbiCom&spInc", "AMB8002T", NULL, NULL } AmbiCom AMB
 product IODATA PCLAT		{ "I-O&spDATA", "PCLA", "ETHERNET", NULL } IO-DATA PCLA/T
 product EPSON EEN10B		{ "Seiko&spEpson&spCorp.", "Ethernet", "P/N:&spEEN10B&spRev.&sp00", NULL } Epson EEN10B
 product EXP EXPMULTIMEDIA	{ "EXP&sp&sp&sp", "PnPIDE", "F1", NULL } EXP IDE/ATAPI DVD Card
+product MELCO WLI_PCM		{ "AMD", "Am79C930", NULL, NULL } Melco WLI-PCM
