@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)savecore.c	5.26 (Berkeley) 4/8/91";*/
-static char rcsid[] = "$Id: savecore.c,v 1.5 1993/12/08 16:43:16 pk Exp $";
+static char rcsid[] = "$Id: savecore.c,v 1.6 1994/02/14 19:32:21 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -57,19 +57,7 @@ static char rcsid[] = "$Id: savecore.c,v 1.5 1993/12/08 16:43:16 pk Exp $";
 #define	LEEWAY	(3*DAY)
 
 #define eq(a,b) (!strcmp(a,b))
-#ifdef vax
-#define ok(number) ((number)&0x7fffffff)
-#else
-#ifdef tahoe
-#define ok(number) ((number)&~0xc0000000)
-#else
-#ifdef i386
-#define ok(number) ((number)&~0xfe000000)
-#else
-#define ok(number) (number)
-#endif
-#endif
-#endif
+#define ok(number) ((number) - KERNBASE)
 
 struct nlist current_nl[] = {	/* namelist for currently running system */
 #define X_DUMPDEV	0
