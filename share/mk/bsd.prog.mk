@@ -1,5 +1,5 @@
 #	from: @(#)bsd.prog.mk	5.26 (Berkeley) 6/25/91
-#	$Id: bsd.prog.mk,v 1.37 1994/04/06 06:37:38 chopps Exp $
+#	$Id: bsd.prog.mk,v 1.38 1994/05/22 23:03:58 jtc Exp $
 
 .if exists(${.CURDIR}/../Makefile.inc)
 .include "${.CURDIR}/../Makefile.inc"
@@ -49,10 +49,13 @@ CLEANFILES+=strings
 	@rm -f x.C
 .endif
 
+
 .if defined(PROG)
 .if defined(SRCS)
-
 OBJS+=  ${SRCS:N*.h:R:S/$/.o/g}
+.else
+OBJS+=	${PROG}.o
+.endif
 
 .if defined(LDONLY)
 
@@ -63,17 +66,6 @@ ${PROG}: ${LIBCRT0} ${OBJS} ${LIBC} ${DPADD}
 
 ${PROG}: ${LIBCRT0} ${OBJS} ${LIBC} ${DPADD}
 	${CC} ${LDFLAGS} ${LDSTATIC} -o ${.TARGET} ${OBJS} ${LDADD}
-
-.endif
-
-.else
-
-SRCS=	${PROG}.c
-
-${PROG}: ${LIBCRT0} ${SRCS} ${LIBC} ${DPADD}
-	${CC} ${LDFLAGS} ${LDSTATIC} ${CFLAGS} -o ${.TARGET} ${.CURDIR}/${SRCS} ${LDADD}
-
-MKDEP=	-p
 
 .endif
 
