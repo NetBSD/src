@@ -1,7 +1,7 @@
-/*	$NetBSD: ccd.c,v 1.37 1997/01/30 03:32:56 thorpej Exp $	*/
+/*	$NetBSD: ccd.c,v 1.38 1997/01/30 04:00:52 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1996 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -132,14 +132,46 @@ struct ccdbuf {
 	int		cb_unit;	/* target unit */
 	int		cb_comp;	/* target component */
 	int		cb_flags;	/* misc. flags */
-
-#define CBF_MIRROR	0x01		/* we're for a mirror component */
+	LIST_ENTRY(ccdbuf) cb_list;	/* entry on freelist */
 };
 
-#define	getccdbuf()		\
-	((struct ccdbuf *)malloc(sizeof(struct ccdbuf), M_DEVBUF, M_WAITOK))
-#define putccdbuf(cbp)		\
-	free((caddr_t)(cbp), M_DEVBUF)
+/* cb_flags */
+#define CBF_MIRROR	0x01		/* we're for a mirror component */
+
+/*
+ * Number of freelist buffers per component.  Overridable in kernel
+ * config file and patchable.
+ */
+#ifndef CCDNBUF
+#define	CCDNBUF		8
+#endif
+int	ccdnbuf = CCDNBUF;
+
+/*
+ * XXX Is it OK to wait here?
+ * XXX maybe set up a timeout when we hit some lowater?
+ * XXX    --thorpej
+ */
+#define	CCDGETBUF(cs, cbp)	do {					\
+		(cs)->sc_ngetbuf++;					\
+		if (((cbp) = (cs)->sc_freelist.lh_first) != NULL) {	\
+			LIST_REMOVE((cbp), cb_list);			\
+			(cs)->sc_freecount--;				\
+		} else {						\
+			(cs)->sc_nmisses++;				\
+			MALLOC((cbp), struct ccdbuf *,			\
+			    sizeof(struct ccdbuf), M_DEVBUF, M_WAITOK);	\
+		}							\
+	} while (0)
+
+#define	CCDPUTBUF(cs, cbp)	do {					\
+		if ((cs)->sc_freecount == (cs)->sc_hiwat) {		\
+			FREE((cbp), M_DEVBUF);				\
+		} else {						\
+			LIST_INSERT_HEAD(&(cs)->sc_freelist, (cbp), cb_list); \
+			(cs)->sc_freecount++;				\
+		}							\
+	} while (0)
 
 #define CCDLABELDEV(dev)	\
 	(MAKEDISKDEV(major((dev)), ccdunit((dev)), RAW_PART))
@@ -221,6 +253,7 @@ ccdinit(ccd, cpaths, p)
 	struct partinfo dpart;
 	struct ccdgeom *ccg = &cs->sc_geom;
 	char tmppath[MAXPATHLEN];
+	struct ccdbuf *cbp;
 	int error;
 
 #ifdef DEBUG
@@ -409,6 +442,23 @@ ccdinit(ccd, cpaths, p)
 	ccg->ccg_ntracks = 1;
 	ccg->ccg_nsectors = 1024 * (1024 / ccg->ccg_secsize);
 	ccg->ccg_ncylinders = cs->sc_size / ccg->ccg_nsectors;
+
+	/*
+	 * Allocate the component buffer header freelist.  We allocate
+	 * ccdnbuf buffers per component.
+	 */
+	LIST_INIT(&cs->sc_freelist);
+	cs->sc_hiwat = cs->sc_nccdisks * ccdnbuf;
+	cs->sc_freecount = cs->sc_hiwat;
+	for (ix = 0; ix < cs->sc_hiwat; ix++) {
+		MALLOC(cbp, struct ccdbuf *, sizeof(struct ccdbuf),
+		    M_DEVBUF, M_WAITOK);
+		LIST_INSERT_HEAD(&cs->sc_freelist, cbp, cb_list);
+	}
+
+	/* Reset statistics. */
+	cs->sc_nmisses = 0;
+	cs->sc_ngetbuf = 0;
 
 	cs->sc_flags |= CCDF_INITED;
 	cs->sc_cflags = ccd->ccd_flags;	/* So we can find out later... */
@@ -808,7 +858,7 @@ ccdbuffer(cs, bp, bn, addr, bcount, cbpp)
 	/*
 	 * Fill in the component buf structure.
 	 */
-	cbp = getccdbuf();
+	CCDGETBUF(cs, cbp);
 	cbp->cb_flags = 0;
 	cbp->cb_buf.b_flags = bp->b_flags | B_CALL;
 	cbp->cb_buf.b_iodone = ccdiodone;
@@ -847,7 +897,7 @@ ccdbuffer(cs, bp, bn, addr, bcount, cbpp)
 	 */
 	if ((cs->sc_cflags & CCDF_MIRROR) &&
 	    ((cbp->cb_buf.b_flags & B_READ) == 0)) {
-		cbp = getccdbuf();
+		CCDGETBUF(cs, cbp);
 		*cbp = *cbpp[0];
 		cbp->cb_flags = CBF_MIRROR;
 		cbp->cb_buf.b_dev = ci2->ci_dev;	/* XXX */
@@ -924,7 +974,7 @@ ccdiodone(vbp)
 	}
 	count = cbp->cb_buf.b_bcount;
 	cbflags = cbp->cb_flags;
-	putccdbuf(cbp);
+	CCDPUTBUF(cs, cbp);
 
 	/*
 	 * If all done, "interrupt".
@@ -1014,6 +1064,7 @@ ccdioctl(dev, cmd, data, flag, p)
 	struct ccd_softc *cs;
 	struct ccd_ioctl *ccio = (struct ccd_ioctl *)data;
 	struct ccddevice ccd;
+	struct ccdbuf *cbp;
 	char **cpp;
 	struct vnode **vpp;
 
@@ -1163,6 +1214,12 @@ ccdioctl(dev, cmd, data, flag, p)
 			(void)vn_close(cs->sc_cinfo[i].ci_vp, FREAD|FWRITE,
 			    p->p_ucred, p);
 			free(cs->sc_cinfo[i].ci_path, M_DEVBUF);
+		}
+
+		/* Free component buffer freelist. */
+		while ((cbp = cs->sc_freelist.lh_first) != NULL) {
+			LIST_REMOVE(cbp, cb_list);
+			FREE(cbp, M_DEVBUF);
 		}
 
 		/* Free interleave index. */
