@@ -1,4 +1,4 @@
-/* $NetBSD: lib.h,v 1.20 1999/03/09 11:10:40 agc Exp $ */
+/* $NetBSD: lib.h,v 1.21 1999/03/22 05:02:41 hubertf Exp $ */
 
 /* from FreeBSD Id: lib.h,v 1.25 1997/10/08 07:48:03 charnier Exp */
 
@@ -28,6 +28,7 @@
 #include <sys/param.h>
 #include <sys/stat.h>
 #include <sys/file.h>
+#include <sys/queue.h>
 
 #include <ctype.h>
 #include <dirent.h>
@@ -88,6 +89,13 @@
 /* The name of the "prefix" environment variable given to scripts */
 #define PKG_PREFIX_VNAME	"PKG_PREFIX"
 
+/* This should only happen on 1.3 and 1.3.1, not 1.3.2 and up */
+#ifndef TAILQ_FIRST 
+#define TAILQ_FIRST(head)               ((head)->tqh_first)
+#define TAILQ_NEXT(elm, field)          ((elm)->field.tqe_next)
+#endif
+
+
 /* enumerated constants for plist entry types */
 typedef enum pl_ent_t {
 	PLIST_SHOW_ALL = -1,
@@ -136,6 +144,14 @@ enum {
 	ChecksumLen = 16,
 	LegibleChecksumLen = 33
 };
+
+/* List of packages */
+typedef struct _lpkg_t {
+    TAILQ_ENTRY(_lpkg_t)        lp_link;
+    char        *lp_name;
+} lpkg_t;
+TAILQ_HEAD(_lpkg_head_t, _lpkg_t);
+typedef struct _lpkg_head_t lpkg_head_t;
 
 /* type of function to be handed to findmatchingname; return value of this
  * is currently ignored */
@@ -213,8 +229,13 @@ char*		pkgdb_iter(void);
 char*          _pkgdb_getPKGDB_FILE(void);
 char*          _pkgdb_getPKGDB_DIR(void);
 
+/* List of packages functions */
+lpkg_t 		*alloc_lpkg(const char *);
+lpkg_t		*find_on_queue(lpkg_head_t *, const char *);
+void 		free_lpkg(lpkg_t *);
+
 /* For all */
-int		pkg_perform(char **);
+int		pkg_perform(lpkg_head_t *);
 
 /* Externs */
 extern Boolean	Verbose;

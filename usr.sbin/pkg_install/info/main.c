@@ -1,11 +1,11 @@
-/*	$NetBSD: main.c,v 1.15 1999/03/04 00:35:05 hubertf Exp $	*/
+/*	$NetBSD: main.c,v 1.16 1999/03/22 05:02:41 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char *rcsid = "from FreeBSD Id: main.c,v 1.14 1997/10/08 07:47:26 charnier Exp";
 #else
-__RCSID("$NetBSD: main.c,v 1.15 1999/03/04 00:35:05 hubertf Exp $");
+__RCSID("$NetBSD: main.c,v 1.16 1999/03/22 05:02:41 hubertf Exp $");
 #endif
 #endif
 
@@ -49,6 +49,7 @@ char PlayPen[FILENAME_MAX];
 size_t PlayPenSize	= sizeof(PlayPen);
 char *CheckPkg		= NULL;
 size_t termwidth	= 0;
+lpkg_head_t pkgs;
 
 static void
 usage(void)
@@ -60,13 +61,23 @@ usage(void)
     exit(1);
 }
 
+static int
+find_fn(const char *pkg, char *data)
+{
+    lpkg_t *lpp;
+
+    lpp=alloc_lpkg(pkg);
+    TAILQ_INSERT_TAIL(&pkgs, lpp, lp_link);
+
+    return 0;
+}
+
 int
 main(int argc, char **argv)
 {
-    int ch;
-    char **pkgs, **start;
+    int ch, rc;
+    lpkg_t *lpp;
 
-    pkgs = start = argv;
     while ((ch = getopt(argc, argv, Options)) != -1)
 	switch(ch) {
 	case 'a':
@@ -192,28 +203,36 @@ main(int argc, char **argv)
 	pkgdb_close();
     }
     
+    TAILQ_INIT(&pkgs);
+
     /* Get all the remaining package names, if any */
     if (File2Pkg && !AllInstalled)
 	if (pkgdb_open(1)==-1) {
 	    err(1, "cannot open pkgdb");
 	}
     while (*argv) {
-	/* pkgdb: if -F flag given, don't add pkgnames to *pkgs but
-	 * rather resolve the given filenames to pkgnames using
-	 * pkgdb_retrieve, then add them. 
+	/* pkgdb: if -F flag given, don't add pkgnames to the "pkgs" 
+	 * queue but rather resolve the given filenames to pkgnames 
+	 * using pkgdb_retrieve, then add them. 
 	 */
 	if (File2Pkg) {
 	    char *s;
 
 	    s = pkgdb_retrieve(*argv);
 
-	    if (s)
-		*pkgs++ = s;
-	    else 
-		warnx("No matching pkg for %s.", *argv);
-	        /* should we bomb out here instead? - HF */
+	    if (s) {
+		lpp=alloc_lpkg(s);
+		TAILQ_INSERT_TAIL(&pkgs, lpp, lp_link);
+	    } else 
+		errx(1, "No matching pkg for %s.", *argv);
 	} else {
-	    *pkgs++ = *argv;
+	    if (ispkgpattern(*argv)){
+		if (findmatchingname(_pkgdb_getPKGDB_DIR(), *argv, find_fn, NULL) == 0) 
+		    errx(1, "No matching pkg for %s.", *argv);
+	    } else {
+		lpp=alloc_lpkg(*argv);
+		TAILQ_INSERT_TAIL(&pkgs, lpp, lp_link);
+	    }
 	}
 	argv++;
     }
@@ -222,9 +241,8 @@ main(int argc, char **argv)
 	pkgdb_close();
 
     /* If no packages, yelp */
-    if (pkgs == start && !AllInstalled && !CheckPkg)
+    if (TAILQ_FIRST(&pkgs)==NULL && !AllInstalled && !CheckPkg)
 	warnx("missing package name(s)"), usage();
-    *pkgs = NULL;
 
     if (isatty(STDOUT_FILENO)) {
 	const char *p;
@@ -237,6 +255,7 @@ main(int argc, char **argv)
 	    termwidth = win.ws_col;
     }
 
-     exit(pkg_perform(start));
+     rc = pkg_perform(&pkgs);
+     exit(rc);
      /* NOTREACHED */
 }
