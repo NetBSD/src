@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.138 2000/08/31 14:41:35 bouyer Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.139 2000/09/05 05:13:43 enami Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -1509,11 +1509,14 @@ vclean(vp, flags, p)
 	 */
 	vp->v_op = dead_vnodeop_p;
 	vp->v_tag = VT_NON;
+	simple_lock(&vp->v_interlock);
 	vp->v_flag &= ~VXLOCK;
 	if (vp->v_flag & VXWANT) {
 		vp->v_flag &= ~VXWANT;
+		simple_unlock(&vp->v_interlock);
 		wakeup((caddr_t)vp);
-	}
+	} else
+		simple_unlock(&vp->v_interlock);
 }
 
 /*
