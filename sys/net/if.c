@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.121 2003/06/28 14:22:06 darrenr Exp $	*/
+/*	$NetBSD: if.c,v 1.122 2003/06/29 10:13:11 ichiro Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.121 2003/06/28 14:22:06 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.122 2003/06/29 10:13:11 ichiro Exp $");
 
 #include "opt_inet.h"
 
@@ -1525,7 +1525,7 @@ ifioctl(so, cmd, data, l)
 #if !defined(COMPAT_43) && !defined(COMPAT_LINUX) && !defined(COMPAT_SVR4) && !defined(COMPAT_ULTRIX) && !defined(LKM)
 		error = ((*so->so_proto->pr_usrreq)(so, PRU_CONTROL,
 		    (struct mbuf *)cmd, (struct mbuf *)data,
-		    (struct mbuf *)ifp, l);
+		    (struct mbuf *)ifp, l));
 #else
 	    {
 		int ocmd = cmd;
