@@ -1,4 +1,4 @@
-.\"	$NetBSD: pool.9,v 1.9 1998/09/03 00:54:23 jeremy Exp $
+.\"	$NetBSD: pool.9,v 1.10 1998/09/03 01:58:57 jeremy Exp $
 .\"
 .\" Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -69,13 +69,13 @@
 .Fn pool_setlowat "struct pool *pp" "int n"
 .Fn POOL_STORAGE_SIZE "size" "nitems"
 .Sh DESCRIPTION
-These utility routines provide management of pools of fixed\(ensized
+These utility routines provide management of pools of fixed-sized
 areas of memory.
 Resource pools set aside an amount of memory for exclusive use by the resource
 pool owner.
 This can be used by applications to guarantee the availability of a minimum
 amount of memory needed to continue operation independent of the memory
-resources currently available from the system\(enwide memory allocator
+resources currently available from the system-wide memory allocator
 .Pq Xr malloc 9 .
 The pool manager can optionally obtain temporary memory by calling the
 .Fn palloc
@@ -99,7 +99,7 @@ Specifies the memory address aligment of the items returned by
 .Fn pool_get .
 This argument must be a power of two.
 If zero,
-the alignment defaults to a architecture\(enspecific natural aligment.
+the alignment defaults to a architecture-specific natural aligment.
 .It Fa align_offset
 The offset within an item to which the
 .Fa align
@@ -301,12 +301,12 @@ this function does not allocate the necessary memory upfront.
 Note that undefined behaviour results when mixing the storage providing
 methods supported by the pool resource routines.
 .Pp
-The pool resource code uses a per\(enpool lock to protect its internal state.
+The pool resource code uses a per-pool lock to protect its internal state.
 If any pool functions are called in an interrupt context,
 the caller must block all interrupts that might cause the
 code to be reentered.
 .Ss DIAGNOSTICS
-Pool usage logs can be enabled by defining the compile\(entime option
+Pool usage logs can be enabled by defining the compile-time option
 .Dv POOL_DIAGNOSTIC .
 .\" .Sh RETURN VALUES
 .\" .Sh EXAMPLES
