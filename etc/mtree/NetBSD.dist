@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.198 2002/07/09 09:04:51 tshiozak Exp $
+#	$NetBSD: NetBSD.dist,v 1.199 2002/07/25 13:13:44 lukem Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -830,6 +830,7 @@
 ./var/spool/lock		uname=uucp gname=daemon
 ./var/spool/mqueue
 ./var/spool/output
+./var/spool/output/lpd
 ./var/spool/postfix
 ./var/spool/postfix/etc
 ./var/spool/sockets		mode=0777
