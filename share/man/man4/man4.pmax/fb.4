@@ -1,4 +1,4 @@
-.\"     $NetBSD: fb.4,v 1.4 2003/03/30 21:20:18 wiz Exp $
+.\"     $NetBSD: fb.4,v 1.5 2003/03/31 18:24:03 perry Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -52,13 +52,13 @@ The devices to which this applies are the
 .Xr cfb 4 ,
 .Xr mfb 4 ,
 .Xr sfb 4 ,
-.Xr pm 4 (colour and mono),
+.Xr pm 4 (color and mono),
 .Xr px 4 , and
 .Xr xcfb 4
 frame buffers.  It provides support for the ULTRIX-compatible
 pm/QVSS-style interface, mostly so that X consortium Xservers work.
 It also provides support for the Sun-style frame buffer interface
-which is compatible with exisiting
+which is compatible with existing
 .Nx
 applications.
 .Pp
@@ -124,7 +124,7 @@ typedef struct {
 } pmCursor;
 .Ed
 .It Dv QIOCINIT
-Initialise the Screen
+Initialize the Screen
 .It Dv QIOCKPCMD
 Send Keyboard Command
 .Pp
@@ -151,12 +151,12 @@ structure, as defined in \*[Lt]pmax/pmioctl.h\*[Gt]:
 .It Dv QIOWCURSOR
 Write Cursor Bitmap
 .It Dv QIOWCURSORCOLOR
-Background/Foreground RGB colour
+Background/Foreground RGB color
 .It Dv QIOSETCMAP
-Set the Colour Map
+Set the Color Map
 .Pp
-Set the colour map, using the entries in the
-.Em ColourMap
+Set the color map, using the entries in the
+.Em ColorMap
 structure, as defined in \*[Lt]pmax/pmioctl.h\*[Gt]:
 .Pp
 .Bd -literal
@@ -202,9 +202,9 @@ struct fbtype {
 };
 .Ed
 .It Dv FBIOGETCMAP/FBIOPUTCMAP
-Colour Map I/O
+Color Map I/O
 .Pp
-Get or set the colour map, using the entries in the
+Get or set the color map, using the entries in the
 .Em fbcmap
 structure,as defined in \*[Lt]pmax/fbio.h\*[Gt]:
 .Pp
