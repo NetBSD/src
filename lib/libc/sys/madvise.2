@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)madvise.2	6.1 (Berkeley) 5/27/91
-.\"	$Id: madvise.2,v 1.3 1993/08/05 21:31:41 jtc Exp $
+.\"	$Id: madvise.2,v 1.4 1993/12/15 18:08:12 jtc Exp $
 .\"
 .Dd May 27, 1991
 .Dt MADVISE 2
@@ -39,6 +39,9 @@
 .Nm madvise 
 .Nd give advise about use of memory
 .Sh SYNOPSIS
+.Fd #include <sys/types.h>
+.Fd #include <sys/mman.h>
+.Ft int
 .Fn madvise "caddr_t addr" "int len" "int behav"
 .Sh DESCRIPTION
 The 
