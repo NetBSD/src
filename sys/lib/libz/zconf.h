@@ -1,11 +1,11 @@
-/* $NetBSD: zconf.h,v 1.4 2002/03/12 00:42:24 fvdl Exp $ */
+/* $NetBSD: zconf.h,v 1.5 2003/03/25 22:48:45 mycroft Exp $ */
 
 /* zconf.h -- configuration of the zlib compression library
  * Copyright (C) 1995-2002 Jean-loup Gailly.
  * For conditions of distribution and use, see copyright notice in zlib.h 
  */
 
-/* @(#) $Id: zconf.h,v 1.4 2002/03/12 00:42:24 fvdl Exp $ */
+/* @(#) $Id: zconf.h,v 1.5 2003/03/25 22:48:45 mycroft Exp $ */
 
 #ifndef _ZCONF_H
 #define _ZCONF_H
@@ -36,16 +36,11 @@
 #  define deflateReset	z_deflateReset
 #  define deflateParams	z_deflateParams
 #  define inflateInit2_	z_inflateInit2_
-#  define inflateSetDictionary z_inflateSetDictionary
-#  define inflateSync	z_inflateSync
-#  define inflateSyncPoint z_inflateSyncPoint
 #  define inflateReset	z_inflateReset
 #  define compress	z_compress
 #  define compress2	z_compress2
 #  define uncompress	z_uncompress
-#  define adler32	z_adler32
 #  define crc32		z_crc32
-#  define get_crc_table z_get_crc_table
 
 #  define Byte		z_Byte
 #  define uInt		z_uInt
