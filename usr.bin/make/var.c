@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.19 1997/07/01 21:17:47 christos Exp $	*/
+/*	$NetBSD: var.c,v 1.20 1997/07/07 19:06:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.19 1997/07/01 21:17:47 christos Exp $");
+__RCSID("$NetBSD: var.c,v 1.20 1997/07/07 19:06:17 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -1119,6 +1119,7 @@ VarRESubstitute(word, addSpace, buf, patternp)
     char *wp;
     char *rp;
     int added;
+    int flags = 0;
 
 #define MAYBE_ADD_SPACE()		\
 	if (addSpace && !added)		\
@@ -1134,7 +1135,7 @@ VarRESubstitute(word, addSpace, buf, patternp)
 	xrv = REG_NOMATCH;
     else {
     tryagain:
-	xrv = regexec(&pat->re, wp, pat->nsub, pat->matches, 0);
+	xrv = regexec(&pat->re, wp, pat->nsub + 1, pat->matches, flags);
     }
 
     switch (xrv) {
@@ -1193,8 +1194,17 @@ VarRESubstitute(word, addSpace, buf, patternp)
 	    }
 	}
 	wp += pat->matches[0].rm_eo;
-	if (pat->flags & VAR_SUB_GLOBAL)
-	    goto tryagain;
+	if (pat->flags & VAR_SUB_GLOBAL) {
+	    flags |= REG_NOTBOL;
+	    if (pat->matches[0].rm_so == 0 && pat->matches[0].rm_eo == 0) {
+		MAYBE_ADD_SPACE();
+		Buf_AddByte(buf, *wp);
+		wp++;
+
+	    }
+	    if (*wp)
+		goto tryagain;
+	}
 	if (*wp) {
 	    MAYBE_ADD_SPACE();
 	    Buf_AddBytes(buf, strlen(wp), wp);
@@ -2329,4 +2339,3 @@ Var_Dump (ctxt)
 {
     Lst_ForEach (ctxt->context, VarPrintVar, (ClientData) 0);
 }
-
