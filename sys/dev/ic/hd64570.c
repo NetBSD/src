@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64570.c,v 1.11 2000/01/09 17:32:58 chopps Exp $	*/
+/*	$NetBSD: hd64570.c,v 1.12 2000/12/12 18:00:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999 Christian E. Hopps
@@ -455,7 +455,7 @@ sca_port_attach(struct sca_softc *sc, u_int port)
 	if_attach(ifp);
 
 #if NBPFILTER > 0
-	bpfattach(&scp->sp_bpf, ifp, DLT_HDLC, HDLC_HDRLEN);
+	bpfattach(ifp, DLT_HDLC, HDLC_HDRLEN);
 #endif
 
 	if (sc->sc_parent == NULL)
@@ -1097,8 +1097,8 @@ X
 	/*
 	 * Pass packet to bpf if there is a listener.
 	 */
-	if (scp->sp_bpf)
-		bpf_mtap(scp->sp_bpf, mb_head);
+	if (ifp->if_bpf)
+		bpf_mtap(ifp->if_bpf, mb_head);
 #endif
 
 	m_freem(mb_head);
@@ -1559,8 +1559,8 @@ sca_frame_process(sca_port_t *scp)
 	}
 
 #if NBPFILTER > 0
-	if (scp->sp_bpf)
-		bpf_mtap(scp->sp_bpf, m);
+	if (scp->sp_if.if_bpf)
+		bpf_mtap(scp->sp_if.if_bpf, m);
 #endif
 
 	scp->sp_if.if_ipackets++;
