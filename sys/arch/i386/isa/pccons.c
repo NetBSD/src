@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.146 2001/06/02 00:01:04 jdolecek Exp $	*/
+/*	$NetBSD: pccons.c,v 1.147 2001/06/02 00:46:00 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1160,21 +1160,6 @@ pccnpollc(dev, on)
 #if (NPCCONSKBD > 0)
 	pckbc_set_poll(kbctag, kbcslot, on);
 #else
-
-	/*
-	 * Some kbd controllers seem to not clear the interrupt condition
-	 * when the status word is read, which leads to loop calling
-	 * pcintr(). Thus, raise interrupt level when polling.
-	 */
-	if (!cold) {
-		static int s;
-
-		if (on)
-			s = spltty();
-		else
-			splx(s);
-	}
-
 	if (!on) {
 		int unit;
 		struct pc_softc *sc;
