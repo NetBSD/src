@@ -1,4 +1,4 @@
-.\"	$NetBSD: BUILDING.mdoc,v 1.20 2003/05/17 08:10:39 lukem Exp $
+.\"	$NetBSD: BUILDING.mdoc,v 1.21 2003/05/18 11:18:02 lukem Exp $
 .\"
 .\" Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -40,7 +40,7 @@
 .\" Toolchain prefix for commands
 .ds toolprefix nb
 .
-.Dd May 17, 2003
+.Dd May 18, 2003
 .Dt BUILDING 8
 .Os NetBSD
 .
@@ -544,7 +544,7 @@ Indicates whether object directories will be created automatically
 (via a
 .Dq make obj
 pass) at the start of a build.
-.DFLTy
+.DFLTn
 .
 .It Sy NBUILDJOBS
 Now obsolete.
@@ -1089,6 +1089,9 @@ Set the value of
 .Sy MKOBJDIRS
 to
 .Dq no .
+Otherwise, it will be automatically set to
+.Dq yes
+(which is opposite to the default behaviour).
 .
 .It Fl R Ar rel
 Set the value of
