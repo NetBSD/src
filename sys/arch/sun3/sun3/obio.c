@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.35 1998/02/08 05:07:06 gwr Exp $	*/
+/*	$NetBSD: obio.c,v 1.36 1998/12/13 19:08:43 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -213,7 +213,7 @@ static caddr_t prom_mappings[SAVE_SLOTS];
 caddr_t
 obio_find_mapping(int pa, int sz)
 {
-	int off, va;
+	vaddr_t off, va;
 
 	off = pa & PGOFSET;
 	pa -= off;
@@ -228,7 +228,7 @@ obio_find_mapping(int pa, int sz)
 		return (caddr_t)0;
 
 	/* Do we have this one? */
-	va = prom_mappings[pa >> SAVE_SHIFT];
+	va = (vaddr_t)prom_mappings[pa >> SAVE_SHIFT];
 	if (va == 0)
 		return (caddr_t)0;
 
