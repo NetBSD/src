@@ -1,4 +1,4 @@
-/*	$NetBSD: mman.h,v 1.7 1994/06/29 06:44:39 cgd Exp $	*/
+/*	$NetBSD: mman.h,v 1.7.2.1 1994/08/01 17:19:26 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -61,8 +61,9 @@
 #define	MAP_HASSEMAPHORE 0x0200	/* region may contain semaphores */
 
 /*
- * Mapping type; default is map from file.
+ * Mapping type
  */
+#define	MAP_FILE	0x0000	/* map from file (default) */
 #define	MAP_ANON	0x1000	/* allocated from memory, swap space */
 
 /*
@@ -86,6 +87,7 @@ int	munmap __P((caddr_t, size_t));
 int	msync __P((caddr_t, size_t));
 int	mlock __P((caddr_t, size_t));
 int	munlock __P((caddr_t, size_t));
+int	madvise __P((caddr_t, size_t, int));
 __END_DECLS
 
 #endif /* !KERNEL */
