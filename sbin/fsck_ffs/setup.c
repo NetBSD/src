@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.53 2002/06/30 22:57:31 dbj Exp $	*/
+/*	$NetBSD: setup.c,v 1.54 2002/09/28 20:11:06 dbj Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.10 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: setup.c,v 1.53 2002/06/30 22:57:31 dbj Exp $");
+__RCSID("$NetBSD: setup.c,v 1.54 2002/09/28 20:11:06 dbj Exp $");
 #endif
 #endif /* not lint */
 
@@ -51,6 +51,7 @@ __RCSID("$NetBSD: setup.c,v 1.53 2002/06/30 22:57:31 dbj Exp $");
 #include <sys/file.h>
 
 #include <ufs/ufs/dinode.h>
+#include <ufs/ufs/dir.h>
 #include <ufs/ufs/ufs_bswap.h>
 #include <ufs/ffs/fs.h>
 #include <ufs/ffs/ffs_extern.h>
@@ -71,7 +72,9 @@ __RCSID("$NetBSD: setup.c,v 1.53 2002/06/30 22:57:31 dbj Exp $");
 static void badsb __P((int, char *));
 static int calcsb __P((const char *, int, struct fs *));
 static struct disklabel *getdisklabel __P((const char *, int));
+static struct partition *getdisklabelpart __P((const char *, struct disklabel *));
 static int readsb __P((int));
+static int readappleufs __P((void));
 
 /*
  * Read in a superblock finding an alternate if necessary.
@@ -437,12 +440,134 @@ setup(dev)
 		usedsoftdep = 1;
 	else
 		usedsoftdep = 0;
+
+	{
+		struct partition *pp = 0;
+		if (!forceimage) 
+			pp = getdisklabelpart(dev,lp);
+		if (pp && (pp->p_fstype == FS_APPLEUFS)) {
+			isappleufs = 1;
+		}
+	}
+	if (readappleufs()) {
+		isappleufs = 1;
+	}
+
+	dirblksiz = DIRBLKSIZ;
+	if (isappleufs)
+		dirblksiz = APPLEUFS_DIRBLKSIZ;
+
+	if (debug)
+		printf("isappleufs = %d, dirblksiz = %d\n", isappleufs, dirblksiz);
+
 	return (1);
 
 badsblabel:
 	markclean=0;
 	ckfini();
 	return (0);
+}
+
+static int
+readappleufs()
+{
+	ufs_daddr_t label = APPLEUFS_LABEL_OFFSET / dev_bsize;
+	struct appleufslabel *appleufs;
+	int i;
+
+	/* XXX do we have to deal with APPLEUFS_LABEL_OFFSET not
+	 * being block aligned (CD's?)
+	 */
+	if (bread(fsreadfd, (char *)appleufsblk.b_un.b_fs, label, (long)APPLEUFS_LABEL_SIZE) != 0)
+		return 0;
+	appleufsblk.b_bno = label;
+	appleufsblk.b_size = APPLEUFS_LABEL_SIZE;
+
+	appleufs = appleufsblk.b_un.b_appleufs;
+
+	if (ntohl(appleufs->ul_magic) != APPLEUFS_LABEL_MAGIC) {
+		if (!isappleufs) {
+			return 0;
+		} else {
+			pfatal("MISSING APPLEUFS VOLUME LABEL\n");
+			if (reply("FIX") == 0) {
+				return 1;
+			}
+			ffs_appleufs_set(appleufs,NULL,-1);
+			appleufsdirty();
+		}
+	}
+
+	if (ntohl(appleufs->ul_version) != APPLEUFS_LABEL_VERSION) {
+		pwarn("INCORRECT APPLE UFS VERSION NUMBER (%d should be %d)",
+			ntohl(appleufs->ul_version),APPLEUFS_LABEL_VERSION);
+		if (preen) {
+			printf(" (CORRECTED)\n");
+		}
+		if (preen || reply("CORRECT")) {
+			appleufs->ul_version = htonl(APPLEUFS_LABEL_VERSION);
+			appleufsdirty();
+		}
+	}
+
+	if (ntohs(appleufs->ul_namelen) > APPLEUFS_MAX_LABEL_NAME) {
+		pwarn("APPLE UFS LABEL NAME TOO LONG");
+		if (preen) {
+			printf(" (TRUNCATED)\n");
+		}
+		if (preen || reply("TRUNCATE")) {
+			appleufs->ul_namelen = htons(APPLEUFS_MAX_LABEL_NAME);
+			appleufsdirty();
+		}
+	}
+
+	if (ntohs(appleufs->ul_namelen) == 0) {
+		pwarn("MISSING APPLE UFS LABEL NAME");
+		if (preen) {
+			printf(" (FIXED)\n");
+		}
+		if (preen || reply("FIX")) {
+			ffs_appleufs_set(appleufs,NULL,-1);
+			appleufsdirty();
+		}
+	}
+
+	/* Scan name for first illegal character */
+	for (i=0;i<ntohs(appleufs->ul_namelen);i++) {
+		if ((appleufs->ul_name[i] == '\0') ||
+			(appleufs->ul_name[i] == ':') ||
+			(appleufs->ul_name[i] == '/')) {
+			pwarn("APPLE UFS LABEL NAME CONTAINS ILLEGAL CHARACTER");
+			if (preen) {
+				printf(" (TRUNCATED)\n");
+			}
+			if (preen || reply("TRUNCATE")) {
+				appleufs->ul_namelen = i+1;
+				appleufsdirty();
+			}
+			break;
+		}
+	}
+
+	/* Check the checksum last, because if anything else was wrong,
+	 * then the checksum gets reset anyway.
+	 */
+	appleufs->ul_checksum = 0;
+	appleufs->ul_checksum = ffs_appleufs_cksum(appleufs);
+	if (appleufsblk.b_un.b_appleufs->ul_checksum != appleufs->ul_checksum) {
+		pwarn("INVALID APPLE UFS CHECKSUM (%#04x should be %#04x)",
+			appleufsblk.b_un.b_appleufs->ul_checksum, appleufs->ul_checksum);
+		if (preen) {
+			printf(" (CORRECTED)\n");
+		}
+		if (preen || reply("CORRECT")) {
+			appleufsdirty();
+		} else {
+			/* put the incorrect checksum back in place */
+			appleufs->ul_checksum = appleufsblk.b_un.b_appleufs->ul_checksum;
+		}
+	}
+	return 1;
 }
 
 /*
@@ -658,20 +783,15 @@ calcsb(dev, devfd, fs)
 {
 	struct disklabel *lp;
 	struct partition *pp;
-	char *cp;
 	int i;
 
-	cp = strchr(dev, '\0') - 1;
-	if ((cp == (char *)-1 || (*cp < 'a' || *cp > 'p')) && !isdigit(*cp)) {
+	lp = getdisklabel(dev, devfd);
+	pp = getdisklabelpart(dev,lp);
+	if (pp == 0) {
 		pfatal("%s: CANNOT FIGURE OUT FILE SYSTEM PARTITION\n", dev);
 		return (0);
 	}
-	lp = getdisklabel(dev, devfd);
-	if (isdigit(*cp))
-		pp = &lp->d_partitions[0];
-	else
-		pp = &lp->d_partitions[*cp - 'a'];
-	if (pp->p_fstype != FS_BSDFFS) {
+	if ((pp->p_fstype != FS_BSDFFS) && (pp->p_fstype != FS_APPLEUFS)) {
 		pfatal("%s: NOT LABELED AS A BSD FILE SYSTEM (%s)\n",
 			dev, pp->p_fstype < FSMAXTYPES ?
 			fstypenames[pp->p_fstype] : "unknown");
@@ -722,3 +842,21 @@ getdisklabel(s, fd)
 	}
 	return (&lab);
 }
+
+static struct partition *
+getdisklabelpart(dev, lp)
+	const char *dev;
+	struct disklabel *lp;
+{
+	char *cp;
+
+	cp = strchr(dev, '\0') - 1;
+	if ((cp == (char *)-1 || (*cp < 'a' || *cp > 'p')) && !isdigit(*cp)) {
+		return 0;
+	}
+	if (isdigit(*cp))
+		return &lp->d_partitions[0];
+	else
+		return &lp->d_partitions[*cp - 'a'];
+}
+  
