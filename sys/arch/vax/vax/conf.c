@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.25 1996/09/07 12:40:40 mycroft Exp $	*/
+/*	$NetBSD: conf.c,v 1.26 1997/01/05 18:50:28 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -109,6 +109,12 @@ bdev_decl(sd);
 #include "st.h"
 bdev_decl(st);
 
+#include "cd.h"
+bdev_decl(cd);
+
+#include "md.h"
+bdev_decl(md);
+
 struct bdevsw	bdevsw[] =
 {
 	bdev_disk_init(NHP,hp),		/* 0: RP0?/RM0? */
@@ -133,6 +139,8 @@ struct bdevsw	bdevsw[] =
 	bdev_disk_init(NHDC,hdc),	/* 19: HDC9224/RD?? */
 	bdev_disk_init(NSD,sd),		/* 20: SCSI disk */
 	bdev_tape_init(NST,st),		/* 21: SCSI tape */
+	bdev_disk_init(NCD,cd),		/* 22: SCSI CD-ROM */
+	bdev_disk_init(NMD,md),		/* 23: memory disk driver */
 };
 int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 
@@ -318,6 +326,9 @@ cdev_decl(qv);
 #include "qd.h"
 cdev_decl(qd);
 
+#include "ipl.h"
+cdev_decl(ipl);
+
 #if defined(INGRES)
 #define NII 1
 #else
@@ -332,6 +343,14 @@ cdev_decl(bpf);
 
 #include "tun.h" 
 cdev_decl(tun);
+cdev_decl(cd);
+#include "ch.h"
+cdev_decl(ch);
+cdev_decl(md);
+#include "ss.h"
+cdev_decl(ss);
+#include "uk.h"
+cdev_decl(uk);
 
 dev_decl(filedesc,open);
 
@@ -379,7 +398,7 @@ struct cdevsw	cdevsw[] =
 	cdev_audio_init(NNP,np),	/* 39: NP Intelligent Board */
 	cdev_graph_init(NQV,qv),	/* 40: QVSS graphic display */
 	cdev_graph_init(NQD,qd),	/* 41: QDSS graphic display */
-	cdev_notdef(),			/* 42 */
+	cdev_ipl_init(NIPL,ipl),	/* 42: Packet filter */
 	cdev_ingres_init(NII,ii),	/* 43: Ingres device */
 	cdev_notdef(),			/* 44  was Datakit */
 	cdev_notdef(),			/* 45  was Datakit */
@@ -398,6 +417,11 @@ struct cdevsw	cdevsw[] =
 	cdev_disk_init(NHDC,hdc),	/* 58: HDC9224/RD?? */
 	cdev_disk_init(NSD,sd),		/* 59: SCSI disk */
 	cdev_tape_init(NST,st),		/* 60: SCSI tape */
+	cdev_disk_init(NCD,cd),		/* 61: SCSI CD-ROM */
+	cdev_disk_init(NMD,md),		/* 62: memory disk driver */
+	cdev_ch_init(NCH,ch),		/* 63: SCSI autochanger */
+	cdev_scanner_init(NSS,ss),	/* 64: SCSI scanner */
+	cdev_uk_init(NUK,uk),		/* 65: SCSI unknown */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -476,6 +500,11 @@ int	chrtoblktbl[] = {
 	19,	/* 58 */
 	20,	/* 59 */
 	21,	/* 60 */
+	22,	/* 61 */
+	23,	/* 62 */
+	NODEV,	/* 63 */
+	NODEV,	/* 64 */
+	NODEV,	/* 65 */
 };
 
 int
