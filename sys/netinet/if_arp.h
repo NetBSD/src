@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.h,v 1.16 1995/04/13 06:26:04 cgd Exp $	*/
+/*	$NetBSD: if_arp.h,v 1.17 1995/04/17 05:32:54 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -76,7 +76,7 @@ struct	ether_header {
  */
 #define ETHER_MAP_IP_MULTICAST(ipaddr, enaddr) \
 	/* struct in_addr *ipaddr; */ \
-	/* u_int8_t enaddr[6];	   */ \
+	/* u_int8_t enaddr[6];     */ \
 { \
 	(enaddr)[0] = 0x01; \
 	(enaddr)[1] = 0x00; \
@@ -113,7 +113,7 @@ struct	ether_arp {
  * begins with this structure.
  */
 struct	arpcom {
-	struct 	 ifnet ac_if;		/* network-visible interface */
+	struct	 ifnet ac_if;		/* network-visible interface */
 	u_int8_t ac_enaddr[6];		/* ethernet hardware address */
 	struct	 in_addr ac_ipaddr;	/* copy of ip address- XXX */
 	struct	 ether_multi *ac_multiaddrs; /* list of ether multicast addrs */
@@ -157,7 +157,7 @@ struct	llinfo_arp llinfo_arp;		/* head of the llinfo queue */
 void	arpwhohas __P((struct arpcom *, struct in_addr *));
 void	arpintr __P((void));
 int	arpresolve __P((struct arpcom *,
-	   struct rtentry *, struct mbuf *, struct sockaddr *, u_char *));
+	    struct rtentry *, struct mbuf *, struct sockaddr *, u_char *));
 void	arp_ifinit __P((struct arpcom *, struct ifaddr *));
 void	arp_rtrequest __P((int, struct rtentry *, struct sockaddr *));
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp.h,v 1.7 1995/04/13 06:36:30 cgd Exp $	*/
+/*	$NetBSD: tcp.h,v 1.8 1995/04/17 05:32:58 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -35,7 +35,7 @@
  *	@(#)tcp.h	8.1 (Berkeley) 6/10/93
  */
 
-typedef	u_int32_t	tcp_seq;
+typedef u_int32_t tcp_seq;
 /*
  * TCP header.
  * Per RFC 793, September, 1981.
@@ -43,8 +43,8 @@ typedef	u_int32_t	tcp_seq;
 struct tcphdr {
 	u_int16_t th_sport;		/* source port */
 	u_int16_t th_dport;		/* destination port */
-	tcp_seq	  th_seq;			/* sequence number */
-	tcp_seq	  th_ack;			/* acknowledgement number */
+	tcp_seq	  th_seq;		/* sequence number */
+	tcp_seq	  th_ack;		/* acknowledgement number */
 #if BYTE_ORDER == LITTLE_ENDIAN
 	u_int8_t  th_x2:4,		/* (unused) */
 		  th_off:4;		/* data offset */
@@ -54,12 +54,12 @@ struct tcphdr {
 		  th_x2:4;		/* (unused) */
 #endif
 	u_int8_t  th_flags;
-#define	TH_FIN	0x01
-#define	TH_SYN	0x02
-#define	TH_RST	0x04
-#define	TH_PUSH	0x08
-#define	TH_ACK	0x10
-#define	TH_URG	0x20
+#define	TH_FIN	  0x01
+#define	TH_SYN	  0x02
+#define	TH_RST	  0x04
+#define	TH_PUSH	  0x08
+#define	TH_ACK	  0x10
+#define	TH_URG	  0x20
 	u_int16_t th_win;			/* window */
 	u_int16_t th_sum;			/* checksum */
 	u_int16_t th_urp;			/* urgent pointer */
