@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.pc532,v 1.64 2000/12/17 15:52:43 jdolecek Exp $
+#	$NetBSD: Makefile.pc532,v 1.65 2001/05/29 02:20:25 mrg Exp $
 
 # Makefile for NetBSD
 #
@@ -38,7 +38,7 @@ PC532=	$S/arch/pc532
 
 HAVE_EGCS!=	${CC} --version | egrep "^(2\.[89]|egcs)" ; echo 
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
-CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL
+CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -D_KERNEL_OPT
 CWARNFLAGS?=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes \
 		-Wpointer-arith -Wno-format
 # XXX Delete -Wuninitialized for now, since the compiler doesn't
