@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pcmcia.c,v 1.19 1999/02/19 21:49:43 abs Exp $ */
+/*	$NetBSD: wdc_pcmcia.c,v 1.20 1999/09/22 10:03:37 enami Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -339,7 +339,7 @@ wdc_pcmcia_attach(parent, self, aux)
 	sc->wdc_channel.ch_queue = malloc(sizeof(struct channel_queue),
 	    M_DEVBUF, M_NOWAIT);
 	if (sc->wdc_channel.ch_queue == NULL) {
-		printf("%s: can't allocate memory for command queue",
+		printf("%s: can't allocate memory for command queue\n",
 		    sc->sc_wdcdev.sc_dev.dv_xname);
 		return;
 	}
