@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.114.2.5 1999/07/02 17:40:20 perry Exp $
+# $NetBSD: GENERIC,v 1.114.2.6 2000/07/05 21:14:11 he Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
 
@@ -179,6 +179,7 @@ ppb*	at	pci? dev ? function ?		# PCI-PCI Bridges
 pciide*	at	pci? dev ? function ?		# PCI IDE controllers
 sio*	at	pci? dev ? function ?		# Intel PCI-ISA Bridges
 tga*	at	pci? dev ? function ?		# DEC ZLXp-E[123] Graphics
+ti*	at	pci? dev ? function ?		# Alteon ACEnic gigabit Ethernet
 tl*	at	pci? dev ? function ?		# TI ThunderLAN Ethernet
 vga*	at	pci? dev ? function ?		# PCI VGA Graphics
 uhci*	at	pci? dev ? function ?		# USB Univ. Host Controller
