@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk.c,v 1.67 2005/02/08 08:56:21 fvdl Exp $	*/
+/*	$NetBSD: subr_disk.c,v 1.67.4.1 2005/04/06 11:56:43 tron Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.67 2005/02/08 08:56:21 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.67.4.1 2005/04/06 11:56:43 tron Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -526,6 +526,22 @@ bufq_alloc(struct bufq_state *bufq, int flags)
 	printf("bufq_alloc: using %s\n", bsp->bs_name);
 #endif
 	(*bsp->bs_initfn)(bufq);
+}
+
+/*
+ * Drain a device buffer queue.
+ */
+void
+bufq_drain(struct bufq_state *bufq)
+{
+	struct buf *bp;
+
+	while ((bp = BUFQ_GET(bufq)) != NULL) {
+		bp->b_error = EIO;
+		bp->b_flags |= B_ERROR;
+		bp->b_resid = bp->b_bcount;
+		biodone(bp);
+	}
 }
 
 /*
