@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_net.c,v 1.3 1994/12/14 20:08:30 mycroft Exp $	 */
+/*	$NetBSD: svr4_net.c,v 1.4 1994/12/14 20:20:26 mycroft Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -140,6 +140,7 @@ svr4_netopen(dev, flag, mode, p)
 
 	if ((error = socreate(AF_INET, &so, type, protocol)) != 0) {
 		DPRINTF(("socreate error %d\n", error));
+		p->p_fd->fd_ofiles[fd] = 0;
 		ffree(fp);
 		return error;
 	}
