@@ -1,4 +1,4 @@
-/*	$NetBSD: pom.c,v 1.4 1995/03/23 08:35:36 cgd Exp $	*/
+/*	$NetBSD: pom.c,v 1.5 1995/06/07 16:30:46 cgd Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -45,7 +45,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)pom.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: pom.c,v 1.4 1995/03/23 08:35:36 cgd Exp $";
+static char rcsid[] = "$NetBSD: pom.c,v 1.5 1995/06/07 16:30:46 cgd Exp $";
 #endif
 #endif /* not lint */
 
@@ -82,6 +82,7 @@ main()
 	struct timeval tp;
 	struct timezone tzp;
 	struct tm *GMT, *gmtime();
+	time_t tmpt;
 	double days, today, tomorrow;
 	int cnt;
 
@@ -89,7 +90,8 @@ main()
 		(void)fprintf(stderr, "pom: %s\n", strerror(errno));
 		exit(1);
 	}
-	GMT = gmtime(&tp.tv_sec);
+	tmpt = tp.tv_sec;
+	GMT = gmtime(&tmpt);
 	days = (GMT->tm_yday + 1) + ((GMT->tm_hour +
 	    (GMT->tm_min / 60.0) + (GMT->tm_sec / 3600.0)) / 24.0);
 	for (cnt = EPOCH; cnt < GMT->tm_year; ++cnt)
