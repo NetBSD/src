@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.10 2001/10/31 16:15:01 tv Exp $
+#	$NetBSD: Makefile.inc,v 1.11 2001/10/31 17:46:08 tv Exp $
 
 .include <bsd.own.mk>
 
@@ -15,7 +15,7 @@ INSTALL=	${TOOLDIR}/bin/binstall
 # "make build":  Only build if the installed program is out-of-date.
 # ("make all" and "make install" always build and install.)
 .if make(build)
-MKTOOLS?=no
+MKTOOLS?=yes
 .if ${MKTOOLS} == "always"
 build:
 .else
@@ -27,8 +27,7 @@ ${TIMESTAMP}: ${_CURDIR}/Makefile
 	@cd ${_CURDIR} && ${MAKE} all
 	@cd ${_CURDIR} && ${MAKE} install
 .else
-	@echo "===> $@ must be updated"
-	@echo "===> (set MKTOOLS=yes in /etc/mk.conf or the environment to continue)"
+	@echo "===> $@ must be updated, but MKTOOLS=no, so cannot build"
 	@false
 .endif
 .endif
