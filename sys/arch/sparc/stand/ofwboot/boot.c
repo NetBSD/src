@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.3 2001/05/31 08:55:19 mrg Exp $	*/
+/*	$NetBSD: boot.c,v 1.4 2002/06/06 05:04:28 martin Exp $	*/
 #define DEBUG
 /*
  * Copyright (c) 1997, 1999 Eduardo E. Horvath.  All rights reserved.
@@ -560,7 +560,7 @@ main()
 	    || OF_getprop(chosen, "bootpath", bootdev, sizeof bootdev) < 0
 	    || OF_getprop(chosen, "bootargs", bootline, sizeof bootline) < 0) {
 		printf("Invalid Openfirmware environment\n");
-		exit();
+		exit(0);
 	}
 	/*prom2boot(bootdev);*/
 	kernelname = kernels[0];
