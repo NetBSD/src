@@ -1,4 +1,4 @@
-#	$NetBSD: rc.subr,v 1.6 1999/03/24 18:59:47 mellon Exp $
+#	$NetBSD: rc.subr,v 1.7 1999/04/01 03:58:44 cjs Exp $
 # functions used by various rc scripts
 
 #
@@ -32,8 +32,12 @@ checkyesno() {
 #	Go through the list of critical filesystems, checking each one
 #	to see if it is mounted, and if it is not, mounting it.
 #
+fstab=/etc/fstab
 mount_critical_filesystems() {
 	for fs in /usr /var $critical_filesystems; do
+		if [ $1 = local ] && ! islocalfs $fs; then
+			continue
+		fi
 		mount | (
 			ismounted=no
 			while read what _on on _type type; do
@@ -46,4 +50,30 @@ mount_critical_filesystems() {
 			fi
 		)  
 	done
+}
+
+islocalfs() {
+	if [ -z "$1" ]; then
+		echo 'islocalfs() called with no fs argument: aborting.'
+		exit 3
+	fi
+	while read dev dir type opts; do
+		if [ "$1" = "$dir" ]; then
+			case $type in
+				# Local filesystems.
+				ados|cd9660|ext2fs|fdesc|ffs) return 0;;
+				filecore|kernfs|lfs|mfs|msdos|null) return 0;;
+				portal|procfs|ufs|umap|union) return 0;;
+				# Network filesystems
+				nfs) return 1;;
+				# If we don't know, err on the safe side
+				# and assume it's a network FS.
+				*) return 1;;
+			esac
+		fi
+	done < $fstab
+	# We didn't find the FS. Return local to show error as
+	# early in boot sequence as possible.
+	echo "WARNING: islocalfs() in rc.subr doesn't recognise fstype $fs"
+	return 1;
 }
