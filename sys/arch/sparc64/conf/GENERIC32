@@ -1,8 +1,8 @@
-# 	$NetBSD: GENERIC32,v 1.30 2002/01/27 13:23:27 jdolecek Exp $
+# 	$NetBSD: GENERIC32,v 1.31 2002/02/05 01:55:49 eeh Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
-#ident 		"GENERIC-$Revision: 1.30 $"
+#ident 		"GENERIC-$Revision: 1.31 $"
 
 maxusers	64
 
@@ -519,7 +519,10 @@ pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 ## /dev/audio support (`audiocs' plus `audio')
 ##
 audiocs*	at sbus? slot ? offset ?	# SUNW,CS4231
+autri*		at pci? dev ? function ?	# Blade 100 'sound'
+
 audio*		at audiocs?
+audio*		at autri?
 
 
 ## Sun "bwtwo" black and white framebuffer, found on sun4, sun4c, and sun4m
