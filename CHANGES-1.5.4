@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.4,v 1.1.2.84 2002/11/17 14:27:13 itojun Exp $
+#	$NetBSD: CHANGES-1.5.4,v 1.1.2.85 2002/11/27 08:35:18 itojun Exp $
 
 A complete list of changes from NetBSD 1.5.3 to NetBSD 1.5.4:
 
@@ -1805,3 +1805,9 @@ dist/bind/man/named.conf.5			1.8
 sys/netinet6/ip6_forward.c			1.20 via patch
 
   Need opt_pfil_hooks.h for PFIL_HOOK.
+
+sys/netinet/ip_h323_pxy.c			via patch
+sys/netinet/ip_ipsec_pxy.c			via patch
+sys/netinet/ip_netbios_pxy.c			via patch
+
+  Fix compilation on a.out systems.
