@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.89 2002/09/27 15:37:37 provos Exp $	*/
+/*	$NetBSD: umass.c,v 1.90 2002/11/04 19:17:33 pooka Exp $	*/
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
  *		      Nick Hibma <n_hibma@freebsd.org>
@@ -38,7 +38,7 @@
 
 /*
  * Ported to NetBSD by Lennart Augustsson <augustss@netbsd.org>.
- * Parts of the code written my Jason R. Thorpe <thorpej@shagadelic.org>.
+ * Parts of the code written by Jason R. Thorpe <thorpej@shagadelic.org>.
  */
 
 /*
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.89 2002/09/27 15:37:37 provos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.90 2002/11/04 19:17:33 pooka Exp $");
 
 #include "atapibus.h"
 #include "scsibus.h"
