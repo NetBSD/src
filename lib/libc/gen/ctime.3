@@ -32,7 +32,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)ctime.3	6.15 (Berkeley) 4/19/91
-.\"	$Id: ctime.3,v 1.2 1993/07/30 08:35:29 mycroft Exp $
+.\"	$Id: ctime.3,v 1.3 1993/10/04 18:28:59 jtc Exp $
 .\"
 .Dd April 19, 1991
 .Dt CTIME 3
@@ -47,13 +47,11 @@
 .Nd transform binary date and time value to
 .Tn ASCII
 .Sh SYNOPSIS
-.Fd #include <sys/types.h>
-.Vt extern char *tzname[2];
+.Fd #include <time.h>
 .Ft char *
 .Fn ctime "const time_t *clock"
 .Ft double
 .Fn difftime "time_t time1" "time_t time0"
-.Fd #include <time.h>
 .Ft char *
 .Fn asctime "const struct tm *tm"
 .Ft struct tm *
@@ -62,6 +60,7 @@
 .Fn gmtime "const time_t *clock"
 .Ft time_t
 .Fn mktime "struct tm *tm"
+.Vt extern char *tzname[2];
 .Sh DESCRIPTION
 The functions
 .Fn ctime ,
