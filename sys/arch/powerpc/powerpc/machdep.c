@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.10 1997/06/12 15:46:44 mrg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.10.4.1 1997/09/16 03:49:07 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -523,11 +523,10 @@ consinit()
  * Set set up registers on exec.
  */
 void
-setregs(p, pack, stack, retval)
+setregs(p, pack, stack)
 	struct proc *p;
 	struct exec_package *pack;
 	u_long stack;
-	register_t *retval;
 {
 	struct trapframe *tf = trapframe(p);
 	struct ps_strings arginfo;
@@ -555,8 +554,8 @@ setregs(p, pack, stack, retval)
 	 * XXX We have to set both regs and retval here due to different
 	 * XXX calling convention in trap.c and init_main.c.
 	 */
-	tf->fixreg[3] = retval[0] = arginfo.ps_nargvstr;
-	tf->fixreg[4] = retval[1] = (register_t)arginfo.ps_argvstr;
+	tf->fixreg[3] = arginfo.ps_nargvstr;
+	tf->fixreg[4] = (register_t)arginfo.ps_argvstr;
 	tf->fixreg[5] = (register_t)arginfo.ps_envstr;
 	tf->fixreg[6] = 0;			/* auxillary vector */
 	tf->fixreg[7] = 0;			/* termination vector */

@@ -1,4 +1,4 @@
-/*	$NetBSD: isp_pci.c,v 1.14.4.2 1997/08/27 23:32:37 thorpej Exp $	*/
+/*	$NetBSD: isp_pci.c,v 1.14.4.3 1997/09/16 03:50:40 thorpej Exp $	*/
 
 /*
  * PCI specific probe and attach routines for Qlogic ISP SCSI adapters.
@@ -458,31 +458,32 @@ isp_pci_dmasetup(isp, xs, rq, iptrp, optr)
 	struct isp_pcisoftc *pci = (struct isp_pcisoftc *)isp;
 	bus_dmamap_t dmap = pci->pci_xfer_dmap[rq->req_handle - 1];
 	ispcontreq_t *crq;
-	int segcnt, seg, error, ovseg, seglim;
+	int segcnt, seg, error, ovseg, seglim, drq;
 
 	if (xs->datalen == 0) {
 		rq->req_seg_count = 1;
 		return (0);
 	}
 
-	if (rq->req_handle > RQUEST_QUEUE_LEN(isp) ||
-	    rq->req_handle < 1) {
+	if (rq->req_handle > RQUEST_QUEUE_LEN(isp) || rq->req_handle < 1) {
 		panic("%s: bad handle (%d) in isp_pci_dmasetup\n",
 		    isp->isp_name, rq->req_handle);
 		/* NOTREACHED */
 	}
 
 	if (xs->flags & SCSI_DATA_IN) {
-		rq->req_flags |= REQFLAG_DATA_IN;
+		drq = REQFLAG_DATA_IN;
 	} else {
-		rq->req_flags |= REQFLAG_DATA_OUT;
+		drq = REQFLAG_DATA_OUT;
 	}
 
 	if (isp->isp_type & ISP_HA_FC) {
 		seglim = ISP_RQDSEG_T2;
 		((ispreqt2_t *)rq)->req_totalcnt = xs->datalen;
+		((ispreqt2_t *)rq)->req_flags |= drq;
 	} else {
 		seglim = ISP_RQDSEG;
+		rq->req_flags |= drq;
 	}
 	error = bus_dmamap_load(pci->pci_dmat, dmap, xs->data, xs->datalen,
 	    NULL, xs->flags & SCSI_NOSLEEP ? BUS_DMA_NOWAIT : BUS_DMA_WAITOK);

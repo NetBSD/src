@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.81.2.2 1997/09/04 00:52:43 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.81.2.3 1997/09/16 03:48:03 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.81.2.2 1997/09/04 00:52:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.81.2.3 1997/09/16 03:48:03 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1467,11 +1467,10 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
  * Set registers on exec.
  */
 void
-setregs(p, pack, stack, retval)
+setregs(p, pack, stack)
 	register struct proc *p;
 	struct exec_package *pack;
 	u_long stack;
-	register_t *retval;
 {
 	struct trapframe *tfp = p->p_md.md_tf;
 	extern struct proc *fpcurproc;
@@ -1509,8 +1508,6 @@ setregs(p, pack, stack, retval)
 	p->p_md.md_flags &= ~MDP_FPUSED;
 	if (fpcurproc == p)
 		fpcurproc = NULL;
-
-	retval[0] = retval[1] = 0;
 }
 
 void
@@ -1695,18 +1692,17 @@ delay(n)
 
 #if defined(COMPAT_OSF1) || 1		/* XXX */
 void	cpu_exec_ecoff_setregs __P((struct proc *, struct exec_package *,
-	    u_long, register_t *));
+	    u_long));
 
 void
-cpu_exec_ecoff_setregs(p, epp, stack, retval)
+cpu_exec_ecoff_setregs(p, epp, stack)
 	struct proc *p;
 	struct exec_package *epp;
 	u_long stack;
-	register_t *retval;
 {
 	struct ecoff_exechdr *execp = (struct ecoff_exechdr *)epp->ep_hdr;
 
-	setregs(p, epp, stack, retval);
+	setregs(p, epp, stack);
 	p->p_md.md_tf->tf_regs[FRAME_GP] = execp->a.gp_value;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.12 1997/07/20 11:03:03 kleink Exp $	*/
+/*	$NetBSD: trap.c,v 1.12.2.1 1997/09/16 03:49:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -281,9 +281,7 @@ copyfault:
 		i = SIGBUS;
 		break;
 
-#ifdef FPCOPROC
 	case T_COPERR:		/* kernel coprocessor violation */
-#endif
 	case T_FMTERR|T_USER:	/* do all RTE errors come in as T_USER? */
 	case T_FMTERR:		/* ...just in case... */
 	/*
@@ -302,7 +300,6 @@ copyfault:
 		ucode = frame.f_format;	/* XXX was ILL_RESAD_FAULT */
 		break;
 
-#ifdef FPCOPROC
 	case T_COPERR|T_USER:	/* user coprocessor violation */
 	/* What is a proper response here? */
 		ucode = 0;
@@ -322,7 +319,6 @@ copyfault:
 		ucode = code;
 		i = SIGFPE;
 		break;
-#endif
 
 #ifdef M68040
 	case T_FPEMULI|T_USER:	/* unimplemented FP instuction */

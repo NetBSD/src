@@ -1,4 +1,4 @@
-/*	$NetBSD: osf1_misc.c,v 1.11 1996/10/13 00:46:53 christos Exp $	*/
+/*	$NetBSD: osf1_misc.c,v 1.11.10.1 1997/09/16 03:49:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -56,7 +56,7 @@ extern int scdebug;
 extern struct sysent osf1_sysent[];
 extern char *osf1_syscallnames[];
 extern void cpu_exec_ecoff_setregs __P((struct proc *, struct exec_package *,
-					u_long, register_t *));
+					u_long));
 
 extern char sigcode[], esigcode[];
 

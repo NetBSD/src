@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_object.h,v 1.20 1997/02/21 20:26:03 thorpej Exp $	*/
+/*	$NetBSD: vm_object.h,v 1.20.4.1 1997/09/16 03:51:37 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -163,19 +163,25 @@ vm_object_t	kmem_object;
 #define	vm_object_paging(object) \
 	((object)->paging_in_progress != 0)
 
-#ifndef DIAGNOSTIC
-#define	vm_object_paging_begin(object) \
-	do {								\
-		(object)->paging_in_progress++;				\
-	} while (0)
+#ifdef DIAGNOSTIC
+/* Hope 0xdead is an unlikely value of either field */
+#if BYTE_ORDER == BIG_ENDIAN
+#define __VMOBJECT_IS_DEAD(object) \
+	((object)->flags == 0xdead)
 #else
+#define __VMOBJECT_IS_DEAD(object) \
+	((object)->paging_in_progress == 0xdead)
+#endif /* BIG_ENDIAN */
+#else
+#define __VMOBJECT_IS_DEAD(object)	(0)
+#endif /* DIAGNOSTIC */
+
 #define	vm_object_paging_begin(object) \
 	do {								\
-		if ((object)->paging_in_progress == 0xdead)		\
+		if (__VMOBJECT_IS_DEAD(object))				\
 			panic("vm_object_paging_begin");		\
 		(object)->paging_in_progress++;				\
 	} while (0)
-#endif
 
 #define	vm_object_paging_end(object) \
 	do {								\

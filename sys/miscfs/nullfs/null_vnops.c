@@ -1,4 +1,4 @@
-/*	$NetBSD: null_vnops.c,v 1.10 1997/05/17 20:32:53 pk Exp $	*/
+/*	$NetBSD: null_vnops.c,v 1.10.4.1 1997/09/16 03:51:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -512,7 +512,7 @@ null_lock(v)
 
 #ifdef NULLFS_DIAGNOSTIC
 	vprint("null_lock_e", ap->a_vp);
-	printf("retpc=%lx, retretpc=%lx\n", RETURN_PC(0), RETURN_PC(1));
+	printf("retpc=%p, retretpc=%p\n", RETURN_PC(0), RETURN_PC(1));
 #endif
 start:
 	while (vp->v_flag & VXLOCK) {
@@ -622,7 +622,7 @@ null_lookup(v)
 	int flags = ap->a_cnp->cn_flags;
 
 #ifdef NULLFS_DIAGNOSTIC
-	printf("null_lookup: dvp=%lx, name='%s'\n",
+	printf("null_lookup: dvp=%p, name='%s'\n",
 	    ap->a_dvp, ap->a_cnp->cn_nameptr);
 #endif
 	/*

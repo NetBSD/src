@@ -1,4 +1,4 @@
-/*	$NetBSD: if_levar.h,v 1.9 1997/06/06 23:43:53 thorpej Exp $	*/
+/*	$NetBSD: if_levar.h,v 1.9.4.1 1997/09/16 03:50:18 thorpej Exp $	*/
 
 /*
  * LANCE Ethernet driver header file
@@ -26,12 +26,10 @@
 #define	DEPCA		3
 #define	DEPCA_CSR	0x0
 #define	DEPCA_CSR_SHE		0x80	/* Shared memory enabled */
-#define	DEPCA_CSR_SWAP32	0x40	/* Byte swapped */
+#define	DEPCA_CSR_LOW32K	0x40	/* Map lower 32K chunk */
 #define	DEPCA_CSR_DUM		0x08	/* rev E compatibility */
 #define	DEPCA_CSR_IM		0x04	/* Interrupt masked */
 #define	DEPCA_CSR_IEN		0x02	/* Interrupt enabled */
-#define	DEPCA_CSR_NORMAL \
-	(DEPCA_CSR_SHE | DEPCA_CSR_DUM | DEPCA_CSR_IEN)
 #define	DEPCA_RDP	0x4
 #define	DEPCA_RAP	0x6
 #define	DEPCA_ADP	0xc

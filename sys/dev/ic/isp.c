@@ -1,4 +1,4 @@
-/*	$NetBSD: isp.c,v 1.9.2.2 1997/08/27 23:30:44 thorpej Exp $	*/
+/*	$NetBSD: isp.c,v 1.9.2.3 1997/09/16 03:50:02 thorpej Exp $	*/
 
 /*
  * Machine Independent (well, as best as possible)
@@ -128,8 +128,10 @@ isp_reset(isp)
 		switch (i) {
 		default:
 			printf("%s: unknown ISP type %x\n", isp->isp_name, i);
+			isp->isp_type = ISP_HA_SCSI_1020;
 			break;
 		case 1:
+		case 2:
 			revname = "1020";
 			isp->isp_type = ISP_HA_SCSI_1020;
 			break;
@@ -694,7 +696,7 @@ isp_fibre_init(isp)
 		delay(1000);		/* wait one millisecond */
 	}
 
-isp->isp_sendmarker = 1;
+	isp->isp_sendmarker = 1;
 
 	(void) splx(s);
 	isp->isp_state = ISP_INITSTATE;
@@ -727,11 +729,7 @@ isp_attach(isp)
 		int s;
 
 		isp->isp_link.scsipi_scsi.max_target = MAX_FC_TARG-1;
-#if	0
 		isp->isp_link.openings = RQUEST_QUEUE_LEN(isp)/(MAX_FC_TARG-1);
-#else
-		isp->isp_link.openings = 8;
-#endif
 		s = splbio();
 		mbs.param[0] = MBOX_GET_LOOP_ID;
 		isp_mboxcmd(isp, &mbs);
@@ -810,20 +808,12 @@ ispscsicmd(xs)
 	isp = xs->sc_link->adapter_softc;
 
 	if (isp->isp_type & ISP_HA_FC) {
-#if	0
-		printf("%s: not doing FC now\n", isp->isp_name);
-		xs->error = XS_SELTIMEOUT;
-		xs->flags |= ITSDONE;
-		return (COMPLETE);
-#endif
 		if (xs->cmdlen > 12) {
-			printf("%s: unsupported cdb for fibre (%d)\n", 
+			printf("%s: unsupported cdb length for fibre (%d)\n", 
 				isp->isp_name, xs->cmdlen);
 			xs->error = XS_DRIVER_STUFFUP;
 			return (COMPLETE);
 		}
-if (isp->isp_type & ISP_HA_FC)
-	DISABLE_INTS(isp);
 	}
 	optr = ISP_READ(isp, OUTMAILBOX4);
 	iptr = isp->isp_reqidx;
@@ -837,8 +827,9 @@ if (isp->isp_type & ISP_HA_FC)
 	}
 
 	s = splbio();
-if (isp->isp_type & ISP_HA_FC)
-	DISABLE_INTS(isp);
+	if (isp->isp_type & ISP_HA_FC)
+		DISABLE_INTS(isp);
+
 	if (isp->isp_sendmarker) {
 		ispmarkreq_t *marker = (ispmarkreq_t *) reqp;
 
@@ -852,8 +843,9 @@ if (isp->isp_type & ISP_HA_FC)
 		if (((iptr + 1) & (RQUEST_QUEUE_LEN(isp) - 1)) == optr) {
 			ISP_WRITE(isp, INMAILBOX4, iptr);
 			isp->isp_reqidx = iptr;
-if (isp->isp_type & ISP_HA_FC)
-	ENABLE_INTS(isp);
+
+			if (isp->isp_type & ISP_HA_FC)
+				ENABLE_INTS(isp);
 			(void) splx(s);
 			printf("%s: Request Queue Overflow+\n", isp->isp_name);
 			xs->error = XS_DRIVER_STUFFUP;
@@ -924,8 +916,8 @@ if (isp->isp_type & ISP_HA_FC)
 	if (reqp->req_time == 0 && xs->timeout)
 		reqp->req_time = 1;
 	if (ISP_DMASETUP(isp, xs, reqp, &iptr, optr)) {
-if (isp->isp_type & ISP_HA_FC)
-	ENABLE_INTS(isp);
+		if (isp->isp_type & ISP_HA_FC)
+			ENABLE_INTS(isp);
 		(void) splx(s);
 		xs->error = XS_DRIVER_STUFFUP;
 		return (COMPLETE);
@@ -933,8 +925,8 @@ if (isp->isp_type & ISP_HA_FC)
 	xs->error = 0;
 	ISP_WRITE(isp, INMAILBOX4, iptr);
 	isp->isp_reqidx = iptr;
-if (isp->isp_type & ISP_HA_FC)
-	ENABLE_INTS(isp);
+	if (isp->isp_type & ISP_HA_FC)
+		ENABLE_INTS(isp);
 	(void) splx(s);
 	if ((xs->flags & SCSI_POLL) == 0) {
 		return (SUCCESSFULLY_QUEUED);
@@ -1339,39 +1331,7 @@ static u_int8_t mbpcnt[] = {
 	MAKNIB(3, 1),	/* 0x66: MBOX_TARGET_RESET */
 	MAKNIB(3, 1),	/* 0x67: MBOX_CLEAR_TASK_SET */
 	MAKNIB(3, 1),	/* 0x69: MBOX_ABORT_TASK_SET */
-	MAKNIB(1, 2),	/* 0x69: MBOX_GET_FIRMWARE_STATE */
-	MAKNIB(0, 0),	/* 0x6a: */
-	MAKNIB(0, 0),	/* 0x6b: */
-	MAKNIB(0, 0),	/* 0x6c: */
-	MAKNIB(0, 0),	/* 0x6d: */
-	MAKNIB(0, 0),	/* 0x6e: */
-	MAKNIB(0, 0),	/* 0x6f: */
-	MAKNIB(0, 0),	/* 0x70: */
-	MAKNIB(0, 0),	/* 0x71: */
-	MAKNIB(0, 0),	/* 0x72: */
-	MAKNIB(0, 0),	/* 0x73: */
-	MAKNIB(0, 0),	/* 0x74: */
-	MAKNIB(0, 0),	/* 0x75: */
-	MAKNIB(0, 0),	/* 0x76: */
-	MAKNIB(0, 0),	/* 0x77: */
-	MAKNIB(0, 0),	/* 0x78: */
-	MAKNIB(0, 0),	/* 0x79: */
-	MAKNIB(0, 0),	/* 0x7a: */
-	MAKNIB(0, 0),	/* 0x7b: */
-	MAKNIB(0, 0),	/* 0x7c: */
-	MAKNIB(0, 0),	/* 0x7d: */
-	MAKNIB(0, 0),	/* 0x7e: */
-	MAKNIB(0, 0),	/* 0x7f: */
-	MAKNIB(8, 6),	/* 0x80: MBOX_INIT_FIRMWARE */
-	MAKNIB(2, 1),	/* 0x81: MBOX_INIT_LIP */
-	MAKNIB(8, 1),	/* 0x82: MBOX_GET_FC_AL_POSITION_MAP */
-	MAKNIB(8, 1),	/* 0x83: MBOX_GET_PORT_DB */
-	MAKNIB(2, 1),	/* 0x84: MBOX_QCTRL */
-	MAKNIB(2, 1),	/* 0x85: MBOX_PCTRL */
-	MAKNIB(3, 1),	/* 0x86: MBOX_CLEAR_ACA */
-	MAKNIB(3, 1),	/* 0x87: MBOX_TARGET_RESET */
-	MAKNIB(3, 1),	/* 0x88: MBOX_CLEAR_TASK_SET */
-	MAKNIB(3, 1)	/* 0x89: MBOX_ABORT_TASK_SET */
+	MAKNIB(1, 2)	/* 0x69: MBOX_GET_FW_STATE */
 };
 #define	NMBCOM	(sizeof (mbpcnt) / sizeof (mbpcnt[0]))
 

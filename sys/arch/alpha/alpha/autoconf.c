@@ -1,4 +1,4 @@
-/* $NetBSD: autoconf.c,v 1.25.4.1 1997/09/04 00:52:17 thorpej Exp $ */
+/* $NetBSD: autoconf.c,v 1.25.4.2 1997/09/16 03:47:59 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -46,7 +46,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.25.4.1 1997/09/04 00:52:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.25.4.2 1997/09/16 03:47:59 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,6 +59,13 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.25.4.1 1997/09/04 00:52:17 thorpej Ex
 #include <machine/autoconf.h>
 #include <machine/prom.h>
 #include <machine/conf.h>
+
+/*
+ * The Alpha console firmware network boots using the BOOTP
+ * protocol, so we ask the NFS code to use BOOTP as well, in
+ * case we have NFS root.
+ */
+int nfs_boot_rfc951 = 1;
 
 struct device		*booted_device;
 int			booted_partition;

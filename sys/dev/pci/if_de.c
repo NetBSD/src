@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.46.2.1 1997/08/27 23:32:27 thorpej Exp $	*/
+/*	$NetBSD: if_de.c,v 1.46.2.2 1997/09/16 03:50:37 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -5044,12 +5044,14 @@ tulip_pci_attach(
      * force a probe.
      */
     switch ((cfdainfo >> 8) & 0xff) {
-    case 1: sc->tulip_media = chipid > TULIP_DE425 ? TULIP_MEDIA_AUI : TULIP_MEDIA_AUIBNC;
-    case 2: sc->tulip_media = chipid > TULIP_DE425 ? TULIP_MEDIA_BNC : TULIP_MEDIA_UNKNOWN;
-    case 3: sc->tulip_media = TULIP_MEDIA_10BASET;
-    case 4: sc->tulip_media = TULIP_MEDIA_10BASET_FD;
-    case 5: sc->tulip_media = TULIP_MEDIA_100BASETX;
-    case 6: sc->tulip_media = TULIP_MEDIA_100BASETX_FD;
+    case 1: sc->tulip_media = chipid > TULIP_DE425 ?
+        TULIP_MEDIA_AUI : TULIP_MEDIA_AUIBNC; break;
+    case 2: sc->tulip_media = chipid > TULIP_DE425 ?
+        TULIP_MEDIA_BNC : TULIP_MEDIA_UNKNOWN; break;
+    case 3: sc->tulip_media = TULIP_MEDIA_10BASET; break;
+    case 4: sc->tulip_media = TULIP_MEDIA_10BASET_FD; break;
+    case 5: sc->tulip_media = TULIP_MEDIA_100BASETX; break;
+    case 6: sc->tulip_media = TULIP_MEDIA_100BASETX_FD; break;
     }
 #endif
 

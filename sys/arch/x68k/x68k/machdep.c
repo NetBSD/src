@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.13 1997/06/12 15:46:54 mrg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.13.4.1 1997/09/16 03:49:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -386,73 +386,38 @@ again:
 
 /*
  * Set registers on exec.
- * XXX Should clear registers except sp, pc,
- * but would break init; should be fixed soon.
  */
 void
-setregs(p, pack, stack, retval)
+setregs(p, pack, stack)
 	register struct proc *p;
 	struct exec_package *pack;
 	u_long stack;
-	register_t *retval;
 {
 	struct frame *frame = (struct frame *)p->p_md.md_regs;
 
+	frame->f_sr = PSL_USERSET;
 	frame->f_pc = pack->ep_entry & ~1;
-	frame->f_regs[SP] = stack;
+	frame->f_regs[D0] = 0;
+	frame->f_regs[D1] = 0;
+	frame->f_regs[D2] = 0;
+	frame->f_regs[D3] = 0;
+	frame->f_regs[D4] = 0;
+	frame->f_regs[D5] = 0;
+	frame->f_regs[D6] = 0;
+	frame->f_regs[D7] = 0;
+	frame->f_regs[A0] = 0;
+	frame->f_regs[A1] = 0;
 	frame->f_regs[A2] = (int)PS_STRINGS;
-#ifdef FPCOPROC
+	frame->f_regs[A3] = 0;
+	frame->f_regs[A4] = 0;
+	frame->f_regs[A5] = 0;
+	frame->f_regs[A6] = 0;
+	frame->f_regs[SP] = stack;
+
 	/* restore a null state frame */
 	p->p_addr->u_pcb.pcb_fpregs.fpf_null = 0;
-	m68881_restore(&p->p_addr->u_pcb.pcb_fpregs);
-#endif
-#ifdef COMPAT_HPUX
-	p->p_md.md_flags &= ~MDP_HPUXMMAP;
-	if (p->p_emul == &emul_hpux) {
-		frame->f_regs[A0] = 0; /* not 68010 (bit 31), no FPA (30) */
-		retval[0] = 0;		/* no float card */
-#ifdef FPCOPROC
-		retval[1] = 1;		/* yes 68881 */
-#else
-		retval[1] = 0;		/* no 68881 */
-#endif
-	}
-	/*
-	 * XXX This doesn't have much to do with setting registers but
-	 * I didn't want to muck up kern_exec.c with this code, so I
-	 * stuck it here.
-	 *
-	 * Ensure we perform the right action on traps type 1 and 2:
-	 * If our parent is an HPUX process and we are being traced, turn
-	 * on HPUX style interpretation.  Else if we were using the HPUX
-	 * style interpretation, revert to the BSD interpretation.
-	 *
-	 * Note that we do this by changing the trap instruction in the
-	 * global "sigcode" array which then gets copied out to the user's
-	 * sigcode in the stack.  Since we are changing it in the global
-	 * array we must always reset it, even for non-HPUX processes.
-	 *
-	 * Note also that implementing it in this way creates a potential
-	 * race where we could have tweaked it for process A which then
-	 * blocks in the copyout to the stack and process B comes along
-	 * and untweaks it causing A to wind up with the wrong setting
-	 * when the copyout continues.  However, since we have already
-	 * copied something out to this user stack page (thereby faulting
-	 * it in), this scenerio is extremely unlikely.
-	 */
-	{
-		extern short sigcodetrap[];
-
-		if ((p->p_pptr->p_emul == &emul_hpux) &&
-		    (p->p_flag & P_TRACED)) {
-			p->p_md.md_flags |= MDP_HPUXTRACE;
-			*sigcodetrap = 0x4E42;
-		} else {
-			p->p_md.md_flags &= ~MDP_HPUXTRACE;
-			*sigcodetrap = 0x4E41;
-		}
-	}
-#endif
+	if (fputype)
+		m68881_restore(&p->p_addr->u_pcb.pcb_fpregs);
 }
 
 /*
@@ -743,15 +708,16 @@ sendsig(catcher, sig, mask, code)
 			       p->p_pid, exframesize[ft], ft);
 #endif
 	}
-#ifdef FPCOPROC
-	kfp->sf_state.ss_flags |= SS_FPSTATE;
-	m68881_save(&kfp->sf_state.ss_fpstate);
+
+	if (fputype) {
+		kfp->sf_state.ss_flags |= SS_FPSTATE;
+		m68881_save(&kfp->sf_state.ss_fpstate);
+	}
 #ifdef DEBUG
 	if ((sigdebug & SDB_FPSTATE) && *(char *)&kfp->sf_state.ss_fpstate)
 		printf("sendsig(%d): copy out FP state (%x) to %p\n",
 		       p->p_pid, *(u_int *)&kfp->sf_state.ss_fpstate,
 		       &kfp->sf_state.ss_fpstate);
-#endif
 #endif
 	/*
 	 * Build the signal context to be used by sigreturn.
@@ -972,20 +938,17 @@ sys_sigreturn(p, v, retval)
 			       p->p_pid, sz, tstate.ss_frame.f_format);
 #endif
 	}
-#ifdef FPCOPROC
+
 	/*
 	 * Finally we restore the original FP context
 	 */
-	if (flags & SS_FPSTATE)
+	if (fputype && (flags & SS_FPSTATE))
 		m68881_restore(&tstate.ss_fpstate);
 #ifdef DEBUG
 	if ((sigdebug & SDB_FPSTATE) && *(char *)&tstate.ss_fpstate)
 		printf("sigreturn(%d): copied in FP state (%x) at %p\n",
 		       p->p_pid, *(u_int *)&tstate.ss_fpstate,
 		       &tstate.ss_fpstate);
-#endif
-#endif
-#ifdef DEBUG
 	if ((sigdebug & SDB_FOLLOW) ||
 	    ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid))
 		printf("sigreturn(%d): returns\n", p->p_pid);

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.27.4.1 1997/08/23 07:14:07 thorpej Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.27.4.2 1997/09/16 03:51:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
@@ -369,7 +369,7 @@ setroot(bootdv, bootpartition, nam2blk)
 	struct devnametobdevmaj *nam2blk;
 {
 	struct device *dv;
-	register int len, i;
+	int len, i, print_newline = 0;
 	dev_t nrootdev;
 	dev_t ndumpdev = NODEV;
 	char buf[128];
@@ -631,6 +631,7 @@ setroot(bootdv, bootpartition, nam2blk)
 	case DV_DISK:
 		printf("root on %s%c", rootdv->dv_xname,
 		    DISKPART(rootdev) + 'a');
+		print_newline = 1;
 		break;
 
 	default:
@@ -718,7 +719,8 @@ setroot(bootdv, bootpartition, nam2blk)
 
  nodumpdev:
 	dumpdev = NODEV;
-	printf("\n");
+	if (print_newline)
+		printf("\n");
 }
 
 static int

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_object.c,v 1.48 1997/04/08 22:35:49 mycroft Exp $	*/
+/*	$NetBSD: vm_object.c,v 1.48.4.1 1997/09/16 03:51:35 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 Charles M. Hannum.  All rights reserved.
@@ -296,6 +296,12 @@ vm_object_deallocate(object)
 		vm_object_lock(object);
 		if (--(object->ref_count) != 0) {
 			/*
+			 * If there are still references, then
+			 * we are done.
+			 */
+			vm_object_cache_unlock();
+
+			/*
 			 * If this is a deallocation of a shadow
 			 * reference (which it is unless it's the
 			 * first time round) and this operation made
@@ -306,16 +312,13 @@ vm_object_deallocate(object)
 			if (temp != NULL &&
 			    (temp = object->shadowers.lh_first) != NULL &&
 			    temp->shadowers_list.le_next == NULL) {
-				vm_object_lock(temp);
+				if (!vm_object_lock_try(temp))
+					return;
+				temp->ref_count++;
 				vm_object_collapse(temp);
 				vm_object_unlock(temp);
+				vm_object_deallocate(temp);
 			}
-
-			/*
-			 * If there are still references, then
-			 * we are done.
-			 */
-			vm_object_cache_unlock();
 			return;
 		}
 
@@ -1194,14 +1197,11 @@ vm_object_overlay(object)
 	 * sleep waiting for pages.
 	 */
 
-	vm_object_unlock(object);
 RetryRename:
 #if 0 /* XXXXX FIXME */
+	vm_object_unlock(object);
 	vm_object_paging_wait(backing_object);
-#else
-	if (vm_object_paging(backing_object))
-		goto fail;
-#endif
+	vm_object_lock(object);
 	/*
 	 * While we were asleep, the parent object might have been deleted.  If
 	 * so, the backing object will now have only one reference (the one we
@@ -1212,7 +1212,10 @@ RetryRename:
 	 */
 	if (backing_object->ref_count == 1)
 		goto fail;
-	vm_object_lock(object);
+#else
+	if (vm_object_paging(backing_object))
+		goto fail;
+#endif
 
 	/*
 	 * Next, move any pages in core from the backing object to the
@@ -1312,7 +1315,6 @@ RetryRename:
 		if (((page = vm_page_lookup(object, new_offset)) == NULL) &&
 		    (object->pager == NULL ||
 		     !vm_pager_has_page(object->pager, new_offset))) {
-			vm_object_unlock(object);
 
 			/*
 			 * First, allocate a page and mark it busy so another
@@ -1323,7 +1325,9 @@ RetryRename:
 			if (backing_page == NULL) {
 #if 0 /* XXXXX FIXME */
 				vm_object_unlock(backing_object);
+				vm_object_unlock(object);
 				VM_WAIT;
+				vm_object_lock(object);
 				vm_object_lock(backing_object);
 				goto RetryRename;
 #else
@@ -1333,6 +1337,7 @@ RetryRename:
 
 			vm_object_paging_begin(backing_object);
 			vm_object_unlock(backing_object);
+			vm_object_unlock(object);
 
 			/*
 			 * Call the pager to retrieve the data, if any.
@@ -1341,6 +1346,7 @@ RetryRename:
 			rv = vm_pager_get(backing_object->pager, backing_page,
 			    TRUE);
 
+			vm_object_lock(object);
 			vm_object_lock(backing_object);
 			vm_object_paging_end(backing_object);
 
@@ -1454,7 +1460,6 @@ vm_object_bypass(object)
 	 */
 	if (vm_object_paging(backing_object) ||
 	    backing_object->pager != NULL) {
-		vm_object_unlock(object);
 		goto fail;
 	}
 
@@ -1486,7 +1491,6 @@ vm_object_bypass(object)
 			/*
 			 * Page still needed.  Can't go any further.
 			 */
-			vm_object_unlock(object);
 			goto fail;
 		}
 	}

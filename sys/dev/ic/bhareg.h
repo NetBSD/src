@@ -1,4 +1,4 @@
-/*	$NetBSD: bhareg.h,v 1.7.4.1 1997/08/27 23:30:36 thorpej Exp $	*/
+/*	$NetBSD: bhareg.h,v 1.7.4.2 1997/09/16 03:50:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -227,7 +227,7 @@ struct bha_ccb {
 	/*------------------------------------longword boundary */
 	TAILQ_ENTRY(bha_ccb) chain;
 	struct bha_ccb *nexthash;
-	long hashkey;
+	u_long hashkey;
 	struct scsipi_xfer *xs;		/* the scsipi_xfer for this cmd */
 	int flags;
 #define	CCB_ALLOC	0x01

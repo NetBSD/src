@@ -1,4 +1,4 @@
-/*	$NetBSD: tc.c,v 1.22 1997/07/22 03:44:32 jonathan Exp $	*/
+/*	$NetBSD: tc.c,v 1.22.2.1 1997/09/16 03:50:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -26,6 +26,8 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
+
+#include "opt_tcverbose.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

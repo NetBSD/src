@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.108 1997/07/17 01:06:27 jtk Exp $	*/
+/*	$NetBSD: fd.c,v 1.108.2.1 1997/09/16 03:48:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -376,11 +376,6 @@ fdcattach(parent, self, aux)
 
 	printf("\n");
 
-#ifdef NEWCONFIG
-	at_setup_dmachan(fdc->sc_drq, FDC_MAXIOSIZE);
-	isa_establish(&fdc->sc_id, &fdc->sc_dev);
-#endif
-
 	if (isa_dmamap_create(parent, fdc->sc_drq, FDC_MAXIOSIZE,
 	    BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW)) {
 		printf("%s: can't set up ISA DMA map\n",
@@ -480,7 +475,7 @@ fdattach(parent, self, aux)
 	/* XXX Allow `flags' to override device type? */
 
 	if (type)
-		printf(": %s %d cyl, %d head, %d sec\n", type->name,
+		printf(": %s, %d cyl, %d head, %d sec\n", type->name,
 		    type->cyls, type->heads, type->sectrac);
 	else
 		printf(": density unknown\n");
@@ -502,10 +497,6 @@ fdattach(parent, self, aux)
 	 */
 	mountroothook_establish(fd_mountroot_hook, &fd->sc_dev);
 
-#ifdef NEWCONFIG
-	/* XXX Need to do some more fiddling with sc_dk. */
-	dk_establish(&fd->sc_dk, &fd->sc_dev);
-#endif
 	/* Needed to power off if the motor is on when we halt. */
 	fd->sc_sdhook = shutdownhook_establish(fd_motor_off, fd);
 }
@@ -1042,14 +1033,9 @@ loop:
 		 }}
 #endif
 		read = bp->b_flags & B_READ ? DMAMODE_READ : DMAMODE_WRITE;
-#ifdef NEWCONFIG
-		at_dma(read, bp->b_data + fd->sc_skip, fd->sc_nbytes,
-		       fdc->sc_drq);
-#else
 		isa_dmastart(fdc->sc_dev.dv_parent, fdc->sc_drq,
 		    bp->b_data + fd->sc_skip, fd->sc_nbytes,
 		    NULL, read, BUS_DMA_NOWAIT);
-#endif
 		bus_space_write_1(iot, ioh, fdctl, type->rate);
 #ifdef FD_DEBUG
 		printf("fdcintr: %s drive %d track %d head %d sec %d nblks %d\n",
@@ -1114,11 +1100,7 @@ loop:
 		goto doio;
 
 	case IOTIMEDOUT:
-#ifdef NEWCONFIG
-		at_dma_abort(fdc->sc_drq);
-#else
 		isa_dmaabort(fdc->sc_dev.dv_parent, fdc->sc_drq);
-#endif
 	case SEEKTIMEDOUT:
 	case RECALTIMEDOUT:
 	case RESETTIMEDOUT:
@@ -1131,11 +1113,7 @@ loop:
 		disk_unbusy(&fd->sc_dk, (bp->b_bcount - bp->b_resid));
 
 		if (fdcresult(fdc) != 7 || (st0 & 0xf8) != 0) {
-#ifdef NEWCONFIG
-			at_dma_abort(fdc->sc_drq);
-#else
 			isa_dmaabort(fdc->sc_dev.dv_parent, fdc->sc_drq);
-#endif
 #ifdef FD_DEBUG
 			fdcstatus(&fd->sc_dev, 7, bp->b_flags & B_READ ?
 			    "read failed" : "write failed");
@@ -1145,11 +1123,7 @@ loop:
 			fdcretry(fdc);
 			goto loop;
 		}
-#ifdef NEWCONFIG
-		at_dma_terminate(fdc->sc_drq);
-#else
 		isa_dmadone(fdc->sc_dev.dv_parent, fdc->sc_drq);
-#endif
 		if (fdc->sc_errors) {
 			diskerr(bp, "fd", "soft error (corrected)", LOG_PRINTF,
 			    fd->sc_skip / FDC_BSIZE, (struct disklabel *)NULL);

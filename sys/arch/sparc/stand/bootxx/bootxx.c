@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.1 1997/06/01 03:39:31 mrg Exp $ */
+/*	$NetBSD: bootxx.c,v 1.1.4.1 1997/09/16 03:49:25 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994 Paul Kranenburg
@@ -75,6 +75,7 @@ main()
 	}
 
 	(void)loadboot(&io, LOADADDR);
+	(io.f_dev->dv_close)(&io);
 	(*entry)(cputyp == CPU_SUN4 ? LOADADDR : (caddr_t)promvec);
 	_rtt();
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: eisa.c,v 1.17 1997/06/06 23:30:06 thorpej Exp $	*/
+/*	$NetBSD: eisa.c,v 1.17.4.1 1997/09/16 03:49:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -37,6 +37,8 @@
  * Makes sure an EISA bus is present, and finds and attaches devices
  * living on it.
  */
+
+#include "opt_eisaverbose.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

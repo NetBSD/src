@@ -1,11 +1,11 @@
-/*	$NetBSD: nfsdiskless.h,v 1.11.4.3 1997/09/16 03:51:26 thorpej Exp $	*/
+/*	$NetBSD: ibcs2_machdep.h,v 1.1.2.2 1997/09/16 03:48:40 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Adam Glass and Gordon W. Ross.
+ * by Charles M. Hannum.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -26,48 +26,25 @@
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
  * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
- * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
  * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
  * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
  * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
- *
- *	@(#)nfsdiskless.h	8.1 (Berkeley) 6/10/93
  */
 
-/*
- * Structure holds parameters needed by nfs_mountroot(),
- * which are filled in by nfs_boot_init() using either
- * BOOTP (RFC951, RFC1048) or Sun RPC/bootparams.  These
- * parameters are INET specific because nfs_boot_init()
- * currently supports only AF_INET protocols.
- *
- * NB: All fields are stored in net byte order to avoid hassles
- * with client/server byte ordering differences.
- */
-struct nfs_dlmount {
-	struct nfs_args ndm_args;
-	struct sockaddr ndm_saddr;  		/* Address of file server */
-	char		ndm_host[MNAMELEN]; 	/* server:pathname */
-	u_char		ndm_fh[NFSX_V3FHMAX]; 	/* The file's file handle */
-};
-struct nfs_diskless {
-	/* A collection of IP addresses, for convenience. */
-	struct in_addr nd_myip; /* My IP address */
-	struct in_addr nd_mask; /* My netmask */
-	struct in_addr nd_gwip; /* My gateway */
-	/* Information for each mount point we need. */
-	struct nfs_dlmount nd_root; 	/* Mount info for root */
-#if 0
-	struct nfs_dlmount nd_swap; 	/* Mount info for swap */
-#endif
-};
+#ifndef _I386_IBCS2_MACHDEP_H_
+#define _I386_IBCS2_MACHDEP_H_
 
-int nfs_boot_init __P((struct nfs_diskless *nd, struct proc *procp));
+#ifdef _KERNEL
+struct exec_package;
+struct exec_vmcmd;
 
-int nfs_bootdhcp  __P((struct ifnet *, struct nfs_diskless *, struct proc *));
-int nfs_bootparam __P((struct ifnet *, struct nfs_diskless *, struct proc *));
+void	ibcs2_setregs __P((struct proc *, struct exec_package *,
+	    u_long));
+#endif /* _KERNEL */
 
+#endif /* !_I386_IBCS2_MACHDEP_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.88.2.2 1997/08/27 23:33:19 thorpej Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.88.2.3 1997/09/16 03:50:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -428,6 +428,8 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	 "TEXEL   ", "CD-ROM          ", "1.06"}, SDEV_NOLUNS},
 	{{T_CDROM, T_REMOV,
 	 "TEXEL   ", "CD-ROM DM-XX24 K", "1.10"}, SDEV_NOLUNS},
+	{{T_CDROM, T_REMOV,
+	 "TOSHIBA ", "XM-4101TASUNSLCD", "1755"}, SDEV_NOLUNS},
 	{{T_CDROM, T_REMOV,  
 	 "ShinaKen", "CD-ROM DM-3x1S", "1.04"}, SDEV_NOLUNS},  
 	{{T_DIRECT, T_FIXED,

@@ -1,4 +1,4 @@
-/*	$NetBSD: via.c,v 1.60 1997/04/04 15:33:30 briggs Exp $	*/
+/*	$NetBSD: via.c,v 1.60.4.1 1997/09/16 03:48:53 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -35,7 +35,7 @@
  */
 
 /*
- *	This code handles both the VIA and RBV functionality.
+ *	This code handles VIA, RBV, and OSS functionality.
  */
 
 #include <sys/param.h>
@@ -86,6 +86,7 @@ void *via2iarg[7] = {
 
 void		via2_intr __P((struct frame *));
 void		rbv_intr __P((struct frame *));
+void		oss_intr __P((struct frame *));
 
 void		(*real_via2_intr) __P((struct frame *));
 
@@ -111,7 +112,7 @@ void *slotptab[7] = {
 };
 
 void
-VIA_initialize()
+via_init()
 {
 	/* Initialize VIA1 */
 	/* set all timers to 0 */
@@ -168,6 +169,8 @@ VIA_initialize()
 
 		real_via2_intr = via2_intr;
 		via2itab[1] = via2_nubus_intr;
+	} else if (current_mac_model->class == MACH_CLASSIIfx) { /* OSS */
+		real_via2_intr = oss_intr;
 	} else {	/* RBV */
 #ifdef DISABLE_EXT_CACHE
 		if (current_mac_model->class == MACH_CLASSIIci) {
@@ -273,6 +276,30 @@ rbv_intr(fp)
 	do {
 		if (intbits & mask)
 			via2itab[bitnum](via2iarg[bitnum]);
+		mask <<= 1;
+	} while (intbits >= mask && ++bitnum);
+}
+
+void
+oss_intr(fp)
+	struct frame *fp;
+{
+	u_int8_t intbits, bitnum;
+	u_int mask;
+
+	intbits = via2_reg(vIFR + rIFR);
+
+	if (intbits == 0)
+		return;
+
+	intbits &= 0x7f;
+	mask = 1;
+	bitnum = 0;
+	do {
+		if (intbits & mask) {
+			(*slotitab[bitnum])(slotptab[bitnum], bitnum+9);
+			via2_reg(rIFR) = mask;
+		}
 		mask <<= 1;
 	} while (intbits >= mask && ++bitnum);
 }

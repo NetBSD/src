@@ -1,4 +1,4 @@
-/*	$NetBSD: pas.c,v 1.32.2.1 1997/08/23 07:13:25 thorpej Exp $	*/
+/*	$NetBSD: pas.c,v 1.32.2.2 1997/09/16 03:50:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -264,9 +264,9 @@ pasprobe(parent, match, aux)
 	struct device *parent;
 	void *match, *aux;
 {
-	register struct pas_softc *sc = match;
-	register struct isa_attach_args *ia = aux;
-	register int iobase;
+	struct pas_softc *sc = match;
+	struct isa_attach_args *ia = aux;
+	int iobase;
 	u_char id, t;
 
         /* ensure we can set this up as a sound blaster */
@@ -445,9 +445,9 @@ pasattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	register struct pas_softc *sc = (struct pas_softc *)self;
+	struct pas_softc *sc = (struct pas_softc *)self;
 	struct isa_attach_args *ia = (struct isa_attach_args *)aux;
-	register int iobase = ia->ia_iobase;
+	int iobase = ia->ia_iobase;
 	
 	sc->sc_sbdsp.sc_iobase = iobase;
 	sc->sc_sbdsp.sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq,
