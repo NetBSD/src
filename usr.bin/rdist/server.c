@@ -1,4 +1,4 @@
-/*	$NetBSD: server.c,v 1.25 2003/01/20 05:30:12 simonb Exp $	*/
+/*	$NetBSD: server.c,v 1.26 2003/07/23 04:11:13 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)server.c	8.1 (Berkeley) 6/9/93";
 #else
-__RCSID("$NetBSD: server.c,v 1.25 2003/01/20 05:30:12 simonb Exp $");
+__RCSID("$NetBSD: server.c,v 1.26 2003/07/23 04:11:13 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -301,7 +301,7 @@ install(char *src, char *dest, int destdir, int opts)
 		return;
 
 	if (destdir) {
-		strcpy(destcopy, dest);
+		strlcpy(destcopy, dest, sizeof(destcopy));
 		Tdest = destcopy;
 	}
 	sendf(rname, opts);
@@ -571,9 +571,9 @@ savelink(struct stat *stp)
 		lp->inum = stp->st_ino;
 		lp->devnum = stp->st_dev;
 		lp->count = stp->st_nlink - 1;
-		strcpy(lp->pathname, target);
+		strlcpy(lp->pathname, target, sizeof(lp->pathname));
 		if (Tdest)
-			strcpy(lp->target, Tdest);
+			strlcpy(lp->target, Tdest, sizeof(lp->target));
 		else
 			*lp->target = 0;
 	}
@@ -831,7 +831,7 @@ recvf(char *cmd, int type)
 		(void) snprintf(tp, sizeof(target) - (tp - target), "/%s", cp);
 	cp = strrchr(target, '/');
 	if (cp == NULL)
-		strcpy(new, tempname);
+		strlcpy(new, tempname, sizeof(new));
 	else if (cp == target)
 		(void) snprintf(new, sizeof(new), "/%s", tempname);
 	else {

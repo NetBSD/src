@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.13 2002/06/14 01:18:55 wiz Exp $	*/
+/*	$NetBSD: main.c,v 1.14 2003/07/23 04:11:13 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/9/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.13 2002/06/14 01:18:55 wiz Exp $");
+__RCSID("$NetBSD: main.c,v 1.14 2003/07/23 04:11:13 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -101,13 +101,13 @@ main(int argc, char **argv)
 		fprintf(stderr, "%s: Who are you?\n", argv[0]);
 		exit(1);
 	}
-	strcpy(user, pw->pw_name);
-	strcpy(homedir, pw->pw_dir);
+	strlcpy(user, pw->pw_name, sizeof(user));
+	strlcpy(homedir, pw->pw_dir, sizeof(homedir));
 	groupid = pw->pw_gid;
 	gethostname(host, sizeof(host));
 	host[sizeof(host) - 1] = '\0';
-	strcpy(tempfile, _PATH_TMP);
-	strcat(tempfile, _RDIST_TMP);
+	strlcpy(tempfile, _PATH_TMP, sizeof(tempfile));
+	strlcat(tempfile, _RDIST_TMP, sizeof(tempfile));
 	if ((tempname = strrchr(tempfile, '/')) != 0)
 		tempname++;
 	else

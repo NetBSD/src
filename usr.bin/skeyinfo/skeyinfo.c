@@ -1,4 +1,4 @@
-/*	$NetBSD: skeyinfo.c,v 1.3 1997/11/08 09:37:44 lukem Exp $	*/
+/*	$NetBSD: skeyinfo.c,v 1.4 2003/07/23 04:11:50 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: skeyinfo.c,v 1.3 1997/11/08 09:37:44 lukem Exp $");
+__RCSID("$NetBSD: skeyinfo.c,v 1.4 2003/07/23 04:11:50 itojun Exp $");
 #endif
 
 #include <stdio.h>
@@ -82,8 +82,7 @@ main(argc, argv)
 			errx(1, "who are you?");
 	}
 
-	(void) strncpy(name, pw->pw_name, sizeof(name));
-	name[sizeof(name) - 1] = '\0';
+	(void) strlcpy(name, pw->pw_name, sizeof(name));
 
 	if (getskeyprompt(&skey, name, prompt) == -1) {
 		printf("%s %s no s/key\n",
