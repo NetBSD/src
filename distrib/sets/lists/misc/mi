@@ -197,5 +197,9 @@
 ./usr/share/doc/usd/19.memacros/intro.me
 ./usr/share/doc/usd/20.meref/Makefile
 ./usr/share/doc/usd/20.meref/ref.me
+./usr/share/doc/usd/30.rogue/Makefile
+./usr/share/doc/usd/30.rogue/rogue.me
+./usr/share/doc/usd/31.trek/Makefile
+./usr/share/doc/usd/31.trek/trek.me
 ./usr/share/doc/usd/Makefile
 ./usr/share/doc/usd/Title

@@ -442,6 +442,7 @@
 ./usr/share/man/cat8/newsyslog.0
 ./usr/share/man/cat8/nfsd.0
 ./usr/share/man/cat8/nfsiod.0
+./usr/share/man/cat8/nologin.0
 ./usr/share/man/cat8/nslookup.0
 ./usr/share/man/cat8/pac.0
 ./usr/share/man/cat8/ping.0
@@ -459,6 +460,7 @@
 ./usr/share/man/cat8/rc.0
 ./usr/share/man/cat8/rdate.0
 ./usr/share/man/cat8/rdump.0
+./usr/share/man/cat8/reboot.0
 ./usr/share/man/cat8/renice.0
 ./usr/share/man/cat8/repquota.0
 ./usr/share/man/cat8/restore.0
@@ -474,9 +476,13 @@
 ./usr/share/man/cat8/rpc.rusersd.0
 ./usr/share/man/cat8/rpc.rwalld.0
 ./usr/share/man/cat8/rpc.sprayd.0
+./usr/share/man/cat8/rquotad.0
 ./usr/share/man/cat8/rpcinfo.0
 ./usr/share/man/cat8/rrestore.0
 ./usr/share/man/cat8/rshd.0
+./usr/share/man/cat8/rstatd.0
+./usr/share/man/cat8/rusersd.0
+./usr/share/man/cat8/rwalld.0
 ./usr/share/man/cat8/rwhod.0
 ./usr/share/man/cat8/sa.0
 ./usr/share/man/cat8/savecore.0
@@ -487,6 +493,7 @@
 ./usr/share/man/cat8/slip.0
 ./usr/share/man/cat8/sliplogin.0
 ./usr/share/man/cat8/slstats.0
+./usr/share/man/cat8/sprayd.0
 ./usr/share/man/cat8/sticky.0
 ./usr/share/man/cat8/swapon.0
 ./usr/share/man/cat8/sync.0
