@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.4,v 1.1.2.74 2002/10/22 00:25:48 itojun Exp $
+#	$NetBSD: CHANGES-1.5.4,v 1.1.2.75 2002/10/25 02:12:33 itojun Exp $
 
 A complete list of changes from NetBSD 1.5.3 to NetBSD 1.5.4:
 
@@ -1762,3 +1762,7 @@ games/trek/getpar.c				1.10
 crypto/dist/heimdal/kadmin/version4.c		1.2
 
   Don't blindly trust rlen.  From Heimdal 0.5.1.  Fixes SA#2002-026.
+
+libexec/ftpd/cmds.c				1.19
+
+  Correct RFC959 compliance in quoting lines starting with digits (page 36).
