@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.64 1999/12/23 19:46:27 augustss Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.65 2000/01/08 07:35:39 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.63 1999/12/23 19:45:56 augustss Exp 
+ *	NetBSD: pcmciadevs,v 1.64 2000/01/08 07:34:49 augustss Exp 
  */
 
 /*-
@@ -327,6 +327,7 @@
 #define	PCMCIA_VENDOR_SVEC	-1	/* SVEC/Hawking Technology */
 #define	PCMCIA_VENDOR_AMBICOM	-1	/* AmbiCom Inc */
 #define	PCMCIA_VENDOR_EPSON	-1	/* Seiko Epson Corporation */
+#define	PCMCIA_VENDOR_EXP	-1	/* EXP Computer Inc */
 
 #define	PCMCIA_CIS_MEGAHERTZ_XJ2288	{ "MEGAHERTZ", "MODEM XJ2288", NULL, NULL }
 #define	PCMCIA_PRODUCT_MEGAHERTZ_XJ2288	-1
@@ -392,3 +393,6 @@
 #define	PCMCIA_CIS_EPSON_EEN10B	{ "Seiko Epson Corp.", "Ethernet", "P/N: EEN10B Rev. 00", NULL }
 #define	PCMCIA_PRODUCT_EPSON_EEN10B	-1
 #define	PCMCIA_STR_EPSON_EEN10B	"Epson EEN10B"
+#define	PCMCIA_CIS_EXP_EXPMULTIMEDIA	{ "EXP   ", "PnPIDE", "F1", NULL }
+#define	PCMCIA_PRODUCT_EXP_EXPMULTIMEDIA	-1
+#define	PCMCIA_STR_EXP_EXPMULTIMEDIA	"EXP IDE/ATAPI DVD Card"
