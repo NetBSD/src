@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.8 1997/12/25 09:16:28 matthias Exp $ 
+#	$NetBSD: Makefile.inc,v 1.9 1998/01/26 23:51:10 bad Exp $ 
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -41,7 +41,6 @@ all: netbsd.gz
 	@echo ""
 	umount ${MOUNT_POINT}
 	vnconfig -u ${VND_CDEV}
-	cat /*bin/* > /dev/null
 	-yes|bim -c init -c "add ${MDEC}/boot boot" -c "default 0" \
 	    -c "exit" ${.OBJDIR}/${IMAGE} 2>/dev/null >/dev/null
 
@@ -69,7 +68,6 @@ ramdisk.fs: ${CBIN} ${LISTS}
 	umount ${MOUNT_POINT}
 .ifndef SD
 	vnconfig -u ${VND_CDEV}
-	cat /*bin/* > /dev/null
 .else
 	dd if=/dev/${SD} of=${.TARGET} bs=128k count=16
 .endif
@@ -79,7 +77,6 @@ unconfig:
 	umount -f ${MOUNT_POINT}
 	vnconfig -u ${VND_DEV}
 	/bin/rm -f ${IMAGE}
-	cat /*bin/* > /dev/null
 
 ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
 	crunchgen -D ${TOP}/../../.. -L ${DESTDIR}/usr/lib ${CRUNCHCONF}
