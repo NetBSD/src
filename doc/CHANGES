@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.273 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.274 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -615,3 +615,5 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 	GCC: Import GCC 3.3.3-20040209.  [mrg 20040210]
 	sh3: Switch to GCC 3.3. [uwe 20040222]
 	hpcsh: Enable building of Xhpc server for hpcsh. [uwe 20040222]
+	progress(1): Allow printing custom text before (left of) the progress
+		bar. [hubertf 20040309]
