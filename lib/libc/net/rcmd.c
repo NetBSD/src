@@ -1,6 +1,7 @@
-/*	$NetBSD: rcmd.c,v 1.19.2.3 1997/02/16 12:54:01 mrg Exp $	*/
+/*	$NetBSD: rcmd.c,v 1.19.2.4 1997/02/16 14:14:15 mrg Exp $	*/
 
 /*
+ * Copyright (c) 1997 Matthew R. Green.
  * Copyright (c) 1983, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -37,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)rcmd.c	8.3 (Berkeley) 3/26/94";
 #else
-static char *rcsid = "$NetBSD: rcmd.c,v 1.19.2.3 1997/02/16 12:54:01 mrg Exp $";
+static char *rcsid = "$NetBSD: rcmd.c,v 1.19.2.4 1997/02/16 14:14:15 mrg Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -65,14 +66,13 @@ static char *rcsid = "$NetBSD: rcmd.c,v 1.19.2.3 1997/02/16 12:54:01 mrg Exp $";
 
 #include "pathnames.h"
 
-int orcmd __P((char **, u_short, const char *, const char *, const char *,
-    int *));
-int rshrcmd __P((char **, u_short, const char *, const char *, const char *, int *, char *));
-int hporcmd __P((struct hostent *, char **, u_short, const char *, const char *, const char *, int *));
-
+int	orcmd __P((char **, u_short, const char *, const char *, const char *,
+	    int *));
+int	rshrcmd __P((char **, u_short, const char *, const char *, const char *, int *, char *));
+int	hporcmd __P((struct hostent *, char **, u_short, const char *, const char *, const char *, int *));
 int	__ivaliduser __P((FILE *, u_int32_t, const char *, const char *));
-static int __icheckhost __P((u_int32_t, const char *));
-static char *__gethostloop __P((u_int32_t));
+static	int __icheckhost __P((u_int32_t, const char *));
+static	char *__gethostloop __P((u_int32_t));
 
 int
 rcmd(ahost, rport, locuser, remuser, cmd, fd2p)
@@ -106,9 +106,10 @@ rcmd(ahost, rport, locuser, remuser, cmd, fd2p)
 		return (rshrcmd(ahost, rport, locuser, remuser, cmd, fd2p,
 		    getenv("RSHCMD")));
 	else
-		return (hporcmd(hp, ahost, rport, locuser, remuser, cmd, fd2p));
+		return (hprcmd(hp, ahost, rport, locuser, remuser, cmd, fd2p));
 }
 
+/* this is simply a wrapper around hprcmd() that handles ahost first */
 int
 orcmd(ahost, rport, locuser, remuser, cmd, fd2p)
 	char **ahost;
@@ -125,11 +126,11 @@ orcmd(ahost, rport, locuser, remuser, cmd, fd2p)
 	}
 	*ahost = hp->h_name;
 	
-	return (hporcmd(hp, ahost, rport, locuser, remuser, cmd, fd2p));
+	return (hprcmd(hp, ahost, rport, locuser, remuser, cmd, fd2p));
 }
 
 int
-hporcmd(hp, ahost, rport, locuser, remuser, cmd, fd2p)
+hprcmd(hp, ahost, rport, locuser, remuser, cmd, fd2p)
 	struct hostent *hp;
 	char **ahost;
 	u_short rport;
@@ -202,7 +203,7 @@ hporcmd(hp, ahost, rport, locuser, remuser, cmd, fd2p)
 			goto bad;
 		listen(s2, 1);
 		(void)snprintf(num, sizeof(num), "%d", lport);
-		if (write(s, num, strlen(num)+1) != strlen(num)+1) {
+		if (write(s, num, strlen(num) + 1) != strlen(num) + 1) {
 			warn("write (setting up stderr): %s");
 			(void)close(s2);
 			goto bad;
@@ -237,6 +238,7 @@ hporcmd(hp, ahost, rport, locuser, remuser, cmd, fd2p)
 			goto bad2;
 		}
 	}
+
 	(void)write(s, locuser, strlen(locuser)+1);
 	(void)write(s, remuser, strlen(remuser)+1);
 	(void)write(s, cmd, strlen(cmd)+1);
