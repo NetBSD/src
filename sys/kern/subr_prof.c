@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prof.c,v 1.18 1998/07/31 22:50:51 perry Exp $	*/
+/*	$NetBSD: subr_prof.c,v 1.19 1998/08/04 04:03:15 perry Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -93,7 +93,7 @@ kmstartup()
 		printf("No memory for profiling.\n");
 		return;
 	}
-	bzero(cp, p->kcountsize + p->tossize + p->fromssize);
+	memset(cp, 0, p->kcountsize + p->tossize + p->fromssize);
 	p->tos = (struct tostruct *)cp;
 	cp += p->tossize;
 	p->kcount = (u_short *)cp;

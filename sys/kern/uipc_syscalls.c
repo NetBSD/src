@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.35 1998/08/03 15:15:58 kleink Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.36 1998/08/04 04:03:18 perry Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -496,7 +496,7 @@ sendit(p, s, mp, flags, retsize)
 		int iovlen = auio.uio_iovcnt * sizeof(struct iovec);
 
 		MALLOC(ktriov, struct iovec *, iovlen, M_TEMP, M_WAITOK);
-		bcopy((caddr_t)auio.uio_iov, (caddr_t)ktriov, iovlen);
+		memcpy((caddr_t)ktriov, (caddr_t)auio.uio_iov, iovlen);
 	}
 #endif
 	len = auio.uio_resid;
@@ -660,7 +660,7 @@ recvit(p, s, mp, namelenp, retsize)
 		int iovlen = auio.uio_iovcnt * sizeof(struct iovec);
 
 		MALLOC(ktriov, struct iovec *, iovlen, M_TEMP, M_WAITOK);
-		bcopy((caddr_t)auio.uio_iov, (caddr_t)ktriov, iovlen);
+		memcpy((caddr_t)ktriov, (caddr_t)auio.uio_iov, iovlen);
 	}
 #endif
 	len = auio.uio_resid;

@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.35 1998/07/31 22:50:53 perry Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.36 1998/08/04 04:03:18 perry Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -143,7 +143,7 @@ unp_setsockaddr(unp, nam)
 	nam->m_len = sun->sun_len;
 	if (nam->m_len > MLEN)
 		MEXTMALLOC(nam, nam->m_len, M_WAITOK);
-	bcopy(sun, mtod(nam, caddr_t), (size_t)nam->m_len);
+	memcpy(mtod(nam, caddr_t), sun, (size_t)nam->m_len);
 }
 
 void
@@ -160,7 +160,7 @@ unp_setpeeraddr(unp, nam)
 	nam->m_len = sun->sun_len;
 	if (nam->m_len > MLEN)
 		MEXTMALLOC(nam, nam->m_len, M_WAITOK);
-	bcopy(sun, mtod(nam, caddr_t), (size_t)nam->m_len);
+	memcpy(mtod(nam, caddr_t), sun, (size_t)nam->m_len);
 }
 
 /*ARGSUSED*/
@@ -502,7 +502,7 @@ unp_attach(so)
 	unp = malloc(sizeof(*unp), M_PCB, M_NOWAIT);
 	if (unp == NULL)
 		return (ENOBUFS);
-	bzero((caddr_t)unp, sizeof(*unp));
+	memset((caddr_t)unp, 0, sizeof(*unp));
 	unp->unp_socket = so;
 	so->so_pcb = unp;
 	microtime(&tv);
@@ -662,7 +662,7 @@ unp_connect(so, nam, p)
 		if (unp2->unp_addr) {
 			unp3->unp_addr = malloc(unp2->unp_addrlen,
 			    M_SONAME, M_WAITOK);
-			bcopy(unp2->unp_addr, unp3->unp_addr,
+			memcpy(unp3->unp_addr, unp2->unp_addr,
 			    unp2->unp_addrlen);
 			unp3->unp_addrlen = unp2->unp_addrlen;
 		}
@@ -882,7 +882,7 @@ morespace:
 			return (ENOBUFS);	/* allocation failed */
 
 		/* copy the data to the cluster */
-		bcopy(cm, mtod(control, char *), cm->cmsg_len);
+		memcpy(mtod(control, char *), cm, cm->cmsg_len);
 		cm = mtod(control, struct cmsghdr *);
 		goto morespace;
 	}
