@@ -1,4 +1,4 @@
-/* $NetBSD: installboot.c,v 1.3 2000/06/16 23:24:30 matt Exp $ */
+/* $NetBSD: installboot.c,v 1.3.2.1 2000/10/17 01:46:31 tv Exp $ */
 
 /*
  * Copyright (c) 1999 Ross Harvey.  All rights reserved.
@@ -183,7 +183,7 @@ clr_bootstrap(const char *disk)
 	else if (rv != sizeof bb)
 		errx(EXIT_FAILURE, "read %s: short read", disk);
 
-	if (bb.magic != PMAX_BOOT_MAGIC) {
+	if (le32toh(bb.magic) != PMAX_BOOT_MAGIC) {
 		fprintf(stderr, "old boot block magic number invalid (%#x)\n",
 		    bb.magic);
 		fprintf(stderr, "boot block invalid\n");
