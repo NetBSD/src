@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.38 2000/04/27 15:26:47 augustss Exp $	*/
+/*	$NetBSD: ugen.c,v 1.39 2000/05/31 16:16:49 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ugen.c,v 1.26 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -757,6 +757,7 @@ ugen_set_interface(sc, ifaceidx, altno)
 	err = usbd_endpoint_count(iface, &nendpt);
 	if (err)
 		return (err);
+	/* XXX should only do this after setting new altno has succeeded */
 	for (endptno = 0; endptno < nendpt; endptno++) {
 		ed = usbd_interface2endpoint_descriptor(iface,endptno);
 		endpt = ed->bEndpointAddress;
@@ -834,7 +835,7 @@ ugen_get_alt_index(sc, ifaceidx)
 
 	err = usbd_device2interface_handle(sc->sc_udev, ifaceidx, &iface);
 	if (err)
-			return (-1);
+		return (-1);
 	return (usbd_get_interface_altindex(iface));
 }
 
