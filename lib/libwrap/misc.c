@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.6 1999/07/03 12:30:41 simonb Exp $	*/
+/*	$NetBSD: misc.c,v 1.7 1999/08/31 13:58:58 itojun Exp $	*/
 
  /*
   * Misc routines that are used by tcpd and by tcpdchk.
@@ -11,7 +11,7 @@
 #if 0
 static char sccsic[] = "@(#) misc.c 1.2 96/02/11 17:01:29";
 #else
-__RCSID("$NetBSD: misc.c,v 1.6 1999/07/03 12:30:41 simonb Exp $");
+__RCSID("$NetBSD: misc.c,v 1.7 1999/08/31 13:58:58 itojun Exp $");
 #endif
 #endif
 
@@ -61,11 +61,35 @@ char   *split_at(string, delimiter)
 char   *string;
 int     delimiter;
 {
+#if 0
     char   *cp;
 
     if ((cp = strchr(string, delimiter)) != 0)
 	*cp++ = 0;
     return (cp);
+#else
+    char *cp;
+    int bracket;
+
+    bracket = 0;
+    for (cp = string; cp && *cp; cp++) {
+	switch (*cp) {
+	case '[':
+	    bracket++;
+	    break;
+	case ']':
+	    bracket--;
+	    break;
+	default:
+	    if (bracket == 0 && *cp == delimiter) {
+		*cp++ = 0;
+		return cp;
+	    }
+	    break;
+	}
+    }
+    return NULL;
+#endif
 }
 
 /* dot_quad_addr - convert dotted quad to internal form */
