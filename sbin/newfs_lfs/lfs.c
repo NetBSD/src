@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.c,v 1.18 2000/09/11 01:32:21 perseant Exp $	*/
+/*	$NetBSD: lfs.c,v 1.19 2000/10/02 16:06:48 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)lfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: lfs.c,v 1.18 2000/09/11 01:32:21 perseant Exp $");
+__RCSID("$NetBSD: lfs.c,v 1.19 2000/10/02 16:06:48 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -300,9 +300,7 @@ make_lfs(fd, lp, partp, minfree, block_size, frag_size, seg_size, minfreeseg)
 		lfsp->lfs_dbpseg = ssize / DEV_BSIZE;
 	}
 	lfsp->lfs_ssize = ssize >> lfsp->lfs_bshift;
-
-	if (minfree)
-		lfsp->lfs_minfree = minfree;
+	lfsp->lfs_minfree = minfree;
 
 	/*
 	 * Fill in parts of superblock that can be computed from file system
