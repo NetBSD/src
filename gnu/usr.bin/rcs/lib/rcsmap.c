@@ -28,7 +28,7 @@ Report problems and direct all questions to:
 
 #include "rcsbase.h"
 
-libId(mapId, "$Id: rcsmap.c,v 1.2 1993/08/02 17:47:28 mycroft Exp $")
+libId(mapId, "$Id: rcsmap.c,v 1.3 1995/02/24 02:25:11 mycroft Exp $")
 
 /* map of character types */
 /* ISO 8859/1 (Latin-1) */
