@@ -1,4 +1,4 @@
-#	$Id: files,v 1.42 1994/03/23 18:22:52 deraadt Exp $
+#	$Id: files,v 1.43 1994/03/26 04:13:48 glass Exp $
 #
 ddb/db_access.c		optional ddb
 ddb/db_aout.c		optional ddb
@@ -176,7 +176,6 @@ netiso/iso_chksum.c	optional iso
 netiso/iso_pcb.c	optional iso
 netiso/iso_proto.c	optional iso
 netiso/iso_snpac.c	optional iso
-netiso/tp_astring.c	optional iso or tpip
 netiso/tp_cons.c	optional iso
 netiso/tp_driver.c	optional iso or tpip
 netiso/tp_emit.c	optional iso or tpip
