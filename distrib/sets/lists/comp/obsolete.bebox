@@ -1,0 +1,3 @@
+# $NetBSD: obsolete.bebox,v 1.1 2001/04/12 02:38:26 briggs Exp $
+/usr/include/bebox/display.h
+/usr/include/bebox/va-ppc.h

@@ -1,4 +1,4 @@
-# $NetBSD: md.bebox,v 1.10 2001/02/17 11:40:58 ragge Exp $
+# $NetBSD: md.bebox,v 1.11 2001/04/12 02:38:26 briggs Exp $
 ./usr/include/bebox	comp-c-include
 ./usr/include/bebox/_G_config.h	comp-c-include
 ./usr/include/bebox/ansi.h	comp-c-include
@@ -14,7 +14,6 @@
 ./usr/include/bebox/cpufunc.h	comp-c-include
 ./usr/include/bebox/db_machdep.h	comp-c-include
 ./usr/include/bebox/disklabel.h	comp-c-include
-./usr/include/bebox/display.h	comp-c-include
 ./usr/include/bebox/elf_machdep.h	comp-c-include
 ./usr/include/bebox/endian.h	comp-c-include
 ./usr/include/bebox/endian_machdep.h	comp-c-include
@@ -52,7 +51,6 @@
 ./usr/include/bebox/stdarg.h	comp-c-include
 ./usr/include/bebox/trap.h	comp-c-include
 ./usr/include/bebox/types.h	comp-c-include
-./usr/include/bebox/va-ppc.h	comp-c-include
 ./usr/include/bebox/varargs.h	comp-c-include
 ./usr/include/bebox/vmparam.h	comp-c-include
 ./usr/include/ieeefp.h		comp-c-include
