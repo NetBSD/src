@@ -1,4 +1,4 @@
-/* $NetBSD: nexf2.c,v 1.1 2004/09/26 21:13:27 jmmv Exp $ */
+/* $NetBSD: nexf2.c,v 1.2 2004/09/27 10:16:24 he Exp $ */
 
 /*
  * Written by Ben Harris, 2000.  This file is in the Public Domain.
@@ -10,8 +10,10 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: nexf2.c,v 1.1 2004/09/26 21:13:27 jmmv Exp $");
+__RCSID("$NetBSD: nexf2.c,v 1.2 2004/09/27 10:16:24 he Exp $");
 #endif /* LIBC_SCCS and not lint */
+
+#ifdef FLOATX80
 
 flag __nexf2(floatx80, floatx80);
 
@@ -22,3 +24,4 @@ __nexf2(floatx80 a, floatx80 b)
 	/* libgcc1.c says a != b */
 	return !floatx80_eq(a, b);
 }
+#endif /* FLOATX80 */
