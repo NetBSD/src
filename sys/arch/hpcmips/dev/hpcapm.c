@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcapm.c,v 1.8 2001/09/16 05:32:18 uch Exp $	*/
+/*	$NetBSD: hpcapm.c,v 1.9 2001/12/30 12:57:41 takemura Exp $	*/
 
 /*
  * Copyright (c) 2000 Takemura Shin
@@ -79,10 +79,6 @@ static void	hpcapm_cpu_busy(void *);
 static void	hpcapm_cpu_idle(void *);
 static void	hpcapm_get_capabilities(void *, u_int *, u_int *);
 
-struct cfattach hpcapm_ca = {
-	sizeof (struct device), hpcapm_match, hpcapm_attach
-};
-
 struct apmhpc_softc {
 	struct device sc_dev;
 	void *sc_apmdev;
@@ -96,6 +92,10 @@ struct apmhpc_softc {
 	config_hook_tag sc_ac_hook;
 	int battery_life;
 	int minutes_left;
+};
+
+struct cfattach hpcapm_ca = {
+	sizeof (struct apmhpc_softc), hpcapm_match, hpcapm_attach
 };
 
 struct apm_accessops hpcapm_accessops = {
