@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.10 1995/01/16 21:48:35 mycroft Exp $	*/
+/*	$NetBSD: ncr.c,v 1.11 1995/01/27 05:44:29 cgd Exp $	*/
 
 /**************************************************************************
 **
@@ -169,15 +169,15 @@
 #include <vm/vm.h>
 #endif /* KERNEL */
 
-#include <i386/pci/ncr_reg.h>
+#include <dev/pci/ncr_reg.h>
 
 #ifdef __NetBSD__
 #include <sys/device.h>
 #include <i386/include/pio.h>
 #define	DELAY(x)	delay(x)
-#include <i386/pci/pcivar.h>
+#include <dev/pci/pcivar.h>
 #endif /* __NetBSD__ */
-#include <i386/pci/pcireg.h>
+#include <dev/pci/pcireg.h>
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
@@ -1213,7 +1213,7 @@ void	ncr_attach	(pcici_t tag, int unit);
 
 
 static char ident[] =
-	"\n$Id: ncr.c,v 1.10 1995/01/16 21:48:35 mycroft Exp $\n";
+	"\n$Id: ncr.c,v 1.11 1995/01/27 05:44:29 cgd Exp $\n";
 
 u_long	ncr_version = NCR_VERSION
 	+ (u_long) sizeof (struct ncb)
@@ -3323,7 +3323,7 @@ void ncr_attach (pcici_t config_id, int unit)
 		ncr_name (np));
 	DELAY (1000000);
 #endif
-	printf ("%s scanning for targets 0..%d ($Revision: 1.10 $)\n",
+	printf ("%s scanning for targets 0..%d ($Revision: 1.11 $)\n",
 		ncr_name (np), MAX_TARGET-1);
 
 	/*
