@@ -1,4 +1,4 @@
-/* $NetBSD: loadbootstrap.c,v 1.4 2000/06/16 23:24:30 matt Exp $ */
+/* $NetBSD: loadbootstrap.c,v 1.4.2.1 2000/10/17 01:45:03 tv Exp $ */
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,6 +37,7 @@
 #include <sys/param.h>		/* XXX for roundup, howmany */
 #include <sys/types.h>
 #include <sys/exec_elf.h>
+#include <sys/endian.h>
 #include <err.h>
 #include <fcntl.h>
 #include <limits.h>
@@ -76,29 +77,29 @@ load_bootstrap(const char *bootstrap, char **data,
 		errx(EXIT_FAILURE, "no ELF header in %s", bootstrap);
 	
 	nsegs = highaddr = 0;
-	lowaddr = (uint32_t) ULONG_MAX;
+	lowaddr = (u_int32_t) ULONG_MAX;
 
-	for (i = 0; i < ehdr.e_phnum; i++) {
-		if (lseek(fd, (off_t) ehdr.e_phoff + i * sizeof(phdr), 0) < 0)
+	for (i = 0; i < le16toh(ehdr.e_phnum); i++) {
+		if (lseek(fd, (off_t) le32toh(ehdr.e_phoff) + i * sizeof(phdr), 0) < 0)
 			err(1, "lseek %s", bootstrap);
 		if (read(fd, &phdr, sizeof(phdr)) != sizeof(phdr))
 			err(1, "read %s", bootstrap);
-		if (phdr.p_type != PT_LOAD)
+		if (le32toh(phdr.p_type) != PT_LOAD)
 			continue;
 
-		seglist[nsegs].addr = phdr.p_paddr;
-		seglist[nsegs].f_offset = phdr.p_offset;
-		seglist[nsegs].f_size = phdr.p_filesz;
+		seglist[nsegs].addr = le32toh(phdr.p_paddr);
+		seglist[nsegs].f_offset = le32toh(phdr.p_offset);
+		seglist[nsegs].f_size = le32toh(phdr.p_filesz);
 		nsegs++;
 
-		if (phdr.p_paddr < lowaddr)
-			lowaddr = phdr.p_paddr;
-		if (phdr.p_paddr + phdr.p_filesz > highaddr)
-			highaddr = phdr.p_paddr + phdr.p_filesz;
+		if (le32toh(phdr.p_paddr) < lowaddr)
+			lowaddr = le32toh(phdr.p_paddr);
+		if (le32toh(phdr.p_paddr) + le32toh(phdr.p_filesz) > highaddr)
+			highaddr = le32toh(phdr.p_paddr) + le32toh(phdr.p_filesz);
 	}
 
 	*loadaddr = lowaddr;
-	*execaddr = ehdr.e_entry;
+	*execaddr = le32toh(ehdr.e_entry);
 	*len = roundup(highaddr - lowaddr, PMAX_BOOT_BLOCK_BLOCKSIZE);
 	if ((*data = malloc(*len)) == NULL)
 		err(1, "malloc %lu bytes", (unsigned long) *len);
