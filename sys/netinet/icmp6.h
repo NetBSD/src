@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.h,v 1.9.2.1 2000/07/20 00:07:04 itojun Exp $	*/
+/*	$NetBSD: icmp6.h,v 1.9.2.2 2000/07/20 00:28:20 itojun Exp $	*/
 /*	$KAME: icmp6.h,v 1.18 2000/07/03 02:51:08 itojun Exp $	*/
 
 /*
@@ -376,38 +376,24 @@ struct ni_reply_fqdn {
 /*
  * Router Renumbering. as router-renum-08.txt
  */
-#if BYTE_ORDER == BIG_ENDIAN /* net byte order */
 struct icmp6_router_renum {	/* router renumbering header */
 	struct icmp6_hdr	rr_hdr;
-	u_int8_t		rr_segnum;
-	u_int8_t		rr_test : 1;
-	u_int8_t		rr_reqresult : 1;
-	u_int8_t		rr_forceapply : 1;
-	u_int8_t		rr_specsite : 1;
-	u_int8_t		rr_prevdone : 1;
-	u_int8_t		rr_flags_reserved : 3;
-	u_int16_t		rr_maxdelay;
-	u_int32_t		rr_reserved;
+	u_int8_t	rr_segnum;
+	u_int8_t	rr_flags;
+	u_int16_t	rr_maxdelay;
+	u_int32_t	rr_reserved;
 };
-#elif BYTE_ORDER == LITTLE_ENDIAN
-struct icmp6_router_renum {	/* router renumbering header */
-	struct icmp6_hdr	rr_hdr;
-	u_int8_t		rr_segnum;
-	u_int8_t		rr_flags_reserved : 3;
-	u_int8_t		rr_prevdone : 1;
-	u_int8_t		rr_specsite : 1;
-	u_int8_t		rr_forceapply : 1;
-	u_int8_t		rr_reqresult : 1;
-	u_int8_t		rr_test : 1;
-	u_int16_t		rr_maxdelay;
-	u_int32_t		rr_reserved;
-};
-#endif /* BYTE_ORDER */
+#define ICMP6_RR_FLAGS_SEGNUM		0x80
+#define ICMP6_RR_FLAGS_TEST		0x40
+#define ICMP6_RR_FLAGS_REQRESULT	0x20
+#define ICMP6_RR_FLAGS_FORCEAPPLY	0x10
+#define ICMP6_RR_FLAGS_SPECSITE		0x08
+#define ICMP6_RR_FLAGS_PREVDONE		0x04
 
-#define rr_type			rr_hdr.icmp6_type
-#define rr_code			rr_hdr.icmp6_code
-#define rr_cksum		rr_hdr.icmp6_cksum
-#define rr_seqnum 		rr_hdr.icmp6_data32[0]
+#define rr_type		rr_hdr.icmp6_type
+#define rr_code		rr_hdr.icmp6_code
+#define rr_cksum	rr_hdr.icmp6_cksum
+#define rr_seqnum 	rr_hdr.icmp6_data32[0]
 
 struct rr_pco_match {		/* match prefix part */
 	u_int8_t	rpm_code;
@@ -417,7 +403,7 @@ struct rr_pco_match {		/* match prefix part */
 	u_int8_t	rpm_minlen;
 	u_int8_t	rpm_maxlen;
 	u_int16_t	rpm_reserved;
-	struct in6_addr	rpm_prefix;
+	struct	in6_addr	rpm_prefix;
 };
 
 #define RPM_PCO_ADD		1
@@ -425,67 +411,41 @@ struct rr_pco_match {		/* match prefix part */
 #define RPM_PCO_SETGLOBAL	3
 #define RPM_PCO_MAX		4
 
-#if BYTE_ORDER == BIG_ENDIAN /* net byte order */
 struct rr_pco_use {		/* use prefix part */
 	u_int8_t	rpu_uselen;
 	u_int8_t	rpu_keeplen;
-	u_int8_t	rpu_mask_onlink : 1;
-	u_int8_t	rpu_mask_autonomous : 1;
-	u_int8_t	rpu_mask_reserved : 6;
-	u_int8_t	rpu_onlink : 1;
-	u_int8_t	rpu_autonomous : 1;
-	u_int8_t	rpu_raflags_reserved : 6;
+	u_int8_t	rpu_ramask;
+	u_int8_t	rpu_raflags;
 	u_int32_t	rpu_vltime;
 	u_int32_t	rpu_pltime;
-	u_int32_t	rpu_decr_vltime : 1;
-	u_int32_t	rpu_decr_pltime : 1;
-	u_int32_t	rpu_flags_reserved : 6;
-	u_int32_t	rpu_reserved : 24;
-	struct in6_addr rpu_prefix;
+	u_int32_t	rpu_flags;
+	struct	in6_addr rpu_prefix;
 };
-#elif BYTE_ORDER == LITTLE_ENDIAN
-struct rr_pco_use {		/* use prefix part */
-	u_int8_t	rpu_uselen;
-	u_int8_t	rpu_keeplen;
-	u_int8_t	rpu_mask_reserved : 6;
-	u_int8_t	rpu_mask_autonomous : 1;
-	u_int8_t	rpu_mask_onlink : 1;
-	u_int8_t	rpu_raflags_reserved : 6;
-	u_int8_t	rpu_autonomous : 1;
-	u_int8_t	rpu_onlink : 1;
-	u_int32_t	rpu_vltime;
-	u_int32_t	rpu_pltime;
-	u_int32_t	rpu_flags_reserved : 6;
-	u_int32_t	rpu_decr_pltime : 1;
-	u_int32_t	rpu_decr_vltime : 1;
-	u_int32_t	rpu_reserved : 24;
-	struct in6_addr rpu_prefix;
-};
-#endif /* BYTE_ORDER */
+#define ICMP6_RR_PCOUSE_RAFLAGS_ONLINK	0x80
+#define ICMP6_RR_PCOUSE_RAFLAGS_AUTO	0x40
 
-#if BYTE_ORDER == BIG_ENDIAN /* net byte order */
-struct rr_result {		/* router renumbering result message */
-	u_int8_t	rrr_reserved;
-	u_int8_t	rrr_flags_reserved : 6;
-	u_int8_t	rrr_outofbound : 1;
-	u_int8_t	rrr_forbidden : 1;
-	u_int8_t	rrr_ordinal;
-	u_int8_t	rrr_matchedlen;
-	u_int32_t	rrr_ifid;
-	struct in6_addr rrr_prefix;
-};
+#if BYTE_ORDER == BIG_ENDIAN
+#define ICMP6_RR_PCOUSE_FLAGS_DECRVLTIME     0x80000000
+#define ICMP6_RR_PCOUSE_FLAGS_DECRPLTIME     0x40000000
 #elif BYTE_ORDER == LITTLE_ENDIAN
+#define ICMP6_RR_PCOUSE_FLAGS_DECRVLTIME     0x80
+#define ICMP6_RR_PCOUSE_FLAGS_DECRPLTIME     0x40
+#endif
+
 struct rr_result {		/* router renumbering result message */
-	u_int8_t	rrr_reserved;
-	u_int8_t	rrr_forbidden : 1;
-	u_int8_t	rrr_outofbound : 1;
-	u_int8_t	rrr_flags_reserved : 6;
+	u_int16_t	rrr_flags;
 	u_int8_t	rrr_ordinal;
 	u_int8_t	rrr_matchedlen;
 	u_int32_t	rrr_ifid;
-	struct in6_addr rrr_prefix;
+	struct	in6_addr rrr_prefix;
 };
-#endif /* BYTE_ORDER */
+#if BYTE_ORDER == BIG_ENDIAN
+#define ICMP6_RR_RESULT_FLAGS_OOB		0x0002
+#define ICMP6_RR_RESULT_FLAGS_FORBIDDEN		0x0001
+#elif BYTE_ORDER == LITTLE_ENDIAN
+#define ICMP6_RR_RESULT_FLAGS_OOB		0x02
+#define ICMP6_RR_RESULT_FLAGS_FORBIDDEN		0x01
+#endif
 
 /*
  * icmp6 filter structures.
