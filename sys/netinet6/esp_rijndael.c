@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_rijndael.c,v 1.1 2000/10/02 17:21:26 itojun Exp $	*/
+/*	$NetBSD: esp_rijndael.c,v 1.2 2000/10/02 17:23:49 itojun Exp $	*/
 /*	$KAME: esp_rijndael.c,v 1.1 2000/09/20 18:15:22 itojun Exp $	*/
 
 /*
@@ -30,13 +30,7 @@
  * SUCH DAMAGE.
  */
 
-#if defined(__FreeBSD__) && __FreeBSD__ >= 3
 #include "opt_inet.h"
-#include "opt_inet6.h"
-#endif
-#ifdef __NetBSD__
-#include "opt_inet.h"
-#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
