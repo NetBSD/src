@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.65 1999/02/16 07:22:17 pk Exp $	*/
+/*	$NetBSD: zs.c,v 1.66 1999/02/22 17:15:30 pk Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -896,7 +896,7 @@ consinit()
 	struct consdev *cn;
 	int channel, zs_unit, zstty_unit;
 	int inSource, outSink;
-	int node, fd;
+	int node;
 	char buffer[128];
 	char *devtype;
 	char *cp;
@@ -925,18 +925,16 @@ consinit()
 		getpropstringA(node, "stdin-path", buffer, sizeof buffer);
 
 		/*
-		 * Open an "instance" of this device.
-		 * You'd think it would be appropriate to call v2_close()
-		 * on the handle when we're done with it. But that seems
-		 * to cause the device to shut down somehow; for the moment,
-		 * we simply leave it open...
+		 * Translate the STDIN package instance (`ihandle') -- that
+		 * the PROM has already opened for us -- to a device tree
+		 * node (i.e. a `phandle'). 
 		 */
-		if ((fd = prom_open(buffer)) == 0 ||
-		     (node = prom_instance_to_package(fd)) == 0) {
+
+		if ((node = prom_instance_to_package(prom_stdin())) == 0) {
 			printf("consinit: bogus stdin path %s.\n", buffer);
 			goto setup_output;
 		}
-		if (prom_node_has_property(node, "keyboard") >= 0) {
+		if (prom_node_has_property(node, "keyboard")) {
 			inSource = PROMDEV_KBD;
 			goto setup_output;
 		}
@@ -972,8 +970,7 @@ setup_output:
 
 		getpropstringA(node, "stdout-path", buffer, sizeof buffer);
 
-		if ((fd = prom_open(buffer)) == 0 ||
-		     (node = prom_instance_to_package(fd)) == 0) {
+		if ((node = prom_instance_to_package(prom_stdout())) == 0) {
 			printf("consinit: bogus stdout path %s.\n",buffer);
 			goto setup_output;
 		}
