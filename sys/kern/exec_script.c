@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_script.c,v 1.20 1999/02/26 23:38:55 wrstuden Exp $	*/
+/*	$NetBSD: exec_script.c,v 1.20.2.1 2000/02/01 23:11:20 he Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -172,7 +172,6 @@ check_shell:
 #endif
 	    ) {
 		struct file *fp;
-		extern struct fileops vnops;
 
 #if defined(DIAGNOSTIC) && defined(FDSCRIPTS)
 		if (epp->ep_flags & EXEC_HASFD)
