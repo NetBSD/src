@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.11 1997/04/09 21:07:26 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.12 1997/06/08 23:54:36 veego Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -98,7 +98,7 @@ void doboot __P((void))
     __attribute__((__noreturn__));
 
 /* the following is used externally (sysctl_hw) */
-char machine[] = "x68k";		/* cpu "architecture" */
+char	machine[] = MACHINE;	/* from <machine/param.h> */
 
 vm_map_t buffer_map;
 #ifdef MACHINE_NONCONTIG

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.76 1997/05/31 20:33:30 mhitch Exp $	*/
+/*	$NetBSD: machdep.c,v 1.77 1997/06/08 23:54:31 veego Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -128,7 +128,7 @@ static u_int tc_slot_phys_base [TC_MAX_SLOTS] = {
 #endif
 
 /* the following is used externally (sysctl_hw) */
-char	machine[] = "pmax";	/* cpu "architecture" */
+char	machine[] = MACHINE;	/* from <machine/param.h> */
 char	cpu_model[30];
 
 vm_map_t buffer_map;
