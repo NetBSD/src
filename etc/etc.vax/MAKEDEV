@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV,v 1.54 2003/03/30 21:13:22 wiz Exp $
+#	$NetBSD: MAKEDEV,v 1.55 2003/04/17 18:03:21 fvdl Exp $
 #
 #	@(#)MAKEDEV	8.1 (Berkeley) 6/9/93
 #
@@ -14,6 +14,8 @@
 #	std	standard devices
 #	local	configuration specific devices
 #	all	create a reasonable amount of all files
+#	init	A set of devices that is used for MFS /dev by init.
+#		May be equal to "all".
 # Tapes:
 #	ht*	massbus tm03 and tu??
 #	tm*	unibus tm11 and te10 emulations (e.g. Emulex tc-11)
@@ -92,7 +94,7 @@ for i
 do
 case $i in
 
-all)
+init|all)
 	makedev std fd vnd0 ccd0 pty0 lkm random
 	makedev cgd0 cgd1 cgd2 cgd3
 	makedev bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7
