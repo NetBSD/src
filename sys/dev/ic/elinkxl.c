@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.34 2000/05/29 17:37:13 jhawk Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.35 2000/06/27 04:18:48 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -85,7 +85,6 @@
 #include <machine/endian.h>
 
 #include <vm/vm.h>
-#include <vm/pmap.h>
 
 #include <dev/mii/miivar.h>
 #include <dev/mii/mii.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: atari_init.c,v 1.48 2000/03/28 23:57:25 simonb Exp $	*/
+/*	$NetBSD: atari_init.c,v 1.49 2000/06/27 04:18:53 mrg Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -54,7 +54,6 @@
 #include <sys/exec.h>
 #include <sys/core.h>
 #include <sys/kcore.h>
-#include <vm/pmap.h>
 
 #include <machine/vmparam.h>
 #include <machine/pte.h>

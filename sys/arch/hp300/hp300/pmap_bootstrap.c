@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.17 1999/12/14 17:51:21 thorpej Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.18 2000/06/27 04:18:55 mrg Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -51,7 +51,6 @@
 #include <hp300/hp300/clockreg.h>
 
 #include <vm/vm.h>
-#include <vm/pmap.h>
 
 #define RELOC(v, t)	*((t*)((u_int)&(v) + firstpa))
 
