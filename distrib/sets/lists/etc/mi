@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.60.2.14 2001/12/11 00:09:29 he Exp $
+# $NetBSD: mi,v 1.60.2.15 2002/03/06 22:17:14 he Exp $
 ./.cshrc
 ./.profile
 ./dev/MAKEDEV.local
@@ -87,6 +87,7 @@
 ./etc/rc.d/gated
 ./etc/rc.d/inetd
 ./etc/rc.d/ipfilter
+./etc/rc.d/ipfs
 ./etc/rc.d/ipmon
 ./etc/rc.d/ipnat
 ./etc/rc.d/ipsec
