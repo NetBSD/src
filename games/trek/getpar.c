@@ -1,4 +1,4 @@
-/*	$NetBSD: getpar.c,v 1.5 1997/10/12 21:24:50 christos Exp $	*/
+/*	$NetBSD: getpar.c,v 1.6 1997/10/13 22:12:01 cjs Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getpar.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: getpar.c,v 1.5 1997/10/12 21:24:50 christos Exp $");
+__RCSID("$NetBSD: getpar.c,v 1.6 1997/10/13 22:12:01 cjs Exp $");
 #endif
 #endif /* not lint */
 
@@ -104,7 +104,7 @@ char	*s;
 
 struct cvntab	Yntab[] =
 {
-	{ "y",	"es",	(cmdfun)1,	0 },
+	{ "y",	"es",	(cmdfun)1,	1 },
 	{ "n",	"o",	(cmdfun)0,	0 },
 	{ NULL,	NULL,	NULL,		0 }
 };
@@ -116,7 +116,7 @@ char	*s;
 	struct cvntab		*r;
 
 	r = getcodpar(s, Yntab);
-	return (int) r->value;
+	return r->value2;
 }
 
 
