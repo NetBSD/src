@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc,v 1.113 2002/07/17 02:23:15 thorpej Exp $
+#	$NetBSD: files.sparc,v 1.114 2002/08/23 18:00:46 thorpej Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
 # sparc-specific configuration info
@@ -89,8 +89,13 @@ device power
 attach power at obio
 file	arch/sparc/dev/power.c			power	needs-flag
 
+device cpuunit { }
+attach cpuunit at mainbus
+file	arch/sparc/sparc/cpuunit.c		cpuunit
+
 device cpu
-attach cpu at mainbus
+attach cpu at mainbus with cpu_mainbus
+attach cpu at cpuunit with cpu_cpuunit
 file	arch/sparc/sparc/cpu.c
 
 device memreg
