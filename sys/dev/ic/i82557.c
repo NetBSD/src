@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.24 2000/03/23 07:01:31 thorpej Exp $	*/
+/*	$NetBSD: i82557.c,v 1.25 2000/03/30 02:06:17 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -195,9 +195,6 @@ void	fxp_shutdown __P((void *));
 void	fxp_power __P((int, void *));
 
 int	fxp_copy_small = 0;
-
-int	fxp_enable __P((struct fxp_softc*));
-void	fxp_disable __P((struct fxp_softc*));
 
 struct fxp_phytype {
 	int	fp_phy;		/* type of PHY, -1 for MII at the end. */
