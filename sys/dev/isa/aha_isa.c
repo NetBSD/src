@@ -1,4 +1,4 @@
-/*	$NetBSD: aha_isa.c,v 1.3 1997/03/28 23:47:12 mycroft Exp $	*/
+/*	$NetBSD: aha_isa.c,v 1.3.2.1 1997/05/18 05:55:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1996, 1997 Charles M. Hannum.  All rights reserved.
@@ -113,11 +113,12 @@ aha_isa_attach(parent, self, aux)
 
 	sc->sc_iot = iot;
 	sc->sc_ioh = ioh;
+	sc->sc_dmat = ia->ia_dmat;
 	if (!aha_find(iot, ioh, &apd))
 		panic("aha_isa_attach: aha_find failed");
 
 	if (apd.sc_drq != -1)
-		isa_dmacascade(apd.sc_drq);
+		isa_dmacascade(parent, apd.sc_drq);
 
 	sc->sc_ih = isa_intr_establish(ic, apd.sc_irq, IST_EDGE, IPL_BIO,
 	    aha_intr, sc);
