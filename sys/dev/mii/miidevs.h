@@ -1,10 +1,10 @@
-/*	$NetBSD: miidevs.h,v 1.20 2001/05/22 16:07:56 soren Exp $	*/
+/*	$NetBSD: miidevs.h,v 1.21 2001/05/31 03:32:38 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: miidevs,v 1.20 2001/05/22 16:04:27 soren Exp 
+ *	NetBSD: miidevs,v 1.21 2001/05/31 03:32:20 thorpej Exp 
  */
 
 /*-
@@ -171,6 +171,8 @@
 #define	MII_STR_xxNATSEMI_DP83840	"DP83840 10/100 media interface"
 #define	MII_MODEL_xxNATSEMI_DP83843	0x0001
 #define	MII_STR_xxNATSEMI_DP83843	"DP83843 10/100 media interface"
+#define	MII_MODEL_xxNATSEMI_DP83891	0x0005
+#define	MII_STR_xxNATSEMI_DP83891	"DP83891 1000baseTX PHY"
 #define	MII_MODEL_xxNATSEMI_DP83861	0x0006
 #define	MII_STR_xxNATSEMI_DP83861	"DP83861 1000baseTX PHY"
 
