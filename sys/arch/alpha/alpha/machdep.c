@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.270 2003/06/29 22:28:01 fvdl Exp $ */
+/* $NetBSD: machdep.c,v 1.271 2003/07/24 19:17:51 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.270 2003/06/29 22:28:01 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.271 2003/07/24 19:17:51 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2165,6 +2165,7 @@ cpu_setmcontext(l, mcp, flags)
 		(void)memcpy(&l->l_addr->u_pcb.pcb_fp, &mcp->__fpregs,
 		    sizeof (l->l_addr->u_pcb.pcb_fp));
 		l->l_md.md_flags = mcp->__fpregs.__fp_fpcr & MDP_FP_C;
+		l->l_md.md_flags |= MDP_FPUSED;
 	}
 
 	return (0);
