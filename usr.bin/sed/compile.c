@@ -1,4 +1,4 @@
-/*	$NetBSD: compile.c,v 1.21 2002/01/23 19:07:34 atatat Exp $	*/
+/*	$NetBSD: compile.c,v 1.22 2002/02/26 02:37:30 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)compile.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: compile.c,v 1.21 2002/01/23 19:07:34 atatat Exp $");
+__RCSID("$NetBSD: compile.c,v 1.22 2002/02/26 02:37:30 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -345,7 +345,7 @@ nonsel:		/* Now parse the command */
 }
 
 /*
- * Get a delimited string.  P points to the delimeter of the string; d points
+ * Get a delimited string.  P points to the delimiter of the string; d points
  * to a buffer area.  Newline and delimiter escapes are processed; other
  * escapes are ignored.
  *
