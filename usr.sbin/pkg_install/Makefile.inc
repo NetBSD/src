@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.10 1999/08/30 04:20:22 christos Exp $
+# $NetBSD: Makefile.inc,v 1.10.8.1 2000/09/03 04:17:01 hubertf Exp $
 # Original from Freebsd, no rcs id.
 
 LIBINSTALL != cd ${.CURDIR}/../lib;\
@@ -46,3 +46,12 @@ LDADD+=	-L${LIBINSTALL} -linstall
 .if exists(${.CURDIR}/../../Makefile.inc)
 .include "${.CURDIR}/../../Makefile.inc"
 .endif
+
+
+
+
+
+
+#CFLAGS+=	-g
+#STRIPFLAG=	# unset
+#LDFLAGS+=	-L/usr/pkg/lib -lefence
