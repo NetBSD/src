@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.38 2003/10/14 00:28:19 christos Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.39 2003/10/21 01:54:23 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.38 2003/10/14 00:28:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.39 2003/10/21 01:54:23 fvdl Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -142,7 +142,7 @@ netbsd32_setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 
 	stack -= sizeof(struct rwindow32);
 	tf->tf_out[6] = stack;
-	tf->tf_out[7] = NULL;
+	tf->tf_out[7] = 0;
 }
 
 /*
