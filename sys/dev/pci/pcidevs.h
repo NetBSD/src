@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.208 2000/03/23 11:18:09 ad Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.209 2000/03/23 15:11:26 joda Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.201 2000/03/23 11:17:32 ad Exp 
+ *	NetBSD: pcidevs,v 1.202 2000/03/23 15:10:56 joda Exp 
  */
 
 /*
@@ -1046,6 +1046,8 @@
 #define	PCI_PRODUCT_INTEL_82810_GC	0x7121		/* 82810 Graphics Controller */
 #define	PCI_PRODUCT_INTEL_82810_DC100_MCH	0x7122		/* 82810-DC100 Memory Controller Hub */
 #define	PCI_PRODUCT_INTEL_82810_DC100_GC	0x7123		/* 82810-DC100 Graphics Controller */
+#define	PCI_PRODUCT_INTEL_82810E_MCH	0x7124		/* 82810E Memory Controller Hub */
+#define	PCI_PRODUCT_INTEL_82810E_GC	0x7125		/* 82810E Graphics Controller */
 #define	PCI_PRODUCT_INTEL_82443LX	0x7180		/* 82443LX PCI AGP Controller (PAC) */
 #define	PCI_PRODUCT_INTEL_82443LX_AGP	0x7181		/* 82443LX AGP Interface (PAC) */
 #define	PCI_PRODUCT_INTEL_82443BX	0x7190		/* 82443BX Host Bridge/Controller */
