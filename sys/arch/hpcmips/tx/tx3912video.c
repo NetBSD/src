@@ -1,4 +1,4 @@
-/*	$NetBSD: tx3912video.c,v 1.8 2000/03/13 18:49:17 uch Exp $ */
+/*	$NetBSD: tx3912video.c,v 1.9 2000/04/03 03:35:38 sato Exp $ */
 
 /*
  * Copyright (c) 1999, 2000, by UCHIYAMA Yasushi
@@ -41,6 +41,7 @@
 #include <hpcmips/tx/tx3912videoreg.h>
 
 #if NHPCFB > 0
+#include <dev/wscons/wsconsio.h>
 #include <arch/hpcmips/dev/hpcfbvar.h>
 #include <arch/hpcmips/dev/hpcfbio.h>
 #include <arch/hpcmips/dev/bivideovar.h>
