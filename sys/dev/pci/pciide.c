@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.203 2003/09/21 11:20:37 bouyer Exp $	*/
+/*	$NetBSD: pciide.c,v 1.204 2003/09/21 11:30:43 bouyer Exp $	*/
 
 
 /*
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide.c,v 1.203 2003/09/21 11:20:37 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide.c,v 1.204 2003/09/21 11:30:43 bouyer Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -4005,7 +4005,6 @@ hpt_chip_map(sc, pa)
 			pciide_mapregs_compat(pa, cp, compatchan,
 			    &cmdsize, &ctlsize);
 		}
-		wdcattach(&cp->wdc_channel);
 	}
 	if ((sc->sc_pp->ide_product == PCI_PRODUCT_TRIONES_HPT366 &&
 	    (revision == HPT370_REV || revision == HPT370A_REV ||
