@@ -1,11 +1,11 @@
-/*	$NetBSD: extract.c,v 1.13 1999/02/01 02:00:42 hubertf Exp $	*/
+/*	$NetBSD: extract.c,v 1.14 1999/03/02 10:32:23 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "FreeBSD - Id: extract.c,v 1.17 1997/10/08 07:45:35 charnier Exp";
 #else
-__RCSID("$NetBSD: extract.c,v 1.13 1999/02/01 02:00:42 hubertf Exp $");
+__RCSID("$NetBSD: extract.c,v 1.14 1999/03/02 10:32:23 agc Exp $");
 #endif
 #endif
 
@@ -181,7 +181,7 @@ extract_plist(char *home, package_t *pkg)
  printf("pkgdb_retrieve(\"%s\")=\"%s\"\n", t, s); /* pkgdb-debug - HF */
 #endif
 			if (s)
-			    warnx("Overwriting %s - pkg %s bogus/conflicting?\n", t, s);
+			    warnx("Overwriting %s - pkg %s bogus/conflicting?", t, s);
 			else {
 			    rc=pkgdb_store(t, PkgName);
 #ifdef PKGDB_DEBUG
@@ -245,7 +245,7 @@ extract_plist(char *home, package_t *pkg)
  printf("pkgdb_retrieve(\"%s\")=\"%s\"\n", t, s); /* pkgdb-debug - HF */
 #endif
 			if (s)
-			    warnx("Overwriting %s - pkg %s bogus/conflicting?\n", t, s);
+			    warnx("Overwriting %s - pkg %s bogus/conflicting?", t, s);
 			else {
 			    rc = pkgdb_store(t, PkgName);
 #ifdef PKGDB_DEBUG
