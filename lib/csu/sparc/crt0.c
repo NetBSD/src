@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: crt0.c,v 1.9 1994/04/18 20:02:58 pk Exp $
+ *	$Id: crt0.c,v 1.10 1994/07/26 19:53:46 pk Exp $
  */
 
 
@@ -226,8 +226,10 @@ __do_dynamic_link ()
 	if (&_DYNAMIC == (struct _dynamic *)0)
 		return;
 
+#ifdef DEBUG
 	/* Provision for alternate ld.so - security risk! */
 	if (!(ldso = _getenv("LDSO")))
+#endif
 		ldso = LDSO;
 
 	crt.crt_ldfd = open(ldso, 0, 0);
