@@ -1,0 +1,23 @@
+#	$NetBSD: std.ev64260,v 1.1 2003/03/05 22:08:25 matt Exp $
+#
+# standard, required NetBSD/evbppc 'options'
+
+machine evbppc powerpc
+
+options 	PPC_OEA		# Discovery uses Motorola PPC60x CPUs
+makeoptions 	PPCDIR="oea"	# Tell Makefile.powerpc what dir to use
+
+# Executable support:
+options 	EXEC_ELF32	# exec ELF binaries
+options 	EXEC_SCRIPT	# exec #! scripts
+
+makeoptions	TEXTADDR=0x120000
+makeoptions	NEED_SREC=yes
+makeoptions	BOARDTYPE="ev64260"
+options 	INTSTK=16384	
+options 	SPILLSTK=4096	
+
+options		PPC_INTR_IMPL="<arch/powerpc/marvell/marvell_intr.h>"
+options		PPC_PCI_MACHDEP_IMPL="<arch/powerpc/marvell/pci_machdep.h>"
+
+include "arch/evbppc/conf/files.ev64260"
