@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rsio.c,v 1.5 2003/02/13 14:16:25 kanaoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rsio.c,v 1.6 2003/03/04 17:25:26 kochi Exp $");
 
 #define __RSIO_C__
 

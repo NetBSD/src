@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: utglobal - Global variables for the ACPI subsystem
- *              xRevision: 178 $
+ *              xRevision: 180 $
  *
  *****************************************************************************/
 
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: utglobal.c,v 1.5 2003/02/13 14:16:26 kanaoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: utglobal.c,v 1.6 2003/03/04 17:25:29 kochi Exp $");
 
 #define __UTGLOBAL_C__
 #define DEFINE_ACPI_GLOBALS
@@ -461,6 +461,7 @@ ACPI_FIXED_EVENT_INFO       AcpiGbl_FixedEventInfo[ACPI_NUM_FIXED_EVENTS] =
 
 const char        *AcpiGbl_RegionTypes[ACPI_NUM_PREDEFINED_REGIONS] =
 {
+/*! [Begin] no source code translation (keep these ASL Keywords as-is) */
     "SystemMemory",
     "SystemIO",
     "PCI_Config",
@@ -468,7 +469,8 @@ const char        *AcpiGbl_RegionTypes[ACPI_NUM_PREDEFINED_REGIONS] =
     "SMBus",
     "CMOS",
     "PCIBARTarget",
-    "DataTable",
+    "DataTable"
+/*! [End] no source code translation !*/
 };
 
 
@@ -484,7 +486,7 @@ AcpiUtGetRegionName (
 
     else if (SpaceId >= ACPI_NUM_PREDEFINED_REGIONS)
     {
-        return ("InvalidSpaceID");
+        return ("InvalidSpaceId");
     }
 
     return ((char *) AcpiGbl_RegionTypes[SpaceId]);
@@ -811,6 +813,10 @@ AcpiUtInitGlobals (
         AcpiGbl_AcpiMutexInfo[i].UseCount   = 0;
     }
 
+    /* GPE support */
+
+    AcpiGbl_GpeBlockListHead            = NULL;
+
     /* Global notify handlers */
 
     AcpiGbl_SysNotify.Handler           = NULL;
@@ -848,8 +854,6 @@ AcpiUtInitGlobals (
 
     /* Hardware oriented */
 
-    AcpiGbl_GpeRegisterInfo             = NULL;
-    AcpiGbl_GpeNumberInfo               = NULL;
     AcpiGbl_EventsInitialized           = FALSE;
 
     /* Namespace */
