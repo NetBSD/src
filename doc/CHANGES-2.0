@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.109 2004/04/21 03:19:17 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.110 2004/04/21 03:20:34 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -1085,3 +1085,8 @@ sys/dev/dksubr.c				1.12
 	will call dk_start() via dk_iodone() before the buffer gets removed 
 	from queue.  PR#25240
 	[elric, ticket #163]
+
+distrib/sets/makesrctars			1.16
+
+	Move ./contrib/sys from src.tgz to syssrc.tgz. PR#25251
+	[lukem, ticket #165]
