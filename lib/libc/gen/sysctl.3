@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.3,v 1.74 2001/02/08 16:07:39 itojun Exp $
+.\"	$NetBSD: sysctl.3,v 1.75 2001/03/27 02:24:40 itojun Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -677,6 +677,7 @@ The currently defined protocols and names are:
 .It ip	gifttl	integer	yes
 .It ip	lowportmin	integer	yes
 .It ip	lowportmax	integer	yes
+.It ip	maxfragpacket	integer	yes
 .It icmp	maskrepl	integer	yes
 .It icmp	errppslimit	integer	yes
 .It tcp	rfc1323	integer	yes
@@ -758,6 +759,11 @@ The highest port number to use for TCP and UDP reserved port allocation.
 This cannot be set to less than 0 or greater than 1024, and must
 be greater than
 .Li ip.lowportmin .
+.It Li ip.maxfragpackets
+The maximum number of fragmented packets the node will accept.
+0 means that the node will not accept any fragmented packets.
+-1 means that the node will accept as many fragmented packets as it receives.
+The flag is provided basically for avoiding possible DoS attacks.
 .It Li icmp.maskrepl
 Returns 1 if ICMP network mask requests are to be answered.
 .It Li icmp.errppslimit
