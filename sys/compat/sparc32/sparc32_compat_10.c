@@ -1,4 +1,4 @@
-/*	$NetBSD: sparc32_compat_10.c,v 1.1 1998/10/01 14:27:56 eeh Exp $	*/
+/*	$NetBSD: sparc32_compat_10.c,v 1.2 1998/10/19 22:39:09 tron Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass and Charles M. Hannum.  All rights reserved.
@@ -29,6 +29,8 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include "opt_sysv.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
