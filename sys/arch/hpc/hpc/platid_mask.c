@@ -1,4 +1,4 @@
-/*	$NetBSD: platid_mask.c,v 1.4 2001/03/03 12:56:38 takemura Exp $	*/
+/*	$NetBSD: platid_mask.c,v 1.5 2001/03/04 03:40:39 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -328,6 +328,14 @@ platid_t platid_mask_MACH_CASIO_CASSIOPEIAE_E500 = {{
 platid_t platid_mask_MACH_CASIO_CASSIOPEIAE_E507 = {{
 	PLATID_CPU_MIPS_VR_4121,
 	PLATID_MACH_CASIO_CASSIOPEIAE_E507
+}};
+platid_t platid_mask_MACH_CASIO_POCKETPOSTPET = {{
+	PLATID_WILD,
+	PLATID_MACH_CASIO_POCKETPOSTPET
+}};
+platid_t platid_mask_MACH_CASIO_POCKETPOSTPET_POCKETPOSTPET = {{
+	PLATID_CPU_MIPS_VR_4121,
+	PLATID_MACH_CASIO_POCKETPOSTPET_POCKETPOSTPET
 }};
 #endif /* hpcmips */
 #ifdef hpcmips

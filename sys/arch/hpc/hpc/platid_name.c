@@ -1,4 +1,4 @@
-/*	$NetBSD: platid_name.c,v 1.4 2001/03/03 12:56:38 takemura Exp $	*/
+/*	$NetBSD: platid_name.c,v 1.5 2001/03/04 03:40:39 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -190,6 +190,10 @@ struct platid_name platid_name_table[] = {
 	 TEXT("CASIO Cassiopeia E500") },
 	{ &platid_mask_MACH_CASIO_CASSIOPEIAE_E507,
 	 TEXT("CASIO Cassiopeia E507") },
+	{ &platid_mask_MACH_CASIO_POCKETPOSTPET,
+	 TEXT("CASIO PocketPostPet") },
+	{ &platid_mask_MACH_CASIO_POCKETPOSTPET_POCKETPOSTPET,
+	 TEXT("CASIO PocketPostPet") },
 #endif /* hpcmips */
 #ifdef hpcmips
 	{ &platid_mask_MACH_SHARP,
