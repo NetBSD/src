@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.eng,v 1.1 1997/10/27 03:34:37 jonathan Exp $	*/
+/*	$NetBSD: msg.md.eng,v 1.2 1997/10/29 01:09:59 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -36,4 +36,4 @@
  *
  */
 
-/* pc532 machine dependend messages, english */
+/* pmax machine dependend messages, english */
