@@ -1,4 +1,4 @@
-/*	$NetBSD: pcibios.c,v 1.7 2001/11/15 07:03:35 lukem Exp $	*/
+/*	$NetBSD: pcibios.c,v 1.8 2002/01/22 15:07:27 uch Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcibios.c,v 1.7 2001/11/15 07:03:35 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcibios.c,v 1.8 2002/01/22 15:07:27 uch Exp $");
 
 #include "opt_pcibios.h"
 
@@ -125,6 +125,12 @@ void	pcibios_print_pir_table __P((void));
 
 #define	PCI_IRQ_TABLE_START	0xf0000
 #define	PCI_IRQ_TABLE_END	0xfffff
+
+static void pci_bridge_hook(pci_chipset_tag_t, pcitag_t, void *);
+struct pci_bridge_hook_arg {
+	void (*func)(pci_chipset_tag_t, pcitag_t, void *);
+	void *arg;
+};
 
 void
 pcibios_init()
@@ -550,5 +556,32 @@ pci_device_foreach_min(pc, minbus, maxbus, func, context)
 				(*func)(pc, tag, context);
 			}
 		}
+	}
+}
+
+void
+pci_bridge_foreach(pci_chipset_tag_t pc, int minbus, int maxbus,
+    void (*func)(pci_chipset_tag_t, pcitag_t, void *), void *ctx)
+{
+	struct pci_bridge_hook_arg bridge_hook;
+
+	bridge_hook.func = func;
+	bridge_hook.arg = ctx;
+	
+	pci_device_foreach_min(pc, minbus, maxbus, pci_bridge_hook,
+	    &bridge_hook);
+}
+
+void
+pci_bridge_hook(pci_chipset_tag_t pc, pcitag_t tag, void *ctx)
+{
+	struct pci_bridge_hook_arg *bridge_hook = (void *)ctx;
+	pcireg_t reg;
+
+	reg = pci_conf_read(pc, tag, PCI_CLASS_REG);
+	if (PCI_CLASS(reg) == PCI_CLASS_BRIDGE &&
+	    (PCI_SUBCLASS(reg) == PCI_SUBCLASS_BRIDGE_PCI ||
+		PCI_SUBCLASS(reg) == PCI_SUBCLASS_BRIDGE_CARDBUS)) {
+		(*bridge_hook->func)(pc, tag, bridge_hook->arg);
 	}
 }
