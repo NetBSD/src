@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.157 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.158 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -11,6 +11,8 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 	libcrypt: support bcrypt password entries.  can be chosen with
 		"blowfish" keyword in passwd.conf.  from openbsd
 		[itojun 20020524]
+	evbarm: Add support for the NOVATEC NTNP425B eval board for
+		the Intel IXP425 Network Processor.  [ichiro 20030523]
 	tcp(4): implement path MTU discovery blackhole detection (turn off path
 		MTU discovery if the connection is losing).  PR 12790.
 		[itojun 20020526]
