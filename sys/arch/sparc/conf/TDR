@@ -1,5 +1,6 @@
-# $Id: TDR,v 1.13 1994/06/24 08:13:14 deraadt Exp $
-# SPARCstation 1, 1+, 2, etc.
+# $Id: TDR,v 1.13.2.1 1994/07/28 09:04:59 cgd Exp $
+#
+# Kernel for Theo's wimpy sparcstation IPC
 
 include	"std.sparc"
 
@@ -16,7 +17,7 @@ options		KTRACE			# system call tracing support
 options		GDB			# support for normal gdb
 options		KGDBDEV=0xc01, KGDBRATE=38400	# device & baud rate
 options		RCONSOLE		# fast rasterop console
-options		SYSVMSG,SYSVSEM
+options		SYSVMSG,SYSVSEM,SYSVSHM
 options		"COMPAT_09"
 
 # Filesystem options
@@ -52,10 +53,8 @@ config		netbsd	root on sd0 swap on sd0
 dma*	at sbus0 slot ? offset ?
 esp*	at sbus0 slot ? offset ?	# nb., esp is a `scsi'
 
-tg0	at scsi? target 1
-sd0	at tg0 drive 0
-tg1	at scsi? target 3
-sd1	at tg1 drive 0
+tg*	at scsi? target ?
+sd*	at tg? drive ?
 
 bwtwo*	at sbus? slot ? offset ?
 cgthree* at sbus? slot ? offset ?
