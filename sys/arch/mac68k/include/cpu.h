@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.24 1995/08/12 04:08:29 briggs Exp $	*/
+/*	$NetBSD: cpu.h,v 1.25 1995/09/14 02:48:09 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -197,11 +197,12 @@ extern unsigned char ssir;
  */
 #define MACH_CLASSH	0x0000	/* Hopeless cases... */
 #define MACH_CLASSII	0x0001	/* MacII class */
-#define MACH_CLASSIIci	0x0002	/* Have RBV, but no Egret */
-#define MACH_CLASSIIsi	0x0003	/* Similar to IIci -- Have Egret. */
-#define MACH_CLASSIIfx	0x0004	/* The IIfx is in a class by itself. */
+#define MACH_CLASSIIci	0x0004	/* Have RBV, but no Egret */
+#define MACH_CLASSIIsi	0x0005	/* Similar to IIci -- Have Egret. */
+#define MACH_CLASSIIvx	0x0006	/* Similar to IIsi -- different via2 emul? */
+#define MACH_CLASSLC	0x0007	/* Low-Cost/Performa/Wal-Mart Macs. */
 #define MACH_CLASSPB	0x0008	/* Powerbooks.  Power management. */
-#define MACH_CLASSLC	0x0010	/* Low-Cost/Performa/Wal-Mart Macs. */
+#define MACH_CLASSIIfx	0x0080	/* The IIfx is in a class by itself. */
 #define MACH_CLASSQ	0x0100	/* Centris/Quadras. */
 
 #define MACH_68020	0
