@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.7 1995/05/16 17:02:00 pk Exp $	*/
+/*	$NetBSD: fd.c,v 1.8 1995/05/20 20:03:37 pk Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -310,6 +310,7 @@ fdcattach(parent, self, aux)
 	struct fdc_softc *fdc = (void *)self;
 	struct fdc_attach_args fa;
 	int n, pri;
+	char code;
 
 	if (ca->ca_ra.ra_vaddr)
 		fdc->sc_reg = (caddr_t)ca->ca_ra.ra_vaddr;
@@ -317,15 +318,6 @@ fdcattach(parent, self, aux)
 		fdc->sc_reg = (caddr_t)mapiodev(ca->ca_ra.ra_paddr,
 						ca->ca_ra.ra_len,
 						ca->ca_bustype);
-
-	if (cputyp == CPU_SUN4M) {
-		fdc->sc_reg_msr = &((struct fdreg_sun4m *)fdc->sc_reg)->fd_msr;
-		fdc->sc_reg_fifo = &((struct fdreg_sun4m *)fdc->sc_reg)->fd_fifo;
-		fdc->sc_reg_dor = &((struct fdreg_sun4m *)fdc->sc_reg)->fd_dor;
-	} else {
-		fdc->sc_reg_msr = &((struct fdreg_sun4c *)fdc->sc_reg)->fd_msr;
-		fdc->sc_reg_fifo = &((struct fdreg_sun4c *)fdc->sc_reg)->fd_fifo;
-	}
 
 	fdc->sc_state = DEVIDLE;
 	fdc->sc_istate = ISTATE_IDLE;
@@ -345,21 +337,38 @@ fdcattach(parent, self, aux)
 	fdc->sc_sih.ih_arg = fdc;
 	intr_establish(PIL_FDSOFT, &fdc->sc_sih);
 
-	if (out_fdc(fdc, NE7CMD_VERSION)) {
-		printf(" misconfigured\n");
-		return;
+	/* Assume a 82077 */
+	fdc->sc_reg_msr = &((struct fdreg_77 *)fdc->sc_reg)->fd_msr;
+	fdc->sc_reg_fifo = &((struct fdreg_77 *)fdc->sc_reg)->fd_fifo;
+	fdc->sc_reg_dor = &((struct fdreg_77 *)fdc->sc_reg)->fd_dor;
+
+	code = '7';
+	if (*fdc->sc_reg_dor == NE7_RQM) {
+		/*
+		 * This hack from Chris Torek: apparently DOR really
+		 * addresses MSR/DRS on a 82072.
+		 * We used to rely on the VERSION command to tell the
+		 * difference (which did not work).
+		 */
+		*fdc->sc_reg_dor = FDC_250KBPS;
+		if (*fdc->sc_reg_dor == NE7_RQM)
+			code = '2';
+	}
+	if (code == '7') {
+		fdc->sc_flags |= FDC_82077;
+	} else {
+		fdc->sc_reg_msr = &((struct fdreg_72 *)fdc->sc_reg)->fd_msr;
+		fdc->sc_reg_fifo = &((struct fdreg_72 *)fdc->sc_reg)->fd_fifo;
+		fdc->sc_reg_dor = 0;
 	}
 
-	n = fdcresult(fdc);
-	if (n == 1 && fdc->sc_status[0] == 0x90) {
-		fdc->sc_flags |= FDC_82077;
-		if (cputyp != CPU_SUN4M)
-			printf(" Hmmm.. ");
-	} else {
-		/* Not a 82077 */
-		if (cputyp != CPU_SUN4C)
-			printf(" Hmmm.. ");
+#ifdef FD_DEBUG
+	if (out_fdc(fdc, NE7CMD_VERSION) == 0 &&
+	    fdcresult(fdc) == 1 && fdc->sc_status[0] == 0x90) {
+		if (fdc_debug)
+			printf("[version cmd]");
 	}
+#endif
 
 	/*
 	 * Configure controller; enable FIFO, Implied seek, no POLL mode?.
@@ -377,8 +386,7 @@ fdcattach(parent, self, aux)
 
 	evcnt_attach(&fdc->sc_dk.dk_dev, "intr", &fdc->sc_intrcnt);
 
-	printf(" pri %d, softpri %d: chip %s\n", pri, PIL_FDSOFT,
-		(fdc->sc_flags & FDC_82077)?"82077":"82072");
+	printf(" pri %d, softpri %d: chip 8207%c\n", pri, PIL_FDSOFT, code);
 
 	/* physical limit: four drives per controller. */
 	for (fa.fa_drive = 0; fa.fa_drive < 4; fa.fa_drive++) {
@@ -399,15 +407,16 @@ fdmatch(parent, match, aux)
 	int drive = fa->fa_drive;
 	int n;
 
+	if (drive > 0)
+		/* XXX - for now, punt > 1 drives */
+		return 0;
+
 	if (fdc->sc_flags & FDC_82077) {
 		/* select drive and turn on motor */
 		*fdc->sc_reg_dor = drive | FDO_FRST | FDO_MOEN(drive);
 		/* wait for motor to spin up */
 		delay(250000);
 	} else {
-		if (drive > 0)
-			/* XXX - drive 0 always answers */
-			return 0;
 		auxregbisc(AUXIO_FDS, 0);
 	}
 	fdc->sc_nstat = 0;
