@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuconf.c,v 1.10 1998/03/20 21:48:21 thorpej Exp $	*/
+/*	$NetBSD: cpuconf.c,v 1.11 1998/04/15 00:45:43 mjacob Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -99,6 +99,13 @@ extern void avalon_a12_init __P((void));
 #define	avalon_a12_init		platform_not_configured
 #endif
 
+#include "opt_dec_kn300.h"
+#ifdef	DEC_KN300
+extern void dec_kn300_init __P((void));
+#else
+#define	kn300_init		platform_not_configured
+#endif
+
 struct cpuinit cpuinit[] = {
 	cpu_notsupp("???"),			     /*  0: ??? */
 	cpu_notsupp("ST_ADU"),			     /*  1: ST_ADU */
@@ -122,7 +129,7 @@ struct cpuinit cpuinit[] = {
 	cpu_notsupp("ST_EB66"),			     /* 19: ST_EB66 */
 	cpu_init(dec_eb64plus_init,"DEC_EB64PLUS"),  /* 20: ST_EB64P */
 	cpu_notsupp("ST_ALPHABOOK1"),		     /* 21: ST_ALPHABOOK1 */
-	cpu_notsupp("ST_DEC_4100"),		     /* 22: ST_DEC_4100 */
+	cpu_init(dec_kn300_init,"ST_DEC_4100"),	     /* 22: ST_DEC_4100 */
 	cpu_notsupp("ST_DEC_EV45_PBP"),		     /* 23: ST_DEC_EV45_PBP */
 	cpu_notsupp("ST_DEC_2100A_A500"),	     /* 24: ST_DEC_2100A_A500 */
 	cpu_notsupp("???"),			     /* 25: ??? */
