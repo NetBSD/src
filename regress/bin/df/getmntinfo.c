@@ -1,4 +1,4 @@
-/*	$NetBSD: getmntinfo.c,v 1.1 2004/03/26 14:53:39 enami Exp $	*/
+/*	$NetBSD: getmntinfo.c,v 1.2 2004/07/07 01:57:35 enami Exp $	*/
 
 #include <sys/param.h>
 #include <sys/ucred.h>
@@ -12,47 +12,48 @@
 #define	MB		* 1024 KB
 #define	GB		* 1024 MB
 
-static struct statfs *getnewstatfs(void);
-static void other_variants(const struct statfs *, const int *, int,
+static struct statvfs *getnewstatvfs(void);
+static void other_variants(const struct statvfs *, const int *, int,
     const int *, int);
 static void setup_filer(void);
 static void setup_ld0g(void);
 
-static struct statfs *allstatfs;
+static struct statvfs *allstatvfs;
 static int sftotal, sfused;
 
-struct statfs *
-getnewstatfs(void)
+struct statvfs *
+getnewstatvfs(void)
 {
 
 	if (sftotal == sfused) {
 		sftotal = sftotal ? sftotal * 2 : 1;
-		allstatfs = realloc(allstatfs,
-		    sftotal * sizeof(struct statfs));
-		if (allstatfs == NULL)
+		allstatvfs = realloc(allstatvfs,
+		    sftotal * sizeof(struct statvfs));
+		if (allstatvfs == NULL)
 			err(EXIT_FAILURE, "realloc");
 	}
 
-	return (&allstatfs[sfused++]);
+	return (&allstatvfs[sfused++]);
 }
 
 void
-other_variants(const struct statfs *tmpl, const int *minfree, int minfreecnt,
+other_variants(const struct statvfs *tmpl, const int *minfree, int minfreecnt,
     const int *consumed, int consumedcnt)
 {
 	int64_t total, used;
-	struct statfs *sf;
+	struct statvfs *sf;
 	int i, j;
 
 	for (i = 0; i < minfreecnt; i++)
 		for (j = 0; j < consumedcnt; j++) {
-			sf = getnewstatfs();
+			sf = getnewstatvfs();
 			*sf = *tmpl;
 			total = (int64_t)(u_long)sf->f_blocks * sf->f_bsize;
 			used =  total * consumed[j] / 100;
 			sf->f_bfree = (total - used) / sf->f_bsize;
 			sf->f_bavail = (total * (100 - minfree[i]) / 100 -
 			    used) / sf->f_bsize;
+			sf->f_bresvd = sf->f_bfree - sf->f_bavail;
 		}
 }
 
@@ -63,14 +64,16 @@ other_variants(const struct statfs *tmpl, const int *minfree, int minfreecnt,
 void
 setup_filer(void)
 {
-	static const struct statfs tmpl = {
+	static const struct statvfs tmpl = {
 #define	BSIZE	512
 #define	TOTAL	1147ULL GB
 #define	USED	132ULL MB
 		.f_bsize = BSIZE,
+		.f_frsize = BSIZE,
 		.f_blocks = TOTAL / BSIZE,
 		.f_bfree = (TOTAL - USED) / BSIZE,
 		.f_bavail = (TOTAL - USED) / BSIZE,
+		.f_bresvd = 0,
 		.f_mntfromname = "filer:/",
 		.f_mntonname = "/filer",
 #undef USED
@@ -79,9 +82,9 @@ setup_filer(void)
 	};
 	static const int minfree[] = { 0, 5, 10, 15, };
 	static const int consumed[] = { 0, 20, 60, 95, 100 };
-	struct statfs *sf;
+	struct statvfs *sf;
 
-	sf = getnewstatfs();
+	sf = getnewstatvfs();
 	*sf = tmpl;
 	other_variants(&tmpl, minfree, sizeof(minfree) / sizeof(minfree[0]),
 	    consumed, sizeof(consumed) / sizeof(consumed[0]));
@@ -94,15 +97,17 @@ setup_filer(void)
 void
 setup_ld0g(void)
 {
-	static const struct statfs tmpl = {
+	static const struct statvfs tmpl = {
 #define	BSIZE	4096			/* Guess */
 #define	TOTAL	1308726116ULL KB
 #define	USED	17901268ULL KB
 #define	AVAIL	1225388540ULL KB
 		.f_bsize = BSIZE,
+		.f_frsize = BSIZE,
 		.f_blocks = TOTAL / BSIZE,
 		.f_bfree = (TOTAL - USED) / BSIZE,
 		.f_bavail = AVAIL / BSIZE,
+		.f_bresvd = (TOTAL - USED) / BSIZE - AVAIL / BSIZE,
 		.f_mntfromname = "/dev/ld0g",
 		.f_mntonname = "/anon-root",
 #undef AVAIL
@@ -112,21 +117,21 @@ setup_ld0g(void)
 	};
 	static const int minfree[] = { 0, 5, 10, 15, };
 	static const int consumed[] = { 0, 20, 60, 95, 100 };
-	struct statfs *sf;
+	struct statvfs *sf;
 
-	sf = getnewstatfs();
+	sf = getnewstatvfs();
 	*sf = tmpl;
 	other_variants(&tmpl, minfree, sizeof(minfree) / sizeof(minfree[0]),
 	    consumed, sizeof(consumed) / sizeof(consumed[0]));
 }
 
 int
-getmntinfo(struct statfs **mntbuf, int flags)
+getmntinfo(struct statvfs **mntbuf, int flags)
 {
 
 	setup_filer();
 	setup_ld0g();
 
-	*mntbuf = allstatfs;
+	*mntbuf = allstatvfs;
 	return (sfused);
 }
