@@ -1,4 +1,4 @@
-/*	$NetBSD: maple.c,v 1.1 2001/01/16 00:32:42 marcus Exp $	*/
+/*	$NetBSD: maple.c,v 1.2 2001/01/19 20:27:31 marcus Exp $	*/
 
 /*
  * Copyright (c) 2001 Marcus Comstedt
@@ -71,6 +71,9 @@ static void	maple_scanbus __P((struct maple_softc *));
 static void	maple_callout __P((void *));
 static void	maple_send_commands __P((struct maple_softc *));
 static void	maple_check_responses __P((struct maple_softc *));
+
+int maple_alloc_dma __P((size_t, vaddr_t *, paddr_t *));
+void maple_free_dma __P((paddr_t, size_t));
 
 
 /*
@@ -347,6 +350,51 @@ maple_callout(ctx)
 		      (void *)maple_callout, sc);
 }
 
+int
+maple_alloc_dma(size, vap, pap)
+	size_t size;
+	vaddr_t *vap;
+	paddr_t *pap;
+{
+	extern paddr_t avail_start, avail_end;	/* from pmap.c */
+
+	struct pglist mlist;
+	vm_page_t m;
+	int error;
+
+	size = round_page(size);
+
+	TAILQ_INIT(&mlist);
+	error = uvm_pglistalloc(size, avail_start, avail_end - PAGE_SIZE,
+	    0, 0, &mlist, 1, 0);
+	if (error)
+		return (error);
+
+	m = TAILQ_FIRST(&mlist);
+	*pap = VM_PAGE_TO_PHYS(m);
+	*vap = SH3_PHYS_TO_P2SEG(VM_PAGE_TO_PHYS(m));
+
+	return (0);
+}
+
+void
+maple_free_dma(paddr, size)
+	paddr_t paddr;
+	size_t size;
+{
+	struct pglist mlist;
+	vm_page_t m;
+	bus_addr_t addr;
+
+	TAILQ_INIT(&mlist);
+	for (addr = paddr; addr < paddr + size; addr += PAGE_SIZE) {
+		m = PHYS_TO_VM_PAGE(addr);
+		TAILQ_INSERT_TAIL(&mlist, m, pageq);
+	}
+	uvm_pglistfree(&mlist);
+}
+
+
 static void
 mapleattach(parent, self, aux)
 	struct device *parent, *self;
@@ -354,6 +402,7 @@ mapleattach(parent, self, aux)
 {
 	struct maple_softc *sc;
 	vaddr_t dmabuffer;
+	paddr_t dmabuffer_phys;
 	u_int32_t *p;
 	int i, j;
 
@@ -361,9 +410,12 @@ mapleattach(parent, self, aux)
 
 	printf("\n");
 
-	dmabuffer = uvm_km_alloc(phys_map, MAPLE_DMABUF_SIZE);
+	if (maple_alloc_dma(MAPLE_DMABUF_SIZE, &dmabuffer, &dmabuffer_phys)) {
+	  printf("%s: unable to allocate DMA buffers.\n", sc->sc_dev.dv_xname);
+	  return;
+	}
 
-	p = (u_int32_t *) vtophys(dmabuffer);
+	p = (u_int32_t *) dmabuffer;
 
 	for (i = 0; i < MAPLE_PORTS; i++)
 	  for (j = 0; j < MAPLE_SUBUNITS; j++) {
