@@ -57,6 +57,7 @@ static char sccsid[] = "@(#)arp.c	5.11.1.1 (Berkeley) 7/22/91";
 #include <netinet/in.h>
 #include <net/if.h>
 #include <netinet/if_ether.h>
+#include <arpa/inet.h>
 
 #include <errno.h>
 #include <nlist.h>
@@ -210,7 +211,6 @@ get(host)
 	struct sockaddr_in *sin;
 	u_char *ea;
 	int s;
-	char *inet_ntoa();
 
 	bzero((caddr_t)&ar, sizeof ar);
 	ar.arp_pa.sa_family = AF_INET;

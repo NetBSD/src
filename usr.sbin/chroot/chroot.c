@@ -43,13 +43,14 @@ static char sccsid[] = "@(#)chroot.c	5.8 (Berkeley) 6/1/90";
 
 #include <stdio.h>
 #include <paths.h>
+#include <string.h>
 
 main(argc, argv)
 	int argc;
 	char **argv;
 {
 	extern int errno;
-	char *shell, *getenv(), *strerror();
+	char *shell, *getenv();
 
 	if (argc < 2) {
 		(void)fprintf(stderr, "usage: chroot newroot [command]\n");
