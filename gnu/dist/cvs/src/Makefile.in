@@ -197,6 +197,7 @@ cvs_SOURCES = \
 	run.c \
 	scramble.c \
 	server.c \
+	stack.c \
 	status.c \
 	subr.c \
 	tag.c \
@@ -219,6 +220,7 @@ cvs_SOURCES = \
 	rcs.h \
 	root.h \
 	server.h \
+	stack.h \
 	update.h \
 	watch.h
 
@@ -265,9 +267,10 @@ am_cvs_OBJECTS = add.$(OBJEXT) admin.$(OBJEXT) annotate.$(OBJEXT) \
 	patch.$(OBJEXT) rcs.$(OBJEXT) rcscmds.$(OBJEXT) \
 	recurse.$(OBJEXT) release.$(OBJEXT) remove.$(OBJEXT) \
 	repos.$(OBJEXT) root.$(OBJEXT) run.$(OBJEXT) scramble.$(OBJEXT) \
-	server.$(OBJEXT) status.$(OBJEXT) subr.$(OBJEXT) tag.$(OBJEXT) \
-	update.$(OBJEXT) version.$(OBJEXT) vers_ts.$(OBJEXT) \
-	watch.$(OBJEXT) wrapper.$(OBJEXT) zlib.$(OBJEXT)
+	server.$(OBJEXT) stack.$(OBJEXT) status.$(OBJEXT) \
+	subr.$(OBJEXT) tag.$(OBJEXT) update.$(OBJEXT) version.$(OBJEXT) \
+	vers_ts.$(OBJEXT) watch.$(OBJEXT) wrapper.$(OBJEXT) \
+	zlib.$(OBJEXT)
 cvs_OBJECTS = $(am_cvs_OBJECTS)
 cvs_DEPENDENCIES = ../diff/libdiff.a ../lib/libcvs.a ../zlib/libz.a
 cvs_LDFLAGS =
@@ -299,11 +302,12 @@ am__depfiles_maybe = depfiles
 @AMDEP_TRUE@	./$(DEPDIR)/release.Po ./$(DEPDIR)/remove.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/repos.Po ./$(DEPDIR)/root.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/run.Po ./$(DEPDIR)/scramble.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/server.Po ./$(DEPDIR)/status.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/subr.Po ./$(DEPDIR)/tag.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/update.Po ./$(DEPDIR)/vers_ts.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/version.Po ./$(DEPDIR)/watch.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/wrapper.Po ./$(DEPDIR)/zlib.Po
+@AMDEP_TRUE@	./$(DEPDIR)/server.Po ./$(DEPDIR)/stack.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/status.Po ./$(DEPDIR)/subr.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/tag.Po ./$(DEPDIR)/update.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/vers_ts.Po ./$(DEPDIR)/version.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/watch.Po ./$(DEPDIR)/wrapper.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/zlib.Po
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 CCLD = $(CC)
@@ -422,6 +426,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/run.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/scramble.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/server.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/stack.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/status.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/subr.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tag.Po@am__quote@
