@@ -1,4 +1,4 @@
-/*	$NetBSD: wall.c,v 1.15 2000/09/06 10:17:01 mjl Exp $	*/
+/*	$NetBSD: wall.c,v 1.16 2000/10/02 03:29:06 taca Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)wall.c	8.2 (Berkeley) 11/16/93";
 #endif
-__RCSID("$NetBSD: wall.c,v 1.15 2000/09/06 10:17:01 mjl Exp $");
+__RCSID("$NetBSD: wall.c,v 1.16 2000/10/02 03:29:06 taca Exp $");
 #endif /* not lint */
 
 /*
@@ -138,7 +138,7 @@ makemsg(fname)
 	FILE *fp;
 	int fd;
 	const char *whom;
-	char *p, *tty, hostname[MAXHOSTNAMELEN+1], lbuf[100], tmpname[32];
+	char *p, *tty, tmpname[32], lbuf[100], hostname[MAXHOSTNAMELEN+1];
 
 	(void)snprintf(tmpname, sizeof tmpname, "%s/wall.XXXXXX", _PATH_TMP);
 	if ((fd = mkstemp(tmpname)) == -1 || !(fp = fdopen(fd, "r+")))
@@ -166,13 +166,10 @@ makemsg(fname)
 		(void)fprintf(fp, "%-79.79s\007\007\r\n", lbuf);
 		tty = ttyname(STDERR_FILENO);
 		if (tty == NULL)
-			(void)snprintf(lbuf, sizeof lbuf,
-				       "        at %d:%02d ...",
-				       lt->tm_hour, lt->tm_min);
-		else
-			(void)snprintf(lbuf, sizeof lbuf,
-				       "        (%s) at %d:%02d ...",
-				       tty, lt->tm_hour, lt->tm_min);
+			tty = "??";
+		(void)snprintf(lbuf, sizeof lbuf,
+		    "        (%s) at %d:%02d ...", tty, lt->tm_hour,
+		    lt->tm_min);
 		(void)fprintf(fp, "%-79.79s\r\n", lbuf);
 	}
 	(void)fprintf(fp, "%79s\r\n", " ");
