@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2000/11/01 07:57:59 garbled Exp $
+#	$NetBSD: Makefile,v 1.9 2000/11/24 19:39:08 scw Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -26,7 +26,7 @@ CRUNCHGEN?=	crunchgen
 # NOTE: If you change NBLKS, you *must* also edit the
 #       rdroot entry in /etc/disktab
 DISKTYPE=	rdroot
-NBLKS=		768
+NBLKS=		1024
 
 CLEANFILES=	netbsd-rd ${IMAGE}
 
@@ -73,6 +73,10 @@ ${CBIN} : libhack.o
 # Use stubs to eliminate some large stuff from libc
 HACKSRC=${TOP}/../utils/libhack
 .include "${HACKSRC}/Makefile.inc"
+
+release:	netbsd-rd
+	-mkdir -p ${RELEASEDIR}/installaion/tapeimage
+	gzip < netbsd-rd > ${RELEASEDIR}/installation/tapeimage/netbsd-rd.gz
 
 clean cleandir distclean:
 	-rm -f a.out core *.core *.o
