@@ -1,7 +1,7 @@
-/*	$NetBSD: ip_gre.c,v 1.3 1998/10/02 21:21:04 kleink Exp $ */
+/*	$NetBSD: ip_gre.c,v 1.4 1998/10/07 23:33:02 thorpej Exp $ */
 
 /*
- * (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -38,9 +38,8 @@
 
 /*
  * deencapsulate tunneled packets and send them on
- * output half is in net/ip_gre.[ch]
+ * output half is in net/if_gre.[ch]
  * This currently handles IPPROTO_IPIP, IPPROTO_GRE, IPPROTO_MOBILE
- *
  */
 
 
@@ -375,6 +374,4 @@ match_tunnel(struct mbuf *m,u_char proto)
 
 }
 
-
 #endif /* if NGRE > 0 */
-
