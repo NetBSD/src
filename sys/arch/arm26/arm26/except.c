@@ -1,4 +1,4 @@
-/* $NetBSD: except.c,v 1.40 2002/01/12 20:02:15 bjh21 Exp $ */
+/* $NetBSD: except.c,v 1.41 2002/01/17 17:26:05 bjh21 Exp $ */
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.40 2002/01/12 20:02:15 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.41 2002/01/17 17:26:05 bjh21 Exp $");
 
 #include "opt_cputypes.h"
 #include "opt_ddb.h"
@@ -93,14 +93,6 @@ checkvectors()
 #endif
 
 
-void
-swi_handler(struct trapframe *tf)
-{
-
-	/* XXX The type of e_syscall is all wrong. */
-	(*(void (*)(struct trapframe *))(curproc->p_emul->e_syscall))(tf);
-}
-
 void
 prefetch_abort_handler(struct trapframe *tf)
 {
