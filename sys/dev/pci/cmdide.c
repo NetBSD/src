@@ -1,4 +1,4 @@
-/*	$NetBSD: cmdide.c,v 1.10 2004/01/03 22:56:53 thorpej Exp $	*/
+/*	$NetBSD: cmdide.c,v 1.11 2004/08/02 19:08:16 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -217,10 +217,11 @@ cmd_pci_intr(void *arg)
 		if ((i == 0 && (priirq & CMD_CONF_DRV0_INTR)) ||
 		    (i == 1 && (secirq & CMD_ARTTIM23_IRQ))) {
 			crv = wdcintr(wdc_cp);
-			if (crv == 0)
+			if (crv == 0) {
 				printf("%s:%d: bogus intr\n",
 				    sc->sc_wdcdev.sc_dev.dv_xname, i);
-			else
+				sc->sc_wdcdev.irqack(wdc_cp);
+			} else
 				rv = 1;
 		}
 	}
