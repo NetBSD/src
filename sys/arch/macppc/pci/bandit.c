@@ -1,7 +1,7 @@
-/*	$NetBSD: bandit.c,v 1.2 1998/07/13 19:27:13 tsubai Exp $	*/
+/*	$NetBSD: bandit.c,v 1.3 1998/07/17 18:40:31 tsubai Exp $	*/
 
 /*
- * Copyright 1996 1995 by Open Software Foundation, Inc. 1997 1996 1995 1994 1993 1992 1991  
+ * Copyright 1991-1998 by Open Software Foundation, Inc. 
  *              All Rights Reserved 
  *  
  * Permission to use, copy, modify, and distribute this software and 
@@ -21,7 +21,7 @@
  * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE. 
  */
 /*
- * Copyright 1996 1995 by Apple Computer, Inc. 1997 1996 1995 1994 1993 1992 1991  
+ * Copyright 1991-1998 by Apple Computer, Inc. 
  *              All Rights Reserved 
  *  
  * Permission to use, copy, modify, and distribute this software and 
@@ -65,9 +65,11 @@
 #define	PCI_MS_IO_COHERENT	0x040	/* I/O Coherent (R/W) */
 #define	PCI_MS_INT_ENABLE	0x080	/* Allow TEA or PCI Abort INT to pass to Grand Central (R/W) */
 
+#define	BANDIT_SPECIAL_CYCLE	0xe00000	/* Special Cycle offset */
+
 static void bandit_init __P((pci_chipset_tag_t));
 static void scan_pci_devs __P((void));
-static void config_slot __P((int));
+static void config_slot __P((int, pci_chipset_tag_t));
 
 void
 pci_init()
@@ -113,7 +115,8 @@ scan_pci_devs()
 	while (node) {
 		if (OF_getprop(node, "name", name, sizeof(name)) <= 0)
 			continue;
-		if (strcmp(name, "bandit") == 0) {
+		if (strcmp(name, "bandit") == 0 ||
+		    strcmp(name, "chaos") == 0) {
 			int child;
 
 			if (OF_getprop(node, "reg", reg, sizeof(reg)) != 8)
@@ -123,13 +126,14 @@ scan_pci_devs()
 			pci_bridges[n].addr = mapiodev(reg[0] + 0x800000, 4);
 			pci_bridges[n].data = mapiodev(reg[0] + 0xc00000, 4);
 			pci_bridges[n].pc = n;
-			bandit_init(n++);
+			bandit_init(n);
 
 			child = OF_child(node);
 			while (child) {
-				config_slot(child);
+				config_slot(child, n);
 				child = OF_peer(child);
 			}
+			n++;
 		}
 		if (strcmp(name, "pci") == 0) {	/* XXX This is not a bandit :) */
 			int child;
@@ -148,53 +152,66 @@ scan_pci_devs()
 }
 
 void
-config_slot(node)
+config_slot(node, pc)
 	int node;
-{
 	pci_chipset_tag_t pc;
+{
 	pcitag_t tag;
-	int dev, irq, intr, csr;
-	char slotname[8];
+	int sp, irq, intr, csr;
+	int bus, dev, func;
+	int sz;
+	u_int reg[40], *rp;
 
-	if (OF_getprop(node, "AAPL,slot-name", slotname, sizeof(slotname)) < 2)
+	sz = OF_getprop(node, "assigned-addresses", reg, sizeof(reg));
+	if (sz < 4)
 		return;
 
-	slotname[2] = 0;
-
 	/*
-	 * slot A1 pci0 dev 13 irq 23
-	 *      B1 pci0 dev 14 irq 24
-	 *      C1 pci0 dev 15 irq 25
-	 *      D2 pci1 dev 13 irq 27
-	 *      E2 pci1 dev 14 irq 28
-	 *      F2 pci1 dev 15 irq 29
+	 * npt000ss bbbbbbbb dddddfff rrrrrrrr
 	 *
-	 * XXX Is this TRUE on all PowerMacs?
+	 * ss	space code (01:I/O, 10:32bit mem)
+	 * b...	8-bit Bus Number
+	 * d...	5-bit Device Number
+	 * f...	3-bit Function Number
+	 * r... 8-bit Register Number
 	 */
-	pc  = slotname[1] - '1';
-	dev = slotname[0] - 'A' + 13 - pc * 3;
+	rp = &reg[0];
+	bus = (*rp >> 16) & 0xff;
+	dev = (*rp >> 11) & 0x1f;
+	func = (*rp >> 8) & 0x07;
 
+	tag = pci_make_tag(pc, bus, dev, func);
+	csr  = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
+
+	/* Fix mem/io bits */
+	while (sz > 0) {
+		sp = (*rp >> 24) & 0x03;
+		if (sp == 1)
+			csr |= PCI_COMMAND_IO_ENABLE;
+		if (sp == 2)
+			csr |= PCI_COMMAND_MEM_ENABLE;
+		sz -= 5 * sizeof(int);
+		rp += 5;
+	}
+
+	pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG, csr);
+
+	/* Fix intr bits */
 	if (OF_getprop(node, "AAPL,interrupts", &irq, sizeof(irq)) ==
 			sizeof(irq)) {
 
-		tag = pci_make_tag(pc, 0, dev, 0);
-		csr  = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
 		intr = pci_conf_read(pc, tag, PCI_INTERRUPT_REG);
-
-#ifdef BANDIT_DEBUG
-		printf(" pc=%d, dev=%d\n", pc, dev);
-		printf(" OLD csr=0x%x, intr=0x%x\n", csr, intr);
-#endif
-
 		intr = (intr & 0xffffff00) | (irq & 0xff);
 		pci_conf_write(pc, tag, PCI_INTERRUPT_REG, intr);
-
-		/* XXX */
-		csr |= (PCI_COMMAND_MEM_ENABLE | PCI_COMMAND_IO_ENABLE);
-		pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG, csr);
-
-#ifdef BANDIT_DEBUG
-		printf(" NEW csr=0x%x, intr=0x%x\n", csr, intr);
-#endif
 	}
+
 }
+
+/*
+ * slot A1 pci0 dev 13 irq 23
+ *      B1 pci0 dev 14 irq 24
+ *      C1 pci0 dev 15 irq 25
+ *      D2 pci1 dev 13 irq 27
+ *      E2 pci1 dev 14 irq 28
+ *      F2 pci1 dev 15 irq 29
+ */
