@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.118.2.1 2000/07/30 17:59:40 bouyer Exp $
+#	$NetBSD: MAKEDEV,v 1.118.2.2 2000/08/05 04:41:58 jhawk Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -663,8 +663,9 @@ cfs*)
 	;;
 
 sysmon)
+	major=67
 	rm -f sysmon
-	mknod sysmon c $major $unit
+	mknod sysmon c $major 0
 	chown root.wheel sysmon
 	chmod 644 sysmon
 	;;
