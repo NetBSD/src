@@ -1,4 +1,4 @@
-/*	$NetBSD: hexdump.c,v 1.8 2002/11/12 22:41:01 kleink Exp $	*/
+/*	$NetBSD: hexdump.c,v 1.9 2003/03/12 16:46:33 augustss Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -34,16 +34,16 @@
  */
 
 #include <sys/cdefs.h>
-#ifndef lint
+#if defined(__COPYRIGHT) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
-#ifndef lint
+#if defined(__RCSID) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)hexdump.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: hexdump.c,v 1.8 2002/11/12 22:41:01 kleink Exp $");
+__RCSID("$NetBSD: hexdump.c,v 1.9 2003/03/12 16:46:33 augustss Exp $");
 #endif
 #endif /* not lint */
 
