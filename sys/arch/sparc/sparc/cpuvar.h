@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuvar.h,v 1.19 1998/10/19 11:56:43 pk Exp $ */
+/*	$NetBSD: cpuvar.h,v 1.20 1998/10/24 08:12:55 pk Exp $ */
 
 /*
  *  Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -80,6 +80,8 @@ struct xpmsg {
 	struct simplelock	lock;
 	int tag;
 #define	XPMSG_SAVEFPU			1
+#define	XPMSG_PAUSECPU			2
+#define	XPMSG_RESUMECPU			3
 #define	XPMSG_DEMAP_TLB_PAGE		10
 #define	XPMSG_DEMAP_TLB_SEGMENT		11
 #define	XPMSG_DEMAP_TLB_REGION		12

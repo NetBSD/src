@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.85 1998/10/14 14:22:18 pk Exp $ */
+/*	$NetBSD: cpu.c,v 1.86 1998/10/24 08:12:55 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -429,13 +429,15 @@ void
 mp_pause_cpus()
 {
 	int n;
-	struct cpu_info *cpi;
 
 	for (n = 0; n < ncpu; n++) {
-		if ((cpi = cpus[n]) == NULL)
+		struct cpu_info *cpi = cpus[n];
+		if (cpuinfo.mid == cpi->mid)
 			continue;
-		if (cpuinfo.mid != cpi->mid)
-			rom_cpuidle(cpi->node);
+
+		simple_lock(&cpi->msg.lock);
+		cpi->msg.tag = XPMSG_PAUSECPU;
+		raise_ipi(cpi);
 	}
 }
 
@@ -443,13 +445,15 @@ void
 mp_resume_cpus()
 {
 	int n;
-	struct cpu_info *cpi;
 
 	for (n = 0; n < ncpu; n++) {
-		if ((cpi = cpus[n]) == NULL)
+		struct cpu_info *cpi = cpus[n];
+		if (cpuinfo.mid == cpi->mid)
 			continue;
-		if (cpuinfo.mid != cpi->mid)
-			rom_cpuresume(cpi->node);
+
+		simple_lock(&cpi->msg.lock);
+		cpi->msg.tag = XPMSG_RESUMECPU;
+		raise_ipi(cpi);
 	}
 }
 
