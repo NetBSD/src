@@ -1,10 +1,10 @@
-/*	$NetBSD: miidevs.h,v 1.35 2002/03/14 04:41:09 chs Exp $	*/
+/*	$NetBSD: miidevs.h,v 1.36 2002/05/15 21:25:28 matt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: miidevs,v 1.35 2002/03/14 04:40:27 chs Exp 
+ *	NetBSD: miidevs,v 1.36 2002/05/15 21:24:59 matt Exp 
  */
 
 /*-
@@ -100,6 +100,7 @@
 /* Don't know what's going on here. */
 #define	MII_OUI_xxDAVICOM	0x000602	/* Davicom Semiconductor */
 #define	MII_OUI_xxPMCSIERRA	0x0009c0	/* PMC-Sierra */
+#define	MII_OUI_xxPMCSIERRA2	0x0009ea	/* PMC-Sierra */
 
 #define	MII_OUI_xxMARVELL	0x000ac2	/* Marvell Semiconductor */
 
@@ -201,6 +202,8 @@
 /* PMC Sierra PHYs */
 #define	MII_MODEL_xxPMCSIERRA_PM8351	0x0000
 #define	MII_STR_xxPMCSIERRA_PM8351	"PM8351 OctalPHY Gigabit interface"
+#define	MII_MODEL_xxPMCSIERRA2_PM8353	0x0003
+#define	MII_STR_xxPMCSIERRA2_PM8353	"PM8353 QuadPHY Gigabit interface"
 
 /* Quality Semiconductor PHYs */
 #define	MII_MODEL_xxQUALSEMI_QS6612	0x0000
