@@ -1,4 +1,4 @@
-/*	$NetBSD: klogin.c,v 1.17 2002/11/16 04:38:45 itojun Exp $	*/
+/*	$NetBSD: klogin.c,v 1.18 2003/07/23 20:31:18 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,13 +38,13 @@
 #if 0
 static char sccsid[] = "@(#)klogin.c	8.3 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: klogin.c,v 1.17 2002/11/16 04:38:45 itojun Exp $");
+__RCSID("$NetBSD: klogin.c,v 1.18 2003/07/23 20:31:18 itojun Exp $");
 #endif /* not lint */
 
 #ifdef KERBEROS
 #include <sys/param.h>
 #include <sys/syslog.h>
-#include <kerberosIV/des.h>
+#include <des.h>
 #include <kerberosIV/krb.h>
 
 #include <err.h>
