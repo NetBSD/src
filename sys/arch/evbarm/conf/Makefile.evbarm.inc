@@ -1,14 +1,14 @@
-#	$NetBSD: Makefile.evbarm.inc,v 1.8 2002/02/22 05:07:46 thorpej Exp $
+#	$NetBSD: Makefile.evbarm.inc,v 1.9 2002/03/02 22:23:10 thorpej Exp $
+
+SYSTEM_LD_TAIL_EXTRA=; \
+	echo "${DBSYM} $@ || true"; \
+	${DBSYM} $@ || true
 
 .if (${BOARDTYPE} == "integrator")
 GENASSYM_EXTRAS+=	${THISARM}/ifpga/genassym.cf
 SYSTEM_FIRST_OBJ=	intmmu.o
 SYSTEM_FIRST_SFILE=	${THISARM}/integrator/intmmu.S
 .endif
-
-SYSTEM_LD_TAIL_EXTRA=; \
-	echo "${DBSYM} $@ || true"; \
-	${DBSYM} $@ || true
 
 .if (${BOARDTYPE} == "iq80310")
 SYSTEM_LD_TAIL_EXTRA+=; \
