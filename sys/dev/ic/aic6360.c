@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6360.c,v 1.49 1996/08/28 19:01:12 cgd Exp $	*/
+/*	$NetBSD: aic6360.c,v 1.50 1996/10/10 22:04:50 christos Exp $	*/
 
 #ifdef DDB
 #define	integrate
@@ -567,9 +567,9 @@ struct aic_softc {
 #define AIC_SHOWSTART	0x20
 #define AIC_DOBREAK	0x40
 int aic_debug = 0x00; /* AIC_SHOWSTART|AIC_SHOWMISC|AIC_SHOWTRACE; */
-#define	AIC_PRINT(b, s)	do {if ((aic_debug & (b)) != 0) printf s;} while (0)
+#define	AIC_PRINT(b, s)	do {if ((aic_debug & (b)) != 0) kprintf s;} while (0)
 #define	AIC_BREAK()	do {if ((aic_debug & AIC_DOBREAK) != 0) Debugger();} while (0)
-#define	AIC_ASSERT(x)	do {if (x) {} else {printf("%s at line %d: assertion failed\n", sc->sc_dev.dv_xname, __LINE__); Debugger();}} while (0)
+#define	AIC_ASSERT(x)	do {if (x) {} else {kprintf("%s at line %d: assertion failed\n", sc->sc_dev.dv_xname, __LINE__); Debugger();}} while (0)
 #else
 #define	AIC_PRINT(b, s)
 #define	AIC_BREAK()
@@ -667,7 +667,7 @@ aicprobe(parent, match, aux)
 #ifdef NEWCONFIG
 	if (ia->ia_irq != IRQUNK) {
 		if (ia->ia_irq != sc->sc_irq) {
-			printf("%s: irq mismatch; kernel configured %d != board configured %d\n",
+			kprintf("%s: irq mismatch; kernel configured %d != board configured %d\n",
 			    sc->sc_dev.dv_xname, ia->ia_irq, sc->sc_irq);
 			return 0;
 		}
@@ -676,7 +676,7 @@ aicprobe(parent, match, aux)
 
 	if (ia->ia_drq != DRQUNK) {
 		if (ia->ia_drq != sc->sc_drq) {
-			printf("%s: drq mismatch; kernel configured %d != board configured %d\n",
+			kprintf("%s: drq mismatch; kernel configured %d != board configured %d\n",
 			    sc->sc_dev.dv_xname, ia->ia_drq, sc->sc_drq);
 			return 0;
 		}
@@ -780,7 +780,7 @@ aicattach(parent, self, aux)
 	sc->sc_link.device = &aic_dev;
 	sc->sc_link.openings = 2;
 
-	printf("\n");
+	kprintf("\n");
 
 #ifdef NEWCONFIG
 	isa_establish(&sc->sc_id, &sc->sc_dev);
@@ -1155,7 +1155,7 @@ aic_reselect(sc, message)
 	 */
 	selid = sc->sc_selid & ~(1 << sc->sc_initiator);
 	if (selid & (selid - 1)) {
-		printf("%s: reselect with invalid selid %02x; sending DEVICE RESET\n",
+		kprintf("%s: reselect with invalid selid %02x; sending DEVICE RESET\n",
 		    sc->sc_dev.dv_xname, selid);
 		AIC_BREAK();
 		goto reset;
@@ -1175,7 +1175,7 @@ aic_reselect(sc, message)
 			break;
 	}
 	if (acb == NULL) {
-		printf("%s: reselect from target %d lun %d with no nexus; sending ABORT\n",
+		kprintf("%s: reselect from target %d lun %d with no nexus; sending ABORT\n",
 		    sc->sc_dev.dv_xname, target, lun);
 		AIC_BREAK();
 		goto abort;
@@ -1329,11 +1329,11 @@ aic_done(sc, acb)
 #if AIC_DEBUG
 	if ((aic_debug & AIC_SHOWMISC) != 0) {
 		if (xs->resid != 0)
-			printf("resid=%d ", xs->resid);
+			kprintf("resid=%d ", xs->resid);
 		if (xs->error == XS_SENSE)
-			printf("sense=0x%02x\n", xs->sense.error_code);
+			kprintf("sense=0x%02x\n", xs->sense.error_code);
 		else
-			printf("error=%d\n", xs->error);
+			kprintf("error=%d\n", xs->error);
 	}
 #endif
 
@@ -1487,7 +1487,7 @@ nextbyte:
 		case MSG_CMDCOMPLETE:
 			if (sc->sc_dleft < 0) {
 				sc_link = acb->xs->sc_link;
-				printf("%s: %d extra bytes from %d:%d\n",
+				kprintf("%s: %d extra bytes from %d:%d\n",
 				    sc->sc_dev.dv_xname, -sc->sc_dleft,
 				    sc_link->target, sc_link->lun);
 				acb->data_length = 0;
@@ -1568,7 +1568,7 @@ nextbyte:
 					aic_sched_msgout(sc, SEND_SDTR);
 				} else {
 					sc_print_addr(acb->xs->sc_link);
-					printf("sync, offset %d, period %dnsec\n",
+					kprintf("sync, offset %d, period %dnsec\n",
 					    ti->offset, ti->period * 4);
 				}
 				aic_setsync(sc, ti);
@@ -1587,14 +1587,14 @@ nextbyte:
 					aic_sched_msgout(sc, SEND_WDTR);
 				} else {
 					sc_print_addr(acb->xs->sc_link);
-					printf("wide, width %d\n",
+					kprintf("wide, width %d\n",
 					    1 << (3 + ti->width));
 				}
 				break;
 #endif
 
 			default:
-				printf("%s: unrecognized MESSAGE EXTENDED; sending REJECT\n",
+				kprintf("%s: unrecognized MESSAGE EXTENDED; sending REJECT\n",
 				    sc->sc_dev.dv_xname);
 				AIC_BREAK();
 				goto reject;
@@ -1602,7 +1602,7 @@ nextbyte:
 			break;
 
 		default:
-			printf("%s: unrecognized MESSAGE; sending REJECT\n",
+			kprintf("%s: unrecognized MESSAGE; sending REJECT\n",
 			    sc->sc_dev.dv_xname);
 			AIC_BREAK();
 		reject:
@@ -1613,7 +1613,7 @@ nextbyte:
 
 	case AIC_RESELECTED:
 		if (!MSG_ISIDENTIFY(sc->sc_imess[0])) {
-			printf("%s: reselect without IDENTIFY; sending DEVICE RESET\n",
+			kprintf("%s: reselect without IDENTIFY; sending DEVICE RESET\n",
 			    sc->sc_dev.dv_xname);
 			AIC_BREAK();
 			goto reset;
@@ -1623,7 +1623,7 @@ nextbyte:
 		break;
 
 	default:
-		printf("%s: unexpected MESSAGE IN; sending DEVICE RESET\n",
+		kprintf("%s: unexpected MESSAGE IN; sending DEVICE RESET\n",
 		    sc->sc_dev.dv_xname);
 		AIC_BREAK();
 	reset:
@@ -1771,7 +1771,7 @@ nextmsg:
 		break;
 
 	default:
-		printf("%s: unexpected MESSAGE OUT; sending NOOP\n",
+		kprintf("%s: unexpected MESSAGE OUT; sending NOOP\n",
 		    sc->sc_dev.dv_xname);
 		AIC_BREAK();
 		sc->sc_omess[0] = MSG_NOOP;
@@ -2121,7 +2121,7 @@ loop:
 	AIC_MISC(("sstat1:0x%02x ", sstat1));
 
 	if ((sstat1 & SCSIRSTI) != 0) {
-		printf("%s: SCSI bus reset\n", sc->sc_dev.dv_xname);
+		kprintf("%s: SCSI bus reset\n", sc->sc_dev.dv_xname);
 		goto reset;
 	}
 
@@ -2129,7 +2129,7 @@ loop:
 	 * Check for less serious errors.
 	 */
 	if ((sstat1 & SCSIPERR) != 0) {
-		printf("%s: SCSI bus parity error\n", sc->sc_dev.dv_xname);
+		kprintf("%s: SCSI bus parity error\n", sc->sc_dev.dv_xname);
 		outb(iobase + CLRSINT1, CLRSCSIPERR);
 		if (sc->sc_prevphase == PH_MSGIN) {
 			sc->sc_flags |= AIC_DROP_MSGIN;
@@ -2158,7 +2158,7 @@ loop:
 			/*
 			 * We don't currently support target mode.
 			 */
-			printf("%s: target mode selected; going to BUS FREE\n",
+			kprintf("%s: target mode selected; going to BUS FREE\n",
 			    sc->sc_dev.dv_xname);
 			outb(iobase + SCSISIG, 0);
 
@@ -2191,7 +2191,7 @@ loop:
 			 * c) Mark device as busy.
 			 */
 			if (sc->sc_state != AIC_SELECTING) {
-				printf("%s: selection out while idle; resetting\n",
+				kprintf("%s: selection out while idle; resetting\n",
 				    sc->sc_dev.dv_xname);
 				AIC_BREAK();
 				goto reset;
@@ -2235,7 +2235,7 @@ loop:
 			AIC_MISC(("selection timeout  "));
 
 			if (sc->sc_state != AIC_SELECTING) {
-				printf("%s: selection timeout while idle; resetting\n",
+				kprintf("%s: selection timeout while idle; resetting\n",
 				    sc->sc_dev.dv_xname);
 				AIC_BREAK();
 				goto reset;
@@ -2252,7 +2252,7 @@ loop:
 			goto finish;
 		} else {
 			if (sc->sc_state != AIC_IDLE) {
-				printf("%s: BUS FREE while not idle; state=%d\n",
+				kprintf("%s: BUS FREE while not idle; state=%d\n",
 				    sc->sc_dev.dv_xname, sc->sc_state);
 				AIC_BREAK();
 				goto out;
@@ -2326,7 +2326,7 @@ loop:
 				 * disconnecting, and this is necessary to
 				 * clean up their state.
 				 */
-				printf("%s: unexpected disconnect; sending REQUEST SENSE\n",
+				kprintf("%s: unexpected disconnect; sending REQUEST SENSE\n",
 				    sc->sc_dev.dv_xname);
 				AIC_BREAK();
 				aic_sense(sc, acb);
@@ -2389,7 +2389,7 @@ dophase:
 		if ((aic_debug & AIC_SHOWMISC) != 0) {
 			AIC_ASSERT(sc->sc_nexus != NULL);
 			acb = sc->sc_nexus;
-			printf("cmd=0x%02x+%d ",
+			kprintf("cmd=0x%02x+%d ",
 			    acb->scsi_cmd.opcode, acb->scsi_cmd_length-1);
 		}
 #endif
@@ -2432,7 +2432,7 @@ dophase:
 		goto loop;
 	}
 
-	printf("%s: unexpected bus phase; resetting\n", sc->sc_dev.dv_xname);
+	kprintf("%s: unexpected bus phase; resetting\n", sc->sc_dev.dv_xname);
 	AIC_BREAK();
 reset:
 	aic_init(sc);
@@ -2489,17 +2489,17 @@ aic_timeout(arg)
 	int s;
 
 	sc_print_addr(sc_link);
-	printf("timed out");
+	kprintf("timed out");
 
 	s = splbio();
 
 	if (acb->flags & ACB_ABORT) {
 		/* abort timed out */
-		printf(" AGAIN\n");
+		kprintf(" AGAIN\n");
 		/* XXX Must reset! */
 	} else {
 		/* abort the operation that has timed out */
-		printf("\n");
+		kprintf("\n");
 		acb->xs->error = XS_TIMEOUT;
 		aic_abort(sc, acb);
 	}
@@ -2525,12 +2525,12 @@ aic_show_scsi_cmd(acb)
 	if ((acb->xs->flags & SCSI_RESET) == 0) {
 		for (i = 0; i < acb->scsi_cmd_length; i++) {
 			if (i)
-				printf(",");
-			printf("%x", b[i]);
+				kprintf(",");
+			kprintf("%x", b[i]);
 		}
-		printf("\n");
+		kprintf("\n");
 	} else
-		printf("RESET\n");
+		kprintf("RESET\n");
 }
 
 void
@@ -2538,8 +2538,8 @@ aic_print_acb(acb)
 	struct aic_acb *acb;
 {
 
-	printf("acb@%p xs=%p flags=%x", acb, acb->xs, acb->flags);
-	printf(" dp=%p dleft=%d target_stat=%x\n",
+	kprintf("acb@%p xs=%p flags=%x", acb, acb->xs, acb->flags);
+	kprintf(" dp=%p dleft=%d target_stat=%x\n",
 	       acb->data_addr, acb->data_length, acb->target_stat);
 	aic_show_scsi_cmd(acb);
 }
@@ -2550,14 +2550,14 @@ aic_print_active_acb()
 	struct aic_acb *acb;
 	struct aic_softc *sc = aic_cd.cd_devs[0];
 
-	printf("ready list:\n");
+	kprintf("ready list:\n");
 	for (acb = sc->ready_list.tqh_first; acb != NULL;
 	    acb = acb->chain.tqe_next)
 		aic_print_acb(acb);
-	printf("nexus:\n");
+	kprintf("nexus:\n");
 	if (sc->sc_nexus != NULL)
 		aic_print_acb(sc->sc_nexus);
-	printf("nexus list:\n");
+	kprintf("nexus list:\n");
 	for (acb = sc->nexus_list.tqh_first; acb != NULL;
 	    acb = acb->chain.tqe_next)
 		aic_print_acb(acb);
@@ -2569,17 +2569,17 @@ aic_dump6360(sc)
 {
 	int iobase = sc->sc_iobase;
 
-	printf("aic6360: SCSISEQ=%x SXFRCTL0=%x SXFRCTL1=%x SCSISIG=%x\n",
+	kprintf("aic6360: SCSISEQ=%x SXFRCTL0=%x SXFRCTL1=%x SCSISIG=%x\n",
 	    inb(iobase + SCSISEQ), inb(iobase + SXFRCTL0),
 	    inb(iobase + SXFRCTL1), inb(iobase + SCSISIG));
-	printf("         SSTAT0=%x SSTAT1=%x SSTAT2=%x SSTAT3=%x SSTAT4=%x\n",
+	kprintf("         SSTAT0=%x SSTAT1=%x SSTAT2=%x SSTAT3=%x SSTAT4=%x\n",
 	    inb(iobase + SSTAT0), inb(iobase + SSTAT1), inb(iobase + SSTAT2),
 	    inb(iobase + SSTAT3), inb(iobase + SSTAT4));
-	printf("         SIMODE0=%x SIMODE1=%x DMACNTRL0=%x DMACNTRL1=%x DMASTAT=%x\n",
+	kprintf("         SIMODE0=%x SIMODE1=%x DMACNTRL0=%x DMACNTRL1=%x DMASTAT=%x\n",
 	    inb(iobase + SIMODE0), inb(iobase + SIMODE1),
 	    inb(iobase + DMACNTRL0), inb(iobase + DMACNTRL1),
 	    inb(iobase + DMASTAT));
-	printf("         FIFOSTAT=%d SCSIBUS=0x%x\n",
+	kprintf("         FIFOSTAT=%d SCSIBUS=0x%x\n",
 	    inb(iobase + FIFOSTAT), inb(iobase + SCSIBUS));
 }
 
@@ -2590,15 +2590,15 @@ aic_dump_driver(sc)
 	struct aic_tinfo *ti;
 	int i;
 
-	printf("nexus=%p prevphase=%x\n", sc->sc_nexus, sc->sc_prevphase);
-	printf("state=%x msgin=%x msgpriq=%x msgoutq=%x lastmsg=%x currmsg=%x\n",
+	kprintf("nexus=%p prevphase=%x\n", sc->sc_nexus, sc->sc_prevphase);
+	kprintf("state=%x msgin=%x msgpriq=%x msgoutq=%x lastmsg=%x currmsg=%x\n",
 	    sc->sc_state, sc->sc_imess[0],
 	    sc->sc_msgpriq, sc->sc_msgoutq, sc->sc_lastmsg, sc->sc_currmsg);
 	for (i = 0; i < 7; i++) {
 		ti = &sc->sc_tinfo[i];
-		printf("tinfo%d: %d cmds %d disconnects %d timeouts",
+		kprintf("tinfo%d: %d cmds %d disconnects %d timeouts",
 		    i, ti->cmds, ti->dconns, ti->touts);
-		printf(" %d senses flags=%x\n", ti->senses, ti->flags);
+		kprintf(" %d senses flags=%x\n", ti->senses, ti->flags);
 	}
 }
 #endif
