@@ -1,4 +1,4 @@
-/*	$NetBSD: dr_1.c,v 1.6 1997/10/13 21:03:09 christos Exp $	*/
+/*	$NetBSD: dr_1.c,v 1.7 1998/08/30 09:19:40 veego Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)dr_1.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: dr_1.c,v 1.6 1997/10/13 21:03:09 christos Exp $");
+__RCSID("$NetBSD: dr_1.c,v 1.7 1998/08/30 09:19:40 veego Exp $");
 #endif
 #endif /* not lint */
 
@@ -359,11 +359,12 @@ compcombat()
 				hit++;
 			hit += QUAL[index][capship(sp)->specs->qual - 1];
 			for (n = 0; n < 3 && sp->file->captured == 0; n++)
-				if (!crew[n])
+				if (!crew[n]) {
 					if (index <= 5)
 						hit--;
 					else
 						hit -= 2;
+				}
 			if (ready & R_INITIAL) {
 				if (!r)
 					sp->file->readyL &= ~R_INITIAL;
@@ -374,11 +375,12 @@ compcombat()
 				else
 					hit += 2;
 			}
-			if (sp->file->captured != 0)
+			if (sp->file->captured != 0) {
 				if (index <= 1)
 					hit--;
 				else
 					hit -= 2;
+			}
 			hit += AMMO[index][load - 1];
 			temp = sp->specs->class;
 			if ((temp >= 5 || temp == 1) && windspeed == 5)
@@ -399,11 +401,12 @@ compcombat()
 int
 next()
 {
-	if (++turn % 55 == 0)
+	if (++turn % 55 == 0) {
 		if (alive)
 			alive = 0;
 		else
 			people = 0;
+	}
 	if (people <= 0 || windspeed == 7) {
 		struct ship *s;
 		struct ship *bestship = NULL;

@@ -1,9 +1,9 @@
-/*	$NetBSD: main.c,v 1.13 1998/07/27 01:12:35 mycroft Exp $	*/
+/*	$NetBSD: main.c,v 1.14 1998/08/30 09:19:38 veego Exp $	*/
 
 /* main.c		 */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.13 1998/07/27 01:12:35 mycroft Exp $");
+__RCSID("$NetBSD: main.c,v 1.14 1998/08/30 09:19:38 veego Exp $");
 #endif				/* not lint */
 
 #include <sys/types.h>
@@ -72,15 +72,17 @@ main(argc, argv)
 	init_term();		/* setup the terminal (find out what type)
 				 * for termcap */
 #endif	/* VT100 */
-	if (((ptr = getlogin()) == 0) || (*ptr == 0))	/* try to get login name */
-		if ((pwe = getpwuid(getuid())) != NULL)/* can we get it from
-						 * /etc/passwd? */
+	/* try to get login name */
+	if (((ptr = getlogin()) == 0) || (*ptr == 0)) {
+		/* can we get it from /etc/passwd? */
+		if ((pwe = getpwuid(getuid())) != NULL)
 			ptr = pwe->pw_name;
 		else if ((ptr = getenv("USER")) == 0)
 			if ((ptr = getenv("LOGNAME")) == 0) {
 		noone:		write(2, "Can't find your logname.  Who Are You?\n", 39);
 				exit(1);
 			}
+	}
 	if (ptr == 0)
 		goto noone;
 	if (strlen(ptr) == 0)
@@ -1201,7 +1203,7 @@ eatcookie()
 	while (1) {
 		if ((i = whatitem("eat")) == '\33')
 			return;
-		if (i != '.')
+		if (i != '.') {
 			if (i == '*')
 				showeat();
 			else {
@@ -1223,6 +1225,7 @@ eatcookie()
 				lprcat("\nYou can't eat that!");
 				return;
 			}
+		}
 	}
 }
 

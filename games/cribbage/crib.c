@@ -1,4 +1,4 @@
-/*	$NetBSD: crib.c,v 1.9 1997/10/11 02:44:30 lukem Exp $	*/
+/*	$NetBSD: crib.c,v 1.10 1998/08/30 09:19:37 veego Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)crib.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: crib.c,v 1.9 1997/10/11 02:44:30 lukem Exp $");
+__RCSID("$NetBSD: crib.c,v 1.10 1998/08/30 09:19:37 veego Exp $");
 #endif
 #endif /* not lint */
 
@@ -582,7 +582,7 @@ peg(mycrib)
 	prhand(ph, pnum, Playwin, FALSE);
 	prhand(ch, cnum, Compwin, TRUE);
 	prtable(sum);
-	if (last)
+	if (last) {
 		if (played) {
 			msg(quiet ? "I get one for last" :
 			    "I get one point for last");
@@ -596,6 +596,7 @@ peg(mycrib)
 			if (chkscr(&pscore, 1))
 				return TRUE;
 		}
+	}
 	return (FALSE);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: move.c,v 1.4 1997/10/12 21:25:02 christos Exp $	*/
+/*	$NetBSD: move.c,v 1.5 1998/08/30 09:19:40 veego Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)move.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: move.c,v 1.4 1997/10/12 21:25:02 christos Exp $");
+__RCSID("$NetBSD: move.c,v 1.5 1998/08/30 09:19:40 veego Exp $");
 #endif
 #endif /* not lint */
 
@@ -186,13 +186,13 @@ double	speed;
 			Ship.quady = iy / NSECTS;
 			Ship.sectx = ix % NSECTS;
 			Ship.secty = iy % NSECTS;
-			if (ix < 0 || Ship.quadx >= NQUADS || iy < 0 || Ship.quady >= NQUADS)
-				if (!damaged(COMPUTER))
-				{
+			if (ix < 0 || Ship.quadx >= NQUADS || iy < 0 ||
+			    Ship.quady >= NQUADS) {
+				if (!damaged(COMPUTER)) {
 					dumpme(0);
-				}
-				else
+				} else
 					lose(L_NEGENB);
+			}
 			initquad(0);
 			n = 0;
 			break;

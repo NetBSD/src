@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.3 1997/10/13 02:18:30 lukem Exp $	*/
+/*	$NetBSD: misc.c,v 1.4 1998/08/30 09:19:39 veego Exp $	*/
 
 /*
  * misc.c  Phantasia miscellaneous support routines
@@ -343,7 +343,7 @@ tradingpost()
 					printw("A blessing requires a %.0f gp donation.  Still want one ? ", blessingcost);
 					ch = getanswer("NY", FALSE);
 
-					if (ch == 'Y')
+					if (ch == 'Y') {
 						if (Player.p_gold < blessingcost)
 							++cheat;
 						else {
@@ -354,6 +354,7 @@ tradingpost()
 							else
 								Player.p_blessing = TRUE;
 						}
+					}
 					break;
 				}
 			break;

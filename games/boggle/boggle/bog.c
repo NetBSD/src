@@ -1,4 +1,4 @@
-/*	$NetBSD: bog.c,v 1.8 1997/10/11 02:12:11 lukem Exp $	*/
+/*	$NetBSD: bog.c,v 1.9 1998/08/30 09:19:36 veego Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\n\
 #if 0
 static char sccsid[] = "@(#)bog.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: bog.c,v 1.8 1997/10/11 02:12:11 lukem Exp $");
+__RCSID("$NetBSD: bog.c,v 1.9 1998/08/30 09:19:36 veego Exp $");
 #endif
 #endif /* not lint */
 
@@ -166,18 +166,19 @@ main(argc, argv)
 	argv += optind;
 
 	/* process final arguments */
-	if (argc > 0)
+	if (argc > 0) {
 		if (strcmp(argv[0], "+") == 0)
 			reuse = 1;
 		else if (strcmp(argv[0], "++") == 0)
 			selfuse = 1;
+	}
 
 	if (reuse || selfuse) {
 		argc -= 1;
 		argv += 1;
 	}
 
-	if (argc > 0)
+	if (argc > 0) {
 		if (islower(argv[0][0])) {
 			if (strlen(argv[0]) != 16) {
 				usage();
@@ -188,6 +189,7 @@ main(argc, argv)
 		} else {
 		  	usage();
 		}
+	}
 
 	if (batch && bspec == NULL)
 		errx(1, "must give both -b and a board setup");

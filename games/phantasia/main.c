@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.4 1997/10/13 02:18:27 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.5 1998/08/30 09:19:39 veego Exp $	*/
 
 /*
  * Phantasia 3.3.2 -- Interterminal fantasy game
@@ -218,7 +218,7 @@ main(argc, argv)
 		checkbattle();	/* check for player to player battle */
 		neatstuff();	/* gurus, medics, etc. */
 
-		if (Player.p_status == S_CLOAKED)
+		if (Player.p_status == S_CLOAKED) {
 			/* costs 3 mana per turn to be cloaked */
 			if (Player.p_mana > 3.0)
 				Player.p_mana -= 3.0;
@@ -228,6 +228,7 @@ main(argc, argv)
 				Player.p_status = S_PLAYING;
 				Changed = TRUE;
 			}
+		}
 
 		if (Player.p_status != S_PLAYING && Player.p_status != S_CLOAKED)
 			/* change status back to S_PLAYING */

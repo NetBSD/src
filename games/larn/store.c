@@ -1,4 +1,4 @@
-/*	$NetBSD: store.c,v 1.6 1997/10/18 20:03:52 christos Exp $	 */
+/*	$NetBSD: store.c,v 1.7 1998/08/30 09:19:38 veego Exp $	 */
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -38,7 +38,7 @@
 #if 0
 static char     sccsid[] = "@(#)store.c	5.4 (Berkeley) 5/13/91";
 #else
-__RCSID("$NetBSD: store.c,v 1.6 1997/10/18 20:03:52 christos Exp $");
+__RCSID("$NetBSD: store.c,v 1.7 1998/08/30 09:19:38 veego Exp $");
 #endif
 #endif				/* not lint */
 
@@ -790,7 +790,7 @@ otradepost()
 				j = 1;
 				cnsitm();
 			}	/* can't sell unidentified item */
-		if (!j)
+		if (!j) {
 			if (i == '*') {
 				clear();
 				qshowstr();
@@ -837,6 +837,7 @@ otradepost()
 				if (j <= maxitm + 2)
 					lprcat("\nSo sorry, but we are not authorized to accept that item.");
 			}
+		}
 	}
 }
 

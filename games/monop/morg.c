@@ -1,4 +1,4 @@
-/*	$NetBSD: morg.c,v 1.5 1997/10/12 17:45:21 christos Exp $	*/
+/*	$NetBSD: morg.c,v 1.6 1998/08/30 09:19:39 veego Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)morg.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: morg.c,v 1.5 1997/10/12 17:45:21 christos Exp $");
+__RCSID("$NetBSD: morg.c,v 1.6 1998/08/30 09:19:39 veego Exp $");
 #endif
 #endif /* not lint */
 
@@ -122,13 +122,14 @@ set_mlist()
 
 	num_good = 0;
 	for (op = cur_p->own_list; op; op = op->next)
-		if (!op->sqr->desc->morg)
+		if (!op->sqr->desc->morg) {
 			if (op->sqr->type == PRPTY && op->sqr->desc->houses)
 				got_houses++;
 			else {
 				names[num_good] = op->sqr->name;
 				square[num_good++] = sqnum(op->sqr);
 			}
+		}
 	names[num_good++] = "done";
 	names[num_good--] = 0;
 	return num_good;

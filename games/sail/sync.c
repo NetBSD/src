@@ -1,4 +1,4 @@
-/*	$NetBSD: sync.c,v 1.8 1998/03/29 04:56:46 mrg Exp $	*/
+/*	$NetBSD: sync.c,v 1.9 1998/08/30 09:19:40 veego Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)sync.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: sync.c,v 1.8 1998/03/29 04:56:46 mrg Exp $");
+__RCSID("$NetBSD: sync.c,v 1.9 1998/08/30 09:19:40 veego Exp $");
 #endif
 #endif /* not lint */
 
@@ -349,7 +349,7 @@ sync_update(type, ship, a, b, c, d)
 		}
 	case W_UNFOUL: {
 		struct snag *p = &ship->file->foul[a];
-		if (p->sn_count > 0)
+		if (p->sn_count > 0) {
 			if (b) {
 				ship->file->nfoul -= p->sn_count;
 				p->sn_count = 0;
@@ -357,11 +357,12 @@ sync_update(type, ship, a, b, c, d)
 				ship->file->nfoul--;
 				p->sn_count--;
 			}
+		}
 		break;
 		}
 	case W_UNGRAP: {
 		struct snag *p = &ship->file->grap[a];
-		if (p->sn_count > 0)
+		if (p->sn_count > 0) {
 			if (b) {
 				ship->file->ngrap -= p->sn_count;
 				p->sn_count = 0;
@@ -369,14 +370,16 @@ sync_update(type, ship, a, b, c, d)
 				ship->file->ngrap--;
 				p->sn_count--;
 			}
+		}
 		break;
 		}
 	case W_SIGNAL:
-		if (mode == MODE_PLAYER)
+		if (mode == MODE_PLAYER) {
 			if (nobells)
 				Signal("$$: %s", ship, (char *) a);
 			else
 				Signal("\7$$: %s", ship, (char *) a);
+		}
 		break;
 	case W_CREW: {
 		struct shipspecs *s = ship->specs;

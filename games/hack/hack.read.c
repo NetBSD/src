@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.read.c,v 1.4 1997/10/19 16:58:52 christos Exp $	*/
+/*	$NetBSD: hack.read.c,v 1.5 1998/08/30 09:19:37 veego Exp $	*/
 
 /*
  * Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
@@ -6,7 +6,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.read.c,v 1.4 1997/10/19 16:58:52 christos Exp $");
+__RCSID("$NetBSD: hack.read.c,v 1.5 1998/08/30 09:19:37 veego Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -557,11 +557,12 @@ do_it:
 	for (zy = seely; zy <= seehy; zy++)
 		for (zx = seelx; zx <= seehx; zx++) {
 			levl[zx][zy].lit = on;
-			if (!Blind && dist(zx, zy) > 2)
+			if (!Blind && dist(zx, zy) > 2) {
 				if (on)
 					prl(zx, zy);
 				else
 					nosee(zx, zy);
+			}
 		}
 	if (!on)
 		seehx = 0;

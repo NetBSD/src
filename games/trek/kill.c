@@ -1,4 +1,4 @@
-/*	$NetBSD: kill.c,v 1.4 1997/10/12 21:24:56 christos Exp $	*/
+/*	$NetBSD: kill.c,v 1.5 1998/08/30 09:19:40 veego Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)kill.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: kill.c,v 1.4 1997/10/12 21:24:56 christos Exp $");
+__RCSID("$NetBSD: kill.c,v 1.5 1998/08/30 09:19:40 veego Exp $");
 #endif
 #endif /* not lint */
 
@@ -113,13 +113,14 @@ int	qx, qy;
 
 	if (q->bases <= 0)
 		return;
-	if (!damaged(SSRADIO))
+	if (!damaged(SSRADIO)) {
 		/* then update starchart */
 		if (q->scanned < 1000)
 			q->scanned -= 10;
 		else
 			if (q->scanned > 1000)
 				q->scanned = -1;
+	}
 	q->bases = 0;
 	Now.bases -= 1;
 	for (b = Now.base; ; b++)
