@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.25 1995/05/19 15:08:55 christos Exp $	*/
+/*	$NetBSD: eval.c,v 1.26 1995/06/09 01:53:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -38,9 +38,9 @@
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)eval.c	8.8 (Berkeley) 5/19/95";
+static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-static char rcsid[] = "$Header: /cvsroot/src/bin/sh/eval.c,v 1.25 1995/05/19 15:08:55 christos Exp $";
+static char sccsid[] = "$NetBSD: eval.c,v 1.26 1995/06/09 01:53:44 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -677,7 +677,18 @@ evalcommand(cmd, flags, backcmd)
 		cmdentry.cmdtype = CMDBUILTIN;
 		cmdentry.u.index = BLTINCMD;
 	} else {
-		find_command(argv[0], &cmdentry, 1);
+		static const char PATH[] = "PATH=";
+		char *path = pathval();
+
+		/*
+		 * Modify the command lookup path, if a PATH= assignment
+		 * is present
+		 */
+		for (sp = varlist.list ; sp ; sp = sp->next)
+			if (strncmp(sp->text, PATH, sizeof(PATH) - 1) == 0)
+				path = sp->text + sizeof(PATH) - 1;
+
+		find_command(argv[0], &cmdentry, 1, path);
 		if (cmdentry.cmdtype == CMDUNKNOWN) {	/* command not found */
 			exitstatus = 1;
 			flushout(&errout);
@@ -876,7 +887,8 @@ prehash(n)
 
 	if (n->type == NCMD && n->ncmd.args)
 		if (goodname(n->ncmd.args->narg.text))
-			find_command(n->ncmd.args->narg.text, &entry, 0);
+			find_command(n->ncmd.args->narg.text, &entry, 0,
+				     pathval());
 }
 
 
