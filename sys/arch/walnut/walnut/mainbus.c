@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.2 2001/06/22 11:42:33 simonb Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.3 2001/06/22 13:21:35 simonb Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -65,6 +65,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "pci.h"
+#include "opt_pci.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -72,11 +75,10 @@
 #include <sys/malloc.h>
 
 #define _GALAXY_BUS_DMA_PRIVATE
-#include <machine/bus.h>
 #include <machine/autoconf.h>
+#include <machine/bus.h>
+#include <machine/walnut.h>
 
-#include "pci.h"
-#include "opt_pci.h"
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/pciconf.h>
@@ -91,14 +93,14 @@ const struct ppc405gp_dev {
 	bus_addr_t addr;
 	int irq;
 } ppc405gp_devs [] = {
-	{ "com",	0xef600300,  5 },
-	{ "com",	0xef600400,  6 },
-	{ "dsrtc",	0xf0000000, -1 },
-	{ "emac",	0xef600800,  9 }, /* XXX: really irq 9..15 */
-	{ "gpio",	0xef600700, -1 },
-	{ "i2c",	0xef600500, -1 },
-	{ "wdog",	-1,         -1 },
-	{ "pckbc",	0xf0100000, -1 }, /* XXX: really irq x..x+1 */
+	{ "com",	UART0_BASE,	 5 },
+	{ "com",	UART1_BASE,	 6 },
+	{ "dsrtc",	NVRAM_BASE,	-1 },
+	{ "emac",	MIO6_START,	 9 }, /* XXX: really irq 9..15 */
+	{ "gpio",	MIO5_START,	-1 },
+	{ "i2c",	MIO4_START,	-1 },
+	{ "wdog",	-1,        	-1 },
+	{ "pckbc",	KEY_MOUSE_BASE,	-1 }, /* XXX: really irq x..x+1 */
 	{ NULL }
 };
 
@@ -185,19 +187,23 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 #ifdef PCI_NETBSD_CONFIGURE
 	// galaxy_show_pci_map();
 	// scan_pci_bus();
-	memext = extent_create("pcimem", 0x80000000, 0x8fffffff, M_DEVBUF,
-			       NULL, 0, EX_NOWAIT);
-	ioext = extent_create("pciio", 0x0000, 0xFFFF, M_DEVBUF,
-			      NULL, 0, EX_NOWAIT);
+	memext = extent_create("pcimem", MIN_PCI_MEMADDR_NOPREFETCH,
+	    MIN_PCI_MEMADDR_NOPREFETCH + 0x1fffffff, M_DEVBUF, NULL, 0,
+	    EX_NOWAIT);
+	ioext = extent_create("pciio", MIN_PCI_PCI_IOADDR,
+	    MIN_PCI_PCI_IOADDR + 0xffff, M_DEVBUF, NULL, 0, EX_NOWAIT);
 	pci_configure_bus(0, ioext, memext, NULL);
 	extent_destroy(memext);
 #endif /* PCI_NETBSD_CONFIGURE */
+
 #ifdef PCI_CONFIGURE_VERBOSE
 	printf("running config_found PCI\n");
 #endif
 	mba.mba_pba.pba_busname = "pci";
-	mba.mba_pba.pba_iot = galaxy_make_bus_space_tag(0xe8000000, 0); /* IO window located @ e8000000 and maps to 0-0xffff */
-	mba.mba_pba.pba_memt = galaxy_make_bus_space_tag(0, 0); /* PCI memory window is directly mapped */
+	/* IO window located @ e8000000 and maps to 0-0xffff */
+	mba.mba_pba.pba_iot = galaxy_make_bus_space_tag(MIN_PLB_PCI_IOADDR, 0);
+	/* PCI memory window is directly mapped */
+	mba.mba_pba.pba_memt = galaxy_make_bus_space_tag(0, 0);
 	mba.mba_pba.pba_dmat = &galaxy_default_bus_dma_tag;
 	mba.mba_pba.pba_bus = 0;
 	mba.mba_pba.pba_flags = PCI_FLAGS_MEM_ENABLED | PCI_FLAGS_IO_ENABLED;
