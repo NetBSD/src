@@ -1,4 +1,4 @@
-/*      $NetBSD: sgec.c,v 1.11 2000/12/14 06:27:26 thorpej Exp $ */
+/*      $NetBSD: sgec.c,v 1.12 2001/04/12 03:16:56 thorpej Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -318,7 +318,6 @@ zestart(ifp)
 	int old_inq = sc->sc_inq;
 	short orword;
 
-	s = splimp();
 	while (sc->sc_inq < (TXDESCS - 1)) {
 
 		if (sc->sc_setup) {
@@ -400,7 +399,6 @@ zestart(ifp)
 
 out:	if (old_inq < sc->sc_inq)
 		ifp->if_timer = 5; /* If transmit logic dies */
-	splx(s);
 }
 
 int
@@ -610,10 +608,8 @@ ze_setup(sc)
 	u_int8_t *enaddr = LLADDR(ifp->if_sadl);
 	int j, idx, s, reg;
 
-	s = splimp();
 	if (sc->sc_inq == (TXDESCS - 1)) {
 		sc->sc_setup = 1;
-		splx(s);
 		return;
 	}
 	sc->sc_setup = 0;
@@ -682,7 +678,6 @@ ze_setup(sc)
 		if (++sc->sc_nexttx == TXDESCS)
 			sc->sc_nexttx = 0;
 	}
-	splx(s);
 }
 
 /*
@@ -732,16 +727,13 @@ zereset(sc)
 	 */
 	reg = ZE_NICSR0_IPL14 | sc->sc_intvec | 0x1fff0003; /* SYNC/ASYNC??? */
 	i = 10;
-	s = splimp();
 	do {
 		if (i-- == 0) {
 			printf("Failing SGEC CSR0 init\n");
-			splx(s);
 			return 1;
 		}
 		ZE_WCSR(ZE_CSR0, reg);
 	} while (ZE_RCSR(ZE_CSR0) != reg);
-	splx(s);
 
 	ZE_WCSR(ZE_CSR3, (vaddr_t)sc->sc_pzedata->zc_recv);
 	ZE_WCSR(ZE_CSR4, (vaddr_t)sc->sc_pzedata->zc_xmit);
