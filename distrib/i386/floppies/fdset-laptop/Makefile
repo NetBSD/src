@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2000/09/27 16:04:14 fvdl Exp $
+#	$NetBSD: Makefile,v 1.2 2000/09/27 19:13:52 fvdl Exp $
 
 TOP=	${.CURDIR}/..
 
@@ -7,5 +7,6 @@ TOP=	${.CURDIR}/..
 KERN!=	cd $(.CURDIR)/../kernel-ramdisk/; \
         printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}/netbsd.INSTALL_LAPTOP.gz\n" | \
 	${MAKE} -s -f-
+BASENAME=bootlap
 
 .include "${TOP}/fdset-common/Makefile.inc"
