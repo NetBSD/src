@@ -1,4 +1,4 @@
-/*	$NetBSD: fsutil.h,v 1.1 1996/09/27 22:38:42 christos Exp $	*/
+/*	$NetBSD: fsutil.h,v 1.2 1996/09/28 19:21:42 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -53,4 +53,4 @@ char *estrdup __P((const char *));
 
 struct fstab;
 int checkfstab __P((int, int, void *(*)(struct fstab *), 
-    int (*) (const char *, const char *, const char *, void *)));
+    int (*) (const char *, const char *, const char *, void *, pid_t *)));
