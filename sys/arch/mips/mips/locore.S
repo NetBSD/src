@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.81 1999/12/03 02:15:55 nisimura Exp $	*/
+/*	$NetBSD: locore.S,v 1.82 1999/12/22 04:54:16 jun Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -72,6 +72,7 @@
 #include <machine/param.h>
 #include <mips/asm.h>
 #include <mips/cpuregs.h>
+#include <mips/trap.h>
 
 #include "assym.h"
 
@@ -1230,8 +1231,11 @@ NESTED(MachFPInterrupt, CALLFRAME_SIZ, ra)
 XNESTED(MachFPTrap)
 	.mask	0x80000000, -4
 	subu	sp, sp, CALLFRAME_SIZ
+#ifndef SOFTFLOAT
 	mfc0	t0, MIPS_COP_0_STATUS
+#endif
 	sw	ra, CALLFRAME_RA(sp)
+#ifndef SOFTFLOAT
 	or	t0, t0, MIPS_SR_COP_1_BIT
 	mtc0	t0, MIPS_COP_0_STATUS
 	nop
@@ -1239,7 +1243,6 @@ XNESTED(MachFPTrap)
 	nop				# 1st extra nop for r4k
 	nop				# 2nd extra nop for r4k
 
-#ifndef SOFTFLOAT
 	cfc1	t0, MIPS_FPU_CSR	# stall til FP done
 	cfc1	t0, MIPS_FPU_CSR	# now get status
 	nop
@@ -1249,27 +1252,13 @@ XNESTED(MachFPTrap)
 #endif
 /*
  * We got an unimplemented operation trap so
- * fetch the instruction, compute the next PC and emulate the instruction.
+ * fetch the instruction and emulate the instruction.
  */
 	bgez	a1, 1f			# Check the branch delay bit.
 	nop
 /*
- * The instruction is in the branch delay slot so the branch will have to
- * be emulated to get the resulting PC.
+ * The instruction is in the branch delay slot.
  */
-	sw	a2, CALLFRAME_SIZ + 8(sp)
-	sw	a3, CALLFRAME_SIZ + 12(sp)
-	move	a0, a3				# 1st arg is p. to trapframe
-	move	a1, a2				# 2nd arg is instruction PC
-	move	a2, t0				# 3rd arg is FP CSR
-	jal	_C_LABEL(MachEmulateBranch)	# compute PC after branch
-	move	a3, zero			# 4th arg is FALSE
-/*
- * Now load the floating-point instruction in the branch delay slot
- * to be emulated.
- */
-	lw	a2, CALLFRAME_SIZ + 8(sp)	# restore exception PC
-	lw	a3, CALLFRAME_SIZ + 12(sp)
 	b	2f
 	lw	a0, 4(a2)			# a0 = coproc instruction
 /*
@@ -1278,27 +1267,27 @@ XNESTED(MachFPTrap)
  */
 1:
 	lw	a0, 0(a2)			# a0 = coproc instruction
-	addu	v0, a2, 4			# v0 = next pc
 2:
-	sw	v0, FRAME_EPC(a3)		# save new pc
+	move	a2, a1
+
 /*
  * Check to see if the instruction to be emulated is a floating-point
  * instruction.
  */
-	sw	zero, FRAME_ZERO(a3)
-
 	srl	t0, a0, MIPS_OPCODE_SHIFT
 	beq	t0, MIPS_OPCODE_C1, 4f
 	nop
 
 #ifdef SOFTFLOAT
-	beq	t0, 0x31, 5f	# lwc1
+	sw	zero, FRAME_ZERO(a3)		# ensure zero has value 0
+
+	beq	t0, MIPS_OPCODE_LWC1, 5f
 	nop
-	beq	t0, 0x35, 6f	# ldc1
+	beq	t0, MIPS_OPCODE_LDC1, 6f
 	nop
-	beq	t0, 0x39, 7f	# swc1
+	beq	t0, MIPS_OPCODE_SWC1, 7f
 	nop
-	beq	t0, 0x3d, 8f	# sdc1
+	beq	t0, MIPS_OPCODE_SDC1, 8f
 	nop
 #endif
 
@@ -1306,7 +1295,16 @@ XNESTED(MachFPTrap)
  * Send a illegal instruction signal to the current process.
  */
 3:
-	li	v0, SIGILL
+	li	t0, 0xFFFFFF00
+	and	a1, a1, t0
+	ori	a1, a1, T_RES_INST << MIPS_CR_EXC_CODE_SHIFT
+	sw	a1, FRAME_CAUSE(a3)
+
+	move	a2, a0				# code = instruction
+	lw	a0, _C_LABEL(curproc)		# get current process
+	jal	_C_LABEL(trapsignal)
+	li	a1, SIGILL
+
 	b	FPReturn
 	nop
 
@@ -1314,28 +1312,23 @@ XNESTED(MachFPTrap)
  * Finally, we can call MachEmulateFP() where a0 is the instruction to emulate.
  */
 4:
-#ifdef SOFTFLOAT
-	move	a1, a3		
-#endif
 	jal	_C_LABEL(MachEmulateFP)
-	nop
+	move	a1, a3
 
-FPemuldone:
-	beq	v0, zero, FPReturn
-	nop
-
-	move	a2, a0				# code = instruction
-	lw	a0, _C_LABEL(curproc)		# get current process
-	jal	_C_LABEL(trapsignal)
-	move	a1, v0
 /*
  * Turn off the floating point coprocessor and return.
  */
 FPReturn:
+#ifndef SOFTFLOAT
 	mfc0	t0, MIPS_COP_0_STATUS
+#endif
 	lw	ra, CALLFRAME_RA(sp)
+#ifndef SOFTFLOAT
 	and	t0, t0, ~MIPS_SR_COP_1_BIT
 	mtc0	t0, MIPS_COP_0_STATUS
+#else
+	nop
+#endif
 	j	ra
 	addu	sp, sp, CALLFRAME_SIZ
 
@@ -1343,25 +1336,25 @@ FPReturn:
 5:	# lwc1
 	jal	_C_LABEL(MachEmulateLWC1)
 	move	a1, a3
-	j	FPemuldone
+	b	FPReturn
 	nop
 
 6:	# ldc1
 	jal	_C_LABEL(MachEmulateLDC1)
 	move	a1, a3
-	j	FPemuldone
+	b	FPReturn
 	nop
 
 7:	# swc1
 	jal	_C_LABEL(MachEmulateSWC1)
 	move	a1, a3
-	j	FPemuldone
+	b	FPReturn
 	nop
 
 8:	# sdc1
 	jal	_C_LABEL(MachEmulateSDC1)
 	move	a1, a3
-	j	FPemuldone
+	b	FPReturn
 	nop
 
 #endif
