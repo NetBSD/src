@@ -36,7 +36,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: kern_lkm.c,v 1.4 1993/07/28 02:22:08 cgd Exp $
+ *	$Id: kern_lkm.c,v 1.5 1993/09/05 00:55:57 cgd Exp $
  */
 
 #include "param.h"
@@ -847,10 +847,8 @@ int			cmd;
 		break;
 
 	case LM_DEV:
-	    {
-		struct lkm_dev	*args = lkmtp->private.lkm_dev;
-	    }
-	    break;
+		err = _lkm_dev( lkmtp, cmd);
+		break;
 
 #ifdef STREAMS
 	case LM_STRMOD:
