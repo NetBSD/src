@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpcmd.y,v 1.74 2003/02/24 12:57:06 lukem Exp $	*/
+/*	$NetBSD: ftpcmd.y,v 1.75 2003/03/03 01:52:13 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-2002 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
 #if 0
 static char sccsid[] = "@(#)ftpcmd.y	8.3 (Berkeley) 4/6/94";
 #else
-__RCSID("$NetBSD: ftpcmd.y,v 1.74 2003/02/24 12:57:06 lukem Exp $");
+__RCSID("$NetBSD: ftpcmd.y,v 1.75 2003/03/03 01:52:13 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -987,7 +987,7 @@ host_long_port6
 			memset(&data_dest, 0, sizeof(data_dest));
 #endif /* INET6 */
 			/* reject invalid LPRT command */
-			if ($1.i != 6.i || $3.i != 16.i || $37.i != 2)
+			if ($1.i != 6 || $3.i != 16 || $37.i != 2)
 				memset(&data_dest, 0, sizeof(data_dest));
 		}
 	;
