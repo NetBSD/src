@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd.c,v 1.14 2003/02/01 21:12:25 tron Exp $	*/
+/*	$NetBSD: netbsd.c,v 1.15 2003/02/02 02:31:14 christos Exp $	*/
 
 /*
 ** netbsd.c		Low level kernel access functions for NetBSD
@@ -12,9 +12,6 @@
 */
 
 #include <sys/types.h>
-#define _KERNEL
-#include <sys/mallocvar.h>
-#undef _KERNEL
 
 #include <stdio.h>
 #include <stdlib.h>
