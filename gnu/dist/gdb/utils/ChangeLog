@@ -1,0 +1,88 @@
+2002-05-28  Nick Clifton  <nickc@cambridge.redhat.com>
+
+	* Remove amd-udi subdirectory - it is obsolete.
+
+2002-05-17  Nick Clifton  <nickc@cambridge.redhat.com>
+
+	* Remove msdos subdirectory - it is obsolete.
+
+2002-04-06  Nathanael Nerode  <neroden@twcny.rr.com>
+
+	* utils/configure.in: autoconfiscate
+	* utils/configure: generate using 'autoconf'
+	* utils/Makefile.tpl: new file
+	* utils/Makefile.def: new file
+	* utils/Makefile.in: generated using 'autogen Makefile.def'
+
+2000-02-28  Nick Clifton  <nickc@cygnus.com>
+
+	* configure.in: Add WinCE support.
+
+	* wince: New Directory: Contains WinCE support code.
+
+Fri Apr 24 12:51:21 1998  Jason Molenda  (crash@bugshack.cygnus.com)
+
+        * Makefile.in (dvi): Do nothing target.
+
+Mon Apr 14 16:30:30 1997  Ian Lance Taylor  <ian@cygnus.com>
+
+	* Makefile.in (INSTALL): Change install.sh to install-sh.
+	* misc/Makefile.in (INSTALL): Likewise.
+	* msdos/Makefile.in (INSTALL): Likewise.
+	* msdos/bin/Makefile.in (INSTALL): Likewise.
+
+Tue Oct 10 11:14:38 1995  Fred Fish  <fnf@cygnus.com>
+
+	* Makefile.in (BISON): Remove macro.
+	* misc/Makefile.in (BISON): Remove macro.
+	* msdos/Makefile.in (BISON): Remove macro.
+	* msdos/bin/Makefile.in (BISON): Remove macro.
+	
+Wed Sep 20 13:40:32 1995  Ian Lance Taylor  <ian@cygnus.com>
+
+	* Makefile.in (maintainer-clean): New synonym for realclean.
+	Recur into subdirectories before removing Makefile.
+	* amd-udi/Makefile.in (maintainer-clean): Likewise.
+	* msdos/Makefile.in (maintainer-clean): Likewise.
+	* misc/Makefile.in (maintainer-clean, realclean): New synonyms for
+	distclean.  Recur into subdirectories before removing Makefile.
+	* amd-udi/udi/Makefile.in (maintainer-clean): New synonym for
+	realclean.
+	* amd-udi/mondfe/Makefile.in (maintainer-clean): Likewise.
+	* amd-udi/montip/Makefile.in (maintainer-clean): Likewise.
+	* msdos/bin/Makefile.in (maintainer-clean): Likewise.
+
+Wed Aug  2 11:46:46 1995  Stan Shebs  <shebs@andros.cygnus.com>
+
+	* configure.in: Edit Makefile SUBDIRS so that make descends
+	into appropriate subdirectories.
+
+Mon Jun 27 11:34:25 1994  Stan Shebs  (shebs@andros.cygnus.com)
+
+	* spu: New subdirectory, random program generator.
+	* configure.in: Always configure spu, add msdos to configdirs
+	instead of setting it.
+
+Tue Jun  7 14:09:39 1994  Ian Lance Taylor  (ian@tweedledumb.cygnus.com)
+
+	* Makefile.in (mostlyclean, realclean): New targets.
+	* amd-udi/Makefile.in, msdos/Makefile.in: Likewise.
+	* msdos/bin/Makefile.in, sparclite/Makefile.in: Likewise.
+	* sparclite/aload/Makefile.in: Likewise.
+
+Mon Oct 25 14:55:40 1993  Rob Savoye  (rob@rtl.cygnus.com)
+
+	* misc/doschk: add dos check utility. 
+	* misc: New directory tree.
+	* msdos/aout2exe: New directory. Build DJ's aout2exe utility using
+	an non-ansi C compiler also.
+
+Fri Oct 22 17:08:17 1993  Rob Savoye  (rob@rtl.cygnus.com)
+
+	* amd-udi: Initial creation. Added Zoo's "work in progress" and
+	made it all configure and build in this tree.
+
+Tue Oct 19 22:29:34 1993  Rob Savoye  (rob@darkstar.cygnus.com)
+
+	* msdos, sparclite: Initial creation.
+
