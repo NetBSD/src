@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.27 1998/07/27 09:09:03 mycroft Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.28 1998/12/20 17:46:46 kleink Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -114,6 +114,14 @@
 #define	__aconst	__const
 #else
 #define	__aconst
+#endif
+
+/*
+ * GCC2 provides __extension__ to suppress warnings for various GNU C
+ * language extensions under "-ansi -pedantic".
+ */
+#if !defined(__GNUC__) || __GNUC__ < 2
+#define	__extension__		/* delete __extension__ if non-gcc or gcc1 */
 #endif
 
 /*
