@@ -1,4 +1,4 @@
-/* $NetBSD: bus_dma.c,v 1.25 1998/08/14 16:50:02 thorpej Exp $ */
+/* $NetBSD: bus_dma.c,v 1.26 1998/08/17 20:15:55 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.25 1998/08/14 16:50:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.26 1998/08/17 20:15:55 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,9 +62,9 @@ __KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.25 1998/08/14 16:50:02 thorpej Exp $")
 #include <machine/bus.h>
 #include <machine/intr.h>
 
-int	_bus_dmamap_load_buffer_direct_common __P((bus_dmamap_t,
-	    void *, bus_size_t, struct proc *, int, bus_addr_t,
-	    bus_size_t, paddr_t *, int *, int));
+int	_bus_dmamap_load_buffer_direct_common __P((bus_dma_tag_t,
+	    bus_dmamap_t, void *, bus_size_t, struct proc *, int,
+	    paddr_t *, int *, int));
 
 /*
  * Common function for DMA map creation.  May be called by bus-specific
@@ -139,15 +139,14 @@ _bus_dmamap_destroy(t, map)
  * first indicates if this is the first invocation of this function.
  */
 int
-_bus_dmamap_load_buffer_direct_common(map, buf, buflen, p, flags, wbase,
-    wsize, lastaddrp, segp, first)
+_bus_dmamap_load_buffer_direct_common(t, map, buf, buflen, p, flags,
+    lastaddrp, segp, first)
+	bus_dma_tag_t t;
 	bus_dmamap_t map;
 	void *buf;
 	bus_size_t buflen;
 	struct proc *p;
 	int flags;
-	bus_addr_t wbase;
-	bus_size_t wsize;
 	paddr_t *lastaddrp;
 	int *segp;
 	int first;
@@ -174,10 +173,10 @@ _bus_dmamap_load_buffer_direct_common(map, buf, buflen, p, flags, wbase,
 		 * If we're beyond the current DMA window, indicate
 		 * that and try to fall back into SGMAPs.
 		 */
-		if (wsize != 0 && curaddr >= wsize)
+		if (t->_wsize != 0 && curaddr >= t->_wsize)
 			return (EINVAL);
 
-		curaddr |= wbase;
+		curaddr |= t->_wbase;
 
 		/*
 		 * Compute the segment size, and adjust counts.
@@ -269,8 +268,8 @@ _bus_dmamap_load_direct(t, map, buf, buflen, p, flags)
 		return (EINVAL);
 
 	seg = 0;
-	error = _bus_dmamap_load_buffer_direct_common(map, buf, buflen,
-	    p, flags, t->_wbase, t->_wsize, &lastaddr, &seg, 1);
+	error = _bus_dmamap_load_buffer_direct_common(t, map, buf, buflen,
+	    p, flags, &lastaddr, &seg, 1);
 	if (error == 0) {
 		map->dm_mapsize = buflen;
 		map->dm_nsegs = seg + 1;
@@ -316,9 +315,8 @@ _bus_dmamap_load_mbuf_direct(t, map, m0, flags)
 	seg = 0;
 	error = 0;
 	for (m = m0; m != NULL && error == 0; m = m->m_next) {
-		error = _bus_dmamap_load_buffer_direct_common(map,
-		    m->m_data, m->m_len, NULL, flags, t->_wbase, t->_wsize,
-		    &lastaddr, &seg, first);
+		error = _bus_dmamap_load_buffer_direct_common(t, map,
+		    m->m_data, m->m_len, NULL, flags, &lastaddr, &seg, first);
 		first = 0;
 	}
 	if (error == 0) {
@@ -388,9 +386,8 @@ _bus_dmamap_load_uio_direct(t, map, uio, flags)
 
 		addr = (caddr_t)iov[i].iov_base + offset;
 
-		error = _bus_dmamap_load_buffer_direct_common(map,
-		    addr, minlen, p, flags, t->_wbase, t->_wsize,
-		    &lastaddr, &seg, first);
+		error = _bus_dmamap_load_buffer_direct_common(t, map,
+		    addr, minlen, p, flags, &lastaddr, &seg, first);
 		first = 0;
 
 		offset = 0;
