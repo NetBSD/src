@@ -1,4 +1,4 @@
-/* $NetBSD: rtwvar.h,v 1.3 2004/12/13 00:48:02 dyoung Exp $ */
+/* $NetBSD: rtwvar.h,v 1.4 2004/12/13 01:15:07 dyoung Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -141,7 +141,7 @@ struct rtw_txctl {
 /* The descriptor rings must begin on RTW_DESC_ALIGNMENT boundaries.
  * I allocate them consecutively from one buffer, so just round up.
  */
-#define RTW_TXQLENLO	RTW_TXQLEN_ROUNDUP(64)	/* high-priority queue length */
+#define RTW_TXQLENLO	RTW_TXQLEN_ROUNDUP(64)	/* low-priority queue length */
 #define RTW_TXQLENMD	RTW_TXQLEN_ROUNDUP(32)	/* medium-priority */
 #define RTW_TXQLENHI	RTW_TXQLEN_ROUNDUP(16)	/* high-priority */
 #define RTW_TXQLENBCN	1			/* beacon */
