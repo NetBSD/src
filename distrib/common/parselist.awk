@@ -1,4 +1,4 @@
-#	$NetBSD: parselist.awk,v 1.3 2002/02/07 11:39:17 lukem Exp $
+#	$NetBSD: parselist.awk,v 1.4 2002/03/05 00:19:43 lukem Exp $
 #
 # Copyright (c) 2002 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -70,7 +70,11 @@
 #
 #	P	CMD	arg1 [...]	run CMD as a shell command
 #
-#	M P	COPY	src dest	copy src to dest
+#	M P	COPY	src dest [mode]	copy src to dest
+#
+#	M P	COPYDIR	src dest	recursively copy files under src to
+#					dest.  for M, the directories in src
+#					are listed first.
 #
 #	C	LIBS	libspec ...	as per crunchgen(1) `libs'
 #
@@ -142,6 +146,31 @@ $1 == "COPY" \
 		err("Usage: COPY src dest [mode]");
 	if (mode == "populate" || mode == "mtree")
 		copy($2, $3, $4);
+	next;
+}
+
+$1 == "COPYDIR" \
+{
+	if (NF != 3)
+		err("Usage: COPYDIR src dest");
+	if (mode == "mtree") {
+		command="cd " $2 " ; find . -type d -print"
+		while (command | getline dir) {
+			gsub(/^\.\//, "", dir);
+			printf("./%s/%s type=dir mode=755\n", $3, dir);
+		}
+		close(command);
+	}
+	if (mode == "populate" || mode == "mtree") {
+		srcdir=$2;
+		destdir=$3;
+		command="cd " srcdir " ; find . -type f -print"
+		while (command | getline srcfile) {
+			gsub(/^\.\//, "", srcfile);
+			copy(srcdir "/" srcfile, destdir "/" srcfile, "");
+		}
+		close(command);
+	}
 	next;
 }
 
@@ -250,7 +279,6 @@ function copy (src, dest, perm) \
 function link (src, dest) \
 {
 	if (mode == "mtree") {
-# XXX		printf("./%s type=hlink link=%s\n", dest, src);
 		printf("./%s\n", dest);
 	} else {
 		printf("rm -rf ${TARGDIR}/%s\n", dest);
