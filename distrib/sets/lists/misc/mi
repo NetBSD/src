@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.60 2001/01/24 08:47:06 jwise Exp $
+# $NetBSD: mi,v 1.61 2001/01/25 09:49:56 wiz Exp $
 ./usr/share/dict/README				misc-reference-share
 ./usr/share/dict/eign				misc-reference-share
 ./usr/share/dict/propernames			misc-reference-share
@@ -361,6 +361,13 @@
 ./usr/share/examples/ipf/nat.eg			misc-netutil-examples
 ./usr/share/examples/ipf/server			misc-netutil-examples
 ./usr/share/examples/ipf/tcpstate		misc-netutil-examples
+./usr/share/examples/isdn/holidays.D.SH		misc-isdn-examples
+./usr/share/examples/isdn/isdnd.rates.A		misc-isdn-examples
+./usr/share/examples/isdn/isdnd.rates.D		misc-isdn-examples
+./usr/share/examples/isdn/isdnd.rates.F		misc-isdn-examples
+./usr/share/examples/isdn/isdnd.rates.L		misc-isdn-examples
+./usr/share/examples/isdn/isdnd.rates.UK.BT	misc-isdn-examples
+./usr/share/examples/isdn/isdnd.rc.sample	misc-isdn-examples
 ./usr/share/examples/kerberos/krb5.conf		misc-krb5-examples
 ./usr/share/examples/mount_portal/advanced.1	misc-sys-examples
 ./usr/share/examples/mount_portal/advanced.1.conf	misc-sys-examples
