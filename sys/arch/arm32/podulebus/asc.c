@@ -1,4 +1,4 @@
-/* $NetBSD: asc.c,v 1.7 1996/06/03 22:41:14 mark Exp $ */
+/* $NetBSD: asc.c,v 1.8 1996/06/12 20:46:58 mark Exp $ */
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -195,7 +195,9 @@ ascattach(pdp, dp, auxp)
 	sc->sc_ih.ih_func = asc_intr;
 	sc->sc_ih.ih_arg = sc;
 	sc->sc_ih.ih_level = IPL_BIO;
-	sc->sc_ih.ih_name = "asc";
+	sc->sc_ih.ih_name = "scsi: asc";
+	sc->sc_ih.ih_maskaddr = sc->sc_podule->irq_addr;
+	sc->sc_ih.ih_maskbits = sc->sc_podule->irq_mask;
 
 #ifdef ASC_POLL
 	if (!asc_poll)
@@ -449,7 +451,8 @@ asc_intr(sc)
 
 	if (intr & IS_SBIC_IRQ)
 		sbicintr((struct sbic_softc *)sc);
-	return(0);
+
+	return(0);	/* Pass interrupt on down the chain */
 }
 
 

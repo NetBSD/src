@@ -1,4 +1,4 @@
-/* $NetBSD: ptsc.c,v 1.4 1996/05/06 00:11:16 mark Exp $ */
+/* $NetBSD: ptsc.c,v 1.5 1996/06/12 20:47:02 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Scott Stevens
@@ -184,6 +184,9 @@ ptscattach(pdp, dp, auxp)
 	sc->sc_softc.sc_ih.ih_func = ptsc_intr;
 	sc->sc_softc.sc_ih.ih_arg  = &sc->sc_softc;
 	sc->sc_softc.sc_ih.ih_level = IPL_BIO;
+	sc->sc_softc.sc_ih.ih_name = "scsi: ptsc";
+	sc->sc_softc.sc_ih.ih_maskaddr = sc->sc_podule->irq_addr;
+	sc->sc_softc.sc_ih.ih_maskbits = sc->sc_podule->irq_mask;
 
 /* initialise the card */
 	*rp->term = 0;
@@ -240,7 +243,7 @@ ptsc_intr(dev)
 			&& --quickints);
 	}
 
-	return(1);
+	return(0);	/* Pass interrupt on down the chain */
 }
 
 /* Load transfer address into dma register */

@@ -1,4 +1,4 @@
-/* $NetBSD: if_ea.c,v 1.8 1996/06/03 22:39:12 mark Exp $ */
+/* $NetBSD: if_ea.c,v 1.9 1996/06/12 20:47:00 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -141,7 +141,7 @@ struct ea_softc {
  * prototypes
  */
 
-static int eaintr __P((void *));
+int eaintr __P((void *));
 static int ea_init __P((struct ea_softc *));
 static int ea_ioctl __P((struct ifnet *, u_long, caddr_t));
 static void ea_start __P((struct ifnet *));
@@ -340,6 +340,8 @@ eaattach(parent, self, aux)
 	sc->sc_ih.ih_arg = sc;
 	sc->sc_ih.ih_level = IPL_NET;
 	sc->sc_ih.ih_name = "net: ea";
+	sc->sc_ih.ih_maskaddr = sc->sc_podule->irq_addr;
+	sc->sc_ih.ih_maskbits = sc->sc_podule->irq_mask;
 
 /* Claim either a network slot interrupt or a podule interrupt */
 
@@ -1184,8 +1186,10 @@ eaintr(arg)
 	status = ReadShort(iobase + EA_8005_STATUS);
         dprintf(("st=%04x\n", status));
 #endif
-	return(0);
+
+	return(0);	/* Pass interrupt on down the chain */
 }
+
 
 void
 eagetpackets(sc)
