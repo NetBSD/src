@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: rrs.c,v 1.1 1993/10/16 21:52:34 pk Exp $
+ *	$Id: rrs.c,v 1.2 1993/10/21 00:52:59 pk Exp $
  */
 
 #include <sys/param.h>
@@ -750,7 +750,7 @@ relocate_rrs_addresses()
 	 * Main program's RRS text values are relative to TXTADDR? WHY??
 	 */
 #ifdef SUN_COMPAT
-	if (soversion == LD_VERSION_SUN)
+	if (soversion == LD_VERSION_SUN && entry_symbol)
 		rrs_dyn2.ld_rel -= N_TXTADDR(outheader);
 #endif
 

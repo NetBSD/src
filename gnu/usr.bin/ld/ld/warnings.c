@@ -1,5 +1,5 @@
 /*
- * $Id: warnings.c,v 1.1 1993/10/16 21:52:36 pk Exp $
+ * $Id: warnings.c,v 1.2 1993/10/21 00:53:01 pk Exp $
  */
 
 #include <sys/param.h>
@@ -166,12 +166,12 @@ print_symbols(outfile)
 		register symbol *sp;
 		for (sp = symtab[i]; sp; sp = sp->link) {
 			if (sp->defined == 1)
-				fprintf(outfile, "  %s: common, length 0x%x\n",
+				fprintf(outfile, "  %s: common, length %#x\n",
 						sp->name, sp->max_common_size);
 			if ( sp->referenced) {
 				if (sp->defined)
-					fprintf(outfile, "  %s: 0x%x\n",
-						sp->name, sp->value);
+					fprintf(outfile, "  %s: %#x %#x\n",
+						sp->name, sp->value, sp->size);
 				else
 					fprintf(outfile, "  %s: undefined\n",
 						sp->name);
