@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.187 2001/06/18 22:40:20 thorpej Exp $
+# $NetBSD: GENERIC,v 1.188 2001/06/30 11:00:31 darcy Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
 #
@@ -6,7 +6,7 @@
 
 include	"arch/alpha/conf/std.alpha"
 
-#ident 		"GENERIC-$Revision: 1.187 $"
+#ident 		"GENERIC-$Revision: 1.188 $"
 
 maxusers 32
 
@@ -82,6 +82,10 @@ options 	COMPAT_LINUX
 
 # System V-like message queues
 options 	SYSVMSG
+#options	SEMMNI=10	# number of semaphore identifiers
+#options	SEMMNS=60	# number of semaphores in system
+#options	SEMUME=10	# max number of undo entries per process
+#options	SEMMNU=30	# number of undo structures in system
 
 # System V-like semaphores
 options 	SYSVSEM

@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.37 2001/04/04 17:08:08 manu Exp $
+#	$NetBSD: GENERIC,v 1.38 2001/06/30 11:00:35 darcy Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/ofppc/conf/std.ofppc"
 
-#ident 		"GENERIC-$Revision: 1.37 $"
+#ident 		"GENERIC-$Revision: 1.38 $"
 
 maxusers	32
 
@@ -20,6 +20,10 @@ options 	KTRACE		# system call tracing via ktrace(1)
 
 options 	SYSVMSG		# System V message queues
 options 	SYSVSEM		# System V semaphores
+#options	SEMMNI=10	# number of semaphore identifiers
+#options	SEMMNS=60	# number of semaphores in system
+#options	SEMUME=10	# max number of undo entries per process
+#options	SEMMNU=30	# number of undo structures in system
 options 	SYSVSHM		# System V shared memory
 #options 	SHMMAXPGS=1024	# 1024 pages is the default
 

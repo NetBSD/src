@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.41 2001/06/11 01:50:54 wiz Exp $
+# $NetBSD: GENERIC,v 1.42 2001/06/30 11:00:35 darcy Exp $
 #
 # GENERIC next68k
 #
@@ -6,7 +6,7 @@
 
 include "arch/next68k/conf/std.next68k"
 
-#ident 		"GENERIC-$Revision: 1.41 $"
+#ident 		"GENERIC-$Revision: 1.42 $"
 
 # Needs to be set per system.  i.e change these as you see fit
 maxusers	16
@@ -15,6 +15,10 @@ maxusers	16
 options 	KTRACE		# system call tracing
 options 	SYSVMSG		# System V message queues
 options 	SYSVSEM		# System V semaphores
+#options	SEMMNI=10	# number of semaphore identifiers
+#options	SEMMNS=60	# number of semaphores in system
+#options	SEMUME=10	# max number of undo entries per process
+#options	SEMMNU=30	# number of undo structures in system
 options 	SYSVSHM		# System V shared memory
 #options 	SHMMAXPGS=1024	# 1024 pages is the default
 

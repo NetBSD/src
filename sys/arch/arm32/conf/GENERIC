@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.79 2001/06/02 10:48:54 bjh21 Exp $
+#	$NetBSD: GENERIC,v 1.80 2001/06/30 11:00:32 darcy Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include	"arch/arm32/conf/std.arm32"
 
-#ident 		"GENERIC-$Revision: 1.79 $"
+#ident 		"GENERIC-$Revision: 1.80 $"
 
 # estimated number of users
 maxusers	32
@@ -101,6 +101,10 @@ options		COMPAT_OLD_BOOTLOADER
 
 options 	SYSVMSG		# System V-like message queues
 options 	SYSVSEM		# System V-like semaphores
+#options	SEMMNI=10	# number of semaphore identifiers
+#options	SEMMNS=60	# number of semaphores in system
+#options	SEMUME=10	# max number of undo entries per process
+#options	SEMMNU=30	# number of undo structures in system
 options 	SYSVSHM		# System V-like memory sharing
 options 	SHMMAXPGS=1024	# 1024 pages is the default
 
