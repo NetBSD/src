@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)parser.c	8.1 (Berkeley) 5/31/93";*/
-static char *rcsid = "$Id: parser.c,v 1.22 1994/12/05 19:07:50 cgd Exp $";
+static char *rcsid = "$Id: parser.c,v 1.23 1995/01/23 06:33:05 christos Exp $";
 #endif /* not lint */
 
 #include "shell.h"
@@ -1136,7 +1136,12 @@ parsesub: {
 		subtype = VSNORMAL;
 		if (c == '{') {
 			c = pgetc();
-			subtype = 0;
+			if (c == '#') {
+				subtype = VSLENGTH;
+				c = pgetc();
+			}
+			else
+				subtype = 0;
 		}
 		if (is_name(c)) {
 			do {
@@ -1152,14 +1157,31 @@ badsub:				synerror("Bad substitution");
 		STPUTC('=', out);
 		flags = 0;
 		if (subtype == 0) {
-			if (c == ':') {
+			switch (c) {
+			case ':':
 				flags = VSNUL;
 				c = pgetc();
+				/*FALLTHROUGH*/
+			default:
+				p = strchr(types, c);
+				if (p == NULL)
+					goto badsub;
+				subtype = p - types + VSNORMAL;
+				break;
+			case '%':
+			case '#': 
+				{
+					int cc = c;
+					subtype = c == '#' ? VSTRIMLEFT :
+							     VSTRIMRIGHT;
+					c = pgetc();
+					if (c == cc)
+						subtype++;
+					else
+						pungetc();
+					break;
+				}
 			}
-			p = strchr(types, c);
-			if (p == NULL)
-				goto badsub;
-			subtype = p - types + VSNORMAL;
 		} else {
 			pungetc();
 		}
