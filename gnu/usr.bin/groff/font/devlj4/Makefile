@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.5 2003/10/21 10:01:20 lukem Exp $
+# $NetBSD: Makefile,v 1.6 2004/07/30 15:04:19 wiz Exp $
 
 # $FreeBSD: src/gnu/usr.bin/groff/font/devlj4/Makefile,v 1.1 2001/04/17 12:36:48 ru Exp $
 
@@ -8,10 +8,13 @@ DEV=		lj4
 LJ4RES=		600
 LJ4PRINT=	${PSPRINT}
 DEVFILES=	DESC \
-		ALBB ALBR AOB AOI AOR CB CBI CI CR GB GBI GI GR \
-		LGB LGI LGR OB OBI OI OR TB TBI TI TR UB UBI UI UR \
-		UCB UCBI UCI UCR CLARENDON CORONET MARIGOLD S \
-		generate/Makefile generate/text.map generate/special.map
+		AB ABI AI ALBB ALBR AOB AOI AOR AR \
+		CB CBI CI CR GB GBI GI GR LGB LGI LGR \
+		OB OBI OI OR TB TBI TI TNRB TNRBI TNRI TNRR TR \
+		UB UBI UI UR UCB UCBI UCI UCR \
+		CLARENDON CORONET MARIGOLD S SYMBOL WINGDINGS \
+		generate/Makefile generate/symbol.map generate/special.awk \
+		generate/special.map generate/text.map generate/wingdings.map
 
 CLEANFILES+=	DESC
 
