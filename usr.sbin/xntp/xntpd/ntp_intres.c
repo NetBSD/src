@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_intres.c,v 1.3 1998/03/06 18:17:21 christos Exp $	*/
+/*	$NetBSD: ntp_intres.c,v 1.4 2000/01/21 17:08:40 mycroft Exp $	*/
 
 /*
  * ripped off from ../xnptres/xntpres.c by Greg Troxel 4/2/92
@@ -131,9 +131,9 @@ char *req_file;		/* name of the file with configuration info */
 
 
 extern int debug;		/* use global debug flag */
-#ifndef SYS_WINNT
+#ifdef NEED_DECLARATION_ERRNO
 extern int errno;
-#endif /* SYS_WINNT */
+#endif /* NEED_DECLARATION_ERRNO */
 
 static	RETSIGTYPE bong		P((int));
 static	void	checkparent	P((void));
