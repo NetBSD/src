@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_subr.c,v 1.10 2000/11/27 08:39:40 chs Exp $	*/
+/*	$NetBSD: coda_subr.c,v 1.11 2001/04/30 03:30:45 lukem Exp $	*/
 
 /*
  * 
@@ -423,8 +423,8 @@ int handleDownCall(opcode, out)
 	      cp->c_flags &= ~C_VATTR;
 	      if (CTOV(cp)->v_flag & VTEXT)
 		  error = coda_vmflush(cp);
-	      CODADEBUG(CODA_ZAPFILE, myprintf(("zapfile: fid = (%lx.%lx.%lx), 
-                                              refcnt = %d, error = %d\n",
+	      CODADEBUG(CODA_ZAPFILE, myprintf((
+		    "zapfile: fid = (%lx.%lx.%lx), refcnt = %d, error = %d\n",
 					      cp->c_fid.Volume, 
 					      cp->c_fid.Vnode, 
 					      cp->c_fid.Unique, 
@@ -451,8 +451,9 @@ int handleDownCall(opcode, out)
 	      cp->c_flags &= ~C_VATTR;
 	      coda_nc_zapParentfid(&out->coda_zapdir.CodaFid, IS_DOWNCALL);     
 	      
-	      CODADEBUG(CODA_ZAPDIR, myprintf(("zapdir: fid = (%lx.%lx.%lx), 
-                                          refcnt = %d\n",cp->c_fid.Volume, 
+	      CODADEBUG(CODA_ZAPDIR, myprintf((
+		    "zapdir: fid = (%lx.%lx.%lx), refcnt = %d\n",
+					     cp->c_fid.Volume, 
 					     cp->c_fid.Vnode, 
 					     cp->c_fid.Unique, 
 					     CTOV(cp)->v_usecount - 1)););
