@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ze.c,v 1.1 1998/07/01 10:52:11 ragge Exp $	*/
+/*	$NetBSD: if_ze.c,v 1.2 1999/03/25 23:16:09 thorpej Exp $	*/
 /*
  * Copyright (c) 1998 James R. Maynard III.  All rights reserved.
  *
@@ -62,9 +62,6 @@ struct netif_driver ze_driver = {
 
 #define NRCV 5				/* allocate 5 receive descriptors */
 #define NXMT 5				/* and 5 transmit - must be >1 */
-#define ETHER_MAX_LEN 1518		/* maximum Ethernet frame */
-#define ETHER_MIN_LEN 64		/* minimum Ethernet frame */
-#define ETHER_ADDR_LEN 6		/* length of an Ethernet address */
 #define SETUP_FRAME_LEN 128		/* length of the setup frame */
 
 /* allocate a buffer on an octaword boundary */
