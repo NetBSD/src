@@ -1,4 +1,4 @@
-#	$NetBSD: sup.netbsd.org,v 1.4 1999/02/16 08:22:19 abs Exp $
+#	$NetBSD: sup.netbsd.org,v 1.4.10.1 2000/08/10 23:15:24 soda Exp $
 #
 # Example supfile for sup.netbsd.org.
 #
@@ -11,9 +11,6 @@ base=/usr prefix=/usr backup use-rel-suffix compress
 
 current release=pkgsrc host=sup.netbsd.org hostbase=/ftp/pub \
 base=/usr prefix=/usr backup use-rel-suffix compress delete
-
-current release=security host=sup.netbsd.org hostbase=/ftp/pub \
-base=/usr prefix=/usr backup use-rel-suffix compress
 
 current release=xsrc host=sup.netbsd.org hostbase=/ftp/pub \
 base=/usr prefix=/usr backup use-rel-suffix compress
