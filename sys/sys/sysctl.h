@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.89 2003/02/02 20:33:08 kleink Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.90 2003/02/10 00:35:15 atatat Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -195,7 +195,8 @@ struct ctlname {
 #define	KERN_POSIX_TIMERS	69	/* int: POSIX Timers option */
 #define	KERN_POSIX_SPIN_LOCKS	70	/* int: POSIX Spin Locks option */
 #define	KERN_POSIX_READER_WRITER_LOCKS 71 /* int: POSIX R/W Locks option */
-#define	KERN_MAXID		72	/* number of valid kern ids */
+#define	KERN_DUMP_ON_PANIC	72	/* int: dump on panic */
+#define	KERN_MAXID		73	/* number of valid kern ids */
 
 
 #define	CTL_KERN_NAMES { \
@@ -271,6 +272,7 @@ struct ctlname {
 	{ "posix_timers", CTLTYPE_INT }, \
 	{ "posix_spin_locks", CTLTYPE_INT }, \
 	{ "posix_reader_writer_locks", CTLTYPE_INT }, \
+	{ "dump_on_panic", CTLTYPE_INT}, \
 }
 
 /*

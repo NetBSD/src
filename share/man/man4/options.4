@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.193 2003/02/02 22:53:57 jmmv Exp $
+.\"	$NetBSD: options.4,v 1.194 2003/02/10 00:35:17 atatat Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -1705,6 +1705,20 @@ will be returned as the hard limit for
 See
 .Pa /usr/include/machine/vmparam.h
 for the port-specific default.
+.It Cd options DUMP_ON_PANIC=integer
+Defaults to one.
+If set to zero, the kernel will not dump to the dump device when
+it panics, though dumps can still be forced via
+.Xr ddb 4
+with the
+.Dq sync
+command.
+Note that this sets the value of the
+.Em kern.dump_on_panic
+.Xr sysctl 3
+variable which may be changed at run time -- see
+.Xr sysctl 8
+for details.
 .El
 .Ss amiga-specific Options
 .Bl -ohang
