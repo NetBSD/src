@@ -1,4 +1,4 @@
-/*	$NetBSD: lib.c,v 1.22 2000/01/13 00:05:32 mycroft Exp $	*/
+/*	$NetBSD: lib.c,v 1.22.2.1 2000/12/26 01:20:23 jhawk Exp $	*/
 
 /*
  *	- library routines
@@ -48,7 +48,7 @@ search_library(fd, entry)
 	register char  *name;
 	register struct file_entry *subentry;
 
-	if (!(link_mode & FORCEARCHIVE) && !undefined_global_sym_count)
+	if (!(entry->flags & E_FORCE_ARCHIVE) && !undefined_global_sym_count)
 		return;
 
 	/* Examine its first member, which starts SARMAG bytes in.  */
@@ -240,7 +240,7 @@ symdef_library(fd, entry, member_length)
 		 */
 
 		for (i = 0; (i < nsymdefs &&
-					((link_mode & FORCEARCHIVE) ||
+					((entry->flags & E_FORCE_ARCHIVE) ||
 					undefined_global_sym_count ||
 					common_defined_global_count)); i++) {
 
@@ -276,7 +276,7 @@ symdef_library(fd, entry, member_length)
 			 * archive members to be searched for definitions
 			 * satisfying undefined shared object symbols.
 			 */
-			if (!(link_mode & FORCEARCHIVE) &&
+			if (!(entry->flags & E_FORCE_ARCHIVE) &&
 				(!sp || sp->defined ||
 					(!(sp->flags & GS_REFERENCED) &&
 						!sp->sorefs)))
@@ -314,7 +314,7 @@ symdef_library(fd, entry, member_length)
 			 * load.
 			 */
 
-			if (!(link_mode & FORCEARCHIVE) &&
+			if (!(entry->flags & E_FORCE_ARCHIVE) &&
 					!subfile_wanted_p(subentry)) {
 				if (subentry->symbols)
 					free(subentry->symbols);
@@ -377,7 +377,7 @@ linear_library(fd, entry)
 	struct	file_entry *prev = 0;
 	int	this_subfile_offset = SARMAG;
 
-	while ((link_mode & FORCEARCHIVE) ||
+	while ((entry->flags & E_FORCE_ARCHIVE) ||
 		undefined_global_sym_count || common_defined_global_count) {
 
 		int			member_length;
@@ -394,7 +394,7 @@ linear_library(fd, entry)
 		subentry->strings = (char *)malloc(subentry->string_size);
 		read_entry_strings(fd, subentry);
 
-		if (!(link_mode & FORCEARCHIVE) &&
+		if (!(entry->flags & E_FORCE_ARCHIVE) &&
 		    !subfile_wanted_p(subentry)) {
 			if (subentry->symbols)
 				free(subentry->symbols);
