@@ -1,4 +1,4 @@
-/*	$NetBSD: softfloat.h,v 1.3 2002/02/21 07:38:17 itojun Exp $	*/
+/*	$NetBSD: softfloat.h,v 1.4 2002/05/22 00:01:35 bjh21 Exp $	*/
 
 /* This is a derivative work. */
 
@@ -124,7 +124,7 @@ enum {
 Software IEC/IEEE floating-point rounding mode.
 -------------------------------------------------------------------------------
 */
-extern int float_rounding_mode;
+extern fp_rnd float_rounding_mode;
 enum {
     float_round_nearest_even = FP_RN,
     float_round_to_zero      = FP_RZ,
@@ -137,7 +137,7 @@ enum {
 Software IEC/IEEE floating-point exception flags.
 -------------------------------------------------------------------------------
 */
-extern int float_exception_flags;
+extern fp_except float_exception_flags;
 enum {
     float_flag_inexact   =  FP_X_IMP,
     float_flag_underflow =  FP_X_UFL,
