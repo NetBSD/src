@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.151 2003/04/01 20:54:23 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.152 2003/05/08 01:04:36 fvdl Exp $	*/
 
 /*
  *
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.151 2003/04/01 20:54:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.152 2003/05/08 01:04:36 fvdl Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
@@ -3318,7 +3318,7 @@ pmap_tlb_shootnow(int32_t cpumask)
 			panic("TLB IPI rendezvous failed (mask %x)",
 			    self->ci_tlb_ipi_mask);
 #else
-		/* XXX insert pause instruction */
+		x86_pause();
 		;
 #endif
 #endif
