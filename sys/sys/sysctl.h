@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.47 2000/05/27 15:28:58 simonb Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.48 2000/06/02 15:53:05 simonb Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -163,7 +163,8 @@ struct ctlname {
 #define	KERN_FSCALE		49	/* int: fixpt FSCALE */
 #define	KERN_CCPU		50	/* int: fixpt ccpu */
 #define	KERN_CP_TIME		51	/* struct: cpu time counters */
-#define	KERN_MAXID		52	/* number of valid kern ids */
+#define	KERN_SYSVIPC_INFO	52	/* number of valid kern ids */
+#define	KERN_MAXID		53	/* number of valid kern ids */
 
 #define CTL_KERN_NAMES { \
 	{ 0, 0 }, \
@@ -218,15 +219,8 @@ struct ctlname {
 	{ "fscale", CTLTYPE_INT }, \
 	{ "ccpu", CTLTYPE_INT }, \
 	{ "cp_time", CTLTYPE_STRUCT }, \
+	{ "sysvipc_info", CTLTYPE_STRUCT }, \
 }
-
-/*
- * KERN_PROC_ARGS subtypes
- */
-#define	KERN_PROC_ARGV		1	/* argv */
-#define	KERN_PROC_NARGV		2	/* number of strings in above */
-#define	KERN_PROC_ENV		3	/* environ */
-#define	KERN_PROC_NENV		4	/* number of strings in above */
 
 /*
  * KERN_PROC subtypes
@@ -402,6 +396,20 @@ struct kinfo_proc2 {
 	u_int32_t p_uctime_usec;	/* STRUCT TIMEVAL: child u+s time. */
 };
 
+/*
+ * KERN_PROC_ARGS subtypes
+ */
+#define	KERN_PROC_ARGV		1	/* argv */
+#define	KERN_PROC_NARGV		2	/* number of strings in above */
+#define	KERN_PROC_ENV		3	/* environ */
+#define	KERN_PROC_NENV		4	/* number of strings in above */
+
+/*
+ * KERN_SYSVIPC_INFO subtypes
+ */
+#define	KERN_SYSVIPC_MSG_INFO		1	/* msginfo and msqid_ds */
+#define	KERN_SYSVIPC_SEM_INFO		2	/* seminfo and semid_ds */
+#define	KERN_SYSVIPC_SHM_INFO		3	/* shminfo and shmid_ds */
 
 /*
  * CTL_HW identifiers
@@ -615,12 +623,11 @@ int sysctl_string __P((void *, size_t *, void *, size_t, char *, int));
 int sysctl_rdstring __P((void *, size_t *, void *, char *));
 int sysctl_struct __P((void *, size_t *, void *, size_t, void *, int));
 int sysctl_rdstruct __P((void *, size_t *, void *, void *, int));
-int sysctl_file __P((char *, size_t *));
 struct radix_node;
 struct walkarg;
-int sysctl_clockrate __P((char *, size_t *));
+int sysctl_clockrate __P((void *, size_t *));
 int sysctl_vnode __P((char *, size_t *, struct proc *));
-int sysctl_ntptime __P((char *, size_t *));
+int sysctl_ntptime __P((void *, size_t *));
 #ifdef GPROF
 int sysctl_doprof __P((int *, u_int, void *, size_t *, void *, size_t));
 #endif

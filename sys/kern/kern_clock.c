@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.58 2000/05/29 23:48:33 mycroft Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.59 2000/06/02 15:53:04 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -1596,7 +1596,7 @@ hardpps(tvp, usec)
  */
 int
 sysctl_clockrate(where, sizep)
-	char *where;
+	void *where;
 	size_t *sizep;
 {
 	struct clockinfo clkinfo;

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_sem.c,v 1.37 2000/05/27 21:00:25 sommerfeld Exp $	*/
+/*	$NetBSD: sysv_sem.c,v 1.38 2000/06/02 15:53:05 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -48,16 +48,18 @@
 #define SYSVSEM
 
 #include <sys/param.h>
-#include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/proc.h>
 #include <sys/sem.h>
-#include <sys/malloc.h>
-
-#include <sys/mount.h>
+#include <vm/vm.h>		/* XXX for <sys/sysctl.h> */
+#include <sys/sysctl.h>
+#include <sys/mount.h>		/* XXX for <sys/syscallargs.h> */
 #include <sys/syscallargs.h>
 
 int	semtot = 0;
+struct	semid_ds *sema;		/* semaphore id pool */
+struct	__sem *sem;		/* semaphore pool */
+struct	sem_undo *semu_list;	/* list of active undo structures */
+int	*semu;			/* undo structure pool */
 
 #ifdef SEM_DEBUG
 #define SEM_PRINTF(a) printf a
