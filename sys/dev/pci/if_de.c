@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.45 1997/06/09 00:34:18 thorpej Exp $	*/
+/*	$NetBSD: if_de.c,v 1.46 1997/07/19 09:49:39 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -4799,10 +4799,8 @@ tulip_pci_attach(
 #define	PCI_CONF_WRITE(r, v)	pci_conf_write(pa->pa_pc, pa->pa_tag, (r), (v))
 #define	PCI_CONF_READ(r)	pci_conf_read(pa->pa_pc, pa->pa_tag, (r))
 #define	PCI_GETBUSDEVINFO(sc)	do { \
-	int busno, devno, funcno; \
-	pci_decompose_tag(pa->pa_pc, pa->pa_tag, &busno, &devno, &funcno); \
-	(sc)->tulip_pci_busno = busno; \
-	(sc)->tulip_pci_devno = devno; \
+	(sc)->tulip_pci_busno = parent; \
+	(sc)->tulip_pci_devno = pa->pa_device; \
     } while (0)
 #endif /* __NetBSD__ */
     int retval, idx;

@@ -1,4 +1,4 @@
-/* $NetBSD: pci_eb164.c,v 1.7 1997/05/31 05:46:08 cgd Exp $ */
+/* $NetBSD: pci_eb164.c,v 1.8 1997/07/19 09:49:55 cgd Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -30,7 +30,7 @@
 #include <machine/options.h>		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_eb164.c,v 1.7 1997/05/31 05:46:08 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_eb164.c,v 1.8 1997/07/19 09:49:55 cgd Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -144,7 +144,7 @@ dec_eb164_intr_map(ccv, bustag, buspin, line, ihp)
                 return 1;
         }
 
-	pci_decompose_tag(pc, bustag, NULL, &device, NULL);
+	alpha_pci_decompose_tag(pc, bustag, NULL, &device, NULL);
 	switch (device) {
 #if 0	/* THIS CODE SHOULD NEVER BE CALLED FOR THE SIO */
 	case 8: 					/* SIO */
