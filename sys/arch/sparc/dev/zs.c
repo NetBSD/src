@@ -42,7 +42,7 @@
  *	@(#)zs.c	8.1 (Berkeley) 7/19/93
  *
  * from: Header: zs.c,v 1.30 93/07/19 23:44:42 torek Exp 
- * $Id: zs.c,v 1.7 1994/05/14 06:39:05 deraadt Exp $
+ * $Id: zs.c,v 1.8 1994/05/19 06:53:07 deraadt Exp $
  */
 
 /*
@@ -254,7 +254,6 @@ zsattach(struct device *parent, struct device *dev, void *aux)
 	tp->t_dev = makedev(ZSMAJOR, unit);
 	tp->t_oproc = zsstart;
 	tp->t_param = zsparam;
-	/*tp->t_stop = zsstop;*/
 	if ((ctp = zs_checkcons(zi, unit, cs)) != NULL)
 		tp = ctp;
 	cs->cs_ttyp = tp;
@@ -281,7 +280,6 @@ zsattach(struct device *parent, struct device *dev, void *aux)
 	tp->t_dev = makedev(ZSMAJOR, unit);
 	tp->t_oproc = zsstart;
 	tp->t_param = zsparam;
-	/*tp->t_stop = zsstop;*/
 	if ((ctp = zs_checkcons(zi, unit, cs)) != NULL)
 		tp = ctp;
 	cs->cs_ttyp = tp;
@@ -435,7 +433,6 @@ zs_checkcons(struct zsinfo *zi, int unit, struct zs_chanstate *cs)
 	}
 	if (o) {
 		tp->t_oproc = zsstart;
-		/*tp->t_stop = zsstop;*/
 	}
 	printf("%s%c: console %s\n",
 	    zi->zi_dev.dv_xname, (unit & 1) + 'a', i ? (o ? "i/o" : i) : o);
