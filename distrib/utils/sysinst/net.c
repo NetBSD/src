@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.88 2003/07/19 22:07:37 abs Exp $	*/
+/*	$NetBSD: net.c,v 1.89 2003/07/22 08:30:10 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -694,6 +694,7 @@ again:
 	/*
 	 * wait a couple of seconds for the interface to go live.
 	 */
+	msg_display_add(MSG_wait_network);
 	sleep(5);
 
 	/*
