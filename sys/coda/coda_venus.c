@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_venus.c,v 1.4 1998/09/15 02:02:59 rvb Exp $	*/
+/*	$NetBSD: coda_venus.c,v 1.5 1998/10/28 19:54:50 rvb Exp $	*/
 
 /*
  * 
@@ -113,6 +113,7 @@
 	  if (from & FWRITE)  to |= C_O_WRITE; 		\
 	  if (from & O_TRUNC) to |= C_O_TRUNC; 		\
 	  if (from & O_EXCL)  to |= C_O_EXCL; 		\
+	  if (from & O_CREAT) to |= C_O_CREAT;		\
     } while (0)
 
 #define CNV_VV2V_ATTR(top, fromp) \
