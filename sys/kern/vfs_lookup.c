@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.31 1999/07/08 01:06:01 wrstuden Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.32 1999/08/03 18:17:24 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -281,6 +281,7 @@ lookup(ndp)
 	int rdonly;			/* lookup read-only flag bit */
 	int error = 0;
 	int slashes;
+	int dpunlocked = 0;		/* dp has already been unlocked */
 	struct componentname *cnp = &ndp->ni_cnd;
 
 	/*
@@ -509,11 +510,14 @@ unionlookup:
 	       (cnp->cn_flags & NOCROSSMOUNT) == 0) {
 		if (vfs_busy(mp, 0, 0))
 			continue;
+		VOP_UNLOCK(dp, 0);
 		error = VFS_ROOT(mp, &tdp);
 		vfs_unbusy(mp);
-		if (error)
+		if (error) {
+			dpunlocked = 1;
 			goto bad2;
-		vput(dp);
+		}
+		vrele(dp);
 		ndp->ni_vp = dp = tdp;
 	}
 
@@ -579,7 +583,10 @@ bad2:
 		VOP_UNLOCK(ndp->ni_dvp, 0);
 	vrele(ndp->ni_dvp);
 bad:
-	vput(dp);
+	if (dpunlocked)
+		vrele(dp);
+	else
+		vput(dp);
 	ndp->ni_vp = NULL;
 	return (error);
 }
