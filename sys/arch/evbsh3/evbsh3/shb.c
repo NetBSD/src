@@ -1,4 +1,4 @@
-/*	$NetBSD: shb.c,v 1.1 1999/09/13 10:30:27 itojun Exp $	*/
+/*	$NetBSD: shb.c,v 1.2 1999/09/16 21:22:40 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.  All rights reserved.
@@ -487,6 +487,7 @@ check_ipending(p1, p2, p3, p4, frame)
 	return 1;
 }
 
+#if !defined(SH4)
 void
 mask_irq(irq)
 	int irq;
@@ -495,8 +496,77 @@ mask_irq(irq)
 	case TMU1_IRQ:
 		SHREG_IPRA &= ~((15)<<8);
 		break;
+#if defined(SH7709) || defined(SH7709A)
 	case SCIF_IRQ:
 		SHREG_IPRE &= ~((15)<<4);
+		break;
+#endif
+#if 0
+	case IRQ0_IRQ:
+		SHREG_IPRC &= ~(15);
+		break;
+	case IRQ1_IRQ:
+		SHREG_IPRC &= ~((15)<<4);
+		break;
+	case IRQ2_IRQ:
+		SHREG_IPRC &= ~((15)<<8);
+		break;
+	case DMAC_IRQ:
+		SHREG_IPRE &= ~((15)<<12);
+		break;
+#endif
+	default:
+		if (irq < 16)
+			printf("masked unknown irq(%d)!\n", irq);
+	}
+}
+
+void
+unmask_irq(int irq)
+{
+
+	switch (irq) {
+	case TMU1_IRQ:
+		SHREG_IPRA |= ((15 - irq)<<8);
+		break;
+#if defined(SH7709) || defined(SH7709A)
+	case SCIF_IRQ:
+		SHREG_IPRE |= ((15 - irq)<<4);
+		break;
+#endif
+#if 0
+	case IRQ0_IRQ:
+		SHREG_IPRC |= (15 - irq);
+		break;
+	case IRQ1_IRQ:
+		SHREG_IPRC |= ((15 - irq)<<4);
+		break;
+	case IRQ2_IRQ:
+		SHREG_IPRC |= ((15 - irq)<<8);
+		break;
+	case DMAC_IRQ:
+		SHREG_IPRE |= ((15 - irq)<<12);
+		break;
+#endif
+	default:
+		if (irq < 16)
+			printf("unmasked unknown irq(%d)!\n", irq);
+	}
+}
+#else
+void
+mask_irq(irq)
+	int irq;
+{
+	switch (irq) {
+	case TMU1_IRQ:
+		SHREG_IPRA &= ~((15)<<8);
+		break;
+	case SCI_IRQ:
+		SHREG_IPRB &= ~((15)<<4);
+		break;
+	case SCIF_IRQ:
+		SHREG_IPRC &= ~((15)<<4);
 		break;
 #if 0
 	case IRQ0_IRQ:
@@ -526,8 +596,11 @@ unmask_irq(int irq)
 	case TMU1_IRQ:
 		SHREG_IPRA |= ((15 - irq)<<8);
 		break;
+	case SCI_IRQ:
+		SHREG_IPRB |= ((15 - irq)<<4);
+		break;
 	case SCIF_IRQ:
-		SHREG_IPRE |= ((15 - irq)<<4);
+		SHREG_IPRC |= ((15 - irq)<<4);
 		break;
 #if 0
 	case IRQ0_IRQ:
@@ -548,6 +621,7 @@ unmask_irq(int irq)
 			printf("unmasked unknown irq(%d)!\n", irq);
 	}
 }
+#endif
 
 void
 init_soft_intr_handler(void)
