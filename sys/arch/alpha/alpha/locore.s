@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.87 2000/12/13 03:16:37 mycroft Exp $ */
+/* $NetBSD: locore.s,v 1.88 2001/01/19 18:51:17 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.87 2000/12/13 03:16:37 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.88 2001/01/19 18:51:17 thorpej Exp $");
 
 #include "assym.h"
 
@@ -325,16 +325,15 @@ LEAF(exception_return, 1)			/* XXX should be NESTED */
 
 	/* GET_CPUINFO clobbers v0, t0, t8...t11. */
 	GET_CPUINFO
-	ldq	t2, CPU_INFO_ASTPENDING(v0)	/* AST pending? */
+	ldq	t1, CPU_INFO_CURPROC(v0)
+	ldl	t2, P_MD_ASTPENDING(t1)		/* AST pending? */
 	bne	t2, 6f				/* yes */
 	/* no: return & deal with FP */
 
 	/*
 	 * We are going back to usermode.  Enable the FPU based on whether
-	 * the current proc is fpcurproc.  v0 already contains the cpu_info
-	 * pointer from above.
+	 * the current proc is fpcurproc.
 	 */
-	ldq	t1, CPU_INFO_CURPROC(v0)
 	ldq	t2, CPU_INFO_FPCURPROC(v0)
 	cmpeq	t1, t2, t1
 	mov	zero, a0
@@ -364,7 +363,7 @@ LEAF(exception_return, 1)			/* XXX should be NESTED */
 	br	2b
 
 	/* We've got an AST */
-6:	stq	zero, CPU_INFO_ASTPENDING(v0)	/* no AST pending */
+6:	stl	zero, P_MD_ASTPENDING(t1)	/* no AST pending */
 
 	ldiq	a0, ALPHA_PSL_IPL_0		/* drop IPL to zero */
 	call_pal PAL_OSF1_swpipl

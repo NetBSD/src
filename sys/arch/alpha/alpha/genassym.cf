@@ -1,4 +1,4 @@
-# $NetBSD: genassym.cf,v 1.2 2000/12/13 03:16:37 mycroft Exp $
+# $NetBSD: genassym.cf,v 1.3 2001/01/19 18:51:17 thorpej Exp $
 
 #
 # Copyright (c) 1994, 1995 Gordon W. Ross
@@ -123,6 +123,7 @@ define	P_CPU			offsetof(struct proc, p_cpu)
 define	P_MD_FLAGS		offsetof(struct proc, p_md.md_flags)
 define	P_MD_PCBPADDR		offsetof(struct proc, p_md.md_pcbpaddr)
 define	P_MD_SYSCALL		offsetof(struct proc, p_md.md_syscall)
+define	P_MD_ASTPENDING		offsetof(struct proc, p_md.md_astpending)
 define	PH_LINK			offsetof(struct prochd, ph_link)
 define	PH_RLINK		offsetof(struct prochd, ph_rlink)
 
@@ -172,5 +173,4 @@ define	CPU_INFO_FPCURPROC	offsetof(struct cpu_info, ci_fpcurproc)
 define	CPU_INFO_CURPCB		offsetof(struct cpu_info, ci_curpcb)
 define	CPU_INFO_IDLE_PCB_PADDR	offsetof(struct cpu_info, ci_idle_pcb_paddr)
 define	CPU_INFO_WANT_RESCHED	offsetof(struct cpu_info, ci_want_resched)
-define	CPU_INFO_ASTPENDING	offsetof(struct cpu_info, ci_astpending)
 define	CPU_INFO_SIZEOF		sizeof(struct cpu_info)
