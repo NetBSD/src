@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.70 2001/04/26 03:10:45 ross Exp $ */
+/* $NetBSD: trap.c,v 1.71 2001/04/26 04:21:35 ross Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.70 2001/04/26 03:10:45 ross Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.71 2001/04/26 04:21:35 ross Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -265,9 +265,7 @@ trap(const u_long a0, const u_long a1, const u_long a2, const u_long entry,
 		 * NaNs, or denorms, and maintain FPCR corrections.
 		 */
 		if (user) {
-			KERNEL_PROC_LOCK(p);
 			i = alpha_fp_complete(a0, a1, p, &ucode);
-			KERNEL_PROC_UNLOCK(p);
 			if (i == 0)
 				goto out;
 			break;
