@@ -49,6 +49,7 @@ static char sccsid[] = "@(#)buf.c	5.5 (Berkeley) 3/28/93";
 
 #include "ed.h"
 
+extern char errmsg[];
 extern line_t line0;
 
 FILE *sfp;				/* scratch file pointer */
@@ -71,13 +72,13 @@ gettxt(lp)
 	if (sfseek != lp->seek) {
 		sfseek = lp->seek;
 		if (fseek(sfp, sfseek, SEEK_SET) < 0) {
-			fprintf(stderr, "cannot seek temp file\n");
+			sprintf(errmsg, "cannot seek temp file");
 			return (char *) ERR;
 		}
 	}
 	len = lp->len & ~ACTV;
 	if ((ct = fread(txtbuf, sizeof(char), len, sfp)) <  0 || ct != len) {
-		fprintf(stderr, "cannot read temp file\n");
+		sprintf(errmsg, "cannot read temp file");
 		return (char *) ERR;
 	}
 	sfseek += len;				/* update file position */
@@ -100,7 +101,7 @@ puttxt(cs)
 	char *s;
 
 	if ((lp = (line_t *) malloc(sizeof(line_t))) == NULL) {
-		fprintf(stderr, "out of memory\n");
+		sprintf(errmsg, "out of memory");
 		return (char *) ERR;
 	}
 	/* assert: cs is '\n' terminated */
@@ -110,7 +111,7 @@ puttxt(cs)
 	/* out of position */
 	if (seek_write) {
 		if (fseek(sfp, 0L, SEEK_END) < 0) {
-			fprintf(stderr, "cannot seek temp file\n");
+			sprintf(errmsg, "cannot seek temp file");
 			return (char *) ERR;
 		}
 		sfseek = ftell(sfp);
@@ -119,7 +120,7 @@ puttxt(cs)
 	/* assert: spl1() */
 	if ((ct = fwrite(cs, sizeof(char), len, sfp)) < 0 || ct != len) {
 		sfseek = -1;
-		fprintf(stderr, "cannot write temp file\n");
+		sprintf(errmsg, "cannot write temp file");
 		return (char *) ERR;
 	}
 	lp->len = len;
@@ -157,19 +158,19 @@ getptr(n)
 
 	spl1();
 	if (n > on)
-		if (n <= (on + lastln) >> 1) {
+		if (n <= (on + lastln) >> 1)
 			for (; on < n; on++)
 				lp = lp->next;
-		} else {
+		else {
 			lp = line0.prev;
 			for (on = lastln; on > n; on--)
 				lp = lp->prev;
 		}
 	else
-		if (n >= on >> 1) {
+		if (n >= on >> 1)
 			for (; on > n; on--)
 				lp = lp->prev;
-		} else {
+		else {
 			lp = &line0;
 			for (on = 0; on < n; on++)
 				lp = lp->next;
@@ -186,19 +187,20 @@ sbopen()
 {
 	strcpy(sfn, "/tmp/ed.XXXXXX");
 	if (mktemp(sfn) == NULL || (sfp = fopen(sfn, "w+")) == NULL) {
-		fprintf(stderr, "cannot open temp file\n");
+		sprintf(errmsg, "cannot open temp file");
 		return ERR;
 	}
 	return 0;
 }
 
+
 /* sbclose: close scratch file */
 sbclose()
 {
 	if (sfp) {
-		unlink(sfn);
 		fclose(sfp);
 		sfp = NULL;
+		unlink(sfn);
 	}
 	sfseek = seek_write = 0;
 }

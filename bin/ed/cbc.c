@@ -160,13 +160,16 @@ getkey()
 	return 0;
 }
 
+
+extern char errmsg[];
+
 /*
  * print a warning message and, possibly, terminate
  */
 err(s)
 	char *s;		/* the message */
 {
-	(void)fprintf(stderr, "?%s\n", s ? s : strerror(errno));
+	(void)sprintf(errmsg, "%s", s ? s : strerror(errno));
 }
 
 /*
@@ -371,6 +374,8 @@ cbcdec(msgbuf, fp)
 	}
 	if (n > 0)
 		err("decryption failed (incomplete block)");
+	else if (n < 0)
+		err("cannot read file");
 	return EOF;
 }
 #endif	/* DES */

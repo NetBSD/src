@@ -96,6 +96,7 @@ static char sccsid[] = "@(#)ed.c	5.5 (Berkeley) 3/28/93";
 #include <setjmp.h>
 #include <signal.h>
 #include <pwd.h>
+#include <sys/ioctl.h>
 
 #include "ed.h"
 
@@ -109,6 +110,10 @@ long lastln;			/* last line number */
 char fnp[MAXFNAME] = "";	/* output file name */
 char *prompt;			/* command-line prompt */
 char *defprompt = "*";		/* default prompt */
+int lineno;			/* script line number */
+struct winsize ws;		/* window size structure */
+int rows = 22;			/* scroll length: ws_row - 2 */
+int cols = 72;			/* wrap column: ws_col - 8 */
 
 
 /* global flags */
@@ -159,16 +164,15 @@ main(argc, argv)
 		argc--;
 		argv++;
 	}
-	if (sbopen() < 0)
-		if (isatty(0))
-			fputs("?\n", stderr);
-		else	exit(2);
 	requeue(&line0, &line0);
-	if (argc && doread(0, strcpy(fnp, *argv)) < 0)
-		if (isatty(0))
-			fputs("?\n", stderr);
-		else	quit(2);
+	if (sbopen() < 0 || argc && doread(0, strcpy(fnp, *argv)) < 0) {
+		fprintf(stderr, "%s\n?\n", errmsg);
+		if (!isatty(0)) quit(2);
+	}
+	dowinch(SIGWINCH);
 	/* assert: reliable signals! */
+	if (isatty(0))
+		signal(SIGWINCH, dowinch);
 	if (signal(SIGHUP, SIG_IGN) != SIG_IGN)
 		signal(SIGHUP, onhup);
 	if (signal(SIGINT, SIG_IGN) != SIG_IGN) {
@@ -219,9 +223,11 @@ main(argc, argv)
 			sprintf(errmsg, "file modified");
 			break;
 		default:
-			if (isatty(0))
-				fputs("?\n", stderr);
-			else	quit(2);
+			fputs("?\n", stderr);
+			if (!isatty(0)) {
+				fprintf(stderr, garrulous ? "script, line %d: %s\n" : "", lineno, errmsg);
+				quit(2);
+			}
 			break;
 		}
 	}
@@ -236,24 +242,17 @@ long	line1, line2, nlines;
 getlist()
 {
 	long num;
-	int cmdsw = 0;
 
 	nlines = line2 = 0;
 	while ((num = getone()) >= 0) {
-		cmdsw = 0;
 		line1 = line2;
 		line2 = num;
 		nlines++;
 		if (*ibufp != ',' && *ibufp != ';')
 			break;
-		else if (*ibufp++ == ';') {
+		else if (*ibufp++ == ';')
 			curln = num;
-			nlines = 0;
-			cmdsw = 1;
-		}
 	}
-	if (cmdsw)
-		nlines++;
 	nlines = min(nlines, 2);
 	if (nlines == 0)
 		line2 = curln;
@@ -492,6 +491,22 @@ doglob()
 }
 
 
+/* GETLINE3: get a legal address from the command buffer */
+#define GETLINE3(num) \
+{ \
+	long ol1, ol2; \
+\
+	ol1 = line1, ol2 = line2; \
+	if (getlist() < 0) \
+		return ERR; \
+	if (line2 < 0 || lastln < line2) { \
+		sprintf(errmsg, "invalid address"); \
+		return ERR; \
+	} \
+	num = line2; \
+	line1 = ol1, line2 = ol2; \
+}
+
 /* sgflags */
 #define SGG 001		/* complement previous global substitute suffix */
 #define SGP 002		/* complement previous print suffix */
@@ -508,7 +523,6 @@ docmd(glob)
 {
 	static pattern_t *subpat = NULL;
 	static int sgflag = 0;
-	static int zc = 22;
 	static char rhs[MAXLINE];
 	static char cmdbuf[MAXLINE];
 
@@ -525,7 +539,7 @@ docmd(glob)
 	switch(*ibufp++) {
 	case '\n':
 		if (deflt(curln + !glob, curln + !glob) < 0
-		 || doprnt(line1, line2, 0) < 0)
+		 || doprnt(line2, line2, 0) < 0)
 			return ERR;
 		break;
 	case '!':
@@ -570,21 +584,13 @@ docmd(glob)
 		if (verbose) printf("!\n");
 		break;
 	case '=':
-		if (nlines > 1) {
-			sprintf(errmsg, "unexpected address");
-			return ERR;
-		}
 		VRFYCMD();
 		printf("%d\n", nlines ? line2 : lastln);
 		break;
 	case 'a':
-		if (nlines > 1) {
-			sprintf(errmsg, "unexpected address range");
-			return ERR;
-		}
 		VRFYCMD();
 		if (!glob) ureset();
-		if (append(line1, glob) < 0)
+		if (append(line2, glob) < 0)
 			return ERR;
 		break;
 	case 'c':
@@ -627,8 +633,10 @@ docmd(glob)
 		if (sbopen() < 0)
 			return ERR;
 		if (*fptr && *fptr != '!') strcpy(fnp, fptr);
-		if (doread(0, *fptr ? fptr : fnp) < 0)
+		if (doread(0, *fptr ? fptr : fnp) < 0) {
+			if (!garrulous) fprintf(stderr, "%s\n", errmsg);
 			return ERR;
+		}
 		ureset();
 		bzero(mark, sizeof mark);
 		modified = FALSE;
@@ -665,13 +673,9 @@ docmd(glob)
 		if (*errmsg) fprintf(stderr, "%s\n", errmsg);
 		break;
 	case 'i':
-		if (nlines > 1 || line1 == 0) {
-			sprintf(errmsg, "unexpected address range");
-			return ERR;
-		}
 		VRFYCMD();
 		if (!glob) ureset();
-		if (append(prevln(line1, lastln), glob) < 0)
+		if (append(prevln(line2, lastln), glob) < 0)
 			return ERR;
 		break;
 	case 'j':
@@ -683,16 +687,12 @@ docmd(glob)
 			return ERR;
 		break;
 	case 'k':
-		if (nlines > 1) {
-			sprintf(errmsg, "unexpected address");
-			return ERR;
-		}
 		if (!islower(c = *ibufp++)) {
 			sprintf(errmsg, "invalid mark character");
 			return ERR;
 		}
 		VRFYCMD();
-		mark[c-'a'] = line1;
+		mark[c-'a'] = line2;
 		break;
 	case 'l':
 		if (deflt(curln, curln) < 0)
@@ -705,19 +705,16 @@ docmd(glob)
 		break;
 	case 'm':
 		/*  Clean but inefficient move.
-		    The cleanness outweighs the inefficiency since the
+		    The inefficiency is outweighed since the requeue
 		    alternative requires special handling by undo(). */
 		if (deflt(curln, curln) < 0)
 			return ERR;
-		if (*ibufp == ',' || *ibufp == ';' || (num = getone()) < 0) {
-			sprintf(errmsg, "invalid address");
-			return ERR;
-		}
-		VRFYCMD();
+		GETLINE3(num);
 		if (line1 <= num && num < line2) {
 			sprintf(errmsg, "invalid destination");
 			return ERR;
 		}
+		VRFYCMD();
 		if (!glob) ureset();
 		if (transfer(num) < 0)
 			return ERR;
@@ -770,21 +767,20 @@ docmd(glob)
 		VRFYCMD();
 		return EOF;
 	case 'r':
-		if (nlines > 1) {
-			sprintf(errmsg, "unexpected address");
-			return ERR;
-		} else if (!isspace(*ibufp)) {
+		if (!isspace(*ibufp)) {
 			sprintf(errmsg, "unexpected command suffix");
 			return ERR;
 		}
-		if (!nlines) line1 = lastln;
+		if (!nlines) line2 = lastln;
 		if ((fptr = getfn()) == NULL)
 			return ERR;
 		VRFYCMD();
 		if (!glob) ureset();
 		if (*fnp == '\0' && *fptr != '!') strcpy(fnp, fptr);
-		if ((num = doread(line1, *fptr ? fptr : fnp)) < 0)
+		if ((num = doread(line2, *fptr ? fptr : fnp)) < 0) {
+			if (!garrulous) fprintf(stderr, "%s\n", errmsg);
 			return ERR;
+		}
 		else if (num != lastln)
 			modified = TRUE;
 		break;
@@ -863,10 +859,7 @@ docmd(glob)
 	case 't':
 		if (deflt(curln, curln) < 0)
 			return ERR;
-		if (*ibufp == ',' || *ibufp == ';' || (num = getone()) < 0) {
-			sprintf(errmsg, "invalid address");
-			return ERR;
-		}
+		GETLINE3(num);
 		VRFYCMD();
 		if (!glob) ureset();
 		if (transfer(num) < 0)
@@ -899,8 +892,10 @@ docmd(glob)
 			return ERR;
 		VRFYCMD();
 		if (*fnp == '\0' && *fptr != '!') strcpy(fnp, fptr);
-		if (dowrite(line1, line2, *fptr ? fptr : fnp, c == 'W' ? "a" : "w") < 0)
+		if (dowrite(line1, line2, *fptr ? fptr : fnp, c == 'W' ? "a" : "w") < 0) {
+			if (!garrulous) fprintf(stderr, "%s\n", errmsg);
 			return ERR;
+		}
 		modified = FALSE;
 		break;
 	case 'x':
@@ -912,20 +907,22 @@ docmd(glob)
 #ifdef DES
 		des = getkey();
 #else
-		fprintf(stderr, "crypt unavailable\n?\n");
+		sprintf(errmsg, "crypt unavailable");
+		return ERR;
 #endif
 		break;
 	case 'z':
 		if (deflt(curln + 1, curln + 1) < 0)
 			return ERR;
 		if (isdigit(*ibufp))
-			zc = strtol(ibufp, &ibufp, 10);
+			rows = strtol(ibufp, &ibufp, 10);
 		VRFYCMD();
-		if (doprnt(line1, min(lastln, line1 + zc - 1), gflag) < 0)
+		if (doprnt(line1, min(lastln, line1 + rows - 1), gflag) < 0)
 			return ERR;
 		gflag = 0;
 		break;
 	default:
+		sprintf(errmsg, "unknown command");
 		return ERR;
 	}
 	return gflag;
@@ -1158,7 +1155,11 @@ subst(pat, sub, gflag)
 	ocl = curln;
 	del(line1, line2);
 	curln = ocl - (line2 - line1 + 1);
-	return (nsubs == 0 && !(gflag & GLB)) ? ERR : 1;
+	if  (nsubs == 0 && !(gflag & GLB)) {
+		sprintf(errmsg, "no match");
+		return ERR;
+	}
+	return 1;
 }
 #else	/* sun */
 
@@ -1201,7 +1202,11 @@ subst(pat, sub, gflag)
 				return ERR;
 		}
 	}
-	return (nsubs == 0 && !(gflag & GLB)) ? ERR : 1;
+	if  (nsubs == 0 && !(gflag & GLB)) {
+		sprintf(errmsg, "no match");
+		return ERR;
+	}
+	return 1;
 }
 #endif	/* sun */
 
@@ -1427,7 +1432,7 @@ prntln(s, n, gflag)
 		col = 8;
 	}
 	for (; *s; s++) {
-		if ((gflag & GLS) && ++col > 71) {
+		if ((gflag & GLS) && ++col > cols) {
 			fputs("\\\n", stdout);
 			col = 1;
 		}
@@ -1493,7 +1498,7 @@ doread(n, fn)
 
 	nullchar = newline_added = 0;
 	if ((fp = (*fn == '!') ? popen(fn + 1, "r") : desopen(esctos(fn), "r")) == NULL) {
-		fprintf(stderr, "cannot open file\n");
+		sprintf(errmsg, "cannot open file");
 		return ERR;
 	}
 	for (curln = n; (len = sgetline(buf, MAXLINE, fp)) > 0; size += len) {
@@ -1532,7 +1537,7 @@ dowrite(n, m, fn, mode)
 	line_t *lp;
 
 	if ((fp = ((*fn == '!') ? popen(fn + 1, "w") : desopen(esctos(fn), mode))) == NULL) {
-		fprintf(stderr, "cannot open file\n");
+		sprintf(errmsg, "cannot open file");
 		return ERR;
 	}
 	if (n && !des)
@@ -1540,7 +1545,7 @@ dowrite(n, m, fn, mode)
 			if ((s = gettxt(lp)) == (char *) ERR)
 				return ERR;
 			else if ((fputs(s, fp) < 0 || putc('\n', fp) < 0)) {
-				fprintf(stderr, "cannot write file\n");
+				sprintf(errmsg, "cannot write file");
 				return ERR;
 			}
 			size += (lp->len & ~ACTV) + 1;		/* +1 '\n' */
@@ -1550,12 +1555,12 @@ dowrite(n, m, fn, mode)
 			if ((s = gettxt(lp)) == (char *) ERR)
 				return ERR;
 			while (*s)
-				if (desputc(*s++, fp) == EOF) {
-					fprintf(stderr, "cannot write file\n");
+				if (desputc(*s++, fp) < 0) {
+					sprintf(errmsg, "cannot write file");
 					return ERR;
 				}
-			if (desputc('\n', fp) == EOF) {
-				fprintf(stderr, "cannot write file\n");
+			if (desputc('\n', fp) < 0) {
+				sprintf(errmsg, "cannot write file");
 				return ERR;
 			}
 			size += (lp->len & ~ACTV) + 1;		/* +1 '\n' */
@@ -1650,14 +1655,13 @@ undo()
 void
 ureset()
 {
-	line_t *lp, *ep;
-	line_t *tmp;
+	line_t *lp, *ep, *tl;
 
 	while (u_p--)
 		if ((ustack[u_p].type ^ usw) == UDEL) {
 			ep = ustack[u_p].t->next;
-			for (lp = ustack[u_p].h; lp != ep; lp = tmp) {
-				tmp = lp->next;
+			for (lp = ustack[u_p].h; lp != ep; lp = tl) {
+				tl = lp->next;
 				free(lp);
 			}
 		}
@@ -1793,6 +1797,7 @@ getline(buf, n)
 			if (i < n - 1) {
 				if ((buf[i++] = c) != '\n')
 					continue;
+				lineno++;		/* script line no. */
 				buf[i] = '\0';
 				return i;
 			}
@@ -1826,7 +1831,7 @@ getcmdv()
 	char *t;
 
 	if ((gbuf = (char *) malloc(m)) == NULL) {
-		fprintf(stderr, "out of memory\n");
+		sprintf(errmsg, "out of memory");
 		return NULL;
 	}
 	strcpy(gbuf, ibufp);
@@ -1838,9 +1843,9 @@ getcmdv()
 		if ((n = getline(ibuf, m)) == 0  || ibuf[n - 1] != '\n'
 		 || (l += n) >= m
 		 && (t = realloc(gbuf, m += sizeof ibuf)) == NULL) {
-			fprintf(stderr, "out of memory\n");
+			sprintf(errmsg, "out of memory");
 			freecmdv();
-			break;
+			return NULL;
 		}
 		gbuf = t;
 		strcat(gbuf, ibuf);
@@ -1860,7 +1865,7 @@ lpdup(lp)
 	line_t *np;
 
 	if ((np = (line_t *) malloc(sizeof(line_t))) == NULL) {
-		fprintf(stderr, "out of memory\n");
+		sprintf(errmsg, "out of memory");
 		return NULL;
 	}
 	np->seek = lp->seek;
@@ -1903,34 +1908,35 @@ getrange(h, t)
 
 
 void
-onhup(i)
-	int i;
+onhup(signo)
+	int signo;
 {
 	if (mutex)
-		sigflags |= SIG_HUP;
-	else	dohup();
+		sigflags |= (1 << signo);
+	else	dohup(signo);
 }
 
 
 void
-onintr(i)
-	int i;
+onintr(signo)
+	int signo;
 {
 	if (mutex)
-		sigflags |= SIG_INT;
-	else	dointr();
+		sigflags |= (1 << signo);
+	else	dointr(signo);
 }
 
 
 char hup[MAXFNAME] = "ed.hup";	/* hup file name */
 
 void
-dohup()
+dohup(signo)
+	int signo;
 {
 	char *s;
 	int n;
 
-	sigflags &= ~SIG_HUP;
+	sigflags &= ~(1 << signo);
 	if (lastln && dowrite(1, lastln, hup, "w") < 0
 	 && (s = getenv("HOME")) != NULL
 	 && (n = strlen(s)) + 8 < sizeof hup) {	/* "ed.hup" + '/' */
@@ -1945,12 +1951,25 @@ dohup()
 
 
 void
-dointr()
+dointr(signo)
+	int signo;
 {
-	sigflags &= ~SIG_INT;
+	sigflags &= ~(1 << signo);
 	fputs("\n?\n", stderr);
 	sprintf(errmsg, "interrupt");
 	longjmp(env, -1);
+}
+
+
+void
+dowinch(signo)
+	int signo;
+{
+	sigflags &= ~(1 << signo);
+	if (ioctl(0, TIOCGWINSZ, (char *) &ws) >= 0) {
+		if (ws.ws_row > 2) rows = ws.ws_row - 2;
+		if (ws.ws_col > 8) cols = ws.ws_col - 8;
+	}
 }
 
 
@@ -1967,3 +1986,5 @@ esctos(s)
 		s++;
 	return file;
 }
+
+
