@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_ec.c,v 1.18 2003/11/03 18:07:10 mycroft Exp $	*/
+/*	$NetBSD: acpi_ec.c,v 1.19 2003/11/12 13:18:24 yamt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -172,7 +172,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.18 2003/11/03 18:07:10 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.19 2003/11/12 13:18:24 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -500,8 +500,7 @@ EcGpeQueryHandler(void *Context)
 		/*
 		 * Evaluate _Qxx to respond to the controller.
 		 */
-		sprintf(qxx, "_Q%02x", Data);
-		strupr(qxx);
+		sprintf(qxx, "_Q%02X", Data);
 		Status = AcpiEvaluateObject(sc->sc_node->ad_handle, qxx,
 		    NULL, NULL);
 
