@@ -1,10 +1,10 @@
-/*	$NetBSD: usbdevs.h,v 1.48 1999/10/11 09:17:22 augustss Exp $	*/
+/*	$NetBSD: usbdevs.h,v 1.49 1999/10/12 11:27:52 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: usbdevs,v 1.48 1999/10/11 09:16:59 augustss Exp 
+ *	NetBSD: usbdevs,v 1.49 1999/10/12 11:25:13 augustss Exp 
  */
 
 /*
@@ -282,6 +282,7 @@
 #define	USB_PRODUCT_ENTREGA_4S	0x0004		/* 4S serial connector */
 #define	USB_PRODUCT_ENTREGA_CENTRONICS	0x0006		/* Centronics connector */
 #define	USB_PRODUCT_ENTREGA_1S9	0x0093		/* 1S9 serial connector */
+#define	USB_PRODUCT_ENTREGA_EZUSB	0x8000		/* EZ-USB */
 #define	USB_PRODUCT_ENTREGA_SERIAL	0x8001		/* DB25 Serial connector */
 
 /* ActiveWire Inc. products */
