@@ -1,4 +1,4 @@
-/*	$NetBSD: isctype.c,v 1.15 1999/09/12 18:54:34 kleink Exp $	*/
+/*	$NetBSD: isascii.c,v 1.1 1999/09/12 18:54:34 kleink Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -36,128 +36,21 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ *
+ * 	from:	@(#)isctype.c	5.2 (Berkeley) 6/1/90
  */
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-#if 0
-static char sccsid[] = "@(#)isctype.c	5.2 (Berkeley) 6/1/90";
-#else
-__RCSID("$NetBSD: isctype.c,v 1.15 1999/09/12 18:54:34 kleink Exp $");
-#endif
+__RCSID("$NetBSD: isascii.c,v 1.1 1999/09/12 18:54:34 kleink Exp $");
 #endif /* LIBC_SCCS and not lint */
 
-#define _ANSI_LIBRARY
 #include <ctype.h>
 
-#undef isalnum
+#undef isascii
 int
-isalnum(c)
+isascii(c)
 	int c;
 {
-	return((_ctype_ + 1)[c] & (_U|_L|_N));
-}
-
-#undef isalpha
-int
-isalpha(c)
-	int c;
-{
-	return((_ctype_ + 1)[c] & (_U|_L));
-}
-
-#undef isblank
-int
-isblank(c)
-	int c;
-{
-	return(c == ' ' || c == '\t');
-}
-
-#undef iscntrl
-int
-iscntrl(c)
-	int c;
-{
-	return((_ctype_ + 1)[c] & _C);
-}
-
-#undef isdigit
-int
-isdigit(c)
-	int c;
-{
-	return((_ctype_ + 1)[c] & _N);
-}
-
-#undef isgraph
-int
-isgraph(c)
-	int c;
-{
-	return((_ctype_ + 1)[c] & (_P|_U|_L|_N));
-}
-
-#undef islower
-int
-islower(c)
-	int c;
-{
-	return((_ctype_ + 1)[c] & _L);
-}
-
-#undef isprint
-int
-isprint(c)
-	int c;
-{
-	return((_ctype_ + 1)[c] & (_P|_U|_L|_N|_B));
-}
-
-#undef ispunct
-int
-ispunct(c)
-	int c;
-{
-	return((_ctype_ + 1)[c] & _P);
-}
-
-#undef isspace
-int
-isspace(c)
-	int c;
-{
-	return((_ctype_ + 1)[c] & _S);
-}
-
-#undef isupper
-int
-isupper(c)
-	int c;
-{
-	return((_ctype_ + 1)[c] & _U);
-}
-
-#undef isxdigit
-int
-isxdigit(c)
-	int c;
-{
-	return((_ctype_ + 1)[c] & (_N|_X));
-}
-
-#undef _toupper
-int
-_toupper(c)
-	int c;
-{
-	return (c - 'a' + 'A');
-}
-
-#undef _tolower
-int
-_tolower(c)
-	int c;
-{
-	return (c - 'A' + 'a');
+	return ((unsigned)(c) <= 0177);
 }
