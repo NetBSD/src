@@ -1,4 +1,4 @@
-/*	$NetBSD: vsbus.c,v 1.26 2000/06/18 22:47:19 matt Exp $ */
+/*	$NetBSD: vsbus.c,v 1.27 2000/06/25 16:00:43 ragge Exp $ */
 /*
  * Copyright (c) 1996, 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -48,8 +48,9 @@
 #include <sys/stat.h>
 
 #include <vm/vm.h>
+#include <vm/vm_kern.h>
 
-#define	_VAX_BUS_DMA_PRIVATE
+#define _VAX_BUS_DMA_PRIVATE
 #include <machine/bus.h>
 #include <machine/pte.h>
 #include <machine/sid.h>
@@ -68,10 +69,10 @@
 #include "ioconf.h"
 #include "opt_cputype.h"
 
-int	vsbus_match	__P((struct device *, struct cfdata *, void *));
-void	vsbus_attach	__P((struct device *, struct device *, void *));
-int	vsbus_print	__P((void *, const char *));
-int	vsbus_search	__P((struct device *, struct cfdata *, void *));
+int	vsbus_match(struct device *, struct cfdata *, void *);
+void	vsbus_attach(struct device *, struct device *, void *);
+int	vsbus_print(void *, const char *);
+int	vsbus_search(struct device *, struct cfdata *, void *);
 
 static struct vax_bus_dma_tag vsbus_bus_dma_tag = {
 	0,
@@ -96,6 +97,7 @@ static struct vax_bus_dma_tag vsbus_bus_dma_tag = {
 };
 
 extern struct vax_bus_space vax_mem_bus_space;
+static SIMPLEQ_HEAD(, vsbus_dma) vsbus_dma;
 
 struct	cfattach vsbus_ca = { 
 	sizeof(struct vsbus_softc), vsbus_match, vsbus_attach
@@ -130,6 +132,7 @@ vsbus_attach(parent, self, aux)
 	void	*aux;
 {
 	struct	vsbus_softc *sc = (void *)self;
+	int dbase, dsize;
 
 	printf("\n");
 
@@ -161,9 +164,21 @@ vsbus_attach(parent, self, aux)
 		sc->sc_intreq = (char *)sc->sc_vsregs + 15;
 		sc->sc_intclr = (char *)sc->sc_vsregs + 15;
 		sc->sc_intmsk = (char *)sc->sc_vsregs + 12;
+		if (vax_boardtype == VAX_BTYP_410) {
+			dbase = KA410_DMA_BASE;
+			dsize = KA410_DMA_SIZE;
+		} else {
+			dbase = KA420_DMA_BASE;
+			dsize = KA420_DMA_SIZE;
+			*(char *)(sc->sc_vsregs + 0xe0) = 1; /* Big DMA */
+		}
+		sc->sc_dmasize = dsize;
+		sc->sc_dmaaddr = uvm_km_valloc(kernel_map, dsize);
+		ioaccess(sc->sc_dmaaddr, dbase, dsize/VAX_NBPG);
 		break;
 	}
 
+	SIMPLEQ_INIT(&vsbus_dma);
 	/*
 	 * First: find which interrupts we won't care about.
 	 * There are interrupts that interrupt on a periodic basic
@@ -226,8 +241,11 @@ vsbus_search(parent, cf, aux)
 
 	va.va_br = br;
 	va.va_cvec = vec;
-
+	va.va_dmaaddr = sc->sc_dmaaddr;
+	va.va_dmasize = sc->sc_dmasize;
+	*sc->sc_intmsk = c; /* Allow interrupts during attach */
 	config_attach(parent, cf, &va, vsbus_print);
+	*sc->sc_intmsk = 0;
 	return 0;
 
 fail:
@@ -279,14 +297,15 @@ vsbus_clrintr(mask)
  * Use the physical memory directly.
  */
 void
-vsbus_copytoproc(p, from, to, len)
-	struct proc *p;
-	caddr_t from, to;
-	int len;
+vsbus_copytoproc(struct proc *p, caddr_t from, caddr_t to, int len)
 {
 	struct pte *pte;
 	paddr_t pa;
 
+	if ((long)to & KERNBASE) { /* In kernel space */
+		bcopy(from, to, len);
+		return;
+	}
 	pte = uvtopte(TRUNC_PAGE(to), (&p->p_addr->u_pcb));
 	if ((vaddr_t)to & PGOFSET) {
 		int cz = ROUND_PAGE(to) - (vaddr_t)to;
@@ -309,14 +328,15 @@ vsbus_copytoproc(p, from, to, len)
 }
 
 void
-vsbus_copyfromproc(p, from, to, len)
-	struct proc *p;
-	caddr_t from, to;
-	int len;
+vsbus_copyfromproc(struct proc *p, caddr_t from, caddr_t to, int len)
 {
 	struct pte *pte;
 	paddr_t pa;
 
+	if ((long)from & KERNBASE) { /* In kernel space */
+		bcopy(from, to, len);
+		return;
+	}
 	pte = uvtopte(TRUNC_PAGE(from), (&p->p_addr->u_pcb));
 	if ((vaddr_t)from & PGOFSET) {
 		int cz = ROUND_PAGE(from) - (vaddr_t)from;
@@ -337,3 +357,35 @@ vsbus_copyfromproc(p, from, to, len)
 		pte += 8; /* XXX */
 	}
 }
+
+/* 
+ * There can only be one user of the DMA area on VS2k/VS3100 at one
+ * time, so keep track of it here.
+ */ 
+static int vsbus_active = 0;
+
+void
+vsbus_dma_start(struct vsbus_dma *vd)
+{
+ 
+	SIMPLEQ_INSERT_TAIL(&vsbus_dma, vd, vd_q);
+
+	if (vsbus_active == 0)
+		vsbus_dma_intr();
+}
+ 
+void
+vsbus_dma_intr(void)
+{	
+	struct vsbus_dma *vd;
+	
+	vd = SIMPLEQ_FIRST(&vsbus_dma); 
+	if (vd == NULL) {
+		vsbus_active = 0;
+		return;
+	}
+	vsbus_active = 1;
+	SIMPLEQ_REMOVE_HEAD(&vsbus_dma, vd, vd_q);
+	(*vd->vd_go)(vd->vd_arg);
+}
+
