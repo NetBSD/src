@@ -1,4 +1,4 @@
-.\"	$NetBSD: fgetln.3,v 1.13 2004/04/21 00:21:04 wiz Exp $
+.\"	$NetBSD: fgetln.3,v 1.14 2004/05/10 17:15:28 drochner Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -115,7 +115,6 @@ or
 .Sh SEE ALSO
 .Xr ferror 3 ,
 .Xr fgets 3 ,
-.Xr fgetstr 3 ,
 .Xr fopen 3 ,
 .Xr putc 3
 .Sh HISTORY
@@ -123,10 +122,34 @@ The
 .Fn fgetln
 function first appeared in
 .Bx 4.4 .
-.Sh NOTES
-The
-.Fn fgetln
-function is equivalent to
-.Fn fgetstr
-with a \en
-.Fa delim .
+.Sh CAVEATS
+Since the returned buffer is not a C string (it is not null terminated), a
+common practice is to replace the newline character with
+.Sq \e0 .
+However, if the last line in a file does not contain a newline,
+the returned text won't contain a newline either.
+The following code demonstrates how to deal with this problem by allocating a
+temporary buffer:
+.Bd -literal
+	char *buf, *lbuf;
+	size_t len;
+
+	lbuf = NULL;
+	while ((buf = fgetln(fp, &len))) {
+		if (buf[len - 1] == '\en')
+			buf[len - 1] = '\e0';
+		else {
+			if ((lbuf = (char *)malloc(len + 1)) == NULL)
+				err(1, NULL);
+			memcpy(lbuf, buf, len);
+			lbuf[len] = '\e0';
+			buf = lbuf;
+		}
+		printf("%s\en", buf);
+
+		if (lbuf != NULL) {
+			free(lbuf);
+			lbuf = NULL;
+		}
+	}
+.Ed
