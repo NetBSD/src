@@ -43,7 +43,7 @@ static char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)pr.c	8.1 (Berkeley) 6/6/93"; */
-static char *rcsid = "$Id: pr.c,v 1.2 1994/03/07 05:42:17 cgd Exp $";
+static char *rcsid = "$Id: pr.c,v 1.3 1995/06/07 16:10:11 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1259,6 +1259,7 @@ nxtfile(argc, argv, fname, buf, dt)
 	struct timezone tz;
 	struct tm *timeptr = NULL;
 	struct stat statbuf;
+	time_t curtime;
 	static int twice = -1;
 
 	++twice;
@@ -1283,7 +1284,8 @@ nxtfile(argc, argv, fname, buf, dt)
 			eoptind = argc - 1;
 			return(NULL);
 		}
-		timeptr = localtime(&(tv.tv_sec));
+		curtime = tv.tv_sec;
+		timeptr = localtime(&curtime);
 	}
 	for (; eoptind < argc; ++eoptind) {
 		if (strcmp(argv[eoptind], "-") == 0) {
@@ -1306,7 +1308,8 @@ nxtfile(argc, argv, fname, buf, dt)
 					strerror(errno));
 				return(NULL);
 			}
-			timeptr = localtime(&(tv.tv_sec));
+			curtime = tv.tv_sec;
+			timeptr = localtime(&curtime);
 		} else {
 			/*
 			 * normal file processing
@@ -1337,7 +1340,8 @@ nxtfile(argc, argv, fname, buf, dt)
 					     strerror(errno));
 					return(NULL);
 				}
-				timeptr = localtime(&(tv.tv_sec));
+				curtime = tv.tv_sec;
+				timeptr = localtime(&curtime);
 			} else {
 				if (fstat(fileno(inf), &statbuf) < 0) {
 					++errcnt;
