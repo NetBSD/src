@@ -1,4 +1,4 @@
-/*	$NetBSD: stat.h,v 1.38 1999/08/03 18:32:03 wrstuden Exp $	*/
+/*	$NetBSD: stat.h,v 1.39 2000/02/03 02:01:53 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -257,7 +257,7 @@ struct stat {
 #endif /* _KERNEL */
 #endif /* !_POSIX_C_SOURCE && !_XOPEN_SOURCE */
 
-#ifndef _KERNEL
+#if !defined(_KERNEL) && !defined(_STANDALONE)
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
@@ -292,5 +292,5 @@ int	lchmod __P((const char *, mode_t));
 #endif /* !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE) */
 __END_DECLS
 
-#endif /* !_KERNEL */
+#endif /* !_KERNEL && !_STANDALONE */
 #endif /* !_SYS_STAT_H_ */
