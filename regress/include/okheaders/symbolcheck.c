@@ -236,7 +236,6 @@
 #include <fmtmsg.h>
 #include <fnmatch.h>
 #include <form.h>
-#include <frame.h>
 #include <fstab.h>
 #include <fts.h>
 #include <getopt.h>
