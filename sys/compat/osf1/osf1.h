@@ -1,4 +1,4 @@
-/* $NetBSD: osf1.h,v 1.12 1999/04/30 02:12:03 cgd Exp $ */
+/* $NetBSD: osf1.h,v 1.13 1999/04/30 04:31:45 cgd Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -150,14 +150,8 @@ struct osf1_auxv {
 /* fcntl GETFD/SETFD flags */
 #define OSF1_FD_CLOEXEC		1
 
-/* fcntl GETFL/SETFL flags */
-#define	OSF1_FNONBLOCK		0x00000004
-#define	OSF1_FAPPEND		0x00000008
+/* fcntl GETFL/SETFL flags, in addition to the O_* flags below */
 #define	OSF1_FASYNC		0x00000040
-#define	OSF1_FSYNC		0x00004000
-#define	OSF1_FNDELAY		0x00008000
-#define	OSF1_FDSYNC		0x00080000
-#define	OSF1_FRSYNC		0x00100000
 
 /* struct osf1_flock, for GETLK/SETLK/SETLKW */
 /* XXX */
