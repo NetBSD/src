@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.67.2.1 2000/08/08 08:17:28 scw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.67.2.2 2000/10/17 19:58:29 scw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -136,7 +136,7 @@ int	safepri = PSL_LOWIPL;
 #define	ETHER_DATA_BUFF_PAGES	4
 #endif
 u_long	ether_data_buff_size = ETHER_DATA_BUFF_PAGES * NBPG;
-u_long	myea;
+u_char	mvme_ea[6];
 
 extern	u_int lowram;
 extern	short exframesize[];
@@ -195,11 +195,7 @@ void	mvme68k_init __P((void));
 void	mvme147_init __P((void));
 #endif
 
-#ifdef MVME162
-void	mvme162_init __P((void));
-#endif
-
-#ifdef MVME167
+#if defined(MVME162) || defined(MVME167)
 #include <mvme68k/dev/pcctworeg.h>
 void	mvme167_init __P((void));
 #endif
@@ -242,13 +238,13 @@ mvme68k_init()
 		mvme147_init();
 		break;
 #endif
-#ifdef MVME162
-	case MVME_162:
-		mvme162_init();
-		break;
-#endif
 #ifdef MVME167
 	case MVME_167:
+#endif
+#ifdef MVME162
+	case MVME_162:
+#endif
+#if defined(MVME167) || defined(MVME162)
 		mvme167_init();
 		break;
 #endif
@@ -309,21 +305,9 @@ mvme147_init()
 }
 #endif /* MVME147 */
 
-#ifdef MVME162
+#if defined(MVME167) || defined(MVME162)
 /*
- * MVME-162 specific initialization.
- */
-void
-mvme162_init()
-{
-
-	/* XXX implement XXX */
-}
-#endif /* MVME162 */
-
-#ifdef MVME167
-/*
- * MVME-167 specific initializaion.
+ * MVME-167 and MVME-162 specific initializaion.
  *
  * XXX Still needs to be bus_spaced XXX
  */
@@ -1201,21 +1185,4 @@ cpu_exec_aout_makecmds(p, epp)
     struct exec_package *epp;
 {
     return ENOEXEC;
-}
-
-void
-myetheraddr(ether)
-	u_char *ether;
-{
-	int e = myea;
-
-	ether[0] = 0x08;
-	ether[1] = 0x00;
-	ether[2] = 0x3e;
-	e = e >> 8;
-	ether[5] = (u_char)(e & 0xff);
-	e = e >> 8;
-	ether[4] = (u_char)(e & 0xff);
-	e = e >> 8;
-	ether[3] = (u_char)(e & 0x0f) | 0x20;
 }
