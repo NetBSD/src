@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.c,v 1.71 2004/03/03 17:14:46 oster Exp $	*/
+/*	$NetBSD: rf_reconstruct.c,v 1.72 2004/03/05 03:58:21 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.71 2004/03/03 17:14:46 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.72 2004/03/05 03:58:21 oster Exp $");
 
 #include <sys/time.h>
 #include <sys/buf.h>
@@ -247,7 +247,7 @@ rf_ReconstructFailedDiskBasic(RF_Raid_t *raidPtr, RF_RowCol_t col)
 
 	RF_LOCK_MUTEX(raidPtr->mutex);
 	RF_ASSERT(raidPtr->Disks[col].status == rf_ds_failed);
-
+#if RF_INCLUDE_PARITY_DECLUSTERING_DS > 0
 	if (raidPtr->Layout.map->flags & RF_DISTRIBUTE_SPARE) {
 		if (raidPtr->status != rf_rs_degraded) {
 			RF_ERRORMSG1("Unable to reconstruct disk at col %d because status not degraded\n", col);
@@ -256,6 +256,7 @@ rf_ReconstructFailedDiskBasic(RF_Raid_t *raidPtr, RF_RowCol_t col)
 		}
 		scol = (-1);
 	} else {
+#endif
 		for (scol = raidPtr->numCol; scol < raidPtr->numCol + raidPtr->numSpare; scol++) {
 			if (raidPtr->Disks[scol].status == rf_ds_spare) {
 				spareDiskPtr = &raidPtr->Disks[scol];
@@ -269,7 +270,9 @@ rf_ReconstructFailedDiskBasic(RF_Raid_t *raidPtr, RF_RowCol_t col)
 			return (ENOSPC);
 		}
 		printf("RECON: initiating reconstruction on col %d -> spare at col %d\n", col, scol);
+#if RF_INCLUDE_PARITY_DECLUSTERING_DS > 0
 	}
+#endif
 	RF_UNLOCK_MUTEX(raidPtr->mutex);
 
 	reconDesc = AllocRaidReconDesc((void *) raidPtr, col, spareDiskPtr, numDisksDone, scol);
@@ -390,6 +393,7 @@ rf_ReconstructInPlace(RF_Raid_t *raidPtr, RF_RowCol_t col)
 	   on any component without ill affects. */
 	/* RF_ASSERT(raidPtr->Disks[col].status == rf_ds_failed); */
 	
+#if RF_INCLUDE_PARITY_DECLUSTERING_DS > 0
 	if (raidPtr->Layout.map->flags & RF_DISTRIBUTE_SPARE) {
 		RF_ERRORMSG1("Unable to reconstruct to disk at col %d: operation not supported for RF_DISTRIBUTE_SPARE\n", col);
 		
@@ -398,7 +402,7 @@ rf_ReconstructInPlace(RF_Raid_t *raidPtr, RF_RowCol_t col)
 		RF_SIGNAL_COND(raidPtr->waitForReconCond);
 		return (EINVAL);
 	}			
-
+#endif
 	proc = raidPtr->engine_thread;
 	
 	/* This device may have been opened successfully the 
@@ -1171,16 +1175,19 @@ ComputePSDiskOffsets(RF_Raid_t *raidPtr, RF_StripeNum_t psid,
 	RF_ASSERT(fcol == testcol);
 
 	/* now locate the spare unit for the failed unit */
+#if RF_INCLUDE_PARITY_DECLUSTERING_DS > 0
 	if (layoutPtr->map->flags & RF_DISTRIBUTE_SPARE) {
 		if (j_is_parity)
 			layoutPtr->map->MapParity(raidPtr, sosRaidAddress + j_offset * layoutPtr->sectorsPerStripeUnit, spCol, spOffset, RF_REMAP);
 		else
 			layoutPtr->map->MapSector(raidPtr, sosRaidAddress + j_offset * layoutPtr->sectorsPerStripeUnit, spCol, spOffset, RF_REMAP);
 	} else {
+#endif
 		*spCol = raidPtr->reconControl->spareCol;
 		*spOffset = *outFailedDiskSectorOffset;
+#if RF_INCLUDE_PARITY_DECLUSTERING_DS > 0
 	}
-
+#endif
 	return (0);
 
 skipit:

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_raid5.c,v 1.13 2004/03/05 03:22:05 oster Exp $	*/
+/*	$NetBSD: rf_raid5.c,v 1.14 2004/03/05 03:58:21 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_raid5.c,v 1.13 2004/03/05 03:22:05 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_raid5.c,v 1.14 2004/03/05 03:58:21 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -196,7 +196,7 @@ rf_RaidFiveDagSelect(RF_Raid_t *raidPtr, RF_IoType_t type,
 			RF_RowCol_t oc = failedPDA->col;
 			RF_SectorNum_t oo = failedPDA->startSector;
 #endif			
-
+#if RF_INCLUDE_PARITY_DECLUSTERING_DS > 0
 			if (layoutPtr->map->flags & RF_DISTRIBUTE_SPARE) {	/* redirect to dist
 										 * spare space */
 				
@@ -228,8 +228,9 @@ rf_RaidFiveDagSelect(RF_Raid_t *raidPtr, RF_IoType_t type,
 						
 					}
 				
-			} else {	/* redirect to dedicated spare
-					 * space */
+			} else {
+#endif	
+				/* redirect to dedicated spare space */
 				
 				failedPDA->col = raidPtr->Disks[fcol].spareCol;
 				
@@ -245,8 +246,9 @@ rf_RaidFiveDagSelect(RF_Raid_t *raidPtr, RF_IoType_t type,
 							asmap->parityInfo->col = failedPDA->col;
 						}
 				}
+#if RF_INCLUDE_PARITY_DECLUSTERING_DS > 0
 			}
-			
+#endif
 			RF_ASSERT(failedPDA->col != -1);
 			
 #if RF_DEBUG_DAG > 0 || RF_DEBUG_MAP > 0
