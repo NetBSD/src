@@ -1,5 +1,10 @@
-/*	$NetBSD: if_xi.c,v 1.4 2000/07/31 21:49:47 gmcgarry Exp $	*/
+/*	$NetBSD: if_xi.c,v 1.5 2000/10/01 23:32:44 thorpej Exp $	*/
 /*	OpenBSD: if_xe.c,v 1.9 1999/09/16 11:28:42 niklas Exp 	*/
+
+/*
+ * XXX THIS DRIVER IS BROKEN WRT. MULTICAST LISTS AND PROMISC/ALLMULTI
+ * XXX FLAGS!
+ */
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist, Brandon Creighton, Job de Haas
