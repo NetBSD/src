@@ -1,4 +1,4 @@
-/*	$NetBSD: hp.c,v 1.4 1996/02/11 13:19:33 ragge Exp $ */
+/*	$NetBSD: hp.c,v 1.5 1996/02/23 17:29:01 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -65,6 +65,7 @@ struct	hp_softc {
 	struct	device	sc_dev;
 	struct	disk sc_disk;
 	struct	mba_device sc_md;	/* Common struct used by mbaqueue. */
+	int	sc_wlabel;
 };
 
 int     hpmatch __P((struct device *, void *, void *));
@@ -168,14 +169,9 @@ hpstrategy(bp)
 	unit = DISKUNIT(bp->b_dev);
 	sc = hpcd.cd_devs[unit];
 
-	if (bounds_check_with_label(bp, sc->sc_disk.dk_label, 0) <= 0)
+	if (bounds_check_with_label(bp, sc->sc_disk.dk_label, sc->sc_wlabel)
+	    <= 0)
 		goto done;
-
-	if (bp->b_flags & B_WRITE) {
-		bp->b_error = EROFS;
-		bp->b_flags |= B_ERROR;
-		goto err;
-	}
 	s = splbio();
 
 	gp = sc->sc_md.md_q.b_actf;
@@ -249,8 +245,7 @@ hpopen(dev, flag, fmt)
 
 	part = DISKPART(dev);
 
-	if ( (part >= sc->sc_disk.dk_label->d_npartitions ||
-	    sc->sc_disk.dk_label->d_partitions[part].p_fstype == FS_UNUSED))
+	if (part >= sc->sc_disk.dk_label->d_npartitions)
 		return ENXIO;
 
 	switch (fmt) {
@@ -306,6 +301,7 @@ hpioctl(dev, cmd, addr, flag, p)
 {
 	struct	hp_softc *sc = hpcd.cd_devs[DISKUNIT(dev)];
 	struct	disklabel *lp = sc->sc_disk.dk_label;
+	int	error;
 
 	switch (cmd) {
 	case	DIOCGDINFO:
@@ -326,9 +322,13 @@ hpioctl(dev, cmd, addr, flag, p)
 
 	case	DIOCWDINFO:
 		if ((flag & FWRITE) == 0)
-			return EBADF;
-
-		return writedisklabel(dev, hpstrategy, sc->sc_disk.dk_label, 0);
+			error = EBADF;
+		else {
+			sc->sc_wlabel = 1;
+			error = writedisklabel(dev, hpstrategy, lp, 0);
+			sc->sc_wlabel = 0;
+		}
+		return error;
 
 	default:
 		printf("hpioctl: command %d\n", cmd);
