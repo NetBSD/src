@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530var.h,v 1.7 2003/08/07 16:28:21 agc Exp $	*/
+/*	$NetBSD: z8530var.h,v 1.8 2005/01/15 16:00:59 chs Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -150,23 +150,23 @@ struct zsc_softc {
  * XXX - no one seems to want to try and check this -wrs
  */
 
-u_char zs_read_reg __P((struct zs_chanstate *cs, u_char reg));
-u_char zs_read_csr __P((struct zs_chanstate *cs));
-u_char zs_read_data __P((struct zs_chanstate *cs));
+u_char zs_read_reg(struct zs_chanstate *, u_char);
+u_char zs_read_csr(struct zs_chanstate *);
+u_char zs_read_data(struct zs_chanstate *);
 
-void  zs_write_reg __P((struct zs_chanstate *cs, u_char reg, u_char val));
-void  zs_write_csr __P((struct zs_chanstate *cs, u_char val));
-void  zs_write_data __P((struct zs_chanstate *cs, u_char val));
+void  zs_write_reg(struct zs_chanstate *, u_char, u_char);
+void  zs_write_csr(struct zs_chanstate *, u_char);
+void  zs_write_data(struct zs_chanstate *, u_char);
 
 /* XXX - Could define splzs() here instead of in psl.h */
 
 /* Hook for MD ioctl support */
-int	zsmdioctl __P((struct zs_chanstate *cs, u_long cmd, caddr_t data));
+int	zsmdioctl(struct zs_chanstate *, u_long, caddr_t);
 /* XXX - This is a bit gross... */
 #define ZS_MD_IOCTL(cs, cmd, data) zsmdioctl(cs, cmd, data)
 
 /* Callback for "external" clock sources */
-void zsmd_setclock  __P((struct zs_chanstate *cs));
+void zsmd_setclock (struct zs_chanstate *);
 #define ZS_MD_SETCLK(cs) zsmd_setclock(cs)
 
 

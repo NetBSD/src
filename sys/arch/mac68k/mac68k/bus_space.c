@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.24 2003/07/15 02:43:19 lukem Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.25 2005/01/15 16:00:59 chs Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.24 2003/07/15 02:43:19 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.25 2005/01/15 16:00:59 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,8 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.24 2003/07/15 02:43:19 lukem Exp $")
 
 #include <uvm/uvm_extern.h>
 
-int	bus_mem_add_mapping __P((bus_addr_t bpa, bus_size_t size, int flags,
-			    bus_space_handle_t *hp));
+int	bus_mem_add_mapping(bus_addr_t, bus_size_t, int, bus_space_handle_t *);
 
 extern struct extent *iomem_ex;
 extern int iomem_malloc_safe;

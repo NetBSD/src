@@ -1,4 +1,4 @@
-/*	$NetBSD: mac68k5380.c,v 1.40 2003/07/15 02:43:17 lukem Exp $	*/
+/*	$NetBSD: mac68k5380.c,v 1.41 2005/01/15 16:00:59 chs Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mac68k5380.c,v 1.40 2003/07/15 02:43:17 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mac68k5380.c,v 1.41 2005/01/15 16:00:59 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,9 +98,9 @@ __KERNEL_RCSID(0, "$NetBSD: mac68k5380.c,v 1.40 2003/07/15 02:43:17 lukem Exp $"
 	static char *last_hit[DBG_PID];
 #	define	PID(a)	\
 	{ int i; \
-	  for (i=0; i< DBG_PID-1; i++) \
-		last_hit[i] = last_hit[i+1]; \
-	  last_hit[DBG_PID-1] = a; }
+	  for (i = 0; i < DBG_PID - 1; i++) \
+		last_hit[i] = last_hit[i + 1]; \
+	  last_hit[DBG_PID - 1] = a; }
 #else
 #	define	PID(a)
 #endif
@@ -136,31 +136,28 @@ static volatile u_char	*ncr_5380_without_drq	= (volatile u_char *) 0x12000;
 
 static void	ncr5380_irq_intr(void *);
 static void	ncr5380_drq_intr(void *);
-static void	do_ncr5380_drq_intr __P((void *));
+static void	do_ncr5380_drq_intr(void *);
 
-static __inline__ void	scsi_clr_ipend __P((void));
-static		  void	scsi_mach_init __P((struct ncr_softc *sc));
-static		  int	machine_match __P((struct device *parent,
-			    struct cfdata *cf, void *aux,
-			    struct cfdriver *cd));
-static __inline__ int	pdma_ready __P((void));
-static		  int	transfer_pdma __P((u_char *phasep, u_char *data,
-					u_long *count));
+static __inline__ void	scsi_clr_ipend(void);
+static		  void	scsi_mach_init(struct ncr_softc *);
+static		  int	machine_match(struct device *, struct cfdata *, void *,
+			    struct cfdriver *);
+static __inline__ int	pdma_ready(void);
+static		  int	transfer_pdma(u_char *, u_char *, u_long *);
 
 static __inline__ void
-scsi_clr_ipend()
+scsi_clr_ipend(void)
 {
-	int	tmp;
+	int tmp;
 
 	tmp = GET_5380_REG(NCR5380_IRCV);
 	scsi_clear_irq();
 }
 
 static void
-scsi_mach_init(sc)
-	struct ncr_softc	*sc;
+scsi_mach_init(struct ncr_softc *sc)
 {
-	static int	initted = 0;
+	static int initted = 0;
 
 	if (initted++)
 		panic("scsi_mach_init called again.");
@@ -185,11 +182,8 @@ scsi_mach_init(sc)
 }
 
 static int
-machine_match(parent, cf, aux, cd)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
-	struct cfdriver *cd;
+machine_match(struct device *parent, struct cfdata *cf, void *aux,
+	      struct cfdriver *cd)
 {
 	if (!mac68k_machine.scsi80)
 		return 0;
@@ -209,7 +203,7 @@ int		pdma_5380_sends = 0;
 int		pdma_5380_bytes = 0;
 
 void
-pdma_stat()
+pdma_stat(void)
 {
 	printf("PDMA SCSI: %d xfers completed for %d bytes.\n",
 		pdma_5380_sends, pdma_5380_bytes);
@@ -273,7 +267,7 @@ pdma_cleanup(void)
 #endif
 
 static __inline__ int
-pdma_ready()
+pdma_ready(void)
 {
 #if USE_PDMA
 	SC_REQ	*reqp = connected;
@@ -327,8 +321,7 @@ extern	u_char	ncr5380_no_parchk;
 }
 
 static void
-ncr5380_irq_intr(p)
-	void	*p;
+ncr5380_irq_intr(void *p)
 {
 	PID("irq");
 
@@ -357,8 +350,7 @@ ncr5380_irq_intr(p)
  * This is usually caused by a disconnecting target.
  */
 static void
-do_ncr5380_drq_intr(p)
-	void	*p;
+do_ncr5380_drq_intr(void *p)
 {
 #if USE_PDMA
 extern	int			*nofault, m68k_fault_addr;
@@ -530,8 +522,7 @@ extern	int			*nofault, m68k_fault_addr;
 }
 
 static void
-ncr5380_drq_intr(p)
-	void	*p;
+ncr5380_drq_intr(void *p)
 {
 	while (GET_5380_REG(NCR5380_DMSTAT) & SC_DMA_REQ) {
 		do_ncr5380_drq_intr(p);
@@ -544,13 +535,10 @@ ncr5380_drq_intr(p)
 #define SCSI_TIMEOUT_VAL	10000000
 
 static int
-transfer_pdma(phasep, data, count)
-	u_char	*phasep;
-	u_char	*data;
-	u_long	*count;
+transfer_pdma(u_char *phasep, u_char *data, u_long *count)
 {
-	SC_REQ	*reqp = connected;
-	int	len = *count, s, scsi_timeout = SCSI_TIMEOUT_VAL;
+	SC_REQ *reqp = connected;
+	int len = *count, s, scsi_timeout = SCSI_TIMEOUT_VAL;
 
 	if (pdma_5380_dir) {
 		panic("ncrscsi: transfer_pdma called when operation already "

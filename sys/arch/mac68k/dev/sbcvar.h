@@ -1,4 +1,4 @@
-/*	$NetBSD: sbcvar.h,v 1.9 2000/03/18 16:13:24 mycroft Exp $	*/
+/*	$NetBSD: sbcvar.h,v 1.10 2005/01/15 16:00:59 chs Exp $	*/
 
 /*
  * Copyright (C) 1996 Scott Reynolds.  All rights reserved.
@@ -87,17 +87,17 @@ extern int	sbc_debug;
 extern int	sbc_link_flags;
 extern int	sbc_options;
 
-int	sbc_pdma_in __P((struct ncr5380_softc *, int, int, u_char *));
-int	sbc_pdma_out __P((struct ncr5380_softc *, int, int, u_char *));
-void	sbc_irq_intr __P((void *));
-void	sbc_drq_intr __P((void *));
-void	sbc_dma_alloc __P((struct ncr5380_softc *));
-void	sbc_dma_free __P((struct ncr5380_softc *));
-void	sbc_dma_poll __P((struct ncr5380_softc *));
-void	sbc_dma_setup __P((struct ncr5380_softc *));
-void	sbc_dma_start __P((struct ncr5380_softc *));
-void	sbc_dma_eop __P((struct ncr5380_softc *));
-void	sbc_dma_stop __P((struct ncr5380_softc *));
+int	sbc_pdma_in(struct ncr5380_softc *, int, int, u_char *);
+int	sbc_pdma_out(struct ncr5380_softc *, int, int, u_char *);
+void	sbc_irq_intr(void *);
+void	sbc_drq_intr(void *);
+void	sbc_dma_alloc(struct ncr5380_softc *);
+void	sbc_dma_free(struct ncr5380_softc *);
+void	sbc_dma_poll(struct ncr5380_softc *);
+void	sbc_dma_setup(struct ncr5380_softc *);
+void	sbc_dma_start(struct ncr5380_softc *);
+void	sbc_dma_eop(struct ncr5380_softc *);
+void	sbc_dma_stop(struct ncr5380_softc *);
 #ifdef SBC_DEBUG
-void	decode_5380_intr __P((struct ncr5380_softc *));
+void	decode_5380_intr(struct ncr5380_softc *);
 #endif
