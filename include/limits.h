@@ -31,12 +31,13 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)limits.h	5.9 (Berkeley) 4/3/91
- *	$Id: limits.h,v 1.3 1993/09/21 21:55:40 jtc Exp $
+ *	$Id: limits.h,v 1.4 1993/09/24 18:13:15 jtc Exp $
  */
 
 #ifndef _LIMITS_H_
 #define	_LIMITS_H_
 
+#if !defined(_ANSI_SOURCE)
 #define	_POSIX_ARG_MAX		4096
 #define	_POSIX_CHILD_MAX	6
 #define	_POSIX_LINK_MAX		8
@@ -46,7 +47,10 @@
 #define	_POSIX_NGROUPS_MAX	0
 #define	_POSIX_OPEN_MAX		16
 #define	_POSIX_PATH_MAX		255
-#define	_POSIX_PIPE_BUF		512
+#define _POSIX_PIPE_BUF		512
+#define _POSIX_SSIZE_MAX	32727
+#define _POSIX_STREAM_MAX	8
+#define _POSIX_TZNAME_MAX	3
 
 #define	_POSIX2_BC_BASE_MAX	99
 #define	_POSIX2_BC_DIM_MAX	2048
@@ -57,6 +61,7 @@
 #define	_POSIX2_LINE_MAX	2048
 #define	_POSIX2_RE_DUP_MAX	255
 #define _POSIX2_VERSION		199209
+#endif
 
 #include <machine/limits.h>
 #include <sys/syslimits.h>
