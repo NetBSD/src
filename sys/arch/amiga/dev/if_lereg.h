@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)if_lereg.h	7.1 (Berkeley) 5/8/90
- *	$Id: if_lereg.h,v 1.1.1.1 1993/09/02 16:53:40 mw Exp $
+ *	$Id: if_lereg.h,v 1.2 1993/10/30 23:41:15 mw Exp $
  */
 
 #define	LEID		21

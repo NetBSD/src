@@ -19,7 +19,7 @@ arch/amiga/dev/a3000dma.c		optional a3000scsi device-driver
 arch/amiga/dev/a2091dma.c		optional a2091scsi device-driver
 arch/amiga/dev/gvp11dma.c		optional gvp11scsi device-driver
 arch/amiga/dev/vn.c			optional vn device-driver
-arch/amiga/dev/scsi.c			optional a3000scsi
+arch/amiga/dev/scsi.c			optional a3000scsi or a2091scsi or gvp11scsi
 arch/amiga/dev/sd.c			optional sd device-driver
 arch/amiga/dev/st.c			optional st device-driver
 arch/amiga/dev/ser.c			optional ser device-driver
@@ -39,3 +39,9 @@ arch/amiga/dev/if_le.c			optional le device-driver
 arch/amiga/dev/rtclocka.c		optional rtclocka device-driver
 arch/amiga/dev/rtclockb.c		optional rtclockb device-driver
 kern/syscalls.c				standard
+arch/amiga/sunos/sun_disklabel.c	optional compat_sunos
+arch/amiga/sunos/sun_ioctl.c		optional compat_sunos
+arch/amiga/sunos/sun_misc.c		optional compat_sunos
+arch/amiga/sunos/sun_sysent.c		optional compat_sunos
+arch/amiga/sunos/sun_exec_aout.c	optional compat_sunos
+arch/amiga/sunos/sun_syscalls.c		optional compat_sunos

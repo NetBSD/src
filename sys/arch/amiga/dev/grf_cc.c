@@ -1,5 +1,3 @@
-/*	$Id: grf_cc.c,v 1.3 1993/09/02 18:07:57 mw Exp $ */
-
 #include "grf.h"
 #if NGRF > 0
 
@@ -12,17 +10,8 @@
 #include "grf_ccreg.h"
 #include "../include/cpu.h"
 #include "../amiga/custom.h"
-<<<<<<< grf_cc.c
-
-||||||| 1.1.1.2
-=======
 #include "../amiga/cia.h"
->>>>>>> /tmp/T4009586
 
-<<<<<<< 1.1.1.2
-
-=======
->>>>>>> /tmp/T4009586
 extern caddr_t CHIPMEMADDR;
 extern caddr_t chipmem_steal ();
 
@@ -553,6 +542,28 @@ cc_vbl ()
   if (!ccfb.beepTimer) custom.aud[0].vol = custom.aud[1].vol = 0;
 }
 
+/* useful function for debugging.. */
+int
+amiga_mouse_button (num)
+     int num;
+{
+  switch (num)
+    {
+    case 1:
+      return ccfb.mouseb1;
+
+    case 2:
+      return ccfb.mouseb2;
+      
+    case 3:
+      return ccfb.mouseb3;
+
+    default:
+      return 0;
+    }
+}
+
+
 /* Initialize hardware.
  * Must point g_display at a grfinfo structure describing the hardware.
  * Returns 0 if hardware not present, non-zero ow.
@@ -749,3 +760,4 @@ cc_mode(gp, cmd, arg)
 }
 
 #endif
+

@@ -33,8 +33,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)sd.c	7.8 (Berkeley) 6/9/91
- *	$Id: sd.c,v 1.3 1993/09/02 18:08:13 mw Exp $
+ *	@(#)sd.c	7.8 (Berkeley) 6/9/91
  */
 
 /*
@@ -44,7 +43,7 @@
 #if NSD > 0
 
 #ifndef lint
-static char rcsid[] = "$Header: /cvsroot/src/sys/arch/amiga/dev/Attic/sd.c,v 1.3 1993/09/02 18:08:13 mw Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/sys/arch/amiga/dev/Attic/sd.c,v 1.4 1993/10/30 23:41:36 mw Exp $";
 #endif
 
 #include "sys/param.h"
@@ -312,6 +311,10 @@ retry_TUR:
 				break;
 		sc->sc_idstr[i+1] = 0;
 	}
+
+	/* for those that have drives they only turn on for use under BSD... */
+	scsi_start_stop_unit (ctlr, slave, unit, 1);
+
 	i = scsi_immed_command(ctlr, slave, unit, &cap, 
 			       (u_char *)&capbuf, sizeof(capbuf), B_READ);
 	if (i) {
@@ -1164,7 +1167,7 @@ sddump(dev)
 		return (EINVAL);
 	if (dumplo + ctod(pages) > sc->sc_label.d_partitions[part].p_size)
 		pages = dtoc(sc->sc_label.d_partitions[part].p_size - dumplo);
-	maddr = lowram;
+	maddr = ctob(lowram);
 	baddr = dumplo + sc->sc_label.d_partitions[part].p_offset;
 	/* scsi bus idle? */
 	if (!scsireq(&sc->sc_dq)) {

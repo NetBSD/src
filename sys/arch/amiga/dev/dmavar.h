@@ -30,8 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)dmavar.h	7.2 (Berkeley) 11/4/90
- *	$Id: dmavar.h,v 1.3 1993/09/02 18:07:55 mw Exp $
+ *	@(#)dmavar.h	7.2 (Berkeley) 11/4/90
  */
 
 /* dmago flags */
