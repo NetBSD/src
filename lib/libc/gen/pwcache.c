@@ -1,4 +1,4 @@
-/*	$NetBSD: pwcache.c,v 1.10 1998/07/28 16:58:36 mycroft Exp $	*/
+/*	$NetBSD: pwcache.c,v 1.11 1998/07/28 18:13:53 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)cache.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: pwcache.c,v 1.10 1998/07/28 16:58:36 mycroft Exp $");
+__RCSID("$NetBSD: pwcache.c,v 1.11 1998/07/28 18:13:53 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -214,7 +214,7 @@ grptb_start()
 }
 
 /*
- * name_uid()
+ * user_from_uid()
  *	caches the name (if any) for the uid. If noname clear, we always return the
  *	the stored name (if valid or invalid match). We use a simple hash table.
  * Return
