@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.47.4.3 2003/06/19 20:05:20 msaitoh Exp $
+# $NetBSD: GENERIC,v 1.47.4.4 2003/06/19 20:12:53 msaitoh Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/newsmips/conf/std.newsmips"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.47.4.3 $"
+#ident 		"GENERIC-$Revision: 1.47.4.4 $"
 
 maxusers	16
 
@@ -150,7 +150,7 @@ zstty5	at zsc2 channel 1		# tty05
 fb0	at hb0 addr 0x88000000		# frame buffer
 
 sc0	at hb0 addr 0xbfe00100 level 0	# on-board cxd1185 SCSI controller
-scsibus0 at sc0
+scsibus* at sc0
 
 dmac*	at ap?				# dmac3
 spifi*	at ap?				# SPIFI SCSI
