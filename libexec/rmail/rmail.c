@@ -1,4 +1,4 @@
-/*	$NetBSD: rmail.c,v 1.18 2003/08/07 09:46:47 agc Exp $	*/
+/*	$NetBSD: rmail.c,v 1.19 2003/09/19 06:01:24 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -36,7 +36,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)rmail.c	8.3 (Berkeley) 5/15/95";
 #else
-__RCSID("$NetBSD: rmail.c,v 1.18 2003/08/07 09:46:47 agc Exp $");
+__RCSID("$NetBSD: rmail.c,v 1.19 2003/09/19 06:01:24 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -90,11 +90,11 @@ main(argc, argv)
 {
 	FILE *fp;
 	struct stat sb;
-	size_t fplen, fptlen, len;
+	size_t fplen, fptlen, len, nfptlen;
 	off_t offset;
 	int ch, debug, i, pdes[2], pid, status;
 	char *addrp, *domain, *p, *t;
-	char *from_path, *from_sys, *from_user;
+	char *from_path, *from_sys, *from_user, *n;
 	char *args[100], buf[2048], lbuf[2048];
 
 	addrp = NULL;	/* XXX gcc */
@@ -196,10 +196,11 @@ main(argc, argv)
 					err(EX_TEMPFAIL, NULL);
 			}
 			if (fplen + len + 2 > fptlen) {
-				fptlen += MAX(fplen + len + 2, 256);
-				if ((from_path =
-				    realloc(from_path, fptlen)) == NULL)
+				nfptlen += MAX(fplen + len + 2, 256);
+				if ((n = realloc(from_path, nfptlen)) == NULL)
 					err(EX_TEMPFAIL, NULL);
+				from_path = n;
+				fptlen = nfptlen;
 			}
 			memmove(from_path + fplen, p, len);
 			fplen += len;
