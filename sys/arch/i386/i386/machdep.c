@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.262.2.12 1998/10/16 17:39:45 cgd Exp $	*/
+/*	$NetBSD: machdep.c,v 1.262.2.13 1998/10/17 22:15:32 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -1559,6 +1559,7 @@ init386(first_avail)
 	    SDT_SYS386CGT, SEL_UPL);
 	static_ldt[LUCODE_SEL] = static_gdt[GUCODE_SEL];
 	static_ldt[LUDATA_SEL] = static_gdt[GUDATA_SEL];
+	static_ldt[LSOL26CALLS_SEL] = static_ldt[LSYS5CALLS_SEL];
 	static_ldt[LBSDICALLS_SEL] = static_ldt[LSYS5CALLS_SEL];
 
 	/* exceptions */
