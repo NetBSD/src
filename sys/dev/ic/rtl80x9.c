@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl80x9.c,v 1.9 2003/10/25 18:35:43 christos Exp $	*/
+/*	$NetBSD: rtl80x9.c,v 1.10 2003/10/28 22:22:28 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl80x9.c,v 1.9 2003/10/25 18:35:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl80x9.c,v 1.10 2003/10/28 22:22:28 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -190,7 +190,7 @@ rtl80x9_media_init(sc)
 	conf2 &= RTL3_CONFIG2_PL1|RTL3_CONFIG2_PL0;
 
 	switch (conf2) {
-	case 0:
+	default:
 		defmedia = IFM_ETHER|IFM_AUTO;
 		printf("auto\n");
 		break;
@@ -209,9 +209,6 @@ rtl80x9_media_init(sc)
 			defmedia = IFM_ETHER|IFM_10_T;
 			printf("10baseT\n");
 		}
-		break;
-	default:
-		defmedia = 0;
 		break;
 	}
 
