@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.27 2003/05/14 00:24:07 dbj Exp $
+#	$NetBSD: Makefile,v 1.28 2003/05/18 07:57:37 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -44,6 +44,6 @@ DPADD+=		${LIBM}
 
 LDADD+=		-ll
 DPADD+=		${LIBL}
+.endif
 
 .include <bsd.prog.mk>
-.endif

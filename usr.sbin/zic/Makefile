@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2002/09/18 03:54:39 lukem Exp $
+#	$NetBSD: Makefile,v 1.8 2003/05/18 07:57:40 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -9,6 +9,4 @@ CPPFLAGS+=-Dunix
 
 .PATH: ${NETBSDSRCDIR}/lib/libc/time
 
-.ifndef HOSTPROG
 .include <bsd.prog.mk>
-.endif

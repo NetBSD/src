@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.13 2002/10/23 01:25:35 itojun Exp $
+# $NetBSD: Makefile,v 1.14 2003/05/18 07:57:33 lukem Exp $
 
 NOLINT= # defined
 
@@ -32,6 +32,4 @@ MAN=	compile_et.1
 
 CLEANFILES+=	lex.c parse.c parse.h
 
-.ifndef HOSTPROG
 .include <bsd.prog.mk>
-.endif

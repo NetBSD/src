@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2003/03/10 20:41:30 tshiozak Exp $
+#	$NetBSD: Makefile,v 1.10 2003/05/18 07:57:36 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -10,6 +10,4 @@ YHEADER=
 
 lex.o:		yacc.h				# for parallel make.
 
-.ifndef HOSTPROG
 .include <bsd.prog.mk>
-.endif
