@@ -1,4 +1,4 @@
-/*	$NetBSD: event.h,v 1.10 2003/06/29 22:32:22 fvdl Exp $	*/
+/*	$NetBSD: event.h,v 1.11 2003/07/08 06:18:00 itojun Exp $	*/
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
  * All rights reserved.
@@ -154,11 +154,11 @@ MALLOC_DECLARE(M_KEVENT);
  */
 struct filterops {
 	int	f_isfd;			/* true if ident == filedescriptor */
-	int	(*f_attach)	__P((struct knote *kn));
+	int	(*f_attach)	__P((struct knote *));
 					/* called when knote is ADDed */
-	void	(*f_detach)	__P((struct knote *kn));
+	void	(*f_detach)	__P((struct knote *));
 					/* called when knote is DELETEd */
-	int	(*f_event)	__P((struct knote *kn, long hint));
+	int	(*f_event)	__P((struct knote *, long));
 					/* called when event is triggered */
 };
 
@@ -196,18 +196,16 @@ struct proc;
 
 void		kqueue_init(void);
 
-void	knote(struct klist *list, long hint);
-void	knote_remove(struct proc *p, struct klist *list);
-void	knote_fdclose(struct proc *p, int fd);
-int 	kqueue_register(struct kqueue *kq,
-		    struct kevent *kev, struct proc *p);
+void	knote(struct klist *, long);
+void	knote_remove(struct proc *, struct klist *);
+void	knote_fdclose(struct proc *, int);
+int 	kqueue_register(struct kqueue *, struct kevent *, struct proc *);
 
-int	kfilter_register(const char *name,
-		    const struct filterops *filtops, int *retfilter);
-int	kfilter_unregister(const char *name);
+int	kfilter_register(const char *, const struct filterops *, int *);
+int	kfilter_unregister(const char *);
 
-int	filt_seltrue(struct knote *kn, long hint);
-int	seltrue_kqfilter(dev_t dev, struct knote *kn);
+int	filt_seltrue(struct knote *, long);
+int	seltrue_kqfilter(dev_t, struct knote *);
 
 #else 	/* !_KERNEL */
 
@@ -217,9 +215,8 @@ struct timespec;
 __BEGIN_DECLS
 #if defined(_NETBSD_SOURCE)
 int	kqueue __P((void));
-int	kevent __P((int kq, const struct kevent *changelist, size_t nchanges,
-		    struct kevent *eventlist, size_t nevents,
-		    const struct timespec *timeout));
+int	kevent __P((int, const struct kevent *, size_t, struct kevent *, size_t,
+		    const struct timespec *));
 #endif /* !_POSIX_C_SOURCE */
 __END_DECLS
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: resourcevar.h,v 1.17 2003/01/18 09:53:20 thorpej Exp $	*/
+/*	$NetBSD: resourcevar.h,v 1.18 2003/07/08 06:18:00 itojun Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -90,14 +90,14 @@ struct plimit {
 
 #ifdef _KERNEL
 extern char defcorename[];
-void	 addupc_intr __P((struct proc *p, u_long pc));
-void	 addupc_task __P((struct proc *p, u_long pc, u_int ticks));
-void	 calcru __P((struct proc *p, struct timeval *up, struct timeval *sp,
-	    struct timeval *ip));
-struct plimit *limcopy __P((struct plimit *lim));
+void	 addupc_intr __P((struct proc *, u_long));
+void	 addupc_task __P((struct proc *, u_long, u_int));
+void	 calcru __P((struct proc *, struct timeval *, struct timeval *,
+	    struct timeval *));
+struct plimit *limcopy __P((struct plimit *));
 void limfree __P((struct plimit *));
-void	ruadd __P((struct rusage *ru, struct rusage *ru2));
-struct	pstats *pstatscopy __P((struct pstats *ps));
-void 	pstatsfree __P((struct pstats *ps));
+void	ruadd __P((struct rusage *, struct rusage *));
+struct	pstats *pstatscopy __P((struct pstats *));
+void 	pstatsfree __P((struct pstats *));
 #endif
 #endif	/* !_SYS_RESOURCEVAR_H_ */

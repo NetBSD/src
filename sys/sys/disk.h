@@ -1,4 +1,4 @@
-/*	$NetBSD: disk.h,v 1.22 2003/04/15 18:27:27 darrenr Exp $	*/
+/*	$NetBSD: disk.h,v 1.23 2003/07/08 06:17:59 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -159,10 +159,9 @@ struct disk_sysctl {
 struct dkdriver {
 	void	(*d_strategy) __P((struct buf *));
 #ifdef notyet
-	int	(*d_open) __P((dev_t dev, int ifmt, int, struct proc *));
-	int	(*d_close) __P((dev_t dev, int, int ifmt, struct proc *));
-	int	(*d_ioctl) __P((dev_t dev, u_long cmd, caddr_t data, int fflag,
-				struct proc *));
+	int	(*d_open) __P((dev_t, int, int, struct proc *));
+	int	(*d_close) __P((dev_t, int, int, struct proc *));
+	int	(*d_ioctl) __P((dev_t, u_long, caddr_t, int, struct proc *));
 	int	(*d_dump) __P((dev_t));
 	void	(*d_start) __P((struct buf *, daddr_t));
 	int	(*d_mklabel) __P((struct disk *));
