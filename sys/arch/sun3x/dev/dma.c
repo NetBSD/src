@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.6 1997/08/27 11:24:32 bouyer Exp $ */
+/*	$NetBSD: dma.c,v 1.7 1997/10/07 17:56:30 gwr Exp $ */
 
 /*
  * Copyright (c) 1994 Paul Kranenburg.  All rights reserved.
@@ -128,7 +128,7 @@ dma_print_rev(sc)
 	int count = 500000;						\
 	while ((COND) && --count > 0) DELAY(1);				\
 	if (count == 0) {						\
-		printf("%s: line %d: CSR = %lx\n", __FILE__, __LINE__,	\
+		printf("%s: line %d: CSR = 0x%x\n", __FILE__, __LINE__, \
 			(SC)->sc_regs->csr);				\
 		if (DONTPANIC)						\
 			printf(MSG);					\
@@ -289,7 +289,7 @@ espdmaintr(sc)
 	u_long csr;
 	csr = DMACSR(sc);
 
-	NCR_DMA(("%s: intr: addr %x, csr %s\n",
+	NCR_DMA(("%s: intr: addr 0x%x, csr %s\n",
 		 sc->sc_dev.dv_xname, DMADDR(sc),
 		 bitmask_snprintf(csr, DMACSRBITS, bits, sizeof(bits))));
 
