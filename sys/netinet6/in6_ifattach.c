@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_ifattach.c,v 1.30.4.1 2001/02/26 15:57:18 he Exp $	*/
+/*	$NetBSD: in6_ifattach.c,v 1.30.4.2 2003/08/05 12:50:09 msaitoh Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.56 2000/05/05 06:54:33 itojun Exp $	*/
 
 /*
@@ -51,6 +51,7 @@
 #include <netinet6/in6_ifattach.h>
 #include <netinet6/ip6_var.h>
 #include <netinet6/nd6.h>
+#include <netinet6/ip6_mroute.h>
 
 #include <net/net_osdep.h>
 
@@ -800,6 +801,9 @@ in6_ifdetach(ifp)
 
 	/* nuke prefix list.  this may try to remove some of ifaddrs as well */
 	in6_purgeprefix(ifp);
+
+	/* remove ip6_mrouter stuff */
+	ip6_mrouter_detach(ifp);
 
 	/* remove neighbor management table */
 	nd6_purge(ifp);
