@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxxvar.h,v 1.7.4.1 1996/07/18 00:34:16 jtc Exp $	*/
+/*	$NetBSD: aic7xxxvar.h,v 1.7.4.2 1997/03/04 14:52:33 mycroft Exp $	*/
 
 /*
  * Interface to the generic driver for the aic7xxx based adaptec
@@ -92,14 +92,14 @@
 				 */
 
 
-typedef unsigned long int physaddr;
+typedef u_int32_t physaddr;
 #if defined(__FreeBSD__)
 extern u_long ahc_unit;
 #endif
 
 struct ahc_dma_seg {
-        physaddr addr;
-            long len;
+	physaddr	addr;
+	u_int32_t	len;
 };
 
 typedef enum {
@@ -115,6 +115,7 @@ typedef enum {
 	AHC_AIC78X0	= 0x060,	/* PCI Based Controller */
 	AHC_274		= 0x110,	/* EISA Based Controller */
 	AHC_284		= 0x210,	/* VL/ISA Based Controller */
+	AHC_294AU	= 0x421,	/* aic7860 based '2940' */
 	AHC_294		= 0x440,	/* PCI Based Controller */
 	AHC_294U	= 0x441,	/* ULTRA PCI Based Controller */
 	AHC_394		= 0x840,	/* Twin Channel PCI Controller */
@@ -145,18 +146,20 @@ typedef enum {
 }ahc_flag;
 
 typedef enum {
-	SCB_FREE		= 0x000,
-	SCB_ACTIVE		= 0x001,
-	SCB_ABORTED		= 0x002,
-	SCB_DEVICE_RESET	= 0x004,
-	SCB_IMMED		= 0x008,
-	SCB_SENSE		= 0x010,
-	SCB_TIMEDOUT		= 0x020,
-	SCB_QUEUED_FOR_DONE	= 0x040,
-	SCB_PAGED_OUT		= 0x080,
-	SCB_WAITINGQ		= 0x100,
-	SCB_ASSIGNEDQ		= 0x200,
-	SCB_SENTORDEREDTAG	= 0x400
+	SCB_FREE		= 0x0000,
+	SCB_ACTIVE		= 0x0001,
+	SCB_ABORTED		= 0x0002,
+	SCB_DEVICE_RESET	= 0x0004,
+	SCB_IMMED		= 0x0008,
+	SCB_SENSE		= 0x0010,
+	SCB_TIMEDOUT		= 0x0020,
+	SCB_QUEUED_FOR_DONE	= 0x0040,
+	SCB_PAGED_OUT		= 0x0080,
+	SCB_WAITINGQ		= 0x0100,
+	SCB_ASSIGNEDQ		= 0x0200,
+	SCB_SENTORDEREDTAG	= 0x0400,
+	SCB_MSGOUT_SDTR		= 0x0800,
+	SCB_MSGOUT_WDTR		= 0x1000
 }scb_flag;
 
 /*
@@ -175,7 +178,7 @@ struct scb {
 /*8*/	u_char residual_SG_segment_count;
 /*9*/	u_char residual_data_count[3];
 /*12*/	physaddr data;
-/*16*/  u_long datalen;			/* Really only three bits, but its
+/*16*/  u_int32_t datalen;		/* Really only three bits, but its
 					 * faster to treat it as a long on
 					 * a quad boundary.
 					 */
@@ -210,6 +213,8 @@ struct ahc_data {
 	void	*sc_ih;
 	bus_chipset_tag_t sc_bc;
 	bus_io_handle_t sc_ioh;
+	LIST_HEAD(, scsi_xfer) sc_xxxq;	/* XXX software request queue */
+	struct scsi_xfer *sc_xxxqlast;	/* last entry in queue */
 #endif
 	ahc_type type;
 	ahc_flag flags;
@@ -287,16 +292,18 @@ struct ahc_data *ahc_alloc __P((int unit, u_long io_base, ahc_type type, ahc_fla
 
 #define	ahc_name(ahc)	(ahc)->sc_dev.dv_xname
 
-void ahc_reset __P((char *devname, bus_chipset_tag_t bc, bus_io_handle_t ioh));
-void ahc_construct __P((struct ahc_data *ahc, bus_chipset_tag_t bc, bus_io_handle_t ioh, ahc_type type, ahc_flag flags));
+void	ahc_reset __P((char *devname, bus_chipset_tag_t bc,
+	    bus_io_handle_t ioh));
+void	ahc_construct __P((struct ahc_data *ahc, bus_chipset_tag_t bc,
+	    bus_io_handle_t ioh, ahc_type type, ahc_flag flags));
 #endif
-void ahc_free __P((struct ahc_data *));
-int ahc_init __P((struct ahc_data *));
-int ahc_attach __P((struct ahc_data *));
+void	ahc_free __P((struct ahc_data *));
+int	ahc_init __P((struct ahc_data *));
+int	ahc_attach __P((struct ahc_data *));
 #if defined(__FreeBSD__)
-void ahc_intr __P((void *arg));
+void	ahc_intr __P((void *arg));
 #elif defined(__NetBSD__)
-int ahc_intr __P((void *arg));
+int	ahc_intr __P((void *arg));
 #endif
 
 #endif  /* _AIC7XXX_H_ */
