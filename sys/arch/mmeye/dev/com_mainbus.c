@@ -1,4 +1,4 @@
-/*	$NetBSD: com_mainbus.c,v 1.3 2002/10/02 05:39:04 thorpej Exp $	*/
+/*	$NetBSD: com_mainbus.c,v 1.4 2003/06/14 17:01:13 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -122,5 +122,6 @@ comcninit(cp)
 	struct consdev *cp;
 {
 
-	comcnattach(0, CONADDR, COMCN_SPEED, COM_FREQ, CONMODE);
+	comcnattach(0, CONADDR, COMCN_SPEED, COM_FREQ, COM_TYPE_NORMAL,
+	    CONMODE);
 }

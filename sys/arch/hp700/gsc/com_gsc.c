@@ -1,4 +1,4 @@
-/*	$NetBSD: com_gsc.c,v 1.5 2002/10/02 05:17:49 thorpej Exp $	*/
+/*	$NetBSD: com_gsc.c,v 1.6 2003/06/14 17:01:12 thorpej Exp $	*/
 
 /*	$OpenBSD: com_gsc.c,v 1.8 2000/03/13 14:39:59 mickey Exp $	*/
 
@@ -170,6 +170,7 @@ com_gsc_kgdb_attach(void)
 	error = com_kgdb_attach(&hppa_bustag, 
 				KGDBADDR + COMGSC_OFFSET, 
 				KGDBRATE, COMGSC_FREQUENCY,
+				COM_TYPE_NORMAL,
 	   /* 8N1 */
 	   ((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8));
 	if (error) {

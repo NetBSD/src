@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.80 2003/04/26 11:05:08 ragge Exp $	*/
+/*	$NetBSD: machdep.c,v 1.81 2003/06/14 17:01:09 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -346,7 +346,8 @@ dokbd:
 	if (!strcmp(consinfo->devname, "com")) {
 		bus_space_tag_t tag = &bebox_isa_io_bs_tag;
 
-		if(comcnattach(tag, consinfo->addr, consinfo->speed, COM_FREQ,
+		if(comcnattach(tag, consinfo->addr, consinfo->speed,
+		    COM_FREQ, COM_TYPE_NORMAL,
 		    ((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8)))
 			panic("can't init serial console");
 
