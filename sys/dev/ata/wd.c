@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.184 1998/11/11 19:38:27 bouyer Exp $ */
+/*	$NetBSD: wd.c,v 1.185 1998/11/19 19:46:12 kenh Exp $ */
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.  All rights reserved.
@@ -97,6 +97,7 @@
 #include <dev/ata/atavar.h>
 #include <dev/ata/wdvar.h>
 #include <dev/ic/wdcreg.h>
+#include <sys/wdcio.h>
 #include "locators.h"
 
 #define	WAITTIME	(4 * hz)	/* time to wait for a completion */
@@ -171,6 +172,26 @@ struct cfattach wd_ca = {
 };
 
 extern struct cfdriver wd_cd;
+
+/*
+ * Glue necessary to hook WDCIOCCOMMAND into physio
+ */
+
+struct wd_ioctl {
+	LIST_ENTRY(wd_ioctl) wi_list;
+	struct buf wi_bp;
+	struct uio wi_uio;
+	struct iovec wi_iov;
+	wdcreq_t wi_wdcreq;
+	struct wd_softc *wi_softc;
+};
+
+LIST_HEAD(, wd_ioctl) wi_head;
+
+struct	wd_ioctl *wi_find __P((struct buf *));
+void	wi_free __P((struct wd_ioctl *));
+struct	wd_ioctl *wi_get __P((void));
+void	wdioctlstrategy __P((struct buf *));
 
 void  wdgetdefaultlabel __P((struct wd_softc *, struct disklabel *));
 void  wdgetdisklabel	__P((struct wd_softc *));
@@ -891,7 +912,54 @@ wdioctl(dev, xfer, addr, flag, p)
 		return error;
 		}
 #endif
-	
+
+	case WDCIOCCOMMAND:
+		/*
+		 * Make sure this command is (relatively) safe first
+		 */
+		if ((((wdcreq_t *) addr)->flags & WDCCMD_READ) == 0 &&
+		    (flag & FWRITE) == 0)
+			return (EBADF);
+		{
+		struct wd_ioctl *wi;
+		wdcreq_t *wdcreq = (wdcreq_t *) addr;
+		int error;
+
+		wi = wi_get();
+		wi->wi_softc = wd;
+		wi->wi_wdcreq = *wdcreq;
+
+		if (wdcreq->datalen && wdcreq->flags &
+		    (WDCCMD_READ | WDCCMD_WRITE)) {
+			wi->wi_iov.iov_base = wdcreq->databuf;
+			wi->wi_iov.iov_len = wdcreq->datalen;
+			wi->wi_uio.uio_iov = &wi->wi_iov;
+			wi->wi_uio.uio_iovcnt = 1;
+			wi->wi_uio.uio_resid = wdcreq->datalen;
+			wi->wi_uio.uio_offset = 0;
+			wi->wi_uio.uio_segflg = UIO_USERSPACE;
+			wi->wi_uio.uio_rw =
+			    (wdcreq->flags & WDCCMD_READ) ? B_READ : B_WRITE;
+			wi->wi_uio.uio_procp = p;
+			error = physio(wdioctlstrategy, &wi->wi_bp, dev,
+			    (wdcreq->flags & WDCCMD_READ) ? B_READ : B_WRITE,
+			    minphys, &wi->wi_uio);
+		} else {
+			/* No need to call physio if we don't have any
+			   user data */
+			wi->wi_bp.b_flags = 0;
+			wi->wi_bp.b_data = 0;
+			wi->wi_bp.b_bcount = 0;
+			wi->wi_bp.b_dev = 0;
+			wi->wi_bp.b_proc = p;
+			wdioctlstrategy(&wi->wi_bp);
+			error = wi->wi_bp.b_error;
+		}
+		*wdcreq = wi->wi_wdcreq;
+		wi_free(wi);
+		return(error);
+		}
+
 	default:
 		return ENOTTY;
 	}
@@ -1173,4 +1241,172 @@ wd_get_params(wd, flags, params)
 		panic("wd_get_params: bad return code from ata_get_params");
 		/* NOTREACHED */
 	}
+}
+
+/*
+ * Allocate space for a ioctl queue structure.  Mostly taken from
+ * scsipi_ioctl.c
+ */
+struct wd_ioctl *
+wi_get()
+{
+	struct wd_ioctl *wi;
+	int s;
+
+	wi = malloc(sizeof(struct wd_ioctl), M_TEMP, M_WAITOK);
+	memset(wi, 0, sizeof (struct wd_ioctl));
+	s = splbio();
+	LIST_INSERT_HEAD(&wi_head, wi, wi_list);
+	splx(s);
+	return (wi);
+}
+
+/*
+ * Free an ioctl structure and remove it from our list
+ */
+
+void
+wi_free(wi)
+	struct wd_ioctl *wi;
+{
+	int s;
+
+	s = splbio();
+	LIST_REMOVE(wi, wi_list);
+	splx(s);
+	free(wi, M_TEMP);
+}
+
+/*
+ * Find a wd_ioctl structure based on the struct buf.
+ */
+
+struct wd_ioctl *
+wi_find(bp)
+	struct buf *bp;
+{
+	struct wd_ioctl *wi;
+	int s;
+
+	s = splbio();
+	for (wi = wi_head.lh_first; wi != 0; wi = wi->wi_list.le_next)
+		if (bp == &wi->wi_bp)
+			break;
+	splx(s);
+	return (wi);
+}
+
+/*
+ * Ioctl pseudo strategy routine
+ *
+ * This is mostly stolen from scsipi_ioctl.c:scsistrategy().  What
+ * happens here is:
+ *
+ * - wdioctl() queues a wd_ioctl structure.
+ *
+ * - wdioctl() calls physio/wdioctlstrategy based on whether or not
+ *   user space I/O is required.  If physio() is called, physio() eventually
+ *   calls wdioctlstrategy().
+ *
+ * - In either case, wdioctlstrategy() calls wdc_exec_command()
+ *   to perform the actual command
+ *
+ * The reason for the use of the pseudo strategy routine is because
+ * when doing I/O to/from user space, physio _really_ wants to be in
+ * the loop.  We could put the entire buffer into the ioctl request
+ * structure, but that won't scale if we want to do things like download
+ * microcode.
+ */
+
+void
+wdioctlstrategy(bp)
+	struct buf *bp;
+{
+	struct wd_ioctl *wi;
+	struct wdc_command wdc_c;
+	int error = 0;
+
+	wi = wi_find(bp);
+	if (wi == NULL) {
+		printf("user_strat: No ioctl\n");
+		error = EINVAL;
+		goto bad;
+	}
+
+	memset(&wdc_c, 0, sizeof(wdc_c));
+
+	/*
+	 * Abort if physio broke up the transfer
+	 */
+
+	if (bp->b_bcount != wi->wi_wdcreq.datalen) {
+		printf("physio split wd ioctl request... cannot proceed\n");
+		error = EIO;
+		goto bad;
+	}
+
+	/*
+	 * Abort if we didn't get a buffer size that was a multiple of
+	 * our sector size (or was larger than NBBY)
+	 */
+
+	if ((bp->b_bcount % wi->wi_softc->sc_dk.dk_label->d_secsize) != 0 ||
+	    (bp->b_bcount / wi->wi_softc->sc_dk.dk_label->d_secsize) >=
+	     (1 << NBBY)) {
+		error = EINVAL;
+		goto bad;
+	}
+
+	/*
+	 * Make sure a timeout was supplied in the ioctl request
+	 */
+
+	if (wi->wi_wdcreq.timeout == 0) {
+		error = EINVAL;
+		goto bad;
+	}
+
+	if (wi->wi_wdcreq.flags & WDCCMD_READ)
+		wdc_c.flags |= AT_READ;
+	else if (wi->wi_wdcreq.flags & WDCCMD_WRITE)
+		wdc_c.flags |= AT_WRITE;
+
+	wdc_c.flags |= AT_WAIT;
+
+	wdc_c.timeout = wi->wi_wdcreq.timeout;
+	wdc_c.r_command = wi->wi_wdcreq.command;
+	wdc_c.r_head = wi->wi_wdcreq.head & 0x0f;
+	wdc_c.r_cyl = wi->wi_wdcreq.cylinder;
+	wdc_c.r_sector = wi->wi_wdcreq.sec_num;
+	wdc_c.r_count = wi->wi_wdcreq.sec_count;
+	wdc_c.r_precomp = wi->wi_wdcreq.features;
+	wdc_c.r_st_bmask = WDCS_DRDY;
+	wdc_c.r_st_pmask = WDCS_DRDY;
+	wdc_c.data = wi->wi_bp.b_data;
+	wdc_c.bcount = wi->wi_bp.b_bcount;
+
+	if (wdc_exec_command(wi->wi_softc->drvp, &wdc_c) != WDC_COMPLETE) {
+		wi->wi_wdcreq.retsts = WDCCMD_ERROR;
+		goto bad;
+	}
+
+
+	if (wdc_c.flags & (AT_ERROR | AT_TIMEOU | AT_DF)) {
+		if (wdc_c.flags & AT_ERROR) {
+			wi->wi_wdcreq.retsts = WDCCMD_ERROR;
+			wi->wi_wdcreq.error = wdc_c.r_error;
+		} else if (wdc_c.flags & AT_DF)
+			wi->wi_wdcreq.retsts = WDCCMD_DF;
+		else
+			wi->wi_wdcreq.retsts = WDCCMD_TIMEOUT;
+	} else
+		wi->wi_wdcreq.retsts = WDCCMD_OK;
+
+	bp->b_error = 0;
+	biodone(bp);
+	return;
+bad:
+	bp->b_flags |= B_ERROR;
+	bp->b_error = error;
+	biodone(bp);
 }
