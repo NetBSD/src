@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.23 1997/10/02 01:15:11 gwr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.24 1997/10/04 20:03:46 gwr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -148,6 +148,7 @@ static void initcpu __P((void));
 void
 consinit()
 {
+	/* Note: cninit() done earlier.  (See _startup.c) */
 
 #ifdef KGDB
 	/* XXX - Ask on console for kgdb_dev? */
@@ -555,6 +556,9 @@ cpu_reboot(howto, user_boot_string)
 	if (cold)
 		goto haltsys;
 
+	/* Un-blank the screen if appropriate. */
+	cnpollc(1);
+
 	if ((howto & RB_NOSYNC) == 0) {
 		reboot_sync();
 		/*
@@ -646,6 +650,10 @@ cpu_dumpconf()
 	int nblks;	/* size of dump area */
 	int maj;
 	int (*getsize)__P((dev_t));
+
+	/* Validate space in page zero for the kcore header. */
+	if (MSGBUFOFF < (sizeof(kcore_seg_t) + sizeof(cpu_kcore_hdr_t)))
+		panic("cpu_dumpconf: MSGBUFOFF too small");
 
 	if (dumpdev == NODEV)
 		return;
