@@ -1,4 +1,4 @@
-/*	$NetBSD: ktrace.c,v 1.32 2004/02/28 01:43:07 enami Exp $	*/
+/*	$NetBSD: ktrace.c,v 1.33 2004/02/28 02:22:31 enami Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ktrace.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ktrace.c,v 1.32 2004/02/28 01:43:07 enami Exp $");
+__RCSID("$NetBSD: ktrace.c,v 1.33 2004/02/28 02:22:31 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -265,19 +265,24 @@ void
 usage()
 {
 
+#define	TRPOINTS "[Aaceilmnsuvw+-]"
 #ifdef KTRUSS
-# define LONG_OPTION "[-e emulation] [-m maxdata] [-o outfile] "
-# define SHRT_OPTION "RT"
+	(void)fprintf(stderr, "usage:\t%s "
+	    "[-aCcdilRT] [-e emulation] [-f infile] [-g pgid] "
+	    "[-m maxdata]\n\t    "
+	    "[-o outfile] [-p pid] [-t " TRPOINTS "]\n", getprogname());
+	(void)fprintf(stderr, "\t%s "
+	    "[-adiRT] [-e emulation] [-m maxdata] [-o outfile]\n\t    "
+	    "[-t " TRPOINTS "] command\n",
+	    getprogname());
 #else
-# define LONG_OPTION ""
-# define SHRT_OPTION ""
+	(void)fprintf(stderr, "usage:\t%s "
+	    "[-aCcdis] [-f trfile] [-g pgid] [-p pid] [-t " TRPOINTS "]\n",
+	    getprogname());
+	(void)fprintf(stderr, "\t%s "
+	    "[-adis] [-f trfile] [-t " TRPOINTS "] command\n",
+	    getprogname());
 #endif
-	(void)fprintf(stderr,
-	    "usage:\t%s [-aCcid%s] %s[-f trfile] [-g pgid] [-p pid] "
-	    "[-t [Aaceilmnsuvw+]]\n\t%s [-aCcid%s] %s[-f trfile] [-t "
-	    "[Aaceilmnsuvw+]] command\n",
-	    getprogname(), SHRT_OPTION, LONG_OPTION,
-	    getprogname(), SHRT_OPTION, LONG_OPTION);
 	exit(1);
 }
 
