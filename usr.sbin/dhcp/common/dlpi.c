@@ -3,7 +3,7 @@
    Data Link Provider Interface (DLPI) network interface code. */
 
 /*
- * Copyright (c) 1996-2000 Internet Software Consortium.
+ * Copyright (c) 1996-2001 Internet Software Consortium.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -36,6 +36,10 @@
  * This software was written for the Internet Software Consortium
  * by Eric James Negaard, <lmdejn@lmd.ericsson.se>.  To learn more about
  * the Internet Software Consortium, see ``http://www.isc.org''.
+ *
+ * Joost Mulders has also done considerable work in debugging the DLPI API
+ * support on Solaris and getting this code to work properly on a variety
+ * of different Solaris platforms.
  */
 
 /*
@@ -84,7 +88,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: dlpi.c,v 1.1.1.9 2001/04/02 21:56:55 mellon Exp $ Copyright (c) 1996-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: dlpi.c,v 1.1.1.10 2001/04/06 17:00:09 mellon Exp $ Copyright (c) 1996-2000 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -1153,7 +1157,8 @@ static int dlpiunitdataind (fd, daddr, daddrlen,
 
 	/* Copy sender info */
 	if (saddr) {
-		memcpy (saddr, &buf [dlp -> unitdata_ind.dl_src_addr_offset],
+		memcpy (saddr,
+			(char *)buf + dlp -> unitdata_ind.dl_src_addr_offset,
 			dlp -> unitdata_ind.dl_src_addr_length);
 	}
 	if (saddrlen) {
@@ -1162,7 +1167,8 @@ static int dlpiunitdataind (fd, daddr, daddrlen,
 
 	/* Copy destination info */
 	if (daddr) {
-		memcpy (daddr, &buf [dlp -> unitdata_ind.dl_dest_addr_offset],
+		memcpy (daddr,
+			(char *)buf + dlp -> unitdata_ind.dl_dest_addr_offset,
 			dlp -> unitdata_ind.dl_dest_addr_length);
 	}
 	if (daddrlen) {

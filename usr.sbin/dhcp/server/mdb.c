@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: mdb.c,v 1.1.1.7 2001/04/02 21:57:23 mellon Exp $ Copyright (c) 1996-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: mdb.c,v 1.1.1.8 2001/04/06 17:00:38 mellon Exp $ Copyright (c) 1996-2000 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -1024,7 +1024,7 @@ int supersede_lease (comp, lease, commit, propogate, pimmediate)
 	}
 
 	/* Make the state transition. */
-	if (commit)
+	if (commit || !pimmediate)
 		process_state_transition (comp);
 
 	/* Put the lease back on the appropriate queue.    If the lease

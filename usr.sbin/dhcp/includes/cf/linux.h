@@ -124,6 +124,7 @@ extern int h_errno;
 #  if defined (USE_DEFAULT_NETWORK)
 #   define USE_LPF
 #  endif
+#  define SIOCGIFCONF_NULL_BUF_GIVES_CORRECT_LEN
 #  define LINUX_SLASHPROC_DISCOVERY
 #  define PROCDEV_DEVICE "/proc/net/dev"
 #  define HAVE_ARPHRD_TUNNEL
@@ -151,7 +152,6 @@ extern int h_errno;
 
 #define ALIAS_NAMES_PERMUTED
 #define SKIP_DUMMY_INTERFACES
-#define SIOCGIFCONF_NULL_BUF_GIVES_CORRECT_LEN
 
 #ifdef NEED_PRAND_CONF
 #ifndef HAVE_DEV_RANDOM
