@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.1 2000/01/21 11:26:00 shin Exp $	*/
+/*	$NetBSD: md.h,v 1.2 2000/02/21 13:23:17 shin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -51,8 +51,8 @@
 /* constants and defines */
 
 
-/* Megs required for a full X installation. */
-#define XNEEDMB 50
+#define STDNEEDMB	130	/* Min space for non X install */
+#define XNEEDMB		30	/* Extra megs for full X installation */
 
 
 /*
