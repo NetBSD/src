@@ -1,4 +1,4 @@
-/*	$NetBSD: macereg.h,v 1.3 2002/12/23 20:05:06 pooka Exp $	*/
+/*	$NetBSD: macereg.h,v 1.4 2003/10/04 09:19:23 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -70,7 +70,7 @@
 #define MACE_PCI_LOW_MEMORY	0x1A000000
 #define MACE_PCI_LOW_IO		0x18000000
 #define MACE_PCI_NATIVE_VIEW	0x40000000
-#define MACE_PCI_IO		0x80000000  
+#define MACE_PCI_IO		0x80000000
 #define MACE_PCI_HI_MEMORY	0x280000000
 #define MACE_PCI_HI_IO		0x100000000
 
@@ -83,7 +83,7 @@
 #define MACE_PERIF   (MACE_BASE + 0x300000)
 #define MACE_ISA_EXT (MACE_BASE + 0x380000)
 
-#define MACE_AUDIO   (MACE_PERIF + 0x00000) 
+#define MACE_AUDIO   (MACE_PERIF + 0x00000)
 #define MACE_ISA     (MACE_PERIF + 0x10000)
 #define MACE_KBDMS   (MACE_PERIF + 0x20000)
 #define MACE_I2C     (MACE_PERIF + 0x30000)
@@ -136,7 +136,7 @@
 #define MACE_ISA_FLASH_NIC_REG  (MACE_ISA+0x0008)
 #define   MACE_ISA_FLASH_WE       (0x01) /* 1=> Enable FLASH writes */
 #define   MACE_ISA_PWD_CLEAR      (0x02) /* 1=> PWD CLEAR jumper detected */
-#define   MACE_ISA_NIC_DEASSERT   (0x04) 
+#define   MACE_ISA_NIC_DEASSERT   (0x04)
 #define   MACE_ISA_NIC_DATA       (0x08)
 #define   MACE_ISA_LED_RED        (0x10) /* 1=> Illuminate RED LED */
 #define   MACE_ISA_LED_GREEN      (0x20) /* 1=> Illuminate GREEN LED */
@@ -154,7 +154,7 @@
 /********************************
  * MACE Timer Interface Registers
  *
- * Note: MSC_UST<31:0> is MSC, MSC_UST<63:32> is UST. 
+ * Note: MSC_UST<31:0> is MSC, MSC_UST<63:32> is UST.
  */
 #define MACE_UST           (MACE_UST_MSC + 0x00) /* Universial system time */
 #define MACE_COMPARE1      (MACE_UST_MSC + 0x08) /* Interrupt compare reg 1 */

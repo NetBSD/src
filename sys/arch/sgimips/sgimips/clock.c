@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.8 2003/08/07 16:29:26 agc Exp $	*/
+/*	$NetBSD: clock.c,v 1.9 2003/10/04 09:19:23 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.8 2003/08/07 16:29:26 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.9 2003/10/04 09:19:23 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -158,7 +158,7 @@ cpu_initclocks()
 		ftp = min(ffs(tickfix), ffs(hz));
 		tickfix >>= (ftp - 1);
 		tickfixinterval = hz >> (ftp - 1);
-        }
+	}
 
 	(*clockfns->cf_init)(clockdev);
 }
