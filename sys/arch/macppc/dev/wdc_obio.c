@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_obio.c,v 1.35 2004/01/03 22:56:53 thorpej Exp $	*/
+/*	$NetBSD: wdc_obio.c,v 1.36 2004/01/04 07:08:13 dbj Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.35 2004/01/03 22:56:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.36 2004/01/04 07:08:13 dbj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,7 +70,7 @@ __KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.35 2004/01/03 22:56:53 thorpej Exp $"
 
 struct wdc_obio_softc {
 	struct wdc_softc sc_wdcdev;
-	struct wdc_channel wdc_chanptr[1];
+	struct wdc_channel *wdc_chanptr;
 	struct wdc_channel wdc_channel;
 	struct ata_queue wdc_chqueue;
 	dbdma_regmap_t *sc_dmareg;
@@ -206,8 +206,8 @@ wdc_obio_attach(parent, self, aux)
 
 	sc->sc_wdcdev.PIO_cap = 4;
 	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_MODE;
-	sc->wdc_chanlist[0] = chp;
-	sc->sc_wdcdev.channels = sc->wdc_chanlist;
+	sc->wdc_chanptr = chp;
+	sc->sc_wdcdev.channels = &sc->wdc_chanptr;
 	sc->sc_wdcdev.nchannels = 1;
 	sc->sc_wdcdev.dma_arg = sc;
 	sc->sc_wdcdev.dma_init = wdc_obio_dma_init;
@@ -276,7 +276,7 @@ wdc_obio_select(chp, drive)
 	struct wdc_channel *chp;
 	int drive;
 {
-	struct wdc_obio_softc *sc = (struct wdc_obio_softc *)chp->wdc;
+	struct wdc_obio_softc *sc = (struct wdc_obio_softc *)chp->ch_wdc;
 	bus_space_write_4(chp->cmd_iot, chp->cmd_baseioh,
 			CONFIG_REG, sc->sc_dmaconf[drive]);
 }
@@ -285,7 +285,7 @@ void
 adjust_timing(chp)
 	struct wdc_channel *chp;
 {
-	struct wdc_obio_softc *sc = (struct wdc_obio_softc *)chp->wdc;
+	struct wdc_obio_softc *sc = (struct wdc_obio_softc *)chp->ch_wdc;
 	int drive;
 	int min_cycle = 0, min_active = 0;
 	int cycle_tick = 0, act_tick = 0, inact_tick = 0, half_tick;
@@ -352,7 +352,7 @@ void
 ata4_adjust_timing(chp)
 	struct wdc_channel *chp;
 {
-	struct wdc_obio_softc *sc = (struct wdc_obio_softc *)chp->wdc;
+	struct wdc_obio_softc *sc = (struct wdc_obio_softc *)chp->ch_wdc;
 	int drive;
 	int min_cycle = 0, min_active = 0;
 	int cycle_tick = 0, act_tick = 0, inact_tick = 0;
