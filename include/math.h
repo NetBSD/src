@@ -1,4 +1,4 @@
-/*	$NetBSD: math.h,v 1.10 1994/10/26 00:56:05 cgd Exp $	*/
+/*	$NetBSD: math.h,v 1.11 1998/04/08 23:42:59 tv Exp $	*/
 
 /*
  * ====================================================
@@ -65,6 +65,7 @@ extern  _LIB_VERSION_TYPE  _LIB_VERSION;
 #define _XOPEN_ fdlibm_xopen
 #define _POSIX_ fdlibm_posix
 
+#ifndef __cplusplus
 struct exception {
 	int type;
 	char *name;
@@ -72,6 +73,7 @@ struct exception {
 	double arg2;
 	double retval;
 };
+#endif
 
 #define	HUGE		MAXFLOAT
 
@@ -151,7 +153,9 @@ extern double nextafter __P((double, double));
 extern double remainder __P((double, double));
 extern double scalb __P((double, double));
 
+#ifndef __cplusplus
 extern int matherr __P((struct exception *));
+#endif
 
 /*
  * IEEE Test Vector
