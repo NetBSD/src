@@ -1,4 +1,4 @@
-/*	$NetBSD: wireg.h,v 1.23 2002/03/31 05:12:55 ichiro Exp $	*/
+/*	$NetBSD: wireg.h,v 1.24 2002/03/31 05:22:26 ichiro Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -669,8 +669,6 @@ struct wi_frame {
 #define	 WI_ENC_TX_802_11	0x11
 #define	WI_TXCNTL_ALTRTRY	0x0020
 #define	WI_TXCNTL_NOCRYPT	0x0080
-#define WI_TXCNTL_MACPORT	0x00FF
-#define WI_TXCNTL_STRUCTTYPE	0xFF00
 
 /*
  * SNAP (sub-network access protocol) constants for transmission
