@@ -1,0 +1,168 @@
+$NetBSD: README.ubc,v 1.1.2.1 1999/03/25 09:43:55 chs Exp $
+
+new interfaces:
+
+
+int
+VOP_GETPAGES(vp, offset, m, count, centeridx, access_type, advice, flags)
+	struct vnode *vp;
+	vaddr_t offset;
+	vm_page_t *m;
+	int *count;
+	int centeridx;
+	vm_prot_t access_type;
+	int advice;
+	int flags;
+
+this is the pgo_get() uvm_object method, but for vnodes instead.
+pages are allocated for VNODE at OFFSET and initialized by reading
+from disk or zero-filling or whatever is appropriate.
+vm_page_t pointers are returned in M, with COUNT being updated with
+the number of pages returned.
+
+
+int
+VOP_PUTPAGES(vp, m, count, sync, rtvals)
+	struct vnode *vp;
+	vm_page_t *m;
+	int count;
+	int sync;
+	int *rtvals;
+
+like pgo_put(), but different.
+COUNT pages in the page-array M are written to backing storage,
+synchronously if SYNC is non-zero.  RTVALS is error return values
+for each page if the operation is synchronous (tho I'm not using it
+so far and haven't missed it, so this arg will probably be removed).
+this interface might also be changed to take only 1 page and let
+the filesystem do any desired clustering.
+
+
+int
+ffs_balloc_range(ip, off, len, cred, flags)
+	struct inode *ip;
+	off_t off;
+	off_t len;
+	struct ucred *cred;
+	int flags;
+
+allocate the range of blocks [OFF, OFF+LEN) in file IP.
+CRED and FLAGS are passed to ffs_balloc().
+
+
++void *			ubc_alloc __P((struct uvm_object *, vaddr_t, vsize_t,
++				       int));
++void			ubc_release __P((void *, vsize_t));
++void			ubc_flush __P((struct uvm_object *, vaddr_t, vaddr_t));
+
+
+
+void
+uvm_aio_biodone(bp)
+	struct buf *bp;
+
+this is the buffer iodone handler for async putpage i/os.
+just queues the buf for further processing by the pagedaemon.
+this is suitable for use by most filesystems' async putpage code.
+
+
+void
+uvm_aio_aiodone(aio)
+	struct uvm_aiodesc *aio;
+
+this is the uvm_aiodesc iodone hander for async putpage i/os.
+deletes the pager mapping and unbusies the pages in the i/o.
+this is suitable for use by most filesystems' async putpage code.
+
+
+
+void
+uvn_findpages(uobj, offset, npagesp, pps, flags)
+	struct uvm_object *uobj;
+	vaddr_t offset;
+	int *npagesp;
+	struct vm_page **pps;
+	int flags;
+
+lookup or create pages for vnode UOBJ at OFFSET.
+(*NPAGESP) is the number of pages requested,
+and PPS must point to enough memory to hold that many vm_page_t's.
+each element in the PPS array must be either PGO_DONTCARE or NULL.
+valid flags are:
+	UFP_NOWAIT	don't sleep for any reason
+	UFP_NOALLOC	don't allocate new pages
+	UFP_NOCACHE	don't return pages that already existed
+	UFP_ALL		(pseudo flag) return all pages requested
+upon return, the NULL elements of PPS for which pages have been found
+or allocated are updated to contain the pointer to the vm_page.
+
+
+
+void
+uvm_vnp_setpageblknos(vp, off, len, blkno, ufp_flags, zero)
+	struct vnode *vp;
+	off_t off, len;
+	daddr_t blkno;
+	int ufp_flags;
+	boolean_t zero;
+
+lookup or allocate pages in VP for the range [OFF, OFF+LEN).
+set the blkno for each page to be BLKNO plus the block offset from the
+beginning of the range.   UFP_FLAGS are as for uvn_findpages().
+if ZERO is non-zero, pages are also zero-filled.
+
+
+void
+uvm_vnp_zerorange(vp, off, len)
+	struct vnode *vp;
+	off_t off;
+	size_t len;
+
+zero-fill the range [OFF, OFF+LEN) of the file VP.
+
+
+void *
+ubc_alloc(uobj, offset, len, flags)
+	struct uvm_object *uobj;
+	vaddr_t offset;
+	vsize_t len;
+	int flags;
+
+allocate a mapping to the window of the file from [OFFSET, OFFSET+LEN)
+and return a pointer to the window.  FLAGS must be UBC_READ or UBC_WRITE
+indicating if the mapping will be used for reading or writing.
+this interface will probably change to deal with variable size windows.
+
+
+void
+ubc_release(va, wlen)
+	void *va;
+	vsize_t wlen;
+
+release the window at address VA.  WLEN is currently unused (and will
+probably be removed).
+
+
+
+
+
+------------------------------------------------------------------------------
+
+changed interfaces:
+
+ffs_realloccg()
+	now has an additional arg, "ufs_daddr_t *blknop".
+	upon return, (*blknop) will contain the physical block offset
+	of the new location of the block.
+
+ffs_balloc()
+	now has two additional args, "daddr_t *blknop" and
+	"boolean_t *alloced".  upon returnm, (*blknop) will contain
+	the physical block offset of the requested block, and
+	(*alloced) will be non-zero if and only if the disk block was
+	allocated by this call to ffs_balloc().
+
+uvn_attach()
+	no longer does a VREF() on the vnode, this must be done separately.
+	this routine will probably go away since it doesn't do much anymore.
+
