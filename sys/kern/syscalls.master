@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.74 1998/05/07 17:08:42 kleink Exp $
+	$NetBSD: syscalls.master,v 1.75 1998/05/30 22:21:03 kleink Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -384,8 +384,8 @@
 202	STD		{ int sys___sysctl(int *name, u_int namelen, \
 			    void *old, size_t *oldlenp, void *new, \
 			    size_t newlen); }
-203	STD		{ int sys_mlock(void *addr, size_t len); }
-204	STD		{ int sys_munlock(void *addr, size_t len); }
+203	STD		{ int sys_mlock(const void *addr, size_t len); }
+204	STD		{ int sys_munlock(const void *addr, size_t len); }
 205	STD		{ int sys_undelete(const char *path); }
 206	STD		{ int sys_futimes(int fd, \
 			    const struct timeval *tptr); }
