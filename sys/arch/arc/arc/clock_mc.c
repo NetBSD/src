@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_mc.c,v 1.7 2000/03/03 12:50:19 soda Exp $	*/
+/*	$NetBSD: clock_mc.c,v 1.8 2000/06/09 05:41:57 soda Exp $	*/
 /*	$OpenBSD: clock_mc.c,v 1.9 1998/03/16 09:38:26 pefo Exp $	*/
 /*	NetBSD: clock_mc.c,v 1.2 1995/06/28 04:30:30 cgd Exp 	*/
 
@@ -65,6 +65,7 @@
 #include <arc/isa/timerreg.h>
 
 extern int	cpu_int_mask;
+extern struct arc_bus_space arc_bus_io;	/* XXX */
 
 void		mcclock_attach __P((struct device *parent,
 		    struct device *self, void *aux));
@@ -134,7 +135,10 @@ mcclock_attach(parent, self, aux)
 		mc146818_write(csc, MC_REGB, MC_REGB_BINARY | MC_REGB_24HR);
 		break;
 
+	case NEC_R94:
+	case NEC_RAx94:
 	case NEC_RD94:
+	case NEC_R96:
 		csc->sc_init = mcclock_init_rd94;
 		csc->sc_data = &mcclockdata_rd94;
 		mc146818_write(csc, MC_REGB, MC_REGB_BINARY | MC_REGB_24HR);
