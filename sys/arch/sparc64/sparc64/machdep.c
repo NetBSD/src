@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.103 2001/04/24 04:31:12 thorpej Exp $ */
+/*	$NetBSD: machdep.c,v 1.104 2001/05/09 19:46:22 kleink Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -578,7 +578,11 @@ sendsig(catcher, sig, mask, code)
 	sf.sf_sc.sc_sp = (long)tf->tf_out[6];
 	sf.sf_sc.sc_pc = tf->tf_pc;
 	sf.sf_sc.sc_npc = tf->tf_npc;
+#ifdef __arch64__
 	sf.sf_sc.sc_tstate = tf->tf_tstate; /* XXX */
+#else
+	sf.sf_sc.sc_psr = TSTATECCR_TO_PSR(tf->tf_tstate); /* XXX */
+#endif
 	sf.sf_sc.sc_g1 = tf->tf_global[1];
 	sf.sf_sc.sc_o0 = tf->tf_out[0];
 
@@ -734,7 +738,11 @@ printf("sigreturn14: pid %d nsaved %d\n",
 		return (EINVAL);
 #endif
 	/* take only psr ICC field */
+#ifdef __arch64__
 	tf->tf_tstate = (u_int64_t)(tf->tf_tstate & ~TSTATE_CCR) | (scp->sc_tstate & TSTATE_CCR);
+#else
+	tf->tf_tstate = (u_int64_t)(tf->tf_tstate & ~TSTATE_CCR) | PSRCC_TO_TSTATE(scp->sc_psr);
+#endif
 	tf->tf_pc = (u_int64_t)scp->sc_pc;
 	tf->tf_npc = (u_int64_t)scp->sc_npc;
 	tf->tf_global[1] = (u_int64_t)scp->sc_g1;
