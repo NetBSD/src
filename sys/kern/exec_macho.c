@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_macho.c,v 1.19 2002/11/24 21:59:44 manu Exp $	*/
+/*	$NetBSD: exec_macho.c,v 1.20 2002/11/29 11:31:11 manu Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_macho.c,v 1.19 2002/11/24 21:59:44 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_macho.c,v 1.20 2002/11/29 11:31:11 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: exec_macho.c,v 1.19 2002/11/24 21:59:44 manu Exp $")
 #include <sys/signalvar.h>
 #include <sys/resourcevar.h>
 #include <sys/mount.h>
+#include <sys/queue.h>
 #include <sys/stat.h>
 
 #include <uvm/uvm.h>
@@ -322,12 +323,30 @@ exec_macho_load_file(p, epp, path, entry, type, depth)
 	struct vnode *vp;
 	struct vattr attr;
 	struct exec_macho_fat_header fat;
+	struct exec_macho_emul_arg *emea;
+	struct exec_macho_loaded_file *loaded_file;
 
 	/*
 	 * Check for excessive rercursive loading
 	 */
 	if (depth++ > 6)
 		return E2BIG;
+	
+	/* Check that this file has not been already loaded */
+	emea = (struct exec_macho_emul_arg *)epp->ep_emul_arg;
+	LIST_FOREACH(loaded_file, &emea->loaded_files, file_list)
+		if (strncmp(path, loaded_file->filename, MAXPATHLEN) == 0)
+			break;
+	if (loaded_file != NULL) {
+		DPRINTF(("%s already loaded, skipping\n", path));
+		return 0;
+	}
+
+	/* This is a new file, enter it in the loaded file list */
+	loaded_file = (struct exec_macho_loaded_file *)
+	    malloc(sizeof(struct exec_macho_loaded_file), M_EXEC, M_WAITOK);
+	strncpy(loaded_file->filename, path, sizeof(loaded_file->filename));
+	LIST_INSERT_HEAD(&emea->loaded_files, loaded_file, file_list);
 
 	/*
 	 * 1. open file
@@ -569,6 +588,7 @@ exec_macho_makecmds(p, epp)
 {
 	struct exec_macho_fat_header *fat = epp->ep_hdr;
 	struct exec_macho_emul_arg *emea;
+	struct exec_macho_loaded_file *loaded_file;
 	int error;
 
 	if (epp->ep_hdrvalid < sizeof(*fat))
@@ -590,6 +610,7 @@ exec_macho_makecmds(p, epp)
 		return (error);
 
 	emea = malloc(sizeof(struct exec_macho_emul_arg), M_EXEC, M_WAITOK);
+	LIST_INIT(&emea->loaded_files);
 	epp->ep_emul_arg = (void *)emea;
 
 	if (!epp->ep_esch->u.mach_probe_func)
@@ -618,6 +639,11 @@ exec_macho_makecmds(p, epp)
 bad:
 	kill_vmcmds(&epp->ep_vmcmds);
 bad2:
+	while (LIST_EMPTY(&emea->loaded_files) == 0) {
+		loaded_file = LIST_FIRST(&emea->loaded_files);
+		LIST_REMOVE(loaded_file, file_list);
+		free(loaded_file, M_EXEC);
+	}
 	free(emea, M_EXEC);
 	return error;
 }
