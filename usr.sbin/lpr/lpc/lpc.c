@@ -1,4 +1,4 @@
-/*	$NetBSD: lpc.c,v 1.5 1995/11/15 22:27:41 pk Exp $	*/
+/*	$NetBSD: lpc.c,v 1.6 1997/07/10 05:34:48 mikel Exp $	*/
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -178,7 +178,7 @@ getcmd(name)
 	longest = 0;
 	nmatches = 0;
 	found = 0;
-	for (c = cmdtab; p = c->c_name; c++) {
+	for (c = cmdtab; (p = c->c_name) != NULL; c++) {
 		for (q = name; *q == *p++; q++)
 			if (*q == 0)		/* exact match? */
 				return(c);
