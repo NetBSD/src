@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.h,v 1.8 2002/01/03 06:43:23 mrg Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.h,v 1.9 2002/01/03 15:28:13 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -30,7 +30,6 @@
 
 /* we define some handy macros here... */
 #define IOCTL_STRUCT_CONV_TO(cmd, type)	\
-	do { \
 		size = IOCPARM_LEN(cmd); \
 		if (size > sizeof(stkbuf)) \
 			data = memp = malloc(size, M_IOCTLOPS, M_WAITOK); \
@@ -41,8 +40,7 @@
 		error = (*fp->f_ops->fo_ioctl)(fp, cmd, data, p); \
 		__CONCAT(netbsd32_from_, type)((struct type *)data, \
 			(struct __CONCAT(netbsd32_, type) *)data32); \
-		break; \
-	} while (0)
+		break
  
 /* from <sys/audioio.h> */
 #if 0
