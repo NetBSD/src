@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arcsubr.c,v 1.22 1999/08/26 19:56:08 is Exp $	*/
+/*	$NetBSD: if_arcsubr.c,v 1.23 1999/08/26 20:44:50 is Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Ignatios Souvatzis
@@ -649,6 +649,7 @@ arc_ifattach(ifp, lla)
 		log(LOG_ERR,"%s: link address 0 reserved for broadcasts.  Please change it and ifconfig %s down up\n",
 		   ifp->if_xname, ifp->if_xname); 
 	}
+	if_attach(ifp);
 	if ((sdl = ifp->if_sadl) &&
 	   sdl->sdl_family == AF_LINK) {
 		sdl->sdl_type = IFT_ARCNET;
