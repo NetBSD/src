@@ -1,4 +1,3 @@
-/* $NetBSD: psl.h,v 1.1 2001/09/05 04:53:41 matt Exp $ */
+/* $NetBSD: psl.h,v 1.2 2001/09/05 17:00:21 matt Exp $ */
 
-#include <arm/arm32/psl.h>
-
+/*#include <arm/arm32/psl.h>*/

@@ -1,4 +1,4 @@
-/* 	$NetBSD: intr.h,v 1.1 2001/09/05 04:53:40 matt Exp $	*/
+/* 	$NetBSD: intr.h,v 1.2 2001/09/05 17:00:20 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -65,13 +65,14 @@
 
 #if defined (_KERNEL) && !defined(_LOCORE)
 #include <sys/queue.h>
+#include <sys/device.h>
 
 extern int _splraise(int);
 extern int _spllower(int);
 extern int _splget(int);
 extern int _splset(int);
 extern int _splnone(void);
-extern int _softintrset(int);
+extern void _softintrset(int);
 extern int _softintrclr(int);
 
 #define	splsoftclock()		_splraise(IPL_SOFTCLOCK)
@@ -98,6 +99,8 @@ extern int _softintrclr(int);
 #define	setsoftnet()		_softintrset(IPL_SOFTNET)
 #define	setsoftserial()		_softintrset(IPL_SOFTSERIAL)
 
+#define	_SPL_0			IPL_NONE
+
 struct intrsource {
 	void *is_cookie;
 	LIST_ENTRY(evbarm_intrsource) is_link;
@@ -111,6 +114,28 @@ struct intrsource {
 	(((src)->is_establish)((src)->is_cookie, irq, type, func, arg))
 #define	intr_disestablish(src, ih) \
 	(((src)->is_disestablish)((src)->is_cookie, ih))
+
+struct irqhandler {
+	LIST_ENTRY(intrhandler) ih_ipllink;
+	LIST_ENTRY(intrhandler) ih_srclink;
+	int (*ih_func)(void *);
+	void *ih_arg;
+	int ih_flags;
+	int ih_ipl;
+	struct evcnt ih_ev;
+};
+
+struct fiqhandler {
+	void (*fh_func)(void);	/* handler function */
+	size_t fh_size;		/* Size of handler function */
+	register_t fh_r8;	/* FIQ mode r8 */
+	register_t fh_r9;	/* FIQ mode r9 */
+	register_t fh_r10;	/* FIQ mode r10 */
+	register_t fh_r11;	/* FIQ mode r11 */
+	register_t fh_r12;	/* FIQ mode r12 */
+	register_t fh_r13;	/* FIQ mode r13 */
+};
+
 #endif	/* _KERNEL */
 
 #endif	/* _EVBARM_INTR_H */

@@ -1,4 +1,4 @@
-#	$NetBSD: std.iq80310,v 1.1 2001/09/05 04:53:39 matt Exp $
+#	$NetBSD: std.iq80310,v 1.2 2001/09/05 17:00:20 matt Exp $
 #
 # standard NetBSD/evbarm for IQ80310 options
 
@@ -8,6 +8,7 @@ options		EXEC_ELF32
 options 	EXEC_AOUT
 options 	EXEC_SCRIPT
 options		IQ80310
+options 	NEWINTR
 
 # To support easy transit to ../arch/arm/arm32
 options		PROG32
