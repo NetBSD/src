@@ -1,4 +1,4 @@
-/* $NetBSD: isp_target.c,v 1.5 2000/07/05 22:25:34 mjacob Exp $ */
+/* $NetBSD: isp_target.c,v 1.6 2000/07/19 22:19:00 mjacob Exp $ */
 /*
  * Machine and OS Independent Target Mode Code for the Qlogic SCSI/FC adapters.
  *
@@ -239,6 +239,9 @@ isp_target_notify(isp, vptr, optrp)
 		    isp->isp_name, hdrp->rqs_entry_type);
 		rval = -1;
 		break;
+	}
+	if (isp_tdebug) {
+		MEMZERO(vptr, QENTRY_LEN);
 	}
 #undef	atiop
 #undef	at2iop
@@ -533,7 +536,8 @@ isp_target_async(isp, bus, event)
 		    isp->isp_name, event);
 		break;
 	}
-	isp_notify_ack(isp, NULL);
+	if (isp->isp_state == ISP_RUNSTATE)
+		isp_notify_ack(isp, NULL);
 }
 
 
