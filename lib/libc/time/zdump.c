@@ -1,12 +1,12 @@
-/*	$NetBSD: zdump.c,v 1.7 1997/10/17 14:23:45 lukem Exp $	*/
+/*	$NetBSD: zdump.c,v 1.8 1998/01/22 07:07:00 jtc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #ifndef NOID
 #if 0
-static char	elsieid[] = "@(#)zdump.c	7.26";
+static char	elsieid[] = "@(#)zdump.c	7.27";
 #else
-__RCSID("$NetBSD: zdump.c,v 1.7 1997/10/17 14:23:45 lukem Exp $");
+__RCSID("$NetBSD: zdump.c,v 1.8 1998/01/22 07:07:00 jtc Exp $");
 #endif
 #endif /* !defined NOID */
 #endif /* !defined lint */
@@ -352,7 +352,7 @@ int	v;
 
 	(void) printf("%-*s  ", (int) longest, zone);
 	if (v)
-		(void) printf("%.24s GMT = ", asctime(gmtime(&t)));
+		(void) printf("%.24s UTC = ", asctime(gmtime(&t)));
 	tmp = localtime(&t);
 	(void) printf("%.24s", asctime(tmp));
 	if (*abbr(tmp) != '\0')
