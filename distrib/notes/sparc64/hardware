@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.16 2004/06/12 07:00:39 mbw Exp $
+.\"	$NetBSD: hardware,v 1.17 2004/06/12 07:35:15 mbw Exp $
 .
 .Ss2 Supported machines
 The minimal configuration requires 32 MB of RAM and ~60 MB of disk space.
@@ -177,7 +177,7 @@ Acard ATP-850/860 based IDE controllers
 .br
 (including the Acard AEC-6210/6260 and the Sonnet Tempo ATA/66 cards)
 .It
-CMD Tech PCI064[3689] and 0680 IDE Controllers
+CMD Tech PCI064[3689] and Silicon Image 0680 IDE Controllers
 .Pq Em cmdide
 .It
 Silicon Image 3112 SATA Controller
