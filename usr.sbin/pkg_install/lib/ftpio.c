@@ -1,8 +1,8 @@
-/*	$NetBSD: ftpio.c,v 1.45 2002/10/17 08:46:00 wiz Exp $	*/
+/*	$NetBSD: ftpio.c,v 1.46 2002/10/26 12:37:00 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ftpio.c,v 1.45 2002/10/17 08:46:00 wiz Exp $");
+__RCSID("$NetBSD: ftpio.c,v 1.46 2002/10/26 12:37:00 hubertf Exp $");
 #endif
 
 /*
@@ -587,7 +587,7 @@ expandURL(char *expandedurl, const char *wildcardurl)
 		matches=0;
 		/* The following loop is basically the same as the readdir() loop
 		 * in findmatchingname() */
-		while (fgets(filename, sizeof(buf), f)) {
+		while (fgets(filename, sizeof(filename), f)) {
 
 			/*
 			 * We need to stripp of any .t[bg]z etc.
