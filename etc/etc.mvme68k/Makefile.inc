@@ -1,13 +1,12 @@
-#	$NetBSD: Makefile.inc,v 1.2 2000/11/24 22:07:32 scw Exp $
+#	$NetBSD: Makefile.inc,v 1.3 2001/11/29 22:45:57 thorpej Exp $
 #
 #	etc.mvme68k/Makefile.inc -- mvme68k-specific etc Makefile targets
 #
 
-# These are packaged and distributed
-EXTRA_KERNELS+= VME147 VME162 VME167 VME172 VME177
+KERNEL_SETS=	GENERIC VME147 VME162 VME167 VME172 VME177
 
-# These are for use by the bootfloppy construction tools
-BUILD_KERNELS+= RAMDISK
+BUILD_KERNELS=	RAMDISK
+
 INSTALLATION_DIRS += installation/miniroot
 INSTALLATION_DIRS += installation/netboot
 INSTALLATION_DIRS += installation/tapeimage

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.11 2001/08/26 05:31:28 eeh Exp $
+#	$NetBSD: Makefile.inc,v 1.12 2001/11/29 22:46:01 thorpej Exp $
 #
 #	etc.sparc64/Makefile.inc -- sparc64-specific etc Makefile targets
 #
@@ -8,9 +8,8 @@ TOP= $(.CURDIR)/..
 # Specify whether or not to build 32-bit libs.
 MK32BITLIBS?=no
 
-# Set this for any kernels beyond GENERIC you want to include
-# in the distribution.
-BUILD_KERNELS+= INSTALL
+KERNEL_SETS=		GENERIC
+BUILD_KERNELS+=		INSTALL
 
 # Add sparc64 installation directories
 MD_INSTALLATION_DIRS= \
