@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.39 2001/10/18 07:44:34 itojun Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.40 2001/10/24 06:36:38 itojun Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -515,7 +515,7 @@ skip_ipsec2:;
 
 		exthdrs.ip6e_ip6 = m;
 	}
-#endif /*IPSEC*/
+#endif /* IPSEC */
 
 	if (!IN6_IS_ADDR_MULTICAST(&ip6->ip6_dst)) {
 		/* Unicast */

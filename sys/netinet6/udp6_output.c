@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_output.c,v 1.3 2001/10/18 07:44:36 itojun Exp $	*/
+/*	$NetBSD: udp6_output.c,v 1.4 2001/10/24 06:36:39 itojun Exp $	*/
 /*	$KAME: udp6_output.c,v 1.43 2001/10/15 09:19:52 itojun Exp $	*/
 
 /*
@@ -101,7 +101,7 @@
 
 #ifdef IPSEC
 #include <netinet6/ipsec.h>
-#endif /*IPSEC*/
+#endif /* IPSEC */
 
 #include "faith.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.68 2001/10/18 09:09:25 itojun Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.69 2001/10/24 06:36:37 itojun Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -2198,7 +2198,7 @@ icmp6_reflect(m, off)
 #ifdef IPSEC
 	/* Don't lookup socket */
 	(void)ipsec_setsocket(m, NULL);
-#endif /*IPSEC*/
+#endif /* IPSEC */
 
 	ip6_output(m, NULL, NULL, 0, NULL, &outif);
 

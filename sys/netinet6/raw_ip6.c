@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.37 2001/10/18 09:12:14 itojun Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.38 2001/10/24 06:36:39 itojun Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.82 2001/07/23 18:57:56 jinmei Exp $	*/
 
 /*
@@ -97,7 +97,7 @@
 
 #ifdef IPSEC
 #include <netinet6/ipsec.h>
-#endif /*IPSEC*/
+#endif /* IPSEC */
 
 #include <machine/stdarg.h>
 
@@ -199,7 +199,7 @@ rip6_input(mp, offp, proto)
 				ipsec6stat.in_polvio++;
 				/* do not inject data into pcb */
 			} else
-#endif /*IPSEC*/
+#endif /* IPSEC */
 			if ((n = m_copy(m, 0, (int)M_COPYALL)) != NULL) {
 				if (last->in6p_flags & IN6P_CONTROLOPTS)
 					ip6_savecontrol(last, &opts, ip6, n);
@@ -230,7 +230,7 @@ rip6_input(mp, offp, proto)
 		ip6stat.ip6s_delivered--;
 		/* do not inject data into pcb */
 	} else
-#endif /*IPSEC*/
+#endif /* IPSEC */
 	if (last) {
 		if (last->in6p_flags & IN6P_CONTROLOPTS)
 			ip6_savecontrol(last, &opts, ip6, m);
@@ -509,7 +509,7 @@ rip6_output(m, va_alist)
 		error = ENOBUFS;
 		goto bad;
 	}
-#endif /*IPSEC*/
+#endif /* IPSEC */
 
 	flags = 0;
 #ifdef IPV6_MINMTU
