@@ -1,4 +1,4 @@
-/* $NetBSD: s3c2xx0_intr.c,v 1.1 2002/11/20 17:52:51 bsh Exp $ */
+/* $NetBSD: s3c2xx0_intr.c,v 1.2 2003/01/02 22:30:05 thorpej Exp $ */
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited
@@ -82,7 +82,6 @@
 
 #include <arm/s3c2xx0/s3c2xx0reg.h>
 #include <arm/s3c2xx0/s3c2xx0var.h>
-#include <arm/s3c2xx0/s3c2xx0_intr.h>
 
 volatile uint32_t *s3c2xx0_intr_mask_reg;
 
