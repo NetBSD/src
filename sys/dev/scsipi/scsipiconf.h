@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.57 2001/09/02 13:11:53 tsutsui Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.58 2001/09/18 20:20:26 mjacob Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -305,6 +305,8 @@ struct scsipi_channel {
 #define	SCSIPI_CHAN_CANGROW	0x04	/* channel can grow resources */
 #define	SCSIPI_CHAN_NOSETTLE	0x08	/* don't wait for devices to settle */
 #define	SCSIPI_CHAN_CALLBACK	0x10	/* has to call chan_callback() */
+#define	SCSIPI_CHAN_KICK	0x20	/* need to run queues */
+#define	SCSIPI_CHAN_TACTIVE	0x40	/* completion thread is active */
 
 #define	SCSIPI_CHAN_MAX_PERIPH(chan)					\
 	(((chan)->chan_flags & SCSIPI_CHAN_OPENINGS) ?			\
