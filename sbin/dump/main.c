@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.35 2001/07/16 13:30:13 mrg Exp $	*/
+/*	$NetBSD: main.c,v 1.36 2001/07/17 10:56:53 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.35 2001/07/16 13:30:13 mrg Exp $");
+__RCSID("$NetBSD: main.c,v 1.36 2001/07/17 10:56:53 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -336,8 +336,28 @@ main(int argc, char *argv[])
 		tape = strchr(host, ':');
 		*tape++ = '\0';
 #ifdef RDUMP
+	{
+		gid_t gid, egid;
+		uid_t uid, euid;
+
+		gid = getgid();
+		egid = getegid();
+		uid = getuid();
+		euid = geteuid();
+
+		if (gid != egid)
+			setegid(gid);
+		if (uid != euid)
+			seteuid(uid);
+
 		if (rmthost(host) == 0)
 			exit(X_ABORT);
+
+		if (gid != egid)
+			setegid(egid);
+		if (uid != euid)
+			seteuid(euid);
+	}
 #else
 		(void)fprintf(stderr, "remote dump not enabled\n");
 		exit(X_ABORT);
