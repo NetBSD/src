@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.28 2002/10/08 12:31:45 kent Exp $	*/
+/*	$NetBSD: auich.c,v 1.29 2002/10/11 04:11:28 kent Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -105,16 +105,12 @@
  * ICH4:http://www.intel.com/design/chipsets/datashts/290744.htm
  *
  * TODO:
- *	- Add support for the microphone input.
+ *	- Add support for the dedicated microphone input.
  *	- 4ch/6ch support.
- *	- auich_calibrate() is called in auich_open().  It causes about 0.1sec
- *	  delay in the first open().  auich_calibrate() should be called in
- *	  auich_attach().  However microtime() doesn't work in the attach
- *	  stage.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.28 2002/10/08 12:31:45 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.29 2002/10/11 04:11:28 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -202,9 +198,7 @@ struct auich_softc {
 
 	struct auich_dma *sc_dmas;
 
-	int sc_calibrated;	/* sc_ac97rate has correct value */
 	int sc_ignore_codecready;
-
 	/* SiS 7012 hack */
 	int  sc_sample_size;
 	int  sc_sts_reg;
@@ -271,8 +265,8 @@ int	auich_allocmem(struct auich_softc *, size_t, size_t,
 int	auich_freemem(struct auich_softc *, struct auich_dma *);
 
 void	auich_powerhook(int, void *);
-int	auich_set_rate(struct auich_softc *sc, int mode, u_long* srate);
-unsigned int auich_calibrate(struct auich_softc *sc);
+int	auich_set_rate(struct auich_softc *, int, u_long*);
+void	auich_calibrate(struct device *);
 
 
 struct audio_hw_if auich_hw_if = {
@@ -480,6 +474,10 @@ auich_attach(struct device *parent, struct device *self, void *aux)
 	/* Watch for power change */
 	sc->sc_suspend = PWR_RESUME;
 	sc->sc_powerhook = powerhook_establish(auich_powerhook, sc);
+
+	if (!IS_FIXED_RATE(sc->codec_if)) {
+		config_interrupts(self, auich_calibrate);
+	}
 }
 
 #define ICH_CODECIO_INTERVAL	10
@@ -577,13 +575,6 @@ auich_reset_codec(void *v)
 int
 auich_open(void *v, int flags)
 {
-	struct auich_softc *sc = v;
-	struct ac97_codec_if *codec = sc->codec_if;
-
-	if (!IS_FIXED_RATE(codec) && !sc->sc_calibrated) {
-		codec->vtbl->set_clock(codec, auich_calibrate(sc));
-		sc->sc_calibrated = TRUE;
-	}
 	return 0;
 }
 
@@ -1324,16 +1315,17 @@ auich_powerhook(int why, void *addr)
 /* -------------------------------------------------------------------- */
 /* Calibrate card (some boards are overclocked and need scaling) */
 
-unsigned int
-auich_calibrate(struct auich_softc *sc)
+void
+auich_calibrate(struct device *self)
 {
+	struct auich_softc *sc;
 	struct timeval t1, t2;
 	u_int8_t ociv, nciv;
 	u_int32_t wait_us, actual_48k_rate, bytes, ac97rate;
 	void *temp_buffer;
 	struct auich_dma *p;
 
-	ac97rate = 48000;
+	sc = (struct auich_softc*)self;
 	/*
 	 * Grab audio from input for fixed interval and compare how
 	 * much we actually get with what we expect.  Interval needs
@@ -1348,7 +1340,7 @@ auich_calibrate(struct auich_softc *sc)
 		;
 	if (p == NULL) {
 		printf("auich_calibrate: bad address %p\n", temp_buffer);
-		return ac97rate;
+		return;
 	}
 	sc->dmalist_pcmi[0].base = DMAADDR(p);
 	sc->dmalist_pcmi[0].len = (bytes / sc->sc_sample_size) | ICH_DMAF_IOC;
@@ -1402,22 +1394,21 @@ auich_calibrate(struct auich_softc *sc)
 	if (nciv == ociv) {
 		printf("%s: ac97 link rate calibration timed out after %d us\n",
 		       sc->sc_dev.dv_xname, wait_us);
-		return ac97rate;
+		return;
 	}
 
-	actual_48k_rate = (bytes * 250000) / wait_us;
+	actual_48k_rate = (bytes * 250000U) / wait_us;
 
-	if (actual_48k_rate < 47500 || actual_48k_rate > 48500) {
+	if (actual_48k_rate <= 48500)
+		ac97rate = 48000;
+	else
 		ac97rate = actual_48k_rate;
-	}
 
-	if (ac97rate != 48000) {
-		printf("%s: measured ac97 link rate at %d Hz",
-		       sc->sc_dev.dv_xname, actual_48k_rate);
-		if (ac97rate != actual_48k_rate)
-			printf(", will use %d Hz", ac97rate);
-		printf("\n");
-	}
+	printf("%s: measured ac97 link rate at %d Hz",
+	       sc->sc_dev.dv_xname, actual_48k_rate);
+	if (ac97rate != actual_48k_rate)
+		printf(", will use %d Hz", ac97rate);
+	printf("\n");
 
-	return ac97rate;
+	sc->codec_if->vtbl->set_clock(sc->codec_if, ac97rate);
 }
