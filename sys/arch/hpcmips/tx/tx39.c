@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39.c,v 1.9 2000/01/03 18:24:04 uch Exp $ */
+/*	$NetBSD: tx39.c,v 1.10 2000/01/07 15:19:14 uch Exp $ */
 
 /*
  * Copyright (c) 1999, 2000, by UCHIYAMA Yasushi
@@ -28,7 +28,6 @@
 
 #include "opt_tx39_debug.h"
 #include "m38813c.h"
-#include "p7416buf.h"
 #include "tc5165buf.h"
 
 #include <sys/param.h>
@@ -62,9 +61,6 @@
 #endif
 
 /* console keyboard */
-#if NP7416BUF > 0
-#include <hpcmips/dev/p7416bufvar.h>
-#endif
 #if NM38813C > 0
 #include <hpcmips/dev/m38813cvar.h>
 #endif
@@ -291,26 +287,34 @@ tx_cons_init()
 			panic("tx_cons_init: can't attach serial console.");
 		}
 	} else {
-#if NP7416BUF > 0
-		if(CONSPLATIDMATCH(COMPAQ_C) &&
-		   p7416buf_cnattach(TX39_SYSADDR_CS3)) {
-			panic("tx_cons_init: can't init console");
-		}
-#endif
 #if NM38813C > 0
 		if(CONSPLATIDMATCH(VICTOR_INTERLINK) &&
 		   m38813c_cnattach(TX39_SYSADDR_CARD1)) {
-			panic("tx_cons_init: can't init console");
+			goto panic;
 		}
 #endif
 #if NTC5165BUF > 0
+		if(CONSPLATIDMATCH(COMPAQ_C) &&
+		   tc5165buf_cnattach(TX39_SYSADDR_CS3)) {
+			goto panic;
+		}
+
 		if(CONSPLATIDMATCH(SHARP_TELIOS) &&
 		   tc5165buf_cnattach(TX39_SYSADDR_CS1)) {
-			panic("tx_cons_init: can't init console");
+			goto panic;
+		}
+		
+		if(CONSPLATIDMATCH(SHARP_MOBILON) &&
+		   tc5165buf_cnattach(TX39_SYSADDR_MCS0)) {
+			goto panic;
 		}
 #endif
 	}
-
+	
+	return;
+ panic:
+	panic("tx_cons_init: can't init console");
+	/* NOTREACHED */
 }
 
 void

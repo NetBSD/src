@@ -1,4 +1,4 @@
-/*	$NetBSD: tc5165buf.c,v 1.2 2000/01/03 18:24:03 uch Exp $ */
+/*	$NetBSD: tc5165buf.c,v 1.3 2000/01/07 15:19:13 uch Exp $ */
 
 /*
  * Copyright (c) 1999, 2000, by UCHIYAMA Yasushi
@@ -27,7 +27,8 @@
  */
 
 /*
- * Device driver for TOSHIBA TC5165BFTS buffer chip
+ * Device driver for TOSHIBA TC5165BFTS, PHILIPS 74ALVC16241/245 
+ * buffer chip
  */
 
 #include "opt_tx39_debug.h"
@@ -46,7 +47,6 @@
 #include <hpcmips/dev/tc5165bufvar.h>
 #include <hpcmips/dev/skbdvar.h>
 
-#define TC5165_SERACH_MAX	257
 #define TC5165_ROW_MAX		16
 #define TC5165_COLUMN_MAX	8
 
@@ -59,7 +59,7 @@
 struct tc5165buf_chip {
 	bus_space_tag_t		scc_cst;
 	bus_space_handle_t	scc_csh;
-	u_int16_t		scc_buf[TC5165_ROW_MAX];
+	u_int16_t		scc_buf[TC5165_COLUMN_MAX];
 	int			scc_enabled;
 
 	struct skbd_controller	scc_controller;
@@ -205,75 +205,40 @@ tc5165buf_poll(arg)
 	struct tc5165buf_chip *scc = arg;	
 	bus_space_tag_t t = scc->scc_cst;
 	bus_space_handle_t h = scc->scc_csh;
-	u_int16_t buf[TC5165_SERACH_MAX], pattern;
 	u_int16_t mask, rpat, edge;
-	int type, val;
-	int i, j, k;
+	int i, j, type, val;
 	skbd_tag_t controller;
 
 	if (!scc->scc_enabled) {
 		return 0;
 	}
+	
+	controller = &scc->scc_controller;
+	skbd_input_hook(controller);
 
-	do {
-		for (pattern = 0, i = 0; i < TC5165_SERACH_MAX; i++) {
-			buf[i] = bus_space_read_2(t, h, i * 2);
-			pattern |= buf[i];
-		}
+	/* clear scanlines */
+	(void)bus_space_read_2(t, h, 0);
+	delay(3);
 
-		DPRINTF((pattern ? "*" : "!\n"));
-
-		controller = &scc->scc_controller;
-
-		skbd_input_hook(controller);
-		
-		for (i = 0; i < TC5165_ROW_MAX; i++) {
-			int cont1;
-			mask = 1 << i;
-			rpat = 0;
-
-			if (pattern & mask) {
-				int cont = 0;
-				cont1 = 0;
-				for (j = 0; j < TC5165_SERACH_MAX; j++) {
-					if (buf[j] & mask) {
-						if (!cont1)
-							cont1 = cont;
-						DPRINTF(("o"));
-					} else {
-						DPRINTF(("."));
-						cont++;
-					}
-				}
-
-				for (j = 1, k = 0; j <= 0x100; j <<= 1) {
-					if (cont1 & j) {
-						k++;
-					}
-				}
-				DPRINTF(("{%02d,%02d}", cont1, cont));
-#ifdef TC5165DEBUG
-				bitdisp(mask);
-#endif
-				if (k != 1) {
-					continue;
-				}
-				rpat = cont1;
-			}
-		
-			edge = scc->scc_buf[i] ^ rpat;
+	for (i = 0; i < TC5165_COLUMN_MAX; i++) {
+		rpat = bus_space_read_2(t, h, 2 << i);
+		delay(3);
+		(void)bus_space_read_2(t, h, 0);
+		delay(3);
+		if ((edge = (rpat ^ scc->scc_buf[i]))) {
 			scc->scc_buf[i] = rpat;
-
-			for (k = 0, mask = 1; k < TC5165_COLUMN_MAX; 
-			     k++, mask <<= 1) {
+			
+			for (j = 0, mask = 1; j < TC5165_ROW_MAX; 
+			     j++, mask <<= 1) {
 				if (mask & edge) {
 					type = mask & rpat ? 1 : 0;
-					val = i * TC5165_COLUMN_MAX + k;
+					val = j * TC5165_COLUMN_MAX + i;
+					DPRINTF(("%d %d\n", j, i));
 					skbd_input(controller, type, val);
 				}
 			}
 		}
-	} while (pattern);
+	}
 
-	return 0;
+	return POLL_CONT;
 }
