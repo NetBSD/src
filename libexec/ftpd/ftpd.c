@@ -1,7 +1,7 @@
-/*	$NetBSD: ftpd.c,v 1.124 2001/04/12 02:28:59 lukem Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.125 2001/04/25 01:46:26 lukem Exp $	*/
 
 /*
- * Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997-2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -109,7 +109,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.124 2001/04/12 02:28:59 lukem Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.125 2001/04/25 01:46:26 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -2714,7 +2714,6 @@ send_file_list(const char *whichf)
 			}
 			cprintf(dout, "%s%s\n", dirname,
 			    type == TYPE_A ? "\r" : "");
-			byte_count += strlen(dirname) + 1;
 			continue;
 		} else if (!S_ISDIR(st.st_mode))
 			continue;
@@ -2760,7 +2759,6 @@ send_file_list(const char *whichf)
 					p = &nbuf[2];
 				cprintf(dout, "%s%s\n", p,
 				    type == TYPE_A ? "\r" : "");
-				byte_count += strlen(nbuf) + 1;
 			}
 		}
 		(void) closedir(dirp);
