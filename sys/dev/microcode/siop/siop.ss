@@ -1,4 +1,4 @@
-;	$NetBSD: siop.ss,v 1.15 2002/04/23 20:41:16 bouyer Exp $
+;	$NetBSD: siop.ss,v 1.16 2002/07/26 01:00:44 wiz Exp $
 
 ;
 ;  Copyright (c) 2000 Manuel Bouyer.
@@ -153,7 +153,7 @@ script_sched:
 ; changes the FALSE to TRUE. The select script will change it back to false
 ; once the target is selected.
 ; The RAM could hold 370 slot entry, we limit it to 40. Should be more than
-; enouth.
+; enough.
 script_sched_slot0:
 	JUMP abs_script_sched_slot0, IF FALSE;
 	JUMP abs_script_sched_slot0, IF FALSE;

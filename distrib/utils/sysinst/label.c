@@ -1,4 +1,4 @@
-/*	$NetBSD: label.c,v 1.19 2001/01/14 02:38:14 mrg Exp $	*/
+/*	$NetBSD: label.c,v 1.20 2002/07/26 01:00:41 wiz Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: label.c,v 1.19 2001/01/14 02:38:14 mrg Exp $");
+__RCSID("$NetBSD: label.c,v 1.20 2002/07/26 01:00:41 wiz Exp $");
 #endif
 
 #include <sys/types.h>
@@ -404,7 +404,7 @@ getpartsize(msg_no, partstart, defpartsize)
 		 */
 		partend = NUMSEC((partstart + i) / localsizemult,
 		    localsizemult, dlcylsize);
-		/* Align to end-of-disk or end-of-slice if close enouth */
+		/* Align to end-of-disk or end-of-slice if close enough */
 		if (fsdsize > partend && (fsdsize - partend) < localsizemult)
 			partend = fsdsize;
 		if (fsptend > partend && (fsptend - partend) < localsizemult)

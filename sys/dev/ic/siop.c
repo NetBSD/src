@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.63 2002/07/18 11:59:08 wiz Exp $	*/
+/*	$NetBSD: siop.c,v 1.64 2002/07/26 01:00:43 wiz Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -33,7 +33,7 @@
 /* SYM53c7/8xx PCI-SCSI I/O Processors driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop.c,v 1.63 2002/07/18 11:59:08 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop.c,v 1.64 2002/07/26 01:00:43 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1861,7 +1861,7 @@ siop_add_dev(sc, target, lun)
 	/*
 	 * we need 8 bytes for the lun sw additionnal entry, and
 	 * eventually sizeof(tag_switch) for the tag switch entry.
-	 * Keep enouth free space for the free targets that could be
+	 * Keep enough free space for the free targets that could be
 	 * probed later.
 	 */
 	if (sc->script_free_lo + 2 +
@@ -1870,11 +1870,11 @@ siop_add_dev(sc, target, lun)
 	    sc->script_free_hi - (sizeof(tag_switch) / sizeof(tag_switch[0])) :
 	    sc->script_free_hi)) {
 		/*
-		 * not enouth space, probably not worth dealing with it.
+		 * not enough space, probably not worth dealing with it.
 		 * We can hold 13 tagged-queuing capable devices in the 4k RAM.
 		 */
 #ifdef DEBUG
-		printf("%s:%d:%d: not enouth memory for a lun sw slot\n",
+		printf("%s:%d:%d: not enough memory for a lun sw slot\n",
 		    sc->sc_c.sc_dev.dv_xname, target, lun);
 #endif
 		return;

@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.53 2002/07/22 20:31:56 bouyer Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.54 2002/07/26 01:00:44 wiz Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.53 2002/07/22 20:31:56 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.54 2002/07/26 01:00:44 wiz Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -943,7 +943,7 @@ wdc_atapi_phase_complete(xfer)
 			}
 		} else {
 			if (wdcwait(chp, WDCS_DSC, WDCS_DSC, 10)) {
-				/* 10ms not enouth, try again in 1 tick */
+				/* 10ms not enough, try again in 1 tick */
 				if (xfer->c_dscpoll++ > 
 				    mstohz(sc_xfer->timeout)) {
 					printf("%s:%d:%d: wait_for_dsc "
