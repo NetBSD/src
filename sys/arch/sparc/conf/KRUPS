@@ -1,7 +1,7 @@
-# $NetBSD: KRUPS,v 1.11 2002/09/18 02:44:08 lukem Exp $
-# From: NetBSD: GENERIC,v 1.133 2002/04/25 15:06:37 atatat Exp
+# $NetBSD: KRUPS,v 1.12 2002/10/03 17:45:20 uwe Exp $
+# From: NetBSD: GENERIC,v 1.139 2002/09/25 11:49:54 martti Exp
 #
-# Krups (JavaStation 10, aka JavaStation NC) machine description file
+# Krups (JavaStation-NC) machine description file
 #
 # XXX: This config is experimental and will not work without some
 # additional patches not yet committed to the tree.
@@ -10,7 +10,7 @@ include 	"arch/sparc/conf/std.sparc"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"KRUPS-$Revision: 1.11 $"
+#ident 		"KRUPS-$Revision: 1.12 $"
 
 maxusers	32
 
@@ -75,6 +75,31 @@ options 	NFS_BOOT_BOOTPARAM
 #options 	NFS_BOOT_BOOTP
 options 	NFS_BOOT_DHCP
 
+
+#### wscons options
+
+# builtin terminal emulations
+options 	WSEMUL_SUN		# sun terminal emulation
+options 	WSEMUL_VT100		# VT100 / VT220 emulation
+options 	WSEMUL_DEFAULT="\"vt100\""
+# different kernel output - see dev/wscons/wsdisplayvar.h
+options 	WS_KERNEL_FG=WSCOL_GREEN
+#options 	WS_KERNEL_BG=WSCOL_BLACK
+options 	WS_KERNEL_COLATTR=WSATTR_HILIT
+# compatibility to other console drivers
+options 	WSDISPLAY_COMPAT_PCVT		# emulate some ioctls
+options 	WSDISPLAY_COMPAT_SYSCONS	# emulate some ioctls
+options 	WSDISPLAY_COMPAT_USL		# VT handling
+options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
+
+options		FONT_GALLANT12x22		# PROM font look-alike
+
+# see dev/pckbc/wskbdmap_mfii.c for implemented layouts
+#options 	PCKBD_LAYOUT="(KB_DE | KB_NODEAD)"
+# allocate a number of virtual screens at autoconfiguration time
+#options 	WSDISPLAY_DEFAULTSCREENS=4
+
+
 #### Debugging options
 
 ## The DDB in-kernel debugger runs at panic (unless DDB_ONPANIC=0), or at
@@ -100,7 +125,7 @@ options 	DDB_ONPANIC=1		# see also sysctl(8): `ddb.onpanic'
 ## such that gdb(1) can be used on a kernel coredump.
 
 #makeoptions	DEBUG="-g"
-makeoptions	COPTS="-pipe -mcpu=supersparc -O2"
+makeoptions	COPTS="-mcpu=supersparc"
 
 
 ## Adds code to the kernel that does internal consistency checks, and will
@@ -137,7 +162,7 @@ options 	MIIVERBOSE	# verbose PHY autoconfig messages
 ## additional user-level utilities or system configuration files. See
 ## compat_sunos(8) and compat_svr4(8).
 
-options 	COMPAT_43	# 4.3BSD system interfaces
+#options 	COMPAT_43	# 4.3BSD system interfaces
 #options 	COMPAT_10	# NetBSD 1.0 binary compatibility
 #options 	COMPAT_11	# NetBSD 1.1 binary compatibility
 #options 	COMPAT_12	# NetBSD 1.2 binary compatibility
@@ -188,6 +213,7 @@ options 	INET		# IP (Internet Protocol) v4
 #options 	PPS_SYNC	# Add serial line synchronization for NTP
 #options 	PFIL_HOOKS	# Add pfil(9) hooks, intended for custom LKMs.
 #options 	IPFILTER_LOG	# Add ipmon(8) logging for ipfilter device
+#options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 #options 	PPP_BSDCOMP	# Add BSD compression to ppp device
 #options 	PPP_DEFLATE	# Add deflate (libz) compression to ppp device
 #options 	PPP_FILTER	# Add active filters for ppp (via bpf)
@@ -207,7 +233,7 @@ pci0	at mspcic0
 options 	PCIVERBOSE
 #options 	PCI_CONFIG_DUMP	# hangs reading IGA1682 config past offset 64
 
-ebus0	at pci0					# ebus devices
+ebus*	at pci?	dev ? function ?		# ebus devices
 
 
 #### Standard system devices -- all required for a given architecture
@@ -216,13 +242,12 @@ ebus0	at pci0					# ebus devices
 timer0	at msiiep0
 
 ## ds1287 TOD clock at EBus
-rtc0	at ebus0
+rtc*	at ebus?
 
 #### Serial port configuration
 
-# XXX: uwe: needs a work-around applied to comstart()
 ## NS16x50 serial chips and clones.
-com*	at ebus0
+com*	at ebus?
 
 
 #### Disk controllers and disks
@@ -284,8 +309,17 @@ pseudo-device	bpfilter	8
 #### Audio and video devices
 
 ## /dev/audio support
-audiocs0	at ebus?		# SUNW,CS4231
-audio*		at audiocs0
+audiocs*	at ebus?		# SUNW,CS4231
+audio*		at audiocs?
+
+# wscons
+pckbc*		at ebus?		# PC keyboard controller
+pckbd*		at pckbc?		# PC keyboard
+pms*		at pckbc?		# PS/2 mouse for wsmouse
+igsfb*		at pci? dev ? function ?
+wsdisplay*	at igsfb? console ?
+wskbd* 		at pckbd? console ?
+wsmouse*	at pms? mux 0
 
 
 #### Other device configuration
@@ -301,5 +335,9 @@ pseudo-device	rnd
 
 # a pseudo device needed for Coda	# also needs CODA (above)
 #pseudo-device	vcoda		4	# coda minicache <-> venus comm.
+
+# wscons pseudo-devices
+pseudo-device	wsmux			# mouse & keyboard multiplexor
+pseudo-device	wsfont
 
 pseudo-device	clockctl		# user control of clock subsystem
