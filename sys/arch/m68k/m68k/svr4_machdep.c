@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.9 2003/01/17 23:18:29 thorpej Exp $	*/
+/*	$NetBSD: svr4_machdep.c,v 1.10 2003/06/29 15:27:59 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -330,7 +330,7 @@ svr4_sys_sysarch(l, v, retval)
 			return (error);
 		name = KERN_HOSTNAME;
 		return (kern_sysctl(&name, 1, NULL, NULL, SCARG(uap, a1), len,
-		    p));
+		    l));
 	default:
 		printf("uninplemented svr4_sysarch(%d), a1 %p\n",
 		    SCARG(uap, op), SCARG(uap, a1));
