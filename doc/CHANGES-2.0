@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.220 2004/05/25 01:12:17 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.221 2004/05/25 01:14:21 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -3040,3 +3040,9 @@ sys/arch/amd64/include/int_fmtio.h		1.3
 
 	Change {u,}int_fast{8,16}_t to 32-bit types.
 	[kleink, ticket #380]
+
+include/signal.h				1.37
+
+	Implement sigemptyset() and sigfillset() not as macros but as inline
+	functions. PR#25627
+	[kleink, ticket #381]
