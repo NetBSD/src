@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.4,v 1.1.2.6 2002/09/04 00:38:56 itojun Exp $
+#	$NetBSD: CHANGES-1.5.4,v 1.1.2.7 2002/09/04 00:49:48 itojun Exp $
 
 A complete list of changes from NetBSD 1.5.3 to NetBSD 1.5.4:
 
@@ -1248,3 +1248,14 @@ include/netdb.h					1.27 (via patch)
 
 sys/netinet/esp_input.c				1.24
   check packet length before fetching ESP crypto checksum.  sync w/kame
+
+sys/netinet6/esp.h				1.20
+sys/netinet6/esp_core.c				1.24
+sys/netinet6/esp_output.c			1.14
+  use correct padding boundary, to correctly estimate ESP header size.
+  problem found by Arto Selonen <arto@selonen.org>
+
+usr.sbin/mtrace/mtrace.c			1.21-1.23(via patch)
+  revoke root priv earlier.  check fd_set overrun (and die if overrun).
+  avoid using runtime-generated printf format string.  from xs@kittenz.org
+  indentation fix.
