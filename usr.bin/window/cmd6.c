@@ -1,4 +1,4 @@
-/*	$NetBSD: cmd6.c,v 1.4 1997/11/21 08:35:53 lukem Exp $	*/
+/*	$NetBSD: cmd6.c,v 1.5 1998/10/14 00:58:46 wsanchez Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,12 +41,12 @@
 #if 0
 static char sccsid[] = "@(#)cmd6.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: cmd6.c,v 1.4 1997/11/21 08:35:53 lukem Exp $");
+__RCSID("$NetBSD: cmd6.c,v 1.5 1998/10/14 00:58:46 wsanchez Exp $");
 #endif
 #endif /* not lint */
 
 #include "defs.h"
-#include "string.h"
+#include "window_string.h"
 #include "char.h"
 
 /*

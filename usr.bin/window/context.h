@@ -1,4 +1,4 @@
-/*	$NetBSD: context.h,v 1.3 1995/09/28 10:34:17 tls Exp $	*/
+/*	$NetBSD: context.h,v 1.4 1998/10/14 00:58:47 wsanchez Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,6 +39,10 @@
  */
 
 #include <stdio.h>
+
+#ifndef EXTERN
+#define EXTERN extern
+#endif
 
 struct context {
 	struct context *x_link;		/* nested contexts */
@@ -82,4 +86,4 @@ struct context {
 #define X_FILE		1		/* input is a file */
 #define X_BUF		2		/* input is a buffer */
 
-struct context cx;			/* the current context */
+EXTERN struct context cx;			/* the current context */

@@ -1,4 +1,4 @@
-/*	$NetBSD: string.c,v 1.6 1997/11/21 08:36:20 lukem Exp $	*/
+/*	$NetBSD: string.c,v 1.7 1998/10/14 00:58:48 wsanchez Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,14 +41,16 @@
 #if 0
 static char sccsid[] = "@(#)string.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: string.c,v 1.6 1997/11/21 08:36:20 lukem Exp $");
+__RCSID("$NetBSD: string.c,v 1.7 1998/10/14 00:58:48 wsanchez Exp $");
 #endif
 #endif /* not lint */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "string.h"
+#define EXTERN
+#include "window_string.h"
+#undef  EXTERN
 
 char *
 str_cpy(s)

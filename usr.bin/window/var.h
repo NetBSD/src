@@ -1,4 +1,4 @@
-/*	$NetBSD: var.h,v 1.4 1997/11/21 08:36:46 lukem Exp $	*/
+/*	$NetBSD: var.h,v 1.5 1998/10/14 00:58:49 wsanchez Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,6 +38,10 @@
  *	@(#)var.h	8.1 (Berkeley) 6/6/93
  */
 
+#ifndef EXTERN
+#define EXTERN extern
+#endif
+
 struct var {
 	struct var *r_left;
 	struct var *r_right;
@@ -60,4 +64,4 @@ int		 var_walk1 __P((struct var *, int (*func)(void *, struct var *),
 #define var_lookup(n)		(*var_lookup1(&var_head, n))
 #define var_walk(f, a)		var_walk1(var_head, f, a)
 
-struct var *var_head;		/* secret, shhh */
+EXTERN struct var *var_head;		/* secret, shhh */
