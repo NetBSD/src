@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.5 1999/11/21 16:46:34 itojun Exp $
+#	$NetBSD: Makefile,v 1.5.4.1 2002/07/01 17:17:25 he Exp $
 
 .include "../Makefile.inc"
 .PATH:	${BIND_DIST_DIR}/bin/ndc \
 	${BIND_DIST_DIR}/man
 
-NAMEDOBJ!=cd ${.CURDIR}/../named; ${MAKE} print-objdir
+NAMEDOBJ!=cd ${.CURDIR}/../named && ${PRINTOBJDIR}
 
 PROG=	ndc
 SRCS=	${PROG}.c
