@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.11 (Berkeley) 5/21/91
-#	$Id: Makefile,v 1.34 1994/02/06 06:48:46 cgd Exp $
+#	$Id: Makefile,v 1.35 1994/02/09 07:29:36 cgd Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	US/Pacific
@@ -93,6 +93,7 @@ distribution: distrib-dirs
 	(cd etc.vax; install -c -o ${BINOWN} -g ${BINGRP} -m 444 ${PCS} \
 	    ${DESTDIR}/)
 .endif
+	(cd ../usr.sbin/sendmail/cf/cf; ${MAKE} distribution)
 
 hcx9-distribution:
 	(cd etc.tahoe; install -c -o ${BINOWN} -g ${BINGRP} -m 444 ${WCS2} \
