@@ -1,4 +1,4 @@
-$NetBSD: README.mknative,v 1.3 2002/02/27 18:18:59 tv Exp $
+$NetBSD: README.mknative,v 1.4 2003/03/01 13:09:09 mrg Exp $
 
 This file describes how to bootstrap the native toolchain on a new NetBSD
 platform (and how to update the new toolchain files, if needed).  These
@@ -21,7 +21,7 @@ work.
 1. Set MKMAINTAINERTOOLS=yes in mk.conf.  (Needed so that src/tools/gettext
    gets built, eliciting proper HAVE_*GETTEXT* defns in config.h files.)
 
-2. Build and install a cross toolchain (via "build.sh -t -m MACHINE").
+2. Build and install a cross toolchain (via "build.sh -m MACHINE tools").
 
 3. In src/tools/toolchain, do "nbmake-MACHINE bootstrap-libgcc".
 
@@ -41,14 +41,14 @@ work.
    Optionally, all of the following may be set in the environment to reduce
    the amount of code needed to build at this step.  Basically, it must be
    possible for static binaries to build and base system libs to exist so
-   that "configure" can do its job for the target--these NO* options omit
+   that "configure" can do its job for the target--these MK* options omit
    the rest for this stage of the build.
 
-   NOCRYPTO=1
-   NOLINT=1
-   NOPIC=1
-   NOPROFILE=1
-   NOSHARE=1
+   MKCRYPTO=no
+   MKLINT=no
+   MKPIC=no
+   MKPROFILE=no
+   MKSHARE=no
 
 7. In src/tools/toolchain, do "nbmake-MACHINE native".
 
