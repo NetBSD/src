@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.18 2004/06/09 16:06:56 chs Exp $	*/
+/*	$NetBSD: trap.c,v 1.19 2004/06/15 16:29:32 chs Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.18 2004/06/09 16:06:56 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.19 2004/06/15 16:29:32 chs Exp $");
 
 /* #define INTRDEBUG */
 /* #define TRAPDEBUG */
@@ -117,9 +117,8 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.18 2004/06/09 16:06:56 chs Exp $");
 
 #include <hppa/hppa/machdep.h>
 
-#if defined(INTRDEBUG) || defined(TRAPDEBUG)
 #include <ddb/db_output.h>
-#endif
+#include <ddb/db_interface.h>
 
 #if defined(DEBUG) || defined(DIAGNOSTIC)
 /*
@@ -481,7 +480,7 @@ trap(int type, struct trapframe *frame)
 	struct vmspace *vm;
 	vm_prot_t vftype;
 	pa_space_t space;
-	u_int opcode;
+	u_int opcode, onfault;
 	int ret;
 	const char *tts;
 	int type_raw;
@@ -744,7 +743,10 @@ trap(int type, struct trapframe *frame)
 		/* Never call uvm_fault in interrupt context. */
 		KASSERT(hppa_intr_depth == 0);
 
+		onfault = l->l_addr->u_pcb.pcb_onfault;
+		l->l_addr->u_pcb.pcb_onfault = 0;
 		ret = uvm_fault(map, va, 0, vftype);
+		l->l_addr->u_pcb.pcb_onfault = onfault;
 
 #ifdef TRAPDEBUG
 		printf("uvm_fault(%p, %x, %d, %d)=%d\n",
@@ -771,15 +773,13 @@ trap(int type, struct trapframe *frame)
 
 		if (ret != 0) {
 			if (type & T_USER) {
-printf("trapsignal: uvm_fault(%p, %x, %d, %d)=%d\n",
-	map, (u_int)va, 0, vftype, ret);
 #ifdef DEBUG
 				user_backtrace(frame, l, type);
 #endif
 				hppa_trapsignal_hack(l, SIGSEGV, frame->tf_ior);
 			} else {
-				if (l && l->l_addr->u_pcb.pcb_onfault) {
-#ifdef PMAPDEBUG
+				if (l->l_addr->u_pcb.pcb_onfault) {
+#ifdef TRAPDEBUG
 					printf("trap: copyin/out %d\n",ret);
 #endif
 					pcbp = &l->l_addr->u_pcb;
@@ -789,13 +789,8 @@ printf("trapsignal: uvm_fault(%p, %x, %d, %d)=%d\n",
 					pcbp->pcb_onfault = 0;
 					break;
 				}
-#if 1
-if (trap_kdebug (type, va, frame))
-	return;
-#else
-				panic("trap: uvm_fault(%p, %x, %d, %d): %d",
+				panic("trap: uvm_fault(%p, %lx, %d, %d): %d",
 				    map, va, 0, vftype, ret);
-#endif
 			}
 		}
 		break;
@@ -833,10 +828,6 @@ return;
 		}
 		/* FALLTHROUGH to unimplemented */
 	default:
-#if 1
-if (trap_kdebug (type, va, frame))
-	return;
-#endif
 		panic ("trap: unimplemented \'%s\' (%d)", tts, type);
 	}
 
