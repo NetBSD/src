@@ -1,4 +1,4 @@
-/*	$NetBSD: dvma.c,v 1.1 1995/09/26 04:02:16 gwr Exp $	*/
+/*	$NetBSD: dvma.c,v 1.2 1995/10/08 23:45:10 gwr Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -241,7 +241,6 @@ void dvma_mapout(char *dma, int len)
 #endif
 		set_segmap(v, SEGINV);
 		v += NBSG;
-		seg_len -= NBSG;
 	}
 
 	s = splimp();
