@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.183 2001/03/04 21:28:11 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.184 2001/03/05 07:04:01 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -2192,8 +2192,9 @@ pv_link4_4c(pv, pm, va, nc)
 				/* Check currently illegal condition */
 				if (nc == 0)
 					printf("pv_link: proc %s, va=0x%lx: "
-					unexpected uncached mapping at 0x%lx\n",
-					curproc ? curproc->p_comm : "--", va);
+				"unexpected uncached mapping at 0x%lx\n",
+					    curproc ? curproc->p_comm : "--",
+					    va, npv->pv_va);
 #endif
 			}
 			if (BADALIAS(va, npv->pv_va)) {
@@ -2502,8 +2503,9 @@ pv_link4m(pv, pm, va, nc)
 				/* Check currently illegal condition */
 				if (nc == 0)
 					printf("pv_link: proc %s, va=0x%lx: "
-					unexpected uncached mapping at 0x%lx\n",
-					curproc ? curproc->p_comm : "--", va);
+				"unexpected uncached mapping at 0x%lx\n",
+					    curproc ? curproc->p_comm : "--",
+					    va, npv->pv_va);
 #endif
 			}
 			if (BADALIAS(va, npv->pv_va)) {
@@ -2531,6 +2533,7 @@ pv_link4m(pv, pm, va, nc)
 	pv->pv_next = npv;
 	return (ret);
 }
+#endif
 
 /*
  * Uncache all entries on behalf of kvm_uncache(). In addition to
@@ -2556,7 +2559,6 @@ pv_uncache(pv0)
 		pv_changepte4_4c(pv, PG_NC, 0);
 #endif
 }
-#endif
 
 /*
  * Walk the given list and flush the cache for each (MI) page that is
@@ -2621,7 +2623,7 @@ void
 pmap_bootstrap(nctx, nregion, nsegment)
 	int nsegment, nctx, nregion;
 {
-	extern char etext[], kernel_text[], kernel_data_start[];
+	extern char etext[], kernel_data_start[];
 
 #if defined(SUN4M)
 	if (CPU_ISSUN4M) {
@@ -2632,6 +2634,7 @@ pmap_bootstrap(nctx, nregion, nsegment)
 		 * (i.e. `kernel_text') to fetch the physical load
 		 * address, just in case those first 4 pages aren't mapped.
 		 */
+		extern char kernel_text[];
 		int offset = (vaddr_t)kernel_text - (vaddr_t)KERNBASE;
 		va2pa_offset -= (VA2PA(kernel_text) - offset);
 	}
