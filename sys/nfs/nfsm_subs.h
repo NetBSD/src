@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsm_subs.h,v 1.23 2003/02/26 06:31:20 matt Exp $	*/
+/*	$NetBSD: nfsm_subs.h,v 1.24 2003/02/26 07:33:57 matt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -439,7 +439,7 @@
 			if (mp == mb) \
 				mp->m_len += bp-bpos; \
 			mp = m_get(M_WAIT, MT_DATA); \
-			MCLAIM(mb2, &nfs_mowner); \
+			MCLAIM(mp, &nfs_mowner); \
 			m_clget(mp, M_WAIT); \
 			mp->m_len = NFSMSIZ(mp); \
 			mp2->m_next = mp; \
