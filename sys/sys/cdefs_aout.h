@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs_aout.h,v 1.5 2000/08/07 16:35:34 kleink Exp $	*/
+/*	$NetBSD: cdefs_aout.h,v 1.6 2001/11/13 19:52:39 tv Exp $	*/
 
 /*
  * Written by J.T. Conklin <jtc@wimsey.com> 01/17/95.
@@ -53,7 +53,11 @@
 #define __SCCSID2(_s)
 #define __COPYRIGHT(_s)	__IDSTRING(copyright,_s)
 
+#if defined(USE_KERNEL_RCSIDS) || !defined(_KERNEL)
 #define	__KERNEL_RCSID(_n, _s) __IDSTRING(__CONCAT(rcsid,_n),_s)
+#else
+#define	__KERNEL_RCSID(_n, _s)
+#endif
 #define	__KERNEL_SCCSID(_n, _s)
 #define	__KERNEL_COPYRIGHT(_n, _s) __IDSTRING(__CONCAT(copyright,_n),_s)
 
