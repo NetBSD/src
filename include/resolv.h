@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)resolv.h	5.15 (Berkeley) 4/3/91
- *	$Id: resolv.h,v 1.6 1994/10/15 07:56:51 deraadt Exp $
+ *	$Id: resolv.h,v 1.7 1994/10/19 03:46:42 cgd Exp $
  */
 
 #ifndef _RESOLV_H_
@@ -156,7 +156,7 @@ int	 dn_expand __P((const u_char *, const u_char *, const u_char *,
 		u_char *, int));
 int	 res_init __P((void));
 int	 res_query __P((char *, int, int, u_char *, int));
-int	 res_search __P((char *, int, int, u_char *, int));
+int	 res_search __P((const char *, int, int, u_char *, int));
 int	 res_mkquery __P((int, const char *, int, int, const char *, int,
 		const char *, char *, int));
 int	 res_send __P((const char *, int, char *, int));
