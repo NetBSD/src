@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.4 2002/05/03 17:53:32 thorpej Exp $	*/
+/*	$NetBSD: types.h,v 1.5 2002/09/22 04:11:35 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -66,5 +66,6 @@ typedef int			register32_t;
 #define	__HAVE_CPU_COUNTER
 #define	__HAVE_SYSCALL_INTERN
 #define	__HAVE_MINIMAL_EMUL
+#define __HAVE_MD_RUNQUEUE
 
 #endif	/* _MACHTYPES_H_ */

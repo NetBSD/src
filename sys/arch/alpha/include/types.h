@@ -1,4 +1,4 @@
-/* $NetBSD: types.h,v 1.25 2002/09/18 02:35:08 thorpej Exp $ */
+/* $NetBSD: types.h,v 1.26 2002/09/22 04:11:32 gmcgarry Exp $ */
 
 /*-
  * Copyright (c) 1990, 1993
@@ -66,5 +66,6 @@ typedef long int	register_t;
 #define	__HAVE_MINIMAL_EMUL
 #define	__HAVE_AST_PERPROC
 #define	__HAVE_RAS
+#define __HAVE_MD_RUNQUEUE
 
 #endif	/* _MACHTYPES_H_ */
