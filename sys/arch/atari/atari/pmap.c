@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.43 1999/03/27 03:37:51 mycroft Exp $	*/
+/*	$NetBSD: pmap.c,v 1.43.2.1 1999/04/26 14:43:37 perry Exp $	*/
 
 /* 
  * Copyright (c) 1991 Regents of the University of California.
@@ -1946,15 +1946,14 @@ pmap_pageable(pmap, sva, eva, pageable)
 		}
 #endif
 		/*
-		 * Mark it unmodified to avoid pageout
+		 * page is unused, free it now!
 		 */
-		pmap_changebit(pa, PG_M, FALSE);
+		pmap_remove(pv->pv_pmap, pv->pv_va, pv->pv_va + NBPG);
+		uvm_pagefree(PHYS_TO_VM_PAGE(pa));
 #ifdef DEBUG
 		if (pmapdebug & PDB_PTPAGE)
-			printf("pmap_pageable: PT page %lx(%x) unmodified\n",
+			printf("pmap_pageable: PT page %lx(%x) freed\n",
 			       sva, *(int *)pmap_pte(pmap, sva));
-		if (pmapdebug & PDB_WIRING)
-			pmap_check_wiring("pageable", sva);
 #endif
 	}
 }
