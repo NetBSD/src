@@ -1,48 +1,53 @@
-.\"	$NetBSD: prep,v 1.13 2002/05/04 20:40:25 mbw Exp $
+.\"	$NetBSD: prep,v 1.14 2002/06/29 11:01:28 lukem Exp $
 .
-There are two installation tools available.  The traditional miniroot
+There are two installation tools available.
+The traditional miniroot
 installer is script-based and may be netbooted or may be dumped to a disk
-and run locally.   The ramdisk kernel with the sysinst installation
+and run locally.
+The ramdisk kernel with the sysinst installation
 utility is more flexible, but can only be netbooted and has not been
 extensively tested.
 .Pp
 There are several possible installation configurations described in this
-document.  Other configurations are possible, but less common.  If you are
-unable to install based on the information in this document, post a
-message to 
+document.
+Other configurations are possible, but less common.
+If you are unable to install based on the information in this document,
+post a message to
 .Mt port-hp300@netbsd.org
-asking for help.  The configurations described in this document are as follows:
+asking for help.
+The configurations described in this document are as follows:
 .Pp
 .(bullet -compact
 \*M netboots
 .Li SYS_UBOOT
 and then runs the miniroot installation tools or a purely diskless
-installation from a 
+installation from a
 .Nx
 server on the same subnet (you must have root access).
 Other server platforms will work, but are described in the NetBSD Diskless
-HOW-TO.  
+HOW-TO.
 .Lk http://www.netbsd.org/Documentation/network/netboot/
 .Pp
 .It
-\*M loads 
+\*M loads
 .Li SYS_UBOOT
 from a local disk, tape, or floppy
 and then runs the miniroot installation tools or a purely diskless
-installation from a 
+installation from a
 .Nx
-server on the same subnet (you must have root access).  
+server on the same subnet (you must have root access).
 Other server platforms will work, but are described in the NetBSD Diskless
-HOW-TO.  
+HOW-TO.
 .Lk http://www.netbsd.org/Documentation/network/netboot/
 You will need
 .Tn HP-UX
 on your \*M if it does not have a SCSI interface or a floppy drive.
 .Pp
 .It
-\*M loads 
+\*M loads
 .Li SYS_INST
-from a local disk.  You partition the drive
+from a local disk.
+You partition the drive
 and then run the miniroot installation tools from that drive.
 You will need
 .Tn HP-UX
@@ -50,35 +55,40 @@ on your \*M if it does not have a SCSI interface.
 .bullet)
 The preferred method is to use another
 .Nx
-server to netboot the \*M client.  This procedure will not
+server to netboot the \*M client.
+This procedure will not
 work on the handful of models which are incapable of netbooting.
 In particular, the 320, 350, 330, 318, and
-319 might not have a recent enough BootROM. The BootROM revision is
-printed when your workstation is first powered on (or
-rebooted). Revision B or later will definitely work. BootROMs with
-numeric revisions such as 1.1 (on a 400s) will netboot without any
-problems.   You can netboot from any built-in or add-on ethernet board on
+319 might not have a recent enough BootROM.
+The BootROM revision is printed when your workstation is first powered on
+(or rebooted).
+Revision B or later will definitely work.
+BootROMs with numeric revisions such as 1.1 (on a 400s) will netboot
+without any problems.
+You can netboot from any built-in or add-on ethernet board on
 a model with a supported BootROM.
 .Pp
 If you have access to a
 .Nx*M
-system, it is 
+system, it is
 .Em much
-easier to simply upgrade than to install from scratch.  Skip down to the
-section on
-.Sx Upgrading a previously-installed NetBSD System 
+easier to simply upgrade than to install from scratch.
+Skip down to the section on
+.Sx Upgrading a previously-installed NetBSD System
 .
 .Ss2 Formatting your hard drives
 .
 .Nx*M
 does not have the capability to perform a low-level format of hard
-drives.  SCSI disks can be formatted on any platform with SCSI support and
-then used on 
+drives.
+SCSI disks can be formatted on any platform with SCSI support and
+then used on
 .Nx*M .
 HP-IB disks can only be formatted by the
-.Tn HP-UX 
+.Tn HP-UX
 .Xr mediainit 1
-command.  You may need to first create the device nodes for your disk, as
+command.
+You may need to first create the device nodes for your disk, as
 .Tn HP-UX
 was never very good about populating
 .Pa /dev/rdsk
@@ -91,18 +101,18 @@ propertly.
 .(item
 .Em ID
 is the HP-IB address (a.k.a. slave) of the disk in hexadecimal.
-This is usually between 
+This is usually between
 .Li 00
 and
 .Li 07 ,
 but possibly up to
-.Li 1F 
+.Li 1F
 (31 decimal) .
 .item)
 .(item
 .Em SC
 is the Select Code of the disk controller.
-This is usually 
+This is usually
 .Li 07
 for slow (i.e. built-in) HP-IB or
 .Li 0E
@@ -116,21 +126,22 @@ This step can sometimes be a real pain, especially when using
 It's best to calculate it ahead of time.
 .Pp
 If you are installing to an HP-IB disk,
-you will need information about your disk's geometry, based on 512-byte
-sectors.  The file
+you will need information about your disk's geometry, based on 512-byte sectors.
+The file
 .Pa installation/misc/HP-IB.geometry
 in the distribution has geometry information for
-several HP-IB disks, but may be incomplete. Geometry may be calculated
-from an HP-UX
+several HP-IB disks, but may be incomplete.
+Geometry may be calculated from an HP-UX
 .Pa /etc/disktab
 entry, but note that HP-UX geometry is based
 on 1024 byte sectors, while
 .Nx 's
-is based on 512 byte sectors.  You should have all partitions start on
-cylinder boundaries.
+is based on 512 byte sectors.
+You should have all partitions start on cylinder boundaries.
 .Pp
 If you are installing to a SCSI disk, you don't need to worry about the
-details of the geometry.  Just create a disklabel based on the total
+details of the geometry.
+Just create a disklabel based on the total
 number of sectors available on the disk.
 .Pp
 .Em A quick note about partitions:
@@ -141,18 +152,22 @@ installation, you will need to treat the
 .Sq Li a
 and
 .Sq Li c
-partitions in a special manner. Due to the size of the
+partitions in a special manner.
+Due to the size of the
 .Nx*M
 boot program (it spills into the area after the disklabel),
 it is necessary to offset the beginning of the
 .Sq Li a
-partition.  For HP-IB disks, it is best to offset it by one cylinder from
-the beginning of the disk.  For SCSI disks, just offset it by 100 KB (200
-sectors).  Later, the
+partition.
+For HP-IB disks, it is best to offset it by one cylinder from
+the beginning of the disk.
+For SCSI disks, just offset it by 100 KB (200 sectors).
+Later, the
 .Sq Li c
 partition will be marked with the type
 .Sq Li boot
-and may not be used for a file system. (For those unfamiliar
+and may not be used for a file system.
+(For those unfamiliar
 with historic
 .Bx
 partition conventions, the
@@ -181,7 +196,7 @@ Here is an example disklabel from a 7959B HP-IB hard drive:
 # /dev/rrd0a:
 type: HP-IB
 disk: rd7959B
-label: 
+label:
 flags:
 bytes/sector: 512
 sectors/track: 42
@@ -195,7 +210,7 @@ trackskew: 0
 cylinderskew: 0
 headswitch: 0           # milliseconds
 track-to-track seek: 0  # milliseconds
-drivedata: 0 
+drivedata: 0
 
 8 partitions:
 #        size   offset    fstype   [fsize bsize   cpg]
@@ -209,22 +224,25 @@ drivedata: 0
 .
 For earlier models incapable of netbooting, you need to install the
 bootstrap program on a bootable local device, such as a hard disk, floppy
-disk, or tape drive.  If you will be booting the miniroot over the
-network, then you will be installing 
+disk, or tape drive.
+If you will be booting the miniroot over the
+network, then you will be installing
 .Pa installation/misc/SYS_UBOOT .
 .Pp
 If you do not have access to a netboot server to serve the miniroot
 installer, you can use a primitive bootstrap program
-.Pa installation/misc/SYS_INST 
+.Pa installation/misc/SYS_INST
 to load the miniroot from a locally attached device (such as a
-disk, tape or CD-R).  This is not recommended, as 
+disk, tape or CD-R).
+This is not recommended, as
 .Pa SYS_INST
 is difficult to use, buggy, and provides no error checking when
 partitioning your disk.
 .Pp
-If your system has SCSI, this is easy.  Just take a
-scratch SCSI disk (hard disk, zip disk, or CD-R) and use any computer
-to dump the bootstrap program to it.  For example, to dump it to the
+If your system has SCSI, this is easy.
+Just take a scratch SCSI disk (hard disk, zip disk, or CD-R)
+and use any computer to dump the bootstrap program to it.
+For example, to dump it to the
 .Li sd1
 disk on a non-i386 platform:
 .(disp
@@ -232,8 +250,8 @@ disk on a non-i386 platform:
 .disp)
 .Pp
 If your system has a floppy drive, you can write the bootstrap program to
-it using any computer with a floppy drive.  You will need to dump it using
-a utility like
+it using any computer with a floppy drive.
+You will need to dump it using a utility like
 .Ic rawrite
 or
 .Xr dd 1 .
@@ -242,13 +260,14 @@ written correctly.
 .Pp
 If your system does not have SCSI or a floppy drive, you will need a
 bootable operating system on your \*M so you can write files to the HP-IB
-device. You should probably write the bootstrap program to the disk you
+device.
+You should probably write the bootstrap program to the disk you
 will be installing
 .Nx
 onto.
 .Pp
 Using
-.Tn HP-UX 
+.Tn HP-UX
 to write to an HP-IB disk:
 .(disp
 .No # Ic "dd if=SYS_UBOOT of=/dev/rdsk/IDs0"
@@ -256,17 +275,17 @@ to write to an HP-IB disk:
 .(item
 .Em ID
 is the HP-IB address (a.k.a. slave) of the disk in hexadecimal.
-This is usually between 
+This is usually between
 .Li 00
 and
 .Li 07 ,
 but possibly up to
-.Li 1F 
+.Li 1F
 (31 decimal) .
 .item)
 .Pp
 Using
-.Tn HP-UX 
+.Tn HP-UX
 to write to an HP-IB tape:
 .(disp
 .No # Ic "dd if=SYS_UBOOT of=/dev/rmt/0mnb obs=20b conv=sync"
@@ -276,13 +295,14 @@ to write to an HP-IB tape:
 .
 This step is only necessary if you are not loading the miniroot
 installer from a netboot server.
-Follow the same procedure for the bootstrap program, except use the 
-uncompressed miniroot filesystem 
+Follow the same procedure for the bootstrap program, except use the
+uncompressed miniroot filesystem
 .No ( Pa installation/miniroot/miniroot.fs.gz No )
 instead of the bootstrap program.
 The only quirk is that you should place it at the offset of the swap
-partition you calculated above in the disklabel.  In the example disklabel
-above, the offset is 38178 sectors of 512 bytes.  Therfore, the 
+partition you calculated above in the disklabel.
+In the example disklabel above, the offset is 38178 sectors of 512 bytes.
+Therfore, the
 .Xr dd 1
 command would be something like:
 .(disp
@@ -296,15 +316,15 @@ after the offset, which specifies blocks of 512 bytes.
 By dumping the miniroot to disk where the swap partition will be, you're
 saving a step later where
 .Pa SYS_INST
-tries to download the miniroot over NFS.  Just make sure that when you
-enter the partition table into 
+tries to download the miniroot over NFS.
+Just make sure that when you enter the partition table into
 .Pa SYS_INST
 you use the same block offset for the swap partition as you dumped the
 miniroot.
 .
 .Ss2 Configuring the netboot server
 .
-This step will configure your netboot server to provide 
+This step will configure your netboot server to provide
 .Pa SYS_UBOOT
 and the miniroot installer to your \*M.
 .Pp
@@ -312,7 +332,7 @@ and the miniroot installer to your \*M.
 .
 .Ss2 Put Series 400 systems in "HP-UX Compatible Boot Mode"
 .
-Series 400 systems can be configured to boot either 
+Series 400 systems can be configured to boot either
 .Tn HP-UX
 or
 .Tn DomainOS .
@@ -343,19 +363,24 @@ doesn't yet.
 Put your system into
 .Sq "service mode" .
 .br
-For a 4XXs, there's a toggle switch on the back of the machine (near the
-top).  For a 4XXt or 4XXdl, press the green button on the front, behind
-the silly door.  For a 425e, there's a toggle switch on the back of the
-machine (in the middle).  The second green LED should light up.
+For a 4XXs, there's a toggle switch on the back of the machine (near the top).
+For a 4XXt or 4XXdl, press the green button on the front, behind
+the silly door.
+For a 425e, there's a toggle switch on the back of the
+machine (in the middle).
+The second green LED should light up.
 .It
 Reset the machine.
 .br
-Press the reset button.  For a 4XXs, ther's a small plunger on the back of
-the machine (near the top).  For a 4XXt or 4XXdl, there's a white button
-on the front, behind the silly door.  For a 425e, there's a button on the
+Press the reset button.
+For a 4XXs, ther's a small plunger on the back of
+the machine (near the top).
+For a 4XXt or 4XXdl, there's a white button
+on the front, behind the silly door.
+For a 425e, there's a button on the
 back of the machine.
 .It
-Press 
+Press
 .Key RETURN
 to get the Domain boot prompt
 .No ( Li \*> No ) .
@@ -364,7 +389,7 @@ You can type
 .Key H
 to get a list of available commands.
 .It
-Type the following sequence of commands to convert to 
+Type the following sequence of commands to convert to
 .Sq Li "HP-UX Compatible Boot Mode" .
 .br
 .(disp
@@ -378,8 +403,8 @@ Type the following sequence of commands to convert to
 Be sure to turn
 .Sq "service mode"
 .Em off
-when you're done.  It may prevent you from selecting which device to boot
-from.
+when you're done.
+It may prevent you from selecting which device to boot from.
 .enum)
 See the FAQ for additional help.
 .Lk http://www.netbsd.org/Ports/hp300/faq.html#domain
@@ -387,21 +412,24 @@ See the FAQ for additional help.
 .Ss2 Searching for a bootable system
 .
 All the early hp300 Boot ROMs are very primitive and only allow a few
-simple operations. You can only interact with it after it is first powered
-on.  If you reboot the machine, it will ignore anything you type and
-start loading the same OS you previously booted. 
+simple operations.
+You can only interact with it after it is first powered on.
+If you reboot the machine, it will ignore anything you type and
+start loading the same OS you previously booted.
 .Pp
 At any time after it recognizes the keyboard, while it is doing its self
 test or searching for a bootable system, you can hit reset to return it to
-a cold-boot configuration. On HIL keybaords, this is
+a cold-boot configuration.
+On HIL keybaords, this is
 .Key control-shift-break ,
 where
 .Key break
 is the key in the upper left (where
-escape is on sane keyboards). There is no equivalent over serial terminal,
-you'll need to power-cycle your machine. 
+escape is on sane keyboards).
+There is no equivalent over serial terminal,
+you'll need to power-cycle your machine.
 .Pp
-After it beeps (i.e. recognizes the HIL keyboard), press 
+After it beeps (i.e. recognizes the HIL keyboard), press
 .Key RETURN
 twice to get the list of bootable devices.
 .(disp
@@ -409,8 +437,8 @@ SEARCHING FOR A SYSTEM (RETURN To Pause)
 .disp)
 .Pp
 The newer HP Boot ROM, present on Series 400 machines and some of the
-later 300s (345, 375, 380, 382, 385) is capable of a little bit more. To
-select which device to boot from, press 
+later 300s (345, 375, 380, 382, 385) is capable of a little bit more.
+To select which device to boot from, press
 .Key RETURN
 once after it beeps twice (i.e. recognizes the HIL keyboard) to get the
 list of bootable devices.
@@ -424,16 +452,16 @@ the order the BootROM looks for bootable devices.
 .Pp
 A normal power-on sequence (from a 400s) looks something like this:
 .(disp
-Copyright 1990,                         
-Hewlett-Packard Company.                
-All Rights Reserved.                    
-                                        
-BOOTROM  Series 400  Rev. 1.1           
-MD12 REV 1.2 1990/08/07.14:27:08        
-MC68030 Processor                       
-MC68882 Coprocessor                     
-Configuration EEPROM                    
-Utility Chip at 41                      
+Copyright 1990,
+Hewlett-Packard Company.
+All Rights Reserved.
+
+BOOTROM  Series 400  Rev. 1.1
+MD12 REV 1.2 1990/08/07.14:27:08
+MC68030 Processor
+MC68882 Coprocessor
+Configuration EEPROM
+Utility Chip at 41
 HP-HIL.Keyboard
  RESET To Power-Up
  Loading Memory
@@ -462,54 +490,60 @@ Bit Mapped Video at 133 (Console)
                                            3Z SYS_INST
 .disp)
 .Pp
-You should see your bootstrap program somewhere in this list.  If it's not
-here, then your \*M can't boot it and there's a problem somewhere.
+You should see your bootstrap program somewhere in this list.
+If it's not here, then your \*M can't boot it and there's a problem somewhere.
 To boot from a particular device, type in the two character name for it
 and press
 .Key RETURN .
-In this example, you'd type 
+In this example, you'd type
 .Key 2Z
 to boot from the network.
 .
 .Ss2 Selecting ethernet port on Series 400
 .
 Series 400 machines have two ethernet media types built into the
-motherboard. You may only use one at a time. When your Series 400
-workstation goes through the self-test when powered on or rebooted, it
-will say one of the following: 
+motherboard.
+You may only use one at a time.
+When your Series 400 workstation goes through the self-test when
+powered on or rebooted, it will say one of the following:
 .(disp
 HP98643 (LAN) at 21, AUI
 HP98643 (LAN) at 21, Thin
 .disp)
 .Pp
 If the wrong type of network is selected, you will need to change the
-ethernet port. You will need to open the case (4XXt, 4XXdl, 4XXe) or
-remove the motherboard (4XXs) to access the jumper. Be sure to use
-static-prevention measures, as you could easily fry your motherboard from
-carelessness. If you are uncomfortable with this, ask a friend who is
-aware of these issues. There is a block of 8 jumpers at the rear of the
-motherboard, labeled AUI/Thin. You will need to put the jumpers in the
+ethernet port.
+You will need to open the case (4XXt, 4XXdl, 4XXe) or
+remove the motherboard (4XXs) to access the jumper.
+Be sure to use static-prevention measures, as you could easily fry
+your motherboard from carelessness.
+If you are uncomfortable with this, ask a friend who is
+aware of these issues.
+There is a block of 8 jumpers at the rear of the
+motherboard, labeled AUI/Thin.
+You will need to put the jumpers in the
 position necessary for your type of ethernet.
 .
 .Ss2 Running SYS_INST
 .
-This step is necessary 
+This step is necessary
 .Em only
 if you cannot netboot.
 .Pp
-Chose 
+Chose
 .Li SYS_INST
 from the list of bootable devices that the BootROM found.
-.Li SYS_INST 
+.Li SYS_INST
 will load and prompt you for a command.
 .Pp
-.Em A quick note about disk numbers: 
-While in the 
+.Em A quick note about disk numbers:
+While in the
 .Pa SYS_INST
 program, you may use different unit numbers for the disks than when the
 .Nx
-kernel is running. The unit number for a disk while in 
-.Pa SYS_INST 
+kernel is running.
+The unit number for a disk while in
+.Pa SYS_INST
 is calculated with the following formula:
 .Pp
 .(disp
@@ -517,7 +551,8 @@ unit = (controller * 8) + slaveID
 .disp)
 .Pp
 Controllers are numbered 0, 1, ... starting with the lowest select code.
-SCSI controllers and HP-IB controllers are counted separately. Therefore,
+SCSI controllers and HP-IB controllers are counted separately.
+Therefore,
 if you had a system with an internal HP-IB interface at select code 7,
 a fast HP-IB interface at select code 14, and a SCSI interface at select
 code 16, unit numbers might be something like the following:
@@ -537,15 +572,16 @@ You will need to place a disklabel on the disk.
 It may be worth selecting the
 .Sy zap
 option initially to ensure that
-the disklabel area is clear. This may be especially important if an
+the disklabel area is clear.
+This may be especially important if an
 HP-UX boot block had been previously installed on the disk.
 .Note)
 .Pp
 Select the
 .Sy edit
 option, and answer the questions about your disk.
-There may be several questions which you may not be sure of the answers
-to. Listed below are guidelines for SCSI and HP-IB disks:
+There may be several questions which you may not be sure of the answers to.
+Listed below are guidelines for SCSI and HP-IB disks:
 .Pp
 .Bl -column -offset indent -compact Track-to-track?xx xxxxx
 .It Bad\ sectoring? Ta NO
@@ -558,16 +594,17 @@ to. Listed below are guidelines for SCSI and HP-IB disks:
 .It Drivedata\ 0-4? Ta 0\ (for\ all\ Drivedata\ values)
 .El
 .Pp
-Next, you will be asked to fill out the partition map. You must provide
-responses for all 8 partitions.
-Remember, you must have the sector offset for the 
+Next, you will be asked to fill out the partition map.
+You must provide responses for all 8 partitions.
+Remember, you must have the sector offset for the
 .Sq Li b
 partition match the location you dumped the miniroot filesystem image.
 Set the size and
-offset of any unused partition to 0. Note that sizes and offsets are
-expressed in
+offset of any unused partition to 0.
+Note that sizes and offsets are expressed in
 .Sq n sectors ,
-assuming 512 byte sectors. Care should be taken
+assuming 512 byte sectors.
+Care should be taken
 to ensure that partitions begin and end on cylinder boundaries (i.e. size
 and offset is an even multiple of the number of sectors per cylinder).
 While this is not technically necessary, it is generally encouraged.
@@ -579,7 +616,8 @@ partition, make sure to
 specify it as an
 .Li ffs
 partition so that the miniroot can be mounted (even
-if this will be a swap partition). You will be given a chance to clean
+if this will be a swap partition).
+You will be given a chance to clean
 this up later in the installation process.
 .Note)
 .Pp
@@ -601,26 +639,27 @@ Boot from the miniroot file system.
 .No "sys_inst\*>" Ic boot
 .disp)
 .Pp
-Enter the disk from which to boot. The kernel in the miniroot file system
-will be booted into single-user mode.
+Enter the disk from which to boot.
+The kernel in the miniroot file system will be booted into single-user mode.
 .
 .Ss2 Chosing a kernel location
 .
-Once the bootstrap program 
+Once the bootstrap program
 .Li SYS_UBOOT
 has started, it will pause and let you chose a kernel location, name, and
 options:
 .(disp
 \*>\*> NetBSD/hp300 Primary Boot, Revision 1.13
 \*>\*> (gregm@mcgarry, Mon Apr 15 08:46:32 NZST 2002)
-\*>\*> HP 9000/425e SPU                              
+\*>\*> HP 9000/425e SPU
 \*>\*> Enter "reset" to reset system.
-Boot: [[[le0a:]netbsd][-a][-c][-d][-s][-v][-q]] :- 
+Boot: [[[le0a:]netbsd][-a][-c][-d][-s][-v][-q]] :-
 .disp)
 .Pp
-If your kernel is on a different device than 
+If your kernel is on a different device than
 .Li SYS_UBOOT
-then you will need to type in where to find it.  This is the case, for
+then you will need to type in where to find it.
+This is the case, for
 example, if your model is incapable of netbooting and you started
 .Li SYS_UBOOT
 from a floppy, and the miniroot installer is on a netboot server.
@@ -629,9 +668,9 @@ In this case, you'd type in
 at the prompt.
 .Pp
 If you've installed the miniroot on your disk, you can always boot from
-that by using partition 
+that by using partition
 .Sq Li b
-when prompted by 
+when prompted by
 .Li SYS_UBOOT .
 For example, to boot the miniroot from an HP-IB disk on controller 0 at
 slave ID 2, you'd type:
