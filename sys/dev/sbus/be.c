@@ -1,4 +1,4 @@
-/*	$NetBSD: be.c,v 1.14 2000/02/02 08:05:30 thorpej Exp $	*/
+/*	$NetBSD: be.c,v 1.15 2000/02/02 17:46:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -353,7 +353,7 @@ beattach(parent, self, aux)
 	if ((v & MGMT_PAL_EXT_MDIO) != 0) {
 
 		mii_attach(&sc->sc_dev, mii, 0xffffffff, BE_PHY_EXTERNAL,
-		    MII_OFFSET_ANY);
+		    MII_OFFSET_ANY, 0);
 
 		child = LIST_FIRST(&mii->mii_phys);
 		if (child == NULL) {
