@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.15 1994/11/20 20:52:23 deraadt Exp $ */
+/*	$NetBSD: kbd.c,v 1.16 1995/04/27 14:27:11 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -190,6 +190,7 @@ struct kbd_state {
 	char	kbd_click;	/* true => keyclick enabled */
 	char	kbd_takeid;	/* take next byte as ID */
 	u_char	kbd_id;		/* a place to store the ID */
+	char	kbd_leds;	/* LED state */
 };
 
 /*
@@ -322,7 +323,11 @@ kbd_reset(register struct kbd_state *ks)
 		if (ks->kbd_click)
 			(void) kbd_docmd(KBD_CMD_CLICK, 0);
 		break;
+	default:
+		printf("Unknown keyboard type %d\n", ks->kbd_id);
 	}
+
+	ks->kbd_leds = 0;
 }
 
 /*
@@ -605,6 +610,33 @@ kbdioctl(dev_t dev, u_long cmd, register caddr_t data, int flag, struct proc *p)
 	case KIOCLAYOUT:
 		*data = 0;
 		return (0);
+
+	case KIOCSLED:
+		if (k->k_state.kbd_id != KB_SUN4) {
+			/* xxx NYI */
+			k->k_state.kbd_leds = *(char*)data;
+		} else {
+			int s;
+			char leds = *(char *)data;
+			struct tty *tp = kbd_softc.k_kbd;
+			s = spltty();
+			if (tp->t_outq.c_cc > 120)
+				(void) tsleep((caddr_t)&lbolt, TTIPRI,
+					      ttyout, 0);
+			splx(s);
+			if (ttyoutput(KBD_CMD_SETLED, tp) >= 0)
+				return (ENOSPC);	/* ERESTART? */
+			k->k_state.kbd_leds = leds;
+			if (ttyoutput(leds, tp) >= 0)
+				return (ENOSPC);	/* ERESTART? */
+			(*tp->t_oproc)(tp);
+		}
+		return (0);
+
+	case KIOCGLED:
+		*(char *)data = k->k_state.kbd_leds;
+		return (0);
+
 
 	case FIONBIO:		/* we will remove this someday (soon???) */
 		return (0);
