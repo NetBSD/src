@@ -33,8 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)sd.c	8.4 (Berkeley) 4/22/94
- *	$Id: sd.c,v 1.9 1994/05/23 05:59:25 mycroft Exp $
+ *	from: @(#)sd.c	8.5 (Berkeley) 5/19/94
+ *	$Id: sd.c,v 1.10 1994/05/27 17:18:52 mycroft Exp $
  */
 
 /*
@@ -44,7 +44,7 @@
 #if NSD > 0
 
 #ifndef lint
-static char rcsid[] = "$Header: /cvsroot/src/sys/arch/hp300/dev/Attic/sd.c,v 1.9 1994/05/23 05:59:25 mycroft Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/sys/arch/hp300/dev/Attic/sd.c,v 1.10 1994/05/27 17:18:52 mycroft Exp $";
 #endif
 
 #include <sys/param.h>
@@ -487,6 +487,9 @@ sdgetinfo(dev)
 #endif
 	printf("defining `c' partition as entire disk\n");
 	pi[2].p_size = sc->sc_blks;
+	/* XXX reset other info since readdisklabel screws with it */
+	lp->d_npartitions = 3;
+	pi[0].p_size = 0;
 	return(0);
 }
 
