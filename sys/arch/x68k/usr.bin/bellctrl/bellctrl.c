@@ -1,4 +1,4 @@
-/*	$NetBSD: bellctrl.c,v 1.8 2003/07/15 01:44:53 lukem Exp $	*/
+/*	$NetBSD: bellctrl.c,v 1.9 2004/05/08 08:38:36 minoura Exp $	*/
 
 /*
  * bellctrl - OPM bell controller (for NetBSD/X680x0)
@@ -6,7 +6,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: bellctrl.c,v 1.8 2003/07/15 01:44:53 lukem Exp $");
+__RCSID("$NetBSD: bellctrl.c,v 1.9 2004/05/08 08:38:36 minoura Exp $");
 
 #include <err.h>
 #include <stdio.h>
@@ -14,9 +14,7 @@ __RCSID("$NetBSD: bellctrl.c,v 1.8 2003/07/15 01:44:53 lukem Exp $");
 #include <ctype.h>
 #include <sys/file.h>
 #include <sys/ioctl.h>
-#include "../../include/opmbellio.h"
-#include "../../dev/opmbellvar.h"
-#include "../../dev/opmreg.h"
+#include <machine/opmbellio.h>
 
 #define DEFAULT -1
 
@@ -28,6 +26,8 @@ __RCSID("$NetBSD: bellctrl.c,v 1.8 2003/07/15 01:44:53 lukem Exp $");
 int bell_setting;
 char *progName;
 struct opm_voice voice;
+
+static struct opm_voice bell_voice = DEFAULT_BELL_VOICE;
 
 static struct bell_info values = {
 	DEFAULT, DEFAULT, DEFAULT

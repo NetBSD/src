@@ -1,4 +1,4 @@
-/*	$NetBSD: opm.c,v 1.11 2003/07/15 01:44:52 lukem Exp $	*/
+/*	$NetBSD: opm.c,v 1.12 2004/05/08 08:38:36 minoura Exp $	*/
 
 /*
  * Copyright (c) 1995 Masanobu Saitoh, Takuya Harakawa.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opm.c,v 1.11 2003/07/15 01:44:52 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opm.c,v 1.12 2004/05/08 08:38:36 minoura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,7 +46,8 @@ __KERNEL_RCSID(0, "$NetBSD: opm.c,v 1.11 2003/07/15 01:44:52 lukem Exp $");
 #include <machine/bus.h>
 #include <machine/cpu.h>
 
-#include <arch/x68k/dev/opmreg.h>
+#include <machine/opmreg.h>
+#include <arch/x68k/dev/opmvar.h>
 #include <arch/x68k/dev/intiovar.h>
 
 struct opm_softc {
