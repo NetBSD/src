@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.1 2001/06/06 17:36:03 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.2 2001/06/08 00:16:25 matt Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -56,6 +56,11 @@
 #include <machine/powerpc.h>
 #include <powerpc/mpc6xx/bat.h>
 
+#if defined(DEBUG) || defined(PMAPCHECK)
+#define	STATIC
+#else
+#define	STATIC	static
+#endif
 struct pteg {
 	pte_t pt[8];
 };
@@ -126,33 +131,48 @@ struct pvo_page {
 	SIMPLEQ_ENTRY(pvo_page) pvop_link;
 };
 SIMPLEQ_HEAD(pvop_head, pvo_page);
-struct pvop_head pmap_pvop_head = SIMPLEQ_HEAD_INITIALIZER(pmap_pvop_head);
+struct pvop_head pmap_upvop_head = SIMPLEQ_HEAD_INITIALIZER(pmap_upvop_head);
+struct pvop_head pmap_mpvop_head = SIMPLEQ_HEAD_INITIALIZER(pmap_mpvop_head);
+u_long pmap_upvop_free;
+u_long pmap_upvop_maxfree;
+u_long pmap_mpvop_free;
+u_long pmap_mpvop_maxfree;
 
-void *pmap_pool_ualloc(unsigned long, int, int);
-void *pmap_pool_malloc(unsigned long, int, int);
-void pmap_pool_ufree(void *, unsigned long, int);
-void pmap_pool_mfree(void *, unsigned long, int);
+STATIC void *pmap_pool_ualloc(unsigned long, int, int);
+STATIC void *pmap_pool_malloc(unsigned long, int, int);
+STATIC void pmap_pool_ufree(void *, unsigned long, int);
+STATIC void pmap_pool_mfree(void *, unsigned long, int);
 
-#ifdef DEBUG
+#if defined(DEBUG) || defined(PMAPCHECK)
+#ifdef PMAPCHECK
+int pmapcheck = 1;
+#else
+int pmapcheck = 0;
+#endif
 void pte_print(volatile pte_t *pt);
-void pmap_pvo_check(const struct pvo_entry *);
+STATIC void pmap_pvo_check(const struct pvo_entry *);
 #define	PMAP_PVO_CHECK(pvo)	 		\
 	do {					\
-		if (pmapdebug > 4)		\
+		if (pmapcheck)			\
 			pmap_pvo_check(pvo);	\
 	} while (0)
 #else
 #define	PMAP_PVO_CHECK(pvo)	do { } while (/*CONSTCOND*/0)
 #endif
-void pmap_pvo_remove(struct pvo_entry *, int, int);
-struct pvo_entry *pmap_pvo_find_va(pmap_t, vaddr_t, int *); 
+STATIC int pmap_pvo_enter(pmap_t, struct pool *, struct pvo_head *,
+	vaddr_t, paddr_t, u_int, int);
+STATIC void pmap_pvo_remove(struct pvo_entry *, int, int);
+STATIC struct pvo_entry *pmap_pvo_find_va(pmap_t, vaddr_t, int *); 
+STATIC volatile pte_t *pmap_pvo_to_pte(const struct pvo_entry *, int);
 
-struct pvo_entry *pmap_rkva_alloc(int);
-volatile pte_t *pmap_pa_map(struct pvo_entry *, paddr_t);
-void pmap_pa_unmap(struct pvo_entry *, volatile pte_t *);
+STATIC struct pvo_entry *pmap_rkva_alloc(int);
+STATIC volatile pte_t *pmap_pa_map(struct pvo_entry *, paddr_t);
+STATIC void pmap_pa_unmap(struct pvo_entry *, volatile pte_t *);
+STATIC void tlbia(void);
 
-void pmap_pinit (pmap_t);
-void pmap_release (pmap_t);
+STATIC void pmap_syncicache(paddr_t);
+STATIC void pmap_release (pmap_t);
+
 
 static u_int usedsr[NPMAPS / sizeof(u_int) / 8];
 
@@ -186,7 +206,7 @@ mftb(void)
  */
 
 void
-tlbia()
+tlbia(void)
 {
 	caddr_t i;
 	
@@ -212,7 +232,7 @@ va_to_pteg(sr_t sr, vaddr_t addr)
 	return hash & pteg_mask;
 }
 
-#ifdef DEBUG
+#if defined(DEBUG) || defined(PMAPCHECK)
 /*
  * Given a PTE in the page table, calculate the VADDR that hashes to it.
  * The only bit of magic is that the top 4 bits of the address doesn't
@@ -417,7 +437,7 @@ pte_unset(volatile pte_t *pt, pte_t *pvo_pt, vaddr_t va)
 	 */
 	SYNC();
 	/*
-	 * Invalidate the pte (and, if requested, the tlb)...
+	 * Invalidate the pte ...
 	 */
 	pt->pte_hi &= ~PTE_VALID;
 	SYNC();
@@ -488,7 +508,7 @@ pte_insert(int ptegidx, pte_t *pvo_pt)
  * with interrupts disabled.
  */
 int
-pte_spill(vaddr_t addr)
+pmap_pte_spill(vaddr_t addr)
 {
 	struct pvo_entry *source_pvo, *victim_pvo;
 	struct pvo_entry *pvo;
@@ -548,7 +568,7 @@ pte_spill(vaddr_t addr)
 		return 0;
 
 	if (victim_pvo == NULL)
-		panic("pte_spill: victim pte has no pvo entry!");
+		panic("pmap_pte_spill: victim pte has no pvo entry!");
 
 	/*
 	 * We are invalidating the TLB entry for the EA for the
@@ -603,7 +623,6 @@ pmap_init(void)
 	char *attr;
 
 	s = splvm();
-
 	pvoh = pmap_physseg.pvoh;
 	attr = pmap_physseg.attrs;
 	for (bank = 0; bank < vm_nphysseg; bank++) {
@@ -615,8 +634,10 @@ pmap_init(void)
 			*attr = 0;
 		}
 	}
+	splx(s);
 #endif
 
+	s = splvm();
 	pool_init(&pmap_mpvo_pl, sizeof(struct pvo_entry),
 	    sizeof(struct pvo_entry), 0, 0, "pmap_mpvopl", NBPG,
 	    pmap_pool_malloc, pmap_pool_mfree, M_VMPMAP);
@@ -774,7 +795,6 @@ pmap_update(void)
 #ifdef MULTIPROCESSOR
 	TLBSYNC();
 #endif
-	tlbia();
 }
 
 /*
@@ -808,7 +828,7 @@ pmap_zero_page(paddr_t pa)
 		pt = pmap_pa_map(pmap_pvo_zeropage, pa);
 		va = (caddr_t) pmap_pvo_zeropage->pvo_vaddr;
 	} else {
-		panic("pmap_zero_page: can't zero pa %#x", pa);
+		panic("pmap_zero_page: can't zero pa %#lx", pa);
 	}
 #if 0
 	bzero(va, NBPG);
@@ -851,7 +871,7 @@ pmap_copy_page(paddr_t src, paddr_t dst)
 		pmap_pa_unmap(pmap_pvo_copypage_dst, dst_pt);
 		return;
 	}
-	panic("pmap_copy_page: failed to copy contents of pa %#x to pa %#x", src, dst);
+	panic("pmap_copy_page: failed to copy contents of pa %#lx to pa %#lx", src, dst);
 }
 
 static __inline int
@@ -872,9 +892,7 @@ pmap_pvo_pte_index(const struct pvo_entry *pvo, int ptegidx)
 volatile pte_t *
 pmap_pvo_to_pte(const struct pvo_entry *pvo, int pteidx)
 {
-	volatile pteg_t *pteg;
 	volatile pte_t *pt;
-	int idx;
 
 	/*
 	 * If we haven't been supplied the ptegidx, calculate it.
@@ -910,7 +928,6 @@ pmap_pvo_to_pte(const struct pvo_entry *pvo, int pteidx)
 struct pvo_entry *
 pmap_pvo_find_va(pmap_t pm, vaddr_t va, int *pteidx_p)
 {
-	struct pvo_head *pvo_head;
 	struct pvo_entry *pvo;
 	int ptegidx;
 	sr_t sr;
@@ -931,10 +948,8 @@ pmap_pvo_find_va(pmap_t pm, vaddr_t va, int *pteidx_p)
 volatile pte_t *
 pmap_pa_map(struct pvo_entry *pvo, paddr_t pa)
 {
-	volatile pte_t *pt;
-
 	pvo->pvo_pte.pte_lo |= pa;
-	if (!pte_spill(pvo->pvo_vaddr))
+	if (!pmap_pte_spill(pvo->pvo_vaddr))
 		panic("pmap_pa_map: could not spill pvo %p", pvo);
 	return pmap_pvo_to_pte(pvo, -1);
 }
@@ -956,7 +971,6 @@ pmap_syncicache(paddr_t pa)
 		return;
 	}
 	if (pmap_initialized) {
-		struct pvo_entry * const pvo;
 		volatile pte_t *pt;
 		if (__predict_false(pmap_pvo_syncicache == NULL))
 			pmap_pvo_syncicache = pmap_rkva_alloc(VM_PROT_READ|VM_PROT_WRITE);
@@ -965,7 +979,7 @@ pmap_syncicache(paddr_t pa)
 		pmap_pa_unmap(pmap_pvo_syncicache, pt);
 		return;
 	}
-	panic("pmap_syncicache: can't sync the icache @ pa %#x", pa);
+	panic("pmap_syncicache: can't sync the icache @ pa %#lx", pa);
 }
 
 /*
@@ -996,7 +1010,7 @@ pmap_rkva_alloc(int prot)
 	return pvo;
 }
 
-#ifdef DEBUG
+#if defined(DEBUG) || defined(PMAPCHECK)
 void
 pmap_pvo_check(const struct pvo_entry *pvo)
 {
@@ -1055,23 +1069,25 @@ pmap_pvo_check(const struct pvo_entry *pvo)
 			failed = 1;
 		}
 		if (pte_to_va(pt) != pvo->pvo_vaddr) {
-			printf("pmap_pvo_check: pvo %p: PTE calculated VA %#x"
+			printf("pmap_pvo_check: pvo %p: PTE %p derived VA %#x"
 			    " doesn't not match PVO's VA %#x\n",
-			    pvo, pte_to_va(pt), pvo->pvo_vaddr);
+			    pvo, pt, pte_to_va(pt), pvo->pvo_vaddr);
 			failed = 1;
 		}
+		if (failed)
+			pte_print(pt);
 	}
 	if (failed)
 		panic("pmap_pvo_check: bugcheck!");
 }
-#endif /* DEBUG */
+#endif /* DEBUG || PMAPCHECK */
 
 /*
  * This returns whether this is the first mapping of a page.
  */
 int
 pmap_pvo_enter(pmap_t pm, struct pool *pl, struct pvo_head *pvo_head,
-	vaddr_t va, vaddr_t pa, u_int pte_lo, int flags)
+	vaddr_t va, paddr_t pa, u_int pte_lo, int flags)
 {
 	struct pvo_entry *pvo;
 	sr_t sr;
@@ -1302,7 +1318,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 
 	if (va < VM_MIN_KERNEL_ADDRESS)
 		panic("pmap_kenter_pa: attempt to enter "
-		    "non-kernel address %#x!", va);
+		    "non-kernel address %#lx!", va);
 
 #if 0
 	printf("pmap_kenter_pa(%#x,%#x,%#x)\n", va, pa, prot);
@@ -1321,12 +1337,12 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 		pte_lo |= PTE_RO;
 
 	error = pmap_pvo_enter(pmap_kernel(), &pmap_upvo_pl, &pvo_kunmanaged,
-	    va, pa, pte_lo, PMAP_WIRED);
+	    va, pa, pte_lo, prot|PMAP_WIRED);
 
 	if (error != 0 && error != ENOENT)
-		panic("pmap_kenter_pa: failed to enter va %#x pa %#x: %d", va, pa, error);
+		panic("pmap_kenter_pa: failed to enter va %#lx pa %#lx: %d", va, pa, error);
 
-#if 0
+#if 1
 	/* 
 	 * Flush the real memory from the cache.
 	 */
@@ -1533,8 +1549,8 @@ void
 pmap_activate(struct proc *p)
 {
 	struct pcb *pcb = &p->p_addr->u_pcb;
-	pmap_t pmap = p->p_vmspace->vm_map.pmap, rpm;
-	int psl, i, ksr, seg;
+	pmap_t pmap = p->p_vmspace->vm_map.pmap;
+	int psl, i, seg;
 
 	DPRINTFN(6,("pmap_activate: proc %p (curproc %p)\n", p, curproc));
 
@@ -1554,14 +1570,13 @@ pmap_activate(struct proc *p)
 		__asm __volatile("isync");
 
 		/* Store pointer to new current pmap. */
-		curpm = pcb->pcb_pmreal;
+		curpm = pmap;
 
 		/*
 		 * Set new segment registers.  Pmap's are always in
 		 * BAT0 so they are always accessible.  Don't load
 		 * the kernel SR.
 		 */
-		rpm = pcb->pcb_pmreal;
 		DPRINTFN(7,("pmap_activate: pm %p:", pmap));
 		for (i = 0; i < 16; i++) {
 			if (i == KERNEL_SR)
@@ -1634,15 +1649,17 @@ pmap_query_bit(struct vm_page *pg, int ptebit)
 	return FALSE;
 }
 
-void
+boolean_t
 pmap_clear_bit(struct vm_page *pg, int ptebit)
 {
 	struct pvo_entry *pvo;
 	volatile pte_t *pt;
+	int rv = 0;
 
 	/*
 	 * Clear the cached value.
 	 */
+	rv |= pmap_attr_fetch(pg);
 	pmap_attr_clear(pg, ptebit);
 
 	/*
@@ -1660,12 +1677,16 @@ pmap_clear_bit(struct vm_page *pg, int ptebit)
 	 */
 	LIST_FOREACH(pvo, vm_page_to_pvoh(pg), pvo_vlink) {
 		PMAP_PVO_CHECK(pvo);		/* sanity check */
-		pvo->pvo_pte.pte_lo &= ~ptebit;
 		pt = pmap_pvo_to_pte(pvo, -1);
-		if (pt != NULL)
+		if (pt != NULL) {
+			pte_synch(pt, &pvo->pvo_pte);
 			pte_clear(pt, ptebit);
+		}
+		rv |= pvo->pvo_pte.pte_lo;
+		pvo->pvo_pte.pte_lo &= ~ptebit;
 		PMAP_PVO_CHECK(pvo);		/* sanity check */
 	}
+	return (rv & ptebit) != 0;
 }
 
 #ifdef ALLEGRO
@@ -1749,7 +1770,7 @@ pmap_procwr(struct proc *p, vaddr_t va, size_t len)
 }
 #endif	/* ALLEGRO */
 
-#if defined(DEBUG)
+#if defined(DEBUG) || defined(PMAPCHECK)
 void
 pte_print(volatile pte_t *pt)
 {
@@ -1782,8 +1803,6 @@ pte_print(volatile pte_t *pt)
 		printf("na]\n");
 		break;
 	}
-	
-
 }
 
 void
@@ -1960,15 +1979,14 @@ void *
 pmap_pool_ualloc(unsigned long size, int flags, int tag)
 {
 	struct pvo_page *pvop;
-	static u_int cnt;
 
-	cnt++;
 	if (size != PAGE_SIZE)
-		panic("pmap_pool_alloc: size(%d) != PAGE_SIZE", size);
+		panic("pmap_pool_alloc: size(%lu) != PAGE_SIZE", size);
 
-	pvop = SIMPLEQ_FIRST(&pmap_pvop_head);
+	pvop = SIMPLEQ_FIRST(&pmap_upvop_head);
 	if (pvop != NULL) {
-		SIMPLEQ_REMOVE_HEAD(&pmap_pvop_head, pvop, pvop_link);
+		pmap_upvop_free--;
+		SIMPLEQ_REMOVE_HEAD(&pmap_upvop_head, pvop, pvop_link);
 		return pvop;
 	}
 	if (uvm.page_init_done != TRUE) {
@@ -1980,10 +1998,18 @@ pmap_pool_ualloc(unsigned long size, int flags, int tag)
 void *
 pmap_pool_malloc(unsigned long size, int flags, int tag)
 {
+	struct pvo_page *pvop;
 	struct vm_page *pg;
 
 	if (size != PAGE_SIZE)
-		panic("pmap_pool_alloc: size(%d) != PAGE_SIZE", size);
+		panic("pmap_pool_alloc: size(%lu) != PAGE_SIZE", size);
+
+	pvop = SIMPLEQ_FIRST(&pmap_mpvop_head);
+	if (pvop != NULL) {
+		pmap_mpvop_free--;
+		SIMPLEQ_REMOVE_HEAD(&pmap_mpvop_head, pvop, pvop_link);
+		return pvop;
+	}
  again:
 	pg = uvm_pagealloc_strat(NULL, 0, NULL, UVM_PGA_USERESERVE,
 	    UVM_PGA_STRAT_ONLY, VM_FREELIST_FIRST256);
@@ -2002,21 +2028,34 @@ void
 pmap_pool_ufree(void *va, unsigned long size, int tag)
 {
 	struct pvo_page *pvop;
+#if 0
 	if (PHYS_TO_VM_PAGE((paddr_t) va) != NULL) {
 		pmap_pool_mfree(va, size, tag);
 		return;
 	}
+#endif
 	pvop = va;
-	SIMPLEQ_INSERT_HEAD(&pmap_pvop_head, pvop, pvop_link);
+	SIMPLEQ_INSERT_HEAD(&pmap_upvop_head, pvop, pvop_link);
+	pmap_upvop_free++;
+	if (pmap_upvop_free > pmap_upvop_maxfree)
+		pmap_upvop_maxfree = pmap_upvop_free;
 }
 
 void
 pmap_pool_mfree(void *va, unsigned long size, int tag)
 {
+	struct pvo_page *pvop;
 	if (size != PAGE_SIZE)
-		panic("pmap_pool_alloc: size(%d) != PAGE_SIZE", size);
+		panic("pmap_pool_alloc: size(%lu) != PAGE_SIZE", size);
 
+	pvop = va;
+	SIMPLEQ_INSERT_HEAD(&pmap_mpvop_head, pvop, pvop_link);
+	pmap_mpvop_free++;
+	if (pmap_mpvop_free > pmap_mpvop_maxfree)
+		pmap_mpvop_maxfree = pmap_mpvop_free;
+#if 0
 	uvm_pagefree(PHYS_TO_VM_PAGE((paddr_t) va));
+#endif
 }
 
 /*
