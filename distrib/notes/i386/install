@@ -31,12 +31,12 @@ question.  If you wish to stop the installation, you may hit Control-C
 at any time, but if you do, you'll have to begin the installation
 process again from scratch.
 
-        Boot your machine using of the appropriate installation
-        floppy.  The boot loader will start, and will print a
-        countdown and begin booting. You will likely see one "file not
-        found" warning from the boot loader -- ignore this as it is
-        normal, and indicates the boot loader failed to find a normal
-        kernel to boot before trying to boot a compressed kernel.
+        Boot your machine using the appropriate installation floppy.
+        The boot loader will start, and will print a countdown and
+        begin booting. You will likely see one "file not found"
+        warning from the boot loader -- ignore this as it is normal,
+        and indicates the boot loader failed to find a normal kernel
+        to boot before trying to boot a compressed kernel.
 
         If the boot loader messages do not appear in a reasonable
         amount of time, you either have a bad boot floppy or a
