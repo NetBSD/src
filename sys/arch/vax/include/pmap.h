@@ -1,4 +1,4 @@
-/*      $NetBSD: pmap.h,v 1.13 1996/02/11 13:46:23 ragge Exp $     */
+/*      $NetBSD: pmap.h,v 1.14 1996/03/07 23:24:01 ragge Exp $     */
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -99,10 +99,6 @@ typedef struct pv_entry {
 	avail_start += (count) * NBPG;
 
 #ifdef	_KERNEL
-pv_entry_t	pv_table;		/* array of entries, 
-					   one per LOGICAL page */
-struct pmap	kernel_pmap_store;
-
 #define pa_index(pa)	                atop(pa)
 #define pa_to_pvh(pa)	                (&pv_table[atop(pa)])
 

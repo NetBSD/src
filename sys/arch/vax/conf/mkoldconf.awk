@@ -1,6 +1,6 @@
 #!/usr/bin/awk -f
 #
-# $NetBSD: mkoldconf.awk,v 1.5 1996/02/13 06:56:58 mycroft Exp $
+# $NetBSD: mkoldconf.awk,v 1.6 1996/03/07 23:28:01 ragge Exp $
 #
 
 /tmscd/{
@@ -116,7 +116,7 @@ printf "#define C (caddr_t)\n"
 printf "struct uba_ctlr ubminit[]={\n"
 for(i=1;i<nuda;i++){
 	k=sprintf("%d",udaddr[i])
-	printf "	{ &udadriver, %d,0,0,udaintr,C %s},\n",
+	printf "	{ &udadriver, %d,'?',0,udaintr,C %s},\n",
 		udaplats[i],loc[k+1]
 }
 for(i=1;i<nts;i++){
@@ -134,7 +134,7 @@ printf "0};\n"
 printf "struct uba_device ubdinit[]={\n"
 for(i=1;i<nra;i++){
 	k=sprintf("%d",raaddr[i])
-	printf "	{ &udadriver,%d,%d,0,%d,0,0,1,0},\n",raplats[i],
+	printf "	{ &udadriver,%d,%d,'?',%d,0,0,1,0},\n",raplats[i],
 		rr++/4,loc[k+1]
 }
 for(i=1;i<nts;i++){

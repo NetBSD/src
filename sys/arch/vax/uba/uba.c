@@ -1,4 +1,4 @@
-/*      $NetBSD: uba.c,v 1.17 1996/03/02 14:09:57 ragge Exp $      */
+/*      $NetBSD: uba.c,v 1.18 1996/03/07 23:25:50 ragge Exp $      */
 
 /*
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -123,6 +123,7 @@ unifind(uhp0, pumem)
 	register struct uba_device *ui;
 	register struct uba_ctlr *um;
 	register struct uba_softc *uhp = uhp0;
+	volatile struct uba_regs *ubar = uhp->uh_uba;
 	u_short *reg, *ap, addr;
 	struct uba_driver *udp;
 	int i;
@@ -150,21 +151,20 @@ unifind(uhp0, pumem)
 		 */
 	    for (ap = udp->ud_addr; addr || (addr = *ap++); addr = 0) {
 		reg = ubaddr(uhp, addr);
-
 		if (badaddr((caddr_t)reg, 2))
 			continue;
 
-#if DW780 && 0 /* XXX */
-		if (uhp->uh_type == DW780 && vubp->uba_sr) {
-			vubp->uba_sr = vubp->uba_sr;
+#if DW780
+		if (uhp->uh_type == DW780 && ubar->uba_sr) {
+			ubar->uba_sr = ubar->uba_sr;
 			continue;
 		}
 #endif
 		rcvec = 0x200;
-		i = (*udp->ud_probe)(reg, um->um_ctlr, um);
-#if DW780 && 0 /* XXX */
-		if (uhp->uh_type == DW780 && vubp->uba_sr) {
-			vubp->uba_sr = vubp->uba_sr;
+		i = (*udp->ud_probe)(reg, um->um_ctlr, um, uhp);
+#if DW780
+		if (uhp->uh_type == DW780 && ubar->uba_sr) {
+			ubar->uba_sr = ubar->uba_sr;
 			continue;
 		}
 #endif
@@ -1042,22 +1042,23 @@ uba_attach(parent, self, aux)
 		for (i = 0; i < NO_IVEC; i++) {
 			bcopy(&idsptch, &sc->uh_idsp[i],
 			    sizeof(struct ivec_dsp));
-			sc->uh_idsp[i].pushlarg = sa->nexinfo;
+			sc->uh_idsp[i].pushlarg = sc->uh_dev.dv_unit;
 			sc->uh_idsp[i].hoppaddr = ubastray;
 			sc->uh_iarea[i] = (unsigned int)&sc->uh_idsp[i];
 		}
 	}
 
 	switch (cpunumber) {
-#if VAX780
+#if VAX780 || VAX8600
 	case VAX_780:
+	case VAX_8600:
 		sc->uh_mr = (void *)ubar->uba_map;
 		sc->uh_type = DW780;
 		sc->uh_physuba = (struct uba_regs *)kvtophys(sa->nexaddr);
 		ubaphys = UMEM780(sa->nexinfo);
 		ubaiophys = UMEM780(sa->nexinfo) + (UBAPAGES * NBPG);
 		bcopy(&idsptch, &sc->uh_dw780, sizeof(struct ivec_dsp));
-		sc->uh_dw780.pushlarg = sa->nexinfo;
+		sc->uh_dw780.pushlarg = sc->uh_dev.dv_unit;
 		sc->uh_dw780.hoppaddr = uba_dw780int;
 		scb->scb_nexvec[0][sa->nexnum] = scb->scb_nexvec[1][sa->nexnum]
 		    = scb->scb_nexvec[2][sa->nexnum]
