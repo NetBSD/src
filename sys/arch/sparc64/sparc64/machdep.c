@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.13 1998/09/13 12:13:51 mycroft Exp $ */
+/*	$NetBSD: machdep.c,v 1.14 1998/09/13 12:24:18 mycroft Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -830,13 +830,13 @@ sys_sigreturn(p, v, retval)
 #endif
 
 	/* Restore signal stack. */
-	if (scp->sc_onstack & SS_ONSTACK)
+	if (sc.sc_onstack & SS_ONSTACK)
 		p->p_sigacts->ps_sigstk.ss_flags |= SS_ONSTACK;
 	else
 		p->p_sigacts->ps_sigstk.ss_flags &= ~SS_ONSTACK;
 
 	/* Restore signal mask. */
-	(void) sigprocmask1(p, SIG_SETMASK, &scp->sc_mask, 0);
+	(void) sigprocmask1(p, SIG_SETMASK, &sc.sc_mask, 0);
 
 	return (EJUSTRETURN);
 }
