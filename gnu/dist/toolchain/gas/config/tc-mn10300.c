@@ -1,5 +1,6 @@
 /* tc-mn10300.c -- Assembler code for the Matsushita 10300
-   Copyright (C) 1996, 1997, 1998, 1999, 2000 Free Software Foundation.
+   Copyright 1996, 1997, 1998, 1999, 2000, 2001
+   Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -211,6 +212,7 @@ static const struct reg_name xr_registers[] =
   { "mcrl", 3 },
   { "mcvf", 4 },
   { "mdrq", 1 },
+  { "pc", 0 },
   { "sp", 0 },
   { "xr0", 0 },
   { "xr1", 1 },
@@ -935,7 +937,7 @@ md_assemble (str)
   struct mn10300_opcode *next_opcode;
   const unsigned char *opindex_ptr;
   int next_opindex, relaxable;
-  unsigned long insn, extension, size = 0, real_size;
+  unsigned long insn, extension, size = 0;
   char *f;
   int i;
   int match;
@@ -1511,11 +1513,16 @@ keep_going:
   if (opcode->format == FMT_D4)
     size = 6;
 
-  real_size = size;
-
   if (relaxable && fc > 0)
     {
       int type;
+
+      /* We want to anchor the line info to the previous frag (if
+	 there isn't one, create it), so that, when the insn is
+	 resized, we still get the right address for the beginning of
+	 the region.  */
+      f = frag_more (0);
+      dwarf2_emit_insn (0);
 
       /* bCC  */
       if (size == 2)
@@ -1727,24 +1734,7 @@ keep_going:
 	      /* Is the reloc pc-relative?  */
 	      pcrel = (operand->flags & MN10300_OPERAND_PCREL) != 0;
 
-	      /* Gross.  This disgusting hack is to make sure we
-		 get the right offset for the 16/32 bit reloc in
-		 "call" instructions.  Basically they're a pain
-		 because the reloc isn't at the end of the instruction.  */
-	      if ((size == 5 || size == 7)
-		  && (((insn >> 24) & 0xff) == 0xcd
-		      || ((insn >> 24) & 0xff) == 0xdd))
-		size -= 2;
-
-	      /* Similarly for certain bit instructions which don't
-		 hav their 32bit reloc at the tail of the instruction.  */
-	      if (size == 7
-		  && (((insn >> 16) & 0xffff) == 0xfe00
-		      || ((insn >> 16) & 0xffff) == 0xfe01
-		      || ((insn >> 16) & 0xffff) == 0xfe02))
-		size -= 1;
-
-	      offset = size - reloc_size / 8;
+	      offset = size - (reloc_size + operand->shift) / 8;
 
 	      /* Choose a proper BFD relocation type.  */
 	      if (pcrel)
@@ -1787,9 +1777,9 @@ keep_going:
 		fixP->fx_offset += offset;
 	    }
 	}
-    }
 
-  dwarf2_emit_insn (real_size);
+      dwarf2_emit_insn (size);
+    }
 }
 
 /* If while processing a fixup, a reloc really needs to be created
@@ -1815,6 +1805,45 @@ tc_gen_reloc (seg, fixp)
 
   if (fixp->fx_addsy && fixp->fx_subsy)
     {
+      /* If we got a difference between two symbols, and the
+	 subtracted symbol is in the current section, use a
+	 PC-relative relocation.  If both symbols are in the same
+	 section, the difference would have already been simplified
+	 to a constant.  */
+      if (S_GET_SEGMENT (fixp->fx_subsy) == seg)
+	{
+	  reloc->sym_ptr_ptr = (asymbol **) xmalloc (sizeof (asymbol *));
+	  *reloc->sym_ptr_ptr = symbol_get_bfdsym (fixp->fx_addsy);
+	  reloc->addend = (reloc->address - S_GET_VALUE (fixp->fx_subsy)
+			   + fixp->fx_offset);
+
+	  switch (fixp->fx_r_type)
+	    {
+	    case BFD_RELOC_8:
+	      reloc->howto = bfd_reloc_type_lookup (stdoutput,
+						    BFD_RELOC_8_PCREL);
+	      return reloc;
+	      
+	    case BFD_RELOC_16:
+	      reloc->howto = bfd_reloc_type_lookup (stdoutput,
+						    BFD_RELOC_16_PCREL);
+	      return reloc;
+
+	    case BFD_RELOC_24:
+	      reloc->howto = bfd_reloc_type_lookup (stdoutput,
+						    BFD_RELOC_24_PCREL);
+	      return reloc;
+
+	    case BFD_RELOC_32:
+	      reloc->howto = bfd_reloc_type_lookup (stdoutput,
+						    BFD_RELOC_32_PCREL);
+	      return reloc;
+
+	    default:
+	      /* Try to compute the absolute value below.  */
+	      break;
+	    }
+	}
 
       if ((S_GET_SEGMENT (fixp->fx_addsy) != S_GET_SEGMENT (fixp->fx_subsy))
 	  || S_GET_SEGMENT (fixp->fx_addsy) == undefined_section)
@@ -1842,44 +1871,23 @@ md_estimate_size_before_relax (fragp, seg)
      fragS *fragp;
      asection *seg;
 {
-  if (fragp->fr_subtype == 0)
-    return 2;
-  if (fragp->fr_subtype == 3)
-    return 3;
-  if (fragp->fr_subtype == 6)
-    {
-      if (!S_IS_DEFINED (fragp->fr_symbol)
-	  || seg != S_GET_SEGMENT (fragp->fr_symbol))
-	{
-	  fragp->fr_subtype = 7;
-	  return 7;
-	}
-      else
-	return 5;
-    }
-  if (fragp->fr_subtype == 8)
-    {
-      if (!S_IS_DEFINED (fragp->fr_symbol)
-	  || seg != S_GET_SEGMENT (fragp->fr_symbol))
-	{
-	  fragp->fr_subtype = 9;
-	  return 6;
-	}
-      else
-	return 4;
-    }
-  if (fragp->fr_subtype == 10)
-    {
-      if (!S_IS_DEFINED (fragp->fr_symbol)
-	  || seg != S_GET_SEGMENT (fragp->fr_symbol))
-	{
-	  fragp->fr_subtype = 12;
-	  return 5;
-	}
-      else
-	return 2;
-    }
-  abort ();
+  if (fragp->fr_subtype == 6
+      && (!S_IS_DEFINED (fragp->fr_symbol)
+	  || seg != S_GET_SEGMENT (fragp->fr_symbol)))
+    fragp->fr_subtype = 7;
+  else if (fragp->fr_subtype == 8
+	   && (!S_IS_DEFINED (fragp->fr_symbol)
+	       || seg != S_GET_SEGMENT (fragp->fr_symbol)))
+    fragp->fr_subtype = 9;
+  else if (fragp->fr_subtype == 10
+	   &&  (!S_IS_DEFINED (fragp->fr_symbol)
+		|| seg != S_GET_SEGMENT (fragp->fr_symbol)))
+    fragp->fr_subtype = 12;
+
+  if (fragp->fr_subtype >= sizeof (md_relax_table) / sizeof (md_relax_table[0]))
+    abort ();
+
+  return md_relax_table[fragp->fr_subtype].rlx_length;
 }
 
 long
@@ -1939,14 +1947,17 @@ md_apply_fix3 (fixp, valuep, seg)
   switch (fixp->fx_r_type)
     {
     case BFD_RELOC_8:
+    case BFD_RELOC_8_PCREL:
       size = 1;
       break;
 
     case BFD_RELOC_16:
+    case BFD_RELOC_16_PCREL:
       size = 2;
       break;
 
     case BFD_RELOC_32:
+    case BFD_RELOC_32_PCREL:
       size = 4;
       break;
 
@@ -1963,9 +1974,11 @@ md_apply_fix3 (fixp, valuep, seg)
 
   md_number_to_chars (fixpos, value, size);
 
-  fixp->fx_done = 1;
-  return 0;
+  /* If a symbol remains, pass the fixup, as a reloc, onto the linker.  */
+  if (fixp->fx_addsy == NULL)
+    fixp->fx_done = 1;
 
+  return 0;
 }
 
 /* Return nonzero if the fixup in FIXP will require a relocation,
@@ -1978,6 +1991,15 @@ mn10300_force_relocation (fixp)
 {
   if (fixp->fx_r_type == BFD_RELOC_VTABLE_INHERIT
       || fixp->fx_r_type == BFD_RELOC_VTABLE_ENTRY)
+    return 1;
+
+  /* Do not adjust relocations involving symbols in code sections,
+     because it breaks linker relaxations.  This could be fixed in the
+     linker, but this fix is simpler, and it pretty much only affects
+     object size a little bit.  */
+  if ((S_GET_SEGMENT (fixp->fx_addsy)->flags & SEC_CODE)
+      && fixp->fx_subsy
+      && S_GET_SEGMENT (fixp->fx_addsy) == S_GET_SEGMENT (fixp->fx_subsy))
     return 1;
 
   return 0;
@@ -1996,6 +2018,13 @@ mn10300_fix_adjustable (fixp)
 
   if (fixp->fx_r_type == BFD_RELOC_VTABLE_INHERIT
       || fixp->fx_r_type == BFD_RELOC_VTABLE_ENTRY)
+    return 0;
+
+  /* Do not adjust relocations involving symbols in code sections,
+     because it breaks linker relaxations.  This could be fixed in the
+     linker, but this fix is simpler, and it pretty much only affects
+     object size a little bit.  */
+  if (S_GET_SEGMENT (fixp->fx_addsy)->flags & SEC_CODE)
     return 0;
 
   return 1;

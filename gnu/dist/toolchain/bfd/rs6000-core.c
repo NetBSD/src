@@ -1,5 +1,6 @@
 /* IBM RS/6000 "XCOFF" back-end for BFD.
-   Copyright 1990, 91, 92, 93, 94, 95, 96, 97, 98, 2000
+   Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 2000,
+   2001
    Free Software Foundation, Inc.
    FIXME: Can someone provide a transliteration of this name into ASCII?
    Using the following chars caused a compiler warning on HIUX (so I replaced
@@ -31,8 +32,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
    In all cases, it does not support writing.
 
    This is in a separate file from coff-rs6000.c, because it includes
-   system include files that conflict with coff/rs6000.h.
-  */
+   system include files that conflict with coff/rs6000.h.  */
 
 /* Internalcoff.h and coffcode.h modify themselves based on this flag.  */
 #define RS6000COFF_C 1
@@ -107,11 +107,11 @@ typedef union {
 
 typedef union {
 #ifdef AIX_CORE_DUMPX_CORE
-    struct core_dumpx new;	/* new AIX 4.3+ core dump */
+  struct core_dumpx new;	/* new AIX 4.3+ core dump */
 #else
-    struct core_dump new;	/* for simpler coding */
+  struct core_dump new;		/* for simpler coding */
 #endif
-    struct core_dump old;	/* old AIX 4.2- core dump, still used on
+  struct core_dump old;		/* old AIX 4.2- core dump, still used on
 				   4.3+ with appropriate SMIT config */
 } CoreHdr;
 
@@ -120,11 +120,11 @@ typedef union {
 #ifdef CORE_VERSION_1
 typedef union {
 #ifdef AIX_CORE_DUMPX_CORE
-    struct vm_infox new;
+  struct vm_infox new;
 #else
-    struct vm_info new;
+  struct vm_info new;
 #endif
-    struct vm_info old;
+  struct vm_info old;
 } VmInfo;
 #endif
 
@@ -247,8 +247,8 @@ typedef union {
 
 /* Size of the leading portion that old and new core dump structures have in
    common.  */
-#define CORE_COMMONSZ	((int)&((struct core_dump *)0)->c_entries + \
-			 sizeof (((struct core_dump *)0)->c_entries))
+#define CORE_COMMONSZ	((int) &((struct core_dump *) 0)->c_entries \
+			 + sizeof (((struct core_dump *) 0)->c_entries))
 
 /* Try to read into CORE the header from the core file associated with ABFD.
    Return success.  */
@@ -269,7 +269,7 @@ read_hdr (bfd *abfd, CoreHdr *core)
   /* Read the trailing portion of the structure.  */
   size = CORE_NEW (*core) ? sizeof (core->new) : sizeof (core->old)
     - CORE_COMMONSZ;
-  return bfd_read ((char *)core + CORE_COMMONSZ, size, 1, abfd) == size;
+  return bfd_read ((char *) core + CORE_COMMONSZ, size, 1, abfd) == size;
 }
 
 static asection *
@@ -360,7 +360,7 @@ rs6000coff_core_p (abfd)
       c_regsize = sizeof (COLD_MSTSAVE (core.old));
       c_regptr = &COLD_MSTSAVE (core.old);
     }
-  c_regoff = (char *)c_regptr - (char *)&core;
+  c_regoff = (char *) c_regptr - (char *) &core;
 
   if (bfd_stat (abfd, &statbuf) < 0)
     {
@@ -378,7 +378,7 @@ rs6000coff_core_p (abfd)
 
      For the data segment, we have no choice but to keep going if it's
      not there, since the default behavior is not to dump it (regardless
-     of the ulimit, it's based on SA_FULLDUMP).	 But for the stack segment,
+     of the ulimit, it's based on SA_FULLDUMP).  But for the stack segment,
      if it's not there, we refuse to have anything to do with this core
      file.  The usefulness of a core dump without a stack segment is pretty
      limited anyway.  */
@@ -397,7 +397,7 @@ rs6000coff_core_p (abfd)
     }
 
   /* Don't check the core file size for a full core, AIX 4.1 includes
-     additional shared library sections in a full core.	 */
+     additional shared library sections in a full core.  */
   if (!(c_flag & (FULL_CORE | CORE_TRUNC)))
     {
       /* If the size is wrong, it means we're misinterpreting something.  */
@@ -422,9 +422,9 @@ rs6000coff_core_p (abfd)
     (*_bfd_error_handler) (_("%s: warning core file truncated"),
 			   bfd_get_filename (abfd));
 
-  /* Allocate core file header.	 */
+  /* Allocate core file header.  */
   size = CORE_NEW (core) ? sizeof (core.new) : sizeof (core.old);
-  tmpptr = (char*) bfd_zalloc (abfd, size);
+  tmpptr = (char *) bfd_zalloc (abfd, size);
   if (!tmpptr)
     return NULL;
 
@@ -450,7 +450,7 @@ rs6000coff_core_p (abfd)
 	  arch = bfd_arch_powerpc;
 	  mach = bfd_mach_ppc;
 	  break;
-      }
+	}
       bfd_default_set_arch_mach (abfd, arch, mach);
     }
 
@@ -481,7 +481,7 @@ rs6000coff_core_p (abfd)
      ulimit is large enough, otherwise the data section is omitted.
      AIX 4 sets FULL_CORE even if the core file is truncated, we have
      to examine core.c_datasize below to find out the actual size of
-     the .data section.	 */
+     the .data section.  */
   if (c_flag & FULL_CORE)
     {
       if (!make_bfd_asection (abfd, ".data",
@@ -537,9 +537,9 @@ rs6000coff_core_p (abfd)
 
     /* .data sections from loaded objects.  */
     if (proc64)
-      size = (int) ((LdInfo *)0)->l64.ldinfo_filename;
+      size = (int) ((LdInfo *) 0)->l64.ldinfo_filename;
     else
-      size = (int) ((LdInfo *)0)->l32.ldinfo_filename;
+      size = (int) ((LdInfo *) 0)->l32.ldinfo_filename;
 
     while (1)
       {
@@ -567,7 +567,7 @@ rs6000coff_core_p (abfd)
 	  if (!make_bfd_asection (abfd, ".data",
 				  SEC_ALLOC | SEC_LOAD | SEC_HAS_CONTENTS,
 				  ldi_datasize, ldi_dataorg, ldi_core))
-	      return NULL;
+	    return NULL;
 
 	if (ldi_next == 0)
 	  break;
@@ -617,10 +617,11 @@ rs6000coff_core_p (abfd)
   }
 #endif
 
-  return abfd->xvec;				/* this is garbage for now.  */
+  return abfd->xvec;		/* This is garbage for now.  */
 }
 
-/* return `true' if given core is from the given executable..  */
+/* Return `true' if given core is from the given executable.  */
+
 boolean
 rs6000coff_core_file_matches_executable_p (core_bfd, exec_bfd)
      bfd *core_bfd;
@@ -643,9 +644,9 @@ rs6000coff_core_file_matches_executable_p (core_bfd, exec_bfd)
     c_loader = (file_ptr) COLD_LOADER (core.old);
 
   if (CORE_NEW (core) && CNEW_PROC64 (core.new))
-    size = (int) ((LdInfo *)0)->l64.ldinfo_filename;
+    size = (int) ((LdInfo *) 0)->l64.ldinfo_filename;
   else
-    size = (int) ((LdInfo *)0)->l32.ldinfo_filename;
+    size = (int) ((LdInfo *) 0)->l32.ldinfo_filename;
 
   if (bfd_seek (core_bfd, c_loader + size, SEEK_SET) != 0)
     return false;

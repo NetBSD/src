@@ -1,5 +1,5 @@
 /* d30v-opc.c -- D30V opcode list
-   Copyright (C) 1997, 1998, 2000 Free Software Foundation, Inc.
+   Copyright 1997, 1998, 1999, 2000 Free Software Foundation, Inc.
    Written by Martin Hunt, Cygnus Support
 
 This file is part of GDB, GAS, and the GNU binutils.

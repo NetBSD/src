@@ -1,5 +1,6 @@
 /* GAS interface for targets using CGEN: Cpu tools GENerator.
-   Copyright (C) 1996, 1997, 1998, 1999, 2000, 2001 Free Software Foundation, Inc.
+   Copyright 1996, 1997, 1998, 1999, 2000, 2001
+   Free Software Foundation, Inc.
 
 This file is part of GAS, the GNU Assembler.
 
@@ -397,6 +398,9 @@ gas_cgen_finish_insn (insn, buf, length, relax_p, result)
     {
       int max_len;
       fragS *old_frag;
+      expressionS *exp;
+      symbolS *sym;
+      offsetT off;
 
 #ifdef TC_CGEN_MAX_RELAX
       max_len = TC_CGEN_MAX_RELAX (insn, byte_len);
@@ -413,14 +417,24 @@ gas_cgen_finish_insn (insn, buf, length, relax_p, result)
       /* Create a relaxable fragment for this instruction.  */
       old_frag = frag_now;
 
+      exp = &fixups[relax_operand].exp;
+      sym = exp->X_add_symbol;
+      off = exp->X_add_number;
+      if (exp->X_op != O_constant && exp->X_op != O_symbol)
+	{
+	  /* Handle complex expressions.  */
+	  sym = make_expr_symbol (exp);
+	  off = 0;
+	}
+
       frag_var (rs_machine_dependent,
 		max_len - byte_len /* max chars */,
 		0 /* variable part already allocated */,
 		/* FIXME: When we machine generate the relax table,
 		   machine generate a macro to compute subtype.  */
 		1 /* subtype */,
-		fixups[relax_operand].exp.X_add_symbol,
-		fixups[relax_operand].exp.X_add_number,
+		sym,
+		off,
 		f);
 
       /* Record the operand number with the fragment so md_convert_frag
@@ -615,7 +629,9 @@ gas_cgen_md_apply_fix3 (fixP, valueP, seg)
 	case BFD_RELOC_32:
 	  md_number_to_chars (where, value, 4);
 	  break;
-	/* FIXME: later add support for 64 bits.  */
+	case BFD_RELOC_64:
+	  md_number_to_chars (where, value, 8);
+	  break;
 	default:
 	  as_bad_where (fixP->fx_file, fixP->fx_line,
 			_("internal error: can't install fix for reloc type %d (`%s')"),
@@ -653,8 +669,7 @@ gas_cgen_tc_gen_reloc (section, fixP)
   if (reloc->howto == (reloc_howto_type *) NULL)
     {
       as_bad_where (fixP->fx_file, fixP->fx_line,
-		    _("internal error: can't export reloc type %d (`%s')"),
-		    fixP->fx_r_type, bfd_get_reloc_code_name (fixP->fx_r_type));
+		    _("relocation is not supported"));
       return NULL;
     }
 
