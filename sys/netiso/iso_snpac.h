@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)iso_snpac.h	7.8 (Berkeley) 5/6/91
+ *	from: @(#)iso_snpac.h	7.8 (Berkeley) 5/6/91
+ *	$Id: iso_snpac.h,v 1.3 1993/05/20 05:27:24 cgd Exp $
  */
 
 #ifndef _NETISO_ISO_SNPAC_H_

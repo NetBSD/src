@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)cons.h	7.3 (Berkeley) 5/6/91
+ *	from: @(#)cons.h	7.3 (Berkeley) 5/6/91
+ *	$Id: cons.h,v 1.3 1993/05/20 05:27:02 cgd Exp $
  */
 
 #ifndef _NETISO_CONS_H_
@@ -63,9 +64,6 @@ SOFTWARE.
  * ARGO Project, Computer Sciences Dept., University of Wisconsin - Madison
  */
 /*
- * $Header: /cvsroot/src/sys/netiso/Attic/cons.h,v 1.2 1993/04/19 03:45:40 mycroft Exp $
- * $Source: /cvsroot/src/sys/netiso/Attic/cons.h,v $
- *
  * interface between TP and CONS
  */
 

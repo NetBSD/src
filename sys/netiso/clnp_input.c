@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)clnp_input.c	7.13 (Berkeley) 5/6/91
+ *	from: @(#)clnp_input.c	7.13 (Berkeley) 5/6/91
+ *	$Id: clnp_input.c,v 1.2 1993/05/20 05:26:51 cgd Exp $
  */
 
 /***********************************************************
@@ -59,8 +60,6 @@ SOFTWARE.
 /*
  * ARGO Project, Computer Sciences Dept., University of Wisconsin - Madison
  */
-/* $Header: /cvsroot/src/sys/netiso/Attic/clnp_input.c,v 1.1 1993/04/09 12:00:52 cgd Exp $ */
-/* $Source: /cvsroot/src/sys/netiso/Attic/clnp_input.c,v $ */
 
 #include "types.h"
 #include "param.h"

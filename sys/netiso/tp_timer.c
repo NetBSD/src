@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)tp_timer.c	7.5 (Berkeley) 5/6/91
+ *	from: @(#)tp_timer.c	7.5 (Berkeley) 5/6/91
+ *	$Id: tp_timer.c,v 1.2 1993/05/20 05:28:00 cgd Exp $
  */
 
 /***********************************************************
@@ -61,9 +62,6 @@ SOFTWARE.
  */
 /* 
  * ARGO TP
- *
- * $Header: /cvsroot/src/sys/netiso/Attic/tp_timer.c,v 1.1 1993/04/09 12:01:53 cgd Exp $
- * $Source: /cvsroot/src/sys/netiso/Attic/tp_timer.c,v $
  *
  * Contains all the timer code.  
  * There are two sources of calls to these routines:

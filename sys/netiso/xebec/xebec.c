@@ -1,5 +1,4 @@
-/* $Header: /cvsroot/src/sys/netiso/xebec/Attic/xebec.c,v 1.1 1993/04/09 12:02:22 cgd Exp $ */
-/* $Source: /cvsroot/src/sys/netiso/xebec/Attic/xebec.c,v $ */
+/* $Id: xebec.c,v 1.2 1993/05/20 05:28:39 cgd Exp $ */
 
 #include "xebec.h"
 #include "llparse.h"

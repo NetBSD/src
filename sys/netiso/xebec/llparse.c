@@ -1,5 +1,3 @@
-/* $Header: /cvsroot/src/sys/netiso/xebec/Attic/llparse.c,v 1.1 1993/04/09 12:02:06 cgd Exp $ */
-/* $Source: /cvsroot/src/sys/netiso/xebec/Attic/llparse.c,v $ */
 /*
  * ************************* NOTICE *******************************
  * This code is in the public domain.  It cannot be copyrighted.
@@ -10,6 +8,8 @@
  * It was subsequently modified very slightly by Nancy Hall at the 
  * University of Wisconsin for the Crystal project.
  * ****************************************************************
+ *
+ *	$Id: llparse.c,v 1.2 1993/05/20 05:28:21 cgd Exp $
  */
 #include "xebec.h"
 #include "llparse.h"

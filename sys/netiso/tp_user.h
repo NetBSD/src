@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)tp_user.h	7.10 (Berkeley) 5/6/91
+ *	from: @(#)tp_user.h	7.10 (Berkeley) 5/6/91
+ *	$Id: tp_user.h,v 1.3 1993/05/20 05:28:08 cgd Exp $
  */
 
 #ifndef _NETISO_TP_USER_H_
@@ -64,9 +65,6 @@ SOFTWARE.
  */
 /* 
  * ARGO TP
- *
- * $Header: /cvsroot/src/sys/netiso/Attic/tp_user.h,v 1.2 1993/04/19 03:46:03 mycroft Exp $
- * $Source: /cvsroot/src/sys/netiso/Attic/tp_user.h,v $
  *
  * These are the values a real-live user ;-) needs. 
  */

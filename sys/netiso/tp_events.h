@@ -1,5 +1,5 @@
-/* $Header: /cvsroot/src/sys/netiso/Attic/tp_events.h,v 1.1 1993/04/09 12:01:32 cgd Exp $ */
-/* $Source: /cvsroot/src/sys/netiso/Attic/tp_events.h,v $ */
+/* $Id: tp_events.h,v 1.2 1993/05/20 05:27:37 cgd Exp $ */
+
 struct tp_event {
 	int ev_number;
 	 struct timeval e_time; 

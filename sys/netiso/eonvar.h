@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)eonvar.h	7.5 (Berkeley) 5/6/91
+ *	from: @(#)eonvar.h	7.5 (Berkeley) 5/6/91
+ *	$Id: eonvar.h,v 1.3 1993/05/20 05:27:05 cgd Exp $
  */
 
 #ifndef _NETISO_EONVAR_H_

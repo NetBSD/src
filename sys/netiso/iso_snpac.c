@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)iso_snpac.c	7.14 (Berkeley) 6/27/91
+ *	from: @(#)iso_snpac.c	7.14 (Berkeley) 6/27/91
+ *	$Id: iso_snpac.c,v 1.2 1993/05/20 05:27:23 cgd Exp $
  */
 
 /***********************************************************
@@ -59,8 +60,6 @@ SOFTWARE.
 /*
  * ARGO Project, Computer Sciences Dept., University of Wisconsin - Madison
  */
-/* $Header: /cvsroot/src/sys/netiso/Attic/iso_snpac.c,v 1.1 1993/04/09 12:01:21 cgd Exp $ */
-/* $Source: /cvsroot/src/sys/netiso/Attic/iso_snpac.c,v $ */
 
 #ifdef ISO
 

@@ -1,3 +1,5 @@
+/* $Id: xebec.bnf,v 1.2 1993/05/20 05:28:38 cgd Exp $ */
+
 {
 #include "main.h"
 #include "sets.h"

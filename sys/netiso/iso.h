@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)iso.h	7.6 (Berkeley) 5/6/91
+ *	from: @(#)iso.h	7.6 (Berkeley) 5/6/91
+ *	$Id: iso.h,v 1.3 1993/05/20 05:27:14 cgd Exp $
  */
 
 #ifndef _NETISO_ISO_H_
@@ -62,8 +63,6 @@ SOFTWARE.
 /*
  * ARGO Project, Computer Sciences Dept., University of Wisconsin - Madison
  */
-/* $Header: /cvsroot/src/sys/netiso/Attic/iso.h,v 1.2 1993/04/19 03:45:44 mycroft Exp $ */
-/* $Source: /cvsroot/src/sys/netiso/Attic/iso.h,v $ */
 
 /*
  *	Return true if this is a multicast address

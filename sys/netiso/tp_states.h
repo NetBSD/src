@@ -1,5 +1,5 @@
-/* $Header: /cvsroot/src/sys/netiso/Attic/tp_states.h,v 1.1 1993/04/09 12:01:48 cgd Exp $ */
-/* $Source: /cvsroot/src/sys/netiso/Attic/tp_states.h,v $ */
+/* $Id: tp_states.h,v 1.2 1993/05/20 05:27:55 cgd Exp $ */
+
 #define ST_ERROR 0x0
 #define TP_CLOSED 0x1
 #define TP_CRSENT 0x2

@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)tp_pcb.h	7.9 (Berkeley) 5/6/91
+ *	from: @(#)tp_pcb.h	7.9 (Berkeley) 5/6/91
+ *	$Id: tp_pcb.h,v 1.3 1993/05/20 05:27:51 cgd Exp $
  */
 
 #ifndef _NETISO_TP_PCB_H_
@@ -65,10 +66,6 @@ SOFTWARE.
 /* 
  * ARGO TP
  *
- * $Header: /cvsroot/src/sys/netiso/Attic/tp_pcb.h,v 1.2 1993/04/19 03:45:56 mycroft Exp $
- * $Source: /cvsroot/src/sys/netiso/Attic/tp_pcb.h,v $
- *
- * 
  * This file defines the transport protocol control block (tpcb).
  * and a bunch of #define values that are used in the tpcb.
  */
