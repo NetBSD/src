@@ -1,4 +1,4 @@
-/*	$NetBSD: rarpd.c,v 1.22 1997/11/24 18:43:16 is Exp $	*/
+/*	$NetBSD: rarpd.c,v 1.23 1998/03/23 08:44:07 fair Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -28,7 +28,7 @@ __COPYRIGHT(
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: rarpd.c,v 1.22 1997/11/24 18:43:16 is Exp $");
+__RCSID("$NetBSD: rarpd.c,v 1.23 1998/03/23 08:44:07 fair Exp $");
 #endif
 
 
@@ -210,6 +210,11 @@ init_one(ifname)
 	char   *ifname;
 {
 	struct if_info *p;
+	int fd;
+
+	fd = rarp_open(ifname);
+	if (fd < 0)
+		return;
 
 	p = (struct if_info *)malloc(sizeof(*p));
 	if (p == 0) {
@@ -219,7 +224,7 @@ init_one(ifname)
 	p->ii_next = iflist;
 	iflist = p;
 
-	p->ii_fd = rarp_open(ifname);
+	p->ii_fd = fd;
 	lookup_eaddr(ifname, p->ii_eaddr);
 	lookup_ipaddr(ifname, &p->ii_ipaddr, &p->ii_netmask);
 }
@@ -337,6 +342,10 @@ rarp_open(device)
 	}
 	(void) strncpy(ifr.ifr_name, device, sizeof ifr.ifr_name);
 	if (ioctl(fd, BIOCSETIF, (caddr_t) & ifr) < 0) {
+		if (aflag) {	/* for -a skip non-ethernet interfaces */
+			close(fd);
+			return(-1);
+		}
 		rarperr(FATAL, "BIOCSETIF: %s", strerror(errno));
 		/* NOTREACHED */
 	}
@@ -347,6 +356,10 @@ rarp_open(device)
 		/* NOTREACHED */
 	}
 	if (dlt != DLT_EN10MB) {
+		if (aflag) {	/* for -a skip non-ethernet interfaces */
+			close(fd);
+			return(-1);
+		}
 		rarperr(FATAL, "%s is not an ethernet", device);
 		/* NOTREACHED */
 	}
