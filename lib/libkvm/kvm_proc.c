@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 1994 Charles Hannum.
+ * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
  * Copyright (c) 1989, 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
