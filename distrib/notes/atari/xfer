@@ -1,4 +1,4 @@
-.\"	$NetBSD: xfer,v 1.10 1999/01/13 07:30:04 ross Exp $	
+.\"	$NetBSD: xfer,v 1.11 1999/04/06 12:33:38 leo Exp $	
 Installation is supported from several media types, including:
 .Pp
 .Bl -bullet -compact
@@ -18,11 +18,11 @@ If you are using NetBSD/atari to make the floppies, you should use
 the command dd(1) to write the raw floppy images (.fs files) to
 the disk. As an example, to write the first part of the miniroot filesystem
 onto a 720KB floppy in fd0 use:
-.Dl dd if=miniroot.fs.1 of=/dev/rfd0b bs=9b
+.Dl dd\ if=miniroot.fs.1\ of=/dev/rfd0b\ bs=9b
 .Pp
 If you are using TOS to make the floppies, grab the 'rawwrite' utility
 from the "atari/utils" directory and issue the command:
-.Dl rawwrite miniroot.fs
+.Dl rawwrite\ boot.fs
 .Pp
 This will create the boot-floppy on the floppy in drive a. The floppies
 should be pre-formatted on 720Kb/1.44Mb for both the 'dd' and 'rawwrite'
