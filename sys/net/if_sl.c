@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sl.c,v 1.59 2000/11/02 11:00:53 itohy Exp $	*/
+/*	$NetBSD: if_sl.c,v 1.60 2000/11/02 12:00:49 itohy Exp $	*/
 
 /*
  * Copyright (c) 1987, 1989, 1992, 1993
@@ -320,7 +320,7 @@ slclose(tp)
 
 	ttywflush(tp);
 	s = splimp();		/* actually, max(spltty, splsoftnet) */
-	tp->t_linesw = NULL;
+	tp->t_linesw = linesw[0]; /* default line discipline */
 	tp->t_state = 0;
 	sc = (struct sl_softc *)tp->t_sc;
 	if (sc != NULL) {
