@@ -1,4 +1,4 @@
-/*	$NetBSD: vga_pci.c,v 1.14 2002/06/27 06:44:17 junyoung Exp $	*/
+/*	$NetBSD: vga_pci.c,v 1.15 2002/06/28 22:24:13 drochner Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga_pci.c,v 1.14 2002/06/27 06:44:17 junyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga_pci.c,v 1.15 2002/06/28 22:24:13 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,6 +73,7 @@ struct vga_pci_softc {
 
 int	vga_pci_match(struct device *, struct cfdata *, void *);
 void	vga_pci_attach(struct device *, struct device *, void *);
+static int vga_pci_lookup_quirks(struct pci_attach_args *);
 
 struct cfattach vga_pci_ca = {
 	sizeof(struct vga_pci_softc), 
@@ -87,6 +88,28 @@ const struct vga_funcs vga_pci_funcs = {
 	vga_pci_ioctl,
 	vga_pci_mmap,
 };
+
+static const struct {
+	int id;
+	int quirks;
+} vga_pci_quirks[] = {
+	{PCI_ID_CODE(PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_XL_AGP),
+	 VGA_QUIRK_ONEFONT},
+};
+
+static int
+vga_pci_lookup_quirks(pa)
+	struct pci_attach_args *pa;
+{
+	int i;
+
+	for (i = 0; i < sizeof(vga_pci_quirks) / sizeof (vga_pci_quirks[0]);
+	     i++) {
+		if (vga_pci_quirks[i].id == pa->pa_id)
+			return (vga_pci_quirks[i].quirks);
+	}
+	return (0);
+}
 
 int
 vga_pci_match(struct device *parent, struct cfdata *match, void *aux)
@@ -181,7 +204,7 @@ vga_pci_attach(struct device *parent, struct device *self, void *aux)
 	/* XXX Expansion ROM? */
 
 	vga_common_attach(sc, pa->pa_iot, pa->pa_memt, WSDISPLAY_TYPE_PCIVGA,
-	    &vga_pci_funcs);
+			  vga_pci_lookup_quirks(pa), &vga_pci_funcs);
 }
 
 int
