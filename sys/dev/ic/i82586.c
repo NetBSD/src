@@ -1,4 +1,4 @@
-/*	$NetBSD: i82586.c,v 1.21 1999/05/18 23:52:55 thorpej Exp $	*/
+/*	$NetBSD: i82586.c,v 1.22 1999/05/21 13:08:50 pk Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1123,6 +1123,14 @@ ieget(sc, to_bpf, head, totlen)
 			if ((m->m_flags & M_EXT) == 0)
 				goto bad;
 			len = MCLBYTES;
+		}
+
+		if (m == m0) {
+			caddr_t newdata = (caddr_t)
+			    ALIGN(m->m_data + sizeof(struct ether_header)) -
+			    sizeof(struct ether_header);
+			len -= newdata - m->m_data;
+			m->m_data = newdata;
 		}
 
 		m->m_len = len = min(totlen, len);
