@@ -1,12 +1,12 @@
 #
-# $NetBSD: FALCON,v 1.52 2002/10/14 18:39:27 elric Exp $
+# $NetBSD: FALCON,v 1.53 2002/10/21 16:18:34 jdc Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
 #
 # Created from:
 #		NetBSD: FALCON.in,v 1.6 2002/09/02 12:10:46 leo Exp $
-#		NetBSD: GENERIC.in,v 1.27 2002/10/14 18:24:33 elric Exp $
+#		NetBSD: GENERIC.in,v 1.28 2002/10/19 05:58:25 junyoung Exp $
 
 #This configuration file is for a generic ATARI-Falcon
 
@@ -36,6 +36,10 @@ options 	UCONSOLE	# Allow xconsole to work
 #Standard system options
 options 	INSECURE	# disable kernel security levels
 #options 	NTP		# NTP phase/frequency locked loop
+
+#Enable experimental buffer queue strategy for better responsiness under 
+#high disk I/O load. Use it with caution - it's not proven to be stable yet.
+#options 	NEW_BUFQ_STRATEGY
 
 #(Co)processors this kernel should support
 
