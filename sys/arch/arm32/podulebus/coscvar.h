@@ -1,4 +1,4 @@
-/* $NetBSD: coscvar.h,v 1.1 1996/10/15 00:08:44 mark Exp $ */
+/* $NetBSD: coscvar.h,v 1.2 2001/03/18 01:31:04 bjh21 Exp $ */
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -44,7 +44,8 @@ struct	cosc_softc {
 	vu_char			*sc_iobase;
 	podule_t		*sc_podule;
 	int			sc_podule_number;
-	irqhandler_t		sc_ih;
+	void			*sc_ih;
+	struct evcnt		sc_intrcnt;
 };
 
 #endif /* _COCVAR_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.28 2001/03/17 20:34:44 bjh21 Exp $	*/
+/*	$NetBSD: asc.c,v 1.29 2001/03/18 01:31:03 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -209,18 +209,17 @@ ascattach(pdp, dp, auxp)
 
 /* If we are polling only then we don't need a interrupt handler */
 
-	sc->sc_ih.ih_func = asc_intr;
-	sc->sc_ih.ih_arg = sc;
-	sc->sc_ih.ih_level = IPL_BIO;
-	sc->sc_ih.ih_name = "scsi: asc";
-	sc->sc_ih.ih_maskaddr = sc->sc_podule->irq_addr;
-	sc->sc_ih.ih_maskbits = sc->sc_podule->irq_mask;
-
 #ifdef ASC_POLL
 	if (!asc_poll)
 #endif
-	if (irq_claim(sc->sc_podule->interrupt, &sc->sc_ih))
-		panic("%s: Cannot claim podule IRQ\n", dp->dv_xname);
+	{
+		evcnt_attach_dynamic(&sc->sc_intrcnt, EVCNT_TYPE_INTR, NULL,
+		    dp->dv_xname, "intr");
+		sc->sc_ih = podulebus_irq_establish(pdp, sc->sc_podule_number,
+		    IPL_BIO, asc_intr, sc, &sc->sc_intrcnt);
+		if (sc->sc_ih == NULL)
+			panic("%s: Cannot claim podule IRQ\n", dp->dv_xname);
+	}
 
 	/*
 	 * attach all scsi units on us

@@ -1,4 +1,4 @@
-/*	$NetBSD: cosc.c,v 1.13 2001/03/17 20:34:44 bjh21 Exp $	*/
+/*	$NetBSD: cosc.c,v 1.14 2001/03/18 01:31:03 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -280,9 +280,16 @@ coscattach(pdp, dp, auxp)
 #if COSC_POLL > 0
 	if (!cosc_poll)
 #endif
-	if (irq_claim(sc->sc_podule->interrupt, &sc->sc_softc.sc_ih))
-		panic("%s: Cannot install IRQ handler\n", dp->dv_xname);
-	
+	{
+		evcnt_attach_dynamic(&sc->sc_intrcnt, EVCNT_TYPE_INTR, NULL,
+		    dp->dv_xname, "intr");
+		sc->sc_ih = podulebus_irq_establish(pdp, sc->sc_podule_number,
+		    IPL_BIO, cosc_intr, sc, &sc->sc_intrcnt);
+		if (sc->sc_ih == NULL)
+			panic("%s: Cannot install IRQ handler\n",
+			    dp->dv_xname);
+	}
+
 	printf("\n");
 
 	/* attach all scsi units on us */
