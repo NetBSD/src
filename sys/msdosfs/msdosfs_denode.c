@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_denode.c,v 1.42 2000/05/13 06:04:41 cgd Exp $	*/
+/*	$NetBSD: msdosfs_denode.c,v 1.43 2000/05/13 23:43:10 perseant Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -333,7 +333,7 @@ deupdat(dep, waitfor)
 	int waitfor;
 {
 
-	return (VOP_UPDATE(DETOV(dep), NULL, NULL, waitfor));
+	return (VOP_UPDATE(DETOV(dep), NULL, NULL, waitfor ? UPDATE_WAIT : 0));
 }
 
 /*

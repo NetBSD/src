@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode_if.c,v 1.21 1999/12/07 23:58:28 thorpej Exp $	*/
+/*	$NetBSD: vnode_if.c,v 1.22 2000/05/13 23:43:06 perseant Exp $	*/
 
 /*
  * Warning: This file is generated automatically.
