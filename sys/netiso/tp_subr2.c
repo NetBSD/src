@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)tp_subr2.c	7.10 (Berkeley) 6/27/91
- *	$Id: tp_subr2.c,v 1.2 1993/05/20 05:27:59 cgd Exp $
+ *	$Id: tp_subr2.c,v 1.3 1993/09/06 18:08:02 mycroft Exp $
  */
 
 /***********************************************************
@@ -111,6 +111,11 @@ SOFTWARE.
 #include "../netccitt/x25.h"
 #include "../netccitt/pk.h"
 #include "../netccitt/pk_var.h"
+
+#ifndef TPCONS
+static void
+pk_flowcontrol() {}
+#endif
 
 /*
  * NAME: 	tp_local_credit()
@@ -696,10 +701,6 @@ register struct tp_pcb *tpcb;
 			pk_flowcontrol(lcp, 0, 0);
 	}
 }
-#ifndef TPCONS
-static
-pk_flowcontrol() {}
-#endif
 
 #ifdef TP_PERF_MEAS
 /*
