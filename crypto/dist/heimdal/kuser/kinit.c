@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997-2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997-2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -32,7 +32,7 @@
  */
 
 #include "kuser_locl.h"
-RCSID("$Id: kinit.c,v 1.1.1.1.2.1 2001/02/26 22:10:03 he Exp $");
+RCSID("$Id: kinit.c,v 1.1.1.1.2.2 2001/04/05 23:25:54 he Exp $");
 
 #ifdef KRB4
 /* for when the KDC tells us it's a v4 one, we try to talk that */
@@ -159,9 +159,9 @@ kinit_get_default_principal (krb5_context context,
 
 #endif /* !KRB4 */
 
-int forwardable_flag	= 0;
-int proxiable_flag	= 0;
-int renewable_flag	= 0;
+int forwardable_flag	= -1;
+int proxiable_flag	= -1;
+int renewable_flag	= -1;
 int renew_flag		= 0;
 int validate_flag	= 0;
 int version_flag	= 0;
@@ -200,7 +200,7 @@ static struct getargs args[] = {
       "keytab to use", "keytabname" },
 
     { "lifetime",	'l', arg_string, &lifetime,
-      "lifetime of tickets", "seconds"},
+      "lifetime of tickets", "time"},
 
     { "proxiable",	'p', arg_flag, &proxiable_flag,
       "get proxiable tickets" },
@@ -212,13 +212,13 @@ static struct getargs args[] = {
       "get renewable tickets" },
 
     { "renewable-life",	'r', arg_string, &renew_life,
-      "renewable lifetime of tickets", "seconds" },
+      "renewable lifetime of tickets", "time" },
 
     { "server", 	'S', arg_string, &server,
       "server to get ticket for", "principal" },
 
     { "start-time",	's', arg_string, &start_str,
-      "when ticket gets valid", "seconds" },
+      "when ticket gets valid", "time" },
 
     { "use-keytab",     'k', arg_flag, &use_keytab,
       "get key from keytab" },
@@ -227,7 +227,7 @@ static struct getargs args[] = {
       "validate TGT" },
 
     { "enctypes",	'e', arg_strings, &etype_str,
-      "encryption type to use", "enctype" },
+      "encryption types to use", "enctypes" },
 
     { "fcache-version", 0,   arg_integer, &fcache_version,
       "file cache version to create" },
@@ -344,8 +344,11 @@ main (int argc, char **argv)
     
     ret = krb5_init_context (&context);
     if (ret)
-	errx(1, "krb5_init_context failed: %u", ret);
+	errx(1, "krb5_init_context failed: %d", ret);
   
+    /* XXX no way to figure out if set without explict test */
+    if(krb5_config_get_string(context, NULL, "libdefaults", 
+			      "forwardable", NULL))
     forwardable_flag = krb5_config_get_bool (context, NULL,
 					     "libdefaults",
 					     "forwardable",
@@ -368,6 +371,22 @@ main (int argc, char **argv)
     if(version_flag) {
 	print_version(NULL);
 	exit(0);
+    }
+
+    argc -= optind;
+    argv += optind;
+
+    if (argc > 1)
+	usage (1);
+
+    if (argv[0]) {
+	ret = krb5_parse_name (context, argv[0], &principal);
+	if (ret)
+	    krb5_err (context, 1, ret, "krb5_parse_name");
+    } else {
+	ret = kinit_get_default_principal (context, &principal);
+	if (ret)
+	    krb5_err (context, 1, ret, "krb5_get_default_principal");
     }
 
     if(fcache_version)
@@ -395,8 +414,14 @@ main (int argc, char **argv)
 
     krb5_get_init_creds_opt_init (&opt);
     
+    krb5_get_init_creds_opt_set_default_flags(context, "kinit", 
+					      /* XXX */principal->realm, &opt);
+
+    if(forwardable_flag != -1)
     krb5_get_init_creds_opt_set_forwardable (&opt, forwardable_flag);
+    if(proxiable_flag != -1)
     krb5_get_init_creds_opt_set_proxiable (&opt, proxiable_flag);
+    if(anonymous_flag != -1)
     krb5_get_init_creds_opt_set_anonymous (&opt, anonymous_flag);
 
     if (!addrs_flag) {
@@ -441,22 +466,6 @@ main (int argc, char **argv)
 	}
 	krb5_get_init_creds_opt_set_etype_list(&opt, enctype, 
 					       etype_str.num_strings);
-    }
-
-    argc -= optind;
-    argv += optind;
-
-    if (argc > 1)
-	usage (1);
-
-    if (argv[0]) {
-	ret = krb5_parse_name (context, argv[0], &principal);
-	if (ret)
-	    krb5_err (context, 1, ret, "krb5_parse_name");
-    } else {
-	ret = kinit_get_default_principal (context, &principal);
-	if (ret)
-	    krb5_err (context, 1, ret, "krb5_get_default_principal");
     }
 
 #ifdef KRB4
