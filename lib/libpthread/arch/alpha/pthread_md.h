@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_md.h,v 1.1.2.4 2002/08/06 20:06:50 nathanw Exp $	*/
+/*	$NetBSD: pthread_md.h,v 1.1.2.5 2002/10/22 01:27:24 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -52,6 +52,13 @@ pthread__sp(void)
 #define pthread__uc_sp(ucp) ((ucp)->uc_mcontext.__gregs[_REG_SP])
 #define pthread__uc_pc(ucp) ((ucp)->uc_mcontext.__gregs[_REG_PC])
 
+/*
+ * Set initial, sane values for registers whose values aren't just
+ * "don't care".
+ * 0x0008 is ALPHA_PSL_USERSET from arch/alpha/include/alpha_cpu.h
+ */
+#define _INITCONTEXT_U_MD(ucp)						\
+	(ucp)->uc_mcontext.__gregs[_REG_PS] = 0x0008;
 #define STACKSPACE 32	/* 4 quad values */
 /*
  * Conversions between struct reg and struct mcontext. Used by
