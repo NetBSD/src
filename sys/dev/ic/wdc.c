@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.24 1998/06/04 02:27:33 enami Exp $ */
+/*	$NetBSD: wdc.c,v 1.25 1998/06/30 00:08:32 hpeyerl Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1998 Charles M. Hannum.  All rights reserved.
@@ -1568,7 +1568,7 @@ wdc_atapi_get_params(ab_link, drive, id)
 	    bus_space_read_1(wdc->sc_iot, wdc->sc_ioh, wd_cyl_hi);
 	if (len != sizeof(struct atapi_identify)) {
 		printf("Warning drive %d returned %d/%d of "
-		    "indentify device data\n", drive, len,
+		    "identify device data\n", drive, len,
 		    sizeof(struct atapi_identify));
 		excess = len - sizeof(struct atapi_identify);
 		if (excess < 0)
