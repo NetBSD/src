@@ -1,7 +1,7 @@
-/*	$NetBSD: intr.c,v 1.13 1999/06/28 08:20:43 itojun Exp $	*/
+/*	$NetBSD: intr.c,v 1.14 1999/08/01 21:50:17 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996, 1997, 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -65,7 +65,7 @@
 typedef LIST_HEAD(, isr) isr_list_t;
 isr_list_t isr_list[NISR];
 
-u_short	hp300_bioipl, hp300_netipl, hp300_ttyipl, hp300_impipl;
+u_short hp300_ipls[HP300_NIPLS];
 
 extern	int intrcnt[];		/* from locore.s */
 
@@ -81,8 +81,13 @@ intr_init()
 		LIST_INIT(&isr_list[i]);
 
 	/* Default interrupt priorities. */
-	hp300_bioipl = hp300_netipl = hp300_ttyipl = hp300_impipl =
-	    (PSL_S|PSL_IPL3);
+	hp300_ipls[HP300_IPL_SOFT] = PSL_S|PSL_IPL1;
+	hp300_ipls[HP300_IPL_BIO] = PSL_S|PSL_IPL3;
+	hp300_ipls[HP300_IPL_NET] = PSL_S|PSL_IPL3;
+	hp300_ipls[HP300_IPL_TTY] = PSL_S|PSL_IPL3;
+	hp300_ipls[HP300_IPL_IMP] = PSL_S|PSL_IPL3;
+	hp300_ipls[HP300_IPL_CLOCK] = PSL_S|PSL_IPL6;
+	hp300_ipls[HP300_IPL_HIGH] = PSL_S|PSL_IPL7;
 }
 
 /*
@@ -96,8 +101,10 @@ intr_computeipl()
 	int ipl;
 
 	/* Start with low values. */
-	hp300_bioipl = hp300_netipl = hp300_ttyipl = hp300_impipl =
-	    (PSL_S|PSL_IPL3);
+	hp300_ipls[HP300_IPL_BIO] =
+	hp300_ipls[HP300_IPL_NET] =
+	hp300_ipls[HP300_IPL_TTY] =
+	hp300_ipls[HP300_IPL_IMP] = PSL_S|PSL_IPL3;
 
 	for (ipl = 0; ipl < NISR; ipl++) {
 		for (isr = isr_list[ipl].lh_first; isr != NULL;
@@ -108,19 +115,22 @@ intr_computeipl()
 			 */
 			switch (isr->isr_priority) {
 			case IPL_BIO:
-				if (ipl > PSLTOIPL(hp300_bioipl))
-					hp300_bioipl = IPLTOPSL(ipl);
+				if (ipl > PSLTOIPL(hp300_ipls[HP300_IPL_BIO]))
+					hp300_ipls[HP300_IPL_BIO] =
+					    IPLTOPSL(ipl);
 				break;
 
 			case IPL_NET:
-				if (ipl > PSLTOIPL(hp300_netipl))
-					hp300_netipl = IPLTOPSL(ipl);
+				if (ipl > PSLTOIPL(hp300_ipls[HP300_IPL_NET]))
+					hp300_ipls[HP300_IPL_NET] =
+					    IPLTOPSL(ipl);
 				break;
 
 			case IPL_TTY:
 			case IPL_TTYNOBUF:
-				if (ipl > PSLTOIPL(hp300_ttyipl))
-					hp300_ttyipl = IPLTOPSL(ipl);
+				if (ipl > PSLTOIPL(hp300_ipls[HP300_IPL_TTY]))
+					hp300_ipls[HP300_IPL_TTY] =
+					    IPLTOPSL(ipl);
 				break;
 
 			default:
@@ -134,14 +144,14 @@ intr_computeipl()
 	 * Enforce `bio <= net <= tty <= imp'
 	 */
 
-	if (hp300_netipl < hp300_bioipl)
-		hp300_netipl = hp300_bioipl;
+	if (hp300_ipls[HP300_IPL_NET] < hp300_ipls[HP300_IPL_BIO])
+		hp300_ipls[HP300_IPL_NET] = hp300_ipls[HP300_IPL_BIO];
 
-	if (hp300_ttyipl < hp300_netipl)
-		hp300_ttyipl = hp300_netipl;
+	if (hp300_ipls[HP300_IPL_TTY] < hp300_ipls[HP300_IPL_NET])
+		hp300_ipls[HP300_IPL_TTY] = hp300_ipls[HP300_IPL_NET];
 
-	if (hp300_impipl < hp300_ttyipl)
-		hp300_impipl = hp300_ttyipl;
+	if (hp300_ipls[HP300_IPL_IMP] < hp300_ipls[HP300_IPL_TTY])
+		hp300_ipls[HP300_IPL_IMP] = hp300_ipls[HP300_IPL_TTY];
 }
 
 void
@@ -150,12 +160,14 @@ intr_printlevels()
 
 #ifdef DEBUG
 	printf("psl: bio = 0x%x, net = 0x%x, tty = 0x%x, imp = 0x%x\n",
-	    hp300_bioipl, hp300_netipl, hp300_ttyipl, hp300_impipl);
+	    hp300_ipls[HP300_IPL_BIO], hp300_ipls[HP300_IPL_NET],
+	    hp300_ipls[HP300_IPL_TTY], hp300_ipls[HP300_IPL_IMP]);
 #endif
 
 	printf("interrupt levels: bio = %d, net = %d, tty = %d\n",
-	    PSLTOIPL(hp300_bioipl), PSLTOIPL(hp300_netipl),
-	    PSLTOIPL(hp300_ttyipl));
+	    PSLTOIPL(hp300_ipls[HP300_IPL_BIO]),
+	    PSLTOIPL(hp300_ipls[HP300_IPL_NET]),
+	    PSLTOIPL(hp300_ipls[HP300_IPL_TTY]));
 }
 
 /*
