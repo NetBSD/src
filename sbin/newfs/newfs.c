@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs.c,v 1.52 2001/12/30 16:53:00 lukem Exp $	*/
+/*	$NetBSD: newfs.c,v 1.53 2001/12/30 18:49:28 augustss Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.13 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: newfs.c,v 1.52 2001/12/30 16:53:00 lukem Exp $");
+__RCSID("$NetBSD: newfs.c,v 1.53 2001/12/30 18:49:28 augustss Exp $");
 #endif
 #endif /* not lint */
 
@@ -103,8 +103,19 @@ int main(int, char *[]);
  *	sectorsize <= DESFRAGSIZE <= DESBLKSIZE
  *	DESBLKSIZE / DESFRAGSIZE <= 8
  */
-#define	DFL_FRAGSIZE	1024
-#define	DFL_BLKSIZE	8192
+/*
+ * For file systems smaller than SMALL_FSSIZE we use the S_DFL_* defaults,
+ * otherwise if less than MEDIUM_FSSIZE use M_DFL_*, otherwise use
+ * L_DFL_*.
+ */
+#define SMALL_FSSIZE	(20*1024*2)
+#define	S_DFL_FRAGSIZE	512
+#define	S_DFL_BLKSIZE	4096
+#define MEDIUM_FSSIZE	(1000*1024*2)
+#define	M_DFL_FRAGSIZE	1024
+#define	M_DFL_BLKSIZE	8192
+#define	L_DFL_FRAGSIZE	2048
+#define	L_DFL_BLKSIZE	16384
 
 /*
  * Default sector size.
@@ -205,6 +216,7 @@ main(int argc, char *argv[])
 	char *cp, *endp, *s1, *s2, *special;
 	const char *opstring;
 	long long llsize;
+	int dfl_fragsize, dfl_blksize;
 #ifdef MFS
 	char mountfromname[100];
 	pid_t pid, res;
@@ -559,15 +571,27 @@ main(int argc, char *argv[])
 		if (interleave <= 0)
 			interleave = 1;
 	}
+
+	if (fssize < SMALL_FSSIZE) {
+		dfl_fragsize = S_DFL_FRAGSIZE;
+		dfl_blksize = S_DFL_BLKSIZE;
+	} else if (fssize < MEDIUM_FSSIZE) {
+		dfl_fragsize = M_DFL_FRAGSIZE;
+		dfl_blksize = M_DFL_BLKSIZE;
+	} else {
+		dfl_fragsize = L_DFL_FRAGSIZE;
+		dfl_blksize = L_DFL_BLKSIZE;
+	}
+
 	if (fsize == 0) {
 		fsize = pp->p_fsize;
 		if (fsize <= 0)
-			fsize = MAX(DFL_FRAGSIZE, lp->d_secsize);
+			fsize = MAX(dfl_fragsize, lp->d_secsize);
 	}
 	if (bsize == 0) {
 		bsize = pp->p_frag * pp->p_fsize;
 		if (bsize <= 0)
-			bsize = MIN(DFL_BLKSIZE, 8 * fsize);
+			bsize = MIN(dfl_blksize, 8 * fsize);
 	}
 	/*
 	 * Maxcontig sets the default for the maximum number of blocks
