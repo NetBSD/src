@@ -1,4 +1,4 @@
-/*	$NetBSD: neo.c,v 1.21 2004/07/09 01:02:32 mycroft Exp $	*/
+/*	$NetBSD: neo.c,v 1.22 2004/07/09 02:42:45 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1999 Cameron Grant <gandalf@vilnya.demon.co.uk>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: neo.c,v 1.21 2004/07/09 01:02:32 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: neo.c,v 1.22 2004/07/09 02:42:45 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -913,6 +913,7 @@ neo_halt_output(void *addr)
 
 	nm_wr_1(sc, NM_PLAYBACK_ENABLE_REG, 0);
 	nm_wr_2(sc, NM_AUDIO_MUTE_REG, NM_AUDIO_MUTE_BOTH);
+	sc->pintr = 0;
 
 	return (0);
 }
@@ -923,6 +924,7 @@ neo_halt_input(void *addr)
 	struct neo_softc *sc = (struct neo_softc *)addr;
 
 	nm_wr_1(sc, NM_RECORD_ENABLE_REG, 0);
+	sc->rintr = 0;
 
 	return (0);
 }
