@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.13 2001/02/10 19:15:24 bjh21 Exp $	*/
+/*	$NetBSD: param.h,v 1.14 2001/08/17 05:49:43 eeh Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -81,6 +81,9 @@
 #elif defined(__sparc__)
 #define PTRDIFF_IS_LONG		1
 #define SIZEOF_IS_ULONG		1
+#elif defined(__sparc64__)
+#define PTRDIFF_IS_LONG		1
+#define SIZEOF_IS_ULONG		1
 #elif defined(__vax__)
 #define PTRDIFF_IS_LONG         0
 #define SIZEOF_IS_ULONG         0
@@ -114,8 +117,10 @@ typedef	u_long	u_quad_t;
 
 /*
  * long double only in ANSI C.
+ *
+ * And the sparc64 long double code generation is broken.
  */
-#ifdef __STDC__
+#if !defined(__sparc64__) && defined(__STDC__)
 typedef	long double ldbl_t;
 #else
 typedef	double	ldbl_t;
