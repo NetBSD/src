@@ -1,4 +1,4 @@
-/*	$NetBSD: utf8.c,v 1.5 2000/12/28 05:27:35 itojun Exp $	*/
+/*	$NetBSD: utf8.c,v 1.6 2000/12/30 05:06:03 itojun Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	citrus Id: utf8.c,v 1.15 2000/12/28 02:30:29 itojun Exp
+ *	citrus Id: utf8.c,v 1.16 2000/12/30 04:51:34 itojun Exp
  */
 
 /*-
@@ -69,7 +69,7 @@
 #if 0
 static char sccsid[] = "@(#)utf2.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: utf8.c,v 1.5 2000/12/28 05:27:35 itojun Exp $");
+__RCSID("$NetBSD: utf8.c,v 1.6 2000/12/30 05:06:03 itojun Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -94,6 +94,7 @@ void _UTF8_unpackstate __P((_RuneLocale *, void *, const mbstate_t *));
 static int _utf_count[256];
 
 typedef struct {
+	void *runelocale;	/* reserved for future thread-safeness */
 	char ch[6];
 	int chlen;
 } _UTF8State;
