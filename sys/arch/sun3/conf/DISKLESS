@@ -1,10 +1,8 @@
-#	$NetBSD: DISKLESS,v 1.19 1997/05/07 02:14:59 lukem Exp $
+# $NetBSD: DISKLESS,v 1.20 1997/10/17 03:17:50 gwr Exp $
 
-#
 # DISKLESS Sun3 (3/50, 3/60, 3/110, 3/160, 3/260)
 # Root and swap on NFS
 # Includes devices needed to run as an X-terminal
-#
 
 include "arch/sun3/conf/std.sun3"
 
@@ -13,33 +11,30 @@ options 	FPU_EMULATE
 options 	HAVECACHE		# Sun3/260 VAC
 
 # Needs to be set per system.  i.e change these as you see fit
-maxusers	4
+maxusers	2
 
 # Standard system options
-options 	KTRACE			# system call tracing support
+options 	KTRACE		# system call tracing
+options 	SYSVMSG		# System V message queues
+options 	SYSVSEM		# System V semaphores
+options 	SYSVSHM		# System V shared memory
+#options 	SHMMAXPGS=1024	# 1024 pages is the default
+#options 	LKM		# loadable kernel modules
+#options 	INSECURE	# disable kernel security level
+#options 	UCONSOLE	# Allow non-root TIOCCONS
 
-# Debugging options.  Uncomment either this:
-#options 	DDB
+# Which kernel debugger?  Uncomment either this:
+options 	DDB
 # ... or these for KGDB (gdb remote target)
-makeoptions DEBUG="-g"			# debugging symbols for gdb
-options 	KGDB
-options 	KGDBDEV=0x0C01
+#makeoptions DEBUG="-g"		# debugging symbols for gdb
+#options 	KGDB
+#options 	KGDBDEV=0x0C01	# ttya=0C00 ttyb=0C01
 
-# Filesystem options
-file-system	NFS		# nfs client support
-file-system	FDESC		# /dev/fd/*
-file-system	KERNFS		# /kern
-file-system	NULLFS		# loopback file system
-file-system	PROCFS		# /proc
-
-options 	FIFO		# FIFOs; RECOMMENDED
-
-# Networking options
-options 	INET		# IP prototol stack support
-#options	GATEWAY		# IP packet forwarding
-options 	TCP_COMPAT_42	# TCP bug compatibility with 4.2BSD
-# XXX - Work-around for root on slow servers (insurance...)
-options 	NFS_BOOT_RWSIZE=1024
+# Other debugging options
+#options 	DEBUG		# kernel debugging code
+#options 	DIAGNOSTIC	# extra kernel sanity checking
+#options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
+#options 	PMAP_DEBUG
 
 # Compatability options
 options 	COMPAT_SUNOS	# can run SunOS 4.1.1 executables
@@ -47,14 +42,33 @@ options 	COMPAT_43	# and 4.3BSD and ...
 options 	COMPAT_10	# NetBSD 1.0
 options 	COMPAT_11	# NetBSD 1.1
 options 	COMPAT_12	# NetBSD 1.2
-options 	UCONSOLE	# Allow non-root TIOCCONS
 
-# Sun3-specific debugging options
-#options 	PMAP_DEBUG
-#options 	VMFAULT_TRACE
-#options 	SYSCALL_DEBUG
-#options 	EXEC_DEBUG
-#options 	DIAGNOSTIC
+# Filesystem options
+#file-system	FFS		# Berkeley Fast Filesystem
+file-system	NFS		# Sun NFS client support
+#file-system	CD9660		# ISO 9660 + Rock Ridge file system
+file-system	FDESC		# /dev/fd/*
+file-system	KERNFS		# /kern
+file-system	NULLFS		# loopback file system
+file-system	PROCFS		# /proc
+#file-system	UNION		# union file system
+#file-system	MFS		# memory-based filesystem
+
+options 	FIFO		# FIFOs; RECOMMENDED
+#options 	NFSSERVER	# nfs server support
+#options 	QUOTA		# FFS quotas
+
+# Networking options
+options 	INET		# IP prototol stack support
+options 	TCP_COMPAT_42	# compatibility with 4.2BSD TCP/IP
+#options 	GATEWAY		# IP packet forwarding
+#options 	ISO,TPIP	# OSI networking
+#options 	EON		# OSI tunneling over IP
+#options 	CCITT,LLC,HDLC	# X.25
+#options 	PFIL_HOOKS	# pfil(9) packet filter hooks.
+
+# Work-around for root on slow servers (insurance...)
+options 	NFS_BOOT_RWSIZE=1024
 
 config		netbsd root on ? type nfs
 
@@ -106,11 +120,14 @@ bwtwo0 at obmem0 addr ?
 cgtwo0 at vmes0 addr 0xff400000 level 4 vect 0xA8
 
 # Support for the CG9 24-bit VME frame buffer.
-#cgnine0 at vmel0 addr 0x08000000
+# cgnine0 at vmel0 addr 0x08000000
 
 # Misc.
-pseudo-device	loop	1		# network loopback
-pseudo-device	sl	2		# CSLIP
-pseudo-device	ppp	2		# PPP
+pseudo-device	loop		1	# network loopback
+pseudo-device	bpfilter	8	# packet filter
+pseudo-device	sl		2	# CSLIP
+pseudo-device	ppp		2	# PPP
+pseudo-device	tun		2	# network tunneling over tty
+#pseudo-device	ipfilter		# ip filter
 
-pseudo-device	pty	32		# pseudo-terminals
+pseudo-device	pty		32	# pseudo-terminals
