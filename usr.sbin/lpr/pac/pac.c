@@ -1,4 +1,4 @@
-/*	$NetBSD: pac.c,v 1.5 1995/11/15 22:52:08 pk Exp $	*/
+/*	$NetBSD: pac.c,v 1.6 1996/01/13 23:18:15 pk Exp $	*/
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -211,7 +211,7 @@ account(acct)
 
 	while (fgets(linebuf, BUFSIZ, acct) != NULL) {
 		cp = linebuf;
-		while (any(*cp, " t\t"))
+		while (any(*cp, " \t"))
 			cp++;
 		t = atof(cp);
 		while (any(*cp, ".0123456789"))
