@@ -1,4 +1,4 @@
-/* $NetBSD: mpbiosreg.h,v 1.2.2.2 2002/10/18 02:37:56 nathanw Exp $ */
+/* $NetBSD: mpbiosreg.h,v 1.2.2.3 2003/01/07 21:11:47 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -56,24 +56,6 @@
 #define MPS_MCT_LINT	4
 
 #define MPS_MCT_NTYPES	5
-
-/*
- * Interrupt typess
- */
-
-#define MPS_INTTYPE_INT		0
-#define MPS_INTTYPE_NMI		1
-#define MPS_INTTYPE_SMI		2
-#define MPS_INTTYPE_ExtINT	3
-
-#define MPS_INTPO_DEF		0
-#define MPS_INTPO_ACTHI		1
-#define MPS_INTPO_ACTLO		3
-
-#define MPS_INTTR_DEF		0
-#define MPS_INTTR_EDGE		1
-#define MPS_INTTR_LEVEL		3
-
 
 /* MP Floating Pointer Structure */
 struct mpbios_fps {

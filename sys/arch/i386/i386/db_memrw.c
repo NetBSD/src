@@ -1,4 +1,4 @@
-/*	$NetBSD: db_memrw.c,v 1.11.2.2 2002/10/18 02:37:39 nathanw Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.11.2.3 2003/01/07 21:11:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2000 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.11.2.2 2002/10/18 02:37:39 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.11.2.3 2003/01/07 21:11:39 thorpej Exp $");
 
 #include "opt_largepages.h"
 
@@ -157,7 +157,7 @@ db_write_text(vaddr_t addr, size_t size, char *data)
 		 */
 
 		/*
-		 * Page is now writeable.  Do as much access as we
+		 * Page is now writable.  Do as much access as we
 		 * can in this page.
 		 */
 		for (; limit > 0; limit--)

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.walnut.inc,v 1.1.2.2 2002/12/11 06:28:58 thorpej Exp $
+#	$NetBSD: Makefile.walnut.inc,v 1.1.2.3 2003/01/07 21:07:42 thorpej Exp $
 
 MKIMG?=	${THISPPC}/compile/walnut-mkimg.sh
 CFLAGS+=-mcpu=403
@@ -9,7 +9,9 @@ SYSTEM_FIRST_OBJ=	walnut_start.o
 SYSTEM_FIRST_SFILE=	${THISPPC}/walnut/walnut_start.S
 
 .ifdef DBSYM
-SYSTEM_LD_TAIL_EXTRA+=; echo ${DBSYM} $@; ${DBSYM} $@
+SYSTEM_LD_TAIL_EXTRA+=; \
+	echo "${DBSYM} $@ || true"; \
+	${DBSYM} $@ || true
 .endif
 
 SYSTEM_LD_TAIL_EXTRA+=; \

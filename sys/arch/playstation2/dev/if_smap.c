@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smap.c,v 1.1.4.2 2002/10/18 02:39:23 nathanw Exp $	*/
+/*	$NetBSD: if_smap.c,v 1.1.4.3 2003/01/07 21:12:30 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -345,7 +345,7 @@ smap_intr(void *arg)
 	if (cause & SPD_INTR_EMAC3)
 		emac3_intr(arg);
 	
-	/* if transmition is pending, start here */
+	/* if transmission is pending, start here */
 	ifp = &sc->ethercom.ec_if;
 	if (IFQ_IS_EMPTY(&ifp->if_snd) == 0)
 		smap_start(ifp);

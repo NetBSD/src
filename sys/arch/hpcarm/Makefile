@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2001/02/23 03:48:06 ichiro Exp $
+#	$NetBSD: Makefile,v 1.1.10.1 2003/01/07 21:08:40 thorpej Exp $
 
 # Makefile for hpcarm tags file and boot blocks
 
@@ -25,6 +25,6 @@ links:
 	    cd $$i && rm -f tags; ln -s ../tags tags; done
 
 
-SUBDIR=	include
+SUBDIR=	compile include
 
 .include <bsd.subdir.mk>

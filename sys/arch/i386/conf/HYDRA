@@ -1,4 +1,4 @@
-#	$NetBSD: HYDRA,v 1.2.2.2 2002/10/18 02:37:30 nathanw Exp $
+#	$NetBSD: HYDRA,v 1.2.2.3 2003/01/07 21:11:37 thorpej Exp $
 #
 #	HYDRA -- ABIT BP6-based system used for MP development.
 #
@@ -177,6 +177,8 @@ mainbus0 at root
 #apm0	at mainbus0			# Advanced power management
 #options	APM_NO_IDLE
 
+options 	MPBIOS
+
 cpu*   	at mainbus?
 ioapic*	at mainbus?
 
@@ -250,10 +252,8 @@ npx0	at isa? port 0xf0 irq 13	# x86 math coprocessor
 # wscons
 pckbc0		at isa?			# pc keyboard controller
 pckbd*		at pckbc?		# PC keyboard
-# "opms" should not be enabled together with "pms" or "pmsi"
 pms*		at pckbc?		# PS/2 mouse for wsmouse
 #pmsi*		at pckbc?		# PS/2 "Intelli"mouse for wsmouse
-#opms*		at pckbc?		# backwards compatible PS/2 mouse
 vga0		at isa?
 vga*		at pci?
 pcdisplay0	at isa?			# CGA, MDA, EGA, HGA
@@ -634,8 +634,6 @@ ukphy*	at mii? phy ?			# generic unknown PHYs
 #olms1	at isa? port 0x238 irq 5
 #omms0	at isa? port 0x23c irq 5	# Microsoft InPort mouse
 #omms1	at isa? port 0x238 irq 5
-#opms0	at pc? irq 12		# PS/2 auxiliary port mouse
-#opms0	at vt? irq 12		# PS/2 auxiliary port mouse
 
 
 # Joysticks

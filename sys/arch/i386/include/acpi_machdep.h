@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_machdep.h,v 1.2.4.4 2002/08/01 02:42:09 nathanw Exp $	*/
+/*	$NetBSD: acpi_machdep.h,v 1.2.4.5 2003/01/07 21:11:44 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -68,6 +68,7 @@ BOOLEAN		acpi_md_OsWritable(void *, UINT32);
 void		acpi_md_OsDisableInterrupt(void);
 
 int		acpi_md_sleep(int);
+void		acpi_md_callback(struct device *);
 
 #ifdef ACPI_MACHDEP_PRIVATE
 u_int32_t	acpi_md_get_npages_of_wakecode(void);

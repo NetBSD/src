@@ -1,7 +1,7 @@
-/*	$NetBSD: vrpiu.c,v 1.17.4.5 2002/12/19 00:31:40 thorpej Exp $	*/
+/*	$NetBSD: vrpiu.c,v 1.17.4.6 2003/01/07 21:08:45 thorpej Exp $	*/
 
 /*
- * Copyright (c) 1999-2002 TAKEMURA Shin All rights reserved.
+ * Copyright (c) 1999-2003 TAKEMURA Shin All rights reserved.
  * Copyright (c) 2000-2001 SATO Kazumi, All rights reserved.
  * Copyright (c) 1999-2001 PocketBSD Project. All rights reserved.
  *
@@ -544,6 +544,7 @@ vrpiu_tp_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 
 	case WSMOUSEIO_SCALIBCOORDS:
 	case WSMOUSEIO_GCALIBCOORDS:
+	case WSMOUSEIO_GETID:
 		return tpcalib_ioctl(&sc->sc_tpcalib, cmd, data, flag, p);
 		
 	default:
@@ -672,9 +673,9 @@ vrpiu_tp_intr(struct vrpiu_softc *sc)
 				tpx1 &= sc->sc_pb_paddata_mask;
 				tpy0 &= sc->sc_pb_paddata_mask;
 				tpy1 &= sc->sc_pb_paddata_mask;
-#define ISVALID(n, c, m)	((c) - (m) < (n) && (n) < (c) + (m))
-				if (ISVALID(tpx0 + tpx1, sc->sc_pb_paddata_max, 200) &&
-				    ISVALID(tpy0 + tpy1, sc->sc_pb_paddata_max, 200)) {
+#define ISVALID(n, c)	((c) - (c)/5 < (n) && (n) < (c) + (c)/5)
+				if (ISVALID(tpx0 + tpx1, sc->sc_pb_paddata_max) &&
+				    ISVALID(tpy0 + tpy1, sc->sc_pb_paddata_max)) {
 #if 0
 					DPRINTF(("%04x %04x %04x %04x\n",
 					    tpx0, tpx1, tpy0, tpy1));

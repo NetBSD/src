@@ -1,4 +1,4 @@
-/*	$NetBSD: mpbios.c,v 1.5.2.4 2003/01/03 16:48:19 thorpej Exp $	*/
+/*	$NetBSD: mpbios.c,v 1.5.2.5 2003/01/07 21:11:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -102,8 +102,6 @@
  * so only Intel MP specific stuff is here.
  */
 
-#include "mpbios.h"
-
 #include "opt_mpbios.h"
 
 #include <sys/param.h>
@@ -118,17 +116,14 @@
 #include <machine/cputypes.h>
 #include <machine/cpuvar.h>
 #include <machine/bus.h>
-#include <machine/mpbiosreg.h>
 #include <machine/mpbiosvar.h>
 
 #include <machine/i82093reg.h>
 #include <machine/i82093var.h>
 #include <machine/i82489reg.h>
 #include <machine/i82489var.h>
-#include <dev/isa/isareg.h>
 
-#include <dev/ic/mc146818reg.h>		/* for NVRAM POST */
-#include <i386/isa/nvram.h>		/* for NVRAM POST */
+#include <dev/isa/isareg.h>
 
 #include <dev/eisa/eisavar.h>	/* for ELCR* def'ns */
 
@@ -162,8 +157,6 @@ struct mp_map
 
 int mp_print __P((void *, const char *));
 int mp_match __P((struct device *,struct cfdata *,void *));
-int mpbios_cpu_start __P((struct cpu_info *));
-void mpbios_cpu_start_cleanup __P((struct cpu_info *));
 static const void *mpbios_search __P((struct device *, paddr_t, int,
     struct mp_map *));
 static inline int mpbios_cksum __P((const void *,int));
@@ -194,13 +187,7 @@ static struct mp_map mp_fp_map;
 const struct mpbios_cth	*mp_cth;
 const struct mpbios_fps	*mp_fps;
 
-#ifdef MPVERBOSE
-int mp_verbose = 1;
-#else
-int mp_verbose = 0;
-#endif
-
-struct cpu_functions mpbios_cpu_funcs = { mpbios_cpu_start, NULL, mpbios_cpu_start_cleanup };
+int mpbios_scanned;
 
 int
 mp_print(aux, pnp)
@@ -451,14 +438,6 @@ static struct mpbios_baseentry mp_conf[] =
 	{4, 8, 0, "lint"},
 };
 
-struct mp_bus *mp_busses;
-int mp_nbus;
-struct mp_intr_map *mp_intrs;
-int mp_nintr;
-
-int mp_isa_bus = -1;		/* XXX */
-int mp_eisa_bus = -1;		/* XXX */
-
 static struct mp_bus extint_bus = {
 	"ExtINT",
 	-1,
@@ -655,6 +634,7 @@ mpbios_scan(self)
 		mp_cth = NULL;
 		mpbios_unmap (&mp_cfg_table_map);
 	}
+	mpbios_scanned = 1;
 }
 
 static void
@@ -678,7 +658,7 @@ mpbios_cpu(ent, self)
 
 	caa.caa_name   = "cpu";
 	caa.cpu_number = entry->apic_id;
-	caa.cpu_func = &mpbios_cpu_funcs;
+	caa.cpu_func = &mp_cpu_funcs;
 
 	config_found_sm(self, &caa, mp_print, mp_match);
 }
@@ -962,6 +942,7 @@ mpbios_ioapic(ent, self)
 	aaa.apic_id = entry->apic_id;
 	aaa.apic_version = entry->apic_version;
 	aaa.apic_address = (paddr_t)entry->apic_address;
+	aaa.apic_vecbase = -1;
 	aaa.flags =  (mp_fps->mpfb2 & 0x80) ? IOAPIC_PICMODE : IOAPIC_VWIRE;
 
 	config_found_sm(self, &aaa, mp_print, mp_match);
@@ -1074,67 +1055,4 @@ mpbios_int(ent, enttype, mpi)
 		printf(" flags %s)\n",
 		    bitmask_snprintf(flags, flagtype_fmt, buf, sizeof(buf)));
 	}
-}
-
-
-int
-mpbios_cpu_start(struct cpu_info *ci)
-{
-	int error;
-	unsigned short dwordptr[2];
-
-	/*
-	 * "The BSP must initialize CMOS shutdown code to 0Ah ..."
-	 */
-
-	outb(IO_RTC, NVRAM_RESET);
-	outb(IO_RTC+1, NVRAM_RESET_JUMP);
-
-	/*
-	 * "and the warm reset vector (DWORD based at 40:67) to point
-	 * to the AP startup code ..."
-	 */
-
-	dwordptr[0] = 0;
-	dwordptr[1] = MP_TRAMPOLINE >> 4;
-
-	pmap_kenter_pa (0, 0, VM_PROT_READ|VM_PROT_WRITE);
-	memcpy ((u_int8_t *) 0x467, dwordptr, 4);
-	pmap_kremove (0, NBPG);
-
-	/*
-	 * ... prior to executing the following sequence:"
-	 */
-
-	if (ci->ci_flags & CPUF_AP) {
-		if ((error = i386_ipi_init(ci->ci_apicid)) != 0)
-			return error;
-
-		delay(10000);
-
-		if (cpu_feature & CPUID_APIC) {
-
-			if ((error = i386_ipi(MP_TRAMPOLINE/NBPG,ci->ci_apicid,
-			    LAPIC_DLMODE_STARTUP)) != 0)
-				return error;
-			delay(200);
-
-			if ((error = i386_ipi(MP_TRAMPOLINE/NBPG,ci->ci_apicid,
-			    LAPIC_DLMODE_STARTUP)) != 0)
-				return error;
-			delay(200);
-		}
-	}
-	return 0;
-}
-
-void
-mpbios_cpu_start_cleanup(struct cpu_info *ci)
-{
-	/*
-	 * Ensure the NVRAM reset byte contains something vaguely sane.
-	 */
-
-	outb(IO_RTC, NVRAM_RESET);
-	outb(IO_RTC+1, NVRAM_RESET_RST);
 }

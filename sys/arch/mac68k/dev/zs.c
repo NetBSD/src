@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.34.8.5 2003/01/03 16:48:23 thorpej Exp $	*/
+/*	$NetBSD: zs.c,v 1.34.8.6 2003/01/07 21:11:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996-1998 Bill Studenmund
@@ -914,8 +914,8 @@ zscnsetup()
 	 */
 
 	/*
-	 * As zs_loadchannelregs doesn't touch reg 9 (interupt control),
-	 * we won't accidentally turn on interupts below
+	 * As zs_loadchannelregs doesn't touch reg 9 (interrupt control),
+	 * we won't accidentally turn on interrupts below
 	 */
 	s = splhigh();
 	zs_loadchannelregs(cs);
