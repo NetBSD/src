@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_iokit.h,v 1.6 2003/02/16 18:33:35 manu Exp $ */
+/*	$NetBSD: mach_iokit.h,v 1.7 2003/02/20 22:39:42 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -317,9 +317,23 @@ int mach_io_registry_entry_get_name_in_plane(struct mach_trap_args *);
 int mach_io_object_get_class(struct mach_trap_args *);
 int mach_io_registry_entry_get_location_in_plane(struct mach_trap_args *);
 
+extern struct mach_iokit_devclass *mach_iokit_devclasses[];
+
 struct mach_device_iterator {
 	struct device *mdi_parent;
 	struct device *mdi_current;
+};
+
+struct mach_iokit_devclass {
+	char *mid_string;
+	int (*mid_registry_entry_get_property)(struct mach_trap_args *);
+	int (*mid_connect_method_scalari_scalaro)(struct mach_trap_args *);
+	char *mid_name;
+};
+	
+struct mach_iokit_property {
+	const char *mip_name;
+	const int mip_value;
 };
 
 #endif /* _MACH_IOKIT_H_ */

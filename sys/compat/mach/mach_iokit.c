@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_iokit.c,v 1.7 2003/02/16 18:33:35 manu Exp $ */
+/*	$NetBSD: mach_iokit.c,v 1.8 2003/02/20 22:39:42 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include "opt_compat_darwin.h"
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_iokit.c,v 1.7 2003/02/16 18:33:35 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_iokit.c,v 1.8 2003/02/20 22:39:42 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -59,6 +59,13 @@ __KERNEL_RCSID(0, "$NetBSD: mach_iokit.c,v 1.7 2003/02/16 18:33:35 manu Exp $");
 #include <compat/darwin/darwin_iokit.h>
 #endif
 
+struct mach_iokit_devclass *mach_iokit_devclasses[] = {
+#ifdef COMPAT_DARWIN
+	DARWIN_IOKIT_DEVCLASSES
+#endif
+	NULL,
+};
+
 int
 mach_io_service_get_matching_services(args)
 	struct mach_trap_args *args;
@@ -69,24 +76,22 @@ mach_io_service_get_matching_services(args)
 	struct lwp *l = args->l;
 	struct mach_port *mp;
 	struct mach_right *mr;
-#ifdef COMPAT_DARWIN
-	struct darwin_iokit_class *dic; 
-#endif
+	struct mach_iokit_devclass *mid; 
+	int i;
 
 	mp = mach_port_get();
 	mp->mp_flags |= MACH_MP_INKERNEL;
 	mr = mach_right_get(mp, l, MACH_PORT_TYPE_SEND, 0);
 	
-#ifdef COMPAT_DARWIN
-	for (dic = darwin_iokit_classes; dic->dic_string; dic++) {
-		if (memcmp(req->req_string, dic->dic_string, 
-		    strlen(dic->dic_string)) == 0) {
-			mp->mp_datatype = MACH_MP_DARWIN_FAKEDEV;
-			mp->mp_data = dic;
+	i = 0;
+	while ((mid = mach_iokit_devclasses[i++]) != NULL) {
+		if (memcmp(req->req_string, mid->mid_string, 
+		    strlen(mid->mid_string)) == 0) {
+			mp->mp_datatype = MACH_MP_IOKIT_DEVCLASS;
+			mp->mp_data = mid;
 			break;
 		}
 	}
-#endif
 
 	rep->rep_msgh.msgh_bits = 
 	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE) |
@@ -122,18 +127,16 @@ mach_io_iterator_next(args)
 		return mach_iokit_error(args, MACH_IOKIT_EPERM);
 
 	switch (mr->mr_port->mp_datatype) {
-#ifdef COMPAT_DARWIN
-	case MACH_MP_DARWIN_FAKEDEV:
+	case MACH_MP_IOKIT_DEVCLASS:
 		/* Do not come here again */
 		mr->mr_port->mp_datatype = MACH_MP_NONE;
 
 		mp = mach_port_get();
 		mp->mp_flags |= MACH_MP_INKERNEL;
-		mp->mp_datatype = MACH_MP_DARWIN_FAKEDEV;
+		mp->mp_datatype = MACH_MP_IOKIT_DEVCLASS;
 		mp->mp_data = mr->mr_port->mp_data;
 
 		break;
-#endif /* COMPAT_DARWIN */
 
 	case MACH_MP_DEVICE_ITERATOR:
 		mdi = mr->mr_port->mp_data;
@@ -211,12 +214,10 @@ mach_io_service_open(args)
 
 	mp = mach_port_get();
 	mp->mp_flags |= MACH_MP_INKERNEL;
-#ifdef COMPAT_DARWIN
-	if (mr->mr_port->mp_datatype == MACH_MP_DARWIN_FAKEDEV) {
-		mp->mp_datatype = MACH_MP_DARWIN_FAKEDEV;
+	if (mr->mr_port->mp_datatype == MACH_MP_IOKIT_DEVCLASS) {
+		mp->mp_datatype = MACH_MP_IOKIT_DEVCLASS;
 		mp->mp_data = mr->mr_port->mp_data;
 	}
-#endif
 	mr = mach_right_get(mp, l, MACH_PORT_TYPE_SEND, 0);
 	
 	rep->rep_msgh.msgh_bits = 
@@ -244,24 +245,20 @@ mach_io_connect_method_scalari_scalaro(args)
 	struct lwp *l = args->l;
 	mach_port_t mn;
 	struct mach_right *mr;
-#ifdef COMPAT_DARWIN
-	struct darwin_iokit_class *dic;
-#endif
+	struct mach_iokit_devclass *mid;
 
 	mn = req->req_msgh.msgh_remote_port;
 	if ((mr = mach_right_check(mn, l, MACH_PORT_TYPE_ALL_RIGHTS)) == NULL)
 		return mach_iokit_error(args, MACH_IOKIT_EPERM);
 	
-#ifdef COMPAT_DARWIN
-	if (mr->mr_port->mp_datatype == MACH_MP_DARWIN_FAKEDEV) {
-		dic = mr->mr_port->mp_data;
-		if (dic->dic_handler == NULL)
-			printf("no handler for darwin_iokit_class %s\n",
-			    dic->dic_name);
+	if (mr->mr_port->mp_datatype == MACH_MP_IOKIT_DEVCLASS) {
+		mid = mr->mr_port->mp_data;
+		if (mid->mid_connect_method_scalari_scalaro == NULL)
+			printf("no connect_method_scalari_scalaro method "
+			    "for darwin_iokit_class %s\n", mid->mid_name);
 		else
-			return (*dic->dic_handler)(args);
+			return (mid->mid_connect_method_scalari_scalaro)(args);
 	}
-#endif
 
 	rep->rep_msgh.msgh_bits = 
 	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
@@ -271,7 +268,7 @@ mach_io_connect_method_scalari_scalaro(args)
 	rep->rep_outcount = 0;
 	rep->rep_out[rep->rep_outcount + 1] = 8; /* XXX Trailer */
 
-	*msglen = sizeof(*rep) - 4096 + rep->rep_outcount;
+	*msglen = sizeof(*rep) - ((4096 + rep->rep_outcount) * sizeof(int));
 	return 0;
 }
 
@@ -293,12 +290,10 @@ mach_io_connect_get_service(args)
 
 	mp = mach_port_get();
 	mp->mp_flags |= MACH_MP_INKERNEL;
-#ifdef COMPAT_DARWIN
-	if (mr->mr_port->mp_datatype == MACH_MP_DARWIN_FAKEDEV) {
-		mp->mp_datatype = MACH_MP_DARWIN_FAKEDEV;
+	if (mr->mr_port->mp_datatype == MACH_MP_IOKIT_DEVCLASS) {
+		mp->mp_datatype = MACH_MP_IOKIT_DEVCLASS;
 		mp->mp_data = mr->mr_port->mp_data;
 	}
-#endif
 	mr = mach_right_get(mp, l, MACH_PORT_TYPE_SEND, 0);
 
 	rep->rep_msgh.msgh_bits = 
@@ -327,24 +322,20 @@ mach_io_registry_entry_get_property(args)
 	struct mach_port *mp;
 	struct mach_right *mr;
 	mach_port_t mn;
-#ifdef COMPAT_DARWIN
-	struct darwin_iokit_class *dic;
-#endif
+	struct mach_iokit_devclass *mid;
 
 	mn = req->req_msgh.msgh_remote_port;
 	if ((mr = mach_right_check(mn, l, MACH_PORT_TYPE_ALL_RIGHTS)) == NULL)
 		return mach_iokit_error(args, MACH_IOKIT_EPERM);
 	
-#ifdef COMPAT_DARWIN
-	if (mr->mr_port->mp_datatype == MACH_MP_DARWIN_FAKEDEV) {
-		dic = mr->mr_port->mp_data;
-		if (dic->dic_handler == NULL)
-			printf("no handler for darwin_iokit_class %s\n",
-			    dic->dic_name);
+	if (mr->mr_port->mp_datatype == MACH_MP_IOKIT_DEVCLASS) {
+		mid = mr->mr_port->mp_data;
+		if (mid->mid_registry_entry_get_property == NULL)
+			printf("no registry_entry_get_property method "
+			    "for darwin_iokit_class %s\n", mid->mid_name);
 		else
-			return (*dic->dic_handler)(args);
+			return (mid->mid_registry_entry_get_property)(args);
 	}
-#endif
 
 	mp = mach_port_get();
 	mp->mp_flags |= MACH_MP_INKERNEL;
@@ -622,3 +613,4 @@ mach_io_registry_entry_get_location_in_plane(args)
 	*msglen = sizeof(*rep);
 	return 0;
 }
+
