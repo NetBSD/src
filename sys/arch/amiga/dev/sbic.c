@@ -1,4 +1,4 @@
-/*	$NetBSD: sbic.c,v 1.46 2002/01/28 09:57:02 aymeric Exp $ */
+/*	$NetBSD: sbic.c,v 1.47 2002/05/30 19:52:52 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -46,7 +46,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbic.c,v 1.46 2002/01/28 09:57:02 aymeric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbic.c,v 1.47 2002/05/30 19:52:52 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2601,7 +2601,7 @@ sbictimeout(struct sbic_softc *dev)
 			GET_SBIC_asr(dev->sc_sbic, asr);
 			if( asr & SBIC_ASR_INT ) {
 				/* We need to service a missed IRQ */
-				printf("Servicing a missed int:(%02x,%02x)->(%02x,??)\n",
+				printf("Servicing a missed int:(%02x,%02x)->(%02x,?)\n",
 				    debug_asr, debug_csr, asr);
 				sbicintr(dev);
 			}
