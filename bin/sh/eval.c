@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.32 1996/11/06 01:17:10 christos Exp $	*/
+/*	$NetBSD: eval.c,v 1.33 1996/11/09 01:04:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-static char sccsid[] = "$NetBSD: eval.c,v 1.32 1996/11/06 01:17:10 christos Exp $";
+static char sccsid[] = "$NetBSD: eval.c,v 1.33 1996/11/09 01:04:07 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -824,7 +824,6 @@ cmddone:
 		}
 		handler = savehandler;
 		if (e != -1) {
-			outfmt(out2, "exception %d\n", e);
 			if ((e != EXERROR && e != EXEXEC)
 			   || cmdentry.u.index == BLTINCMD
 			   || cmdentry.u.index == DOTCMD
