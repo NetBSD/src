@@ -1,4 +1,4 @@
-#	$NetBSD: files.sun2,v 1.13 2003/07/27 01:19:32 thorpej Exp $
+#	$NetBSD: files.sun2,v 1.14 2004/12/07 04:33:24 chs Exp $
 
 #
 # sun2-specific configuration info
@@ -22,6 +22,7 @@ file arch/sun2/sun2/idprom.c
 file arch/sun2/sun2/promlib.c
 file arch/sun2/sun2/sys_machdep.c
 file arch/sun2/sun2/trap.c
+file arch/m68k/m68k/procfs_machdep.c		procfs
 file arch/m68k/m68k/vm_machdep.c
 
 include "arch/m68k/fpe/files.fpe"
