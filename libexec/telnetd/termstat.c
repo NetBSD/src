@@ -1,4 +1,4 @@
-/*	$NetBSD: termstat.c,v 1.6.12.2 2001/07/29 04:12:54 jhawk Exp $	*/
+/*	$NetBSD: termstat.c,v 1.6.12.3 2001/08/16 17:09:05 tv Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)termstat.c	8.2 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: termstat.c,v 1.6.12.2 2001/07/29 04:12:54 jhawk Exp $");
+__RCSID("$NetBSD: termstat.c,v 1.6.12.3 2001/08/16 17:09:05 tv Exp $");
 #endif
 #endif /* not lint */
 
@@ -446,7 +446,7 @@ clientstat(code, parm1, parm2)
 				useeditmode = 0;
 				if (tty_isediting())
 					useeditmode |= MODE_EDIT;
-				if (tty_istrapsig)
+				if (tty_istrapsig())
 					useeditmode |= MODE_TRAPSIG;
 				if (tty_issofttab())
 					useeditmode |= MODE_SOFT_TAB;
@@ -566,7 +566,7 @@ clientstat(code, parm1, parm2)
 		/*
 		 * Change terminal speed as requested by client.
 		 * We set the receive speed first, so that if we can't
-		 * store seperate receive and transmit speeds, the transmit
+		 * store separate receive and transmit speeds, the transmit
 		 * speed will take precedence.
 		 */
 		tty_rspeed(parm2);
