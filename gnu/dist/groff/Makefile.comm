@@ -19,7 +19,6 @@
 #
 # Makefile.comm
 #
-SHELL=/bin/sh
 INCLUDES=-I. -I$(srcdir) \
   -I$(top_builddir)/src/include -I$(top_srcdir)/src/include
 ALL_CCFLAGS=$(INCLUDES) $(CCDEFINES) $(CCFLAGS) $(CPPFLAGS)

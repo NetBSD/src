@@ -1,4 +1,4 @@
-# Copyright (C) 2002, 2003 Free Software Foundation, Inc.
+# Copyright (C) 2002, 2003, 2004 Free Software Foundation, Inc.
 #      Written by Werner Lemberg (wl@gnu.org)
 # 
 # This file is part of groff.
@@ -19,7 +19,7 @@
 
 # These may be overridden if cross-compiling.
 GROFFBIN=$(top_builddir)/src/roff/groff/groff
-GROFF_BIN_PATH=`echo $(groff_bin_dirs) | sed -e 's|  *|:|g'`
+GROFF_BIN_PATH=`echo $(groff_bin_dirs) | sed -e 's|  *|$(SH_SEP)|g'`
 
 groff_bin_dirs=\
   $(top_builddir)/src/roff/groff \
@@ -67,6 +67,7 @@ EXAMPLEFILES=\
   examples/typewrite.mom \
   examples/README.mom \
   examples/elvis_syntax \
+  examples/elvis_syntax.new \
   examples/penguin.ps
 
 PROCESSEDEXAMPLEFILES=\
