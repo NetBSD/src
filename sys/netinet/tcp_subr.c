@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.108 2001/03/20 20:07:51 thorpej Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.109 2001/03/21 03:35:11 chs Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1756,10 +1756,11 @@ tcp_seq
 tcp_new_iss1(void *laddr, void *faddr, u_int16_t lport, u_int16_t fport,
     size_t addrsz, tcp_seq addin)
 {
-	static int beenhere;
 	tcp_seq tcp_iss;
 
 #if NRND > 0
+	static int beenhere;
+
 	/*
 	 * If we haven't been here before, initialize our cryptographic
 	 * hash secret.
