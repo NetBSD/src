@@ -1,4 +1,4 @@
-/* $NetBSD: shell_disassem.c,v 1.2 1996/03/06 23:52:15 mark Exp $ */
+/* $NetBSD: shell_disassem.c,v 1.3 1996/06/03 22:11:34 mark Exp $ */
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -47,8 +47,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-
-/* Local header files */
+#include <dev/cons.h>
 
 #include <machine/katelib.h>
 
@@ -58,6 +57,7 @@
 
 u_int disassemble __P((u_char *));
 u_int do_disassemble __P((u_char *));
+int readhex __P((char *buf));
 
 /* Now for the main code */
 
@@ -91,7 +91,7 @@ do_disassemble(addr)
 {
 	u_int result;
 	int quit = 0;
-	int key;
+	int key = 0;
 	int count = 1;
 
 	do {

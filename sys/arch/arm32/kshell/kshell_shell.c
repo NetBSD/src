@@ -1,4 +1,4 @@
-/* $NetBSD: kshell_shell.c,v 1.6 1996/04/26 22:49:21 mark Exp $ */
+/* $NetBSD: kshell_shell.c,v 1.7 1996/06/03 22:14:22 mark Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -88,7 +88,8 @@ void debug_show_fs	__P((int argc, char *argv[]));
 void debug_show_vm_map	__P((vm_map_t map, char *text));
 void debug_show_pmap	__P((pmap_t pmap));
 void pmap_dump_pvs	__P((void));
-void bootsync		__P((void));
+void asc_dump		__P((void));
+void pmap_pagedir_dump	__P((void));
 
 /* Now for the main code */
 

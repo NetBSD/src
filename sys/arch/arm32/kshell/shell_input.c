@@ -1,4 +1,4 @@
-/* $NetBSD: shell_input.c,v 1.2 1996/03/06 23:44:07 mark Exp $ */
+/* $NetBSD: shell_input.c,v 1.3 1996/06/03 22:11:37 mark Exp $ */
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -46,6 +46,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
+#include <dev/cons.h>
 
 /*#define SOFT_CURSOR*/
 
