@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.5 2002/02/12 06:58:19 thorpej Exp $	*/
+/*	$NetBSD: param.h,v 1.6 2002/02/26 15:13:20 simonb Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -127,8 +127,12 @@
  * of the hardware page size.
  */
 #define	MSIZE		256		/* size of an mbuf */
+
+#ifndef MCLSHIFT
 #define	MCLSHIFT	11		/* convert bytes to m_buf clusters */
+					/* 2K cluster can hold Ether frame */
+#endif	/* MCLSHIFT */
+
 #define	MCLBYTES	(1 << MCLSHIFT)	/* size of a m_buf cluster */
-#define	MCLOFSET	(MCLBYTES - 1)	/* offset within a m_buf cluster */
 
 #endif /* _ARM_PARAM_H_ */

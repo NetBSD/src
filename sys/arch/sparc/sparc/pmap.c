@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.204 2002/02/04 08:36:37 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.205 2002/02/26 15:13:27 simonb Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -3758,7 +3758,7 @@ pmap_init()
 	vaddr_t va;
 
 	if (PAGE_SIZE != NBPG)
-		panic("pmap_init: CLSIZE!=1");
+		panic("pmap_init: PAGE_SIZE!=NBPG");
 
 	npages = 0;
 	for (n = 0; n < vm_nphysseg; n++)
