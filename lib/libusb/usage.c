@@ -1,4 +1,4 @@
-/*	$NetBSD: usage.c,v 1.6 2000/08/13 22:22:02 augustss Exp $	*/
+/*	$NetBSD: usage.c,v 1.7 2000/09/24 02:17:52 augustss Exp $	*/
 
 /*
  * Copyright (c) 1999 Lennart Augustsson <augustss@netbsd.org>
@@ -191,4 +191,41 @@ hid_usage_in_page(unsigned int u)
  bad:
 	sprintf(b, "0x%04x", i);
 	return b;
+}
+
+int
+hid_parse_usage_page(const char *name)
+{
+	int k;
+
+	if (!pages)
+		errx(1, "no hid table\n");
+
+	for (k = 0; k < npages; k++)
+		if (strcmp(pages[k].name, name) == 0)
+			return pages[k].usage;
+	return -1;
+}
+
+/* XXX handle hex */
+int
+hid_parse_usage_in_page(const char *name)
+{
+	const char *sep = strchr(name, ':');
+	int k, j;
+	unsigned int l;
+
+	if (sep == NULL)
+		return -1;
+	l = sep - name;
+	for (k = 0; k < npages; k++)
+		if (strncmp(pages[k].name, name, l) == 0)
+			goto found;
+	return -1;
+ found:
+	sep++;
+	for (j = 0; j < pages[k].pagesize; j++)
+		if (strcmp(pages[k].page_contents[j].name, sep) == 0)
+			return (pages[k].usage << 16) | pages[k].page_contents[j].usage;
+	return (-1);
 }

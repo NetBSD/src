@@ -1,4 +1,4 @@
-.\"	$NetBSD: usb.3,v 1.12 2000/09/24 02:13:24 augustss Exp $
+.\"	$NetBSD: usb.3,v 1.13 2000/09/24 02:17:52 augustss Exp $
 .\"
 .\" Copyright (c) 1999 Lennart Augustsson <augustss@netbsd.org>
 .\" All rights reserved.
@@ -67,6 +67,10 @@
 .Fn hid_usage_page "int i"
 .Ft char *
 .Fn hid_usage_in_page "u_int u"
+.Ft int
+.Fn hid_parse_usage_page "const char *"
+.Ft char *
+.Fn hid_parse_usage_in_page "const char *"
 .Ft void
 .Fn hid_init "char *file"
 .Ft int
@@ -162,7 +166,19 @@ will return the symbolic name of a usage page, and the function
 .Fn hid_usage_in_page
 will return the symbolic name of the usage within the page.
 Both these functions may return a pointer to static data.
-Before either of these functions can be called the usage table
+.Pp
+The functions
+.Fn hid_parse_usage_page
+and
+.Fn hid_parse_usage_in_page
+are the inverses of
+.Fn hid_usage_page
+and
+.Fn hid_usage_in_page .
+They take a usage string and return the number of the usage, or -1
+if it cannot be found.
+.Pp
+Before any of these functions can be called the usage table
 must be parsed, this is done by calling
 .Fn hid_init
 with the name of the table.  Passing
