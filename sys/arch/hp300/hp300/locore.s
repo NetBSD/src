@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.41 1995/05/25 01:09:10 mycroft Exp $	*/
+/*	$NetBSD: locore.s,v 1.42 1995/09/10 19:42:19 thorpej Exp $	*/
 
 #undef STACKCHECK	/* doesn't work any more */
 
@@ -1202,22 +1202,7 @@ _szicode:
  * Primitives
  */ 
 
-#ifdef __STDC__
-#define EXPORT(name)		.globl _ ## name; _ ## name:
-#else
-#define EXPORT(name)		.globl _/**/name; _/**/name:
-#endif
-#ifdef GPROF
-#if __GNUC__ >= 2
-#define	ENTRY(name)		EXPORT(name) link a6,\#0; jbsr mcount; unlk a6
-#else
-#define	ENTRY(name)		EXPORT(name) link a6,#0; jbsr mcount; unlk a6
-#endif
-#define ALTENTRY(name, rname)	ENTRY(name); jra rname+12
-#else
-#define	ENTRY(name)		EXPORT(name)
-#define ALTENTRY(name, rname) 	ENTRY(name)
-#endif
+#include <machine/asm.h>
 
 /*
  * For gcc2
@@ -2102,15 +2087,23 @@ Lcmpdone:
 	
 /*
  * {ov}bcopy(from, to, len)
+ * memcpy(to, from len)
  *
  * Works for counts up to 128K.
  */
+ENTRY(memcpy)
+	movl	sp@(12),d0		| get count
+	jeq	Lcpyexit		| if zero, return
+	movl	sp@(8), a0		| src address
+	movl	sp@(4), a1		| dest address
+	jra	Ldocopy			| jump into bcopy
 ALTENTRY(ovbcopy, _bcopy)
 ENTRY(bcopy)
 	movl	sp@(12),d0		| get count
 	jeq	Lcpyexit		| if zero, return
 	movl	sp@(4),a0		| src address
 	movl	sp@(8),a1		| dest address
+Ldocopy:
 	cmpl	a1,a0			| src before dest?
 	jlt	Lcpyback		| yes, copy backwards (avoids overlap)
 	movl	a0,d1
