@@ -42,7 +42,7 @@
  *	@(#)clock.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: clock.c,v 1.17 92/11/26 03:04:47 torek Exp  (LBL)
- * $Id: clock.c,v 1.3 1993/11/28 03:47:11 deraadt Exp $
+ * $Id: clock.c,v 1.4 1993/12/08 18:26:19 pk Exp $
  */
 
 /*
@@ -428,7 +428,12 @@ inittodr(base)
 	int badbase = 0;
 
 	if (base < 5 * SECYR) {
-		printf("WARNING: preposterous time in file system\n");
+		/*
+		 * If base is 0, assume filesystem time is just unknown
+		 * in stead of preposterous. Don't bark.
+		 */
+		if (base != 0)
+			printf("WARNING: preposterous time in file system\n");
 		/* not going to use it anyway, if the chip is readable */
 		base = 21*SECYR + 186*SECDAY + SECDAY/2;
 		badbase = 1;
@@ -457,7 +462,7 @@ inittodr(base)
 
 		if (deltat < 0)
 			deltat = -deltat;
-		if (deltat < 2 * SECDAY)
+		if (base == 0 || deltat < 2 * SECDAY)
 			return;
 		printf("WARNING: clock %s %d days",
 		    time.tv_sec < base ? "lost" : "gained", deltat / SECDAY);
