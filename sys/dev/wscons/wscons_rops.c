@@ -1,4 +1,4 @@
-/* $NetBSD: wscons_rops.c,v 1.3 1998/06/20 21:52:50 drochner Exp $ */
+/* $NetBSD: wscons_rops.c,v 1.4 1998/06/26 21:12:49 drochner Exp $ */
 
 /*
  * Copyright (c) 1991, 1993
@@ -92,6 +92,16 @@ rcons_cursor(id, on, row, col)
 	    (struct raster *) 0, 0, 0);
 
 	rc->rc_bits ^= RC_CURSOR;
+}
+
+unsigned int
+rcons_mapchar(id, uni)
+	void *id;
+	int uni;
+{
+	if (uni < 128)
+		return (uni);
+	return (0);
 }
 
 /*
