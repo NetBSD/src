@@ -6,7 +6,7 @@
 .\" *** DO NOT EDIT - any changes will be lost!!!
 .\" *** ------------------------------------------------------------------
 .\"
-.\" $NetBSD: MAKEDEV.8,v 1.5 2001/04/16 08:11:18 wiz Exp $
+.\" $NetBSD: MAKEDEV.8,v 1.6 2001/06/26 02:11:57 hubertf Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -101,28 +101,28 @@ digits when calling
 . Bl -tag -width 0123456789 -compact
 . It Ar st#
 Scsi tapes, see
-.Xr st 4
+.Xr s\&t 4
 . El
 .It Disks:
 . Bl -tag -width 0123456789 -compact
 . It Ar sd#
 SCSI disks, see
-.Xr sd 4
+.Xr s\&d 4
 . It Ar cd#
 SCSI compact discs, see
-.Xr cd 4
+.Xr c\&d 4
 . It Ar vnd#
 Vnode pseudo-disks, see
-.Xr vnd 4
+.Xr v\&nd 4
 . It Ar raid#
 RAIDframe disk driver, see
-.Xr raid 4
+.Xr r\&aid 4
 . It Ar ccd#
 Concatenated disk driver, see
-.Xr ccd 4
+.Xr c\&cd 4
 . It Ar md#
 Memory pseudo-disk devices, see
-.Xr md 4
+.Xr m\&d 4
 . It Ar fd#
 Floppy disk drives (3 1/2")
 . El
@@ -132,7 +132,7 @@ Floppy disk drives (3 1/2")
 Ite consoles
 . It Ar tty#
 Standard built-in serial ports (2), see
-.Xr tty 4
+.Xr t\&ty 4
 . It Ar ttyE#
 Wscons
 . El
@@ -140,19 +140,19 @@ Wscons
 . Bl -tag -width 0123456789 -compact
 . It Ar wsmouse#
 Wscons mouse events, see
-.Xr wsmouse 4
+.Xr w\&smouse 4
 . El
 .It Keyboard devices:
 . Bl -tag -width 0123456789 -compact
 . It Ar wskbd#
 Wscons keyboard events, see
-.Xr wskbd 4
+.Xr w\&skbd 4
 . El
 .It Pseudo terminals:
 . Bl -tag -width 0123456789 -compact
 . It Ar pty#
 Set of 16 master and slave pseudo terminals, see
-.Xr pty 4
+.Xr p\&ty 4
 . El
 .It Graphics devices:
 . Bl -tag -width 0123456789 -compact
@@ -163,33 +163,33 @@ Bitmapped graphics device
 . Bl -tag -width 0123456789 -compact
 . It Ar tun#
 Network tunnel driver, see
-.Xr tun 4
+.Xr t\&un 4
 . It Ar bpf#
 Packet filter, see
-.Xr bpf 4
+.Xr b\&pf 4
 . It Ar lkm
 Loadable kernel modules interface, see
-.Xr lkm 4
+.Xr l\&km 4
 . It Ar ipl
 Ip filter
 . It Ar random
 Random number generator
 . It Ar scsibus#
 SCSI busses, see
-.Xr scsictl 8 ,
-.Xr scsi 4
+.Xr s\&csictl 8 ,
+.Xr s\&csi 4
 . It Ar ss#
 SCSI scanner, see
-.Xr ss 4
+.Xr s\&s 4
 . It Ar uk#
 SCSI unknown, see
-.Xr uk 4
+.Xr u\&k 4
 . It Ar ch#
 SCSI changer, see
-.Xr ch 4
+.Xr c\&h 4
 . It Ar adb
 Apple Desktop Bus, see
-.Xr adb 4
+.Xr a\&db 4
 . It Ar asc#
 Apple Sound Chip
 . It Ar cfs#

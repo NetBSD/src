@@ -6,7 +6,7 @@
 .\" *** DO NOT EDIT - any changes will be lost!!!
 .\" *** ------------------------------------------------------------------
 .\"
-.\" $NetBSD: MAKEDEV.8,v 1.12 2001/05/27 21:18:54 wiz Exp $
+.\" $NetBSD: MAKEDEV.8,v 1.13 2001/06/26 02:12:01 hubertf Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -97,154 +97,154 @@ digits when calling
 . Bl -tag -width 0123456789 -compact
 . It Ar ht#
 Massbus tm03 & tu??, see
-.Xr ht 4
+.Xr h\&t 4
 . It Ar tm#
 Unibus tm11 & te10 emulations (e.g. Emulex tc-11), see
-.Xr tm 4
+.Xr t\&m 4
 . It Ar mt#
 MSCP tapes (e.g. TU81, TK50), see
-.Xr mt 4
+.Xr m\&t 4
 . It Ar ts#
 Unibus ts11, see
-.Xr ts 4
+.Xr t\&s 4
 . It Ar ut#
 Unibus tu45 emulations (e.g.si 9700), see
-.Xr ut 4
+.Xr u\&t 4
 . It Ar uu#
 Tu58 cassettes on dl11 controller, see
-.Xr uu 4
+.Xr u\&u 4
 . It Ar st#
 SCSI tapes, see
-.Xr st 4
+.Xr s\&t 4
 . El
 .It Disks:
 . Bl -tag -width 0123456789 -compact
 . It Ar hp#
 Massbus rm??, see
-.Xr hp 4
+.Xr h\&p 4
 . It Ar hk#
 Unibus rk06 and rk07, see
-.Xr hk 4
+.Xr h\&k 4
 . It Ar up#
 Other unibus devices (e.g. on Emulex sc-21v controller), see
-.Xr up 4
+.Xr u\&p 4
 . It Ar ra#
 MSCP disks (ra??, rd??)
 . It Ar rx#
 MSCP floppy disk (rx33/50/...), see
-.Xr rx 4
+.Xr r\&x 4
 . It Ar rl#
 Unibus rl02, see
-.Xr rl 4
+.Xr r\&l 4
 . It Ar rb#
 730 idc w/ rb80 and/or rb02
 . It Ar ccd#
 ``concatenated'' pseudo-disks, see
-.Xr ccd 4
+.Xr c\&cd 4
 . It Ar raid#
 RAIDframe disk driver, see
-.Xr raid 4
+.Xr r\&aid 4
 . It Ar vnd#
 ``file'' pseudo-disks, see
-.Xr vnd 4
+.Xr v\&nd 4
 . It Ar rd#
 HDC9224 rd disks on VS2000
 . It Ar sd#
 SCSI disks, see
-.Xr sd 4
+.Xr s\&d 4
 . It Ar cd#
 SCSI CD-ROM, see
-.Xr cd 4
+.Xr c\&d 4
 . It Ar md#
 Memory pseudo-disk devices, see
-.Xr md 4
+.Xr m\&d 4
 . El
 .It Terminal multiplexors:
 . Bl -tag -width 0123456789 -compact
 . It Ar dz#
 Unibus dz11 and dz32, see
-.Xr dz 4
+.Xr d\&z 4
 . It Ar dh#
 Unibus dh11 and emulations (e.g. Able dmax, Emulex cs-11), see
-.Xr dh 4
+.Xr d\&h 4
 . It Ar dmf#
 Unibus dmf32, see
-.Xr dmf 4
+.Xr d\&mf 4
 . It Ar dhu#
 Unibus dhu11, see
-.Xr dhu 4
+.Xr d\&hu 4
 . It Ar dmz#
 Unibus dmz32, see
-.Xr dmz 4
+.Xr d\&mz 4
 . It Ar dl#
 Unibus dl11, see
-.Xr dl 4
+.Xr d\&l 4
 . El
 .It Pseudo terminals:
 . Bl -tag -width 0123456789 -compact
 . It Ar pty#
 Set of 16 master and slave pseudo terminals, see
-.Xr pty 4
+.Xr p\&ty 4
 . El
 .It Printers:
 . Bl -tag -width 0123456789 -compact
 . It Ar ct#
 Unibus parallel interface to CAT typesetter, see
-.Xr ct 4
+.Xr c\&t 4
 . It Ar lp#
 Unibus lp11 parallel interface, see
-.Xr lp 4
+.Xr l\&p 4
 . It Ar va#
 Unibus varian parallel interface, see
-.Xr va 4
+.Xr v\&a 4
 . It Ar vp#
 Unibus versatec parallel interface, see
-.Xr vp 4
+.Xr v\&p 4
 . El
 .It Call units:
 . Bl -tag -width 0123456789 -compact
 . It Ar dn#
 Unibus dn11 and emulations (e.g. Able Quadracall), see
-.Xr dn 4
+.Xr d\&n 4
 . El
 .It Special purpose devices:
 . Bl -tag -width 0123456789 -compact
 . It Ar ik#
 Unibus interface to ikonas frame buffer, see
-.Xr ik 4
+.Xr i\&k 4
 . It Ar ps#
 Unibus interface to e&s picture system 2, see
-.Xr ps 4
+.Xr p\&s 4
 . It Ar ad#
 Unibus interface to data translation a/d converter, see
-.Xr ad 4
+.Xr a\&d 4
 . It Ar np#
 Unibus ethernet co-processor interface, for downloading., see
-.Xr np 4
+.Xr n\&p 4
 . It Ar qv#
 Qvss (microvax) display
 . It Ar lkm
 Loadable kernel modules, see
-.Xr lkm 4
+.Xr l\&km 4
 . It Ar bpf#
 Berkeley packet filter, see
-.Xr bpf 4
+.Xr b\&pf 4
 . It Ar tun#
 Network tunnel device, see
-.Xr tun 4
+.Xr t\&un 4
 . It Ar scsibus#
 SCSI busses,
-.Xr scsictl 8 ,
-.Xr scsi 4
+.Xr s\&csictl 8 ,
+.Xr s\&csi 4
 . It Ar ss#
 SCSI scanner, see
-.Xr ss 4
+.Xr s\&s 4
 . It Ar uk#
 SCSI unknown, see
-.Xr uk 4
+.Xr u\&k 4
 . It Ar ch#
 SCSI changer, see
-.Xr ch 4
+.Xr c\&h 4
 . It Ar random
 Random number generator
 . El

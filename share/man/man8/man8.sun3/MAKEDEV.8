@@ -6,7 +6,7 @@
 .\" *** DO NOT EDIT - any changes will be lost!!!
 .\" *** ------------------------------------------------------------------
 .\"
-.\" $NetBSD: MAKEDEV.8,v 1.8 2001/04/16 08:11:20 wiz Exp $
+.\" $NetBSD: MAKEDEV.8,v 1.9 2001/06/26 02:12:01 hubertf Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -95,60 +95,60 @@ digits when calling
 . Bl -tag -width 0123456789 -compact
 . It Ar st#
 SCSI tape, see
-.Xr st 4
+.Xr s\&t 4
 . El
 .It Disks:
 . Bl -tag -width 0123456789 -compact
 . It Ar sd#
 Sun SCSI disks, see
-.Xr sd 4
+.Xr s\&d 4
 . It Ar fd#
 Floppies
 . It Ar vnd#
 ``file'' pseudo-disks, see
-.Xr vnd 4
+.Xr v\&nd 4
 . It Ar ccd#
 Concatenated disk driver, see
-.Xr ccd 4
+.Xr c\&cd 4
 . It Ar raid#
 RAIDframe disk driver, see
-.Xr raid 4
+.Xr r\&aid 4
 . It Ar md#
 Memory pseudo-disk devices, see
-.Xr md 4
+.Xr m\&d 4
 . El
 .It Pseudo terminals:
 . Bl -tag -width 0123456789 -compact
 . It Ar pty#
 Set of 16 master and slave pseudo terminals, see
-.Xr pty 4
+.Xr p\&ty 4
 . El
 .It Special purpose devices:
 . Bl -tag -width 0123456789 -compact
 . It Ar bwtwo#
 Monochromatic frame buffer, see
-.Xr bwtwo 4
+.Xr b\&wtwo 4
 . It Ar cgtwo#
 8-bit VME bus color frame buffer, see
-.Xr cgtwo 4
+.Xr c\&gtwo 4
 . It Ar cgfour#
 8-bit color frame buffer, see
-.Xr cgfour 4
+.Xr c\&gfour 4
 . It Ar bpf#
 Packet filter, see
-.Xr bpf 4
+.Xr b\&pf 4
 . It Ar lkm
 Loadable kernel modules interface, see
-.Xr lkm 4
+.Xr l\&km 4
 . It Ar tun#
 Network tunnel driver, see
-.Xr tun 4
+.Xr t\&un 4
 . It Ar random
 Random number generator
 . It Ar scsibus#
 SCSI busses, see
-.Xr scsictl 8 ,
-.Xr scsi 4
+.Xr s\&csictl 8 ,
+.Xr s\&csi 4
 . El
 .El
 .Sh FILES

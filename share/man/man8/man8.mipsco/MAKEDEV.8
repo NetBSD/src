@@ -6,7 +6,7 @@
 .\" *** DO NOT EDIT - any changes will be lost!!!
 .\" *** ------------------------------------------------------------------
 .\"
-.\" $NetBSD: MAKEDEV.8,v 1.1 2001/06/08 14:32:10 wiz Exp $
+.\" $NetBSD: MAKEDEV.8,v 1.2 2001/06/26 02:11:58 hubertf Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -99,49 +99,49 @@ digits when calling
 . Bl -tag -width 0123456789 -compact
 . It Ar st#
 MI SCSI tape drives, see
-.Xr st 4
+.Xr s\&t 4
 . El
 .It Disks:
 . Bl -tag -width 0123456789 -compact
 . It Ar sd#
 SCSI disks, see
-.Xr sd 4
+.Xr s\&d 4
 . It Ar cd#
 SCSI cdrom drives, see
-.Xr cd 4
+.Xr c\&d 4
 . It Ar ch#
 SCSI changer, see
-.Xr ch 4
+.Xr c\&h 4
 . It Ar vnd#
 ``file'' pseudo-disks, see
-.Xr vnd 4
+.Xr v\&nd 4
 . It Ar ccd#
 Concatenated disk devices, see
-.Xr ccd 4
+.Xr c\&cd 4
 . It Ar raid#
 RAIDframe disk devices, see
-.Xr raid 4
+.Xr r\&aid 4
 . It Ar md#
 Memory pseudo-disk devices, see
-.Xr md 4
+.Xr m\&d 4
 . El
 .It Pseudo terminals:
 . Bl -tag -width 0123456789 -compact
 . It Ar pty#
 Set of 16 master and slave pseudo terminals, see
-.Xr pty 4
+.Xr p\&ty 4
 . El
 .It Special purpose devices:
 . Bl -tag -width 0123456789 -compact
 . It Ar bpf#
 Packet filter, see
-.Xr bpf 4
+.Xr b\&pf 4
 . It Ar lkm
 Loadable kernel modules interface, see
-.Xr lkm 4
+.Xr l\&km 4
 . It Ar tun#
 Network tunnel driver, see
-.Xr tun 4
+.Xr t\&un 4
 . It Ar ipl
 Ip filter
 . It Ar random

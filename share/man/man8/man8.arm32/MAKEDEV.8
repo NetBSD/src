@@ -6,7 +6,7 @@
 .\" *** DO NOT EDIT - any changes will be lost!!!
 .\" *** ------------------------------------------------------------------
 .\"
-.\" $NetBSD: MAKEDEV.8,v 1.13 2001/05/27 21:18:54 wiz Exp $
+.\" $NetBSD: MAKEDEV.8,v 1.14 2001/06/26 02:11:55 hubertf Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -103,33 +103,33 @@ digits when calling
 . Bl -tag -width 0123456789 -compact
 . It Ar st#
 SCSI tapes, see
-.Xr st 4
+.Xr s\&t 4
 . El
 .It Disks:
 . Bl -tag -width 0123456789 -compact
 . It Ar wd#
 ``winchester'' disk drives (ST506,IDE,ESDI,RLL,...), see
-.Xr wd 4
+.Xr w\&d 4
 . It Ar fd#
 ``floppy'' disk drives (3 1/2``, 5 1/4'')
 . It Ar sd#
 SCSI disks, see
-.Xr sd 4
+.Xr s\&d 4
 . It Ar cd#
 SCSI CD-ROM, see
-.Xr cd 4
+.Xr c\&d 4
 . It Ar vnd#
 ``file'' pseudo-disks, see
-.Xr vnd 4
+.Xr v\&nd 4
 . It Ar md#
 Memory pseudo-disk devices, see
-.Xr md 4
+.Xr m\&d 4
 . It Ar ccd#
 Contatenated disk devices, see
-.Xr ccd 4
+.Xr c\&cd 4
 . It Ar raid#
 RAIDframe disk driver, see
-.Xr raid 4
+.Xr r\&aid 4
 . El
 .It Console ports:
 . Bl -tag -width 0123456789 -compact
@@ -142,25 +142,25 @@ Wscons
 . Bl -tag -width 0123456789 -compact
 . It Ar quadmouse#
 ``quadrature mouse'', see
-.Xr quadmouse 4
+.Xr q\&uadmouse 4
 . It Ar pms#
 ``PS/2 mouse'', see
-.Xr pms 4
+.Xr p\&ms 4
 . It Ar wsmouse#
 Wscons mouse events, see
-.Xr wsmouse 4
+.Xr w\&smouse 4
 . El
 .It Keyboard devices:
 . Bl -tag -width 0123456789 -compact
 . It Ar wskbd#
 Wscons keyboard events, see
-.Xr wskbd 4
+.Xr w\&skbd 4
 . El
 .It Terminal ports:
 . Bl -tag -width 0123456789 -compact
 . It Ar tty#
 Serial ports, see
-.Xr tty 4
+.Xr t\&ty 4
 . It Ar fcom
 DC21285 COM port
 . El
@@ -168,13 +168,13 @@ DC21285 COM port
 . Bl -tag -width 0123456789 -compact
 . It Ar pty#
 Set of 16 master and slave pseudo terminals, see
-.Xr pty 4
+.Xr p\&ty 4
 . El
 .It Printers:
 . Bl -tag -width 0123456789 -compact
 . It Ar lpt#
 Stock lp, see
-.Xr lpt 4
+.Xr l\&pt 4
 . It Ar lpa#
 Interruptless lp
 . El
@@ -182,22 +182,22 @@ Interruptless lp
 . Bl -tag -width 0123456789 -compact
 . It Ar usb#
 Bus control devices used by usbd for attach/detach, see
-.Xr usb 4
+.Xr u\&sb 4
 . It Ar uhid#
 Generic HID devices, see
-.Xr uhid 4
+.Xr u\&hid 4
 . It Ar ulpt#
 Printer devices, see
-.Xr ulpt 4
+.Xr u\&lpt 4
 . It Ar ugen#
 Generic device, see
-.Xr ugen 4
+.Xr u\&gen 4
 . It Ar urio#
 Diamond Rio 500, see
-.Xr urio 4
+.Xr u\&rio 4
 . It Ar uscanner#
 Scanners, see
-.Xr uscanner 4
+.Xr u\&scanner 4
 . It Ar ttyU#
 Modem
 . El
@@ -218,20 +218,20 @@ Trace device
 . Bl -tag -width 0123456789 -compact
 . It Ar md
 Memory disk, see
-.Xr md 4
+.Xr m\&d 4
 . It Ar kbd
 Raw keyboard, see
-.Xr kbd 4
+.Xr k\&bd 4
 . It Ar kbdctl
 Keyboard control
 . It Ar fd
 File descriptors
 . It Ar bpf#
 Packet filter, see
-.Xr bpf 4
+.Xr b\&pf 4
 . It Ar beep
 Riscpc speaker, see
-.Xr beep 4
+.Xr b\&eep 4
 . It Ar ipl
 IP filter control
 . It Ar openfirm
@@ -240,23 +240,23 @@ OpenFirmware accessor
 Random number generator
 . It Ar lkm
 Loadable kernel modules interface, see
-.Xr lkm 4
+.Xr l\&km 4
 . It Ar tun#
 Network tunnel driver, see
-.Xr tun 4
+.Xr t\&un 4
 . It Ar ch#
 SCSI Auto changer, see
-.Xr ch 4
+.Xr c\&h 4
 . It Ar uk#
 SCSI Unknown device, see
-.Xr uk 4
+.Xr u\&k 4
 . It Ar scsibus#
 SCSI busses, see
-.Xr scsi 4 ,
-.Xr scsictl 8
+.Xr s\&csi 4 ,
+.Xr s\&csictl 8
 . It Ar ss#
 SCSI scanner device, see
-.Xr ss 4
+.Xr s\&s 4
 . It Ar iic#
 IIC bus device
 . It Ar rtc#
