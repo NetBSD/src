@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.63.2.4 1999/06/21 23:21:36 perry Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.63.2.5 1999/06/22 14:37:43 perry Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 static char sccsid[] = "@(#)disklabel.c	8.4 (Berkeley) 5/4/95";
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 #else
-__RCSID("$NetBSD: disklabel.c,v 1.63.2.4 1999/06/21 23:21:36 perry Exp $");
+__RCSID("$NetBSD: disklabel.c,v 1.63.2.5 1999/06/22 14:37:43 perry Exp $");
 #endif
 #endif /* not lint */
 
@@ -1099,13 +1099,11 @@ makedisktab(f, lp)
 				break;
 
 			case FS_BSDFFS:
+			case FS_BSDLFS:
+			case FS_EX2FS:
+			case FS_ADOS:
 				(void) fprintf(f, "b%c#%d:", c,
 				    pp->p_fsize * pp->p_frag);
-				(void) fprintf(f, "f%c#%d:", c, pp->p_fsize);
-				break;
-			case FS_EX2FS:
-				(void) fprintf(f, "b%c#%d:", c,
-					pp->p_fsize * pp->p_frag);
 				(void) fprintf(f, "f%c#%d:", c, pp->p_fsize);
 				break;
 			default:
@@ -1201,11 +1199,13 @@ display(f, lp)
 				break;
 
 			case FS_BSDFFS:
+			case FS_ADOS:
 				(void) fprintf(f, "    %5d %5d %5d ",
 				    pp->p_fsize, pp->p_fsize * pp->p_frag,
 				    pp->p_cpg);
 				break;
 
+			case FS_BSDLFS:
 			case FS_EX2FS:
 				(void) fprintf(f, "    %5d %5d       ",
 				    pp->p_fsize, pp->p_fsize * pp->p_frag);
@@ -1658,6 +1658,7 @@ getasciilabel(f, lp)
 				break;
 
 			case FS_BSDFFS:
+			case FS_ADOS:
 				NXTNUM(pp->p_fsize);
 				if (pp->p_fsize == 0)
 					break;
@@ -1665,6 +1666,7 @@ getasciilabel(f, lp)
 				pp->p_frag = v / pp->p_fsize;
 				NXTNUM(pp->p_cpg);
 				break;
+			case FS_BSDLFS:
 			case FS_EX2FS:
 				NXTNUM(pp->p_fsize);
 				if (pp->p_fsize == 0)
