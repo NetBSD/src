@@ -1,4 +1,4 @@
-/*	$NetBSD: print-802_11.c,v 1.4 2002/05/31 09:45:44 itojun Exp $	*/
+/*	$NetBSD: print-802_11.c,v 1.5 2002/09/30 13:31:57 onoe Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -28,7 +28,7 @@
 static const char rcsid[] =
     "@(#) Header: /tcpdump/master/tcpdump/print-802_11.c,v 1.7 2002/05/13 08:30:19 guy Exp (LBL)";
 #else
-__RCSID("$NetBSD: print-802_11.c,v 1.4 2002/05/31 09:45:44 itojun Exp $");
+__RCSID("$NetBSD: print-802_11.c,v 1.5 2002/09/30 13:31:57 onoe Exp $");
 #endif
 #endif
 
@@ -60,6 +60,7 @@ do { \
 	char *sep = " ["; \
 	for (z = 0; z < p.rates.length ; z++) { \
 		printf("%s%2.1f", sep, (.5 * (p.rates.rate[z] & 0x7f))); \
+		if (p.rates.rate[z] & 0x80) printf("*"); \
 		sep = " "; \
 	} \
 	if (p.rates.length != 0) \
