@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mips,v 1.33 2003/07/04 03:48:01 simonb Exp $
+#	$NetBSD: Makefile.mips,v 1.34 2003/10/05 16:53:15 tsutsui Exp $
 
 # Makefile for NetBSD
 #
@@ -20,6 +20,12 @@
 USETOOLS?=	no
 NEED_OWN_INSTALL_TARGET?=no
 .include <bsd.own.mk>
+
+##
+## (0) toolchain settings for things that aren't part of the standard
+## toolchain
+##
+ELF2ECOFF?=	elf2ecoff
 
 ##
 ## (1) port identification
