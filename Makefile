@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.77 1999/01/03 22:17:19 cjs Exp $
+#	$NetBSD: Makefile,v 1.78 1999/01/05 07:09:58 scottr Exp $
 
 .include <bsd.own.mk>			# for configuration variables.
 
@@ -30,8 +30,7 @@ SUBDIR+= gnu
 # This is needed for libstdc++ and gen-params.
 includes-gnu: includes-include includes-sys
 
-.if exists(domestic) && (!defined(EXPORTABLE_SYSTEM) ||\
-    make(obj) || make(clean) || make(cleandir) || make(distclean))
+.if exists(domestic) && (make(clean) || make(cleandir) || make(obj))
 SUBDIR+= domestic
 .endif
 
@@ -88,25 +87,10 @@ build: beforeinstall
 	    ${MAKE} depend && ${MAKE} ${_J} NOMAN= && ${MAKE} NOMAN= install)
 	(cd ${.CURDIR}/gnu/lib && \
 	    ${MAKE} depend && ${MAKE} ${_J} NOMAN= && ${MAKE} NOMAN= install)
-.if exists(domestic) && !defined(EXPORTABLE_SYSTEM)
-# libtelnet depends on libdes and libkrb.  libkrb depends on
-# libcom_err.
-.if exists(domestic/lib/libdes)
-	(cd ${.CURDIR}/domestic/lib/libdes && \
-	    ${MAKE} depend && ${MAKE} ${_J} NOMAN= && ${MAKE} NOMAN= install)
-.endif
-.if exists(domestic/lib/libcom_err)
-	(cd ${.CURDIR}/domestic/lib/libcom_err && \
-	    ${MAKE} depend && ${MAKE} ${_J} NOMAN= && ${MAKE} NOMAN= install)
-.endif
-.if exists(domestic/lib/libkrb)
-	(cd ${.CURDIR}/domestic/lib/libkrb && \
-	    ${MAKE} depend && ${MAKE} ${_J} NOMAN= && ${MAKE} NOMAN= install)
-.endif
-	(cd ${.CURDIR}/domestic/lib && \
-	    ${MAKE} depend && ${MAKE} ${_J} NOMAN= && ${MAKE} NOMAN= install)
-.endif
 	${MAKE} depend && ${MAKE} ${_J} && ${MAKE} install
+.if exists(domestic) && !defined(EXPORTABLE_SYSTEM)
+	(cd ${.CURDIR}/domestic && ${MAKE} ${_J} _SLAVE_BUILD= build)
+.endif
 	@echo -n "Build finished at: "
 	@date
 
