@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.42 2000/08/25 08:12:49 pk Exp $ */
+/*	$NetBSD: db_interface.c,v 1.43 2000/09/28 15:32:36 eeh Exp $ */
 
 /*
  * Mach Operating System
@@ -487,8 +487,9 @@ db_pmap_cmd(addr, have_addr, count, modif)
 		pm = (struct pmap*)addr;
 	}
 
-	db_printf("pmap %x: ctx %x refs %d physaddr %p psegs %p\n",
-		  pm, pm->pm_ctx, pm->pm_refs, (long)pm->pm_physaddr, (long)pm->pm_segs);
+	db_printf("pmap %p: ctx %x refs %d physaddr %llx psegs %p\n",
+		pm, pm->pm_ctx, pm->pm_refs,
+		(paddr_t)pm->pm_physaddr, pm->pm_segs);
 
 	if (full) {
 		db_dump_pmap(pm);
@@ -553,6 +554,24 @@ db_dump_dtsb(addr, have_addr, count, modif)
 	}
 }
 
+void db_page_cmd __P((db_expr_t, int, db_expr_t, char *));
+void
+db_page_cmd(addr, have_addr, count, modif)
+	db_expr_t addr;
+	int have_addr;
+	db_expr_t count;
+	char *modif;
+{
+	struct pv_entry *pv;
+
+	if (!have_addr) {
+		db_printf("Need paddr for page\n");
+		return;
+	}
+
+	db_printf("pa %llx pg %p\n", addr, PHYS_TO_VM_PAGE(addr));
+	
+}
 
 
 void
@@ -874,6 +893,7 @@ struct db_command sparc_db_command_table[] = {
 	{ "lock",	db_lock,	0,	0 },
 	{ "pcb",	db_dump_pcb,	0,	0 },
 	{ "pctx",	db_setpcb,	0,	0 },
+	{ "page",	db_page_cmd,	0,	0 },
 	{ "phys",	db_pload_cmd,	0,	0 },
 	{ "pmap",	db_pmap_cmd,	0,	0 },
 	{ "proc",	db_proc_cmd,	0,	0 },
