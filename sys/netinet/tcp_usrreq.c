@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.62 2001/07/03 08:06:19 itojun Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.63 2001/07/08 16:18:59 abs Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -103,6 +103,7 @@
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
+#include "opt_tcp_debug.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -605,8 +606,10 @@ tcp_usrreq(so, req, m, nam, control, p)
 	default:
 		panic("tcp_usrreq");
 	}
+#ifdef TCP_DEBUG
 	if (tp && (so->so_options & SO_DEBUG))
 		tcp_trace(TA_USER, ostate, tp, NULL, req);
+#endif
 
 release:
 	splx(s);
