@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.8 2003/11/11 08:27:16 scw Exp $	*/
+/*	$NetBSD: param.h,v 1.9 2004/02/14 12:20:14 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -143,5 +143,14 @@
 #endif	/* MCLSHIFT */
 
 #define	MCLBYTES	(1 << MCLSHIFT)	/* size of a m_buf cluster */
+
+/*
+ * Compatibility /dev/zero mapping.
+ */
+#ifdef _KERNEL
+#ifdef COMPAT_16
+#define	COMPAT_ZERODEV(x)	(x == makedev(0, _DEV_ZERO_oARM))
+#endif
+#endif /* _KERNEL */
 
 #endif /* _ARM_PARAM_H_ */
