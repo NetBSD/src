@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.19 2002/03/23 19:21:58 thorpej Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.20 2002/03/24 03:37:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -202,7 +202,7 @@ cpu_startup()
 	 */
 	printf(version);
 
-	format_bytes(pbuf, sizeof(pbuf), arm_page_to_byte(physmem));
+	format_bytes(pbuf, sizeof(pbuf), arm_ptob(physmem));
 	printf("total memory = %s\n", pbuf);
 
 	/*
