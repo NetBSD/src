@@ -1,4 +1,4 @@
-/* $NetBSD: vga.c,v 1.71.4.1 2004/06/07 09:37:51 tron Exp $ */
+/* $NetBSD: vga.c,v 1.71.4.2 2004/06/07 09:47:25 tron Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.71.4.1 2004/06/07 09:37:51 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.71.4.2 2004/06/07 09:47:25 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -273,18 +273,19 @@ const struct wsdisplay_accessops vga_accessops = {
 	vga_free_screen,
 	vga_show_screen,
 	vga_load_font,
+	NULL,
+#ifdef WSDISPLAY_CHARFUNCS
+	vga_getwschar,
+	vga_putwschar,
+#else /* WSDISPLAY_CHARFUNCS */
+	NULL,
+	NULL,
+#endif /* WSDISPLAY_CHARFUNCS */
 #ifdef WSDISPLAY_SCROLLSUPPORT
 	vga_scroll,
 #else
 	NULL,
 #endif
-#ifdef WSDISPLAY_CHARFUNCS
-	vga_getwschar,
-	vga_putwschar
-#else /* WSDISPLAY_CHARFUNCS */
-	NULL,
-	NULL
-#endif /* WSDISPLAY_CHARFUNCS */
 };
 
 /*
