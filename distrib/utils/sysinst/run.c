@@ -1,4 +1,4 @@
-/*	$NetBSD: run.c,v 1.47 2003/07/27 07:45:09 dsl Exp $	*/
+/*	$NetBSD: run.c,v 1.48 2003/07/28 11:32:21 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -320,18 +320,13 @@ launch_subwin(WINDOW *actionwin, char **args, struct winsize *win, int flags,
 	int selectfailed;
 	int status, master, slave;
 	fd_set active_fd_set, read_fd_set;
-	int dataflow[2];
-	pid_t child, subchild, pid;
-	char ibuf[MAXBUF], obuf[MAXBUF];
+	pid_t child, pid;
+	char ibuf[MAXBUF];
 	char pktdata;
 	struct termios rtt;
 	struct termios tt;
 	struct timeval tmo;
 
-	if (pipe(dataflow) < 0) {
-		*errstr = "pipe() failed";
-		return (1);
-	}
 
 	(void)tcgetattr(STDIN_FILENO, &tt);
 	if (openpty(&master, &slave, NULL, &tt, win) == -1) {
@@ -359,20 +354,12 @@ launch_subwin(WINDOW *actionwin, char **args, struct winsize *win, int flags,
 		return -1;
 	case 0:	/* child */
 		(void)close(STDIN_FILENO);
-		subchild = fork();
-		if (subchild == 0) {
-			close(dataflow[0]);
-			for (;;) {
-				n = read(master, obuf, sizeof(obuf));
-				if (n <= 0)
-					break;
-				write(dataflow[1], obuf, (size_t)n);
-			} /* while spinning */
-			_exit(EXIT_SUCCESS);
-		} /* subchild, child forks */
+		/* silently stop curses */
+		(void)close(STDOUT_FILENO);
+		(void)open("/dev/null", O_RDWR, 0);
+		dup2(STDIN_FILENO, STDOUT_FILENO);
+		endwin();
 		(void)close(master);
-		close(dataflow[1]);
-		close(dataflow[0]);
 		rtt = tt;
 		rtt.c_lflag |= (ICANON|ECHO); 
 		(void)tcsetattr(slave, TCSANOW, &rtt);
@@ -410,9 +397,8 @@ launch_subwin(WINDOW *actionwin, char **args, struct winsize *win, int flags,
 		ttysig_ignore = 0;
 		break;
 	}
-	close(dataflow[1]);
 	FD_ZERO(&active_fd_set);
-	FD_SET(dataflow[0], &active_fd_set);
+	FD_SET(master, &active_fd_set);
 	FD_SET(STDIN_FILENO, &active_fd_set);
 
 	for (selectfailed = 0;;) {
@@ -434,7 +420,7 @@ launch_subwin(WINDOW *actionwin, char **args, struct winsize *win, int flags,
 				    "select failure: %s\n", strerror(errno));
 			++selectfailed;
 		} else for (i = 0; i < FD_SETSIZE; ++i) {
-			if (FD_ISSET (i, &read_fd_set)) {
+			if (FD_ISSET(i, &read_fd_set)) {
 				n = read(i, ibuf, MAXBUF);
 				if (n <= 0) {
 					if (n < 0)
@@ -492,7 +478,6 @@ loop:
  		if (pid == child && (WIFEXITED(status) || WIFSIGNALED(status)))
 			break;
 	}
-	close(dataflow[0]); /* clean up our leaks */
 	close(master);
 	close(slave);
 	if (logging)
