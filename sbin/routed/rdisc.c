@@ -1,4 +1,4 @@
-/*	$NetBSD: rdisc.c,v 1.10 2000/03/02 21:00:41 christos Exp $	*/
+/*	$NetBSD: rdisc.c,v 1.11 2001/01/15 13:19:12 itojun Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -37,7 +37,7 @@
 static char sccsid[] __attribute__((unused)) = "@(#)rdisc.c	8.1 (Berkeley) x/y/95";
 #elif defined(__NetBSD__)
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rdisc.c,v 1.10 2000/03/02 21:00:41 christos Exp $");
+__RCSID("$NetBSD: rdisc.c,v 1.11 2001/01/15 13:19:12 itojun Exp $");
 #endif
 
 #include "defs.h"
@@ -191,9 +191,13 @@ set_rdisc_mg(struct interface *ifp,
 		return;
 #endif
 	memset(&m, 0, sizeof(m));
+#ifdef MCAST_IFINDEX
+	m.imr_interface.s_addr = htonl(ifp->int_index);
+#else
 	m.imr_interface.s_addr = ((ifp->int_if_flags & IFF_POINTOPOINT)
 				  ? ifp->int_dstaddr
 				  : ifp->int_addr);
+#endif
 	if (supplier
 	    || (ifp->int_state & IS_NO_ADV_IN)
 	    || !on) {
@@ -733,6 +737,10 @@ send_rdisc(union ad_u *p,
 		}
 		if (rdisc_sock_mcast != ifp) {
 			/* select the right interface. */
+#ifdef MCAST_IFINDEX
+			/* specify ifindex */
+			tgt_mcast = htonl(ifp->int_index);
+#else
 #ifdef MCAST_PPP_BUG
 			/* Do not specify the primary interface explicitly
 			 * if we have the multicast point-to-point kernel
@@ -746,6 +754,7 @@ send_rdisc(union ad_u *p,
 			} else
 #endif
 			tgt_mcast = ifp->int_addr;
+#endif
 			if (0 > setsockopt(rdisc_sock,
 					   IPPROTO_IP, IP_MULTICAST_IF,
 					   &tgt_mcast, sizeof(tgt_mcast))) {

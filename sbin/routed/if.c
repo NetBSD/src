@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.20 2000/06/11 23:43:17 christos Exp $	*/
+/*	$NetBSD: if.c,v 1.21 2001/01/15 13:19:12 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 static char sccsid[] __attribute__((unused)) = "@(#)if.c	8.1 (Berkeley) 6/5/93";
 #elif defined(__NetBSD__)
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: if.c,v 1.20 2000/06/11 23:43:17 christos Exp $");
+__RCSID("$NetBSD: if.c,v 1.21 2001/01/15 13:19:12 itojun Exp $");
 #endif
 
 #include "defs.h"
@@ -498,10 +498,14 @@ ifdel(struct interface *ifp)
 #endif
 		    && rip_sock >= 0) {
 			m.imr_multiaddr.s_addr = htonl(INADDR_RIP_GROUP);
+#ifdef MCAST_IFINDEX
+			m.imr_interface.s_addr = htonl(ifp->int_index);
+#else
 			m.imr_interface.s_addr = ((ifp->int_if_flags
 						   & IFF_POINTOPOINT)
 						  ? ifp->int_dstaddr
 						  : ifp->int_addr);
+#endif
 			if (setsockopt(rip_sock,IPPROTO_IP,IP_DROP_MEMBERSHIP,
 				       &m, sizeof(m)) < 0
 			    && errno != EADDRNOTAVAIL
