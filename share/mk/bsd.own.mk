@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.222 2001/11/19 04:44:32 perry Exp $
+#	$NetBSD: bsd.own.mk,v 1.223 2001/11/24 21:26:34 perry Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -48,8 +48,10 @@ _SRC_TOP_!= cd ${.CURDIR}; while :; do \
 .endif
 
 .if !defined(_SRC_TOP_OBJ_)
+.if ${_SRC_TOP_} != ""
 _SRC_TOP_OBJ_!=	cd ${_SRC_TOP_} && ${PRINTOBJDIR}
 .MAKEOVERRIDES+=	_SRC_TOP_OBJ_
+.endif
 .endif
 
 .if (${_SRC_TOP_} != "") && defined(USE_NEW_TOOLCHAIN)
@@ -195,15 +197,19 @@ RENAME?=	-r
 HRDLINK?=	-l h
 SYMLINK?=	-l s
 
+.if defined(_SRC_TOP_OBJ_)
 METALOG?=	${_SRC_TOP_OBJ_}/METALOG
+.else
+METALOG?=	/dev/null
+.endif
 INSTPRIV?=	${UNPRIVED:D-U -M ${METALOG}}
 STRIPFLAG?=	-s
 
 .if ${NEED_OWN_INSTALL_TARGET} == "yes"
 INSTALL_DIR?=		${INSTALL} ${INSTPRIV} -d
 INSTALL_FILE?=		${INSTALL} ${INSTPRIV} ${COPY} ${PRESERVE} ${RENAME}
-INSTALL_LINK?=		${INSTALL} ${INSTPRIV} ${HRDLINK}
-INSTALL_SYMLINK?=	${INSTALL} ${INSTPRIV} ${SYMLINK}
+INSTALL_LINK?=		${INSTALL} ${INSTPRIV} ${HRDLINK} ${RENAME}
+INSTALL_SYMLINK?=	${INSTALL} ${INSTPRIV} ${SYMLINK} ${RENAME}
 HOST_INSTALL_FILE?=	${INSTALL} ${COPY} ${PRESERVE} ${RENAME}
 .endif
 
