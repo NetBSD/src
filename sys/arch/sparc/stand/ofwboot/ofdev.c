@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdev.c,v 1.1 2000/08/20 14:58:41 mrg Exp $	*/
+/*	$NetBSD: ofdev.c,v 1.1.22.1 2004/05/06 04:34:06 jmc Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -92,8 +92,14 @@ filename(str, ppart)
 #ifdef NOTDEF_DEBUG
 				printf("filename: hunting for arguments in %s\n", str);
 #endif
-				for (cp = lp;
-				     --cp >= str && *cp != '/' && *cp != '-';);
+				for (cp = lp; ; ) {
+					cp--;
+					if (cp < str) break;
+					if (cp[0] == '/') break;
+					if (cp[0] == ' ' && (cp+1) != lp &&
+					    cp[1] == '-')
+						break;
+				}
 				if (cp >= str && *cp == '-') {
 					/* found arguments, make firmware ignore them */
 					*cp = 0;
