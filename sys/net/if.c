@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.155 2005/03/31 15:48:13 christos Exp $	*/
+/*	$NetBSD: if.c,v 1.156 2005/03/31 21:14:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.155 2005/03/31 15:48:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.156 2005/03/31 21:14:52 christos Exp $");
 
 #include "opt_inet.h"
 
@@ -1741,7 +1741,7 @@ ifq_enqueue(struct ifnet *ifp, struct mbuf *m
 	int s = splnet();
 	int error;
 
-	IFQ_ENQUEUE(&ifp->if_snd, m, &pktattr, error);
+	IFQ_ENQUEUE(&ifp->if_snd, m, pktattr, error);
 	if (error) {
 		splx(s);
 		return error;
@@ -1778,7 +1778,7 @@ ifq_enqueue2(struct ifnet *ifp, struct ifqueue *ifq, struct mbuf *m
 		else
 			IF_ENQUEUE(ifq, m);
 	} else
-		IFQ_ENQUEUE(&ifp->if_snd, m, &pktattr, error);
+		IFQ_ENQUEUE(&ifp->if_snd, m, pktattr, error);
 	if (error != 0) {
 		++ifp->if_oerrors;
 		return error;
