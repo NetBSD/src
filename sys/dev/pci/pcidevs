@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.573 2003/08/28 15:17:54 thorpej Exp $
+$NetBSD: pcidevs,v 1.574 2003/09/13 12:13:29 jdolecek Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1487,7 +1487,7 @@ product INTEL PRO_100_VM_4	0x103c	PRO/100 VM Network Controller with 82562EM/EX 
 product INTEL PRO_100_VE_4	0x103d	PRO/100 VE (MOB) Network Controller
 product INTEL PRO_100_VM_5	0x103e	PRO/100 VM (MOB) Network Controller
 product INTEL PRO_WL_2100	0x1043	PRO/Wireless LAN 2100 3B Mini PCI Adapter
-product INTEL PRO_100_VM_6	0x1050	PRO/100 VM Network Controller with 82562ET PHY
+product INTEL PRO_100_VM_6	0x1050	PRO/100 VM Network Controller with 82562ET/EZ PHY
 product INTEL PRO_100_M		0x1059	PRO/100 M Network Controller
 product INTEL 82815_DC100_HUB	0x1100	82815 Hub
 product INTEL 82815_DC100_AGP	0x1101	82815 AGP
