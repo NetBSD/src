@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.10 1998/12/02 17:20:20 augustss Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.11 1998/12/02 22:57:08 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -111,7 +111,9 @@ usbd_get_string(dev, si, buf)
 	usbd_status r;
 
 	if (si == 0)
-		return 0;
+		return (0);
+	if (dev->quirks->uq_flags & UQ_NO_STRINGS)
+		return (0);
 	req.bmRequestType = UT_READ_DEVICE;
 	req.bRequest = UR_GET_DESCRIPTOR;
 	USETW2(req.wValue, UDESC_STRING, si);
@@ -202,7 +204,7 @@ usbd_devinfo(dev, showclass, cp)
 	int bcdDevice, bcdUSB;
 
 	usbd_devinfo_vp(dev, vendor, product);
-	cp += sprintf(cp, "addr %d, %s %s", dev->address, vendor, product);
+	cp += sprintf(cp, "%s %s", vendor, product);
 	if (showclass)
 		cp += sprintf(cp, " (class %d/%d)",
 			      udd->bDeviceClass, udd->bDeviceSubClass);
@@ -213,6 +215,7 @@ usbd_devinfo(dev, showclass, cp)
 	*cp++ = '/';
 	cp += usbd_printBCD(cp, bcdDevice);
 	*cp++ = ')';
+	cp += sprintf(cp, ", addr %d", dev->address);
 	*cp = 0;
 }
 
@@ -672,6 +675,8 @@ usbd_new_device(parent, bus, depth, lowspeed, port, up)
 	uaa.iface = 0;
 	uaa.usegeneric = 0;
 	uaa.port = port;
+	uaa.configno = UHUB_UNK_CONFIGURATION;
+	uaa.ifaceno = UHUB_UNK_INTERFACE;
 	/* First try with device specific drivers. */
 	if (config_found_sm(parent, &uaa, usbd_print, usbd_submatch) != 0)
 		return (USBD_NORMAL_COMPLETION);
@@ -686,8 +691,10 @@ usbd_new_device(parent, bus, depth, lowspeed, port, up)
 			       parent->dv_xname, addr, r);
 			goto bad;
 		}
+		uaa.configno = confi;
 		for (found = i = 0; i < dev->cdesc->bNumInterface; i++) {
 			uaa.iface = &dev->ifaces[i];
+			uaa.ifaceno = dev->ifaces[i].idesc->bInterfaceNumber;
 			if (config_found_sm(parent, &uaa, usbd_print, 
 					    usbd_submatch))
 				found++;
@@ -704,6 +711,8 @@ usbd_new_device(parent, bus, depth, lowspeed, port, up)
 	/* Finally try the generic driver. */
 	uaa.iface = 0;
 	uaa.usegeneric = 1;
+	uaa.configno = 0;
+	uaa.ifaceno = UHUB_UNK_INTERFACE;
 	if (config_found_sm(parent, &uaa, usbd_print, usbd_submatch) != 0)
 		return (USBD_NORMAL_COMPLETION);
 
@@ -733,10 +742,14 @@ usbd_print(aux, pnp)
 		if (!uaa->usegeneric)
 			return (QUIET);
 		usbd_devinfo(uaa->device, 1, devinfo);
-		printf("%s: %s", pnp, devinfo);
+		printf("%s, %s", devinfo, pnp);
 	}
 	if (uaa->port != 0)
-		printf(", port %d", uaa->port);
+		printf(" port %d", uaa->port);
+	if (uaa->configno != UHUB_UNK_CONFIGURATION)
+		printf(" configuration %d", uaa->configno);
+	if (uaa->ifaceno != UHUB_UNK_INTERFACE)
+		printf(" interface %d", uaa->ifaceno);
 	return (UNCONF);
 }
 
@@ -748,9 +761,15 @@ usbd_submatch(parent, cf, aux)
 {
 	struct usb_attach_arg *uaa = aux;
 
-	if (uaa->port != 0 &&
-	    cf->uhubcf_port != UHUB_UNK_PORT &&
-	    cf->uhubcf_port != uaa->port)
+	if ((uaa->port != 0 &&
+	     cf->uhubcf_port != UHUB_UNK_PORT &&
+	     cf->uhubcf_port != uaa->port) ||
+	    (uaa->configno != UHUB_UNK_CONFIGURATION &&
+	     cf->uhubcf_configuration != UHUB_UNK_CONFIGURATION &&
+	     cf->uhubcf_configuration != uaa->configno) ||
+	    (uaa->ifaceno != UHUB_UNK_INTERFACE &&
+	     cf->uhubcf_interface != UHUB_UNK_INTERFACE &&
+	     cf->uhubcf_interface != uaa->ifaceno))
 		return 0;
 	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
 }
