@@ -1,4 +1,4 @@
-/*	$NetBSD: menu_sys.def,v 1.32 2003/05/07 16:54:39 dsl Exp $	*/
+/*	$NetBSD: menu_sys.def,v 1.33 2003/05/08 16:20:57 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -505,6 +505,11 @@ menu_init (void)
 
 	if (__menu_init)
 		return 0;
+
+#ifdef	USER_MENU_INIT
+	if (USER_MENU_INIT)
+		return 1;
+#endif
 
 	if (initscr() == NULL)
 		return 1;
