@@ -1,4 +1,4 @@
-/*	$NetBSD: unfdpass.c,v 1.1 1998/01/07 03:53:02 thorpej Exp $	*/
+/*	$NetBSD: unfdpass.c,v 1.2 1998/01/07 23:38:54 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 /*
- * Test passing of file descriptors over Unix domain sockets.
+ * Test passing of file descriptors and credentials over Unix domain sockets.
  */
 
 #include <sys/param.h>
@@ -47,19 +47,27 @@
 #include <sys/wait.h>
 #include <sys/un.h>
 #include <err.h>
+#include <errno.h>
 #include <fcntl.h>
+#include <signal.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
 
-int	sock[2];
+#define	SOCK_NAME	"test-sock"
 
 int	main __P((int, char *[]));
 void	child __P((void));
+void	catch_sigchld __P((int));
 
-struct cmessage {
+struct fdcmessage {
 	struct cmsghdr cm;
 	int files[2];
+};
+
+struct crcmessage {
+	struct cmsghdr cm;
+	char creds[SOCKCREDSIZE(NGROUPS)];
 };
 
 /* ARGSUSED */
@@ -69,11 +77,19 @@ main(argc, argv)
 	char *argv[];
 {
 	struct msghdr msg;
-	int fd, i, status;
+	int listensock, sock, fd, i, status;
 	char fname[16], buf[64];
-	pid_t pid;
 	struct cmsghdr *cmp;
-	struct cmessage cm;
+	struct {
+		struct fdcmessage fdcm;
+		struct crcmessage crcm;
+	} message;
+	int *files = NULL;
+	struct sockcred *sc = NULL;
+	struct sockaddr_un sun, csun;
+	int csunlen;
+	fd_set oob;
+	pid_t pid;
 
 	/*
 	 * Create the test files.
@@ -89,11 +105,31 @@ main(argc, argv)
 	}
 
 	/*
-	 * Create the socket pair to pass the descriptors over.
+	 * Create the listen socket.
 	 */
-	if (socketpair(AF_LOCAL, SOCK_STREAM, 0, sock) == -1)
-		err(1, "socketpair");
+	if ((listensock = socket(AF_LOCAL, SOCK_STREAM, 0)) == -1)
+		err(1, "socket");
 
+	(void) unlink(SOCK_NAME);
+	(void) memset(&sun, 0, sizeof(sun));
+	sun.sun_family = AF_LOCAL;
+	(void) strcpy(sun.sun_path, SOCK_NAME);
+	sun.sun_len = SUN_LEN(&sun);
+
+	i = 1;
+	if (setsockopt(listensock, 0, LOCAL_CREDS, &i, sizeof(i)) == -1)
+		err(1, "setsockopt");
+
+	if (bind(listensock, (struct sockaddr *)&sun, sizeof(sun)) == -1)
+		err(1, "bind");
+
+	if (listen(listensock, 1) == -1)
+		err(1, "listen");
+
+	/*
+	 * Create the sender.
+	 */
+	(void) signal(SIGCHLD, catch_sigchld);
 	pid = fork();
 	switch (pid) {
 	case -1:
@@ -105,7 +141,132 @@ main(argc, argv)
 		/* NOTREACHED */
 	}
 
-	(void) close(sock[1]);
+	/*
+	 * Wait for the sender to connect.
+	 */
+	if ((sock = accept(listensock, (struct sockaddr *)&csun,
+	    &csunlen)) == -1)
+		err(1, "accept");
+
+	/*
+	 * Give sender a chance to run.  We will get going again
+	 * once the SIGCHLD arrives.
+	 */
+	(void) sleep(10);
+
+	/*
+	 * Grab the descriptors and credentials passed to us.
+	 */
+	(void) memset(&msg, 0, sizeof(msg));
+	msg.msg_control = (caddr_t) &message;
+	msg.msg_controllen = sizeof(message);
+
+	if (recvmsg(sock, &msg, 0) < 0)
+		err(1, "recvmsg");
+
+	(void) close(sock);
+
+	if (msg.msg_controllen == 0)
+		errx(1, "no control messages received");
+
+	if (msg.msg_flags & MSG_CTRUNC)
+		errx(1, "lost control message data");
+
+	cmp = CMSG_FIRSTHDR(&msg);
+	for (cmp = CMSG_FIRSTHDR(&msg); cmp != NULL;
+	    cmp = CMSG_NXTHDR(&msg, cmp)) {
+		if (cmp->cmsg_level != SOL_SOCKET)
+			errx(1, "bad control message level %d",
+			    cmp->cmsg_level);
+
+		switch (cmp->cmsg_type) {
+		case SCM_RIGHTS:
+			if (cmp->cmsg_len != sizeof(message.fdcm))
+				errx(1, "bad fd control message length");
+
+			files = (int *)CMSG_DATA(cmp);
+			break;
+
+		case SCM_CREDS:
+			if (cmp->cmsg_len < sizeof(struct sockcred))
+				errx(1, "bad cred control message length");
+
+			sc = (struct sockcred *)CMSG_DATA(cmp);
+			break;
+
+		default:
+			errx(1, "unexpected control message");
+			/* NOTREACHED */
+		}
+	}
+
+	/*
+	 * Read the files and print their contents.
+	 */
+	if (files == NULL)
+		warnx("didn't get fd control message");
+	else {
+		for (i = 0; i < 2; i++) {
+			(void) memset(buf, 0, sizeof(buf));
+			if (read(files[i], buf, sizeof(buf)) <= 0)
+				err(1, "read file %d", i + 1);
+			printf("%s", buf);
+		}
+	}
+
+	/*
+	 * Double-check credentials.
+	 */
+	if (sc == NULL)
+		warnx("didn't get cred control message");
+	else {
+		if (sc->sc_uid == getuid() &&
+		    sc->sc_euid == geteuid() &&
+		    sc->sc_gid == getgid() &&
+		    sc->sc_egid == getegid())
+			printf("Credentials match.\n");
+		else
+			printf("Credentials do NOT match.\n");
+	}
+
+	/*
+	 * All done!
+	 */
+	exit(0);
+}
+
+void
+catch_sigchld(sig)
+	int sig;
+{
+	int status;
+
+	(void) wait(&status);
+}
+
+void
+child()
+{
+	struct msghdr msg;
+	char fname[16], buf[64];
+	struct cmsghdr *cmp;
+	struct fdcmessage fdcm;
+	int i, fd, sock;
+	struct sockaddr_un sun;
+
+	/*
+	 * Create socket and connect to the receiver.
+	 */
+	if ((sock = socket(AF_LOCAL, SOCK_STREAM, 0)) == -1)
+		errx(1, "child socket");
+
+	(void) memset(&sun, 0, sizeof(sun));
+	sun.sun_family = AF_LOCAL;
+	(void) strcpy(sun.sun_path, SOCK_NAME);
+	sun.sun_len = SUN_LEN(&sun);
+
+	if (connect(sock, (struct sockaddr *)&sun, sizeof(sun)) == -1)
+		err(1, "child connect");
 
 	/*
 	 * Open the files again, and pass them to the child over the socket.
@@ -113,77 +274,21 @@ main(argc, argv)
 	for (i = 0; i < 2; i++) {
 		(void) sprintf(fname, "file%d", i + 1);
 		if ((fd = open(fname, O_RDONLY, 0666)) == -1)
-			err(1, "open %s", fname);
-		cm.files[i] = fd;
+			err(1, "child open %s", fname);
+		fdcm.files[i] = fd;
 	}
 
 	(void) memset(&msg, 0, sizeof(msg));
-	msg.msg_control = (caddr_t) &cm;
-	msg.msg_controllen = sizeof(cm);
+	msg.msg_control = (caddr_t) &fdcm;
+	msg.msg_controllen = sizeof(fdcm);
 
 	cmp = CMSG_FIRSTHDR(&msg);
-	cmp->cmsg_len = sizeof(cm);
+	cmp->cmsg_len = sizeof(fdcm);
 	cmp->cmsg_level = SOL_SOCKET;
 	cmp->cmsg_type = SCM_RIGHTS;
 
-	if (sendmsg(sock[0], &msg, 0)) {
-		warn("sendmsg");
-		(void) kill(pid, SIGINT);
-	}
-
-	/* Wait for the child to exit. */
-	if (waitpid(pid, &status, 0) == -1)
-		err(1, "waitpid");
-
-	if (WIFEXITED(status) && WEXITSTATUS(status) != 0)
-		errx(1, "child exited with status of %d\n",
-		    WEXITSTATUS(status));
-
-	exit(0);
-}
-
-void
-child()
-{
-	struct msghdr msg;
-	char buf[64];
-	struct cmsghdr *cmp;
-	struct cmessage cm;
-	int i;
-
-	/*
-	 * Close the socket we're not using.
-	 */
-	(void) close(sock[0]);
-
-	/*
-	 * Grab the descriptors passed to us.
-	 */
-	(void) memset(&msg, 0, sizeof(msg));
-	msg.msg_control = (caddr_t) &cm;
-	msg.msg_controllen = sizeof(cm);
-
-	if (recvmsg(sock[1], &msg, 0) < 0)
-		err(1, "recvmsg");
-
-	cmp = CMSG_FIRSTHDR(&msg);
-
-	if (cmp->cmsg_len != sizeof(cm))
-		err(1, "bad control message length");
-	if (cmp->cmsg_level != SOL_SOCKET)
-		err(1, "bad control message level");
-	if (cmp->cmsg_type != SCM_RIGHTS)
-		err(1, "bad control message type");
-
-	/*
-	 * Read the files and print their contents.
-	 */
-	for (i = 0; i < 2; i++) {
-		(void) memset(buf, 0, sizeof(buf));
-		if (read(cm.files[i], buf, sizeof(buf)) <= 0)
-			err(1, "read file %d", i + 1);
-		printf("%s", buf);
-	}
+	if (sendmsg(sock, &msg, 0))
+		err(1, "child sendmsg");
 
 	/*
 	 * All done!
