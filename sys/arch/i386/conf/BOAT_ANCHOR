@@ -1,7 +1,7 @@
 #
 #	BOAT_ANCHOR -- kernel for the 386-20 the gang uses for testing
 #
-#	$Id: BOAT_ANCHOR,v 1.31 1994/03/29 04:40:40 mycroft Exp $
+#	$Id: BOAT_ANCHOR,v 1.32 1994/04/14 07:01:44 cgd Exp $
 #
 machine		"i386"
 cpu		"I386_CPU"
@@ -48,7 +48,7 @@ device		npx0	at isa? port "IO_NPX" irq 13 vector npxintr
 
 pseudo-device	loop
 pseudo-device	ether
-#pseudo-device	sl	2
+pseudo-device	sl	2
 pseudo-device	log
 pseudo-device	pty	32
 
