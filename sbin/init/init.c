@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.26 1997/07/19 18:11:59 perry Exp $	*/
+/*	$NetBSD: init.c,v 1.27 1997/07/19 19:00:44 perry Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n"
 #if 0
 static char sccsid[] = "@(#)init.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: init.c,v 1.26 1997/07/19 18:11:59 perry Exp $");
+__RCSID("$NetBSD: init.c,v 1.27 1997/07/19 19:00:44 perry Exp $");
 #endif
 #endif /* not lint */
 
@@ -87,6 +87,8 @@ __RCSID("$NetBSD: init.c,v 1.26 1997/07/19 18:11:59 perry Exp $");
 #define	WINDOW_WAIT		 3	/* wait N secs after starting window */
 #define	STALL_TIMEOUT		30	/* wait N secs after warning */
 #define	DEATH_WATCH		10	/* wait N secs for procs to die */
+
+int main __P((int, char *[]));
 
 void handle __P((sig_t, ...));
 void delset __P((sigset_t *, ...));
@@ -296,7 +298,7 @@ handle(va_alist)
 	sa.sa_handler = handler;
 	sigfillset(&mask_everything);
 
-	while (sig = va_arg(ap, int)) {
+	while ((sig = va_arg(ap, int)) != 0) {
 		sa.sa_mask = mask_everything;
 		/* XXX SA_RESTART? */
 		sa.sa_flags = sig == SIGCHLD ? SA_NOCLDSTOP : 0;
@@ -327,7 +329,7 @@ delset(va_alist)
 	va_start(ap, maskp);
 #endif
 
-	while (sig = va_arg(ap, int))
+	while ((sig = va_arg(ap, int)) != 0)
 		sigdelset(maskp, sig);
 	va_end(ap);
 }
@@ -868,16 +870,16 @@ char **
 construct_argv(command)
 	char *command;
 {
-	register int argc = 0;
-	register char **argv = (char **) malloc(((strlen(command) + 1) / 2 + 1)
+	int argc = 0;
+	char **argv = (char **) malloc(((strlen(command) + 1) / 2 + 1)
 						* sizeof (char *));
 	static const char separators[] = " \t";
 
 	if ((argv[argc++] = strtok(command, separators)) == 0)
-		return 0;
-	while (argv[argc++] = strtok((char *) 0, separators))
+		return (NULL);
+	while ((argv[argc++] = strtok((char *) 0, separators)))
 		continue;
-	return argv;
+	return (argv);
 }
 
 /*
@@ -885,7 +887,7 @@ construct_argv(command)
  */
 void
 free_session(sp)
-	register session_t *sp;
+	session_t *sp;
 {
 	free(sp->se_device);
 	if (sp->se_getty) {
@@ -906,14 +908,14 @@ session_t *
 new_session(sprev, session_index, typ)
 	session_t *sprev;
 	int session_index;
-	register struct ttyent *typ;
+	struct ttyent *typ;
 {
-	register session_t *sp;
+	session_t *sp;
 
 	if ((typ->ty_status & TTY_ON) == 0 ||
-	    typ->ty_name == 0 ||
-	    typ->ty_getty == 0)
-		return 0;
+	    typ->ty_name == NULL ||
+	    typ->ty_getty == NULL)
+		return (NULL);
 
 	sp = (session_t *) malloc(sizeof (session_t));
 	memset(sp, 0, sizeof *sp);
@@ -926,19 +928,19 @@ new_session(sprev, session_index, typ)
 
 	if (setupargv(sp, typ) == 0) {
 		free_session(sp);
-		return (0);
+		return (NULL);
 	}
 
-	sp->se_next = 0;
-	if (sprev == 0) {
+	sp->se_next = NULL;
+	if (sprev == NULL) {
 		sessions = sp;
-		sp->se_prev = 0;
+		sp->se_prev = NULL;
 	} else {
 		sprev->se_next = sp;
 		sp->se_prev = sprev;
 	}
 
-	return sp;
+	return (sp);
 }
 
 /*
@@ -957,10 +959,10 @@ setupargv(sp, typ)
 	sp->se_getty = malloc(strlen(typ->ty_getty) + strlen(typ->ty_name) + 2);
 	(void) sprintf(sp->se_getty, "%s %s", typ->ty_getty, typ->ty_name);
 	sp->se_getty_argv = construct_argv(sp->se_getty);
-	if (sp->se_getty_argv == 0) {
+	if (sp->se_getty_argv == NULL) {
 		warning("can't parse getty for port %s", sp->se_device);
 		free(sp->se_getty);
-		sp->se_getty = 0;
+		sp->se_getty = NULL;
 		return (0);
 	}
 	if (typ->ty_window) {
@@ -968,11 +970,11 @@ setupargv(sp, typ)
 			free(sp->se_window);
 		sp->se_window = strdup(typ->ty_window);
 		sp->se_window_argv = construct_argv(sp->se_window);
-		if (sp->se_window_argv == 0) {
+		if (sp->se_window_argv == NULL) {
 			warning("can't parse window for port %s",
 				sp->se_device);
 			free(sp->se_window);
-			sp->se_window = 0;
+			sp->se_window = NULL;
 			return (0);
 		}
 	}
@@ -986,8 +988,8 @@ state_func_t
 read_ttys()
 {
 	int session_index = 0;
-	register session_t *sp, *snext;
-	register struct ttyent *typ;
+	session_t *sp, *snext;
+	struct ttyent *typ;
 
 	/*
 	 * Destroy any previous session state.
@@ -999,7 +1001,7 @@ read_ttys()
 		snext = sp->se_next;
 		free_session(sp);
 	}
-	sessions = 0;
+	sessions = NULL;
 	if (start_session_db())
 		return (state_func_t) single_user;
 
@@ -1007,8 +1009,8 @@ read_ttys()
 	 * Allocate a session entry for each active port.
 	 * Note that sp starts at 0.
 	 */
-	while (typ = getttyent())
-		if (snext = new_session(sp, ++session_index, typ))
+	while ((typ = getttyent()) != NULL)
+		if ((snext = new_session(sp, ++session_index, typ)) != NULL)
 			sp = snext;
 
 	endttyent();
@@ -1105,7 +1107,7 @@ collect_child(pid)
 #endif
 {
 #ifndef LETS_GET_SMALL
-	register session_t *sp, *sprev, *snext;
+	session_t *sp, *sprev, *snext;
 
 	if (! sessions)
 		return;
@@ -1118,11 +1120,11 @@ collect_child(pid)
 	sp->se_process = 0;
 
 	if (sp->se_flags & SE_SHUTDOWN) {
-		if (sprev = sp->se_prev)
+		if ((sprev = sp->se_prev) != NULL)
 			sprev->se_next = sp->se_next;
 		else
 			sessions = sp->se_next;
-		if (snext = sp->se_next)
+		if ((snext = sp->se_next) != NULL)
 			snext->se_prev = sp->se_prev;
 		free_session(sp);
 		return;
@@ -1174,7 +1176,7 @@ state_func_t
 multi_user()
 {
 	pid_t pid;
-	register session_t *sp;
+	session_t *sp;
 
 	requested_transition = 0;
 
@@ -1213,16 +1215,16 @@ multi_user()
 state_func_t
 clean_ttys()
 {
-	register session_t *sp, *sprev;
-	register struct ttyent *typ;
-	register int session_index = 0;
-	register int devlen;
+	session_t *sp, *sprev;
+	struct ttyent *typ;
+	int session_index = 0;
+	int devlen;
 
 	for (sp = sessions; sp; sp = sp->se_next)
 		sp->se_flags &= ~SE_PRESENT;
 
 	devlen = sizeof(_PATH_DEV) - 1;
-	while (typ = getttyent()) {
+	while ((typ = getttyent()) != NULL) {
 		++session_index;
 
 		for (sprev = 0, sp = sessions; sp; sprev = sp, sp = sp->se_next)
@@ -1273,7 +1275,7 @@ clean_ttys()
 state_func_t
 catatonia()
 {
-	register session_t *sp;
+	session_t *sp;
 
 	for (sp = sessions; sp; sp = sp->se_next)
 		sp->se_flags |= SE_SHUTDOWN;
@@ -1299,8 +1301,8 @@ alrm_handler(sig)
 state_func_t
 death()
 {
-	register session_t *sp;
-	register int i;
+	session_t *sp;
+	int i;
 	pid_t pid;
 	static const int death_sigs[3] = { SIGHUP, SIGTERM, SIGKILL };
 
