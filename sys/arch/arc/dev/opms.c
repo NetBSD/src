@@ -1,4 +1,4 @@
-/*	$NetBSD: opms.c,v 1.11 2005/01/22 07:35:34 tsutsui Exp $	*/
+/*	$NetBSD: opms.c,v 1.12 2005/03/11 06:58:11 matt Exp $	*/
 /*	$OpenBSD: pccons.c,v 1.22 1999/01/30 22:39:37 imp Exp $	*/
 /*	NetBSD: pms.c,v 1.21 1995/04/18 02:25:18 mycroft Exp	*/
 
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opms.c,v 1.11 2005/01/22 07:35:34 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opms.c,v 1.12 2005/03/11 06:58:11 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -259,7 +259,7 @@ opmsclose(dev_t dev, int flag, int mode, struct proc *p)
 }
 
 int
-opmsread(dev_t devf struct uio *uio, int flag)
+opmsread(dev_t dev, struct uio *uio, int flag)
 {
 	struct opms_softc *sc = opms_cd.cd_devs[PMSUNIT(dev)];
 	int s;
