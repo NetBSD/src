@@ -1,4 +1,4 @@
-/*	$NetBSD: mesh.c,v 1.1.2.1 2000/02/22 22:31:31 he Exp $	*/
+/*	$NetBSD: mesh.c,v 1.1.2.2 2000/02/23 01:22:27 he Exp $	*/
 
 /*-
  * Copyright (C) 1999	Internet Research Institute, Inc.
@@ -303,7 +303,6 @@ mesh_intr(arg)
 {
 	struct mesh_softc *sc = arg;
 	struct mesh_scb *scb;
-	int fifocnt;
 	u_char intr, exception, error, status0, status1;
 	int i;
 
@@ -338,16 +337,8 @@ mesh_intr(arg)
 		sc->sc_flags &= ~MESH_DMA_ACTIVE;
 		scb->resid = MESH_GET_XFER(sc);
 
-		fifocnt = mesh_read_reg(sc, MESH_FIFO_COUNT);
-		if (fifocnt != 0 && (scb->flags & MESH_READ)) {
-			char *cp = (char *)scb->daddr + scb->dlen - fifocnt;
-
-			while (fifocnt > 0) {
-				*cp++ = mesh_read_reg(sc, MESH_FIFO);
-				fifocnt--;
-			}
-		} else
-			mesh_set_reg(sc, MESH_SEQUENCE, MESH_CMD_FLUSH_FIFO);
+		if (mesh_read_reg(sc, MESH_FIFO_COUNT) != 0)
+			panic("mesh: FIFO != 0");	/* XXX */
 	}
 
 	if (intr & MESH_INTR_ERROR) {
@@ -1035,14 +1026,8 @@ mesh_done(sc, scb)
 	}
 
 	if (scb->status == SCSI_CHECK) {
-		if (scb->flags & MESH_SENSE) {
-			printf("mesh: SCSI_CHECK && MESH_SENSE?\n");
-			xs->xs_status |= XS_STS_DONE;
-			xs->error = XS_DRIVER_STUFFUP;
-			scsipi_done(xs);
-			mesh_free_scb(sc, scb);
-			return;
-		}
+		if (scb->flags & MESH_SENSE)
+			panic("SCSI_CHECK && MESH_SENSE?");
 		xs->resid = scb->resid;
 		mesh_sense(sc, scb);
 		return;
