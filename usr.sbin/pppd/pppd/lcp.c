@@ -1,4 +1,4 @@
-/*	$NetBSD: lcp.c,v 1.15 1997/09/26 19:52:55 christos Exp $	*/
+/*	$NetBSD: lcp.c,v 1.16 1997/09/26 20:24:12 christos Exp $	*/
 
 /*
  * lcp.c - PPP Link Control Protocol.
@@ -24,7 +24,7 @@
 #if 0
 static char rcsid[] = "Id: lcp.c,v 1.30 1997/04/30 05:52:59 paulus Exp ";
 #else
-__RCSID("$NetBSD: lcp.c,v 1.15 1997/09/26 19:52:55 christos Exp $");
+__RCSID("$NetBSD: lcp.c,v 1.16 1997/09/26 20:24:12 christos Exp $");
 #endif
 #endif
 
@@ -792,7 +792,7 @@ lcp_nakci(f, p, len)
      */
     if (go->neg_mru && go->mru != DEFMRU) {
 	NAKCISHORT(CI_MRU, neg_mru,
-		   if (cishort <= wo->mru || cishort < DEFMRU)
+		   if (cishort <= wo->mru || cishort <= DEFMRU)
 		       try.mru = cishort;
 		   );
     }
