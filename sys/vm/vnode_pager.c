@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode_pager.c,v 1.22 1997/01/31 03:06:06 thorpej Exp $	*/
+/*	$NetBSD: vnode_pager.c,v 1.23 1997/02/13 02:54:11 tls Exp $	*/
 
 /*
  * Copyright (c) 1990 University of Utah.
@@ -437,6 +437,26 @@ vnode_pager_umount(mp)
 		if (mp == (struct mount *)0 || vp->v_mount == mp) {
 			VOP_LOCK(vp);
 			(void) vnode_pager_uncache(vp);
+			VOP_UNLOCK(vp);
+		}
+	}
+}
+
+void
+vnode_pager_sync(mp)
+	struct mount *mp;
+{
+	vm_pager_t pager;
+	vm_object_t object;
+	struct vnode *vp;
+
+	for (pager = vnode_pager_list.tqh_first;
+	     pager != NULL; pager = pager->pg_list.tqe_next) {
+		vp = ((vn_pager_t)pager->pg_data)->vnp_vp;
+		if (mp == (struct mount *)0 || vp->v_mount == mp) {
+			object = vm_object_lookup(pager);
+			VOP_LOCK(vp);
+			(void)vm_object_page_clean(object, 0, 0, FALSE, TRUE);
 			VOP_UNLOCK(vp);
 		}
 	}

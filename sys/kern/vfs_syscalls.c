@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.75 1997/02/10 12:41:19 fvdl Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.76 1997/02/13 02:54:06 tls Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -443,6 +443,7 @@ sys_sync(p, v, retval)
 		    !vfs_busy(mp)) {
 			asyncflag = mp->mnt_flag & MNT_ASYNC;
 			mp->mnt_flag &= ~MNT_ASYNC;
+			vnode_pager_sync(mp);
 			VFS_SYNC(mp, MNT_NOWAIT, p->p_ucred, p);
 			if (asyncflag)
 				mp->mnt_flag |= MNT_ASYNC;
