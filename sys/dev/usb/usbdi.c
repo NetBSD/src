@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.75 2000/06/01 15:51:27 augustss Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.76 2000/06/06 11:36:21 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -634,11 +634,12 @@ usbd_set_interface(usbd_interface_handle iface, int altidx)
 	if (LIST_FIRST(&iface->pipes) != 0)
 		return (USBD_IN_USE);
 
+	endpoints = iface->endpoints;
 	err = usbd_fill_iface_data(iface->device, iface->index, altidx);
 	if (err)
 		return (err);
 
-	/* new setting work, we can free old endpoints */
+	/* new setting works, we can free old endpoints */
 	if (endpoints != NULL)
 		free(endpoints, M_USB);
 
