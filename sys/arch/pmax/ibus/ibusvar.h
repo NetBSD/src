@@ -1,19 +1,21 @@
-/*	$NetBSD: ibusvar.h,v 1.4 1999/03/15 07:43:06 nisimura Exp $	*/
+/*	$NetBSD: ibusvar.h,v 1.5 1999/03/15 07:52:05 nisimura Exp $	*/
 
 #ifndef __IBUSVAR_H
 #define __IBUSVAR_H
 
+#include <mips/cpuregs.h>
+
 /*
- * function types for interrupt establish/diestablish
+ * function types for interrupt establish/disestablish
  */
 struct ibus_attach_args;
 typedef int (ibus_intr_establish_t) __P((void * cookie, int level,
-			int (*handler) __P((intr_arg_t)), intr_arg_t arg));
+			int (*handler)(intr_arg_t), intr_arg_t arg));
 typedef int (ibus_intr_disestablish_t)  __P((struct ibus_attach_args *));
 
 
 /* 
- * Arguments used to attach a ibus "device" to its parent
+ * Arguments used to attach an ibus "device" to its parent
  */
 struct ibus_dev_attach_args {
 	const char *ibd_busname;		/* XXX should be common */
@@ -37,12 +39,12 @@ struct ibus_attach_args {
 
 
 /*
- * interrrupt estalish functions.
+ * interrupt establish functions.
  * These call up to system-specific code to 
  * recompute spl levels.
  */
 void	ibus_intr_establish __P((void * cookie, int level,
-			int (*handler) __P((intr_arg_t)), intr_arg_t arg));
+			int (*handler)(intr_arg_t), intr_arg_t arg));
 void	ibus_intr_disestablish __P((struct ibus_attach_args *));
 int	ibusprint __P((void *aux, const char *pnp));
 
