@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.x68k,v 1.20 1997/10/07 19:26:15 is Exp $
+#	$NetBSD: Makefile.x68k,v 1.21 1997/10/09 20:40:31 is Exp $
 
 # Makefile for NetBSD
 #
@@ -22,6 +22,7 @@
 # PROF is set to -pg if profiling.
 
 CC?=	cc
+AS?=	as
 LD?=	ld
 MKDEP?=	mkdep
 SIZE?=	size

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.amiga,v 1.66 1997/10/07 19:23:37 is Exp $
+#	$NetBSD: Makefile.amiga,v 1.67 1997/10/09 20:40:25 is Exp $
 
 # Makefile for NetBSD
 #
@@ -22,6 +22,7 @@
 # PROF is set to -pg if profiling.
 
 CC?=	cc
+AS?=	as
 LD?=	ld
 MKDEP?=	mkdep
 SIZE?=	size
