@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)mfsnode.h	7.3 (Berkeley) 4/16/91
- *	$Id: mfsnode.h,v 1.3 1993/05/20 03:53:29 cgd Exp $
+ *	$Id: mfsnode.h,v 1.4 1993/08/24 14:54:16 mycroft Exp $
  */
 
 #ifndef _UFS_MFSNODE_H_
@@ -188,7 +188,7 @@ int	mfs_bmap __P((
 		daddr_t *bnp));
 int	mfs_strategy __P((
 		struct buf *bp));
-int	mfs_print __P((
+void	mfs_print __P((
 		struct vnode *vp));
 #define mfs_islocked ((int (*) __P(( \
 		struct vnode *vp))) nullop)
