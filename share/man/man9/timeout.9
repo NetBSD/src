@@ -1,4 +1,4 @@
-.\"	$NetBSD: timeout.9,v 1.1 1996/06/23 22:11:59 pk Exp $
+.\"	$NetBSD: timeout.9,v 1.2 1996/06/23 22:32:34 pk Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -52,9 +52,12 @@ schedules a call to the function given by the argument
 .Fa fnt
 to take place after
 .Fa ticks Ns No /hz
-seconds.
+seconds. Non-positive values of
+.Fa ticks
+are silently converted to the value
+.Sq 1 .
 .Fa fnt
-should be a function that takes a
+should be a pointer to a function that takes a
 .Fa void *
 argument, in which the
 .Fn timeout
@@ -64,8 +67,13 @@ will be passed.
 .Pp
 The function
 .Fn untimeout
-cancels any scheduled call that matches the
+cancels the first scheduled call
+.Pq i.e. the one with the shortest delay left
+that matches the
 .Aq Fa fnt , Ns Fa arg
 pair. If a match can not be found in the callout queue, nothing happens.
 .Sh SEE ALSO
 .Xr hz 9
+.Sh BUGS
+.Fn untimeout
+should probably remove all matches from the queue..
