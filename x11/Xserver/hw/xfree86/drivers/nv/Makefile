@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2003/12/23 10:46:27 rtr Exp $
+#	$NetBSD: Makefile,v 1.2 2003/12/26 04:15:16 rtr Exp $
 
 XMODULEDIR=	${X11USRLIBDIR}/modules/drivers
 
@@ -6,8 +6,8 @@ XMODULEDIR=	${X11USRLIBDIR}/modules/drivers
 
 .include <bsd.own.mk>
 
-MOD=	nv_drv
-.PATH:          ${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/drivers/nv
+MODULE=	nv_drv
+.PATH:	${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/drivers/nv
 
 SRCS=	nv_driver.c nv_dac.c nv_setup.c nv_cursor.c nv_xaa.c nv_dga.c \
 	nv_shadow.c riva_hw.c nv_video.c
