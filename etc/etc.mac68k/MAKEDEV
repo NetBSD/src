@@ -20,7 +20,7 @@
 # MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 #
 #	from: @(#)MAKEDEV	5.2 (Berkeley) 6/22/90
-#	$NetBSD: MAKEDEV,v 1.48 2000/07/27 18:43:24 mason Exp $
+#	$NetBSD: MAKEDEV,v 1.49 2001/12/19 17:58:07 wiz Exp $
 #
 ###########################################################################
 #
@@ -72,7 +72,7 @@
 #	lkm	loadable kernel modules interface
 #	ipl	ip filter
 #	random	Random number generator
-#	scsibus* SCSI busses, see scsictl(8), scsi(4)
+#	scsibus* SCSI busses, see scsi(4), scsictl(8)
 #	ss*	SCSI scanner
 #	uk*	SCSI unknown
 #	ch*	SCSI changer
