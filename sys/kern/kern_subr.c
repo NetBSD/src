@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.94 2002/12/21 16:23:57 manu Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.95 2003/01/18 10:06:30 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.94 2002/12/21 16:23:57 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.95 2003/01/18 10:06:30 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -166,9 +166,9 @@ uiomove(buf, n, uio)
 		switch (uio->uio_segflg) {
 
 		case UIO_USERSPACE:
-			if (curproc->p_cpu->ci_schedstate.spc_flags &
+			if (curlwp->l_cpu->ci_schedstate.spc_flags &
 			    SPCF_SHOULDYIELD)
-				preempt(NULL);
+				preempt(1);
 			if (__predict_true(p == curproc)) {
 				if (uio->uio_rw == UIO_READ)
 					error = copyout(cp, iov->iov_base, cnt);
@@ -1235,16 +1235,16 @@ format_bytes(buf, len, bytes)
  * system call number range for emulation the process runs under.
  */
 int
-trace_enter(p, code, realcode, callp, args, rval)
-	struct proc *p; 
-	register_t code;
-	register_t realcode;
-	const struct sysent *callp;
-	void *args;
-	register_t rval[];
+trace_enter(struct lwp *l, register_t code,
+	register_t realcode, const struct sysent *callp, void *args,
+	register_t rval[])
 {
+#if defined(KTRACE) || defined(SYSTRACE)
+	struct proc *p = l->l_proc;
+#endif
+
 #ifdef SYSCALL_DEBUG
-	scdebug_call(p, code, args);
+	scdebug_call(l, code, args);
 #endif /* SYSCALL_DEBUG */
 
 #ifdef KTRACE
@@ -1267,18 +1267,22 @@ trace_enter(p, code, realcode, callp, args, rval)
  * system call number range for emulation the process runs under.
  */
 void
-trace_exit(struct proc *p, register_t code, void *args, register_t rval[],
+trace_exit(struct lwp *l, register_t code, void *args, register_t rval[],
     int error)
 {
+#if defined(KTRACE) || defined(SYSTRACE)
+	struct proc *p = l->l_proc;
+#endif
+
 #ifdef SYSCALL_DEBUG
-	scdebug_ret(p, code, error, rval);
+	scdebug_ret(l, code, error, rval);
 #endif /* SYSCALL_DEBUG */
 
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET)) {
-		KERNEL_PROC_LOCK(p);
+		KERNEL_PROC_LOCK(l);
 		ktrsysret(p, code, error, rval[0]);
-		KERNEL_PROC_UNLOCK(p);
+		KERNEL_PROC_UNLOCK(l);
 	}
 #endif /* KTRACE */
 

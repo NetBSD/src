@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.77 2002/08/28 07:27:14 gmcgarry Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.78 2003/01/18 10:06:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993 Jan-Simon Pendry.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.77 2002/08/28 07:27:14 gmcgarry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.78 2003/01/18 10:06:34 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,6 +69,7 @@ __KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.77 2002/08/28 07:27:14 gmcgarry Ex
 #include <sys/ras.h>
 
 #include <sys/mount.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <uvm/uvm_extern.h>
@@ -84,8 +85,8 @@ __KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.77 2002/08/28 07:27:14 gmcgarry Ex
  * Process debugging system call.
  */
 int
-sys_ptrace(p, v, retval)
-	struct proc *p;
+sys_ptrace(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -95,6 +96,8 @@ sys_ptrace(p, v, retval)
 		syscallarg(caddr_t) addr;
 		syscallarg(int) data;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
+	struct lwp *lt;
 	struct proc *t;				/* target process */
 	struct uio uio;
 	struct iovec iov;
@@ -229,6 +232,17 @@ sys_ptrace(p, v, retval)
 	/* Do single-step fixup if needed. */
 	FIX_SSTEP(t);
 
+	/*
+	 * XXX NJWLWP
+	 *
+	 * The entire ptrace interface needs work to be useful to a
+	 * process with multiple LWPs. For the moment, we'll kluge
+	 * this; memory access will be fine, but register access will
+	 * be weird.
+	 */
+
+	lt = proc_representative_lwp(t);
+
 	/* Now do the operation. */
 	write = 0;
 	*retval = 0;
@@ -327,23 +341,23 @@ sys_ptrace(p, v, retval)
 		if (SCARG(uap, data) < 0 || SCARG(uap, data) >= NSIG)
 			return (EINVAL);
 
-		PHOLD(t);
+		PHOLD(lt);
 
 		/* If the address parameter is not (int *)1, set the pc. */
 		if ((int *)SCARG(uap, addr) != (int *)1)
-			if ((error = process_set_pc(t, SCARG(uap, addr))) != 0)
+			if ((error = process_set_pc(lt, SCARG(uap, addr))) != 0)
 				goto relebad;
 
 #ifdef PT_STEP
 		/*
 		 * Arrange for a single-step, if that's requested and possible.
 		 */
-		error = process_sstep(t, SCARG(uap, req) == PT_STEP);
+		error = process_sstep(lt, SCARG(uap, req) == PT_STEP);
 		if (error)
 			goto relebad;
 #endif
 
-		PRELE(t);
+		PRELE(lt);
 
 		if (SCARG(uap, req) == PT_DETACH) {
 			/* give process back to original parent or init */
@@ -362,7 +376,7 @@ sys_ptrace(p, v, retval)
 		if (t->p_stat == SSTOP) {
 			t->p_xstat = SCARG(uap, data);
 			SCHED_LOCK(s);
-			setrunnable(t);
+			setrunnable(proc_unstop(t));
 			SCHED_UNLOCK(s);
 		} else {
 			if (SCARG(uap, data) != 0)
@@ -371,7 +385,7 @@ sys_ptrace(p, v, retval)
 		return (0);
 
 	relebad:
-		PRELE(t);
+		PRELE(lt);
 		return (error);
 
 	case  PT_KILL:
@@ -406,6 +420,14 @@ sys_ptrace(p, v, retval)
 		/* write = 0 done above. */
 #endif
 #if defined(PT_SETREGS) || defined(PT_GETREGS)
+		tmp = SCARG(uap, data);
+		if (tmp != 0 && t->p_nlwps > 1) {
+			LIST_FOREACH(lt, &t->p_lwps, l_sibling)
+			    if (lt->l_lid == tmp)
+				    break;
+			if (lt == NULL)
+				return (ESRCH);
+		}
 		if (!process_validregs(t))
 			return (EINVAL);
 		else {
@@ -418,7 +440,7 @@ sys_ptrace(p, v, retval)
 			uio.uio_segflg = UIO_USERSPACE;
 			uio.uio_rw = write ? UIO_WRITE : UIO_READ;
 			uio.uio_procp = p;
-			return (process_doregs(p, t, &uio));
+			return (process_doregs(p, lt, &uio));
 		}
 #endif
 
@@ -431,6 +453,14 @@ sys_ptrace(p, v, retval)
 		/* write = 0 done above. */
 #endif
 #if defined(PT_SETFPREGS) || defined(PT_GETFPREGS)
+		tmp = SCARG(uap, data);
+		if (tmp != 0 && t->p_nlwps > 1) {
+			LIST_FOREACH(lt, &t->p_lwps, l_sibling)
+			    if (lt->l_lid == tmp)
+				    break;
+			if (lt == NULL)
+				return (ESRCH);
+		}
 		if (!process_validfpregs(t))
 			return (EINVAL);
 		else {
@@ -443,13 +473,13 @@ sys_ptrace(p, v, retval)
 			uio.uio_segflg = UIO_USERSPACE;
 			uio.uio_rw = write ? UIO_WRITE : UIO_READ;
 			uio.uio_procp = p;
-			return (process_dofpregs(p, t, &uio));
+			return (process_dofpregs(p, lt, &uio));
 		}
 #endif
 
 #ifdef __HAVE_PTRACE_MACHDEP
 	PTRACE_MACHDEP_REQUEST_CASES
-		return (ptrace_machdep_dorequest(p, t,
+		return (ptrace_machdep_dorequest(p, lt,
 		    SCARG(uap, req), SCARG(uap, addr),
 		    SCARG(uap, data)));
 #endif
@@ -462,9 +492,9 @@ sys_ptrace(p, v, retval)
 }
 
 int
-process_doregs(curp, p, uio)
+process_doregs(curp, l, uio)
 	struct proc *curp;		/* tracer */
-	struct proc *p;			/* traced */
+	struct lwp *l;			/* traced */
 	struct uio *uio;
 {
 #if defined(PT_GETREGS) || defined(PT_SETREGS)
@@ -473,7 +503,7 @@ process_doregs(curp, p, uio)
 	char *kv;
 	int kl;
 
-	if ((error = process_checkioperm(curp, p)) != 0)
+	if ((error = process_checkioperm(curp, l->l_proc)) != 0)
 		return error;
 
 	kl = sizeof(r);
@@ -486,19 +516,19 @@ process_doregs(curp, p, uio)
 	if ((size_t) kl > uio->uio_resid)
 		kl = uio->uio_resid;
 
-	PHOLD(p);
+	PHOLD(l);
 
-	error = process_read_regs(p, &r);
+	error = process_read_regs(l, &r);
 	if (error == 0)
 		error = uiomove(kv, kl, uio);
 	if (error == 0 && uio->uio_rw == UIO_WRITE) {
-		if (p->p_stat != SSTOP)
+		if (l->l_stat != LSSTOP)
 			error = EBUSY;
 		else
-			error = process_write_regs(p, &r);
+			error = process_write_regs(l, &r);
 	}
 
-	PRELE(p);
+	PRELE(l);
 
 	uio->uio_offset = 0;
 	return (error);
@@ -520,9 +550,9 @@ process_validregs(p)
 }
 
 int
-process_dofpregs(curp, p, uio)
+process_dofpregs(curp, l, uio)
 	struct proc *curp;		/* tracer */
-	struct proc *p;			/* traced */
+	struct lwp *l;			/* traced */
 	struct uio *uio;
 {
 #if defined(PT_GETFPREGS) || defined(PT_SETFPREGS)
@@ -531,7 +561,7 @@ process_dofpregs(curp, p, uio)
 	char *kv;
 	int kl;
 
-	if ((error = process_checkioperm(curp, p)) != 0)
+	if ((error = process_checkioperm(curp, l->l_proc)) != 0)
 		return (error);
 
 	kl = sizeof(r);
@@ -544,19 +574,19 @@ process_dofpregs(curp, p, uio)
 	if ((size_t) kl > uio->uio_resid)
 		kl = uio->uio_resid;
 
-	PHOLD(p);
+	PHOLD(l);
 
-	error = process_read_fpregs(p, &r);
+	error = process_read_fpregs(l, &r);
 	if (error == 0)
 		error = uiomove(kv, kl, uio);
 	if (error == 0 && uio->uio_rw == UIO_WRITE) {
-		if (p->p_stat != SSTOP)
+		if (l->l_stat != LSSTOP)
 			error = EBUSY;
 		else
-			error = process_write_fpregs(p, &r);
+			error = process_write_fpregs(l, &r);
 	}
 
-	PRELE(p);
+	PRELE(l);
 
 	uio->uio_offset = 0;
 	return (error);

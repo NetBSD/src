@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ntptime.c,v 1.21 2002/05/03 01:22:30 eeh Exp $	*/
+/*	$NetBSD: kern_ntptime.c,v 1.22 2003/01/18 10:06:28 thorpej Exp $	*/
 
 /******************************************************************************
  *                                                                            *
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.21 2002/05/03 01:22:30 eeh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.22 2003/01/18 10:06:28 thorpej Exp $");
 
 #include "opt_ntp.h"
 
@@ -64,6 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.21 2002/05/03 01:22:30 eeh Exp $"
 #include <sys/vnode.h>
 
 #include <sys/mount.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <machine/cpu.h>
@@ -103,8 +104,8 @@ extern long pps_stbcnt;		/* stability limit exceeded */
  * ntp_gettime() - NTP user application interface
  */
 int
-sys_ntp_gettime(p, v, retval)
-	struct proc *p;
+sys_ntp_gettime(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 
@@ -189,14 +190,15 @@ sys_ntp_gettime(p, v, retval)
  * ntp_adjtime() - NTP daemon application interface
  */
 int
-sys_ntp_adjtime(p, v, retval)
-	struct proc *p;
+sys_ntp_adjtime(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct sys_ntp_adjtime_args /* {
 		syscallarg(struct timex *) tp;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	struct timex ntv;
 	int error = 0;
 
@@ -383,8 +385,8 @@ sysctl_ntptime(where, sizep)
 /* For some reason, raising SIGSYS (as sys_nosys would) is problematic. */
 
 int
-sys_ntp_gettime(p, v, retval)
-	struct proc *p;
+sys_ntp_gettime(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {

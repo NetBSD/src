@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.74 2002/11/26 18:44:36 christos Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.75 2003/01/18 10:06:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.74 2002/11/26 18:44:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.75 2003/01/18 10:06:36 thorpej Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_pipe.h"
@@ -60,6 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.74 2002/11/26 18:44:36 christos 
 #include <sys/event.h>
 
 #include <sys/mount.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <uvm/uvm_extern.h>
@@ -70,18 +71,21 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.74 2002/11/26 18:44:36 christos 
 extern	struct fileops socketops;
 
 int
-sys_socket(struct proc *p, void *v, register_t *retval)
+sys_socket(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_socket_args /* {
 		syscallarg(int)	domain;
 		syscallarg(int)	type;
 		syscallarg(int)	protocol;
 	} */ *uap = v;
+
+	struct proc	*p;
 	struct filedesc	*fdp;
 	struct socket	*so;
 	struct file	*fp;
 	int		fd, error;
 
+	p = l->l_proc;
 	fdp = p->p_fd;
 	/* falloc() will use the desciptor for us */
 	if ((error = falloc(p, &fp, &fd)) != 0)
@@ -106,17 +110,19 @@ sys_socket(struct proc *p, void *v, register_t *retval)
 
 /* ARGSUSED */
 int
-sys_bind(struct proc *p, void *v, register_t *retval)
+sys_bind(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_bind_args /* {
 		syscallarg(int)				s;
 		syscallarg(const struct sockaddr *)	name;
 		syscallarg(unsigned int)		namelen;
 	} */ *uap = v;
+	struct proc	*p;
 	struct file	*fp;
 	struct mbuf	*nam;
 	int		error;
 
+	p = l->l_proc;
 	/* getsock() will use the descriptor for us */
 	if ((error = getsock(p->p_fd, SCARG(uap, s), &fp)) != 0)
 		return (error);
@@ -134,15 +140,17 @@ sys_bind(struct proc *p, void *v, register_t *retval)
 
 /* ARGSUSED */
 int
-sys_listen(struct proc *p, void *v, register_t *retval)
+sys_listen(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_listen_args /* {
 		syscallarg(int)	s;
 		syscallarg(int)	backlog;
 	} */ *uap = v;
+	struct proc	*p;
 	struct file	*fp;
 	int		error;
 
+	p = l->l_proc;
 	/* getsock() will use the descriptor for us */
 	if ((error = getsock(p->p_fd, SCARG(uap, s), &fp)) != 0)
 		return (error);
@@ -152,13 +160,14 @@ sys_listen(struct proc *p, void *v, register_t *retval)
 }
 
 int
-sys_accept(struct proc *p, void *v, register_t *retval)
+sys_accept(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_accept_args /* {
 		syscallarg(int)			s;
 		syscallarg(struct sockaddr *)	name;
 		syscallarg(unsigned int *)	anamelen;
 	} */ *uap = v;
+	struct proc	*p;
 	struct filedesc	*fdp;
 	struct file	*fp;
 	struct mbuf	*nam;
@@ -166,6 +175,7 @@ sys_accept(struct proc *p, void *v, register_t *retval)
 	int		error, s, fd;
 	struct socket	*so;
 
+	p = l->l_proc;
 	fdp = p->p_fd;
 	if (SCARG(uap, name) && (error = copyin((caddr_t)SCARG(uap, anamelen),
 	    (caddr_t)&namelen, sizeof(namelen))))
@@ -255,18 +265,20 @@ sys_accept(struct proc *p, void *v, register_t *retval)
 
 /* ARGSUSED */
 int
-sys_connect(struct proc *p, void *v, register_t *retval)
+sys_connect(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_connect_args /* {
 		syscallarg(int)				s;
 		syscallarg(const struct sockaddr *)	name;
 		syscallarg(unsigned int)		namelen;
 	} */ *uap = v;
+	struct proc	*p;
 	struct file	*fp;
 	struct socket	*so;
 	struct mbuf	*nam;
 	int		error, s;
 
+	p = l->l_proc;
 	/* getsock() will use the descriptor for us */
 	if ((error = getsock(p->p_fd, SCARG(uap, s), &fp)) != 0)
 		return (error);
@@ -310,7 +322,7 @@ sys_connect(struct proc *p, void *v, register_t *retval)
 }
 
 int
-sys_socketpair(struct proc *p, void *v, register_t *retval)
+sys_socketpair(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_socketpair_args /* {
 		syscallarg(int)		domain;
@@ -318,11 +330,13 @@ sys_socketpair(struct proc *p, void *v, register_t *retval)
 		syscallarg(int)		protocol;
 		syscallarg(int *)	rsv;
 	} */ *uap = v;
+	struct proc *p;
 	struct filedesc	*fdp;
 	struct file	*fp1, *fp2;
 	struct socket	*so1, *so2;
 	int		fd, error, sv[2];
 
+	p = l->l_proc;
 	fdp = p->p_fd;
 	error = socreate(SCARG(uap, domain), &so1, SCARG(uap, type),
 			 SCARG(uap, protocol));
@@ -379,7 +393,7 @@ sys_socketpair(struct proc *p, void *v, register_t *retval)
 }
 
 int
-sys_sendto(struct proc *p, void *v, register_t *retval)
+sys_sendto(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_sendto_args /* {
 		syscallarg(int)				s;
@@ -389,9 +403,11 @@ sys_sendto(struct proc *p, void *v, register_t *retval)
 		syscallarg(const struct sockaddr *)	to;
 		syscallarg(unsigned int)		tolen;
 	} */ *uap = v;
+	struct proc	*p;
 	struct msghdr	msg;
 	struct iovec	aiov;
 
+	p = l->l_proc;
 	msg.msg_name = (caddr_t)SCARG(uap, to);		/* XXX kills const */
 	msg.msg_namelen = SCARG(uap, tolen);
 	msg.msg_iov = &aiov;
@@ -404,13 +420,14 @@ sys_sendto(struct proc *p, void *v, register_t *retval)
 }
 
 int
-sys_sendmsg(struct proc *p, void *v, register_t *retval)
+sys_sendmsg(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_sendmsg_args /* {
 		syscallarg(int)				s;
 		syscallarg(const struct msghdr *)	msg;
 		syscallarg(int)				flags;
 	} */ *uap = v;
+	struct proc	*p;
 	struct msghdr	msg;
 	struct iovec	aiov[UIO_SMALLIOV], *iov;
 	int		error;
@@ -433,6 +450,7 @@ sys_sendmsg(struct proc *p, void *v, register_t *retval)
 	}
 	msg.msg_iov = iov;
 	msg.msg_flags = 0;
+	p = l->l_proc;
 	error = sendit(p, SCARG(uap, s), &msg, SCARG(uap, flags), retval);
 done:
 	if (iov != aiov)
@@ -540,7 +558,7 @@ sendit(struct proc *p, int s, struct msghdr *mp, int flags, register_t *retsize)
 }
 
 int
-sys_recvfrom(struct proc *p, void *v, register_t *retval)
+sys_recvfrom(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_recvfrom_args /* {
 		syscallarg(int)			s;
@@ -550,6 +568,7 @@ sys_recvfrom(struct proc *p, void *v, register_t *retval)
 		syscallarg(struct sockaddr *)	from;
 		syscallarg(unsigned int *)	fromlenaddr;
 	} */ *uap = v;
+	struct proc	*p;
 	struct msghdr	msg;
 	struct iovec	aiov;
 	int		error;
@@ -569,18 +588,20 @@ sys_recvfrom(struct proc *p, void *v, register_t *retval)
 	aiov.iov_len = SCARG(uap, len);
 	msg.msg_control = 0;
 	msg.msg_flags = SCARG(uap, flags);
+	p = l->l_proc;
 	return (recvit(p, SCARG(uap, s), &msg,
 		       (caddr_t)SCARG(uap, fromlenaddr), retval));
 }
 
 int
-sys_recvmsg(struct proc *p, void *v, register_t *retval)
+sys_recvmsg(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_recvmsg_args /* {
 		syscallarg(int)			s;
 		syscallarg(struct msghdr *)	msg;
 		syscallarg(int)			flags;
 	} */ *uap = v;
+	struct proc	*p;
 	struct msghdr	msg;
 	struct iovec	aiov[UIO_SMALLIOV], *uiov, *iov;
 	int		error;
@@ -605,6 +626,7 @@ sys_recvmsg(struct proc *p, void *v, register_t *retval)
 	uiov = msg.msg_iov;
 	msg.msg_iov = iov;
 	msg.msg_flags = SCARG(uap, flags);
+	p = l->l_proc;
 	if ((error = recvit(p, SCARG(uap, s), &msg, (caddr_t)0, retval)) == 0) {
 		msg.msg_iov = uiov;
 		error = copyout((caddr_t)&msg, (caddr_t)SCARG(uap, msg),
@@ -751,15 +773,17 @@ recvit(struct proc *p, int s, struct msghdr *mp, caddr_t namelenp,
 
 /* ARGSUSED */
 int
-sys_shutdown(struct proc *p, void *v, register_t *retval)
+sys_shutdown(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_shutdown_args /* {
 		syscallarg(int)	s;
 		syscallarg(int)	how;
 	} */ *uap = v;
+	struct proc	*p;
 	struct file	*fp;
 	int		error;
 
+	p = l->l_proc;
 	/* getsock() will use the descriptor for us */
 	if ((error = getsock(p->p_fd, SCARG(uap, s), &fp)) != 0)
 		return (error);
@@ -770,7 +794,7 @@ sys_shutdown(struct proc *p, void *v, register_t *retval)
 
 /* ARGSUSED */
 int
-sys_setsockopt(struct proc *p, void *v, register_t *retval)
+sys_setsockopt(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_setsockopt_args /* {
 		syscallarg(int)			s;
@@ -779,25 +803,27 @@ sys_setsockopt(struct proc *p, void *v, register_t *retval)
 		syscallarg(const void *)	val;
 		syscallarg(unsigned int)	valsize;
 	} */ *uap = v;
+	struct proc	*p;
 	struct file	*fp;
 	struct mbuf	*m;
 	int		error;
-	unsigned int	l;
+	unsigned int	len;
 
+	p = l->l_proc;
 	m = NULL;
 	/* getsock() will use the descriptor for us */
 	if ((error = getsock(p->p_fd, SCARG(uap, s), &fp)) != 0)
 		return (error);
-	l = SCARG(uap, valsize);
-	if (l > MCLBYTES) {
+	len = SCARG(uap, valsize);
+	if (len > MCLBYTES) {
 		error = EINVAL;
 		goto out;
 	}
 	if (SCARG(uap, val)) {
 		m = m_get(M_WAIT, MT_SOOPTS);
-		if (l > MLEN)
+		if (len > MLEN)
 			MCLGET(m, M_WAIT);
-		error = copyin(SCARG(uap, val), mtod(m, caddr_t), l);
+		error = copyin(SCARG(uap, val), mtod(m, caddr_t), len);
 		if (error) {
 			(void) m_free(m);
 			goto out;
@@ -813,7 +839,7 @@ sys_setsockopt(struct proc *p, void *v, register_t *retval)
 
 /* ARGSUSED */
 int
-sys_getsockopt(struct proc *p, void *v, register_t *retval)
+sys_getsockopt(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_getsockopt_args /* {
 		syscallarg(int)			s;
@@ -822,11 +848,13 @@ sys_getsockopt(struct proc *p, void *v, register_t *retval)
 		syscallarg(void *)		val;
 		syscallarg(unsigned int *)	avalsize;
 	} */ *uap = v;
+	struct proc	*p;
 	struct file	*fp;
 	struct mbuf	*m, *m0;
 	unsigned int	op, i, valsize;
 	int		error;
 
+	p = l->l_proc;
 	m = NULL;
 	/* getsock() will use the descriptor for us */
 	if ((error = getsock(p->p_fd, SCARG(uap, s), &fp)) != 0)
@@ -865,13 +893,15 @@ sys_getsockopt(struct proc *p, void *v, register_t *retval)
 #ifdef PIPE_SOCKETPAIR
 /* ARGSUSED */
 int
-sys_pipe(struct proc *p, void *v, register_t *retval)
+sys_pipe(struct lwp *l, void *v, register_t *retval)
 {
+	struct proc	*p;
 	struct filedesc	*fdp;
 	struct file	*rf, *wf;
 	struct socket	*rso, *wso;
 	int		fd, error;
 
+	p = l->l_proc;
 	fdp = p->p_fd;
 	if ((error = socreate(AF_LOCAL, &rso, SOCK_STREAM, 0)) != 0)
 		return (error);
@@ -923,19 +953,21 @@ sys_pipe(struct proc *p, void *v, register_t *retval)
  */
 /* ARGSUSED */
 int
-sys_getsockname(struct proc *p, void *v, register_t *retval)
+sys_getsockname(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_getsockname_args /* {
 		syscallarg(int)			fdes;
 		syscallarg(struct sockaddr *)	asa;
 		syscallarg(unsigned int *)	alen;
 	} */ *uap = v;
+	struct proc	*p;
 	struct file	*fp;
 	struct socket	*so;
 	struct mbuf	*m;
 	unsigned int	len;
 	int		error;
 
+	p = l->l_proc;
 	/* getsock() will use the descriptor for us */
 	if ((error = getsock(p->p_fd, SCARG(uap, fdes), &fp)) != 0)
 		return (error);
@@ -966,19 +998,21 @@ sys_getsockname(struct proc *p, void *v, register_t *retval)
  */
 /* ARGSUSED */
 int
-sys_getpeername(struct proc *p, void *v, register_t *retval)
+sys_getpeername(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_getpeername_args /* {
 		syscallarg(int)			fdes;
 		syscallarg(struct sockaddr *)	asa;
 		syscallarg(unsigned int *)	alen;
 	} */ *uap = v;
+	struct proc	*p;
 	struct file	*fp;
 	struct socket	*so;
 	struct mbuf	*m;
 	unsigned int	len;
 	int		error;
 
+	p = l->l_proc;
 	/* getsock() will use the descriptor for us */
 	if ((error = getsock(p->p_fd, SCARG(uap, fdes), &fp)) != 0)
 		return (error);

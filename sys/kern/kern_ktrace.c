@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.66 2002/12/21 16:23:57 manu Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.67 2003/01/18 10:06:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.66 2002/12/21 16:23:57 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.67 2003/01/18 10:06:27 thorpej Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h"
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.66 2002/12/21 16:23:57 manu Exp $"
 #include <sys/ioctl.h>
 
 #include <sys/mount.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #ifdef KTRACE
@@ -251,10 +252,13 @@ ktrgenio(p, fd, rw, iov, len, error)
 	buflen -= sizeof(struct ktr_genio);
 
 	while (resid > 0) {
+#if 0 /* XXX NJWLWP */
 		KDASSERT(p->p_cpu != NULL);
 		KDASSERT(p->p_cpu == curcpu());
-		if (p->p_cpu->ci_schedstate.spc_flags & SPCF_SHOULDYIELD)
-			preempt(NULL);
+#endif
+		/* XXX NJWLWP */
+		if (curcpu()->ci_schedstate.spc_flags & SPCF_SHOULDYIELD)
+			preempt(1);
 
 		cnt = min(iov->iov_len, buflen);
 		if (cnt > resid)
@@ -479,8 +483,8 @@ done:
  */
 /* ARGSUSED */
 int
-sys_fktrace(curp, v, retval)
-	struct proc *curp;
+sys_fktrace(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -490,6 +494,7 @@ sys_fktrace(curp, v, retval)
 		syscallarg(int) facs;
 		syscallarg(int) pid;
 	} */ *uap = v;
+	struct proc *curp = l->l_proc;
 	struct file *fp = NULL;
 	struct filedesc *fdp = curp->p_fd;
 
@@ -508,8 +513,8 @@ sys_fktrace(curp, v, retval)
  */
 /* ARGSUSED */
 int
-sys_ktrace(curp, v, retval)
-	struct proc *curp;
+sys_ktrace(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -519,6 +524,7 @@ sys_ktrace(curp, v, retval)
 		syscallarg(int) facs;
 		syscallarg(int) pid;
 	} */ *uap = v;
+	struct proc *curp = l->l_proc;
 	struct vnode *vp = NULL;
 	struct file *fp = NULL;
 	int fd;
@@ -694,7 +700,7 @@ ktrwrite(p, kth)
 		    fp->f_cred, FOF_UPDATE_OFFSET);
 		tries++;
 		if (error == EWOULDBLOCK) 
-		  	preempt(NULL);
+		  	preempt(1);
 	} while ((error == EWOULDBLOCK) && (tries < 3));
 	FILE_UNUSE(fp, NULL);
 
@@ -752,8 +758,8 @@ ktrcanset(callp, targetp)
  * Put user defined entry to ktrace records.
  */
 int
-sys_utrace(p, v, retval)
-	struct proc *p;
+sys_utrace(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -763,7 +769,7 @@ sys_utrace(p, v, retval)
 		syscallarg(void *) addr;
 		syscallarg(size_t) len;
 	} */ *uap = v;
-
+	struct proc *p = l->l_proc;
 	if (!KTRPOINT(p, KTR_USER))
 		return (0);
 
