@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_olduname.c,v 1.5 1995/06/10 22:19:14 mycroft Exp $	*/
+/*	$NetBSD: linux_olduname.c,v 1.6 1995/06/11 14:56:59 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -787,5 +787,25 @@ linux_getpgid(p, uap, retval)
 		targp = p;
 
 	retval[0] = targp->p_pgid;
+	return 0;
+}
+
+/*
+ * Set the 'personality' (emulation mode) for the current process. Only
+ * accept the Linux personality here (0). This call is needed because
+ * the Linux ELF crt0 issues it in an ugly kludge to make sure that
+ * ELF binaries run in Linux mode, not SVR4 mode.
+ */
+int
+linux_personality(p, uap, retval)
+	struct proc *p;
+	struct linux_personality_args /* P
+		syscallarg(int) per;
+	} */ *uap;
+	register_t *retval;
+{
+	if (SCARG(uap, per) != 0)
+		return EINVAL;
+	retval[0] = 0;
 	return 0;
 }
