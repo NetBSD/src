@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.33 2002/02/24 10:56:54 kleink Exp $	*/
+/*	$NetBSD: machdep.c,v 1.34 2002/02/24 10:58:41 kleink Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -272,8 +272,8 @@ initppc(startkernel, endkernel, args, btinfo)
 	battable[8].batu = BATU(PREP_BUS_SPACE_IO, BAT_BL_256M, BAT_Vs);
 
 	/* map the PCI/ISA MEMORY 256 MB area */
-	battable[9].batl = BATL(PREP_BUS_SPACE_MEM, BAT_I, BAT_PP_RW);
-	battable[9].batu = BATU(PREP_BUS_SPACE_MEM, BAT_BL_256M, BAT_Vs);
+	battable[12].batl = BATL(PREP_BUS_SPACE_MEM, BAT_I, BAT_PP_RW);
+	battable[12].batu = BATU(PREP_BUS_SPACE_MEM, BAT_BL_256M, BAT_Vs);
 
 	/*
 	 * Now setup fixed bat registers
@@ -286,7 +286,7 @@ initppc(startkernel, endkernel, args, btinfo)
 	asm volatile ("mtdbatl 1,%0; mtdbatu 1,%1"
 		      :: "r"(battable[8].batl), "r"(battable[8].batu));
 	asm volatile ("mtdbatl 2,%0; mtdbatu 2,%1"
-		      :: "r"(battable[9].batl), "r"(battable[9].batu));
+		      :: "r"(battable[12].batl), "r"(battable[12].batu));
 
 	asm volatile ("sync; isync");
 	/*
