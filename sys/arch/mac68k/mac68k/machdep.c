@@ -72,7 +72,7 @@
  * from: Utah $Hdr: machdep.c 1.63 91/04/24$
  *
  *	from: @(#)machdep.c	7.16 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.8 1994/02/22 01:30:55 briggs Exp $
+ *	$Id: machdep.c,v 1.9 1994/02/27 16:40:38 briggs Exp $
  */
 
 #include <param.h>
@@ -155,6 +155,10 @@ int	physmem = MAXMEM;	/* max supported memory, changes to actual */
  */
 int	safepri = PSL_LOWIPL;
 extern int	freebufspace;
+
+#ifdef COMPAT_SUNOS
+void	sun_sendsig();
+#endif
 
 /*
  * Console initialization: called early on from main,
@@ -431,6 +435,9 @@ identifycpu()
 		case MACH_MACPB170:
 			printf("PowerBook 170 ");
 			break;
+		case MACH_MACLCII:
+			printf("LC II ");
+			break;
 		case MACH_MACCLASSIC2:
 			printf("Classic II ");
 			break;
@@ -480,6 +487,26 @@ struct sigframe {
 	struct	sigcontext sf_sc;	/* actual context */
 };
 
+#ifdef COMPAT_SUNOS
+/* sigh.. I guess it's too late to change now, but "our" sigcontext
+   is plain vax, not very 68000 (ap, for example..) */
+struct sun_sigcontext {
+	int	sc_onstack;		/* sigstack state to restore */
+	int	sc_mask;		/* signal mask to restore */
+	int	sc_sp;			/* sp to restore */
+	int	sc_pc;			/* pc to restore */
+	int	sc_ps;			/* psl to restore */
+};
+struct sun_sigframe {
+	int	ssf_signum;		/* signo for handler */
+	int	ssf_code;		/* additional info for handler */
+	struct sun_sigcontext *ssf_scp;	/* context pointer for handler */
+	u_int	ssf_addr;		/* even more info for handler */
+	struct sun_sigcontext ssf_sc;	/* I don't know if that's what
+					   comes here */
+};
+#endif
+
 #ifdef DEBUG
 int sigdebug = 0;
 int sigpid = 0;
@@ -509,6 +536,35 @@ sendsig(catcher, sig, mask, code)
 	frame = (struct frame *)p->p_regs;
 	ft = frame->f_format;
 	oonstack = ps->ps_onstack;
+
+#ifdef COMPAT_SUNOS
+	if (p->p_emul == EMUL_SUNOS)
+	  {
+#if 0
+	    /* SunOS doesn't seem to make any distinction between
+	       hardware faults and normal signals.. */
+
+	    /* if this is a hardware fault (ft >= FMT9), sun_sendsig
+	       can't currently handle it. Reset signal actions and
+	       have the process die unconditionally. */
+	    if (ft >= FMT9)
+	      {
+		SIGACTION(p, sig) = SIG_DFL;
+		mask = sigmask(sig);
+		p->p_sigignore &= ~sig;
+		p->p_sigcatch &= ~sig;
+		p->p_sigmask &= ~sig;
+		psignal(p, sig);
+		return;
+	      }
+#endif
+
+	    /* else build the short SunOS frame instead */
+	    sun_sendsig (catcher, sig, mask, code);
+	    return;
+	  }
+#endif
+
 	/*
 	 * Allocate and validate space for the signal handler
 	 * context. Note that if the stack is in P0 space, the
@@ -632,6 +688,104 @@ sendsig(catcher, sig, mask, code)
 	free((caddr_t)kfp, M_TEMP);
 }
 
+#ifdef COMPAT_SUNOS
+/* much simpler sendsig() for SunOS processes, as SunOS does the whole
+   context-saving in usermode. For now, no hardware information (ie.
+   frames for buserror etc) is saved. This could be fatal, so I take 
+   SIG_DFL for "dangerous" signals. */
+
+void
+sun_sendsig(catcher, sig, mask, code)
+	sig_t catcher;
+	int sig, mask;
+	unsigned code;
+{
+	register struct proc *p = curproc;
+	register struct sun_sigframe *fp;
+	struct sun_sigframe kfp;
+	register struct frame *frame;
+	register struct sigacts *ps = p->p_sigacts;
+	register short ft;
+	int oonstack, fsize;
+
+	frame = (struct frame *)p->p_regs;
+	ft = frame->f_format;
+	oonstack = ps->ps_onstack;
+	/*
+	 * Allocate and validate space for the signal handler
+	 * context. Note that if the stack is in P0 space, the
+	 * call to grow() is a nop, and the useracc() check
+	 * will fail if the process has not already allocated
+	 * the space with a `brk'.
+	 */
+	fsize = sizeof(struct sun_sigframe);
+	if (!ps->ps_onstack && (ps->ps_sigonstack & sigmask(sig))) {
+		fp = (struct sun_sigframe *)(ps->ps_sigsp - fsize);
+		ps->ps_onstack = 1;
+	} else
+		fp = (struct sun_sigframe *)(frame->f_regs[SP] - fsize);
+	if ((unsigned)fp <= USRSTACK - ctob(p->p_vmspace->vm_ssize)) 
+		(void)grow(p, (unsigned)fp);
+#ifdef DEBUG
+	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
+		printf("sun_sendsig(%d): sig %d ssp %x usp %x scp %x ft %d\n",
+		       p->p_pid, sig, &oonstack, fp, &fp->ssf_sc, ft);
+#endif
+	if (useracc((caddr_t)fp, fsize, B_WRITE) == 0) {
+#ifdef DEBUG
+		if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
+			printf("sun_sendsig(%d): useracc failed on sig %d\n",
+			       p->p_pid, sig);
+#endif
+		/*
+		 * Process has trashed its stack; give it an illegal
+		 * instruction to halt it in its tracks.
+		 */
+		SIGACTION(p, SIGILL) = SIG_DFL;
+		sig = sigmask(SIGILL);
+		p->p_sigignore &= ~sig;
+		p->p_sigcatch &= ~sig;
+		p->p_sigmask &= ~sig;
+		psignal(p, SIGILL);
+		return;
+	}
+	/* 
+	 * Build the argument list for the signal handler.
+	 */
+	kfp.ssf_signum = sig;
+	kfp.ssf_code = code;
+	kfp.ssf_scp = &fp->ssf_sc;
+	kfp.ssf_addr = ~0;		/* means: not computable */
+
+	/*
+	 * Build the signal context to be used by sigreturn.
+	 */
+	kfp.ssf_sc.sc_onstack = oonstack;
+	kfp.ssf_sc.sc_mask = mask;
+	kfp.ssf_sc.sc_sp = frame->f_regs[SP];
+	kfp.ssf_sc.sc_pc = frame->f_pc;
+	kfp.ssf_sc.sc_ps = frame->f_sr;
+	(void) copyout((caddr_t)&kfp, (caddr_t)fp, fsize);
+	frame->f_regs[SP] = (int)fp;
+#ifdef DEBUG
+	if (sigdebug & SDB_FOLLOW)
+		printf("sun_sendsig(%d): sig %d scp %x sc_sp %x\n",
+		       p->p_pid, sig, kfp.ssf_sc.sc_sp);
+#endif
+
+	/* have the user-level trampoline code sort out what registers it
+	   has to preserve. */
+	frame->f_pc = (u_int) catcher;
+#ifdef DEBUG
+	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
+		printf("sun_sendsig(%d): sig %d returns\n",
+		       p->p_pid, sig);
+#endif
+}
+
+#endif	/* COMPAT_SUNOS */
+
+
 /*
  * System call to cleanup state after a signal
  * has been taken.  Reset signal mask and
@@ -658,6 +812,11 @@ sigreturn(p, uap, retval)
 	struct sigstate tstate;
 	int flags;
 	extern short exframesize[];
+
+#ifdef COMPAT_SUNOS
+	if (p->p_emul == EMUL_SUNOS)
+	  return sun_sigreturn (p, uap, retval);
+#endif
 
 	scp = uap->sigcntxp;
 #ifdef DEBUG
@@ -764,6 +923,58 @@ sigreturn(p, uap, retval)
 #endif
 	return (EJUSTRETURN);
 }
+
+#ifdef COMPAT_SUNOS
+/* this is a "light weight" version of the NetBSD sigreturn, just for
+   SunOS processes. We don't have to restore any hardware frames,
+   registers, fpu stuff, that's all done in user space. */
+
+struct sun_sigreturn_args {
+    struct sun_sigcontext *sigcntxp;
+};
+
+int
+sun_sigreturn(p, uap, retval)
+	struct proc *p;
+	struct sun_sigreturn_args *uap;
+	int *retval;
+{
+	register struct sun_sigcontext *scp;
+	register struct frame *frame;
+	register int rf;
+	struct sun_sigcontext tsigc;
+	int flags;
+
+	scp = uap->sigcntxp;
+#ifdef DEBUG
+	if (sigdebug & SDB_FOLLOW)
+		printf("sun_sigreturn: pid %d, scp %x\n", p->p_pid, scp);
+#endif
+	if ((int)scp & 1)
+		return (EINVAL);
+	/*
+	 * Test and fetch the context structure.
+	 * We grab it all at once for speed.
+	 */
+	if (useracc((caddr_t)scp, sizeof (*scp), B_WRITE) == 0 ||
+	    copyin((caddr_t)scp, (caddr_t)&tsigc, sizeof tsigc))
+		return (EINVAL);
+	scp = &tsigc;
+	if ((scp->sc_ps & (PSL_MBZ|PSL_IPL|PSL_S)) != 0)
+		return (EINVAL);
+	/*
+	 * Restore the user supplied information
+	 */
+	p->p_sigacts->ps_onstack = scp->sc_onstack & 01;
+	p->p_sigmask = scp->sc_mask &~ sigcantmask;
+	frame = (struct frame *) p->p_regs;
+	frame->f_regs[SP] = scp->sc_sp;
+	frame->f_pc = scp->sc_pc;
+	frame->f_sr = scp->sc_ps;
+
+	return EJUSTRETURN;
+}
+#endif /* COMPAT_SUNOS */
 
 int	waittime = -1;
 
@@ -1783,34 +1994,27 @@ int alice_debug(p, uap, retval)
    return(0);
 }
 
-#define COMPAT_NOMID	1
-
 cpu_exec_aout_makecmds(p, epp)
 	struct proc *p;
 	struct exec_package *epp;
 {
-#ifdef COMPAT_NOMID
-	u_long midmag, magic;
-	u_short mid;
-	int error;
+	int error = ENOEXEC;
 	struct exec *execp = epp->ep_hdr;
 
-	midmag = ntohl(execp->a_midmag);
-	mid = (midmag >> 16 ) & 0xffff;
-	magic = midmag & 0xffff;
-
-	switch (mid << 16 | magic) {
-		case (MID_ZERO << 16) | ZMAGIC:
-			error = cpu_exec_prep_oldzmagic(p, epp);
-			break;
-		default:
-			error = ENOEXEC;
-	}
-
-	return error;
-#else /* ! COMPAT_NOMID */
-	return ENOEXEC;
+#ifdef COMPAT_NOMID
+	if (execp->a_midmag == ZMAGIC) /* i.e., MID == 0. */
+		return cpu_exec_prep_oldzmagic(p, epp);
 #endif
+
+#ifdef COMPAT_SUNOS
+	{
+		extern sun_exec_aout_makecmds __P((struct proc *,
+						   struct exec_package *));
+		if ((error = sun_exec_aout_makecmds(p, epp)) == 0)
+			return 0;
+	}
+#endif
+	return error;
 }
 
 #ifdef COMPAT_NOMID
@@ -2127,6 +2331,7 @@ void setmachdep(void)
 		case MACH_MACSE30:
 		case MACH_MAC2X:
 		case MACH_MAC2CX:
+		case MACH_MACLCII:
 			VIA2 = 1;
 			via_reg(VIA1, vIER) = 0x7f;	/* disable VIA1 int */
 			via_reg(VIA2, vIER) = 0x7f;	/* disable VIA2 int */
