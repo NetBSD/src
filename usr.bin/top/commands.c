@@ -1,4 +1,4 @@
-/*	$NetBSD: commands.c,v 1.10 2003/07/12 14:08:37 itojun Exp $	*/
+/*	$NetBSD: commands.c,v 1.11 2004/11/04 07:35:15 dsl Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -37,7 +37,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: commands.c,v 1.10 2003/07/12 14:08:37 itojun Exp $");
+__RCSID("$NetBSD: commands.c,v 1.11 2004/11/04 07:35:15 dsl Exp $");
 #endif
 
 #include "os.h"
@@ -144,8 +144,8 @@ char *str;
 int  *intp;
 
 {
-    register int val = 0;
-    register char ch;
+    int val = 0;
+    int ch;
 
     /* if there is nothing left of the string, flag it as an error */
     /* This fix is dedicated to Greg Earle */
@@ -154,7 +154,7 @@ int  *intp;
 	return(-1);
     }
 
-    while ((ch = *str++) != '\0')
+    while ((ch = (unsigned char)*str++) != '\0')
     {
 	if (isdigit(ch))
 	{
@@ -409,7 +409,7 @@ char *str;
     uid = getuid();
 
     /* skip over leading white space */
-    while (isspace(*str)) str++;
+    while (isspace((unsigned char)*str)) str++;
 
     if (str[0] == '-')
     {
@@ -419,7 +419,7 @@ char *str;
 	    return(" kill: no processes specified");
 	}
 
-	if (isdigit(str[1]))
+	if (isdigit((unsigned char)str[1]))
 	{
 	    (void) scanint(str + 1, &signum);
 	    if (signum <= 0 || signum >= NSIG)
