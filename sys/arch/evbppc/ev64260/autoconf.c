@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.3 2003/06/18 08:58:37 drochner Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.4 2003/07/04 01:59:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -135,4 +135,9 @@ findroot(void)
 			return;
 		}
 	}
+}
+
+void
+device_register(struct device *dev, void *aux)
+{
 }

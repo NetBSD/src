@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.2 2003/03/11 10:40:17 hannken Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.3 2003/07/04 01:59:20 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -86,4 +86,9 @@ cpu_rootconf(void)
 {
 
 	setroot(booted_device, booted_partition);
+}
+
+void
+device_register(struct device *dev, void *aux)
+{
 }
