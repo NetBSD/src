@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.474 2002/10/05 17:04:29 kent Exp $	*/
+/*	\$NetBSD\$	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.472 2002/10/05 17:01:50 kent Exp 
+ *	NetBSD: pcidevs,v 1.473 2002/10/16 14:55:26 leo Exp 
  */
 
 /*
@@ -1790,6 +1790,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "AVM",
 	    "Fritz! Card ISDN Interface",
+	},
+	{
+	    PCI_VENDOR_AVM, PCI_PRODUCT_AVM_FRITZ_PCI_V2_ISDN,
+	    0,
+	    "AVM",
+	    "Fritz!PCI v2.0 ISDN Interface",
 	},
 	{
 	    PCI_VENDOR_AVM, PCI_PRODUCT_AVM_B1,
