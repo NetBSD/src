@@ -1,4 +1,4 @@
-/*	$NetBSD: uda.c,v 1.17 1996/07/01 21:24:48 ragge Exp $	*/
+/*	$NetBSD: uda.c,v 1.18 1996/07/11 19:34:02 ragge Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1988 Regents of the University of California.
@@ -39,36 +39,17 @@
  */
 
 /*
- * UDA50 device driver
+ * UDA50 disk device driver
  */
 
-#define	DEFAULT_BURST	4	/* default DMA burst size */
-#define	DELAYTEN	1000	/* Delaycount for 10 seconds */
-
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/buf.h>
-#include <sys/conf.h>
-#include <sys/file.h>
-#include <sys/ioctl.h>
-#include <sys/proc.h>
-#include <sys/user.h>
-#include <sys/map.h>
-#include <sys/device.h>
-#include <sys/dkstat.h>
-#include <sys/disklabel.h>
-#include <sys/syslog.h>
-#include <sys/stat.h>
 #include <sys/kernel.h>
 
-#include <machine/pte.h>
 #include <machine/sid.h>
-#include <machine/cpu.h>
-#include <machine/mtpr.h>
+#include <machine/pte.h>
 
-#include <vax/uba/ubareg.h>
 #include <vax/uba/ubavar.h>
-
+#include <vax/uba/ubareg.h>
 #include <vax/uba/udareg.h>
 
 #include <vax/mscp/mscp.h>
@@ -85,13 +66,8 @@ struct	uda_softc {
 	struct	mscp_pack sc_uda;	/* Struct for uda communication */
 	struct	udadevice *sc_udadev;	/* pointer to ip/sa regs */
 	struct	mscp *sc_mscp;		/* Keep pointer to active mscp */
-	short	sc_state;	/* UDA50 state; see below */
-	short	sc_flags;	/* flags; see below */
-	int	sc_micro;	/* microcode revision */
-	int	sc_ivec;	/* interrupt vector address */
 	short	sc_ipl;		/* interrupt priority, Q-bus */
 	struct	mscp_softc *sc_softc;	/* MSCP info (per mscpvar.h) */
-	int	sc_burst;
 	int	sc_wticks;	/* watchdog timer ticks */
 };
 
@@ -101,7 +77,6 @@ void	udareset __P((int));
 void	udaintr __P((int));
 void	udadgo __P((struct uba_unit *));
 void	udactlrdone __P((struct device *, int));
-void	udawatch __P((void *));
 int	udaprint __P((void *, char *));
 void	udasaerror __P((struct device *, int));
 void	udastart  __P((struct uba_unit *));
@@ -114,40 +89,6 @@ struct	cfdriver uda_cd = {
 struct	cfattach uda_ca = {
 	sizeof(struct uda_softc), udamatch, udaattach
 };
-
-#define	uda_ca mp_ca
-#define	uda_rsp	mp_rsp
-#define	uda_cmd mp_cmd
-
-/*
- * Controller states
- */
-#define	ST_IDLE		0	/* uninitialised */
-#define	ST_STEP1	1	/* in `STEP 1' */
-#define	ST_STEP2	2	/* in `STEP 2' */
-#define	ST_STEP3	3	/* in `STEP 3' */
-#define	ST_SETCHAR	4	/* in `Set Controller Characteristics' */
-#define	ST_RUN		5	/* up and running */
-
-/*
- * Flags
- */
-#define	SC_MAPPED	0x01	/* mapped in Unibus I/O space */
-#define	SC_INSTART	0x02	/* inside udastart() */
-#define	SC_GRIPED	0x04	/* griped about cmd ring too small */
-#define	SC_INSLAVE	0x08	/* inside udaslave() */
-#define	SC_DOWAKE	0x10	/* wakeup when ctlr init done */
-#define	SC_STARTPOLL	0x20	/* need to initiate polling */
-#define	SC_NOINTR	0x40	/* Don't handle interrupts */
-
-/*
- * Device to unit number and partition and back
- */
-#define	UNITSHIFT	3
-#define	UNITMASK	7
-#define	udaunit(dev)	(minor(dev) >> UNITSHIFT)
-#define	udapart(dev)	(minor(dev) & UNITMASK)
-#define	udaminor(u, p)	(((u) << UNITSHIFT) | (p))
 
 /*
  * More driver definitions, for generic MSCP code.
@@ -183,10 +124,11 @@ udamatch(parent, match, aux)
 	void	*match, *aux;
 {
 	struct	uba_attach_args *ua = aux;
-	volatile struct udadevice *udaddr;
+	struct	mscp_softc mi;	/* Nice hack */
 	struct	uba_softc *ubasc;
 	int	tries, count;
-#ifdef notyet
+#ifdef QBA
+	extern volatile int rbr;
 	int s;
 #endif
 
@@ -194,7 +136,8 @@ udamatch(parent, match, aux)
 	ubasc = (void *)parent;
 	ivec_no = ubasc->uh_lastiv - 4;
 
-	udaddr = (struct udadevice *) ua->ua_addr;
+	mi.mi_sa = &((struct udadevice *)ua->ua_addr)->udasa;
+	mi.mi_ip = &((struct udadevice *)ua->ua_addr)->udaip;
 
 	/*
 	 * Initialise the controller (partially).  The UDA50 programmer's
@@ -204,48 +147,27 @@ udamatch(parent, match, aux)
 	 * initialise within ten seconds.  Or so I hear; I have not seen
 	 * this manual myself.
 	 */
-#ifdef notyet
+#if 0
 	s = spl6();
 #endif
 	tries = 0;
 again:
-	udaddr->udaip = 0;		/* start initialisation */
 
-	count = 0;
-	while ( count < DELAYTEN ) {
-		if ( (udaddr->udasa & MP_STEP1) != 0 )
-			break;
-		DELAY(10000);
-		count += 1;
-	}
+	*mi.mi_ip = 0;
+	if (mscp_waitstep(&mi, MP_STEP1, MP_STEP1) == 0)
+		return 0; /* Nothing here... */
 
-	/* nothing there */
-	if ( count == DELAYTEN )
-	        return(0);
-
-	udaddr->udasa = MP_ERR | (NCMDL2 << 11) | (NRSPL2 << 8) | MP_IE |
+	*mi.mi_sa = MP_ERR | (NCMDL2 << 11) | (NRSPL2 << 8) | MP_IE |
 		(ivec_no >> 2);
 
-	count = 0;
-	while (count < DELAYTEN) {
-		if ((udaddr->udasa & MP_STEP2 ) != 0)
-		    break;
-		DELAY(10000);
-		count += 1;
-	}
-
-	if (count == DELAYTEN) {
-		printf("udaprobe: init step2 no change.\n");
+	if (mscp_waitstep(&mi, MP_STEP2, MP_STEP2) == 0) {
+		printf("udaprobe: init step2 no change. sa=%x\n", *mi.mi_sa);
 		goto bad;
 	}
 
 	/* should have interrupted by now */
-#ifdef notyet
-	sc->sc_ipl = br = qbgetpri();
-#else
-#ifdef notyet
-	sc->sc_ipl = 0x15;
-#endif
+#if 0
+	rbr = qbgetpri();
 #endif
 	ua->ua_ivec = udaintr;
 	ua->ua_reset = udareset;
@@ -253,7 +175,7 @@ again:
 bad:
 	if (++tries < 2)
 		goto again;
-#ifdef notyet
+#if 0
 	splx(s);
 #endif
 	return 0;
@@ -277,11 +199,12 @@ udaattach(parent, self, aux)
 	printf("\n");
 
 	uh->uh_lastiv -= 4;	/* remove dynamic interrupt vector */
+#ifdef QBA
+	sc->sc_ipl = ua->ua_br;
+#endif
 
 	ctlr = sc->sc_dev.dv_unit;
-	sc->sc_ivec = ivec_no;
 	sc->sc_udadev = (struct udadevice *)ua->ua_addr;
-	sc->sc_burst = DEFAULT_BURST;
 
 	/*
 	 * Fill in the uba_unit struct, so we can communicate with the uba.
@@ -290,21 +213,19 @@ udaattach(parent, self, aux)
 	sc->sc_unit.uu_dgo = udadgo;	/* go routine called from adapter */
 	sc->sc_unit.uu_keepbdp = cpunumber == VAX_750 ? 1 : 0;
 
-	if ((sc->sc_flags & SC_MAPPED) == 0) {
-		/*
-		 * Map the communication area and command and
-		 * response packets into Unibus space.
-		 */
-		ubinfo = uballoc(sc->sc_dev.dv_parent->dv_unit,
-			(caddr_t) &sc->sc_uda,
-			sizeof (struct mscp_pack), UBA_CANTWAIT);
-		if (ubinfo == 0) {
-			printf("%s: uballoc map failed\n", sc->sc_dev.dv_xname);
-			return;
-		}
-		sc->sc_uuda = (struct mscp_pack *) UBAI_ADDR(ubinfo);
-		sc->sc_flags |= SC_MAPPED;
+	/*
+	 * Map the communication area and command and
+	 * response packets into Unibus space.
+	 */
+	ubinfo = uballoc(sc->sc_dev.dv_parent->dv_unit,
+		(caddr_t) &sc->sc_uda,
+		sizeof (struct mscp_pack), UBA_CANTWAIT);
+	if (ubinfo == 0) {
+		printf("%s: uballoc map failed\n", sc->sc_dev.dv_xname);
+		return;
 	}
+	sc->sc_uuda = (struct mscp_pack *) UBAI_ADDR(ubinfo);
+
 	bzero(&sc->sc_uda, sizeof (struct mscp_pack));
 
 	ma.ma_mc = &uda_mscp_ctlr;
@@ -316,6 +237,8 @@ udaattach(parent, self, aux)
 	ma.ma_sa = ma.ma_sw = &sc->sc_udadev->udasa;
 	ma.ma_softc = &sc->sc_softc;
 	ma.ma_ivec = ivec_no;
+	ma.ma_ctlrnr = (ua->ua_iaddr == 0772150 ? 0 : 1);	/* XXX */
+	ma.ma_adapnr = uh->uh_nr;
 	config_found(&sc->sc_dev, &ma, udaprint);
 }
 
@@ -482,8 +405,6 @@ udareset(ctlr)
 	}
 	sc->sc_unit.uu_ubinfo = 0;
 /*	sc->sc_unit.uu_cmd = 0; XXX */
-	sc->sc_flags &= ~SC_MAPPED;
-	sc->sc_state = ST_IDLE;
 
 	/* reset queues and requeue pending transfers */
 	mscp_requeue(sc->sc_softc);
@@ -496,33 +417,6 @@ udareset(ctlr)
 	 */
 /* XXX	if (udainit(sc)) */
 		printf(" (hung)");
-}
-
-/*
- * Watchdog timer:  If the controller is active, and no interrupts
- * have occurred for 30 seconds, assume it has gone away.
- */
-void
-udawatch(arg)
-	void *arg;
-{
-	register int i;
-	register struct uda_softc *sc;
-	timeout(udawatch, (caddr_t) 0, hz);	/* every second */
-	for (i = 0, sc = (void *)uda_cd.cd_devs; i < uda_cd.cd_ndevs;
-	    i++, sc++) {
-		if (sc == NULL)
-			continue;
-		if (sc->sc_state == ST_IDLE)
-			continue;
-		if (sc->sc_state == ST_RUN && !sc->sc_unit.uu_tab.b_active)
-			sc->sc_wticks = 0;
-		else if (++sc->sc_wticks >= 30) {
-			sc->sc_wticks = 0;
-			printf("%s: lost interrupt\n", sc->sc_dev.dv_xname);
-			ubareset(sc->sc_dev.dv_parent->dv_unit);
-		}
-	}
 }
 
 void
