@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.197 1998/10/30 13:47:02 lukem Exp $
+#	$NetBSD: GENERIC,v 1.198 1998/11/03 00:12:45 thorpej Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -419,6 +419,7 @@ we1	at isa? port 0x300 iomem 0xcc000 irq 10
 
 # MII/PHY support
 exphy*	at mii? phy ?			# 3Com internal PHYs
+icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS1890
 inphy*	at mii? phy ?			# Intel 82555 PHYs
 lxtphy*	at mii? phy ?			# Level One LXT-970 PHYs
 nsphy*	at mii? phy ?			# NS83840 PHYs
