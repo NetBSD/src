@@ -1,4 +1,4 @@
-#	$NetBSD: sys.mk,v 1.58 2000/08/22 17:38:49 bjh21 Exp $
+#	$NetBSD: sys.mk,v 1.59 2001/06/19 01:37:44 fvdl Exp $
 #	@(#)sys.mk	8.2 (Berkeley) 3/21/94
 
 unix?=		We run NetBSD.
@@ -28,6 +28,8 @@ CC?=		cc
     ${MACHINE_ARCH} == "sparc" || \
     ${MACHINE_ARCH} == "vax"
 DBG?=	-O2
+.elif ${MACHINE_ARCH} == "x86_64"
+DBG?=
 .else
 DBG?=	-O
 .endif
