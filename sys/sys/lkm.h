@@ -1,4 +1,4 @@
-/*	$NetBSD: lkm.h,v 1.17 1999/01/13 23:06:28 sommerfe Exp $	*/
+/*	$NetBSD: lkm.h,v 1.18 2000/05/02 22:13:20 jdolecek Exp $	*/
 
 /*
  * Header file used by loadable kernel modules and loadable kernel module
@@ -67,7 +67,7 @@ typedef enum loadmod {
 struct lkm_syscall {
 	MODTYPE	lkm_type;
 	int	lkm_ver;
-	char	*lkm_name;
+	const char *lkm_name;
 	u_long	lkm_offset;		/* save/assign area */
 	struct sysent	*lkm_sysent;
 	struct sysent	lkm_oldent;	/* save area for unload */
@@ -79,7 +79,7 @@ struct lkm_syscall {
 struct lkm_vfs {
 	MODTYPE	lkm_type;
 	int	lkm_ver;
-	char	*lkm_name;
+	const char *lkm_name;
 	u_long	lkm_offset;
 	struct vfsops	*lkm_vfsops;
 };
@@ -98,7 +98,7 @@ typedef enum devtype {
 struct lkm_dev {
 	MODTYPE	lkm_type;
 	int	lkm_ver;
-	char	*lkm_name;
+	const char *lkm_name;
 	u_long	lkm_offset;
 	DEVTYPE	lkm_devtype;
 	union {
@@ -118,7 +118,7 @@ struct lkm_dev {
 struct lkm_strmod {
 	MODTYPE	lkm_type;
 	int	lkm_ver;
-	char	*lkm_name;
+	const char *lkm_name;
 	u_long	lkm_offset;
 	/*
 	 * Removed: future release
@@ -131,7 +131,7 @@ struct lkm_strmod {
 struct lkm_exec {
 	MODTYPE	lkm_type;
 	int	lkm_ver;
-	char	*lkm_name;
+	const char *lkm_name;
 	u_long	lkm_offset;
 	struct execsw	*lkm_exec;
 	struct execsw	lkm_oldexec;
