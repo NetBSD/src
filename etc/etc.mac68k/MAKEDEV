@@ -20,7 +20,7 @@
 # MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 #
 #	from: @(#)MAKEDEV	5.2 (Berkeley) 6/22/90
-#	$NetBSD: MAKEDEV,v 1.19 1997/01/01 23:46:22 pk Exp $
+#	$NetBSD: MAKEDEV,v 1.20 1997/01/13 23:38:43 scottr Exp $
 #
 # Device "make" file.  Valid arguments:
 #	all	a smattering--at least one of each except
@@ -53,9 +53,10 @@
 #	grf*	Bitmapped graphics device
 #
 # Special purpose devices:
-#	bpf*	packet filter
 #	tun*	network tunnel driver
-#	lkm	Device to for loadable kernel modules
+#	bpf*	packet filter
+#	lkm	loadable kernel modules interface
+#	ipl	ip filter
 #	ss*	SCSI scanner
 #	uk*	SCSI unknown
 #	ch*	SCSI changer
@@ -75,7 +76,7 @@ all)
 	sh $0 ttye0 adb grf0 grf1 grf2 grf3
 	sh $0 bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7
 	sh $0 bpf8 bpf9 bpf10 bpf11
-	sh $0 tun0 tun1 tun2 tun3 lkm local
+	sh $0 tun0 tun1 tun2 tun3 lkm ipl local
 	;;
 
 std)
@@ -276,6 +277,13 @@ lkm)
 	mknod lkm c 25 0
 	chown root.kmem lkm
 	chmod 640 lkm
+	;;
+
+ipl)
+	rm -f ipl
+	mknod ipl c 36 0
+	chown root.wheel ipl
+	chmod 600 ipl
 	;;
 
 local)
