@@ -1,4 +1,4 @@
-# $NetBSD: files.arm26,v 1.31 2001/06/05 09:25:07 bjh21 Exp $
+# $NetBSD: files.arm26,v 1.32 2001/06/08 20:13:27 bjh21 Exp $
 
 # Copyright (c) 1997, 1998, 2000 Ben Harris
 # All rights reserved.
@@ -176,11 +176,6 @@ include "dev/podulebus/files.podulebus"
 device	eh: ether, ifnet, arp, dp8390nic, podloader
 attach	eh at podulebus
 file	arch/arm26/podulebus/if_eh.c		eh
-
-# D.T. software IDE
-device	dtide {[channel = -1]}: wdc_base, ata, atapi
-attach	dtide at podulebus
-file	arch/arm26/podulebus/dtide.c		dtide
 
 
 # Memory disk for installation (or ROM versions?)
