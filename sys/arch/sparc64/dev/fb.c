@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.6 1999/04/26 04:25:39 ad Exp $ */
+/*	$NetBSD: fb.c,v 1.7 1999/05/15 12:52:22 ad Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -241,8 +241,6 @@ fb_bell(on)
 	(void)kbd_docmd(on?KBD_CMD_BELL:KBD_CMD_NOBELL, 0);
 }
 
-#include <sparc/dev/rcons_font.h>
-
 void
 fbrcons_init(fb)
 	struct fbdevice *fb;
@@ -252,6 +250,7 @@ fbrcons_init(fb)
 	int maxrow, maxcol;
 
 	/* Set up what rasops needs to know about */
+	bzero(&ri, sizeof *ri);
 	ri->ri_stride = fb->fb_linebytes;
 	ri->ri_bits = (caddr_t)fb->fb_pixels;
 	ri->ri_depth = fb->fb_type.fb_depth;
