@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfs_prot_xdr.c	8.1 (Berkeley) 6/6/93
- *	$Id: nfs_prot_xdr.c,v 1.2 1994/06/13 20:50:59 mycroft Exp $
+ *	$Id: nfs_prot_xdr.c,v 1.3 1994/12/08 21:41:26 christos Exp $
  *
  */
 
@@ -109,7 +109,7 @@ xdr_fattr(xdrs, objp)
 	XDR *xdrs;
 	fattr *objp;
 {
-	if (!xdr_ftype(xdrs, &objp->type)) {
+	if (!xdr_ftype(xdrs, (enum_t *) &objp->type)) {
 		return (FALSE);
 	}
 	if (!xdr_u_int(xdrs, &objp->mode)) {
@@ -219,7 +219,7 @@ xdr_attrstat(xdrs, objp)
 	XDR *xdrs;
 	attrstat *objp;
 {
-	if (!xdr_nfsstat(xdrs, &objp->status)) {
+	if (!xdr_nfsstat(xdrs, (enum_t *) &objp->status)) {
 		return (FALSE);
 	}
 	switch (objp->status) {
@@ -291,7 +291,7 @@ xdr_diropres(xdrs, objp)
 	XDR *xdrs;
 	diropres *objp;
 {
-	if (!xdr_nfsstat(xdrs, &objp->status)) {
+	if (!xdr_nfsstat(xdrs, (enum_t *) &objp->status)) {
 		return (FALSE);
 	}
 	switch (objp->status) {
@@ -312,7 +312,7 @@ xdr_readlinkres(xdrs, objp)
 	XDR *xdrs;
 	readlinkres *objp;
 {
-	if (!xdr_nfsstat(xdrs, &objp->status)) {
+	if (!xdr_nfsstat(xdrs, (enum_t *) &objp->status)) {
 		return (FALSE);
 	}
 	switch (objp->status) {
@@ -373,7 +373,7 @@ xdr_readres(xdrs, objp)
 	XDR *xdrs;
 	readres *objp;
 {
-	if (!xdr_nfsstat(xdrs, &objp->status)) {
+	if (!xdr_nfsstat(xdrs, (enum_t *) &objp->status)) {
 		return (FALSE);
 	}
 	switch (objp->status) {
@@ -565,7 +565,7 @@ xdr_readdirres(xdrs, objp)
 	XDR *xdrs;
 	readdirres *objp;
 {
-	if (!xdr_nfsstat(xdrs, &objp->status)) {
+	if (!xdr_nfsstat(xdrs, (enum_t *) &objp->status)) {
 		return (FALSE);
 	}
 	switch (objp->status) {
@@ -612,7 +612,7 @@ xdr_statfsres(xdrs, objp)
 	XDR *xdrs;
 	statfsres *objp;
 {
-	if (!xdr_nfsstat(xdrs, &objp->status)) {
+	if (!xdr_nfsstat(xdrs, (enum_t *) &objp->status)) {
 		return (FALSE);
 	}
 	switch (objp->status) {
