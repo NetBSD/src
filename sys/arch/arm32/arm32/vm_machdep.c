@@ -1,7 +1,7 @@
-/* $NetBSD: vm_machdep.c,v 1.1 1996/01/31 23:17:33 mark Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.2 1996/03/08 20:58:40 mark Exp $ */
 
 /*
- * Copyright (c) 1994 Mark Brinicombe.
+ * Copyright (c) 1994-1996 Mark Brinicombe.
  * Copyright (c) 1994 Brini.
  * All rights reserved.
  *
@@ -41,12 +41,10 @@
  * vm machine specifiv bits
  *
  * Created      : 08/10/94
- * Last updated : 08/01/96
- *
- *    $Id: vm_machdep.c,v 1.1 1996/01/31 23:17:33 mark Exp $
  */
 
 #define DEBUG_VMMACHDEP
+/*#define FREESWAPPEDPAGEDIRS*/
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -343,6 +341,14 @@ cpu_swapin(p)
 		printf("cpu_swapin(%08x, %d, %s, %08x)\n", (u_int)p, p->p_pid, p->p_comm, (u_int)&p->p_vmspace->vm_pmap);
 #endif
 
+#ifdef FREESWAPPEDPAGEDIRS
+	printf("cpu_swapin(%08x, %d, %s, %08x)\n", (u_int)p, p->p_pid, p->p_comm, (u_int)&p->p_vmspace->vm_pmap);
+	if (p->p_vmspace->vm_pmap.pm_pdir)
+		printf("pdir = %08x\n", p->p_vmspace->vm_pmap.pm_pdir);
+	pmap_pinit(&p->p_vmspace->vm_pmap);
+	pmap_debug_level = 10;
+#endif
+
 	addr = trunc_page((u_int)vtopte(USRSTACK));
 
 #ifdef DEBUG_VMMACHDEP
@@ -409,6 +415,13 @@ cpu_swapout(p)
 /* Free the system page mapping */
 
 	pmap_remove(&p->p_vmspace->vm_pmap, 0, NBPG);
+
+#ifdef FREESWAPPEDPAGEDIRS
+	printf("cpu_swapout(%08x, %d, %s, %08x)\n", (u_int)p, p->p_pid, p->p_comm, (u_int)&p->p_vmspace->vm_pmap);
+	printf("p->pm_vptpt[0] = %08x pdir=%08x\n", *((int *)(p->p_vmspace->vm_pmap.pm_vptpt + 0)), p->p_vmspace->vm_pmap.pm_pdir);
+	pmap_freepagedir(&p->p_vmspace->vm_pmap);
+	p->p_vmspace->vm_pmap.pm_pdir = 0;
+#endif
 
 	idcflush();
 }
