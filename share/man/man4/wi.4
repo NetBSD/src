@@ -1,4 +1,4 @@
-.\"     $NetBSD: wi.4,v 1.17 2001/09/11 23:18:56 wiz Exp $
+.\"     $NetBSD: wi.4,v 1.18 2001/10/13 16:56:17 ichiro Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -30,7 +30,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 .\" THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$Id: wi.4,v 1.17 2001/09/11 23:18:56 wiz Exp $
+.\"	$Id: wi.4,v 1.18 2001/10/13 16:56:17 ichiro Exp $
 .\"
 .Dd January 11, 2001
 .Dt WI 4
@@ -41,12 +41,13 @@
 WaveLAN/IEEE and PRISM-II 802.11 PCMCIA wireless network driver
 .Sh SYNOPSIS
 .Cd "wi* at pcmcia? function ?"
+.Cd "wi* at pci? dev ? function ?"
 .Sh DESCRIPTION
 The
 .Nm
 driver provides support for Lucent Technologies WaveLAN/IEEE PCCARD adapters
 (also known as WaveLAN II cards) and various PCCARD adapters which use
-Intersil PRISM-II chipsets.
+Intersil PRISM-II and PRISM-2.5 chipsets.
 Note that while Lucent sells both ISA and PCMCIA WaveLAN/IEEE devices,
 the ISA product is actually a PCMCIA card in an ISA to PCMCIA bridge adapter.
 Consequently, the
@@ -121,6 +122,8 @@ DEC/Cabletron RoamAbout 802.11 DS High Rate cards [*] [+]
 Corega Wireless LAN PCC-11 cards [*] [+]
 .It
 ELSA AirLancer MC-11
+.It
+Intersil PRISM Mini-PCI
 .El
 .Pp
 The original PRISM-I chipset is supported by the
@@ -162,6 +165,7 @@ driver was written by
 .An Bill Paul Aq wpaul@ctr.columbia.edu .
 .Sh BUGS
 The IBSS mode is not supported.
+PRISM chipset does not have IBSS mode.
 .Pp
 The execution of
 .Xr wiconfig 8
