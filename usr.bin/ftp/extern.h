@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.18 1997/11/01 14:36:53 lukem Exp $	*/
+/*	$NetBSD: extern.h,v 1.19 1998/01/18 14:23:34 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -74,7 +74,7 @@ int	getreply __P((int));
 int	globulize __P((char **));
 char   *gunique __P((const char *));
 void	help __P((int, char **));
-char   *hookup __P((const char *, int));
+char   *hookup __P((const char *, in_port_t));
 void	idle __P((int, char **));
 int     initconn __P((void));
 void	intr __P((void));
