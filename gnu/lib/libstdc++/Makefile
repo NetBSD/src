@@ -1,6 +1,78 @@
-#	$NetBSD: Makefile,v 1.9 1999/02/13 02:54:23 lukem Exp $
+#	$NetBSD: Makefile,v 1.10 2001/07/24 19:44:49 tv Exp $
+
+.include <bsd.own.mk>
 
 LIB=		stdc++
+MKLINT=		no
+
+.if defined(USE_NEW_TOOLCHAIN)
+
+.include "${.CURDIR}/arch/${MACHINE_ARCH}/defs.mk"
+
+SUBDIR=		include
+
+TOP=		${.CURDIR}/../..
+DIST=		${TOP}/dist/toolchain
+
+SRCS=		${G_OBJS:.o=.cc} ${G_LIBIBERTY_OBJS:.o=.c}
+
+# Ugly, but they aren't identified individually in libio/Makefile:
+.for f in ${G_LIBIOSTREAM_USE}
+.if exists(${DIST}/libio/${f:.o=.c})
+SRCS+=		${f:.o=.c}
+.else
+SRCS+=		${f:.o=.cc}
+.endif
+.endfor
+
+GCPPFLAGS=	${G_XCFLAGS} ${G_CINCLUDES} ${G_MT_CFLAGS} ${G_CXXINCLUDES}
+CPPFLAGS+=	-nostdinc++ -I${.CURDIR}/arch/${MACHINE_ARCH} \
+		${GCPPFLAGS:M-D*} ${GCPPFLAGS:M-I*:N-I.*} \
+		-I${DIST}/gcc/cp/inc \
+		-I${.CURDIR}/../libiberty/arch/${MACHINE_ARCH} -I${DIST}/include
+
+CXXFLAGS+=	${G_XCXXFLAGS:M-f*}
+
+.PATH: ${DIST}/libstdc++ ${DIST}/libstdc++/stl ${DIST}/libio ${DIST}/libiberty
+
+.for t in C
+.for v in STRFUNCS STRIO
+CLEANFILES+=	${t}${v}.cc
+SRCS+=		${t}${v}.cc
+
+${t}${v}.cc: Makefile ${.CURDIR}/arch/${MACHINE_ARCH}/defs.mk sinst.cc
+	echo '#define ${t}' >$@
+.for f in ${G_${v}}
+	echo '#define ${f}' >>$@
+.endfor
+	cat ${>:M*.cc} >>$@
+.endfor
+.endfor
+
+.for t in F D LD
+.for v in COMFUNCS COMIO
+CLEANFILES+=	${t}${v}.cc
+SRCS+=		${t}${v}.cc
+
+${t}${v}.cc: Makefile ${.CURDIR}/arch/${MACHINE_ARCH}/defs.mk cinst.cc
+	echo '#define ${t}' >$@
+.for f in ${G_${v}}
+	echo '#define ${f}' >>$@
+.endfor
+	cat ${>:M*.cc} >>$@
+.endfor
+.endfor
+
+.include <bsd.lib.mk>
+.include <bsd.subdir.mk>
+
+${OBJS}: ${.CURDIR}/arch/${MACHINE_ARCH}/defs.mk
+
+.else
+#
+# XXX - BEGIN - Old toolchain build goop - delete when everything migrated - XXX
+#
+MKPIC=no	# XXX hack; shlib_version mismatch
 
 INCS=		cassert cctype cerrno cfloat ciso646 climits clocale cmath \
 		complex csetjmp csignal cstdarg cstddef cstdio cstdlib \
@@ -29,9 +101,6 @@ SRCS=	PlotFile.cc SFile.cc builtinbuf.cc editbuf.cc filebuf.cc fstream.cc \
 
 DIST=		${.CURDIR}/../../dist
 CPPFLAGS+=	-I${DESTDIR}/usr/include/g++ -I${DIST}/libstdc++
-
-MKMAN=	no
-MKLINT=	no
 
 TEXINFO=	iostream.texi
 
@@ -73,6 +142,10 @@ ${_TYPE_}inst.cc: cinst.cc
 .include <bsd.info.mk>
 .include <bsd.lib.mk>
 .include <bsd.subdir.mk>
+#
+# XXX - END - Old toolchain build goop - delete when everything migrated - XXX
+#
+.endif
 
 .if (${OBJECT_FMT} == "a.out")
 LDADD=	${DESTDIR}/usr/lib/c++rt0.o
