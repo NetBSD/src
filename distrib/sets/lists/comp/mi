@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.406 2001/11/25 16:28:52 thorpej Exp $
+#	$NetBSD: mi,v 1.407 2001/11/25 23:39:50 thorpej Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -1635,8 +1635,6 @@
 ./usr/share/man/cat3/clock.0	comp-c-catman
 ./usr/share/man/cat3/closedir.0	comp-c-catman
 ./usr/share/man/cat3/closelog.0	comp-c-catman
-./usr/share/man/cat3/com_err.0			comp-c-catman
-./usr/share/man/cat3/com_err_va.0		comp-c-catman
 ./usr/share/man/cat3/confstr.0	comp-c-catman
 ./usr/share/man/cat3/copysign.0	comp-c-catman
 ./usr/share/man/cat3/copysignf.0	comp-c-catman
@@ -1717,8 +1715,6 @@
 ./usr/share/man/cat3/erfcf.0	comp-c-catman
 ./usr/share/man/cat3/erff.0	comp-c-catman
 ./usr/share/man/cat3/err.0	comp-c-catman
-./usr/share/man/cat3/error_message.0		comp-c-catman
-./usr/share/man/cat3/error_table_name.0		comp-c-catman
 ./usr/share/man/cat3/errx.0	comp-c-catman
 ./usr/share/man/cat3/etext.0	comp-c-catman
 ./usr/share/man/cat3/ether_aton.0	comp-c-catman
@@ -1971,7 +1967,6 @@
 ./usr/share/man/cat3/inet_ntoa.0	comp-c-catman
 ./usr/share/man/cat3/inet_ntop.0	comp-c-catman
 ./usr/share/man/cat3/inet_pton.0	comp-c-catman
-./usr/share/man/cat3/init_error_table.0		comp-c-catman
 ./usr/share/man/cat3/initgroups.0	comp-c-catman
 ./usr/share/man/cat3/initstate.0	comp-c-catman
 ./usr/share/man/cat3/innetgr.0	comp-c-catman
@@ -2376,7 +2371,6 @@
 ./usr/share/man/cat3/res_query.0	comp-c-catman
 ./usr/share/man/cat3/res_search.0	comp-c-catman
 ./usr/share/man/cat3/res_send.0	comp-c-catman
-./usr/share/man/cat3/reset_com_err_hook.0	comp-c-catman
 ./usr/share/man/cat3/resolver.0	comp-c-catman
 ./usr/share/man/cat3/rewind.0	comp-c-catman
 ./usr/share/man/cat3/rewinddir.0	comp-c-catman
@@ -2420,7 +2414,6 @@
 ./usr/share/man/cat3/secure_path.0	comp-c-catman
 ./usr/share/man/cat3/seed48.0	comp-c-catman
 ./usr/share/man/cat3/seekdir.0	comp-c-catman
-./usr/share/man/cat3/set_com_err_hook.0		comp-c-catman
 ./usr/share/man/cat3/setbuf.0	comp-c-catman
 ./usr/share/man/cat3/setbuffer.0	comp-c-catman
 ./usr/share/man/cat3/setclasscontext.0	comp-c-catman
@@ -2666,7 +2659,6 @@
 ./usr/share/man/cat3/usb.0	comp-c-catman
 ./usr/share/man/cat3/user_from_uid.0	comp-c-catman
 ./usr/share/man/cat3/usleep.0	comp-c-catman
-./usr/share/man/cat3/util.0	comp-c-catman
 ./usr/share/man/cat3/utime.0	comp-c-catman
 ./usr/share/man/cat3/va_arg.0	comp-c-catman
 ./usr/share/man/cat3/va_copy.0	comp-c-catman
@@ -4079,8 +4071,6 @@
 ./usr/share/man/man3/clock.3		comp-c-man
 ./usr/share/man/man3/closedir.3		comp-c-man
 ./usr/share/man/man3/closelog.3		comp-c-man
-./usr/share/man/man3/com_err.3			comp-c-man
-./usr/share/man/man3/com_err_va.3		comp-c-man
 ./usr/share/man/man3/confstr.3		comp-c-man
 ./usr/share/man/man3/copysign.3		comp-c-man
 ./usr/share/man/man3/copysignf.3		comp-c-man
@@ -4161,8 +4151,6 @@
 ./usr/share/man/man3/erfcf.3		comp-c-man
 ./usr/share/man/man3/erff.3		comp-c-man
 ./usr/share/man/man3/err.3		comp-c-man
-./usr/share/man/man3/error_message.3		comp-c-man
-./usr/share/man/man3/error_table_name.3		comp-c-man
 ./usr/share/man/man3/errx.3		comp-c-man
 ./usr/share/man/man3/etext.3		comp-c-man
 ./usr/share/man/man3/ether_aton.3		comp-c-man
@@ -4415,7 +4403,6 @@
 ./usr/share/man/man3/inet_ntoa.3		comp-c-man
 ./usr/share/man/man3/inet_ntop.3		comp-c-man
 ./usr/share/man/man3/inet_pton.3		comp-c-man
-./usr/share/man/man3/init_error_table.3		comp-c-man
 ./usr/share/man/man3/initgroups.3		comp-c-man
 ./usr/share/man/man3/initstate.3		comp-c-man
 ./usr/share/man/man3/innetgr.3		comp-c-man
@@ -4820,7 +4807,6 @@
 ./usr/share/man/man3/res_query.3		comp-c-man
 ./usr/share/man/man3/res_search.3		comp-c-man
 ./usr/share/man/man3/res_send.3		comp-c-man
-./usr/share/man/man3/reset_com_err_hook.3	comp-c-man
 ./usr/share/man/man3/resolver.3		comp-c-man
 ./usr/share/man/man3/rewind.3		comp-c-man
 ./usr/share/man/man3/rewinddir.3		comp-c-man
@@ -4864,7 +4850,6 @@
 ./usr/share/man/man3/secure_path.3		comp-c-man
 ./usr/share/man/man3/seed48.3		comp-c-man
 ./usr/share/man/man3/seekdir.3		comp-c-man
-./usr/share/man/man3/set_com_err_hook.3		comp-c-man
 ./usr/share/man/man3/setbuf.3		comp-c-man
 ./usr/share/man/man3/setbuffer.3		comp-c-man
 ./usr/share/man/man3/setclasscontext.3		comp-c-man
@@ -5110,7 +5095,6 @@
 ./usr/share/man/man3/usb.3		comp-c-man
 ./usr/share/man/man3/user_from_uid.3		comp-c-man
 ./usr/share/man/man3/usleep.3		comp-c-man
-./usr/share/man/man3/util.3		comp-c-man
 ./usr/share/man/man3/utime.3		comp-c-man
 ./usr/share/man/man3/va_arg.3		comp-c-man
 ./usr/share/man/man3/va_copy.3		comp-c-man
