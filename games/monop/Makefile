@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 1995/03/23 08:34:32 cgd Exp $
+#	$NetBSD: Makefile,v 1.13 1996/10/18 02:48:56 thorpej Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
 PROG=	monop
@@ -19,7 +19,7 @@ initdeck: initdeck.c
 	${CC} ${CFLAGS} ${LDFLAGS} ${LDSTATIC} -o ${.TARGET} ${.CURDIR}/initdeck.c ${LDADD}
 
 beforeinstall:
-	install -c -o ${BINOWN} -g ${BINGRP} -m 444 cards.pck \
+	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 444 cards.pck \
 	    ${DESTDIR}/usr/share/games
 
 .include <bsd.prog.mk>
