@@ -1,20 +1,8 @@
-#	$NetBSD: Makefile,v 1.1 1998/10/31 18:14:53 eeh Exp $
+#	$NetBSD: Makefile,v 1.2 1998/11/11 05:26:57 mrg Exp $
 
-CURDIR=	${.CURDIR}
-S=	${CURDIR}/../../../..
-
-#
-# Override normal settings
-#
-CC=cc
-LORDER=lorder 
-TSORT=tsort 
-NM=nm
-
-PROG=		fgen
-SRCS=		fgen.l
-
-NOMAN=
+PROG=	fgen
+SRCS=	fgen.l
+MAN=	fgen.1
 
 .include <bsd.prog.mk>
 

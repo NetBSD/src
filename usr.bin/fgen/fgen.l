@@ -49,12 +49,15 @@ white	[ \t\n\r\f]
 tail	{white}
 
 %{
-#include <errno.h>
-#include <stdio.h>
-#include <fcntl.h>
-#include <string.h>
+#include <sys/types.h>
+
 #include <assert.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <stdio.h>
+#include <string.h>
 #include <unistd.h>
+
 #include "fgen.h"
 TOKEN token;
 
@@ -81,12 +84,14 @@ int tokenizer = 0;
 Cell parse_stack[PSTKSIZ];
 int parse_stack_ptr = 0;
 
-/* define prototype */
+int	main __P((int, char *[]));
 YY_DECL;
 
 int debug = 0;
 #define ASSERT if (debug) assert
 #define STATE(y, x)	do { if (debug) printf( "%ld State %s: token `%s'\n", outpos, x, y); } while (0)
+
+#define YY_NO_UNPUT
 %}
 
 %%
@@ -278,10 +283,10 @@ int aadd __P((struct macro *, struct macro *));
 struct macro *alookup __P((struct macro *, char *));
 void initdic __P((void));
 void usage __P((char *));
-TOKEN* tokenize __P((YY_BUFFER_STATE));
+void tokenize __P((YY_BUFFER_STATE));
 int emit __P((char *));
 int spit __P((long));
-int sspit __P((char *));
+void sspit __P((char *));
 int apply_macros __P((YY_BUFFER_STATE, char *));
 int main __P((int argc, char *argv[]));
 
@@ -799,7 +804,7 @@ char *str;
  */
 int
 aadd(dict, new)
-struct macro *dict, *new;
+	struct macro *dict, *new;
 {
 	int res = strcmp(dict->name, new->name);
 
@@ -922,19 +927,16 @@ apply_macros(input, str)
 
 void
 usage(me)
-char *me;
+	char *me;
 {
-	(void)printf( 
-		      "%s: [-o <outfile>] <infile>\n", 
-		      me);
+	(void)fprintf(stderr, "%s: [-o <outfile>] <infile>\n", me);
 	exit(1);
 }
 
-
 int
 main(argc, argv)
-int argc;
-char *argv[];
+	int argc;
+	char *argv[];
 {
 	extern char *optarg;
 	extern int optind;
@@ -955,7 +957,7 @@ char *argv[];
 			debug = atol(optarg);
 			break;
 		case 'o':
-			if ((outf = open(optarg, O_WRONLY|O_CREAT|O_TRUNC, 666)) == NULL) {
+			if ((outf = open(optarg, O_WRONLY|O_CREAT|O_TRUNC, 0666)) == NULL) {
 				(void)printf(
 					      "%s: %s: %s\n", 
 					      myname, optarg, strerror(errno));
@@ -995,7 +997,7 @@ char *argv[];
 
 	inbuf = yy_create_buffer( inf, YY_BUF_SIZE );
 	yy_switch_to_buffer(inbuf);
-	(void)tokenize(inbuf);
+	tokenize(inbuf);
 	yy_delete_buffer(inbuf);
 	fclose(inf);
 	emit("end0");
@@ -1023,7 +1025,7 @@ char *argv[];
  * be called recursively to parse mutiple levels of include files.
  */
 
-TOKEN*
+void
 tokenize(input) 
 	YY_BUFFER_STATE input;
 {
@@ -1031,8 +1033,6 @@ tokenize(input)
 	YY_BUFFER_STATE inbuf;
 	TOKEN *token;
 	struct fcode *fcode;
-	struct macro *macro;
-	int lastof = 0;		/* Offset of last `endof' */
 	int pos, off;
 
 	while ((token = yylex()) != NULL) {
@@ -1071,7 +1071,7 @@ tokenize(input)
 			spit(0);
 			spit(0);
 			spit(token->text[1]);
-			break;
+		break;
 		case TOK_STRING_LIT: 
 			STATE(token->text, "TOK_STRING_LIT:");
 		{
@@ -1135,7 +1135,7 @@ tokenize(input)
 			token = yylex();
 			if (token == NULL) {
 				(void)printf( "EOF in colon definition\n");
-				return (token);
+				return;
 			}
 			
 			/* Add new code to dictionary */
@@ -1188,7 +1188,7 @@ tokenize(input)
 			token = yylex();
 			if (token == NULL) {
 				(void)printf( "EOF in alias definition\n");
-				return (token);
+				return;
 			}
 			if (token->type != TOK_OTHER) {
 				(void)printf( "ENDCOMMENT aliasing weird token type %d\n",
@@ -1199,7 +1199,7 @@ tokenize(input)
 			token = yylex();
 			if (token == NULL) {
 				(void)printf( "EOF in alias definition\n");
-				return (token);
+				return;
 			}			
 			alias->equiv = strdup(token->text);
 			if (!aadd(aliases, alias)) {
@@ -1216,7 +1216,7 @@ tokenize(input)
 			token = yylex();
 			if (token == NULL) {
 				(void)printf( "EOF in [']\n");
-				return (token);
+				return;
 			}
 			if ((fcode = flookup(dictionary, token->text)) == NULL) {
 				(void)printf( "[']: %s not found\n", token->text);
@@ -1248,7 +1248,7 @@ tokenize(input)
 			token = yylex();
 			if (token == NULL) {
 				(void)printf( "EOF in colon definition\n");
-				return (token);
+				return;
 			}
 			
 			/* Add new code to dictionary */
@@ -1281,7 +1281,7 @@ tokenize(input)
 			token = yylex();
 			if (token == NULL) {
 				(void)printf( "EOF in constant definition\n");
-				return (token);
+				return;
 			}
 			
 			/* Add new code to dictionary */
@@ -1322,7 +1322,7 @@ tokenize(input)
 			token = yylex();
 			if (token == NULL) {
 				(void)printf( "EOF in create definition\n");
-				return (token);
+				return;
 			}
 			
 			/* Add new code to dictionary */
@@ -1360,7 +1360,7 @@ tokenize(input)
 				token = yylex();
 				if (token == NULL) {
 					(void)printf( "EOF after d#\n");
-					return (token);
+					return;
 				}
 				if (token->type == TOK_OTHER) {
 					if (strcmp("-1", token->text) == 0) {
@@ -1391,7 +1391,7 @@ tokenize(input)
 			token = yylex();
 			if (token == NULL) {
 				(void)printf( "EOF in colon definition\n");
-				return (token);
+				return;
 			}
 			
 			/* Add new code to dictionary */
@@ -1460,7 +1460,7 @@ tokenize(input)
 			pos = outpos;
 			outpos = off;
 			off = pos - off;
-				if (offsetsize == 16) {
+			if (offsetsize == 16) {
 				spit(0);	/* Place holder for later */
 			}
 			spit(0);	/* Place holder for later */
@@ -1527,7 +1527,7 @@ tokenize(input)
 			token = yylex();
 			if (token == NULL) {
 				(void)printf( "EOF in field definition\n");
-				return (token);
+				return;
 			}
 			
 			/* Add new code to dictionary */
@@ -1566,7 +1566,7 @@ tokenize(input)
 				token = yylex();
 				if (token == NULL) {
 					(void)printf( "EOF after h#\n");
-					return (token);
+					return;
 				}
 				value = strtol(token->text, &end, 16);
 				if (*end != 0) {
@@ -1655,7 +1655,7 @@ tokenize(input)
 				token = yylex();
 				if (token == NULL) {
 					(void)printf( "EOF after o#\n");
-					return (token);
+					return;
 				}
 				value = strtol(token->text, &end, 8);
 				if (*end != 0) {
@@ -1756,7 +1756,7 @@ tokenize(input)
 			token = yylex();
 			if (token == NULL) {
 				(void)printf( "EOF in value definition\n");
-				return (token);
+				return;
 			}
 			
 			/* Add new code to dictionary */
@@ -1784,7 +1784,7 @@ tokenize(input)
 			token = yylex();
 			if (token == NULL) {
 				(void)printf( "EOF in variable definition\n");
-				return (token);
+				return;
 			}
 			
 			/* Add new code to dictionary */
@@ -1870,7 +1870,7 @@ tokenize(input)
 		default:
 		}
 	}
-	return (NULL);
+	return;
 }
 
 /*
@@ -1904,7 +1904,7 @@ emit(str)
  */
 int
 spit(n)
-long n;
+	long n;
 {
 	int count = 1;
 
@@ -1914,7 +1914,7 @@ long n;
 		while (outpos >= outbufsiz) outbufsiz += BUFCLICK;
 		if (!(outbuf = realloc(outbuf, outbufsiz))) {
 			(void)printf( "realloc of %ld bytes failed -- out of memory\n",
-				      outbufsiz);
+				      (long)outbufsiz);
 			exit(1);
 		}
 	}
@@ -1925,7 +1925,7 @@ long n;
 /*
  * Spit out an FCode string.
  */
-int
+void
 sspit(s)
 	char *s;
 {
@@ -1933,19 +1933,20 @@ sspit(s)
 
 	if (len > 255) {
 		(void)printf( "string length %d too long\n", len);
-		return (0);
+		return;
 	}
 #ifdef DEBUG
 	if (debug > 1)
 		(void)printf( "sspit: len %d str `%s'\n", len, s);
 #endif
 	spit(len);
-	while (*s) spit(*s++);
-	return (len);
+	while (*s)
+		spit(*s++);
 }
 
 int 
-yywrap() {
+yywrap()
+{
 	/* Always generate EOF */
 	return (1);
 }
