@@ -1,4 +1,4 @@
-/*	$NetBSD: intvec.S,v 1.3 2002/05/13 21:11:23 matt Exp $   */
+/*	$NetBSD: intvec.S,v 1.4 2003/01/19 22:29:23 ragge Exp $   */
 
 /*
  * Copyright (c) 1994, 1997 Ludd, University of Lule}, Sweden.
@@ -300,6 +300,7 @@ SCBENTRY(softclock)
 	jsb	softintr_dispatch
 	incl	_C_LABEL(softclock_intrcnt)+EV_COUNT
 	adwc	$0,_C_LABEL(softclock_intrcnt)+EV_COUNT+4
+	incl	_C_LABEL(uvmexp)+UVME_SOFTS
 	POPR
 	rei
 
@@ -321,6 +322,7 @@ SCBENTRY(softnet)
 	jsb	softintr_dispatch
 	incl	_C_LABEL(softnet_intrcnt)+EV_COUNT
 	adwc	$0,_C_LABEL(softnet_intrcnt)+EV_COUNT+4
+	incl	_C_LABEL(uvmexp)+UVME_SOFTS
 	POPR
 	rei
 
@@ -330,6 +332,7 @@ SCBENTRY(softserial)
 	jsb	softintr_dispatch
 	incl	_C_LABEL(softserial_intrcnt)+EV_COUNT
 	adwc	$0,_C_LABEL(softserial_intrcnt)+EV_COUNT+4
+	incl	_C_LABEL(uvmexp)+UVME_SOFTS
 	POPR
 	rei
 
@@ -372,6 +375,7 @@ SCBENTRY(hardclock)
 1:	pushr	$0x3f
 	incl	_C_LABEL(clock_intrcnt)+EV_COUNT	# count the number of clock interrupts
 	adwc	$0,_C_LABEL(clock_intrcnt)+EV_COUNT+4
+	incl	_C_LABEL(uvmexp)+UVME_INTRS
 #if VAX46 || VAXANY
 	cmpl	_C_LABEL(vax_boardtype),$VAX_BTYP_46
 	bneq	1f
