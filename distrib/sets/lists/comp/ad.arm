@@ -1,4 +1,4 @@
-# $NetBSD: ad.arm,v 1.16 2003/02/26 22:31:04 thorpej Exp $
+# $NetBSD: ad.arm,v 1.17 2003/05/08 18:11:38 skrll Exp $
 ./usr/include/arm			comp-c-include
 ./usr/include/arm/ansi.h		comp-c-include
 ./usr/include/arm/aout_machdep.h	comp-c-include
@@ -65,7 +65,7 @@
 ./usr/lib/libarm.a			comp-c-lib
 ./usr/lib/libarm.so			comp-c-lib
 ./usr/lib/libarm_p.a			comp-c-lib
-./usr/lib/libarm_pic.a			comp-c-lib
+./usr/lib/libarm_pic.a			comp-c-piclib
 ./usr/lib/libpmc.a			comp-c-lib
 ./usr/lib/libpmc.so			comp-c-lib
 ./usr/lib/libpmc_p.a			comp-c-proflib
