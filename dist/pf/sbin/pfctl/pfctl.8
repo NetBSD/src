@@ -385,9 +385,9 @@ ftp server.
 The following commands configure the firewall and send 10 pings to the ftp
 server:
 .Bd -literal -offset indent
-# printf "table <test> { ftp.openbsd.org }\en \e
-    pass out to <test> keep state\en" | pfctl -f-
-# ping -qc10 ftp.openbsd.org
+# printf "table \*[Lt]test\*[Gt] { ftp.NetBSD.org }\en \e
+    pass out to \*[Lt]test\*[Gt] keep state\en" | pfctl -f-
+# ping -qc10 ftp.NetBSD.org
 .Ed
 .Pp
 We can now use the table
