@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_vsbus.c,v 1.2 1999/08/27 20:05:08 ragge Exp $	*/
+/*	$NetBSD: if_le_vsbus.c,v 1.3 2000/01/24 02:54:03 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -97,6 +97,7 @@
 
 #include <machine/cpu.h>
 #include <machine/sid.h>
+#include <machine/scb.h>
 #include <machine/bus.h>
 #include <machine/rpb.h>
 #include <machine/vsbus.h>
@@ -118,7 +119,6 @@ int	le_vsbus_match __P((struct device *, struct cfdata *, void *));
 void	le_vsbus_attach __P((struct device *, struct device *, void *));
 static	void	lewrcsr __P((struct lance_softc *, u_int16_t, u_int16_t));
 static	u_int16_t lerdcsr __P((struct lance_softc *, u_int16_t));
-static	void	leintr __P((int));
 
 struct cfattach le_vsbus_ca = {
 	sizeof(struct le_softc), le_vsbus_match, le_vsbus_attach
@@ -168,7 +168,6 @@ le_vsbus_match(parent, cf, aux)
 
 	/* Wait for initialization to finish. */
 	DELAY(100000);
-	va->va_ivec = leintr;
 
 	/* Should have interrupted by now */
 	if (*rdp & LE_C0_IDON)
@@ -200,6 +199,7 @@ le_vsbus_attach(parent, self, aux)
 	sc->sc_am7990.lsc.sc_wrcsr = lewrcsr;
 	sc->sc_am7990.lsc.sc_nocarrier = NULL;
 
+	scb_vecalloc(va->va_cvec, (void (*)(void *)) am7990_intr, sc, SCB_ISTACK);
         /*
          * Allocate a (DMA-safe) block for all descriptors and buffers.
          */
@@ -248,11 +248,4 @@ le_vsbus_attach(parent, self, aux)
 	 */
 	if (B_TYPE(bootdev) == BDEV_LE)
 		booted_from = self;
-}
-
-void
-leintr(unit)
-	int unit;
-{
-	am7990_intr(le_cd.cd_devs[unit]);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.5 1999/08/23 19:09:27 ragge Exp $ */
+/*	$NetBSD: autoconf.c,v 1.6 2000/01/24 02:54:01 matt Exp $ */
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -174,6 +174,7 @@ getsecs()
 void scb_stray(), rtimer();
 struct ivec_dsp **scb;
 struct ivec_dsp *scb_vec;
+extern struct ivec_dsp idsptch;
 
 /*
  * Init the SCB and set up a handler for all vectors in the lower space,
@@ -198,7 +199,7 @@ scbinit()
 	for (i = 0; i < 128; i++) {
 		scb[i] = &scb_vec[i];
 		(int)scb[i] |= 1;	/* Only interrupt stack */
-		memcpy(&scb_vec[i], &idsptch, sizeof(struct ivec_dsp));
+		scb_vec[i] = idsptch;
 		scb_vec[i].hoppaddr = scb_stray;
 	}
 	scb_vec[0xc0/4].hoppaddr = rtimer;
