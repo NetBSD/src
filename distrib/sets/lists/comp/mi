@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.264 2000/10/13 04:33:01 itojun Exp $
+#	$NetBSD: mi,v 1.265 2000/10/14 01:53:14 wiz Exp $
 ./sys			comp-sysutil-root
 ./usr/bin/addr2line	comp-miscutil-bin
 ./usr/bin/ar		comp-util-bin
@@ -313,6 +313,7 @@
 ./usr/include/dev/sun		comp-c-include
 ./usr/include/dev/sun/disklabel.h		comp-c-include
 ./usr/include/dev/sun/event_var.h		comp-c-include
+./usr/include/dev/sun/fbio.h		comp-c-include
 ./usr/include/dev/sun/kbd_tables.h		comp-c-include
 ./usr/include/dev/sun/kbd_xlate.h		comp-c-include
 ./usr/include/dev/tc		comp-c-include
@@ -2593,6 +2594,8 @@
 ./usr/share/man/cat3/strsignal.0	comp-c-catman
 ./usr/share/man/cat3/strspn.0	comp-c-catman
 ./usr/share/man/cat3/strstr.0	comp-c-catman
+./usr/share/man/cat3/strsvis.0	comp-c-catman
+./usr/share/man/cat3/strsvisx.0	comp-c-catman
 ./usr/share/man/cat3/strtod.0	comp-c-catman
 ./usr/share/man/cat3/strtok.0	comp-c-catman
 ./usr/share/man/cat3/strtok_r.0	comp-c-catman
@@ -2646,6 +2649,7 @@
 ./usr/share/man/cat3/svcraw_create.0	comp-c-catman
 ./usr/share/man/cat3/svctcp_create.0	comp-c-catman
 ./usr/share/man/cat3/svcudp_bufcreate.0	comp-c-catman
+./usr/share/man/cat3/svis.0	comp-c-catman
 ./usr/share/man/cat3/swab.0	comp-c-catman
 ./usr/share/man/cat3/swapon.0	comp-c-catman
 ./usr/share/man/cat3/sys_siglist.0	comp-c-catman
@@ -3158,6 +3162,7 @@
 ./usr/share/man/man1/cccp.1		comp-util-man
 ./usr/share/man/man1/crunchgen.1	comp-miscutil-man
 ./usr/share/man/man1/crunchide.1	comp-miscutil-man
+./usr/share/man/man1/cvs.1		comp-miscutil-man
 ./usr/share/man/man1/elf2aout.1		comp-sysutil-man
 ./usr/share/man/man1/elf2ecoff.1	comp-sysutil-man
 ./usr/share/man/man1/f77.1		comp-fortran-man
@@ -4345,6 +4350,8 @@
 ./usr/share/man/man3/strsignal.3		comp-c-man
 ./usr/share/man/man3/strspn.3		comp-c-man
 ./usr/share/man/man3/strstr.3		comp-c-man
+./usr/share/man/man3/strsvis.3		comp-c-man
+./usr/share/man/man3/strsvisx.3		comp-c-man
 ./usr/share/man/man3/strtod.3		comp-c-man
 ./usr/share/man/man3/strtok.3		comp-c-man
 ./usr/share/man/man3/strtok_r.3		comp-c-man
@@ -4398,6 +4405,7 @@
 ./usr/share/man/man3/svcraw_create.3		comp-c-man
 ./usr/share/man/man3/svctcp_create.3		comp-c-man
 ./usr/share/man/man3/svcudp_bufcreate.3		comp-c-man
+./usr/share/man/man3/svis.3		comp-c-man
 ./usr/share/man/man3/swab.3		comp-c-man
 ./usr/share/man/man3/swapon.3		comp-c-man
 ./usr/share/man/man3/sys_siglist.3		comp-c-man
@@ -4564,10 +4572,12 @@
 ./usr/share/man/man3/ypclnt.3		comp-c-man
 ./usr/share/man/man3/yperr_string.3	comp-c-man
 ./usr/share/man/man3/ypprot_err.3	comp-c-man
+./usr/share/man/man5/cvs.5		comp-miscutil-man
 ./usr/share/man/man5/mk.conf.5		comp-util-man
 ./usr/share/man/man5/ranlib.5		comp-util-man
 ./usr/share/man/man7/operator.7		comp-c-man
 ./usr/share/man/man8/config.8		comp-sysutil-man
+./usr/share/man/man8/cvsbug.8		comp-sysutil-man
 ./usr/share/man/man8/kgmon.8		comp-sysutil-man
 ./usr/share/man/man8/verify_krb5_conf.8		comp-sysutil-man
 ./usr/share/man/man9/ETHER_FIRST_MULTI.9		comp-kern-man
