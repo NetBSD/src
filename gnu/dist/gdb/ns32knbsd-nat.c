@@ -121,10 +121,10 @@ fetch_core_registers (core_reg_sect, core_reg_size, which, reg_addr)
   core_reg = (struct coreregs *)core_reg_sect;
 
   /*
-   * We have *all* registers in the first core section.
+   * We have *all* registers
+   * in the first core section.
+   * Ignore which.
    */
-  if (which != 0)
-	  return;
 
   if (core_reg_size < sizeof(*core_reg)) {
     fprintf_unfiltered (gdb_stderr, "Couldn't read regs from core file\n");
@@ -191,11 +191,11 @@ fetch_kcore_registers (pcb)
   int dummy;
 
   /* Integer registers */
-  if (target_read_memory(pcb->pcb_ksp, &sf, sizeof sf))
+  if (target_read_memory((CORE_ADDR)pcb->pcb_ksp, (char *)&sf, sizeof sf))
      error("Cannot read integer registers.");
 
   /* We use the psr at kernel entry */
-  if (target_read_memory(pcb->pcb_onstack, &intreg, sizeof intreg))
+  if (target_read_memory((CORE_ADDR)pcb->pcb_onstack, (char *)&intreg, sizeof intreg))
      error("Cannot read processor status register.");
 
   dummy = 0;
@@ -214,8 +214,120 @@ fetch_kcore_registers (pcb)
   RF(PC_REGNUM	  , sf.sf_pc);
   RF(PS_REGNUM	  , intreg.r_psr);
 
-  /* The kernel does not use the FPU, so ignore it. */
+  /* Floating point registers */
+  RF(FPS_REGNUM   , pcb->pcb_fsr);
+  RF(FP0_REGNUM +0, pcb->pcb_freg[0]);
+  RF(FP0_REGNUM +2, pcb->pcb_freg[2]);
+  RF(FP0_REGNUM +4, pcb->pcb_freg[4]);
+  RF(FP0_REGNUM +6, pcb->pcb_freg[6]);
   registers_fetched ();
 }
 #endif	/* FETCH_KCORE_REGISTERS */
 
+void
+clear_regs()
+{
+  double zero = 0.0;
+  int null = 0;
+  
+  /* Integer registers */
+  RF(R0_REGNUM + 0, null);
+  RF(R0_REGNUM + 1, null);
+  RF(R0_REGNUM + 2, null);
+  RF(R0_REGNUM + 3, null);
+  RF(R0_REGNUM + 4, null);
+  RF(R0_REGNUM + 5, null);
+  RF(R0_REGNUM + 6, null);
+  RF(R0_REGNUM + 7, null);
+
+  RF(SP_REGNUM	  , null);
+  RF(FP_REGNUM	  , null);
+  RF(PC_REGNUM	  , null);
+  RF(PS_REGNUM	  , null);
+
+  /* Floating point registers */
+  RF(FPS_REGNUM   , zero);
+  RF(FP0_REGNUM +0, zero);
+  RF(FP0_REGNUM +2, zero);
+  RF(FP0_REGNUM +4, zero);
+  RF(FP0_REGNUM +6, zero);
+  return;
+}
+
+/* Return number of args passed to a frame.
+   Can return -1, meaning no way to tell. */
+
+int
+frame_num_args(fi)
+struct frame_info *fi;
+{
+	CORE_ADDR	enter_addr;
+	CORE_ADDR	argp;
+	int		inst;
+	int		args;
+	int		i;
+
+	if (read_memory_integer (fi->frame, 4) == 0 && fi->pc < 0x10000) {
+		/* main is always called with three args */
+		return(3);
+	}
+	enter_addr = ns32k_get_enter_addr(fi->pc);
+	if (enter_addr = 0)
+		return(-1);
+	argp = enter_addr == 1 ? SAVED_PC_AFTER_CALL(fi) : FRAME_SAVED_PC(fi);
+	for (i = 0; i < 16; i++) {
+		/*
+		 * After a bsr gcc may emit the following instructions
+		 * to remove the arguments from the stack:
+		 *   cmpqd 0,tos 	- to remove 4 bytes from the stack
+		 *   cmpd tos,tos	- to remove 8 bytes from the stack
+		 *   adjsp[bwd] -n	- to remove n bytes from the stack
+		 * Gcc sometimes delays emitting these instructions and
+		 * may even throw a branch between our feet.
+		 */		 
+		inst = read_memory_integer(argp    , 4);
+		args = read_memory_integer(argp + 2, 4);
+		if ((inst & 0xff) == 0xea) {		/* br */
+			args = ((inst >> 8) & 0xffffff) | (args << 24);
+			if (args & 0x80) {
+				if (args & 0x40) {
+					args = ntohl(args);
+				} else {
+					args = ntohs(args & 0xffff);
+					if (args & 0x2000)
+						args |= 0xc000;
+				}
+			} else {
+				args = args & 0xff;
+				if (args & 0x40)
+					args |= 0x80;
+			}
+			argp += args;
+			continue;
+		}
+		if ((inst & 0xffff) == 0xb81f)		/* cmpqd 0,tos */
+			return(1);
+		else if ((inst & 0xffff) == 0xbdc7)	/* cmpd tos,tos */
+			return(2);
+		else if ((inst & 0xfffc) == 0xa57c) {	/* adjsp[bwd] */
+			switch (inst & 3) {
+			case 0:
+				args = ((args & 0xff) + 0x80);
+				break;
+			case 1:
+				args = ((ntohs(args) & 0xffff) + 0x8000);
+				break;
+			case 3:
+				args = -ntohl(args);
+				break;
+			default:
+				return(-1);
+			}
+			if (args / 4 > 10 || (args & 3) != 0)
+				continue;
+			return(args / 4);
+		}
+		argp += 1;
+	}
+	return(-1);
+}
