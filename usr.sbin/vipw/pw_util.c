@@ -1,6 +1,8 @@
+/*	$NetBSD: pw_util.c,v 1.5 1995/01/20 19:19:54 mycroft Exp $	*/
+
 /*-
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993, 1994
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,8 +34,7 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)pw_util.c	5.4 (Berkeley) 5/21/91";*/
-static char rcsid[] = "$Id: pw_util.c,v 1.4 1994/03/29 02:21:11 jtc Exp $";
+static char sccsid[] = "@(#)pw_util.c	8.3 (Berkeley) 4/2/94";
 #endif /* not lint */
 
 /*
@@ -42,24 +43,25 @@ static char rcsid[] = "$Id: pw_util.c,v 1.4 1994/03/29 02:21:11 jtc Exp $";
  */
 
 #include <sys/param.h>
-#include <sys/stat.h>
 #include <sys/time.h>
-#include <sys/wait.h>
 #include <sys/resource.h>
-#include <signal.h>
-#include <fcntl.h>
-#include <pwd.h>
+#include <sys/stat.h>
+#include <sys/wait.h>
+
+#include <err.h>
 #include <errno.h>
-#include <stdio.h>
+#include <fcntl.h>
 #include <paths.h>
-#include <string.h>
+#include <pwd.h>
+#include <signal.h>
+#include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
-extern char *progname;
-extern char *tempname;
+#include "pw_util.h"
 
-void pw_error __P((char *, int, int));
+extern char *tempname;
 
 void
 pw_init()
@@ -92,11 +94,11 @@ pw_init()
 	(void)umask(0);
 }
 
+static int lockfd;
+
 int
 pw_lock()
 {
-	int lockfd;
-
 	/* 
 	 * If the master password file doesn't exist, the system is hosed.
 	 * Might as well try to build one.  Set the close-on-exec bit so
@@ -104,17 +106,11 @@ pw_lock()
 	 * Open should allow flock'ing the file; see 4.4BSD.	XXX
 	 */
 	lockfd = open(_PATH_MASTERPASSWD, O_RDONLY, 0);
-	if (lockfd < 0 || fcntl(lockfd, F_SETFD, 1) == -1) {
-		(void)fprintf(stderr, "%s: %s: %s\n",
-		    progname, _PATH_MASTERPASSWD, strerror(errno));
-		exit(1);
-	}
-	if (flock(lockfd, LOCK_EX|LOCK_NB)) {
-		(void)fprintf(stderr,
-		    "%s: the password db is busy.\n", progname);
-		exit(1);
-	}
-	return(lockfd);
+	if (lockfd < 0 || fcntl(lockfd, F_SETFD, 1) == -1)
+		err(1, "%s", _PATH_MASTERPASSWD);
+	if (flock(lockfd, LOCK_EX|LOCK_NB))
+		errx(1, "the password db file is busy");
+	return (lockfd);
 }
 
 int
@@ -124,18 +120,15 @@ pw_tmp()
 	int fd;
 	char *p;
 
-	if ((p = strrchr(path, '/')) != NULL)
+	if (p = strrchr(path, '/'))
 		++p;
 	else
 		p = path;
-	(void)snprintf(p, sizeof(path), "%s.XXXXXX", progname);
-	if ((fd = mkstemp(path)) == -1) {
-		(void)fprintf(stderr,
-		    "%s: %s: %s\n", progname, path, strerror(errno));
-		exit(1);
-	}
+	strcpy(p, "pw.XXXXXX");
+	if ((fd = mkstemp(path)) == -1)
+		err(1, "%s", path);
 	tempname = path;
-	return(fd);
+	return (fd);
 }
 
 int
@@ -144,17 +137,17 @@ pw_mkdb()
 	int pstat;
 	pid_t pid;
 
-	(void)printf("%s: rebuilding the database...\n", progname);
-	(void)fflush(stdout);
+	warnx("rebuilding the database...");
+	(void)fflush(stderr);
 	if (!(pid = vfork())) {
 		execl(_PATH_PWD_MKDB, "pwd_mkdb", "-p", tempname, NULL);
 		pw_error(_PATH_PWD_MKDB, 1, 1);
 	}
 	pid = waitpid(pid, &pstat, 0);
 	if (pid == -1 || !WIFEXITED(pstat) || WEXITSTATUS(pstat) != 0)
-		return(0);
-	(void)printf("%s: done\n", progname);
-	return(1);
+		return (0);
+	warnx("done");
+	return (1);
 }
 
 void
@@ -167,7 +160,7 @@ pw_edit(notsetuid)
 
 	if (!(editor = getenv("EDITOR")))
 		editor = _PATH_VI;
-	if ((p = strrchr(editor, '/')) != NULL)
+	if (p = strrchr(editor, '/'))
 		++p;
 	else 
 		p = editor;
@@ -180,7 +173,7 @@ pw_edit(notsetuid)
 		execlp(editor, p, tempname, NULL);
 		_exit(1);
 	}
-	pid = waitpid(pid, &pstat, 0);
+	pid = waitpid(pid, (int *)&pstat, 0);
 	if (pid == -1 || !WIFEXITED(pstat) || WEXITSTATUS(pstat) != 0)
 		pw_error(editor, 1, 1);
 }
@@ -188,18 +181,15 @@ pw_edit(notsetuid)
 void
 pw_prompt()
 {
-	register int c;
+	int c;
 
-	for (;;) {
-		(void)printf("re-edit the password file? [y]: ");
-		(void)fflush(stdout);
-		c = getchar();
-		if (c != EOF && c != (int)'\n')
-			while (getchar() != (int)'\n');
-		if (c == (int)'n')
-			pw_error((char *)NULL, 0, 0);
-		break;
-	}
+	(void)printf("re-edit the password file? [y]: ");
+	(void)fflush(stdout);
+	c = getchar();
+	if (c != EOF && c != '\n')
+		while (getchar() != '\n');
+	if (c == 'n')
+		pw_error(NULL, 0, 0);
 }
 
 void
@@ -207,17 +197,10 @@ pw_error(name, err, eval)
 	char *name;
 	int err, eval;
 {
-	int sverrno;
+	if (err)
+		warn(name);
 
-	if (err) {
-		sverrno = errno;
-		(void)fprintf(stderr, "%s: ", progname);
-		if (name)
-			(void)fprintf(stderr, "%s: ", name);
-		(void)fprintf(stderr, "%s\n", strerror(sverrno));
-	}
-	(void)fprintf(stderr,
-	    "%s: %s unchanged\n", progname, _PATH_MASTERPASSWD);
+	warnx("%s: unchanged", _PATH_MASTERPASSWD);
 	(void)unlink(tempname);
 	exit(eval);
 }

@@ -1,3 +1,5 @@
+/*	$NetBSD: pw_util.h,v 1.2 1995/01/20 19:19:55 mycroft Exp $	*/
+
 /*-
  * Copyright (c) 1994
  *	The Regents of the University of California.  All rights reserved.
