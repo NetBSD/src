@@ -1,4 +1,4 @@
-/*	$NetBSD: bsd_audio.c,v 1.3 1996/10/13 03:34:40 christos Exp $	*/
+/*	$NetBSD: bsd_audio.c,v 1.4 1998/01/12 21:13:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -207,10 +207,6 @@ void	audioattach __P((struct device *, struct device *, void *));
 
 struct cfattach audio_ca = {
 	sizeof(struct audio_softc), audiomatch, audioattach
-};
-
-struct cfdriver audio_cd = {
-	NULL, "audio", DV_DULL
 };
 
 int

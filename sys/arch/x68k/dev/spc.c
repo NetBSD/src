@@ -1,4 +1,4 @@
-/*	$NetBSD: spc.c,v 1.12 1997/10/19 20:45:11 oki Exp $	*/
+/*	$NetBSD: spc.c,v 1.13 1998/01/12 21:13:48 thorpej Exp $	*/
 
 #define	integrate	__inline static
 
@@ -382,9 +382,7 @@ struct cfattach spc_ca = {
 	sizeof(struct spc_softc), spcmatch, spcattach
 };
 
-struct cfdriver spc_cd = {
-	NULL, "spc", DV_DULL
-};
+extern struct cfdriver spc_cd;
 
 struct scsipi_adapter spc_switch = {
 	spc_scsi_cmd,

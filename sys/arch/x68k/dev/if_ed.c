@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ed.c,v 1.5 1997/10/17 20:28:06 oki Exp $	*/
+/*	$NetBSD: if_ed.c,v 1.6 1998/01/12 21:13:45 thorpej Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -139,9 +139,8 @@ u_short ed_pio_write_mbufs __P((struct ed_softc *, struct mbuf *, u_short));
 struct cfattach ed_ca = {
 	sizeof(struct ed_softc), edmatch, edattach
 };
-struct cfdriver ed_cd = {
-	NULL, "ed", DV_IFNET
-};
+
+extern struct cfdriver ed_cd;
 
 #define	ETHER_MIN_LEN	64
 #define ETHER_MAX_LEN	1518

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.8 1997/04/21 22:04:23 ragge Exp $	*/
+/*	$NetBSD: if_le.c,v 1.9 1998/01/12 20:52:34 thorpej Exp $	*/
 
 /* #define LE_CHIP_IS_POKEY	/* does VS2000 need this ??? */
 
@@ -105,6 +105,8 @@ int leintr __P((void *sc));
 struct cfattach le_ca = {
 	sizeof(struct le_softc), lematch, leattach
 };
+
+extern struct cfdriver le_cd;
 
 hide void lewrcsr __P ((struct am7990_softc *, u_int16_t, u_int16_t));
 hide u_int16_t lerdcsr __P ((struct am7990_softc *, u_int16_t));

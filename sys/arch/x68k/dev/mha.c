@@ -1,4 +1,4 @@
-/*	$NetBSD: mha.c,v 1.2 1997/10/19 20:45:17 oki Exp $	*/
+/*	$NetBSD: mha.c,v 1.3 1998/01/12 21:13:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Masaru Oki, Takumi Nakamura and Masanobu Saitoh.  All rights reserved.
@@ -238,9 +238,7 @@ struct cfattach mha_ca = {
 	sizeof(struct mha_softc), mhamatch, mhaattach
 };
 
-struct cfdriver mha_cd = {
-	NULL, "mha", DV_DULL
-};
+extern struct cfdriver mha_cd;
 
 struct scsipi_adapter mha_switch = {
 	mha_scsi_cmd,

@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_tape.c,v 1.6 1997/07/17 02:22:27 jtk Exp $ */
+/*	$NetBSD: mscp_tape.c,v 1.7 1998/01/12 20:52:44 thorpej Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -107,13 +107,11 @@ struct	mscp_device mt_device = {
 #define	mtnorewind(dev)	(dev & T_NOREWIND)
 #define	mthdensity(dev)	(dev & T_1600BPI)
 
-struct	cfdriver mt_cd = {
-	NULL, "mt", DV_DULL
-};
-
 struct	cfattach mt_ca = {
 	sizeof(struct mt_softc), mtmatch, mtattach
 };
+
+extern struct cfdriver mt_cd;
 
 /*
  * More driver definitions, for generic MSCP code.

@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.10 1997/10/19 20:35:15 ragge Exp $	*/
+/*	$NetBSD: ncr.c,v 1.11 1998/01/12 20:53:04 thorpej Exp $	*/
 
 /* #define DEBUG	/* */
 /* #define TRACE	/* */
@@ -275,9 +275,6 @@ static struct scsipi_device si_dev = {
 };
 
 
-struct cfdriver ncr_cd = {
-	NULL, si_name, DV_DULL
-};
 struct cfattach ncr_ca = {
 	sizeof(struct si_softc), si_match, si_attach,
 };

@@ -1,4 +1,4 @@
-/*	$NetBSD: ka820.c,v 1.6 1997/07/17 02:22:31 jtk Exp $	*/
+/*	$NetBSD: ka820.c,v 1.7 1998/01/12 20:52:59 thorpej Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -298,9 +298,9 @@ ms820_attach(parent, self, aux)
 void
 ka820_memerr()
 {
+	extern struct cfdriver mem_cd;
 	register struct ms820regs *mcr;
 	struct mem_bi_softc *mc;
-	extern struct cfdriver mem_cd;
 	register int m, hard;
 	register char *type;
 static char b1[] = "\20\40ERRSUM\37ECCDIAG\36ECCDISABLE\20CRDINH\17VALID\
