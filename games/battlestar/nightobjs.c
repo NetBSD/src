@@ -1,4 +1,4 @@
-/*	$NetBSD: nightobjs.c,v 1.7 1999/02/10 01:36:50 hubertf Exp $	*/
+/*	$NetBSD: nightobjs.c,v 1.8 1999/09/18 16:42:29 jsm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)nightobjs.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: nightobjs.c,v 1.7 1999/02/10 01:36:50 hubertf Exp $");
+__RCSID("$NetBSD: nightobjs.c,v 1.8 1999/09/18 16:42:29 jsm Exp $");
 #endif
 #endif				/* not lint */
 
@@ -103,5 +103,5 @@ const struct objs nightobjs[] = {
 	{249, FOOT},
 	{250, FOOT},
 	{93, PAPAYAS},
-	{0}
+	{0, 0}
 };
