@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.27 1998/08/23 10:07:09 pk Exp $ */
+/*	$NetBSD: cpu.h,v 1.28 1998/09/26 20:12:06 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -141,6 +141,9 @@ extern int	want_resched;		/* resched() was called */
  */
 #define	signotify(p)		(want_ast = 1)
 
+/* Number of CPUs in the system */
+extern int ncpu;
+
 /*
  * Only one process may own the FPU state.
  *
@@ -229,6 +232,10 @@ void cpu_set_kpc __P((struct proc *, void (*)(struct proc *)));
 struct trapframe;
 int fixalign __P((struct proc *, struct trapframe *));
 int emulinstr __P((int, struct trapframe *));
+/* cpu.c */
+void mp_pause_cpus __P((void));
+void mp_resume_cpus __P((void));
+void mp_halt_cpus __P((void));
 
 /*
  *
