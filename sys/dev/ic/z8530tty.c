@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.19 1997/10/17 22:55:09 gwr Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.20 1997/11/01 15:51:23 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -366,13 +366,10 @@ zsopen(dev, flags, mode, p)
 	if (tp == NULL)
 		return (EBUSY);
 
-	/* It's simpler to do this up here. */
-	if (((tp->t_state & (TS_ISOPEN | TS_XCLUDE))
-	     ==             (TS_ISOPEN | TS_XCLUDE))
-	    && (p->p_ucred->cr_uid != 0) )
-	{
+	if ((tp->t_state & TS_ISOPEN) != 0 &&
+	    (tp->t_state & TS_XCLUDE) != 0 &&
+	    p->p_ucred->cr_uid != 0)
 		return (EBUSY);
-	}
 
 	s = spltty();
 
@@ -380,22 +377,26 @@ zsopen(dev, flags, mode, p)
 		/* First open. */
 		struct termios t;
 
+		/* Turn on interrupts. */
+		cs->cs_preg[1] = ZSWR1_RIE | ZSWR1_SIE;
+
+		/* Fetch the current modem control status, needed later. */
+		cs->cs_rr0 = zs_read_csr(cs);
+
 		/*
 		 * Setup the "new" parameters in t.
 		 * Can not use tp->t because zsparam
 		 * deals only with what has changed.
 		 */
-		bzero((void*)&t, sizeof(t));
-		t.c_cflag  = cs->cs_defcflag;
+		t.c_ispeed = 0;
+		t.c_ospeed = cs->cs_defspeed;
+		t.c_cflag = cs->cs_defcflag;
 		if (zst->zst_swflags & TIOCFLAG_CLOCAL)
 			t.c_cflag |= CLOCAL;
 		if (zst->zst_swflags & TIOCFLAG_CRTSCTS)
 			t.c_cflag |= CRTSCTS;
 		if (zst->zst_swflags & TIOCFLAG_MDMBUF)
 			t.c_cflag |= MDMBUF;
-		t.c_ospeed = cs->cs_defspeed;
-		/* Enable interrupts. */
-		cs->cs_preg[1] = ZSWR1_RIE | ZSWR1_SIE;
 		/* Make sure zsparam will see changes. */
 		tp->t_ospeed = 0;
 		(void) zsparam(tp, &t);
@@ -411,62 +412,51 @@ zsopen(dev, flags, mode, p)
 		}
 		ttychars(tp);
 		ttsetwater(tp);
-		/* Flush any pending input. */
+
+		/*
+		 * Turn on DTR.  We must always do this, even if carrier is not
+		 * present, because otherwise we'd have to use TIOCSDTR
+		 * immediately after setting CLOCAL.  We will drop DTR only on
+		 * the next high-low transition of DCD, or by explicit request.
+		 */
+		zs_modem(zst, 1);
+
+		/* Clear the input ring, and unblock. */
 		zst->zst_rbget = zst->zst_rbput;
-		zs_iflush(cs);	/* XXX */
-		/* DTR was turned on by zsparam. */
-		if (zst->zst_swflags & TIOCFLAG_SOFTCAR) {
-			tp->t_state |= TS_CARR_ON;
-		}
-		/* XXX - The MD code could just force CLOCAL instead. */
-		if (zst->zst_hwflags & ZS_HWFLAG_NO_DCD) {
-			tp->t_state |= TS_CARR_ON;
-		}
+		zs_iflush(cs);
+		/* Turn on RTS. */
+		zs_hwiflow(zst, 0);
 	}
 	error = 0;
 
 	/* In this section, we may touch the chip. */
 	(void)splzs();
 
-	/*
-	 * Get initial value of RR0.  This is done after we
-	 * raise DTR in case the cable loops DTR back to CTS.
-	 */
-	cs->cs_rr0 = zs_read_csr(cs);
-
-	/*
-	 * Wait for DCD (if necessary).  Note that we might
-	 * never get status interrupt if DCD is already on.
-	 */
-	for (;;) {
-		/* Check the DCD bit (if we have one). */
-		if (cs->cs_rr0 & cs->cs_rr0_dcd)
-			tp->t_state |= TS_CARR_ON;
-
-		if ((tp->t_state & TS_CARR_ON) ||
-		    (tp->t_cflag & CLOCAL) ||
-		    (flags & O_NONBLOCK) )
-			break;
-
-		/* Sleep waiting for a status interrupt. */
-		tp->t_state |= TS_WOPEN;
-		error = ttysleep(tp, (caddr_t)&tp->t_rawq,
-			TTIPRI | PCATCH, ttopen, 0);
-		if (error) {
-			if ((tp->t_state & TS_ISOPEN) == 0) {
-				/* Never get here with softcar */
-				zs_modem(zst, 0);
-				tp->t_state &= ~TS_WOPEN;
-				ttwakeup(tp);
+	/* If we're doing a blocking open... */
+	if ((flags & O_NONBLOCK) == 0)
+		/* ...then wait for carrier. */
+		while ((tp->t_state & TS_CARR_ON) == 0 &&
+		    (tp->t_cflag & (CLOCAL | MDMBUF)) == 0) {
+			error = ttysleep(tp, &tp->t_rawq, TTIPRI | PCATCH,
+			    ttopen, 0);
+			if (error) {
+				/*
+				 * If the open was interrupted and nobody
+				 * else has the device open, then hang up.
+				 */
+				if ((tp->t_state & TS_ISOPEN) == 0) {
+					zs_modem(zst, 0);
+					tp->t_state &= ~TS_WOPEN;
+					ttwakeup(tp);
+				}
+				break;
 			}
-			break;
+			tp->t_state |= TS_WOPEN;
 		}
-		/* The status interrupt changed cs->cs_rr0 */
-	}
 
 	splx(s);
 	if (error == 0)
-		error = linesw[tp->t_line].l_open(dev, tp);
+		error = (*linesw[tp->t_line].l_open)(dev, tp);
 	return (error);
 }
 
@@ -483,7 +473,7 @@ zsclose(dev, flags, mode, p)
 	struct zstty_softc *zst;
 	register struct zs_chanstate *cs;
 	register struct tty *tp;
-	int hup, s;
+	int s;
 
 	zst = zstty_cd.cd_devs[minor(dev)];
 	cs = zst->zst_cs;
@@ -494,27 +484,27 @@ zsclose(dev, flags, mode, p)
 		return 0;
 
 	(*linesw[tp->t_line].l_close)(tp, flags);
+	ttyclose(tp);
 
-	/* Disable interrupts. */
+	/* If we were asserting flow control, then deassert it. */
+	zs_hwiflow(zst, 1);
+	/* Clear any break condition set with TIOCSBRK. */
+	zs_break(cs, 0);
+	/*
+	 * Hang up if necessary.  Wait a bit, so the other side has time to
+	 * notice even if we immediately open the port again.
+	 */
+	if ((tp->t_cflag & HUPCL) != 0) {
+		zs_modem(zst, 0);
+		(void) tsleep(cs, TTIPRI, ttclos, hz);
+	}
+
 	s = splzs();
+	/* Turn off interrupts. */
 	cs->cs_creg[1] = cs->cs_preg[1] = 0;
 	zs_write_reg(cs, 1, cs->cs_creg[1]);
 	splx(s);
 
-	/* Maybe do "hangup" (drop DTR). */
-	hup = tp->t_cflag & HUPCL;
-	if (zst->zst_swflags & TIOCFLAG_SOFTCAR)
-		hup = 0;
-	if (hup) {
-		zs_modem(zst, 0);
-		/* hold low for 1 second */
-		(void)tsleep((caddr_t)cs, TTIPRI, ttclos, hz);
-	}
-	if (cs->cs_creg[5] & ZSWR5_BREAK) {
-		zs_break(cs, 0);
-	}
-
-	ttyclose(tp);
 	return (0);
 }
 
@@ -563,7 +553,7 @@ zsioctl(dev, cmd, data, flag, p)
 	register struct zstty_softc *zst;
 	register struct zs_chanstate *cs;
 	register struct tty *tp;
-	register int error, tmp;
+	register int error;
 
 	zst = zstty_cd.cd_devs[minor(dev)];
 	cs = zst->zst_cs;
@@ -584,7 +574,6 @@ zsioctl(dev, cmd, data, flag, p)
 #endif	/* ZS_MD_IOCTL */
 
 	switch (cmd) {
-
 	case TIOCSBRK:
 		zs_break(cs, 1);
 		break;
@@ -599,17 +588,9 @@ zsioctl(dev, cmd, data, flag, p)
 
 	case TIOCSFLAGS:
 		error = suser(p->p_ucred, &p->p_acflag);
-		if (error != 0)
-			return (EPERM);
-		tmp = *(int *)data;
-		/* Check for random bits... */
-		if (tmp & ~TIOCFLAG_ALL)
-			return(EINVAL);
-		/* Silently enforce softcar on the console. */
-		if (zst->zst_hwflags & ZS_HWFLAG_CONSOLE)
-			tmp |= TIOCFLAG_SOFTCAR;
-		/* These flags take effect during open. */
-		zst->zst_swflags = tmp;
+		if (error)
+			return (error);
+		zst->zst_swflags = *(int *)data;
 		break;
 
 	case TIOCSDTR:
@@ -639,64 +620,71 @@ zsstart(tp)
 {
 	register struct zstty_softc *zst;
 	register struct zs_chanstate *cs;
-	register int s, nch;
+	register int s;
 
 	zst = zstty_cd.cd_devs[minor(tp->t_dev)];
 	cs = zst->zst_cs;
 
 	s = spltty();
-
-	/*
-	 * If currently active or delaying, no need to do anything.
-	 */
-	if (tp->t_state & (TS_TIMEOUT | TS_BUSY | TS_TTSTOP))
+	if ((tp->t_state & TS_BUSY) != 0)
 		goto out;
+	if ((tp->t_state & (TS_TIMEOUT | TS_TTSTOP)) != 0)
+		goto stopped;
 
-	/*
-	 * If under CRTSCTS hfc and halted, do nothing
-	 * This flag can only be set with CRTSCTS.
-	 */
 	if (zst->zst_tx_stopped)
-		goto out;
+		goto stopped;
 
-	/*
-	 * If there are sleepers, and output has drained below low
-	 * water mark, awaken.
-	 */
 	if (tp->t_outq.c_cc <= tp->t_lowat) {
-		if (tp->t_state & TS_ASLEEP) {
+		if ((tp->t_state & TS_ASLEEP) != 0) {
 			tp->t_state &= ~TS_ASLEEP;
 			wakeup((caddr_t)&tp->t_outq);
 		}
 		selwakeup(&tp->t_wsel);
+		if (tp->t_outq.c_cc == 0)
+			goto stopped;
 	}
 
-	nch = ndqb(&tp->t_outq, 0);	/* XXX */
-	(void) splzs();
+	/* Grab the first contiguous region of buffer space. */
+	{
+		u_char *tba;
+		int tbc;
 
-	if (nch) {
-		register char *p = tp->t_outq.c_cf;
+		tba = tp->t_outq.c_cf;
+		tbc = ndqb(&tp->t_outq, 0);
+	
+		(void) splzs();
 
-		/* mark busy, enable tx done interrupts, & send first byte */
-		tp->t_state |= TS_BUSY;
-		zst->zst_tx_busy = 1;
+		zst->zst_tba = tba;
+		zst->zst_tbc = tbc;
+	}
+
+	tp->t_state |= TS_BUSY;
+	zst->zst_tx_busy = 1;
+
+	/* Enable transmit completion interrupts if necessary. */
+	if ((cs->cs_preg[1] & ZSWR1_TIE) == 0) {
 		cs->cs_preg[1] |= ZSWR1_TIE;
 		cs->cs_creg[1] = cs->cs_preg[1];
 		zs_write_reg(cs, 1, cs->cs_creg[1]);
-		zs_write_data(cs, *p);
-		zst->zst_tba = p + 1;
-		zst->zst_tbc = nch - 1;
-	} else {
-		/*
-		 * Nothing to send, turn off transmit done interrupts.
-		 * This is useful if something is doing polled output.
-		 */
+	}
+
+	/* Output the first character of the contiguous buffer. */
+	zs_write_data(cs, *zst->zst_tba);
+	zst->zst_tbc--;
+	zst->zst_tba++;
+	splx(s);
+	return;
+
+stopped:
+	/* Disable transmit completion interrupts if necessary. */
+	if ((cs->cs_preg[1] & ZSWR1_TIE) != 0) {
 		cs->cs_preg[1] &= ~ZSWR1_TIE;
 		cs->cs_creg[1] = cs->cs_preg[1];
 		zs_write_reg(cs, 1, cs->cs_creg[1]);
 	}
 out:
 	splx(s);
+	return;
 }
 
 /*
@@ -753,12 +741,22 @@ zsparam(tp, t)
 		return (EINVAL);
 
 	/*
+	 * For the console, always force CLOCAL and !HUPCL, so that the port
+	 * is always active.
+	 */
+	if ((zst->zst_swflags & TIOCFLAG_SOFTCAR) != 0 ||
+	    (zst->zst_hwflags & (ZS_HWFLAG_NO_DCD | ZS_HWFLAG_CONSOLE)) != 0) {
+		t->c_cflag |= CLOCAL;
+		t->c_cflag &= ~HUPCL;
+	}
+
+	/*
 	 * Only whack the UART when params change.
 	 * Some callers need to clear tp->t_ospeed
 	 * to make sure initialization gets done.
 	 */
-	if ((tp->t_ospeed == bps) &&
-	    (tp->t_cflag == cflag) )
+	if (tp->t_ospeed == bps &&
+	    tp->t_cflag == cflag)
 		return (0);
 
 	/*
@@ -812,6 +810,8 @@ zsparam(tp, t)
 		tmp5 |= ZSWR5_TX_8;
 		break;
 	}
+
+#if 0
 	/* Raise or lower DTR and RTS as appropriate. */
 	if (bps) {
 		/* Raise DTR and RTS */
@@ -821,6 +821,8 @@ zsparam(tp, t)
 		/* XXX: Should SOFTCAR prevent this? */
 		tmp5 &= ~(cs->cs_wr5_dtr);
 	}
+#endif
+
 	cs->cs_preg[3] = tmp3;
 	cs->cs_preg[5] = tmp5;
 
@@ -857,9 +859,15 @@ zsparam(tp, t)
 			zs_loadchannelregs(cs);
 		}
 	}
+
 	splx(s);
 
-	/* XXX - Check for DCD in case ZSWR15_DCD_IE was just set? */
+	/*
+	 * Update the tty layer's idea of the carrier bit, in case we changed
+	 * CLOCAL or MDMBUF.  We don't hang up here; we only do that if we
+	 * lose carrier while carrier detection is on.
+	 */
+	(void) (*linesw[tp->t_line].l_modem)(tp, cs->cs_rr0 & cs->cs_rr0_dcd);
 
 	/* If we can throttle input, enable "high water" detection. */
 	if (cflag & CHWFLOW) {
