@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.19 1997/08/09 19:06:45 jonathan Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.20 1997/09/11 23:02:10 mycroft Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -405,11 +405,10 @@ cpu_identify()
  * code by the MIPS elf abi).
  */
 void
-setregs(p, pack, stack, retval)
+setregs(p, pack, stack)
 	register struct proc *p;
 	struct exec_package *pack;
 	u_long stack;
-	register_t *retval;
 {
 	extern struct proc *fpcurproc;
 

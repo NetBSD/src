@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_exec.c,v 1.13 1997/07/19 09:54:33 jonathan Exp $	*/
+/*	$NetBSD: cpu_exec.c,v 1.14 1997/09/11 23:02:09 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -135,15 +135,14 @@ cpu_exec_aout_makecmds(p, epp)
 extern struct emul emul_ultrix;
 
 void
-cpu_exec_ecoff_setregs(p, epp, stack, retval)
+cpu_exec_ecoff_setregs(p, epp, stack)
 	struct proc *p;
 	struct exec_package *epp;
 	u_long stack;
-	register_t *retval;
 {
 	struct ecoff_exechdr *execp = (struct ecoff_exechdr *)epp->ep_hdr;
 
-	setregs(p, epp, stack, retval);
+	setregs(p, epp, stack);
 	p->p_md.md_regs[GP] = execp->a.gp_value;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.21 1997/06/12 15:46:37 mrg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.22 1997/09/11 23:02:12 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -510,11 +510,10 @@ allocsys(v)
  * but would break init; should be fixed soon.
  */
 void
-setregs(p, pack, stack, retval)
+setregs(p, pack, stack)
 	register struct proc *p;
 	struct exec_package *pack;
 	u_long stack;
-	register_t *retval;
 {
 	struct frame *frame = (struct frame *)p->p_md.md_regs;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.83 1997/07/29 10:04:44 fair Exp $ */
+/*	$NetBSD: machdep.c,v 1.84 1997/09/11 23:02:19 mycroft Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -374,11 +374,10 @@ allocsys(v)
  */
 /* ARGSUSED */
 void
-setregs(p, pack, stack, retval)
+setregs(p, pack, stack)
 	struct proc *p;
 	struct exec_package *pack;
 	u_long stack;
-	register_t *retval;
 {
 	register struct trapframe *tf = p->p_md.md_tf;
 	register struct fpstate *fs;
@@ -413,7 +412,6 @@ setregs(p, pack, stack, retval)
 	tf->tf_global[2] = tf->tf_global[7] = tf->tf_npc;
 	stack -= sizeof(struct rwindow);
 	tf->tf_out[6] = stack;
-	retval[1] = 0;
 }
 
 #ifdef DEBUG

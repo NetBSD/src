@@ -1,4 +1,4 @@
-/*      $NetBSD: trap.c,v 1.28 1997/07/28 21:48:33 ragge Exp $     */
+/*      $NetBSD: trap.c,v 1.29 1997/09/11 23:02:26 mycroft Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -374,18 +374,16 @@ if(p){
 }
 
 void
-setregs(p, pack, stack, retval)
+setregs(p, pack, stack)
         struct proc *p;
 	struct exec_package *pack;
         u_long stack;
-        register_t retval[2];
 {
 	struct trapframe *exptr;
 
 	exptr = p->p_addr->u_pcb.framep;
 	exptr->pc = pack->ep_entry + 2;
 	exptr->sp = stack;
-	retval[0] = retval[1] = 0;
 }
 
 void
