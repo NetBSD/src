@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi.eng,v 1.31 1999/06/20 02:15:22 cgd Exp $	*/
+/*	$NetBSD: menus.mi.eng,v 1.32 1999/06/20 05:44:26 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -56,11 +56,11 @@
 #include "menu_defs.h"
 }
 
-default x=20, y=12, no exit, scrollable;
+default y=12, no exit, scrollable;
 
 allow dynamic menus;
 
-menu netbsd, x=15, title "NetBSD-@@VERSION@@ Install System",
+menu netbsd, title "NetBSD-@@VERSION@@ Install System",
     exit, exitstring "Exit Install System";
 	display action  { toplevel(); };
 	option "Install NetBSD to hard disk",
