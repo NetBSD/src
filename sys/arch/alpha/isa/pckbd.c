@@ -1,4 +1,4 @@
-/* $NetBSD: pckbd.c,v 1.22 1998/01/18 14:51:29 drochner Exp $ */
+/* $NetBSD: pckbd.c,v 1.23 1998/04/15 20:10:52 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -45,7 +45,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pckbd.c,v 1.22 1998/01/18 14:51:29 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbd.c,v 1.23 1998/04/15 20:10:52 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -85,7 +85,6 @@ isa_chipset_tag_t pckbd_ic;
 
 bus_space_handle_t pckbd_ioh;
 bus_space_handle_t pckbd_timer_ioh;
-bus_space_handle_t pckbd_delay_ioh;
 
 struct pckbd_softc {
         struct  device sc_dev;
@@ -147,11 +146,7 @@ void	async_update __P((void));
 #define	KP		0x0200	/* Keypad keys */
 #define	NONE		0x0400	/* no function */
 
-#define	KBD_DELAY \
-	{ u_char x; x = bus_space_read_1(pckbd_iot, pckbd_delay_ioh, 0); } \
-	{ u_char x; x = bus_space_read_1(pckbd_iot, pckbd_delay_ioh, 0); } \
-	{ u_char x; x = bus_space_read_1(pckbd_iot, pckbd_delay_ioh, 0); } \
-	{ u_char x; x = bus_space_read_1(pckbd_iot, pckbd_delay_ioh, 0); }
+#define	KBD_DELAY	DELAY(8)
 
 static inline int
 kbd_wait_output()
@@ -304,7 +299,6 @@ pckbdprobe(parent, match, aux)
 	pckbd_ic = pa->pa_ic;
 	pckbd_ioh = pa->pa_ioh;
 	pckbd_timer_ioh = pa->pa_pit_ioh;
-	pckbd_delay_ioh = pa->pa_delaybah;
 
 	/* Enable interrupts and keyboard, etc. */
 	if (!kbc_put8042cmd(CMDBYTE)) {
@@ -393,7 +387,6 @@ pckbdattach(parent, self, aux)
 	pckbd_ic = pa->pa_ic;
 	pckbd_ioh = pa->pa_ioh;
 	pckbd_timer_ioh = pa->pa_pit_ioh;
-	pckbd_delay_ioh = pa->pa_delaybah;
 
 	sc->sc_ih = isa_intr_establish(pckbd_ic, 1, IST_EDGE, IPL_TTY,
 	    pckbdintr, sc);
