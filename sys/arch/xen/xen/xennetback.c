@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback.c,v 1.4.4.3 2005/03/19 12:21:12 yamt Exp $      */
+/*      $NetBSD: xennetback.c,v 1.4.4.4 2005/03/20 08:49:21 yamt Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -328,7 +328,7 @@ xnetback_ctrlif_rx(ctrl_msg_t *msg, unsigned long id)
 		   xneti->xni_ma_txring, 1, PMAP_WIRED | PMAP_CANFAIL,
 		   req->domid);
 		if (error) {
-			pmap_remove(kernel_map, ring_rxaddr,
+			pmap_remove(pmap_kernel(), ring_rxaddr,
 			    ring_rxaddr + PAGE_SIZE);
 			pmap_update();
 fail_1:
