@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.298 2001/01/08 14:08:17 lukem Exp $
+#	$NetBSD: mi,v 1.299 2001/01/12 03:50:27 jwise Exp $
 ./sys			comp-sysutil-root
 ./usr/bin/addr2line	comp-miscutil-bin
 ./usr/bin/ar		comp-util-bin
@@ -1344,13 +1344,13 @@
 ./usr/libdata/lint/llib-lwrap.ln		comp-c-lintlib
 ./usr/libdata/lint/llib-ly.ln		comp-c-lintlib
 ./usr/libdata/lint/llib-lz.ln		comp-c-lintlib
-./usr/libexec/cc1		comp-c-libexec
-./usr/libexec/cc1obj		comp-objc-libexec
-./usr/libexec/cc1plus		comp-cxx-libexec
-./usr/libexec/collect2		comp-cxx-libexec
-./usr/libexec/f771		comp-fortran-libexec
-./usr/libexec/lint1		comp-c-libexec
-./usr/libexec/lint2		comp-c-libexec
+./usr/libexec/cc1		comp-c-bin
+./usr/libexec/cc1obj		comp-objc-bin
+./usr/libexec/cc1plus		comp-cxx-bin
+./usr/libexec/collect2		comp-cxx-bin
+./usr/libexec/f771		comp-fortran-bin
+./usr/libexec/lint1		comp-c-bin
+./usr/libexec/lint2		comp-c-bin
 ./usr/sbin/config		comp-sysutil-sbin
 ./usr/sbin/gspa			comp-miscutil-sbin
 ./usr/sbin/gspahextoc	comp-miscutil-sbin
@@ -4730,7 +4730,7 @@
 ./usr/share/man/man3/xdr.3		comp-c-man
 ./usr/share/man/man3/xdr_accepted_reply.3		comp-c-man
 ./usr/share/man/man3/xdr_array.3		comp-c-man
-./usr/share/man/man3/xdr_authsys_parms.3
+./usr/share/man/man3/xdr_authsys_parms.3	comp-c-man
 ./usr/share/man/man3/xdr_bool.3		comp-c-man
 ./usr/share/man/man3/xdr_bytes.3		comp-c-man
 ./usr/share/man/man3/xdr_callhdr.3		comp-c-man
