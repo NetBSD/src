@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.99 1997/05/16 21:39:55 gwr Exp $	*/
+/*	$NetBSD: init_main.c,v 1.100 1997/06/12 17:12:17 mrg Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -316,10 +316,8 @@ main(framep)
 	roundrobin(NULL);
 	schedcpu(NULL);
 
-	/* Determine the root/swap/dump devices, etc. */
+	/* Determine the root devices, etc. */
 	cpu_rootconf();
-	swapconf();
-	cpu_dumpconf();
 
 	/* Mount the root file system. */
 	do {

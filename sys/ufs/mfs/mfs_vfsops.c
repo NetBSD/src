@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vfsops.c,v 1.12 1997/02/22 03:25:05 fvdl Exp $	*/
+/*	$NetBSD: mfs_vfsops.c,v 1.13 1997/06/12 17:15:00 mrg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1993, 1994
@@ -102,9 +102,9 @@ mfs_mountroot()
 	int error;
 
 	/*
-	 * Get vnodes for swapdev and rootdev.
+	 * Get vnodes for rootdev.
 	 */
-	if (bdevvp(swapdev, &swapdev_vp) || bdevvp(rootdev, &rootvp))
+	if (bdevvp(rootdev, &rootvp))
 		panic("mfs_mountroot: can't setup bdevvp's");
 
 	mp = malloc((u_long)sizeof(struct mount), M_MOUNT, M_WAITOK);
