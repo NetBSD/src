@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_create.1,v 1.9 1998/10/09 09:22:16 agc Exp $
+.\" $NetBSD: pkg_create.1,v 1.10 1998/10/09 09:35:39 agc Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintainance
 .\" of non-core utilities.
@@ -86,9 +86,8 @@ or, if preceded by
 .Cm - ,
 the argument itself.
 .It Fl O
-Go into a `packing list Only' mode.  This is a custom hack for the
-.Em "FreeBSD Ports Collection"
-and is used to do `fake pkg_add' operations when a port is installed.
+Go into a `packing list Only' mode.
+This is used to do `fake pkg_add' operations when a package is installed.
 In such cases, it is necessary to know what the final, adjusted packing
 list will look like.
 .It Fl v

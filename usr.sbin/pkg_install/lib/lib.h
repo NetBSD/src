@@ -1,4 +1,4 @@
-/* $NetBSD: lib.h,v 1.12 1998/10/09 09:22:17 agc Exp $ */
+/* $NetBSD: lib.h,v 1.13 1998/10/09 09:35:40 agc Exp $ */
 
 /* from FreeBSD Id: lib.h,v 1.25 1997/10/08 07:48:03 charnier Exp */
 
@@ -80,14 +80,27 @@
 /* The name of the "prefix" environment variable given to scripts */
 #define PKG_PREFIX_VNAME	"PKG_PREFIX"
 
-enum _plist_t {
-    PLIST_FILE, PLIST_CWD, PLIST_CMD, PLIST_CHMOD,
-    PLIST_CHOWN, PLIST_CHGRP, PLIST_COMMENT, PLIST_IGNORE,
-    PLIST_NAME, PLIST_UNEXEC, PLIST_SRC, PLIST_DISPLAY,
-    PLIST_PKGDEP, PLIST_MTREE, PLIST_DIR_RM, PLIST_IGNORE_INST,
-    PLIST_OPTION, PLIST_PKGCFL
-};
-typedef enum _plist_t plist_t;
+typedef enum _plist_t {
+	PLIST_SHOW_ALL = -1,
+	PLIST_FILE,
+	PLIST_CWD,
+	PLIST_CMD,
+	PLIST_CHMOD,
+	PLIST_CHOWN,
+	PLIST_CHGRP,
+	PLIST_COMMENT,
+	PLIST_IGNORE,
+	PLIST_NAME,
+	PLIST_UNEXEC,
+	PLIST_SRC,
+	PLIST_DISPLAY,
+	PLIST_PKGDEP,
+	PLIST_MTREE,
+	PLIST_DIR_RM,
+	PLIST_IGNORE_INST,
+	PLIST_OPTION,
+	PLIST_PKGCFL
+} plist_t;
 
 /* Types */
 typedef unsigned int Boolean;

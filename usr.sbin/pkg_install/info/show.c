@@ -1,11 +1,11 @@
-/*	$NetBSD: show.c,v 1.5 1997/10/17 14:54:20 lukem Exp $	*/
+/*	$NetBSD: show.c,v 1.6 1998/10/09 09:35:39 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: show.c,v 1.11 1997/10/08 07:47:38 charnier Exp";
 #else
-__RCSID("$NetBSD: show.c,v 1.5 1997/10/17 14:54:20 lukem Exp $");
+__RCSID("$NetBSD: show.c,v 1.6 1998/10/09 09:35:39 agc Exp $");
 #endif
 #endif
 
@@ -76,7 +76,7 @@ show_index(char *title, char *fname)
     fclose(fp);
 }
 
-/* Show a packing list item type.  If type is -1, show all */
+/* Show a packing list item type.  If type is PLIST_SHOW_ALL, show all */
 void
 show_plist(char *title, Package *plist, plist_t type)
 {
@@ -87,7 +87,7 @@ show_plist(char *title, Package *plist, plist_t type)
 	printf("%s%s", InfoPrefix, title);
     p = plist->head;
     while (p) {
-	if (p->type != type && type != -1) {
+	if (p->type != type && type != PLIST_SHOW_ALL) {
 	    p = p->next;
 	    continue;
 	}
@@ -164,6 +164,10 @@ show_plist(char *title, Package *plist, plist_t type)
 
 	case PLIST_DIR_RM:
 	    printf(Quiet ? "@dirrm %s\n" : "\tDeinstall directory remove: %s\n", p->name);
+	    break;
+
+	case PLIST_PKGCFL:
+	    printf(Quiet ? "@pkgcfl %s\n" : "\tPackage conflicts with: %s\n", p->name);
 	    break;
 
 	default:
