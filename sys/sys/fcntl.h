@@ -1,4 +1,4 @@
-/*	$NetBSD: fcntl.h,v 1.25 2003/05/01 12:32:39 bjh21 Exp $	*/
+/*	$NetBSD: fcntl.h,v 1.26 2003/05/01 12:45:31 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1990, 1993
@@ -168,7 +168,7 @@
 #if (_POSIX_C_SOURCE - 0) >= 200112L || (_XOPEN_SOURCE - 0) >= 500 || \
     defined(_NETBSD_SOURCE)
 #define	F_GETOWN	5		/* get SIGIO/SIGURG proc/pgrp */
-#define F_SETOWN	6		/* set SIGIO/SIGURG proc/pgrp */
+#define	F_SETOWN	6		/* set SIGIO/SIGURG proc/pgrp */
 #endif
 #define	F_GETLK		7		/* get record locking information */
 #define	F_SETLK		8		/* set record locking information */
