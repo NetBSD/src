@@ -1,4 +1,4 @@
-/*	$NetBSD: ioasicvar.h,v 1.3 1997/07/17 01:12:41 jtk Exp $	*/
+/*	$NetBSD: ioasicvar.h,v 1.4 1998/01/12 09:51:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -44,13 +44,6 @@ struct ioasicdev_attach_args {
 #define	ioasiccf_offset	cf_loc[IOASICCF_OFFSET]		/* offset */
 
 #define	IOASIC_OFFSET_UNKNOWN	IOASICCF_OFFSET_DEFAULT
-
-/*
- * The IOASIC (bus) cfdriver, so that subdevices can more
- * easily tell what bus they're on.
- */
-extern struct cfdriver ioasic_cd;
-
 
 /*
  * XXX Some drivers need direct access to IOASIC registers.
