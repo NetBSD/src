@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.200 2000/03/23 01:04:10 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.201 2000/03/26 20:42:21 kleink Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.200 2000/03/23 01:04:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.201 2000/03/26 20:42:21 kleink Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -466,13 +466,13 @@ nobootinfo:
 	 * bit of space before the beginning for the bootstrap
 	 * stack).
 	 */
-	kernstart = trunc_page(kernel_text) - 2 * PAGE_SIZE;
+	kernstart = trunc_page((vaddr_t)kernel_text) - 2 * PAGE_SIZE;
 #ifdef DDB
 	ksym_start = (void *)bootinfo.ssym;
 	ksym_end   = (void *)bootinfo.esym;
-	kernend = (vaddr_t)round_page(ksym_end);
+	kernend = (vaddr_t)round_page((vaddr_t)ksym_end);
 #else
-	kernend = (vaddr_t)round_page(_end);
+	kernend = (vaddr_t)round_page((vaddr_t)_end);
 #endif
 
 	kernstartpfn = atop(ALPHA_K0SEG_TO_PHYS(kernstart));

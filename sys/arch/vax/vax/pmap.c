@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.75 1999/12/11 17:51:35 ragge Exp $	   */
+/*	$NetBSD: pmap.c,v 1.76 2000/03/26 20:42:38 kleink Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -351,7 +351,7 @@ pmap_decpteref(pmap, pte)
 		return;
 	index = ((vaddr_t)pte - (vaddr_t)pmap->pm_p0br) >> PGSHIFT;
 
-	pte = (struct pte *)trunc_page(pte);
+	pte = (struct pte *)trunc_page((vaddr_t)pte);
 #ifdef PMAPDEBUG
 	if (startpmapdebug)
 		printf("pmap_decpteref: pmap %p pte %p index %d refcnt %d\n",
@@ -691,7 +691,7 @@ if (startpmapdebug)
 			panic("pmap_enter: bad index %d", index);
 #endif
 		if (pmap->pm_refcnt[index] == 0) {
-			vaddr_t ptaddr = trunc_page(&patch[i]);
+			vaddr_t ptaddr = trunc_page((vaddr_t)&patch[i]);
 			paddr_t phys;
 			struct vm_page *pg;
 #ifdef DEBUG

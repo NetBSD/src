@@ -1,4 +1,4 @@
-/*	$NetBSD: mappedcopy.c,v 1.9 1999/11/18 15:19:26 minoura Exp $	*/
+/*	$NetBSD: mappedcopy.c,v 1.10 2000/03/26 20:42:29 kleink Exp $	*/
 
 /*
  * XXX This doesn't work yet.  Soon.  --thorpej@netbsd.org
@@ -113,7 +113,8 @@ mappedcopyin(f, t, count)
 		/*
 		 * Map in the page and bcopy data in from it
 		 */
-		if (pmap_extract(upmap, trunc_page(fromp), &upa) == FALSE)
+		if (pmap_extract(upmap, trunc_page((vaddr_t)fromp), &upa)
+		    == FALSE)
 			panic("mappedcopyin: null page frame");
 		len = min(count, (PAGE_SIZE - off));
 		pmap_enter(pmap_kernel(), kva, upa,
@@ -169,7 +170,8 @@ mappedcopyout(f, t, count)
 		/*
 		 * Map in the page and bcopy data out to it
 		 */
-		if (pmap_extract(upmap, trunc_page(top), &upa) == FALSE)
+		if (pmap_extract(upmap, trunc_page((vaddr_t)top), &upa)
+		    == FALSE)
 			panic("mappedcopyout: null page frame");
 		len = min(count, (PAGE_SIZE - off));
 		pmap_enter(pmap_kernel(), kva, upa,

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_shm.c,v 1.53 1999/12/03 21:43:20 ragge Exp $	*/
+/*	$NetBSD: sysv_shm.c,v 1.54 2000/03/26 20:42:45 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -283,7 +283,8 @@ sys_shmat(p, v, retval)
 	} else {
 		/* This is just a hint to vm_mmap() about where to put it. */
 		attach_va =
-		    round_page(p->p_vmspace->vm_taddr + MAXTSIZ + MAXDSIZ);
+		    round_page((vaddr_t)p->p_vmspace->vm_taddr +
+			MAXTSIZ + MAXDSIZ);
 	}
 	shm_handle = shmseg->_shm_internal;
 	uao_reference(shm_handle->shm_object);
