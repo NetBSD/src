@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.2 2001/03/30 23:17:04 wdk Exp $ 	*/
+/*	$NetBSD: bus_space.c,v 1.3 2001/09/15 00:49:54 wdk Exp $ 	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -67,6 +67,7 @@ mipsco_bus_space_init(bst, name, paddr, vaddr, start, size)
 	bst->bs_map = mipsco_bus_space_map;
 	bst->bs_unmap = mipsco_bus_space_unmap;
 	bst->bs_subregion = mipsco_bus_space_subregion;
+	bst->bs_mmap = mipsco_bus_space_mmap;
 	bst->bs_alloc = mipsco_bus_space_alloc;
 	bst->bs_free = mipsco_bus_space_free;
 	bst->bs_aux = NULL;
@@ -248,6 +249,27 @@ mipsco_bus_space_subregion(bst, bsh, offset, size, nbshp)
 {
 	*nbshp = bsh + (offset << bst->bs_stride);
 	return (0);
+}
+
+paddr_t
+mipsco_bus_space_mmap(bst, addr, off, prot, flags)
+	bus_space_tag_t bst;
+	bus_addr_t addr;
+	off_t off;
+	int prot;
+	int flags;
+{
+
+	/*
+	 * XXX We do not disallow mmap'ing of I/O space here,
+	 * XXX which we should be doing.
+	 */
+
+	if (addr < bst->bs_start ||
+	    (addr + off) >= (bst->bs_start + bst->bs_size))
+		return (-1);
+
+	return (mips_btop(bst->bs_pbase + (addr - bst->bs_start) + off));
 }
 
 int
