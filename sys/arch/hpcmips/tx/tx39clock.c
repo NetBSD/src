@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39clock.c,v 1.3 1999/12/22 15:35:35 uch Exp $ */
+/*	$NetBSD: tx39clock.c,v 1.4 1999/12/23 16:58:48 uch Exp $ */
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi
@@ -303,7 +303,7 @@ tx39clock_get(dev, base, ct)
 		dt.dt_min = sc->sc_epoch.min;
 		dt.dt_sec = sc->sc_epoch.sec;
 		dt.dt_wday = sc->sc_epoch.dow;
-		sec += clock_ymdhms_to_secs(&dt);
+		base = sec + clock_ymdhms_to_secs(&dt);
 	}
 
 	clock_secs_to_ymdhms(base, &dt);
