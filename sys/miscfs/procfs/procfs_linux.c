@@ -1,4 +1,4 @@
-/*      $NetBSD: procfs_linux.c,v 1.5 2003/02/25 21:00:31 jrf Exp $      */
+/*      $NetBSD: procfs_linux.c,v 1.6 2003/02/27 12:20:28 hannken Exp $      */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.5 2003/02/25 21:00:31 jrf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.6 2003/02/27 12:20:28 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -139,7 +139,7 @@ procfs_douptime(struct proc *curp, struct proc *p, struct pfsnode *pfs,
 
 	timersub(&curcpu()->ci_schedstate.spc_runtime, &boottime, &runtime);
 	idle = curcpu()->ci_schedstate.spc_cp_time[CP_IDLE];
-	len = sprintf(buf, "%lu.%02lu %llu.%02llu\n",
+	len = sprintf(buf, "%lu.%02lu %" PRIu64 ".%02" PRIu64 "\n",
 		      runtime.tv_sec, runtime.tv_usec / 10000,
 		      idle / hz, (((idle % hz) * 100) / hz) % 100);
 
