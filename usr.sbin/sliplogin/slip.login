@@ -1,5 +1,6 @@
 #!/bin/sh -
 #
+#	$NetBSD: slip.login,v 1.3 1994/06/30 07:50:26 cgd Exp $
 #	@(#)slip.login	5.1 (Berkeley) 7/1/90
 
 #
@@ -8,5 +9,13 @@
 #      1        2         3        4          5         6     7-n
 #   slipunit ttyspeed loginname local-addr remote-addr mask opt-args
 #
-/sbin/ifconfig sl$1 inet $4 $5 netmask $6 $7 $8 $9 $10 $11
+UNIT=$1
+LOCALADDR=$4
+REMOTEADDR=$5
+NETMASK=$6
+shift 6
+OPTARGS=$*
+
+/sbin/ifconfig sl${UNIT} inet ${LOCALADDR} ${REMOTEADDR} netmask ${NETMASK} \
+    ${OPTARGS}
 exit
