@@ -263,16 +263,16 @@ stop:
 /* error messages */
 
 #ifdef	DEBUG
-one:	String		"1\r\n\0"
-two:	String		"2\r\n\0"
-three:	String		"3\r\n\0"
-four:	String		"4\r\n\0"
-five:	String		"5\r\n\0"
-six:	String		"6\r\n\0"
-seven:	String		"7\r\n\0"
+one:	.asciz		"1\r\n"
+two:	.asciz		"2\r\n"
+three:	.asciz		"3\r\n"
+four:	.asciz		"4\r\n"
+five:	.asciz		"5\r\n"
+six:	.asciz		"6\r\n"
+seven:	.asciz		"7\r\n"
 #endif	DEBUG
-eread:	String		"Read error\r\n\0"
-enoboot: String		"No bootable partition\r\n\0"
+eread:	.asciz		"Read error\r\n"
+enoboot: .asciz		"No bootable partition\r\n"
 endofcode:
 /* throw in a partition in case we are block0 as well */
 /* flag, head, sec, cyl, typ, ehead, esect, ecyl, start, len */
