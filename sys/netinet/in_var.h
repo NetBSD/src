@@ -1,4 +1,4 @@
-/*	$NetBSD: in_var.h,v 1.26 1998/06/01 00:50:07 thorpej Exp $	*/
+/*	$NetBSD: in_var.h,v 1.27 1998/07/02 11:39:56 is Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -147,6 +147,22 @@ void	in_socktrim __P((struct sockaddr_in *));
 	    ia != NULL && !in_hosteq(ia->ia_addr.sin_addr, (addr)); \
 	    ia = ia->ia_hash.le_next) \
 		 continue; \
+}
+
+/*
+ * Macro for finding the next in_ifaddr structure with the same internet
+ * address as ia. Call only with a valid ia pointer.
+ * Will set ia to NULL if none found.
+ */
+
+#define NEXT_IA_WITH_SAME_ADDR(ia) \
+	/* struct in_ifaddr *ia; */ \
+{ \
+	struct in_addr addr; \
+	addr = ia->ia_addr.sin_addr; \
+	do { \
+		ia = ia->ia_hash.le_next; \
+	} while ((ia != NULL) && in_hosteq(ia->ia_addr.sin_addr, addr)); \
 }
 
 /*
