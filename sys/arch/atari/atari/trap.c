@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.42 1999/03/26 23:41:28 mycroft Exp $	*/
+/*	$NetBSD: trap.c,v 1.43 1999/06/18 06:31:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -942,24 +942,8 @@ writeback(fp, docachepush)
 		}
 	}
 	p->p_addr->u_pcb.pcb_onfault = oonfault;
-
-	/*
-	 * Determine the cause of the failure if any translating to
-	 * a signal.  If the corresponding VA is valid and RO it is
-	 * a protection fault (SIGBUS) otherwise consider it an
-	 * illegal reference (SIGSEGV).
-	 */
-	if (err) {
-		if (uvm_map_checkprot(&p->p_vmspace->vm_map,	
-					    trunc_page(fa), round_page(fa),
-					    VM_PROT_READ) &&
-		    !uvm_map_checkprot(&p->p_vmspace->vm_map,
-					     trunc_page(fa), round_page(fa),
-					     VM_PROT_WRITE))
-			err = SIGBUS;
-		else
-			err = SIGSEGV;
-	}
+	if (err)
+		err = SIGSEGV;
 	return(err);
 }
 
