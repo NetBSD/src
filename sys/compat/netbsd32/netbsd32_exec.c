@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_exec.c,v 1.5 1998/09/06 04:34:49 eeh Exp $	*/
+/*	$NetBSD: netbsd32_exec.c,v 1.6 1998/09/09 10:29:18 thorpej Exp $	*/
 /*	from: NetBSD: exec_aout.c,v 1.15 1996/09/26 23:34:46 cgd Exp */
 
 /*
@@ -116,13 +116,13 @@ exec_sparc32_makecmds(p, epp)
 	midmag = mid << 16 | magic;
 
 	switch (midmag) {
-	case (MID_MACHINE << 16) | ZMAGIC:
+	case (MID_SPARC << 16) | ZMAGIC:
 		error = sparc32_exec_aout_prep_zmagic(p, epp);
 		break;
-	case (MID_MACHINE << 16) | NMAGIC:
+	case (MID_SPARC << 16) | NMAGIC:
 		error = sparc32_exec_aout_prep_nmagic(p, epp);
 		break;
-	case (MID_MACHINE << 16) | OMAGIC:
+	case (MID_SPARC << 16) | OMAGIC:
 		error = sparc32_exec_aout_prep_omagic(p, epp);
 		break;
 	default:
