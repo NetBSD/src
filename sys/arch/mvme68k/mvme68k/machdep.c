@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.9 1996/09/12 02:45:57 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.10 1996/09/12 04:59:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1292,42 +1292,42 @@ straytrap(pc, evec)
 
 int	*nofault;
 
-badaddr(addr)
+int
+badaddr(addr, nbytes)
 	register caddr_t addr;
+	int nbytes;
 {
 	register int i;
-	label_t	faultbuf;
+	label_t faultbuf;
 
 #ifdef lint
-	i = *addr; if (i) return(0);
+	i = *addr; if (i) return (0);
 #endif
+
 	nofault = (int *) &faultbuf;
 	if (setjmp((label_t *)nofault)) {
 		nofault = (int *) 0;
 		return(1);
 	}
-	i = *(volatile short *)addr;
-	nofault = (int *) 0;
-	return(0);
-}
 
-badbaddr(addr)
-	register caddr_t addr;
-{
-	register int i;
-	label_t	faultbuf;
+	switch (nbytes) {
+	case 1:
+		i = *(volatile char *)addr;
+		break;
 
-#ifdef lint
-	i = *addr; if (i) return(0);
-#endif
-	nofault = (int *) &faultbuf;
-	if (setjmp((label_t *)nofault)) {
-		nofault = (int *) 0;
-		return(1);
+	case 2:
+		i = *(volatile short *)addr;
+		break;
+
+	case 4:
+		i = *(volatile int *)addr;
+		break;
+
+	default:
+		panic("badaddr: bad request");
 	}
-	i = *(volatile char *)addr;
 	nofault = (int *) 0;
-	return(0);
+	return (0);
 }
 
 /* XXX wrapper for locore.s; used only my level 7 autovector */
