@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.17 2000/07/28 19:10:33 eeh Exp $ */
+/*	$NetBSD: db_trace.c,v 1.18 2000/09/28 15:34:38 eeh Exp $ */
 
 /*
  * Mach Operating System
@@ -42,7 +42,11 @@ void db_dump_trap __P((db_expr_t, int, db_expr_t, char *));
 void db_dump_ts __P((db_expr_t, int, db_expr_t, char *));
 void db_print_window __P((u_int64_t));
 
+#if 0
 #define INKERNEL(va)	(((vaddr_t)(va)) >= USRSTACK) /* Not really true, y'know */
+#else
+#define INKERNEL(va)	1	/* Everything's in the kernel now. 8^) */
+#endif
 
 void
 db_stack_trace_print(addr, have_addr, count, modif, pr)
