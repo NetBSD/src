@@ -1,4 +1,4 @@
-#	$NetBSD: files.mvme68k,v 1.9 1996/11/09 03:52:54 chuck Exp $
+#	$NetBSD: files.mvme68k,v 1.10 1996/12/28 23:23:20 pk Exp $
 
 # config file for mvme68k
 
@@ -47,10 +47,10 @@ attach vmes at vmechip
 device vmel { [ atype = -1 ], addr = 0, [ ipl = -1 ], [ vec = - 1 ] }
 attach vmel at vmechip
 
-# RAM disk for boot tape
-pseudo-device rd
-file dev/ramdisk.c				rd needs-flag
-file arch/mvme68k/dev/rd_root.c			ramdisk_hooks
+# Memory disk for boot tape
+pseudo-device md
+file dev/md.c				md needs-flag
+file arch/mvme68k/dev/md_root.c		memory_disk_hooks
 
 # MVME-147 VME controller chip
 attach vmechip at pcc with vmechip_pcc
@@ -60,7 +60,7 @@ include "../../../scsi/files.scsi"
 
 major { vnd = 6 }
 major { sd = 7 }
-major { rd = 9 }
+major { md = 9 }
 major { cd = 18 }
 
 # WD33C93 SCSI ...

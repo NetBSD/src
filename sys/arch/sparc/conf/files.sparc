@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc,v 1.32 1996/12/06 21:57:57 pk Exp $
+#	$NetBSD: files.sparc,v 1.33 1996/12/28 23:25:47 pk Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
 # sparc-specific configuration info
@@ -238,7 +238,7 @@ include "../../../compat/sunos/files.sunos"
 # Miscellaneous
 file	netns/ns_cksum.c		ns
 
-pseudo-device rd
-major	{rd = 5}
-file	arch/sparc/dev/md_root.c	ramdisk_hooks
-file	dev/ramdisk.c			rd needs-flag
+pseudo-device md
+major	{md = 5}
+file	arch/sparc/dev/md_root.c	memory_disk_hooks
+file	dev/md.c			md needs-flag
