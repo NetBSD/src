@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.76 2004/08/21 22:23:13 thorpej Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.77 2004/09/14 08:40:26 simonb Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.76 2004/08/21 22:23:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.77 2004/09/14 08:40:26 simonb Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -263,7 +263,6 @@ struct wm_softc {
 	/* Event counters. */
 	struct evcnt sc_ev_txsstall;	/* Tx stalled due to no txs */
 	struct evcnt sc_ev_txdstall;	/* Tx stalled due to no txd */
-	struct evcnt sc_ev_txforceintr;	/* Tx interrupts forced */
 	struct evcnt sc_ev_txdw;	/* Tx descriptor interrupts */
 	struct evcnt sc_ev_txqe;	/* Tx queue empty interrupts */
 	struct evcnt sc_ev_rxintr;	/* Rx interrupts */
@@ -1201,8 +1200,6 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 	    NULL, sc->sc_dev.dv_xname, "txsstall");
 	evcnt_attach_dynamic(&sc->sc_ev_txdstall, EVCNT_TYPE_MISC,
 	    NULL, sc->sc_dev.dv_xname, "txdstall");
-	evcnt_attach_dynamic(&sc->sc_ev_txforceintr, EVCNT_TYPE_MISC,
-	    NULL, sc->sc_dev.dv_xname, "txforceintr");
 	evcnt_attach_dynamic(&sc->sc_ev_txdw, EVCNT_TYPE_INTR,
 	    NULL, sc->sc_dev.dv_xname, "txdw");
 	evcnt_attach_dynamic(&sc->sc_ev_txqe, EVCNT_TYPE_INTR,
