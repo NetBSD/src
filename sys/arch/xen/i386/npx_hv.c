@@ -1,4 +1,4 @@
-/*	$NetBSD: npx_hv.c,v 1.1 2004/03/11 21:44:08 cl Exp $	*/
+/*	$NetBSD: npx_hv.c,v 1.2 2004/04/24 17:35:27 cl Exp $	*/
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npx_hv.c,v 1.1 2004/03/11 21:44:08 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npx_hv.c,v 1.2 2004/04/24 17:35:27 cl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,7 +57,7 @@ npx_hv_probe(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct xen_npx_attach_args *xa = (struct xen_npx_attach_args *)aux;
 
-	if (strcmp(xa->xa_busname, "npx") == 0)
+	if (strcmp(xa->xa_device, "npx") == 0)
 		return 1;
 	return 0;
 }

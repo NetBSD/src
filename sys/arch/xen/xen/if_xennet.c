@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xennet.c,v 1.5 2004/04/21 17:36:59 cl Exp $	*/
+/*	$NetBSD: if_xennet.c,v 1.6 2004/04/24 17:35:28 cl Exp $	*/
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.5 2004/04/21 17:36:59 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.6 2004/04/24 17:35:28 cl Exp $");
 
 #include "opt_inet.h"
 
@@ -179,7 +179,7 @@ xennet_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct xennet_attach_args *xa = (struct xennet_attach_args *)aux;
 
-	if (strcmp(xa->xa_busname, "xennet") == 0)
+	if (strcmp(xa->xa_device, "xennet") == 0)
 		return 1;
 	return 0;
 }

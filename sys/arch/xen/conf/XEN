@@ -1,4 +1,4 @@
-# $NetBSD: XEN,v 1.2 2004/04/17 12:56:27 cl Exp $
+# $NetBSD: XEN,v 1.3 2004/04/24 17:35:27 cl Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -116,11 +116,14 @@ mainbus0 at root
 
 cpu* at mainbus?
 
-npx0	at mainbus?		# x86 math coprocessor
+hypervisor*	at mainbus?		# Xen hypervisor
 
-xenc*	at mainbus?		# Xen virtual console
-xennet*	at mainbus?		# Xen virtual network interface
-xbd*	at mainbus?		# Xen virtual block device
+npx0		at hypervisor?		# x86 math coprocessor
+
+xenc*		at hypervisor?		# Xen virtual console
+xennet* 	at hypervisor?		# Xen virtual network interface
+
+xbd*		at hypervisor?		# Xen virtual block device
 
 
 include	"arch/xen/conf/GENERIC.local"
