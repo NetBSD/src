@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.32 2003/09/13 22:31:04 kleink Exp $	*/
+/*	$NetBSD: time.h,v 1.33 2003/12/21 23:19:02 kleink Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -159,14 +159,14 @@ struct tm *localtime_r __P((const time_t * __restrict, struct tm * __restrict));
 #if defined(_NETBSD_SOURCE)
 time_t time2posix __P((time_t));
 time_t posix2time __P((time_t));
-time_t timegm __P((struct tm *const));
-time_t timeoff __P((struct tm *const, const long));
-time_t timelocal __P((struct tm *const));
+time_t timegm __P((struct tm *));
+time_t timeoff __P((struct tm *, long));
+time_t timelocal __P((struct tm *));
 #ifdef __LIBC12_SOURCE__
 char *timezone __P((int, int));
 #endif
 void tzsetwall __P((void));
-struct tm *offtime __P((const time_t *const, const long));
+struct tm *offtime __P((const time_t *, long));
 #endif /* _NETBSD_SOURCE */
 
 #endif /* !_ANSI_SOURCE */
