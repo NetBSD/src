@@ -43,7 +43,7 @@
  * are token separators.
  *
  *-M*************************************************************************/
-static char id[] = "$Id: aic7xxx_asm.c,v 1.1 1995/10/09 09:49:39 mycroft Exp $";
+static char id[] = "$Id: aic7xxx_asm.c,v 1.2 1996/04/29 19:30:50 christos Exp $";
 #include <ctype.h>
 #include <stdio.h>
 #include <string.h>
@@ -70,39 +70,6 @@ char *filename;
 FILE *ifp, *ofp;
 unsigned char M[MEMORY][4];
 
-void 
-error(char *s)
-{
-	fprintf(stderr, "%s: %s at line %d\n", filename, s, lineno);
-	exit(EXIT_FAILURE);
-}
-
-void *
-Malloc(size_t size)
-{
-	void *p = malloc(size);
-	if (!p)
-		error("out of memory");
-	return(p);
-}
-
-void *
-Realloc(void *ptr, size_t size)
-{
-	void *p = realloc(ptr, size);
-	if (!p)
-		error("out of memory");
-	return(p);
-}
-
-char *
-Strdup(char *s)
-{
-	char *p = (char *)Malloc(strlen(s) + 1);
-	strcpy(p, s);
-	return(p);
-}
-
 typedef struct sym_t {
 	struct sym_t	*next;		/* MUST BE FIRST */
 	char		*name;
@@ -111,10 +78,68 @@ typedef struct sym_t {
 	int		*patch;
 } sym_t;
 
+void error __P((char *));
+void *Malloc __P((size_t));
+void *Realloc __P((void *, size_t));
+char *Strdup __P((const char *));
+
+void define __P((char *, int));
+sym_t *lookup __P((char *));
+void patch __P((sym_t *, int));
+void backpatch __P((void));
+void output __P((FILE *));
+char **getl __P((int *));
+int eval_operand __P((char **, int));
+int eval_sdi __P((char **, int));
+int eval_addr __P((char **, int));
+int crack __P((char **, int));
+void assemble __P((void));
+
+void 
+error(s)
+	char *s;
+{
+	fprintf(stderr, "%s: %s at line %d\n", filename, s, lineno);
+	exit(EXIT_FAILURE);
+}
+
+void *
+Malloc(size)
+	size_t size;
+{
+	void *p = malloc(size);
+	if (!p)
+		error("out of memory");
+	return(p);
+}
+
+void *
+Realloc(ptr, size)
+	void *ptr;
+	size_t size;
+{
+	void *p = realloc(ptr, size);
+	if (!p)
+		error("out of memory");
+	return(p);
+}
+
+char *
+Strdup(s)
+	const char *s;
+{
+	size_t l = strlen(s) + 1;
+	char *p = Malloc(l);
+	memcpy(p, s, l);
+	return(p);
+}
+
 sym_t *head;
 
 void
-define(char *name, int value)
+define(name, value)
+	char *name;
+	int value;
 {
 	sym_t *p, *q;
 
@@ -141,7 +166,8 @@ define(char *name, int value)
 }
 
 sym_t *
-lookup(char *name)
+lookup(name)
+	char *name;
 {
 	sym_t *p;
 
@@ -152,7 +178,9 @@ lookup(char *name)
 }
 
 void 
-patch(sym_t *p, int location)
+patch(p, location)
+	sym_t *p;
+	int location;
 {
 	p->npatch += 1;
 	p->patch = (int *)Realloc(p->patch, p->npatch * sizeof(int *));
@@ -160,7 +188,7 @@ patch(sym_t *p, int location)
 	p->patch[p->npatch - 1] = location;
 }
 
-void backpatch(void)
+void backpatch()
 {
 	int i;
 	sym_t *p;
@@ -200,7 +228,8 @@ void backpatch(void)
  *  since the sequencer RAM is loaded that way.
  */
 void
-output(FILE *fp)
+output(fp)
+	FILE *fp;
 {
 	int i;
 
@@ -214,7 +243,8 @@ output(FILE *fp)
 }
 
 char **
-getl(int *n)
+getl(n)
+	int *n;
 {
 	int i;
 	char *p, *quote;
@@ -337,7 +367,9 @@ struct {
 };
 
 int 
-eval_operand(char **a, int spec)
+eval_operand(a, spec)
+	char **a;
+	int spec;
 {
 	int i;
 	unsigned int want = spec & (LO|LA|LX);
@@ -373,7 +405,9 @@ eval_operand(char **a, int spec)
 }
 
 int
-eval_sdi(char **a, int spec)
+eval_sdi(a, spec)
+	char **a;
+	int spec;
 {
 	sym_t *p;
 	unsigned val;
@@ -443,7 +477,9 @@ eval_sdi(char **a, int spec)
 }
 
 int
-eval_addr(char **a, int spec)
+eval_addr(a, spec)
+	char **a;
+	int spec;
 {
 	sym_t *p;
 
@@ -468,7 +504,9 @@ eval_addr(char **a, int spec)
 }
 
 int
-crack(char **a, int n)
+crack(a, n)
+	char **a;
+	int n;
 {
 	int i;
 	int I_imm, I_addr;
@@ -536,7 +574,7 @@ crack(char **a, int n)
 #undef A
 
 void
-assemble(void)
+assemble()
 {
 	int n;
 	char **a;
