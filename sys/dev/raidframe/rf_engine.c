@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_engine.c,v 1.28 2003/12/29 06:19:28 oster Exp $	*/
+/*	$NetBSD: rf_engine.c,v 1.29 2003/12/30 21:59:03 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -55,7 +55,7 @@
  ****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_engine.c,v 1.28 2003/12/29 06:19:28 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_engine.c,v 1.29 2003/12/30 21:59:03 oster Exp $");
 
 #include <sys/errno.h>
 
@@ -93,8 +93,7 @@ do { \
 	RF_BROADCAST_COND((_r_)->node_queue)	/* XXX RF_SIGNAL_COND? */
 
 static void 
-rf_ShutdownEngine(arg)
-	void   *arg;
+rf_ShutdownEngine(void *arg)
 {
 	RF_Raid_t *raidPtr;
 	int ks;
@@ -123,10 +122,8 @@ rf_ShutdownEngine(arg)
 }
 
 int 
-rf_ConfigureEngine(
-    RF_ShutdownList_t ** listp,
-    RF_Raid_t * raidPtr,
-    RF_Config_t * cfgPtr)
+rf_ConfigureEngine(RF_ShutdownList_t **listp, RF_Raid_t *raidPtr,
+		   RF_Config_t *cfgPtr)
 {
 	int     rc;
 
@@ -172,7 +169,7 @@ rf_ConfigureEngine(
 }
 
 static int 
-BranchDone(RF_DagNode_t * node)
+BranchDone(RF_DagNode_t *node)
 {
 	int     i;
 
@@ -213,7 +210,7 @@ BranchDone(RF_DagNode_t * node)
 }
 
 static int 
-NodeReady(RF_DagNode_t * node)
+NodeReady(RF_DagNode_t *node)
 {
 	int     ready;
 
@@ -253,7 +250,7 @@ NodeReady(RF_DagNode_t * node)
  * set to "fired" or "recover" to indicate the direction of execution.
  */
 static void 
-FireNode(RF_DagNode_t * node)
+FireNode(RF_DagNode_t *node)
 {
 	switch (node->status) {
 	case rf_fired:
@@ -306,9 +303,7 @@ FireNode(RF_DagNode_t * node)
  * The entire list is fired atomically.
  */
 static void 
-FireNodeArray(
-    int numNodes,
-    RF_DagNode_t ** nodeList)
+FireNodeArray(int numNodes, RF_DagNode_t **nodeList)
 {
 	RF_DagStatus_t dstat;
 	RF_DagNode_t *node;
@@ -352,7 +347,7 @@ FireNodeArray(
  * The entire list is fired atomically.
  */
 static void 
-FireNodeList(RF_DagNode_t * nodeList)
+FireNodeList(RF_DagNode_t *nodeList)
 {
 	RF_DagNode_t *node, *next;
 	RF_DagStatus_t dstat;
@@ -409,9 +404,7 @@ FireNodeList(RF_DagNode_t * nodeList)
  * entire function, but this is certainly overkill.
  */
 static void 
-PropagateResults(
-    RF_DagNode_t * node,
-    int context)
+PropagateResults(RF_DagNode_t *node, int context)
 {
 	RF_DagNode_t *s, *a;
 	RF_Raid_t *raidPtr;
@@ -617,9 +610,7 @@ PropagateResults(
  * Process a fired node which has completed
  */
 static void 
-ProcessNode(
-    RF_DagNode_t * node,
-    int context)
+ProcessNode(RF_DagNode_t *node, int context)
 {
 	RF_Raid_t *raidPtr;
 
@@ -671,9 +662,7 @@ ProcessNode(
  * as complete and fire off any successors that have been enabled.
  */
 int 
-rf_FinishNode(
-    RF_DagNode_t * node,
-    int context)
+rf_FinishNode(RF_DagNode_t *node, int context)
 {
 	int     retcode = RF_FALSE;
 	node->dagHdr->numNodesCompleted++;
@@ -694,10 +683,8 @@ rf_FinishNode(
  * All we do here is fire the direct successors of the header node.
  * The DAG execution thread does the rest of the dag processing.  */
 int 
-rf_DispatchDAG(
-    RF_DagHeader_t * dag,
-    void (*cbFunc) (void *),
-    void *cbArg)
+rf_DispatchDAG(RF_DagHeader_t *dag, void (*cbFunc) (void *),
+	       void *cbArg)
 {
 	RF_Raid_t *raidPtr;
 

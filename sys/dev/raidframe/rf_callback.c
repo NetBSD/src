@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_callback.c,v 1.11 2003/12/29 03:33:47 oster Exp $	*/
+/*	$NetBSD: rf_callback.c,v 1.12 2003/12/30 21:59:03 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -26,15 +26,15 @@
  * rights to redistribute these changes.
  */
 
-/*****************************************************************************************
+/*****************************************************************************
  *
  * callback.c -- code to manipulate callback descriptor
  *
- ****************************************************************************************/
+ ****************************************************************************/
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_callback.c,v 1.11 2003/12/29 03:33:47 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_callback.c,v 1.12 2003/12/30 21:59:03 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 #include <sys/pool.h>
@@ -53,8 +53,7 @@ static struct pool rf_callback_pool;
 
 static void rf_ShutdownCallback(void *);
 static void 
-rf_ShutdownCallback(ignored)
-	void   *ignored;
+rf_ShutdownCallback(void *ignored)
 {
 	pool_destroy(&rf_callback_pool);
 }

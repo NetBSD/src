@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagfuncs.c,v 1.14 2003/12/29 03:43:07 oster Exp $	*/
+/*	$NetBSD: rf_dagfuncs.c,v 1.15 2003/12/30 21:59:03 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagfuncs.c,v 1.14 2003/12/29 03:43:07 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagfuncs.c,v 1.15 2003/12/30 21:59:03 oster Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -85,8 +85,7 @@ int     (*rf_RecoveryXorUndoFunc) (RF_DagNode_t *);
  * main (only) configuration routine for this module
  ****************************************************************************/
 int 
-rf_ConfigureDAGFuncs(listp)
-	RF_ShutdownList_t **listp;
+rf_ConfigureDAGFuncs(RF_ShutdownList_t **listp)
 {
 	RF_ASSERT(((sizeof(long) == 8) && RF_LONGSHIFT == 3) || 
 		  ((sizeof(long) == 4) && RF_LONGSHIFT == 2));
@@ -108,8 +107,7 @@ rf_ConfigureDAGFuncs(listp)
  * the execution function associated with a terminate node
  ****************************************************************************/
 int 
-rf_TerminateFunc(node)
-	RF_DagNode_t *node;
+rf_TerminateFunc(RF_DagNode_t *node)
 {
 	RF_ASSERT(node->dagHdr->numCommits == node->dagHdr->numCommitNodes);
 	node->status = rf_good;
@@ -117,14 +115,13 @@ rf_TerminateFunc(node)
 }
 
 int 
-rf_TerminateUndoFunc(node)
-	RF_DagNode_t *node;
+rf_TerminateUndoFunc(RF_DagNode_t *node)
 {
 	return (0);
 }
 
 
-/*****************************************************************************************
+/*****************************************************************************
  * execution functions associated with a mirror node
  *
  * parameters:
@@ -135,11 +132,10 @@ rf_TerminateUndoFunc(node)
  * 3 - flags
  * 4 - physical disk address of mirror (parity)
  *
- ****************************************************************************************/
+ ****************************************************************************/
 
 int 
-rf_DiskReadMirrorIdleFunc(node)
-	RF_DagNode_t *node;
+rf_DiskReadMirrorIdleFunc(RF_DagNode_t *node)
 {
 	/* select the mirror copy with the shortest queue and fill in node
 	 * parameters with physical disk address */
@@ -150,8 +146,7 @@ rf_DiskReadMirrorIdleFunc(node)
 
 #if (RF_INCLUDE_CHAINDECLUSTER > 0) || (RF_INCLUDE_INTERDECLUSTER > 0) || (RF_DEBUG_VALIDATE_DAG > 0)
 int 
-rf_DiskReadMirrorPartitionFunc(node)
-	RF_DagNode_t *node;
+rf_DiskReadMirrorPartitionFunc(RF_DagNode_t *node)
 {
 	/* select the mirror copy with the shortest queue and fill in node
 	 * parameters with physical disk address */
@@ -162,8 +157,7 @@ rf_DiskReadMirrorPartitionFunc(node)
 #endif
 
 int 
-rf_DiskReadMirrorUndoFunc(node)
-	RF_DagNode_t *node;
+rf_DiskReadMirrorUndoFunc(RF_DagNode_t *node)
 {
 	return (0);
 }
@@ -175,8 +169,7 @@ rf_DiskReadMirrorUndoFunc(node)
  * the execution function associated with a parity log update node
  ****************************************************************************/
 int 
-rf_ParityLogUpdateFunc(node)
-	RF_DagNode_t *node;
+rf_ParityLogUpdateFunc(RF_DagNode_t *node)
 {
 	RF_PhysDiskAddr_t *pda = (RF_PhysDiskAddr_t *) node->params[0].p;
 	caddr_t buf = (caddr_t) node->params[1].p;
@@ -203,12 +196,11 @@ rf_ParityLogUpdateFunc(node)
 }
 
 
-/*****************************************************************************************
+/*****************************************************************************
  * the execution function associated with a parity log overwrite node
- ****************************************************************************************/
+ ****************************************************************************/
 int 
-rf_ParityLogOverwriteFunc(node)
-	RF_DagNode_t *node;
+rf_ParityLogOverwriteFunc(RF_DagNode_t *node)
 {
 	RF_PhysDiskAddr_t *pda = (RF_PhysDiskAddr_t *) node->params[0].p;
 	caddr_t buf = (caddr_t) node->params[1].p;
@@ -234,15 +226,13 @@ rf_ParityLogOverwriteFunc(node)
 }
 
 int 
-rf_ParityLogUpdateUndoFunc(node)
-	RF_DagNode_t *node;
+rf_ParityLogUpdateUndoFunc(RF_DagNode_t *node)
 {
 	return (0);
 }
 
 int 
-rf_ParityLogOverwriteUndoFunc(node)
-	RF_DagNode_t *node;
+rf_ParityLogOverwriteUndoFunc(RF_DagNode_t *node)
 {
 	return (0);
 }
@@ -252,16 +242,14 @@ rf_ParityLogOverwriteUndoFunc(node)
  * the execution function associated with a NOP node
  ****************************************************************************/
 int 
-rf_NullNodeFunc(node)
-	RF_DagNode_t *node;
+rf_NullNodeFunc(RF_DagNode_t *node)
 {
 	node->status = rf_good;
 	return (rf_FinishNode(node, RF_THREAD_CONTEXT));
 }
 
 int 
-rf_NullNodeUndoFunc(node)
-	RF_DagNode_t *node;
+rf_NullNodeUndoFunc(RF_DagNode_t *node)
 {
 	node->status = rf_undone;
 	return (rf_FinishNode(node, RF_THREAD_CONTEXT));
@@ -272,8 +260,7 @@ rf_NullNodeUndoFunc(node)
  * the execution function associated with a disk-read node
  ****************************************************************************/
 int 
-rf_DiskReadFuncForThreads(node)
-	RF_DagNode_t *node;
+rf_DiskReadFuncForThreads(RF_DagNode_t *node)
 {
 	RF_DiskQueueData_t *req;
 	RF_PhysDiskAddr_t *pda = (RF_PhysDiskAddr_t *) node->params[0].p;
@@ -314,8 +301,7 @@ rf_DiskReadFuncForThreads(node)
  * the execution function associated with a disk-write node
  ****************************************************************************/
 int 
-rf_DiskWriteFuncForThreads(node)
-	RF_DagNode_t *node;
+rf_DiskWriteFuncForThreads(RF_DagNode_t *node)
 {
 	RF_DiskQueueData_t *req;
 	RF_PhysDiskAddr_t *pda = (RF_PhysDiskAddr_t *) node->params[0].p;
@@ -360,8 +346,7 @@ rf_DiskWriteFuncForThreads(node)
  *        old data is not restored to disk!
  ****************************************************************************/
 int 
-rf_DiskUndoFunc(node)
-	RF_DagNode_t *node;
+rf_DiskUndoFunc(RF_DagNode_t *node)
 {
 	RF_DiskQueueData_t *req;
 	RF_PhysDiskAddr_t *pda = (RF_PhysDiskAddr_t *) node->params[0].p;
@@ -387,8 +372,7 @@ rf_DiskUndoFunc(node)
  * the execution function associated with an "unlock disk queue" node
  ****************************************************************************/
 int 
-rf_DiskUnlockFuncForThreads(node)
-	RF_DagNode_t *node;
+rf_DiskUnlockFuncForThreads(RF_DagNode_t *node)
 {
 	RF_DiskQueueData_t *req;
 	RF_PhysDiskAddr_t *pda = (RF_PhysDiskAddr_t *) node->params[0].p;
@@ -416,10 +400,9 @@ rf_DiskUnlockFuncForThreads(node)
  * inform the execution engine that the node has fired.
  ****************************************************************************/
 int 
-rf_GenericWakeupFunc(node, status)
-	RF_DagNode_t *node;
-	int     status;
+rf_GenericWakeupFunc(RF_DagNode_t *node, int status)
 {
+
 	switch (node->status) {
 	case rf_bwd1:
 		node->status = rf_bwd2;
@@ -478,8 +461,7 @@ rf_GenericWakeupFunc(node, status)
  * SU, and use the pda params to determine where within the buffer to
  * XOR the input buffers.  */
 int 
-rf_RegularXorFunc(node)
-	RF_DagNode_t *node;
+rf_RegularXorFunc(RF_DagNode_t *node)
 {
 	RF_Raid_t *raidPtr = (RF_Raid_t *) node->params[node->numParams - 1].p;
 	RF_AccTraceEntry_t *tracerec = node->dagHdr->tracerec;
@@ -505,8 +487,7 @@ rf_RegularXorFunc(node)
 }
 /* xor the inputs into the result buffer, ignoring placement issues */
 int 
-rf_SimpleXorFunc(node)
-	RF_DagNode_t *node;
+rf_SimpleXorFunc(RF_DagNode_t *node)
 {
 	RF_Raid_t *raidPtr = (RF_Raid_t *) node->params[node->numParams - 1].p;
 	int     i, retcode = 0;
@@ -538,8 +519,7 @@ rf_SimpleXorFunc(node)
  * parameter list to determine where within the target buffer the
  * corresponding data should be xored.  */
 int 
-rf_RecoveryXorFunc(node)
-	RF_DagNode_t *node;
+rf_RecoveryXorFunc(RF_DagNode_t *node)
 {
 	RF_Raid_t *raidPtr = (RF_Raid_t *) node->params[node->numParams - 1].p;
 	RF_RaidLayout_t *layoutPtr = (RF_RaidLayout_t *) & raidPtr->Layout;
@@ -583,12 +563,8 @@ rf_RecoveryXorFunc(node)
  * the portion of targbuf identified in the pda.  */
 
 int 
-rf_XorIntoBuffer(raidPtr, pda, srcbuf, targbuf, bp)
-	RF_Raid_t *raidPtr;
-	RF_PhysDiskAddr_t *pda;
-	char   *srcbuf;
-	char   *targbuf;
-	void   *bp;
+rf_XorIntoBuffer(RF_Raid_t *raidPtr, RF_PhysDiskAddr_t *pda,
+		 char *srcbuf, char *targbuf, void *bp)
 {
 	char   *targptr;
 	int     sectPerSU = raidPtr->Layout.sectorsPerStripeUnit;
@@ -608,11 +584,7 @@ rf_XorIntoBuffer(raidPtr, pda, srcbuf, targbuf, bp)
  * a multiple of the sector size, so there should be no problem with
  * leftover bytes at the end.  */
 int 
-rf_bxor(src, dest, len, bp)
-	char   *src;
-	char   *dest;
-	int     len;
-	void   *bp;
+rf_bxor(char *src, char *dest, int len, void *bp)
 {
 	unsigned mask = sizeof(long) - 1, retcode = 0;
 
@@ -634,13 +606,12 @@ rf_bxor(src, dest, len, bp)
  * about which input buffers are in kernel/user space, nor about their
  * alignment, so in each loop we compute the maximum number of bytes
  * that we can xor without crossing any page boundaries, and do only
- * this many bytes before the next remap.  */
+ * this many bytes before the next remap.  
+ * 
+ * len - is in longwords 
+ */
 int 
-rf_longword_bxor(src, dest, len, bp)
-	unsigned long *src;
-	unsigned long *dest;
-	int     len;		/* longwords */
-	void   *bp;
+rf_longword_bxor(unsigned long *src, unsigned long *dest, int len, void *bp)
 {
 	unsigned long *end = src + len;
 	unsigned long d0, d1, d2, d3, s0, s1, s2, s3;	/* temps */
@@ -710,15 +681,11 @@ rf_longword_bxor(src, dest, len, bp)
    dst = a ^ b ^ c;
    a may equal dst
    see comment above longword_bxor
+   len is length in longwords
 */
 int 
-rf_longword_bxor3(dst, a, b, c, len, bp)
-	unsigned long *dst;
-	unsigned long *a;
-	unsigned long *b;
-	unsigned long *c;
-	int     len;		/* length in longwords */
-	void   *bp;
+rf_longword_bxor3(unsigned long *dst, unsigned long *a, unsigned long *b,
+		  unsigned long *c, int len, void *bp)
 {
 	unsigned long a0, a1, a2, a3, b0, b1, b2, b3;
 	unsigned long *pg_a, *pg_b, *pg_c, *pg_dst;	/* per-page source/dest
@@ -877,13 +844,8 @@ rf_longword_bxor3(dst, a, b, c, len, bp)
 }
 
 int 
-rf_bxor3(dst, a, b, c, len, bp)
-	unsigned char *dst;
-	unsigned char *a;
-	unsigned char *b;
-	unsigned char *c;
-	unsigned long len;
-	void   *bp;
+rf_bxor3(unsigned char *dst, unsigned char *a, unsigned char *b, 
+	 unsigned char *c, unsigned long len, void *bp)
 {
 	RF_ASSERT(((RF_UL(dst) | RF_UL(a) | RF_UL(b) | RF_UL(c) | len) & 0x7) == 0);
 

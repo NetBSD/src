@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.168 2003/12/29 04:56:26 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.169 2003/12/30 21:59:03 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -146,7 +146,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.168 2003/12/29 04:56:26 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.169 2003/12/30 21:59:03 oster Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -336,8 +336,7 @@ static int raidautoconfig = 0; /* Debugging, mostly.  Set to 0 to not
 			          kernel config file.  */
 
 void
-raidattach(num)
-	int     num;
+raidattach(int num)
 {
 	int raidID;
 	int i, rc;
@@ -511,8 +510,7 @@ rf_buildroothack(RF_ConfigSet_t *config_sets)
 
 
 int
-raidsize(dev)
-	dev_t   dev;
+raidsize(dev_t dev)
 {
 	struct raid_softc *rs;
 	struct disklabel *lp;
@@ -547,21 +545,14 @@ raidsize(dev)
 }
 
 int
-raiddump(dev, blkno, va, size)
-	dev_t   dev;
-	daddr_t blkno;
-	caddr_t va;
-	size_t  size;
+raiddump(dev_t dev, daddr_t blkno, caddr_t va, size_t  size)
 {
 	/* Not implemented. */
 	return ENXIO;
 }
 /* ARGSUSED */
 int
-raidopen(dev, flags, fmt, p)
-	dev_t   dev;
-	int     flags, fmt;
-	struct proc *p;
+raidopen(dev_t dev, int flags, int fmt, struct proc *p)
 {
 	int     unit = raidunit(dev);
 	struct raid_softc *rs;
@@ -631,10 +622,7 @@ raidopen(dev, flags, fmt, p)
 }
 /* ARGSUSED */
 int
-raidclose(dev, flags, fmt, p)
-	dev_t   dev;
-	int     flags, fmt;
-	struct proc *p;
+raidclose(dev_t dev, int flags, int fmt, struct proc *p)
 {
 	int     unit = raidunit(dev);
 	struct raid_softc *rs;
@@ -691,8 +679,7 @@ raidclose(dev, flags, fmt, p)
 }
 
 void
-raidstrategy(bp)
-	struct buf *bp;
+raidstrategy(struct buf *bp)
 {
 	int s;
 
@@ -755,10 +742,7 @@ raidstrategy(bp)
 }
 /* ARGSUSED */
 int
-raidread(dev, uio, flags)
-	dev_t   dev;
-	struct uio *uio;
-	int     flags;
+raidread(dev_t dev, struct uio *uio, int flags)
 {
 	int     unit = raidunit(dev);
 	struct raid_softc *rs;
@@ -775,10 +759,7 @@ raidread(dev, uio, flags)
 }
 /* ARGSUSED */
 int
-raidwrite(dev, uio, flags)
-	dev_t   dev;
-	struct uio *uio;
-	int     flags;
+raidwrite(dev_t dev, struct uio *uio, int flags)
 {
 	int     unit = raidunit(dev);
 	struct raid_softc *rs;
@@ -795,12 +776,7 @@ raidwrite(dev, uio, flags)
 }
 
 int
-raidioctl(dev, cmd, data, flag, p)
-	dev_t   dev;
-	u_long  cmd;
-	caddr_t data;
-	int     flag;
-	struct proc *p;
+raidioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	int     unit = raidunit(dev);
 	int     error = 0;
@@ -1610,8 +1586,7 @@ raidioctl(dev, cmd, data, flag, p)
 
 
 static void
-raidinit(raidPtr)
-	RF_Raid_t *raidPtr;
+raidinit(RF_Raid_t *raidPtr)
 {
 	struct raid_softc *rs;
 	int     unit;
@@ -1650,8 +1625,7 @@ raidinit(raidPtr)
  * XXX This code is not currently used. GO
  */
 int 
-rf_GetSpareTableFromDaemon(req)
-	RF_SparetWait_t *req;
+rf_GetSpareTableFromDaemon(RF_SparetWait_t *req)
 {
 	int     retcode;
 
@@ -1685,8 +1659,7 @@ rf_GetSpareTableFromDaemon(req)
  * Formerly known as: rf_DoAccessKernel
  */
 void
-raidstart(raidPtr)
-	RF_Raid_t *raidPtr;
+raidstart(RF_Raid_t *raidPtr)
 {
 	RF_SectorCount_t num_blocks, pb, sum;
 	RF_RaidAddr_t raid_addr;
@@ -1810,9 +1783,7 @@ raidstart(raidPtr)
 /* invoke an I/O from kernel mode.  Disk queue should be locked upon entry */
 
 int 
-rf_DispatchKernelIO(queue, req)
-	RF_DiskQueue_t *queue;
-	RF_DiskQueueData_t *req;
+rf_DispatchKernelIO(RF_DiskQueue_t *queue, RF_DiskQueueData_t *req)
 {
 	int     op = (req->type == RF_IO_TYPE_READ) ? B_READ : B_WRITE;
 	struct buf *bp;
@@ -1917,8 +1888,7 @@ rf_DispatchKernelIO(queue, req)
    kernel code.
  */
 static void 
-KernelWakeupFunc(vbp)
-	struct buf *vbp;
+KernelWakeupFunc(struct buf *vbp)
 {
 	RF_DiskQueueData_t *req = NULL;
 	RF_DiskQueue_t *queue;
@@ -2003,19 +1973,10 @@ KernelWakeupFunc(vbp)
  * initialize a buf structure for doing an I/O in the kernel.
  */
 static void 
-InitBP(bp, b_vp, rw_flag, dev, startSect, numSect, buf, cbFunc, cbArg,
-       logBytesPerSector, b_proc)
-	struct buf *bp;
-	struct vnode *b_vp;
-	unsigned rw_flag;
-	dev_t dev;
-	RF_SectorNum_t startSect;
-	RF_SectorCount_t numSect;
-	caddr_t buf;
-	void (*cbFunc) (struct buf *);
-	void *cbArg;
-	int logBytesPerSector;
-	struct proc *b_proc;
+InitBP(struct buf *bp, struct vnode *b_vp, unsigned rw_flag, dev_t dev,
+       RF_SectorNum_t startSect, RF_SectorCount_t numSect, caddr_t buf,
+       void (*cbFunc) (struct buf *), void *cbArg, int logBytesPerSector,
+       struct proc *b_proc)
 {
 	/* bp->b_flags       = B_PHYS | rw_flag; */
 	bp->b_flags = B_CALL | rw_flag;	/* XXX need B_PHYS here too??? */
@@ -2036,10 +1997,8 @@ InitBP(bp, b_vp, rw_flag, dev, startSect, numSect, buf, cbFunc, cbArg,
 }
 
 static void
-raidgetdefaultlabel(raidPtr, rs, lp)
-	RF_Raid_t *raidPtr;
-	struct raid_softc *rs;
-	struct disklabel *lp;
+raidgetdefaultlabel(RF_Raid_t *raidPtr, struct raid_softc *rs, 
+		    struct disklabel *lp)
 {
 	memset(lp, 0, sizeof(*lp));
 
@@ -2074,8 +2033,7 @@ raidgetdefaultlabel(raidPtr, rs, lp)
  * up.
  */
 static void
-raidgetdisklabel(dev)
-	dev_t   dev;
+raidgetdisklabel(dev_t dev)
 {
 	int     unit = raidunit(dev);
 	struct raid_softc *rs = &raid_softc[unit];
@@ -2131,8 +2089,7 @@ raidgetdisklabel(dev)
  * that a disklabel isn't present.
  */
 static void
-raidmakedisklabel(rs)
-	struct raid_softc *rs;
+raidmakedisklabel(struct raid_softc *rs)
 {
 	struct disklabel *lp = rs->sc_dkdev.dk_label;
 	db1_printf(("Making a label..\n"));
@@ -2155,10 +2112,7 @@ raidmakedisklabel(rs)
  * You'll find the original of this in ccd.c
  */
 int
-raidlookup(path, p, vpp)
-	char   *path;
-	struct proc *p;
-	struct vnode **vpp;	/* result */
+raidlookup(char *path, struct proc *p, struct vnode **vpp)
 {
 	struct nameidata nd;
 	struct vnode *vp;
@@ -2198,8 +2152,7 @@ raidlookup(path, p, vpp)
  * (Hmm... where have we seen this warning before :->  GO )
  */
 static int
-raidlock(rs)
-	struct raid_softc *rs;
+raidlock(struct raid_softc *rs)
 {
 	int     error;
 
@@ -2216,8 +2169,7 @@ raidlock(rs)
  * Unlock and wake up any waiters.
  */
 static void
-raidunlock(rs)
-	struct raid_softc *rs;
+raidunlock(struct raid_softc *rs)
 {
 
 	rs->sc_flags &= ~RAIDF_LOCKED;
@@ -2256,10 +2208,8 @@ raidmarkdirty(dev_t dev, struct vnode *b_vp, int mod_counter)
 
 /* ARGSUSED */
 int
-raidread_component_label(dev, b_vp, clabel)
-	dev_t dev;
-	struct vnode *b_vp;
-	RF_ComponentLabel_t *clabel;
+raidread_component_label(dev_t dev, struct vnode *b_vp, 
+			 RF_ComponentLabel_t *clabel)
 {
 	struct buf *bp;
 	const struct bdevsw *bdev;
@@ -2301,10 +2251,8 @@ raidread_component_label(dev, b_vp, clabel)
 }
 /* ARGSUSED */
 int 
-raidwrite_component_label(dev, b_vp, clabel)
-	dev_t dev; 
-	struct vnode *b_vp;
-	RF_ComponentLabel_t *clabel;
+raidwrite_component_label(dev_t dev, struct vnode *b_vp, 
+			  RF_ComponentLabel_t *clabel)
 {
 	struct buf *bp;
 	const struct bdevsw *bdev;
@@ -2340,8 +2288,7 @@ raidwrite_component_label(dev, b_vp, clabel)
 }
 
 void 
-rf_markalldirty(raidPtr)
-	RF_Raid_t *raidPtr;
+rf_markalldirty(RF_Raid_t *raidPtr)
 {
 	RF_ComponentLabel_t clabel;
 	int sparecol;
@@ -2413,9 +2360,7 @@ rf_markalldirty(raidPtr)
 
 
 void
-rf_update_component_labels(raidPtr, final)
-	RF_Raid_t *raidPtr;
-	int final;
+rf_update_component_labels(RF_Raid_t *raidPtr, int final)
 {
 	RF_ComponentLabel_t clabel;
 	int sparecol;
@@ -2506,10 +2451,7 @@ rf_update_component_labels(raidPtr, final)
 }
 
 void
-rf_close_component(raidPtr, vp, auto_configured)
-	RF_Raid_t *raidPtr;
-	struct vnode *vp;
-	int auto_configured;
+rf_close_component(RF_Raid_t *raidPtr, struct vnode *vp, int auto_configured)
 {
 	struct proc *p;
 
@@ -2529,8 +2471,7 @@ rf_close_component(raidPtr, vp, auto_configured)
 
 
 void
-rf_UnconfigureVnodes(raidPtr)
-	RF_Raid_t *raidPtr;
+rf_UnconfigureVnodes(RF_Raid_t *raidPtr)
 {
 	int r,c; 
 	struct vnode *vp;
@@ -2558,8 +2499,7 @@ rf_UnconfigureVnodes(raidPtr)
 
 
 void 
-rf_ReconThread(req)
-	struct rf_recon_req *req;
+rf_ReconThread(struct rf_recon_req *req)
 {
 	int     s;
 	RF_Raid_t *raidPtr;
@@ -2582,8 +2522,7 @@ rf_ReconThread(req)
 }
 
 void
-rf_RewriteParityThread(raidPtr)
-	RF_Raid_t *raidPtr;
+rf_RewriteParityThread(RF_Raid_t *raidPtr)
 {
 	int retcode;
 	int s;
@@ -2613,8 +2552,7 @@ rf_RewriteParityThread(raidPtr)
 
 
 void
-rf_CopybackThread(raidPtr)
-	RF_Raid_t *raidPtr;
+rf_CopybackThread(RF_Raid_t *raidPtr)
 {
 	int s;
 
@@ -2630,8 +2568,7 @@ rf_CopybackThread(raidPtr)
 
 
 void
-rf_ReconstructInPlaceThread(req)
-	struct rf_recon_req *req;
+rf_ReconstructInPlaceThread(struct rf_recon_req *req)
 {
 	int s;
 	RF_Raid_t *raidPtr;
@@ -2802,8 +2739,7 @@ rf_find_raid_components()
 }
 			
 static int
-rf_reasonable_label(clabel)
-	RF_ComponentLabel_t *clabel;
+rf_reasonable_label(RF_ComponentLabel_t *clabel)
 {
 	
 	if (((clabel->version==RF_COMPONENT_LABEL_VERSION_1) ||
@@ -2827,8 +2763,7 @@ rf_reasonable_label(clabel)
 
 #if DEBUG
 void
-rf_print_component_label(clabel)
-	RF_ComponentLabel_t *clabel;
+rf_print_component_label(RF_ComponentLabel_t *clabel)
 {
 	printf("   Row: %d Column: %d Num Rows: %d Num Columns: %d\n",
 	       clabel->row, clabel->column, 
@@ -2855,8 +2790,7 @@ rf_print_component_label(clabel)
 #endif
 
 RF_ConfigSet_t *
-rf_create_auto_sets(ac_list)
-	RF_AutoConfig_t *ac_list;
+rf_create_auto_sets(RF_AutoConfig_t *ac_list)
 {
 	RF_AutoConfig_t *ac;
 	RF_ConfigSet_t *config_sets;
@@ -2922,9 +2856,7 @@ rf_create_auto_sets(ac_list)
 }
 
 static int
-rf_does_it_fit(cset, ac)	
-	RF_ConfigSet_t *cset;
-	RF_AutoConfig_t *ac;
+rf_does_it_fit(RF_ConfigSet_t *cset, RF_AutoConfig_t *ac)
 {
 	RF_ComponentLabel_t *clabel1, *clabel2;
 
@@ -2981,8 +2913,7 @@ rf_does_it_fit(cset, ac)
 }
 
 int
-rf_have_enough_components(cset)
-	RF_ConfigSet_t *cset;
+rf_have_enough_components(RF_ConfigSet_t *cset)
 {
 	RF_AutoConfig_t *ac;
 	RF_AutoConfig_t *auto_config;
@@ -3085,10 +3016,8 @@ rf_have_enough_components(cset)
 }
 
 void
-rf_create_configuration(ac,config,raidPtr)
-	RF_AutoConfig_t *ac;
-	RF_Config_t *config;
-	RF_Raid_t *raidPtr;
+rf_create_configuration(RF_AutoConfig_t *ac, RF_Config_t *config,
+			RF_Raid_t *raidPtr)
 {
 	RF_ComponentLabel_t *clabel;
 	int i;
@@ -3122,9 +3051,7 @@ rf_create_configuration(ac,config,raidPtr)
 }
 
 int
-rf_set_autoconfig(raidPtr, new_value)
-	RF_Raid_t *raidPtr;
-	int new_value;
+rf_set_autoconfig(RF_Raid_t *raidPtr, int new_value)
 {
 	RF_ComponentLabel_t clabel;
 	struct vnode *vp;
@@ -3157,9 +3084,7 @@ rf_set_autoconfig(raidPtr, new_value)
 }
 
 int
-rf_set_rootpartition(raidPtr, new_value)
-	RF_Raid_t *raidPtr;
-	int new_value;
+rf_set_rootpartition(RF_Raid_t *raidPtr, int new_value)
 {
 	RF_ComponentLabel_t clabel;
 	struct vnode *vp;
@@ -3191,8 +3116,7 @@ rf_set_rootpartition(raidPtr, new_value)
 }
 
 void
-rf_release_all_vps(cset)
-	RF_ConfigSet_t *cset;
+rf_release_all_vps(RF_ConfigSet_t *cset)
 {
 	RF_AutoConfig_t *ac;
 	
@@ -3211,8 +3135,7 @@ rf_release_all_vps(cset)
 
 
 void
-rf_cleanup_config_set(cset)
-	RF_ConfigSet_t *cset;
+rf_cleanup_config_set(RF_ConfigSet_t *cset)
 {
 	RF_AutoConfig_t *ac;
 	RF_AutoConfig_t *next_ac;
@@ -3233,9 +3156,7 @@ rf_cleanup_config_set(cset)
 
 
 void
-raid_init_component_label(raidPtr, clabel)
-	RF_Raid_t *raidPtr;
-	RF_ComponentLabel_t *clabel;
+raid_init_component_label(RF_Raid_t *raidPtr, RF_ComponentLabel_t *clabel)
 {
 	/* current version number */
 	clabel->version = RF_COMPONENT_LABEL_VERSION; 
@@ -3263,9 +3184,7 @@ raid_init_component_label(raidPtr, clabel)
 }
 
 int
-rf_auto_config_set(cset,unit)
-	RF_ConfigSet_t *cset;
-	int *unit;
+rf_auto_config_set(RF_ConfigSet_t *cset, int *unit)
 {
 	RF_Raid_t *raidPtr;
 	RF_Config_t *config;
@@ -3365,8 +3284,7 @@ rf_auto_config_set(cset,unit)
 }
 
 void
-rf_disk_unbusy(desc)
-	RF_RaidAccessDesc_t *desc;
+rf_disk_unbusy(RF_RaidAccessDesc_t *desc)
 {
 	struct buf *bp;
 

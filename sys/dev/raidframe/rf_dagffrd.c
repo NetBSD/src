@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagffrd.c,v 1.9 2003/12/29 03:33:47 oster Exp $	*/
+/*	$NetBSD: rf_dagffrd.c,v 1.10 2003/12/30 21:59:03 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagffrd.c,v 1.9 2003/12/29 03:33:47 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagffrd.c,v 1.10 2003/12/30 21:59:03 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -74,13 +74,10 @@ __KERNEL_RCSID(0, "$NetBSD: rf_dagffrd.c,v 1.9 2003/12/29 03:33:47 oster Exp $")
  */
 
 void 
-rf_CreateFaultFreeReadDAG(
-    RF_Raid_t * raidPtr,
-    RF_AccessStripeMap_t * asmap,
-    RF_DagHeader_t * dag_h,
-    void *bp,
-    RF_RaidAccessFlags_t flags,
-    RF_AllocListElem_t * allocList)
+rf_CreateFaultFreeReadDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
+			  RF_DagHeader_t *dag_h, void *bp,
+			  RF_RaidAccessFlags_t flags,
+			  RF_AllocListElem_t *allocList)
 {
 	rf_CreateNonredundantDAG(raidPtr, asmap, dag_h, bp, flags, allocList,
 	    RF_IO_TYPE_READ);
@@ -127,14 +124,11 @@ rf_CreateFaultFreeReadDAG(
  *****************************************************************************/
 
 void 
-rf_CreateNonredundantDAG(
-    RF_Raid_t * raidPtr,
-    RF_AccessStripeMap_t * asmap,
-    RF_DagHeader_t * dag_h,
-    void *bp,
-    RF_RaidAccessFlags_t flags,
-    RF_AllocListElem_t * allocList,
-    RF_IoType_t type)
+rf_CreateNonredundantDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
+			 RF_DagHeader_t *dag_h, void *bp,
+			 RF_RaidAccessFlags_t flags,
+			 RF_AllocListElem_t *allocList,
+			 RF_IoType_t type)
 {
 	RF_DagNode_t *nodes, *diskNodes, *blockNode, *commitNode, *termNode;
 	RF_PhysDiskAddr_t *pda = asmap->physInfo;
@@ -306,14 +300,11 @@ rf_CreateNonredundantDAG(
  *****************************************************************************/
 
 static void 
-CreateMirrorReadDAG(
-    RF_Raid_t * raidPtr,
-    RF_AccessStripeMap_t * asmap,
-    RF_DagHeader_t * dag_h,
-    void *bp,
-    RF_RaidAccessFlags_t flags,
-    RF_AllocListElem_t * allocList,
-    int (*readfunc) (RF_DagNode_t * node))
+CreateMirrorReadDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
+		    RF_DagHeader_t *dag_h, void *bp,
+		    RF_RaidAccessFlags_t flags, 
+		    RF_AllocListElem_t *allocList,
+		    int (*readfunc) (RF_DagNode_t * node))
 {
 	RF_DagNode_t *readNodes, *nodes, *blockNode, *commitNode, *termNode;
 	RF_PhysDiskAddr_t *data_pda = asmap->physInfo;
@@ -430,13 +421,11 @@ rf_CreateMirrorIdleReadDAG(
 #if (RF_INCLUDE_CHAINDECLUSTER > 0) || (RF_INCLUDE_INTERDECLUSTER > 0)
 
 void 
-rf_CreateMirrorPartitionReadDAG(
-    RF_Raid_t * raidPtr,
-    RF_AccessStripeMap_t * asmap,
-    RF_DagHeader_t * dag_h,
-    void *bp,
-    RF_RaidAccessFlags_t flags,
-    RF_AllocListElem_t * allocList)
+rf_CreateMirrorPartitionReadDAG(RF_Raid_t *raidPtr,
+				RF_AccessStripeMap_t *asmap,
+				RF_DagHeader_t *dag_h, void *bp,
+				RF_RaidAccessFlags_t flags,
+				RF_AllocListElem_t *allocList)
 {
 	CreateMirrorReadDAG(raidPtr, asmap, dag_h, bp, flags, allocList,
 	    rf_DiskReadMirrorPartitionFunc);

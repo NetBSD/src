@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_raid1.c,v 1.14 2003/12/29 02:38:18 oster Exp $	*/
+/*	$NetBSD: rf_raid1.c,v 1.15 2003/12/30 21:59:03 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_raid1.c,v 1.14 2003/12/29 02:38:18 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_raid1.c,v 1.15 2003/12/30 21:59:03 oster Exp $");
 
 #include "rf_raid.h"
 #include "rf_raid1.h"
@@ -58,10 +58,8 @@ typedef struct RF_Raid1ConfigInfo_s {
 }       RF_Raid1ConfigInfo_t;
 /* start of day code specific to RAID level 1 */
 int 
-rf_ConfigureRAID1(
-    RF_ShutdownList_t ** listp,
-    RF_Raid_t * raidPtr,
-    RF_Config_t * cfgPtr)
+rf_ConfigureRAID1(RF_ShutdownList_t **listp, RF_Raid_t *raidPtr,
+		  RF_Config_t *cfgPtr)
 {
 	RF_RaidLayout_t *layoutPtr = &raidPtr->Layout;
 	RF_Raid1ConfigInfo_t *info;
@@ -97,12 +95,8 @@ rf_ConfigureRAID1(
 
 /* returns the physical disk location of the primary copy in the mirror pair */
 void 
-rf_MapSectorRAID1(
-    RF_Raid_t * raidPtr,
-    RF_RaidAddr_t raidSector,
-    RF_RowCol_t * col,
-    RF_SectorNum_t * diskSector,
-    int remap)
+rf_MapSectorRAID1(RF_Raid_t *raidPtr, RF_RaidAddr_t raidSector,
+		  RF_RowCol_t *col, RF_SectorNum_t *diskSector, int remap)
 {
 	RF_StripeNum_t SUID = raidSector / raidPtr->Layout.sectorsPerStripeUnit;
 	RF_RowCol_t mirrorPair = SUID % (raidPtr->numCol / 2);
@@ -118,12 +112,8 @@ rf_MapSectorRAID1(
  * pair
  */
 void 
-rf_MapParityRAID1(
-    RF_Raid_t * raidPtr,
-    RF_RaidAddr_t raidSector,
-    RF_RowCol_t * col,
-    RF_SectorNum_t * diskSector,
-    int remap)
+rf_MapParityRAID1(RF_Raid_t *raidPtr, RF_RaidAddr_t raidSector,
+		  RF_RowCol_t *col, RF_SectorNum_t *diskSector, int remap)
 {
 	RF_StripeNum_t SUID = raidSector / raidPtr->Layout.sectorsPerStripeUnit;
 	RF_RowCol_t mirrorPair = SUID % (raidPtr->numCol / 2);
@@ -139,10 +129,8 @@ rf_MapParityRAID1(
  * returns a list of disks for a given redundancy group
  */
 void 
-rf_IdentifyStripeRAID1(
-    RF_Raid_t * raidPtr,
-    RF_RaidAddr_t addr,
-    RF_RowCol_t ** diskids)
+rf_IdentifyStripeRAID1(RF_Raid_t *raidPtr, RF_RaidAddr_t addr,
+		       RF_RowCol_t **diskids)
 {
 	RF_StripeNum_t stripeID = rf_RaidAddressToStripeID(&raidPtr->Layout, addr);
 	RF_Raid1ConfigInfo_t *info = raidPtr->Layout.layoutSpecificInfo;
@@ -158,11 +146,8 @@ rf_IdentifyStripeRAID1(
  * maps a logical stripe to a stripe in the redundant array
  */
 void 
-rf_MapSIDToPSIDRAID1(
-    RF_RaidLayout_t * layoutPtr,
-    RF_StripeNum_t stripeID,
-    RF_StripeNum_t * psID,
-    RF_ReconUnitNum_t * which_ru)
+rf_MapSIDToPSIDRAID1(RF_RaidLayout_t *layoutPtr, RF_StripeNum_t stripeID,
+		     RF_StripeNum_t *psID, RF_ReconUnitNum_t *which_ru)
 {
 	*which_ru = 0;
 	*psID = stripeID;
@@ -180,11 +165,8 @@ rf_MapSIDToPSIDRAID1(
  *****************************************************************************/
 
 void 
-rf_RAID1DagSelect(
-    RF_Raid_t * raidPtr,
-    RF_IoType_t type,
-    RF_AccessStripeMap_t * asmap,
-    RF_VoidFuncPtr * createFunc)
+rf_RAID1DagSelect(RF_Raid_t *raidPtr, RF_IoType_t type,
+		  RF_AccessStripeMap_t *asmap, RF_VoidFuncPtr *createFunc)
 {
 	RF_RowCol_t fcol, oc;
 	RF_PhysDiskAddr_t *failedPDA;
@@ -259,12 +241,9 @@ rf_RAID1DagSelect(
 }
 
 int 
-rf_VerifyParityRAID1(
-    RF_Raid_t * raidPtr,
-    RF_RaidAddr_t raidAddr,
-    RF_PhysDiskAddr_t * parityPDA,
-    int correct_it,
-    RF_RaidAccessFlags_t flags)
+rf_VerifyParityRAID1(RF_Raid_t *raidPtr, RF_RaidAddr_t raidAddr,
+		     RF_PhysDiskAddr_t *parityPDA, int correct_it,
+		     RF_RaidAccessFlags_t flags)
 {
 	int     nbytes, bcount, stripeWidth, ret, i, j, nbad, *bbufs;
 	RF_DagNode_t *blockNode, *wrBlock;
@@ -539,13 +518,14 @@ done:
 	return (ret);
 }
 
+/* rbuf          - the recon buffer to submit 
+ * keep_it       - whether we can keep this buffer or we have to return it
+ * use_committed - whether to use a committed or an available recon buffer
+ */
+
 int 
-rf_SubmitReconBufferRAID1(rbuf, keep_it, use_committed)
-	RF_ReconBuffer_t *rbuf;	/* the recon buffer to submit */
-	int     keep_it;	/* whether we can keep this buffer or we have
-				 * to return it */
-	int     use_committed;	/* whether to use a committed or an available
-				 * recon buffer */
+rf_SubmitReconBufferRAID1(RF_ReconBuffer_t *rbuf, int keep_it,
+			  int use_committed)
 {
 	RF_ReconParityStripeStatus_t *pssPtr;
 	RF_ReconCtrl_t *reconCtrlPtr;

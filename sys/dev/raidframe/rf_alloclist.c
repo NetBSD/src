@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_alloclist.c,v 1.14 2003/07/01 23:53:48 oster Exp $	*/
+/*	$NetBSD: rf_alloclist.c,v 1.15 2003/12/30 21:59:03 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -37,7 +37,7 @@
  ***************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_alloclist.c,v 1.14 2003/07/01 23:53:48 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_alloclist.c,v 1.15 2003/12/30 21:59:03 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -60,8 +60,7 @@ static int al_free_list_count;
 
 static void rf_ShutdownAllocList(void *);
 
-static void rf_ShutdownAllocList(ignored)
-	void   *ignored;
+static void rf_ShutdownAllocList(void *ignored)
 {
 	RF_AllocListElem_t *p, *pt;
 
@@ -78,8 +77,7 @@ static void rf_ShutdownAllocList(ignored)
 }
 
 int 
-rf_ConfigureAllocList(listp)
-	RF_ShutdownList_t **listp;
+rf_ConfigureAllocList(RF_ShutdownList_t **listp)
 {
 	int     rc;
 
@@ -99,10 +97,7 @@ rf_ConfigureAllocList(listp)
  * increase POINTERS_PER_ALLOC_LIST_ELEMENT.
  */
 void 
-rf_real_AddToAllocList(l, p, size)
-	RF_AllocListElem_t *l;
-	void   *p;
-	int     size;
+rf_real_AddToAllocList(RF_AllocListElem_t *l, void *p, int size)
 {
 	RF_AllocListElem_t *newelem;
 
@@ -122,8 +117,7 @@ rf_real_AddToAllocList(l, p, size)
 }
 
 void 
-rf_FreeAllocList(l)
-	RF_AllocListElem_t *l;
+rf_FreeAllocList(RF_AllocListElem_t *l)
 {
 	int     i;
 	RF_AllocListElem_t *temp, *p;

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_chaindecluster.c,v 1.10 2003/12/29 02:38:17 oster Exp $	*/
+/*	$NetBSD: rf_chaindecluster.c,v 1.11 2003/12/30 21:59:03 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_chaindecluster.c,v 1.10 2003/12/29 02:38:17 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_chaindecluster.c,v 1.11 2003/12/30 21:59:03 oster Exp $");
 
 #include "rf_archs.h"
 
@@ -61,10 +61,8 @@ typedef struct RF_ChaindeclusterConfigInfo_s {
 }       RF_ChaindeclusterConfigInfo_t;
 
 int 
-rf_ConfigureChainDecluster(
-    RF_ShutdownList_t ** listp,
-    RF_Raid_t * raidPtr,
-    RF_Config_t * cfgPtr)
+rf_ConfigureChainDecluster(RF_ShutdownList_t **listp, RF_Raid_t *raidPtr,
+			   RF_Config_t *cfgPtr)
 {
 	RF_RaidLayout_t *layoutPtr = &raidPtr->Layout;
 	RF_StripeCount_t num_used_stripeUnitsPerDisk;
@@ -111,8 +109,7 @@ rf_ConfigureChainDecluster(
 }
 
 RF_ReconUnitCount_t 
-rf_GetNumSpareRUsChainDecluster(raidPtr)
-	RF_Raid_t *raidPtr;
+rf_GetNumSpareRUsChainDecluster(RF_Raid_t *raidPtr)
 {
 	RF_ChaindeclusterConfigInfo_t *info = (RF_ChaindeclusterConfigInfo_t *) raidPtr->Layout.layoutSpecificInfo;
 
@@ -126,12 +123,9 @@ rf_GetNumSpareRUsChainDecluster(raidPtr)
 
 /* Maps to the primary copy of the data, i.e. the first mirror pair */
 void 
-rf_MapSectorChainDecluster(
-    RF_Raid_t * raidPtr,
-    RF_RaidAddr_t raidSector,
-    RF_RowCol_t * col,
-    RF_SectorNum_t * diskSector,
-    int remap)
+rf_MapSectorChainDecluster(RF_Raid_t *raidPtr, RF_RaidAddr_t raidSector,
+			   RF_RowCol_t *col, RF_SectorNum_t *diskSector,
+			   int remap)
 {
 	RF_ChaindeclusterConfigInfo_t *info = (RF_ChaindeclusterConfigInfo_t *) raidPtr->Layout.layoutSpecificInfo;
 	RF_StripeNum_t SUID = raidSector / raidPtr->Layout.sectorsPerStripeUnit;
@@ -173,12 +167,9 @@ rf_MapSectorChainDecluster(
    in the next disk (mod numCol) after the disk containing the primary copy.
    The offset into the disk is one-half disk down */
 void 
-rf_MapParityChainDecluster(
-    RF_Raid_t * raidPtr,
-    RF_RaidAddr_t raidSector,
-    RF_RowCol_t * col,
-    RF_SectorNum_t * diskSector,
-    int remap)
+rf_MapParityChainDecluster(RF_Raid_t *raidPtr, RF_RaidAddr_t raidSector,
+			   RF_RowCol_t *col, RF_SectorNum_t *diskSector,
+			   int remap)
 {
 	RF_ChaindeclusterConfigInfo_t *info = (RF_ChaindeclusterConfigInfo_t *) raidPtr->Layout.layoutSpecificInfo;
 	RF_StripeNum_t SUID = raidSector / raidPtr->Layout.sectorsPerStripeUnit;
@@ -214,10 +205,8 @@ rf_MapParityChainDecluster(
 }
 
 void 
-rf_IdentifyStripeChainDecluster(
-    RF_Raid_t * raidPtr,
-    RF_RaidAddr_t addr,
-    RF_RowCol_t ** diskids)
+rf_IdentifyStripeChainDecluster(RF_Raid_t *raidPtr, RF_RaidAddr_t addr,
+				RF_RowCol_t **diskids)
 {
 	RF_ChaindeclusterConfigInfo_t *info = (RF_ChaindeclusterConfigInfo_t *) raidPtr->Layout.layoutSpecificInfo;
 	RF_StripeNum_t SUID;
@@ -229,11 +218,10 @@ rf_IdentifyStripeChainDecluster(
 }
 
 void 
-rf_MapSIDToPSIDChainDecluster(
-    RF_RaidLayout_t * layoutPtr,
-    RF_StripeNum_t stripeID,
-    RF_StripeNum_t * psID,
-    RF_ReconUnitNum_t * which_ru)
+rf_MapSIDToPSIDChainDecluster(RF_RaidLayout_t *layoutPtr,
+			      RF_StripeNum_t stripeID,
+			      RF_StripeNum_t *psID,
+			      RF_ReconUnitNum_t *which_ru)
 {
 	*which_ru = 0;
 	*psID = stripeID;
@@ -248,11 +236,8 @@ rf_MapSIDToPSIDChainDecluster(
  *****************************************************************************/
 
 void 
-rf_RAIDCDagSelect(
-    RF_Raid_t * raidPtr,
-    RF_IoType_t type,
-    RF_AccessStripeMap_t * asmap,
-    RF_VoidFuncPtr * createFunc)
+rf_RAIDCDagSelect(RF_Raid_t *raidPtr, RF_IoType_t type,
+		  RF_AccessStripeMap_t *asmap, RF_VoidFuncPtr *createFunc)
 #if 0
 	void    (**createFunc) (RF_Raid_t *, RF_AccessStripeMap_t *,
             RF_DagHeader_t *, void *, RF_RaidAccessFlags_t,

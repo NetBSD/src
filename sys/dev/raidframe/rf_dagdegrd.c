@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagdegrd.c,v 1.15 2003/12/29 03:33:47 oster Exp $	*/
+/*	$NetBSD: rf_dagdegrd.c,v 1.16 2003/12/30 21:59:03 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagdegrd.c,v 1.15 2003/12/29 03:33:47 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagdegrd.c,v 1.16 2003/12/30 21:59:03 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -75,13 +75,12 @@ __KERNEL_RCSID(0, "$NetBSD: rf_dagdegrd.c,v 1.15 2003/12/29 03:33:47 oster Exp $
  */
 
 void 
-rf_CreateRaidFiveDegradedReadDAG(
-    RF_Raid_t * raidPtr,
-    RF_AccessStripeMap_t * asmap,
-    RF_DagHeader_t * dag_h,
-    void *bp,
-    RF_RaidAccessFlags_t flags,
-    RF_AllocListElem_t * allocList)
+rf_CreateRaidFiveDegradedReadDAG(RF_Raid_t *raidPtr,
+				 RF_AccessStripeMap_t *asmap,
+				 RF_DagHeader_t *dag_h,
+				 void *bp,
+				 RF_RaidAccessFlags_t flags,
+				 RF_AllocListElem_t *allocList)
 {
 	rf_CreateDegradedReadDAG(raidPtr, asmap, dag_h, bp, flags, allocList,
 	    &rf_xorRecoveryFuncs);
@@ -111,13 +110,12 @@ rf_CreateRaidFiveDegradedReadDAG(
  *****************************************************************************/
 
 void 
-rf_CreateRaidOneDegradedReadDAG(
-    RF_Raid_t * raidPtr,
-    RF_AccessStripeMap_t * asmap,
-    RF_DagHeader_t * dag_h,
-    void *bp,
-    RF_RaidAccessFlags_t flags,
-    RF_AllocListElem_t * allocList)
+rf_CreateRaidOneDegradedReadDAG(RF_Raid_t *raidPtr,
+				RF_AccessStripeMap_t *asmap,
+				RF_DagHeader_t *dag_h,
+				void *bp,
+				RF_RaidAccessFlags_t flags,
+				RF_AllocListElem_t *allocList)
 {
 	RF_DagNode_t *nodes, *rdNode, *blockNode, *commitNode, *termNode;
 	RF_StripeNum_t parityStripeID;
@@ -250,14 +248,11 @@ rf_CreateRaidOneDegradedReadDAG(
  *****************************************************************************/
 
 void 
-rf_CreateDegradedReadDAG(
-    RF_Raid_t * raidPtr,
-    RF_AccessStripeMap_t * asmap,
-    RF_DagHeader_t * dag_h,
-    void *bp,
-    RF_RaidAccessFlags_t flags,
-    RF_AllocListElem_t * allocList,
-    const RF_RedFuncs_t * recFunc)
+rf_CreateDegradedReadDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
+			 RF_DagHeader_t *dag_h, void *bp,
+			 RF_RaidAccessFlags_t flags,
+			 RF_AllocListElem_t *allocList,
+			 const RF_RedFuncs_t *recFunc)
 {
 	RF_DagNode_t *nodes, *rudNodes, *rrdNodes, *xorNode, *blockNode;
 	RF_DagNode_t *commitNode, *rpNode, *termNode;
@@ -526,13 +521,10 @@ rf_CreateDegradedReadDAG(
  *****************************************************************************/
 
 void 
-rf_CreateRaidCDegradedReadDAG(
-    RF_Raid_t * raidPtr,
-    RF_AccessStripeMap_t * asmap,
-    RF_DagHeader_t * dag_h,
-    void *bp,
-    RF_RaidAccessFlags_t flags,
-    RF_AllocListElem_t * allocList)
+rf_CreateRaidCDegradedReadDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
+			      RF_DagHeader_t *dag_h, void *bp,
+			      RF_RaidAccessFlags_t flags,
+			      RF_AllocListElem_t *allocList)
 {
 	RF_DagNode_t *nodes, *rdNode, *blockNode, *commitNode, *termNode;
 	RF_StripeNum_t parityStripeID;
@@ -654,14 +646,10 @@ rf_CreateRaidCDegradedReadDAG(
  * XXX move this elsewhere?
  */
 void 
-rf_DD_GenerateFailedAccessASMs(
-    RF_Raid_t * raidPtr,
-    RF_AccessStripeMap_t * asmap,
-    RF_PhysDiskAddr_t ** pdap,
-    int *nNodep,
-    RF_PhysDiskAddr_t ** pqpdap,
-    int *nPQNodep,
-    RF_AllocListElem_t * allocList)
+rf_DD_GenerateFailedAccessASMs(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
+			       RF_PhysDiskAddr_t **pdap, int *nNodep,
+			       RF_PhysDiskAddr_t **pqpdap, int *nPQNodep,
+			       RF_AllocListElem_t *allocList)
 {
 	RF_RaidLayout_t *layoutPtr = &(raidPtr->Layout);
 	int     PDAPerDisk, i;
@@ -987,16 +975,11 @@ rf_InitNode(node, rf_wait, RF_FALSE, rf_DiskReadFunc, rf_DiskReadUndoFunc, rf_Ge
   (_node_).params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, 0, 0, which_ru)
 
 void 
-rf_DoubleDegRead(
-    RF_Raid_t * raidPtr,
-    RF_AccessStripeMap_t * asmap,
-    RF_DagHeader_t * dag_h,
-    void *bp,
-    RF_RaidAccessFlags_t flags,
-    RF_AllocListElem_t * allocList,
-    char *redundantReadNodeName,
-    char *recoveryNodeName,
-    int (*recovFunc) (RF_DagNode_t *))
+rf_DoubleDegRead(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
+		 RF_DagHeader_t *dag_h, void *bp, RF_RaidAccessFlags_t flags,
+		 RF_AllocListElem_t *allocList,
+		 char *redundantReadNodeName, char *recoveryNodeName,
+		 int (*recovFunc) (RF_DagNode_t *))
 {
 	RF_RaidLayout_t *layoutPtr = &(raidPtr->Layout);
 	RF_DagNode_t *nodes, *rudNodes, *rrdNodes, *recoveryNode, *blockNode,

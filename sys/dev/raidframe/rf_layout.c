@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_layout.c,v 1.14 2003/02/09 10:04:33 jdolecek Exp $	*/
+/*	$NetBSD: rf_layout.c,v 1.15 2003/12/30 21:59:03 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_layout.c,v 1.14 2003/02/09 10:04:33 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_layout.c,v 1.15 2003/12/30 21:59:03 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -399,10 +399,8 @@ rf_GetLayout(RF_ParityConfig_t parityConfig)
  *
  ****************************************************************************/
 int 
-rf_ConfigureLayout(
-    RF_ShutdownList_t ** listp,
-    RF_Raid_t * raidPtr,
-    RF_Config_t * cfgPtr)
+rf_ConfigureLayout(RF_ShutdownList_t **listp, RF_Raid_t *raidPtr,
+		   RF_Config_t *cfgPtr)
 {
 	RF_RaidLayout_t *layoutPtr = &(raidPtr->Layout);
 	RF_ParityConfig_t parityConfig;
@@ -461,10 +459,9 @@ rf_ConfigureLayout(
  * a RaidAddressToParityStripeID macro in layout.h
  */
 RF_StripeNum_t 
-rf_MapStripeIDToParityStripeID(layoutPtr, stripeID, which_ru)
-	RF_RaidLayout_t *layoutPtr;
-	RF_StripeNum_t stripeID;
-	RF_ReconUnitNum_t *which_ru;
+rf_MapStripeIDToParityStripeID(RF_RaidLayout_t *layoutPtr,
+			       RF_StripeNum_t stripeID,
+			       RF_ReconUnitNum_t *which_ru)
 {
 	RF_StripeNum_t parityStripeID;
 

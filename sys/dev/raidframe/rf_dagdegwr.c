@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagdegwr.c,v 1.13 2003/12/29 03:33:47 oster Exp $	*/
+/*	$NetBSD: rf_dagdegwr.c,v 1.14 2003/12/30 21:59:03 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagdegwr.c,v 1.13 2003/12/29 03:33:47 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagdegwr.c,v 1.14 2003/12/30 21:59:03 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -82,13 +82,10 @@ RF_CREATE_DAG_FUNC_DECL(rf_CreateSimpleDegradedWriteDAG)
 }
 
 void 
-rf_CreateDegradedWriteDAG(raidPtr, asmap, dag_h, bp, flags, allocList)
-	RF_Raid_t *raidPtr;
-	RF_AccessStripeMap_t *asmap;
-	RF_DagHeader_t *dag_h;
-	void   *bp;
-	RF_RaidAccessFlags_t flags;
-	RF_AllocListElem_t *allocList;
+rf_CreateDegradedWriteDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
+			  RF_DagHeader_t *dag_h, void *bp, 
+			  RF_RaidAccessFlags_t flags, 
+			  RF_AllocListElem_t *allocList)
 {
 
 	RF_ASSERT(asmap->numDataFailed == 1);
@@ -154,17 +151,14 @@ rf_CreateDegradedWriteDAG(raidPtr, asmap, dag_h, bp, flags, allocList)
  *****************************************************************************/
 
 void 
-rf_CommonCreateSimpleDegradedWriteDAG(raidPtr, asmap, dag_h, bp, flags,
-    allocList, nfaults, redFunc, allowBufferRecycle)
-	RF_Raid_t *raidPtr;
-	RF_AccessStripeMap_t *asmap;
-	RF_DagHeader_t *dag_h;
-	void   *bp;
-	RF_RaidAccessFlags_t flags;
-	RF_AllocListElem_t *allocList;
-	int     nfaults;
-	int     (*redFunc) (RF_DagNode_t *);
-	int     allowBufferRecycle;
+rf_CommonCreateSimpleDegradedWriteDAG(RF_Raid_t *raidPtr, 
+				      RF_AccessStripeMap_t *asmap,
+				      RF_DagHeader_t *dag_h, void *bp,
+				      RF_RaidAccessFlags_t flags,
+				      RF_AllocListElem_t *allocList,
+				      int nfaults,
+				      int (*redFunc) (RF_DagNode_t *),
+				      int allowBufferRecycle)
 {
 	int     nNodes, nRrdNodes, nWndNodes, nXorBufs, i, j, paramNum,
 	        rdnodesFaked;
@@ -659,17 +653,14 @@ rf_WriteGenerateFailedAccessASMs(
   (_node_).params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, 0, 0, which_ru)
 
 void 
-rf_DoubleDegSmallWrite(
-    RF_Raid_t * raidPtr,
-    RF_AccessStripeMap_t * asmap,
-    RF_DagHeader_t * dag_h,
-    void *bp,
-    RF_RaidAccessFlags_t flags,
-    RF_AllocListElem_t * allocList,
-    char *redundantReadNodeName,
-    char *redundantWriteNodeName,
-    char *recoveryNodeName,
-    int (*recovFunc) (RF_DagNode_t *))
+rf_DoubleDegSmallWrite(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
+		       RF_DagHeader_t *dag_h, void *bp,
+		       RF_RaidAccessFlags_t flags,
+		       RF_AllocListElem_t *allocList,
+		       char *redundantReadNodeName,
+		       char *redundantWriteNodeName,
+		       char *recoveryNodeName,
+		       int (*recovFunc) (RF_DagNode_t *))
 {
 	RF_RaidLayout_t *layoutPtr = &(raidPtr->Layout);
 	RF_DagNode_t *nodes, *wudNodes, *rrdNodes, *recoveryNode, *blockNode,

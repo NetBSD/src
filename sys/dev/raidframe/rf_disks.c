@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_disks.c,v 1.48 2003/12/30 17:46:59 oster Exp $	*/
+/*	$NetBSD: rf_disks.c,v 1.49 2003/12/30 21:59:03 oster Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -67,7 +67,7 @@
  ***************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_disks.c,v 1.48 2003/12/30 17:46:59 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_disks.c,v 1.49 2003/12/30 21:59:03 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -110,10 +110,8 @@ static int rf_check_label_vitals( RF_Raid_t *, int, int, char *,
  **************************************************************************/
 
 int 
-rf_ConfigureDisks( listp, raidPtr, cfgPtr )
-	RF_ShutdownList_t **listp;
-	RF_Raid_t *raidPtr;
-	RF_Config_t *cfgPtr;
+rf_ConfigureDisks(RF_ShutdownList_t **listp, RF_Raid_t *raidPtr,
+		  RF_Config_t *cfgPtr)
 {
 	RF_RaidDisk_t *disks;
 	RF_SectorCount_t min_numblks = (RF_SectorCount_t) 0x7FFFFFFFFFFFLL;
@@ -236,10 +234,8 @@ fail:
  * in row zero, which is specially expanded to hold them.
  ****************************************************************************/
 int 
-rf_ConfigureSpareDisks( listp, raidPtr, cfgPtr )
-	RF_ShutdownList_t ** listp;
-	RF_Raid_t * raidPtr;
-	RF_Config_t * cfgPtr;
+rf_ConfigureSpareDisks(RF_ShutdownList_t **listp, RF_Raid_t *raidPtr,
+		       RF_Config_t *cfgPtr)
 {
 	int     i, ret;
 	unsigned int bs;
@@ -316,9 +312,7 @@ fail:
 }
 
 static int
-rf_AllocDiskStructures(raidPtr, cfgPtr)
-	RF_Raid_t *raidPtr;
- 	RF_Config_t *cfgPtr;
+rf_AllocDiskStructures(RF_Raid_t *raidPtr, RF_Config_t *cfgPtr)
 {
 	int ret;
 
@@ -353,10 +347,8 @@ fail:
 
 /* configure a single disk during auto-configuration at boot */
 int
-rf_AutoConfigureDisks(raidPtr, cfgPtr, auto_config)
-	RF_Raid_t *raidPtr;
-	RF_Config_t *cfgPtr;
-	RF_AutoConfig_t *auto_config;
+rf_AutoConfigureDisks(RF_Raid_t *raidPtr, RF_Config_t *cfgPtr,
+		      RF_AutoConfig_t *auto_config)
 {
 	RF_RaidDisk_t *disks;
 	RF_RaidDisk_t *diskPtr;
@@ -572,11 +564,8 @@ fail:
 
 /* configure a single disk in the array */
 int 
-rf_ConfigureDisk(raidPtr, buf, diskPtr, col)
-	RF_Raid_t *raidPtr;
-	char   *buf;
-	RF_RaidDisk_t *diskPtr;
-	RF_RowCol_t col;
+rf_ConfigureDisk(RF_Raid_t *raidPtr, char *buf, RF_RaidDisk_t *diskPtr,
+		 RF_RowCol_t col)
 {
 	char   *p;
 	struct partinfo dpart;
@@ -643,11 +632,8 @@ rf_ConfigureDisk(raidPtr, buf, diskPtr, col)
 }
 
 static void
-rf_print_label_status( raidPtr, column, dev_name, ci_label )
-	RF_Raid_t *raidPtr;
-	int column;
-	char *dev_name;
-	RF_ComponentLabel_t *ci_label;
+rf_print_label_status(RF_Raid_t *raidPtr, int column, char *dev_name,
+		      RF_ComponentLabel_t *ci_label)
 {
 
 	printf("raid%d: Component %s being configured at col: %d\n", 
@@ -662,15 +648,9 @@ rf_print_label_status( raidPtr, column, dev_name, ci_label )
 	       ci_label->clean ? "Yes" : "No", ci_label->status );
 }
 
-static int rf_check_label_vitals( raidPtr, row, column, dev_name, ci_label,
-				  serial_number, mod_counter )
-	RF_Raid_t *raidPtr;
-	int row;
-	int column;
-	char *dev_name;
-	RF_ComponentLabel_t *ci_label;
-	int serial_number;
-	int mod_counter;
+static int rf_check_label_vitals(RF_Raid_t *raidPtr, int row, int column,
+				 char *dev_name, RF_ComponentLabel_t *ci_label,
+				 int serial_number, int mod_counter)
 {
 	int fatal_error = 0;
 
@@ -712,9 +692,7 @@ static int rf_check_label_vitals( raidPtr, row, column, dev_name, ci_label,
  */
 
 int 
-rf_CheckLabels( raidPtr, cfgPtr )
-	RF_Raid_t *raidPtr;
-	RF_Config_t *cfgPtr;
+rf_CheckLabels(RF_Raid_t *raidPtr, RF_Config_t *cfgPtr)
 {
 	int c;
 	char *dev_name;
@@ -963,9 +941,7 @@ rf_CheckLabels( raidPtr, cfgPtr )
 }
 
 int
-rf_add_hot_spare(raidPtr, sparePtr)
-	RF_Raid_t *raidPtr;
-	RF_SingleComponent_t *sparePtr;
+rf_add_hot_spare(RF_Raid_t *raidPtr, RF_SingleComponent_t *sparePtr)
 {
 	RF_RaidDisk_t *disks;
 	RF_DiskQueue_t *spareQueues;
@@ -1067,9 +1043,7 @@ fail:
 }
 
 int
-rf_remove_hot_spare(raidPtr,sparePtr)
-	RF_Raid_t *raidPtr;
-	RF_SingleComponent_t *sparePtr;
+rf_remove_hot_spare(RF_Raid_t *raidPtr, RF_SingleComponent_t *sparePtr)
 {
 	int spare_number;
 
@@ -1102,9 +1076,7 @@ rf_remove_hot_spare(raidPtr,sparePtr)
 
 
 int
-rf_delete_component(raidPtr,component)
-	RF_Raid_t *raidPtr;
-	RF_SingleComponent_t *component;
+rf_delete_component(RF_Raid_t *raidPtr, RF_SingleComponent_t *component)
 {
 	RF_RaidDisk_t *disks;
 
@@ -1121,9 +1093,7 @@ rf_delete_component(raidPtr,component)
 }
 
 int
-rf_incorporate_hot_spare(raidPtr,component)
-	RF_Raid_t *raidPtr;
-	RF_SingleComponent_t *component;
+rf_incorporate_hot_spare(RF_Raid_t *raidPtr, RF_SingleComponent_t *component)
 {
 
 	/* Issues here include how to 'move' this in if there is IO 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_evenodd.c,v 1.11 2003/12/29 03:33:48 oster Exp $	*/
+/*	$NetBSD: rf_evenodd.c,v 1.12 2003/12/30 21:59:03 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ****************************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_evenodd.c,v 1.11 2003/12/29 03:33:48 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_evenodd.c,v 1.12 2003/12/30 21:59:03 oster Exp $");
 
 #include "rf_archs.h"
 
@@ -68,10 +68,8 @@ typedef struct RF_EvenOddConfigInfo_s {
 }       RF_EvenOddConfigInfo_t;
 
 int 
-rf_ConfigureEvenOdd(listp, raidPtr, cfgPtr)
-	RF_ShutdownList_t **listp;
-	RF_Raid_t *raidPtr;
-	RF_Config_t *cfgPtr;
+rf_ConfigureEvenOdd(RF_ShutdownList_t **listp, RF_Raid_t *raidPtr,
+		    RF_Config_t *cfgPtr)
 {
 	RF_RaidLayout_t *layoutPtr = &raidPtr->Layout;
 	RF_EvenOddConfigInfo_t *info;
@@ -123,23 +121,20 @@ rf_ConfigureEvenOdd(listp, raidPtr, cfgPtr)
 }
 
 int 
-rf_GetDefaultNumFloatingReconBuffersEvenOdd(RF_Raid_t * raidPtr)
+rf_GetDefaultNumFloatingReconBuffersEvenOdd(RF_Raid_t *raidPtr)
 {
 	return (20);
 }
 
 RF_HeadSepLimit_t 
-rf_GetDefaultHeadSepLimitEvenOdd(RF_Raid_t * raidPtr)
+rf_GetDefaultHeadSepLimitEvenOdd(RF_Raid_t *raidPtr)
 {
 	return (10);
 }
 
 void 
-rf_IdentifyStripeEvenOdd(
-    RF_Raid_t * raidPtr,
-    RF_RaidAddr_t addr,
-    RF_RowCol_t ** diskids,
-    RF_RowCol_t * outRow)
+rf_IdentifyStripeEvenOdd(RF_Raid_t *raidPtr, RF_RaidAddr_t addr,
+			 RF_RowCol_t **diskids, RF_RowCol_t *outRow)
 {
 	RF_StripeNum_t stripeID = rf_RaidAddressToStripeID(&raidPtr->Layout, addr);
 	RF_EvenOddConfigInfo_t *info = (RF_EvenOddConfigInfo_t *) raidPtr->Layout.layoutSpecificInfo;
@@ -163,13 +158,9 @@ rf_IdentifyStripeEvenOdd(
 
 
 void 
-rf_MapParityEvenOdd(
-    RF_Raid_t * raidPtr,
-    RF_RaidAddr_t raidSector,
-    RF_RowCol_t * row,
-    RF_RowCol_t * col,
-    RF_SectorNum_t * diskSector,
-    int remap)
+rf_MapParityEvenOdd(RF_Raid_t *raidPtr, RF_RaidAddr_t raidSector,
+		    RF_RowCol_t *row, RF_RowCol_t *col,
+		    RF_SectorNum_t *diskSector, int remap)
 {
 	RF_StripeNum_t SUID = raidSector / raidPtr->Layout.sectorsPerStripeUnit;
 	RF_StripeNum_t endSUIDofthisStrip = (SUID / raidPtr->Layout.numDataCol + 1) * raidPtr->Layout.numDataCol - 1;
@@ -181,13 +172,9 @@ rf_MapParityEvenOdd(
 }
 
 void 
-rf_MapEEvenOdd(
-    RF_Raid_t * raidPtr,
-    RF_RaidAddr_t raidSector,
-    RF_RowCol_t * row,
-    RF_RowCol_t * col,
-    RF_SectorNum_t * diskSector,
-    int remap)
+rf_MapEEvenOdd(RF_Raid_t *raidPtr, RF_RaidAddr_t raidSector,
+	       RF_RowCol_t *row, RF_RowCol_t *col, RF_SectorNum_t *diskSector,
+	       int remap)
 {
 	RF_StripeNum_t SUID = raidSector / raidPtr->Layout.sectorsPerStripeUnit;
 	RF_StripeNum_t endSUIDofthisStrip = (SUID / raidPtr->Layout.numDataCol + 1) * raidPtr->Layout.numDataCol - 1;
@@ -199,11 +186,8 @@ rf_MapEEvenOdd(
 }
 
 void 
-rf_EODagSelect(
-    RF_Raid_t * raidPtr,
-    RF_IoType_t type,
-    RF_AccessStripeMap_t * asmap,
-    RF_VoidFuncPtr * createFunc)
+rf_EODagSelect(RF_Raid_t *raidPtr, RF_IoType_t type,
+	       RF_AccessStripeMap_t *asmap, RF_VoidFuncPtr *createFunc)
 {
 	RF_RaidLayout_t *layoutPtr = &(raidPtr->Layout);
 	unsigned ndfail = asmap->numDataFailed;
@@ -349,12 +333,9 @@ rf_EODagSelect(
 
 
 int 
-rf_VerifyParityEvenOdd(raidPtr, raidAddr, parityPDA, correct_it, flags)
-	RF_Raid_t *raidPtr;
-	RF_RaidAddr_t raidAddr;
-	RF_PhysDiskAddr_t *parityPDA;
-	int     correct_it;
-	RF_RaidAccessFlags_t flags;
+rf_VerifyParityEvenOdd(RF_Raid_t *raidPtr, RF_RaidAddr_t raidAddr,
+		       RF_PhysDiskAddr_t *parityPDA, int correct_it,
+		       RF_RaidAccessFlags_t flags)
 {
 	RF_RaidLayout_t *layoutPtr = &(raidPtr->Layout);
 	RF_RaidAddr_t startAddr = rf_RaidAddressOfPrevStripeBoundary(layoutPtr, raidAddr);

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_aselect.c,v 1.9 2003/12/29 03:33:47 oster Exp $	*/
+/*	$NetBSD: rf_aselect.c,v 1.10 2003/12/30 21:59:03 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_aselect.c,v 1.9 2003/12/29 03:33:47 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_aselect.c,v 1.10 2003/12/30 21:59:03 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -62,9 +62,7 @@ int     rf_SelectAlgorithm(RF_RaidAccessDesc_t *, RF_RaidAccessFlags_t);
  *
  *****************************************************************************/
 static int 
-InitHdrNode(hdr, raidPtr)
-	RF_DagHeader_t **hdr;
-	RF_Raid_t *raidPtr;
+InitHdrNode(RF_DagHeader_t **hdr, RF_Raid_t *raidPtr)
 {
 	/* create and initialize dag hdr */
 	*hdr = rf_AllocDAGHeader();
@@ -115,9 +113,7 @@ InitHdrNode(hdr, raidPtr)
 #define MAXNSTRIPES 50
 
 int 
-rf_SelectAlgorithm(desc, flags)
-	RF_RaidAccessDesc_t *desc;
-	RF_RaidAccessFlags_t flags;
+rf_SelectAlgorithm(RF_RaidAccessDesc_t *desc, RF_RaidAccessFlags_t flags)
 {
 	RF_AccessStripeMapHeader_t *asm_h = desc->asmap;
 	RF_IoType_t type = desc->type;

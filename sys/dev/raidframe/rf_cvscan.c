@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_cvscan.c,v 1.10 2002/09/23 04:02:29 oster Exp $	*/
+/*	$NetBSD: rf_cvscan.c,v 1.11 2003/12/30 21:59:03 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -35,7 +35,7 @@
  ******************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_cvscan.c,v 1.10 2002/09/23 04:02:29 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_cvscan.c,v 1.11 2003/12/30 21:59:03 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 #include "rf_alloclist.h"
@@ -51,7 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: rf_cvscan.c,v 1.10 2002/09/23 04:02:29 oster Exp $")
 #define pri_ok(p)  ( ((p) == RF_IO_NORMAL_PRIORITY) || ((p) == RF_IO_LOW_PRIORITY))
 
 static void 
-CheckCvscanState(RF_CvscanHeader_t * hdr)
+CheckCvscanState(RF_CvscanHeader_t *hdr)
 {
 	long    i, key;
 	RF_DiskQueueData_t *tmp;
@@ -88,7 +88,7 @@ CheckCvscanState(RF_CvscanHeader_t * hdr)
 
 
 static void 
-PriorityInsert(RF_DiskQueueData_t ** list_ptr, RF_DiskQueueData_t * req)
+PriorityInsert(RF_DiskQueueData_t **list_ptr, RF_DiskQueueData_t *req)
 {
 	/* * insert block pointed to by req in to list whose first * entry is
 	 * pointed to by the pointer that list_ptr points to * ie., list_ptr
@@ -105,7 +105,7 @@ PriorityInsert(RF_DiskQueueData_t ** list_ptr, RF_DiskQueueData_t * req)
 
 
 static void 
-ReqInsert(RF_DiskQueueData_t ** list_ptr, RF_DiskQueueData_t * req, RF_CvscanArmDir_t order)
+ReqInsert(RF_DiskQueueData_t **list_ptr, RF_DiskQueueData_t *req, RF_CvscanArmDir_t order)
 {
 	/* * insert block pointed to by req in to list whose first * entry is
 	 * pointed to by the pointer that list_ptr points to * ie., list_ptr
@@ -124,7 +124,7 @@ ReqInsert(RF_DiskQueueData_t ** list_ptr, RF_DiskQueueData_t * req, RF_CvscanArm
 
 
 static RF_DiskQueueData_t *
-ReqDequeue(RF_DiskQueueData_t ** list_ptr)
+ReqDequeue(RF_DiskQueueData_t **list_ptr)
 {
 	RF_DiskQueueData_t *ret = (*list_ptr);
 	if ((*list_ptr) != (RF_DiskQueueData_t *) NULL) {
@@ -136,7 +136,7 @@ ReqDequeue(RF_DiskQueueData_t ** list_ptr)
 
 
 static void 
-ReBalance(RF_CvscanHeader_t * hdr)
+ReBalance(RF_CvscanHeader_t *hdr)
 {
 	/* DO_CHECK_STATE(hdr); */
 	while (hdr->right != (RF_DiskQueueData_t *) NULL
@@ -151,7 +151,7 @@ ReBalance(RF_CvscanHeader_t * hdr)
 
 
 static void 
-Transfer(RF_DiskQueueData_t ** to_list_ptr, RF_DiskQueueData_t ** from_list_ptr)
+Transfer(RF_DiskQueueData_t **to_list_ptr, RF_DiskQueueData_t **from_list_ptr)
 {
 	RF_DiskQueueData_t *gp;
 	for (gp = (*from_list_ptr); gp != (RF_DiskQueueData_t *) NULL;) {
@@ -165,7 +165,7 @@ Transfer(RF_DiskQueueData_t ** to_list_ptr, RF_DiskQueueData_t ** from_list_ptr)
 
 
 static void 
-RealEnqueue(RF_CvscanHeader_t * hdr, RF_DiskQueueData_t * req)
+RealEnqueue(RF_CvscanHeader_t *hdr, RF_DiskQueueData_t *req)
 {
 	RF_ASSERT(req->priority == RF_IO_NORMAL_PRIORITY || req->priority == RF_IO_LOW_PRIORITY);
 
@@ -321,8 +321,8 @@ rf_CvscanPeek(void *q_in)
 
 void   *
 rf_CvscanCreate(RF_SectorCount_t sectPerDisk,
-    RF_AllocListElem_t * clList,
-    RF_ShutdownList_t ** listp)
+    RF_AllocListElem_t *clList,
+    RF_ShutdownList_t **listp)
 {
 	RF_CvscanHeader_t *hdr;
 	long    range = 2;	/* Currently no mechanism to change these */
@@ -347,7 +347,7 @@ rf_CvscanCreate(RF_SectorCount_t sectPerDisk,
 /* PrintCvscanQueue is not used, so we ignore it... */
 #else
 static void 
-PrintCvscanQueue(RF_CvscanHeader_t * hdr)
+PrintCvscanQueue(RF_CvscanHeader_t *hdr)
 {
 	RF_DiskQueueData_t *tmp;
 
@@ -387,7 +387,8 @@ PrintCvscanQueue(RF_CvscanHeader_t * hdr)
  * be short.
  */
 int 
-rf_CvscanPromote(void *q_in, RF_StripeNum_t parityStripeID, RF_ReconUnitNum_t which_ru)
+rf_CvscanPromote(void *q_in, RF_StripeNum_t parityStripeID, 
+		 RF_ReconUnitNum_t which_ru)
 {
 	RF_CvscanHeader_t *hdr = (RF_CvscanHeader_t *) q_in;
 	RF_DiskQueueData_t *trailer = NULL, *tmp = hdr->burner, *tlist = NULL;
