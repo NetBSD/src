@@ -1,4 +1,4 @@
-/*	$NetBSD: findcpu.c,v 1.10 2001/04/24 20:16:36 ragge Exp $	*/
+/*	$NetBSD: findcpu.c,v 1.11 2001/05/01 13:18:27 ragge Exp $	*/
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -71,6 +71,10 @@ findcpu(void)
 		break;
 	case VAX_TYP_790:
 		vax_bustype = VAX_ABUS;
+		break;
+
+	case VAX_TYP_UV1:
+		vax_bustype = VAX_IBUS;
 		break;
 
 	case VAX_TYP_UV2:

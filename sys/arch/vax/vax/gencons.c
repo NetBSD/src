@@ -1,4 +1,4 @@
-/*	$NetBSD: gencons.c,v 1.30 2001/04/24 20:16:36 ragge Exp $	*/
+/*	$NetBSD: gencons.c,v 1.31 2001/05/01 13:18:27 ragge Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -239,7 +239,7 @@ gencnparam(struct tty *tp, struct termios *t)
 void
 gencnprobe(struct consdev *cndev)
 {
-	if ((vax_cputype < VAX_TYP_UV1) || /* All older has MTPR console */
+	if ((vax_cputype < VAX_TYP_UV2) || /* All older has MTPR console */
 	    (vax_boardtype == VAX_BTYP_9RR) ||
 	    (vax_boardtype == VAX_BTYP_630) ||
 	    (vax_boardtype == VAX_BTYP_660) ||
