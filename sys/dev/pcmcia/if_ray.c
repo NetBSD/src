@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ray.c,v 1.4 2000/01/25 05:32:28 chopps Exp $	*/
+/*	$NetBSD: if_ray.c,v 1.5 2000/01/26 02:25:47 augustss Exp $	*/
 /* 
  * Copyright (c) 2000 Christian E. Hopps
  * All rights reserved.
@@ -467,6 +467,8 @@ ray_attach(parent, self, aux)
 	struct ray_softc *sc;
 	struct ifnet *ifp;
 	bus_addr_t memoff;
+	struct pcmcia_card *card;
+	int i;
 
 	pa = aux;
 	sc = (struct ray_softc *)self;
@@ -476,6 +478,18 @@ ray_attach(parent, self, aux)
 #if 0
 	sc->sc_awindow = -1;
 #endif
+
+	/* Print out what we are */
+	printf(": ");
+	card = &pa->pf->sc->card;
+	for (i = 0; i < 4; i++) {
+		if (card->cis1_info[i] == NULL)
+			break;
+		if (i)
+			printf(", ");
+		printf("%s", card->cis1_info[i]);
+	}
+	printf("\n");
 
 	/* enable the card */
 	pcmcia_function_init(sc->sc_pf, sc->sc_pf->cfe_head.sqh_first);
@@ -551,10 +565,6 @@ ray_attach(parent, self, aux)
 	 * attach the interface
 	 */
 	/* The version isn't the most accurate way, but it's easy. */
-	if (sc->sc_version == SC_BUILD_4)
-		printf(": WebGear Aviator2.4\n");
-	else
-		printf(": Raytheon Raylink\n");
 	printf("%s: firmware version %d\n", sc->sc_dev.dv_xname,sc->sc_version);
 	printf("%s: supported rates %0x:%0x:%0x:%0x:%0x:%0x:%0x:%0x\n",
 	    sc->sc_xname, ep->e_rates[0], ep->e_rates[1], ep->e_rates[2],
