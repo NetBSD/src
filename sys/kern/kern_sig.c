@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.112.2.14 2002/04/12 04:54:33 nathanw Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.112.2.15 2002/04/25 22:21:24 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.112.2.14 2002/04/12 04:54:33 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.112.2.15 2002/04/25 22:21:24 nathanw Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -1423,6 +1423,17 @@ static	const char logcoredump[] =
 static	const char lognocoredump[] =
 	"pid %d (%s), uid %d: exited on signal %d (core not dumped, err = %d)\n";
 
+/* Wrapper function for use in p_userret */
+static void
+lwp_coredump_hook(struct lwp *l, void *arg)
+{
+	/* Un-detach the LWP so it won't be reaped while we're busy
+	 * dumping memory or other LWP state.
+	 */
+	l->l_flag &= ~L_DETACHED;
+	lwp_exit(l);
+}
+
 void
 sigexit(struct lwp *l, int signum)
 {
@@ -1437,6 +1448,9 @@ sigexit(struct lwp *l, int signum)
 	if (p->p_flag & P_WEXIT)
 		lwp_exit(l);
 	p->p_flag |= P_WEXIT;
+	/* Make other LWPs stick around long enough to be dumped */
+	p->p_userret = lwp_coredump_hook;
+	p->p_userret_arg = NULL;
 
 	exitsig = signum;
 	p->p_acflag |= AXSIG;
