@@ -1,4 +1,4 @@
-/* $NetBSD: sfb.c,v 1.16 1999/06/11 00:56:09 nisimura Exp $ */
+/* $NetBSD: sfb.c,v 1.17 1999/06/11 01:44:47 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sfb.c,v 1.16 1999/06/11 00:56:09 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sfb.c,v 1.17 1999/06/11 01:44:47 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,7 +78,8 @@ __KERNEL_RCSID(0, "$NetBSD: sfb.c,v 1.16 1999/06/11 00:56:09 nisimura Exp $");
  *			u_int8_t u2;
  *			unsigned :8; 
  *		} bt_lo;
- *		...
+ *		struct {
+ *
  * Although HX has single Bt459, 32bit R/W can be done w/o any trouble.
  *	struct bt459reg {
  *		   u_int32_t	   bt_lo;
@@ -986,7 +987,7 @@ sfb_copycols(id, row, srccol, dstcol, ncols)
 		}
 	}
 	/* copy forward (left-to-right) */
-	else if (dstcol > srccol || srccol + ncols >= dstcol) {
+	else if (dstcol < srccol || srccol + ncols < dstcol) {
 		caddr_t sq = sp, dq = dp;
 
 		w = width;
