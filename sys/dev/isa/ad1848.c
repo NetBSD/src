@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848.c,v 1.21 1997/03/20 20:15:24 mycroft Exp $	*/
+/*	$NetBSD: ad1848.c,v 1.22 1997/03/20 20:18:40 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -1113,7 +1113,7 @@ ad1848_round_blocksize(addr, blk)
 	blk = NBPG;
 
     /* Round to a multiple of the sample size. */
-    blk &= -(sc->sc_channels * sc->sc_precision / 8);
+    blk &= -(sc->channels * sc->precision / 8);
 
     return (blk);
 }
