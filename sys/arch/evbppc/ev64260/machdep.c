@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.15 2004/02/14 14:33:28 bjh21 Exp $	*/
+/*	$NetBSD: machdep.c,v 1.16 2004/03/13 07:22:21 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.15 2004/02/14 14:33:28 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.16 2004/03/13 07:22:21 matt Exp $");
 
 #include "opt_marvell.h"
 #include "opt_ev64260.h"
@@ -273,7 +273,7 @@ void
 gt_find_memory(bus_space_tag_t memt, bus_space_handle_t memh,
 	paddr_t endkernel)
 {
-	paddr_t start, end;
+	paddr_t start = ~0, end = 0;
 	int i, j = 0, first = 1;
 
 	/*

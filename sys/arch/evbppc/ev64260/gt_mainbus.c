@@ -1,4 +1,4 @@
-/*	$NetBSD: gt_mainbus.c,v 1.9 2003/07/15 01:37:35 lukem Exp $	*/
+/*	$NetBSD: gt_mainbus.c,v 1.10 2004/03/13 07:22:21 matt Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gt_mainbus.c,v 1.9 2003/07/15 01:37:35 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gt_mainbus.c,v 1.10 2004/03/13 07:22:21 matt Exp $");
 
 #include "opt_ev64260.h"
 
@@ -187,6 +187,8 @@ gtpci_bus_configure(struct gtpci_chipset *gtpc)
 		    gt_pci1_mem_bs_tag.pbs_limit-1,
 		    M_DEVBUF, NULL, 0, EX_NOWAIT);
 		break;
+	default:
+		panic("gtpci_bus_configure: unknown bus %d", gtpc->gtpc_busno);
 	}
 
 	pci_configure_bus(&gtpc->gtpc_pc, ioext, memext, NULL, 0, 32);
