@@ -1,4 +1,4 @@
-/*	$NetBSD: isadma.c,v 1.9 1994/11/04 19:25:34 mycroft Exp $	*/
+/*	$NetBSD: isadma.c,v 1.10 1994/11/18 22:07:37 mycroft Exp $	*/
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -23,7 +23,7 @@ static char bounced[8];		/* XXX */
 #define MAXDMASZ 512		/* XXX */
 
 /* high byte of address is stored in this port for i-th dma channel */
-static short dmapageport[8] =
+static int dmapageport[8] =
 	{ 0x87, 0x83, 0x81, 0x82, 0x8f, 0x8b, 0x89, 0x8a };
 
 /*
