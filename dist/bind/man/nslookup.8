@@ -1,4 +1,4 @@
-.\"     $NetBSD: nslookup.8,v 1.2 1999/11/29 18:28:18 christos Exp $
+.\"     $NetBSD: nslookup.8,v 1.3 2000/06/14 05:54:30 itojun Exp $
 .\"
 .\"
 .\" ++Copyright++ 1985, 1989
@@ -536,3 +536,10 @@ RFC-1035,
 .Dq Domain Names - Implementation and Specification .
 .Sh AUTHOR
 Andrew Cherenson
+.Sh BUGS
+.Nm
+does not support DNS queries/replies over IPv6 transport, and ignores
+IPv6 address on
+.Dq nameserver
+line in
+.Xr resolv.conf 5 .

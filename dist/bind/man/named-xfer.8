@@ -1,4 +1,4 @@
-.\"     $NetBSD: named-xfer.8,v 1.1.1.1 1999/11/20 18:53:57 veego Exp $
+.\"     $NetBSD: named-xfer.8,v 1.2 2000/06/14 05:54:30 itojun Exp $
 .\"
 .\" ++Copyright++ 1985
 .\" -
@@ -185,3 +185,6 @@ for an incremental zone transfer.
 RFC 882, RFC 883, RFC 973, RFC 974, RFC 1033, RFC 1034, RFC 1035, 
 RFC 1123, RFC 1995
 .Dq Name Server Operations Guide for Sy BIND .
+.Sh BUGS
+.Nm
+does not support DNS queries/replies over IPv6 transport.
