@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.76 2001/07/14 05:48:45 thorpej Exp $ */
+/* $NetBSD: trap.c,v 1.77 2001/07/18 22:22:02 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.76 2001/07/14 05:48:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.77 2001/07/18 22:22:02 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -904,10 +904,12 @@ unaligned_fixup(u_long va, u_long opcode, u_long reg, struct proc *p)
 	 */
 	if (doprint) {
 		uprintf(
-		"pid %d (%s): unaligned access: va=0x%lx pc=0x%lx ra=0x%lx op=",
+		"pid %d (%s): unaligned access: "
+		"va=0x%lx pc=0x%lx ra=0x%lx sp=0x%lx op=",
 		    p->p_pid, p->p_comm, va,
 		    p->p_md.md_tf->tf_regs[FRAME_PC] - 4,
-		    p->p_md.md_tf->tf_regs[FRAME_RA]);
+		    p->p_md.md_tf->tf_regs[FRAME_RA],
+		    p->p_md.md_tf->tf_regs[FRAME_SP]);
 		uprintf(selected_tab->type,opcode);
 		uprintf("\n");
 	}
