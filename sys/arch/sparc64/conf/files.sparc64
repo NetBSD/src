@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.93 2004/03/22 00:43:37 martin Exp $
+#	$NetBSD: files.sparc64,v 1.94 2004/09/13 14:29:38 drochner Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -113,7 +113,7 @@ attach zstty at zs
 file dev/ic/z8530tty.c			zstty needs-flag
 # file arch/sparc/dev/zs_kgdb.c		kgdb
 
-device sabtty {}: tty
+device sabtty: tty
 attach sabtty at sab
 
 file arch/sparc64/dev/kd.c 		kbd
