@@ -1,4 +1,4 @@
-/*	$NetBSD: wdcvar.h,v 1.16 1999/04/01 21:46:30 bouyer Exp $	*/
+/*	$NetBSD: wdcvar.h,v 1.16.2.1 1999/04/12 09:14:31 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -90,6 +90,7 @@ struct wdc_softc { /* Per controller state */
 #define	WDC_CAPABILITY_ATA_NOSTREAM 0x0040 /* Don't use stream funcs on ATA */
 #define	WDC_CAPABILITY_ATAPI_NOSTREAM 0x0080 /* Don't use stream f on ATAPI */
 #define WDC_CAPABILITY_NO_EXTRA_RESETS 0x0100 /* only reset once */
+#define WDC_CAPABILITY_PREATA 0x0200 /* ctrl can be a pre-ata one */
 	u_int8_t      PIO_cap; /* highest PIO mode supported */
 	u_int8_t      DMA_cap; /* highest DMA mode supported */
 	u_int8_t      UDMA_cap; /* highest UDMA mode supported */
