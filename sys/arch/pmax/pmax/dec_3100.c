@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3100.c,v 1.6.2.10 1999/11/12 11:07:20 nisimura Exp $ */
+/* $NetBSD: dec_3100.c,v 1.6.2.11 1999/11/19 11:06:27 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -72,25 +72,24 @@
  */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3100.c,v 1.6.2.10 1999/11/12 11:07:20 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3100.c,v 1.6.2.11 1999/11/19 11:06:27 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <dev/cons.h>
-#include <sys/termios.h>
 
 #include <machine/cpu.h>
+#include <machine/bus.h>
 #include <machine/intr.h>
 #include <machine/sysconf.h>
 
-#include <pmax/pmax/kn01.h>
 #include <mips/mips/mips_mcclock.h>
 
-#include <machine/bus.h>
+#include <pmax/pmax/kn01.h>
 #include <pmax/ibus/ibusvar.h>
 
 #include "wsdisplay.h"
+#include "pm.h"
 
 void dec_3100_init __P((void));
 void dec_3100_bus_reset __P((void));
@@ -105,9 +104,9 @@ static void dec_3100_memerr __P((void));
 
 extern void kn01_wbflush __P((void));
 extern void prom_findcons __P((int *, int *, int *));
-extern int pm_cnattach __P((u_int32_t));
-extern int dc_cnattach __P((paddr_t, int, int, int));
+extern void dc_cnattach __P((paddr_t, int));
 extern void dckbd_cnattach __P((paddr_t));
+extern int pm_cnattach __P((paddr_t));
 
 struct splsw spl_3100 = {
 	{ _spllower,	0 },
@@ -168,10 +167,11 @@ dec_3100_cons_init()
 	prom_findcons(&kbd, &crt, &screen);
 
 	if (screen > 0) {
-#if NWSDISPLAY > 0
-		dckbd_cnattach(KN01_SYS_DZ);
-		pm_cnattach(0x0fc00000 + MIPS_KSEG1_START);
-		return;
+#if NWSDISPLAY > 0 && NPM > 0
+		if (pm_cnattach(KN01_PHYS_FBUF_START) > 0) {
+			dckbd_cnattach(KN01_SYS_DZ);
+			return;
+		}
 #else
 		printf("No framebuffer device configured: ");
 		printf("using serial console\n");
@@ -184,9 +184,7 @@ dec_3100_cons_init()
 	 */
 	DELAY(160000000 / 9600);        /* XXX */
 
-	if (dc_cnattach(KN01_SYS_DZ, 3,
-	    9600, (TTYDEF_CFLAG & ~(CSIZE | PARENB)) | CS8))
-		panic("can't init serial console");
+	dc_cnattach(KN01_SYS_DZ, kbd);
 }
 
 void

@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3maxplus.c,v 1.9.2.17 1999/11/12 11:07:20 nisimura Exp $ */
+/* $NetBSD: dec_3maxplus.c,v 1.9.2.18 1999/11/19 11:06:27 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,19 +73,19 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.9.2.17 1999/11/12 11:07:20 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.9.2.18 1999/11/19 11:06:27 nisimura Exp $");
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>	
-#include <sys/termios.h>
-#include <dev/cons.h>
 
 #include <machine/cpu.h>
+#include <machine/bus.h>
 #include <machine/sysconf.h>
+
+#include <mips/mips/mips_mcclock.h>
 
 #include <pmax/pmax/kn03.h>
 #include <pmax/pmax/memc.h>
-#include <mips/mips/mips_mcclock.h>
 
 #include <dev/tc/tcvar.h>
 #include <dev/tc/ioasicvar.h>
@@ -109,7 +109,7 @@ static unsigned latched_cycle_cnt;
 
 extern void prom_haltbutton __P((void));
 extern void prom_findcons __P((int *, int *, int *));
-extern int tc_fb_cnattach __P((int));
+extern int tcfb_cnattach __P((int));
 
 extern int _splraise_ioasic __P((int));
 extern int _spllower_ioasic __P((int));
@@ -131,7 +131,7 @@ dec_3maxplus_init()
 	u_int32_t prodtype;
 	extern char cpu_model[];
 
-	platform.iobus = "tc3maxplus";
+	platform.iobus = "tcbus";
 	platform.bus_reset = dec_3maxplus_bus_reset;
 	platform.cons_init = dec_3maxplus_cons_init;
 	platform.device_register = dec_3maxplus_device_register;
@@ -216,9 +216,10 @@ dec_3maxplus_cons_init()
 
 	if (screen > 0) {
 #if NWSDISPLAY > 0
-		zs_ioasic_lk201_cnattach(ioasic_base, 0x180000, 0);
-		if (tc_fb_cnattach(crt) > 0)
+		if (tcfb_cnattach(crt) > 0) {
+			zs_ioasic_lk201_cnattach(ioasic_base, 0x180000, 0);
 			return;
+		}
 #endif
 		printf("No framebuffer device configured for slot %d: ", crt);
 		printf("using serial console\n");
@@ -230,14 +231,7 @@ dec_3maxplus_cons_init()
 	 */
 	DELAY(160000000 / 9600);        /* XXX */
 
-	/*
-	 * Console is channel B of the second SCC.
-	 * XXX Should use ctb_line_off to get the
-	 * XXX line parameters.
-	 */
-	if (zs_ioasic_cnattach(ioasic_base, 0x180000, 1,
-	    9600, (TTYDEF_CFLAG & ~(CSIZE | PARENB)) | CS8))
-		panic("can't init serial console");
+	zs_ioasic_cnattach(ioasic_base, 0x180000, 1);
 }
 
 void
@@ -440,12 +434,13 @@ static struct tc_builtin tc_ioasic_builtins[] = {
 	{ "IOCTL   ",	3, 0x0, C(SYS_DEV_BOGUS), },
 };
 
-struct tcbus_attach_args kn03_tc_desc = {
-	"tc", 0,
+struct tcbus_attach_args kn03_tc_desc = {	/* global not a const */
+	NULL, 0,
 	TC_SPEED_25_MHZ,
 	4, tc_kn03_slots,
 	1, tc_ioasic_builtins,
-	ioasic_intr_establish, ioasic_intr_disestablish
+	ioasic_intr_establish, ioasic_intr_disestablish,
+	NULL,
 };
 
 /* XXX XXX XXX */

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_ibus.c,v 1.1.2.2 1999/03/19 08:19:20 nisimura Exp $	*/
+/*	$NetBSD: if_le_ibus.c,v 1.1.2.3 1999/11/19 11:06:24 nisimura Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -58,6 +58,7 @@ void	le_pmax_attach __P((struct device *, struct device *, void *));
 struct cfattach le_pmax_ca = {
 	sizeof(struct le_softc), le_pmax_match, le_pmax_attach
 };
+extern struct cfdriver ibus_cd;
 
 int
 le_pmax_match(parent, match, aux)
@@ -66,14 +67,12 @@ le_pmax_match(parent, match, aux)
 	void *aux;
 {
   	struct ibus_attach_args *d = aux;
-#define	CFNAME(cf) ((cf)->dv_cfdata->cf_driver->cd_name)
 
-	if (strcmp(CFNAME(parent), "ibus") != 0)
+	if (parent->dv_cfdata->cf_driver != &ibus_cd)
 		return (0);
 	if (strcmp("lance", d->ia_name) != 0)
 		return (0);
 	return (1);
-#undef CFNAME
 }
 
 void
