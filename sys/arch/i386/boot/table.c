@@ -25,7 +25,7 @@
  * any improvements or extensions that they make and grant Carnegie Mellon
  * the rights to redistribute these changes.
  *     
- *	$Id: table.c,v 1.4 1994/02/03 23:21:26 mycroft Exp $
+ *	$Id: table.c,v 1.5 1994/02/04 16:08:54 mycroft Exp $
  */
 
 /*
@@ -87,21 +87,6 @@ struct seg_desc	Gdt[] = {
 	{0xFFFF, RUN, RUN, 0x9E, 0x0, 0x0},	/* 0x28 : boot code, 16 bits */
 };
 
-struct idt_desc {
-	unsigned short	entry_15_0;
-	unsigned short	selector;
-	unsigned char	padding;
-	unsigned char	p_dpl_type;
-	unsigned short	entry_31_16;
-};
-
-struct idt_desc	Idt[] = {
-	{},					/* Null (int 0) */
-	{RUN, 0x70, 0, 0x8E, 0},		/* DEBUG_VECTOR = 1 */
-	{},					/* Null (int 2) */
-	{RUN, 0x70, 0, 0xEE, 0},		/* BREAKPOINT_VECTOR = 3 */
-};
-
 struct pseudo_desc {
 	unsigned short	limit;
 	unsigned short	base_low;
@@ -109,5 +94,3 @@ struct pseudo_desc {
 };
 
 struct pseudo_desc Gdtr = { sizeof Gdt - 1, RUN, RUN };
-struct pseudo_desc Idtr_prot = { sizeof Idt - 1, RUN, RUN };
-struct pseudo_desc Idtr_real = { 0x400 - 1, 0x0, 0x0 };
