@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_isdata.c,v 1.6 2003/10/08 10:58:13 bouyer Exp $	*/
+/*	$NetBSD: umass_isdata.c,v 1.7 2003/12/14 05:33:29 thorpej Exp $	*/
 
 /*
  * TODO:
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_isdata.c,v 1.6 2003/10/08 10:58:13 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_isdata.c,v 1.7 2003/12/14 05:33:29 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -260,7 +260,7 @@ uisdata_bio_cb(struct umass_softc *sc, void *priv, int residue, int status)
 		DPRINTF(("%s: wakeup %p\n", __func__, ata_bio));
 		wakeup(ata_bio);
 	} else {
-		wddone(scbus->sc_drv_data.drv_softc);
+		(*scbus->sc_drv_data.drv_done)(scbus->sc_drv_data.drv_softc);
 	}
 	splx(s);
 }
@@ -495,7 +495,7 @@ uisdata_kill_pending(struct ata_drive_datas *drv)
 	ata_bio->flags |= ATA_ITSDONE;
 	ata_bio->error = ERR_NODEV;
 	ata_bio->r_error = WDCE_ABRT;
-	wddone(scbus->sc_drv_data.drv_softc);
+	(*scbus->sc_drv_data.drv_done)(scbus->sc_drv_data.drv_softc);
 }
 
 int
