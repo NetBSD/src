@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.6 1995/04/10 11:55:03 mycroft Exp $	*/
+/*	$NetBSD: mem.c,v 1.7 1995/09/29 21:53:29 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -50,6 +50,7 @@
 #include <sys/systm.h>
 #include <sys/uio.h>
 #include <sys/malloc.h>
+#include <sys/msgbuf.h>
 
 #include <machine/cpu.h>
 
@@ -105,7 +106,7 @@ mmrw(dev, uio, flags)
 		case 0:
 			v = uio->uio_offset;
 			c = iov->iov_len;
-			if (v + c > btoc(physmem))
+			if (v + c > ctob(physmem))
 				return (EFAULT);
 			v += MACH_CACHED_MEMORY_ADDR;
 			error = uiomove((caddr_t)v, c, uio);
@@ -117,7 +118,8 @@ mmrw(dev, uio, flags)
 			c = min(iov->iov_len, MAXPHYS);
 			if (v < MACH_CACHED_MEMORY_ADDR)
 				return (EFAULT);
-			if (v + c > MACH_PHYS_TO_CACHED(avail_end) &&
+			if (v + c > MACH_PHYS_TO_CACHED(avail_end +
+							sizeof (struct msgbuf)) &&
 			    (v < MACH_KSEG2_ADDR ||
 			    !kernacc((caddr_t)v, c,
 			    uio->uio_rw == UIO_READ ? B_READ : B_WRITE)))
