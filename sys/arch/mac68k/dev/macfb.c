@@ -1,4 +1,4 @@
-/* $NetBSD: macfb.c,v 1.1.2.9 1999/12/13 05:04:13 scottr Exp $ */
+/* $NetBSD: macfb.c,v 1.1.2.10 1999/12/24 10:07:48 scottr Exp $ */
 /*
  * Copyright (c) 1998 Matt DeBergalis
  * All rights reserved.
@@ -168,7 +168,7 @@ macfb_init(dc)
 	rap->height = dc->dc_ht;
 	rap->depth = dc->dc_depth;
 	rap->linelongs = dc->dc_rowbytes / sizeof(u_int32_t);
-	rap->pixels = (u_int32_t *)dc->dc_vaddr + dc->dc_offset;
+	rap->pixels = (u_int32_t *)(dc->dc_vaddr + dc->dc_offset);
 
 	/* initialize the raster console blitter */
 	rcp = &dc->dc_rcons;
