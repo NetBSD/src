@@ -7,6 +7,5 @@
 
 ENTRY(fpgetmask)
 	fmovel fpcr,d0
-	lsrl #6,d0
-	andl #248,d0
+	bfextu d0{#18:#5},d0
 	rts
