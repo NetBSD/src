@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2000/09/10 23:21:50 erh Exp $
+#	$NetBSD: Makefile,v 1.9 2001/01/16 02:42:40 cgd Exp $
 
 PROG=	rpc.pcnfsd
 MAN=	pcnfsd.8
@@ -16,7 +16,7 @@ XRPCGEN != (cd ${.CURDIR} && ${MAKE} getrpcgen)
 .endif
 
 getrpcgen:
-	@set -- X `type ${RPCGEN}` && shift $$(($$# - 1)) && echo "$$1"
+	@set -- X `type ${RPCGEN}` && shift `expr $$# - 1` && echo "$$1"
 
 pcnfsd_svc.c: pcnfsd.x ${XRPCGEN}
 	${RPCGEN} -C -s udp -s tcp -I ${.CURDIR}/pcnfsd.x -o $@
