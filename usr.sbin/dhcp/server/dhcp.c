@@ -42,7 +42,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: dhcp.c,v 1.1.1.5 1998/05/18 06:54:01 mellon Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: dhcp.c,v 1.2 1999/01/25 22:31:45 sommerfe Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -616,6 +616,8 @@ void ack_lease (packet, lease, offer, when)
 		state -> filename = user_class -> group -> filename;
 	else if (vendor_class  && vendor_class -> group -> filename)
 		state -> filename = vendor_class -> group -> filename;
+	else if (root_group.filename)
+        	state -> filename = root_group.filename;
 	else state -> filename = (char *)0;
 
 	/* Choose a server name as above. */
