@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.88 2002/12/31 17:48:03 thorpej Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.89 2002/12/31 23:45:36 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.88 2002/12/31 17:48:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.89 2002/12/31 23:45:36 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
@@ -152,6 +152,25 @@ tablefull(tab, hint)
 		log(LOG_ERR, "%s: table is full - %s\n", tab, hint);
 	else
 		log(LOG_ERR, "%s: table is full\n", tab);
+}
+
+/*
+ * twiddle: spin a little propellor on the console.
+ */
+
+void
+twiddle(void)
+{
+	static const char twiddle_chars[] = "|/-\\";
+	static int pos;
+	int s;
+
+	KPRINTF_MUTEX_ENTER(s);
+
+	putchar(twiddle_chars[pos++ & 3], TOCONS, NULL);
+	putchar('\b', TOCONS, NULL);
+
+	KPRINTF_MUTEX_EXIT(s);
 }
 
 /*
@@ -619,6 +638,59 @@ aprint_normal(fmt, va_alist)
 }
 
 /*
+ * aprint_error: Send to console unless AB_QUIET.  Always goes
+ * to the log.  Also counts the number of times called so other
+ * parts of the kernel can report the number of errors during a
+ * given phase of system startup.
+ */
+static int aprint_error_count;
+
+int
+aprint_get_error_count(void)
+{
+	int count, s;
+
+	KPRINTF_MUTEX_ENTER(s);
+
+	count = aprint_error_count;
+	aprint_error_count = 0;
+
+	KPRINTF_MUTEX_EXIT(s);
+
+	return (count);
+}
+
+void
+#ifdef __STDC__
+aprint_error(const char *fmt, ...)
+#else
+aprint_error(fmt, va_alist)
+	char *fmt;
+	va_dcl
+#endif
+{
+	va_list ap;
+	int s, flags = TOLOG;
+
+	if ((boothowto & (AB_SILENT|AB_QUIET)) == 0 ||
+	    (boothowto & AB_VERBOSE) != 0)
+		flags |= TOCONS;
+ 
+	KPRINTF_MUTEX_ENTER(s);
+
+	aprint_error_count++;
+
+	va_start(ap, fmt);
+	kprintf(fmt, flags, NULL, NULL, ap);
+	va_end(ap);
+
+	KPRINTF_MUTEX_EXIT(s);
+        
+	if (!panicstr)
+		logwakeup();
+}
+
+/*
  * aprint_naive: Send to console only if AB_QUIET.  Never goes
  * to the log.
  */
@@ -700,6 +772,31 @@ aprint_debug(fmt, va_alist)
 
 		KPRINTF_MUTEX_EXIT(s);
 	}
+}
+
+/*
+ * printf_nolog: Like printf(), but does not send message to the log.
+ */
+
+void
+#ifdef __STDC__
+printf_nolog(const char *fmt, ...)
+#else
+printf_nolog(fmt, va_alist)
+	char *fmt;
+	va_dcl;
+#endif
+{
+	va_list ap;
+	int s;
+
+	KPRINTF_MUTEX_ENTER(s);
+
+	va_start(ap, fmt);
+	kprintf(fmt, TOCONS, NULL, NULL, ap);
+	va_end(ap);
+
+	KPRINTF_MUTEX_EXIT(s);
 }
 
 /*
