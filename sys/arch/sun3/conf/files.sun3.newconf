@@ -1,4 +1,4 @@
-#	$NetBSD: files.sun3.newconf,v 1.24 1995/03/24 17:27:12 gwr Exp $
+#	$NetBSD: files.sun3.newconf,v 1.25 1995/04/07 02:23:03 gwr Exp $
 
 #
 # sun3-specific configuration info
@@ -115,6 +115,9 @@ file	arch/sun3/dev/si.c		si
 #
 device bwtwo at obmem: sunfb
 file arch/sun3/dev/bw2.c		bwtwo needs-flag
+
+device cgtwo at vmes: sunfb
+file arch/sun3/dev/cg2.c		cgtwo needs-flag
 
 device cgfour at obmem: sunfb
 file arch/sun3/dev/cg4.c		cgfour needs-flag
