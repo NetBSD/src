@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2002/04/11 12:19:43 lukem Exp $
+#	$NetBSD: Makefile,v 1.2 2002/04/11 23:36:49 thorpej Exp $
 
 .include <bsd.own.mk>
 .include "${_SRC_TOP_}/distrib/Makefile.inc"
@@ -22,11 +22,11 @@ GZIMGS+=	gzimg_${K}_flash_${R}.gz
 gzimg_${K}_flash_${R}.gz: .NOTMAIN ${GZB${K}} ${KERNOBJDIR}/${K}/netbsd.bin
 	@echo "Populating ${.TARGET}"
 	cp ${KERNOBJDIR}/${K}/netbsd.bin netbsd.tmp
-	gzip -9 netbsd.tmp
+	gzip -9f netbsd.tmp
 	cp ${GZB${K}} gzboot.sym
 	${MDSETIMAGE} -v -s gzboot.sym netbsd.tmp.gz
 	${OBJCOPY} -O binary gzboot.sym gzboot.bin
-	gzip -9 gzboot.bin
+	gzip -9f gzboot.bin
 	mv gzboot.bin.gz ${.TARGET}
 
 .endfor							# }
