@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39.c,v 1.7 1999/12/12 18:40:33 uch Exp $ */
+/*	$NetBSD: tx39.c,v 1.8 1999/12/22 15:35:35 uch Exp $ */
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi
@@ -84,6 +84,7 @@ u_int32_t tx39debugflag;
 void	tx_init __P((void));
 int	tx39icu_intr __P((u_int32_t, u_int32_t, u_int32_t, u_int32_t));
 int	tx39_find_dram __P((u_int32_t, u_int32_t));
+void	tx39clock_cpuspeed __P((int*, int*));
 
 /* TX39-specific initialization vector */
 void	tx_os_init __P((void));
@@ -101,6 +102,7 @@ tx_init()
 {
 	tx_chipset_tag_t tc;
 	int model, rev;
+	int cpuclock;
 	
 	tc = tx_conf_get_tag();
 	/*
@@ -123,14 +125,18 @@ tx_init()
 			cpu_id.cpu.cp_majrev, cpu_id.cpu.cp_minrev);
 		break;
 	case TMPR3912:
-		sprintf(cpu_model, "TOSHIBA TMPR3912");
-		cpuspeed = 50; /* XXX Should calibrate XXX */
+		tx39clock_cpuspeed(&cpuclock, &cpuspeed);
+
+		sprintf(cpu_model, "TOSHIBA TMPR3912 %d.%02d MHz",
+			cpuclock / 1000000, (cpuclock % 1000000) / 10000);
 		break;
 	case TMPR3922:
+		tx39clock_cpuspeed(&cpuclock, &cpuspeed);
 		rev = tx_conf_read(tc, TX3922_REVISION_REG);
-		sprintf(cpu_model, "TOSHIBA TMPR3922 rev. %x.%x",
-			(rev >> 4) & 0xf, rev & 0xf);
-		cpuspeed = 100; /* XXX Should calibrate XXX */
+
+		sprintf(cpu_model, "TOSHIBA TMPR3922 rev. %x.%x "
+			"%d.%02d MHz", (rev >> 4) & 0xf, rev & 0xf, 
+			cpuclock / 1000000, (cpuclock % 1000000) / 10000);
 		break;
 	}
 }
@@ -343,7 +349,7 @@ tx_conf_read(t, reg)
 	tx_chipset_tag_t t;
 	int reg;
 {
-	return *((txreg_t*)(TX39_SYSADDR_CONFIG_REG_KSEG1 + reg));
+	return *((volatile txreg_t*)(TX39_SYSADDR_CONFIG_REG_KSEG1 + reg));
 }
 
 void
@@ -352,7 +358,7 @@ tx_conf_write(t, reg, val)
 	int reg;
 	txreg_t val;
 {
-	*((txreg_t*)(TX39_SYSADDR_CONFIG_REG_KSEG1 + reg)) = val;
+	*((volatile txreg_t*)(TX39_SYSADDR_CONFIG_REG_KSEG1 + reg)) = val;
 }
 #endif /* TX39_PREFER_FUNCTION */
 
