@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.7 2003/01/17 15:32:23 wiz Exp $
+#	$NetBSD: Makefile.inc,v 1.8 2003/09/08 13:33:03 wiz Exp $
 
 .if !defined(__MAKEFILE_INC_INCLUDED__)
 __MAKEFILE_INC_INCLUDED__=1
@@ -14,10 +14,8 @@ CPPFLAGS+=	-I${.CURDIR}/../common -I${IDIST}/lib \
 DPADD+=		${LIBCOMMONDIR}/libcommon.a
 LDADD+=		-L${LIBCOMMONDIR} -lcommon
 
-# libintl-less build should comment the following 3 lines out
 DPADD+=		${LIBINTL}
 LDADD+=		-lintl
-CPPFLAGS+=	-DENABLE_NLS=1 -DHAVE_GETTEXT=1 -DHAVE_LIBINTL_H=1
 
 LIBCOMMONDIR!=	cd ${.CURDIR}/../common && ${PRINTOBJDIR}
 
