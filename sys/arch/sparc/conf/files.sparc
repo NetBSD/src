@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc,v 1.8 1995/08/29 22:28:07 pk Exp $
+#	$NetBSD: files.sparc,v 1.9 1995/09/05 21:43:09 pk Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
 # sparc-specific configuration info
@@ -84,7 +84,8 @@ file	arch/sparc/dev/xd.c		xd needs-flag
 major	{xd = 10}
 
 device	si at vmes: scsi
-file	arch/sparc/dev/si.c		si needs-flag
+device	sw at obio: scsi
+file	arch/sparc/dev/si.c		si sw needs-flag
 
 pseudo-device	kbd
 
