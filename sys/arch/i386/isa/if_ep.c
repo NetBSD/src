@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep.c,v 1.63 1994/12/10 14:52:02 christos Exp $	*/
+/*	$NetBSD: if_ep.c,v 1.64 1994/12/28 16:47:50 hpeyerl Exp $	*/
 
 /*
  * Copyright (c) 1994 Herb Peyerl <hpeyerl@novatel.ca>
@@ -1126,7 +1126,7 @@ epbusyeeprom(sc)
 		return (1);
 	}
 	if (j & EEPROM_TST_MODE) {
-		printf("\n%s: 3c509 is in test mode -- erase pencil mark!\n",
+		printf("\n%s: erase pencil mark, or disable plug-n-play mode!\n",
 		    sc->sc_dev.dv_xname);
 		return (1);
 	}
