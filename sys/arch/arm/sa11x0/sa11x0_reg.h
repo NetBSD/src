@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_reg.h,v 1.2 2001/07/30 16:08:42 rjs Exp $	*/
+/*	$NetBSD: sa11x0_reg.h,v 1.3 2002/01/08 11:29:51 rjs Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.  All rights reserved.
@@ -68,5 +68,10 @@
 
 /* width of interrupt controller */
 #define ICU_LEN			32
+
+/* Reset controller registers */
+#define SARCR_RSRR		0x0		/* Software reset register */
+#define SARCR_RCSR		0x4		/* Reset status register */
+#define SARCR_TUCR		0x8		/* Test Unit control reg */
 
 #endif /* _ARM_SA11X0_REG_H_ */
