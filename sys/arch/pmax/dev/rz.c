@@ -1,4 +1,4 @@
-/*	$NetBSD: rz.c,v 1.28.4.4 1997/11/13 08:12:59 mellon Exp $	*/
+/*	$NetBSD: rz.c,v 1.28.4.5 1998/05/08 06:32:21 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: rz.c,v 1.28.4.4 1997/11/13 08:12:59 mellon Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rz.c,v 1.28.4.5 1998/05/08 06:32:21 mycroft Exp $");
 
 /*
  * SCSI CCS (Command Command Set) disk driver.
@@ -464,7 +464,10 @@ rzprobe(xxxsd)
 	case SCSI_OPTICAL_MEM_TYPE:	/* Magneto-optical */
 		break;
 
-	default:			/* not a disk */
+	case SCSI_TAPE_TYPE:		/* tape, handled by tz driver */
+		goto bad;
+
+	default:			/* not a disk (or tape) */
 		printf("rz%d: unknown media code 0x%x\n",
 		       sd->sd_unit, inqbuf.type);
 		goto bad;
