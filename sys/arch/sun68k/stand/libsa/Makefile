@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2003/03/30 00:17:28 kristerw Exp $
+#	$NetBSD: Makefile,v 1.15 2003/07/27 05:04:44 mrg Exp $
 
 LIB=sa
 
@@ -26,7 +26,7 @@ DIR_KERN=${S}/lib/libkern
 DEFS= -Dsun3 -D_STANDALONE
 INCL= -I. -I${.CURDIR} -I${S}/lib/libsa -I${S}
 AFLAGS= -Wa,-mc68020 -Wa,-mc68851
-CFLAGS= -mc68000 -Wa,-mc68010 -Wa,-m68851 -Os -msoft-float -fno-defer-pop
+CFLAGS= -mc68000 -Wa,-mc68010 -Wa,-m68851 -Os -msoft-float -fno-defer-pop -ffreestanding
 CPPFLAGS= ${DEFS} ${DBG} ${INCL}
 CLEANFILES= SRT0.o SRT1.o vers.c
 
