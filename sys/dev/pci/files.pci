@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.98 2000/06/25 18:49:22 sommerfeld Exp $
+#	$NetBSD: files.pci,v 1.99 2000/06/25 23:34:27 gmcgarry Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -238,7 +238,7 @@ attach	opl at sv with opl_sv
 file	dev/pci/opl_sv.c		opl_sv
 
 # C-Media CMI8x38 Audio Chip
-device	cmpci { }: audio, auconv
+device	cmpci { }: audio, auconv, mulaw
 attach	cmpci at pci
 file	dev/pci/cmpci.c			cmpci
 
