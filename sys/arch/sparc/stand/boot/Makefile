@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5.8.1 1997/11/04 22:36:19 mellon Exp $
+#	$NetBSD: Makefile,v 1.5.8.2 1997/11/14 02:11:52 mellon Exp $
 
 PROG=		boot
 PROGSOURCE=	boot.c net.c netif_sun.c conf.c
@@ -8,6 +8,8 @@ INCLUDE_LIBZ=	yes
 SAMISCMAKEFLAGS= SA_USE_CREAD=yes
 
 .include "../Makefile.buildboot"
+
+RELOC=	0x300000
 
 ${PROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
 	sh ${.CURDIR}/../common/newvers.sh ${.CURDIR}/version ${NEWVERSWHAT}
