@@ -1,4 +1,4 @@
-/*	$NetBSD: smc83c170.c,v 1.20 1999/08/25 22:44:26 thorpej Exp $	*/
+/*	$NetBSD: smc83c170.c,v 1.21 1999/08/27 19:13:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@ int	epic_mediachange __P((struct ifnet *));
 void	epic_mediastatus __P((struct ifnet *, struct ifmediareq *));
 
 #define	INTMASK	(INTSTAT_FATAL_INT | INTSTAT_TXU | \
-	    INTSTAT_TXC | INTSTAT_RQE | INTSTAT_RCC)
+	    INTSTAT_TXC | INTSTAT_RXE | INTSTAT_RQE | INTSTAT_RCC)
 
 int	epic_copy_small = 0;
 
@@ -645,7 +645,7 @@ epic_intr(arg)
 	/*
 	 * Check for receive interrupts.
 	 */
-	if (intstat & (INTSTAT_RCC | INTSTAT_RQE)) {
+	if (intstat & (INTSTAT_RCC | INTSTAT_RXE | INTSTAT_RQE)) {
 		for (i = sc->sc_rxptr;; i = EPIC_NEXTRX(i)) {
 			rxd = EPIC_CDRX(sc, i);
 			ds = EPIC_DSRX(sc, i);
@@ -682,7 +682,12 @@ epic_intr(arg)
 			bus_dmamap_sync(sc->sc_dmat, ds->ds_dmamap, 0,
 			    ds->ds_dmamap->dm_mapsize, BUS_DMASYNC_POSTREAD);
 
-			len = rxd->er_rxlength;
+			/*
+			 * The EPIC includes the CRC with every packet;
+			 * trim it.
+			 */
+			len = rxd->er_rxlength - ETHER_CRC_LEN;
+
 			if (len < sizeof(struct ether_header)) {
 				/*
 				 * Runt packet; drop it now.
@@ -848,7 +853,21 @@ epic_intr(arg)
 	 * Check for fatal interrupts.
 	 */
 	if (intstat & INTSTAT_FATAL_INT) {
-		printf("%s: fatal error, resetting\n", sc->sc_dev.dv_xname);
+		if (intstat & INTSTAT_PTA)
+			printf("%s: PCI target abort error\n",
+			    sc->sc_dev.dv_xname);
+		else if (intstat & INTSTAT_PMA)
+			printf("%s: PCI master abort error\n",
+			    sc->sc_dev.dv_xname);
+		else if (intstat & INTSTAT_APE)
+			printf("%s: PCI address parity error\n",
+			    sc->sc_dev.dv_xname);
+		else if (intstat & INTSTAT_DPE)
+			printf("%s: PCI data parity error\n",
+			    sc->sc_dev.dv_xname);
+		else
+			printf("%s: unknown fatal error\n",
+			    sc->sc_dev.dv_xname);
 		(void) epic_init(sc);
 	}
 
