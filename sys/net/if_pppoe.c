@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.4 2001/06/24 20:35:50 martin Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.5 2001/09/04 20:41:32 martin Exp $ */
 
 /*
  * Copyright (c) 2001 Martin Husemann. All rights reserved.
@@ -92,6 +92,7 @@
 
 struct pppoe_softc {
 	struct sppp sc_sppp;		/* contains a struct ifnet as first element */
+	LIST_ENTRY(pppoe_softc) sc_list;
 	struct ifnet *sc_eth_if;	/* ethernet interface we are using */
 
 #define	PPPOE_DISC_TIMEOUT	hz/5
@@ -137,7 +138,7 @@ static void pppoe_dispatch_disc_pkt(u_int8_t *p, size_t size, struct ifnet *rcvi
 static void pppoe_data_input(struct mbuf *m);
 
 /* management routines */
-void pppoeattach(void);
+void pppoeattach(int count);
 static int pppoe_connect(struct pppoe_softc *sc);
 static int pppoe_disconnect(struct pppoe_softc *sc);
 static void pppoe_abort_connect(struct pppoe_softc *sc);
@@ -161,51 +162,21 @@ static int pppoe_output(struct pppoe_softc *sc, struct mbuf *m);
 static struct pppoe_softc * pppoe_find_softc_by_session(u_int session, struct ifnet *rcvif);
 static struct pppoe_softc * pppoe_find_softc_by_hunique(u_int8_t *token, size_t len, struct ifnet *rcvif);
 
-/* XXX - turn into SLIST and implement "ifconfig create" */
-struct pppoe_softc pppoe_softc[NPPPOE];
+LIST_HEAD(pppoe_softc_head, pppoe_softc) pppoe_softc_list;
 
-/*
- * Initialize device data structures
- */
+int     pppoe_clone_create __P((struct if_clone *, int));
+void    pppoe_clone_destroy __P((struct ifnet *));
+
+struct if_clone pppoe_cloner =
+    IF_CLONE_INITIALIZER("pppoe", pppoe_clone_create, pppoe_clone_destroy);
+
+/* ARGSUSED */
 void
-pppoeattach()
+pppoeattach(count)
+	int count;
 {
-	struct pppoe_softc *sc;
-	int i = 0;
-
-	memset(pppoe_softc, 0, sizeof pppoe_softc);
-	for (sc = pppoe_softc; i < NPPPOE; sc++) {
-		sprintf(sc->sc_sppp.pp_if.if_xname, "pppoe%d", i++);
-		sc->sc_sppp.pp_if.if_softc = sc;
-		sc->sc_sppp.pp_if.if_mtu = ETHERMTU - PPPOE_HEADERLEN - 2; /* two byte PPP protocol discriminator, then IP data */
-		sc->sc_sppp.pp_if.if_flags = IFF_SIMPLEX | IFF_POINTOPOINT
-		    | IFF_MULTICAST | IFF_LINK1;	/* auto "dial" */
-		sc->sc_sppp.pp_if.if_type = IFT_PPP;
-		sc->sc_sppp.pp_if.if_hdrlen = sizeof(struct ether_header)+PPPOE_HEADERLEN;
-		sc->sc_sppp.pp_if.if_dlt = DLT_PPP_ETHER;
-		sc->sc_sppp.pp_flags |= PP_NOFRAMING;	/* no serial encapsulation */
-		sc->sc_sppp.pp_if.if_ioctl = pppoe_ioctl;
-		IFQ_SET_MAXLEN(&sc->sc_sppp.pp_if.if_snd, IFQ_MAXLEN);
-		IFQ_SET_READY(&sc->sc_sppp.pp_if.if_snd);
-
-		/* changed to real address later */
-		memcpy(&sc->sc_dest, etherbroadcastaddr, sizeof(sc->sc_dest));
-
-		callout_init(&sc->sc_timeout);
-
-		sc->sc_sppp.pp_if.if_start = pppoe_start;
-		sc->sc_sppp.pp_tls = pppoe_tls;
-		sc->sc_sppp.pp_tlf = pppoe_tlf;
-		sc->sc_sppp.pp_framebytes = PPPOE_HEADERLEN;	/* framing added to ppp packets */
-	
-		if_attach(&sc->sc_sppp.pp_if);
-		sppp_attach(&sc->sc_sppp.pp_if);
-
-		if_alloc_sadl(&sc->sc_sppp.pp_if);
-#if NBPFILTER > 0
-		bpfattach(&sc->sc_sppp.pp_if, DLT_PPP_ETHER, 0);
-#endif
-	}
+	LIST_INIT(&pppoe_softc_list);
+	if_clone_attach(&pppoe_cloner);
 
 	ppoediscinq.ifq_maxlen = IFQ_MAXLEN;
 	ppoeinq.ifq_maxlen = IFQ_MAXLEN;
@@ -213,6 +184,64 @@ pppoeattach()
 #ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 	pppoe_softintr = softintr_establish(IPL_SOFTNET, pppoe_softintr_handler, NULL);
 #endif
+}
+
+int
+pppoe_clone_create(ifc, unit)
+	struct if_clone *ifc;
+	int unit;
+{
+	struct pppoe_softc *sc;
+
+	sc = malloc(sizeof(struct pppoe_softc), M_DEVBUF, M_WAITOK);
+	memset(sc, 0, sizeof(struct pppoe_softc));
+
+	sprintf(sc->sc_sppp.pp_if.if_xname, "pppoe%d", unit);
+	sc->sc_sppp.pp_if.if_softc = sc;
+	sc->sc_sppp.pp_if.if_mtu = ETHERMTU - PPPOE_HEADERLEN - 2; /* two byte PPP protocol discriminator, then IP data */
+	sc->sc_sppp.pp_if.if_flags = IFF_SIMPLEX | IFF_POINTOPOINT
+	    | IFF_MULTICAST | IFF_LINK1;	/* auto "dial" */
+	sc->sc_sppp.pp_if.if_type = IFT_PPP;
+	sc->sc_sppp.pp_if.if_hdrlen = sizeof(struct ether_header)+PPPOE_HEADERLEN;
+	sc->sc_sppp.pp_if.if_dlt = DLT_PPP_ETHER;
+	sc->sc_sppp.pp_flags |= PP_NOFRAMING;	/* no serial encapsulation */
+	sc->sc_sppp.pp_if.if_ioctl = pppoe_ioctl;
+	IFQ_SET_MAXLEN(&sc->sc_sppp.pp_if.if_snd, IFQ_MAXLEN);
+	IFQ_SET_READY(&sc->sc_sppp.pp_if.if_snd);
+
+	/* changed to real address later */
+	memcpy(&sc->sc_dest, etherbroadcastaddr, sizeof(sc->sc_dest));
+
+	callout_init(&sc->sc_timeout);
+
+	sc->sc_sppp.pp_if.if_start = pppoe_start;
+	sc->sc_sppp.pp_tls = pppoe_tls;
+	sc->sc_sppp.pp_tlf = pppoe_tlf;
+	sc->sc_sppp.pp_framebytes = PPPOE_HEADERLEN;	/* framing added to ppp packets */
+	
+	if_attach(&sc->sc_sppp.pp_if);
+	sppp_attach(&sc->sc_sppp.pp_if);
+
+	if_alloc_sadl(&sc->sc_sppp.pp_if);
+#if NBPFILTER > 0
+	bpfattach(&sc->sc_sppp.pp_if, DLT_PPP_ETHER, 0);
+#endif
+	LIST_INSERT_HEAD(&pppoe_softc_list, sc, sc_list);
+	return 0;
+}
+
+void
+pppoe_clone_destroy(ifp)
+	struct ifnet *ifp;
+{
+	struct pppoe_softc * sc = ifp->if_softc;
+
+	LIST_REMOVE(sc, sc_list);
+#if NBPFILTER > 0
+	bpfdetach(ifp);
+#endif
+	if_detach(ifp);
+	free(sc, M_DEVBUF);
 }
 
 /*
@@ -224,15 +253,15 @@ pppoeattach()
 static struct pppoe_softc *
 pppoe_find_softc_by_session(u_int session, struct ifnet *rcvif)
 {
-	int i;
+	struct pppoe_softc *sc;
 
 	if (session == 0) return NULL;
 
-	for (i = 0; i < NPPPOE; i++) {
-		if (pppoe_softc[i].sc_state == PPPOE_STATE_SESSION
-		    && pppoe_softc[i].sc_session == session) {
-			if (pppoe_softc[i].sc_eth_if == rcvif)
-				return &pppoe_softc[i];
+	LIST_FOREACH(sc, &pppoe_softc_list, sc_list) {
+		if (sc->sc_state == PPPOE_STATE_SESSION
+		    && sc->sc_session == session) {
+			if (sc->sc_eth_if == rcvif)
+				return sc;
 			else
 				return NULL;
 		}
@@ -245,16 +274,20 @@ pppoe_find_softc_by_session(u_int session, struct ifnet *rcvif)
 static struct pppoe_softc *
 pppoe_find_softc_by_hunique(u_int8_t *token, size_t len, struct ifnet *rcvif)
 {
-	struct pppoe_softc *sc = NULL;
+	struct pppoe_softc *sc, *t;
 	if (len != sizeof sc) return NULL;
-	memcpy(&sc, token, len);
-	/* XXX - change when turning softc array into an SLIST */
-	if (sc < &pppoe_softc[0] && sc > &pppoe_softc[NPPPOE-1]) {
+	memcpy(&t, token, len);
+
+	LIST_FOREACH(sc, &pppoe_softc_list, sc_list)
+		if (sc == t) break;
+
+	if (sc != t) {
 #ifdef PPPOE_DEBUG
 		printf("pppoe: invalid host unique value\n");
 #endif
 		return NULL;
 	}
+
 	/* should be safe to access *sc now */
 	if (sc->sc_state < PPPOE_STATE_PADI_SENT || sc->sc_state >= PPPOE_STATE_SESSION) {
 #ifdef PPPOE_DEBUG
