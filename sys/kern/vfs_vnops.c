@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.73 2003/08/07 16:32:04 agc Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.74 2003/09/29 10:04:03 cb Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.73 2003/08/07 16:32:04 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.74 2003/09/29 10:04:03 cb Exp $");
 
 #include "fs_union.h"
 
@@ -140,21 +140,23 @@ vn_open(ndp, fmode, cmode)
 				error = EEXIST;
 				goto bad;
 			}
-			if (ndp->ni_vp->v_type == VLNK) {
-				error = EFTYPE;
-				goto bad;
-			}
 			fmode &= ~O_CREAT;
 		}
 	} else {
 		ndp->ni_cnd.cn_nameiop = LOOKUP;
-		ndp->ni_cnd.cn_flags = FOLLOW | LOCKLEAF;
+		ndp->ni_cnd.cn_flags = LOCKLEAF;
+		if ((fmode & O_NOFOLLOW) == 0)
+			ndp->ni_cnd.cn_flags |= FOLLOW;
 		if ((error = namei(ndp)) != 0)
 			return (error);
 		vp = ndp->ni_vp;
 	}
 	if (vp->v_type == VSOCK) {
 		error = EOPNOTSUPP;
+		goto bad;
+	}
+	if (ndp->ni_vp->v_type == VLNK) {
+		error = EFTYPE;
 		goto bad;
 	}
 
