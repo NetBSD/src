@@ -167,12 +167,10 @@
 #define HAVE_LIMITS_H 1
 
 /* Define to 1 if you have the `login' function. */
-/* WIZ: #undef HAVE_LOGIN */
-#define HAVE_LOGIN 1
+/* #undef HAVE_LOGIN */
 
 /* Define to 1 if you have the `logout' function. */
-/* WIZ: #undef HAVE_LOGOUT */
-#define HAVE_LOGOUT 1
+/* #undef HAVE_LOGOUT */
 
 /* Define to 1 if you support file names longer than 14 characters. */
 #define HAVE_LONG_FILE_NAMES 1
@@ -241,8 +239,7 @@
 #define HAVE_RENAME 1
 
 /* Define to 1 if you have the `select' function. */
-/* WIZ: #undef HAVE_SELECT */
-#define HAVE_SELECT 1
+/* #undef HAVE_SELECT */
 
 /* Define if the diff library should use setmode for binary files. */
 /* #undef HAVE_SETMODE */
@@ -346,8 +343,7 @@
 #define HAVE_UNISTD_H 1
 
 /* Define to 1 if you have the `usleep' function. */
-/* WIZ: #undef HAVE_USLEEP */
-#define HAVE_USLEEP 1
+/* #undef HAVE_USLEEP */
 
 /* Define to 1 if you have the <utime.h> header file. */
 #define HAVE_UTIME_H 1
