@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.170 2002/07/17 04:55:57 thorpej Exp $ */
+/*	$NetBSD: autoconf.c,v 1.171 2002/07/18 03:22:00 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -1123,6 +1123,29 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 #else
 #define openboot_special4m	((void *)0)
 #endif
+#if defined(SUN4D)
+	static const char *const openboot_special4d[] = {
+		"",
+
+		/* ignore these (end with NULL) */
+		/*
+		 * These are _root_ devices to ignore. Others must be handled
+		 * elsewhere.
+		 */
+		"mem-unit",	/* XXX might need this for memory errors */
+		"boards",
+		"openprom",
+		"virtual-memory",
+		"memory",
+		"aliases",
+		"options",
+		"packages",
+		NULL
+	};
+#else
+#define	openboot_special4d	((void *)0)
+#endif
+
 
 	if (CPU_ISSUN4)
 		printf(": SUN-4/%d series\n", cpuinfo.classlvl);
@@ -1168,11 +1191,14 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 /*
  * The rest of this routine is for OBP machines exclusively.
  */
-#if defined(SUN4C) || defined(SUN4M)
+#if defined(SUN4C) || defined(SUN4M) || defined(SUN4D)
 
-	openboot_special = CPU_ISSUN4M
-				? openboot_special4m
-				: openboot_special4c;
+	if (CPU_ISSUN4D)
+		openboot_special = openboot_special4d;
+	else if (CPU_ISSUN4M)
+		openboot_special = openboot_special4m;
+	else
+		openboot_special = openboot_special4c;
 
 	node = findroot();
 
