@@ -1,4 +1,4 @@
-/*      $NetBSD: subr.s,v 1.20 1997/11/04 20:52:29 ragge Exp $     */
+/*      $NetBSD: subr.s,v 1.21 1998/01/02 19:33:27 ragge Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -86,49 +86,6 @@ ENTRY(badaddr,0)			# Called with addr,b/w/l
 5:		mtpr	(sp)+,$0x12
 		movl	r3,r0
 		ret
-
-#if 0
-#
-# copystr(from, to, maxlen, *copied, addr)
-# Only used in kernel mode, doesnt check accessability.
-#
-
-	.globl	_copystr
-_copystr:	.word 0x7c
-        movl    4(ap),r4        # from
-        movl    8(ap),r5        # to
-        movl    12(ap),r2       # len
-	movl	16(ap),r3	# copied
-
-#if VAX630 || VAX650 || VAX410
-        movl    r4, r1          # (3) string address == r1
-        movl    r2, r0          # (2) string length == r0
-        jeql    Llocc_out       # forget zero length strings
-Llocc_loop:
-        tstb    (r1)
-        jeql    Llocc_out
-        incl    r1
-        sobgtr  r0,Llocc_loop
-Llocc_out:
-        tstl    r0              # be sure of condition codes
-#else
-        locc    $0, r2, (r4)    # check for null byte
-#endif
-	beql	1f
-
-	subl3	r0, r2, r6	# Len to copy.
-	incl	r6
-	tstl	r3
-	beql	7f
-	movl	r6,(r3)
-7:	movc3	r6,(r4),(r5)
-	movl	$0,r0
-cs:	ret
-
-1:	movc3	r2,(r4),(r5)
-	movl	$ENAMETOOLONG, r0
-	ret
-#endif
 
 # Have bcopy and bzero here to be sure that system files that not gets
 # macros.h included will not complain.
@@ -290,9 +247,9 @@ _copyin:.word 0
 1:	clrl	*pcbtrap
 	ret
 
-_copystr:	.globl	_copystr,_copyinstr,_copyoutstr
-_copyinstr:
-_copyoutstr:
+_copystr:	.globl	_copystr
+_copyinstr:	.globl	_copyinstr
+_copyoutstr:	.globl	_copyoutstr
 	.word	0
 	movl	4(ap),r4	# from
 	movl	8(ap),r5	# to
@@ -300,11 +257,17 @@ _copyoutstr:
 	movl	16(ap),r3	# copied
 
 	moval	2f,*pcbtrap
-#if VAX630 || VAX410
+
+/*
+ * This routine consists of two parts: One is for MV2 that doesn't have
+ * locc in hardware, the other is a fast version with locc. But because
+ * locc only handles <64k strings, we default to the slow version if the
+ * string is longer.
+ */
 	cmpl	_vax_cputype,$VAX_TYP_UV2
 	bneq	4f		# Check if locc emulated
 
-	movl	r2,r0
+9:	movl	r2,r0
 7:	movb	(r4)+,(r5)+
 	beql	6f
 	sobgtr	r0,7b
@@ -317,12 +280,20 @@ _copyoutstr:
 5:	clrl	r0
 	clrl	*pcbtrap
 	ret
-#endif
-4:	locc	$0,r2,(r4)	# check for null byte
+
+4:	cmpl	r2,$65535	# maxlen < 64k?
+	blss	8f		# then use fast code.
+
+	locc	$0,$65535,(r4)	# is strlen < 64k?
+	beql	9b		# No, use slow code
+	subl3	r0,$65535,r1	# Get string len
+	brb	0f		# do the copy
+
+8:	locc	$0,r2,(r4)	# check for null byte
 	beql	1f
 
 	subl3	r0,r2,r1	# Calculate len to copy
-	incl	r1		# Copy null byte also
+0:	incl	r1		# Copy null byte also
 	tstl	r3
 	beql	3f
 	movl	r1,(r3)		# save len copied
