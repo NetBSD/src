@@ -1,4 +1,4 @@
-/*	$NetBSD: rdsetroot.c,v 1.2 1995/10/13 16:38:39 gwr Exp $	*/
+/*	$NetBSD: rdsetroot.c,v 1.3 1997/05/26 02:51:46 jeremy Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -26,12 +26,12 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: rdsetroot.c,v 1.2 1995/10/13 16:38:39 gwr Exp $
+ *	$Id: rdsetroot.c,v 1.3 1997/05/26 02:51:46 jeremy Exp $
  */
 
 /*
  * Copy a ramdisk image into the space reserved for it.
- * Kernel variables: rd_root_size, rd_root_image
+ * Kernel variables: md_root_size, md_root_image
  */
 
 #include <sys/types.h>
@@ -146,7 +146,7 @@ main(argc,argv)
 	ip = (int*) (dataseg + rd_root_size_off);
 	rd_root_size_val = *ip;
 #ifdef	DEBUG
-	printf("rd_root_size  val: 0x%08X (%d blocks)\n",
+	printf("md_root_size  val: 0x%08X (%d blocks)\n",
 		rd_root_size_val, (rd_root_size_val >> 9));
 #endif
 
@@ -181,8 +181,8 @@ main(argc,argv)
  * Find locations of the symbols to patch.
  */
 struct nlist wantsyms[] = {
-	{ "_rd_root_size", 0 },
-	{ "_rd_root_image", 0 },
+	{ "_md_root_size", 0 },
+	{ "_md_root_image", 0 },
 	{ NULL, 0 },
 };
 
@@ -193,7 +193,7 @@ find_rd_root_image(file)
 	int std_entry;
 
 	if (nlist(file, wantsyms)) {
-		printf("%s: no rd_root_image symbols?\n", file);
+		printf("%s: no md_root_image symbols?\n", file);
 		exit(1);
 	}
 	std_entry = N_TXTADDR(head) +
@@ -210,21 +210,21 @@ find_rd_root_image(file)
 	rd_root_image_off     = wantsyms[1].n_value - data_va;
 #ifdef	DEBUG
 	printf(".data segment  va: 0x%08X\n", data_va);
-	printf("rd_root_size   va: 0x%08X\n", wantsyms[0].n_value);
-	printf("rd_root_image  va: 0x%08X\n", wantsyms[1].n_value);
-	printf("rd_root_size  off: 0x%08X\n", rd_root_size_off);
-	printf("rd_root_image off: 0x%08X\n", rd_root_image_off);
+	printf("md_root_size   va: 0x%08X\n", wantsyms[0].n_value);
+	printf("md_root_image  va: 0x%08X\n", wantsyms[1].n_value);
+	printf("md_root_size  off: 0x%08X\n", rd_root_size_off);
+	printf("md_root_image off: 0x%08X\n", rd_root_image_off);
 #endif
 
 	/*
 	 * Sanity check locations of db_* symbols
 	 */
 	if (rd_root_image_off < 0 || rd_root_image_off >= head.a_data) {
-		printf("%s: rd_root_image not in data segment?\n", file);
+		printf("%s: md_root_image not in data segment?\n", file);
 		exit(1);
 	}
 	if (rd_root_size_off < 0 || rd_root_size_off >= head.a_data) {
-		printf("%s: rd_root_size not in data segment?\n", file);
+		printf("%s: md_root_size not in data segment?\n", file);
 		exit(1);
 	}
 }
