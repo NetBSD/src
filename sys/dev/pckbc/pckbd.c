@@ -1,4 +1,4 @@
-/* $NetBSD: pckbd.c,v 1.9 1998/06/16 11:26:04 drochner Exp $ */
+/* $NetBSD: pckbd.c,v 1.10 1998/08/02 14:21:02 drochner Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -76,7 +76,6 @@ struct pckbd_internal {
 	pckbc_tag_t t_kbctag;
 	pckbc_slot_t t_kbcslot;
 
-	int t_led_state;
 	int t_lastchar;
 	int t_extended;
 	int t_extended1;
@@ -88,6 +87,9 @@ struct pckbd_softc {
         struct  device sc_dev;
 
 	struct pckbd_internal *id;
+	int sc_enabled;
+
+	int sc_ledstate;
 
 	struct device *sc_wskbddev;
 #ifdef WSDISPLAY_COMPAT_RAWKBD
@@ -104,11 +106,33 @@ struct cfattach pckbd_ca = {
 	sizeof(struct pckbd_softc), pckbdprobe, pckbdattach,
 };
 
+int	pckbd_enable __P((void *, int));
 void	pckbd_set_leds __P((void *, int));
 int	pckbd_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
 
+const struct wskbd_accessops pckbd_accessops = {
+	pckbd_enable,
+	pckbd_set_leds,
+	pckbd_ioctl,
+};
+
 void	pckbd_cngetc __P((void *, u_int *, int *));
 void	pckbd_cnpollc __P((void *, int));
+
+const struct wskbd_consops pckbd_consops = {
+	pckbd_cngetc,
+	pckbd_cnpollc,
+};
+
+const struct wskbd_mapdata pckbd_keymapdata = {
+	pckbd_keydesctab,
+	sizeof(pckbd_keydesctab)/sizeof(pckbd_keydesctab[0]),
+#ifdef PCKBD_LAYOUT
+	PCKBD_LAYOUT,
+#else
+	KB_US,
+#endif
+};
 
 int	pckbd_set_xtscancode __P((pckbc_tag_t, pckbc_slot_t));
 int	pckbd_init __P((struct pckbd_internal *, pckbc_tag_t, pckbc_slot_t,
@@ -227,14 +251,6 @@ pckbdprobe(parent, cf, aux)
 	 */
 	pckbc_flush(pa->pa_tag, pa->pa_slot);
 
-	/* Just to be sure. */
-	cmd[0] = KBC_ENABLE;
-	res = pckbc_poll_cmd(pa->pa_tag, pa->pa_slot, cmd, 1, 0, 0, 0);
-	if (res) {
-		printf("pckbdprobe: enable error %d\n", res);
-		return (0);
-	}
-
 	if (pckbd_set_xtscancode(pa->pa_tag, pa->pa_slot))
 		return (0);
 
@@ -255,12 +271,16 @@ pckbdattach(parent, self, aux)
 
 	isconsole = pckbd_is_console(pa->pa_tag, pa->pa_slot);
 
-	if (isconsole)
+	if (isconsole) {
 		sc->id = &pckbd_consdata;
-	else {
+		sc->sc_enabled = 1;
+	} else {
 		sc->id = malloc(sizeof(struct pckbd_internal),
 				M_DEVBUF, M_WAITOK);
 		(void) pckbd_init(sc->id, pa->pa_tag, pa->pa_slot, 0);
+
+		/* no interrupts until enabled */
+		pckbd_enable(sc, 0);
 	}
 
 	sc->id->t_sc = sc;
@@ -269,25 +289,11 @@ pckbdattach(parent, self, aux)
 			       pckbd_input, sc);
 
 	a.console = isconsole;
-#ifdef PCKBD_LAYOUT
-	a.layout = PCKBD_LAYOUT;
-#else
-	a.layout = KB_US;
-#endif
-	a.keydesc = pckbd_keydesctab;
-	a.num_keydescs = sizeof(pckbd_keydesctab)/sizeof(pckbd_keydesctab[0]);
 
-	if (isconsole) {
-		a.getc = pckbd_cngetc;
-		a.pollc = pckbd_cnpollc;
-	} else {
-		a.getc = NULL;
-		a.pollc = NULL;
-	}
+	a.keymap = &pckbd_keymapdata;
 
-	a.set_leds = pckbd_set_leds;
-	a.ioctl = pckbd_ioctl;
-	a.accesscookie = sc->id;
+	a.accessops = &pckbd_accessops;
+	a.accesscookie = sc;
 
 	/*
 	 * Attach the wskbd, saving a handle to it.
@@ -296,7 +302,56 @@ pckbdattach(parent, self, aux)
 	sc->sc_wskbddev = config_found(self, &a, wskbddevprint);
 }
 
-static int pckbd_decode(id, datain, type, dataout)
+int
+pckbd_enable(v, on)
+	void *v;
+	int on;
+{
+	struct pckbd_softc *sc = v;
+	u_char cmd[1];
+	int res;
+
+	if (on) {
+		if (sc->sc_enabled)
+			return (EBUSY);
+
+		pckbc_slot_enable(sc->id->t_kbctag, sc->id->t_kbcslot, 1);
+
+		cmd[0] = KBC_ENABLE;
+		res = pckbc_enqueue_cmd(sc->id->t_kbctag, sc->id->t_kbcslot,
+					cmd, 1, 0, 1, 0);
+		if (res) {
+			printf("pckbd_enable: command error\n");
+			return (res);
+		}
+
+		res = pckbd_set_xtscancode(sc->id->t_kbctag, sc->id->t_kbcslot);
+		if (res)
+			return (res);
+
+		sc->sc_enabled = 1;
+	} else {
+		if (sc->id->t_isconsole)
+			return (EBUSY);
+
+		cmd[0] = KBC_DISABLE;
+		res = pckbc_enqueue_cmd(sc->id->t_kbctag, sc->id->t_kbcslot,
+					cmd, 1, 0, 1, 0);
+		if (res) {
+			printf("pckbd_disable: command error\n");
+			return (res);
+		}
+
+		pckbc_slot_enable(sc->id->t_kbctag, sc->id->t_kbcslot, 0);
+
+		sc->sc_enabled = 0;
+	}
+
+	return (0);
+}
+
+static int
+pckbd_decode(id, datain, type, dataout)
 	struct pckbd_internal *id;
 	int datain;
 	u_int *type;
@@ -392,14 +447,15 @@ pckbd_set_leds(v, leds)
 	void *v;
 	int leds;
 {
-	struct pckbd_internal *t = v;
+	struct pckbd_softc *sc = v;
 	u_char cmd[2];
 
 	cmd[0] = KBC_MODEIND;
 	cmd[1] = pckbd_led_encode(leds);
-	t->t_led_state = cmd[1];
+	sc->sc_ledstate = cmd[1];
 
-	(void) pckbc_enqueue_cmd(t->t_kbctag, t->t_kbcslot, cmd, 2, 0, 0, 0);
+	(void) pckbc_enqueue_cmd(sc->id->t_kbctag, sc->id->t_kbcslot,
+				 cmd, 2, 0, 0, 0);
 }
 
 /*
@@ -433,7 +489,7 @@ pckbd_ioctl(v, cmd, data, flag, p)
 	int flag;
 	struct proc *p;
 {
-	struct pckbd_internal *t = v;
+	struct pckbd_softc *sc = v;
 
 	switch (cmd) {
 	    case WSKBDIO_GTYPE:
@@ -444,13 +500,13 @@ pckbd_ioctl(v, cmd, data, flag, p)
 		int res;
 		cmd[0] = KBC_MODEIND;
 		cmd[1] = pckbd_led_encode(*(int *)data);
-		t->t_led_state = cmd[1];
-		res = pckbc_enqueue_cmd(t->t_kbctag, t->t_kbcslot, cmd, 2, 0,
-					1, 0);
+		sc->sc_ledstate = cmd[1];
+		res = pckbc_enqueue_cmd(sc->id->t_kbctag, sc->id->t_kbcslot,
+					cmd, 2, 0, 1, 0);
 		return (res);
 		}
 	    case WSKBDIO_GETLEDS:
-		*(int *)data = pckbd_led_decode(t->t_led_state);
+		*(int *)data = pckbd_led_decode(sc->sc_ledstate);
 		return (0);
 	    case WSKBDIO_COMPLEXBELL:
 #define d ((struct wskbd_bell_data *)data)
@@ -463,7 +519,7 @@ pckbd_ioctl(v, cmd, data, flag, p)
 		return (0);
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 	    case WSKBDIO_SETMODE:
-		t->t_sc->rawkbd = (*(int *)data == WSKBD_RAW);
+		sc->rawkbd = (*(int *)data == WSKBD_RAW);
 		return (0);
 #endif
 	}
@@ -475,8 +531,8 @@ pckbd_cnattach(kbctag, kbcslot)
 	pckbc_tag_t kbctag;
 	int kbcslot;
 {
+	char cmd[1];
 	int res;
-	struct wskbddev_attach_args a;
 
 	res = pckbd_init(&pckbd_consdata, kbctag, kbcslot, 1);
 #if 0 /* we allow the console to be attached if no keyboard is present */
@@ -484,21 +540,15 @@ pckbd_cnattach(kbctag, kbcslot)
 		return (res);
 #endif
 
-	a.console = 1;
-#ifdef PCKBD_LAYOUT
-	a.layout = PCKBD_LAYOUT;
-#else
-	a.layout = KB_US;
+	/* Just to be sure. */
+	cmd[0] = KBC_ENABLE;
+	res = pckbc_poll_cmd(kbctag, kbcslot, cmd, 1, 0, 0, 0);
+#if 0
+	if (res)
+		return (res);
 #endif
-	a.keydesc = pckbd_keydesctab;
-	a.num_keydescs = sizeof(pckbd_keydesctab)/sizeof(pckbd_keydesctab[0]);
-	a.getc = pckbd_cngetc;
-	a.pollc = pckbd_cnpollc;
-	a.set_leds = pckbd_set_leds;
-	a.ioctl = NULL;
-	a.accesscookie = &pckbd_consdata;
 
-	wskbd_cnattach(&a);
+	wskbd_cnattach(&pckbd_consops, &pckbd_consdata, &pckbd_keymapdata);
 
 	return (0);
 }
