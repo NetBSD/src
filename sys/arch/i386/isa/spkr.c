@@ -6,7 +6,7 @@
  *      386bsd only clean version, all SYSV stuff removed
  *      use hz value from param.c
  *
- *	$Id: spkr.c,v 1.4 1993/06/16 18:12:28 brezak Exp $
+ *	$Id: spkr.c,v 1.5 1993/06/16 19:41:54 brezak Exp $
  */
 
 #include "speaker.h"
@@ -19,6 +19,9 @@
 #include "buf.h"
 #include "uio.h"
 #include "i386/include/spkr.h"
+#include "isa.h"
+#include "timerreg.h"
+#include "spkr_reg.h"
 
 /**************** MACHINE DEPENDENT PART STARTS HERE *************************
  *
@@ -34,33 +37,15 @@
  */
 
 /*
- * PIT and PPI port addresses and control values
- *
- * Most of the magic is hidden in the TIMER_PREP value, which selects PIT
- * channel 2, frequency LSB first, square-wave mode and binary encoding.
- * The encoding is as follows:
- *
- * +----------+----------+---------------+-----+
- * |  1    0  |  1    1  |  0    1    1  |  0  |
- * | SC1  SC0 | RW1  RW0 | M2   M1   M0  | BCD |
- * +----------+----------+---------------+-----+
- *   Counter     Write        Mode 3      Binary
- *  Channel 2  LSB first,  (Square Wave) Encoding 
- *             MSB second
+ * Magic numbers for timer control. 
  */
-#define PPI		0x61	/* port of Programmable Peripheral Interface */
-#define PPI_SPKR	0x03	/* turn these PPI bits on to pass sound */
-#define PIT_CTRL	0x43	/* PIT control address */
-#define PIT_COUNT	0x42	/* PIT count address */
-#define PIT_MODE	0xB6	/* set timer mode for sound generation */
-
-#include "timerreg.h"
+#define PIT_MODE	(TIMER_SEL2|TIMER_MSB|TIMER_SQWAVE)
 
 static int endtone()
 /* turn off the speaker, ending current tone */
 {
     wakeup((caddr_t)endtone);
-    outb(PPI, inb(PPI) & ~PPI_SPKR);
+    outb(PITAUX_PORT, inb(PITAUX_PORT) & ~PIT_SPKR);
 }
 
 static void tone(hz, ticks)
@@ -76,13 +61,13 @@ unsigned int hz, ticks;
 
     /* set timer to generate clicks at given frequency in Hertz */
     sps = spltty();
-    outb(PIT_CTRL, PIT_MODE);		/* prepare timer */
-    outb(PIT_COUNT, (unsigned char) divisor);  /* send lo byte */
-    outb(PIT_COUNT, (divisor >> 8));	/* send hi byte */
+    outb(TIMER_MODE, PIT_MODE);		/* prepare timer */
+    outb(TIMER_CNTR2, (unsigned char) divisor);  /* send lo byte */
+    outb(TIMER_CNTR2, (divisor >> 8));	/* send hi byte */
     splx(sps);
 
     /* turn the speaker on */
-    outb(PPI, inb(PPI) | PPI_SPKR);
+    outb(PITAUX_PORT, inb(PITAUX_PORT) | PIT_SPKR);
 
     /*
      * Set timeout to endtone function, then give up the timeslice.
