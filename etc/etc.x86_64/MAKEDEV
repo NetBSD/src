@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.8 2003/03/31 03:59:15 perry Exp $
+#	$NetBSD: MAKEDEV,v 1.9 2003/04/17 18:03:22 fvdl Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -33,6 +33,8 @@
 # Device "make" file.  Valid arguments:
 #	all	makes all known devices, including local devices.
 #		Tries to make the 'standard' number of each type.
+#	init	A set of devices that is used for MFS /dev by init.
+#		May be equal to "all".
 #	floppy	devices to be put on install floppies
 #	ramdisk	devices to be put into INSTALL kernel ramdisks.
 #	std	standard devices
@@ -164,34 +166,54 @@ do
 
 case $i in
 
+# As of 2003-04-17, the "init" case must not create more than 890 entries.
+init)
+	makedev std wscons wt0 fd0 fd1 wd0 wd1 wd2 wd3 sd0 sd1 sd2 sd3 sd4
+	makedev tty0 tty1
+	makedev st0 st1 ch0 cd0 cd1 mcd0 vnd0
+	makedev bpf0
+	makedev ccd0 md0 ch0 random
+	makedev cgd0 cgd1
+	makedev iop0 mlx0 mly0 dpti0 dpt0 twe0
+	makedev ed0 ed1
+	makedev raid0
+	makedev ld0 ld1 ld2 ld3
+	makedev local
+	makedev usbs
+	;;
+
 all)
-	makedev std wscons fd wt0 fd0 fd1 wd0 wd1 wd2 wd3 sd0 sd1 sd2 sd3 sd4
-	makedev tty0 tty1 tty2 tty3 pty0
-	makedev raid0 raid1 raid2 raid3 raid4 raid5 raid6 raid7
-	makedev st0 st1 ch0 cd0 cd1 mcd0 vnd0 vnd1 lpa0 lpa1 lpa2
-	makedev bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7
-	makedev lpt0 lpt1 lpt2 ttyv0 tun0 tun1 tun2 tun3 ipl
-	makedev ccd0 ccd1 ccd2 ccd3 md0 ss0 ch0 uk0 uk1 random
-	makedev cgd0 cgd1 cgd2 cgd3
-	makedev speaker lkm mms0 lms0 joy0 joy1 apm local satlink0
-	makedev iop0 mlx0 mly0
+	makedev init
+	makedev fd
+	makedev tty2 tty3 pty0
+	makedev lpa0 lpa1 lpa2
+	makedev lpt0 lpt1 lpt2
+	makedev tun0 tun1 tun2 tun3 ipl
+	makedev bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7
+	makedev vnd1
+	makedev raid1 raid2 raid3 raid4 raid5 raid6 raid7
+	makedev ccd1 ccd2 ccd3
+	makedev cgd2 cgd3
+	makedev ss0 uk0 uk1
+	makedev speaker lkm mms0 lms0 joy0 joy1
+	makedev apm satlink0
 	makedev audio
 	makedev radio
-	makedev usbs
 	makedev isdns
 	makedev music rmidi0 rmidi1 rmidi2 rmidi3 rmidi4 rmidi5 rmidi6 rmidi7
 	makedev scsibus0 scsibus1 scsibus2 scsibus3
-	makedev ld0 ld1 ld2 ld3
 	makedev sysmon
 	makedev bktr
 	makedev ttyCZ0 ttyCY0
 	makedev agp0
 	makedev pci0 pci1 pci2 pci3 pci4 pci5 pci6 pci7
 	makedev altq
-	makedev ed0 ed1
 	makedev cir0 cir1 irframe0 irframe1
 	makedev clockctl
-	makedev nsmb0 nsmb1 nsmb2 nsmb3
+	makedev systrace
+	makedev kttcp
+	makedev dmoverio
+	makedev nsmb
 	;;
 
 audio)
@@ -828,6 +850,13 @@ mly*)
 	chmod 600 mly$unit
 	;;
 
+twe*)
+	unit=${i#twe}
+	rm -f twe$unit
+	mknod twe$unit c 97 $unit
+	chmod 600 twe$unit
+	;;
+
 agp*)
 	unit=${i#agp}
 	rm -f agp$unit
@@ -848,6 +877,13 @@ dpti*)
 	rm -f dpti$unit
 	mknod dpti$unit c 84 $unit
 	chmod 600 dpti$unit
+	;;
+
+dpt*)
+	unit=${i#dpt}
+	rm -f dpt$unit
+	mknod dpt$unit c 96 $unit
+	chmod 600 dpt$unit
 	;;
 
 altq)
@@ -938,6 +974,10 @@ clockctl)
 	chmod 660 clockctl
 	;;
 
+nsmb)
+	makedev nsmb0 nsmb1 nsmb2 nsmb3
+	;;
+
 nsmb*)
 	unit=${i#nsmb}
 	nsmb=nsmb$unit
@@ -945,6 +985,30 @@ nsmb*)
 	rm -f $nsmb
 	mknod $nsmb c $major $unit
 	chmod 644 $nsmb
+	;;
+
+systrace)
+	rm -f systrace
+	mknod systrace c 90 0
+	chmod 644 systrace
+	;;
+
+kttcp)
+	rm -f kttcp
+	mknod kttcp c 91 0
+	chmod 600 kttcp
+	;;
+
+dmoverio)
+	rm -f dmoverio
+	mknod dmoverio c 92 0
+	chmod 644 dmoverio
+	;;
+
+veriexec)
+	rm -f veriexec
+	mknod veriexec c 94 0
+	chmod 644 veriexec
 	;;
 
 local)

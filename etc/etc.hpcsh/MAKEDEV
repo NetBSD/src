@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.25 2003/03/31 03:59:03 perry Exp $
+#	$NetBSD: MAKEDEV,v 1.26 2003/04/17 18:03:15 fvdl Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -31,6 +31,8 @@
 # Device "make" file.  Valid arguments:
 #	all	makes all known devices, including local devices.
 #		Tries to make the 'standard' number of each type.
+#	init	A set of devices that is used for MFS /dev by init.
+#		May be equal to "all".
 #	std	standard devices
 #	local	configuration specific devices
 #
@@ -104,7 +106,7 @@ for i
 do
 case $i in
 
-all)
+init|all)
 	makedev std wscons fd wd0 wd1 sd0 sd1
 	makedev scif0 sci0
 	makedev tty0 tty1 tty2 pty0
