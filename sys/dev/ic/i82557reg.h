@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557reg.h,v 1.5 2001/05/22 00:07:32 thorpej Exp $	*/
+/*	$NetBSD: i82557reg.h,v 1.6 2001/05/22 00:27:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -120,6 +120,8 @@
 #define	FXP_SCB_INTMASK_FR		0x40
 #define	FXP_SCB_INTMASK_CXTNO		0x80
 
+#define	FXP_SCB_STATACK_FCP		0x01	/* flow control pause */
+#define	FXP_SCB_STATACK_ER		0x02	/* early receive */
 #define FXP_SCB_STATACK_SWI		0x04
 #define FXP_SCB_STATACK_MDI		0x08
 #define FXP_SCB_STATACK_RNR		0x10
@@ -370,6 +372,10 @@ struct fxp_stats {
 /*
  * PHY device types (from EEPROM)
  */
+#define	FXP_PHY_DEVICE_MASK	0x3f00
+#define	FXP_PHY_DEVICE_SHIFT	8
+#define	FXP_PHY_DEVADDR_MASK	0x00ff
+#define	FXP_PHY_SERIAL_ONLY	0x8000
 #define FXP_PHY_NONE		0
 #define FXP_PHY_82553A		1
 #define FXP_PHY_82553C		2
@@ -379,3 +385,4 @@ struct fxp_stats {
 #define FXP_PHY_80C24		6
 #define FXP_PHY_82555		7
 #define FXP_PHY_DP83840A	10
+#define	FXP_PHY_DP82555B	11
