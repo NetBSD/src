@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.56 2004/04/08 03:50:22 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.57 2004/04/08 19:41:31 jdc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -579,3 +579,32 @@ sys/kern/init_sysctl.c				1.25
 	Avoids leaking garbage from the stack (left over from the earlier
 	call to sysctl_locate()).
 	[atatat, ticket #85]
+
+src/sys/conf/files				1.663
+
+	Create opt_sysctl.h which will hold sysctl related options.  I suspect
+	most of these won't be used (well, the description related one will
+	be), but it's good to formalize things.
+	[atatat, ticket #86]
+
+src/sys/sys/sysctl.h				1.117
+
+	Include new opt_sysctl.h here, and use SYSCTL_NO_DESCR for eliminating
+	properly declared descriptions.
+	[atatat, ticket #87]
+
+src/sbin/sysctl/sysctl.c			1.88
+
+	Do nothing else for nodes with no children if -d is used (dflag is
+	set).  Otherwise, some nodes (those with "printers") will also print
+	the "use foo ..." message.
+	[atatat, ticket #88]
+
+src/lib/libc/gen/sysctlbyname.c			1.2
+src/lib/libc/gen/sysctlnametomib.c		1.2
+src/lib/libc/gen/sysctlgetmibinfo.c		1.3
+src/lib/libc/include/namespace.h		1.85
+
+	Weak aliases for sysctlfoobar() functions.
+	[atatat, ticket #90]
+
