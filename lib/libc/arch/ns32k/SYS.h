@@ -1,4 +1,4 @@
-/*	$NetBSD: SYS.h,v 1.9 1998/10/01 22:46:35 matthias Exp $	*/
+/*	$NetBSD: SYS.h,v 1.10 2000/12/29 23:16:42 matthias Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -54,7 +54,7 @@
 
 #define _SYSCALL(x,y)							\
 	_SYSCALL_NOERROR(x,y);						\
-	bcs cerror
+	bcs _ASM_LABEL(cerror)
 
 #define SYSCALL_NOERROR(x)						\
 	_SYSCALL_NOERROR(x,x)
