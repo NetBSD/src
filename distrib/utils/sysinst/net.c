@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.89 2003/07/22 08:30:10 dsl Exp $	*/
+/*	$NetBSD: net.c,v 1.90 2003/07/22 11:45:16 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -771,7 +771,7 @@ get_via_ftp(void)
 		 * example, ftp_dir could easily contain '~', which is
 		 * unsafe by a strict reading of RFC 1738).
 		 */
-		if (strcmp("ftp", ftp_user) == 0)
+		if (strcmp("ftp", ftp_user) == 0 && ftp_pass[0] == 0)
 			ret = run_prog(RUN_DISPLAY, NULL,
 			    "/usr/bin/ftp -a ftp://%s/%s/%s",
 			    ftp_host,
