@@ -1,4 +1,4 @@
-#	$NetBSD: files.isa,v 1.45 1997/11/07 13:08:23 enami Exp $
+#	$NetBSD: files.isa,v 1.46 1997/11/21 10:09:42 bouyer Exp $
 #
 # Config file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -170,12 +170,6 @@ file	dev/isa/if_fe.c			fe
 #attach	hp at isa
 #file	dev/isa/if_hp.c			hp
 
-# Intel i82586-based boards
-# (AT&T StarLAN 10, AT&T EN100, AT&T StarLAN Fiber, 3Com 3C507)
-device	ie: ether, ifnet, elink, arp
-attach	ie at isa
-file	dev/isa/if_ie.c			ie
-
 # Intel i82595-based boards.
 # (Intel EtherExpress PRO)
 device  iy: ether, ifnet, arp
@@ -210,6 +204,13 @@ file	dev/isa/if_sm_isa.c		sm_isa
 device	we: ether, ifnet, arp, dp8390nic
 attach	we at isa
 file	dev/isa/if_we.c			we
+
+# Intel i82586-based boards
+# (AT&T StarLAN 10, AT&T EN100, AT&T StarLAN Fiber, 3Com 3C507)
+# MUST BE LAST ! the probe clobbers some boards (like SMC boards).
+device	ie: ether, ifnet, elink, arp
+attach	ie at isa
+file	dev/isa/if_ie.c			ie
 
 #
 # ISA Sound hardware
