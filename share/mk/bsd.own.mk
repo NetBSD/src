@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.250 2002/01/05 07:29:31 mrg Exp $
+#	$NetBSD: bsd.own.mk,v 1.251 2002/01/05 07:34:08 mrg Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -152,6 +152,7 @@ SOELIM=		${TOOLDIR}/bin/nbsoelim
 TBL=		${TOOLDIR}/bin/nbtbl
 TSORT=		${TOOLDIR}/bin/nbtsort -q
 YACC=		${TOOLDIR}/bin/nbyacc
+ZIC=		${TOOLDIR}/bin/nbzic
 
 # Make sure DESTDIR is set, so that builds with these tools always
 # get appropriate -nostdinc, -nostdlib, etc. handling.  The default is
