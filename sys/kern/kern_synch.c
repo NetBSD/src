@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.125 2003/02/04 13:41:50 yamt Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.126 2003/02/04 20:15:59 pk Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.125 2003/02/04 13:41:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.126 2003/02/04 20:15:59 pk Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -536,6 +536,14 @@ ltsleep(const void *ident, int priority, const char *wmesg, int timo,
 			return (EINTR);
 		return (ERESTART);
 	}
+
+#ifdef KTRACE
+	if (KTRPOINT(p, KTR_CSW))
+		ktrcsw(p, 0, 0);
+#endif
+	if (relock && interlock != NULL)
+		simple_lock(interlock);
+
 	/* XXXNJW this is very much a kluge.
 	 * revisit. a better way of preventing looping/hanging syscalls like 
 	 * wait4() and _lwp_wait() from wedging an exiting process
@@ -543,12 +551,6 @@ ltsleep(const void *ident, int priority, const char *wmesg, int timo,
 	 */
 	if (catch && ((p->p_flag & P_WEXIT) && exiterr))
 		return (EINTR);
-#ifdef KTRACE
-	if (KTRPOINT(p, KTR_CSW))
-		ktrcsw(p, 0, 0);
-#endif
-	if (relock && interlock != NULL)
-		simple_lock(interlock);
 	return (0);
 }
 
