@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.20 1998/10/18 23:50:01 chs Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.21 1998/11/08 19:37:12 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -1767,7 +1767,7 @@ uvm_swap_io(pps, startslot, npages, flags)
 	 * /dev/drum's vnode [swapdev_vp].
 	 */
 	bp = &sbp->sw_buf;
-	bp->b_flags = B_BUSY | (flags & (B_READ|B_ASYNC));
+	bp->b_flags = B_BUSY | B_NOCACHE | (flags & (B_READ|B_ASYNC));
 	bp->b_proc = &proc0;	/* XXX */
 	bp->b_rcred = bp->b_wcred = proc0.p_ucred;
 	bp->b_vnbufs.le_next = NOLIST;
