@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.47 1999/05/28 20:31:43 thorpej Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.48 1999/05/28 20:49:51 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -314,7 +314,7 @@ uvm_map_entry_unwire(map, entry)
 	vm_map_entry_t entry;
 {
 
-	uvm_fault_unwire(map->pmap, entry->start, entry->end);
+	uvm_fault_unwire(map, entry->start, entry->end);
 	entry->wired_count = 0;
 }
 
