@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.82 1997/11/24 02:03:44 perry Exp $
+#	$NetBSD: Makefile,v 1.83 1997/12/02 06:52:14 mrg Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 TZDIR=		/usr/share/zoneinfo
@@ -72,13 +72,7 @@ distribution: distrib-dirs
 		rm -f ${DESTDIR}/.cshrc ${DESTDIR}/.profile; \
 		ln ${DESTDIR}/root/.cshrc ${DESTDIR}/.cshrc; \
 		ln ${DESTDIR}/root/.profile ${DESTDIR}/.profile)
-	(cd mtree; \
-		${INSTALL} -c -o root -g wheel -m 600 special \
-		    ${DESTDIR}/etc/mtree; \
-		${INSTALL} -c -o root -g wheel -m 444 NetBSD.dist \
-		    ${DESTDIR}/etc/mtree; \
-		${INSTALL} -c -o root -g wheel -m 444 BSD.pkg.dist \
-		    ${DESTDIR}/etc/mtree)
+	(cd mtree; ${MAKE} install)
 	(cd namedb; \
 		${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 644 ${NAMEDB} \
 		    ${DESTDIR}/etc/namedb)
