@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.134 1999/06/17 00:12:10 thorpej Exp $
+#	$NetBSD: files.i386,v 1.135 1999/07/28 01:57:05 mellon Exp $
 #
 # new style config file for i386 architecture
 #
@@ -247,7 +247,7 @@ file	arch/i386/i386/apmcall.s	apm
 file	arch/i386/i386/vm86.c			vm86
 
 # Binary compatibility with previous NetBSD releases (COMPAT_XX)
-file	arch/i386/i386/compat_13_machdep.c	compat_13
+file	arch/i386/i386/compat_13_machdep.c	compat_13 | compat_aout
 
 # SVR4 binary compatibility (COMPAT_SVR4)
 include "compat/svr4/files.svr4"
