@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sigaction.c,v 1.18 1999/12/04 22:21:12 tron Exp $	*/
+/*	$NetBSD: linux_sigaction.c,v 1.19 2000/03/30 11:27:17 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 int
 linux_sys_sigaction(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {

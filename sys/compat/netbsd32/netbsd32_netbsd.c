@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.24 2000/03/23 06:48:17 thorpej Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.25 2000/03/30 11:27:18 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -666,8 +666,8 @@ netbsd32_wait4(q, v, retval)
 		syscallarg(netbsd32_rusagep_t) rusage;
 	} */ *uap = v;
 	struct netbsd32_rusage ru32;
-	register int nfound;
-	register struct proc *p, *t;
+	int nfound;
+	struct proc *p, *t;
 	int status, error;
 
 	if (SCARG(uap, pid) == 0)
@@ -932,8 +932,8 @@ netbsd32_getfsstat(p, v, retval)
 		syscallarg(netbsd32_long) bufsize;
 		syscallarg(int) flags;
 	} */ *uap = v;
-	register struct mount *mp, *nmp;
-	register struct statfs *sp;
+	struct mount *mp, *nmp;
+	struct statfs *sp;
 	struct netbsd32_statfs sb32;
 	caddr_t sfsp;
 	long count, maxcount, error;
@@ -1074,7 +1074,7 @@ netbsd32_recvmsg(p, v, retval)
 	} */ *uap = v;
 	struct netbsd32_msghdr msg;
 	struct iovec aiov[UIO_SMALLIOV], *uiov, *iov;
-	register int error;
+	int error;
 
 	error = copyin((caddr_t)(u_long)SCARG(uap, msg), (caddr_t)&msg,
 		       sizeof(msg));
@@ -1122,7 +1122,7 @@ recvit32(p, s, mp, iov, namelenp, retsize)
 {
 	struct file *fp;
 	struct uio auio;
-	register int i;
+	int i;
 	int len, error;
 	struct mbuf *from = 0, *control = 0;
 	struct socket *so;
@@ -2222,8 +2222,8 @@ netbsd32_getgroups(p, v, retval)
 		syscallarg(int) gidsetsize;
 		syscallarg(netbsd32_gid_tp) gidset;
 	} */ *uap = v;
-	register struct pcred *pc = p->p_cred;
-	register int ngrp;
+	struct pcred *pc = p->p_cred;
+	int ngrp;
 	int error;
 
 	ngrp = SCARG(uap, gidsetsize);
@@ -2910,8 +2910,8 @@ netbsd32_readv(p, v, retval)
 		syscallarg(int) iovcnt;
 	} */ *uap = v;
 	int fd = SCARG(uap, fd);
-	register struct file *fp;
-	register struct filedesc *fdp = p->p_fd;
+	struct file *fp;
+	struct filedesc *fdp = p->p_fd;
 
 	if ((u_int)fd >= fdp->fd_nfiles ||
 	    (fp = fdp->fd_ofiles[fd]) == NULL ||
@@ -2935,7 +2935,7 @@ dofilereadv32(p, fd, fp, iovp, iovcnt, offset, flags, retval)
 	register_t *retval;
 {
 	struct uio auio;
-	register struct iovec *iov;
+	struct iovec *iov;
 	struct iovec *needfree;
 	struct iovec aiov[UIO_SMALLIOV];
 	long i, cnt, error = 0;
@@ -3023,8 +3023,8 @@ netbsd32_writev(p, v, retval)
 		syscallarg(int) iovcnt;
 	} */ *uap = v;
 	int fd = SCARG(uap, fd);
-	register struct file *fp;
-	register struct filedesc *fdp = p->p_fd;
+	struct file *fp;
+	struct filedesc *fdp = p->p_fd;
 
 	if ((u_int)fd >= fdp->fd_nfiles ||
 	    (fp = fdp->fd_ofiles[fd]) == NULL ||
@@ -3047,7 +3047,7 @@ dofilewritev32(p, fd, fp, iovp, iovcnt, offset, flags, retval)
 	register_t *retval;
 {
 	struct uio auio;
-	register struct iovec *iov;
+	struct iovec *iov;
 	struct iovec *needfree;
 	struct iovec aiov[UIO_SMALLIOV];
 	long i, cnt, error = 0;
@@ -3424,8 +3424,8 @@ netbsd32_statfs(p, v, retval)
 		syscallarg(const netbsd32_charp) path;
 		syscallarg(netbsd32_statfsp_t) buf;
 	} */ *uap = v;
-	register struct mount *mp;
-	register struct statfs *sp;
+	struct mount *mp;
+	struct statfs *sp;
 	struct netbsd32_statfs s32;
 	int error;
 	struct nameidata nd;
@@ -3454,8 +3454,8 @@ netbsd32_fstatfs(p, v, retval)
 		syscallarg(netbsd32_statfsp_t) buf;
 	} */ *uap = v;
 	struct file *fp;
-	register struct mount *mp;
-	register struct statfs *sp;
+	struct mount *mp;
+	struct statfs *sp;
 	struct netbsd32_statfs s32;
 	int error;
 
@@ -4345,7 +4345,7 @@ netbsd32___semctl14(p, v, retval)
 	struct ucred *cred = p->p_ucred;
 	int i, rval, eval;
 	struct netbsd32_semid_ds sbuf;
-	register struct semid_ds *semaptr;
+	struct semid_ds *semaptr;
 
 	semlock(p);
 
@@ -5144,8 +5144,8 @@ netbsd32___fstat13(p, v, retval)
 		syscallarg(netbsd32_statp_t) sb;
 	} */ *uap = v;
 	int fd = SCARG(uap, fd);
-	register struct filedesc *fdp = p->p_fd;
-	register struct file *fp;
+	struct filedesc *fdp = p->p_fd;
+	struct file *fp;
 	struct netbsd32_stat sb32;
 	struct stat ub;
 	int error = 0;
@@ -5423,7 +5423,7 @@ netbsd32___sigaction14(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct netbsd32___sigaction14_args /* {
+	struct netbsd32___sigaction14_args /* {
 		syscallarg(int) signum;
 		syscallarg(const struct sigaction *) nsa;
 		syscallarg(struct sigaction *) osa;
@@ -5461,7 +5461,7 @@ int netbsd32___sigpending14(p, v, retval)
 	void   *v;
 	register_t *retval;
 {
-	register struct netbsd32___sigpending14_args /* {
+	struct netbsd32___sigpending14_args /* {
 		syscallarg(sigset_t *) set;
 	} */ *uap = v;
 	struct sys___sigpending14_args ua;
@@ -5475,7 +5475,7 @@ int netbsd32___sigprocmask14(p, v, retval)
 	void   *v;
 	register_t *retval;
 {
-	register struct netbsd32___sigprocmask14_args /* {
+	struct netbsd32___sigprocmask14_args /* {
 		syscallarg(int) how;
 		syscallarg(const sigset_t *) set;
 		syscallarg(sigset_t *) oset;
@@ -5518,7 +5518,7 @@ int netbsd32___getcwd(p, v, retval)
 	void   *v;
 	register_t *retval;
 {
-	register struct netbsd32___getcwd_args /* {
+	struct netbsd32___getcwd_args /* {
 		syscallarg(char *) bufp;
 		syscallarg(size_t) length;
 	} */ *uap = v;
@@ -5568,7 +5568,7 @@ int netbsd32_fchroot(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct netbsd32_fchroot_args /* {
+	struct netbsd32_fchroot_args /* {
 		syscallarg(int) fd;
 	} */ *uap = v;
 	struct sys_fchroot_args ua;
@@ -5589,7 +5589,7 @@ netbsd32_fhopen(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct netbsd32_fhopen_args /* {
+	struct netbsd32_fhopen_args /* {
 		syscallarg(const fhandle_t *) fhp;
 		syscallarg(int) flags;
 	} */ *uap = v;
@@ -5605,7 +5605,7 @@ int netbsd32_fhstat(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct netbsd32_fhstat_args /* {
+	struct netbsd32_fhstat_args /* {
 		syscallarg(const netbsd32_fhandlep_t) fhp;
 		syscallarg(struct stat *) sb;
 	} */ *uap = v;
@@ -5621,7 +5621,7 @@ int netbsd32_fhstatfs(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct netbsd32_fhstatfs_args /* {
+	struct netbsd32_fhstatfs_args /* {
 		syscallarg(const netbsd32_fhandlep_t) fhp;
 		syscallarg(struct statfs *) buf;
 	} */ *uap = v;

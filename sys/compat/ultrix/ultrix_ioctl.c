@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_ioctl.c,v 1.13 1998/08/09 20:37:56 perry Exp $ */
+/*	$NetBSD: ultrix_ioctl.c,v 1.14 2000/03/30 11:27:21 augustss Exp $ */
 /*	from : NetBSD: sunos_ioctl.c,v 1.21 1995/10/07 06:27:31 mycroft Exp */
 
 /*
@@ -139,7 +139,7 @@ stios2btios(st, bt)
 	struct emul_termios *st;
 	struct termios *bt;
 {
-	register u_long l, r;
+	u_long l, r;
 
 	l = st->c_iflag;
 	r = 	((l & 0x00000001) ? IGNBRK	: 0);
@@ -271,7 +271,7 @@ btios2stios(bt, st)
 	struct termios *bt;
 	struct emul_termios *st;
 {
-	register u_long l, r;
+	u_long l, r;
 
 	l = bt->c_iflag;
 	r = 	((l &  IGNBRK) ? 0x00000001	: 0);
@@ -444,14 +444,14 @@ stio2stios(t, ts)
 
 int
 ultrix_sys_ioctl(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {
 	struct ultrix_sys_ioctl_args *uap = v;
-	register struct filedesc *fdp = p->p_fd;
-	register struct file *fp;
-	register int (*ctl) __P((struct file *, u_long, caddr_t, struct proc *));
+	struct filedesc *fdp = p->p_fd;
+	struct file *fp;
+	int (*ctl) __P((struct file *, u_long, caddr_t, struct proc *));
 	int error;
 
 	if ( (unsigned)SCARG(uap, fd) >= fdp->fd_nfiles ||

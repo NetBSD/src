@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_psdev.c,v 1.12 1999/10/17 23:39:15 cgd Exp $	*/
+/*	$NetBSD: coda_psdev.c,v 1.13 2000/03/30 11:24:16 augustss Exp $	*/
 
 /*
  * 
@@ -123,7 +123,7 @@ vc_nb_open(dev, flag, mode, p)
     int          mode;     
     struct proc *p;             /* NetBSD only */
 {
-    register struct vcomm *vcp;
+    struct vcomm *vcp;
     
     ENTRY;
 
@@ -155,8 +155,8 @@ vc_nb_close (dev, flag, mode, p)
     int          mode;     
     struct proc *p;
 {
-    register struct vcomm *vcp;
-    register struct vmsg *vmp, *nvmp = NULL;
+    struct vcomm *vcp;
+    struct vmsg *vmp, *nvmp = NULL;
     struct coda_mntinfo *mi;
     int                 err;
 	
@@ -239,8 +239,8 @@ vc_nb_read(dev, uiop, flag)
     struct uio  *uiop; 
     int          flag;
 {
-    register struct vcomm *	vcp;
-    register struct vmsg *vmp;
+    struct vcomm *	vcp;
+    struct vmsg *vmp;
     int error = 0;
     
     ENTRY;
@@ -293,8 +293,8 @@ vc_nb_write(dev, uiop, flag)
     struct uio  *uiop; 
     int          flag;
 {
-    register struct vcomm *	vcp;
-    register struct vmsg *vmp;
+    struct vcomm *	vcp;
+    struct vmsg *vmp;
     struct coda_out_hdr *out;
     u_long seq;
     u_long opcode;
@@ -447,7 +447,7 @@ vc_nb_poll(dev, events, p)
     int           events;   
     struct proc  *p;
 {
-    register struct vcomm *vcp;
+    struct vcomm *vcp;
     int event_msk = 0;
 
     ENTRY;

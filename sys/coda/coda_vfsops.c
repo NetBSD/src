@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vfsops.c,v 1.9 2000/03/16 18:08:21 jdolecek Exp $	*/
+/*	$NetBSD: coda_vfsops.c,v 1.10 2000/03/30 11:24:17 augustss Exp $	*/
 
 /*
  * 
@@ -123,7 +123,7 @@ struct vfsops coda_vfsops = {
 int
 coda_vfsopstats_init(void)
 {
-	register int i;
+	int i;
 	
 	for (i=0;i<CODA_VFSOPS_SIZE;i++) {
 		coda_vfsopstats[i].opcode = i;
@@ -415,7 +415,7 @@ coda_quotactl(vfsp, cmd, uid, arg, p)
  */
 int
 coda_nb_statfs(vfsp, sbp, p)
-    register struct mount *vfsp;
+    struct mount *vfsp;
     struct statfs *sbp;
     struct proc *p;
 {
@@ -482,7 +482,7 @@ coda_vget(vfsp, ino, vpp)
  */
 int
 coda_fhtovp(vfsp, fhp, nam, vpp, exflagsp, creadanonp)
-    register struct mount *vfsp;    
+    struct mount *vfsp;    
     struct fid *fhp;
     struct mbuf *nam;
     struct vnode **vpp;

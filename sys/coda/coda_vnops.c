@@ -6,7 +6,7 @@ mkdir
 rmdir
 symlink
 */
-/*	$NetBSD: coda_vnops.c,v 1.16 1999/10/31 15:49:27 chs Exp $	*/
+/*	$NetBSD: coda_vnops.c,v 1.17 2000/03/30 11:24:17 augustss Exp $	*/
 
 /*
  * 
@@ -195,7 +195,7 @@ coda_vop_nop(void *anon) {
 int
 coda_vnodeopstats_init(void)
 {
-	register int i;
+	int i;
 	
 	for(i=0;i<CODA_VNODEOPS_SIZE;i++) {
 		coda_vnodeopstats[i].opcode = i;
@@ -224,7 +224,7 @@ coda_open(v)
      */
 /* true args */
     struct vop_open_args *ap = v;
-    register struct vnode **vpp = &(ap->a_vp);
+    struct vnode **vpp = &(ap->a_vp);
     struct cnode *cp = VTOC(*vpp);
     int flag = ap->a_mode & (~O_EXCL);
     struct ucred *cred = ap->a_cred;
@@ -628,9 +628,9 @@ coda_setattr(v)
 {
 /* true args */
     struct vop_setattr_args *ap = v;
-    register struct vnode *vp = ap->a_vp;
+    struct vnode *vp = ap->a_vp;
     struct cnode *cp = VTOC(vp);
-    register struct vattr *vap = ap->a_vap;
+    struct vattr *vap = ap->a_vap;
     struct ucred *cred = ap->a_cred;
     struct proc *p = ap->a_p;
 /* locals */
@@ -1431,7 +1431,7 @@ coda_mkdir(v)
     struct vnode *dvp = ap->a_dvp;
     struct cnode *dcp = VTOC(dvp);	
     struct componentname  *cnp = ap->a_cnp;
-    register struct vattr *va = ap->a_vap;
+    struct vattr *va = ap->a_vap;
     struct vnode **vpp = ap->a_vpp;
     struct ucred *cred = cnp->cn_cred;
     struct proc *p = cnp->cn_proc;
@@ -1690,7 +1690,7 @@ coda_readdir(v)
     struct vop_readdir_args *ap = v;
     struct vnode *vp = ap->a_vp;
     struct cnode *cp = VTOC(vp);
-    register struct uio *uiop = ap->a_uio;
+    struct uio *uiop = ap->a_uio;
     struct ucred *cred = ap->a_cred;
     int *eofflag = ap->a_eofflag;
     off_t **cookies = ap->a_cookies;
@@ -1778,7 +1778,7 @@ coda_strategy(v)
 {
 /* true args */
     struct vop_strategy_args *ap = v;
-    register struct buf *bp __attribute__((unused)) = ap->a_bp;
+    struct buf *bp __attribute__((unused)) = ap->a_bp;
     struct proc *p __attribute__((unused)) = curproc;
 /* upcall decl */
 /* locals */

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.22 2000/01/12 17:19:11 jdolecek Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.23 2000/03/30 11:27:18 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -588,8 +588,8 @@ out:
 
 int
 linux_ioctl_socket(p, uap, retval)
-	register struct proc *p;
-	register struct linux_sys_ioctl_args /* {
+	struct proc *p;
+	struct linux_sys_ioctl_args /* {
 		syscallarg(int) fd;
 		syscallarg(u_long) com;
 		syscallarg(caddr_t) data;
@@ -641,13 +641,13 @@ linux_ioctl_socket(p, uap, retval)
 
 int
 linux_sys_connect(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {
 	int error;
 
-	register struct sys_connect_args /* {
+	struct sys_connect_args /* {
 		syscallarg(int) s;
 		syscallarg(const struct sockaddr *) name;
 		syscallarg(unsigned int) namelen;
@@ -657,7 +657,7 @@ linux_sys_connect(p, v, retval)
 
 	if (error == EISCONN) {
 		struct file *fp;
-		register struct socket *so;
+		struct socket *so;
 		int s, state, prflags;
 		
 		/* getsock() will use the descriptor for us */

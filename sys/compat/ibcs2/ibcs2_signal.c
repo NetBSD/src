@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_signal.c,v 1.10 1998/09/11 12:50:08 mycroft Exp $	*/
+/*	$NetBSD: ibcs2_signal.c,v 1.11 2000/03/30 11:27:16 augustss Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Bartram
@@ -243,7 +243,7 @@ native_to_ibcs2_sigaltstack(bss, sss)
 
 int
 ibcs2_sys_sigaction(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {
@@ -277,7 +277,7 @@ ibcs2_sys_sigaction(p, v, retval)
 
 int 
 ibcs2_sys_sigaltstack(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {
@@ -310,7 +310,7 @@ ibcs2_sys_sigaltstack(p, v, retval)
 
 int
 ibcs2_sys_sigsys(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {
@@ -371,7 +371,7 @@ ibcs2_sys_sigsys(p, v, retval)
 
 int
 ibcs2_sys_sigprocmask(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {
@@ -420,7 +420,7 @@ ibcs2_sys_sigprocmask(p, v, retval)
 
 int
 ibcs2_sys_sigpending(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {
@@ -437,7 +437,7 @@ ibcs2_sys_sigpending(p, v, retval)
 
 int
 ibcs2_sys_sigsuspend(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {
@@ -460,7 +460,7 @@ ibcs2_sys_sigsuspend(p, v, retval)
 
 int
 ibcs2_sys_pause(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {
@@ -470,7 +470,7 @@ ibcs2_sys_pause(p, v, retval)
 
 int
 ibcs2_sys_kill(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {

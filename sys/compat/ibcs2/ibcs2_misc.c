@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_misc.c,v 1.46 2000/03/28 23:57:32 simonb Exp $	*/
+/*	$NetBSD: ibcs2_misc.c,v 1.47 2000/03/30 11:27:16 augustss Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -355,12 +355,12 @@ ibcs2_sys_getdents(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct ibcs2_sys_getdents_args /* {
+	struct ibcs2_sys_getdents_args /* {
 		syscallarg(int) fd;
 		syscallarg(char *) buf;
 		syscallarg(int) nbytes;
 	} */ *uap = v;
-	register struct dirent *bdp;
+	struct dirent *bdp;
 	struct vnode *vp;
 	caddr_t inp, buf;	/* BSD-format */
 	int len, reclen;	/* BSD-format */
@@ -483,7 +483,7 @@ ibcs2_sys_read(p, v, retval)
 		syscallarg(char *) buf;
 		syscallarg(u_int) nbytes;
 	} */ *uap = v;
-	register struct dirent *bdp;
+	struct dirent *bdp;
 	struct vnode *vp;
 	caddr_t inp, buf;	/* BSD-format */
 	int len, reclen;	/* BSD-format */

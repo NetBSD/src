@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_socksys.c,v 1.7 1996/10/13 00:46:51 christos Exp $	*/
+/*	$NetBSD: ibcs2_socksys.c,v 1.8 2000/03/30 11:27:16 augustss Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Scott Bartram
@@ -56,11 +56,11 @@ struct ibcs2_socksys_args {
 
 int
 ibcs2_socksys(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	register struct ibcs2_socksys_args *uap = v;
+	struct ibcs2_socksys_args *uap = v;
 	int error;
 	int realargs[7]; /* 1 for command, 6 for recvfrom */
       

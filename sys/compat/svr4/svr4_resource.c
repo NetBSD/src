@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_resource.c,v 1.5 1999/09/28 14:47:02 bouyer Exp $	 */
+/*	$NetBSD: svr4_resource.c,v 1.6 2000/03/30 11:27:20 augustss Exp $	 */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -93,7 +93,7 @@ svr4_to_native_rl(rl)
 
 int
 svr4_sys_getrlimit(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {
@@ -140,7 +140,7 @@ svr4_sys_getrlimit(p, v, retval)
 
 int
 svr4_sys_setrlimit(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {
@@ -191,7 +191,7 @@ svr4_sys_setrlimit(p, v, retval)
 
 int
 svr4_sys_getrlimit64(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {
@@ -238,7 +238,7 @@ svr4_sys_getrlimit64(p, v, retval)
 
 int
 svr4_sys_setrlimit64(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {

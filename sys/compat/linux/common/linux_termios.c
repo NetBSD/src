@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_termios.c,v 1.6 1998/10/04 00:02:45 fvdl Exp $	*/
+/*	$NetBSD: linux_termios.c,v 1.7 2000/03/30 11:27:18 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -89,8 +89,8 @@ static void bsd_termios_to_linux_termios __P((struct termios *,
 
 static void
 linux_termio_to_bsd_termios(lt, bts)
-	register struct linux_termio *lt;
-	register struct termios *bts;
+	struct linux_termio *lt;
+	struct termios *bts;
 {
 	int index;
 
@@ -172,8 +172,8 @@ linux_termio_to_bsd_termios(lt, bts)
 
 static void
 bsd_termios_to_linux_termio(bts, lt)
-	register struct termios *bts;
-	register struct linux_termio *lt;
+	struct termios *bts;
+	struct linux_termio *lt;
 {
 	int i, mask;
 
@@ -258,8 +258,8 @@ bsd_termios_to_linux_termio(bts, lt)
 
 static void
 linux_termios_to_bsd_termios(lts, bts)
-	register struct linux_termios *lts;
-	register struct termios *bts;
+	struct linux_termios *lts;
+	struct termios *bts;
 {
 	int index;
 
@@ -346,8 +346,8 @@ linux_termios_to_bsd_termios(lts, bts)
 
 static void
 bsd_termios_to_linux_termios(bts, lts)
-	register struct termios *bts;
-	register struct linux_termios *lts;
+	struct termios *bts;
+	struct linux_termios *lts;
 {
 	int i, mask;
 
@@ -445,16 +445,16 @@ bsd_termios_to_linux_termios(bts, lts)
 
 int
 linux_ioctl_termios(p, uap, retval)
-	register struct proc *p;
-	register struct linux_sys_ioctl_args /* {
+	struct proc *p;
+	struct linux_sys_ioctl_args /* {
 		syscallarg(int) fd;
 		syscallarg(u_long) com;
 		syscallarg(caddr_t) data;
 	} */ *uap;
 	register_t *retval;
 {
-	register struct file *fp;
-	register struct filedesc *fdp;
+	struct file *fp;
+	struct filedesc *fdp;
 	u_long com;
 	struct linux_termio tmplt;
 	struct linux_termios tmplts;

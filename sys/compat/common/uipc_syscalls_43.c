@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls_43.c,v 1.10 1998/12/18 13:18:43 drochner Exp $	*/
+/*	$NetBSD: uipc_syscalls_43.c,v 1.11 2000/03/30 11:27:15 augustss Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -149,7 +149,7 @@ compat_43_sys_recv(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct compat_43_sys_recv_args /* {
+	struct compat_43_sys_recv_args /* {
 		syscallarg(int) s;
 		syscallarg(caddr_t) buf;
 		syscallarg(int) len;
@@ -199,7 +199,7 @@ compat_43_sys_recvmsg(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct compat_43_sys_recvmsg_args /* {
+	struct compat_43_sys_recvmsg_args /* {
 		syscallarg(int) s;
 		syscallarg(struct omsghdr *) msg;
 		syscallarg(int) flags;
@@ -244,7 +244,7 @@ compat_43_sys_send(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct compat_43_sys_send_args /* {
+	struct compat_43_sys_send_args /* {
 		syscallarg(int) s;
 		syscallarg(caddr_t) buf;
 		syscallarg(int) len;
@@ -270,7 +270,7 @@ compat_43_sys_sendmsg(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct compat_43_sys_sendmsg_args /* {
+	struct compat_43_sys_sendmsg_args /* {
 		syscallarg(int) s;
 		syscallarg(caddr_t) msg;
 		syscallarg(int) flags;

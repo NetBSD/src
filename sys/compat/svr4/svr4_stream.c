@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stream.c,v 1.35 1999/09/07 18:20:19 christos Exp $	 */
+/*	$NetBSD: svr4_stream.c,v 1.36 2000/03/30 11:27:20 augustss Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -1463,7 +1463,7 @@ svr4_stream_ioctl(fp, p, retval, fd, cmd, dat)
 
 int
 svr4_sys_putmsg(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {
@@ -1631,7 +1631,7 @@ svr4_sys_putmsg(p, v, retval)
 
 int
 svr4_sys_getmsg(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_misc.c,v 1.55 2000/03/28 23:57:35 simonb Exp $	*/
+/*	$NetBSD: ultrix_misc.c,v 1.56 2000/03/30 11:27:21 augustss Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -317,15 +317,15 @@ async_daemon(p, v, retval)
 
 int
 ultrix_sys_mmap(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	register struct ultrix_sys_mmap_args *uap = v;
+	struct ultrix_sys_mmap_args *uap = v;
 	struct sys_mmap_args ouap;
-	register struct filedesc *fdp;
-	register struct file *fp;
-	register struct vnode *vp;
+	struct filedesc *fdp;
+	struct file *fp;
+	struct vnode *vp;
 
 	/*
 	 * Verify the arguments.
@@ -371,7 +371,7 @@ ultrix_sys_setsockopt(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct ultrix_sys_setsockopt_args *uap = v;
+	struct ultrix_sys_setsockopt_args *uap = v;
 	struct file *fp;
 	struct mbuf *m = NULL;
 	int error;
@@ -574,18 +574,18 @@ ultrix_sys_vhangup(p, v, retval)
 #ifdef __mips
 int
 ultrix_sys_cacheflush(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	register struct ultrix_sys_cacheflush_args /* {
+	struct ultrix_sys_cacheflush_args /* {
 		syscallarg(void *) addr;
 		syscallarg(int) nbytes;
 		syscallarg(int) flag;
 	} */ *uap = v;
-	register vaddr_t va  = (vaddr_t)SCARG(uap, addr);
-	register int nbytes     = SCARG(uap, nbytes);
-	register int whichcache = SCARG(uap, whichcache);
+	vaddr_t va  = (vaddr_t)SCARG(uap, addr);
+	int nbytes     = SCARG(uap, nbytes);
+	int whichcache = SCARG(uap, whichcache);
 
 	return (mips_user_cacheflush(p, va, nbytes, whichcache));
 }
@@ -593,18 +593,18 @@ ultrix_sys_cacheflush(p, v, retval)
 
 int
 ultrix_sys_cachectl(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	register struct ultrix_sys_cachectl_args /* {
+	struct ultrix_sys_cachectl_args /* {
 		syscallarg(void *) addr;
 		syscallarg(int) nbytes;
 		syscallarg(int) cacheop;
 	} */ *uap = v;
-	register vaddr_t va  = (vaddr_t)SCARG(uap, addr);
-	register int nbytes  = SCARG(uap, nbytes);
-	register int cacheop = SCARG(uap, cacheop);
+	vaddr_t va  = (vaddr_t)SCARG(uap, addr);
+	int nbytes  = SCARG(uap, nbytes);
+	int cacheop = SCARG(uap, cacheop);
 
 	return mips_user_cachectl(p, va, nbytes, cacheop);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_fcntl.c,v 1.8 1997/05/08 16:19:52 mycroft Exp $	*/
+/*	$NetBSD: ibcs2_fcntl.c,v 1.9 2000/03/30 11:27:16 augustss Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Bartram
@@ -237,12 +237,12 @@ ibcs2_sys_eaccess(p, v, retval)
 	void *v;
         register_t *retval;
 {
-	register struct ibcs2_sys_eaccess_args /* {
+	struct ibcs2_sys_eaccess_args /* {
 		syscallarg(char *) path;
 		syscallarg(int) flags;
 	} */ *uap = v;
-	register struct ucred *cred = p->p_ucred;
-	register struct vnode *vp;
+	struct ucred *cred = p->p_ucred;
+	struct vnode *vp;
         int error, flags;
         struct nameidata nd;
         caddr_t sg = stackgap_init(p->p_emul);
