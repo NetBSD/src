@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.14 1999/03/19 05:13:17 cgd Exp $
+#	$NetBSD: genassym.cf,v 1.15 1999/03/24 11:21:47 tron Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -74,7 +74,6 @@
 #	@(#)genassym.c	5.11 (Berkeley) 5/10/91
 #
 
-include "opt_uvm.h"
 include "opt_pmap_new.h"
 include "opt_compat_svr4.h"
 include "opt_compat_freebsd.h"
