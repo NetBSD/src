@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.6 1997/05/16 21:35:34 gwr Exp $ */
+/* $NetBSD: pmap.h,v 1.7 1997/10/05 22:59:36 mark Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -55,6 +55,8 @@
  */
 struct pmap {
 	pd_entry_t		*pm_pdir;	/* KVA of page directory */
+	void			*pm_unused0;	/* Reserved for future */
+	void			*pm_unused1;	/* Reserved for future */
 	vm_offset_t		pm_pptpt;	/* PA of pt's page table */
 	vm_offset_t		pm_vptpt;	/* VA of pt's page table */
 	boolean_t		pm_pdchanged;	/* pdir changed */
@@ -127,8 +129,6 @@ pmap_phys_address(int ppn)
 }
 
 #endif	/* _KERNEL */
-
-#define	__VM_PMAP_HACK
 
 #endif	/* _ARM32_PMAP_H_ */
 
