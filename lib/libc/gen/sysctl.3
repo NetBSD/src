@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.3,v 1.116 2003/04/19 21:56:49 christos Exp $
+.\"	$NetBSD: sysctl.3,v 1.117 2003/05/03 19:43:00 wiz Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -233,9 +233,9 @@ privilege may change the value.
 .It Li HW_MACHINE
 The machine class.
 .It Li HW_MODEL
-The machine model
+The machine model.
 .It Li HW_NCPU
-The number of cpus.
+The number of CPUs.
 .ne 1i
 .It Li HW_BYTEORDER
 The byteorder (4,321, or 1,234).
@@ -674,7 +674,7 @@ otherwise 0.
 Return System V style IPC configuration and run-time information.
 The third level name selects the System V style IPC facility.
 .Bl -column "KERN_SYSVIPC_MSG_INFOXXX" "struct shm_sysctl_infoXXX" -offset indent
-.It Sy Pa Third level name	Type
+.It Sy Third level name	Type
 .It KERN\_SYSVIPC\_MSG\_INFO	struct msg_sysctl_info
 .It KERN\_SYSVIPC\_SEM\_INFO	struct sem_sysctl_info
 .It KERN\_SYSVIPC\_SHM\_INFO	struct shm_sysctl_info
@@ -1045,7 +1045,7 @@ The third level name is the protocol.
 The fourth level name is the variable name.
 The currently defined protocols and names are:
 .Bl -column "Protocol name" "Variable nameXX" "integer" "yes" -offset indent
-.It Pa Protocol name	Variable name	Type	Changeable
+.It Sy Protocol name	Variable name	Type	Changeable
 .It ip6	forwarding	integer	yes
 .It ip6	redirect	integer	yes
 .It ip6	hlim	integer	yes
