@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)lgamma.3	6.6 (Berkeley) 12/3/92
-.\"	$NetBSD: lgamma.3,v 1.18 2002/02/07 07:00:49 ross Exp $
+.\"	$NetBSD: lgamma.3,v 1.19 2002/02/20 11:52:39 wiz Exp $
 .\"
 .Dd December 3, 1992
 .Dt LGAMMA 3
@@ -106,14 +106,13 @@ lg = lgamma(x); g = signgam\(**exp(lg);
 Only after
 .Fn lgamma
 has returned can signgam be correct.
-.Pp
 .Sh RETURN VALUES
 .Fn lgamma
 returns appropriate values unless an argument is out of range.
 Overflow will occur for sufficiently large positive values, and
 non-positive integers.
 On the
-.Tn VAX,
+.Tn VAX ,
 the reserved operator is returned,
 and
 .Va errno
