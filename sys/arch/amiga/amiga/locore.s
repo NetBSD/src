@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.79 1997/04/25 01:35:45 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.80 1997/05/13 18:00:54 gwr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1256,7 +1256,7 @@ Lswnofpsave:
 	tstl	a0			| map == VM_MAP_NULL?
 	jeq	Lbadsw			| panic
 #endif
-	lea	a0@(VM_PMAP),a0		| pmap = &vmspace.vm_pmap
+	movl	a0@(VM_PMAP),a0		| pmap = vmspace->vm_map.pmap
 	tstl	a0@(PM_STCHG)		| pmap->st_changed?
 	jeq	Lswnochg		| no, skip
 	pea	a1@			| push pcb (at p_addr)

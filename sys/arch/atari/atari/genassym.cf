@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.1 1997/03/17 13:23:15 leo Exp $
+#	$NetBSD: genassym.cf,v 1.2 1997/05/13 18:00:57 gwr Exp $
 
 #-
 # Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@ define	SRUN			SRUN
 define	PM_STCHG		offsetof(struct pmap, pm_stchanged)
 
 # VM structure fields
-define	VM_PMAP			offsetof(struct vmspace, vm_pmap)
+define	VM_PMAP			offsetof(struct vmspace, vm_map.pmap)
 
 # interrupt/fault metering
 define	V_INTR			offsetof(struct vmmeter, v_intr)

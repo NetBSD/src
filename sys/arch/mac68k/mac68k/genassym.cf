@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.1 1997/04/15 06:11:40 scottr Exp $
+#	$NetBSD: genassym.cf,v 1.2 1997/05/13 18:01:06 gwr Exp $
 
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -72,7 +72,7 @@ define	MD_REGS 		offsetof(struct mdproc, md_regs)
 
 define	PM_STCHG		offsetof(struct pmap, pm_stchanged)
 
-define	VM_PMAP 		offsetof(struct vmspace, vm_pmap)
+define	VM_PMAP 		offsetof(struct vmspace, vm_map.pmap)
 define	V_SWTCH 		offsetof(struct vmmeter, v_swtch)
 define	V_TRAP			offsetof(struct vmmeter, v_trap)
 define	V_SYSCALL		offsetof(struct vmmeter, v_syscall)
