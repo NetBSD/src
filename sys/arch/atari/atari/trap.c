@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.4 1995/04/22 20:49:25 christos Exp $	*/
+/*	$NetBSD: trap.c,v 1.5 1995/05/05 16:35:27 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -621,17 +621,8 @@ trap(type, code, v, frame)
 	 */
 	case T_SSIR:
 	case T_SSIR|T_USER:
-		if (ssir & SIR_NET) {
-			siroff(SIR_NET);
-			cnt.v_soft++;
-			netintr();
-		}
-		if (ssir & SIR_CLOCK) {
-			siroff(SIR_CLOCK);
-			cnt.v_soft++;
-			/* XXXX softclock(&frame.f_stackadj); */
-			softclock();
-		}
+		if(ssir)
+			softint();
 		/*
 		 * If this was not an AST trap, we are all done.
 		 */
