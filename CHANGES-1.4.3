@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.3,v 1.1.2.60 2000/09/25 16:21:42 he Exp $
+#	$NetBSD: CHANGES-1.4.3,v 1.1.2.61 2000/09/26 11:27:52 he Exp $
 
 A complete list of changes from NetBSD 1.4.2 to NetBSD 1.4.3:
 
@@ -1356,3 +1356,13 @@ sys/arch/hp300/stand/mkboot/Makefile		patch
 
   Fix build problem during ``make release'', caused by missing
   just-cleaned executable in the release phase.
+
+sys/arch/pmax/tc/scc.c				1.50
+
+  Make this compile again with no rcons.
+
+share/man/man8/man8.amiga/Makefile		1.7
+distrib/sets/lists/man/md_share			1.99-1.100
+
+  Build, install, and include in distribution the manual page for
+  the Amiga boot procedure.
