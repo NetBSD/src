@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.12 2000/01/27 07:50:02 soda Exp $	*/
+/*	$NetBSD: param.h,v 1.13 2000/02/11 19:25:14 thorpej Exp $	*/
 /*      $OpenBSD: param.h,v 1.9 1997/04/30 09:54:15 niklas Exp $ */
 
 /*
@@ -107,14 +107,6 @@
 #else
 #define	NMBCLUSTERS	1024		/* map size, max cluster allocation */
 #endif
-#endif
-
-/*
- * Size of kernel malloc arena in NBPG-sized logical pages
- *	XXX - different from <mips/include/mips_param.h>
- */
-#ifndef NKMEMCLUSTERS
-#define	NKMEMCLUSTERS	(4096*1024/NBPG)
 #endif
 
 /* bytes to disk blocks */

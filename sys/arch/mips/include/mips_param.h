@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_param.h,v 1.16 2000/01/09 13:24:15 simonb Exp $	*/
+/*	$NetBSD: mips_param.h,v 1.17 2000/02/11 19:25:16 thorpej Exp $	*/
 
 #include <machine/cpu.h>
 
@@ -48,11 +48,11 @@
 #define	SEGSHIFT	22		/* LOG2(NBSEG) */
 
 /*
- * Size of kernel malloc arena in NBPG-sized logical pages
+ * Minimum and maximum sizes of the kernel malloc arena in PAGE_SIZE-sized
+ * logical pages.
  */
-#ifndef NKMEMCLUSTERS
-#define	NKMEMCLUSTERS	(6 * 1024 * 1024 / NBPG)
-#endif
+#define	NKMEMPAGES_MIN_DEFAULT	((8 * 1024 * 1024) >> PAGE_SHIFT)
+#define	NKMEMPAGES_MAX_DEFAULT	((128 * 1024 * 1024) >> PAGE_SHIFT)
 
 /* pages ("clicks") (4096 bytes) to disk blocks */
 #define	ctod(x)		((x) << (PGSHIFT - DEV_BSHIFT))

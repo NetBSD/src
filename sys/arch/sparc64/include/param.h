@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.15 1999/12/04 21:21:34 ragge Exp $ */
+/*	$NetBSD: param.h,v 1.16 2000/02/11 19:30:29 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -164,11 +164,11 @@ extern int nbpg, pgofset, pgshift;
 #define MSGBUFSIZE	NBPG
 
 /*
- * Size of kernel malloc arena in NBPG-sized logical pages.
+ * Minimum and maximum sizes of the kernel malloc arena in PAGE_SIZE-sized
+ * logical pages.
  */
-#ifndef	NKMEMCLUSTERS
-#define	NKMEMCLUSTERS	(6 * 1024 * 1024 / NBPG)
-#endif
+#define	NKMEMPAGES_MIN_DEFAULT	((6 * 1024 * 1024) >> PAGE_SHIFT)
+#define	NKMEMPAGES_MAX_DEFAULT	((6 * 1024 * 1024) >> PAGE_SHIFT)
 
 /* pages ("clicks") to disk blocks */
 #define	ctod(x)		((x) << (PGSHIFT - DEV_BSHIFT))

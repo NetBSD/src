@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.20 2000/01/26 09:44:12 tsutsui Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.21 2000/02/11 19:30:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -129,7 +129,6 @@
 #endif
 
 /* virtual sizes (bytes) for various kernel submaps */
-#define VM_KMEM_SIZE		(NKMEMCLUSTERS*NBPG)
 #define VM_PHYS_SIZE		(USRIOSIZE*NBPG)
 
 #define VM_PHYSSEG_MAX		1	/* we have contiguous memory */
