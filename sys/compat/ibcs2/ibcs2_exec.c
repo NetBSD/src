@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_exec.c,v 1.26 2000/04/11 04:37:49 chs Exp $	*/
+/*	$NetBSD: ibcs2_exec.c,v 1.27 2000/06/04 16:24:02 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -46,6 +46,7 @@
 #include <sys/vnode.h>
 #include <sys/mount.h>
 #include <sys/exec.h>
+#include <sys/exec_coff.h>
 #include <sys/exec_elf.h>
 #include <sys/resourcevar.h>
 #ifdef IBCS2_DEBUG
@@ -357,9 +358,9 @@ exec_ibcs2_coff_prep_omagic(p, epp, fp, ap)
 	struct coff_filehdr *fp;
 	struct coff_aouthdr *ap;
 {
-	epp->ep_taddr = COFF_SEGMENT_ALIGN(ap, ap->a_tstart);
+	epp->ep_taddr = COFF_SEGMENT_ALIGN(fp, ap, ap->a_tstart);
 	epp->ep_tsize = ap->a_tsize;
-	epp->ep_daddr = COFF_SEGMENT_ALIGN(ap, ap->a_dstart);
+	epp->ep_daddr = COFF_SEGMENT_ALIGN(fp, ap, ap->a_dstart);
 	epp->ep_dsize = ap->a_dsize;
 	epp->ep_entry = ap->a_entry;
 
@@ -372,7 +373,7 @@ exec_ibcs2_coff_prep_omagic(p, epp, fp, ap)
 	/* set up command for bss segment */
 	if (ap->a_bsize > 0)
 		NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, ap->a_bsize,
-			  COFF_SEGMENT_ALIGN(ap, ap->a_dstart + ap->a_dsize),
+			  COFF_SEGMENT_ALIGN(fp, ap, ap->a_dstart + ap->a_dsize),
 			  NULLVP, 0,
 			  VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 	
@@ -391,7 +392,7 @@ exec_ibcs2_coff_prep_nmagic(p, epp, fp, ap)
 	struct coff_filehdr *fp;
 	struct coff_aouthdr *ap;
 {
-	epp->ep_taddr = COFF_SEGMENT_ALIGN(ap, ap->a_tstart);
+	epp->ep_taddr = COFF_SEGMENT_ALIGN(fp, ap, ap->a_tstart);
 	epp->ep_tsize = ap->a_tsize;
 	epp->ep_daddr = COFF_ROUND(ap->a_dstart, COFF_LDPGSZ);
 	epp->ep_dsize = ap->a_dsize;
@@ -410,7 +411,7 @@ exec_ibcs2_coff_prep_nmagic(p, epp, fp, ap)
 	/* set up command for bss segment */
 	if (ap->a_bsize > 0)
 		NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, ap->a_bsize,
-			  COFF_SEGMENT_ALIGN(ap, ap->a_dstart + ap->a_dsize),
+			  COFF_SEGMENT_ALIGN(fp, ap, ap->a_dstart + ap->a_dsize),
 			  NULLVP, 0,
 			  VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 
