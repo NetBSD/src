@@ -26,4 +26,7 @@ LIB=	${ARCH}
 .include <bsd.lib.mk>
 .else
 all:
+clean:
+cleandir:
+obj:
 .endif
