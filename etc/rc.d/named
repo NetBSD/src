@@ -1,10 +1,11 @@
 #!/bin/sh
 #
-# $NetBSD: named,v 1.9 2002/03/22 04:16:39 lukem Exp $
+# $NetBSD: named,v 1.10 2002/03/22 04:33:59 thorpej Exp $
 #
 
 # PROVIDE: named
 # REQUIRE: SERVERS
+# BEFORE:  DAEMON
 
 . /etc/rc.subr
 
