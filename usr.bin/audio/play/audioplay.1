@@ -1,4 +1,4 @@
-.\"	$NetBSD: audioplay.1,v 1.6 1999/09/13 19:36:30 tron Exp $
+.\"	$NetBSD: audioplay.1,v 1.7 1999/09/14 05:04:21 mrg Exp $
 .\"
 .\" Copyright (c) 1998-1999 Matthew R. Green
 .\" All rights reserved.
@@ -149,7 +149,13 @@ the audio device to be used.
 .Sh EXAMPLES
 Play a raw dump taken from an audio CD ROM:
 .Pp
-.Dl "audioplay -f -c 2 -P 16 -s 44100 e slinear_le filename
+.Dl "audioplay -f -c 2 -P 16 -s 44100 -e slinear_le filename
+.Pp
+The
+.Xr audioctl 1
+program can be used to show the available supported encodings:
+.Pp
+.Dl "audioctl encodings
 .Pp
 .Sh NOTES
 .Nm
