@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.hp700,v 1.6 2003/11/06 18:19:32 kleink Exp $
+# $NetBSD: Makefile.hp700,v 1.7 2004/06/04 04:45:50 thorpej Exp $
 
 # Makefile for NetBSD
 #
@@ -135,3 +135,8 @@ MKDEP_AFLAGS=	${APPFLAGS}
 ## (9) port independent kernel machinery
 ##
 .include "$S/conf/Makefile.kern.inc"
+
+##
+## (10) Appending make options.
+##
+%MAKEOPTIONSAPPEND
