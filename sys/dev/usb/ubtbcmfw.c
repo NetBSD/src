@@ -1,4 +1,4 @@
-/*	$NetBSD: ubtbcmfw.c,v 1.1 2002/08/23 00:55:21 augustss Exp $	*/
+/*	$NetBSD: ubtbcmfw.c,v 1.2 2002/08/23 00:58:58 augustss Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubtbcmfw.c,v 1.1 2002/08/23 00:55:21 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubtbcmfw.c,v 1.2 2002/08/23 00:58:58 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -216,7 +216,6 @@ ubtbcmfw_load_file(usbd_device_handle dev, usbd_pipe_handle out,
 	int error;
 	char buf[1024];
 
-printf("open %s\n", filename);
 	NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, filename, p);
 	if ((error = vn_open(&nd, FREAD, 0)) != 0)
 		return (error);
@@ -229,7 +228,6 @@ printf("open %s\n", filename);
 
 	for (offs = 0; ; offs += size) {
 		size = sizeof buf;
-printf("read %d at %d\n", size, offs);
 		error = vn_rdwr(UIO_READ, vp, buf, size, offs, UIO_SYSSPACE,
 		    IO_NODELOCKED | IO_SYNC, p->p_ucred, &resid, p);
 		size -= resid;
@@ -242,7 +240,6 @@ printf("read %d at %d\n", size, offs);
 	}
 
 out:
-printf("close\n");
 	vn_close(vp, FREAD, p->p_ucred, p);
 	return error;
 }
