@@ -8,3 +8,15 @@
 #
 0	belong		0x000003f3	AmigaOS loadseg()ble executable/binary
 0	belong		0x000003e7	AmigaOS object/library data
+#
+0	beshort		0xe310		Amiga Workbench
+>2	beshort		1		
+>>48	byte		1		disk icon
+>>48	byte		2		drawer icon
+>>48	byte		3		tool icon
+>>48	byte		4		project icon
+>>48	byte		5		garbage icon
+>>48	byte		6		device icon
+>>48	byte		7		kickstart icon
+>>48	byte		8		workbench application icon
+>2	beshort		>1		icon, vers. %d
