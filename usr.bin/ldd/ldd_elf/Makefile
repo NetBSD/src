@@ -1,24 +1,22 @@
-#	$NetBSD: Makefile,v 1.4 1997/05/08 21:11:41 gwr Exp $
+#	$NetBSD: Makefile,v 1.5 1997/10/11 19:13:39 christos Exp $
 
+WARNS ?= 1
 PROG=	ldd
 SRCS=	ldd.c \
 	xmalloc.c debug.c map_object.c load.c search.c headers.c paths.c
 NOMAN=
 
 .if (${MACHINE_ARCH} == "alpha")
-CFLAGS+= -DELFSIZE=64
+CPPFLAGS+= -DELFSIZE=64
 .else
-CFLAGS+= -DELFSIZE=32
+CPPFLAGS+= -DELFSIZE=32
 .endif
 
-CFLAGS+= -Wall  -I${.CURDIR}/../../libexec/ld.elf_so
-CFLAGS+= -DLIBDIR=\"${LIBDIR}\"
-#CFLAGS+= -DDEBUG
-
-
+LDELFSO=${.CURDIR}/../../libexec/ld.elf_so
+CPPFLAGS+= -I${LDELFSO} -DLIBDIR=\"${LIBDIR}\"	# -DDEBUG
+.PATH: ${LDELFSO}
 
 LDFLAGS+= -static
 
-.PATH: ${.CURDIR}/../../libexec/ld.elf_so
 
 .include <bsd.prog.mk>
