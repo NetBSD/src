@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.157 2000/04/20 13:59:02 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.158 2000/04/30 21:22:28 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -493,7 +493,6 @@ static void  mmu_setup4m_L3 __P((int, struct segmap *));
 /* from pmap.h: */
 boolean_t	(*pmap_clear_modify_p) __P((struct vm_page *));
 boolean_t	(*pmap_clear_reference_p) __P((struct vm_page *));
-void		(*pmap_copy_page_p) __P((paddr_t, paddr_t));
 int		(*pmap_enter_p) __P((pmap_t, vaddr_t, paddr_t, vm_prot_t, int));
 boolean_t	(*pmap_extract_p) __P((pmap_t, vaddr_t, paddr_t *));
 boolean_t	(*pmap_is_modified_p) __P((struct vm_page *));
@@ -503,7 +502,6 @@ void		(*pmap_kenter_pgs_p) __P((vaddr_t, struct vm_page **, int));
 void		(*pmap_kremove_p) __P((vaddr_t, vsize_t));
 void		(*pmap_page_protect_p) __P((struct vm_page *, vm_prot_t));
 void		(*pmap_protect_p) __P((pmap_t, vaddr_t, vaddr_t, vm_prot_t));
-void		(*pmap_zero_page_p) __P((paddr_t));
 void		(*pmap_changeprot_p) __P((pmap_t, vaddr_t, vm_prot_t, int));
 /* local: */
 void 		(*pmap_rmk_p) __P((struct pmap *, vaddr_t, vaddr_t, int, int));
@@ -1051,15 +1049,15 @@ srmmu_bypass_read(paddr)
 {
 	unsigned long v;
 
-	if (/*cpuinfo.cpu_impl == 4 && */cpuinfo.mxcc) {
+	if (cpuinfo.mxcc) {
 		/*
 		 * We're going to have to use MMU passthrough. If we're on
-		 * a Viking MicroSparc without an mbus, we need to turn
-		 * off traps and set the AC bit at 0x8000 in the MMU's
-		 * control register.  Ugh.
+		 * a Viking SuperSPARC with a MultiCache Controller, we
+		 * need to set the AC (Alternate Cacheable) bit in the MMU's
+		 * control register in order to not by-pass the cache.
 		 */
 
-		unsigned long s = lda(SRMMU_PCR,ASI_SRMMU);
+		unsigned long s = lda(SRMMU_PCR, ASI_SRMMU);
 
 		/* set MMU AC bit */
 		sta(SRMMU_PCR, ASI_SRMMU, s | VIKING_PCR_AC);
@@ -2875,7 +2873,6 @@ pmap_bootstrap4_4c(nctx, nregion, nsegment)
 #if defined(SUN4M) /* We're in a dual-arch kernel. Setup 4/4c fn. ptrs */
 	pmap_clear_modify_p 	=	pmap_clear_modify4_4c;
 	pmap_clear_reference_p 	= 	pmap_clear_reference4_4c;
-	pmap_copy_page_p 	=	pmap_copy_page4_4c;
 	pmap_enter_p 		=	pmap_enter4_4c;
 	pmap_extract_p 		=	pmap_extract4_4c;
 	pmap_is_modified_p 	=	pmap_is_modified4_4c;
@@ -2885,7 +2882,6 @@ pmap_bootstrap4_4c(nctx, nregion, nsegment)
 	pmap_kremove_p	 	=	pmap_kremove4_4c;
 	pmap_page_protect_p	=	pmap_page_protect4_4c;
 	pmap_protect_p		=	pmap_protect4_4c;
-	pmap_zero_page_p	=	pmap_zero_page4_4c;
 	pmap_changeprot_p	=	pmap_changeprot4_4c;
 	pmap_rmk_p		=	pmap_rmk4_4c;
 	pmap_rmu_p		=	pmap_rmu4_4c;
@@ -3224,7 +3220,6 @@ pmap_bootstrap4m(void)
 #if defined(SUN4) || defined(SUN4C) /* setup 4M fn. ptrs for dual-arch kernel */
 	pmap_clear_modify_p 	=	pmap_clear_modify4m;
 	pmap_clear_reference_p 	= 	pmap_clear_reference4m;
-	pmap_copy_page_p 	=	pmap_copy_page4m;
 	pmap_enter_p 		=	pmap_enter4m;
 	pmap_extract_p 		=	pmap_extract4m;
 	pmap_is_modified_p 	=	pmap_is_modified4m;
@@ -3234,7 +3229,6 @@ pmap_bootstrap4m(void)
 	pmap_kremove_p	 	=	pmap_kremove4m;
 	pmap_page_protect_p	=	pmap_page_protect4m;
 	pmap_protect_p		=	pmap_protect4m;
-	pmap_zero_page_p	=	pmap_zero_page4m;
 	pmap_changeprot_p	=	pmap_changeprot4m;
 	pmap_rmk_p		=	pmap_rmk4m;
 	pmap_rmu_p		=	pmap_rmu4m;
@@ -6600,7 +6594,6 @@ pmap_copy_page4_4c(src, dst)
  * We avoid stomping on the cache.
  * XXX	might be faster to use destination's context and allow cache to fill?
  */
-int xxxdebug = 0;
 void
 pmap_zero_page4m(pa)
 	paddr_t pa;
@@ -6627,6 +6620,27 @@ pmap_zero_page4m(pa)
 	/* Remove temporary mapping */
 	tlb_flush_page(va);
 	setpgt4m(vpage_pte[0], SRMMU_TEINVALID);
+}
+
+void
+pmap_zero_page_viking_mxcc(pa)
+	paddr_t pa;
+{
+	u_int offset;
+	u_int stream_data_addr = MXCC_STREAM_DATA;
+	u_int64_t v = (u_int64_t)pa;
+
+	/* Load MXCC stream data register with 0 (bottom 32 bytes only) */
+	stda(stream_data_addr+0, ASI_CONTROL, 0);
+	stda(stream_data_addr+8, ASI_CONTROL, 0);
+	stda(stream_data_addr+16, ASI_CONTROL, 0);
+	stda(stream_data_addr+24, ASI_CONTROL, 0);
+
+	/* Then write the stream data register to each block in the page */
+	v |= MXCC_STREAM_C;
+	for (offset = 0; offset < NBPG; offset += MXCC_STREAM_BLKSZ) {
+		stda(MXCC_STREAM_DST, ASI_CONTROL, v | offset);
+	}
 }
 
 /*
@@ -6673,6 +6687,25 @@ pmap_copy_page4m(src, dst)
 	setpgt4m(vpage_pte[0], SRMMU_TEINVALID);
 	tlb_flush_page(dva);
 	setpgt4m(vpage_pte[1], SRMMU_TEINVALID);
+}
+
+void
+pmap_copy_page_viking_mxcc(src, dst)
+	paddr_t src, dst;
+{
+	u_int offset;
+	u_int64_t v1 = (u_int64_t)src;
+	u_int64_t v2 = (u_int64_t)dst;
+
+	/* Enable cache-coherency */
+	v1 |= MXCC_STREAM_C;
+	v2 |= MXCC_STREAM_C;
+
+	/* Copy through stream data register */
+	for (offset = 0; offset < NBPG; offset += MXCC_STREAM_BLKSZ) {
+		stda(MXCC_STREAM_SRC, ASI_CONTROL, v1 | offset);
+		stda(MXCC_STREAM_DST, ASI_CONTROL, v2 | offset);
+	}
 }
 #endif /* SUN4M */
 
