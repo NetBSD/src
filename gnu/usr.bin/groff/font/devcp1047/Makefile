@@ -2,5 +2,7 @@
 
 DEV=		cp1047
 
+DIST_SUBDIR=	font/devcp1047
+
 .include "../Makefile.tty"
 .include "../Makefile.dev"

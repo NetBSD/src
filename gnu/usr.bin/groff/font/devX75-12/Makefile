@@ -3,5 +3,8 @@
 NOOBJ=
 
 .include "../Makefile.inc"
+
+DIST_SUBDIR=	font/devX75-12
+
 .include "${DIST_DIR}/Makefile.sub"
 .include "../Makefile.dev"

@@ -1,5 +1,10 @@
-.\" Copyright (c) 2001 Ruslan Ermilov <ru@FreeBSD.org>.
+.\" $NetBSD: mdoc.local,v 1.2 2003/06/30 18:41:05 wiz Exp $
+.\"
+.\" Copyright (c) 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Thomas Klausner.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -9,62 +14,150 @@
 .\" 2. Redistributions in binary form must reproduce the above copyright
 .\"    notice, this list of conditions and the following disclaimer in the
 .\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"        This product includes software developed by the NetBSD
+.\"        Foundation, Inc. and its contributors.
+.\" 4. Neither the name of The NetBSD Foundation nor the names of its
+.\"    contributors may be used to endorse or promote products derived
+.\"    from this software without specific prior written permission.
 .\"
-.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
-.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
-.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
-.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
-.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
-.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
-.\" SUCH DAMAGE.
-.\"
-.\" $FreeBSD: src/gnu/usr.bin/groff/tmac/mdoc.local,v 1.27 2003/06/09 10:40:17 ru Exp $
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"     %beginstrip%
 .
-.eo
+.\" NetBSD
+.ds volume-operating-system NetBSD
+.\" NetBSD section names
+.ds volume-ds-1 Reference Manual
+.ds volume-ds-2 System Calls Manual
+.ds volume-ds-3 Library Functions Manual
+.ds volume-ds-4 Kernel Interfaces Manual
+.ds volume-ds-5 File Formats Manual
+.ds volume-ds-6 Games Manual
+.ds volume-ds-7 Miscellaneous Information Manual
+.ds volume-ds-8 System Manager's Manual
+.ds volume-ds-9 Kernel Developer's Manual
 .
+.\" NetBSD .Lb values
+.\".ds str-Lb-libarm32     ARM32 Architecture Library (libarm32, \-larm32)
+.ds str-Lb-libarm       ARM Architecture Library (libarm, \-larm)
+.\".ds str-Lb-libc         Standard C\~Library (libc, \-lc)
+.ds str-Lb-libcdk       Curses Development Kit Library (libcdk, \-lcdk)
+.\".ds str-Lb-libcompat    Compatibility Library (libcompat, \-lcompat)
+.\".ds str-Lb-libcrypt     Crypt Library (libcrypt, \-lcrypt)
+.\".ds str-Lb-libcurses    Curses Library (libcurses, \-lcurses)
+.\".ds str-Lb-libedit      Command Line Editor Library (libedit, \-ledit)
+.ds str-Lb-libform      Curses Form Library (libform, \-lform)
+.\".ds str-Lb-libi386      i386 Architecture Library (libi386, \-li386)
+.ds str-Lb-libintl      Internationalized Message Handling Library (libintl, \-lintl)
+.\".ds str-Lb-libipsec     IPsec Policy Control Library (libipsec, \-lipsec)
+.\".ds str-Lb-libkvm       Kernel Data Access Library (libkvm, \-lkvm)
+.\".ds str-Lb-libm         Math Library (libm, \-lm)
+.ds str-Lb-libm68k      m68k Architecture Library (libm68k, \-lm68k)
+.ds str-Lb-libmagic     Magic Number Recognition Library (libmagic, \-lmagic)
+.\".ds str-Lb-libmenu      Curses Menu Library (libmenu, \-lmenu)
+.\".ds str-Lb-libossaudio  OSS Audio Emulation Library (libossaudio, \-lossaudio)
+.ds str-Lb-libpcap      Packet Capture Library (libpcap, \-lpcap)
+.ds str-Lb-libpci       PCI Bus Access Library (libpci, \-lpci)
+.ds str-Lb-libpmc       Performance Counters Library (libpmc, \-lpmc)
+.\".ds str-Lb-libposix     POSIX Compatibility Library (libposix, \-lposix)
+.ds str-Lb-libpthread   POSIX Thread Library (libpthread, \-lpthread)
+.\".ds str-Lb-libresolv    DNS Resolver Library (libresolv, \-lresolv)
+.ds str-Lb-librt        POSIX Real-time Library (librt, \-lrt)
+.\".ds str-Lb-libtermcap   Termcap Access Library (libtermcap, \-ltermcap)
+.ds str-Lb-libusbhid    USB Human Interface Devices Library (libusbhid, \-lusbhid)
+.\".ds str-Lb-libutil      System Utilities Library (libutil, \-lutil)
+.ds str-Lb-libx86_64    x86_64 Architecture Library (libx86_64, \-lx86_64)
+.\".ds str-Lb-libz         Compression Library (libz, \-lz)
 .
-.ds doc-volume-operating-system FreeBSD
+.\" architecture names where case diverges from groff
+.ds volume-as-alpha    alpha
+.ds volume-as-amiga    amiga
+.ds volume-as-arc      arc
+.\" next two are dead...
+.\".ds volume-as-arm26    arm26
+.\".ds volume-as-arm32    arm32
+.ds volume-as-atari    atari
+.ds volume-as-bebox    bebox
+.ds volume-as-cobalt   cobalt
+.ds volume-as-evbsh3   evbsh3
+.ds volume-as-hp300    hp300
+.ds volume-as-hpcmips  hpcmips
+.ds volume-as-mips     mips
+.ds volume-as-sparc    sparc
+.ds volume-as-vax      vax
+.\" not in groff
+.ds volume-as-acorn26  acorn26
+.ds volume-as-acorn32  acorn32
+.ds volume-as-algor    algor
+.ds volume-as-amd64    amd64
+.ds volume-as-cats     cats
+.ds volume-as-cesfic   cesfic
+.ds volume-as-dreamcast dreamcast
+.ds volume-as-evbarm   evbarm
+.ds volume-as-evbmips  evbmips
+.ds volume-as-evbppc   evbppc
+.ds volume-as-hp700    hp700
+.ds volume-as-hpcarm   hpcarm
+.ds volume-as-hpcsh    hpcsh
+.ds volume-as-mipsco   mipsco
+.ds volume-as-mvmeppc  mvmeppc
+.ds volume-as-netwinder netwinder
+.ds volume-as-playstation2 playstation2
+.ds volume-as-pmppc    pmppc
+.ds volume-as-sandpoint sandpoint
+.ds volume-as-sbmips   sbmips
+.ds volume-as-shark    shark
+.ds volume-as-sun2     sun2
+.ds volume-as-x86_64   x86_64
 .
-.\" FreeBSD .Lb values
-.ds doc-str-Lb-libc_r      Reentrant C\~Library (libc_r, \-lc_r)
-.ds doc-str-Lb-libcalendar Calendar Arithmetic Library (libcalendar, \-lcalendar)
-.ds doc-str-Lb-libcam      Common Access Method User Library (libcam, \-lcam)
-.ds doc-str-Lb-libcipher   FreeSec Crypt Library (libcipher, \-lcipher)
-.ds doc-str-Lb-libdevinfo  Device and Resource Information Utility Library (libdevinfo, \-ldevinfo)
-.ds doc-str-Lb-libdevstat  Device Statistics Library (libdevstat, \-ldevstat)
-.ds doc-str-Lb-libdisk     Interface to Slice and Partition Labels Library (libdisk, \-ldisk)
-.ds doc-str-Lb-libedit     Line Editor and History Library (libedit, \-ledit)
-.ds doc-str-Lb-libfetch    File Transfer Library (libfetch, \-lfetch)
-.ds doc-str-Lb-libgeom     Userland API Library for kernel GEOM subsystem (libgeom, \-lgeom)
-.ds doc-str-Lb-libipx      IPX Address Conversion Support Library (libipx, \-lipx)
-.ds doc-str-Lb-libmd       Message Digest (MD4, MD5, etc.) Support Library (libmd, \-lmd)
-.ds doc-str-Lb-libnetgraph Netgraph User Library (libnetgraph, \-lnetgraph)
-.ds doc-str-Lb-libpam      PAM Library (libpam, \-lpam)
-.ds doc-str-Lb-librpcsvc   RPC Service Library (librpcsvc, \-lrpcsvc)
-.ds doc-str-Lb-libugidfw   File System Firewall Interface Library (libugidfw, \-lugidfw)
-.ds doc-str-Lb-libusbhid   USB HID access routines library (libusbhid, \-lusbhid)
-.ds doc-str-Lb-libvgl      Video Graphics Library (libvgl, \-lvgl)
+.\" standards names diverging from groff
+.ds doc-str-St--isoC       \*[doc-Tn-font-size]ISO/IEC\*[doc-str-St] 9899:1990
+.as doc-str-St--isoC       " (\*[Lq]\*[doc-Tn-font-size]ISO\~C\^90\*[doc-str-St]\*[Rq])
+.ds str-St--xcurses4.2     \*[doc-Tn-font-size]X/Open\*[doc-str-St] Curses Issue\~4, Version\~2
+.as str-St--xcurses4.2     " (\*[Lq]\*[doc-Tn-font-size]XCURSES\*[doc-str-St]\^4.2\*[Rq])
+.ds str-St--xpg4.2         \*[doc-Tn-font-size]X/Open\*[doc-str-St] Portability Guide Issue\~4, Version\~2
+.as str-St--xpg4.2         " (\*[Lq]\*[doc-Tn-font-size]XPG\*[doc-str-St]\^4.2\*[Rq])
+.
+.\" standards names not in groff
+.als str-St--isoC-90 str-St--isoC
+.ds str-St--isoC-amd1       \*[doc-Tn-font-size]ISO/IEC\*[doc-str-St] 9899/AMD1:1995
+.as str-St--isoC-amd1       " (\*[Lq]\*[doc-Tn-font-size]ISO\~C\^90\*[doc-str-St], Amendment 1\*[Rq])
+.ds str-St--isoC-tcor1      \*[doc-Tn-font-size]ISO/IEC\*[doc-str-St] 9899/TCOR1:1994
+.as str-St--isoC-tcor1      " (\*[Lq]\*[doc-Tn-font-size]ISO\~C\^90\*[doc-str-St], Technical Corrigendum 1\*[Rq])
+.ds str-St--isoC-tcor2      \*[doc-Tn-font-size]ISO/IEC\*[doc-str-St] 9899/TCOR2:1995
+.as str-St--isoC-tcor2      " (\*[Lq]\*[doc-Tn-font-size]ISO\~C\^90\*[doc-str-St], Technical Corrigendum 2\*[Rq])
+.ds str-St--xns5.2d2.0      \*[doc-Tn-font-size]X/Open\*[doc-str-St] Networking Services Issue\~5.2 Draft\~2.0
+.as str-St--xns5.2d2.0      " (\*[Lq]\*[doc-Tn-font-size]XNS\*[doc-str-St]\^5.2D2.0\*[Rq])
+.ds str-St--ieee1275-94     \*[doc-Tn-font-size]\%IEEE\*[doc-str-St] Std 1275-1994
+.as str-St--ieee1275-94     " (\*[Lq]\*[doc-Tn-font-size]Open Firmware\*[doc-str-St]\*[Rq])
+.\" for a short time only -- use -isoC-90 or -isoC
+.als str-St--isoC90 str-St--isoC
+.\" for a short time only -- use -isoC-99
+.als str-St--isoC99 str-St--isoC-99
 .
 .\" Default .Os value
-.ds doc-operating-system FreeBSD\~5.1
-.
-.\" FreeBSD releases not found in doc-common
-.ds doc-operating-system-FreeBSD-4.9    4.9
-.ds doc-operating-system-FreeBSD-5.1    5.1
-.ds doc-operating-system-FreeBSD-5.2    5.2
-.
-.ec
-.
-.\" Locale support
-.if d doc-locale \{\
-.  ie "\*[doc-locale]"ru.KOI8-R" \
-.    mso mdoc/ru.KOI8-R
-.  el \{ .if "\*[doc-locale]"fr.ISO8859-1" \
-.    mso mdoc/fr.ISO8859-1
-.\}\}
+.ds operating-system NetBSD\~1.6
+.\" Other known versions, not yet in groff distribution
+.ds operating-system-NetBSD-1.4.2  1.4.2
+.ds operating-system-NetBSD-1.4.3  1.4.3
+.ds operating-system-NetBSD-1.5.1  1.5.1
+.ds operating-system-NetBSD-1.5.2  1.5.2
+.ds operating-system-NetBSD-1.5.3  1.5.3
+.ds operating-system-NetBSD-1.6.1  1.6.1
+.ds operating-system-NetBSD-2.0    2.0
+.ds str-At-V.3 \*[Tn-font-size]AT&T\*[str-At] System\~V.3
+.as str-At-V.3 " \*[Tn-font-size]UNIX\*[str-At]
+.\" For easier converting
+.nr hyphen-flags 1

@@ -1,5 +1,7 @@
 # $FreeBSD: src/gnu/usr.bin/groff/font/devlbp/Makefile,v 1.2 2002/10/11 08:58:13 ru Exp $
 
+DIST_SUBDIR=	font/devlbp
+
 DEV=		lbp
 LBPPRINT=	${PSPRINT}
 DEVFILES=	DESC HB HBI HI HR HNB HNBI HNI HNR \

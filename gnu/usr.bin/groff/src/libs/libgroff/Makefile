@@ -1,7 +1,12 @@
 # $FreeBSD: src/gnu/usr.bin/groff/src/libs/libgroff/Makefile,v 1.5 2003/05/01 13:22:19 ru Exp $
 
+DIST_SUBDIR=	src/libs/libgroff
+
+NOMAN=		# defined
+NOPROFILE=	# defined
+NOPIC=		# defined
+
 LIB=		groff
-INTERNALLIB=	YES
 SRCS=		assert.cpp change_lf.cpp cmap.cpp color.cpp cset.cpp device.cpp errarg.cpp\
 		error.cpp fatal.cpp filename.cpp font.cpp fontfile.cpp geometry.cpp\
 		htmlhint.cpp invalid.cpp lf.cpp lineno.cpp macropath.cpp\
@@ -10,6 +15,9 @@ SRCS=		assert.cpp change_lf.cpp cmap.cpp color.cpp cset.cpp device.cpp errarg.cp
 		tmpfile.cpp tmpname.cpp version.cpp
 SRCS+=		getopt.c getopt1.c iftoa.c itoa.c matherr.c
 CLEANFILES=	version.cpp
+
+# only needed during build
+libinstall::
 
 .include <bsd.lib.mk>
 

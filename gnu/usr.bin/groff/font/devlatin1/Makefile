@@ -2,5 +2,7 @@
 
 DEV=		latin1
 
+DIST_SUBDIR=	font/devlatin1
+
 .include "../Makefile.tty"
 .include "../Makefile.dev"
