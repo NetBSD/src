@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.h,v 1.28 1999/10/04 23:21:18 lukem Exp $	*/
+/*	$NetBSD: curses.h,v 1.29 1999/12/07 03:22:10 simonb Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -205,8 +205,8 @@ extern char	*AL, *BC, *BL, *BT, *CD, *CE, *CL, *CM, *CR, *CS, *DC,
 #define    KEY_MAX        0x198    /* maximum extended key value */
 
 /* 8-bit ASCII characters. */
-#define	unctrl(c)		__unctrl[(c) & 0xff]
-#define	unctrllen(ch)		__unctrllen[(ch) & 0xff]
+#define	unctrl(c)		__unctrl[((unsigned)c) & 0xff]
+#define	unctrllen(ch)		__unctrllen[((unsigned)ch) & 0xff]
 
 extern char	 *__unctrl[256];	/* Control strings. */
 extern char	 __unctrllen[256];	/* Control strings length. */
@@ -478,7 +478,9 @@ __END_DECLS
 
 /* Private functions. */
 #ifdef _CURSES_PRIVATE
+#ifdef DEBUG
 void	 __CTRACE __P((const char *, ...));
+#endif
 int	 __delay __P((void));
 unsigned int __hash __P((char *, int));
 void	 __id_subwins __P((WINDOW *));
