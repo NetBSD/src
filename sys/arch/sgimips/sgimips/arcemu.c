@@ -1,4 +1,4 @@
-/*	$NetBSD: arcemu.c,v 1.5 2004/04/14 10:29:26 pooka Exp $	*/
+/*	$NetBSD: arcemu.c,v 1.6 2004/06/08 22:51:21 rumble Exp $	*/
 
 /*
  * Copyright (c) 2004 Steve Rumble 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arcemu.c,v 1.5 2004/04/14 10:29:26 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arcemu.c,v 1.6 2004/06/08 22:51:21 rumble Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -140,6 +140,12 @@ arcemu_identify()
  * IP12 specific
  */
 
+/* Prom Vectors */
+static void   (*ip12_prom_reset)(void) = (void *)MIPS_PHYS_TO_KSEG1(0x1fc00000);
+static void   (*ip12_prom_reinit)(void) =(void *)MIPS_PHYS_TO_KSEG1(0x1fc00018);
+static int    (*ip12_prom_printf)(const char *, ...) =
+					 (void *)MIPS_PHYS_TO_KSEG1(0x1fc00080);
+
 /*
  * The following matches IP12 NVRAM memory layout
  */
@@ -224,9 +230,9 @@ arcemu_ip12_init()
 	arcemu_v.GetChild =		  arcemu_ip12_GetChild;
 	arcemu_v.GetEnvironmentVariable = arcemu_ip12_GetEnvironmentVariable;
 	arcemu_v.GetMemoryDescriptor =    arcemu_ip12_GetMemoryDescriptor;
-	arcemu_v.Reboot =                 IP12_PROM_REBOOT; 
-	arcemu_v.PowerDown =              IP12_PROM_POWER_DOWN;
-	arcemu_v.EnterInteractiveMode =   IP12_PROM_INTERACTIVE_MODE;
+	arcemu_v.Reboot =                 (void *)ip12_prom_reset; 
+	arcemu_v.PowerDown =		  (void *)ip12_prom_reinit; 
+	arcemu_v.EnterInteractiveMode =   (void *)ip12_prom_reinit;	
 
 	cn_tab = &arcemu_ip12_cn;
 	arcemu_ip12_eeprom_read();
@@ -386,13 +392,7 @@ arcemu_ip12_GetMemoryDescriptor(void *mem)
 static void
 arcemu_ip12_putc(dev_t dummy, int c)
 {
-	static void (*ip12write)(char *, int, int, int) = IP12_PROM_PRINT;
-	char t[2];
-
-	t[0] = c;
-	t[1] = '\0';
-
-	ip12write(t, 0, 0, 0);
+	ip12_prom_printf("%c", c);
 }
 
 /*
