@@ -1,4 +1,4 @@
-/*	$NetBSD: printjob.c,v 1.26 2001/01/05 03:27:27 lukem Exp $	*/
+/*	$NetBSD: printjob.c,v 1.27 2001/06/25 11:04:51 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -45,7 +45,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)printjob.c	8.7 (Berkeley) 5/10/95";
 #else
-__RCSID("$NetBSD: printjob.c,v 1.26 2001/01/05 03:27:27 lukem Exp $");
+__RCSID("$NetBSD: printjob.c,v 1.27 2001/06/25 11:04:51 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -1226,7 +1226,7 @@ init()
 	} else if (status == -3)
 		fatal("potential reference loop detected in printcap file");
 
-	if (cgetstr(bp, "lp", &LP) == -1)
+	if (cgetstr(bp, DEFLP, &LP) == -1)
 		LP = _PATH_DEFDEVLP;
 	if (cgetstr(bp, "rp", &RP) == -1)
 		RP = DEFLP;

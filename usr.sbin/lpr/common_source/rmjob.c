@@ -1,4 +1,4 @@
-/*	$NetBSD: rmjob.c,v 1.16 2000/04/16 14:43:58 mrg Exp $	*/
+/*	$NetBSD: rmjob.c,v 1.17 2001/06/25 11:04:52 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)rmjob.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: rmjob.c,v 1.16 2000/04/16 14:43:58 mrg Exp $");
+__RCSID("$NetBSD: rmjob.c,v 1.17 2001/06/25 11:04:52 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -93,7 +93,7 @@ rmjob()
 		fatal("unknown printer");
 	else if (i == -3)
 		fatal("potential reference loop detected in printcap file");
-	if (cgetstr(bp, "lp", &LP) < 0)
+	if (cgetstr(bp, DEFLP, &LP) < 0)
 		LP = _PATH_DEFDEVLP;
 	if (cgetstr(bp, "rp", &RP) < 0)
 		RP = DEFLP;
