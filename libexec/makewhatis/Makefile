@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.11 2002/03/08 21:59:07 jdolecek Exp $
+#	$NetBSD: Makefile,v 1.11.2.1 2002/11/03 13:55:31 he Exp $
 
 PROG=	makewhatis
-SRCS=	makewhatis.c config.c
+SRCS=	makewhatis.c manconf.c
 .PATH:	${.CURDIR}/../../usr.bin/man
 CPPFLAGS+=-I${.CURDIR}/../../usr.bin
 
