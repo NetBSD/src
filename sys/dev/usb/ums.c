@@ -1,4 +1,4 @@
-/*	$NetBSD: ums.c,v 1.22 1999/01/12 22:06:48 augustss Exp $	*/
+/*	$NetBSD: ums.c,v 1.23 1999/05/09 15:10:31 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -411,6 +411,7 @@ ums_intr(reqh, addr, status)
 	int dx, dy, dz;
 	u_char buttons = 0;
 	int i;
+	int s;
 
 #if defined(__NetBSD__)
 #define UMS_BUT(i) ((i) == 1 || (i) == 2 ? 3 - (i) : i)
@@ -448,8 +449,11 @@ ums_intr(reqh, addr, status)
 		DPRINTFN(10, ("ums_intr: x:%d y:%d z:%d buttons:0x%x\n",
 			dx, dy, dz, buttons));
 		sc->sc_buttons = buttons;
-		if (sc->sc_wsmousedev)
+		if (sc->sc_wsmousedev) {
+			s = spltty();
 			wsmouse_input(sc->sc_wsmousedev, buttons, dx, dy, dz);
+			splx(s);
+		}
 #elif defined(__FreeBSD__)
 	if (dx || dy || dz || buttons != sc->status.button) {
 		DPRINTFN(10, ("ums_intr: x:%d y:%d z:%d buttons:0x%x\n",
