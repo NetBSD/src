@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2004/12/08 15:13:34 mrg Exp $
+#	$NetBSD: Makefile,v 1.20 2004/12/12 12:43:06 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -6,7 +6,6 @@ TOP=		${NETBSDSRCDIR}/gnu
 
 .include "${.CURDIR}/../common/Makefile.inc"
 .include "${.CURDIR}/arch/${MACHINE_ARCH}/defs.mk"
-GNUHOSTDIST=	${DIST}
 
 PROG=		ld
 SRCS=		${G_OFILES:.o=.c}
