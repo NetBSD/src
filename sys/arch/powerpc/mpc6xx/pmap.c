@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.35 2001/11/11 23:07:02 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.36 2001/11/14 20:38:22 matt Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -114,10 +114,12 @@ u_long pmap_pte_valid;
 u_long pmap_pte_overflow;
 u_long pmap_pte_replacements;
 u_long pmap_pvo_entries;
-u_long pmap_pvo_enter_depth;
 u_long pmap_pvo_enter_calls;
-u_long pmap_pvo_remove_depth;
 u_long pmap_pvo_remove_calls;
+#if defined(DIAGNOSTIC) || defined(DEBUG) || defined(PMAPCHECK)
+u_long pmap_pvo_enter_depth;
+u_long pmap_pvo_remove_depth;
+#endif
 u_int64_t pmap_pte_spills = 0;
 struct pvo_entry *pmap_pvo_syncicache;
 struct pvo_entry *pmap_pvo_zeropage;
@@ -521,8 +523,10 @@ pmap_pte_clear(volatile pte_t *pt, vaddr_t va, int ptebit)
 static __inline void
 pmap_pte_set(volatile pte_t *pt, pte_t *pvo_pt)
 {
+#if defined(DIAGNOSTIC) || defined(DEBUG) || defined(PMAPCHECK)
 	if (pvo_pt->pte_hi & PTE_VALID)
 		panic("pte_set: setting an already valid pte %p", pvo_pt);
+#endif
 	pvo_pt->pte_hi |= PTE_VALID;
 	/*
 	 * Update the PTE as defined in section 7.6.3.1
@@ -539,10 +543,12 @@ pmap_pte_set(volatile pte_t *pt, pte_t *pvo_pt)
 static __inline void
 pmap_pte_unset(volatile pte_t *pt, pte_t *pvo_pt, vaddr_t va)
 {
+#if defined(DIAGNOSTIC) || defined(DEBUG) || defined(PMAPCHECK)
 	if ((pvo_pt->pte_hi & PTE_VALID) == 0)
 		panic("pte_unset: attempt to unset an inactive pte#1 %p/%p", pvo_pt, pt);
 	if ((pt->pte_hi & PTE_VALID) == 0)
 		panic("pte_unset: attempt to unset an inactive pte#2 %p/%p", pvo_pt, pt);
+#endif
 
 	pvo_pt->pte_hi &= ~PTE_VALID;
 	/*
@@ -1042,8 +1048,8 @@ pmap_pvo_to_pte(const struct pvo_entry *pvo, int pteidx)
 {
 	volatile pte_t *pt;
 
-#ifndef DIAGNOSTIC
-	if ((pvo->pvo_pte.hi & PTE_VALID) == 0)
+#if !defined(DIAGNOSTIC) && !defined(DEBUG) && !defined(PMAPCHECK)
+	if ((pvo->pvo_pte.pte_hi & PTE_VALID) == 0)
 		return NULL;
 #endif
 
@@ -1059,7 +1065,9 @@ pmap_pvo_to_pte(const struct pvo_entry *pvo, int pteidx)
 
 	pt = &pmap_pteg_table[pteidx >> 3].pt[pteidx & 7];
 
-#ifdef DIAGNOSTIC
+#if !defined(DIAGNOSTIC) && !defined(DEBUG) && !defined(PMAPCHECK)
+	return pt;
+#else
 	if ((pvo->pvo_pte.pte_hi & PTE_VALID) && !PVO_PTEGIDX_ISSET(pvo)) {
 		panic("pmap_pvo_to_pte: pvo %p: has valid pte in "
 		    "pvo but no valid pte index", pvo);
@@ -1068,10 +1076,8 @@ pmap_pvo_to_pte(const struct pvo_entry *pvo, int pteidx)
 		panic("pmap_pvo_to_pte: pvo %p: has valid pte index in "
 		    "pvo but no valid pte", pvo);
 	}
-#endif
 
 	if ((pt->pte_hi ^ (pvo->pvo_pte.pte_hi & ~PTE_VALID)) == PTE_VALID) {
-#ifdef DIAGNOSTIC
 		if ((pvo->pvo_pte.pte_hi & PTE_VALID) == 0) {
 #if defined(DEBUG) || defined(PMAPCHECK)
 			pmap_pte_print(pt);
@@ -1088,11 +1094,9 @@ pmap_pvo_to_pte(const struct pvo_entry *pvo, int pteidx)
 			    "not match pte %p in pmap_pteg_table",
 			    pvo, pt);
 		}
-#endif
 		return pt;
 	}
 
-#ifdef DIAGNOSTIC
 	if (pvo->pvo_pte.pte_hi & PTE_VALID) {
 #if defined(DEBUG) || defined(PMAPCHECK)
 		pmap_pte_print(pt);
@@ -1100,8 +1104,8 @@ pmap_pvo_to_pte(const struct pvo_entry *pvo, int pteidx)
 		panic("pmap_pvo_to_pte: pvo %p: has invalid pte %p in "
 		    "pmap_pteg_table but valid in pvo", pvo, pt);
 	}
-#endif
 	return NULL;
+#endif	/* !(!DIAGNOSTIC && !DEBUG && !PMAPCHECK) */
 }
 
 struct pvo_entry *
@@ -1116,7 +1120,7 @@ pmap_pvo_find_va(pmap_t pm, vaddr_t va, int *pteidx_p)
 	ptegidx = va_to_pteg(sr, va);
 
 	LIST_FOREACH(pvo, &pmap_pvo_table[ptegidx], pvo_olink) {
-#ifdef DIAGNOSTIC
+#if defined(DIAGNOSTIC) || defined(DEBUG) || defined(PMAPCHECK)
 		if ((uintptr_t) pvo >= SEGMENT_LENGTH)
 			panic("pmap_pvo_find_va: invalid pvo %p on "
 			    "list %#x (%p)", pvo, ptegidx,
@@ -1148,9 +1152,11 @@ pmap_pa_map(struct pvo_entry *pvo, paddr_t pa, pte_t *saved_pt, int *depth_p)
 		volatile pte_t *pt;
 		pt = pmap_pvo_to_pte(pvo, -1);
 		if (pt != NULL) {
+#if defined(DIAGNOSTIC) || defined(DEBUG) || defined(PMAPCHECK)
 			if (depth_p != NULL && *depth_p == 0)
 				panic("pmap_pa_map: pvo %p: valid pt %p"
 				    " on 0 depth", pvo, pt);
+#endif
 			pmap_pte_unset(pt, &pvo->pvo_pte, pvo->pvo_vaddr);
 			PVO_PTEGIDX_CLR(pvo);
 			pmap_pte_overflow++;
@@ -1161,17 +1167,21 @@ pmap_pa_map(struct pvo_entry *pvo, paddr_t pa, pte_t *saved_pt, int *depth_p)
 		    pvo->pvo_pte.pte_hi, pvo->pvo_pte.pte_lo,
 		    pvo->pvo_vaddr));
 		pvo->pvo_pte.pte_lo &= ~PTE_RPGN;
+#if defined(DIAGNOSTIC) || defined(DEBUG) || defined(PMAPCHECK)
 	} else if ((pvo->pvo_pte.pte_hi & PTE_VALID) ||
 	    (depth_p != NULL && (*depth_p) > 0)) {
 		panic("pmap_pa_map: unprotected recursive use of pvo %p", pvo);
+#endif
 	}
 	pvo->pvo_pte.pte_lo |= pa;
 	if (!pmap_pte_spill(pvo->pvo_vaddr))
 		panic("pmap_pa_map: could not spill pvo %p", pvo);
+#if defined(DIAGNOSTIC) || defined(DEBUG) || defined(PMAPCHECK)
 	if ((pvo->pvo_pte.pte_hi & PTE_VALID) == 0)
 		panic("pmap_pa_map: pvo %p: pte not valid after spill", pvo);
 	if (PVO_PTEGIDX_ISSET(pvo) == 0)
 		panic("pmap_pa_map: pvo %p: no pte index spill", pvo);
+#endif
 	if (depth_p != NULL)
 		(*depth_p)++;
 	pmap_interrupts_restore(msr);
@@ -1200,10 +1210,12 @@ pmap_pa_unmap(struct pvo_entry *pvo, pte_t *saved_pt, int *depth_p)
 	 * and return.
 	 */
 	if (saved_pt != NULL && (saved_pt->pte_lo & PTE_RPGN) != 0) {
+#if defined(DIAGNOSTIC) || defined(DEBUG) || defined(PMAPCHECK)
 		if (pvo->pvo_pte.pte_hi != saved_pt->pte_hi)
 			panic("pmap_pa_unmap: pvo %p pte_hi %#x "
 			    "!= saved pte_hi %#x", pvo, pvo->pvo_pte.pte_hi,
 			    saved_pt->pte_hi);
+#endif
 		if (depth_p != NULL && --(*depth_p) == 0)
 			panic("pmap_pa_unmap: restoring but depth == 0");
 		pvo->pvo_pte = *saved_pt;
@@ -1212,6 +1224,7 @@ pmap_pa_unmap(struct pvo_entry *pvo, pte_t *saved_pt, int *depth_p)
 		    pvo->pvo_pte.pte_hi, pvo->pvo_pte.pte_lo, pvo->pvo_vaddr));
 		if (!pmap_pte_spill(pvo->pvo_vaddr))
 			panic("pmap_pa_unmap: could not spill pvo %p", pvo);
+#if defined(DIAGNOSTIC) || defined(DEBUG) || defined(PMAPCHECK)
 		if ((pvo->pvo_pte.pte_hi & PTE_VALID) == 0)
 			panic("pmap_pa_unmap: pvo %p: pte not valid after "
 			    "spill", pvo);
@@ -1219,6 +1232,7 @@ pmap_pa_unmap(struct pvo_entry *pvo, pte_t *saved_pt, int *depth_p)
 		if (depth_p != NULL && --(*depth_p) != 0)
 			panic("pmap_pa_unmap: reseting but depth (%u) > 0",
 			    *depth_p);
+#endif
 	}
 
 	pmap_interrupts_restore(msr);
@@ -1394,10 +1408,12 @@ pmap_pvo_enter(pmap_t pm, struct pool *pl, struct pvo_head *pvo_head,
 	int i;
 	int poolflags = PR_NOWAIT;
 
+#if defined(DIAGNOSTIC) || defined(DEBUG) || defined(PMAPCHECK)
 	if (pmap_pvo_remove_depth > 0)
 		panic("pmap_pvo_enter: called while pmap_pvo_remove active!");
 	if (++pmap_pvo_enter_depth > 1)
 		panic("pmap_pvo_enter: called recursively!");
+#endif
 
 	pmap_pvo_enter_calls++;
 	/*
@@ -1450,7 +1466,9 @@ pmap_pvo_enter(pmap_t pm, struct pool *pl, struct pvo_head *pvo_head,
 #endif
 			if ((flags & PMAP_CANFAIL) == 0)
 				panic("pmap_pvo_enter: failed");
+#if defined(DIAGNOSTIC) || defined(DEBUG) || defined(PMAPCHECK)
 			pmap_pvo_enter_depth--;
+#endif
 			pmap_interrupts_restore(msr);
 			return ENOMEM;
 #if 0
@@ -1500,7 +1518,9 @@ pmap_pvo_enter(pmap_t pm, struct pool *pl, struct pvo_head *pvo_head,
 #endif
 	}
 	PMAP_PVO_CHECK(pvo);		/* sanity check */
+#if defined(DIAGNOSTIC) || defined(DEBUG) || defined(PMAPCHECK)
 	pmap_pvo_enter_depth--;
+#endif
 	pmap_interrupts_restore(msr);
 	return first ? ENOENT : 0;
 }
@@ -1510,8 +1530,10 @@ pmap_pvo_remove(struct pvo_entry *pvo, int pteidx)
 {
 	volatile pte_t *pt;
 
+#if defined(DIAGNOSTIC) || defined(DEBUG) || defined(PMAPCHECK)
 	if (++pmap_pvo_remove_depth > 1)
 		panic("pmap_pvo_remove: called recursively!");
+#endif
 
 	PMAP_PVO_CHECK(pvo);		/* sanity check */
 	/* 
@@ -1559,7 +1581,9 @@ pmap_pvo_remove(struct pvo_entry *pvo, int pteidx)
 	    pvo);
 	pmap_pvo_entries--;
 	pmap_pvo_remove_calls++;
+#if defined(DIAGNOSTIC) || defined(DEBUG) || defined(PMAPCHECK)
 	pmap_pvo_remove_depth--;
+#endif
 }
 
 /*
@@ -2734,7 +2758,7 @@ pmap_bootstrap(paddr_t kernelstart, paddr_t kernelend)
 	 */
 	size = pmap_pteg_cnt * sizeof(pteg_t);
 	pmap_pteg_table = pmap_boot_find_memory(size, size, 0);
-#ifdef DIAGNOSTIC
+#if defined(DIAGNOSTIC) || defined(DEBUG) || defined(PMAPCHECK)
 	if ( (uintptr_t) pmap_pteg_table + size > SEGMENT_LENGTH)
 		panic("pmap_bootstrap: pmap_pteg_table end (%p + %lx) > 256MB",
 		    pmap_pteg_table, size);
@@ -2749,7 +2773,7 @@ pmap_bootstrap(paddr_t kernelstart, paddr_t kernelend)
 	 */
 	size = sizeof(struct pvo_head) * pmap_pteg_cnt;
 	pmap_pvo_table = pmap_boot_find_memory(size, NBPG, 0);
-#ifdef DIAGNOSTIC
+#if defined(DIAGNOSTIC) || defined(DEBUG) || defined(PMAPCHECK)
 	if ( (uintptr_t) pmap_pvo_table + size > SEGMENT_LENGTH)
 		panic("pmap_bootstrap: pmap_pvo_table end (%p + %lx) > 256MB",
 		    pmap_pvo_table, size);
@@ -2774,7 +2798,7 @@ pmap_bootstrap(paddr_t kernelstart, paddr_t kernelend)
 		size = (sizeof(struct pvo_head) + 1) * npgs;
 		pmap_physseg.pvoh = pmap_boot_find_memory(size, NBPG, 0);
 		pmap_physseg.attrs = (char *) &pmap_physseg.pvoh[npgs];
-#ifdef DIAGNOSTIC
+#if defined(DIAGNOSTIC) || defined(DEBUG) || defined(PMAPCHECK)
 		if ((uintptr_t)pmap_physseg.pvoh + size > SEGMENT_LENGTH)
 			panic("pmap_bootstrap: PVO list end (%p + %lx) > 256MB",
 			    pmap_physseg.pvoh, size);
