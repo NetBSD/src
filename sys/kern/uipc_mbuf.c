@@ -883,7 +883,7 @@ m_copyup(struct mbuf *n, int len, int dstoff)
 	m->m_len = 0;
 	if (n->m_flags & M_PKTHDR) {
 		M_COPY_PKTHDR(m, n);
-		m_tag_delete_chain(m, NULL);
+		m_tag_delete_chain(n, NULL);
 		n->m_flags &= ~M_PKTHDR;
 	}
 	m->m_data += dstoff;
