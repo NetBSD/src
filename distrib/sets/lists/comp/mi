@@ -1316,6 +1316,7 @@
 ./usr/share/man/cat3/authnone_create.0
 ./usr/share/man/cat3/authunix_create.0
 ./usr/share/man/cat3/authunix_create_default.0
+./usr/share/man/cat3/basename.0
 ./usr/share/man/cat3/bcmp.0
 ./usr/share/man/cat3/bcopy.0
 ./usr/share/man/cat3/bindresvport.0
@@ -1400,6 +1401,7 @@
 ./usr/share/man/cat3/difftime.0
 ./usr/share/man/cat3/directory.0
 ./usr/share/man/cat3/dirfd.0
+./usr/share/man/cat3/dirname.0
 ./usr/share/man/cat3/div.0
 ./usr/share/man/cat3/dn_comp.0
 ./usr/share/man/cat3/dn_expand.0
@@ -2278,6 +2280,7 @@
 ./usr/share/man/man3/authnone_create.3
 ./usr/share/man/man3/authunix_create.3
 ./usr/share/man/man3/authunix_create_default.3
+./usr/share/man/man3/basename.3
 ./usr/share/man/man3/bcmp.3
 ./usr/share/man/man3/bcopy.3
 ./usr/share/man/man3/bindresvport.3
@@ -2362,6 +2365,7 @@
 ./usr/share/man/man3/difftime.3
 ./usr/share/man/man3/directory.3
 ./usr/share/man/man3/dirfd.3
+./usr/share/man/man3/dirname.3
 ./usr/share/man/man3/div.3
 ./usr/share/man/man3/dn_comp.3
 ./usr/share/man/man3/dn_expand.3
