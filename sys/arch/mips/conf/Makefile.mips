@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mips,v 1.1 2000/12/03 02:07:05 matt Exp $
+#	$NetBSD: Makefile.mips,v 1.2 2000/12/03 04:52:38 matt Exp $
 
 # Makefile for NetBSD
 #
@@ -137,6 +137,10 @@ SYSTEM_LD_TAIL+=; \
 .endif
 .else
 LINKFLAGS+=	-x
+.endif
+
+.ifdef POST_STRIP_SYSTEM_LD_TAIL
+SYSTEM_LD_TAIL+=${POST_STRIP_SYSTEM_LD_TAIL}
 .endif
 
 %LOAD
