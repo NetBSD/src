@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.109 1998/12/05 21:05:44 mjacob Exp $ */
+/*	$NetBSD: autoconf.c,v 1.110 1998/12/21 11:25:39 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -833,9 +833,6 @@ configure()
 
 	*promvec->pv_synchook = sync_crash;
 
-	if (config_rootfound("mainbus", NULL) == NULL)
-		panic("mainbus not configured");
-
 	/* Enable device interrupts */
 #if defined(SUN4M)
 	if (CPU_ISSUN4M)
@@ -845,6 +842,9 @@ configure()
 	if (CPU_ISSUN4OR4C)
 		ienab_bis(IE_ALLIE);
 #endif
+
+	if (config_rootfound("mainbus", NULL) == NULL)
+		panic("mainbus not configured");
 
 	/*
 	 * XXX Re-zero proc0's user area, to nullify the effect of the
@@ -871,13 +871,17 @@ cpu_rootconf()
 	bootpartition = bp == NULL ? 0 : bp->val[2];
 
 	if (bootdv != altbootdev) {
+		int c;
 		printf("device_register boot device mismatch\n");
 		printf("\tbootdv=%s\n",
 			bootdv==NULL?"NOT FOUND":bootdv->dv_xname);
 		printf("\taltbootdev=%s\n",
 			altbootdev==NULL?"NOT FOUND":altbootdev->dv_xname);
 		printf("RETURN to continue ");
-		cnpollc(1); while (cngetc() != '\n'); cnpollc(0);
+		cnpollc(1);
+		while ((c = cngetc()) != '\r' && c != '\n');
+		printf("\n");
+		cnpollc(0);
 	}
 	setroot(bootdv, bootpartition, dev_name2blk);
 }
@@ -1584,6 +1588,7 @@ getdevunit(name, unit)
 
 static int bus_class __P((struct device *));
 static int instance_match __P((struct device *, void *, struct bootpath *));
+static void nail_bootdev __P((struct device *, struct bootpath *));
 
 static struct {
 	char	*name;
@@ -1644,7 +1649,6 @@ instance_match(dev, aux, bp)
 	 * instance parameter check does not produce a match.
 	 */
 
-
 	switch (bus_class(dev)) {
 	case BUSCLASS_MAINBUS:
 		ma = aux;
@@ -1670,6 +1674,25 @@ instance_match(dev, aux, bp)
 		return (1);
 
 	return (0);
+}
+
+void
+nail_bootdev(dev, bp)
+	struct device *dev;
+	struct bootpath *bp;
+{
+	/*bp->dev = dev;	-* got it! */
+	if (altbootdev != NULL)
+		panic("device_register: already got a boot device: %s",
+			altbootdev->dv_xname);
+	altbootdev = dev;
+
+	/*
+	 * Clear current bootpath component, so we don't spuriously
+	 * match similar instances on other busses, e.g. a disk on
+	 * another SCSI bus with the same target.
+	 */
+	altbootpath_store(1, NULL);
 }
 
 void
@@ -1718,8 +1741,7 @@ device_register(dev, aux)
 		 * LANCE ethernet device
 		 */
 		if (instance_match(dev, aux, bp) != 0) {
-			/*bp->dev = dev;	-* got it! */
-			altbootdev = dev;
+			nail_bootdev(dev, bp);
 			return;
 		}
 	} else if (strcmp(dvname, "sd") == 0 || strcmp(dvname, "cd") == 0) {
@@ -1760,25 +1782,20 @@ device_register(dev, aux)
 
 		if (sc_link->scsipi_scsi.target == target &&
 		    sc_link->scsipi_scsi.lun == lun) {
-			/*bp->dev = dev;	-* got it! */
-			/*
-			 * What is missing here is the mapping between
-			 * our SCSI bus number and the parent (hba) path
-			 * from which we booted from. As a temp fix.
-			 * we'll only go with the first match- not additional
-			 * matches.
-			 */
-			if (altbootdev == NULL) /* do it on the *first* one */
-				altbootdev = dev;
+			nail_bootdev(dev, bp);
 			return;
 		}
 	} else if (strcmp("xd", dvname) == 0 || strcmp("xy", dvname) == 0) {
 
-		/* XXX - dv_unit may not be the drive number.. */
-		if (dev->dv_unit == bp->val[0]) {
+		/*
+		 * XXX - x[dy]c attach args are not exported right now..
+		 * XXX   we happen to know they look like this:
+		 */
+		struct xxxx_attach_args { int driveno; } *aap = aux;
+
+		if (aap->driveno == bp->val[0]) {
 			/* We've found the boot device */
-			/*bp->dev = dev;*/
-			altbootdev = dev;
+			nail_bootdev(dev, bp);
 			return;
 		}
 	} else {
@@ -1786,8 +1803,7 @@ device_register(dev, aux)
 		 * Generic match procedure.
 		 */
 		if (instance_match(dev, aux, bp) != 0) {
-			/*bp->dev = dev;	-* got it! */
-			altbootdev = dev;
+			nail_bootdev(dev, bp);
 			return;
 		}
 	}
