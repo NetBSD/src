@@ -1,4 +1,4 @@
-/*	$NetBSD: mca_machdep.c,v 1.12 2001/12/02 17:02:33 jdolecek Exp $	*/
+/*	$NetBSD: mca_machdep.c,v 1.13 2001/12/03 22:50:44 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mca_machdep.c,v 1.12 2001/12/02 17:02:33 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mca_machdep.c,v 1.13 2001/12/03 22:50:44 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -477,7 +477,7 @@ _mca_bus_dmamap_sync(t, map, offset, len, ops)
 	if (map->_dm_flags & MCABUS_DMA_IOPORT)
 		mode |= DMACMD_MODE_IOPORT;
 
-	/* If transfer size can be divided by two, use 16bit DMA */
+	/* Use 16bit DMA if requested */
 	if (map->_dm_flags & MCABUS_DMA_16BIT) {
 #ifdef DIAGNOSTIC
 		if ((cnt % 2) != 0) {
@@ -584,9 +584,9 @@ mca_dma_set_ioport(dma, port)
 	bus_space_write_1(dmaiot, dmacmdh, 0, DMACMD_MASK | dma);
 
 	/* Set I/O port to use for DMA */
-	bus_space_write_1(dmaiot, dmacmdh, 0, DMACMD_SET_IO);
+	bus_space_write_1(dmaiot, dmacmdh, 0, DMACMD_SET_IO | dma);
 	bus_space_write_1(dmaiot, dmaexech, 0, port & 0xff);
-	bus_space_write_1(dmaiot, dmaexech, 0, (port & 0xff) >> 8);
+	bus_space_write_1(dmaiot, dmaexech, 0, (port >> 8) & 0xff);
 
 	/* Enable access to dma channel. */
 	bus_space_write_1(dmaiot, dmacmdh, 0, DMACMD_RESET_MASK | dma);
