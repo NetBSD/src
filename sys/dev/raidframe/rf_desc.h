@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_desc.h,v 1.5 2000/01/09 00:00:18 oster Exp $	*/
+/*	$NetBSD: rf_desc.h,v 1.6 2001/10/04 15:58:52 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -29,8 +29,9 @@
 #ifndef _RF__RF_DESC_H_
 #define _RF__RF_DESC_H_
 
+#include <dev/raidframe/raidframevar.h>
+
 #include "rf_archs.h"
-#include "rf_types.h"
 #include "rf_etimer.h"
 #include "rf_dag.h"
 

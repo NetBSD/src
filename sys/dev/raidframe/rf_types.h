@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_types.h,v 1.7 2001/09/26 02:52:57 oster Exp $	*/
+/*	$NetBSD: rf_types.h,v 1.8 2001/10/04 15:58:56 oster Exp $	*/
 /*
  * rf_types.h
  */
@@ -221,6 +221,8 @@ typedef enum RF_AccessState_e {
 #define RF_MAXCOL    40
 #define RF_MAXSPARE  10
 #define RF_MAXDBGV   75		/* max number of debug variables */
+#define RF_MAX_DISKS 128	/* max disks per array */
+
 
 union RF_GenericParam_u {
 	void   *p;

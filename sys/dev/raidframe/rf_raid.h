@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_raid.h,v 1.13 2001/09/26 03:01:19 oster Exp $	*/
+/*	$NetBSD: rf_raid.h,v 1.14 2001/10/04 15:58:55 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -34,8 +34,8 @@
 #ifndef _RF__RF_RAID_H_
 #define _RF__RF_RAID_H_
 
+#include <dev/raidframe/raidframevar.h>
 #include "rf_archs.h"
-#include "rf_types.h"
 #include "rf_threadstuff.h"
 
 #include "rf_netbsd.h"
@@ -55,8 +55,6 @@
 #if RF_INCLUDE_PARITYLOGGING > 0
 #include "rf_paritylog.h"
 #endif				/* RF_INCLUDE_PARITYLOGGING > 0 */
-
-#define RF_MAX_DISKS 128	/* max disks per array */
 
 #define RF_COMPONENT_LABEL_VERSION_1 1
 #define RF_COMPONENT_LABEL_VERSION 2
