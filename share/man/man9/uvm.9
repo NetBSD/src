@@ -1,4 +1,4 @@
-.\"	$NetBSD: uvm.9,v 1.28 2001/12/24 12:28:47 jdolecek Exp $
+.\"	$NetBSD: uvm.9,v 1.29 2001/12/26 01:02:01 wiz Exp $
 .\"
 .\" Copyright (c) 1998 Matthew R. Green
 .\" All rights reserved.
@@ -105,7 +105,6 @@ call (see
 .Fn uvm_swap_init
 initialises the swap sub-system.
 .Sh VIRTUAL ADDRESS SPACE MANAGEMENT
-.Pp
 .nr nS 1
 .Ft int
 .Fn uvm_map "struct vm_map *map" "vaddr_t *startp" "vsize_t size" "struct uvm_object *uobj" "voff_t uoffset" "uvm_flag_t flags"
@@ -117,7 +116,7 @@ initialises the swap sub-system.
 .Fn uvm_map_protect "struct vm_map *map" "vaddr_t start" "vaddr_t end" "vm_prot_t new_prot" "boolean_t set_max"
 .Ft int
 .Fn uvm_deallocate "struct vm_map *map" "vaddr_t start" "vsize_t size"
-
+.Pp
 .Ft struct vmspace *
 .Fn uvmspace_alloc "vaddr_t min" "vaddr_t max" "int pageable"
 .Ft void
@@ -344,7 +343,6 @@ has its own, unshared address space, by creating a new one if
 necessary by calling
 .Fn uvmspace_fork .
 .Sh PAGE FAULT HANDLING
-.Pp
 .nr nS 1
 .Ft int
 .Fn uvm_fault "struct vm_map *orig_map" "vaddr_t vaddr" "vm_fault_t fault_type" "vm_prot_t access_type"
@@ -363,7 +361,6 @@ describing the type of access requested.
 .Fn uvm_fault
 returns a standard UVM return value.
 .Sh MEMORY MAPPING FILES AND DEVICES
-.Pp
 .nr nS 1
 .Ft struct uvm_object *
 .Fn uvn_attach "void *arg" "vm_prot_t accessprot"
@@ -422,7 +419,6 @@ frees the mapping at
 for reuse.  The mapping may be cached to speed future accesses to the same
 region of the object.  The flags are currently unused.
 .Sh VIRTUAL MEMORY I/O
-.Pp
 .nr nS 1
 .Ft int
 .Fn uvm_io "struct vm_map *map" "struct uio *uio"
@@ -434,7 +430,6 @@ performs the I/O described in
 on the memory described in
 .Fa map .
 .Sh ALLOCATION OF KERNEL MEMORY
-.Pp
 .nr nS 1
 .Ft vaddr_t
 .Fn uvm_km_alloc "struct vm_map *map" "vsize_t size"
@@ -549,7 +544,6 @@ If
 .Fa pageable
 is non-zero, entries in the map may be paged out.
 .Sh ALLOCATION OF PHYSICAL MEMORY
-.Pp
 .nr nS 1
 .Ft struct vm_page *
 .Fn uvm_pagealloc "struct uvm_object *uobj" "voff_t off" "struct vm_anon *anon" "int flags"
@@ -646,7 +640,6 @@ of the physical addresses of the segment, and the available start and end
 addresses of pages not already in use.
 .\" XXX expand on "system boot time"!
 .Sh PROCESSES
-.Pp
 .nr nS 1
 .Ft void
 .Fn uvm_pageout "void"
@@ -668,7 +661,6 @@ order.
 .Fn uvm_swapin
 swaps in the named process.
 .Sh PAGE LOAN
-.Pp
 .nr nS 1
 .Ft int
 .Fn uvm_loan "struct vm_map *map" "vaddr_t start" "vsize_t len" "void *v" "int flags"
@@ -724,41 +716,40 @@ and should match what was used for previous call to
 .Fn uvm_loan .
 .Sh MISCELLANEOUS FUNCTIONS
 .nr nS 1
-.Pp
 .Ft struct uvm_object *
 .Fn uao_create "vsize_t size" "int flags"
 .Ft void
 .Fn uao_detach "struct uvm_object *uobj"
 .Ft void
 .Fn uao_reference "struct uvm_object *uobj"
-
+.Pp
 .Ft boolean_t
 .Fn uvm_chgkprot "caddr_t addr" "size_t len" "int rw"
 .Ft void
 .Fn uvm_kernacc "caddr_t addr" "size_t len" "int rw"
 .Ft boolean_t
 .Fn uvm_useracc "caddr_t addr" "size_t len" "int rw"
-
+.Pp
 .Ft int
 .Fn uvm_vslock "struct proc *p" "caddr_t addr" "size_t len" "vm_prot_t prot"
 .Ft void
 .Fn uvm_vsunlock "struct proc *p" "caddr_t addr" "size_t len"
-
+.Pp
 .Ft void
 .Fn uvm_meter "void"
 .Ft int
 .Fn uvm_sysctl "int *name" "u_int namelen" "void *oldp" "size_t *oldlenp" "void *newp " "size_t newlen" "struct proc *p"
-
+.Pp
 .Ft void
 .Fn uvm_fork "struct proc *p1" "struct proc *p2" "boolean_t shared"
 .Ft int
 .Fn uvm_grow "struct proc *p" "vaddr_t sp"
 .Ft int
 .Fn uvm_coredump "struct proc *p" "struct vnode *vp" "struct ucred *cred" "struct core *chdr"
-
+.Pp
 .Ft void
 .Fn uvn_findpages "struct uvm_object *uobj" "voff_t offset" "int *npagesp" "struct vm_page **pps" "int flags"
-
+.Pp
 .nr nS 0
 .Pp
 The
@@ -992,6 +983,13 @@ All structure and types whose names begin with
 .Dq vm_
 will be renamed to
 .Dq uvm_ .
+.Sh SEE ALSO
+.Xr getloadavg 3 ,
+.Xr kvm 3 ,
+.Xr sysctl 3 ,
+.Xr ddb 4 ,
+.Xr options 4 ,
+.Xr pmap 9
 .Sh HISTORY
 UVM is a new VM system developed at Washington University in St. Louis
 (Missouri).  UVM's roots lie partly in the Mach-based
@@ -1023,10 +1021,3 @@ Chuck Silvers <chuq@chuq.com> implemented the aobj pager, thus allowing
 UVM to support System V shared memory and process swapping.  He also
 designed and implemented the UBC part of UVM, which uses UVM pages to
 cache vnode data rather than the traditional buffer cache buffers.
-.Sh SEE ALSO
-.Xr getloadavg 3 ,
-.Xr kvm 3 ,
-.Xr sysctl 3 ,
-.Xr ddb 4 ,
-.Xr options 4 ,
-.Xr pmap 9 .
