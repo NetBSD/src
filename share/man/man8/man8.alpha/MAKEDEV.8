@@ -6,7 +6,7 @@
 .\" *** DO NOT EDIT - any changes will be lost!!!
 .\" *** ------------------------------------------------------------------
 .\"
-.\" $NetBSD: MAKEDEV.8,v 1.14 2001/09/10 22:17:33 augustss Exp $
+.\" $NetBSD: MAKEDEV.8,v 1.15 2001/09/15 10:53:30 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -253,6 +253,12 @@ ALTQ control device
 . It Ar wsmux#
 Wscons event multiplexor, see
 .Xr \&wsmux 4
+. It Ar pci#
+PCI bus access devices, see
+.Xr \&pci 4
+. It Ar agp#
+AGP GART devices, see
+.Xr \&agp 4
 . El
 .El
 .Sh FILES
