@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.20 2003/03/19 11:37:57 scw Exp $	*/
+/*	$NetBSD: trap.c,v 1.21 2003/03/27 17:29:17 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -157,6 +157,14 @@ trap(struct lwp *l, struct trapframe *tf)
 	default:
 	dopanic:
 		(void) splhigh();
+		{
+			register_t ssr;
+
+			/* Make sure the FPU is enabled */
+			__asm __volatile("getcon ssr, %0" : "=r"(ssr));
+			ssr &= ~SH5_CONREG_SR_FD;
+			__asm __volatile("putcon %0, ssr" :: "r"(ssr));
+		}
 		printf("\ntrap: %s in %s mode\n",
 		    trap_type(traptype), USERMODE(tf) ? "user" : "kernel");
 		printf("SSR=0x%x, SPC=0x%lx, TEA=0x%lx, TRA=0x%x\n",
@@ -435,6 +443,15 @@ panic_trap(struct trapframe *tf, register_t ssr, register_t spc,
 	tlbregs[7] = ci->ci_tscratch.ts_tr[0];
 	tlbregs[8] = ci->ci_tscratch.ts_tr[1];
 
+	{
+		register_t ssr;
+
+		/* Make sure the FPU is enabled */
+		__asm __volatile("getcon ssr, %0" : "=r"(ssr));
+		ssr &= ~SH5_CONREG_SR_FD;
+		__asm __volatile("putcon %0, ssr" :: "r"(ssr));
+	}
+
 	/*
 	 * Allow subsequent exceptions.
 	 */
@@ -478,10 +495,8 @@ panic_trap(struct trapframe *tf, register_t ssr, register_t spc,
 	printf("   SSR: 0x%08x\n", (u_int)excf.es_ssr);
 	printf("   USR: 0x%04x\n", (u_int)excf.es_usr);
 
-#ifdef DIAGNOSTIC
-	dump_trapframe(printf, "\n", tf);
-#endif
 #ifdef DDB
+	dump_trapframe(printf, "\n", tf);
 	kdb_trap(0, tf);
 #endif
 	panic("panic trap");
