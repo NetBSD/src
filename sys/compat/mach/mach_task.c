@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_task.c,v 1.23 2003/04/05 21:18:02 manu Exp $ */
+/*	$NetBSD: mach_task.c,v 1.24 2003/04/06 17:58:50 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include "opt_compat_darwin.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.23 2003/04/05 21:18:02 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.24 2003/04/06 17:58:50 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -476,6 +476,122 @@ mach_task_info(args)
 	rep->rep_count = count;
 	rep->rep_info[count + 1] = 8; /* Trailer */
  
+	return 0;
+}
+
+int
+mach_task_suspend(args)
+	struct mach_trap_args *args;
+{
+	mach_task_suspend_request_t *req = args->smsg;
+	mach_task_suspend_reply_t *rep = args->rmsg;
+	size_t *msglen = args->rsize;
+	mach_port_t mn;
+	struct mach_right *mr;
+	struct lwp *l;
+	struct proc *p;
+	struct mach_emuldata *med;
+	int s;
+
+	/*
+	 * XXX Two bugs when gdb calls this function:
+	 * - gdb uses a port it never allocated (apparently)
+	 * - this makes mach_right_check panic because of the lock operation
+	 *   on a draining lock.
+	 */
+	return mach_msg_error(args, 0);
+
+	/* XXX more permission checks nescessary here? */
+	mn = req->req_msgh.msgh_remote_port;
+	if ((mr = mach_right_check(mn, l, MACH_PORT_TYPE_ALL_RIGHTS)) == 0)
+		return mach_msg_error(args, EINVAL);
+	if ((mr->mr_port == NULL) || (mr->mr_port->mp_recv == NULL)) {
+#ifdef DEBUG_MACH
+		printf("mach_task_suspend: port = %p, recv = %p\n",
+		    mr->mr_port, mr->mr_port->mp_recv);
+#endif
+		return mach_msg_error(args, EINVAL);
+	}
+
+	l = mr->mr_port->mp_recv->mr_lwp;
+	p = l->l_proc;
+	med = p->p_emuldata;
+	med->med_suspend++; /* XXX Mach also has a per thread semaphore */
+		
+	if (p->p_stat == SACTIVE) {
+		sigminusset(&contsigmask, &p->p_sigctx.ps_siglist);
+		SCHED_LOCK(s);
+		p->p_stat = SSTOP;
+		l->l_stat = LSSTOP;
+		p->p_nrlwps--;
+		mi_switch(l, NULL);
+		SCHED_ASSERT_UNLOCKED();
+		splx(s);
+	}
+
+	rep->rep_msgh.msgh_bits =
+	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
+	rep->rep_msgh.msgh_size = sizeof(*rep) - sizeof(rep->rep_trailer);
+	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
+	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
+	rep->rep_trailer.msgh_trailer_size = 8;
+
+	*msglen = sizeof(*rep);
+
+	return 0;
+}
+
+int
+mach_task_resume(args)
+	struct mach_trap_args *args;
+{
+	mach_task_resume_request_t *req = args->smsg;
+	mach_task_resume_reply_t *rep = args->rmsg;
+	size_t *msglen = args->rsize;
+	mach_port_t mn;
+	struct mach_right *mr;
+	struct lwp *l;
+	struct proc *p;
+	struct mach_emuldata *med;
+	int s;
+
+	/* XXX more permission checks nescessary here? */
+	mn = req->req_msgh.msgh_remote_port;
+	if ((mr = mach_right_check(mn, l, MACH_PORT_TYPE_ALL_RIGHTS)) == 0)
+		return mach_msg_error(args, EINVAL);
+	if ((mr->mr_port == NULL) || (mr->mr_port->mp_recv == NULL)) {
+#ifdef DEBUG_MACH
+		printf("mach_task_resume: port = %p, recv = %p\n",
+		    mr->mr_port, mr->mr_port->mp_recv);
+#endif
+		return mach_msg_error(args, EINVAL);
+	}
+
+	l = mr->mr_port->mp_recv->mr_lwp;
+	p = l->l_proc;
+	med = p->p_emuldata;
+	med->med_suspend--; /* XXX Mach also has a per thread semaphore */
+	if (med->med_suspend > 0)
+		return mach_msg_error(args, 0); /* XXX error code */
+		
+	/* XXX We should also wake up the stopped thread... */
+	if (p->p_stat == SSTOP) {
+		sigminusset(&stopsigmask, &p->p_sigctx.ps_siglist);
+		SCHED_LOCK(s);
+		p->p_stat = SACTIVE;
+		SCHED_ASSERT_UNLOCKED();
+		splx(s);
+	}
+
+	rep->rep_msgh.msgh_bits =
+	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
+	rep->rep_msgh.msgh_size = sizeof(*rep) - sizeof(rep->rep_trailer);
+	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
+	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
+	rep->rep_trailer.msgh_trailer_size = 8;
+
+	*msglen = sizeof(*rep);
+
 	return 0;
 }
 
