@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.175.2.1 2002/11/01 11:55:04 tron Exp $
+#	$NetBSD: Makefile,v 1.175.2.2 2002/11/15 04:15:13 lukem Exp $
 
 # This is the top-level makefile for building NetBSD. For an outline of
 # how to build a snapshot or release, as well as other release engineering
@@ -19,15 +19,15 @@
 #	software. It defaults to /. Note that programs are built against
 #	libraries installed in DESTDIR.
 #   MKMAN, if set to `no', will prevent building of manual pages.
-#   MKOBJDIRS, if not set to `no', will build object directories at 
+#   MKOBJDIRS, if not set to `no', will build object directories at
 #	an appropriate point in a build.
 #   MKSHARE, if set to `no', will prevent building and installing
 #	anything in /usr/share.
 #   UPDATE, if defined, will avoid a `make cleandir' at the start of
-#     `make build', as well as having the effects listed in
-#     /usr/share/mk/bsd.README.
+#	`make build', as well as having the effects listed in
+#	/usr/share/mk/bsd.README.
 #   NOCLEANDIR, if defined, will avoid a `make cleandir' at the start
-#     of the `make build'.
+#	of the `make build'.
 #   NOINCLUDES will avoid the `make includes' usually done by `make build'.
 #
 # Targets:
@@ -94,6 +94,10 @@ regression-tests:
 	@(cd ${.CURDIR}/regress && ${MAKE} regress)
 .endif
 
+.if defined(UNPRIVED)
+NOPOSTINSTALL=	# defined
+.endif
+
 afterinstall:
 .if ${MKMAN} != "no"
 	(cd ${.CURDIR}/share/man && ${MAKE} makedb)
@@ -101,8 +105,8 @@ afterinstall:
 .if defined(UNPRIVED) && (${MKINFO} != "no")
 	(cd ${.CURDIR}/gnu/usr.bin/texinfo/install-info && ${MAKE} infodir-meta)
 .endif
-.if !defined(DESTDIR) || ${DESTDIR} == "" || ${DESTDIR} == "/"
-	(${MAKE} postinstall-check)
+.if !defined(NOPOSTINSTALL)
+	(cd ${.CURDIR} && ${MAKE} postinstall-check)
 .endif
 
 postinstall-check:
@@ -158,12 +162,14 @@ build:
 # Build a full distribution, but not a release (i.e. no sets into
 # ${RELEASEDIR}).
 
-distribution: build
+distribution:
+	(cd ${.CURDIR} && ${MAKE} NOPOSTINSTALL=1 build)
 	(cd ${.CURDIR}/etc && ${MAKE} INSTALL_DONE=1 distribution)
 
 # Build a release or snapshot (implies "make build").
 
-release snapshot: build
+release snapshot:
+	(cd ${.CURDIR} && ${MAKE} NOPOSTINSTALL=1 build)
 	(cd ${.CURDIR}/etc && ${MAKE} INSTALL_DONE=1 release)
 
 # Special components of the "make build" process.
