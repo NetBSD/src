@@ -1,4 +1,4 @@
-/* $NetBSD: fsck.h,v 1.12 2004/03/20 22:31:13 perseant Exp $	 */
+/* $NetBSD: fsck.h,v 1.13 2004/07/18 20:51:30 yamt Exp $	 */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -190,7 +190,6 @@ struct inoinfo {
 	/* XXX ondisk32 */
 	int32_t i_blks[1];	/* actually longer */
 }     **inphead, **inpsort;
-#define	clearinode(dp)	(*(dp) = zino)
 
 #ifndef VERBOSE_BLOCKMAP
 #define	setbmap(blkno)	setbit(blockmap, blkno)
@@ -213,5 +212,6 @@ int ino_to_fsba(struct lfs *, ino_t);
 struct ufs1_dinode *ginode(ino_t);
 struct inoinfo *getinoinfo(ino_t);
 daddr_t lfs_ino_daddr(ino_t);
+void clearinode(ino_t);
 
 #include "fsck_vars.h"

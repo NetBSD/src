@@ -1,4 +1,4 @@
-/* $NetBSD: inode.c,v 1.23 2004/03/20 22:31:13 perseant Exp $	 */
+/* $NetBSD: inode.c,v 1.24 2004/07/18 20:51:30 yamt Exp $	 */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -432,8 +432,6 @@ inodirty(struct inode *ip)
 void
 clri(struct inodesc * idesc, char *type, int flag)
 {
-	struct ubuf *bp;
-	IFILE *ifp;
 	struct uvnode *vp;
 
 	vp = vget(fs, idesc->id_number);
@@ -447,18 +445,39 @@ clri(struct inodesc * idesc, char *type, int flag)
 			printf(" (CLEARED)\n");
 		n_files--;
 		(void) ckinode(VTOD(vp), idesc);
-		clearinode(VTOD(vp));
+		clearinode(idesc->id_number);
 		statemap[idesc->id_number] = USTATE;
-		inodirty(VTOI(vp));
+		vnode_destroy(vp);
+	}
+}
 
-		/* Send cleared inode to the free list */
+void
+clearinode(ino_t inumber)
+{
+	struct ubuf *bp;
+	IFILE *ifp;
+	daddr_t daddr;
 
-		LFS_IENTRY(ifp, fs, idesc->id_number, bp);
-		ifp->if_daddr = LFS_UNUSED_DADDR;
-		ifp->if_nextfree = fs->lfs_freehd;
-		fs->lfs_freehd = idesc->id_number;
-		sbdirty();
-		VOP_BWRITE(bp);
+	/* Send cleared inode to the free list */
+
+	LFS_IENTRY(ifp, fs, inumber, bp);
+	daddr = ifp->if_daddr;
+	ifp->if_daddr = LFS_UNUSED_DADDR;
+	ifp->if_nextfree = fs->lfs_freehd;
+	fs->lfs_freehd = inumber;
+	sbdirty();
+	VOP_BWRITE(bp);
+
+	/*
+	 * update segment usage.
+	 */
+	if (daddr != LFS_UNUSED_DADDR) {
+		SEGUSE *sup;
+		u_int32_t oldsn = dtosn(fs, daddr);
+
+		LFS_SEGENTRY(sup, fs, oldsn, bp);
+		sup->su_nbytes -= DINODE1_SIZE;
+		LFS_WRITESEGENTRY(sup, fs, oldsn, bp);	/* Ifile */
 	}
 }
 
@@ -607,9 +626,9 @@ freeino(ino_t ino)
 	idesc.id_number = ino;
 	vp = vget(fs, ino);
 	(void) ckinode(VTOD(vp), &idesc);
-	clearinode(VTOI(vp)->i_din.ffs1_din);
-	inodirty(VTOI(vp));
+	clearinode(ino);
 	statemap[ino] = USTATE;
+	vnode_destroy(vp);
 
 	n_files--;
 }
