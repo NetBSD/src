@@ -1,4 +1,4 @@
-# $NetBSD: dot.profile,v 1.3.2.1 2000/10/09 13:43:33 fvdl Exp $
+# $NetBSD: dot.profile,v 1.1.2.2 2000/10/09 13:43:33 fvdl Exp $
 #
 # Copyright (c) 1997 Perry E. Metzger
 # Copyright (c) 1994 Christopher G. Demetriou
@@ -43,7 +43,7 @@ BLOCKSIZE=1k
 export BLOCKSIZE
 EDITOR=ed
 export EDITOR
-BOOTMODEL=tiny
+BOOTMODEL=small
 export BOOTMODEL
 
 umask 022
@@ -66,7 +66,10 @@ if [ "X${DONEPROFILE}" = "X" ]; then
 	mount -t kernfs /kern /kern
 
 	# pull in the functions that people will use from the shell prompt.
+	# . /.commonutils
+	# . /.instutils
 	dmesg() cat /kern/msgbuf
+	grep() sed -n "/$1/p"
 
 	# run the installation or upgrade script.
 	sysinst
