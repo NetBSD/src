@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.h,v 1.51 2000/12/31 12:33:02 jdc Exp $	*/
+/*	$NetBSD: curses.h,v 1.52 2001/01/01 10:36:12 simonb Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -463,9 +463,13 @@ extern char	*ttytype;		/* Full name of current terminal. */
 #define	getch()				wgetch(stdscr)
 #define	getstr(s)			wgetstr(stdscr, s)
 #define	inch()				winch(stdscr)
+#define	inchnstr(c)			winchnstr(stdscr, c)
+#define	inchstr(c)			winchstr(stdscr, c)
+#define	innstr(s, n)			winnstr(stdscr, s, n)
 #define	insch(ch)			winsch(stdscr, ch)
 #define	insdelln(n)			winsdelln(stdscr, n)
 #define	insertln()			winsertln(stdscr)
+#define	instr(s)			winstr(stdscr, s)
 #define	move(y, x)			wmove(stdscr, y, x)
 #define	refresh()			wrefresh(stdscr)
 #define	scrl(n)				wscrl(stdscr, n)
@@ -489,7 +493,11 @@ extern char	*ttytype;		/* Full name of current terminal. */
 #define	mvgetch(y, x)			mvwgetch(stdscr, y, x)
 #define	mvgetstr(y, x, s)		mvwgetstr(stdscr, y, x, s)
 #define	mvinch(y, x)			mvwinch(stdscr, y, x)
+#define	mvinchnstr(y, x, c, n)		mvwinchnstr(stdscr, y, x, c, n)
+#define	mvinchstr(y, x, c)		mvwinchstr(stdscr, y, x, c)
+#define	mvinnstr(y, x, s, n)		mvwinnstr(stdscr, y, x, s, n)
 #define	mvinsch(y, x, c)		mvwinsch(stdscr, y, x, c)
+#define	mvinstr(y, x, s)		mvwinstr(stdscr, y, x, s)
 #define	mvwaddbytes(w, y, x, s, n) \
 	(wmove(w, y, x) == ERR ? ERR : __waddbytes(w, s, n, 0))
 #define	mvwaddch(w, y, x, ch) \
@@ -506,8 +514,16 @@ extern char	*ttytype;		/* Full name of current terminal. */
 	(wmove(w, y, x) == ERR ? ERR : wgetstr(w, s))
 #define	mvwinch(w, y, x) \
 	(wmove(w, y, x) == ERR ? ERR : winch(w))
+#define	mvwinchnstr(w, y, x, c, n) \
+	(wmove(w, y, x) == ERR ? ERR : winchnstr(w, c, n))
+#define	mvwinchstr(w, y, x, s) \
+	(wmove(w, y, x) == ERR ? ERR : winchstr(w, c))
+#define	mvwinnstr(w, y, x, s, n) \
+	(wmove(w, y, x) == ERR ? ERR : winnstr(w, s, n))
 #define	mvwinsch(w, y, x, c) \
 	(wmove(w, y, x) == ERR ? ERR : winsch(w, c))
+#define	mvwinstr(w, y, x, s) \
+	(wmove(w, y, x) == ERR ? ERR : winstr(w, s))
 
 #define	getyx(w, y, x)		(y) = getcury(w), (x) = getcurx(w)
 #define	getbegyx(w, y, x)	(y) = getbegy(w), (x) = getbegx(w)
@@ -533,9 +549,13 @@ int	 erase(void);
 int	 getch(void);
 int	 getstr(char *);
 chtype	 inch(void);
+int	 inchnstr(chtype *, int);
+int	 inchstr(chtype *);
+int	 innstr(char *, int);
 int	 insch(chtype);
 int	 insdelln(int);
 int	 insertln(void);
+int	 instr(char *);
 int	 move(int, int);
 int	 refresh(void);
 int	 scrl(int);
@@ -559,7 +579,11 @@ int	 mvdelch(int, int);
 int	 mvgetch(int, int);
 int	 mvgetstr(int, int, char *);
 chtype	 mvinch(int, int);
+int	 mvinchnstr(int, int, chtype *, int);
+int	 mvinchstr(int, int, chtype *);
+int	 mvinnstr(int, int, char *, int);
 int	 mvinsch(int, int, chtype);
+int	 mvinstr(int, int, char *);
 
 int	 mvwaddbytes(WINDOW *, int, int, const char *, int);
 int	 mvwaddch(WINDOW *, int, int, chtype);
@@ -636,6 +660,10 @@ int	 mvvline(int, int, chtype, int);
 int	 mvwhline(WINDOW *, int, int, chtype, int);
 int	 mvwvline(WINDOW *, int, int, chtype, int);
 int	 mvwin(WINDOW *, int, int);
+int	 mvwinchnstr(WINDOW *, int, int, chtype *, int);
+int	 mvwinchstr(WINDOW *, int, int, chtype *);
+int	 mvwinnstr(WINDOW *, int, int, char *, int);
+int	 mvwinstr(WINDOW *, int, int, char *);
 int	 mvwprintw(WINDOW *, int, int, const char *, ...)
 		__attribute__((__format__(__printf__, 4, 5)));
 int	 mvwscanw(WINDOW *, int, int, const char *, ...)
@@ -695,9 +723,13 @@ int	 wgetch(WINDOW *);
 int	 wgetstr(WINDOW *, char *);
 int	 whline(WINDOW *, chtype, int);
 chtype	 winch(WINDOW *);
+int	 winchnstr(WINDOW *, chtype *, int);
+int	 winchstr(WINDOW *, chtype *);
+int	 winnstr(WINDOW *, char *, int);
 int	 winsch(WINDOW *, chtype);
 int	 winsdelln(WINDOW *, int);
 int	 winsertln(WINDOW *);
+int	 winstr(WINDOW *, char *);
 int	 wmove(WINDOW *, int, int);
 int	 wnoutrefresh(WINDOW *);
 int	 wprintw(WINDOW *, const char *, ...)
