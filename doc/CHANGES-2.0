@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.229 2004/05/28 07:55:09 tron Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.230 2004/05/29 08:58:52 tron Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -3134,4 +3134,10 @@ sys/netinet6/udp6_usrreq.c			1.63
 
 	Sysctl descriptions under net subtree (net.key not done)
 	[atatat, ticket #391]
+
+lib/libc/arch/sh3/sys/cerror.S			1.7
+
+	Provide _REENTRANT code.  It's a wonder nobody has noticed this before.
+	Uncovered by multithreaded bind9 utils.
+	[uwe, ticket #418]
 
