@@ -1,4 +1,4 @@
-/*	$NetBSD: yppasswdd_mkpw.c,v 1.9.2.1 2002/11/24 16:07:29 tron Exp $	*/
+/*	$NetBSD: yppasswdd_mkpw.c,v 1.9.2.2 2004/05/20 03:43:18 jmc Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe <thorpej@NetBSD.ORG>
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: yppasswdd_mkpw.c,v 1.9.2.1 2002/11/24 16:07:29 tron Exp $");
+__RCSID("$NetBSD: yppasswdd_mkpw.c,v 1.9.2.2 2004/05/20 03:43:18 jmc Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -72,6 +72,8 @@ make_passwd(yppasswd *argp, struct svc_req *rqstp, SVCXPRT *transp)
 	int pfd, tfd;
 	char mpwd[MAXPATHLEN];
 	char buf[8192]; /* from libutil */
+	char *p;
+	int lineno;
 	FILE *fpw;
 
 #define REPLY(val)	do { \
@@ -100,7 +102,7 @@ make_passwd(yppasswd *argp, struct svc_req *rqstp, SVCXPRT *transp)
 		warnx("%s", mpwd);
 		RETURN(1);
 	}
-	for(;;) {
+	for(lineno = 1; ; lineno++) {
 		if (fgets(buf, sizeof(buf), fpw) == NULL) {
 			if (feof(fpw))
 				warnx("%s: %s not found", mpwd,
@@ -109,6 +111,12 @@ make_passwd(yppasswd *argp, struct svc_req *rqstp, SVCXPRT *transp)
 				warnx("%s: %s", mpwd, strerror(errno));
 			RETURN(1);
 		}
+		if ((p = strchr(buf, '\n')) == NULL) {
+			warnx("line %d too long", lineno);
+			RETURN(1);
+		}
+		/* get rid of trailing \n */
+		*p = '\0';
 		if (pw_scan(buf, &pw, NULL) == 0)
 			continue;
 		if (strncmp(argp->newpw.pw_name, pw.pw_name, MAXLOGNAME) == 0)
