@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.84 2001/01/18 20:28:22 jdolecek Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.85 2001/01/21 02:34:34 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -210,15 +210,19 @@ usbd_get_string(usbd_device_handle dev, int si, char *buf)
 }
 
 static void
-usbd_trim_trailings_spaces(char *p)
+usbd_trim_spaces(char *p)
 {
-	char *q;
+	char *q, *e;
 
 	if (p == NULL)
 		return;
-	q = p + strlen(p);
-	while (--q >= p && *q == ' ')
-		*q = 0;
+	q = e = p;
+	while (*q == ' ')	/* skip leading spaces */
+		q++;
+	while ((*p = *q++))	/* copy string */
+		if (*p++ != ' ') /* remember last non-space */
+			e = p;
+	*e = 0;			/* kill trailing spaces */
 }
 
 void
@@ -237,9 +241,9 @@ usbd_devinfo_vp(usbd_device_handle dev, char *v, char *p, int usedev)
 
 	if (usedev) {
 		vendor = usbd_get_string(dev, udd->iManufacturer, v);
-		usbd_trim_trailings_spaces(vendor);
+		usbd_trim_spaces(vendor);
 		product = usbd_get_string(dev, udd->iProduct, p);
-		usbd_trim_trailings_spaces(product);
+		usbd_trim_spaces(product);
 	} else {
 		vendor = NULL;
 		product = NULL;
