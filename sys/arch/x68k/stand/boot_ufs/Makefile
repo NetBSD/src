@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2003/10/30 22:23:51 he Exp $
+#	$NetBSD: Makefile,v 1.16 2004/03/21 16:25:56 itohy Exp $
 
 NOMAN=		# defined
 
@@ -41,7 +41,7 @@ CPPFLAGS+= -DBOOT=\"$(BOOT)\" -DBOOT_VERS=\"$(VERSION)\"
 CPPFLAGS+= -DSCSI_ADHOC_BOOTPART
 #CPPFLAGS+= -DBOOT_DEBUG
 CPPFLAGS+= -DUSE_FFS -DUSE_LFS -DUSE_UFS1 -DUSE_UFS2 -D__daddr_t=int32_t
-CPPFLAGS+= -I${COMMONDIR} -I${LIBIOCS} -I${S}
+CPPFLAGS+= -I${COMMONDIR} -I${LIBIOCS} -I${S} -I. -D_STANDALONE
 AFLAGS=	   ${CFLAGS:M-[ID]*}
 .if ${OBJECT_FMT} == "ELF"
 LDFLAGS=   -n -Bstatic -T ${.CURDIR}/${BOOT}.ldscript -M
@@ -57,27 +57,26 @@ CLEANFILES+=	$(PROG).x $(PROG).map
 
 
 $(PROG): $(OBJS)
-	$(LD) $(LDFLAGS) -o $(PROG) $(OBJS) $(LDADD) > $(PROG).map
-	@grep first_kbyte $(PROG).map
 .if ${OBJECT_FMT} == "ELF"
-	@if [ `(echo ibase=16; 						   \
-	    sed -n 's/^.*0x\([0-9a-f]*\).* first_kbyte$$/\1-$(TEXT)-400/p' \
-		$(PROG).map | 						   \
-	    tr a-f A-F) | bc` -gt 0 ]; 					   \
-	then echo '$(BOOT): first_kbyte exceeds the first killobyte';	   \
-	    rm $(PROG) ; exit 1; 					   \
+	:
+	: Note:	"relocation truncated to fit: R_68K_16" messages are expected.
+	:	Other errors are fatal.
+	:
+.endif
+	$(LD) $(LDFLAGS) -o $(PROG).x $(OBJS) $(LDADD) >$(PROG).map
+	@grep first_kbyte $(PROG).map
+	@if [ `(echo ibase=16;						\
+		sed -n	-e '/[ 	]first_kbyte/{'				\
+			-e 's/.*0x\([0-9a-fA-F]*\).*/\1-$(TEXT)-400/p'	\
+			-e '}' $(PROG).map |				\
+		tr a-f A-F) | bc` -gt 0 ];				\
+	then echo '$(BOOT): first_kbyte exceeds the first killobyte';	\
+		exit 1;							\
 	fi
+.if ${OBJECT_FMT} == "ELF"
+	mv -f $(PROG).x $(PROG)
 .else
-	mv $(PROG) $(PROG).x
-	$(OBJCOPY) -I a.out-m68k-netbsd -O binary $(PROG).x $(PROG)
-	@rm -f $(PROG).x
-	@if [ `(echo ibase=16; 						   \
-	    sed -n 's/  first_kbyte:.*0x\(.*\),.*$$/\1-$(TEXT)-400/p'	   \
-		$(PROG).map | 						   \
-	    tr a-f A-F) | bc` -gt 0 ]; 					   \
-	then echo '$(BOOT): first_kbyte exceeds the first killobyte';	   \
-	    rm $(PROG) ; exit 1; 					   \
-	fi
+	$(OBJCOPY) -O binary $(PROG).x $(PROG)
 .endif
 
 .include <bsd.prog.mk>
