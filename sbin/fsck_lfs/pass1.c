@@ -1,4 +1,4 @@
-/*	$NetBSD: pass1.c,v 1.4 2000/01/20 21:32:32 perseant Exp $	*/
+/*	$NetBSD: pass1.c,v 1.5 2000/05/16 04:55:59 perseant Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -50,11 +50,13 @@
 #include "extern.h"
 #include "fsutil.h"
 
-extern struct dinode **din_table;
+SEGUSE *seg_table;
+extern daddr_t *din_table;
 
 static daddr_t badblk;
 static daddr_t dupblk;
 static void checkinode __P((ino_t, struct inodesc *));
+static int i_d_cmp(const void *, const void *);
 
 static void bmapcheck(void)
 {
@@ -67,15 +69,39 @@ static void bmapcheck(void)
 			raise(1);
 }
 
+struct ino_daddr {
+	ino_t ino;
+	daddr_t daddr;
+};
+
+static int
+i_d_cmp(const void *va, const void *vb)
+{
+	struct ino_daddr *a, *b;
+
+	a = *((struct ino_daddr **)va);
+	b = *((struct ino_daddr **)vb);
+
+	if (a->daddr == b->daddr) {
+		return (a->ino - b->ino);
+	}
+	if (a->daddr > b->daddr) {
+		return 1;
+	}
+	return -1;
+}
+
 void
 pass1()
 {
 	ino_t inumber;
-	int total_segments;
+	int i, total_segments;
 	struct inodesc idesc;
         struct dinode *idinode, *tinode;
         struct ifile *ifp;
         CLEANERINFO *cp;
+	struct bufarea *bp;
+	struct ino_daddr **dins;
 
         idinode = lfs_difind(&sblock,sblock.lfs_ifile,&ifblock);
 
@@ -102,18 +128,28 @@ pass1()
 	inumber = 0;
 	n_files = n_blks = 0;
 
-	/* find a value for numdirs */
+	if (debug)
+		printf("creating inode address table...\n");
+	/* Sort by daddr */
+	dins = (struct ino_daddr **)malloc((maxino+1) * sizeof(*dins));
+	for(i=0;i<=maxino;i++) {
+		dins[i] = malloc(sizeof(**dins));
+		dins[i]->ino = i;
+		dins[i]->daddr = lfs_ino_daddr(i);
+	}
+	qsort(dins, maxino+1, sizeof(*dins), i_d_cmp);
+
+	/* find a value for numdirs, fill in din_table */
+	if (debug)
+		printf("counting dirs...\n");
 	numdirs=0;
-	for(inumber=0; inumber < maxino; inumber++) {
-            tinode = lfs_ginode(inumber);
-#if 0 /* debug */
-            ifp = lfs_ientry(inumber);
-            if(ifp)
-                printf("Inode %lu has disk address %lx\n",
-                       inumber, ifp->if_daddr);
-#endif
-            if(tinode && (tinode->di_mode & IFMT)==IFDIR)
-                numdirs++;
+	for(i=0; i <= maxino; i++) {
+		inumber = dins[i]->ino;
+		if(inumber == 0 || dins[i]->daddr == 0)
+			continue;
+		tinode = lfs_ginode(inumber);
+		if(tinode && (tinode->di_mode & IFMT)==IFDIR)
+			numdirs++;
 	}
 
 	/* from setup.c */
@@ -130,19 +166,23 @@ pass1()
         }
 
 	/* resetinodebuf(); */
-
-        for(inumber=ROOTINO; inumber <= maxino; inumber++) {
-            ifp = lfs_ientry(inumber);
-            if(ifp && ifp->if_daddr != LFS_UNUSED_DADDR) {
-                checkinode(inumber, &idesc);
-#if 1
-                if(statemap[inumber]!=USTATE && din_table[inumber]==NULL) {
-                    pwarn("Inode %d not claimed by any segment (belongs to %d)\n",inumber,datosn(&sblock,ifp->if_daddr));
-                }
-#endif
-            } else
-                statemap[inumber] = USTATE;
+	if (debug)
+		printf("counting blocks...\n");
+        for(i=0; i <= maxino; i++) {
+		inumber = dins[i]->ino;
+		if(inumber == 0 || dins[i]->daddr == 0)
+			continue;
+		ifp = lfs_ientry(inumber,&bp);
+		if(ifp && ifp->if_daddr != LFS_UNUSED_DADDR) {
+			bp->b_flags &= ~B_INUSE;
+			checkinode(inumber, &idesc);
+		} else {
+			bp->b_flags &= ~B_INUSE;
+			statemap[inumber] = USTATE;
+		}
+		free(dins[i]);
         }
+	free(dins);
 
 	bmapcheck();
 	/* freeinodebuf(); */
@@ -262,7 +302,7 @@ checkinode(inumber, idesc)
 			if (debug)
 				printf("bad indirect addr: %d\n",
 					dp->di_ib[j]);
-			goto unknown;
+			/* goto unknown; */
 		}
 	if (ftypeok(dp) == 0)
 		goto unknown;
@@ -337,6 +377,10 @@ pass1check(idesc)
 	register struct dups *dlp;
 	struct dups *new;
 
+	if (!testbmap(blkno)) {
+		seg_table[datosn(&sblock,blkno)].su_nbytes += idesc->id_numfrags * sblock.lfs_fsize;
+	}
+
 	if ((anyout = chkrange(blkno, idesc->id_numfrags)) != 0) {
 		blkerror(idesc->id_number, "BAD", blkno);
 		if (badblk++ >= MAXBAD) {
@@ -357,10 +401,6 @@ pass1check(idesc)
 #ifndef VERBOSE_BLOCKMAP
 			setbmap(blkno);
 #else
-#if 0
-			if(idesc->id_number > 10000)
-				printf("Oops, inum was %d\n", idesc->id_number);
-#endif
 			setbmap(blkno,idesc->id_number);
 #endif
 		} else {
