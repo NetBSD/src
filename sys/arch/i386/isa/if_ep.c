@@ -21,7 +21,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: if_ep.c,v 1.33 1994/04/23 04:31:12 hpeyerl Exp $
+ *	$Id: if_ep.c,v 1.34 1994/04/24 02:48:10 deraadt Exp $
  */
 
 #include "bpfilter.h"
@@ -84,6 +84,7 @@ struct ep_softc {
 	int	next_mb;		/* Which mbuf to use next. 	*/
 	int	last_mb;		/* Last mbuf.			*/
 	int	tx_start_thresh;	/* Current TX_start_thresh.	*/
+	int	tx_succ_ok;		/* # packets sent in sequence w/o underrun */
 	caddr_t bpf;			/* BPF  "magic cookie"		*/
 	char	bus32bit;		/* 32bit access possible */
 };
@@ -172,7 +173,7 @@ epprobe(parent, self, aux)
 			k = (k & 0x1f) * 0x10 + 0x200;
 			k2 = inw(port + EP_W0_RESOURCE_CFG);
 			k2 >>= 12;
-			epaddcard(port, k2, 0);
+			epaddcard(port, k2, 1);
 		}
 
 		/* find all isa cards */
@@ -356,6 +357,8 @@ epattach(parent, self, aux)
 	bpfattach(&sc->bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
 #endif
 
+	sc->tx_start_thresh = 20;	/* probably a good starting point. */
+
 	sc->sc_ih.ih_fun = epintr;
 	sc->sc_ih.ih_arg = sc;
 	sc->sc_ih.ih_level = IPL_NET;
@@ -414,8 +417,6 @@ epinit(sc)
 
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;	/* just in case */
-	sc->tx_start_thresh = 20;	/* probably a good starting point. */
-	/* Store up a bunch of mbuf's for use later. (MAX_MBS). */
 	epmbuffill(sc);
 
 	epstart(ifp);
@@ -512,13 +513,17 @@ startagain:
 		goto readcheck;
 	}
 
+	outw(BASE + EP_COMMAND, SET_TX_AVAIL_THRESH | (len + pad + 4));
 	if (inw(BASE + EP_W1_FREE_TX) < len + pad + 4) {
-		/* no room in FIFO */
-		outw(BASE + EP_COMMAND, SET_TX_AVAIL_THRESH | (len + pad + 4));
+		/* not enough room in FIFO */
 		sc->ep_ac.ac_if.if_flags |= IFF_OACTIVE;
 		splx(s);
 		return (0);
+	} else {
+		outw(BASE + EP_COMMAND, SET_TX_AVAIL_THRESH | 2044);
+		outw(BASE + EP_COMMAND, ACK_INTR | S_TX_AVAIL);
 	}
+
 	IF_DEQUEUE(&sc->ep_ac.ac_if.if_snd, m);
 	if (m == 0) {		/* not really needed */
 		splx(s);
@@ -633,73 +638,71 @@ int
 epintr(sc)
 	register struct ep_softc *sc;
 {
-	int     status, i;
 	struct ifnet *ifp = &sc->ep_ac.ac_if;
+	u_short		status;
+	int		i, ret = 0;
 
-	status = 0;
 	status = inw(BASE + EP_STATUS) &
 	    (S_TX_COMPLETE | S_TX_AVAIL | S_RX_COMPLETE | S_CARD_FAILURE);
-	if (status == 0) {
-		/* No interrupts. */
-		outw(BASE + EP_COMMAND, C_INTR_LATCH);
-		return (0);
-	}
-loop:
-	/* important that we do this first. */
-	outw(BASE + EP_COMMAND, ACK_INTR | status);
+	while (status) {
+		ret = 1;
+		/* important that we do this first. */
+		outw(BASE + EP_COMMAND, ACK_INTR | status);
 
-	if (status & S_RX_COMPLETE) {
-		status &= ~S_RX_COMPLETE;
-		epread(sc);
-	}
-	if (status & S_TX_AVAIL) {
-		status &= ~S_TX_AVAIL;
-		inw(BASE + EP_W1_FREE_TX);
-		sc->ep_ac.ac_if.if_flags &= ~IFF_OACTIVE;
-		epstart(&sc->ep_ac.ac_if);
-	}
-	if (status & S_CARD_FAILURE) {
-		printf("%s: reset (status: %x)\n", sc->sc_dev.dv_xname, status);
-		outw(BASE + EP_COMMAND, C_INTR_LATCH);
-		epreset(sc);
-		return (1);
-	}
-	if (status & S_TX_COMPLETE) {
-		status &= ~S_TX_COMPLETE;
-		/*
-		 * We need to read TX_STATUS until we get a 0 status in
-		 * order to turn off the interrupt flag.
-		 */
-		while ((i = inb(BASE + EP_W1_TX_STATUS)) & TXS_COMPLETE) {
-			outw(BASE + EP_W1_TX_STATUS, 0x0);
-			if (i & (TXS_MAX_COLLISION | TXS_JABBER | TXS_UNDERRUN)) {
-				if (i & TXS_MAX_COLLISION)
-					++sc->ep_ac.ac_if.if_collisions;
-				if (i & (TXS_JABBER | TXS_UNDERRUN)) {
-					outw(BASE + EP_COMMAND, TX_RESET);
-					if (i & TXS_UNDERRUN) {
-						if (sc->tx_start_thresh < ETHER_MAX_LEN) {
-							sc->tx_start_thresh += 20;
-							outw(BASE + EP_COMMAND,
-							    SET_TX_START_THRESH |
-							    sc->tx_start_thresh);
-						}
-					}
-				}
-				outw(BASE + EP_COMMAND, TX_ENABLE);
-				++sc->ep_ac.ac_if.if_oerrors;
-			}
+		if (status & S_RX_COMPLETE)
+			epread(sc);
+		if (status & S_TX_AVAIL) {
+			inw(BASE + EP_W1_FREE_TX);
+			sc->ep_ac.ac_if.if_flags &= ~IFF_OACTIVE;
+			epstart(&sc->ep_ac.ac_if);
 		}
-		epstart(ifp);
-	}
-	status = inw(BASE + EP_STATUS) &
-	    (S_TX_COMPLETE | S_TX_AVAIL | S_RX_COMPLETE | S_CARD_FAILURE);
-	if (status == 0) {
-		/* No interrupts. */
-		outw(BASE + EP_COMMAND, C_INTR_LATCH);
-		return (1);
-	}
-	goto loop;
+		if (status & S_CARD_FAILURE) {
+			printf("%s: adapter failure (%x)\n",
+			    sc->sc_dev.dv_xname, status);
+			outw(BASE + EP_COMMAND, C_INTR_LATCH);
+			epreset(sc);
+			return (1);
+		}
+		if (status & S_TX_COMPLETE) {
+			/*
+			 * We need to read+write TX_STATUS until we get a 0 status
+			 * in order to turn off the interrupt flag.
+			 */
+			while ((i = inb(BASE + EP_W1_TX_STATUS)) & TXS_COMPLETE) {
+				outw(BASE + EP_W1_TX_STATUS, 0x0);
+	
+				if (i & TXS_JABBER) {
+					++sc->ep_ac.ac_if.if_oerrors;
+					untimeout(epmbuffill, sc);
+					printf("%s: jabber (%x %x)\n",
+					    sc->sc_dev.dv_xname, status, i);
+					epreset(sc);
+				} else if (i & TXS_UNDERRUN) {
+					++sc->ep_ac.ac_if.if_oerrors;
+					untimeout(epmbuffill, sc);
+					printf("%s: fifo underrun (%x %x), correcting\n",
+					    sc->sc_dev.dv_xname, status, i);
+					if (sc->tx_succ_ok < 100)
+						sc->tx_start_thresh = MIN(ETHER_MAX_LEN,
+						    sc->tx_start_thresh + 20);
+					sc->tx_succ_ok = 0;
+					epreset(sc);
+				} else if (i & TXS_MAX_COLLISION) {
+					++sc->ep_ac.ac_if.if_collisions;
+					outw(BASE + EP_COMMAND, TX_ENABLE);
+					sc->ep_ac.ac_if.if_flags &= ~IFF_OACTIVE;
+				} else
+					sc->tx_succ_ok = (sc->tx_succ_ok+1) & 128;
+					
+			}
+			epstart(ifp);
+		}
+		status = inw(BASE + EP_STATUS) &
+		    (S_TX_COMPLETE | S_TX_AVAIL | S_RX_COMPLETE | S_CARD_FAILURE);
+	}	
+	/* no more interrupts */
+	outw(BASE + EP_COMMAND, C_INTR_LATCH);
+	return (ret);
 }
 
 static void
@@ -1030,12 +1033,12 @@ epbusyeeprom(sc)
 			break;
 	}
 	if (!i) {
-		printf("\n%s: eeprom failed to come ready.\n",
+		printf("\n%s: eeprom failed to come ready\n",
 		    sc->sc_dev.dv_xname);
 		return (1);
 	}
 	if (j & EEPROM_TST_MODE) {
-		printf("\n%s: 3c509 in test mode. Erase pencil mark!\n",
+		printf("\n%s: 3c509 is in test mode -- erase pencil mark!\n",
 		    sc->sc_dev.dv_xname);
 		return (1);
 	}
