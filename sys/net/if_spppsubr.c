@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.23 2001/04/13 23:30:15 thorpej Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.24 2001/07/17 19:12:02 martin Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -1604,10 +1604,12 @@ sppp_cp_input(const struct cp *cp, struct sppp *sp, struct mbuf *m)
 		case STATE_CLOSING:
 			(cp->tlf)(sp);
 			sppp_cp_change_state(cp, sp, STATE_CLOSED);
+			sppp_lcp_check_and_close(sp);
 			break;
 		case STATE_STOPPING:
 			(cp->tlf)(sp);
 			sppp_cp_change_state(cp, sp, STATE_STOPPED);
+			sppp_lcp_check_and_close(sp);
 			break;
 		case STATE_ACK_RCVD:
 			sppp_cp_change_state(cp, sp, STATE_REQ_SENT);
@@ -1944,16 +1946,19 @@ sppp_to_event(const struct cp *cp, struct sppp *sp)
 		case STATE_CLOSING:
 			(cp->tlf)(sp);
 			sppp_cp_change_state(cp, sp, STATE_CLOSED);
+			sppp_lcp_check_and_close(sp);
 			break;
 		case STATE_STOPPING:
 			(cp->tlf)(sp);
 			sppp_cp_change_state(cp, sp, STATE_STOPPED);
+			sppp_lcp_check_and_close(sp);
 			break;
 		case STATE_REQ_SENT:
 		case STATE_ACK_RCVD:
 		case STATE_ACK_SENT:
 			(cp->tlf)(sp);
 			sppp_cp_change_state(cp, sp, STATE_STOPPED);
+			sppp_lcp_check_and_close(sp);
 			break;
 		}
 	else
@@ -3145,12 +3150,8 @@ sppp_ipcp_tls(struct sppp *sp)
 static void
 sppp_ipcp_tlf(struct sppp *sp)
 {
-
-#if 0 /* need #if 0 to close IPCP properly */
 	/* we no longer need LCP */
 	sp->lcp.protos &= ~(1 << IDX_IPCP);
-	sppp_lcp_check_and_close(sp);
-#endif
 }
 
 static void
@@ -3594,12 +3595,8 @@ sppp_ipv6cp_tls(struct sppp *sp)
 static void
 sppp_ipv6cp_tlf(struct sppp *sp)
 {
-
-#if 0 /* need #if 0 to close IPv6CP properly */
 	/* we no longer need LCP */
 	sp->lcp.protos &= ~(1 << IDX_IPV6CP);
-	sppp_lcp_check_and_close(sp);
-#endif
 }
 
 static void
