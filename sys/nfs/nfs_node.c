@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfs_node.c	7.34 (Berkeley) 5/15/91
- *	$Id: nfs_node.c,v 1.6 1994/03/01 20:31:09 pk Exp $
+ *	$Id: nfs_node.c,v 1.7 1994/04/21 23:23:29 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -130,11 +130,6 @@ loop:
 		if (mntp != NFSTOV(np)->v_mount ||
 		    bcmp((caddr_t)fhp, (caddr_t)&np->n_fh, NFSX_FH))
 			continue;
-		if ((np->n_flag & NLOCKED) != 0) {
-			np->n_flag |= NWANT;
-			(void) tsleep((caddr_t)np, PINOD, "nfsnode", 0);
-			goto loop;
-		}
 		vp = NFSTOV(np);
 		if (vget(vp))
 			goto loop;
@@ -244,31 +239,14 @@ nfs_reclaim(vp)
 }
 
 /*
- * In theory, NFS does not need locking, but we make provision
- * for doing it just in case it is needed.
- */
-int donfslocking = 1;
-/*
  * Lock an nfsnode
  */
 
 nfs_lock(vp)
 	struct vnode *vp;
 {
-	register struct nfsnode *np = VTONFS(vp);
 
-	if (!donfslocking)
-		return;
-	while (np->n_flag & NLOCKED) {
-		np->n_flag |= NWANT;
-		if (np->n_lockholder == curproc->p_pid)
-			panic("locking against myself");
-		np->n_lockwaiter = curproc->p_pid;
-		(void) tsleep((caddr_t)np, PINOD, "nfslock", 0);
-	}
-	np->n_lockwaiter = 0;
-	np->n_lockholder = curproc->p_pid;
-	np->n_flag |= NLOCKED;
+	return (0);
 }
 
 /*
@@ -277,14 +255,8 @@ nfs_lock(vp)
 nfs_unlock(vp)
 	struct vnode *vp;
 {
-	register struct nfsnode *np = VTONFS(vp);
 
-	np->n_lockholder = 0;
-	np->n_flag &= ~NLOCKED;
-	if (np->n_flag & NWANT) {
-		np->n_flag &= ~NWANT;
-		wakeup((caddr_t)np);
-	}
+	return (0);
 }
 
 /*
@@ -294,23 +266,17 @@ nfs_islocked(vp)
 	struct vnode *vp;
 {
 
-	if (VTONFS(vp)->n_flag & NLOCKED)
-		return (1);
 	return (0);
 }
 
 /*
- * Unlock and vrele()
- * since I can't decide if dirs. should be locked, I will check for
- * the lock and be flexible
+ * Unlock (i.e. do nothing) and vrele()
  */
 nfs_nput(vp)
 	struct vnode *vp;
 {
 	register struct nfsnode *np = VTONFS(vp);
 
-	if (np->n_flag & NLOCKED)
-		nfs_unlock(vp);
 	vrele(vp);
 }
 

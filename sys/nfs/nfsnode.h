@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfsnode.h	7.12 (Berkeley) 4/16/91
- *	$Id: nfsnode.h,v 1.7 1994/02/15 21:07:15 pk Exp $
+ *	$Id: nfsnode.h,v 1.8 1994/04/21 23:23:45 cgd Exp $
  */
 
 #ifndef _NFS_NFSNODE_H_
@@ -61,8 +61,6 @@ struct nfsnode {
 	time_t	n_mtime;	/* Prev modify time to maintain data cache consistency*/
 	time_t	n_ctime;	/* Prev create time for name cache consistency*/
 	int	n_error;	/* Save write error value */
-	pid_t	n_lockholder;	/* holder of nfsnode lock */
-	pid_t	n_lockwaiter;	/* most recent waiter for nfsnode lock */
 	u_long	n_direofoffset;	/* Dir. EOF offset cache */
 	struct timeval n_delayed_atime;	/* Non-urgent access/modified time */
 	struct timeval n_delayed_mtime;	/* updates are stored here. */
@@ -81,10 +79,8 @@ struct nfsnode {
 /*
  * Flags for n_flag
  */
-#define	NLOCKED		0x1	/* Lock the node for other local accesses */
-#define	NWANT		0x2	/* Want above lock */
-#define	NMODIFIED	0x4	/* Might have a modified buffer in bio */
-#define	NWRITEERR	0x8	/* Flag write errors so close will know */
+#define	NMODIFIED	0x1	/* Might have a modified buffer in bio */
+#define	NWRITEERR	0x2	/* Flag write errors so close will know */
 
 /*
  * Prototypes for NFS vnode operations

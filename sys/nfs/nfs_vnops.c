@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfs_vnops.c	7.60 (Berkeley) 5/24/91
- *	$Id: nfs_vnops.c,v 1.28 1994/04/21 07:49:12 cgd Exp $
+ *	$Id: nfs_vnops.c,v 1.29 1994/04/21 23:23:37 cgd Exp $
  */
 
 /*
@@ -1785,12 +1785,6 @@ nfs_print(vp)
 	if (vp->v_type == VFIFO)
 		fifo_printinfo(vp);
 #endif /* FIFO */
-	printf("%s\n", (np->n_flag & NLOCKED) ? " (LOCKED)" : "");
-	if (np->n_lockholder == 0)
-		return (0);
-	printf("\towner pid %d", np->n_lockholder);
-	if (np->n_lockwaiter)
-		printf(" waiting pid %d", np->n_lockwaiter);
 	printf("\n");
 	return (0);
 }
