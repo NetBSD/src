@@ -3,7 +3,7 @@
 .\"
 .\"	Written by John F. Woods <jfw@jfwhome.funhouse.com>
 .\"
-.\"	$NetBSD: tar.1,v 1.13 1999/09/26 00:45:44 enami Exp $
+.\"	$NetBSD: tar.1,v 1.14 1999/09/26 00:50:05 enami Exp $
 .\"
 .Dd 6 August 1994
 .Os
@@ -295,7 +295,8 @@ Filter the archive through
 .Ar program
 (which must accept
 .Fl d
-to mean ``decompress'').
+to mean
+.Do decompress Dc Ns ).
 .It Fl -block-compress
 Block the output of compression program for tapes or floppies
 (otherwise writes will be of odd length, which device drivers may reject).
