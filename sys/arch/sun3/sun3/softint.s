@@ -39,9 +39,14 @@
  *
  *	from: @(#)locore.s	7.11 (Berkeley) 5/9/91
  *	locore.s,v 1.2 1993/05/22 07:57:30 cgd Exp
+ *	$Id: softint.s,v 1.6 1994/06/29 05:34:16 gwr Exp $
  */
 
-/* this code is un-altered from the hp300 code */
+/*
+ * This code is (mostly) un-altered from the hp300 code,
+ * except that sun machines do not need a simulated SIR
+ * because they have a real software interrupt register.
+ */
 /*
  * Emulation of VAX REI instruction.
  *
@@ -55,7 +60,11 @@
  * This code is complicated by the fact that sendsig may have been called
  * necessitating a stack cleanup.
  */
+
+#ifdef	NEED_SSIR	/* Now using isr_soft_request() */
 	.comm	_ssir,1
+#endif	/* NEED_SSIR */
+
 	.globl	_astpending
 rei:
 #ifdef STACKCHECK
@@ -105,7 +114,7 @@ Laststkadj:
 #endif
 
 Lchksir:
-#if 0	/* XXX - Now using isr_soft_request() */
+#ifdef	NEED_SSIR	/* Now using isr_soft_request() */
 	tstb	_ssir			| SIR pending?
 	jeq	Ldorte			| no, all done
 	movl	d0,sp@-			| need a scratch register
@@ -137,7 +146,7 @@ Lgotsir:
 #endif
 Lnosir:
 	movl	sp@+,d0			| restore scratch register
-#endif	/* XXX */
+#endif	/* NEED_SSIR */
 
 Ldorte:
 #ifdef STACKCHECK
@@ -189,6 +198,7 @@ ENTRY(spl0)
 	moveq	#0,d0
 	movw	sr,d0			| get old SR for return
 	movw	#PSL_LOWIPL,sr		| restore new SR
+#ifdef	NEED_SSIR	/* Now using isr_soft_request() */
 	tstb	_ssir			| software interrupt pending?
 	jeq	Lspldone		| no, all done
 	subql	#4,sp			| make room for RTE frame
@@ -197,4 +207,5 @@ ENTRY(spl0)
 	movw	#PSL_LOWIPL,sp@		| and new SR
 	jra	Lgotsir			| go handle it
 Lspldone:
+#endif	/* NEED_SSIR */
 	rts
