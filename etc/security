@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: security,v 1.89 2004/04/02 13:13:47 jmmv Exp $
+#	$NetBSD: security,v 1.90 2004/04/09 17:33:35 kim Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -904,7 +904,7 @@ if [ -n "$CHANGELIST" ]; then
 fi
 
 if [ -f /etc/security.local ]; then
-	. /etc/security.local > $OUTPUT
+	. /etc/security.local > $OUTPUT 2>&1
 	if [ -s $OUTPUT ] ; then
 		printf "\nRunning /etc/security.local:\n"
 		cat $OUTPUT
