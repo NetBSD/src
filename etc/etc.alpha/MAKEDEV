@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV,v 1.103 2002/10/21 04:14:49 lukem Exp $
+#	$NetBSD: MAKEDEV,v 1.104 2002/11/05 04:45:10 fair Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -126,6 +126,7 @@
 #	systrace syscall tracer
 #	bktr	Brooktree 848/849/878/879 based TV cards
 #	kttcp	kernel ttcp helper device
+#	radio*	control radio receivers
 
 dialin=0
 dialout=524288
@@ -175,6 +176,7 @@ all)
 	makedev systrace
 	makedev bktr
 	makedev kttcp
+	makedev radio
 	;;
 
 minimal)
@@ -774,6 +776,21 @@ kttcp)
 	rm -f kttcp
 	mknod kttcp c 72 0
 	chmod 600 kttcp
+	;;
+
+radio)
+	makedev radio0 radio1
+	ln -fs radio0 radio
+	;;
+
+radio*)
+	unit=${i#radio}
+	radio=radio$unit
+	major=74
+	if [ "$unit" = "" ]; then unit=0; fi
+	rm -f $radio
+	mknod $radio c $major $unit
+	chmod 666 $radio
 	;;
 
 local)
