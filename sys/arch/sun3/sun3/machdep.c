@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.48 1995/03/24 17:27:41 gwr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.49 1995/03/26 19:32:31 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -202,16 +202,6 @@ load_u_area()
 }
 
 /*
- * This function exists just so stack traces show the right caller
- * when the first interrupts come in (else ddb gets confused).
- */
-static void
-enable_interrupts()
-{
-	(void)spl0();
-}
-
-/*
  * This is called early in init_main.c:main(), after the
  * kernel memory allocator is ready for use, but before
  * the creation of process 0,1,2 and mountroot, etc.
@@ -326,7 +316,6 @@ void cpu_startup()
     configure();
 
 	cold = 0;
-	enable_interrupts();
 
 #ifdef	COMPAT_SUNOS
 	hack_sun_reboot();	/* XXX - Temporary hack... */
