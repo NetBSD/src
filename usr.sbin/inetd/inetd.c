@@ -1,4 +1,4 @@
-/*	$NetBSD: inetd.c,v 1.52 1999/07/28 10:58:31 itojun Exp $	*/
+/*	$NetBSD: inetd.c,v 1.53 1999/08/02 01:12:21 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)inetd.c	8.4 (Berkeley) 4/13/94";
 #else
-__RCSID("$NetBSD: inetd.c,v 1.52 1999/07/28 10:58:31 itojun Exp $");
+__RCSID("$NetBSD: inetd.c,v 1.53 1999/08/02 01:12:21 sommerfeld Exp $");
 #endif
 #endif /* not lint */
 
@@ -207,7 +207,9 @@ __RCSID("$NetBSD: inetd.c,v 1.52 1999/07/28 10:58:31 itojun Exp $");
 #define RLIMIT_NOFILE	RLIMIT_OFILE
 #endif
 
+#ifndef NO_RPC
 #define RPC
+#endif
 
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -921,6 +923,7 @@ config(signo)
 			}
 			sep->se_ctrladdr_size = res->ai_addrlen;
 			freeaddrinfo(res);
+#ifdef RPC
 			if (isrpcservice(sep)) {
 				struct rpcent *rp;
 
@@ -941,7 +944,9 @@ config(signo)
 					setup(sep);
 				if (sep->se_fd != -1)
 					register_rpc(sep);
-			} else {
+			} else
+#endif
+			{
 				if (sep->se_fd >= 0)
 					close_sep(sep);
 				if (sep->se_fd == -1 && !ISMUX(sep))
