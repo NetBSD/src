@@ -1,4 +1,4 @@
-/*      $NetBSD: ata.c,v 1.1.2.1 1998/06/04 16:52:34 bouyer Exp $      */
+/*      $NetBSD: ata.c,v 1.1.2.2 1998/06/05 08:38:57 bouyer Exp $      */
 /*
  * Copyright (c) 1998 Manuel Bouyer.  All rights reserved.
  *
@@ -62,9 +62,12 @@ ata_get_params(drvp, flags, prms)
 	struct ataparams *prms;
 {
 	char tb[DEV_BSIZE];
-	int i;
 	struct wdc_command wdc_c;
+
+#if BYTE_ORDER == LITTLE_ENDIAN
+	int i;
 	u_int16_t *p;
+#endif
 
 	WDCDEBUG_PRINT(("wdc_ata_get_parms\n"), DEBUG_FUNCS);
 

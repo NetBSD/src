@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_mb.c,v 1.1.2.1 1998/06/04 16:53:40 bouyer Exp $	*/
+/*	$NetBSD: wdc_mb.c,v 1.1.2.2 1998/06/05 08:38:56 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -37,6 +37,7 @@
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/malloc.h>
 #include <sys/device.h>
 
 #include <machine/cpu.h>
@@ -159,20 +160,14 @@ wdc_mb_attach(parent, self, aux)
 	 */
 	MFP->mf_ierb &= ~IB_DINT;
 
-	/*
-	 * XXX: Is this true on all atari's??
-	 */
-	/* sc->sc_wdcdev.sc_flags |= WDCF_SINGLE; *//* XXX why is this here ? */
-
-	sc->wdc_channel.cap |= WDC_CAPABILITY_HWLOCK;
+	sc->sc_wdcdev.cap |= WDC_CAPABILITY_HWLOCK;
 	sc->sc_wdcdev.pio_mode = 0;
-	sc->wdc_channel.claim_hw = &claim_hw;
-	sc->wdc_channel.free_hw  = &free_hw;
+	sc->sc_wdcdev.claim_hw = &claim_hw;
+	sc->sc_wdcdev.free_hw  = &free_hw;
 	sc->sc_wdcdev.channels = &sc->wdc_channel;
 	sc->sc_wdcdev.nchannels = 1;
 	sc->wdc_channel.channel = 0;
-	sc->wdc_channel.ch_drive[0].ctrl_softc = 
-	    sc->wdc_channel.ch_drive[1].ctrl_softc  = &sc->sc_wdcdev;
+	sc->wdc_channel.wdc = &sc->sc_wdcdev;
 	sc->wdc_channel.ch_queue = malloc(sizeof(struct channel_queue),
 	    M_DEVBUF, M_NOWAIT);
 	if (sc->wdc_channel.ch_queue == NULL) {
@@ -200,8 +195,6 @@ claim_hw(softc, maysleep)
 void *softc;
 int  maysleep;
 {
-	void wdcrestart __P((void *));
-
 	if (wd_lock != DMA_LOCK_GRANT) {
 		if (wd_lock == DMA_LOCK_REQ) {
 			/*
