@@ -1,4 +1,4 @@
-/*	$NetBSD: union_subr.c,v 1.19 1996/10/10 22:54:23 christos Exp $	*/
+/*	$NetBSD: union_subr.c,v 1.20 1996/10/13 02:21:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Jan-Simon Pendry
@@ -235,7 +235,7 @@ union_newsize(vp, uppersz, lowersz)
 
 	if (sz != VNOVAL) {
 #ifdef UNION_DIAGNOSTIC
-		kprintf("union: %s size now %ld\n",
+		printf("union: %s size now %ld\n",
 		    uppersz != VNOVAL ? "upper" : "lower", (long) sz);
 #endif
 		vnode_pager_setsize(vp, sz);

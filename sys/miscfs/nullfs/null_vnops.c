@@ -1,4 +1,4 @@
-/*	$NetBSD: null_vnops.c,v 1.8 1996/10/10 22:54:11 christos Exp $	*/
+/*	$NetBSD: null_vnops.c,v 1.9 1996/10/13 02:21:35 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -235,7 +235,7 @@ null_bypass(v)
 	int reles, i;
 
 	if (null_bug_bypass)
-		kprintf ("null_bypass: %s\n", descp->vdesc_name);
+		printf ("null_bypass: %s\n", descp->vdesc_name);
 
 #ifdef SAFETY
 	/*
@@ -424,14 +424,14 @@ null_print(v)
 	register struct vnode *vp = ap->a_vp;
 	register struct null_node *nn = VTONULL(vp);
 
-	kprintf ("\ttag VT_NULLFS, vp=%p, lowervp=%p\n", vp, NULLVPTOLOWERVP(vp));
+	printf ("\ttag VT_NULLFS, vp=%p, lowervp=%p\n", vp, NULLVPTOLOWERVP(vp));
 #ifdef DIAGNOSTIC
-	kprintf("%s%s owner pid %d retpc %p retret %p\n",
+	printf("%s%s owner pid %d retpc %p retret %p\n",
 	    (nn->null_flags & NULL_LOCKED) ? "(LOCKED) " : "",
 	    (nn->null_flags & NULL_LLOCK) ? "(LLOCK) " : "",
 	    nn->null_pid, nn->null_lockpc, nn->null_lockpc2);
 #else
-	kprintf("%s%s\n",
+	printf("%s%s\n",
 	    (nn->null_flags & NULL_LOCKED) ? "(LOCKED) " : "",
 	    (nn->null_flags & NULL_LLOCK) ? "(LLOCK) " : "");
 #endif
@@ -512,7 +512,7 @@ null_lock(v)
 
 #ifdef NULLFS_DIAGNOSTIC
 	vprint("null_lock_e", ap->a_vp);
-	kprintf("retpc=%lx, retretpc=%lx\n", RETURN_PC(0), RETURN_PC(1));
+	printf("retpc=%lx, retretpc=%lx\n", RETURN_PC(0), RETURN_PC(1));
 #endif
 start:
 	while (vp->v_flag & VXLOCK) {
@@ -622,7 +622,7 @@ null_lookup(v)
 	int flags = ap->a_cnp->cn_flags;
 
 #ifdef NULLFS_DIAGNOSTIC
-	kprintf("null_lookup: dvp=%lx, name='%s'\n",
+	printf("null_lookup: dvp=%lx, name='%s'\n",
 	    ap->a_dvp, ap->a_cnp->cn_nameptr);
 #endif
 	/*
