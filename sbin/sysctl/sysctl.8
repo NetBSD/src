@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.8,v 1.64 2001/02/07 08:59:49 itojun Exp $
+.\"	$NetBSD: sysctl.8,v 1.65 2001/03/09 01:02:10 chs Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -346,9 +346,16 @@ privilege can change the value.
 .It user.posix2_upe	integer	no
 .It user.posix2_version	integer	no
 .It user.re_dup_max	integer	no
-.It vfs.generic.usermount	integer	yes
 .It vendor.<vendor>.*	?	vendor specific
+.It vfs.generic.usermount	integer	yes
+.It vm.anonmin	integer	yes
 .It vm.loadavg	struct	no
+.It vm.nkmempages	integer	no
+.It vm.uvmexp	struct	no
+.It vm.uvmexp2	struct	no
+.It vm.vmmeter	struct	no
+.It vm.vnodemin	integer	yes
+.It vm.vtextmin	integer	yes
 .El
 .Pp
 Entries found under
