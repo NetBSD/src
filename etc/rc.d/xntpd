@@ -1,0 +1,17 @@
+#!/bin/sh
+#
+# $NetBSD: xntpd,v 1.1.1.1 2000/03/10 11:53:23 lukem Exp $
+#
+
+# PROVIDE: xntpd
+# REQUIRE: daemon
+
+. /etc/rc.subr
+. /etc/rc.conf
+
+name="xntpd"
+command="/usr/sbin/${name}"
+pidfile="/var/run/${name}.pid"
+required_files="/etc/ntp.conf"
+
+run_rc_command "$1"

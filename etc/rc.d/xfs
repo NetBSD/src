@@ -1,0 +1,17 @@
+#!/bin/sh
+#
+# $NetBSD: xfs,v 1.1.1.1 2000/03/10 11:53:23 lukem Exp $
+#
+
+# PROVIDE: xfs
+# REQUIRE: mountall
+
+. /etc/rc.subr
+. /etc/rc.conf
+
+name="xfs"
+command="/usr/X11R6/bin/${name}"
+command_args="& sleep 2"
+required_files="/usr/X11R6/lib/X11/fs/config"
+
+run_rc_command "$1" "reload"
