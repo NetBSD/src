@@ -1,4 +1,4 @@
-/*	$NetBSD: twe.c,v 1.59 2004/09/13 12:55:48 drochner Exp $	*/
+/*	$NetBSD: twe.c,v 1.60 2004/09/23 01:16:34 heas Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.59 2004/09/13 12:55:48 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.60 2004/09/23 01:16:34 heas Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1039,7 +1039,7 @@ twe_aen_dequeue(struct twe_softc *sc)
 		aen = TWE_AEN_QUEUE_EMPTY;
 	else {
 		aen = sc->sc_aen_queue[sc->sc_aen_tail];
-		sc->sc_aen_tail = (sc->sc_aen_tail + 1) & TWE_AEN_Q_LENGTH;
+		sc->sc_aen_tail = (sc->sc_aen_tail + 1) % TWE_AEN_Q_LENGTH;
 	}
 
 	return (aen);
