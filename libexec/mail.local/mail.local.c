@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)mail.local.c	5.6 (Berkeley) 6/19/91";*/
-static char rcsid[] = "$Id: mail.local.c,v 1.4 1993/08/01 18:30:13 mycroft Exp $";
+static char rcsid[] = "$Id: mail.local.c,v 1.5 1994/02/10 05:33:21 briggs Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -170,7 +170,7 @@ deliver(fd, name, lockfile)
 {
 	struct stat sb;
 	struct passwd *pw;
-	int created, mbfd, nr, nw, off, rval, lfd=-1;
+	int created, mbfd, nr, nw, off, rval=0, lfd=-1;
 	char biffmsg[100], buf[8*1024], path[MAXPATHLEN], lpath[MAXPATHLEN];
 	off_t curoff, lseek();
 
