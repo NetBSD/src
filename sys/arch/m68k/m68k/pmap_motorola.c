@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.c,v 1.13 2005/02/14 02:15:43 chs Exp $        */
+/*	$NetBSD: pmap_motorola.c,v 1.14 2005/04/01 11:59:32 yamt Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -124,7 +124,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.13 2005/02/14 02:15:43 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.14 2005/04/01 11:59:32 yamt Exp $");
 
 #include "opt_compat_hpux.h"
 
@@ -374,27 +374,6 @@ pmap_init()
 	caddr1_pte = pmap_pte(pmap_kernel(), CADDR1);
 	caddr2_pte = pmap_pte(pmap_kernel(), CADDR2);
 
-	/*
-	 * Now that kernel map has been allocated, we can mark as
-	 * unavailable regions which we have mapped in pmap_bootstrap().
-	 */
-
-	pmap_init_md();
-	addr = (vaddr_t) Sysmap;
-	if (uvm_map(kernel_map, &addr, M68K_MAX_PTSIZE,
-		    NULL, UVM_UNKNOWN_OFFSET, 0,
-		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE,
-				UVM_INH_NONE, UVM_ADV_RANDOM,
-				UVM_FLAG_FIXED)) != 0) {
-		/*
-		 * If this fails, it is probably because the static
-		 * portion of the kernel page table isn't big enough
-		 * and we overran the page table map.
-		 */
-
-		panic("pmap_init: bogons in the VM system!");
-	}
-
 	PMAP_DPRINTF(PDB_INIT,
 	    ("pmap_init: Sysseg %p, Sysmap %p, Sysptmap %p\n",
 	    Sysseg, Sysmap, Sysptmap));
@@ -412,7 +391,7 @@ pmap_init()
 	s += page_cnt * sizeof(struct pv_entry);	/* pv table */
 	s += page_cnt * sizeof(char);			/* attribute table */
 	s = round_page(s);
-	addr = uvm_km_zalloc(kernel_map, s);
+	addr = uvm_km_alloc(kernel_map, s, 0, UVM_KMF_WIRED | UVM_KMF_ZERO);
 	if (addr == 0)
 		panic("pmap_init: can't allocate data structures");
 
@@ -467,7 +446,7 @@ pmap_init()
 	 * Now allocate the space and link the pages together to
 	 * form the KPT free list.
 	 */
-	addr = uvm_km_zalloc(kernel_map, s);
+	addr = uvm_km_alloc(kernel_map, s, 0, UVM_KMF_WIRED | UVM_KMF_ZERO);
 	if (addr == 0)
 		panic("pmap_init: cannot allocate KPT free list");
 	s = ptoa(npages);
@@ -571,9 +550,10 @@ pmap_alloc_pv()
 	int i;
 
 	if (pv_nfree == 0) {
-		pvp = (struct pv_page *)uvm_km_zalloc(kernel_map, PAGE_SIZE);
+		pvp = (struct pv_page *)uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
+		    UVM_KMF_WIRED | UVM_KMF_ZERO);
 		if (pvp == 0)
-			panic("pmap_alloc_pv: uvm_km_zalloc() failed");
+			panic("pmap_alloc_pv: uvm_km_alloc() failed");
 		pvp->pvp_pgi.pgi_freelist = pv = &pvp->pvp_pv[1];
 		for (i = NPVPPG - 2; i; i--, pv++)
 			pv->pv_next = pv + 1;
@@ -620,7 +600,7 @@ pmap_free_pv(pv)
 	case NPVPPG:
 		pv_nfree -= NPVPPG - 1;
 		TAILQ_REMOVE(&pv_page_freelist, pvp, pvp_pgi.pgi_list);
-		uvm_km_free(kernel_map, (vaddr_t)pvp, PAGE_SIZE);
+		uvm_km_free(kernel_map, (vaddr_t)pvp, PAGE_SIZE, UVM_KMF_WIRED);
 		break;
 	}
 }
@@ -685,7 +665,7 @@ pmap_collect_pv()
 
 	for (pvp = pv_page_collectlist.tqh_first; pvp; pvp = npvp) {
 		npvp = pvp->pvp_pgi.pgi_list.tqe_next;
-		uvm_km_free(kernel_map, (vaddr_t)pvp, PAGE_SIZE);
+		uvm_km_free(kernel_map, (vaddr_t)pvp, PAGE_SIZE, UVM_KMF_WIRED);
 	}
 }
 
@@ -820,12 +800,10 @@ pmap_release(pmap)
 	if (pmap->pm_ptab) {
 		pmap_remove(pmap_kernel(), (vaddr_t)pmap->pm_ptab,
 		    (vaddr_t)pmap->pm_ptab + M68K_MAX_PTSIZE);
-		uvm_km_pgremove(uvm.kernel_object,
-		    (vaddr_t)pmap->pm_ptab - vm_map_min(kernel_map),
-		    (vaddr_t)pmap->pm_ptab + M68K_MAX_PTSIZE
-				- vm_map_min(kernel_map));
-		uvm_km_free_wakeup(pt_map, (vaddr_t)pmap->pm_ptab,
-				   M68K_MAX_PTSIZE);
+		uvm_km_pgremove((vaddr_t)pmap->pm_ptab,
+		    (vaddr_t)pmap->pm_ptab + M68K_MAX_PTSIZE);
+		uvm_km_free(pt_map, (vaddr_t)pmap->pm_ptab,
+		    M68K_MAX_PTSIZE, UVM_KMF_VAONLY);
 	}
 	KASSERT(pmap->pm_stab == Segtabzero);
 }
@@ -1208,7 +1186,8 @@ pmap_enter(pmap, va, pa, prot, flags)
 	 */
 	if (pmap->pm_ptab == NULL)
 		pmap->pm_ptab = (pt_entry_t *)
-			uvm_km_valloc_wait(pt_map, M68K_MAX_PTSIZE);
+		    uvm_km_alloc(pt_map, M68K_MAX_PTSIZE, 0,
+		    UVM_KMF_VAONLY | UVM_KMF_WAITVA);
 
 	/*
 	 * Segment table entry not valid, we need a new PT page
@@ -2421,14 +2400,8 @@ pmap_remove_mapping(pmap, va, pte, flags)
 				PMAP_DPRINTF(PDB_REMOVE|PDB_SEGTAB,
 				    ("remove: free stab %p\n",
 				    ptpmap->pm_stab));
-				pmap_remove(pmap_kernel(),
-				    (vaddr_t)ptpmap->pm_stab,
-				    (vaddr_t)ptpmap->pm_stab + M68K_STSIZE);
-				uvm_pagefree(PHYS_TO_VM_PAGE((paddr_t)
-							     ptpmap->pm_stpa));
-				uvm_km_free_wakeup(st_map,
-						 (vaddr_t)ptpmap->pm_stab,
-						 M68K_STSIZE);
+				uvm_km_free(st_map, (vaddr_t)ptpmap->pm_stab,
+				    M68K_STSIZE, UVM_KMF_WIRED);
 				ptpmap->pm_stab = Segtabzero;
 				ptpmap->pm_stpa = Segtabzeropa;
 #if defined(M68040) || defined(M68060)
@@ -2639,7 +2612,8 @@ pmap_enter_ptpage(pmap, va)
 	 */
 	if (pmap->pm_stab == Segtabzero) {
 		pmap->pm_stab = (st_entry_t *)
-			uvm_km_zalloc(st_map, M68K_STSIZE);
+		    uvm_km_alloc(st_map, M68K_STSIZE, 0,
+		    UVM_KMF_WIRED | UVM_KMF_ZERO);
 		(void) pmap_extract(pmap_kernel(), (vaddr_t)pmap->pm_stab,
 		    (paddr_t *)&pmap->pm_stpa);
 #if defined(M68040) || defined(M68060)

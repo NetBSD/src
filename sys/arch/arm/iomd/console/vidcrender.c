@@ -1,4 +1,4 @@
-/*	$NetBSD: vidcrender.c,v 1.14 2005/02/11 06:21:22 simonb Exp $	*/
+/*	$NetBSD: vidcrender.c,v 1.15 2005/04/01 11:59:24 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vidcrender.c,v 1.14 2005/02/11 06:21:22 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidcrender.c,v 1.15 2005/04/01 11:59:24 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1246,7 +1246,8 @@ vidc_cursor_init(vc)
 
 	if (!cursor_data) {
 		/* Allocate cursor memory first time round */
-		cursor_data = (char *)uvm_km_zalloc(kernel_map, PAGE_SIZE);
+		cursor_data = (char *)uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
+		    UVM_KMF_VAONLY);
 		if (!cursor_data)
 			panic("Cannot allocate memory for hardware cursor");
 		(void) pmap_extract(pmap_kernel(), (vaddr_t)cursor_data, &pa);
