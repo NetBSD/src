@@ -1,4 +1,4 @@
-.\"	$NetBSD: getservent.3,v 1.6 1997/05/12 06:48:38 mikel Exp $
+.\"	$NetBSD: getservent.3,v 1.7 1998/02/02 11:53:11 mrg Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -31,9 +31,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     @(#)getservent.3	8.3 (Berkeley) 1/12/94
+.\"     @(#)getservent.3      8.4 (Berkeley) 5/25/95
 .\"
-.Dd January 12, 1994
+.Dd May 25, 1995
 .Dt GETSERVENT 3
 .Os BSD 4.2
 .Sh NAME
@@ -81,7 +81,7 @@ The members of this structure are:
 .It Fa s_name
 The official name of the service.
 .It Fa s_aliases
-A zero terminated list of alternative names for the service.
+A NULL terminated list of alternative names for the service.
 .It Fa s_port
 The port number at which the service resides.
 Port numbers must be given and are returned in network byte order.
@@ -123,7 +123,7 @@ port number is found,
 or until
 .Dv EOF
 is encountered.
-If a protocol name is also supplied (non-
+If a protocol name is also supplied (non-\c
 .Dv NULL ) , 
 searches must also match the protocol.
 .ne 1i
