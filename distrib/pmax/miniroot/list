@@ -1,75 +1,36 @@
-#	$NetBSD: list,v 1.12 2000/05/02 16:06:54 sjg Exp $
-
-# pmax extra's: mountpoint for kernfs
-SPECIAL mkdir			kern
+#	$NetBSD: list,v 1.13 2002/03/06 12:04:53 lukem Exp $
 
 # extras in bin
-LINK	instbin			bin/csh
-LINK	instbin			bin/date
-LINK	instbin			bin/rcp
-LINK	instbin			bin/rcmd
+PROG	bin/csh
+PROG	bin/date
+PROG	bin/rcp
+PROG	bin/rcmd
 
 # extras in sbin
-LINK	instbin			sbin/disklabel
-LINK	instbin			sbin/mount_ext2fs
-LINK	instbin			sbin/fsck_ext2fs
-LINK	instbin			sbin/mount_kernfs
+PROG	sbin/disklabel
+PROG	sbin/fsck_ext2fs
+PROG	sbin/mount_ext2fs
+PROG	sbin/mount_kernfs
 
 # extras in /usr.bin
-SYMLINK	../../instbin		usr/bin/netstat
-SYMLINK	../../instbin		usr/bin/rsh
-SYMLINK ../../instbin		usr/bin/tset usr/bin/reset
-SYMLINK	../../instbin		usr/bin/vi
+PROG	usr/bin/netstat
+PROG	usr/bin/rsh
+PROG	usr/bin/tset usr/bin/reset
+PROG	usr/bin/vi
 
 # extras in /usr/mdec
-SYMLINK ../../instbin		usr/mdec/installboot
-
-# OK, now do everything in /usr all over all again in usr.install,
-# in case we try and install directly into the miniroot (mounting over /usr).
-
-# local usr.bin
-SPECIAL	mkdir	usr.install
-SPECIAL	mkdir	usr.install/bin
-SPECIAL	mkdir	usr.install/sbin
-
-
-SPECIAL	ln -s ../../instbin	usr.install/bin/chflags
-SPECIAL	ln -s ../../instbin	usr.install/bin/chgrp
-SPECIAL	ln -s ../../instbin	usr.install/bin/ftp
-SPECIAL	ln -s ../../instbin	usr.install/bin/gunzip
-SPECIAL	ln -s ../../instbin	usr.install/bin/gzcat
-SPECIAL	ln -s ../../instbin	usr.install/bin/gzip
-SPECIAL	ln -s ../../instbin	usr.install/bin/netstat
-SPECIAL	ln -s ../../instbin	usr.install/bin/sort
-SPECIAL	ln -s ../../instbin	usr.install/bin/tar
-SPECIAL	ln -s ../../instbin	usr.install/bin/tip
-SPECIAL	ln -s ../../instbin	usr.install/bin/vi
-
-# local usr.sbin
-SPECIAL	ln -s ../../instbin	usr.install/sbin/chroot
-SPECIAL	ln -s ../../instbin	usr.install/sbin/chown
-
+PROG	usr/mdec/installboot
 
 # crunchgen source directory specials: progs built in nonstandard places
-CRUNCHSPECIAL	vi	srcdir usr.bin/vi/build
-CRUNCHSPECIAL	sysinst srcdir distrib/utils/sysinst/arch/pmax
-
-
+SPECIAL	vi	srcdir usr.bin/vi/build
 
 # Minimize use of MFS
 SYMLINK	/tmp	var/tmp
-
-# copy the MAKEDEV script and make some devices
-COPY	${DESTDIR}/dev/MAKEDEV		dev/MAKEDEV
-COPY	${DESTDIR}/dev/MAKEDEV.local	dev/MAKEDEV.local
-SPECIAL	cd dev; sh MAKEDEV all
-SPECIAL	/bin/rm dev/MAKEDEV dev/MAKEDEV.local
 
 # we need the contents of /usr/mdec
 COPYDIR	${DESTDIR}/usr/mdec	usr/mdec
 # and /boot.pmax
 COPY	${DESTDIR}/boot.pmax	boot.pmax
-
 
 # the zoneinfo (dont use)
 #COPYDIR	${DESTDIR}/usr/share/zoneinfo	usr/share/zoneinfo
@@ -78,9 +39,9 @@ COPY	${DESTDIR}/boot.pmax	boot.pmax
 COPY	${ARCHDIR}/termcap.rcons usr/share/misc/termcap
 
 # copy the kernel(s)
-COPY	${KERNOBJDIR:-${CURDIR}/../../sys/arch/pmax/compile}/GENERIC/netbsd.aout  netbsd
-COPY	${KERNOBJDIR:-${CURDIR}/../../sys/arch/pmax/compile}/GENERIC/netbsd.ecoff netbsd.ecoff
-COPY	${KERNOBJDIR:-${CURDIR}/../../sys/arch/pmax/compile}/INSTALL/nfsnetbsd.ecoff nfsnetbsd.ecoff
+COPY	${KERNOBJDIR}/GENERIC/netbsd.aout	netbsd
+COPY	${KERNOBJDIR}/GENERIC/netbsd.ecoff	netbsd.ecoff
+COPY	${KERNOBJDIR}/INSTALL/nfsnetbsd.ecoff	nfsnetbsd.ecoff
 
 # various files that we need in /etc for the install
 #COPY	${DESTDIR}/etc/disktab		etc/disktab.shadow
@@ -94,10 +55,6 @@ COPY	${DESTDIR}/etc/disktab		etc/disktab.preinstall
 
 # and the installation tools
 COPY	${ARCHDIR}/dot.profile		.profile
-LINK	instbin				sbin/sysinst
 
 # and a spare .profile
 COPY	${DESTDIR}/.profile		tmp/.hdprofile
-
-#the lists of obsolete files used by sysinst  
-SPECIAL sh ${CURDIR}/../../../../distrib/sets/makeobsolete -b -s ${CURDIR}/../../../distrib/sets -t ./dist

@@ -1,80 +1,42 @@
-#	$NetBSD: list,v 1.1 2001/10/15 16:22:50 uch Exp $
-
-# playstation2 extra's: mountpoint for kernfs
-SPECIAL mkdir			kern
+#	$NetBSD: list,v 1.2 2002/03/06 12:04:53 lukem Exp $
 
 # extras in bin
-LINK	instbin			bin/csh
-LINK	instbin			bin/date
-LINK	instbin			bin/rcp
-LINK	instbin			bin/rcmd
+PROG	bin/csh
+PROG	bin/date
+PROG	bin/rcp
+PROG	bin/rcmd
 
 # extras in sbin
-LINK	instbin			sbin/disklabel
-LINK	instbin			sbin/fdisk
-LINK	instbin			sbin/mount_ext2fs
-LINK	instbin			sbin/fsck_ext2fs
-LINK	instbin			sbin/mount_kernfs
-LINK	instbin			sbin/mount_msdos
+PROG	sbin/disklabel
+PROG	sbin/fdisk
+PROG	sbin/fsck_ext2fs
+PROG	sbin/mount_ext2fs
+PROG	sbin/mount_kernfs
+PROG	sbin/mount_msdos
 
 # extras in /usr.bin
-SYMLINK	../../instbin		usr/bin/netstat
-SYMLINK	../../instbin		usr/bin/rsh
-SYMLINK ../../instbin		usr/bin/tset usr/bin/reset
-SYMLINK	../../instbin		usr/bin/vi
-
-# OK, now do everything in /usr all over all again in usr.install,
-# in case we try and install directly into the miniroot (mounting over /usr).
-
-# local usr.bin
-SPECIAL	mkdir	usr.install
-SPECIAL	mkdir	usr.install/bin
-SPECIAL	mkdir	usr.install/sbin
-
-
-SPECIAL	ln -s ../../instbin	usr.install/bin/chflags
-SPECIAL	ln -s ../../instbin	usr.install/bin/chgrp
-SPECIAL	ln -s ../../instbin	usr.install/bin/ftp
-SPECIAL	ln -s ../../instbin	usr.install/bin/gunzip
-SPECIAL	ln -s ../../instbin	usr.install/bin/gzcat
-SPECIAL	ln -s ../../instbin	usr.install/bin/gzip
-SPECIAL	ln -s ../../instbin	usr.install/bin/netstat
-SPECIAL	ln -s ../../instbin	usr.install/bin/sort
-SPECIAL	ln -s ../../instbin	usr.install/bin/tar
-SPECIAL	ln -s ../../instbin	usr.install/bin/tip
-SPECIAL	ln -s ../../instbin	usr.install/bin/vi
-
-# local usr.sbin
-SPECIAL	ln -s ../../instbin	usr.install/sbin/chroot
-SPECIAL	ln -s ../../instbin	usr.install/sbin/chown
-
+PROG	usr/bin/netstat
+PROG	usr/bin/rsh
+PROG	usr/bin/tset usr/bin/reset
+PROG	usr/bin/vi
 
 # crunchgen source directory specials: progs built in nonstandard places
 CRUNCHSPECIAL	vi	srcdir usr.bin/vi/build
-CRUNCHSPECIAL	sysinst srcdir distrib/utils/sysinst/arch/playstation2
-
 
 # Minimize use of MFS
 SYMLINK	/tmp	var/tmp
 
-# copy the MAKEDEV script and make some devices
-COPY	${DESTDIR}/dev/MAKEDEV		dev/MAKEDEV
-COPY	${DESTDIR}/dev/MAKEDEV.local	dev/MAKEDEV.local
-SPECIAL	cd dev; sh MAKEDEV all
-SPECIAL	/bin/rm dev/MAKEDEV dev/MAKEDEV.local
-
 # we need the contents of /usr/mdec
-COPYDIR	${DESTDIR}/usr/mdec	/usr/mdec
-
+COPYDIR	${DESTDIR}/usr/mdec		/usr/mdec
 
 # the zoneinfo (dont use)
 #COPYDIR	${DESTDIR}/usr/share/zoneinfo	usr/share/zoneinfo
 
 # and the termcap file
-COPY	${CURDIR}/../playstation2/miniroot/termcap.vt100 usr/share/misc/termcap
+COPY	${ARCHDIR}/termcap.vt100	usr/share/misc/termcap
 
 # copy the kernel(s)
-#COPY	${CURDIR}/../../sys/arch/playstation2/compile/GENERIC/netbsd  netbsd
+#COPY	${KERNOBJDIR}/GENERIC/netbsd	netbsd
 
 
 # various files that we need in /etc for the install
@@ -91,10 +53,6 @@ COPY	${DESTDIR}/etc/disktab		etc/disktab.preinstall
 
 # and the installation tools
 COPY	${ARCHDIR}/dot.profile		.profile
-LINK	instbin				sbin/sysinst
 
 # and a spare .profile
 COPY	${DESTDIR}/.profile		tmp/.hdprofile
-
-#the lists of obsolete files used by sysinst  
-SPECIAL sh ${CURDIR}/../../distrib/sets/makeobsolete -b -s ${CURDIR}/../../distrib/sets -t ./dist

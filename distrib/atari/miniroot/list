@@ -1,28 +1,19 @@
-#	$NetBSD: list,v 1.11 2000/11/14 13:13:36 leo Exp $
+#	$NetBSD: list,v 1.12 2002/03/06 12:04:50 lukem Exp $
 
 # Usage of libhack.o reduces the instbin-size with approx. 64KB!
 LIBS	libhack.o
 
 # Atari extra's
-LINK	instbin			sbin/ahdilabel
-LINK	instbin			sbin/edlabel
-LINK	instbin			sbin/mount_msdos
-LINK	instbin			sbin/mount_kernfs
-LINK	instbin			usr/bin/printf
-LINK	instbin			usr/sbin/loadkmap
-
-# `internal' crunchgen links
-ARGVLINK mount_msdos	msdos
+PROG	sbin/ahdilabel
+PROG	sbin/edlabel
+PROG	sbin/mount_kernfs
+PROG	sbin/mount_msdos
+PROG	usr/bin/printf
+PROG	usr/sbin/loadkmap
 
 # crunchgen source directory specials
-CRUNCHSPECIAL	ahdilabel srcdir sys/arch/atari/stand/ahdilabel/
-CRUNCHSPECIAL	loadkmap srcdir sys/arch/atari/stand/loadkmap/
-
-# copy the MAKEDEV script and make some devices
-COPY	${DESTDIR}/dev/MAKEDEV		dev/MAKEDEV
-COPY	${DESTDIR}/dev/MAKEDEV.local	dev/MAKEDEV.local
-SPECIAL	cd dev; sh MAKEDEV floppy
-SPECIAL	/bin/rm dev/MAKEDEV dev/MAKEDEV.local
+SPECIAL	ahdilabel	srcdir	sys/arch/atari/stand/ahdilabel
+SPECIAL	loadkmap	srcdir	sys/arch/atari/stand/loadkmap
 
 # various files that we need in /etc for the install
 COPY	${ARCHDIR}/disktab.shadow		etc/disktab.shadow
@@ -32,7 +23,7 @@ COPY	${ARCHDIR}/disktab.shadow		etc/disktab.shadow
 #SYMLINK	/tmp/hosts			etc/hosts
 
 # and the termcap file
-COPY	${ARCHDIR}/termcap.vt usr/share/misc/termcap
+COPY	${ARCHDIR}/termcap.vt		usr/share/misc/termcap
 
 # and the installation scripts
 COPY	${ARCHDIR}/install.md		install.md
@@ -41,12 +32,5 @@ COPY	${ARCHDIR}/dot.profile		.profile
 # and the keyboard maps
 COPYDIR	${DESTDIR}/usr/share/keymaps/atari	usr/share/keymaps/atari
 
-# mount-point for kernfs
-SPECIAL	mkdir kern
-
-# remove the /usr/share/zoneinfo directory, so the installation script
-# can determine that the atari install does not support it.
-SPECIAL	rmdir usr/share/zoneinfo
-
 # strip /etc/services - not enough space... (leaves ftp in).
-SPECIAL grep ftp ${DESTDIR}/etc/services > etc/services
+CMD	grep ftp ${DESTDIR}/etc/services > etc/services

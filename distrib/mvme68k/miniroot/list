@@ -1,45 +1,39 @@
-#	$NetBSD: list,v 1.6 2001/10/21 02:22:36 chs Exp $
+#	$NetBSD: list,v 1.7 2002/03/06 12:04:52 lukem Exp $
 
 # mvme68k's extras
-LINK	instbin			sbin/disklabel
-LINK	instbin			sbin/edlabel
-LINK	instbin			sbin/mount_kernfs
+PROG	sbin/disklabel
+PROG	sbin/edlabel
+PROG	sbin/mount_kernfs
 
-SYMLINK	../../instbin		usr/bin/basename
-SYMLINK	../../instbin		usr/bin/cksum usr/bin/sum
-SYMLINK	../../instbin		usr/bin/cut
-SYMLINK	../../instbin		usr/bin/gawk usr/bin/awk
-SYMLINK	../../instbin		usr/bin/grep usr/bin/egrep usr/bin/fgrep
-SYMLINK	../../instbin		usr/bin/netstat
-SYMLINK	../../instbin		usr/bin/rsh
-SYMLINK	../../instbin		usr/bin/tset usr/bin/reset
-SYMLINK	../../instbin		usr/bin/vi
-SYMLINK	../../instbin		usr/bin/less usr/bin/more
+PROG	usr/bin/basename
+PROG	usr/bin/cksum usr/bin/sum
+PROG	usr/bin/cut
+PROG	usr/bin/gawk usr/bin/awk
+PROG	usr/bin/grep usr/bin/egrep usr/bin/fgrep
+PROG	usr/bin/netstat
+PROG	usr/bin/rsh
+PROG	usr/bin/tset usr/bin/reset
+PROG	usr/bin/vi
+PROG	usr/bin/less usr/bin/more
 
 # crunchgen source directory specials
-CRUNCHSPECIAL	vi srcdir usr.bin/vi/build
-CRUNCHSPECIAL	less srcdir usr.bin/less/less
+SPECIAL	less	srcdir usr.bin/less/less
+SPECIAL	vi	srcdir usr.bin/vi/build
 
 # Minimize use of MFS
 SYMLINK	/tmp	var/tmp
 
-# copy the MAKEDEV script and make some devices
-COPY	${DESTDIR}/dev/MAKEDEV		dev/MAKEDEV
-COPY	${DESTDIR}/dev/MAKEDEV.local	dev/MAKEDEV.local
-SPECIAL	cd dev; sh MAKEDEV all
-SPECIAL	/bin/rm dev/MAKEDEV
-
 # we need the contents of /usr/mdec
-COPYDIR	${DESTDIR}/usr/mdec	usr/mdec
+COPYDIR	${DESTDIR}/usr/mdec		usr/mdec
 
 # the zoneinfo
 COPYDIR	${DESTDIR}/usr/share/zoneinfo	usr/share/zoneinfo
 
 # and the termcap file
-COPY	${CURDIR}/../../share/termcap/termcap.src usr/share/misc/termcap
+COPY	${_SRC_TOP_}/share/termcap/termcap.src usr/share/misc/termcap
 
 # copy the kernel
-COPY	${KERNOBJDIR:-${CURDIR}/../../sys/arch/mvme68k/compile}/GENERIC/netbsd	netbsd
+COPY	${KERNOBJDIR}/GENERIC/netbsd	netbsd
 
 # various files that we need in /etc for the install
 COPY	${DESTDIR}/etc/disktab		etc/disktab.shadow
@@ -53,7 +47,3 @@ SYMLINK	/tmp/hosts			etc/hosts
 # and the installation tools
 COPY	${ARCHDIR}/dot.profile		.profile
 COPY	${ARCHDIR}/install.md		install.md
-
-# create a mount-point for the kernel fs
-SPECIAL	/bin/mkdir			kern
-
