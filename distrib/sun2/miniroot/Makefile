@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2003/12/13 22:05:28 chs Exp $
+#	$NetBSD: Makefile,v 1.16 2004/02/23 18:53:31 he Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -6,7 +6,7 @@
 .include <bsd.kernobj.mk>
 
 IMAGE=		miniroot.fs
-IMAGESIZE=	13m
+IMAGESIZE=	15m
 MAKEFS_FLAGS=	-o minfree=0,optimization=space,density=8k
 
 KERNEL=		${KERNOBJDIR}/INSTALL/netbsd
