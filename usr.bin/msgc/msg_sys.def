@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_sys.def,v 1.20 2003/06/10 17:24:17 dsl Exp $	*/
+/*	$NetBSD: msg_sys.def,v 1.21 2003/06/27 22:11:59 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -44,15 +44,20 @@ static int last_i_was_nl, last_i_was_space;
 static int last_o_was_punct, last_o_was_space;
 
 static void	_msg_beep(void);
-static int	_msg_vprintf(int auto_fill, const char *fmt, va_list ap);
-static void	_msg_vprompt(const char *msg, int do_echo, const char *def,
-		    char *val, size_t max_chars, va_list ap);
+static int	_msg_vprintf(int, const char *, va_list);
+static void	_msg_vprompt(const char *, int, const char *, char *,
+			size_t, va_list);
+
+static char *msgmap = MAP_FAILED;
+static size_t msgmapsz;
+static int msgmapcount;
 
 /* Routines */
 
 static void
 _msg_beep(void)
 {
+
 	fprintf(stderr, "\a");
 }
 
@@ -87,31 +92,72 @@ msg_window(WINDOW *window)
 	return old;
 }
 
-const char *msg_string (msg msg_no)
+int
+msg_file(const char *file)
+{
+	int fd;
+
+	if (msgmap != MAP_FAILED)
+		munmap(msgmap, msgmapsz);
+	msgmap = MAP_FAILED;
+	if (!file)
+		return 0;
+	fd = open(file, O_RDONLY, 0);
+	if (fd == -1)
+		return -1;
+	msgmapsz = lseek(fd, 0, SEEK_END);
+	msgmap = mmap(0, msgmapsz, PROT_READ, MAP_SHARED, fd, 0);
+	close(fd);
+	if (msgmap == MAP_FAILED)
+		return -1;
+	/* check_magic */
+	if (memcmp(msgmap, "INSTMSGS", 8)) {
+		msg_file(NULL);
+		return -1;
+	}
+	msgmapcount = atoi(msgmap + 8);
+	return 0;
+}
+
+const char *
+msg_string(msg msg_no)
 {
 	int m = (intptr_t)msg_no;
 
 	if (m > sizeof msg_list / sizeof msg_list[0])
 		/* guess that we were passed a text string */
 		return msg_no;
+
+	if (msgmap != MAP_FAILED && m != 0 && m <= msgmapcount) {
+		unsigned int offset = atoi(msgmap + 8 + 8 * m);
+		if (offset != 0 && offset < msgmapsz)
+			return msgmap + offset;
+	}
+
 	return msg_list[m];
 }
 
-void msg_clear(void)
+void
+msg_clear(void)
 {
-	wclear (msg_win);
-	wrefresh (msg_win);
+
+	wclear(msg_win);
+	wrefresh(msg_win);
 	last_o_was_punct = 0;
 	last_o_was_space = 1;
 }
 
-void msg_standout(void)
+void
+msg_standout(void)
 {
+
 	wstandout(msg_win);
 }
 
-void msg_standend(void)
+void
+msg_standend(void)
 {
+
 	wstandend(msg_win);
 }
 
@@ -122,7 +168,7 @@ _msg_vprintf(int auto_fill, const char *fmt, va_list ap)
 	int wordlen, nspaces;
 	int ret;
 
-	ret = vsnprintf (cbuffer, cbuffersize, fmt, ap);
+	ret = vsnprintf(cbuffer, cbuffersize, fmt, ap);
 
 	if (!auto_fill) {
 		waddstr(msg_win, cbuffer);
@@ -237,11 +283,12 @@ _msg_vprintf(int auto_fill, const char *fmt, va_list ap)
 	}
 
 out:
-	wrefresh (msg_win);
+	wrefresh(msg_win);
 	return ret;
 }
 
-void msg_display(msg msg_no, ...)
+void
+msg_display(msg msg_no, ...)
 {
 	va_list ap;
 
@@ -252,13 +299,14 @@ void msg_display(msg msg_no, ...)
 	va_end(ap);
 }
 
-void msg_display_add(msg msg_no, ...)
+void
+msg_display_add(msg msg_no, ...)
 {
 	va_list ap;
 
-	va_start (ap, msg_no);
+	va_start(ap, msg_no);
 	(void)_msg_vprintf(1, msg_string(msg_no), ap);
-	va_end (ap);
+	va_end(ap);
 }
 
 static void
@@ -283,12 +331,12 @@ _msg_vprompt(const char *msg, int do_echo, const char *def, char *val,
 
 	_msg_vprintf(0, msg, ap);
 	if (def != NULL && *def) {
-		waddstr (msg_win, " [");
-		waddstr (msg_win, def);
-		waddstr (msg_win, "]");
+		waddstr(msg_win, " [");
+		waddstr(msg_win, def);
+		waddstr(msg_win, "]");
 	}
-	waddstr (msg_win, ": ");
-	wrefresh (msg_win);
+	waddstr(msg_win, ": ");
+	wrefresh(msg_win);
 
 	while ((ch = wgetch(msg_win)) != '\n') {
 		if (ch == 0x08 || ch == 0x7f) {  /* bs or del */
@@ -322,7 +370,7 @@ _msg_vprompt(const char *msg, int do_echo, const char *def, char *val,
 			}
 		} else if (count < (max_chars - 1) && isprint(ch)) {
 			if (do_echo)
-				waddch (msg_win, ch);
+				waddch(msg_win, ch);
 			ibuf[count++] = ch;
 		} else
 			_msg_beep();
@@ -351,9 +399,9 @@ msg_prompt(msg msg_no, const char *def, char *val, size_t max_chars, ...)
 
 	msg_clear();
 
-	va_start (ap, max_chars);
+	va_start(ap, max_chars);
 	_msg_vprompt(msg_string(msg_no), 1, def, val, max_chars, ap);
-	va_end (ap);
+	va_end(ap);
 }
 
 void
@@ -364,8 +412,8 @@ msg_prompt_win(msg msg_no, int x, int y, int w, int h,
 	WINDOW *win, *svwin;
 	int maxx, maxy;
 
-	maxx = getmaxx(stdscr);
-	maxy = getmaxy(stdscr);
+	maxx = getmaxx(msg_win);
+	maxy = getmaxy(msg_win);
 	if (w == 0) {
 		va_start(ap, max_chars);
 		w = vsnprintf(NULL, 0, msg_string(msg_no), ap);
@@ -386,7 +434,7 @@ msg_prompt_win(msg msg_no, int x, int y, int w, int h,
 	if (y + h > maxy)
 		y = maxy - h;
 
-	win = newwin(h, w, y, x);
+	win = subwin(msg_win, h, w, y, x);
 	if (win == NULL)
 		wprintw(msg_win, "msg_prompt_win: "
 			"newwin(%d, %d, %d, %d) failed\n",
@@ -397,7 +445,7 @@ msg_prompt_win(msg msg_no, int x, int y, int w, int h,
 		box(win, 0, 0);
 		wrefresh(win);
 
-		svwin = msg_window(derwin(win, -1, -1, 1, 1));
+		svwin = msg_window(subwin(msg_win, h - 2, w - 2, y + 1, x + 1));
 		wbkgd(msg_win, getbkgd(win));
 		wattrset(msg_win, getattrs(win));
 
@@ -421,7 +469,7 @@ msg_prompt_add(msg msg_no, const char *def, char *val, size_t max_chars, ...)
 {
 	va_list ap;
 
-	va_start (ap, max_chars);
+	va_start(ap, max_chars);
 	_msg_vprompt(msg_string(msg_no), 1, def, val, max_chars, ap);
 	va_end(ap);
 }
@@ -433,17 +481,18 @@ msg_prompt_noecho(msg msg_no, const char *def, char *val, size_t max_chars, ...)
 
 	msg_clear();
 
-	va_start (ap, max_chars);
+	va_start(ap, max_chars);
 	_msg_vprompt(msg_string(msg_no), 0, def, val, max_chars, ap);
-	va_end (ap);
+	va_end(ap);
 }
 
-void msg_table_add(msg msg_no, ...)
+void
+msg_table_add(msg msg_no, ...)
 {
 	va_list ap;
 
-	va_start (ap, msg_no);
+	va_start(ap, msg_no);
 	(void)_msg_vprintf(0, msg_string(msg_no), ap);
-	va_end (ap);
+	va_end(ap);
 }
 
