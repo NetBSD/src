@@ -1,4 +1,4 @@
-/*	$NetBSD: fp.S,v 1.8 1994/12/15 17:48:39 mycroft Exp $	*/
+/*	$NetBSD: fp.S,v 1.9 1997/06/16 01:24:05 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -42,9 +42,9 @@
  * Standard header stuff.
  */
 
-#include <machine/regdef.h>
-#include <machine/machAsmDefs.h>
-#include <machine/machConst.h>
+#include <mips/regdef.h>
+#include <mips/asm.h>
+#include <mips/cpuregs.h>
 
 #include "assym.h"
 
