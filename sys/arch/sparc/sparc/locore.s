@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.148.4.3 2001/11/28 13:38:59 pk Exp $	*/
+/*	$NetBSD: locore.s,v 1.148.4.4 2001/11/29 14:23:31 pk Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -4631,7 +4631,7 @@ cpu_switch0:
 	tst	%o0
 	bne	Lsw_panic_wchan		!	panic("switch wchan");
 	 EMPTY
-	ldsb	[%g3 + L_STAT], %o0	! if (p->p_stat != SRUN)
+	ld	[%g3 + L_STAT], %o0	! if (p->p_stat != SRUN)
 	cmp	%o0, LSRUN
 	bne	Lsw_panic_srun		!	panic("switch SRUN");
 	 EMPTY
@@ -4641,7 +4641,7 @@ cpu_switch0:
 	 * It may be the same as the one we were running before.
 	 */
 	mov	LSONPROC, %o0			! p->p_stat = LSONPROC;
-	stb	%o0, [%g3 + L_STAT]
+	st	%o0, [%g3 + L_STAT]
 
 	/* p->p_cpu initialized in fork1() for single-processor */
 #if defined(MULTIPROCESSOR)
