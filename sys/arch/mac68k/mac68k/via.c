@@ -1,4 +1,4 @@
-/*	$NetBSD: via.c,v 1.32 1995/09/12 22:52:08 briggs Exp $	*/
+/*	$NetBSD: via.c,v 1.33 1995/09/18 03:15:43 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -86,7 +86,6 @@ void		rbv_intr(struct frame *);
 
 static int	via_inited=0;
 void		(*real_via2_intr)(struct frame *);
-int		mac68k_trip_debugger=0;
 
 /* nubus slot interrupt routines */
 void (*slotitab[6])(void *, int) = {
@@ -165,59 +164,48 @@ VIA_initialize()
 void
 via1_intr(struct frame *fp)
 {
-	static intpend = 0;
-	register unsigned char intbits, enbbits;
-	register unsigned char bitnum, bitmsk;
-	struct timeval before, after;
+	register unsigned char intbits;
+	register unsigned char bitnum;
 
 	intbits = via_reg(VIA1, vIFR);	/* get interrupts pending */
 	intbits &= via_reg(VIA1, vIER);	/* only care about enabled ones */
-	intbits &= ~ intpend;  		/* to stop recursion */
 
 	if (intbits == 0)
 		return;
 
 	via_reg(VIA1, vIFR) = intbits;
 
-	bitmsk = 1;
 	bitnum = 0;
-	mac68k_trip_debugger = 0;
-	while(bitnum < 7){
-		if(intbits & bitmsk){
-			intpend |= bitmsk;	/* don't process this twice */
+	do {
+		if (intbits & 0x1) {
 			via1itab[bitnum](bitnum); /* run interrupt handler */
-			intpend &= ~bitmsk;	/* fix previous pending */
 		}
-		bitnum++;
-		bitmsk <<= 1;
-	}
-#ifdef DDB
-   	if (mac68k_trip_debugger) Debugger();
-#endif
+		intbits >>= 1;
+	} while (++bitnum != 7 && intbits);
 }
 
 void
 via2_intr(struct frame *fp)
 {
 	register unsigned char	intbits;
-	register char		bitnum, bitmsk;
+	register char		bitnum;
 
 	intbits = via2_reg(vIFR);	/* get interrupts pending */
 	intbits &= via2_reg(vIER);	/* only care about enabled */
+
+	if (intbits == 0) return;
 
 	/*
 	 * Unflag interrupts we're about to process.
 	 */
 	via2_reg(vIFR) = intbits;
 
-	bitmsk = 0x01;
-	bitnum = 7;
-	while(bitnum--){
-		if(intbits & bitmsk){
-			via2itab[6-bitnum](via2iarg[6-bitnum]);
-		}
-		bitmsk <<= 1;
-	}
+	bitnum = 0;
+	do {
+		if (intbits & 0x1)
+			via2itab[bitnum](via2iarg[bitnum]);
+		intbits >>= 1;
+	} while (++bitnum != 7 && intbits);
 }
 
 void
@@ -227,21 +215,20 @@ rbv_intr(struct frame *fp)
 	register char		bitnum, bitmsk;
 
 	intbits = (via2_reg(vIFR + rIFR) &= via2_reg(vIER + rIER));
+
+	if (intbits == 0) return;
+
 	/*
 	 * Unflag interrupts we're about to process.
 	 */
-	if (intbits == 0) return;
-
 	via2_reg(rIFR) = intbits;
 
-	bitmsk = 0x01;
-	bitnum = 7;
-	while(bitnum--){
-		if(intbits & bitmsk){
-			via2itab[6-bitnum](via2iarg[6-bitnum]);
-		}
-		bitmsk <<= 1;
-	}
+	bitnum = 0;
+	do {
+		if (intbits & 0x1)
+			via2itab[bitnum](via2iarg[bitnum]);
+		intbits >>= 1;
+	} while (++bitnum != 7 && intbits);
 }
 
 static void
