@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.hpcmips,v 1.1.1.1 1999/09/16 12:23:18 takemura Exp $
+#	$NetBSD: Makefile.hpcmips,v 1.2 1999/11/21 07:04:31 uch Exp $
 
 # Makefile for NetBSD
 #
@@ -95,6 +95,8 @@ NORMAL_S=	${CC} ${AFLAGS} ${CPPFLAGS} -c $<
 #	${SYSTEM_LD_TAIL}
 SYSTEM_OBJ=     locore.o locore_machdep.o
 .if !empty(IDENT:M-DMIPS1)
+CFLAGS+= -mips2
+AFLAGS+= -mips2
 SYSTEM_OBJ+=    locore_mips1.o
 .endif
 .if !empty(IDENT:M-DMIPS3)
