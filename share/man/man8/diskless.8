@@ -1,4 +1,4 @@
-.\"	$NetBSD: diskless.8,v 1.23 2002/08/20 15:51:25 wiz Exp $
+.\"	$NetBSD: diskless.8,v 1.24 2003/05/15 02:03:45 fair Exp $
 .\"
 .\" Copyright (c) 1994 Gordon W. Ross, Theo de Raadt
 .\" All rights reserved.
@@ -48,7 +48,10 @@ phases of interaction between client and server:
 .Pp
 .Bl -tag -width 1.2 -compact
 .It 1 .
-The PROM (or stage-1 bootstrap) loads a boot program.
+The
+.Tn PROM
+.Pq or stage-1 bootstrap
+loads a boot program.
 .It 2 .
 The boot program loads a kernel.
 .It 3 .
@@ -59,8 +62,11 @@ mounts for root.
 .Pp
 Each of these phases are described in further detail below.
 .Pp
-In phase 1, the PROM loads a boot program.  PROM designs
-vary widely, so this phase is inherently machine-specific.
+In phase 1, the
+.Tn PROM
+loads a boot program.
+.Tn PROM
+designs vary widely, so this phase is inherently machine-specific.
 Sun machines use
 .Tn RARP
 to determine the client's
@@ -69,17 +75,23 @@ address and then use
 .Tn TFTP
 to download a boot program from whomever sent the
 .Tn RARP
-reply.  HP 300-series machines use the
+reply.
+HP 300-series machines use the
 .Tn HP Remote Maintenance Protocol
 to download a boot program.
 Typical personal computers may load a
 network boot program either from diskette or
-using a special PROM on the network card.
+using a special
+.Tn PROM
+on the network card.
 .Pp
-In phase 2, the boot program loads a kernel.  Operation in
+In phase 2, the boot program loads a kernel.
+Operation in
 this phase depends on the design of the boot program.
-(The design described here is the one used by Sun and
-.Nx Ns Tn /hp300 . )
+.Po
+The design described here is the one used by Sun and
+.Nx Ns Tn /hp300
+.Pc .
 The boot program:
 .Pp
 .Bl -tag -width 2.2 -compact
@@ -127,12 +139,15 @@ The kernel finds a boot server using the same procedure
 as described in steps 2.1 and 2.2 above.
 In general, the GENERIC
 .Xr config 8
-files
-for any particular architecture will specify options to activate in
-the kernel the
-same protocol used by the boot program for that
-architecture, however, the kernel can
-be compiled to use any of BOOTP, DHCP, or BOOTPARAMS. See
+files for any particular architecture will specify options to
+activate in the kernel the same protocol used by the boot program
+for that architecture, however, the kernel can be compiled to use
+any of
+.Tn BOOTP ,
+.Tn DHCP ,
+or
+.Tn BOOTPARAMS .
+See
 .Xr options 4 .
 .It 3.2
 The kernel gets the
@@ -168,7 +183,9 @@ This will be used by
 .It 2 .
 Assign an IP address for myclient in your
 .Pa /etc/hosts
-or DNS database:
+or
+.Tn DNS
+database:
 .Bd -literal -offset indent -compact
 192.197.96.12           myclient
 .Ed
@@ -194,25 +211,39 @@ See the
 manual page for more information.
 .Pp
 .It 4 .
-If booting a SPARC machine, install a copy of the appropriate diskless boot
-loader (such as
+If booting a
+.Tn SPARC
+machine, install a copy of the appropriate diskless boot
+loader
+.Po
+such as
 .Pa /usr/mdec/boot
 or
-.Pa ofwboot.net )
+.Pa ofwboot.net
+.Pc
 in the
 .Pa /tftpboot
 directory.
 Make a link such that the boot program is
 accessible by a file name composed of the client's IP address
-in HEX, a dot, and the architecture name (all upper case).
+in hexadecimal, a dot, and the architecture name
+.Pq all upper case .
 For example:
 .Bd -literal -offset indent -compact
 # cd /tftpboot
 # ln -s boot C0C5600C.SUN4
 .Ed
 .Pp
-For a Sun3 or Ultra Sparc machine, the name would be just C0C5600C
-(there the PROM does not append the architecture name). The name
+For a
+Sun-3 or
+.Tn UltraSPARC
+machine, the name would be just C0C5600C
+.Po
+there the
+.Tn PROM
+does not append the architecture name
+.Pc .
+The name
 used is architecture dependent, it simply has to match what the
 booting client's PROM wishes to it to be.
 If the client's PROM fails to fetch the expected file,
@@ -221,9 +252,11 @@ can be used to discover which filename the client is trying to read.
 .Pp
 If booting an HP 300-series machine, ensure that the network boot program
 .Pa SYS_UBOOT
-(which may be called
+.Po
+which may be called
 .Pa uboot.lif
-before installation)
+before installation
+.Pc
 is installed in the directory
 .Pa /usr/mdec/rbootd .
 .Pp
@@ -244,12 +277,13 @@ Build the swap file for myclient:
 # cd /export/myclient/root
 # dd if=/dev/zero of=swap bs=16k count=1024
 .Ed
-This creates a 16 Megabyte swap file.
+This creates a 16 megabyte swap file.
 .Pp
 .It 7 .
 Populate myclient's
 .Pa /
-file system on the server.  How this is done depends on the
+file system on the server.
+How this is done depends on the
 client architecture and the version of the
 .Nx
 distribution.
@@ -324,7 +358,8 @@ or it will not be used!
 .Sh FILES
 .Bl -tag -width /usr/mdec/rbootd -compact
 .It Pa /etc/ethers
-Ethernet addresses of known clients
+.Tn Ethernet
+addresses of known clients
 .It Pa /etc/bootparams
 client root pathname
 .It Pa /etc/exports
@@ -334,7 +369,8 @@ mount points
 .It Pa /etc/rbootd.conf
 configuration file for HP Remote Boot Daemon
 .It Pa /tftpboot
-location of boot programs loaded by the Sun PROM
+location of boot programs loaded by the Sun
+.Tn PROM
 .It Pa /usr/mdec/rbootd
 location of boot programs loaded by the HP Boot ROM
 .El
