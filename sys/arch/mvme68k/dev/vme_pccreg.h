@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_pccreg.h,v 1.3 2000/03/18 22:33:04 scw Exp $	*/
+/*	$NetBSD: vme_pccreg.h,v 1.4 2000/08/13 17:00:52 scw Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -146,7 +146,7 @@
  * The Type 1 VMEchip decoder maps VME address space to system addresses
  * like this:
  *
- * A24D32:  0x00000000 - 0x00ffffff
+ * A24D32:	0x00000000 - 0x00ffffff
  * A32D32:	0x01000000 - 0xefffffff
  * A24D16:	0xf0000000 - 0xf0ffffff
  * A32D16:	0xf1000000 - 0xff7fffff

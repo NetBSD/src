@@ -1,4 +1,4 @@
-/* $NetBSD: bus_dma.h,v 1.3 2000/06/26 04:55:50 simonb Exp $	*/
+/* $NetBSD: bus_dma.h,v 1.4 2000/08/13 17:00:53 scw Exp $	*/
 
 /*
  * This file was extracted from from next68k/include/bus.h
@@ -204,6 +204,7 @@ struct mvme68k_bus_dmamap {
 	bus_size_t	_dm_maxsegsz;	/* largest possible segment */
 	bus_size_t	_dm_boundary;	/* don't cross this */
 	int		_dm_flags;	/* misc. flags */
+	void		*_dm_cookie;	/* Bus-specific cookie */
 
 	/*
 	 * PUBLIC MEMBERS: these are used by machine-independent code.
@@ -230,6 +231,10 @@ int	_bus_dmamap_load_raw_direct __P((bus_dma_tag_t,
 void	_bus_dmamap_unload __P((bus_dma_tag_t, bus_dmamap_t));
 void	_bus_dmamap_sync __P((bus_dma_tag_t, bus_dmamap_t, bus_addr_t,
 	    bus_size_t, int));
+
+int	_bus_dmamem_alloc_common __P((bus_dma_tag_t,
+	    bus_addr_t, bus_addr_t, bus_size_t, bus_size_t, bus_size_t,
+	    bus_dma_segment_t *, int, int *, int));
 
 int	_bus_dmamem_alloc __P((bus_dma_tag_t tag, bus_size_t size,
 	    bus_size_t alignment, bus_size_t boundary,
