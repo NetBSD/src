@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2001/01/07 08:39:33 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.8 2001/11/09 20:52:19 tsutsui Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -32,8 +32,8 @@ INO_BYTES?=	65536
 
 all:	${KERN}
 	dd if=/dev/zero of=${IMAGE} bs=1440k count=1
-	vnconfig -t ${DISKTYPE} -v -c ${VND_CDEV} ${IMAGE}
-	disklabel -rw ${VND_CDEV} ${DISKTYPE}
+	vnconfig -t ${DISKTYPE} -v -c ${VND} ${IMAGE}
+	disklabel -rw ${VND} ${DISKTYPE}
 	newfs -B be -m 0 -o space -i ${INO_BYTES} -c 80 \
 	    -f 1024 -b 8192 ${VND_RDEV}
 	mount ${VND_DEV} ${MOUNT_POINT}
@@ -47,11 +47,11 @@ all:	${KERN}
 	sync
 	${MDEC}/installboot -v ${MOUNT_POINT}/boot ${MDEC}/bootxx ${VND_CRDEV}
 	umount ${MOUNT_POINT}
-	vnconfig -u ${VND_CDEV}
+	vnconfig -u ${VND}
 
 unconfig:
 	-umount -f ${MOUNT_POINT}
-	-vnconfig -u ${VND_DEV}
+	-vnconfig -u ${VND}
 
 .ifndef RELEASEDIR
 release:
