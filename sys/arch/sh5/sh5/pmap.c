@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.10 2002/09/28 10:53:58 scw Exp $	*/
+/*	$NetBSD: pmap.c,v 1.11 2002/10/01 07:49:46 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -1868,12 +1868,25 @@ pmap_extract(pmap_t pm, vaddr_t va, paddr_t *pap)
 
 	PMPRINTF(("pmap_extract: %p: va 0x%lx - ", pm, va));
 
-#ifdef PMAP_DIAG
-	if (pm == pmap_kernel() && va < SH5_KSEG1_BASE) {
-		printf("pmap_extract: pmap_kernel() with va 0x%lx!!\n", va);
-		pmap_debugger();
+	/*
+	 * We can be called from the bus_dma code for addresses in KSEG0.
+	 * This would be the case, for example, of bus_dmamap_load() being
+	 * called for a buffer allocated by pool(9).
+	 */
+	if (pm == pmap_kernel() &&
+	    va < SH5_KSEG1_BASE && va >= SH5_KSEG0_BASE) {
+		struct mem_region *mr;
+		for (mr = mem; mr->mr_size; mr++) {
+			if (va >= mr->mr_kvastart &&
+			    va < (mr->mr_kvastart + mr->mr_size)) {
+				*pap = mr->mr_start +
+				    (paddr_t)(va - mr->mr_kvastart);
+				return (TRUE);
+			}
+		}
+
+		return (FALSE);		/* Should probably panic here ... */
 	}
-#endif
 
 	s = splhigh();
 	pvo = pmap_pvo_find_va(pm, va, NULL);
