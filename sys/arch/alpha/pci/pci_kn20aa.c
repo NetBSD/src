@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_kn20aa.c,v 1.14 1996/08/19 04:14:58 cgd Exp $	*/
+/*	$NetBSD: pci_kn20aa.c,v 1.15 1996/08/19 04:19:01 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -166,7 +166,7 @@ dec_kn20aa_intr_map(ccv, bustag, buspin, line, ihp)
 		kn20aa_irq = 12;
 		break;
 
-	case 6:					/* 21040 on AlphStation 500 */
+	case 6:					/* 21040 on AlphaStation 500 */
 		kn20aa_irq = 13;
 		break;
 
