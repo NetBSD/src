@@ -1,4 +1,4 @@
-/* $NetBSD: ep93xx_intr.c,v 1.1 2004/12/22 19:07:14 joff Exp $ */
+/* $NetBSD: ep93xx_intr.c,v 1.2 2004/12/29 04:46:13 joff Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ep93xx_intr.c,v 1.1 2004/12/22 19:07:14 joff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ep93xx_intr.c,v 1.2 2004/12/29 04:46:13 joff Exp $");
 
 /*
  * Interrupt support for the Cirrus Logic EP93XX
@@ -297,7 +297,7 @@ ep93xx_do_pending(void)
 {
 	static __cpu_simple_lock_t processing = __SIMPLELOCK_UNLOCKED;
 	int	new;
-	u_int	oldirqstate;
+	u_int	oldirqstate, oldirqstate2;
 
 	if (__cpu_simple_lock_try(&processing) == 0)
 		return;
@@ -310,9 +310,9 @@ ep93xx_do_pending(void)
 	if ((ipending & ~vic1_imask[new]) & SI_TO_IRQBIT(si)) {		\
 		ipending &= ~SI_TO_IRQBIT(si);				\
 		current_spl_level = si_to_ipl[(si)];			\
-		restore_interrupts(oldirqstate);			\
+		oldirqstate2 = enable_interrupts(I32_bit);		\
 		softintr_dispatch(si);					\
-		oldirqstate = disable_interrupts(I32_bit);		\
+		restore_interrupts(oldirqstate2);			\
 		current_spl_level = new;				\
 	}
 
@@ -533,8 +533,6 @@ ep93xx_intr_dispatch(struct clockframe *frame)
 
 	/* Check for pendings soft intrs. */
 	if ((ipending & INT_SWMASK) & ~vic1_imask[pcpl]) {
-		oldirqstate = enable_interrupts(I32_bit);
 		ep93xx_do_pending();
-		restore_interrupts(oldirqstate);
 	}
 }
