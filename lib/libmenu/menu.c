@@ -1,4 +1,4 @@
-/*	$NetBSD: menu.c,v 1.12 2002/07/29 13:03:51 blymn Exp $	*/
+/*	$NetBSD: menu.c,v 1.13 2002/08/19 11:01:11 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn (blymn@baea.com.au, brett_lymn@yahoo.com.au)
@@ -455,10 +455,41 @@ new_menu(ITEM **items)
 	  /* set a default window if none already set. */
 	if (the_menu->menu_win == NULL)
 		the_menu->scrwin = stdscr;
+
+	  /* make a private copy of the mark string */
+	if (_menui_default_menu.mark.string != NULL) {
+		if ((the_menu->mark.string =
+		     (char *) malloc((unsigned) _menui_default_menu.mark.length + 1))
+		    == NULL) {
+			free(the_menu);
+			return NULL;
+		}
+
+		strlcpy(the_menu->mark.string, _menui_default_menu.mark.string,
+			(unsigned) _menui_default_menu.mark.length);
+	}
 	
+	  /* make a private copy of the unmark string too */
+	if (_menui_default_menu.unmark.string != NULL) {
+		if ((the_menu->unmark.string =
+		     (char *) malloc((unsigned) _menui_default_menu.unmark.length + 1))
+		    == NULL) {
+			free(the_menu);
+			return NULL;
+		}
+
+		strlcpy(the_menu->unmark.string,
+			_menui_default_menu.unmark.string,
+			(unsigned) _menui_default_menu.unmark.length);
+	}
+
           /* now attach the items, if any */
         if (items != NULL) {
 		if(set_menu_items(the_menu, items) < 0) {
+			if (the_menu->mark.string != NULL)
+				free(the_menu->mark.string);
+			if (the_menu->unmark.string != NULL)
+				free(the_menu->unmark.string);
 			free(the_menu);
 			return NULL;
 		}
