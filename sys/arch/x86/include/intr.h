@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.6 2003/08/20 21:48:46 fvdl Exp $	*/
+/*	$NetBSD: intr.h,v 1.7 2003/09/06 17:44:39 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -253,6 +253,7 @@ int intr_allocate_slot(struct pic *, int, int, int, struct cpu_info **, int *,
 		       int *);
 void *intr_establish(int, struct pic *, int, int, int, int (*)(void *), void *);
 void intr_disestablish(struct intrhand *);
+const char *intr_string(int);
 void cpu_intr_init(struct cpu_info *);
 int intr_find_mpmapping(int bus, int pin, int *handle);
 #ifdef INTRDEBUG

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.5 2003/08/20 21:48:47 fvdl Exp $	*/
+/*	$NetBSD: intr.c,v 1.6 2003/09/06 17:44:40 fvdl Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.5 2003/08/20 21:48:47 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.6 2003/09/06 17:44:40 fvdl Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -519,6 +519,40 @@ intr_disestablish(struct intrhand *ih)
 	free(ih, M_DEVBUF);
 
 	simple_unlock(&ci->ci_slock);
+}
+
+const char *
+intr_string(int ih)
+{
+	static char irqstr[64];
+#if NIOAPIC > 0
+	struct pic *pic;
+#endif
+
+	if (ih == 0)
+		panic("pci_intr_string: bogus handle 0x%x", ih);
+
+
+#if NIOAPIC > 0
+	if (ih & APIC_INT_VIA_APIC) {
+		pic = (struct pic *)ioapic_find(APIC_IRQ_APIC(ih));
+		if (pic != NULL) {
+			sprintf(irqstr, "%s pin %d (irq %d)",
+			    pic->pic_name, APIC_IRQ_PIN(ih), ih&0xff);
+		} else {
+			sprintf(irqstr, "apic %d int %d (irq %d)",
+			    APIC_IRQ_APIC(ih),
+			    APIC_IRQ_PIN(ih),
+			    ih&0xff);
+		}
+	} else
+		sprintf(irqstr, "irq %d", ih&0xff);
+#else
+
+	sprintf(irqstr, "irq %d", ih&0xff);
+#endif
+	return (irqstr);
+
 }
 
 #define CONCAT(x,y)	__CONCAT(x,y)

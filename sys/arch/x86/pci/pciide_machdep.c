@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_machdep.c,v 1.4 2001/11/15 07:03:35 lukem Exp $	*/
+/*	$NetBSD: pciide_machdep.c,v 1.1 2003/09/06 17:44:40 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide_machdep.c,v 1.4 2001/11/15 07:03:35 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide_machdep.c,v 1.1 2003/09/06 17:44:40 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,6 +54,13 @@ __KERNEL_RCSID(0, "$NetBSD: pciide_machdep.c,v 1.4 2001/11/15 07:03:35 lukem Exp
 
 #include <dev/isa/isavar.h>
 
+#include "ioapic.h"
+
+#if NIOAPIC > 0
+#include <machine/i82093var.h>
+#include <machine/mpbiosvar.h>
+#endif
+
 void *
 pciide_machdep_compat_intr_establish(dev, pa, chan, func, arg)
 	struct device *dev;
@@ -64,11 +71,23 @@ pciide_machdep_compat_intr_establish(dev, pa, chan, func, arg)
 {
 	int irq;
 	void *cookie;
+#if NIOAPIC > 0
+	int mpih;
+#endif
 
 	irq = PCIIDE_COMPAT_IRQ(chan);
 	cookie = isa_intr_establish(NULL, irq, IST_EDGE, IPL_BIO, func, arg);
 	if (cookie == NULL)
 		return (NULL);
+#if NIOAPIC > 0
+	if (mp_busses != NULL &&
+	    (intr_find_mpmapping(mp_isa_bus, irq, &mpih) == 0 ||
+	     intr_find_mpmapping(mp_eisa_bus, irq, &mpih) == 0)) {
+		mpih |= irq;
+		printf("%s: %s channel interrupting at %s\n", dev->dv_xname,
+		    PCIIDE_CHANNEL_NAME(chan), intr_string(mpih));
+	} else
+#endif
 	printf("%s: %s channel interrupting at irq %d\n", dev->dv_xname,
 	    PCIIDE_CHANNEL_NAME(chan), irq);
 	return (cookie);
