@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.24 2001/10/20 08:22:29 billc Exp $	*/
+/*	$NetBSD: locore.S,v 1.25 2001/10/23 01:36:32 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -61,7 +61,9 @@
 /*
  * Globals
  */
-GLOBAL(esym)
+GLOBAL(startsym)
+	.long	0			/* start of symbol table */
+GLOBAL(endsym)
 	.long	0			/* end of symbol table */
 GLOBAL(proc0paddr)
 	.long	0			/* proc0 p_addr */
@@ -102,13 +104,44 @@ __start:
 	mtmsr	0			/* Disable FPU/MMU/exceptions */
 	isync
 
-/* compute end of kernel memory */
+	/* compute end of kernel memory */
+#ifdef DDB
+	/* skip symbol table */
+	cmpwi	6,0
+	beq	1f
+	add	9,6,7			/* r9 = args + l */
+
+	/* If the resulting address is misaligned, abort. */
+	andi.	8,9,3
+	bne	1f			/* misaligned */
+
+	/* First, see if the loader even put the symbols there. */
+	lwz	9,-12(9)
+	lis	8,0x19730224@h		/* magic number */
+	ori	8,8,0x19730224@l
+	cmplw	8,9
+	bne	1f			/* nope */
+
+	/* Okay, ssym and esym are here -- fetch them. */
+	add	9,6,7
+	lwz	9,-8(9)
+	lis	8,_C_LABEL(startsym)@ha
+	stw	9,_C_LABEL(startsym)@l(8)
+
+	add	9,6,7
+	lwz	9,-4(9)
+	lis	8,_C_LABEL(endsym)@ha
+	stw	9,_C_LABEL(endsym)@l(8)
+
+	mr	8,9			/* r8 = end of kernel + symbols */
+	b	2f
+1:
 	lis	8,_C_LABEL(end)@ha
 	addi	8,8,_C_LABEL(end)@l
-#ifdef DDB
-	/*
-	 * XXX Account for symbols.
-	 */
+2:
+#else
+	lis	8,_C_LABEL(end)@ha
+	addi	8,8,_C_LABEL(end)@l
 #endif
 	li	9,PGOFSET
 	add	8,8,9

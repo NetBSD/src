@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.71 2001/10/22 23:01:17 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.72 2001/10/23 01:36:32 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -54,6 +54,9 @@
 #include <uvm/uvm_extern.h>
 
 #include <net/netisr.h>
+
+#include <machine/db_machdep.h>
+#include <ddb/db_extern.h>
 
 #include <dev/ofw/openfirm.h>
 
@@ -132,7 +135,7 @@ initppc(startkernel, endkernel, args)
 	extern int tlbdsmiss, tlbdsmsize;
 #ifdef DDB
 	extern int ddblow, ddbsize;
-	/* extern void *startsym, *endsym; */
+	extern void *startsym, *endsym;
 #endif
 #ifdef IPKDB
 	extern int ipkdblow, ipkdbsize;
@@ -259,18 +262,6 @@ initppc(startkernel, endkernel, args)
 			BOOT_FLAG(*args, boothowto);
 	}
 
-#ifdef DDB
-	/* ddb_init((int)(endsym - startsym), startsym, endsym); */
-#endif
-#ifdef IPKDB
-	/*
-	 * Now trap to IPKDB
-	 */
-	ipkdb_init();
-	if (boothowto & RB_KDB)
-		ipkdb_connect(0);
-#endif
-
 	/*
 	 * Set the page size.
 	 */
@@ -280,6 +271,20 @@ initppc(startkernel, endkernel, args)
 	 * Initialize pmap module.
 	 */
 	pmap_bootstrap(startkernel, endkernel);
+
+#ifdef DDB
+	ddb_init((int)((u_int)endsym - (u_int)startsym), startsym, endsym);
+	if (boothowto & RB_KDB)
+		Debugger();
+#endif
+#ifdef IPKDB
+	/*
+	 * Now trap to IPKDB
+	 */
+	ipkdb_init();
+	if (boothowto & RB_KDB)
+		ipkdb_connect(0);
+#endif
 }
 
 /*
