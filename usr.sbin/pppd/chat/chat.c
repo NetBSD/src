@@ -1,4 +1,4 @@
-/*	$NetBSD: chat.c,v 1.11 1997/09/26 20:14:42 christos Exp $	*/
+/*	$NetBSD: chat.c,v 1.12 1997/10/14 20:38:09 mellon Exp $	*/
 
 /*
  *	Chat -- a program for automatic session establishment (i.e. dial
@@ -76,7 +76,7 @@
 #if 0
 static char rcsid[] = "Id: chat.c,v 1.15 1997/07/14 03:50:22 paulus Exp ";
 #else
-__RCSID("$NetBSD: chat.c,v 1.11 1997/09/26 20:14:42 christos Exp $");
+__RCSID("$NetBSD: chat.c,v 1.12 1997/10/14 20:38:09 mellon Exp $");
 #endif
 #endif
 
@@ -122,18 +122,6 @@ __RCSID("$NetBSD: chat.c,v 1.11 1997/09/26 20:14:42 christos Exp $");
 #ifndef O_NONBLOCK
 #define O_NONBLOCK	O_NDELAY
 #endif
-
-/*************** Micro getopt() *********************************************/
-#define	OPTION(c,v)	(_O&2&&**v?*(*v)++:!c||_O&4?0:(!(_O&1)&& \
-				((--c,++v),_O=4,c)&&**v=='-'&&v[0][1]?*++*v=='-'\
-				&&!v[0][1]?(--c,++v,0):(_O=2,*(*v)++):0))
-#define	OPTARG(c,v)	(_O&2?**v||(++v,--c)?(_O=1,--c,*v++): \
-				(_O=4,(char*)0):(char*)0)
-#define	OPTONLYARG(c,v)	(_O&2&&**v?(_O=1,--c,*v++):(char*)0)
-#define	ARG(c,v)	(c?(--c,*v++):(char*)0)
-
-static int _O = 0;		/* Internal state */
-/*************** Micro getopt() *********************************************/
 
 char *program_name;
 
@@ -246,12 +234,12 @@ int argc;
 char **argv;
     {
     int option;
-    char *arg;
+    int i;
 
     program_name = *argv;
     tzset();
 
-    while ((option = OPTION(argc, argv)) != 0)
+    while ((option = getopt(argc, argv, ":evVf:t:r:")) != -1)
         {
 	switch (option)
 	    {
@@ -268,9 +256,9 @@ char **argv;
 		break;
 
 	    case 'f':
-		if ((arg = OPTARG(argc, argv)) != NULL)
+		if (optarg != NULL)
 		    {
-		    chat_file = copy_of(arg);
+		    chat_file = copy_of(optarg);
 		    }
 		else
 		    {
@@ -279,9 +267,9 @@ char **argv;
 		break;
 
 	    case 't':
-		if ((arg = OPTARG(argc, argv)) != NULL)
+		if (optarg != NULL)
 		    {
-		    timeout = atoi(arg);
+		    timeout = atoi(optarg);
 		    }
 		else
 		    {
@@ -290,14 +278,13 @@ char **argv;
 		break;
 
 	    case 'r':
-		arg = OPTARG (argc, argv);
-		if (arg)
+		if (optarg)
 		    {
 		    if (report_fp != NULL)
 		        {
 			fclose (report_fp);
 		        }
-		    report_file = copy_of (arg);
+		    report_file = copy_of (optarg);
 		    report_fp   = fopen (report_file, "a");
 		    if (report_fp != NULL)
 		        {
@@ -311,11 +298,14 @@ char **argv;
 		    }
 		break;
 
+	    case ':':
 	    default:
 		usage();
 		break;
 	    }
       }
+    argc -= optind;
+    argv += optind;
 /*
  * Default the report file to the stderr location
  */
@@ -343,8 +333,7 @@ char **argv;
     
     if (chat_file != NULL)
 	{
-	arg = ARG(argc, argv);
-	if (arg != NULL)
+	if (argc)
 	    {
 	    usage();
 	    }
@@ -355,13 +344,13 @@ char **argv;
 	}
     else
 	{
-	while ((arg = ARG(argc, argv)) != NULL)
+	  for (i = 0; i < argc; i++)
 	    {
-	    chat_expect(arg);
+	    chat_expect(argv [i]);
 
-	    if ((arg = ARG(argc, argv)) != NULL)
+	    if (++i < argc)
 	        {
-		chat_send(arg);
+		chat_send(argv [i]);
 	        }
 	    }
 	}
