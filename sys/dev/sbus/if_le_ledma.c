@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_ledma.c,v 1.23 2003/11/11 15:01:05 pk Exp $	*/
+/*	$NetBSD: if_le_ledma.c,v 1.24 2004/03/15 23:51:12 pk Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_ledma.c,v 1.23 2003/11/11 15:01:05 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_ledma.c,v 1.24 2004/03/15 23:51:12 pk Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -62,6 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_le_ledma.c,v 1.23 2003/11/11 15:01:05 pk Exp $");
 
 #include <machine/bus.h>
 #include <machine/intr.h>
+#include <machine/autoconf.h>
 
 #include <dev/sbus/sbusvar.h>
 
@@ -345,8 +346,6 @@ leattach_ledma(parent, self, aux)
 	bus_dma_tag_t dmatag = sa->sa_dmatag;
 	bus_dma_segment_t seg;
 	int rseg, error;
-	/* XXX the following declarations should be elsewhere */
-	extern void myetheraddr __P((u_char *));
 
 	lesc->sc_bustag = sa->sa_bustag;
 
@@ -418,7 +417,7 @@ leattach_ledma(parent, self, aux)
 	sc->sc_nsupmedia = NLEMEDIA;
 	sc->sc_defaultmedia = IFM_ETHER|IFM_AUTO;
 
-	myetheraddr(sc->sc_enaddr);
+	prom_getether(sa->sa_node, sc->sc_enaddr);
 
 	sc->sc_copytodesc = lance_copytobuf_contig;
 	sc->sc_copyfromdesc = lance_copyfrombuf_contig;
