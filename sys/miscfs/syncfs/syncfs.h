@@ -1,4 +1,4 @@
-/*	$NetBSD: syncfs.h,v 1.5 2001/12/06 04:27:42 chs Exp $	*/
+/*	$NetBSD: syncfs.h,v 1.5.4.1 2002/03/11 18:58:28 thorpej Exp $	*/
 
 /*
  * Copyright 1997 Marshall Kirk McKusick. All Rights Reserved.
@@ -31,6 +31,8 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/mutex.h>
+
 /*
  * Routines to create and manage a filesystem syncer vnode.
  */
@@ -54,5 +56,5 @@ extern int (**sync_vnodeop_p) __P((void *));
 #define SYNCER_MAXDELAY       32
 
 extern int syncer_maxdelay;	/* maximum delay time */ 
-extern struct lock syncer_lock;	/* lock to freeze syncer during unmount */
+extern kmutex_t syncer_mutex;	/* lock to freeze syncer during unmount */
 LIST_HEAD(synclist, vnode);

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.172 2002/03/09 13:22:54 bjh21 Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.172.2.1 2002/03/11 18:58:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.172 2002/03/09 13:22:54 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.172.2.1 2002/03/11 18:58:28 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -2424,9 +2424,9 @@ vfs_unmountall(p)
 		 * XXX Freeze syncer.  Must do this before locking the
 		 * mount point.  See dounmount() for details.
 		 */
-		lockmgr(&syncer_lock, LK_EXCLUSIVE, NULL);
+		mutex_enter(&syncer_mutex);
 		if (vfs_busy(mp, 0, 0)) {
-			lockmgr(&syncer_lock, LK_RELEASE, NULL);
+			mutex_exit(&syncer_mutex);
 			continue;
 		}
 		if ((error = dounmount(mp, MNT_FORCE, p)) != 0) {

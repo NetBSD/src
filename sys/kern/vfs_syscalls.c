@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.173 2001/11/12 15:25:41 lukem Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.173.4.1 2002/03/11 18:58:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.173 2001/11/12 15:25:41 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.173.4.1 2002/03/11 18:58:29 thorpej Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -454,10 +454,10 @@ sys_unmount(p, v, retval)
 	 * XXX Freeze syncer.  Must do this before locking the
 	 * mount point.  See dounmount() for details.
 	 */
-	lockmgr(&syncer_lock, LK_EXCLUSIVE, NULL);
+	mutex_enter(&syncer_mutex);
 
 	if (vfs_busy(mp, 0, 0)) {
-		lockmgr(&syncer_lock, LK_RELEASE, NULL);
+		mutex_exit(&syncer_mutex);
 		return (EBUSY);
 	}
 
@@ -490,15 +490,15 @@ dounmount(mp, flags, p)
 	 * per-mountpoint basis, so the softdep code would become a maze
 	 * of vfs_busy() calls.
 	 *
-	 * The caller of dounmount() must acquire syncer_lock because
-	 * the syncer itself acquires locks in syncer_lock -> vfs_busy
+	 * The caller of dounmount() must acquire syncer_mutex because
+	 * the syncer itself acquires locks in syncer_mutex -> vfs_busy
 	 * order, and we must preserve that order to avoid deadlock.
 	 *
 	 * So, if the file system did not use the syncer, now is
-	 * the time to release the syncer_lock.
+	 * the time to release the syncer_mutex.
 	 */
 	if (used_syncer == 0)
-		lockmgr(&syncer_lock, LK_RELEASE, NULL);
+		mutex_exit(&syncer_mutex);
 
 	mp->mnt_flag |= MNT_UNMOUNT;
 	mp->mnt_unmounter = p;
@@ -524,7 +524,7 @@ dounmount(mp, flags, p)
 		lockmgr(&mp->mnt_lock, LK_RELEASE | LK_INTERLOCK | LK_REENABLE,
 		    &mountlist_slock);
 		if (used_syncer)
-			lockmgr(&syncer_lock, LK_RELEASE, NULL);
+			mutex_exit(&syncer_mutex);
 		while (mp->mnt_wcnt > 0) {
 			wakeup((caddr_t)mp);
 			tsleep(&mp->mnt_wcnt, PVFS, "mntwcnt1", 0);
@@ -542,7 +542,7 @@ dounmount(mp, flags, p)
 	mp->mnt_flag |= MNT_GONE;
 	lockmgr(&mp->mnt_lock, LK_RELEASE | LK_INTERLOCK, &mountlist_slock);
 	if (used_syncer)
-		lockmgr(&syncer_lock, LK_RELEASE, NULL);
+		mutex_exit(&syncer_mutex);
 	while(mp->mnt_wcnt > 0) {
 		wakeup((caddr_t)mp);
 		tsleep(&mp->mnt_wcnt, PVFS, "mntwcnt2", 0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_psdev.c,v 1.19 2001/11/23 17:42:48 perry Exp $	*/
+/*	$NetBSD: coda_psdev.c,v 1.19.4.1 2002/03/11 18:58:28 thorpej Exp $	*/
 
 /*
  * 
@@ -52,7 +52,7 @@
 /* These routines are the device entry points for Venus. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_psdev.c,v 1.19 2001/11/23 17:42:48 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_psdev.c,v 1.19.4.1 2002/03/11 18:58:28 thorpej Exp $");
 
 extern int coda_nc_initialized;    /* Set if cache has been initialized */
 
@@ -193,10 +193,10 @@ vc_nb_close (dev, flag, mode, p)
      * XXX Freeze syncer.  Must do this before locking the
      * mount point.  See dounmount for details().
      */
-    lockmgr(&syncer_lock, LK_EXCLUSIVE, NULL);
+    mutex_enter(&syncer_mutex);
     VTOC(mi->mi_rootvp)->c_flags |= C_UNMOUNTING;
     if (vfs_busy(mi->mi_vfsp, 0, 0)) {
-	lockmgr(&syncer_lock, LK_RELEASE, NULL);
+	mutex_exit(&syncer_mutex);
 	return (EBUSY);
     }
     coda_unmounting(mi->mi_vfsp);
