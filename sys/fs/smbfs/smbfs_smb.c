@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_smb.c,v 1.20 2004/04/21 01:05:38 christos Exp $	*/
+/*	$NetBSD: smbfs_smb.c,v 1.21 2004/04/26 17:08:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_smb.c,v 1.20 2004/04/21 01:05:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_smb.c,v 1.21 2004/04/26 17:08:45 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -213,7 +213,7 @@ smbfs_smb_statvfs2(struct smb_share *ssp, struct statvfs *sbp,
 	md_get_uint32le(mdp, &funits);
 	md_get_uint16le(mdp, &bsize);
 	sbp->f_bsize = bpu * bsize;	/* fundamental file system block size */
-	sbp->f_frsize = bpu;		/* fundamental file system frag size */
+	sbp->f_frsize = bsize;		/* fundamental file system frag size */
 	sbp->f_iosize = bsize;		/* I/O size */
 	sbp->f_blocks= units;		/* total data blocks in file system */
 	sbp->f_bfree = funits;		/* free blocks in fs */
@@ -254,7 +254,7 @@ smbfs_smb_statvfs(struct smb_share *ssp, struct statvfs *sbp,
 	md_get_uint16le(mdp, &bsize);
 	md_get_uint16le(mdp, &funits);
 	sbp->f_bsize = bpu * bsize;	/* fundamental file system block size */
-	sbp->f_frsize = bpu;		/* fundamental file system frag size */
+	sbp->f_frsize = bsize;		/* fundamental file system frag size */
 	sbp->f_iosize = bsize;		/* I/O size */
 	sbp->f_blocks= units;		/* total data blocks in file system */
 	sbp->f_bfree = funits;		/* free blocks in fs */
