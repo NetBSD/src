@@ -1,3 +1,5 @@
+/*	$NetBSD: traceroute.c,v 1.8 1995/03/26 21:45:23 glass Exp $	*/
+
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -41,8 +43,11 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)traceroute.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: traceroute.c,v 1.7 1995/03/21 14:29:14 mycroft Exp $";
+#if 0
+static char sccsid[] = "@(#)traceroute.c	8.1 (Berkeley) 6/6/93";*/
+#else
+static char rcsid[] = "$NetBSD: traceroute.c,v 1.8 1995/03/26 21:45:23 glass Exp $";
+#endif
 #endif /* not lint */
 
 /*
@@ -319,7 +324,7 @@ main(argc, argv)
 				hp = gethostbyname(optarg);
 				if (hp == 0)
 					errx(1, "unknown host %s", optarg);
-				bcopy(hp->h_addr, &gw, 4);
+				memcpy(&gw, hp->h_addr, 4);
 			}
 			gateway[lsrr++].s_addr = gw;
 			if (lsrr == 1)
@@ -378,7 +383,7 @@ main(argc, argv)
 
 	setlinebuf (stdout);
 
-	(void) bzero((char *)&to, sizeof(struct sockaddr));
+	(void) memset((char *)&to, 0, sizeof(struct sockaddr));
 	to.sin_family = AF_INET;
 	to.sin_addr.s_addr = inet_addr(*argv);
 	if (to.sin_addr.s_addr != -1)
@@ -388,7 +393,7 @@ main(argc, argv)
 		if (hp == 0)
 			errx(1, "unknown host %s", *argv);
 		to.sin_family = hp->h_addrtype;
-		bcopy(hp->h_addr, (caddr_t)&to.sin_addr, hp->h_length);
+		memcpy((caddr_t)&to.sin_addr, hp->h_addr, hp->h_length);
 		hostname = hp->h_name;
 	}
 	if (*++argv)
@@ -401,7 +406,7 @@ main(argc, argv)
 	outpacket = (u_char *)malloc(datalen);
 	if (outpacket == 0)
 		err(1, "malloc");
-	(void) bzero(outpacket, datalen);
+	(void) memset(outpacket, 0, datalen);
 
 	ip = (struct ip *)outpacket;
 	if (lsrr != 0) {
@@ -459,7 +464,7 @@ main(argc, argv)
 				  (char *)&on, sizeof(on));
 
 	if (source) {
-		(void) bzero((char *)&from, sizeof(struct sockaddr));
+		(void) memset((char *)&from, 0, sizeof(struct sockaddr));
 		from.sin_family = AF_INET;
 		from.sin_addr.s_addr = inet_addr(source);
 		if (from.sin_addr.s_addr == -1)
