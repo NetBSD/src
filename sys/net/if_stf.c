@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stf.c,v 1.31 2002/09/17 06:32:49 itojun Exp $	*/
+/*	$NetBSD: if_stf.c,v 1.32 2002/11/17 19:29:31 itojun Exp $	*/
 /*	$KAME: if_stf.c,v 1.62 2001/06/07 22:32:16 itojun Exp $	*/
 
 /*
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.31 2002/09/17 06:32:49 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.32 2002/11/17 19:29:31 itojun Exp $");
 
 #include "opt_inet.h"
 
@@ -510,6 +510,14 @@ stf_checkaddr4(sc, in, inifp)
 		return -1;
 
 	/*
+	 * reject packet with IPv4 link-local (169.254.0.0/16),
+	 * as suggested in draft-savola-v6ops-6to4-security-00.txt
+	 */
+	if (((ntohl(in->s_addr) & 0xff000000) >> 24) == 169 &&
+	    ((ntohl(in->s_addr) & 0x00ff0000) >> 16) == 254)
+		return -1;
+
+	/*
 	 * reject packets with broadcast
 	 */
 	TAILQ_FOREACH(ia4, &in_ifaddr, ia_list)
@@ -554,6 +562,7 @@ stf_checkaddr6(sc, in6, inifp)
 	struct in6_addr *in6;
 	struct ifnet *inifp;	/* incoming interface */
 {
+
 	/*
 	 * check 6to4 addresses
 	 */
@@ -567,6 +576,20 @@ stf_checkaddr6(sc, in6, inifp)
 	 * (2) to be safe against future ip6_input change.
 	 */
 	if (IN6_IS_ADDR_V4COMPAT(in6) || IN6_IS_ADDR_V4MAPPED(in6))
+		return -1;
+
+	/*
+	 * reject link-local and site-local unicast
+	 * as suggested in draft-savola-v6ops-6to4-security-00.txt
+	 */
+	if (IN6_IS_ADDR_LINKLOCAL(in6) || IN6_IS_ADDR_SITELOCAL(in6))
+		return -1;
+
+	/*
+	 * reject node-local and link-local multicast
+	 * as suggested in draft-savola-v6ops-6to4-security-00.txt
+	 */
+	if (IN6_IS_ADDR_MC_NODELOCAL(in6) || IN6_IS_ADDR_MC_LINKLOCAL(in6))
 		return -1;
 
 	return 0;
