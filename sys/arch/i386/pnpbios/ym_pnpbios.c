@@ -1,4 +1,4 @@
-/* $NetBSD: ym_pnpbios.c,v 1.3 2000/04/22 06:38:25 thorpej Exp $ */
+/* $NetBSD: ym_pnpbios.c,v 1.3.6.1 2000/09/26 00:35:02 itohy Exp $ */
 /*
  * Copyright (c) 1999
  *	Matthias Drochner.  All rights reserved.
@@ -128,7 +128,7 @@ ym_pnpbios_attach(parent, self, aux)
 		return;
 	}
 	if (pnpbios_getdmachan(aa->pbt, aa->resc, 1, &sc->ym_recdrq))
-		sc->ym_recdrq = -1;
+		sc->ym_recdrq = sc->ym_playdrq;	/* half-duplex mode */
 
 	printf("\n");
 	pnpbios_print_devres(self, aa);
