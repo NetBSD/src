@@ -1,4 +1,4 @@
-/*	$NetBSD: swapcontext.S,v 1.2 2003/01/22 13:44:36 scw Exp $	*/
+/*	$NetBSD: swapcontext.S,v 1.3 2003/03/24 14:29:34 scw Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -38,16 +38,22 @@
 #include "SYS.h"
 
 #if defined(LIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: swapcontext.S,v 1.2 2003/01/22 13:44:36 scw Exp $")
+	RCSID("$NetBSD: swapcontext.S,v 1.3 2003/03/24 14:29:34 scw Exp $")
 #endif /* LIBC_SCCS && !lint */
 
 ENTRY(swapcontext)
 	or	r2, r63, r4		/* Preserve oucp in r4 across syscall */
 	or	r18, r63, r5		/* Preserve return address similarly */
-	SYSCALL(getcontext)		/* Note: preserves ucp(r3) & oucp(r4) */
+	SYSTRAP(getcontext)		/* Note: preserves ucp(r3) & oucp(r4) */
+	pt/u	1f, tr0
+	bne/u	r0, r63, tr0
 	st.q	r4, 40, r5		/* Adjust saved program counter */
 	st.q	r4, 72, r63		/* Arrange for return value of 0 */
 	or	r3, r63, r2		/* Fetch 'ucp' */
-	SYSCALL(setcontext)
+	SYSTRAP(setcontext)
 	/*NOTREACHED*/
 	brk				/* But just in case ... */
+
+1:	PIC_PROLOGUE
+	PIC_PTAL(_C_LABEL(__cerror), r0, tr0)
+	blink	tr0, r63

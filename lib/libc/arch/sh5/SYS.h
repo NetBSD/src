@@ -1,4 +1,4 @@
-/*	$NetBSD: SYS.h,v 1.1 2002/07/05 13:32:58 scw Exp $	*/
+/*	$NetBSD: SYS.h,v 1.2 2003/03/24 14:29:34 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -49,23 +49,35 @@
 #define	SYSTRAP(x)	movi SYS_/**/x, r0; movi 128, r1; trapa r1
 #endif
 
-#define	SYSCALL(x)							\
-	SYSTRAP(x) ;							\
-	pt/u	_C_LABEL(__cerror), tr0 ;				\
-	bne/u	r0, r63, tr0
+#define	_SYSCALL_NOERROR(x,y)						\
+	ENTRY(x) ;							\
+	SYSTRAP(y)
+
+#ifdef PIC
+#define	_SYSCALL_CERROR	99b
+#define	_SYSCALL(x,y)							\
+	_TEXT_SECTION ;							\
+	_ALIGN_TEXT ;							\
+	99: PIC_PROLOGUE ;						\
+	    PIC_PTAL(_C_LABEL(__cerror), r0, tr0) ;			\
+	    blink tr0, r63 ;						\
+	_SYSCALL_NOERROR(x,y)
+#else
+#define	_SYSCALL_CERROR	_C_LABEL(__cerror)
+#define	_SYSCALL(x,y)							\
+	_SYSCALL_NOERROR(x,y)
+#endif
 
 #define	PSEUDO_NOERROR(x,y)						\
-	ENTRY(x) ;							\
-	SYSTRAP(y) ;							\
+	_SYSCALL_NOERROR(x,y) ;						\
 	ptabs/l r18, tr0 ;						\
 	blink tr0, r63
 
 #define	PSEUDO(x,y)							\
-	ENTRY(x) ;							\
-	SYSTRAP(y) ;							\
+	_SYSCALL(x,y) ;							\
 	ptabs/l r18, tr0 ;						\
 	beq/l r0, r63, tr0 ;						\
-	pt/l _C_LABEL(__cerror), tr0 ;					\
+	pta/l _SYSCALL_CERROR, tr0 ;					\
 	blink tr0, r63
 
 #define RSYSCALL_NOERROR(x)						\
