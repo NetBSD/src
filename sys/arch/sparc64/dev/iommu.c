@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.15 2000/06/19 23:30:33 eeh Exp $	*/
+/*	$NetBSD: iommu.c,v 1.16 2000/06/22 18:18:19 eeh Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -124,7 +124,6 @@
 
 #include <machine/bus.h>
 #include <sparc64/sparc64/cache.h>
-#include <sparc64/sparc64/vaddrs.h>
 #include <sparc64/dev/iommureg.h>
 #include <sparc64/dev/iommuvar.h>
 
@@ -510,7 +509,7 @@ iommu_dvmamap_load(t, is, map, buf, buflen, p, flags)
 	map->dm_mapsize = buflen;
 	map->dm_nsegs = 1;
 	map->dm_segs[0].ds_addr = dvmaddr + (vaddr & PGOFSET);
-	map->dm_segs[0].ds_len = sgsize;
+	map->dm_segs[0].ds_len = buflen;
 
 	if (p != NULL)
 		pmap = p->p_vmspace->vm_map.pmap;
@@ -571,7 +570,8 @@ iommu_dvmamap_unload(t, is, map)
 	    map, (long)addr, (long)len));
 	iommu_remove(is, addr, len);
 	dvmaddr = (map->dm_segs[0].ds_addr & ~PGOFSET);
-	sgsize = map->dm_segs[0].ds_len;
+	sgsize = round_page(map->dm_segs[0].ds_len + 
+			    ((int)map->dm_segs[0].ds_addr & PGOFSET));
 
 	/* Mark the mappings as invalid. */
 	map->dm_mapsize = 0;
