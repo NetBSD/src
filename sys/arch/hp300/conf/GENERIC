@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.27 1997/03/31 00:03:11 thorpej Exp $
+#	$NetBSD: GENERIC,v 1.28 1997/04/27 21:06:30 thorpej Exp $
 #
 # Generic kernel - one size fits all.
 #
@@ -10,11 +10,15 @@ include "arch/hp300/conf/std.hp300"
 options 	HP320
 options 	HP330		# includes 318, 319
 options 	HP340
+options 	HP345
 options 	HP350
 options 	HP360
 options 	HP370
-options 	HP375		# includes 345, 400t, 400s
-options 	HP380		# includes 425t, 425s, 433s
+options 	HP375
+options 	HP380
+options 	HP400
+options 	HP425
+options 	HP433
 
 # Need to set locally
 maxusers	32
