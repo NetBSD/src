@@ -1,7 +1,7 @@
-/*	$NetBSD: be_bus.c,v 1.1 1998/04/22 08:03:29 leo Exp $	*/
+/*	$NetBSD: be_bus.c,v 1.2 1998/04/23 09:17:44 leo Exp $	*/
 
 /*-
- * Copyright (c) 1996 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
