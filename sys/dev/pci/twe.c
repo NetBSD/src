@@ -1,4 +1,4 @@
-/*	$NetBSD: twe.c,v 1.26 2002/07/10 15:37:30 christos Exp $	*/
+/*	$NetBSD: twe.c,v 1.27 2002/08/06 20:47:44 kim Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.26 2002/07/10 15:37:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.27 2002/08/06 20:47:44 kim Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -160,7 +160,7 @@ struct {
  * format 1 (unit specific message), and format 2 (port specific message).
  */
 static const char *aenfmt[] = {
-	""		/* No message */
+	"",		/* No message */
 	"unit %d: ",	/* Unit message */
 	"port %d: "	/* Port message */
 };
