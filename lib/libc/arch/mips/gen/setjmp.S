@@ -35,12 +35,12 @@
  */
 
 #include <sys/syscall.h>
-#include <machine/reg.h>
+#include <machine/regnum.h>
 #include <machine/machAsmDefs.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)setjmp.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$Id: setjmp.S,v 1.3 1994/12/15 17:24:51 mycroft Exp $")
+	ASMSTR("$Id: setjmp.S,v 1.4 1995/12/22 10:20:59 jonathan Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 /*
