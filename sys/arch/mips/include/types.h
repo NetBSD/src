@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.18 1999/01/14 18:45:45 castor Exp $	*/
+/*	$NetBSD: types.h,v 1.19 1999/01/31 00:55:41 castor Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -50,10 +50,10 @@
  * 
  */
 
-#if defined(_MIPS_BSD_SIM) && _MIPS_BSD_SIM != _MIPS_SIM_ABI32
+#if defined(_MIPS_BSD_API) && _MIPS_BSD_API != _MIPS_BSD_ABI_LP32
 typedef long long mips_reg_t;
 typedef unsigned long long mips_ureg_t;
-#if _MIPS_BSD_SIM != _MIPS_SIM_ABI32 && _MIPS_BSD_SIM != _MIPS_SIM_ABIX32
+#if _MIPS_BSD_API != _MIPS_BSD_ABI_LP32 && _MIPS_BSD_API != _MIPS_BSD_API_LP32_64CLEAN
 typedef	long long	mips_fpreg_t;
 #else
 typedef	int	mips_fpreg_t;

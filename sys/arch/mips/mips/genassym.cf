@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.7 1999/01/15 01:23:12 castor Exp $
+#	$NetBSD: genassym.cf,v 1.8 1999/01/31 00:55:42 castor Exp $
 #
 # Copyright (c) 1997
 #  Jonathan Stone.  All rights reserved.
@@ -94,9 +94,6 @@ define	MIPS3_PG_HVPN		MIPS3_PG_HVPN
 define	MIPS3_PG_ASID		MIPS3_PG_ASID
 define	MIPS3_PG_ODDPG		MIPS3_PG_ODDPG
 
-define	STAND_FRAME_SIZE	sizeof(mips_reg_t) * (4 + 2)
-define	STAND_RA_OFFSET		sizeof(mips_reg_t) * 5
-
 define	FRAME_SIZ		sizeof(struct frame)
 define	FRAME_ZERO		sizeof(mips_reg_t) * ZERO
 define	FRAME_AST		sizeof(mips_reg_t) * AST
@@ -171,11 +168,6 @@ define	FRAME_FP29		sizeof(mips_fpreg_t) * 29
 define	FRAME_FP30		sizeof(mips_fpreg_t) * 30
 define	FRAME_FP31		sizeof(mips_fpreg_t) * 31
 
-# standard callframe {
-# 	register_t cf_args[4];		arg0 - arg3
-# 	register_t cf_sp;		frame pointer
-# 	register_t cf_ra;		return address
-# };
 # 
 # trapframe synthesized on stack and pointed by 5th arg {
 # 	register_t cf_args[4 + 2];	arg0 - arg3 and arg4 and arg5 (ignored)
@@ -188,11 +180,6 @@ define	FRAME_FP31		sizeof(mips_fpreg_t) * 31
 #	mips_reg_t tf_mulhi;		-
 #	mips_reg_t tf_epc;		- might be modified prior to return
 # };
-
-#define	CALLFRAME_SIZ	sizeof(struct callframe)
-define	CALLFRAME_SIZ	sizeof(register_t) * (4 + 2)
-define	CALLFRAME_SP	sizeof(register_t) * 4
-define	CALLFRAME_RA	sizeof(register_t) * 5
 
 #define	KERNFRAME_SIZ	sizeof(struct kernframe)
 define	KERNFRAME_SIZ	(sizeof(register_t) * (6 + 2 ) + sizeof(mips_reg_t) * (17 + 5))
