@@ -1,4 +1,4 @@
-/*	$NetBSD: clk_varitext.c,v 1.2 2001/04/21 21:57:16 thorpej Exp $	*/
+/*	$NetBSD: clk_varitext.c,v 1.3 2002/04/09 02:42:50 thorpej Exp $	*/
 
 #ifdef HAVE_CONFIG_H
 # include <config.h>
@@ -38,12 +38,12 @@
 extern void printf P((const char *, ...));
 #endif
 
-static const u_char VT_INITIALISED      = 0x01;
-static const u_char VT_SYNCHRONISED     = 0x02;
-static const u_char VT_ALARM_STATE      = 0x04;
-static const u_char VT_BST              = 0x08;
-static const u_char VT_SEASON_CHANGE    = 0x10;
-static const u_char VT_LAST_TELEGRAM_OK = 0x20;
+#define VT_INITIALISED        0x01
+#define VT_SYNCHRONISED       0x02
+#define VT_ALARM_STATE        0x04
+#define VT_BST                0x08
+#define VT_SEASON_CHANGE      0x10
+#define VT_LAST_TELEGRAM_OK   0x20
 
 /*
  * The Varitext receiver sends a datagram in the following format every minute
@@ -149,7 +149,7 @@ cvt_varitext(
 	  clock_time->utcoffset = -1*60*60;
 	  clock_time->flags |= PARSEB_DST;
 	}
-      /*
+#if 0
 	 if (!((*f) & VT_INITIALISED))  Clock not initialised 
 	 clock_time->flags |= PARSEB_POWERUP;
 	 
@@ -158,7 +158,7 @@ cvt_varitext(
 	 
 	 if (((*f) & VT_SEASON_CHANGE))  Seasonal change expected in the next hour 
 	 clock_time->flags |= PARSEB_ANNOUNCE;
-	 */
+#endif
       return CVT_OK; 
     }
   }
