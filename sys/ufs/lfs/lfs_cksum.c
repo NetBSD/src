@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_cksum.c,v 1.16 2001/07/13 20:30:23 perseant Exp $	*/
+/*	$NetBSD: lfs_cksum.c,v 1.17 2001/10/26 05:56:09 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -79,7 +79,6 @@
 # include <stddef.h>
 #endif
 #include <sys/mount.h>
-#include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
 #include <ufs/lfs/lfs.h>
 

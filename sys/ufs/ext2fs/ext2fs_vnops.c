@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vnops.c,v 1.38 2001/09/22 22:35:19 sommerfeld Exp $	*/
+/*	$NetBSD: ext2fs_vnops.c,v 1.39 2001/10/26 05:56:08 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -63,7 +63,6 @@
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/specfs/specdev.h>
 
-#include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
 #include <ufs/ufs/ufs_extern.h>
 #include <ufs/ufs/ufsmount.h>

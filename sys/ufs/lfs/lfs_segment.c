@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.70 2001/07/26 20:20:15 jdolecek Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.71 2001/10/26 05:56:10 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -93,7 +93,6 @@
 #include <miscfs/specfs/specdev.h>
 #include <miscfs/fifofs/fifo.h>
 
-#include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
 #include <ufs/ufs/dir.h>
 #include <ufs/ufs/ufsmount.h>

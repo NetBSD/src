@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.36 2001/07/13 20:30:23 perseant Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.37 2001/10/26 05:56:09 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -79,7 +79,6 @@
 #include <sys/mount.h>
 #include <sys/kernel.h>
 
-#include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
 #include <ufs/ufs/ufsmount.h>
 #include <ufs/ufs/ufs_extern.h>

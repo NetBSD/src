@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_ihash.c,v 1.12 2001/09/15 16:13:06 chs Exp $	*/
+/*	$NetBSD: ufs_ihash.c,v 1.13 2001/10/26 05:56:10 lukem Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -42,7 +42,6 @@
 #include <sys/proc.h>
 #include <sys/lock.h>
 
-#include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
 #include <ufs/ufs/ufs_extern.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.59 2001/09/15 20:36:43 chs Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.60 2001/10/26 05:56:10 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -83,7 +83,6 @@
 
 #include <sys/syscallargs.h>
 
-#include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
 #include <ufs/ufs/ufsmount.h>
 #include <ufs/ufs/ufs_extern.h>
