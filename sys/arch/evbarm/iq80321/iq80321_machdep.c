@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80321_machdep.c,v 1.1 2002/03/27 21:51:29 thorpej Exp $	*/
+/*	$NetBSD: iq80321_machdep.c,v 1.2 2002/03/29 02:22:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -114,6 +114,9 @@
  * Address to call from cpu_reset() to reset the machine.
  * This is machine architecture dependant as it varies depending
  * on where the ROM appears when you turn the MMU off.
+ *
+ * XXX Not actally used on IQ80321 -- clean up the generic
+ * ARM code.
  */
 
 u_int cpu_reset_address = 0x00000000;
@@ -235,8 +238,7 @@ cpu_reboot(int howto, char *bootstr)
 		printf("Please press any key to reboot.\n\n");
 		cngetc();
 		printf("rebooting...\n");
-		cpu_reset();
-		/*NOTREACHED*/
+		goto reset;
 	}
 
 	/* Disable console buffering */
@@ -270,9 +272,19 @@ cpu_reboot(int howto, char *bootstr)
 		cngetc();
 	}
 
-	printf("rebooting...\n");
-	cpu_reset();
-	/*NOTREACHED*/
+	printf("rebooting...\n\r");
+ reset:
+	/*
+	 * Make really really sure that all interrupts are disabled,
+	 * and poke the Internal Bus and Peripheral Bus reset lines.
+	 */
+	(void) disable_interrupts(I32_bit|F32_bit);
+	*(__volatile uint32_t *)(IQ80321_80321_VBASE + VERDE_ATU_BASE +
+	    ATU_PCSR) = PCSR_RIB | PCSR_RPB;
+
+	/* ...and if that didn't work, just croak. */
+	printf("RESET FAILED!\n");
+	for (;;);
 }
 
 /*
