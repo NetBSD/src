@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.247 2000/07/10 16:32:08 ad Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.248 2000/07/20 14:47:36 ad Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.243 2000/07/10 16:14:02 ad Exp 
+ *	NetBSD: pcidevs,v 1.244 2000/07/20 14:46:51 ad Exp 
  */
 
 /*
@@ -1700,6 +1700,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "ESS Technology Inc",
 	    "Maestro 3 Modem",
+	},
+	{
+	    PCI_VENDOR_ESSTECH2, PCI_PRODUCT_ESSTECH2_MAESTRO1,
+	    0,
+	    "ESS Technology Inc",
+	    "Maestro 1 PCI Audio Accelerator",
 	},
 	{
 	    PCI_VENDOR_O2MICRO, PCI_PRODUCT_O2MICRO_OZ6832,
@@ -7525,6 +7531,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_DAVICOM, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Davicom Semiconductor",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_ESSTECH2, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "ESS Technology Inc",
 	    NULL,
 	},
 	{
