@@ -1,10 +1,10 @@
 #	from: @(#)Makefile	6.13 (Berkeley) 3/20/91
-#	$NetBSD: Makefile,v 1.15 1997/03/24 21:57:13 christos Exp $
+#	$NetBSD: Makefile,v 1.16 1997/03/27 03:12:32 mycroft Exp $
 
 BINDIR= /usr/share
-MSRCS=  doc doc-ditroff doc-common doc-nroff doc-syms
+MSRCS=  andoc doc doc-ditroff doc-common doc-nroff doc-syms
 MMACS=  ${MSRCS:S@^@tmac.@g}
-FILES=	tmac.andoc ${MMACS}
+FILES=	${MMACS}
 FILESDIR=${BINDIR}/tmac
 LINKS=	${BINDIR}/tmac/tmac.andoc ${BINDIR}/tmac/tmac.an
 CLEANFILES+= ${MMACS}

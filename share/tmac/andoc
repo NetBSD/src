@@ -31,7 +31,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from @(#)tmac.andoc	5.6 (Berkeley) 8/5/91
-.\"	$NetBSD: tmac.andoc,v 1.4 1996/10/15 20:04:28 perry Exp $
+.\"	$NetBSD: andoc,v 1.1 1997/03/27 03:12:33 mycroft Exp $
 .\"
 .de Dd
 .rm Dd
