@@ -1,4 +1,5 @@
-/*	$NetBSD: dump.c,v 1.2 2000/02/25 09:19:07 itojun Exp $	*/
+/*	$NetBSD: dump.c,v 1.2.4.1 2000/10/18 02:22:30 tv Exp $	*/
+/*	$KAME: dump.c,v 1.8 2000/10/05 22:20:39 itojun Exp $	*/
 
 /*
  * Copyright (C) 1999 WIDE Project.
@@ -98,7 +99,7 @@ rtsold_dump_file(dumpfile)
 	char *dumpfile;
 {
 	if ((fp = fopen(dumpfile, "w")) == NULL) {
-		warnmsg(LOG_WARNING, __FUNCTION__, "open a dump file(%s)",
+		warnmsg(LOG_WARNING, __FUNCTION__, "open a dump file(%s): %s",
 			dumpfile, strerror(errno));
 		return;
 	}
