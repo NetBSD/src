@@ -111,7 +111,7 @@ higher_prime_number (n)
     536870909,
     1073741789,
     2147483647,
-    4294967291
+    4294967291UL
   };
 
   unsigned long* low = &primes[0];
