@@ -1,4 +1,4 @@
-.\" $NetBSD: wctob.3,v 1.1 2003/03/03 08:24:59 tshiozak Exp $
+.\" $NetBSD: wctob.3,v 1.2 2003/03/17 08:33:45 wiz Exp $
 .\"
 .\" Copyright (c)2003 Citrus Project,
 .\" All rights reserved.
@@ -50,17 +50,21 @@ the current locale.
 .Pp
 The behaviour of the
 .Fn wctob
-is affected by LC_CTYPE category of the current locale.
+is affected by the
+.Dv LC_CTYPE
+category of the current locale.
 .\" ----------------------------------------------------------------------
 .Sh RETURN VALUES
 The
 .Fn wctob
-returns:
+function returns:
 .Bl -tag -width 012345678901
-.It EOF
+.It Dv EOF
 if
 .Fa wc
-is WEOF or if
+is
+.Dv WEOF
+or if
 .Fa wc
 does not correspond to a valid single byte character representation.
 .It (otherwise)
@@ -73,8 +77,8 @@ No errors are defined.
 .\" ----------------------------------------------------------------------
 .Sh SEE ALSO
 .Xr btowc 3 ,
-.Xr wcrtomb 3 ,
-.Xr setlocale 3
+.Xr setlocale 3 ,
+.Xr wcrtomb 3
 .\" ----------------------------------------------------------------------
 .Sh STANDARDS
 The
