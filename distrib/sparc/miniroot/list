@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.11.2.1 1999/07/01 19:28:35 perry Exp $
+#	$NetBSD: list,v 1.11.2.2 1999/07/06 23:46:13 perry Exp $
 
 # Sparc extra's
 LINK	instbin			sbin/disklabel
@@ -19,6 +19,8 @@ SYMLINK	../../instbin		usr/sbin/sysctl
 CRUNCHSPECIAL	vi srcdir usr.bin/vi/build
 CRUNCHSPECIAL	less srcdir usr.bin/less/less
 
+# for /kern
+SPECIAL	mkdir kern
 
 # Minimize use of MFS
 SYMLINK	/tmp	var/tmp
