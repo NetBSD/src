@@ -1,4 +1,4 @@
-/*	$NetBSD: rusersd.c,v 1.9 1996/08/30 20:19:45 thorpej Exp $	*/
+/*	$NetBSD: rusersd.c,v 1.10 1997/09/17 16:35:56 christos Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -28,29 +28,38 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char rcsid[] = "$NetBSD: rusersd.c,v 1.9 1996/08/30 20:19:45 thorpej Exp $";
+__RCSID("$NetBSD: rusersd.c,v 1.10 1997/09/17 16:35:56 christos Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
 #include <rpc/rpc.h>
+#include <sys/socket.h>
 #include <signal.h>
 #include <syslog.h>
+#include <stdlib.h>
 #include <rpcsvc/rusers.h>	/* New version */
 #include <rpcsvc/rnusers.h>	/* Old version */
 
-extern void rusers_service();
+#include "rusers_proc.h"
+
 
 int from_inetd = 1;
 
-void
-cleanup()
+static void cleanup __P((int));
+int main __P((int, char *[]));
+
+static void
+cleanup(n)
+	int n;
 {
 	(void) pmap_unset(RUSERSPROG, RUSERSVERS_3);
 	(void) pmap_unset(RUSERSPROG, RUSERSVERS_IDLE);
 	exit(0);
 }
 
+int
 main(argc, argv)
 	int argc;
 	char *argv[];
