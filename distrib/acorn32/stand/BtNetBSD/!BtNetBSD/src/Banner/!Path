@@ -1,0 +1,4 @@
+| $NetBSD: !Path,v 1.1.1.1 2002/05/09 20:03:59 jdolecek Exp $
+
+Set asmlib$dir <obey$dir>
+dir <Obey$Dir>

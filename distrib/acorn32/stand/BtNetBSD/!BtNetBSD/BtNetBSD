@@ -1,0 +1,1281 @@
+REM > BtNetBSD
+REM $NetBSD: BtNetBSD,v 1.1.1.1 2002/05/09 20:03:57 jdolecek Exp $
+REM
+REM Copyright (c) 2000, 2001, 2002 Reinoud Zandijk
+REM Copyright (c) 1998, 1999, 2000 Ben Harris
+REM ELF file reading based on work by Ben Harris
+REM All rights reserved.
+REM
+REM Redistribution and use in source and binary forms, with or without
+REM modification, are permitted provided that the following conditions
+REM are met:
+REM 1. Redistributions of source code must retain the above copyright
+REM    notice, this list of conditions and the following disclaimer.
+REM 2. Redistributions in binary form must reproduce the above copyright
+REM    notice, this list of conditions and the following disclaimer in the
+REM    documentation and/or other materials provided with the distribution.
+REM 3. The name of the author may not be used to endorse or promote products
+REM    derived from this software without specific prior written permission.
+REM
+REM THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+REM IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+REM OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+REM IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+REM INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+REM NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+REM DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+REM THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+REM (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+REM THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+REM
+REM This file is part of NetBSD/acorn32 -- a port of NetBSD to ARM6+ machines
+REM This source contains pieces of code by Ben Harris (file structure)
+REM and Mark Brinicombe (DRAM/VRAM search)
+REM
+REM Purpose : Trying to boot NetBSD/acorn32 !!
+
+
+ON ERROR REPORT:PRINT " at line ";ERL: PRINT'"Press key":QQ=GET:END
+
+debug%           = 0
+emulateVRAM%     = 0
+emulateDRAMsize% = 0
+extradebug%      = 0
+startdelay%      = 5
+
+REM For Kinetic cards
+SDRAM_ADDR_START% = 512*1024*1024
+REM For debugging only :
+REM SDRAM_ADDR_START% = &18000000
+
+
+REM set pretty screen for printing without scrolling
+SYS "XWimp_CommandWindow", -1: VDU 26
+SYS "XHourglass_Smash"
+MODE MODE
+COLOUR 128+4:CLS
+scwidth% = FNvdu_var(256): scheigth% = FNvdu_var(257)
+width% = INT(scwidth%*0.75*0.5)*2: heigth% = INT(scheigth%*0.75*0.5)*2
+VDU 4, 28, (scwidth%-width%)/2, (scheigth%+heigth%)/2, (scwidth%+width%)/2, (scheigth%-heigth%)/2
+COLOUR 128:CLS
+
+PRINT''
+PROCcenter("BtNetBSD 0.99a")
+PROCcenter("booting NetBSD/acorn32 on a RiscPC/A7000/NC")
+PRINT''
+
+REM get argument string
+SYS "OS_GetEnv" TO args$
+WHILE LEFT$(args$, 1)=" ": args$=MID$(args$,2):ENDWHILE
+IF LEFT$(args$, 5)="BASIC" THEN args$=MID$(args$, 6)
+WHILE LEFT$(args$, 1)=" ": args$=MID$(args$,2):ENDWHILE
+IF LEFT$(args$, 5)="-quit" THEN args$=MID$(args$, 6)
+WHILE LEFT$(args$, 1)=" ": args$=MID$(args$,2):ENDWHILE
+prog$ = LEFT$(args$, INSTR(args$, " ")-1)
+args$ = MID$(args$, LEN(prog$)+1)
+WHILE LEFT$(args$, 1)=" ": args$=MID$(args$,2):ENDWHILE
+
+REM get kernel name
+file$ = LEFT$(args$, INSTR(args$, " ")-1)
+PRINT"Booting ";file$;" ";args$''
+
+
+IF FNtolower(LEFT$(file$,9))="unixfs:$." THEN
+  kernelname$=MID$(file$, 10)
+ELSE
+  kernelname$="netbsd" : REM RISC OS file namen zeggen niets XXX
+ENDIF
+
+
+REM Get some space to mess with
+REM Declare a large array ... and then wipe it/map it in in the OS_Mem loop
+REM the difference is that RO4 won't map it in by default and
+REM that could trigger a OS_Memory bug ...
+SYS "OS_Memory", 6 TO ,memorytablesize%, nbpp% : REM get tablesize%
+memory_image_size% = HIMEM-512*1024            : REM keep a 512 Kb for vars
+DIM memory_image% memory_image_size%           : REM claim the space
+
+bot_memory% = memory_image%
+top_memory% = memory_image% + memory_image_size%
+
+KERNEL_BASE = &F0000000
+
+MAX_RELOCPAGES = 4096
+MAX_DRAMBANKS = 32
+MAX_VRAMBANKS = 16
+
+twirl% = 0
+firstpage%  = (bot_memory% DIV nbpp%)+1
+lastpage%   = (top_memory% DIV nbpp%)-1
+totalpages% = lastpage% - firstpage%
+PRINT "I got a ";totalpages%;" memory pages to mess with"
+
+relocsize% = (MAX_RELOCPAGES+1)*12
+DIM relocinstr% relocsize%
+relocpos% = relocinstr%+4 : REM first word in number of relocations
+relocnr% = 0: relocoff% = 0
+
+REM this memory block contains all information about the memory layout
+REM maybe a bug in BASIC but if I DIM this variable in a procedure it
+REM gets on the stack or so ? It malfunctions if I pass this on as a
+REM procedure variable.
+DIM memoryblock% (totalpages%*12+4)
+
+PROCget_memory_configuration
+PROCget_memory_map
+
+PROCload_kernel(file$)
+PROCcreate_initial_pagetables
+PROCadd_pagetables
+PROCcreate_configuration
+
+REM now only the relocation code itself and then copying the relocation table itself
+!relocinstr% = relocnr%
+PROCcreate_relocate_mechanism
+PRINT " "
+
+REM start the kernel
+A% = FNblock_paddr(configurationbasepage%)
+B% = physical_start_address% - FNblock_vaddr(relocatebasepage%) + FNblock_paddr(relocatebasepage%)
+C% = FNblock_paddr(relocatebasepage%) + nbpp% : REM one page after the code
+D% = L1pages_phys%
+E% = entry%
+
+IF debug% THEN
+  IF ((relocpos%-(relocinstr%+4)) MOD 12)<>0 THEN ERROR 0,"Sanity check for relocation entries failed!"
+  PRINT"Entering kernel at 0x";~entry%
+  REM  OSCLI("Memoryi "+STR$~(FNblock_vaddr(start_kernelpage%)+(entry% MOD nbpp%)))
+  REM  PRINT"Go for it (key)":qq=GET
+ENDIF
+PRINT ''"Press ESC to abort loader"
+PRINT "Kernel will be started in ";
+FOR secs%=startdelay% TO 1 STEP -1
+  PRINT ;secs%;"...";
+  tt=TIME: WHILE TIME-tt<=100: ENDWHILE : REM wait one second
+NEXT
+PRINT "start!"
+
+REM get ECID for each podule
+FOR pod% =-1 TO 8
+  SYS "XPodule_ReadID",,,,pod%
+NEXT
+
+REM shut down RiscOS
+SYS "XOS_CLI", "RMKill UnixFS"
+SYS "OS_FSControl", 23     : REM close files etc.
+SYS "OS_ServiceCall",, &45 : REM prereset
+
+REM Remove all cursors
+*pointer 0
+SYS "OS_RemoveCursors"
+
+REM XXX is this OK ? What is this!
+DIM buf 8
+buf!?3 = 2: buf!4 = 0: SYS "OS_Word", 22, buf+3
+
+CALL relocate_entry%
+
+END
+
+
+DEF PROCload_kernel(file$)
+  LOCAL file%, magic%
+  file% = OPENIN(file$)
+  IF file% = 0 THEN ERROR EXT 1, "Can't open kernel"
+    DIM magic% 3
+  SYS "OS_GBPB", 3, file%, magic%, 4, 0
+  IF magic%?0 = 127 AND magic%?1 = ASC("E") AND magic%?2 = ASC("L") AND magic%?3 = ASC("F") THEN
+    PROCload_kernel_elf(file%)
+  ELSE
+    PROCload_kernel_aout(file%)
+  ENDIF
+  CLOSE#file%
+ENDPROC
+
+
+
+REM *****************************************************************************
+REM * ELF LOADER                                                                *
+REM *****************************************************************************
+
+
+DEF PROCload_kernel_elf(file%)
+  REM read header
+  DIM hdr% 52
+  SYS "OS_GBPB", 3, file%, hdr%, 52, 0
+ 
+  REM check if its a correct kernel to load
+  IF hdr%?4 <> 1 THEN ERROR 1, "Not a 32-bit ELF file"
+  IF hdr%?5 <> 1 THEN ERROR 1, "Not an LSB ELF file"
+  IF hdr%?6 <> 1 THEN ERROR 1, "Not a version-1 ELF file"
+  REM hdr%?7 is EI_OSABI.  Should it be 255 (ELFOSABI_STANDALONE)?
+  IF (hdr%!16 AND &FFFF) <> 2 THEN ERROR 1, "Not an executable ELF file"
+  IF (hdr%!18 AND &FFFF) <> 40 THEN ERROR 1, "Not an ARM ELF file"
+
+  PRINT "(ELF) ";
+  REM read kernel characteristics and headers
+  entry% = hdr%!24
+  phoff% = hdr%!28
+  shoff% = hdr%!32
+  phentsize% = hdr%!42 AND &FFFF
+  phnum% = hdr%!44 AND &FFFF
+  shentsize% = hdr%!46 AND &FFFF
+  shnum% = hdr%!48 AND &FFFF
+  DIM phdrs% phnum% * phentsize% - 1  : REM array with headers ?
+  SYS "OS_GBPB", 3, file%, phdrs%, phnum% * phentsize%, phoff%
+  IF phnum% = 0 THEN ERROR 1, "No program headers"
+
+  REM start loading !
+  freepagesbase% = first_mapped_DRAM_index% : REM == first virt address in DRAM0a
+  start_kernelpage% = freepagesbase%
+  pv_offset% = KERNEL_BASE - DRAM_addr%(0) : REM XXX hardcoded
+
+  REM load the program blocks
+  first% = TRUE
+  FOR ph% = phdrs% TO phdrs% + (phnum% - 1) * phentsize% STEP phentsize%
+    IF ph%!0 = 1 THEN
+      REM We only do PT_LOAD
+      IF NOT first% THEN PRINT "+";
+      first%  = FALSE
+      offset% = ph%!4
+      vaddr%  = ph%!8
+      REM physaddr% = ph%!12
+      filesz% = ph%!16
+      memsz%  = ph%!20
+      flags%  = ph%!24
+      PROCload_chunk(file%, offset%, vaddr%, filesz%, memsz%)
+      REM freepagesbase% is updated
+
+      vfreebase% = vaddr% + memsz% : REM memsz% is the real size.... filesz can be only Text f.e.
+    ENDIF
+  NEXT
+
+  txtbase% = 0
+  txtsize% = 0
+  database% = 0
+  datasize% = 0
+  bssbase% = 0
+  bsssize% = 0
+  ssym% = 0
+  esym% = 0
+
+  DIM shdrs% shnum% * shentsize% - 1
+  SYS "OS_GBPB", 3, file%, shdrs%, shnum% * shentsize%, shoff%
+  IF shnum% <> 0 THEN
+    havesyms% = FALSE
+    FOR sh% = shdrs% TO shdrs% + (shnum% - 1) * shentsize% STEP shentsize%
+      IF sh%!4 = 2 THEN havesyms% = TRUE
+    NEXT
+    IF havesyms% THEN
+      IF INSTR(args$, "symtab")=0 THEN havesyms% = FALSE
+      IF debug% THEN
+        IF havesyms% PRINT ;" (symbols avail) "; ELSE PRINT ;" (ignoring symbols) ";
+      ENDIF
+    ENDIF
+    REM freepagesbase% points to first free relocation page
+    IF havesyms% THEN
+      REM vfreebase points to first free address in relocated area
+      PRINT "+[";
+
+      REM First, we have the munged ELF header
+      ssym% = vfreebase%
+      ssympage% = freepagesbase%
+      PROCload_chunk(file%, 0, ssym%, 52, 52)
+      !(FNblock_vaddr(ssympage%) + 32) = 52: REM  PROCwrite_word(ssym%+32, 52)
+      vfreebase% += 52
+
+      REM then, the munged section headers
+      mshdrs% = vfreebase%
+      mshdrspage% = freepagesbase%
+      PRINT "+";
+      PROCload_chunk(file%, shoff%, mshdrs%, shnum% * shentsize%, shnum% * shentsize%)
+      vfreebase% += shnum% * shentsize%
+      FOR sh% = shdrs% TO shdrs% + (shnum% - 1) * shentsize% STEP shentsize%
+        IF sh%!4 = 2 OR sh%!4 = 3 THEN
+          PRINT "+";
+          PROCload_chunk(file%, sh%!16, vfreebase%, sh%!20, sh%!20)
+          !(FNblock_vaddr(mshdrspage%) + sh% - shdrs% + 16) = vfreebase% - ssym%
+          vfreebase% += FNroundup(sh%!20, 4)
+        ENDIF
+      NEXT
+      esym% = vfreebase%
+      PRINT "]";
+    ENDIF
+  ENDIF
+  PRINT " ";
+
+  kernelpages% = freepagesbase% - start_kernelpage%
+  IF extradebug% THEN PRINT ''"Number of kernel pages ";kernelpages%;" (";kernelpages%*nbpp%;" bytes)"
+
+  PROCfinish_relocationtable
+ENDPROC
+
+
+DEF PROCload_chunk(file%, offset%, vaddr%, filesz%, memsz%)
+  LOCAL paddr%, ppn%, fragaddr%, fragsz%
+
+  REM offset%  offset in file
+  REM vaddr%   indicates virtual address where stuff needs to be relocated to
+  REM filesz%  number of bytes to read of `file' for this chunk
+  REM memsz%   number of bytes to clear for this chunk
+  PRINT ;filesz%;
+  IF extradebug% PRINT ;" (";~vaddr%;"-";~(vaddr%+memsz%);" [till base+";INT((vaddr%+memsz%-&F0000000)/1024);"k]) ";
+  WHILE filesz% > 0
+    REM freepagesbase% is first page index in freepages list
+    fragsz% = nbpp%
+    IF fragsz% > filesz% THEN fragsz% = filesz%
+
+    fragaddr% = FNblock_vaddr(freepagesbase%)
+    SYS "OS_GBPB", 3, file%, fragaddr%, fragsz%, offset%
+ 
+    REM create a relocation block
+    relocpos%!0 = FNblock_paddr(freepagesbase%)
+    relocpos%!4 = vaddr% - pv_offset%
+    relocpos%!8 = fragsz%
+    relocpos% += 12: relocnr%+=1: relocoff%+=1
+    freepagesbase% += 1
+
+    offset% += fragsz%
+    vaddr% += fragsz%
+    filesz% -= fragsz%
+    memsz% -= fragsz%
+    PROCtwirl
+  ENDWHILE
+ 
+  IF memsz% > 0 PRINT "+";memsz%;
+  WHILE memsz% > 0
+    REM freepagesbase% is first page index in freepages list
+    fragsz% = nbpp%
+    IF fragsz% > memsz% THEN fragsz% = memsz%
+
+    PROCbzero(FNblock_vaddr(freepagesbase%), fragsz%)
+
+    REM create a relocation block
+    relocpos%!0 = FNblock_paddr(freepagesbase%)
+    relocpos%!4 = vaddr% - pv_offset%
+    relocpos%!8 = fragsz%
+    relocpos% += 12: relocnr%+=1: relocoff%+=1
+    freepagesbase% += 1
+ 
+    offset% += fragsz%
+    vaddr% += fragsz%
+    filesz% -= fragsz%
+    memsz% -= fragsz%
+    PROCtwirl
+  ENDWHILE
+ENDPROC
+
+
+REM *****************************************************************************
+REM * A.OUT LOADER                                                              *
+REM *****************************************************************************
+
+DEF PROCload_kernel_aout(file%)
+  LOCAL hdr%
+  DIM hdr% 32
+  ssym% = 0 : esym% = 0
+  SYS "OS_GBPB", 3, file%, hdr%, 32, 0
+  bemagic% = (hdr%?0 << 24) OR (hdr%?1 <<16) OR (hdr%?2 << 8) OR hdr%?3
+  CASE bemagic% AND &0000FFFF OF
+    WHEN &0107
+      PRINT "(OMAGIC) ";
+    WHEN &0108
+      PRINT "(NMAGIC) ";
+    WHEN &010B
+      PRINT "(ZMAGIC) ";
+    WHEN &00CC
+      PRINT "(QMAGIC) ";
+  ENDCASE
+  REM XXX: Assume ZMAGIC
+
+  REM foooff% is byte offset in file.  foobasepage% is base page in RAM.
+  txtoff% = 0 : REM in arm26 its 4096
+  txtbasepage% = first_mapped_DRAM_index% : REM == first virt address in DRAM0a
+  start_kernelpage% = txtbasepage%
+
+  txtsize% = hdr%!4
+  IF txtsize% MOD nbpp% <> 0 THEN
+    ERROR EXT 1, "Text size not a multiple of page size"
+  ENDIF
+  txtpages% = txtsize% DIV nbpp%
+  dataoff% = txtoff% + txtsize%
+  databasepage% = txtbasepage% + txtpages%
+  database% = databasepage% * nbpp%
+  datasize% = hdr%!8
+  IF datasize% MOD nbpp% <> 0 THEN
+    ERROR EXT 1, "Data size not a multiple of page size"
+  ENDIF
+  datapages% = datasize% DIV nbpp%
+  bssbasepage% = databasepage% + datapages%
+  bssbase% = bssbasepage% * nbpp%
+  bsspages% = FNroundup(hdr%!12, nbpp%) DIV nbpp%
+  bsssize% = bsspages% * nbpp%
+  IF bsssize% MOD nbpp% <> 0 THEN
+    ERROR EXT 1, "Bss size not a multiple of page size"
+  ENDIF
+ 
+  entry% = hdr%!20
+  IF debug% THEN PRINT "Entry point at ";~entry%
+
+  REM kernelpages without syms table is :
+  kernelpages% = txtpages% + datapages% + bsspages% : REM
+
+  REM  symbasepage% = bssbasepage% + bsspages%-1 : REM REAL size... not in pages
+  symoff% = dataoff% + datasize%
+  symsize% = hdr%!16
+  stringtablesize% = EXT#file% - (txtsize% + datasize% + symsize%)
+  IF INSTR(args$, "symtab")>0 THEN
+    kernelpages% += FNroundup(stringtablesize% + symsize% + 4, nbpp%) DIV nbpp%
+  ELSE
+    symsize% = 0
+    stringtablesize% = 0
+  ENDIF
+  REM reserve 1 extra word for the length
+  symbolsize% = symsize% + stringtablesize% + 4
+  symbolpages% = FNroundup(symbolsize%, nbpp%) DIV nbpp%
+  IF debug% PRINT '"Stringtablesize = 0x";~stringtablesize%;"  symsize = 0x";~symsize%
+ 
+  PRINT '"A total of about ";kernelpages%;" pages need to be relocated"
+  IF (kernelpages%+40)*nbpp% > memory_image_size% THEN
+    REM 40 is an estimation ...
+    ERROR EXT 1, "Not enough memory free... please increase WimpSlot in the configuration file"
+  ENDIF
+
+  PRINT ;txtsize%;
+  new_hdr% = FNblock_vaddr(txtbasepage%)
+  FOR pg% = 0 TO txtpages%-1
+    SYS "OS_GBPB", 3, file%, FNblock_vaddr(txtbasepage%+pg%), nbpp%, txtoff% + pg%*nbpp%
+    relocpos%!0 = FNblock_paddr(txtbasepage%+pg%)
+    relocpos%!4 = kernel_phys_start% + nbpp%*relocoff%: relocnr%+=1: relocoff%+=1
+    relocpos%!8 = nbpp%
+    relocpos% += 12
+    PROCtwirl
+  NEXT
+
+  PRINT "+";datasize%;
+  FOR pg% = 0 TO datapages%-1
+    SYS "OS_GBPB", 3, file%, FNblock_vaddr(databasepage%+pg%), nbpp%, dataoff% + pg%*nbpp%
+    relocpos%!0 = FNblock_paddr(databasepage%+pg%)
+    relocpos%!4 = kernel_phys_start% + nbpp%*relocoff%: relocnr%+=1: relocoff%+=1
+    relocpos%!8 = nbpp%
+    relocpos% += 12
+    PROCtwirl
+  NEXT
+  REM PRINT;"(";off%;" gaps)";
+
+  PRINT "+";bsssize%;
+  FOR pg% = 0 TO bsspages%-1 : REM overshoot is safe
+    PROCbzero(FNblock_vaddr(bssbasepage%+pg%), nbpp%)
+    relocpos%!0 = FNblock_paddr(bssbasepage%+pg%)
+    relocpos%!4 = kernel_phys_start% + nbpp%*relocoff%: relocnr%+=1: relocoff%+=1
+    relocpos%!8 = nbpp%
+    relocpos% += 12
+    PROCtwirl
+  NEXT
+  REM PRINT;"(";off%;" gaps)";
+
+  freepagesbase% = bssbasepage% + bsspages%
+
+  IF INSTR(args$, "symtab")>0 THEN
+    symbasepage% = freepagesbase%
+
+    REM put a page for the value of symsize just after bss%
+    symDaddr% = !(relocpos%-8) + ((hdr%!12) AND (nbpp%-1))
+ 
+    symstartpagaddrV% = FNblock_vaddr(symbasepage%)
+    PROCbzero(symstartpagaddrV%, nbpp%)
+    !symstartpagaddrV% = symsize%
+
+    relocpos%!0 = FNblock_paddr(symbasepage%)
+    relocpos%!4 = symDaddr%  : relocnr%+=1: relocoff%+=1
+    relocpos%!8 = nbpp% : REM XXX
+    relocpos% += 12
+    symDaddr% += 4
+ 
+    REM update the symbasepage !! ... we used one!
+    symbasepage%+=1
+ 
+    PRINT "+";symbolsize%;
+    REM now fill in rest of the file
+    FOR pg% = 0 TO symbolpages%-1 : REM => due to first page to hold offset
+      SYS "OS_GBPB", 3, file%, FNblock_vaddr(symbasepage%+pg%), nbpp%, symoff% + pg%*nbpp%
+      relocpos%!0 = FNblock_paddr(symbasepage%+pg%)
+      relocpos%!4 = symDaddr% + nbpp%*pg%: relocnr%+=1: relocoff%+=1
+      relocpos%!8 = nbpp%
+      relocpos% += 12
+      PROCtwirl
+    NEXT
+ 
+    freepagesbase% = symbasepage% + symbolpages% + 4 : REM XXX
+  ENDIF
+ 
+  REM update new header structure
+  new_hdr%!16 = symsize%
+ 
+  REM mark highest virtual address free in NetBSD's mapping
+  vfreebase% = KERNEL_BASE + nbpp%*relocoff%
+
+  REM `patch' symbol table stuff
+  ssym% = 0
+  esym% = 0
+ 
+  PROCfinish_relocationtable
+ENDPROC
+
+
+REM *****************************************************************************
+REM * Common loader and relocate stuff                                          *
+REM *****************************************************************************
+
+DEF PROCfinish_relocationtable
+  REM align vfreebase% to a page
+  vfreebase% = FNroundup(vfreebase%, nbpp%)
+  relocoff% = (vfreebase% - KERNEL_BASE) DIV nbpp%
+
+  IF vfreebase% > (nbpp%*relocoff% + KERNEL_BASE) THEN
+    PRINT ''"WHOOAH!' : 0x", ~vfreebase%;" > 0x";~(nbpp%*relocoff%+KERNEL_BASE)
+    freepagesbase% += 16
+    kernelpages%   += 16
+    relocoff%      += 16
+  ENDIF
+
+  IF INSTR(args$, "oldkernel")>0 THEN
+    REM place the arguments in a block ... for the old bootloader's sake
+    argsbasepage% = freepagesbase%
+    argspages% = 1
+    argvirtualbase% = nbpp%*relocoff% + KERNEL_BASE
+    relocpos%!0 = FNblock_paddr(argsbasepage%)
+    relocpos%!4 = kernel_phys_start% + nbpp%*relocoff%: relocnr%+=1: relocoff%+=1
+    relocpos%!8 = nbpp%
+    relocpos% += 12
+    $(FNblock_vaddr(argsbasepage%)) = args$+CHR$0
+    freepagesbase% += argspages%
+    kernelpages%   += argspages%
+    IF debug% THEN PRINT "Args at 0x";~argvirtualbase%
+  ELSE
+    REM reserve some space for the MDF file
+    REM XXX not implemented yet XXX
+  ENDIF
+
+  REM I give it a 48k scratch space
+  scratchbasepage% = freepagesbase%
+  scratchpages% = 12
+  scratchvirtualbase% = nbpp%*relocoff% + KERNEL_BASE
+  freepagesbase% += scratchpages%
+  kernelpages%   += scratchpages%
+
+  REM Create one page for the initial vectors
+  initvectorbasepage% = freepagesbase%
+  initvectorpages%    = 1
+  relocpos%!0 = FNblock_paddr(initvectorbasepage%)
+  relocpos%!4 = top_physdram% - 1*1024*1024 : relocnr%+=1
+  relocpos%!8 = nbpp%
+  relocpos% += 12
+  freepagesbase% += initvectorpages%
+
+  P%=FNblock_vaddr(initvectorbasepage%)
+  FOR vec=0 TO &20 STEP 4
+    [OPT 2: MOVS PC, r14:]
+  NEXT
+ENDPROC
+
+
+DEF PROCadd_pagetables
+  REM DESTINATION MUST BE ON A 16kb boundary!!! (!!!!)
+  REM get 4 pages on the top of physical memory (top_physdram%) and copy PT's in it
+  addr% = top_physdram% - 4*nbpp%
+  IF (addr% AND (16*1024-1)) <> 0 ERROR EXT 0, "L1 pages not on 16Kb boundary"
+  FOR pg%=0 TO 3
+    PROCcopy(FNblock_vaddr(freepagesbase% + pg%), bootpagetables% + pg%*nbpp%, nbpp%)
+    relocpos%!0 = FNblock_paddr(freepagesbase%+pg%)
+    relocpos%!4 = addr%+pg%*nbpp%: relocnr%+=1
+    relocpos%!8 = nbpp%
+    relocpos% += 12
+  NEXT
+  L1pages_phys% = addr%
+  freepagesbase% = freepagesbase%+pg%
+ENDPROC
+
+
+DEF PROCcreate_initial_pagetables
+  LOCAL I%, addr%, kaddr%, mapped_screenmemory%
+  DIM bootpagetables% 16*1024
+  REM linear translation on the whole domain 00 in blocks of 1Mb
+  REM AP=%01, CB=%00 for easy initial setup, dom=0
+  FOR I%=0 TO 4*1024-1
+    bootpagetables%!(I%*4) = (I%<<20) + (0<<11)+(1<<10) + (1<<4) + (0<<3) + (0<<2) + (1<<1) + 0
+  NEXT
+
+  REM video memory is mapped 1:1 in the DRAM section or in VRAM section
+
+  REM map 1Mb from top of memory to bottom 1Mb of virt. memmap
+  addr% = (top_physdram%/1024/1024) -1
+  bootpagetables%!0 = (addr%<<20) + (0<<11)+(1<<10) + (1<<4) + (0<<3) + (0<<2) + (1<<1) + 0
+
+  REM map 16 Mb of DRAM0a (kernel space) to 0xf0000000
+  FOR I%=0 TO 15
+    addr% = (kernel_phys_start% >> 20) + I%
+    kaddr% = &F00 + I% : REM &F0000000 LSR #20 + I%
+    bootpagetables%!(kaddr%*4) = (addr%<<20) + (0<<11)+(1<<10) + (1<<4) + (0<<3) + (0<<2) + (1<<1) + 0
+  NEXT
+ENDPROC
+
+
+DEF PROCcreate_relocate_mechanism
+  REM relocate mechanism relies on a contigunous space of the relocator + tables
+  REM this isn't finished yet
+
+  relocatesize% = nbpp% + relocsize% : REM just ONE code page + relocation table
+  PRINT ;"+";relocatesize%;
+  relocatepages% = FNroundup(relocatesize%, nbpp%) DIV nbpp%
+  relocatebasepage% = freepagesbase%
+  pg%=0
+  WHILE pg%<relocatepages%
+    IF pg%>0 THEN
+      PROCcopy(FNblock_vaddr(relocatebasepage%+pg%), relocinstr%+(pg%-1)*nbpp%, nbpp%)
+    ENDIF
+    PROCtwirl
+
+    IF pg%<>relocatepages%-1 THEN
+      IF FNblock_paddr(relocatebasepage%+pg%+1)-FNblock_paddr(relocatebasepage%+pg%)<>nbpp% THEN
+        REM Help! non contigunous relocate area => try again
+        REM ERROR EXT 0, "Help! non contigunous relocate area"
+        PRINT ;"*";
+        relocatebasepage% = freepagesbase% + pg% : REM  try again from this page
+        pg%=-1 : REM will be auto incremented later ...
+      ENDIF
+    ENDIF
+    pg%+=1
+  ENDWHILE
+  PROCassemble_relocate_code(FNblock_vaddr(relocatebasepage%), FNblock_paddr(relocatebasepage%), entry%, L1pages_phys%)
+ENDPROC
+
+
+DEF PROCcreate_configuration
+  PRINT ;"+";nbpp%;
+  configurationbasepage% = freepagesbase%
+  configurationpages% = 1
+  freepagesbase% += configurationpages%
+
+  REM fatal(swix(OS_ReadSysInfo, IN(R0)|OUT(R3), 2, &bootconfig.machine_id));
+  SYS "OS_ReadSysInfo", 2 TO r0,r1,r2, machineId%
+
+  IF INSTR(args$, "oldkernel")>0 THEN
+    PROCold_configuration_structure
+  ELSE
+    PROCnew_configuration_structure
+  ENDIF
+ENDPROC
+
+
+DEF PROCnew_configuration_structure
+  FOR opt%=0 TO 2 STEP 2
+    P% = FNblock_vaddr(configurationbasepage%)
+    [OPT opt%
+    ; u_int magic
+        EQUD          &43112233 ; BOOTCONFIG_MAGIC
+    ; u_int bootconfig_version
+        EQUD          2
+
+    ; u_char machine_id[4]
+        EQUD          machineId%
+    ; char kernelname[80]
+        EQUS          LEFT$(kernelname$+CHR$0+STRING$(80, " "), 80)
+    ; char args[512]
+        EQUS          args$+CHR$0
+        ]: P% += 512 - LEN(args$+CHR$0): [ OPT opt%
+
+    ; u_int kernvirtualbase             /* not used now */
+        EQUD 0
+    ; u_int kernphysicalbase            /* not used now */
+        EQUD 0
+    ; u_int kernsize
+        EQUD          kernelpages% * nbpp%
+    ; u_int scratchvirtualbase
+        EQUD          scratchvirtualbase%
+    ; u_int scratchphysicalbase
+        EQUD          scratchvirtualbase%
+    ; u_int scratchsize
+        EQUD          scratchpages% * nbpp%
+
+    ; u_int ksym_start
+        EQUD ssym%
+    ; u_int ksym_end
+        EQUD esym%
+
+    ; u_int MDFvirtualbase
+        EQUD 0
+    ; u_int MDFphysicalbase
+        EQUD 0
+    ; u_int MDFsize
+        EQUD 0
+ 
+    ; u_int display_phys
+        EQUD          videomem_start%
+    ; u_int display_start
+        EQUD          videomem_start% ; screenstart (149)
+    ; u_int display_size
+        EQUD          display_size%   ; screensize  (150)
+    ; u_int width
+        EQUD          FNvdu_var(11)   ; acorn32 port needs 0..x-1
+    ; u_int heigth
+        EQUD          FNvdu_var(12)   ; acorn32 port needs 0..y-1
+    ; u_int log2_bpp
+        EQUD          FNvdu_var(9)    ; acorn32 port needs log(bitsperpixel)/log(2)
+    ; u_int framerate
+        EQUD          56 ; XXX why?
+ 
+    ; char reserved[512]
+    ]: P% += 512: [ OPT opt%
+ 
+    ; u_int pagesize
+        EQUD          nbpp%
+    ; u_int drampages
+        EQUD          totaldrampages%
+    ; u_int vrampages;
+        EQUD          totalvrampages%
+    ; u_int dramblocks
+        EQUD          dramblocks%
+    ; u_int vramblocks
+        EQUD          vramblocks%
+
+    ]
+    REM phys_mem dram[DRAM_BLOCKS]  <- 32
+    FOR I%=0 TO MAX_DRAMBANKS-1
+      [OPT opt%
+        ; address% : EQUD DRAM_addr%(I%)
+        ; length%  : EQUD DRAM_pages%(I%)
+        ; flags%   : EQUD 0
+      ]
+    NEXT
+    REM phys_mem vram[VRAM_BLOCKS]  <- 16
+    FOR I%=0 TO MAX_VRAMBANKS-1
+      [OPT opt%
+        ; address% : EQUD VRAM_addr%(I%)
+        ; length%  : EQUD VRAM_pages%(I%)
+        ; flags%   : EQUD 0
+      ]
+    NEXT
+  NEXT
+ENDPROC
+
+
+DEF PROCold_configuration_structure
+  FOR opt%=0 TO 2 STEP 2
+    P% = FNblock_vaddr(configurationbasepage%)
+    [OPT opt%
+    ;kernvirtualbase%
+        EQUD          0   ; not used
+    ;kernphysicalbase%
+        EQUD          0   ; not used
+    ;kernsize%
+        EQUD          kernelpages% * nbpp%
+    ;argvirtualbase
+        EQUD          argvirtualbase%
+    ;argphysicalbase
+        EQUD          FNblock_paddr(argsbasepage%)
+    ;argsize%
+        EQUD          nbpp%
+    ;scratchvirtualbase%
+        EQUD          scratchvirtualbase%
+    ;scratchphysicalbase%
+        EQUD          scratchvirtualbase%
+    ;scratchsize%
+        EQUD          scratchpages% * nbpp%
+    ;display_start%
+        EQUD          videomem_start% ; screenstart (149)
+    ;display_size%
+        EQUD          display_size%   ; screensize  (150)
+    ;width%
+        EQUD          FNvdu_var(11)   ; arm32 port needs 0..x-1
+    ;height%
+        EQUD          FNvdu_var(12)   ; arm32 port needs 0..y-1
+    ;bitsperpixel
+        EQUD          FNvdu_var(9)    ; arm32 port needs log(bitsperpixel)/log(2)
+    ]
+    REM for compatibility for now just 4 DRAM and 1 VRAM
+    FOR I%=0 TO 3
+      [OPT opt%
+        ;address% : EQUD DRAM_addr%(I%)
+        ;length%  : EQUD DRAM_pages%(I%)
+      ]
+    NEXT
+    REM current config structure only wants 1 VRAM entry !
+    FOR I%=0 TO 0
+      [OPT opt%
+        ;address% : EQUD VRAM_addr%(I%)
+        ;length%  : EQUD VRAM_pages%(I%)
+      ]
+    NEXT
+    [OPT opt%
+    ;c_dramblocks%
+        EQUD          dramblocks%
+    ;c_vramblocks%
+        EQUD          vramblocks%
+    ;pagesize%
+        EQUD          nbpp%
+    ;drampages%
+        EQUD          totaldrampages%
+    ;vrampages%
+        EQUD          totalvrampages%
+    ;kernelname%
+        EQUS          LEFT$(kernelname$+CHR$0+STRING$(80, " "), 80)
+    ;framerate%
+        EQUD          56 ; XXXXX
+    ;machine_id%
+        EQUD          machineId%
+    ;magic%
+        EQUD          &43112233 ; BOOTCONFIG_MAGIC
+    ;display_phys%
+        EQUD          videomem_start%
+    ]
+  NEXT opt%
+ENDPROC
+
+
+REM XXXX a bit messy still
+DEF PROCassemble_relocate_code(virtaddress%, physaddress%, entry%, L1pages_phys%)
+  FOR opt%=0 TO 2 STEP 2
+    P%=virtaddress%
+    [OPT opt%
+      ; entry conditions :
+      ;   - on RiscOS page tables in usr26 mode on virt address ....
+      ;   - R0  pointer to configuration structure
+      ;   - R1  pointer to physical restart point
+      ;   - R2  pointer to physical relocation table
+      ;   - R3  pointer to physical new L1 page address
+      ;   - R4  new virt adres of kernel entry%
+      .relocate_entry%
+        ; Enter sup26 mode
+        SWI "OS_EnterOS"
+ 
+        ; move args up in register bank
+        STMFD r13!, {r0-r4}
+        LDMFD r13!, {r8-r12}
+
+        ; r8  = config structure address
+        ; r9  = physical restart point address
+        ; r10 = physical relocation table address
+        ; r11 = physical address of new L1page
+        ; r12 = kernel entry point in new virt. map
+ 
+        ; go to sup32 mode with IRQ + FIQ disabled
+        EQUD %11100001000011110000000000000000 ; MRS R0, CPSR
+        BIC r0, r0, #&1F                       ; clear proc. mode
+        ORR r0, r0, #(1<<7) + (1<<6)           ; set FIQ + IRQ disable
+        ORR r0, r0, #%10011                    ; superv. 32 bit
+        EQUD %11100001001010011111000000000000 ; MSR CPSR, r0
+        MOV r0, r0
+        MOV r0, r0                             ; nops ... nessisary?
+
+        ; flush data cache
+        ; just read a 64kb app space in the cache
+        MOV r0, #&8000
+        ADD r1, r0, r0
+      .loop_flush1
+        LDR r2, [r0], #4
+        SUBS r1, r1, #4
+        BNE loop_flush1
+
+        ; determine processor type ... nessisary for correct copro instr .. store in r13
+        EQUD %11101110000100000000111100010000 ; MRC cp15, 0, r0, c0, c0, 0 ; read CPU Id in r0
+        MOV   r13, r0                          ; store in r13
+
+        ; determine if its a StrongARM
+        MOV   r14, #1                          ; r14 flags if its a StrongARM ... assume one
+ 
+        ; detecting an ARM6 needs a special mask
+        MOV   r0,     #&FF000000               ; get processor discr. mask in r0
+        ADD   r0, r0, #&00000F00               ;
+
+        MOV   r1,     #&41000000               ; check for 0x41xxx6xx => ARM6
+        ADD   r1, r1, #&00000600
+        AND   r2, r13, r0                      ; mask with discr. mask
+        CMP   r2, r1                           ; is it a ARM6 ?
+        MOVEQ r14, #0                          ; ifso ... then its a v3
+ 
+        ; newer ARMs need a different mask
+        MOV   r0,     #&FF000000               ; get processor discr. mask in r0
+        ADD   r0, r0, #&0000F000               ;
+
+        MOV   r1,     #&41000000               ; check for 0x41xx7xxx => ARM7
+        ADD   r1, r1, #&00007000
+        AND   r2, r13, r0                      ; mask with discr. mask
+        CMP   r2, r1                           ; is it a ARM7 ?
+        MOVEQ r14, #0                          ; ifso ... then its a v3
+ 
+;        MOV   r1,     #&44000000               ; check for 0x44xxaxxx => Strong ARM
+;        ADD   r1, r1, #&0000a000
+;        AND   r2, r13, r0                      ; mask with discr. mask
+;        CMP   r2, r1                           ; is it a StrongARM ?
+ 
+        ; switch off MMU, IDcache and WB and branch to physical code !!
+        CMP r14, #0
+        EQUD %00011110000100010000111100010000 ; MRCNE cp15, 0, r0, c1, c0, 0 ; read control register
+        BICNE r0, r0, #&3F                     ; clear only known bits please !
+        MOVEQ r0, #0                           ; ARM6/7 only have these
+        ORR r0, r0, #%0001110000
+        ;             RSB1DPWCAM
+        MOV r13, r0                            ; save this value in r13
+        MOV r1, #0
+        CMP r14, #0
+        EQUD %11101110000000010000111100010000 ; MCR cp15, 0, r0, c1, c0, 0 ; write control register
+        EQUD %00011110000001110001111100010101 ; MCRNE cp15, 0, r1, c7, c5, 0 ; write 0 in v4 MMU disable
+        MOV pc, r9                             ; call rest of code in physical mem ... not flat
+
+      .physical_start_address%
+        ; should now be running in physical space
+        ; this relocate code can be heavyly optimised ... but it is used only once ... and is fast enough
+        ; relocate kernel (physical to physical) + debug in screenmemory
+        MOV  r5, r10                           ; load PC relative r5 = startreloc table
+        LDR  r6, [r5], #4                      ; r4 = number of relocated pages
+      .loop_relocate_pages%
+        LDR  r2, [r5], #4                      ; r2 = from address
+        LDR  r3, [r5], #4                      ; r3 = to address
+        LDR  r7, [r5], #4                      ; r6 = number of bytes to travel
+        MOV  r1, #0                            ; r1 = offset in page
+      .loop_one_page%
+        LDRB r0, [r2, r1]
+        STRB r0, [r3, r1]
+        ADD  r1, r1, #1
+        CMP  r1, r7                            ; all bytes copied ?
+        BNE loop_one_page%
+        SUBS r6, r6, #1
+        BNE loop_relocate_pages%
+
+        ; switch over to the new L1 pages
+
+        ; disable clockswitching for SA110  (WHY?)
+        MOV r0,  #0                            ; write 0
+        CMP r14, #0                            ; check v4 .. or SA110 specific ?
+        EQUD %00011110000011110000111101010010 ; MCRNE cp15, 0, r0, c15, c2, 2 ; from Linux loader
+
+        ; flush ID cache
+        MOV r0,  #0
+        CMP r14, #0
+        EQUD %00001110000001110000111100010000 ; MCREQ cp15, 0, r0, c7, c0, 0 ; flush v3 ID cache
+        EQUD %00011110000001110000111100010111 ; MCRNE cp15, 0, r0, c7, c7, 0 ; flush v4 ID cache
+
+        ; drain WB (v4)
+        MOV r0,  #0
+        CMP r14, #0
+        EQUD %00011110000001110000111110011010 ; MCRNE cp15, 0, r0, c7, c10, 4; drain WB v4 from Linux loader
+
+        ; flush TLB
+        EQUD %11101110000001010000111100010000 ; MCR cp15, 0, r0, c5, c0, 0 ; flush v3 TLB
+
+        ; set new TLB address
+        MOV r0, r11
+        EQUD %11101110000000100000111100010000 ; MCR cp15, 0, r0, c2, c0, 0 ; write TLB base
+ 
+        ; switch on MMU, IDcache and WB and keep on running (flat *translated*)
+        ; in r13 last written value
+        ORR r0, r13, #%0001111101
+        ;              RSB1DPWCAM
+        ORR r0, r0,  #%1000000000
+        CMP r14, #0
+        EQUD %11101110000000010000111100010000 ; MCR cp15, 0, r0, c1, c0, 0 ; write control register
+        MOV r0, r0                             ; flat
+        MOV r0, r0                             ; flat
+        ; not flat anymore ... but it doesnt matter
+    ]
+    IF extradebug% THEN
+      [OPT opt%
+        MOV r6, #videomem_start%
+        MOV r7, #videomem_pages% * nbpp%
+        MOV r5, #KERNEL_BASE
+        .loop_testing%
+          LDR r0, [r5], #4
+          STR r0, [r6], #4
+          SUBS r7, r7, #4
+        BNE loop_testing%
+       ]
+     ENDIF
+     [OPT opt%
+        ; call kernel in new virtual space ... start()
+
+        MOV  r0, r8
+        MOV  pc, r12
+    ]
+  NEXT
+ENDPROC
+
+
+DEF FNblock_vaddr(pagenr%)
+=!(memoryblock% + pagenr%*12 + 4)
+
+
+DEF FNblock_paddr(pagenr%)
+=!(memoryblock% + pagenr%*12 + 8)
+
+
+DEF PROCget_memory_map
+  PRINT '"Getting actual memory mapping ";
+  FOR pg%=0 TO totalpages%-1
+    pos% = memoryblock% + 12*pg%
+    pos%!0  = 0
+    pos%!4  = (firstpage% + pg%) * nbpp%
+    pos%!8  = 0
+    REM force paging in this page in RO4
+    IF (pg% MOD 5)=0 THEN PROCtwirl
+    !(pos%!4) = 0: REM PROCbzero(pos%!4, nbpp%)
+  NEXT
+  PRINT ;" "
+ 
+  os_memory_GIVEN_LOG_ADDR   = &200
+  os_memory_RETURN_PAGE_NO   = &800
+  os_memory_RETURN_PHYS_ADDR = &2000
+  SYS "OS_Memory", os_memory_GIVEN_LOG_ADDR+os_memory_RETURN_PAGE_NO+os_memory_RETURN_PHYS_ADDR, memoryblock%, totalpages%
+ 
+  PROCsort_memory_map(memoryblock%, totalpages%)
+ 
+  REM Get first DRAM index
+  PRINT '"Found memory blocks ";
+  first_mapped_DRAM_index%=-1
+  pg% = 0
+  WHILE pg%<totalpages%
+    addr% = !(memoryblock% + pg%*12 + 8)
+    PRINT "[";"0x";~addr%;
+    num_seq_pag%=0
+    WHILE (!(memoryblock% + pg%*12 + 12 + 8) - addr%)=nbpp%
+      IF first_mapped_DRAM_index%<0 AND (addr%>=DRAM_addr%(0)) THEN first_mapped_DRAM_index% = pg%
+      num_seq_pag%+=1
+      pg%+=1
+      addr% = !(memoryblock% + pg%*12 + 8)
+    ENDWHILE
+    PRINT;"-0x";~(!(memoryblock% + pg%*12 + 8) + nbpp%-1);"]";
+    PRINT ;"  ";
+    pg%+=1
+  ENDWHILE
+  PRINT'
+  IF extradebug% THEN PRINT '"First DRAM index found at index ";first_mapped_DRAM_index%;" DRAM_addr%(0)=0x";~DRAM_addr%(0)
+  IF first_mapped_DRAM_index%<0 THEN ERROR EXT 1, "No (S)DRAM mapped in this program (wierd) ... increase Wimpslot!"
+ENDPROC
+
+
+DEF PROCget_memory_configuration
+  REM Get memory distribution
+  PRINT "Getting memory configuration ";
+  DIM DRAM_addr%(MAX_DRAMBANKS), DRAM_pages%(MAX_DRAMBANKS)
+  DIM VRAM_addr%(MAX_VRAMBANKS), VRAM_pages%(MAX_VRAMBANKS)
+  DIM memorytable% memorytablesize%
+  SYS "OS_Memory", 7, memorytable% : REM read table
+  dramblocks% = 0: vramblocks% = 0: currentpages% = 0: currentadr% = 0
+  currentpage% = -1: loop%=0
+  WHILE loop% < memorytablesize%*2
+    page% = memorytable%!(loop% DIV 2)
+    IF loop% MOD 2 THEN page% = page% >> 4
+    page% = page% AND &07
+    IF page% <> currentpage% THEN
+      IF currentpage% = 1 THEN
+        DRAM_addr%(dramblocks%) = currentaddr% * nbpp%
+        DRAM_pages%(dramblocks%) = currentpages%
+        dramblocks% +=1
+      ENDIF
+      IF currentpage%=2 THEN
+        VRAM_addr%(vramblocks%) = currentaddr% * nbpp%
+        VRAM_pages%(vramblocks%) = currentpages%
+        vramblocks% +=1
+       ENDIF
+      currentpage% = page%
+      currentaddr% = loop%
+      currentpages% = 0
+    ENDIF
+    currentpages% += 64
+    loop% += 64
+    PROCtwirl
+  ENDWHILE
+ 
+  IF emulateDRAMsize% > 0 THEN
+    REM emulate HACK
+    DRAM0% = DRAM_addr%(0)
+    DRAM_addr%() = 0
+    DRAM_pages%() = 0
+    DRAM_addr%(0) = DRAM0%
+    DRAM_pages%(0) = (emulateDRAMsize%*1024*1024)/nbpp%
+    dramblocks% = 1
+    REM END HACK
+  ENDIF
+
+  REM find top of DRAM pages
+  I%=8: WHILE (I%>=0) AND DRAM_addr%(I%)=0: I%-=1: ENDWHILE
+
+  IF I%>=0 THEN top_drambank% = I% ELSE ERROR EXT 0, "Reality check: No DRAM banks??"
+  top_physdram% = DRAM_addr%(top_drambank%) + DRAM_pages%(top_drambank%)*nbpp%
+
+  PRINT " "
+  PRINT'
+ 
+  REM Emulate VRAM by reporting different memory sizes
+  REM XXX assumption : no VRAM => screen is located in bottom DRAM; leave it there
+  IF (VRAM_pages%(0)=0) OR emulateVRAM% THEN
+    mapped_screenmemory% = 1024*1024 : REM Max allowed on RiscPC
+    videomem_start% = DRAM_addr%(0)
+    videomem_pages% = mapped_screenmemory% DIV nbpp%
+    display_size%   = FNvdu_var(150) AND NOT(nbpp%-1)
+    DRAM_addr%(0)  += videomem_pages% * nbpp%
+    DRAM_pages%(0) -= videomem_pages%
+  ELSE
+    mapped_screenmemory% = 0
+    videomem_start% = VRAM_addr%(0)
+    videomem_pages% = VRAM_pages%(0)
+    display_size%   = videomem_pages% * nbpp%
+  ENDIF
+ 
+  IF mapped_screenmemory%>0 THEN PRINT "Used 1st Mb of DRAM at 0x";RIGHT$("00000000"+STR$~videomem_start%,8);" for video memory"
+
+  totaldrampages% = 0
+  FOR I%=0 TO dramblocks%-1
+    totaldrampages% += DRAM_pages%(I%)
+    PRINT "Found ";
+    IF (DRAM_addr%(I%) >= SDRAM_ADDR_START%) PRINT ;"SDRAM"; ELSE PRINT ;" DRAM";
+    PRINT " (";I%;") at 0x";RIGHT$("00000000"+STR$~DRAM_addr%(I%),8);" for ";,DRAM_pages%(I%)*nbpp%/1024;" k"
+  NEXT
+
+  totalvrampages% = 0
+  FOR I%=0 TO vramblocks%-1
+    totalvrampages% += VRAM_pages%(I%)
+    PRINT "Found  VRAM (";I%;") at 0x";RIGHT$("00000000"+STR$~VRAM_addr%(I%),8);" for ";,VRAM_pages%(I%)*nbpp%/1024;" k"
+  NEXT
+ 
+  kernel_phys_start% = DRAM_addr%(0)
+ 
+  REM Expirimental Kinetic support
+  IF INSTR(args$, "kinetic")>0 THEN
+    REM The Kinetic card has SDRAM on the processor module ... first fix is to only use this memory
+    REM for VRAM emulation and only pass it trough as buffer memory for the DRAM is the only one
+    REM wich DMA capabilities.
+ 
+    PRINT ''"Kinetic support asked ... ";
+ 
+    REM find SDRAM start... DRAM is under 512 Mb, SDRAM is above it
+    first_SDRAM% = -1
+    FOR I%=0 TO MAX_RAMBANKS
+      IF (DRAM_addr%(I%) >= SDRAM_ADDR_START%) AND (first_SDRAM%<0) THEN first_SDRAM% = I%
+    NEXT
+    IF first_SDRAM% >= 0 THEN
+      PRINT ;"granted"
+      REM put kernel pointer to the first SDRAM module and update DRAM reporting (yeah ...more clear than fast)
+      FOR I%=0 TO first_SDRAM%-1
+        PRINT "Moving DRAM at 0x";RIGHT$("00000000"+STR$~DRAM_addr%(I%),8);" for ";,DRAM_pages%(I%)*nbpp%/1024;" k"
+        REM save this block
+        DRAM_addr% = DRAM_addr%(I%): DRAM_pages% = DRAM_pages%(I%)
+        REM move everything down
+        FOR J%=I% TO MAX_RAMBANKS-1
+          DRAM_addr%(J%) = DRAM_addr%(J%+1): DRAM_pages%(J%) = DRAM_pages%(J%+1)
+        NEXT
+        DRAM_addr%(MAX_RAMBANKS) = 0: DRAM_pages%(MAX_RAMBANKS) = 0
+        REM fill in the moved block at the top of the structure
+        DRAM_addr%(dramblocks%-1) = DRAM_addr%: DRAM_pages%(dramblocks%-1) = DRAM_pages%
+      NEXT
+      REM XXX kernel is loaded per definition in dram[0]
+      first_SDRAM% = 0
+      kernel_phys_start% = DRAM_addr%(first_SDRAM%)
+    ELSE
+      PRINT ;"ignored; no SDRAM found"
+    ENDIF
+    PRINT
+  ENDIF
+ENDPROC
+
+
+DEF PROCsort_memory_map(memoryblock%, totalpages%)
+  LOCAL out%, in%, outp%, inp%
+
+  DIM code% 1024
+  FOR opt%=0 TO 2 STEP 2
+    P%=code%
+    [OPT opt%
+     .sortit%
+          STMFD r13!, {r0-r12}
+          ; R0  = A% = memory block%
+          ; R1  = B% = totalpages%
+          ; r2  = out%
+          ; r3  = inp%
+          ; R12 = limit r3
+          SUB r2, r1, #2
+     .loop_outer%
+          MOV r3, r0
+          MOV r4, #12
+          MLA r12, r2, r4, r0
+     .loop_inner%
+          LDR r4, [r3, #8]
+          LDR r5, [r3, #20]
+          CMP r4, r5
+          BLT not_bigger%
+            LDMIA r3, {r6, r7, r8}
+            ADD r4, r3, #12
+            LDMIA r4, {r9, r10, r11}
+            STMIA r3, {r9, r10, r11}
+            STMIA r4, {r6, r7, r8}
+     .not_bigger%
+          ADD r3, r3, #12
+          CMP r3, r12
+          BLE loop_inner%
+          SUBS r2, r2, #1
+          BPL loop_outer%
+          LDMFD r13!, {r0-r12}
+          MOV pc, r14
+  ]
+  NEXT
+
+  A% = memoryblock%
+  B% = totalpages%
+  CALL sortit%
+
+ENDPROC
+
+
+DEF PROCcenter(line$)
+  PRINT STRING$((width%-LEN(line$))/2, " ");line$
+ENDPROC
+
+
+DEF PROCbzero(addr%, len%)
+  LOCAL a%
+  FOR a% = 0 TO len%-4 STEP 4
+    addr%!a% = 0
+  NEXT
+ENDPROC
+
+
+DEF PROCcopy(dest%, src%, len%)
+  LOCAL a%
+  FOR a% = 0 TO len%-4 STEP 4
+    dest%!a% = src%!a%
+  NEXT
+ENDPROC
+
+
+DEF PROCtwirl
+  PRINT MID$("|/-\", twirl%+1, 1)+CHR$(8);
+  twirl% += 1
+  twirl% = twirl% MOD 4
+ENDPROC
+
+
+DEF FNvdu_var(var%)
+  LOCAL b%
+  DIM b% 7
+  b%!0 = var%
+  b%!4 = -1
+  SYS "OS_ReadVduVariables", b%, b%
+= b%!0
+
+
+DEF FNroundup(val%, size%)
+=val% + (size% - 1) AND NOT (size% - 1)
+
+
+DEF FNtolower(name$)
+  LOCAL A$, Ch$, i%
+  FOR i%=1 TO LEN(name$)
+    Ch$ = LEFT$(name$,1)
+    IF Ch$>="A" AND Ch$<="Z" THEN
+      A$ += CHR$(ASC(Ch$)+ASC("a")-ASC("A"))
+    ELSE
+      A$ += Ch$
+    ENDIF
+    name$ = MID$(name$, 2)
+  NEXT
+= A$
