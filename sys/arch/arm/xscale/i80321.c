@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321.c,v 1.9 2003/01/01 00:45:00 thorpej Exp $	*/
+/*	$NetBSD: i80321.c,v 1.10 2003/01/23 03:53:16 briggs Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -111,48 +111,48 @@ i80321_attach(struct i80321_softc *sc)
 	/*
 	 * Program the Inbound windows.
 	 */
+	bus_space_write_4(sc->sc_st, sc->sc_atu_sh, ATU_IALR0,
+	    (0xffffffff - (sc->sc_iwin[0].iwin_size - 1)) & 0xffffffc0);
+	bus_space_write_4(sc->sc_st, sc->sc_atu_sh, ATU_IATVR0,
+	    sc->sc_iwin[0].iwin_xlate);
 	if (sc->sc_is_host) {
 		bus_space_write_4(sc->sc_st, sc->sc_atu_sh,
 		    PCI_MAPREG_START, sc->sc_iwin[0].iwin_base_lo);
 		bus_space_write_4(sc->sc_st, sc->sc_atu_sh,
 		    PCI_MAPREG_START + 0x04, sc->sc_iwin[0].iwin_base_hi);
 	}
-	bus_space_write_4(sc->sc_st, sc->sc_atu_sh, ATU_IALR0,
-	    (0xffffffff - (sc->sc_iwin[0].iwin_size - 1)) & 0xffffffc0);
-	bus_space_write_4(sc->sc_st, sc->sc_atu_sh, ATU_IATVR0,
-	    sc->sc_iwin[0].iwin_xlate);
 
+	bus_space_write_4(sc->sc_st, sc->sc_atu_sh, ATU_IALR1,
+	    (0xffffffff - (sc->sc_iwin[1].iwin_size - 1)) & 0xffffffc0);
+	/* no xlate for window 1 */
 	if (sc->sc_is_host) {
 		bus_space_write_4(sc->sc_st, sc->sc_atu_sh,
 		    PCI_MAPREG_START + 0x08, sc->sc_iwin[1].iwin_base_lo);
 		bus_space_write_4(sc->sc_st, sc->sc_atu_sh,
 		    PCI_MAPREG_START + 0x0c, sc->sc_iwin[1].iwin_base_hi);
 	}
-	bus_space_write_4(sc->sc_st, sc->sc_atu_sh, ATU_IALR1,
-	    (0xffffffff - (sc->sc_iwin[1].iwin_size - 1)) & 0xffffffc0);
-	/* no xlate for window 1 */
 
+	bus_space_write_4(sc->sc_st, sc->sc_atu_sh, ATU_IALR2,
+	    (0xffffffff - (sc->sc_iwin[2].iwin_size - 1)) & 0xffffffc0);
+	bus_space_write_4(sc->sc_st, sc->sc_atu_sh, ATU_IATVR2,
+	    sc->sc_iwin[2].iwin_xlate);
 	if (sc->sc_is_host) {
 		bus_space_write_4(sc->sc_st, sc->sc_atu_sh,
 		    PCI_MAPREG_START + 0x10, sc->sc_iwin[2].iwin_base_lo);
 		bus_space_write_4(sc->sc_st, sc->sc_atu_sh,
 		    PCI_MAPREG_START + 0x14, sc->sc_iwin[2].iwin_base_hi);
 	}
-	bus_space_write_4(sc->sc_st, sc->sc_atu_sh, ATU_IALR2,
-	    (0xffffffff - (sc->sc_iwin[2].iwin_size - 1)) & 0xffffffc0);
-	bus_space_write_4(sc->sc_st, sc->sc_atu_sh, ATU_IATVR2,
-	    sc->sc_iwin[2].iwin_xlate);
 
+	bus_space_write_4(sc->sc_st, sc->sc_atu_sh, ATU_IALR3,
+	    (0xffffffff - (sc->sc_iwin[3].iwin_size - 1)) & 0xffffffc0);
+	bus_space_write_4(sc->sc_st, sc->sc_atu_sh, ATU_IATVR3,
+	    sc->sc_iwin[3].iwin_xlate);
 	if (sc->sc_is_host) {
 		bus_space_write_4(sc->sc_st, sc->sc_atu_sh,
 		    ATU_IABAR3, sc->sc_iwin[3].iwin_base_lo);
 		bus_space_write_4(sc->sc_st, sc->sc_atu_sh,
 		    ATU_IAUBAR3, sc->sc_iwin[3].iwin_base_hi);
 	}
-	bus_space_write_4(sc->sc_st, sc->sc_atu_sh, ATU_IALR3,
-	    (0xffffffff - (sc->sc_iwin[3].iwin_size - 1)) & 0xffffffc0);
-	bus_space_write_4(sc->sc_st, sc->sc_atu_sh, ATU_IATVR3,
-	    sc->sc_iwin[3].iwin_xlate);
 
 	/*
 	 * Mask (disable) the ATU interrupt sources.
