@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.2 1996/02/22 23:03:44 mark Exp $	*/
+/*	$NetBSD: wd.c,v 1.3 1996/03/06 23:31:05 mark Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -255,8 +255,8 @@ wdcattach(parent, self, aux)
   	wdc->sc_ih.ih_func = wdcintr;
    	wdc->sc_ih.ih_arg = wdc;
    	wdc->sc_ih.ih_level = IPL_BIO;
-	if (irq_claim(IRQ_HD, &wdc->sc_ih) == -1)
-		panic("Cannot installed HD IRQ handler\n");
+	if (irq_claim(mb->mb_irq, &wdc->sc_ih))
+		panic("Cannot claim IRQ %d for wdc%d\n", mb->mb_irq, parent->dv_unit);
 
 	for (wa.wa_drive = 0; wa.wa_drive < 2; wa.wa_drive++)
 		(void)config_found(self, (void *)&wa, wdprint);
