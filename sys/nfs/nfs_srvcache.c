@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_srvcache.c,v 1.23 2003/05/21 13:50:54 yamt Exp $	*/
+/*	$NetBSD: nfs_srvcache.c,v 1.24 2003/05/21 13:53:18 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_srvcache.c,v 1.23 2003/05/21 13:50:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_srvcache.c,v 1.24 2003/05/21 13:53:18 yamt Exp $");
 
 #include "opt_iso.h"
 
@@ -185,8 +185,9 @@ nfsrv_getcache(nd, slp, repp)
 		return (RC_DOIT);
 loop:
 	LIST_FOREACH(rp, NFSRCHASH(nd->nd_retxid), rc_hash) {
-	    if (nd->nd_retxid == rp->rc_xid && nd->nd_procnum == rp->rc_proc &&
-		netaddr_match(NETFAMILY(rp), &rp->rc_haddr, nd->nd_nam)) {
+		if (nd->nd_retxid == rp->rc_xid &&
+		    nd->nd_procnum == rp->rc_proc &&
+		    netaddr_match(NETFAMILY(rp), &rp->rc_haddr, nd->nd_nam)) {
 			if ((rp->rc_flag & RC_LOCKED) != 0) {
 				rp->rc_flag |= RC_WANTED;
 				(void) tsleep((caddr_t)rp, PZERO-1, "nfsrc", 0);
@@ -289,8 +290,9 @@ nfsrv_updatecache(nd, repvalid, repmbuf)
 		return;
 loop:
 	LIST_FOREACH(rp, NFSRCHASH(nd->nd_retxid), rc_hash) {
-	    if (nd->nd_retxid == rp->rc_xid && nd->nd_procnum == rp->rc_proc &&
-		netaddr_match(NETFAMILY(rp), &rp->rc_haddr, nd->nd_nam)) {
+		if (nd->nd_retxid == rp->rc_xid &&
+		    nd->nd_procnum == rp->rc_proc &&
+		    netaddr_match(NETFAMILY(rp), &rp->rc_haddr, nd->nd_nam)) {
 			if ((rp->rc_flag & RC_LOCKED) != 0) {
 				rp->rc_flag |= RC_WANTED;
 				(void) tsleep((caddr_t)rp, PZERO-1, "nfsrc", 0);
