@@ -1,4 +1,4 @@
-/*	$NetBSD: locore2.c,v 1.9 1997/02/11 00:58:32 gwr Exp $	*/
+/*	$NetBSD: locore2.c,v 1.10 1997/02/12 16:04:33 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@ int mmutype = -1;	/* MMU_68030 */
 /*
  * Now our own stuff.
  */
-int boothowto = RB_KDB; 	/* XXX - For now... */
+int boothowto = RB_SINGLE | RB_KDB; 	/* XXX - For now... */
 int cold = 1;
 
 unsigned char cpu_machine_id = 0;
