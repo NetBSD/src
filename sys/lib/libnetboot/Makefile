@@ -1,8 +1,10 @@
-#	$Id: Makefile,v 1.5 1993/10/13 21:22:27 cgd Exp $
+#	$Id: Makefile,v 1.6 1993/10/15 13:52:26 cgd Exp $
 
 LIB=	netboot
-SRCS=	arp.c bootinfo.c bootp.c exec.c globals.c in_cksum.c \
-	net.c netif.c nfsboot.c rpc.c util.c
+SRCS+=	arp.c bootinfo.c bootp.c exec.c globals.c in_cksum.c \
+	net.c netif.c rpc.c util.c
+
+SRCS+=	boot_nfs.c boot_tftp.c
 
 NOPROFILE=
 NOPIC=
