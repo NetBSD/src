@@ -1,4 +1,4 @@
-.\"	$NetBSD: restore.8,v 1.46 2004/10/23 00:41:08 snj Exp $
+.\"	$NetBSD: restore.8,v 1.47 2004/10/24 17:01:22 wiz Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -343,11 +343,6 @@ Extract the actual directory,
 rather than the files that it references.
 This prevents hierarchical restoration of complete subtrees
 from the dump.
-.It Fl m
-Extract by inode numbers rather than by file name.
-This is useful if only a few files are being extracted,
-and one wants to avoid regenerating the complete pathname
-to the file.
 .It Fl M Ar mfile
 Do not set the file flags on restore.
 Instead, append an
@@ -358,6 +353,13 @@ which can be used to restore file flags with a command such as
 .Bd -literal -offset indent
 sort mfile | mtree -e -i -u
 .Ed
+.It Fl m
+Extract by inode numbers rather than by file name.
+This is useful if only a few files are being extracted,
+and one wants to avoid regenerating the complete pathname
+to the file.
+.It Fl N
+Do not perform actual writing to disk.
 .It Fl s Ar fileno
 Read from the specified
 .Ar fileno
@@ -386,8 +388,6 @@ preceded by its file type.
 .It Fl y
 Do not ask the user whether to abort the restore in the event of an error.
 Always try to skip over the bad block(s) and continue.
-.It Fl N
-Do not perform actual writing to disk.
 .El
 .Sh ENVIRONMENT
 If the following environment variable exists it will be used by
