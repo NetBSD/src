@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_ftp_pxy.c,v 1.16.4.1 2000/08/31 14:49:49 veego Exp $	*/
+/*	$NetBSD: ip_ftp_pxy.c,v 1.16.4.2 2001/04/05 12:53:33 he Exp $	*/
 
 /*
  * Simple FTP transparent proxy for in-kernel use.  For use with the NAT
@@ -672,15 +672,18 @@ int rv;
 			while ((rptr < wptr) && (*rptr != '\r'))
 				rptr++;
 
-			if ((*rptr == '\r') && (rptr + 1 < wptr)) {
-				if (*(rptr + 1) == '\n') {
-					rptr += 2;
-					f->ftps_junk = 0;
+			if (*rptr == '\r') {
+				if (rptr + 1 < wptr) {
+					if (*(rptr + 1) == '\n') {
+						rptr += 2;
+						f->ftps_junk = 0;
+					} else
+						rptr++;
 				} else
-					rptr++;
+					break;
 			}
-			f->ftps_rptr = rptr;
 		}
+		f->ftps_rptr = rptr;
 
 		if (rptr == wptr) {
 			rptr = wptr = f->ftps_buf;
