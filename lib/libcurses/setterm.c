@@ -1,4 +1,4 @@
-/*	$NetBSD: setterm.c,v 1.14 2000/04/11 13:57:10 blymn Exp $	*/
+/*	$NetBSD: setterm.c,v 1.15 2000/04/12 21:45:30 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)setterm.c	8.8 (Berkeley) 10/25/94";
 #else
-__RCSID("$NetBSD: setterm.c,v 1.14 2000/04/11 13:57:10 blymn Exp $");
+__RCSID("$NetBSD: setterm.c,v 1.15 2000/04/12 21:45:30 jdc Exp $");
 #endif
 #endif /* not lint */
 
@@ -50,16 +50,23 @@ __RCSID("$NetBSD: setterm.c,v 1.14 2000/04/11 13:57:10 blymn Exp $");
 #include <unistd.h>
 
 #include "curses.h"
+#include "curses_private.h"
 
 static void zap __P((void));
 
 static char	*sflags[] = {
-		/*       am   bs   da   eo   hc   in   mi   ms  */
-			&AM, &BS, &DA, &EO, &HC, &IN, &MI, &MS,
-		/*	 nc   ns   os   ul   xb   xn   xt   xs   xx  */
-			&NC, &NS, &OS, &UL, &XB, &XN, &XT, &XS, &XX
+		/*	 am   be   bs   cc   da   eo   hc   hl  */
+			&AM, &BE, &BS, &CC, &DA, &EO, &HC, &HL,
+		/*	 in   mi   ms   nc   ns   os   ul   xb  */
+			&IN, &MI, &MS, &NC, &NS, &OS, &UL, &XB,
+		/*	 xn   xt   xs   xx  */
+			&XN, &XT, &XS, &XX
 		};
 
+static int	*svals[] = {
+		/*	 pa   Co */
+			&PA, &cO, &nc
+		};
 static char	*_PC,
 		**sstrs[] = {
 		/*	 AC   AE   AL   AS   bc   bl   bt   cd   ce  */
@@ -72,20 +79,22 @@ static char	*_PC,
 			&K7, &K8, &K9, &HO, &IC, &IM, &IP, &KD, &KE,
 		/*	 kh   kl   kr   ks   ku   ll   ma   mb   md  */
 			&KH, &KL, &KR, &KS, &KU, &LL, &MA, &MB, &MD,
-		/*	 me   mh   mk   mp   mr   nd   nl    pc   rc */
-			&ME, &MH, &MK, &MP, &MR, &ND, &NL, &_PC, &RC,
-		/*	 sc   se   SF   so   SR   ta   te   ti   uc  */
-			&SC, &SE, &SF, &SO, &SR, &TA, &TE, &TI, &UC,
-		/*	 ue   up   us   vb   vs   ve   al   dl   sf  */
-			&UE, &UP, &US, &VB, &VS, &VE, &al, &dl, &sf,
-		/*	 sr   AL	DL	  UP	    DO	     */
+		/*	 me   mh   mk   mp   mr   nd   nl   oc   op  */
+			&ME, &MH, &MK, &MP, &MR, &ND, &NL, &OC, &OP,
+		/*	  pc   rc   sc   se   SF   so   sp   SR   ta */
+			&_PC, &RC, &SC, &SE, &SF, &SO, &SP, &SR, &TA,
+		/*	 te   ti   uc   ue   up   us   vb   vs   ve  */
+			&TE, &TI, &UC, &UE, &UP, &US, &VB, &VS, &VE,
+		/*	 AB   AF   al   dl   Ic   Ip   Sb   Sf   sf  */
+			&ab, &af, &al, &dl, &iC, &iP, &sB, &sF, &sf,
+		/*	 sr   AL        DL        UP        DO  */
 			&sr, &AL_PARM, &DL_PARM, &UP_PARM, &DOWN_PARM,
-		/*	 LE	    RI				     */
+		/*	 LE          RI */
 			&LEFT_PARM, &RIGHT_PARM,
 		};
 
 static char	*aoftspace;		/* Address of _tspace for relocation */
-static char	tspace[2048];		/* Space for capability strings */
+static char	tspace[4096];		/* Space for capability strings */
 
 char *ttytype;
 
@@ -93,7 +102,7 @@ int
 setterm(type)
 	char *type;
 {
-	static char genbuf[1024];
+	static char genbuf[2048];
 	static char __ttytype[128];
 	int unknown;
 	struct winsize win;
@@ -181,6 +190,7 @@ static void
 zap()
 {
 	char *namp, ***sp;
+	int  **vp;
 	char **fp;
 	char tmp[3];
 #ifdef DEBUG
@@ -188,7 +198,7 @@ zap()
 #endif
 	tmp[2] = '\0';
 
-	namp = "ambsdaeohcinmimsncnsosulxbxnxtxsxx";
+	namp = "ambebsccdaeohchlinmimsncnsosulxbxnxtxsxx";
 	fp = sflags;
 	do {
 		*tmp = *namp;
@@ -200,7 +210,19 @@ zap()
 		namp += 2;
 
 	} while (*namp);
-	namp = "acaeALasbcblbtcdceclcmcrcsdcDLdmdoeAedeik0k1k2k3k4k5k6k7k8k9hoicimipkdkekhklkrkskullmambmdmemhmkmpmrndnlpcrcscseSFsoSRtatetiucueupusvbvsvealdlsfsrALDLUPDOLERI";
+	namp = "paCoNC";
+	vp = svals;
+	do {
+		*tmp = *namp;
+		*(tmp + 1) = *(namp + 1);
+		*(*vp++) = tgetnum(tmp);
+#ifdef DEBUG
+		__CTRACE("%2.2s = %d\n", namp, *vp[-1]);
+#endif
+		namp += 2;
+
+	} while (*namp);
+	namp = "acaeALasbcblbtcdceclcmcrcsdcDLdmdoeAedeik0k1k2k3k4k5k6k7k8k9hoicimipkdkekhklkrkskullmambmdmemhmkmpmrndnlocoppcprscseSFsospSRtatetiucueupusvbvsveABAFaldlIcIpSbSfsfsrALDLUPDOLERI";
 	sp = sstrs;
 	do {
 		*tmp = *namp;
