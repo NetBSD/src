@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.58 2001/12/04 00:05:06 darrenr Exp $ */
+/*	$NetBSD: intr.c,v 1.59 2002/08/04 14:57:34 uwe Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -75,6 +75,9 @@
 void *softnet_cookie;
 
 void	strayintr __P((struct clockframe *));
+#ifdef DIAGNOSTIC
+void	bogusintr __P((struct clockframe *));
+#endif
 void	softnet __P((void *));
 
 /*
@@ -96,13 +99,32 @@ strayintr(fp)
 
 	timesince = time.tv_sec - straytime;
 	if (timesince <= 10) {
-		if (++nstray > 9)
+		if (++nstray > 10)
 			panic("crazy interrupts");
 	} else {
 		straytime = time.tv_sec;
 		nstray = 1;
 	}
 }
+
+
+#ifdef DIAGNOSTIC
+/*
+ * Bogus interrupt for which neither hard nor soft interrupt bit in
+ * the IPR was set.
+ */
+void
+bogusintr(fp)
+	struct clockframe *fp;
+{
+	char bits[64];
+
+	printf("bogus interrupt ipl 0x%x pc=0x%x npc=0x%x psr=%s\n",
+		fp->ipl, fp->pc, fp->npc, bitmask_snprintf(fp->psr,
+		       PSR_BITS, bits, sizeof(bits)));
+}
+#endif /* DIAGNOSTIC */
+
 
 /*
  * Process software network interrupts.
