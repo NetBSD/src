@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_exec.c,v 1.8 1995/04/22 19:48:44 christos Exp $	*/
+/*	$NetBSD: sunos_exec.c,v 1.9 1995/06/25 14:15:08 briggs Exp $	*/
 
 /*
  * Copyright (c) 1993 Theo de Raadt
@@ -69,6 +69,7 @@ extern char *sunos_syscallnames[];
 #endif
 extern void sunos_sendsig __P((sig_t, int, int, u_long));
 extern char sigcode[], esigcode[];
+const char sunos_emul_path[] = "/emul/sunos";
 
 struct emul emul_sunos = {
 	"sunos",
