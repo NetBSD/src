@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.8 1996/12/02 06:46:49 cgd Exp $	*/
+/*	$NetBSD: bus.h,v 1.9 1996/12/02 07:07:18 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -61,6 +61,10 @@ struct alpha_bus_space {
 	void		(*abs_free) __P((void *, bus_space_handle_t,
 			    bus_size_t));
 
+	/* barrier */
+	void		(*abs_barrier) __P((void *, bus_space_handle_t,
+			    bus_size_t, bus_size_t, int));
+
 	/* read (single) */
 	u_int8_t	(*abs_r_1) __P((void *, bus_space_handle_t,
 			    bus_size_t));
@@ -71,7 +75,7 @@ struct alpha_bus_space {
 	u_int64_t	(*abs_r_8) __P((void *, bus_space_handle_t,
 			    bus_size_t));
 
-	/* read multi */
+	/* read multiple */
 	void		(*abs_rm_1) __P((void *, bus_space_handle_t,
 			    bus_size_t, u_int8_t *, bus_size_t));
 	void		(*abs_rm_2) __P((void *, bus_space_handle_t,
@@ -101,7 +105,7 @@ struct alpha_bus_space {
 	void		(*abs_w_8) __P((void *, bus_space_handle_t,
 			    bus_size_t, u_int64_t));
 
-	/* write multi */
+	/* write multiple */
 	void		(*abs_wm_1) __P((void *, bus_space_handle_t,
 			    bus_size_t, const u_int8_t *, bus_size_t));
 	void		(*abs_wm_2) __P((void *, bus_space_handle_t,
@@ -121,7 +125,7 @@ struct alpha_bus_space {
 	void		(*abs_wr_8) __P((void *, bus_space_handle_t,
 			    bus_size_t, const u_int64_t *, bus_size_t));
 
-	/* set multi */
+	/* set multiple */
 	void		(*abs_sm_1) __P((void *, bus_space_handle_t,
 			    bus_size_t, u_int8_t, bus_size_t));
 	void		(*abs_sm_2) __P((void *, bus_space_handle_t,
@@ -143,10 +147,6 @@ struct alpha_bus_space {
 
 	/* copy */
 	/* XXX IMPLEMENT */
-
-	/* barrier */
-	void		(*abs_barrier) __P((void *, bus_space_handle_t,
-			    bus_size_t, bus_size_t, int));
 };
 
 
@@ -195,6 +195,16 @@ struct alpha_bus_space {
 	    (c), (ap), (hp))
 #define	bus_space_free(t, h, s)						\
 	(*(t)->abs_free)((t)->abs_cookie, (h), (s))
+
+
+/*
+ * Bus barrier operations.
+ */
+#define	bus_space_barrier(t, h, o, l, f)				\
+	(*(t)->abs_barrier)((t)->abs_cookie, (h), (o), (l), (f))
+
+#define	BUS_BARRIER_READ	0x01
+#define	BUS_BARRIER_WRITE	0x02
 
 
 /*
@@ -297,15 +307,5 @@ struct alpha_bus_space {
  * Copy operations.
  */
 /* XXX IMPLEMENT */
-
-
-/*
- * Bus barrier operations.
- */
-#define	bus_space_barrier(t, h, o, l, f)				\
-	(*(t)->abs_barrier)((t)->abs_cookie, (h), (o), (l), (f))
-
-#define	BUS_BARRIER_READ	0x01
-#define	BUS_BARRIER_WRITE	0x02
 
 #endif /* _ALPHA_BUS_H_ */

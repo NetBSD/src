@@ -1,4 +1,4 @@
-/*	$NetBSD: tc_bus_mem.c,v 1.11 1996/12/02 06:46:51 cgd Exp $	*/
+/*	$NetBSD: tc_bus_mem.c,v 1.12 1996/12/02 07:07:20 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -53,6 +53,10 @@ int		tc_mem_alloc __P((void *, bus_addr_t, bus_addr_t, bus_size_t,
 		    bus_size_t, bus_addr_t, int, bus_addr_t *,
 		    bus_space_handle_t *));
 void		tc_mem_free __P((void *, bus_space_handle_t, bus_size_t));
+
+/* barrier */
+inline void	tc_mem_barrier __P((void *, bus_space_handle_t,
+		    bus_size_t, bus_size_t, int));
 
 /* read (single) */
 inline u_int8_t	tc_mem_read_1 __P((void *, bus_space_handle_t, bus_size_t));
@@ -130,11 +134,6 @@ void		tc_mem_set_region_4 __P((void *, bus_space_handle_t,
 void		tc_mem_set_region_8 __P((void *, bus_space_handle_t,
 		    bus_size_t, u_int64_t, bus_size_t));
 
-/* barrier */
-void		tc_mem_barrier __P((void *, bus_space_handle_t,
-		    bus_size_t, bus_size_t, int));
-
-
 static struct alpha_bus_space tc_mem_space = {
 	/* cookie */
 	NULL,
@@ -147,6 +146,9 @@ static struct alpha_bus_space tc_mem_space = {
 	/* allocation/deallocation */
 	tc_mem_alloc,
 	tc_mem_free,
+
+	/* barrier */
+	tc_mem_barrier,
 
 	/* read (single) */
 	tc_mem_read_1,
@@ -198,9 +200,6 @@ static struct alpha_bus_space tc_mem_space = {
 
 	/* copy */
 	/* XXX IMPLEMENT */
-
-	/* barrier */
-	tc_mem_barrier,
 };
 
 bus_space_tag_t
@@ -282,6 +281,20 @@ tc_mem_free(v, bsh, size)
 
 	/* XXX XXX XXX XXX XXX XXX */
 	panic("tc_mem_free unimplemented");
+}
+
+inline void
+tc_mem_barrier(v, h, o, l, f)
+	void *v;
+	bus_space_handle_t h;
+	bus_size_t o, l;
+	int f;
+{
+
+	if ((f & BUS_BARRIER_READ) != 0)
+		alpha_mb();
+	else if ((f & BUS_BARRIER_WRITE) != 0)
+		alpha_wmb();
 }
 
 inline u_int8_t
@@ -561,17 +574,3 @@ tc_mem_set_region_N(1,u_int8_t)
 tc_mem_set_region_N(2,u_int16_t)
 tc_mem_set_region_N(4,u_int32_t)
 tc_mem_set_region_N(8,u_int64_t)
-
-void
-tc_mem_barrier(v, h, o, l, f)
-	void *v;
-	bus_space_handle_t h;
-	bus_size_t o, l;
-	int f;
-{
-
-	if ((f & BUS_BARRIER_READ) != 0)
-		alpha_mb();
-	else if ((f & BUS_BARRIER_WRITE) != 0)
-		alpha_wmb();
-}
