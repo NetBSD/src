@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.c,v 1.67 2001/05/12 19:21:57 christos Exp $	*/
+/*	$NetBSD: ip_fil.c,v 1.68 2001/06/02 16:17:09 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1993-2000 by Darren Reed.
@@ -9,7 +9,7 @@
  */
 #if !defined(lint)
 #if defined(__NetBSD__)
-static const char rcsid[] = "$NetBSD: ip_fil.c,v 1.67 2001/05/12 19:21:57 christos Exp $";
+static const char rcsid[] = "$NetBSD: ip_fil.c,v 1.68 2001/06/02 16:17:09 thorpej Exp $";
 #else
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_fil.c,v 2.42.2.17 2000/10/19 15:39:42 darrenr Exp";
@@ -1384,6 +1384,13 @@ frdest_t *fdp;
 	struct route iproute;
 	frentry_t *fr;
 
+#if defined(__NetBSD__) && defined(M_CSUM_IPv4)
+	/*
+	 * Clear any in-bound checksum flags for this packet.
+	 */
+	m0->m_pkthdr.csum_flags = 0;
+#endif /* __NetBSD__ && M_CSUM_IPv4 */
+
 	hlen = fin->fin_hlen;
 	ip = mtod(m0, struct ip *);
 
@@ -1491,8 +1498,15 @@ frdest_t *fdp;
 # endif
 		ip->ip_len = htons(ip->ip_len);
 		ip->ip_off = htons(ip->ip_off);
+# if defined(__NetBSD__) && defined(M_CSUM_IPv4)
+		if (ifp->if_csum_flags & M_CSUM_IPv4)
+			m->m_pkthdr.csum_flags |= M_CSUM_IPv4;
+		else if (ip->ip_sum == 0)
+			ip->ip_sum = in_cksum(m, hlen);
+# else
 		if (!ip->ip_sum)
 			ip->ip_sum = in_cksum(m, hlen);
+# endif /* __NetBSD__ && M_CSUM_IPv4 */
 # if	BSD >= 199306
 		error = (*ifp->if_output)(ifp, m, (struct sockaddr *)dst,
 					  ro->ro_rt);

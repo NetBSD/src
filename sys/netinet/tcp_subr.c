@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.110 2001/05/24 07:22:27 itojun Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.111 2001/06/02 16:17:10 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -104,6 +104,7 @@
 #include "opt_inet.h"
 #include "opt_ipsec.h"
 #include "opt_tcp_compat_42.h"
+#include "opt_inet_csum.h"
 #include "rnd.h"
 
 #include <sys/param.h>
@@ -211,6 +212,19 @@ void	tcp6_mtudisc __P((struct in6pcb *, int));
 
 struct pool tcpcb_pool;
 
+#ifdef TCP_CSUM_COUNTERS
+#include <sys/device.h>
+
+struct evcnt tcp_hwcsum_bad = EVCNT_INITIALIZER(EVCNT_TYPE_MISC,
+    NULL, "tcp", "hwcsum bad");
+struct evcnt tcp_hwcsum_ok = EVCNT_INITIALIZER(EVCNT_TYPE_MISC,
+    NULL, "tcp", "hwcsum ok");
+struct evcnt tcp_hwcsum_data = EVCNT_INITIALIZER(EVCNT_TYPE_MISC,
+    NULL, "tcp", "hwcsum data");
+struct evcnt tcp_swcsum = EVCNT_INITIALIZER(EVCNT_TYPE_MISC,
+    NULL, "tcp", "swcsum");
+#endif /* TCP_CSUM_COUNTERS */
+
 /*
  * Tcp initialization
  */
@@ -246,6 +260,13 @@ tcp_init()
 
 	/* Initialize the compressed state engine. */
 	syn_cache_init();
+
+#ifdef TCP_CSUM_COUNTERS
+	evcnt_attach_static(&tcp_hwcsum_bad);
+	evcnt_attach_static(&tcp_hwcsum_ok);
+	evcnt_attach_static(&tcp_hwcsum_data);
+	evcnt_attach_static(&tcp_swcsum);
+#endif /* TCP_CSUM_COUNTERS */
 }
 
 /*
@@ -316,7 +337,11 @@ tcp_template(tp)
 			return NULL;
 		m->m_pkthdr.len = m->m_len = hlen + sizeof(struct tcphdr);
 	}
+
 	bzero(mtod(m, caddr_t), m->m_len);
+
+	n = (struct tcphdr *)(mtod(m, caddr_t) + hlen);
+
 	switch (tp->t_family) {
 	case AF_INET:
 	    {
@@ -338,6 +363,16 @@ tcp_template(tp)
 				sizeof(ipov->ih_dst));
 		}
 #endif
+		/*
+		 * Compute the pseudo-header portion of the checksum
+		 * now.  We incrementally add in the TCP option and
+		 * payload lengths later, and then compute the TCP
+		 * checksum right before the packet is sent off onto
+		 * the wire.
+		 */
+		n->th_sum = in_cksum_phdr(ipov->ih_src.s_addr,
+		    ipov->ih_dst.s_addr,
+		    htons(sizeof(struct tcphdr) + IPPROTO_TCP));
 		break;
 	    }
 #ifdef INET6
@@ -358,11 +393,21 @@ tcp_template(tp)
 		}
 		ip6->ip6_vfc &= ~IPV6_VERSION_MASK;
 		ip6->ip6_vfc |= IPV6_VERSION;
+
+		/*
+		 * Compute the pseudo-header portion of the checksum
+		 * now.  We incrementally add in the TCP option and
+		 * payload lengths later, and then compute the TCP
+		 * checksum right before the packet is sent off onto
+		 * the wire.
+		 */
+		n->th_sum = in6_cksum_phdr(&in6p->in6p_laddr,
+		    &in6p->in6p_faddr, htonl(sizeof(struct tcphdr)),
+		    htonl(IPPROTO_TCP));
 		break;
 	    }
 #endif
 	}
-	n = (struct tcphdr *)(mtod(m, caddr_t) + hlen);
 	if (inp) {
 		n->th_sport = inp->inp_lport;
 		n->th_dport = inp->inp_fport;
@@ -379,7 +424,6 @@ tcp_template(tp)
 	n->th_off = 5;
 	n->th_flags = 0;
 	n->th_win = 0;
-	n->th_sum = 0;
 	n->th_urp = 0;
 	return (m);
 }

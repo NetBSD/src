@@ -1,4 +1,4 @@
-/*	$NetBSD: in.h,v 1.54 2001/05/27 23:46:51 itojun Exp $	*/
+/*	$NetBSD: in.h,v 1.55 2001/06/02 16:17:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -387,6 +387,53 @@ struct ip_mreq {
 #undef __KAME_NETINET_IN_H_INCLUDED_
 
 #ifdef _KERNEL
+/*
+ * in_cksum_phdr:
+ *
+ *	Compute significant parts of the IPv4 checksum pseudo-header
+ *	for use in a delayed TCP/UDP checksum calculation.
+ *
+ *	Args:
+ *
+ *		src		Source IP address
+ *		dst		Destination IP address
+ *		lenproto	htons(proto-hdr-len + proto-number)
+ */
+static __inline u_int16_t __attribute__((__unused__))
+in_cksum_phdr(u_int32_t src, u_int32_t dst, u_int32_t lenproto)
+{
+	u_int32_t sum;
+
+	sum = lenproto +
+	      (u_int16_t)(src >> 16) +
+	      (u_int16_t)(src /*& 0xffff*/) +
+	      (u_int16_t)(dst >> 16) +
+	      (u_int16_t)(dst /*& 0xffff*/);
+
+	sum = (u_int16_t)(sum >> 16) + (u_int16_t)(sum /*& 0xffff*/);
+
+	if (sum > 0xffff)
+		sum -= 0xffff;
+
+	return (sum);
+}
+
+/*
+ * in_cksum_addword:
+ *
+ *	Add the two 16-bit network-order values, carry, and return.
+ */
+static __inline u_int16_t __attribute__((__unused__))
+in_cksum_addword(u_int16_t a, u_int16_t b)
+{
+	u_int32_t sum = a + b;
+
+	if (sum > 0xffff)
+		sum -= 0xffff;
+
+	return (sum);
+}
+
 extern	struct in_addr zeroin_addr;
 extern	u_char	ip_protox[];
 
@@ -394,6 +441,7 @@ int	in_broadcast __P((struct in_addr, struct ifnet *));
 int	in_canforward __P((struct in_addr));
 int	in_cksum __P((struct mbuf *, int));
 int	in4_cksum __P((struct mbuf *, u_int8_t, int, int));
+void	in_delayed_cksum __P((struct mbuf *));
 int	in_localaddr __P((struct in_addr));
 void	in_socktrim __P((struct sockaddr_in *));
 

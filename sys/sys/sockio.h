@@ -1,4 +1,4 @@
-/*	$NetBSD: sockio.h,v 1.17 2001/02/20 15:35:19 itojun Exp $	*/
+/*	$NetBSD: sockio.h,v 1.18 2001/06/02 16:17:11 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993, 1994
@@ -121,5 +121,7 @@
 #define	SIOCIFGCLONERS	_IOWR('i', 120, struct if_clonereq) /* get cloners */
 
 #define	SIOCGIFDLT	_IOWR('i', 119, struct ifreq)	/* get DLT */
+#define	SIOCGIFCAP	_IOWR('i', 118, struct ifcapreq)/* get capabilities */
+#define	SIOCSIFCAP	 _IOW('i', 117, struct ifcapreq)/* set capabilities */
 
 #endif /* !_SYS_SOCKIO_H_ */
