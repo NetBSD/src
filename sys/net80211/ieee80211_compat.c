@@ -1,3 +1,4 @@
+/*	$NetBSD: ieee80211_compat.c,v 1.2 2003/09/14 01:14:54 dyoung Exp $	*/
 /*-
  * Copyright (c) 2003, 2004 David Young
  * All rights reserved.
@@ -26,6 +27,7 @@
  */
 #include <net/if.h>
 #include <sys/systm.h>
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_compat.c,v 1.2 2003/09/14 01:14:54 dyoung Exp $");
 
 #ifdef __NetBSD__
 int
