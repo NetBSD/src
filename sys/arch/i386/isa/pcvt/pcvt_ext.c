@@ -1121,7 +1121,7 @@ wd90c11_col(int cols)
 							     M_DEVBUF,
 							     M_WAITOK))
 					   == NULL)
-						kprintf("pcvt: no font buffer\n");
+						printf("pcvt: no font buffer\n");
 					else
 						vga_move_charset(i,
 								 sv_fontwd[i],

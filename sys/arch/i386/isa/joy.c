@@ -1,4 +1,4 @@
-/*	$NetBSD: joy.c,v 1.4 1996/10/11 00:27:06 christos Exp $	*/
+/*	$NetBSD: joy.c,v 1.5 1996/10/13 03:20:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995 Jean-Marc Zucconi
@@ -129,7 +129,7 @@ joyattach(parent, self, aux)
 	sc->timeout[0] = sc->timeout[1] = 0;
 	outb(iobase, 0xff);
 	DELAY(10000);		/* 10 ms delay */
-	kprintf(": joystick%sconnected\n",
+	printf(": joystick%sconnected\n",
 	    (inb(iobase) & 0x0f) == 0x0f ? " not " : " ");
 }
 

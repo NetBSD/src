@@ -1,4 +1,4 @@
-/*	$NetBSD: spkr.c,v 1.26 1996/10/11 00:27:13 christos Exp $	*/
+/*	$NetBSD: spkr.c,v 1.27 1996/10/13 03:20:10 christos Exp $	*/
 
 /*
  * spkr.c -- device driver for console speaker on 80386
@@ -92,7 +92,7 @@ void tone(hz, ticks)
     int sps;
 
 #ifdef DEBUG
-    kprintf("tone: hz=%d ticks=%d\n", hz, ticks);
+    printf("tone: hz=%d ticks=%d\n", hz, ticks);
 #endif /* DEBUG */
 
     /* set timer to generate clicks at given frequency in Hertz */
@@ -133,7 +133,7 @@ rest(ticks)
      * waited out.
      */
 #ifdef DEBUG
-    kprintf("rest: %d\n", ticks);
+    printf("rest: %d\n", ticks);
 #endif /* DEBUG */
     timeout(endrest, NULL, ticks);
     sleep(endrest, PZERO - 1);
@@ -236,7 +236,7 @@ playtone(pitch, value, sustain)
 	silence = whole * (FILLTIME-fill) * snum / (FILLTIME * value * sdenom);
 
 #ifdef DEBUG
-	kprintf("playtone: pitch %d for %d ticks, rest for %d ticks\n",
+	printf("playtone: pitch %d for %d ticks, rest for %d ticks\n",
 	    pitch, sound, silence);
 #endif /* DEBUG */
 
@@ -262,7 +262,7 @@ playstring(cp, slen)
 	register char	c = toupper(*cp);
 
 #ifdef DEBUG
-	kprintf("playstring: %c (%x)\n", c, c);
+	printf("playstring: %c (%x)\n", c, c);
 #endif /* DEBUG */
 
 	switch (c)
@@ -458,7 +458,7 @@ spkrattach(parent, self, aux)
 	struct device *self;
 	void *aux;
 {
-	kprintf(" port 0x%x\n", self->dv_cfdata->cf_loc[1]);
+	printf(" port 0x%x\n", self->dv_cfdata->cf_loc[1]);
 	spkr_attached = 1;
 }
 
@@ -470,7 +470,7 @@ spkropen(dev, flags, mode, p)
     struct proc *p;
 {
 #ifdef DEBUG
-    kprintf("spkropen: entering with dev = %x\n", dev);
+    printf("spkropen: entering with dev = %x\n", dev);
 #endif /* DEBUG */
 
     if (minor(dev) != 0 || !spkr_attached)
@@ -496,7 +496,7 @@ spkrwrite(dev, uio, flags)
     char *cp;
     int error;
 #ifdef DEBUG
-    kprintf("spkrwrite: entering with dev = %x, count = %d\n",
+    printf("spkrwrite: entering with dev = %x, count = %d\n",
 		dev, uio->uio_resid);
 #endif /* DEBUG */
 
@@ -520,7 +520,7 @@ int spkrclose(dev, flags, mode, p)
     struct proc *p;
 {
 #ifdef DEBUG
-    kprintf("spkrclose: entering with dev = %x\n", dev);
+    printf("spkrclose: entering with dev = %x\n", dev);
 #endif /* DEBUG */
 
     if (minor(dev) != 0)
@@ -542,7 +542,7 @@ int spkrioctl(dev, cmd, data, flag, p)
     struct proc *p;
 {
 #ifdef DEBUG
-    kprintf("spkrioctl: entering with dev = %x, cmd = %lx\n", dev, cmd);
+    printf("spkrioctl: entering with dev = %x, cmd = %lx\n", dev, cmd);
 #endif /* DEBUG */
 
     if (minor(dev) != 0)
