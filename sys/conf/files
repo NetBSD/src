@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.565 2002/10/10 22:45:45 thorpej Exp $
+#	$NetBSD: files,v 1.566 2002/10/10 22:56:03 thorpej Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -81,13 +81,12 @@ include "netinet/files.netinet"
 include "netinet/files.ipfilter"
 include "netinet6/files.netinet6"
 include "netinet6/files.netipsec"
+include "netiso/files.netiso"
 
 defflag	opt_ns.h		NS NSIP		# NS network stack,
 						# XNS tunneled over IP
-defflag	opt_iso.h		ISO TPIP	# ISO network stack
 defflag opt_smb.h		SMB		# SMB network stack
 defflag				IPX		# IPX network stack
-defflag				EON		# ISO clnp over IP
 defflag				NATM		# "native" ATM protocols
 defflag				PFIL_HOOKS	# pfil(9)
 defflag	opt_ppp.h		PPP_DEFLATE PPP_BSDCOMP PPP_FILTER
@@ -1143,40 +1142,6 @@ file	netinet/ip_ecn.c		ipsec | gif | stf
 file	netinet/ip_encap.c		inet | inet6
 file	netinet/ip_gre.c		inet & gre
 file	netinet6/in6_gif.c		gif & inet6
-file	netiso/clnp_debug.c		iso
-file	netiso/clnp_er.c		iso
-file	netiso/clnp_frag.c		iso
-file	netiso/clnp_input.c		iso
-file	netiso/clnp_options.c		iso
-file	netiso/clnp_output.c		iso
-file	netiso/clnp_raw.c		iso
-file	netiso/clnp_subr.c		iso
-file	netiso/clnp_timer.c		iso
-file	netiso/cltp_usrreq.c		iso
-file	netiso/esis.c			iso
-file	netiso/idrp_usrreq.c		iso
-file	netiso/if_cons.c		iso
-file	netiso/if_eon.c			eon
-file	netiso/iso.c			iso
-file	netiso/iso_chksum.c		iso
-file	netiso/iso_pcb.c		iso
-file	netiso/iso_proto.c		iso
-file	netiso/iso_snpac.c		iso
-file	netiso/tp_astring.c		iso | tpip
-file	netiso/tp_cons.c		iso
-file	netiso/tp_driver.c		iso | tpip
-file	netiso/tp_emit.c		iso | tpip
-file	netiso/tp_inet.c		iso | tpip
-file	netiso/tp_input.c		iso | tpip
-file	netiso/tp_iso.c			iso
-file	netiso/tp_meas.c		iso | tpip
-file	netiso/tp_output.c		iso | tpip
-file	netiso/tp_pcb.c			iso | tpip
-file	netiso/tp_subr.c		iso | tpip
-file	netiso/tp_subr2.c		iso | tpip
-file	netiso/tp_timer.c		iso | tpip
-file	netiso/tp_trace.c		iso | tpip
-file	netiso/tp_usrreq.c		iso | tpip
 file	netnatm/natm.c			natm
 file	netnatm/natm_pcb.c		natm
 file	netnatm/natm_proto.c		natm
