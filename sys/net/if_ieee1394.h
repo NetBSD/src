@@ -1,9 +1,11 @@
-/*-
+/*	$NetBSD: if_ieee1394.h,v 1.1 2000/11/05 17:17:15 onoe Exp $	*/
+
+/*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by 
+ * by Atsushi Onoe.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -15,8 +17,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
  * 4. Neither the name of The NetBSD Foundation nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
@@ -34,27 +36,53 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _DEV_IEEE1394_IEEE1394VAR_H_
-#define _DEV_IEEE1394_IEEE1394VAR_H_
+#ifndef _NET_IF_IEEE1394_H_
+#define _NET_IF_IEEE1394_H_
 
-struct ieee1394_softc {
-	struct device sc1394_dev;
-	struct device *sc1394_if;
-
-	u_int32_t sc1394_max_receive;
-	u_int8_t sc1394_guid[8];
-	u_int8_t sc1394_link_speed;	/* IEEE1394_SPD_* */
-	u_int16_t sc1394_node_id;	/* my node id in network order */
-
-	int (*sc1394_ifoutput)(struct device *, struct mbuf *,
-	    void (*)(struct device *, struct mbuf *));
-	int (*sc1394_ifinreg)(struct device *, u_int32_t, u_int32_t,
-	    void (*)(struct device *, struct mbuf *));
+/* pseudo header */
+struct ieee1394_header {
+	u_int8_t	ih_dstaddr[8];
+	u_int8_t	ih_srcaddr[8];
 };
 
-int ieee1394_init __P((struct ieee1394_softc *));
+/* hardware address information for arp / nd */
+struct ieee1394_hwaddr {
+	u_int8_t	iha_uid[8];
+	u_int8_t	iha_maxrec;
+	u_int8_t	iha_speed;
+	u_int8_t	iha_offset[6];
+};
 
-#define	IEEE1394_ARGTYPE_PTR	0
-#define	IEEE1394_ARGTYPE_MBUF	1
+/* unfragment encapsulation header */
+struct ieee1394_unfraghdr {
+	u_int16_t	iuh_ft;
+	u_int16_t	iuh_etype;
+};
 
-#endif	/* _DEV_IEEE1394_IEEE1394VAR_H_ */
+/* fragmented encapsulation header */
+struct ieee1394_fraghdr {
+	u_int16_t	ifh_ft_size;
+	u_int16_t	ifh_etype_off;
+	u_int16_t	ifh_dgl;
+	u_int16_t	ifh_reserved;
+};
+
+#define	IEEE1394MTU		1500
+
+#define	IEEE1394_STRHDRLEN	16
+#define	IEEE1394_AWBHDRLEN	20
+#define	IEEE1394_ADDR_LEN	8
+#define	IEEE1394_CRC_LEN	4
+
+struct ieee1394com {
+	struct ifnet	ic_if;
+	struct ieee1394_hwaddr ic_hwaddr;
+	u_int16_t	ic_dgl;
+};
+
+const char *ieee1394_sprintf(const u_int8_t *);
+void ieee1394_ifattach(struct ifnet *, const struct ieee1394_hwaddr *);
+void ieee1394_ifdetach(struct ifnet *);
+int  ieee1394_ioctl(struct ifnet *, u_long, caddr_t);
+
+#endif /* _NET_IF_IEEE1394_H_ */

@@ -37,6 +37,70 @@
 #ifndef _DEV_IEEE1394_FWOHCIVAR_H_
 #define	_DEV_IEEE1394_FWOHCIVAR_H_
 
+
+#define	OHCI_PAGE_SIZE		0x0800
+#define	OHCI_BUF_ARRQ_CNT	16
+#define	OHCI_BUF_ARRS_CNT	8
+#define	OHCI_BUF_ATRQ_CNT	(8*8)
+#define	OHCI_BUF_ATRS_CNT	(8*8)
+#define	OHCI_BUF_IR_CNT		16
+#define	OHCI_BUF_CNT		(OHCI_BUF_ARRQ_CNT + OHCI_BUF_ARRS_CNT + OHCI_BUF_ATRQ_CNT + OHCI_BUF_ATRS_CNT + OHCI_BUF_IR_CNT + 1 + 1)
+
+#define	OHCI_LOOP		1000
+
+struct fwohci_softc;
+
+struct fwohci_buf {
+	TAILQ_ENTRY(fwohci_buf) fb_list;
+	bus_dma_segment_t fb_seg;
+	int fb_nseg;
+	bus_dmamap_t fb_dmamap;
+	caddr_t fb_buf;
+	struct fwohci_desc *fb_desc;
+	bus_addr_t fb_daddr;
+	int fb_off;
+	struct mbuf *fb_m;
+	void (*fb_callback)(struct device *, struct mbuf *);
+};
+
+struct fwohci_pkt {
+	int	fp_tcode;
+	int	fp_hlen;
+	int	fp_dlen;
+	u_int32_t fp_hdr[4];
+	int	fp_iovcnt;
+	struct iovec fp_iov[8];
+	u_int32_t *fp_trail;
+	struct mbuf *fp_m;
+	void (*fp_callback)(struct device *, struct mbuf *);
+};
+
+struct fwohci_handler {
+	LIST_ENTRY(fwohci_handler) fh_list;
+	u_int32_t	fh_tcode;	/* ARRQ   / ARRS   / IR   */
+	u_int32_t	fh_key1;	/* addrhi / srcid  / chan */
+	u_int32_t	fh_key2;	/* addrlo / tlabel / tag  */
+	int		(*fh_handler)(struct fwohci_softc *, void *,
+			    struct fwohci_pkt *);
+	void		*fh_handarg;
+};
+
+struct fwohci_ctx {
+	int	fc_ctx;
+	int	fc_ppbmode;	/* packet per buffer */
+	int	fc_bufcnt;
+	u_int32_t	*fc_branch;
+	TAILQ_HEAD(fwohci_buf_s, fwohci_buf) fc_buf, fc_busy;
+	LIST_HEAD(, fwohci_handler) fc_handler;
+};
+
+struct fwohci_uidtbl {
+	struct fwohci_uident {
+		u_int8_t	fu_uid[4];
+		u_int8_t	fu_valid;
+	} fu_hi, fu_lo;
+};
+
 struct fwohci_softc {
 	struct ieee1394_softc sc_sc1394;
 
@@ -44,10 +108,36 @@ struct fwohci_softc {
 	bus_space_handle_t sc_memh;
 	bus_dma_tag_t sc_dmat;
 	bus_size_t sc_memsize;
+
+	bus_dma_segment_t sc_dseg;
+	int sc_dnseg;
+	bus_dmamap_t sc_ddmamap;
+	caddr_t sc_desc;
+	int sc_descsize;
+	int sc_descfree;
+
+	int sc_isoctx;
+	int sc_tlabel;
+
+	struct fwohci_ctx *sc_ctx_arrq;
+	struct fwohci_ctx *sc_ctx_arrs;
+	struct fwohci_ctx *sc_ctx_atrq;
+	struct fwohci_ctx *sc_ctx_atrs;
+	struct fwohci_ctx **sc_ctx_ir;
+	struct fwohci_buf sc_buf_cnfrom;
+	struct fwohci_buf sc_buf_selfid;
+
+	u_int8_t sc_csr[CSR_SB_END];
+
+	struct fwohci_uidtbl *sc_uidtbl;
+	u_int16_t sc_nodeid;
+	u_int8_t sc_irmid;
+	u_int8_t sc_rootid;
 };
 
 int fwohci_init __P((struct fwohci_softc *));
 int fwohci_intr __P((void *));
+int fwohci_print __P((void *, const char *));
 
 /* Macros to read and write the OHCI registers
  */

@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_ifattach.c,v 1.31 2000/10/01 10:56:02 itojun Exp $	*/
+/*	$NetBSD: in6_ifattach.c,v 1.32 2000/11/05 17:17:16 onoe Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.67 2000/10/01 10:51:54 itojun Exp $	*/
 
 /*
@@ -161,7 +161,11 @@ found:
 	case IFT_ETHER:
 	case IFT_FDDI:
 	case IFT_ATM:
+	case IFT_IEEE1394:
 		/* IEEE802/EUI64 cases - what others? */
+		/* IEEE1394 uses 16byte length address starting with EUI64 */
+		if (addrlen > 8)
+			addrlen = 8;
 
 		/* look at IEEE802/EUI64 only */
 		if (addrlen != 8 && addrlen != 6)
@@ -446,6 +450,7 @@ in6_ifattach_addaddr(ifp, ia)
 		case IFT_ARCNET:
 		case IFT_ETHER:
 		case IFT_FDDI:
+		case IFT_IEEE1394:
 #else
 		default:
 #endif

@@ -1,9 +1,11 @@
-/*-
+/*	$NetBSD: if_ieee1394arp.h,v 1.1 2000/11/05 17:17:16 onoe Exp $	*/
+
+/*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by 
+ * by Atsushi Onoe.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -15,8 +17,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
  * 4. Neither the name of The NetBSD Foundation nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
@@ -34,27 +36,20 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _DEV_IEEE1394_IEEE1394VAR_H_
-#define _DEV_IEEE1394_IEEE1394VAR_H_
+#ifndef _NETINET_IF_IEEE1394ARP_H_
+#define _NETINET_IF_IEEE1394ARP_H_
 
-struct ieee1394_softc {
-	struct device sc1394_dev;
-	struct device *sc1394_if;
-
-	u_int32_t sc1394_max_receive;
-	u_int8_t sc1394_guid[8];
-	u_int8_t sc1394_link_speed;	/* IEEE1394_SPD_* */
-	u_int16_t sc1394_node_id;	/* my node id in network order */
-
-	int (*sc1394_ifoutput)(struct device *, struct mbuf *,
-	    void (*)(struct device *, struct mbuf *));
-	int (*sc1394_ifinreg)(struct device *, u_int32_t, u_int32_t,
-	    void (*)(struct device *, struct mbuf *));
+struct ieee1394_arp {
+	struct arphdr	iar_arp;
+	struct ieee1394_hwaddr	iar_sha;
+	u_int32_t	iar_sip;
+	u_int32_t	iar_tip;
 };
 
-int ieee1394_init __P((struct ieee1394_softc *));
+void ieee1394arp_rtrequest(int, struct rtentry *, struct sockaddr *);
+int  ieee1394arpresolve(struct ifnet *, struct rtentry *, struct mbuf *,
+	struct sockaddr *, struct ieee1394_hwaddr *);
+void in_ieee1394arpinput(struct mbuf *);
+void ieee1394arp_ifinit(struct ifnet *, struct ifaddr *);
 
-#define	IEEE1394_ARGTYPE_PTR	0
-#define	IEEE1394_ARGTYPE_MBUF	1
-
-#endif	/* _DEV_IEEE1394_IEEE1394VAR_H_ */
+#endif /* _NETINET_IF_IEEE1394ARP_H_ */
