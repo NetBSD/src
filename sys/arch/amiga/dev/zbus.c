@@ -1,4 +1,4 @@
-/*	$NetBSD: zbus.c,v 1.5 1995/07/04 18:06:44 chopps Exp $	*/
+/*	$NetBSD: zbus.c,v 1.6 1995/08/18 15:28:19 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -55,6 +55,7 @@ struct preconfdata {
  */
 static struct aconfdata aconftab[] = {
 	/* Commodore Amiga */
+	{ "atfsc",	514,	84 },
 	{ "atzee",	513,	1 },
 	{ "atzsc",	514,	3 },
 	{ "le",		514,	112 },
@@ -86,7 +87,9 @@ static struct aconfdata aconftab[] = {
 	{ "vhzsc",	1010,	69 },
 	/* Supra */
 	{ "wstsc",	1056,	12 },
+	{ "wstsc",	1056,	13 },
 	/* IVS */
+	{ "itrmp",	2112,	48 },
 	{ "itrmp",	2112,	52 },
 	{ "ivasc",	2112,	242 },
 	{ "ivsc",	2112,	243 },

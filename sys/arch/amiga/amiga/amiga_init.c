@@ -1,4 +1,4 @@
-/*	$NetBSD: amiga_init.c,v 1.29 1995/05/11 23:04:31 chopps Exp $	*/
+/*	$NetBSD: amiga_init.c,v 1.30 1995/08/18 15:27:29 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -222,7 +222,7 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags)
 			if (sp->ms_start == fphystart)
 				continue;
 			z2mem_end = sp->ms_start + sp->ms_size;
-			z2mem_start = z2mem_end - MAXPHYS * use_z2_mem;
+			z2mem_start = z2mem_end - MAXPHYS * use_z2_mem * 7;
 			NZTWOMEMPG = (z2mem_end - z2mem_start) / NBPG;
 			if ((z2mem_end - z2mem_start) > sp->ms_size) {
 				NZTWOMEMPG = sp->ms_size / NBPG;
@@ -277,7 +277,7 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags)
 	avail -= vstart;
 
 #ifdef M68040
-	if (cpu040) {
+	if (mmutype == MMU_68040) {
 		/*
 		 * allocate the kernel 1st level segment table
 		 */
@@ -349,7 +349,7 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags)
 	 * initialize segment table and page table map
 	 */
 #ifdef M68040
-	if (cpu040) {
+	if (mmutype == MMU_68040) {
 		sg_proto = Sysseg_pa | SG_RW | SG_V;
 		/*
 		 * map all level 1 entries to the segment table
@@ -426,7 +426,7 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags)
 	 */
 	pg_proto = (pg_proto & PG_FRAME) | PG_RW | PG_V;
 #ifdef M68040
-	if (cpu040)
+	if (mmutype == MMU_68040)
 		pg_proto |= PG_CCB;
 #endif
 	/*
@@ -543,7 +543,7 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags)
 	 * prepare to enable the MMU
 	 */
 #ifdef M68040
-	if (cpu040) {
+	if (mmutype == MMU_68040) {
 		/*
 		 * movel Sysseg1_pa,a0;
 		 * movec a0,SRP;

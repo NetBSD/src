@@ -1,4 +1,4 @@
-/*	$NetBSD: atzsc.c,v 1.11 1995/02/12 19:19:02 chopps Exp $	*/
+/*	$NetBSD: atzsc.c,v 1.12 1995/08/18 15:27:49 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -77,7 +77,7 @@ struct scsi_device atzsc_scsidev = {
 
 
 #ifdef DEBUG
-void	atzsc_dmatimeout __P((void *));
+void	atzsc_dmatimeout __P((struct sbic_softc *));
 int	atzsc_dmadebug = 0;
 #endif
 
@@ -134,38 +134,39 @@ atzscattach(pdp, dp, auxp)
 
 #ifdef DEBUG
 	/* make sure timeout is really not needed */
-	timeout(atzsc_dmatimeout, 0, 30 * hz);
+	timeout((void *)atzsc_dmatimeout, sc, 30 * hz);
 #endif
 	/*
 	 * only 24 bit mem.
 	 */
 	sc->sc_flags |= SBICF_BADDMA;
 	sc->sc_dmamask = ~0x00ffffff;
+#if 0
 	/*
 	 * If the users kva space is not ztwo try and allocate a bounce buffer. 
 	 * XXX this needs to change if we move to multiple memory segments.
 	 */
 	if (kvtop(sc) & sc->sc_dmamask) {
-		sc->sc_dmabuffer = (char *)alloc_z2mem(MAXPHYS);
+		sc->sc_dmabuffer = (char *)alloc_z2mem(MAXPHYS * 8); /* XXX */
 		if (isztwomem(sc->sc_dmabuffer))
 			printf(" bounce pa 0x%x", kvtop(sc->sc_dmabuffer));
 		else if (sc->sc_dmabuffer)
 			printf(" bounce pa 0x%x",
 			    PREP_DMA_MEM(sc->sc_dmabuffer));
 	}
+#endif
 	sc->sc_sbicp = (sbic_regmap_p) ((int)rp + 0x91);
 	sc->sc_clkfreq = sbic_clock_override ? sbic_clock_override : 77;
 	
 	printf(": dmamask 0x%x\n", ~sc->sc_dmamask);
 
-	sbicreset(sc);
-
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.adapter_target = 7;
 	sc->sc_link.adapter = &atzsc_scsiswitch;
 	sc->sc_link.device = &atzsc_scsidev;
-	sc->sc_link.openings = 1;
-	TAILQ_INIT(&sc->sc_xslist);
+	sc->sc_link.openings = 2;
+
+	sbicinit(sc);
 
 	sc->sc_isr.isr_intr = atzsc_dmaintr;
 	sc->sc_isr.isr_arg = sc;
@@ -378,26 +379,19 @@ atzsc_dmanext(dev)
 #ifdef DEBUG
 /*ARGSUSED*/
 void
-atzsc_dmatimeout(arg)
-	void *arg;
+atzsc_dmatimeout(sc)
+	struct sbic_softc *sc;
 {
-	struct sbic_softc *dev;
-	int i, s;
+	int s;
 
-	for (i = 0; i < atzsccd.cd_ndevs; i++) {
-		dev = atzsccd.cd_devs[i];
-		if (dev == NULL)
-			continue;
-
-		s = splbio();
-		if (dev->sc_dmatimo) {
-			if (dev->sc_dmatimo > 1)
-				printf("atzsc_dma%d: timeout #%d\n", 
-				    dev->sc_dev.dv_unit, dev->sc_dmatimo - 1);
-			dev->sc_dmatimo++;
-		}
-		splx(s);
+	s = splbio();
+	if (sc->sc_dmatimo) {
+		if (sc->sc_dmatimo > 1)
+			printf("%s: dma timeout #%d\n", 
+			    sc->sc_dev.dv_xname, sc->sc_dmatimo - 1);
+		sc->sc_dmatimo++;
 	}
-	timeout(atzsc_dmatimeout, 0, 30 * hz);
+	splx(s);
+	timeout((void *)atzsc_dmatimeout, sc, 30 * hz);
 }
 #endif
