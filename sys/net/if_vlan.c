@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.26.2.2 2000/12/31 20:14:32 jhawk Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.26.2.3 2004/04/07 21:55:22 jmc Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -840,7 +840,7 @@ vlan_input(struct ifnet *ifp, struct mbuf *m)
 	if (ifv == NULL ||
 	    (ifv->ifv_if.if_flags & (IFF_UP|IFF_RUNNING)) !=
 	     (IFF_UP|IFF_RUNNING)) {
-		m_free(m);
+		m_freem(m);
 		ifp->if_noproto++;
 		return;
 	}
