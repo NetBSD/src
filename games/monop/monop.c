@@ -1,4 +1,4 @@
-/*	$NetBSD: monop.c,v 1.11 2000/05/08 07:56:04 mycroft Exp $	*/
+/*	$NetBSD: monop.c,v 1.12 2001/09/18 18:15:49 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)monop.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: monop.c,v 1.11 2000/05/08 07:56:04 mycroft Exp $");
+__RCSID("$NetBSD: monop.c,v 1.12 2001/09/18 18:15:49 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -187,7 +187,7 @@ again:
 }
 
 /*
- *	This routine initalizes the monopoly structures.
+ *	This routine initializes the monopoly structures.
  */
 static void
 init_monops() 

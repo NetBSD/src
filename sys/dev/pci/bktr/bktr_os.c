@@ -1,4 +1,4 @@
-/*	$NetBSD: bktr_os.c,v 1.19 2001/03/15 21:59:09 ross Exp $	*/
+/*	$NetBSD: bktr_os.c,v 1.20 2001/09/18 18:15:52 wiz Exp $	*/
 
 /* FreeBSD: src/sys/dev/bktr/bktr_os.c,v 1.20 2000/10/20 08:16:53 roger Exp */
 
@@ -572,7 +572,7 @@ bktr_open( dev_t dev, int flags, int fmt, struct proc *p )
 		return (ENXIO);
 	}
 
-	if (!(bktr->flags & METEOR_INITALIZED)) /* device not found */
+	if (!(bktr->flags & METEOR_INITIALIZED)) /* device not found */
 		return( ENXIO );	
 
 	/* Record that the device is now busy */
@@ -1073,7 +1073,7 @@ bktr_open( dev_t dev, int flags, int fmt, struct proc *p )
 
 	bktr = &(brooktree[ unit ]);
 
-	if (!(bktr->flags & METEOR_INITALIZED)) /* device not found */
+	if (!(bktr->flags & METEOR_INITIALIZED)) /* device not found */
 		return( ENXIO );	
 
 
@@ -1625,7 +1625,7 @@ bktr_open(dev_t dev, int flags, int fmt, struct proc *p)
 
 	bktr = bktr_cd.cd_devs[unit];
 
-	if (!(bktr->flags & METEOR_INITALIZED)) /* device not found */
+	if (!(bktr->flags & METEOR_INITIALIZED)) /* device not found */
 		return(ENXIO);	
 
 	switch (FUNCTION(dev)) {
