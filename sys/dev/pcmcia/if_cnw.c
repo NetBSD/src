@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cnw.c,v 1.11 2000/06/05 23:06:31 gmcgarry Exp $	*/
+/*	$NetBSD: if_cnw.c,v 1.12 2000/07/05 18:42:19 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -172,8 +172,15 @@ int cnw_skey = CNW_SCRAMBLEKEY;		/* Scramble key */
  * We can que a second packet if there are transmit buffers available,
  * but we do not actually send the packet until the last packet has
  * been written.
-#define	ONE_AT_A_TIME
  */
+#define	ONE_AT_A_TIME
+
+/*
+ * Netwave cards choke if we try to use io memory address >= 0x400.
+ * Even though, CIS tuple does not talk about this.
+ * Use memory mapped access.
+ */
+#define MEMORY_MAPPED
 
 int	cnw_match __P((struct device *, struct cfdata *, void *));
 void	cnw_attach __P((struct device *, struct device *, void *));
@@ -190,10 +197,12 @@ struct cnw_softc {
 
 	/* PCMCIA-specific stuff */
 	struct pcmcia_function *sc_pf;	    /* PCMCIA function */
+#ifndef MEMORY_MAPPED
 	struct pcmcia_io_handle sc_pcioh;   /* PCMCIA I/O space handle */
 	int sc_iowin;			    /*   ...window */
 	bus_space_tag_t sc_iot;		    /*   ...bus_space tag */
 	bus_space_handle_t sc_ioh;	    /*   ...bus_space handle */
+#endif
 	struct pcmcia_mem_handle sc_pcmemh; /* PCMCIA memory handle */
 	bus_addr_t sc_memoff;		    /*   ...offset */
 	int sc_memwin;			    /*   ...window */
@@ -250,7 +259,12 @@ wait_WOC(sc, line)
 	int i, asr;
 
 	for (i = 0; i < 5000; i++) {
+#ifndef MEMORY_MAPPED
 		asr = bus_space_read_1(sc->sc_iot, sc->sc_ioh, CNW_REG_ASR);
+#else
+		asr = bus_space_read_1(sc->sc_memt, sc->sc_memh,
+		    sc->sc_memoff + CNW_IOM_OFF + CNW_REG_ASR);
+#endif
 		if (asr & CNW_ASR_WOC)
 			return (0);
 		DELAY(100);
@@ -337,10 +351,20 @@ cnw_reset(sc)
 		printf("%s: resetting\n", sc->sc_dev.dv_xname);
 #endif
 	wait_WOC(sc, 0);
+#ifndef MEMORY_MAPPED
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, CNW_REG_PMR, CNW_PMR_RESET);
+#eles
+	bus_space_write_1(sc->sc_memt, sc->sc_meh,
+	    sc->sc_memoff + CNW_IOM_OFF + CNW_REG_PMR, CNW_PMR_RESET);
+#endif
 	bus_space_write_1(sc->sc_memt, sc->sc_memh,
 	    sc->sc_memoff + CNW_EREG_ASCC, CNW_ASR_WOC);
+#ifndef MEMORY_MAPPED
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, CNW_REG_PMR, 0);
+#else
+	bus_space_write_1(sc->sc_memt, sc->sc_memh,
+	    sc->sc_memoff + CNW_IOM_OFF + CNW_REG_PMR, 0);
+#endif
 }
 
 
@@ -376,16 +400,28 @@ cnw_init(sc)
 
 	/* Enable interrupts */
 	WAIT_WOC(sc);
+#ifndef MEMORY_MAPPED
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh,
 	    CNW_REG_IMR, CNW_IMR_IENA | CNW_IMR_RFU1);
+#else
+	bus_space_write_1(sc->sc_memt, sc->sc_memh,
+	    sc->sc_memoff + CNW_IOM_OFF + CNW_REG_IMR,
+	    CNW_IMR_IENA | CNW_IMR_RFU1);
+#endif
 
 	/* Enable receiver */
 	CNW_CMD0(sc, CNW_CMD_ER);
 
 	/* "Set the IENA bit in COR" */
 	WAIT_WOC(sc);
+#ifndef MEMORY_MAPPED
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, CNW_REG_COR,
 	    CNW_COR_IENA | CNW_COR_LVLREQ);
+#else
+	bus_space_write_1(sc->sc_memt, sc->sc_memh,
+	    sc->sc_memoff + CNW_IOM_OFF + CNW_REG_COR,
+	    CNW_COR_IENA | CNW_COR_LVLREQ);
+#endif
 }
 
 
@@ -473,6 +509,7 @@ cnw_attach(parent, self, aux)
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	u_int8_t macaddr[ETHER_ADDR_LEN];
 	int i;
+	bus_size_t memsize;
 
 	sc->sc_resource = 0;
 
@@ -486,6 +523,7 @@ cnw_attach(parent, self, aux)
 	sc->sc_resource |= CNW_RES_PCIC;
 
 	/* Map I/O register and "memory" */
+#ifndef MEMORY_MAPPED
 	if (pcmcia_io_alloc(sc->sc_pf, 0, CNW_IO_SIZE, CNW_IO_SIZE,
 	    &sc->sc_pcioh) != 0) {
 		printf(": can't allocate i/o space\n");
@@ -500,12 +538,18 @@ cnw_attach(parent, self, aux)
 	sc->sc_iot = sc->sc_pcioh.iot;
 	sc->sc_ioh = sc->sc_pcioh.ioh;
 	sc->sc_resource |= CNW_RES_IO;
+#endif
 	if (pcmcia_mem_alloc(sc->sc_pf, CNW_MEM_SIZE, &sc->sc_pcmemh) != 0) {
 		printf(": can't allocate memory\n");
 		goto fail;
 	}
+#ifndef MEMORY_MAPPED
+	memsize = CNW_MEM_SIZE;
+#else
+	memsize = CNW_MEM_SIZE + CNW_IOM_SIZE;
+#endif
 	if (pcmcia_mem_map(sc->sc_pf, PCMCIA_WIDTH_MEM8|PCMCIA_MEM_COMMON,
-	    CNW_MEM_ADDR, CNW_MEM_SIZE, &sc->sc_pcmemh, &sc->sc_memoff,
+	    CNW_MEM_ADDR, memsize, &sc->sc_pcmemh, &sc->sc_memoff,
 	    &sc->sc_memwin) != 0) {
 		printf(": can't map memory\n");
 		pcmcia_mem_free(sc->sc_pf, &sc->sc_pcmemh);
@@ -561,11 +605,13 @@ cnw_attach(parent, self, aux)
 	return;
 
 fail:
+#ifndef MEMORY_MAPPED
 	if ((sc->sc_resource & CNW_RES_IO) != 0) {
 		pcmcia_io_unmap(sc->sc_pf, sc->sc_iowin);
 		pcmcia_io_free(sc->sc_pf, &sc->sc_pcioh);
 		sc->sc_resource &= ~CNW_RES_IO;
 	}
+#endif
 	if ((sc->sc_resource & CNW_RES_PCIC) != 0) {
 		pcmcia_function_disable(sc->sc_pf);
 		sc->sc_resource &= ~CNW_RES_PCIC;
@@ -638,7 +684,12 @@ cnw_start(ifp)
 
 		/* Is there any buffer space available on the card? */
 		WAIT_WOC(sc);
+#ifndef MEMORY_MAPPED
 		asr = bus_space_read_1(sc->sc_iot, sc->sc_ioh, CNW_REG_ASR);
+#else
+		asr = bus_space_read_1(sc->sc_memt, sc->sc_memh,
+		    sc->sc_memoff + CNW_IOM_OFF + CNW_REG_ASR);
+#endif
 		if (!(asr & CNW_ASR_TXBA)) {
 #ifdef CNW_DEBUG
 			if (sc->sc_ethercom.ec_if.if_flags & IFF_DEBUG)
@@ -889,15 +940,26 @@ cnw_intr(arg)
 	ret = 0;
 	for (;;) {
 		WAIT_WOC(sc);
-		if (!(bus_space_read_1(sc->sc_iot, sc->sc_ioh,
-		    CNW_REG_CCSR) & 0x02)) {
+#ifndef MEMORY_MAPPED
+		status = bus_space_read_1(sc->sc_iot, sc->sc_ioh,
+		    CNW_REG_CCSR);
+#else
+		status = bus_space_read_1(sc->sc_memt, sc->sc_memh,
+		    sc->sc_memoff + CNW_IOM_OFF + CNW_REG_CCSR);
+#endif
+		if (!(status & 0x02)) {
 			if (ret == 0)
 				printf("%s: spurious interrupt\n",
 				    sc->sc_dev.dv_xname);
 			return (ret);
 		}
 		ret = 1;
+#ifndef MEMORY_MAPPED
 		status = bus_space_read_1(sc->sc_iot, sc->sc_ioh, CNW_REG_ASR);
+#else
+		status = bus_space_read_1(sc->sc_memt, sc->sc_memh,
+		    sc->sc_memoff + CNW_IOM_OFF + CNW_REG_ASR);
+#endif
 
 		/* Anything to receive? */
 		if (status & CNW_ASR_RXRDY) {
@@ -1191,11 +1253,13 @@ cnw_detach(self, flags)
 		if_detach(ifp);
 	}
 
+#ifndef MEMORY_MAPPED
 	/* unmap and free our i/o windows */
 	if ((sc->sc_resource & CNW_RES_IO) != 0) {
 		pcmcia_io_unmap(sc->sc_pf, sc->sc_iowin);
 		pcmcia_io_free(sc->sc_pf, &sc->sc_pcioh);
 	}
+#endif
 
 	/* unmap and free our memory windows */
 	if ((sc->sc_resource & CNW_RES_MEM) != 0) {
