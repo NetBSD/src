@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.106 2000/11/13 11:50:46 itojun Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.107 2000/11/13 11:52:41 itojun Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.106 2000/11/13 11:50:46 itojun Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.107 2000/11/13 11:52:41 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -2439,11 +2439,19 @@ extended_port(const char *arg)
 parsefail:
 	reply(500, "Invalid argument, rejected.");
 	usedefault = 1;
+	if (tmp != NULL)
+		free(tmp);
+	if (res)
+		freeaddrinfo(res);
 	return -1;
 
 protounsupp:
 	epsv_protounsupp("Protocol not supported");
 	usedefault = 1;
+	if (tmp != NULL)
+		free(tmp);
+	if (res)
+		freeaddrinfo(res);
 	return -1;
 #else
 	reply(500, "Invalid argument, rejected.");
