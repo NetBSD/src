@@ -1,0 +1,34 @@
+#	$NetBSD: Makefile.mbr,v 1.1 2003/04/28 12:19:05 dsl Exp $
+
+S=	${.CURDIR}/../../../../../
+
+NOMAN=	# defined
+STRIPFLAG=
+
+.include <bsd.own.mk>
+
+SRCS?= mbr.S
+
+BINDIR=	/usr/mdec
+BINMODE=444
+
+.PATH:	${.CURDIR}/..
+
+LDFLAGS+= -e start
+CPPFLAGS+= -I ${.CURDIR}/../../lib
+
+.if ${MACHINE} == "amd64"
+LDFLAGS+=  -m elf_i386
+AFLAGS+=   -m32
+.endif
+
+CLEANFILES+= ${PROG}.tmp
+
+${PROG}: ${OBJS}
+	${LD} -o ${PROG}.tmp ${LDFLAGS} -Ttext 0x600 ${OBJS}
+	@ set -- $$( ${NM} -t d ${PROG}.tmp | grep '\<mbr_space\>' ); \
+		echo "#### There are $$(($$1)) free bytes in ${PROG}"
+	${OBJCOPY} -O binary ${PROG}.tmp ${PROG}
+	rm -f ${PROG}.tmp
+
+.include <bsd.prog.mk>
