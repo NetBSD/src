@@ -1,4 +1,4 @@
-/*	$NetBSD: i4b_capi_l4if.c,v 1.3 2003/10/03 16:38:44 pooka Exp $	*/
+/*	$NetBSD: i4b_capi_l4if.c,v 1.4 2003/10/03 16:47:57 pooka Exp $	*/
 
 /*
  * Copyright (c) 2001-2003 Cubical Solutions Ltd. All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_capi_l4if.c,v 1.3 2003/10/03 16:38:44 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_capi_l4if.c,v 1.4 2003/10/03 16:47:57 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -267,10 +267,9 @@ static void
 n_connect_response(call_desc_t *cd, int response, int cause)
 {
     capi_softc_t *sc;
-    int bch, s;
+    int s;
 
     sc = cd->l3drv->l1_token;
-    bch = cd->channelid;
 
     T400_stop(cd);
 
@@ -292,10 +291,9 @@ static void
 n_disconnect_request(call_desc_t *cd, int cause)
 {
     capi_softc_t *sc;
-    int bch, s;
+    int s;
 
     sc = cd->l3drv->l1_token;
-    bch = cd->channelid;
 
     cd->cause_out = cause;
 
