@@ -1,4 +1,4 @@
-/*	$NetBSD: com_vrip.c,v 1.3 2000/02/11 03:20:21 takemura Exp $	*/
+/*	$NetBSD: com_vrip.c,v 1.4 2000/07/20 21:03:38 jeffs Exp $	*/
 
 /*-
  * Copyright (c) 1999 SASAKI Takesi. All rights reserved.
@@ -126,11 +126,12 @@ find_comenableport_from_cfdata(int *port)
 }
 
 int
-com_vrip_cnattach(iot, iobase, rate, frequency, cflag)
+com_vrip_cndb_attach(iot, iobase, rate, frequency, cflag, kgdb)
 	bus_space_tag_t iot;
 	int iobase;
 	int rate, frequency;
 	tcflag_t cflag;
+	int kgdb;
 {
 	int port;
 	/* Platform dependent setting */
@@ -140,7 +141,12 @@ com_vrip_cnattach(iot, iobase, rate, frequency, cflag)
 
 	if (!com_vrip_common_probe(iot, iobase))
 		return (EIO);	/* I can't find appropriate error number. */
-	return (comcnattach(iot, iobase, rate, frequency, cflag));
+#ifdef KGDB
+	if (kgdb)
+		return (com_kgdb_attach(iot, iobase, rate, frequency, cflag));
+	else
+#endif
+		return (comcnattach(iot, iobase, rate, frequency, cflag));
 }
 
 static int

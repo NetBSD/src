@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.29 2000/07/14 18:35:39 jeffs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.30 2000/07/20 21:03:37 jeffs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.29 2000/07/14 18:35:39 jeffs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.30 2000/07/20 21:03:37 jeffs Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 #include "opt_vr41x1.h"
@@ -71,6 +71,10 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.29 2000/07/14 18:35:39 jeffs Exp $");
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 #include <sys/kcore.h>
+
+#ifdef KGDB
+#include <sys/kgdb.h>
+#endif
 
 #include <uvm/uvm_extern.h>
 
@@ -390,12 +394,19 @@ mach_init(argc, argv, bi)
 	/* Setup interrupt handler */
 	(*platform.os_init)();
 
-	/* Initialize console. */
+	/* Initialize console and KGDB serial port. */
 	(*platform.cons_init)();
 
+#if defined(DDB) || defined(KGDB)
+	if (boothowto & RB_KDB) {
 #ifdef DDB
-	if (boothowto & RB_KDB)
 		Debugger();
+#endif
+#ifdef KGDB
+		kgdb_debug_init = 1;
+		kgdb_connect(1);
+#endif
+	}
 #endif
 
 	/* Find physical memory regions. */
