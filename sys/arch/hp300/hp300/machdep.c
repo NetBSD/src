@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.103 1998/01/24 16:46:33 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.104 1998/02/08 18:37:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -191,6 +191,17 @@ void
 hp300_init()
 {
 	int i;
+
+#if defined(MACHINE_NEW_NONCONTIG)
+	extern vm_offset_t avail_start, avail_end;
+
+	/*
+	 * Tell the VM system about available physical memory.  The
+	 * hp300 only has one segment.
+	 */
+	vm_page_physload(atop(avail_start), atop(avail_end),
+	    atop(avail_start), atop(avail_end));
+#endif
 
 	/* Initialize the interrupt handlers. */
 	intr_init();
@@ -823,16 +834,10 @@ cpu_init_kcore_hdr()
 	m->relocend = (u_int32_t)end;
 
 	/*
-	 * hp300 has one contiguous memory segment.  Note,
-	 * RAM size is physmem + 1 to account for the msgbuf
-	 * page.
-	 *
-	 * XXX There's actually one more page... the last one mapped
-	 * XXX va == pa.  Should we dump it?  It's not really used
-	 * XXX for anything except to reboot and the MMU trampoline.
+	 * hp300 has one contiguous memory segment.
 	 */
 	m->ram_segs[0].start = lowram;
-	m->ram_segs[0].size  = ctob(physmem + 1);
+	m->ram_segs[0].size  = ctob(physmem);
 }
 
 /*
