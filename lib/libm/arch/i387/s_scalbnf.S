@@ -5,10 +5,11 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: s_scalbnf.S,v 1.3 1995/05/09 00:19:59 jtc Exp $")
+RCSID("$NetBSD: s_scalbnf.S,v 1.4 1999/01/02 05:15:40 kristerw Exp $")
 
 ENTRY(scalbnf)
 	fildl	8(%esp)
 	flds	4(%esp)
 	fscale
+	fstp	%st(1)		/* bug fix for fp stack overflow */
 	ret
