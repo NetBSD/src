@@ -149,6 +149,7 @@
 %{msparclite:-mcpu=sparclite} %{mf930:-mcpu=f930} %{mf934:-mcpu=f934} \
 %{mv8:-mcpu=v8} %{msupersparc:-mcpu=supersparc} \
 %{m32:-mptr32 -mcpu=cypress -mno-stack-bias} \
+%{!m32:%{p*:-mcmodel=medlow}} \
 "
 #endif
 
