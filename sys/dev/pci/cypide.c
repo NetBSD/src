@@ -1,5 +1,4 @@
-/*	$NetBSD: cypide.c,v 1.1 2003/10/08 11:51:59 bouyer Exp $	*/
-
+/*	$NetBSD: cypide.c,v 1.2 2003/10/11 17:40:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -31,7 +30,6 @@
  *
  */
 
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
@@ -43,16 +41,16 @@
 #include <dev/pci/pciide_cy693_reg.h>
 #include <dev/pci/cy82c693var.h>
 
-void cy693_chip_map __P((struct pciide_softc*, struct pci_attach_args*));
-void cy693_setup_channel __P((struct channel_softc*));
+static void cy693_chip_map(struct pciide_softc*, struct pci_attach_args*);
+static void cy693_setup_channel(struct channel_softc*);
 
-int	cypide_match __P((struct device *, struct cfdata *, void *));
-void	cypide_attach __P((struct device *, struct device *, void *));
+static int  cypide_match(struct device *, struct cfdata *, void *);
+static void cypide_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(cypide, sizeof(struct pciide_softc),
     cypide_match, cypide_attach, NULL, NULL);
 
-const struct pciide_product_desc pciide_cypress_products[] =  {
+static const struct pciide_product_desc pciide_cypress_products[] =  {
 	{ PCI_PRODUCT_CONTAQ_82C693,
 	  IDE_16BIT_IOSPACE,
 	  "Cypress 82C693 IDE Controller",
@@ -65,11 +63,8 @@ const struct pciide_product_desc pciide_cypress_products[] =  {
 	}
 };
 
-int
-cypide_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+static int
+cypide_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -80,10 +75,8 @@ cypide_match(parent, match, aux)
 	return (0);
 }
 
-void
-cypide_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+static void
+cypide_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	struct pciide_softc *sc = (struct pciide_softc *)self;
@@ -93,10 +86,8 @@ cypide_attach(parent, self, aux)
 
 }
 
-void
-cy693_chip_map(sc, pa)
-	struct pciide_softc *sc;
-	struct pci_attach_args *pa;
+static void
+cy693_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 {	 
 	struct pciide_channel *cp;
 	pcireg_t interface = PCI_INTERFACE(pa->pa_class);
@@ -180,9 +171,8 @@ cy693_chip_map(sc, pa)
 	wdcattach(&cp->wdc_channel);
 }
 
-void
-cy693_setup_channel(chp)
-	struct channel_softc *chp;
+static void
+cy693_setup_channel(struct channel_softc *chp)
 {
 	struct ata_drive_datas *drvp;
 	int drive;

@@ -1,4 +1,4 @@
-/*	$NetBSD: optiide.c,v 1.1 2003/10/08 11:51:59 bouyer Exp $	*/
+/*	$NetBSD: optiide.c,v 1.2 2003/10/11 17:40:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -45,16 +45,16 @@
 #include <dev/pci/pciidevar.h>
 #include <dev/pci/pciide_opti_reg.h>
 
-void opti_chip_map __P((struct pciide_softc*, struct pci_attach_args*));
-void opti_setup_channel __P((struct channel_softc*));
+static void opti_chip_map(struct pciide_softc*, struct pci_attach_args*);
+static void opti_setup_channel(struct channel_softc*);
 
-int	optiide_match __P((struct device *, struct cfdata *, void *));
-void	optiide_attach __P((struct device *, struct device *, void *));
+static int  optiide_match(struct device *, struct cfdata *, void *);
+static void optiide_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(optiide, sizeof(struct pciide_softc),
     optiide_match, optiide_attach, NULL, NULL);
 
-const struct pciide_product_desc pciide_opti_products[] =  {
+static const struct pciide_product_desc pciide_opti_products[] =  {
 	{ PCI_PRODUCT_OPTI_82C621,
 	  0,
 	  "OPTi 82c621 PCI IDE controller",
@@ -77,11 +77,8 @@ const struct pciide_product_desc pciide_opti_products[] =  {
 	}
 };
 
-int
-optiide_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+static int
+optiide_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -92,10 +89,8 @@ optiide_match(parent, match, aux)
 	return (0);
 }
 
-void
-optiide_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+static void
+optiide_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	struct pciide_softc *sc = (struct pciide_softc *)self;
@@ -105,10 +100,8 @@ optiide_attach(parent, self, aux)
 
 }
 
-void
-opti_chip_map(sc, pa)
-	struct pciide_softc *sc;
-	struct pci_attach_args *pa;
+static void
+opti_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 {
 	struct pciide_channel *cp;
 	bus_size_t cmdsize, ctlsize;
@@ -172,9 +165,8 @@ opti_chip_map(sc, pa)
 	}
 }
 
-void
-opti_setup_channel(chp)
-	struct channel_softc *chp;
+static void
+opti_setup_channel(struct channel_softc *chp)
 {
 	struct ata_drive_datas *drvp;
 	struct pciide_channel *cp = (struct pciide_channel*)chp;
