@@ -1,4 +1,4 @@
-#	$NetBSD: termcap.src,v 1.57 2000/04/28 21:59:15 mycroft Exp $
+#	$NetBSD: termcap.src,v 1.58 2000/04/28 23:39:46 mycroft Exp $
 #
 ######## TERMINAL TYPE DESCRIPTIONS SOURCE FILE
 #
@@ -907,12 +907,12 @@ x68k|x68k-ite|NetBSD/x68k ITE:\
 # after the manner of the pcvt entries.
 wsvt25|NetBSD wscons in 25 line DEC VT220 mode:\
 	:Co#16:NC#32:pa#256:ut:\
-	:AB=\E[4%dm:AF=\E[3%dm:op=\E[37;40m:\
+	:AB=\E[4%dm:AF=\E[3%dm:op=\E[m:\
 	:co#80:li#25:tc=vt220:
 
 wsvt25m|NetBSD wscons in 25 line DEC VT220 mode with Meta:\
 	:Co#16:NC#32:pa#256:ut:\
-	:AB=\E[4%dm:AF=\E[3%dm:op=\E[37;40m:\
+	:AB=\E[4%dm:AF=\E[3%dm:op=\E[m:\
 	:co#80:li#25:km:tc=vt220:
 
 #### FreeBSD console entries
@@ -1769,7 +1769,7 @@ xterm-xf86-v33|xterm terminal emulator (X Window System):\
 # This is one of the variants from XFree86 3.3 (T.Dickey)
 xterm-16color|xterm with 16 colors like aixterm:\
 	:Co#16:NC#32:pa#256:ut:\
-	:AB=\E[4%dm:AF=\E[3%dm:op=\E[37;40m:\
+	:AB=\E[4%dm:AF=\E[3%dm:op=\E[m:\
 	:tc=xterm-xf86-v33:
 
 # This is xterm for ncurses. It mainly adds mappings for more high-half
