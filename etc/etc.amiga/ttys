@@ -1,5 +1,5 @@
 #
-#	$NetBSD: ttys,v 1.14 1997/10/29 20:10:53 veego Exp $
+#	$NetBSD: ttys,v 1.15 1999/08/25 20:37:10 is Exp $
 #
 #	from: @(#)ttys	5.1 (Berkeley) 4/17/89
 #
@@ -7,15 +7,15 @@
 #
 # If the console is marked insecure, single-user requires
 # the root password.
-console	"/usr/libexec/getty Pc"		vt220	off secure 
-ttye0	"/usr/libexec/getty Pc"		vt220	on secure 	# custom chips
-ttye1	"/usr/libexec/getty Pc"		vt220	on secure 	# retina
-ttye2	"/usr/libexec/getty Pc"		vt220	on secure 	# retina
-ttye3	"/usr/libexec/getty Pc"		vt220	on secure 	# cirrus logic
-ttye4	"/usr/libexec/getty Pc"		vt220	on secure 	# a2410
-ttye5	"/usr/libexec/getty Pc"		vt220	on secure 	# CyberVision64
-ttye6	"/usr/libexec/getty Pc"		vt220	on secure 	# Domino, Merlin, oMniBus
-ttye7	"/usr/libexec/getty Pc"		vt220	on secure 	# CyberVision64/3D
+console	"/usr/libexec/getty Pc"		vt220	on secure 
+ttye0	"/usr/libexec/getty Pc"		vt220	off secure 	# custom chips
+ttye1	"/usr/libexec/getty Pc"		vt220	off secure 	# retina
+ttye2	"/usr/libexec/getty Pc"		vt220	off secure 	# retina
+ttye3	"/usr/libexec/getty Pc"		vt220	off secure 	# cirrus logic
+ttye4	"/usr/libexec/getty Pc"		vt220	off secure 	# a2410
+ttye5	"/usr/libexec/getty Pc"		vt220	off secure 	# CyberVision64
+ttye6	"/usr/libexec/getty Pc"		vt220	off secure 	# Domino, Merlin, oMniBus
+ttye7	"/usr/libexec/getty Pc"		vt220	off secure 	# CyberVision64/3D
 tty00	"/usr/libexec/getty std.9600"	unknown off secure	# int. serial.
 ttyp0	none			network
 ttyp1	none			network
