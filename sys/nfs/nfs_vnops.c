@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.195 2004/05/08 21:33:41 yamt Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.196 2004/05/08 21:35:13 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.195 2004/05/08 21:33:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.196 2004/05/08 21:35:13 yamt Exp $");
 
 #include "opt_nfs.h"
 #include "opt_uvmhist.h"
@@ -925,7 +925,8 @@ dorpc:
 	 * XXX although we have no way to know if O_EXCL is requested or not.
 	 */
 
-	if (v3 && cnp->cn_nameiop == CREATE && (flags & ISLASTCN) &&
+	if (v3 && cnp->cn_nameiop == CREATE &&
+	    (flags & (ISLASTCN|ISDOTDOT)) == ISLASTCN &&
 	    (dvp->v_mount->mnt_flag & MNT_RDONLY) == 0) {
 		KASSERT(lockparent);
 		cnp->cn_flags |= SAVENAME;
