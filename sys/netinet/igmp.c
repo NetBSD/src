@@ -1,4 +1,4 @@
-/*	$NetBSD: igmp.c,v 1.18 1998/02/13 18:21:40 tls Exp $	*/
+/*	$NetBSD: igmp.c,v 1.19 1999/01/19 23:03:20 mycroft Exp $	*/
 
 /*
  * Internet Group Management Protocol (IGMP) routines.
@@ -110,7 +110,6 @@ igmp_input(m, va_alist)
 	register struct ifnet *ifp = m->m_pkthdr.rcvif;
 	register struct ip *ip = mtod(m, struct ip *);
 	register struct igmp *igmp;
-	register int igmplen;
 	register int minlen;
 	struct in_multi *inm;
 	struct in_multistep step;
@@ -125,17 +124,15 @@ igmp_input(m, va_alist)
 
 	++igmpstat.igps_rcv_total;
 
-	igmplen = ip->ip_len;
-
 	/*
 	 * Validate lengths
 	 */
-	if (igmplen < IGMP_MINLEN) {
+	minlen = iphlen + IGMP_MINLEN;
+	if (ip->ip_len < minlen) {
 		++igmpstat.igps_rcv_tooshort;
 		m_freem(m);
 		return;
 	}
-	minlen = iphlen + IGMP_MINLEN;
 	if ((m->m_flags & M_EXT || m->m_len < minlen) &&
 	    (m = m_pullup(m, minlen)) == 0) {
 		++igmpstat.igps_rcv_tooshort;
@@ -148,7 +145,7 @@ igmp_input(m, va_alist)
 	m->m_data += iphlen;
 	m->m_len -= iphlen;
 	igmp = mtod(m, struct igmp *);
-	if (in_cksum(m, igmplen)) {
+	if (in_cksum(m, ip->ip_len - iphlen)) {
 		++igmpstat.igps_rcv_badsum;
 		m_freem(m);
 		return;

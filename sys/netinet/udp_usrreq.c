@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.46 1999/01/19 21:58:41 mycroft Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.47 1999/01/19 23:03:22 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993, 1995
@@ -143,13 +143,12 @@ udp_input(m, va_alist)
 	 * If not enough data to reflect UDP length, drop.
 	 */
 	len = ntohs((u_int16_t)uh->uh_ulen);
-	if (ip->ip_len != len) {
-		if (len > ip->ip_len) {
+	if (ip->ip_len != iphlen + len) {
+		if (ip->ip_len < iphlen + len) {
 			udpstat.udps_badlen++;
 			goto bad;
 		}
-		m_adj(m, len - ip->ip_len);
-		/* ip->ip_len = len; */
+		m_adj(m, iphlen + len - ip->ip_len);
 	}
 	/*
 	 * Save a copy of the IP header in case we want restore it
@@ -303,7 +302,6 @@ udp_input(m, va_alist)
 			/* It was a debugger connect packet, just drop it now */
 				goto bad;
 #endif
-			ip->ip_len += iphlen;
 			icmp_error(m, ICMP_UNREACH, ICMP_UNREACH_PORT, 0, 0);
 			return;
 		}

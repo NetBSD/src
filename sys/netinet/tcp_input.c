@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.73 1999/01/19 21:58:41 mycroft Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.74 1999/01/19 23:03:21 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -481,8 +481,8 @@ tcp_input(m, va_alist)
 	/*
 	 * Checksum extended TCP header and data.
 	 */
-	tlen = ((struct ip *)ti)->ip_len;
-	len = sizeof (struct ip) + tlen;
+	len = ((struct ip *)ti)->ip_len;
+	tlen = len - sizeof (struct ip);
 	bzero(ti->ti_x1, sizeof ti->ti_x1);
 	ti->ti_len = (u_int16_t)tlen;
 	HTONS(ti->ti_len);
