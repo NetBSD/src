@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.38 2002/06/10 17:30:16 itojun Exp $ */
+/*	$NetBSD: if_gre.c,v 1.39 2002/06/10 17:38:31 itojun Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.38 2002/06/10 17:30:16 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.39 2002/06/10 17:38:31 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -192,7 +192,7 @@ gre_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 	u_short etype = 0;
 	struct mobile_h mob_h;
 
-	if ((ifp->if_flags & IFF_UP) == 0 ||
+	if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) == 0 ||
 	    sc->g_src.s_addr == INADDR_ANY || sc->g_dst.s_addr == INADDR_ANY) {
 		m_freem(m);
 		error = ENETDOWN;
@@ -370,9 +370,6 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	case SIOCSIFFLAGS:
 		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
 			break;
-		if ((sc->g_dst.s_addr == INADDR_ANY) ||
-		    (sc->g_src.s_addr == INADDR_ANY))
-			ifp->if_flags &= ~IFF_UP;
 		if ((ifr->ifr_flags & IFF_LINK0) != 0)
 			sc->g_proto = IPPROTO_GRE;
 		else
@@ -446,7 +443,9 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			if (sc->route.ro_rt != 0) /* free old route */
 				RTFREE(sc->route.ro_rt);
 			if (gre_compute_route(sc) == 0)
-				ifp->if_flags |= IFF_UP;
+				ifp->if_flags |= IFF_RUNNING;
+			else
+				ifp->if_flags &= ~IFF_RUNNING;
 		}
 		break;
 	case GREGADDRS:
