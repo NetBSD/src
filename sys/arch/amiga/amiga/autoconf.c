@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: autoconf.c,v 1.23 1994/06/13 08:12:30 chopps Exp $
+ *	$Id: autoconf.c,v 1.24 1994/06/22 16:19:55 chopps Exp $
  */
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -198,7 +198,7 @@ mbattach(pdp, dp, auxp)
 	config_found(dp, "kbd", simple_devprint);
 	config_found(dp, "grfcc", simple_devprint);
 	config_found(dp, "fdc", simple_devprint);
-	if (is_a4000())
+	if (is_a4000() || is_a1200())
 		config_found(dp, "idesc", simple_devprint);
 	config_found(dp, "ztwobus", simple_devprint);
 	if (is_a3000())
@@ -374,6 +374,9 @@ is_a4000()
 {
 	if ((machineid >> 16) == 4000)
 		return (1);		/* It's an A4000 */
+	if ((machineid >> 16) == 1200)
+		return (0);		/* It's an A1200, so not A4000 */
+	/* Do I need this any more? */
 	if ((custom.deniseid & 0xff) == 0xf8)
 		return (1);
 #ifdef DEBUG
@@ -383,4 +386,12 @@ is_a4000()
 	if (machineid >> 16)
 		return (0);		/* It's not an A4000 */
 	return (a4000_flag);		/* Machine type not set */
+}
+
+int
+is_a1200()
+{
+	if ((machineid >> 16) == 1200)
+		return (1);		/* It's an A1200 */
+	return (0);			/* Machine type not set */
 }
