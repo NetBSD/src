@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.9 2005/02/20 15:56:03 jdolecek Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.10 2005/02/23 09:19:38 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -143,11 +143,6 @@
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
 
-/*
- * Default to using PIO access for this driver.
- */
-#define RE_USEIOSPACE
-
 #include <dev/ic/rtl81x9reg.h>
 #include <dev/ic/rtl81x9var.h>
 
@@ -184,23 +179,6 @@ static void re_miibus_writereg(struct device *, int, int, int);
 static void re_miibus_statchg(struct device *);
 
 static void re_reset(struct rtk_softc *);
-
-
-#ifdef RE_USEIOSPACE
-#define RTK_RES			SYS_RES_IOPORT
-#define RTK_RID			RTK_PCI_LOIO
-#else
-#define RTK_RES			SYS_RES_MEMORY
-#define RTK_RID			RTK_PCI_LOMEM
-#endif
-
-#define EE_SET(x)					\
-	CSR_WRITE_1(sc, RTK_EECMD,			\
-		CSR_READ_1(sc, RTK_EECMD) | x)
-
-#define EE_CLR(x)					\
-	CSR_WRITE_1(sc, RTK_EECMD,			\
-		CSR_READ_1(sc, RTK_EECMD) & ~x)
 
 static int
 re_gmii_readreg(struct device *self, int phy, int reg)
