@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.71 2004/01/03 10:28:18 sekiya Exp $	*/
+/*	$NetBSD: machdep.c,v 1.72 2004/01/12 12:32:00 sekiya Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.71 2004/01/03 10:28:18 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.72 2004/01/12 12:32:00 sekiya Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -894,6 +894,7 @@ void ddb_trap_hook(int where)
 
 void mips_machdep_cache_config(void)
 {
+#if defined(MIPS3)
 	volatile u_int32_t cpu_config;
 
 	arcbios_tree_walk(mips_machdep_find_l2cache, NULL);
@@ -940,6 +941,7 @@ void mips_machdep_cache_config(void)
 		printf("Don't know how to configure SC on this platform.\n");
 		break;
 	}
+#endif
 }
 
 void
