@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.h,v 1.39 2004/02/10 01:30:49 matt Exp $	*/
+/*	$NetBSD: uvm_map.h,v 1.40 2005/01/01 21:00:06 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -86,8 +86,8 @@
  * => map must be locked by caller
  */
 
-#define UVM_MAP_CLIP_START(MAP,ENTRY,VA) { \
-	if ((VA) > (ENTRY)->start) uvm_map_clip_start(MAP,ENTRY,VA); }
+#define UVM_MAP_CLIP_START(MAP,ENTRY,VA,UMR) { \
+	if ((VA) > (ENTRY)->start) uvm_map_clip_start(MAP,ENTRY,VA,UMR); }
 
 /*
  * UVM_MAP_CLIP_END: ensure that the entry ends at or before
@@ -96,8 +96,8 @@
  * => map must be locked by caller
  */
 
-#define UVM_MAP_CLIP_END(MAP,ENTRY,VA) { \
-	if ((VA) < (ENTRY)->end) uvm_map_clip_end(MAP,ENTRY,VA); }
+#define UVM_MAP_CLIP_END(MAP,ENTRY,VA,UMR) { \
+	if ((VA) < (ENTRY)->end) uvm_map_clip_end(MAP,ENTRY,VA,UMR); }
 
 /*
  * extract flags
@@ -142,8 +142,11 @@ struct vm_map_entry {
 #define uvm_map_entry_stop_copy flags
 	u_int8_t		flags;		/* flags */
 
-#define UVM_MAP_STATIC		0x01		/* static map entry */
-#define UVM_MAP_KMEM		0x02		/* from kmem entry pool */
+#define	UVM_MAP_KERNEL		0x01		/* kernel map entry */
+#define	UVM_MAP_KMAPENT		0x02		/* contains map entries */
+#define	UVM_MAP_FIRST		0x04		/* the first special entry */
+#define	UVM_MAP_QUANTUM		0x08		/* allocated with
+						 * UVM_FLAG_QUANTUM */
 #define	UVM_MAP_NOMERGE		0x10		/* this entry is not mergable */
 
 };
@@ -226,6 +229,11 @@ struct vm_map {
 	int			flags;		/* flags */
 	struct simplelock	flags_lock;	/* Lock for flags field */
 	unsigned int		timestamp;	/* Version number */
+	LIST_HEAD(, uvm_kmapent_hdr) kentry_free; /* Freelist of map entry */
+
+	struct vm_map_entry	*merged_entries;/* Merged entries, kept for
+						 * later splitting */
+
 #define	min_offset		header.end
 #define	max_offset		header.start
 };
@@ -239,15 +247,28 @@ struct vm_map {
 #define	VM_MAP_DYING		0x20		/* rw: map is being destroyed */
 #define	VM_MAP_TOPDOWN		0x40		/* ro: arrange map top-down */
 
-/* XXX: number of kernel maps and entries to statically allocate */
+#ifdef _KERNEL
+struct uvm_mapent_reservation {
+	struct vm_map_entry *umr_entries[2];
+	int umr_nentries;
+};
+#define	UMR_EMPTY(umr)		((umr) == NULL || (umr)->umr_nentries == 0)
+#define	UMR_GETENTRY(umr)	((umr)->umr_entries[--(umr)->umr_nentries])
+#define	UMR_PUTENTRY(umr, ent)	\
+	(umr)->umr_entries[(umr)->umr_nentries++] = (ent)
 
-#if !defined(MAX_KMAPENT)
-#if (50 + (2 * NPROC) > 1000)
-#define MAX_KMAPENT (50 + (2 * NPROC))
-#else
-#define	MAX_KMAPENT	1000  /* XXXCDC: no crash */
-#endif
-#endif	/* !defined MAX_KMAPENT */
+struct uvm_map_args {
+	struct vm_map_entry *uma_prev;
+
+	vaddr_t uma_start;
+	vsize_t uma_size;
+
+	struct uvm_object *uma_uobj;
+	voff_t uma_uoffset;
+
+	uvm_flag_t uma_flags;
+};
+#endif /* _KERNEL */
 
 #ifdef _KERNEL
 #define	vm_map_modflags(map, set, clear)				\
@@ -287,9 +308,9 @@ void		uvm_map_deallocate(struct vm_map *);
 
 int		uvm_map_clean(struct vm_map *, vaddr_t, vaddr_t, int);
 void		uvm_map_clip_start(struct vm_map *, struct vm_map_entry *,
-		    vaddr_t);
+		    vaddr_t, struct uvm_mapent_reservation *);
 void		uvm_map_clip_end(struct vm_map *, struct vm_map_entry *,
-		    vaddr_t);
+		    vaddr_t, struct uvm_mapent_reservation *);
 MAP_INLINE
 struct vm_map	*uvm_map_create(pmap_t, vaddr_t, vaddr_t, int);
 int		uvm_map_extract(struct vm_map *, vaddr_t, vsize_t,
@@ -316,7 +337,19 @@ MAP_INLINE
 void		uvm_unmap(struct vm_map *, vaddr_t, vaddr_t);
 void		uvm_unmap_detach(struct vm_map_entry *,int);
 void		uvm_unmap_remove(struct vm_map *, vaddr_t, vaddr_t,
-		    struct vm_map_entry **);
+		    struct vm_map_entry **, struct uvm_mapent_reservation *);
+
+int		uvm_map_prepare(struct vm_map *, vaddr_t, vsize_t,
+		    struct uvm_object *, voff_t, vsize_t, uvm_flag_t,
+		    struct uvm_map_args *);
+int		uvm_map_enter(struct vm_map *, const struct uvm_map_args *,
+		    struct vm_map_entry *);
+
+int		uvm_mapent_reserve(struct vm_map *,
+		    struct uvm_mapent_reservation *, int, int);
+void		uvm_mapent_unreserve(struct vm_map *,
+		    struct uvm_mapent_reservation *);
+
 
 #endif /* _KERNEL */
 
@@ -464,6 +497,7 @@ do {									\
 	if (oflags & VM_MAP_WANTLOCK)					\
 		wakeup(&(map)->flags);					\
 } while (/*CONSTCOND*/ 0)
+
 #endif /* _KERNEL */
 
 /*
