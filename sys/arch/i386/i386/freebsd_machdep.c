@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_machdep.c,v 1.12 1996/10/13 03:19:42 christos Exp $	*/
+/*	$NetBSD: freebsd_machdep.c,v 1.12.12.1 1997/09/08 23:35:25 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996 Charles M. Hannum.  All rights reserved.
@@ -84,6 +84,7 @@ freebsd_sendsig(catcher, sig, mask, code)
 	register struct trapframe *tf;
 	struct freebsd_sigframe *fp, frame;
 	struct sigacts *psp = p->p_sigacts;
+	struct sigaction *sa = &psp->ps_sigact[sig];
 	int oonstack;
 	extern char freebsd_sigcode[], freebsd_esigcode[];
 
@@ -93,16 +94,16 @@ freebsd_sendsig(catcher, sig, mask, code)
 	frame.sf_signum = sig;
 
 	tf = p->p_md.md_regs;
-	oonstack = psp->ps_sigstk.ss_flags & SS_ONSTACK;
+	oonstack = p->p_sigstk.ss_flags & SS_ONSTACK;
 
 	/*
 	 * Allocate space for the signal handler context.
 	 */
 	if ((psp->ps_flags & SAS_ALTSTACK) && !oonstack &&
-	    (psp->ps_sigonstack & sigmask(sig))) {
-		fp = (struct freebsd_sigframe *)(psp->ps_sigstk.ss_sp +
-		    psp->ps_sigstk.ss_size - sizeof(struct freebsd_sigframe));
-		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
+	    (sa->sa_flags & SA_ONSTACK)) {
+		fp = (struct freebsd_sigframe *)(p->p_sigstk.ss_sp +
+		    p->p_sigstk.ss_size - sizeof(struct freebsd_sigframe));
+		p->p_sigstk.ss_flags |= SS_ONSTACK;
 	} else {
 		fp = (struct freebsd_sigframe *)tf->tf_esp - 1;
 	}
@@ -236,9 +237,9 @@ freebsd_sys_sigreturn(p, v, retval)
 	tf->tf_ss = context.sc_ss;
 
 	if (context.sc_onstack & 01)
-		p->p_sigacts->ps_sigstk.ss_flags |= SS_ONSTACK;
+		p->p_sigstk.ss_flags |= SS_ONSTACK;
 	else
-		p->p_sigacts->ps_sigstk.ss_flags &= ~SS_ONSTACK;
+		p->p_sigstk.ss_flags &= ~SS_ONSTACK;
 	p->p_sigmask = context.sc_mask & ~sigcantmask;
 
 	return (EJUSTRETURN);

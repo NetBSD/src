@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.55 1997/07/08 16:56:36 kleink Exp $	*/
+/*	$NetBSD: trap.c,v 1.55.4.1 1997/09/08 23:33:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -356,10 +356,8 @@ trap(type, code, v, frame)
 		printf("pid %d: kernel %s exception\n", p->p_pid,
 		       type==T_COPERR ? "coprocessor" : "format");
 		type |= T_USER;
-		p->p_sigacts->ps_sigact[SIGILL] = SIG_DFL;
+		SIGACTION(p, SIGILL) = SIG_DFL;
 		i = sigmask(SIGILL);
-		p->p_sigignore &= ~i;
-		p->p_sigcatch &= ~i;
 		p->p_sigmask &= ~i;
 		i = SIGILL;
 		ucode = frame.f_format;	/* XXX was ILL_RESAD_FAULT */

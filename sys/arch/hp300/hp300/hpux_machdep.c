@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_machdep.c,v 1.13 1997/04/27 21:38:57 thorpej Exp $	*/
+/*	$NetBSD: hpux_machdep.c,v 1.13.6.1 1997/09/08 23:33:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Jason R. Thorpe.  All rights reserved.
@@ -387,13 +387,14 @@ hpux_sendsig(catcher, sig, mask, code)
 	struct hpuxsigframe *kfp, *fp;
 	struct frame *frame;
 	struct sigacts *psp = p->p_sigacts;
+	struct sigaction *sa = &psp->ps_sigact[sig];
 	short ft;
 	int oonstack, fsize;
 	extern char sigcode[], esigcode[];
 
 	frame = (struct frame *)p->p_md.md_regs;
 	ft = frame->f_format;
-	oonstack = psp->ps_sigstk.ss_flags & SS_ONSTACK;
+	oonstack = p->p_sigstk.ss_flags & SS_ONSTACK;
 
 	/*
 	 * Allocate and validate space for the signal handler
@@ -404,10 +405,10 @@ hpux_sendsig(catcher, sig, mask, code)
 	 */
 	fsize = sizeof(struct hpuxsigframe);
 	if ((psp->ps_flags & SAS_ALTSTACK) && !oonstack &&
-	    (psp->ps_sigonstack & sigmask(sig))) {
-		fp = (struct hpuxsigframe *)(psp->ps_sigstk.ss_sp +
-		    psp->ps_sigstk.ss_size - fsize);
-		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
+	    (sa->sa_flags & SA_ONSTACK)) {
+		fp = (struct hpuxsigframe *)(p->p_sigstk.ss_sp +
+		    p->p_sigstk.ss_size - fsize);
+		p->p_sigstk.ss_flags |= SS_ONSTACK;
 	} else
 		fp = (struct hpuxsigframe *)(frame->f_regs[SP] - fsize);
 	if ((unsigned)fp <= USRSTACK - ctob(p->p_vmspace->vm_ssize)) 
@@ -431,8 +432,6 @@ hpux_sendsig(catcher, sig, mask, code)
 		 */
 		SIGACTION(p, SIGILL) = SIG_DFL;
 		sig = sigmask(SIGILL);
-		p->p_sigignore &= ~sig;
-		p->p_sigcatch &= ~sig;
 		p->p_sigmask &= ~sig;
 		psignal(p, SIGILL);
 		return;
@@ -588,9 +587,9 @@ hpux_sys_sigreturn(p, v, retval)
 	 * Restore the user supplied information
 	 */
 	if (scp->hsc_onstack & 01)
-		p->p_sigacts->ps_sigstk.ss_flags |= SS_ONSTACK;
+		p->p_sigstk.ss_flags |= SS_ONSTACK;
 	else
-		p->p_sigacts->ps_sigstk.ss_flags &= ~SS_ONSTACK;
+		p->p_sigstk.ss_flags &= ~SS_ONSTACK;
 	p->p_sigmask = scp->hsc_mask &~ sigcantmask;
 	frame = (struct frame *) p->p_md.md_regs;
 	frame->f_regs[SP] = scp->hsc_sp;
