@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.c,v 1.34 2002/07/13 20:54:57 oster Exp $	*/
+/*	$NetBSD: rf_reconstruct.c,v 1.35 2002/09/09 02:44:17 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.34 2002/07/13 20:54:57 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.35 2002/09/09 02:44:17 oster Exp $");
 
 #include <sys/time.h>
 #include <sys/buf.h>
@@ -454,7 +454,9 @@ rf_ReconstructInPlace(raidPtr, row, col)
 			RF_UNLOCK_MUTEX(raidPtr->mutex);
 			return (EINVAL);
 		}
-
+		if (raidPtr->Disks[row][col].status == rf_ds_spared) {
+			return (EINVAL);
+		}
 
 		if (raidPtr->Disks[row][col].status != rf_ds_failed) {
 			/* "It's gone..." */
