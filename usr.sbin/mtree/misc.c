@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.18 2001/10/22 07:07:46 lukem Exp $	*/
+/*	$NetBSD: misc.c,v 1.19 2001/11/03 12:51:41 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: misc.c,v 1.18 2001/10/22 07:07:46 lukem Exp $");
+__RCSID("$NetBSD: misc.c,v 1.19 2001/11/03 12:51:41 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -153,9 +153,9 @@ mtree_err(const char *fmt, ...)
 	va_start(ap, fmt);
 	vwarnx(fmt, ap);
 	va_end(ap);
-	if (lineno)
+	if (mtree_lineno)
 		warnx("failed at line %lu of the specification",
-		    (u_long) lineno);
+		    (u_long) mtree_lineno);
 	exit(1);
 	/* NOTREACHED */
 }
