@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.2 2000/02/08 16:53:37 tron Exp $
+#	$NetBSD: Makefile,v 1.3 2000/03/15 16:25:58 tron Exp $
 #	install these sources in /usr/share/sendmail
 
 .include <bsd.own.mk>
 
 DIST=		${.CURDIR}/../../../dist
-.PATH: ${DIST}/sendmail
+.PATH: ${DIST}/sendmail/cf ${DIST}/sendmail
 
 .if ${MKSHARE} != "no"
 FILESDIR=	/usr/share/sendmail
