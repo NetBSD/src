@@ -1,11 +1,11 @@
-/*	$NetBSD: plist.c,v 1.11 1998/10/08 12:58:00 agc Exp $	*/
+/*	$NetBSD: plist.c,v 1.12 1998/10/09 18:27:35 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: plist.c,v 1.24 1997/10/08 07:48:15 charnier Exp";
 #else
-__RCSID("$NetBSD: plist.c,v 1.11 1998/10/08 12:58:00 agc Exp $");
+__RCSID("$NetBSD: plist.c,v 1.12 1998/10/09 18:27:35 agc Exp $");
 #endif
 #endif
 
@@ -33,88 +33,83 @@ __RCSID("$NetBSD: plist.c,v 1.11 1998/10/08 12:58:00 agc Exp $");
 #include <err.h>
 #include <md5.h>
 
-/* Add an item to a packing list */
+/* Add an item to the end of a packing list */
 void
-add_plist(Package *p, plist_t type, char *arg)
+add_plist(package_t *p, pl_ent_t type, char *arg)
 {
-    PackingList tmp;
+	plist_t *tmp;
 
-    tmp = new_plist_entry();
-    tmp->name = copy_string(arg);
-    tmp->type = type;
-
-    if (!p->head)
-	p->head = p->tail = tmp;
-    else {
-	tmp->prev = p->tail;
-	p->tail->next = tmp;
-	p->tail = tmp;
-    }
+	tmp = new_plist_entry();
+	tmp->name = copy_string(arg);
+	tmp->type = type;
+	if (!p->head) {
+		p->head = p->tail = tmp;
+	} else {
+		tmp->prev = p->tail;
+		p->tail->next = tmp;
+		p->tail = tmp;
+	}
 }
 
+/* add an item to the start of a packing list */
 void
-add_plist_top(Package *p, plist_t type, char *arg)
+add_plist_top(package_t *p, pl_ent_t type, char *arg)
 {
-    PackingList tmp;
+	plist_t *tmp;
 
-    tmp = new_plist_entry();
-    tmp->name = copy_string(arg);
-    tmp->type = type;
-
-    if (!p->head)
-	p->head = p->tail = tmp;
-    else {
-	tmp->next = p->head;
-	p->head->prev = tmp;
-	p->head = tmp;
-    }
+	tmp = new_plist_entry();
+	tmp->name = copy_string(arg);
+	tmp->type = type;
+	if (!p->head) {
+		p->head = p->tail = tmp;
+	} else {
+		tmp->next = p->head;
+		p->head->prev = tmp;
+		p->head = tmp;
+	}
 }
 
 /* Return the last (most recent) entry in a packing list */
-PackingList
-last_plist(Package *p)
+plist_t *
+last_plist(package_t *p)
 {
-    return p->tail;
+	return p->tail;
 }
 
 /* Mark all items in a packing list to prevent iteration over them */
 void
-mark_plist(Package *pkg)
+mark_plist(package_t *pkg)
 {
-    PackingList p = pkg->head;
+	plist_t	*pp;
 
-    while (p) {
-	p->marked = TRUE;
-	p = p->next;
-    }
+	for (pp = pkg->head ; pp ; pp = pp->next) {
+		pp->marked = TRUE;
+	}
 }
 
 /* Find a given item in a packing list and, if so, return it (else NULL) */
-PackingList
-find_plist(Package *pkg, plist_t type)
+plist_t *
+find_plist(package_t *pkg, pl_ent_t type)
 {
-    PackingList p = pkg->head;
+	plist_t	*pp;
 
-    while (p) {
-	if (p->type == type)
-	    return p;
-	p = p->next;
-    }
-    return NULL;
+	for (pp = pkg->head ; pp && pp->type != type ; pp = pp->next) {
+	}
+	return pp;
 }
 
 /* Look for a specific boolean option argument in the list */
 char *
-find_plist_option(Package *pkg, char *name)
+find_plist_option(package_t *pkg, char *name)
 {
-    PackingList p = pkg->head;
+	plist_t *p = pkg->head;
 
-    while (p) {
-	if (p->type == PLIST_OPTION && !strcmp(p->name, name))
-	    return p->name;
-	p = p->next;
-    }
-    return NULL;
+	while (p) {
+		if (p->type == PLIST_OPTION && !strcmp(p->name, name))
+			return p->name;
+		p = p->next;
+	}
+	return NULL;
 }
 
 /*
@@ -122,12 +117,12 @@ find_plist_option(Package *pkg, char *name)
  * too.)  If 'all' is set, delete all items, not just the first occurance.
  */
 void
-delete_plist(Package *pkg, Boolean all, plist_t type, char *name)
+delete_plist(package_t *pkg, Boolean all, pl_ent_t type, char *name)
 {
-    PackingList p = pkg->head;
+    plist_t *p = pkg->head;
 
     while (p) {
-	PackingList pnext = p->next;
+	plist_t *pnext = p->next;
 
 	if (p->type == type && (!name || !strcmp(name, p->name))) {
 	    free(p->name);
@@ -150,24 +145,24 @@ delete_plist(Package *pkg, Boolean all, plist_t type, char *name)
 }
 
 /* Allocate a new packing list entry */
-PackingList
+plist_t *
 new_plist_entry(void)
 {
-    PackingList ret;
+    plist_t *ret;
 
-    ret = (PackingList)malloc(sizeof(struct _plist));
-    memset(ret, 0, sizeof(struct _plist));
+    ret = (plist_t *)malloc(sizeof(plist_t));
+    memset(ret, 0, sizeof(plist_t));
     return ret;
 }
 
 /* Free an entire packing list */
 void
-free_plist(Package *pkg)
+free_plist(package_t *pkg)
 {
-    PackingList p = pkg->head;
+    plist_t *p = pkg->head;
 
     while (p) {
-	PackingList p1 = p->next;
+	plist_t *p1 = p->next;
 
 	free(p->name);
 	free(p);
@@ -176,6 +171,35 @@ free_plist(Package *pkg)
     pkg->head = pkg->tail = NULL;
 }
 
+/* this struct defines a plist command type */
+typedef struct cmd_t {
+	char		*c_s;		/* string to recognise */
+	pl_ent_t	c_type;		/* type of command */
+} cmd_t;
+
+/* commands to recognise */
+static cmd_t	cmdv[] = {
+	{	"cwd",		PLIST_CWD		},
+	{	"src",		PLIST_SRC		},
+	{	"cd",		PLIST_CWD		},
+	{	"exec",		PLIST_CMD		},
+	{	"unexec",	PLIST_UNEXEC		},
+	{	"mode",		PLIST_CHMOD		},
+	{	"owner",	PLIST_CHOWN		},
+	{	"group",	PLIST_CHGRP		},
+	{	"comment",	PLIST_COMMENT		},
+	{	"ignore",	PLIST_IGNORE		},
+	{	"ignore_inst",	PLIST_IGNORE_INST	},
+	{	"name",		PLIST_NAME		},
+	{	"display",	PLIST_DISPLAY		},
+	{	"pkgdep",	PLIST_PKGDEP		},
+	{	"pkgcfl",	PLIST_PKGCFL		},
+	{	"mtree",	PLIST_MTREE		},
+	{	"dirrm",	PLIST_DIR_RM		},
+	{	"option",	PLIST_OPTION		},
+	{	NULL,		FAIL			}
+};
+
 /*
  * For an ascii string denoting a plist command, return its code and
  * optionally its argument(s)
@@ -183,67 +207,31 @@ free_plist(Package *pkg)
 int
 plist_cmd(char *s, char **arg)
 {
-    char cmd[FILENAME_MAX + 20];	/* 20 == fudge for max cmd len */
-    char *cp, *sp;
+	cmd_t	*cmdp;
+	char	cmd[FILENAME_MAX + 20];	/* 20 == fudge for max cmd len */
+	char	*cp;
+	char	*sp;
 
-    strcpy(cmd, s);
-    str_lowercase(cmd);
-    cp = cmd;
-    sp = s;
-    while (*cp) {
-	if (isspace(*cp)) {
-	    *cp = '\0';
-	    while (isspace(*sp)) /* Never sure if macro, increment later */
-		++sp;
-	    break;
+	(void) strcpy(cmd, s);
+	str_lowercase(cmd);
+	for (cp = cmd, sp = s ; *cp ; cp++, sp++) {
+		if (isspace(*cp)) {
+			for (*cp = '\0'; isspace(*sp) ; sp++) {
+			}
+			break;
+		}
 	}
-	++cp, ++sp;
-    }
-    if (arg)
-	*arg = sp;
-    if (!strcmp(cmd, "cwd"))
-	return PLIST_CWD;
-    else if (!strcmp(cmd, "srcdir"))
-	return PLIST_SRC;
-    else if (!strcmp(cmd, "cd"))
-	return PLIST_CWD;
-    else if (!strcmp(cmd, "exec"))
-	return PLIST_CMD;
-    else if (!strcmp(cmd, "unexec"))
-	return PLIST_UNEXEC;
-    else if (!strcmp(cmd, "mode"))
-	return PLIST_CHMOD;
-    else if (!strcmp(cmd, "owner"))
-	return PLIST_CHOWN;
-    else if (!strcmp(cmd, "group"))
-	return PLIST_CHGRP;
-    else if (!strcmp(cmd, "comment"))
-	return PLIST_COMMENT;
-    else if (!strcmp(cmd, "ignore"))
-	return PLIST_IGNORE;
-    else if (!strcmp(cmd, "ignore_inst"))
-	return PLIST_IGNORE_INST;
-    else if (!strcmp(cmd, "name"))
-	return PLIST_NAME;
-    else if (!strcmp(cmd, "display"))
-	return PLIST_DISPLAY;
-    else if (!strcmp(cmd, "pkgdep"))
-	return PLIST_PKGDEP;
-    else if (!strcmp(cmd, "pkgcfl"))
-	return PLIST_PKGCFL;
-    else if (!strcmp(cmd, "mtree"))
-	return PLIST_MTREE;
-    else if (!strcmp(cmd, "dirrm"))
-	return PLIST_DIR_RM;
-    else if (!strcmp(cmd, "option"))
-	return PLIST_OPTION;
-    else
-	return FAIL;
+	if (arg) {
+		*arg = sp;
+	}
+	for (cmdp = cmdv ; cmdp->c_s && strcmp(cmdp->c_s, cmd) != 0 ; cmdp++) {
+	}
+	return cmdp->c_type;
 }
 
 /* Read a packing list from a file */
 void
-read_plist(Package *pkg, FILE *fp)
+read_plist(package_t *pkg, FILE *fp)
 {
     char *cp, pline[FILENAME_MAX];
     int cmd;
@@ -273,9 +261,9 @@ read_plist(Package *pkg, FILE *fp)
 
 /* Write a packing list to a file, converting commands to ascii equivs */
 void
-write_plist(Package *pkg, FILE *fp)
+write_plist(package_t *pkg, FILE *fp)
 {
-    PackingList plist = pkg->head;
+    plist_t *plist = pkg->head;
 
     while (plist) {
 	switch(plist->type) {
@@ -364,9 +352,9 @@ write_plist(Package *pkg, FILE *fp)
  * run it too in cases of failure.
  */
 int
-delete_package(Boolean ign_err, Boolean nukedirs, Package *pkg)
+delete_package(Boolean ign_err, Boolean nukedirs, package_t *pkg)
 {
-    PackingList p;
+    plist_t *p;
     char *Where = ".", *last_file = "";
     int fail = SUCCESS;
     Boolean preserve;
@@ -408,7 +396,7 @@ delete_package(Boolean ign_err, Boolean nukedirs, Package *pkg)
 	    }
 	    else {
 		if (p->next && p->next->type == PLIST_COMMENT && !strncmp(p->next->name, "MD5:", 4)) {
-		    char *cp, buf[33];
+		    char *cp, buf[LegibleChecksumLen];
 
 		    if ((cp = MD5File(tmp, buf)) != NULL) {
 			/* Mismatch? */
