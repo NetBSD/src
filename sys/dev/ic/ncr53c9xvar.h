@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9xvar.h,v 1.13 1998/05/26 23:17:34 thorpej Exp $	*/
+/*	$NetBSD: ncr53c9xvar.h,v 1.14 1998/09/01 22:22:03 jeremy Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -286,7 +286,7 @@ struct ncr53c9x_softc {
 	size_t	sc_cmdlen;	/* Size of command in transit */
 
 	/* hardware/openprom stuff */
-	int sc_freq;				/* Freq in HZ */
+	int sc_freq;				/* Freq in MHz */
 	int sc_id;				/* our scsi id */
 	int sc_rev;				/* esp revision */
 	int sc_features;			/* chip features */
