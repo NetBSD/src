@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.64 2000/10/11 23:47:56 fvdl Exp $	*/
+/*	$NetBSD: net.c,v 1.65 2000/12/17 22:55:53 jmc Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -856,6 +856,8 @@ mnt_net_config(void)
 {
 	char ans [5] = "y";
 	char ifconfig_fn [STRSIZE];
+        char to [STRSIZE];
+        char cmd [STRSIZE];
 	FILE *f;
 
 	if (!network_up)
@@ -940,8 +942,21 @@ mnt_net_config(void)
 			}
 			fclose(f);
 		}
-	}
-
+	} else {
+                strncpy(to, target_expand("/etc/rc.conf"), STRSIZE);
+                sprintf(cmd, "echo dhclient=YES >> %s", to);
+                if (logging)
+                        (void)fprintf(log, "%s\n", cmd);
+                if (scripting)
+                        (void)fprintf(script, "%s\n", cmd);
+                do_system(cmd);
+                sprintf(cmd, "echo dhclient_flags=\"%s\" >> %s", net_dev, to);
+                if (logging)
+                        (void)fprintf(log, "%s\n", cmd);
+                if (scripting)
+                        (void)fprintf(script, "%s\n", cmd);
+                do_system(cmd);
+        }
 	fflush(NULL);
 }
 
