@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_pci.c,v 1.32 2000/01/26 16:51:11 thorpej Exp $	*/
+/*	$NetBSD: if_tlp_pci.c,v 1.33 2000/03/07 00:39:18 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -246,26 +246,6 @@ const struct tlp_pci_quirks tlp_pci_21142_quirks[] = {
 	{ NULL,				{ 0, 0, 0 } }
 };
 
-/*
- * Even more disgusting... some 21143 implementations (namely Cobalt's)
- * which should have a 8-address-bit SROM actually only have a
- * 6-address-bit SROM (even though it's rev 4.1!).  Broken!  This
- * quirk detects that.
- */
-#define	TPSQ_NOMATCH			0
-#define	TPSQ_CONTINUE			1
-#define	TPSQ_READ_AGAIN_AND_CONTINUE	2
-
-typedef	int (*tlp_pci_srom_quirk_t) __P((struct tulip_pci_softc *));
-
-int	tlp_pci_cobalt_21143_srom_quirks __P((struct tulip_pci_softc *));
-int	tlp_pci_21143_srom_quirks __P((struct tulip_pci_softc *));
-
-tlp_pci_srom_quirk_t tlp_pci_21143_srom_quirks_list[] = {
-	tlp_pci_cobalt_21143_srom_quirks,
-	tlp_pci_21143_srom_quirks,		/* MUST BE AT THE END */
-};
-
 int	tlp_pci_shared_intr __P((void *));
 
 const struct tulip_pci_product *tlp_pci_lookup
@@ -392,13 +372,6 @@ tlp_pci_attach(parent, self, aux)
 	 * followed by a 4 byte pad).
 	 */
 	sc->sc_regshift = 3;
-
-	/*
-	 * Some chips have a 128 byte SROM (6 address bits), and some
-	 * have a 512 byte SROM (8 address bits).  Default to 6; we'll
-	 * adjust below.
-	 */
-	sc->sc_srom_addrbits = 6;
 
 	/*
 	 * Get revision info, and set some chip-specific variables.
@@ -568,12 +541,12 @@ tlp_pci_attach(parent, self, aux)
 	/*
 	 * Read the contents of the Ethernet Address ROM/SROM.
 	 */
- read_srom_again:
-	memset(sc->sc_srom, 0, sizeof(sc->sc_srom));
 	switch (sc->sc_chip) {
 	case TULIP_CHIP_21040:
+		sc->sc_srom_addrbits = 6;
+		sc->sc_srom = malloc(TULIP_ROM_SIZE(6), M_DEVBUF, M_NOWAIT);
 		TULIP_WRITE(sc, CSR_MIIROM, MIIROM_SROMCS);
-		for (i = 0; i < TULIP_ROM_SIZE(sc->sc_srom_addrbits); i++) {
+		for (i = 0; i < TULIP_ROM_SIZE(6); i++) {
 			for (j = 0; j < 10000; j++) {
 				val = TULIP_READ(sc, CSR_MIIROM);
 				if ((val & MIIROM_DN) == 0)
@@ -586,16 +559,17 @@ tlp_pci_attach(parent, self, aux)
 	case TULIP_CHIP_82C168:
 	case TULIP_CHIP_82C169:
 	    {
-		u_int16_t *rombuf = (u_int16_t *)sc->sc_srom;
+		sc->sc_srom_addrbits = 2;
+		sc->sc_srom = malloc(TULIP_ROM_SIZE(2), M_DEVBUF, M_NOWAIT);
 
 		/*
 		 * The Lite-On PNIC stores the Ethernet address in
 		 * the first 3 words of the EEPROM.  EEPROM access
 		 * is not like the other Tulip chips.
 		 */
-		for (i = 0; i < 3; i++) {
+		for (i = 0; i < 6; i += 2) {
 			TULIP_WRITE(sc, CSR_PNIC_SROMCTL,
-			    PNIC_SROMCTL_READ | i);
+			    PNIC_SROMCTL_READ | (i >> 1));
 			for (j = 0; j < 500; j++) {
 				delay(2);
 				val = TULIP_READ(sc, CSR_MIIROM);
@@ -607,23 +581,17 @@ tlp_pci_attach(parent, self, aux)
 				    sc->sc_dev.dv_xname);
 				return;
 			}
-			rombuf[i] = bswap16(val & PNIC_MIIROM_DATA);
+			val &= PNIC_MIIROM_DATA;
+			sc->sc_srom[i] = val >> 8;
+			sc->sc_srom[i + 1] = val & 0xff;
 		}
 		break;
 	    }
 
 	default:
-		tlp_read_srom(sc, 0, TULIP_ROM_SIZE(sc->sc_srom_addrbits) >> 1,
-		    sc->sc_srom);
-#if 0
-		printf("SROM CONTENTS:");
-		for (i = 0; i < TULIP_ROM_SIZE(sc->sc_srom_addrbits); i++) {
-			if ((i % 8) == 0)
-				printf("\n\t");
-			printf("0x%02x ", sc->sc_srom[i]);
-		}
-		printf("\n");
-#endif
+		if (tlp_read_srom(sc) == 0)
+			goto cant_cope;
+		break;
 	}
 
 	/*
@@ -643,11 +611,8 @@ tlp_pci_attach(parent, self, aux)
 		/*
 		 * Parse the Ethernet Address ROM.
 		 */
-		if (tlp_parse_old_srom(sc, enaddr) == 0) {
-			printf("%s: unable to decode Ethernet Address ROM\n",
-			    sc->sc_dev.dv_xname);
-			return;
-		}
+		if (tlp_parse_old_srom(sc, enaddr) == 0)
+			goto cant_cope;
 
 		/*
 		 * If we have a slaved ROM, adjust the Ethernet address.
@@ -682,11 +647,8 @@ tlp_pci_attach(parent, self, aux)
 			 * Not an ISV SROM; try the old DEC Ethernet Address
 			 * ROM format.
 			 */
-			if (tlp_parse_old_srom(sc, enaddr) == 0) {
-				printf("%s: unable to decode Ethernet "
-				    "Address ROM\n", sc->sc_dev.dv_xname);
-				return;
-			}
+			if (tlp_parse_old_srom(sc, enaddr) == 0)
+				goto cant_cope;
 		}
 
 		/*
@@ -709,11 +671,8 @@ tlp_pci_attach(parent, self, aux)
 			 * Not an ISV SROM; try the old DEC Ethernet Address
 			 * ROM format.
 			 */
-			if (tlp_parse_old_srom(sc, enaddr) == 0) {
-				printf("%s: unable to decode Ethernet "
-				    "Address ROM\n", sc->sc_dev.dv_xname);
-				return;
-			}
+			if (tlp_parse_old_srom(sc, enaddr) == 0)
+				goto cant_cope;
 		} else {
 			/*
 			 * We start out with the 2114x ISV media switch.
@@ -739,37 +698,12 @@ tlp_pci_attach(parent, self, aux)
 	case TULIP_CHIP_21143:
 		/* Check for new format SROM. */
 		if (tlp_isv_srom_enaddr(sc, enaddr) == 0) {
-			if (sc->sc_chip == TULIP_CHIP_21143) {
-				tlp_pci_srom_quirk_t q;
-
-				/*
-				 * Check for SROM quirkiness.
-				 */
-				for (i = 0; sc->sc_srom_addrbits != 8; i++) {
-					q = tlp_pci_21143_srom_quirks_list[i];
-					switch ((*q)(psc)) {
-					case TPSQ_NOMATCH:
-						continue;
-
-					case TPSQ_CONTINUE:
-						break;
-
-					case TPSQ_READ_AGAIN_AND_CONTINUE:
-						goto read_srom_again;
-					}
-					break;	/* for TPSQ_CONTINUE */
-				}
-			}
-
 			/*
 			 * Not an ISV SROM; try the old DEC Ethernet Address
 			 * ROM format.
 			 */
-			if (tlp_parse_old_srom(sc, enaddr) == 0) {
-				printf("%s: unable to decode Ethernet "
-				    "Address ROM\n", sc->sc_dev.dv_xname);
-				return;
-			}
+			if (tlp_parse_old_srom(sc, enaddr) == 0)
+				goto cant_cope;
 		} else {
 			/*
 			 * We start out with the 2114x ISV media switch.
@@ -1157,43 +1091,4 @@ tlp_pci_cobalt_21142_quirks(psc, enaddr)
 	 * Cobalt Networks interfaces are just MII-on-SIO.
 	 */
 	sc->sc_mediasw = &tlp_sio_mii_mediasw;
-}
-
-int
-tlp_pci_cobalt_21143_srom_quirks(psc)
-	struct tulip_pci_softc *psc;
-{
-	struct tulip_softc *sc = &psc->sc_tulip;
-
-	/*
-	 * Check for broken Cobalt interface; pass 4.1 Tulip with
-	 * only 6-bit SROM and Ethernet address in first 6 bytes.
-	 */
-	if (sc->sc_srom[0] == 0x00 &&
-	    sc->sc_srom[1] == 0x10 &&
-	    sc->sc_srom[2] == 0xe0)
-		return (TPSQ_CONTINUE);
-
-	return (TPSQ_NOMATCH);
-}
-
-int
-tlp_pci_21143_srom_quirks(psc)
-	struct tulip_pci_softc *psc;
-{
-	struct tulip_softc *sc = &psc->sc_tulip;
-
-	/*
-	 * Pass 4.1 21143s are supposed to have an 8-address-bit SROM.
-	 * We need to read them again.
-	 */
-	if (sc->sc_rev >= 0x41) {
-		sc->sc_srom_addrbits = 8;
-		return (TPSQ_READ_AGAIN_AND_CONTINUE);
-	}
-
-	/*
-	 * ...otherwise, what we read is just fine.
-	 */
-	return (TPSQ_CONTINUE);
 }
