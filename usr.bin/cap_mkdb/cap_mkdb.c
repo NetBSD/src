@@ -1,4 +1,4 @@
-/*	$NetBSD: cap_mkdb.c,v 1.6 1997/10/18 12:31:08 lukem Exp $	*/
+/*	$NetBSD: cap_mkdb.c,v 1.7 1997/10/18 12:55:39 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)cap_mkdb.c	8.2 (Berkeley) 4/27/95";
 #endif
-__RCSID("$NetBSD: cap_mkdb.c,v 1.6 1997/10/18 12:31:08 lukem Exp $");
+__RCSID("$NetBSD: cap_mkdb.c,v 1.7 1997/10/18 12:55:39 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -92,7 +92,7 @@ main(argc, argv)
 	int c;
 
 	capname = NULL;
-	while ((c = getopt(argc, argv, "f:v")) != EOF) {
+	while ((c = getopt(argc, argv, "f:v")) != -1) {
 		switch(c) {
 		case 'f':
 			capname = optarg;
