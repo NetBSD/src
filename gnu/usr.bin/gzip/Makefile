@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.7 1993/10/15 23:14:16 jtc Exp $
+#	$Id: Makefile,v 1.8 1993/10/23 01:13:46 jtc Exp $
 
 PROG=	gzip
 SRCS=	gzip.c zip.c deflate.c trees.c bits.c unzip.c inflate.c util.c \
@@ -9,9 +9,10 @@ CFLAGS+=-DASMV -DSTDC_HEADERS=1 -DHAVE_UNISTD_H=1 -DDIRENT=1
 LDADD+=	-lgnumalloc
 DPADD+=	/usr/lib/libgnumalloc.a
 
-MLINKS= gzip.1 gunzip.1  gzip.1 zcat.1  gzip.1 gzcat.1
+MLINKS= gzip.1 gunzip.1 gzip.1 gzcat.1 gzip.1 uncompress.1 gzip.1 zcat.1
 LINKS+= ${BINDIR}/gzip ${BINDIR}/gunzip
 LINKS+= ${BINDIR}/gzip ${BINDIR}/gzcat
+LINKS+=	${BINDIR}/gzip ${BINDIR}/uncompress
 LINKS+= ${BINDIR}/gzip ${BINDIR}/zcat
 
 afterinstall:
