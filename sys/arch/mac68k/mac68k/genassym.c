@@ -32,25 +32,23 @@
 */
 /*
  *	from: @(#)genassym.c	7.8 (Berkeley) 5/7/91
- *	$Id: genassym.c,v 1.7 1994/05/06 17:39:42 briggs Exp $
+ *	$Id: genassym.c,v 1.8 1994/06/26 13:13:54 briggs Exp $
  */
 
-#include "sys/param.h"
-#include "sys/buf.h"
-#include "sys/vmmeter.h"
-/* #include "sys/map.h" */
-#include "sys/proc.h"
-#include "sys/mbuf.h"
-#include "sys/msgbuf.h"
-#include "machine/cpu.h"
-#include "machine/trap.h"
-#include "machine/psl.h"
-#include "machine/reg.h"
+#include <sys/param.h>
+#include <sys/buf.h>
+#include <sys/proc.h>
+#include <sys/mbuf.h>
+#include <sys/msgbuf.h>
+#include <machine/cpu.h>
+#include <machine/trap.h>
+#include <machine/psl.h>
+#include <machine/reg.h>
 #include "clockreg.h"
-#include "sys/syscall.h"
-#include "vm/vm.h"
-#include "sys/user.h"
-#include "machine/pte.h"
+#include <sys/syscall.h>
+#include <vm/vm.h>
+#include <sys/user.h>
+#include <machine/pte.h>
 
 main()
 {
@@ -58,18 +56,19 @@ main()
 	register struct vmmeter *vm = (struct vmmeter *)0;
 	register struct user *up = (struct user *)0;
 	register struct rusage *rup = (struct rusage *)0;
+	register struct frame *frame = (struct frame *)0;
 	struct vmspace *vms = (struct vmspace *)0;
 	pmap_t pmap = (pmap_t)0;
 	struct pcb *pcb = (struct pcb *)0;
 	register unsigned i;
 
-	printf("#define\tP_LINK %d\n", &p->p_forw);
-	printf("#define\tP_RLINK %d\n", &p->p_back);
+	printf("#define\tP_FORW %d\n", &p->p_forw);
+	printf("#define\tP_BACK %d\n", &p->p_back);
 	printf("#define\tP_VMSPACE %d\n", &p->p_vmspace);
 	printf("#define\tVM_PMAP %d\n", &vms->vm_pmap);
 	printf("#define\tPM_STCHG %d\n", &pmap->pm_stchanged);
 	printf("#define\tP_ADDR %d\n", &p->p_addr);
-	printf("#define\tP_PRI %d\n", &p->p_priority);
+	printf("#define\tP_PRIORITY %d\n", &p->p_priority);
 	printf("#define\tP_STAT %d\n", &p->p_stat);
 	printf("#define\tP_WCHAN %d\n", &p->p_wchan);
 	printf("#define\tP_FLAG %d\n", &p->p_flag);
@@ -90,6 +89,7 @@ main()
 	printf("#define\tSYSPTSIZE %d\n", SYSPTSIZE);
 	printf("#define\tUSRPTSIZE %d\n", USRPTSIZE);
 	printf("#define\tUSRIOSIZE %d\n", USRIOSIZE);
+
 #ifdef SYSVSHM
 	printf("#define\tSHMMAXPGS %d\n", SHMMAXPGS);
 #endif
@@ -157,7 +157,10 @@ main()
 	printf("#define\tPCB_ONFAULT %d\n", &pcb->pcb_onfault);
 	printf("#define\tPCB_FPCTX %d\n", &pcb->pcb_fpregs);
 	printf("#define\tSIZEOF_PCB %d\n", sizeof(struct pcb));
-	printf("#define\tSP %d\n", SP);
+	printf("#define\tFR_SP %d\n", &frame->f_regs[15]);
+	printf("#define\tFR_HW %d\n", &frame->f_sr);
+	printf("#define\tFR_ADJ %d\n", &frame->f_stackadj);
+/*	printf("#define\tSP %d\n", SP); */
 	printf("#define\tB_READ %d\n", B_READ);
 	printf("#define\tENOENT %d\n", ENOENT);
 	printf("#define\tEFAULT %d\n", EFAULT);
