@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.133.2.1 2000/02/01 23:10:54 he Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.133.2.2 2000/06/27 15:30:46 he Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -210,8 +210,10 @@ sys_mount(p, v, retval)
 		VOP_UNLOCK(vp, 0);
 		goto update;
 	} else {
-		if (securelevel >= 2)
+		if (securelevel >= 2) {
+			vput(vp);
 			return (EPERM);
+		}
 	}
 	/*
 	 * If the user is not root, ensure that they own the directory
