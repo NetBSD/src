@@ -32,7 +32,6 @@ Bugs to fix:
 Interfaces/features to implement:
 - pthread_kill()
 - pthread_atfork()
-- pthread_rwlock... These are currently stubbed to MUTEX in libc!!
 - priority scheduling
 - libc integration: 
    - foo_r interfaces
