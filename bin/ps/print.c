@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.55 2000/06/08 13:30:40 simonb Exp $	*/
+/*	$NetBSD: print.c,v 1.56 2000/06/29 06:27:33 mrg Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.55 2000/06/08 13:30:40 simonb Exp $");
+__RCSID("$NetBSD: print.c,v 1.56 2000/06/29 06:27:33 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -85,8 +85,6 @@ __RCSID("$NetBSD: print.c,v 1.55 2000/06/08 13:30:40 simonb Exp $");
 #include <sys/stat.h>
 #include <sys/ucred.h>
 #include <sys/sysctl.h>
-
-#include <vm/vm.h>
 
 #include <err.h>
 #include <kvm.h>
