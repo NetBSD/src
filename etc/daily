@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: daily,v 1.51 2003/12/07 16:20:18 perry Exp $
+#	$NetBSD: daily,v 1.52 2003/12/07 16:35:04 perry Exp $
 #	@(#)daily	8.2 (Berkeley) 1/25/94
 #
 
@@ -141,7 +141,9 @@ fi
 
 if checkyesno check_disks; then
 	df -hi > $TMP 
-	dump -W > $TMP2
+	if [ -s /etc/dumpdates ] ; then
+		dump -W > $TMP2
+	fi
 	if [ -s $TMP -o -s $TMP2 ]; then
 		echo ""
 		echo "Checking subsystem status:"
@@ -242,9 +244,11 @@ if checkyesno run_security; then
 fi
 
 if checkyesno run_skeyaudit; then
-	echo ""
-	echo "Checking remaining s/key OTPs:"
-	skeyaudit
+	if [ -s /etc/skeykeys ]; then
+		echo ""
+		echo "Checking remaining s/key OTPs:"
+		skeyaudit
+	fi
 fi
 
 if [ -f /etc/daily.local ]; then
