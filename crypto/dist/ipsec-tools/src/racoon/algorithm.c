@@ -1,4 +1,6 @@
-/* $Id: algorithm.c,v 1.1.1.1 2005/02/12 11:11:39 manu Exp $ */
+/*	$NetBSD: algorithm.c,v 1.1.1.2 2005/02/23 14:54:11 manu Exp $	*/
+
+/* Id: algorithm.c,v 1.11 2004/10/24 17:36:46 manubsd Exp */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.

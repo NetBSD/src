@@ -1,3 +1,5 @@
+/*	$NetBSD: dump.c,v 1.1.1.2 2005/02/23 14:54:13 manu Exp $	*/
+
 /*	$KAME: dump.c,v 1.3 2000/09/23 15:31:05 itojun Exp $	*/
 
 /*

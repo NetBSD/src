@@ -1,4 +1,4 @@
-# $Id: Makefile.am,v 1.1.1.1 2005/02/12 11:11:37 manu Exp $
+# Id: Makefile.am,v 1.19.2.1 2005/02/22 23:56:08 manubsd Exp
 
 sbin_PROGRAMS = racoon racoonctl plainrsa-gen
 noinst_PROGRAMS = eaytest
@@ -12,7 +12,7 @@ adminsockdir=${localstatedir}/racoon
 INCLUDES = -I${srcdir}/../libipsec 
 AM_CFLAGS = @GLIBC_BUGS@ -DSYSCONFDIR=\"${sysconfdir}\" \
 	-DADMINPORTDIR=\"${adminsockdir}\"
-AM_LDFLAGS = -lcrypto
+AM_LDFLAGS = @EXTRA_CRYPTO@ -lcrypto
 
 MISSING_ALGOS = \
 	missing/crypto/sha2/sha2.c \

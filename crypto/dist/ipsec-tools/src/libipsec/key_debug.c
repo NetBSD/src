@@ -1,3 +1,5 @@
+/*	$NetBSD: key_debug.c,v 1.1.1.2 2005/02/23 14:54:08 manu Exp $	*/
+
 /*	$KAME: key_debug.c,v 1.29 2001/08/16 14:25:41 itojun Exp $	*/
 
 /*

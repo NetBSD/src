@@ -1,3 +1,5 @@
+/*	$NetBSD: safefile.c,v 1.1.1.2 2005/02/23 14:54:27 manu Exp $	*/
+
 /*	$KAME: safefile.c,v 1.5 2001/03/05 19:54:06 thorpej Exp $	*/
 
 /*

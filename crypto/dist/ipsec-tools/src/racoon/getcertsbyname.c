@@ -1,3 +1,5 @@
+/*	$NetBSD: getcertsbyname.c,v 1.1.1.2 2005/02/23 14:54:14 manu Exp $	*/
+
 /*	$KAME: getcertsbyname.c,v 1.7 2001/11/16 04:12:59 sakane Exp $	*/
 
 /*

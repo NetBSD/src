@@ -1,4 +1,6 @@
-/* $Id: isakmp.c,v 1.1.1.1 2005/02/12 11:12:14 manu Exp $ */
+/*	$NetBSD: isakmp.c,v 1.1.1.2 2005/02/23 14:54:17 manu Exp $	*/
+
+/* Id: isakmp.c,v 1.34.2.1 2005/02/23 13:38:51 manubsd Exp */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1597,11 +1599,11 @@ isakmp_open()
 			if(option != -1){
 				if (setsockopt (p->sock, SOL_UDP, UDP_ENCAP,
 								&option, sizeof (option)) < 0) {
-					plog(LLV_ERROR, LOCATION, NULL,
+					plog(LLV_WARNING, LOCATION, NULL,
 						 "setsockopt(%s): %s\n",
 						 option == UDP_ENCAP_ESPINUDP ? "UDP_ENCAP_ESPINUDP" : "UDP_ENCAP_ESPINUDP_NON_IKE",
 						 strerror(errno));
-					goto err_and_next;
+					goto skip_encap;
 				}
 				else {
 					plog(LLV_INFO, LOCATION, NULL,
@@ -1611,8 +1613,8 @@ isakmp_open()
 				}
 			}
 		}
+skip_encap:
 #endif
-
 		continue;
 
 	err_and_next:

@@ -1,3 +1,5 @@
+/*	$NetBSD: nattraversal.c,v 1.1.1.2 2005/02/23 14:54:22 manu Exp $	*/
+
 /*
  * Copyright (C) 2004 SuSE Linux AG, Nuernberg, Germany.
  * Contributed by: Michal Ludvig <mludvig@suse.cz>, SUSE Labs

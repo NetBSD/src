@@ -1,3 +1,5 @@
+/*	$NetBSD: strnames.c,v 1.1.1.2 2005/02/23 14:54:28 manu Exp $	*/
+
 /*	$KAME: strnames.c,v 1.25 2003/11/13 10:53:26 itojun Exp $	*/
 
 /*

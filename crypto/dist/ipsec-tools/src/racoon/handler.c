@@ -1,4 +1,6 @@
-/* $Id: handler.c,v 1.1.1.1 2005/02/12 11:12:00 manu Exp $ */
+/*	$NetBSD: handler.c,v 1.1.1.2 2005/02/23 14:54:15 manu Exp $	*/
+
+/* Id: handler.c,v 1.13 2004/11/21 19:36:26 manubsd Exp */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.

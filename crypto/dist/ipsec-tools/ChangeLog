@@ -1,3 +1,37 @@
+2005-02-23  Emmanuel Dreyfus <manu@netbsd.org>
+
+        * configure.ac, src/racoon/{Makefile.am|crypto_openssl.c}: optionnal
+	  support for patented algorithms: IDEA and RC5.
+	* src/racoon/{isakmp_xauth.c|main.c}: don't initialize RADIUS if it
+	  is not required in the configuration
+	* src/racoon/isakmp.c: do not reject addresses for which kernel
+	  refused UDP encapsulation, they can still be used for non NAT-T
+	  traffic (eg: NAT-T enabled racoon on non NAT-T enabled kernel)
+
+2005-02-18  Emmanuel Dreyfus <manu@netbsd.org>
+
+        * src/racoon/{main.c|eaytest.c|plairsa-gen.c}
+	  src/setkey/setkey.c: don't use fuzzy paths for package_version.h
+
+2005-02-18  Yvan Vanhullebus  <vanhu@free.fr>
+
+	* src/racoon/isakmp_inf.c: Purge generated SPDs when getting a
+	  related DELETE_SA
+	* src/racoon/pfkey.c: do NOT unbindph12() when SA acquire
+
+2005-02-17  Emmanuel Dreyfus <manu@netbsd.org>
+
+	From Fred Senault <fred.letter@lacave.net>
+	* src/racoon/remoteconf.c: Fix a bug in script init
+
+2005-02-17  Yvan Vanhullebus  <vanhu@free.fr>
+
+	* src/racoon/ipsec_doi.c: Workaround for phase1 lifetime checks
+
+2005-02-15  Michal Ludvig  <michal@logix.cz>
+
+	* configure.ac: Changed --enable-natt_NN to --enable-natt-versions=NN,NN
+
 ---------------------------------------------
 
 	Branch for 0.6 created (ipsec-tools-0_6-branch)
@@ -24,7 +58,7 @@
 
 2005-01-30  Yvan Vanhullebus  <vanhu@free.fr>
 
-	* src/racoon/vmbuf.c.c: bugfix in vrealloc()
+	* src/racoon/vmbuf.c: bugfix in vrealloc()
 	* src/racoon/oakley.c: mem leak fix in INITDHVAL()
 	* src/racoon/session.c: mem leak fix in check_flushsa()
 

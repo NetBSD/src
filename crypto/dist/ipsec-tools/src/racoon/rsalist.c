@@ -1,4 +1,6 @@
-/* $Id: rsalist.c,v 1.1.1.1 2005/02/12 11:13:00 manu Exp $ */
+/*	$NetBSD: rsalist.c,v 1.1.1.2 2005/02/23 14:54:27 manu Exp $	*/
+
+/* Id: rsalist.c,v 1.3 2004/11/08 12:04:23 ludvigm Exp */
 
 /*
  * Copyright (C) 2004 SuSE Linux AG, Nuernberg, Germany.

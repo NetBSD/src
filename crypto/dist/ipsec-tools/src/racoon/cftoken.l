@@ -1,4 +1,6 @@
-/* $Id: cftoken.l,v 1.1.1.1 2005/02/12 11:11:45 manu Exp $ */
+/*	$NetBSD: cftoken.l,v 1.1.1.2 2005/02/23 14:54:12 manu Exp $	*/
+
+/* Id: cftoken.l,v 1.31 2005/02/11 06:59:01 manubsd Exp */
 
 %{
 /*

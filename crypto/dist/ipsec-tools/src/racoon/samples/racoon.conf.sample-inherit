@@ -1,4 +1,4 @@
-# $Id: racoon.conf.sample-inherit,v 1.1.1.1 2005/02/12 11:13:59 manu Exp $
+# Id: racoon.conf.sample-inherit,v 1.1 2004/05/27 14:01:42 ludvigm Exp
 # Contributed by: Michal Ludvig <mludvig@suse.cz>, SUSE Labs
 
 # This file show the basic inheritance usage in 'remote' statements.

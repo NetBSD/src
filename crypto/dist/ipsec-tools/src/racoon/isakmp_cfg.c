@@ -1,4 +1,6 @@
-/* $Id: isakmp_cfg.c,v 1.1.1.1 2005/02/12 11:12:20 manu Exp $ */
+/*	$NetBSD: isakmp_cfg.c,v 1.1.1.2 2005/02/23 14:54:19 manu Exp $	*/
+
+/* Id: isakmp_cfg.c,v 1.26 2005/02/10 02:02:56 manubsd Exp */
 
 /*
  * Copyright (C) 2004 Emmanuel Dreyfus

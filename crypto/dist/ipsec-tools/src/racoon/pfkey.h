@@ -1,4 +1,6 @@
-/* $Id: pfkey.h,v 1.1.1.1 2005/02/12 11:12:46 manu Exp $ */
+/*	$NetBSD: pfkey.h,v 1.1.1.2 2005/02/23 14:54:24 manu Exp $	*/
+
+/* Id: pfkey.h,v 1.3 2004/06/11 16:00:17 ludvigm Exp */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.

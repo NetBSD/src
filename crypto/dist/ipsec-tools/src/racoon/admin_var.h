@@ -1,4 +1,6 @@
-/* $Id: admin_var.h,v 1.1.1.1 2005/02/12 11:11:38 manu Exp $ */
+/*	$NetBSD: admin_var.h,v 1.1.1.2 2005/02/23 14:54:10 manu Exp $	*/
+
+/* Id: admin_var.h,v 1.7 2004/12/30 00:08:30 manubsd Exp */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.

@@ -1,4 +1,6 @@
-/* $Id: privsep.h,v 1.1.1.1 2005/02/12 11:12:51 manu Exp $ */
+/*	$NetBSD: privsep.h,v 1.1.1.2 2005/02/23 14:54:25 manu Exp $	*/
+
+/* Id: privsep.h,v 1.3 2005/02/10 02:02:56 manubsd Exp */
 
 /*
  * Copyright (C) 2004 Emmanuel Dreyfus

@@ -1,3 +1,5 @@
+/*	$NetBSD: isakmp_base.c,v 1.1.1.2 2005/02/23 14:54:18 manu Exp $	*/
+
 /*	$KAME: isakmp_base.c,v 1.49 2003/11/13 02:30:20 sakane Exp $	*/
 
 /*
