@@ -1,4 +1,4 @@
-/*	$NetBSD: mulaw.c,v 1.18 2001/11/13 05:32:50 lukem Exp $	*/
+/*	$NetBSD: mulaw.c,v 1.19 2002/02/10 06:27:06 kent Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mulaw.c,v 1.18 2001/11/13 05:32:50 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mulaw.c,v 1.19 2002/02/10 06:27:06 kent Exp $");
 
 #include <sys/types.h>
 #include <sys/audioio.h>
@@ -327,6 +327,17 @@ mulaw_to_slinear16_be(void *v, u_char *p, int cc)
 		q -= 2;
 		q[0] = mulawtolin16[*p][0] ^ 0x80;
 		q[1] = mulawtolin16[*p][1];
+	}
+}
+
+void
+slinear16_to_mulaw_le(void *v, u_char* p, int cc)
+{
+	u_char *q = p + 1;	/* q points higher byte. */
+
+	while (--cc >= 0) {
+		*p++ = lintomulaw[*q ^ 0x80];
+		q +=2 ;
 	}
 }
 
