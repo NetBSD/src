@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.8 2003/01/28 22:19:30 wiz Exp $	*/
+/*	$NetBSD: parser.c,v 1.9 2003/02/01 17:13:14 wiz Exp $	*/
 /*	$KAME: parser.c,v 1.16 2002/02/20 10:40:39 kjc Exp $	*/
 /*
  * Copyright (C) 1999-2002
@@ -99,7 +99,8 @@ struct cmd_tab {
 	int		(*parser)(char *);
 	const char	*help;
 } cmd_tab[] = {
-	{"help",	NULL,	"help | ?"},
+	{"?",		NULL,	"?"},
+	{"help",	NULL,	"help"},
 	{"quit",	NULL,	"quit"},
 	{"interface",	interface_parser,	"interface if_name [bandwidth bps] [cbq|hfsc]"},
 	{"class",	class_parser,	"class discipline if_name class_name [parent]"},
