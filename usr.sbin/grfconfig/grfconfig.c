@@ -1,4 +1,4 @@
-/*	$NetBSD: grfconfig.c,v 1.7 1997/10/08 22:19:19 jtc Exp $	*/
+/*	$NetBSD: grfconfig.c,v 1.8 1997/10/17 05:58:29 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1997 The NetBSD Foundation, Inc.\n\
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: grfconfig.c,v 1.7 1997/10/08 22:19:19 jtc Exp $");
+__RCSID("$NetBSD: grfconfig.c,v 1.8 1997/10/17 05:58:29 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/file.h>
@@ -56,9 +56,6 @@ __RCSID("$NetBSD: grfconfig.c,v 1.7 1997/10/08 22:19:19 jtc Exp $");
 #include <unistd.h>
 
 #include <amiga/dev/grfioctl.h>
-
-extern char *optarg;
-extern int optind;
 
 int main __P((int, char **));
 static void print_rawdata __P((struct grfvideo_mode *, int));    
