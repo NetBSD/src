@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.6 2003/03/19 11:36:33 dsl Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.7 2003/05/21 17:57:21 kristerw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -98,7 +98,7 @@ sys__lwp_create(struct lwp *l, void *v, register_t *retval)
 
 	newlwp(l, p, uaddr, inmem,
 	    SCARG(uap, flags) & LWP_DETACHED,
-	    NULL, NULL, startlwp, newuc, &l2);
+	    NULL, 0, startlwp, newuc, &l2);
 
 	if ((SCARG(uap, flags) & LWP_SUSPENDED) == 0) {
 		SCHED_LOCK(s);
