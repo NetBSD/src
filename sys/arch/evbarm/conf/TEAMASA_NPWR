@@ -1,4 +1,4 @@
-#	$NetBSD: TEAMASA_NPWR,v 1.29 2003/10/10 15:17:41 chs Exp $
+#	$NetBSD: TEAMASA_NPWR,v 1.30 2003/10/20 15:37:46 briggs Exp $
 #
 #	TEAMASA_NPWR -- Team ASA, Inc. Npwr -- XScale/IOP310-based
 #	server appliance.
@@ -159,6 +159,11 @@ com0		at obio? addr 0xfe810000 xint3 3
 
 # i80312 Companion I/O support
 iopxs*		at mainbus?
+
+iopiic*		at iopxs? 			# I2C Controller Unit
+iic*		at iopiic?
+m41t*		at iic? addr 0x68
+
 pci*		at iopxs? bus ?
 
 #
