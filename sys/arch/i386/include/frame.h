@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.22 2003/09/06 22:05:49 christos Exp $	*/
+/*	$NetBSD: frame.h,v 1.23 2003/09/10 16:48:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -148,6 +148,10 @@ struct switchframe {
 	int	sf_eip;
 };
 
+#if (defined(COMPAT_16) || defined(COMPAT_IBCS2)) && defined(_KERNEL)
+/*
+ * XXX: Really COMPAT_IBCS2 should not be using our old signal frame.
+ */
 /*
  * Signal frame
  */
@@ -158,6 +162,7 @@ struct sigframe_sigcontext {
 	struct	sigcontext *sf_scp;	/* "scp" argument for handler */
 	struct	sigcontext sf_sc;	/* actual saved context */
 };
+#endif
 
 struct sigframe_siginfo {
 	int		sf_ra;		/* return address for handler */
