@@ -1,4 +1,4 @@
-/*	$NetBSD: append.c,v 1.3 2000/10/07 20:37:06 bjh21 Exp $	*/
+/*	$NetBSD: append.c,v 1.4 2000/10/15 20:46:33 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -39,7 +39,7 @@
 #include "sort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: append.c,v 1.3 2000/10/07 20:37:06 bjh21 Exp $");
+__RCSID("$NetBSD: append.c,v 1.4 2000/10/15 20:46:33 jdolecek Exp $");
 __SCCSID("@(#)append.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -66,16 +66,16 @@ void
 append(keylist, nelem, depth, fp, put, ftbl)
 	const u_char **keylist;
 	int nelem;
-	register int depth;
+	int depth;
 	FILE *fp;
 	void (*put)(RECHEADER *, FILE *);
 	struct field *ftbl;
 {
-	register u_char *wts, *wts1;
-	register int n, odepth;
-	register const u_char **cpos, **ppos, **lastkey;
-	register const u_char *cend, *pend, *start;
-	register struct recheader *crec, *prec;
+	u_char *wts, *wts1;
+	int n, odepth;
+	const u_char **cpos, **ppos, **lastkey;
+	const u_char *cend, *pend, *start;
+	struct recheader *crec, *prec;
 
 	if (*keylist == '\0' && UNIQUE)
 		return;

@@ -1,4 +1,4 @@
-/*	$NetBSD: fsort.c,v 1.3 2000/10/07 20:37:06 bjh21 Exp $	*/
+/*	$NetBSD: fsort.c,v 1.4 2000/10/15 20:46:33 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -47,7 +47,7 @@
 #include "fsort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: fsort.c,v 1.3 2000/10/07 20:37:06 bjh21 Exp $");
+__RCSID("$NetBSD: fsort.c,v 1.4 2000/10/15 20:46:33 jdolecek Exp $");
 __SCCSID("@(#)fsort.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -63,21 +63,21 @@ int PANIC = FSORTMAX;
 
 void
 fsort(binno, depth, infiles, nfiles, outfp, ftbl)
-	register int binno, depth, nfiles;
-	register union f_handle infiles;
+	int binno, depth, nfiles;
+	union f_handle infiles;
 	FILE *outfp;
-	register struct field *ftbl;
+	struct field *ftbl;
 {
-	register const u_char **keypos;
-	register u_char *bufend, *tmpbuf;
+	const u_char **keypos;
+	u_char *bufend, *tmpbuf;
 	u_char *weights;
 	int ntfiles, mfct = 0, total, i, maxb, lastb, panic = 0;
-	register int c, nelem;
+	int c, nelem;
 	long sizes [NBINS+1];
 	union f_handle tfiles, mstart = {MAXFCT-16};
-	register int (*get)(int, union f_handle, int, RECHEADER *,
+	int (*get)(int, union f_handle, int, RECHEADER *,
 		u_char *, struct field *);
-	register struct recheader *crec;
+	struct recheader *crec;
 	struct field tfield[2];
 	FILE *prevfp, *tailfp[FSORTMAX+1];
 
@@ -253,9 +253,9 @@ onepass(a, depth, n, sizes, tr, fp)
 	const u_char **bin[257], ***bp, ***bpmax, **top[256], ***tp;
 	static int histo[256];
 	int *hp;
-	register int c;
+	int c;
 	const u_char **an, *t, **aj;
-	register const u_char **ak, *r;
+	const u_char **ak, *r;
 
 	memset(tsizes, 0, sizeof(tsizes));
 	depth += sizeof(TRECHEADER);

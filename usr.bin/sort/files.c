@@ -1,4 +1,4 @@
-/*	$NetBSD: files.c,v 1.3 2000/10/07 20:37:06 bjh21 Exp $	*/
+/*	$NetBSD: files.c,v 1.4 2000/10/15 20:46:33 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -40,7 +40,7 @@
 #include "fsort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: files.c,v 1.3 2000/10/07 20:37:06 bjh21 Exp $");
+__RCSID("$NetBSD: files.c,v 1.4 2000/10/15 20:46:33 jdolecek Exp $");
 __SCCSID("@(#)files.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -54,12 +54,12 @@ int
 getnext(binno, infl0, nfiles, pos, end, dummy)
 	int binno, nfiles;
 	union f_handle infl0;
-	register struct recheader *pos;
-	register u_char *end;
+	struct recheader *pos;
+	u_char *end;
 	struct field *dummy;
 {
-	register int i;
-	register u_char *hp;
+	int i;
+	u_char *hp;
 	static long nleft = 0;
 	static int cnt = 0, flag = -1;
 	static u_char maxb = 0;
@@ -133,10 +133,10 @@ makeline(flno, filelist, nfiles, buffer, bufend, dummy2)
 	struct field *dummy2;
 {
 	static char *opos;
-	register char *end, *pos;
+	char *end, *pos;
 	static int fileno = 0, overflow = 0;
 	static FILE *fp = 0;
-	register int c;
+	int c;
 
 	pos = (char *) buffer->data;
 	end = min((char *) bufend, pos + MAXLLEN);
@@ -256,8 +256,8 @@ seq(fp, line, key)
 	DBT *key, *line;
 {
 	static char *buf, flag = 1;
-	register char *end, *pos;
-	register int c;
+	char *end, *pos;
+	int c;
 	if (flag) {
 		flag = 0;
 		buf = (char *) linebuf;
@@ -293,8 +293,8 @@ seq(fp, line, key)
  */
 void
 putrec(rec, fp)
-	register struct recheader *rec;
-	register FILE *fp;
+	struct recheader *rec;
+	FILE *fp;
 {
 	EWRITE(rec, 1, rec->length + sizeof(TRECHEADER), fp);
 }
@@ -304,8 +304,8 @@ putrec(rec, fp)
  */
 void
 putline(rec, fp)
-	register struct recheader *rec;
-	register FILE *fp;
+	struct recheader *rec;
+	FILE *fp;
 {
 	EWRITE(rec->data+rec->offset, 1, rec->length - rec->offset, fp);
 }
@@ -317,8 +317,8 @@ int
 geteasy(flno, filelist, nfiles, rec, end, dummy2)
 	int flno, nfiles;
 	union f_handle filelist;
-	register struct recheader *rec;
-	register u_char *end;
+	struct recheader *rec;
+	u_char *end;
 	struct field *dummy2;
 {
 	int i;
