@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_machdep.c,v 1.15 1997/09/12 07:00:36 mycroft Exp $	*/
+/*	$NetBSD: hpux_machdep.c,v 1.16 1997/09/12 10:29:24 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Jason R. Thorpe.  All rights reserved.
@@ -682,7 +682,6 @@ hpux_sys_sigreturn(p, v, retval)
 
 /*
  * Set registers on exec.
- * XXX Should clear registers except sp, pc.
  */
 void
 hpux_setregs(p, pack, stack)

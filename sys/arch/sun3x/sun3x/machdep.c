@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.20 1997/09/12 07:00:49 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.21 1997/09/12 10:29:33 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -383,8 +383,6 @@ cpu_startup()
 
 /*
  * Set registers on exec.
- * XXX Should clear registers except sp, pc,
- * but would break init; should be fixed soon.
  */
 void
 setregs(p, pack, stack)
@@ -394,6 +392,7 @@ setregs(p, pack, stack)
 {
 	struct trapframe *tf = (struct trapframe *)p->p_md.md_regs;
 
+	tf->tf_sr = PSL_USERSET;
 	tf->tf_pc = pack->ep_entry & ~1;
 	tf->tf_regs[D0] = 0;
 	tf->tf_regs[D1] = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.16 1997/09/12 08:08:51 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.17 1997/09/12 10:29:34 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -386,8 +386,6 @@ again:
 
 /*
  * Set registers on exec.
- * XXX Should clear registers except sp, pc,
- * but would break init; should be fixed soon.
  */
 void
 setregs(p, pack, stack)
@@ -397,6 +395,7 @@ setregs(p, pack, stack)
 {
 	struct frame *frame = (struct frame *)p->p_md.md_regs;
 
+	frame->f_sr = PSL_USERSET;
 	frame->f_pc = pack->ep_entry & ~1;
 	frame->f_regs[D0] = 0;
 	frame->f_regs[D1] = 0;
