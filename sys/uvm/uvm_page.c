@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.96 2004/02/13 13:47:16 yamt Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.97 2004/03/24 07:50:49 junyoung Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.96 2004/02/13 13:47:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.97 2004/03/24 07:50:49 junyoung Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -149,9 +149,9 @@ vaddr_t uvm_zerocheckkva;
  * local prototypes
  */
 
-static void uvm_pageinsert __P((struct vm_page *));
-static void uvm_pageinsert_after __P((struct vm_page *, struct vm_page *));
-static void uvm_pageremove __P((struct vm_page *));
+static void uvm_pageinsert(struct vm_page *);
+static void uvm_pageinsert_after(struct vm_page *, struct vm_page *);
+static void uvm_pageremove(struct vm_page *);
 
 /*
  * inline functions
@@ -581,7 +581,7 @@ uvm_pageboot_alloc(size)
  */
 
 /* subroutine: try to allocate from memory chunks on the specified freelist */
-static boolean_t uvm_page_physget_freelist __P((paddr_t *, int));
+static boolean_t uvm_page_physget_freelist(paddr_t *, int);
 
 static boolean_t
 uvm_page_physget_freelist(paddrp, freelist)
@@ -1223,7 +1223,7 @@ uvm_pagereplace(oldpg, newpg)
 	struct vm_page *oldpg;
 	struct vm_page *newpg;
 {
-	
+
 	KASSERT((oldpg->flags & PG_TABLED) != 0);
 	KASSERT(oldpg->uobject != NULL);
 	KASSERT((newpg->flags & PG_TABLED) == 0);
