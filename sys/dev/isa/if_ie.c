@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.43 1995/09/14 12:41:32 hpeyerl Exp $	*/
+/*	$NetBSD: if_ie.c,v 1.44 1995/09/26 13:24:48 hpeyerl Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -593,7 +593,7 @@ ee16_probe(sc, ia)
 	 * of shared RAM, we only worry about the 32k locations. 
 	 *
 	 * NOTE: if a 64k EE16 exists, it should be added to this switch.
-	 *       then the ia->msize would need to be set per case statement.
+	 *       then the ia->ia_msize would need to be set per case statement.
 	 *
 	 *	value	msize	location
 	 *	=====	=====	========
@@ -604,7 +604,7 @@ ee16_probe(sc, ia)
 	 *
 	 */ 
 
-	if (ia->ia_maddr == MADDRUNK) {
+	if ((ia->ia_maddr == MADDRUNK) || (ia->ia_msize == 0)) {
 		i = (ee16_read_eeprom(sc, 6) & 0x00ff ) >> 3;
 		switch(i) {
 			case 0x03:
@@ -2089,12 +2089,10 @@ ieinit(sc)
 		bart_config &= ~IEE16_BART_LOOPBACK;
 		bart_config |= IEE16_BART_MCS16_TEST; /* inb doesn't get bit! */
 		outb(PORT + IEE16_CONFIG, bart_config);
+		ee16_interrupt_enable(sc); 
+		ee16_chan_attn(sc);
 		}
 	}
-
-	ee16_interrupt_enable(sc); 
-	ee16_chan_attn(sc);
-
 	return 0;
 }
 
