@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)wd.c	7.2 (Berkeley) 5/9/91
- *	$Id: wd.c,v 1.30 1993/12/24 13:56:14 ws Exp $
+ *	$Id: wd.c,v 1.31 1994/01/03 16:22:18 mycroft Exp $
  */
 
 /* Note: This code heavily modified by tih@barsoom.nhh.no; use at own risk! */
@@ -1518,7 +1518,7 @@ wddump(dev_t dev)
 		pmap_enter(kernel_pmap, CADDR1, trunc_page(addr), VM_PROT_READ, TRUE);
 #else
 		*(int *)CMAP1 = PG_V | PG_KW | ctob((long)addr);
-		load_cr3(rcr3());
+		tlbflush();
 #endif
 	
 		/* compute disk address */
