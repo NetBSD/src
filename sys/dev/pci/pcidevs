@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.332 2001/06/20 16:32:32 thorpej Exp $
+$NetBSD: pcidevs,v 1.333 2001/06/20 19:51:12 thorpej Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -594,7 +594,10 @@ product 3COM 3C905BFX	0x905a	3c905B-FX 100 Ethernet
 product 3COM 3C905CTX	0x9200	3c905C-TX 10/100 Ethernet with mngmt
 product 3COM 3C980SRV	0x9800	3c980 Server Adapter 10/100 Ethernet
 product 3COM 3C980CTXM	0x9805	3c980C-TXM 10/100 Ethernet
-product 3COM 3CR990TX97	0x9903	3CR990-TX-97 10/100 Ethernet
+product 3COM 3CR990TX95	0x9902	3CR990-TX-95 10/100 Ethernet with 3XP
+product 3COM 3CR990TX97	0x9903	3CR990-TX-97 10/100 Ethernet with 3XP
+product 3COM 3CR990SVR95 0x9908	3CR990-SVR-95 10/100 Ethernet with 3XP
+product 3COM 3CR990SVR97 0x9909	3CR990-SVR-97 10/100 Ethernet with 3XP
 
 /* 3Dfx Interactive products */
 product 3DFX VOODOO	0x0001	Voodoo
