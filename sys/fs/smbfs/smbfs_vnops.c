@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vnops.c,v 1.38 2004/03/20 20:26:28 jdolecek Exp $	*/
+/*	$NetBSD: smbfs_vnops.c,v 1.39 2004/03/20 21:03:42 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.38 2004/03/20 20:26:28 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.39 2004/03/20 21:03:42 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -440,6 +440,12 @@ smbfs_setattr(v)
 	if (vap->va_atime.tv_sec != VNOVAL)
 		atime = &vap->va_atime;
 	if (mtime != atime) {
+                if (ap->a_cred->cr_uid != VTOSMBFS(vp)->sm_args.uid &&
+                    (error = suser(ap->a_cred, &ap->a_p->p_acflag)) &&
+                    ((vap->va_vaflags & VA_UTIMES_NULL) == 0 ||
+                    (error = VOP_ACCESS(ap->a_vp, VWRITE, ap->a_cred, ap->a_p))))
+                        return (error);
+
 #if 0
 		if (mtime == NULL)
 			mtime = &np->n_mtime;
