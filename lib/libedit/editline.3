@@ -1,4 +1,4 @@
-.\"	$NetBSD: editline.3,v 1.29 2002/10/01 19:06:45 wiz Exp $
+.\"	$NetBSD: editline.3,v 1.30 2003/01/21 18:40:23 christos Exp $
 .\"
 .\" Copyright (c) 1997-1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -562,6 +562,17 @@ Add
 .Fa str
 as a new element to the history, and, if necessary,
 removing the oldest entry to keep the list to the created size.
+If 
+.Dv H_SETUNIQUE
+was has been called with a non-zero arguments, the element
+will not be entered into the history if its contents match
+the ones of the current history element.
+If the element is entered
+.Fn history
+returns 1, if it is ignored as a duplicate returns 0.
+Finally
+.Fn history
+returns -1 if an error occurred.
 .It Dv H_PREV_STR , Fa "const char *str"
 Return the closest previous event that starts with
 .Fa str .
@@ -580,10 +591,16 @@ Load the history list stored in
 .It Dv H_SAVE , Fa "const char *file"
 Save the history list to
 .Fa file .
+.It Dv H_SETUNIQUE , Fa "int unique"
+Set if the adjacent identical event strigns should not be entered into
+the history.
+.It Dv H_GETUNIQUE
+Retrieve the current setting if if adjacent elementes should be entered into
+the history.
 .El
 .Pp
 .Fn history
-returns 0 if the operation
+returns >= 0 if the operation succeeds
 .Fa op
 succeeds.
 Otherwise, -1 is returned and
