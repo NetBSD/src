@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.93 2003/06/29 22:31:59 fvdl Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.94 2003/06/30 14:51:06 ragge Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -142,7 +142,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.93 2003/06/29 22:31:59 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.94 2003/06/30 14:51:06 ragge Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -455,7 +455,7 @@ tcp_build_datapkt(struct tcpcb *tp, struct socket *so, int off,
 		 * data to send is the directly following the previous
 		 * transfer.  This is important for large TCP windows.
 		 */
-		if (off > 8*1024) { /* Only for long chains */
+		if (0 && off > 8*1024) { /* Only for long chains */
 			if (tp->t_lastm == NULL ||
 			    (tp->t_lastoff + tp->t_lastlen) != off) {
 				/* Prediction failed */
