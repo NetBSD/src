@@ -1,4 +1,4 @@
-/*	$NetBSD: mdb.c,v 1.31 2003/06/04 19:07:39 dsl Exp $	*/
+/*	$NetBSD: mdb.c,v 1.32 2003/06/09 18:48:40 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -187,8 +187,8 @@ write_menu_file (char *initcode)
 		"	WINDOW		*mw;\n"
 		"	const char	*helpstr;\n"
 		"	const char	*exitstr;\n"
-		"	void		(*post_act)(void);\n"
-		"	void		(*exit_act)(void);\n"
+		"	void		(*post_act)(menudesc *, void *);\n"
+		"	void		(*exit_act)(menudesc *, void *);\n"
 		"};\n"
 		"\n"
 		"/* defines for mopt field. */\n"
@@ -197,6 +197,7 @@ write_menu_file (char *initcode)
 		"#define MC_SCROLL 4\n"
 		"#define MC_NOSHORTCUT 8\n"
 		"#define MC_NOCLEAR 16\n"
+		"#define MC_DFLTEXIT 32\n"
 		"#define MC_VALID 256\n"	
 		);
 
@@ -216,10 +217,11 @@ write_menu_file (char *initcode)
 			"int new_menu(const char *title, menu_ent *opts, "
 				"int numopts, \n"
 				"\tint x, int y, int h, int w, int mopt,\n"
-				"\tvoid (*post_act)(void), "
-				"void (*exit_act)(void), "
+				"\tvoid (*post_act)(menudesc *, void *), "
+				"void (*exit_act)(menudesc *, void *), "
 				"const char *help, const char *exit);\n"
 			"void free_menu(int menu_no);\n"
+			"void set_menu_numopts(int, int);\n"
 			);
 
 	(void) fprintf (out_file, "\n/* Menu names */\n");
@@ -254,8 +256,8 @@ write_menu_file (char *initcode)
 	for (i=0; i<menu_no; i++) {
 		if (strlen(menus[i]->info->postact.code)) {
 			(void) fprintf (out_file,
-				"void menu_%d_postact(void);\n"
-				"void menu_%d_postact(void)\n{", i, i);
+				"static void menu_%d_postact(menudesc *menu, void *arg);\n"
+				"static void menu_%d_postact(menudesc *menu, void *arg)\n{", i, i);
 			if (menus[i]->info->postact.endwin)
 				(void) fprintf (out_file, "\tendwin();\n"
 					"\t__m_endwin = 1;\n");
@@ -265,8 +267,8 @@ write_menu_file (char *initcode)
 		}
 		if (strlen(menus[i]->info->exitact.code)) {
 			(void) fprintf (out_file,
-				"void menu_%d_exitact(void);\n"
-				"void menu_%d_exitact(void)\n{", i, i);
+				"static void menu_%d_exitact(menudesc *menu, void *arg);\n"
+				"static void menu_%d_exitact(menudesc *menu, void *arg)\n{", i, i);
 			if (menus[i]->info->exitact.endwin)
 				(void) fprintf (out_file, "\tendwin();\n"
 					"\t__m_endwin = 1;\n");
