@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.238 1999/09/17 20:04:36 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.239 1999/11/13 00:30:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -280,7 +280,7 @@ mac68k_init()
 	for (i = 0; i < btoc(MSGBUFSIZE); i++)
 		pmap_enter(pmap_kernel(), (vaddr_t)msgbufaddr + i * NBPG,
 		    high[numranges - 1] + i * NBPG, VM_PROT_READ|VM_PROT_WRITE,
-		    TRUE, VM_PROT_READ|VM_PROT_WRITE);
+		    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
 	initmsgbuf(msgbufaddr, m68k_round_page(MSGBUFSIZE));
 }
 
@@ -423,7 +423,7 @@ cpu_startup(void)
 				    "buffer cache");
 			pmap_enter(kernel_map->pmap, curbuf,
 			    VM_PAGE_TO_PHYS(pg), VM_PROT_READ|VM_PROT_WRITE,
-			    TRUE, VM_PROT_READ|VM_PROT_WRITE);
+			    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
 			curbuf += PAGE_SIZE;
 			curbufsize -= PAGE_SIZE;
 		}
@@ -624,7 +624,7 @@ cpu_reboot(howto, bootstr)
 
 	/* Map the last physical page VA = PA for doboot() */
 	pmap_enter(pmap_kernel(), (vaddr_t)maxaddr, (vaddr_t)maxaddr,
-	    VM_PROT_ALL, TRUE, VM_PROT_ALL);
+	    VM_PROT_ALL, VM_PROT_ALL|PMAP_WIRED);
 
 	printf("rebooting...\n");
 	DELAY(1000000);
@@ -854,7 +854,7 @@ dumpsys()
 			maddr = m->ram_segs[seg].start;
 		}
 		pmap_enter(pmap_kernel(), (vaddr_t)vmmap, maddr,
-		    VM_PROT_READ, TRUE, VM_PROT_READ);
+		    VM_PROT_READ, VM_PROT_READ|PMAP_WIRED);
 
 		error = (*dump)(dumpdev, blkno, vmmap, NBPG);
  bad:

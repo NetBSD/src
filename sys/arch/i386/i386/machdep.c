@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.366 1999/10/06 20:04:26 fvdl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.367 1999/11/13 00:30:33 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -1710,16 +1710,16 @@ init386(first_avail)
 #if NBIOSCALL > 0
 	/* install page 2 (reserved above) as PT page for first 4M */
 	pmap_enter(pmap_kernel(), (u_long)vtopte(0), 2*NBPG,
-	    VM_PROT_READ|VM_PROT_WRITE, TRUE, VM_PROT_READ|VM_PROT_WRITE);
+	    VM_PROT_READ|VM_PROT_WRITE, PMAP_WIRED|VM_PROT_READ|VM_PROT_WRITE);
 	memset(vtopte(0), 0, NBPG);  /* make sure it is clean before using */
 #endif
 
 	pmap_enter(pmap_kernel(), idt_vaddr, idt_paddr,
-	    VM_PROT_READ|VM_PROT_WRITE, TRUE, VM_PROT_READ|VM_PROT_WRITE);
+	    VM_PROT_READ|VM_PROT_WRITE, PMAP_WIRED|VM_PROT_READ|VM_PROT_WRITE);
 	idt = (union descriptor *)idt_vaddr;
 #ifdef I586_CPU
 	pmap_enter(pmap_kernel(), pentium_idt_vaddr, idt_paddr,
-	    VM_PROT_READ, TRUE, VM_PROT_READ);
+	    VM_PROT_READ, PMAP_WIRED|VM_PROT_READ);
 	pentium_idt = (union descriptor *)pentium_idt_vaddr;
 #endif
 	gdt = idt + NIDT;
@@ -2713,8 +2713,8 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 			if (size == 0)
 				panic("_bus_dmamem_map: size botch");
 			pmap_enter(pmap_kernel(), va, addr,
-			    VM_PROT_READ | VM_PROT_WRITE, TRUE,
-			    VM_PROT_READ | VM_PROT_WRITE);
+			    VM_PROT_READ | VM_PROT_WRITE,
+			    PMAP_WIRED | VM_PROT_READ | VM_PROT_WRITE);
 		}
 	}
 

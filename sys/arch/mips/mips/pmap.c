@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.76 1999/11/07 19:42:23 mhitch Exp $	*/
+/*	$NetBSD: pmap.c,v 1.77 1999/11/13 00:30:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.76 1999/11/07 19:42:23 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.77 1999/11/13 00:30:39 thorpej Exp $");
 
 /*
  *	Manages physical address maps.
@@ -1082,19 +1082,19 @@ pmap_page_cache(pa, mode)
  *	or lose information.  That is, this routine must actually
  *	insert this page into the given map NOW.
  */
-void
-pmap_enter(pmap, va, pa, prot, wired, access_type)
+int
+pmap_enter(pmap, va, pa, prot, flags)
 	pmap_t pmap;
 	vaddr_t va;
 	paddr_t pa;
 	vm_prot_t prot;
-	boolean_t wired;
-	vm_prot_t access_type;
+	int flags;
 {
 	pt_entry_t *pte;
 	u_int npte;
 	vm_page_t mem;
 	unsigned asid;
+	boolean_t wired = (flags & PMAP_WIRED) != 0;
 
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_ENTER))
@@ -1303,6 +1303,8 @@ pmap_enter(pmap, va, pa, prot, wired, access_type)
 		MachFlushICache(va, PAGE_SIZE);
 	}
 #endif
+
+	return (KERN_SUCCESS);
 }
 
 void
@@ -1311,7 +1313,7 @@ pmap_kenter_pa(va, pa, prot)
 	paddr_t pa;
 	vm_prot_t prot;
 {
-	pmap_enter(pmap_kernel(), va, pa, prot, TRUE, 0);
+	pmap_enter(pmap_kernel(), va, pa, prot, PMAP_WIRED);
 }
 
 void
@@ -1324,7 +1326,7 @@ pmap_kenter_pgs(va, pgs, npgs)
 
 	for (i = 0; i < npgs; i++, va += PAGE_SIZE) {
 		pmap_enter(pmap_kernel(), va, VM_PAGE_TO_PHYS(pgs[i]),
-				VM_PROT_READ|VM_PROT_WRITE, TRUE, 0);
+				VM_PROT_READ|VM_PROT_WRITE, PMAP_WIRED);
 	}
 }
 
