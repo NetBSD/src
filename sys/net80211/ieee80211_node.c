@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_node.c,v 1.27 2004/07/25 05:21:36 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_node.c,v 1.28 2004/07/26 16:31:47 mycroft Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2004 Sam Leffler, Errno Consulting
@@ -35,7 +35,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_node.c,v 1.22 2004/04/05 04:15:55 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.27 2004/07/25 05:21:36 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.28 2004/07/26 16:31:47 mycroft Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -680,14 +680,7 @@ ieee80211_needs_rxnode(struct ieee80211com *ic, struct ieee80211_frame *wh,
 		    IEEE80211_FC0_SUBTYPE_RTS;
 	case IEEE80211_FC0_TYPE_MGT:
 		*bssid = wh->i_addr3;
-		switch (wh->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK) {
-		case IEEE80211_FC0_SUBTYPE_BEACON:
-		case IEEE80211_FC0_SUBTYPE_PROBE_RESP:
-			rc = 1;
-			break;
-		default:
-			break;
-		}
+		rc = IEEE80211_ADDR_EQ(*bssid, bss->ni_bssid);
 		break;
 	case IEEE80211_FC0_TYPE_DATA:
 		switch (wh->i_fc[1] & IEEE80211_FC1_DIR_MASK) {
