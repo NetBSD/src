@@ -1,4 +1,4 @@
-/*	$NetBSD: dumpfs.c,v 1.20 1999/04/13 00:16:24 thorpej Exp $	*/
+/*	$NetBSD: dumpfs.c,v 1.21 2000/01/18 20:24:19 pk Exp $	*/
 
 /*
  * Copyright (c) 1983, 1992, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)dumpfs.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: dumpfs.c,v 1.20 1999/04/13 00:16:24 thorpej Exp $");
+__RCSID("$NetBSD: dumpfs.c,v 1.21 2000/01/18 20:24:19 pk Exp $");
 #endif
 #endif /* not lint */
 
@@ -164,8 +164,9 @@ dumpfs(name)
 				i++;
 		}
 	}
-	printf("cylgrp\t%s\tinodes\t%s\tfslevel %d\n",
-	    i < 1 ? "static" : "dynamic", i < 2 ? "4.2/4.3BSD" : "4.4BSD", i);
+	printf("cylgrp\t%s\tinodes\t%s\tfslevel %d\tsoftdep %sabled\n",
+	    i < 1 ? "static" : "dynamic", i < 2 ? "4.2/4.3BSD" : "4.4BSD", i,
+	    (afs.fs_flags & FS_DOSOFTDEP) ? "en" : "dis");
 	printf("nbfree\t%d\tndir\t%d\tnifree\t%d\tnffree\t%d\n",
 	    afs.fs_cstotal.cs_nbfree, afs.fs_cstotal.cs_ndir,
 	    afs.fs_cstotal.cs_nifree, afs.fs_cstotal.cs_nffree);
