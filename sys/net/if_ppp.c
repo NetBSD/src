@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.71 2001/08/05 18:07:55 jdolecek Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.72 2001/11/12 23:49:41 lukem Exp $	*/
 /*	Id: if_ppp.c,v 1.6 1997/03/04 03:33:00 paulus Exp 	*/
 
 /*
@@ -84,6 +84,9 @@
  * splimp() with splhigh() in order to applomplish what it needs
  * to accomplish, and added that happy little comment.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.72 2001/11/12 23:49:41 lukem Exp $");
 
 #include "ppp.h"
 

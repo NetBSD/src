@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.49 2001/11/05 18:02:16 matt Exp $	*/
+/*	$NetBSD: route.c,v 1.50 2001/11/12 23:49:48 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -100,6 +100,9 @@
  *
  *	@(#)route.c	8.3 (Berkeley) 1/9/95
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.50 2001/11/12 23:49:48 lukem Exp $");
 
 #include "opt_ns.h"
 
