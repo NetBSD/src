@@ -1,4 +1,4 @@
-.\"	$NetBSD: sshd.8,v 1.15 2001/08/31 09:00:29 cjs Exp $
+.\"	$NetBSD: sshd.8,v 1.16 2001/09/27 03:24:07 itojun Exp $
 .\"  -*- nroff -*-
 .\"
 .\" Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -35,7 +35,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $OpenBSD: sshd.8,v 1.132 2001/06/23 03:03:59 markus Exp $
+.\" $OpenBSD: sshd.8,v 1.152 2001/09/20 00:15:54 stevesk Exp $
 .Dd June 18, 2001
 .Dt SSHD 8
 .Os
@@ -44,7 +44,7 @@
 .Nd OpenSSH SSH daemon
 .Sh SYNOPSIS
 .Nm sshd
-.Op Fl deiqD46
+.Op Fl deiqtD46
 .Op Fl b Ar bits
 .Op Fl f Ar config_file
 .Op Fl g Ar login_grace_time
@@ -52,7 +52,6 @@
 .Op Fl k Ar key_gen_time
 .Op Fl p Ar port
 .Op Fl u Ar len
-.Op Fl V Ar client_protocol_id
 .Sh DESCRIPTION
 .Nm
 (SSH Daemon) is the daemon program for
@@ -119,9 +118,8 @@ configuration file if desired.
 System security is not improved unless
 .Xr rshd 8 ,
 .Xr rlogind 8 ,
-.Xr rexecd 8 ,
 and
-.Xr rexd 8
+.Xr rexecd 8
 are disabled (thus completely disabling
 .Xr rlogin 1
 and
@@ -131,7 +129,7 @@ into the machine).
 .Ss SSH protocol version 2
 .Pp
 Version 2 works similarly:
-Each host has a host-specific DSA key used to identify the host.
+Each host has a host-specific key (RSA or DSA) used to identify the host.
 However, when the daemon starts, it does not generate a server key.
 Forward security is provided through a Diffie-Hellman key agreement.
 This key agreement results in a shared session key.
@@ -185,7 +183,6 @@ The options are as follows:
 .It Fl b Ar bits
 Specifies the number of bits in the ephemeral protocol version 1
 server key (default 768).
-.Pp
 .It Fl d
 Debug mode.
 The server sends verbose debug output to the system
@@ -249,6 +246,12 @@ Quiet mode.
 Nothing is sent to the system log.
 Normally the beginning,
 authentication, and termination of each connection is logged.
+.It Fl t
+Test mode.
+Only check the validity of the configuration file and sanity of the keys.
+This is useful for updating 
+.Nm
+reliably as configuration options may change.
 .It Fl u Ar len
 This option is used to specify the size of the field
 in the
@@ -265,6 +268,18 @@ indicates that only dotted decimal addresses
 should be put into the
 .Pa utmp
 file.
+.Fl u0
+is also be used to prevent
+.Nm
+from making DNS requests unless the authentication
+mechanism or configuration requires it.
+Authentication mechanisms that may require DNS include
+.Cm RhostsAuthentication ,
+.Cm RhostsRSAAuthentication ,
+.Cm HostbasedAuthentication
+and using a
+.Cm from="pattern-list"
+option in a key file.
 .It Fl D
 When this option is specified
 .Nm
@@ -287,12 +302,14 @@ reads configuration data from
 (or the file specified with
 .Fl f
 on the command line).
-The file contains keyword-value pairs, one per line.
+The file contains keyword-argument pairs, one per line.
 Lines starting with
 .Ql #
 and empty lines are interpreted as comments.
 .Pp
-The following keywords are possible.
+The possible
+keywords and their meanings are as follows (note that
+keywords are case-insensitive and arguments are case-sensitive):
 .Bl -tag -width Ds
 .It Cm AFSTokenPassing
 Specifies whether an AFS token may be forwarded to the server.
@@ -308,7 +325,7 @@ and
 .Ql ?
 can be used as
 wildcards in the patterns.
-Only group names are valid; a numerical group ID isn't recognized.
+Only group names are valid; a numerical group ID is not recognized.
 By default login is allowed regardless of the group list.
 .Pp
 .It Cm AllowTcpForwarding
@@ -329,15 +346,18 @@ and
 .Ql ?
 can be used as
 wildcards in the patterns.
-Only user names are valid; a numerical user ID isn't recognized.
+Only user names are valid; a numerical user ID is not recognized.
 By default login is allowed regardless of the user name.
+If the pattern takes the form USER@HOST then USER and HOST
+are separately checked, restricting logins to particular
+users from particular hosts.
 .Pp
 .It Cm AuthorizedKeysFile
-Specifies the file that contains the public RSA keys that can be used
-for RSA authentication in protocol version 1.
+Specifies the file that contains the public keys that can be used
+for user authentication.
 .Cm AuthorizedKeysFile
 may contain tokens of the form %T which are substituted during connection
-set-up. The following tokens are defined; %% is replaces by a literal '%',
+set-up. The following tokens are defined: %% is replaced by a literal '%',
 %h is replaced by the home directory of the user being authenticated and
 %u is replaced by the username of that user.
 After expansion,
@@ -354,20 +374,12 @@ authentication is allowed.
 This option is only available for protocol version 2.
 .Pp
 .It Cm ChallengeResponseAuthentication
-Specifies whether
-challenge response
-authentication is allowed.
-Currently there is only support for
-.Xr skey 1
-authentication.
+Specifies whether challenge response authentication is allowed.
+All authentication styles from
+.Xr login.conf 5
+are supported.
 The default is
 .Dq yes .
-.It Cm CheckMail
-Specifies whether
-.Nm
-should check for new mail for interactive logins.
-The default is
-.Dq no .
 .It Cm Ciphers
 Specifies the ciphers allowed for protocol version 2.
 Multiple ciphers must be comma-separated.
@@ -375,7 +387,7 @@ The default is
 .Dq aes128-cbc,3des-cbc,blowfish-cbc,cast128-cbc,arcfour.
 .It Cm ClientAliveInterval
 Sets a timeout interval in seconds after which if no data has been received
-from the client, 
+from the client,
 .Nm
 will send a message through the encrypted
 channel to request a response from the client.
@@ -387,23 +399,24 @@ Sets the number of client alive messages (see above) which may be
 sent without
 .Nm
 receiving any messages back from the client. If this threshold is
-reached while client alive messages are being sent, 
+reached while client alive messages are being sent,
 .Nm
 will disconnect the client, terminating the session. It is important
-to note that the use of client alive messages is very different from 
+to note that the use of client alive messages is very different from
 .Cm Keepalive
 (below). The client alive messages are sent through the
 encrypted channel and therefore will not be spoofable. The TCP keepalive
 option enabled by
 .Cm Keepalive
-is spoofable. You want to use the client
-alive mechanism when you are basing something important on
-clients having an active connection to the server.
+is spoofable. The client alive mechanism is valuable when the client or
+server depend on knowing when a connection has become inactive.
 .Pp
-The default value is 3. If you set
+The default value is 3. If
 .Cm ClientAliveInterval
-(above) to 15, and leave this value at the default, unresponsive ssh clients
-will be disconnected after approximately 45 seconds. 
+(above) is set to 15, and
+.Cm ClientAliveCountMax
+is left at the default, unresponsive ssh clients
+will be disconnected after approximately 45 seconds.
 .It Cm DenyGroups
 This keyword can be followed by a number of group names, separated
 by spaces.
@@ -414,7 +427,7 @@ and
 .Ql ?
 can be used as
 wildcards in the patterns.
-Only group names are valid; a numerical group ID isn't recognized.
+Only group names are valid; a numerical group ID is not recognized.
 By default login is allowed regardless of the group list.
 .Pp
 .It Cm DenyUsers
@@ -425,11 +438,20 @@ Login is disallowed for user names that match one of the patterns.
 and
 .Ql ?
 can be used as wildcards in the patterns.
-Only user names are valid; a numerical user ID isn't recognized.
+Only user names are valid; a numerical user ID is not recognized.
 By default login is allowed regardless of the user name.
 .It Cm GatewayPorts
 Specifies whether remote hosts are allowed to connect to ports
 forwarded for the client.
+By default,
+.Nm
+binds remote port forwardings to the loopback addresss.  This
+prevents other remote hosts from connecting to forwarded ports.
+.Cm GatewayPorts
+can be used to specify that
+.Nm
+should bind remote port forwardings to the wildcard address,
+thus allowing remote hosts to connect to forwarded ports.
 The argument must be
 .Dq yes
 or
@@ -942,7 +964,8 @@ file and edit it.
 The options (if present) consist of comma-separated option
 specifications.
 No spaces are permitted, except within double quotes.
-The following option specifications are supported:
+The following option specifications are supported (note
+that option keywords are case-insensitive):
 .Bl -tag -width Ds
 .It Cm from="pattern-list"
 Specifies that in addition to RSA authentication, the canonical name
@@ -968,10 +991,10 @@ just the key).
 Specifies that the command is executed whenever this key is used for
 authentication.
 The command supplied by the user (if any) is ignored.
-The command is run on a pty if the connection requests a pty;
+The command is run on a pty if the client requests a pty;
 otherwise it is run without a tty.
-Note that if you want a 8-bit clean channel,
-you must not request a pty or should specify
+If a 8-bit clean channel is required,
+one must not request a pty or should specify
 .Cm no-pty .
 A quote may be included in the command by quoting it with a backslash.
 This option might be useful
@@ -979,6 +1002,7 @@ to restrict certain RSA keys to perform just a specific operation.
 An example might be a key that permits remote backups but nothing else.
 Note that the client may specify TCP/IP and/or X11
 forwarding unless they are explicitly prohibited.
+Note that this option applies to shell, command or subsystem execution.
 .It Cm environment="NAME=value"
 Specifies that the string is to be added to the environment when
 logging in using this key.
@@ -1000,13 +1024,16 @@ authentication.
 .It Cm no-pty
 Prevents tty allocation (a request to allocate a pty will fail).
 .It Cm permitopen="host:port"
-Limit local 
+Limit local
 .Li ``ssh -L''
 port forwarding such that it may only connect to the specified host and
-port. Multiple 
+port.
+IPv6 addresses can be specified with an alternative syntax:
+.Ar host/port .
+Multiple
 .Cm permitopen
-options may be applied separated by commas. No pattern matching is 
-performed on the specified hostnames, they must be literal domains or 
+options may be applied separated by commas. No pattern matching is
+performed on the specified hostnames, they must be literal domains or
 addresses.
 .El
 .Ss Examples
@@ -1260,15 +1287,14 @@ created OpenSSH.
 Markus Friedl contributed the support for SSH
 protocol versions 1.5 and 2.0.
 .Sh SEE ALSO
-.Xr moduli 5 ,
-.Xr rlogin 1 ,
-.Xr rsh 1 ,
 .Xr scp 1 ,
 .Xr sftp 1 ,
 .Xr ssh 1 ,
 .Xr ssh-add 1 ,
 .Xr ssh-agent 1 ,
 .Xr ssh-keygen 1 ,
+.Xr login.conf 5 ,
+.Xr moduli 5 ,
 .Xr sftp-server 8
 .Rs
 .%A T. Ylonen
@@ -1277,8 +1303,8 @@ protocol versions 1.5 and 2.0.
 .%A T. Rinne
 .%A S. Lehtinen
 .%T "SSH Protocol Architecture"
-.%N draft-ietf-secsh-architecture-07.txt
-.%D January 2001
+.%N draft-ietf-secsh-architecture-09.txt
+.%D July 2001
 .%O work in progress material
 .Re
 .Rs

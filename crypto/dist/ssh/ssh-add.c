@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh-add.c,v 1.12 2001/06/23 19:37:41 itojun Exp $	*/
+/*	$NetBSD: ssh-add.c,v 1.13 2001/09/27 03:24:05 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -12,7 +12,7 @@
  * called by a name other than "ssh" or "Secure Shell".
  *
  * SSH2 implementation,
- * Copyright (c) 2000 Markus Friedl.  All rights reserved.
+ * Copyright (c) 2000, 2001 Markus Friedl.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,7 +36,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: ssh-add.c,v 1.39 2001/06/23 15:12:20 itojun Exp $");
+RCSID("$OpenBSD: ssh-add.c,v 1.45 2001/08/03 10:31:30 jakob Exp $");
 
 #include <openssl/evp.h>
 
@@ -49,6 +49,9 @@ RCSID("$OpenBSD: ssh-add.c,v 1.39 2001/06/23 15:12:20 itojun Exp $");
 #include "authfile.h"
 #include "pathnames.h"
 #include "readpass.h"
+
+/* argv0 */
+extern char *__progname;
 
 /* we keep a cache of one passphrases */
 static char *pass = NULL;
@@ -123,7 +126,7 @@ add_file(AuthenticationConnection *ac, const char *filename)
 		snprintf(msg, sizeof msg, "Enter passphrase for %.200s: ",
 		   comment);
 		for (;;) {
-			pass = read_passphrase(msg, 1);
+			pass = read_passphrase(msg, RP_ALLOW_STDIN);
 			if (strcmp(pass, "") == 0) {
 				clear_pass();
 				xfree(comment);
@@ -142,6 +145,17 @@ add_file(AuthenticationConnection *ac, const char *filename)
 		fprintf(stderr, "Could not add identity: %s\n", filename);
 	xfree(comment);
 	key_free(private);
+}
+
+static void
+update_card(AuthenticationConnection *ac, int add, const char *id)
+{
+	if (ssh_update_card(ac, add, id))
+		fprintf(stderr, "Card %s: %s\n",
+		     add ? "added" : "removed", id);
+	else
+		fprintf(stderr, "Could not %s card: %s\n",
+		     add ? "add" : "remove", id);
 }
 
 static void
@@ -176,15 +190,31 @@ list_identities(AuthenticationConnection *ac, int do_fp)
 		printf("The agent has no identities.\n");
 }
 
+static void
+usage(void)
+{
+	fprintf(stderr, "Usage: %s [options]\n", __progname);
+	fprintf(stderr, "Options:\n");
+	fprintf(stderr, "  -l          List fingerprints of all identities.\n");
+	fprintf(stderr, "  -L          List public key parameters of all identities.\n");
+	fprintf(stderr, "  -d          Delete identity.\n");
+	fprintf(stderr, "  -D          Delete all identities.\n");
+#ifdef SMARTCARD
+	fprintf(stderr, "  -s reader   Add key in smartcard reader.\n");
+	fprintf(stderr, "  -e reader   Remove key in smartcard reader.\n");
+#endif
+}
+
 int
 main(int argc, char **argv)
 {
+	extern char *optarg;
+	extern int optind;
 	AuthenticationConnection *ac = NULL;
 	struct passwd *pw;
 	char buf[1024];
-	int no_files = 1;
-	int i;
-	int deleting = 0;
+	char *sc_reader_id = NULL;
+	int i, ch, deleting = 0;
 
 	SSLeay_add_all_algorithms();
 
@@ -194,30 +224,40 @@ main(int argc, char **argv)
 		fprintf(stderr, "Could not open a connection to your authentication agent.\n");
 		exit(1);
 	}
-	for (i = 1; i < argc; i++) {
-		if ((strcmp(argv[i], "-l") == 0) ||
-		    (strcmp(argv[i], "-L") == 0)) {
-			list_identities(ac, argv[i][1] == 'l' ? 1 : 0);
-			/* Don't default-add/delete if -l. */
-			no_files = 0;
-			continue;
-		}
-		if (strcmp(argv[i], "-d") == 0) {
+        while ((ch = getopt(argc, argv, "lLdDe:s:")) != -1) {
+		switch (ch) {
+		case 'l':
+		case 'L':
+			list_identities(ac, ch == 'l' ? 1 : 0);
+			goto done;
+			break;
+		case 'd':
 			deleting = 1;
-			continue;
-		}
-		if (strcmp(argv[i], "-D") == 0) {
+			break;
+		case 'D':
 			delete_all(ac);
-			no_files = 0;
-			continue;
+			goto done;
+			break;
+		case 's':
+			sc_reader_id = optarg;
+			break;
+		case 'e':
+			deleting = 1; 
+			sc_reader_id = optarg;
+			break;
+		default:
+			usage();
+			exit(1);
+			break;
 		}
-		no_files = 0;
-		if (deleting)
-			delete_file(ac, argv[i]);
-		else
-			add_file(ac, argv[i]);
 	}
-	if (no_files) {
+	argc -= optind;
+	argv += optind;
+	if (sc_reader_id != NULL) {
+		update_card(ac, !deleting, sc_reader_id);
+		goto done;
+	}
+	if (argc == 0) {
 		pw = getpwuid(getuid());
 		if (!pw) {
 			fprintf(stderr, "No user found with uid %u\n",
@@ -230,8 +270,17 @@ main(int argc, char **argv)
 			delete_file(ac, buf);
 		else
 			add_file(ac, buf);
+	} else {
+		for (i = 0; i < argc; i++) {
+			if (deleting)
+				delete_file(ac, argv[i]);
+			else
+				add_file(ac, argv[i]);
+		}
 	}
 	clear_pass();
+
+done:
 	ssh_close_authentication_connection(ac);
 	exit(0);
 }

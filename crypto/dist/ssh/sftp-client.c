@@ -1,4 +1,4 @@
-/*	$NetBSD: sftp-client.c,v 1.10 2001/06/23 19:37:41 itojun Exp $	*/
+/*	$NetBSD: sftp-client.c,v 1.11 2001/09/27 03:24:04 itojun Exp $	*/
 /*
  * Copyright (c) 2001 Damien Miller.  All rights reserved.
  *
@@ -30,16 +30,14 @@
 /* XXX: copy between two remote sites */
 
 #include "includes.h"
-RCSID("$OpenBSD: sftp-client.c,v 1.17 2001/06/23 15:12:20 itojun Exp $");
+RCSID("$OpenBSD: sftp-client.c,v 1.18 2001/07/14 15:10:16 stevesk Exp $");
 
-#include "ssh.h"
 #include "buffer.h"
 #include "bufaux.h"
 #include "getput.h"
 #include "xmalloc.h"
 #include "log.h"
 #include "atomicio.h"
-#include "pathnames.h"
 
 #include "sftp.h"
 #include "sftp-common.h"

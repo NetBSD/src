@@ -1,4 +1,4 @@
-/*	$NetBSD: clientloop.c,v 1.10 2001/06/23 19:37:39 itojun Exp $	*/
+/*	$NetBSD: clientloop.c,v 1.11 2001/09/27 03:24:03 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -36,7 +36,7 @@
  *
  *
  * SSH2 support added by Markus Friedl.
- * Copyright (c) 1999,2000 Markus Friedl.  All rights reserved.
+ * Copyright (c) 1999, 2000, 2001 Markus Friedl.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -60,7 +60,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: clientloop.c,v 1.77 2001/06/23 15:12:18 itojun Exp $");
+RCSID("$OpenBSD: clientloop.c,v 1.82 2001/09/17 20:52:47 markus Exp $");
 
 #include "ssh.h"
 #include "ssh1.h"
@@ -319,10 +319,10 @@ client_check_window_change(void)
 
 static void
 client_wait_until_can_do_something(fd_set **readsetp, fd_set **writesetp,
-    int *maxfdp, int rekeying)
+    int *maxfdp, int *nallocp, int rekeying)
 {
 	/* Add any selections by the channel mechanism. */
-	channel_prepare_select(readsetp, writesetp, maxfdp, rekeying);
+	channel_prepare_select(readsetp, writesetp, maxfdp, nallocp, rekeying);
 
 	if (!compat20) {
 		/* Read from the connection, unless our buffers are full. */
@@ -771,7 +771,7 @@ client_loop(int have_pty, int escape_char_arg, int ssh2_chan_id)
 {
 	fd_set *readset = NULL, *writeset = NULL;
 	double start_time, total_time;
-	int max_fd = 0, len, rekeying = 0;
+	int max_fd = 0, max_fd2 = 0, len, rekeying = 0, nalloc = 0;
 	char buf[100];
 
 	debug("Entering interactive session.");
@@ -878,8 +878,9 @@ client_loop(int have_pty, int escape_char_arg, int ssh2_chan_id)
 		 * Wait until we have something to do (something becomes
 		 * available on one of the descriptors).
 		 */
+		max_fd2 = max_fd;
 		client_wait_until_can_do_something(&readset, &writeset,
-		    &max_fd, rekeying);
+		    &max_fd2, &nalloc, rekeying);
 
 		if (quit_pending)
 			break;
@@ -1056,7 +1057,7 @@ client_request_forwarded_tcpip(const char *request_type, int rchan)
 	debug("client_request_forwarded_tcpip: listen %s port %d, originator %s port %d",
 	    listen_address, listen_port, originator_address, originator_port);
 
-	sock = channel_connect_by_listen_adress(listen_port);
+	sock = channel_connect_by_listen_address(listen_port);
 	if (sock < 0) {
 		xfree(originator_address);
 		xfree(listen_address);
@@ -1111,6 +1112,7 @@ client_request_x11(const char *request_type, int rchan)
 		error("client_request_x11: channel_new failed");
 		close(sock);
 	}
+	c->force_drain = 1;
 	return c;
 }
 
@@ -1136,6 +1138,7 @@ client_request_agent(const char *request_type, int rchan)
 		error("client_request_agent: channel_new failed");
 		close(sock);
 	}
+	c->force_drain = 1;
 	return c;
 }
 
@@ -1272,7 +1275,7 @@ client_init_dispatch_15(void)
 	dispatch_set(SSH_MSG_CHANNEL_CLOSE, &channel_input_ieof);
 	dispatch_set(SSH_MSG_CHANNEL_CLOSE_CONFIRMATION, & channel_input_oclose);
 }
-void
+static void
 client_init_dispatch(void)
 {
 	if (compat20)

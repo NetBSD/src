@@ -1,4 +1,4 @@
-/*	$NetBSD: sshconnect2.c,v 1.11 2001/06/23 19:37:42 itojun Exp $	*/
+/*	$NetBSD: sshconnect2.c,v 1.12 2001/09/27 03:24:06 itojun Exp $	*/
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -24,7 +24,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshconnect2.c,v 1.76 2001/06/23 15:12:21 itojun Exp $");
+RCSID("$OpenBSD: sshconnect2.c,v 1.82 2001/08/31 11:46:39 markus Exp $");
 
 #include <openssl/bn.h>
 #include <openssl/md5.h>
@@ -46,7 +46,6 @@ RCSID("$OpenBSD: sshconnect2.c,v 1.76 2001/06/23 15:12:21 itojun Exp $");
 #include "key.h"
 #include "sshconnect.h"
 #include "authfile.h"
-#include "cli.h"
 #include "dh.h"
 #include "authfd.h"
 #include "log.h"
@@ -166,6 +165,8 @@ struct Authctxt {
 	/* hostbased */
 	Key **keys;
 	int nkeys;
+	/* kbd-interactive */
+	int info_req_seen;
 };
 struct Authmethod {
 	char	*name;		/* string to compare against server's list */
@@ -197,21 +198,21 @@ static Authmethod *authmethod_lookup(const char *name);
 static char *authmethods_get(void);
 
 Authmethod authmethods[] = {
-	{"publickey",
-		userauth_pubkey,
-		&options.pubkey_authentication,
-		NULL},
 	{"hostbased",
 		userauth_hostbased,
 		&options.hostbased_authentication,
 		NULL},
-	{"password",
-		userauth_passwd,
-		&options.password_authentication,
-		&options.batch_mode},
+	{"publickey",
+		userauth_pubkey,
+		&options.pubkey_authentication,
+		NULL},
 	{"keyboard-interactive",
 		userauth_kbdint,
 		&options.kbd_interactive_authentication,
+		&options.batch_mode},
+	{"password",
+		userauth_passwd,
+		&options.password_authentication,
 		&options.batch_mode},
 	{"none",
 		userauth_none,
@@ -254,6 +255,7 @@ ssh_userauth2(const char *local_user, const char *server_user, char *host,
 		options.preferred_authentications = authmethods_get();
 
 	/* setup authentication context */
+	memset(&authctxt, 0, sizeof(authctxt));
 	authctxt.agent = ssh_get_authentication_connection();
 	authctxt.server_user = server_user;
 	authctxt.local_user = local_user;
@@ -264,6 +266,7 @@ ssh_userauth2(const char *local_user, const char *server_user, char *host,
 	authctxt.authlist = NULL;
 	authctxt.keys = keys;
 	authctxt.nkeys = nkeys;
+	authctxt.info_req_seen = 0;
 	if (authctxt.method == NULL)
 		fatal("ssh_userauth2: internal error: cannot send userauth none request");
 
@@ -463,7 +466,7 @@ userauth_passwd(Authctxt *authctxt)
 	return 1;
 }
 
-void
+static void
 clear_auth_state(Authctxt *authctxt)
 {
 	/* XXX clear authentication state */
@@ -642,6 +645,11 @@ identity_sign_cb(Authctxt *authctxt, Key *key, u_char **sigp, int *lenp,
 	idx = authctxt->last_key_hint;
 	if (idx < 0)
 		return -1;
+
+	/* private key is stored in external hardware */
+	if (options.identity_keys[idx]->flags & KEY_FLAG_EXT) 
+		return key_sign(options.identity_keys[idx], sigp, lenp, data, datalen);
+
 	private = load_identity_file(options.identity_files[idx]);
 	if (private == NULL)
 		return -1;
@@ -736,6 +744,12 @@ userauth_kbdint(Authctxt *authctxt)
 
 	if (attempt++ >= options.number_of_password_prompts)
 		return 0;
+	/* disable if no SSH2_MSG_USERAUTH_INFO_REQUEST has been seen */
+	if (attempt > 1 && !authctxt->info_req_seen) {
+		debug3("userauth_kbdint: disable: no info_req_seen");
+		dispatch_set(SSH2_MSG_USERAUTH_INFO_REQUEST, NULL);
+		return 0;
+	}
 
 	debug2("userauth_kbdint");
 	packet_start(SSH2_MSG_USERAUTH_REQUEST);
@@ -767,13 +781,15 @@ input_userauth_info_req(int type, int plen, void *ctxt)
 	if (authctxt == NULL)
 		fatal("input_userauth_info_req: no authentication context");
 
+	authctxt->info_req_seen = 1;
+
 	name = packet_get_string(NULL);
 	inst = packet_get_string(NULL);
 	lang = packet_get_string(NULL);
 	if (strlen(name) > 0)
-		cli_mesg(name);
+		log("%s", name);
 	if (strlen(inst) > 0)
-		cli_mesg(inst);
+		log("%s", inst);
 	xfree(name);
 	xfree(inst);
 	xfree(lang);
@@ -793,7 +809,7 @@ input_userauth_info_req(int type, int plen, void *ctxt)
 		prompt = packet_get_string(NULL);
 		echo = packet_get_char();
 
-		response = cli_prompt(prompt, echo);
+		response = read_passphrase(prompt, echo ? RP_ECHO : 0);
 
 		packet_put_cstring(response);
 		memset(response, 0, strlen(response));
@@ -978,7 +994,8 @@ authmethod_get(char *authlist)
 
 
 #define	DELIM	","
-char *
+
+static char *
 authmethods_get(void)
 {
 	Authmethod *method = NULL;

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2001/03/19 20:03:26 itojun Exp $
+#	$NetBSD: Makefile,v 1.3 2001/09/27 03:24:01 itojun Exp $
 
 .include <bsd.own.mk>
 
@@ -9,5 +9,5 @@ SRCS=	ssh-keyscan.c
 
 .include <bsd.prog.mk>
 
-LDADD+=	-lcrypto
-DPADD+=	${LIBCRYPTO}
+LDADD+=	-lcrypto -lz
+DPADD+=	${LIBCRYPTO} ${LIBZ}

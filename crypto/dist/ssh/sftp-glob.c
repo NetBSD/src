@@ -1,4 +1,4 @@
-/*	$NetBSD: sftp-glob.c,v 1.6 2001/06/23 19:37:41 itojun Exp $	*/
+/*	$NetBSD: sftp-glob.c,v 1.7 2001/09/27 03:24:05 itojun Exp $	*/
 /*
  * Copyright (c) 2001 Damien Miller.  All rights reserved.
  *
@@ -24,18 +24,14 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sftp-glob.c,v 1.6 2001/06/23 15:12:20 itojun Exp $");
+RCSID("$OpenBSD: sftp-glob.c,v 1.8 2001/07/14 15:10:17 stevesk Exp $");
 
 #include <glob.h>
 
-#include "ssh.h"
 #include "buffer.h"
 #include "bufaux.h"
-#include "getput.h"
 #include "xmalloc.h"
 #include "log.h"
-#include "atomicio.h"
-#include "pathnames.h"
 
 #include "sftp.h"
 #include "sftp-common.h"
@@ -138,9 +134,9 @@ int
 remote_glob(int fd_in, int fd_out, const char *pattern, int flags,
     int (*errfunc)(const char *, int), glob_t *pglob)
 {
-	pglob->gl_opendir = (void*)fudge_opendir;
-	pglob->gl_readdir = (void*)fudge_readdir;
-	pglob->gl_closedir = (void*)fudge_closedir;
+	pglob->gl_opendir = fudge_opendir;
+	pglob->gl_readdir = (struct dirent *(*)(void *))fudge_readdir;
+	pglob->gl_closedir = (void (*)(void *))fudge_closedir;
 	pglob->gl_lstat = fudge_lstat;
 	pglob->gl_stat = fudge_stat;
 	
@@ -148,6 +144,6 @@ remote_glob(int fd_in, int fd_out, const char *pattern, int flags,
 	cur.fd_in = fd_in;
 	cur.fd_out = fd_out;
 
-	return(glob(pattern, flags | GLOB_ALTDIRFUNC, (void*)errfunc,
+	return(glob(pattern, flags | GLOB_ALTDIRFUNC, errfunc,
 	    pglob));
 }

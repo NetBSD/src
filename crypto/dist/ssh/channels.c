@@ -1,4 +1,4 @@
-/*	$NetBSD: channels.c,v 1.13 2001/06/23 19:37:39 itojun Exp $	*/
+/*	$NetBSD: channels.c,v 1.14 2001/09/27 03:24:02 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -13,9 +13,8 @@
  * incompatible with the protocol description in the RFC file, it must be
  * called by a name other than "ssh" or "Secure Shell".
  *
- *
  * SSH2 support added by Markus Friedl.
- * Copyright (c) 1999,2000 Markus Friedl.  All rights reserved.
+ * Copyright (c) 1999, 2000, 2001 Markus Friedl.  All rights reserved.
  * Copyright (c) 1999 Dug Song.  All rights reserved.
  * Copyright (c) 1999 Theo de Raadt.  All rights reserved.
  *
@@ -41,7 +40,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: channels.c,v 1.127 2001/06/23 15:12:17 itojun Exp $");
+RCSID("$OpenBSD: channels.c,v 1.134 2001/09/17 21:04:01 markus Exp $");
 
 #include "ssh.h"
 #include "ssh1.h"
@@ -263,10 +262,42 @@ channel_new(char *ctype, int type, int rfd, int wfd, int efd,
 	c->cb_fn = NULL;
 	c->cb_arg = NULL;
 	c->cb_event = 0;
-	c->dettach_user = NULL;
+	c->force_drain = 0;
+	c->detach_user = NULL;
 	c->input_filter = NULL;
 	debug("channel %d: new [%s]", found, remote_name);
 	return c;
+}
+
+static int
+channel_find_maxfd(void)
+{
+	int i, max = 0;
+	Channel *c;
+
+	for (i = 0; i < channels_alloc; i++) {
+		c = channels[i];
+		if (c != NULL) {
+			max = MAX(max, c->rfd);
+			max = MAX(max, c->wfd);
+			max = MAX(max, c->efd);
+		}
+	}
+	return max;
+}
+
+int
+channel_close_fd(int *fdp)
+{
+	int ret = 0, fd = *fdp;
+
+	if (fd != -1) {
+		ret = close(fd);
+		*fdp = -1;
+		if (fd == channel_max_fd)
+			channel_max_fd = channel_find_maxfd();
+	}
+	return ret;
 }
 
 /* Close all channel fd/socket. */
@@ -277,22 +308,10 @@ channel_close_fds(Channel *c)
 	debug3("channel_close_fds: channel %d: r %d w %d e %d",
 	    c->self, c->rfd, c->wfd, c->efd);
 
-	if (c->sock != -1) {
-		close(c->sock);
-		c->sock = -1;
-	}
-	if (c->rfd != -1) {
-		close(c->rfd);
-		c->rfd = -1;
-	}
-	if (c->wfd != -1) {
-		close(c->wfd);
-		c->wfd = -1;
-	}
-	if (c->efd != -1) {
-		close(c->efd);
-		c->efd = -1;
-	}
+	channel_close_fd(&c->sock);
+	channel_close_fd(&c->rfd);
+	channel_close_fd(&c->wfd);
+	channel_close_fd(&c->efd);
 }
 
 /* Free the channel and close its fd/socket. */
@@ -313,9 +332,9 @@ channel_free(Channel *c)
 	debug3("channel_free: status: %s", s);
 	xfree(s);
 
-	if (c->dettach_user != NULL) {
-		debug("channel_free: channel %d: dettaching channel user", c->self);
-		c->dettach_user(c->self, NULL);
+	if (c->detach_user != NULL) {
+		debug("channel_free: channel %d: detaching channel user", c->self);
+		c->detach_user(c->self, NULL);
 	}
 	if (c->sock != -1)
 		shutdown(c->sock, SHUT_RDWR);
@@ -341,6 +360,22 @@ channel_free_all(void)
 			channel_free(channels[i]);
 }
 
+void
+channel_detach_all(void)
+{
+	int i;
+	Channel *c;
+
+	for (i = 0; i < channels_alloc; i++) {
+		c = channels[i];
+		if (c != NULL && c->detach_user != NULL) {
+			debug("channel_detach_all: channel %d", c->self);
+			c->detach_user(c->self, NULL);
+			c->detach_user = NULL;
+		}
+	}
+}
+
 /*
  * Closes the sockets/fds of all channels.  This is used to close extra file
  * descriptors after a fork.
@@ -354,6 +389,32 @@ channel_close_all()
 	for (i = 0; i < channels_alloc; i++)
 		if (channels[i] != NULL)
 			channel_close_fds(channels[i]);
+}
+
+/*
+ * Stop listening to channels.
+ */
+
+void
+channel_stop_listening(void)
+{
+	int i;
+	Channel *c;
+
+	for (i = 0; i < channels_alloc; i++) {
+		c = channels[i];
+		if (c != NULL) {
+			switch (c->type) {
+			case SSH_CHANNEL_AUTH_SOCKET:
+			case SSH_CHANNEL_PORT_LISTENER:
+			case SSH_CHANNEL_RPORT_LISTENER:
+			case SSH_CHANNEL_X11_LISTENER:
+				channel_close_fd(&c->sock);
+				channel_free(c);
+				break;
+			}
+		}
+	}
 }
 
 /*
@@ -582,7 +643,7 @@ channel_register_cleanup(int id, channel_callback_fn *fn)
 		log("channel_register_cleanup: %d: bad id", id);
 		return;
 	}
-	c->dettach_user = fn;
+	c->detach_user = fn;
 }
 void
 channel_cancel_cleanup(int id)
@@ -592,7 +653,7 @@ channel_cancel_cleanup(int id)
 		log("channel_cancel_cleanup: %d: bad id", id);
 		return;
 	}
-	c->dettach_user = NULL;
+	c->detach_user = NULL;
 }
 void
 channel_register_filter(int id, channel_filter_fn *fn)
@@ -803,7 +864,7 @@ channel_pre_x11_open_13(Channel *c, fd_set * readset, fd_set * writeset)
 		log("X11 connection rejected because of wrong authentication.");
 		buffer_clear(&c->input);
 		buffer_clear(&c->output);
-		close(c->sock);
+		channel_close_fd(&c->sock);
 		c->sock = -1;
 		c->type = SSH_CHANNEL_CLOSED;
 		packet_start(SSH_MSG_CHANNEL_CLOSE);
@@ -816,6 +877,9 @@ static void
 channel_pre_x11_open(Channel *c, fd_set * readset, fd_set * writeset)
 {
 	int ret = x11_open_helper(&c->output);
+
+	/* c->force_drain = 1; */
+
 	if (ret == 1) {
 		c->type = SSH_CHANNEL_OPEN;
 		if (compat20)
@@ -1145,7 +1209,7 @@ static void
 channel_post_connecting(Channel *c, fd_set * readset, fd_set * writeset)
 {
 	int err = 0;
-	int sz = sizeof(err);
+	socklen_t sz = sizeof(err);
 
 	if (FD_ISSET(c->sock, writeset)) {
 		if (getsockopt(c->sock, SOL_SOCKET, SO_ERROR, (char *)&err,
@@ -1230,14 +1294,17 @@ static int
 channel_handle_wfd(Channel *c, fd_set * readset, fd_set * writeset)
 {
 	struct termios tio;
+	u_char *data;
+	u_int dlen;
 	int len;
 
 	/* Send buffered output data to the socket. */
 	if (c->wfd != -1 &&
 	    FD_ISSET(c->wfd, writeset) &&
 	    buffer_len(&c->output) > 0) {
-		len = write(c->wfd, buffer_ptr(&c->output),
-		    buffer_len(&c->output));
+		data = buffer_ptr(&c->output);
+		dlen = buffer_len(&c->output);
+		len = write(c->wfd, data, dlen);
 		if (len < 0 && (errno == EINTR || errno == EAGAIN))
 			return 1;
 		if (len <= 0) {
@@ -1254,7 +1321,7 @@ channel_handle_wfd(Channel *c, fd_set * readset, fd_set * writeset)
 			}
 			return -1;
 		}
-		if (compat20 && c->isatty) {
+		if (compat20 && c->isatty && dlen >= 1 && data[0] != '\r') {
 			if (tcgetattr(c->wfd, &tio) == 0 &&
 			    !(tio.c_lflag & ECHO) && (tio.c_lflag & ICANON)) {
 				/*
@@ -1294,8 +1361,7 @@ channel_handle_efd(Channel *c, fd_set * readset, fd_set * writeset)
 			if (len <= 0) {
 				debug2("channel %d: closing write-efd %d",
 				    c->self, c->efd);
-				close(c->efd);
-				c->efd = -1;
+				channel_close_fd(&c->efd);
 			} else {
 				buffer_consume(&c->extended, len);
 				c->local_consumed += len;
@@ -1310,8 +1376,7 @@ channel_handle_efd(Channel *c, fd_set * readset, fd_set * writeset)
 			if (len <= 0) {
 				debug2("channel %d: closing read-efd %d",
 				    c->self, c->efd);
-				close(c->efd);
-				c->efd = -1;
+				channel_close_fd(&c->efd);
 			} else {
 				buffer_append(&c->extended, buf, len);
 			}
@@ -1493,7 +1558,7 @@ channel_handler(chan_fn *ftab[], fd_set * readset, fd_set * writeset)
  */
 void
 channel_prepare_select(fd_set **readsetp, fd_set **writesetp, int *maxfdp,
-    int rekeying)
+    int *nallocp, int rekeying)
 {
 	int n;
 	u_int sz;
@@ -1501,15 +1566,13 @@ channel_prepare_select(fd_set **readsetp, fd_set **writesetp, int *maxfdp,
 	n = MAX(*maxfdp, channel_max_fd);
 
 	sz = howmany(n+1, NFDBITS) * sizeof(fd_mask);
-	if (*readsetp == NULL || n > *maxfdp) {
-		if (*readsetp)
-			xfree(*readsetp);
-		if (*writesetp)
-			xfree(*writesetp);
-		*readsetp = xmalloc(sz);
-		*writesetp = xmalloc(sz);
-		*maxfdp = n;
+	/* perhaps check sz < nalloc/2 and shrink? */
+	if (*readsetp == NULL || sz > *nallocp) {
+		*readsetp = xrealloc(*readsetp, sz);
+		*writesetp = xrealloc(*writesetp, sz);
+		*nallocp = sz;
 	}
+	*maxfdp = n;
 	memset(*readsetp, 0, sz);
 	memset(*writesetp, 0, sz);
 
@@ -1728,6 +1791,13 @@ channel_input_ieof(int type, int plen, void *ctxt)
 	if (c == NULL)
 		packet_disconnect("Received ieof for nonexistent channel %d.", id);
 	chan_rcvd_ieof(c);
+
+	/* XXX force input close */
+	if (c->force_drain) {
+		debug("channel %d: FORCE input drain", c->self);
+		c->istate = CHAN_INPUT_WAIT_DRAIN;
+	}
+
 }
 
 void
@@ -2268,7 +2338,7 @@ connect_to(const char *host, u_short port)
 }
 
 int
-channel_connect_by_listen_adress(u_short listen_port)
+channel_connect_by_listen_address(u_short listen_port)
 {
 	int i;
 
@@ -2559,6 +2629,7 @@ x11_input_open(int type, int plen, void *ctxt)
 			close(sock);
 		} else {
 			c->remote_id = remote_id;
+			c->force_drain = 1;
 		}
 	}
 	if (c == NULL) {
@@ -2821,6 +2892,7 @@ auth_input_open_request(int type, int plen, void *ctxt)
 			close(sock);
 		} else {
 			c->remote_id = remote_id;
+			c->force_drain = 1;
 		}
 	}
 	if (c == NULL) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: auth2.c,v 1.9 2001/06/23 19:37:38 itojun Exp $	*/
+/*	$NetBSD: auth2.c,v 1.10 2001/09/27 03:24:02 itojun Exp $	*/
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -24,7 +24,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: auth2.c,v 1.66 2001/06/23 15:12:17 itojun Exp $");
+RCSID("$OpenBSD: auth2.c,v 1.70 2001/09/20 13:46:48 markus Exp $");
 
 #include <openssl/evp.h>
 
@@ -77,7 +77,7 @@ static void protocol_error(int, int, void *);
 
 /* helper */
 static Authmethod *authmethod_lookup(const char *);
-char *authmethods_get(void);
+static char *authmethods_get(void);
 static int user_key_allowed(struct passwd *, Key *);
 static int hostbased_key_allowed(struct passwd *, const char *, char *, Key *);
 
@@ -119,10 +119,6 @@ do_authentication2(void)
 
 	x_authctxt = authctxt;		/*XXX*/
 
-#if defined(KRB4) || defined(KRB5)
-	/* turn off kerberos, not supported by SSH2 */
-	options.kerberos_authentication = 0;
-#endif
 	/* challenge-reponse is implemented via keyboard interactive */
 	if (options.challenge_response_authentication)
 		options.kbd_interactive_authentication = 1;
@@ -552,7 +548,7 @@ auth_get_user(void)
 
 #define	DELIM	","
 
-char *
+static char *
 authmethods_get(void)
 {
 	Authmethod *method = NULL;
@@ -631,7 +627,7 @@ user_key_allowed2(struct passwd *pw, Key *key, char *file)
 		return 0;
 	}
 	if (options.strict_modes &&
-	    secure_filename(f, file, pw->pw_uid, line, sizeof(line)) != 0) {
+	    secure_filename(f, file, pw, line, sizeof(line)) != 0) {
 		fclose(f);
 		log("Authentication refused: %s", line);
 		restore_uid();
@@ -650,7 +646,7 @@ user_key_allowed2(struct passwd *pw, Key *key, char *file)
 		if (!*cp || *cp == '\n' || *cp == '#')
 			continue;
 
-		if (key_read(found, &cp) == -1) {
+		if (key_read(found, &cp) != 1) {
 			/* no key?  check if there are options for this key */
 			int quoted = 0;
 			debug2("user_key_allowed: check options: '%s'", cp);
@@ -664,7 +660,7 @@ user_key_allowed2(struct passwd *pw, Key *key, char *file)
 			/* Skip remaining whitespace. */
 			for (; *cp == ' ' || *cp == '\t'; cp++)
 				;
-			if (key_read(found, &cp) == -1) {
+			if (key_read(found, &cp) != 1) {
 				debug2("user_key_allowed: advance: '%s'", cp);
 				/* still no key?  advance to next line*/
 				continue;
@@ -673,7 +669,7 @@ user_key_allowed2(struct passwd *pw, Key *key, char *file)
 		if (key_equal(found, key) &&
 		    auth_parse_options(pw, options, file, linenum) == 1) {
 			found_key = 1;
-			debug("matching key found: file %s, line %ld",
+			debug("matching key found: file %s, line %lu",
 			    file, linenum);
 			break;
 		}
