@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.65 2001/11/17 03:50:28 lukem Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.66 2001/11/21 01:30:04 enami Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.65 2001/11/17 03:50:28 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.66 2001/11/21 01:30:04 enami Exp $");
 
 #include "opt_lockdebug.h"
 
@@ -263,7 +263,7 @@ malloc(size, type, flags)
 	if (kbp->kb_next == NULL) {
 		kbp->kb_last = NULL;
 		if (size > MAXALLOCSAVE)
-			allocsize = roundup(size, PAGE_SIZE);
+			allocsize = round_page(size);
 		else
 			allocsize = 1 << indx;
 		npg = btoc(allocsize);
