@@ -1,4 +1,4 @@
-.\"	$NetBSD: printenv.1,v 1.4 1997/01/09 15:17:31 tls Exp $
+.\"	$NetBSD: printenv.1,v 1.5 1997/10/19 12:44:21 lukem Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
 .\"   The Regents of the University of California.  All rights reserved.
@@ -34,7 +34,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)printenv.1	8.1 (Berkeley) 6/6/93
-.\"	$NetBSD: printenv.1,v 1.4 1997/01/09 15:17:31 tls Exp $
+.\"	$NetBSD: printenv.1,v 1.5 1997/10/19 12:44:21 lukem Exp $
 .\"
 .Dd June 6, 1993
 .Dt PRINTENV 1
@@ -43,10 +43,10 @@
 .Nm printenv
 .Nd print out the environment
 .Sh SYNOPSIS
-.Nm printenv
+.Nm
 .Op Ar name
 .Sh DESCRIPTION
-.Nm Printenv
+.Nm
 prints out the names and values of the variables in the environment,
 with one name/value pair per line.  If
 .Ar name
@@ -56,7 +56,7 @@ its value is printed.
 If a
 .Ar name
 is specified and it is not defined in the environment,
-.Nm printenv
+.Nm
 returns exit status 1, else it returns status 0.
 .Sh SEE ALSO
 .Xr csh 1 ,
@@ -64,6 +64,6 @@ returns exit status 1, else it returns status 0.
 .Xr environ 7
 .Sh HISTORY
 The
-.Nm printenv
+.Nm
 command appeared in
 .Bx 3.0 .
