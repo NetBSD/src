@@ -1,4 +1,4 @@
-/* $NetBSD: nextdisplay.c,v 1.15 2003/10/05 22:00:25 mycroft Exp $ */
+/* $NetBSD: nextdisplay.c,v 1.16 2005/01/11 02:04:01 chs Exp $ */
 
 /*
  * Copyright (c) 1998 Matt DeBergalis
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nextdisplay.c,v 1.15 2003/10/05 22:00:25 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nextdisplay.c,v 1.16 2005/01/11 02:04:01 chs Exp $");
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
@@ -204,8 +204,6 @@ nextdisplay_init(dc, color)
 	for (i = 0; i < dc->dc_ht * dc->dc_rowbytes; i += sizeof(u_int32_t))
 		*(u_int32_t *)(dc->dc_videobase + i) = 
 			(color ? 0x0 : 0xffffffff);
-
-	printf("done clearing\n");
 
 	rap = &dc->dc_raster;
 	rap->width = dc->dc_wid;
