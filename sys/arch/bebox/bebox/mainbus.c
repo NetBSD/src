@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.4 1998/01/12 18:18:01 thorpej Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.5 1998/02/03 04:38:53 sakamoto Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -53,14 +53,6 @@ union mainbus_attach_args {
 	struct pcibus_attach_args mba_pba;
 };
 
-struct bebox_bus_space bebox_bus_io = {
-	BEBOX_BUS_SPACE_IO, BEBOX_BUS_REVERSE
-};
-
-struct bebox_bus_space bebox_bus_mem = {
-	BEBOX_BUS_SPACE_MEM, BEBOX_BUS_REVERSE
-};
-
 /*
  * Probe for the mainbus; always succeeds.
  */
@@ -93,8 +85,8 @@ mainbus_attach(parent, self, aux)
 	 */
 #if NPCI > 0
 	mba.mba_pba.pba_busname = "pci";
-	mba.mba_pba.pba_iot = (bus_space_tag_t)&bebox_bus_io;
-	mba.mba_pba.pba_memt = (bus_space_tag_t)&bebox_bus_mem;
+	mba.mba_pba.pba_iot = (bus_space_tag_t)BEBOX_BUS_SPACE_IO;
+	mba.mba_pba.pba_memt = (bus_space_tag_t)BEBOX_BUS_SPACE_MEM;
 	mba.mba_pba.pba_bus = 0;
 	mba.mba_pba.pba_flags = PCI_FLAGS_IO_ENABLED |
 	    PCI_FLAGS_MEM_ENABLED;

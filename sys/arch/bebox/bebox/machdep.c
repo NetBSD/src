@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.7 1998/02/02 04:59:19 sakamoto Exp $	*/
+/*	$NetBSD: machdep.c,v 1.8 1998/02/03 04:38:54 sakamoto Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -623,7 +623,7 @@ consinit()
 #endif
 #if (NCOM > 0)
 	if (!strcmp(consinfo->devname, "com")) {
-		bus_space_tag_t tag = &bebox_bus_io;
+		bus_space_tag_t tag = BEBOX_BUS_SPACE_IO;
 
 		if(comcnattach(tag, consinfo->addr, consinfo->speed, COM_FREQ,
 		    ((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8)))
