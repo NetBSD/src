@@ -1,4 +1,4 @@
-/*	$NetBSD: siovar.h,v 1.1 1995/11/23 02:38:22 cgd Exp $	*/
+/*	$NetBSD: siovar.h,v 1.2 1996/04/12 02:11:24 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -27,10 +27,14 @@
  * rights to redistribute these changes.
  */
 
-void	sio_intr_setup __P((__const struct isa_pio_fns *, void *));
+void	sio_intr_setup __P((bus_chipset_tag_t));
 void	sio_iointr __P((void *framep, int vec));
+
+const char *sio_intr_string __P((void *, int));
+void	*sio_intr_establish __P((void *, int, int, int, int (*)(void *),
+	    void *));
+void	sio_intr_disestablish __P((void *, void *));
 
 #ifdef EVCNT_COUNTERS
 extern struct evcnt sio_intr_evcnt;
 #endif
-extern __const struct isa_intr_fns sio_isa_intr_fns;

@@ -1,4 +1,4 @@
-/*	$NetBSD: sio.c,v 1.4 1996/03/17 01:06:35 thorpej Exp $	*/
+/*	$NetBSD: sio.c,v 1.5 1996/04/12 02:11:22 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -32,6 +32,9 @@
 #include <sys/kernel.h>
 #include <sys/device.h>
 
+#include <machine/intr.h>
+#include <machine/bus.h>
+
 #include <dev/isa/isavar.h>
 #include <dev/eisa/eisavar.h>
 
@@ -45,21 +48,27 @@ int	siomatch __P((struct device *, void *, void *));
 void	sioattach __P((struct device *, struct device *, void *));
 
 struct cfattach sio_ca = {
-	sizeof(struct device), siomatch, sioattach
+	sizeof(struct device), siomatch, sioattach,
 };
 
 struct cfdriver sio_cd = {
-	NULL, "sio", DV_DULL
+	NULL, "sio", DV_DULL,
 };
 
 int	pcebmatch __P((struct device *, void *, void *));
 
 struct cfattach pceb_ca = {
-	sizeof(struct device), pcebmatch, sioattach
+	sizeof(struct device), pcebmatch, sioattach,
 };
 
 struct cfdriver pceb_cd = {
-	NULL, "pceb", DV_DULL
+	NULL, "pceb", DV_DULL,
+};
+
+union sio_attach_args {
+	const char *sa_name;			/* XXX should be common */
+	struct isabus_attach_args sa_iba;
+	struct eisabus_attach_args sa_eba;
 };
 
 static int	sioprint __P((void *, char *pnp));
@@ -70,10 +79,10 @@ siomatch(parent, match, aux)
 	void *match, *aux;
 {
 	struct cfdata *cf = match;
-	struct pcidev_attach_args *pda = aux;
+	struct pci_attach_args *pa = aux;
 
-	if (PCI_VENDOR(pda->pda_id) != PCI_VENDOR_INTEL ||
-	    PCI_PRODUCT(pda->pda_id) != PCI_PRODUCT_INTEL_SIO)
+	if (PCI_VENDOR(pa->pa_id) != PCI_VENDOR_INTEL ||
+	    PCI_PRODUCT(pa->pa_id) != PCI_PRODUCT_INTEL_SIO)
 		return (0);
 
 	return (1);
@@ -85,10 +94,10 @@ pcebmatch(parent, match, aux)
 	void *match, *aux;
 {
 	struct cfdata *cf = match;
-	struct pcidev_attach_args *pda = aux;
+	struct pci_attach_args *pa = aux;
 
-	if (PCI_VENDOR(pda->pda_id) != PCI_VENDOR_INTEL ||
-	    PCI_PRODUCT(pda->pda_id) != PCI_PRODUCT_INTEL_PCEB)
+	if (PCI_VENDOR(pa->pa_id) != PCI_VENDOR_INTEL ||
+	    PCI_PRODUCT(pa->pa_id) != PCI_PRODUCT_INTEL_PCEB)
 		return (0);
 
 	return (1);
@@ -99,23 +108,22 @@ sioattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct pcidev_attach_args *pda = aux;
-	struct isa_attach_args ia;
-	struct eisa_attach_args ea;
+	struct pci_attach_args *pa = aux;
+	union sio_attach_args sa;
 	int sio, haseisa;
 	char devinfo[256];
 
-	sio = (PCI_PRODUCT(pda->pda_id) == PCI_PRODUCT_INTEL_SIO);
-	haseisa = (PCI_PRODUCT(pda->pda_id) == PCI_PRODUCT_INTEL_PCEB);
+	sio = (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_SIO);
+	haseisa = (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_PCEB);
 
-	pci_devinfo(pda->pda_id, pda->pda_class, 0, devinfo);
+	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
 	printf(": %s (rev. 0x%02x)\n", devinfo,
-	    PCI_REVISION(pda->pda_class));
+	    PCI_REVISION(pa->pa_class));
 
 	if (sio) {
 		pci_revision_t rev;
 
-		rev = PCI_REVISION(pda->pda_class);
+		rev = PCI_REVISION(pa->pa_class);
 		
 		if (rev < 3)
 			printf("%s: WARNING: SIO I SUPPORT UNTESTED\n",
@@ -126,29 +134,15 @@ sioattach(parent, self, aux)
 	evcnt_attach(self, "intr", &sio_intr_evcnt);
 #endif
 
-	ia.ia_bus = BUS_ISA;
-	ia.ia_dmafns = pda->pda_dmafns;
-	ia.ia_dmaarg = pda->pda_dmaarg;
-	ia.ia_intrfns = &sio_isa_intr_fns;
-	ia.ia_intrarg = NULL;			/* XXX needs nothing */
-	ia.ia_memfns = pda->pda_memfns;
-	ia.ia_memarg = pda->pda_memarg;
-	ia.ia_piofns = pda->pda_piofns;
-	ia.ia_pioarg = pda->pda_pioarg;
-	config_found(self, &ia, sioprint);
-
 	if (haseisa) {
-		ea.ea_bus = BUS_EISA;
-		ea.ea_dmafns = pda->pda_dmafns;
-		ea.ea_dmaarg = pda->pda_dmaarg;
-		ea.ea_intrfns = &sio_isa_intr_fns;
-		ea.ea_intrarg = NULL;		/* XXX needs nothing */
-		ea.ea_memfns = pda->pda_memfns;
-		ea.ea_memarg = pda->pda_memarg;
-		ea.ea_piofns = pda->pda_piofns;
-		ea.ea_pioarg = pda->pda_pioarg;
-		config_found(self, &ea, sioprint);
+		sa.sa_eba.eba_busname = "eisa";
+		sa.sa_eba.eba_bc = pa->pa_bc;
+		config_found(self, &sa.sa_eba, sioprint);
 	}
+
+	sa.sa_iba.iba_busname = "isa";
+	sa.sa_iba.iba_bc = pa->pa_bc;
+	config_found(self, &sa.sa_iba, sioprint);
 }
 
 static int
@@ -156,14 +150,9 @@ sioprint(aux, pnp)
 	void *aux;
 	char *pnp;
 {
-        register struct isa_attach_args *ia = aux;
-
-	/*
-	 * XXX Assumes that the first fields of 'struct isa_attach_args'
-	 * XXX and 'struct eisa_attach_args' are the same.
-	 */
+        register union sio_attach_args *sa = aux;
 
         if (pnp)
-                printf("%s at %s", isa_bustype_name(ia->ia_bus), pnp);
+                printf("%s at %s", sa->sa_name, pnp);
         return (UNCONF);
 }
