@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.12 2000/04/22 17:05:07 ragge Exp $
+#	$NetBSD: genassym.cf,v 1.13 2000/05/01 12:11:50 ragge Exp $
 #
 # Copyright (c) 1997 Ludd, University of Lule}, Sweden.
 # All rights reserved.
@@ -38,6 +38,10 @@ include	<sys/syscall.h>
 
 include	<net/netisr.h>
 
+include <vm/vm.h>
+include <uvm/uvm.h>
+include <uvm/uvm_extern.h>
+
 include	<machine/mtpr.h>
 include	<machine/pcb.h>
 include	<machine/sid.h>
@@ -58,6 +62,8 @@ define	MCHK		offsetof(struct cpu_dep, cpu_mchk)
 define	MEMERR		offsetof(struct cpu_dep, cpu_memerr)
 
 define	KERNBASE	KERNBASE
+
+define	UVM_PAGE_IDLE_ZERO	offsetof(struct uvm, page_idle_zero)
 
 ifdef MULTIPROCESSOR
 # Multiprocessor struct members
