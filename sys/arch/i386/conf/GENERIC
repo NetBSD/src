@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.313 2000/03/19 22:32:59 mycroft Exp $
+#	$NetBSD: GENERIC,v 1.314 2000/03/19 22:35:43 mycroft Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.313 $"
+#ident 		"GENERIC-$Revision: 1.314 $"
 
 maxusers	32		# estimated number of users
 
@@ -402,6 +402,7 @@ scsibus* at ahc?
 scsibus* at aic?
 scsibus* at bha?
 scsibus* at dpt?
+scsibus* at esp?
 scsibus* at isp?
 #scsibus* at nca?
 scsibus* at ncr?
