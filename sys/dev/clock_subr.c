@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_subr.c,v 1.4 1997/10/14 17:25:57 gwr Exp $	*/
+/*	$NetBSD: clock_subr.c,v 1.5 2000/10/03 13:41:07 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -52,9 +52,6 @@
 #include <sys/systm.h>
 
 #include <dev/clock_subr.h>
-
-/* Traditional POSIX base year */
-#define	POSIX_BASE_YEAR	1970
 
 static inline int leapyear __P((int year));
 #define FEBRUARY	2

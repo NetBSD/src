@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_subr.h,v 1.6 2000/10/03 13:00:30 tsutsui Exp $	*/
+/*	$NetBSD: clock_subr.h,v 1.7 2000/10/03 13:41:07 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -62,6 +62,8 @@ void	clock_secs_to_ymdhms __P((time_t, struct clock_ymdhms *));
 #define SECDAY		(24 * 60 * 60)
 #define SECYR		(SECDAY * 365)
 
+/* Traditional POSIX base year */
+#define	POSIX_BASE_YEAR	1970
 
 /*
  * Interface to time-of-day clock devices.
