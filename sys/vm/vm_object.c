@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_object.c	7.4 (Berkeley) 5/7/91
- *	$Id: vm_object.c,v 1.13 1994/01/07 22:22:24 mycroft Exp $
+ *	$Id: vm_object.c,v 1.14 1994/01/08 04:38:16 mycroft Exp $
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -75,8 +75,6 @@
 #include <vm/vm_page.h>
 
 static void	_vm_object_allocate __P((vm_size_t, vm_object_t));
-void		vm_object_page_clean
-		   __P((vm_object_t, vm_offset_t, vm_offset_t));
 static void	vm_object_deactivate_pages __P((vm_object_t));
 static void	vm_object_cache_trim __P((void));
 static void	vm_object_remove __P((vm_pager_t));
@@ -150,7 +148,6 @@ vm_object_init()
  *
  *	Returns a new object with the given size.
  */
-
 vm_object_t
 vm_object_allocate(size)
 	vm_size_t	size;
@@ -550,7 +547,6 @@ vm_object_cache_trim()
 	vm_object_cache_unlock();
 }
 
-
 /*
  *	vm_object_shutdown()
  *
@@ -562,7 +558,6 @@ vm_object_cache_trim()
  *	a duplicate deallocation.  This routine is probably full of
  *	race conditions!
  */
-
 void
 vm_object_shutdown()
 {
@@ -879,7 +874,6 @@ vm_object_copy(src_object, src_offset, size,
  *	The new object and offset into that object
  *	are returned in the source parameters.
  */
-
 void
 vm_object_shadow(object, offset, length)
 	vm_object_t	*object;	/* IN/OUT */
@@ -925,7 +919,6 @@ vm_object_shadow(object, offset, length)
 /*
  *	Set the specified object's pager to the specified pager.
  */
-
 void
 vm_object_setpager(object, pager, paging_offset,
 			read_only)
@@ -947,7 +940,6 @@ vm_object_setpager(object, pager, paging_offset,
 /*
  *	vm_object_hash hashes the pager/id pair.
  */
-
 #define vm_object_hash(pager) \
 	(((unsigned)pager)%VM_OBJECT_HASH_COUNT)
 
@@ -955,7 +947,6 @@ vm_object_setpager(object, pager, paging_offset,
  *	vm_object_lookup looks in the object cache for an object with the
  *	specified pager and paging id.
  */
-
 vm_object_t
 vm_object_lookup(pager)
 	vm_pager_t	pager;
@@ -1059,7 +1050,6 @@ vm_object_remove(pager)
  *	vm_object_cache_clear removes all objects from the cache.
  *
  */
-
 void
 vm_object_cache_clear()
 {
