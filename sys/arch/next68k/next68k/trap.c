@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.18 1999/11/13 00:30:41 thorpej Exp $	*/
+/*	$NetBSD: trap.c,v 1.19 1999/12/05 11:56:33 ragge Exp $	*/
 
 /*
  * This file was taken from mvme68k/mvme68k/trap.c
@@ -650,7 +650,7 @@ trap(type, code, v, frame)
 			if (rv == KERN_SUCCESS) {
 				unsigned nss;
 
-				nss = clrnd(btoc(USRSTACK-(unsigned)va));
+				nss = btoc(USRSTACK-(unsigned)va);
 				if (nss > vm->vm_ssize)
 					vm->vm_ssize = nss;
 			} else if (rv == KERN_PROTECTION_FAILURE)
