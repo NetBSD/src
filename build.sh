@@ -1,5 +1,5 @@
 #! /bin/sh
-#  $NetBSD: build.sh,v 1.43 2002/02/10 19:09:13 thorpej Exp $
+#  $NetBSD: build.sh,v 1.44 2002/02/27 13:55:28 lukem Exp $
 #
 # Top level build wrapper, for a system containing no tools.
 #
@@ -90,7 +90,7 @@ resolvepath () {
 
 usage () {
 	echo "Usage:"
-	echo "$0 [-bdoru] [-a arch] [-j njob] [-m mach] [-w wrapper]"
+	echo "$0 [-bdorUu] [-a arch] [-j njob] [-m mach] [-w wrapper]"
 	echo "   [-D dest] [-O obj] [-R release] [-T tools]"
 	echo ""
 	echo "    -a: set MACHINE_ARCH to arch (otherwise deduced from MACHINE)"
@@ -106,6 +106,7 @@ usage () {
 	echo "    -r: remove contents of TOOLDIR and DESTDIR before building"
 	echo "    -T: set TOOLDIR to tools"
 	echo "    -t: build and install tools only (implies -b)"
+	echo "    -U: set UNPRIVED"
 	echo "    -u: set UPDATE"
 	echo "    -w: create nbmake script at wrapper (default TOOLDIR/bin/nbmake-MACHINE)"
 	echo ""
@@ -125,7 +126,7 @@ do_removedirs=false
 makeenv=
 makewrapper=
 opt_a=no
-opts='a:bdhj:m:nortuw:D:O:R:T:'
+opts='a:bdhj:m:nortuw:D:O:R:T:U'
 runcmd=
 
 if type getopts >/dev/null 2>&1; then
@@ -167,6 +168,9 @@ while eval $getoptcmd; do case $opt in
 	-r)	do_removedirs=true; do_rebuildmake=true;;
 
 	-t)	do_buildonlytools=true; do_buildsystem=false;;
+
+	-U)	UNPRIVED=yes; export UNPRIVED
+		makeenv="$makeenv UNPRIVED";;
 
 	-u)	UPDATE=yes; export UPDATE
 		makeenv="$makeenv UPDATE";;
@@ -343,7 +347,7 @@ fi
 eval cat <<EOF $makewrapout
 #! /bin/sh
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.43 2002/02/10 19:09:13 thorpej Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.44 2002/02/27 13:55:28 lukem Exp $
 #
 
 EOF
