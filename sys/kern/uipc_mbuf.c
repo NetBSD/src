@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.40 1999/04/01 00:23:25 thorpej Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.41 1999/04/25 03:03:03 simonb Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1991, 1993
@@ -85,7 +85,7 @@ mbinit()
 	 * mbuf clusters the kernel is to support.  Log the limit
 	 * reached message max once a minute.
 	 */
-	pool_sethardlimit(&mclpool, NMBCLUSTERS,
+	pool_sethardlimit(&mclpool, nmbclusters,
 	    "WARNING: mclpool limit reached; increase NMBCLUSTERS", 60);
 	
 	/*
