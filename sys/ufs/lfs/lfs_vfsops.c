@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.43 1999/11/12 16:56:48 perseant Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.44 1999/11/15 18:49:14 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -439,7 +439,7 @@ lfs_mountfs(devvp, mp, p)
 	ump->um_nindir = fs->lfs_nindir;
 	for (i = 0; i < MAXQUOTAS; i++)
 		ump->um_quotas[i] = NULLVP;
-	devvp->v_specflags |= SI_MOUNTEDON;
+	devvp->v_specmountpoint = mp;
 
 	/*
 	 * We use the ifile vnode for almost every operation.  Instead of
@@ -527,7 +527,7 @@ lfs_unmount(mp, mntflags, p)
 
 	ronly = !fs->lfs_ronly;
 	if (ump->um_devvp->v_type != VBAD)
-		ump->um_devvp->v_specflags &= ~SI_MOUNTEDON;
+		ump->um_devvp->v_specmountpoint = NULL;
 	vn_lock(ump->um_devvp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_CLOSE(ump->um_devvp,
 	    ronly ? FREAD : FREAD|FWRITE, NOCRED, p);
@@ -656,7 +656,7 @@ lfs_vget(mp, ino, vpp)
 	dev = ump->um_dev;
 
 	do {
-		if ((*vpp = ufs_ihashget(dev, ino)) != NULL)
+		if ((*vpp = ufs_ihashget(dev, ino, LK_EXCLUSIVE)) != NULL)
 			return (0);
 	} while (lockmgr(&ufs_hashlock, LK_EXCLUSIVE|LK_SLEEPFAIL, 0));
 

@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.329 1999/11/13 05:02:25 simonb Exp $
+#	$NetBSD: files,v 1.330 1999/11/15 18:49:07 fvdl Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -714,6 +714,8 @@ file miscfs/procfs/procfs_subr.c	procfs
 file miscfs/procfs/procfs_vfsops.c	procfs
 file miscfs/procfs/procfs_vnops.c	procfs
 file miscfs/specfs/spec_vnops.c
+file miscfs/syncfs/sync_vnops.c
+file miscfs/syncfs/sync_subr.c
 file miscfs/umapfs/umap_subr.c		umapfs
 file miscfs/umapfs/umap_vfsops.c	umapfs
 file miscfs/umapfs/umap_vnops.c		umapfs
@@ -889,6 +891,7 @@ file ufs/ffs/ffs_alloc.c		ffs | mfs
 file ufs/ffs/ffs_balloc.c		ffs | mfs
 file ufs/ffs/ffs_bswap.c		(ffs | mfs | lfs) & ffs_ei
 file ufs/ffs/ffs_inode.c		ffs | mfs
+file ufs/ffs/ffs_softdep.stub.c		ffs & !softdep
 file ufs/ffs/ffs_subr.c			ffs | mfs
 file ufs/ffs/ffs_tables.c		ffs | mfs
 file ufs/ffs/ffs_vfsops.c		ffs | mfs
