@@ -1,4 +1,4 @@
-# $Id: README,v 1.1 1994/04/18 10:48:50 deraadt Exp $
+# $Id: README,v 1.2 1994/06/28 22:07:48 deraadt Exp $
 
 Sparc Binary Snapshot #2: Tue Mar 29 02:58:07 MST 1994	src: Mar 22.
 Sparc Binary Snapshot #3: Mon Apr 18 02:48:08 MDT 1994	src: Apr 16.
@@ -43,6 +43,9 @@ Until there are better instructions written, here's a rough idea:
 2.  newfs it using sunos. yup, the filesystem format is identical.
     UFS hasn't changed much over the years. (If you can, there is
     a performance benefit from newfs'ing using NetBSD.)
+    If you newfs using the NetBSD newfs command, be sure to use -O
+    to specify the `4.3BSD filesystem format' for your / partition,
+    otherwise you will not be able to boot.
 
 3.  put a SunOS /boot program in the root partition, and use
     "installboot" to cause it to work. the "installboot" man page
