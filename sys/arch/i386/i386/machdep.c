@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.140 1995/02/28 23:21:45 cgd Exp $	*/
+/*	$NetBSD: machdep.c,v 1.141 1995/03/05 22:20:37 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -649,7 +649,7 @@ boot(howto)
 		if (panicstr == 0)
 			vnode_pager_umount(NULL);
 		sync(&proc0, (void *)0, (int *)0);
-#if 0
+#ifdef notyet
 		/*
 		 * Unmount filesystems
 		 */
@@ -749,6 +749,7 @@ void
 dumpsys()
 {
 
+	msgbufmapped = 0;
 	if (dumpdev == NODEV)
 		return;
 	if (dumpsize == 0) {
