@@ -1,4 +1,4 @@
-/*	$NetBSD: crunchgen.c,v 1.51 2003/10/27 00:12:43 lukem Exp $	*/
+/*	$NetBSD: crunchgen.c,v 1.52 2003/11/19 22:44:15 nathanw Exp $	*/
 /*
  * Copyright (c) 1994 University of Maryland
  * All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: crunchgen.c,v 1.51 2003/10/27 00:12:43 lukem Exp $");
+__RCSID("$NetBSD: crunchgen.c,v 1.52 2003/11/19 22:44:15 nathanw Exp $");
 #endif
 
 #include <stdlib.h>
@@ -629,7 +629,7 @@ void fillin_program_objs(prog_t *p, char *dirpath)
     fclose(f);
 
     (void)snprintf(line, sizeof(line),
-	"cd %s && %s -B CRUNCHEDPROG=1 -f %s %s crunchgen_objs 2>&1", dirpath,
+	"cd %s && %s -B -f %s %s CRUNCHEDPROG=1 crunchgen_objs 2>&1", dirpath,
 	makebin, tempfname, makeflags);
     if((f = popen(line, "r")) == NULL) {
 	perror("submake pipe");
@@ -898,7 +898,7 @@ void prog_makefile_rules(FILE *outmk, prog_t *p)
 	    p->ident, p->ident, p->ident);
 	fprintf(outmk, "\tprintf \".PATH: ${%s_SRCDIR}\\n.CURDIR:= ${%s_SRCDIR}\\n"
 	    ".include \\\"\\$${.CURDIR}/Makefile\\\"\\n\" \\\n", p->ident, p->ident);
-	fprintf(outmk, "\t| ${MAKE} CRUNCHEDPROG=1 DBG=\"${DBG}\" -f- depend ${%s_OBJS}\n\n",
+	fprintf(outmk, "\t| ${MAKE} -f- CRUNCHEDPROG=1 DBG=\"${DBG}\" depend ${%s_OBJS}\n\n",
 	    p->ident);
     }
     else
