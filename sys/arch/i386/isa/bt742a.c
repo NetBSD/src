@@ -12,7 +12,7 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  *
- *	$Id: bt742a.c,v 1.16 1994/03/08 12:21:15 mycroft Exp $
+ *	$Id: bt742a.c,v 1.17 1994/03/10 20:52:14 mycroft Exp $
  */
 
 /*
@@ -457,10 +457,14 @@ btprobe(dev)
 	/*
 	 * find unit and check we have that many defined
 	 */
-	int     unit = btunit;
-	struct bt_data *bt = btdata[unit];
+	int     unit;
+	struct bt_data *bt;
 
-	dev->id_unit = unit;
+	if (dev->id_masunit != -1)
+		return 1;
+
+	dev->id_unit = unit = btunit;
+	bt = btdata[unit];
 	bt_base[unit] = dev->id_iobase;
 	if (unit >= NBT) {
 		printf("bt: unit number (%d) too high\n", unit);
@@ -493,6 +497,9 @@ btattach(dev)
 	static int firstswitch[NBT];
 	int     masunit = dev->id_masunit;
 	int     r;
+
+	if (masunit == -1)
+		return 1;
 
 	if (!firstswitch[masunit]) {
 		firstswitch[masunit] = 1;
