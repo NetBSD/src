@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.19 1996/05/22 13:55:18 mycroft Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.20 1996/05/23 18:30:57 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988, 1991, 1993
@@ -121,8 +121,9 @@ route_usrreq(so, req, m, nam, control, p)
 			route_cb.ns_count++;
 		else if (af == AF_ISO)
 			route_cb.iso_count++;
-		rp->rcb_faddr = &route_src;
 		route_cb.any_count++;
+		rp->rcb_laddr = &route_src;
+		rp->rcb_faddr = &route_dst;
 		soisconnected(so);
 		so->so_options |= SO_USELOOPBACK;
 	}
