@@ -1,6 +1,5 @@
-#	$NetBSD: mk.integrator,v 1.1 2003/01/03 02:16:27 thorpej Exp $
+#	$NetBSD: mk.integrator,v 1.2 2003/09/06 12:57:22 rearnsha Exp $
 
-GENASSYM_EXTRAS+=	${THISARM}/ifpga/genassym.cf
 SYSTEM_FIRST_OBJ=	intmmu.o
 SYSTEM_FIRST_SFILE=	${THISARM}/integrator/intmmu.S
 
