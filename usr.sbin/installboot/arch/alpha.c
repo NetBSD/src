@@ -1,4 +1,4 @@
-/*	$NetBSD: alpha.c,v 1.2 2002/04/04 00:32:06 lukem Exp $	*/
+/*	$NetBSD: alpha.c,v 1.3 2002/04/04 14:00:55 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -98,7 +98,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: alpha.c,v 1.2 2002/04/04 00:32:06 lukem Exp $");
+__RCSID("$NetBSD: alpha.c,v 1.3 2002/04/04 14:00:55 mrg Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -109,6 +109,7 @@ __RCSID("$NetBSD: alpha.c,v 1.2 2002/04/04 00:32:06 lukem Exp $");
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 #include <dev/dec/dec_boot.h>
@@ -319,9 +320,9 @@ alpha_setboot(ib_params *params)
 
 	if (params->flags & IB_VERBOSE) {
 		printf("Bootstrap start sector:  %#llx\n",
-		    startblock);
+		    (unsigned long long)startblock);
 		printf("Bootstrap sector count:  %#llx\n",
-		    le64toh(bb.bb_secsize));
+		    (unsigned long long)le64toh(bb.bb_secsize));
 		printf("New boot block checksum: %#llx\n",
 		    (unsigned long long)bb.bb_cksum);
 		printf("%sriting bootstrap\n",
