@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_object.h,v 1.16.4.1 1996/12/07 12:10:05 mrg Exp $	*/
+/*	$NetBSD: vm_object.h,v 1.16.4.2 1996/12/26 16:41:48 mrg Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -109,6 +109,7 @@ struct vm_object {
 #define OBJ_CANPERSIST	0x0001	/* allow to persist */
 #define OBJ_INTERNAL	0x0002	/* internally created object */
 #define OBJ_ACTIVE	0x0004	/* used to mark active objects */
+#define OBJ_FADING	0x0008	/* tell others that the object is going away */
 
 TAILQ_HEAD(vm_object_hash_head, vm_object_hash_entry);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_object.c,v 1.36.2.2 1996/12/07 13:52:24 mrg Exp $	*/
+/*	$NetBSD: vm_object.c,v 1.36.2.3 1996/12/26 16:41:47 mrg Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -337,6 +337,21 @@ vm_object_terminate(object)
 	vm_object_t		shadow_object;
 
 	/*
+	 * Setters of paging_in_progress might be interested that this object
+	 * is going away as soon as we get a grip on it.
+	 */
+	object->flags |= OBJ_FADING;
+
+	/*
+	 * Wait until the pageout daemon is through with the object or a
+	 * potential collapse operation is finished.
+	 */
+	while (object->paging_in_progress) {
+		vm_object_sleep(object, object, FALSE);
+		vm_object_lock(object);
+	}
+
+	/*
 	 *	Detach the object from its shadow if we are the shadow's
 	 *	copy.
 	 */
@@ -350,14 +365,6 @@ vm_object_terminate(object)
 			panic("vm_object_terminate: copy/shadow inconsistency");
 #endif
 		vm_object_unlock(shadow_object);
-	}
-
-	/*
-	 * Wait until the pageout daemon is through with the object.
-	 */
-	while (object->paging_in_progress) {
-		vm_object_sleep(object, object, FALSE);
-		vm_object_lock(object);
 	}
 
 	/*
@@ -1338,6 +1345,18 @@ vm_object_collapse_aux(object)
 				object->paging_in_progress--;
 				thread_wakeup(backing_object);
 				thread_wakeup(object);
+
+				/*
+				 *	During the pagein vm_object_terminate
+				 *	might have slept on our front object in
+				 *	order to remove it.  If this is the
+				 *	case, we might as well stop all the
+				 *	collapse work right here.
+				 */
+				if (object->flags & OBJ_FADING) {
+					PAGE_WAKEUP(backing_page);
+					return KERN_FAILURE;
+				}
 
 			/*
 				 *	Third, relookup in case pager changed
