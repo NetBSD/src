@@ -1,4 +1,4 @@
-/*	$NetBSD: tape.c,v 1.25 1997/03/19 08:42:55 lukem Exp $	*/
+/*	$NetBSD: tape.c,v 1.26 1997/04/15 07:12:25 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)tape.c	8.6 (Berkeley) 9/13/94";
 #else
-static char rcsid[] = "$NetBSD: tape.c,v 1.25 1997/03/19 08:42:55 lukem Exp $";
+static char rcsid[] = "$NetBSD: tape.c,v 1.26 1997/04/15 07:12:25 lukem Exp $";
 #endif
 #endif /* not lint */
 
@@ -56,6 +56,7 @@ static char rcsid[] = "$NetBSD: tape.c,v 1.25 1997/03/19 08:42:55 lukem Exp $";
 #include <protocols/dumprestore.h>
 
 #include <errno.h>
+#include <paths.h>
 #include <setjmp.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -64,7 +65,6 @@ static char rcsid[] = "$NetBSD: tape.c,v 1.25 1997/03/19 08:42:55 lukem Exp $";
 
 #include "restore.h"
 #include "extern.h"
-#include "pathnames.h"
 
 static long	fssize = MAXBSIZE;
 static int	mt = -1;
