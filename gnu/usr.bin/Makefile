@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.47 1998/05/19 19:09:31 tv Exp $
+#	$NetBSD: Makefile,v 1.48 1998/05/25 20:06:39 tv Exp $
 
 # XXX Temporary for USE_EGCS
 .include <bsd.own.mk>
 
-SUBDIR+=	bc cpio dc diff diff3 gawk grep groff
+SUBDIR+=	bc binutils cpio dc diff diff3 gawk grep groff
 SUBDIR+=	gzip rcs sdiff send-pr sort tar
 
 .if (${MACHINE_ARCH} == "arm32")

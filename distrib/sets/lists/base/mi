@@ -113,6 +113,7 @@
 ./usr
 ./usr/bin
 ./usr/bin/Mail
+./usr/bin/addr2line
 ./usr/bin/apply
 ./usr/bin/apropos
 ./usr/bin/at
@@ -126,6 +127,7 @@
 ./usr/bin/bc
 ./usr/bin/bdes
 ./usr/bin/biff
+./usr/bin/c++filt
 ./usr/bin/cal
 ./usr/bin/calendar
 ./usr/bin/cap_mkdb
@@ -237,6 +239,7 @@
 ./usr/bin/nice
 ./usr/bin/nm
 ./usr/bin/nohup
+./usr/bin/objdump
 ./usr/bin/od
 ./usr/bin/page
 ./usr/bin/pagesize
@@ -247,6 +250,7 @@
 ./usr/bin/printenv
 ./usr/bin/printf
 ./usr/bin/quota
+./usr/bin/ranlib
 ./usr/bin/rcs
 ./usr/bin/rcsclean
 ./usr/bin/rcsdiff
