@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ae.c,v 1.13 1997/03/15 18:09:21 is Exp $	*/
+/*	$NetBSD: if_ae.c,v 1.14 1997/03/18 18:44:53 veego Exp $	*/
 
 /*
  * Copyright (c) 1995 Bernd Ernesti and Klaus Burkert. All rights reserved.
@@ -47,9 +47,6 @@
  *	WORD or LONG, BYTE-access is prohibited!!
  */
 
-#include "ae.h"
-#if NAE > 0
-
 #include "bpfilter.h"
 
 /*
@@ -72,6 +69,7 @@
 #include <sys/device.h>
 
 #include <net/if.h>
+#include <net/if_dl.h>
 #include <net/if_ether.h>
 
 #ifdef INET
@@ -90,7 +88,6 @@
 #if defined(CCITT) && defined(LLC)
 #include <sys/socketvar.h>  
 #include <netccitt/x25.h>
-#include <net/if_dl.h>
 #include <net/if_llc.h>
 #include <netccitt/dll.h>
 #include <netccitt/llc_var.h>
@@ -128,11 +125,11 @@ struct	ae_softc {
 	int	sc_rmd;		/* predicted next rmd to process */
 	int	sc_tmd;		/* next tmd to use */
 	int	sc_no_td;	/* number of tmds in use */
-} ae_softc[NAE];
+	u_int16_t	ae_rev;	/* revision of the lance chip */
+};
 
 /* offsets for:	   ID,   REGS,    MEM */
 int	aestd[] = { 0, 0x0370, 0x8000 };
-static u_int16_t	revision;
 
 int	aematch __P((struct device *, struct cfdata *, void *));
 void	aeattach __P((struct device *, struct device *, void *));
@@ -233,8 +230,8 @@ aeattach(parent, self, aux)
 
 	/* get the chip version of the lance chip */
 	sc->sc_r1->aer1_rap = 0x5900;
-	revision = ((sc->sc_r1->aer1_rdp >> 4) -2);
-	printf("  chip-revision: B%x\n", revision);
+	sc->ae_rev = ((sc->sc_r1->aer1_rdp >> 4) -2);
+	printf("  chip-revision: B%x\n", sc->ae_rev);
 
 	splx (s);
 
@@ -288,9 +285,8 @@ void
 aememinit(sc)
 	register struct ae_softc *sc;
 {        
-#if NBPFILTER > 0
 	register struct ifnet *ifp = &sc->sc_ethercom.ec_if;
-#endif
+	u_int8_t *myaddr;
 	/*
 	 * This structure is referenced from the CARD's/PCnet-ISA's point
 	 * of view, thus the 0x8000 address which is the buffer RAM area
@@ -310,12 +306,10 @@ aememinit(sc)
 #endif
 		aer2->aer2_mode = AE_MODE;
 	/* you know: no BYTE access.... */
-	aer2->aer2_padr[0] =
-		(LLADDR(ifp->if_sadl)[0] << 8) | LLADDR(ifp->if_sadl)[1];
-	aer2->aer2_padr[1] =
-		(LLADDR(ifp->if_sadl)[2] << 8) | LLADDR(ifp->if_sadl)[3];
-	aer2->aer2_padr[2] =
-		(LLADDR(ifp->if_sadl)[4] << 8) | LLADDR(ifp->if_sadl)[5];
+	myaddr = LLADDR(ifp->if_sadl);
+	aer2->aer2_padr[0] = (myaddr[0] << 8) | myaddr[1];
+	aer2->aer2_padr[1] = (myaddr[2] << 8) | myaddr[3];
+	aer2->aer2_padr[2] = (myaddr[4] << 8) | myaddr[5];
 	aesetladrf(&sc->sc_ethercom, aer2->aer2_ladrf);
 
 	sc->sc_no_td = sc->sc_tmd = sc->sc_rmd = 0;
@@ -327,9 +321,9 @@ aememinit(sc)
 
 	for (i = 0; i < AERBUF; i++) {  
 		aer2->aer2_rmd[i].rmd0 = SWAP((int)aemem->aer2_rbuf[i]);
-		aer2->aer2_rmd[i].rmd1 = AE_OWN; 
 		aer2->aer2_rmd[i].rmd2 = SWAP(-ETHER_MAX_LEN);
 		aer2->aer2_rmd[i].rmd3 = 0;
+		aer2->aer2_rmd[i].rmd1 = AE_OWN; 
 	}
 
 	for (i = 0; i < AETBUF; i++) {
@@ -490,9 +484,9 @@ aestart(ifp)
 
 		ifp->if_timer = 5;
 
-		tmd->tmd1 = AE_OWN | AE_STP | AE_ENP;
 		tmd->tmd2 = SWAP(-len);
 		tmd->tmd3 = 0;
+		tmd->tmd1 = AE_OWN | AE_STP | AE_ENP;
 
 		sc->sc_r1->aer1_rdp = AE_INEA | AE_TDMD;
 
@@ -666,11 +660,11 @@ aerint(sc)
 		sc->sc_r1->aer1_rdp =  AE_RINT | AE_INEA;
 		if (rmd->rmd1 & (AE_FRAM | AE_OFLO | AE_CRC | AE_RBUFF)) {
 			ifp->if_ierrors++;
-			if ((rmd->rmd1 & (AE_FRAM | AE_OFLO | AE_ENP)) == (AE_FRAM | AE_ENP))
-				printf("%s: framing error\n", sc->sc_dev.dv_xname);
 			if ((rmd->rmd1 & (AE_OFLO | AE_ENP)) == AE_OFLO)
 				printf("%s: overflow\n", sc->sc_dev.dv_xname);
-			if ((rmd->rmd1 & (AE_CRC | AE_OFLO | AE_ENP)) == (AE_CRC | AE_ENP))
+			else if ((rmd->rmd1 & (AE_FRAM | AE_OFLO | AE_ENP)) == (AE_FRAM | AE_ENP))
+				printf("%s: framing error\n", sc->sc_dev.dv_xname);
+			else if ((rmd->rmd1 & (AE_CRC | AE_OFLO | AE_ENP)) == (AE_CRC | AE_ENP))
 				printf("%s: crc mismatch\n", sc->sc_dev.dv_xname);
 			if (rmd->rmd1 & AE_RBUFF)
 				printf("%s: receive buffer error\n", sc->sc_dev.dv_xname);
@@ -690,9 +684,9 @@ aerint(sc)
 		} else
 			aeread(sc, sc->sc_r2->aer2_rbuf[bix], SWAP(rmd->rmd3) - 4);
 
-		rmd->rmd1 = AE_OWN;
-		rmd->rmd2 = SWAP(-ETHER_MAX_LEN);
 		rmd->rmd3 = 0;
+		rmd->rmd2 = SWAP(-ETHER_MAX_LEN);
+		rmd->rmd1 = AE_OWN;
 
 		AENEXTRMP;
 	} while ((rmd->rmd1 & AE_OWN) == 0);
@@ -1131,5 +1125,3 @@ allmulti:
 	ifp->if_flags |= IFF_ALLMULTI;
 	af[0] = af[1] = af[2] = af[3] = 0xffff;
 }
-
-#endif /* NAE > 0 */
