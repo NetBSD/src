@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.35 2002/09/05 15:38:22 mycroft Exp $	 */
+/*	$NetBSD: rtld.h,v 1.36 2002/09/05 15:45:54 mycroft Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -308,17 +308,8 @@ void	_rtld_bind_start_old __P((void));
 #endif
 
 #if defined(__hppa__)
-/* hppa_reloc.c */
-void _rtld_bootstrap_hppa_got __P((Elf_Dyn *, Elf_Addr, Elf_Addr, Elf_Addr));
-
 /* rtld_start.S */
 void __rtld_setup_hppa_pltgot __P((const Obj_Entry *, Elf_Addr *));
-#endif
-
-#if defined(__powerpc__)
-/* ppc_reloc.c */
-caddr_t _rtld_bind_powerpc __P((Obj_Entry *, Elf_Word));
-int _rtld_reloc_powerpc_plt __P((Obj_Entry *, const Elf_Rela *, bool));
 #endif
 
 #endif /* _RTLD_SOURCE */
