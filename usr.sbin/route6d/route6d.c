@@ -1,4 +1,4 @@
-/*	$NetBSD: route6d.c,v 1.32.2.4 2004/03/15 05:08:59 jmc Exp $	*/
+/*	$NetBSD: route6d.c,v 1.32.2.5 2004/03/15 15:29:47 jmc Exp $	*/
 /*	$KAME: route6d.c,v 1.88 2002/08/21 16:24:25 itojun Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef	lint
-__RCSID("$NetBSD: route6d.c,v 1.32.2.4 2004/03/15 05:08:59 jmc Exp $");
+__RCSID("$NetBSD: route6d.c,v 1.32.2.5 2004/03/15 15:29:47 jmc Exp $");
 #endif
 
 #include <stdio.h>
@@ -1028,7 +1028,8 @@ riprecv()
 	struct	rip6 *rp;
 	struct	netinfo6 *np, *nq;
 	struct	riprt *rrt;
-	ssize_t	len, nn, need_trigger, idx;
+	ssize_t	len, nn;
+	unsigned int need_trigger, idx;
 	char	buf[4 * RIP6_MAXMTU];
 	time_t	t;
 	struct msghdr m;
