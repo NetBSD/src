@@ -1,3 +1,4 @@
+/* $NetBSD: cryptotest.c,v 1.2 2004/01/21 02:14:14 jonathan Exp $ */
 /* $FreeBSD: /repoman/r/ncvs/src/tools/tools/crypto/cryptotest.c,v 1.3.2.2 2003/06/03 00:14:44 sam Exp $ */
 
 /*
