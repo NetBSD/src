@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_auth_unix.c,v 1.4 1996/12/20 20:47:56 cgd Exp $	*/
+/*	$NetBSD: svc_auth_unix.c,v 1.5 1997/07/13 20:13:22 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -29,10 +29,14 @@
  * Mountain View, California  94043
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)svc_auth_unix.c 1.28 88/02/08 Copyr 1984 Sun Micro";*/
-/*static char *sccsid = "from: @(#)svc_auth_unix.c	2.3 88/08/01 4.0 RPCSRC";*/
-static char *rcsid = "$NetBSD: svc_auth_unix.c,v 1.4 1996/12/20 20:47:56 cgd Exp $";
+#if 0
+static char *sccsid = "@(#)svc_auth_unix.c 1.28 88/02/08 Copyr 1984 Sun Micro";
+static char *sccsid = "@(#)svc_auth_unix.c	2.3 88/08/01 4.0 RPCSRC";
+#else
+__RCSID("$NetBSD: svc_auth_unix.c,v 1.5 1997/07/13 20:13:22 christos Exp $");
+#endif
 #endif
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_generic.c,v 1.6 1995/06/03 22:37:21 mycroft Exp $	*/
+/*	$NetBSD: clnt_generic.c,v 1.7 1997/07/13 20:13:04 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -29,10 +29,14 @@
  * Mountain View, California  94043
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)clnt_generic.c 1.4 87/08/11 (C) 1987 SMI";*/
-/*static char *sccsid = "from: @(#)clnt_generic.c	2.2 88/08/01 4.0 RPCSRC";*/
-static char *rcsid = "$NetBSD: clnt_generic.c,v 1.6 1995/06/03 22:37:21 mycroft Exp $";
+#if 0
+static char *sccsid = "@(#)clnt_generic.c 1.4 87/08/11 (C) 1987 SMI";
+static char *sccsid = "@(#)clnt_generic.c	2.2 88/08/01 4.0 RPCSRC";
+#else
+__RCSID("$NetBSD: clnt_generic.c,v 1.7 1997/07/13 20:13:04 christos Exp $");
+#endif
 #endif
 
 /*

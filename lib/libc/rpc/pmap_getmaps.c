@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_getmaps.c,v 1.3 1995/02/25 03:01:48 cgd Exp $	*/
+/*	$NetBSD: pmap_getmaps.c,v 1.4 1997/07/13 20:13:13 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -29,10 +29,14 @@
  * Mountain View, California  94043
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)pmap_getmaps.c 1.10 87/08/11 Copyr 1984 Sun Micro";*/
-/*static char *sccsid = "from: @(#)pmap_getmaps.c	2.2 88/08/01 4.0 RPCSRC";*/
-static char *rcsid = "$NetBSD: pmap_getmaps.c,v 1.3 1995/02/25 03:01:48 cgd Exp $";
+#if 0
+static char *sccsid = "@(#)pmap_getmaps.c 1.10 87/08/11 Copyr 1984 Sun Micro";
+static char *sccsid = "@(#)pmap_getmaps.c	2.2 88/08/01 4.0 RPCSRC";
+#else
+__RCSID("$NetBSD: pmap_getmaps.c,v 1.4 1997/07/13 20:13:13 christos Exp $");
+#endif
 #endif
 
 /*
@@ -50,6 +54,7 @@ static char *rcsid = "$NetBSD: pmap_getmaps.c,v 1.3 1995/02/25 03:01:48 cgd Exp 
 #include <netdb.h>
 #include <stdio.h>
 #include <errno.h>
+#include <unistd.h>
 #include <net/if.h>
 #include <sys/ioctl.h>
 #define NAMELEN 255

@@ -1,4 +1,4 @@
-/*	$NetBSD: svc.c,v 1.9 1996/05/17 00:32:22 jtc Exp $	*/
+/*	$NetBSD: svc.c,v 1.10 1997/07/13 20:13:20 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -29,10 +29,14 @@
  * Mountain View, California  94043
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint) 
-/*static char *sccsid = "from: @(#)svc.c 1.44 88/02/08 Copyr 1984 Sun Micro";*/
-/*static char *sccsid = "from: @(#)svc.c	2.4 88/08/11 4.0 RPCSRC";*/
-static char *rcsid = "$NetBSD: svc.c,v 1.9 1996/05/17 00:32:22 jtc Exp $";
+#if 0
+static char *sccsid = "@(#)svc.c 1.44 88/02/08 Copyr 1984 Sun Micro";
+static char *sccsid = "@(#)svc.c	2.4 88/08/11 4.0 RPCSRC";
+#else
+__RCSID("$NetBSD: svc.c,v 1.10 1997/07/13 20:13:20 christos Exp $");
+#endif
 #endif
 
 /*
@@ -69,10 +73,11 @@ static struct svc_callout {
 	struct svc_callout *sc_next;
 	u_long		    sc_prog;
 	u_long		    sc_vers;
-	void		    (*sc_dispatch)();
+	void		    (*sc_dispatch) __P((struct svc_req *, SVCXPRT *));
 } *svc_head;
 
-static struct svc_callout *svc_find();
+static struct svc_callout *svc_find __P((u_long, u_long,
+    struct svc_callout **));
 
 /* ***************  SVCXPRT related stuff **************** */
 
@@ -130,7 +135,7 @@ svc_register(xprt, prog, vers, dispatch, protocol)
 	SVCXPRT *xprt;
 	u_long prog;
 	u_long vers;
-	void (*dispatch)();
+	void (*dispatch) __P((struct svc_req *, SVCXPRT *));
 	int protocol;
 {
 	struct svc_callout *prev;
@@ -390,7 +395,8 @@ svc_getreqset(readfds)
 
 	maskp = readfds->fds_bits;
 	for (sock = 0; sock < FD_SETSIZE; sock += NFDBITS) {
-	    for (mask = *maskp++; bit = ffs(mask); mask ^= (1 << (bit - 1))) {
+	    for (mask = *maskp++; (bit = ffs(mask)) != 0;
+		mask ^= (1 << (bit - 1))) {
 		/* sock has input waiting */
 		xprt = xports[sock + bit - 1];
 		if (xprt == NULL)

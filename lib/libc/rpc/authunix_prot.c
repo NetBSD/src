@@ -1,4 +1,4 @@
-/*	$NetBSD: authunix_prot.c,v 1.2 1995/02/25 03:01:36 cgd Exp $	*/
+/*	$NetBSD: authunix_prot.c,v 1.3 1997/07/13 20:13:03 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -29,10 +29,14 @@
  * Mountain View, California  94043
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)authunix_prot.c 1.15 87/08/11 Copyr 1984 Sun Micro";*/
-/*static char *sccsid = "from: @(#)authunix_prot.c	2.1 88/07/29 4.0 RPCSRC";*/
-static char *rcsid = "$NetBSD: authunix_prot.c,v 1.2 1995/02/25 03:01:36 cgd Exp $";
+#if 0
+static char *sccsid = "@(#)authunix_prot.c 1.15 87/08/11 Copyr 1984 Sun Micro";
+static char *sccsid = "@(#)authunix_prot.c	2.1 88/07/29 4.0 RPCSRC";
+#else
+__RCSID("$NetBSD: authunix_prot.c,v 1.3 1997/07/13 20:13:03 christos Exp $");
+#endif
 #endif
 
 /*

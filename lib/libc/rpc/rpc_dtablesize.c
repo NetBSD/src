@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_dtablesize.c,v 1.8 1996/12/18 20:57:15 cgd Exp $	*/
+/*	$NetBSD: rpc_dtablesize.c,v 1.9 1997/07/13 20:13:19 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -29,13 +29,19 @@
  * Mountain View, California  94043
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)rpc_dtablesize.c 1.2 87/08/11 Copyr 1987 Sun Micro";*/
-/*static char *sccsid = "from: @(#)rpc_dtablesize.c	2.1 88/07/29 4.0 RPCSRC";*/
-static char *rcsid = "$NetBSD: rpc_dtablesize.c,v 1.8 1996/12/18 20:57:15 cgd Exp $";
+#if 0
+static char *sccsid = "@(#)rpc_dtablesize.c 1.2 87/08/11 Copyr 1987 Sun Micro";
+static char *sccsid = "@(#)rpc_dtablesize.c	2.1 88/07/29 4.0 RPCSRC";
+#else
+__RCSID("$NetBSD: rpc_dtablesize.c,v 1.9 1997/07/13 20:13:19 christos Exp $");
+#endif
 #endif
 
 #include <unistd.h>
+
+int _rpc_dtablesize __P((void));	/* XXX */
 
 /*
  * Cache the result of sysconf(_SC_OPEN_MAX), so we don't have to do an
