@@ -19,7 +19,7 @@
  * improvements that they make and grant CSS redistribution rights.
  *
  * 	from: Utah $Hdr: grfinfo.c 1.3 94/04/04$
- *	$Id: grfinfo.c,v 1.1 1994/04/04 21:53:25 cgd Exp $
+ *	$Id: grfinfo.c,v 1.2 1997/01/31 23:06:54 carrel Exp $
  */
 
 #include <stdio.h>
@@ -28,7 +28,7 @@
 #include <dev/grfioctl.h>
 
 int aflg = 0;
-int tflg = 1;
+int tflg = 0;
 char *pname;
 char *dname, *tname();
 struct grfinfo gi;
@@ -72,7 +72,7 @@ main(argc, argv)
 	getinfo();
 	if (aflg)
 		printall();
-	else if (tflg)
+	else
 		printf("%s\n", tname());
 	exit(0);
 }
