@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.57 1998/03/01 02:21:04 fvdl Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.58 1998/03/08 14:04:14 mrg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -42,7 +42,7 @@
  * Kernel parameter filesystem (/kern)
  */
 
-#ifndef _LKM
+#if defined(_KERNEL) && !defined(_LKM)
 #include "opt_uvm.h"
 #endif
 
