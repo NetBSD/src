@@ -1,4 +1,4 @@
-/*	$NetBSD: comvar.h,v 1.11.2.4 1997/09/22 06:33:13 thorpej Exp $	*/
+/*	$NetBSD: comvar.h,v 1.11.2.5 1997/10/15 21:53:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -53,7 +53,6 @@ int com_is_console __P((bus_space_tag_t, int, bus_space_handle_t *));
 
 struct com_softc {
 	struct device sc_dev;
-	void *sc_ih;
 	void *sc_si;
 	struct tty *sc_tty;
 
@@ -61,7 +60,7 @@ struct com_softc {
 	int sc_floods;
 	int sc_errors;
 
-	int sc_iobase;
+	int sc_iobase;			/* XXX ISA-centric name */
 	int sc_frequency;
 
 	bus_space_tag_t sc_iot;
@@ -101,8 +100,6 @@ struct com_softc {
 			sc_rx_ready;
 
 	volatile u_char sc_heldchange;
-
-	int pcmcia_window;
 };
 
 /* Macros to clear/set/test flags. */
