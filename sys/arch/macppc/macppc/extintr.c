@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.25 2001/02/04 17:46:33 briggs Exp $	*/
+/*	$NetBSD: extintr.c,v 1.26 2001/02/05 19:22:24 briggs Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -676,9 +676,49 @@ softintr(ipl)
 }
 
 void
-macppc_openpic_init()
+openpic_init()
 {
-	openpic_init(macppc_openpic_base, ICU_LEN);
+	int irq;
+	u_int x;
+
+	openpic_base = (volatile unsigned char *) macppc_openpic_base;
+
+	/* disable all interrupts */
+	for (irq = 0; irq < 256; irq++)
+		openpic_write(OPENPIC_SRC_VECTOR(irq), OPENPIC_IMASK);
+
+	openpic_set_priority(0, 15);
+
+	/* we don't need 8259 pass through mode */
+	x = openpic_read(OPENPIC_CONFIG);
+	x |= OPENPIC_CONFIG_8259_PASSTHRU_DISABLE;
+	openpic_write(OPENPIC_CONFIG, x);
+
+	/* send all interrupts to cpu 0 */
+	for (irq = 0; irq < ICU_LEN; irq++)
+		openpic_write(OPENPIC_IDEST(irq), 1 << 0);
+
+	for (irq = 0; irq < ICU_LEN; irq++) {
+		x = irq;
+		x |= OPENPIC_IMASK;
+		x |= OPENPIC_POLARITY_POSITIVE;
+		x |= OPENPIC_SENSE_LEVEL;
+		x |= 8 << OPENPIC_PRIORITY_SHIFT;
+		openpic_write(OPENPIC_SRC_VECTOR(irq), x);
+	}
+
+	/* XXX set spurious intr vector */
+
+	openpic_set_priority(0, 0);
+
+	/* clear all pending interrunts */
+	for (irq = 0; irq < 256; irq++) {
+		openpic_read_irq(0);
+		openpic_eoi(0);
+	}
+
+	for (irq = 0; irq < ICU_LEN; irq++)
+		openpic_disable_irq(irq);
 
 	install_extint(ext_intr_openpic);
 }
@@ -743,7 +783,7 @@ init_interrupt()
 			goto failed;
 
 		macppc_openpic_base = (void *)(obio_base + reg[0]);
-		macppc_openpic_init();
+		openpic_init();
 		return;
 	}
 

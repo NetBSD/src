@@ -1,4 +1,4 @@
-/*	$NetBSD: openpicreg.h,v 1.1 2001/02/02 06:11:52 briggs Exp $	*/
+/*	$NetBSD: openpicreg.h,v 1.2 2001/02/05 19:22:23 briggs Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -72,12 +72,6 @@
 /* interrupt destination cpu */
 #ifndef OPENPIC_IDEST
 #define OPENPIC_IDEST(irq)		(0x10010 + (irq) * 0x20)
-#endif
-
-#ifndef OPENPIC_INIT_SRC
-#define OPENPIC_INIT_SRC(irq)	\
-	    ((irq) | OPENPIC_IMASK | OPENPIC_POLARITY_POSITIVE | \
-	     OPENPIC_SENSE_LEVEL | (8 << OPENPIC_PRIORITY_SHIFT))
 #endif
 
 /*

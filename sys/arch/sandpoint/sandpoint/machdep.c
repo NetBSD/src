@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.1 2001/02/04 18:32:18 briggs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.2 2001/02/05 19:22:25 briggs Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -335,7 +335,7 @@ initppc(startkernel, endkernel, args, btinfo)
 	out32rb(SANDPOINT_PCI_CONFIG_DATA, SANDPOINT_BUS_SPACE_EUMB);
 	out32rb(SANDPOINT_PCI_CONFIG_ADDR, 0);
 
-	openpic_init(eumb_base + 0x40000, ICU_LEN);
+	openpic_init(eumb_base + 0x40000);
 #if (NISA > 0)
 	isa_intr_init();
 #endif
