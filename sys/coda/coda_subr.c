@@ -1,33 +1,35 @@
+/*	$NetBSD: coda_subr.c,v 1.2 1998/09/08 17:12:47 rvb Exp $	*/
+
 /*
-
-            Coda: an Experimental Distributed File System
-                             Release 3.1
-
-          Copyright (c) 1987-1998 Carnegie Mellon University
-                         All Rights Reserved
-
-Permission  to  use, copy, modify and distribute this software and its
-documentation is hereby granted,  provided  that  both  the  copyright
-notice  and  this  permission  notice  appear  in  all  copies  of the
-software, derivative works or  modified  versions,  and  any  portions
-thereof, and that both notices appear in supporting documentation, and
-that credit is given to Carnegie Mellon University  in  all  documents
-and publicity pertaining to direct or indirect use of this code or its
-derivatives.
-
-CODA IS AN EXPERIMENTAL SOFTWARE SYSTEM AND IS  KNOWN  TO  HAVE  BUGS,
-SOME  OF  WHICH MAY HAVE SERIOUS CONSEQUENCES.  CARNEGIE MELLON ALLOWS
-FREE USE OF THIS SOFTWARE IN ITS "AS IS" CONDITION.   CARNEGIE  MELLON
-DISCLAIMS  ANY  LIABILITY  OF  ANY  KIND  FOR  ANY  DAMAGES WHATSOEVER
-RESULTING DIRECTLY OR INDIRECTLY FROM THE USE OF THIS SOFTWARE  OR  OF
-ANY DERIVATIVE WORK.
-
-Carnegie  Mellon  encourages  users  of  this  software  to return any
-improvements or extensions that  they  make,  and  to  grant  Carnegie
-Mellon the rights to redistribute these changes without encumbrance.
-*/
-
-/* $Header: /cvsroot/src/sys/coda/coda_subr.c,v 1.1.1.1 1998/08/29 21:26:45 rvb Exp $ */
+ * 
+ *             Coda: an Experimental Distributed File System
+ *                              Release 3.1
+ * 
+ *           Copyright (c) 1987-1998 Carnegie Mellon University
+ *                          All Rights Reserved
+ * 
+ * Permission  to  use, copy, modify and distribute this software and its
+ * documentation is hereby granted,  provided  that  both  the  copyright
+ * notice  and  this  permission  notice  appear  in  all  copies  of the
+ * software, derivative works or  modified  versions,  and  any  portions
+ * thereof, and that both notices appear in supporting documentation, and
+ * that credit is given to Carnegie Mellon University  in  all  documents
+ * and publicity pertaining to direct or indirect use of this code or its
+ * derivatives.
+ * 
+ * CODA IS AN EXPERIMENTAL SOFTWARE SYSTEM AND IS  KNOWN  TO  HAVE  BUGS,
+ * SOME  OF  WHICH MAY HAVE SERIOUS CONSEQUENCES.  CARNEGIE MELLON ALLOWS
+ * FREE USE OF THIS SOFTWARE IN ITS "AS IS" CONDITION.   CARNEGIE  MELLON
+ * DISCLAIMS  ANY  LIABILITY  OF  ANY  KIND  FOR  ANY  DAMAGES WHATSOEVER
+ * RESULTING DIRECTLY OR INDIRECTLY FROM THE USE OF THIS SOFTWARE  OR  OF
+ * ANY DERIVATIVE WORK.
+ * 
+ * Carnegie  Mellon  encourages  users  of  this  software  to return any
+ * improvements or extensions that  they  make,  and  to  grant  Carnegie
+ * Mellon the rights to redistribute these changes without encumbrance.
+ * 
+ * 	@(#) cfs/cfs_subr.c,v 1.1.1.1 1998/08/29 21:26:45 rvb Exp $ 
+ */
 
 /* 
  * Mach Operating System
@@ -44,6 +46,9 @@ Mellon the rights to redistribute these changes without encumbrance.
 /*
  * HISTORY
  * $Log: coda_subr.c,v $
+ * Revision 1.2  1998/09/08 17:12:47  rvb
+ * Pass2 complete
+ *
  * Revision 1.1.1.1  1998/08/29 21:26:45  rvb
  * Very Preliminary Coda
  *
@@ -215,8 +220,6 @@ Mellon the rights to redistribute these changes without encumbrance.
 #include <cfs/cfs_subr.h>
 #include <cfs/cfsnc.h>
 
-#if	NVCFS
-
 int cfs_active = 0;
 int cfs_reuse = 0;
 int cfs_new = 0;
@@ -356,6 +359,7 @@ cfs_kill(whoIam, dcstat)
 	 * 
 	 *     Finally, step through whatever is left and mark them dying.
 	 *        This prevents any operation at all.
+
 	 */
 	
 	/* This is slightly overkill, but should work. Eventually it'd be
@@ -693,17 +697,7 @@ int
 cfs_vmflush(cp)
      struct cnode *cp;
 {
-#if	0
-  /* old code */
-    /* Unset <device, inode> so that page_read doesn't try to use
-       (possibly) invalid cache file. */
-    cp->c_device = 0;
-    cp->c_inode = 0;
-
-    return(inode_uncache_try(VTOI(CTOV(cp))) ? 0 : ETXTBSY);
-#else /* __NetBSD__ || __FreeBSD__ */
     return 0;
-#endif /* __NetBSD__ || __FreeBSD__ */
 }
 
 
@@ -748,6 +742,3 @@ void cfs_debugoff(void)
  * 13) all <= 3
  * ...
  */
-
-
-#endif	/* NVCFS */
