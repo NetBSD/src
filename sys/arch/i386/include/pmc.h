@@ -1,4 +1,4 @@
-/*	$NetBSD: pmc.h,v 1.5 2002/08/08 20:40:49 thorpej Exp $	*/
+/*	$NetBSD: pmc.h,v 1.6 2002/08/09 05:28:08 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -36,15 +36,15 @@
 #ifndef _I386_PMC_H_
 #define	_I386_PMC_H_
 
-#define	PMC_TYPE_I586		0x10000		/* i586-compatible */
+#define	PMC_CLASS_I586		0x10000		/* i586-compatible */
 #define	PMC_TYPE_I586_TSC	0x10001		/* cycle counter */
 #define	PMC_TYPE_I586_PMCx	0x10002		/* performance counter */
 
-#define	PMC_TYPE_I686		0x20000		/* i686-compatible */
+#define	PMC_CLASS_I686		0x20000		/* i686-compatible */
 #define	PMC_TYPE_I686_TSC	0x20001		/* cycle counter */
 #define	PMC_TYPE_I686_PMCx	0x20002		/* performance counter */
 
-#define	PMC_TYPE_K7		0x30000		/* K7-compatible */
+#define	PMC_CLASS_K7		0x30000		/* K7-compatible */
 #define	PMC_TYPE_K7_TSC		0x30001		/* cycle counter */
 #define	PMC_TYPE_K7_PMCx	0x30002		/* performance counter */
 
