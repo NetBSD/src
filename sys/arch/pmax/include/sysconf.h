@@ -1,4 +1,4 @@
-/*	$NetBSD: sysconf.h,v 1.8 2000/02/29 04:41:59 nisimura Exp $	*/
+/*	$NetBSD: sysconf.h,v 1.9 2000/03/06 03:11:43 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -60,7 +60,6 @@ struct platform {
 	 * Platform Specific Function Hooks
 	 *	bus_reset	-	clear memory error condition
 	 *	cons_init	-	console initialization
-	 *	device_register -	boot configuration aid
 	 *	iointr		-	I/O interrupt handler
 	 *	intr_establish	-	establish interrupt handler
 	 *	intr_disestablish -	disestablish interrupt handler
@@ -68,7 +67,6 @@ struct platform {
 	 */
 	void	(*bus_reset) __P((void));
 	void	(*cons_init) __P((void));
-	void	(*device_register) __P((struct device *, void *));
 	int	(*iointr) __P((unsigned, unsigned, unsigned, unsigned));
 	void	(*intr_establish) __P((struct device *, void *, int,
 		    int (*)(void *), void *));

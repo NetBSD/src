@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3100.c,v 1.25 2000/02/29 04:41:50 nisimura Exp $ */
+/* $NetBSD: dec_3100.c,v 1.26 2000/03/06 03:13:35 mhitch Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -95,7 +95,6 @@ void		dec_3100_init __P((void));		/* XXX */
 static void	dec_3100_bus_reset __P((void));
 
 static void	dec_3100_cons_init __P((void));
-static void	dec_3100_device_register __P((struct device *, void *));
 static void	dec_3100_errintr __P((void));
 static int	dec_3100_intr __P((unsigned, unsigned, unsigned, unsigned));
 static void	dec_3100_intr_establish __P((struct device *, void *,
@@ -109,7 +108,6 @@ dec_3100_init()
 	platform.iobus = "baseboard";
 	platform.bus_reset = dec_3100_bus_reset;
 	platform.cons_init = dec_3100_cons_init;
-	platform.device_register = dec_3100_device_register;
 	platform.iointr = dec_3100_intr;
 	platform.intr_establish = dec_3100_intr_establish;
 	platform.memsize = memsize_scan;
@@ -168,16 +166,6 @@ dec_3100_cons_init()
 
 	dc_cnattach(KN01_SYS_DZ, kbd);
 }
-
-
-static void
-dec_3100_device_register(dev, aux)
-	struct device *dev;
-	void *aux;
-{
-	panic("dec_3100_device_register unimplemented");
-}
-
 
 #define CALLINTR(vvv, cp0)					\
     do {							\
