@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_prot.c,v 1.41 1997/11/04 21:24:14 thorpej Exp $	*/
+/*	$NetBSD: kern_prot.c,v 1.42 1997/11/10 08:26:09 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1991, 1993
@@ -186,12 +186,11 @@ sys_getgroups(p, v, retval)
 		syscallarg(gid_t *) gidset;
 	} */ *uap = v;
 	register struct pcred *pc = p->p_cred;
-	register u_int ngrp;
+	register int ngrp;
 	int error;
 
-	if (SCARG(uap, gidsetsize) < 0)
-		return (EINVAL);
-	if ((ngrp = SCARG(uap, gidsetsize)) == 0) {
+	ngrp = SCARG(uap, gidsetsize);
+	if (ngrp == 0) {
 		*retval = pc->pc_ucred->cr_ngroups;
 		return (0);
 	}
@@ -485,15 +484,13 @@ sys_setgroups(p, v, retval)
 		syscallarg(const gid_t *) gidset;
 	} */ *uap = v;
 	register struct pcred *pc = p->p_cred;
-	register u_int ngrp;
+	register int ngrp;
 	int error;
 
 	if ((error = suser(pc->pc_ucred, &p->p_acflag)) != 0)
 		return (error);
-	if (SCARG(uap, gidsetsize) < 0)
-		return (EINVAL);
 	ngrp = SCARG(uap, gidsetsize);
-	if (ngrp > NGROUPS)
+	if ((u_int)ngrp > NGROUPS)
 		return (EINVAL);
 	pc->pc_ucred = crcopy(pc->pc_ucred);
 	error = copyin(SCARG(uap, gidset), pc->pc_ucred->cr_groups,
