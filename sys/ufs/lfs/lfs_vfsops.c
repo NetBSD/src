@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.132 2003/10/14 12:52:28 yamt Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.133 2003/10/14 13:46:30 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.132 2003/10/14 12:52:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.133 2003/10/14 13:46:30 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -652,7 +652,7 @@ update_inoblk(struct lfs *fs, daddr_t offset, struct ucred *cred,
 #define CHECK_UPDATE  0x0002  /* Update Ifile for new data blocks / inodes */
 
 static daddr_t
-check_segsum(struct lfs *fs, daddr_t offset,
+check_segsum(struct lfs *fs, daddr_t offset, u_int64_t nextserial,
 	     struct ucred *cred, int flags, int *pseg_flags, struct proc *p)
 {
 	struct vnode *devvp;
@@ -665,7 +665,6 @@ check_segsum(struct lfs *fs, daddr_t offset,
 	FINFO *fip;
 	SEGUSE *sup;
 	size_t size;
-	u_int64_t serial;
 
 	devvp = VTOI(fs->lfs_ivnode)->i_devvp;
 	/*
@@ -712,8 +711,7 @@ check_segsum(struct lfs *fs, daddr_t offset,
 		}
 	}
 	if (fs->lfs_version > 1) {
-		serial = ssp->ss_serial;
-		if (serial != fs->lfs_serial + 1) {
+		if (ssp->ss_serial != nextserial) {
 #ifdef DEBUG_LFS_RFW
 			printf("Unexpected serial number at 0x%" PRIx64
 			    "\n", offset);
@@ -862,7 +860,7 @@ check_segsum(struct lfs *fs, daddr_t offset,
 
 	/* XXX should we update the serial number even for bad psegs? */
 	if ((flags & CHECK_UPDATE) && offset > 0 && fs->lfs_version > 1)
-		fs->lfs_serial = serial;
+		fs->lfs_serial = nextserial;
 	return offset;
 }
 
@@ -1164,6 +1162,7 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 			  !(fs->lfs_pflags & LFS_PF_CLEAN));
 #endif
 	if (do_rollforward) {
+		u_int64_t nextserial;
 		/*
 		 * Phase I: Find the address of the last good partial
 		 * segment that was written after the checkpoint.  Mark
@@ -1181,9 +1180,10 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 			--fs->lfs_nclean;
 		sup->su_flags |= SEGUSE_DIRTY;
 		LFS_WRITESEGENTRY(sup, fs, dtosn(fs, offset), bp);
-		while ((offset = check_segsum(fs, offset, cred, CHECK_CKSUM,
-					      &flags, p)) > 0)
-		{
+		nextserial = fs->lfs_serial + 1;
+		while ((offset = check_segsum(fs, offset, nextserial,
+		    cred, CHECK_CKSUM, &flags, p)) > 0) {
+			nextserial++;
 			if (sntod(fs, oldoffset) != sntod(fs, offset)) {
 				LFS_SEGENTRY(sup, fs, dtosn(fs, oldoffset),
 					     bp); 
@@ -1243,8 +1243,9 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 				printf("LFS roll forward phase 2: 0x%"
 				    PRIx64 "\n", offset);
 #endif
-				offset = check_segsum(fs, offset, cred,
-						      CHECK_UPDATE, NULL, p);
+				offset = check_segsum(fs, offset,
+				    fs->lfs_serial + 1, cred, CHECK_UPDATE,
+				    NULL, p);
 			}
 
 			/*
