@@ -1,4 +1,4 @@
-/*	$NetBSD: sshconnect1.c,v 1.20 2002/06/24 05:48:39 itojun Exp $	*/
+/*	$NetBSD: sshconnect1.c,v 1.21 2002/08/08 15:12:42 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -252,7 +252,7 @@ try_rsa_authentication(int idx)
 	 * load the private key.  Try first with empty passphrase; if it
 	 * fails, ask for a passphrase.
 	 */
-	if (public->flags && KEY_FLAG_EXT)
+	if (public->flags & KEY_FLAG_EXT)
 		private = public;
 	else
 		private = key_load_private_type(KEY_RSA1, authfile, "", NULL);
