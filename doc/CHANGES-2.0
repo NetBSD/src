@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.97 2004/04/18 02:24:37 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.98 2004/04/18 02:26:33 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -1001,3 +1001,9 @@ sys/dev/ata/ata.c				1.28
 	WDCF_TH_RUN bit after tsleep() it may loose loose the changes made by 
 	an interrupt handler or another thread.
 	[bouyer, ticket #149]
+
+distrib/utils/sysinst/msg.mi.pl			1.36
+distrib/utils/sysinst/msg.mi.en			1.126
+
+	Said "Mount pount"...now says "Mount point".
+	[atatat, ticket #153]
