@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.26 1997/10/18 04:08:12 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.27 1997/10/18 07:59:18 lukem Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,9 +45,11 @@
  */
 
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1992, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+#ifndef MAKE_BOOTSTRAP
+#include <sys/cdefs.h>
+__COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
+#endif /* not MAKE_BOOTSTRAP */
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -75,21 +77,23 @@ static struct nvlist **nextdefopt;
 static struct nvlist **nextmkopt;
 static struct nvlist **nextfsopt;
 
-static __dead void stop __P((void));
-static int do_option __P((struct hashtab *, struct nvlist ***,
-			const char *, const char *, const char *));
-static int crosscheck __P((void));
-static int badstar __P((void));
-static int mksymlinks __P((void));
-static int hasparent __P((struct devi *));
-static int cfcrosscheck __P((struct config *, const char *, struct nvlist *));
+static	void	stop __P((void));
+static	int	do_option __P((struct hashtab *, struct nvlist ***,
+		    const char *, const char *, const char *));
+static	int	crosscheck __P((void));
+static	int	badstar __P((void));
+	int	main __P((int, char **));
+static	int	mksymlinks __P((void));
+static	int	hasparent __P((struct devi *));
+static	int	cfcrosscheck __P((struct config *, const char *,
+		    struct nvlist *));
 
 int
 main(argc, argv)
 	int argc;
 	char **argv;
 {
-	register char *p;
+	char *p;
 	const char *last_component;
 	int pflag, ch;
 
@@ -302,8 +306,8 @@ void
 defoption(name)
 	const char *name;
 {
-	register const char *n;
-	register char *p, c;
+	const char *n;
+	char *p, c;
 	char low[500];
 
 	/*
@@ -335,8 +339,8 @@ void
 addoption(name, value)
 	const char *name, *value;
 {
-	register const char *n;
-	register char *p, c;
+	const char *n;
+	char *p, c;
 	char low[500];
 
 	if (do_option(opttab, &nextopt, name, value, "options"))
@@ -359,9 +363,8 @@ void
 addfsoption(name)
 	const char *name;
 {
-	register struct nvlist *nv;
-	register const char *n; 
-	register char *p, c;
+	const char *n; 
+	char *p, c;
 	char buf[500];
 
 	/* Convert to lowercase. */
@@ -404,7 +407,7 @@ do_option(ht, nppp, name, value, type)
 	struct nvlist ***nppp;
 	const char *name, *value, *type;
 {
-	register struct nvlist *nv;
+	struct nvlist *nv;
 
 	/* assume it will work */
 	nv = newnv(name, value, NULL, 0, NULL);
@@ -431,10 +434,10 @@ do_option(ht, nppp, name, value, type)
  */
 int
 deva_has_instances(deva, unit)
-	register struct deva *deva;
+	struct deva *deva;
 	int unit;
 {
-	register struct devi *i;
+	struct devi *i;
 
 	if (unit == WILD)
 		return (deva->d_ihead != NULL);
@@ -450,10 +453,10 @@ deva_has_instances(deva, unit)
  */
 int
 devbase_has_instances(dev, unit)
-	register struct devbase *dev;
+	struct devbase *dev;
 	int unit;
 {
-	register struct deva *da;
+	struct deva *da;
 
 	for (da = dev->d_ahead; da != NULL; da = da->d_bsame)
 		if (deva_has_instances(da, unit))
@@ -463,9 +466,9 @@ devbase_has_instances(dev, unit)
 
 static int
 hasparent(i)
-	register struct devi *i;
+	struct devi *i;
 {
-	register struct nvlist *nv;
+	struct nvlist *nv;
 	int atunit = i->i_atunit;
 
 	/*
@@ -498,12 +501,12 @@ hasparent(i)
 
 static int
 cfcrosscheck(cf, what, nv)
-	register struct config *cf;
+	struct config *cf;
 	const char *what;
-	register struct nvlist *nv;
+	struct nvlist *nv;
 {
-	register struct devbase *dev;
-	register struct devi *pd;
+	struct devbase *dev;
+	struct devi *pd;
 	int errs, devunit;
 
 	if (maxpartitions <= 0)
@@ -546,8 +549,8 @@ loop:
 int
 crosscheck()
 {
-	register struct devi *i;
-	register struct config *cf;
+	struct devi *i;
+	struct config *cf;
 	int errs;
 
 	errs = 0;
@@ -581,10 +584,10 @@ crosscheck()
 int
 badstar()
 {
-	register struct devbase *d;
-	register struct deva *da;
-	register struct devi *i;
-	register int errs, n;
+	struct devbase *d;
+	struct deva *da;
+	struct devi *i;
+	int errs, n;
 
 	errs = 0;
 	for (d = allbases; d != NULL; d = d->d_next) {
@@ -619,7 +622,6 @@ void
 setupdirs()
 {
 	struct stat st;
-	char *prof;
 
 	/* srcdir must be specified if builddir is not specified or if
 	 * no configuration filename was specified. */

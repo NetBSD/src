@@ -1,4 +1,4 @@
-/*	$NetBSD: mkioconf.c,v 1.43 1997/03/14 22:54:08 jtk Exp $	*/
+/*	$NetBSD: mkioconf.c,v 1.44 1997/10/18 07:59:25 lukem Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -63,7 +63,6 @@ static int emitloc __P((FILE *));
 static int emitpseudo __P((FILE *));
 static int emitpv __P((FILE *));
 static int emitroots __P((FILE *));
-static char *vecname __P((char *, const char *, int));
 
 #define	SEP(pos, max)	(((u_int)(pos) % (max)) == 0 ? "\n\t" : " ")
 
@@ -76,7 +75,7 @@ static char *vecname __P((char *, const char *, int));
 int
 mkioconf()
 {
-	register FILE *fp;
+	FILE *fp;
 	int v;
 
 	qsort(packed, npacked, sizeof *packed, cforder);
@@ -104,7 +103,7 @@ static int
 cforder(a, b)
 	const void *a, *b;
 {
-	register int n1, n2;
+	int n1, n2;
 
 	n1 = (*(struct devi **)a)->i_cfindex;
 	n2 = (*(struct devi **)b)->i_cfindex;
@@ -113,10 +112,10 @@ cforder(a, b)
 
 static int
 emithdr(ofp)
-	register FILE *ofp;
+	FILE *ofp;
 {
-	register FILE *ifp;
-	register int n;
+	FILE *ifp;
+	int n;
 	char ifn[200], buf[BUFSIZ];
 
 	if (fprintf(ofp, "\
@@ -149,10 +148,10 @@ emithdr(ofp)
 
 static int
 emitexterns(fp)
-	register FILE *fp;
+	FILE *fp;
 {
-	register struct devbase *d;
-	register struct deva *da;
+	struct devbase *d;
+	struct deva *da;
 
 	NEWLINE;
 	for (d = allbases; d != NULL; d = d->d_next) {
@@ -185,7 +184,7 @@ cf_locnames_print(name, value, arg)
 	void *arg;
 {
 	struct attr *a;
-	register struct nvlist *nv;
+	struct nvlist *nv;
 	FILE *fp = arg;
 
 	a = value;
@@ -204,9 +203,9 @@ cf_locnames_print(name, value, arg)
 
 static int
 emitloc(fp)
-	register FILE *fp;
+	FILE *fp;
 {
-	register int i;
+	int i;
 
 	if (fprintf(fp, "\n/* locators */\n\
 static int loc[%d] = {", locators.used) < 0)
@@ -225,9 +224,9 @@ static int loc[%d] = {", locators.used) < 0)
  */
 static int
 emitpv(fp)
-	register FILE *fp;
+	FILE *fp;
 {
-	register int i;
+	int i;
 
 	if (fprintf(fp, "\n/* parent vectors */\n\
 static short pv[%d] = {", parents.used) < 0)
@@ -243,13 +242,13 @@ static short pv[%d] = {", parents.used) < 0)
  */
 static int
 emitcfdata(fp)
-	register FILE *fp;
+	FILE *fp;
 {
-	register struct devi **p, *i, **par;
-	register int unit, v;
-	register const char *state, *basename, *attachment;
-	register struct nvlist *nv;
-	register struct attr *a;
+	struct devi **p, *i, **par;
+	int unit, v;
+	const char *state, *basename, *attachment;
+	struct nvlist *nv;
+	struct attr *a;
 	char *loc;
 	char locbuf[20];
 
@@ -313,9 +312,9 @@ struct cfdata cfdata[] = {\n\
  */
 static int
 emitroots(fp)
-	register FILE *fp;
+	FILE *fp;
 {
-	register struct devi **p, *i;
+	struct devi **p, *i;
 
 	if (fputs("\nshort cfroots[] = {\n", fp) < 0)
 		return (1);
@@ -339,10 +338,10 @@ emitroots(fp)
  */
 static int
 emitpseudo(fp)
-	register FILE *fp;
+	FILE *fp;
 {
-	register struct devi *i;
-	register struct devbase *d;
+	struct devi *i;
+	struct devbase *d;
 
 	if (fputs("\n/* pseudo-devices */\n", fp) < 0)
 		return (1);

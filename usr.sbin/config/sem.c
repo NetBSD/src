@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.17 1997/06/14 04:25:56 thorpej Exp $	*/
+/*	$NetBSD: sem.c,v 1.18 1997/10/18 07:59:35 lukem Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,12 +76,12 @@ static struct devi **nextpseudo;
 
 static int has_errobj __P((struct nvlist *, void *));
 static struct nvlist *addtoattr __P((struct nvlist *, struct devbase *));
-static int exclude __P((struct nvlist *, const char *, const char *));
 static int resolve __P((struct nvlist **, const char *, const char *,
 			struct nvlist *, int));
 static struct devi *newdevi __P((const char *, int, struct devbase *d));
 static struct devi *getdevi __P((const char *));
 static const char *concat __P((const char *, int));
+static char *extend __P((char *, const char *));
 static int split __P((const char *, size_t, char *, size_t, int *));
 static void selectbase __P((struct devbase *, struct deva *));
 static int onlist __P((struct nvlist *, void *));
@@ -124,7 +124,7 @@ extern const char *lastfile;
 void
 enddefs()
 {
-	register struct devbase *dev;
+	struct devbase *dev;
 
 	for (dev = allbases; dev != NULL; dev = dev->d_next) {
 		if (!dev->d_isdef) {
@@ -185,9 +185,9 @@ defattr(name, locs)
 	const char *name;
 	struct nvlist *locs;
 {
-	register struct attr *a;
-	register struct nvlist *nv;
-	register int len;
+	struct attr *a;
+	struct nvlist *nv;
+	int len;
 
 	a = emalloc(sizeof *a);
 	if (ht_insert(attrtab, name, a)) {
@@ -220,8 +220,8 @@ defattr(name, locs)
  */
 static int
 has_errobj(nv, obj)
-	register struct nvlist *nv;
-	register void *obj;
+	struct nvlist *nv;
+	void *obj;
 {
 
 	for (; nv != NULL; nv = nv->nv_next)
@@ -236,10 +236,10 @@ has_errobj(nv, obj)
  */
 int
 has_attr(nv, attr)
-	register struct nvlist *nv;
-	register const char *attr;
+	struct nvlist *nv;
+	const char *attr;
 {
-	register struct attr *a;
+	struct attr *a;
 
 	if ((a = getattr(attr)) == NULL)
 		return (0);
@@ -257,10 +257,10 @@ has_attr(nv, attr)
  */
 static struct nvlist *
 addtoattr(l, dev)
-	register struct nvlist *l;
-	register struct devbase *dev;
+	struct nvlist *l;
+	struct devbase *dev;
 {
-	register struct nvlist *n;
+	struct nvlist *n;
 
 	n = newnv(NULL, NULL, dev, 0, l);
 	return (n);
@@ -272,12 +272,12 @@ addtoattr(l, dev)
  */
 void
 defdev(dev, ispseudo, loclist, attrs)
-	register struct devbase *dev;
+	struct devbase *dev;
 	int ispseudo;
 	struct nvlist *loclist, *attrs;
 {
-	register struct nvlist *nv;
-	register struct attr *a;
+	struct nvlist *nv;
+	struct attr *a;
 
 	if (dev == &errdev)
 		goto bad;
@@ -332,8 +332,8 @@ struct devbase *
 getdevbase(name)
 	const char *name;
 {
-	register u_char *p;
-	register struct devbase *dev;
+	u_char *p;
+	struct devbase *dev;
 
 	p = (u_char *)name;
 	if (!isalpha(*p))
@@ -374,13 +374,13 @@ badname:
  */
 void
 defdevattach(deva, dev, atlist, attrs)
-	register struct deva *deva;
+	struct deva *deva;
 	struct devbase *dev;
 	struct nvlist *atlist, *attrs;
 {
-	register struct nvlist *nv;
-	register struct attr *a;
-	register struct deva *da;
+	struct nvlist *nv;
+	struct attr *a;
+	struct deva *da;
 
 	if (dev == &errdev)
 		goto bad;
@@ -467,8 +467,8 @@ struct deva *
 getdevattach(name)
 	const char *name;
 {
-	register u_char *p;
-	register struct deva *deva;
+	u_char *p;
+	struct deva *deva;
 
 	p = (u_char *)name;
 	if (!isalpha(*p))
@@ -535,21 +535,6 @@ setmajor(d, n)
 		d->d_major = n;
 }
 
-#define ABS(x) ((x) < 0 ? -(x) : (x))
-
-static int
-exclude(nv, name, what)
-	struct nvlist *nv;
-	const char *name, *what;
-{
-
-	if (nv != NULL) {
-		error("%s: wildcarded root must not specify %s", name, what);
-		return (1);
-	}
-	return (0);
-}
-
 /*
  * Make a string description of the device at maj/min.
  */
@@ -579,16 +564,15 @@ makedevstr(maj, min)
  */
 static int
 resolve(nvp, name, what, dflt, part)
-	register struct nvlist **nvp;
+	struct nvlist **nvp;
 	const char *name, *what;
 	struct nvlist *dflt;
-	register int part;
+	int part;
 {
-	register struct nvlist *nv, *anv;
-	register struct devbase *dev;
-	register const char *cp;
-	register int maj, min, i, l;
-	register struct attr *a;
+	struct nvlist *nv;
+	struct devbase *dev;
+	const char *cp;
+	int maj, min, i, l;
 	int unit;
 	char buf[NAMESIZE];
 
@@ -676,10 +660,10 @@ resolve(nvp, name, what, dflt, part)
  */
 void
 addconf(cf0)
-	register struct config *cf0;
+	struct config *cf0;
 {
-	register struct config *cf;
-	register struct nvlist *nv;
+	struct config *cf;
+	struct nvlist *nv;
 	const char *name;
 
 	name = cf0->cf_name;
@@ -736,7 +720,7 @@ bad:
 
 void
 setconf(npp, what, v)
-	register struct nvlist **npp;
+	struct nvlist **npp;
 	const char *what;
 	struct nvlist *v;
 {
@@ -773,7 +757,7 @@ newdevi(name, unit, d)
 	int unit;
 	struct devbase *d;
 {
-	register struct devi *i;
+	struct devi *i;
 
 	i = emalloc(sizeof *i);
 	i->i_name = name;
@@ -805,12 +789,12 @@ adddev(name, at, loclist, flags)
 	struct nvlist *loclist;
 	int flags;
 {
-	register struct devi *i;	/* the new instance */
-	register struct attr *attr;	/* attribute that allows attach */
-	register struct devbase *ib;	/* i->i_base */
-	register struct devbase *ab;	/* not NULL => at another dev */
-	register struct nvlist *nv;
-	register struct deva *iba;	/* devbase attachment used */
+	struct devi *i;		/* the new instance */
+	struct attr *attr;	/* attribute that allows attach */
+	struct devbase *ib;	/* i->i_base */
+	struct devbase *ab;	/* not NULL => at another dev */
+	struct nvlist *nv;
+	struct deva *iba;	/* devbase attachment used */
 	const char *cp;
 	int atunit;
 	char atbuf[NAMESIZE];
@@ -917,7 +901,6 @@ findattachment:
 		if (!hit)
 			panic("adddev: can't figure out attachment");
 	}
-ok:
 	if ((i->i_locs = fixloc(name, attr, loclist)) == NULL)
 		goto bad;
 	i->i_at = at;
@@ -942,8 +925,8 @@ addpseudo(name, number)
 	const char *name;
 	int number;
 {
-	register struct devbase *d;
-	register struct devi *i;
+	struct devbase *d;
+	struct devi *i;
 
 	d = ht_lookup(devbasetab, name);
 	if (d == NULL) {
@@ -974,8 +957,8 @@ static struct devi *
 getdevi(name)
 	const char *name;
 {
-	register struct devi *i, *firsti;
-	register struct devbase *d;
+	struct devi *i, *firsti;
+	struct devbase *d;
 	int unit;
 	char base[NAMESIZE];
 
@@ -1015,7 +998,7 @@ concat(name, c)
 	const char *name;
 	int c;
 {
-	register int len;
+	int len;
 	char buf[NAMESIZE];
 
 	len = strlen(name);
@@ -1023,7 +1006,7 @@ concat(name, c)
 		error("device name `%s%c' too long", name, c);
 		len = sizeof(buf) - 2;
 	}
-	bcopy(name, buf, len);
+	memmove(buf, name, len);
 	buf[len] = c;
 	buf[len + 1] = 0;
 	return (intern(buf));
@@ -1052,14 +1035,14 @@ wildref(name)
  */
 static int
 split(name, nlen, base, bsize, aunit)
-	register const char *name;
+	const char *name;
 	size_t nlen;
 	char *base;
 	size_t bsize;
 	int *aunit;
 {
-	register const char *cp;
-	register int c, l;
+	const char *cp;
+	int c, l;
 
 	l = nlen;
 	if (l < 2 || l >= bsize || isdigit(*name))
@@ -1078,7 +1061,7 @@ split(name, nlen, base, bsize, aunit)
 			l--, cp--;
 		*aunit = atoi(cp);
 	}
-	bcopy(name, base, l);
+	memmove(base, name, l);
 	base[l] = 0;
 	return (0);
 }
@@ -1089,11 +1072,11 @@ split(name, nlen, base, bsize, aunit)
  */
 static void
 selectbase(d, da)
-	register struct devbase *d;
-	register struct deva *da;
+	struct devbase *d;
+	struct deva *da;
 {
-	register struct attr *a;
-	register struct nvlist *nv;
+	struct attr *a;
+	struct nvlist *nv;
 
 	(void)ht_insert(selecttab, d->d_name, (char *)d->d_name);
 	for (nv = d->d_attrs; nv != NULL; nv = nv->nv_next) {
@@ -1115,8 +1098,8 @@ selectbase(d, da)
  */
 static int
 onlist(nv, ptr)
-	register struct nvlist *nv;
-	register void *ptr;
+	struct nvlist *nv;
+	void *ptr;
 {
 	for (; nv != NULL; nv = nv->nv_next)
 		if (nv->nv_ptr == ptr)
@@ -1126,13 +1109,13 @@ onlist(nv, ptr)
 
 static char *
 extend(p, name)
-	register char *p;
+	char *p;
 	const char *name;
 {
-	register int l;
+	int l;
 
 	l = strlen(name);
-	bcopy(name, p, l);
+	memmove(p, name, l);
 	p += l;
 	*p++ = ',';
 	*p++ = ' ';
@@ -1146,12 +1129,12 @@ extend(p, name)
 static const char **
 fixloc(name, attr, got)
 	const char *name;
-	register struct attr *attr;
-	register struct nvlist *got;
+	struct attr *attr;
+	struct nvlist *got;
 {
-	register struct nvlist *m, *n;
-	register int ord;
-	register const char **lp;
+	struct nvlist *m, *n;
+	int ord;
+	const char **lp;
 	int nmissing, nextra, nnodefault;
 	char *mp, *ep, *ndp;
 	char missing[1000], extra[1000], nodefault[1000];

@@ -1,4 +1,4 @@
-.\"	$NetBSD: config.8,v 1.11 1997/02/05 19:17:28 thorpej Exp $
+.\"	$NetBSD: config.8,v 1.12 1997/10/18 07:59:00 lukem Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -40,22 +40,21 @@
 .Nm config
 .Nd build kernel compilation directories
 .Sh SYNOPSIS
-.Nm config
+.Nm
 .Op Fl b Ar builddir
 .Op Fl s Ar srcdir
 .Op Fl p
 .Op Ar config-file
 .Sh DESCRIPTION
-.Pp
-.Nm Config
+.Nm
 creates a kernel build directory from the file
 .Ar config-file ,
 which describes the system to configure.
 .Pp
 There are several different ways to run the
-.Nm config
+.Nm
 program.  The traditional way is to run
-.Nm config
+.Nm
 from the
 .Pa conf
 subdirectory of the machine-specific directory of the system source
@@ -70,14 +69,14 @@ is one of
 and so forth), and to specify as the
 .Ar config-file
 the name of a file located in that directory.
-.Nm config
+.Nm
 will by default create files in the directory
 .Pa ../compile/SYSTEMNAME ,
 where
 .Pa SYSTEMNAME
 is the last path component of
 .Ar config-file .
-.Nm Config
+.Nm
 will assume that the top-level kernel source directory is located four
 directories above the build directory.
 .Pp
@@ -85,13 +84,13 @@ Another way is to create the build directory yourself, place the
 configuration file in the build directory with the name
 .Pa CONFIG ,
 and run
-.Nm config
+.Nm
 from within the build directory without specifying a
 .Ar config-file .
-.Nm Config
+.Nm
 will then by default create files in the current directory.  If you
 run
-.Nm config
+.Nm
 this way, you must specify the location of the top-level kernel source
 directory using the
 .Fl s
@@ -100,7 +99,7 @@ option or by using the
 directive at the beginning of the system configuration file.
 .Pp
 Finally, you can specify the build directory for
-.Nm config
+.Nm
 and run it from anywhere.  You can specify a build directory with the
 .Fl b
 option or by using the
@@ -114,7 +113,7 @@ If the
 option is supplied,
 .Pa .PROF
 is appended to the default compilation directory name, and
-.Nm config
+.Nm
 acts as if the lines
 .Dq Li makeoptions PROF="-pg"
 and
@@ -144,7 +143,7 @@ and (typically)
 .Dq Li options KGDB .
 .Pp
 The output of
-.Nm config
+.Nm
 consists of a number of files, principally
 .Pa ioconf.c ,
 a description of I/O devices that may be attached to the system; and a
@@ -154,20 +153,20 @@ used by
 in building the kernel.
 .Pp
 After running
-.Nm config ,
+.Nm "" ,
 it is wise to run
 .Dq Li make depend
 in the directory where the new makefile
 was created.
-.Nm Config
+.Nm
 prints a reminder of this when it completes.
 .Pp
 If
-.Nm config
+.Nm
 stops due to errors, the problems reported should be corrected and
-.Nm config
+.Nm
 should be run again.
-.Nm Config
+.Nm
 attempts to avoid changing the compilation directory
 if there are configuration errors,
 but this code is not well-tested,
@@ -183,7 +182,7 @@ The SYNOPSIS portion of each device in section 4.
 .Xr options 4
 .Sh HISTORY
 The
-.Nm config
+.Nm
 command appeared in
 .Bx 4.1 .
 It was completely revised in

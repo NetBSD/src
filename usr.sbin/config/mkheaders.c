@@ -1,4 +1,4 @@
-/*	$NetBSD: mkheaders.c,v 1.15 1997/07/18 11:27:37 jtk Exp $	*/
+/*	$NetBSD: mkheaders.c,v 1.16 1997/10/18 07:59:21 lukem Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -66,8 +66,8 @@ static char *cntname __P((const char *));
 int
 mkheaders()
 {
-	register struct files *fi;
-	register struct nvlist *nv;
+	struct files *fi;
+	struct nvlist *nv;
 
 	for (fi = allfiles; fi != NULL; fi = fi->fi_next) {
 		if (fi->fi_flags & FI_HIDDEN)
@@ -89,10 +89,10 @@ mkheaders()
 
 static int
 emitcnt(head)
-	register struct nvlist *head;
+	struct nvlist *head;
 {
-	register struct nvlist *nv;
-	register FILE *fp;
+	struct nvlist *nv;
+	FILE *fp;
 	int cnt;
 	char nam[100];
 	char buf[BUFSIZ];
@@ -137,8 +137,7 @@ emitopt(nv)
 {
 	struct nvlist *option;
 	char new_contents[BUFSIZ], buf[BUFSIZ];
-	char fname[BUFSIZ], *p, c;
-	const char *n;
+	char fname[BUFSIZ], *p;
 	int len, nlines;
 	FILE *fp;
 
@@ -209,10 +208,10 @@ locators_print(name, value, arg)
 	void *arg;
 {
 	struct attr *a;
-	register struct nvlist *nv;
-	register int i;
+	struct nvlist *nv;
+	int i;
 	char *locdup, *namedup;
-	register char *cp;
+	char *cp;
 	FILE *fp = arg;
 
 	a = value;
@@ -265,11 +264,9 @@ locators_print(name, value, arg)
 static int
 emitlocs()
 {
-	struct nvlist *option;
 	char nbuf[BUFSIZ], obuf[BUFSIZ];
-	char *tfname, *nfname;
-	const char *n;
-	int count, rval;
+	char *tfname, *nfname = NULL;
+	int rval;
 	FILE *tfp = NULL, *nfp = NULL;
 	
 	tfname = "tmp_locators.h";
@@ -335,9 +332,9 @@ err(what, fname, fp)
 
 static char *
 cntname(src)
-	register const char *src;
+	const char *src;
 {
-	register char *dst, c;
+	char *dst, c;
 	static char buf[100];
 
 	dst = buf;

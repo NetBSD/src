@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.33 1997/10/10 10:27:53 mycroft Exp $	*/
+/*	$NetBSD: config.h,v 1.34 1997/10/18 07:59:03 lukem Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -333,6 +333,7 @@ struct {			/* loc[] table for config */
 void	initfiles __P((void));
 void	checkfiles __P((void));
 int	fixfiles __P((void));	/* finalize */
+int	fixobjects __P((void));
 void	addfile __P((const char *, struct nvlist *, int, const char *));
 void	addobject __P((const char *, struct nvlist *, int));
 
@@ -373,6 +374,7 @@ void	pack __P((void));
 
 /* scan.l */
 int	currentline __P((void));
+int	firstfile __P((const char *));
 int	include __P((const char *, int));
 
 /* sem.c, other than for yacc actions */
@@ -389,3 +391,7 @@ struct nvlist *newnv __P((const char *, const char *, void *, int,
 	    struct nvlist *));
 void	nvfree __P((struct nvlist *));
 void	nvfreel __P((struct nvlist *));
+
+/* liby */
+void	yyerror __P((const char *));
+int	yylex __P((void));
