@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ipccall.c,v 1.2 1995/03/08 17:27:42 fvdl Exp $	*/
+/*	$NetBSD: linux_ipccall.c,v 1.3 1995/06/22 21:34:36 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -43,6 +43,7 @@
 #include <sys/mman.h>
 #include <sys/systm.h>
 #include <sys/stat.h>
+#include <sys/exec.h>
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>

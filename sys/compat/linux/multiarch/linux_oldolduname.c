@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_oldolduname.c,v 1.7 1995/06/11 21:51:38 fvdl Exp $	*/
+/*	$NetBSD: linux_oldolduname.c,v 1.8 1995/06/22 21:34:38 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -40,6 +40,7 @@
 #include <sys/namei.h>
 #include <sys/proc.h>
 #include <sys/dir.h>
+#include <sys/exec.h>
 #include <sys/file.h>
 #include <sys/stat.h>
 #include <sys/filedesc.h>
