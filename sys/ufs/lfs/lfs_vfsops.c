@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.88 2003/01/25 23:00:09 kleink Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.89 2003/01/27 23:17:57 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.88 2003/01/25 23:00:09 kleink Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.89 2003/01/27 23:17:57 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -446,7 +446,7 @@ update_meta(struct lfs *fs, ino_t ino, int version, daddr_t lbn,
 #ifdef DIAGNOSTIC
 		if (sup->su_nbytes < size) {
 			panic("update_meta: negative bytes "
-			      "(segment %" PRId64 " short by %ld)\n",
+			      "(segment %" PRIu32 " short by %ld)\n",
 			      dtosn(fs, dbtofsb(fs, odaddr)), (long)size - sup->su_nbytes);
 			sup->su_nbytes = size;
 		}
@@ -465,8 +465,8 @@ update_meta(struct lfs *fs, ino_t ino, int version, daddr_t lbn,
 	/* Now look again to make sure it worked */
 	ufs_bmaparray(vp, lbn, &odaddr, &a[0], &num, NULL );
 	if (dbtofsb(fs, odaddr) != ndaddr)
-		printf("update_meta: failed setting ino %d lbn %d to %x\n",
-		       ino, lbn, ndaddr);
+		printf("update_meta: failed setting ino %d lbn %" PRId64
+		    " to %" PRId64 "\n", ino, lbn, ndaddr);
 #endif
 	vput(vp);
 	return 0;
@@ -602,21 +602,21 @@ check_segsum(struct lfs *fs, daddr_t offset,
 					   fs->lfs_sumsize -
 					   sizeof(ssp->ss_sumsum))) {
 #ifdef DEBUG_LFS_RFW
-			printf("Sumsum error at 0x%x\n", offset);
+			printf("Sumsum error at 0x%" PRIx64 "\n", offset);
 #endif
 			offset = -1;
 			goto err1;
 		}
 		if (ssp->ss_nfinfo == 0 && ssp->ss_ninos == 0) {
 #ifdef DEBUG_LFS_RFW
-			printf("Empty pseg at 0x%x\n", offset);
+			printf("Empty pseg at 0x%" PRIx64 "\n", offset);
 #endif
 			offset = -1;
 			goto err1;
 		}
 		if (ssp->ss_create < fs->lfs_tstamp) {
 #ifdef DEBUG_LFS_RFW
-			printf("Old data at 0x%x\n", offset);
+			printf("Old data at 0x%" PRIx64 "\n", offset);
 #endif
 			offset = -1;
 			goto err1;
@@ -626,15 +626,16 @@ check_segsum(struct lfs *fs, daddr_t offset,
 		serial = ssp->ss_serial;
 		if (serial != fs->lfs_serial + 1) {
 #ifdef DEBUG_LFS_RFW
-			printf("Unexpected serial number at 0x%x\n", offset);
+			printf("Unexpected serial number at 0x%" PRIx64
+			    "\n", offset);
 #endif
 			offset = -1;
 			goto err1;
 		}
 		if (ssp->ss_ident != fs->lfs_ident) {
 #ifdef DEBUG_LFS_RFW
-			printf("Incorrect fsid (0x%x vs 0x%x) at 0x%x\n",
-			       ssp->ss_ident, fs->lfs_ident, offset);
+			printf("Incorrect fsid (0x%x vs 0x%x) at 0x%"
+			    PRIx64 "\n", ssp->ss_ident, fs->lfs_ident, offset);
 #endif
 			offset = -1;
 			goto err1;
@@ -731,8 +732,8 @@ check_segsum(struct lfs *fs, daddr_t offset,
 	   ssp->ss_datasum != cksum(datap, nblocks * sizeof(u_long)))
 	{
 #ifdef DEBUG_LFS_RFW
-		printf("Datasum error at 0x%x (wanted %x got %x)\n", offset,
-		       ssp->ss_datasum, cksum(datap, nblocks *
+		printf("Datasum error at 0x%" PRIx64 " (wanted %x got %x)\n",
+		    offset, ssp->ss_datasum, cksum(datap, nblocks *
 					      sizeof(u_long)));
 #endif
 		offset = -1;
@@ -748,7 +749,7 @@ check_segsum(struct lfs *fs, daddr_t offset,
 		}
 		offset = ssp->ss_next;
 #ifdef DEBUG_LFS_RFW
-		printf("LFS roll forward: moving on to offset 0x%x "
+		printf("LFS roll forward: moving on to offset 0x%" PRIx64
 		       " -> segment %d\n", offset, dtosn(fs,offset));
 #endif
 	}
@@ -1038,8 +1039,8 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 		lastgoodpseg = oldoffset = offset = fs->lfs_offset;
 		flags = 0x0;
 #ifdef DEBUG_LFS_RFW
-		printf("LFS roll forward phase 1: starting at offset 0x%x\n",
-		       offset);
+		printf("LFS roll forward phase 1: starting at offset 0x%"
+		    PRIx64 "\n", offset);
 #endif
 		LFS_SEGENTRY(sup, fs, dtosn(fs, offset), bp);
 		if (!(sup->su_flags & SEGUSE_DIRTY))
@@ -1059,14 +1060,14 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 			}
 
 #ifdef DEBUG_LFS_RFW
-			printf("LFS roll forward phase 1: offset=0x%x\n",
-			       offset);
+			printf("LFS roll forward phase 1: offset=0x%"
+			    PRIx64 "\n", offset);
 			if (flags & SS_DIROP) {
-				printf("lfs_mountfs: dirops at 0x%x\n",
+				printf("lfs_mountfs: dirops at 0x%" PRIx64 "\n",
 				       oldoffset);
 				if (!(flags & SS_CONT))
 					printf("lfs_mountfs: dirops end "
-					       "at 0x%x\n", oldoffset);
+					       "at 0x%" PRIx64 "\n", oldoffset);
 			}
 #endif
 			if (!(flags & SS_CONT))
@@ -1079,7 +1080,7 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 			       "dirops discarded\n");
 		}
 		printf("LFS roll forward phase 1: completed: "
-		       "lastgoodpseg=0x%x\n", lastgoodpseg);
+		       "lastgoodpseg=0x%" PRIx64 "\n", lastgoodpseg);
 #endif
 		oldoffset = fs->lfs_offset;
 		if (fs->lfs_offset != lastgoodpseg) {
@@ -1104,8 +1105,8 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 			 */
 			while (offset != lastgoodpseg) {
 #ifdef DEBUG_LFS_RFW
-				printf("LFS roll forward phase 2: 0x%x\n",
-				       offset);
+				printf("LFS roll forward phase 2: 0x%"
+				    PRIx64 "\n", offset);
 #endif
 				offset = check_segsum(fs, offset, cred,
 						      CHECK_UPDATE, NULL, p);

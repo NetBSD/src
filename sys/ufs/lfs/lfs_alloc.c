@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.61 2003/01/25 18:12:32 tron Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.62 2003/01/27 23:17:56 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.61 2003/01/25 18:12:32 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.62 2003/01/27 23:17:56 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -589,7 +589,7 @@ lfs_vfree(void *v)
 #ifdef DIAGNOSTIC
 		if (sup->su_nbytes < DINODE_SIZE) {
 			printf("lfs_vfree: negative byte count"
-			       " (segment %" PRId64 " short by %d)\n",
+			       " (segment %" PRIu32 " short by %d)\n",
 			       dtosn(fs, old_iaddr),
 			       (int)DINODE_SIZE - sup->su_nbytes);
 			panic("lfs_vfree: negative byte count");

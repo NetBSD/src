@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.95 2003/01/27 21:45:52 kleink Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.96 2003/01/27 23:17:57 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.95 2003/01/27 21:45:52 kleink Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.96 2003/01/27 23:17:57 yamt Exp $");
 
 #define ivndebug(vp,str) printf("ino %d: %s\n",VTOI(vp)->i_number,(str))
 
@@ -968,15 +968,14 @@ lfs_writeinode(struct lfs *fs, struct segment *sp, struct inode *ip)
 #ifdef DIAGNOSTIC
 		if (sup->su_nbytes + DINODE_SIZE * ndupino < DINODE_SIZE) {
 			printf("lfs_writeinode: negative bytes "
-			       "(segment %" PRId64 " short by %d, "
-			       "oldsn=%u, cursn=%u, daddr=%d, su_nbytes=%u, "
+			       "(segment %" PRIu32 " short by %d, "
+			       "oldsn=%" PRIu32 ", cursn=%" PRIu32
+			       ", daddr=%" PRId64 ", su_nbytes=%u, "
 			       "ndupino=%d)\n",
 			       dtosn(fs, daddr),
 			       (int)DINODE_SIZE * (1 - sp->ndupino)
 				   - sup->su_nbytes,
-			       (unsigned int)oldsn,
-			       (unsigned int)sp->seg_number,
-			       (int)daddr,
+			       oldsn, sp->seg_number, daddr,
 			       (unsigned int)sup->su_nbytes,
 			       sp->ndupino);
 			panic("lfs_writeinode: negative bytes");
@@ -1079,7 +1078,7 @@ loop:	for (bp = LIST_FIRST(&vp->v_dirtyblkhd); bp; bp = nbp) {
 		if ((bp->b_flags & (B_BUSY|B_GATHERED)) || !match(fs, bp)) {
 #ifdef DEBUG_LFS
 			if (vp == fs->lfs_ivnode && (bp->b_flags & (B_BUSY|B_GATHERED)) == B_BUSY)
-				printf("(%d:%lx)", bp->b_lblkno, bp->b_flags);
+				printf("(%" PRId64 ":%lx)", bp->b_lblkno, bp->b_flags);
 #endif
 			continue;
 		}
@@ -1290,7 +1289,7 @@ lfs_updatemeta(struct segment *sp)
 #ifdef DIAGNOSTIC
 			if (sup->su_nbytes + DINODE_SIZE * ndupino < osize) {
 				printf("lfs_updatemeta: negative bytes "
-				       "(segment %" PRId64 " short by %d)\n",
+				       "(segment %" PRIu32 " short by %d)\n",
 				       dtosn(fs, daddr),
 				       osize - sup->su_nbytes);
 				printf("lfs_updatemeta: ino %d, lbn %" PRId64
@@ -1302,8 +1301,8 @@ lfs_updatemeta(struct segment *sp)
 			}
 #endif
 #ifdef DEBUG_SU_NBYTES
-			printf("seg %d -= %ld for ino %d lbn %" PRId64
-				" db 0x%x\n",
+			printf("seg %" PRIu32 " -= %d for ino %d lbn %" PRId64
+				" db 0x%" PRIx64 "\n",
 				dtosn(fs, daddr), osize,
 				VTOI(sp->vp)->i_number, lbn, daddr);
 #endif
@@ -1617,10 +1616,10 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 		if ((*bpp)->b_vp != devvp) {
 			sup->su_nbytes += (*bpp)->b_bcount;
 #ifdef DEBUG_SU_NBYTES
-		printf("seg %d += %ld for ino %d lbn %" PRId64 " db 0x%x\n",
-		       sp->seg_number, (*bpp)->b_bcount,
-		       VTOI((*bpp)->b_vp)->i_number,
-		       (*bpp)->b_lblkno, (*bpp)->b_blkno);
+		printf("seg %" PRIu32 " += %ld for ino %d lbn %" PRId64
+		    " db 0x%" PRIx64 "\n", sp->seg_number, (*bpp)->b_bcount,
+		    VTOI((*bpp)->b_vp)->i_number, (*bpp)->b_lblkno,
+		    (*bpp)->b_blkno);
 #endif
 		}
 	}
@@ -1859,8 +1858,8 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 #if defined(DEBUG) && defined(DIAGNOSTIC)
 		if(dtosn(fs, dbtofsb(fs, (*bpp)->b_blkno + btodb((*bpp)->b_bcount - 1))) !=
 		   dtosn(fs, dbtofsb(fs, cbp->b_blkno))) {
-			printf("block at %" PRIx64 " (%" PRId64 "), "
-			       "cbp at %" PRIx64 " (%" PRId64 ")\n",
+			printf("block at %" PRId64 " (%" PRIu32 "), "
+			       "cbp at %" PRId64 " (%" PRIu32 ")\n",
 				(*bpp)->b_blkno, dtosn(fs, dbtofsb(fs, (*bpp)->b_blkno)),
 			       cbp->b_blkno, dtosn(fs, dbtofsb(fs, cbp->b_blkno)));
 			panic("lfs_writeseg: Segment overwrite");
