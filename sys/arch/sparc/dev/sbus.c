@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.56 2003/01/01 02:20:47 thorpej Exp $ */
+/*	$NetBSD: sbus.c,v 1.57 2003/07/15 00:04:56 lukem Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -83,6 +83,9 @@
 /*
  * Sbus stuff.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.57 2003/07/15 00:04:56 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.262 2003/06/28 10:17:47 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.263 2003/07/15 00:05:08 lukem Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -54,6 +54,9 @@
 /*
  * SPARC physical map management code.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.263 2003/07/15 00:05:08 lukem Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"

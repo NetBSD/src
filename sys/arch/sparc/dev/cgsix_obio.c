@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix_obio.c,v 1.13 2002/10/02 16:02:13 thorpej Exp $ */
+/*	$NetBSD: cgsix_obio.c,v 1.14 2003/07/15 00:04:53 lukem Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -39,6 +39,9 @@
 /*
  * color display (cgsix) driver; sun4 obio bus front-end.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: cgsix_obio.c,v 1.14 2003/07/15 00:04:53 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: mkclock.c,v 1.6 2003/03/02 21:42:48 pk Exp $ */
+/*	$NetBSD: mkclock.c,v 1.7 2003/07/15 00:05:07 lukem Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -39,6 +39,10 @@
 /*
  * time-of-day clock driver for sparc machines with the MOSTEK MK48Txx.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mkclock.c,v 1.7 2003/07/15 00:05:07 lukem Exp $");
+
 #include "opt_sparc_arch.h"
 
 #include <sys/param.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: mcclock_jazzio.c,v 1.3 2002/10/02 04:59:49 thorpej Exp $	*/
+/*	$NetBSD: mcclock_jazzio.c,v 1.4 2003/07/15 00:04:49 lukem Exp $	*/
 /*	$OpenBSD: clock_mc.c,v 1.9 1998/03/16 09:38:26 pefo Exp $	*/
 /*	NetBSD: clock_mc.c,v 1.2 1995/06/28 04:30:30 cgd Exp 	*/
 
@@ -43,6 +43,9 @@
  *
  *	@(#)clock.c	8.1 (Berkeley) 6/10/93
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mcclock_jazzio.c,v 1.4 2003/07/15 00:04:49 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: jazzisabr.c,v 1.4 2003/01/19 10:06:15 tsutsui Exp $	*/
+/*	$NetBSD: jazzisabr.c,v 1.5 2003/07/15 00:04:49 lukem Exp $	*/
 /*	$OpenBSD: isabus.c,v 1.15 1998/03/16 09:38:46 pefo Exp $	*/
 /*	NetBSD: isa.c,v 1.33 1995/06/28 04:30:51 cgd Exp 	*/
 
@@ -41,6 +41,9 @@
  *
  *	@(#)isa.c	7.2 (Berkeley) 5/12/91
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: jazzisabr.c,v 1.5 2003/07/15 00:04:49 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

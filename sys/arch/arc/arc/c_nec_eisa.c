@@ -1,4 +1,4 @@
-/*	$NetBSD: c_nec_eisa.c,v 1.6 2003/05/25 14:00:12 tsutsui Exp $	*/
+/*	$NetBSD: c_nec_eisa.c,v 1.7 2003/07/15 00:04:41 lukem Exp $	*/
 
 /*-
  * Copyright (C) 2003 Izumi Tsutsui.
@@ -30,6 +30,9 @@
 /*
  * for NEC EISA generation machines.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: c_nec_eisa.c,v 1.7 2003/07/15 00:04:41 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

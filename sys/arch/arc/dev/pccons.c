@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.35 2003/04/27 17:05:57 tsutsui Exp $	*/
+/*	$NetBSD: pccons.c,v 1.36 2003/07/15 00:04:45 lukem Exp $	*/
 /*	$OpenBSD: pccons.c,v 1.22 1999/01/30 22:39:37 imp Exp $	*/
 /*	NetBSD: pccons.c,v 1.89 1995/05/04 19:35:20 cgd Exp	*/
 
@@ -47,6 +47,9 @@
 /*
  * code to work keyboard & display for PC-style console
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.36 2003/07/15 00:04:45 lukem Exp $");
 
 #include "opt_ddb.h"
 

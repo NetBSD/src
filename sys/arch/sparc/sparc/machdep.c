@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.228 2003/06/29 22:28:57 fvdl Exp $ */
+/*	$NetBSD: machdep.c,v 1.229 2003/07/15 00:05:05 lukem Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -80,6 +80,9 @@
  *
  *	@(#)machdep.c	8.6 (Berkeley) 1/14/94
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.229 2003/07/15 00:05:05 lukem Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"

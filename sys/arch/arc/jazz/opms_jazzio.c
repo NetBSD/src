@@ -1,4 +1,4 @@
-/* $NetBSD: opms_jazzio.c,v 1.3 2002/10/02 04:59:49 thorpej Exp $ */
+/* $NetBSD: opms_jazzio.c,v 1.4 2003/07/15 00:04:50 lukem Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -26,6 +26,9 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: opms_jazzio.c,v 1.4 2003/07/15 00:04:50 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: timer_sun4.c,v 1.10 2003/01/18 06:45:06 thorpej Exp $	*/
+/*	$NetBSD: timer_sun4.c,v 1.11 2003/07/15 00:05:09 lukem Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -56,6 +56,9 @@
 /*
  * Sun4/Sun4c timer support.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: timer_sun4.c,v 1.11 2003/07/15 00:05:09 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>

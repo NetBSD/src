@@ -1,4 +1,4 @@
-/*	$NetBSD: arc_trap.c,v 1.25 2003/05/25 14:00:11 tsutsui Exp $	*/
+/*	$NetBSD: arc_trap.c,v 1.26 2003/07/15 00:04:39 lukem Exp $	*/
 /*	$OpenBSD: trap.c,v 1.22 1999/05/24 23:08:59 jason Exp $	*/
 
 /*
@@ -42,6 +42,9 @@
  *
  *	@(#)trap.c	8.5 (Berkeley) 1/11/94
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: arc_trap.c,v 1.26 2003/07/15 00:04:39 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: jazzio.c,v 1.10 2003/05/03 18:10:45 wiz Exp $	*/
+/*	$NetBSD: jazzio.c,v 1.11 2003/07/15 00:04:49 lukem Exp $	*/
 /*	$OpenBSD: picabus.c,v 1.11 1999/01/11 05:11:10 millert Exp $	*/
 /*	NetBSD: tc.c,v 1.2 1995/03/08 00:39:05 cgd Exp 	*/
 
@@ -29,6 +29,9 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: jazzio.c,v 1.11 2003/07/15 00:04:49 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

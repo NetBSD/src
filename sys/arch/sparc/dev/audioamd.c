@@ -1,4 +1,4 @@
-/*	$NetBSD: audioamd.c,v 1.16 2002/12/10 13:44:49 pk Exp $	*/
+/*	$NetBSD: audioamd.c,v 1.17 2003/07/15 00:04:51 lukem Exp $	*/
 /*	NetBSD: am7930_sparc.c,v 1.44 1999/03/14 22:29:00 jonathan Exp 	*/
 
 /*
@@ -30,6 +30,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: audioamd.c,v 1.17 2003/07/15 00:04:51 lukem Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0

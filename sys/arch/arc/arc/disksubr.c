@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.16 2003/05/10 23:12:30 thorpej Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.17 2003/07/15 00:04:41 lukem Exp $	*/
 /*	$OpenBSD: disksubr.c,v 1.14 1997/05/08 00:14:29 deraadt Exp $	*/
 /*	NetBSD: disksubr.c,v 1.40 1999/05/06 15:45:51 christos Exp	*/
 
@@ -36,6 +36,9 @@
  *
  *	@(#)ufs_disksubr.c	7.16 (Berkeley) 5/4/91
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.17 2003/07/15 00:04:41 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

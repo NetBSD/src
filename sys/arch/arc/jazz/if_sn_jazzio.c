@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn_jazzio.c,v 1.4 2002/12/28 16:25:39 tsutsui Exp $	*/
+/*	$NetBSD: if_sn_jazzio.c,v 1.5 2003/07/15 00:04:49 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -40,6 +40,9 @@
  * Microsoft JAZZ front-end for for the National Semiconductor DP83932
  * Systems-Oriented Network Interface Controller (SONIC).
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_sn_jazzio.c,v 1.5 2003/07/15 00:04:49 lukem Exp $");
 
 #include "bpfilter.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_subr.c,v 1.3 1996/03/14 19:42:01 christos Exp $ */
+/*	$NetBSD: fpu_subr.c,v 1.4 2003/07/15 00:05:00 lukem Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -47,6 +47,9 @@
 /*
  * FPU subroutines.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: fpu_subr.c,v 1.4 2003/07/15 00:05:00 lukem Exp $");
 
 #include <sys/types.h>
 #ifdef DIAGNOSTIC

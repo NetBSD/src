@@ -1,4 +1,4 @@
-/*	$NetBSD: opms.c,v 1.8 2003/01/19 10:06:13 tsutsui Exp $	*/
+/*	$NetBSD: opms.c,v 1.9 2003/07/15 00:04:45 lukem Exp $	*/
 /*	$OpenBSD: pccons.c,v 1.22 1999/01/30 22:39:37 imp Exp $	*/
 /*	NetBSD: pms.c,v 1.21 1995/04/18 02:25:18 mycroft Exp	*/
 
@@ -43,6 +43,9 @@
  *
  *	@(#)pccons.c	5.11 (Berkeley) 5/21/91
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: opms.c,v 1.9 2003/07/15 00:04:45 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

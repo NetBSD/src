@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_compare.c,v 1.3 2001/08/26 05:46:31 eeh Exp $ */
+/*	$NetBSD: fpu_compare.c,v 1.4 2003/07/15 00:04:59 lukem Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -50,6 +50,9 @@
  * These rely on the fact that our internal wide format is achieved by
  * adding zero bits to the end of narrower mantissas.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: fpu_compare.c,v 1.4 2003/07/15 00:04:59 lukem Exp $");
 
 #include <sys/types.h>
 

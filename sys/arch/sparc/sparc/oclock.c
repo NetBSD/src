@@ -1,4 +1,4 @@
-/*	$NetBSD: oclock.c,v 1.7 2003/02/26 17:39:07 pk Exp $ */
+/*	$NetBSD: oclock.c,v 1.8 2003/07/15 00:05:07 lukem Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -42,6 +42,10 @@
  *
  * Only 4/100's and 4/200's have this old clock device.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: oclock.c,v 1.8 2003/07/15 00:05:07 lukem Exp $");
+
 #include "opt_sparc_arch.h"
 
 #include <sys/param.h>

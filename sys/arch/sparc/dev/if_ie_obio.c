@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_obio.c,v 1.29 2003/04/02 04:35:27 thorpej Exp $	*/
+/*	$NetBSD: if_ie_obio.c,v 1.30 2003/07/15 00:04:55 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -83,6 +83,9 @@
  * written so that different "ie" interfaces can be controled by the same
  * driver.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_ie_obio.c,v 1.30 2003/07/15 00:04:55 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.11 2002/10/02 04:59:47 thorpej Exp $	*/
+/*	$NetBSD: cpu.c,v 1.12 2003/07/15 00:04:41 lukem Exp $	*/
 /*	$OpenBSD: cpu.c,v 1.8 1997/04/19 17:19:41 pefo Exp $ */
 
 /*
@@ -32,6 +32,9 @@
  * SUCH DAMAGE.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.12 2003/07/15 00:04:41 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

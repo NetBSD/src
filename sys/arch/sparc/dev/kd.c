@@ -1,4 +1,4 @@
-/*	$NetBSD: kd.c,v 1.25 2003/06/29 22:28:56 fvdl Exp $	*/
+/*	$NetBSD: kd.c,v 1.26 2003/07/15 00:04:55 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -44,6 +44,9 @@
  * allows another device to serve console input. This will normally
  * be a keyboard driver (see sys/dev/sun/kbd.c)
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: kd.c,v 1.26 2003/07/15 00:04:55 lukem Exp $");
 
 #include "opt_kgdb.h"
 #include "fb.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: cgtwo.c,v 1.45 2003/06/29 22:28:55 fvdl Exp $ */
+/*	$NetBSD: cgtwo.c,v 1.46 2003/07/15 00:04:53 lukem Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -51,6 +51,9 @@
  *
  * XXX should defer colormap updates to vertical retrace interrupts
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: cgtwo.c,v 1.46 2003/07/15 00:04:53 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_machdep.c,v 1.12 2003/04/02 04:35:25 thorpej Exp $ */
+/*	$NetBSD: kgdb_machdep.c,v 1.13 2003/07/15 00:05:05 lukem Exp $ */
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -86,6 +86,9 @@
 /*
  * Machine dependent routines needed by kern/kgdb_stub.c
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.13 2003/07/15 00:05:05 lukem Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_multiprocessor.h"

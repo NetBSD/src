@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.63 2003/05/03 18:11:00 wiz Exp $	*/
+/*	$NetBSD: obio.c,v 1.64 2003/07/15 00:04:55 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997,1998 The NetBSD Foundation, Inc.
@@ -36,6 +36,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.64 2003/07/15 00:04:55 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

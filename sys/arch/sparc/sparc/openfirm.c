@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.c,v 1.6 2001/12/11 03:35:02 uwe Exp $	*/
+/*	$NetBSD: openfirm.c,v 1.7 2003/07/15 00:05:07 lukem Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -30,6 +30,10 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: openfirm.c,v 1.7 2003/07/15 00:05:07 lukem Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <machine/psl.h>

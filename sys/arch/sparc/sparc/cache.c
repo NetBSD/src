@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.79 2003/06/23 13:34:28 pk Exp $ */
+/*	$NetBSD: cache.c,v 1.80 2003/07/15 00:05:01 lukem Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -57,6 +57,9 @@
  * TODO:
  *	- rework range flush
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.80 2003/07/15 00:05:01 lukem Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_sparc_arch.h"

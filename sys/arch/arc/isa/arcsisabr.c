@@ -1,4 +1,4 @@
-/*	$NetBSD: arcsisabr.c,v 1.3 2002/10/02 04:59:48 thorpej Exp $	*/
+/*	$NetBSD: arcsisabr.c,v 1.4 2003/07/15 00:04:46 lukem Exp $	*/
 /*	$OpenBSD: isabus.c,v 1.15 1998/03/16 09:38:46 pefo Exp $	*/
 /*	NetBSD: isa.c,v 1.33 1995/06/28 04:30:51 cgd Exp 	*/
 
@@ -41,6 +41,9 @@
  *
  *	@(#)isa.c	7.2 (Berkeley) 5/12/91
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: arcsisabr.c,v 1.4 2003/07/15 00:04:46 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: bwtwo_obio.c,v 1.9 2002/10/02 16:02:13 thorpej Exp $ */
+/*	$NetBSD: bwtwo_obio.c,v 1.10 2003/07/15 00:04:51 lukem Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -88,6 +88,9 @@
  * P4 and overlay plane support by Jason R. Thorpe <thorpej@NetBSD.ORG>.
  * Overlay plane handling hints and ideas provided by Brad Spencer.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: bwtwo_obio.c,v 1.10 2003/07/15 00:04:51 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

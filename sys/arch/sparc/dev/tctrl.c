@@ -1,4 +1,4 @@
-/*	$NetBSD: tctrl.c,v 1.24 2003/06/29 22:28:56 fvdl Exp $	*/
+/*	$NetBSD: tctrl.c,v 1.25 2003/07/15 00:04:57 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: tctrl.c,v 1.25 2003/07/15 00:04:57 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

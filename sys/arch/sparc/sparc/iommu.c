@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.75 2003/04/02 04:35:24 thorpej Exp $ */
+/*	$NetBSD: iommu.c,v 1.76 2003/07/15 00:05:05 lukem Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -35,6 +35,10 @@
  * SUCH DAMAGE.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.76 2003/07/15 00:05:05 lukem Exp $");
+
 #include "opt_sparc_arch.h"
 
 #include <sys/param.h>

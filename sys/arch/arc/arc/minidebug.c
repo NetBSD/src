@@ -1,4 +1,4 @@
-/*	$NetBSD: minidebug.c,v 1.13 2003/04/27 17:05:56 tsutsui Exp $	*/
+/*	$NetBSD: minidebug.c,v 1.14 2003/07/15 00:04:42 lukem Exp $	*/
 /*	$OpenBSD: minidebug.c,v 1.2 1998/03/16 09:03:36 pefo Exp $	*/
 
 /*-
@@ -42,6 +42,9 @@
 /*
  * Define machine dependent primitives for mdb.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: minidebug.c,v 1.14 2003/07/15 00:04:42 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

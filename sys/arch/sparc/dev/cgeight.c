@@ -1,4 +1,4 @@
-/*	$NetBSD: cgeight.c,v 1.34 2003/06/29 22:28:53 fvdl Exp $	*/
+/*	$NetBSD: cgeight.c,v 1.35 2003/07/15 00:04:52 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -88,6 +88,9 @@
  *
  * XXX should defer colormap updates to vertical retrace interrupts
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: cgeight.c,v 1.35 2003/07/15 00:04:52 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

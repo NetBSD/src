@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_machdep.c,v 1.45 2003/01/18 06:44:59 thorpej Exp $	*/
+/*	$NetBSD: vme_machdep.c,v 1.46 2003/07/15 00:04:57 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: vme_machdep.c,v 1.46 2003/07/15 00:04:57 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/extent.h>

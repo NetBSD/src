@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space_large.c,v 1.2 2000/06/29 08:34:09 mrg Exp $	*/
+/*	$NetBSD: bus_space_large.c,v 1.3 2003/07/15 00:04:40 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -53,6 +53,9 @@
  *	In this case, the size of wired TLBs becomes always
  *	ARC_WIRED_PAGE_SIZE (i.e. 16MB). (See wired_map.c for detail.)
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: bus_space_large.c,v 1.3 2003/07/15 00:04:40 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
