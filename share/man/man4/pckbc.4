@@ -1,4 +1,4 @@
-.\" $NetBSD: pckbc.4,v 1.1 1999/04/21 18:42:03 drochner Exp $
+.\" $NetBSD: pckbc.4,v 1.2 2000/06/16 06:42:31 augustss Exp $
 .Dd April 21, 1999
 .Os
 .Dt PCKBC 4
@@ -6,11 +6,12 @@
 .Nm pckbc
 .Nd PC (ISA) keyboard controller driver
 .Sh SYNOPSIS
-.Cd pckbc* at isa?
-.Cd pckbd* at pckbc? slot ?
-.Cd pms* at pckbc? slot ?
-.Cd pmsi* at pckbc? slot ?
-.Cd opms* at pckbc? slot ?
+.Cd "pckbc* at isa?"
+.Cd "pckbc* at pnpbios? index ?"
+.Cd "pckbd* at pckbc? slot ?"
+.Cd "pms*   at pckbc? slot ?"
+.Cd "pmsi*  at pckbc? slot ?"
+.Cd "opms*  at pckbc? slot ?"
 .Sh DESCRIPTION
 The
 .Nm
@@ -32,4 +33,5 @@ useful in normal operation.
 .Xr pckbd 4 ,
 .Xr pms 4 ,
 .Xr pmsi 4 ,
+.Xr pnpbios 4 ,
 .Xr opms 4 .
