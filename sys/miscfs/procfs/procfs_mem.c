@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_mem.c,v 1.6 1994/06/29 06:34:50 cgd Exp $	*/
+/*	$NetBSD: procfs_mem.c,v 1.7 1995/01/05 07:10:54 chopps Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -158,9 +158,11 @@ procfs_rwmem(p, uio)
 		}
 
 		/* Find space in kernel_map for the page we're interested in */
-		if (!error)
+		if (!error) {
+			kva = VM_MIN_KERNEL_ADDRESS;
 			error = vm_map_find(kernel_map, object, off, &kva,
 					PAGE_SIZE, 1);
+		}
 
 		if (!error) {
 			/*
