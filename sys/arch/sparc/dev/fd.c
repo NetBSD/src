@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.58 1998/03/21 20:14:13 pk Exp $	*/
+/*	$NetBSD: fd.c,v 1.59 1998/03/25 23:15:07 pk Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -402,7 +402,23 @@ fdcattach_mainbus(parent, self, aux)
 
 	fdc->sc_bustag = ma->ma_bustag;
 
-	fdc->sc_reg = (caddr_t)ma->ma_promvaddr;
+	if (ma->ma_promvaddr != 0)
+		fdc->sc_reg = (caddr_t)ma->ma_promvaddr;
+	else {
+		bus_space_handle_t bh;
+		if (sparc_bus_map(
+				ma->ma_bustag,
+				ma->ma_iospace,
+				(bus_addr_t)ma->ma_paddr,
+				ma->ma_size,
+				BUS_SPACE_MAP_LINEAR,
+				0,
+				&bh) != 0) {
+			printf("%s: cannot map registers\n", self->dv_xname);
+			return;
+		}
+		fdc->sc_reg = (caddr_t)bh;
+	}
 
 	bp = NULL;
 	if (ma->ma_bp != NULL && strcmp(ma->ma_bp->name, OBP_FDNAME) == 0) {
