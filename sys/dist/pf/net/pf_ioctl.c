@@ -1,4 +1,4 @@
-/*	$NetBSD: pf_ioctl.c,v 1.15 2005/02/14 21:28:33 peter Exp $	*/
+/*	$NetBSD: pf_ioctl.c,v 1.16 2005/03/15 18:08:59 peter Exp $	*/
 /*	$OpenBSD: pf_ioctl.c,v 1.130.2.1 2004/12/19 19:01:50 brad Exp $ */
 
 /*
@@ -452,7 +452,7 @@ struct pf_ruleset *
 pf_find_or_create_ruleset(const char *path)
 {
 	static char		 p[MAXPATHLEN];
-	char			*q, *r;
+	char			*q = NULL /* XXX gcc */, *r;
 	struct pf_ruleset	*ruleset;
 	struct pf_anchor	*anchor = NULL /* XXX gcc */,
 				*dup, *parent = NULL;
