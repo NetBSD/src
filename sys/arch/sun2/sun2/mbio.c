@@ -1,4 +1,4 @@
-/*	$NetBSD: mbio.c,v 1.6 2001/11/30 18:11:56 fredette Exp $	*/
+/*	$NetBSD: mbio.c,v 1.7 2001/12/15 22:13:11 fredette Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -133,6 +133,7 @@ mbio_attach(parent, self, aux)
 	 */
 	mba = *ma;
 	mba.mba_bustag = &mbio_space_tag;
+	mba.mba_paddr = LOCATOR_REQUIRED;
 	mba.mba_pri = LOCATOR_OPTIONAL;
 
 	/* Find all `early' mbio devices */
