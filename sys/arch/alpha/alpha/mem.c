@@ -1,4 +1,4 @@
-/* $NetBSD: mem.c,v 1.20 1998/02/24 07:38:02 thorpej Exp $ */
+/* $NetBSD: mem.c,v 1.21 1998/03/09 20:43:28 thorpej Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -48,7 +48,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.20 1998/02/24 07:38:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.21 1998/03/09 20:43:28 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -182,19 +182,11 @@ kmemphys:
 			/*
 			 * On the first call, allocate and zero a page
 			 * of memory for use with /dev/zero.
-			 *
-			 * XXX on the alpha we already know where there
-			 * is a global zeroed page, the null segment table.
 			 */
 			if (zeropage == NULL) {
-#if (CLBYTES == NBPG) && !defined(NEW_PMAP)
-				extern caddr_t Segtabzero;
-				zeropage = Segtabzero;
-#else
 				zeropage = (caddr_t)
 				    malloc(CLBYTES, M_TEMP, M_WAITOK);
 				bzero(zeropage, CLBYTES);
-#endif
 			}
 			c = min(iov->iov_len, CLBYTES);
 			error = uiomove(zeropage, c, uio);
