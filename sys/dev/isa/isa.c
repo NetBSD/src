@@ -1,4 +1,4 @@
-/*	$NetBSD: isa.c,v 1.72 1995/04/17 12:09:09 cgd Exp $	*/
+/*	$NetBSD: isa.c,v 1.73 1995/05/17 02:07:03 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.  All rights reserved.
@@ -43,7 +43,7 @@ int isamatch __P((struct device *, void *, void *));
 void isaattach __P((struct device *, struct device *, void *));
 
 struct cfdriver isacd = {
-	NULL, "isa", isamatch, isaattach, DV_DULL, sizeof(struct device), 1
+	NULL, "isa", isamatch, isaattach, DV_DULL, sizeof(struct isa_softc), 1
 };
 
 int
