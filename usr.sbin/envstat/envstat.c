@@ -1,4 +1,4 @@
-/*	$NetBSD: envstat.c,v 1.11 2003/01/11 23:44:47 christos Exp $ */
+/*	$NetBSD: envstat.c,v 1.12 2003/02/20 20:57:08 christos Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: envstat.c,v 1.11 2003/01/11 23:44:47 christos Exp $");
+__RCSID("$NetBSD: envstat.c,v 1.12 2003/02/20 20:57:08 christos Exp $");
 #endif
 
 #include <fcntl.h>
@@ -49,32 +49,29 @@ __RCSID("$NetBSD: envstat.c,v 1.11 2003/01/11 23:44:47 christos Exp $");
 #include <err.h>
 #include <paths.h>
 
+#define ENVSYSUNITNAMES
 #include <sys/envsys.h>
 #include <sys/ioctl.h>
 
-const char E_CANTENUM[] = "cannot enumerate sensors";
-
 int main(int, char **);
-void listsensors(envsys_basic_info_t *, int);
-int numsensors(int);
-int fillsensors(int, envsys_tre_data_t *, envsys_basic_info_t *, int);
-int longestname(envsys_basic_info_t *, int);
-int marksensors(envsys_basic_info_t *, int *, char *, int);
-int strtosnum(envsys_basic_info_t *, const char *, int);
-void header(unsigned, int, envsys_basic_info_t *, const int * const, int);
-void values(unsigned, int, envsys_tre_data_t *, const int * const, int);
+void listsensors(envsys_basic_info_t *, size_t);
+size_t numsensors(int);
+void fillsensors(int, envsys_tre_data_t *, envsys_basic_info_t *, size_t);
+size_t longestname(envsys_basic_info_t *, size_t);
+int marksensors(envsys_basic_info_t *, int *, char *, size_t);
+int strtosnum(envsys_basic_info_t *, const char *, size_t);
+void header(size_t, int, envsys_basic_info_t *, const int * const, size_t);
+void values(size_t, int, envsys_tre_data_t *, const int * const, size_t);
 void usage(void);
 
 int rflag = 0;
 
-static const char *unit_str[] = {"degC", "RPM", "VAC", "V", "Ohms", "W",
-				 "A", "Wh", "Ah", "bool", "Unk"};
-
 int
 main(int argc, char **argv)
 {
-	int c, fd, ns, ls, celsius;
-	unsigned int interval, width, headrep, headcnt;
+	int c, fd, ls, celsius;
+	size_t ns;
+	size_t interval, width, headrep, headcnt;
 	envsys_tre_data_t *etds;
 	envsys_basic_info_t *ebis;
 	int *cetds;
@@ -134,18 +131,17 @@ main(int argc, char **argv)
 	 * Determine number of sensors, allocate and fill arrays with
 	 * initial information.  Determine column width
 	 */
-	if ((ns = numsensors(fd)) <= 0)
-		errx(1, E_CANTENUM);
+	if ((ns = numsensors(fd)) == 0)
+		errx(1, "No sensors found");
 
 	cetds = (int *)malloc(ns * sizeof(int));
 	etds = (envsys_tre_data_t *)malloc(ns * sizeof(envsys_tre_data_t));
 	ebis = (envsys_basic_info_t *)malloc(ns * sizeof(envsys_basic_info_t));
 
 	if ((cetds == NULL) || (etds == NULL) || (ebis == NULL))
-		errx(1, "cannot allocate memory");
+		err(1, "Out of memory");
 
-	if (fillsensors(fd, etds, ebis, ns) == -1)
-		errx(1, E_CANTENUM);
+	fillsensors(fd, etds, ebis, ns);
 
 	if (ls) {
 		listsensors(ebis, ns);
@@ -215,7 +211,7 @@ main(int argc, char **argv)
 				default:
 					printf(" %10.3f %s",
 					    etds[i].cur.data_s / 1000000.0,
-					    unit_str[ebis[i].units]);
+					    envsysunitnames[ebis[i].units]);
 					break;
 			}
 			if (etds[i].validflags & ENVSYS_FFRACVALID) {
@@ -253,8 +249,7 @@ main(int argc, char **argv)
 
 		sleep(interval);
 
-		if (fillsensors(fd, etds, ebis, ns) == -1)
-			errx(1, E_CANTENUM);
+		fillsensors(fd, etds, ebis, ns);
 	}
 
 	/* NOTREACHED */
@@ -267,8 +262,8 @@ main(int argc, char **argv)
  * post: a column header line is displayed on stdout
  */
 void
-header(unsigned width, int celsius, envsys_basic_info_t *ebis,
-       const int * const cetds, int ns)
+header(size_t width, int celsius, envsys_basic_info_t *ebis,
+       const int * const cetds, size_t ns)
 {
 	int i;
 	const char *s;
@@ -287,9 +282,9 @@ header(unsigned width, int celsius, envsys_basic_info_t *ebis,
 			    !celsius)
 				s = "degF";
 			else if (ebis[i].units >= ENVSYS_NSENSORS)
-				s = unit_str[ENVSYS_NSENSORS];
+				s = envsysunitnames[ENVSYS_NSENSORS];
 			else
-				s = unit_str[ebis[i].units];
+				s = envsysunitnames[ebis[i].units];
 
 			printf(" %*.*s", (int)width, (int)width, s);
 		}
@@ -297,8 +292,8 @@ header(unsigned width, int celsius, envsys_basic_info_t *ebis,
 }
 
 void
-values(unsigned width, int celsius, envsys_tre_data_t *etds,
-       const int * const cetds, int ns)
+values(size_t width, int celsius, envsys_tre_data_t *etds,
+       const int * const cetds, size_t ns)
 {
 	int i;
 	double temp;
@@ -344,9 +339,10 @@ void
 usage(void)
 {
 
-	fprintf(stderr, "Usage: %s [-cr] [-s s1,s2,...]", getprogname());
-	fprintf(stderr, " [-i interval] [-n headrep] [-w width] [device]\n");
-	fprintf(stderr, "       envstat -l [device]\n");
+	(void)fprintf(stderr, "Usage: %s [-cr] [-s s1,s2,...]", getprogname());
+	(void)fprintf(stderr, " [-i interval] [-n headrep] [-w width]");
+	(void)fprintf(stderr, " [device]\n");
+	(void)fprintf(stderr, "       %s -l [device]\n", getprogname());
 	exit(1);
 }
 
@@ -355,7 +351,7 @@ usage(void)
  * post: a list of sensor names supported by the device is displayed on stdout
  */
 void
-listsensors(envsys_basic_info_t *ebis, int ns)
+listsensors(envsys_basic_info_t *ebis, size_t ns)
 {
 	int i;
 
@@ -370,7 +366,7 @@ listsensors(envsys_basic_info_t *ebis, int ns)
  * post: returns the number of valid sensors provided by the device
  *       or -1 on error
  */
-int
+size_t
 numsensors(int fd)
 {
 	int count = 0, valid = 1;
@@ -378,10 +374,8 @@ numsensors(int fd)
 	etd.sensor = 0;
 
 	while (valid) {
-		if (ioctl(fd, ENVSYS_GTREDATA, &etd) == -1) {
-			fprintf(stderr, E_CANTENUM);
-			exit(1);
-		}
+		if (ioctl(fd, ENVSYS_GTREDATA, &etd) == -1)
+			err(1, "Can't get sensor data");
 
 		valid = etd.validflags & ENVSYS_FVALID;
 		if (valid)
@@ -400,32 +394,31 @@ numsensors(int fd)
  * post: returns 0 and etds and ebis arrays are filled with sensor info
  *       or returns -1 on failure
  */
-int
-fillsensors(int fd, envsys_tre_data_t *etds, envsys_basic_info_t *ebis, int ns)
+void
+fillsensors(int fd, envsys_tre_data_t *etds, envsys_basic_info_t *ebis,
+    size_t ns)
 {
 	int i;
 
 	for (i = 0; i < ns; ++i) {
 		ebis[i].sensor = i;
 		if (ioctl(fd, ENVSYS_GTREINFO, &ebis[i]) == -1)
-			return -1;
+			err(1, "Can't get sensor info for sensor %d", i);
 
 		etds[i].sensor = i;
 		if (ioctl(fd, ENVSYS_GTREDATA, &etds[i]) == -1)
-			return -1;
+			err(1, "Can't get sensor data for sensor %d", i);
 	}
-
-	return 0;
 }
 
 
 /*
  * post: returns the strlen() of the longest sensor name
  */
-int
-longestname(envsys_basic_info_t *ebis, int ns)
+size_t
+longestname(envsys_basic_info_t *ebis, size_t ns)
 {
-	int i, maxlen, cur;
+	size_t i, maxlen, cur;
 
 	maxlen = 0;
 
@@ -443,9 +436,9 @@ longestname(envsys_basic_info_t *ebis, int ns)
  *       or returns -1
  */
 int
-marksensors(envsys_basic_info_t *ebis, int *cetds, char *sensors, int ns)
+marksensors(envsys_basic_info_t *ebis, int *cetds, char *sensors, size_t ns)
 {
-	int i;
+	size_t i;
 	char *s;
 
 	if (sensors == NULL) {
@@ -461,10 +454,11 @@ marksensors(envsys_basic_info_t *ebis, int *cetds, char *sensors, int ns)
 
 	s = strtok(sensors, ",");
 	while (s != NULL) {
-		if ((i = strtosnum(ebis, s, ns)) != -1)
-			cetds[i] = 1;
+		int snum;
+		if ((snum = strtosnum(ebis, s, ns)) != -1)
+			cetds[snum] = 1;
 		else {
-			fprintf(stderr, "envstat: unknown sensor %s\n", s);
+			warnx("Unknown sensor %s", s);
 			return (-1);
 		}
 
@@ -476,7 +470,7 @@ marksensors(envsys_basic_info_t *ebis, int *cetds, char *sensors, int ns)
 		if (cetds[i] == 1)
 			return (0);
 
-	fprintf(stderr, "envstat: no sensors selected for display\n");
+	warnx("No sensors selected for display");
 	return (-1);
 }
 
@@ -486,9 +480,9 @@ marksensors(envsys_basic_info_t *ebis, int *cetds, char *sensors, int ns)
  *       or the sensor number of a sensor which has that name
  */
 int
-strtosnum(envsys_basic_info_t *ebis, const char *s, int ns)
+strtosnum(envsys_basic_info_t *ebis, const char *s, size_t ns)
 {
-	int i;
+	size_t i;
 
 	for (i = 0; i < ns; ++i) {
 		if((ebis[i].validflags & ENVSYS_FVALID) &&
