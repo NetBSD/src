@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_vm.c,v 1.10 2002/11/17 18:39:48 manu Exp $ */
+/*	$NetBSD: mach_vm.c,v 1.11 2002/11/24 11:49:36 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_vm.c,v 1.10 2002/11/17 18:39:48 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_vm.c,v 1.11 2002/11/24 11:49:36 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -133,8 +133,18 @@ mach_vm_allocate(p, msgh)
 	SCARG(&cup, fd) = -1;
 	SCARG(&cup, pos) = 0;
 
-	if ((error = sys_mmap(p, &cup, &rep.rep_address)) != 0)
-		return MACH_MSG_ERROR(msgh, &req, &rep, error);
+	if ((error = sys_mmap(p, &cup, &rep.rep_address)) != 0) {
+		DPRINTF(("vm_allocate: failed, error = %d, retry.\n", error));
+		if ((uvm_map_findspace(&p->p_vmspace->vm_map,
+		    (u_long)NULL, req.req_size,
+		    (void *)&SCARG(&cup, addr), NULL, 0, PAGE_SIZE, 
+		    0)) != NULL) {
+			error = sys_mmap(p, &cup, &rep.rep_address);
+		}
+		if (error != 0)
+			return MACH_MSG_ERROR(msgh, &req, &rep, error);
+	}
+	DPRINTF(("vm_allocate: success at %p\n", (void *)rep.rep_address));
 
 	rep.rep_msgh.msgh_bits =
 	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
