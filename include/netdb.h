@@ -1,4 +1,4 @@
-/*	$NetBSD: netdb.h,v 1.10 1998/02/03 04:20:36 perry Exp $	*/
+/*	$NetBSD: netdb.h,v 1.11 1998/05/10 17:32:39 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1983, 1988, 1993
@@ -59,14 +59,17 @@
 #ifndef _NETDB_H_
 #define _NETDB_H_
 
-#include <sys/param.h>
 #include <sys/cdefs.h>
 
+#include <inttypes.h>
+
+#if !defined(_XOPEN_SOURCE)
 #define	_PATH_HEQUIV	"/etc/hosts.equiv"
 #define	_PATH_HOSTS	"/etc/hosts"
 #define	_PATH_NETWORKS	"/etc/networks"
 #define	_PATH_PROTOCOLS	"/etc/protocols"
 #define	_PATH_SERVICES	"/etc/services"
+#endif
 
 extern int h_errno;
 
@@ -92,7 +95,7 @@ struct	netent {
 	char		*n_name;	/* official name of net */
 	char		**n_aliases;	/* alias list */
 	int		n_addrtype;	/* net address type */
-	unsigned long	n_net;		/* network # */
+	unsigned long	n_net;		/* network # XXX */
 };
 
 struct	servent {
@@ -113,13 +116,17 @@ struct	protoent {
  * (left in extern int h_errno).
  */
 
+#if !defined(_XOPEN_SOURCE)
 #define	NETDB_INTERNAL	-1	/* see errno */
 #define	NETDB_SUCCESS	0	/* no problem */
+#endif
 #define	HOST_NOT_FOUND	1 /* Authoritative Answer Host not found */
 #define	TRY_AGAIN	2 /* Non-Authoritive Host not found, or SERVERFAIL */
 #define	NO_RECOVERY	3 /* Non recoverable errors, FORMERR, REFUSED, NOTIMP */
 #define	NO_DATA		4 /* Valid name, no data record of requested type */
+#if !defined(_XOPEN_SOURCE)
 #define	NO_ADDRESS	NO_DATA		/* no address, look for MX record */
+#endif
 
 __BEGIN_DECLS
 void		endhostent __P((void));
@@ -128,7 +135,9 @@ void		endprotoent __P((void));
 void		endservent __P((void));
 struct hostent	*gethostbyaddr __P((const char *, int, int));
 struct hostent	*gethostbyname __P((const char *));
+#if !defined(_XOPEN_SOURCE)
 struct hostent	*gethostbyname2 __P((const char *, int));
+#endif
 struct hostent	*gethostent __P((void));
 struct netent	*getnetbyaddr __P((unsigned long, int));
 struct netent	*getnetbyname __P((const char *));
@@ -139,10 +148,14 @@ struct protoent	*getprotoent __P((void));
 struct servent	*getservbyname __P((const char *, const char *));
 struct servent	*getservbyport __P((int, const char *));
 struct servent	*getservent __P((void));
+#if !defined(_XOPEN_SOURCE)
 void		herror __P((const char *));
 const char	*hstrerror __P((int));
+#endif
 void		sethostent __P((int));
+#if !defined(_XOPEN_SOURCE)
 /* void		sethostfile __P((const char *)); */
+#endif
 void		setnetent __P((int));
 void		setprotoent __P((int));
 void		setservent __P((int));
