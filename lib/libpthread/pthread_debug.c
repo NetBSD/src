@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_debug.c,v 1.1.2.7 2002/01/28 18:38:56 nathanw Exp $	*/
+/*	$NetBSD: pthread_debug.c,v 1.1.2.8 2002/02/06 19:20:20 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -53,19 +53,38 @@
 
 #ifdef PTHREAD__DEBUG
 
+int pthread__debug_counters[PTHREADD_NCOUNTERS];
 static struct pthread_msgbuf* debugbuf;
+
+static void pthread__debug_printcounters(void);
 
 void pthread__debug_init(void)
 {
 	time_t t;
 
-	if (getenv("PTHREAD_DEBUGLOG") == NULL)
+	if (getenv("PTHREAD_DEBUGCOUNTERS") != NULL)
+		atexit(pthread__debug_printcounters);
+
+	if (getenv("PTHREAD_DEBUGLOG") != NULL) {
+		t = time(NULL);
+		debugbuf = pthread__debuglog_init(0);
+		DPRINTF(("Started debugging %s (pid %d) at %s\n", 
+		    getprogname(), getpid(), ctime(&t)));
+	}
+}
+
+static void
+pthread__debug_printcounters(void)
+{
+	int i;
+
+	if (getenv("PTHREAD_DEBUGCOUNTERS") == NULL)
 		return;
 
-	t = time(NULL);
-	debugbuf = pthread__debuglog_init(0);
-	DPRINTF(("Started debugging %s (pid %d) at %s\n", getprogname(), 
-	    getpid(), ctime(&t)));
+	printf("Pthread event counters:\n");
+	for (i = 0; i < PTHREADD_NCOUNTERS; i++)
+		printf("Counter %2d: %9d\n", i, pthread__debug_counters[i]);
+	printf("\n");
 }
 
 struct pthread_msgbuf *

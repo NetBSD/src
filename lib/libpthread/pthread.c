@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.1.2.14 2002/01/28 19:05:48 nathanw Exp $	*/
+/*	$NetBSD: pthread.c,v 1.1.2.15 2002/02/06 19:20:19 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -69,12 +69,6 @@ extern pthread_spin_t runqueue_lock;
 
 static int started;
 
-#ifdef PTHREAD__DEBUG
-
-int pthread__debug_counters[PTHREADD_NCOUNTERS];
-
-#endif /* PTHREAD_DEBUG */
-
 /* This needs to be started by the library loading code, before main() 
  * gets to run, for various things that use the state of the initial thread
  * to work properly (thread-specific data is an application-visible example; 
@@ -87,10 +81,10 @@ void pthread_init(void)
 	extern int __isthreaded;
 	extern timer_t pthread_alarmtimer;
 	struct sigevent ev;
+
 #ifdef PTHREAD__DEBUG
 	pthread__debug_init();
 #endif
-
 	/* Basic data structure setup */
 	pthread_attr_init(&pthread_default_attr);
 	PTQ_INIT(&allqueue);
