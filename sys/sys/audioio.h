@@ -1,4 +1,4 @@
-/*	$NetBSD: audioio.h,v 1.8 1997/05/07 18:51:51 augustss Exp $	*/
+/*	$NetBSD: audioio.h,v 1.9 1997/05/07 19:24:37 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -64,9 +64,9 @@ typedef struct audio_prinfo audio_prinfo_t;
 struct audio_info {
 	struct	audio_prinfo play;	/* Info for play (output) side */
 	struct	audio_prinfo record;	/* Info for record (input) side */
-	u_int	__spare;
+	u_int	buffersize;		/* total size audio buffer */
 	/* BSD extensions */
-	u_int	blocksize;	/* input blocking threshold */
+	u_int	blocksize;	/* H/W read/write block size */
 	u_int	hiwat;		/* output high water mark */
 	u_int	lowat;		/* output low water mark */
 	u_int	backlog;	/* samples of output backlog to gen. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.43 1997/05/07 18:51:39 augustss Exp $	*/
+/*	$NetBSD: audio.c,v 1.44 1997/05/07 19:24:34 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -1801,6 +1801,7 @@ audiogetinfo(sc, ai)
 	p->seek = sc->sc_wseek;
 	r->seek = sc->sc_rseek;
 
+	ai->buffersize = AU_RING_SIZE;
 	ai->blocksize = sc->sc_blksize;
 	ai->hiwat = sc->sc_hiwat;
 	ai->lowat = sc->sc_lowat;
