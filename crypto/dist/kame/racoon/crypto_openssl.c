@@ -1,4 +1,4 @@
-/*	$KAME: crypto_openssl.c,v 1.79 2003/07/12 08:44:44 itojun Exp $	*/
+/*	$KAME: crypto_openssl.c,v 1.80 2003/07/29 04:29:24 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: crypto_openssl.c,v 1.9 2003/07/24 14:16:57 itojun Exp $");
+__RCSID("$NetBSD: crypto_openssl.c,v 1.10 2003/07/29 04:30:54 itojun Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1147,7 +1147,7 @@ eay_bf_keylen(len)
 		return 448;
 	if (len < 40 || len > 448)
 		return -1;
-	return (len + 7) / 8;
+	return len;
 }
 
 #ifdef HAVE_OPENSSL_RC5_H
@@ -1212,7 +1212,7 @@ eay_rc5_keylen(len)
 		return 128;
 	if (len < 40 || len > 2040)
 		return -1;
-	return (len + 7) / 8;
+	return len;
 }
 #endif
 
@@ -1354,7 +1354,7 @@ eay_cast_keylen(len)
 		return 128;
 	if (len < 40 || len > 128)
 		return -1;
-	return (len + 7) / 8;
+	return len;
 }
 
 /*
