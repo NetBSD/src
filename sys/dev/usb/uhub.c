@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.70 2004/10/23 16:17:56 augustss Exp $	*/
+/*	$NetBSD: uhub.c,v 1.71 2004/10/26 05:00:59 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.70 2004/10/23 16:17:56 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.71 2004/10/26 05:00:59 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -588,9 +588,9 @@ USB_DETACH(uhub)
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_hub,
 			   USBDEV(sc->sc_dev));
 
-	free(hub, M_USBDEV);
 	if (hub->ports[0].tt)
 		free(hub->ports[0].tt, M_USBDEV);
+	free(hub, M_USBDEV);
 	sc->sc_hub->hub = NULL;
 
 	return (0);
