@@ -33,7 +33,7 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-#	$Id: Makefile,v 1.1 1993/06/08 03:53:41 cgd Exp $
+#	$NetBSD: Makefile,v 1.2 1997/10/13 11:20:49 lukem Exp $
 #
 
 PROG=	testsyscall

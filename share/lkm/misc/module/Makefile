@@ -33,7 +33,7 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-#	$Id: Makefile,v 1.4 1995/04/27 19:15:11 jtc Exp $
+#	$NetBSD: Makefile,v 1.5 1997/10/13 11:20:16 lukem Exp $
 #
 
 SRCS=miscmod.c

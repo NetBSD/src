@@ -36,7 +36,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: testmisc.c,v 1.1 1993/06/08 03:53:30 cgd Exp $
+ *	$NetBSD: testmisc.c,v 1.2 1997/10/13 11:20:30 lukem Exp $
  */
 #include <stdio.h>
 

@@ -1,5 +1,5 @@
 #
-#	$Id: Makefile,v 1.13 1997/05/09 07:50:19 mycroft Exp $
+#	$NetBSD: Makefile,v 1.14 1997/10/13 11:19:58 lukem Exp $
 #
 
 FILES=	README syscall vfs misc
