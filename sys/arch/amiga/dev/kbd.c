@@ -31,14 +31,11 @@
  * SUCH DAMAGE.
  *
  *	kbd.c
- *	$Id: kbd.c,v 1.8 1994/02/17 09:10:54 chopps Exp $
+ *	$Id: kbd.c,v 1.9 1994/05/08 05:53:24 chopps Exp $
  */
-
-#include "ite.h"
-
-#if NITE > 0
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/device.h>
 #include <sys/ioctl.h>
 #include <sys/tty.h>
 #include <sys/proc.h>
@@ -46,25 +43,50 @@
 #include <sys/file.h>
 #include <sys/kernel.h>
 #include <sys/syslog.h>
-
 #include <dev/cons.h>
-
-#include <amiga/dev/device.h>
-#include <amiga/dev/kbdreg.h>
-#include <amiga/dev/itevar.h>
 #include <machine/cpu.h>
-
+#include <amiga/amiga/device.h>
 #include <amiga/amiga/custom.h>
 #include <amiga/amiga/cia.h>
-
-/* for sun-like event mode, if you go thru /dev/kbd. */
+#include <amiga/dev/itevar.h>
+#include <amiga/dev/kbdreg.h>
 #include <amiga/dev/event_var.h>
 #include <amiga/dev/vuid_event.h>
+#include "kbd.h"
 
 struct kbd_softc {
-  int k_event_mode;  	 /* if true, collect events, else pass to ite */
-  struct evvar k_events; /* event queue state */
-} kbd_softc;
+	int k_event_mode;	/* if true, collect events, else pass to ite */
+	struct evvar k_events;	/* event queue state */
+};
+struct kbd_softc kbd_softc;
+
+void kbdattach __P((struct device *, struct device *, void *));
+int kbdmatch __P((struct device *, struct cfdata *, void *));
+
+struct cfdriver kbdcd = {
+	NULL, "kbd", kbdmatch, kbdattach, DV_DULL,
+	sizeof(struct device), NULL, 0 };
+
+/*ARGSUSED*/
+int
+kbdmatch(pdp, cfp, auxp)
+	struct device *pdp;
+	struct cfdata *cfp;
+	void *auxp;
+{
+	if (matchname((char *)auxp, "kbd"))
+		return(1);
+	return(0);
+}
+
+/*ARGSUSED*/
+void
+kbdattach(pdp, dp, auxp)
+	struct device *pdp, *dp;
+	void *auxp;
+{
+	printf("\n");
+}
 
 /* definitions for amiga keyboard encoding. */
 #define KEY_CODE(c)  ((c) & 0x7f)
@@ -73,17 +95,19 @@ struct kbd_softc {
 void
 kbdenable ()
 {
-  int s = spltty();
+	int s;
 
-  /* collides with external ints from SCSI, watch out for this when
-     enabling/disabling interrupts there !! */
-  custom.intena = INTF_SETCLR | INTF_PORTS;
-  ciaa.icr = CIA_ICR_IR_SC | CIA_ICR_SP;  /* SP interrupt enable */
-  ciaa.cra &= ~(1<<6);		/* serial line == input */
-  kbd_softc.k_event_mode = 0;
-  kbd_softc.k_events.ev_io = 0;
-  
-  splx (s);
+	/*
+	 * collides with external ints from SCSI, watch out for this when
+	 * enabling/disabling interrupts there !!
+	 */
+	s = spltty();
+	custom.intena = INTF_SETCLR | INTF_PORTS;
+	ciaa.icr = CIA_ICR_IR_SC | CIA_ICR_SP;  /* SP interrupt enable */
+	ciaa.cra &= ~(1<<6);		/* serial line == input */
+	kbd_softc.k_event_mode = 0;
+	kbd_softc.k_events.ev_io = 0;
+	splx(s);
 }
 
 
@@ -201,12 +225,6 @@ kbdintr (mask)
   c = (c >> 1) | (c << 7);	/* rotate right once */
 
   
-  /* XXX THIS IS WRONG!!! The screenblanker should route thru ite.c, which 
-     should call thru it's driver table, ie. we need a new driver-dependant
-     function for this feature! */
-
-  cc_unblank ();
-
   /* if not in event mode, deliver straight to ite to process key stroke */
   if (! k->k_event_mode)
     {
@@ -270,7 +288,3 @@ kbdgetcn ()
 
   return c;
 }
-
-void
-kbdattach() {}
-#endif

@@ -12,8 +12,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
+ *      This product includes software developed by the University of
+ *      California, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
@@ -30,17 +30,45 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)dmavar.h	7.2 (Berkeley) 11/4/90
- *	$Id: dmavar.h,v 1.7 1994/05/08 05:53:02 chopps Exp $
+ *      @(#)gvp11_dmareg.h
+ *	$Id: gtscreg.h,v 1.1 1994/05/08 05:53:14 chopps Exp $
+ */
+#ifndef _AMIGA_DEV_AHSCREG_H_
+#define _AMIGA_DEV_AHSCREG_H_
+
+/*
+ * Hardware layout of the GVP Series II SDMAC. This also contains the
+ * registers for the sbic chip, but in favor of separating DMA and
+ * scsi, the scsi-driver doesn't make use of this dependency
  */
 
-/* dmago flags */
-#define	DMAGO_READ	0x08	/* transfer is a read */
-#define	DMAGO_NOINT	0x80	/* don't interrupt on completion */
+#define	v_int		volatile int
+#define vu_char		volatile u_char
+#define vu_short	volatile u_short
+#define vu_int		volatile u_int
 
-#ifdef KERNEL
-typedef void (*dmafree_t) (void *dev);
-typedef int  (*dmago_t)   (void *dev, char *, int, int);
-typedef int  (*dmanext_t) (void *dev);
-typedef void (*dmastop_t) (void *dev);
-#endif
+struct sdmac {
+  u_short	pad0[32];
+  vu_short CNTR;
+  u_short	pad1[15];
+  u_char	pad2;
+  vu_char  SASR;
+  u_char	pad3;
+  vu_char  SCMD;
+  u_short	pad4[2];
+  vu_short bank;
+  u_short	pad5[3];
+  vu_int   ACR;
+  vu_short	secret1;      /* Initially store 0  here */
+  vu_short ST_DMA;       /* strobe */
+  vu_short SP_DMA;       /* strobe */
+  vu_short	secret2;      /* Initially store 1  here */
+  vu_short	secret3;      /*         "       15  "   */
+};
+
+#define GVP_CNTR_BUSY           (1<<0)
+#define GVP_CNTR_INT_P          (1<<1)
+#define GVP_CNTR_INTEN          (1<<3)
+#define GVP_CNTR_DDIR           (1<<4)
+
+#endif /* _AMIGA_DEV_AHSCREG_H_ */

@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)sd.c	7.8 (Berkeley) 6/9/91
- *	$Id: sd.c,v 1.13 1994/04/18 04:09:20 chopps Exp $
+ *	$Id: sd.c,v 1.14 1994/05/08 05:53:43 chopps Exp $
  */
 
 /*
@@ -53,9 +53,6 @@
 #define NSD	8	/* Can't handle more than 8 devices */
 #endif
 
-#ifndef lint
-static char rcsid[] = "$Header: /cvsroot/src/sys/arch/amiga/dev/Attic/sd.c,v 1.13 1994/04/18 04:09:20 chopps Exp $";
-#endif
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -79,23 +76,23 @@ static char rcsid[] = "$Header: /cvsroot/src/sys/arch/amiga/dev/Attic/sd.c,v 1.1
 
 struct sd_softc;
 
-int sdinit __P((register struct amiga_device *ad));
-int sdopen __P((dev_t dev, int flags, int mode, struct proc *p));
-int sdioctl __P((dev_t dev, int cmd, caddr_t data, int flag, struct proc *p));
-int sdsize __P((dev_t dev));
-int sddump __P((dev_t dev));
-int scsi_unlock_floptical __P((int ctlr, int slave, int unit));
-void sdreset __P((register struct sd_softc *sc, register struct amiga_device *ad));
-void sdstrategy __P((register struct buf *bp));
-void sdustart __P((register int unit));
-void sdstart __P((register int unit));
-void sdgo __P((register int unit));
-void sdintr __P((register int unit, int stat));
+int sdinit __P((struct amiga_device *ad));
+int sdopen __P((dev_t, int, int, struct proc *));
+int sdioctl __P((dev_t, int, caddr_t, int, struct proc *));
+int sdsize __P((dev_t));
+int sddump __P((dev_t));
+int scsi_unlock_floptical __P((int, int, int));
+void sdreset __P((struct sd_softc *, struct amiga_device *));
+void sdstrategy __P((struct buf *));
+void sdustart __P((int));
+void sdstart __P((int));
+void sdgo __P((int));
+void sdintr __P((int, int));
 
-static int sdident __P((struct sd_softc *sc, struct amiga_device *ad));
-static int sderror __P((int unit, register struct sd_softc *sc, register struct amiga_device *am, int stat));
-static void sdlblkstrat __P((register struct buf *bp, register int bsize));
-static void sdfinish __P((int unit, register struct sd_softc *sc, register struct buf *bp));
+static int sdident __P((struct sd_softc *, struct amiga_device *));
+static int sderror __P((int, struct sd_softc *, struct amiga_device *, int));
+static void sdlblkstrat __P((struct buf *, int));
+static void sdfinish __P((int, struct sd_softc *, struct buf *));
 
 extern void disksort();
 extern int physio();
@@ -107,12 +104,13 @@ struct	driver sddriver = {
 };
 
 struct sd_softc {
-	struct	amiga_device *sc_ad;
-	struct	devqueue sc_dq;
-	int	sc_format_pid;	/* process using "format" mode */
-	short	sc_flags;
-	short	sc_type;	/* drive type */
-	short	sc_punit;	/* physical unit (scsi lun) */
+	struct device dev;
+	struct scsibus_softc *sc_scsibus;
+	struct devqueue sc_dq;
+	int sc_format_pid;	/* process using "format" mode */
+	short sc_flags;
+	short sc_type;	/* drive type */
+	short sc_punit;	/* physical unit (scsi lun) */
 	u_short	sc_bshift;	/* convert device blocks to DEV_BSIZE blks */
 	u_int	sc_blks;	/* number of blocks on device */
 	int	sc_blksize;	/* device block size in bytes */
@@ -201,25 +199,23 @@ struct scsi_fmt_cdb cap = {
 };
 
 static int
-sdident(sc, ad)
+sdident(sc)
 	struct sd_softc *sc;
-	struct amiga_device *ad;
 {
+	struct scsibus_softc *sbsc;
 	int unit, stat;
-	register int ctlr, slave;
-	register int i;
-	register int tries = 10;
+	int i;
+	int tries = 10;
 	int ismo = 0;
 
-	ctlr = ad->amiga_ctlr;
-	slave = ad->amiga_slave;
+	sbsc = sc->sc_scsibus;
 	unit = sc->sc_punit;
-	(ad->amiga_cdriver->d_delay)(-1);
+	scsidelay(-1);
 
 	/*
 	 * See if unit exists and is a disk then read block size & nblocks.
 	 */
-	while ((i = (ad->amiga_cdriver->d_tur)(ctlr, slave, unit)) != 0) {
+	while ((i = scsitur(sbsc, unit)) != 0) {
 retry_TUR:
 		if (i == -1 || --tries < 0) {
 			if (ismo)
@@ -231,8 +227,7 @@ retry_TUR:
 			u_char sensebuf[128];
 			struct scsi_xsense *sp = (struct scsi_xsense *)sensebuf;
 
-			i = (ad->amiga_cdriver->d_rqs)(ctlr, slave, unit, sensebuf, 
-					       sizeof(sensebuf));
+			i = scsirqs(sbsc, unit, sensebuf, sizeof(sensebuf));
 			if (sp->class == 7)
 				switch (sp->key) {
 				/* not ready -- might be MO with no media */
@@ -254,13 +249,11 @@ retry_TUR:
 	/*
 	 * Find out about device
 	 */
-	if (i = (ad->amiga_cdriver->d_immcmd)(ctlr, slave, unit, &inq, 
-				   (u_char *)&inqbuf, sizeof(inqbuf), B_READ))
-	  {
-	    if (i == STS_CHECKCOND)
-	      goto retry_TUR;
-	    goto failed;
-	  }
+	if (i = scsiicmd(sbsc, unit, &inq, &inqbuf, sizeof(inqbuf), B_READ)) {
+		if (i == STS_CHECKCOND)
+			goto retry_TUR;
+		goto failed;
+	}
 	switch (inqbuf.type) {
 	case 0:		/* disk */
 	case 4:		/* WORM */
