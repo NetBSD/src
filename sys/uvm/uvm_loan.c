@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_loan.c,v 1.34 2001/11/06 08:07:50 chs Exp $	*/
+/*	$NetBSD: uvm_loan.c,v 1.35 2001/11/10 07:37:00 lukem Exp $	*/
 
 /*
  *
@@ -37,6 +37,9 @@
 /*
  * uvm_loan.c: page loanout handler
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.35 2001/11/10 07:37:00 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

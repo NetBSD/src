@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.54 2001/11/07 08:43:32 chs Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.55 2001/11/10 07:37:00 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,8 +66,6 @@
  * rights to redistribute these changes.
  */
 
-#include "opt_uvmhist.h"
-
 /*
  * uvm_km.c: handle kernel memory allocation and management
  */
@@ -134,6 +132,11 @@
  * this has to be done because there is no backing store for kernel pages
  * and no need to save them after they are no longer referenced.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.55 2001/11/10 07:37:00 lukem Exp $");
+
+#include "opt_uvmhist.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
