@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfs_node.c	8.2 (Berkeley) 12/30/93
- *	$Id: nfs_node.c,v 1.10 1994/06/13 15:33:32 gwr Exp $
+ *	$Id: nfs_node.c,v 1.11 1994/06/13 15:39:13 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -59,8 +59,6 @@ u_long nheadhash;
 
 #define TRUE	1
 #define	FALSE	0
-
-int prtactive;
 
 /*
  * Initialize hash links for nfsnodes
@@ -165,6 +163,7 @@ nfs_inactive(ap)
 	register struct nfsnode *np;
 	register struct sillyrename *sp;
 	struct proc *p = curproc;	/* XXX */
+	extern int prtactive;
 
 	np = VTONFS(ap->a_vp);
 	if (prtactive && ap->a_vp->v_usecount != 0)
@@ -200,6 +199,7 @@ nfs_reclaim(ap)
 	register struct nfsnode *np = VTONFS(vp);
 	register struct nfsmount *nmp = VFSTONFS(vp->v_mount);
 	register struct nfsnode *nq;
+	extern int prtactive;
 
 	if (prtactive && vp->v_usecount != 0)
 		vprint("nfs_reclaim: pushing active", vp);
