@@ -26,8 +26,16 @@
  * sup "meat" routines
  **********************************************************************
  * HISTORY
+ *
+ * 7-July-93  Nate Williams at Montana State University
+ *	Modified SUP to use gzip based compression when sending files
+ *	across the network to save BandWidth
+ *
  * $Log: supcmeat.c,v $
- * Revision 1.2  1993/05/24 18:57:50  brezak
+ * Revision 1.3  1993/08/04 17:46:18  brezak
+ * Changes from nate for gzip'ed sup
+ *
+ * Revision 1.2  1993/05/24  18:57:50  brezak
  * Use /var/tmp for NetBSD
  *
  * Revision 1.1.1.1  1993/05/21  14:52:18  cgd
@@ -124,6 +132,8 @@
 TREE *lastT;				/* last filenames in collection */
 jmp_buf sjbuf;				/* jump location for network errors */
 int dontjump;				/* flag to void sjbuf */
+int cancompress=FALSE;			/* Can we do compression? */
+int docompress=FALSE;			/* Do we do compression? */
 
 extern COLLECTION *thisC;		/* collection list pointer */
 extern int rpauseflag;			/* don't disable resource pausing */
@@ -279,6 +289,10 @@ int *tout;
 		notify ("SUP: version of the sup fileserver or find an older version of sup.\n");
 		t->Tmode = SCMEOF;
 		return (TRUE);
+	}
+	/* If protocol is > 7 then try compression */
+	if (protver > 7) {
+		cancompress = TRUE;
 	}
 	return (FALSE);
 }
@@ -671,6 +685,16 @@ recvfiles ()
 	int recvone ();
 	int recvmore;
 
+	/* Does the protocol support compression */
+	if (cancompress) {
+		/* Check for compression on sending files */
+		docompress = (thisC->Cflags&CFCOMPRESS);
+		x = msgcompress();
+		if ( x != SCMOK) 
+			goaway ("Error sending compression check to server");
+		if (docompress)
+			vnotify("SUP Using compressed file transfer\n");
+	}
 	recvmore = TRUE;
 	upgradeT = NULL;
 	do {
@@ -1054,6 +1078,7 @@ char *from;		/* 0 if reading from network */
 	register int fromf,tof,istemp,x;
 	char dpart[STRINGLENGTH],fpart[STRINGLENGTH];
 	char tname[STRINGLENGTH];
+	char sys_com[STRINGLENGTH];
 	struct stat sbuf;
 
 	static int thispid = 0;		/* process id # */
@@ -1107,7 +1132,8 @@ char *from;		/* 0 if reading from network */
 		if (tof >= 0)  break;
 		istemp = FALSE;
 	/* give up: try to create output file */
-		tof = open (to,(O_WRONLY|O_CREAT|O_TRUNC),0600);
+		if (!docompress)
+			tof = open (to,(O_WRONLY|O_CREAT|O_TRUNC),0600);
 		if (tof >= 0)  break;
 	/* no luck */
 		notify ("SUP: Can't create %s or temp file for it\n",to);
@@ -1183,6 +1209,23 @@ char *from;		/* 0 if reading from network */
 		}
 	}
 	if (!istemp) {			/* no temp file used */
+		lockout (FALSE);
+		return (FALSE);
+	}
+	/* uncompress it first */
+	if (docompress) {
+		sprintf(sys_com, "gunzip < %s > %s\n", tname, to);
+		/* Uncompress it onto the destination */
+		if (system(sys_com) < 0) {
+			notify ("SUP: Error in uncompressing file %s\n",
+				to);
+			(void) unlink (tname);
+			/* Just in case */
+			(void) unlink (to);
+			lockout (FALSE);
+			return (TRUE);
+		}
+		(void) unlink (tname);
 		lockout (FALSE);
 		return (FALSE);
 	}

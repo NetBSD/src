@@ -25,10 +25,11 @@
 /*
  * supfilesrv -- SUP File Server
  *
- * Usage:  supfilesrv [-l] [-P] [-N]
+ * Usage:  supfilesrv [-l] [-P] [-N] [-R]
  *	-l	"live" -- don't fork daemon
  *	-P	"debug ports" -- use debugging network ports
  *	-N	"debug network" -- print debugging messages for network i/o
+ *	-R	"RCS mode" -- if file is an rcs file, use co to get contents
  *
  **********************************************************************
  * HISTORY
@@ -36,9 +37,13 @@
  *	Changed name of sup program in xpatch from /usr/cs/bin/sup to
  *	/usr/bin/sup for exported version of sup.
  *
+ * 7-July-93  Nate Williams at Montana State University
+ *	Modified SUP to use gzip based compression when sending files
+ *	across the network to save BandWidth
+ *
  * $Log: supfilesrv.c,v $
- * Revision 1.4  1993/06/22 17:20:23  brezak
- * Close misbehaving connections instead of exiting.
+ * Revision 1.5  1993/08/04 17:46:21  brezak
+ * Changes from nate for gzip'ed sup
  *
  * Revision 1.3  1993/06/05  21:32:17  cgd
  * use daemon() to put supfilesrv into daemon mode...
@@ -301,16 +306,26 @@ int live;				/* -l flag */
 int dbgportsq;				/* -P flag */
 extern int scmdebug;			/* -N flag */
 extern int netfile;
+#ifdef RCS
+int candorcs;				/* -R flag */
+int dorcs = FALSE;
+#endif
 
 char *clienthost;			/* host name of client */
 int nchildren;				/* number of children that exist */
 char *prefix;				/* collection pathname prefix */
 char *release;				/* collection release name */
 char *cryptkey;				/* encryption key if non-null */
+#ifdef CVS
+char *cvs_root;				/* RCS root */
+#endif
+char *rcs_branch;			/* RCS branch name */
 int lockfd;				/* descriptor of lock file */
 
 /* global variables for scan functions */
 int trace = FALSE;			/* directory scan trace */
+int cancompress = FALSE;		/* Can we compress files */
+int docompress = FALSE;			/* Do we compress files */
 
 HASH *uidH[HASHSIZE];			/* for uid and gid lookup */
 HASH *gidH[HASHSIZE];
@@ -421,6 +436,9 @@ char **argv;
 	int maxsleep;
 	register FILE *f;
 
+#ifdef RCS
+        candorcs = FALSE;
+#endif
 	live = FALSE;
 	dbgportsq = FALSE;
 	scmdebug = 0;
@@ -457,6 +475,11 @@ char **argv;
 			argc -= 2;
 			argv += 2;
 			break;
+#ifdef RCS
+                case 'R':
+                        candorcs = TRUE;
+                        break;
+#endif
 		default:
 			fprintf (stderr,"Unknown flag %s ignored\n",argv[0]);
 			break;
@@ -568,6 +591,10 @@ answer ()
 	basedir = NULL;
 	prefix = NULL;
 	release = NULL;
+        rcs_branch = NULL;
+#ifdef CVS
+        cvs_root = NULL;
+#endif
 	goawayreason = NULL;
 	donereason = NULL;
 	lockfd = -1;
@@ -583,7 +610,7 @@ answer ()
 			x = msgxpatch ();
 			if (x != SCMOK)
 				exit (0);
-			xargv[0] = "/usr/bin/sup";
+			xargv[0] = "sup";
 			xargv[1] = "-X";
 			xargv[xargc] = (char *)NULL;
 			(void) dup2 (netfile,0);
@@ -592,7 +619,7 @@ answer ()
 			fd = getdtablesize ();
 			while (--fd > 2)
 				(void) close (fd);
-			execv (xargv[0],xargv);
+			execvp (xargv[0],xargv);
 			exit (0);
 		}
 		listfiles ();
@@ -603,6 +630,10 @@ answer ()
 	if (basedir)  free (basedir);
 	if (prefix)  free (prefix);
 	if (release)  free (release);
+	if (rcs_branch)  free (rcs_branch);
+#ifdef CVS
+	if (cvs_root)  free (cvs_root);
+#endif
 	if (goawayreason) {
 		if (donereason == goawayreason)
 			donereason = NULL;
@@ -650,6 +681,9 @@ setup ()
 	struct stat sbuf;
 	register TREELIST *tl;
 
+	if (protver > 7) {
+		cancompress = TRUE;
+	}
 	x = msgsetup ();
 	if (x != SCMOK)  goaway ("Error reading setup request from client");
 	if (protver < 4) {
@@ -722,6 +756,15 @@ setup ()
 			goaway ("Error sending setup reply to client");
 		return;
 	}
+#ifdef RCS
+        if (candorcs && release != NULL &&
+            (strncmp(release, "RCS.", 4) == 0)) {
+                rcs_branch = salloc(&release[4]);
+                free(release);
+                release = salloc("RCS");
+                dorcs = TRUE;
+        }
+#endif
 	if (release == NULL)
 		release = salloc (DEFRELEASE);
 	if (basedir == NULL || *basedir == '\0') {
@@ -1045,9 +1088,27 @@ sendfiles ()
 	register TREELIST *tl;
 	register int x;
 
+	/* Does the protocol support compression */
+	if (cancompress) {
+		/* Check for compression on sending files */
+		x = msgcompress();
+		if ( x != SCMOK)
+			goaway ("Error sending compression check to server");
+	}
 	/* send all files */
 	for (tl = listTL; tl != NULL; tl = tl->TLnext) {
 		cdprefix (tl->TLprefix);
+#ifdef CVS
+                if (candorcs) {
+                        cvs_root = getcwd(NULL, 256);
+                        if (access("CVSROOT", F_OK) < 0)
+                                dorcs = FALSE;
+                        else {
+                                loginfo("is a CVSROOT \"%s\"\n", cvs_root);
+                                dorcs = TRUE;
+                        }
+                }
+#endif
 		(void) Tprocess (tl->TLtree,sendone);
 	}
 	/* send directories in reverse order */
@@ -1068,6 +1129,9 @@ sendone (t)
 TREE *t;
 {
 	register int x,fd;
+	register int fdtmp;
+	char sys_com[STRINGLENGTH], temp_file[STRINGLENGTH], rcs_file[STRINGLENGTH];
+        union wait status;
 	char *uconvert(),*gconvert();
 	int sendfile ();
 
@@ -1076,13 +1140,80 @@ TREE *t;
 	if ((t->Tmode&S_IFMT) == S_IFDIR) /* send no directories this pass */
 		return (SCMOK);
 	x = msgsend ();
-	if (x != SCMOK)  goaway ("Error reading receive file request from client");
+	if (x != SCMOK)  goaway ("Error reading receive file request from clien
+t");
 	upgradeT = t;			/* upgrade file pointer */
 	fd = -1;			/* no open file */
 	if ((t->Tmode&S_IFMT) == S_IFREG) {
 		if (!listonly && (t->Tflags&FUPDATE) == 0) {
-			fd = open (t->Tname,O_RDONLY,0);
-			if (fd < 0)  t->Tmode = 0;
+#ifdef RCS
+                        if (dorcs) {
+                                char rcs_release[STRINGLENGTH];
+
+				tmpnam(rcs_file);
+                                if (strcmp(&t->Tname[strlen(t->Tname)-2], ",v") == 0) {
+                                        t->Tname[strlen(t->Tname)-2] = '\0';
+                                        if (rcs_branch != NULL)
+#ifdef CVS
+                                                sprintf(rcs_release, "-r %s", rcs_branch);
+#else
+                                                sprintf(rcs_release, "-r%s", rcs_branch);
+#endif
+                                        else
+                                                rcs_release[0] = '\0';
+#ifdef CVS
+                                        sprintf(sys_com, "cvs -d %s -r -l -Q co -p %s %s > %s\n", cvs_root, rcs_release, t->Tname, rcs_file);
+#else
+                                        sprintf(sys_com, "co -q -p %s %s > %s 2> /dev/null\n", rcs_release, t->Tname, rcs_file);
+#endif
+                                        /*loginfo("using rcs mode \"%s\"\n", sys_com);*/
+                                        status.w_status = system(sys_com);
+                                        if (status.w_status < 0 || status.w_retcode) {
+                                                /* Just in case */
+                                                unlink(rcs_file);
+                                                if (status.w_status < 0) {
+                                                        goaway ("We died trying to \"%s\"", sys_com);
+                                                        t->Tmode = 0;
+                                                }
+                                                else {
+                                                        /*logerr("rcs command failed \"%s\" = %d\n",
+                                                               sys_com, status.w_retcode);*/
+                                                        t->Tflags |= FUPDATE;
+                                                }
+                                        }
+                                        else if (docompress) {
+                                                tmpnam(temp_file);
+                                                sprintf(sys_com, "gzip -c < %s > %s\n", rcs_file, temp_file);
+                                                if (system(sys_com) < 0) {
+                                                        /* Just in case */
+                                                        unlink(temp_file);
+                                                        unlink(rcs_file);
+                                                        goaway ("We died trying to \"%s\"", sys_com);
+                                                        t->Tmode = 0;
+                                                }
+                                                fd = open (temp_file,O_RDONLY,0);
+                                        }
+                                        else
+                                                fd = open (rcs_file,O_RDONLY,0);
+                                }
+                        }
+#endif
+                        if (fd == -1) {
+                                if (docompress) {
+                                        tmpnam(temp_file);
+                                        sprintf(sys_com, "gzip -c < %s > %s\n", t->Tname, temp_file);
+                                        if (system(sys_com) < 0) {
+                                                /* Just in case */
+                                                unlink(temp_file);
+                                                goaway ("We died trying to \"%s\"", sys_com);
+                                                t->Tmode = 0;
+                                        }
+                                        fd = open (temp_file,O_RDONLY,0);
+                                }
+                                else
+                                        fd = open (t->Tname,O_RDONLY,0);
+                        }
+			if (fd < 0 && (t->Tflags&FUPDATE) == 0)  t->Tmode = 0;
 		}
 		if (t->Tmode) {
 			t->Tuser = salloc (uconvert (t->Tuid));
@@ -1090,6 +1221,12 @@ TREE *t;
 		}
 	}
 	x = msgrecv (sendfile,fd);
+	if (docompress)
+		unlink(temp_file);
+#ifdef RCS
+	if (dorcs)
+		unlink(rcs_file);
+#endif
 	if (x != SCMOK)  goaway ("Error sending file to client");
 	return (SCMOK);
 }
@@ -1125,7 +1262,7 @@ va_list ap;
 		return (SCMOK);
 	x = writefile (fd);
 	if (x != SCMOK)  goaway ("Error sending file to client");
-	(void) close (fd);
+        (void) close (fd);
 	return (SCMOK);
 }
 

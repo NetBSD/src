@@ -34,8 +34,15 @@
  * 13-Sep-92  Mary Thompson (mrt) at Carnegie-Mellon University
  *	Changed name of DEFDIR from /usr/cs to /usr.
  *
+ * 7-July-93  Nate Williams at Montana State University
+ *	Modified SUP to use gzip based compression when sending files
+ *	across the network to save BandWidth
+ *
  * $Log: sup.h,v $
- * Revision 1.1.1.1  1993/05/21 14:52:18  cgd
+ * Revision 1.2  1993/08/04 17:46:15  brezak
+ * Changes from nate for gzip'ed sup
+ *
+ * Revision 1.1.1.1  1993/05/21  14:52:18  cgd
  * initial import of CMU's SUP to NetBSD
  *
  * Revision 1.10  92/08/11  12:06:42  mrt
@@ -94,7 +101,7 @@
 
 /* PGMVERSION is defined separately in each program */
 extern char scmversion[];		/* string version of scm */
-#define PROTOVERSION 7			/* version of network protocol */
+#define PROTOVERSION 8			/* version of network protocol */
 #define SCANVERSION  2			/* version of scan file format */
 
 /* TCP servers for name server and file server */
