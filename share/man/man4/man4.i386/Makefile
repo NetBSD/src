@@ -1,11 +1,9 @@
-#	$NetBSD: Makefile,v 1.28 1997/02/18 00:51:17 jonathan Exp $
+#	$NetBSD: Makefile,v 1.29 1997/02/23 22:22:58 jonathan Exp $
 #	from: @(#)Makefile	5.1 (Berkeley) 2/12/91
 
-MAN=	aha.4 aic.4 apm.4 ast.4 autoconf.4 \
-	boca.4 busmouse.4 com.4 cy.4 ed.4 eg.4 el.4 fdc.4 \
-	gus.4 ie.4 intro.4 iy.4 joy.4 le.4 lms.4 lpt.4 mcd.4 \
-	mem.4 mms.4 npx.4 pms.4 pss.4 rtfps.4 sb.4 sea.4 \
-	speaker.4 wd.4 wss.4 wt.4
+MAN=	apm.4 autoconf.4 busmouse.4 com.4 ed.4 fdc.4	\
+	ie.4 intro.4 joy.4 le.4 lms.4 lpt.4 mem.4 mms.4 npx.4 \
+	pms.4 speaker.4 wd.4 
 MLINKS=	mem.4 kmem.4
 MANSUBDIR=/i386
 
