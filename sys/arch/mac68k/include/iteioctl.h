@@ -1,4 +1,4 @@
-/*	$NetBSD: iteioctl.h,v 1.2 1997/10/13 14:22:39 lukem Exp $	*/
+/*	$NetBSD: iteioctl.h,v 1.3 2004/04/29 04:18:27 fredb Exp $	*/
 
 /*-
  * Copyright (C) 1994	Allen K. Briggs, Chris P. Caputo,
@@ -34,6 +34,8 @@
  *
  */
 
+#ifndef _MAC68K_ITEIOCTL_H_
+#define _MAC68K_ITEIOCTL_H_
 
 #include <sys/ioctl.h>
 
@@ -48,3 +50,5 @@ struct bellparams{
 #define ITEIOC_GETBELL            _IOR('I', 128, struct bellparams)
 #define ITEIOC_SETBELL            _IOW('I', 129, struct bellparams)
 #define ITEIOC_RINGBELL            _IO('I', 130)
+
+#endif /* _MAC68K_ITEIOCTL_H_ */
