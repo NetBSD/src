@@ -1,4 +1,4 @@
-#	$NetBSD: sys.mk,v 1.38 1998/04/01 15:23:36 tv Exp $
+#	$NetBSD: sys.mk,v 1.39 1998/04/01 16:58:33 tv Exp $
 #	@(#)sys.mk	8.2 (Berkeley) 3/21/94
 
 unix?=		We run NetBSD.
@@ -189,7 +189,6 @@ YACC.y?=	${YACC} ${YFLAGS}
 .y.c:
 	${YACC.y} ${.IMPSRC}
 	mv y.tab.c ${.TARGET}
-	[ -f y.tab.h ] && mv y.tab.h ${.TARGET:R}.h || true
 .y.o:
 	${YACC.y} ${.IMPSRC}
 	${COMPILE.c} -o ${.TARGET} y.tab.c
