@@ -1,4 +1,4 @@
-#	$NetBSD: IQ31244,v 1.24 2005/02/12 09:54:36 rearnsha Exp $
+#	$NetBSD: IQ31244,v 1.25 2005/02/12 09:59:29 rearnsha Exp $
 #
 #	IQ31244 -- Intel IQ31244 Evaluation Board Kernel
 #
@@ -161,6 +161,16 @@ iic0		at iopiic?
 iic1		at iopiic?
 iopwdog*	at iopxs?		# Watchdog timer
 pci0		at iopxs? bus ?		# PCI/PCI-X support
+
+# IIC devices
+# XXX These don't seem to work yet
+
+# Temperature sensors
+#lmtemp0  	at iic0	addr 0x48	# LM75 temperature sensor
+#lmtemp1  	at iic0	addr 0x49	# LM75 temperature sensor
+
+# RTC
+#strtc0		at iic0 addr 0x68	# M41ST84 RTC
 
 # PCI-PCI bridges
 ppb*		at pci? dev ? function ?
