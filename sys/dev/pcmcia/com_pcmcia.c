@@ -1,7 +1,7 @@
-/*	$NetBSD: com_pcmcia.c,v 1.44 2004/08/10 02:55:30 mycroft Exp $	 */
+/*	$NetBSD: com_pcmcia.c,v 1.45 2004/08/10 06:10:38 mycroft Exp $	 */
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_pcmcia.c,v 1.44 2004/08/10 02:55:30 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_pcmcia.c,v 1.45 2004/08/10 06:10:38 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
