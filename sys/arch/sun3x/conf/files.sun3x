@@ -1,4 +1,4 @@
-#	$NetBSD: files.sun3x,v 1.15 1997/03/20 16:01:36 gwr Exp $
+#	$NetBSD: files.sun3x,v 1.16 1997/03/26 17:26:48 gwr Exp $
 
 #
 # sun3x-specific configuration info
@@ -120,7 +120,12 @@ device fdc {}
 attach fdc at obio
 device fd: disk
 attach fd at fdc
-file	arch/sun3x/dev/fd.c			fdc | fd needs-flag
+file arch/sun3x/dev/fd.c		fdc | fd needs-flag
+
+# Printer port
+device pp
+attach pp at obio
+file arch/sun3x/dev/pp.c		pp needs-flag
 
 #
 # Sun-compatible Frame Buffers (?)
