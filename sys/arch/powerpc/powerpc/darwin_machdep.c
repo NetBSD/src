@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_machdep.c,v 1.2 2002/11/26 23:54:10 manu Exp $ */
+/*	$NetBSD: darwin_machdep.c,v 1.3 2002/11/29 00:04:03 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_machdep.c,v 1.2 2002/11/26 23:54:10 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_machdep.c,v 1.3 2002/11/29 00:04:03 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,7 +118,7 @@ darwin_sendsig(sig, mask, code)
 		sig = 0;
 	}
 
-	sf.duc.si.si_signo = sig;
+	sf.duc.si.darwin_si_signo = sig;
 	sf.duc.uctx.uc_onstack = onstack;
 	native_sigset_to_sigset13(mask, &sf.duc.uctx.uc_sigmask);
 	sf.duc.uctx.uc_stack.ss_sp = (char *)sfp;
