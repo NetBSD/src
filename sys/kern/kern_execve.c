@@ -454,7 +454,7 @@ dont_bother:
 	vs->vm_tsize = tsize/NBPG;		/* text size (pages) XXX */
 	vs->vm_dsize = (dsize+bsize)/NBPG;	/* data size (pages) XXX */
 					/* user virtual address of text XXX */
-	vs->vm_taddr = (magic == QMAGIC ? NBPG : 0);
+	vs->vm_taddr = (caddr_t)(magic == QMAGIC ? NBPG : 0);
 					/* user virtual address of data XXX */
 	vs->vm_daddr = (caddr_t)tsize + (magic == QMAGIC ? NBPG : 0);
 	vs->vm_maxsaddr = newframe;	/* user VA at max stack growth XXX */
