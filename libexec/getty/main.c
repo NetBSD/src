@@ -39,17 +39,16 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)main.c	5.16 (Berkeley) 3/27/91";*/
-static char rcsid[] = "$Id: main.c,v 1.6 1994/03/17 13:55:48 pk Exp $";
+static char rcsid[] = "$Id: main.c,v 1.7 1994/04/28 22:12:30 pk Exp $";
 #endif /* not lint */
-
-#define USE_OLD_TTY
 
 #include <sys/param.h>
 #include <sys/stat.h>
+#include <sys/termios.h>
+#include <sys/ioctl.h>
 #include <sys/utsname.h>
 #include <signal.h>
 #include <fcntl.h>
-#include <sgtty.h>
 #include <time.h>
 #include <ctype.h>
 #include <setjmp.h>
@@ -61,17 +60,7 @@ static char rcsid[] = "$Id: main.c,v 1.6 1994/03/17 13:55:48 pk Exp $";
 #include "gettytab.h"
 #include "pathnames.h"
 
-struct	sgttyb tmode = {
-	0, 0, CERASE, CKILL, 0
-};
-struct	tchars tc = {
-	CINTR, CQUIT, CSTART,
-	CSTOP, CEOF, CBRK,
-};
-struct	ltchars ltc = {
-	CSUSP, CDSUSP, CRPRNT,
-	CFLUSH, CWERASE, CLNEXT
-};
+struct termios tmode;
 
 int crmod, digit, lower, upper;
 
@@ -110,9 +99,9 @@ char partab[] = {
 	0000,0200,0200,0000,0200,0000,0000,0201
 };
 
-#define	ERASE	tmode.sg_erase
-#define	KILL	tmode.sg_kill
-#define	EOT	tc.t_eofc
+#define	ERASE	tmode.c_cc[VERASE]
+#define	KILL	tmode.c_cc[VKILL]
+#define	EOT	tmode.c_cc[VEOF]
 
 jmp_buf timeout;
 
@@ -187,13 +176,18 @@ main(argc, argv)
 	    }
 	}
 
+	/* Start with default tty settings */
+	if (tcgetattr(0, &tmode) < 0) {
+		syslog(LOG_ERR, "%s: %m", ttyn);
+		exit(1);
+	}
+
 	gettable("default", defent);
 	gendefaults();
 	tname = "default";
 	if (argc > 1)
 		tname = argv[1];
 	for (;;) {
-		int ldisp = OTTYDISC;
 		int off = 0;
 
 		gettable(tname, tabent);
@@ -203,20 +197,21 @@ main(argc, argv)
 		ioctl(0, TIOCFLUSH, &off);	/* clear out the crap */
 		ioctl(0, FIONBIO, &off);	/* turn off non-blocking mode */
 		ioctl(0, FIOASYNC, &off);	/* ditto for async mode */
+
 		if (IS)
-			tmode.sg_ispeed = speed(IS);
+			tmode.c_ispeed = speed(IS);
 		else if (SP)
-			tmode.sg_ispeed = speed(SP);
+			tmode.c_ispeed = speed(SP);
 		if (OS)
-			tmode.sg_ospeed = speed(OS);
+			tmode.c_ospeed = speed(OS);
 		else if (SP)
-			tmode.sg_ospeed = speed(SP);
-		tmode.sg_flags = setflags(0);
-		ioctl(0, TIOCSETP, &tmode);
+			tmode.c_ospeed = speed(SP);
+		setflags(0);
 		setchars();
-		ioctl(0, TIOCSETC, &tc);
-		if (HC)
-			ioctl(0, TIOCHPCL, 0);
+		if (tcsetattr(0, TCSANOW, &tmode) < 0) {
+			syslog(LOG_ERR, "%s: %m", ttyn);
+			exit(1);
+		}
 		if (AB) {
 			extern char *autobaud();
 
@@ -233,8 +228,8 @@ main(argc, argv)
 		if (IM && *IM)
 			putf(IM);
 		if (setjmp(timeout)) {
-			tmode.sg_ispeed = tmode.sg_ospeed = 0;
-			ioctl(0, TIOCSETP, &tmode);
+			tmode.c_ispeed = tmode.c_ospeed = 0;
+			(void)tcsetattr(0, TCSANOW, &tmode);
 			exit(1);
 		}
 		if (TO) {
@@ -253,18 +248,21 @@ main(argc, argv)
 			}
 			if (!(upper || lower || digit))
 				continue;
-			allflags = setflags(2);
-			tmode.sg_flags = allflags & 0xffff;
-			allflags >>= 16;
-			if (crmod || NL)
-				tmode.sg_flags |= CRMOD;
+			setflags(2);
+			if (crmod) {
+				tmode.c_iflag |= ICRNL;
+				tmode.c_oflag |= ONLCR;
+			}
+#if XXX
 			if (upper || UC)
 				tmode.sg_flags |= LCASE;
 			if (lower || LC)
 				tmode.sg_flags &= ~LCASE;
-			ioctl(0, TIOCSETP, &tmode);
-			ioctl(0, TIOCSLTC, &ltc);
-			ioctl(0, TIOCLSET, &allflags);
+#endif
+			if (tcsetattr(0, TCSANOW, &tmode) < 0) {
+				syslog(LOG_ERR, "%s: %m", ttyn);
+				exit(1);
+			}
 			signal(SIGINT, SIG_DFL);
 			for (i = 0; environ[i] != (char *)0; i++)
 				env[i] = environ[i];
@@ -295,16 +293,17 @@ getname()
 		return (0);
 	}
 	signal(SIGINT, interrupt);
-	tmode.sg_flags = setflags(0);
-	ioctl(0, TIOCSETP, &tmode);
-	tmode.sg_flags = setflags(1);
+	setflags(1);
 	prompt();
 	if (PF > 0) {
 		oflush();
 		sleep(PF);
 		PF = 0;
 	}
-	ioctl(0, TIOCSETP, &tmode);
+	if (tcsetattr(0, TCSANOW, &tmode) < 0) {
+		syslog(LOG_ERR, "%s: %m", ttyn);
+		exit(1);
+	}
 	crmod = digit = lower = upper = 0;
 	np = name;
 	for (;;) {
@@ -326,7 +325,7 @@ getname()
 		else if (c == ERASE || c == '#' || c == '\b') {
 			if (np > name) {
 				np--;
-				if (tmode.sg_ospeed >= B1200)
+				if (tmode.c_ospeed >= B1200)
 					puts("\b \b");
 				else
 					putchr(cs);
@@ -335,7 +334,7 @@ getname()
 		} else if (c == KILL || c == '@') {
 			putchr(cs);
 			putchr('\r');
-			if (tmode.sg_ospeed < B1200)
+			if (tmode.c_ospeed < B1200)
 				putchr('\n');
 			/* this is the way they do it down under ... */
 			else if (np > name)
@@ -391,8 +390,8 @@ putpad(s)
 	 */
 	if (pad == 0)
 		return;
-	if (tmode.sg_ospeed <= 0 ||
-	    tmode.sg_ospeed >= (sizeof tmspc10 / sizeof tmspc10[0]))
+	if (tmode.c_ospeed <= 0 ||
+	    tmode.c_ospeed >= (sizeof tmspc10 / sizeof tmspc10[0]))
 		return;
 
 	/*
@@ -401,7 +400,7 @@ putpad(s)
 	 * Transmitting pad characters slows many terminals down and also
 	 * loads the system.
 	 */
-	mspc10 = tmspc10[tmode.sg_ospeed];
+	mspc10 = tmspc10[tmode.c_ospeed];
 	pad += mspc10 / 2;
 	for (pad /= mspc10; pad > 0; pad--)
 		putchr(*PC);
