@@ -1,4 +1,4 @@
-/*	$NetBSD: ln.c,v 1.15 1998/07/28 05:31:25 mycroft Exp $	*/
+/*	$NetBSD: ln.c,v 1.16 1999/09/05 23:34:40 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)ln.c	8.2 (Berkeley) 3/31/94";
 #else
-__RCSID("$NetBSD: ln.c,v 1.15 1998/07/28 05:31:25 mycroft Exp $");
+__RCSID("$NetBSD: ln.c,v 1.16 1999/09/05 23:34:40 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -137,7 +137,7 @@ linkit(target, source, isdir)
 
 	if (!sflag) {
 		/* If target doesn't exist, quit now. */
-		if (stat(target, &sb)) {
+		if (lstat(target, &sb)) {
 			warn("%s", target);
 			return (1);
 		}
