@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.33 2001/09/15 20:36:44 chs Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.34 2001/09/16 13:57:56 chs Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -79,6 +79,7 @@ READ(void *v)
 	off_t bytesinfile;
 	long size, xfersize, blkoffset;
 	int error;
+	boolean_t usepc = FALSE;
 
 	vp = ap->a_vp;
 	ip = VTOI(vp);
@@ -106,7 +107,10 @@ READ(void *v)
 		goto out;
 	}
 
-	if (vp->v_type == VREG) {
+#ifndef LFS_READWRITE
+	usepc = vp->v_type == VREG;
+#endif
+	if (usepc) {
 		while (uio->uio_resid > 0) {
 			bytelen = MIN(ip->i_ffs_size - uio->uio_offset,
 			    uio->uio_resid);
@@ -202,6 +206,7 @@ WRITE(void *v)
 	void *win;
 	vsize_t bytelen;
 	boolean_t alloced;
+	boolean_t usepc = FALSE;
 
 	cred = ap->a_cred;
 	ioflag = ap->a_ioflag;
@@ -261,7 +266,10 @@ WRITE(void *v)
 	bsize = fs->fs_bsize;
 	error = 0;
 
-	if (vp->v_type != VREG) {
+#ifndef LFS_READWRITE
+	usepc = vp->v_type == VREG;
+#endif
+	if (!usepc) {
 		goto bcache;
 	}
 
