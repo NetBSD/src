@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.33 2004/10/01 07:16:57 sekiya Exp $	*/
+/*	$NetBSD: bus.c,v 1.34 2004/10/02 03:19:00 sekiya Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.33 2004/10/01 07:16:57 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.34 2004/10/02 03:19:00 sekiya Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,6 +98,7 @@ sgimips_bus_dma_init(void)
 	/* >=R4000*/
 	case MACH_SGI_IP20:
 	case MACH_SGI_IP22:
+	case MACH_SGI_IP30:
 	case MACH_SGI_IP32:
 		sgimips_default_bus_dma_tag._dmamap_sync =
 		    _bus_dmamap_sync_mips3;
