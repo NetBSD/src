@@ -43,6 +43,7 @@
  */
 
 #include "sys/types.h"
+#include "sys/syscall.h"
 
 #include "machine/cpu.h"
 #include "machine/trap.h"
@@ -393,10 +394,20 @@ curproc->p_pid, frame.sf_pc, code, frame.sf_psr, frame.sf_usp, params); */
 	/* Set new return address and save old one. */
 	opc = frame.sf_pc++;
 
-	if (code == 0) {
+	switch (code) {
+	case SYS_syscall:
 		code = fuword(params);
-		params += sizeof (int);
-/* printf ("Syscall ... new code=%d\n", code); */
+		params += sizeof(int);
+		break;
+	
+	case SYS___syscall:
+		code = fuword(params + _QUAD_LOWWORD * sizeof(int));
+		params += sizeof(quad_t);
+		break;
+
+	default:
+		/* do nothing by default */
+		break;
 	}
 
 #if 1
