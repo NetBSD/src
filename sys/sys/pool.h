@@ -1,4 +1,4 @@
-/*	$NetBSD: pool.h,v 1.11 1998/12/16 04:28:23 briggs Exp $	*/
+/*	$NetBSD: pool.h,v 1.12 1998/12/27 21:13:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,6 +38,10 @@
 
 #ifndef _SYS_POOL_H_
 #define _SYS_POOL_H_
+
+#if defined(_KERNEL) && !defined(_LKM)
+#include "opt_pool.h"
+#endif
 
 #include <sys/lock.h>
 #include <sys/queue.h>
@@ -138,7 +142,7 @@ void		pool_sethiwat __P((pool_handle_t, int));
 void		pool_print __P((pool_handle_t, char *));
 void		pool_reclaim __P((pool_handle_t));
 void		pool_drain __P((void *));
-#ifdef DEBUG
+#if defined(POOL_DIAGNOSTIC) || defined(DEBUG)
 void		pool_print __P((struct pool *, char *));
 int		pool_chk __P((struct pool *, char *));
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.16 1998/12/16 04:28:23 briggs Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.17 1998/12/27 21:13:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -125,7 +125,11 @@ struct pool_log {
 };
 
 /* Number of entries in pool log buffers */
-int pool_logsize = 10;
+#ifndef POOL_LOGSIZE
+#define	POOL_LOGSIZE	10
+#endif
+
+int pool_logsize = POOL_LOGSIZE;
 
 static void	pr_log __P((struct pool *, void *, int, const char *, long));
 static void	pr_printlog __P((struct pool *));
@@ -989,7 +993,7 @@ pool_drain(arg)
 }
 
 
-#ifdef DEBUG
+#if defined(POOL_DIAGNOSTIC) || defined(DEBUG)
 /*
  * Diagnostic helpers.
  */
@@ -1080,4 +1084,4 @@ out:
 	simple_unlock(&pp->pr_lock);
 	return (r);
 }
-#endif
+#endif /* POOL_DIAGNOSTIC || DEBUG */
