@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.18 1998/08/07 10:15:32 drochner Exp $	*/
+/*	$NetBSD: pcib.c,v 1.19 1998/08/24 19:27:05 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -121,6 +121,19 @@ pcibmatch(parent, match, aux)
 	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_BRIDGE &&
 	    PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_BRIDGE_ISA) {
 		return (1);
+	}
+
+	/*
+	 * The Intel 82371MX identifies itself erroneously as a
+	 * miscellaneous bridge.
+	 */
+	switch (PCI_VENDOR(pa->pa_id)) {
+	case PCI_VENDOR_INTEL:
+		switch (PCI_PRODUCT(pa->pa_id)) {
+		case PCI_PRODUCT_INTEL_82371MX:
+			return (1);
+		}
+		break;
 	}
 
 	return (0);
