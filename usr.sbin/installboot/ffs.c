@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.c,v 1.11 2003/04/05 11:30:53 he Exp $	*/
+/*	$NetBSD: ffs.c,v 1.12 2003/05/30 09:22:50 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: ffs.c,v 1.11 2003/04/05 11:30:53 he Exp $");
+__RCSID("$NetBSD: ffs.c,v 1.12 2003/05/30 09:22:50 dsl Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -530,6 +530,7 @@ ffs_findstage2(ib_params *params, uint32_t *maxblk, ib_block *blocks)
 	if (is_ufs2)
 		rv = ffs_find_disk_blocks_ufs2(params, ino,
 		    ffs_findstage2_blocks, &state);
+	else
 		rv = ffs_find_disk_blocks_ufs1(params, ino,
 		    ffs_findstage2_blocks, &state);
 	if (! rv) {
