@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-	$Id: tm.h,v 1.1 1994/01/28 12:41:38 pk Exp $
+	$Id: tm.h,v 1.2 1995/01/26 17:55:20 mycroft Exp $
 */
 
 /* Override number of expected traps from sysv. */
@@ -29,10 +29,12 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 /* Shared library code */
 #include "solib.h"
 
-/* 386BSD cannot handle the segment registers. */
-/* BSDI can't handle them either.  */
+/* We can't yet read %fs and %gs. */
 #undef NUM_REGS
-#define NUM_REGS 10
+#define NUM_REGS 14
+
+/* We define our own fetch and store methods. */
+#define FETCH_INFERIOR_REGISTERS
 
 /* On 386 bsd, sigtramp is above the user stack and immediately below
    the user area. Using constants here allows for cross debugging.
