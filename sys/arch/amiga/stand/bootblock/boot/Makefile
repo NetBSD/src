@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20.4.1 2000/09/19 18:15:11 is Exp $
+#	$NetBSD: Makefile,v 1.20.4.2 2002/02/09 17:35:23 he Exp $
 
 ### what we need:
 
@@ -21,7 +21,7 @@ COBJS = main.o console.o xd.o twiddle.o bzero.o gets.o
 COBJS+=  lseek.o open.o read.o close.o dev.o errno.o
 COBJS+=  ufs.o
 
-SOBJS = alloc.o ashrdi3.o bcopy.o muldi3.o printf.o startit.o
+SOBJS = alloc.o ashrdi3.o ashldi3.o bcopy.o muldi3.o printf.o startit.o
 SOBJS += strlen.o strcmp.o
 SOBJS += libstubs.o 
 
