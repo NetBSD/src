@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.54 2000/07/24 10:52:28 itojun Exp $	*/
+/*	$NetBSD: defs.h,v 1.55 2000/08/15 01:08:00 hubertf Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -328,6 +328,7 @@ void	make_ramdisk_dir __P((const char *path));
 void	ask_verbose_dist __P((void));
 int 	get_and_unpack_sets(msg success_msg, msg failure_msg);
 int	sanity_check __P((void));
+int	set_timezone __P((void));
 
 /* from target.c */
 int	must_mount_root __P((void));
