@@ -21,7 +21,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: if_ep.c,v 1.13 1994/02/10 17:17:58 mycroft Exp $
+ *	$Id: if_ep.c,v 1.14 1994/02/14 02:09:31 deraadt Exp $
  */
 /*
  * TODO:
@@ -909,10 +909,14 @@ epmbufqueue(sc)
 	struct ep_softc *sc;
 {
 	int     i = 0;
+	int	s;
 
+	s = splnet();
 	i = sc->last_mb;
-	if (sc->mb[i])
+	if (sc->mb[i]) {
+		splx(s);
 		return;
+	}
 	do {
 		MGET(sc->mb[i], M_DONTWAIT, MT_DATA);
 		if (!sc->mb[i])
@@ -920,6 +924,7 @@ epmbufqueue(sc)
 		i = (i + 1) % MAX_MBS;
 	} while (i != sc->next_mb);
 	sc->last_mb = i;
+	splx(s);
 }
 
 #endif /* NEP > 0 */
