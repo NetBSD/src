@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ray.c,v 1.17 2000/03/23 07:01:42 thorpej Exp $	*/
+/*	$NetBSD: if_ray.c,v 1.18 2000/03/26 20:25:30 kleink Exp $	*/
 /* 
  * Copyright (c) 2000 Christian E. Hopps
  * All rights reserved.
@@ -335,7 +335,11 @@ static struct timeval rtv, tv1, tv2, *ttp, *ltp;
 	microtime(ttp);				\
 	timersub(ttp, ltp, &rtv);		\
 	tmp = ttp; ttp = ltp; ltp = tmp;	\
-	printf("%ld:%ld %ld:%06ld: ", ttp->tv_sec, ttp->tv_usec, rtv.tv_sec, rtv.tv_usec);	\
+	printf("%ld:%ld %ld:%06ld: ",		\
+	    (long int)ttp->tv_sec,		\
+	    (long int)ttp->tv_usec,		\
+	    (long int)rtv.tv_sec,		\
+	    (long int)rtv.tv_usec);		\
 	printf x ;				\
 	} } while (0)
 #define	RAY_DPRINTF_XMIT(x)	do { if (ray_debug_xmit_sum) {	\
@@ -343,7 +347,11 @@ static struct timeval rtv, tv1, tv2, *ttp, *ltp;
 	microtime(ttp);				\
 	timersub(ttp, ltp, &rtv);		\
 	tmp = ttp; ttp = ltp; ltp = tmp;	\
-	printf("%ld:%ld %ld:%06ld: ", ttp->tv_sec, ttp->tv_usec, rtv.tv_sec, rtv.tv_usec);	\
+	printf("%ld:%ld %ld:%06ld: ",		\
+	    (long int)ttp->tv_sec,		\
+	    (long int)ttp->tv_usec,		\
+	    (long int)rtv.tv_sec,		\
+	    (long int)rtv.tv_usec);		\
 	printf x ;				\
 	} } while (0)
 
