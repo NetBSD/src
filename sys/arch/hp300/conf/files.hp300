@@ -1,4 +1,4 @@
-#	$NetBSD: files.hp300,v 1.27 1997/05/05 20:57:29 thorpej Exp $
+#	$NetBSD: files.hp300,v 1.28 1997/05/12 08:23:28 thorpej Exp $
 #
 # hp300-specific configuration info
 
@@ -58,6 +58,11 @@ file	arch/hp300/dev/dio.c		dio
 device	frodo { offset = -1 }
 attach	frodo at intio
 file	arch/hp300/dev/frodo.c		frodo
+
+# Apollo APCI 8250-like UARTs
+device	apci
+attach	apci at frodo
+file	arch/hp300/dev/apci.c		apci needs-flag
 
 # Frame buffer attribute
 define	grfdev { }
