@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_md.h,v 1.1.2.3 2002/07/28 05:15:14 gmcgarry Exp $	*/
+/*	$NetBSD: pthread_md.h,v 1.1.2.4 2002/08/06 18:52:08 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -61,5 +61,42 @@ pthread__sp(void)
  * See comment in pthread_switch.S about STACK_SWITCH.
  */
 #define STACKSPACE	12	/* room for 3 integer values */
+
+/*
+ * Conversions between struct reg and struct mcontext. Used by
+ * libpthread_dbg.
+ */
+
+#define PTHREAD_UCONTEXT_TO_REG(reg, uc) do {				\
+	memcpy(&(reg)->r_regs, &(uc)->uc_mcontext.__gregs,		\
+		_REG_PC * sizeof(__greg_t));				\
+	(reg)->r_sr = (uc)->uc_mcontext.__gregs[_REG_PS];		\
+	(reg)->r_pc = (uc)->uc_mcontext.__gregs[_REG_PC];		\
+	} while (/*CONSTCOND*/0)
+
+#define PTHREAD_REG_TO_UCONTEXT(uc, reg) do {				\
+	memcpy(&(uc)->uc_mcontext.__gregs, &(reg)->r_regs,		\
+		_REG_PC * sizeof(__greg_t));				\
+	(uc)->uc_mcontext.__gregs[_REG_PS] = (reg)->r_sr;		\
+	(uc)->uc_mcontext.__gregs[_REG_PC] = (reg)->r_pc;		\
+	(uc)->uc_flags = ((uc)->uc_flags | _UC_CPU) & ~_UC_USER;       	\
+	} while (/*CONSTCOND*/0)
+
+#define PTHREAD_UCONTEXT_TO_FPREG(freg, uc) do {       			\
+	memcpy(&(freg)->r_regs, &(uc)->uc_mcontext.__fpregs.__fp_fpregs,\
+		8 * 3 * sizeof(int));					\
+	(freg)->r_fpcr = (uc)->uc_mcontext.__fpregs.__fp_pcr;		\
+	(freg)->r_fpsr = (uc)->uc_mcontext.__fpregs.__fp_psr;		\
+	(freg)->r_fpiar = (uc)->uc_mcontext.__fpregs.__fp_piaddr;      	\
+	} while (/*CONSTCOND*/0)
+
+#define PTHREAD_FPREG_TO_UCONTEXT(uc, freg) do {       	       		\
+	memcpy(&(uc)->uc_mcontext.__fpregs.__fp_fpregs, &(freg)->r_regs,\
+		8 * 3 * sizeof(int));					\
+	(uc)->uc_mcontext.__fpregs.__fp_pcr = (freg)->r_fpcr;		\
+	(uc)->uc_mcontext.__fpregs.__fp_psr = (freg)->r_fpsr;		\
+	(uc)->uc_mcontext.__fpregs.__fp_piaddr = (freg)->r_fpiar;      	\
+	(uc)->uc_flags = ((uc)->uc_flags | _UC_FPU) & ~_UC_USER;       	\
+	} while (/*CONSTCOND*/0)
 
 #endif /* _LIB_PTHREAD_M68K_MD_H */
