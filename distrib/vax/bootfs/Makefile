@@ -1,8 +1,10 @@
-#	$NetBSD: Makefile,v 1.1.2.1 2000/03/01 12:35:56 he Exp $
+#	$NetBSD: Makefile,v 1.1.2.2 2000/11/04 19:43:39 he Exp $
 
 # TOP is assumed to be defined by Makefile including this one.
 
 TOP=	${.CURDIR}/..
+
+.include <bsd.own.mk>
 
 MOUNT_POINT?=	/mnt
 VND?=		vnd0
@@ -11,7 +13,7 @@ VND_RDEV=	/dev/r${VND}a
 VND_CDEV=	/dev/${VND}c
 VND_CRDEV=	/dev/r${VND}c
 IMAGE?=		boot.fs
-KERN?=		${.CURDIR}/../../../sys/arch/vax/compile/INSTALL/netbsd
+KERN?=		${KERNOBJDIR}/INSTALL/netbsd
 MDEC=		${DESTDIR}/usr/mdec
 STRIP?=		strip
 
@@ -36,7 +38,7 @@ INO_BYTES?=	204800
 
 CLEANFILES+=	netbsd.ram.gz
 
-all:	bootroot boot.fs
+all:	unconfig bootroot boot.fs
 
 boot.fs: netbsd.ram.gz
 	dd if=/dev/zero of=${IMAGE} count=${DISKSIZE}
