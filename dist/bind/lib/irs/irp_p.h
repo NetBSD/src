@@ -1,4 +1,4 @@
-/*	$NetBSD: irp_p.h,v 1.1.1.1 1999/11/20 18:54:08 veego Exp $	*/
+/*	$NetBSD: irp_p.h,v 1.1.1.1.8.1 2000/10/17 19:50:40 tv Exp $	*/
 
 /*
  * Copyright (c) 1996 by Internet Software Consortium.
@@ -55,7 +55,8 @@ char *irs_irp_read_body(struct irp_p *pvt, size_t *size);
 int irs_irp_get_full_response(struct irp_p *pvt, int *code,
 			      char *text, size_t textlen,
 			      char **body, size_t *bodylen);
-int irs_irp_send_command(struct irp_p *pvt, const char *fmt, ...);
+int irs_irp_send_command(struct irp_p *pvt, const char *fmt, ...)
+     __attribute__((__format__(__printf__, 2, 3)));
 
 
 extern int irp_log_errors;

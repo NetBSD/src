@@ -1,4 +1,4 @@
-/*	$NetBSD: pstat.c,v 1.52 2000/06/12 13:30:04 assar Exp $	*/
+/*	$NetBSD: pstat.c,v 1.52.2.1 2000/10/17 19:50:28 tv Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)pstat.c	8.16 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: pstat.c,v 1.52 2000/06/12 13:30:04 assar Exp $");
+__RCSID("$NetBSD: pstat.c,v 1.52.2.1 2000/10/17 19:50:28 tv Exp $");
 #endif
 #endif /* not lint */
 
@@ -713,7 +713,7 @@ kinfo_vnodes(avnodes)
 	return ((struct e_vnode *)vbuf);
 }
 
-char hdr[]="  LINE RAW CAN OUT  HWT LWT     COL STATE  SESS      PGID DISC\n";
+const char hdr[]="  LINE RAW CAN OUT  HWT LWT     COL STATE  SESS      PGID DISC\n";
 int ttyspace = 128;
 
 void

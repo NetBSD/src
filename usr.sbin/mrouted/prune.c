@@ -1,4 +1,4 @@
-/*	$NetBSD: prune.c,v 1.6 1999/01/23 22:44:43 hwr Exp $	*/
+/*	$NetBSD: prune.c,v 1.6.10.1 2000/10/17 19:50:25 tv Exp $	*/
 
 /*
  * The mrouted program is covered by the license in the accompanying file
@@ -713,7 +713,7 @@ add_table_entry(origin, mcastgrp)
 		struct gtable *g;
 
 		g = gtp ? gtp->gt_gnext : kernel_table;
-		log(LOG_WARNING, 0, "Entry for (%s %s) (rt:%x) exists (rt:%x)",
+		log(LOG_WARNING, 0, "Entry for (%s %s) (rt:%p) exists (rt:%p)",
 		    inet_fmts(r->rt_origin, r->rt_originmask, s1),
 		    inet_fmt(g->gt_mcastgrp, s2),
 		    r, g->gt_route);

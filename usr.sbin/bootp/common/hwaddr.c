@@ -1,8 +1,8 @@
-/*	$NetBSD: hwaddr.c,v 1.4 1998/03/14 04:39:54 lukem Exp $	*/
+/*	$NetBSD: hwaddr.c,v 1.4.10.1 2000/10/17 19:50:20 tv Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hwaddr.c,v 1.4 1998/03/14 04:39:54 lukem Exp $");
+__RCSID("$NetBSD: hwaddr.c,v 1.4.10.1 2000/10/17 19:50:20 tv Exp $");
 #endif
 
 /*
@@ -144,7 +144,7 @@ setarp(s, ia, ha, len)
 	sprintf(buf, "arp -d %s; arp -s %s %s temp",
 		a, a, haddrtoa(ha, len));
 	if (debug > 2)
-		report(LOG_INFO, buf);
+		report(LOG_INFO, "%s", buf);
 	status = system(buf);
 	if (status)
 		report(LOG_ERR, "arp failed, exit code=0x%x", status);

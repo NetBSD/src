@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpdc.c,v 1.1.1.1 2000/03/29 12:38:55 simonb Exp $	*/
+/*	$NetBSD: ntpdc.c,v 1.1.1.1.4.1 2000/10/17 19:50:45 tv Exp $	*/
 
 /*
  * ntpdc - control and monitor your ntpd daemon
@@ -84,8 +84,10 @@ static	void	hostnames	P((struct parse *, FILE *));
 static	void	setdebug	P((struct parse *, FILE *));
 static	void	quit		P((struct parse *, FILE *));
 static	void	version		P((struct parse *, FILE *));
-static	void	warning		P((const char *, const char *, const char *));
-static	void	error		P((const char *, const char *, const char *));
+static	void	warning		P((const char *, ...))
+	__attribute__((__format__(__printf__, 1, 2)));
+static	void	error		P((const char *, ...))
+	__attribute__((__format__(__printf__, 1, 2)));
 static	u_long	getkeyid	P((const char *));
 
 
@@ -562,7 +564,7 @@ getresponse(
 	n = select(sockfd+1, &fds, (fd_set *)0, (fd_set *)0, &tvo);
 
 	if (n == -1) {
-		warning("select fails", "", "");
+		warning("select fails");
 		return -1;
 	}
 	if (n == 0) {
@@ -593,7 +595,7 @@ getresponse(
 
 	n = recv(sockfd, (char *)&rpkt, sizeof(rpkt), 0);
 	if (n == -1) {
-		warning("read", "", "");
+		warning("read");
 		return -1;
 	}
 
@@ -851,7 +853,7 @@ doquery(
 		res = select(sockfd+1, &fds, (fd_set *)0, (fd_set *)0, &tvzero);
 
 		if (res == -1) {
-			warning("polling select", "", "");
+			warning("polling select");
 			return -1;
 		} else if (res > 0)
 
@@ -1633,12 +1635,17 @@ version(
 static void
 warning(
 	const char *fmt,
-	const char *st1,
-	const char *st2
+        ...
 	)
 {
+	va_list ap;
+
 	(void) fprintf(stderr, "%s: ", progname);
-	(void) fprintf(stderr, fmt, st1, st2);
+
+	va_start(ap, fmt);
+	(void) vfprintf(stderr, fmt, ap);
+	va_end(ap);
+	
 	(void) fprintf(stderr, ": ");
 	perror("");
 }
@@ -1650,11 +1657,19 @@ warning(
 static void
 error(
 	const char *fmt,
-	const char *st1,
-	const char *st2
+        ...
 	)
 {
-	warning(fmt, st1, st2);
+	va_list ap;
+
+	(void) fprintf(stderr, "%s: ", progname);
+
+	va_start(ap, fmt);
+	(void) vfprintf(stderr, fmt, ap);
+	va_end(ap);
+	
+	(void) fprintf(stderr, ": ");
+	perror("");
 	exit(1);
 }
 

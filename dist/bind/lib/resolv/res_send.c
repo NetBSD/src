@@ -1,4 +1,4 @@
-/*	$NetBSD: res_send.c,v 1.1.1.1 1999/11/20 18:54:12 veego Exp $	*/
+/*	$NetBSD: res_send.c,v 1.1.1.1.8.1 2000/10/17 19:50:43 tv Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993
@@ -782,7 +782,7 @@ res_nsend(res_state statp,
 		       (stdout, ";; got answer:\n"));
 		DprintQ((statp->options & RES_DEBUG) ||
 			(statp->pfcode & RES_PRF_REPLY),
-			(stdout, ""),
+			(stdout, "%s", ""),
 			ans, (resplen>anssiz)?anssiz:resplen);
 		/*
 		 * If using virtual circuits, we assume that the first server

@@ -1,4 +1,4 @@
-/*	$NetBSD: gspa.c,v 1.5.8.1 2000/07/26 23:13:30 mycroft Exp $	*/
+/*	$NetBSD: gspa.c,v 1.5.8.2 2000/10/17 19:50:22 tv Exp $	*/
 /*
  * GSP assembler main program
  *
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: gspa.c,v 1.5.8.1 2000/07/26 23:13:30 mycroft Exp $");
+__RCSID("$NetBSD: gspa.c,v 1.5.8.2 2000/10/17 19:50:22 tv Exp $");
 #endif
 
 #include <sys/param.h>
@@ -287,7 +287,7 @@ void
 yyerror(char *err)
 {
 
-	perr(err);
+	perr("%s", err);
 	longjmp(synerrjmp, 1);
 }
 

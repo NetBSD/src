@@ -1,8 +1,8 @@
-/*	$NetBSD: dovend.c,v 1.3 1998/03/14 04:39:54 lukem Exp $	*/
+/*	$NetBSD: dovend.c,v 1.3.10.1 2000/10/17 19:50:20 tv Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: dovend.c,v 1.3 1998/03/14 04:39:54 lukem Exp $");
+__RCSID("$NetBSD: dovend.c,v 1.3.10.1 2000/10/17 19:50:20 tv Exp $");
 #endif
 
 /*
@@ -67,7 +67,7 @@ dovend_rfc1497(hp, buf, len)
 	char *tmpstr;
 #endif
 
-	static char noroom[] = "%s: No room for \"%s\" option";
+	static const char noroom[] = "%s: No room for \"%s\" option";
 #define	NEED(LEN, MSG) do                       \
 		if (bytesleft < (LEN)) {         	    \
 			report(LOG_NOTICE, noroom,          \

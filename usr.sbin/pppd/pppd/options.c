@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.31.6.2 2000/09/30 06:21:44 simonb Exp $	*/
+/*	$NetBSD: options.c,v 1.31.6.3 2000/10/17 19:50:28 tv Exp $	*/
 
 /*
  * options.c - handles option processing for PPP.
@@ -24,7 +24,7 @@
 #if 0
 #define RCSID	"Id: options.c,v 1.69 1999/12/23 01:28:52 paulus Exp "
 #else
-__RCSID("$NetBSD: options.c,v 1.31.6.2 2000/09/30 06:21:44 simonb Exp $");
+__RCSID("$NetBSD: options.c,v 1.31.6.3 2000/10/17 19:50:28 tv Exp $");
 #endif
 #endif
 
@@ -280,7 +280,7 @@ option_t general_options[] = {
 #define IMPLEMENTATION ""
 #endif
 
-static char *usage_string = "\
+static const char usage_string[] = "\
 pppd version %s.%d%s\n\
 Usage: %s [ options ], where options are:\n\
 	<device>	Communicate over the named device\n\

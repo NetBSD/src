@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_glob.h,v 1.1.1.1 1999/11/20 18:53:59 veego Exp $	*/
+/*	$NetBSD: ns_glob.h,v 1.1.1.1.8.1 2000/10/17 19:50:34 tv Exp $	*/
 
 /*
  *	from ns.h	4.33 (Berkeley) 8/23/90
@@ -314,14 +314,9 @@ DECL	const struct ns_sym	category_constants[]
 #endif
 ;
 
-DECL	const char panic_msg_no_options[]
-	INIT("no server_options in NS_OPTION_P");
-
-DECL	const char panic_msg_insist_failed[]
-	INIT("%s:%d: insist '%s' failed: %s");
-
-DECL	const char panic_msg_bad_which[]
-	INIT("%s:%d: INCRSTATS(%s): bad \"which\"");
+#define  panic_msg_no_options		"no server_options in NS_OPTION_P"
+#define  panic_msg_insist_failed 	"%s:%d: insist '%s' failed: %s"
+#define  panic_msg_bad_which		"%s:%d: INCRSTATS(%s): bad \"which\""
 
 DECL	u_long			globalStats[nssLast];
 

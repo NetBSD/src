@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)rwhod.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: rwhod.c,v 1.17 1999/12/30 09:10:28 itojun Exp $");
+__RCSID("$NetBSD: rwhod.c,v 1.17.4.1 2000/10/17 19:50:30 tv Exp $");
 #endif
 #endif /* not lint */
 
@@ -385,7 +385,7 @@ void
 quit(msg)
 	char *msg;
 {
-	syslog(LOG_ERR, msg);
+	syslog(LOG_ERR, "%s", msg);
 	exit(1);
 }
 

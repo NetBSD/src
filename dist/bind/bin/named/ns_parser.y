@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_parser.y,v 1.1.1.1 1999/11/20 18:54:00 veego Exp $	*/
+/*	$NetBSD: ns_parser.y,v 1.1.1.1.8.1 2000/10/17 19:50:35 tv Exp $	*/
 
 %{
 #if !defined(lint) && !defined(SABER)
@@ -97,6 +97,8 @@ static u_long chan_max_size;
 static log_channel lookup_channel(char *);
 static void define_channel(char *, log_channel);
 static char *canonical_name(char *);
+
+extern const char *p_order(int order);
 
 int yyparse();
 	
@@ -1763,7 +1765,7 @@ in_port: L_NUMBER
 		if ($1 < 0 || $1 > 65535) {
 		  	parser_warning(0, 
 			  "invalid IP port number '%d'; setting port to 0",
-			               $1);
+			               (int)$1);
 			$1 = 0;
 		} else
 			$$ = htons($1);

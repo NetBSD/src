@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_main.c,v 1.5 2000/03/01 10:49:58 itojun Exp $	*/
+/*	$NetBSD: ns_main.c,v 1.5.4.1 2000/10/17 19:50:34 tv Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 static const char sccsid[] = "@(#)ns_main.c	4.55 (Berkeley) 7/1/91";
@@ -216,10 +216,10 @@ usage() {
 	exit(1);
 }
 
-static char bad_p_option[] =
+static const char bad_p_option[] =
 "-p remote/local obsolete; use 'listen-on' in config file to specify local";
 
-static char bad_directory[] = "chdir failed for directory '%s': %s";
+static const char bad_directory[] = "chdir failed for directory '%s': %s";
 
 /*ARGSUSED*/
 int
@@ -916,8 +916,8 @@ stream_getmsg(evContext lev, void *uap, int fd, int bytes) {
 	sp->s_time = tt.tv_sec;
 
 	if (ns_wouldlog(ns_log_default,5)) {
-		ns_debug(ns_log_default, 5, "sp %#x rfd %d size %d time %d next %#x",
-			sp, sp->s_rfd, sp->s_size, sp->s_time, sp->s_next);
+		ns_debug(ns_log_default, 5, "sp %p rfd %d size %d time %ld next %p",
+			sp, sp->s_rfd, sp->s_size, (long)sp->s_time, sp->s_next);
 		ns_debug(ns_log_default, 5, "\tbufsize %d bytes %d", sp->s_bufsize,
 			 bytes);
 	}
@@ -1125,7 +1125,7 @@ getnetconf(int periodic_scan) {
 		buf = memget(bufsiz);
 		if (!buf)
 			ns_panic(ns_log_default, 1,
-				"memget(interface)", NULL);
+				"memget(interface)");
 		ifc.ifc_len = bufsiz;
 		ifc.ifc_buf = buf;
 #ifdef IRIX_EMUL_IOCTL_SIOCGIFCONF
@@ -1247,7 +1247,7 @@ getnetconf(int periodic_scan) {
 				ifp = (interface *)memget(sizeof *ifp);
 				if (!ifp)
 					ns_panic(ns_log_default, 1,
-						 "memget(interface)", NULL);
+						 "memget(interface)");
 				memset(ifp, 0, sizeof *ifp);
 				APPEND(iflist, ifp, link);
 				ifp->addr = ina;
@@ -2408,8 +2408,7 @@ nsid_init(void) {
 		nsid_vtable = memget(NSID_SHUFFLE_TABLE_SIZE *
 				     (sizeof(u_int16_t)) );
 		if (!nsid_vtable)
-			ns_panic(ns_log_default, 1, "memget(nsid_vtable)",
-				 NULL);
+			ns_panic(ns_log_default, 1, "memget(nsid_vtable)");
 		for (i = 0; i < NSID_SHUFFLE_TABLE_SIZE; i++) {
 			nsid_vtable[i] = nsid_state;
 			nsid_state = (((u_long) nsid_a1 * nsid_state) + nsid_c1)
@@ -2421,7 +2420,7 @@ nsid_init(void) {
 		nsid_algorithm = NSID_USE_POOL;
 		nsid_pool = memget(0x10000 * (sizeof(u_int16_t)));
 		if (!nsid_pool)
-			ns_panic(ns_log_default, 1, "memget(nsid_pool)", NULL);
+			ns_panic(ns_log_default, 1, "memget(nsid_pool)");
 		for (i = 0; ; i++) {
 			nsid_pool[i] = nsid_state;
 			nsid_state = (((u_long) nsid_a1 * nsid_state) + nsid_c1)                                     & 0xFFFF;
@@ -2475,7 +2474,7 @@ nsid_next() {
 		else
 			nsid_state++;
 	} else
-		ns_panic(ns_log_default, 1, "Unknown ID algorithm", NULL);
+		ns_panic(ns_log_default, 1, "Unknown ID algorithm");
 
 	/* Now lets obfuscate ... */
 	id = (((u_long) nsid_a2 * id) + nsid_c2) & 0xFFFF;
@@ -2600,7 +2599,7 @@ toggle_qrylog(void) {
 
 static void
 wild(void) {
-	ns_panic(ns_log_default, 1, "wild need", NULL);
+	ns_panic(ns_log_default, 1, "wild need");
 }
 
 /*
@@ -2641,7 +2640,7 @@ handle_need(void) {
 			(handlers[need])();
 			return;
 		}
-	ns_panic(ns_log_default, 1, "handle_need() found no needs", NULL);
+	ns_panic(ns_log_default, 1, "handle_need() found no needs");
 }
 
 void
