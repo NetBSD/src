@@ -1,4 +1,4 @@
-/*	$NetBSD: brconfig.c,v 1.9 2005/01/20 15:47:51 xtraeme Exp $	*/
+/*	$NetBSD: brconfig.c,v 1.10 2005/03/20 15:34:47 yamt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -43,7 +43,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: brconfig.c,v 1.9 2005/01/20 15:47:51 xtraeme Exp $");
+__RCSID("$NetBSD: brconfig.c,v 1.10 2005/03/20 15:34:47 yamt Exp $");
 #endif
 
 
@@ -153,10 +153,6 @@ int	aflag;
 
 struct ifreq g_ifr;
 int	g_ifr_updated;
-
-#define	IFFBITS \
-"\020\1UP\2BROADCAST\3DEBUG\4LOOPBACK\5POINTOPOINT\6NOTRAILERS\7RUNNING\10NOARP\
-\11PROMISC\12ALLMULTI\13OACTIVE\14SIMPLEX\15LINK0\16LINK1\17LINK2\20MULTICAST"
 
 int
 main(int argc, char *argv[])
