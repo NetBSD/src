@@ -1,4 +1,4 @@
-/*	$NetBSD: facpri.c,v 1.1.1.2 2000/05/03 10:55:30 veego Exp $	*/
+/*	$NetBSD: facpri.c,v 1.2 2000/05/03 11:40:16 veego Exp $	*/
 
 /*
  * Copyright (C) 1993-2000 by Darren Reed.

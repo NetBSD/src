@@ -1,4 +1,4 @@
-/*	$NetBSD: opt.c,v 1.1.1.2 2000/05/03 10:55:54 veego Exp $	*/
+/*	$NetBSD: opt.c,v 1.2 2000/05/03 11:40:17 veego Exp $	*/
 
 /*
  * Copyright (C) 1993-2000 by Darren Reed.
