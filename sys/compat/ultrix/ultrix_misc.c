@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_misc.c,v 1.95 2004/10/27 19:29:57 david Exp $	*/
+/*	$NetBSD: ultrix_misc.c,v 1.96 2005/01/24 10:08:02 drochner Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_misc.c,v 1.95 2004/10/27 19:29:57 david Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_misc.c,v 1.96 2005/01/24 10:08:02 drochner Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
@@ -142,6 +142,7 @@ __KERNEL_RCSID(0, "$NetBSD: ultrix_misc.c,v 1.95 2004/10/27 19:29:57 david Exp $
 
 #ifdef __mips
 #include <mips/cachectl.h>
+#include <mips/frame.h>
 #endif
 
 static int ultrix_to_bsd_flock(struct ultrix_flock *, struct flock *);
@@ -169,7 +170,7 @@ const struct emul emul_ultrix = {
 #endif
 	ultrix_sysent,
 	ultrix_syscallnames,
-	sendsig,
+	sendsig_sigcontext,
 	trapsignal,
 	NULL,
 	ultrix_sigcode,
