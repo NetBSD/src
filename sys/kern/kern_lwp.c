@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.1.2.12 2002/07/12 01:40:17 nathanw Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.1.2.13 2002/07/12 03:08:32 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -319,8 +319,8 @@ lwp_wait1(struct lwp *l, lwpid_t lid, lwpid_t *departed, int flags)
 	if (lid == l->l_lid)
 		return (EDEADLK); /* Waiting for ourselves makes no sense. */
 	
-	wpri = PWAIT | PCATCH | 
-	    ((flags & LWPWAIT_EXITCONTROL) ? PNOEXITERR : 0);
+	wpri = PWAIT |
+	    ((flags & LWPWAIT_EXITCONTROL) ? PNOEXITERR : PCATCH);
  loop:       
 	nfound = 0;
 	LIST_FOREACH(l2, &p->p_lwps, l_sibling) {
