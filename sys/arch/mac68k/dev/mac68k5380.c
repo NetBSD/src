@@ -1,4 +1,4 @@
-/*	$NetBSD: mac68k5380.c,v 1.23 1996/05/05 06:16:51 briggs Exp $	*/
+/*	$NetBSD: mac68k5380.c,v 1.23.4.1 1996/06/01 06:14:37 scottr Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs
@@ -127,8 +127,9 @@ static volatile u_char	*ncr_5380_without_drq	= (volatile u_char *) 0x12000;
 #define GET_5380_REG(rnum)	SCSI_5380->scsi_5380[((rnum)<<4)]
 #define SET_5380_REG(rnum,val)	(SCSI_5380->scsi_5380[((rnum)<<4)] = (val))
 
-void	ncr5380_irq_intr(void *);
-void	ncr5380_drq_intr(void *);
+static void	ncr5380_irq_intr(void *);
+static void	ncr5380_drq_intr(void *);
+static void	do_ncr5380_drq_intr __P((void *));
 
 static __inline__ void	scsi_clr_ipend __P((void));
 static		  void	scsi_mach_init __P((struct ncr_softc *sc));
@@ -144,6 +145,7 @@ scsi_clr_ipend()
 	int	tmp;
 
 	tmp = GET_5380_REG(NCR5380_IRCV);
+	scsi_clear_irq();
 }
 
 static void
@@ -162,10 +164,13 @@ scsi_mach_init(sc)
 	ncr_5380_without_drq	= (volatile u_char *)
 			  (SCSIBase + (u_int) ncr_5380_without_drq);
 
-	if (VIA2 == VIA2OFF)
+	if (VIA2 == VIA2OFF) {
 		scsi_enable = Via1Base + VIA2 * 0x2000 + vIER;
-	else
+		scsi_flag   = Via1Base + VIA2 * 0x2000 + vIFR;
+	} else {
 		scsi_enable = Via1Base + VIA2 * 0x2000 + rIER;
+		scsi_flag   = Via1Base + VIA2 * 0x2000 + rIFR;
+	}
 
 	mac68k_register_scsi_irq(ncr5380_irq_intr, sc);
 	mac68k_register_scsi_drq(ncr5380_drq_intr, sc);
@@ -270,33 +275,25 @@ extern	u_char	ncr5380_no_parchk;
 	if (pdma_5380_dir) {
 		PID("pdma_ready1.")
 		/*
-		 * If Mr. IRQ isn't set one might wonder how we got
-		 * here.  It does happen, though.
-		 */
-		dmstat = GET_5380_REG(NCR5380_DMSTAT);
-		if (!(dmstat & SC_IRQ_SET)) {
-			PID("pdma_ready2");
-			return 0;
-		}
-		/*
 		 * For a phase mis-match, ATN is a "don't care," IRQ is 1 and
 		 * all other bits in the Bus & Status Register are 0.  Also,
 		 * the current SCSI Bus Status Register has a 1 for BSY and
 		 * REQ.  Since we're just checking that this interrupt isn't a
 		 * reselection or a reset, we just check for either.
 		 */
+		dmstat = GET_5380_REG(NCR5380_DMSTAT);
 		idstat = GET_5380_REG(NCR5380_IDSTAT);
 		if (   ((dmstat & (0xff & ~SC_ATN_STAT)) == SC_IRQ_SET)
 		    && ((idstat & (SC_S_BSY|SC_S_REQ))
 			== (SC_S_BSY | SC_S_REQ)) ) {
-			PID("pdma_ready3");
+			PID("pdma_ready2");
 			pdma_cleanup();
 			return 1;
 		} else if (PH_IN(reqp->phase) && (dmstat & SC_PAR_ERR)) {
 			if (!(ncr5380_no_parchk & (1 << reqp->targ_id)))
 				/* XXX: Should be parity error ???? */
 				reqp->xs->error = XS_DRIVER_STUFFUP;
-			PID("pdma_ready4");
+			PID("pdma_ready3");
 			/* XXX: is this the right reaction? */
 			pdma_cleanup();
 			return 1;
@@ -315,25 +312,24 @@ extern	u_char	ncr5380_no_parchk;
 			panic("Spurious interrupt during PDMA xfer.\n");
 		}
 	} else
-		PID("pdma_ready5");
+		PID("pdma_ready4");
 #endif
 	return 0;
 }
 
-void
+static void
 ncr5380_irq_intr(p)
 	void	*p;
 {
 	PID("irq");
+
 #if USE_PDMA
 	if (pdma_ready()) {
 		return;
 	}
 #endif
-	if (GET_5380_REG(NCR5380_DMSTAT) & SC_IRQ_SET) {
-		scsi_idisable();
-		ncr_ctrl_intr(cur_softc);
-	}
+	scsi_idisable();
+	ncr_ctrl_intr(cur_softc);
 }
 
 /*
@@ -351,8 +347,8 @@ ncr5380_irq_intr(p)
  * detect and handle the bus error for early termination of a command.
  * This is usually caused by a disconnecting target.
  */
-void
-ncr5380_drq_intr(p)
+static void
+do_ncr5380_drq_intr(p)
 	void	*p;
 {
 #if USE_PDMA
@@ -361,34 +357,8 @@ extern	int			*nofault, mac68k_buserr_addr;
 	register int		count;
 	volatile u_int32_t	*long_drq;
 	u_int32_t		*long_data;
-	volatile u_int8_t	*drq;
+	volatile u_int8_t	*drq, tmp_data;
 	u_int8_t		*data;
-
-	/*
-	 * If we're not ready to xfer data, just return.
-	 */
-	if (   !(GET_5380_REG(NCR5380_DMSTAT) & SC_DMA_REQ)
-	    || !pdma_5380_dir) {
-		PID("drq0");
-		return;
-	}
-
-	/*
-	 * I don't think this should be necessary, but it is
-	 * for writes--at least to some devices.  They don't
-	 * let go of PH_DATAOUT until we do pdma_cleanup().
-	 */
-	if (pending_5380_count == 0) {
-#if DBG_PID
-		if (pdma_5380_dir == 2) {
-			PID("drq1 (in)");
-		} else {
-			PID("drq1 (out)");
-		}
-#endif
-		pdma_cleanup();
-		return;
-	}
 
 #if DBG_PID
 	if (pdma_5380_dir == 2) {
@@ -420,8 +390,10 @@ extern	int			*nofault, mac68k_buserr_addr;
 		pending_5380_data += count;
 		pending_5380_count -= count;
 
-		PID("end drq early");
 		mac68k_buserr_addr = 0;
+
+		PID("end drq early");
+
 		return;
 	}
 
@@ -456,31 +428,10 @@ extern	int			*nofault, mac68k_buserr_addr;
 		long_data = (u_int32_t *) pending_5380_data;
 
 #define R4	*long_data++ = *long_drq++
-		while ( count >= 512 ) {
-			if (!(GET_5380_REG(NCR5380_DMSTAT) & SC_DMA_REQ)) {
-				nofault = (int *) 0;
-
-				pending_5380_data += (dcount - count);
-				pending_5380_count -= (dcount - count);
-				return;
-			}
+		while ( count >= 64 ) {
 			R4; R4; R4; R4; R4; R4; R4; R4;
 			R4; R4; R4; R4; R4; R4; R4; R4;	/* 64 */
-			R4; R4; R4; R4; R4; R4; R4; R4;
-			R4; R4; R4; R4; R4; R4; R4; R4;	/* 128 */
-			R4; R4; R4; R4; R4; R4; R4; R4;
-			R4; R4; R4; R4; R4; R4; R4; R4;
-			R4; R4; R4; R4; R4; R4; R4; R4;
-			R4; R4; R4; R4; R4; R4; R4; R4;	/* 256 */
-			R4; R4; R4; R4; R4; R4; R4; R4;
-			R4; R4; R4; R4; R4; R4; R4; R4;
-			R4; R4; R4; R4; R4; R4; R4; R4;
-			R4; R4; R4; R4; R4; R4; R4; R4;
-			R4; R4; R4; R4; R4; R4; R4; R4;
-			R4; R4; R4; R4; R4; R4; R4; R4;
-			R4; R4; R4; R4; R4; R4; R4; R4;
-			R4; R4; R4; R4; R4; R4; R4; R4;	/* 512 */
-			count -= 512;
+			count -= 64;
 		}
 		while (count >= 4) {
 			R4; count -= 4;
@@ -546,6 +497,14 @@ extern	int			*nofault, mac68k_buserr_addr;
 		pending_5380_count -= dcount;
 		pending_5380_data += dcount;
 		}
+		PID("write complete");
+
+		drq = (volatile u_int8_t *) ncr_5380_with_drq;
+		tmp_data = *drq;
+
+		PID("read a byte?");
+
+		nofault = (int *) 0;
 	}
 
 	/*
@@ -555,8 +514,22 @@ extern	int			*nofault, mac68k_buserr_addr;
 	nofault = (int *) 0;
 
 	PID("end drq");
+	return;
+#else
+	return;
 #endif	/* if USE_PDMA */
 }
+
+static void
+ncr5380_drq_intr(p)
+	void	*p;
+{
+	while (GET_5380_REG(NCR5380_DMSTAT) & SC_DMA_REQ) {
+		do_ncr5380_drq_intr(p);
+		scsi_clear_drq();
+	}
+}
+
 
 #if USE_PDMA
 
