@@ -1,4 +1,4 @@
-/*	$NetBSD: tputs.c,v 1.8 1998/07/27 01:57:26 mycroft Exp $	*/
+/*	$NetBSD: tputs.c,v 1.9 1999/02/02 12:34:56 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,11 +38,10 @@
 #if 0
 static char sccsid[] = "@(#)tputs.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: tputs.c,v 1.8 1998/07/27 01:57:26 mycroft Exp $");
+__RCSID("$NetBSD: tputs.c,v 1.9 1999/02/02 12:34:56 christos Exp $");
 #endif
 #endif /* not lint */
 
-#include <sgtty.h>
 #include <ctype.h>
 #include <termcap.h>
 #undef ospeed

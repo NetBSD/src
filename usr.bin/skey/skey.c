@@ -1,4 +1,4 @@
-/*	$NetBSD: skey.c,v 1.7 1998/02/03 04:10:42 perry Exp $	*/
+/*	$NetBSD: skey.c,v 1.8 1999/02/02 12:36:09 christos Exp $	*/
 
 /*
  * S/KEY v1.1b (skey.c)
@@ -23,12 +23,11 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: skey.c,v 1.7 1998/02/03 04:10:42 perry Exp $");
+__RCSID("$NetBSD: skey.c,v 1.8 1999/02/02 12:36:09 christos Exp $");
 #endif
 
 #include <sys/cdefs.h>
 #include <fcntl.h>
-#include <sgtty.h>
 #include <stdio.h>
 #include <skey.h>
 #include <stdlib.h>
