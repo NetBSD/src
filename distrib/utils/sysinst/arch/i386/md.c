@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.90 2003/07/07 12:30:25 dsl Exp $ */
+/*	$NetBSD: md.c,v 1.91 2003/07/08 17:39:00 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -296,7 +296,8 @@ md_post_newfs(void)
 	/* Copy bootstrap in by hand - /sbin/installboot explodes ramdisks */
 	ret = 1;
 
-	td = opendisk(diskdev, O_RDWR, bootxx, sizeof bootxx, 0);
+	snprintf(bootxx, sizeof bootxx, "/dev/r%s%c", diskdev, 'a' + rootpart);
+	td = open(bootxx, O_RDWR, 0);
 	sd = open("/usr/mdec/bootxx_ffsv1", O_RDONLY);
 	if (td == -1 || sd == -1)
 		goto bad_bootxx;
@@ -312,10 +313,10 @@ md_post_newfs(void)
 		bp.bp_conspeed = atoi(boottype + 6);
 	}
 
-	if (pwrite(td, bootxx, 512, ptstart * (off_t)512) != 512)
+	if (pwrite(td, bootxx, 512, 0) != 512)
 		goto bad_bootxx;
 	len -= 512 * 2;
-	if (pwrite(td, bootxx + 512*2, len, (ptstart + 2) * (off_t)512) != len)
+	if (pwrite(td, bootxx + 512 * 2, len, 2 * (off_t)512) != len)
 		goto bad_bootxx;
 	ret = 0;
 

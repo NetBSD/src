@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.62 2003/07/07 12:30:19 dsl Exp $ */
+/*	$NetBSD: disks.c,v 1.63 2003/07/08 17:38:55 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -549,7 +549,7 @@ fsck_root(void)
 	char	rootdev[STRSIZE];
 
 	/* cons up the root name: partition 'a' on the target diskdev.*/
-	snprintf(rootdev, STRSIZE, "%s%c", diskdev, 'a');
+	snprintf(rootdev, STRSIZE, "%s%c", diskdev, 'a' + rootpart);
 #ifdef DEBUG
 	printf("fsck_root: rootdev is %s\n", rootdev);
 #endif
