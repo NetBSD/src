@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_sh3.c,v 1.3 2002/03/03 14:31:26 uch Exp $	*/
+/*	$NetBSD: cache_sh3.c,v 1.4 2002/03/24 18:04:41 uch Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -67,8 +67,6 @@ sh3_cache_config()
 	/* Determine cache size */
 	switch (cpu_product) {
 	default:
-		/* FALLTHROUGH */
-	case CPU_PRODUCT_UNKNOWN:
 		/* FALLTHROUGH */
 	case CPU_PRODUCT_7708:
 		/* FALLTHROUGH */

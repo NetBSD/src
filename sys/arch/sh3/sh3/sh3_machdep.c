@@ -1,4 +1,4 @@
-/*	$NetBSD: sh3_machdep.c,v 1.35 2002/03/18 17:00:20 itojun Exp $	*/
+/*	$NetBSD: sh3_machdep.c,v 1.36 2002/03/24 18:04:41 uch Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2002 The NetBSD Foundation, Inc.
@@ -103,11 +103,12 @@ const char kgdb_devname[] = KGDB_DEVNAME;
 
 #include <uvm/uvm_extern.h>
 
-#include <sh3/trapreg.h>
 #include <sh3/cache.h>
-#include <sh3/mmu.h>
 #include <sh3/clock.h>
+#include <sh3/exception.h>
 #include <sh3/locore.h>
+#include <sh3/mmu.h>
+#include <sh3/intr.h>
 
 /* Our exported CPU info; we can have only one. */  
 struct cpu_info cpu_info_store;
@@ -161,6 +162,9 @@ sh_cpu_init(int arch, int product)
 
 	/* Hardclock, RTC initialize. */
 	machine_clock_init();
+
+	/* ICU initiailze. */
+	intc_init();
 
 	/* Exception vector. */
 	memcpy(VBR + 0x100, sh_vector_generic,
@@ -251,6 +255,7 @@ sh_proc0_init(vaddr_t kernend, paddr_t pstart, paddr_t pend)
 	 * pcb_fp and pcb_sp are stored into r6_bank, r7_bank
 	 * when context switching.
 	 */
+
 	curpcb->pcb_sp = p0 + USPACE;
 	curpcb->pcb_fp = p0 + NBPG;
 	curpcb->pcb_sf.sf_r6_bank = curpcb->pcb_fp;
@@ -266,12 +271,15 @@ sh_proc0_init(vaddr_t kernend, paddr_t pstart, paddr_t pend)
 	    NBPG - sizeof(struct user));
 	memset((char *)(p0 + NBPG), 0xa5, USPACE - NBPG);
 #endif
+
 	/* Enable MMU */
 	sh_mmu_start();
 
-	/* Enable exception */
-	splraise(-1);
-	_cpu_exception_resume(0); /* SR.BL = 0 */
+	/* Mask all interrupt */
+	_cpu_intr_suspend();
+
+	/* Enable exception for P3 access */
+	_cpu_exception_resume(0);
 
 	return (p0 + sz - kernend);
 }
@@ -286,7 +294,8 @@ sh_startup()
 	char pbuf[9];
 
 	printf(version);
-
+	if (*cpu_model != '\0')
+		printf("%s", cpu_model);
 #ifdef DEBUG
 	printf("general exception handler:\t%d byte\n",
 	       sh_vector_generic_end - sh_vector_generic);
@@ -296,12 +305,6 @@ sh_startup()
 	printf("interrupt exception handler:\t%d byte\n",
 	       sh_vector_interrupt_end - sh_vector_interrupt);
 #endif /* DEBUG */
-
-#define MHZ(x) ((x) / 1000000), (((x) % 1000000) / 1000)
-	sprintf(cpu_model, "HITACHI SH%d %d.%02dMHz PCLOCK %d.%02d MHz",
-	    CPU_IS_SH3 ? 3 : 4, MHZ(sh_clock_get_cpuclock()),
-	    MHZ(sh_clock_get_pclock()));
-#undef MHZ
 
 	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
 	printf("total memory = %s\n", pbuf);
@@ -380,19 +383,11 @@ sh_startup()
 	format_bytes(pbuf, sizeof(pbuf), bufpages * NBPG);
 	printf("using %d buffers containing %s of memory\n", nbuf, pbuf);
 
-	/* 
-	 * Print cache configuration.
-	 */
-	sh_cache_information();
-	/*
-	 * Print MMU configuration.
-	 */
-	sh_mmu_information();
-	
 	/*
 	 * Set up buffers, so they can be used to read disk labels.
 	 */
 	bufinit();
+
 }
 
 /*
