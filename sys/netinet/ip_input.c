@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.66 1998/05/24 20:14:53 thorpej Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.67 1998/06/01 00:39:37 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1400,10 +1400,16 @@ ip_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 		return (error);
 #ifdef GATEWAY
 	case IPCTL_MAXFLOWS:
+	    {
+		int s;
+
 		error = sysctl_int(oldp, oldlenp, newp, newlen,
 		   &ip_maxflows);
+		s = splsoftnet();
 		ipflow_reap(0);
+		splx(s);
 		return (error);
+	    }
 #endif
 	default:
 		return (EOPNOTSUPP);
