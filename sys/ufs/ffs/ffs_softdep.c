@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.50.2.7 2004/10/27 06:48:24 skrll Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.50.2.8 2004/10/30 06:44:10 skrll Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.50.2.7 2004/10/27 06:48:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.50.2.8 2004/10/30 06:44:10 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -916,8 +916,7 @@ softdep_flushworklist(oldmnt, countp, l)
 	while ((count = softdep_process_worklist(oldmnt)) > 0) {
 		*countp += count;
 		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
-		error = VOP_FSYNC(devvp, p->p_ucred,
-		    FSYNC_WAIT, 0, 0, l);
+		error = VOP_FSYNC(devvp, p->p_ucred, FSYNC_WAIT, 0, 0, l);
 		VOP_UNLOCK(devvp, 0);
 		if (error)
 			break;
@@ -3275,8 +3274,7 @@ handle_workitem_remove(dirrem)
 	ino_t oldinum;
 	int error;
 
-	if ((error = VFS_VGET(dirrem->dm_mnt, dirrem->dm_oldinum,
-	    &vp)) != 0) {
+	if ((error = VFS_VGET(dirrem->dm_mnt, dirrem->dm_oldinum, &vp)) != 0) {
 		softdep_error("handle_workitem_remove: vget", error);
 		return;
 	}
@@ -5370,12 +5368,13 @@ request_cleanup(resource, islocked)
 	int resource;
 	int islocked;
 {
+	struct proc *p = CURPROC;
 	int s;
 
 	/*
 	 * We never hold up the filesystem syncer process.
 	 */
-	if (curproc == filesys_syncer)		/* XXX */
+	if (p == filesys_syncer)
 		return (0);
 	/*
 	 * If we are resource constrained on inode dependencies, try
