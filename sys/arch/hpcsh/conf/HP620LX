@@ -1,9 +1,9 @@
-#	$NetBSD: HP620LX,v 1.1 2001/06/28 19:07:13 uch Exp $
+#	$NetBSD: HP620LX,v 1.2 2001/07/08 17:02:36 uch Exp $
 #
 #	HP620LX
 #
 
-include "arch/hpcsh/conf/std.hpcsh.el"
+include "arch/hpcsh/conf/std.hpcsh"
 
 maxusers	32			# estimated number of users
 
