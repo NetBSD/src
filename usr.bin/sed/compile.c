@@ -37,7 +37,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)compile.c	8.1 (Berkeley) 6/6/93"; */
-static char *rcsid = "$Id: compile.c,v 1.12 1994/11/09 19:30:32 mycroft Exp $";
+static char *rcsid = "$Id: compile.c,v 1.13 1994/11/15 19:03:25 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -186,18 +186,18 @@ semicolon:	EATSPACE();
 			p = compile_addr(p, cmd->a1);
 			EATSPACE();				/* EXTENSION */
 			if (*p == ',') {
-				naddr++;
 				p++;
 				EATSPACE();			/* EXTENSION */
+				naddr++;
 				cmd->a2 = xmalloc(sizeof(struct s_addr));
 				p = compile_addr(p, cmd->a2);
+				EATSPACE();
 			} else
 				cmd->a2 = 0;
 		} else
-			cmd->a1 = 0;
+			cmd->a1 = cmd->a2 = 0;
 
 nonsel:		/* Now parse the command */
-		EATSPACE();
 		if (!*p)
 			err(COMPILE, "command expected");
 		cmd->code = *p;
@@ -211,8 +211,9 @@ nonsel:		/* Now parse the command */
 "command %c expects up to %d address(es), found %d", *p, fp->naddr, naddr);
 		switch (fp->args) {
 		case NONSEL:			/* ! */
-			cmd->nonsel = ! cmd->nonsel;
 			p++;
+			EATSPACE();
+			cmd->nonsel = ! cmd->nonsel;
 			goto nonsel;
 		case GROUP:			/* { */
 			p++;
