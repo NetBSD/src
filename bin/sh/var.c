@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)var.c	8.1 (Berkeley) 5/31/93";*/
-static char *rcsid = "$Id: var.c,v 1.8 1994/06/11 16:12:39 mycroft Exp $";
+static char *rcsid = "$Id: var.c,v 1.9 1994/09/23 11:28:46 mycroft Exp $";
 #endif /* not lint */
 
 /*
@@ -504,7 +504,7 @@ mklocal(name)
 	lvp = ckmalloc(sizeof (struct localvar));
 	if (name[0] == '-' && name[1] == '\0') {
 		lvp->text = ckmalloc(sizeof optlist);
-		bcopy(optlist, lvp->text, sizeof optlist);
+		memcpy(lvp->text, optlist, sizeof optlist);
 		vp = NULL;
 	} else {
 		vpp = hashvar(name);
@@ -545,7 +545,7 @@ poplocalvars() {
 		localvars = lvp->next;
 		vp = lvp->vp;
 		if (vp == NULL) {	/* $- saved */
-			bcopy(lvp->text, optlist, sizeof optlist);
+			memcpy(optlist, lvp->text, sizeof optlist);
 			ckfree(lvp->text);
 		} else if ((lvp->flags & (VUNSET|VSTRFIXED)) == VUNSET) {
 			(void)unsetvar(vp->text);

@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)jobs.c	8.1 (Berkeley) 5/31/93";*/
-static char *rcsid = "$Id: jobs.c,v 1.11 1994/06/11 16:12:01 mycroft Exp $";
+static char *rcsid = "$Id: jobs.c,v 1.12 1994/09/23 11:28:42 mycroft Exp $";
 #endif /* not lint */
 
 #include "shell.h"
@@ -137,10 +137,10 @@ setjobctl(on) {
 		setsignal(SIGTSTP);
 		setsignal(SIGTTOU);
 		setsignal(SIGTTIN);
-		setpgrp(0, rootpid);
+		setpgid(0, rootpid);
 		ioctl(2, TIOCSPGRP, (char *)&rootpid);
 	} else { /* turning job control off */
-		setpgrp(0, initialpgrp);
+		setpgid(0, initialpgrp);
 		ioctl(2, TIOCSPGRP, (char *)&initialpgrp);
 		setsignal(SIGTSTP);
 		setsignal(SIGTTOU);
@@ -459,7 +459,7 @@ makejob(node, nprocs)
 				jobtab = ckmalloc(4 * sizeof jobtab[0]);
 			} else {
 				jp = ckmalloc((njobs + 4) * sizeof jobtab[0]);
-				bcopy(jobtab, jp, njobs * sizeof jp[0]);
+				memcpy(jp, jobtab, njobs * sizeof jp[0]);
 				ckfree(jobtab);
 				jobtab = jp;
 			}
@@ -542,7 +542,7 @@ forkshell(jp, n, mode)
 				pgrp = getpid();
 			else
 				pgrp = jp->ps[0].pid;
-			setpgrp(0, pgrp);
+			setpgid(0, pgrp);
 			if (mode == FORK_FG) {
 				/*** this causes superfluous TIOCSPGRPS ***/
 				if (ioctl(2, TIOCSPGRP, (char *)&pgrp) < 0)
@@ -584,7 +584,7 @@ forkshell(jp, n, mode)
 			pgrp = pid;
 		else
 			pgrp = jp->ps[0].pid;
-		setpgrp(pid, pgrp);
+		setpgid(pid, pgrp);
 	}
 	if (mode == FORK_BG)
 		backgndpid = pid;		/* set $! */

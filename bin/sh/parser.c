@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)parser.c	8.1 (Berkeley) 5/31/93";*/
-static char *rcsid = "$Id: parser.c,v 1.20 1994/08/24 05:48:28 mycroft Exp $";
+static char *rcsid = "$Id: parser.c,v 1.21 1994/09/23 11:28:45 mycroft Exp $";
 #endif /* not lint */
 
 #include "shell.h"
@@ -1194,7 +1194,7 @@ parsebackq: {
 	savelen = out - stackblock();
 	if (savelen > 0) {
 		str = ckmalloc(savelen);
-		bcopy(stackblock(), str, savelen);
+		memcpy(str, stackblock(), savelen);
 	}
 	savehandler = handler;
 	handler = &jmploc;
@@ -1222,7 +1222,7 @@ parsebackq: {
                 savelen = out - stackblock();
                 if (savelen > 0) {
                         str = ckmalloc(savelen);
-                        bcopy(stackblock(), str, savelen);
+                        memcpy(str, stackblock(), savelen);
                 }
                 setinputstring(str, 1);
         }
@@ -1243,7 +1243,7 @@ parsebackq: {
 		growstackblock();
 	STARTSTACKSTR(out);
 	if (str) {
-		bcopy(str, out, savelen);
+		memcpy(out, str, savelen);
 		STADJUST(savelen, out);
 		INTOFF;
 		ckfree(str);

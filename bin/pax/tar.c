@@ -37,7 +37,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)tar.c	8.2 (Berkeley) 4/18/94";*/
-static char *rcsid = "$Id: tar.c,v 1.3 1994/06/14 00:43:37 mycroft Exp $";
+static char *rcsid = "$Id: tar.c,v 1.4 1994/09/23 11:35:13 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -630,7 +630,7 @@ tar_wr(arcn)
 		 * dirs, so no pad.
 		 */
 		hd->linkflag = AREGTYPE;
-		bzero(hd->linkname, sizeof(hd->linkname));
+		memset(hd->linkname, 0, sizeof(hd->linkname));
 		hd->name[len-1] = '/';
 		if (ul_oct((u_long)0L, hd->size, sizeof(hd->size), 1))
 			goto out;
@@ -655,7 +655,7 @@ tar_wr(arcn)
 		 * data follows this file, so set the pad
 		 */
 		hd->linkflag = AREGTYPE;
-		bzero(hd->linkname, sizeof(hd->linkname));
+		memset(hd->linkname, 0, sizeof(hd->linkname));
 #		ifdef NET2_STAT
 		if (ul_oct((u_long)arcn->sb.st_size, hd->size,
 		    sizeof(hd->size), 1)) {
@@ -1004,7 +1004,7 @@ ustar_wr(arcn)
 		zf_strncpy(hd->prefix, arcn->name, sizeof(hd->prefix));
 		*pt++ = '/';
 	} else
-		bzero(hd->prefix, sizeof(hd->prefix));
+		memset(hd->prefix, 0, sizeof(hd->prefix));
 
 	/*
 	 * copy the name part. this may be the whole path or the part after
@@ -1018,9 +1018,9 @@ ustar_wr(arcn)
 	switch(arcn->type) {
 	case PAX_DIR:
 		hd->typeflag = DIRTYPE;
-		bzero(hd->linkname, sizeof(hd->linkname));
-		bzero(hd->devmajor, sizeof(hd->devmajor));
-		bzero(hd->devminor, sizeof(hd->devminor));
+		memset(hd->linkname, 0, sizeof(hd->linkname));
+		memset(hd->devmajor, 0, sizeof(hd->devmajor));
+		memset(hd->devminor, 0, sizeof(hd->devminor));
 		if (ul_oct((u_long)0L, hd->size, sizeof(hd->size), 3))
 			goto out;
 		break;
@@ -1030,7 +1030,7 @@ ustar_wr(arcn)
 			hd->typeflag = CHRTYPE;
 		else
 			hd->typeflag = BLKTYPE;
-		bzero(hd->linkname, sizeof(hd->linkname));
+		memset(hd->linkname, 0, sizeof(hd->linkname));
 		if (ul_oct((u_long)MAJOR(arcn->sb.st_rdev), hd->devmajor,
 		   sizeof(hd->devmajor), 3) ||
 		   ul_oct((u_long)MINOR(arcn->sb.st_rdev), hd->devminor,
@@ -1040,9 +1040,9 @@ ustar_wr(arcn)
 		break;
 	case PAX_FIF:
 		hd->typeflag = FIFOTYPE;
-		bzero(hd->linkname, sizeof(hd->linkname));
-		bzero(hd->devmajor, sizeof(hd->devmajor));
-		bzero(hd->devminor, sizeof(hd->devminor));
+		memset(hd->linkname, 0, sizeof(hd->linkname));
+		memset(hd->devmajor, 0, sizeof(hd->devmajor));
+		memset(hd->devminor, 0, sizeof(hd->devminor));
 		if (ul_oct((u_long)0L, hd->size, sizeof(hd->size), 3))
 			goto out;
 		break;
@@ -1054,8 +1054,8 @@ ustar_wr(arcn)
 		else
 			hd->typeflag = LNKTYPE;
 		zf_strncpy(hd->linkname,arcn->ln_name, sizeof(hd->linkname));
-		bzero(hd->devmajor, sizeof(hd->devmajor));
-		bzero(hd->devminor, sizeof(hd->devminor));
+		memset(hd->devmajor, 0, sizeof(hd->devmajor));
+		memset(hd->devminor, 0, sizeof(hd->devminor));
 		if (ul_oct((u_long)0L, hd->size, sizeof(hd->size), 3))
 			goto out;
 		break;
@@ -1069,9 +1069,9 @@ ustar_wr(arcn)
 			hd->typeflag = CONTTYPE;
 		else
 			hd->typeflag = REGTYPE;
-		bzero(hd->linkname, sizeof(hd->linkname));
-		bzero(hd->devmajor, sizeof(hd->devmajor));
-		bzero(hd->devminor, sizeof(hd->devminor));
+		memset(hd->linkname, 0, sizeof(hd->linkname));
+		memset(hd->devmajor, 0, sizeof(hd->devmajor));
+		memset(hd->devminor, 0, sizeof(hd->devminor));
 		arcn->pad = TAR_PAD(arcn->sb.st_size);
 #		ifdef NET2_STAT
 		if (ul_oct((u_long)arcn->sb.st_size, hd->size,

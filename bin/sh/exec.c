@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)exec.c	8.1 (Berkeley) 5/31/93";*/
-static char *rcsid = "$Id: exec.c,v 1.10 1994/06/11 16:11:52 mycroft Exp $";
+static char *rcsid = "$Id: exec.c,v 1.11 1994/09/23 11:28:40 mycroft Exp $";
 #endif /* not lint */
 
 /*
@@ -286,7 +286,7 @@ padvance(path, name)
 		growstackblock();
 	q = stackblock();
 	if (p != start) {
-		bcopy(start, q, p - start);
+		memcpy(q, start, p - start);
 		q += p - start;
 		*q++ = '/';
 	}
