@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.48 2002/03/15 05:55:36 gmcgarry Exp $	*/
+/*	$NetBSD: rd.c,v 1.49 2002/04/08 21:41:44 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.48 2002/03/15 05:55:36 gmcgarry Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.49 2002/04/08 21:41:44 gmcgarry Exp $");                                                  
 
 #include "opt_useleds.h"
 #include "rnd.h"
@@ -537,15 +537,7 @@ rdgetinfo(dev)
 	 * or to use if there isn't a label.
 	 */
 	memset((caddr_t)lp, 0, sizeof *lp);
-	lp->d_type = DTYPE_HPIB;
-	lp->d_secsize = DEV_BSIZE;
-	lp->d_nsectors = 32;
-	lp->d_ntracks = 20;
-	lp->d_ncylinders = 1;
-	lp->d_secpercyl = 32*20;
-	lp->d_npartitions = 3;
-	lp->d_partitions[2].p_offset = 0;
-	lp->d_partitions[2].p_size = LABELSECTOR+1;
+	rdgetdefaultlabel(rs, lp);
 
 	/*
 	 * Now try to read the disklabel
@@ -1213,15 +1205,15 @@ rdgetdefaultlabel(sc, lp)
 	memset((caddr_t)lp, 0, sizeof(struct disklabel));
 
 	lp->d_type = DTYPE_HPIB;
-	lp->d_secsize = rdidentinfo[type].ri_nbpt;
+	lp->d_secsize = DEV_BSIZE;
+	lp->d_nsectors = rdidentinfo[type].ri_nbpt;
 	lp->d_ntracks = rdidentinfo[type].ri_ntpc;
-	lp->d_nsectors = rdidentinfo[type].ri_nblocks;
 	lp->d_ncylinders = rdidentinfo[type].ri_ncyl;
+	lp->d_secperunit = rdidentinfo[type].ri_nblocks;
 	lp->d_secpercyl = lp->d_ntracks * lp->d_nsectors;
 	
 	strncpy(lp->d_typename, rdidentinfo[type].ri_desc, 16);
 	strncpy(lp->d_packname, "fictitious", 16);
-	lp->d_secperunit = lp->d_ncylinders * lp->d_secpercyl;
 	lp->d_rpm = 3000;
 	lp->d_interleave = 1;
 	lp->d_flags = 0;
