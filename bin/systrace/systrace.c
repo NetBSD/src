@@ -1,4 +1,4 @@
-/*	$NetBSD: systrace.c,v 1.21 2003/06/03 04:33:44 provos Exp $	*/
+/*	$NetBSD: systrace.c,v 1.22 2003/08/02 14:31:10 provos Exp $	*/
 /*	$OpenBSD: systrace.c,v 1.32 2002/08/05 23:27:53 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -73,6 +73,7 @@ void
 systrace_parameters(void)
 {
 	struct passwd *pw;
+	char *normcwd;
 	uid_t uid = getuid();
 
 	iamroot = getuid() == 0;
@@ -88,6 +89,10 @@ systrace_parameters(void)
 	/* Determine current working directory for filtering */
 	if (getcwd(cwd, sizeof(cwd)) == NULL)
 		err(1, "getcwd");
+	if ((normcwd = normalize_filename(-1, 0, cwd, ICLINK_ALL)) == NULL)
+		errx(1, "normalize_filename");
+	if (strlcpy(cwd, normcwd, sizeof(cwd)) >= sizeof(cwd))
+		errx(1, "cwd too long");
 }
 
 /*
