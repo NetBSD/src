@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.35 2000/11/08 14:28:16 ad Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.36 2000/11/24 20:34:01 chs Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -198,11 +198,9 @@ struct uvm_pagerops aobj_pager = {
 	NULL,			/* fault */
 	uao_flush,		/* flush */
 	uao_get,		/* get */
-	NULL,			/* asyncget */
 	NULL,			/* put (done by pagedaemon) */
 	NULL,			/* cluster */
 	NULL,			/* mk_pcluster */
-	NULL,			/* aiodone */
 	uao_releasepg		/* releasepg */
 };
 
