@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.376.2.2 2000/04/17 01:43:23 sommerfeld Exp $	*/
+/*	$NetBSD: machdep.c,v 1.376.2.3 2000/04/22 16:05:19 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -202,7 +202,6 @@ vm_map_t exec_map = NULL;
 vm_map_t mb_map = NULL;
 vm_map_t phys_map = NULL;
 
-extern	int biosbasemem, biosextmem;
 extern	paddr_t avail_start, avail_end;
 extern	paddr_t hole_start, hole_end;
 
@@ -1569,6 +1568,8 @@ extern vector *IDTVEC(exceptions)[];
 extern vector IDTVEC(svr4_fasttrap);
 #endif /* COMPAT_SVR4 */
 
+#define	KBTOB(x)	((size_t)(x) * 1024UL)
+
 void cpu_init_idt()
 {
 	struct region_descriptor region;
@@ -1584,10 +1585,10 @@ void
 init386(first_avail)
 	vaddr_t first_avail;
 {
-	int x;
-	struct region_descriptor region;
 	extern void consinit __P((void));
 	extern struct extent *iomem_ex;
+	struct region_descriptor region;
+	int x;
 
 	proc0.p_addr = proc0paddr;
 	curpcb = &proc0.p_addr->u_pcb;
@@ -1601,11 +1602,11 @@ init386(first_avail)
 	 * extent map.  This is done before the addresses are
 	 * page rounded just to make sure we get them all.
 	 */
-	if (extent_alloc_region(iomem_ex, 0, biosbasemem * 1024, EX_NOWAIT)) {
+	if (extent_alloc_region(iomem_ex, 0, KBTOB(biosbasemem), EX_NOWAIT)) {
 		/* XXX What should we do? */
 		printf("WARNING: CAN'T ALLOCATE BASE MEMORY FROM IOMEM EXTENT MAP!\n");
 	}
-	if (extent_alloc_region(iomem_ex, IOM_END, biosextmem * 1024,
+	if (extent_alloc_region(iomem_ex, IOM_END, KBTOB(biosextmem),
 	    EX_NOWAIT)) {
 		/* XXX What should we do? */
 		printf("WARNING: CAN'T ALLOCATE EXTENDED MEMORY FROM IOMEM EXTENT MAP!\n");
@@ -1639,15 +1640,15 @@ init386(first_avail)
 #else
 #if NBIOSCALL > 0
 	avail_start = 3*NBPG;	/* save us a page for trampoline code and
-				 one additional PT page! */
+				   one additional PT page! */
 #else
 	avail_start = NBPG;	/* BIOS leaves data in low memory */
 				/* and VM system doesn't work with phys 0 */
 #endif
 #endif
-	avail_end = IOM_END + trunc_page(biosextmem * 1024);
+	avail_end = IOM_END + trunc_page(KBTOB(biosextmem));
 
-	hole_start = trunc_page(biosbasemem * 1024);
+	hole_start = trunc_page(KBTOB(biosbasemem));
 	/* we load right after the I/O hole; adjust hole_end to compensate */
 	hole_end = round_page(first_avail);
 
@@ -1764,13 +1765,13 @@ init386(first_avail)
 	enable_intr();
 
 	/* number of pages of physmem addr space */
-	physmem = btoc(biosbasemem * 1024) + btoc(biosextmem * 1024);
+	physmem = btoc(KBTOB(biosbasemem)) + btoc(KBTOB(biosextmem));
 
 	mem_clusters[0].start = 0;
-	mem_clusters[0].size  = trunc_page(biosbasemem * 1024);
+	mem_clusters[0].size  = trunc_page(KBTOB(biosbasemem));
 
 	mem_clusters[1].start = IOM_END;
-	mem_clusters[1].size  = trunc_page(biosextmem * 1024);
+	mem_clusters[1].size  = trunc_page(KBTOB(biosextmem));
 
 	mem_cluster_cnt = 2;
 
