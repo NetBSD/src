@@ -1,4 +1,4 @@
-.\"	$NetBSD: fparseln.3,v 1.9 2002/02/07 07:00:52 ross Exp $
+.\"	$NetBSD: fparseln.3,v 1.10 2002/10/01 19:36:30 wiz Exp $
 .\"
 .\" Copyright (c) 1997 Christos Zoulas.  All rights reserved.
 .\"
@@ -50,8 +50,8 @@ returns a pointer to the next logical line from the stream referenced by
 .Fa stream .
 This string is
 .Dv NUL
-terminated and it is dynamicaly allocated on each invocation. It is the
-responsibility of the caller to free the pointer.
+terminated and it is dynamicaly allocated on each invocation.
+It is the responsibility of the caller to free the pointer.
 .Pp
 By default, if a character is escaped, both it and the preceding escape
 character will be present in the returned string.
