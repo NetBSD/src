@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.119 1999/05/03 16:17:08 christos Exp $	*/
+/*	$NetBSD: locore.s,v 1.120 1999/05/03 20:56:11 pk Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -3388,15 +3388,15 @@ dostart:
 	add	%l3, %l4, %o5		! relocate
 	sethi	%hi(_C_LABEL(esym) - KERNBASE), %l3	! store esym
 	st	%o5, [%l3 + %lo(_C_LABEL(esym) - KERNBASE)]
-	add	%o4, 4, %o4
-	!	2nd word is bootinfo
-	ld	[%o4], %l3
+
+	ld	[%o4 + 4], %l3		! 2nd word is bootinfo
 	add	%l3, %l4, %o5		! relocate
 	sethi	%hi(_C_LABEL(bootinfo) - KERNBASE), %l3	! store bootinfo
 	st	%o5, [%l3 + %lo(_C_LABEL(bootinfo) - KERNBASE)]
 	b,a	3f
 
 1:
+	/* Check for old-style DDB loader magic */
 	set	0x44444231, %l3		! ddb magic
 	cmp	%o5, %l3
 	be,a	2f
