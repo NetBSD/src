@@ -1,4 +1,4 @@
-/*	$NetBSD: bcuvar.h,v 1.2 1999/12/09 02:14:00 sato Exp $	*/
+/*	$NetBSD: bcuvar.h,v 1.3 1999/12/16 12:10:02 shin Exp $	*/
 
 /*-
  * Copyright (c) 1999 SATO Kazumi. All rights reserved.
@@ -44,3 +44,4 @@ char	*vrbcu_vrip_getcpuname __P((void));
 int	vrbcu_vrip_getcpuid __P((void));
 int	vrbcu_vrip_getcpumajor __P((void));
 int	vrbcu_vrip_getcpuminor __P((void));
+int	vrbcu_vrip_getcpuclock __P((void));

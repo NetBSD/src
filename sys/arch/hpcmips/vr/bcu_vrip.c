@@ -1,4 +1,4 @@
-/*	$NetBSD: bcu_vrip.c,v 1.3 1999/12/16 09:36:19 sato Exp $	*/
+/*	$NetBSD: bcu_vrip.c,v 1.4 1999/12/16 12:10:02 shin Exp $	*/
 
 /*-
  * Copyright (c) 1999 SATO Kazumi. All rights reserved.
@@ -180,3 +180,44 @@ vrbcu_vrip_getcpuminor(void)
 	vr_minor = (vr_minor&BCUREVID_MNREVMASK)>>BCUREVID_MNREVSHFT;
 	return vr_minor;
 }	
+
+#define CLKX	18432000	/* CLKX1,CLKX2: 18.432MHz */
+#define MHZ	1000000
+
+int
+vrbcu_vrip_getcpuclock(void)
+{
+	u_int16_t clksp;
+	int cpuid, cpuclock;
+
+	clksp = *(u_int16_t *)MIPS_PHYS_TO_KSEG1((VRIP_BCU_ADDR+BCUCLKSPEED_REG_W)) & BCUCLKSPEED_CLKSPMASK;
+	cpuid = vrbcu_vrip_getcpuid();
+
+	switch (cpuid) {
+	case BCUREVID_RID_4101:
+		/* assume 33MHz */
+		cpuclock = 33000000;
+		/* branch delay is 1 clock; 2 clock/loop */
+		cpuspeed = (cpuclock / 2 + MHZ / 2) / MHZ;
+		break;
+	case BCUREVID_RID_4102:
+		cpuclock = CLKX / clksp * 32;
+		/* branch delay is 1 clock; 2 clock/loop */
+		cpuspeed = (cpuclock / 2 + MHZ / 2) / MHZ;
+		break;
+	case BCUREVID_RID_4111:
+		cpuclock = CLKX / clksp * 64;
+		/* branch delay is 1 clock; 2 clock/loop */
+		cpuspeed = (cpuclock / 2 + MHZ / 2) / MHZ;
+		break;
+	case BCUREVID_RID_4121:
+		cpuclock = CLKX / clksp * 64;
+		/* branch delay is 2 clock; 3 clock/loop */
+		cpuspeed = (cpuclock / 3 + MHZ / 2) / MHZ;
+		break;
+	default:
+		panic("unknown CPU type %d\n", cpuid);
+		break;
+	}
+	return cpuclock;
+}
