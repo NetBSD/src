@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.8 1997/10/10 17:48:06 oki Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.9 1997/10/12 18:20:23 oki Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -604,7 +604,7 @@ setmemrange()
 			high[numranges] = 0;
 			/* range check */
 			for (s = min; s <= max; s += 0x00100000)
-				if (!badaddr(low[numranges] + s - 4))
+				if (!badaddr((caddr_t)low[numranges] + s - 4))
 					high[numranges] = low[numranges] + s;
 			if (low[numranges] < high[numranges]) {
 				numranges++;

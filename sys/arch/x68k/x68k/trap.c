@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.12 1997/10/10 17:46:09 oki Exp $	*/
+/*	$NetBSD: trap.c,v 1.13 1997/10/12 18:20:21 oki Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -60,6 +60,7 @@
 #include <machine/trap.h>
 #include <machine/cpu.h>
 #include <machine/reg.h>
+#include <machine/db_machdep.h>
 
 #include <vm/vm.h>
 #include <vm/pmap.h>
@@ -302,7 +303,7 @@ trap(type, code, v, frame)
 			goto kgdb_cont;
 #endif
 #ifdef DDB
-		(void) kdb_trap(type, &frame);
+		(void)kdb_trap(type, (db_regs_t *)&frame);
 #endif
 	kgdb_cont:
 		splx(s);
