@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_stub.c,v 1.9 2003/01/18 06:55:23 thorpej Exp $ */
+/*	$NetBSD: kgdb_stub.c,v 1.10 2003/01/21 20:42:02 martin Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -276,6 +276,7 @@ computeSignal(type)
 
 	case T_ILLINST:
 	case T_PRIVINST:
+	case T_IDIV0:
 	case T_DIV0:
 		sigval = SIGILL;
 		break;
