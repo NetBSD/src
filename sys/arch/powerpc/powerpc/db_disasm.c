@@ -1,9 +1,9 @@
-/*	$NetBSD: db_disasm.c,v 1.1 1998/01/27 15:13:10 sakamoto Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.2 2000/06/09 14:07:13 kleink Exp $	*/
 /*	$OpenBSD: db_disasm.c,v 1.2 1996/12/28 06:21:48 rahnds Exp $	*/
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/proc.h>
+#include <sys/systm.h>
 
 #include <machine/db_machdep.h>
 
@@ -11,6 +11,7 @@
 #include <ddb/db_sym.h>
 #include <ddb/db_variables.h>
 #include <ddb/db_interface.h>
+#include <ddb/db_output.h>
 
 enum function_mask {
 	Op_A    =	0x00000001,
@@ -71,6 +72,9 @@ struct opcode {
 typedef u_int32_t instr_t;
 typedef void (op_class_func) (instr_t);
 
+u_int32_t extract_field(u_int32_t value, u_int32_t base, u_int32_t width);
+void disasm_fields(const struct opcode *popcode, instr_t instr,
+    char *disasm_str);
 void dis_ppc(const struct opcode *opcodeset, instr_t instr);
 
 op_class_func op_ill, op_base;
