@@ -31,8 +31,13 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
+#if 0
 static char sccsid[] = "@(#)cuserid.c	8.1 (Berkeley) 6/4/93";
+#else
+__RCSID("$NetBSD: cuserid.c,v 1.2 1997/10/09 10:21:08 lukem Exp $");
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <pwd.h>
