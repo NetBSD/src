@@ -1,6 +1,15 @@
-# $NetBSD: obsolete.i386,v 1.3 2000/04/22 00:51:21 hubertf Exp $
+# $NetBSD: obsolete.i386,v 1.4 2000/06/13 00:54:21 wiz Exp $
 /bin/ldconfig
+/dev/ttyv1
+/dev/ttyv2
+/dev/ttyv3
+/dev/ttyv4
+/dev/ttyv5
+/dev/ttyv6
+/dev/ttyv7
 /dev/vga
+/usr/bin/fontedit
+/usr/bin/vttest
 /usr/include/machine/ansi.h
 /usr/include/machine/aout_machdep.h
 /usr/include/machine/apmvar.h
@@ -65,3 +74,13 @@
 /usr/mdec/fdboot
 /usr/mdec/sdboot
 /usr/mdec/wdboot
+/usr/share/pcvt/fonts/vt220h.808
+/usr/share/pcvt/fonts/vt220h.810
+/usr/share/pcvt/fonts/vt220h.814
+/usr/share/pcvt/fonts/vt220h.816
+/usr/share/pcvt/fonts/vt220l.808
+/usr/share/pcvt/fonts/vt220l.810
+/usr/share/pcvt/fonts/vt220l.814
+/usr/share/pcvt/fonts/vt220l.816
+/usr/share/pcvt/fonts
+/usr/share/pcvt
