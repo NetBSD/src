@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.12 1994/11/27 19:59:09 briggs Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.13 1994/11/30 02:42:47 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -340,8 +340,8 @@ findbootdev()
 
 	for (dv = alldevs ; dv ; dv = dv->dv_next) {
 		if (   (dv->dv_class == DV_DISK)
-		    && (major == findblkmajor((struct dkdevice *) dv))
-		    && (unit == dv->dv_unit)) {
+		    && (unit == dv->dv_unit)
+		    && (major == findblkmajor((struct dkdevice *) (dv+1)))) {
 			bootdv = dv;
 			return;
 		}
