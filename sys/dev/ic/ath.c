@@ -39,7 +39,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.14 2003/09/05 22:22:49 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.2 2003/10/13 05:34:30 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.3 2003/10/14 17:47:03 ichiro Exp $");
 #endif
 
 /*
@@ -170,6 +170,12 @@ static void	ath_setcurmode(struct ath_softc *, enum ieee80211_phymode);
 static void	ath_rate_ctl_reset(struct ath_softc *, enum ieee80211_state);
 static void	ath_rate_ctl(void *, struct ieee80211_node *);
 
+#ifdef __NetBSD__
+int	ath_enable(struct ath_softc *);
+void	ath_disable(struct ath_softc *);
+void	ath_power(int, void *);
+#endif
+
 #ifdef __FreeBSD__
 SYSCTL_DECL(_hw_ath);
 /* XXX validate sysctl values */
@@ -210,6 +216,51 @@ static	void ath_printtxbuf(struct ath_buf *bf, int);
 #define	DPRINTF(X)
 #define	DPRINTF2(X)
 #endif
+
+#ifdef __NetBSD__
+int
+ath_activate(struct device *self, enum devact act)
+{
+	struct ath_softc *sc = (struct ath_softc *)self;
+	int rv = 0, s;
+
+	s = splnet();
+	switch (act) {
+	case DVACT_ACTIVATE:
+		rv = EOPNOTSUPP;
+		break;
+	case DVACT_DEACTIVATE:
+		if_deactivate(&sc->sc_ic.ic_if);
+		break;
+	}
+	splx(s);
+	return rv;
+}
+
+int
+ath_enable(struct ath_softc *sc)
+{
+	if (ATH_IS_ENABLED(sc) == 0) {
+		if (sc->sc_enable != NULL && (*sc->sc_enable)(sc) != 0) {
+			printf("%s: device enable failed\n",
+				sc->sc_dev.dv_xname);
+			return (EIO);
+		}
+		sc->sc_flags |= ATH_ENABLED;
+	}
+	return (0);
+}
+
+void
+ath_disable(struct ath_softc *sc)
+{
+	if (!ATH_IS_ENABLED(sc))
+		return;
+	if (sc->sc_disable != NULL)
+		(*sc->sc_disable)(sc);
+	sc->sc_flags &= ~ATH_ENABLED;
+}
+#endif	/* #ifdef __NetBSD__ */
 
 int
 ath_attach(u_int16_t devid, struct ath_softc *sc)
@@ -372,6 +423,22 @@ ath_attach(u_int16_t devid, struct ath_softc *sc)
 
 	if_printf(ifp, "802.11 address: %s\n", ether_sprintf(ic->ic_myaddr));
 
+#ifdef __NetBSD__
+	sc->sc_flags |= ATH_ATTACHED;
+	/*
+	 * Make sure the interface is shutdown during reboot.
+	 */
+#if 0
+	sc->sc_sdhook = shutdownhook_establish(ath_shutdown, sc);
+	if (sc->sc_sdhook == NULL)
+		printf("%s: WARNING: unable to establish shutdown hook\n",
+			sc->sc_dev.dv_xname);
+#endif
+	sc->sc_powerhook = powerhook_establish(ath_power, sc);
+	if (sc->sc_powerhook == NULL)
+		printf("%s: WARNING: unable to establish power hook\n",
+			sc->sc_dev.dv_xname);
+#endif
 	return 0;
 bad:
 	if (ah)
@@ -387,6 +454,8 @@ ath_detach(struct ath_softc *sc)
 	ath_softc_critsect_decl(s);
 
 	DPRINTF(("ath_detach: if_flags %x\n", ifp->if_flags));
+	if ((sc->sc_flags & ATH_ATTACHED) == 0)
+		return (0);
 
 	ath_softc_critsect_begin(sc, s);
 	ath_stop(ifp);
@@ -404,17 +473,44 @@ ath_detach(struct ath_softc *sc)
 }
 
 void
-ath_suspend(struct ath_softc *sc)
+ath_power(int why, void *arg)
+{
+	struct ath_softc *sc = arg;
+	int s;
+
+	DPRINTF(("ath_power(%d)\n", why));
+
+	s = splnet();
+	switch (why) {
+	case PWR_SUSPEND:
+	case PWR_STANDBY:
+		ath_suspend(sc, why);
+		break;
+	case PWR_RESUME:
+		ath_resume(sc, why);
+		break;
+	case PWR_SOFTSUSPEND:
+	case PWR_SOFTSTANDBY:
+	case PWR_SOFTRESUME:
+		break;
+	}
+	splx(s);
+}
+
+void
+ath_suspend(struct ath_softc *sc, int why)
 {
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
 
 	DPRINTF(("ath_suspend: if_flags %x\n", ifp->if_flags));
 
 	ath_stop(ifp);
+	if (sc->sc_power != NULL)
+		(*sc->sc_power)(sc, why);
 }
 
 void
-ath_resume(struct ath_softc *sc)
+ath_resume(struct ath_softc *sc, int why)
 {
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
 
@@ -422,6 +518,11 @@ ath_resume(struct ath_softc *sc)
 
 	if (ifp->if_flags & IFF_UP) {
 		ath_init(ifp);
+#if 0
+		(void)ath_intr(sc);
+#endif
+		if (sc->sc_power != NULL)
+			(*sc->sc_power)(sc, why);
 		if (ifp->if_flags & IFF_RUNNING)
 			ath_start(ifp);
 	}
@@ -596,6 +697,11 @@ ath_init1(struct ath_softc *sc)
 
 	DPRINTF(("ath_init: if_flags 0x%x\n", ifp->if_flags));
 
+#ifdef __NetBSD__
+	if ((error = ath_enable(sc)) != 0)
+		return error;
+#endif
+
 	ath_softc_critsect_begin(sc, s);
 	/*
 	 * Stop anything previously setup.  This is safe
@@ -706,8 +812,12 @@ ath_stop(struct ifnet *ifp)
 #endif
 		ath_beacon_free(sc);
 		ieee80211_new_state(ic, IEEE80211_S_INIT, -1);
-		if (!sc->sc_invalid)
+		if (!sc->sc_invalid) {
 			ath_hal_setpower(ah, HAL_PM_FULL_SLEEP, 0);
+		}
+#ifdef __NetBSD__
+		ath_disable(sc);
+#endif
 	}
 	ath_softc_critsect_end(sc, s);
 }
