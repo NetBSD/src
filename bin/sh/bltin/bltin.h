@@ -1,4 +1,4 @@
-/*	$NetBSD: bltin.h,v 1.7 1995/03/21 09:10:46 cgd Exp $	*/
+/*	$NetBSD: bltin.h,v 1.8 1996/10/16 15:28:10 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -57,6 +57,12 @@
 #define fputs outstr
 #define fflush flushout
 #define INITARGS(argv)
+#define warnx(a, b, c) {				\
+	char buf[64];					\
+	(void)snprintf(buf, sizeof(buf), a, b, c);	\
+	error("%s", buf);				\
+}
+
 #else
 #undef NULL
 #include <stdio.h>
