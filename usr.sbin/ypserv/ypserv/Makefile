@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2002/09/18 03:54:38 lukem Exp $
+#	$NetBSD: Makefile,v 1.15 2003/07/22 11:29:53 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -15,10 +15,7 @@ YHEADER=1
 LDADD+=	-lwrap -lutil
 DPADD+=	${LIBWRAP} ${LIBUTIL}
 
+CPPFLAGS.gethnamaddr.c=	-UYP -D_LIBC
+CPPFLAGS.getnetnamadr.c=-UYP -D_LIBC
+
 .include <bsd.prog.mk>
-
-gethnamaddr.o: gethnamaddr.c
-	${COMPILE.c} -UYP -D_LIBC ${.IMPSRC}
-
-getnetnamadr.o: getnetnamadr.c
-	${COMPILE.c} -UYP -D_LIBC ${.IMPSRC}
