@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.3,v 1.1.2.7 2000/04/30 20:36:18 he Exp $
+#	$NetBSD: CHANGES-1.4.3,v 1.1.2.8 2000/05/05 03:07:40 cgd Exp $
 
 A complete list of changes from NetBSD 1.4.2 to NetBSD 1.4.3:
 
@@ -225,3 +225,9 @@ sys/dev/isa/pas.c				1.47
 
   Fix bug related to allocation / deallocation of bus_space region
   if map of SB I/O space failed.  Fixes PR#9992.
+
+sys/netinet/ip.h				1.20-1.21
+
+  Add "__attribute__((__packed__))" to structures used to describe
+  on-the-wire data, to prevent egcs from making unwarranted assumptions
+  about the alignment of these structures.
