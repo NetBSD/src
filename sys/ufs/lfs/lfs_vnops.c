@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.138 2005/03/23 00:12:51 perseant Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.139 2005/03/24 04:00:33 chs Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.138 2005/03/23 00:12:51 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.139 2005/03/24 04:00:33 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1193,8 +1193,7 @@ lfs_flush_dirops(struct lfs *fs)
 		 */
 		if (vp->v_flag & VXLOCK)
 			continue;
-		if (vn_lock(vp, LK_EXCLUSIVE | LK_CANRECURSE |
-			    LK_NOWAIT) == 0) {
+		if (vn_lock(vp, LK_EXCLUSIVE | LK_NOWAIT) == 0) {
 			needunlock = 1;
 		} else {
 			DLOG((DLOG_VNODE, "lfs_flush_dirops: flushing locked ino %d\n",
@@ -1322,6 +1321,7 @@ lfs_fcntl(void *v)
 		 * Flush dirops and write Ifile, allowing empty segments
 		 * to be immediately reclaimed.
 		 */
+		VOP_UNLOCK(ap->a_vp, 0);
 		lfs_writer_enter(fs, "pndirop");
 		off = fs->lfs_offset;
 		lfs_seglock(fs, SEGM_FORCE_CKP | SEGM_CKP);
@@ -1342,6 +1342,7 @@ lfs_fcntl(void *v)
 		LFS_SYNC_CLEANERINFO(cip, fs, bp, 0);
 #endif
 
+		VOP_LOCK(ap->a_vp, LK_EXCLUSIVE);
 		return 0;
 
 	    case LFCNIFILEFH:
