@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.88 2001/11/22 04:31:01 augustss Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.89 2001/12/02 23:25:25 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.88 2001/11/22 04:31:01 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.89 2001/12/02 23:25:25 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1098,6 +1098,22 @@ usbd_ratecheck(struct timeval *last)
 	static struct timeval errinterval = { 0, 250000 }; /* 0.25 s*/
 
 	return (ratecheck(last, &errinterval));
+}
+
+/*
+ * Search for a vendor/product pair in an array.  The item size is
+ * given as an argument.
+ */
+struct usb_devno *
+usb_match_device(struct usb_devno *tbl, u_int nentries, u_int sz,
+		 u_int16_t vendor, u_int16_t product)
+{
+	while (nentries-- > 0) {
+		if (tbl->ud_vendor == vendor && tbl->ud_product == product)
+			return (tbl);
+		tbl = (struct usb_devno *)((char *)tbl + sz);
+	}
+	return (NULL);
 }
 
 #if defined(__FreeBSD__)

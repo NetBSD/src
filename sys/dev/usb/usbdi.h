@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.h,v 1.54 2001/11/15 15:15:59 augustss Exp $	*/
+/*	$NetBSD: usbdi.h,v 1.55 2001/12/02 23:25:25 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.h,v 1.18 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -191,6 +191,13 @@ struct usb_task {
 void usb_add_task(usbd_device_handle dev, struct usb_task *task);
 void usb_rem_task(usbd_device_handle dev, struct usb_task *task);
 #define usb_init_task(t, f, a) ((t)->fun = (f), (t)->arg = (a), (t)->onqueue = 0)
+
+struct usb_devno {
+	u_int16_t ud_vendor;
+	u_int16_t ud_product;
+};
+struct usb_devno *usb_match_device(struct usb_devno *tbl, u_int nentries,
+		      u_int sz, u_int16_t vendor, u_int16_t product);
 
 /* NetBSD attachment information */
 
