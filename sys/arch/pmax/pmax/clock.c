@@ -1,4 +1,4 @@
-/* $NetBSD: clock.c,v 1.22 1997/09/01 08:05:05 jonathan Exp $ */
+/* $NetBSD: clock.c,v 1.23 1998/04/22 07:08:11 jonathan Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.22 1997/09/01 08:05:05 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.23 1998/04/22 07:08:11 jonathan Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -55,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.22 1997/09/01 08:05:05 jonathan Exp $");
 #include <machine/autoconf.h>
 
 #include <dev/dec/clockvar.h>
+#include "opt_ntp.h"
 
 #define	SECMIN	((unsigned)60)			/* seconds per minute */
 #define	SECHOUR	((unsigned)(60*SECMIN))		/* seconds per hour */
@@ -66,6 +67,7 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.22 1997/09/01 08:05:05 jonathan Exp $");
 struct device *clockdev;
 const struct clockfns *clockfns;
 int clockinitted;
+
 #ifdef NTP
 extern int fixtick;
 #endif
