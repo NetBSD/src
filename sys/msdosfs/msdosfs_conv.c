@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_conv.c,v 1.13 1995/11/29 15:08:36 ws Exp $	*/
+/*	$NetBSD: msdosfs_conv.c,v 1.14 1996/01/31 20:51:40 mycroft Exp $	*/
 
 /*-
  * Copyright (C) 1995 Wolfgang Solfrank.
@@ -121,7 +121,7 @@ unix2dostime(tsp, ddp, dtp)
 	     /* +- daylight savings time correction */ ;
 	if (lasttime != t) {
 		lasttime = t;
-		lastdtime = (((t % 60) >> 1) << DT_2SECONDS_SHIFT)
+		lastdtime = (((t / 2) % 30) << DT_2SECONDS_SHIFT)
 		    + (((t / 60) % 60) << DT_MINUTES_SHIFT)
 		    + (((t / 3600) % 24) << DT_HOURS_SHIFT);
 
@@ -187,7 +187,7 @@ dos2unixtime(dd, dt, tsp)
 	u_long days;
 	u_short *months;
 
-	seconds = ((dt & DT_2SECONDS_MASK) >> DT_2SECONDS_SHIFT)
+	seconds = ((dt & DT_2SECONDS_MASK) >> DT_2SECONDS_SHIFT) * 2
 	    + ((dt & DT_MINUTES_MASK) >> DT_MINUTES_SHIFT) * 60
 	    + ((dt & DT_HOURS_MASK) >> DT_HOURS_SHIFT) * 3600;
 	/*
