@@ -1,7 +1,5 @@
-/*	$NetBSD: ncr.c,v 1.21 1995/11/30 00:58:47 jtc Exp $ */
-
 /*
- * Copyright (c) 1994 Matthias Pfaller.
+ * Copyright (c) 1996 Matthias Pfaller.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -28,8 +26,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- *	$Id: ncr.c,v 1.21 1995/11/30 00:58:47 jtc Exp $
  */
 
 #include <sys/param.h>
@@ -40,157 +36,156 @@
 #include <scsi/scsi_all.h>
 #include <scsi/scsi_message.h>
 #include <scsi/scsiconf.h>
-#include <machine/stdarg.h>
+
+#include <dev/ic/ncr5380reg.h>
+#include <dev/ic/ncr5380var.h>
+#include <machine/cpufunc.h>
 
 /*
- * Include the driver definitions
+ * Function declarations:
  */
-#include "ncr5380reg.h"
-#include "ncrreg.h"
-
-/*
- * Set the various driver options
- */
-#define	NREQ		18	/* Size of issue queue			*/
-#define	AUTO_SENSE	1	/* Automatically issue a request-sense 	*/
-
-#define	DRNAME		ncr	/* used in various prints	*/
-#undef	DBG_SEL			/* Show the selection process		*/
-#undef	DBG_REQ			/* Show enqueued/ready requests		*/
-#undef	DBG_NOWRITE		/* Do not allow writes to the targets	*/
-#undef	DBG_PIO			/* Show the polled-I/O process		*/
-#undef	DBG_INF			/* Show information transfer process	*/
-#undef 	DBG_NOSTATIC		/* No static functions, all in DDB trace*/
-#define	DBG_PID			/* Keep track of driver			*/
-#undef 	REAL_DMA		/* Use DMA if sensible			*/
-#undef 	REAL_DMA_POLL	0	/* 1: Poll for end of DMA-transfer	*/
-#define	USE_PDMA		/* Use special pdma-transfer function	*/
-
-/*
- * Softc of currently active controller (a bit of fake; we only have one)
- */
-static struct ncr_softc	*cur_softc;
-
-/*
- * Function decls:
- */
-static int transfer_pdma __P((u_char *, u_char *, u_long *));
+static int ncr_pdma_in __P((struct ncr5380_softc *, int, int, u_char *));
+static int ncr_pdma_out __P((struct ncr5380_softc *, int, int, u_char *));
+static void ncr_minphys __P((struct buf *bp));
 static void ncr_intr __P((void *));
-static void ncr_soft_intr __P((void *));
-#define scsi_dmaok(x)		0
-#define pdma_ready()		0
-#define fair_to_keep_dma()	1
-#define claimed_dma()		1
-#define reconsider_dma()
-#define ENABLE_NCR5380(sc) do { \
-		scsi_select_ctlr(DP8490); \
-		cur_softc = sc; \
-	} while (0)
+static int ncr_print __P((void *, char *));
+static void ncr_attach __P((struct device *, struct device *, void *));
+static int ncr_match __P((struct device *, void *, void *));
 
-void
-delay(timeo)
-	int timeo;
-{
-	int	len;
-	for (len=0; len < timeo * 2; len++);
-}
+/*
+ * Some constants.
+ */
+#define PDMA_ADDRESS	((volatile u_char *) 0xffe00000)
+#define	NCR5380		((volatile u_char *) 0xffd00000)
+#define MIN_PHYS	0x10000
+
+struct scsi_adapter ncr_switch = {
+	ncr5380_scsi_cmd,	/* scsi_cmd()				*/
+	ncr_minphys,		/* scsi_minphys()			*/
+	0,			/* open_target_lu()			*/
+	0			/* close_target_lu()			*/
+};
+
+struct scsi_device ncr_dev = {
+	NULL,			/* use default error handler		*/
+	NULL,			/* do not have a start functio		*/
+	NULL,			/* have no async handler		*/
+	NULL			/* Use default done routine		*/
+};
+
+struct cfdriver ncrcd = {
+	NULL, "ncr", ncr_match, ncr_attach,
+	DV_DULL, sizeof(struct ncr5380_softc), NULL, 0,
+};
 
 static int
-machine_match(pdp, cdp, auxp, cfd)
-	struct device	*pdp;
-	struct cfdata	*cdp;
-	void		*auxp;
-	struct cfdriver	*cfd;
+ncr_match(parent, cf, aux)
+	struct device	*parent;
+	void		*cf, *aux;
 {
-	if(cdp->cf_unit != 0)	/* Only one unit	*/
+	int unit = ((struct cfdata *)cf)->cf_unit;
+	
+	if (unit != 0)	/* Only one unit */
 		return(0);
 	return(1);
 }
 
 static void
-scsi_mach_init(sc)
-	struct ncr_softc *sc;
+ncr_attach(parent, self, aux)
+	struct device	*parent, *self;
+	void		*aux;
 {
-	register int i;
-	intr_disable(IR_SCSI1);
-	i = intr_establish(SOFTINT, ncr_soft_intr, sc, sc->sc_dev.dv_xname,
-		IPL_BIO, 0);
-	intr_establish(IR_SCSI1, ncr_intr, (void *)i, sc->sc_dev.dv_xname,
+	struct ncr5380_softc *sc = (struct ncr5380_softc *) self;
+
+	/*
+	 * For now we only support the DP8490.
+	 */
+	scsi_select_ctlr(DP8490);
+
+	/*
+	 * Fill in the prototype scsi_link.
+	 */
+	sc->sc_link.adapter_softc  = sc;
+	sc->sc_link.adapter_target = 7;
+	sc->sc_link.adapter        = &ncr_switch;
+	sc->sc_link.device	   = &ncr_dev;
+
+	/*
+	 * Initialize NCR5380 register addresses.
+	 */
+	sc->sci_r0 = NCR5380 + 0;
+	sc->sci_r1 = NCR5380 + 1;
+	sc->sci_r2 = NCR5380 + 2;
+	sc->sci_r3 = NCR5380 + 3;
+	sc->sci_r4 = NCR5380 + 4;
+	sc->sci_r5 = NCR5380 + 5;
+	sc->sci_r6 = NCR5380 + 6;
+	sc->sci_r7 = NCR5380 + 7;
+
+	/*
+	 * We only have to set the sc_pio_in and sc_pio_out
+	 * function pointers. The rest of the MD functions is
+	 * not used and defaults to NULL.
+	 */
+	sc->sc_pio_in	= ncr_pdma_in;
+	sc->sc_pio_out	= ncr_pdma_out;
+
+	/*
+	 * Allow disconnect/reconnect.
+	 */
+	sc->sc_flags = NCR5380_PERMIT_RESELECT;
+
+	intr_establish(IR_SCSI1, ncr_intr, (void *)sc, sc->sc_dev.dv_xname,
 		IPL_BIO, RISING_EDGE);
-	printf(" addr 0x%x, irq %d", NCR5380, IR_SCSI1);
+	printf(" addr 0x%x, irq %d\n", NCR5380, IR_SCSI1);
+
+	/*
+	 *  Initialize the SCSI controller itself.
+	 */
+	ncr5380_init(sc);
+	ncr5380_reset_scsibus(sc);
+	config_found(self, &(sc->sc_link), ncr_print);
 }
 
-/*
- * 5380 interrupt.
- */
-static void
-ncr_intr(softint)
-	void *softint;
+static int
+ncr_print(aux, name)
+	void *aux;
+	char *name;
 {
-	int ctrlr = scsi_select_ctlr(DP8490);
-	if (NCR5380->ncr_dmstat & SC_IRQ_SET) {
-		intr_disable(IR_SCSI1);
-		softintr((int)softint);
+	if (name != NULL)
+		printf("%s: scsibus ", name);
+	return UNCONF;
+}
+
+static void ncr_intr(p)
+	void *p;
+{
+	register struct ncr5380_softc *sc = p;
+
+	if (*sc->sci_csr & SCI_CSR_INT) {
+		if (ncr5380_intr(sc) == 0) {
+			printf("%s: ", sc->sc_dev.dv_xname);
+			if ((*sc->sci_bus_csr & ~SCI_BUS_RST) == 0)
+				printf("BUS RESET\n");
+			else
+				printf("spurious interrupt\n");
+			SCI_CLR_INTR(sc);
+		}
 	}
-	scsi_select_ctlr(ctrlr);
 }
 
 static void
-ncr_soft_intr(sc)
-	void *sc;
+ncr_minphys(bp)
+	struct buf *bp;
 {
-	int ctrlr = scsi_select_ctlr(DP8490);
-	ncr_ctrl_intr(sc);
-	intr_enable(IR_SCSI1);
-	scsi_select_ctlr(ctrlr);
+	if (bp->b_bcount > MIN_PHYS)
+		bp->b_bcount = MIN_PHYS;
+	minphys(bp);
 }
 
 /*
  * PDMA stuff
  */
-#define movsd(from, to, n) do { \
-		register int r0 __asm ("r0") = n; \
-		register u_char *r1 __asm("r1") = from; \
-		register u_char *r2 __asm("r2") = to; \
-		__asm volatile ("movsd" \
-			: "=r" (r1), "=r" (r2) \
-			: "0" (r1), "1" (r2), "r" (r0) \
-			: "r0", "memory" \
-		); \
-		from = r1; to = r2; \
-	} while (0)
-
-#define movsb(from, to, n) do { \
-		register int r0 __asm ("r0") = n; \
-		register u_char *r1 __asm("r1") = from; \
-		register u_char *r2 __asm("r2") = to; \
-		__asm volatile ("movsb" \
-			: "=r" (r1), "=r" (r2) \
-			: "0" (r1), "1" (r2), "r" (r0) \
-			: "r0", "memory" \
-		); \
-		from = r1; to = r2; \
-	} while (0)
-
-#define TIMEOUT	1000000
-#define READY(dataout) do { \
-		for (i = TIMEOUT; i > 0; i--) { \
-			/*if (!(NCR5380->ncr_dmstat & SC_PHS_MTCH)) {*/ \
-			if (NCR5380->ncr_dmstat & SC_IRQ_SET) { \
-				if (dataout) NCR5380->ncr_icom &= ~SC_ADTB; \
-				NCR5380->ncr_mode = IMODE_BASE; \
-				*count = len; \
-				if ((idstat = NCR5380->ncr_idstat) & SC_S_REQ) \
-					*phase = (idstat >> 2) & 7; \
-				else \
-					*phase = NR_PHASE; \
-				return(1); \
-			} \
-			if (NCR5380->ncr_dmstat & SC_DMA_REQ) break; \
-			delay(1); \
-		} \
-		if (i <= 0) panic("ncr0: pdma timeout"); \
-	} while (0)
 
 #define byte_data ((volatile u_char *)pdma)
 #define word_data ((volatile u_short *)pdma)
@@ -202,92 +197,148 @@ ncr_soft_intr(sc)
 #define R1(n)	*(data + n) = *byte_data
 #define R4(n)	*((u_long *)data + n) = *long_data
 
-static int
-transfer_pdma(phase, data, count)
-	u_char *phase;
-	u_char *data;
-	u_long *count;
+#define TSIZE	512
+
+#define TIMEOUT	1000000
+
+static __inline int
+ncr_ready(sc)
+	struct ncr5380_softc *sc;
 {
-	register volatile u_char *pdma = PDMA_ADDRESS;
-	register int len = *count, i, idstat;
+	register int i;
 
-	if (len < 256) {
-		transfer_pio(phase, data, count, 0);
-		return(1);
-	}
-	NCR5380->ncr_tcom = *phase;
-	scsi_clr_ipend();
-	if (PH_IN(*phase)) {
-		NCR5380->ncr_icom = 0;
-		NCR5380->ncr_mode = IMODE_BASE | SC_M_DMA | SC_MON_BSY;
-		NCR5380->ncr_ircv = 0;
-		while (len >= 256) {
-			READY(0);
-			di();
-			movsd((u_char *)pdma, data, 64);
-			len -= 256;
-			ei();
-		}
-		if (len) {
-			di();
-			while (len) {
-				READY(0);
-				R1(0);
-				data++;
-				len--;
-			}
-			ei();
-		}
-	} else {
-		NCR5380->ncr_mode = IMODE_BASE | SC_M_DMA | SC_MON_BSY;
-		NCR5380->ncr_icom = SC_ADTB;
-		NCR5380->ncr_dmstat = SC_S_SEND;
-		while (len >= 256) {
-			/* The second ready is to
-			 * compensate for DMA-prefetch.
-			 * Since we adjust len only at
-			 * the end of the block, there
-			 * is no need to correct the
-			 * residue.
-			 */
-			READY(1);
-			di();
-			W1(0); READY(1); W1(1); W2(1);
-			data += 4;
-			movsd(data, (u_char *)pdma, 63);
-			ei();
-			len  -= 256;
-		}
-		if (len) {
-			READY(1);
-			di();
-			while (len) {
-				W1(0);
-				READY(1);
-				data++;
-				len--;
-			}
-			ei();
-		}
-		i = TIMEOUT;
-		while (((NCR5380->ncr_dmstat & (SC_DMA_REQ|SC_PHS_MTCH))
-			== SC_PHS_MTCH) && --i);
-		if (!i)
-			printf("ncr0: timeout waiting for SC_DMA_REQ.\n");
-		*byte_data = 0;
-	}
+	for (i = TIMEOUT; i > 0; i--) {
+		if ((*sc->sci_csr & (SCI_CSR_DREQ | SCI_CSR_PHASE_MATCH)) ==
+		    (SCI_CSR_DREQ | SCI_CSR_PHASE_MATCH))
+		    	return(1);
 
-ncr_timeout_error:
-	NCR5380->ncr_mode = IMODE_BASE;
-	if((idstat = NCR5380->ncr_idstat) & SC_S_REQ)
-		*phase = (idstat >> 2) & 7;
-	else
-		*phase = NR_PHASE;
-	*count = len;
-	return(1);
+		if ((*sc->sci_csr & SCI_CSR_PHASE_MATCH) == 0 ||
+		    SCI_BUSY(sc) == 0)
+			return(0);
+	}
+	printf("%s: ready timeout\n", sc->sc_dev.dv_xname);
+	return(0);
 }
 
-/*
- * Last but not least... Include the general driver code
- */
-#include "ncr5380.c"
+static int
+ncr_pdma_in(sc, phase, datalen, data)
+	struct ncr5380_softc *sc;
+	int phase, datalen;
+	u_char *data;
+{
+	register volatile u_char *pdma = PDMA_ADDRESS;
+	register int resid, ready = 1;
+
+	if (datalen < TSIZE)
+		return(ncr5380_pio_in(sc, phase, datalen, data));
+
+	intr_disable(IR_SCSI1);
+	*sc->sci_mode |= SCI_MODE_DMA;
+	*sc->sci_irecv = 0;
+
+	resid = datalen;
+	while (resid >= TSIZE) {
+		if (ncr_ready(sc) == 0) {
+			ready = 0;
+			break;
+		}
+		di();
+		movsd((u_char *)pdma, data, TSIZE / 4);
+		resid -= TSIZE;
+		ei();
+	}
+
+	if (resid && ready) {
+		di();
+		while (resid > 0) {
+			if (ncr_ready(sc) == 0)
+				break;
+			R1(0);
+			data++;
+			resid--;
+		}
+		ei();
+	}
+
+	SCI_CLR_INTR(sc);
+	*sc->sci_mode &= ~SCI_MODE_DMA;
+	intr_enable(IR_SCSI1);
+	return(datalen - resid);
+}
+
+static int
+ncr_pdma_out(sc, phase, datalen, data)
+	struct ncr5380_softc *sc;
+	int phase, datalen;
+	u_char *data;
+{
+	register volatile u_char *pdma = PDMA_ADDRESS;
+	register int i, resid, ready = 1;
+	register u_char icmd;
+
+	if (datalen < TSIZE)
+		return(ncr5380_pio_out(sc, phase, datalen, data));
+
+	intr_disable(IR_SCSI1);
+	icmd = *(sc->sci_icmd) & SCI_ICMD_RMASK;
+	*sc->sci_icmd = icmd | SCI_ICMD_DATA;
+	*sc->sci_mode |= SCI_MODE_DMA;
+	*sc->sci_dma_send = 0;
+
+	resid = datalen;
+	while (resid >= TSIZE) {
+		if (ncr_ready(sc) == 0) {
+			ready = 0;
+			break;
+		}
+		di();
+		W1(0);
+		/* The second ready is to
+		 * compensate for DMA-prefetch.
+		 * Since we adjust resid only at
+		 * the end of the block, there
+		 * is no need to correct the
+		 * residue.
+		 */
+		if (ncr_ready(sc) == 0) {
+			ready = 0;
+			break;
+		}
+		W1(1); W2(1);
+		data += 4;
+		movsd(data, (u_char *)pdma, TSIZE / 4 - 1);
+		ei();
+		resid -= TSIZE;
+	}
+
+	if (resid && ready) {
+		if (ncr_ready(sc) == 1) {
+			di();
+			while (resid > 0) {
+				W1(0);
+				if (ncr_ready(sc) == 0)
+					break;
+				data++;
+				resid--;
+			}
+			ei();
+		}
+	}
+
+	for (i = TIMEOUT; i > 0; i--) {
+		if ((*sc->sci_csr & (SCI_CSR_DREQ|SCI_CSR_PHASE_MATCH))
+		    != SCI_CSR_DREQ)
+			break;
+	}
+	if (i != 0)
+		*byte_data = 0;
+	else
+		printf("%s: timeout waiting for final SCI_DSR_DREQ.\n",
+			sc->sc_dev.dv_xname);
+
+	SCI_CLR_INTR(sc);
+	*sc->sci_mode &= ~SCI_MODE_DMA;
+	*sc->sci_icmd = icmd;
+	intr_enable(IR_SCSI1);
+	return(datalen - resid);
+}
