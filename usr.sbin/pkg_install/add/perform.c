@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.8.2.5 1998/11/06 20:40:35 cgd Exp $	*/
+/*	$NetBSD: perform.c,v 1.8.2.6 1998/11/09 08:17:31 cgd Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.44 1997/10/13 15:03:46 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.8.2.5 1998/11/06 20:40:35 cgd Exp $");
+__RCSID("$NetBSD: perform.c,v 1.8.2.6 1998/11/09 08:17:31 cgd Exp $");
 #endif
 #endif
 
@@ -95,6 +95,14 @@ pkg_do(char *pkg)
     inPlace = 0;
     dbdir = (tmp = getenv(PKG_DBDIR)) ? tmp : DEF_LOG_DIR;
 
+    /* make sure dbdir actually exists! */
+    if (!(isdir(dbdir) || islinktodir(dbdir))) {
+	if (! vsystem("/bin/mkdir -p -m 755 %s", dbdir)) {
+	    errx(1, "Database-dir %s cannot be generated, aborting.",
+		 dbdir); 
+	}
+    }
+    
     /* Are we coming in for a second pass, everything already extracted? */
     /* (Slave mode) */
     if (!pkg) {
@@ -265,7 +273,7 @@ pkg_do(char *pkg)
 	    buf[s-PkgName+1]='*';
 	    buf[s-PkgName+2]='\0';
 
-            if (findmatchingname(dbdir, buf, check_if_installed, installed)) {
+            if (findmatchingname(dbdir, buf, check_if_installed, installed) > 0) {
 		warnx("other version '%s' already installed", installed);
 		code = 1;
 		goto success;	/* close enough for government work */
@@ -284,7 +292,7 @@ pkg_do(char *pkg)
 	
 	/* was: */
         /* if (!vsystem("/usr/sbin/pkg_info -qe '%s'", p->name)) {*/
-	if(findmatchingname(dbdir, p->name, check_if_installed, installed)){
+	if (findmatchingname(dbdir, p->name, check_if_installed, installed) > 0){
 	    warnx("Conflicting package installed, please use\n\t\"pkg_delete %s\" first to remove it!\n",  installed); 
 	    ++code;
 	}
@@ -299,7 +307,7 @@ pkg_do(char *pkg)
 	if (Verbose)
 	    printf("Package `%s' depends on `%s'.\n", PkgName, p->name);
 	/* if (vsystem("/usr/sbin/pkg_info -qe '%s'", p->name)) { */
-	if (!findmatchingname(dbdir, p->name, check_if_installed, installed)) {
+	if (findmatchingname(dbdir, p->name, check_if_installed, installed) != 1) {
 	    char path[FILENAME_MAX], *cp = NULL;
 
 	    if (!Fake) {
@@ -488,8 +496,10 @@ pkg_do(char *pkg)
 	fclose(cfile);
 	move_file(".", DESC_FNAME, LogDir);
 	move_file(".", COMMENT_FNAME, LogDir);
-	move_file(".", BUILD_VERSION_FNAME, LogDir);
-	move_file(".", BUILD_INFO_FNAME, LogDir);
+	if (fexists(BUILD_VERSION_FNAME))
+	    move_file(".", BUILD_VERSION_FNAME, LogDir);
+	if (fexists(BUILD_INFO_FNAME))
+	    move_file(".", BUILD_INFO_FNAME, LogDir);
 	if (fexists(DISPLAY_FNAME))
 	    move_file(".", DISPLAY_FNAME, LogDir);
 
