@@ -1,12 +1,9 @@
-#	$NetBSD: std.hp300,v 1.1 1996/12/17 08:40:58 thorpej Exp $
+#	$NetBSD: std.hp300,v 1.2 1997/01/30 09:55:45 thorpej Exp $
 #
 # Options/devices that all hp300s should have
 #
 
 machine hp300 m68k
-
-# XXX new config glue, for now
-options 	NEWCONFIG
 
 options 	SWAPPAGER	# swap pager (anonymous and swap space)
 options 	VNODEPAGER	# vnode pager (mapped files)
