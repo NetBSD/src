@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.50 1998/06/19 22:59:01 kleink Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.51 1998/06/26 17:41:38 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1985, 1988, 1990, 1992, 1993, 1994
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.50 1998/06/19 22:59:01 kleink Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.51 1998/06/26 17:41:38 msaitoh Exp $");
 #endif
 #endif /* not lint */
 
@@ -117,6 +117,7 @@ jmp_buf	errcatch, urgcatch;
 int	logged_in;
 struct	passwd *pw;
 int	debug;
+int	sflag;
 int	logging;
 int	guest;
 int	dochroot;
@@ -234,9 +235,10 @@ main(argc, argv)
 
 	debug = 0;
 	logging = 0;
+	sflag = 0;
 	(void)strcpy(confdir, _DEFAULT_CONFDIR);
 
-	while ((ch = getopt(argc, argv, "a:c:C:dlt:T:u:v")) != -1) {
+	while ((ch = getopt(argc, argv, "a:c:C:dlst:T:u:v")) != -1) {
 		switch (ch) {
 		case 'a':
 			anondir = optarg;
@@ -258,6 +260,10 @@ main(argc, argv)
 
 		case 'l':
 			logging++;	/* > 1 == extra logging */
+			break;
+
+		case 's':
+			sflag = 1;
 			break;
 
 		case 't':
@@ -634,7 +640,7 @@ pass(passwd)
 			goto skip;
 		}
 #endif
-		if (*pw->pw_passwd != '\0' &&
+		if (!sflag && *pw->pw_passwd != '\0' &&
 		    !strcmp(crypt(passwd, pw->pw_passwd), pw->pw_passwd)) {
 			rval = 0;
 			goto skip;
