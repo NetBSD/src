@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.70.2.6 2002/01/05 17:23:38 he Exp $
+#	$NetBSD: GENERIC,v 1.70.2.7 2002/04/22 22:11:16 he Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include		"arch/macppc/conf/std.macppc"
 
-#ident 		"GENERIC-$Revision: 1.70.2.6 $"
+#ident 		"GENERIC-$Revision: 1.70.2.7 $"
 
 maxusers	32
 
@@ -28,6 +28,8 @@ options 	DIAGNOSTIC	# cheap kernel consistency checks
 options 	DDB		# in-kernel debugger
 #options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
 options 	TRAP_PANICWAIT
+
+options 	BUFPAGES=1024
 
 #makeoptions	DEBUG="-g"	# compile full symbol table
 
