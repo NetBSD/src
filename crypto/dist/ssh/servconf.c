@@ -1,4 +1,4 @@
-/*	$NetBSD: servconf.c,v 1.29 2005/02/13 18:14:04 christos Exp $	*/
+/*	$NetBSD: servconf.c,v 1.30 2005/02/22 02:29:32 elric Exp $	*/
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
  *                    All rights reserved
@@ -12,7 +12,7 @@
 
 #include "includes.h"
 RCSID("$OpenBSD: servconf.c,v 1.137 2004/08/13 11:09:24 dtucker Exp $");
-__RCSID("$NetBSD: servconf.c,v 1.29 2005/02/13 18:14:04 christos Exp $");
+__RCSID("$NetBSD: servconf.c,v 1.30 2005/02/22 02:29:32 elric Exp $");
 
 #ifdef KRB4
 #include <krb.h>
@@ -81,6 +81,12 @@ initialize_server_options(ServerOptions *options)
 	options->kerberos_authentication = -1;
 	options->kerberos_or_local_passwd = -1;
 	options->kerberos_ticket_cleanup = -1;
+#if defined(AFS) || defined(KRB5)
+	options->kerberos_tgt_passing = -1;
+#endif
+#ifdef AFS
+	options->afs_token_passing = -1;
+#endif
 	options->kerberos_get_afs_token = -1;
 	options->gss_authentication=-1;
 	options->gss_cleanup_creds = -1;
@@ -195,6 +201,14 @@ fill_default_server_options(ServerOptions *options)
 		options->kerberos_or_local_passwd = 1;
 	if (options->kerberos_ticket_cleanup == -1)
 		options->kerberos_ticket_cleanup = 1;
+#if defined(AFS) || defined(KRB5)
+	if (options->kerberos_tgt_passing == -1)
+		options->kerberos_tgt_passing = 0;
+#endif
+#ifdef AFS
+	if (options->afs_token_passing == -1)
+		options->afs_token_passing = 0;
+#endif
 	if (options->kerberos_get_afs_token == -1)
 		options->kerberos_get_afs_token = 0;
 	if (options->gss_authentication == -1)
@@ -327,7 +341,11 @@ static struct {
 	{ "kerberosticketcleanup", sUnsupported },
 	{ "kerberosgetafstoken", sUnsupported },
 #endif
+#if defined(AFS) || defined(KRB5)
+	{ "kerberostgtpassing", sKerberosTgtPassing },
+#else
 	{ "kerberostgtpassing", sUnsupported },
+#endif
 	{ "afstokenpassing", sUnsupported },
 #ifdef GSSAPI
 	{ "gssapiauthentication", sGssAuthentication },
@@ -656,6 +674,10 @@ parse_flag:
 
 	case sKerberosTicketCleanup:
 		intptr = &options->kerberos_ticket_cleanup;
+		goto parse_flag;
+
+	case sKerberosTgtPassing:
+		intptr = &options->kerberos_tgt_passing;
 		goto parse_flag;
 
 	case sKerberosGetAFSToken:
