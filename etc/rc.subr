@@ -1,4 +1,4 @@
-# $NetBSD: rc.subr,v 1.22 2000/08/17 11:07:10 lukem Exp $
+# $NetBSD: rc.subr,v 1.23 2000/08/19 08:47:43 lukem Exp $
 #
 # Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -191,8 +191,7 @@ check_process()
 #	${name}_flags	n	Arguments to call ${command} with.
 #				NOTE:	if $flags is set (e.g, from the parent
 #					environment), it overrides this.
-#	${name}_nice	n	Nice level to run ${command} at (if not using
-#				${name}_chroot).
+#	${name}_nice	n	Nice level to run ${command} at.
 #	${name}_user	n	User to run ${command} as, using su(1) if not
 #				using ${name}_chroot.
 #	${name}_group	n	Group to run chrooted ${command} as.
@@ -344,6 +343,7 @@ run_rc_command()
 			echo "Starting ${name}."
 			if [ -n "$_chroot" ]; then
 				_doit="\
+${_nice:+nice -n $_nice }\
 chroot ${_user:+-u $_user }${_group:+-g $_group }${_groups:+-G $_groups }\
 $_chroot $command $_flags $command_args"
 			else
