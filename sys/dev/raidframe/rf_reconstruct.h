@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.h,v 1.11 2003/12/30 23:23:17 oster Exp $	*/
+/*	$NetBSD: rf_reconstruct.h,v 1.12 2004/01/01 19:27:36 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -132,8 +132,6 @@ struct RF_ReconCtrl_s {
 					 * events */
 	        RF_DECLARE_MUTEX(eq_mutex)	/* mutex for locking event
 						 * queue */
-	        RF_DECLARE_COND(eq_cond)	/* condition variable for
-						 * signalling recon events */
 	int     eq_count;	/* debug only */
 
 	/* reconstruction buffer management */

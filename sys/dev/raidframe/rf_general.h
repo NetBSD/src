@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_general.h,v 1.11 2003/04/09 00:28:28 thorpej Exp $	*/
+/*	$NetBSD: rf_general.h,v 1.12 2004/01/01 19:27:36 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -52,7 +52,6 @@
 void rf_print_panic_message(int, char *);
 void rf_print_assert_panic_message(int, char *, char *);
 void rf_print_unable_to_init_mutex(char *, int, int);
-void rf_print_unable_to_init_cond(char *, int, int);
 void rf_print_unable_to_add_shutdown(char *, int, int);
 
 	
