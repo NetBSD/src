@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.7 1997/03/26 22:39:09 gwr Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.8 1997/06/16 07:35:46 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -69,7 +69,9 @@ int	cold = 1;	/* if 1, still working on cold-start */
 int	cpuspeed = 150;	/* approx # instr per usec. */
 extern	int pica_boardtype;
 
-void	findroot __P((struct device **, int *));
+void	findroot __P((struct device **devpp, int *partp));
+int	getpno __P((char **cp));
+
 
 struct devnametobdevmaj pica_nam2blk[] = {
 	{ "sd",		0 },
@@ -81,10 +83,13 @@ struct devnametobdevmaj pica_nam2blk[] = {
 	{ NULL,		0 },
 };
 
+
+
 /*
  *  Configure all devices found that we know about.
  *  This is done at boot time.
  */
+void
 configure()
 {
 
@@ -118,15 +123,15 @@ u_long	bootdev;		/* should be dev_t, but not until 32 bits */
  */
 void
 findroot(devpp, partp)
-	struct device *devpp;
+	struct device **devpp;
 	int *partp;
 {
 	int i, majdev, unit, part;
-	dev_t temp, orootdev;
-	struct swdevt *swp;
+	struct device *dv;
+	char buf[32];
 
 	/*
-	 * Default to "not found".
+	 * Default to "not found."
 	 */
 	*devpp = NULL;
 	*partp = 0;
@@ -135,11 +140,11 @@ findroot(devpp, partp)
 	printf("howto %x bootdev %x ", boothowto, bootdev);
 #endif
 
-	if ((bootdev & B_MAGICMASK) != B_DEVMAGIC)
+	if ((bootdev & B_MAGICMASK) != (u_long)B_DEVMAGIC)
 		return;
 
 	majdev = B_TYPE(bootdev);
-	for (i = 0; pica_nam2blk[i].d_name != NULL, i++)
+	for (i = 0; pica_nam2blk[i].d_name != NULL; i++)
 		if (majdev == pica_nam2blk[i].d_maj)
 			break;
 	if (pica_nam2blk[i].d_name == NULL)
@@ -159,6 +164,8 @@ findroot(devpp, partp)
 	}
 }
 
+
+
 /*
  * Look at the string 'cp' and decode the boot device.
  * Boot names look like: scsi()disk(n)rdisk()partition(1)\bsd
@@ -167,7 +174,7 @@ void
 makebootdev(cp)
 	char *cp;
 {
-	int majdev, unit, part, ctrl;
+	int majdev, unit, ctrl;
 	char dv[8];
 
 	bootdev = B_DEVMAGIC;
@@ -178,12 +185,16 @@ makebootdev(cp)
 		dv[1] = *cp;
 		unit = getpno(&cp);
 
-		for (majdev = 0; majdev < sizeof(devname)/sizeof(devname[0]); majdev++)
-			if (dv[0] == devname[majdev][0] &&
-			    dv[1] == devname[majdev][1] && cp[0] == ')')
+		for (majdev = 0; majdev < sizeof(pica_nam2blk)/sizeof(pica_nam2blk[0]); majdev++)
+			if (dv[0] == pica_nam2blk[majdev].d_name[0] &&
+			    dv[1] == pica_nam2blk[majdev].d_name[1] &&
+			    cp[0] == ')')
 				bootdev = MAKEBOOTDEV(majdev, 0, ctrl, unit,0);
 	}
 }
+
+
+int
 getpno(cp)
 	char **cp;
 {
