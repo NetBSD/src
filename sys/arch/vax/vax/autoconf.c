@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.51 2000/05/20 13:38:59 ragge Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.52 2000/05/21 10:03:55 ragge Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -326,7 +326,7 @@ booted_hp(struct device *dev, void *aux)
 	if (strcmp("mba", dev->dv_cfdata->cf_driver->cd_name) == 0) {
 		struct sbi_attach_args *sa = aux;
 
-		mbaaddr = (int)sa->nexaddr;
+		mbaaddr = kvtophys(sa->nexaddr);
 		return 0;
 	}
 
@@ -336,7 +336,7 @@ booted_hp(struct device *dev, void *aux)
 	if (((struct mba_attach_args *)aux)->unit != rpb.unit)
 		return 0;
 
-	if (mbaaddr != rpb.csrphy)
+	if (mbaaddr != rpb.adpphy)
 		return 0;
 
 	return 1;
