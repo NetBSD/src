@@ -1,4 +1,4 @@
-/* $NetBSD: netisr_dispatch.h,v 1.5 2001/01/15 16:33:32 thorpej Exp $ */
+/* $NetBSD: netisr_dispatch.h,v 1.6 2001/04/11 03:55:16 thorpej Exp $ */
 
 /*
  * netisr_dispatch: This file is included by the 
@@ -56,4 +56,7 @@
 #endif
 #if NPPP > 0
 	DONETISR(NETISR_PPP,pppnetisr);
+#endif
+#if NBRIDGE > 0
+	DONETISR(NETISR_BRIDGE,bridgenetisr);
 #endif
