@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.145 2003/11/01 19:45:13 yamt Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.146 2003/11/01 19:56:09 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.145 2003/11/01 19:45:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.146 2003/11/01 19:56:09 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -890,7 +890,6 @@ uvm_map(struct vm_map *map, vaddr_t *startp /* IN/OUT */, vsize_t size,
 			uobj->pgops->pgo_detach(uobj);
 
 		prev_entry->end += size;
-		map->size += size;
 		uvm_rb_fixup(map, prev_entry);
 
 		uvm_tree_sanity(map, "map backmerged");
@@ -1040,7 +1039,6 @@ forwardmerge:
 			uvm_mapent_free(dead);
 		} else {
 			prev_entry->next->start -= size;
-			map->size += size;
 			if (prev_entry != &map->header)
 				uvm_rb_fixup(map, prev_entry);
 			if (uobj)
@@ -1121,7 +1119,6 @@ nomerge:
 			new_entry->aref.ar_amap = NULL;
 		}
 		uvm_map_entry_link(map, prev_entry, new_entry);
-		map->size += size;
 
 		/*
 		 * Update the free space hint
@@ -1131,6 +1128,8 @@ nomerge:
 		    (prev_entry->end >= new_entry->start))
 			map->first_free = new_entry;
 	}
+
+	map->size += size;
 
 	UVMHIST_LOG(maphist,"<- done!", 0, 0, 0, 0);
 	vm_map_unlock(map);
@@ -1785,6 +1784,7 @@ uvm_unmap_remove(struct vm_map *map, vaddr_t start, vaddr_t end,
 		SAVE_HINT(map, entry, entry->prev);
 
 		uvm_map_entry_unlink(map, entry);
+		KASSERT(map->size >= len);
 		map->size -= len;
 		entry->prev = NULL;
 		entry->next = first_entry;
@@ -3555,6 +3555,8 @@ uvmspace_free(struct vmspace *vm)
 		if (dead_entries != NULL)
 			uvm_unmap_detach(dead_entries, 0);
 	}
+	KASSERT(map->nentries == 0);
+	KASSERT(map->size == 0);
 	pmap_destroy(map->pmap);
 	pool_put(&uvm_vmspace_pool, vm);
 }
