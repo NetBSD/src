@@ -1,4 +1,9 @@
-/*	$NetBSD: ehci.c,v 1.28 2001/12/28 00:21:26 augustss Exp $	*/
+/*	$NetBSD: ehci.c,v 1.29 2001/12/31 12:16:57 augustss Exp $	*/
+
+/*
+ * TODO
+ *  hold off explorations by companion controllers until ehci has started.
+ */
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -47,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.28 2001/12/28 00:21:26 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.29 2001/12/31 12:16:57 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -590,6 +595,11 @@ ehci_softintr(void *v)
 	for (ex = LIST_FIRST(&sc->sc_intrhead); ex; ex = LIST_NEXT(ex, inext))
 		ehci_check_intr(sc, ex);
 
+	if (sc->sc_softwake) {
+		sc->sc_softwake = 0;
+		wakeup(&sc->sc_softwake);
+	}
+
 	sc->sc_bus.intr_context--;
 }
 
@@ -1028,7 +1038,7 @@ ehci_dump_regs(ehci_softc_t *sc)
 	       EOREAD4(sc, EHCI_USBCMD),
 	       EOREAD4(sc, EHCI_USBSTS),
 	       EOREAD4(sc, EHCI_USBINTR));
-	printf("frindex=0x08x ctrdsegm=0x%08x periodic=0x%08x async=0x%08x\n",
+	printf("frindex=0x%08x ctrdsegm=0x%08x periodic=0x%08x async=0x%08x\n",
 	       EOREAD4(sc, EHCI_FRINDEX),
 	       EOREAD4(sc, EHCI_CTRLDSSEGMENT),
 	       EOREAD4(sc, EHCI_PERIODICLISTBASE),
@@ -1068,8 +1078,16 @@ ehci_dump_link(ehci_link_t link, int type)
 void
 ehci_dump_sqtds(ehci_soft_qtd_t *sqtd)
 {
-	for (; sqtd; sqtd = sqtd->nextqtd)
+	int i;
+	u_int32_t stop;
+
+	stop = 0;
+	for (i = 0; sqtd && i < 20 && !stop; sqtd = sqtd->nextqtd, i++) {
 		ehci_dump_sqtd(sqtd);
+		stop = sqtd->qtd.qtd_next & EHCI_LINK_TERMINATE;
+	}
+	if (sqtd)
+		printf("dump aborted, too many TDs\n");
 }
 
 void
@@ -2128,8 +2146,8 @@ ehci_alloc_sqtd_chain(struct ehci_pipe *epipe, ehci_softc_t *sc,
 		    qtdstatus | htole32(EHCI_QTD_SET_BYTES(curlen));
 		cur->xfer = xfer;
 		cur->len = curlen;
-		DPRINTFN(10,("ehci_alloc_sqtd_chain: cbp=0x%08x be=0x%08x\n",
-			    dataphys, dataphys + curlen - 1));
+		DPRINTFN(10,("ehci_alloc_sqtd_chain: cbp=0x%08x end=0x%08x\n",
+			    dataphys, dataphys + curlen));
 		if (len == 0)
 			break;
 		DPRINTFN(10,("ehci_alloc_sqtd_chain: extend chain\n"));
@@ -2138,6 +2156,9 @@ ehci_alloc_sqtd_chain(struct ehci_pipe *epipe, ehci_softc_t *sc,
 	}
 	cur->qtd.qtd_status |= htole32(EHCI_QTD_IOC);
 	*ep = cur;
+
+	DPRINTFN(10,("ehci_alloc_sqtd_chain: return sqtd=%p sqtdend=%p\n",
+		     *sp, *ep));
 
 	return (USBD_NORMAL_COMPLETION);
 
@@ -2153,6 +2174,9 @@ ehci_free_sqtd_chain(ehci_softc_t *sc, ehci_soft_qtd_t *sqtd,
 {
 	ehci_soft_qtd_t *p;
 	int i;
+
+	DPRINTFN(10,("ehci_free_sqtd_chain: sqtd=%p sqtdend=%p\n",
+		     sqtd, sqtdend));
 
 	for (i = 0; sqtd != sqtdend; sqtd = p, i++) {
 		p = sqtd->nextqtd;
@@ -2240,9 +2264,11 @@ ehci_abort_xfer(usbd_xfer_handle xfer, usbd_status status)
 	 * has run.
 	 */
 	ehci_sync_hc(sc);
-	/* XXX should have some communication with softintr() to know
-	   when it's done */
-	usb_delay_ms(epipe->pipe.device->bus, 250);
+	s = splusb();
+	sc->sc_softwake = 1;
+	usb_schedsoftintr(&sc->sc_bus);
+	tsleep(&sc->sc_softwake, PZERO, "ehciab", 0);
+	splx(s);
 		
 	/* 
 	 * Step 3: Remove any vestiges of the xfer from the hardware.
@@ -2646,8 +2672,13 @@ ehci_device_bulk_start(usbd_xfer_handle xfer)
 	if (ehcidebug > 10) {
 		DPRINTF(("ehci_device_bulk_transfer: data(2)\n"));
 		delay(10000);
+		DPRINTF(("ehci_device_bulk_transfer: data(3)\n"));
 		ehci_dump_regs(sc);
+#if 0
+		printf("async_head:\n");
 		ehci_dump_sqh(sc->sc_async_head);
+#endif
+		printf("sqh:\n");
 		ehci_dump_sqh(sqh);
 		ehci_dump_sqtds(data);
 	}
