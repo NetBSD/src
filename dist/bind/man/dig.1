@@ -1,4 +1,4 @@
-.\"     $NetBSD: dig.1,v 1.4 2002/06/20 11:43:09 itojun Exp $
+.\"     $NetBSD: dig.1,v 1.5 2002/06/20 12:01:50 itojun Exp $
 .\"
 .\" Id: dig.1,v 8.9 2002/06/18 01:53:43 marka Exp
 .\"
@@ -704,10 +704,3 @@ batch aborts; when such an event is trapped,
 .Ic dig
 simply
 continues with the next query.
-.Pp
-.Nm
-does not support DNS queries/replies over IPv6 transport, and ignores
-IPv6 address on
-.Dq nameserver
-line in
-.Xr resolv.conf 5 .
