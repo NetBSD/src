@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.215.2.3 2000/02/21 21:11:47 sommerfeld Exp $	*/
+/*	$NetBSD: locore.s,v 1.215.2.4 2000/02/23 06:12:04 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -303,6 +303,11 @@
 	.globl	_C_LABEL(lapic_tpr)	
 	
 #if NLAPIC > 0
+#ifdef __ELF__
+	.align	NBPG
+#else
+	.align	12
+#endif
 	.globl _C_LABEL(local_apic)
 _C_LABEL(local_apic):
 	.space	LAPIC_ID
