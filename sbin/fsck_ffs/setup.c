@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.60 2003/04/06 17:23:26 fvdl Exp $	*/
+/*	$NetBSD: setup.c,v 1.61 2003/04/11 10:21:40 enami Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.10 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: setup.c,v 1.60 2003/04/06 17:23:26 fvdl Exp $");
+__RCSID("$NetBSD: setup.c,v 1.61 2003/04/11 10:21:40 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -575,7 +575,7 @@ detect_byteorder(struct fs *fs)
 			doswap = do_blkswap = do_dirswap = 1;
 		}
 		return 0;
-	} else if (fs->fs_magic == bswap32(FS_UFS2_MAGIC) ||
+	} else if (fs->fs_magic == bswap32(FS_UFS1_MAGIC) ||
 		   fs->fs_magic == bswap32(FS_UFS2_MAGIC)) {
 		if (endian == 0 || BYTE_ORDER != endian) {
 			needswap = 1;
