@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.76 2004/01/18 04:43:42 sekiya Exp $	*/
+/*	$NetBSD: machdep.c,v 1.77 2004/01/19 00:12:31 sekiya Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.76 2004/01/18 04:43:42 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.77 2004/01/19 00:12:31 sekiya Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -141,10 +141,9 @@ u_int32_t clockmask;
 phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
 int mem_cluster_cnt;
 
-#if !defined(IP32)
+#if defined(INDY_R4600_CACHE)
 extern void	ip22_sdcache_disable(void);
 extern void	ip22_sdcache_enable(void);
-extern void	int_init(u_int32_t);
 #endif
 
 extern void mips1_clock_intr(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
@@ -385,10 +384,8 @@ mach_init(int argc, char **argv, int magic, struct btinfo_common *btinfo)
 
 	switch (mach_type) {
 	case MACH_SGI_IP12:
-#if defined(IP1X)
-		int_init(INT_IP12);
 		i = *(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(0x1fbd0000);
-        	mach_boardrev = (sysid & 0x7000) >> 12; 
+        	mach_boardrev = (i & 0x7000) >> 12; 
 
 		if ((i & 0x8000) == 0) {
 			if (mach_boardrev < 7)	/* 4D/3X */
@@ -408,11 +405,8 @@ mach_init(int argc, char **argv, int magic, struct btinfo_common *btinfo)
 		clockmask = 0xbf00;
 		platform.intr3 = mips1_clock_intr;
 		platform.clkread = mips1_clkread;
-#endif
 		break;
 	case MACH_SGI_IP20:
-#if defined(IP2X)
-		int_init(INT_IP20);
 		i = *(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(0x1fbd0000);
 		mach_boardrev = (i & 0x7000) >> 12;
 
@@ -424,22 +418,12 @@ mach_init(int argc, char **argv, int magic, struct btinfo_common *btinfo)
 		platform.clkread = mips3_clkread;
 		break;
 	case MACH_SGI_IP22:
-		i = *(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(0x1fbd9858);
-		if (i & 1) {
-			mach_subtype = MACH_SGI_IP22_FULLHOUSE;
-			int_init(INT_IP22);
-		} else {
-			mach_subtype = MACH_SGI_IP22_GUINESS;
-			int_init(INT_IP24);
-		}
-                mach_boardrev = (i >> 1) & 0x0f;
 		biomask = 0x0700;
 		netmask = 0x0700;
 		ttymask = 0x0f00;
 		clockmask = 0xbf00;
 		platform.intr5 = mips3_clock_intr;
 		platform.clkread = mips3_clkread;
-#endif
 		break;
 	case MACH_SGI_IP32:
 		biomask = 0x0700;
@@ -842,7 +826,7 @@ void mips_machdep_cache_config(void)
 	arcbios_tree_walk(mips_machdep_find_l2cache, NULL);
 
 	switch (MIPS_PRID_IMPL(cpu_id)) {
-#if defined(IP2X)
+#if defined(INDY_R4600_CACHE)
 	case MIPS_R4600:
 		/*
 		 * R4600 is on Indy-class machines only.  Disable and

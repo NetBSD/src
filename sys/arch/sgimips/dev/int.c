@@ -1,4 +1,4 @@
-/*	$NetBSD: int.c,v 1.1 2004/01/18 00:47:21 sekiya Exp $	*/
+/*	$NetBSD: int.c,v 1.1 2004/01/19 00:12:31 sekiya Exp $	*/
 
 /*
  * Copyright (c) 2004 Christopher SEKIYA
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: int.c,v 1.1 2004/01/18 00:47:21 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: int.c,v 1.1 2004/01/19 00:12:31 sekiya Exp $");
 
 #include "opt_cputype.h"
 #include "opt_machtypes.h"
@@ -56,7 +56,13 @@ __KERNEL_RCSID(0, "$NetBSD: int.c,v 1.1 2004/01/18 00:47:21 sekiya Exp $");
 static bus_space_handle_t ioh;
 static bus_space_tag_t iot;
 
-void		int_init(u_int32_t);
+struct int_softc {
+	struct device sc_dev;
+};
+
+
+static int	int_match(struct device *, struct cfdata *, void *);
+static void	int_attach(struct device *, struct device *, void *);
 void 		int_local0_intr(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
 void		int_local1_intr(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
 int 		int_mappable_intr(void *);
@@ -65,13 +71,42 @@ void		*int_intr_establish(int, int, int (*)(void *), void *);
 unsigned long	int_cal_timer(void);
 void		int_8254_cal(void);
 
-void
-int_init(u_int32_t address)
+CFATTACH_DECL(int, sizeof(struct int_softc),
+	int_match, int_attach, NULL, NULL);
+
+static int
+int_match(struct device *parent, struct cfdata *match, void *aux)
+{
+	if (	(mach_type == MACH_SGI_IP12) || (mach_type == MACH_SGI_IP20) ||
+		(mach_type == MACH_SGI_IP22) )
+		return 1;
+
+	return 0;
+}
+
+static void
+int_attach(struct device *parent, struct device *self, void *aux)
 {
 	int i;
 	unsigned long cps;
 	unsigned long ctrdiff[3];
+	u_int32_t address;
 
+	if (mach_type == MACH_SGI_IP12)
+		address = INT_IP12;
+	else if (mach_type == MACH_SGI_IP20)
+		address = INT_IP20;
+	else if (mach_type == MACH_SGI_IP22) {
+		if (mach_subtype == MACH_SGI_IP22_FULLHOUSE)
+			address = INT_IP22;
+		else
+			address = INT_IP24;
+	}
+	else
+		panic("\nint0: passed match, but failed attach?");
+
+	printf(" addr 0x%x", address);
+	
 	bus_space_map(iot, address, 0, 0, &ioh);
 	iot = SGIMIPS_BUS_SPACE_NORMAL;
 
@@ -109,17 +144,18 @@ int_init(u_int32_t address)
 
 			cps = cps / (sizeof(ctrdiff) / sizeof(ctrdiff[0]));
 
-			printf("Timer calibration, %lu cycles (%lu, %lu, %lu)\n", cps,
-				ctrdiff[0], ctrdiff[1], ctrdiff[2]);
+			printf(": bus %luMHz, CPU %luMHz", cps / 10000, cps / 5000);
 
 			/* R4k/R4400/R4600/R5k count at half CPU frequency */
 			curcpu()->ci_cpu_freq = 2 * cps * hz;
 
 			break;
 		default:
-			panic("int: unsupported machine type %i\n", mach_type);
+			panic("int0: unsupported machine type %i\n", mach_type);
 			break;
 	}
+
+	printf("\n");
 
 	curcpu()->ci_cycles_per_hz = curcpu()->ci_cpu_freq / (2 * hz);
 	curcpu()->ci_divisor_delay = curcpu()->ci_cpu_freq / (2 * 1000000);
@@ -160,7 +196,7 @@ int_mappable_intr(void *arg)
 				ret |= (intrtab[intnum].ih_fun)
 				    (intrtab[intnum].ih_arg);
 			else
-				printf("Unexpected mappable interrupt %d\n",
+				printf("int0: unexpected mapped interrupt %d\n",
 				    intnum);
 		}
 	}
@@ -187,7 +223,7 @@ int_local0_intr(u_int32_t status, u_int32_t cause, u_int32_t pc, u_int32_t ipend
 			if (intrtab[i].ih_fun != NULL)
 				ret |= (intrtab[i].ih_fun)(intrtab[i].ih_arg);
 			else
-				printf("Unexpected local0 interrupt %d\n", i);
+				printf("int0: unexpected local0 interrupt %d\n", i);
 		}
 	}
 }
@@ -212,7 +248,7 @@ int_local1_intr(u_int32_t status, u_int32_t cause, u_int32_t pc, u_int32_t ipend
 				ret |= (intrtab[8 + i].ih_fun)
 				    (intrtab[8 + i].ih_arg);
 			else
-				printf("Unexpected local1 interrupt %x\n",
+				printf("int0: unexpected local1 interrupt %x\n",
 				    8 + i );
 		}
 	}
@@ -228,7 +264,7 @@ int_intr_establish(int level, int ipl, int (*handler) (void *), void *arg)
 
 	if (intrtab[level].ih_fun != NULL)
 	{
-		printf("warning: ip2x cannot share interrupts yet.\n");
+		printf("int0: cannot share interrupts yet.\n");
 		return (void *)NULL;
 	}
 
