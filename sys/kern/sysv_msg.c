@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_msg.c,v 1.21 1996/10/13 02:32:42 christos Exp $	*/
+/*	$NetBSD: sysv_msg.c,v 1.22 1998/05/07 18:00:49 kleink Exp $	*/
 
 /*
  * Implementation of SVID messages
@@ -338,12 +338,12 @@ sys_msgsnd(p, v, retval)
 {
 	register struct sys_msgsnd_args /* {
 		syscallarg(int) msqid;
-		syscallarg(void *) msgp;
+		syscallarg(const void *) msgp;
 		syscallarg(size_t) msgsz;
 		syscallarg(int) msgflg;
 	} */ *uap = v;
 	int msqid = SCARG(uap, msqid);
-	char *user_msgp = SCARG(uap, msgp);
+	const char *user_msgp = SCARG(uap, msgp);
 	size_t msgsz = SCARG(uap, msgsz);
 	int msgflg = SCARG(uap, msgflg);
 	int segs_needed, eval;

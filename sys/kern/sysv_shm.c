@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_shm.c,v 1.43 1998/02/10 14:09:49 mrg Exp $	*/
+/*	$NetBSD: sysv_shm.c,v 1.44 1998/05/07 18:00:49 kleink Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass and Charles Hannum.  All rights reserved.
@@ -188,7 +188,7 @@ sys_shmdt(p, v, retval)
 	register_t *retval;
 {
 	struct sys_shmdt_args /* {
-		syscallarg(void *) shmaddr;
+		syscallarg(const void *) shmaddr;
 	} */ *uap = v;
 	struct shmmap_state *shmmap_s;
 	int i;
@@ -214,7 +214,7 @@ sys_shmat(p, v, retval)
 {
 	struct sys_shmat_args /* {
 		syscallarg(int) shmid;
-		syscallarg(void *) shmaddr;
+		syscallarg(const void *) shmaddr;
 		syscallarg(int) shmflg;
 	} */ *uap = v;
 	int error, i, flags;
@@ -365,7 +365,7 @@ shmget_existing(p, uap, mode, segnum, retval)
 	struct proc *p;
 	struct sys_shmget_args /* {
 		syscallarg(key_t) key;
-		syscallarg(int) size;
+		syscallarg(size_t) size;
 		syscallarg(int) shmflg;
 	} */ *uap;
 	int mode;
@@ -405,7 +405,7 @@ shmget_allocate_segment(p, uap, mode, retval)
 	struct proc *p;
 	struct sys_shmget_args /* {
 		syscallarg(key_t) key;
-		syscallarg(int) size;
+		syscallarg(size_t) size;
 		syscallarg(int) shmflg;
 	} */ *uap;
 	int mode;
