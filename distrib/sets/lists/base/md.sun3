@@ -1,8 +1,0 @@
-# $NetBSD: md.sun3,v 1.36 1999/04/19 03:11:32 simonb Exp $
-./sbin/edlabel
-./usr/mdec/bootxx
-./usr/mdec/installboot
-./usr/mdec/netboot
-./usr/mdec/tapeboot
-./usr/mdec/ufsboot
-./usr/sbin/eeprom

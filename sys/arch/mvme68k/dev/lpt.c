@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.5 1999/02/14 17:54:28 scw Exp $	*/
+/*	$NetBSD: lpt.c,v 1.5.16.1 2000/03/11 20:51:49 scw Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -54,6 +54,7 @@
 #include <sys/syslog.h>
 
 #include <machine/cpu.h>
+#include <machine/bus.h>
 
 #include <mvme68k/dev/lptvar.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.56 1999/10/26 00:20:39 itohy Exp $	*/
+/*	$NetBSD: locore.s,v 1.56.4.1 2000/03/11 20:51:52 scw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1734,6 +1734,9 @@ GLOBAL(intiobase_phys)
 
 GLOBAL(intiotop_phys)
 	.long	0		| PA of top of board's I/O registers
+
+GLOBAL(vmeiobase)
+	.long	0		| KVA of base of VMEbus IO space
 
 /* interrupt counters */
 GLOBAL(intrnames)

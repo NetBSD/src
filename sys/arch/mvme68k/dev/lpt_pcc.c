@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_pcc.c,v 1.2 1999/02/14 17:54:28 scw Exp $ */
+/*	$NetBSD: lpt_pcc.c,v 1.2.16.1 2000/03/11 20:51:49 scw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -53,6 +53,7 @@
 #include <sys/syslog.h>
 
 #include <machine/cpu.h>
+#include <machine/bus.h>
 
 #include <mvme68k/dev/lptvar.h>
 #include <mvme68k/dev/lpt_pccreg.h>
@@ -115,22 +116,20 @@ void	*args;
 {
 	struct lpt_softc *sc = (void *)self;
 	struct pcc_attach_args *pa = args;
-	union lpt_regs *regs;
 
-	/*
-	 * Get pointer to regs
-	 */
-	regs = sc->sc_regs = (void *) PCC_VADDR(pa->pa_offset);
+	sc->sc_bust = pa->pa_bust;
+	bus_space_map(pa->pa_bust, pa->pa_offset, LPREG_SIZE, 0, &sc->sc_bush);
+
 	sc->sc_ipl = pa->pa_ipl & PCC_IMASK;
-	sc->sc_laststatus = 0;
 	sc->sc_funcs = &lpt_pcc_funcs;
+	sc->sc_laststatus = 0;
 
 	printf(": PCC Parallel Printer\n");
 
 	/*
 	 * Disable interrupts until device is opened
 	 */
-	sys_pcc->pr_int = 0;
+	pcc_reg_write(sys_pcc, PCCREG_PRNT_INTR_CTRL, 0);
 
 	/*
 	 * Main attachment code
@@ -160,8 +159,10 @@ lpt_pcc_intr(arg)
 
 	i = lpt_intr(sc);
 
-	if ( sys_pcc->pr_int & LPI_ACKINT )
-		sys_pcc->pr_int = sc->sc_icr | LPI_ACKINT;
+	if ( pcc_reg_read(sys_pcc, PCCREG_PRNT_INTR_CTRL) & LPI_ACKINT ) {
+		pcc_reg_write(sys_pcc, PCCREG_PRNT_INTR_CTRL,
+		    sc->sc_icr | LPI_ACKINT);
+	}
 
 	return i;
 }
@@ -174,12 +175,13 @@ lpt_pcc_open(sc, int_ena)
 {
 	int sps;
 
-	sys_pcc->pr_int = LPI_ACKINT | LPI_FAULTINT;
+	pcc_reg_write(sys_pcc, PCCREG_PRNT_INTR_CTRL,
+	    LPI_ACKINT | LPI_FAULTINT);
 
 	if ( int_ena == 0 ) {
 		sps = splhigh();
 		sc->sc_icr = sc->sc_ipl | LPI_ENABLE;
-		sys_pcc->pr_int = sc->sc_icr;
+		pcc_reg_write(sys_pcc, PCCREG_PRNT_INTR_CTRL, sc->sc_icr);
 		splx(sps);
 	}
 }
@@ -188,16 +190,16 @@ static void
 lpt_pcc_close(sc)
 	struct lpt_softc *sc;
 {
-	sys_pcc->pr_int = 0;
+	pcc_reg_write(sys_pcc, PCCREG_PRNT_INTR_CTRL, 0);
 	sc->sc_icr = sc->sc_ipl;
-	sys_pcc->pr_int = sc->sc_icr;
+	pcc_reg_write(sys_pcc, PCCREG_PRNT_INTR_CTRL, sc->sc_icr);
 }
 
 static void
 lpt_pcc_iprime(sc)
 	struct lpt_softc *sc;
 {
-	sys_pcc->pr_cr = LPC_INPUT_PRIME;
+	lpt_control_write(LPC_INPUT_PRIME);
 	delay(100);
 }
 
@@ -207,9 +209,9 @@ lpt_pcc_speed(sc, speed)
 	int speed;
 {
 	if ( speed == LPT_STROBE_FAST )
-		sys_pcc->pr_cr = LPC_FAST_STROBE;
+		lpt_control_write(LPC_FAST_STROBE);
 	else
-		sys_pcc->pr_cr = 0;
+		lpt_control_write(0);
 }
 
 static int
@@ -217,14 +219,13 @@ lpt_pcc_notrdy(sc, err)
 	struct lpt_softc *sc;
 	int err;
 {
-	union lpt_regs *regs = sc->sc_regs;
 	u_char status;
 	u_char new;
 
 #define	LPS_INVERT	(LPS_SELECT)
 #define	LPS_MASK	(LPS_SELECT|LPS_FAULT|LPS_BUSY|LPS_PAPER_EMPTY)
 
-	status = (regs->pr_status ^ LPS_INVERT) & LPS_MASK;
+	status = (lpt_status_read(sc) ^ LPS_INVERT) & LPS_MASK;
 
 	if ( err ) {
 		new = status & ~sc->sc_laststatus;
@@ -241,7 +242,8 @@ lpt_pcc_notrdy(sc, err)
 				sc->sc_dev.dv_xname);
 	}
 
-	sys_pcc->pr_int = sc->sc_icr | LPI_FAULTINT;
+	pcc_reg_write(sys_pcc, PCCREG_PRNT_INTR_CTRL,
+	    sc->sc_icr | LPI_FAULTINT);
 
 	return status;
 }
@@ -251,7 +253,5 @@ lpt_pcc_wr_data(sc, data)
 	struct lpt_softc *sc;
 	u_char data;
 {
-	union lpt_regs *regs = sc->sc_regs;
-
-	regs->pr_data = data;
+	lpt_data_write(sc, data);
 }

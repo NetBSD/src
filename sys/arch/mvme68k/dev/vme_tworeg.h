@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_tworeg.h,v 1.1 1999/02/20 00:12:01 scw Exp $ */
+/*	$NetBSD: vme_tworeg.h,v 1.1.16.1 2000/03/11 20:51:51 scw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -36,17 +36,15 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __mvme68k_vme_tworeg_h
-#define __mvme68k_vme_tworeg_h
+#ifndef _MVME68K_VME_TWOREG_H
+#define _MVME68K_VME_TWOREG_H
 
 /*
  * Where the VMEchip2's registers live relative to the start
- * of internal I/O space.
+ * of the VMEChip2's register space.
  */
-#define VMECHIP2_BASE		(0xfff40000u)
-#define	VMECHIP2_VADDR(off)	((void *)IIOV(VMECHIP2_BASE + (off)))
-#define	VME2_REGS_LCSR		0x0000
-#define	VME2_REGS_GCSR		0x0100
+#define	VME2REG_LCSR_OFFSET	0x0000
+#define	VME2REG_GCSR_OFFSET	0x0100
 
 
 /*
@@ -54,10 +52,16 @@
  * Note: Only responds to D32 accesses.
  */
 struct vme_two_lcsr {
-	/*
-	 * Slave window configuration registers
-	 */
+/*
+ * Slave window configuration registers
+ */
 #define VME2_SLAVE_WINDOWS	2
+#define	VME2LCSR_SLAVE_ENDING1	0x00
+#define	VME2LCSR_SLAVE_ENDING2	0x04
+#define	VME2LCSR_SLAVE_TRANS1	0x08
+#define	VME2LCSR_SLAVE_TRANS2	0x0c
+#define	VME2LCSR_SLAVE_CTRL	0x10
+
 	volatile u_int32_t	vme_slave_win[VME2_SLAVE_WINDOWS];
 	volatile u_int32_t	vme_slave_trans[VME2_SLAVE_WINDOWS];
 	volatile u_int32_t	vme_slave_ctrl;
@@ -440,6 +444,14 @@ struct vme_two_lcsr {
 #define VME2_MISC_CTRL_MPIRQEN	(1u << 7)
 };
 
+#define VME2REG_LCSR_SIZE	0x100
+
+
+#define	vme2_lcsr_read(s,r) \
+	bus_space_read_4((s)->sc_bust, (s)->sc_lcrh, (r))
+#define	vme2_lcsr_write(s,r,v) \
+	bus_space_write_4((s)->sc_bust, (s)->sc_lcrh, (r), (v))
+
 
 /*
  * Define the layout of the VMEChip2's GCSR [registers].
@@ -449,4 +461,4 @@ struct vme_two_gcsr {
 	u_int32_t		gcsr_not_yet;
 };
 
-#endif /* __mvme68k_vme_tworeg_h */
+#endif /* _MVME68K_VME_TWOREG_H */

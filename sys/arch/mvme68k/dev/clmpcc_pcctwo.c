@@ -1,4 +1,4 @@
-/*	$NetBSD: clmpcc_pcctwo.c,v 1.2 1999/02/14 17:54:28 scw Exp $ */
+/*	$NetBSD: clmpcc_pcctwo.c,v 1.2.16.1 2000/03/11 20:51:48 scw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -59,7 +59,8 @@
 
 #include <dev/ic/clmpccvar.h>
 
-#include <mvme68k/dev/pccvar.h>
+#include <mvme68k/dev/mainbus.h>
+#include <mvme68k/dev/pcctwovar.h>
 #include <mvme68k/dev/pcctworeg.h>
 
 
@@ -96,10 +97,10 @@ clmpcc_pcctwo_match(parent, cf, aux)
 {
 	struct pcc_attach_args *pa = aux;
 
-	if (strcmp(pa->pa_name, clmpcc_cd.cd_name))
+	if ( strcmp(pa->pa_name, clmpcc_cd.cd_name) )
 		return (0);
 
-	pa->pa_ipl = cf->pcccf_ipl;
+	pa->pa_ipl = cf->pcctwocf_ipl;
 
 	return (1);
 }
@@ -117,8 +118,9 @@ clmpcc_pcctwo_attach(parent, self, aux)
 	struct pcc_attach_args *pa = aux;
 	int level = pa->pa_ipl;
 
-	sc->sc_iot = (bus_space_tag_t)0;
-	sc->sc_ioh = (bus_space_handle_t) PCCTWO_VADDR(pa->pa_offset);
+	sc->sc_iot = pa->pa_bust;
+	bus_space_map(pa->pa_bust, pa->pa_offset, 0x100, 0, &sc->sc_ioh);
+
 	sc->sc_clk = 20000000;
 	sc->sc_byteswap = CLMPCC_BYTESWAP_LOW;
 	sc->sc_swaprtsdtr = 1;
@@ -142,9 +144,10 @@ clmpcc_pcctwo_attach(parent, self, aux)
 	pcctwointr_establish(PCCTWOV_SCC_MODEM, clmpcc_mdintr, level, sc);
 
 	/* Enable the interrupts */
-	sys_pcctwo->scc_mod_icr = level | PCCTWO_ICR_IEN;
-	sys_pcctwo->scc_rx_icr  = level | PCCTWO_ICR_IEN;
-	sys_pcctwo->scc_tx_icr  = level | PCCTWO_ICR_IEN;
+	pcc2_reg_write(sys_pcctwo, PCC2REG_SCC_MODEM_ICSR,
+	    level | PCCTWO_ICR_IEN);
+	pcc2_reg_write(sys_pcctwo, PCC2REG_SCC_RX_ICSR, level | PCCTWO_ICR_IEN);
+	pcc2_reg_write(sys_pcctwo, PCC2REG_SCC_TX_ICSR, level | PCCTWO_ICR_IEN);
 }
 
 static void
@@ -159,25 +162,48 @@ clmpcc_pcctwo_iackhook(sc, which)
 	struct clmpcc_softc *sc;
 	int which;
 {
-	struct pcctwo *pcc2;
+	bus_space_tag_t bust;
+	bus_space_handle_t bush;
+	bus_size_t offset;
 	volatile u_char foo;
 
-	if ( (pcc2 = sys_pcctwo) == NULL )
-		pcc2 = PCCTWO_VADDR(PCCTWO_REG_OFF);
+	if ( sys_pcctwo == NULL ) {
+		/*
+		 * This is necessary to get the console working when the
+		 * PCCChip2 driver is not yet attached.
+		 */
+		bust = MVME68K_INTIO_BUS_SPACE;
+		bus_space_map(bust, MAINBUS_PCCTWO_OFFSET + PCCTWO_REG_OFF,
+		    PCC2REG_SIZE, 0, &bush);
+	} else {
+		bust = sys_pcctwo->sc_bust;
+		bush = sys_pcctwo->sc_bush;
+	}
 
 	switch ( which ) {
 	  case CLMPCC_IACK_MODEM:
-		foo = pcc2->scc_mod_piack;
+		offset = PCC2REG_SCC_MODEM_PIACK;
 		break;
 
 	  case CLMPCC_IACK_RX:
-		foo = pcc2->scc_rx_piack;
+		offset = PCC2REG_SCC_RX_PIACK;
 		break;
 
 	  case CLMPCC_IACK_TX:
-		foo = pcc2->scc_tx_piack;
+		offset = PCC2REG_SCC_TX_PIACK;
 		break;
+#ifdef DEBUG
+	  default:
+		printf("%s: Invalid IACK number '%d'\n",
+		    sc->sc_dev.dv_xname, which);
+		panic("clmpcc_pcctwo_iackhook");
+#endif
 	}
+
+	foo = bus_space_read_1(bust, bush, offset);
+
+	if ( sys_pcctwo == NULL )
+		bus_space_unmap(bust, bush, PCC2REG_SIZE);
 }
 
 
@@ -194,7 +220,7 @@ clmpcccnprobe(cp)
 {
 	int	maj;
 
-	if (machineid == MVME_147) {
+	if ( machineid == MVME_147 ) {
 		cp->cn_pri = CN_DEAD;
 		return;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.12 1999/08/10 21:08:08 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.12.10.1 2000/03/11 20:51:51 scw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -175,8 +175,8 @@ extern	int machineid;
 extern	int cpuspeed;
 extern	char *intiobase, *intiolimit;
 extern	u_int intiobase_phys, intiotop_phys;
-extern	void *ether_data_buff;		/* These two will go when bus_dma */
-extern	u_long ether_data_buff_size;	/* support is added. */
+extern	char *vmeiobase;
+extern	u_long ether_data_buff_size;
 
 struct frame;
 void	doboot __P((int)) 
@@ -215,4 +215,17 @@ int	dma_cachectl __P((caddr_t, int));
 #define	IIOV(pa)	(((u_int)(pa) - intiobase_phys) + (u_int)intiobase)
 #define	IIOP(va)	(((u_int)(va) - (u_int)intiobase) + intiobase_phys)
 #define	IIOPOFF(pa)	((u_int)(pa) - intiobase_phys)
+
+/*
+ * VMEbus IO space:
+ *
+ * A range of kernel virtual addresses is reserved in pmap_bootstrap() for
+ * VMEbus IO space. The size of the KVA space is set by VMEIOMAPSIZE, which
+ * by default is 8Mb if not specified in the kernel config file.
+ */
+#ifndef VMEIOMAPSIZE
+#define VMEIOMAPSIZE	(8 * 1024 * 1024)
+#endif
+#define VMEIOMAPPAGES	btoc(VMEIOMAPSIZE)
+
 #endif /* _KERNEL */
