@@ -1,4 +1,4 @@
-/*	$NetBSD: ldvar.h,v 1.8 2004/07/20 15:44:20 dbj Exp $	*/
+/*	$NetBSD: ldvar.h,v 1.9 2004/09/25 04:28:08 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -66,8 +66,6 @@ struct ld_softc {
 };
 
 #define	LDF_ENABLED	0x001		/* device enabled */
-#define	LDF_LKHELD	0x002		/* lock held */
-#define	LDF_LKWANTED	0x004		/* lock wanted */
 #define	LDF_WLABEL	0x008		/* label is writable */
 #define	LDF_LABELLING	0x010		/* writing label */
 #define	LDF_DRAIN	0x020		/* maxqueuecnt has changed; drain */
