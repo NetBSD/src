@@ -37,7 +37,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)locore.s	7.3 (Berkeley) 5/13/91
- *	$Id: locore.s,v 1.76 1994/06/14 20:25:53 mycroft Exp $
+ *	$Id: locore.s,v 1.77 1994/07/04 23:20:44 mycroft Exp $
  */
 
 /*
@@ -1824,49 +1824,6 @@ ENTRY(savectx)
 	popl	%edi
 	popl	%esi
 	popl	%ebx
-	ret
-
-/*****************************************************************************/
-
-/*
- * This is used for profiling.
- */
-
-/*
- * addupc(int pc, struct uprof *up, int ticks):
- * Update profiling information for the user process.
- */
-ENTRY(addupc)
-	movl	4(%esp),%eax		# pc
-	movl	8(%esp),%edx		# up
-
-	subl	PR_OFF(%edx),%eax	# pc -= up->pr_off
-	jc	1f			# if (pc < 0) return
-
-	shrl	$1,%eax			# praddr = pc >> 1
-	imull	PR_SCALE(%edx),%eax	# praddr *= up->pr_scale
-	shrl	$15,%eax		# praddr = praddr << 15
-	andl	$-2,%eax		# praddr &= ~1
-
-	cmpl	PR_SIZE(%edx),%eax	# if (praddr > up->pr_size) return
-	ja	1f
-
-/*	addl	%eax,%eax		# praddr -> word offset */
-	addl	PR_BASE(%edx),%eax	# praddr += up-> pr_base
-	movl	12(%esp),%ecx		# ticks
-
-	movl	_curpcb,%edx
-	movl	$_proffault,PCB_ONFAULT(%edx)
-	addl	%ecx,(%eax)		# storage location += ticks
-	movl	$0,PCB_ONFAULT(%edx)
-
-1:	ret
-
-ENTRY(proffault)
-	/* If we get a fault, then kill profiling all together. */
-	movl	$0,PCB_ONFAULT(%edx)	# squish the fault handler
-	movl	8(%esp),%ecx
-	movl	$0,PR_SCALE(%ecx)	# up->pr_scale = 0
 	ret
 
 /*****************************************************************************/
