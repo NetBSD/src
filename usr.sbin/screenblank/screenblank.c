@@ -1,4 +1,4 @@
-/*	$NetBSD: screenblank.c,v 1.3 1996/06/23 22:08:43 thorpej Exp $	*/
+/*	$NetBSD: screenblank.c,v 1.4 1997/05/17 15:48:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@ static	void add_dev __P((char *, int));
 static	void change_state __P((int));
 static	void cvt_arg __P((char *, struct timeval *));
 static	void logpid __P((void));
-static	void sighandler __P((int, int, struct sigcontext *));
+static	void sighandler __P((int));
 static	void usage __P((void));
 
 int
@@ -242,9 +242,8 @@ add_dev(path, isfb)
 
 /* ARGSUSED */
 static void
-sighandler(sig, code, context)
-	int sig, code;
-	struct sigcontext *context;
+sighandler(sig)
+	int sig;
 {
 
 	/* Kill the pid file and re-enable the framebuffer before exit. */
