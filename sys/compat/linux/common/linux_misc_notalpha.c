@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc_notalpha.c,v 1.9 1995/06/24 20:20:26 christos Exp $	*/
+/*	$NetBSD: linux_misc_notalpha.c,v 1.10 1995/08/13 17:51:40 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -772,8 +772,16 @@ linux_select(p, uap, retval)
 	if (ls.timeout)
 		microtime(&tv0);
 
-	if ((error = select(p, &bsa, retval)))
+	error = select(p, &bsa, retval);
+	if (error) {
+		/*
+		 * See fs/select.c in the Linux kernel.  Without this,
+		 * Maelstrom doesn't work.
+		 */
+		if (error == ERESTART)
+			error = EINTR;
 		return error;
+	}
 
 	if (ls.timeout) {
 		if (!*retval) {
