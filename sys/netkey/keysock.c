@@ -1,4 +1,4 @@
-/*	$NetBSD: keysock.c,v 1.10.2.1 2000/09/29 06:29:00 itojun Exp $	*/
+/*	$NetBSD: keysock.c,v 1.10.2.2 2003/01/23 10:25:54 msaitoh Exp $	*/
 /*	$KAME: keysock.c,v 1.23 2000/09/22 08:26:33 itojun Exp $	*/
 
 /*
@@ -49,6 +49,7 @@
 
 #include <net/raw_cb.h>
 #include <net/route.h>
+#include <netinet/in.h>
 
 #include <net/pfkeyv2.h>
 #include <netkey/keydb.h>
