@@ -73,7 +73,6 @@
 
 #include <vm/vm.h>
 #include <vm/vm_page.h>
-#include <vm/vm_object.h>
 
 /*
  *	Virtual memory maps provide for the mapping, protection,
@@ -247,7 +246,7 @@ vm_map_create(pmap, min, max, pageable)
  */
 void
 vm_map_init(map, min, max, pageable)
-	register struct vm_map *map;
+	register vm_map_t map;
 	vm_offset_t	min, max;
 	boolean_t	pageable;
 {
