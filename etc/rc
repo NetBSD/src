@@ -1,4 +1,5 @@
-#	@(#)rc	5.27 (Berkeley) 6/5/91
+#	From: @(#)rc	5.27 (Berkeley) 6/5/91
+#	$Id: rc,v 1.25 1993/12/15 07:24:31 mycroft Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -185,7 +186,7 @@ fi
 echo -n ' inetd';		inetd
 echo '.'
 
-sh /etc/rc.local
+. /etc/rc.local
 
 date
 
