@@ -1,4 +1,5 @@
 cd-hd-tape/obj/cdhdtape
-     fdset/obj/disk1of2
-     fdset/obj/disk2of2
+     fdset/obj/disk1of3
+     fdset/obj/disk2of3
+     fdset/obj/disk3of3
 instkernel/obj/netbsd.gz
