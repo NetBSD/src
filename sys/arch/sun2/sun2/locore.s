@@ -1,7 +1,7 @@
-/*	$NetBSD: locore.s,v 1.1 2001/03/29 03:24:19 fredette Exp $	*/
+/*	$NetBSD: locore.s,v 1.2 2001/04/06 14:36:08 fredette Exp $	*/
 
 /*
- * Copyright (c) 2001 Mathew Fredette
+ * Copyright (c) 2001 Matthew Fredette
  * Copyright (c) 1994, 1995 Gordon W. Ross
  * Copyright (c) 1993 Adam Glass
  * Copyright (c) 1988 University of Utah.
@@ -102,6 +102,16 @@ L_per_pmeg:
 | Force a long jump to the relocated code (high VA).
 	jmp L_high_code:l		| long jump
 
+| These entry points are here in pretty low memory, so that they
+| can be reached from virtual address zero using the classic,
+| old-school "g0" and "g4" commands from the monitor.  Note that
+| on entry, we are in low memory again (i.e., not where we were
+| linked.)  We do a long jump right away to the relocated code.
+L_g0_entry:
+	jmp _C_LABEL(g0_handler):l	| long jump
+L_g4_entry:
+	jmp _C_LABEL(g4_handler):l	| long jump
+	
 L_high_code:
 | We are now running in the correctly relocated kernel, so
 | we are no longer restricted to position-independent code.
@@ -114,6 +124,18 @@ L_high_code:
 	andw	d1, d0
 	movsw	d0, SYSTEM_ENAB		| disable all interrupts
 	movw	d0, _C_LABEL(enable_reg_soft)
+
+| Set up our g0 and g4 handlers.  Note that we reach ourselves
+| in low memory again (i.e., not where we were linked), which
+| is why we subtract KERNBASE.  The 2 and the 6 further adjust
+| the offsets to be PC-relative.
+	movl	#0, a0
+	movw	#0x6000, a0@+			| braw
+	movl	#(L_g0_entry-2-KERNBASE), d0
+	movw	d0, a0@+			| L_g0_entry
+	movw	#0x6000, a0@+			| braw
+	movl	#(L_g4_entry-6-KERNBASE), d0
+	movw	d0, a0@+			| L_g4_entry
 	
 | Do bootstrap stuff needed before main() gets called.
 | Our boot loader leaves a copy of the kernel's exec header
@@ -337,13 +359,6 @@ GLOBAL(trap0)
  * command in d0, addr in a1, length in d1
  */
 GLOBAL(trap12)
-	movl	_C_LABEL(curproc),sp@-	| push curproc pointer
-	movl	d1,sp@-			| push length
-	movl	a1,sp@-			| push addr
-	movl	d0,sp@-			| push command
-	lea	_C_LABEL(cachectl1),a0
-	jsr	a0@			| do it
-	lea	sp@(16),sp		| pop args
 	jra	_ASM_LABEL(rei)		| all done
 
 /*
@@ -991,15 +1006,6 @@ ENTRY(enable_reg_or)
 	bne 1b					| install it again if the soft value changed
 	movc	a1,dfc			| restore dfc
 	rts
-
-/*
- * This strangely-named function used to initialize the soft enable register that the
- * above functions use, and used to disable interrupts entirely, as the intreg_init
- * in sun3/intreg.c does.  But now we do all of this early in this locore.s, so
- * this function does nothing.  (It still has to exist because obio_init calls it.)
- */
-ENTRY(intreg_init)
-	rts	
 
 | Define some addresses, mostly so DDB can print useful info.
 | Not using _C_LABEL() here because these symbols are never
