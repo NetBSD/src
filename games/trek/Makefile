@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 1995/04/22 10:58:17 cgd Exp $
+#	$NetBSD: Makefile,v 1.8 1997/10/11 09:34:21 mycroft Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
 PROG=	trek
@@ -16,7 +16,8 @@ LDADD=	-lm
 HIDEGAME=hidegame
 
 .if make(install)
-SUBDIR+= USD.doc
+SUBDIR+=USD.doc
 .endif
 
 .include <bsd.prog.mk>
+.include <bsd.subdir.mk>

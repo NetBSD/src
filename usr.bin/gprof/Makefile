@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 1997/03/24 21:59:37 christos Exp $
+#	$NetBSD: Makefile,v 1.17 1997/10/11 09:34:39 mycroft Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/29/93
 
 PROG=	gprof
@@ -10,7 +10,8 @@ FILES=	${.CURDIR}/gprof.flat ${.CURDIR}/gprof.callg
 FILESDIR=/usr/share/misc
 
 .if make(install)
-SUBDIR+= PSD.doc
+SUBDIR+=PSD.doc
 .endif
 
 .include <bsd.prog.mk>
+.include <bsd.subdir.mk>

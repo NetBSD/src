@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 1997/02/03 22:02:51 christos Exp $
+#	$NetBSD: Makefile,v 1.18 1997/10/11 09:34:36 mycroft Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/19/93
 
 PROG=	routed
@@ -11,3 +11,4 @@ MLINKS=	routed.8 rdisc.8
 #COPTS=-g -DDEBUG -Wall
 
 .include <bsd.prog.mk>
+.include <bsd.subdir.mk>
