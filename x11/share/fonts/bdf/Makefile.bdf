@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.bdf,v 1.1.1.1 2003/09/11 18:55:44 lukem Exp $
+#	$NetBSD: Makefile.bdf,v 1.2 2003/09/13 00:24:52 lukem Exp $
 
 FILESDIR=	${X11FONTDIR}/${FONTSUBDIR}
 .PATH:  	${X11SRCDIR.xc}/fonts/bdf/${FONTSUBDIR}
@@ -15,7 +15,7 @@ UCS2ANY=	${UCS2ANYDIR}/ucs2any
 
 .for _F _M in ${UCSFILES}						# {
 ${_F}-${_M}.bdf: ${_F}.bdf
-	${UCS2ANY} ${.ALLSRC} ${DESTDIR}/${X11FONTDIR}/util/map-${_M} ${_M}
+	${UCS2ANY} ${.ALLSRC} ${DESTDIR}${X11FONTDIR}/util/map-${_M} ${_M}
 
 CLEANFILES+=	${_F}-${_M}.bdf
 BDFFILES+=	${_F}-${_M}.bdf
