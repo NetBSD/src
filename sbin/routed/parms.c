@@ -1,3 +1,5 @@
+/*	$NetBSD: parms.c,v 1.2 1996/08/10 01:29:30 thorpej Exp $	*/
+
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -32,10 +34,12 @@
  */
 
 #if !defined(lint) && !defined(sgi)
+#if 0
 static char sccsid[] = "@(#)if.c	8.1 (Berkeley) 6/5/93";
+#else
+static char rcsid[] = "$NetBSD: parms.c,v 1.2 1996/08/10 01:29:30 thorpej Exp $";
+#endif
 #endif /* not lint */
-
-#ident "$Revision: 1.1.1.1 $"
 
 #include "defs.h"
 #include "pathnames.h"
@@ -110,7 +114,7 @@ get_parms(struct interface *ifp)
 		ifp->int_state |= IS_NO_RDISC;
 	if (ifp->int_state & IS_PASSIVE)
 		ifp->int_state |= (IS_NO_RIP | IS_NO_RDISC);
-	if (ifp->int_state&(IS_NO_RIP|IS_NO_RDISC) == (IS_NO_RIP|IS_NO_RDISC))
+	if ((ifp->int_state&(IS_NO_RIP|IS_NO_RDISC)) == (IS_NO_RIP|IS_NO_RDISC))
 		ifp->int_state |= IS_PASSIVE;
 }
 
@@ -270,7 +274,8 @@ gwkludge(void)
 			state |= IS_NO_RDISC;
 		if (state & IS_PASSIVE)
 			state |= (IS_NO_RIP | IS_NO_RDISC);
-		if (state & (IS_NO_RIP|IS_NO_RDISC) == (IS_NO_RIP|IS_NO_RDISC))
+		if ((state & (IS_NO_RIP|IS_NO_RDISC)) ==
+		    (IS_NO_RIP|IS_NO_RDISC))
 			state |= IS_PASSIVE;
 
 		parmp = (struct parm*)malloc(sizeof(*parmp));
@@ -353,7 +358,7 @@ parse_parms(char *line)
 	if (!strncasecmp("subnet=",line,7)) {
 		intnetp = (struct intnet*)malloc(sizeof(*intnetp));
 		intnetp->intnet_metric = 1;
-		if (p = strrchr(line,',')) {
+		if ((p = strrchr(line,','))) {
 			*p++ = '\0';
 			intnetp->intnet_metric = (int)strtol(p,&p,0);
 			if (*p != '\0'

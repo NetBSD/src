@@ -1,3 +1,5 @@
+/*	$NetBSD: rdisc.c,v 1.2 1996/08/10 01:29:43 thorpej Exp $	*/
+
 /*
  * Copyright (c) 1995
  *	The Regents of the University of California.  All rights reserved.
@@ -32,10 +34,12 @@
  */
 
 #if !defined(lint) && !defined(sgi)
+#if 0
 static char sccsid[] = "@(#)rdisc.c	8.1 (Berkeley) x/y/95";
+#else
+static char rcsid[] = "$NetBSD: rdisc.c,v 1.2 1996/08/10 01:29:43 thorpej Exp $";
+#endif
 #endif /* not lint */
-
-#ident "$Revision: 1.1.1.1 $"
 
 #include "defs.h"
 #include <netinet/in_systm.h>
@@ -44,12 +48,12 @@ static char sccsid[] = "@(#)rdisc.c	8.1 (Berkeley) x/y/95";
 
 /* router advertisement ICMP packet */
 struct icmp_ad {
-	u_char	icmp_type;		/* type of message */
-	u_char	icmp_code;		/* type sub code */
-	u_short	icmp_cksum;		/* ones complement cksum of struct */
-	u_char	icmp_ad_num;		/* # of following router addresses */
-	u_char	icmp_ad_asize;		/* 2--words in each advertisement */
-	u_short	icmp_ad_life;		/* seconds of validity */
+	u_int8_t	icmp_type;	/* type of message */
+	u_int8_t	icmp_code;	/* type sub code */
+	u_int16_t	icmp_cksum;	/* ones complement cksum of struct */
+	u_int8_t	icmp_ad_num;	/* # of following router addresses */
+	u_int8_t	icmp_ad_asize;	/* 2--words in each advertisement */
+	u_int16_t	icmp_ad_life;	/* seconds of validity */
 	struct icmp_ad_info {
 	    n_long  icmp_ad_addr;
 	    n_long  icmp_ad_pref;
@@ -58,9 +62,9 @@ struct icmp_ad {
 
 /* router solicitation ICMP packet */
 struct icmp_so {
-	u_char	icmp_type;		/* type of message */
-	u_char	icmp_code;		/* type sub code */
-	u_short	icmp_cksum;		/* ones complement cksum of struct */
+	u_int8_t	icmp_type;	/* type of message */
+	u_int8_t	icmp_code;	/* type sub code */
+	u_int16_t	icmp_cksum;	/* ones complement cksum of struct */
 	n_long	icmp_so_rsvd;
 };
 
