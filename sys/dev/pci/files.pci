@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.121 2001/02/09 14:33:15 briggs Exp $
+#	$NetBSD: files.pci,v 1.122 2001/02/18 09:37:19 martin Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -406,11 +406,11 @@ file	dev/pci/if_an_pci.c		an_pci
 
 
 # ISDN devices
-attach isic at pci with pci_isic
-file dev/pci/pci_isic.c				pci_isic
+attach isic at pci with isic_pci
+file dev/pci/isic_pci.c				isic_pci
 
 defopt	opt_isicpci.h	ISICPCI_ELSA_QS1PCI ISICPCI_AVM_A1
 
-file dev/pci/i4b_elsa_qs1p.c			pci_isic
-file dev/pci/i4b_avm_fritz_pci.c		pci_isic
+file dev/pci/isic_pci_elsa_qs1p.c		isic_pci
+file dev/pci/isic_pci_avm_fritz_pci.c		isic_pci
 
