@@ -1,5 +1,5 @@
 #	from: @(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
-#	$Id: 4.4BSD.dist,v 1.8 1995/07/04 03:36:45 cgd Exp $
+#	$Id: 4.4BSD.dist,v 1.9 1995/08/12 01:22:31 jtc Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -1039,6 +1039,11 @@ sparc
 # ./usr/share/man/man4/sparc
 ..
 
+# ./usr/share/man/man4/sun3
+sun3
+# ./usr/share/man/man4/sun3
+..
+
 # ./usr/share/man/man4/tahoe
 tahoe
 # ./usr/share/man/man4/tahoe
@@ -1098,6 +1103,11 @@ pc532
 # ./usr/share/man/man8/sparc
 sparc
 # ./usr/share/man/man8/sparc
+..
+
+# ./usr/share/man/man8/sun3
+sun3
+# ./usr/share/man/man8/sun3
 ..
 
 # ./usr/share/man/man8/tahoe
