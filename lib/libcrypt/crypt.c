@@ -1,6 +1,8 @@
+/*	$NetBSD: crypt.c,v 1.5 1995/02/19 12:19:03 cgd Exp $	*/
+
 /*
- * Copyright (c) 1989 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1989, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Tom Truscott.
@@ -35,8 +37,10 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char sccsid[] = "from: @(#)crypt.c	5.11 (Berkeley) 6/25/91";*/
-static char rcsid[] = "$Id: crypt.c,v 1.4 1994/12/20 16:00:32 cgd Exp $";
+#if 0
+static char sccsid[] = "@(#)crypt.c	8.1.1.1 (Berkeley) 8/18/93";
+#endif
+static char rcsid[] = "$NetBSD: crypt.c,v 1.5 1995/02/19 12:19:03 cgd Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <unistd.h>
@@ -649,9 +653,7 @@ des_cipher(in, out, salt, num_iter)
 	}
 	else
 	{		/* decryption */
-		num_iter = -num_iter;
-		kp = &KS[KS_SIZE-1];
-		ks_inc  = -(long)sizeof(*kp);
+		return (1); /* always fail */
 	}
 
 	while (--num_iter >= 0) {
@@ -659,7 +661,7 @@ des_cipher(in, out, salt, num_iter)
 		do {
 
 #define	SPTAB(t, i) \
-	    (*(int32_t*)((unsigned char *)t + i*(sizeof(int32_t)/4)))
+	    (*(int32_t *)((unsigned char *)t + i*(sizeof(int32_t)/4)))
 #if defined(gould)
 			/* use this if B.b[i] is evaluated just once ... */
 #define	DOXOR(x,y,i)	x^=SPTAB(SPE[0][i],B.b[i]); y^=SPTAB(SPE[1][i],B.b[i]);
