@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64570.c,v 1.16 2001/06/12 11:48:51 wiz Exp $	*/
+/*	$NetBSD: hd64570.c,v 1.17 2001/06/14 05:44:26 itojun Exp $	*/
 
 /*
  * Copyright (c) 1999 Christian E. Hopps
@@ -807,7 +807,6 @@ sca_output(ifp, m, dst, rt0)
 	ALTQ_DECL(struct altq_pktattr pktattr;)
 
 	error = 0;
-	ifp->if_lastchange = time;
 
 	if ((ifp->if_flags & IFF_UP) != IFF_UP) {
 		error = ENETDOWN;
@@ -906,7 +905,6 @@ sca_output(ifp, m, dst, rt0)
 		return (error);
 	}
 	ifp->if_obytes += len;
-	ifp->if_lastchange = time;
 	if (mflags & M_MCAST)
 		ifp->if_omcasts++;
 
@@ -1610,7 +1608,6 @@ sca_frame_process(sca_port_t *scp)
 #endif
 
 	scp->sp_if.if_ipackets++;
-	scp->sp_if.if_lastchange = time;
 
 	hdlc = mtod(m, struct hdlc_header *);
 	switch (ntohs(hdlc->h_proto)) {

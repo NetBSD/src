@@ -1,4 +1,4 @@
-/*	$NetBSD: if_strip.c,v 1.38 2001/05/07 10:15:46 lukem Exp $	*/
+/*	$NetBSD: if_strip.c,v 1.39 2001/06/14 05:44:25 itojun Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
 /*
@@ -834,7 +834,7 @@ stripoutput(ifp, m, dst, rt)
 		struct timeval tv;
 
 		/* if output's been stalled for too long, and restart */
-		timersub(&time, &sc->sc_if.if_lastchange, &tv);
+		timersub(&time, &sc->sc_lastpacket, &tv);
 		if (tv.tv_sec > 0) {
 			DPRINTF(("stripoutput: stalled, resetting\n"));
 			sc->sc_otimeout++;
@@ -860,7 +860,7 @@ stripoutput(ifp, m, dst, rt)
 		ifp->if_oerrors++;
 		return (error);
 	}
-	sc->sc_if.if_lastchange = time;
+	sc->sc_lastpacket = time;
 	splx(s);
 
 	s = spltty();
@@ -1182,7 +1182,7 @@ stripintr(void *arg)
 			m_freem(bpf_m);
 		}
 #endif
-		sc->sc_if.if_lastchange = time;
+		sc->sc_lastpacket = time;
 
 		s = spltty();
 		strip_send(sc, m);
@@ -1300,7 +1300,7 @@ stripintr(void *arg)
 		}
 
 		sc->sc_if.if_ipackets++;
-		sc->sc_if.if_lastchange = time;
+		sc->sc_lastpacket = time;
 
 		s = splnet();
 		if (IF_QFULL(&ipintrq)) {
@@ -1411,7 +1411,7 @@ strip_resetradio(sc, tp)
 	 * is so badlyhung it needs  powercycling.
 	 */
 	sc->sc_state = ST_DEAD;
-	sc->sc_if.if_lastchange = time;
+	sc->sc_lastpacket = time;
 	sc->sc_statetimo = time.tv_sec + STRIP_RESET_INTERVAL;
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee1394subr.c,v 1.10 2001/04/13 23:30:14 thorpej Exp $	*/
+/*	$NetBSD: if_ieee1394subr.c,v 1.11 2001/06/14 05:44:24 itojun Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -101,7 +101,6 @@ ieee1394_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 
 	if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) != (IFF_UP|IFF_RUNNING))
 		senderr(ENETDOWN);
-	ifp->if_lastchange = time;
 	if ((rt = rt0) != NULL) {
 		if ((rt->rt_flags & RTF_UP) == 0) {
 			if ((rt0 = rt = rtalloc1(dst, 1)) != NULL) {
