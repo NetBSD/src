@@ -1,4 +1,4 @@
-.\" $NetBSD: sem_wait.3,v 1.2 2003/01/21 03:33:30 jdolecek Exp $
+.\" $NetBSD: sem_wait.3,v 1.3 2003/01/21 11:48:04 wiz Exp $
 .\"
 .\" Copyright (C) 2000 Jason Evans <jasone@FreeBSD.org>.
 .\" All rights reserved.
@@ -56,8 +56,8 @@ The
 .Fn sem_trywait
 function decrements (locks) the semaphore pointed to by
 .Fa sem
-only if the value is non-zero.  Otherwise, the semaphore is not decremented and
-an error is returned.
+only if the value is non-zero.
+Otherwise, the semaphore is not decremented and an error is returned.
 .Sh RETURN VALUES
 .Rv -std sem_wait
 .Sh ERRORS
