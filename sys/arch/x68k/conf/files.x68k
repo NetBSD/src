@@ -1,4 +1,4 @@
-#	$NetBSD: files.x68k,v 1.21 1998/08/05 16:08:35 minoura Exp $
+#	$NetBSD: files.x68k,v 1.22 1998/12/15 19:37:14 itohy Exp $
 #
 # new style config file for x68k architecture
 #
@@ -136,3 +136,10 @@ file	arch/x68k/dev/md_root.c		memory_disk_hooks
 
 include	"compat/sunos/files.sunos"
 file	arch/m68k/m68k/sunos_machdep.c	compat_sunos
+
+# Linux binary compatibility (COMPAT_LINUX)
+include "compat/linux/files.linux"
+include "compat/linux/arch/m68k/files.linux_m68k"
+
+# OSS audio driver compatibility
+include "compat/ossaudio/files.ossaudio"

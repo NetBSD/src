@@ -1,4 +1,4 @@
-# $NetBSD: files.next68k,v 1.3 1998/08/28 23:05:53 dbj Exp $
+# $NetBSD: files.next68k,v 1.4 1998/12/15 19:37:07 itohy Exp $
 
 # next68k-specific configuration info
 
@@ -78,3 +78,10 @@ major	{md = 13}
 # SunOS Binary Compatibility (COMPAT_SUNOS)
 include "compat/sunos/files.sunos"
 file	arch/m68k/m68k/sunos_machdep.c	compat_sunos
+
+# Linux binary compatibility (COMPAT_LINUX)
+include "compat/linux/files.linux"
+include "compat/linux/arch/m68k/files.linux_m68k"
+
+# OSS audio driver compatibility
+include "compat/ossaudio/files.ossaudio"

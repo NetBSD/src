@@ -1,4 +1,4 @@
-#	$NetBSD: files.mac68k,v 1.86 1998/10/23 01:16:22 ender Exp $
+#	$NetBSD: files.mac68k,v 1.87 1998/12/15 19:37:04 itohy Exp $
 
 # mac68k-specific configuration info
 
@@ -161,3 +161,10 @@ major	{md = 13}
 # SunOS Binary Compatibility (COMPAT_SUNOS)
 include "compat/sunos/files.sunos"
 file	arch/m68k/m68k/sunos_machdep.c	compat_sunos
+
+# Linux binary compatibility (COMPAT_LINUX)
+include "compat/linux/files.linux"
+include "compat/linux/arch/m68k/files.linux_m68k"
+
+# OSS audio driver compatibility
+include "compat/ossaudio/files.ossaudio"

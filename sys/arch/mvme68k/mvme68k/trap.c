@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.25 1998/11/11 06:41:27 thorpej Exp $	*/
+/*	$NetBSD: trap.c,v 1.26 1998/12/15 19:37:06 itohy Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,11 +43,13 @@
  */
 
 #include "opt_ddb.h"
+#include "opt_execfmt.h"
 #include "opt_ktrace.h"
 #include "opt_uvm.h"
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
 #include "opt_compat_hpux.h"
+#include "opt_compat_linux.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,6 +84,15 @@
 #ifdef COMPAT_SUNOS
 #include <compat/sunos/sunos_syscall.h>
 extern struct emul emul_sunos;
+#endif
+
+#ifdef COMPAT_LINUX
+#ifdef EXEC_AOUT
+extern struct emul emul_linux_aout;
+#endif
+#ifdef EXEC_ELF32
+extern struct emul emul_linux_elf32;
+#endif
 #endif
 
 #include <m68k/cacheops.h>
@@ -1032,6 +1043,43 @@ syscall(code, frame)
 	else
 		callp += code;
 	argsize = callp->sy_argsize;
+#ifdef COMPAT_LINUX
+	if (0
+# ifdef EXEC_AOUT
+	    || p->p_emul == &emul_linux_aout
+# endif
+# ifdef EXEC_ELF32
+	    || p->p_emul == &emul_linux_elf32
+# endif
+	     ) {
+		/*
+		 * Linux passes the args in d1-d5
+		 */
+		switch (argsize) {
+		case 20:
+			args[4] = frame.f_regs[D5];
+		case 16:
+			args[3] = frame.f_regs[D4];
+		case 12:
+			args[2] = frame.f_regs[D3];
+		case 8:
+			args[1] = frame.f_regs[D2];
+		case 4:
+			args[0] = frame.f_regs[D1];
+		case 0:
+			error = 0;
+			break;
+		default:
+#ifdef DEBUG
+			panic("linux syscall %d weird argsize %d",
+				code, argsize);
+#else
+			error = EINVAL;
+#endif
+			break;
+		}
+	} else
+#endif
 	if (argsize)
 		error = copyin(params, (caddr_t)args, argsize);
 	else
