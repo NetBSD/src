@@ -1,4 +1,4 @@
-#	$NetBSD: files.scsipi,v 1.19 1998/11/17 14:38:42 bouyer Exp $
+#	$NetBSD: files.scsipi,v 1.20 1999/02/07 22:58:43 sommerfe Exp $
 #
 # Config file and device description for machine-independent SCSI code.
 # Included by ports that need it.  Ports that use it must provide
@@ -6,13 +6,13 @@
 
 defopt	opt_scsi.h	SCSIVERBOSE ST_ENABLE_EARLYWARN
 
-file	dev/scsipi/scsipiconf.c		scsi | atapi
-file	dev/scsipi/scsipi_base.c	scsi | atapi
-file	dev/scsipi/scsipi_ioctl.c	scsi | atapi
-file	dev/scsipi/scsipi_verbose.c	(scsi | atapi) & scsiverbose
+file	dev/scsipi/scsipiconf.c		scsi | atapibus
+file	dev/scsipi/scsipi_base.c	scsi | atapibus
+file	dev/scsipi/scsipi_ioctl.c	scsi | atapibus
+file	dev/scsipi/scsipi_verbose.c	(scsi | atapibus) & scsiverbose
 file	dev/scsipi/scsi_base.c		scsi 
-file	dev/scsipi/atapi_base.c		atapi
-file	dev/scsipi/atapi_wdc.c		atapi & wdc_base
+file	dev/scsipi/atapi_base.c		atapibus
+file	dev/scsipi/atapi_wdc.c		atapibus & wdc_base
 
 device	scsibus {target = -1, lun = -1}
 attach	scsibus at scsi
