@@ -24,7 +24,11 @@
    /usr/libexec directory.  */
 
 #undef MD_EXEC_PREFIX
+#ifdef NBSD_EXEC_PREFIX
+#define	MD_EXEC_PREFIX			NBSD_EXEC_PREFIX
+#else
 #define MD_EXEC_PREFIX			"/usr/libexec/"
+#endif
 
 /* Under NetBSD, the normal location of the various *crt*.o files is the
    /usr/lib directory.  */
