@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd_clock.c,v 1.10 2002/10/02 15:45:12 thorpej Exp $	*/
+/*	$NetBSD: iomd_clock.c,v 1.11 2003/07/14 15:17:23 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -47,7 +47,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD");
+__KERNEL_RCSID(0, "$NetBSD");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>

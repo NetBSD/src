@@ -1,11 +1,11 @@
-/* $NetBSD: stubs.c,v 1.2 2002/08/12 14:20:44 bjh21 Exp $ */
+/* $NetBSD: stubs.c,v 1.3 2003/07/14 15:17:16 lukem Exp $ */
 /*
  * stubs.c -- functions I haven't written yet
  */
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: stubs.c,v 1.2 2002/08/12 14:20:44 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stubs.c,v 1.3 2003/07/14 15:17:16 lukem Exp $");
 
 #include <sys/kernel.h>
 #include <sys/systm.h>

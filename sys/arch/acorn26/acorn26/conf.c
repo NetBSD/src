@@ -1,4 +1,4 @@
-/* $NetBSD: conf.c,v 1.6 2002/10/26 13:50:18 jdolecek Exp $ */
+/* $NetBSD: conf.c,v 1.7 2003/07/14 15:17:14 lukem Exp $ */
 /*-
  * Copyright (c) 1998, 2000 Ben Harris
  * All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: conf.c,v 1.6 2002/10/26 13:50:18 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.7 2003/07/14 15:17:14 lukem Exp $");
 
 #include <sys/conf.h>
 #include <dev/cons.h>

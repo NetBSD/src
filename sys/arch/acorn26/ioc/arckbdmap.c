@@ -1,4 +1,4 @@
-/* $NetBSD: arckbdmap.c,v 1.2 2002/03/24 23:37:44 bjh21 Exp $ */
+/* $NetBSD: arckbdmap.c,v 1.3 2003/07/14 15:17:19 lukem Exp $ */
 /*-
  * Copyright (c) 1998 Ben Harris
  * All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/types.h>
 
-__RCSID("$NetBSD: arckbdmap.c,v 1.2 2002/03/24 23:37:44 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arckbdmap.c,v 1.3 2003/07/14 15:17:19 lukem Exp $");
 
 #include <sys/device.h>
 #include <dev/wscons/wsksymdef.h>

@@ -1,4 +1,4 @@
-/* $NetBSD: cons_machdep.c,v 1.3 2003/04/26 11:05:05 ragge Exp $ */
+/* $NetBSD: cons_machdep.c,v 1.4 2003/07/14 15:17:15 lukem Exp $ */
 /*-
  * Copyright (c) 1998 Ben Harris
  * All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: cons_machdep.c,v 1.3 2003/04/26 11:05:05 ragge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cons_machdep.c,v 1.4 2003/07/14 15:17:15 lukem Exp $");
 
 #include <sys/syslog.h>
 #include <sys/systm.h>
