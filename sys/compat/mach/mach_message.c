@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_message.c,v 1.42 2003/12/26 16:31:29 manu Exp $ */
+/*	$NetBSD: mach_message.c,v 1.43 2004/01/02 02:09:52 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_message.c,v 1.42 2003/12/26 16:31:29 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_message.c,v 1.43 2004/01/02 02:09:52 manu Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h" /* For COMPAT_MACH in <sys/ktrace.h> */
@@ -844,7 +844,7 @@ mach_trade_rights_complex(l, mm)
 	mcm = (struct mach_complex_msg *)mm->mm_msg;
 	count = mcm->mcm_body.msgh_descriptor_count;
 	begin = (u_long)mcm;
-	end = (u_long)&mcm->mcm_desc.gen[count + 1];
+	end = (u_long)&mcm->mcm_desc.gen[count];
 
 	if ((end - begin) > mm->mm_size) {
 #ifdef DEBUG_MACH
