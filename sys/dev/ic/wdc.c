@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.114.4.3 2003/09/24 11:16:43 tron Exp $ */
+/*	$NetBSD: wdc.c,v 1.114.4.4 2004/03/28 22:24:10 jmc Exp $ */
 
 
 /*
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.114.4.3 2003/09/24 11:16:43 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.114.4.4 2004/03/28 22:24:10 jmc Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -237,7 +237,7 @@ wdcprobe(chp)
 	DELAY(1000);
 	bus_space_write_1(chp->ctl_iot, chp->ctl_ioh, wd_aux_ctlr,
 	    WDCTL_IDS);
-	delay(1000);
+	delay(2000);
 	(void) bus_space_read_1(chp->cmd_iot, chp->cmd_ioh, wd_error);
 	bus_space_write_1(chp->ctl_iot, chp->ctl_ioh, wd_aux_ctlr, WDCTL_4BIT);
 	delay(10);
