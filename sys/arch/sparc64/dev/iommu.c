@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.51.4.5 2002/11/08 09:24:57 tron Exp $	*/
+/*	$NetBSD: iommu.c,v 1.51.4.6 2002/12/01 22:18:03 he Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Eduardo Horvath
@@ -393,8 +393,7 @@ iommu_strbuf_flush_done(sb)
 
 	/* Bypass non-coherent D$ */
 	while ((!ldxa(sb->sb_flushpa, ASI_PHYS_CACHED)) &&
-		((cur.tv_sec <= flushtimeout.tv_sec) &&
-			(cur.tv_usec <= flushtimeout.tv_usec)))
+		timercmp(&cur, &flushtimeout, <=))
 		microtime(&cur);
 
 #ifdef DIAGNOSTIC
