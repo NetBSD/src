@@ -1,4 +1,4 @@
-/*	$NetBSD: filedesc.h,v 1.18 1999/05/05 19:52:20 thorpej Exp $	*/
+/*	$NetBSD: filedesc.h,v 1.19 2000/03/23 05:16:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -114,6 +114,7 @@ void	fdunshare __P((struct proc *p));
 void	fdinit1 __P((struct filedesc0 *newfdp));
 void	fdclear __P((struct proc *p));
 void	fdfree __P((struct proc *p));
+void	fdremove __P((struct filedesc *, int));
 int	fdrelease __P((struct proc *p, int));
 void	fdcloseexec __P((struct proc *));
 

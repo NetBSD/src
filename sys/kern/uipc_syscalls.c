@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.49 1999/11/05 11:48:57 mycroft Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.50 2000/03/23 05:16:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -103,7 +103,7 @@ sys_socket(p, v, retval)
 			 SCARG(uap, protocol));
 	if (error) {
 		FILE_UNUSE(fp, p);
-		fdp->fd_ofiles[fd] = 0;
+		fdremove(fdp, fd);
 		ffree(fp);
 	} else {
 		fp->f_data = (caddr_t)so;
@@ -257,7 +257,7 @@ sys_accept(p, v, retval)
 	}
 	/* if an error occured, free the file descriptor */
 	if (error) {
-		fdp->fd_ofiles[fd] = 0;
+		fdremove(fdp, fd);
 		ffree(fp);
 	}
 	m_freem(nam);
@@ -377,11 +377,11 @@ sys_socketpair(p, v, retval)
 free4:
 	FILE_UNUSE(fp2, p);
 	ffree(fp2);
-	fdp->fd_ofiles[sv[1]] = 0;
+	fdremove(fdp, sv[1]);
 free3:
 	FILE_UNUSE(fp1, p);
 	ffree(fp1);
-	fdp->fd_ofiles[sv[0]] = 0;
+	fdremove(fdp, sv[0]);
 free2:
 	(void)soclose(so2);
 free1:
@@ -990,11 +990,11 @@ sys_pipe(p, v, retval)
 free4:
 	FILE_UNUSE(wf, p);
 	ffree(wf);
-	fdp->fd_ofiles[retval[1]] = 0;
+	fdremove(fdp, retval[1]);
 free3:
 	FILE_UNUSE(rf, p);
 	ffree(rf);
-	fdp->fd_ofiles[retval[0]] = 0;
+	fdremove(fdp, retval[0]);
 free2:
 	(void)soclose(wso);
 free1:

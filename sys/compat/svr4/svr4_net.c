@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_net.c,v 1.21 1999/09/07 18:20:19 christos Exp $	 */
+/*	$NetBSD: svr4_net.c,v 1.22 2000/03/23 05:16:16 thorpej Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -193,7 +193,7 @@ svr4_netopen(dev, flag, mode, p)
 
 	if ((error = socreate(family, &so, type, protocol)) != 0) {
 		DPRINTF(("socreate error %d\n", error));
-		p->p_fd->fd_ofiles[fd] = 0;
+		fdremove(p->p_fd, fd);
 		FILE_UNUSE(fp, NULL);
 		ffree(fp);
 		return error;
