@@ -1,4 +1,4 @@
-/*	$NetBSD: if_nameindex.c,v 1.5 2000/11/24 08:21:12 itojun Exp $	*/
+/*	$NetBSD: if_nameindex.c,v 1.6 2000/12/20 18:47:11 christos Exp $	*/
 /*	$KAME: if_nameindex.c,v 1.8 2000/11/24 08:20:01 itojun Exp $	*/
 
 /*-
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: if_nameindex.c,v 1.5 2000/11/24 08:21:12 itojun Exp $");
+__RCSID("$NetBSD: if_nameindex.c,v 1.6 2000/12/20 18:47:11 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -116,7 +116,7 @@ if_nameindex(void)
 	 * the strings.
 	 */
 	cp = malloc((ni + 1) * sizeof(struct if_nameindex) + nbytes);
-	ifni = (struct if_nameindex *)cp;
+	ifni = (struct if_nameindex *)(void *)cp;
 	if (ifni == NULL)
 		goto out;
 	cp += (ni + 1) * sizeof(struct if_nameindex);
