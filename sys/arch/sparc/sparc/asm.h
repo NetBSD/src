@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.5 1998/09/14 22:43:29 pk Exp $ */
+/*	$NetBSD: asm.h,v 1.6 1998/09/27 14:32:14 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -120,4 +120,11 @@
 /* atomic swap of a word between a register and memory */
 #define	swap(loc, val) ({ \
 	__asm __volatile("swap [%2],%0" : "=&r" (val) : "0" (val), "r" (loc)); \
+})
+
+/* atomic load/store of a byte in memory */
+#define	ldstub(loc) ({ \
+	int _v; \
+	__asm __volatile("ldstub [%1],%0" : "=r" (_v) : "r" (loc) : "memory"); \
+	_v; \
 })
