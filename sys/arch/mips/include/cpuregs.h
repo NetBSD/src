@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuregs.h,v 1.41 2001/05/30 07:21:51 nisimura Exp $	*/
+/*	$NetBSD: cpuregs.h,v 1.42 2001/05/30 12:52:06 soren Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -671,7 +671,7 @@
 #define MIPS_RC64470	0x30	/* IDT RC64474/RC64475 		ISA III */
 #define MIPS_R5400	0x54	/* NEC VR5400 			ISA IV	*/
 #define	MIPS_4Kc	0x80	/* MIPS 4Kc			ISA 32  */
-#define	MIPS_5Kc	0x81	/* MIPS 4Kc			ISA 32  */
+#define	MIPS_5Kc	0x81	/* MIPS 5Kc			ISA 32  */
 
 /*
  * FPU processor revision ID
