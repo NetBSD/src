@@ -1,4 +1,4 @@
-/*	$NetBSD: buffer.c,v 1.1.1.6.2.3 2003/09/16 23:29:22 christos Exp $	*/
+/*	$NetBSD: buffer.c,v 1.1.1.6.2.4 2003/09/18 18:27:31 tron Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -39,9 +39,10 @@ void
 buffer_free(Buffer *buffer)
 {
 	if (buffer->alloc > 0) {
-	memset(buffer->buf, 0, buffer->alloc);
-	xfree(buffer->buf);
-}
+		memset(buffer->buf, 0, buffer->alloc);
+		xfree(buffer->buf);
+		buffer->alloc = 0;
+	}
 }
 
 /*
