@@ -1,11 +1,11 @@
-/*	$NetBSD: msg.c,v 1.4 1997/10/17 14:54:41 lukem Exp $	*/
+/*	$NetBSD: msg.c,v 1.4.2.1 1998/08/29 03:40:05 mellon Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: msg.c,v 1.10 1997/10/13 15:03:55 jkh Exp";
 #else
-__RCSID("$NetBSD: msg.c,v 1.4 1997/10/17 14:54:41 lukem Exp $");
+__RCSID("$NetBSD: msg.c,v 1.4.2.1 1998/08/29 03:40:05 mellon Exp $");
 #endif
 #endif
 
@@ -35,10 +35,10 @@ __RCSID("$NetBSD: msg.c,v 1.4 1997/10/17 14:54:41 lukem Exp $");
 
 /* Die a relatively simple death */
 void
-upchuck(const char *err)
+upchuck(const char *errstr)
 {
-    warn("fatal error during execution: %s", err);
     cleanup(0);
+    err(1, "fatal error during execution: %s", errstr);
 }
 
 /*
@@ -59,8 +59,8 @@ y_or_n(Boolean def, const char *msg, ...)
      */
     tty = fopen("/dev/tty", "r");
     if (!tty) {
-	warnx("can't open /dev/tty!");
 	cleanup(0);
+	errx(1, "can't open /dev/tty!");
     }
     while (ch != 'Y' && ch != 'N') {
 	vfprintf(stderr, msg, args);
