@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.623 2003/09/28 09:16:46 dsl Exp $
+#	$NetBSD: mi,v 1.624 2003/09/28 16:36:53 dsl Exp $
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
 ./usr/bin/as			comp-util-bin
@@ -7403,8 +7403,8 @@
 ./usr/share/man/man9/dmover_request_free.9		comp-sys-man
 ./usr/share/man/man9/dmover_session_create.9		comp-sys-man
 ./usr/share/man/man9/dmover_session_destroy.9		comp-sys-man
-./usr/share/man/man9/do_setresgid.0		comp-sys-man
-./usr/share/man/man9/do_setresuid.0		comp-sys-man
+./usr/share/man/man9/do_setresgid.9		comp-sys-man
+./usr/share/man/man9/do_setresuid.9		comp-sys-man
 ./usr/share/man/man9/dofileread.9		comp-sys-man
 ./usr/share/man/man9/dofilereadv.9		comp-sys-man
 ./usr/share/man/man9/dofilewrite.9		comp-sys-man
