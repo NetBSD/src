@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.57 1998/03/15 23:10:21 pk Exp $	*/
+/*	$NetBSD: rtld.c,v 1.58 1998/03/18 23:21:46 pk Exp $	*/
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -1224,7 +1224,7 @@ xprintf(" BINDER: %s located at = %#x in %s\n", sym, addr, src_map->som_path);
 
 
 static int			hfd;
-static long			hsize;
+static size_t			hsize;
 static struct hints_header	*hheader;
 static struct hints_bucket	*hbuckets;
 static char			*hstrtab;
@@ -1238,58 +1238,43 @@ maphints()
 	caddr_t		addr;
 	struct stat	statbuf;
 
-	if ((hfd = open(_PATH_LD_HINTS, O_RDONLY, 0)) == -1) {
-		hheader = (struct hints_header *)-1;
-		return;
-	}
+	if ((hfd = open(_PATH_LD_HINTS, O_RDONLY, 0)) == -1)
+		goto nohints;
 
 	if (fstat(hfd, &statbuf) != 0 ||
-	    statbuf.st_size < sizeof(struct hints_header)) {
-		hheader = (struct hints_header *)-1;
-		return;
-	}
+	    (hsize = (size_t)statbuf.st_size) < sizeof(struct hints_header))
+		goto nohints;
 
-	hsize = PAGSIZ;
+	hsize = roundup(hsize, PAGSIZ);
+
 	addr = mmap(0, hsize, PROT_READ, MAP_FILE|MAP_COPY, hfd, 0);
-
-	if (addr == (caddr_t)-1) {
-		close(hfd);
-		hheader = (struct hints_header *)-1;
-		return;
-	}
+	if (addr == (caddr_t)-1)
+		goto nohints;
 
 	hheader = (struct hints_header *)addr;
-	if (HH_BADMAG(*hheader)) {
+	if (HH_BADMAG(*hheader) || hheader->hh_ehints > hsize) {
 		munmap(addr, hsize);
-		close(hfd);
-		hheader = (struct hints_header *)-1;
-		return;
+		goto nohints;
 	}
 
 	if (hheader->hh_version != LD_HINTS_VERSION_1 &&
 	    hheader->hh_version != LD_HINTS_VERSION_2) {
 		munmap(addr, hsize);
-		close(hfd);
-		hheader = (struct hints_header *)-1;
-		return;
-	}
-
-	if (hheader->hh_ehints > hsize) {
-		if (mmap(addr+hsize, hheader->hh_ehints - hsize,
-				PROT_READ, MAP_FILE|MAP_COPY|MAP_FIXED,
-				hfd, hsize) != (caddr_t)(addr+hsize)) {
-
-			munmap((caddr_t)hheader, hsize);
-			close(hfd);
-			hheader = (struct hints_header *)-1;
-			return;
-		}
+		goto nohints;
 	}
 
 	hbuckets = (struct hints_bucket *)(addr + hheader->hh_hashtab);
 	hstrtab = (char *)(addr + hheader->hh_strtab);
 	if (hheader->hh_version >= LD_HINTS_VERSION_2)
 		hint_search_path = hstrtab + hheader->hh_dirlist;
+
+	return;
+
+nohints:
+	if (hfd >= 0)
+		close(hfd);
+	hheader = (struct hints_header *)-1;
+	return;
 }
 
 static void
