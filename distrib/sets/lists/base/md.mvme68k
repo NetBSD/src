@@ -1,5 +1,6 @@
-# $NetBSD: md.mvme68k,v 1.16 2001/01/26 01:37:19 jwise Exp $
-./sbin/edlabel			base-sysutil-bin
+# $NetBSD: md.mvme68k,v 1.17 2002/08/29 01:30:42 lukem Exp $
+./rescue/edlabel			base-rescue-root
+./sbin/edlabel				base-sysutil-bin
 ./usr/mdec/bootsd			base-sysutil-bin
 ./usr/mdec/bootst			base-sysutil-bin
 ./usr/mdec/bootxx			base-sysutil-bin

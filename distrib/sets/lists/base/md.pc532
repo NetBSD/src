@@ -1,4 +1,6 @@
-# $NetBSD: md.pc532,v 1.39 2001/12/04 00:12:46 jdolecek Exp $
+# $NetBSD: md.pc532,v 1.40 2002/08/29 01:30:43 lukem Exp $
+./rescue/bim			base-rescue-root
+./rescue/ldconfig		base-rescue-root
 ./sbin/bim			base-sysutil-root
 ./sbin/ldconfig			base-sysutil-root
 ./usr/libexec/ld.so		base-sys-shlib

@@ -1,4 +1,6 @@
-# $NetBSD: md.sparc,v 1.62 2002/05/07 12:49:39 lukem Exp $
+# $NetBSD: md.sparc,v 1.63 2002/08/29 01:30:45 lukem Exp $
+./rescue/edlabel		base-rescue-root
+./rescue/ldconfig		base-rescue-root
 ./sbin/edlabel			base-sysutil-root
 ./sbin/ldconfig			base-sysutil-root
 ./usr/bin/fdformat		base-util-bin

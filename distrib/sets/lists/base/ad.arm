@@ -1,4 +1,5 @@
-# $NetBSD: ad.arm,v 1.5 2002/08/09 00:15:57 thorpej Exp $
+# $NetBSD: ad.arm,v 1.6 2002/08/29 01:30:37 lukem Exp $
+./rescue/ldconfig		base-rescue-root
 ./sbin/ldconfig			base-sysutil-root
 ./usr/lib/libarm.so.0		base-sys-shlib
 ./usr/lib/libarm.so.0.0		base-sys-shlib

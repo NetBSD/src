@@ -1,2 +1,3 @@
-# $NetBSD: md.playstation2,v 1.1 2001/10/15 16:22:51 uch Exp $
+# $NetBSD: md.playstation2,v 1.2 2002/08/29 01:30:44 lukem Exp $
+./rescue/fdisk		base-rescue-root
 ./sbin/fdisk		base-sysutil-root

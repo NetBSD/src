@@ -1,5 +1,6 @@
-# $NetBSD: md.atari,v 1.43 2002/07/10 19:59:58 jdolecek Exp $
+# $NetBSD: md.atari,v 1.44 2002/08/29 01:30:38 lukem Exp $
 ./boot.atari				base-sysutil-bin
+./rescue/edlabel			base-rescue-root
 ./sbin/ahdilabel			base-sysutil-root
 ./sbin/binpatch				base-sysutil-root
 ./sbin/edahdi				base-sysutil-root

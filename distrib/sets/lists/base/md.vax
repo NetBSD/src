@@ -1,6 +1,7 @@
-# $NetBSD: md.vax,v 1.19 2002/05/14 15:08:26 lukem Exp $
+# $NetBSD: md.vax,v 1.20 2002/08/29 01:30:46 lukem Exp $
 ./boot				base-sys-root
 ./pcs750.bin			base-sys-root
+./rescue/ldconfig		base-rescue-root
 ./sbin/ldconfig			base-sysutil-root
 ./usr/libexec/ld.so		base-sys-shlib
 ./usr/mdec/boot			base-sysutil-bin
