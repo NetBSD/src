@@ -1,4 +1,4 @@
-/*	$NetBSD: mopchk.c,v 1.2 1997/03/25 03:07:45 thorpej Exp $	*/
+/*	$NetBSD: mopchk.c,v 1.3 1997/04/16 13:30:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1995-96 Mats O Jansson.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$NetBSD: mopchk.c,v 1.2 1997/03/25 03:07:45 thorpej Exp $";
+static char rcsid[] = "$NetBSD: mopchk.c,v 1.3 1997/04/16 13:30:58 christos Exp $";
 #endif
 
 /*
@@ -39,7 +39,7 @@ static char rcsid[] = "$NetBSD: mopchk.c,v 1.2 1997/03/25 03:07:45 thorpej Exp $
  * Usage:	mopchk [-a] [-v] [filename...]
  */
 
-#include "os.h"
+#include "common/os.h"
 #include "common/common.h"
 #include "common/mopdef.h"
 #include "common/device.h"
