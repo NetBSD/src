@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.10 1996/11/13 21:13:10 cgd Exp $	*/
+/*	$NetBSD: mem.c,v 1.11 1997/03/24 23:01:40 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -96,7 +96,7 @@ mmrw(dev, uio, flags)
 	register struct iovec *iov;
 	int error = 0;
 
-	while (uio->uio_resid > 0 && error == 0) {
+	while (uio->uio_resid > 0 && !error) {
 		iov = uio->uio_iov;
 		if (iov->iov_len == 0) {
 			uio->uio_iov++;
@@ -121,7 +121,7 @@ kmemphys:
 			c = min(uio->uio_resid, (int)(NBPG - o));
 			error =
 			    uiomove((caddr_t)ALPHA_PHYS_TO_K0SEG(v), c, uio);
-			continue;
+			break;
 
 /* minor device 1 is kernel memory */
 		case 1:
@@ -137,9 +137,9 @@ kmemphys:
 			    uio->uio_rw == UIO_READ ? B_READ : B_WRITE))
 				return (EFAULT);
 			error = uiomove((caddr_t)v, c, uio);
-			continue;
+			break;
 
-/* minor device 2 is EOF/RATHOLE */
+/* minor device 2 is EOF/rathole */
 		case 2:
 			if (uio->uio_rw == UIO_WRITE)
 				uio->uio_resid = 0;
@@ -148,8 +148,8 @@ kmemphys:
 /* minor device 12 (/dev/zero) is source of nulls on read, rathole on write */
 		case 12:
 			if (uio->uio_rw == UIO_WRITE) {
-				c = iov->iov_len;
-				break;
+				uio->uio_resid = 0;
+				return (0);
 			}
 			/*
 			 * On the first call, allocate and zero a page
@@ -170,17 +170,11 @@ kmemphys:
 			}
 			c = min(iov->iov_len, CLBYTES);
 			error = uiomove(zeropage, c, uio);
-			continue;
+			break;
 
 		default:
 			return (ENXIO);
 		}
-		if (error)
-			break;
-		iov->iov_base += c;
-		iov->iov_len -= c;
-		uio->uio_offset += c;
-		uio->uio_resid -= c;
 	}
 	return (error);
 }
