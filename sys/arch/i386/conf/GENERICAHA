@@ -1,7 +1,7 @@
 #
 # GENERICAHA -- Generic machine w/aha driver -- distribution floppy
 #
-#	$Id: GENERICAHA,v 1.43 1994/04/27 08:25:53 mycroft Exp $
+#	$Id: GENERICAHA,v 1.44 1994/05/21 08:37:33 cgd Exp $
 #
 
 machine		"i386"
@@ -11,7 +11,6 @@ cpu		"I586_CPU"
 ident		GENERICAHA
 timezone	8 dst
 maxusers	10
-maxfdescs	2048
 options		SWAPPAGER,VNODEPAGER,DEVPAGER
 options		FFS
 options		INET,ISOFS,NFSCLIENT
