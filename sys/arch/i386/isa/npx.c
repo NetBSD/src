@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.83 2002/01/08 13:31:04 toshii Exp $	*/
+/*	$NetBSD: npx.c,v 1.84 2002/01/10 03:46:17 enami Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995, 1998 Charles M. Hannum.  All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.83 2002/01/08 13:31:04 toshii Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.84 2002/01/10 03:46:17 enami Exp $");
 
 #if 0
 #define IPRINTF(x)	printf x
@@ -390,7 +390,7 @@ npxintr(void *arg)
 		 * in doreti, and the frame for that could easily be set up
 		 * just before it is used).
 		 */
-		p->p_md.md_regs = (struct trapframe *)&frame->if_es;
+		p->p_md.md_regs = (struct trapframe *)&frame->if_gs;
 #ifdef notyet
 		/*
 		 * Encode the appropriate code for detailed information on
