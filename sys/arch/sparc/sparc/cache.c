@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.22 1997/03/22 19:17:03 pk Exp $ */
+/*	$NetBSD: cache.c,v 1.23 1997/03/22 22:03:25 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -165,18 +165,18 @@ viking_cache_enable()
 void
 hypersparc_cache_enable()
 {
-	register u_int i, lim, ls, ts;
+	register u_int pcr, i, lim, ls, ts;
 
 	ls = CACHEINFO.c_linesize;
 	ts = CACHEINFO.c_totalsize;
 
-	i = lda(SRMMU_PCR, ASI_SRMMU);
+	pcr = lda(SRMMU_PCR, ASI_SRMMU);
 
 	/*
 	 * First we determine what type of cache we have, and
 	 * setup the anti-aliasing constants appropriately.
 	 */
-	if (i & HYPERSPARC_PCR_CS) {
+	if (pcr & HYPERSPARC_PCR_CS) {
 		cache_alias_bits = CACHE_ALIAS_BITS_HS256k;
 		cache_alias_dist = CACHE_ALIAS_DIST_HS256k;
 	} else {
@@ -187,12 +187,13 @@ hypersparc_cache_enable()
 	for (i = 0, lim = ts; i < lim; i += ls)
 		sta(i, ASI_DCACHETAG, 0);
 
-	sta(SRMMU_PCR, ASI_SRMMU, /* Enable write-back cache */
-	    lda(SRMMU_PCR, ASI_SRMMU) | HYPERSPARC_PCR_CE | HYPERSPARC_PCR_CM);
+	/* Enable write-back cache */
+	pcr |= (HYPERSPARC_PCR_CE | HYPERSPARC_PCR_CM);
+	sta(SRMMU_PCR, ASI_SRMMU, pcr);
 	CACHEINFO.c_enabled = 1;
 
-	CACHEINFO.c_vactype = VAC_NONE;
 	/* HyperSPARC uses phys. tagged cache */
+	CACHEINFO.c_vactype = VAC_NONE;
 
 	/* XXX: should add support */
 	if (CACHEINFO.c_hwflush)
@@ -204,10 +205,18 @@ hypersparc_cache_enable()
 void
 swift_cache_enable()
 {
+	int pcr;
+
 	cache_alias_dist = max(
 		CACHEINFO.ic_totalsize / CACHEINFO.ic_associativity,
 		CACHEINFO.dc_totalsize / CACHEINFO.dc_associativity);
 	cache_alias_bits = (cache_alias_dist - 1) & ~PGOFSET;
+
+	pcr = lda(SRMMU_PCR, ASI_SRMMU);
+	pcr |= (SWIFT_PCR_ICE | SWIFT_PCR_DCE);
+	sta(SRMMU_PCR, ASI_SRMMU, pcr);
+	CACHEINFO.c_enabled = 1;
+	printf("cache enabled\n");
 }
 
 void
@@ -225,6 +234,23 @@ cypress_cache_enable()
 	if (CACHEINFO.c_vactype == VAC_WRITEBACK)
 		scr |= CYPRESS_PCR_CM;
 	sta(SRMMU_PCR, ASI_SRMMU, scr);
+	CACHEINFO.c_enabled = 1;
+	printf("cache enabled\n");
+}
+
+void
+turbosparc_cache_enable()
+{
+	int pcr;
+
+	cache_alias_dist = max(
+		CACHEINFO.ic_totalsize / CACHEINFO.ic_associativity,
+		CACHEINFO.dc_totalsize / CACHEINFO.dc_associativity);
+	cache_alias_bits = (cache_alias_dist - 1) & ~PGOFSET;
+
+	pcr = lda(SRMMU_PCR, ASI_SRMMU);
+	pcr |= (TURBOSPARC_PCR_ICE | TURBOSPARC_PCR_DCE);
+	sta(SRMMU_PCR, ASI_SRMMU, pcr);
 	CACHEINFO.c_enabled = 1;
 	printf("cache enabled\n");
 }
@@ -598,6 +624,22 @@ ms1_cache_flush(base, len)
 }
 
 void
+viking_cache_flush(base, len)
+	caddr_t base;
+	register u_int len;
+{
+	/*
+	 * Although physically tagged, we still need to flush the
+	 * data cache after (if we have a write-through cache) or before
+	 * (in case of write-back caches) DMA operations.
+	 */
+
+	/* XXX investigate other methods instead of blowing the entire cache */
+	sta(0x80000000, ASI_DCACHECLR, 0);	/* Unlock */
+	sta(0, ASI_DCACHECLR, 0);
+}
+
+void
 viking_pcache_flush_line(va, pa)
 	int va;
 	int pa;
@@ -606,31 +648,37 @@ viking_pcache_flush_line(va, pa)
 	 * Flush cache line corresponding to virtual address `va'
 	 * which is mapped at physical address `pa'.
 	 */
-	int i, cmask, cshift, *v;
-	extern char *etext;
+	static char *base;
+	static int cmask, cshift;
+	int i;
+	char *v;
 
-	i = CACHEINFO.dc_associativity;
-	cmask = CACHEINFO.ic_totalsize/i - 1;
-	cshift = CACHEINFO.ic_l2linesize;
-
-	if (i == 0) {
+	if (CACHEINFO.c_enabled == 0) {
 		/* In bootstrap; flash-clear entire cache */
 		sta(0x80000000, ASI_DCACHECLR, 0);	/* Unlock */
 		sta(0, ASI_DCACHECLR, 0);
 		return;
 	}
 
+	if (base == 0) {
+		extern char *etext;
+
+		cshift = CACHEINFO.ic_l2linesize;
+		cmask = (CACHEINFO.ic_nlines << cshift) - 1;
+		base = (char *)roundup((int)etext, NBPG);
+	}
+
+
 	/*
 	 * Construct a virtual address that hits the same cache line
 	 * as VA, then read from ASSOCIATIVITY different physical
 	 * locations (all different from PA).
 	 */
-	v = (int *)(((va & cmask) >> cshift) << cshift);
-	
-	v += roundup((int)etext, NBPG);	/* XXX */
+	v = base + (((va & cmask) >> cshift) << cshift);
+	i = CACHEINFO.dc_associativity;
+
 	while (i--) {
-		volatile int x;
-		x = *v;
+		(*(volatile int *)v);
 		v += NBPG;
 	}
 }

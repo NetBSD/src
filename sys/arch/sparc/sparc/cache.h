@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.h,v 1.12 1997/03/21 01:32:15 pk Exp $ */
+/*	$NetBSD: cache.h,v 1.13 1997/03/22 22:03:27 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -159,6 +159,7 @@ void	viking_cache_enable __P((void));	/* turn it on */
 void	hypersparc_cache_enable __P((void));	/* turn it on */
 void	swift_cache_enable __P((void));		/* turn it on */
 void	cypress_cache_enable __P((void));	/* turn it on */
+void	turbosparc_cache_enable __P((void));	/* turn it on */
 
 void	sun4_vcache_flush_context __P((void));	/* flush current context */
 void	sun4_vcache_flush_region __P((int));	/* flush region in cur ctx */
@@ -173,6 +174,7 @@ void	srmmu_vcache_flush_page __P((int va));	/* flush page in cur ctx */
 void	srmmu_cache_flush __P((caddr_t, u_int));/* flush region */
 
 void	ms1_cache_flush __P((caddr_t, u_int));
+void	viking_cache_flush __P((caddr_t, u_int));
 void	viking_pcache_flush_line __P((int, int));
 void	cypress_pcache_flush_line __P((int, int));
 
@@ -207,6 +209,7 @@ struct cacheinfo {
 	int	c_hwflush;		/* true => have hardware flush */
 	int	c_linesize;		/* line size, in bytes */
 	int	c_l2linesize;		/* log2(linesize) */
+	int	c_nlines;		/* number of cache lines */
 	int	c_physical;		/* true => cache is physical */
 	int 	c_split;		/* true => cache is split */
 
@@ -214,18 +217,21 @@ struct cacheinfo {
 	int 	ic_enabled;
 	int 	ic_linesize;
 	int 	ic_l2linesize;
+	int 	ic_nlines;
 	int 	ic_associativity;
 
 	int 	dc_totalsize;		/* data cache */
 	int 	dc_enabled;
 	int 	dc_linesize;
 	int 	dc_l2linesize;
+	int 	dc_nlines;
 	int 	dc_associativity;
 
 	int	ec_totalsize;		/* external cache info */
 	int 	ec_enabled;
 	int	ec_linesize;
 	int	ec_l2linesize;
+	int 	ec_nlines;
 	int 	ec_associativity;
 
 	enum vactype	c_vactype;
