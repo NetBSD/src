@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.27 2000/09/04 16:54:40 abs Exp $	
+.\"	$NetBSD: install,v 1.28 2000/09/26 14:11:02 abs Exp $	
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -130,8 +130,9 @@ of 'syboot.fs' below.
 .Pp
 On
 .Nx
-as well as SunOS you use the following two commands:
+as well as SunOS you use the following three commands:
 .Dl # Ic "fdformat"
+.Dl # Ic "gunzip syboot.fs.gz"
 .Dl # Ic "dd if=syboot.fs of=/dev/rfd0a bs=36k"
 (Be sure that the `fdformat' command completes successfully before proceeding
 to the `dd' step; on
