@@ -1,8 +1,8 @@
-/*	$NetBSD: ftpio.c,v 1.32 2001/07/15 00:34:14 hubertf Exp $	*/
+/*	$NetBSD: ftpio.c,v 1.33 2001/09/16 16:34:45 wiz Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ftpio.c,v 1.32 2001/07/15 00:34:14 hubertf Exp $");
+__RCSID("$NetBSD: ftpio.c,v 1.33 2001/09/16 16:34:45 wiz Exp $");
 #endif
 
 /*
@@ -231,7 +231,7 @@ ftp_cmd(const char *cmd, const char *expectstr)
 	    if (expectstr) {
 		    /* set "rc" to the FTP error code: */
 		    if (expect(ftpio.answer, expectstr, &rc) == -1)
-			    rc = -1;	/* some error occured */
+			    rc = -1;	/* some error occurred */
 	    }
     } else {	
 	    if (Verbose)

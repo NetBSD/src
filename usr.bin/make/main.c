@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.71 2001/06/12 23:36:17 sjg Exp $	*/
+/*	$NetBSD: main.c,v 1.72 2001/09/16 16:34:43 wiz Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,7 +39,7 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: main.c,v 1.71 2001/06/12 23:36:17 sjg Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.72 2001/09/16 16:34:43 wiz Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -51,7 +51,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.71 2001/06/12 23:36:17 sjg Exp $");
+__RCSID("$NetBSD: main.c,v 1.72 2001/09/16 16:34:43 wiz Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -79,7 +79,7 @@ __RCSID("$NetBSD: main.c,v 1.71 2001/06/12 23:36:17 sjg Exp $");
  *				takes a format string and two arguments.
  *
  *	Finish			Finish things up by printing the number of
- *				errors which occured, as passed to it, and
+ *				errors which occurred, as passed to it, and
  *				exiting.
  */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.36 2001/07/03 18:08:51 christos Exp $	*/
+/*	$NetBSD: make.h,v 1.37 2001/09/16 16:34:43 wiz Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -139,7 +139,7 @@ typedef struct GNode {
 				 *  	mode only)
 				 *  MADE - Was out-of-date and has been made
 				 *  UPTODATE - Was already up-to-date
-				 *  ERROR - An error occured while it was being
+				 *  ERROR - An error occurred while it was being
 				 *  	made (used only in compat mode)
 				 *  ABORTED - The target was aborted due to
 				 *  	an error making an inferior (compat).

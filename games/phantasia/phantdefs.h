@@ -1,4 +1,4 @@
-/*	$NetBSD: phantdefs.h,v 1.3 1999/09/30 18:01:33 jsm Exp $	*/
+/*	$NetBSD: phantdefs.h,v 1.4 2001/09/16 16:34:25 wiz Exp $	*/
 
 /*
  * phantdefs.h - important constants for Phantasia
@@ -28,7 +28,7 @@
 #define S_INBATTLE	4		/* playing - in battle */
 #define S_MONSTER	5		/* playing - fighting monster */
 #define	S_TRADING	6		/* playing - at a trading post */
-#define	S_HUNGUP	7		/* error occured with character */
+#define	S_HUNGUP	7		/* error occurred with character */
 
 /* tampered constants */
 #define T_OFF		0		/* nothing */

@@ -138,7 +138,7 @@
 #define	  TSR_ENW		  0x80000000 /* Enable Next Watchdog */
 #define	  TSR_WIS		  0x40000000 /* Watchdog Interrupt Status */
 #define	  TSR_WRS_MASK		  0x30000000 /* Watchdog Reset Status */
-#define	  TSR_WRS_NONE		  0x00000000 /* No watchdog reset has occured */
+#define	  TSR_WRS_NONE		  0x00000000 /* No watchdog reset has occurred */
 #define	  TSR_WRS_CORE		  0x10000000 /* Core reset was forced by the watchdog */
 #define	  TSR_WRS_CHIP		  0x20000000 /* Chip reset was forced by the watchdog */
 #define	  TSR_WRS_SYSTEM	  0x30000000 /* System reset was forced by the watchdog */

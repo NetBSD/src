@@ -1,4 +1,4 @@
-/*	$NetBSD: printjob.c,v 1.27 2001/06/25 11:04:51 mrg Exp $	*/
+/*	$NetBSD: printjob.c,v 1.28 2001/09/16 16:34:44 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -45,7 +45,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)printjob.c	8.7 (Berkeley) 5/10/95";
 #else
-__RCSID("$NetBSD: printjob.c,v 1.27 2001/06/25 11:04:51 mrg Exp $");
+__RCSID("$NetBSD: printjob.c,v 1.28 2001/09/16 16:34:44 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -518,7 +518,7 @@ pass2:
 /*
  * Print a file.
  * Set up the chain [ PR [ | {IF, OF} ] ] or {IF, RF, TF, NF, DF, CF, VF}.
- * Return -1 if a non-recoverable error occured,
+ * Return -1 if a non-recoverable error occurred,
  * 2 if the filter detected some errors (but printed the job anyway),
  * 1 if we should try to reprint this job and
  * 0 if all is well.
@@ -759,7 +759,7 @@ start:
 
 /*
  * Send the daemon control file (cf) and any data files.
- * Return -1 if a non-recoverable error occured, 1 if a recoverable error and
+ * Return -1 if a non-recoverable error occurred, 1 if a recoverable error and
  * 0 if all is well.
  */
 static int
