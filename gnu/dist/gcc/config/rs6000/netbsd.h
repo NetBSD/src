@@ -71,6 +71,3 @@
 #define CPP_SPEC "\
 %{posix:-D_POSIX_SOURCE} \
 %{mcall-sysv: -D_CALL_SYSV} %{mcall-aix: -D_CALL_AIX} %{!mcall-sysv: %{!mcall-aix: -D_CALL_SYSV}}"
-
-/* Use sjlj exceptions. */
-#define DWARF2_UNWIND_INFO 0
