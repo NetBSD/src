@@ -1,4 +1,4 @@
-/*	$NetBSD: catopen.c,v 1.18 2000/09/30 16:47:26 sommerfeld Exp $	*/
+/*	$NetBSD: catopen.c,v 1.19 2002/02/13 07:48:49 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -46,10 +46,14 @@
 #include <assert.h>
 #include <fcntl.h>
 #include <limits.h>
+#include <locale.h>
 #include <nl_types.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+#include "../locale/aliasname_local.h"
+#define NLS_ALIAS_DB "/usr/share/nls/nls.alias"
 
 #define NLS_DEFAULT_PATH "/usr/share/nls/%L/%N.cat:/usr/share/nls/%N/%L"
 #define NLS_DEFAULT_LANG "C"
@@ -60,7 +64,6 @@ __weak_alias(catopen, _catopen)
 
 static nl_catd load_msgcat __P((const char *));
 
-/* ARGSUSED */
 nl_catd
 _catopen(name, oflag)
 	const char *name;
@@ -68,10 +71,11 @@ _catopen(name, oflag)
 {
 	char tmppath[PATH_MAX+1];
 	char *nlspath;
-	char *lang;
+	const char *lang;
 	char *s, *t;
 	const char *u;
 	nl_catd catd;
+	char langbuf[PATH_MAX];
 		
 	if (name == NULL || *name == '\0')
 		return (nl_catd)-1;
@@ -82,8 +86,16 @@ _catopen(name, oflag)
 
 	if (issetugid() || (nlspath = getenv("NLSPATH")) == NULL)
 		nlspath = NLS_DEFAULT_PATH;
-	if ((lang = getenv("LANG")) == NULL || strchr(lang, '/'))
+	if (oflag == NL_CAT_LOCALE) {
+		lang = setlocale(LC_MESSAGES, NULL);
+	}
+	else {
+		lang = getenv("LANG");
+	}
+	if (lang == NULL || strchr(lang, '/'))
 		lang = NLS_DEFAULT_LANG;
+
+	lang = __unaliasname(NLS_ALIAS_DB, lang, langbuf, sizeof(langbuf));
 
 	s = nlspath;
 	t = tmppath;	
