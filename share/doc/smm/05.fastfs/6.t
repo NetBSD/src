@@ -29,7 +29,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	@(#)6.t	8.1 (Berkeley) 6/8/93
+.\"	@(#)6.t	8.2 (Berkeley) 2/14/95
 .\"
 .nr H2 1
 .ds RH Acknowledgements
@@ -96,7 +96,7 @@ Kowalski, T.
 "FSCK - The UNIX System Check Program",
 Bell Laboratory, Murray Hill, NJ 07974. March 1978
 .IP [Knuth75] 20
-Kunth, D.
+Knuth, D.
 "The Art of Computer Programming",
 Volume 3 - Sorting and Searching,
 Addison-Wesley Publishing Company Inc, Reading, Mass, 1975. pp 506-549
