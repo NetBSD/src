@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 1997/03/21 18:44:21 gwr Exp $
+#	$NetBSD: Makefile,v 1.13 1997/03/21 18:48:58 gwr Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/4/93
 
 LIB=	kvm
@@ -8,7 +8,7 @@ SRCS=	kvm.c kvm_file.c kvm_getloadavg.c kvm_proc.c
 
 # This library should compile to the same thing on all variants of
 # ${MACHINE} with the same ${MACHINE_ARCH} so shared /usr works.
-# If it is necessary for to run different based on ${MACHINE} then
+# If it is necessary to run different code based on ${MACHINE} then
 # the dispatch on ${MACHINE} should be done at run time (see m68k).
 
 SRCS+=	kvm_${MACHINE_ARCH}.c
