@@ -1,7 +1,7 @@
 #
 # TRINITY -- Mycroft's 386 box
 #
-#	$Id: TRINITY,v 1.15 1993/07/17 16:54:16 mycroft Exp $
+#	$Id: TRINITY,v 1.16 1993/07/18 15:11:31 mycroft Exp $
 #
 
 machine		"i386"
@@ -17,6 +17,7 @@ options		XSERVER,UCONSOLE
 options		PCFS,KERNFS
 options		SCSI
 options		DDB
+options		"DUMMY_NOPS"
 
 config		netbsd	root on sd0 swap on sd0 and sd1
 
