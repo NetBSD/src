@@ -38,7 +38,7 @@
  * from: Utah $Hdr: trap.c 1.32 91/04/06$
  *
  *	@(#)trap.c	7.15 (Berkeley) 8/2/91
- *	$Id: trap.c,v 1.19 1994/05/21 10:05:44 chopps Exp $
+ *	$Id: trap.c,v 1.20 1994/05/25 07:58:35 chopps Exp $
  */
 
 #include <sys/param.h>
@@ -73,6 +73,63 @@ struct	sysent	sun_sysent[];
 int	nsun_sysent;
 #endif
 
+/*
+ * XXX Hack until I can figure out what to do about this code's removal
+ * from m68k/include/frame.h
+ */
+
+/* 68040 fault frame */
+#define SSW_CP		0x8000		/* Continuation - Floating-Point Post*/
+#define SSW_CU		0x4000		/* Continuation - Unimpl. FP */
+#define SSW_CT		0x2000		/* Continuation - Trace */
+#define SSW_CM		0x1000		/* Continuation - MOVEM */
+#define SSW_MA		0x0800		/* Misaligned access */
+#define SSW_ATC		0x0400		/* ATC fault */
+#define SSW_LK		0x0200		/* Locked transfer */
+#define SSW_RW040	0x0100		/* Read/Write */
+#define SSW_SZMASK	0x0060		/* Transfer size */
+#define SSW_TTMASK	0x0018		/* Transfer type */
+#define SSW_TMMASK	0x0007		/* Transfer modifier */
+
+#define WBS_TMMASK	0x0007
+#define WBS_TTMASK	0x0018
+#define WBS_SZMASK	0x0060
+#define WBS_VALID	0x0080
+
+#define WBS_SIZE_BYTE	0x0020
+#define WBS_SIZE_WORD	0x0040
+#define WBS_SIZE_LONG	0x0000
+#define WBS_SIZE_LINE	0x0060
+
+#define WBS_TT_NORMAL	0x0000
+#define WBS_TT_MOVE16	0x0008
+#define WBS_TT_ALTFC	0x0010
+#define WBS_TT_ACK	0x0018
+
+#define WBS_TM_PUSH	0x0000
+#define WBS_TM_UDATA	0x0001
+#define WBS_TM_UCODE	0x0002
+#define WBS_TM_MMUTD	0x0003
+#define WBS_TM_MMUTC	0x0004
+#define WBS_TM_SDATA	0x0005
+#define WBS_TM_SCODE	0x0006
+#define WBS_TM_RESV	0x0007
+
+#define	MMUSR_PA_MASK	0xfffff000
+#define MMUSR_B		0x00000800
+#define MMUSR_G		0x00000400
+#define MMUSR_U1	0x00000200
+#define MMUSR_U0	0x00000100
+#define MMUSR_S		0x00000080
+#define MMUSR_CM	0x00000060
+#define MMUSR_M		0x00000010
+#define MMUSR_0		0x00000008
+#define MMUSR_W		0x00000004
+#define MMUSR_T		0x00000002
+#define MMUSR_R		0x00000001
+/*
+ * XXX End hack
+ */
 char	*trap_type[] = {
 	"Bus error",
 	"Address error",
@@ -241,7 +298,8 @@ trapmmufault(type, code, v, fp, p, sticks)
 		map = kernel_map;
 	else
 		map = &vm->vm_map;
-	if ((cpu040 && (code & SSW_RW040) == 0) ||
+	if (
+	    (cpu040 && (code & SSW_RW040) == 0) ||
 	    (!cpu040 && (code & (SSW_DF|SSW_RW)) ==
 	    SSW_DF))	/* what about RMW? */
 		ftype = VM_PROT_READ | VM_PROT_WRITE;
@@ -280,7 +338,6 @@ trapmmufault(type, code, v, fp, p, sticks)
 		printf("vmfault %s %x returned %d\n",
 		    map == kernel_map ? "kernel" : "user", va, rv);
 #endif
-
 	if (cpu040) {
 		if(rv != KERN_SUCCESS) {
 			goto nogo;
@@ -422,6 +479,11 @@ trap(type, code, v, frame)
 			return;
 	}
 #endif
+/*
+	printf("trap: t %x c %x v %x pad %x adj %x sr %x pc %x fmt %x vc %x\n",
+	    type, code, v, frame.f_pad, frame.f_stackadj, frame.f_sr,
+	    frame.f_pc, frame.f_format, frame.f_vector);
+*/
 
 	switch (type) {
 	default:
@@ -587,12 +649,10 @@ trap(type, code, v, frame)
 			return;
 		}
 		spl0();
-#ifndef PROFTIMER
-		if ((p->p_flag & P_OWEUPC) && p->p_stats->p_prof.pr_scale) {
-			addupc(frame.f_pc, &p->p_stats->p_prof, 1);
+		if (p->p_flag & P_OWEUPC) {
 			p->p_flag &= ~P_OWEUPC;
+			ADDUPROF(p);
 		}
-#endif
 		userret(p, frame.f_pc, sticks); 
 		return;
 	/*
@@ -625,7 +685,7 @@ trap(type, code, v, frame)
  * Proces a system call.
  */
 syscall(code, frame)
-	volatile int code;
+	u_int code;
 	struct frame frame;
 {
 	struct sysent *callp;
@@ -689,10 +749,24 @@ syscall(code, frame)
 
 	switch (code) {
 	case SYS_syscall:
+		/*
+		 * Code is first argument, followed by actual args.
+		 */
 		code = fuword(params);
 		params += sizeof(int);
+		/*
+		 * XXX sigreturn requires special stack manipulation
+		 * that is only done if entered via the sigreturn
+		 * trap.  Cannot allow it here so make sure we fail.
+		 */
+		if (code == SYS_sigreturn)
+			code = numsys;
 		break;
 	case SYS___syscall:
+		/*
+		 * Like syscall, but code is a quad, so as to maintain
+		 * quad alignment for the rest of the arguments.
+		 */
 		if (systab != sysent)
 			break;
 		code = fuword(params + _QUAD_LOWWORD * sizeof(int));
@@ -702,10 +776,11 @@ syscall(code, frame)
 		break;
 	}
 
-	if (code < 0 || code >= numsys)
-		callp = &systab[0];		/* indir (illegal) */
+	callp = systab;
+	if (code < numsys)
+		callp += code;
 	else
-		callp = &systab[code];
+		callp += SYS_syscall;		/* => nosys */
 
 	i = callp->sy_narg * sizeof(int);
 	if (i != 0)
@@ -767,7 +842,6 @@ syscall(code, frame)
 /*
  * Process a pending write back
  */
-
 _write_back (wb, wb_sts, wb_data, wb_addr, wb_map)
 	u_int wb;	/* writeback type: 1, 2, or 3 */
 	u_int wb_sts;	/* writeback status information */

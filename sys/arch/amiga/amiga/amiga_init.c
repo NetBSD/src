@@ -1,14 +1,10 @@
 /* Authors: Markus Wild, Bryan Ford, Niklas Hallqvist 
  *          Michael L. Hitch - initial 68040 support
  *
- *	$Id: amiga_init.c,v 1.16 1994/05/22 07:22:10 chopps Exp $
+ *	$Id: amiga_init.c,v 1.17 1994/05/25 07:58:24 chopps Exp $
  */
 
 
-#include <machine/pte.h>
-#include <machine/cpu.h>
-#include <sys/param.h>
-#include <machine/vmparam.h>
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -28,6 +24,10 @@
 #include <sys/dkbad.h>
 #include <sys/reboot.h>
 #include <sys/exec.h>
+
+#include <machine/vmparam.h>
+#include <machine/pte.h>
+#include <machine/cpu.h>
 
 #include <amiga/amiga/custom.h>
 #include <amiga/amiga/cia.h> 

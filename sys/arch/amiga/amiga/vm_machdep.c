@@ -38,7 +38,7 @@
  * from: Utah $Hdr: vm_machdep.c 1.21 91/04/06$
  *
  *	@(#)vm_machdep.c	7.10 (Berkeley) 5/7/91
- *	$Id: vm_machdep.c,v 1.12 1994/05/21 10:05:48 chopps Exp $
+ *	$Id: vm_machdep.c,v 1.13 1994/05/25 07:58:36 chopps Exp $
  */
 
 #include <sys/param.h>
@@ -118,7 +118,7 @@ cpu_fork(p1, p2)
  * pcb and stack and never returns.  We block memory allocation
  * until switch_exit has made things safe again.
  */
-__dead void
+void
 cpu_exit(p)
 	struct proc *p;
 {

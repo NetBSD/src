@@ -38,7 +38,7 @@
  * from: Utah $Hdr: machdep.c 1.63 91/04/24$
  *
  *	@(#)machdep.c	7.16 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.26 1994/05/22 07:22:13 chopps Exp $
+ *	$Id: machdep.c,v 1.27 1994/05/25 07:58:30 chopps Exp $
  */
 
 #include <sys/param.h>
@@ -209,8 +209,8 @@ cpu_startup()
 #endif
 	/* avail_end was pre-decremented in pmap_bootstrap to compensate */
 	for (i = 0; i < btoc(sizeof (struct msgbuf)); i++)
-		pmap_enter(pmap_kernel(), msgbufp, avail_end + i * NBPG,
-			   VM_PROT_ALL, TRUE);
+		pmap_enter(kernel_pmap, (vm_offset_t)msgbufp, 
+		    avail_end + i * NBPG, VM_PROT_ALL, TRUE);
 	msgbufmapped = 1;
 
 	/*
@@ -311,7 +311,7 @@ again:
 	 */
 	size = MAXBSIZE * nbuf;
 	buffer_map = kmem_suballoc(kernel_map, (vm_offset_t *)&buffers,
-				   &maxaddr, size, FALSE);
+				   &maxaddr, size, TRUE);
 	minaddr = (vm_offset_t)buffers;
 	if (vm_map_find(buffer_map, vm_object_allocate(size), (vm_offset_t)0,
 			&minaddr, size, FALSE) != KERN_SUCCESS)
@@ -411,8 +411,11 @@ setregs(p, entry, stack, retval)
 	u_long stack;
 	int retval[2];
 {
-	p->p_md.md_regs[PC] = entry & ~1;
-	p->p_md.md_regs[SP] = stack;
+	struct frame *frame = (struct frame *)p->p_md.md_regs;
+	
+	frame->f_pc = entry & ~1;
+	frame->f_regs[SP] = stack;
+
 #ifdef FPCOPROC
 	/* restore a null state frame */
 	p->p_addr->u_pcb.pcb_fpregs.fpf_null = 0;
@@ -1046,7 +1049,7 @@ bootsync(void)
 	}
 }
 
-__dead void
+void
 boot(howto)
 	register int howto;
 {
