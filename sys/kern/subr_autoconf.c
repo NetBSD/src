@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.60 2001/12/05 16:12:42 augustss Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.61 2001/12/10 00:33:04 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.60 2001/12/05 16:12:42 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.61 2001/12/10 00:33:04 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -340,7 +340,7 @@ config_makeroom(int n, struct cfdriver *cd)
 	 * Need to expand the array.
 	 */
 	old = cd->cd_ndevs;
-	if (old == NULL)
+	if (old == 0)
 		new = MINALLOCSIZE / sizeof(void *);
 	else
 		new = old * 2;
@@ -353,7 +353,7 @@ config_makeroom(int n, struct cfdriver *cd)
 		panic("config_attach: %sing dev array",
 		    old != 0 ? "expand" : "creat");
 	memset(nsp + old, 0, (new - old) * sizeof(void *));
-	if (old != NULL) {
+	if (old != 0) {
 		memcpy(nsp, cd->cd_devs, old * sizeof(void *));
 		free(cd->cd_devs, M_DEVBUF);
 	}
