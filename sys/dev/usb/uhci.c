@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.82 2000/01/26 10:04:38 augustss Exp $	*/
+/*	$NetBSD: uhci.c,v 1.83 2000/01/28 00:15:54 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -1049,9 +1049,16 @@ uhci_check_intr(sc, ii)
 		DPRINTFN(15, ("uhci_check_intr: active ii=%p\n", ii));
 		for (std = ii->stdstart; std != lstd; std = std->link.std) {
 			status = LE(std->td.td_status);
-			if ((status & UHCI_TD_STALLED) ||
-			     (status & (UHCI_TD_SPD | UHCI_TD_ACTIVE)) == 
-			     UHCI_TD_SPD)
+			/* If there's an active TD the xfer isn't done. */
+			if (status & UHCI_TD_ACTIVE)
+				break;
+			/* Any kind of error makes the xfer done. */
+			if (status & UHCI_TD_STALLED)
+				goto done;
+			/* We want short packets, and it is short: it's done */
+			if ((status & UHCI_TD_SPD) &&
+			      UHCI_TD_GET_ACTLEN(status) < 
+			      UHCI_TD_GET_MAXLEN(LE(std->td.td_token)))
 				goto done;
 		}
 		DPRINTFN(15, ("uhci_check_intr: ii=%p std=%p still active\n",
@@ -1059,6 +1066,7 @@ uhci_check_intr(sc, ii)
 		return;
 	}
  done:
+	DPRINTFN(15, ("uhci_check_intr: ii=%p done\n", ii));
 	usb_untimeout(uhci_timeout, ii, ii->timeout_handle);
 	uhci_idone(ii);
 }
