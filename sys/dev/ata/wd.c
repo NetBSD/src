@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.117 1994/11/23 03:11:01 mycroft Exp $	*/
+/*	$NetBSD: wd.c,v 1.118 1994/11/23 07:54:15 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -918,10 +918,12 @@ bad2:
 	wd->sc_flags &= ~WDF_LOADED;
 
 bad:
-	wd->sc_flags &= ~WDF_LOCKED;
-	if ((wd->sc_flags & WDF_WANTED) != 0) {
-		wd->sc_flags &= ~WDF_WANTED;
-		wakeup(wd);
+	if (wd->sc_dk.dk_openmask == 0) {
+		wd->sc_flags &= ~WDF_LOCKED;
+		if ((wd->sc_flags & WDF_WANTED) != 0) {
+			wd->sc_flags &= ~WDF_WANTED;
+			wakeup(wd);
+		}
 	}
 
 	return error;
