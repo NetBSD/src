@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.28 2001/02/05 10:42:41 chs Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.29 2001/03/29 10:37:37 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -672,6 +672,7 @@ linux_ioctl_socket(p, uap, retval)
 	case LINUX_SIOCGIFHWADDR:
 	        error = linux_getifhwaddr(p, retval, SCARG(uap, fd),
 					 SCARG(uap, data));
+		dosys = 0;
 		break;
 	default:
 		error = EINVAL;
