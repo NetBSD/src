@@ -1,4 +1,4 @@
-/*	$NetBSD: fwnode.c,v 1.1 2001/05/01 04:48:11 jmc Exp $	*/
+/*	$NetBSD: fwnode.c,v 1.2 2001/05/01 05:17:40 jmc Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -503,7 +503,10 @@ static int
 fwnode_parse_configrom(struct fwnode_softc *sc)
 {
     struct configrom_dir *root;
-    int i, next;
+#ifdef FW_DEBUG
+    int i;
+#endif
+    int next;
     u_int16_t crc, crc1, romcrc;
     u_int32_t *t;
 
@@ -1083,7 +1086,9 @@ static void
 sbp2_login_resp(struct ieee1394_abuf *ab, int rcode)
 {
     /*    struct fwnode_device_cap *devcap = (struct fwnode_device_cap *)ab->ab_cbarg;*/
+#ifdef FW_DEBUG
     int i;
+#endif
     
     if (rcode) {
 #ifdef FW_DEBUG
