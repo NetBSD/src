@@ -1,4 +1,4 @@
-/*	$NetBSD: gethost.c,v 1.6 2001/04/28 14:56:42 kleink Exp $	*/
+/*	$NetBSD: gethost.c,v 1.7 2001/06/15 17:26:51 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1988, 1993
@@ -60,15 +60,9 @@
 
 #include <sys/cdefs.h>
 
-#if defined(__weak_alias)
-/* From namespace.h: */
-#define gethostbyaddr	_gethostbyaddr
-#define gethostbyname	_gethostbyname
-#define gethostname	_gethostname
-
-__weak_alias(gethostbyaddr,_gethostbyaddr);
-__weak_alias(gethostbyname,_gethostbyname);
-__weak_alias(gethostbyname2,gethostbyname);
+#ifdef __weak_alias
+#define gethostbyaddr		_gethostbyaddr
+#define gethostbyname		_gethostbyname
 #endif
 
 #include <sys/param.h>
@@ -82,6 +76,11 @@ __weak_alias(gethostbyname2,gethostbyname);
 #include <ctype.h>
 #include <errno.h>
 #include <string.h>
+
+#ifdef __weak_alias
+__weak_alias(gethostbyaddr,_gethostbyaddr);
+__weak_alias(gethostbyname,_gethostbyname);
+#endif
 
 #define	MAXALIASES	35
 #define	MAXADDRS	35
