@@ -1,4 +1,4 @@
-/*	$NetBSD: dev.c,v 1.5 1999/03/30 21:59:58 cgd Exp $	*/
+/*	$NetBSD: errno.c,v 1.1 1999/03/30 21:59:58 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -35,28 +35,6 @@
  *	@(#)dev.c	8.1 (Berkeley) 6/11/93
  */
 
-#include <sys/param.h>
-#include <sys/reboot.h>
-
 #include "stand.h"
 
-int
-nodev()
-{
-	return (ENXIO);
-}
-
-void
-nullsys()
-{
-}
-
-/* ARGSUSED */
-int
-noioctl(f, cmd, data)
-	struct open_file *f;
-	u_long cmd;
-	void *data;
-{
-	return (EINVAL);
-}
+int errno;
