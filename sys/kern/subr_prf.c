@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.74 2000/06/10 18:44:44 sommerfeld Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.75 2000/07/04 15:33:31 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -167,10 +167,13 @@ void (*v_putc) __P((int)) = cnputc;	/* start with cnputc (normal cons) */
  */
 
 void
-tablefull(tab)
-	const char *tab;
+tablefull(tab, hint)
+	const char *tab, *hint;
 {
-	log(LOG_ERR, "%s: table is full\n", tab);
+	if (hint)
+		log(LOG_ERR, "%s: table is full - %s\n", tab, hint);
+	else
+		log(LOG_ERR, "%s: table is full\n", tab);
 }
 
 /*

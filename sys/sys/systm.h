@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.111 2000/06/10 18:44:45 sommerfeld Exp $	*/
+/*	$NetBSD: systm.h,v 1.112 2000/07/04 15:33:28 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -199,7 +199,7 @@ char	*bitmask_snprintf __P((u_quad_t, const char *, char *, size_t));
 int	humanize_number __P((char *, size_t, u_int64_t, const char *, int));
 int	format_bytes __P((char *, size_t, u_int64_t));
 
-void	tablefull __P((const char *));
+void	tablefull __P((const char *, const char *));
 
 int	kcopy __P((const void *, void *, size_t));
 
