@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.12 1998/09/26 20:14:53 christos Exp $	*/
+/*	$NetBSD: lock.h,v 1.13 1998/09/29 07:29:15 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1995
@@ -59,6 +59,7 @@ struct simplelock {
 	int lock_line;
 	const char *unlock_file;
 	int unlock_line;
+	unsigned long lock_holder;		/* CPU ID */
 #endif
 };
 #if defined(UVM) /* XXXCDC: kill typedefs later? */
@@ -189,7 +190,7 @@ int	lockmgr __P((__volatile struct lock *, u_int flags,
 int	lockstatus __P((struct lock *));
 void	lockmgr_printinfo __P((struct lock *));
 
-#ifdef LOCKDEBUG
+#if defined(LOCKDEBUG) && !defined(MULTIPROCESSOR)
 void _simple_unlock __P((__volatile struct simplelock *alp, const char *, int));
 #define simple_unlock(alp) _simple_unlock(alp, __FILE__, __LINE__)
 int _simple_lock_try __P((__volatile struct simplelock *alp, const char *, int));
@@ -197,9 +198,13 @@ int _simple_lock_try __P((__volatile struct simplelock *alp, const char *, int))
 void _simple_lock __P((__volatile struct simplelock *alp, const char *, int));
 #define simple_lock(alp) _simple_lock(alp, __FILE__, __LINE__)
 void simple_lock_init __P((struct simplelock *alp));
-#else /* !LOCKDEBUG */
+#else /* !(LOCKDEBUG && !MULTIPROCESSOR) */
 #if defined(MULTIPROCESSOR)
-#include <machine/lock.h>	/* pull in machine-dependent spin lock defs */
+/*
+ * Pull in machine-dependent spin lock defs.  Note that this file is
+ * responsible for handling the LOCKDEBUG && MULTIPROCESSOR case.
+ */
+#include <machine/lock.h>
 #else
 /* single-processor; no locking neecessary */
 #define	simple_lock_init(alp)	(alp)->lock_data = 0
@@ -207,6 +212,6 @@ void simple_lock_init __P((struct simplelock *alp));
 #define	simple_lock_try(alp)	(1)	/* always succeeds */
 #define	simple_unlock(alp)
 #endif /* MULTIPROCESSOR */
-#endif /* LOCKDEBUG */
+#endif /* LOCKDEBUG && ! MULTIPROCESSOR */
 
 #endif /* _SYS_LOCK_H_ */
