@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.25 2004/03/02 09:15:26 yamt Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.26 2004/03/05 11:17:41 junyoung Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.25 2004/03/02 09:15:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.26 2004/03/05 11:17:41 junyoung Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -596,7 +596,6 @@ lwp_exit2(struct lwp *l)
 	 */
 	uvm_lwp_exit(l);
 
-	l->l_stat = LSZOMB;
 	if (l->l_flag & L_DETACHED) {
 		/* Nobody waits for detached LWPs. */
 
@@ -609,6 +608,7 @@ lwp_exit2(struct lwp *l)
 		pool_put(&lwp_pool, l);
 		KERNEL_UNLOCK();
 	} else {
+		l->l_stat = LSZOMB;
 		p = l->l_proc;
 		p->p_nzlwps++;
 		KERNEL_UNLOCK();
