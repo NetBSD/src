@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.4 2003/06/30 15:17:11 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.5 2003/07/04 00:33:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -53,6 +53,8 @@
 struct device *booted_device;
 int booted_partition;
 
+void	(*evbarm_device_register)(struct device *, void *);
+
 /*
  * Set up the root device from the boot args
  */
@@ -94,4 +96,7 @@ cpu_configure(void)
 void
 device_register(struct device *dev, void *aux)
 {
+
+	if (evbarm_device_register != NULL)
+		(*evbarm_device_register)(dev, aux);
 }
