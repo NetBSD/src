@@ -1,4 +1,4 @@
-.\"	$NetBSD: ed.1,v 1.15 1998/04/09 08:37:12 fair Exp $
+.\"	$NetBSD: ed.1,v 1.16 2000/05/12 14:02:00 christos Exp $
 .\"
 .TH ED 1 "21 May 1993"
 .SH NAME
@@ -923,6 +923,11 @@ Prints the line number of the addressed line.
 (.+1)newline
 Prints the addressed line, and sets the current address to
 that line.
+
+.SH ENVIRONMENTAL VARIABLES
+.TP    
+.I TMPDIR
+The location used to stored temporary files.
 
 .SH FILES
 .TP 20
