@@ -30,8 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)pathnames.h	8.1 (Berkeley) 6/8/93
- *	$Id: pathnames.h,v 1.1 1994/06/08 19:15:59 mycroft Exp $
+ *	@(#)pathnames.h	8.1 (Berkeley) 6/8/93
  */
 
 #define _PATH_LFS_CLEANERD	"/usr/libexec/lfs_cleanerd"

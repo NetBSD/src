@@ -41,8 +41,7 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)mount_nfs.c	8.3 (Berkeley) 3/27/94";*/
-static char *rcsid = "$Id: mount_nfs.c,v 1.1 1994/06/08 19:23:05 mycroft Exp $";
+static char sccsid[] = "@(#)mount_nfs.c	8.3 (Berkeley) 3/27/94";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -188,7 +187,6 @@ main(argc, argv)
 		case 'd':
 			nfsargsp->flags |= NFSMNT_DUMBTIMR;
 			break;
-#if 0 /* XXXX */
 		case 'g':
 			num = strtol(optarg, &p, 10);
 			if (*p || num <= 0)
@@ -197,7 +195,6 @@ main(argc, argv)
 			nfsargsp->maxgrouplist = num;
 			nfsargsp->flags |= NFSMNT_MAXGRPS;
 			break;
-#endif
 		case 'i':
 			nfsargsp->flags |= NFSMNT_INT;
 			break;
