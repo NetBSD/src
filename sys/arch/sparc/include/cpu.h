@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.36 2000/05/26 21:20:16 thorpej Exp $ */
+/*	$NetBSD: cpu.h,v 1.37 2000/05/31 05:28:26 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,17 +76,17 @@
  * definitions of cpu-dependent requirements
  * referenced in generic code
  */
+#define	curcpu()	(cpuinfo.ci_self)
+#define	curproc		(curcpu()->ci_curproc)
+
 #define	cpu_swapin(p)	/* nothing */
 #define	cpu_swapout(p)	/* nothing */
 #define	cpu_wait(p)	/* nothing */
-#define	cpu_number()	0		/* XXX */
+#define	cpu_number()	(cpuinfo.cpu_no)
 
 #if defined(MULTIPROCESSOR)
 void	cpu_boot_secondary_processors __P((void));
 #endif
-
-#define	curcpu()	(&cpuinfo)
-#define	curproc		(curcpu()->ci_curproc)
 
 /*
  * Arguments to hardclock, softclock and gatherstats encapsulate the
