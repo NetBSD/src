@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.35.2.2 2004/04/19 03:50:26 jmc Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.35.2.3 2004/06/07 10:21:04 tron Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.pl,v 1.36 2004/04/17 18:55:35 atatat Exp       */
 
@@ -474,25 +474,11 @@ Jesli "uzytkownik" to "ftp", wtedy haslo nie jest wymagane.
 
 host:		%s 
 katalog:	%s 
-uzytkownik:	%s
+katalog:	%s 
+uzytkownik:	%s 
 haslo:		%s 
 proxy:		%s 
 }
-
-message host
-{host}
-
-message dir
-{katalog}
-
-message user
-{uzytkownik}
-
-message passwd
-{haslo}
-
-message proxy
-{proxy}
 
 message email
 {adres e-mail}
@@ -507,6 +493,7 @@ dostepny via nfs.
 
 host:		%s 
 katalog:	%s 
+katalog:	%s
 }
 
 message nfsbadmount
@@ -528,6 +515,7 @@ Pamietaj, ze katalog musi zawierac pliki .tgz.
 
 urzadzenie:	%s 
 system plikow:	%s 
+katalog:	%s 
 katalog:	%s
 }
 
@@ -602,13 +590,13 @@ message net_media
 {Typ medium sieciowego}
 
 message netok
-{Ponizej sa wartosci, ktore wprowadziles.  Czy sa poprawne?
+{Ponizej sa wartosci, ktore wprowadziles.
 
 Domena DNS:		%s 
-Nazwa hosta:		%s
+Nazwa hosta:		%s 
 Podstawowy interfejs:	%s 
 Adres IP:		%s 
-Maska podsieci:		%s
+Maska podsieci:		%s 
 Serwer nazw IPv4:	%s 
 Bramka IPv4:		%s 
 Medium sieciowe:	%s
@@ -618,6 +606,9 @@ message netokv6
 {Autkonfiguracja IPv6:	%s 
 Serwer nazw IPv6:	%s 
 }
+
+message netok_ok
+{Czy sa poprawne?}
 
 message netagain
 {Wprowadz jeszcze raz informacje o twojej sieci. Twoje ostatnie odpowiedzi
@@ -638,11 +629,9 @@ message realdir
 {Nie moglem przejsc do katalogu %s: %s.  Instalacja przerwana.
 }
 
-message ftperror_cont
-{Ftp wykrylo blad. Nacisnij <enter> aby kontynuowac.}
-
 message ftperror
-{Ftp nie moze sciagnac pliku. Czy chcesz sprobowac jeszcze raz?}
+{Ftp nie moze sciagnac pliku.
+Czy chcesz sprobowac jeszcze raz?}
 
 message distdir
 {Jakiego katalogu powinienem uzyc dla %s? }
@@ -657,9 +646,10 @@ wypakowywanego pliku ?
 }
 
 message notarfile
-{Pakiet %s nie istnieje.
+{Pakiet %s nie istnieje.}
 
-Kontynuowac rozpakowywanie pakietow?}
+message notarfile_ok
+{Kontynuowac rozpakowywanie pakietow?}
 
 message endtarok
 {Wszystkie wybrane pakiety dystrybucji zostaly rozpakowane.}
@@ -964,7 +954,7 @@ message Pick_an_option {Wybierz opcje aby je wlaczyc lub wylaczyc.}
 message Scripting {Scripting}	/* XXX translate */
 message Logging {Logowanie}
 
-message Status  { Status: }
+message Status  {   Status: }
 message Command {Polecenie: }
 message Running {Uruchamianie}
 message Finished {Zakonczone}
@@ -1007,6 +997,8 @@ message Custom_installation {Inna instalacja}
 message Change {Zmien}
 message hidden {** ukryte **}
 message Host {Host}
+message Base_dir {Katalog}
+message Set_dir {Katalog}
 message Directory {Katalog}
 message User {Uzytkownik}
 message Password {Haslo}
@@ -1026,16 +1018,15 @@ message Blowfish_2_7_round {Blowfish 2^7 round}
 message do_not_change {nie zmieniaj}
 message Device {Urzadzenie}
 message File_system {SystemPlikow}
-message Change_directory_path {Zmien sciezke katalogu}
 message Select_IPv6_DNS_server {  Wybierz serwer nazw IPv6}
 message other {inny  }
 message Perform_IPv6_autoconfiguration {Wykonac autokonfiguracje IPv6?}
 message Perform_DHCP_autoconfiguration {Wykonac autkonfiguracje DHCP?}
 message Root_shell {Powloka root'a}
 message Select_set_extraction_verbosity {Wybierz gadatliwosc procesu rozpakowywania pakietow}
-message Progress_bar_recommended {Pasek postepu (zalecany)}
+message Progress_bar {Pasek postepu (zalecany)}
 message Silent {Cichy}
-message Verbose_file_name_listing_slow {Lista plikow (wolne)}
+message Verbose {Lista plikow (wolne)}
 
 .if AOUT2ELF
 message aoutfail
