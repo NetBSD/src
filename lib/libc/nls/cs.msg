@@ -178,7 +178,7 @@ $ EBADMSG
 $ ENODATA
 89 ®ádná zpráva není dostupná
 $ ENOSR
-90 ®ádný prostøedek STREAM
+90 ®ádné STREAM prostøedky
 $ ENOSTR
 91 Není STREAM
 $set 2

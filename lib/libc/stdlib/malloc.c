@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.c,v 1.36.2.5 2002/03/25 03:40:37 nathanw Exp $	*/
+/*	$NetBSD: malloc.c,v 1.36.2.6 2002/12/10 06:25:54 thorpej Exp $	*/
 
 /*
  * ----------------------------------------------------------------------------
@@ -140,7 +140,7 @@ struct pgfree {
  * How many bits per u_int in the bitmap.
  * Change only if not 8 bits/byte
  */
-#define	MALLOC_BITS	(8*sizeof(u_int))
+#define	MALLOC_BITS	((int)(8*sizeof(u_int)))
 
 /*
  * Magic values to put in the page_directory
@@ -1120,6 +1120,7 @@ malloc(size_t size)
     if (malloc_active++) {
 	wrtwarning("recursive call.\n");
         malloc_active--;
+	THREAD_UNLOCK();
 	return (0);
     }
     if (!malloc_started)
@@ -1168,6 +1169,7 @@ realloc(void *ptr, size_t size)
     if (malloc_active++) {
 	wrtwarning("recursive call.\n");
         malloc_active--;
+	THREAD_UNLOCK();
 	return (0);
     }
     if (ptr && !malloc_started) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: syncicache.c,v 1.4.2.3 2002/04/25 04:01:38 nathanw Exp $	*/
+/*	$NetBSD: syncicache.c,v 1.4.2.4 2002/12/10 06:25:44 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995-1997, 1999 Wolfgang Solfrank.
@@ -55,6 +55,8 @@ static struct cache_info _cache_info = {
 #elif defined(_KERNEL)
 #define	CACHEINFO	(curcpu()->ci_ci)
 #else
+#include <stdlib.h>
+
 static void getcachelinesize (void);
 
 static int _cachelinesize = 0;

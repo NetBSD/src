@@ -1,4 +1,4 @@
-/*	$NetBSD: utmpx.c,v 1.3.2.7 2002/11/11 22:22:16 nathanw Exp $	 */
+/*	$NetBSD: utmpx.c,v 1.3.2.8 2002/12/10 06:25:49 thorpej Exp $	 */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include <sys/cdefs.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: utmpx.c,v 1.3.2.7 2002/11/11 22:22:16 nathanw Exp $");
+__RCSID("$NetBSD: utmpx.c,v 1.3.2.8 2002/12/10 06:25:49 thorpej Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -277,7 +277,7 @@ utmp_update(const struct utmpx *utx)
 	switch (pid = fork()) {
 	case 0:
 		(void)execl(_PATH_UTMP_UPDATE,
-		    strrchr(_PATH_UTMP_UPDATE, '/') + 1, buf);
+		    strrchr(_PATH_UTMP_UPDATE, '/') + 1, buf, NULL);
 		exit(1);
 		/*NOTREACHED*/
 	case -1:
@@ -338,7 +338,7 @@ utmpxname(const char *fname)
 	if (fname[len - 1] != 'x')
 		return 0;
 
-	(void)strcpy(utfile, fname);
+	(void)strlcpy(utfile, fname, sizeof(utfile));
 	endutxent();
 	return 1;
 }
@@ -393,7 +393,7 @@ lastlogxname(const char *fname)
 	if (fname[len - 1] != 'x')
 		return 0;
 
-	(void)strcpy(llfile, fname);
+	(void)strlcpy(llfile, fname, sizeof(llfile));
 	return 1;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: __glob13.c,v 1.14.2.1 2001/10/08 20:18:41 nathanw Exp $	*/
+/*	$NetBSD: __glob13.c,v 1.14.2.2 2002/12/10 06:25:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)glob.c	8.3 (Berkeley) 10/13/93";
 #else
-__RCSID("$NetBSD: __glob13.c,v 1.14.2.1 2001/10/08 20:18:41 nathanw Exp $");
+__RCSID("$NetBSD: __glob13.c,v 1.14.2.2 2002/12/10 06:25:48 thorpej Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -926,7 +926,7 @@ g_opendir(str, pglob)
 	_DIAGASSERT(pglob != NULL);
 
 	if (!*str)
-		(void)strcpy(buf, ".");
+		(void)strlcpy(buf, ".", sizeof(buf));
 	else {
 		if (g_Ctoc(str, buf, sizeof(buf)))
 			return NULL;

@@ -1,5 +1,5 @@
 .\" 	@(#)getnetconfig.3n 1.28 93/06/02 SMI; from SVr4
-.\"	$NetBSD: getnetconfig.3,v 1.1.6.3 2002/03/22 20:42:23 nathanw Exp $
+.\"	$NetBSD: getnetconfig.3,v 1.1.6.4 2002/12/10 06:25:52 thorpej Exp $
 .\" Copyright 1989 AT&T
 .Dd April 22, 2000
 .Dt GETNETCONFIG 3
@@ -36,11 +36,24 @@ The library routines described on this page
 provide the application access to
 the system network configuration database,
 .Pa /etc/netconfig .
+.Bd -literal
+struct netconfig {
+        char *nc_netid;              /* Network ID */
+        unsigned long nc_semantics;  /* Semantics */
+        unsigned long nc_flag;       /* Flags */
+        char *nc_protofmly;          /* Protocol family */
+        char *nc_proto;              /* Protocol name */
+        char *nc_device;             /* Network device pathname */
+        unsigned long nc_nlookups;   /* Number of directory lookup libs */
+        char **nc_lookups;           /* Names of the libraries */
+};
+.Ed
+.Pp
 .Fn getnetconfig
 returns a pointer to the
 current entry in the
-.B netconfig
-database, formatted as a struct netconfig .
+.Pa netconfig
+database, formatted as a struct netconfig.
 Successive calls will return successive netconfig
 entries in the netconfig database.
 .Fn getnetconfig
@@ -50,7 +63,7 @@ file.
 returns
 .Dv NULL
 at the end of the file.
-.I handlep
+.Fa handlep
 is the handle obtained through
 .Fn setnetconfig .
 .Pp
@@ -121,7 +134,7 @@ contains the error message.
 and
 .Fn nc_sperror
 can also be used with the
-.SB NETPATH
+.Va NETPATH
 access routines defined in
 .Xr getnetpath 3 .
 .Sh RETURN VALUES
@@ -150,12 +163,13 @@ returns 0 on success and -1 on failure
 was not called previously).
 .Pp
 On success,
-.B getnetconfigent(\|)
+.Fn getnetconfigent()
 returns a pointer to the
-.B struct netconfig
+.Li struct netconfig
 structure corresponding to
-.IR netid ;
-otherwise it returns NULL.
+.Ar netid ;
+otherwise it returns
+.Dv NULL .
 .Pp
 .Fn nc_sperror
 returns a pointer to a buffer which contains the error message string.

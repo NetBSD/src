@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_ntop.c,v 1.9.6.2 2002/08/27 23:49:36 nathanw Exp $	*/
+/*	$NetBSD: inet_ntop.c,v 1.9.6.3 2002/12/10 06:25:51 thorpej Exp $	*/
 
 /* Copyright (c) 1996 by Internet Software Consortium.
  *
@@ -21,7 +21,7 @@
 #if 0
 static char rcsid[] = "Id: inet_ntop.c,v 8.7 1996/08/05 08:41:18 vixie Exp ";
 #else
-__RCSID("$NetBSD: inet_ntop.c,v 1.9.6.2 2002/08/27 23:49:36 nathanw Exp $");
+__RCSID("$NetBSD: inet_ntop.c,v 1.9.6.3 2002/12/10 06:25:51 thorpej Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -109,7 +109,7 @@ inet_ntop4(src, dst, size)
 
 	l = snprintf(tmp, sizeof(tmp), "%u.%u.%u.%u",
 	    src[0], src[1], src[2], src[3]);
-	if (l <= 0 || l >= size) {
+	if (l <= 0 || (socklen_t) l >= size) {
 		errno = ENOSPC;
 		return (NULL);
 	}

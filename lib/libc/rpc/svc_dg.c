@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_dg.c,v 1.6.2.2 2002/11/11 22:22:46 nathanw Exp $	*/
+/*	$NetBSD: svc_dg.c,v 1.6.2.3 2002/12/10 06:25:53 thorpej Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -183,7 +183,7 @@ svc_dg_recv(xprt, msg)
 	struct sockaddr_storage ss;
 	socklen_t alen;
 	size_t replylen;
-	int rlen;
+	ssize_t rlen;
 
 	_DIAGASSERT(xprt != NULL);
 	_DIAGASSERT(msg != NULL);
@@ -197,7 +197,7 @@ again:
 	    (struct sockaddr *)(void *)&ss, &alen);
 	if (rlen == -1 && errno == EINTR)
 		goto again;
-	if (rlen == -1 || (rlen < 4 * sizeof (u_int32_t)))
+	if (rlen == -1 || (rlen < (ssize_t)(4 * sizeof (u_int32_t))))
 		return (FALSE);
 	if (xprt->xp_rtaddr.len < alen) {
 		if (xprt->xp_rtaddr.len != 0)
@@ -251,7 +251,7 @@ svc_dg_reply(xprt, msg)
 		slen = XDR_GETPOS(xdrs);
 		if (sendto(xprt->xp_fd, rpc_buffer(xprt), slen, 0,
 		    (struct sockaddr *)xprt->xp_rtaddr.buf,
-		    (socklen_t)xprt->xp_rtaddr.len) == slen) {
+		    (socklen_t)xprt->xp_rtaddr.len) == (ssize_t) slen) {
 			stat = TRUE;
 			if (su->su_cache)
 				cache_set(xprt, slen);
