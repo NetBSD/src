@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.2 2003/10/08 22:43:01 thorpej Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.3 2003/11/06 00:41:20 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -71,6 +71,12 @@ typedef struct {
 	__gregset_t	__gregs;
 	__fpregset_t	__fpregs;
 } mcontext_t;
+/*
+ * mcontext extensions to handle signal delivery.
+ */
+#define	_UC_SETSTACK	0x00010000
+#define	_UC_CLRSTACK	0x00020000
+
 
 #define	_UC_MACHINE_SP(uc)	((uc)->uc_mcontext.__gregs[_REG_SP])
 #define	_UC_MACHINE_PC(uc)	((uc)->uc_mcontext.__gregs[_REG_PC])
