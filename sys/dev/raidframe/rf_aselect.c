@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_aselect.c,v 1.19 2004/03/20 21:25:55 oster Exp $	*/
+/*	$NetBSD: rf_aselect.c,v 1.19.2.1 2004/04/11 11:19:31 tron Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_aselect.c,v 1.19 2004/03/20 21:25:55 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_aselect.c,v 1.19.2.1 2004/04/11 11:19:31 tron Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -46,7 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: rf_aselect.c,v 1.19 2004/03/20 21:25:55 oster Exp $"
 #include "rf_desc.h"
 #include "rf_map.h"
 
-static void InitHdrNode(RF_DagHeader_t **, RF_Raid_t *);
+static void InitHdrNode(RF_DagHeader_t **, RF_Raid_t *, RF_RaidAccessDesc_t *);
 int     rf_SelectAlgorithm(RF_RaidAccessDesc_t *, RF_RaidAccessFlags_t);
 
 /******************************************************************************
@@ -55,7 +55,7 @@ int     rf_SelectAlgorithm(RF_RaidAccessDesc_t *, RF_RaidAccessFlags_t);
  *
  *****************************************************************************/
 static void
-InitHdrNode(RF_DagHeader_t **hdr, RF_Raid_t *raidPtr)
+InitHdrNode(RF_DagHeader_t **hdr, RF_Raid_t *raidPtr, RF_RaidAccessDesc_t *desc)
 {
 	/* create and initialize dag hdr */
 	*hdr = rf_AllocDAGHeader();
@@ -65,6 +65,7 @@ InitHdrNode(RF_DagHeader_t **hdr, RF_Raid_t *raidPtr)
 	(*hdr)->nodes = NULL;
 	(*hdr)->raidPtr = raidPtr;
 	(*hdr)->next = NULL;
+	(*hdr)->desc = desc;
 }
 
 /******************************************************************************
@@ -382,7 +383,7 @@ rf_SelectAlgorithm(RF_RaidAccessDesc_t *desc, RF_RaidAccessFlags_t flags)
 						for (k = 0; k < physPtr->numSector; k++) {
 							/* create a dag for
 							 * this block */
-							InitHdrNode(&tempdag_h, raidPtr);
+							InitHdrNode(&tempdag_h, raidPtr, desc);
 							dagList->numDags++;
 							if (dag_h == NULL) {
 								dag_h = tempdag_h;
@@ -402,7 +403,7 @@ rf_SelectAlgorithm(RF_RaidAccessDesc_t *desc, RF_RaidAccessFlags_t flags)
 						stripeUnitNum++;
 					} else {
 						/* create a dag for this unit */
-						InitHdrNode(&tempdag_h, raidPtr);
+						InitHdrNode(&tempdag_h, raidPtr, desc);
 						dagList->numDags++;
 						if (dag_h == NULL) {
 							dag_h = tempdag_h;
@@ -424,7 +425,7 @@ rf_SelectAlgorithm(RF_RaidAccessDesc_t *desc, RF_RaidAccessFlags_t flags)
 				failed_stripe = failed_stripe->next;
 			} else {
 				/* Create a dag for this parity stripe */
-				InitHdrNode(&tempdag_h, raidPtr);
+				InitHdrNode(&tempdag_h, raidPtr, desc);
 				dagList->numDags++;
 				if (dag_h == NULL) {
 					dag_h = tempdag_h;
