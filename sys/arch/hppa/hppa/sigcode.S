@@ -1,4 +1,4 @@
-/*	$NetBSD: sigcode.S,v 1.4 2003/10/10 15:07:43 chs Exp $	*/
+/*	$NetBSD: sigcode.S,v 1.5 2004/03/26 14:11:01 drochner Exp $	*/
 
 /*	$OpenBSD: locore.S,v 1.46 2001/09/20 18:33:03 mickey Exp $	*/
 
@@ -112,7 +112,7 @@ L$sigcode_bounce:
 	ldil	L%SYSCALLGATE, %r1
 	.call
 	ble	4(%sr7, %r1)
-	ldi	SYS___sigreturn14, %t1
+	ldi	SYS_compat_16___sigreturn14, %t1
 	/* Make a SYS_exit system call. */
 	copy	%ret0, %arg0
 	ldil	L%SYSCALLGATE, %r1
