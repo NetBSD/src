@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_direct.c,v 1.10 1999/06/22 11:29:11 tsubai Exp $	*/
+/*	$NetBSD: adb_direct.c,v 1.11 1999/07/11 16:59:31 tsubai Exp $	*/
 
 /* From: adb_direct.c 2.02 4/18/97 jpw */
 
@@ -1624,6 +1624,7 @@ adb_setup_hw_type(void)
 		return;
 
 	case ADB_HW_PB:
+		adbSoftPower = 1;
 		pm_setup_adb();
 		return;
 
@@ -1957,7 +1958,11 @@ adb_poweroff(void)
 		return 0;
 
 	case ADB_HW_PB:
-		return -1;
+		pm_adb_poweroff();
+
+		for (;;);		/* wait for power off */
+
+		return 0;
 
 	case ADB_HW_CUDA:
 		output[0] = 0x02;	/* 2 byte message */

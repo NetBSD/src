@@ -1,4 +1,4 @@
-/*	$NetBSD: pm_direct.c,v 1.5 1999/06/22 13:12:11 tsubai Exp $	*/
+/*	$NetBSD: pm_direct.c,v 1.6 1999/07/11 16:59:31 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1997 Takashi Hamada
@@ -1169,6 +1169,19 @@ pm_adb_restart()
 	p.num_data = 0;
 	p.s_buf = p.data;
 	p.r_buf = p.data;
+	pmgrop(&p);
+}
+
+void
+pm_adb_poweroff()
+{
+	PMData p;
+
+	p.command = PMU_POWER_OFF;
+	p.num_data = 4;
+	p.s_buf = p.data;
+	p.r_buf = p.data;
+	strcpy(p.data, "MATT");
 	pmgrop(&p);
 }
 
