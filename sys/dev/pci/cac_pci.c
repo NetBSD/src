@@ -1,4 +1,4 @@
-/*	$NetBSD: cac_pci.c,v 1.1 2000/03/16 14:52:23 ad Exp $	*/
+/*	$NetBSD: cac_pci.c,v 1.2 2000/03/21 13:45:16 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cac_pci.c,v 1.1 2000/03/16 14:52:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cac_pci.c,v 1.2 2000/03/21 13:45:16 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,25 +101,26 @@ static struct cac_linkage cac_pci_l1 = {
 /* This block of code inspired by Compaq's Linux driver. */
 struct cac_type {
 	int	ct_id;				/* PCI ID */
+	int	ct_mmreg;			/* Memory mapped registers */
 	struct	cac_linkage *ct_linkage;	/* Command interface */
 	char	*ct_typestr;			/* Textual description */
 } static cac_type[] = {
 #ifdef notdef
-	{ 0x0040110e, &cac_pci_lX, "IDA" },
-	{ 0x0140110e, &cac_pci_lX, "IDA 2" },
-	{ 0x1040110e, &cac_pci_lX, "IAES" },
-	{ 0x2040110e, &cac_pci_lX, "SMART" },
+	{ 0x0040110e, 0, &cac_pci_lX, "IDA" },
+	{ 0x0140110e, 0, &cac_pci_lX, "IDA 2" },
+	{ 0x1040110e, 0, &cac_pci_lX, "IAES" },
+	{ 0x2040110e, 0, &cac_pci_lX, "SMART" },
 #endif
-	{ 0x3040110E, &cac_pci_l0, "SMART-2/E" },
-	{ 0xae100e11, &cac_pci_l0, "SMART-2/P" },	/* XXX also SA 211? */
-	{ 0x40300e11, &cac_pci_l0, "SMART-2/P" },
-	{ 0x40310e11, &cac_pci_l0, "SMART-2SL" },
-	{ 0x40320e11, &cac_pci_l0, "Smart Array 3200" },
-	{ 0x40330e11, &cac_pci_l0, "Smart Array 3100ES" },
-	{ 0x40340e11, &cac_pci_l0, "Smart Array 221" },
-	{ 0x40400e11, &cac_pci_l1, "Integrated Array" },
-	{ 0x40500e11, &cac_pci_l1, "Smart Array 4200" },
-	{ 0x40510e11, &cac_pci_l1, "Smart Array 4200ES" },
+	{ 0x3040110E, 0, &cac_pci_l0, "SMART-2/E" },
+	{ 0xae100e11, 1, &cac_pci_l0, "SMART-2/P" },	/* XXX also SA 211? */
+	{ 0x40300e11, 1, &cac_pci_l0, "SMART-2/P" },
+	{ 0x40310e11, 1, &cac_pci_l0, "SMART-2SL" },
+	{ 0x40320e11, 1, &cac_pci_l0, "Smart Array 3200" },
+	{ 0x40330e11, 1, &cac_pci_l0, "Smart Array 3100ES" },
+	{ 0x40340e11, 1, &cac_pci_l0, "Smart Array 221" },
+	{ 0x40400e11, 1, &cac_pci_l1, "Integrated Array" },
+	{ 0x40500e11, 1, &cac_pci_l1, "Smart Array 4200" },
+	{ 0x40510e11, 1, &cac_pci_l1, "Smart Array 4200ES" },
 	{ 0xffffffff, NULL, NULL },
 };
 
@@ -148,24 +149,36 @@ cac_pci_attach(parent, self, aux)
 	void *aux;
 {
 	struct pci_attach_args *pa;
+	struct cac_type *ct;
 	struct cac_softc *sc;
 	pci_chipset_tag_t pc;
 	pci_intr_handle_t ih;
 	const char *intrstr;
 	pcireg_t csr;
-	int i;
+	int mmreg;
 	
 	sc = (struct cac_softc *)self;
 	pa = (struct pci_attach_args *)aux;
 	pc = pa->pa_pc;
+	mmreg = 0;
 	
 	printf(": ");
 
-	if (pci_mapreg_map(pa, PCI_CBIO, PCI_MAPREG_TYPE_IO, 0, &sc->sc_iot, 
-	    &sc->sc_ioh, NULL, NULL)) {
-		printf("can't map i/o space\n");
-		return;
-	}
+	for (ct = cac_type; ct->ct_linkage != NULL; ct++)
+		if (pa->pa_id == ct->ct_id)
+			break;
+
+	if ((mmreg = ct->ct_mmreg) != 0)
+		if (pci_mapreg_map(pa, PCI_CBMA, PCI_MAPREG_TYPE_MEM, 0,
+		    &sc->sc_iot, &sc->sc_ioh, NULL, NULL))
+		    	mmreg = 0;
+	
+	if (mmreg == 0)
+		if (pci_mapreg_map(pa, PCI_CBIO, PCI_MAPREG_TYPE_IO, 0,
+		    &sc->sc_iot, &sc->sc_ioh, NULL, NULL)) {
+			printf("can't map i/o space\n");
+			return;
+		}
 	
 	sc->sc_dmat = pa->pa_dmat;
 
@@ -191,11 +204,8 @@ cac_pci_attach(parent, self, aux)
 	}
 
 	/* Now attach to the bus-independent code */
-	for (i = 0; cac_type[i].ct_linkage != NULL; i++)
-		if (pa->pa_id == cac_type[i].ct_id)
-			break;
-	sc->sc_typestr = cac_type[i].ct_typestr;
-	sc->sc_cl = cac_type[i].ct_linkage;
+	sc->sc_typestr = ct->ct_typestr;
+	sc->sc_cl = ct->ct_linkage;
 	cac_init(sc, intrstr);
 }
 
