@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: grfabs_cc.c,v 1.4 1994/06/29 13:13:02 chopps Exp $
+ *	$Id: grfabs_cc.c,v 1.5 1994/06/30 11:49:05 chopps Exp $
  *
  *  abstract interface for custom chips to the amiga abstract graphics driver.
  *
@@ -239,22 +239,12 @@ get_best_mode(size, depth)
 		dy = abs(dm->nominal_size.height - size->height);
 		ct = dx + dy;
 
-#ifdef GRF_AGA
-		if (ct < dt || save == NULL ||
-		    (size->width >= 640 && dmd->frames == aga_frames)) {
-#else
 		if (ct < dt || save == NULL) {
-#endif
 			save = dm;
 			dt = ct;
 		}
 		dm = dm->link.le_next;
 	}
-#if defined(DEBUG) && defined(GRF_AGA)
-	if (aga_enable & AGA_TRACE)
-		printf("best mode(%dx%dx%d) - %s\n",
-		    size->width, size->height, depth, save->name);
-#endif
 	return (save);
 }
 /* bitmap functions */
@@ -338,16 +328,8 @@ void
 cc_load_mode(d)
 	dmode_t *d;
 {
-#if defined(GRF_AGA) && defined(DEBUG)
-	if (aga_enable & AGA_TRACE)
-		printf("cc_load_mode - %s ", d->name);
-#endif
 	if (d) {
 		m_this_data->current_mode = d;
-#if defined(GRF_AGA) && defined(DEBUG)
-	if (aga_enable & AGA_TRACE)
-		printf("new\n");
-#endif
 		return;
 	}
 	/* turn off display */
@@ -355,10 +337,6 @@ cc_load_mode(d)
 	wait_tof();
 	wait_tof();
 	custom.cop1lc = PREP_DMA_MEM(null_mode_copper_list);
-#if defined(GRF_AGA) && defined(DEBUG)
-	if (aga_enable & AGA_TRACE)
-		printf("off\n");
-#endif
 }
 /*
  * CC Mode Stuff.
@@ -637,25 +615,20 @@ cc_use_aga_colormap(v, cm)
 		for (i = 0; i < nframes; i++) {
 			cp = DMDATA(VDATA(v)->mode)->frames[i];
 
-			tmp = cp;
+			tmp = find_copper_inst(cp, CI_MOVE(R_COLOR00));
 			for (j = 0; j < vcm->size; j += 32) {
 				int k;
 
-				tmp = find_copper_inst(tmp, CI_MOVE(R_COLOR00));
-
-				if (tmp == NULL)
-					break;
 				for (k = 0; k < 32; k++) {
 					int ce = vcm->entry[j + k] >> 4;
 					CMOVE(tmp, R_COLOR00 + (k << 1), CM_LTOW(ce));
 				}
-				tmp = find_copper_inst(tmp, CI_MOVE(R_COLOR00));
-				if (tmp == NULL)
-					break;
+				tmp++;
 				for (k = 0; k < 32; k++) {
 					int ce =vcm->entry[j + k];
 					CMOVE(tmp, R_COLOR00 + (k << 1), CM_LTOW(ce));
 				}
+				tmp++;
 			}
 		}
 	}
@@ -763,10 +736,6 @@ cc_init_view(v, bm, mode, dbox)
 	v->free_view = cc_free_view;
 	v->get_display_mode = cc_get_display_mode;
 	v->remove_view = cc_remove_view;
-#if defined(GRF_AGA) && defined(DEBUG)
-	if (aga_enable & AGA_TRACE)
-		printf("init view - %s\n", mode->name);
-#endif
 }
 
 void
@@ -1975,7 +1944,7 @@ display_aga_view(v)
 
 		vd->flags |= VF_DISPLAY;
 
-		cc_use_colormap(v, vd->colormap);
+		cc_use_aga_colormap(v, vd->colormap);
 	}
 	cc_load_mode(aga_this);
 #ifdef DEBUG
