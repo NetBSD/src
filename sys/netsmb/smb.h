@@ -1,4 +1,4 @@
-/*	$NetBSD: smb.h,v 1.4 2003/02/18 10:09:29 jdolecek Exp $	*/
+/*	$NetBSD: smb.h,v 1.5 2003/02/18 10:18:53 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -70,7 +70,7 @@ enum smb_dialects {
  */
 #define	SMB_SIGNATURE		"\xFFSMB"
 #define	SMB_SIGLEN		4
-#define	SMB_HDRMID(p)		(letohs(*(u_short*)((u_char*)(p) + 30)))
+#define	SMB_HDRMID(p)		(le16toh(*(u_short*)((u_char*)(p) + 30)))
 #define	SMB_HDRLEN		32
 /*
  * bits in the smb_flags field
