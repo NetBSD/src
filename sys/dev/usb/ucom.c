@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.35 2001/01/23 21:56:17 augustss Exp $	*/
+/*	$NetBSD: ucom.c,v 1.36 2001/01/23 22:06:25 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -198,11 +198,12 @@ USB_ATTACH(ucom)
 USB_DETACH(ucom)
 {
 	struct ucom_softc *sc = (struct ucom_softc *)self;
+	struct tty *tp = sc->sc_tty;
 	int maj, mn;
 	int s;
 
 	DPRINTF(("ucom_detach: sc=%p flags=%d tp=%p, pipe=%d,%d\n", 
-		 sc, flags, sc->sc_tty, sc->sc_bulkin_no, sc->sc_bulkout_no));
+		 sc, flags, tp, sc->sc_bulkin_no, sc->sc_bulkout_no));
 
 	sc->sc_dying = 1;
 
@@ -214,8 +215,11 @@ USB_DETACH(ucom)
 	s = splusb();
 	if (--sc->sc_refcnt >= 0) {
 		/* Wake up anyone waiting */
-		if (sc->sc_tty != NULL)
-			ttyflush(sc->sc_tty, FREAD|FWRITE);
+		if (tp != NULL) {
+			CLR(tp->t_state, TS_CARR_ON);
+			CLR(tp->t_cflag, CLOCAL | MDMBUF);
+			ttyflush(tp, FREAD|FWRITE);
+		}
 		/* Wait for processes to go away. */
 		usb_detach_wait(USBDEV(sc->sc_dev));
 	}
@@ -234,9 +238,9 @@ USB_DETACH(ucom)
 	vdevgone(maj, mn | UCOMCALLUNIT_MASK, mn | UCOMCALLUNIT_MASK, VCHR);
 
 	/* Detach and free the tty. */
-	if (sc->sc_tty != NULL) {
-		tty_detach(sc->sc_tty);
-		ttyfree(sc->sc_tty);
+	if (tp != NULL) {
+		tty_detach(tp);
+		ttyfree(tp);
 		sc->sc_tty = NULL;
 	}
 
