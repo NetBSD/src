@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.33 1998/07/26 06:45:18 is Exp $	*/
+/*	$NetBSD: clock.c,v 1.34 1999/03/14 22:42:12 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -649,25 +649,38 @@ void
 inittodr(base)
 	time_t base;
 {
-	time_t timbuf = base;	/* assume no battery clock exists */
-  
-	if (gettod == NULL)
-		printf("WARNING: no battery clock\n");
-	else
-		timbuf = gettod() + rtc_offset * 60;
+	struct timeval tvbuf;
 
-	if (timbuf < base) {
+	tvbuf.tv_usec = 0;
+	tvbuf.tv_sec = base;	/* assume no battery clock exists */
+  
+	if (ugettod == NULL)
+		printf("WARNING: no battery clock\n");
+	else {
+		ugettod(&tvbuf);
+		tvbuf.tv_sec +=  rtc_offset * 60;
+	}
+
+	if (tvbuf.tv_sec < base) {
 		printf("WARNING: bad date in battery clock\n");
-		timbuf = base;
+		tvbuf.tv_sec = base;
 	}
   
-	/* Battery clock does not store usec's, so forget about it. */
-	time.tv_sec = timbuf;
+	time = tvbuf;
 }
 
 void
 resettodr()
 {
-	if (settod && settod(time.tv_sec - rtc_offset * 60) == 0)
+	struct timeval tvbuf;
+
+	if (!usettod)
+		return;
+
+	tvbuf = time;
+
+	tvbuf.tv_sec -= rtc_offset * 60;
+
+	if (!usettod(&tvbuf))
 		printf("Cannot set battery backed clock\n");
 }
