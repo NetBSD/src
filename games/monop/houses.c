@@ -1,4 +1,4 @@
-/*	$NetBSD: houses.c,v 1.3 1995/03/23 08:34:40 cgd Exp $	*/
+/*	$NetBSD: houses.c,v 1.4 1997/10/12 17:45:11 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -33,29 +33,35 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)houses.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: houses.c,v 1.3 1995/03/23 08:34:40 cgd Exp $";
+__RCSID("$NetBSD: houses.c,v 1.4 1997/10/12 17:45:11 christos Exp $");
 #endif
 #endif /* not lint */
 
-# include	"monop.ext"
+#include "monop.ext"
 
 static char	*names[N_MON+2],
 		cur_prop[80];
 
 static MON	*monops[N_MON];
 
+static void buy_h __P((MON *));
+static void sell_h __P((MON *));
+static void list_cur __P((MON *));
 /*
  *	These routines deal with buying and selling houses
  */
-buy_houses() {
+void
+buy_houses()
+{
 
-	reg int num_mon;
-	reg MON	*mp;
-	reg OWN	*op;
+	int num_mon;
+	MON	*mp;
+	OWN	*op;
 	bool	good,got_morg;
 	int	i,p;
 
@@ -104,13 +110,15 @@ over:
 	}
 }
 
+static void
 buy_h(mnp)
-MON	*mnp; {
+MON	*mnp;
+{
 
-	reg int	i;
-	reg MON	*mp;
-	reg int	price;
-	shrt	input[3],temp[3];
+	int	i;
+	MON	*mp;
+	int	price;
+	short	input[3],temp[3];
 	int	tot;
 	PROP	*pp;
 
@@ -150,7 +158,7 @@ err:		printf("That makes the spread too wide.  Try again\n");
 		tot += input[i];
 	if (tot) {
 		printf("You asked for %d houses for $%d\n", tot, tot * price);
-		if (getyn("Is that ok? ", yn) == 0) {
+		if (getyn("Is that ok? ") == 0) {
 			cur_p->money -= tot * price;
 			for (tot = i = 0; i < mp->num_in; i++)
 				mp->sq[i]->desc->houses = temp[i];
@@ -161,11 +169,13 @@ err:		printf("That makes the spread too wide.  Try again\n");
 /*
  *	This routine sells houses.
  */
-sell_houses() {
+void
+sell_houses()
+{
 
-	reg int	num_mon;
-	reg MON	*mp;
-	reg OWN	*op;
+	int	num_mon;
+	MON	*mp;
+	OWN	*op;
 	bool	good;
 	int	p;
 
@@ -203,13 +213,15 @@ over:
 	}
 }
 
+static void
 sell_h(mnp)
-MON	*mnp; {
+MON	*mnp;
+{
 
-	reg int	i;
-	reg MON	*mp;
-	reg int	price;
-	shrt	input[3],temp[3];
+	int	i;
+	MON	*mp;
+	int	price;
+	short	input[3],temp[3];
 	int	tot;
 	PROP	*pp;
 
@@ -250,7 +262,7 @@ err:		printf("That makes the spread too wide.  Try again\n");
 		tot += input[i];
 	if (tot) {
 		printf("You asked to sell %d houses for $%d\n",tot,tot * price);
-		if (getyn("Is that ok? ", yn) == 0) {
+		if (getyn("Is that ok? ") == 0) {
 			cur_p->money += tot * price;
 			for (tot = i = 0; i < mp->num_in; i++)
 				mp->sq[i]->desc->houses = temp[i];
@@ -258,11 +270,13 @@ err:		printf("That makes the spread too wide.  Try again\n");
 	}
 }
 
+static void
 list_cur(mp)
-reg MON	*mp; {
+MON	*mp;
+{
 
-	reg int		i;
-	reg SQUARE	*sqp;
+	int		i;
+	SQUARE	*sqp;
 
 	for (i = 0; i < mp->num_in; i++) {
 		sqp = mp->sq[i];
