@@ -1,4 +1,4 @@
-.\"	$NetBSD: ptrace.2,v 1.11 2000/07/27 21:40:09 jdolecek Exp $
+.\"	$NetBSD: ptrace.2,v 1.12 2000/09/24 07:34:15 erh Exp $
 .\"
 .\" This file is in the public domain.
 .Dd November 7, 1994
@@ -161,10 +161,11 @@ process is running as root, these restrictions do not apply.)  The
 tracing process will see the newly-traced process stop and may then
 control it as if it had been traced all along.
 .Pp
-Two other restrictions apply to all tracing processes, even those
-running as root.  First, no process may trace the process running
+Three other restrictions apply to all tracing processes, even those
+running as root.  First, no process may trace a system process.
+Second, no process may trace the process running
 .Xr init 8 .
-Second, if a process has its root directory set with
+Third, if a process has its root directory set with
 .Xr chroot 2 ,
 it may not trace another process unless that process's root directory
 is at or below the tracing process's root.
