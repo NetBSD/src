@@ -1,4 +1,4 @@
-/* $NetBSD: osf1.h,v 1.17 1999/05/05 00:57:43 cgd Exp $ */
+/* $NetBSD: osf1.h,v 1.18 1999/05/10 03:58:50 cgd Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -427,6 +427,26 @@ struct osf1_sigaltstack {
 
 /* socket.h */
 
+struct osf1_msghdr {
+	osf1_data_ptr	msg_name;
+	osf1_u_int	msg_namelen;
+	osf1_data_ptr	msg_iov;		/* struct osf1_xopen_iovec * */
+	osf1_u_int	msg_iovlen;
+	osf1_data_ptr	msg_control;
+	osf1_u_int	msg_controllen;
+	osf1_int	msg_flags;
+};
+
+struct osf1_xopen_msghdr {
+	osf1_data_ptr	msg_name;
+	osf1_size_t	msg_namelen;
+	osf1_data_ptr	msg_iov;		/* struct osf1_xopen_iovec * */
+	osf1_int	msg_iovlen;
+	osf1_data_ptr	msg_control;
+	osf1_size_t	msg_controllen;
+	osf1_int	msg_flags;
+};
+
 /* max message iov len */
 #define	OSF1_MSG_MAXIOVLEN	16
 
@@ -506,13 +526,14 @@ struct osf1_timezone {
 
 /* uio.h */
 
-/*
- * The X/Open version of this uses size_t iov_len, but we can't count on
- * the not-in-int bits being zero.  (The non-X/Open version uses int.)
- */
 struct osf1_iovec {
 	osf1_data_ptr	iov_base;
 	osf1_int	iov_len;
+};
+
+struct osf1_xopen_iovec {
+	osf1_data_ptr	iov_base;
+	osf1_size_t	iov_len;
 };
 
 
