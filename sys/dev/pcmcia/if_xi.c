@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xi.c,v 1.39 2004/08/08 05:56:08 mycroft Exp $ */
+/*	$NetBSD: if_xi.c,v 1.40 2004/08/08 05:56:50 mycroft Exp $ */
 /*	OpenBSD: if_xe.c,v 1.9 1999/09/16 11:28:42 niklas Exp 	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.39 2004/08/08 05:56:08 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.40 2004/08/08 05:56:50 mycroft Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipx.h"
@@ -129,7 +129,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.39 2004/08/08 05:56:08 mycroft Exp $");
 #endif	/* __GNUC__ */
 
 #define	XIDEBUG
-#define	XIDEBUG_VALUE	XID_CONFIG|XID_INTR|XID_FIFO|XID_MCAST
+#define	XIDEBUG_VALUE	0
 
 #ifdef XIDEBUG
 #define DPRINTF(cat, x) if (xidebug & (cat)) printf x
