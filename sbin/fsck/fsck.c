@@ -1,4 +1,4 @@
-/*	$NetBSD: fsck.c,v 1.20 1998/11/12 16:19:48 christos Exp $	*/
+/*	$NetBSD: fsck.c,v 1.21 1999/04/22 04:20:53 abs Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas. All rights reserved.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsck.c,v 1.20 1998/11/12 16:19:48 christos Exp $");
+__RCSID("$NetBSD: fsck.c,v 1.21 1999/04/22 04:20:53 abs Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -56,6 +56,7 @@ __RCSID("$NetBSD: fsck.c,v 1.20 1998/11/12 16:19:48 christos Exp $");
 #include <errno.h>
 #include <fstab.h>
 #include <fcntl.h>
+#include <paths.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -165,13 +166,20 @@ main(argc, argv)
 
 
 	for (; argc--; argv++) {
-		const char *spec, *type;
+		const char *spec, *type, *cp;
+		char	device[MAXPATHLEN];
 
-		if ((fs = getfsfile(*argv)) == NULL &&
-		    (fs = getfsspec(*argv)) == NULL) {
+		spec = *argv;
+		cp = strrchr(spec, '/');
+		if (cp == 0) {
+			(void)snprintf(device, sizeof(device), "%s%s",
+				_PATH_DEV, spec);
+			spec = device;
+		}
+		if ((fs = getfsfile(spec)) == NULL &&
+		    (fs = getfsspec(spec)) == NULL) {
 			if (vfstype == NULL)
-				vfstype = getfslab(*argv);
-			spec = *argv;
+				vfstype = getfslab(spec);
 			type = vfstype;
 		}
 		else {
@@ -179,7 +187,7 @@ main(argc, argv)
 			type = fs->fs_vfstype;
 			if (BADTYPE(fs->fs_type))
 				errx(1, "%s has unknown file system type.",
-				    *argv);
+				    spec);
 		}
 
 		rval |= checkfs(type, blockcheck(spec), *argv, NULL, NULL);
