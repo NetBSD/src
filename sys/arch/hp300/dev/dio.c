@@ -1,4 +1,4 @@
-/*	$NetBSD: dio.c,v 1.1 1996/12/17 08:41:02 thorpej Exp $	*/
+/*	$NetBSD: dio.c,v 1.2 1997/01/12 21:27:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -206,7 +206,7 @@ dio_scodetopa(scode)
 	else if (DIO_ISDIO(scode))
 		rval = DIO_BASE + (scode * DIO_DEVSIZE);
 	else if (DIO_ISDIOII(scode))
-		rval = DIOII_BASE + (scode * DIOII_DEVSIZE);
+		rval = DIOII_BASE + ((scode - DIOII_SCBASE) * DIOII_DEVSIZE);
 	else
 		rval = 0;
 
