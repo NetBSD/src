@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf32.c,v 1.47 2000/02/06 16:49:51 eeh Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.48 2000/04/11 04:37:50 chs Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -725,7 +725,7 @@ ELFNAME2(exec,makecmds)(p, epp)
 	    VM_PROT_READ);
 #endif
 	free((char *)ph, M_TEMP);
-	epp->ep_vp->v_flag |= VTEXT;
+	vn_marktext(epp->ep_vp);
 	return exec_elf_setup_stack(p, epp);
 
 bad:
