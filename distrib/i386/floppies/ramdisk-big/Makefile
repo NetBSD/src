@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2001/10/13 06:15:16 jmc Exp $
+#	$NetBSD: Makefile,v 1.10 2001/11/07 02:50:22 christos Exp $
 
 TOP=		${.CURDIR}/..
 WARNS=1
@@ -38,10 +38,10 @@ realall: ${IMAGE}
 ${IMAGE}: ${CBIN} ${AUXDEPENDS} ${MTREECONF} ${LISTS}
 	rm -f ${IMAGE}.tmp
 	dd if=/dev/zero of=${IMAGE}.tmp count=${RAMDISKSIZE}
-	vnconfig -v -c ${VND_CDEV} ${IMAGE}.tmp \
+	vnconfig -v -c ${VND_CRDEV} ${IMAGE}.tmp \
 	    512/${RAMDISKSPC}/1/${RAMDISKCYLS}
-	-disklabel ${VND_CDEV} >tmplabel
-	disklabel -r -R ${VND_CDEV} tmplabel
+	-disklabel ${VND_CRDEV} >tmplabel
+	disklabel -r -R ${VND_CRDEV} tmplabel
 	newfs -B le -m 0 -o space -i 3950 -c 80 ${VND_RDEV} 
 	mount ${VND_DEV} ${MOUNT_POINT}
 	${MTREE} -def ${.CURDIR}/${MTREECONF} -p ${MOUNT_POINT}/ -U
@@ -51,12 +51,12 @@ ${IMAGE}: ${CBIN} ${AUXDEPENDS} ${MTREECONF} ${LISTS}
 	@df -i ${MOUNT_POINT}
 	@echo ""
 	umount ${MOUNT_POINT}
-	vnconfig -u ${VND_CDEV}
+	vnconfig -u ${VND_CRDEV}
 	mv -f ${IMAGE}.tmp ${IMAGE}
 
 unconfig:
 	-umount -f ${MOUNT_POINT}
-	-vnconfig -u ${VND_DEV}
+	-vnconfig -u ${VND_RDEV}
 	-/bin/rm -f ${IMAGE} ${IMAGE}.tmp
 
 ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
