@@ -1,4 +1,4 @@
-/*	$NetBSD: gapspci_dma.c,v 1.8 2003/07/15 01:31:38 lukem Exp $	*/
+/*	$NetBSD: gapspci_dma.c,v 1.8.10.1 2005/01/26 11:57:30 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: gapspci_dma.c,v 1.8 2003/07/15 01:31:38 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gapspci_dma.c,v 1.8.10.1 2005/01/26 11:57:30 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h> 
@@ -581,7 +581,7 @@ gaps_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 
 	size = round_page(size);
 
-	va = uvm_km_valloc(kernel_map, size);
+	va = uvm_km_alloc(kernel_map, size, 0, UVM_KMF_VAONLY);
 
 	if (va == 0)
 		return (ENOMEM);
@@ -622,7 +622,7 @@ gaps_dmamem_unmap(bus_dma_tag_t t, caddr_t kva, size_t size)
 	size = round_page(size);
 	pmap_kremove((vaddr_t) kva, size);
 	pmap_update(pmap_kernel());
-	uvm_km_free(kernel_map, (vaddr_t) kva, size);
+	uvm_km_free(kernel_map, (vaddr_t) kva, size, UVM_KMF_VAONLY);
 }
 
 paddr_t
