@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.doc.mk,v 1.41 1999/02/12 01:10:06 lukem Exp $
+#	$NetBSD: bsd.doc.mk,v 1.42 1999/08/21 06:17:45 simonb Exp $
 #	@(#)bsd.doc.mk	8.1 (Berkeley) 8/14/93
 
 .if !target(__initialized__)
@@ -61,8 +61,8 @@ ${DESTDIR}${DOCDIR}/${DIR}/${F}: .MADE
 
 .PRECIOUS: ${DESTDIR}${DOCDIR}/${DIR}/${F}
 ${DESTDIR}${DOCDIR}/${DIR}/${F}: ${F}
-	${INSTALL} ${RENAME} ${PRESERVE} -c -o ${DOCOWN} -g ${DOCGRP} \
-		-m ${DOCMODE} ${.ALLSRC} ${.TARGET}
+	${INSTALL} ${RENAME} ${PRESERVE} ${INSTPRIV} -c -o ${DOCOWN} \
+	    -g ${DOCGRP} -m ${DOCMODE} ${.ALLSRC} ${.TARGET}
 .endfor
 .endif
 
