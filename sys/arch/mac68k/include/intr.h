@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.9 1998/08/12 06:58:42 scottr Exp $	*/
+/*	$NetBSD: intr.h,v 1.10 1998/08/25 03:59:01 scottr Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds
@@ -87,6 +87,7 @@ extern unsigned short	mac68k_ttyipl;
 extern unsigned short	mac68k_bioipl;
 extern unsigned short	mac68k_netipl;
 extern unsigned short	mac68k_impipl;
+extern unsigned short	mac68k_audioipl;
 extern unsigned short	mac68k_clockipl;
 extern unsigned short	mac68k_statclockipl;
 extern unsigned short	mac68k_schedipl;
@@ -106,6 +107,7 @@ extern unsigned short	mac68k_schedipl;
 #define	splbio()	_splraise(mac68k_bioipl)
 #define	splnet()	_splraise(mac68k_netipl)
 #define	splimp()	_splraise(mac68k_impipl)
+#define	splaudio()	_splraise(mac68k_audioipl)
 #define	splclock()	_splraise(mac68k_clockipl)
 #define	splstatclock()	_splraise(mac68k_statclockipl)
 #define	splsched()	_splsched(mac68k_schedipl)
