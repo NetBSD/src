@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.5 1995/10/02 00:36:07 thorpej Exp $
+#	$NetBSD: GENERIC,v 1.6 1995/10/10 02:12:41 thorpej Exp $
 #
 # Generic kernel - one size fits all.
 #
@@ -100,6 +100,7 @@ tape		st0	at scsi? slave ?
 tape		st1	at scsi? slave ?
 
 device		dca0	at scode9 flags 1
+device		dca1	at scode?
 
 device		dcm0	at scode? flags 0xe
 device		dcm1	at scode? flags 0xe
@@ -108,6 +109,7 @@ device		le0	at scode?
 device		le1	at scode?
 
 device		grf0	at scode?
+device		grf1	at scode?
 
 pseudo-device	pty		64	# pseudo ptys
 pseudo-device	sl		4	# SLIP network interfaces
