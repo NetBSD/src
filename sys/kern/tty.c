@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.156 2003/08/11 10:49:06 dsl Exp $	*/
+/*	$NetBSD: tty.c,v 1.157 2003/09/21 18:40:38 manu Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.156 2003/08/11 10:49:06 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.157 2003/09/21 18:40:38 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1224,10 +1224,11 @@ ttykqfilter(dev_t dev, struct knote *kn)
 	int		s;
 	const struct cdevsw	*cdev;
 
-	cdev = cdevsw_lookup(dev);
-	if (cdev == NULL)
+        if (((cdev = cdevsw_lookup(dev)) == NULL) ||
+	    (cdev->d_tty == NULL) ||
+	    ((tp = (*cdev->d_tty)(dev)) == NULL))
 		return (ENXIO);
-	tp = (*cdev->d_tty)(dev);
+
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
 		klist = &tp->t_rsel.sel_klist;
