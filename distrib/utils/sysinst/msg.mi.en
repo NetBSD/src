@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.120 2003/08/19 14:33:16 dsl Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.121 2003/09/27 10:47:17 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -67,15 +67,17 @@ message upgrade
 message hello
 {Welcome to sysinst, the NetBSD-@@VERSION@@ system installation tool.
 This menu-driven tool is designed to help you install NetBSD to a hard
-disk, or upgrade an existing NetBSD system, with a minimum of work.
+disk, or upgrade an existing NetBSD system, with a minimum of work. 
 In the following menus, you may change the current selection by
-either typing the reference letter (a, b, c, ...).  Arrow keys may also work.
+either typing the reference letter (a, b, c, ...) or CTRL+N and CTRL+P.
+Arrow keys and Page-up/Page-down may also work. 
 You activate the current selection from the menu by typing the enter key.
 
 }
 
 message thanks
 {Thank you for using NetBSD!
+
 }
 
 message installusure
@@ -129,18 +131,6 @@ message ask_disk
 
 message Available_disks
 {Available disks}
-
-message pleasemountroot
-{The root device is not mounted.  Please mount it.
-
-Your selected target disk %s also holds the current root device.  I
-need to know whether I'm currently running out of the target root
-(%sa), or out of an alternate root (say, in %sb, your swap partition).
-I can't tell unless you mount the root from which you booted read/write
-(eg 'mount /dev/%sb /').
-
-I'm aborting back to the main menu so you can fork a subshell.
-}
 
 message cylinders
 {cylinders}

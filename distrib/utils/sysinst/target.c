@@ -1,4 +1,4 @@
-/*	$NetBSD: target.c,v 1.42 2003/08/07 09:28:01 agc Exp $	*/
+/*	$NetBSD: target.c,v 1.43 2003/09/27 10:47:17 dsl Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -71,7 +71,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: target.c,v 1.42 2003/08/07 09:28:01 agc Exp $");
+__RCSID("$NetBSD: target.c,v 1.43 2003/09/27 10:47:17 dsl Exp $");
 #endif
 
 /*
@@ -103,10 +103,6 @@ __RCSID("$NetBSD: target.c,v 1.42 2003/08/07 09:28:01 agc Exp $");
 /*
  * local  prototypes 
  */
-static const char* get_rootdev (void);
-static const char* mounted_rootpart (void);
-int target_on_current_disk (void);
-int must_mount_root (void);
 
 static void make_prefixed_dir (const char *prefix, const char *path);
 static int do_target_chdir (const char *dir, int flag);
@@ -149,206 +145,53 @@ backtowin(void)
 }
 #endif
 
-/*
- * Get name of current root device  from kernel via sysctl. 
- * On NetBSD-1.3_ALPHA, this just returns the name of a
- * device (e.g., "sd0"), not a specific partition -- like "sd0a",
- * or "sd0b" for root-in-swap.
- */
-static const char *
-get_rootdev(void)
-{
-	int mib[2];
-	static char rootdev[STRSIZE];
-	size_t varlen;
-
-	mib[0] = CTL_KERN;
-	mib[1] = KERN_ROOT_DEVICE;
-	varlen = sizeof(rootdev);
-	if (sysctl(mib, 2, rootdev, &varlen, NULL, 0) < 0)
-		return (NULL);
-
-#ifdef	DEBUG
-	printf("get_rootdev(): sysctl returns %s\n", rootdev);
-#endif
-	return (rootdev);
-}
-
-
-/*
- * Check if current root and target are on the same 
- * device (e.g., both on "sd0") or on different devices
- * e.g., target is "sd0" and root is "le0" (nfs).
- */
-int
-target_on_current_disk(void)
-{
-	int same;
-
-	if (strcmp(diskdev, "") == 0)	/* nothing selected yet */
-		same = 1;	/* bad assumption: this is a live system */
-	else
-		same = (strcmp(diskdev, get_rootdev()) == 0);
-	return (same);
-}
-
-/*
- * must_mount_root  -- check to see if the current root
- * partition  and the target root partition are on the same
- * device.  If they are, we need to have the root mounted read/write
- * in order to find out whether they're the same partition.
- * (this is arguably a bug in the kernel API.)
- *
- * check to see if they're
- */
-int
-must_mount_root(void)
-{
-	int result;
-
-#if defined(DEBUG)  ||	defined(DEBUG_ROOT)
-	endwin();
-	printf("must_mount_root\n");
-	backtowin();
-#endif
-
-	/* if they're  on different devices, we're OK. */
-	if (target_on_current_disk() == 0) {
-#if defined(DEBUG)  ||	defined(DEBUG_ROOT)
-		endwin();
-		printf("must_mount_root: %s and %s, no?\n",
-		    diskdev, get_rootdev());
-		fflush(stdout);
-		backtowin();
-#endif
-		return (0);
-	}
-
-	/* If they're on the same device, and root not mounted, yell. */
-	result = (strcmp(mounted_rootpart(), "root_device") == 0);
-
-#if defined(DEBUG)  ||	defined(DEBUG_ROOT)
-		endwin();
-		printf("must_mount_root %s and root_device gives %d\n",
-		    mounted_rootpart(), result);
-		fflush(stdout);
-		backtowin();
-#endif
-
-	return (result);
-}
 
 /*
  * Is the root partition we're running from the same as the root 
  * which the user has selected to install/upgrade?
  * Uses global variable "diskdev" to find the selected device for
  * install/upgrade.
- * FIXME -- disklabel-editing code assumes that partition 'a' is always root.
  */
 int
 target_already_root(void)
 {
-	register int result;
-	char diskdevroot[STRSIZE];
 
-	/* if they're  on different devices, we're OK. */
-	if (target_on_current_disk() == 0)
-		return (0);
-
-	/*
-	 * otherwise, install() or upgrade() should already did
-	 * have forced the user to explicitly mount the root,
-	 * so we can find out via statfs().  Abort if not.
-	 */
-
-	if (strcmp(diskdev, "") == 0) {
-		/* no root partition was ever selected. Assume that
-		 * the currently mounted one should be used
+	if (strcmp(diskdev, "") == 0)
+		/* No root partition was ever selected.
+		 * Assume that the currently mounted one should be used
 		 */
-		result = 1;
-	} else {
-		/* append 'a' to the partitionless target disk device name. */
-		snprintf(diskdevroot, STRSIZE, "%s%c", diskdev, 'a' + rootpart);
-		result = is_active_rootpart(diskdevroot);
-	}
-	return (result);
+		return 1;
+
+	return is_active_rootpart(diskdev, rootpart);
 }
 
-
-
-/*
- * ask the kernel what the current root is.
- * If it's "root_device", we should just give up now.
- * (Why won't the kernel tell us? If we booted with "n",
- * or an explicit bootpath,  the operator told *it* ....)
- *
- * Don't cache the answer in case the user suspends and remounts.
- */
-static const char *
-mounted_rootpart(void)
-{
-	struct statfs statfsbuf;
-	int result;
-
-	static char statrootstr[STRSIZE];
-	memset(&statfsbuf, 0, sizeof(statfsbuf));
-	result = statfs("/", &statfsbuf);
-	if (result < 0) {
-		fprintf(stderr, "Help! statfs() can't find root: %s\n",
-		    strerror(errno));
-		fflush(stderr);
-		if (logging)
-			fprintf(logfp, "Help! statfs() can't find root: %s\n",
-			    strerror(errno));
-		exit(errno);
-		return(0);
-	}
-#if defined(DEBUG)
-	endwin();
-	printf("mounted_rootpart: got %s on %s\n", 
-	    statfsbuf.f_mntonname, statfsbuf.f_mntfromname);
-	fflush(stdout);
-	backtowin();
-#endif
-
-	/*
-	 * Check for unmounted root. We can't tell which partition
-	 */
-	strncpy(statrootstr, statfsbuf.f_mntfromname, STRSIZE);
-	return (statrootstr);
-}
 
 /*
  * Is this device partition (e.g., "sd0a") mounted as root? 
- * Note difference from target_on_current_disk()!
  */
 int
-is_active_rootpart(const char *devpart)
+is_active_rootpart(const char *dev, int ptn)
 {
-	const char *root = 0;
-	int result;
-	static char devdirdevpart[STRSIZE];
+	int mib[2];
+	char rootdev[SSTRSIZE];
+	int rootptn;
+	size_t varlen;
 
-	/* check to see if the devices match? */
+	mib[0] = CTL_KERN;
+	mib[1] = KERN_ROOT_DEVICE;
+	varlen = sizeof(rootdev);
+	if (sysctl(mib, 2, rootdev, &varlen, NULL, 0) < 0)
+		return 1;
 
-	/* this changes on mounts, so don't cache it. */
-	root = mounted_rootpart();
+	if (strcmp(dev, rootdev) != 0)
+		return 0;
 
-	/* prepend /dev. */
-	/* XXX post-1.3, use strstr to strip "/dev" from input. */
-	snprintf(devdirdevpart, STRSIZE, "/dev/%s", devpart);
+	mib[1] = KERN_ROOT_PARTITION;
+	varlen = sizeof rootptn;
+	if (sysctl(mib, 2, &rootptn, &varlen, NULL, 0) < 0)
+		return 1;
 
-	result = (strcmp(devdirdevpart, root) == 0);
-
-#if defined(DEBUG) || defined(DEBUG_ROOT)
-	endwin();
-	printf("is_active_rootpart: activeroot = %s, query=%s, mung=%s, answer=%d\n",
-	    root, devpart, devdirdevpart, result);
-	fflush(stdout);
-	backtowin();
-#endif
-
-	return (result);
+	return ptn == rootptn;
 }
 
 /*

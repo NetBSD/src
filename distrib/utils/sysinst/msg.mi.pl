@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.31 2003/08/19 14:33:17 dsl Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.32 2003/09/27 10:47:17 dsl Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.en,v 1.86 2002/04/04 14:26:44 ad Exp 	*/
 
@@ -132,17 +132,6 @@ message ask_disk
 
 message Available_disks	/* XXX translate */
 {Available disks}
-
-message pleasemountroot
-{Glowny dysk nie jest zamountowany. Zamountuj go.
-
-Wybrany przez ciebie dysk docelowy %s jest takze aktualnym glownym dyskiem.
-Musze wiedziec czy aktualnie dzialam poza docelowym dyskiem (%sa), czy 
-poza alternatywnym (powiedzmy, w %sb, twojej partycji wymiany).
-Nie moge tego stwierdzic dopoki nie zamountujesz glownej partycji z ktorej uruchomiles system zapis/odczyt (np 'mount /dev/%sb /').
-
-Przerywam i wracam do glownego menu, abys mogl uruchomic powloke.
-}
 
 message cylinders
 {cylindry}
