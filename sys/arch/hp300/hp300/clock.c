@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.14 1996/05/18 23:30:12 thorpej Exp $	*/
+/*	$NetBSD: clock.c,v 1.15 1996/10/04 08:55:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -163,6 +163,14 @@ hp300_calibrate_delay()
 
 		asm volatile(" movpw %0@(5),%1" : : "a" (clk), "d" (intvl));
 	}
+
+	/*
+	 * Make sure the clock interrupt is disabled.  Otherwise,
+	 * we can end up calling hardclock() before proc0 is set up,
+	 * causing a bad pointer deref.
+	 */
+	clk->clk_cr2 = CLK_CR1;
+	clk->clk_cr1 = CLK_RESET;
 
 	/*
 	 * Sanity check the delay_divisor value.  If we totally lost,
