@@ -38,7 +38,7 @@
  * from: Utah Hdr: rd.c 1.20 92/12/21
  * from: @(#)rd.c	8.1 (Berkeley) 7/15/93
  *
- * $Id: rd.c,v 1.4 1994/01/26 02:38:54 brezak Exp $
+ * $Id: rd.c,v 1.5 1994/03/09 20:17:39 brezak Exp $
  */
 
 /*
@@ -302,6 +302,9 @@ rdopen(f, ctlr, unit, part)
 	if (unit >= NRD)
 		return (ECTLR);
 	rs = &rd_softc[ctlr][unit];
+	rs->sc_part = part;
+	rs->sc_unit = unit;
+	rs->sc_ctlr = ctlr;
 	if (rs->sc_alive == 0) {
 		if (rdinit(ctlr, unit) == 0)
 			return (ENXIO);
@@ -311,9 +314,6 @@ rdopen(f, ctlr, unit, part)
 	if (part >= rs->sc_pinfo.npart || rs->sc_pinfo.offset[part] == -1)
 		return (EPART);
 
-	rs->sc_part = part;
-	rs->sc_unit = unit;
-	rs->sc_ctlr = ctlr;
 	f->f_devdata = (void *)rs;
 	return (0);
 }
