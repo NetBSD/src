@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3max.c,v 1.6.2.14 1999/11/30 08:49:55 nisimura Exp $ */
+/* $NetBSD: dec_3max.c,v 1.6.2.15 1999/12/06 08:52:14 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.6.2.14 1999/11/30 08:49:55 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.6.2.15 1999/12/06 08:52:14 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -156,8 +156,7 @@ dec_3max_init()
 #endif
 	
 	/* calibrate cpu_mhz value */
-	mc_cpuspeed(
-	    (void *)MIPS_PHYS_TO_KSEG1(KN02_SYS_CLOCK), MIPS_INT_MASK_1);
+	mc_cpuspeed(MIPS_PHYS_TO_KSEG1(KN02_SYS_CLOCK), MIPS_INT_MASK_1);
 
 	/*
 	 * Enable ECC memory correction, turn off LEDs, and
