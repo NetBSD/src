@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4 2003/04/17 22:12:50 thorpej Exp $
+# $NetBSD: Makefile,v 1.5 2005/03/09 03:11:22 christos Exp $
 
 PROG=	cgdconfig
 MAN=	cgdconfig.8
@@ -14,7 +14,7 @@ CFLAGS+= -I${.CURDIR} -I.
 
 YHEADER=1
 
-DPADD=  ${LIBUTIL} ${LIBCRYPTO}
-LDADD=  -lutil -lcrypto -ly -ll
+DPADD=  ${LIBUTIL} ${LIBCRYPTO} ${LIBCRYPT}
+LDADD=  -lutil -lcrypto -lcrypt -ly -ll
 
 .include <bsd.prog.mk>
