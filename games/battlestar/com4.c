@@ -1,4 +1,4 @@
-/*	$NetBSD: com4.c,v 1.14 2000/09/23 19:23:58 jsm Exp $	*/
+/*	$NetBSD: com4.c,v 1.15 2000/09/24 09:39:56 jsm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)com4.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: com4.c,v 1.14 2000/09/23 19:23:58 jsm Exp $");
+__RCSID("$NetBSD: com4.c,v 1.15 2000/09/24 09:39:56 jsm Exp $");
 #endif
 #endif				/* not lint */
 
@@ -280,39 +280,64 @@ drop(name)
 	wordnumber++;
 	while (wordnumber <= wordcount && (wordtype[wordnumber] == OBJECT || wordtype[wordnumber] == NOUNS)) {
 		value = wordvalue[wordnumber];
-		printf("%s:\n", objsht[value]);
-		if (testbit(inven, value)) {
-			clearbit(inven, value);
-			carrying -= objwt[value];
-			encumber -= objcumber[value];
-			if (value == BOMB) {
-				puts("The bomb explodes.  A blinding white light and immense concussion obliterate us.");
-				die();
-			}
-			if (value != AMULET && value != MEDALION && value != TALISMAN)
-				setbit(location[position].objects, value);
-			else
-				tempwiz = 0;
-			ourtime++;
+		if (value == BODY) {	/* special case */
+			wordtype[wordnumber] = OBJECT;
+			if (testbit(inven, MAID) || testbit(location[position].objects, MAID))
+				value = MAID;
+			else if (testbit(inven, DEADWOOD) || testbit(location[position].objects, DEADWOOD))
+				value = DEADWOOD;
+			else if (testbit(inven, DEADGOD) || testbit(location[position].objects, DEADGOD))
+				value = DEADGOD;
+			else if (testbit(inven, DEADTIME) || testbit(location[position].objects, DEADTIME))
+				value = DEADTIME;
+			else if (testbit(inven, DEADNATIVE) || testbit(location[position].objects, DEADNATIVE))
+				value = DEADNATIVE;
+		}
+		if (wordtype[wordnumber] == NOUNS && value == DOOR) {
 			if (*name == 'K')
-				puts("Drop kicked.");
+				puts("You hurt your foot.");
 			else
-				printf("%s.\n", name);
+				puts("You're not holding a door.");
+		} else if (objsht[value] == NULL) {
+			if (*name == 'K')
+				puts("That's not for kicking!");
+			else
+				puts("You don't have that.");
 		} else {
-			if (*name != 'K') {
-				printf("You aren't holding the %s.\n", objsht[value]);
-				if (testbit(location[position].objects, value)) {
-					if (*name == 'T')
-						puts("Kicked instead.");
-					else if (*name == 'G')
-						puts("Given anyway.");
+			printf("%s:\n", objsht[value]);
+			if (testbit(inven, value)) {
+				clearbit(inven, value);
+				carrying -= objwt[value];
+				encumber -= objcumber[value];
+				if (value == BOMB) {
+					puts("The bomb explodes.  A blinding white light and immense concussion obliterate us.");
+					die();
 				}
-			} else if (testbit(location[position].objects, value))
-				puts("Kicked.");
-			else if (testbit(wear, value))
-				puts("Not while it's being worn.");
-			else
-				puts("Not found.");
+				if (value != AMULET && value != MEDALION && value != TALISMAN)
+					setbit(location[position].objects, value);
+				else
+					tempwiz = 0;
+				ourtime++;
+				if (*name == 'K')
+					puts("Drop kicked.");
+				else
+					printf("%s.\n", name);
+			} else {
+				if (*name != 'K') {
+					printf("You aren't holding the %s.\n", objsht[value]);
+					if (testbit(location[position].objects, value)) {
+						if (*name == 'T')
+							puts("Kicked instead.");
+						else if (*name == 'G')
+							puts("Given anyway.");
+					}
+				} else if (testbit(location[position].objects, value))
+					puts("Kicked.");
+				else if (testbit(wear, value))
+					puts("Not while it's being worn.");
+				else
+					puts("Not found.");
+			}
 		}
 		if (wordnumber < wordcount - 1 && wordvalue[++wordnumber] == AND)
 			wordnumber++;
