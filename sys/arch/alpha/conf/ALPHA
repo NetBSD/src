@@ -1,4 +1,4 @@
-# $NetBSD: ALPHA,v 1.186 2003/10/08 11:55:43 bouyer Exp $
+# $NetBSD: ALPHA,v 1.187 2003/10/18 08:30:12 lukem Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
@@ -6,7 +6,7 @@ include 	"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident		"ALPHA-$Revision: 1.186 $"
+ident		"ALPHA-$Revision: 1.187 $"
 
 maxusers 32
 
@@ -475,26 +475,14 @@ ss*	at	scsibus? target ? lun ?		# SCSI scanners
 st*	at	scsibus? target ? lun ?		# SCSI tape drives
 uk*	at	scsibus? target ? lun ?		# SCSI unknown
 
-# ATA bus support
-atabus* at wdc? channel ?
-atabus* at pciide? channel ?
-atabus* at acardide? channel ?
-atabus* at aceride? channel ?
-atabus* at cmdide? channel ?
-atabus* at cypide? channel ?
-atabus* at hptide? channel ?
-atabus* at optiide? channel ?
-atabus* at piixide? channel ?
-atabus* at pdcide? channel ?
-atabus* at siside? channel ?
-atabus* at slide? channel ?
-atabus* at viaide? channel ?
+# ATA (IDE) bus support
+atabus* at ata?
 
-# ST506/ESDI/IDE devices
+# IDE drives
 wd*	at	atabus? drive ?
 
 # ATAPI bus support
-atapibus* at	atabus?
+atapibus* at	atapi?
 
 # ATAPI devices
 sd*	at	atapibus? drive ?		# ATAPI disk devices

@@ -1,5 +1,5 @@
 #
-# 	$NetBSD: MPC303,v 1.23 2003/10/08 11:09:09 bouyer Exp $
+# 	$NetBSD: MPC303,v 1.24 2003/10/18 08:30:14 lukem Exp $
 # 	From: NetBSD: GENERIC,v 1.91 2001/05/06 14:25:16 takemura Exp
 #
 # Kernel configuration file for Victor MP-C303; enami's test machine.
@@ -9,7 +9,7 @@ include		"arch/hpcmips/conf/std.hpcmips"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.23 $"
+#ident 		"GENERIC-$Revision: 1.24 $"
 
 maxusers	16
 
@@ -427,7 +427,11 @@ pcmcia*	at pcic? controller 0 socket ?
 
 # PCMCIA IDE disk
 wdc*	at pcmcia? function ?
-atabus* at wdc? channel ?
+
+# ATA (IDE) bus support
+atabus* at ata?
+
+# IDE drives
 wd*	at atabus? drive ? flags 0x0000
 
 # PCMCIA network interfaces
@@ -448,7 +452,7 @@ aic*	at pcmcia? function ?
 esp*	at pcmcia? function ?		# NCR53c406 SCSI
 
 # ATAPI bus support
-atapibus* at atabus?
+atapibus* at atapi?
 cd*	at atapibus? drive ? flags 0x0000 # ATAPI CD-ROM drives
 sd*	at atapibus? drive ? flags 0x0000 # ATAPI disk drives
 
