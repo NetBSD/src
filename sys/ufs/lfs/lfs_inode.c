@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.44 2000/09/09 04:49:55 perseant Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.45 2000/10/14 23:22:14 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -439,7 +439,8 @@ lfs_truncate(v)
 			panic("itrunc: newspace");
 		if (oldspace - newspace > 0) {
 			lfs_blkfree(fs, bn, oldspace - newspace, &lastseg, &bc);
-			real_released += btodb(oldspace - newspace);
+			if (bn > 0)
+				real_released += btodb(oldspace - newspace);
 			blocksreleased += btodb(oldspace - newspace);
 		}
 	}
@@ -466,18 +467,12 @@ done:
 	oip->i_ffs_blocks -= real_released;
 	fs->lfs_bfree += blocksreleased;
 #ifdef DIAGNOSTIC
-	if (oip->i_ffs_size == 0 && oip->i_ffs_blocks > 0) {
-		printf("lfs_tuncate: truncate to 0 but %d blocks on inode\n",
+	if (oip->i_ffs_size == 0 && oip->i_ffs_blocks != 0) {
+		printf("lfs_truncate: truncate to 0 but %d blocks on inode\n",
 		       oip->i_ffs_blocks);
 		panic("lfs_truncate: persistent blocks\n");
 	}
 #endif
-	if (oip->i_ffs_blocks < 0) {
-#ifdef DIAGNOSTIC
-		panic("lfs_truncate: negative block count\n");
-#endif
-		oip->i_ffs_blocks = 0;
-	}
 	oip->i_flag |= IN_CHANGE;
 #ifdef QUOTA
 	(void) chkdq(oip, -blocksreleased, NOCRED, 0);
