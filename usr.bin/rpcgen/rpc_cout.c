@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_cout.c,v 1.9 1997/10/09 16:31:12 mycroft Exp $	*/
+/*	$NetBSD: rpc_cout.c,v 1.10 1997/10/09 17:58:15 mycroft Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -468,14 +468,14 @@ emit_struct(def)
 					/* this is required to handle arrays */
 
 					if (sizestr == NULL)
-						plus = " ";
+						plus = "";
 					else
-						plus = "+";
+						plus = " + ";
 
 					if (ptr->length != 1)
-						s_print(ptemp, " %s %s * %d", plus, dl->decl.array_max, ptr->length);
+						s_print(ptemp, "%s%s * %d", plus, dl->decl.array_max, ptr->length);
 					else
-						s_print(ptemp, " %s %s ", plus, dl->decl.array_max);
+						s_print(ptemp, "%s%s", plus, dl->decl.array_max);
 
 					/* now concatenate to sizestr !!!! */
 					if (sizestr == NULL)
