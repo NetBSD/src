@@ -1,4 +1,4 @@
-/*	$NetBSD: pathnames.h,v 1.4 1997/12/30 22:31:17 thorpej Exp $	*/
+/*	$NetBSD: pathnames.h,v 1.5 2000/09/04 02:45:33 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,4 +35,6 @@
  *	@(#)pathnames.h	8.1 (Berkeley) 6/6/93
  */
 
+#ifndef _PATH_STRIP
 #define	_PATH_STRIP	"/usr/bin/strip"
+#endif
