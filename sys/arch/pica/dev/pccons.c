@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.7 1997/06/16 08:41:19 jonathan Exp $	*/
+/*	$NetBSD: pccons.c,v 1.8 1997/06/16 09:12:14 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -62,6 +62,7 @@
 #include <sys/vnode.h>
 #include <sys/device.h>
 #include <sys/file.h>
+#include <sys/poll.h>
 
 #include <dev/cons.h>
 
@@ -1870,7 +1871,7 @@ pc_xmode_off()
 #endif
 	async_update();
 }
-/*	$NetBSD: pccons.c,v 1.7 1997/06/16 08:41:19 jonathan Exp $	*/
+/*	$NetBSD: pccons.c,v 1.8 1997/06/16 09:12:14 jonathan Exp $	*/
 
 #include <machine/mouse.h>
 
@@ -2206,25 +2207,21 @@ pmsintr(arg)
 }
 
 int
-pmsselect(dev, rw, p)
+pmspoll(dev, events, p)
 	dev_t dev;
-	int rw;
+	int events;
 	struct proc *p;
 {
 	struct pms_softc *sc = pms_cd.cd_devs[PMSUNIT(dev)];
-	int s;
-	int ret;
+	int revents = 0;
+	int s = spltty();
 
-	if (rw == FWRITE)
-		return 0;
+	if (events & (POLLIN | POLLRDNORM))
+		if (sc->sc_q.c_cc > 0)
+			revents |= events & (POLLIN | POLLRDNORM);
+		else
+			selrecord(p, &sc->sc_rsel);
 
-	s = spltty();
-	if (!sc->sc_q.c_cc) {
-		selrecord(p, &sc->sc_rsel);
-		ret = 0;
-	} else
-		ret = 1;
 	splx(s);
-
-	return ret;
+	return (revents);
 }
