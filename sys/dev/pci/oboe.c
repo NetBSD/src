@@ -1,4 +1,4 @@
-/*	$NetBSD: oboe.c,v 1.14 2003/07/14 15:47:26 lukem Exp $	*/
+/*	$NetBSD: oboe.c,v 1.15 2003/10/21 03:24:25 fvdl Exp $	*/
 
 /*	XXXXFVDL THIS DRIVER IS BROKEN FOR NON-i386 -- vtophys() usage	*/
 
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oboe.c,v 1.14 2003/07/14 15:47:26 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oboe.c,v 1.15 2003/10/21 03:24:25 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -663,7 +663,7 @@ oboe_alloc_taskfile(struct oboe_softc *sc)
 	int i;
 	/* XXX */
 	uint32_t addr = (uint32_t)malloc(OBOE_TASK_BUF_LEN, M_DEVBUF, M_WAITOK);
-	if (addr == NULL) {
+	if (addr == 0) {
 		goto bad;
 	}
 	addr &= ~(sizeof (struct OboeTaskFile) - 1);
