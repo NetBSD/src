@@ -1,4 +1,4 @@
-# $NetBSD: .gdbinit,v 1.3 1997/10/18 19:12:11 gwr Exp $
+# $NetBSD: .gdbinit,v 1.4 2000/11/28 22:33:49 jmc Exp $
 
 # .gdbinit for debugging gdb with itself
 
@@ -17,7 +17,7 @@ end
 dir ../../dist/gdb
 dir ../../dist/readline
 
-dir ../../lib/bfd
+dir ../../lib/libbfd
 
 dir ../../dist/bfd
 dir ../../dist/opcodes
