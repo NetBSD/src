@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.29 2000/08/11 09:20:40 toddpw Exp $
+#	$NetBSD: Makefile.inc,v 1.30 2000/08/13 18:42:54 jdolecek Exp $
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -10,8 +10,8 @@ VND_CRDEV=	/dev/r${VND}d
 IMAGE?=		boot-xxx.fs
 FSTMP=		ustar.tmp
 MDEC=		${DESTDIR}/usr/mdec
-BOOTCODE=	${MDEC}/biosboot.sym
-#BOOTCODE=	${MDEC}/biosboot_com0.sym	# Serial output
+BOOTCODE?=	${MDEC}/biosboot.sym
+#BOOTCODE?=	${MDEC}/biosboot_com0.sym	# Serial output
 STRIP?=		strip
 
 DISKTYPE?=	floppy3
