@@ -1,4 +1,4 @@
-/*	$NetBSD: mulsi3.S,v 1.1 2000/01/05 14:07:33 msaitoh Exp $	*/
+/*	$NetBSD: mulsi3.S,v 1.2 2001/02/14 11:32:44 msaitoh Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -26,10 +26,9 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-	.globl	___mulsi3
-	.text
+#include <machine/asm.h>
 
-___mulsi3:
+ENTRY(__mulsi3)
 	mul.l	r4, r5
 	rts
 	sts	macl, r0

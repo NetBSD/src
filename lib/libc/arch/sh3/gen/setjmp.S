@@ -1,4 +1,4 @@
-/*	$NetBSD: setjmp.S,v 1.2 2000/08/04 08:47:04 tsubai Exp $	*/
+/*	$NetBSD: setjmp.S,v 1.3 2001/02/14 11:32:44 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,7 +40,7 @@
 
 #include <machine/asm.h>
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: setjmp.S,v 1.2 2000/08/04 08:47:04 tsubai Exp $")
+	RCSID("$NetBSD: setjmp.S,v 1.3 2001/02/14 11:32:44 msaitoh Exp $")
 #endif
 
 /*
@@ -81,7 +81,7 @@ ENTRY(setjmp)
 
 	.align 2
 Lsigblock:
-	.long	_sigblock
+	.long	_C_LABEL(sigblock)
 
 ENTRY(longjmp)
 	mov.l	r4, @-r15
@@ -114,4 +114,4 @@ ENTRY(longjmp)
 
 	.align	2
 Lsigsetmask:
-	.long	_sigsetmask
+	.long	_C_LABEL(sigsetmask)
