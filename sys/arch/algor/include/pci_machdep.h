@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.h,v 1.1 2001/05/28 16:22:19 thorpej Exp $	*/
+/*	$NetBSD: pci_machdep.h,v 1.2 2001/06/08 04:48:56 simonb Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -30,6 +30,7 @@
 /*
  * Machine-specific definitions for PCI autoconfiguration.
  */
+#define	__HAVE_PCIIDE_MACHDEP_COMPAT_INTR_ESTABLISH
 
 /*
  * Types provided to machine-independent PCI code

@@ -1,4 +1,4 @@
-#	$NetBSD: files.macppc,v 1.42 2001/05/16 10:56:43 tsubai Exp $
+#	$NetBSD: files.macppc,v 1.43 2001/06/08 04:48:57 simonb Exp $
 #
 # macppc-specific configuration info
 
@@ -98,8 +98,6 @@ file arch/macppc/pci/uninorth.c			uninorth
 
 # PCI bus support
 include "dev/pci/files.pci"
-
-file arch/macppc/pci/pciide_machdep.c		pciide
 
 # network devices MII bus
 include "dev/mii/files.mii"

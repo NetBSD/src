@@ -1,4 +1,4 @@
-#	$NetBSD: files.arc,v 1.30 2001/05/22 03:22:49 soda Exp $
+#	$NetBSD: files.arc,v 1.31 2001/06/08 04:48:56 simonb Exp $
 #	$OpenBSD: files.arc,v 1.21 1999/09/11 10:20:20 niklas Exp $
 #
 # maxpartitions must be first item in files.${ARCH}
@@ -155,8 +155,6 @@ define	pcmcia {}			# XXX dummy decl...
 
 include	"dev/pci/files.pci"
 include	"dev/isa/files.isa"
-
-file arch/arc/pci/pciide_machdep.c		pciide
 
 #	Real time clock, must have one..
 device	aclock

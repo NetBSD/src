@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.h,v 1.16 2000/12/28 22:59:09 sommerfeld Exp $	*/
+/*	$NetBSD: pci_machdep.h,v 1.17 2001/06/08 04:48:57 simonb Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -33,6 +33,7 @@
 /*
  * Machine-specific definitions for PCI autoconfiguration.
  */
+#define	__HAVE_PCIIDE_MACHDEP_COMPAT_INTR_ESTABLISH
 
 /*
  * Many i386 PCI systems only work properly with I/O mapped space, in
