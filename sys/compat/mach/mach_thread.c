@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_thread.c,v 1.14 2003/01/24 21:37:03 manu Exp $ */
+/*	$NetBSD: mach_thread.c,v 1.15 2003/01/26 12:39:32 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_thread.c,v 1.14 2003/01/24 21:37:03 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_thread.c,v 1.15 2003/01/26 12:39:32 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -158,11 +158,13 @@ mach_thread_create_running(args)
 		
 	/* 
 	 * The child relies on some values in mctc, so we should not
-	 * exit until it is finished with it. We loop to avoid
-	 * spurious wakeups due to signals.
+	 * exit until it is finished with it. We catch signals so that 
+	 * the process can be killed with kill -9, but we loop to avoid
+	 * spurious wakeups due to other signals.
 	 */
 	while(mctc.mctc_child_done == 0)
-		(void)tsleep(&mctc.mctc_child_done, PZERO, "mach_thread", 0);
+		(void)tsleep(&mctc.mctc_child_done, 
+		    PZERO|PCATCH, "mach_thread", 0);
 
 	rep->rep_msgh.msgh_bits =
 	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
@@ -174,54 +176,4 @@ mach_thread_create_running(args)
 
 	*msglen = sizeof(*rep);
 	return 0;
-}
-
-/* 
- * Duplicate the right of p1 into p2 on thread creation.
- * This will disappear the day we will have struct lwp. 
- * XXX mr_p is not accurate anymore, this might introduce
- * some problems.
- */
-void
-mach_copy_right(l1, l2)
-	struct lwp *l1;
-	struct lwp *l2;
-{
-	struct mach_emuldata *med1;
-	struct mach_emuldata *med2;
-	struct mach_right *mr;
-
-	med1 = (struct mach_emuldata *)l1->l_proc->p_emuldata;
-	med2 = (struct mach_emuldata *)l2->l_proc->p_emuldata;
-
-	/* Undo what mach_e_proc_init did */
-	if (--med2->med_bootstrap->mp_refcount == 0)
-		mach_port_put(med2->med_bootstrap);
-	if (--med2->med_kernel->mp_refcount == 0)
-		mach_port_put(med2->med_kernel);
-	if (--med2->med_host->mp_refcount == 0)
-		mach_port_put(med2->med_host);
-	if (--med2->med_exception->mp_refcount == 0)
-		mach_port_put(med2->med_exception);
-
-	/* 
-	 * Share ports and rights with the parent, bump their reference
-	 * counts so that if p2 deallocates some right, p1 is still able 
-	 * to use it.
-	 */
-	med2->med_right = med1->med_right;
-	LIST_FOREACH(mr, &med2->med_right, mr_list)
-		mr->mr_refcount++;
-
-	med2->med_bootstrap->mp_refcount++;
-	med2->med_kernel->mp_refcount++;
-	med2->med_host->mp_refcount++;
-	med2->med_exception->mp_refcount++;
-
-	med2->med_bootstrap = med1->med_bootstrap;
-	med2->med_kernel = med1->med_kernel;
-	med2->med_host = med1->med_host;
-	med2->med_exception = med1->med_exception;
-
-	return;
 }

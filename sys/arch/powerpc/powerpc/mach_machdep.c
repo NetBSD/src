@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_machdep.c,v 1.10 2003/01/21 04:06:08 matt Exp $ */
+/*	$NetBSD: mach_machdep.c,v 1.11 2003/01/26 12:39:33 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_machdep.c,v 1.10 2003/01/21 04:06:08 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_machdep.c,v 1.11 2003/01/26 12:39:33 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -122,6 +122,10 @@ mach_create_thread_child(arg)
 	struct trapframe *tf;
 	struct exec_macho_powerpc_thread_state *regs;
 
+#ifdef DEBUG_MACH
+	printf("entering mach_create_thread_child\n");
+#endif
+
 	mctc = (struct mach_create_thread_child_args *)arg;
 	l = mctc->mctc_lwp;
 
@@ -131,11 +135,6 @@ mach_create_thread_child(arg)
 		killproc(l->l_proc, "mach_create_thread_child: unknown flavor");
 	}
 	
-	/* 
-	 * Copy right from parent. Will disappear the day we have struct lwp.
-	 */
-	mach_copy_right(mctc->mctc_oldlwp, l);
-
 	tf = trapframe(l);
 	regs = (struct exec_macho_powerpc_thread_state *)mctc->mctc_state;
 
@@ -143,10 +142,10 @@ mach_create_thread_child(arg)
 	if ((regs->srr1 & PSL_USERSTATIC) != (tf->srr1 & PSL_USERSTATIC))
 		uprintf("mach_create_thread_child: PSL_USERSTATIC change\n");		
 	/* 
-	 * Call child return before setting the register context as it
+	 * Call upcallret before setting the register context as it
 	 * affects R3, R4 and CR.
 	 */
-	child_return((void *)l);
+	upcallret(l);
 
 	/* Set requested register context */
 	tf->srr0 = regs->srr0;
@@ -164,5 +163,8 @@ mach_create_thread_child(arg)
 	mctc->mctc_child_done = 1;
 	wakeup(&mctc->mctc_child_done);	
 
+#ifdef DEBUG_MACH
+	printf("leaving mach_create_thread_child\n");
+#endif
 	return;
 }
