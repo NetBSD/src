@@ -1,4 +1,4 @@
-/*	$NetBSD: dump.h,v 1.28 2001/08/14 05:44:44 lukem Exp $	*/
+/*	$NetBSD: dump.h,v 1.29 2001/10/15 13:25:34 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -111,6 +111,7 @@ int	nonodump;	/* if set, do not honor UF_NODUMP user flags */
 
 extern int	density;	/* density in 0.1" units */
 extern int	notify;		/* notify operator flag */
+extern int      timestamp;      /* timestamp messages */
 extern int	blockswritten;	/* number of blocks written on current tape */
 extern int	tapeno;		/* current tape number */
 
