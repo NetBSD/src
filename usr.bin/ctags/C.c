@@ -1,4 +1,4 @@
-/*	$NetBSD: C.c,v 1.5 1998/07/24 07:30:08 ross Exp $	*/
+/*	$NetBSD: C.c,v 1.6 1999/05/26 08:43:30 ross Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)C.c	8.4 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: C.c,v 1.5 1998/07/24 07:30:08 ross Exp $");
+__RCSID("$NetBSD: C.c,v 1.6 1999/05/26 08:43:30 ross Exp $");
 #endif
 #endif /* not lint */
 
@@ -349,6 +349,10 @@ hash_entry()
 	char	tok[MAXTOKEN];		/* storage buffer */
 
 	curline = lineno;
+	do if (GETC(==, EOF))
+		return;
+	while(c != '\n' && iswhite(c));
+	ungetc(c, inf);
 	for (sp = tok;;) {		/* get next token */
 		if (GETC(==, EOF))
 			return;
