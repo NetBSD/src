@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_machdep.c,v 1.41 2002/12/10 12:16:25 pk Exp $	*/
+/*	$NetBSD: vme_machdep.c,v 1.42 2002/12/16 16:59:09 pk Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -913,7 +913,7 @@ sparc_vme4_dmamap_load(t, map, buf, buflen, p, flags)
 	int pagesz = PAGE_SIZE;
 	int error;
 
-	cpuinfo.cache_flush(buf, buflen); /* XXX - move to bus_dma_sync */
+	cache_flush(buf, buflen); /* XXX - move to bus_dma_sync */
 
 	va = (vaddr_t)buf;
 	voff = va & (pagesz - 1);

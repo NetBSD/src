@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.65 2002/12/15 23:01:09 martin Exp $ */
+/*	$NetBSD: cache.c,v 1.66 2002/12/16 16:59:10 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -334,6 +334,16 @@ turbosparc_cache_enable()
 }
 #endif /* SUN4M || SUN4D */
 
+
+/* XXX - should inline */
+void
+cache_flush(base, len)
+	caddr_t base;
+	u_int len;
+{
+	cpuinfo.cache_flush(base, len, getcontext());
+}
+
 /*
  * Flush the current context from the cache.
  *
@@ -342,7 +352,8 @@ turbosparc_cache_enable()
  * hardware flush space, for all cache pages).
  */
 void
-sun4_vcache_flush_context()
+sun4_vcache_flush_context(ctx)
+	int ctx;
 {
 	char *p;
 	int i, ls;
@@ -373,8 +384,9 @@ sun4_vcache_flush_context()
  * no hw-flush space.
  */
 void
-sun4_vcache_flush_region(vreg)
+sun4_vcache_flush_region(vreg, ctx)
 	int vreg;
+	int ctx;
 {
 	int i, ls;
 	char *p;
@@ -397,8 +409,9 @@ sun4_vcache_flush_region(vreg)
  * Again, for hardware, we just write each page (in hw-flush space).
  */
 void
-sun4_vcache_flush_segment(vreg, vseg)
+sun4_vcache_flush_segment(vreg, vseg, ctx)
 	int vreg, vseg;
+	int ctx;
 {
 	int i, ls;
 	char *p;
@@ -424,8 +437,9 @@ sun4_vcache_flush_segment(vreg, vseg)
  * Again we write to each cache line.
  */
 void
-sun4_vcache_flush_page(va)
+sun4_vcache_flush_page(va, ctx)
 	int va;
+	int ctx;
 {
 	int i, ls;
 	char *p;
@@ -450,8 +464,9 @@ sun4_vcache_flush_page(va)
  * one write into ASI_HWFLUSHPG space to flush all cache lines.
  */
 void
-sun4_vcache_flush_page_hw(va)
+sun4_vcache_flush_page_hw(va, ctx)
 	int va;
+	int ctx;
 {
 	char *p;
 
@@ -476,9 +491,10 @@ sun4_vcache_flush_page_hw(va)
 #define CACHE_FLUSH_MAGIC	(CACHEINFO.c_totalsize / NBPG)
 
 void
-sun4_cache_flush(base, len)
+sun4_cache_flush(base, len, ctx)
 	caddr_t base;
 	u_int len;
+	int ctx;
 {
 	int i, ls, baseoff;
 	char *p;
@@ -526,20 +542,21 @@ sun4_cache_flush(base, len)
 		}
 		return;
 	}
+
 	baseoff = (u_int)base & SGOFSET;
 	i = (baseoff + len + SGOFSET) >> SGSHIFT;
 	if (i == 1)
-		sun4_vcache_flush_segment(VA_VREG(base), VA_VSEG(base));
+		sun4_vcache_flush_segment(VA_VREG(base), VA_VSEG(base), ctx);
 	else {
 		if (HASSUN4_MMU3L) {
 			baseoff = (u_int)base & RGOFSET;
 			i = (baseoff + len + RGOFSET) >> RGSHIFT;
 			if (i == 1)
-				sun4_vcache_flush_region(VA_VREG(base));
+				sun4_vcache_flush_region(VA_VREG(base), ctx);
 			else
-				sun4_vcache_flush_context();
+				sun4_vcache_flush_context(ctx);
 		} else
-			sun4_vcache_flush_context();
+			sun4_vcache_flush_context(ctx);
 	}
 }
 
@@ -553,7 +570,8 @@ sun4_cache_flush(base, len)
  * hardware flush space, for all cache pages).
  */
 void
-srmmu_vcache_flush_context()
+srmmu_vcache_flush_context(ctx)
+	int ctx;
 {
 	char *p;
 	int i, ls;
@@ -574,8 +592,9 @@ srmmu_vcache_flush_context()
  * we use the `flush region' space.
  */
 void
-srmmu_vcache_flush_region(vreg)
+srmmu_vcache_flush_region(vreg, ctx)
 	int vreg;
+	int ctx;
 {
 	int i, ls;
 	char *p;
@@ -598,8 +617,9 @@ srmmu_vcache_flush_region(vreg)
  * Again, for hardware, we just write each page (in hw-flush space).
  */
 void
-srmmu_vcache_flush_segment(vreg, vseg)
+srmmu_vcache_flush_segment(vreg, vseg, ctx)
 	int vreg, vseg;
+	int ctx;
 {
 	int i, ls;
 	char *p;
@@ -618,8 +638,9 @@ srmmu_vcache_flush_segment(vreg, vseg)
  * Again we write to each cache line.
  */
 void
-srmmu_vcache_flush_page(va)
+srmmu_vcache_flush_page(va, ctx)
 	int va;
+	int ctx;
 {
 	int i, ls;
 	char *p;
@@ -643,7 +664,7 @@ srmmu_vcache_flush_page(va)
 void
 srmmu_cache_flush_all()
 {
-	srmmu_vcache_flush_context();
+	srmmu_vcache_flush_context(0);
 }
 
 /*
@@ -657,9 +678,10 @@ srmmu_cache_flush_all()
 #define CACHE_FLUSH_MAGIC	(CACHEINFO.c_totalsize / NBPG)
 
 void
-srmmu_cache_flush(base, len)
+srmmu_cache_flush(base, len, ctx)
 	caddr_t base;
 	u_int len;
+	int ctx;
 {
 	int i, ls, baseoff;
 	char *p;
@@ -713,23 +735,24 @@ srmmu_cache_flush(base, len)
 	baseoff = (u_int)base & SGOFSET;
 	i = (baseoff + len + SGOFSET) >> SGSHIFT;
 	if (i == 1)
-		srmmu_vcache_flush_segment(VA_VREG(base), VA_VSEG(base));
+		srmmu_vcache_flush_segment(VA_VREG(base), VA_VSEG(base), ctx);
 	else {
 		baseoff = (u_int)base & RGOFSET;
 		i = (baseoff + len + RGOFSET) >> RGSHIFT;
 		if (i == 1)
-			srmmu_vcache_flush_region(VA_VREG(base));
+			srmmu_vcache_flush_region(VA_VREG(base), ctx);
 		else
-			srmmu_vcache_flush_context();
+			srmmu_vcache_flush_context(ctx);
 	}
 }
 
 int ms1_cacheflush_magic = 0;
 #define MS1_CACHEFLUSH_MAGIC	ms1_cacheflush_magic
 void
-ms1_cache_flush(base, len)
+ms1_cache_flush(base, len, ctx)
 	caddr_t base;
 	u_int len;
+	int ctx;
 {
 	/*
 	 * Although physically tagged, we still need to flush the
@@ -783,6 +806,7 @@ ms1_cache_flush(base, len)
 		sta(0, ASI_DCACHECLR, 0);
 }
 
+
 /*
  * Flush entire cache.
  */
@@ -799,7 +823,7 @@ void
 hypersparc_cache_flush_all()
 {
 
-	srmmu_vcache_flush_context();
+	srmmu_vcache_flush_context(getcontext4m());
 	/* Flush instruction cache */
 	hypersparc_pure_vcache_flush();
 }
@@ -822,16 +846,11 @@ cypress_cache_flush_all()
 
 
 void
-viking_cache_flush(base, len)
+viking_cache_flush(base, len, ctx)
 	caddr_t base;
 	u_int len;
+	int ctx;
 {
-	/*
-	 * Although physically tagged, we still need to flush the
-	 * data cache after (if we have a write-through cache) or before
-	 * (in case of write-back caches) DMA operations.
-	 */
-
 }
 
 void
@@ -951,12 +970,13 @@ viking_pcache_flush_page(pa, invalidate_only)
  */
 
 void
-smp_vcache_flush_page(va)
+smp_vcache_flush_page(va, ctx)
 	int va;
+	int ctx;
 {
 	int n, s;
 
-	cpuinfo.sp_vcache_flush_page(va);
+	cpuinfo.sp_vcache_flush_page(va, ctx);
 	if (cold || (cpuinfo.flags & CPUFLG_READY) == 0)
 		return;
 	LOCK_XPMSG();
@@ -979,12 +999,13 @@ smp_vcache_flush_page(va)
 }
 
 void
-smp_vcache_flush_segment(vr, vs)
+smp_vcache_flush_segment(vr, vs, ctx)
 	int vr, vs;
+	int ctx;
 {
 	int n, s;
 
-	cpuinfo.sp_vcache_flush_segment(vr, vs);
+	cpuinfo.sp_vcache_flush_segment(vr, vs, ctx);
 	if (cold || (cpuinfo.flags & CPUFLG_READY) == 0)
 		return;
 	LOCK_XPMSG();
@@ -1008,12 +1029,13 @@ smp_vcache_flush_segment(vr, vs)
 }
 
 void
-smp_vcache_flush_region(vr)
+smp_vcache_flush_region(vr, ctx)
 	int vr;
+	int ctx;
 {
 	int n, s;
 
-	cpuinfo.sp_vcache_flush_region(vr);
+	cpuinfo.sp_vcache_flush_region(vr, ctx);
 	if (cold || (cpuinfo.flags & CPUFLG_READY) == 0)
 		return;
 	LOCK_XPMSG();
@@ -1036,11 +1058,12 @@ smp_vcache_flush_region(vr)
 }
 
 void
-smp_vcache_flush_context()
+smp_vcache_flush_context(ctx)
+	int ctx;
 {
 	int n, s;
 
-	cpuinfo.sp_vcache_flush_context();
+	cpuinfo.sp_vcache_flush_context(ctx);
 	if (cold || (cpuinfo.flags & CPUFLG_READY) == 0)
 		return;
 	LOCK_XPMSG();
@@ -1054,7 +1077,7 @@ smp_vcache_flush_context()
 		s = splhigh();
 		simple_lock(&cpi->msg.lock);
 		cpi->msg.tag = XPMSG_VCACHE_FLUSH_CONTEXT;
-		p->ctx = getcontext4m();
+		p->ctx = ctx;
 		raise_ipi_wait_and_unlock(cpi);
 		splx(s);
 	}

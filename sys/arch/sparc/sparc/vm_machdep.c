@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.63 2002/09/25 22:21:21 thorpej Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.64 2002/12/16 16:59:13 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -127,7 +127,7 @@ vmapbuf(bp, len)
 	 * have the correct contents.
 	 */
 	if (CACHEINFO.c_vactype != VAC_NONE)
-		cpuinfo.cache_flush((caddr_t)uva, len);
+		cache_flush((caddr_t)uva, len);
 
 	upmap = vm_map_pmap(&bp->b_proc->p_vmspace->vm_map);
 	kpmap = vm_map_pmap(kernel_map);

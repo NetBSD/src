@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuvar.h,v 1.40 2002/07/17 15:56:20 thorpej Exp $ */
+/*	$NetBSD: cpuvar.h,v 1.41 2002/12/16 16:59:11 pk Exp $ */
 
 /*
  *  Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -51,7 +51,6 @@
 #include <sys/sched.h>
 
 #include <sparc/include/reg.h>
-
 #include <sparc/sparc/cache.h>	/* for cacheinfo */
 
 /*
@@ -75,11 +74,11 @@ struct module_info {
 
 	void (*get_syncflt)(void);
 	int  (*get_asyncflt)(u_int *, u_int *);
-	void (*sp_cache_flush)(caddr_t, u_int);
-	void (*sp_vcache_flush_page)(int);
-	void (*sp_vcache_flush_segment)(int, int);
-	void (*sp_vcache_flush_region)(int);
-	void (*sp_vcache_flush_context)(void);
+	void (*sp_cache_flush)(caddr_t, u_int, int);
+	void (*sp_vcache_flush_page)(int, int);
+	void (*sp_vcache_flush_segment)(int, int, int);
+	void (*sp_vcache_flush_region)(int, int);
+	void (*sp_vcache_flush_context)(int);
 	void (*pcache_flush_page)(paddr_t, int);
 	void (*pure_vcache_flush)(void);
 	void (*cache_flush_all)(void);
@@ -285,16 +284,16 @@ struct cpu_info {
 	 * all processor modules.
 	 */
 	void	(*cache_enable)(void);
-	void	(*cache_flush)(caddr_t, u_int);
-	void	(*sp_cache_flush)(caddr_t, u_int);
-	void	(*vcache_flush_page)(int);
-	void	(*sp_vcache_flush_page)(int);
-	void	(*vcache_flush_segment)(int, int);
-	void	(*sp_vcache_flush_segment)(int, int);
-	void	(*vcache_flush_region)(int);
-	void	(*sp_vcache_flush_region)(int);
-	void	(*vcache_flush_context)(void);
-	void	(*sp_vcache_flush_context)(void);
+	void	(*cache_flush)(caddr_t, u_int, int);
+	void	(*sp_cache_flush)(caddr_t, u_int, int);
+	void	(*vcache_flush_page)(int, int);
+	void	(*sp_vcache_flush_page)(int, int);
+	void	(*vcache_flush_segment)(int, int, int);
+	void	(*sp_vcache_flush_segment)(int, int, int);
+	void	(*vcache_flush_region)(int, int);
+	void	(*sp_vcache_flush_region)(int, int);
+	void	(*vcache_flush_context)(int);
+	void	(*sp_vcache_flush_context)(int);
 
 	void	(*pcache_flush_page)(paddr_t, int);
 	void	(*pure_vcache_flush)(void);
@@ -429,5 +428,6 @@ void cross_call (int (*)(int, int, int, int), int, int, int, int, int);
 extern struct cpu_info **cpus;
 
 #define cpuinfo	(*(struct cpu_info *)CPUINFO_VA)
+
 
 #endif	/* _sparc_cpuvar_h */

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.209 2002/12/12 09:34:04 pk Exp $ */
+/*	$NetBSD: machdep.c,v 1.210 2002/12/16 16:59:12 pk Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -1496,7 +1496,7 @@ sun4_dmamap_load(t, map, buf, buflen, p, flags)
 	if (buflen > map->_dm_size)
 		return (EINVAL);
 
-	cpuinfo.cache_flush(buf, buflen);
+	cache_flush(buf, buflen);
 
 	if ((map->_dm_flags & BUS_DMA_24BIT) == 0) {
 		/*

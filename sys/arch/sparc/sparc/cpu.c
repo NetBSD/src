@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.138 2002/12/15 15:01:08 pk Exp $ */
+/*	$NetBSD: cpu.c,v 1.139 2002/12/16 16:59:10 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -501,7 +501,7 @@ cpu_setup(sc)
 	cpu_hatched = 1;
 #if 0
 	/* Flush cache line */
-	cpuinfo.cache_flush((caddr_t)&cpu_hatched, sizeof(cpu_hatched));
+	cpuinfo.cache_flush((caddr_t)&cpu_hatched, sizeof(cpu_hatched), 0);
 #endif
 }
 
@@ -545,7 +545,7 @@ extern void cpu_hatch __P((void));	/* in locore.s */
 	 * Wait for this CPU to spin up.
 	 */
 	for (n = 10000; n != 0; n--) {
-		cpuinfo.cache_flush((caddr_t)&cpu_hatched, sizeof(cpu_hatched));
+		cache_flush((caddr_t)&cpu_hatched, sizeof(cpu_hatched));
 		if (cpu_hatched != 0) {
 			return;
 		}
