@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.120 2003/09/13 13:47:04 bouyer Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.121 2003/09/13 14:09:15 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.120 2003/09/13 13:47:04 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.121 2003/09/13 14:09:15 bouyer Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -494,8 +494,9 @@ ffs_reload(mountp, cred, p)
 	if (ump->um_flags & UFS_NEEDSWAP) {
 		ffs_sb_swap((struct fs*)bp->b_data, newfs);
 		fs->fs_flags |= FS_SWAPPED;
-	}
+	} else
 #endif
+		fs->fs_flags &= ~FS_SWAPPED;
 	if ((newfs->fs_magic != FS_UFS1_MAGIC &&	
 	     newfs->fs_magic != FS_UFS2_MAGIC)||
 	     newfs->fs_bsize > MAXBSIZE ||
@@ -779,8 +780,9 @@ next_sblock:
 	if (needswap) {
 		ffs_sb_swap((struct fs*)bp->b_data, fs);
 		fs->fs_flags |= FS_SWAPPED;
-	}
+	} else
 #endif
+		fs->fs_flags &= ~FS_SWAPPED;
 
 	if (fs->fs_pendingblocks != 0 || fs->fs_pendinginodes != 0) {
 		fs->fs_pendingblocks = 0;
