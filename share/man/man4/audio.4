@@ -1,4 +1,4 @@
-.\"	$NetBSD: audio.4,v 1.56 2004/01/26 18:17:08 wiz Exp $
+.\"	$NetBSD: audio.4,v 1.57 2004/01/31 00:07:56 fredb Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -597,17 +597,31 @@ of the mask bits can be used.
 The
 .Va mixer_class
 field identifies what class of control this is.
-This value is set to the index value used to query the class itself.
-For example, a mixer level controlling the input gain on the
-.Dq line in
-circuit would be a class that matches an input class device
-with the name
+The
+.Pq arbitrary
+value set by the hardware driver may be determined by examining the
+.Va mixer_class
+field of the class itself,
+a mixer of type
+.Dv AUDIO_MIXER_CLASS .
+For example, a mixer controlling the input gain on the line in circuit
+would have a
+.Va mixer_class
+that matches an input class device with the name
 .Dq inputs
-.Dv ( AudioCinputs ) .
+.Dv ( AudioCinputs ) ,
+and would have a
+.Va label
+of
+.Dq line
+.Dv ( AudioNline ) .
 Mixer controls which control audio circuitry for a particular audio
 source (e.g. line-in, CD in, DAC output) are collected under the input class,
 while those which control all audio sources (e.g. master volume,
 equalization controls) are under the output class.
+Hardware devices capable of recording typically also have a record class,
+for controls that only affect recording,
+and also a monitor class.
 .Pp
 The
 .Va next
