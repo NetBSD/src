@@ -1,4 +1,4 @@
-/*	$NetBSD: nextdma.c,v 1.1.1.1 1998/06/09 07:53:05 dbj Exp $	*/
+/*	$NetBSD: nextdma.c,v 1.2 1998/07/01 22:14:44 dbj Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -382,7 +382,7 @@ next_dma_print(nd)
 	if (nd->_nd_map_cont) {
 		printf("NDMAP: nd->_nd_map_cont->dm_segs[%d].ds_addr = 0x%08lx\n",
 				nd->_nd_idx_cont,nd->_nd_map_cont->dm_segs[nd->_nd_idx_cont].ds_addr);
-		printf("NDMAP: nd->_nd_map_cont->dm_segs[%d] = %d\n",
+		printf("NDMAP: nd->_nd_map_cont->dm_segs[%d].ds_len = %d\n",
 				nd->_nd_idx_cont,nd->_nd_map_cont->dm_segs[nd->_nd_idx_cont].ds_len);
 	} else {
 		printf("NDMAP: nd->_nd_map_cont = NULL\n");
@@ -451,9 +451,18 @@ nextdma_intr(arg)
 #ifdef DIAGNOSTIC
 		if (!(state & DMACSR_COMPLETE)) {
 			next_dma_print(nd);
+#if 0 /* This bit doesn't seem to get set every once in a while,
+			 * and I don't know why.  Let's try treating it as a spurious
+			 * interrupt.  ie. report it and ignore the interrupt.
+			 */
 			printf("DEBUG: state = 0x%b\n", state,DMACSR_BITS);
 			panic("DMA  ipl (%ld) intr(0x%b), DMACSR_COMPLETE not set in intr\n",
 					NEXT_I_IPL(nd->nd_intr), NEXT_I_BIT(nd->nd_intr),NEXT_INTR_BITS);
+#else
+			printf("DMA  ipl (%ld) intr(0x%b), DMACSR_COMPLETE not set in intr\n",
+					NEXT_I_IPL(nd->nd_intr), NEXT_I_BIT(nd->nd_intr),NEXT_INTR_BITS);
+			return(1);
+#endif
 		}
 #endif
 
