@@ -9,7 +9,7 @@ the install document.
 
 	NOTE that the instructions on old versions of the web site
 	are incorrect. The installation miniroot image for both NetBSD 1.1
-	and 1.1 include the 8Kbytes reserved for bootblocks and disklabel.
+	and 1.2 include the 8Kbytes reserved for bootblocks and disklabel.
 	The dd commands to write the miniroot to a freshly-labeleld
 	disk should have an 'skip=16' added to them, if the 'skip=16'
 	option is already present.
