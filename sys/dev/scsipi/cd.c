@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.43 1994/11/22 03:23:49 mycroft Exp $	*/
+/*	$NetBSD: cd.c,v 1.44 1994/11/23 07:55:25 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -235,10 +235,11 @@ cdopen(dev, flag, fmt)
 		 */
 		scsi_start(sc_link, SSS_START, SCSI_ERR_OK | SCSI_SILENT);
 
+		sc_link->flags |= SDEV_OPEN;	/* unit attn errors are now errors */
+
 		/*
 		 * Check that it is still responding and ok.
 		 */
-		sc_link->flags |= SDEV_OPEN;	/* unit attn errors are now errors */
 		if (scsi_test_unit_ready(sc_link, 0) != 0) {
 			SC_DEBUG(sc_link, SDEV_DB3, ("device not responding\n"));
 			error = ENXIO;
@@ -301,12 +302,12 @@ bad:
 	if (cd->sc_dk.dk_openmask == 0) {
 		scsi_prevent(sc_link, PR_ALLOW, SCSI_ERR_OK | SCSI_SILENT);
 		sc_link->flags &= ~SDEV_OPEN;
-	}
 
-	cd->flags &= ~CDF_LOCKED;
-	if ((cd->flags & CDF_WANTED) != 0) {
-		cd->flags &= ~CDF_WANTED;
-		wakeup(cd);
+		cd->flags &= ~CDF_LOCKED;
+		if ((cd->flags & CDF_WANTED) != 0) {
+			cd->flags &= ~CDF_WANTED;
+			wakeup(cd);
+		}
 	}
 
 	return error;
