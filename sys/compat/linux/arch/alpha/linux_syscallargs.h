@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_syscallargs.h,v 1.18.4.1 2001/03/30 21:54:01 he Exp $	*/
+/*	$NetBSD: linux_syscallargs.h,v 1.18.4.2 2001/05/01 08:57:20 he Exp $	*/
 
 /*
  * System call argument lists.
@@ -430,7 +430,7 @@ struct linux_sys_wait4_args {
  * System call prototypes.
  */
 
-int	sys_nosys	__P((struct proc *, void *, register_t *));
+int	linux_sys_nosys	__P((struct proc *, void *, register_t *));
 int	sys_exit	__P((struct proc *, void *, register_t *));
 int	sys_fork	__P((struct proc *, void *, register_t *));
 int	sys_read	__P((struct proc *, void *, register_t *));
