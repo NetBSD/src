@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.116 2004/03/14 01:08:49 cl Exp $	*/
+/*	$NetBSD: trap.c,v 1.117 2004/08/28 17:53:02 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.116 2004/03/14 01:08:49 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.117 2004/08/28 17:53:02 jdolecek Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -581,16 +581,10 @@ trap(type, code, v, tf)
 		 * the current limit and we need to reflect that as an access
 		 * error.
 		 */
-		if ((map != kernel_map) && ((caddr_t)va >= vm->vm_maxsaddr)) {
-			if (rv == 0) {
-				unsigned nss;
-
-				nss = btoc((u_int)(USRSTACK-va));
-				if (nss > vm->vm_ssize)
-					vm->vm_ssize = nss;
-			}
-		}
 		if (rv == 0) {
+			if (map != kernel_map && (caddr_t)va >= vm->vm_maxsaddr)
+				uvm_grow(p, va);
+
 			if ((type & T_USER) != 0)
 				l->l_flag &= ~L_SA_PAGEFAULT;
 			goto finish;
