@@ -1,4 +1,4 @@
-/*	$NetBSD: n_tan.c,v 1.3 1999/07/02 15:37:37 simonb Exp $	*/
+/*	$NetBSD: n_tan.c,v 1.3.10.1 2002/06/18 13:41:33 lukem Exp $	*/
 /*
  * Copyright (c) 1987, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -41,8 +41,7 @@ static char sccsid[] = "@(#)tan.c	8.1 (Berkeley) 6/4/93";
 #include "mathimpl.h"
 #include "trig.h"
 double
-tan(x)
-double x;
+tan(double x)
 {
 	double a,z,ss,cc,c;
 	int k;
@@ -50,27 +49,27 @@ double x;
 	if(!finite(x))		/* tan(NaN) and tan(INF) must be NaN */
 		return x-x;
 	x = drem(x,PI);			/* reduce x into [-PI/2, PI/2] */
-	a = copysign(x,one);		/* ... = abs(x) */
+	a = copysign(x,__one);		/* ... = abs(x) */
 	if (a >= PIo4) {
 		k = 1;
 		x = copysign(PIo2-a,x);
 	}
 	else {
 		k = 0;
-		if (a < small) {
-			z=big+a;
+		if (a < __small) {
+			z=__big+a;
 			return x;
 		}
 	}
 	z = x*x;
 	cc = cos__C(z);
 	ss = sin__S(z);
-	z *= half;			/* Next get c = cos(x) accurately */
-	c = (z >= thresh ? half-((z-half)-cc) : one-(z-cc));
+	z *= __half;			/* Next get c = cos(x) accurately */
+	c = (z >= thresh ? __half-((z-__half)-cc) : __one-(z-cc));
 	if (k == 0)
 		return x+(x*(z-(cc-ss)))/c;	/* ... sin/cos */
 #ifdef national
-	else if (x == zero)
+	else if (x == __zero)
 		return copysign(fmax,x);	/* no inf on 32k */
 #endif	/* national */
 	else
