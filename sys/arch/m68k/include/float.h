@@ -1,9 +1,9 @@
-/*	$NetBSD: float.h,v 1.14 2003/04/19 23:05:31 christos Exp $	*/
+/*	$NetBSD: float.h,v 1.15 2003/04/20 12:57:43 bjh21 Exp $	*/
 
 #ifndef _M68K_FLOAT_H_
 #define _M68K_FLOAT_H_
 
 #define LDBL_MANT_DIG	64
-#include <sys/math_ieee.h>
+#include <sys/float_ieee.h>
 
 #endif	/* !_M68K_FLOAT_H_ */
