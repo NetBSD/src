@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.66 2002/09/21 05:24:17 junyoung Exp $	 */
+/*	$NetBSD: rtld.c,v 1.67 2002/09/23 23:56:48 mycroft Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -418,7 +418,8 @@ _rtld(sp, relocbase)
 	if (pAUX_execfd != NULL) {	/* Load the main program. */
 		int             fd = pAUX_execfd->a_v;
 		dbg(("loading main program"));
-		_rtld_objmain = _rtld_map_object(argv[0], fd, NULL);
+		_rtld_objmain = _rtld_map_object(argv[0] ? xstrdup(argv[0]) :
+		    xstrdup("main program"), fd, NULL);
 		close(fd);
 		if (_rtld_objmain == NULL)
 			_rtld_die();
@@ -439,10 +440,6 @@ _rtld(sp, relocbase)
 		_rtld_objmain = _rtld_digest_phdr(phdr, phnum, entry);
 	}
 
-	if (argv[0] != NULL)
-		_rtld_objmain->path = xstrdup(argv[0]);
-	else
-		_rtld_objmain->path = xstrdup("main program");
 	_rtld_objmain->mainprog = true;
 	
 	/*
@@ -690,11 +687,8 @@ _rtld_dlopen(name, mode)
 	if (name == NULL) {
 		obj = _rtld_objmain;
 		obj->refcount++;
-	} else {
-		char *path = _rtld_find_library(name, _rtld_objmain);
-		if (path != NULL)
-			obj = _rtld_load_object(path, mode);
-	}
+	} else
+		obj = _rtld_load_library(name, _rtld_objmain, mode);
 
 	if (obj != NULL) {
 		++obj->dl_refcount;
@@ -732,7 +726,7 @@ _rtld_objmain_sym(name)
 	hash = _rtld_elf_hash(name);
 	obj = _rtld_objmain;
 
-	def = _rtld_symlook_list(name, hash, &_rtld_list_main, &obj, true);
+	def = _rtld_symlook_list(name, hash, &_rtld_list_main, &obj);
 
 	if (def != NULL)
 		return obj->relocbase + def->st_value;
@@ -766,11 +760,11 @@ _rtld_dlsym(handle, name)
 			return NULL;
 		}
 		if (handle == NULL) { /* Just the caller's shared object. */
-			def = _rtld_symlook_obj(name, hash, obj, true);
+			def = _rtld_symlook_obj(name, hash, obj);
 			defobj = obj;
 		} else { /* All the shared objects after the caller's */
 			while ((obj = obj->next) != NULL) {
-				if ((def = _rtld_symlook_obj(name, hash, obj, true)) != NULL) {
+				if ((def = _rtld_symlook_obj(name, hash, obj)) != NULL) {
 					defobj = obj;
 					break;
 				}
@@ -782,13 +776,13 @@ _rtld_dlsym(handle, name)
 		
 		if (obj->mainprog) {
 			/* Search main program and all libraries loaded by it. */
-			def = _rtld_symlook_list(name, hash, &_rtld_list_main, &defobj, true);
+			def = _rtld_symlook_list(name, hash, &_rtld_list_main, &defobj);
 		} else {
 			/*
 			 * XXX - This isn't correct.  The search should include the whole
 			 * DAG rooted at the given object.
 			 */
-			def = _rtld_symlook_obj(name, hash, obj, true);
+			def = _rtld_symlook_obj(name, hash, obj);
 			defobj = obj;
 		}
 	}
@@ -943,18 +937,12 @@ _rtld_linkmap_delete(obj)
 static Obj_Entry *
 _rtld_obj_from_addr(const void *addr)
 {
-	unsigned long endhash;
 	Obj_Entry *obj;
 	
-	endhash = _rtld_elf_hash(END_SYM);
 	for (obj = _rtld_objlist;  obj != NULL;  obj = obj->next) {
-		const Elf_Sym *endsym;
-
 		if (addr < (void *) obj->mapbase)
 			continue;
-		if ((endsym = _rtld_symlook_obj(END_SYM, endhash, obj, true)) == NULL)
-			continue; /* No "end" symbol?! */
-		if (addr < (void *) (obj->relocbase + endsym->st_value))
+		if (addr < (void *) (obj->mapbase + obj->mapsize))
 			return obj;
 	}
 	return NULL;
