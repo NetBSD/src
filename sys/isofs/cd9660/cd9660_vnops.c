@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vnops.c,v 1.46 1998/06/24 20:58:45 sommerfe Exp $	*/
+/*	$NetBSD: cd9660_vnops.c,v 1.47 1998/06/25 22:21:13 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -942,12 +942,7 @@ cd9660_setattr(v)
 #define	cd9660_create	genfs_eopnotsupp
 #define	cd9660_mknod	genfs_eopnotsupp
 #define	cd9660_write	genfs_eopnotsupp
-#ifdef	NFSSERVER
-int	lease_check	__P((void *));
-#define	cd9660_lease_check	lease_check
-#else
-#define	cd9660_lease_check	genfs_nullop
-#endif
+#define	cd9660_lease_check	genfs_lease_check
 #define	cd9660_fsync	genfs_nullop
 #define	cd9660_remove	genfs_eopnotsupp
 #define	cd9660_rename	genfs_eopnotsupp
