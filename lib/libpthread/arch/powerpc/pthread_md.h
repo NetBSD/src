@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_md.h,v 1.2 2003/01/18 10:34:21 thorpej Exp $	*/
+/*	$NetBSD: pthread_md.h,v 1.3 2003/01/20 00:53:55 matt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -57,7 +57,7 @@ pthread__sp(void)
  * 0xd032 is PSL_USERSET from arch/powerpc/include/psl.h
  */
 #define _INITCONTEXT_U_MD(ucp)						\
-	(ucp)->uc_mcontext.__gregs[35] = 0xd032;
+	(ucp)->uc_mcontext.__gregs[_REG_MSR] = 0xd032;
 
 /*
  * Usable stack space below the ucontext_t.
@@ -73,20 +73,20 @@ pthread__sp(void)
 
 #define PTHREAD_UCONTEXT_TO_REG(reg, uc) do {				\
 	memcpy((reg)->fixreg, (uc)->uc_mcontext.__gregs, 32 * 4);	\
-	(reg)->cr = (uc)->uc_mcontext.__gregs[32];			\
-	(reg)->lr = (uc)->uc_mcontext.__gregs[33];			\
-	(reg)->pc = (uc)->uc_mcontext.__gregs[34];			\
-	(reg)->ctr = (uc)->uc_mcontext.__gregs[36];			\
-	(reg)->xer = (uc)->uc_mcontext.__gregs[37];			\
+	(reg)->cr = (uc)->uc_mcontext.__gregs[_REG_CR];			\
+	(reg)->lr = (uc)->uc_mcontext.__gregs[_REG_LR];			\
+	(reg)->pc = (uc)->uc_mcontext.__gregs[_REG_PC];			\
+	(reg)->ctr = (uc)->uc_mcontext.__gregs[_REG_CTR];		\
+	(reg)->xer = (uc)->uc_mcontext.__gregs[_REG_XER];		\
 	} while (/*CONSTCOND*/0)
 
 #define PTHREAD_REG_TO_UCONTEXT(uc, reg) do {				\
 	memcpy((uc)->uc_mcontext.__gregs, (reg)->fixreg, 32 * 4);	\
-	(uc)->uc_mcontext.__gregs[32] = (reg)->cr;			\
-	(uc)->uc_mcontext.__gregs[33] = (reg)->lr;			\
-	(uc)->uc_mcontext.__gregs[34] = (reg)->pc;			\
-	(uc)->uc_mcontext.__gregs[36] = (reg)->ctr;			\
-	(uc)->uc_mcontext.__gregs[37] = (reg)->xer;			\
+	(uc)->uc_mcontext.__gregs[_REG_CR] = (reg)->cr;			\
+	(uc)->uc_mcontext.__gregs[_REG_LR] = (reg)->lr;			\
+	(uc)->uc_mcontext.__gregs[_REG_PC] = (reg)->pc;			\
+	(uc)->uc_mcontext.__gregs[_REG_CTR] = (reg)->ctr;		\
+	(uc)->uc_mcontext.__gregs[_REG_XER] = (reg)->xer;		\
 	(uc)->uc_flags = ((uc)->uc_flags | _UC_CPU) & ~_UC_USER;       	\
 	} while (/*CONSTCOND*/0)
 

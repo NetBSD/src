@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.8 2003/01/19 09:23:39 matt Exp $	*/
+/*	$NetBSD: signal.h,v 1.9 2003/01/20 00:53:56 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -62,14 +62,14 @@ struct sigcontext {
  */
 #define	_MCONTEXT_TO_SIGCONTEXT(uc, sc)					\
 do {									\
-	memcpy((sc)->sc_frame.fixreg, &(uc)->uc_mcontext.__gregs[0],	\
+	memcpy((sc)->sc_frame.fixreg, &(uc)->uc_mcontext.__gregs[_REG_R0], \
 	    sizeof((sc)->sc_frame.fixreg));				\
-	(sc)->sc_frame.cr     = (uc)->uc_mcontext.__gregs[32];		\
-	(sc)->sc_frame.lr     = (uc)->uc_mcontext.__gregs[33];		\
-	(sc)->sc_frame.srr0   = (uc)->uc_mcontext.__gregs[34];		\
-	(sc)->sc_frame.srr1   = (uc)->uc_mcontext.__gregs[35];		\
-	(sc)->sc_frame.xer    = (uc)->uc_mcontext.__gregs[36];		\
-	(sc)->sc_frame.ctr    = (uc)->uc_mcontext.__gregs[37];		\
+	(sc)->sc_frame.cr     = (uc)->uc_mcontext.__gregs[_REG_CR];	\
+	(sc)->sc_frame.lr     = (uc)->uc_mcontext.__gregs[_REG_LR];	\
+	(sc)->sc_frame.srr0   = (uc)->uc_mcontext.__gregs[_REG_PC];	\
+	(sc)->sc_frame.srr1   = (uc)->uc_mcontext.__gregs[_REG_MSR];	\
+	(sc)->sc_frame.ctr    = (uc)->uc_mcontext.__gregs[_REG_CTR];	\
+	(sc)->sc_frame.xer    = (uc)->uc_mcontext.__gregs[_REG_XER];	\
 	(sc)->sc_frame.dar    = 0;					\
 	(sc)->sc_frame.dsisr  = 0;					\
 	(sc)->sc_frame.exc    = 0;					\
@@ -78,14 +78,14 @@ do {									\
 
 #define	_SIGCONTEXT_TO_MCONTEXT(sc, uc)					\
 do {									\
-	memcpy(&(uc)->uc_mcontext.__gregs[0], (sc)->sc_frame.fixreg,	\
+	memcpy(&(uc)->uc_mcontext.__gregs[_REG_R0], (sc)->sc_frame.fixreg, \
 	    sizeof((sc)->sc_frame.fixreg));				\
-	(uc)->uc_mcontext.__gregs[32] = (sc)->sc_frame.cr;		\
-	(uc)->uc_mcontext.__gregs[33] = (sc)->sc_frame.lr;		\
-	(uc)->uc_mcontext.__gregs[34] = (sc)->sc_frame.srr0;		\
-	(uc)->uc_mcontext.__gregs[35] = (sc)->sc_frame.srr1;		\
-	(uc)->uc_mcontext.__gregs[36] = (sc)->sc_frame.ctr;		\
-	(uc)->uc_mcontext.__gregs[37] = (sc)->sc_frame.xer;		\
+	(uc)->uc_mcontext.__gregs[_REG_CR] = (sc)->sc_frame.cr;		\
+	(uc)->uc_mcontext.__gregs[_REG_LR] = (sc)->sc_frame.lr;		\
+	(uc)->uc_mcontext.__gregs[_REG_PC] = (sc)->sc_frame.srr0;	\
+	(uc)->uc_mcontext.__gregs[_REG_MSR] = (sc)->sc_frame.srr1;	\
+	(uc)->uc_mcontext.__gregs[_REG_CTR] = (sc)->sc_frame.ctr;	\
+	(uc)->uc_mcontext.__gregs[_REG_XER] = (sc)->sc_frame.xer;	\
 	(uc)->uc_mcontext.__vrf.__vrsave  = (sc)->sc_frame.vrsave;	\
 } while (/*CONSTCOND*/0)
 
