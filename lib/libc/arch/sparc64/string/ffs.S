@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.S,v 1.2 1998/09/13 23:54:44 eeh Exp $	*/
+/*	$NetBSD: ffs.S,v 1.3 1999/12/30 15:30:26 eeh Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -44,10 +44,32 @@
 #if 0
 	.asciz "@(#)ffs.s	8.1 (Berkeley) 6/4/93"
 #else
-	RCSID("$NetBSD: ffs.S,v 1.2 1998/09/13 23:54:44 eeh Exp $")
+	RCSID("$NetBSD: ffs.S,v 1.3 1999/12/30 15:30:26 eeh Exp $")
 #endif
 #endif  /* LIBC_SCCS and not lint */
 
+#if 0
+	/*
+	 * We have a popcount instruction -- use it.
+	 * only uses %o0, %o1, %o2
+	 *
+	 * Here's the pseudo-code from the v9 spec:
+	 *
+	 * int ffs(unsigned zz) {
+	 *	return popc( zz ^ ( ~ (-zz)));
+	 * }
+	 *
+	 * XXXX sptifires and blackbirds don't implement popc,
+	 * so we won't use this nice clean code 8^(.
+	 */
+ENTRY(ffs)
+	neg	%o0, %o1				! %o1 = -zz
+	xnor	%o0, %o1, %o2				! %o2 = zz ^ ~ -zz
+	popc	%o2, %o1
+	movrz	%o0, %g0, %o1				! result of ffs(0) should be zero
+	retl
+	 mov	%o1, %o0
+#endif
 /*
  * ffs returns the number of the rightmost bit set in its argument,
  * i.e., the lowest value such that (x & (ffs(x) - 1)) is nonzero.
