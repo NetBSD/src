@@ -1,4 +1,4 @@
-/*	$NetBSD: pcap.h,v 1.1.1.6 1998/05/17 16:29:46 veego Exp $	*/
+/*	$NetBSD: pcap.h,v 1.1.1.7 1998/07/12 14:48:04 veego Exp $	*/
 
 /*
  * Copyright (C) 1993-1997 by Darren Reed.

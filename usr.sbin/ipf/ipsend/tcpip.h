@@ -1,4 +1,4 @@
-/*	$NetBSD: tcpip.h,v 1.1.1.4 1998/05/17 16:29:54 veego Exp $	*/
+/*	$NetBSD: tcpip.h,v 1.1.1.5 1998/07/12 14:48:13 veego Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993

@@ -1,4 +1,4 @@
-/*	$NetBSD: ipft_tx.c,v 1.1.1.10 1998/05/29 20:14:16 veego Exp $	*/
+/*	$NetBSD: ipft_tx.c,v 1.1.1.11 1998/07/12 14:48:04 veego Exp $	*/
 
 /*
  * Copyright (C) 1995-1997 by Darren Reed.
