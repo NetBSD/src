@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld_start.S,v 1.5 2002/09/11 22:28:33 mycroft Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.6 2002/09/12 17:07:26 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -47,17 +47,19 @@ _rtld_start:
 	mov	r4, r0			/* save ps_strings */
 
 	ldr	sl, .L2
-	ldr	r1, .L2+4
+	ldr	r5, .L2+4
 	ldr	r0, .L2+8
 .L1:
 	add	sl, pc, sl
-	ldr	r1, [sl, r1]
+	ldr	r5, [sl, r5]
 	ldr	r0, [sl, r0]
-	sub	r1, sl, r1
-	add	r0, r1, r0
+
+	sub	r1, sl, r5		/* relocbase */
+	add	r0, r1, r0		/* &_DYNAMIC */
 	bl	_rtld_relocate_nonplt_self
 
-	mov	r0, sp			/* arg#1 = sp */
+	sub	r1, sl, r5		/* relocbase */
+	mov	r0, sp			/* sp */
 	bl	_rtld			/* call the shared loader */
 	mov	r3, r0			/* save entry point */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld_start.S,v 1.5 2002/09/11 17:23:25 mycroft Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.6 2002/09/12 17:07:26 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -54,16 +54,17 @@
 	movl	_GLOBAL_OFFSET_TABLE_@GOT(%ebx),%edx
 	movl	_DYNAMIC@GOT(%ebx),%ecx
 	subl	%edx,%ebx
-	pushl	%ebx
+	pushl	%ebx			# relocbase
 	addl	%ebx,%ecx
-	pushl	%ecx
+	pushl	%ecx			# &_DYNAMIC
 	call	_rtld_relocate_nonplt_self@PLT
 
 	leal	12(%esp),%eax		# &cleanup
-	pushl	%eax
-	call	_rtld@PLT		# _rtld(sp)
+	pushl	%ebx			# relocbase
+	pushl	%eax			# sp
+	call	_rtld@PLT		# _rtld(sp, relocbase)
 
-	addl	$12,%esp		# pop args
+	addl	$16,%esp		# pop args
 
 	popl	%ebx			# %ebx = ps_strings
 	popl	%edx			# %edx = cleanup
