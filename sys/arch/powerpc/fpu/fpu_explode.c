@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_explode.c,v 1.3 2003/08/07 16:29:18 agc Exp $ */
+/*	$NetBSD: fpu_explode.c,v 1.4 2003/10/27 04:32:02 simonb Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_explode.c,v 1.3 2003/08/07 16:29:18 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_explode.c,v 1.4 2003/10/27 04:32:02 simonb Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -200,29 +200,6 @@ fpu_dtof(struct fpn *fp, u_int i, u_int j)
 }
 
 /*
- * 128-bit extended -> fpn.
- */
-int
-fpu_qtof(struct fpn *fp, u_int i, u_int j, u_int k, u_int l)
-{
-	int exp;
-	u_int frac, f0, f1, f2, f3;
-#define EXT_SHIFT (-(EXT_FRACBITS - 3 * 32 - FP_LG))	/* left shift! */
-
-	/*
-	 * Note that ext and fpn `line up', hence no shifting needed.
-	 */
-	exp = (i >> (32 - 1 - EXT_EXPBITS)) & mask(EXT_EXPBITS);
-	frac = i & mask(EXT_FRACBITS - 3 * 32);
-	f0 = (frac << EXT_SHIFT) | (j >> (32 - EXT_SHIFT));
-	f1 = (j << EXT_SHIFT) | (k >> (32 - EXT_SHIFT));
-	f2 = (k << EXT_SHIFT) | (l >> (32 - EXT_SHIFT));
-	f3 = l << EXT_SHIFT;
-	frac |= j | k | l;
-	FP_TOF(exp, EXT_EXP_BIAS, frac, f0, f1, f2, f3);
-}
-
-/*
  * Explode the contents of a register / regpair / regquad.
  * If the input is a signalling NaN, an NV (invalid) exception
  * will be set.  (Note that nothing but NV can occur until ALU
@@ -258,12 +235,8 @@ fpu_explode(struct fpemu *fe, struct fpn *fp, int type, int reg)
 		s = fpu_dtof(fp, s, space[1]);
 		break;
 
-	case FTYPE_EXT:
-		s = fpu_qtof(fp, s, space[1], space[2], space[3]);
-		break;
-
-	default:
 		panic("fpu_explode");
+		panic("fpu_explode: invalid type %d", type);
 	}
 
 	if (s == FPC_QNAN && (fp->fp_mant[0] & FP_QUIETBIT) == 0) {
@@ -282,8 +255,7 @@ fpu_explode(struct fpemu *fe, struct fpn *fp, int type, int reg)
 	DPRINTF(FPE_REG, ("fpu_explode: %%%c%d => ", (type == FTYPE_LNG) ? 'x' :
 		((type == FTYPE_INT) ? 'i' : 
 			((type == FTYPE_SNG) ? 's' :
-				((type == FTYPE_DBL) ? 'd' :
-					((type == FTYPE_EXT) ? 'q' : '?')))), 
+				((type == FTYPE_DBL) ? 'd' : ?))),
 		reg));
 	DUMPFPN(FPE_REG, fp);
 	DPRINTF(FPE_REG, ("\n"));
