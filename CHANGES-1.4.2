@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.2,v 1.1.2.97 2000/01/15 17:43:34 he Exp $
+#	$NetBSD: CHANGES-1.4.2,v 1.1.2.98 2000/01/15 18:14:30 he Exp $
 
 A complete list of changes from NetBSD 1.4.1 to NetBSD 1.4.2:
 
@@ -1108,7 +1108,7 @@ usr.sbin/mtree/spec.c				1.17
   legal characters (`#', ` ', binary characters), fixing PR#5006 and
   PR#7663.
 
-share/man/man8/compat_osf1.8			1.1 (new)
+share/man/man8/compat_osf1.8			1.1-1.3 (new)
 
   Provide minimal documentation for the Alpha OSF/1 aka Tru64 compat
   environment.
@@ -2597,3 +2597,46 @@ sys/arch/x68k/dev/ms.c				1.9
   software timer, and change the clock interrupt handler not to
   lower interrupt level, in order to eliminate glitches on MPU
   interrupt levels.
+
+sys/kern/init_main.c				1.161
+
+  Update the copyright notice to include 2000.
+
+sys/ufs/lfs/lfs_alloc.c				1.25
+sys/ufs/lfs/lfs_inode.c				1.27
+sys/ufs/lfs/lfs_segment.c			1.30
+sys/ufs/lfs/lfs_vfsops.c			1.36
+sys/ufs/lfs/lfs_vnops.c				1.28
+
+  Address problems related to using an LFS filesystem as the root
+  filesystem, including mknod hangs.  Fixes PR#8172 and PR#9072.
+
+sys/ufs/lfs/lfs_alloc.c				1.30
+sys/ufs/lfs/lfs_vnops.c				1.34
+
+  Fix error returns on lfs vnops so that locks and reference counts
+  are preserved.  Handle dirop accounting in lfs_vfree for this
+  case as well.  Fixes PR#8823.
+
+sys/ufs/lfs/lfs_segment.c			1.38
+
+  Handle flushing a vnode during cleaning, and cleaning the Ifile,
+  more correctly, avoiding possible disk corruption in some cases.
+
+sys/ufs/lfs/lfs_syscalls.c			1.38
+
+  Expand the category of "metadata" in lfs_markv to include Ifile
+  data blocks.  This prevents a rare condition in which certain
+  Ifile blocks are "unwritten" when cleaning during intense disk
+  activity.
+
+sys/dev/pcmcia/pcmcia_cis.c			1.14
+
+  Make PCMCIA CIS parsing more robust.
+
+sys/arch/x68k/include/vmparam.h			1.12
+
+  Change physseg allocation strategy to VM_PSTRAT_BIGFIRST.  Required
+  when big (>64MB) high memory is installed, i.e. in a situation
+  where DMA reachable memory runs out because of the large buffer
+  cache.
