@@ -1,4 +1,4 @@
-/*	$NetBSD: hme.c,v 1.12 2000/05/18 12:49:09 mrg Exp $	*/
+/*	$NetBSD: hme.c,v 1.13 2000/05/18 14:00:46 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -202,13 +202,6 @@ hme_config(sc)
 		sc->sc_rb.rb_ntbuf * _HME_BUFSZ +	/* TX buffers */
 		sc->sc_rb.rb_nrbuf * _HME_BUFSZ;	/* TX buffers */
 
-	if ((error = bus_dmamap_create(dmatag, size, 1, size, 0,
-				    BUS_DMA_NOWAIT, &sc->sc_dmamap)) != 0) {
-		printf("%s: DMA map create error %d\n",
-			sc->sc_dev.dv_xname, error);
-		return;
-	}
-
 	/* Allocate DMA buffer */
 	if ((error = bus_dmamem_alloc(dmatag, size,
 				      2048, 0,
@@ -217,16 +210,6 @@ hme_config(sc)
 			sc->sc_dev.dv_xname, error);
 		return;
 	}
-
-	/* Load the buffer */
-	if ((error = bus_dmamap_load_raw(dmatag, sc->sc_dmamap,
-				&seg, rseg, size, BUS_DMA_NOWAIT)) != 0) {
-		printf("%s: DMA buffer map load error %d\n",
-			sc->sc_dev.dv_xname, error);
-		bus_dmamem_free(dmatag, &seg, rseg);
-		return;
-	}
-	sc->sc_rb.rb_dmabase = sc->sc_dmamap->dm_segs[0].ds_addr;
 
 	/* Map DMA memory in CPU addressable space */
 	if ((error = bus_dmamem_map(dmatag, &seg, rseg, size,
@@ -238,6 +221,23 @@ hme_config(sc)
 		bus_dmamem_free(dmatag, &seg, rseg);
 		return;
 	}
+
+	if ((error = bus_dmamap_create(dmatag, size, 1, size, 0,
+				    BUS_DMA_NOWAIT, &sc->sc_dmamap)) != 0) {
+		printf("%s: DMA map create error %d\n",
+			sc->sc_dev.dv_xname, error);
+		return;
+	}
+
+	/* Load the buffer */
+	if ((error = bus_dmamap_load(dmatag, sc->sc_dmamap,
+	    sc->sc_rb.rb_membase, size, NULL, BUS_DMA_NOWAIT)) != 0) {
+		printf("%s: DMA buffer map load error %d\n",
+			sc->sc_dev.dv_xname, error);
+		bus_dmamem_free(dmatag, &seg, rseg);
+		return;
+	}
+	sc->sc_rb.rb_dmabase = sc->sc_dmamap->dm_segs[0].ds_addr;
 
 	printf(": address %s\n", ether_sprintf(sc->sc_enaddr));
 
