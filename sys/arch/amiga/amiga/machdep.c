@@ -38,7 +38,7 @@
  * from: Utah $Hdr: machdep.c 1.63 91/04/24$
  *
  *	@(#)machdep.c	7.16 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.33 1994/06/22 16:20:01 chopps Exp $
+ *	$Id: machdep.c,v 1.34 1994/07/02 15:53:56 chopps Exp $
  */
 
 #include <sys/param.h>
@@ -58,7 +58,6 @@
 #include <sys/msgbuf.h>
 #include <sys/user.h>
 #include <sys/exec.h>            /* for PS_STRINGS */
-#include <sys/exec_aout.h>
 #include <sys/vnode.h>
 #include <sys/queue.h>
 #include <sys/sysctl.h>
