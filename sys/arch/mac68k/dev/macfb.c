@@ -1,4 +1,4 @@
-/* $NetBSD: macfb.c,v 1.1.2.3 1999/05/16 23:34:37 scottr Exp $ */
+/* $NetBSD: macfb.c,v 1.1.2.4 1999/11/02 06:49:58 scottr Exp $ */
 /*
  * Copyright (c) 1998 Matt DeBergalis
  * All rights reserved.
@@ -42,6 +42,7 @@
 #include <sys/device.h>
 #include <sys/mman.h>
 #include <sys/proc.h>
+#include <sys/resourcevar.h>
 #include <sys/vnode.h>
 #endif /* WSDISPLAY_COMPAT_GRF */
 
@@ -52,11 +53,8 @@
 #include <miscfs/specfs/specdev.h>
 
 #include <vm/vm.h>
-#include <vm/vm_kern.h>
-#include <vm/vm_page.h>
-#include <vm/vm_pager.h>
-
-#include <uvm/uvm.h>
+#include <uvm/uvm_extern.h>
+#include <uvm/uvm_map.h>
 #endif /* WSDISPLAY_COMPAT_GRF */
 
 #include <machine/grfioctl.h>
@@ -500,7 +498,8 @@ macfb_grfmap(v, addrp, p)
 	vn.v_rdev = makedev(44,sc->sc_dev.dv_unit);	/* XXX */
 
 	error = uvm_mmap(&p->p_vmspace->vm_map, (vaddr_t *)addrp,
-	    (vsize_t)len, VM_PROT_ALL, VM_PROT_ALL, flags, (caddr_t)&vn, 0);
+	    (vsize_t)len, VM_PROT_ALL, VM_PROT_ALL,
+	    flags, (caddr_t)&vn, 0, p->p_rlimit[RLIMIT_MEMLOCK].rlim_cur);
 
 	/* Offset into page: */
 	*addrp += sc->sc_dc->dc_offset;
