@@ -1,5 +1,5 @@
 #! /usr/bin/awk -f
-#	$NetBSD: devlist2h.awk,v 1.10 2003/10/28 10:35:12 augustss Exp $
+#	$NetBSD: devlist2h.awk,v 1.11 2003/12/15 07:32:21 jmc Exp $
 #
 # Copyright (c) 1995, 1996 Christopher G. Demetriou
 # All rights reserved.
@@ -30,7 +30,7 @@
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 BEGIN {
-	nproducts = nvendors = 0
+	nproducts = nvendors = blanklines = 0
 	dfile="usbdevs_data.h"
 	hfile="usbdevs.h"
 }
@@ -39,11 +39,11 @@ NR == 1 {
 	gsub("\\$", "", VERSION)
 
 	if (os == "NetBSD")
-		printf("/*\t$NetBSD: devlist2h.awk,v 1.10 2003/10/28 10:35:12 augustss Exp $\t*/\n\n") > dfile
+		printf("/*\t$NetBSD" "$\t*/\n\n") > dfile
 	else if (os == "FreeBSD")
-		printf("/*\t$FreeBSD$\t*/\n\n") > dfile
+		printf("/*\t$FreeBSD" "$\t*/\n\n") > dfile
 	else if (os == "OpenBSD")
-		printf("/*\t$OpenBSD$\t*/\n\n") > dfile
+		printf("/*\t$OpenBSD" "$\t*/\n\n") > dfile
 	else
 		printf("/* ??? */\n\n") > dfile
 	printf("/*\n") > dfile
@@ -55,11 +55,11 @@ NR == 1 {
 	printf(" */\n") > dfile
 
 	if (os == "NetBSD")
-		printf("/*\t$NetBSD: devlist2h.awk,v 1.10 2003/10/28 10:35:12 augustss Exp $\t*/\n\n") > hfile
+		printf("/*\t$NetBSD" "$\t*/\n\n") > hfile
 	else if (os == "FreeBSD")
-		printf("/*\t$FreeBSD$\t*/\n\n") > hfile
+		printf("/*\t$FreeBSD" "$\t*/\n\n") > hfile
 	else if (os == "OpenBSD")
-		printf("/*\t$OpenBSD$\t*/\n\n") > hfile
+		printf("/*\t$OpenBSD" "$\t*/\n\n") > hfile
 	else
 		printf("/* ??? */\n\n") > hfile
 	printf("/*\n") > hfile
@@ -72,7 +72,7 @@ NR == 1 {
 
 	next
 }
-$1 == "vendor" {
+NF > 0 && $1 == "vendor" {
 	nvendors++
 
 	vendorindex[$2] = nvendors;		# record index for this name, for later.
@@ -117,7 +117,7 @@ $1 == "vendor" {
 
 	next
 }
-$1 == "product" {
+NF > 0 && $1 == "product" {
 	nproducts++
 
 	products[nproducts, 1] = $2;		# vendor name
@@ -188,7 +188,7 @@ END {
 		printf("\t    \"") > dfile
 		j = 3;
 		needspace = 0;
-		while (vendors[vendi, j] != "") {
+		while ((vendi, j) in vendors) {
 			if (needspace)
 				printf(" ") > dfile
 			printf("%s", vendors[vendi, j]) > dfile
@@ -200,7 +200,7 @@ END {
 		printf("\t    \"") > dfile
 		j = 4;
 		needspace = 0;
-		while (products[i, j] != "") {
+		while ((i, j) in products) {
 			if (needspace)
 				printf(" ") > dfile
 			printf("%s", products[i, j]) > dfile
@@ -219,7 +219,7 @@ END {
 		printf("\t    \"") > dfile
 		j = 3;
 		needspace = 0;
-		while (vendors[i, j] != "") {
+		while ((i, j) in vendors) {
 			if (needspace)
 				printf(" ") > dfile
 			printf("%s", vendors[i, j]) > dfile
@@ -232,4 +232,6 @@ END {
 	}
 	printf("\t{ 0, 0, 0, NULL, NULL, }\n") > dfile
 	printf("};\n") > dfile
+	close(dfile)
+	close(hfile)
 }

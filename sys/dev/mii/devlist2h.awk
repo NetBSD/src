@@ -1,5 +1,5 @@
 #! /usr/bin/awk -f
-#	$NetBSD: devlist2h.awk,v 1.3 2000/05/08 13:25:35 augustss Exp $
+#	$NetBSD: devlist2h.awk,v 1.4 2003/12/15 07:32:20 jmc Exp $
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -64,7 +64,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-function collectline(f, line) {
+function collectline(f) {
 	oparen = 0
 	line = ""
 	while (f <= NF) {
@@ -91,7 +91,7 @@ function collectline(f, line) {
 	return line
 }
 BEGIN {
-	nmodels = nouis = 0
+	nmodels = nouis = nuios = blanklines = firstdone = 0
 	hfile="miidevs.h"
 	dfile="miidevs_data.h"
 }
@@ -99,7 +99,7 @@ NR == 1 {
 	VERSION = $0
 	gsub("\\$", "", VERSION)
 
-	printf("/*\t\$NetBSD\$\t*/\n\n") > hfile
+	printf("/*\t$NetBSD" "$\t*/\n\n") > hfile
 	printf("/*\n") > hfile
 	printf(" * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.\n") \
 	    > hfile
@@ -108,7 +108,7 @@ NR == 1 {
 	printf(" *\t%s\n", VERSION) > hfile
 	printf(" */\n") > hfile
 
-	printf("/*\t\$NetBSD\$\t*/\n\n") > dfile
+	printf("/*\t$NetBSD" "$\t*/\n\n") > dfile
 	printf("/*\n") > dfile
 	printf(" * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.\n") \
 	    > dfile
@@ -119,7 +119,7 @@ NR == 1 {
 
 	next
 }
-$1 == "oui" {
+NF > 0 && $1 == "oui" {
 	nuios++
 
 	ouiindex[$2] = nouis;		# record index for this name, for later.
@@ -128,11 +128,11 @@ $1 == "oui" {
 	ouis[nouis, 2] = $3;		# id
 	printf("#define\tMII_OUI_%s\t%s\t", ouis[nouis, 1],
 	    ouis[nouis, 2]) > hfile
-	ouis[nouis, 3] = collectline(4, line)
+	ouis[nouis, 3] = collectline(4)
 	printf("/* %s */\n", ouis[nouis, 3]) > hfile
 	next
 }
-$1 == "model" {
+NF > 0 && $1 == "model" {
 	nmodels++
 
 	models[nmodels, 1] = $2;		# oui name
@@ -142,7 +142,7 @@ $1 == "model" {
 	printf("#define\tMII_MODEL_%s_%s\t%s\n", models[nmodels, 1],
 	    models[nmodels, 2], models[nmodels, 3]) > hfile
 
-	models[nmodels, 4] = collectline(5, line)
+	models[nmodels, 4] = collectline(5)
 
 	printf("#define\tMII_STR_%s_%s\t\"%s\"\n",
 	    models[nmodels, 1], models[nmodels, 2],
@@ -168,4 +168,6 @@ $1 == "model" {
 END {
 	printf(" { 0, 0, NULL }\n") > dfile
 	printf("};\n") > dfile
+	close(dfile)
+	close(hfile)
 }
