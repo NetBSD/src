@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.57 2002/03/24 04:49:16 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.58 2002/03/24 04:56:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -143,7 +143,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.57 2002/03/24 04:49:16 thorpej Exp $");        
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.58 2002/03/24 04:56:49 thorpej Exp $");        
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
 	if (pmap_debug_level >= (_lev_)) \
@@ -397,11 +397,14 @@ pmap_debug(level)
 __inline static boolean_t
 pmap_is_curpmap(struct pmap *pmap)
 {
-    if ((curproc && curproc->p_vmspace->vm_map.pmap == pmap)
-	    || (pmap == pmap_kernel()))
-	return (TRUE);
-    return (FALSE);
+
+	if ((curproc && curproc->p_vmspace->vm_map.pmap == pmap) ||
+	    pmap == pmap_kernel())
+		return (TRUE);
+
+	return (FALSE);
 }
+
 #include "isadma.h"
 
 #if NISADMA > 0
@@ -2279,11 +2282,7 @@ pmap_remove(pmap, sva, eva)
 	
 	pte = &ptes[arm_btop(sva)];
 	/* Note if the pmap is active thus require cache and tlb cleans */
-	if ((curproc && curproc->p_vmspace->vm_map.pmap == pmap)
-	    || (pmap == pmap_kernel()))
-		pmap_active = 1;
-	else
-		pmap_active = 0;
+	pmap_active = pmap_is_curpmap(pmap);
 
 	/* Now loop along */
 	while (sva < eva) {
@@ -2793,9 +2792,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 		 * map_ptes
 		 */
 		ptes = pmap_map_ptes(pmap);
-		if ((curproc && curproc->p_vmspace->vm_map.pmap == pmap)
-		    || (pmap == pmap_kernel()))
-			pmap_active = TRUE;
+		pmap_active = pmap_is_curpmap(pmap);
 		simple_lock(&pg->mdpage.pvh_slock);
  		pmap_vac_me_harder(pmap, pg, ptes, pmap_active);
 		simple_unlock(&pg->mdpage.pvh_slock);
