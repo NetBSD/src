@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_raid.h,v 1.11 2000/02/23 03:44:02 oster Exp $	*/
+/*	$NetBSD: rf_raid.h,v 1.12 2000/02/24 17:12:10 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -120,6 +120,8 @@ struct RF_Raid_s {
 	RF_RaidLayout_t Layout;	/* all information related to layout */
 	RF_RaidDisk_t **Disks;	/* all information related to physical disks */
 	RF_DiskQueue_t **Queues;/* all information related to disk queues */
+	RF_DiskQueueSW_t *qType;/* pointer to the DiskQueueSW used for the
+				   component queues. */
 	/* NOTE:  This is an anchor point via which the queues can be
 	 * accessed, but the enqueue/dequeue routines in diskqueue.c use a
 	 * local copy of this pointer for the actual accesses. */
