@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.69 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.70 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -234,3 +234,7 @@ Changes from NetBSD 1.6 to NetBSD 1.7:
 	procfs:	Add /proc/<pid>/fd/<fd> [christos 20030103]
 	build system: Releases are now installed under ${RELEASEDIR}/${MACHINE}
 		instead of ${RELEASEDIR}.  [lukem 20030103]
+	mtree(8): Newly created directories have 0777 instead of 0700
+		permissions (as modified by the umask(2)).  This only
+		affects 'mtree -W', or directories without an explicit
+		mode= entry.  [lukem 20030105].
