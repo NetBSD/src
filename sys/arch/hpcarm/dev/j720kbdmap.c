@@ -1,4 +1,4 @@
-/*	$NetBSD: j720kbdmap.c,v 1.4 2002/07/21 19:16:39 manu Exp $	*/
+/*	$NetBSD: j720kbdmap.c,v 1.5 2002/08/27 17:54:30 manu Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2001 The NetBSD Foundation, Inc.
@@ -155,7 +155,7 @@ static const keysym_t j720kbd_keydesc_fr[] = {
     KC(83),  KS_Shift_L, 	KS_Shift_L,	KS_Caps_Lock,
     KC(102), KS_twosuperior,	KS_twosuperior,	KS_threesuperior,
     KC(114), KS_Cmd1,	KS_Control_L, KS_Control_L, KS_Num_Lock, 
-    KC(120), KS_Alt_R,		KS_Multi_key, 
+    KC(120), KS_Mode_switch,	KS_Multi_key, 
 };
 
 static const keysym_t j720kbd_keydesc_jp[] = {
