@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.305 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.306 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -34,3 +34,5 @@ Changes from NetBSD 2.0 to NetBSD 2.1:
 	statvfs(2): Eliminate statfs(2) and friends, in preference for
 		the POSIX/XOpen compliant statvfs(2) family.
 		[christos 20040421]
+	kernel: Add a POOL_INIT macro to declare and automatically
+		initialise resource pools.  [simonb 20040425]
