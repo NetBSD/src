@@ -1,10 +1,10 @@
-/* $NetBSD: main.c,v 1.2 1997/06/05 12:59:36 agc Exp $ */
+/* $NetBSD: main.c,v 1.3 1997/06/13 16:10:15 agc Exp $ */
 
 #ifndef lint
 #if 0
 static char *rcsid = "from FreeBSD Id: main.c,v 1.9 1997/03/31 05:10:48 imp Exp";
 #else
-static char *rcsid = "$NetBSD: main.c,v 1.2 1997/06/05 12:59:36 agc Exp $";
+static char *rcsid = "$NetBSD: main.c,v 1.3 1997/06/13 16:10:15 agc Exp $";
 #endif
 #endif
 
@@ -95,7 +95,7 @@ main(int argc, char **argv)
     *pkgs = NULL;
     if (!Fake && getuid() != 0)
 	errx(1, "You must be root to delete packages.");
-    if ((error = pkg_perform(start)) != NULL) {
+    if ((error = pkg_perform(start)) != 0) {
 	if (Verbose)
 	    fprintf(stderr, "%d package deletion(s) failed.\n", error);
 	return error;
