@@ -1,5 +1,5 @@
 .\"
-.\" Copyright (c) 1996 Jonathan Stone.
+.\" Copyright (c) 1996, 1997 Jonathan Stone.
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -27,7 +27,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$NetBSD: le.4,v 1.1 1996/08/11 02:29:11 jonathan Exp $
+.\"	$NetBSD: le.4,v 1.1.2.1 1997/11/03 19:29:26 mellon Exp $
 .\"
 .Dd August 6, 1996
 .Dt LE 4 pmax
@@ -37,10 +37,10 @@
 .Nd
 DECstation AMD 7990 LANCE ethernet interface
 .Sh SYNOPSIS
-.Cd "le? at mainbus	with le_pmax"	(3100 baseboard)
-.Cd "le*? at tc	with le_tc"	(5000/200 baseboard)
-.Cd "le? at ioasic with le_ioasic"	(ioasic baseboard)
-.Cd "le* at tc?	with le_tc"	(TC option cards)
+.Cd "le? at mainbus	with le_pmax"		(3100 baseboard)
+.Cd "le*? at tc	with le_tc"		(5000/200 baseboard)
+.Cd "le? at ioasic  with le_ioasic"	(ioasic baseboard)
+.Cd "le* at tc?	with le_tc"		(TC option cards)
 .Sh DESCRIPTION
 The
 .Nm
@@ -51,16 +51,16 @@ driver provies access to a 10Mb/s Ethernet via the
 Ethernet chip.  All
 .Tn LANCE
 interfaces on
-.Tn DECstations , 
-are supported. as are interfaces on
+.Tn DECstations  
+are supported, as are interfaces on
 .Tn "Alpha AXP"
 machines with a
 .Tn TurboChannel
 bus.
 .Pp
 The
-.Nm driver employs the Address Resolution Prootocol described
-in
+.Nm 
+driver employs the Address Resolution Prootocol described in
 .Xr arp 4
 to map between Internet and Ethernet addresses on the local
 network.  Selective recption of multicast Ethernet frames is provided
@@ -74,15 +74,32 @@ The
 .Tn DECstation
 model 5000/200
 .Tn PMAD-AA
-baseboard device provides only a BNC connector, and the
+baseboard device provides only a BNC connector.
+The
+.Nm ioasic
+baseboard devices and  the 
 .Tn PMAD-AA
 .Tn TurboChannel
-option card provides only an AUI port.
+option card provide only an AUI port.
 .Pp
 .Sh SEE ALSO
 .Xr intro 4 ,
 .Xr inet 4 ,
-.Xr arp 4
+.Xr tc 4 ,
+.Xr ioasic 4 ,
+.Xr arp 4 .
+.Sh BUGS
+On all front-ends, performance is impaired by hardware whic forces
+forces a software copy of packets to and from DMA buffers.  The
+.Nm ioasic
+machines  and the Decstation 3100 must 
+copying packet to and from non-contiguous DMA buffers.
+The 
+Decstation 5000/200  and the
+.Tn PMAD-AA 
+must copy to and from an onboard SRAM DMA
+buffer.  The CPU overhead is noticeable, but all machines can sustain
+10Mbit media speed.
 .Sh HISTORY
 This
 .Nm
@@ -90,5 +107,5 @@ driver is derived from a
 .NM
 driver that first appeared in
 .Bx 4.4 .
-The multiple bus attachment support first appeared in
+Support for  multiple bus attachments first appeared in
 .Nx 1.2 .
