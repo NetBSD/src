@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.22 1998/02/19 00:41:12 thorpej Exp $
+	$NetBSD: syscalls.master,v 1.23 1998/02/20 18:09:04 mycroft Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -238,7 +238,7 @@
 				u_int iovcnt); }
 146	NOARGS		{ int sys_writev(int fd, struct iovec *iovp, \
 				u_int iovcnt); }
-147	STD		{ int linux_sys_getsid(int pid); }
+147	NOARGS		{ pid_t sys_getsid(pid_t pid); }
 148	STD		{ int linux_sys_fdatasync(int fd); }
 149	STD		{ int linux_sys___sysctl(struct linux___sysctl *lsp); }
 150	NOARGS		{ int sys_mlock(caddr_t addr, size_t len); }
