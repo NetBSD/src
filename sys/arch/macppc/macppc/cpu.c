@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.23 2001/08/22 21:09:05 matt Exp $	*/
+/*	$NetBSD: cpu.c,v 1.24 2001/08/26 02:47:37 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Tsubai Masanari.
@@ -54,7 +54,6 @@ void cpuattach(struct device *, struct device *, void *);
 
 void identifycpu(char *);
 static void ohare_init(void);
-static void config_l2cr(void);
 int cpu_spinup(void);
 void cpu_hatch(void);
 
@@ -64,17 +63,7 @@ struct cfattach cpu_ca = {
 	sizeof(struct device), cpumatch, cpuattach
 };
 
-int ncpus;
-
-#ifdef MULTIPROCESSOR
-int cpuintr(void *);
-struct cpu_info cpu_info[2];
-#else
-struct cpu_info cpu_info_store;
-#endif
-
 extern struct cfdriver cpu_cd;
-extern int powersave;
 
 #define HH_ARBCONF		0xf8000090
 #define HH_INTR_SECONDARY	0xf80000c0
@@ -117,182 +106,31 @@ cpumatch(parent, cf, aux)
 	return 0;
 }
 
-#define MPC601		1
-#define MPC602		5
-#define MPC603		3
-#define MPC603e		6
-#define MPC603ev	7
-#define MPC604		4
-#define MPC604ev	9
-#define MPC620		20
-#define MPC750		8
-#define MPC7400		12
-#define MPC7410		0x800c
-#define MPC7450		0x8000
-
 void
 cpuattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
+	struct cpu_info *ci;
 	struct confargs *ca = aux;
 	int id = ca->ca_reg[0];
-	u_int hid0, pvr, vers;
-	char model[80];
 
-	ncpus++;
+	ci = cpu_attach_common(self, id);
+
+	if (id > 0) {
 #ifdef MULTIPROCESSOR
-	cpu_info[id].ci_cpuid = id;
-	cpu_info[id].ci_intrdepth = -1;
-#endif
-
-	asm volatile ("mfpvr %0" : "=r"(pvr));
-	vers = (pvr >> 16) & 0xffff;
-
-	switch (id) {
-	case 0:
-		/* load my cpu_number to PIR */
-		switch (vers) {
-		case MPC604:
-		case MPC604ev:
-		case MPC7400:
-		case MPC7410:
-		case MPC7450:
-			asm volatile ("mtspr 1023,%0" :: "r"(id));
-		}
-		identifycpu(model);
-		printf(": %s, ID %d (primary)\n", model, cpu_number());
-		break;
-	case 1:
-#ifdef MULTIPROCESSOR
-		cpu_spinup();
-#else
-		printf(" not configured\n");
+		if (ci != NULL)
+			cpu_spinup();
 #endif
 		return;
-	default:
-		printf(": more than 2 cpus?\n");
-		panic("cpuattach");
 	}
+	if (ci == NULL)
+		return;
 
-	asm ("mfspr %0,1008" : "=r"(hid0));
-
-	/*
-	 * Configure power-saving mode.
-	 */
-	switch (vers) {
-	case MPC603:
-	case MPC603e:
-	case MPC603ev:
-	case MPC750:
-	case MPC7400:
-	case MPC7410:
-		/* Select DOZE mode. */
-		hid0 &= ~(HID0_DOZE | HID0_NAP | HID0_SLEEP);
-		hid0 |= HID0_DOZE | HID0_DPM;
-		powersave = 1;
-		break;
-
-	case MPC7450:
-		/* Select NAP mode. */
-		hid0 &= ~(HID0_DOZE | HID0_NAP | HID0_SLEEP);
-		hid0 |= HID0_NAP | HID0_DPM;
-		powersave = 1;
-		break;
-
-	default:
-		/* No power-saving mode is available. */
-	}
-
-#ifdef NAPMODE
-	switch (vers) {
-	case MPC750:
-	case MPC7400:
-		/* Select NAP mode. */
-		hid0 &= ~(HID0_DOZE | HID0_NAP | HID0_SLEEP);
-		hid0 |= HID0_NAP;
-		break;
-	}
-#endif
-
-	switch (vers) {
-	case MPC750:
-		hid0 &= ~HID0_DBP;		/* XXX correct? */
-		hid0 |= HID0_EMCP | HID0_BTIC | HID0_SGE | HID0_BHT;
-		break;
-	case MPC7400:
-	case MPC7410:
-		hid0 &= ~HID0_SPD;
-		hid0 |= HID0_EMCP | HID0_BTIC | HID0_SGE | HID0_BHT;
-		hid0 |= HID0_EIEC;
-		break;
-	}
-
-	asm volatile ("mtspr 1008,%0" :: "r"(hid0));
-
-#if 1
-	if (1) {
-		char hidbuf[128];
-		bitmask_snprintf(hid0,
-		     vers == MPC7450 ? HID0_7450_BITMASK : HID0_BITMASK,
-		     hidbuf, sizeof hidbuf);
-		printf("%s: HID0 %s\n", self->dv_xname, hidbuf);
-	}
-#endif
-
-	/*
-	 * Display cache configuration.
-	 */
-	if (vers == MPC750 || vers == MPC7400) {
-		printf("%s", self->dv_xname);
-		config_l2cr();
-	} else if (OF_finddevice("/bandit/ohare") != -1) {
+	if (OF_finddevice("/bandit/ohare") != -1) {
 		printf("%s", self->dv_xname);
 		ohare_init();
 	}
-}
-
-struct cputab {
-	int version;
-	char *name;
-};
-static const struct cputab models[] = {
-	{ MPC601,     "601" },
-	{ MPC602,     "602" },
-	{ MPC603,     "603" },
-	{ MPC603e,    "603e" },
-	{ MPC603ev,   "603ev" },
-	{ MPC604,     "604" },
-	{ MPC604ev,   "604ev" },
-	{ MPC620,     "620" },
-	{ MPC750,     "750" },
-	{ MPC7400,   "7400" },
-	{ MPC7410,   "7410" },
-	{ MPC7450,   "7450" },
-	{ 0,	       NULL }
-};
-
-void
-identifycpu(cpu_model)
-	char *cpu_model;
-{
-	u_int pvr, vers, rev;
-	const struct cputab *cp = models;
-
-	asm ("mfpvr %0" : "=r"(pvr));
-	vers = pvr >> 16;
-	rev = pvr & 0xffff;
-
-	while (cp->name) {
-		if (cp->version == vers)
-			break;
-		cp++;
-	}
-	if (cp->name)
-		strcpy(cpu_model, cp->name);
-	else
-		sprintf(cpu_model, "Version %x", vers);
-	sprintf(cpu_model + strlen(cpu_model), " (Revision %x)", rev);
 }
 
 #define CACHE_REG 0xf8000000
@@ -314,116 +152,6 @@ ohare_init()
 		cache_reg[4] = x;
 		printf(": ohare L2 cache enabled\n");
 	}
-}
-
-#define L2CR 1017
-
-#define L2CR_L2E	0x80000000 /* 0: L2 enable */
-#define L2CR_L2PE	0x40000000 /* 1: L2 data parity enable */
-#define L2CR_L2SIZ	0x30000000 /* 2-3: L2 size */
-#define  L2SIZ_RESERVED		0x00000000
-#define  L2SIZ_256K		0x10000000
-#define  L2SIZ_512K		0x20000000
-#define  L2SIZ_1M	0x30000000
-#define L2CR_L2CLK	0x0e000000 /* 4-6: L2 clock ratio */
-#define  L2CLK_DIS		0x00000000 /* disable L2 clock */
-#define  L2CLK_10		0x02000000 /* core clock / 1   */
-#define  L2CLK_15		0x04000000 /*            / 1.5 */
-#define  L2CLK_20		0x08000000 /*            / 2   */
-#define  L2CLK_25		0x0a000000 /*            / 2.5 */
-#define  L2CLK_30		0x0c000000 /*            / 3   */
-#define L2CR_L2RAM	0x01800000 /* 7-8: L2 RAM type */
-#define  L2RAM_FLOWTHRU_BURST	0x00000000
-#define  L2RAM_PIPELINE_BURST	0x01000000
-#define  L2RAM_PIPELINE_LATE	0x01800000
-#define L2CR_L2DO	0x00400000 /* 9: L2 data-only.
-				      Setting this bit disables instruction
-				      caching. */
-#define L2CR_L2I	0x00200000 /* 10: L2 global invalidate. */
-#define L2CR_L2CTL	0x00100000 /* 11: L2 RAM control (ZZ enable).
-				      Enables automatic operation of the
-				      L2ZZ (low-power mode) signal. */
-#define L2CR_L2WT	0x00080000 /* 12: L2 write-through. */
-#define L2CR_L2TS	0x00040000 /* 13: L2 test support. */
-#define L2CR_L2OH	0x00030000 /* 14-15: L2 output hold. */
-#define L2CR_L2SL	0x00008000 /* 16: L2 DLL slow. */
-#define L2CR_L2DF	0x00004000 /* 17: L2 differential clock. */
-#define L2CR_L2BYP	0x00002000 /* 18: L2 DLL bypass. */
-#define L2CR_L2IP	0x00000001 /* 31: L2 global invalidate in progress
-				      (read only). */
-#ifdef L2CR_CONFIG
-u_int l2cr_config = L2CR_CONFIG;
-#else
-u_int l2cr_config = 0;
-#endif
-
-void
-config_l2cr()
-{
-	u_int l2cr, x;
-
-	__asm __volatile ("mfspr %0, 1017" : "=r"(l2cr));
-
-	/*
-	 * Configure L2 cache if not enabled.
-	 */
-	if ((l2cr & L2CR_L2E) == 0 && l2cr_config != 0) {
-		l2cr = l2cr_config;
-		asm volatile ("mtspr 1017,%0" :: "r"(l2cr));
-
-		/* Wait for L2 clock to be stable (640 L2 clocks). */
-		delay(100);
-
-		/* Invalidate all L2 contents. */
-		l2cr |= L2CR_L2I;
-		asm volatile ("mtspr 1017,%0" :: "r"(l2cr));
-		do {
-			asm volatile ("mfspr %0, 1017" : "=r"(x));
-		} while (x & L2CR_L2IP);
-
-		/* Enable L2 cache. */
-		l2cr &= ~L2CR_L2I;
-		l2cr |= L2CR_L2E;
-		asm volatile ("mtspr 1017,%0" :: "r"(l2cr));
-	}
-
-	if (l2cr & L2CR_L2E) {
-		switch (l2cr & L2CR_L2SIZ) {
-		case L2SIZ_256K:
-			printf(": 256KB");
-			break;
-		case L2SIZ_512K:
-			printf(": 512KB");
-			break;
-		case L2SIZ_1M:
-			printf(": 1MB");
-			break;
-		default:
-			printf(": unknown size");
-		}
-#if 0
-		switch (l2cr & L2CR_L2RAM) {
-		case L2RAM_FLOWTHRU_BURST:
-			printf(" Flow-through synchronous burst SRAM");
-			break;
-		case L2RAM_PIPELINE_BURST:
-			printf(" Pipelined synchronous burst SRAM");
-			break;
-		case L2RAM_PIPELINE_LATE:
-			printf(" Pipelined synchronous late-write SRAM");
-			break;
-		default:
-			printf(" unknown type");
-		}
-
-		if (l2cr & L2CR_L2PE)
-			printf(" with parity");
-#endif
-		printf(" backside cache");
-	} else
-		printf(": L2 cache not enabled");
-
-	printf("\n");
 }
 
 #ifdef MULTIPROCESSOR

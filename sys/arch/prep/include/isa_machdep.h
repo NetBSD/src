@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.h,v 1.5 2001/06/15 15:50:05 nonaka Exp $	*/
+/*	$NetBSD: isa_machdep.h,v 1.6 2001/08/26 02:47:34 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -187,5 +187,6 @@ extern struct powerpc_bus_dma_tag isa_bus_dma_tag;
  * Miscellanous functions.
  */
 void isabeep(int, int);		/* beep with the system speaker */
+void init_icu(int);		/* change ELCR */
 
 #endif /* _PREP_ISA_MACHDEP_H_ */

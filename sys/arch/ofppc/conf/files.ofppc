@@ -1,4 +1,4 @@
-#	$NetBSD: files.ofppc,v 1.13 2001/06/18 02:00:50 christos Exp $
+#	$NetBSD: files.ofppc,v 1.14 2001/08/26 02:47:40 matt Exp $
 #
 # First try for ofppc-specific configuration info
 #
@@ -57,6 +57,10 @@ define	mainbus {}
 device	mainbus: mainbus, ofbus
 attach	mainbus at root
 file	arch/ofppc/ofppc/mainbus.c		mainbus
+
+device	cpu
+attach	cpu at ofbus
+file	arch/ofppc/ofppc/cpu.c			cpu
 
 # RAIDframe
 major	{raid = 12}

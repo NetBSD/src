@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.17 2001/05/30 12:28:46 mrg Exp $	*/
+/*	$NetBSD: cpu.h,v 1.18 2001/08/26 02:47:37 matt Exp $	*/
 
 /*
  * Copyright (C) 1995-1997 Wolfgang Solfrank.
@@ -33,109 +33,10 @@
 #ifndef	_MACHINE_CPU_H_
 #define	_MACHINE_CPU_H_
 
-#if defined(_KERNEL_OPT)
-#include "opt_lockdebug.h"
-#include "opt_multiprocessor.h"
-#endif
-
-#include <machine/frame.h>
-#include <machine/psl.h>
-#include <machine/intr.h>
-
-#ifdef _KERNEL
-#include <sys/sched.h>
-struct cpu_info {
-	struct schedstate_percpu ci_schedstate; /* scheduler state */
-#if defined(DIAGNOSTIC) || defined(LOCKDEBUG)
-	u_long ci_spin_locks;		/* # of spin locks held */
-	u_long ci_simple_locks;		/* # of simple locks held */
-#endif
-	struct proc *ci_curproc;	/* current owner of the processor */
-
-	struct pcb *ci_curpcb;
-	struct pmap *ci_curpm;
-	struct proc *ci_fpuproc;
-	struct pcb *ci_idle_pcb;	/* PA of our idle pcb */
-	int ci_cpuid;
-
-	int ci_astpending;
-	int ci_want_resched;
-	u_long ci_lasttb;
-	int ci_tickspending;
-	int ci_cpl;
-	int ci_ipending;
-	int ci_intrdepth;
-	char *ci_intstk;
-	char *ci_spillstk;
-	int ci_tempsave[8];
-	int ci_ddbsave[8];
-	int ci_ipkdbsave[8];
-	int ci_disisave[4];
-};
-
-#ifdef MULTIPROCESSOR
-static __inline int
-cpu_number()
-{
-	int pir;
-
-	asm ("mfspr %0,1023" : "=r"(pir));
-	return pir;
-}
-
-static __inline struct cpu_info *
-curcpu()
-{
-	struct cpu_info *ci;
-
-	asm volatile ("mfsprg %0,0" : "=r"(ci));
-	return ci;
-}
-
-extern struct cpu_info cpu_info[];
-
-#define CPU_IS_PRIMARY(ci)	((ci)->ci_cpuid == 0)
-#define curproc			curcpu()->ci_curproc
-#define fpuproc			curcpu()->ci_fpuproc
-#define curpcb			curcpu()->ci_curpcb
-#define curpm			curcpu()->ci_curpm
-#define want_resched		curcpu()->ci_want_resched
-#define astpending		curcpu()->ci_astpending
-
-#else
-extern struct cpu_info cpu_info_store;
-extern volatile int want_resched;
-extern volatile int astpending;
-
-#define curcpu()		(&cpu_info_store)
-#define cpu_number()		0
-
-#endif /* MULTIPROCESSOR */
-
-#define	CLKF_USERMODE(frame)	(((frame)->srr1 & PSL_PR) != 0)
-#define	CLKF_BASEPRI(frame)	((frame)->pri == 0)
-#define	CLKF_PC(frame)		((frame)->srr0)
-#define	CLKF_INTR(frame)	((frame)->depth > 0)
-
-#define	PROC_PC(p)		(trapframe(p)->srr0)
-
-#define	cpu_swapout(p)
-#define cpu_wait(p)
-
-extern void delay __P((unsigned));
-#define	DELAY(n)		delay(n)
-
-#define	need_resched(ci)	(want_resched = 1, astpending = 1)
-#define	need_proftick(p)	((p)->p_flag |= P_OWEUPC, astpending = 1)
-#define	signotify(p)		(astpending = 1)
-
+#if defined(_KERNEL)
+#define	CPU_MAXNUM	2
 extern char bootpath[];
-
 #endif /* _KERNEL */
-
-#if defined(_KERNEL) || defined(_STANDALONE)
-#define	CACHELINESIZE	32
-#endif
 
 #include <powerpc/cpu.h>
 

@@ -1,4 +1,4 @@
-/*      $NetBSD: ibm_machdep.c,v 1.1 2001/06/20 14:35:26 nonaka Exp $        */
+/*      $NetBSD: ibm_machdep.c,v 1.2 2001/08/26 02:47:35 matt Exp $        */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,6 +37,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 
 #include <machine/bus.h>
 #include <machine/platform.h>

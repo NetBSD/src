@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.9 2001/07/08 16:32:24 abs Exp $
+#	$NetBSD: GENERIC,v 1.10 2001/08/26 02:47:37 matt Exp $
 #
 # GENERIC for Motorola Sandpoint
 #
 
 include "arch/sandpoint/conf/std.sandpoint"
 
-#ident 		"GENERIC-$Revision: 1.9 $"
+#ident 		"GENERIC-$Revision: 1.10 $"
 
 maxusers	32
 
@@ -82,6 +82,7 @@ options 	PCI_NETBSD_CONFIGURE	# Have NetBSD configure PCI I/O & Mem
 
 mainbus0 at root
 
+cpu*	at mainbus0
 pci*	at mainbus0 bus ?
 
 ppb*	at pci? dev ? function ?	# PCI-PCI bridges
