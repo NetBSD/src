@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2001/03/13 18:34:23 itojun Exp $
+#	$NetBSD: Makefile,v 1.4 2001/08/09 08:10:19 itojun Exp $
 
 LIB=	util
 
@@ -29,7 +29,7 @@ SRCS=	argv.c argv_split.c attr.c basename.c binhash.c chroot_uid.c \
 	clean_env.c watchdog.c spawn_command.c duplex_pipe.c sane_rename.c \
 	sane_link.c unescape.c timed_read.c timed_write.c dict_tcp.c \
 	hex_quote.c dict_alloc.c rand_sleep.c sane_time.c dict_debug.c \
-	sane_socketpair.c \
+	sane_socketpair.c ctable.c
 # IPv6
 SRCS+=	get_port.c
 
