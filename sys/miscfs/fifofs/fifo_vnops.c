@@ -1,4 +1,4 @@
-/*	$NetBSD: fifo_vnops.c,v 1.33.10.1 2002/07/29 14:56:43 lukem Exp $	*/
+/*	$NetBSD: fifo_vnops.c,v 1.33.10.2 2004/03/15 05:34:17 jmc Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993, 1995
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fifo_vnops.c,v 1.33.10.1 2002/07/29 14:56:43 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fifo_vnops.c,v 1.33.10.2 2004/03/15 05:34:17 jmc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -441,7 +441,12 @@ fifo_close(void *v)
 		if (--fip->fi_writers == 0)
 			socantrcvmore(fip->fi_readsock);
 	}
-	if (--fip->fi_opencount == 0) {
+	/*
+	 * shut down if either last close, or if close called from
+	 * vclean()
+	 */
+	if ((--fip->fi_opencount == 0)
+	    || ((ap->a_fflag & (FREAD | FWRITE | FNONBLOCK)) == FNONBLOCK)) {
 		(void) soclose(fip->fi_readsock);
 		(void) soclose(fip->fi_writesock);
 		FREE(fip, M_VNODE);
