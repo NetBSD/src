@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.5 2002/09/01 10:07:25 scw Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.6 2002/09/01 22:39:56 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -53,17 +53,18 @@
 #include <ddb/ddbvar.h>
 
 typedef u_int32_t opcode_t;
-typedef const char *(*format_func_t)(opcode_t, long, char *, char *, char *);
+typedef const char *(*format_func_t)(opcode_t, db_addr_t,
+    char *, char *, char *);
 
 #define	SH5_OPCODE_FORMAT(op)	(((op) >> 26) & 0x3f)
 
 /*
  * Opcode Major Formats
  */
-static const char *sh5_fmt_mnd0(opcode_t, long, char *, char *, char *);
-static const char *sh5_fmt_msd6(opcode_t, long, char *, char *, char *);
-static const char *sh5_fmt_msd10(opcode_t, long, char *, char *, char *);
-static const char *sh5_fmt_xsd16(opcode_t, long, char *, char *, char *);
+static const char *sh5_fmt_mnd0(opcode_t, db_addr_t, char *, char *, char *);
+static const char *sh5_fmt_msd6(opcode_t, db_addr_t, char *, char *, char *);
+static const char *sh5_fmt_msd10(opcode_t, db_addr_t, char *, char *, char *);
+static const char *sh5_fmt_xsd16(opcode_t, db_addr_t, char *, char *, char *);
 
 static const format_func_t major_format_funcs[] = {
 	/* Opcode bits 5, 4 and 3 == 000 */
@@ -1033,7 +1034,7 @@ struct format_xsd16 {
 	char op_imm;		/* Immediate operand */
 	char op_d;		/* Destination operand */
 };
-static int sh5_fmt_xsd16_decode_op(int, int, long, char *);
+static int sh5_fmt_xsd16_decode_op(int, int, int, db_addr_t, char *);
 
 #define	FMT_XSD16_MAJ_INDEX(op)	(SH5_OPCODE_FORMAT(op) - 0x32)
 #define	FMT_XSD16_IMM(op)	(((op) >> 10) & 0xffff)
@@ -1081,13 +1082,14 @@ static const char *sh5_conreg_names[64] = {
 
 static int sh5_sign_extend(int, int);
 
+static char oper1[128], oper2[128], oper3[128];
+static char extra_info[256];
 
 db_addr_t
 db_disasm(db_addr_t loc, boolean_t dummy)
 {
 	format_func_t fp;
 	opcode_t op;
-	char oper1[20], oper2[20], oper3[20];
 	const char *mnemonic, *comma = "";
 
 	if (loc < SH5_KSEG0_BASE) {
@@ -1098,6 +1100,8 @@ db_disasm(db_addr_t loc, boolean_t dummy)
 		}
 	} else
 		op = *((opcode_t *)loc);
+
+	extra_info[0] = '\0';
 
 	/*
 	 * The lowest 4 bits must be zero
@@ -1129,14 +1133,17 @@ db_disasm(db_addr_t loc, boolean_t dummy)
 	if (oper3[0])
 		db_printf("%s%s", comma, oper3);
 
-	db_printf("\n");
+	if (extra_info[0] != '\0')
+		db_printf("\t%s\n", extra_info);
+	else
+		db_printf("\n");
 
 	return (loc + sizeof(opcode_t));
 }
 
 /*ARGSUSED*/
 static const char *
-sh5_fmt_mnd0(opcode_t op, long loc, char *op1, char *op2, char *op3)
+sh5_fmt_mnd0(opcode_t op, db_addr_t loc, char *op1, char *op2, char *op3)
 {
 	const struct format_mnd0 *fp;
 	static char trl[16];
@@ -1230,7 +1237,7 @@ sh5_fmt_mnd0_decode_op(int fmt, int op, char *ops)
 
 /*ARGSUSED*/
 static const char *
-sh5_fmt_msd6(opcode_t op, long loc, char *op1, char *op2, char *op3)
+sh5_fmt_msd6(opcode_t op, db_addr_t loc, char *op1, char *op2, char *op3)
 {
 	const struct format_msd6 *fp;
 	static char trl[16];
@@ -1308,7 +1315,7 @@ sh5_fmt_msd6_decode_op(int fmt, int op, char *ops)
 
 /*ARGSUSED*/
 static const char *
-sh5_fmt_msd10(opcode_t op, long loc, char *op1, char *op2, char *op3)
+sh5_fmt_msd10(opcode_t op, db_addr_t loc, char *op1, char *op2, char *op3)
 {
 	const struct format_msd10 *fp;
 	int r, imm, sd;
@@ -1369,7 +1376,7 @@ sh5_fmt_msd10_decode_op(int fmt, int op, char *ops)
 }
 
 static const char *
-sh5_fmt_xsd16(opcode_t op, long loc, char *op1, char *op2, char *op3)
+sh5_fmt_xsd16(opcode_t op, db_addr_t loc, char *op1, char *op2, char *op3)
 {
 	const struct format_xsd16 *fp;
 	static char trl[16];
@@ -1383,10 +1390,10 @@ sh5_fmt_xsd16(opcode_t op, long loc, char *op1, char *op2, char *op3)
 	if (fp->mnemonic == NULL)
 		return (NULL);
 
-	if (sh5_fmt_xsd16_decode_op(fp->op_imm, imm, loc, op1) < 0)
+	if (sh5_fmt_xsd16_decode_op(fp->op_imm, imm, d, loc, op1) < 0)
 		return (NULL);
 
-	if (sh5_fmt_xsd16_decode_op(fp->op_d, d, 0, op2) < 0)
+	if (sh5_fmt_xsd16_decode_op(fp->op_d, d, 0, 0, op2) < 0)
 		return (NULL);
 
 	op3[0] = '\0';
@@ -1400,53 +1407,113 @@ sh5_fmt_xsd16(opcode_t op, long loc, char *op1, char *op2, char *op3)
 }
 
 static int
-sh5_fmt_xsd16_decode_op(int fmt, int op, long loc, char *ops)
+sh5_fmt_xsd16_decode_op(int fmt, int op, int d, db_addr_t loc, char *ops)
 {
-	char opstr[16];
+	char *symname;
+	db_sym_t sym;
+	db_expr_t diff;
+	opcode_t nextop;
+	char accmovi_str[32];
+	static db_addr_t last_movi;
+	static int last_d = -1;
+	static int64_t accmovi;
 
 	switch (fmt) {
 	case FMT_XSD16_OP_R:
-		sprintf(opstr, "r%d", op);
+		sprintf(ops, "r%d", op);
 		break;
 
 	case FMT_XSD16_OP_TRL:
-		if ((op & 0x18) != 0) {
-			db_printf("xsd16: bad trl op: 0x%x\n", op);
+		if ((op & 0x18) != 0)
 			return (-1);
-		}
-		sprintf(opstr, "tr%d", op & 0x7);
+		sprintf(ops, "tr%d", op & 0x7);
 		break;
 
 	case FMT_XSD16_OP_SHORI:
-		sprintf(opstr, "%d", op);
-		/*
-		 * XXX: Should tie-in with a preceding MOVI to figure
-		 * XXX: out the 32/64-bit value and possibly lookup symbol.
-		 */
+		sprintf(ops, "%d", op);
+		if ((last_movi + 4) == loc && last_d == d) {
+			accmovi <<= 16;
+			accmovi |= op;
+
+			if ((loc + 4) < SH5_KSEG0_BASE)
+				nextop = fuword((void *)(loc + 4));
+			else
+				nextop = *((opcode_t *)(loc + 4));
+
+			if ((nextop & 0xfc00000f) == 0xc8000000 &&
+			    ((nextop >> 4) & 0x3f) == d) {
+				last_movi = loc;
+			} else {
+				symname = NULL;
+				sym = db_search_symbol((db_addr_t)accmovi,
+				    DB_STGY_PROC, &diff);
+				db_symbol_values(sym, &symname, NULL);
+
+				if (symname == NULL || symname[0] == '/') {
+					sym = db_search_symbol(
+					    (db_addr_t)accmovi,
+					    DB_STGY_XTRN, &diff);
+					db_symbol_values(sym, &symname, NULL);
+					if (symname && symname[0] == '/')
+						symname = NULL;
+				} else {
+					diff &= ~1;
+#ifdef _ILP32
+					accmovi &= 0xffffffff;
+#endif
+				}
+
+				if ((u_int64_t)accmovi >= 0x100000000) {
+					sprintf(accmovi_str, "0x%08x%08x",
+					    (u_int)(accmovi >> 32),
+					    (u_int)accmovi);
+				} else
+					sprintf(accmovi_str, "0x%08x",
+					    (u_int)accmovi);
+
+				if (symname == NULL || diff >= 0x400000)
+					strcpy(extra_info, accmovi_str);
+				else {
+					if (diff)
+						sprintf(extra_info,
+						    "%s <%s+0x%x>",
+						    accmovi_str, symname, diff);
+					else
+						sprintf(extra_info, "%s <%s>",
+						    accmovi_str, symname);
+				}
+			}
+		}
 		break;
 
 	case FMT_XSD16_OP_MOVI:
 		op = sh5_sign_extend(op, 16);
-		sprintf(opstr, "%d", op);
-		/*
-		 * XXX: Should tie-in with a subsequent SHORI insn(s).
-		 */
+		sprintf(ops, "%d", op);
+		last_movi = loc;
+		last_d = d;
+		accmovi = (int64_t)op;
 		break;
 
 	case FMT_XSD16_OP_LABEL:
 		op = sh5_sign_extend(op, 16) * 4;
-		loc += op;
-		sprintf(opstr, "0x%lx", loc);
-		/*
-		 * XXX: Should look up the symbol
-		 */
+		loc = (long)loc + (long)op;
+		symname = NULL;
+		sym = db_search_symbol(loc, DB_STGY_PROC, &diff);
+		db_symbol_values(sym, &symname, NULL);
+		if (symname == NULL)
+			sprintf(ops, "0x%lx", loc);
+		else {
+			if (diff)
+				sprintf(ops, "%s+0x%x", symname, diff);
+			else
+				strcpy(ops, symname);
+		}
 		break;
 
 	default:
 		return (-1);
 	}
 
-	strcpy(ops, opstr);
 	return (0);
 }
 
