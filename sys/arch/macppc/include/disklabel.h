@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.8 2002/03/23 01:29:35 wrstuden Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.9 2002/06/19 03:10:57 itojun Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -98,11 +98,15 @@
 
 #define	LABELSECTOR	0		/* sector containing label */
 #define	LABELOFFSET	64		/* offset of label in sector */
+#define	MBR_LABELSECTOR	1		/* sector containing label - in MBR */
+#define	MBR_LABELOFFSET	0		/* offset of label in sector - in MBR */
 #define	MAXPARTITIONS	16		/* number of partitions */
 #define	RAW_PART	2		/* raw partition: XX?c */
 
 struct cpu_disklabel {
-	int cd_start;		/* Offset to NetBSD partition in blocks */
+	daddr_t cd_start;	/* Offset to NetBSD partition in blocks */
+	daddr_t cd_labelsector;	/* label sector offset from cd_start */
+	int cd_labeloffset;	/* label byte offset within label sector */
 };
 
 /*
