@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.243 2003/12/24 04:28:02 jmc Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.244 2003/12/24 04:35:02 jmc Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -3088,3 +3088,10 @@ etc/skel/dot.profile				1.2
 	Nuke 'umask 2' as it is inappropriate for the default useradd(8)
 	behaviour.
 	[grant, ticket #1570]
+
+usr.bin/menuc/menu_sys.def			patch
+
+	The opt_action function may allocate new menus, which may make 
+	m a stale pointer into the old menus array. So re-target it.
+	[martin, ticket #1571]
+
