@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.8 1994/11/28 19:05:54 dean Exp $	*/
+/*	$NetBSD: asc.c,v 1.9 1994/12/01 16:41:05 dean Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -936,8 +936,10 @@ again:
 				state->script = asc->script;
 		} else if (state->flags & DMA_IN) {
 			if (len) {
+#ifdef DEBUG
 				printf("asc_intr: 1: bn %d len %d (fifo %d)\n",
 					asc_debug_bn, len, fifo); /* XXX */
+#endif
 				goto abort;
 			}
 			/* setup state to resume to */
