@@ -17,6 +17,10 @@
    along with GAS; see the file COPYING.  If not, write to
    the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. */
 
+#ifndef lint
+static char rcsid[] = "$Id: input-scrub.c,v 1.6 1994/08/25 07:36:22 pk Exp $";
+#endif
+
 #include <errno.h>		/* Need this to make errno declaration right */
 #include "as.h"
 #include "input-file.h"
