@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.59 1999/09/01 05:03:42 itojun Exp $	*/
+/*	$NetBSD: ftp.c,v 1.60 1999/09/03 04:29:57 itojun Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.59 1999/09/01 05:03:42 itojun Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.60 1999/09/03 04:29:57 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -1512,14 +1512,14 @@ reinit:
 				memset(&data_addr, 0, sizeof(data_addr));
 				data_addr.su_family = AF_INET6;
 				data_addr.su_len = sizeof(struct sockaddr_in6);
-				data_addr.su_sin6.sin6_addr.s6_addr32[0] =
-					htonl(pack4(addr, 0));
-				data_addr.su_sin6.sin6_addr.s6_addr32[1] =
-					htonl(pack4(addr, 4));
-				data_addr.su_sin6.sin6_addr.s6_addr32[2] =
-					htonl(pack4(addr, 8));
-				data_addr.su_sin6.sin6_addr.s6_addr32[3] =
-					htonl(pack4(addr, 12));
+			    {
+				u_int32_t *p32;
+				p32 = (u_int32_t *)&data_addr.su_sin6.sin6_addr;
+				p32[0] = htonl(pack4(addr, 0));
+				p32[1] = htonl(pack4(addr, 4));
+				p32[2] = htonl(pack4(addr, 8));
+				p32[3] = htonl(pack4(addr, 12));
+			    }
 				data_addr.su_port = htons(pack2(port, 0));
 				break;
 			default:
