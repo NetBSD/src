@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.12 2004/02/15 14:22:55 jdolecek Exp $	*/
+/*	$NetBSD: init.c,v 1.13 2004/02/17 02:31:33 itojun Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
 #include "sort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: init.c,v 1.12 2004/02/15 14:22:55 jdolecek Exp $");
+__RCSID("$NetBSD: init.c,v 1.13 2004/02/17 02:31:33 itojun Exp $");
 __SCCSID("@(#)init.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -91,7 +91,7 @@ static u_char alltable[NBINS], dtable[NBINS], itable[NBINS];
 /*
  * parsed key options
  */
-struct coldesc *clist=NULL;
+struct coldesc *clist = NULL;
 int ncols = 0;
 
 /*
@@ -108,9 +108,14 @@ insertcol(field)
 	struct field *field;
 {
 	int i;
+	struct coldesc *p;
 
 	/* Make space for new item */
-	clist = realloc(clist, (ncols+1) * sizeof(*clist));
+	p = realloc(clist, (ncols + 1) * sizeof(*clist));
+	if (!p)
+		err(1, "realloc");
+	clist = p;
+	memset(&clist[ncols], 0, sizeof(clist[ncols]));
 
 	for (i = 0; i < ncols; i++)
 		if (field->icol.num <= clist[i].num)
@@ -140,7 +145,8 @@ fldreset(fldtab)
 	struct field *fldtab;
 {
 	int i;
-	fldtab[0].tcol.p = clist+ncols-1;
+
+	fldtab[0].tcol.p = clist + ncols - 1;
 	for (++fldtab; fldtab->icol.num; ++fldtab) {
 		for (i = 0; fldtab->icol.num != clist[i].num; i++)
 			;
