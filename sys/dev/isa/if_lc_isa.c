@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lc_isa.c,v 1.2 1997/10/15 21:26:51 matt Exp $ */
+/*	$NetBSD: if_lc_isa.c,v 1.3 1997/10/20 13:46:53 fvdl Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1997 Matt Thomas <matt@3am-software.com>
@@ -134,6 +134,7 @@ lemac_isa_probe(
 		    ia->ia_iosize = LEMAC_IOSIZE;
 		    ia->ia_maddr  = maddr;
 		    ia->ia_msize  = msize;
+		    bus_space_unmap(ia->ia_iot, ioh, LEMAC_IOSIZE);
 		    return 1;
 		}
 	    }
