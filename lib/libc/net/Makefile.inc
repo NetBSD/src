@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	5.3 (Berkeley) 2/21/91
-#	$Id: Makefile.inc,v 1.11 1993/12/05 15:45:52 briggs Exp $
+#	$Id: Makefile.inc,v 1.12 1993/12/08 13:31:22 pk Exp $
 
 # net sources
 .PATH: ${.CURDIR}/arch/${MACHINE_ARCH}/net ${.CURDIR}/net
@@ -22,6 +22,8 @@ SRCS+=	htonl.S htons.S ntohl.S ntohs.S
 .elif (${MACHINE_ARCH} == "tahoe")
 SRCS+=	htonl.S htons.S ntohl.S ntohs.S
 .elif (${MACHINE_ARCH} == "vax")
+SRCS+=	htonl.S htons.S ntohl.S ntohs.S
+.elif (${MACHINE_ARCH} == "sparc")
 SRCS+=	htonl.S htons.S ntohl.S ntohs.S
 .else 
 SRCS+=	htonl.c htons.c ntohl.c ntohs.c
