@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_timeout.c,v 1.8 2003/07/20 16:25:58 he Exp $	*/
+/*	$NetBSD: kern_timeout.c,v 1.9 2003/08/03 19:14:59 he Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_timeout.c,v 1.8 2003/07/20 16:25:58 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_timeout.c,v 1.9 2003/08/03 19:14:59 he Exp $");
 
 /*
  * Adapted from OpenBSD: kern_timeout.c,v 1.15 2002/12/08 04:21:07 art Exp,
@@ -334,7 +334,7 @@ callout_stop(struct callout *c)
 	if (callout_pending(c))
 		CIRCQ_REMOVE(&c->c_list);
 
-	c->c_flags &= ~(CALLOUT_PENDING|CALLOUT_FIRED|CALLOUT_INVOKING);
+	c->c_flags &= ~(CALLOUT_PENDING|CALLOUT_FIRED);
 
 	CALLOUT_UNLOCK(s);
 }
