@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc.c,v 1.3 1998/04/18 09:42:20 drochner Exp $ */
+/* $NetBSD: pckbc.c,v 1.4 1998/04/28 19:13:24 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -1047,8 +1047,19 @@ pckbc_cnattach(iot, slot)
 #if (NPCKBD > 0)
 		res = pckbd_cnattach(&pckbc_consdata, slot);
 #else
+		/*
+		 * XXX This should be replaced with the `notyet' case
+		 * XXX when all of the old PC-style console drivers
+		 * XXX have gone away.  When that happens, all of
+		 * XXX the pckbc_machdep_cnattach() should be purged,
+		 * XXX as well.
+		 */
+#ifdef notyet
+		res = ENXIO;
+#else
 		res = pckbc_machdep_cnattach(&pckbc_consdata, slot);
 #endif
+#endif /* NPCKBD > 0 */
 	}
 
 	if (res) {
