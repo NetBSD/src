@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia.c,v 1.38 2004/07/07 06:43:22 mycroft Exp $	*/
+/*	$NetBSD: pcmcia.c,v 1.39 2004/08/06 20:30:05 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.38 2004/07/07 06:43:22 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.39 2004/08/06 20:30:05 mycroft Exp $");
 
 #include "opt_pcmciaverbose.h"
 
@@ -315,7 +315,7 @@ pcmcia_devinfo(card, showhex, cp, cplen)
 	}
 
 	for (i = 0; i < 4 && card->cis1_info[i] != NULL && cplen > 1; i++) {
-		n = snprintf(cp, cplen, "%s%s", (i && i != 3) ? ", " : "",
+		n = snprintf(cp, cplen, "%s%s", i ? ", " : "",
 		        card->cis1_info[i]);
 		cp += n;
 		if (cplen < n)
