@@ -1620,7 +1620,7 @@ switch_screen(int n, int dontsave)
 
 	/* video board memory -> kernel memory */
 
-	bcopy(vsp->Crtat, vsp->Memory, vsp->screen_rowsize * vsp->maxcol * CHR);
+	bcopy(vsp->Crtat, vsp->Memory, vsp->screen_rows * vsp->maxcol * CHR);
 
 	vsp->Crtat = vsp->Memory;	/* operate in memory now */
 #if PCVT_USL_VT_COMPAT
@@ -1641,14 +1641,14 @@ switch_screen(int n, int dontsave)
 
 	/* kernel memory -> video board memory */
 
-	bcopy(vsp->Crtat, Crtat, vsp->screen_rowsize * vsp->maxcol * CHR);
+	bcopy(vsp->Crtat, Crtat, vsp->screen_rows * vsp->maxcol * CHR);
 
 	vsp->Crtat = Crtat;		/* operate on screen now */
 
 	outb(addr_6845, CRTC_STARTADRH);
-	outb(addr_6845+1, (vsp->Crtat - Crtat) >> 8);
+	outb(addr_6845+1, 0);
 	outb(addr_6845, CRTC_STARTADRL);
-	outb(addr_6845+1, (vsp->Crtat - Crtat));
+	outb(addr_6845+1, 0);
 
 	splx(x);
 	
@@ -1658,9 +1658,9 @@ switch_screen(int n, int dontsave)
 		vga_col(vsp, vsp->maxcol);	/* select 80/132 columns */
 	
  	outb(addr_6845, CRTC_CURSORH);	/* select high register */
-	outb(addr_6845+1, ((vsp->Crtat + vsp->cur_offset) - Crtat) >> 8);
+	outb(addr_6845+1, vsp->cur_offset >> 8);
 	outb(addr_6845, CRTC_CURSORL);	/* select low register */
-	outb(addr_6845+1, ((vsp->Crtat + vsp->cur_offset) - Crtat));
+	outb(addr_6845+1, vsp->cur_offset);
 
 	if(vsp->cursor_on)
 	{
@@ -1685,16 +1685,7 @@ switch_screen(int n, int dontsave)
 	}
 
 	update_led();			/* update led's */
-
-	if((vs[n].vt_pure_mode == M_HPVT) && (vs[n].labels_on))
-	{
-		*((vs[n].Crtat+((vs[n].screen_rows+2)*vs[n].maxcol))
-		  +vs[n].maxcol-3) = user_attr | '[';
-		*((vs[n].Crtat+((vs[n].screen_rows+2)*vs[n].maxcol))
-		  +vs[n].maxcol-2) = user_attr | n+'0';
-		*((vs[n].Crtat+((vs[n].screen_rows+2)*vs[n].maxcol))
-		  +vs[n].maxcol-1) = user_attr | ']';
-	}
+	update_hp(&vs[n]);		/* update fkey labels, if present */
 }
 
 /*---------------------------------------------------------------------------*
