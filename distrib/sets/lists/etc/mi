@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.67 2000/08/26 09:17:00 lukem Exp $
+# $NetBSD: mi,v 1.68 2000/09/28 22:25:29 thorpej Exp $
 ./.cshrc
 ./.profile
 ./dev/MAKEDEV.local
@@ -129,6 +129,7 @@
 ./etc/rc.d/screenblank
 ./etc/rc.d/securelevel
 ./etc/rc.d/sendmail
+./etc/rc.d/sshd
 ./etc/rc.d/swap1
 ./etc/rc.d/swap2
 ./etc/rc.d/sysctl
@@ -157,6 +158,8 @@
 ./etc/shells
 ./etc/skeykeys
 ./etc/spwd.db
+./etc/ssh.conf
+./etc/sshd.conf
 ./etc/sysctl.conf
 ./etc/syslog.conf
 ./etc/ttys
