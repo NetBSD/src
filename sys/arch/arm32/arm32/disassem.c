@@ -1,4 +1,4 @@
-/* $NetBSD: disassem.c,v 1.2 1996/02/15 22:05:20 mark Exp $ */
+/* $NetBSD: disassem.c,v 1.3 1996/03/16 00:13:09 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -41,8 +41,6 @@
  * Debug / Monitor disassembler
  *
  * Created      : 09/10/94
- *
- *    $Id: disassem.c,v 1.2 1996/02/15 22:05:20 mark Exp $
  */
 
 /* Include standard header files */
