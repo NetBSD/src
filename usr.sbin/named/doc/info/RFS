@@ -1,0 +1,26 @@
+Return-Path: vixie
+Received: by gw.home.vix.com id AA18779; Tue, 7 Dec 93 16:51:00 -0800
+Message-Id: <9312080051.AA18779@gw.home.vix.com>
+To: Nicholas_Briggs.PARC@xerox.com
+Cc: paul
+Subject: Re: nsquery in BIND release 
+In-Reply-To: Your message of Mon, 06 Dec 93 17:43:46.
+             <93Dec6.174359pst.14497(2)@alpha.xerox.com> 
+Date: Tue, 07 Dec 93 16:50:59 PST
+From: Paul A Vixie <vixie>
+
+i'll release-note this fact.  thanks.
+
+> Date: 	Mon, 6 Dec 1993 17:43:46 PST
+> From: Nicholas_Briggs.PARC@xerox.com
+> Subject: nsquery in BIND release
+> To: paul@vix.com
+> Cc: Nicholas_Briggs.PARC@xerox.com
+> Message-Id: <93Dec6.174359pst.14497(2)@alpha.xerox.com>
+> 
+> Paul -- I didn't notice this before, but the "nsquery" tool in BIND conflicts
+> with the SunOS (4.1.3) /usr/bin/nsquery, which is the RFS name server query
+> tool.
+> 
+> 					\nick
+

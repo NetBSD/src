@@ -1,16 +1,14 @@
-/*	$NetBSD: Version.c,v 1.1 1996/02/02 15:28:02 mrg Exp $	*/
-
 /*
  *	@(#)Version.c	4.9 (Berkeley) 7/21/90
- *	$Id: Version.c,v 8.1 1994/12/15 06:24:14 vixie Exp 
+ *	$Id: Version.c,v 1.1.1.1 1997/04/13 09:06:13 mrg Exp $
  */
 
 #ifndef lint
-char sccsid[] = "@(#)named %VERSION%";
-char rcsid[] = "$Id: Version.c,v 8.1 1994/12/15 06:24:14 vixie Exp ";
+char sccsid[] = "@(#)named %VERSION% %WHEN% %WHOANDWHERE%";
+char rcsid[] = "$Id: Version.c,v 1.1.1.1 1997/04/13 09:06:13 mrg Exp $";
 #endif /* not lint */
 
-char Version[] = "named %VERSION%";
+char Version[] = "named %VERSION% %WHEN%\n\t%WHOANDWHERE%";
 
 #ifdef COMMENT
 

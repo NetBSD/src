@@ -1,5 +1,3 @@
-/*	$NetBSD: storage.c,v 1.1 1996/02/02 15:29:21 mrg Exp $	*/
-
 /*
  * ++Copyright++ 1985, 1989
  * -
@@ -55,6 +53,7 @@
  * --Copyright--
  */
 
+#include <sys/types.h>
 #include <sys/param.h>
 #include <syslog.h>
 
@@ -87,7 +86,7 @@ extern void panic __P((int, const char *));
  *	All rights reserved.
  */
 #ifndef lint
-static char RCSid[] = "$Id: storage.c,v 8.1 1994/12/15 06:24:14 vixie Exp ";
+static char RCSid[] = "$Id: storage.c,v 1.1.1.1 1997/04/13 09:06:17 mrg Exp $";
 #endif
 
 #undef malloc

@@ -1,5 +1,3 @@
-.\"	$NetBSD: named-xfer.8,v 1.1 1996/02/02 15:27:37 mrg Exp $
-.\"
 .\" ++Copyright++ 1985
 .\" -
 .\" Copyright (c) 1985
@@ -55,10 +53,10 @@
 .\"
 .\"	from named.8	6.6 (Berkeley) 2/14/89
 .\"
-.TH NAMED-XFER 8 "June 26, 1993"
+.TH @XFER_INDOT_U@NAMED-XFER @SYS_OPS_EXT_U@ "June 26, 1993"
 .UC 4
 .SH NAME
-named-xfer \- ancillary agent for inbound zone transfers
+@XFER_INDOT@named-xfer \- ancillary agent for inbound zone transfers
 .SH SYNOPSIS
 .B named-xfer
 .B \-z
@@ -87,7 +85,7 @@ named-xfer \- ancillary agent for inbound zone transfers
 .SH DESCRIPTION
 .I Named-xfer
 is an ancillary program executed by
-.IR named (8)
+.IR @INDOT@named (@SYS_OPS_EXT@)
 to perform an inbound zone transfer.  It is rarely executed directly, and
 only by system administrators who are trying to debug a zone transfer problem.
 See RFC's 1033, 1034, and 1035 for more information on the Internet
@@ -129,13 +127,13 @@ server itself.
 .TP
 .B \-p
 Use a different port number.  The default is the standard port number
-as returned by getservbyname(3) for service ``domain''.
+as returned by getservbyname(@LIB_NETWORK_EXT@) for service ``domain''.
 .TP
 .B \-S
 Perform a restricted transfer of only the SOA, NS records and glue A records
 for the zone. The SOA record will not be loaded by named but will be used to
 determine when to verify the NS records.  See the ``stubs'' directive in
-.IR named (8)
+.IR @INDOT@named (@SYS_OPS_EXT@)
 for more information.
 .PP
 Additional arguments are taken as name server addresses in so-called
@@ -143,6 +141,6 @@ Additional arguments are taken as name server addresses in so-called
 one address must be specified.  Any additional addresses will be tried
 in order if the first one fails to transfer to us successfully.
 .SH "SEE ALSO"
-named(8), resolver(3), resolver(5), hostname(7),
+@INDOT@named(@SYS_OPS_EXT@), resolver(@LIB_NETWORK_EXT@), resolver(@FORMAT_EXT@), hostname(@DESC_EXT@),
 RFC 882, RFC 883, RFC 973, RFC 974, RFC 1033, RFC 1034, RFC 1035, RFC 1123,
 \fIName Server Operations Guide for \s-1BIND\s+1\fR

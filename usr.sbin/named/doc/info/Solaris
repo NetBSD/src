@@ -1,0 +1,85 @@
+Replied: Thu, 28 Dec 1995 21:00:45 -0800
+Replied: "dupuy@smarts.com (Alexander Dupuy) "
+Received: by gw.home.vix.com id AA26157; Tue, 26 Dec 95 14:42:31 -0800
+Received: by gw.home.vix.com id AA26153; Tue, 26 Dec 95 14:42:29 -0800
+Received: from just.smarts.com by mail.smarts.com (4.1/SMI-4.1)
+	id AA11178; Tue, 26 Dec 95 17:42:30 EST
+Organization: System Management ARTS - "Minds Over Networks"
+Received: by just.smarts.com (5.x/SMI-SVR4)
+	id AA29347; Tue, 26 Dec 1995 17:42:30 -0500
+Date: Tue, 26 Dec 1995 17:42:30 -0500
+From: dupuy@smarts.com (Alexander Dupuy)
+Message-Id: <9512262242.AA29347@just.smarts.com>
+To: bind-workers@vix.com
+Subject: BIND and Solaris shared library
+X-Sun-Charset: US-ASCII
+
+Sun has released a patch for Solaris 2.4 which addresses a security hole in
+their implementation of name/address resolution using DNS.  Anyone who is
+running Solaris 2.4 with DNS specified in their /etc/nsswitch.conf file should
+apply this patch.  This is true whether you are using the BIND 4.9.3 beta
+supplied version of the resolver shared library or the stock Solaris version.
+
+A note should be added to the shres/solaris ISSUES file telling users that
+they should get and apply patch 102165-02 to their Solaris system if they want
+to use DNS as a hostname resolution method.
+
+The relevant portion of the README file from the patch is included below.
+Note that this patch is only available for the SPARC architecture, although
+the security hole applies to x86 architecture as well.
+
+@alex
+
+
+Patch-ID# 102165-02
+Keywords: DNS spoofing security nss_dns.so.1
+Synopsis: SunOS 5.4: nss_dns.so.1 fixes
+Date: Dec/13/95
+ 
+Solaris Release: 2.4
+ 
+SunOS Release: 5.4
+ 
+Unbundled Product:
+ 
+Unbundled Release:
+ 
+Topic: SunOS 5.4: nss_dns.so.1 fixes
+ 
+BugId's fixed with this patch: 1174876 1207777
+ 
+Changes incorporated in this version: 1207777
+ 
+Relevant Architectures: sparc
+
+Files included with this patch:
+
+/usr/lib/nss_dns.so.1
+
+Problem Description:
+
+1207777 adding the 102167 patch adds a new security hole and increases traffic/delays
+
+(from 102165-01)
+
+1174876 DNS spoofing possible in 5.3 when using DNS via /usr/lib/nss_dns.so.1
+
+This patch protects the Name Service Switch (DNS Domain Name Service) backend
+from DNS spoofing.  I.e. a hacker maps an IP address they own to a hostname
+that someone trusts (ex. 10.1.0.35 owned by Hacker.COM, to Trusted-host.my.com)
+allowing them to perhaps rlogin to another machine.  The solution done in 4.x
+and the resolver library is after doing a gethostbyaddr() to do a gethostbyname() and check that the IP address given is one that belongs to
+the returned hostname.
+
+If IP address passed into gethostbyaddr() does not match an IP address returned
+from the gethostbyname() call a SPOOFING error message is syslog-ed and the gethostbyaddr() call returns failure (NOTFOUND).  If the gethostbyname() call
+FAILS, then the hostname is returned.  This is because some people like to register IP addresses BUT not the hostnames in DNS (don't ask why, security through obscurity I guess).
+
+(We will ignore the entire question of basing "security" on IP addresses)
+
+--
+inet: dupuy@smarts.com
+Member of the League for Programming Freedom -- write to lpf@uunet.uu.net
+GCS d?@ H s++: !g p? !au a w v US+++$ C++$ P+ 3 L E++ N+(!N) K- W M V- po- Y+
+     t+ !5 j R G? tv-- b++ !D B- e>* u+(**)@ h--- f+ r++ n+ y+*
+

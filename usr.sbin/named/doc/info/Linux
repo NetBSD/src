@@ -1,0 +1,104 @@
+Date: Mon, 22 May 1995 10:19:51 -0700 (PDT)
+>From: John Kennedy <warlock@csuchico.edu>
+Message-Id: <199505221719.KAA10941@menkure.net.CSUChico.EDU>
+To: BIND workers <bind-workers@vix.com>
+Subject: doc/info/linux* update
+
+05/22/95 @ 10:17:12 AM (Monday)
+
+  Paul, this can supersede the current doc/info/Linux* files.  It has
+everything Matt and I noticed (Matt never did get in contact with me...)
+but leaves out Charles Lopes's patches (which are horribly out of date
+and unnecessary anyway).
+								--- john
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+05/22/95 @ 10:12:13 AM (Monday)
+
+  This is my continuing summary of BIND/linux porting issues.  As usual,
+linux is a moving target and this information will be outdated as soon as
+it gets included into the source, so some adaptation may be required by the
+time you use it.
+
+  BIND is known to compile well on linux with GCC since version 2.5.8 and
+well through 2.6.4 (snapshot 950518), give or take a few warnings.  It has
+worked, for better or worse, on kernels 1.1.29 (and earlier) through the
+current 1.2.8.  The binutils used have gone from 2.5.2 through the current
+ELF-enhanced 2.5.2l.15 (not released to the public yet, so you'll probably
+see something newer when it comes out).
+
+  Most of the BIND-related complications have been because of the libraries
+and the header files distributed with them.  Therefor this will be indexed
+primarily by libc version and the problems with them:
+
+    Jul `94, libc ~4.5.26, kernel ~1.1.29
+	Delete/rename/compress compat/include/sys/cdefs.h header file.
+	  The linux <sys/cdefs.h> has been good enough for BIND for
+	  all of the versions that I've ever tested it with.
+	The <sys/param.h> header needs to #include <sys/types.h>.  It
+	  does on a lot of other system types and BIND assumes that
+	  it does on linux as well.  There are a number of ways to
+	  fix this:  (A) modify the header file directly, (B) make
+	  a local compat "param.h" file that has these lines:
+
+		#include	<sys/types.h>
+		#include_next	<sys/param.h>
+	
+	  (B) only fixes the problem for BIND, but it doesn't require
+	  you to modify your system's include files.
+    Dec `94, libc 4.6.20, kernel ~1.1.70
+    	The header file <sys/types.h> is officially included in
+	  <sys/param.h>.  You still need to nuke BIND's "cdefs.h".
+    May `95, libc ~4.7.2 & 5.0.9, kernel ~1.2.8
+	You still need to nuke BIND's "cdefs.h".  I haven't tried to
+	  compile it with the 4.7 libc since it's supposed to be
+	  bug-fixes on top of the final a.out 4.6 series.  The
+	  5.0 series is the ELF release and I haven't found any
+	  complications caused by the libraries.
+
+If you have multiple architecures (e.g. used "make links"), you will need
+to take care when disabling compat/include/sys/cdefs.h as compat/include is
+a shared directory. You will need something like
+	for d in compat/include compat/include/sys
+	do	rm $d && mkdir $d && ln -s SRC/$d/* $d/.
+	done
+	mv  compat/include/sys/cdefs.h  compat/include/sys/cdefs.h.dist
+
+  If you want to make a dynamic resolv library with ELF, you can use a
+Makefile like the one below (modifying the VER sting to match the version
+you happen to be compiling at the time).  The source files are from the res
+directory but should include everything that goes into libresolv.a, so make
+sure everything gets included in later versions of BIND before you complain
+to the list (or at least complain to me first).  When I made my ELF system
+I crippled the default resolver library and remade the system using a
+dynamic resolv library.  No problems yet.  Beware mixing the standard
+header files with BIND's, which may get you in more or less trouble
+depending on your version of libc and BIND.
+						--- john
+						    <warlock@csuchico.edu>
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+VER=	4.9.3.17
+
+INC=	-I../include -I../compat/include
+DEF=	-DUSE_OPTIONS_H
+CFLAGS=	-O -fPIC ${INC} ${DEF}
+
+LIB=	libresolv.so.${VER}
+
+SRCS=	herror.c res_debug.c \
+	res_comp.c res_init.c res_mkquery.c res_query.c res_send.c \
+	getnetbyaddr.c getnetbyname.c getnetent.c getnetnamadr.c \
+	gethnamaddr.c sethostent.c nsap_addr.c
+OBJS=	${SRCS:.c=.o}
+
+${LIB}:	${OBJS}
+	${CC} -shared -o $@ -Wl,-soname,$@ ${OBJS}
+
+${OBJS}:
+	${CC} ${CPPFLAGS} ${CFLAGS} -c ../res/$*.c
+	-${LDS} ld -x -r $*.o
+	${LDS} mv a.out $*.o
+
+clean:
+	rm ${OBJS} libresolv*
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+

@@ -1,0 +1,60 @@
+Path: vixie!pa.dec.com!bind-redist-request
+From: pauls@locust.cic.net (Paul Southworth)
+Newsgroups: local.mail.dns.bind
+Subject: Re: resolv.conf on Solaris 2.3
+Date: 4 Oct 1994 08:45:51 -0700
+Organization: CICNet, Inc.
+Lines: 25
+Sender: daemon@vix.com
+Distribution: local
+Message-ID: <36rq3h$58b@spruce.cic.net>
+NNTP-Posting-Host: gw.home.vix.com
+X-Received: by gw.home.vix.com id AA06704; Tue, 4 Oct 94 08:45:42 -0700
+X-Received: from pobox1.pa.dec.com by inet-gw-1.pa.dec.com (5.65/10Aug94)
+	id AA12132; Tue, 4 Oct 94 08:22:30 -0700
+X-Received: by pobox1.pa.dec.com; id AA08901; Tue, 4 Oct 94 08:22:02 -0700
+X-Received: by pobox1.pa.dec.com; id AA08897; Tue, 4 Oct 94 08:22:01 -0700
+X-Received: from relay1.UU.NET by inet-gw-2.pa.dec.com (5.65/10Aug94)
+	id AA23996; Tue, 4 Oct 94 08:14:35 -0700
+X-Received: by relay1.UU.NET 
+	id QQxked01471; Tue, 4 Oct 1994 10:51:01 -0400
+X-Received: from hofmann.CS.Berkeley.EDU by relay1.UU.NET with SMTP 
+	id QQxked01432; Tue, 4 Oct 1994 10:50:55 -0400
+X-Received: from rodan.UU.NET (rodan.UU.NET [153.39.128.10]) by hofmann.CS.Berkeley.EDU (8.6.9/8.6.6.Beta11) with ESMTP id HAA27381 for <bind@arpa.berkeley.edu>; Tue, 4 Oct 1994 07:50:42 -0700
+X-Received: from relay1.UU.NET by rodan.UU.NET with SMTP 
+	id QQxked23527; Tue, 4 Oct 1994 10:50:31 -0400
+X-Received: from spruce.cic.net by relay1.UU.NET with SMTP 
+	id QQxked01268; Tue, 4 Oct 1994 10:50:28 -0400
+X-Received: (from news@localhost) by spruce.cic.net (8.6.7/8.6.6) id KAA05389; Tue, 4 Oct 1994 10:50:27 -0400
+X-To: info-bind@uunet.uu.net
+X-Path: locust.cic.net!pauls
+X-Newsgroups: info.bind
+X-Lines: 25
+X-References: <Cx5722.5yG@Belgium.EU.net>
+X-Nntp-Posting-Host: locust.cic.net
+
+In article <Cx5722.5yG@Belgium.EU.net>,
+Simon Townsend <u99288@s854803.kb.be> wrote:
+>*All* I want to do is set up resolv.conf on a Sun SparcStation LX to use our
+>network DNS server.
+>
+>The Sun configuration seems to require me to set a flag in the NIS master to
+>indicate that DNS should be used.  We do not use NIS.  I can not find any
+>information on how I should set it up to work otherwise.
+
+Your maxim for the day is:
+
+"The virtue of an NIS implementation is a function of how easily you can
+turn it off"
+
+In the case of Solaris 2.x, I must say the NIS implementation is outstanding.
+
+1. Edit /etc/nsswitch.conf.  Make the "hosts:" line read "hosts: dns".
+2. Create /etc/resolv.conf
+
+You're done!
+
+--
+Paul Southworth
+CICNet, Inc.
+pauls@cic.net

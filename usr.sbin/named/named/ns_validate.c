@@ -1,5 +1,3 @@
-/*	$NetBSD: ns_validate.c,v 1.1 1996/02/02 15:29:12 mrg Exp $	*/
-
 /**************************************************************************
  * ns_validate.c (was security.c in original ISI contribution)
  * author: anant kumar
@@ -9,6 +7,7 @@
  * response to a query.
  */
 
+#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/socket.h>
 #include <sys/file.h>
@@ -117,9 +116,7 @@ validate(dname, qdomain, server, type, class, data, dlen
 	int exactmatch = 0;
 	struct fwdinfo *fwd;
 
-#ifdef	DATUMREFCNT
 	nsp[0] = NULL;
-#endif
 	dprintf(3, (ddt,
 		    "validate(), d:%s, s:[%s], t:%d, c:%d\n",
 		    dname, inet_ntoa(server->sin_addr), type, class));
@@ -156,9 +153,7 @@ validate(dname, qdomain, server, type, class, data, dlen
 		 * in either case, do not cache
 		 **/
 		dprintf(5, (ddt, "validate: auth data found\n"));
-#ifdef	DATUMREFCNT
 		free_nsp(nsp);
-#endif
 		if (needs_prime_cache)
 			needs_prime_cache = 0;
 
@@ -178,7 +173,7 @@ validate(dname, qdomain, server, type, class, data, dlen
 				return (VALID_NO_CACHE);
 		}
 #endif
-		if (!strcasecmp(dname, np->n_dname)) {
+		if (!strcasecmp(dname, NAME(*np))) {
       
 			/* if the name we seek is the same as that we have ns
 			 * records for, compare the data we have to see if it
@@ -212,9 +207,7 @@ validate(dname, qdomain, server, type, class, data, dlen
 		/* stick_in_queue(dname, type, class, data); */
 		if (needs_prime_cache)
 			needs_prime_cache = 0;
-#ifdef	DATUMREFCNT
 		free_nsp(nsp);
-#endif
 		return (INVALID);
     
 	case OK: /*proceed */
@@ -223,21 +216,15 @@ validate(dname, qdomain, server, type, class, data, dlen
 			needs_prime_cache = 0;
 		if (samedomain(dname, qdomain) ||
 		    check_addr_ns(nsp, server, dname)) {
-#ifdef	DATUMREFCNT
 			free_nsp(nsp);
-#endif
 			return (VALID_CACHE);
 		}
 		/* server is not one of those we know of */
 		/* stick_in_queue(dname, type, class, data); */
-#ifdef	DATUMREFCNT
 		free_nsp(nsp);
-#endif
 		return (INVALID);
 	default:
-#ifdef	DATUMREFCNT
 		free_nsp(nsp);
-#endif
 		return (INVALID);
 	} /*switch*/
 

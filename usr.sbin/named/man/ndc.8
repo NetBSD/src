@@ -1,5 +1,3 @@
-.\"	$NetBSD: ndc.8,v 1.1 1996/02/02 15:27:48 mrg Exp $
-.\"
 .\" Copyright (c) 1994
 .\"    The Regents of the University of California.  All rights reserved.
 .\" 
@@ -31,12 +29,12 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.TH NDC 8 "November 27, 1994"
+.TH @INDOT_U@NDC @SYS_OPS_EXT_U@ "November 27, 1994"
 .UC 5
 .SH NAME
-ndc \- name daemon control interface
+@INDOT@ndc \- name daemon control interface
 .SH SYNOPSIS
-.B ndc
+.B @INDOT@ndc
 .I directive
 [ ... ]
 .SH DESCRIPTION
@@ -46,33 +44,33 @@ from the following list:
 .TP
 .B status
 Displays the current status of
-.B named
+.B @INDOT@named
 as shown by
 .BR ps (1).
 .TP
 .B dumpdb
 Causes
-.B named
+.B @INDOT@named
 to dump its database and cache to
 .B /var/tmp/named_dump.db
 (uses the INT signal.)
 .TP
 .B reload
 Causes
-.B named
+.B @INDOT@named
 to check the serial numbers of all primary and secondary zones
 and to reload those that have changed (uses the HUP signal.)
 .TP
 .B stats
 Causes
-.B named
+.B @INDOT@named
 to dump its statistics to
 .B /var/tmp/named.stats
 (uses the IOT or ABRT signal.)
 .TP
 .B trace
 Causes
-.B named
+.B @INDOT@named
 to increment its ``tracing level'' by one.  Whenever the tracing level
 is nonzero, trace information will be written to
 .BR /var/tmp/named.run .
@@ -81,14 +79,14 @@ Higher tracing levels result in more detailed information.
 .TP
 .B notrace
 Causes
-.B named
+.B @INDOT@named
 to set its ``tracing level'' to zero, closing
 .B /var/tmp/named.run
 if it is open (uses the USR2 signal.)
 .TP
 .B querylog
 Causes
-.B named
+.B @INDOT@named
 to toggle the ``query logging'' feature, which while on will result in a
 .BR syslog (3)
 of each incoming query (uses the WINCH signal.)  Note that query logging
@@ -97,21 +95,21 @@ consumes quite a lot of log file space.  This directive may also be given as
 .TP
 .B start
 Causes
-.B named
+.B @INDOT@named
 to be started, as long as it isn't already running.
 .TP
 .B stop
 Causes
-.B named
+.B @INDOT@named
 to be stopped, if it is running.
 .TP
 .B restart
 Causes
-.B named
+.B @INDOT@named
 to be killed and restarted.
 .SH BUGS
 Arguments to
-.B named
+.B @INDOT@named
 are not preserved by
 .BR restart ,
 or known by
@@ -124,6 +122,6 @@ script.
 .SH AUTHOR
 Paul Vixie (Internet Software Consortium)
 .SH SEE ALSO
-named(8),
-named.reload(8),
-named.restart(8)
+@INDOT@named(@SYS_OPS_EXT@),
+@INDOT@named.reload(@SYS_OPS_EXT@),
+@INDOT@named.restart(@SYS_OPS_EXT@)

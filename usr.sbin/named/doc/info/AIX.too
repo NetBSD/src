@@ -1,0 +1,525 @@
+Path: vixie!pa.dec.com!bind-redist-request
+From: matthew@ans.net (Matthew Braun)
+Newsgroups: local.mail.dns.bind
+Subject: bind-4.9.3-BETA21 bug report
+Date: 28 Jun 1995 11:39:14 -0700
+Organization: Vixie Enterprises
+Lines: 497
+Sender: daemon@vix.com
+Distribution: local
+Message-ID: <199506281639.AA182663@bugsy.aa.ans.net>
+NNTP-Posting-Host: gw.home.vix.com
+X-Received: by gw.home.vix.com id AA02727; Wed, 28 Jun 95 11:39:12 -0700
+X-Received: from pobox1.pa.dec.com by inet-gw-2.pa.dec.com (5.65/24Feb95)
+	id AA27581; Wed, 28 Jun 95 10:15:51 -0700
+X-Received: by pobox1.pa.dec.com; id AA06397; Wed, 28 Jun 95 10:15:43 -0700
+X-Received: by pobox1.pa.dec.com; id AA06393; Wed, 28 Jun 95 10:15:42 -0700
+X-Received: from relay3.UU.NET by inet-gw-1.pa.dec.com (5.65/24Feb95)
+	id AA25444; Wed, 28 Jun 95 10:06:01 -0700
+X-Received: by relay3.UU.NET 
+	id QQywcg10382; Wed, 28 Jun 1995 12:39:36 -0400
+X-Received: from bugsy.aa.ans.net by relay3.UU.NET with SMTP 
+	id QQywcg10353; Wed, 28 Jun 1995 12:39:32 -0400
+X-Received: by bugsy.aa.ans.net id AA182663
+  (5.65c/IDA-1.4.4 for bind@uunet.uu.net); Wed, 28 Jun 1995 12:39:12 -0400
+X-Mailer: Mail User's Shell (7.2.5 10/14/92)
+X-To: bind@uunet.uu.net
+X-Cc: Bryan Beecher <bryan@noc.ans.net>
+
+Hi-
+
+When trying to compile bind on an AIX 3.2.5 box I had a technically easy
+but annoyingly tedious problem that I needed to fix to make the code
+compile.
+
+First of all, the Makefile has bsdcc in it for AIX, which I don't have
+and didn't really need.  Note the Makefile patch probably won't work
+correctly cause I didn't have a virgin copy of the original Makefile, so
+you'll have to look at that manually.
+
+The tedious problem that I had to fix was adding a '#include
+<sys/types.h>' to lots of *.c files and a few '#include <sys/select.h'
+to others.  After adding these statements the code compiled very
+cleanly.
+
+Note, this is not the most ideal way of fixing this problem and I have
+no idea if this will break other platforms (it shouldn't though).
+Another idea might to be to add a #include "pre-portability.h" to the
+begining of the #include's in each source file, where hacks for crapy
+OS's like AIX can be put in.
+
+What I don't understand is that the RUNSON file says "compiles and runs"
+for AIX 3.2.5, but it didn't for me without changing a bunch of files.
+
+Hope this will help someone else.
+
+Cheers,
+
+Matthew.
+
+=====
+
+diff -cr bind-4.9.3-BETA21/Makefile bind-4.9.3-BETA21.mod/Makefile
+*** bind-4.9.3-BETA21/Makefile	Thu Jun 22 09:22:39 1995
+--- bind-4.9.3-BETA21.mod/Makefile	Wed Jun 28 11:53:44 1995
+***************
+*** 267,279 ****
+  
+  #(AIX3)
+  #CC = bsdcc $(CPPFLAGS)
+! #CPPFLAGS = -DBSD=43
+! #LIBS = -ll
+! #DESTEXEC = /usr/sbin
+! #INSTALL = /usr/ucb/install
+! #CATEXT = $$$$N
+! #LEX = lex
+! #PS = ps -p
+  
+  # (ConvexOS-10.x)
+  #CC = gcc $(CPPFLAGS) -g -O2 -fpcc-struct-return -fno-builtin -funsigned-char
+--- 267,281 ----
+  
+  #(AIX3)
+  #CC = bsdcc $(CPPFLAGS)
+! CC = cc
+! CDEBUG = -O
+! CPPFLAGS = -DBSD=43
+! LIBS = -ll -lbsd
+! DESTEXEC = /usr/sbin
+! INSTALL = /usr/ucb/install
+! CATEXT = $$$$N
+! LEX = lex
+! PS = ps -p
+  
+  # (ConvexOS-10.x)
+  #CC = gcc $(CPPFLAGS) -g -O2 -fpcc-struct-return -fno-builtin -funsigned-char
+diff -cr bind-4.9.3-BETA21/named/Makefile bind-4.9.3-BETA21.mod/named/Makefile
+*** bind-4.9.3-BETA21/named/Makefile	Mon Jun 19 04:34:49 1995
+--- bind-4.9.3-BETA21.mod/named/Makefile	Mon Jun 26 12:03:59 1995
+***************
+*** 84,90 ****
+  PIDDIR = /var/run
+  CC= cc
+  SHELL= /bin/sh
+! CDEBUG= -g
+  LIBS=
+  COMPLIB= ../compat/lib/lib44bsd.a
+  PATH_XFER = ${DESTEXEC}/${XFER_INDOT}named-xfer
+--- 84,90 ----
+  PIDDIR = /var/run
+  CC= cc
+  SHELL= /bin/sh
+! CDEBUG= -O
+  LIBS=
+  COMPLIB= ../compat/lib/lib44bsd.a
+  PATH_XFER = ${DESTEXEC}/${XFER_INDOT}named-xfer
+diff -cr bind-4.9.3-BETA21/named/db_lookup.c bind-4.9.3-BETA21.mod/named/db_lookup.c
+*** bind-4.9.3-BETA21/named/db_lookup.c	Thu Dec 15 01:24:16 1994
+--- bind-4.9.3-BETA21.mod/named/db_lookup.c	Mon Jun 26 11:22:16 1995
+***************
+*** 62,67 ****
+--- 62,68 ----
+   * Table lookup routines.
+   */
+  
++ #include <sys/types.h>
+  #include <syslog.h>
+  #include <sys/param.h>
+  #include <sys/socket.h>
+diff -cr bind-4.9.3-BETA21/named/db_reload.c bind-4.9.3-BETA21.mod/named/db_reload.c
+*** bind-4.9.3-BETA21/named/db_reload.c	Thu Dec 15 01:24:16 1994
+--- bind-4.9.3-BETA21.mod/named/db_reload.c	Mon Jun 26 11:22:45 1995
+***************
+*** 58,63 ****
+--- 58,64 ----
+   * --Copyright--
+   */
+  
++ #include <sys/types.h>
+  #include <sys/param.h>
+  #include <sys/socket.h>
+  #include <netinet/in.h>
+diff -cr bind-4.9.3-BETA21/named/db_save.c bind-4.9.3-BETA21.mod/named/db_save.c
+*** bind-4.9.3-BETA21/named/db_save.c	Thu Dec 15 01:24:16 1994
+--- bind-4.9.3-BETA21.mod/named/db_save.c	Mon Jun 26 11:23:12 1995
+***************
+*** 62,67 ****
+--- 62,68 ----
+   * Buffer allocation and deallocation routines.
+   */
+  
++ #include <sys/types.h>
+  #include <sys/param.h>
+  #include <sys/socket.h>
+  #include <netinet/in.h>
+diff -cr bind-4.9.3-BETA21/named/ns_forw.c bind-4.9.3-BETA21.mod/named/ns_forw.c
+*** bind-4.9.3-BETA21/named/ns_forw.c	Mon Jun 19 16:55:44 1995
+--- bind-4.9.3-BETA21.mod/named/ns_forw.c	Mon Jun 26 11:24:20 1995
+***************
+*** 58,63 ****
+--- 58,64 ----
+   * --Copyright--
+   */
+  
++ #include <sys/types.h>
+  #include <sys/param.h>
+  #include <sys/socket.h>
+  #include <netinet/in.h>
+diff -cr bind-4.9.3-BETA21/named/ns_init.c bind-4.9.3-BETA21.mod/named/ns_init.c
+*** bind-4.9.3-BETA21/named/ns_init.c	Tue Jun 20 19:34:47 1995
+--- bind-4.9.3-BETA21.mod/named/ns_init.c	Mon Jun 26 11:24:36 1995
+***************
+*** 58,63 ****
+--- 58,64 ----
+   * --Copyright--
+   */
+  
++ #include <sys/types.h>
+  #include <sys/param.h>
+  #include <sys/socket.h>
+  #include <sys/stat.h>
+diff -cr bind-4.9.3-BETA21/named/ns_main.c bind-4.9.3-BETA21.mod/named/ns_main.c
+*** bind-4.9.3-BETA21/named/ns_main.c	Tue Jun 20 19:58:53 1995
+--- bind-4.9.3-BETA21.mod/named/ns_main.c	Mon Jun 26 11:26:48 1995
+***************
+*** 70,75 ****
+--- 70,76 ----
+   * Internet Name server (see rfc883 & others).
+   */
+  
++ #include <sys/select.h>
+  #include <sys/param.h>
+  #include <sys/file.h>
+  #include <sys/stat.h>
+diff -cr bind-4.9.3-BETA21/named/ns_ncache.c bind-4.9.3-BETA21.mod/named/ns_ncache.c
+*** bind-4.9.3-BETA21/named/ns_ncache.c	Thu Jul 21 04:17:43 1994
+--- bind-4.9.3-BETA21.mod/named/ns_ncache.c	Mon Jun 26 11:30:47 1995
+***************
+*** 6,11 ****
+--- 6,12 ----
+   * implements negative caching
+   */
+  
++ #include <sys/types.h>
+  #include <sys/param.h>
+  #include <sys/socket.h>
+  #include <sys/file.h>
+diff -cr bind-4.9.3-BETA21/named/ns_req.c bind-4.9.3-BETA21.mod/named/ns_req.c
+*** bind-4.9.3-BETA21/named/ns_req.c	Tue Jun 20 19:58:55 1995
+--- bind-4.9.3-BETA21.mod/named/ns_req.c	Mon Jun 26 11:28:48 1995
+***************
+*** 58,63 ****
+--- 58,64 ----
+   * --Copyright--
+   */
+  
++ #include <sys/types.h>
+  #include <sys/param.h>
+  #include <sys/uio.h>
+  #include <sys/file.h>
+diff -cr bind-4.9.3-BETA21/named/ns_resp.c bind-4.9.3-BETA21.mod/named/ns_resp.c
+*** bind-4.9.3-BETA21/named/ns_resp.c	Tue Jun 20 03:43:09 1995
+--- bind-4.9.3-BETA21.mod/named/ns_resp.c	Mon Jun 26 11:29:09 1995
+***************
+*** 58,63 ****
+--- 58,64 ----
+   * --Copyright--
+   */
+  
++ #include <sys/types.h>
+  #include <sys/param.h>
+  #include <sys/socket.h>
+  #include <sys/file.h>
+diff -cr bind-4.9.3-BETA21/named/ns_stats.c bind-4.9.3-BETA21.mod/named/ns_stats.c
+*** bind-4.9.3-BETA21/named/ns_stats.c	Mon Jun 19 04:34:58 1995
+--- bind-4.9.3-BETA21.mod/named/ns_stats.c	Mon Jun 26 11:29:38 1995
+***************
+*** 63,68 ****
+--- 63,69 ----
+  /*            dumps a bunch of values into a well-known file              */
+  /**************************************************************************/
+  
++ #include <sys/types.h>
+  #include <sys/param.h>
+  #include <netinet/in.h>
+  #include <arpa/nameser.h>
+diff -cr bind-4.9.3-BETA21/named/ns_validate.c bind-4.9.3-BETA21.mod/named/ns_validate.c
+*** bind-4.9.3-BETA21/named/ns_validate.c	Mon Jun 19 02:48:07 1995
+--- bind-4.9.3-BETA21.mod/named/ns_validate.c	Mon Jun 26 11:29:51 1995
+***************
+*** 7,12 ****
+--- 7,13 ----
+   * response to a query.
+   */
+  
++ #include <sys/types.h>
+  #include <sys/param.h>
+  #include <sys/socket.h>
+  #include <sys/file.h>
+diff -cr bind-4.9.3-BETA21/res/gethnamaddr.c bind-4.9.3-BETA21.mod/res/gethnamaddr.c
+*** bind-4.9.3-BETA21/res/gethnamaddr.c	Tue Jun 20 19:58:57 1995
+--- bind-4.9.3-BETA21.mod/res/gethnamaddr.c	Mon Jun 26 11:18:58 1995
+***************
+*** 58,63 ****
+--- 58,64 ----
+  static char rcsid[] = "$Id: AIX.too,v 1.1.1.1 1997/04/13 09:08:04 mrg Exp $";
+  #endif /* LIBC_SCCS and not lint */
+  
++ #include <sys/types.h>
+  #include <sys/param.h>
+  #include <sys/socket.h>
+  #include <netinet/in.h>
+diff -cr bind-4.9.3-BETA21/res/getnetent.c bind-4.9.3-BETA21.mod/res/getnetent.c
+*** bind-4.9.3-BETA21/res/getnetent.c	Mon Jun 19 04:35:01 1995
+--- bind-4.9.3-BETA21.mod/res/getnetent.c	Mon Jun 26 11:17:47 1995
+***************
+*** 46,51 ****
+--- 46,52 ----
+  static char rcsid[] = "$Id: AIX.too,v 1.1.1.1 1997/04/13 09:08:04 mrg Exp $";
+  #endif /* LIBC_SCCS and not lint */
+  
++ #include <sys/types.h>
+  #include <sys/param.h>
+  #include <sys/socket.h>
+  #include <netinet/in.h>
+diff -cr bind-4.9.3-BETA21/res/getnetnamadr.c bind-4.9.3-BETA21.mod/res/getnetnamadr.c
+*** bind-4.9.3-BETA21/res/getnetnamadr.c	Tue Jun 20 03:43:10 1995
+--- bind-4.9.3-BETA21.mod/res/getnetnamadr.c	Mon Jun 26 11:18:05 1995
+***************
+*** 44,49 ****
+--- 44,50 ----
+  static char rcsid[] = "$Id: AIX.too,v 1.1.1.1 1997/04/13 09:08:04 mrg Exp $";
+  #endif /* LIBC_SCCS and not lint */
+  
++ #include <sys/types.h>
+  #include <sys/param.h>
+  #include <sys/socket.h>
+  #include <netinet/in.h>
+diff -cr bind-4.9.3-BETA21/res/herror.c bind-4.9.3-BETA21.mod/res/herror.c
+*** bind-4.9.3-BETA21/res/herror.c	Mon Jun 19 04:35:02 1995
+--- bind-4.9.3-BETA21.mod/res/herror.c	Mon Jun 26 11:05:11 1995
+***************
+*** 58,63 ****
+--- 58,64 ----
+  static char rcsid[] = "$Id: AIX.too,v 1.1.1.1 1997/04/13 09:08:04 mrg Exp $";
+  #endif /* LIBC_SCCS and not lint */
+  
++ #include <sys/types.h>
+  #include <sys/param.h>
+  #include <sys/uio.h>
+  #include <netdb.h>
+diff -cr bind-4.9.3-BETA21/res/inet_addr.c bind-4.9.3-BETA21.mod/res/inet_addr.c
+*** bind-4.9.3-BETA21/res/inet_addr.c	Mon Jun 19 16:55:50 1995
+--- bind-4.9.3-BETA21.mod/res/inet_addr.c	Mon Jun 26 11:19:53 1995
+***************
+*** 58,63 ****
+--- 58,64 ----
+  static char rcsid[] = "$Id: AIX.too,v 1.1.1.1 1997/04/13 09:08:04 mrg Exp $";
+  #endif /* LIBC_SCCS and not lint */
+  
++ #include <sys/types.h>
+  #include <sys/param.h>
+  #include <netinet/in.h>
+  #include <arpa/inet.h>
+diff -cr bind-4.9.3-BETA21/res/nsap_addr.c bind-4.9.3-BETA21.mod/res/nsap_addr.c
+*** bind-4.9.3-BETA21/res/nsap_addr.c	Mon Jun 19 04:35:02 1995
+--- bind-4.9.3-BETA21.mod/res/nsap_addr.c	Mon Jun 26 11:19:40 1995
+***************
+*** 2,7 ****
+--- 2,8 ----
+  static char rcsid[] = "$Id: AIX.too,v 1.1.1.1 1997/04/13 09:08:04 mrg Exp $";
+  #endif /* LIBC_SCCS and not lint */
+  
++ #include <sys/types.h>
+  #include <sys/param.h>
+  #include <sys/socket.h>
+  #include <netinet/in.h>
+diff -cr bind-4.9.3-BETA21/res/res_comp.c bind-4.9.3-BETA21.mod/res/res_comp.c
+*** bind-4.9.3-BETA21/res/res_comp.c	Mon Jun 19 04:35:02 1995
+--- bind-4.9.3-BETA21.mod/res/res_comp.c	Mon Jun 26 11:12:42 1995
+***************
+*** 58,63 ****
+--- 58,64 ----
+  static char rcsid[] = "$Id: AIX.too,v 1.1.1.1 1997/04/13 09:08:04 mrg Exp $";
+  #endif /* LIBC_SCCS and not lint */
+  
++ #include <sys/types.h>
+  #include <sys/param.h>
+  #include <netinet/in.h>
+  #include <arpa/nameser.h>
+diff -cr bind-4.9.3-BETA21/res/res_debug.c bind-4.9.3-BETA21.mod/res/res_debug.c
+*** bind-4.9.3-BETA21/res/res_debug.c	Mon Jun 19 16:55:51 1995
+--- bind-4.9.3-BETA21.mod/res/res_debug.c	Mon Jun 26 11:07:47 1995
+***************
+*** 58,63 ****
+--- 58,64 ----
+  static char rcsid[] = "$Id: AIX.too,v 1.1.1.1 1997/04/13 09:08:04 mrg Exp $";
+  #endif /* LIBC_SCCS and not lint */
+  
++ #include <sys/types.h>
+  #include <sys/param.h>
+  #include <netinet/in.h>
+  #include <arpa/inet.h>
+diff -cr bind-4.9.3-BETA21/res/res_init.c bind-4.9.3-BETA21.mod/res/res_init.c
+*** bind-4.9.3-BETA21/res/res_init.c	Mon Jun 19 04:35:03 1995
+--- bind-4.9.3-BETA21.mod/res/res_init.c	Mon Jun 26 11:13:07 1995
+***************
+*** 58,63 ****
+--- 58,64 ----
+  static char rcsid[] = "$Id: AIX.too,v 1.1.1.1 1997/04/13 09:08:04 mrg Exp $";
+  #endif /* LIBC_SCCS and not lint */
+  
++ #include <sys/types.h>
+  #include <sys/param.h>
+  #include <sys/socket.h>
+  #include <sys/time.h>
+diff -cr bind-4.9.3-BETA21/res/res_mkquery.c bind-4.9.3-BETA21.mod/res/res_mkquery.c
+*** bind-4.9.3-BETA21/res/res_mkquery.c	Mon Jun 19 04:35:03 1995
+--- bind-4.9.3-BETA21.mod/res/res_mkquery.c	Mon Jun 26 11:13:30 1995
+***************
+*** 58,63 ****
+--- 58,64 ----
+  static char rcsid[] = "$Id: AIX.too,v 1.1.1.1 1997/04/13 09:08:04 mrg Exp $";
+  #endif /* LIBC_SCCS and not lint */
+  
++ #include <sys/types.h>
+  #include <sys/param.h>
+  #include <netinet/in.h>
+  #include <arpa/nameser.h>
+diff -cr bind-4.9.3-BETA21/res/res_query.c bind-4.9.3-BETA21.mod/res/res_query.c
+*** bind-4.9.3-BETA21/res/res_query.c	Tue Jun 20 03:43:10 1995
+--- bind-4.9.3-BETA21.mod/res/res_query.c	Mon Jun 26 11:14:01 1995
+***************
+*** 58,63 ****
+--- 58,64 ----
+  static char rcsid[] = "$Id: AIX.too,v 1.1.1.1 1997/04/13 09:08:04 mrg Exp $";
+  #endif /* LIBC_SCCS and not lint */
+  
++ #include <sys/types.h>
+  #include <sys/param.h>
+  #include <netinet/in.h>
+  #include <arpa/inet.h>
+diff -cr bind-4.9.3-BETA21/res/res_send.c bind-4.9.3-BETA21.mod/res/res_send.c
+*** bind-4.9.3-BETA21/res/res_send.c	Mon Jun 19 16:55:52 1995
+--- bind-4.9.3-BETA21.mod/res/res_send.c	Mon Jun 26 11:16:51 1995
+***************
+*** 69,74 ****
+--- 69,75 ----
+   * Send query to name server and wait for reply.
+   */
+  
++ #include <sys/select.h>
+  #include <sys/param.h>
+  #include <sys/time.h>
+  #include <sys/socket.h>
+diff -cr bind-4.9.3-BETA21/res/sethostent.c bind-4.9.3-BETA21.mod/res/sethostent.c
+*** bind-4.9.3-BETA21/res/sethostent.c	Mon Jun 19 04:35:04 1995
+--- bind-4.9.3-BETA21.mod/res/sethostent.c	Mon Jun 26 11:19:25 1995
+***************
+*** 36,41 ****
+--- 36,42 ----
+  static char rcsid[] = "$Id: AIX.too,v 1.1.1.1 1997/04/13 09:08:04 mrg Exp $";
+  #endif /* LIBC_SCCS and not lint */
+  
++ #include <sys/types.h>
+  #include <sys/param.h>
+  #include <netinet/in.h>
+  #include <arpa/nameser.h>
+diff -cr bind-4.9.3-BETA21/tools/Makefile bind-4.9.3-BETA21.mod/tools/Makefile
+*** bind-4.9.3-BETA21/tools/Makefile	Tue Jun 20 19:58:58 1995
+--- bind-4.9.3-BETA21.mod/tools/Makefile	Mon Jun 26 12:04:21 1995
+***************
+*** 60,66 ****
+  CC= cc
+  SHELL= /bin/sh
+  
+! CDEBUG= -g
+  
+  INCL =  ../include
+  RES=	../res/libresolv.a
+--- 60,66 ----
+  CC= cc
+  SHELL= /bin/sh
+  
+! CDEBUG= -O
+  
+  INCL =  ../include
+  RES=	../res/libresolv.a
+diff -cr bind-4.9.3-BETA21/tools/nslookup/debug.c bind-4.9.3-BETA21.mod/tools/nslookup/debug.c
+*** bind-4.9.3-BETA21/tools/nslookup/debug.c	Thu Dec 15 01:24:31 1994
+--- bind-4.9.3-BETA21.mod/tools/nslookup/debug.c	Mon Jun 26 11:40:00 1995
+***************
+*** 70,75 ****
+--- 70,76 ----
+   *******************************************************************************
+   */
+  
++ #include <sys/types.h>
+  #include <sys/param.h>
+  #include <netinet/in.h>
+  #include <arpa/nameser.h>
+diff -cr bind-4.9.3-BETA21/tools/nslookup/getinfo.c bind-4.9.3-BETA21.mod/tools/nslookup/getinfo.c
+*** bind-4.9.3-BETA21/tools/nslookup/getinfo.c	Thu Dec 15 01:24:32 1994
+--- bind-4.9.3-BETA21.mod/tools/nslookup/getinfo.c	Mon Jun 26 11:39:40 1995
+***************
+*** 71,76 ****
+--- 71,77 ----
+   ******************************************************************************
+   */
+  
++ #include <sys/types.h>
+  #include <sys/param.h>
+  #include <sys/socket.h>
+  #include <netinet/in.h>
+diff -cr bind-4.9.3-BETA21/tools/nslookup/list.c bind-4.9.3-BETA21.mod/tools/nslookup/list.c
+*** bind-4.9.3-BETA21/tools/nslookup/list.c	Mon Dec 19 03:35:16 1994
+--- bind-4.9.3-BETA21.mod/tools/nslookup/list.c	Mon Jun 26 11:42:47 1995
+***************
+*** 70,75 ****
+--- 70,76 ----
+   *******************************************************************************
+   */
+  
++ #include <sys/types.h>
+  #include <sys/param.h>
+  #include <sys/socket.h>
+  #include <netinet/in.h>
+diff -cr bind-4.9.3-BETA21/tools/nslookup/main.c bind-4.9.3-BETA21.mod/tools/nslookup/main.c
+*** bind-4.9.3-BETA21/tools/nslookup/main.c	Thu Dec 15 01:24:32 1994
+--- bind-4.9.3-BETA21.mod/tools/nslookup/main.c	Mon Jun 26 11:38:53 1995
+***************
+*** 79,84 ****
+--- 79,85 ----
+   ******************************************************************************
+   */
+  
++ #include <sys/types.h>
+  #include <sys/param.h>
+  #include <netdb.h>
+  #include <sys/socket.h>
+diff -cr bind-4.9.3-BETA21/tools/nslookup/send.c bind-4.9.3-BETA21.mod/tools/nslookup/send.c
+*** bind-4.9.3-BETA21/tools/nslookup/send.c	Thu Dec 15 01:24:33 1994
+--- bind-4.9.3-BETA21.mod/tools/nslookup/send.c	Mon Jun 26 11:41:46 1995
+***************
+*** 75,80 ****
+--- 75,81 ----
+   * Send query to name server and wait for reply.
+   */
+  
++ #include <sys/select.h>
+  #include <sys/param.h>
+  #include <sys/time.h>
+  #include <sys/socket.h>
+diff -cr bind-4.9.3-BETA21/tools/nslookup/skip.c bind-4.9.3-BETA21.mod/tools/nslookup/skip.c
+*** bind-4.9.3-BETA21/tools/nslookup/skip.c	Thu Dec 15 01:24:33 1994
+--- bind-4.9.3-BETA21.mod/tools/nslookup/skip.c	Mon Jun 26 11:42:34 1995
+***************
+*** 75,80 ****
+--- 75,81 ----
+   *******************************************************************************
+   */
+  
++ #include <sys/types.h>
+  #include <sys/param.h>
+  #include <netinet/in.h>
+  #include <arpa/nameser.h>

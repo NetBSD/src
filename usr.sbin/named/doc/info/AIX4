@@ -1,0 +1,60 @@
+Received: by gw.home.vix.com id AA10810; Thu, 28 Dec 95 13:22:40 -0800
+Received: by gw.home.vix.com id AA10806; Thu, 28 Dec 95 13:22:39 -0800
+Received: by wisdom.home.vix.com id AA07401; Thu, 28 Dec 1995 13:22:39 -0800
+Message-Id: <9512282122.AA07401@wisdom.home.vix.com>
+To: bind-workers@vix.com
+Subject: BIND on AIX 4 -- anybody got a problem with this?
+Date: Thu, 28 Dec 1995 13:22:39 -0800
+From: Paul A Vixie <paul@vix.com>
+
+
+------- Forwarded Message
+
+...
+
+Here's what it took to build BIND on AIX Version 4.
+
+Beta bind 4.9.3 Patch level 32
+AIX 4.1.4 with most IBM patches applied
+PowerPC C10 Hardware
+
+Building on AIX Version 4
+
+top level Makefile
+
+    line 328 add an addition library so that 'vfork' is available
+    <LIBS = -ll -lbsd
+    >LIBS = -ll -lbsd
+
+These files need to include select.h
+    res/res_send.c
+    named/ns_main.c
+    tools/nslookup/send.c
+
+    #ifdef (_AIX)
+    #include <sys/select.h>
+    #endif
+
+These aix include files need to include <sys/types.h> or a bigger sweep
+through the bind source needs to done so ensure that types.h is included
+before these.
+
+    include/netinet/in.h
+    include/sys/sockets.h
+
+    #include <sys/types.h>
+
+
+Resolver library Makefile
+
+I was surprised to find ld begin called directly in the makefile.
+
+    ld should be replaced with $(LD) and LD should
+    be defined in the top level Makefile.   The gnu ld fails on res_debug.o
+    so $(LD) should point to the AIX version in /usr/bin/ld.
+
+
+
+------- End of Forwarded Message
+
+

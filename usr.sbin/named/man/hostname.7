@@ -1,5 +1,3 @@
-.\"	$NetBSD: hostname.7,v 1.1 1996/02/02 15:27:32 mrg Exp $
-.\"
 .\" Copyright (c) 1987 The Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -17,7 +15,7 @@
 .\"
 .\"	@(#)hostname.7	6.4 (Berkeley) 1/16/90
 .\"
-.TH HOSTNAME 7 "February 16, 1994"
+.TH HOSTNAME @DESC_EXT_U@ "February 16, 1994"
 .UC 5
 .SH NAME
 hostname \- host name resolution description
@@ -34,7 +32,7 @@ would be represented as
 Hostnames are often used with network client and server programs,
 which must generally translate the name to an address for use.
 (This task is usually performed by the library routine
-.IR gethostbyname (3).)
+.IR gethostbyname (@LIB_NETWORK_EXT@).)
 The default method for resolving hostnames by the Internet name resolver is
 to follow \s-1RFC\s+1 1535's security recommendations.  Actions can be taken
 by the administrator to override these recommendations and to have the
@@ -68,9 +66,9 @@ search list of domains contains only the full domain specified by the domain
 option (in
 .IR /etc/resolv.conf )
 or the domain used in the local hostname (see 
-.IR hostname (1)
+.IR hostname (@CMD_EXT@)
 and
-.IR resolver (5)).
+.IR resolver (@FORMAT_EXT@)).
 For example, if the ``\fIdomain\fP'' option is set to \fICS.Berkeley.EDU\fP,
 then only CS.Berkeley.EDU will be in the search list and will be the only
 domain appended to the partial hostname, for example, ``\fIlithium\fP'',
@@ -98,13 +96,13 @@ The environment variable ``\s-1LOCALDOMAIN\s+1'' overrides the
 ``\fIsearch\fP'' and ``\fIdomain\fP'' options, and if both search and domain
 options are present in the resolver configuration file, then only the last
 one listed is used (see
-.IR resolver (5)).
+.IR resolver (@FORMAT_EXT@)).
 .PP
 If the name was not previously tried ``as is'' (i.e., it fell below the
 ``\fIndots\fP'' threshold or did not contain a dot), then the name as
 originally provided is attempted.
 .SH SEE ALSO
-.IR gethostbyname (3),
-.IR resolver (5),
-.IR mailaddr (7),
-.IR named (8)
+.IR gethostbyname (@LIB_NETWORK_EXT@),
+.IR resolver (@FORMAT_EXT@),
+.IR mailaddr (@DESC_EXT@),
+.IR @INDOT@named (@SYS_OPS_EXT@)

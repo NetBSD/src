@@ -1,0 +1,20 @@
+Date: Sun, 5 Mar 1995 21:50:45 -0600 (CST)
+From: Phillip Porch <root@theporch.com>
+To: Paul Vixie <paul@vix.com>
+Subject: Re: Help! bind-4.9.3-BETA17 (fwd)
+Message-Id: <Pine.AUX.3.91.950305214732.579A-100000@uro.theporch.com>
+Mime-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+Paul, I had forgotten that a long time ago, I discovered that starting 
+named from the inittab under A/UX didn't work. I kept getting a message 
+that it was a "socket operation on a non-socket". Named works fine if 
+your start it from the /etc/rc file. Could you add a note for A/UX users 
+that they need to disable named starting from /etc/inittab and instead 
+start it from /etc/rc?
+
+Thanks.
+
+--
+Phillip P. Porch <root@theporch.com>  NIC:PP1573
+http://www.theporch.com  UTM - 16 514548E 3994397N 

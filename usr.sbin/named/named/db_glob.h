@@ -1,8 +1,6 @@
-/*	$NetBSD: db_glob.h,v 1.1 1996/02/02 15:28:21 mrg Exp $	*/
-
 /*
  *	from db.h	4.16 (Berkeley) 6/1/90
- *	$Id: db_glob.h,v 8.3 1995/12/06 20:34:38 vixie Exp 
+ *	$Id: db_glob.h,v 1.1.1.1 1997/04/13 09:06:52 mrg Exp $
  */
 
 /*
@@ -65,10 +63,10 @@
  */
 
 	/* ONE_WEEK maximum ttl */
-DECL	int		max_cache_ttl INIT(7*24*60*60);
+DECL	u_int		max_cache_ttl INIT(7*24*60*60);
 
 	/* no minimum ttl */
-DECL	int		min_cache_ttl INIT(0);
+DECL	u_int		min_cache_ttl INIT(0);
 
 	/* current line number */
 DECL	int		lineno;

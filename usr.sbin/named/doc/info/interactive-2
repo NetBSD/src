@@ -1,0 +1,138 @@
+Replied: Sun, 31 Dec 1995 12:41:34 -0800
+Replied: "kuriyama@unix.cpf.navy.mil (Kent Kuriyama) "
+Received: by gw.home.vix.com id AA10367; Sun, 31 Dec 95 11:00:28 -0800
+Received: by unix.cpf.navy.mil (5.65/1.35)
+	id AA28534; Sun, 31 Dec 95 09:01:34 -1000
+From: kuriyama@unix.cpf.navy.mil (Kent Kuriyama)
+Message-Id: <9512311901.AA28534@unix.cpf.navy.mil>
+Subject: ISC 4.1 changes to bind beta 34
+To: paul@vix.com
+Date: Sun, 31 Dec 1995 09:01:33 -1000 (HST)
+Cc: kuriyama@unix.cpf.navy.mil (Kent Kuriyama)
+X-Mailer: ELM [version 2.4 PL23]
+Mime-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Content-Length: 3419      
+
+Paul,
+
+Enclosed is a 'diff' file that contains the changes necessary to port
+bind BETA34 under ISC 4.1 (using gcc 2.7.2).  In the diff file below
+the sub-directory 'beta34' contained the modified sources.
+
+I have the software up and running - no problems so far.  Thank you
+for your efforts.
+
+Kent Kuriyama
+---------------
+Common subdirectories: beta34.orig/BSD and beta34/BSD
+diff --unif=2 beta34.orig/Makefile beta34/Makefile
+--- beta34.orig/Makefile	Fri Dec 29 11:08:15 1995
++++ beta34/Makefile	Sun Dec 31 08:27:12 1995
+@@ -582,23 +582,32 @@
+ #IOT = IOT
+ 
+-#(ISC4.0 using GCC)
+-#CC = gcc -DISC -posix
+-#CPPFLAGS =
+-#CDEBUG = -g
+-#LEX = flex -I
+-#LIBS = -lbsd
+-#PIDDIR = /etc
+-#DESTBIN = /usr/bin
+-#DESTSBIN = /etc
+-#DESTEXEC = /etc
+-#DESTHELP = /etc
+-#DESTMAN = /usr/catman/l_man
+-#CATEXT = $$$$N
+-#RANLIB = @:
+-#LDS = @:
+-#PS = ps -p
+-#ARPREF = `lorder
+-#ARSUFF = | tsort`
+-#IOT = IOT
++#(ISC4.1 using GCC 2.7.2)
++#
++# Notes:
++#
++# 1)  The 'gettimeofday' routine seems to be broken on ISC.
++#     Using the one supplied in 'compat/lib'.
++# 2)  Needed to modify some ISC supplied include files so that
++#     they would automatically include other files.
++#
++CC = gcc -DISC -posix
++CPPFLAGS =
++CDEBUG = -g
++LEX = flex -I
++LIBS = -ll -linet
++PIDDIR = /etc
++DESTBIN = /usr/bin
++DESTLIB = /usr/local/lib
++DESTSBIN = /etc
++DESTEXEC = /etc
++DESTHELP = /etc
++DESTMAN = /usr/catman/l_man
++CATEXT = $$$$N
++RANLIB = @:
++LDS = @:
++PS = ps -p
++ARPREF =
++ARSUFF =
++IOT = IOT
+ 
+ # AUX 3.x (I used 3.1.1)
+Common subdirectories: beta34.orig/bin and beta34/bin
+Common subdirectories: beta34.orig/compat and beta34/compat
+Common subdirectories: beta34.orig/conf and beta34/conf
+Common subdirectories: beta34.orig/contrib and beta34/contrib
+Common subdirectories: beta34.orig/doc and beta34/doc
+Common subdirectories: beta34.orig/include and beta34/include
+Common subdirectories: beta34.orig/man and beta34/man
+Common subdirectories: beta34.orig/named and beta34/named
+Common subdirectories: beta34.orig/res and beta34/res
+Common subdirectories: beta34.orig/shres and beta34/shres
+Common subdirectories: beta34.orig/tools and beta34/tools
+diff -r --unif=2 beta34.orig/res/getnetnamadr.c beta34/res/getnetnamadr.c
+--- beta34.orig/res/getnetnamadr.c	Wed Jun 28 23:26:28 1995
++++ beta34/res/getnetnamadr.c	Sat Dec 30 22:34:53 1995
+@@ -45,4 +45,8 @@
+ #endif /* LIBC_SCCS and not lint */
+ 
++#ifdef ISC
++#include <net/errno.h>
++#endif
++
+ #include <sys/param.h>
+ #include <sys/socket.h>
+diff -r --unif=2 beta34.orig/compat/lib/ftruncate.c beta34/compat/lib/ftruncate.c
+--- beta34.orig/compat/lib/ftruncate.c	Wed Dec 14 20:23:51 1994
++++ beta34/compat/lib/ftruncate.c	Sat Dec 30 22:39:24 1995
+@@ -11,5 +11,5 @@
+ #endif
+ 
+-#if defined(M_UNIX)
++#if defined(M_UNIX) || defined(ISC)
+ #define OWN_FTRUNCATE
+ #include <stdio.h>
+diff -r --unif=2 beta34.orig/conf/portability.h beta34/conf/portability.h
+--- beta34.orig/conf/portability.h	Fri Dec 22 00:20:20 1995
++++ beta34/conf/portability.h	Sun Dec 31 07:58:01 1995
+@@ -80,4 +80,5 @@
+ # define NEED_STRTOUL
+ # define NEED_FTRUNCATE
++# define NEED_GETTIMEOFDAY
+ # define USE_POSIX
+ # include <sys/bsdtypes.h>
+diff -r --unif=2 beta34.orig/tools/dig.c beta34/tools/dig.c
+--- beta34.orig/tools/dig.c	Fri Dec 29 11:08:18 1995
++++ beta34/tools/dig.c	Sat Dec 30 22:37:54 1995
+@@ -144,4 +144,7 @@
+ #define VSTRING "2.1"
+ 
++#ifdef ISC
++#define _SYSV3
++#endif
+ #include <sys/types.h>
+ #include <sys/param.h>
+

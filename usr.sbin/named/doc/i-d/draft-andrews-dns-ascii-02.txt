@@ -1,0 +1,109 @@
+                                                            Mark Andrews
+INTERNET DRAFT                                                     CSIRO
+Expires: September 1996                                         May 1996
+Updates RFC-1035
+
+                    ASCII Encoding for Domain Names
+
+                     draft-andrews-dns-ascii-02.txt
+
+1. Status of This Memo
+
+   This document is an Internet Draft.  Internet Drafts are working
+   documents of the Internet Engineering Task Force (IETF), its Areas,
+   and its Working Groups.  Note that other groups may also distribute
+   working documents as Internet Drafts.
+
+   Internet Drafts are draft documents valid for a maximum of six
+   months.  Internet Drafts may be updated, replaced, or obsoleted by
+   other documents at any time.  It is not appropriate to use Internet
+   Drafts as reference material or to cite them other than as a "working
+   draft" or "work in progress."
+
+   Please check the 1id-abstracts.txt listing contained in the internet-
+   drafts Shadow Directories to learn the current status of any Internet
+   Draft.
+
+2. Abstract
+
+   [RFC 1035 Section 5.1] describes how to encode domain names as
+   character strings. It however allows non printable characters to be
+   used. It also allows for encodings of text files which would not
+   survive intact ftp ASCII mode transfers, different end of line
+   conventions. This document addresses these problems by stating where
+   decimal escapes SHOULD be used.
+
+   While a applications MUST continue to read the full range as
+   expressed by [RFC 1035 5.1]. They SHOULD emit only this selected
+   subset.
+
+3. Encoding
+
+   Octets within the follow ranges are encoded as backslash followed by
+   three decimal digits, 0x00 - 0x20, 0x7f - 0xff.
+
+           e.g.
+                   0x00, \000
+                   0x1f, \031
+                   0xff, \255
+
+
+
+Andrews                                                         [Page 1]
+
+Internet Draft       draft-andrews-dns-ascii-02.txt             May 1996
+
+
+   Period (".") when NOT used as a domain separator is encoded as the
+   sequence backslash period, e.g. "\.". Un-escaped periods indicate
+   label separators.
+
+   Backslash ("\") is encoded as two consecutive backslashes, e.g. "\\".
+
+   Double quotes ('"') should always be represented as backslash quote
+   as a common nameserver implementation mis-parses strings containing
+   quotes, e.g. '\"'.
+
+   Semi-colon (";") should always be encoded as backslash semi-colon
+   otherwise it will be interpreted as a comment. e.g. "\;".
+
+   Space may be a literal space when the string is enclosed by double
+   quotes.
+
+   All other characters represent their literal ASCII encoding eighth
+   bit not set.
+
+4. Security
+
+   This draft introduces no known security problems. It may however
+   remove some latent security problems in applications where the
+   encoding is NOT reversible leading to unexpected changes in domain
+   names.
+
+4. References
+
+   [RFC-1035]
+      P. Mockapetris, ``DOMAIN NAMES - IMPLEMENTATION AND
+      SPECIFICATION'', RFC-1035, ISI, November 1987.
+
+6. Author's Address
+
+   Mark Andrews
+   CSIRO
+   Division of Mathematics and Statistics
+   Locked Bag 17
+   North Ryde NSW 2113
+   AUSTRALIA
+
+   Mark.Andrews@dms.csiro.au [MA88]
+
+
+
+
+
+
+
+
+
+Andrews                                                         [Page 2]
+

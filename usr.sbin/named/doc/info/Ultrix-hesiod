@@ -1,0 +1,78 @@
+Return-Path: bind-workers-request
+Received: by gw.home.vix.com id AA04567; Fri, 28 Jan 94 13:20:51 -0800
+Received: by gw.home.vix.com id AA04555; Fri, 28 Jan 94 13:20:48 -0800
+Received: from monkeyboy.WPI.EDU (gshapiro@monkeyboy.WPI.EDU [130.215.24.62]) by bigboote.WPI.EDU (8.6.6.Beta0/8.6) with ESMTP id QAA02114; Fri, 28 Jan 1994 16:20:44 -0500
+From: Gregory Neil Shapiro <gshapiro@WPI.EDU>
+Received: from localhost (gshapiro@localhost) by monkeyboy.WPI.EDU (8.6.6.Beta0/8.6) id QAA14847; Fri, 28 Jan 1994 16:20:42 -0500
+Date: Fri, 28 Jan 1994 16:20:42 -0500
+Message-Id: <199401282120.QAA14847@monkeyboy.WPI.EDU>
+To: bind-workers@vix.com
+Cc: aej@WPI.EDU
+Subject: BIND 4.9.2 BETA05 resolver problem
+
+We have a major problem with replacing Ultrix's resolver routines with
+those in 4.9.2 Beta 5.
+
+Here at WPI we used Hesiod to serve our passwords.  4.9.2's resolver
+doesn't go to secondaries for the information if the first nameserver
+listed in /etc/resolv.conf isn't responding (i.e. if it dies, the host is
+down, or the nameserver is reloading) on any getpw*() call.
+
+Here is my /etc/resolv.conf:
+
+;
+; BIND data file.
+;
+domain		WPI.EDU
+nameserver	130.215.24.62
+nameserver	130.215.24.56
+nameserver	130.215.56.45
+nameserver	130.215.8.125
+
+Here is a program to show the broken behavior:
+
+#include <sys/param.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <arpa/nameser.h>
+#include <stdio.h>
+#include <resolv.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <netdb.h>
+
+main()
+{
+  printf("res.options = %x\n", _res.options);
+  if (getpwnam("gshapiro"))
+    printf("Ok\n");
+  else
+    printf("No\n");
+  if (gethostbyname("wpi"))
+    printf("Ok\n");
+  else
+    printf("No\n");
+}
+
+If I compile with 4.9.2's resolver:
+
+> cc -I/usr/local/include -I/usr0/CCCtools/BIND/4.9.2/include -I/usr0/CCCtools/BIND/4.9.2/compat/include try.c -o try -lresolv -l44bsd
+
+And run it:
+
+> ./try                                                       
+res.options = 2c0
+No
+Ok
+
+If I compile with Ultrix's resolver (built-in to libc.a):
+
+> cc try.c -o try
+> ./try
+res.options = 2c0
+Ok
+Ok
+
+4.9.2's resolver doesn't go on to secondaries on the getpw*() call.
+However, gethostbyname() calls do properly go to secondaries, it's only the
+Hesiod getpw*() calls that fail.
