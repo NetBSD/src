@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.429 2005/01/07 18:56:41 tron Exp $
+#	$NetBSD: bsd.own.mk,v 1.430 2005/01/10 00:20:21 he Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -602,6 +602,7 @@ MKPROFILE:=	no
 
 .if ${MKPIC} == "no"
 MKPICLIB:=	no
+MKPAM:=		no
 .endif
 
 .if ${MKOBJ} == "no"
