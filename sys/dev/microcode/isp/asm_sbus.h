@@ -1,13 +1,9 @@
-/*	$NetBSD: asm_sbus.h,v 1.5 1997/08/16 00:30:43 mjacob Exp $	*/
-
+/* $Id: asm_sbus.h,v 1.6 1998/09/08 07:06:57 mjacob Exp $ */
 /*
- * Copyright (c) 1997 by Matthew Jacob 
- * NASA AMES Research Center
- * All rights reserved.
+ * SBus Qlogic Host Adapter Firmware Tables
+ * Copyright (c) 1996, 1997, 1998 by Qlogic Corporation
  *
  *	Version 1.24 Initiator Firmware (Aug 8, 1996)
- *
- *	[from Qlogic]
  */
 
 #define	ISP_CODE_ORG		0x1000
