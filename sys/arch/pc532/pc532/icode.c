@@ -31,7 +31,7 @@
  *
  *	icode.c
  *
- *	$Id: icode.c,v 1.1.1.1 1993/09/09 23:53:48 phil Exp $
+ *	$Id: icode.c,v 1.2 1994/04/19 17:14:16 phil Exp $
  */
 /*
  * This is the "user" code for process 1 that execs /sbin/init.
@@ -65,7 +65,7 @@ void i_code()
 /* Exec /sbin/init! */
 void i_main()
 {
-  extern char i_arg1;
+  extern char i_arg1();
   char *argv[] = {"init", 0, 0};
 
 #ifdef DEBUG
@@ -80,7 +80,7 @@ void i_main()
   printf ("ready to exec /sbin/init\n");
 #endif
 
-  argv[1] = &i_arg1;
+  argv[1] = (char *)&i_arg1;
 
   execve ("/sbin/init", argv, 0);
 
@@ -101,7 +101,7 @@ asm("  ret	0");
 asm("_myerrno: .long 0");
 
 /* Call it a function to get space and a good address in the text segment. */
-i_arg1()
+char i_arg1()
 {}
 
 int szicode = 0;

@@ -36,7 +36,7 @@
  *
  *	@(#)pmap.c	7.7 (Berkeley)	5/12/91
  *
- *	$Id: pmap.c,v 1.3 1994/01/28 03:47:57 phil Exp $
+ *	$Id: pmap.c,v 1.4 1994/04/19 17:14:21 phil Exp $
  */
 
 /*
@@ -316,7 +316,7 @@ pmap_bootstrap(firstaddr, loadaddr)
 #endif
 	extern vm_offset_t maxmem, physmem;
 
-	ns532pagesperpage = PAGE_SIZE / NS532_PAGE_SIZE;
+	ns532pagesperpage = 1; /* PAGE_SIZE / NS532_PAGE_SIZE; */
 
 	/*
 	 * Initialize protection array.
@@ -437,6 +437,9 @@ pmap_init(phys_start, phys_end)
 	if (pmapdebug & (PDB_FOLLOW|PDB_INIT))
 		printf("pmap_init(0x%x, 0x%x)\n", phys_start, phys_end);
 #endif
+
+	if (PAGE_SIZE != NBPG)
+		panic("pmap_init: CLSIZE != 1");
 	/*
 	 * Now that kernel map has been allocated, we can mark as
 	 * unavailable regions which we have mapped in locore.
