@@ -1,4 +1,4 @@
-#	$NetBSD: RISCPC,v 1.14 1998/07/06 00:49:21 mark Exp $
+#	$NetBSD: RISCPC,v 1.15 1998/07/06 00:59:21 mark Exp $
 #
 #	RISCPC -- Full RiscPC config
 #
@@ -35,7 +35,7 @@ options 	RISCPC		# We are a RiscPC
 
 # FPA options
 
-options 	ARMFPE		# ARM Ltd FPE
+#options 	ARMFPE		# ARM Ltd FPE
 
 # File systems
 
