@@ -1,4 +1,4 @@
-/*	$NetBSD: gethnamaddr.c,v 1.5 1998/10/13 20:54:02 kleink Exp $	*/
+/*	$NetBSD: gethnamaddr.c,v 1.6 1998/10/14 19:33:49 kleink Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1988, 1993
@@ -61,11 +61,13 @@
 static char sccsid[] = "@(#)gethostnamadr.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: gethnamaddr.c,v 8.21 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: gethnamaddr.c,v 1.5 1998/10/13 20:54:02 kleink Exp $");
+__RCSID("$NetBSD: gethnamaddr.c,v 1.6 1998/10/14 19:33:49 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#if defined(_LIBC)
 #include "namespace.h"
+#endif
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -95,7 +97,7 @@ __RCSID("$NetBSD: gethnamaddr.c,v 1.5 1998/10/13 20:54:02 kleink Exp $");
 #include <rpcsvc/ypclnt.h>
 #endif
 
-#ifdef __weak_alias
+#if defined(_LIBC) && defined(__weak_alias)
 __weak_alias(gethostbyaddr,_gethostbyaddr);
 __weak_alias(gethostbyname,_gethostbyname);
 #endif

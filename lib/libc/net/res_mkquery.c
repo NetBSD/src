@@ -1,4 +1,4 @@
-/*	$NetBSD: res_mkquery.c,v 1.11 1998/10/14 19:13:02 kleink Exp $	*/
+/*	$NetBSD: res_mkquery.c,v 1.12 1998/10/14 19:33:49 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993
@@ -59,11 +59,13 @@
 static char sccsid[] = "@(#)res_mkquery.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: res_mkquery.c,v 8.5 1996/08/27 08:33:28 vixie Exp ";
 #else
-__RCSID("$NetBSD: res_mkquery.c,v 1.11 1998/10/14 19:13:02 kleink Exp $");
+__RCSID("$NetBSD: res_mkquery.c,v 1.12 1998/10/14 19:33:49 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#if defined(_LIBC)
 #include "namespace.h"
+#endif
 #include <sys/param.h>
 #include <netinet/in.h>
 #include <arpa/nameser.h>
@@ -73,7 +75,7 @@ __RCSID("$NetBSD: res_mkquery.c,v 1.11 1998/10/14 19:13:02 kleink Exp $");
 #include <stdio.h>
 #include <string.h>
 
-#ifdef __weak_alias
+#if defined(_LIBC) && defined(__weak_alias)
 __weak_alias(res_mkquery,_res_mkquery);
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: res_init.c,v 1.19 1998/10/14 19:13:01 kleink Exp $	*/
+/*	$NetBSD: res_init.c,v 1.20 1998/10/14 19:33:49 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1989, 1993
@@ -59,11 +59,13 @@
 static char sccsid[] = "@(#)res_init.c	8.1 (Berkeley) 6/7/93";
 static char rcsid[] = "Id: res_init.c,v 8.8 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: res_init.c,v 1.19 1998/10/14 19:13:01 kleink Exp $");
+__RCSID("$NetBSD: res_init.c,v 1.20 1998/10/14 19:33:49 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#if defined(_LIBC)
 #include "namespace.h"
+#endif
 #include <sys/param.h>
 #include <sys/socket.h>
 #include <sys/time.h>
@@ -77,7 +79,7 @@ __RCSID("$NetBSD: res_init.c,v 1.19 1998/10/14 19:13:01 kleink Exp $");
 #include <string.h>
 #include <ctype.h>
 
-#ifdef __weak_alias
+#if defined(_LIBC) && defined(__weak_alias)
 __weak_alias(res_init,_res_init);
 #endif
 
