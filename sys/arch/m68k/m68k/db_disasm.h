@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: db_disasm.h,v 1.1 1994/03/04 13:44:31 chopps Exp $
+ *	$Id: db_disasm.h,v 1.1.2.1 1994/08/14 09:27:51 mycroft Exp $
  */
 
 #define ENCB(b7,b6,b5,b4,b3,b2,b1,b0) \
@@ -412,11 +412,15 @@ struct dis_buffer {
 };
 typedef struct dis_buffer dis_buffer_t;
 
-#define ISBITSET(val,b)	(val & (1<<b))
-#define BITFIELD_MASK(sb,eb)	(((1 << (sb + 1))-1) & (~((1 << (eb))-1)))
-#define BITFIELD(val,sb,eb)	((BITFIELD_MASK(sb,eb) & val) >> eb)
+#define ISBITSET(val,b)	((val) & (1 << (b)))
+#define BITFIELD_MASK(sb,eb)	(((1 << ((sb) + 1))-1) & (~((1 << (eb))-1)))
+#define BITFIELD(val,sb,eb)	((BITFIELD_MASK(sb,eb) & (val)) >> (eb))
 #define OPCODE_MAP(x) (BITFIELD(x,15,12))
-#define IS_INST(inst,val) ((inst ## _MASK & val) == inst ## _INST)
+#ifdef __STDC__
+#define IS_INST(inst,val) ((inst ## _MASK & (val)) == inst ## _INST)
+#else
+#define IS_INST(inst,val) ((inst/**/_MASK & (val)) == inst/**/_INST)
+#endif
 #define PRINT_FPREG(dbuf, reg) addstr(dbuf, fpregs[reg])
 #define PRINT_DREG(dbuf, reg) addstr(dbuf, dregs[reg])
 #define PRINT_AREG(dbuf, reg) addstr(dbuf, aregs[reg])
