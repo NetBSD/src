@@ -24,7 +24,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: eeprom.h,v 1.3 1994/05/04 05:23:02 gwr Exp $
+ *	$Id: eeprom.h,v 1.4 1994/09/20 16:26:00 gwr Exp $
  */
 
 /*
@@ -166,3 +166,9 @@ struct eeprom {
 	/* 0x700 */
 	u_char	eeUnixArea[0x100];
 };
+
+#ifdef	KERNEL
+/* Offset of eeConsole (for zs driver). */
+#define	EE_CONS_OFFSET		0x1F
+extern int ee_get_byte(int off, int canwait);
+#endif	/* KERNEL */
