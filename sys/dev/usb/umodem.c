@@ -1,4 +1,4 @@
-/*	$NetBSD: umodem.c,v 1.21 2000/02/02 13:18:47 augustss Exp $	*/
+/*	$NetBSD: umodem.c,v 1.22 2000/02/08 09:18:02 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -131,6 +131,8 @@ static struct ucom_methods umodem_methods = {
 	umodem_set,
 	umodem_param,
 	umodem_ioctl,
+	NULL,
+	NULL,
 };
 
 USB_DECLARE_DRIVER(umodem);
