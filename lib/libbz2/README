@@ -1,3 +1,4 @@
+$NetBSD: README,v 1.2 1998/09/14 03:13:53 ross Exp $
 
 
 This is the README for bzip2, a block-sorting file compressor, version
