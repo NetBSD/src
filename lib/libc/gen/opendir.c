@@ -1,3 +1,5 @@
+/*	$NetBSD: opendir.c,v 1.8 1995/02/25 08:51:28 cgd Exp $	*/
+
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -32,8 +34,11 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char sccsid[] = "from: @(#)opendir.c	8.7 (Berkeley) 12/10/94";*/
-static char rcsid[] = "$Id: opendir.c,v 1.7 1994/12/28 03:34:37 mycroft Exp $";
+#if 0
+static char sccsid[] = "@(#)opendir.c	8.7 (Berkeley) 12/10/94";
+#else
+static char rcsid[] = "$NetBSD: opendir.c,v 1.8 1995/02/25 08:51:28 cgd Exp $";
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
