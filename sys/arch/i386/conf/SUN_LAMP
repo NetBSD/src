@@ -1,4 +1,4 @@
-#	$NetBSD: SUN_LAMP,v 1.67 1996/03/10 09:03:26 cgd Exp $
+#	$NetBSD: SUN_LAMP,v 1.68 1996/03/12 01:32:59 perry Exp $
 #
 #	SUN_LAMP -- kernel for one of cgd's 486/50 EISA boxes...
 #
@@ -28,7 +28,7 @@ options		VNODEPAGER	# mmap() of files
 options		DEVPAGER	# mmap() of devices
 
 options		DDB		# in-kernel debugger
-options		DIAGNOSTIC	# internally consistency checks
+options		DIAGNOSTIC	# internal consistency checks
 options		KTRACE		# system call tracing, a la ktrace(1)
 
 #options	SYSVMSG		# System V-like message queues

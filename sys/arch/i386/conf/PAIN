@@ -1,4 +1,4 @@
-#	$NetBSD: PAIN,v 1.61 1996/03/10 09:03:23 cgd Exp $
+#	$NetBSD: PAIN,v 1.62 1996/03/12 01:32:55 perry Exp $
 #
 #	PAIN -- mail server and test machine
 #
@@ -28,7 +28,7 @@ options		VNODEPAGER	# mmap() of files
 options		DEVPAGER	# mmap() of devices
 
 options		DDB		# in-kernel debugger
-options		DIAGNOSTIC	# internally consistency checks
+options		DIAGNOSTIC	# internal consistency checks
 options		KTRACE		# system call tracing, a la ktrace(1)
 
 options		SYSVMSG		# System V-like message queues

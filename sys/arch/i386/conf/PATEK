@@ -1,4 +1,4 @@
-#	$NetBSD: PATEK,v 1.32 1996/03/10 09:03:24 cgd Exp $
+#	$NetBSD: PATEK,v 1.33 1996/03/12 01:32:56 perry Exp $
 #
 #	PATEK -- Mycroft's 486 test box
 #
@@ -28,7 +28,7 @@ options		VNODEPAGER	# mmap() of files
 options		DEVPAGER	# mmap() of devices
 
 options		DDB		# in-kernel debugger
-options		DIAGNOSTIC	# internally consistency checks
+options		DIAGNOSTIC	# internal consistency checks
 options		KTRACE		# system call tracing, a la ktrace(1)
 
 options		SYSVMSG		# System V-like message queues
