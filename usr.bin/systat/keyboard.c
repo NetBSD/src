@@ -1,4 +1,4 @@
-/*	$NetBSD: keyboard.c,v 1.21 2005/02/26 19:01:09 dsl Exp $	*/
+/*	$NetBSD: keyboard.c,v 1.22 2005/02/26 22:12:33 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)keyboard.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: keyboard.c,v 1.21 2005/02/26 19:01:09 dsl Exp $");
+__RCSID("$NetBSD: keyboard.c,v 1.22 2005/02/26 22:12:33 dsl Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -43,6 +43,7 @@ __RCSID("$NetBSD: keyboard.c,v 1.21 2005/02/26 19:01:09 dsl Exp $");
 #include <signal.h>
 #include <termios.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "systat.h"
 #include "extern.h"
@@ -50,9 +51,11 @@ __RCSID("$NetBSD: keyboard.c,v 1.21 2005/02/26 19:01:09 dsl Exp $");
 void
 keyboard(void)
 {
-	int ch, rch;
+	int ch, rch, col;
 	char *line;
 	int i, linesz;
+	static char help[] = "help";
+	static char quit[] = "quit";
 
 	linesz = COLS - 2;		/* XXX does not get updated on SIGWINCH */
 	if ((line = malloc(linesz)) == NULL) {
@@ -93,12 +96,12 @@ keyboard(void)
 				    case '?':
 				    case 'H':
 				    case 'h':
-					command("help");
+					command(help);
 					move(CMDLINE, 0);
 					break;
 				    case 'Q':
 				    case 'q':
-					command("quit");
+					command(quit);
 					break;
 				    case ':':
 					move(CMDLINE, 0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp.c,v 1.7 2003/02/24 10:10:00 dsl Exp $	*/
+/*	$NetBSD: icmp.c,v 1.8 2005/02/26 22:12:33 dsl Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Andrew Doran <ad@NetBSD.org>
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: icmp.c,v 1.7 2003/02/24 10:10:00 dsl Exp $");
+__RCSID("$NetBSD: icmp.c,v 1.8 2005/02/26 22:12:33 dsl Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -40,7 +40,6 @@ __RCSID("$NetBSD: icmp.c,v 1.7 2003/02/24 10:10:00 dsl Exp $");
 #include <netinet/ip_icmp.h>
 #include <netinet/icmp_var.h>
 
-#include <kvm.h>
 #include <string.h>
 
 #include "systat.h"

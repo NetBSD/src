@@ -1,4 +1,4 @@
-/*	$NetBSD: netstat.c,v 1.26 2005/01/09 01:27:47 christos Exp $	*/
+/*	$NetBSD: netstat.c,v 1.27 2005/02/26 22:12:33 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)netstat.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: netstat.c,v 1.26 2005/01/09 01:27:47 christos Exp $");
+__RCSID("$NetBSD: netstat.c,v 1.27 2005/02/26 22:12:33 dsl Exp $");
 #endif /* not lint */
 
 /*
@@ -79,14 +79,14 @@ __RCSID("$NetBSD: netstat.c,v 1.26 2005/01/09 01:27:47 christos Exp $");
 #include "extern.h"
 
 static void fetchnetstat4(void *, int);
-static void enter(struct inpcb *, struct socket *, int, char *);
+static void enter(struct inpcb *, struct socket *, int, const char *);
 static const char *inetname(struct in_addr);
-static void inetprint(struct in_addr *, int, char *);
+static void inetprint(struct in_addr *, int, const char *);
 #ifdef INET6
 static void fetchnetstat6(void *, int);
-static void enter6(struct in6pcb *, struct socket *, int, char *);
+static void enter6(struct in6pcb *, struct socket *, int, const char *);
 static const char *inet6name(struct in6_addr *);
-static void inet6print(struct in6_addr *, int, char *);
+static void inet6print(struct in6_addr *, int, const char *);
 #endif
 
 #define	streq(a,b)	(strcmp(a,b)==0)
@@ -100,7 +100,7 @@ struct netinfo {
 #define	NIF_LACHG	0x1		/* local address changed */
 #define	NIF_FACHG	0x2		/* foreign address changed */
 	short	ni_state;		/* tcp state */
-	char	*ni_proto;		/* protocol */
+	const char	*ni_proto;		/* protocol */
 	struct	in_addr ni_laddr;	/* local address */
 #ifdef INET6
 	struct	in6_addr ni_laddr6;	/* local address */
@@ -295,7 +295,7 @@ fetchnetstat6(void *off, int istcp)
 #endif /*INET6*/
 
 static void
-enter(struct inpcb *inp, struct socket *so, int state, char *proto)
+enter(struct inpcb *inp, struct socket *so, int state, const char *proto)
 {
 	struct netinfo *p;
 
@@ -344,7 +344,7 @@ enter(struct inpcb *inp, struct socket *so, int state, char *proto)
 
 #ifdef INET6
 static void
-enter6(struct in6pcb *in6p, struct socket *so, int state, char *proto)
+enter6(struct in6pcb *in6p, struct socket *so, int state, const char *proto)
 {
 	struct netinfo *p;
 
@@ -526,7 +526,7 @@ shownetstat(void)
  * If the nflag was specified, use numbers instead of names.
  */
 static void
-inetprint(struct in_addr *in, int port, char *proto)
+inetprint(struct in_addr *in, int port, const char *proto)
 {
 	struct servent *sp = 0;
 	char line[80], *cp;
@@ -551,7 +551,7 @@ inetprint(struct in_addr *in, int port, char *proto)
 
 #ifdef INET6
 static void
-inet6print(struct in6_addr *in6, int port, char *proto)
+inet6print(struct in6_addr *in6, int port, const char *proto)
 {
 	struct servent *sp = 0;
 	char line[80], *cp;

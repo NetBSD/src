@@ -1,9 +1,10 @@
-#	$NetBSD: Makefile,v 1.29 2005/02/16 03:45:41 hubertf Exp $
+#	$NetBSD: Makefile,v 1.30 2005/02/26 22:12:33 dsl Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/6/93
 
 .include <bsd.own.mk>
 
 PROG=	systat
+WARNS=3
 
 .PATH:	${NETBSDSRCDIR}/usr.bin/vmstat ${NETBSDSRCDIR}/usr.bin/who
 
