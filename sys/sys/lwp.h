@@ -1,4 +1,4 @@
-/* 	$Id: lwp.h,v 1.1.2.18 2002/10/18 04:06:45 nathanw Exp $	*/
+/* 	$Id: lwp.h,v 1.1.2.19 2002/12/04 21:59:09 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@ struct	lwp {
 	LIST_ENTRY(lwp) l_list;		/* Entry on list of all LWPs. */
 	LIST_ENTRY(lwp) l_zlist;	/* Entry on zombie list.  */
 
-	struct proc *l_proc;	/* Process which with we are associated. */
+	struct proc *l_proc;	/* Process with which we are associated. */
 
 	LIST_ENTRY(lwp) l_sibling;	/* Entry on process's list of LWPs. */
 
