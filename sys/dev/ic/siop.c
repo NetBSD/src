@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.32 2000/10/18 20:06:54 bouyer Exp $	*/
+/*	$NetBSD: siop.c,v 1.33 2000/10/19 07:22:06 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -1843,7 +1843,8 @@ siop_add_reselsw(sc, target)
 			    0x800c0080 | target);
 			siop_script_write(sc, sc->targets[target]->reseloff + 1,
 			    sc->sc_scriptaddr +
-			    sc->targets[target]->lunsw->lunsw_off * 4);
+			    sc->targets[target]->lunsw->lunsw_off * 4 +
+			    Ent_lun_switch_entry);
 			break;
 		}
 	}
