@@ -27,7 +27,7 @@
  *	exec.h - supplemental program/script execution
  *	----------------------------------------------
  *
- *	$Id: exec.c,v 1.3 2002/03/27 13:46:35 martin Exp $ 
+ *	$Id: exec.c,v 1.4 2002/04/17 15:27:15 drochner Exp $ 
  *
  * $FreeBSD$
  *
@@ -209,7 +209,7 @@ exec_answer(struct cfg_entry *cep)
 	u_char devicename[MAXPATHLEN];	
 	int pid;
 
-	snprintf(devicename, sizeof(devicename), "/dev/isdn%s%d", cep->usrdevicename, cep->usrdeviceunit);
+	snprintf(devicename, sizeof(devicename), "/dev/%s%d", cep->usrdevicename, cep->usrdeviceunit);
 
 	argv[0] = cep->answerprog;
 	argv[1] = "-D";
