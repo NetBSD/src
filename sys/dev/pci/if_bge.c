@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.48 2003/08/26 10:17:02 hannken Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.49 2003/08/27 23:13:50 fvdl Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.48 2003/08/26 10:17:02 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.49 2003/08/27 23:13:50 fvdl Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -1169,7 +1169,8 @@ bge_chipinit(sc)
 		 */
 		if (sc->bge_asicrev == BGE_ASICREV_BCM5704_A0 ||
 		    sc->bge_asicrev == BGE_ASICREV_BCM5704_A1 ||
-		    sc->bge_asicrev == BGE_ASICREV_BCM5704_A2) {
+		    sc->bge_asicrev == BGE_ASICREV_BCM5704_A2 ||
+		    sc->bge_asicrev == BGE_ASICREV_BCM5704_A3) {
 			dma_rw_ctl = BGE_PCI_READ_CMD|BGE_PCI_WRITE_CMD |
 			  /* should be 0x1f0000 */
 			  (0x7 << BGE_PCIDMARWCTL_RD_WAT_SHIFT) |
@@ -1750,6 +1751,10 @@ static const struct bge_revision {
 	{ BGE_ASICREV_BCM5704_A2,
   	  BGE_QUIRK_ONLY_PHY_1,
 	  "BCM5704 A2" },
+
+	{ BGE_ASICREV_BCM5704_A3,
+  	  BGE_QUIRK_ONLY_PHY_1,
+	  "BCM5704 A3" },
 
 	{ BGE_ASICREV_BCM5705_A1,
 	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_5705_CORE,
