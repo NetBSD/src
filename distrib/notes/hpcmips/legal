@@ -1,31 +1,32 @@
-.\"	$NetBSD: legal,v 1.2 2000/10/10 12:55:18 lukem Exp $
+.\"	$NetBSD: legal,v 1.3 2002/05/20 23:48:45 itojun Exp $
 .
+.It
 This product includes software developed by Frank van der Linden.
-.Pp
+.It
 This product includes software developed by Darrin Jewell.
-.Pp
+.It
 This product includes software developed by Anders Magnusson.
-.Pp
+.It
 This product includes software developed by Shin Takemura.
-.Pp
+.It
 This product includes software developed by Jason Thorpe.
-.Pp
+.It
 This product includes software developed by Izumi Tsutsui.
-.Pp
+.It
 This product includes software developed by Andy Doran.
-.Pp
+.It
 This product includes software developed by Matthias Drochner.
-.Pp
+.It
 This product includes software developed by Jun Ebihara.
-.Pp
+.It
 This product includes software developed by Enami Tsugutomo.
-.Pp
+.It
 This product includes software developed by Klaus Klein.
-.Pp
+.It
 This product includes software developed by SATO Kazumi.
-.Pp
+.It
 This product includes software developed by Takao Shinohara.
-.Pp
+.It
 This product includes software developed by UCHIYAMA Yasushi.
-.Pp
+.It
 This product includes software developed by Shuiciro URATA.
