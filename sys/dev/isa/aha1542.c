@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: aha1542.c,v 1.31 1994/06/13 18:54:41 mycroft Exp $
+ *	$Id: aha1542.c,v 1.32 1994/07/27 03:09:21 mycroft Exp $
  */
 
 /*
@@ -545,31 +545,27 @@ ahaprobe(parent, self, aux)
 	 */
 	aha->kv_phys_xor = (long int) aha ^ (KVTOPHYS(aha));
 
-#ifdef NEWCONFIG
 	/*
 	 * If it's there, put in it's interrupt vectors and dma channel
 	 */
-	if (ia->ia_irq == IRQUNK) {
-		ia->ia_irq = (1 << aha->aha_int);
-	} else {
+	if (ia->ia_irq != IRQUNK) {
 		if (ia->ia_irq != (1 << aha->aha_int)) {
-			printf("aha%d: irq mismatch, %x != %x\n",
-				aha->sc_dev.dv_unit, ia->ia_irq,
-				1 << aha->aha_int);
+			printf("aha%d: irq mismatch; kernel configured %d != board configured %d\n",
+				aha->sc_dev.dv_unit, ffs(ia->ia_irq) - 1,
+				aha->aha_int);
 			return 0;
 		}
-	}
+	} else
+		ia->ia_irq = (1 << aha->aha_int);
 
-	if (ia->ia_drq == DRQUNK) {
-		ia->ia_drq = aha->aha_dma;
-	} else {
+	if (ia->ia_drq != DRQUNK) {
 		if (ia->ia_drq != aha->aha_dma) {
-			printf("aha%d: drq mismatch, %x != %x\n",
+			printf("aha%d: drq mismatch; kernel configured %d != board configured %d\n",
 				aha->sc_dev.dv_unit, ia->ia_drq, aha->aha_dma);
 			return 0;
 		}
-	}
-#endif
+	} else
+		ia->ia_drq = aha->aha_dma;
 
 	ia->ia_msize = 0;
 	ia->ia_iosize = 4;
