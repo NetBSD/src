@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.60 1996/03/05 05:30:09 jtk Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.61 1996/04/03 23:25:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -195,6 +195,7 @@ struct vnodeopv_entry_desc spec_nfsv2nodeop_entries[] = {
 struct vnodeopv_desc spec_nfsv2nodeop_opv_desc =
 	{ &spec_nfsv2nodeop_p, spec_nfsv2nodeop_entries };
 
+#ifdef FIFO
 int (**fifo_nfsv2nodeop_p) __P((void *));
 struct vnodeopv_entry_desc fifo_nfsv2nodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
@@ -247,6 +248,7 @@ struct vnodeopv_entry_desc fifo_nfsv2nodeop_entries[] = {
 };
 struct vnodeopv_desc fifo_nfsv2nodeop_opv_desc =
 	{ &fifo_nfsv2nodeop_p, fifo_nfsv2nodeop_entries };
+#endif /* FIFO */
 
 /*
  * Global variables
@@ -2938,8 +2940,10 @@ nfs_print(v)
 
 	printf("tag VT_NFS, fileid %ld fsid 0x%lx",
 		np->n_vattr.va_fileid, np->n_vattr.va_fsid);
+#ifdef FIFO
 	if (vp->v_type == VFIFO)
 		fifo_printinfo(vp);
+#endif
 	printf("\n");
 	return (0);
 }
@@ -3253,6 +3257,7 @@ nfsspec_close(v)
 	return (VOCALL(spec_vnodeop_p, VOFFSET(vop_close), ap));
 }
 
+#ifdef FIFO
 /*
  * Read wrapper for fifos.
  */
@@ -3345,3 +3350,4 @@ nfsfifo_close(v)
 	}
 	return (VOCALL(fifo_vnodeop_p, VOFFSET(vop_close), ap));
 }
+#endif /* ! FIFO */
