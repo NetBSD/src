@@ -1,4 +1,4 @@
-/*	$NetBSD: becc.c,v 1.5 2003/05/30 18:38:02 thorpej Exp $	*/
+/*	$NetBSD: becc.c,v 1.6 2003/06/15 23:08:57 fvdl Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -201,6 +201,7 @@ becc_attach(struct becc_softc *sc)
 	pba.pba_iot = &sc->sc_pci_iot;
 	pba.pba_memt = &sc->sc_pci_memt;
 	pba.pba_dmat = &sc->sc_pci_dmat;
+	pba.pba_dmat64 = NULL;
 	pba.pba_pc = &sc->sc_pci_chipset;
 	pba.pba_bus = 0;
 	pba.pba_bridgetag = NULL;

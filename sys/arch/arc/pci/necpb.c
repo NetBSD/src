@@ -1,4 +1,4 @@
-/*	$NetBSD: necpb.c,v 1.14 2003/01/01 00:32:05 thorpej Exp $	*/
+/*	$NetBSD: necpb.c,v 1.15 2003/06/15 23:08:56 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -240,6 +240,7 @@ necpbattach(parent, self, aux)
 	pba.pba_iot = &sc->sc_ncp->nc_iot;
 	pba.pba_memt = &sc->sc_ncp->nc_memt;
 	pba.pba_dmat = &sc->sc_ncp->nc_dmat;
+	pba.pba_dmat64 = NULL;
 	pba.pba_pc = &sc->sc_ncp->nc_pc;
 	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
 	pba.pba_bus = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.5 2003/03/29 22:07:14 scw Exp $	*/
+/*	$NetBSD: bus.h,v 1.6 2003/06/15 23:09:05 fvdl Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -910,6 +910,8 @@ struct sh5_bus_dma_tag;
 struct sh5_bus_dmamap;
 typedef const struct sh5_bus_dma_tag *bus_dma_tag_t;
 typedef struct sh5_bus_dmamap *bus_dmamap_t;
+
+#define BUS_DMA_TAG_VALID(t)    ((t) != (bus_dma_tag_t)0)
 
 /*
  *	bus_dma_segment_t

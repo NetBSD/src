@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.29 2003/01/28 01:07:56 kent Exp $	*/
+/*	$NetBSD: bus.h,v 1.30 2003/06/15 23:08:57 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -573,6 +573,8 @@ struct uio;
 
 typedef struct atari_bus_dma_tag	*bus_dma_tag_t;
 typedef struct atari_bus_dmamap		*bus_dmamap_t;
+
+#define BUS_DMA_TAG_VALID(t)    ((t) != (bus_dma_tag_t)0)
 
 /*
  *	bus_dma_segment_t

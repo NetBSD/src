@@ -1,4 +1,4 @@
-/*	$NetBSD: macepci.c,v 1.10 2003/01/19 23:08:54 rafal Exp $	*/
+/*	$NetBSD: macepci.c,v 1.11 2003/06/15 23:09:05 fvdl Exp $	*/
 
 /*
  * Copyright (c) 2001 Christopher Sekiya
@@ -185,6 +185,7 @@ macepci_attach(parent, self, aux)
 /*XXX*/	pba.pba_iot = 4;
 /*XXX*/	pba.pba_memt = 2;
 	pba.pba_dmat = &pci_bus_dma_tag;
+	pba.pba_dmat64 = NULL;
 	pba.pba_bus = 0;
 	pba.pba_bridgetag = NULL;
 	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED |
