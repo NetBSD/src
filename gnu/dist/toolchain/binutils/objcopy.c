@@ -237,8 +237,8 @@ static boolean weaken = false;
 #define OPTION_STRIP_UNNEEDED (OPTION_SET_START + 1)
 #define OPTION_WEAKEN (OPTION_STRIP_UNNEEDED + 1)
 #define OPTION_REDEFINE_SYM (OPTION_WEAKEN + 1)
-#define OPTION_REDEFINE_SYMS_FILE (OPTION_REDEFINE_SYM + 1)
-#define OPTION_SREC_LEN (OPTION_REDEFINE_SYMS_FILE + 1)
+#define OPTION_REDEFINE_SYMS (OPTION_REDEFINE_SYM + 1)
+#define OPTION_SREC_LEN (OPTION_REDEFINE_SYMS + 1)
 #define OPTION_SREC_FORCES3 (OPTION_SREC_LEN + 1)
 #define OPTION_STRIP_SYMBOLS (OPTION_SREC_FORCES3 + 1)
 #define OPTION_KEEP_SYMBOLS (OPTION_STRIP_SYMBOLS + 1)
@@ -326,7 +326,7 @@ static struct option copy_options[] =
   {"weaken", no_argument, 0, OPTION_WEAKEN},
   {"weaken-symbol", required_argument, 0, 'W'},
   {"redefine-sym", required_argument, 0, OPTION_REDEFINE_SYM},
-  {"redefine-syms-file", required_argument, 0, OPTION_REDEFINE_SYMS_FILE},
+  {"redefine-syms", required_argument, 0, OPTION_REDEFINE_SYMS},
   {"srec-len", required_argument, 0, OPTION_SREC_LEN},
   {"srec-forceS3", no_argument, 0, OPTION_SREC_FORCES3},
   {"keep-symbols", required_argument, 0, OPTION_KEEP_SYMBOLS},
@@ -411,7 +411,8 @@ copy_usage (stream, exit_status)
      --change-leading-char         Force output format's leading character style\n\
      --remove-leading-char         Remove leading character from global symbols\n\
      --redefine-sym <old>=<new>    Redefine symbol name <old> to <new>\n\
-     --redefine-syms-file <file>   Use <file> as a list of symbol redefinitions\n\
+     --redefine-syms <file>        --redefine-sym for all symbol pairs \n\
+                                     listed in <file>\n\
      --srec-len <number>           Restrict the length of generated Srecords\n\
      --srec-forceS3                Restrict the type of generated Srecords to S3\n\
      --strip-symbols <file>        -N for all symbols listed in <file>\n\
@@ -908,7 +909,7 @@ redefine_list_append (cause, source, target)
   *p = new_node;
 }
 
-/* Handle the --redefine-syms-file option.  Read lines conataining "old new"
+/* Handle the --redefine-syms option.  Read lines conataining "old new"
    from the file, and add them to the symbol redefine list.  */
 void
 add_redefine_syms_file (filename)
@@ -2517,7 +2518,7 @@ copy_main (argc, argv)
 	  }
 	  break;
 
-	case OPTION_REDEFINE_SYMS_FILE:
+	case OPTION_REDEFINE_SYMS:
 	  add_redefine_syms_file (optarg);
 	  break;
 
