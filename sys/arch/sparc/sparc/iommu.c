@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.42 2000/05/28 20:55:54 pk Exp $ */
+/*	$NetBSD: iommu.c,v 1.43 2000/05/29 20:41:10 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -171,11 +171,14 @@ iommu_attach(parent, self, aux)
 #if defined(SUN4M)
 	struct iommu_softc *sc = (struct iommu_softc *)self;
 	struct mainbus_attach_args *ma = aux;
-	int node;
 	bus_space_handle_t bh;
+	int node;
 	int i, s;
-	extern u_int *kernel_iopte_table;
-	extern u_int kernel_iopte_table_pa;
+	u_int iopte_table_pa;
+	struct pglist mlist;
+	u_int size;
+	vm_page_t m;
+	vaddr_t va;
 
 	iommu_sc = sc;
 	/*
@@ -188,14 +191,10 @@ iommu_attach(parent, self, aux)
 	}
 	node = ma->ma_node;
 
-#if 0
-	if (ra->ra_vaddr)
-		sc->sc_reg = (struct iommureg *)ca->ca_ra.ra_vaddr;
-#else
 	/*
 	 * Map registers into our space. The PROM may have done this
 	 * already, but I feel better if we have our own copy. Plus, the
-	 * prom doesn't map the entire register set
+	 * prom doesn't map the entire register set.
 	 *
 	 * XXX struct iommureg is bigger than ra->ra_len; what are the
 	 *     other fields for?
@@ -212,7 +211,6 @@ iommu_attach(parent, self, aux)
 		return;
 	}
 	sc->sc_reg = (struct iommureg *)bh;
-#endif
 
 	sc->sc_hasiocache = node_has_property(node, "cache-coherence?");
 	if (CACHEINFO.c_enabled == 0) /* XXX - is this correct? */
@@ -222,18 +220,36 @@ iommu_attach(parent, self, aux)
 	sc->sc_pagesize = getpropint(node, "page-size", NBPG),
 
 	/*
-	 * Now we build our own copy of the IOMMU page tables. We need to
-	 * do this since we're going to change the range to give us 64M of
-	 * DVMA space (starting at 0xfd000000).
+	 * Allocate memory for I/O pagetables.
+	 * This takes 64K of contiguous physical memory to map 64M of
+	 * DVMA space (starting at IOMMU_DVMA_BASE).
+	 * The table must be aligned on a (-IOMMU_DVMA_BASE/pagesize)
+	 * boundary (i.e. 64K for 64M of DVMA space).
 	 */
-	sc->sc_ptes = (iopte_t *) kernel_iopte_table;
 
-	/*
-	 * Now discache the page tables so that the IOMMU sees our
-	 * changes.
-	 */
-	kvm_uncache((caddr_t)sc->sc_ptes,
-	    (((0 - IOMMU_DVMA_BASE)/sc->sc_pagesize) * sizeof(iopte_t)) / NBPG);
+	size = ((0 - IOMMU_DVMA_BASE) / sc->sc_pagesize) * sizeof(iopte_t);
+	TAILQ_INIT(&mlist);
+	if (uvm_pglistalloc(size, vm_first_phys, vm_first_phys+vm_num_phys,
+			    size, 0, &mlist, 1, 0) != 0)
+		panic("iommu_attach: no memory");
+
+	va = uvm_km_valloc(kernel_map, size);
+	if (va == 0)
+		panic("iommu_attach: no memory");
+
+	sc->sc_ptes = (iopte_t *)va;
+
+	m = TAILQ_FIRST(&mlist);
+	iopte_table_pa = VM_PAGE_TO_PHYS(m);
+
+	/* Map the pages */
+	for (; m != NULL; m = TAILQ_NEXT(m,pageq)) {
+		paddr_t pa = VM_PAGE_TO_PHYS(m);
+		pmap_enter(pmap_kernel(), va, pa | PMAP_NC,
+		    VM_PROT_READ|VM_PROT_WRITE,
+		    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
+		va += NBPG;
+	}
 
 	/*
 	 * Copy entries from current IOMMU table.
@@ -255,9 +271,10 @@ iommu_attach(parent, self, aux)
 	s = splhigh();
 	IOMMU_FLUSHALL(sc);
 
+	/* Load range and physical address of PTEs */
 	sc->sc_reg->io_cr = (sc->sc_reg->io_cr & ~IOMMU_CTL_RANGE) |
 			  (i << IOMMU_CTL_RANGESHFT) | IOMMU_CTL_ME;
-	sc->sc_reg->io_bar = (kernel_iopte_table_pa >> 4) & IOMMU_BAR_IBA;
+	sc->sc_reg->io_bar = (iopte_table_pa >> 4) & IOMMU_BAR_IBA;
 
 	IOMMU_FLUSHALL(sc);
 	splx(s);
