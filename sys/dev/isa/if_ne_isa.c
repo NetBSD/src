@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_isa.c,v 1.15 2002/10/02 02:09:18 thorpej Exp $	*/
+/*	$NetBSD: if_ne_isa.c,v 1.16 2002/10/02 03:10:48 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_isa.c,v 1.15 2002/10/02 02:09:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_isa.c,v 1.16 2002/10/02 03:10:48 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,7 +80,7 @@ struct ne_isa_softc {
 };
 
 CFATTACH_DECL(ne_isa, sizeof(struct ne_isa_softc),
-	ne_isa_match, ne_isa_attach, NULL, NULL);
+    ne_isa_match, ne_isa_attach, NULL, NULL);
 
 int
 ne_isa_match(parent, match, aux)

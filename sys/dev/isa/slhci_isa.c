@@ -1,4 +1,4 @@
-/*	$NetBSD: slhci_isa.c,v 1.3 2002/10/02 02:09:20 thorpej Exp $	*/
+/*	$NetBSD: slhci_isa.c,v 1.4 2002/10/02 03:10:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Kiyoshi Ikehara. All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: slhci_isa.c,v 1.3 2002/10/02 02:09:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: slhci_isa.c,v 1.4 2002/10/02 03:10:50 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,7 +63,7 @@ static int  slhci_isa_match(struct device *, struct cfdata *, void *);
 static void slhci_isa_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(slhci_isa, sizeof(struct slhci_isa_softc),
-	slhci_isa_match, slhci_isa_attach, NULL, NULL);
+    slhci_isa_match, slhci_isa_attach, NULL, NULL);
 
 static int
 slhci_isa_match(struct device *parent, struct cfdata *cf, void *aux)
