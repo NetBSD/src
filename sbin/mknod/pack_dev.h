@@ -1,4 +1,4 @@
-/*	$NetBSD: mknod.h,v 1.1 2001/10/08 04:20:44 lukem Exp $	*/
+/*	$NetBSD: pack_dev.h,v 1.1 2001/10/08 04:45:30 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -36,12 +36,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef	_MKNOD_H
-#define	_MKNOD_H
+#ifndef	_PACK_DEV_H
+#define	_PACK_DEV_H
 
 typedef	dev_t pack_t(int, u_long []);
 
-pack_t	*find_format(const char *);
+pack_t	*pack_find(const char *);
 pack_t	 pack_native;
 
-#endif	/* _MKNOD_H */
+#endif	/* _PACK_DEV_H */

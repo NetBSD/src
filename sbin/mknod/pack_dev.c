@@ -1,4 +1,4 @@
-/*	$NetBSD: format.c,v 1.1 2001/10/08 04:20:44 lukem Exp $	*/
+/*	$NetBSD: pack_dev.c,v 1.1 2001/10/08 04:45:30 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: format.c,v 1.1 2001/10/08 04:20:44 lukem Exp $");
+__RCSID("$NetBSD: pack_dev.c,v 1.1 2001/10/08 04:45:30 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -51,8 +51,19 @@ __RCSID("$NetBSD: format.c,v 1.1 2001/10/08 04:20:44 lukem Exp $");
 #include <unistd.h>
 #include <string.h>
 
-#include "mknod.h"
+#include "pack_dev.h"
 
+static	pack_t	pack_netbsd;
+static	pack_t	pack_freebsd;
+static	pack_t	pack_8_8;
+static	pack_t	pack_12_20;
+static	pack_t	pack_14_18;
+static	pack_t	pack_8_24;
+static	pack_t	pack_bsdos;
+static	int	compare_format(const void *, const void *);
+
+
+	/* exported */
 dev_t
 pack_native(int n, u_long numbers[])
 {
@@ -77,9 +88,7 @@ pack_native(int n, u_long numbers[])
 					 (((y) << 12) & 0xfff00000) | \
 					 (((y) <<  0) & 0x000000ff)))
 
-pack_t pack_netbsd;
-
-dev_t
+static dev_t
 pack_netbsd(int n, u_long numbers[])
 {
 	dev_t dev;
@@ -101,9 +110,7 @@ pack_netbsd(int n, u_long numbers[])
 #define	makedev_freebsd(x,y)	((dev_t)((((x) << 8) & 0x0000ff00) | \
 					 (((y) << 0) & 0xffff00ff)))
 
-pack_t pack_freebsd;
-
-dev_t
+static dev_t
 pack_freebsd(int n, u_long numbers[])
 {
 	dev_t dev;
@@ -125,9 +132,7 @@ pack_freebsd(int n, u_long numbers[])
 #define	makedev_8_8(x,y)	((dev_t)((((x) << 8) & 0x0000ff00) | \
 					 (((y) << 0) & 0x000000ff)))
 
-pack_t pack_8_8;
-
-dev_t
+static dev_t
 pack_8_8(int n, u_long numbers[])
 {
 	dev_t dev;
@@ -149,9 +154,7 @@ pack_8_8(int n, u_long numbers[])
 #define	makedev_12_20(x,y)	((dev_t)((((x) << 20) & 0xfff00000) | \
 					 (((y) <<  0) & 0x000fffff)))
 
-pack_t pack_12_20;
-
-dev_t
+static dev_t
 pack_12_20(int n, u_long numbers[])
 {
 	dev_t dev;
@@ -173,9 +176,7 @@ pack_12_20(int n, u_long numbers[])
 #define	makedev_14_18(x,y)	((dev_t)((((x) << 18) & 0xfffc0000) | \
 					 (((y) <<  0) & 0x0003ffff)))
 
-pack_t pack_14_18;
-
-dev_t
+static dev_t
 pack_14_18(int n, u_long numbers[])
 {
 	dev_t dev;
@@ -197,9 +198,7 @@ pack_14_18(int n, u_long numbers[])
 #define	makedev_8_24(x,y)	((dev_t)((((x) << 24) & 0xff000000) | \
 					 (((y) <<  0) & 0x00ffffff)))
 
-pack_t pack_8_24;
-
-dev_t
+static dev_t
 pack_8_24(int n, u_long numbers[])
 {
 	dev_t dev;
@@ -223,9 +222,7 @@ pack_8_24(int n, u_long numbers[])
 					 (((y) <<  8) & 0x000fff00) | \
 					 (((z) <<  0) & 0x000000ff)))
 
-pack_t pack_bsdos;
-
-dev_t
+static dev_t
 pack_bsdos(int n, u_long numbers[])
 {
 	dev_t dev;
@@ -250,6 +247,8 @@ pack_bsdos(int n, u_long numbers[])
 }
 
 
+		/* list of formats and pack functions */
+		/* this list must be sorted lexically */
 struct format {
 	const char	*name;
 	pack_t		*pack;
@@ -272,9 +271,7 @@ struct format {
 	{"ultrix",  pack_8_8},
 };
 
-int compare_format(const void *, const void *);
-
-int
+static int
 compare_format(const void *key, const void *element)
 {
 	const char		*name;
@@ -288,7 +285,7 @@ compare_format(const void *key, const void *element)
 
 
 pack_t *
-find_format(const char *name)
+pack_find(const char *name)
 {
 	struct format	*format;
 
