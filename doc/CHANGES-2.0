@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.442 2004/09/11 18:34:12 he Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.443 2004/09/11 22:07:47 he Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -7301,3 +7301,9 @@ sys/dev/ic/wdc.c				patch
 	Otherwise, the queue stays frozen after the reset.
 	Should fix PR#26873 and PR#26910.
 	[bouyer, ticket #840]
+
+sys/kern/uipc_mbuf.c				1.87
+
+	Restore behaviour of m_split() on M_PKTHDR which was
+	unintentionally changed when m_copyback_cow() was added.
+	[yamt, ticket #841]
