@@ -1,16 +1,10 @@
-#	$NetBSD: std.hp300,v 1.3 1998/05/04 05:01:30 thorpej Exp $
+#	$NetBSD: std.hp300,v 1.4 1999/03/24 06:06:10 mrg Exp $
 #
 # Options/devices that all hp300s should have
 #
 
 machine hp300 m68k
 
-# XXX Not with UVM: garbage-collect these eventually.
-options 	SWAPPAGER	# swap pager (anonymous and swap space)
-options 	VNODEPAGER	# vnode pager (mapped files)
-options 	DEVPAGER	# device pager (mapped devices)
-
-options 	UVM		# New UVM VM system
 #options 	PMAP_NEW	# UVM's new pmap interface
 
 options 	EXEC_AOUT	# support for exec'ing a.out

@@ -1,16 +1,10 @@
-#	$NetBSD: std.mvme68k,v 1.4 1998/05/04 05:00:12 thorpej Exp $
+#	$NetBSD: std.mvme68k,v 1.5 1999/03/24 06:06:10 mrg Exp $
 #
 # Options/devices that all mvme68ks should have
 #
 
 machine mvme68k m68k
 
-# XXX Not with UVM: garbage-collect these eventually
-options 	SWAPPAGER	# swap pager (anonymous and swap space)
-options 	VNODEPAGER	# vnode pager (mapped files)
-options 	DEVPAGER	# device pager (mapped devices)
-
-options 	UVM		# New UVM VM system
 #options 	PMAP_NEW	# UVM's new pmap interface
 
 options 	EXEC_AOUT	# support for exec'ing a.out
