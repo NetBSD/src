@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mc,v 1.1.1.1 1997/09/26 17:54:10 phil Exp $	*/
+/*	$NetBSD: menus.mc,v 1.2 1997/11/09 20:59:20 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -43,6 +43,9 @@
 }
 
 default x=20, y=10;
+
+error action { fprintf (stderr, "Testm: Could not initialize curses.\n");
+	       exit(1); };
 
 menu root, title "  Main Menu of Test System";
 	option  "Do nothing option", 
