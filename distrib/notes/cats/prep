@@ -1,25 +1,66 @@
-.\"	$NetBSD: prep,v 1.1 2002/04/02 11:36:35 skrll Exp $
+.\"	$NetBSD: prep,v 1.1.2.1 2002/06/29 08:02:41 lukem Exp $
 .
-First and foremost, before beginning the installation process,
-.Em make sure you have a reliable backup
-of any data on your hard disk that you
-wish to keep. Repartitioning your hard disk is an excellent way to
-destroy important data.
+A \*M machine usually needs little or no preparation before installing
+.Nx ,
+other than the usual, well advised precaution of
+.Em backing up all data
+on any attached storage devices.
 .Pp
-Second, read and perform the instructions in
-.Pa \*M/ Ns Ar platform Ns Pa /prep
-that are specific to your platform for partitioning and booting (even if you're
-dedicating a device to
-.Nx ) .
+.
+.Ss2 Available Boot Media
+.
+Currently the \*M Cyclone firmware allows for system booting using:
+.(bullet -compact
+Ethernet (netboot) using DHCP, BOOTP, TFTP, or NFS.
+.It
+Local harddisk or CD ROM with the following file systems:
+.(bullet -compact
+Berkeley FFS
+.It
+Lunux ext2
+.It
+ISO9660 CD-ROM filesystem
+.It
+MS-DOS filesystem
+.bullet)
+.bullet)
 .Pp
-Finally, when you are happy with your
+Booting from floppy disk is not currently supported.
+.
+.Ss2 Preparing the Bootable Media
+.
+This section desribes how to get a
+.Nx /\*M
+install kernel onto a CD-R.
+.Pp
+Go to one of the
 .Nx
-installation, do whatever
-is necessary to restore order to the partition you took space away from.
-This will most likely involve restoring files, but might involve some
-other
-.Dq house-work .
+mirror sites and download CD-R image from the
+.Pa pub/NetBSD/iso
+directory.
+.Lk http://www.netbsd.org/mirrors/#iso
 .Pp
-Your hard disk is now prepared to have
-.Nx
-installed on it, and you should proceed with the installation instructions.
+Get and install cdrecord. This is available in the packages collection
+under pkgsrc/sysutils/cdrecord. Systems not supported by the packages
+collection should get it from the official website:
+.br
+.Lk ftp://ftp.netbsd.org/pub/NetBSD/packages/pkgsrc/sysutils/cdrecord/README.html
+.br
+.Lk http://www.fokus.gmd.de/research/cc/glone/employees/joerg.schilling/private/cdrecord.html
+.Pp
+.(disp
+.No # Ic "cdrecord -v speed=4 dev=/dev/cd1d output.iso"
+.disp)
+.Pp
+You will need to substitute the correct name of the disk image file,
+speed for your CD writer, and the
+correct device for your system (for i386 it would be
+.Pa /dev/cd1d No Ns ).
+.
+.Ss2 Booting from CD-ROM
+.
+To boot from a CD-ROM simply issue the following command
+.Pp
+.(disp
+.No boot> Ic "boot cd0:/netbsd"
+.disp)
