@@ -1,4 +1,4 @@
-.\"	$NetBSD: yp.8,v 1.10 1996/08/09 14:40:28 thorpej Exp $
+.\"	$NetBSD: yp.8,v 1.11 1997/01/05 09:40:26 cjs Exp $
 .\"
 .\" Copyright (c) 1992/3 Theo de Raadt <deraadt@fsa.ca>
 .\" All rights reserved.
@@ -94,6 +94,14 @@
 .Op Fl C Ar tid prog ipadd port
 .Ar mapname
 .Pp
+.Nm ypinit
+.Fl m
+.Op Ar domainname
+.Nm ypinit
+.Fl s
+.Ar master_server
+.Op Ar domainname
+.Pp
 .Nm yptest
 .Pp
 .Nm rpc.yppasswdd
@@ -142,7 +150,8 @@ it hangs.
 .Xr ypwhich 1 ,
 .Xr ypserv 8 ,
 .Xr yppush 8 ,
-.Xr ypxfr 8 .
+.Xr ypxfr 8 ,
+.Xr ypinit 8 ,
 .Xr yptest 8 ,
 .Xr ypclnt 3
 .Sh HISTORY
