@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.24 2002/03/17 17:02:45 thorpej Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.25 2002/05/09 15:44:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1984, 1993
@@ -76,6 +76,15 @@ struct reg;
 #if defined(PT_GETFPREGS) || defined(PT_SETFPREGS)
 struct fpreg;
 #endif
+
+int	process_doregs __P((struct proc *, struct proc *, struct uio *));
+int	process_validregs __P((struct proc *));
+
+int	process_dofpregs __P((struct proc *, struct proc *, struct uio *));
+int	process_validfpregs __P((struct proc *));
+
+int	process_domem __P((struct proc *, struct proc *, struct uio *));
+int	process_checkioperm __P((struct proc *, struct proc *));
 
 void	proc_reparent __P((struct proc *child, struct proc *newparent));
 #ifdef PT_GETFPREGS
