@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.33 2001/02/20 15:54:29 minoura Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.34 2001/02/21 12:39:17 minoura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -212,7 +212,7 @@ pagemove(from, to, size)
 	boolean_t rv;
 
 #ifdef DEBUG
-	if (size & PGOFSET)
+	if (m68k_page_offset(size))
 		panic("pagemove");
 #endif
 	while (size > 0) {
