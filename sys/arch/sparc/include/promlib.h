@@ -1,4 +1,4 @@
-/*	$NetBSD: promlib.h,v 1.17 2004/03/18 15:13:59 pk Exp $ */
+/*	$NetBSD: promlib.h,v 1.18 2004/03/21 13:52:00 pk Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -126,9 +126,9 @@ extern struct promops	promops;
  * Same as version 2 rom meminfo property.
  */
 struct memarr {
-	int	zero;
-	u_int	addr;
-	u_int	len;
+	long	zero;
+	u_long	addr;
+	u_long	len;
 };
 int	prom_makememarr(struct memarr *, int max, int which);
 #define	MEMARR_AVAILPHYS	0
