@@ -1,5 +1,5 @@
-/*	$NetBSD: ping6.c,v 1.22 2000/10/12 10:35:48 itojun Exp $	*/
-/*	$KAME: ping6.c,v 1.93 2000/10/12 10:27:00 itojun Exp $	*/
+/*	$NetBSD: ping6.c,v 1.23 2000/11/08 12:05:09 itojun Exp $	*/
+/*	$KAME: ping6.c,v 1.99 2000/11/08 09:55:45 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -81,7 +81,7 @@ static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping6.c,v 1.22 2000/10/12 10:35:48 itojun Exp $");
+__RCSID("$NetBSD: ping6.c,v 1.23 2000/11/08 12:05:09 itojun Exp $");
 #endif
 #endif
 
@@ -222,6 +222,7 @@ char *hostname;
 int ident;			/* process id to identify our packets */
 u_int8_t nonce[8];		/* nonce field for node information */
 struct in6_addr srcaddr;
+int hoplimit = -1;		/* hoplimit */
 
 /* counters */
 long npackets;			/* max packets to transmit */
@@ -229,7 +230,6 @@ long nreceived;			/* # of packets we got back */
 long nrepeats;			/* number of duplicates */
 long ntransmitted;		/* sequence # for outbound packets = #sent */
 struct timeval interval = {1, 0}; /* interval between packets */
-int hoplimit = -1;		/* hoplimit */
 
 /* timing */
 int timing;			/* flag to do timing */
@@ -566,10 +566,12 @@ main(argc, argv)
 	if (options & F_FLOOD && options & F_INTERVAL)
 		errx(1, "-f and -i incompatible options");
 
-	if ((options & F_NOUSERDATA) == 0 &&
-	    datalen >= sizeof(struct timeval)) {
-		/* can we time transfer */
-		timing = 1;
+	if ((options & F_NOUSERDATA) == 0) {
+		if (datalen >= sizeof(struct timeval)) {
+			/* we can time transfer */
+			timing = 1;
+		} else
+			timing = 0;
 	} else {
 		/* suppress timing for node information query */
 		timing = 0;
@@ -1555,8 +1557,8 @@ pr_ip6opt(void *extbuf)
 
 	ext = (struct ip6_hbh *)extbuf;
 	extlen = (ext->ip6h_len + 1) * 8;
-	printf("nxt %u, len %u (%d bytes)\n", ext->ip6h_nxt,
-	       ext->ip6h_len, extlen);
+	printf("nxt %u, len %u (%lu bytes)\n", ext->ip6h_nxt,
+	       (unsigned int)ext->ip6h_len, (unsigned long)extlen);
 
 	currentlen = 0;
 	while (1) {
@@ -1584,7 +1586,8 @@ pr_ip6opt(void *extbuf)
 			       ntohs(value2));
 			break;
 		default:
-			printf("    Received Opt %u len %u\n", type, len);
+			printf("    Received Opt %u len %lu\n",
+			       type, (unsigned long)len);
 			break;
 		}
 	}
@@ -1792,6 +1795,7 @@ summary()
 #endif
 		(void)fflush(stdout);
 	}
+	(void)fflush(stdout);
 }
 
 /*subject type*/
