@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_misc.c,v 1.26 1999/04/27 17:50:59 cgd Exp $ */
+/* $NetBSD: osf1_misc.c,v 1.27 1999/04/27 17:56:52 cgd Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -1056,11 +1056,9 @@ cvtrusage2osf1(ru, oru)
 {
 	oru->ru_utime.tv_sec = ru->ru_utime.tv_sec;
 	oru->ru_utime.tv_usec = ru->ru_utime.tv_usec;
-	printf("ru_ut: %ld.%ld\n", ru->ru_utime.tv_sec, ru->ru_utime.tv_usec);
 
 	oru->ru_stime.tv_sec = ru->ru_stime.tv_sec;
 	oru->ru_stime.tv_usec = ru->ru_stime.tv_usec;
-	printf("ru_st: %ld.%ld\n", ru->ru_stime.tv_sec, ru->ru_stime.tv_usec);
 
 	oru->ru_maxrss = ru->ru_maxrss;
 	oru->ru_ixrss = ru->ru_ixrss;
