@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.44 2002/10/21 04:14:53 lukem Exp $
+#	$NetBSD: MAKEDEV,v 1.45 2002/11/28 16:56:26 hamajima Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -105,6 +105,7 @@
 #	audio*	audio devices
 #	systrace syscall tracer
 #	apm	power management device
+#	midi*	MIDI
 #
 
 dialin=0
@@ -149,6 +150,7 @@ all)
 	makedev audio
 	makedev systrace
 	makedev apm
+	makedev music rmidi0 rmidi1 rmidi2 rmidi3 rmidi4 rmidi5 rmidi6 rmidi7
 #	makedev local
 	;;
 
@@ -660,6 +662,27 @@ apm*)
 	mknod apm c 51 0
 	mknod apmctl c 51 8
 	chmod 644 apm apmctl
+	;;
+
+rmidi*)
+	unit=${i#rmidi}
+	major=52
+	rmidi=rmidi$unit
+	rm -f $rmidi
+	mknod $rmidi c $major $unit
+	chmod 666 $rmidi
+	;;
+
+music*)
+	unit=${i#music}
+	music=music$unit
+	sequencer=sequencer$unit
+	major=53
+	if [ "$unit" = "" ]; then unit=0; fi
+	rm -f $sequencer $music
+	mknod $music     c $major $(($unit + 0))
+	mknod $sequencer c $major $(($unit + 128))
+	chmod 666 $music $sequencer
 	;;
 
 local)
