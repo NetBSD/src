@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_src.c,v 1.9 2001/11/13 00:57:00 lukem Exp $	*/
+/*	$NetBSD: in6_src.c,v 1.10 2002/01/22 03:53:56 itojun Exp $	*/
 /*	$KAME: in6_src.c,v 1.36 2001/02/06 04:08:17 itojun Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.9 2001/11/13 00:57:00 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.10 2002/01/22 03:53:56 itojun Exp $");
 
 #include "opt_inet.h"
 
@@ -240,10 +240,13 @@ in6_selectsrc(dstsock, opts, mopts, ro, laddr, errorp)
 	/*
 	 * If route is known or can be allocated now,
 	 * our src addr is taken from the i/f, else punt.
+	 * Note that we should check the address family of the
+	 * cached destination, in case of sharing the cache with IPv4. 
 	 */
 	if (ro) {
 		if (ro->ro_rt &&
-		    !IN6_ARE_ADDR_EQUAL(&satosin6(&ro->ro_dst)->sin6_addr, dst)) {
+		    (ro->ro_dst.sin6_family != AF_INET6 ||
+		     !IN6_ARE_ADDR_EQUAL(&satosin6(&ro->ro_dst)->sin6_addr, dst))) {
 			RTFREE(ro->ro_rt);
 			ro->ro_rt = (struct rtentry *)0;
 		}

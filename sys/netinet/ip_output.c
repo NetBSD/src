@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.91 2002/01/08 10:05:13 itojun Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.92 2002/01/22 03:53:55 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.91 2002/01/08 10:05:13 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.92 2002/01/22 03:53:55 itojun Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_ipsec.h"
@@ -235,13 +235,17 @@ ip_output(m0, va_alist)
 	 * If there is a cached route,
 	 * check that it is to the same destination
 	 * and is still up.  If not, free it and try again.
+	 * The address family should also be checked in case of sharing the
+	 * cache with IPv6.
 	 */
 	if (ro->ro_rt && ((ro->ro_rt->rt_flags & RTF_UP) == 0 ||
+	    dst->sin_family != AF_INET ||
 	    !in_hosteq(dst->sin_addr, ip->ip_dst))) {
 		RTFREE(ro->ro_rt);
 		ro->ro_rt = (struct rtentry *)0;
 	}
 	if (ro->ro_rt == 0) {
+		bzero(dst, sizeof(*dst));
 		dst->sin_family = AF_INET;
 		dst->sin_len = sizeof(*dst);
 		dst->sin_addr = ip->ip_dst;
