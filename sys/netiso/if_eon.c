@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eon.c,v 1.43 2004/04/19 05:16:45 matt Exp $	*/
+/*	$NetBSD: if_eon.c,v 1.44 2004/04/21 04:17:29 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -67,7 +67,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_eon.c,v 1.43 2004/04/19 05:16:45 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eon.c,v 1.44 2004/04/21 04:17:29 matt Exp $");
 
 #include "opt_eon.h"
 
@@ -276,7 +276,7 @@ eonrtrequest(int cmd, struct rtentry *rt, struct rt_addrinfo *info)
 	unsigned long   zerodst = 0;
 	caddr_t         ipaddrloc = (caddr_t) & zerodst;
 	struct eon_llinfo *el = (struct eon_llinfo *) rt->rt_llinfo;
-	struct sockaddr *gate;
+	const struct sockaddr *gate;
 
 	/*
 	 * Common Housekeeping
