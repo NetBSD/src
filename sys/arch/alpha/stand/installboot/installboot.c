@@ -1,4 +1,4 @@
-/* $NetBSD: installboot.c,v 1.2 1997/04/06 08:41:12 cgd Exp $ */
+/* $NetBSD: installboot.c,v 1.3 1997/11/01 06:49:14 lukem Exp $ */
 
 /*
  * Copyright (c) 1997 Christopher G. Demetriou.  All rights reserved.
@@ -89,7 +89,7 @@ main(argc, argv)
 	struct disklabel dl;
 	unsigned long partoffset;
 
-	while ((c = getopt(argc, argv, "vn")) != EOF) {
+	while ((c = getopt(argc, argv, "vn")) != -1) {
 		switch (c) {
 		case 'n':
 			/* Do not actually write the bootblock to disk */

@@ -1,4 +1,4 @@
-/*	$NetBSD: loadbsd.c,v 1.22 1996/10/13 13:39:52 is Exp $	*/
+/*	$NetBSD: loadbsd.c,v 1.23 1997/11/01 06:49:18 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -202,7 +202,7 @@ main(argc, argv)
 	if ((ExpansionBase=(void *)OpenLibrary(EXPANSIONNAME, 0)) == NULL)
 		err(20, "can't open expansion library");
 
-	while ((ch = getopt(argc, argv, "aAbc:DhI:km:n:ptsSVZ")) != EOF) {
+	while ((ch = getopt(argc, argv, "aAbc:DhI:km:n:ptsSVZ")) != -1) {
 		switch (ch) {
 		case 'k':
 			k_flag = 1;

@@ -91,7 +91,7 @@ main(int argc, char **argv)
 	int dflag = 0;
 	char *device;
 	
-	while( (c = getopt(argc, argv, "c:d:f:is:")) != EOF)
+	while( (c = getopt(argc, argv, "c:d:f:is:")) != -1)
 	{
 		switch(c)
 		{

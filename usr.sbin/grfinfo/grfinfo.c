@@ -19,12 +19,12 @@
  * improvements that they make and grant CSS redistribution rights.
  *
  * 	from: Utah $Hdr: grfinfo.c 1.3 94/04/04$
- *	$NetBSD: grfinfo.c,v 1.6 1997/10/17 15:44:08 carrel Exp $
+ *	$NetBSD: grfinfo.c,v 1.7 1997/11/01 06:54:11 lukem Exp $
  */
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: grfinfo.c,v 1.6 1997/10/17 15:44:08 carrel Exp $");
+__RCSID("$NetBSD: grfinfo.c,v 1.7 1997/11/01 06:54:11 lukem Exp $");
 #endif
 
 #include <sys/types.h>
@@ -65,7 +65,7 @@ main(argc, argv)
 {
 	int c;
 
-	while ((c = getopt(argc, argv, "at")) != EOF)
+	while ((c = getopt(argc, argv, "at")) != -1)
 		switch (c) {
 		/* everything */
 		case 'a':

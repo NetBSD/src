@@ -1,4 +1,4 @@
-/*	$NetBSD: kgmon.c,v 1.10 1997/10/23 12:35:12 enami Exp $	*/
+/*	$NetBSD: kgmon.c,v 1.11 1997/11/01 06:54:12 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1992, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1992, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)kgmon.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: kgmon.c,v 1.10 1997/10/23 12:35:12 enami Exp $");
+__RCSID("$NetBSD: kgmon.c,v 1.11 1997/11/01 06:54:12 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -96,7 +96,7 @@ main(int argc, char **argv)
 	seteuid(getuid());
 	kmemf = NULL;
 	system = NULL;
-	while ((ch = getopt(argc, argv, "M:N:bhpr")) != EOF) {
+	while ((ch = getopt(argc, argv, "M:N:bhpr")) != -1) {
 		switch((char)ch) {
 
 		case 'M':

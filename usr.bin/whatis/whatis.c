@@ -1,4 +1,4 @@
-/*	$NetBSD: whatis.c,v 1.7 1997/10/20 23:03:02 mikel Exp $	*/
+/*	$NetBSD: whatis.c,v 1.8 1997/11/01 06:51:50 lukem Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)whatis.c	8.5 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: whatis.c,v 1.7 1997/10/20 23:03:02 mikel Exp $");
+__RCSID("$NetBSD: whatis.c,v 1.8 1997/11/01 06:51:50 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -84,7 +84,7 @@ main(argc, argv)
 
 	conffile = NULL;
 	p_augment = p_path = NULL;
-	while ((ch = getopt(argc, argv, "C:M:m:P:")) != EOF)
+	while ((ch = getopt(argc, argv, "C:M:m:P:")) != -1)
 		switch (ch) {
 		case 'C':
 			conffile = optarg;

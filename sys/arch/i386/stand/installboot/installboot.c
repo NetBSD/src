@@ -1,4 +1,4 @@
-/* $NetBSD: installboot.c,v 1.4 1997/07/21 18:04:36 drochner Exp $	 */
+/* $NetBSD: installboot.c,v 1.5 1997/11/01 06:49:50 lukem Exp $	 */
 
 /*
  * Copyright (c) 1994 Paul Kranenburg
@@ -317,7 +317,7 @@ main(argc, argv)
 	int nowrite = 0;
 	int allok = 0;
 
-	while ((c = getopt(argc, argv, "vnf")) != EOF) {
+	while ((c = getopt(argc, argv, "vnf")) != -1) {
 		switch (c) {
 		case 'n':
 			/* Do not actually write the bootblock to disk */

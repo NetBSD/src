@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.1 1996/05/17 20:00:55 chuck Exp $ */
+/*	$NetBSD: installboot.c,v 1.2 1997/11/01 06:49:52 lukem Exp $ */
 
 /*
  * Copyright (c) 1994 Paul Kranenburg
@@ -89,7 +89,7 @@ main(argc, argv)
 	char	*protostore;
 	long	protosize;
 
-	while ((c = getopt(argc, argv, "vnh")) != EOF) {
+	while ((c = getopt(argc, argv, "vnh")) != -1) {
 		switch (c) {
 		case 'h':
 			/* Don't strip a.out header */

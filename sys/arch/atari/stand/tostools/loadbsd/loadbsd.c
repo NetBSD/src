@@ -1,4 +1,4 @@
-/*	$NetBSD: loadbsd.c,v 1.12 1997/05/27 10:28:47 leo Exp $	*/
+/*	$NetBSD: loadbsd.c,v 1.13 1997/11/01 06:49:22 lukem Exp $	*/
 
 /*
  * Copyright (c) 1995 L. Weppelman
@@ -52,7 +52,7 @@ int	s_flag  = 0;		/* St-ram only			*/
 int	t_flag  = 0;		/* Just test, do not execute	*/
 int	v_flag  = 0;		/* show version			*/
 
-const char version[] = "$Revision: 1.12 $";
+const char version[] = "$Revision: 1.13 $";
 
 /*
  * Default name of kernel to boot, large enough to patch
@@ -86,7 +86,7 @@ char	**argv;
 
 	kparam.boothowto = RB_SINGLE;
 
-	while ((ch = getopt(argc, argv, "abdhstVwDo:S:T:")) != EOF) {
+	while ((ch = getopt(argc, argv, "abdhstVwDo:S:T:")) != -1) {
 		switch (ch) {
 		case 'a':
 			kparam.boothowto &= ~(RB_SINGLE);

@@ -1,4 +1,4 @@
-/*	$NetBSD: crunchide.c,v 1.7 1997/08/08 11:08:10 hannken Exp $	*/
+/*	$NetBSD: crunchide.c,v 1.8 1997/11/01 06:51:45 lukem Exp $	*/
 /*
  * Copyright (c) 1997 Christopher G. Demetriou.  All rights reserved.
  * Copyright (c) 1994 University of Maryland
@@ -60,7 +60,7 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: crunchide.c,v 1.7 1997/08/08 11:08:10 hannken Exp $");
+__RCSID("$NetBSD: crunchide.c,v 1.8 1997/11/01 06:51:45 lukem Exp $");
 #endif
 
 #include <unistd.h>
@@ -96,7 +96,7 @@ char **argv;
 
     if(argc > 0) pname = argv[0];
 
-    while ((ch = getopt(argc, argv, "k:f:v")) != EOF)
+    while ((ch = getopt(argc, argv, "k:f:v")) != -1)
 	switch(ch) {
 	case 'k':
 	    add_to_keep_list(optarg);
