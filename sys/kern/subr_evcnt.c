@@ -1,4 +1,4 @@
-/* $NetBSD: subr_evcnt.c,v 1.1 2004/02/17 05:03:16 rtr Exp $ */
+/* $NetBSD: subr_evcnt.c,v 1.2 2004/02/17 08:22:12 tron Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,12 +77,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_evcnt.c,v 1.1 2004/02/17 05:03:16 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_evcnt.c,v 1.2 2004/02/17 08:22:12 tron Exp $");
 
 #include "opt_ddb.h"
 
 #include <sys/param.h>
 #include <sys/device.h>
+#include <sys/systm.h>
 
 /* list of all events */
 struct evcntlist allevents = TAILQ_HEAD_INITIALIZER(allevents);
