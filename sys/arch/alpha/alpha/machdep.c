@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.64 1997/01/31 01:41:37 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.65 1997/02/03 20:02:02 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -564,6 +564,15 @@ unknown_cputype:
 		case 'n': /* askname */
 		case 'N':
 			boothowto |= RB_ASKNAME;
+			break;
+
+		case 's': /* single-user (default, supported for sanity) */
+		case 'S':
+			boothowto |= RB_SINGLE;
+			break;
+
+		default:
+			printf("Unrecognized boot flag '%c'.\n", *p);
 			break;
 		}
 	}
