@@ -1,4 +1,4 @@
-/* $NetBSD: user.c,v 1.1 1999/12/06 21:31:47 agc Exp $ */
+/* $NetBSD: user.c,v 1.2 1999/12/06 22:29:02 simonb Exp $ */
 
 /*
  * Copyright © 1999 Alistair G. Crooks.  All rights reserved.
@@ -52,6 +52,13 @@
 #include "usermgmt.h"
 
 static int	verbose;
+
+static int	useradd __P((int, char **));
+static int	usermod __P((int, char **));
+static int	userdel __P((int, char **));
+static int	groupadd __P((int, char **));
+static int	groupdel __P((int, char **));
+static int	groupmod __P((int, char **));
 
 /* if *cpp is non-null, free it, then assign `n' chars of `s' to it */
 static void
@@ -572,16 +579,17 @@ adduser(char *login, user_t *up)
 	} else {
 		(void) memset(password, '*', PasswordLength);
 		if (up->u_password != (char *) NULL) {
-			warnx("Password `%s' is invalid: setting it to `%s'", password);
+			warnx("Password `%s' is invalid: setting it to `%s'",
+			    password, "*");
 		}
 	}
-	cc = snprintf(buf, sizeof(buf), "%s:%s:%d:%d::%d:%d:%s:%s:%s\n",
+	cc = snprintf(buf, sizeof(buf), "%s:%s:%d:%d::%d:%ld:%s:%s:%s\n",
 			login,
 			password,
 			up->u_uid,
 			gid,
 			up->u_inactive,
-			expire,
+			(long)expire,
 			up->u_comment,
 			home,
 			up->u_shell);
@@ -723,13 +731,13 @@ moduser(char *login, char *newlogin, user_t *up)
 		colonc = (size_t)(colon - buf);
 		if (strncmp(login, buf, loginc) == 0 && loginc == colonc) {
 			if (up != (user_t *) NULL) {
-				cc = snprintf(buf, sizeof(buf), "%s:%s:%d:%d::%d:%d:%s:%s:%s\n",
+				cc = snprintf(buf, sizeof(buf), "%s:%s:%d:%d::%d:%ld:%s:%s:%s\n",
 					newlogin,
 					password,
 					up->u_uid,
 					gid,
 					up->u_inactive,
-					expire,
+					(long)expire,
 					up->u_comment,
 					home,
 					up->u_shell);
@@ -792,7 +800,7 @@ extern char	*optarg;
 #define ADD_OPT_EXTENSIONS	
 #endif
 
-int
+static int
 useradd(int argc, char **argv)
 {
 	user_t	u;
@@ -899,7 +907,7 @@ useradd(int argc, char **argv)
 #define MOD_OPT_EXTENSIONS	
 #endif
 
-int
+static int
 usermod(int argc, char **argv)
 {
 	user_t	u;
@@ -973,7 +981,7 @@ usermod(int argc, char **argv)
 #define DEL_OPT_EXTENSIONS	
 #endif
 
-int
+static int
 userdel(int argc, char **argv)
 {
 	struct passwd	*pwp;
