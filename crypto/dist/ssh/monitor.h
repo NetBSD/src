@@ -1,5 +1,5 @@
-/*	$NetBSD: monitor.h,v 1.3 2002/10/01 14:07:33 itojun Exp $	*/
-/*	$OpenBSD: monitor.h,v 1.8 2002/09/26 11:38:43 markus Exp $	*/
+/*	$NetBSD: monitor.h,v 1.4 2003/07/23 03:52:17 itojun Exp $	*/
+/*	$OpenBSD: monitor.h,v 1.9 2003/07/22 13:35:22 markus Exp $	*/
 
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -50,7 +50,6 @@ enum monitor_reqtype {
 	MONITOR_REQ_RSAKEYALLOWED, MONITOR_ANS_RSAKEYALLOWED,
 	MONITOR_REQ_RSACHALLENGE, MONITOR_ANS_RSACHALLENGE,
 	MONITOR_REQ_RSARESPONSE, MONITOR_ANS_RSARESPONSE,
-	MONITOR_REQ_KRB4, MONITOR_ANS_KRB4,
 	MONITOR_REQ_KRB5, MONITOR_ANS_KRB5,
 	MONITOR_REQ_TERM
 };

@@ -1,4 +1,4 @@
-.\"	$NetBSD: sshd_config.5,v 1.5 2003/06/27 22:37:13 wiz Exp $
+.\"	$NetBSD: sshd_config.5,v 1.6 2003/07/23 03:52:23 itojun Exp $
 .\"  -*- nroff -*-
 .\"
 .\" Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -62,10 +62,6 @@ The possible
 keywords and their meanings are as follows (note that
 keywords are case-insensitive and arguments are case-sensitive):
 .Bl -tag -width Ds
-.It Cm AFSTokenPassing
-Specifies whether an AFS token may be forwarded to the server.
-Default is
-.Dq no .
 .It Cm AllowGroups
 This keyword can be followed by a list of group name patterns, separated
 by spaces.
@@ -329,8 +325,7 @@ Default is
 .It Cm KerberosTgtPassing
 Specifies whether a Kerberos TGT may be forwarded to the server.
 Default is
-.Dq no ,
-as this only works when the Kerberos KDC is actually an AFS kaserver.
+.Dq no .
 .It Cm KerberosTicketCleanup
 Specifies whether to automatically destroy the user's ticket cache
 file on logout.
