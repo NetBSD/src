@@ -1,4 +1,4 @@
-/*	$NetBSD: memerr.c,v 1.2 1997/01/23 22:20:16 gwr Exp $ */
+/*	$NetBSD: memerr.c,v 1.3 1997/04/25 19:02:46 gwr Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -139,7 +139,7 @@ memerr_attach(parent, self, args)
 	printf(": (%s memory)\n", sc->sc_typename);
 
 	mer = (struct memerr *)
-	    obio_alloc(ca->ca_paddr, sizeof(*mer));
+	    obio_mapin(ca->ca_paddr, sizeof(*mer));
 	if (mer == NULL)
 		panic("memerr: can not map register");
 	sc->sc_reg = mer;
