@@ -1,8 +1,8 @@
-/*	$NetBSD: ranlib.c,v 1.4 1997/01/09 20:21:00 tls Exp $	*/
+/*	$NetBSD: ranlib.c,v 1.5 1997/10/19 05:50:34 mrg Exp $	*/
 
 /*-
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Hugh Smith at The University of Guelph.
@@ -37,14 +37,17 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1990 The Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1990, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)ranlib.c	5.6 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$NetBSD: ranlib.c,v 1.4 1997/01/09 20:21:00 tls Exp $";
+#if 0
+static char sccsid[] = "@(#)ranlib.c	8.1 (Berkeley) 6/6/93";
+#else
+static char rcsid[] = "$NetBSD: ranlib.c,v 1.5 1997/10/19 05:50:34 mrg Exp $";
+#endif
 #endif /* not lint */
 
 #include <sys/types.h>

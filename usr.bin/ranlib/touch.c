@@ -1,8 +1,8 @@
-/*	$NetBSD: touch.c,v 1.4 1997/01/09 20:21:01 tls Exp $	*/
+/*	$NetBSD: touch.c,v 1.5 1997/10/19 05:50:36 mrg Exp $	*/
 
 /*-
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Hugh Smith at The University of Guelph.
@@ -37,8 +37,11 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)touch.c	5.3 (Berkeley) 3/12/91";*/
-static char rcsid[] = "$NetBSD: touch.c,v 1.4 1997/01/09 20:21:01 tls Exp $";
+#if 0
+static char sccsid[] = "@(#)touch.c	8.1 (Berkeley) 6/6/93";
+#else
+static char rcsid[] = "$NetBSD: touch.c,v 1.5 1997/10/19 05:50:36 mrg Exp $";
+#endif
 #endif /* not lint */
 
 #include <sys/types.h>
