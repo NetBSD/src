@@ -1,4 +1,4 @@
-/*	$NetBSD: __clone.S,v 1.3 2003/12/31 15:56:26 martin Exp $	*/
+/*	$NetBSD: __clone.S,v 1.4 2004/01/02 14:06:51 martin Exp $	*/
 
 /*-     
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -53,10 +53,9 @@ ENTRY(__clone)
 	/*
 	 * Sanity checks: func and stack may not be NULL.
 	 */
-	tst	%i0
-	be	8f		! func == NULL, bail
+	brz,pn	%i0,8f		! func == NULL, bail
 	 orcc	%i1, %g0, %o1	! setup stack arg for syscall, test
-	be	8f		! stack == NULL, bail
+	bz,pn	%xcc, 8f	! stack == NULL, bail
 	 mov	%i2, %o0	! setup flags arg for syscall
 
 	/*
@@ -73,9 +72,9 @@ ENTRY(__clone)
 	 */
 	mov	SYS___clone, %g1
 	t	ST_SYSCALL
-	bcs	9f
+	bcs,pn	%xcc, 9f
 	 tst	%o1		! %o1 (rv[1]) == 0 in parent
-1:	bz	2f		! yes, parent
+	bz	%xcc, 2f	! yes, parent
 	 ldx	[%sp+BIAS], %l0	! grab the function
 	ldx	[%sp+8+BIAS], %o0	! and the argument from the stack
 	add	%sp, 16, %sp	! restore the stack
@@ -88,8 +87,10 @@ ENTRY(__clone)
 2:	ret
 	 restore %g0, %o0, %o0
 
-8:	mov	EINVAL, %o0
-9:	ERROR()
-	mov	-1, %i0
-	ret
-	 restore %g0, -1, %o0
+8:	restore %g0, EINVAL, %o0
+	ERROR()
+	/* NOTREACHED */
+
+9:	restore %o0, %g0, %o0
+	ERROR()
+	/* NOTREACHED */
