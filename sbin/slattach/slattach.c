@@ -35,20 +35,11 @@
  */
 
 /*
-** Hacks to support "-a|c|n" flags on the command line which enalbe VJ
-** header compresion and disable ICMP.  I use getopt to deal witht that
-** stuff because I'm a lazy sob, I can't spell, and that's OK.
-**
-** If this is good all rights go to B & L Jolitz, otherwise send your
-** comments to Reagan (/dev/null).
-**
-** nerd@percival.rain.com (Michael Galassi) 92.09.03
-**
-** Hacked to change from sgtty to POSIX termio style serial line control
-** and added flag to enable cts/rts style flow control.
-**
-** blymn@awadi.com.au (Brett Lymn) 93.04.04
-*/
+ * Hacked to change from sgtty to POSIX termio style serial line control
+ * and added flag to enable cts/rts style flow control.
+ *
+ * blymn@awadi.com.au (Brett Lymn) 93.04.04
+ */
 
 #ifndef lint
 char copyright[] =
@@ -58,7 +49,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)slattach.c	4.6 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: slattach.c,v 1.8 1993/12/02 05:44:30 mycroft Exp $";
+static char rcsid[] = "$Id: slattach.c,v 1.9 1993/12/10 13:20:12 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -76,12 +67,9 @@ static char rcsid[] = "$Id: slattach.c,v 1.8 1993/12/02 05:44:30 mycroft Exp $";
 #define DEFAULT_BAUD	9600
 
 static char usage_str[] = "\
-usage: %s [-a] [-c] [-h] [-m] [-n] [-s <speed>] <device>\n\
-	-a -- autoenable VJ compression\n\
-	-c -- enable VJ compression\n\
+usage: %s [-h] [-m] [-s <speed>] <device>\n\
 	-h -- turn on CTS/RTS style flow control\n\
 	-m -- maintain DTR after last close (no HUPCL)\n\
-	-n -- throw out ICMP packets\n\
 	-s -- baud rate (default 9600)\n";
 
 int main(int argc, char **argv)
@@ -93,7 +81,6 @@ int main(int argc, char **argv)
 	char *dev = (char *)0;
 	int slipdisc = SLIPDISC;
 	int speed = DEFAULT_BAUD;
-	int slflags = 0;
 	int cflags = HUPCL;
 
 	extern char *optarg;
@@ -101,22 +88,11 @@ int main(int argc, char **argv)
 
 	while ((option = getopt(argc, argv, "achmns:")) != EOF) {
 		switch (option) {
-		case 'a':
-			slflags |= SC_AUTOCOMP;
-			slflags &= ~SC_COMPRESS;
-			break;
-		case 'c':
-			slflags |= SC_COMPRESS;
-			slflags &= ~SC_AUTOCOMP;
-			break;
 		case 'h':
 			cflags |= CRTSCTS;
 			break;
 		case 'm':
 			cflags &= ~HUPCL;
-			break;
-		case 'n':
-			slflags |= SC_NOICMP;
 			break;
 		case 's':
 			speed = atoi(optarg);
@@ -130,7 +106,6 @@ int main(int argc, char **argv)
 
 	if (optind == argc - 1)
 		dev = argv[optind];
-
 
 	if (dev == (char *)0) {
 		fprintf(stderr, usage_str, argv[0]);
@@ -176,12 +151,6 @@ int main(int argc, char **argv)
 
 	if (ioctl(fd, TIOCSETD, &slipdisc) < 0) {
 		perror("ioctl(TIOCSETD)");
-		close(fd);
-		exit(1);
-	}
-
-	if (ioctl(fd, SLIOCSFLAGS, &slflags) < 0) {
-		perror("ioctl(SLIOCSFLAGS)");
 		close(fd);
 		exit(1);
 	}

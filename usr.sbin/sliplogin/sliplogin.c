@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)sliplogin.c	5.6 (Berkeley) 3/2/91";*/
-static char rcsid[] = "$Id: sliplogin.c,v 1.5 1993/12/07 23:05:26 mycroft Exp $";
+static char rcsid[] = "$Id: sliplogin.c,v 1.6 1993/12/10 13:19:20 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -97,22 +97,11 @@ static char rcsid[] = "$Id: sliplogin.c,v 1.5 1993/12/07 23:05:26 mycroft Exp $"
 #include "pathnames.h"
 
 int	unit;
-int	slip_mode;
 int	speed;
 int	uid;
 char	loginargs[BUFSIZ];
 char	loginfile[MAXPATHLEN];
 char	loginname[BUFSIZ];
-
-struct slip_modes {
-	char	*sm_name;
-	int	sm_value;
-}	 modes[] = {
-	"normal",	0,              
-	"compress",	SC_COMPRESS,   
-	"noicmp",	SC_NOICMP,
-	"autocomp",	SC_AUTOCOMP
-};
 
 void
 findid(name)
@@ -143,17 +132,6 @@ findid(name)
 			continue;
 		if (strcmp(user, name) != 0)
 			continue;
-
-		slip_mode = 0;
-		for (i = 0; i < n - 4; i++) {
-			for (j = 0; j < sizeof(modes)/sizeof(struct slip_modes);
-				j++) {
-				if (strcmp(modes[j].sm_name, slopt[i]) == 0) {
-					slip_mode |= modes[j].sm_value;
-					break;
-				}
-			}
-		}
 
 		/*
 		 * we've found the guy we're looking for -- see if
@@ -365,10 +343,6 @@ main(argc, argv)
 		       loginname, s, loginfile);
 		(void) ioctl(0, TIOCSETD, (caddr_t)&odisc);
 		exit(6);
-	}
-	if (ioctl(0, SLIOCSFLAGS, (caddr_t)&slip_mode) < 0) {
-		syslog(LOG_ERR, "ioctl (SLIOCSFLAGS): %m");
-		exit(1);
 	}
 
 	/* twiddle thumbs until we get a signal */
