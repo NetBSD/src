@@ -43,7 +43,7 @@
  *
  * from: Header: zs.c,v 1.30 93/07/19 23:44:42 torek Exp 
  * from: sparc/dev/zs.c,v 1.3 1993/10/13 02:36:44 deraadt Exp 
- * $Id: zs.c,v 1.4 1994/05/05 06:54:08 gwr Exp $
+ * $Id: zs.c,v 1.5 1994/05/06 07:49:20 gwr Exp $
  */
 
 /*
@@ -56,8 +56,8 @@
  */
 #define	NZS	2		/* XXX */
 
-#include <sys/systm.h>
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/device.h>
 #include <sys/conf.h>
@@ -67,7 +67,6 @@
 #include <sys/time.h>
 #include <sys/kernel.h>
 #include <sys/syslog.h>
-#include <sys/conf.h>
 
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
@@ -982,7 +981,7 @@ again:
 					tp->t_state &= ~TS_FLUSH;
 				else
 					ndflush(&tp->t_outq,
-					    (u_char *)cs->cs_tba - tp->t_outq.c_cf);
+					    (char *)cs->cs_tba - tp->t_outq.c_cf);
 				line->l_start(tp);
 				break;
 
