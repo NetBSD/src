@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.c,v 1.22 2001/02/20 07:58:16 itojun Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.23 2001/02/20 08:33:02 itojun Exp $	*/
 /*	$KAME: if_gif.c,v 1.40 2001/02/20 07:41:36 itojun Exp $	*/
 
 /*
@@ -303,7 +303,7 @@ gif_output(ifp, m, dst, rt)
 		 * try to free it or keep a pointer a to it).
 		 */
 		struct mbuf m0;
-		u_int af = dst->sa_family;
+		u_int32_t af = dst->sa_family;
 
 		m0.m_next = m;
 		m0.m_len = 4;
