@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.164 1997/10/08 23:10:10 thorpej Exp $ */
+/*	$NetBSD: wd.c,v 1.165 1997/10/10 01:17:33 explorer Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -47,6 +47,7 @@
 #include <sys/disk.h>
 #include <sys/syslog.h>
 #include <sys/proc.h>
+#include <sys/rnd.h>
 
 #include <vm/vm.h>
 
@@ -80,6 +81,7 @@ struct wd_softc {
 	struct disk sc_dk;
 	struct wd_link *d_link;
 	struct buf sc_q;
+	rndsource_element_t	rnd_source;
 };
 
 int	wdprobe		__P((struct device *, void *, void *));
@@ -206,6 +208,8 @@ wdattach(parent, self, aux)
 		printf(" lba addressing\n");
 	else
 		printf(" chs addressing\n");
+
+	rnd_attach_source(&wd->rnd_source, wd->sc_dev.dv_xname, RND_TYPE_DISK);
 }
 
 /*
@@ -966,4 +970,5 @@ wddone(d_link, bp)
 	struct wd_softc *wd = (void *)d_link->wd_softc;
 
 	disk_unbusy(&wd->sc_dk, (bp->b_bcount - bp->b_resid));
+	rnd_add_uint32(&wd->rnd_source, bp->b_blkno);
 }

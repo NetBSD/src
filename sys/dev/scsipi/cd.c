@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.104 1997/10/08 23:05:22 thorpej Exp $	*/
+/*	$NetBSD: cd.c,v 1.105 1997/10/10 01:09:03 explorer Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1997 Charles M. Hannum.  All rights reserved.
@@ -63,6 +63,7 @@
 #include <sys/cdio.h>
 #include <sys/proc.h>
 #include <sys/conf.h>
+#include <sys/rnd.h>
 
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsipi_cd.h>
@@ -159,6 +160,8 @@ cdattach(parent, cd, sc_link, ops)
 #endif
 
 	printf("\n");
+
+	rnd_attach_source(&cd->rnd_source, cd->sc_dev.dv_xname, RND_TYPE_DISK);
 }
 
 /*
@@ -571,8 +574,10 @@ cddone(xs)
 {
 	struct cd_softc *cd = xs->sc_link->device_softc;
 
-	if (xs->bp != NULL)
+	if (xs->bp != NULL) {
 		disk_unbusy(&cd->sc_dk, xs->bp->b_bcount - xs->bp->b_resid);
+		rnd_add_uint32(&cd->rnd_source, xs->bp->b_blkno);
+	}
 }
 
 void
