@@ -64,6 +64,8 @@ store_inferior_registers (regno)
 	  sizeof(inferior_fp_registers));
   ptrace (PT_SETFPREGS, inferior_pid,
 	  (PTRACE_ARG3_TYPE) &inferior_fp_registers, 0);
+
+  registers_fetched ();
 }
 
 

@@ -65,11 +65,13 @@ fetch_inferior_registers (regno)
   RF(FP0_REGNUM +2, inferior_fpregisters.r_freg[2]);
   RF(FP0_REGNUM +4, inferior_fpregisters.r_freg[4]);
   RF(FP0_REGNUM +6, inferior_fpregisters.r_freg[6]);
+
   RF(LP0_REGNUM + 1, inferior_fpregisters.r_freg[1]);
   RF(LP0_REGNUM + 3, inferior_fpregisters.r_freg[3]);
   RF(LP0_REGNUM + 5, inferior_fpregisters.r_freg[5]);
   RF(LP0_REGNUM + 7, inferior_fpregisters.r_freg[7]);
-   registers_fetched ();
+
+  registers_fetched ();
 }
 
 void
@@ -98,6 +100,7 @@ store_inferior_registers (regno)
   RS(FP0_REGNUM +2, inferior_fpregisters.r_freg[2]);
   RS(FP0_REGNUM +4, inferior_fpregisters.r_freg[4]);
   RS(FP0_REGNUM +6, inferior_fpregisters.r_freg[6]);
+
   RS(LP0_REGNUM + 1, inferior_fpregisters.r_freg[1]);
   RS(LP0_REGNUM + 3, inferior_fpregisters.r_freg[3]);
   RS(LP0_REGNUM + 5, inferior_fpregisters.r_freg[5]);
@@ -107,6 +110,8 @@ store_inferior_registers (regno)
 	  (PTRACE_ARG3_TYPE) &inferior_registers, 0);
   ptrace (PT_SETFPREGS, inferior_pid,
 	  (PTRACE_ARG3_TYPE) &inferior_fpregisters, 0);
+
+  registers_fetched ();
 }
 
 
@@ -160,10 +165,12 @@ fetch_core_registers (core_reg_sect, core_reg_size, which, reg_addr)
   RF(FP0_REGNUM +2, core_reg->freg.r_freg[2]);
   RF(FP0_REGNUM +4, core_reg->freg.r_freg[4]);
   RF(FP0_REGNUM +6, core_reg->freg.r_freg[6]);
+
   RF(LP0_REGNUM + 1, core_reg->freg.r_freg[1]);
   RF(LP0_REGNUM + 3, core_reg->freg.r_freg[3]);
   RF(LP0_REGNUM + 5, core_reg->freg.r_freg[5]);
   RF(LP0_REGNUM + 7, core_reg->freg.r_freg[7]);
+
   registers_fetched ();
 }
 

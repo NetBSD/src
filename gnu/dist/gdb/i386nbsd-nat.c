@@ -55,6 +55,7 @@ store_inferior_registers (regno)
 	  (PTRACE_ARG3_TYPE) &inferior_registers, 0);
 
   /* FIXME: FP regs? */
+  registers_fetched ();
 }
 
 
