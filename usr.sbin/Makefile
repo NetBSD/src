@@ -1,9 +1,9 @@
 #	from: @(#)Makefile	5.6.1.2 (Berkeley) 5/8/91
-#	$Id: Makefile,v 1.19 1993/12/05 22:11:09 mycroft Exp $
+#	$Id: Makefile,v 1.20 1993/12/16 05:38:42 deraadt Exp $
 
 SUBDIR=	accton amd arp chown chroot config config.new dbsym dev_mkdb \
 	diskpart edquota flcopy gettable htable inetd iostat kgmon \
-	kvm_mkdb lpr mtree named portmap pppd pwd_mkdb quotaon repquota \
+	kvm_mkdb lpr mtree named portmap pppd pwd_mkdb quotaon rarpd repquota \
 	rmt rwhod sendmail sliplogin slstats spray swapinfo syslogd tcpdump \
 	timed traceroute trpt trsp update vipw yp
 
