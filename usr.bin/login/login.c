@@ -1,4 +1,4 @@
-/*	$NetBSD: login.c,v 1.15 1996/11/14 19:28:29 gwr Exp $	*/
+/*	$NetBSD: login.c,v 1.16 1996/12/20 20:17:30 sommerfe Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-static char rcsid[] = "$NetBSD: login.c,v 1.15 1996/11/14 19:28:29 gwr Exp $";
+static char rcsid[] = "$NetBSD: login.c,v 1.16 1996/12/20 20:17:30 sommerfe Exp $";
 #endif /* not lint */
 
 /*
@@ -224,8 +224,8 @@ main(argc, argv)
 		} else
 			instance = "";
 #endif
-		if (strlen(username) > UT_NAMESIZE)
-			username[UT_NAMESIZE] = '\0';
+		if (strlen(username) > MAXLOGNAME)
+			username[MAXLOGNAME] = '\0';
 
 		/*
 		 * Note if trying multiple user names; log failures for
@@ -481,9 +481,9 @@ pwcheck(user, p, salt, passwd)
 }
 
 #if defined(KERBEROS) || defined(KERBEROS5)
-#define	NBUFSIZ		(UT_NAMESIZE + 1 + 5)	/* .root suffix */
+#define	NBUFSIZ		(MAXLOGNAME + 1 + 5)	/* .root suffix */
 #else
-#define	NBUFSIZ		(UT_NAMESIZE + 1)
+#define	NBUFSIZ		(MAXLOGNAME + 1)
 #endif
 
 #if defined(KERBEROS) || defined(KERBEROS5)
