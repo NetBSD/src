@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.87 2004/01/11 09:07:56 cube Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.88 2004/04/11 16:57:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.87 2004/01/11 09:07:56 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.88 2004/04/11 16:57:44 thorpej Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -137,10 +137,17 @@ __KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.87 2004/01/11 09:07:56 cube Exp $");
 /*
  * Transmit descriptor list size.  This is arbitrary, but allocate
  * enough descriptors for 128 pending transmissions, and 8 segments
- * per packet.  This MUST work out to a power of 2.
+ * per packet (64 for DP83820 for jumbo frames).
+ *
+ * This MUST work out to a power of 2.
  */
+#ifdef DP83820
+#define	SIP_NTXSEGS		64
+#define	SIP_NTXSEGS_ALLOC	16
+#else
 #define	SIP_NTXSEGS		16
 #define	SIP_NTXSEGS_ALLOC	8
+#endif
 
 #define	SIP_TXQUEUELEN		256
 #define	SIP_NTXDESC		(SIP_TXQUEUELEN * SIP_NTXSEGS_ALLOC)
@@ -363,7 +370,7 @@ do {									\
 
 #ifdef DP83820
 #define	SIP_INIT_RXDESC_EXTSTS	__sipd->sipd_extsts = 0;
-#define	SIP_RXBUF_LEN		(MCLBYTES - 4)
+#define	SIP_RXBUF_LEN		(MCLBYTES - 8)
 #else
 #define	SIP_INIT_RXDESC_EXTSTS	/* nothing */
 #define	SIP_RXBUF_LEN		(MCLBYTES - 1)	/* field width */
@@ -1009,7 +1016,11 @@ SIP_DECL(attach)(struct device *parent, struct device *self, void *aux)
 	 * may trash the first few outgoing packets if the
 	 * PCI bus is saturated.
 	 */
+#ifdef DP83820
+	sc->sc_tx_drain_thresh = 6400 / 32;	/* from FreeBSD nge(4) */
+#else
 	sc->sc_tx_drain_thresh = 1504 / 32;
+#endif
 
 	/*
 	 * Initialize the Rx FIFO drain threshold.
@@ -1130,11 +1141,13 @@ SIP_DECL(start)(struct ifnet *ifp)
 	u_int32_t extsts;
 #endif
 
+#ifndef DP83820
 	/*
 	 * If we've been told to pause, don't transmit any more packets.
 	 */
 	if (sc->sc_flags & SIPF_PAUSED)
 		ifp->if_flags |= IFF_OACTIVE;
+#endif
 
 	if ((ifp->if_flags & (IFF_RUNNING|IFF_OACTIVE)) != IFF_RUNNING)
 		return;
@@ -1418,7 +1431,12 @@ SIP_DECL(start)(struct ifnet *ifp)
 #endif
 
 		/* Set a watchdog timer in case the chip flakes out. */
+#ifdef DP83820
+		/* Gigabit autonegotiation takes 5 seconds. */
+		ifp->if_timer = 10;
+#else
 		ifp->if_timer = 5;
+#endif
 	}
 }
 
@@ -1506,6 +1524,9 @@ SIP_DECL(intr)(void *arg)
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	u_int32_t isr;
 	int handled = 0;
+
+	/* Disable interrupts. */
+	bus_space_write_4(sc->sc_st, sc->sc_sh, SIP_IER, 0);
 
 	for (;;) {
 		/* Reading clears interrupt. */
@@ -1622,6 +1643,9 @@ SIP_DECL(intr)(void *arg)
 		}
 	}
 
+	/* Re-enable interrupts. */
+	bus_space_write_4(sc->sc_st, sc->sc_sh, SIP_IER, IER_IE);
+
 	/* Try to get more packets going. */
 	SIP_DECL(start)(ifp);
 
@@ -1640,8 +1664,10 @@ SIP_DECL(txintr)(struct sip_softc *sc)
 	struct sip_txsoft *txs;
 	u_int32_t cmdsts;
 
+#ifndef DP83820
 	if ((sc->sc_flags & SIPF_PAUSED) == 0)
 		ifp->if_flags &= ~IFF_OACTIVE;
+#endif
 
 	/*
 	 * Go through our Tx list and free mbufs for those
@@ -1713,7 +1739,7 @@ SIP_DECL(rxintr)(struct sip_softc *sc)
 	struct sip_rxsoft *rxs;
 	struct mbuf *m, *tailm;
 	u_int32_t cmdsts, extsts;
-	int i, len;
+	int i, len, frame_len;
 
 	for (i = sc->sc_rxptr;; i = SIP_NEXTRX(i)) {
 		rxs = &sc->sc_rxsoft[i];
@@ -1786,6 +1812,7 @@ SIP_DECL(rxintr)(struct sip_softc *sc)
 		*sc->sc_rxtailp = NULL;
 		m = sc->sc_rxhead;
 		tailm = sc->sc_rxtail;
+		frame_len = sc->sc_rxlen;
 
 		SIP_RXCHAIN_RESET(sc);
 
@@ -1821,7 +1848,8 @@ SIP_DECL(rxintr)(struct sip_softc *sc)
 		 * every packet.
 		 */
 		len = CMDSTS_SIZE(cmdsts);
-		tailm->m_len = len - sc->sc_rxlen;
+		frame_len += len;
+		tailm->m_len = len;
 
 		/*
 		 * If the packet is small enough to fit in a
@@ -1909,7 +1937,7 @@ SIP_DECL(rxintr)(struct sip_softc *sc)
 		ifp->if_ipackets++;
 		m->m_flags |= M_HASFCS;
 		m->m_pkthdr.rcvif = ifp;
-		m->m_pkthdr.len = len;
+		m->m_pkthdr.len = frame_len;
 
 #if NBPFILTER > 0
 		/*
@@ -2315,7 +2343,32 @@ SIP_DECL(init)(struct ifnet *ifp)
 	 * Initialize the prototype RXCFG register.
 	 */
 	sc->sc_rxcfg |= (sc->sc_rx_drain_thresh << RXCFG_DRTH_SHIFT);
-#ifndef DP83820
+#ifdef DP83820
+	/*
+	 * Accept long packets (including FCS) so we can handle
+	 * 802.1q-tagged frames and jumbo frames properly.
+	 */
+	if (ifp->if_mtu > ETHERMTU ||
+	    (sc->sc_ethercom.ec_capenable & ETHERCAP_VLAN_MTU))
+		sc->sc_rxcfg |= RXCFG_ALP;
+
+	/*
+	 * Checksum offloading is disabled if the user selects an MTU
+	 * larger than 8109.  (FreeBSD says 8152, but there is emperical
+	 * evidence that >8109 does not work on some boards, such as the
+	 * Planex GN-1000TE).
+	 */
+	if (ifp->if_mtu > 8109 &&
+	    (ifp->if_capenable &
+	     (IFCAP_CSUM_IPv4|IFCAP_CSUM_TCPv4|IFCAP_CSUM_UDPv4))) {
+		printf("%s: Checksum offloading does not work if MTU > 8109 - "
+		       "disabled.\n", sc->sc_dev.dv_xname);
+		ifp->if_capenable &= ~(IFCAP_CSUM_IPv4|IFCAP_CSUM_TCPv4|
+				       IFCAP_CSUM_UDPv4);
+		ifp->if_csum_flags_tx = 0;
+		ifp->if_csum_flags_rx = 0;
+	}
+#else
 	/*
 	 * Accept packets >1518 bytes (including FCS) so we can handle
 	 * 802.1q-tagged frames properly.
@@ -2383,6 +2436,13 @@ SIP_DECL(init)(struct ifnet *ifp)
 	 * control.
 	 */
 	mii_mediachg(&sc->sc_mii);
+
+#ifdef DP83820
+	/*
+	 * Set the interrupt hold-off timer to 100us.
+	 */
+	bus_space_write_4(st, sh, SIP_IHR, 0x01);
+#endif
 
 	/*
 	 * Enable interrupts.
@@ -2983,7 +3043,7 @@ SIP_DECL(dp83820_mii_writereg)(struct device *self, int phy, int reg, int val)
 }
 
 /*
- * sip_dp83815_mii_statchg:	[mii interface function]
+ * sip_dp83820_mii_statchg:	[mii interface function]
  *
  *	Callback from MII layer when media changes.
  */

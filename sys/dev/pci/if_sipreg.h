@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sipreg.h,v 1.13 2003/12/03 21:58:49 cube Exp $	*/
+/*	$NetBSD: if_sipreg.h,v 1.14 2004/04/11 16:57:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -79,9 +79,16 @@
 /*
  * Transmit FIFO size.  Used to compute the transmit drain threshold.
  *
- * The transmit FIFO is arranged as a 512 32-bit memory array.
+ * On the SiS 900, the transmit FIFO is arranged as a 512 32-bit memory
+ * array.
+ *
+ * On the DP83820, we have an 8KB transmit FIFO.
  */
+#ifdef DP83820
+#define	SIP_TXFIFO_SIZE	8192
+#else
 #define	SIP_TXFIFO_SIZE	(512 * 4)
+#endif
 
 /*
  * The SiS900 uses a single descriptor format for both transmit
@@ -497,9 +504,38 @@ struct sip_desc {
 #define	CCSR_CLKRUN_EN	0x00000001	/* clkrun enable */
 #endif /* DP83820 */
 
-#define	SIP_NS_WCSR	0x40	/* WoL control/status register (83815) */
+#define	SIP_NS_WCSR	0x40	/* WoL control/status register (83815/83820) */
 
-#define	SIP_NS_PCR	0x44	/* pause control/status register (83815) */
+#define	SIP_NS_PCR	0x44	/* pause control/status reg (83815/83820) */
+#define	PCR_PSEN	0x80000000 /* pause enable */
+#define	PCR_PS_MCAST	0x40000000 /* pause on multicast */
+#define	PCR_PS_DA	0x20000000 /* pause on DA */
+#define	PCR_PS_ACT	0x10000000 /* pause active */
+#define	PCR_PS_RCVD	0x08000000 /* pause packet recieved */
+#ifdef DP83820
+#define	PCR_PS_STHI_8	0x03000000 /* Status FIFO Hi Threshold (8packets) */
+#define	PCR_PS_STHI_4	0x02000000 /* Status FIFO Hi Threshold (4packets) */
+#define	PCR_PS_STHI_2	0x01000000 /* Status FIFO Hi Threshold (2packets) */
+#define	PCR_PS_STHI_0	0x00000000 /* Status FIFO Hi Threshold (disable) */
+#define	PCR_PS_STLO_8	0x00c00000 /* Status FIFO Lo Threshold (8packets) */
+#define	PCR_PS_STLO_4	0x00800000 /* Status FIFO Lo Threshold (4packets) */
+#define	PCR_PS_STLO_2	0x00400000 /* Status FIFO Lo Threshold (2packets) */
+#define	PCR_PS_STLO_0	0x00000000 /* Status FIFO Lo Threshold (disable) */
+#define	PCR_PS_FFHI_8	0x00300000 /* Data FIFO Hi Threshold (8Kbyte) */
+#define	PCR_PS_FFHI_4	0x00200000 /* Data FIFO Hi Threshold (4Kbyte) */
+#define	PCR_PS_FFHI_2	0x00100000 /* Data FIFO Hi Threshold (2Kbyte) */
+#define	PCR_PS_FFHI_0	0x00000000 /* Data FIFO Hi Threshold (disable) */
+#define	PCR_PS_FFLO_8	0x000c0000 /* Data FIFO Lo Threshold (8Kbyte) */
+#define	PCR_PS_FFLO_4	0x00080000 /* Data FIFO Lo Threshold (4Kbyte) */
+#define	PCR_PS_FFLO_2	0x00040000 /* Data FIFO Lo Threshold (2Kbyte) */
+#define	PCR_PS_FFLO_0	0x00000000 /* Data FIFO Lo Threshold (disable) */
+#define	PCR_PS_TX	0x00020000 /* Transmit PAUSE frame manually */
+#else
+#define	PCR_PSNEG	0x00200000 /* Pause Negoticated (83815) */
+#define	PCR_MLD_EN	0x00010000 /* Manual Load Enable (83815) */
+#endif /* DP83820 */
+#define PCR_PAUSE_CNT_MASK 0x0000ffff /* pause count mask */
+#define PCR_PAUSE_CNT	   65535      /* pause count (512bit-time) */
 
 #define	SIP_RFCR	0x48	/* receive filter control register */
 #define	RFCR_RFEN	0x80000000	/* Rx filter enable */
