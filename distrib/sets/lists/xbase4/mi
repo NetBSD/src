@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.4 2002/08/03 23:58:07 chris Exp $
+# $NetBSD: mi,v 1.5 2002/08/31 16:21:44 mycroft Exp $
 ./usr/X11R6/bin/beforelight
 ./usr/X11R6/bin/cxpm
 ./usr/X11R6/bin/dga
@@ -41,7 +41,6 @@
 ./usr/X11R6/include/X11/bitmaps/taller.xbm
 ./usr/X11R6/include/X11/bitmaps/up.xbm
 ./usr/X11R6/include/X11/bitmaps/wider.xbm
-./usr/X11R6/include/X11/pixmaps
 ./usr/X11R6/include/X11/pixmaps/card.xpm
 ./usr/X11R6/include/X11/pixmaps/computer.xpm
 ./usr/X11R6/include/X11/pixmaps/keyboard.xpm
