@@ -1,5 +1,29 @@
-/*	$NetBSD: rside.c,v 1.1 2004/01/03 14:31:28 chris Exp $	*/
+/*	$NetBSD: rside.c,v 1.2 2004/01/04 13:49:49 chris Exp $	*/
 
+/*
+ * Copyright (c) 2004 Christopher Gilbert
+ * All rights reserved.
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. The name of the author may be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+ * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ */
 /*
  * Copyright (c) 1997-1998 Mark Brinicombe
  * Copyright (c) 1997-1998 Causality Limited
@@ -30,6 +54,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rside.c,v 1.2 2004/01/04 13:49:49 chris Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,30 +104,24 @@
  */
 
 /*
- * make a private tag so that we can use mainbus's map/unmap
- */
-
-static struct bus_space rside_bs_tag;
-
-/*
  * RiscStation IDE card softc structure.
  *
- * Contains the device node, podule information and global information
- * required by the driver such as the card version and the interrupt mask.
+ * Contains the device node, and global information required by the driver
  */
 
 struct rside_softc {
 	struct wdc_softc	sc_wdcdev;	/* common wdc definitions */
 	struct wdc_channel	*wdc_chanarray[2]; /* channels definition */
+	struct bus_space        sc_tag;			/* custom tag */
 	struct rside_channel {
-		struct wdc_channel wdc_channel; /* generic part */
-		struct ata_queue wdc_chqueue; /* channel queue */
-		irqhandler_t *wdc_ih;	/* interrupt handler */
+		struct wdc_channel wdc_channel;		/* generic part */
+		struct ata_queue wdc_chqueue;		/* channel queue */
+		irqhandler_t *wdc_ih;			/* irq handler */
 	} rside_channels[2];
 };
 
-int	rside_probe	__P((struct device *, struct cfdata *, void *));
-void	rside_attach	__P((struct device *, struct device *, void *));
+static int	rside_probe	(struct device *, struct cfdata *, void *);
+static void	rside_attach	(struct device *, struct device *, void *);
 
 CFATTACH_DECL(rside, sizeof(struct rside_softc),
 		rside_probe, rside_attach, NULL, NULL);
@@ -116,21 +137,16 @@ struct {
 	u_int drive_registers;
 	u_int aux_register;
 } rside_info[] = {
-	{ PRIMARY_DRIVE_REGISTERS_POFFSET, PRIMARY_AUX_REGISTER_POFFSET,
-	  },
-	{ SECONDARY_DRIVE_REGISTERS_POFFSET, SECONDARY_AUX_REGISTER_POFFSET,
-	   }
+	{ PRIMARY_DRIVE_REGISTERS_POFFSET, PRIMARY_AUX_REGISTER_POFFSET },
+	{ SECONDARY_DRIVE_REGISTERS_POFFSET, SECONDARY_AUX_REGISTER_POFFSET }
 };
 
 /*
  * Card probe function
  */
 
-int
-rside_probe(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+static int
+rside_probe(struct device *parent, struct cfdata *cf, void *aux)
 {
 	/* if we're including this, then for now assume it exists */
 	return 1;
@@ -139,16 +155,13 @@ rside_probe(parent, cf, aux)
 /*
  * Card attach function
  *
- * Identify the card version and configure any children.
  */
 
-void
-rside_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+static void
+rside_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct rside_softc *sc = (void *)self;
-	struct rsbus_attach_args *rs = (void *)aux;
+	struct rsbus_attach_args *rs = aux;
 	int channel, i;
 	struct rside_channel *scp;
 	struct wdc_channel *cp;
@@ -165,8 +178,8 @@ rside_attach(parent, self, aux)
 	 * cookie.
 	 */
 
-	rside_bs_tag = *rs->sa_iot;
-	rside_bs_tag.bs_cookie = (void *) DRIVE_REGISTER_SPACING_SHIFT;
+	sc->sc_tag = *rs->sa_iot;
+	sc->sc_tag.bs_cookie = (void *) DRIVE_REGISTER_SPACING_SHIFT;
 
 	/* Fill in wdc and channel infos */
 	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16;
@@ -180,10 +193,10 @@ rside_attach(parent, self, aux)
 		sc->wdc_chanarray[channel] = &scp->wdc_channel;
 		cp = &scp->wdc_channel;
 
-		cp->channel = channel;
-		cp->wdc = &sc->sc_wdcdev;
+		cp->ch_channel = channel;
+		cp->ch_wdc = &sc->sc_wdcdev;
 		cp->ch_queue = &scp->wdc_chqueue;
-		cp->cmd_iot = cp->ctl_iot = &rside_bs_tag;
+		cp->cmd_iot = cp->ctl_iot = &sc->sc_tag;
 		if (bus_space_map(cp->cmd_iot,
 		    rside_info[channel].drive_registers,
 		    DRIVE_REGISTERS_SPACE, 0, &cp->cmd_baseioh)) 
@@ -209,10 +222,9 @@ rside_attach(parent, self, aux)
 			continue;
 		}
 
-
 		/* attach it to the interrupt */
-		if ((scp->wdc_ih = intr_claim((channel == 0 ? IRQ_NEVENT1 : IRQ_NEVENT2), IPL_BIO,
-			    "rside", wdcintr, cp)) == NULL)
+		if ((scp->wdc_ih = intr_claim((channel == 0 ? IRQ_NEVENT1 : IRQ_NEVENT2),
+						IPL_BIO, "rside", wdcintr, cp)) == NULL)
 			panic("%s: Cannot claim interrupt %d\n",
 			    self->dv_xname, (channel == 0 ? IRQ_NEVENT1 : IRQ_NEVENT2));
 
