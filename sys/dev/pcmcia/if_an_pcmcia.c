@@ -1,4 +1,4 @@
-/* $NetBSD: if_an_pcmcia.c,v 1.7 2000/12/19 08:00:56 onoe Exp $ */
+/* $NetBSD: if_an_pcmcia.c,v 1.8 2000/12/21 15:32:46 onoe Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -199,44 +199,44 @@ an_pcmcia_attach(parent, self, aux)
 	struct an_softc *sc = &psc->sc_an;
 	struct pcmcia_attach_args *pa = aux;
 	struct pcmcia_config_entry *cfe;
+	char devinfo[256];
+
+	/* Print out what we are. */
+	pcmcia_devinfo(&pa->pf->sc->card, 0, devinfo, sizeof(devinfo));
+	printf(": %s\n", devinfo);
 
 	psc->sc_pf = pa->pf;
 	if ((cfe = SIMPLEQ_FIRST(&pa->pf->cfe_head)) == NULL) {
-		printf(": no suitable CIS info found\n");
+		printf("%s: no suitable CIS info found\n", sc->an_dev.dv_xname);
 		goto fail1;
 	}
 
 	if (pcmcia_io_alloc(psc->sc_pf, cfe->iospace[0].start,
 	    cfe->iospace[0].length, AN_IOSIZ, &psc->sc_pcioh) != 0) {
-		printf(": failed to allocate io space\n");
+		printf("%s: failed to allocate io space\n",
+		    sc->an_dev.dv_xname);
 		goto fail1;
 	}
 
 	if (pcmcia_io_map(psc->sc_pf, PCMCIA_WIDTH_AUTO, 0, psc->sc_pcioh.size,
 	    &psc->sc_pcioh, &psc->sc_io_window) != 0) {
-		printf(": failed to map io space\n");
+		printf("%s: failed to map io space\n", sc->an_dev.dv_xname);
 		goto fail2;
 	}
 
 	pcmcia_function_init(psc->sc_pf, cfe);
 
 	if (pcmcia_function_enable(psc->sc_pf)) {
-		printf(": failed to enable pcmcia\n");
+		printf("%s: failed to enable pcmcia\n", sc->an_dev.dv_xname);
 		goto fail3;
 	}
 
 	if ((psc->sc_ih = pcmcia_intr_establish(psc->sc_pf, IPL_NET, an_intr,
 	    sc)) == NULL) {
-		printf(": unable to establish interrupt\n");
+		printf("%s: unable to establish interrupt\n",
+		    sc->an_dev.dv_xname);
 		goto fail4;
 	}
-
-	if (pa->card->cis1_info[0] != NULL) {
-		printf(": %s", pa->card->cis1_info[0]);
-		if (pa->card->cis1_info[1] != NULL)
-			printf(" %s", pa->card->cis1_info[1]);
-	}
-	printf("\n");
 
 	sc->an_btag = psc->sc_pcioh.iot;
 	sc->an_bhandle = psc->sc_pcioh.ioh;
