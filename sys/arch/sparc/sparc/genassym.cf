@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.41 2003/01/18 06:45:03 thorpej Exp $
+#	$NetBSD: genassym.cf,v 1.41.4.1 2004/04/24 18:31:20 jdc Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -138,6 +138,7 @@ define	V_SWTCH		offsetof(struct uvmexp, swtch)
 define	V_INTR		offsetof(struct uvmexp, intrs)
 define	V_SOFT		offsetof(struct uvmexp, softs)
 define	V_FAULTS	offsetof(struct uvmexp, faults)
+define	EV_COUNT	offsetof(struct evcnt, ev_count)
 
 # CPU info structure
 define	CPUINFO_STRUCTSIZE	sizeof(struct cpu_info)
@@ -159,6 +160,14 @@ define	CPUINFO_FLAGS		offsetof(struct cpu_info, flags)
 define	CPUINFO_WANT_AST	offsetof(struct cpu_info, want_ast)
 define	CPUINFO_WANT_RESCHED	offsetof(struct cpu_info, want_resched)
 define	CPUINFO_TT		offsetof(struct cpu_info, ci_tt)
+define	CPUINFO_CACHE_LINESZ	offsetof(struct cpu_info, cacheinfo.c_linesize)
+define	CPUINFO_CACHE_NLINES	offsetof(struct cpu_info, cacheinfo.c_nlines)
+define	CPUINFO_XMSG_FUNC	offsetof(struct cpu_info, msg.u.xpmsg_func.func)
+define	CPUINFO_XMSG_TRAP	offsetof(struct cpu_info, msg.u.xpmsg_func.trap)
+define	CPUINFO_XMSG_ARG0	offsetof(struct cpu_info, msg.u.xpmsg_func.arg0)
+define	CPUINFO_XMSG_ARG1	offsetof(struct cpu_info, msg.u.xpmsg_func.arg1)
+define	CPUINFO_XMSG_ARG2	offsetof(struct cpu_info, msg.u.xpmsg_func.arg2)
+define	CPUINFO_XMSG_CMPLT	offsetof(struct cpu_info, msg.complete)
 
 # PTE bits and related information
 define	PG_W		PG_W
@@ -173,6 +182,7 @@ define	SRMMU_PROT_MASK	SRMMU_PROT_MASK
 define	PPROT_R_RW	PPROT_R_RW
 define	PPROT_RX_RX	PPROT_RX_RX
 define	PPROT_RWX_RWX	PPROT_RWX_RWX
+define	PPROT_X_X	PPROT_X_X
 define	PPROT_WRITE	PPROT_WRITE
 
 # FPU state
