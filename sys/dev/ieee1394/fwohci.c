@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.36 2001/06/29 14:57:24 onoe Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.37 2001/07/02 02:26:40 onoe Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -1576,12 +1576,12 @@ fwohci_at_output(struct fwohci_softc *sc, struct fwohci_ctx *fc,
 	DPRINTFN(1, ("fwohci_at_output: tcode 0x%x, hlen %d, dlen %d",
 	    pkt->fp_tcode, pkt->fp_hlen, pkt->fp_dlen));
 	for (i = 0; i < pkt->fp_hlen/4; i++) 
-		DPRINTFN(2, ("%s%08x", i?" ":"\n\t", pkt->fp_hdr[i]));
+		DPRINTFN(2, ("%s%08x", i?" ":"\n    ", pkt->fp_hdr[i]));
 	DPRINTFN(2, ("$"));
 	for (ndesc = 0, iov = pkt->fp_iov;
 	     ndesc < pkt->fp_uio.uio_iovcnt; ndesc++, iov++) {
 		for (i = 0; i < iov->iov_len; i++)
-			DPRINTFN(2, ("%s%02x", (i%32)?((i%4)?"":" "):"\n\t",
+			DPRINTFN(2, ("%s%02x", (i%32)?((i%4)?"":" "):"\n    ",
 			    ((u_int8_t *)iov->iov_base)[i]));
 		DPRINTFN(2, ("$"));
 	}
@@ -1697,7 +1697,7 @@ fwohci_at_output(struct fwohci_softc *sc, struct fwohci_ctx *fc,
 	DPRINTFN(1, ("fwohci_at_output: desc %ld",
 	    (long)(fb->fb_desc - sc->sc_desc)));
 	for (i = 0; i < ndesc * 4; i++)
-		DPRINTFN(1, ("%s%08x", i&7?" ":"\n\t",
+		DPRINTFN(2, ("%s%08x", i&7?" ":"\n    ",
 		    ((u_int32_t *)fb->fb_desc)[i]));
 	DPRINTFN(1, ("\n"));
 #endif
@@ -1744,7 +1744,7 @@ fwohci_at_done(struct fwohci_softc *sc, struct fwohci_ctx *fc, int force)
 		    force ? "force " : "", (long)(fd - sc->sc_desc),
 		    fb->fb_nseg));
 		for (i = 0; i < fb->fb_nseg * 4; i++)
-			DPRINTFN(1, ("%s%08x", i&7?" ":"\n    ",
+			DPRINTFN(2, ("%s%08x", i&7?" ":"\n    ",
 			    ((u_int32_t *)fd)[i]));
 		DPRINTFN(1, ("\n"));
 #endif
@@ -2161,7 +2161,7 @@ fwohci_selfid_input(struct fwohci_softc *sc)
 	DPRINTFN(1, ("%s: SelfID: 0x%08x", sc->sc_sc1394.sc1394_dev.dv_xname,
 	    val));
 	for (i = 0; i < count; i++)
-		DPRINTFN(1, ("%s%08x", i&7?" ":"\n    ", buf[i]));
+		DPRINTFN(2, ("%s%08x", i&7?" ":"\n    ", buf[i]));
 	DPRINTFN(1, ("\n"));
 #endif /* FW_DEBUG */
 
@@ -2521,12 +2521,12 @@ fwohci_if_input(struct fwohci_softc *sc, void *arg, struct fwohci_pkt *pkt)
 	DPRINTFN(1, ("fwohci_if_input: tcode=0x%x, dlen=%d", pkt->fp_tcode,
 	    pkt->fp_dlen));
 	for (i = 0; i < pkt->fp_hlen/4; i++)
-		DPRINTFN(2, ("%s%08x", i?" ":"\n\t", pkt->fp_hdr[i]));
+		DPRINTFN(2, ("%s%08x", i?" ":"\n    ", pkt->fp_hdr[i]));
 	DPRINTFN(2, ("$"));
 	for (n = 0, len = pkt->fp_dlen; len > 0; len -= i, n++){
 		iov = &pkt->fp_iov[n];
 		for (i = 0; i < iov->iov_len; i++)
-			DPRINTFN(2, ("%s%02x", (i%32)?((i%4)?"":" "):"\n\t",
+			DPRINTFN(2, ("%s%02x", (i%32)?((i%4)?"":" "):"\n    ",
 			    ((u_int8_t *)iov->iov_base)[i]));
 		DPRINTFN(2, ("$"));
 	}
@@ -2630,7 +2630,7 @@ fwohci_if_output(struct device *self, struct mbuf *m0,
 			for (m = m0; m != NULL; m = m->m_next) {
 				for (n = 0; n < m->m_len; n++)
 					DPRINTFN(2, ("%s%02x", (n%32)?
-					    ((n%4)?"":" "):"\n\t",
+					    ((n%4)?"":" "):"\n    ",
 					    mtod(m, u_int8_t *)[n]));
 				DPRINTFN(2, ("$"));
 			}
