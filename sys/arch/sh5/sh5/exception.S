@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.S,v 1.3 2002/07/12 19:33:28 scw Exp $	*/
+/*	$NetBSD: exception.S,v 1.4 2002/08/26 10:38:52 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -164,11 +164,13 @@
 	st.q	r24, ES(ES_TRA), r0					      ;\
 	getcon	kcr1, r0						      ;\
 	st.q	r24, ES(ES_USR), r0					      ;\
-	or	r24, r63, r2		/* Drop use of r24 now */	      ;\
-	LDPTR	r2, CI_CURPCB, r1	/* Get curpcb */		      ;\
-	movi	USPACE, r0		/* Offset of top of kernel stack */   ;\
-	add	r0, r1, r1						      ;\
-	getcon	ssr, r0			/* Fetch saved status register */     ;\
+	getcon	spc, r0							      ;\
+	st.q	r24, ES(ES_SPC), r0					      ;\
+	getcon	ssr, r0							      ;\
+	st.q	r24, ES(ES_SSR), r0					      ;\
+	LDPTR	r24, CI_CURPCB, r1	/* Get curpcb */		      ;\
+	movi	USPACE, r2		/* Offset of top of kernel stack */   ;\
+	add	r2, r1, r1						      ;\
 	shlri	r0, SH5_CONREG_SR_MD_SHIFT, r0	/* Get SSR.MD to bit#0 */     ;\
 	andi	r0, 1, r0		/* r0 == 0 if came from user mode */  ;\
 	cmveq	r0, r1, r15		/* Switch stacks if necessary */      ;\
@@ -178,13 +180,12 @@
 	LDC32(SH5_CONREG_SR_BL, r0)	/* Unblock exceptions. This allows */ ;\
 	andc	r0, r1, r1		/* us to take a TLB miss exception */ ;\
 	ori	r1, SH5_CONREG_SR_IMASK_ALL, r0 /* But don't allow IRQs */    ;\
+	or	r24, r63, r2		/* Drop use of r24 now */	      ;\
 	putcon	r0, sr			/* Now safe to touch kernel stack */  ;\
-	getcon	ssr, r0							      ;\
+	ld.q	r2, ES(ES_SSR), r0					      ;\
 	st.q	r15, SFO(SF_SSR,sz), r0	/* Save SSR */			      ;\
-	getcon	spc, r0							      ;\
+	ld.q	r2, ES(ES_SPC), r0					      ;\
 	st.q	r15, SFO(SF_SPC,sz), r0	/* Save SPC */			      ;\
-	STPTR	r15, (sz + _PTRSZ), r0	/* Set up a stack frame */	      ;\
-	STPTR	r15, sz, r14						      ;\
 	ld.q	r2, ES(ES_USR), r0					      ;\
 	st.q	r15, SFO(SF_USR,sz), r0	/* Save USR */			      ;\
 	ld.q	r2, ES(ES_R0), r0					      ;\
@@ -209,21 +210,32 @@
 	getcon	sr, r0							      ;\
 	ori	r0, SH5_CONREG_SR_IMASK_ALL, r0 /* No IRQs please */	      ;\
 	putcon	r0, sr							      ;\
-	ld.q	r15, SFO(SF_SSR,sz), r0					      ;\
-	putcon	r0, ssr			/* Restore saved SR */		      ;\
-	ld.q	r15, SFO(SF_SPC,sz), r0					      ;\
-	putcon	r0, spc			/* Restore saved PC */		      ;\
-	ld.q	r15, SFO(SF_USR,sz), r0					      ;\
 	getcon	kcr0, r24						      ;\
+	st.q	r24, ES(ES_CRITICAL), r24 /* We're in critical sect */	      ;\
+	ld.q	r15, SFO(SF_SSR,sz), r0					      ;\
+	st.q	r24, ES(ES_SSR), r0					      ;\
+	ld.q	r15, SFO(SF_SPC,sz), r0					      ;\
+	st.q	r24, ES(ES_SPC), r0					      ;\
+	ld.q	r15, SFO(SF_USR,sz), r0					      ;\
 	st.q	r24, ES(ES_USR), r0					      ;\
+	ld.q	r15, IFO(IF_R0,sz), r0					      ;\
+	st.q	r24, ES(ES_R0), r0					      ;\
 	ld.q	r15, IFO(IF_TR0,sz), r0	/* Restore saved TR0 */		      ;\
 	ptabs/u	r0, tr0							      ;\
-	ld.q	r15, IFO(IF_R0,sz), r0	/* Restore scratch registers */	      ;\
 	ld.q	r15, IFO(IF_R1,sz), r1					      ;\
 	ld.q	r15, IFO(IF_R2,sz), r2					      ;\
 	ld.q	r15, IFO(IF_R15,sz), r15/* Back on previous context's stack */;\
-	getcon	kcr0, r24		/* Have to reload in case of recent */;\
-	ld.q	r24, ES(ES_USR), r24	/* TLB miss while restoring regs */   ;\
+	getcon	sr, r0							      ;\
+	LDC32(SH5_CONREG_SR_BL | SH5_CONREG_SR_IMASK_ALL, r24)		      ;\
+	or	r0, r24, r0		/* Block exceptions */		      ;\
+	putcon	r0, sr							      ;\
+	getcon	kcr0, r24						      ;\
+	ld.q	r24, ES(ES_SPC), r0					      ;\
+	putcon	r0, spc							      ;\
+	ld.q	r24, ES(ES_SSR), r0					      ;\
+	putcon	r0, ssr							      ;\
+	ld.q	r24, ES(ES_R0), r0					      ;\
+	ld.q	r24, ES(ES_USR), r24					      ;\
 	putcon	r24, usr						      ;\
 	synco								      ;\
 	rte
@@ -444,19 +456,17 @@ GLOBAL(sh5_vector_table)
  *
  * VBR Offset: 0x0
  *     Length: 0x100
- *
- * Can't do these yet, as they are invoked with the MMU disabled ... 
  */
 Lsh5_vector_panic:
-#if 0
 	getcon	usr, r24		/* Stash USR somewhere safe for now */
 	putcon	r15, kcr1
-	LEA(PANIC_STACK_PHYS, r15)		/* Get on the panic stack */
+	getcon	kcr0, r15
+	LDPTR	r15, CI_PANICSTKPHYS, r15	/* Get on panic stack */
 	st.q	r15, IFO(IF_R0,SZ_TRAPFRAME), r0	/* Save r0 */
 	st.q	r15, IFO(IF_R1,SZ_TRAPFRAME), r1	/* Save r1 */
 	st.q	r15, IFO(IF_R2,SZ_TRAPFRAME), r2	/* Save r2 */
 	getcon	kcr1, r0
-	st.q	r15, IFO(IF_R15,SZ_TRAPFRAME), r15	/* Save r15 */
+	st.q	r15, IFO(IF_R15,SZ_TRAPFRAME), r0	/* Save r15 */
 	gettr	tr0, r0
 	st.q	r15, IFO(IF_TR0,SZ_TRAPFRAME), r0	/* Save tr0 */
 	getcon	ssr, r0
@@ -474,9 +484,6 @@ Lsh5_vector_panic:
 	st.q	r15, SFO(SF_TRA, SZ_TRAPFRAME), r0	/* Save TRA */
 	pta/l	Lsh5_event_panic, tr0
 	blink	tr0, r63
-#else
-	nop
-#endif
 
 	.balign	0x100
 
@@ -708,8 +715,6 @@ Lsh5_vector_interrupt:
 /*========================== End of Vector Table =============================*/
 
 
-/* Can't do these yet, as they are invoked with the MMU disabled ... */
-#if 0
 /******************************************************************************
  * Continuation of Panic Event.
  *
@@ -720,13 +725,25 @@ Lsh5_vector_interrupt:
 Lsh5_event_panic:
 	_INTR_FRAME_SAVE(SZ_TRAPFRAME)
 	_TRAP_FRAME_SAVE(SZ_TRAPFRAME)
-	LEAF(_C_LABEL(panic_trap), r0)
+	getcon	pssr, r4
+	getcon	pspc, r5
+	LEAF(1f, r0)
+	putcon	r0, spc
+	LDUC32(SH5_CONREG_SR_BL|SH5_CONREG_SR_MD|SH5_CONREG_SR_MMU, r0)
+	putcon	r0, ssr
 	getcon	kcr0, r2
+	LEA(_C_LABEL(sh5_panic_stack), r15)
+	movi	(USPACE - SZ_TRAPFRAME), r0
+	add	r15, r0, r15
+	synco
+	rte
+1:	LEAF(_C_LABEL(panic_trap), r0)
 	ptabs/l	r0, tr0
 	or	r15, r63, r3
 	blink	tr0, r63
 	/*NOTREACHED*/
-#endif
+
+	.comm	_C_LABEL(sh5_panic_stack),USPACE,16
 
 
 /******************************************************************************
