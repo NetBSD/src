@@ -1,4 +1,4 @@
-/*	$NetBSD: tcx.c,v 1.2 1998/09/05 16:50:38 pk Exp $ */
+/*	$NetBSD: tcx.c,v 1.3 1999/05/23 02:45:19 eeh Exp $ */
 
 /* 
  *  Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -224,7 +224,7 @@ tcxattach(parent, self, args)
 		fb->fb_type.fb_width,
 		fb->fb_type.fb_height);
 
-	isconsole = node == fbnode && fbconstty != NULL;
+	isconsole = (node == fbnode);
 
 	printf(", id %d, rev %d, sense %d",
 		(sc->sc_thc->thc_config & THC_CFG_FBID) >> THC_CFG_FBID_SHIFT,
