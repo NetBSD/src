@@ -1,7 +1,7 @@
 # ALLEN
 # Mac II, etc.
 
-include	"std.mac"
+include	"std.mac68k"
 
 maxusers	16
 

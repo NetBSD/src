@@ -1,0 +1,70 @@
+#	from: @(#)files.sparc	8.1 (Berkeley) 7/19/93
+#	$Id: files.mac68k,v 1.1 1993/12/02 18:29:22 briggs Exp $
+# files.mac68k.newconf
+# mac68k-specific configuration info
+
+maxusers 2 8 64
+
+device mainbus at root { }		# no locators (yet?)
+
+device	nubus at mainbus { slot = -1, id = -1, claimed = 0 }
+file	arch/mac68k/dev/nubus.c		nubus
+
+device	ser at mainbus: tty
+file	arch/mac68k/dev/ser.c		ser needs-count
+
+device	adb at mainbus
+file	arch/mac68k/dev/adb.c		adb needs-count
+
+pseudo-device con
+file	arch/mac68k/dev/console.c		con needs-count
+device	grf at nubus
+file	arch/mac68k/dev/grf.c		grf needs-count
+file	arch/mac68k/dev/grf_gb.c		grf
+device	ite at nubus
+
+device	ae at nubus: ifnet, ether
+file	arch/mac68k/dev/if_ae.c		ae
+
+# scsi driver and associated stuff
+define	scsi { target = -1 }
+
+device	ncr at mainbus: scsi
+file	arch/mac68k/dev/scsi.c		ncr
+
+device	scsibus at scsi { drive = -1 }
+file	arch/mac68k/scsi/scsiconf.c	scsibus needs-count
+file	arch/mac68k/scsi/scsi_base.c	scsi
+#file	arch/mac68k/scsi/scsi_ioctl.c	scsi
+
+device	cd at scsibus: disk
+file	arch/mac68k/scsi/cd.c		cd needs-count
+major {cd=6}
+device	ch at scsibus: disk
+file	arch/mac68k/scsi/ch.c		ch needs-count
+device	sd at scsibus: disk
+file	arch/mac68k/scsi/sd.c		sd needs-count
+major {sd=4}
+device	st at scsibus: tape
+file	arch/mac68k/scsi/st.c		st needs-count
+major {st=5}
+#file	arch/mac68k/scsi/uk.c		uk needs-flag
+#file	arch/mac68k/scsi/su.c		su needs-flag
+
+file	arch/mac68k/mac68k/disksubr.c		disk
+file	arch/mac68k/mac68k/ns_cksum.c		ns
+file	arch/mac68k/mac68k/oc_cksum.s		inet
+file	arch/mac68k/mac68k/in_cksum.c		inet
+file	arch/mac68k/mac68k/vm_machdep.c
+file	arch/mac68k/mac68k/via.c
+file	arch/mac68k/mac68k/trap.c
+file	arch/mac68k/mac68k/sys_machdep.c
+file	arch/mac68k/mac68k/pram.c
+file	arch/mac68k/mac68k/pmap.c
+file	arch/mac68k/mac68k/mem.c
+file	arch/mac68k/mac68k/machdep.c
+file	arch/mac68k/mac68k/cons.c
+file	arch/mac68k/mac68k/clock.c
+file	arch/mac68k/mac68k/autoconf.c
+file	arch/mac68k/mac68k/swapgeneric.c
+file	arch/mac68k/mac68k/itedumm.c		ite needs-count
