@@ -49,7 +49,7 @@ Supported devices include:
 		    Merlin.
 		A2410.
 		Cybervision 64.
-		Cybervision 64/3D.**)
+		Cybervision 64/3D.
 
 	Audio I/O:
 		Amiga builtin (currently 8bit-mode only)
@@ -73,7 +73,7 @@ Supported devices include:
 	CD-ROM drives:
 		Most SCSI CD-ROM drives
 	Serial cards:
-		HyperCom 3 and 4
+		HyperCom Z3 and HyperCom 4
 		MultiFaceCard II and III
 		A2232
 	Amiga floppy drives with Amiga (880/1760kB) and 
@@ -98,9 +98,6 @@ Known problems with some hardware:
 
 	*) the Emplant SCSI adapter has been reported by a party to
 	hang after doing part of the installation without problems.
-
-	**) the CyberVision 64/3D works at the moment only in
-	ZorroIII mode.
 
 	***) SCSI scanner support is machine independent, so it should
 	work, but hasn't been tested yet on most Amiga configurations.
