@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.231.2.9 2000/10/15 18:34:49 perry Exp $
+#	$NetBSD: mi,v 1.231.2.10 2000/10/20 15:12:41 tv Exp $
 ./sys			comp-sysutil-root
 ./usr/bin/addr2line	comp-miscutil-bin
 ./usr/bin/ar		comp-util-bin
@@ -335,19 +335,10 @@
 ./usr/include/dev/vme/xyvar.h		comp-c-include
 ./usr/include/dev/vndvar.h		comp-c-include
 ./usr/include/dev/wscons		comp-c-include
-./usr/include/dev/wscons/ascii.h		comp-c-include
-./usr/include/dev/wscons/wscons_callbacks.h		comp-c-include
-./usr/include/dev/wscons/wscons_raster.h		comp-c-include
-./usr/include/dev/wscons/wscons_rfont.h		comp-c-include
 ./usr/include/dev/wscons/wsconsio.h		comp-c-include
 ./usr/include/dev/wscons/wsdisplay_usl_io.h		comp-c-include
-./usr/include/dev/wscons/wsdisplayvar.h		comp-c-include
-./usr/include/dev/wscons/wsemulvar.h		comp-c-include
-./usr/include/dev/wscons/wseventvar.h		comp-c-include
-./usr/include/dev/wscons/wskbdvar.h		comp-c-include
 ./usr/include/dev/wscons/wsksymdef.h		comp-c-include
 ./usr/include/dev/wscons/wsksymvar.h		comp-c-include
-./usr/include/dev/wscons/wsmousevar.h		comp-c-include
 ./usr/include/dirent.h		comp-c-include
 ./usr/include/disktab.h		comp-c-include
 ./usr/include/dlfcn.h		comp-c-include
