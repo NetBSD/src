@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.223 2003/07/20 17:01:58 lukem Exp $
+#	$NetBSD: bsd.lib.mk,v 1.224 2003/07/22 06:53:22 lukem Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -162,36 +162,36 @@ FFLAGS+=	${FOPTS}
 
 .c.o:
 .if defined(COPTS) && !empty(COPTS:M*-g*)
-	${COMPILE.c} ${.IMPSRC}
+	${COMPILE.c} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC}
 .else
-	@echo ${COMPILE.c:Q} ${.IMPSRC}
-	@${COMPILE.c} ${.IMPSRC} -o ${.TARGET}.o
+	@echo ${COMPILE.c:Q} ${COPTS.${.IMPSRC:T}:Q} ${CPUFLAGS.${.IMPSRC:T}:Q} ${CPPFLAGS.${.IMPSRC:T}:Q} ${.IMPSRC}
+	@${COMPILE.c} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC} -o ${.TARGET}.o
 	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 .endif
 
 .c.po:
 .if defined(COPTS) && !empty(COPTS:M*-g*)
-	${COMPILE.c} -pg ${.IMPSRC} -o ${.TARGET}
+	${COMPILE.c} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} -pg ${.IMPSRC} -o ${.TARGET}
 .else
-	@echo ${COMPILE.c:Q} -pg ${.IMPSRC} -o ${.TARGET}
-	@${COMPILE.c} -pg ${.IMPSRC} -o ${.TARGET}.o
+	@echo ${COMPILE.c:Q} ${COPTS.${.IMPSRC:T}:Q} ${CPUFLAGS.${.IMPSRC:T}:Q} ${CPPFLAGS.${.IMPSRC:T}:Q} -pg ${.IMPSRC} -o ${.TARGET}
+	@${COMPILE.c} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} -pg ${.IMPSRC} -o ${.TARGET}.o
 	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 .endif
 
 .c.so:
 .if defined(COPTS) && !empty(COPTS:M*-g*)
-	${COMPILE.c} ${CSHLIBFLAGS} ${.IMPSRC} -o ${.TARGET}
+	${COMPILE.c} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${CSHLIBFLAGS} ${.IMPSRC} -o ${.TARGET}
 .else
-	@echo ${COMPILE.c:Q} ${CSHLIBFLAGS} ${.IMPSRC} -o ${.TARGET}
-	@${COMPILE.c} ${CSHLIBFLAGS} ${.IMPSRC} -o ${.TARGET}.o
+	@echo ${COMPILE.c:Q} ${COPTS.${.IMPSRC:T}:Q} ${CPUFLAGS.${.IMPSRC:T}:Q} ${CPPFLAGS.${.IMPSRC:T}:Q} ${CSHLIBFLAGS} ${.IMPSRC} -o ${.TARGET}
+	@${COMPILE.c} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${CSHLIBFLAGS} ${.IMPSRC} -o ${.TARGET}.o
 	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 .endif
 
 .c.ln:
-	${LINT} ${LINTFLAGS} ${CPPFLAGS:M-[IDU]*} -i ${.IMPSRC}
+	${LINT} ${LINTFLAGS} ${CPPFLAGS:M-[IDU]*} ${CPPFLAGS.${.IMPSRC:T}:M-[-IDU]*} -i ${.IMPSRC}
 
 .cc.o .cpp.o .cxx.o .C.o:
 .if defined(COPTS) && !empty(COPTS:M*-g*)
