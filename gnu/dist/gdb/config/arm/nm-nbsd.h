@@ -25,15 +25,4 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 /* #define FLOAT_INFO	{ arm_float_info(); } */
 
-/* Return sizeof user struct to callers in less machine dependent routines */
-
-#define KERNEL_U_SIZE kernel_u_size()
-extern int kernel_u_size PARAMS ((void));
-
-/*#define REGISTER_U_ADDR(addr, blockend, regno) \
-	(addr) = arm_register_u_addr ((blockend),(regno));
-
-extern int
-arm_register_u_addr PARAMS ((int, int));*/
-
 #endif /* NM_NBSD_H */
