@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.4 2002/03/26 00:03:47 kleink Exp $	*/
+/*	$NetBSD: clock.c,v 1.5 2004/06/29 16:26:05 kleink Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -94,7 +94,7 @@ delay(n)
 		}
 		__asm __volatile ("1: mfspr %0,%3; cmplw %0,%1; blt 1b; bgt 2f;"
 		    "mfspr %0,%4; cmplw %0,%2; blt 1b; 2:"
-		    : "=r"(scratch)
+		    : "=&r"(scratch)
 		    : "r"(tbh), "r"(tbl), "n"(SPR_RTCU_R), "n"(SPR_RTCL_R));
 	} else {
 		tb = mftb();
@@ -103,7 +103,7 @@ delay(n)
 		tbl = tb;
 		__asm __volatile ("1: mftbu %0; cmpw %0,%1; blt 1b; bgt 2f;"
 		                  "mftb %0; cmpw %0,%2; blt 1b; 2:"
-		                  : "=r"(scratch)
+		                  : "=&r"(scratch)
 		                  : "r"(tbh), "r"(tbl));
 	}
 }
