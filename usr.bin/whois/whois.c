@@ -1,6 +1,8 @@
+/*	$NetBSD: whois.c,v 1.5 1994/11/14 05:13:25 jtc Exp $	*/
+
 /*
- * Copyright (c) 1980 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1980, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,14 +34,16 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1980 Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1980, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)whois.c	5.11 (Berkeley) 3/2/91";*/
-static char rcsid[] = "$Id: whois.c,v 1.4 1993/08/27 22:31:09 jtc Exp $";
+#if 0
+static char sccsid[] = "@(#)whois.c	8.1 (Berkeley) 6/6/93";
+#endif
+static char rcsid[] = "$NetBSD: whois.c,v 1.5 1994/11/14 05:13:25 jtc Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
