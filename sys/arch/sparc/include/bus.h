@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.7 1998/03/21 19:31:27 pk Exp $	*/
+/*	$NetBSD: bus.h,v 1.8 1998/03/28 19:45:29 pk Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -143,6 +143,15 @@ int sparc_bus_map __P(( void *, bus_type_t, bus_addr_t, bus_size_t,
 			int, vm_offset_t, bus_space_handle_t *));
 int sparc_bus_mmap __P((void *, bus_type_t, bus_addr_t, int));
 
+int bus_space_probe __P((
+		bus_space_tag_t,
+		bus_type_t,
+		bus_addr_t,
+		bus_size_t,			/* probe size */
+		size_t,				/* offset */
+		int,				/* flags */
+		int (*) __P((void *, void *)),	/* callback function */
+		void *));			/* callback arg */
 
 #if 0
 int	bus_space_alloc __P((bus_space_tag_t t, bus_addr_t rstart,
