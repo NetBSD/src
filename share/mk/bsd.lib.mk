@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.239 2003/10/26 03:29:44 lukem Exp $
+#	$NetBSD: bsd.lib.mk,v 1.240 2003/11/11 11:43:45 dsl Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -21,6 +21,7 @@ LDFLAGS+=   ${LDFLAGS.lib${LIB}}
 LDSTATIC+=  ${LDSTATIC.lib${LIB}}
 
 ##### Build and install rules
+MKDEP_SUFFIXES?=	.o .po .so .ln
 CPPFLAGS+=	${DESTDIR:D-nostdinc ${CPPFLAG_ISYSTEM} ${DESTDIR}/usr/include}
 CXXFLAGS+=	${DESTDIR:D-nostdinc++ ${CPPFLAG_ISYSTEMXX} ${DESTDIR}/usr/include/g++}
 
@@ -458,14 +459,6 @@ cleanlib:
 	rm -f lib${LIB}_pic.a lib${LIB}.so.* lib${LIB}.so ${SOBJS}
 	rm -f ${OBJS:=.tmp} ${POBJS:=.tmp} ${SOBJS:=.tmp}
 	rm -f llib-l${LIB}.ln ${LOBJS}
-
-.if defined(SRCS)
-afterdepend: .depend
-	@(TMP=/tmp/_depend$$$$; trap 'rm -f $$TMP ; exit 1' 1 2 3 13 15; \
-	    sed -e 's/^\([^\.]*\).o[ ]*:/\1.o \1.po \1.so \1.ln:/' \
-	      < .depend > $$TMP && \
-	    mv $$TMP .depend)
-.endif
 
 .if !target(libinstall)
 # Make sure it gets defined, in case MKPIC==no && MKLINKLIB==no
