@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sl.c,v 1.87 2004/12/05 05:43:04 christos Exp $	*/
+/*	$NetBSD: if_sl.c,v 1.88 2004/12/05 14:56:50 he Exp $	*/
 
 /*
  * Copyright (c) 1987, 1989, 1992, 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.87 2004/12/05 05:43:04 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.88 2004/12/05 14:56:50 he Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -698,8 +698,7 @@ slnetisr(void)
 {
 	struct sl_softc *sc;
 
-	LIST_FOREACH(sc, &sl_softc_list, sc_iflist)
-		sc = &sl_softc[i];
+	LIST_FOREACH(sc, &sl_softc_list, sc_iflist) {
 		if (sc->sc_ttyp == NULL)
 			continue;
 		slintr(sc);
