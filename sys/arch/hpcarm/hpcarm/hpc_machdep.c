@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc_machdep.c,v 1.54 2002/08/24 02:16:34 thorpej Exp $	*/
+/*	$NetBSD: hpc_machdep.c,v 1.55 2002/10/05 17:12:09 chs Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -201,10 +201,9 @@ static void fakecninit();
 void dumppages(char *, int);
 #endif
 
-extern int db_trapper();
-
+u_int initarm(int, char **, struct bootinfo *);
+extern int db_trapper(u_int, u_int, trapframe_t *, int);
 extern void dump_spl_masks	__P((void));
-
 extern void dumpsys	__P((void));
 
 /*

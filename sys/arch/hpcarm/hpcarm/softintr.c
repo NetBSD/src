@@ -1,4 +1,4 @@
-/*	$NetBSD: softintr.c,v 1.6 2001/11/27 01:12:55 thorpej Exp $	*/
+/*	$NetBSD: softintr.c,v 1.7 2002/10/05 17:12:10 chs Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -47,6 +47,7 @@
 
 extern int ipl_to_spl(int);
 void softintr_free(void *);
+void softintr_dispatch(int);
 
 struct softintr_handler {
 	struct softintr_handler *sh_vlink;	/* vertical link */
