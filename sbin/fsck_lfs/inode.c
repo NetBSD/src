@@ -1,4 +1,4 @@
-/* $NetBSD: inode.c,v 1.7 2000/06/14 18:43:58 perseant Exp $	 */
+/* $NetBSD: inode.c,v 1.8 2001/01/05 02:02:58 lukem Exp $	 */
 
 /*
  * Copyright (c) 1997, 1998
@@ -722,7 +722,7 @@ pinode(ino_t ino)
 		printf("MODE=%o\n", dp->di_mode);
 		if (preen)
 			printf("%s: ", cdevname());
-		printf("SIZE=%qu ", (unsigned long long)dp->di_size);
+		printf("SIZE=%llu ", (unsigned long long)dp->di_size);
 		t = dp->di_mtime;
 		p = ctime(&t);
 		printf("MTIME=%12.12s %4.4s ", &p[4], &p[20]);

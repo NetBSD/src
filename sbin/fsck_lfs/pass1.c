@@ -1,4 +1,4 @@
-/* $NetBSD: pass1.c,v 1.8 2000/06/14 18:43:59 perseant Exp $	 */
+/* $NetBSD: pass1.c,v 1.9 2001/01/05 02:02:58 lukem Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -216,7 +216,8 @@ checkinode(ino_t inumber, struct inodesc * idesc)
 	if (			/* dp->di_size < 0 || */
 	    dp->di_size + sblock.lfs_bsize - 1 < dp->di_size) {
 		if (debug)
-			printf("bad size %qu:", (unsigned long long)dp->di_size);
+			printf("bad size %llu:",
+			    (unsigned long long)dp->di_size);
 		goto unknown;
 	}
 	if (!preen && mode == IFMT && reply("HOLD BAD BLOCK") == 1) {
@@ -228,7 +229,7 @@ checkinode(ino_t inumber, struct inodesc * idesc)
 	ndb = howmany(dp->di_size, sblock.lfs_bsize);
 	if (ndb < 0) {
 		if (debug)
-			printf("bad size %qu ndb %d:",
+			printf("bad size %llu ndb %d:",
 			       (unsigned long long)dp->di_size, ndb);
 		goto unknown;
 	}
@@ -252,7 +253,7 @@ checkinode(ino_t inumber, struct inodesc * idesc)
 				errexit("cannot read symlink");
 			if (debug) {
 				symbuf[dp->di_size] = 0;
-				printf("convert symlink %d(%s)of size %qd\n",
+				printf("convert symlink %d(%s)of size %lld\n",
 				  inumber, symbuf, (long long)dp->di_size);
 			}
 			dp = ginode(inumber);
