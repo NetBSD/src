@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.93 2000/06/14 13:44:24 lukem Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.94 2000/06/14 13:55:15 itojun Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.93 2000/06/14 13:44:24 lukem Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.94 2000/06/14 13:55:15 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -1708,8 +1708,6 @@ statcmd(void)
 				UC(p[0]), UC(p[1]));
 		}
 
-/* XXXLUKEM this code doesn't look right; speak to itojun */
-
 							/* LPSV/LPRT */
 	    {
 		int alen, af, i;
@@ -1736,8 +1734,8 @@ statcmd(void)
 			lreply(-2, "    %s (%d,%d",
 			    ispassive ? "LPSV" : "LPRT", af, alen);
 			for (i = 0; i < alen; i++)
-				lreply(-2, "%d,", UC(a[alen]));
-			lreply(-1, "%d,%d,%d)", 2, UC(p[0]), UC(p[1]));
+				lreply(-2, ",%d", UC(a[i]));
+			lreply(-1, ",%d,%d,%d)", 2, UC(p[0]), UC(p[1]));
 #undef UC
 		}
 	    }
