@@ -1,4 +1,4 @@
-/* $NetBSD: bcopyinout.S,v 1.4 1996/06/03 21:21:32 mark Exp $ */
+/* $NetBSD: bcopyinout.S,v 1.5 1996/06/12 20:06:00 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -57,18 +57,121 @@ Lcurpcb:
 Lcurproc:
 	.word	_curproc
 
-bcopyinoutfault:
+/*
+ * r0 = user space address
+ * r1 = kernel space address
+ * r2 = length
+ *
+ * Copies bytes from user space to kernel space
+ */
+	.global _copyin
+
+_copyin:
+	teq	r2, #0x00000000
+	moveq	r0, #0x000000000
+	moveq	pc,lr
+
+/* Validate addresses */
+
+	ldr	r3, Lvm_min_address
+	cmp	r0, r3
+	bcc	Lbadaddress
+	ldr	r3, Lvm_maxuser_address
+	cmp	r0, r3
+	bcs	Lbadaddress
+	cmp	r1, r3
+	bcc	Lbadaddress
+	ldr	r3, Lvm_maxkern_address
+	cmp	r1, r3
+	bcs	Lbadaddress
+
+	stmfd	sp!, {r4}
+	ldr	r4, Lcurpcb
+	ldr	r4, [r4]
+	teq	r4, #0x00000000
+	beq	copyinoutpcbfault
+	add	r3, pc, #copyinoutfault - . - 8
+	str	r3, [r4, #PCB_ONFAULT]
+
+copyin_loop:
+	ldrb	r3, [r0], #0x0001
+	strb	r3, [r1], #0x0001
+	subs	r2, r2, #0x00000001
+	bne	copyin_loop
+
 	mov	r0, #0x00000000
 	str	r0, [r4, #PCB_ONFAULT]
-	mov	r0, #EFAULT
 	ldmfd	sp!, {r4}
 	mov	pc, lr
 
-bcopyinoutpcbfault:
+/*
+ * r0 = kernel space address
+ * r1 = user space address
+ * r2 = length
+ *
+ * Copies bytes from user space to kernel space
+ */
+	.global _copyout
+
+_copyout:
+	teq	r2, #0x00000000
+	moveq	r0, #0x000000000
+	moveq	pc,lr
+
+/* Validate addresses */
+
+	ldr	r3, Lvm_min_address
+	cmp	r1, r3
+	bcc	Lbadaddress
+	ldr	r3, Lvm_maxuser_address
+	cmp	r1, r3
+	bcs	Lbadaddress
+	cmp	r0, r3
+	bcc	Lbadaddress
+	ldr	r3, Lvm_maxkern_address
+	cmp	r0, r3
+	bcs	Lbadaddress
+
+	stmfd	sp!, {r4}
+	ldr	r4, Lcurpcb
+	ldr	r4, [r4]
+	teq	r4, #0x00000000
+	beq	copyinoutpcbfault
+	add	r3, pc, #copyinoutfault - . - 8
+	str	r3, [r4, #PCB_ONFAULT]
+
+copyout_loop:
+	ldrb	r3, [r0], #0x0001
+	strb	r3, [r1], #0x0001
+	subs	r2, r2, #0x00000001
+	bne	copyout_loop
+
+	mov	r0, #0x00000000
+	str	r0, [r4, #PCB_ONFAULT]
+	ldmfd	sp!, {r4}
+	mov	pc, lr
+
+Lvm_min_address:
+	.word	VM_MIN_ADDRESS
+Lvm_maxuser_address:
+	.word	VM_MAXUSER_ADDRESS
+Lvm_maxkern_address:
+	.word	VM_MAXKERN_ADDRESS
+
+copyinoutfault:
+	mov	r0, #0x00000000
+	str	r0, [r4, #PCB_ONFAULT]
+	ldmfd	sp!, {r4}
+
+Lbadaddress:
+	mov	r0, #EFAULT
+	mov	pc, lr
+
+copyinoutpcbfault:
 	stmfd	sp!, {lr}
 	mov	r3, r1
 	mov	r1, r4
-	add	r0, pc, #bcopyinouttext - . - 8
+	add	r0, pc, #copyinouttext - . - 8
 	mov	r2, r3
 	ldr	r3, Lcurproc
 	ldr	r3, [r3]
@@ -78,52 +181,6 @@ bcopyinoutpcbfault:
 	ldmfd	sp!, {r4}
 	mov	pc, lr
 
-bcopyinouttext:
-	.asciz	"Alert ! PCB = %08x during bcopyinout addr=%08x curproc=%08x\n"
-
+copyinouttext:
+	.asciz	"Alert ! PCB = %08x during copyinout addr=%08x curproc=%08x\n"
 	.align	0
-
-	.global _bcopyinout
-
-_bcopyinout:
-	teq	r2, #0x00000000
-	moveq	r0, #0x000000000
-	moveq	pc,lr
-
-	stmfd	sp!, {r4}
-	ldr	r4, Lcurpcb
-	ldr	r4, [r4]
-	teq	r4, #0x00000000
-	beq	bcopyinoutpcbfault
-	add	r3, pc, #bcopyinoutfault - . - 8
-	str	r3, [r4, #PCB_ONFAULT]
-
-	cmp	r0, r1
-	blt	bcopy_back
-
-bcopy_loop:
-	ldrb	r3, [r0], #0x0001
-	strb	r3, [r1], #0x0001
-	subs	r2, r2, #0x00000001
-	bne	bcopy_loop
-
-	mov	r0, #0x00000000
-	str	r0, [r4, #PCB_ONFAULT]
-	ldmfd	sp!, {r4}
-	mov	pc, lr
-
-bcopy_back:
-	add	r0, r0, r2
-	add	r1, r1, r2
-
-bcopy_bloop:
-	ldrb	r3, [r0, #-0x0001]!
-	strb	r3, [r1, #-0x0001]!
-	subs	r2, r2, #0x00000001
-	bne	bcopy_bloop
-
-	mov	r0, #0x00000000
-	str	r0, [r4, #PCB_ONFAULT]
-	ldmfd	sp!, {r4}
-	mov	pc, r14
-
