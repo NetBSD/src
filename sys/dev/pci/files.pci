@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.55 1999/06/01 18:29:50 thorpej Exp $
+#	$NetBSD: files.pci,v 1.56 1999/06/20 16:35:40 thorpej Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -98,9 +98,8 @@ attach	cy at pci with cy_pci
 file	dev/pci/cy_pci.c		cy_pci
 
 # Intel EtherExpress PRO 10/100B
-device	fxp: ether, ifnet, arp, mii
-attach	fxp at pci 
-file	dev/pci/if_fxp.c		fxp
+attach	fxp at pci with fxp_pci
+file	dev/pci/if_fxp_pci.c		fxp_pci
 
 # NE2000-compatible PCI Ethernet cards
 attach	ne at pci with ne_pci: rtl80x9
