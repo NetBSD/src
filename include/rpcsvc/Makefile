@@ -1,7 +1,7 @@
 #
 # @(#)Makefile	2.3 88/08/11 4.0 RPCSRC
 #
-# $Header: /cvsroot/src/include/rpcsvc/Attic/Makefile,v 1.4 1993/05/06 02:23:15 proven Exp $
+# $Header: /cvsroot/src/include/rpcsvc/Attic/Makefile,v 1.5 1993/05/06 13:28:50 proven Exp $
 #
 
 .SUFFIXES: .x
@@ -38,4 +38,3 @@ install: all
 	@PWD=`pwd` ; cd ${.CURDIR} ; ${RPCCOM} -h $*.x -o $$PWD/$@
 
 .include <bsd.prog.mk>
-mk>
