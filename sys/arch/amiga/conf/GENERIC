@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.112 1998/11/28 12:19:44 is Exp $
+#	$NetBSD: GENERIC,v 1.113 1998/12/15 19:50:00 itohy Exp $
 
 #
 # GENERIC AMIGA
@@ -84,6 +84,8 @@ options 	COMPAT_12	# compatibility with NetBSD 1.2
 options 	COMPAT_13	# compatibility with NetBSD 1.3
 options 	COMPAT_SUNOS	# Support to run Sun (m68k) executables
 options 	COMPAT_NOMID	# allow nonvalid machine id executables
+#options 	COMPAT_LINUX	# Support to run Linux/m68k executables
+#options 	EXEC_ELF32	# 32-bit ELF executables (Linux)
 
 #
 # Support for System V IPC facilities.
