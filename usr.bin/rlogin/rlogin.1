@@ -1,4 +1,4 @@
-.\"	$NetBSD: rlogin.1,v 1.4 1995/08/18 15:07:35 pk Exp $
+.\"	$NetBSD: rlogin.1,v 1.5 1996/09/27 02:49:50 thorpej Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -103,6 +103,13 @@ in realm
 .Ar realm
 instead of the remote host's realm as determined by
 .Xr krb_realmofhost  3  .
+.It Fl l
+the
+.Fl l
+option specifies an alternate
+.Ar username
+for the remote login.
+If this option is not specified, your local username will be used.
 .It Fl x
 The
 .Fl x
