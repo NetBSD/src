@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.1 1997/05/18 20:14:22 kleink Exp $
+#	$NetBSD: Makefile.inc,v 1.2 1997/05/24 03:29:22 jonathan Exp $
 
 # sys sources
 .PATH: ${.CURDIR}/../libc/arch/${MACHINE_ARCH}/sys ${.CURDIR}/sys
@@ -22,21 +22,13 @@ ${PPSEUDO}: ${.CURDIR}/../libc/arch/${MACHINE_ARCH}/SYS.h \
 	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
-.if (${MACHINE_ARCH} != "alpha")
 ${SPSEUDO}: ${.CURDIR}/../libc/arch/${MACHINE_ARCH}/SYS.h \
     ${DESTDIR}/usr/include/sys/syscall.h
 	@echo creating ${.TARGET}
 	@printf '#include "SYS.h"\n \
 	    PSEUDO(${.PREFIX},${.PREFIX:S/^/posix_/})\n' | \
-	    ${CPP} -DPIC ${CFLAGS:M-[ID]*} ${AINC} | ${AS} -k -o ${.TARGET}
-.else
-${SPSEUDO}: ${.CURDIR}/../libc/arch/${MACHINE_ARCH}/SYS.h \
-    ${DESTDIR}/usr/include/sys/syscall.h
-	@echo creating ${.TARGET}
-	@printf '#include "SYS.h"\n \
-	    PSEUDO(${.PREFIX},${.PREFIX:S/^/posix_/})\n' | \
-	    ${CPP} -DPIC ${CFLAGS:M-[ID]*} ${AINC} | ${AS} -o ${.TARGET}
-.endif
+	    ${CPP} ${CPPPICFLAGS} ${CFLAGS:M-[ID]*} ${AINC} | \
+	    ${AS} ${APICFLAGS} -o ${.TARGET}
 
 ${PSEUDO}: ${.CURDIR}/../libc/arch/${MACHINE_ARCH}/SYS.h \
     ${DESTDIR}/usr/include/sys/syscall.h
