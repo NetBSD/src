@@ -1,4 +1,4 @@
-/*	$NetBSD: verify.c,v 1.27 2002/01/31 19:37:16 tv Exp $	*/
+/*	$NetBSD: verify.c,v 1.28 2002/02/04 05:16:41 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)verify.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: verify.c,v 1.27 2002/01/31 19:37:16 tv Exp $");
+__RCSID("$NetBSD: verify.c,v 1.28 2002/02/04 05:16:41 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -223,6 +223,9 @@ miss(NODE *p, char *tail)
 				if (chown(path, p->st_uid, p->st_gid))
 					printf(
 					    "%s: user/group not modified: %s\n",
+					    path, strerror(errno));
+				if (chmod(path, p->st_mode))
+					printf("%s: permissions not set: %s\n",
 					    path, strerror(errno));
 				continue;
 			case F_LINK:
