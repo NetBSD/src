@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h.in,v 1.26 2002/11/29 13:00:23 lukem Exp $	*/
+/*	$NetBSD: config.h.in,v 1.27 2003/03/13 04:30:39 thorpej Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_CONFIG_H__
 #define	__NETBSD_COMPAT_CONFIG_H__
@@ -31,6 +31,7 @@
 #undef STDC_HEADERS
 
 #undef HAVE_ID_T
+#undef HAVE_SOCKLEN_T
 #undef HAVE_LONG_LONG
 #undef HAVE_U_QUAD_T
 
