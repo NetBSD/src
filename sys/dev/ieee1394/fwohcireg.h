@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohcireg.h,v 1.7 2001/03/12 23:27:54 onoe Exp $	*/
+/*	$NetBSD: fwohcireg.h,v 1.8 2001/03/15 22:26:03 enami Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #ifndef _DEV_IEEE1394_FWOHCIREG_H_
-#define _DEV_IEEE1394_FWOHCIREG_H_
+#define	_DEV_IEEE1394_FWOHCIREG_H_
 
 /* PCI/CardBus-Specific definitions
  */
@@ -208,8 +208,10 @@
 /* OHCI_REG_Version
  */
 #define	OHCI_Version_GUID_ROM		0x01000000
-#define	OHCI_Version_GET_Version(x)	((((x) >> 16) & 0xf) + (((x) >> 20) & 0xf) * 10)
-#define	OHCI_Version_GET_Revision(x)	((((x) >> 4) & 0xf) + ((x) & 0xf) * 10)
+#define	OHCI_Version_GET_Version(x) \
+	((((x) >> 16) & 0xf) + (((x) >> 20) & 0xf) * 10)
+#define	OHCI_Version_GET_Revision(x) \
+	((((x) >> 4) & 0xf) + ((x) & 0xf) * 10)
 
 /* OHCI_REG_Guid_Rom
  */
@@ -482,7 +484,7 @@
 #define	OHCI_CTXCTL_TX_CYCLE_MATCH_BITLEN	0x7fff0000
 #define	OHCI_CTXCTL_TX_CYCLE_MATCH_BITPOS	16
 
-#define OHCI_CTXCTL_RX_BUFFER_FILL		0x80000000
+#define	OHCI_CTXCTL_RX_BUFFER_FILL		0x80000000
 #define	OHCI_CTXCTL_RX_ISOCH_HEADER		0x40000000
 #define	OHCI_CTXCTL_RX_CYCLE_MATCH_ENABLE	0x20000000
 #define	OHCI_CTXCTL_RX_MULTI_CHAN_MODE		0x10000000
