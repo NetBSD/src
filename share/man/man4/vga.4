@@ -1,4 +1,4 @@
-.\" $NetBSD: vga.4,v 1.2 2000/05/13 15:22:19 mycroft Exp $
+.\" $NetBSD: vga.4,v 1.2.4.1 2000/08/09 07:48:40 drochner Exp $
 .Dd March 20, 1999
 .Os
 .Dt VGA 4
@@ -39,7 +39,7 @@ This is the standard
 .Tn VGA
 text mode with 80 columns and 25 rows. 16 different colors
 can be displayed at the same time. Characters are 8 x 16
-Pixels large, and a font consists of 256 characters. A builtin
+pixels large, and a font consists of 256 characters. A builtin
 font of this size is always present on a
 .Tn VGA
 card. It's also possible to use a downloaded font instead.
@@ -48,6 +48,15 @@ is a modified version of the previous. It only allows 8
 colors to be displayed. In exchange, it can access two
 fonts at the same time, so that 512 different characters
 can be displayed.
+.It 80x40
+A text mode with 80 colums and 40 rows. Similar to the
+standard mode, 16 colors and 256 characters are available.
+Characters are 8 x 10 pixels large. For this mode to be useful,
+a font of that character size must be downloaded.
+.It 80x40bf
+is analogously to
+.Dq 80x25bf
+a version with 512 displayable characters but 8 colors only.
 .It 80x50
 A text mode with 80 colums and 50 rows. Similar to the
 standard mode, 16 colors and 256 characters are available.
@@ -57,6 +66,17 @@ a font of that character size must be downloaded.
 is analogously to
 .Dq 80x25bf
 a version with 512 displayable characters but 8 colors only.
+.It 80x24
+is a variant of the
+.Dq 80x25
+screen type which displays 24 lines only. It uses the standard 8x16 VGA font.
+This mode might be useful for applications which depend on closer
+.Tn DEC VT100
+compatibility.
+.It 80x24bf
+Analogously, like
+.Dq 80x24
+but with 512 character slots and 8 colors.
 .El
 .Pp
 The
@@ -65,8 +85,7 @@ driver can display fonts of the original
 .Tn IBM
 type and ISO-8859-1 encoded fonts. As an experimental feature, the
 .Dq higher half
-fonts of the NetBSD/i386
-.Xr pcvt 4
+fonts of the former NetBSD/i386 pcvt(4)
 driver distribution can be used too if the kernel option
 .Dq WSCONS_SUPPORT_PCVTFONTS
 was set at compile time. This is only useful with the
@@ -84,13 +103,16 @@ if a monochrome display is connected. In this case, the
 device will naturally not support colors at all, but
 offer the capability to display underlined characters instead.
 The
-.Dq 80x25bf
-and
+.Dq 80x25bf ,
+.Dq 80x40bf ,
 .Dq 80x50bf
+and
+.Dq 80x24bf
 screen types will not be available. This mode of operation
 is not tested.
 .Sh SEE ALSO
 .Xr isa 4 ,
+.Xr pcdisplay 4,  
 .Xr pci 4 ,
 .Xr wscons 4 ,
 .Xr wsconscfg 8 ,
