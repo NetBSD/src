@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.40 1998/11/22 06:52:32 explorer Exp $	*/
+/*	$NetBSD: fetch.c,v 1.41 1998/12/27 05:49:53 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.40 1998/11/22 06:52:32 explorer Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.41 1998/12/27 05:49:53 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -79,7 +79,7 @@ typedef enum {
 
 static int	parse_url __P((const char *, const char *, url_t *, char **,
 				char **, char **, in_port_t *, char **));
-static int	url_get __P((const char *, const char *, const char *));
+static int	url_get __P((const char *, const char *));
 void    	aborthttp __P((int));
 
 
@@ -87,10 +87,6 @@ void    	aborthttp __P((int));
 #define	FILE_URL	"file://"	/* file URL prefix */
 #define	FTP_URL		"ftp://"	/* ftp URL prefix */
 #define	HTTP_URL	"http://"	/* http URL prefix */
-#define FTP_PROXY	"ftp_proxy"	/* env var with ftp proxy location */
-#define HTTP_PROXY	"http_proxy"	/* env var with http proxy location */
-#define NO_PROXY	"no_proxy"	/* env var with list of non-proxied 
-					 * hosts, comma or space separated */
 
 
 #define EMPTYSTRING(x)	((x) == NULL || (*(x) == '\0'))
@@ -102,7 +98,7 @@ void    	aborthttp __P((int));
  * Returns -1 if a parse error occurred, otherwise 0.
  * Sets type to url_t, each of the given char ** pointers to a
  * malloc(3)ed strings of the relevant section, and port to
- * 0 if not given, or the number given.
+ * the number given, or ftpport if ftp://, or httpport if http://.
  */
 static int
 parse_url(url, desc, type, user, pass, host, port, path)
@@ -128,9 +124,11 @@ parse_url(url, desc, type, user, pass, host, port, path)
 	if (strncasecmp(url, HTTP_URL, sizeof(HTTP_URL) - 1) == 0) {
 		url += sizeof(HTTP_URL) - 1;
 		*type = HTTP_URL_T;
+		*port = httpport;
 	} else if (strncasecmp(url, FTP_URL, sizeof(FTP_URL) - 1) == 0) {
 		url += sizeof(FTP_URL) - 1;
 		*type = FTP_URL_T;
+		*port = ftpport;
 	} else if (strncasecmp(url, FILE_URL, sizeof(FILE_URL) - 1) == 0) {
 		url += sizeof(FILE_URL) - 1;
 		*type = FILE_URL_T;
@@ -199,14 +197,14 @@ cleanup_parse_url:
 jmp_buf	httpabort;
 
 /*
- * Retrieve URL, via the proxy in $proxyvar if necessary.
- * Modifies the string argument given.
- * Returns -1 on failure, 0 on success
+ * Retrieve URL or classic ftp argument, via the proxy in $proxyvar if
+ * necessary.
+ * Returns -1 on failure, 0 on completed xfer, 1 if ftp connection
+ * is still open (e.g, ftp xfer with trailing /)
  */
 static int
-url_get(url, proxyenv, outfile)
+url_get(url, outfile)
 	const char *url;
-	const char *proxyenv;
 	const char *outfile;
 {
 	struct sockaddr_in sin;
@@ -226,6 +224,7 @@ url_get(url, proxyenv, outfile)
 	char *user, *pass, *host;
 	in_port_t port;
 	char *path;
+	const char *proxyenv;
 
 	closefunc = NULL;
 	fin = fout = NULL;
@@ -233,6 +232,7 @@ url_get(url, proxyenv, outfile)
 	buf = savefile = NULL;
 	isredirected = isproxy = 0;
 	retval = -1;
+	proxyenv = NULL;
 
 #ifdef __GNUC__			/* shut up gcc warnings */
 	(void)&closefunc;
@@ -247,8 +247,6 @@ url_get(url, proxyenv, outfile)
 	if (parse_url(url, "URL", &urltype, &user, &pass, &host, &port, &path)
 	    == -1)
 		goto cleanup_url_get;
-	if (port == 0)
-		port = httpport;
 
 	if (urltype == FILE_URL_T && ! EMPTYSTRING(host)
 	    && strcasecmp(host, "localhost") != 0) {
@@ -298,18 +296,19 @@ url_get(url, proxyenv, outfile)
 		}
 		fprintf(ttyout, "Copying %s\n", path);
 	} else {				/* ftp:// or http:// URLs */
+		if (urltype == HTTP_URL_T)
+			proxyenv = httpproxy;
+		else if (urltype == FTP_URL_T)
+			proxyenv = ftpproxy;
 		direction = "retrieved";
 		if (proxyenv != NULL) {				/* use proxy */
 			url_t purltype;
 			char *puser, *ppass, *phost;
-			in_port_t pport;
 			char *ppath;
-			char *no_proxy;
 
 			isproxy = 1;
 
 				/* check URL against list of no_proxied sites */
-			no_proxy = getenv(NO_PROXY);
 			if (no_proxy != NULL) {
 				char *np, *np_copy;
 				long np_port;
@@ -342,7 +341,7 @@ url_get(url, proxyenv, outfile)
 
 			if (isproxy) {
 				if (parse_url(proxyenv, "proxy URL", &purltype,
-				    &puser, &ppass, &phost, &pport, &ppath)
+				    &puser, &ppass, &phost, &port, &ppath)
 				    == -1)
 					goto cleanup_url_get;
 
@@ -366,10 +365,6 @@ url_get(url, proxyenv, outfile)
 				pass = ppass;
 				FREEPTR(host);
 				host = phost;
-				if (pport == 0)
-					port = httpport;
-				else
-					port = pport;
 				FREEPTR(path);
 				FREEPTR(ppath);
 				path = xstrdup(url);
@@ -397,8 +392,10 @@ url_get(url, proxyenv, outfile)
 			memcpy(&sin.sin_addr, hp->h_addr, hp->h_length);
 		}
 
-		if (port == 0)
-			port = httpport;
+		if (port == 0) {
+			warnx("Unknown port for URL `%s'", url);
+			goto cleanup_url_get;
+		}
 		sin.sin_port = port;
 
 		s = socket(AF_INET, SOCK_STREAM, 0);
@@ -551,7 +548,7 @@ url_get(url, proxyenv, outfile)
 				if (verbose)
 					fprintf(ttyout,
 					    "Redirected to %s\n", cp);
-				retval = url_get(cp, proxyenv, outfile);
+				retval = url_get(cp, outfile);
 				goto cleanup_url_get;
 			}
 		}
@@ -691,10 +688,9 @@ aborthttp(notused)
  * ftp protocol, URLs of the form "http://host/path" using the
  * http protocol, and URLs of the form "file:///" by simple
  * copying.
- * If path has a trailing "/", then return (-1);
- * the path will be cd-ed into and the connection remains open,
- * and the function will return -1 (to indicate the connection
- * is alive).
+ * If path has a trailing "/", the path will be cd-ed into and
+ * the connection remains open, and the function will return -1
+ * (to indicate the connection is alive).
  * If an error occurs the return value will be the offset+1 in
  * argv[] of the file that caused a problem (i.e, argv[x]
  * returns x+1)
@@ -713,7 +709,6 @@ auto_fetch(argc, argv, outfile)
 	char *cp, *host, *path, *dir, *file;
 	char *user, *pass;
 	in_port_t port;
-	char *ftpproxy, *httpproxy;
 	int rval, xargc;
 	volatile int argpos;
 	int dirhasglob, filehasglob;
@@ -732,9 +727,6 @@ auto_fetch(argc, argv, outfile)
 	}
 	(void)signal(SIGINT, (sig_t)intr);
 	(void)signal(SIGPIPE, (sig_t)lostpeer);
-
-	ftpproxy = getenv(FTP_PROXY);
-	httpproxy = getenv(HTTP_PROXY);
 
 	/*
 	 * Loop through as long as there's files to fetch.
@@ -773,7 +765,7 @@ auto_fetch(argc, argv, outfile)
 		 */
 		if (strncasecmp(line, HTTP_URL, sizeof(HTTP_URL) - 1) == 0 ||
 		    strncasecmp(line, FILE_URL, sizeof(FILE_URL) - 1) == 0) {
-			if (url_get(line, httpproxy, outfile) == -1)
+			if (url_get(line, outfile) == -1)
 				rval = argpos + 1;
 			continue;
 		}
@@ -787,7 +779,7 @@ auto_fetch(argc, argv, outfile)
 			url_t urltype;
 
 			if (ftpproxy) {
-				if (url_get(line, ftpproxy, outfile) == -1)
+				if (url_get(line, outfile) == -1)
 					rval = argpos + 1;
 				continue;
 			}

@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp_var.h,v 1.27 1998/11/25 16:55:10 christos Exp $	*/
+/*	$NetBSD: ftp_var.h,v 1.28 1998/12/27 05:49:53 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -146,6 +146,10 @@ int	unix_proxy;		/* proxy is unix, can use binary for ascii */
 in_port_t	ftpport;	/* port number to use for ftp connections */
 in_port_t	httpport;	/* port number to use for http connections */
 in_port_t	gateport;	/* port number to use for gateftp connections */
+
+const char	*ftpproxy;	/* ftp:// proxy server */
+const char	*httpproxy;	/* http:// proxy server */
+const char	*no_proxy;	/* list of domains not to proxy */
 
 jmp_buf	toplevel;		/* non-local goto stuff for cmd scanner */
 
