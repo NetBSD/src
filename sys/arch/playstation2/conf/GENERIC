@@ -1,0 +1,12 @@
+#
+# Distribution kernel config file.
+#
+# 	$NetBSD: GENERIC,v 1.1 2001/10/16 15:38:31 uch Exp $
+#
+
+include 	"arch/playstation2/conf/std.playstation2"
+include 	"arch/playstation2/conf/config.playstation2"
+
+config		netbsd		root on ? type ?
+
+makeoptions	DEFGP="-G 48"
