@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.67 1998/03/01 02:24:12 fvdl Exp $	*/
+/*	$NetBSD: exec.h,v 1.68 1999/12/30 15:46:16 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -137,6 +137,7 @@ struct exec_package {
 #define	EXEC_HASARGL	0x0004		/* has fake args vector */
 #define	EXEC_SKIPARG	0x0008		/* don't copy user-supplied argv[0] */
 #define	EXEC_DESTR	0x0010		/* destructive ops performed */
+#define	EXEC_32		0x0020		/* 32-bit binary emulation */
 
 struct exec_vmcmd {
 	int	(*ev_proc) __P((struct proc *p, struct exec_vmcmd *cmd));
