@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_threadstuff.c,v 1.18 2003/12/29 05:48:13 oster Exp $	*/
+/*	$NetBSD: rf_threadstuff.c,v 1.19 2003/12/29 06:19:28 oster Exp $	*/
 /*
  * rf_threadstuff.c
  */
@@ -30,31 +30,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_threadstuff.c,v 1.18 2003/12/29 05:48:13 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_threadstuff.c,v 1.19 2003/12/29 06:19:28 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
 #include "rf_threadstuff.h"
 #include "rf_general.h"
 #include "rf_shutdown.h"
-
-/*
- * Shared stuff
- */
-
-int 
-_rf_init_managed_threadgroup(listp, g, file, line)
-	RF_ShutdownList_t **listp;
-	RF_ThreadGroup_t *g;
-	char   *file;
-	int     line;
-{
-
-	rf_mutex_init(&g->mutex);
-	g->cond = 0;
-	g->created = g->running = g->shutdown = 0;
-	return (0);
-}
 
 /*
  * Kernel

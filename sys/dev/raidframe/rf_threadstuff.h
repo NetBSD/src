@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_threadstuff.h,v 1.18 2003/12/29 05:48:13 oster Exp $	*/
+/*	$NetBSD: rf_threadstuff.h,v 1.19 2003/12/29 06:19:28 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -51,16 +51,6 @@
 
 #include <dev/raidframe/raidframevar.h>
 
-#define rf_init_managed_threadgroup(a,b) _rf_init_managed_threadgroup(a,b,__FILE__,__LINE__)
-#define rf_init_threadgroup(a) _rf_init_threadgroup(a,__FILE__,__LINE__)
-#define rf_destroy_threadgroup(a) _rf_destroy_threadgroup(a,__FILE__,__LINE__)
-
-int     _rf_init_threadgroup(RF_ThreadGroup_t * g, char *file, int line);
-int     _rf_destroy_threadgroup(RF_ThreadGroup_t * g, char *file, int line);
-int 
-_rf_init_managed_threadgroup(RF_ShutdownList_t ** listp,
-    RF_ThreadGroup_t * g, char *file, int line);
-
 #include <sys/lock.h>
 
 #define decl_simple_lock_data(a,b) a struct simplelock b;
@@ -107,77 +97,6 @@ typedef void *RF_ThreadArg_t;
 #define	RF_CREATE_ENGINE_THREAD(_handle_, _func_, _arg_, _fmt_, _fmt_arg_) \
 	kthread_create1((void (*)(void *))(_func_), (void *)(_arg_), \
 	    (struct proc **)&(_handle_), _fmt_, _fmt_arg_)
-
-struct RF_ThreadGroup_s {
-	int     created;
-	int     running;
-	int     shutdown;
-	        RF_DECLARE_MUTEX(mutex)
-	        RF_DECLARE_COND(cond)
-};
-/*
- * Someone has started a thread in the group
- */
-#define RF_THREADGROUP_STARTED(_g_) { \
-	RF_LOCK_MUTEX((_g_)->mutex); \
-	(_g_)->created++; \
-	RF_UNLOCK_MUTEX((_g_)->mutex); \
-}
-
-/*
- * Thread announcing that it is now running
- */
-#define RF_THREADGROUP_RUNNING(_g_) { \
-	RF_LOCK_MUTEX((_g_)->mutex); \
-	(_g_)->running++; \
-	RF_UNLOCK_MUTEX((_g_)->mutex); \
-	RF_SIGNAL_COND((_g_)->cond); \
-}
-
-/*
- * Thread announcing that it is now done
- */
-#define RF_THREADGROUP_DONE(_g_) { \
-	RF_LOCK_MUTEX((_g_)->mutex); \
-	(_g_)->shutdown++; \
-	RF_UNLOCK_MUTEX((_g_)->mutex); \
-	RF_SIGNAL_COND((_g_)->cond); \
-}
-
-/*
- * Wait for all threads to start running
- */
-#define RF_THREADGROUP_WAIT_START(_g_) { \
-	RF_LOCK_MUTEX((_g_)->mutex); \
-	while((_g_)->running < (_g_)->created) { \
-		RF_WAIT_COND((_g_)->cond, (_g_)->mutex); \
-	} \
-	RF_UNLOCK_MUTEX((_g_)->mutex); \
-}
-
-/*
- * Wait for all threads to stop running
- */
-#ifndef __NetBSD__
-#define RF_THREADGROUP_WAIT_STOP(_g_) { \
-	RF_LOCK_MUTEX((_g_)->mutex); \
-	RF_ASSERT((_g_)->running == (_g_)->created); \
-	while((_g_)->shutdown < (_g_)->running) { \
-		RF_WAIT_COND((_g_)->cond, (_g_)->mutex); \
-	} \
-	RF_UNLOCK_MUTEX((_g_)->mutex); \
-}
-#else
- /* XXX Note that we've removed the assert.  That should get put back in once
-  * we actually get something like a kernel thread running */
-#define RF_THREADGROUP_WAIT_STOP(_g_) { \
-	RF_LOCK_MUTEX((_g_)->mutex); \
-	while((_g_)->shutdown < (_g_)->running) { \
-		RF_WAIT_COND((_g_)->cond, (_g_)->mutex); \
-	} \
-	RF_UNLOCK_MUTEX((_g_)->mutex); \
-}
-#endif
 
 #define rf_mutex_init(m) simple_lock_init(m)
 
