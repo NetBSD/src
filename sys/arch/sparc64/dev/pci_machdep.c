@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.18 2001/01/19 21:25:19 martin Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.19 2001/03/02 06:34:06 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -57,6 +57,9 @@ int sparc_pci_debug = 0x0;
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
+
+#include <dev/ofw/openfirm.h>
+#include <dev/ofw/ofw_pci.h>
 
 #include <sparc64/dev/iommureg.h>
 #include <sparc64/dev/iommuvar.h>
@@ -250,6 +253,73 @@ pci_bus_maxdevs(pc, busno)
 
 	return 32;
 }
+
+#ifdef __PCI_BUS_DEVORDER
+int
+pci_bus_devorder(pc, busno, devs)
+	pci_chipset_tag_t pc;
+	int busno;
+	char *devs;
+{
+	struct ofw_pci_register reg0;
+	int node, len, device, i = 0;
+	u_int32_t done = 0;
+
+	for (node = OF_child(pc->node); node; node = OF_peer(node)) {
+		len = OF_getproplen(node, "reg");
+		if (len < sizeof(reg0))
+			continue;
+		if (OF_getprop(node, "reg", (void *)&reg0, sizeof(reg0)) != len)
+			panic("pci_probe_bus: OF_getprop len botch");
+
+		device = OFW_PCI_PHYS_HI_DEVICE(reg0.phys_hi);
+
+		if (done & (1 << device))
+			continue;
+
+		devs[i++] = device;
+		done |= 1 << device;
+		if (i == 32)
+			break;
+	}
+	if (i < 32)
+		devs[i] = -1;
+
+	return i;
+}
+#endif
+
+#ifdef __PCI_DEV_FUNCORDER
+int
+pci_dev_funcorder(pc, busno, device, funcs)
+	pci_chipset_tag_t pc;
+	int busno;
+	int device;
+	char *funcs;
+{
+	struct ofw_pci_register reg0;
+	int node, len, i = 0;
+
+	for (node = OF_child(pc->node); node; node = OF_peer(node)) {
+		len = OF_getproplen(node, "reg");
+		if (len < sizeof(reg0))
+			continue;
+		if (OF_getprop(node, "reg", (void *)&reg0, sizeof(reg0)) != len)
+			panic("pci_probe_bus: OF_getprop len botch");
+
+		if (device != OFW_PCI_PHYS_HI_DEVICE(reg0.phys_hi))
+			continue;
+
+		funcs[i++] = OFW_PCI_PHYS_HI_FUNCTION(reg0.phys_hi);
+		if (i == 8)
+			break;
+	}
+	if (i < 8)
+		funcs[i] = -1;
+
+	return i;
+}
+#endif
 
 pcitag_t
 pci_make_tag(pc, b, d, f)

@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep.h,v 1.5 2000/12/28 22:59:10 sommerfeld Exp $ */
+/* $NetBSD: pci_machdep.h,v 1.6 2001/03/02 06:34:06 mrg Exp $ */
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -32,6 +32,12 @@
 #define _MACHINE_PCI_MACHDEP_H_
 
 /*
+ * We want to contro both device & function probe order.
+ */
+#define		__PCI_BUS_DEVORDER
+#define		__PCI_DEV_FUNCORDER
+
+/*
  * Forward declarations.
  */
 struct pci_attach_args;
@@ -48,11 +54,16 @@ struct sparc_pci_chipset {
 	void			*cookie;	/* psycho_pbm, but sssh! */
 	int			node;		/* OFW node */
 	int			busno;		/* PCI bus number */
-	/* do we need any more here? */
 };
 
 void		pci_attach_hook(struct device *, struct device *,
 				     struct pcibus_attach_args *);
+#ifdef __PCI_BUS_DEVORDER
+int		pci_bus_devorder(pci_chipset_tag_t, int, char *);
+#endif
+#ifdef __PCI_DEV_FUNCORDER
+int		pci_dev_funcorder(pci_chipset_tag_t, int, int, char *);
+#endif
 int		pci_bus_maxdevs(pci_chipset_tag_t, int);
 pcitag_t	pci_make_tag(pci_chipset_tag_t, int, int, int);
 pcireg_t	pci_conf_read(pci_chipset_tag_t, pcitag_t, int);
