@@ -1,4 +1,4 @@
-.\" $NetBSD: uhid.4,v 1.7 1999/08/23 12:32:19 augustss Exp $
+.\" $NetBSD: uhid.4,v 1.8 2000/03/20 01:35:30 augustss Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -83,13 +83,21 @@ field indicates which report is requested.  It should be
 .Dv UHID_OUTPUT_REPORT ,
 or
 .Dv UHID_FEATURE_REPORT .
-This call may fail if the device does not support
-this feature.
+This call may fail if the device does not support this feature.
 .Bd -literal
 struct usb_ctl_report {
 	int report;
-	u_char	data[1024];	/* filled data size will vary */
+	u_char	data[1024];	/* used data size will vary */
 };
+.It Dv USB_SET_REPORT (struct usb_ctl_report)
+Set a report in the device.  The 
+.Dv report
+field indicates which report is to be set.  It should be
+.Dv UHID_INPUT_REPORT ,
+.Dv UHID_OUTPUT_REPORT ,
+or
+.Dv UHID_FEATURE_REPORT .
+This call may fail if the device does not support this feature.
 .Ed
 .El
 .Pp
