@@ -1,4 +1,4 @@
-/*	$NetBSD: frexp_ieee754.c,v 1.3 2003/08/07 16:42:48 agc Exp $	*/
+/*	$NetBSD: frexp_ieee754.c,v 1.4 2003/10/27 00:05:46 kleink Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)frexp.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: frexp_ieee754.c,v 1.3 2003/08/07 16:42:48 agc Exp $");
+__RCSID("$NetBSD: frexp_ieee754.c,v 1.4 2003/10/27 00:05:46 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -56,10 +56,7 @@ __RCSID("$NetBSD: frexp_ieee754.c,v 1.3 2003/08/07 16:42:48 agc Exp $");
 double
 frexp(double value, int *eptr)
 {
-	union {
-		double v;
-		struct ieee_double s;
-	} u;
+	union ieee_double_u u;
 
 	if (value) {
 		/*
@@ -67,12 +64,12 @@ frexp(double value, int *eptr)
 		 * Leave Inf and NaN alone, however.
 		 * WHAT ABOUT DENORMS?
 		 */
-		u.v = value;
-		if (u.s.dbl_exp != DBL_EXP_INFNAN) {
-			*eptr = u.s.dbl_exp - (DBL_EXP_BIAS - 1);
-			u.s.dbl_exp = DBL_EXP_BIAS - 1;
+		u.dblu_d = value;
+		if (u.dblu_dbl.dbl_exp != DBL_EXP_INFNAN) {
+			*eptr = u.dblu_dbl.dbl_exp - (DBL_EXP_BIAS - 1);
+			u.dblu_dbl.dbl_exp = DBL_EXP_BIAS - 1;
 		}
-		return (u.v);
+		return (u.dblu_d);
 	} else {
 		*eptr = 0;
 		return (0.0);

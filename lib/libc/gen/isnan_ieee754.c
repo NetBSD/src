@@ -1,4 +1,4 @@
-/*	$NetBSD: isnan_ieee754.c,v 1.2 2003/08/07 16:42:52 agc Exp $	*/
+/*	$NetBSD: isnan_ieee754.c,v 1.3 2003/10/27 00:05:46 kleink Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)isinf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: isnan_ieee754.c,v 1.2 2003/08/07 16:42:52 agc Exp $");
+__RCSID("$NetBSD: isnan_ieee754.c,v 1.3 2003/10/27 00:05:46 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -56,12 +56,9 @@ __weak_alias(isnan,_isnan)
 int
 isnan(double d)
 {
-	union {
-		double d;
-		struct ieee_double dbl;
-	} u;
+	union ieee_double_u u;
 
-	u.d = d;
-	return (u.dbl.dbl_exp == DBL_EXP_INFNAN &&
-	    (u.dbl.dbl_frach != 0 || u.dbl.dbl_fracl != 0));
+	u.dblu_d = d;
+	return (u.dblu_dbl.dbl_exp == DBL_EXP_INFNAN &&
+	    (u.dblu_dbl.dbl_frach != 0 || u.dblu_dbl.dbl_fracl != 0));
 }
