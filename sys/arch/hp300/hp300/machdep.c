@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.90.2.1 1997/05/04 15:18:55 mrg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.90.2.2 1997/05/13 01:55:19 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -97,12 +97,14 @@
 #include <vm/vm_kern.h>
 #include <vm/vm_param.h>
 
+#include "opt_useleds.h"
+
 #include <arch/hp300/dev/hilreg.h>
 #include <arch/hp300/dev/hilioctl.h>
 #include <arch/hp300/dev/hilvar.h>
 #ifdef USELEDS
-#include <arch/hp300/hp300/led.h>
-#endif /* USELEDS */
+#include <arch/hp300/hp300/leds.h>
+#endif
 
 /* the following is used externally (sysctl_hw) */
 char machine[] = "hp300";		/* cpu "architecture" */
@@ -147,7 +149,6 @@ int	parityerror __P((struct frame *));
 int	parityerrorfind __P((void));
 void    identifycpu __P((void));
 void    initcpu __P((void));
-void    ledinit __P((void));
 
 int	cpu_dumpsize __P((void));
 int	cpu_dump __P((int (*)(dev_t, daddr_t, caddr_t, size_t), daddr_t *));
@@ -674,53 +675,6 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	}
 	/* NOTREACHED */
 }
-
-#ifdef USELEDS
-int inledcontrol = 0;	/* 1 if we are in ledcontrol already, cheap mutex */
-char *ledaddr;
-
-/*
- * Map the LED page and setup the KVA to access it.
- */
-void
-ledinit()
-{
-	extern caddr_t ledbase;
-
-	pmap_enter(pmap_kernel(), (vm_offset_t)ledbase, (vm_offset_t)LED_ADDR,
-		   VM_PROT_READ|VM_PROT_WRITE, TRUE);
-	ledaddr = (char *) ((int)ledbase | (LED_ADDR & PGOFSET));
-}
-
-/*
- * Do lights:
- *	`ons' is a mask of LEDs to turn on,
- *	`offs' is a mask of LEDs to turn off,
- *	`togs' is a mask of LEDs to toggle.
- * Note we don't use splclock/splx for mutual exclusion.
- * They are expensive and we really don't need to be that precise.
- * Besides we would like to be able to profile this routine.
- */
-void
-ledcontrol(ons, offs, togs)
-	int ons, offs, togs;
-{
-	static char currentleds;
-	char leds;
-
-	inledcontrol = 1;
-	leds = currentleds;
-	if (ons)
-		leds |= ons;
-	if (offs)
-		leds &= ~offs;
-	if (togs)
-		leds ^= togs;
-	currentleds = leds;
-	*ledaddr = ~leds;
-	inledcontrol = 0;
-}
-#endif
 
 int	waittime = -1;
 
