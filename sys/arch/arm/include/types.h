@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.6 2002/10/07 02:48:38 thorpej Exp $	*/
+/*	$NetBSD: types.h,v 1.7 2003/03/01 04:36:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -64,6 +64,7 @@ typedef unsigned long	pmc_ctr_t;
 
 typedef int		register_t;
 
+#define	__HAVE_SYSCALL_INTERN
 #define	__HAVE_MINIMAL_EMUL
 #define	__HAVE_RAS
 
