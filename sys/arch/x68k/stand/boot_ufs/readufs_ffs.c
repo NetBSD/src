@@ -1,23 +1,21 @@
-/*	from Id: readufs_ffs.c,v 1.5 2002/01/26 16:26:44 itohy Exp 	*/
+/*	$NetBSD: readufs_ffs.c,v 1.3 2003/04/09 12:57:14 itohy Exp $	*/
+/*	from Id: readufs_ffs.c,v 1.6 2003/04/08 09:19:32 itohy Exp 	*/
 
 /*
  * FS specific support for 4.2BSD Fast Filesystem
  *
- * Written by ITOH, Yasufumi (itohy@netbsd.org).
+ * Written in 1999, 2002, 2003 by ITOH Yasufumi (itohy@netbsd.org).
  * Public domain.
  *
  * Intended to be used for boot programs (first stage).
  * DON'T ADD ANY FANCY FEATURE.  THIS SHALL BE COMPACT.
  */
 
-#include <sys/types.h>
-#include <sys/param.h>
-#include <ufs/ufs/dinode.h>
-#include <ufs/ffs/fs.h>
-
 #include "readufs.h"
 
-static int get_ffs_inode __P((ino_t ino, struct dinode *dibuf));
+#include <ufs/ffs/fs.h>
+
+static int get_ffs_inode __P((ino_t ino, union ufs_dinode *dibuf));
 
 #define fsi	(*ufsinfo)
 #define fsi_ffs	fsi.fs_u.u_ffs
@@ -31,22 +29,50 @@ try_ffs()
 {
 	union {
 		struct fs	sblk;
-		unsigned char	pad[SBSIZE];
+		unsigned char	pad[SBLOCKSIZE];
 	} buf;
 	struct ufs_info *ufsinfo = &ufs_info;
+	static const int sblocs[] = SBLOCKSEARCH;
+	const int *sbl;
+	int magic;
 
 #ifdef DEBUG_WITH_STDIO
 	printf("trying FFS\n");
 #endif
 	/* read FFS superblock */
-	RAW_READ(&buf, SBLOCK, SBSIZE);
+	for (sbl = sblocs; ; sbl++) {
+		if (*sbl == -1)
+			return 1;
 
+		RAW_READ(&buf, (daddr_t) btodb(*sbl), SBLOCKSIZE);
+
+		magic = buf.sblk.fs_magic;
 #ifdef DEBUG_WITH_STDIO
-	printf("FFS: sblk: magic: 0x%x\n", buf.sblk.fs_magic);
+		printf("FFS: sblk: pos %d magic 0x%x\n", btodb(*sbl), magic);
 #endif
 
-	if (buf.sblk.fs_magic != FS_MAGIC)
-		return 1;
+#ifdef USE_UFS1
+		if (magic == FS_UFS1_MAGIC)
+			break;
+#endif
+#ifdef USE_UFS2
+		if (magic == FS_UFS2_MAGIC) {
+#ifdef USE_UFS1
+			fsi.ufstype = UFSTYPE_UFS2;
+#endif
+			break;
+		}
+#endif
+	}
+
+	/*
+	 * XXX <ufs/ffs/fs.h> always uses fs_magic
+	 * (UFS1 only or UFS2 only is impossible)
+	 */
+	fsi_ffs.magic = magic;
+#ifdef DEBUG_WITH_STDIO
+	printf("FFS: detected UFS%d format\n", (magic == FS_UFS2_MAGIC) + 1);
+#endif
 
 	/* This partition looks like an FFS. */
 	fsi.fstype = UFSTYPE_FFS;
@@ -58,8 +84,8 @@ try_ffs()
 	fsi.nindir = buf.sblk.fs_nindir;
 
 	fsi_ffs.iblkno = buf.sblk.fs_iblkno;
-	fsi_ffs.cgoffset = buf.sblk.fs_cgoffset;
-	fsi_ffs.cgmask = buf.sblk.fs_cgmask;
+	fsi_ffs.old_cgoffset = buf.sblk.fs_old_cgoffset;
+	fsi_ffs.old_cgmask = buf.sblk.fs_old_cgmask;
 	fsi_ffs.fragshift = buf.sblk.fs_fragshift;
 	fsi_ffs.inopb = buf.sblk.fs_inopb;
 	fsi_ffs.ipg = buf.sblk.fs_ipg;
@@ -71,9 +97,10 @@ try_ffs()
 /* for inode macros */
 #define fs_ipg		fs_u.u_ffs.ipg
 #define fs_iblkno	fs_u.u_ffs.iblkno
-#define fs_cgoffset	fs_u.u_ffs.cgoffset
-#define fs_cgmask	fs_u.u_ffs.cgmask
+#define fs_old_cgoffset	fs_u.u_ffs.old_cgoffset
+#define fs_old_cgmask	fs_u.u_ffs.old_cgmask
 #define fs_fpg		fs_u.u_ffs.fpg
+#define fs_magic	fs_u.u_ffs.magic
 #define fs_inopb	fs_u.u_ffs.inopb
 #define fs_fragshift	fs_u.u_ffs.fragshift
 #define fs_fsbtodb	fsbtodb
@@ -84,27 +111,41 @@ try_ffs()
 static int
 get_ffs_inode(ino, dibuf)
 	ino_t ino;
-	struct dinode *dibuf;
+	union ufs_dinode *dibuf;
 {
 	struct ufs_info *ufsinfo = &ufs_info;
-	struct dinode *buf = alloca((size_t) fsi.bsize);
-	struct dinode *di;
+	union ufs_dinode *buf = alloca((size_t) fsi.bsize);
+	union ufs_dinode *di;
+	unsigned ioff;
 
 	RAW_READ(buf, fsbtodb(&fsi, ino_to_fsba(&fsi, ino)),
 			(size_t) fsi.bsize);
 
-	di = &buf[ino_to_fsbo(&fsi, ino)];
-#ifdef DEBUG_WITH_STDIO
-	printf("FFS: dinode(%d): mode 0%o, nlink %d, size %d, uid %d, gid %d, db[0] %d\n",
-		ino, di->di_mode, di->di_nlink, (int)di->di_size,
-		di->di_uid, di->di_gid, di->di_db[0]);
+	ioff = ino_to_fsbo(&fsi, ino);
+
+#if defined(USE_UFS1) && defined(USE_UFS2)
+	if (ufsinfo->ufstype == UFSTYPE_UFS1)
+		di = (void *) &(&buf->di1)[ioff];
+	else {
+		di = (void *) &(&buf->di2)[ioff];
+
+		/* XXX for DI_SIZE() macro */
+		di->di1.di_size = di->di2.di_size;
+	}
+#else
+	di = &buf[ioff];
 #endif
 
-	if (di->di_mode == 0)
+#ifdef DEBUG_WITH_STDIO
+	printf("FFS: dinode(%d): mode 0%o, nlink %d, size %u\n",
+		ino, di->di_common.di_mode, di->di_common.di_nlink,
+		(unsigned) DI_SIZE(di));
+#endif
+
+	if (di->di_common.di_mode == 0)
 		return 1;	/* unused inode (file is not found) */
 
 	*dibuf = *di;
 
 	return 0;
 }
-
