@@ -1,4 +1,4 @@
-/*	$NetBSD: quota.h,v 1.4 1994/12/13 21:14:43 mycroft Exp $	*/
+/*	$NetBSD: quota.h,v 1.5 1994/12/21 20:07:26 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -109,6 +109,9 @@ struct dqblk {
 	time_t	  dqb_itime;		/* time limit for excessive files */
 };
 
+#ifdef KERNEL
+#include <sys/queue.h>
+
 /*
  * The following structure records disk usage for a user or group on a
  * filesystem. There is one allocated for each quota that exists on any
@@ -205,5 +208,6 @@ __BEGIN_DECLS
 void	chkdquot __P((struct inode *));
 __END_DECLS
 #endif
+#endif /* KERNEL */
 
 #endif /* _QUOTA_ */
