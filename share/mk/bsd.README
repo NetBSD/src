@@ -219,6 +219,7 @@ DPADD		Additional dependencies for the program.  Usually used for
 			LIBL		/usr/lib/libl.a
 			LIBKDB		/usr/lib/libkdb.a
 			LIBKRB		/usr/lib/libkrb.a
+			LIBKVM		/usr/lib/libkvm.a
 			LIBM		/usr/lib/libm.a
 			LIBMP		/usr/lib/libmp.a
 			LIBPC		/usr/lib/libpc.a
