@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vfsops.c,v 1.5 1995/01/18 09:44:37 mycroft Exp $	*/
+/*	$NetBSD: mfs_vfsops.c,v 1.6 1995/03/08 01:51:54 cgd Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1993, 1994
@@ -97,7 +97,7 @@ mfs_mountroot()
 	struct proc *p = curproc;	/* XXX */
 	struct ufsmount *ump;
 	struct mfsnode *mfsp;
-	u_int size;
+	u_long size;
 	int error;
 
 	/*
@@ -186,7 +186,7 @@ mfs_mount(mp, path, data, ndp, p)
 	struct ufsmount *ump;
 	register struct fs *fs;
 	register struct mfsnode *mfsp;
-	u_int size;
+	u_long size;
 	int flags, error;
 
 	if (error = copyin(data, (caddr_t)&args, sizeof (struct mfs_args)))
