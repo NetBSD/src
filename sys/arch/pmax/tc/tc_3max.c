@@ -1,4 +1,4 @@
-/*	$NetBSD: tc_3max.c,v 1.1 1998/04/19 07:59:13 jonathan Exp $	*/
+/*	$NetBSD: tc_3max.c,v 1.2 1999/03/12 07:13:15 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: tc_3max.c,v 1.1 1998/04/19 07:59:13 jonathan Exp $ ");
+__KERNEL_RCSID(0, "$NetBSD: tc_3max.c,v 1.2 1999/03/12 07:13:15 nisimura Exp $ ");
 
 
 #include <sys/types.h>
@@ -59,16 +59,14 @@ struct tc_slotdesc tc_kn02_slots [8] = {
 int tc_kn02_nslots =
     sizeof(tc_kn02_slots) / sizeof(tc_kn02_slots[0]);
 
-#define KN02_ROM_NAME KN02_ASIC_NAME
-
 #define TC_KN02_DEV_IOASIC     -1
 #define TC_KN02_DEV_ETHER	6
 #define TC_KN02_DEV_SCSI	5
 
 const struct tc_builtin tc_kn02_builtins[] = {
-	{ KN02_ROM_NAME,7, 0x0, TC_C(TC_KN02_DEV_IOASIC) /* TC_C(7)*/ },
-	{ TC_ETHER,	6, 0x0, TC_C(TC_KN02_DEV_ETHER)  /* TC_C(6)*/ },
-	{ TC_SCSI,	5, 0x0, TC_C(TC_KN02_DEV_SCSI)   /* TC_C(5)*/ }
+	{ "KN02    ",	7, 0x0, TC_C(TC_KN02_DEV_IOASIC) /* TC_C(7)*/ },
+	{ "PMAD-AA ",	6, 0x0, TC_C(TC_KN02_DEV_ETHER)  /* TC_C(6)*/ },
+	{ "PMAZ-AA ",	5, 0x0, TC_C(TC_KN02_DEV_SCSI)   /* TC_C(5)*/ }
 };
 
 
