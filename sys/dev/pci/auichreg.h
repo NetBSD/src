@@ -1,4 +1,4 @@
-/*	$NetBSD: auichreg.h,v 1.6 2003/10/30 19:33:51 kent Exp $	*/
+/*	$NetBSD: auichreg.h,v 1.7 2003/11/22 08:49:41 kent Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -43,6 +43,8 @@
 #define	ICH_NAMBAR	0x10
 /* 12.1.11 NABMBAR - native audio bus mastering base address register */
 #define	ICH_NABMBAR	0x14
+#define ICH_MMBAR	0x18	/* ICH4/ICH5 native audio mixer BAR */
+#define ICH_MBBAR	0x1c	/* ICH4/ICH5 native bus mastering BAR */
 #define ICH_CFG		0x41
 #define		ICH_CFG_IOSE	0x01
 
