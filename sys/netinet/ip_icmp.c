@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.25.2.2 1998/05/09 03:33:00 mycroft Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.25.2.3 1998/10/01 17:57:34 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -33,6 +33,43 @@
  * SUCH DAMAGE.
  *
  *	@(#)ip_icmp.c	8.2 (Berkeley) 1/4/94
+ */
+
+/*-
+ * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Public Access Networks Corporation ("Panix").  It was developed under
+ * contract to Panix by Eric Haszlakiewicz and Thor Lancelot Simon.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions  
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *      This product includes software developed by the NetBSD
+ *      Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS 
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS 
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF  
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  */
 
 #include <sys/param.h>
@@ -436,6 +473,7 @@ icmp_reflect(m)
 {
 	register struct ip *ip = mtod(m, struct ip *);
 	register struct in_ifaddr *ia;
+	register struct ifaddr *ifa;
 	struct in_addr t;
 	struct mbuf *opts = 0;
 	int optlen = (ip->ip_hl << 2) - sizeof(struct ip);
@@ -454,23 +492,35 @@ icmp_reflect(m)
 	 * or anonymous), use the address which corresponds
 	 * to the incoming interface.
 	 */
-	for (ia = in_ifaddr.tqh_first; ia; ia = ia->ia_list.tqe_next) {
-		if (in_hosteq(t, ia->ia_addr.sin_addr))
-			break;
-		if ((ia->ia_ifp->if_flags & IFF_BROADCAST) &&
-		    in_hosteq(t, ia->ia_broadaddr.sin_addr))
-			break;
+	INADDR_TO_IA(t, ia);
+	if (ia == NULL && (m->m_pkthdr.rcvif->if_flags & IFF_BROADCAST)) {
+		for (ifa = m->m_pkthdr.rcvif->if_addrlist.tqh_first;  
+		    ifa != NULL; ifa = ifa->ifa_list.tqe_next) {
+			if (ifa->ifa_addr->sa_family != AF_INET)
+				continue;
+			ia = ifatoia(ifa);
+			if (in_hosteq(t, ia->ia_broadaddr.sin_addr))
+				break;
+		}
 	}
+
 	icmpdst.sin_addr = t;
 	if (ia == (struct in_ifaddr *)0)
 		ia = ifatoia(ifaof_ifpforaddr(sintosa(&icmpdst),
 		    m->m_pkthdr.rcvif));
 	/*
 	 * The following happens if the packet was not addressed to us,
-	 * and was received on an interface with no IP address.
+	 * and was received on an interface with no IP address:
+	 * We find the first AF_INET address on the first non-loopback
+	 * interface.
 	 */
 	if (ia == (struct in_ifaddr *)0)
-		ia = in_ifaddr.tqh_first;
+		for (ia = in_ifaddr.tqh_first; ia != NULL;
+		    ia = ia->ia_list.tqe_next) {
+			if (ia->ia_ifp->if_flags & IFF_LOOPBACK)
+				continue;
+			break;
+		}
 	t = ia->ia_addr.sin_addr;
 	ip->ip_src = t;
 	ip->ip_ttl = MAXTTL;
