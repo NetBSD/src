@@ -4,7 +4,7 @@
 .\"	appropriate changes to the script.
 .\"
 .Ss2 "NetBSD Mirror Site List"
-The following sites mirror NetBSD as of May 09, 1999.
+The following sites mirror NetBSD as of May 10, 1999.
 .Pp
 If you wish to become a distribution site for NetBSD, contact
 .Mt mirrors@netbsd.org .
@@ -239,7 +239,7 @@ If you wish to become a distribution site for NetBSD, contact
 "Western Washington State University" \
 "http://www.netbsd.org/"
 .mirror "www2.us.netbsd.org" \
-"New York" \
-"http://www.us.netbsd.org/"
+"Global Wire Oy, New York" \
+"http://www2.us.netbsd.org/"
 .El
 .El
