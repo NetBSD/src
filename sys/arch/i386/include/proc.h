@@ -31,14 +31,13 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)proc.h	7.1 (Berkeley) 5/15/91
- *	$Id: proc.h,v 1.3 1993/12/20 05:25:36 mycroft Exp $
+ *	$Id: proc.h,v 1.4 1993/12/21 09:47:57 mycroft Exp $
  */
 
 /*
  * Machine-dependent part of the proc structure for i386.
  */
 struct mdproc {
-	int	unused;
 #ifdef notyet
 	int	*p_regs;		/* registers on current frame */
 #endif
