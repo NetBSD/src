@@ -1,0 +1,9 @@
+This fails to link with a slew of "truncated relocation" errors... I assume
+the same fate befell the pman miniroot and that's why it isn't being built
+either (though that's only a guess).
+
+I assume the problems are most likely due to the -Wa,-xgot trick we use
+to be able to build crunched binaries on MIPS.
+
+--rafal, May 21, 2002 20:39 GMT.
+
