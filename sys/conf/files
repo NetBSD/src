@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.456 2001/09/09 11:01:00 tls Exp $
+#	$NetBSD: files,v 1.457 2001/09/10 23:11:05 bjh21 Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -186,9 +186,10 @@ define	rasops24
 define	rasops32
 
 # net device attributes - we have generic code for arc(net), ether(net),
-# fddi, token ring and atm.
+# fddi, token ring, atm and eco(net).
 define	arc
 define	atm
+define	eco
 define	ether
 define	fddi
 define	hippi
@@ -966,6 +967,7 @@ file	net/if_arcsubr.c		arc			needs-flag
 file	net/if_atmsubr.c		atm
 file	net/if_bridge.c			bridge			needs-flag
 file	net/bridgestp.c			bridge
+file	net/if_ecosubr.c		eco
 file	net/if_ethersubr.c		ether | fddi | netatalk | token |
 					    wlan | vlan | pppoe
 file	net/if_faith.c			faith & inet & inet6	needs-flag
