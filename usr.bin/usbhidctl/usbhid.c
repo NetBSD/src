@@ -1,4 +1,4 @@
-/*	$NetBSD: usbhid.c,v 1.6 1998/12/03 20:46:10 augustss Exp $	*/
+/*	$NetBSD: usbhid.c,v 1.7 1999/04/21 16:23:14 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -141,11 +141,11 @@ dumpitems(u_char *buf, int len)
 	}
 	hid_end_parse(d);
 	printf("Total   input size %d bytes\n", 
-	       hid_report_size(buf, len, hid_input));
+	       hid_report_size(buf, len, hid_input, 0));
 	printf("Total  output size %d bytes\n", 
-	       hid_report_size(buf, len, hid_output));
+	       hid_report_size(buf, len, hid_output, 0));
 	printf("Total feature size %d bytes\n", 
-	       hid_report_size(buf, len, hid_feature));
+	       hid_report_size(buf, len, hid_feature, 0));
 }
 
 void
@@ -196,7 +196,7 @@ prdata(u_char *buf, struct hid_item *h)
 		if (h->logical_minimum < 0)
 			printf("%ld", (long)data);
 		else
-			printf("%lu", data);
+			printf("%04lx", data);
 		pos += h->report_size;
 	}
 }
@@ -211,6 +211,7 @@ dumpdata(int f, u_char *buf, int len, int loop)
 	static int one = 1;
 	u_int32_t colls[100];
 	int sp = 0;
+	int report_id;
 	char namebuf[10000], *namep;
 
 	hids = 0;
@@ -229,7 +230,7 @@ dumpdata(int f, u_char *buf, int len, int loop)
 	}
 	hid_end_parse(d);
 	rev(&hids);
-	dlen = hid_report_size(buf, len, hid_input);
+	dlen = hid_report_size(buf, len, hid_input, &report_id);
 	dbuf = malloc(dlen);
 	if (!loop)
 		if (ioctl(f, USB_SET_IMMED, &one) < 0) {
@@ -254,7 +255,7 @@ dumpdata(int f, u_char *buf, int len, int loop)
 			if (all || gotname(namebuf)) {
 				if (!noname)
 					printf("%s=", namebuf);
-				prdata(dbuf, n);
+				prdata(dbuf + (report_id != 0), n);
 				if (verbose)
 					printf(" [%d - %d]", 
 					       n->logical_minimum, 
