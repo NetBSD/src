@@ -1,4 +1,4 @@
-/* $NetBSD: conf.c,v 1.3 2002/03/17 06:28:57 simonb Exp $ */
+/* $NetBSD: conf.c,v 1.4 2002/06/17 16:33:16 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -38,7 +38,9 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.3 2002/03/17 06:28:57 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.4 2002/06/17 16:33:16 christos Exp $");
+
+#include "opt_systrace.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -351,6 +353,11 @@ struct cdevsw cdevsw[] =
 	cdev_notdef(),			/* 67 */
 	cdev_notdef(),			/* 68 */
 	cdev_clockctl_init(NCLOCKCTL,clockctl),	/* 69: clockctl pseudo device */
+#ifdef SYSTRACE
+	cdev_systrace_init(1, systrace),/* 70: system call tracing */
+#else
+	cdev_notdef(),			/* 70: system call tracing */
+#endif
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -460,6 +467,7 @@ static int chrtoblktbl[] = {
 	/* 67 */	NODEV,
 	/* 68 */	NODEV,
 	/* 69 */	NODEV,
+	/* 70 */	NODEV,
 };
 
 /*

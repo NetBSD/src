@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.17 2002/05/21 06:35:08 manu Exp $	*/
+/*	$NetBSD: conf.c,v 1.18 2002/06/17 16:33:16 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,6 +39,7 @@
  */
 
 #include "opt_compat_irix.h"
+#include "opt_systrace.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -211,6 +212,11 @@ struct cdevsw cdevsw[] =
 	cdev_notdef(),			/* 61: */
 	cdev_notdef(),			/* 62: */
 #endif
+#ifdef SYSTRACE
+	cdev_systrace_init(1, systrace),/* 63: system call tracing */
+#else
+	cdev_notdef(),			/* 63: system call tracing */
+#endif
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -295,6 +301,7 @@ static int chrtoblktbl[] = {
 	/* 60 */	NODEV,
 	/* 61 */	NODEV,
 	/* 62 */	NODEV,
+	/* 63 */	NODEV,
 };
 
 dev_t
