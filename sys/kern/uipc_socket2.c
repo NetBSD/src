@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.39 2001/06/16 21:29:32 manu Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.40 2001/07/27 19:27:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -651,13 +651,11 @@ sbcompress(struct sockbuf *sb, struct mbuf *m, struct mbuf *n)
 			m = m_free(m);
 			continue;
 		}
-		if (n && (n->m_flags & M_EOR) == 0 && n->m_type == m->m_type &&
-		    (((n->m_flags & M_EXT) == 0 &&
-		      n->m_data + n->m_len + m->m_len <= &n->m_dat[MLEN]) ||
-		     ((~n->m_flags & (M_EXT|M_CLUSTER)) == 0 &&
-		      !MCLISREFERENCED(n) &&
-		      n->m_data + n->m_len + m->m_len <=
-		       &n->m_ext.ext_buf[MCLBYTES]))) {
+		if (n && (n->m_flags & M_EOR) == 0 &&
+		    /* M_TRAILINGSPACE() checks buffer writeability */
+		    m->m_len <= MCLBYTES / 4 && /* XXX Don't copy too much */
+		    m->m_len <= M_TRAILINGSPACE(n) &&
+		    n->m_type == m->m_type) {
 			memcpy(mtod(n, caddr_t) + n->m_len, mtod(m, caddr_t),
 			    (unsigned)m->m_len);
 			n->m_len += m->m_len;
