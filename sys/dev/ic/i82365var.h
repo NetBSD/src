@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365var.h,v 1.18 2003/09/05 01:02:51 mycroft Exp $	*/
+/*	$NetBSD: i82365var.h,v 1.19 2004/08/11 00:18:19 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -191,6 +191,7 @@ void	pcic_chip_io_unmap __P((pcmcia_chipset_handle_t, int));
 
 void	pcic_chip_socket_enable __P((pcmcia_chipset_handle_t));
 void	pcic_chip_socket_disable __P((pcmcia_chipset_handle_t));
+void	pcic_chip_socket_settype __P((pcmcia_chipset_handle_t, int));
 
 #if 0
 

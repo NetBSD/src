@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmciavar.h,v 1.24 2004/08/10 18:39:08 mycroft Exp $	*/
+/*	$NetBSD: pcmciavar.h,v 1.25 2004/08/11 00:18:20 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -289,6 +289,7 @@ void	pcmcia_ccr_write __P((struct pcmcia_function *, int, int));
 
 void	pcmcia_socket_enable __P((struct device *));
 void	pcmcia_socket_disable __P((struct device *));
+void	pcmcia_socket_settype __P((struct device *));
 
 int	pcmcia_config_alloc __P((struct pcmcia_function *,
 	    struct pcmcia_config_entry *));
