@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.93 2003/09/16 14:00:27 cl Exp $ */
+/*	$NetBSD: trap.c,v 1.94 2003/10/12 19:08:17 pk Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.93 2003/09/16 14:00:27 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.94 2003/10/12 19:08:17 pk Exp $");
 
 #define NEW_FPSTATE
 
@@ -518,7 +518,9 @@ trap(tf, type, pc, tstate)
 	int64_t n;
 	u_quad_t sticks;
 	int pstate = tstate >> TSTATE_PSTATE_SHIFT;
+	ksiginfo_t ksi;
 	int error;
+	int sig;
 
 	/* This steps the PC over the trap. */
 #define	ADVANCE (n = tf->tf_npc, tf->tf_pc = n, tf->tf_npc = n + 4)
@@ -640,6 +642,8 @@ extern void db_printf(const char * , ...);
 	pcb = &l->l_addr->u_pcb;
 	l->l_md.md_tf = tf;	/* for ptrace/signals */
 
+	sig = 0;
+
 	switch (type) {
 
 	default:
@@ -669,7 +673,12 @@ badtrap:
 		/* ... but leave it in until we find anything */
 		printf("%s[%d]: unimplemented software trap 0x%x\n",
 		    p->p_comm, p->p_pid, type);
-		trapsignal(l, SIGILL, type);
+
+		KSI_INIT_TRAP(&ksi);
+		sig = SIGILL;
+		ksi.ksi_trap = type;
+		ksi.ksi_code = ILL_ILLTRP;
+		ksi.ksi_addr = (void *)pc;
 		break;
 
 #if defined(COMPAT_SVR4) || defined(COMPAT_SVR4_32)
@@ -713,7 +722,11 @@ badtrap:
 		if (trapdebug & TDB_STOPSIG)
 			Debugger();
 #endif
-		trapsignal(l, SIGILL, 0);	/* XXX code?? */
+		KSI_INIT_TRAP(&ksi);
+		sig = SIGILL;
+		ksi.ksi_trap = type;
+		ksi.ksi_code = ILL_ILLOPC;
+		ksi.ksi_addr = (void *)pc;
 		break;
 
 	case T_PRIVINST:
@@ -723,11 +736,19 @@ badtrap:
 		if (trapdebug & TDB_STOPSIG)
 			Debugger();
 #endif
-		trapsignal(l, SIGILL, 0);	/* XXX code?? */
+		KSI_INIT_TRAP(&ksi);
+		sig = SIGILL;
+		ksi.ksi_trap = type;
+		ksi.ksi_code = ILL_PRVOPC;
+		ksi.ksi_addr = (void *)pc;
 		break;
 
 	case T_PRIVACT:
-		trapsignal(l, SIGILL, 0);
+		KSI_INIT_TRAP(&ksi);
+		sig = SIGILL;
+		ksi.ksi_trap = type;
+		ksi.ksi_code = ILL_PRVOPC;
+		ksi.ksi_addr = (void *)pc;
 		break;
 
 	case T_FPDISABLED: {
@@ -765,7 +786,7 @@ badtrap:
 	case T_ALIGN:
 	case T_LDDF_ALIGN:
 	case T_STDF_ALIGN:
-	{
+		{
 		int64_t dsfsr, dsfar=0, isfsr;
 
 		dsfsr = ldxa(SFSR, ASI_DMMU);
@@ -788,20 +809,24 @@ badtrap:
 		       l->l_proc->p_pid, l->l_lid, l->l_proc->p_comm, fmt64(dsfsr), fmt64(dsfar),
 		       fmt64(isfsr), pc);
 #endif
-	}
+		}
 		
 #if defined(DDB) && defined(DEBUG)
-	if (trapdebug & TDB_STOPSIG) {
-		write_all_windows();
-		kdb_trap(type, tf);
-	}
+		if (trapdebug & TDB_STOPSIG) {
+			write_all_windows();
+			kdb_trap(type, tf);
+		}
 #endif
 		if ((l->l_md.md_flags & MDP_FIXALIGN) != 0 && 
 		    fixalign(l, tf) == 0) {
 			ADVANCE;
 			break;
 		}
-		trapsignal(l, SIGBUS, 0);	/* XXX code?? */
+		KSI_INIT_TRAP(&ksi);
+		sig = SIGBUS;
+		ksi.ksi_trap = type;
+		ksi.ksi_code = BUS_ADRALN;
+		ksi.ksi_addr = (void *)pc;
 		break;
 
 	case T_FP_IEEE_754:
@@ -824,7 +849,11 @@ badtrap:
 			    &l->l_md.md_fpstate->fs_queue[0].fq_instr,
 			    sizeof(int));
 			if (error) {
-				trapsignal(l, SIGBUS, 0);	/* XXX code */
+				sig = SIGBUS;
+				KSI_INIT_TRAP(&ksi);
+				ksi.ksi_trap = type;
+				ksi.ksi_code = BUS_OBJERR;
+				ksi.ksi_addr = (void *)pc;
 				break;
 			}
 			l->l_md.md_fpstate->fs_qsize = 1;
@@ -839,17 +868,29 @@ badtrap:
 		break;
 
 	case T_TAGOF:
-		trapsignal(l, SIGEMT, 0);	/* XXX code?? */
+		KSI_INIT_TRAP(&ksi);
+		sig = SIGEMT;
+		ksi.ksi_trap = type;
+		ksi.ksi_code = 0;
+		ksi.ksi_addr = (void *)pc;
 		break;
 
 	case T_BREAKPOINT:
-		trapsignal(l, SIGTRAP, 0);
+		sig = SIGTRAP;
+		KSI_INIT_TRAP(&ksi);
+		ksi.ksi_trap = type;
+		ksi.ksi_code = TRAP_BRKPT;
+		ksi.ksi_addr = (void *)pc;
 		break;
 
 	case T_IDIV0:
 	case T_DIV0:
 		ADVANCE;
-		trapsignal(l, SIGFPE, FPE_INTDIV_TRAP);
+		sig = SIGFPE;
+		KSI_INIT_TRAP(&ksi);
+		ksi.ksi_trap = type;
+		ksi.ksi_code = FPE_INTDIV;
+		ksi.ksi_addr = (void *)pc;
 		break;
 
 	case T_CLEANWIN:
@@ -866,7 +907,11 @@ badtrap:
 	case T_RANGECHECK:
 		printf("T_RANGECHECK\n");	/* XXX */
 		ADVANCE;
-		trapsignal(l, SIGILL, 0);	/* XXX code?? */
+		sig = SIGILL;
+		KSI_INIT_TRAP(&ksi);
+		ksi.ksi_trap = type;
+		ksi.ksi_code = ILL_ILLADR;
+		ksi.ksi_addr = (void *)pc;
 		break;
 
 	case T_FIXALIGN:
@@ -881,8 +926,22 @@ badtrap:
 	case T_INTOF:
 		uprintf("T_INTOF\n");		/* XXX */
 		ADVANCE;
-		trapsignal(l, SIGFPE, FPE_INTOVF_TRAP);
+		sig = SIGFPE;
+		KSI_INIT_TRAP(&ksi);
+		ksi.ksi_trap = type;
+		ksi.ksi_code = FPE_INTOVF;
+		ksi.ksi_addr = (void *)pc;
 		break;
+	}
+	if (sig != 0) {
+		KERNEL_PROC_LOCK(l);
+		ksi.ksi_signo = sig;
+#ifdef __HAVE_SIGINFO
+		trapsignal(l, &ksi);
+#else
+		trapsignal(l, sig, ksi.ksi_code);
+#endif
+		KERNEL_PROC_UNLOCK(l);
 	}
 	userret(l, pc, sticks);
 	share_fpu(l, tf);
@@ -1035,6 +1094,7 @@ data_access_fault(tf, type, pc, addr, sfva, sfsr)
 	vm_prot_t access_type;
 	vaddr_t onfault;
 	u_quad_t sticks;
+	ksiginfo_t ksi;
 #ifdef DEBUG
 	static int lastdouble;
 	extern struct pcb* cpcb;
@@ -1233,15 +1293,26 @@ kfault:
 			Debugger();
 		}
 #endif
+		KSI_INIT_TRAP(&ksi);
 		if (rv == ENOMEM) {
 			printf("UVM: pid %d (%s), uid %d killed: out of swap\n",
 			       p->p_pid, p->p_comm,
 			       p->p_cred && p->p_ucred ?
 			       p->p_ucred->cr_uid : -1);
-			trapsignal(l, SIGKILL, (u_long)addr);
+			ksi.ksi_signo = SIGKILL;
+			ksi.ksi_code = 0;
 		} else {
-			trapsignal(l, SIGSEGV, (u_long)addr);
+			ksi.ksi_signo = SIGSEGV;
+			ksi.ksi_code = (rv == EACCES
+				? SEGV_ACCERR : SEGV_MAPERR);
 		}
+		ksi.ksi_trap = type;
+		ksi.ksi_addr = (void *)addr;
+#ifdef __HAVE_SIGINFO
+		trapsignal(l, &ksi);
+#else
+		trapsignal(l, ksi.ksi_signo, (u_long)ksi.ksi_addr);
+#endif
 	}
 	if ((tstate & TSTATE_PRIV) == 0) {
 		l->l_flag &= ~L_SA_PAGEFAULT;
@@ -1285,6 +1356,7 @@ data_access_error(tf, type, afva, afsr, sfva, sfsr)
 	struct lwp *l;
 	vaddr_t onfault;
 	u_quad_t sticks;
+	ksiginfo_t ksi;
 #ifdef DEBUG
 	static int lastdouble;
 #endif
@@ -1409,7 +1481,16 @@ data_access_error(tf, type, afva, afsr, sfva, sfsr)
 		Debugger();
 	}
 #endif
-	trapsignal(l, SIGSEGV, (u_long)sfva);
+	KSI_INIT_TRAP(&ksi);
+	ksi.ksi_signo = SIGSEGV;
+	ksi.ksi_code = SEGV_MAPERR;
+	ksi.ksi_trap = type;
+	ksi.ksi_addr = (void *)sfva;
+#ifdef __HAVE_SIGINFO
+	trapsignal(l, &ksi);
+#else
+	trapsignal(l, ksi.ksi_signo, (u_long)ksi.ksi_addr);
+#endif
 out:
 	if ((tstate & TSTATE_PRIV) == 0) {
 		userret(l, pc, sticks);
@@ -1443,6 +1524,7 @@ text_access_fault(tf, type, pc, sfsr)
 	int rv;
 	vm_prot_t access_type;
 	u_quad_t sticks;
+	ksiginfo_t ksi;
 
 #ifdef DEBUG
 	if (tf->tf_pc == tf->tf_npc) {
@@ -1538,7 +1620,16 @@ text_access_fault(tf, type, pc, sfsr)
 			Debugger();
 		}
 #endif
-		trapsignal(l, SIGSEGV, (u_long)pc);
+		KSI_INIT_TRAP(&ksi);
+		ksi.ksi_signo = SIGSEGV;
+		ksi.ksi_code = (rv == EACCES ? SEGV_ACCERR : SEGV_MAPERR);
+		ksi.ksi_trap = type;
+		ksi.ksi_addr = (void *)pc;
+#ifdef __HAVE_SIGINFO
+		trapsignal(l, &ksi);
+#else
+		trapsignal(l, ksi.ksi_signo, (u_long)ksi.ksi_addr);
+#endif
 	}
 	if ((tstate & TSTATE_PRIV) == 0) {
 		userret(l, pc, sticks);
@@ -1580,6 +1671,7 @@ text_access_error(tf, type, pc, sfsr, afva, afsr)
 	int rv;
 	vm_prot_t access_type;
 	u_quad_t sticks;
+	ksiginfo_t ksi;
 #ifdef DEBUG
 	static int lastdouble;
 #endif
@@ -1636,7 +1728,16 @@ text_access_error(tf, type, pc, sfsr, afva, afsr)
 			panic("text_access_error: kernel memory error");
 
 		/* User fault -- Berr */
-		trapsignal(l, SIGBUS, (u_long)pc);
+		KSI_INIT_TRAP(&ksi);
+		ksi.ksi_signo = SIGBUS;
+		ksi.ksi_code = BUS_OBJERR;
+		ksi.ksi_trap = type;
+		ksi.ksi_addr = (void *)pc;
+#ifdef __HAVE_SIGINFO
+		trapsignal(l, &ksi);
+#else
+		trapsignal(l, ksi.ksi_signo, (u_long)ksi.ksi_addr);
+#endif
 	}
 
 	if ((sfsr & SFSR_FV) == 0 || (sfsr & SFSR_FT) == 0)
@@ -1716,7 +1817,16 @@ text_access_error(tf, type, pc, sfsr, afva, afsr)
 			Debugger();
 		}
 #endif
-		trapsignal(l, SIGSEGV, (u_long)pc);
+		KSI_INIT_TRAP(&ksi);
+		ksi.ksi_signo = SIGSEGV;
+		ksi.ksi_code = (rv == EACCES ? SEGV_ACCERR : SEGV_MAPERR);
+		ksi.ksi_trap = type;
+		ksi.ksi_addr = (void *)pc;
+#ifdef __HAVE_SIGINFO
+		trapsignal(l, &ksi);
+#else
+		trapsignal(l, ksi.ksi_signo, (u_long)ksi.ksi_addr);
+#endif
 	}
 out:
 	if ((tstate & TSTATE_PRIV) == 0) {
