@@ -1,4 +1,4 @@
-#	$NetBSD: ftp.cs.umn.edu,v 1.3 1998/04/17 21:22:57 hubertf Exp $
+#	$NetBSD: ftp.cs.umn.edu,v 1.4 1999/02/14 04:08:53 hubertf Exp $
 #
 # Example supfile for ftp.cs.umn.edu.
 #
@@ -10,7 +10,7 @@ current release=doc host=ftp.cs.umn.edu hostbase=/ftp/server/log \
 base=/usr prefix=/usr backup use-rel-suffix compress
 
 current release=pkgsrc host=ftp.cs.umn.edu hostbase=/ftp/server/log \
-base=/usr prefix=/usr backup use-rel-suffix compress
+base=/usr prefix=/usr backup use-rel-suffix compress delete
 
 current release=security host=ftp.cs.umn.edu hostbase=/ftp/server/log \
 base=/usr prefix=/usr backup use-rel-suffix compress
