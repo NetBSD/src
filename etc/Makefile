@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.158 2000/08/06 18:10:48 fvdl Exp $
+#	$NetBSD: Makefile,v 1.159 2000/08/21 23:03:10 lukem Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -80,7 +80,7 @@ BIN1+=	bootptab changelist csh.cshrc csh.login csh.logout daily \
 	mailer.conf man.conf monthly monthly.conf mrouted.conf \
 	netconfig networks newsyslog.conf nsswitch.conf ntp.conf \
 	phones printcap profile protocols rbootd.conf rc rc.conf \
-	rc.lkm rc.local rc.subr rc.shutdown rc.wscons remote rpc \
+	rc.lkm rc.local rc.subr rc.shutdown remote rpc \
 	security security.conf services shells sysctl.conf syslog.conf \
 	weekly weekly.conf wscons.conf \
 	etc.${MACHINE}/ttys etc.${MACHINE}/disktab
@@ -158,6 +158,7 @@ distribution: distrib-dirs
 		rm -f ${DESTDIR}/.cshrc ${DESTDIR}/.profile; \
 		ln ${DESTDIR}/root/.cshrc ${DESTDIR}/.cshrc; \
 		ln ${DESTDIR}/root/.profile ${DESTDIR}/.profile)
+	(cd default; ${MAKE} install)
 	(cd mtree; ${MAKE} install)
 	(cd namedb; \
 		${INSTALL} ${INSTPRIV} -c -o ${BINOWN} -g ${BINGRP} -m 644 \
