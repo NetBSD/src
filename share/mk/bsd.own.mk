@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.60 1998/02/25 18:30:11 perry Exp $
+#	$NetBSD: bsd.own.mk,v 1.61 1998/02/26 08:46:09 lukem Exp $
 
 .if defined(MAKECONF) && exists(${MAKECONF})
 .include "${MAKECONF}"
@@ -20,8 +20,8 @@ SKEY=		yes
 BSDSRCDIR?=	/usr/src
 BSDOBJDIR?=	/usr/obj
 
-BINGRP?=	bin
-BINOWN?=	bin
+BINGRP?=	wheel
+BINOWN?=	root
 BINMODE?=	555
 NONBINMODE?=	444
 
@@ -29,8 +29,8 @@ NONBINMODE?=	444
 #MANZ=		1
 
 MANDIR?=	/usr/share/man
-MANGRP?=	bin
-MANOWN?=	bin
+MANGRP?=	wheel
+MANOWN?=	root
 MANMODE?=	${NONBINMODE}
 MANINSTALL?=	maninstall catinstall
 
@@ -41,18 +41,18 @@ LIBOWN?=	${BINOWN}
 LIBMODE?=	${NONBINMODE}
 
 DOCDIR?=        /usr/share/doc
-DOCGRP?=	bin
-DOCOWN?=	bin
+DOCGRP?=	wheel
+DOCOWN?=	root
 DOCMODE?=       ${NONBINMODE}
 
 NLSDIR?=	/usr/share/nls
-NLSGRP?=	bin
-NLSOWN?=	bin
+NLSGRP?=	wheel
+NLSOWN?=	root
 NLSMODE?=	${NONBINMODE}
 
 KMODDIR?=	/usr/lkm
-KMODGRP?=	bin
-KMODOWN?=	bin
+KMODGRP?=	wheel
+KMODOWN?=	root
 KMODMODE?=	${NONBINMODE}
 
 COPY?=		-c
