@@ -1,4 +1,4 @@
-.\"	$NetBSD: ftpd.8,v 1.11 1997/04/27 03:21:40 lukem Exp $
+.\"	$NetBSD: ftpd.8,v 1.12 1997/04/29 04:00:39 cjs Exp $
 .\"
 .\" Copyright (c) 1985, 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -103,17 +103,26 @@ prints it after a successful login.
 .Pp
 The
 .Pa /etc/ftpusers
-file is used to determine which users may use ftp.  If a user is
-listed in the file with ``allow'' after his name, he is allowed to
-log in using ftp.  If he has anything else (or nothing) after the
-name, he is not allowed to log in.  If there is an entry for the
-pseudo-user ``*'', that entry is used for users not listed in the
-file, otherwise users not listed in the file are allowed (as if
-``* allow'' appeared in the file).
-Note that if you have ``* deny'' in your
+file is used to determine which users may use ftp.
+If the file does not exist, all users are denied access.  If it
+does exist, each line is a a comment starting with ``#'' or a
+glob pattern that uses the same syntax as /bin/sh, optionally
+followed by whitespace and ``allow'' or ``deny''.
+Each glob pattern is compared in turn against the username
+until a match is found.  If the word following the matched glob
+pattern is ``allow'' the user is granted access; if the word is
+anything else, or nothing at all, the user is denied access.
+(No further comparisons are attempted after the first successful match.)
+If no match is found, the user is granted access.
+This syntax is backward-compatable with the old syntax.
+.Pp
+
+If a user requests a guest login, the ftp server checks to see that
+both ``anonymous'' and ``ftp'' have access, so if you deny all
+users by default, you will need to add both ``anonymous allow''
+and ``ftp allow'' to
 .Pa /etc/ftpusers
-file, you will need to add both ``anonymous allow'' and ``ftp allow''
-to allow anonymous ftp logins.
+in order to allow guest logins.
 .Pp
 The ftp server currently supports the following ftp requests.
 The case of the requests is ignored.

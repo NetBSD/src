@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.20 1997/04/27 03:21:41 lukem Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.21 1997/04/29 04:00:40 cjs Exp $	*/
 
 /*
  * Copyright (c) 1985, 1988, 1990, 1992, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$NetBSD: ftpd.c,v 1.20 1997/04/27 03:21:41 lukem Exp $";
+static char rcsid[] = "$NetBSD: ftpd.c,v 1.21 1997/04/29 04:00:40 cjs Exp $";
 #endif
 #endif /* not lint */
 
@@ -70,6 +70,7 @@ static char rcsid[] = "$NetBSD: ftpd.c,v 1.20 1997/04/27 03:21:41 lukem Exp $";
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <fnmatch.h>
 #include <glob.h>
 #include <limits.h>
 #include <netdb.h>
@@ -498,12 +499,14 @@ checkuser(fname, name)
 
 /*
  * Determine whether a user has access, based on information in 
- * _PATH_FTPUSERS. The users are listed one per line, with `allow'
- * or `deny' after the username. If anything other than `allow', or
- * just nothing, is given after the username, `deny' is assumed.
+ * _PATH_FTPUSERS. Each line is a shell-style glob followed by
+ * `allow' or `deny' (with deny being the default if anything but
+ * `allow', or nothing at all, is specified).
  *
- * If the user is not found in the file, but the pseudo-user `*' is,
- * the permission is taken from that line.
+ * Each glob is matched against the username in turn, and the first
+ * match found is used. If no match is found, access is allowed.
+ *
+ * Any line starting with `#' is considered a comment and ignored.
  *
  * This is probably not the best way to do this, but it preserves
  * the old semantics where if a user was listed in the file he was
@@ -521,32 +524,28 @@ checkaccess(name)
 #define ALLOWED		0
 #define	NOT_ALLOWED	1
 	FILE *fd;
-	int allowed = ALLOWED;
-	char *user, *perm, line[BUFSIZ];
+	int retval = ALLOWED;
+	char *glob, *perm, line[BUFSIZ];
 
 	if ((fd = fopen(_PATH_FTPUSERS, "r")) == NULL)
 		return NOT_ALLOWED;
 
 	while (fgets(line, sizeof(line), fd) != NULL)  {
-		user = strtok(line, " \t\n");
-		if (user[0] == '#')
+		glob = strtok(line, " \t\n");
+		if (glob[0] == '#')
 			continue;
 		perm = strtok(NULL, " \t\n");
-		if (strcmp(user, "*") == 0)  {
+		if (fnmatch(glob, name, 0) == 0)  {
 			if (perm != NULL && strcmp(perm, "allow") == 0)
-				allowed = ALLOWED;
+				retval = ALLOWED;
 			else
-				allowed = NOT_ALLOWED;
-		}
-		if (strcmp(user, name) == 0)  {
-			if (perm != NULL && strcmp(perm, "allow") == 0)
-				return ALLOWED;
-			else
-				return NOT_ALLOWED;
+				retval = NOT_ALLOWED;
+			break;
 		}
 	}
 	(void) fclose(fd);
-	return (allowed);
+	return (retval);
+
 }
 #undef	ALLOWED
 #undef	NOT_ALLOWED
