@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.13 1996/10/13 02:59:25 christos Exp $	*/
+/*	$NetBSD: clock.c,v 1.14 1996/11/23 06:31:57 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -70,18 +70,17 @@ clockattach(dev, fns)
 {
 
 	/*
-	 * establish the clock interrupt; it's a special case
+	 * Just bookkeeping.
 	 */
-	set_clockintr();
-#ifdef EVCNT_COUNTERS
-	evcnt_attach(self, "intr", &clock_intr_evcnt);
-#endif
 	printf("\n");
 
 	if (clockfns != NULL)
 		panic("clockattach: multiple clocks");
 	clockdev = dev;
 	clockfns = fns;
+#ifdef EVCNT_COUNTERS
+	evcnt_attach(dev, "intr", &clock_intr_evcnt);
+#endif
 }
 
 /*
@@ -119,6 +118,20 @@ cpu_initclocks()
 		tickfix >>= (ftp - 1);
 		tickfixinterval = hz >> (ftp - 1);
         }
+
+	/*
+	 * Establish the clock interrupt; it's a special case.
+	 *
+	 * We establish the clock interrupt this late because if
+	 * we do it at clock attach time, we may have never been at
+	 * spl0() since taking over the system.  Some versions of
+	 * PALcode save a clock interrupt, which would get delivered
+	 * when we spl0() in autoconf.c.  If established the clock
+	 * interrupt handler earlier, that interrupt would go to
+	 * hardclock, which would then fall over because p->p_stats
+	 * isn't set at that time.
+	 */
+	set_clockintr();
 
 	/*
 	 * Get the clock started.
