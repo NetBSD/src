@@ -1,3 +1,5 @@
+/*	$NetBSD: apply.c,v 1.3 1995/03/25 03:38:23 glass Exp $	*/
+
 /*-
  * Copyright (c) 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -35,8 +37,11 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "@(#)apply.c	8.4 (Berkeley) 4/4/94";*/
-static char rcsid[] = "$Id: apply.c,v 1.2 1994/09/21 03:17:36 glass Exp $";
+#if 0
+static char sccsid[] = "@(#)apply.c	8.4 (Berkeley) 4/4/94";
+#else
+static char rcsid[] = "$NetBSD: apply.c,v 1.3 1995/03/25 03:38:23 glass Exp $";
+#endif
 #endif /* not lint */
 
 #include <sys/wait.h>
