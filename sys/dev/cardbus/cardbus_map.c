@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus_map.c,v 1.2 1999/10/15 06:42:21 haya Exp $	*/
+/*	$NetBSD: cardbus_map.c,v 1.3 1999/10/15 10:59:57 augustss Exp $	*/
 
 /*
  * Copyright (c) 1999
@@ -33,7 +33,7 @@
  */
 
 
-#define CARDBUS_MAP_DEBUG 1
+/* #define CARDBUS_MAP_DEBUG 1 */
 
 #include <sys/types.h>
 #include <sys/param.h>
