@@ -1,4 +1,4 @@
-/*	$NetBSD: pw_gensalt.c,v 1.1 2005/01/11 22:41:07 christos Exp $	*/
+/*	$NetBSD: pw_gensalt.c,v 1.2 2005/01/11 23:02:30 christos Exp $	*/
 
 /*
  * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pw_gensalt.c,v 1.1 2005/01/11 22:41:07 christos Exp $");
+__RCSID("$NetBSD: pw_gensalt.c,v 1.2 2005/01/11 23:02:30 christos Exp $");
 #endif /* not lint */
 
 #include <sys/syslimits.h>
@@ -140,7 +140,7 @@ int
 pw_gensalt(char *salt, size_t saltlen, const struct passwd *pwd, char type)
 {
 	char option[LINE_MAX], *next, *now, *cipher, *ep, grpkey[LINE_MAX];
-	unsigned long rounds;
+	unsigned long rounds = 0;
 	struct group *grp;
 	const struct pw_salt *sp;
 
@@ -168,15 +168,17 @@ pw_gensalt(char *salt, size_t saltlen, const struct passwd *pwd, char type)
 
 	next = option;
 	now = strsep(&next, ",");
-	rounds = strtoul(next, &ep, 0);
+	if (next) {
+		rounds = strtoul(next, &ep, 0);
 
-	if (next == ep || *ep) {
-		errno = EINVAL;
-		return -1;
+		if (next == ep || *ep) {
+			errno = EINVAL;
+			return -1;
+		}
+
+		if (errno == ERANGE && rounds == ULONG_MAX)
+			return -1;
 	}
-
-	if (errno == ERANGE && rounds == ULONG_MAX)
-		return -1;
 
 	for (sp = salts; sp->name; sp++)
 		if (strcmp(sp->name, now) == 0)
