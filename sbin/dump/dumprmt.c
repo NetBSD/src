@@ -1,4 +1,4 @@
-/*	$NetBSD: dumprmt.c,v 1.21.10.1 2002/01/16 09:41:16 he Exp $	*/
+/*	$NetBSD: dumprmt.c,v 1.21.10.2 2002/01/16 09:55:44 he Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)dumprmt.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: dumprmt.c,v 1.21.10.1 2002/01/16 09:41:16 he Exp $");
+__RCSID("$NetBSD: dumprmt.c,v 1.21.10.2 2002/01/16 09:55:44 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -47,13 +47,7 @@ __RCSID("$NetBSD: dumprmt.c,v 1.21.10.1 2002/01/16 09:41:16 he Exp $");
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <sys/time.h>
-#ifdef sunos
-#include <sys/vnode.h>
-
-#include <ufs/inode.h>
-#else
 #include <ufs/ufs/dinode.h>
-#endif
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
@@ -104,11 +98,8 @@ rmthost(host)
 	char *host;
 {
 
-	rmtpeer = malloc(strlen(host) + 1);
-	if (rmtpeer)
-		strcpy(rmtpeer, host);
-	else
-		rmtpeer = host;
+	if ((rmtpeer = strdup(host)) == NULL)
+		err(X_STARTUP, "strdup");
 	signal(SIGPIPE, rmtconnaborted);
 	rmtgetconn();
 	if (rmtape < 0)
@@ -121,7 +112,7 @@ rmtconnaborted(dummy)
 	int dummy;
 {
 
-	errx(1, "Lost connection to remote host.");
+	errx(X_ABORT, "Lost connection to remote host.");
 }
 
 void
@@ -136,18 +127,18 @@ rmtgetconn()
 	if (sp == NULL) {
 		sp = getservbyname("shell", "tcp");
 		if (sp == NULL)
-			errx(1, "shell/tcp: unknown service");
+			errx(X_STARTUP, "shell/tcp: unknown service");
 		pwd = getpwuid(getuid());
 		if (pwd == NULL)
-			errx(1, "who are you?");
+			errx(X_STARTUP, "who are you?");
 	}
 	if ((name = strdup(pwd->pw_name)) == NULL)
-		err(1, "malloc");
+		err(X_STARTUP, "strdup");
 	if ((cp = strchr(rmtpeer, '@')) != NULL) {
 		tuser = rmtpeer;
 		*cp = '\0';
 		if (!okname(tuser))
-			exit(1);
+			exit(X_STARTUP);
 		rmtpeer = ++cp;
 	} else
 		tuser = name;
@@ -226,8 +217,8 @@ rmtread(buf, count)
 	(void)snprintf(line, sizeof line, "R%d\n", count);
 	n = rmtcall("read", line, 1);
 	if (n < 0) {
-		errno = n;
-		return (-1);
+		/* rmtcall() properly sets errno for us on errors. */
+		return (n);
 	}
 	for (i = 0; i < n; i += cc) {
 		cc = read(rmtape, buf+i, n - i);
@@ -343,10 +334,9 @@ rmtreply(cmd, verbose)
 		rmtgets(emsg, sizeof (emsg));
 		if (verbose)
 			msg("%s: %s", cmd, emsg);
-		if (*code == 'F') {
+		errno = atoi(code + 1);
+		if (*code == 'F')
 			rmtstate = TS_CLOSED;
-			return (-1);
-		}
 		return (-1);
 	}
 	if (*code != 'A') {
