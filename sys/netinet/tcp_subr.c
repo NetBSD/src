@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.149 2003/08/22 22:00:38 itojun Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.150 2003/08/22 22:27:07 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.149 2003/08/22 22:00:38 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.150 2003/08/22 22:27:07 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -817,10 +817,10 @@ tcp_respond(tp, template, m, th0, ack, seq, flags)
 #endif
 	}
 
-	if (tp->t_inpcb)
+	if (tp && tp->t_inpcb)
 		so = tp->t_inpcb->inp_socket;
 #ifdef INET6
-	else if (tp->t_in6pcb)
+	else if (tp && tp->t_in6pcb)
 		so = tp->t_in6pcb->in6p_socket;
 #endif
 	else
