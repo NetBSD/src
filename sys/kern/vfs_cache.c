@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)vfs_cache.c	7.8 (Berkeley) 2/28/91
+ *	from: @(#)vfs_cache.c	7.8 (Berkeley) 2/28/91
+ *	$Id: vfs_cache.c,v 1.2 1993/05/20 02:55:33 cgd Exp $
  */
 
 #include "param.h"
