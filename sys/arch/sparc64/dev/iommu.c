@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.66 2003/07/15 03:36:05 lukem Exp $	*/
+/*	$NetBSD: iommu.c,v 1.67 2003/09/08 17:23:15 petrov Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Eduardo Horvath
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.66 2003/07/15 03:36:05 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.67 2003/09/08 17:23:15 petrov Exp $");
 
 #include "opt_ddb.h"
 
@@ -901,6 +901,50 @@ iommu_dvmamap_load_raw(t, sb, map, segs, nsegs, flags, size)
 	return (0);
 }
 
+
+/*
+ * Flush an individual dma segment, returns non-zero if the streaming buffers
+ * need flushing afterwards.
+ */
+static int
+iommu_dvmamap_sync_range(struct strbuf_ctl *sb, vaddr_t va, bus_size_t len)
+{
+	vaddr_t vaend;
+	struct iommu_state *is = sb->sb_is;
+
+#ifdef DIAGNOSTIC
+	if (va < is->is_dvmabase || va > is->is_dvmaend)
+		panic("invalid va: %llx", (long long)va);
+#endif
+
+	if ((is->is_tsb[IOTSBSLOT(va, is->is_tsbsize)] & IOTTE_STREAM) == 0) {
+		DPRINTF(IDB_BUSDMA, 
+			("iommu_dvmamap_sync_range: attempting to flush "
+			 "non-streaming entry\n"));
+		return (0);
+	}
+
+	vaend = (va + len + PGOFSET) & ~PGOFSET;
+	va &= ~PGOFSET;
+
+#ifdef DIAGNOSTIC
+	if (va < is->is_dvmabase || vaend > is->is_dvmaend)
+		panic("invalid va range: %llx to %llx (%x to %x)",
+		    (long long)va, (long long)vaend,
+		    is->is_dvmabase,
+		    is->is_dvmaend);
+#endif
+
+	for ( ; va <= vaend; va += PAGE_SIZE) {
+		DPRINTF(IDB_BUSDMA,
+		    ("iommu_dvmamap_sync_range: flushing va %p\n",
+		    (void *)(u_long)va));
+		iommu_strbuf_flush(sb, va);
+	}
+
+	return (1);
+}
+
 void
 iommu_dvmamap_sync(t, sb, map, offset, len, ops)
 	bus_dma_tag_t t;
@@ -910,49 +954,43 @@ iommu_dvmamap_sync(t, sb, map, offset, len, ops)
 	bus_size_t len;
 	int ops;
 {
-	struct iommu_state *is = sb->sb_is;
-	vaddr_t va = map->dm_segs[0].ds_addr + offset;
-	int64_t tte;
-	vaddr_t vaend;
+	bus_size_t count;
+	int i, needsflush = 0;
 
 	if (!sb->sb_flush)
 		return;
 
-	/*
-	 * We only support one DMA segment; supporting more makes this code
-	 * too unwieldy.
-	 */
-	if (map->dm_nsegs > 1)
-		panic("iommu_dvmamap_sync: %d segments", map->dm_nsegs);
+	for (i = 0; i < map->dm_nsegs; i++) {
+		if (offset < map->dm_segs[i].ds_len)
+			break;
+		offset -= map->dm_segs[i].ds_len;
+	}
 
-	DPRINTF(IDB_SYNC,
-	    ("iommu_dvmamap_sync: syncing va %p len %lu "
-	     "ops 0x%x\n", (void *)(u_long)va, (u_long)len, ops));
+	if (i == map->dm_nsegs)
+		panic("iommu_dvmamap_sync: segment too short %lu", offset);
 
 	if (ops & (BUS_DMASYNC_PREREAD | BUS_DMASYNC_POSTWRITE)) {
 		/* Nothing to do */;
 	}
 
 	if (ops & (BUS_DMASYNC_POSTREAD | BUS_DMASYNC_PREWRITE)) {
-#ifdef DIAGNOSTIC
-		if (va < is->is_dvmabase || va >= is->is_dvmaend)
-			panic("iommu_dvmamap_sync: invalid dva %lx", va);
-#endif
-		tte = is->is_tsb[IOTSBSLOT(va, is->is_tsbsize)];
 
-		/* if we have a streaming buffer, flush it here first */
-		if ((tte & IOTTE_STREAM) && sb->sb_flush) {
-			vaend = (va + len + PGOFSET) & ~PGOFSET;
-
-			for (va &= ~PGOFSET; va <= vaend; va += PAGE_SIZE) {
-				DPRINTF(IDB_BUSDMA,
-					("iommu_dvmamap_sync: flushing va %p\n",
-					 (void *)(u_long)va));
-				iommu_strbuf_flush(sb, va);
-			}
-
-			iommu_strbuf_flush_done(sb);
+		for (; len > 0 && i < map->dm_nsegs; i++) {
+			count = MIN(map->dm_segs[i].ds_len - offset, len);
+			if (count > 0 && 
+			    iommu_dvmamap_sync_range(sb,
+				map->dm_segs[i].ds_addr + offset, count))
+				needsflush = 1;
+			offset = 0;
+			len -= count;
 		}
+#ifdef DIAGNOSTIC
+		if (i == map->dm_nsegs && len > 0)
+			panic("iommu_dvmamap_sync: leftover %lu", len);
+#endif
+
+		if (needsflush)
+			iommu_strbuf_flush_done(sb);
 	}
 }
 
