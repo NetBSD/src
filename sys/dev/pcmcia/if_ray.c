@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ray.c,v 1.51 2004/08/10 08:57:50 mycroft Exp $	*/
+/*	$NetBSD: if_ray.c,v 1.52 2004/08/10 15:29:56 mycroft Exp $	*/
 
 /* 
  * Copyright (c) 2000 Christian E. Hopps
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.51 2004/08/10 08:57:50 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.52 2004/08/10 15:29:56 mycroft Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -538,11 +538,8 @@ ray_attach(parent, self, aux)
 	callout_init(&sc->sc_start_join_timo_ch);
 
 	error = ray_enable(sc);
-	if (error) {
-		aprint_error("%s: enable failed, error=%d\n", self->dv_xname,
-		    error);
+	if (error)
 		goto fail;
-	}
 
 	/* get startup results */
 	ep = &sc->sc_ecf_startup;
@@ -702,7 +699,7 @@ ray_enable(sc)
 
 	sc->sc_ih = pcmcia_intr_establish(sc->sc_pf, IPL_NET,
 	    ray_intr, sc);
-	if (sc->sc_ih == NULL)
+	if (!sc->sc_ih)
 		return (EIO);
 
 	error = ray_init(sc);
