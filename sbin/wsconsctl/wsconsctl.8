@@ -1,4 +1,4 @@
-.\" $NetBSD: wsconsctl.8,v 1.10 2003/02/25 10:35:12 wiz Exp $
+.\" $NetBSD: wsconsctl.8,v 1.11 2003/04/05 09:22:22 wiz Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -113,7 +113,7 @@ the
 value can be changed, and the keyboard encoding can be modified
 to switch keys, should the user find a keyboard's default layout
 difficult to use.
-The keyboard types and other relevant definitions,
+The keyboard types and other relevant definitions
 can all be found in the
 .Pa /usr/include/dev/wscons/wsconsio.h
 file.
@@ -122,8 +122,8 @@ The mouse types are defined in the
 .Pa /usr/include/dev/wscons/wsconsio.h
 file.
 .Pp
-The keyboard types, and the height, width,
-depth (bits per pixel), color map size, and colormap
+The display types, height, width,
+depth (bits per pixel), color map size, and color map
 are defined in the
 .Pa /usr/include/dev/wscons/wsconsio.h
 file.
@@ -155,19 +155,19 @@ Sets a UK keyboard encoding.
 .Pp
 .Dl wsconsctl -w map+="keysym Caps_Lock = Control_L"
 .Pp
-Modifies the current keyboard encoding so that, when the
+Modifies the current keyboard encoding so that when the
 .Ar Caps Lock
 key is pressed, the same encoding sequence as
 .Ar Left Control
 is sent.
-For a full list of keysyms, and keycodes, please refer
+For a full list of keysyms and keycodes, please refer
 to the
 .Pa /usr/include/dev/wscons/wsksymdef.h
 file.
 .Pp
 .Dl wsconsctl -w encoding=us.swapctrlcaps
 .Pp
-sets a US keyboard encoding, with the
+Sets a US keyboard encoding, with the
 .Ar Caps Lock
 and
 .Ar Left Control
@@ -186,7 +186,7 @@ Sets the bell pitch to be 1200, whilst
 .Pp
 .Dl wsconsctl -w bell.pitch+=200
 .Pp
-adds 200 to the current pitch of the bell.
+Adds 200 to the current pitch of the bell.
 .Sh SEE ALSO
 .Xr pckbd 4 ,
 .Xr wscons 4 ,
