@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.125 2003/02/10 00:35:16 atatat Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.126 2003/02/15 18:47:41 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.125 2003/02/10 00:35:16 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.126 2003/02/15 18:47:41 dsl Exp $");
 
 #include "opt_ddb.h"
 #include "opt_insecure.h"
@@ -1861,7 +1861,8 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki)
 	strncpy(ki->p_comm, p->p_comm,
 	    min(sizeof(ki->p_comm), sizeof(p->p_comm)));
 
-	strncpy(ki->p_login, p->p_session->s_login, sizeof(ki->p_login));
+	strncpy(ki->p_login, p->p_session->s_login,
+		min(sizeof ki->p_login - 1, sizeof p->p_session->s_login));
 
 	ki->p_nlwps = p->p_nlwps;
 	ki->p_nrlwps = p->p_nrlwps;
