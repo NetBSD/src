@@ -1,4 +1,4 @@
-/*	$NetBSD: su.c,v 1.51 2002/11/16 15:59:31 itojun Exp $	*/
+/*	$NetBSD: su.c,v 1.52 2003/04/20 20:13:20 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)su.c	8.3 (Berkeley) 4/2/94";*/
 #else
-__RCSID("$NetBSD: su.c,v 1.51 2002/11/16 15:59:31 itojun Exp $");
+__RCSID("$NetBSD: su.c,v 1.52 2003/04/20 20:13:20 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -356,6 +356,8 @@ badlogin:
 			*np-- = "-f";
 		if (asme)
 			*np-- = "-m";
+	} else {
+		unsetenv("ENV");
 	}
 
 	if (asthem) {
