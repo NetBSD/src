@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.147 2004/04/21 01:05:44 christos Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.148 2004/04/22 10:45:56 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.147 2004/04/21 01:05:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.148 2004/04/22 10:45:56 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -1425,7 +1425,7 @@ lfs_statvfs(struct mount *mp, struct statvfs *sbp, struct proc *p)
 		panic("lfs_statvfs: magic");
 
 	sbp->f_bsize = fs->lfs_bsize;
-	sbp->f_frsize = sbp->f_bsize; /* XXX */
+	sbp->f_frsize = fs->lfs_fsize;
 	sbp->f_iosize = fs->lfs_bsize;
 	sbp->f_blocks = fsbtofrags(fs, LFS_EST_NONMETA(fs));
 	sbp->f_bfree = fsbtofrags(fs, LFS_EST_BFREE(fs));
