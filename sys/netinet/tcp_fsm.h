@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_fsm.h,v 1.13 2003/11/20 16:21:48 yamt Exp $	*/
+/*	$NetBSD: tcp_fsm.h,v 1.14 2004/04/20 22:54:31 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -93,6 +93,8 @@ const char * const tcpstates[] = {
 	"ESTABLISHED",	"CLOSE_WAIT",	"FIN_WAIT_1",	"CLOSING",
 	"LAST_ACK",	"FIN_WAIT_2",	"TIME_WAIT",
 };
+#elif defined(_KERNEL)
+extern const char * const tcpstates[];
 #endif
 
 #endif /* _NETINET_TCP_FSM_H_ */
