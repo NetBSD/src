@@ -27,7 +27,7 @@
  *	i4b daemon - dial handling routines
  *	-----------------------------------
  *
- *	$Id: dial.c,v 1.4 2003/10/06 09:18:41 itojun Exp $ 
+ *	$Id: dial.c,v 1.5 2003/10/06 09:43:27 itojun Exp $ 
  *
  * $FreeBSD$
  *
@@ -46,13 +46,13 @@ select_first_dialno(struct cfg_entry *cep)
 {
 	int i, j;
 
-	if(cep->remote_numbers_count < 1)
+	if (cep->remote_numbers_count < 1)
 	{
 		logit(LL_ERR, "select_first_dialno: remote_numbers_count < 1!");
 		return;
 	}
 
-	if(cep->remote_numbers_count == 1)
+	if (cep->remote_numbers_count == 1)
 	{
 		strlcpy(cep->remote_phone_dialout,
 		    cep->remote_numbers[0].number,
@@ -62,7 +62,7 @@ select_first_dialno(struct cfg_entry *cep)
 		return;
 	}
 
-	if(cep->remote_numbers_handling == RNH_FIRST)
+	if (cep->remote_numbers_handling == RNH_FIRST)
 	{
 		strlcpy(cep->remote_phone_dialout,
 		    cep->remote_numbers[0].number,
@@ -74,11 +74,11 @@ select_first_dialno(struct cfg_entry *cep)
 
 	i = cep->last_remote_number;
 	   
-	for(j = cep->remote_numbers_count; j > 0; j--)
+	for (j = cep->remote_numbers_count; j > 0; j--)
 	{
-		if(cep->remote_numbers[i].flag == RNF_SUCC)
+		if (cep->remote_numbers[i].flag == RNF_SUCC)
 		{
-			if(cep->remote_numbers_handling == RNH_LAST)
+			if (cep->remote_numbers_handling == RNH_LAST)
 			{
 				strlcpy(cep->remote_phone_dialout,
 				    cep->remote_numbers[i].number,
@@ -89,7 +89,7 @@ select_first_dialno(struct cfg_entry *cep)
 			}
 			else
 			{
-				if(++i >= cep->remote_numbers_count)
+				if (++i >= cep->remote_numbers_count)
 					i = 0;
 
 				strlcpy(cep->remote_phone_dialout,
@@ -101,7 +101,7 @@ select_first_dialno(struct cfg_entry *cep)
 			}
 		}
 
-		if(++i >= cep->remote_numbers_count)
+		if (++i >= cep->remote_numbers_count)
 			i = 0;
 	}
 	strlcpy(cep->remote_phone_dialout, cep->remote_numbers[0].number,
@@ -116,13 +116,13 @@ select_first_dialno(struct cfg_entry *cep)
 void
 select_next_dialno(struct cfg_entry *cep)
 {
-	if(cep->remote_numbers_count < 1)
+	if (cep->remote_numbers_count < 1)
 	{
 		logit(LL_ERR, "select_next_dialno: remote_numbers_count < 1!");
 		return;
 	}
 
-	if(cep->remote_numbers_count == 1)
+	if (cep->remote_numbers_count == 1)
 	{
 		strlcpy(cep->remote_phone_dialout,
 		    cep->remote_numbers[0].number,
@@ -140,7 +140,7 @@ select_next_dialno(struct cfg_entry *cep)
 	
 	cep->last_remote_number++;
 
-	if(cep->last_remote_number >= cep->remote_numbers_count)
+	if (cep->last_remote_number >= cep->remote_numbers_count)
 		cep->last_remote_number = 0;
 
 	strlcpy(cep->remote_phone_dialout,

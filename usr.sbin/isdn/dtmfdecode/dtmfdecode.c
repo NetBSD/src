@@ -6,7 +6,7 @@
  * this stuff is worth it, you can buy me a beer in return.   Poul-Henning Kamp
  * ----------------------------------------------------------------------------
  *
- * $Id: dtmfdecode.c,v 1.2 2003/04/06 18:20:14 wiz Exp $
+ * $Id: dtmfdecode.c,v 1.3 2003/10/06 09:43:27 itojun Exp $
  *
  * $FreeBSD$
  *
@@ -114,7 +114,7 @@ main(int argc, char **argv)
 
 		/* For each tone */
 		s = 0;
-		for(kk = 0; kk < 8; kk++) {
+		for (kk = 0; kk < 8; kk++) {
 
 			/* Turn the crank */
 			c = (P2 * (x - k[kk])) / FSC;

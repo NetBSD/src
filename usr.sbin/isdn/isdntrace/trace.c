@@ -35,7 +35,7 @@
  *	trace.c - print traces of D (B) channel activity for isdn4bsd
  *	-------------------------------------------------------------
  *
- *	$Id: trace.c,v 1.6 2003/10/06 09:18:41 itojun Exp $ 
+ *	$Id: trace.c,v 1.7 2003/10/06 09:43:28 itojun Exp $ 
  *
  * $FreeBSD$
  *
@@ -145,101 +145,101 @@ main(int argc, char *argv[])
 	
 	while( (c = getopt(argc, argv, "abdf:hiln:op:ru:xBFPR:T:")) != -1)
 	{
-		switch(c)
+		switch (c)
 		{
-			case 'a':
-				analyze = 1;
-				break;
-				
-			case 'b':
-				enable_trace |= (TRACE_B_RX | TRACE_B_TX);
-				break;
-
-			case 'd':
-				enable_trace &= (~(TRACE_D_TX | TRACE_D_RX));
-				break;
-
-			case 'o':
-				outflag = 0;
-				break;
-
-			case 'f':
-				outfile = optarg;
-				outfileset = 1;
-				break;
+		case 'a':
+			analyze = 1;
+			break;
 			
-			case 'n':
-				noct = atoi(optarg);
-				break;
+		case 'b':
+			enable_trace |= (TRACE_B_RX | TRACE_B_TX);
+			break;
 
-			case 'h':
-				header = 0;
-				break;
+		case 'd':
+			enable_trace &= (~(TRACE_D_TX | TRACE_D_RX));
+			break;
 
-			case 'i':
-				enable_trace |= TRACE_I;
-				info = 1;
-				break;
+		case 'o':
+			outflag = 0;
+			break;
 
-			case 'l':
-				print_q921 = 0;
-				break;
+		case 'f':
+			outfile = optarg;
+			outfileset = 1;
+			break;
+		
+		case 'n':
+			noct = atoi(optarg);
+			break;
 
-			case 'p':
-				binfile = optarg;
-				bpopt = 1;
-				break;
-			
-			case 'r':
-				raw = 0;
-				break;
+		case 'h':
+			header = 0;
+			break;
 
-			case 'u':
-				unit = atoi(optarg);
-				break;
+		case 'i':
+			enable_trace |= TRACE_I;
+			info = 1;
+			break;
 
-			case 'x':
-				xopt = 0;
-				break;
+		case 'l':
+			print_q921 = 0;
+			break;
 
-			case 'B':
-				Bopt = 1;
-				break;
-			
-			case 'F':
-				Fopt = 1;
-				break;
-			
-			case 'P':
-				Popt = 1;
-				break;
-			
-			case 'R':
-				Rx = atoi(optarg);
-				break;
+		case 'p':
+			binfile = optarg;
+			bpopt = 1;
+			break;
+		
+		case 'r':
+			raw = 0;
+			break;
 
-			case 'T':
-				Tx = atoi(optarg);
-				break;
+		case 'u':
+			unit = atoi(optarg);
+			break;
 
-			case '?':
-			default:
-				usage();
-				break;
+		case 'x':
+			xopt = 0;
+			break;
+
+		case 'B':
+			Bopt = 1;
+			break;
+		
+		case 'F':
+			Fopt = 1;
+			break;
+		
+		case 'P':
+			Popt = 1;
+			break;
+		
+		case 'R':
+			Rx = atoi(optarg);
+			break;
+
+		case 'T':
+			Tx = atoi(optarg);
+			break;
+
+		case '?':
+		default:
+			usage();
+			break;
 		}
 	}
 
-	if(enable_trace == 0)
+	if (enable_trace == 0)
 		usage();
 
-	if(Bopt && Popt)
+	if (Bopt && Popt)
 		usage();
 		
 	atexit(exit_hdl);
 
-	if(Bopt)
+	if (Bopt)
 	{
-		if(bpopt)
+		if (bpopt)
 			snprintf(BPfilename, sizeof(BPfilename), "%s", binfile);
 		else
 			snprintf(BPfilename, sizeof(BPfilename), "%s%d",
@@ -247,7 +247,7 @@ main(int argc, char *argv[])
 			
 		add_datetime(BPfilename, rBPfilename);
 
-		if((BP = fopen(rBPfilename, "w")) == NULL)
+		if ((BP = fopen(rBPfilename, "w")) == NULL)
 		{
 			char buffer[80];
 
@@ -257,7 +257,7 @@ main(int argc, char *argv[])
 			exit(1);
 		}
 		
-		if((setvbuf(BP, (char *)NULL, _IONBF, 0)) != 0)
+		if ((setvbuf(BP, (char *)NULL, _IONBF, 0)) != 0)
 		{
 			char buffer[80];
 
@@ -269,9 +269,9 @@ main(int argc, char *argv[])
 		}
 	}		
 
-	if(Popt)
+	if (Popt)
 	{
-		if(bpopt)
+		if (bpopt)
 			snprintf(BPfilename, sizeof(BPfilename), "%s", binfile);
 		else
 			snprintf(BPfilename, sizeof(BPfilename), "%s%d",
@@ -279,7 +279,7 @@ main(int argc, char *argv[])
   			
 		strlcpy(rBPfilename, BPfilename, sizeof(rBPfilename));
 		
-		if((BP = fopen(BPfilename, "r")) == NULL)
+		if ((BP = fopen(BPfilename, "r")) == NULL)
 		{
 			char buffer[80];
 
@@ -288,9 +288,9 @@ main(int argc, char *argv[])
 			perror(buffer);
 			exit(1);
 		}
-		if(Fopt)
+		if (Fopt)
 		{
-			if(fstat(fileno(BP), &fst))
+			if (fstat(fileno(BP), &fst))
 			{
 				char buffer[80];
 				snprintf(buffer, sizeof(buffer),
@@ -305,7 +305,7 @@ main(int argc, char *argv[])
 		snprintf(devicename, sizeof(devicename), "%s%d",
 		    I4BTRC_DEVICE, unit);
 	
-		if((f = open(devicename, O_RDWR)) < 0)
+		if ((f = open(devicename, O_RDWR)) < 0)
 		{
 			char buffer[80];
 	
@@ -316,9 +316,9 @@ main(int argc, char *argv[])
 		}
 	}
 	
-	if(outflag)
+	if (outflag)
 	{
-		if(outfileset == 0)
+		if (outfileset == 0)
 			snprintf(outfilename, sizeof(outfilename), "%s%d",
 			    TRACE_FILE_NAME, unit);
 		else
@@ -326,7 +326,7 @@ main(int argc, char *argv[])
 			
 		add_datetime(outfilename, routfilename);
 			
-		if((Fout = fopen(routfilename, "w")) == NULL)
+		if ((Fout = fopen(routfilename, "w")) == NULL)
 		{
 			char buffer[80];
 
@@ -336,7 +336,7 @@ main(int argc, char *argv[])
 			exit(1);
 		}
 		
-		if((setvbuf(Fout, (char *)NULL, _IONBF, 0)) != 0)
+		if ((setvbuf(Fout, (char *)NULL, _IONBF, 0)) != 0)
 		{
 			char buffer[80];
 
@@ -348,7 +348,7 @@ main(int argc, char *argv[])
 		}
 	}
 
-	if((setvbuf(stdout, (char *)NULL, _IOLBF, 0)) != 0)
+	if ((setvbuf(stdout, (char *)NULL, _IOLBF, 0)) != 0)
 	{
 		char buffer[80];
 
@@ -358,9 +358,9 @@ main(int argc, char *argv[])
 		exit(1);
 	}
 
-	if(!Popt)
+	if (!Popt)
 	{
-		if((switch_driver(enable_trace, Rx, Tx)) == -1)
+		if ((switch_driver(enable_trace, Rx, Tx)) == -1)
 			exit(1);
 		else
 			traceon = 1;
@@ -371,7 +371,7 @@ main(int argc, char *argv[])
 
 	time(&tm);
 	
-	if(analyze)
+	if (analyze)
 	{
 		snprintf(headerbuf, sizeof(headerbuf),
 		    "\n==== isdnanalyze controller rx #%d - tx #%d ==== started %s",
@@ -386,18 +386,18 @@ main(int argc, char *argv[])
 	
 	printf("%s", headerbuf);
 	
-	if(outflag)
+	if (outflag)
 		fprintf(Fout, "%s", headerbuf);
 
 	for (;;)
 	{
-		if(Popt == 0)
+		if (Popt == 0)
 		{
 			n = read(f, buf, BSIZE);
 
-			if(Bopt)
+			if (Bopt)
 			{
-				if((fwrite(buf, 1, n, BP)) != n)
+				if ((fwrite(buf, 1, n, BP)) != n)
 				{
 					char buffer[80];
 					snprintf(buffer, sizeof(buffer),
@@ -413,13 +413,13 @@ main(int argc, char *argv[])
 		else
 		{			
 again:
-			if((fread(buf, 1, sizeof(struct i4b_trace_hdr), BP)) != sizeof(struct i4b_trace_hdr))
+			if ((fread(buf, 1, sizeof(struct i4b_trace_hdr), BP)) != sizeof(struct i4b_trace_hdr))
 			{
-				if(feof(BP))
+				if (feof(BP))
 				{
-					if(Fopt)
+					if (Fopt)
 					{
-						if(ferror(BP))
+						if (ferror(BP))
 						{
 							char buffer[80];
 							snprintf(buffer, sizeof(buffer), "Error reading hdr from file [%s]", rBPfilename);
@@ -430,12 +430,12 @@ again:
 						usleep(250000);
 						clearerr(BP);
 
-						if(stat(rBPfilename, &fstnew) != -1)
+						if (stat(rBPfilename, &fstnew) != -1)
 						{
-							if((fst.st_ino != fstnew.st_ino) ||
+							if ((fst.st_ino != fstnew.st_ino) ||
 							   (fstnew.st_nlink == 0))
 							{
-								if((BP = freopen(rBPfilename, "r", BP)) == NULL)
+								if ((BP = freopen(rBPfilename, "r", BP)) == NULL)
 								{
 									char buffer[80];
 									snprintf(buffer, sizeof(buffer), "Error reopening file [%s]", rBPfilename);
@@ -467,7 +467,7 @@ again:
 			ithp = (struct i4b_trace_hdr *)buf;
 			l = ithp->length - sizeof(struct i4b_trace_hdr);
 			
-			if((n = fread(buf+sizeof(struct i4b_trace_hdr), 1, l , BP)) != l)
+			if ((n = fread(buf+sizeof(struct i4b_trace_hdr), 1, l , BP)) != l)
 			{
 				char buffer[80];
 				snprintf(buffer, sizeof(buffer),
@@ -479,7 +479,7 @@ again:
 
 		}
 
-		if((n > 0) && (n > noct))
+		if ((n > 0) && (n > noct))
 		{
 			dumpbuf(n, b, (struct i4b_trace_hdr *)buf, raw);
 		}
@@ -499,7 +499,7 @@ fmt_hdr(struct i4b_trace_hdr *hdr, int frm_len)
 
 	s = localtime(&secs);
 
-	if(hdr->type == TRC_CH_I)		/* Layer 1 INFO's */
+	if (hdr->type == TRC_CH_I)		/* Layer 1 INFO's */
 	{
 		snprintf(hbuf, sizeof(hbuf),
 		    "\n-- %s - bri:%d ---------------- time:%2.2d.%2.2d %2.2d:%2.2d:%2.2d.%06u ",
@@ -509,7 +509,7 @@ fmt_hdr(struct i4b_trace_hdr *hdr, int frm_len)
 	}
 	else
 	{
-		if(hdr->trunc > 0)
+		if (hdr->trunc > 0)
 		{
 			snprintf(hbuf, sizeof(hbuf),
 			    "\n-- %s - bri:%d - frame:%6.6u - time:%2.2d.%2.2d %2.2d:%2.2d:%2.2d.%06u - length:%d (%d) ",
@@ -528,7 +528,7 @@ fmt_hdr(struct i4b_trace_hdr *hdr, int frm_len)
 		}
 	}
 	
-	for(i=strlen(hbuf); i <= NCOLS;)
+	for (i = strlen(hbuf); i <= NCOLS;)
 		hbuf[i++] = '-';
 
 	hbuf[i++] = '\n';
@@ -555,141 +555,141 @@ dumpbuf(int n, unsigned char *buf, struct i4b_trace_hdr *hdr, int raw)
 	l2buf[0] = '\0';
 	l3buf[0] = '\0';
 
-	switch(hdr->type)
+	switch (hdr->type)
 	{
-		case TRC_CH_I:		/* Layer 1 INFO's */
+	case TRC_CH_I:		/* Layer 1 INFO's */
 
-			/* on playback, don't display layer 1 if -i ! */
-			if(!(enable_trace & TRACE_I))
-				break;
-				
-			pbuf = &l1buf[0];
-
-			switch(buf[0])
-			{
-				case INFO0:
-					sprintf((pbuf+strlen(pbuf)),"I430: INFO0 (No Signal)\n");
-					break;
-	
-				case INFO1_8:
-					sprintf((pbuf+strlen(pbuf)),"I430: INFO1 (Activation Request, Priority = 8, from TE)\n");
-					break;
-	
-				case INFO1_10:
-					sprintf((pbuf+strlen(pbuf)),"I430: INFO1 (Activation Request, Priority = 10, from TE)\n");
-					break;
-	
-				case INFO2:
-					sprintf((pbuf+strlen(pbuf)),"I430: INFO2 (Pending Activation, from NT)\n");
-					break;
-	
-				case INFO3:
-					sprintf((pbuf+strlen(pbuf)),"I430: INFO3 (Synchronized, from TE)\n");
-					break;
-	
-				case INFO4_8:
-					sprintf((pbuf+strlen(pbuf)),"I430: INFO4 (Activated, Priority = 8/9, from NT)\n");
-					break;
-	
-				case INFO4_10:
-					sprintf((pbuf+strlen(pbuf)),"I430: INFO4 (Activated, Priority = 10/11, from NT)\n");
-					break;
-	
-				default:
-					sprintf((pbuf+strlen(pbuf)),"I430: ERROR, invalid INFO value 0x%x!\n", buf[0]);
-					break;
-			}
+		/* on playback, don't display layer 1 if -i ! */
+		if (!(enable_trace & TRACE_I))
 			break;
 			
-		case TRC_CH_D:		/* D-channel data */
+		pbuf = &l1buf[0];
 
-			cnt = decode_lapd(l2buf, n, buf, hdr->dir, raw, print_q921);
+		switch (buf[0])
+		{
+		case INFO0:
+			sprintf((pbuf+strlen(pbuf)),"I430: INFO0 (No Signal)\n");
+			break;
+
+		case INFO1_8:
+			sprintf((pbuf+strlen(pbuf)),"I430: INFO1 (Activation Request, Priority = 8, from TE)\n");
+			break;
+
+		case INFO1_10:
+			sprintf((pbuf+strlen(pbuf)),"I430: INFO1 (Activation Request, Priority = 10, from TE)\n");
+			break;
+
+		case INFO2:
+			sprintf((pbuf+strlen(pbuf)),"I430: INFO2 (Pending Activation, from NT)\n");
+			break;
+
+		case INFO3:
+			sprintf((pbuf+strlen(pbuf)),"I430: INFO3 (Synchronized, from TE)\n");
+			break;
+
+		case INFO4_8:
+			sprintf((pbuf+strlen(pbuf)),"I430: INFO4 (Activated, Priority = 8/9, from NT)\n");
+			break;
+
+		case INFO4_10:
+			sprintf((pbuf+strlen(pbuf)),"I430: INFO4 (Activated, Priority = 10/11, from NT)\n");
+			break;
+
+		default:
+			sprintf((pbuf+strlen(pbuf)),"I430: ERROR, invalid INFO value 0x%x!\n", buf[0]);
+			break;
+		}
+		break;
 		
-			n -= cnt;
-			buf += cnt;
-		
-			if(n)
+	case TRC_CH_D:		/* D-channel data */
+
+		cnt = decode_lapd(l2buf, n, buf, hdr->dir, raw, print_q921);
+	
+		n -= cnt;
+		buf += cnt;
+	
+		if (n)
+		{
+			switch (*buf)
 			{
-				switch(*buf)
+			case 0x40:
+			case 0x41:
+				decode_1tr6(l3buf, n, cnt, buf, raw);
+				break;
+				
+			case 0x08:
+				decode_q931(l3buf, n, cnt, buf, raw);
+				break;
+
+			default:
+				if (xopt)
 				{
-					case 0x40:
-					case 0x41:
-						decode_1tr6(l3buf, n, cnt, buf, raw);
-						break;
-						
-					case 0x08:
-						decode_q931(l3buf, n, cnt, buf, raw);
-						break;
-
-					default:
-						if(xopt)
-						{
-							l2buf[0] = '\0';
-							l3buf[0] = '\0';
-						}
-						else
-						{	
-							decode_unknownl3(l3buf, n, cnt, buf, raw);
-						}
-						break;
+					l2buf[0] = '\0';
+					l3buf[0] = '\0';
 				}
+				else
+				{	
+					decode_unknownl3(l3buf, n, cnt, buf, raw);
+				}
+				break;
 			}
-			break;
+		}
+		break;
 
-		default:	/* B-channel data */
-	
-			pbuf = &l2buf[0];
-	
-			for (i = 0; i < n; i += 16)
-			{
-				sprintf((pbuf+strlen(pbuf)),"B%d:%.3x  ", hdr->type, i);
-	
-				for (j = 0; j < 16; j++)
-					if (i + j < n)
-						sprintf((pbuf+strlen(pbuf)),"%02x ", buf[i + j]);
-					else
-						sprintf((pbuf+strlen(pbuf)),"   ");
-	
-				sprintf((pbuf+strlen(pbuf)),"      ");
-	
-				for (j = 0; j < 16 && i + j < n; j++)
-					if (isprint(buf[i + j]))
-						sprintf((pbuf+strlen(pbuf)),"%c", buf[i + j]);
-					else
-						sprintf((pbuf+strlen(pbuf)),".");
-	
-				sprintf((pbuf+strlen(pbuf)),"\n");
-			}
-			break;
+	default:	/* B-channel data */
+
+		pbuf = &l2buf[0];
+
+		for (i = 0; i < n; i += 16)
+		{
+			sprintf((pbuf+strlen(pbuf)),"B%d:%.3x  ", hdr->type, i);
+
+			for (j = 0; j < 16; j++)
+				if (i + j < n)
+					sprintf((pbuf+strlen(pbuf)),"%02x ", buf[i + j]);
+				else
+					sprintf((pbuf+strlen(pbuf)),"   ");
+
+			sprintf((pbuf+strlen(pbuf)),"      ");
+
+			for (j = 0; j < 16 && i + j < n; j++)
+				if (isprint(buf[i + j]))
+					sprintf((pbuf+strlen(pbuf)),"%c", buf[i + j]);
+				else
+					sprintf((pbuf+strlen(pbuf)),".");
+
+			sprintf((pbuf+strlen(pbuf)),"\n");
+		}
+		break;
 	}
 	
-	if(header && ((l1buf[0] != '\0' || l2buf[0] != '\0') || (l3buf[0] != 0)))
+	if (header && ((l1buf[0] != '\0' || l2buf[0] != '\0') || (l3buf[0] != 0)))
 	{
 		char *p;
 		p = fmt_hdr(hdr, nsave);
 		printf("%s", p);
-		if(outflag)
+		if (outflag)
 			fprintf(Fout, "%s", p);
 	}
 
-	if(l1buf[0] != '\0')
+	if (l1buf[0] != '\0')
 	{	
 		printf("%s", l1buf);
-		if(outflag)
+		if (outflag)
 			fprintf(Fout, "%s", l1buf);
 	}
 
-	if(l2buf[0] != '\0')
+	if (l2buf[0] != '\0')
 	{	
 		printf("%s", l2buf);
-		if(outflag)
+		if (outflag)
 			fprintf(Fout, "%s", l2buf);
 	}
 
-	if(l3buf[0] != '\0')
+	if (l3buf[0] != '\0')
 	{
 		printf("%s", l3buf);
-		if(outflag)
+		if (outflag)
 			fprintf(Fout, "%s", l3buf);
 	}
 }
@@ -700,7 +700,7 @@ dumpbuf(int n, unsigned char *buf, struct i4b_trace_hdr *hdr, int raw)
 void
 exit_hdl()
 {
-	if(traceon)
+	if (traceon)
 		switch_driver(TRACE_OFF, Rx, Tx);
 }
 
@@ -713,9 +713,9 @@ switch_driver(int value, int rx, int tx)
 	char buffer[80];
 	int v = value;
 
-	if(analyze == 0)
+	if (analyze == 0)
 	{
-		if(ioctl(f, I4B_TRC_SET, &v) < 0)
+		if (ioctl(f, I4B_TRC_SET, &v) < 0)
 		{
 			snprintf(buffer, sizeof(buffer),
 			    "Error ioctl I4B_TRC_SET, val = %d", v);
@@ -725,9 +725,9 @@ switch_driver(int value, int rx, int tx)
 	}
 	else
 	{
-		if(value == TRACE_OFF)
+		if (value == TRACE_OFF)
 		{
-			if(ioctl(f, I4B_TRC_RESETA, &v) < 0)
+			if (ioctl(f, I4B_TRC_RESETA, &v) < 0)
 			{
 				snprintf(buffer, sizeof(buffer),
 				    "Error ioctl I4B_TRC_RESETA - ");
@@ -744,7 +744,7 @@ switch_driver(int value, int rx, int tx)
 			tsa.txunit = tx;
 			tsa.txflags = value;
 			
-			if(ioctl(f, I4B_TRC_SETA, &tsa) < 0)
+			if (ioctl(f, I4B_TRC_SETA, &tsa) < 0)
 			{
 				snprintf(buffer, sizeof(buffer),
 				    "Error ioctl I4B_TRC_SETA, val = %d", v);
@@ -769,13 +769,13 @@ switch_driver(int value, int rx, int tx)
 static void
 reopenfiles(int dummy)
 {
-	if(outflag)
+	if (outflag)
 	{
 		fclose(Fout);
 
 		add_datetime(outfilename, routfilename);
 		
-		if((Fout = fopen(routfilename, "a")) == NULL)
+		if ((Fout = fopen(routfilename, "a")) == NULL)
 		{
 			char buffer[80];
 
@@ -785,7 +785,7 @@ reopenfiles(int dummy)
 			exit(1);
 		}
 
-		if((setvbuf(Fout, (char *)NULL, _IONBF, 0)) != 0)
+		if ((setvbuf(Fout, (char *)NULL, _IONBF, 0)) != 0)
 		{
 			char buffer[80];
 
@@ -797,14 +797,14 @@ reopenfiles(int dummy)
 		}
 	}
 
-	if(Bopt)
+	if (Bopt)
 	{
 		
 		fclose(BP);
 
 		add_datetime(BPfilename, rBPfilename);
 		
-		if((BP = fopen(rBPfilename, "a")) == NULL)
+		if ((BP = fopen(rBPfilename, "a")) == NULL)
 		{
 			char buffer[80];
 
@@ -814,7 +814,7 @@ reopenfiles(int dummy)
 			exit(1);
 		}
 
-		if((setvbuf(BP, (char *)NULL, _IONBF, 0)) != 0)
+		if ((setvbuf(BP, (char *)NULL, _IONBF, 0)) != 0)
 		{
 			char buffer[80];
 
@@ -842,7 +842,7 @@ add_datetime(char *filename, char *rfilename)
 	strftime(rfilename+strlen(rfilename), MAXPATHLEN-strlen(rfilename)-1,
 		"%Y%m%d-%H%M%S", tmp);
 		
-	if((fx = fopen(rfilename, "r")) != NULL)
+	if ((fx = fopen(rfilename, "r")) != NULL)
 	{
 		fclose(fx);
 

@@ -1,4 +1,4 @@
-/* $NetBSD: monitor.c,v 1.10 2003/10/06 09:18:41 itojun Exp $ */
+/* $NetBSD: monitor.c,v 1.11 2003/10/06 09:43:27 itojun Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -219,7 +219,7 @@ monitor_start_rights(const char *clientspec)
 			memcpy(&hn, host->h_addr_list[0], sizeof hn);
 			r.net = (u_int32_t)ntohl(hn);
 		}
-		else if(p[1])
+		else if (p[1])
 		{
 			/* must be net/cidr spec */
 
@@ -279,7 +279,7 @@ monitor_start_rights(const char *clientspec)
 	memcpy(cur_add_entry, &r, sizeof(r));
 	TAILQ_INSERT_TAIL(&rights, cur_add_entry, list);
 
-	if(r.local)
+	if (r.local)
 		local_rights = cur_add_entry;
 
 	DBGL(DL_RCCF, (logit(LL_DBG, "system: monitor = %s", clientspec)));
@@ -293,7 +293,7 @@ monitor_start_rights(const char *clientspec)
 void
 monitor_add_rights(int rights_mask)
 {
-	if(cur_add_entry == NULL)
+	if (cur_add_entry == NULL)
 		return;		/* noone under construction */
 
 	cur_add_entry->rights |= rights_mask;
@@ -382,7 +382,7 @@ monitor_create_remote_socket(int portno)
 
 	remotesockfd = socket(AF_INET, SOCK_STREAM, 0);
 
-	if(remotesockfd == -1)
+	if (remotesockfd == -1)
 	{
 		logit(LL_MER, "could not create remote monitor socket: %s", strerror(errno));
 		return(-1);
@@ -390,7 +390,7 @@ monitor_create_remote_socket(int portno)
 
 	val = 1;
 
-	if(setsockopt(remotesockfd, SOL_SOCKET, SO_REUSEADDR, &val, sizeof val))
+	if (setsockopt(remotesockfd, SOL_SOCKET, SO_REUSEADDR, &val, sizeof val))
 	{
 		logit(LL_MER, "could not setsockopt: %s", strerror(errno));
 		return(-1);
@@ -402,13 +402,13 @@ monitor_create_remote_socket(int portno)
 	sa.sin_port = htons(portno);
 	sa.sin_addr.s_addr = htonl(INADDR_ANY);
 
-	if(bind(remotesockfd, (struct sockaddr *)&sa, sizeof sa) == -1)
+	if (bind(remotesockfd, (struct sockaddr *)&sa, sizeof sa) == -1)
 	{
 		logit(LL_MER, "could not bind remote monitor socket to port %d: %s", portno, strerror(errno));
 		return(-1);
 	}
 
-	if(listen(remotesockfd, 0))
+	if (listen(remotesockfd, 0))
 	{
 		logit(LL_MER, "could not listen on monitor socket: %s", strerror(errno));
 		return(-1);
@@ -550,7 +550,7 @@ monitor_handle_connect(int sockfd, int is_local)
 
 	/* accept the connection */
 
-	if(is_local)
+	if (is_local)
 	{
 		s = sizeof ua;
 		fd = accept(sockfd, (struct sockaddr *)&ua, &s);
@@ -567,7 +567,7 @@ monitor_handle_connect(int sockfd, int is_local)
 
 		hp = gethostbyaddr((char *)&ia.sin_addr, 4, AF_INET);
 
-		if(hp == NULL)
+		if (hp == NULL)
 			snprintf(source, sizeof source, "%s (%s)", inet_ntoa(ia.sin_addr), inet_ntoa(ia.sin_addr));
 		else
 			snprintf(source, sizeof source, "%s (%s)", hp->h_name, inet_ntoa(ia.sin_addr));
@@ -584,9 +584,9 @@ monitor_handle_connect(int sockfd, int is_local)
 
 	for (rp = TAILQ_FIRST(&rights); rp != NULL; rp = TAILQ_NEXT(rp, list))
 	{
-		if(rp->local)
+		if (rp->local)
 		{
-			if(is_local)
+			if (is_local)
 			{
 				r_mask = rp->rights;
 				break;
@@ -596,7 +596,7 @@ monitor_handle_connect(int sockfd, int is_local)
 		}
 		else
 		{
-			if((ha & rp->mask) == rp->net)
+			if ((ha & rp->mask) == rp->net)
 			{
 				r_mask = rp->rights;
 				break;
@@ -605,7 +605,7 @@ monitor_handle_connect(int sockfd, int is_local)
 		}
 	}
 
-	if(r_mask == 0)
+	if (r_mask == 0)
 	{
 		/* no rights - go away */
 		logit(LL_MER, "monitor access denied from %s", source);
@@ -634,7 +634,7 @@ monitor_handle_connect(int sockfd, int is_local)
 	I4B_PUT_2B(idata, I4B_MON_IDATA_NUMENTR, n);
 	I4B_PUT_4B(idata, I4B_MON_IDATA_CLACCESS, r_mask);
 
-	if((sock_write(fd, idata, sizeof idata)) == -1)
+	if ((sock_write(fd, idata, sizeof idata)) == -1)
 	{
 		logit(LL_MER, "monitor_handle_connect: sock_write 1 error - %s", strerror(errno));
 	}
@@ -652,7 +652,7 @@ monitor_handle_connect(int sockfd, int is_local)
 		I4B_PUT_4B(ictrl, I4B_MON_ICTRL_FLAGS, 0);
 		I4B_PUT_2B(ictrl, I4B_MON_ICTRL_NCHAN, 2);
 
-		if((sock_write(fd, ictrl, sizeof ictrl)) == -1)
+		if ((sock_write(fd, ictrl, sizeof ictrl)) == -1)
 		{
 			logit(LL_MER, "monitor_handle_connect: sock_write 2 error - %s", strerror(errno));
 		}
@@ -671,7 +671,7 @@ monitor_handle_connect(int sockfd, int is_local)
 /*XXX*/		I4B_PUT_2B(ictrl, I4B_MON_IDEV_STATE, 1);
 		I4B_PUT_STR(ictrl, I4B_MON_IDEV_NAME, nbuf);
 
-		if((sock_write(fd, ictrl, sizeof ictrl)) == -1)
+		if ((sock_write(fd, ictrl, sizeof ictrl)) == -1)
 		{
 			logit(LL_MER, "monitor_handle_connect: sock_write 3 error - %s", strerror(errno));
 		}
@@ -692,7 +692,7 @@ monitor_handle_connect(int sockfd, int is_local)
 	
 	for (cfe = get_first_cfg_entry(); cfe; cfe = NEXT_CFE(cfe)) {
 
-		if(cfe->state == ST_CONNECTED)
+		if (cfe->state == ST_CONNECTED)
 		{
 			monitor_evnt_connect(cfe);
 			monitor_evnt_acct(cfe);
@@ -721,7 +721,7 @@ cmd_dump_rights(int fd, int r_mask, u_int8_t *cmd, const char *source)
 	I4B_PREP_EVNT(drini, I4B_MON_DRINI_CODE);
 	I4B_PUT_2B(drini, I4B_MON_DRINI_COUNT, num_rights);
 
-	if((sock_write(fd, drini, sizeof drini)) == -1)
+	if ((sock_write(fd, drini, sizeof drini)) == -1)
 	{
 		logit(LL_MER, "cmd_dump_rights: sock_write 1 error - %s", strerror(errno));
 	}
@@ -733,7 +733,7 @@ cmd_dump_rights(int fd, int r_mask, u_int8_t *cmd, const char *source)
 		I4B_PUT_4B(dr, I4B_MON_DR_NET, r->net);
 		I4B_PUT_4B(dr, I4B_MON_DR_MASK, r->mask);
 		I4B_PUT_1B(dr, I4B_MON_DR_LOCAL, r->local);
-		if((sock_write(fd, dr, sizeof dr)) == -1)
+		if ((sock_write(fd, dr, sizeof dr)) == -1)
 		{
 			logit(LL_MER, "cmd_dump_rights: sock_write 2 error - %s", strerror(errno));
 		}		
@@ -777,7 +777,7 @@ cmd_dump_mcons(int fd, int rights, u_int8_t *cmd, const char * source)
 	I4B_PREP_EVNT(dcini, I4B_MON_DCINI_CODE);
 	I4B_PUT_2B(dcini, I4B_MON_DCINI_COUNT, num_connections);
 
-	if((sock_write(fd, dcini, sizeof dcini)) == -1)
+	if ((sock_write(fd, dcini, sizeof dcini)) == -1)
 	{
 		logit(LL_MER, "cmd_dump_mcons: sock_write 1 error - %s", strerror(errno));
 	}		
@@ -799,7 +799,7 @@ cmd_dump_mcons(int fd, int rights, u_int8_t *cmd, const char * source)
 		if (getpeername(con->sock, (struct sockaddr*)&name, &namelen) == 0)
 			memcpy(dc+I4B_MON_DC_WHO, &name.sin_addr, sizeof name.sin_addr);
 #endif
-		if((sock_write(fd, dc, sizeof dc)) == -1)
+		if ((sock_write(fd, dc, sizeof dc)) == -1)
 		{
 			logit(LL_MER, "cmd_dump_mcons: sock_write 2 error - %s", strerror(errno));
 		}
@@ -875,7 +875,7 @@ monitor_command(struct monitor_connection * con, int fd, int rights)
 
 	/* now we know the size, it fits, so lets read it! */
 
-	if(sock_read(fd, cmd, bytes) <= 0)
+	if (sock_read(fd, cmd, bytes) <= 0)
 	{
 		logit(LL_MER, "monitor: sock_read <= 0");
 		close(fd);
@@ -986,7 +986,7 @@ monitor_broadcast(int mask, u_int8_t *pkt, size_t bytes)
 		{
 			int fd = con->sock;
 
-			if((sock_write(fd, pkt, bytes)) == -1)
+			if ((sock_write(fd, pkt, bytes)) == -1)
 			{
 				logit(LL_MER, "monitor_broadcast: sock_write error - %s", strerror(errno));
 			}
@@ -1030,7 +1030,7 @@ monitor_evnt_charge(struct cfg_entry *cep, int units, int estimate)
 	
 	mask = (cep->direction == DIR_IN) ? I4B_CA_EVNT_CALLIN : I4B_CA_EVNT_CALLOUT;
 
-	if(!anybody(mask))
+	if (!anybody(mask))
 		return;
 
 	time(&now);
@@ -1073,7 +1073,7 @@ monitor_evnt_connect(struct cfg_entry *cep)
 	I4B_PUT_STR(evnt, I4B_MON_CONNECT_CFGNAME, cep->name);
 	I4B_PUT_STR(evnt, I4B_MON_CONNECT_DEVNAME, devname);
 
-	if(cep->direction == DIR_OUT)
+	if (cep->direction == DIR_OUT)
 	{
 		I4B_PUT_STR(evnt, I4B_MON_CONNECT_REMPHONE, cep->remote_phone_dialout);
 		I4B_PUT_STR(evnt, I4B_MON_CONNECT_LOCPHONE, cep->local_phone_dialout);
@@ -1146,7 +1146,7 @@ monitor_evnt_l12stat(int controller, int layer, int state)
 	u_int8_t evnt[I4B_MON_L12STAT_SIZE];
 	time_t now;
 
-	if(!anybody(I4B_CA_EVNT_I4B))
+	if (!anybody(I4B_CA_EVNT_I4B))
 		return;
 
 	time(&now);
@@ -1169,7 +1169,7 @@ monitor_evnt_tei(int controller, int tei)
 	u_int8_t evnt[I4B_MON_TEI_SIZE];
 	time_t now;
 
-	if(!anybody(I4B_CA_EVNT_I4B))
+	if (!anybody(I4B_CA_EVNT_I4B))
 		return;
 
 	time(&now);
@@ -1191,7 +1191,7 @@ monitor_evnt_acct(struct cfg_entry *cep)
 	u_int8_t evnt[I4B_MON_ACCT_SIZE];
 	time_t now;
 
-	if(!anybody(I4B_CA_EVNT_I4B))
+	if (!anybody(I4B_CA_EVNT_I4B))
 		return;
 
 	time(&now);
@@ -1224,9 +1224,9 @@ sock_read(int fd, void *buf, size_t nbytes)
 
 	while(nleft > 0)
 	{
-		if((nread = read(fd, ptr, nleft)) < 0)
+		if ((nread = read(fd, ptr, nleft)) < 0)
 		{
-			if(errno == EINTR)
+			if (errno == EINTR)
 			{
 				nread = 0;
 			}
@@ -1235,7 +1235,7 @@ sock_read(int fd, void *buf, size_t nbytes)
 				return(-1);
 			}
 		}
-		else if(nread == 0)
+		else if (nread == 0)
 		{
 			break; /* EOF */
 		}
@@ -1261,9 +1261,9 @@ sock_write(int fd, void *buf, size_t nbytes)
 
 	while(nleft > 0)
 	{
-		if((nwritten = write(fd, ptr, nleft)) <= 0)
+		if ((nwritten = write(fd, ptr, nleft)) <= 0)
 		{
-			if(errno == EINTR)
+			if (errno == EINTR)
 			{
 				nwritten = 0;
 			}
