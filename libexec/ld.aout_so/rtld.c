@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.75 1999/06/17 21:11:42 thorpej Exp $	*/
+/*	$NetBSD: rtld.c,v 1.76 2000/02/11 00:07:36 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -184,7 +184,7 @@ static int		__dlclose __P((void *));
 static void		*__dlsym __P((void *, const char *));
 static int		__dlctl __P((void *, int, void *));
 static void		__dlexit __P((void));
-static int		__dladdr __P((void *, Dl_info *));
+static int		__dladdr __P((const void *, Dl_info *));
 
 static struct ld_entry	ld_entry = {
 	__dlopen, __dlclose, __dlsym, __dlctl, __dlexit, __dladdr
@@ -1222,7 +1222,7 @@ xprintf("Allocating common: %s size %d at %#x\n", name, common_size, rtsp->rt_sp
  */
 static int
 __dladdr(addr, dli)
-	void	*addr;
+	const void *addr;
 	Dl_info	*dli;
 {
 	struct so_map		*smp;
