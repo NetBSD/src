@@ -1,4 +1,4 @@
-/* $NetBSD: kbd.c,v 1.14 1996/10/15 19:47:04 mark Exp $ */
+/* $NetBSD: kbd.c,v 1.15 1996/11/23 03:37:36 mark Exp $ */
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -673,7 +673,7 @@ kbdprobe(parent, match, aux)
 
 /* Make sure we have an IOMD we understand */
     
-	id = ReadByte(IOMD_ID0) | (ReadByte(IOMD_ID1) << 8);
+	id = IOMD_ID;
 
 /* So far I only know about this IOMD */
 

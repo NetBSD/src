@@ -1,4 +1,4 @@
-/* $NetBSD: lmcaudio.c,v 1.1 1996/10/15 21:10:26 mark Exp $ */
+/* $NetBSD: lmcaudio.c,v 1.2 1996/11/23 03:37:37 mark Exp $ */
 
 /*
  * Copyright (c) 1996, Danny C Tsen.
@@ -142,7 +142,7 @@ lmcaudio_probe(parent, match, aux)
 {
 	int id;
 
-	id = inb(IOMD_ID0) | inb(IOMD_ID1) << 8;
+	id = IOMD_ID;
 
 	switch (id) {
 	case RPC600_IOMD_ID:

@@ -1,4 +1,4 @@
-/* $NetBSD: qms.c,v 1.11 1996/10/29 23:25:29 mark Exp $ */
+/* $NetBSD: qms.c,v 1.12 1996/11/23 03:37:39 mark Exp $ */
 
 /*
  * Copyright (c) Scott Stevens 1995 All rights reserved
@@ -111,7 +111,7 @@ quadmouseprobe(parent, match, aux)
 
 /* Make sure we have an IOMD we understand */
     
-	id = ReadByte(IOMD_ID0) | (ReadByte(IOMD_ID1) << 8);
+	id = IOMD_ID;
 
 /* So far I only know about this IOMD */
 
