@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnode.9,v 1.7 2002/06/11 23:56:21 wiz Exp $
+.\"     $NetBSD: vnode.9,v 1.8 2002/08/14 18:50:48 soren Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -125,15 +125,16 @@
 The vnode is the focus of all file activity in
 .Nx .
 There is a unique vnode allocated for each active file, directory,
-mounted-on file, fifo, domain socket, symbolic link and device.  The
-kernel has no concept of a file's structure and so it relies on the
+mounted-on file, fifo, domain socket, symbolic link and device.  The kernel
+has no concept of a file's underlying structure and so it relies on the
 information stored in the vnode to describe the file.  Thus, the vnode
 associated with a file holds all the administration information
 pertaining to it.
 .Pp
-When a process requests an operation on a file, the vfs interface
-passes control to a file system type dependent function to carry out
-the operation.  If the file system type dependent function finds that
+When a process requests an operation on a file, the
+.Xr vfs 9
+interface passes control to a file system type dependent function to carry
+out the operation.  If the file system type dependent function finds that
 a vnode representing the file is not in main memory, it dynamically
 allocates a new vnode from the system main memory pool.  Once
 allocated, the vnode is attached to the data structure pointer
@@ -203,13 +204,12 @@ Valid flags are:
 .It VROOT
 This vnode is the root of its file system.
 .It VTEXT
-This vnode is a pure text prototype
+This vnode is a pure text prototype.
 .It VEXECMAP
-This vnode has executable mappings
+This vnode has executable mappings.
 .It VSYSTEM
-This vnode being used by kernel; only used to skip the
-.Fn vflush
-operation quota files.
+This vnode being used by kernel; only used to skip quota files in
+.Fn vflush .
 .It VISTTY
 This vnode represents a tty; used when reading dead vnodes.
 .It VXLOCK
@@ -224,7 +224,7 @@ This vnode has an alias.
 This vnode is involved in a directory operation.  This flag is used
 exclusively by LFS.
 .It VLAYER
-This vnode is on a layer file system.
+This vnode is on a layered file system.
 .It VONWORKLST
 This vnode is on syncer work-list.
 .It VDIRTY
@@ -290,8 +290,8 @@ vnode are recorded in
 It is used by
 .Xr fsync 2
 to wait for all writes to complete before returning to the user.  Its
-value must only be modified at splbio.  See
-.Xr spl 9 .
+value must only be modified at splbio (see
+.Xr spl 9 ).
 It does not track the number of dirty buffers attached to the
 vnode.
 .Pp
@@ -371,7 +371,7 @@ values cannot be defined for loadable file systems.  The
 .Em v_tag
 member is read-only.  Valid tag types are:
 .Pp
-.Bl -tag -offset indent -width VT_FILECORE -compact
+.Bl -tag -offset indent -width "VT_FILECORE " -compact
 .It VT_NON
 non file system
 .It VT_UFS
@@ -393,7 +393,7 @@ portal daemon
 .It VT_NULL
 null file system layer
 .It VT_UMAP
-sample file system layer
+uid/gid remapping file system layer
 .It VT_KERNFS
 kernel interface file system
 .It VT_PROCFS
@@ -401,7 +401,7 @@ process interface file system
 .It VT_AFS
 AFS file system
 .It VT_ISOFS
-ISO file system(s)
+ISO 9660 file system(s)
 .It VT_UNION
 union file system
 .It VT_ADOSFS
@@ -418,6 +418,8 @@ Microsoft NT's file system
 virtual file system
 .It VT_OVERLAY
 overlay file system
+.It VT_SMBFS
+SMB file system
 .El
 .Pp
 All vnode locking operations use
@@ -468,8 +470,6 @@ nullfs) must call the underlying file system directly for locking.
 Each file system underlying a vnode allocates its own private area and
 hangs it from
 .Em v_data .
-If non-null, this area is freed by
-.Fn getnewvnode .
 .Pp
 Most functions discussed in this page that operate on vnodes cannot be
 called from interrupt context.  The members
@@ -594,7 +594,7 @@ The argument
 .Fa vops
 is the vnode operations vector of the file system requesting the new
 vnode.  If a vnode is successfully retrieved zero is returned,
-otherwise and appropriate error code is returned.
+otherwise an appropriate error code is returned.
 .It Fn ungetnewvnode "vp"
 Undo the operation of
 .Fn getnewvnode .
@@ -628,17 +628,11 @@ an error is returned if any are found (this is a user error, not a
 system error).  If MNT_FORCE is specified, active vnodes that are
 found are detached.
 .It Fn vaccess "type" "file_mode" "uid" "gid" "acc_mode" "cred"
-Do access checking.  The arguments
-.Fa file_mode ,
-.Fa uid ,
-and
-.Fa gid
-are from the vnode to check.  The arguments
+Do access checking by comparing the file's permissions to the caller's
+desired access type
 .Fa acc_mode
-and
-.Fa cred
-are passed directly to
-.Xr VOP_ACCESS 9 .
+and credentials
+.Fa cred .
 .It Fn checkalias "vp" "nvp_rdev" "mp"
 Check to see if the new vnode
 .Fa vp
@@ -671,7 +665,7 @@ Update outstanding I/O count
 .Em vp-\*[Gt]v_numoutput
 for the vnode
 .Em bp-\*[Gt]b_vp
-and do wakeup if requested and
+and do a wakeup if requested and
 .Em vp-\*[Gt]vflag
 has VBWAIT set.
 .It Fn vflushbuf "vp" "sync"
@@ -693,15 +687,14 @@ The argument
 .Fa p
 and
 .Fa cred
-specified the calling process and its credentials.
-The arguments
-.Fa flags ,
+specified the calling process and its credentials.  The
+.Xr sleep 9
+flag and timeout are specified by the arguments
 .Fa slpflag
 and
 .Fa slptimeo
-are ignored in the present implementation.  If the operation is
-successful zero is returned, otherwise and appropriate error code is
-returned.
+respectively.  If the operation is successful zero is returned,
+otherwise an appropriate error code is returned.
 .It Fn vtruncbuf "vp" "lbn" "slpflag" "slptimeo"
 Destroy any in-core buffers past the file truncation length for the
 locked vnode
@@ -716,10 +709,10 @@ flag and timeout are specified by the arguments
 and
 .Fa slptimeo
 respectively.  If the operation is successful zero is returned,
-otherwise and appropriate error code is returned.
+otherwise an appropriate error code is returned.
 .It Fn vprint "label" "vp"
 This function is used by the kernel to dump vnode information during a
-panic.  It is only used if kernel option DIAGNOSTIC is compiled into
+panic.  It is only used if the kernel option DIAGNOSTIC is compiled into
 the kernel.  The argument
 .Fa label
 is a string to prefix the information dump of vnode
