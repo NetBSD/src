@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_machdep.c,v 1.48 2003/08/27 15:59:50 mrg Exp $	*/
+/*	$NetBSD: vme_machdep.c,v 1.49 2004/03/17 17:04:59 pk Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vme_machdep.c,v 1.48 2003/08/27 15:59:50 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vme_machdep.c,v 1.49 2004/03/17 17:04:59 pk Exp $");
 
 #include <sys/param.h>
 #include <sys/extent.h>
@@ -463,7 +463,7 @@ vmeattach_iommu(parent, self, aux)
 	/*
 	 * Get "range" property.
 	 */
-	if (PROM_getprop(node, "ranges", sizeof(struct rom_range),
+	if (prom_getprop(node, "ranges", sizeof(struct rom_range),
 		    &sc->sc_nrange, &sc->sc_range) != 0) {
 		panic("%s: can't get ranges property", self->dv_xname);
 	}

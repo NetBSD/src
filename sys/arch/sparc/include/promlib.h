@@ -1,4 +1,4 @@
-/*	$NetBSD: promlib.h,v 1.15 2004/03/17 11:00:19 pk Exp $ */
+/*	$NetBSD: promlib.h,v 1.16 2004/03/17 17:04:59 pk Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -140,10 +140,10 @@ void		prom_getether(int, u_char *);
 void	prom_init(void);	/* To setup promops */
 
 /* Utility routines */
-int	PROM_getprop(int, char *, size_t, int *, void *);
-int	PROM_getpropint(int node, char *name, int deflt);
-char	*PROM_getpropstring(int node, char *name);
-char	*PROM_getpropstringA(int node, char *name, char *, size_t);
+int	prom_getprop(int, char *, size_t, int *, void *);
+int	prom_getpropint(int node, char *name, int deflt);
+char	*prom_getpropstring(int node, char *name);
+char	*prom_getpropstringA(int node, char *name, char *, size_t);
 void	prom_printf(const char *, ...);
 
 int	prom_findroot(void);
@@ -214,7 +214,7 @@ void	prom_boot(char *)	__attribute__((__noreturn__));
 
 #define firstchild(node)	prom_firstchild(node)
 #define nextsibling(node)	prom_nextsibling(node)
-#define PROM_getproplen(node,name)	prom_proplen(node, name)
+#define prom_getproplen(node,name)	prom_proplen(node, name)
 
 
 /* MP stuff - not currently used */

@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.99 2004/02/13 11:36:17 wiz Exp $	*/
+/*	$NetBSD: zs.c,v 1.100 2004/03/17 17:04:59 pk Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.99 2004/02/13 11:36:17 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.100 2004/03/17 17:04:59 pk Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -263,7 +263,7 @@ zs_attach_mainbus(parent, self, aux)
 
 	zsc->zsc_bustag = ma->ma_bustag;
 	zsc->zsc_dmatag = ma->ma_dmatag;
-	zsc->zsc_promunit = PROM_getpropint(ma->ma_node, "slave", -2);
+	zsc->zsc_promunit = prom_getpropint(ma->ma_node, "slave", -2);
 	zsc->zsc_node = ma->ma_node;
 
 	/*
@@ -315,7 +315,7 @@ zs_attach_obio(parent, self, aux)
 		/*
 		 * Check if power state can be set, e.g. Tadpole 3GX
 		 */
-		if (PROM_getpropint(sa->sa_node, "pwr-on-auxio2", 0))
+		if (prom_getpropint(sa->sa_node, "pwr-on-auxio2", 0))
 		{
 			printf (" powered via auxio2");
 			for (channel = 0; channel < 2; channel++) {
@@ -327,7 +327,7 @@ zs_attach_obio(parent, self, aux)
 
 		zsc->zsc_bustag = sa->sa_bustag;
 		zsc->zsc_dmatag = sa->sa_dmatag;
-		zsc->zsc_promunit = PROM_getpropint(sa->sa_node, "slave", -2);
+		zsc->zsc_promunit = prom_getpropint(sa->sa_node, "slave", -2);
 		zsc->zsc_node = sa->sa_node;
 		zs_attach(zsc, va, sa->sa_pri);
 	} else {
@@ -400,7 +400,7 @@ zs_attach_bootbus(parent, self, aux)
 	}
 
 	zsc->zsc_bustag = baa->ba_bustag;
-	zsc->zsc_promunit = PROM_getpropint(baa->ba_node, "slave", -2);
+	zsc->zsc_promunit = prom_getpropint(baa->ba_node, "slave", -2);
 	zsc->zsc_node = baa->ba_node;
 	zs_attach(zsc, va, baa->ba_intr[0].oi_pri);
 }
