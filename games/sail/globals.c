@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)globals.c	5.4 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: globals.c,v 1.2 1993/08/01 18:51:46 mycroft Exp $";
+static char rcsid[] = "$Id: globals.c,v 1.3 1994/01/13 18:24:40 glass Exp $";
 #endif /* not lint */
 
 #include "externs.h"
@@ -219,7 +219,7 @@ struct scenario scene[] = {
 		{ "Turenne",		specs+10, N_F,  9, 35, 6, 0 },
 		{ "Nightmare",		specs+9,  N_F,  7, 37, 6, 0 },
 		{ "Paris",		specs+53, N_F,  3, 45, 4, 0 },
-		{ "Napolean",		specs+56, N_F,  1, 40, 6, 0 }
+		{ "Napoleon",		specs+56, N_F,  1, 40, 6, 0 }
 	},
 	6, 4, 7, 5, "Cape Horn",
 	{
