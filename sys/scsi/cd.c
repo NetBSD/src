@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.96 1996/10/12 23:23:13 christos Exp $	*/
+/*	$NetBSD: cd.c,v 1.97 1996/12/05 01:06:39 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -94,7 +94,11 @@ struct cd_softc {
 	struct buf buf_queue;
 };
 
+#ifdef __BROKEN_INDIRECT_CONFIG
 int	cdmatch __P((struct device *, void *, void *));
+#else
+int	cdmatch __P((struct device *, struct cfdata *, void *));
+#endif
 void	cdattach __P((struct device *, struct device *, void *));
 int	cdlock __P((struct cd_softc *));
 void	cdunlock __P((struct cd_softc *));
@@ -146,7 +150,12 @@ struct scsi_inquiry_pattern cd_patterns[] = {
 int
 cdmatch(parent, match, aux)
 	struct device *parent;
-	void *match, *aux;
+#ifdef __BROKEN_INDIRECT_CONFIG
+	void *match;
+#else
+	struct cfdata *match;
+#endif
+	void *aux;
 {
 	struct scsibus_attach_args *sa = aux;
 	int priority;
