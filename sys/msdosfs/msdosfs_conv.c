@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_conv.c,v 1.27 1999/03/28 11:05:43 tron Exp $	*/
+/*	$NetBSD: msdosfs_conv.c,v 1.28 2000/02/28 10:43:08 jdolecek Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1997 Wolfgang Solfrank.
@@ -53,7 +53,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/time.h>
-#include <sys/kernel.h>		/* defines tz XXX */
+#include <sys/kernel.h>
 #include <sys/dirent.h>
 #include <sys/vnode.h>
 
@@ -110,8 +110,7 @@ unix2dostime(tsp, ddp, dtp, dhp)
 	 * If the time from the last conversion is the same as now, then
 	 * skip the computations and use the saved result.
 	 */
-	/* XXX NOTE: Removed tz, which is obsolete. Must replace!!! */
-	t = tsp->tv_sec /* - (tz.tz_minuteswest * 60) */
+	t = tsp->tv_sec - (rtc_offset * 60)
 	     /* +- daylight savings time correction */ ;
 	t &= ~1;
 	if (lasttime != t) {
@@ -225,8 +224,7 @@ dos2unixtime(dd, dt, dh, tsp)
 		days += ((dd & DD_DAY_MASK) >> DD_DAY_SHIFT) - 1;
 		lastseconds = (days * 24 * 60 * 60) + SECONDSTO1980;
 	}
-	/* XXX NOTE: Removed tz, which is obsolete. Must replace!!! */
-	tsp->tv_sec = seconds + lastseconds /* + (tz.tz_minuteswest * 60) */
+	tsp->tv_sec = seconds + lastseconds + (rtc_offset * 60)
 	     /* -+ daylight savings time correction */ ;
 	tsp->tv_nsec = (dh % 100) * 10000000;
 }
