@@ -1,7 +1,7 @@
-/*	$NetBSD: ccd.c,v 1.58 1999/01/12 12:49:53 christos Exp $	*/
+/*	$NetBSD: ccd.c,v 1.59 1999/01/21 00:35:15 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996, 1997, 1998, 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -128,7 +128,7 @@ int ccddebug = 0x00;
 struct ccdbuf {
 	struct buf	cb_buf;		/* new I/O buf */
 	struct buf	*cb_obp;	/* ptr. to original I/O buf */
-	int		cb_unit;	/* target unit */
+	struct ccd_softc *cb_sc;	/* pointer to ccd softc */
 	int		cb_comp;	/* target component */
 	SIMPLEQ_ENTRY(ccdbuf) cb_q;	/* fifo of component buffers */
 };
@@ -224,7 +224,7 @@ ccdinit(cs, cpaths, vpp, p)
 
 #ifdef DEBUG
 	if (ccddebug & (CCDB_FOLLOW|CCDB_INIT))
-		printf("ccdinit: unit %d\n", cs->sc_unit);
+		printf("%s: ccdinit\n", cs->sc_xname);
 #endif
 
 	/* Allocate space for the component info. */
@@ -592,6 +592,10 @@ ccdstrategy(bp)
 		printf("ccdstrategy(%p): unit %d\n", bp, unit);
 #endif
 	if ((cs->sc_flags & CCDF_INITED) == 0) {
+#ifdef DEBUG
+		if (ccddebug & CCDB_FOLLOW)
+			printf("ccdstrategy: unit %d: not inited\n", unit);
+#endif
 		bp->b_error = ENXIO;
 		bp->b_flags |= B_ERROR;
 		goto done;
@@ -673,6 +677,7 @@ ccdstart(cs, bp)
 			/* Notify the upper layer we are out of memory. */
 			bp->b_error = ENOMEM;
 			bp->b_flags |= B_ERROR;
+			disk_unbusy(&cs->sc_dkdev, 0);
 			return;
 		}
 		SIMPLEQ_INSERT_TAIL(&cbufq, cbp, cb_q);
@@ -779,7 +784,7 @@ ccdbuffer(cs, bp, bn, addr, bcount)
 	 * context for ccdiodone
 	 */
 	cbp->cb_obp = bp;
-	cbp->cb_unit = cs->sc_unit;
+	cbp->cb_sc = cs;
 	cbp->cb_comp = ccdisk;
 
 #ifdef DEBUG
@@ -821,9 +826,8 @@ ccdiodone(vbp)
 	struct buf *vbp;
 {
 	struct ccdbuf *cbp = (struct ccdbuf *) vbp;
-	register struct buf *bp = cbp->cb_obp;
-	register int unit = cbp->cb_unit;
-	struct ccd_softc *cs = &ccd_softc[unit];
+	struct buf *bp = cbp->cb_obp;
+	struct ccd_softc *cs = cbp->cb_sc;
 	int count, s;
 
 	s = splbio();
@@ -858,7 +862,7 @@ ccdiodone(vbp)
 	if (bp->b_resid < 0)
 		panic("ccdiodone: count");
 	if (bp->b_resid == 0)
-		ccdintr(&ccd_softc[unit], bp);
+		ccdintr(cs, bp);
 	splx(s);
 }
 
