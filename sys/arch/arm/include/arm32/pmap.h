@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.20 2002/01/19 16:55:22 chs Exp $	*/
+/*	$NetBSD: pmap.h,v 1.21 2002/02/05 21:14:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -99,24 +99,6 @@ struct pmap {
 typedef struct pmap *pmap_t;
 
 /*
- * for each managed physical page we maintain a list of <PMAP,VA>'s
- * which it is mapped at.  the list is headed by a pv_head structure.
- * there is one pv_head per managed phys page (allocated at boot time).
- * the pv_head structure points to a list of pv_entry structures (each
- * describes one mapping).
- *
- * pv_entry's are only visible within pmap.c, so only provide a placeholder
- * here
- */
-
-struct pv_entry;
-
-struct pv_head {
-	struct simplelock pvh_lock;	/* locks every pv on this list */
-	struct pv_entry *pvh_list;	/* head of list (locked by pvh_lock) */
-};
-
-/*
  * Page hooks. I'll eliminate these sometime soon :-)
  *
  * For speed we store the both the virtual address and the page table
@@ -146,7 +128,6 @@ typedef struct {
 /*
  * Commonly referenced structures
  */
-extern struct pv_entry	*pv_table;	/* Phys to virt mappings, per page. */
 extern struct pmap	kernel_pmap_store;
 extern int		pmap_debug_level; /* Only exists if PMAP_DEBUG */
 
