@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2000/05/04 00:52:58 itojun Exp $
+#	$NetBSD: Makefile,v 1.3 2002/04/24 08:18:48 lukem Exp $
 #	install these sources in /usr/share/sendmail/feature
 
 DIST=		${.CURDIR}/../../../../dist
@@ -22,5 +22,4 @@ FILES=		accept_unqualified_senders.m4 accept_unresolvable_domains.m4 \
 
 all:
 
-.include <bsd.own.mk>
-.include <bsd.files.mk>
+.include <bsd.prog.mk>

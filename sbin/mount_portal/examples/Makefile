@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4 2001/12/11 15:39:10 bgrayson Exp $
+# $NetBSD: Makefile,v 1.5 2002/04/24 08:18:52 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -17,4 +17,3 @@ SCRIPTS=	sysctlfs.sh.sh cvs.sh.sh
 .endif
 
 .include <bsd.prog.mk>
-.include <bsd.files.mk>

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.20 2001/12/12 00:51:04 tv Exp $
+# $NetBSD: Makefile,v 1.21 2002/04/24 08:18:51 lukem Exp $
 
 NOLINT=		# defined
 
@@ -268,12 +268,10 @@ INFOFLAGS=	-I${DIST}/heimdal/doc
 	fi
 .endif
 
-.include <bsd.lib.mk>
-.include <bsd.info.mk>
-
 .if ${MKSHARE} != "no"
 FILES=		${DIST}/heimdal/krb5.conf
 FILESDIR=	/usr/share/examples/kerberos
 .endif
 
-.include <bsd.files.mk>
+.include <bsd.lib.mk>
+.include <bsd.info.mk>

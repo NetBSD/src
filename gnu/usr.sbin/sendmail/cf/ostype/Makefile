@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2001/10/19 02:53:02 tv Exp $
+#	$NetBSD: Makefile,v 1.8 2002/04/24 08:18:50 lukem Exp $
 #	install these sources in /usr/share/sendmail/ostype
 
 DIST=		${.CURDIR}/../../../../dist
@@ -19,5 +19,4 @@ FILES=		aix2.m4 aix3.m4 aix4.m4 aix5.m4 altos.m4 amdahl-uts.m4 \
 
 all:
 
-.include <bsd.own.mk>
-.include <bsd.files.mk>
+.include <bsd.prog.mk>

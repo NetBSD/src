@@ -1,6 +1,4 @@
-# $NetBSD: Makefile,v 1.27 2002/02/11 14:00:35 lukem Exp $
-
-NOPROG= noprog
+# $NetBSD: Makefile,v 1.28 2002/04/24 08:18:47 lukem Exp $
 
 .include <bsd.own.mk>
 

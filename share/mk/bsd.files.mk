@@ -1,9 +1,6 @@
-#	$NetBSD: bsd.files.mk,v 1.18 2002/02/11 21:14:58 mycroft Exp $
+#	$NetBSD: bsd.files.mk,v 1.19 2002/04/24 08:18:52 lukem Exp $
 
 .if !target(__fileinstall)
-# This file can be included multiple times.  It clears the definition of
-# FILES at the end so that this is possible.
-
 ##### Basic targets
 .PHONY:		filesinstall
 realinstall:	filesinstall
@@ -50,5 +47,3 @@ filesinstall::	${_F}
 .undef _FDIR
 .undef _FNAME
 .undef _F
-
-FILES:=		# reset to empty

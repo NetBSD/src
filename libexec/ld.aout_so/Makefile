@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.37 2002/03/29 09:48:49 matt Exp $
+#	$NetBSD: Makefile,v 1.38 2002/04/24 08:18:51 lukem Exp $
 
 .include <bsd.own.mk>
 .if (${OBJECT_FMT} == "a.out")
@@ -45,8 +45,6 @@ UUDECODE?=	uudecode
 
 ld.so:	${.CURDIR}/ld.so.${MACHINE_ARCH}.uue
 	${UUDECODE} ${.ALLSRC}
-
-.include <bsd.files.mk>
 
 .endif
 

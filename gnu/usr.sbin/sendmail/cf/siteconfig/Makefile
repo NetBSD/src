@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2000/02/08 13:45:40 tron Exp $
+#	$NetBSD: Makefile,v 1.2 2002/04/24 08:18:51 lukem Exp $
 #	install these sources in /usr/share/sendmail/siteconfig
 
 DIST=		${.CURDIR}/../../../../dist
@@ -9,5 +9,4 @@ FILES=		uucp.cogsci.m4 uucp.old.arpa.m4 uucp.ucbarpa.m4 uucp.ucbvax.m4
 
 all:
 
-.include <bsd.own.mk>
-.include <bsd.files.mk>
+.include <bsd.prog.mk>
