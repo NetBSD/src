@@ -1,10 +1,10 @@
-#	$NetBSD: GENERIC,v 1.7 2000/06/30 17:10:17 itojun Exp $
+#	$NetBSD: GENERIC,v 1.8 2000/07/27 17:53:37 mason Exp $
 #
 #	GENERIC LUNA68K
 #
 include		"arch/luna68k/conf/std.luna68k"
 
-#ident 		"GENERIC-$Revision: 1.7 $"
+#ident 		"GENERIC-$Revision: 1.8 $"
 
 maxusers	8
 
@@ -128,7 +128,7 @@ pseudo-device	bpfilter	2	# Berkeley Packet Filter
 pseudo-device	loop		1	# loopback interface; required
 pseudo-device	md		1	# memory disk device
 #pseudo-device	ppp		1	# PPP interfaces
-pseudo-device	pty		32	# pseudo-terminals
+pseudo-device	pty		64	# pseudo-terminals
 #pseudo-device	raid		2	# RAIDframe disk driver
 #pseudo-device	sl		1	# SLIP interfaces
 #pseudo-device	tun		2	# Network "tunnel" device

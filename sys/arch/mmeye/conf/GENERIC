@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.16 2000/06/30 17:10:18 itojun Exp $
+#	$NetBSD: GENERIC,v 1.17 2000/07/27 17:53:38 mason Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/mmeye/conf/std.mmeye"
 
-#ident 		"GENERIC-$Revision: 1.16 $"
+#ident 		"GENERIC-$Revision: 1.17 $"
 
 maxusers	16		# estimated number of users
 
@@ -160,7 +160,7 @@ pseudo-device	ipip		2	# IP Encapsulation within IP (RFC 2003)
 pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
 #pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
-pseudo-device	pty		16	# pseudo-terminals
+pseudo-device	pty		64	# pseudo-terminals
 pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	vcoda		4	# coda minicache <-> venus comm.
 #pseudo-device	md		1	# memory disk device (ramdisk)
