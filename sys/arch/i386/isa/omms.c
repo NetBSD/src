@@ -1,4 +1,4 @@
-/*	$NetBSD: omms.c,v 1.4 2002/01/07 21:47:02 thorpej Exp $	*/
+/*	$NetBSD: omms.c,v 1.4.10.1 2002/05/17 15:40:57 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omms.c,v 1.4 2002/01/07 21:47:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omms.c,v 1.4.10.1 2002/05/17 15:40:57 gehenna Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -39,12 +39,12 @@ __KERNEL_RCSID(0, "$NetBSD: omms.c,v 1.4 2002/01/07 21:47:02 thorpej Exp $");
 #include <sys/vnode.h>
 #include <sys/device.h>
 #include <sys/poll.h>
+#include <sys/conf.h>
 
 #include <machine/cpu.h>
 #include <machine/intr.h>
 #include <machine/bus.h>
 #include <machine/mouse.h>
-#include <machine/conf.h>
 
 #include <dev/isa/isavar.h>
 
@@ -81,6 +81,17 @@ struct cfattach omms_ca = {
 };
 
 extern struct cfdriver omms_cd;
+
+dev_type_open(mmsopen);
+dev_type_close(mmsclose);
+dev_type_read(mmsread);
+dev_type_ioctl(mmsioctl);
+dev_type_poll(mmspoll);
+
+const struct cdevsw omms_cdevsw = {
+	mmsopen, mmsclose, mmsread, nowrite, mmsioctl,
+	nostop, notty, mmspoll, nommap,
+};
 
 #define	MMSUNIT(dev)	(minor(dev))
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: bw2.c,v 1.17 2001/09/19 18:10:34 thorpej Exp $	*/
+/*	$NetBSD: bw2.c,v 1.17.12.1 2002/05/17 15:40:49 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -72,8 +72,6 @@
 #include <sun3/dev/bw2reg.h>
 #include <sun3/dev/p4reg.h>
 
-cdev_decl(bw2);
-
 /* per-display variables */
 struct bw2_softc {
 	struct	device sc_dev;		/* base device */
@@ -94,13 +92,22 @@ struct cfattach bwtwo_ca = {
 
 extern struct cfdriver bwtwo_cd;
 
+dev_type_open(bw2open);
+dev_type_ioctl(bw2ioctl);
+dev_type_mmap(bw2mmap);
+
+const struct cdevsw bwtwo_cdevsw = {
+	bw2open, nullclose, noread, nowrite, bw2ioctl,
+	nostop, notty, nopoll, bw2mmap,
+};
+
 /* XXX we do not handle frame buffer interrupts */
 
 static int bw2gvideo __P((struct fbdevice *, void *));
 static int bw2svideo __P((struct fbdevice *, void *));
 
 static struct fbdriver bw2fbdriver = {
-	bw2open, bw2close, bw2mmap,
+	bw2open, nullclose, bw2mmap,
 	fb_noioctl,
 	bw2gvideo, bw2svideo,
 	fb_noioctl, fb_noioctl, };
@@ -293,16 +300,6 @@ bw2open(dev, flags, mode, p)
 
 	if (unit >= bwtwo_cd.cd_ndevs || bwtwo_cd.cd_devs[unit] == NULL)
 		return (ENXIO);
-	return (0);
-}
-
-int
-bw2close(dev, flags, mode, p)
-	dev_t dev;
-	int flags, mode;
-	struct proc *p;
-{
-
 	return (0);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.21 2001/12/27 02:23:24 wiz Exp $	*/
+/*	$NetBSD: grf.c,v 1.21.8.1 2002/05/17 15:40:46 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -95,7 +95,6 @@ int grfdebug = 0;
 #define GDB_LOCK	0x08
 #endif
 
-cdev_decl(grf);
 int grfon __P((dev_t));
 int grfoff __P((dev_t));
 off_t grfaddr __P((struct grf_softc *, off_t));
@@ -103,6 +102,17 @@ int grfmap __P((dev_t, caddr_t *, struct proc *));
 int grfunmap __P((dev_t, caddr_t, struct proc *));
 
 extern struct cfdriver grf_cd;
+
+dev_type_open(grfopen);
+dev_type_close(grfclose);
+dev_type_ioctl(grfioctl);
+dev_type_poll(grfpoll);
+dev_type_mmap(grfmmap);
+
+const struct cdevsw grf_cdevsw = {
+	grfopen, grfclose, nullread, nullwrite, grfioctl,
+	nostop, notty, grfpoll, grfmmap,
+};
 
 /*ARGSUSED*/
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.11 2001/06/12 15:17:21 wiz Exp $	*/
+/*	$NetBSD: kbd.c,v 1.11.16.1 2002/05/17 15:40:46 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -71,12 +71,6 @@ struct kbd_softc {
 };
 
 void	kbdenable	__P((int));
-int	kbdopen 	__P((dev_t, int, int, struct proc *));
-int	kbdclose	__P((dev_t, int, int, struct proc *));
-int	kbdread 	__P((dev_t, struct uio *, int));
-int	kbdwrite	__P((dev_t, struct uio *, int));
-int	kbdioctl	__P((dev_t, u_long, caddr_t, int, struct proc *));
-int	kbdpoll 	__P((dev_t, int, struct proc *));
 int	kbdintr 	__P((void *));
 void	kbdsoftint	__P((void));
 void	kbd_bell	__P((int));
@@ -92,6 +86,16 @@ struct cfattach kbd_ca = {
 	sizeof(struct kbd_softc), kbdmatch, kbdattach
 };
 
+dev_type_open(kbdopen);
+dev_type_close(kbdclose);
+dev_type_read(kbdread);
+dev_type_ioctl(kbdioctl);
+dev_type_poll(kbdpoll);
+
+const struct cdevsw kbd_cdevsw = {
+	kbdopen, kbdclose, kbdread, nowrite, kbdioctl,
+	nostop, notty, kbdpoll, nommap,
+};
 
 static int
 kbdmatch(parent, cf, aux)
@@ -213,16 +217,6 @@ kbdread(dev, uio, flags)
 	struct kbd_softc *k = kbd_cd.cd_devs[minor(dev)];
 
 	return ev_read(&k->sc_events, uio, flags);
-}
-
-/* this routine should not exist, but is convenient to write here for now */
-int
-kbdwrite(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
-{
-	return EOPNOTSUPP;
 }
 
 #if NBELL > 0

@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.39 2000/07/30 21:40:49 briggs Exp $	*/
+/*	$NetBSD: asc.c,v 1.39.16.1 2002/05/17 15:40:56 gehenna Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds
@@ -71,6 +71,7 @@
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/poll.h>
+#include <sys/conf.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -111,6 +112,19 @@ struct cfattach asc_ca = {
 };
 
 extern struct cfdriver asc_cd;
+
+dev_type_open(ascopen);
+dev_type_close(ascclose);
+dev_type_read(ascread);
+dev_type_write(ascwrite);
+dev_type_ioctl(ascioctl);
+dev_type_poll(ascpoll);
+dev_type_mmap(ascmmap);
+
+const struct cdevsw asc_cdevsw = {
+	ascopen, ascclose, ascread, ascwrite, ascioctl,
+	nostop, notty, ascpoll, ascmmap,
+};
 
 static int
 ascmatch(parent, cf, aux)
@@ -257,7 +271,7 @@ ascwrite(dev, uio, ioflag)
 int
 ascioctl(dev, cmd, data, flag, p)
 	dev_t dev;
-	int cmd;
+	u_long cmd;
 	caddr_t data;
 	int flag;
 	struct proc *p;

@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.20 2001/09/26 20:53:10 eeh Exp $ */
+/*	$NetBSD: fb.c,v 1.20.12.1 2002/05/17 15:40:50 gehenna Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -59,11 +59,20 @@
 #include <dev/sun/fbio.h>
 #include <machine/kbd.h>
 #include <machine/fbvar.h>
-#include <machine/conf.h>
 #include <machine/eeprom.h>
 
 static struct fbdevice *devfb;
 
+dev_type_open(fbopen);
+dev_type_close(fbclose);
+dev_type_ioctl(fbioctl);
+dev_type_poll(fbpoll);
+dev_type_mmap(fbmmap);
+
+const struct cdevsw fb_cdevsw = {
+	fbopen, fbclose, noread, nowrite, fbioctl,
+	nostop, notty, fbpoll, fbmmap,
+};
 
 void
 fb_unblank()

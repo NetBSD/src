@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.89 2002/03/11 16:27:02 pk Exp $	*/
+/*	$NetBSD: fd.c,v 1.89.4.1 2002/05/17 15:40:51 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -105,7 +105,6 @@
 
 #include <machine/autoconf.h>
 #include <machine/intr.h>
-#include <machine/conf.h>
 
 #include <sparc/sparc/auxreg.h>
 #include <sparc/dev/fdreg.h>
@@ -269,9 +268,24 @@ struct cfattach fd_ca = {
 
 extern struct cfdriver fd_cd;
 
+dev_type_open(fdopen);
+dev_type_close(fdclose);
+dev_type_read(fdread);
+dev_type_write(fdwrite);
+dev_type_ioctl(fdioctl);
+dev_type_strategy(fdstrategy);
+
+const struct bdevsw fd_bdevsw = {
+	fdopen, fdclose, fdstrategy, fdioctl, nodump, nosize, D_DISK
+};
+
+const struct cdevsw fd_cdevsw = {
+	fdopen, fdclose, fdread, fdwrite, fdioctl,
+	nostop, notty, nopoll, nommap, D_DISK
+};
+
 void fdgetdisklabel __P((dev_t));
 int fd_get_parms __P((struct fd_softc *));
-void fdstrategy __P((struct buf *));
 void fdstart __P((struct fd_softc *));
 int fdprint __P((void *, const char *));
 
@@ -1865,27 +1879,6 @@ fdcretry(fdc)
 		fdfinish(fd, bp);
 	}
 	fdc->sc_errors++;
-}
-
-int
-fdsize(dev)
-	dev_t dev;
-{
-
-	/* Swapping to floppies would not make sense. */
-	return (-1);
-}
-
-int
-fddump(dev, blkno, va, size)
-	dev_t dev;
-	daddr_t blkno;
-	caddr_t va;
-	size_t size;
-{
-
-	/* Not implemented. */
-	return (EINVAL);
 }
 
 int

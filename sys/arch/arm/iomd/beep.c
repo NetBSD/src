@@ -1,4 +1,4 @@
-/*	$NetBSD: beep.c,v 1.8 2002/04/10 19:35:23 thorpej Exp $	*/
+/*	$NetBSD: beep.c,v 1.8.2.1 2002/05/17 15:41:03 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -42,7 +42,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: beep.c,v 1.8 2002/04/10 19:35:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: beep.c,v 1.8.2.1 2002/05/17 15:41:03 gehenna Exp $");
 
 #include <sys/systm.h>
 #include <sys/conf.h>
@@ -54,7 +54,6 @@ __KERNEL_RCSID(0, "$NetBSD: beep.c,v 1.8 2002/04/10 19:35:23 thorpej Exp $");
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/conf.h>
 #include <machine/intr.h>
 #include <arm/arm32/katelib.h>
 #include <machine/pmap.h>
@@ -85,8 +84,6 @@ struct beep_softc {
 
 int	beepprobe	__P((struct device *parent, struct cfdata *cf, void *aux));
 void	beepattach	__P((struct device *parent, struct device *self, void *aux));
-int	beepopen	__P((dev_t, int, int, struct proc *));
-int	beepclose	__P((dev_t, int, int, struct proc *));
 int	beepintr	__P((void *arg));
 void	beepdma		__P((struct beep_softc *sc, int buf));
 
@@ -97,6 +94,15 @@ struct cfattach beep_ca = {
 };
 
 extern struct cfdriver beep_cd;
+
+dev_type_open(beepopen);
+dev_type_close(beepclose);
+dev_type_ioctl(beepioctl);
+
+const struct cdevsw beep_cdevsw = {
+	beepopen, beepclose, noread, nowrite, beepioctl,
+	nostop, notty, nopoll, nommap,
+};
 
 int
 beepprobe(parent, cf, aux)

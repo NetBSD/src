@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.66 2001/11/15 07:03:28 lukem Exp $ */
+/*	$NetBSD: apm.c,v 1.66.8.1 2002/05/17 15:40:57 gehenna Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.66 2001/11/15 07:03:28 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.66.8.1 2002/05/17 15:40:57 gehenna Exp $");
 
 #include "apm.h"
 #if NAPM > 1
@@ -173,13 +173,21 @@ static const char *apm_strerror __P((int));
 static void	apm_suspend __P((struct apm_softc *));
 static void	apm_resume __P((struct apm_softc *, struct bioscallregs *));
 
-cdev_decl(apm);
-
 struct cfattach apm_ca = {
 	sizeof(struct apm_softc), apmmatch, apmattach
 };
 
 extern struct cfdriver apm_cd;
+
+dev_type_open(apmopen);
+dev_type_close(apmclose);
+dev_type_ioctl(apmioctl);
+dev_type_poll(apmpoll);
+
+const struct cdevsw apm_cdevsw = {
+	apmopen, apmclose, noread, nowrite, apmioctl,
+	nostop, notty, apmpoll, nommap,
+};
 
 /* configurable variables */
 int	apm_bogus_bios = 0;

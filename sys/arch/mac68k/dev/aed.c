@@ -1,4 +1,4 @@
-/*	$NetBSD: aed.c,v 1.10 2000/03/23 06:39:56 thorpej Exp $	*/
+/*	$NetBSD: aed.c,v 1.10.20.1 2002/05/17 15:40:57 gehenna Exp $	*/
 
 /*
  * Copyright (C) 1994	Bradley A. Grantham
@@ -40,6 +40,7 @@
 #include <sys/proc.h>
 #include <sys/signalvar.h>
 #include <sys/systm.h>
+#include <sys/conf.h>
 
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
@@ -73,6 +74,17 @@ struct cfattach aed_ca = {
 };
 
 extern struct cfdriver aed_cd;
+
+dev_type_open(aedopen);
+dev_type_close(aedclose);
+dev_type_read(aedread);
+dev_type_ioctl(aedioctl);
+dev_type_poll(aedpoll);
+
+const struct cdevsw aed_cdevsw = {
+	aedopen, aedclose, aedread, nullwrite, aedioctl,
+	nostop, notty, aedpoll, nommap,
+};
 
 static int
 aedmatch(parent, cf, aux)
@@ -498,21 +510,10 @@ aedread(dev, uio, flag)
 	return (0);
 }
 
-
-int 
-aedwrite(dev, uio, flag)
-    dev_t dev;
-    struct uio *uio;
-    int flag;
-{
-	return 0;
-}
-
-
 int 
 aedioctl(dev, cmd, data, flag, p)
     dev_t dev;
-    int cmd;
+    u_long cmd;
     caddr_t data;
     int flag;
     struct proc *p;

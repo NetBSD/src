@@ -1,4 +1,4 @@
-/*	$NetBSD: et4000.c,v 1.5 2000/06/26 04:55:35 simonb Exp $	*/
+/*	$NetBSD: et4000.c,v 1.5.16.1 2002/05/17 15:41:01 gehenna Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -89,13 +89,6 @@ static void	et_stop __P((bus_space_tag_t *, bus_space_handle_t *, int *,
 static int	et_detect __P((bus_space_tag_t *, bus_space_tag_t *,
 		    bus_space_handle_t *, bus_space_handle_t *, u_int));
 
-dev_decl(et,open);
-dev_decl(et,close);
-dev_decl(et,read);
-dev_decl(et,write);
-dev_decl(et,ioctl);
-dev_decl(et,mmap);
-
 int		eton __P((dev_t));
 int		etoff __P((dev_t));
 
@@ -140,6 +133,18 @@ struct cfattach et_ca = {
 };
 
 extern struct cfdriver et_cd;
+
+dev_type_open(etopen);
+dev_type_close(etclose);
+dev_type_read(etread);
+dev_type_write(etwrite);
+dev_type_ioctl(etioctl);
+dev_type_mmap(etmmap);
+
+const struct cdevsw et_cdevsw = {
+	etopen, etclose, etread, etwrite, etioctl,
+	nostop, notty, nopoll, etmmap,
+};
 
 /*
  * Look for a ET4000 (Crazy Dots) card on the VME bus.  We might

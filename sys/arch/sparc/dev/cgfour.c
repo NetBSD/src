@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfour.c,v 1.26 2002/03/11 16:27:01 pk Exp $	*/
+/*	$NetBSD: cgfour.c,v 1.26.4.1 2002/05/17 15:40:52 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -105,7 +105,6 @@
 
 #include <machine/autoconf.h>
 #include <machine/eeprom.h>
-#include <machine/conf.h>
 
 #include <dev/sun/fbio.h>
 #include <dev/sun/fbvar.h>
@@ -134,19 +133,25 @@ static void	cgfourunblank __P((struct device *));
 
 static int	cg4_pfour_probe __P((void *, void *));
 
-/* cdevsw prototypes */
-cdev_decl(cgfour);
-
 struct cfattach cgfour_ca = {
 	sizeof(struct cgfour_softc), cgfourmatch, cgfourattach
 };
 
 extern struct cfdriver cgfour_cd;
 
+dev_type_open(cgfouropen);
+dev_type_ioctl(cgfourioctl);
+dev_type_mmap(cgfourmmap);
+
+const struct cdevsw cgfour_cdevsw = {
+	cgfouropen, nullclose, noread, nowrite, cgfourioctl,
+	nostop, notty, nopoll, cgfourmmap,
+};
+
 #if defined(SUN4)
 /* frame buffer generic driver */
 static struct fbdriver cgfourfbdriver = {
-	cgfourunblank, cgfouropen, cgfourclose, cgfourioctl, cgfourpoll,
+	cgfourunblank, cgfouropen, nullclose, cgfourioctl, nopoll,
 	cgfourmmap
 };
 
@@ -320,16 +325,6 @@ cgfouropen(dev, flags, mode, p)
 }
 
 int
-cgfourclose(dev, flags, mode, p)
-	dev_t dev;
-	int flags, mode;
-	struct proc *p;
-{
-
-	return (0);
-}
-
-int
 cgfourioctl(dev, cmd, data, flags, p)
 	dev_t dev;
 	u_long cmd;
@@ -388,16 +383,6 @@ cgfourioctl(dev, cmd, data, flags, p)
 	}
 #endif
 	return (0);
-}
-
-int
-cgfourpoll(dev, events, p)
-	dev_t dev;
-	int events;
-	struct proc *p;
-{
-
-	return (seltrue(dev, events, p));
 }
 
 /*

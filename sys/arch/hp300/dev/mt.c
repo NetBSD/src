@@ -1,4 +1,4 @@
-/*	$NetBSD: mt.c,v 1.16 2002/03/15 05:55:36 gmcgarry Exp $	*/
+/*	$NetBSD: mt.c,v 1.16.4.1 2002/05/17 15:40:59 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.16 2002/03/15 05:55:36 gmcgarry Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.16.4.1 2002/05/17 15:40:59 gehenna Exp $");                                                  
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -142,6 +142,22 @@ struct cfattach mt_ca = {
 
 extern struct cfdriver mt_cd;
 
+dev_type_open(mtopen);
+dev_type_close(mtclose);
+dev_type_read(mtread);
+dev_type_write(mtwrite);
+dev_type_ioctl(mtioctl);
+dev_type_strategy(mtstrategy);
+
+const struct bdevsw mt_bdevsw = {
+	mtopen, mtclose, mtstrategy, mtioctl, nodump, nosize, D_TAPE
+};
+
+const struct cdevsw mt_cdevsw = {
+	mtopen, mtclose, mtread, mtwrite, mtioctl,
+	nostop, notty, nopoll, nommap, D_TAPE
+};
+
 int	mtident __P((struct mt_softc *, struct hpibbus_attach_args *));
 void	mtustart __P((struct mt_softc *));
 int	mtreaddsj __P((struct mt_softc *, int));
@@ -152,9 +168,6 @@ void	spl_mtstart __P((void *));
 void	mtstart __P((void *));
 void	mtgo __P((void *));
 void	mtintr __P((void *));
-
-bdev_decl(mt);
-cdev_decl(mt);
 
 int
 mtmatch(parent, match, aux)
@@ -1004,15 +1017,4 @@ mtioctl(dev, cmd, data, flag, p)
 		return (EINVAL);
 	}
 	return (0);
-}
-
-/*ARGSUSED*/
-int
-mtdump(dev, blkno, va, size)
-	dev_t dev;
-	daddr_t blkno;
-	caddr_t va;
-	size_t size;
-{
-	return (ENODEV);
 }

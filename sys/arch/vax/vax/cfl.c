@@ -1,4 +1,4 @@
-/*	$NetBSD: cfl.c,v 1.7 2000/11/20 08:24:23 chs Exp $	*/
+/*	$NetBSD: cfl.c,v 1.7.16.1 2002/05/17 15:40:47 gehenna Exp $	*/
 /*-
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -88,15 +88,20 @@ struct {
 
 static	void cflstart __P((void));
 
-int	cflopen __P((dev_t, int, struct proc *));
-int	cflclose __P((dev_t, int, struct proc *));
-int	cflrw __P((dev_t, struct uio *, int));
+dev_type_open(cflopen);
+dev_type_close(cflclose);
+dev_type_read(cflrw);
+
+const struct cdevsw cfl_cdevsw = {
+	cflopen, cflclose, cflrw, cflrw, noioctl,
+	nostop, notty, nopoll, nommap,
+};
 
 /*ARGSUSED*/
 int
-cflopen(dev, flag, p)
+cflopen(dev, flag, mode, p)
 	dev_t dev;
-	int flag;
+	int flag, mode;
 	struct proc *p;
 {
 	if (vax_cputype != VAX_780)
@@ -110,9 +115,9 @@ cflopen(dev, flag, p)
 
 /*ARGSUSED*/
 int
-cflclose(dev, flag, p)
+cflclose(dev, flag, mode, p)
 	dev_t dev;
-	int flag;
+	int flag, mode;
 	struct proc *p;
 {
 	int s;

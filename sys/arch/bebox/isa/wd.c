@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.5 1998/08/13 02:10:38 eeh Exp $	*/
+/*	$NetBSD: wd.c,v 1.5.24.1 2002/05/17 15:41:00 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -156,16 +156,29 @@ struct cfattach wd_ca = {
 
 extern struct cfdriver wd_cd;
 
+dev_type_open(wdopen);
+dev_type_close(wdclose);
+dev_type_read(wdread);
+dev_type_write(wdwrite);
+dev_type_ioctl(wdioctl);
+dev_type_strategy(wdstrategy);
+dev_type_dump(wddump);
+dev_type_size(wdsize);
+
+const struct bdevsw wd_bdevsw = {
+	wdopen, wdclose, wdstrategy, wdioctl, wddump, wdsize, D_DISK
+};
+
+const struct cdevsw wd_cdevsw = {
+	wdopen, wdclose, wdread, wdwrite, wdioctl,
+	nostop, notty, nopoll, nommap, D_DISK
+};
+
 void	wdgetdisklabel	__P((struct wd_softc *));
 int	wd_get_parms	__P((struct wd_softc *));
-void	wdstrategy	__P((struct buf *));
 void	wdstart		__P((struct wd_softc *));
 
 struct dkdriver wddkdriver = { wdstrategy };
-
-/* XXX: these should go elsewhere */
-cdev_decl(wd);
-bdev_decl(wd);
 
 void	wdfinish	__P((struct wd_softc *, struct buf *));
 int 	dcintr		__P((void *));

@@ -1,4 +1,4 @@
-/*	$NetBSD: par.c,v 1.12 2000/06/11 14:20:45 minoura Exp $	*/
+/*	$NetBSD: par.c,v 1.12.18.1 2002/05/17 15:40:46 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -109,8 +109,6 @@ int	pardebug = 0;
 #endif
 #endif
 
-cdev_decl(par);
-
 int parmatch __P((struct device *, struct cfdata *, void *));
 void parattach __P((struct device *, struct device *, void *));
 
@@ -119,6 +117,16 @@ struct cfattach par_ca = {
 };
 
 extern struct cfdriver par_cd;
+
+dev_type_open(paropen);
+dev_type_close(parclose);
+dev_type_write(parwrite);
+dev_type_ioctl(parioctl);
+
+const struct cdevsw par_cdevsw = {
+	paropen, parclose, noread, parwrite, parioctl,
+	nostop, notty, nopoll, nommap,
+};
 
 int
 parmatch(pdp, cfp, aux)

@@ -1,4 +1,4 @@
-/*	$NetBSD: cg4.c,v 1.23 2001/09/19 18:10:34 thorpej Exp $	*/
+/*	$NetBSD: cg4.c,v 1.23.12.1 2002/05/17 15:40:49 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -90,8 +90,6 @@ union bt_cmap_u {
 #define CG4_TYPE_A 0	/* AMD DACs */
 #define CG4_TYPE_B 1	/* Brooktree DACs */
 
-cdev_decl(cg4);
-
 #define	CG4_MMAP_SIZE (CG4_OVERLAY_SIZE + CG4_ENABLE_SIZE + CG4_PIXMAP_SIZE)
 
 #define CMAP_SIZE 256
@@ -126,6 +124,15 @@ struct cfattach cgfour_ca = {
 
 extern struct cfdriver cgfour_cd;
 
+dev_type_open(cg4open);
+dev_type_ioctl(cg4ioctl);
+dev_type_mmap(cg4mmap);
+
+const struct cdevsw cgfour_cdevsw = {
+	cg4open, nullclose, noread, nowrite, cg4ioctl,
+	nostop, notty, nopoll, cg4mmap,
+};
+
 static int	cg4gattr   __P((struct fbdevice *, void *));
 static int	cg4gvideo  __P((struct fbdevice *, void *));
 static int	cg4svideo  __P((struct fbdevice *, void *));
@@ -141,7 +148,7 @@ static void	cg4b_init   __P((struct cg4_softc *));
 static void	cg4b_ldcmap __P((struct cg4_softc *));
 
 static struct fbdriver cg4_fbdriver = {
-	cg4open, cg4close, cg4mmap, cg4gattr,
+	cg4open, nullclose, cg4mmap, cg4gattr,
 	cg4gvideo, cg4svideo,
 	cg4getcmap, cg4putcmap };
 
@@ -334,16 +341,6 @@ cg4open(dev, flags, mode, p)
 
 	if (unit >= cgfour_cd.cd_ndevs || cgfour_cd.cd_devs[unit] == NULL)
 		return (ENXIO);
-	return (0);
-}
-
-int
-cg4close(dev, flags, mode, p)
-	dev_t dev;
-	int flags, mode;
-	struct proc *p;
-{
-
 	return (0);
 }
 

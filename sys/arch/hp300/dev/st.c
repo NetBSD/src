@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.31 2002/03/15 05:55:37 gmcgarry Exp $	*/
+/*	$NetBSD: st.c,v 1.31.4.1 2002/05/17 15:40:58 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.31 2002/03/15 05:55:37 gmcgarry Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.31.4.1 2002/05/17 15:40:58 gehenna Exp $");                                                  
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,6 +124,7 @@ __KERNEL_RCSID(0, "$NetBSD: st.c,v 1.31 2002/03/15 05:55:37 gmcgarry Exp $");
 #include <sys/kernel.h>
 #include <sys/tprintf.h>
 #include <sys/device.h>
+#include <sys/conf.h>
 
 #include <hp300/dev/scsireg.h>
 #include <hp300/dev/scsivar.h>
@@ -199,19 +200,6 @@ int st_extti = 0x01;		/* bitmask of unit numbers, do extra */
 				/* sensing so TTi display gets updated */
 #endif
 
-/* bdev_decl(st); */
-/* cdev_decl(st); */
-/* XXX we should use macros to do these... */
-int	stopen __P((dev_t, int, int, struct proc *));
-int	stclose __P((dev_t, int, int, struct proc *));
-
-int	stioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
-int	stread __P((dev_t, struct uio *, int));
-int	stwrite __P((dev_t, struct uio *, int));
-
-void	ststrategy __P((struct buf *));
-int	stdump __P((dev_t));
-
 #ifdef DEBUG
 void	dumpxsense __P((struct st_xsense *));
 void	prtmodsel __P((struct mode_select_data *, int));
@@ -228,6 +216,22 @@ struct cfattach st_ca = {
 };
 
 extern struct cfdriver st_cd;
+
+dev_type_open(stopen);
+dev_type_close(stclose);
+dev_type_read(stread);
+dev_type_write(stwrite);
+dev_type_ioctl(stioctl);
+dev_type_strategy(ststrategy);
+
+const struct bdevsw st_bdevsw = {
+	stopen, stclose, ststrategy, stioctl, nodump, nosize, D_TAPE
+};
+
+const struct cdevsw st_cdevsw = {
+	stopen, stclose, stread, stwrite, stioctl,
+	nostop, notty, nopoll, nommap, D_TAPE
+};
 
 static int
 stmatch(parent, match, aux)
@@ -849,14 +853,6 @@ stwrite(dev, uio, flags)
 
 	/* XXX: check for hardware write-protect? */
 	return (physio(ststrategy, NULL, dev, B_WRITE, minphys, uio));
-}
-
-/*ARGSUSED*/
-int
-stdump(dev)
-	dev_t dev;
-{
-	return(ENXIO);
 }
 
 /*ARGSUSED*/

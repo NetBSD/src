@@ -1,4 +1,4 @@
-/*	$NetBSD: pcons.c,v 1.1 2002/03/22 00:22:44 fredette Exp $	*/
+/*	$NetBSD: pcons.c,v 1.1.6.1 2002/05/17 15:40:50 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 2000 Eduardo E. Horvath
@@ -49,7 +49,6 @@
 
 #include <machine/autoconf.h>
 #include <machine/promlib.h>
-#include <machine/conf.h>
 #include <machine/cpu.h>
 #include <machine/psl.h>
 
@@ -69,6 +68,19 @@ static struct cnm_state pcons_cnm_state;
 
 static int pconsprobe __P((void));
 extern struct consdev *cn_tab;
+
+dev_type_open(pconsopen);
+dev_type_close(pconsclose);
+dev_type_read(pconsread);
+dev_type_write(pconswrite);
+dev_type_ioctl(pconsioctl);
+dev_type_tty(pconstty);
+dev_type_poll(pconspoll);
+
+const struct cdevsw pcons_cdevsw = {
+	pconsopen, pconsclose, pconsread, pconswrite, pconsioctl,
+	nostop, pconstty, pconspoll, nommap, D_TTY
+};
 
 static int
 pconsmatch(parent, match, aux)

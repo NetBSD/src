@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfourteen.c,v 1.23 2002/04/03 16:34:11 darrenr Exp $ */
+/*	$NetBSD: cgfourteen.c,v 1.23.2.1 2002/05/17 15:40:51 gehenna Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -91,7 +91,6 @@
 
 #include <machine/bus.h>
 #include <machine/autoconf.h>
-#include <machine/conf.h>
 
 #include <dev/sbus/sbusvar.h>
 
@@ -106,19 +105,26 @@ static void	cgfourteenattach(struct device *, struct device *, void *);
 static int	cgfourteenmatch(struct device *, struct cfdata *, void *);
 static void	cgfourteenunblank(struct device *);
 
-/* cdevsw prototypes */
-cdev_decl(cgfourteen);
-
 struct cfattach cgfourteen_ca = {
 	sizeof(struct cgfourteen_softc), cgfourteenmatch, cgfourteenattach
 };
 
 extern struct cfdriver cgfourteen_cd;
 
+dev_type_open(cgfourteenopen);
+dev_type_close(cgfourteenclose);
+dev_type_ioctl(cgfourteenioctl);
+dev_type_mmap(cgfourteenmmap);
+
+const struct cdevsw cgfourteen_cdevsw = {
+	cgfourteenopen, cgfourteenclose, noread, nowrite, cgfourteenioctl,
+	nostop, notty, nopoll, cgfourteenmmap,
+};
+
 /* frame buffer generic driver */
 static struct fbdriver cgfourteenfbdriver = {
 	cgfourteenunblank, cgfourteenopen, cgfourteenclose, cgfourteenioctl,
-	cgfourteenpoll, cgfourteenmmap
+	nopoll, cgfourteenmmap
 };
 
 static void cg14_set_video __P((struct cgfourteen_softc *, int));
@@ -611,16 +617,6 @@ cgfourteenmmap(dev, off, prot)
 		BUS_ADDR(sc->sc_physadr[CG14_PXL_IDX].sbr_slot,
 			sc->sc_physadr[CG14_PXL_IDX].sbr_offset),
 		off, prot, BUS_SPACE_MAP_LINEAR));
-}
-
-int
-cgfourteenpoll(dev, events, p)
-	dev_t dev;
-	int events;
-	struct proc *p;
-{
-
-	return (seltrue(dev, events, p));
 }
 
 /*

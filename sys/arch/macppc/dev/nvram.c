@@ -1,4 +1,4 @@
-/*	$NetBSD: nvram.c,v 1.4 2001/06/08 00:32:02 matt Exp $	*/
+/*	$NetBSD: nvram.c,v 1.4.16.1 2002/05/17 15:40:56 gehenna Exp $	*/
 
 /*-
  * Copyright (C) 1998	Internet Research Institute, Inc.
@@ -38,6 +38,7 @@
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
+#include <sys/conf.h>
 
 #include <machine/autoconf.h>
 #include <machine/pio.h>
@@ -47,8 +48,6 @@
 #define NVRAM_PORT  2
 
 #define NVRAM_SIZE 0x2000
-
-cdev_decl(nvram);
 
 static void nvram_attach __P((struct device *, struct device *, void *));
 static int nvram_match __P((struct device *, struct cfdata *, void *));
@@ -65,6 +64,15 @@ struct cfattach nvram_ca = {
 };
 
 extern struct cfdriver nvram_cd;
+
+dev_type_read(nvramread);
+dev_type_write(nvramwrite);
+dev_type_mmap(nvrammmap);
+
+const struct cdevsw nvram_cdevsw = {
+	nullopen, nullclose, nvramread, nvramwrite, noioctl,
+	nostop, notty, nopoll, nvrammmap,
+};
 
 int
 nvram_match(parent, cf, aux)
@@ -112,24 +120,6 @@ nvram_attach(parent, self, aux)
 		sc->nv_type = NVRAM_NONE;
 		return;
 	}
-}
-
-int
-nvramopen(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
-{
-	return 0;
-}
-
-int
-nvramclose(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
-{
-	return 0;
 }
 
 int
@@ -200,17 +190,6 @@ nvramwrite(dev, uio, flag)
 	int flag;
 {
 	return ENXIO;
-}
-
-int
-nvramioctl(dev, cmd, data, flag, p)
-	dev_t dev;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
-{
-	return ENOTTY;
 }
 
 paddr_t
