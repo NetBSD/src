@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.125 1999/10/04 19:27:04 pk Exp $ */
+/*	$NetBSD: autoconf.c,v 1.125.2.1 1999/10/19 17:57:25 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -1719,23 +1719,23 @@ device_register(dev, aux)
 		 * from parent and match with current bootpath component.
 		 */
 		struct scsipibus_attach_args *sa = aux;
-		struct scsipi_link *sc_link = sa->sa_sc_link;
-		struct scsibus_softc *sbsc =
-			(struct scsibus_softc *)dev->dv_parent;
+		struct scsipi_periph *periph = sa->sa_periph;
+		struct scsipi_channel *chan = periph->periph_channel;
 		u_int target = bp->val[0];
 		u_int lun = bp->val[1];
 
 		/*
 		 * Bounds check; XXX - guess a reasonable target/lun bound.
 		 */
-		if (target >= 16 || lun >= 16) {
+		if (target >= chan->chan_ntargets || lun >= chan->chan_nluns) {
 			printf("SCSI disk bootpath component not accepted: "
 			       "target %u; lun %u\n", target, lun);
 			return;
 		}
 
 		if (CPU_ISSUN4 && dvname[0] == 's' &&
-		    target == 0 && sbsc->sc_link[0][0] == NULL) {
+		    target == 0 &&
+		    scsipi_lookup_periph(chan, target, lun) == NULL) {
 			/*
 			 * disk unit 0 is magic: if there is actually no
 			 * target 0 scsi device, the PROM will call
@@ -1749,8 +1749,8 @@ device_register(dev, aux)
 		if (CPU_ISSUN4C && dvname[0] == 's')
 			target = sd_crazymap(target);
 
-		if (sc_link->scsipi_scsi.target == target &&
-		    sc_link->scsipi_scsi.lun == lun) {
+		if (periph->periph_target == target &&
+		    periph->periph_lun == lun) {
 			nail_bootdev(dev, bp);
 			return;
 		}
