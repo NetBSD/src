@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_defs.h,v 1.42 2004/06/22 04:36:23 jmc Exp $	*/
+/*	$NetBSD: compat_defs.h,v 1.43 2004/06/23 11:08:01 tron Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_DEFS_H__
 #define	__NETBSD_COMPAT_DEFS_H__
@@ -18,6 +18,7 @@
 /* So _NETBSD_SOURCE doesn't end up defined. Define enough to pull in standard
    defs. Other platforms may need similiar defines. */
 #ifdef __NetBSD__
+#define	_ISOC99_SOURCE
 #define _POSIX_SOURCE	1
 #define _POSIX_C_SOURCE	200112L
 #define _XOPEN_SOURCE 600
