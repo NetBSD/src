@@ -51,16 +51,6 @@
  *   onboard xceiver or not.  Since the Clarkson drivers do a very
  *   good rendition of a 3c503, I also scavenged a lot of ideas from
  *   there.
- *
- * Kludges:
- *   Since I couldn't really think of any non-creative way (other than
- *   using a #define) of configuring the board to use the onboard xceiver,
- *   I kludged the isa_device->unit to contain this information.  Simply
- *   put, if bit-7 of isa_device->unit is set (>127) then the driver
- *   configures that unit to onboard-xceiver (BNC) and if <128 it assumes
- *   AUI.  ec_attach informs the user of this on bootup.  Also, ec_probe
- *   repairs this bit after obtaining it's information since I didn't know
- *   what else within the depths of the kernel would freak out if I left it.
  */
 #include "param.h"
 #include "mbuf.h"
@@ -262,7 +252,6 @@ int unit;
 	u_short   ax, cx;
 
 	Bdry=0;
-printf("ecinit");
 /*
  * Address not known.
  */
@@ -270,7 +259,6 @@ printf("ecinit");
 		return;
 
 	/*
-	 * XXX (untested)
 	 * select thick (e.g. AUI connector) if LLC0 bit is set
 	 */
 	if (ifp->if_flags & IFF_LLC0)
