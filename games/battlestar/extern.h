@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.22 2000/09/23 19:23:58 jsm Exp $ */
+/*	$NetBSD: extern.h,v 1.23 2000/09/24 09:44:28 jsm Exp $ */
 
 /*
  * Copyright (c) 1983, 1993
@@ -317,7 +317,6 @@ extern const struct objs nightobjs[];
 
 #define DEFAULT_SAVE_FILE	".Bstar"
 
-void blast __P((void));
 void bury __P((void));
 int card __P((const char *, int));
 void chime __P((void));
@@ -333,7 +332,6 @@ void drink __P((void));
 int drive __P((void));
 int drop __P((const char *));
 int eat __P((void));
-void endfly __P((void));
 int fight __P((int, int));
 int follow __P((void));
 char *getcom __P((char *, int, const char *, const char *));
@@ -350,12 +348,10 @@ void light __P((void));
 void live __P((void)) __attribute__((__noreturn__));
 struct wlist *lookup __P((const char *));
 void love __P((void));
-void moveenemy __P((int));
 int moveplayer __P((int, int));
 void murder __P((void));
 void news __P((void));
 void newway __P((int));
-void notarget __P((void));
 void open_score_file __P((void));
 void parse __P((void));
 void post __P((char));
@@ -368,12 +364,9 @@ void restore __P((const char *));
 int ride __P((void));
 void save __P((const char *));
 char *save_file_name __P((const char *, size_t));
-void screen __P((void));
 int shoot __P((void));
-void succumb __P((int));
 int take __P((unsigned int[]));
 int takeoff __P((void));
-void target __P((void));
 int throw __P((const char *));
 const char *truedirec __P((int, char));
 int ucard __P((const unsigned int *));
