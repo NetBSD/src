@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.16 1996/10/13 04:10:55 christos Exp $	*/
+/*	$NetBSD: grf.c,v 1.17 1996/12/20 12:49:36 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -96,7 +96,7 @@ int grfbanked_set __P((dev_t, int));
 #endif
 
 int grfbusprint __P((void *auxp, const char *));
-int grfbusmatch __P((struct device *, void *, void *));
+int grfbusmatch __P((struct device *, struct cfdata *, void *));
 void grfbusattach __P((struct device *, struct device *, void *));
 
 /*
@@ -118,12 +118,11 @@ struct cfdriver grfbus_cd = {
 static struct cfdata *cfdata_gbus  = NULL;
 
 int
-grfbusmatch(pdp, match, auxp)
+grfbusmatch(pdp, cfp, auxp)
 struct device	*pdp;
-void		*match, *auxp;
+struct cfdata	*cfp;
+void		*auxp;
 {
-	struct cfdata *cfp = match;
-
 	if(strcmp(auxp, grfbus_cd.cd_name))
 		return(0);
 
