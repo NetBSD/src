@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.19 2002/06/18 22:58:30 thorpej Exp $
+# $NetBSD: postinstall,v 1.20 2002/06/27 02:26:39 itojun Exp $
 #
 # Copyright (c) 2002 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -497,6 +497,21 @@ do_wscons()
 	return ${failed}
 }
 
+#
+#	makedev
+#
+additem makedev "/dev/MAKEDEV being up to date"
+do_makedev()
+{
+	[ -n "$1" ] || err 2 "USAGE: do_makedev   fix|check"
+
+	compare_dir $1 ${SRC_DIR}/etc/etc.${MACHINE} \
+		${DEST_DIR}/dev 555 MAKEDEV
+	if [ "${op}" = "fix" ]; then
+		(cd ${DEST_DIR}/dev; /bin/sh ./MAKEDEV all)
+	fi
+}
+
 
 #
 #	end of items
@@ -641,6 +656,10 @@ PROGNAME=${0##*/}
 SRC_DIR="/usr/src"
 DEST_DIR="/"
 SCRATCHDIR=$( mkdtemp ) || err 1 "Can't create scratch directory"
+# assume native build if $MACHINE is not set
+if [ -z "${MACHINE}" ]; then
+	MACHINE=`/usr/bin/uname -m`
+fi
 trap "/bin/rm -rf ${SCRATCHDIR} ; exit 0" 0 1 2 3 15	# EXIT HUP INT QUIT TERM
 umask 022
 
