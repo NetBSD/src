@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.4 1997/11/04 23:10:27 thorpej Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.5 1998/08/22 12:12:38 ragge Exp $	*/
 
 /*
  * Written by J.T. Conklin <jtc@wimsey.com> 01/17/95.
@@ -30,6 +30,8 @@
 	__asm__(".stabs msg,30,0,0,0");			\
 	__asm__(".stabs \"_/**/sym\",1,0,0,0");
 #endif
+#else
+#define	__warn_references(sym,msg)
 #endif
 
 #endif /* !_MACHINE_CDEFS_H_ */
