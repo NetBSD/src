@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.40 1998/08/05 14:40:20 minoura Exp $	*/
+/*	$NetBSD: machdep.c,v 1.41 1998/08/05 16:08:38 minoura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -239,7 +239,7 @@ consinit()
 #else
 	uvm_page_physload(atop(avail_start), atop(avail_end),
 			atop(avail_start), atop(avail_end),
-			VM_FREELIST_DEFAULT);
+			VM_FREELIST_DEFAILT);
 #endif
 #else	/* not UVM */
 #ifdef MACHINE_NONCONTIG

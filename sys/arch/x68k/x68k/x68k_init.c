@@ -1,4 +1,4 @@
-/*	$NetBSD: x68k_init.c,v 1.4 1997/10/11 11:13:54 oki Exp $	*/
+/*	$NetBSD: x68k_init.c,v 1.5 1998/08/05 16:08:39 minoura Exp $	*/
 
 /*
  * Copyright (c) 1996 Masaru Oki.
@@ -33,7 +33,7 @@
 #include <sys/param.h>
 
 #include <x68k/x68k/iodevice.h>
-#define zschan IODEVbase->io_inscc.zs_chan
+#define zsdev IODEVbase->io_inscc
 
 volatile struct IODEVICE *IODEVbase = (volatile struct IODEVICE *) PHYS_IODEV;
 
@@ -49,15 +49,15 @@ intr_reset()
 	ioctlr.intr = 0;
 
 	/* Internal RS-232C port */
-	zschan[1].zc_csr = 1;
+	zsdev.zs_chan_a.zc_csr = 1;
 	asm("nop");
-	zschan[1].zc_csr = 0;
+	zsdev.zs_chan_a.zc_csr = 0;
 	asm("nop");
 
 	/* mouse */
-	zschan[0].zc_csr = 1;
+	zsdev.zs_chan_b.zc_csr = 1;
 	asm("nop");
-	zschan[0].zc_csr = 0;
+	zsdev.zs_chan_b.zc_csr = 0;
 	asm("nop");
 	while(!(mfp.tsr & MFP_TSR_BE))
 		;

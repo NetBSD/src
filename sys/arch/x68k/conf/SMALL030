@@ -1,4 +1,4 @@
-#	$NetBSD: SMALL030,v 1.9 1998/06/26 01:54:15 lukem Exp $
+#	$NetBSD: SMALL030,v 1.10 1998/08/05 16:08:35 minoura Exp $
 
 #
 #	SMALL030 -- small configuration with mc68030 processor
@@ -100,7 +100,9 @@ spc0		at mainbus0		# builtin scsi
 spc1		at mainbus0		# external scsi
 scsibus*	at spc?
 
-zs0		at mainbus0		# Zilog serial
+zsc0		at mainbus0
+zstty0		at zsc0 channel 0	# built-in RS-232C
+#ms0		at zsc0 channel 1	# standard mouse
 #zs1		at mainbus0		# Zilog serial
 #par0		at mainbus0		# builtin parallel port
 grfbus0 	at mainbus0		# bitmapped display's
