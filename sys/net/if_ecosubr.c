@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ecosubr.c,v 1.4 2001/09/15 17:27:24 bjh21 Exp $	*/
+/*	$NetBSD: if_ecosubr.c,v 1.5 2001/09/15 23:03:11 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -66,7 +66,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: if_ecosubr.c,v 1.4 2001/09/15 17:27:24 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ecosubr.c,v 1.5 2001/09/15 23:03:11 bjh21 Exp $");
 
 #include <sys/errno.h>
 #include <sys/kernel.h>
@@ -537,14 +537,19 @@ struct mbuf *
 eco_inputframe(struct ifnet *ifp, struct mbuf *m)
 {
 	struct ecocom *ec = (void *)ifp;
-	struct eco_header *eh;
+	struct eco_header *eh, *eh0;
 	struct mbuf *m0;
 	struct mbuf *reply;
 	int len;
 
 	eh = mtod(m, struct eco_header *);
 	switch (ec->ec_state) {
-	case ECO_IDLE:
+	case ECO_IDLE: /* Start of a packet (bcast, immed, scout) */
+		if (m->m_pkthdr.len < ECO_HDR_LEN) {
+			log(LOG_NOTICE, "%s: undersize scout\n",
+			    ifp->if_xname);
+			goto drop;
+		}
 		if (memcmp(eh->eco_dhost, eco_broadcastaddr,
 		    ECO_ADDR_LEN) == 0) {
 			/* Broadcast */
@@ -555,12 +560,6 @@ eco_inputframe(struct ifnet *ifp, struct mbuf *m)
 			if (eh->eco_port == ECO_PORT_IMMEDIATE)
 				return eco_immediate(ifp, m);
 			else {
-				if (m->m_pkthdr.len != ECO_HDR_LEN) {
-					printf("%s: %d-byte scout\n",
-					    ifp->if_xname, m->m_pkthdr.len);
-					m_freem(m);
-					break;
-				}
 				if (eco_interestingp(ifp, m)) {
 					reply = eco_ack(ifp, m);
 					if (reply == NULL) {
@@ -579,16 +578,23 @@ eco_inputframe(struct ifnet *ifp, struct mbuf *m)
 			/* Not for us.  Throw it away. */
 			m_freem(m);
 		break;
-	case ECO_SCOUT_RCVD:
+	case ECO_SCOUT_RCVD: /* Packet data */
 		KASSERT(ec->ec_scout != NULL);
+		m0 = ec->ec_scout;
+		eh0 = mtod(m0, struct eco_header *);
+		if (m->m_pkthdr.len < ECO_SHDR_LEN ||
+		    memcmp(eh->eco_shost, eh0->eco_shost, ECO_ADDR_LEN) != 0 ||
+		    memcmp(eh->eco_dhost, eh0->eco_dhost, ECO_ADDR_LEN) != 0) {
+			log(LOG_NOTICE, "%s: garbled data packet header\n",
+			    ifp->if_xname);
+			goto drop;
+		}
 		reply = eco_ack(ifp, m);
-		/* XXX should check that headers match. */
 		/*
 		 * Chop off the small header from this frame, and put
 		 * the scout (which holds the control byte and port)
 		 * in its place.
 		 */
-		m0 = ec->ec_scout;
 		ec->ec_scout = NULL;
 		m_adj(m, ECO_SHDR_LEN);
 		len = m0->m_pkthdr.len + m->m_pkthdr.len;
@@ -597,9 +603,17 @@ eco_inputframe(struct ifnet *ifp, struct mbuf *m)
 		ec->ec_state = ECO_DONE;
 		eco_input(ifp, m0);
 		return reply;
-	case ECO_SCOUT_SENT:
+	case ECO_SCOUT_SENT: /* Scout ack */
 		KASSERT(ec->ec_packet != NULL);
-		/* XXX should check ack fields for correctness */
+		m0 = ec->ec_packet;
+		eh0 = mtod(m0, struct eco_header *);
+		if (m->m_pkthdr.len != ECO_SHDR_LEN ||
+		    memcmp(eh->eco_shost, eh0->eco_dhost, ECO_ADDR_LEN) != 0 ||
+		    memcmp(eh->eco_dhost, eh0->eco_shost, ECO_ADDR_LEN) != 0) {
+			log(LOG_NOTICE, "%s: garbled scout ack\n",
+			    ifp->if_xname);
+			goto drop;
+		}
 		m_freem(m);
 		/* Chop out the control and port bytes. */
 		m0 = m_copym(ec->ec_packet, 0, ECO_SHDR_LEN, M_DONTWAIT);
@@ -619,15 +633,24 @@ eco_inputframe(struct ifnet *ifp, struct mbuf *m)
 		m0->m_pkthdr.len = len;
 		ec->ec_state = ECO_DATA_SENT;
 		return m0;
-	case ECO_DATA_SENT:
+	case ECO_DATA_SENT: /* Data ack */
 		KASSERT(ec->ec_packet != NULL);
-		/* XXX check ack fields? */
+		m0 = ec->ec_packet;
+		eh0 = mtod(m0, struct eco_header *);
+		if (m->m_pkthdr.len != ECO_SHDR_LEN ||
+		    memcmp(eh->eco_shost, eh0->eco_dhost, ECO_ADDR_LEN) != 0 ||
+		    memcmp(eh->eco_dhost, eh0->eco_shost, ECO_ADDR_LEN) != 0) {
+			log(LOG_NOTICE, "%s: garbled data ack\n",
+			    ifp->if_xname);
+			goto drop;
+		}
 		m_freem(m);
 		m_freem(ec->ec_packet);
 		ec->ec_packet = NULL;
 		ec->ec_state = ECO_DONE;
 		return NULL;
 	default:
+	drop:
 		m_freem(m);
 		break;
 	}
