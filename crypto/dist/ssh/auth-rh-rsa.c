@@ -1,4 +1,4 @@
-/*	$NetBSD: auth-rh-rsa.c,v 1.1.1.5 2001/06/23 16:36:23 itojun Exp $	*/
+/*	$NetBSD: auth-rh-rsa.c,v 1.1.1.6 2001/11/27 04:03:44 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -14,7 +14,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: auth-rh-rsa.c,v 1.25 2001/06/23 03:04:42 markus Exp $");
+RCSID("$OpenBSD: auth-rh-rsa.c,v 1.26 2001/11/07 22:41:51 markus Exp $");
 
 #include "packet.h"
 #include "xmalloc.h"
@@ -25,7 +25,6 @@ RCSID("$OpenBSD: auth-rh-rsa.c,v 1.25 2001/06/23 03:04:42 markus Exp $");
 #include "hostfile.h"
 #include "pathnames.h"
 #include "auth.h"
-#include "tildexpand.h"
 #include "canohost.h"
 
 /*
