@@ -1,4 +1,4 @@
-/*	$NetBSD: ca.c,v 1.1 2000/03/16 14:52:23 ad Exp $	*/
+/*	$NetBSD: ca.c,v 1.2 2000/03/20 18:48:34 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ca.c,v 1.1 2000/03/16 14:52:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ca.c,v 1.2 2000/03/20 18:48:34 ad Exp $");
 
 #include "rnd.h"
 
@@ -93,6 +93,8 @@ __KERNEL_RCSID(0, "$NetBSD: ca.c,v 1.1 2000/03/16 14:52:23 ad Exp $");
 #define	CAMAKEDEV(maj, unit, part)	MAKEDISKDEV(maj, unit, part)
 
 #define	CALABELDEV(dev)	(CAMAKEDEV(major(dev), CAUNIT(dev), RAW_PART))
+
+/* #define CA_ENABLE_SYNC_XFER */
 
 struct ca_softc {
 	struct	device sc_dv;
@@ -141,14 +143,7 @@ camatch(parent, match, aux)
 	struct cfdata *match;
 	void *aux;
 {
-#if 0
-	struct cac_attach_args *caca;
-	
-	caca = (struct cac_attach_args *)aux;
 
-	/* Unit 0 is the controller */
-	return (caca->caca_unit != 0);
-#endif
 	return (1);
 }
 
@@ -462,11 +457,13 @@ castrategy(bp)
 	if ((bp->b_flags & B_READ) != 0) {
 		cmd = CAC_CMD_READ;
 		flg = CAC_CCB_DATA_IN;
-	} else if ((bp->b_flags & B_ASYNC) != 0) {
-		cmd = CAC_CMD_WRITE;
-		flg = CAC_CCB_DATA_OUT;
-	} else {
+#ifdef CA_ENABLE_SYNC_XFER
+	} else if ((bp->b_flags & B_ASYNC) == 0) {
 		cmd = CAC_CMD_WRITE_MEDIA;
+		flg = CAC_CCB_DATA_OUT;
+#endif
+	} else {
+		cmd = CAC_CMD_WRITE;
 		flg = CAC_CCB_DATA_OUT;
 	}
 
@@ -499,7 +496,7 @@ cadone(ccb, error)
 		bp->b_error = EIO;
 		bp->b_resid = bp->b_bcount;
 	} else
-		bp->b_resid = 0;
+		bp->b_resid = bp->b_bcount - ccb->ccb_datasize;
 
 	disk_unbusy(&sc->sc_dk, 0);
 #if NRND > 0

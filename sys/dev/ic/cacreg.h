@@ -1,4 +1,4 @@
-/*	$NetBSD: cacreg.h,v 1.1 2000/03/16 14:52:24 ad Exp $	*/
+/*	$NetBSD: cacreg.h,v 1.2 2000/03/20 18:48:34 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -112,34 +112,34 @@
 #define CAC_RET_CMD_REJECTED		0x14
 
 struct cac_drive_info {
-	u_int16_t	secsize 	__attribute__ ((packed));
-	u_int32_t	secperunit 	__attribute__ ((packed));
-	u_int16_t	ncylinders 	__attribute__ ((packed));
-	u_int8_t	nheads	 	__attribute__ ((packed));
-	u_int8_t	signature 	__attribute__ ((packed));
-	u_int8_t	psectors 	__attribute__ ((packed));
-	u_int16_t	wprecomp 	__attribute__ ((packed));
-	u_int8_t	max_acc 	__attribute__ ((packed));
-	u_int8_t	control 	__attribute__ ((packed));
-	u_int16_t	pcylinders 	__attribute__ ((packed));
-	u_int8_t	ptracks 	__attribute__ ((packed));
-	u_int16_t	landing_zone 	__attribute__ ((packed));
-	u_int8_t	nsectors 	__attribute__ ((packed));
-	u_int8_t	checksum 	__attribute__ ((packed));
-	u_int8_t	mirror 		__attribute__ ((packed));
-};
+	u_int16_t	secsize;
+	u_int32_t	secperunit;
+	u_int16_t	ncylinders;
+	u_int8_t	nheads;
+	u_int8_t	signature;
+	u_int8_t	psectors;
+	u_int16_t	wprecomp;
+	u_int8_t	max_acc;
+	u_int8_t	control;
+	u_int16_t	pcylinders;
+	u_int8_t	ptracks;
+	u_int16_t	landing_zone;
+	u_int8_t	nsectors;
+	u_int8_t	checksum;
+	u_int8_t	mirror;
+} __attribute__((__packed__));
 
 struct cac_controller_info {
-	u_int8_t	num_drvs 	__attribute__ ((packed));
-	u_int32_t	signature 	__attribute__ ((packed));
-	u_int8_t	firm_rev[4] 	__attribute__ ((packed));
-};
+	u_int8_t	num_drvs;
+	u_int32_t	signature;
+	u_int8_t	firm_rev[4];
+} __attribute__((__packed__));
 
 struct cac_hdr {
 	u_int8_t	drive;		/* logical drive */
 	u_int8_t	priority;	/* block priority */
 	u_int16_t	size;		/* size of request, in words */
-};
+} __attribute__((__packed__));
 
 struct cac_req {
 	u_int16_t	next;		/* offset of next request */
@@ -149,12 +149,12 @@ struct cac_req {
 	u_int16_t	bcount;		/* block count */
 	u_int8_t	sgcount;	/* number of scatter/gather entries */
 	u_int8_t	reserved;	/* reserved */
-};
+} __attribute__((__packed__));
 
 struct cac_sgb {
 	u_int32_t	length;		/* length of S/G segment */
 	u_int32_t	addr;		/* physical address of block */
-};
+} __attribute__((__packed__));
 
 /*
  * Stupid macros to deal with alignment/endianness issues.

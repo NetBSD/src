@@ -1,4 +1,4 @@
-/*	$NetBSD: cac.c,v 1.1 2000/03/16 14:52:24 ad Exp $	*/
+/*	$NetBSD: cac.c,v 1.2 2000/03/20 18:48:34 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cac.c,v 1.1 2000/03/16 14:52:24 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cac.c,v 1.2 2000/03/20 18:48:34 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,7 +66,7 @@ static int	cac_submatch __P((struct device *, struct cfdata *, void *));
 static void	cac_ccb_poll __P((struct cac_softc *, struct cac_ccb *, int));
 static void	cac_shutdown __P((void *));
 
-static SIMPLEQ_HEAD(, cac_softc) cac_hba;	/* tailq of HBA softc's */
+static SIMPLEQ_HEAD(, cac_softc) cac_hba;	/* list of HBA softc's */
 static void *cac_sdh;				/* shutdown hook */
 
 /*
@@ -276,7 +276,9 @@ cac_cmd(sc, command, data, datasize, drive, blkno, flags, context)
 {
 	struct cac_ccb *ccb;
 	struct cac_sgb *sgb;
-	int s, i, rv;
+	int s, i, rv, size, nsegs;
+
+	size = 0;
 
 	if ((ccb = cac_ccb_alloc(sc, 0)) == NULL) {
 		printf("%s: unable to alloc CCB", sc->sc_dv.dv_xname);
@@ -292,26 +294,35 @@ cac_cmd(sc, command, data, datasize, drive, blkno, flags, context)
 		    BUS_DMASYNC_PREWRITE);
 	
 		sgb = ccb->ccb_seg;
+		nsegs = min(ccb->ccb_dmamap_xfer->dm_nsegs, CAC_SG_SIZE);
 
-		for (i = 0; i < ccb->ccb_dmamap_xfer->dm_nsegs; i++, sgb++) {
+		for (i = 0; i < nsegs; i++, sgb++) {
+			size += ccb->ccb_dmamap_xfer->dm_segs[i].ds_len;
 			sgb->length = 
 			    htole32(ccb->ccb_dmamap_xfer->dm_segs[i].ds_len);
 			sgb->addr = 
 			    htole32(ccb->ccb_dmamap_xfer->dm_segs[i].ds_addr);
 		}
+	} else {
+		size = datasize;
+		nsegs = 0;
 	}
+
+	/* XXXDEBUG */
+	if (size != datasize)
+		printf("%s: datasize %d != %d", sc->sc_dv.dv_xname, datasize, size);
 
 	ccb->ccb_hdr.drive = drive;
 	ccb->ccb_hdr.size = htole16((sizeof(struct cac_req) + 
 	    sizeof(struct cac_sgb) * CAC_SG_SIZE) >> 2);
 
-	ccb->ccb_req.bcount = htole16(howmany(datasize, DEV_BSIZE));
+	ccb->ccb_req.bcount = htole16(howmany(size, DEV_BSIZE));
 	ccb->ccb_req.command = command;
 	ccb->ccb_req.sgcount = i;
 	ccb->ccb_req.blkno = htole32(blkno);
 	
 	ccb->ccb_flags = flags;
-	ccb->ccb_datasize = datasize;
+	ccb->ccb_datasize = size;
 
 	if (context == NULL) {
 		memset(&ccb->ccb_context, 0, sizeof(struct cac_context));
@@ -342,9 +353,11 @@ cac_ccb_poll(sc, ccb, timo)
 	struct cac_ccb *ccb;
 	int timo;
 {
-	struct cac_ccb *ccb_done = NULL;
+	struct cac_ccb *ccb_done;
 	paddr_t completed;
 	int off;
+	
+	ccb_done = NULL;
 
 	for (;;) {
 		for (; timo != 0; timo--) {
@@ -461,8 +474,6 @@ cac_ccb_alloc(sc, nosleep)
 	}
 
 	splx(s);
-	if (ccb != NULL)
-		memset(ccb, 0, 276);	/* XXX */
 	return (ccb);
 }
 
@@ -494,6 +505,7 @@ cac_minphys(bp)
 	struct buf *bp;
 {
 
-	if (bp->b_bcount > CAC_MAX_XFER / DEV_BSIZE)		/* XXX */
-		bp->b_bcount = CAC_MAX_XFER / DEV_BSIZE;	/* XXX */
+	if (bp->b_bcount > CAC_MAX_XFER)
+		bp->b_bcount = CAC_MAX_XFER;
+	minphys(bp);
 }
