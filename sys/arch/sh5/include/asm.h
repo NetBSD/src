@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.3 2002/07/10 11:36:23 scw Exp $	*/
+/*	$NetBSD: asm.h,v 1.4 2002/07/11 14:09:34 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -247,19 +247,17 @@
 /*
  * Set up/Clear down a C-like stack frame on entry/exit to an assembly function
  */
-#define	LINK_FRAME(sz)		\
-	addi.l	r15, -8, r15	;\
-	st.l	r15, 4, r18	;\
-	st.l	r15, 0, r14	;\
-	addi.l	r15, -(sz), r15	;\
+#define	LINK_FRAME(sz)			\
+	addi.l	r15, -(8 + (sz)), r15	;\
+	st.l	r15, (sz), r14		;\
+	st.l	r15, (sz) + 4, r18	;\
 	add.l	r15, r63, r14
 
-#define	UNLINK_FRAME(sz)	\
-	addi.l	r14, sz, r14	;\
-	add.l	r14, r63, r15	;\
-	ld.l	r15, 0, r14	;\
-	ld.l	r15, 4, r18	;\
-	addi.l	r15, 8, r15
+#define	UNLINK_FRAME(sz)		\
+	add.l	r14, r63, r15		;\
+	ld.l	r15, (sz), r14		;\
+	ld.l	r15, (sz) + 4, r18	;\
+	addi.l	r15, (sz) + 8, r15
 
 #else
 
@@ -271,19 +269,17 @@
 #define	LEAF(sym, reg)		LDC64(sym, reg)
 #define	LDPTR			ld.q
 #define	STPTR			st.q
-#define	LINK_FRAME(sz)		\
-	addi	r15, -16, r15	;\
-	st.q	r15, 8, r18	;\
-	st.q	r15, 0, r14	;\
-	addi	r15, -(sz), r15	;\
+#define	LINK_FRAME(sz)			\
+	addi	r15, -(16 + (sz)), r15	;\
+	st.q	r15, (sz), r14		;\
+	st.q	r15, (sz) + 8, r18	;\
 	add	r15, r63, r14
 
-#define	UNLINK_FRAME(sz)	\
-	addi	r14, sz, r14	;\
-	add	r14, r63, r15	;\
-	ld.q	r15, 0, r14	;\
-	ld.q	r15, 8, r18	;\
-	addi	r15, 16, r15
+#define	UNLINK_FRAME(sz)		\
+	add	r14, r63, r15		;\
+	ld.q	r15, (sz), r14		;\
+	ld.q	r15, (sz) + 8, r18	;\
+	addi	r15, (sz) + 16, r15
 #endif
 
 
