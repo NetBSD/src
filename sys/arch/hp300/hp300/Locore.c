@@ -1,4 +1,4 @@
-/*	$NetBSD: Locore.c,v 1.9 1995/05/12 12:54:44 mycroft Exp $	*/
+/*	$NetBSD: Locore.c,v 1.10 1995/08/13 00:05:09 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -276,14 +276,15 @@ addupc(pc, prof, counts) int pc; struct uprof *prof; int counts; { }
 
 spl0() { }
 splsoftclock() { return (0); }
-splnet() { return (0); }
+splsoftnet() { return (0); }
 spl1() { return (0); }
 spl2() { return (0); }
 spl3() { return (0); }
 spl4() { return (0); }
-splimp() { return (0); }
 splbio() { return (0); }
+splnet() { return (0); }
 spltty() { return (0); }
+splimp() { return (0); }
 spl5() { return (0); }
 splclock() { return (0); }
 spl6() { return (0); }
