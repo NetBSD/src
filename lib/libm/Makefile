@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.32 1996/07/05 22:26:51 explorer Exp $
+#  $NetBSD: Makefile,v 1.33 1996/10/12 18:32:38 ragge Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24 
 # 
@@ -122,7 +122,7 @@ SRCS=	${COMMON_SRCS}
 .endif
 
 # Substitute common sources with any arch specific sources 
-.for i in ${ARCH_SRCS}
+.for i in ${ARCH_SRCS} ${NOIEEE_ARCH}
     SRCS:=${SRCS:S/${i:S/.S/.c/}/$i/}
 .endfor
 
