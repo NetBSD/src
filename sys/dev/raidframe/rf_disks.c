@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_disks.c,v 1.38 2001/11/15 09:48:13 lukem Exp $	*/
+/*	$NetBSD: rf_disks.c,v 1.39 2002/09/23 02:51:43 oster Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -67,7 +67,7 @@
  ***************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_disks.c,v 1.38 2001/11/15 09:48:13 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_disks.c,v 1.39 2002/09/23 02:51:43 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -386,7 +386,6 @@ rf_AutoConfigureDisks(raidPtr, cfgPtr, auto_config)
 	RF_SectorCount_t min_numblks = (RF_SectorCount_t) 0x7FFFFFFFFFFFLL;
 	int bs, ret;
 	int numFailuresThisRow;
-	int force;
 	RF_AutoConfig_t *ac;
 	int parity_good;
 	int mod_counter;
@@ -395,7 +394,6 @@ rf_AutoConfigureDisks(raidPtr, cfgPtr, auto_config)
 #if DEBUG
 	printf("Starting autoconfiguration of RAID set...\n");
 #endif
-	force = cfgPtr->force;
 
 	ret = rf_AllocDiskStructures(raidPtr, cfgPtr);
 	if (ret)
@@ -612,15 +610,12 @@ rf_ConfigureDisk(raidPtr, buf, diskPtr, row, col)
 	RF_RowCol_t col;
 {
 	char   *p;
-	int     retcode;
-
 	struct partinfo dpart;
 	struct vnode *vp;
 	struct vattr va;
 	struct proc *proc;
 	int     error;
 
-	retcode = 0;
 	p = rf_find_non_white(buf);
 	if (p[strlen(p) - 1] == '\n') {
 		/* strip off the newline */
