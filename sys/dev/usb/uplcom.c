@@ -1,4 +1,4 @@
-/*	$NetBSD: uplcom.c,v 1.34 2004/02/19 01:12:05 augustss Exp $	*/
+/*	$NetBSD: uplcom.c,v 1.35 2004/04/09 19:06:52 martin Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uplcom.c,v 1.34 2004/02/19 01:12:05 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uplcom.c,v 1.35 2004/04/09 19:06:52 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -337,7 +337,7 @@ USB_ATTACH(uplcom)
 		USB_ATTACH_ERROR_RETURN;
 	}
 
-	sc->sc_dtr = sc->sc_rts = -1;
+	sc->sc_dtr = sc->sc_rts = 0;
 	uca.portno = UCOM_UNK_PORTNO;
 	/* bulkin, bulkout set above */
 	uca.ibufsize = UPLCOMIBUFSIZE;
