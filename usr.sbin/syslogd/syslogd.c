@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.60 2003/08/07 11:25:44 agc Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.61 2003/09/19 08:24:48 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.60 2003/08/07 11:25:44 agc Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.61 2003/09/19 08:24:48 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -280,7 +280,6 @@ main(int argc, char *argv[])
 			if (*user == '\0')
 				usage();
 			break;
-		case '?':
 		default:
 			usage();
 		}
