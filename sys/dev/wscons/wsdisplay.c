@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.54 2001/10/13 15:56:15 augustss Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.55 2001/10/15 21:51:33 augustss Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.54 2001/10/13 15:56:15 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.55 2001/10/15 21:51:33 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -564,10 +564,12 @@ wsdisplay_common_attach(struct wsdisplay_softc *sc, int console, int kbdmux,
 #if NWSKBD > 0
 	struct device *dv;
 
-	if (kbdmux <= 0)
-		sc->sc_muxdv = wsmux_create("dmux", sc->sc_dv.dv_unit);
-	else
+#if NWSMUX > 0
+	if (kbdmux >= 0)
 		sc->sc_muxdv = wsmux_getmux(kbdmux);
+	else
+#endif
+		sc->sc_muxdv = wsmux_create("dmux", sc->sc_dv.dv_unit);
 	/* XXX panic()ing isn't nice, but attach cannot fail */
 	if (!sc->sc_muxdv)
 		panic("wsdisplay_common_attach: no memory\n");
