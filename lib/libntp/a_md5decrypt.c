@@ -39,6 +39,7 @@ MD5authdecrypt(keyno, pkt, length)
     int length;		/* length of variable data in octets */
 {
     MD5_CTX ctx;
+    char hash[16];
 
     authdecryptions++;
 
@@ -51,9 +52,9 @@ MD5authdecrypt(keyno, pkt, length)
     MD5Init(&ctx);
     MD5Update(&ctx, (unsigned const char *)cache_key, cache_keylen);
     MD5Update(&ctx, (unsigned const char *)pkt, length);
-    MD5Final(&ctx);
+    MD5Final(hash, &ctx);
 
-    return (!memcmp((char *)ctx.digest,
+    return (!memcmp((char *) hash,
 		    (char *)pkt + length + 4,
 		    BLOCK_OCTETS));
 }
