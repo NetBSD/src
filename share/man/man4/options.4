@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.41 1998/02/06 06:06:48 perry Exp $
+.\"	$NetBSD: options.4,v 1.42 1998/02/09 22:14:43 is Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -942,6 +942,19 @@ When the bootloader (which passes AmigaOS ROM information) claims we have
 a M68060 cpu without FPU, go look into the Processor Configuration Register
 to find out. You need this with Amiga ROMs up to (at least) V40.xxx (OS3.1),
 when you boot via the bootblocks and don't have a DraCo.
+.It Cd options LIMITMEM=value
+If there, limit memory usage by NetBSD to value megabytes.
+.br
+The machine specific part of the virtual memory system contains tables which 
+are fixed in size (due to the way initialization is done currently), but would
+need scaling with kernel data space virtual size (see NKMEMCLUSTERS).
+However, the kernel data area contains at least two variables: address space
+of big graphics boards, and the file buffer cache (the latter scales with
+memory size). As the size of the table would get very large if it should
+handle big spaces conveniently, it would make booting on
+small Amigas very painful due to excessive paging.
+This option allows to work around this problem by limiting what the kernel
+things is the memory size.
 .Ss atari-specific Options
 .Bl -ohang
 .It Cd options DISKLABEL_AHDI

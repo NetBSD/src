@@ -1,4 +1,4 @@
-/*	$NetBSD: amiga_init.c,v 1.56 1997/06/10 18:22:24 veego Exp $	*/
+/*	$NetBSD: amiga_init.c,v 1.57 1998/02/09 22:14:46 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -219,6 +219,11 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync, boot_part
 		*altaiscol = 0;
 	} else
 ((volatile struct Custom *)0xdff000)->color[0] = 0xa00;		/* RED */
+#endif
+
+#ifdef LIMITMEM
+	if (fphysize > LIMITMEM*1024*1024)
+		fphysize = LIMITMEM*1024*1024;
 #endif
 
 	RELOC(boot_fphystart, u_long) = fphystart;
