@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9var.h,v 1.17 2005/02/04 02:10:37 perry Exp $	*/
+/*	$NetBSD: rtl81x9var.h,v 1.18 2005/03/23 20:23:08 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -81,6 +81,8 @@ struct rtk_mii_frame {
 #define RTK_ISCPLUS(x)	((x)->rtk_type == RTK_8139CPLUS || \
 			 (x)->rtk_type == RTK_8169)
 
+#define RTK_TX_QLEN		64
+
 /*
  * The 8139C+ and 8160 gigE chips support descriptor-based TX
  * and RX. In fact, they even support TCP large send. Descriptors
@@ -89,22 +91,28 @@ struct rtk_mii_frame {
  */
 
 struct rtk_list_data {
-	struct mbuf		*rtk_tx_mbuf[RTK_TX_DESC_CNT];
+	struct rtk_txq {
+		struct mbuf *txq_mbuf;
+		bus_dmamap_t txq_dmamap;
+		int txq_descidx;
+	} rtk_txq[RTK_TX_QLEN];
+	int			rtk_txq_considx;
+	int			rtk_txq_prodidx;
+	bus_dmamap_t		rtk_tx_list_map;
+	struct rtk_desc		*rtk_tx_list;
+	bus_dma_segment_t 	rtk_tx_listseg;
+	int			rtk_tx_free;	/* # of free descriptors */
+	int			rtk_tx_nextfree; /* next descriptor to use */
+	int			rtk_tx_desc_cnt; /* # of descriptors */
+	int			rtk_tx_listnseg;
+
 	struct mbuf		*rtk_rx_mbuf[RTK_RX_DESC_CNT];
-	int			rtk_tx_prodidx;
-	int			rtk_rx_prodidx;
-	int			rtk_tx_considx;
-	int			rtk_tx_free;
-	bus_dmamap_t		rtk_tx_dmamap[RTK_TX_DESC_CNT];
 	bus_dmamap_t		rtk_rx_dmamap[RTK_RX_DESC_CNT];
 	bus_dmamap_t		rtk_rx_list_map;
 	struct rtk_desc		*rtk_rx_list;
 	bus_dma_segment_t 	rtk_rx_listseg;
+	int			rtk_rx_prodidx;
 	int			rtk_rx_listnseg;
-	bus_dmamap_t		rtk_tx_list_map;
-	struct rtk_desc		*rtk_tx_list;
-	bus_dma_segment_t 	rtk_tx_listseg;
-	int			rtk_tx_listnseg;
 };
 struct rtk_tx_desc {
 	SIMPLEQ_ENTRY(rtk_tx_desc) txd_q;
@@ -153,6 +161,15 @@ struct rtk_softc {
 	rndsource_element_t     rnd_source;
 #endif
 };
+
+#define	RTK_TX_DESC_CNT(sc)	\
+	((sc)->rtk_ldata.rtk_tx_desc_cnt)
+#define	RTK_TX_LIST_SZ(sc)	\
+	(RTK_TX_DESC_CNT(sc) * sizeof(struct rtk_desc))
+#define	RTK_TX_DESC_INC(sc, x)	\
+	((x) = ((x) + 1) % RTK_TX_DESC_CNT(sc))
+#define	RTK_RX_DESC_INC(sc, x)	\
+	((x) = ((x) + 1) % RTK_RX_DESC_CNT)
 
 #define RTK_ATTACHED 0x00000001 /* attach has succeeded */
 #define RTK_ENABLED  0x00000002 /* chip is enabled	*/
