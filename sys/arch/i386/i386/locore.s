@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.242 2001/06/17 21:01:33 sommerfeld Exp $	*/
+/*	$NetBSD: locore.s,v 1.243 2001/07/08 19:33:44 perry Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -1603,11 +1603,7 @@ ENTRY(longjmp)
 /*
  * void setrunqueue(struct proc *p);
  * Insert a process on the appropriate queue.  Should be called at splclock().
- */
-/*
- * XXX No section 9 man page for setrunqueue. IMHO,
- * Since it is part of the MI/MD interface, it needs documentation.
- * -- Perry Metzger, May 7, 2001
+ * See setrunqueue(9) for more details.
  */
 /* LINTSTUB: Func: void setrunqueue(struct proc *p) */
 NENTRY(setrunqueue)
@@ -1640,11 +1636,7 @@ NENTRY(setrunqueue)
 /*
  * void remrunqueue(struct proc *p);
  * Remove a process from its queue.  Should be called at splclock().
- */
-/*
- * XXX No section 9 man page for remrunqueue. IMHO,
- * Since it is part of the MI/MD interface, it needs documentation.
- * -- Perry Metzger, May 7, 2001
+ * See remrunqueue(9) for more details.
  */
 /* LINTSTUB: Func: void remrunqueue(struct proc *p) */
 NENTRY(remrunqueue)
