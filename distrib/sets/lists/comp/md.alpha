@@ -49,10 +49,3 @@
 ./usr/include/alpha/vuid_event.h
 ./usr/include/alpha/wsconsio.h
 ./usr/include/alpha/z8530var.h
-./usr/libdata/ldscripts
-./usr/libdata/ldscripts/elf64alpha.x
-./usr/libdata/ldscripts/elf64alpha.xbn
-./usr/libdata/ldscripts/elf64alpha.xn
-./usr/libdata/ldscripts/elf64alpha.xr
-./usr/libdata/ldscripts/elf64alpha.xs
-./usr/libdata/ldscripts/elf64alpha.xu
