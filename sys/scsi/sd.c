@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.106 1996/11/29 19:58:40 thorpej Exp $	*/
+/*	$NetBSD: sd.c,v 1.107 1996/12/05 01:06:43 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -103,7 +103,11 @@ struct scsi_mode_sense_data {
 	union disk_pages pages;
 } scsi_sense;
 
+#ifdef __BROKEN_INDIRECT_CONFIG
 int	sdmatch __P((struct device *, void *, void *));
+#else
+int	sdmatch __P((struct device *, struct cfdata *, void *));
+#endif
 void	sdattach __P((struct device *, struct device *, void *));
 int	sdlock __P((struct sd_softc *));
 void	sdunlock __P((struct sd_softc *));
@@ -147,7 +151,12 @@ struct scsi_inquiry_pattern sd_patterns[] = {
 int
 sdmatch(parent, match, aux)
 	struct device *parent;
-	void *match, *aux;
+#ifdef __BROKEN_INDIRECT_CONFIG
+	void *match;
+#else
+	struct cfdata *match;
+#endif
+	void *aux;
 {
 	struct scsibus_attach_args *sa = aux;
 	int priority;
