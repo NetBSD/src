@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_create.1,v 1.6.2.2 1998/08/29 03:33:51 mellon Exp $
+.\" $NetBSD: pkg_create.1,v 1.6.2.3 1998/11/06 20:40:49 cgd Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintainance
 .\" of non-core utilities.
@@ -32,18 +32,20 @@
 .Nd a utility for creating software package distributions
 .Sh SYNOPSIS
 .Nm
-.Op Fl YNOhv
-.Op Fl P Ar dpkgs
+.Op Fl ORhvl
+.Op Fl B Ar build-info-file
 .Op Fl C Ar cpkgs
-.Op Fl p Ar prefix
+.Op Fl D Ar displayfile
+.Op Fl P Ar dpkgs
+.Op Fl X Ar excludefile
+.Op Fl b Ar build-version-file
 .Op Fl f Ar contents
 .Op Fl i Ar iscript
 .Op Fl k Ar dscript
+.Op Fl m Ar mtreefile
+.Op Fl p Ar prefix
 .Op Fl r Ar rscript
 .Op Fl t Ar template
-.Op Fl X Ar excludefile
-.Op Fl D Ar displayfile
-.Op Fl m Ar mtreefile
 .Fl c Ar comment
 .Fl d Ar description
 .Fl f Ar packlist
@@ -61,16 +63,68 @@ description of the input syntax is included in this document.
 .Sh OPTIONS
 The following command line options are supported:
 .Bl -tag -width indent
-.It Fl f Ar packinglist
-Fetch ``packing list'' for package from the file
-.Ar packinglist
-or
-.Cm stdin
-if
-.Ar packinglist
-is a
-.Cm -
-(dash).
+.It Fl B Ar build-info-file
+Install the file
+.Ar build-info-file
+so that users of binary packages can see what
+.Xr make 1
+definitions
+were used to control the build when creating the
+binary package. This allows various build definitions
+to be retained in a binary package and viewed wherever it is installed,
+using
+.Xr pkginfo 1 .
+.It Fl C Ar cpkgs
+Set the initial package conflict list to
+.Ar cpkgs .
+This is assumed to be a whitespace separated list of package names
+and is meant as a convenient shorthand for specifying multiple
+.Cm @pkgcfl
+directives in the packing list (see PACKING LIST DETAILS section below).
+.It Fl D Ar displayfile
+Display the file (using
+.Xr more 1 )
+after installing the package.  Useful for things like
+legal notices on almost-free software, etc.
+.It Fl O
+Go into a `packing list Only' mode.
+This is used to do `fake pkg_add' operations when a package is installed.
+In such cases, it is necessary to know what the final, adjusted packing
+list will look like.
+.It Fl P Ar dpkgs
+Set the initial package dependency list to
+.Ar dpkgs .
+This is assumed to be a whitespace separated list of package names
+and is meant as a convenient shorthand for specifying multiple
+.Cm @pkgdep
+directives in the packing list (see PACKING LIST DETAILS section below).
+.It Fl R
+Re-order any directories in the pkg/PLIST file into reverse alphabetic
+order, so that child directories will automatically be removed before
+parent directories.
+.It Fl X Ar excludefile
+Pass
+.Ar excludefile
+as a
+.Fl exclude-from
+argument to
+.Cm tar
+when creating final package.  See
+.Cm tar
+man page (or run
+.Cm tar
+with
+.Fl -help
+flag) for further information on using this flag.
+.It Fl b Ar build-version-file
+Install the file
+.Ar build-version-file
+so that users of binary packages can see what versions of
+the files used to control the build were used when creating the
+binary package. This allows some fine-grained version control information
+to be retained in a binary package and viewed wherever it is installed,
+using
+.Xr pkg_info 1 .
 .It Fl c Ar [-]desc
 Fetch package ``one line description'' from file
 .Ar desc
@@ -85,18 +139,16 @@ Fetch long description for package from file
 or, if preceded by
 .Cm - ,
 the argument itself.
-.It Fl Y
-Assume a default answer of `Yes' for any questions asked.
-.It Fl N
-Assume a default answer of `No' for any questions asked.
-.It Fl O
-Go into a `packing list Only' mode.  This is a custom hack for the
-.Em "FreeBSD Ports Collection"
-and is used to do `fake pkg_add' operations when a port is installed.
-In such cases, it is necessary to know what the final, adjusted packing
-list will look like.
-.It Fl v
-Turn on verbose output.
+.It Fl f Ar packinglist
+Fetch ``packing list'' for package from the file
+.Ar packinglist
+or
+.Cm stdin
+if
+.Ar packinglist
+is a
+.Cm -
+(dash).
 .It Fl h
 Force tar to follow symbolic links, so that the files they point to
 are dumped, rather than the links themselves.
@@ -106,31 +158,43 @@ Set
 to be the install procedure for the package.  This can be any
 executable program (or shell script).  It will be invoked automatically
 when the package is later installed.
-.It Fl P Ar dpkgs
-Set the initial package dependency list to
-.Ar dpkgs .
-This is assumed to be a whitespace separated list of package names
-and is meant as a convenient shorthand for specifying multiple
-.Cm @pkgdep
-directives in the packing list (see PACKING LIST DETAILS section below).
-.It Fl C Ar cpkgs
-Set the initial package conflict list to
-.Ar cpkgs .
-This is assumed to be a whitespace separated list of package names
-and is meant as a convenient shorthand for specifying multiple
-.Cm @pkgcfl
-directives in the packing list (see PACKING LIST DETAILS section below).
-.It Fl p Ar prefix
-Set
-.Ar prefix
-as the initial directory ``base'' to start from in selecting files for
-the package.
 .It Fl k Ar dscript
 Set
 .Ar dscript
 to be the de-install procedure for the package.  This can be any
 executable program (or shell script).  It will be invoked automatically
 when the package is later (if ever) de-installed.
+.It Fl l
+Check that any symbolic links which are to be placed in the package are
+relative to the current prefix. This means using
+.Xr unlink 2
+and
+.Xr symlink 2
+to remove and re-link
+any symbolic links which are targetted at full path names.
+.It Fl m Ar mtreefile
+Run
+.Xr mtree 8
+with input from mtreefile before the package is installed.  
+Mtree is invoked as
+.Cm mtree
+.Fl u 
+.Fl f 
+.Ar mtreefile
+.Fl d
+.Fl e 
+.Fl p 
+.Pa prefix ,
+where
+.Pa prefix
+is the name of the first directory named by a
+.Cm @cwd
+directive.
+.It Fl p Ar prefix
+Set
+.Ar prefix
+as the initial directory ``base'' to start from in selecting files for
+the package.
 .It Fl r Ar rscript
 Set
 .Ar rscript
@@ -151,44 +215,9 @@ space in your
 directory is limited.  Be sure to leave some number of `X' characters
 for
 .Xr mktemp 3
- to fill in with a unique ID.
-.It Fl X Ar excludefile
-Pass
-.Ar excludefile
-as a
-.Fl exclude-from
-argument to
-.Cm tar
-when creating final package.  See
-.Cm tar
-man page (or run
-.Cm tar
-with
-.Fl -help
-flag) for further information on using this flag.
-.It Fl D Ar displayfile
-Display the file (using
-.Xr more 1 )
-after installing the package.  Useful for things like
-legal notices on almost-free software, etc.
-.It Fl m Ar mtreefile
-Run
-.Xr mtree 8
-with input from mtreefile before the package is installed.  
-Mtree is invoked as
-.Cm mtree
-.Fl u 
-.Fl f 
-.Ar mtreefile
-.Fl d
-.Fl e 
-.Fl p 
-.Pa prefix ,
-where
-.Pa prefix
-is the name of the first directory named by a
-.Cm @cwd
-directive.
+to fill in with a unique ID.
+.It Fl v
+Turn on verbose output.
 .El
 .Pp
 .Sh PACKING LIST DETAILS
@@ -362,15 +391,10 @@ package is deinstalled.  Multiple
 .Cm @pkgdep
 directives may be used if the package depends on multiple other packages.
 .It Cm @pkgcfl Ar pkgcflname
-Declare a conflict to the
+Declare a conflict with the
 .Ar pkgcflname
-package.  The
-.Ar pkgcflname
-package must
-.Cm not
-be installed if
-.Ar pkgname
-package gets installed cause they install the same files and thus conflict.
+package, as the two packages contain references to the same files,
+and so cannot co-exist on the same system.
 .El
 .Sh SEE ALSO
 .Xr pkg_add 1 ,
@@ -399,5 +423,3 @@ extracted.  They additionally must not end up being split between
 invocations due to exec argument-space limitations (this depends on the
 value returned by
 .Fn sysconf _SC_ARG_MAX ) .
-.Pp
-Sure to be others.
