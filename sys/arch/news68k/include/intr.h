@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.5 2000/11/24 14:08:14 tsutsui Exp $	*/
+/*	$NetBSD: intr.h,v 1.6 2001/01/14 02:00:41 thorpej Exp $	*/
 
 /*
  *
@@ -57,10 +57,10 @@
 #define	splnet()	splraise4()
 #define	spltty()	splraise5()
 #define	splimp()	splraise5()
+#define	splvm()		splraise5()
 #define	splserial()     splraise5()
 #define	splclock()	splraise6()
 #define	splstatclock()	splclock()
-#define	splvm()		spl6()
 #define	splhigh()	spl7()
 #define	splsched()	spl7()
 #define	spllock()	spl7()
