@@ -1,4 +1,4 @@
-/*	$NetBSD: traceroute.c,v 1.32 1999/06/16 13:26:16 is Exp $	*/
+/*	$NetBSD: traceroute.c,v 1.33 1999/06/16 13:52:58 is Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1991, 1994, 1995, 1996, 1997
@@ -29,7 +29,7 @@ static const char rcsid[] =
 #else
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1991, 1994, 1995, 1996, 1997\n\
 The Regents of the University of California.  All rights reserved.\n");
-__RCSID("$NetBSD: traceroute.c,v 1.32 1999/06/16 13:26:16 is Exp $");
+__RCSID("$NetBSD: traceroute.c,v 1.33 1999/06/16 13:52:58 is Exp $");
 #endif
 #endif
 
@@ -1101,6 +1101,8 @@ again:
 
 			if (errno == EMSGSIZE) {
 				packlen = *mtuptr++;
+		outudp->uh_ulen =
+		    htons((u_short)(packlen - (sizeof(*outip) + optlen)));
 #ifdef _NoLongerLooksUgly_
                 		Printf("message too big, "
 				    "trying new MTU = %d\n", packlen);
@@ -1481,6 +1483,8 @@ frag_err()
 ",
                         nextmtu);
                 packlen = nextmtu;
+		outudp->uh_ulen =
+		    htons((u_short)(packlen - (sizeof(*outip) + optlen)));
                 for (i = 0; mtus[i] > 0; i++) {
                         if (mtus[i] < nextmtu) {
                                 mtuptr = &mtus[i];    /* next one to try */
@@ -1489,6 +1493,8 @@ frag_err()
                 }
         } else {
                 packlen = *mtuptr++;
+		outudp->uh_ulen =
+		    htons((u_short)(packlen - (sizeof(*outip) + optlen)));
                 Printf("fragmentation required and DF set, "
 		    "trying new MTU = %d\n", packlen);
         }
