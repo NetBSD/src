@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.44 1999/03/13 15:16:47 ragge Exp $
+#	$NetBSD: GENERIC,v 1.45 1999/03/26 22:04:07 ragge Exp $
 #
 # GENERIC VAX configuration file; all supported devices.
 #
@@ -12,10 +12,12 @@ options 	"VAX780"
 options 	"VAX750"
 options 	"VAX630"	# MV II
 options 	"VAX650"	# MV III, 3600, 3800, 3900
+options 	"VAX670"	# VAX 4000/300
 options 	"VAX410"	# VS 2000
 options 	"VAX43"		# VS 3100/76
 options 	"VAX46"		# VS 4000/60
 options 	"VAX48"		# VS 4000 VLC
+options 	"VAX49"		# VS 4000/90
 
 # Max users on system; this is just a hint
 maxusers	8
@@ -48,10 +50,12 @@ file-system 	CD9660
 options 	QUOTA
 #options 	FFS_EI		# FFS Endian Independant support
 options 	NFSSERVER
+options 	NFS_BOOT_BOOTP,NFS_BOOT_DHCP	# Use bootp <> dhcp
 options 	NFS_BOOT_BOOTPARAM	# Use the Sun way for netbooting.
 
 # WS console uses VT100 terminal emulation
 options 	WSEMUL_VT100
+options 	WSDISPLAY_DEFAULTSCREENS=8
 
 # System V shared memory & semaphores support.
 options 	SYSVMSG
