@@ -1,4 +1,4 @@
-/*	$NetBSD: ast.c,v 1.44 1998/08/15 03:02:31 mycroft Exp $	*/
+/*	$NetBSD: ast.c,v 1.45 1998/09/18 14:38:48 enami Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -101,7 +101,7 @@ astprobe(parent, self, aux)
 		rv = 0;
 		goto out;
 	}
-	rv = comprobe1(iot, ioh, iobase);
+	rv = comprobe1(iot, ioh);
 	bus_space_unmap(iot, ioh, COM_NPORTS);
 	if (rv == 0)
 		goto out;
