@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.8 1994/11/28 18:42:21 dean Exp $	*/
+/*	$NetBSD: conf.c,v 1.9 1994/12/14 19:11:17 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -52,8 +52,7 @@ int	rawwrite	__P((dev_t, struct uio *, int));
 void	swstrategy	__P((struct buf *)); /* why not include <vm/vm_extern.h>? */
 int	ttselect	__P((dev_t, int, struct proc *));
 
-#define	dev_type_open(n)	int n __P((dev_t, int, int, struct proc *, \
-					   struct file *))
+#define	dev_type_open(n)	int n __P((dev_t, int, int, struct proc *))
 #define	dev_type_close(n)	int n __P((dev_t, int, int, struct proc *))
 #define	dev_type_strategy(n)	void n __P((struct buf *))
 #define	dev_type_ioctl(n) \
