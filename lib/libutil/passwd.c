@@ -1,4 +1,4 @@
-/*	$NetBSD: passwd.c,v 1.17 1999/09/17 01:28:12 lukem Exp $	*/
+/*	$NetBSD: passwd.c,v 1.18 1999/09/20 04:48:11 lukem Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: passwd.c,v 1.17 1999/09/17 01:28:12 lukem Exp $");
+__RCSID("$NetBSD: passwd.c,v 1.18 1999/09/20 04:48:11 lukem Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -282,10 +282,6 @@ pw_copy(ffd, tfd, pw, old_pw)
 
 	_DIAGASSERT(pw != NULL);
 	/* old_pw may be NULL */
-#ifdef _DIAGNOSTIC
-	if (pw == NULL)
-		return;
-#endif
 
 	if (!(from = fdopen(ffd, "r")))
 		pw_error(_PATH_MASTERPASSWD, 1, 1);

@@ -84,13 +84,6 @@ getopt_internal(nargc, nargv, ostr)
 
 	_DIAGASSERT(nargv != NULL);
 	_DIAGASSERT(ostr != NULL);
-#ifdef _DIAGNOSTIC
-	if (nargv == NULL || ostr == NULL) {
-		errno = EFAULT;
-		place = EMSG;
-		return (-1);
-	}
-#endif
 
 	if (optreset || !*place) {		/* update scanning pointer */
 		optreset = 0;
@@ -180,12 +173,6 @@ getopt_long(nargc, nargv, options, long_options, index)
 	_DIAGASSERT(ostr != NULL);
 	_DIAGASSERT(long_options != NULL);
 	/* index may be NULL */
-#ifdef _DIAGNOSTIC
-	if (nargv == NULL || ostr == NULL || long_options) {
-		errno = EFAULT;
-		return (-1);
-	}
-#endif
 
 	if ((retval = getopt_internal(nargc, nargv, options)) == -2) {
 		char *current_argv = nargv[optind++] + 2, *has_equal;

@@ -1,4 +1,4 @@
-/*	$NetBSD: fdopen.c,v 1.9 1999/09/16 11:45:25 lukem Exp $	*/
+/*	$NetBSD: fdopen.c,v 1.10 1999/09/20 04:39:25 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)fdopen.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: fdopen.c,v 1.9 1999/09/16 11:45:25 lukem Exp $");
+__RCSID("$NetBSD: fdopen.c,v 1.10 1999/09/20 04:39:25 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -69,12 +69,6 @@ fdopen(fd, mode)
 	int flags, oflags, fdflags, tmp;
 
 	_DIAGASSERT(fd != -1);
-#ifdef _DIAGNOSTIC
-	if (fd == -1) {
-		errno = EBADF;
-		return (NULL);
-	}
-#endif
 
 	if ((flags = __sflags(mode, &oflags)) == 0)
 		return (NULL);

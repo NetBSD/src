@@ -1,4 +1,4 @@
-/*	$NetBSD: getttyent.c,v 1.15 1999/09/16 11:45:00 lukem Exp $	*/
+/*	$NetBSD: getttyent.c,v 1.16 1999/09/20 04:39:02 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getttyent.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: getttyent.c,v 1.15 1999/09/16 11:45:00 lukem Exp $");
+__RCSID("$NetBSD: getttyent.c,v 1.16 1999/09/20 04:39:02 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -69,10 +69,6 @@ getttynam(tty)
 	struct ttyent *t;
 
 	_DIAGASSERT(tty != NULL);
-#ifdef _DIAGNOSTIC
-	if (tty == NULL)
-		return (NULL);
-#endif
 
 	setttyent();
 	while ((t = getttyent()) != NULL)

@@ -1,4 +1,4 @@
-/*	$NetBSD: strlcpy.c,v 1.4 1999/09/16 11:45:42 lukem Exp $	*/
+/*	$NetBSD: strlcpy.c,v 1.5 1999/09/20 04:39:47 lukem Exp $	*/
 /*	from OpenBSD: strlcpy.c,v 1.4 1999/05/01 18:56:41 millert Exp 	*/
 
 /*
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: strlcpy.c,v 1.4 1999/09/16 11:45:42 lukem Exp $");
+__RCSID("$NetBSD: strlcpy.c,v 1.5 1999/09/20 04:39:47 lukem Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -54,10 +54,6 @@ strlcpy(dst, src, siz)
 
 	_DIAGASSERT(dst != NULL);
 	_DIAGASSERT(src != NULL);
-#ifdef _DIAGNOSTIC
-	if (dst == NULL || src == NULL)
-		return (0);
-#endif
 
 	/* Copy as many bytes as will fit */
 	if (n != 0 && --n != 0) {

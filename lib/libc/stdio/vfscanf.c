@@ -1,4 +1,4 @@
-/*	$NetBSD: vfscanf.c,v 1.23 1999/09/16 11:45:31 lukem Exp $	*/
+/*	$NetBSD: vfscanf.c,v 1.24 1999/09/20 04:39:34 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)vfscanf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: vfscanf.c,v 1.23 1999/09/16 11:45:31 lukem Exp $");
+__RCSID("$NetBSD: vfscanf.c,v 1.24 1999/09/20 04:39:34 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -135,16 +135,6 @@ __svfscanf(fp, fmt0, ap)
 
 	_DIAGASSERT(fp != NULL);
 	_DIAGASSERT(fmt0 != NULL);
-#ifdef _DIAGNOSTIC
-	if (fp == NULL) {
-		errno = EBADF;
-		return (EOF);
-	}
-	if (fmt0 == NULL) {
-		errno = EFAULT;
-		return (EOF);
-	}
-#endif
 
 	nassigned = 0;
 	nread = 0;

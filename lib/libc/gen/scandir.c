@@ -1,4 +1,4 @@
-/*	$NetBSD: scandir.c,v 1.15 1999/09/16 11:45:03 lukem Exp $	*/
+/*	$NetBSD: scandir.c,v 1.16 1999/09/20 04:39:04 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)scandir.c	8.3 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: scandir.c,v 1.15 1999/09/16 11:45:03 lukem Exp $");
+__RCSID("$NetBSD: scandir.c,v 1.16 1999/09/20 04:39:04 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -89,12 +89,6 @@ scandir(dirname, namelist, select, dcomp)
 
 	_DIAGASSERT(dirname != NULL);
 	_DIAGASSERT(namelist != NULL);
-#ifdef _DIAGNOSTIC
-	if (dirname == NULL || namelist == NULL) {
-		errno = EFAULT;
-		return (-1);
-	}
-#endif
 
 	if ((dirp = opendir(dirname)) == NULL)
 		return(-1);

@@ -1,4 +1,4 @@
-/*	$NetBSD: sprintf.c,v 1.7 1999/09/16 11:45:30 lukem Exp $	*/
+/*	$NetBSD: sprintf.c,v 1.8 1999/09/20 04:39:33 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)sprintf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: sprintf.c,v 1.7 1999/09/16 11:45:30 lukem Exp $");
+__RCSID("$NetBSD: sprintf.c,v 1.8 1999/09/20 04:39:33 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -72,12 +72,6 @@ sprintf(str, fmt, va_alist)
 
 	_DIAGASSERT(str != NULL);
 	_DIAGASSERT(fmt != NULL);
-#ifdef _DIAGNOSTIC
-	if (str == NULL || fmt == NULL) {
-		errno = EFAULT;
-		return (-1);
-	}
-#endif
 
 	f._flags = __SWR | __SSTR;
 	f._bf._base = f._p = (unsigned char *)str;

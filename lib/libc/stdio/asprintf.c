@@ -1,4 +1,4 @@
-/*	$NetBSD: asprintf.c,v 1.5 1999/09/16 11:45:25 lukem Exp $	*/
+/*	$NetBSD: asprintf.c,v 1.6 1999/09/20 04:39:25 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: asprintf.c,v 1.5 1999/09/16 11:45:25 lukem Exp $");
+__RCSID("$NetBSD: asprintf.c,v 1.6 1999/09/20 04:39:25 lukem Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -58,12 +58,6 @@ asprintf(str, fmt, va_alist)
 	unsigned char *_base;
 
 	_DIAGASSERT(str != NULL);
-#ifdef _DIAGNOSTIC
-	if (str == NULL) {
-		errno = EFAULT;
-		return (-1);
-	}
-#endif
 
 #if __STDC__
 	va_start(ap, fmt);

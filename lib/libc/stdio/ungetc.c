@@ -1,4 +1,4 @@
-/*	$NetBSD: ungetc.c,v 1.10 1999/09/16 11:45:31 lukem Exp $	*/
+/*	$NetBSD: ungetc.c,v 1.11 1999/09/20 04:39:33 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)ungetc.c	8.2 (Berkeley) 11/3/93";
 #else
-__RCSID("$NetBSD: ungetc.c,v 1.10 1999/09/16 11:45:31 lukem Exp $");
+__RCSID("$NetBSD: ungetc.c,v 1.11 1999/09/20 04:39:33 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -102,12 +102,6 @@ ungetc(c, fp)
 {
 
 	_DIAGASSERT(fp != NULL);
-#ifdef _DIAGNOSTIC
-	if (fp == NULL) {
-		errno = EBADF;
-		return (EOF);
-	}
-#endif
 
 	if (c == EOF)
 		return (EOF);

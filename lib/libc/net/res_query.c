@@ -1,4 +1,4 @@
-/*	$NetBSD: res_query.c,v 1.23 1999/09/16 11:45:18 lukem Exp $	*/
+/*	$NetBSD: res_query.c,v 1.24 1999/09/20 04:39:18 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -59,7 +59,7 @@
 static char sccsid[] = "@(#)res_query.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: res_query.c,v 8.10 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: res_query.c,v 1.23 1999/09/16 11:45:18 lukem Exp $");
+__RCSID("$NetBSD: res_query.c,v 1.24 1999/09/20 04:39:18 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -119,12 +119,6 @@ res_query(name, class, type, answer, anslen)
 
 	_DIAGASSERT(name != NULL);
 	_DIAGASSERT(answer != NULL);
-#ifdef _DIAGNOSTIC
-	if (name == NULL || answer == NULL) {
-		h_errno = NETDB_INTERNAL;
-		return (-1);
-	}
-#endif
 
 	if ((_res.options & RES_INIT) == 0 && res_init() == -1) {
 		h_errno = NETDB_INTERNAL;
@@ -204,12 +198,6 @@ res_search(name, class, type, answer, anslen)
 
 	_DIAGASSERT(name != NULL);
 	_DIAGASSERT(answer != NULL);
-#ifdef _DIAGNOSTIC
-	if (name == NULL || answer == NULL) {
-		h_errno = NETDB_INTERNAL;
-		return (-1);
-	}
-#endif
 
 	if ((_res.options & RES_INIT) == 0 && res_init() == -1) {
 		h_errno = NETDB_INTERNAL;
@@ -354,12 +342,6 @@ res_querydomain(name, domain, class, type, answer, anslen)
 	_DIAGASSERT(name != NULL);
 	/* domain may be NULL */
 	_DIAGASSERT(answer != NULL);
-#ifdef _DIAGNOSTIC
-	if (name == NULL || answer == NULL) {
-		h_errno = NETDB_INTERNAL;
-		return (-1);
-	}
-#endif
 
 	if ((_res.options & RES_INIT) == 0 && res_init() == -1) {
 		h_errno = NETDB_INTERNAL;
@@ -408,10 +390,6 @@ __hostalias(name)
 	static char abuf[MAXDNAME];
 
 	_DIAGASSERT(name != NULL);
-#ifdef _DIAGNOSTIC
-	if (name == NULL)
-		return (NULL);
-#endif
 
 	if (_res.options & RES_NOALIASES)
 		return (NULL);

@@ -1,4 +1,4 @@
-/*	$NetBSD: putenv.c,v 1.9 1999/09/16 11:45:35 lukem Exp $	*/
+/*	$NetBSD: putenv.c,v 1.10 1999/09/20 04:39:40 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)putenv.c	8.2 (Berkeley) 3/27/94";
 #else
-__RCSID("$NetBSD: putenv.c,v 1.9 1999/09/16 11:45:35 lukem Exp $");
+__RCSID("$NetBSD: putenv.c,v 1.10 1999/09/20 04:39:40 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -61,12 +61,6 @@ putenv(str)
 	int rval;
 
 	_DIAGASSERT(str != NULL);
-#ifdef _DIAGNOSTIC
-	if (str == NULL) {
-		errno = EFAULT;
-		return (-1);
-	}
-#endif
 
 	if ((p = strdup(str)) == NULL)
 		return (-1);

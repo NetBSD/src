@@ -1,4 +1,4 @@
-/*	$NetBSD: sha1hl.c,v 1.3 1999/09/16 11:45:07 lukem Exp $	*/
+/*	$NetBSD: sha1hl.c,v 1.4 1999/09/20 04:39:07 lukem Exp $	*/
 /* sha1hl.c
  * ----------------------------------------------------------------------------
  * "THE BEER-WARE LICENSE" (Revision 42):
@@ -23,7 +23,7 @@
 #include <unistd.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: sha1hl.c,v 1.3 1999/09/16 11:45:07 lukem Exp $");
+__RCSID("$NetBSD: sha1hl.c,v 1.4 1999/09/20 04:39:07 lukem Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #if defined(__weak_alias)
@@ -45,10 +45,6 @@ SHA1End(ctx, buf)
 
     _DIAGASSERT(ctx != NULL);
     /* buf may be NULL */
-#ifdef _DIAGNOSTIC
-    if (ctx == NULL)
-	return NULL;
-#endif
 
     if (p == NULL && (p = malloc(41)) == NULL)
 	return 0;
@@ -73,10 +69,6 @@ SHA1File (filename, buf)
 
     _DIAGASSERT(filename != NULL);
     /* XXX: buf may be NULL ? */
-#ifdef _DIAGNOSTIC
-    if (filename == NULL || *filename == '\0')
-	return(0);
-#endif
 
     SHA1Init(&ctx);
 
@@ -102,10 +94,6 @@ SHA1Data (data, len, buf)
 
     _DIAGASSERT(data != NULL);
     /* XXX: buf may be NULL ? */
-#ifdef _DIAGNOSTIC
-    if (data == NULL)
-	return NULL;
-#endif
 
     SHA1Init(&ctx);
     SHA1Update(&ctx, data, len);

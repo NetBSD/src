@@ -1,4 +1,4 @@
-/*	$NetBSD: getw.c,v 1.7 1999/09/16 11:45:29 lukem Exp $	*/
+/*	$NetBSD: getw.c,v 1.8 1999/09/20 04:39:30 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)getw.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: getw.c,v 1.7 1999/09/16 11:45:29 lukem Exp $");
+__RCSID("$NetBSD: getw.c,v 1.8 1999/09/20 04:39:30 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -56,12 +56,6 @@ getw(fp)
 	int x;
 
 	_DIAGASSERT(fp != NULL);
-#ifdef _DIAGNOSTIC
-	if (fp == NULL) {
-		errno = EBADF;
-		return (EOF);
-	}
-#endif
 
 	return (fread((void *)&x, sizeof(x), 1, fp) == 1 ? x : EOF);
 }

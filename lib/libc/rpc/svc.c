@@ -1,4 +1,4 @@
-/*	$NetBSD: svc.c,v 1.17 1999/09/16 11:45:24 lukem Exp $	*/
+/*	$NetBSD: svc.c,v 1.18 1999/09/20 04:39:24 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)svc.c 1.44 88/02/08 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)svc.c	2.4 88/08/11 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: svc.c,v 1.17 1999/09/16 11:45:24 lukem Exp $");
+__RCSID("$NetBSD: svc.c,v 1.18 1999/09/20 04:39:24 lukem Exp $");
 #endif
 #endif
 
@@ -111,10 +111,6 @@ xprt_register(xprt)
 	int sock;
 
 	_DIAGASSERT(xprt != NULL);
-#ifdef _DIAGNOSTIC
-	if (xprt == NULL)
-		return;
-#endif
 
 	sock = xprt->xp_sock;
 
@@ -142,10 +138,6 @@ xprt_unregister(xprt)
 	int sock;
 
 	_DIAGASSERT(xprt != NULL);
-#ifdef _DIAGNOSTIC
-	if (xprt == NULL)
-		return;
-#endif
 
 	sock = xprt->xp_sock;
 
@@ -181,10 +173,6 @@ svc_register(xprt, prog, vers, dispatch, protocol)
 
 	_DIAGASSERT(xprt != NULL);
 	_DIAGASSERT(dispatch != NULL);
-#ifdef _DIAGNOSTIC
-	if (xprt == NULL || dispatch == NULL)
-		return (FALSE);
-#endif
 
 	if ((s = svc_find(prog, vers, &prev)) != NULL_SVC) {
 		if (s->sc_dispatch == dispatch)
@@ -271,10 +259,6 @@ svc_sendreply(xprt, xdr_results, xdr_location)
 	struct rpc_msg rply; 
 
 	_DIAGASSERT(xprt != NULL);
-#ifdef _DIAGNOSTIC
-	if (xprt == NULL)
-		return (FALSE);
-#endif
 
 	rply.rm_direction = REPLY;  
 	rply.rm_reply.rp_stat = MSG_ACCEPTED; 
@@ -295,10 +279,6 @@ svcerr_noproc(xprt)
 	struct rpc_msg rply;
 
 	_DIAGASSERT(xprt != NULL);
-#ifdef _DIAGNOSTIC
-	if (xprt == NULL)
-		return;
-#endif
 
 	rply.rm_direction = REPLY;
 	rply.rm_reply.rp_stat = MSG_ACCEPTED;
@@ -317,10 +297,6 @@ svcerr_decode(xprt)
 	struct rpc_msg rply; 
 
 	_DIAGASSERT(xprt != NULL);
-#ifdef _DIAGNOSTIC
-	if (xprt == NULL)
-		return;
-#endif
 
 	rply.rm_direction = REPLY; 
 	rply.rm_reply.rp_stat = MSG_ACCEPTED; 
@@ -339,10 +315,6 @@ svcerr_systemerr(xprt)
 	struct rpc_msg rply; 
 
 	_DIAGASSERT(xprt != NULL);
-#ifdef _DIAGNOSTIC
-	if (xprt == NULL)
-		return;
-#endif
 
 	rply.rm_direction = REPLY; 
 	rply.rm_reply.rp_stat = MSG_ACCEPTED; 
@@ -362,10 +334,6 @@ svcerr_auth(xprt, why)
 	struct rpc_msg rply;
 
 	_DIAGASSERT(xprt != NULL);
-#ifdef _DIAGNOSTIC
-	if (xprt == NULL)
-		return;
-#endif
 
 	rply.rm_direction = REPLY;
 	rply.rm_reply.rp_stat = MSG_DENIED;
@@ -383,10 +351,6 @@ svcerr_weakauth(xprt)
 {
 
 	_DIAGASSERT(xprt != NULL);
-#ifdef _DIAGNOSTIC
-	if (xprt == NULL)
-		return;
-#endif
 
 	svcerr_auth(xprt, AUTH_TOOWEAK);
 }
@@ -401,10 +365,6 @@ svcerr_noprog(xprt)
 	struct rpc_msg rply;  
 
 	_DIAGASSERT(xprt != NULL);
-#ifdef _DIAGNOSTIC
-	if (xprt == NULL)
-		return;
-#endif
 
 	rply.rm_direction = REPLY;   
 	rply.rm_reply.rp_stat = MSG_ACCEPTED;  
@@ -425,10 +385,6 @@ svcerr_progvers(xprt, low_vers, high_vers)
 	struct rpc_msg rply;
 
 	_DIAGASSERT(xprt != NULL);
-#ifdef _DIAGNOSTIC
-	if (xprt == NULL)
-		return;
-#endif
 
 	rply.rm_direction = REPLY;
 	rply.rm_reply.rp_stat = MSG_ACCEPTED;
@@ -488,10 +444,6 @@ svc_getreqset(readfds)
 	r.rq_clntcred = &(cred_area[2*MAX_AUTH_BYTES]);
 
 	_DIAGASSERT(readfds != NULL);
-#ifdef _DIAGNOSTIC
-	if (readfds == NULL)
-		return;
-#endif
 
 	maskp = readfds->fds_bits;
 	for (sock = 0; sock < FD_SETSIZE; sock += NFDBITS) {

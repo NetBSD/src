@@ -1,4 +1,4 @@
-/*	$NetBSD: xdryp.c,v 1.23 1999/09/16 11:45:45 lukem Exp $	*/
+/*	$NetBSD: xdryp.c,v 1.24 1999/09/20 04:39:55 lukem Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe <thorpej@NetBSD.ORG>.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: xdryp.c,v 1.23 1999/09/16 11:45:45 lukem Exp $");
+__RCSID("$NetBSD: xdryp.c,v 1.24 1999/09/20 04:39:55 lukem Exp $");
 #endif
 
 /*
@@ -108,10 +108,6 @@ xdr_domainname(xdrs, objp)
 
 	_DIAGASSERT(xdrs != NULL);
 	_DIAGASSERT(objp != NULL);
-#ifdef _DIAGNOSTIC
-	if (xdrs == NULL || objp == NULL)
-		return FALSE;
-#endif
 
 	return xdr_string(xdrs, &objp, YPMAXDOMAIN);
 }
@@ -127,10 +123,6 @@ xdr_peername(xdrs, objp)
 
 	_DIAGASSERT(xdrs != NULL);
 	_DIAGASSERT(objp != NULL);
-#ifdef _DIAGNOSTIC
-	if (xdrs == NULL || objp == NULL)
-		return FALSE;
-#endif
 
 	return xdr_string(xdrs, &objp, YPMAXPEER);
 }
@@ -146,10 +138,6 @@ xdr_mapname(xdrs, objp)
 
 	_DIAGASSERT(xdrs != NULL);
 	_DIAGASSERT(objp != NULL);
-#ifdef _DIAGNOSTIC
-	if (xdrs == NULL || objp == NULL)
-		return FALSE;
-#endif
 
 	return xdr_string(xdrs, &objp, YPMAXMAP);
 }
@@ -162,10 +150,6 @@ xdr_ypdomain_wrap_string(xdrs, objp)
 
 	_DIAGASSERT(xdrs != NULL);
 	_DIAGASSERT(objp != NULL);
-#ifdef _DIAGNOSTIC
-	if (xdrs == NULL || objp == NULL)
-		return FALSE;
-#endif
 
 	return xdr_string(xdrs, objp, YPMAXDOMAIN);
 }
@@ -178,10 +162,6 @@ xdr_ypmap_wrap_string(xdrs, objp)
 
 	_DIAGASSERT(xdrs != NULL);
 	_DIAGASSERT(objp != NULL);
-#ifdef _DIAGNOSTIC
-	if (xdrs == NULL || objp == NULL)
-		return FALSE;
-#endif
 
 	return xdr_string(xdrs, objp, YPMAXMAP);
 }
@@ -194,10 +174,6 @@ xdr_ypowner_wrap_string(xdrs, objp)
 
 	_DIAGASSERT(xdrs != NULL);
 	_DIAGASSERT(objp != NULL);
-#ifdef _DIAGNOSTIC
-	if (xdrs == NULL || objp == NULL)
-		return FALSE;
-#endif
 
 	return xdr_string(xdrs, objp, YPMAXPEER);
 }
@@ -210,10 +186,6 @@ xdr_datum(xdrs, objp)
 
 	_DIAGASSERT(xdrs != NULL);
 	_DIAGASSERT(objp != NULL);
-#ifdef _DIAGNOSTIC
-	if (xdrs == NULL || objp == NULL)
-		return FALSE;
-#endif
 
 	return xdr_bytes(xdrs, (char **)&objp->dptr,
 	    (u_int *)&objp->dsize, YPMAXRECORD);
@@ -227,10 +199,6 @@ xdr_ypreq_key(xdrs, objp)
 
 	_DIAGASSERT(xdrs != NULL);
 	_DIAGASSERT(objp != NULL);
-#ifdef _DIAGNOSTIC
-	if (xdrs == NULL || objp == NULL)
-		return FALSE;
-#endif
 
 	if (!xdr_ypdomain_wrap_string(xdrs, (char **)&objp->domain))
 		return FALSE;
@@ -252,10 +220,6 @@ xdr_ypreq_nokey(xdrs, objp)
 
 	_DIAGASSERT(xdrs != NULL);
 	_DIAGASSERT(objp != NULL);
-#ifdef _DIAGNOSTIC
-	if (xdrs == NULL || objp == NULL)
-		return FALSE;
-#endif
 
 	if (!xdr_ypdomain_wrap_string(xdrs, (char **)&objp->domain))
 		return FALSE;
@@ -274,10 +238,6 @@ xdr_yp_inaddr(xdrs, objp)
 
 	_DIAGASSERT(xdrs != NULL);
 	_DIAGASSERT(objp != NULL);
-#ifdef _DIAGNOSTIC
-	if (xdrs == NULL || objp == NULL)
-		return FALSE;
-#endif
 
 	return xdr_opaque(xdrs, (caddr_t)(void *)&objp->s_addr,
 	    sizeof objp->s_addr);
@@ -291,10 +251,6 @@ xdr_ypbind_binding(xdrs, objp)
 
 	_DIAGASSERT(xdrs != NULL);
 	_DIAGASSERT(objp != NULL);
-#ifdef _DIAGNOSTIC
-	if (xdrs == NULL || objp == NULL)
-		return FALSE;
-#endif
 
 	if (!xdr_yp_inaddr(xdrs, &objp->ypbind_binding_addr))
 		return FALSE;
@@ -314,10 +270,6 @@ xdr_ypbind_resptype(xdrs, objp)
 
 	_DIAGASSERT(xdrs != NULL);
 	_DIAGASSERT(objp != NULL);
-#ifdef _DIAGNOSTIC
-	if (xdrs == NULL || objp == NULL)
-		return FALSE;
-#endif
 
 	return xdr_enum(xdrs, (enum_t *)objp);
 }
@@ -330,10 +282,6 @@ xdr_ypstat(xdrs, objp)
 
 	_DIAGASSERT(xdrs != NULL);
 	_DIAGASSERT(objp != NULL);
-#ifdef _DIAGNOSTIC
-	if (xdrs == NULL || objp == NULL)
-		return FALSE;
-#endif
 
 	return xdr_enum(xdrs, (enum_t *)objp);
 }
@@ -346,10 +294,6 @@ xdr_ypbind_resp(xdrs, objp)
 
 	_DIAGASSERT(xdrs != NULL);
 	_DIAGASSERT(objp != NULL);
-#ifdef _DIAGNOSTIC
-	if (xdrs == NULL || objp == NULL)
-		return FALSE;
-#endif
 
 	if (!xdr_ypbind_resptype(xdrs, &objp->ypbind_status))
 		return FALSE;
@@ -377,10 +321,6 @@ xdr_ypresp_val(xdrs, objp)
 
 	_DIAGASSERT(xdrs != NULL);
 	_DIAGASSERT(objp != NULL);
-#ifdef _DIAGNOSTIC
-	if (xdrs == NULL || objp == NULL)
-		return FALSE;
-#endif
 
 	if (!xdr_ypstat(xdrs, (enum ypbind_resptype *)&objp->status))
 		return FALSE;
@@ -400,10 +340,6 @@ xdr_ypbind_setdom(xdrs, objp)
 
 	_DIAGASSERT(xdrs != NULL);
 	_DIAGASSERT(objp != NULL);
-#ifdef _DIAGNOSTIC
-	if (xdrs == NULL || objp == NULL)
-		return FALSE;
-#endif
 
 	cp = objp->ypsetdom_domain;
 
@@ -427,10 +363,6 @@ xdr_ypresp_key_val(xdrs, objp)
 
 	_DIAGASSERT(xdrs != NULL);
 	_DIAGASSERT(objp != NULL);
-#ifdef _DIAGNOSTIC
-	if (xdrs == NULL || objp == NULL)
-		return FALSE;
-#endif
 
 	if (!xdr_ypstat(xdrs, (enum ypbind_resptype *)&objp->status))
 		return FALSE;
@@ -455,10 +387,6 @@ xdr_ypall(xdrs, incallback)
 
 	_DIAGASSERT(xdrs != NULL);
 	_DIAGASSERT(incallback != NULL);
-#ifdef _DIAGNOSTIC
-	if (xdrs == NULL || incallback == NULL)
-		return FALSE;
-#endif
 
 	/*
 	 * Set up key/val struct to be used during the transaction.
@@ -505,10 +433,6 @@ xdr_ypresp_master(xdrs, objp)
 
 	_DIAGASSERT(xdrs != NULL);
 	_DIAGASSERT(objp != NULL);
-#ifdef _DIAGNOSTIC
-	if (xdrs == NULL || objp == NULL)
-		return FALSE;
-#endif
 
 	if (!xdr_ypstat(xdrs, (enum ypbind_resptype *)&objp->status))
 		return FALSE;
@@ -527,10 +451,6 @@ xdr_ypmaplist_str(xdrs, objp)
 
 	_DIAGASSERT(xdrs != NULL);
 	_DIAGASSERT(objp != NULL);
-#ifdef _DIAGNOSTIC
-	if (xdrs == NULL || objp == NULL)
-		return FALSE;
-#endif
 
 	return xdr_string(xdrs, &objp, YPMAXMAP+1);
 }
@@ -543,10 +463,6 @@ xdr_ypmaplist(xdrs, objp)
 
 	_DIAGASSERT(xdrs != NULL);
 	_DIAGASSERT(objp != NULL);
-#ifdef _DIAGNOSTIC
-	if (xdrs == NULL || objp == NULL)
-		return FALSE;
-#endif
 
 	if (!xdr_ypmaplist_str(xdrs, objp->ypml_name))
 		return FALSE;
@@ -566,10 +482,6 @@ xdr_ypresp_maplist(xdrs, objp)
 
 	_DIAGASSERT(xdrs != NULL);
 	_DIAGASSERT(objp != NULL);
-#ifdef _DIAGNOSTIC
-	if (xdrs == NULL || objp == NULL)
-		return FALSE;
-#endif
 
 	if (!xdr_ypstat(xdrs, (enum ypbind_resptype *)&objp->status))
 		return FALSE;
@@ -589,10 +501,6 @@ xdr_ypresp_order(xdrs, objp)
 
 	_DIAGASSERT(xdrs != NULL);
 	_DIAGASSERT(objp != NULL);
-#ifdef _DIAGNOSTIC
-	if (xdrs == NULL || objp == NULL)
-		return FALSE;
-#endif
 
 	if (!xdr_ypstat(xdrs, (enum ypbind_resptype *)&objp->status))
 		return FALSE;
@@ -611,10 +519,6 @@ xdr_ypreq_xfr(xdrs, objp)
 
 	_DIAGASSERT(xdrs != NULL);
 	_DIAGASSERT(objp != NULL);
-#ifdef _DIAGNOSTIC
-	if (xdrs == NULL || objp == NULL)
-		return FALSE;
-#endif
 
 	if (!xdr_ypmap_parms(xdrs, &objp->map_parms))
 		return FALSE;
@@ -639,10 +543,6 @@ xdr_ypmap_parms(xdrs, objp)
 
 	_DIAGASSERT(xdrs != NULL);
 	_DIAGASSERT(objp != NULL);
-#ifdef _DIAGNOSTIC
-	if (xdrs == NULL || objp == NULL)
-		return FALSE;
-#endif
 
 	if (!xdr_ypdomain_wrap_string(xdrs, (char **)&objp->domain))
 		return FALSE;
@@ -667,10 +567,6 @@ xdr_yppushresp_xfr(xdrs, objp)
 
 	_DIAGASSERT(xdrs != NULL);
 	_DIAGASSERT(objp != NULL);
-#ifdef _DIAGNOSTIC
-	if (xdrs == NULL || objp == NULL)
-		return FALSE;
-#endif
 
 	if (!xdr_u_int(xdrs, &objp->transid))
 		return FALSE;

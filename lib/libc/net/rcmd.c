@@ -1,4 +1,4 @@
-/*	$NetBSD: rcmd.c,v 1.33 1999/09/16 11:45:17 lukem Exp $	*/
+/*	$NetBSD: rcmd.c,v 1.34 1999/09/20 04:39:16 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997 Matthew R. Green.
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)rcmd.c	8.3 (Berkeley) 3/26/94";
 #else
-__RCSID("$NetBSD: rcmd.c,v 1.33 1999/09/16 11:45:17 lukem Exp $");
+__RCSID("$NetBSD: rcmd.c,v 1.34 1999/09/20 04:39:16 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -98,10 +98,6 @@ rcmd(ahost, rport, locuser, remuser, cmd, fd2p)
 	_DIAGASSERT(remuser != NULL);
 	_DIAGASSERT(cmd != NULL);
 	/* fd2p may be NULL */
-#ifdef _DIAGNOSTIC
-	if (ahost == NULL || locuser == NULL || remuser == NULL || cmd == NULL)
-		return (-1);
-#endif
 
 	/*
 	 * Canonicalise hostname.
@@ -143,10 +139,6 @@ orcmd(ahost, rport, locuser, remuser, cmd, fd2p)
 	_DIAGASSERT(remuser != NULL);
 	_DIAGASSERT(cmd != NULL);
 	/* fd2p may be NULL */
-#ifdef _DIAGNOSTIC
-	if (ahost == NULL || locuser == NULL || remuser == NULL || cmd == NULL)
-		return (-1);
-#endif
 
 	hp = gethostbyname(*ahost);
 	if (hp == NULL) {
@@ -433,12 +425,6 @@ rresvport(alport)
 {
 
 	_DIAGASSERT(alport != NULL);
-#ifdef _DIAGNOSTIC
-	if (alport == NULL) {
-		errno = EFAULT;
-		return (-1);
-	}
-#endif
 
 	return rresvport_af(alport, AF_INET);
 }
@@ -455,12 +441,6 @@ rresvport_af(alport, family)
 	u_int16_t *portp;
 
 	_DIAGASSERT(alport != NULL);
-#ifdef _DIAGNOSTIC
-	if (alport == NULL) {
-		errno = EFAULT;
-		return (-1);
-	}
-#endif
 
 	memset(&ss, 0, sizeof(ss));
 	sa = (struct sockaddr *)&ss;
@@ -535,10 +515,6 @@ ruserok(rhost, superuser, ruser, luser)
 	_DIAGASSERT(rhost != NULL);
 	_DIAGASSERT(ruser != NULL);
 	_DIAGASSERT(luser != NULL);
-#ifdef _DIAGNOSTIC
-	if (rhost == NULL || ruser == NULL || luser == NULL)
-		return (-1);
-#endif
 
 	if ((hp = gethostbyname(rhost)) == NULL)
 		return (-1);
@@ -578,10 +554,6 @@ iruserok(raddr, superuser, ruser, luser)
 
 	_DIAGASSERT(ruser != NULL);
 	_DIAGASSERT(luser != NULL);
-#ifdef _DIAGNOSTIC
-	if (ruser == NULL || luser == NULL)
-		return (-1);
-#endif
 
 	first = 1;
 	hostf = superuser ? NULL : fopen(_PATH_HEQUIV, "r");
@@ -668,10 +640,6 @@ __ivaliduser(hostf, raddr, luser, ruser)
 	_DIAGASSERT(hostf != NULL);
 	_DIAGASSERT(luser != NULL);
 	_DIAGASSERT(ruser != NULL);
-#ifdef _DIAGNOSTIC
-	if (hostf == NULL || luser == NULL || ruser == NULL)
-		return (-1);
-#endif
 
 	while (fgets(buf, sizeof(buf), hostf)) {
 		p = buf;

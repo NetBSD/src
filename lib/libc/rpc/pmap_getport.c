@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_getport.c,v 1.13 1999/09/16 11:45:23 lukem Exp $	*/
+/*	$NetBSD: pmap_getport.c,v 1.14 1999/09/20 04:39:22 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)pmap_getport.c 1.9 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)pmap_getport.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: pmap_getport.c,v 1.13 1999/09/16 11:45:23 lukem Exp $");
+__RCSID("$NetBSD: pmap_getport.c,v 1.14 1999/09/20 04:39:22 lukem Exp $");
 #endif
 #endif
 
@@ -85,10 +85,6 @@ pmap_getport(address, program, version, protocol)
 	struct pmap parms;
 
 	_DIAGASSERT(address != NULL);
-#ifdef _DIAGNOSTIC
-	if (address == NULL)
-		return (NULL);
-#endif
 
 	address->sin_port = htons(PMAPPORT);
 	client = clntudp_bufcreate(address, PMAPPROG,

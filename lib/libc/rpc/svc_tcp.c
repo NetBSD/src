@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_tcp.c,v 1.25 1999/09/16 17:03:46 sommerfeld Exp $	*/
+/*	$NetBSD: svc_tcp.c,v 1.26 1999/09/20 04:39:24 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)svc_tcp.c 1.21 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)svc_tcp.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: svc_tcp.c,v 1.25 1999/09/16 17:03:46 sommerfeld Exp $");
+__RCSID("$NetBSD: svc_tcp.c,v 1.26 1999/09/20 04:39:24 lukem Exp $");
 #endif
 #endif
 
@@ -213,12 +213,6 @@ svcfd_create(fd, sendsize, recvsize)
 {
 
 	_DIAGASSERT(fd != -1);
-#ifdef _DIAGNOSTIC
-	if (fd == -1) {
-		errno = EBADF;
-		return (NULL);
-	}
-#endif
 
 	return (makefd_xprt(fd, sendsize, recvsize));
 }
@@ -349,10 +343,6 @@ readtcp(xprtp, buf, len)
 	_DIAGASSERT(xprt != NULL);
 
 	sock = xprt->xp_sock;
-#ifdef _DIAGNOSTIC
-	if (buf == NULL)
-		goto fatal_err;
-#endif
 
 	do {
 		pollfd.fd = sock;

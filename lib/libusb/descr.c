@@ -1,4 +1,4 @@
-/*	$NetBSD: descr.c,v 1.5 1999/09/16 11:45:50 lukem Exp $	*/
+/*	$NetBSD: descr.c,v 1.6 1999/09/20 04:48:12 lukem Exp $	*/
 
 /*
  * Copyright (c) 1999 Lennart Augustsson <augustss@netbsd.org>
@@ -47,12 +47,6 @@ hid_get_report_desc(fd)
 	report_desc_t r;
 
 	_DIAGASSERT(fd != -1);
-#ifdef _DIAGNOSTIC
-	if (fd == -1) {
-		errno = EBADF;
-		return (0);
-	}
-#endif
 
 	rep.size = 0;
 	if (ioctl(fd, USB_GET_REPORT_DESC, &rep) < 0)

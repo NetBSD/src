@@ -1,4 +1,4 @@
-/*	$NetBSD: md5c.c,v 1.14 1999/09/17 09:25:34 kleink Exp $	*/
+/*	$NetBSD: md5c.c,v 1.15 1999/09/20 04:39:10 lukem Exp $	*/
 
 /*
  * This file is derived from the RSA Data Security, Inc. MD5 Message-Digest
@@ -172,10 +172,6 @@ MD5Init(context)
 {
 
 	_DIAGASSERT(context != 0);
-#ifdef _DIAGNOSTIC
-	if (context == 0)
-		return;
-#endif
 
 	context->count[0] = context->count[1] = 0;
 
@@ -201,10 +197,6 @@ MD5Update(context, input, inputLen)
 
 	_DIAGASSERT(context != 0);
 	_DIAGASSERT(input != 0);
-#ifdef _DIAGNOSTIC
-	if (context == 0 || input == 0)
-		return;
-#endif
 
 	/* Compute number of bytes mod 64 */
 	idx = (unsigned int)((context->count[0] >> 3) & 0x3F);
@@ -251,10 +243,6 @@ MD5Final(digest, context)
 
 	_DIAGASSERT(digest != 0);
 	_DIAGASSERT(context != 0);
-#ifdef _DIAGNOSTIC
-	if (digest == 0 || context == 0)
-		return;
-#endif
 
 	/* Save number of bits */
 	Encode(bits, context->count, 8);

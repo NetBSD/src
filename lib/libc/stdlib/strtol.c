@@ -1,4 +1,4 @@
-/*	$NetBSD: strtol.c,v 1.14 1999/09/16 11:45:36 lukem Exp $	*/
+/*	$NetBSD: strtol.c,v 1.15 1999/09/20 04:39:42 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)strtol.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: strtol.c,v 1.14 1999/09/16 11:45:36 lukem Exp $");
+__RCSID("$NetBSD: strtol.c,v 1.15 1999/09/20 04:39:42 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -68,12 +68,6 @@ strtol(nptr, endptr, base)
 
 	_DIAGASSERT(nptr != NULL);
 	/* endptr may be NULL */
-#ifdef _DIAGNOSTIC
-	if (nptr == NULL) {
-		errno = EFAULT;
-		return (0);
-	}
-#endif
 
 	/*
 	 * Skip white space and pick up leading +/- sign if any.

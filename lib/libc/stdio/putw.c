@@ -1,4 +1,4 @@
-/*	$NetBSD: putw.c,v 1.8 1999/09/16 11:45:29 lukem Exp $	*/
+/*	$NetBSD: putw.c,v 1.9 1999/09/20 04:39:32 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)putw.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: putw.c,v 1.8 1999/09/16 11:45:29 lukem Exp $");
+__RCSID("$NetBSD: putw.c,v 1.9 1999/09/20 04:39:32 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -61,12 +61,6 @@ putw(w, fp)
 	int r;
 
 	_DIAGASSERT(fp != NULL);
-#ifdef _DIAGNOSTIC
-	if (fp == NULL) {
-		errno = EBADF;
-		return (EOF);
-	}
-#endif
 
 	iov.iov_base = &w;
 	iov.iov_len = uio.uio_resid = sizeof(w);

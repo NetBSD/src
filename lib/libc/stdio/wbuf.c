@@ -1,4 +1,4 @@
-/*	$NetBSD: wbuf.c,v 1.9 1999/09/16 11:45:32 lukem Exp $	*/
+/*	$NetBSD: wbuf.c,v 1.10 1999/09/20 04:39:35 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)wbuf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: wbuf.c,v 1.9 1999/09/16 11:45:32 lukem Exp $");
+__RCSID("$NetBSD: wbuf.c,v 1.10 1999/09/20 04:39:35 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -63,12 +63,6 @@ __swbuf(c, fp)
 	int n;
 
 	_DIAGASSERT(fp != NULL);
-#ifdef _DIAGNOSTIC
-	if (fp == NULL) {
-		errno = EBADF;
-		return (EOF);
-	}
-#endif
 
 	/*
 	 * In case we cannot write, or longjmp takes us out early,

@@ -1,4 +1,4 @@
-/*	$NetBSD: setmode.c,v 1.22 1999/09/16 11:45:04 lukem Exp $	*/
+/*	$NetBSD: setmode.c,v 1.23 1999/09/20 04:39:05 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)setmode.c	8.2 (Berkeley) 3/25/94";
 #else
-__RCSID("$NetBSD: setmode.c,v 1.22 1999/09/16 11:45:04 lukem Exp $");
+__RCSID("$NetBSD: setmode.c,v 1.23 1999/09/20 04:39:05 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -101,10 +101,6 @@ getmode(bbox, omode)
 	mode_t clrval, newmode, value;
 
 	_DIAGASSERT(bbox != NULL);
-#ifdef _DIAGNOSTIC
-	if (bbox == NULL)
-		return (omode);
-#endif
 
 	set = (const BITCMD *)bbox;
 	newmode = omode;

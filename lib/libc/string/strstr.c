@@ -1,4 +1,4 @@
-/*	$NetBSD: strstr.c,v 1.9 1999/09/16 11:45:43 lukem Exp $	*/
+/*	$NetBSD: strstr.c,v 1.10 1999/09/20 04:39:48 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)strstr.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: strstr.c,v 1.9 1999/09/16 11:45:43 lukem Exp $");
+__RCSID("$NetBSD: strstr.c,v 1.10 1999/09/20 04:39:48 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -60,10 +60,6 @@ strstr(s, find)
 
 	_DIAGASSERT(s != NULL);
 	_DIAGASSERT(find != NULL);
-#ifdef _DIAGNOSTIC
-	if (s == NULL || find == NULL)
-		return (NULL);
-#endif
 
 	if ((c = *find++) != 0) {
 		len = strlen(find);

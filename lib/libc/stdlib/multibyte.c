@@ -1,4 +1,4 @@
-/*	$NetBSD: multibyte.c,v 1.7 1999/09/16 11:45:35 lukem Exp $	*/
+/*	$NetBSD: multibyte.c,v 1.8 1999/09/20 04:39:40 lukem Exp $	*/
 
 /*
  * Copyright (c) 1991 The Regents of the University of California.
@@ -38,7 +38,7 @@
 #if 0
 static char *sccsid = "from: @(#)multibyte.c	5.1 (Berkeley) 2/18/91";
 #else
-__RCSID("$NetBSD: multibyte.c,v 1.7 1999/09/16 11:45:35 lukem Exp $");
+__RCSID("$NetBSD: multibyte.c,v 1.8 1999/09/20 04:39:40 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -108,10 +108,6 @@ mbstowcs(pwcs, s, n)
 
 	_DIAGASSERT(pwcs != NULL);
 	_DIAGASSERT(s != NULL);
-#ifdef _DIAGNOSTIC
-	if (pwcs == NULL || s == NULL)
-		return (0);
-#endif
 
 	if (n != 0) {
 		do {

@@ -1,4 +1,4 @@
-/*	$NetBSD: snprintf.c,v 1.9 1999/09/16 11:45:30 lukem Exp $	*/
+/*	$NetBSD: snprintf.c,v 1.10 1999/09/20 04:39:33 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)snprintf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: snprintf.c,v 1.9 1999/09/16 11:45:30 lukem Exp $");
+__RCSID("$NetBSD: snprintf.c,v 1.10 1999/09/20 04:39:33 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -77,12 +77,6 @@ snprintf(str, n, fmt, va_alist)
 
 	_DIAGASSERT(str != NULL);
 	_DIAGASSERT(fmt != NULL);
-#ifdef _DIAGNOSTIC
-	if (str == NULL || fmt == NULL) {
-		errno = EFAULT;
-		return (-1);
-	}
-#endif
 
 	if ((int)n < 1)
 		return (-1);

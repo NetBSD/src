@@ -1,4 +1,4 @@
-/*	$NetBSD: hesiod.c,v 1.10 1999/09/16 11:45:13 lukem Exp $	*/
+/*	$NetBSD: hesiod.c,v 1.11 1999/09/20 04:39:12 lukem Exp $	*/
 
 /* Copyright (c) 1996 by Internet Software Consortium.
  *
@@ -52,7 +52,7 @@ __IDSTRING(rcsid_hesiod_p_h,
     "#Id: hesiod_p.h,v 1.1 1996/12/08 21:39:37 ghudson Exp #");
 __IDSTRING(rcsid_hescompat_c,
     "#Id: hescompat.c,v 1.1.2.1 1996/12/16 08:37:45 ghudson Exp #");
-__RCSID("$NetBSD: hesiod.c,v 1.10 1999/09/16 11:45:13 lukem Exp $");
+__RCSID("$NetBSD: hesiod.c,v 1.11 1999/09/20 04:39:12 lukem Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -111,12 +111,6 @@ hesiod_init(context)
 	int serrno;
 
 	_DIAGASSERT(context != NULL);
-#ifdef _DIAGNOSTIC
-	if (context == NULL) {
-		errno = EFAULT;
-		return (-1);
-	}
-#endif
 
 	ctx = malloc(sizeof(struct hesiod_p));
 	if (ctx) {
@@ -169,10 +163,6 @@ hesiod_end(context)
 	struct hesiod_p *ctx = (struct hesiod_p *) context;
 
 	_DIAGASSERT(context != NULL);
-#ifdef _DIAGNOSTIC
-	if (context == NULL)
-		return;
-#endif
 
 	free(ctx->rhs);
 	if (ctx->lhs)
@@ -196,10 +186,6 @@ hesiod_to_bind(void *context, const char *name, const char *type)
 	_DIAGASSERT(context != NULL);
 	_DIAGASSERT(name != NULL);
 	_DIAGASSERT(type != NULL);
-#ifdef _DIAGNOSTIC
-	if (context == NULL || name == NULL || type == NULL)
-		return (NULL);
-#endif
 
 	strcpy(bindname, name);
 
@@ -276,10 +262,6 @@ hesiod_resolve(context, name, type)
 	_DIAGASSERT(context != NULL);
 	_DIAGASSERT(name != NULL);
 	_DIAGASSERT(type != NULL);
-#ifdef _DIAGNOSTIC
-	if (context == NULL || name == NULL || type == NULL)
-		return (NULL);
-#endif
 
 	bindname = hesiod_to_bind(context, name, type);
 	if (!bindname)
@@ -302,10 +284,6 @@ hesiod_free_list(context, list)
 	char  **p;
 
 	_DIAGASSERT(context != NULL);
-#ifdef _DIAGNOSTIC
-	if (context == NULL)
-		return;
-#endif
 
 	if (list == NULL)
 		return;
@@ -560,10 +538,6 @@ hes_to_bind(name, type)
 
 	_DIAGASSERT(name != NULL);
 	_DIAGASSERT(type != NULL);
-#ifdef _DIAGNOSTIC
-	if (name == NULL || type == NULL)
-		return (NULL);
-#endif
 
 	if (init_context() < 0)
 		return NULL;
@@ -584,10 +558,6 @@ hes_resolve(name, type)
 
 	_DIAGASSERT(name != NULL);
 	_DIAGASSERT(type != NULL);
-#ifdef _DIAGNOSTIC
-	if (name == NULL || type == NULL)
-		return (NULL);
-#endif
 
 	if (init_context() < 0)
 		return NULL;
