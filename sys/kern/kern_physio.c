@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_physio.c,v 1.31 1998/04/30 06:28:57 thorpej Exp $	*/
+/*	$NetBSD: kern_physio.c,v 1.32 1998/05/08 18:18:58 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -248,9 +248,9 @@ physio(strategy, bp, dev, flags, minphys, uio)
 				panic("done > todo; strategy broken");
 #endif
 			iovp->iov_len -= done;
-                        iovp->iov_base += done;
-                        uio->uio_offset += done;
-                        uio->uio_resid -= done;
+			(caddr_t)iovp->iov_base += done;
+			uio->uio_offset += done;
+			uio->uio_resid -= done;
 
 			/*
 			 * Now, check for an error.
