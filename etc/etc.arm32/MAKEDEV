@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.50 2001/01/08 22:26:25 martin Exp $
+#	$NetBSD: MAKEDEV,v 1.51 2001/02/21 00:59:45 reinoud Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -163,7 +163,7 @@ isdn)
 
 std)
 	rm -f console drum mem kmem null zero tty klog stdin stdout stderr kbd
-	rm -f kbdctl vidcvideo0 vidc iic rtc0
+	rm -f kbdctl vidcvideo0 vidcconsole0 vidc iic rtc0
 	mknod mem		c 0 0	; chmod 640 mem	; chgrp kmem mem
 	mknod kmem		c 0 1	; chmod 640 kmem ; chgrp kmem kmem
 	mknod null		c 0 2	; chmod 666 null
@@ -177,8 +177,9 @@ std)
 	mknod stdin		c 34 0	; chmod 666 stdin
 	mknod stdout		c 34 1	; chmod 666 stdout
 	mknod stderr		c 34 2	; chmod 666 stderr
-	mknod vidcvideo0	c 37 0	; chmod 640 vidcvideo0
-	ln -s vidcvideo0 vidc
+	mknod vidcconsole0	c 37 0	; chmod 640 vidcconsole0
+	ln -s vidcconsole0 vidc
+	ln -s vidcconsole0 vidcvideo0	; # backwards compatible for X (XXX)
 	mknod iic		c 42 0	; chmod 600 iic
 	mknod rtc0		c 43 0	; chmod 644 rtc0
 	;;
