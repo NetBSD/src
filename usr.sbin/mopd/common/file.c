@@ -1,4 +1,4 @@
-/*	$NetBSD: file.c,v 1.2 1997/03/25 03:07:12 thorpej Exp $	*/
+/*	$NetBSD: file.c,v 1.3 1997/10/16 07:36:31 lukem Exp $	*/
 
 /*
  * Copyright (c) 1995-96 Mats O Jansson.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$NetBSD: file.c,v 1.2 1997/03/25 03:07:12 thorpej Exp $";
+static char rcsid[] = "$NetBSD: file.c,v 1.3 1997/10/16 07:36:31 lukem Exp $";
 #endif
 
 #include "os.h"
@@ -186,43 +186,33 @@ GetMopFileInfo(fd, load, xfr)
 				    header[iha+IHA_L_TFRADR1+2]*0x10000 +
 				    header[iha+IHA_L_TFRADR1+1]*0x100 +
 				    header[iha+IHA_L_TFRADR1]) & 0x7fffffff;
-#ifdef INFO
 			printf("Native Image (VAX)\n");
 			printf("Header Block Count: %d\n",hbcnt);
 			printf("Image Size:         %08x\n",isize);
 			printf("Load Address:       %08x\n",load_addr);
 			printf("Transfer Address:   %08x\n",xfr_addr);
-#endif
 			break;
 		case IHD_C_RSX:			/* RSX image produced by TKB */
 			hbcnt = header[L_BBLK+1]*256 + header[L_BBLK];
 			isize = (header[L_BLDZ+1]*256 + header[L_BLDZ]) * 64;
 			load_addr = header[L_BSA+1]*256 + header[L_BSA];
 			xfr_addr  = header[L_BXFR+1]*256 + header[L_BXFR];
-#ifdef INFO
 			printf("RSX Image\n");
 			printf("Header Block Count: %d\n",hbcnt);
 			printf("Image Size:         %08x\n",isize);
 			printf("Load Address:       %08x\n",load_addr);
 			printf("Transfer Address:   %08x\n",xfr_addr);
-#endif
 			break;
 		case IHD_C_BPA:			/* BASIC plus analog         */
-#ifdef INFO
 			printf("BASIC-Plus Image, not supported\n");
-#endif
 			return(-1);
 			break;
 		case IHD_C_ALIAS:		/* Alias		     */
-#ifdef INFO
 			printf("Alias, not supported\n");
-#endif
 			return(-1);
 			break;
 		case IHD_C_CLI:			/* Image is CLI		     */
-#ifdef INFO
 			printf("CLI, not supported\n");
-#endif
 			return(-1);
 			break;
 		case IHD_C_PMAX:		/* PMAX system image	     */
@@ -239,13 +229,11 @@ GetMopFileInfo(fd, load, xfr)
 				    header[iha+IHA_L_TFRADR1+2]*0x10000 +
 				    header[iha+IHA_L_TFRADR1+1]*0x100 +
 				    header[iha+IHA_L_TFRADR1]);
-#ifdef INFO
 			printf("PMAX Image \n");
 			printf("Header Block Count: %d\n",hbcnt);
 			printf("Image Size:         %08x\n",isize);
 			printf("Load Address:       %08x\n",load_addr);
 			printf("Transfer Address:   %08x\n",xfr_addr);
-#endif
 			break;
 		case IHD_C_ALPHA:		/* ALPHA system image	     */
 			isd = (header[EIHD_L_ISDOFF+3]*0x1000000 +
@@ -262,18 +250,14 @@ GetMopFileInfo(fd, load, xfr)
 				 header[isd+EISD_L_SECSIZE]);
 			load_addr = 0;
 			xfr_addr = 0;
-#ifdef INFO
 			printf("Alpha Image \n");
 			printf("Header Block Count: %d\n",hbcnt);
 			printf("Image Size:         %08x\n",isize);
 			printf("Load Address:       %08x\n",load_addr);
 			printf("Transfer Address:   %08x\n",xfr_addr);
-#endif
 			break;
 		default:
-#ifdef INFO
 			printf("Unknown Image (%d)\n",image_type);
-#endif
 			return(-1);
 	}
 
@@ -528,7 +512,6 @@ GetAOutFileInfo(fd, load, xfr, a_text, a_text_fill,
 /*###525 [cc] syntax error before `}'%%%*/
 	}
 
-#ifdef INFO
 	printf("a.out image (");
 	switch (N_GETMID (ex)) {
 	case MID_I386:
@@ -604,7 +587,7 @@ GetAOutFileInfo(fd, load, xfr, a_text, a_text_fill,
 	printf("Transfer Address:   %08x\n",ex.a_entry);
 	printf("Size of reloc text: %08x\n",ex.a_trsize);
 	printf("Size of reloc data: %08x\n",ex.a_drsize);
-#endif
+
 	magic = N_GETMAGIC (ex);
 	clbytes = getCLBYTES(mid);
 	clofset = clbytes - 1;
