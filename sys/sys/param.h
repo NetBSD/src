@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.122.2.8 2002/04/17 00:06:29 nathanw Exp $	*/
+/*	$NetBSD: param.h,v 1.122.2.9 2002/05/04 16:33:57 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -139,9 +139,6 @@
 
 /* Signals. */
 #include <sys/signal.h>
-
-/* Scheduler activations. */
-#include <sys/sa.h>
 
 /* Machine type dependent parameters. */
 #include <machine/param.h>
