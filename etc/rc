@@ -1,4 +1,4 @@
-#	$NetBSD: rc,v 1.127 1999/07/03 03:29:29 itojun Exp $
+#	$NetBSD: rc,v 1.128 1999/08/05 20:51:57 christos Exp $
 #	originally from: @(#)rc	8.2 (Berkeley) 3/17/94
 
 # System startup script run by init on autoboot
@@ -365,7 +365,7 @@ if checkyesno update_motd; then
 	if [ ! -f /etc/motd ]; then
 		install -c -o root -g wheel -m 664 /dev/null /etc/motd
 	fi
-	T=/tmp/_motd
+	T=/etc/_motd
 	rm -f $T
 	sysctl -n kern.version | sed 1q > $T
 	echo "" >> $T
