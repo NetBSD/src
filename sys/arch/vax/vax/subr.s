@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.s,v 1.48 2000/06/10 14:59:38 ragge Exp $	   */
+/*	$NetBSD: subr.s,v 1.49 2000/07/06 17:37:40 ragge Exp $	   */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -49,11 +49,61 @@
 
 		.text
 
+#ifdef	KERNEL_LOADABLE_BY_MOP
+/*
+ * This is a little tricky. The kernel is not loaded at the correct 
+ * address, so the kernel must first be relocated, then copied, then
+ * jump back to the correct address.
+ */
+/* Copy routine */
+cps:
+2:	movb	(r0)+,(r1)+
+	cmpl	r0,r7
+	bneq	2b
+
+3:	clrb	(r1)+
+	incl	r0
+	cmpl	r0,r6
+	bneq	3b
+	clrl	-(sp)
+	movl	sp,ap
+	movl	$_cca,r7
+	movl	r8,(r7)
+	movpsl	-(sp)
+	pushl	r2
+	rei
+cpe:
+
+/* Copy the copy routine */
+1:	movab	cps,r0
+	movab	cpe,r1
+	movl	$0x300000,sp
+	movl	sp,r3
+4:	movb	(r0)+,(r3)+
+	cmpl	r0,r1
+	bneq	4b
+	movl	r7,r8
+/* Ok, copy routine copied, set registers and rei */
+	movab	_edata,r7
+	movab	_end,r6
+	movl	$0x80000000,r1
+	movl	$0x80000200,r0
+	subl3	$0x200,r6,r9
+	movab	2f,r2
+	subl2	$0x200,r2
+	movpsl	-(sp)
+	pushab	4(sp)
+	rei
+
 /*
  * First entry routine from boot. This should be in a file called locore.
  */
+JSBENTRY(start)
+	brb	1b				# Netbooted starts here
+#else
 ASENTRY(start, 0)
-	bisl3	$0x80000000,r9,_esym		# End of loaded code
+#endif
+2:	bisl3	$0x80000000,r9,_esym		# End of loaded code
 	pushl	$0x1f0000			# Push a nice PSL
 	pushl	$to				# Address to jump to
 	rei					# change to kernel stack
