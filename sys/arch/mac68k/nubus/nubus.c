@@ -1,4 +1,4 @@
-/*	$NetBSD: nubus.c,v 1.19 1996/05/05 06:17:03 briggs Exp $	*/
+/*	$NetBSD: nubus.c,v 1.20 1996/05/06 01:08:41 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -197,8 +197,8 @@ probe_slot(slot, fmt)
 
 #ifdef DEBUG
 	if (nubus_debug & NDB_PROBE)
-		printf("bytelanes of 0x%x found for slot 0x%x (base 0x%x).\n",
-			fmt->bytelanes, slot, NUBUS_SLOT_TO_BASE(slot));
+		printf("bytelanes of 0x%x found for slot 0x%x.\n",
+			fmt->bytelanes, slot);
 #endif
 
 	hdr_size = 20;
@@ -209,7 +209,6 @@ probe_slot(slot, fmt)
 	 * would be valid.  This is necessary for NUBUS_ROM_offset()
 	 * to work.
 	 */
-printf("Mapping in space for slot %d.\n", fmt->slot);
 	hdr = (vm_offset_t)
 		bus_mapin(BUS_NUBUS,NUBUS_SLOT_TO_PADDR(fmt->slot),NBMEMSIZE);
 	if (hdr == NULL) {

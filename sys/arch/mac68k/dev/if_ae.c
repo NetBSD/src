@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ae.c,v 1.43 1996/05/05 06:16:40 briggs Exp $	*/
+/*	$NetBSD: if_ae.c,v 1.44 1996/05/06 01:08:35 briggs Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -311,7 +311,7 @@ aeprobe(parent, match, aux)
 
 	sc->regs_rev = 0;
 
-	addr = (caddr_t) NUBUS_SLOT_TO_BASE(nu->slot);
+	addr = (caddr_t) nu->virtual_base;
 
 	switch (sc->vendor) {
 	case AE_VENDOR_INTERLAN:
