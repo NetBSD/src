@@ -1,4 +1,4 @@
-/*	$NetBSD: res_state.c,v 1.2 2004/05/22 15:44:26 christos Exp $	*/
+/*	$NetBSD: res_state.c,v 1.3 2004/05/24 01:20:17 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: res_state.c,v 1.2 2004/05/22 15:44:26 christos Exp $");
+__RCSID("$NetBSD: res_state.c,v 1.3 2004/05/24 01:20:17 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -48,6 +48,7 @@ __RCSID("$NetBSD: res_state.c,v 1.2 2004/05/22 15:44:26 christos Exp $");
 #include <stdlib.h>
 #include <unistd.h>
 #include <resolv.h>
+#include <netdb.h>
 
 #include "pthread.h"
 #include "pthread_int.h"
@@ -101,12 +102,26 @@ __res_get_state(void)
 	if (st != NULL) {
 		res_state_debug("checkout from list", st);
 		LIST_REMOVE(st, st_list);
-		res_ninit(res = &st->st_res);
+		/* XXX: because we trash it with pointers from the list */
+		/* we should probably put the pointers elsewhere */
+		res = &st->st_res;
+		res->options = 0;
 	} else {
-		res = (res_state)calloc(sizeof(union _res_st), 1);
+		res = (res_state)malloc(sizeof(union _res_st));
+		if (res == NULL) {
+			pthread_mutex_unlock(&res_mtx);
+			h_errno = NETDB_INTERNAL;
+			return NULL;
+		}
+		res->options = 0;
 		res_state_debug("alloc new", res);
 	}
 	pthread_mutex_unlock(&res_mtx);
+	if ((res->options & RES_INIT) == 0 && res_ninit(res) == -1) {
+		h_errno = NETDB_INTERNAL;
+		__res_put_state(res);
+		return NULL;
+	}
 	return res;
 }
 
