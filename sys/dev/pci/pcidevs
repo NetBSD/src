@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.549 2003/07/06 22:56:09 dyoung Exp $
+$NetBSD: pcidevs,v 1.550 2003/07/12 05:59:50 hubertf Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -2342,6 +2342,8 @@ product TOSHIBA2 ISA		0x0602	ISA Bridge
 product TOSHIBA2 ToPIC95	0x0603	ToPIC95 CardBus-PCI Bridge
 product TOSHIBA2 ToPIC95B	0x060a	ToPIC95B CardBus-PCI Bridge
 product TOSHIBA2 ToPIC97	0x060f	ToPIC97 CardBus-PCI Bridge
+product TOSHIBA2 SMCARD		0x0804	Smart Media Controller
+product TOSHIBA2 SDCARD		0x0805	Secure Digital Card Controller Type-A
 product TOSHIBA2 ToPIC100	0x0617	ToPIC100 CardBus-PCI Bridge
 product TOSHIBA2 OBOE		0x0701	Fast Infrared Type O
 product TOSHIBA2 DONAUOBOE	0x0d01	Fast Infrared Type DO
