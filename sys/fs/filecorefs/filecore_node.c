@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_node.c,v 1.10 2002/03/08 20:48:40 thorpej Exp $	*/
+/*	$NetBSD: filecore_node.c,v 1.1 2002/12/23 17:30:40 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 Andrew McMurry
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_node.c,v 1.10 2002/03/08 20:48:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_node.c,v 1.1 2002/12/23 17:30:40 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,10 +53,10 @@ __KERNEL_RCSID(0, "$NetBSD: filecore_node.c,v 1.10 2002/03/08 20:48:40 thorpej E
 #include <sys/pool.h>
 #include <sys/stat.h>
 
-#include <filecorefs/filecore.h>
-#include <filecorefs/filecore_extern.h>
-#include <filecorefs/filecore_node.h>
-#include <filecorefs/filecore_mount.h>
+#include <fs/filecorefs/filecore.h>
+#include <fs/filecorefs/filecore_extern.h>
+#include <fs/filecorefs/filecore_node.h>
+#include <fs/filecorefs/filecore_mount.h>
 
 /*
  * Structures associated with filecore_node caching.

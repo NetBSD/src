@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_mount.h,v 1.3 2002/09/21 18:11:13 christos Exp $	*/
+/*	$NetBSD: filecore_mount.h,v 1.1 2002/12/23 17:30:40 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998 Andrew McMurry

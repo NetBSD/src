@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vfsops.c,v 1.22 2002/09/21 20:28:50 mycroft Exp $	*/
+/*	$NetBSD: filecore_vfsops.c,v 1.1 2002/12/23 17:30:41 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 Andrew McMurry
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.22 2002/09/21 20:28:50 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.1 2002/12/23 17:30:41 jdolecek Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -58,10 +58,10 @@ __KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.22 2002/09/21 20:28:50 mycroft
 #include <sys/pool.h>
 #include <sys/conf.h>
 
-#include <filecorefs/filecore.h>
-#include <filecorefs/filecore_extern.h>
-#include <filecorefs/filecore_node.h>
-#include <filecorefs/filecore_mount.h>
+#include <fs/filecorefs/filecore.h>
+#include <fs/filecorefs/filecore_extern.h>
+#include <fs/filecorefs/filecore_node.h>
+#include <fs/filecorefs/filecore_mount.h>
 
 extern const struct vnodeopv_desc filecore_vnodeop_opv_desc;
 
