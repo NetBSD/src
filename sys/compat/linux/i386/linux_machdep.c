@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.14 1995/08/30 00:32:51 fvdl Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.15 1995/08/31 09:33:10 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -417,13 +417,15 @@ linux_machdepioctl(p, uap, retval)
 	register_t *retval;
 {
 	struct ioctl_args bia, tmparg;
+	u_long com;
+#if NVT > 0
 	int error, mode;
 	struct vt_mode lvt;
 	caddr_t bvtp, sg;
 	u_int fd;
 	struct file *fp;
 	struct filedesc *fdp;
-	u_long com;
+#endif
 
 	SCARG(&bia, fd) = SCARG(uap, fd);
 	SCARG(&bia, data) = SCARG(uap, data);
