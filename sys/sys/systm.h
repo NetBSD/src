@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.166 2003/08/07 16:34:17 agc Exp $	*/
+/*	$NetBSD: systm.h,v 1.167 2003/10/26 10:45:03 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -345,8 +345,6 @@ int	uiomove __P((void *, size_t, struct uio *));
 
 #ifdef _KERNEL
 caddr_t	allocsys __P((caddr_t, caddr_t (*)(caddr_t)));
-#define	ALLOCSYS(base, name, type, num) \
-	    (name) = (type *)(base); (base) = (caddr_t)ALIGN((name)+(num))
 
 int	setjmp	__P((label_t *));
 void	longjmp	__P((label_t *));

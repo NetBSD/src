@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_allocsys.c,v 1.25 2003/10/26 10:32:24 jdolecek Exp $	*/
+/*	$NetBSD: kern_allocsys.c,v 1.26 2003/10/26 10:45:03 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_allocsys.c,v 1.25 2003/10/26 10:32:24 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_allocsys.c,v 1.26 2003/10/26 10:45:03 jdolecek Exp $");
 
 #include "opt_bufcache.h"
 
@@ -98,6 +98,9 @@ __KERNEL_RCSID(0, "$NetBSD: kern_allocsys.c,v 1.25 2003/10/26 10:32:24 jdolecek 
 u_int	nbuf = NBUF;
 u_int	bufpages = BUFPAGES;	/* optional hardwired count */
 u_int	bufcache = BUFCACHE;	/* % of RAM to use for buffer cache */
+
+#define	ALLOCSYS(base, name, type, num) \
+	    (name) = (type *)(base); (base) = (caddr_t)ALIGN((name)+(num))
 
 /*
  * Allocate space for system data structures.  We are given
