@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.204 2004/09/29 21:28:34 christos Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.205 2004/10/06 01:34:11 darrenr Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.204 2004/09/29 21:28:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.205 2004/10/06 01:34:11 darrenr Exp $");
 
 #include "opt_inet.h"
 #include "opt_gateway.h"
@@ -649,6 +649,20 @@ ip_input(struct mbuf *m)
 			return;
 		ip = mtod(m, struct ip *);
 		hlen = ip->ip_hl << 2;
+		/*
+		 * XXX The setting of "srcrt" here is to prevent ip_forward()
+		 * from generating ICMP redirects for packets that have
+		 * been redirected by a hook back out on to the same LAN that
+		 * they came from and is not an indication that the packet
+		 * is being inffluenced by source routing options.  This
+		 * allows things like
+		 * "rdr tlp0 0/0 port 80 -> 1.1.1.200 3128 tcp"
+		 * where tlp0 is both on the 1.1.1.0/24 network and is the
+		 * default route for hosts on 1.1.1.0/24.  Of course this
+		 * also requires a "map tlp0 ..." to complete the story.
+		 * One might argue whether or not this kind of network config.
+		 * should be supported in this manner... 
+		 */
 		srcrt = (odst.s_addr != ip->ip_dst.s_addr);
 	}
 #endif /* PFIL_HOOKS */
