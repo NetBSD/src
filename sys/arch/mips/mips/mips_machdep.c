@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.56 1999/09/25 00:00:39 shin Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.57 1999/10/18 17:23:00 soren Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.56 1999/09/25 00:00:39 shin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.57 1999/10/18 17:23:00 soren Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_ultrix.h"
@@ -519,11 +519,11 @@ cpu_identify()
 		}
 	}
 	if (fpuname == NULL && fpu_id.cpu.cp_imp == cpu_id.cpu.cp_imp)
-		fpuname = "built in floating point processor";
+		fpuname = "built-in FPU";
 	if (cpu_id.cpu.cp_imp == MIPS_R4700)	/* FPU PRid is 0x20 */
-		fpuname = "built in floating point processor";
+		fpuname = "built-in FPU";
 	if (cpu_id.cpu.cp_imp == MIPS_RC64470)	/* FPU PRid is 0x21 */
-		fpuname = "built in floating point processor";
+		fpuname = "built-in FPU";
 
 	printf("cpu0: ");
 	if (cpuname != NULL)
