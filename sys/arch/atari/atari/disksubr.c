@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.24 2003/01/06 12:46:07 wiz Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.25 2003/02/04 21:24:54 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -185,7 +185,7 @@ readdisklabel(dev, strat, lp, clp)
 	if (e < 0)
 		return("I/O error");
 
-	/* Unknown format or unitialised volume? */
+	/* Unknown format or uninitialized volume? */
 	if (e > 0)
 		uprintf("Warning: unknown disklabel format"
 			"- assuming empty disk\n");
