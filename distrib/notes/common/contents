@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.97.2.3 2004/09/11 10:50:09 he Exp $
+.\"	$NetBSD: contents,v 1.97.2.4 2004/09/11 10:51:46 he Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -924,7 +924,9 @@ that your system may need to boot.
 .showsize
 .\} \" !\n[xen]
 .\} \" !\n[evbppc]
+.\} \" !\n[sparc]
 .\} \" !\n[sgimips]
+.\} \" !\n[macppc]
 .\} \" !\n[mac68k]
 .\} \" !\n[evbarm]
 .\} \" !\n[atari]
