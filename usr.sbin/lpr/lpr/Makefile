@@ -1,8 +1,8 @@
-#	@(#)Makefile	5.3 (Berkeley) 6/19/90
+#	@(#)Makefile	8.1 (Berkeley) 6/6/93
 
 PROG=	lpr
 CFLAGS+=-I${.CURDIR}/../common_source
-SRCS=	lpr.c startdaemon.c printcap.c
+SRCS=	lpr.c startdaemon.c common.c
 BINOWN=	root
 BINGRP=	daemon
 BINMODE=6555
