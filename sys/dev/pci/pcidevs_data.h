@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.338 2001/06/27 18:03:14 mcr Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.339 2001/06/28 04:45:57 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.334 2001/06/27 17:57:23 mcr Exp 
+ *	NetBSD: pcidevs,v 1.335 2001/06/28 04:45:09 thorpej Exp 
  */
 
 /*
@@ -4984,6 +4984,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "SK-NET GE",
 	},
 	{
+	    PCI_VENDOR_TAMARACK, PCI_PRODUCT_TAMARACK_TC9021,
+	    0,
+	    "Tamarack Microelectronics, Inc.",
+	    "Tamarack TC9021 Gigabit Ethernet",
+	},
+	{
 	    PCI_VENDOR_TEKRAM, PCI_PRODUCT_TEKRAM_DC290,
 	    0,
 	    "Tekram Technology (1st PCI Vendor ID)",
@@ -9043,6 +9049,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_CMEDIA, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "C-Media Electronics Inc",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_TAMARACK, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Tamarack Microelectronics, Inc.",
 	    NULL,
 	},
 	{
