@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.32 2000/10/29 14:08:10 lukem Exp $
+.\"	$NetBSD: install,v 1.33 2000/11/01 00:23:51 pk Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -186,7 +186,7 @@ success is a string of
 .Sq Li \&. 's .
 .Pp
 Next, transfer the two floppy images
-.Pq Pa installation/floppy/boot.fs.gz No and Pa installation/floppy/instfs.fs.gz
+.Pq Pa installation/floppy/disk1.gz No and Pa installation/floppy/disk2
 to the disks you just formatted.
 You can do this step from
 .Nx ,
@@ -198,20 +198,19 @@ machine using
 (available in the NetBSD/i386 distribution).
 Insert the first floppy and run the following commands:
 .Pp
-.Dl # Ic "gunzip boot.fs.gz"
-.Dl # Ic "dd if=boot.fs of=/dev/rfd0a bs=36k"
+.Dl # Ic "gunzip disk1.gz"
+.Dl # Ic "dd if=disk1 of=/dev/rfd0a bs=36k"
 .Dl # Ic "eject floppy"
 .Pp
 Insert the second floppy and run the following commands:
 .Pp
-.Dl # Ic "gunzip instfs.fs.gz"
-.Dl # Ic "dd if=instfs.fs of=/dev/rfd0a bs=36k"
+.Dl # Ic "dd if=disk2 of=/dev/rfd0a bs=36k"
 .Dl # Ic "eject floppy"
 .Pp
 Be sure to label your floppies so you can later identify them.
 .Pp
 Insert the floppy made from
-.Pa boot.fs
+.Pa disk1
 into your Sparc.
 From the OpenBoot prompt, boot the floppy with the following command:
 .Pp
@@ -226,9 +225,9 @@ From the OpenBoot prompt, boot the floppy with the following command:
 .Pp
 After the initial probe messages you'll be asked to insert the floppy
 labeled
-.Dq NetBSD instfs .
+.Dq NetBSD disk2 .
 After the installation tools have been loaded from the
-.Li instfs
+.Li disk2
 floppy, you'll be asked to start the install or upgrade procedure.
 Proceed to the section
 .Sx Running the installation scripts.
@@ -402,11 +401,9 @@ Your client will need a kernel to boot (use
 .Dl # Ic "mv netbsd.GENERIC /export/client/root/netbsd"
 .Pp
 Your client will need installation tools (use
-.Pa installation/netboot/miniroot.tgz ) .
+.Pa installation/netboot/rootfs.tgz ) .
 .Pp
-.Dl # Ic "gunzip miniroot.tgz"
-.Dl # Ic "cd /export/client/root"
-.Dl # Ic "tar -xf miniroot.tar"
+.Dl # Ic "gunzip < rootfs.tgz | (cd /export/client/root && tar -xpf -)"
 .Pp
 Now, netboot your Sparc from the server by entering the appropriate
 .Ic boot command at the monitor prompt.
@@ -423,6 +420,44 @@ of the following forms:
 .Pp
 After the initial probe messages you'll be asked to start the
 install or upgrade procedure. Proceed to the section
+.Sx Running the installation scripts.
+below.
+.
+.Ss2 Installing NetBSD by using a bootable tape
+.
+Get the tape images
+.Pq Pa installation/tape/tapefile1.gz No and Pa installation/tape/tapefile2
+and transfer them to a tape using the following commands:
+.Pp
+.Dl # Ic "gunzip tapefile1.gz"
+.Dl # Ic "mt -f /dev/nrst0 rew"
+.Dl # Ic "dd if=tapefile1 of=/dev/nrst0 bs=4k"
+.Dl # Ic "dd if=tapefile2 of=/dev/nrst0 bs=4k"
+.Pp
+Now you can transfer the
+.Nx \*V.
+distribution sets from
+.Pq Pa binary/sets
+to the tape by using a series of additional
+.Dl # Ic "dd if=<aset>.tgz of=/dev/nrst0 bs=4k"
+commands.  See also the section
+.Sx Getting the NetBSD System on to Useful Media.
+Be sure to mark the location of these files on the tape; you'll need them
+during the installation procedure.
+.Pp
+Insert the tape into your Sparc's tapestation.
+From the OpenBoot prompt, boot the from the tape with the following command:
+.Pp
+.(tag OpenBoot\ PROM\ 2\ (alternate) -offset indent -compact
+.It sun4 PROM
+.Li > Ic "b st()"
+.It OpenBoot PROM
+.Li ok Ic "boot tape"
+.tag)
+.Pp
+After the initial probe messages you'll be asked to confirm the tape
+device and tape file number containing the installation tools.
+Then, proceed to the section
 .Sx Running the installation scripts.
 below.
 .
