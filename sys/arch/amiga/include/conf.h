@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.3 1996/09/07 12:40:25 mycroft Exp $	*/
+/*	$NetBSD: conf.h,v 1.4 1996/11/30 01:13:07 is Exp $	*/
 
 /*
  * Copyright (c) 1996 Bernd Ernesti.  All rights reserved.
@@ -73,6 +73,8 @@ cdev_decl(ser);
 cdev_decl(msc);
 
 cdev_decl(mfcs);
+
+cdev_decl(drcom);
 
 cdev_decl(view);
 
