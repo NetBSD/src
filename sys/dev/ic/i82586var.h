@@ -1,4 +1,4 @@
-/*	$NetBSD: i82586var.h,v 1.3 1997/07/29 20:24:46 pk Exp $	*/
+/*	$NetBSD: i82586var.h,v 1.4 1997/08/01 20:33:03 pk Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -178,6 +178,7 @@ struct ie_softc {
 	volatile char *cbuffs[MAXRXBUF];
         int rfhead, rftail, rbhead, rbtail;
 
+	volatile struct ie_cmd_common *nop_cmds[NTXBUF+1];
 	volatile struct ie_xmit_cmd *xmit_cmds[NTXBUF];
 	volatile struct ie_xmit_buf *xmit_buffs[NTXBUF];
 	u_char *xmit_cbuffs[NTXBUF];
