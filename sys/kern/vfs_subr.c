@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.109 1999/08/19 18:09:44 thorpej Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.110 1999/08/20 22:21:25 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -1310,33 +1310,37 @@ vgonel(vp, p)
 	 */
 	if ((vp->v_type == VBLK || vp->v_type == VCHR) && vp->v_specinfo != 0) {
 		simple_lock(&spechash_slock);
-		if (*vp->v_hashchain == vp) {
-			*vp->v_hashchain = vp->v_specnext;
-		} else {
-			for (vq = *vp->v_hashchain; vq; vq = vq->v_specnext) {
-				if (vq->v_specnext != vp)
-					continue;
-				vq->v_specnext = vp->v_specnext;
-				break;
-			}
-			if (vq == NULL)
-				panic("missing bdev");
-		}
-		if (vp->v_flag & VALIASED) {
-			vx = NULL;
-			for (vq = *vp->v_hashchain; vq; vq = vq->v_specnext) {
-				if (vq->v_rdev != vp->v_rdev ||
-				    vq->v_type != vp->v_type)
-					continue;
-				if (vx)
+		if (vp->v_hashchain != NULL) {
+			if (*vp->v_hashchain == vp) {
+				*vp->v_hashchain = vp->v_specnext;
+			} else {
+				for (vq = *vp->v_hashchain; vq;
+							vq = vq->v_specnext) {
+					if (vq->v_specnext != vp)
+						continue;
+					vq->v_specnext = vp->v_specnext;
 					break;
-				vx = vq;
+				}
+				if (vq == NULL)
+					panic("missing bdev");
 			}
-			if (vx == NULL)
-				panic("missing alias");
-			if (vq == NULL)
-				vx->v_flag &= ~VALIASED;
-			vp->v_flag &= ~VALIASED;
+			if (vp->v_flag & VALIASED) {
+				vx = NULL;
+				for (vq = *vp->v_hashchain; vq;
+							vq = vq->v_specnext) {
+					if (vq->v_rdev != vp->v_rdev ||
+					    vq->v_type != vp->v_type)
+						continue;
+					if (vx)
+						break;
+					vx = vq;
+				}
+				if (vx == NULL)
+					panic("missing alias");
+				if (vq == NULL)
+					vx->v_flag &= ~VALIASED;
+				vp->v_flag &= ~VALIASED;
+			}
 		}
 		simple_unlock(&spechash_slock);
 		FREE(vp->v_specinfo, M_VNODE);
