@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.112 2001/01/20 17:04:03 thorpej Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.113 2001/01/23 05:42:43 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.113 2001/01/20 17:03:32 thorpej Exp 
+ *	NetBSD: pcmciadevs,v 1.114 2001/01/23 05:42:12 thorpej Exp 
  */
 
 /*-
@@ -505,6 +505,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "Xircom",
 	    "Xircom CreditCard 10/100 Ethernet"	},
+	},
+	{
+	    PCMCIA_VENDOR_XIRCOM, PCMCIA_PRODUCT_XIRCOM_CT2,
+	    PCMCIA_CIS_XIRCOM_CT2,
+	    0,
+	    "Xircom",
+	    "Xircom CreditCard Token Ring II"	},
 	},
 	{
 	    PCMCIA_VENDOR_XIRCOM, PCMCIA_PRODUCT_XIRCOM_CEM,
