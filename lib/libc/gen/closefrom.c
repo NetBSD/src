@@ -1,4 +1,4 @@
-/*	$NetBSD: closefrom.c,v 1.1 2004/05/31 05:06:51 itojun Exp $	*/
+/*	$NetBSD: closefrom.c,v 1.2 2004/06/22 13:49:43 atatat Exp $	*/
 
 /*
  * Copyright (C) 2004 WIDE Project.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: closefrom.c,v 1.1 2004/05/31 05:06:51 itojun Exp $");
+__RCSID("$NetBSD: closefrom.c,v 1.2 2004/06/22 13:49:43 atatat Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <fcntl.h>
@@ -41,5 +41,5 @@ int
 closefrom(int fd)
 {
 
-	return (fcntl(F_CLOSEM, fd));
+	return (fcntl(fd, F_CLOSEM));
 }
