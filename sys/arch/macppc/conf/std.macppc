@@ -1,10 +1,11 @@
-#	$NetBSD: std.macppc,v 1.10 2001/02/04 17:33:42 briggs Exp $
+#	$NetBSD: std.macppc,v 1.11 2001/06/06 17:50:14 matt Exp $
 #
 # Standard/required options for NetBSD/macppc.
 
 machine	macppc powerpc
 
 # standard ("mandatory") kernel options.
+options 	PPC_MPC6XX	# Motorola STD PPC chips
 
 # Executable support:
 options 	EXEC_ELF32	# (native) ELF32 binary support
