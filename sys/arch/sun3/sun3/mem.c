@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.20 1996/12/17 21:11:36 gwr Exp $	*/
+/*	$NetBSD: mem.c,v 1.21 1997/01/27 20:43:56 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -62,8 +62,7 @@
 #include <machine/eeprom.h>
 #include <machine/pte.h>
 #include <machine/pmap.h>
-
-#include "machdep.h"
+#include <machine/machdep.h>
 
 #define	mmread	mmrw
 cdev_decl(mm);
