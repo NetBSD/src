@@ -1,4 +1,4 @@
-/*	$NetBSD: strtouq.c,v 1.14 2000/03/08 20:17:21 kleink Exp $	*/
+/*	$NetBSD: strtouq.c,v 1.15 2000/05/02 12:39:03 is Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)strtouq.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: strtouq.c,v 1.14 2000/03/08 20:17:21 kleink Exp $");
+__RCSID("$NetBSD: strtouq.c,v 1.15 2000/05/02 12:39:03 is Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -71,7 +71,7 @@ strtouq(nptr, endptr, base)
 	/* endptr may be NULL */
 
 #ifdef __GNUC__
-	/* This outrageous construct just to shut up a GCC warning. */
+	/* This outrageous construct works around an arm32 compiler bug. */
 	(void) &acc;
 #endif
 
