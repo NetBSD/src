@@ -1,30 +1,36 @@
-#	$NetBSD: Makefile,v 1.52 2003/02/01 06:23:50 thorpej Exp $
+#	$NetBSD: Makefile,v 1.53 2003/03/10 07:55:14 lukem Exp $
 
 INCSDIR= /usr/include/sys
 
 INCS=	acct.h agpio.h ansi.h ataio.h audioio.h \
 	bootblock.h bswap.h buf.h \
 	callout.h cdefs.h cdefs_aout.h \
-	cdefs_elf.h cdio.h chio.h clockctl.h conf.h core.h device.h \
-	dir.h dirent.h disk.h disklabel.h disklabel_acorn.h disklabel_mbr.h \
-	dkbad.h dkio.h dkstat.h domain.h dvdio.h endian.h envsys.h errno.h \
-	event.h \
-	exec.h exec_aout.h exec_coff.h exec_ecoff.h exec_elf.h exec_script.h \
-	extent.h fcntl.h fdio.h featuretest.h file.h filedesc.h filio.h \
-	gmon.h hash.h inttypes.h ioccom.h ioctl.h ioctl_compat.h ipc.h \
-	kcore.h kernel.h kgdb.h ksem.h ktrace.h lkm.h \
-	localedef.h lock.h lockf.h lwp.h malloc.h mallocvar.h mbuf.h md4.h \
-	md5.h midiio.h mman.h mount.h msg.h msgbuf.h mtio.h namei.h null.h \
+	cdefs_elf.h cdio.h chio.h clockctl.h conf.h core.h \
+	device.h dir.h dirent.h disk.h disklabel.h disklabel_acorn.h \
+	disklabel_mbr.h dkbad.h dkio.h dkstat.h domain.h dvdio.h \
+	endian.h envsys.h errno.h event.h exec.h exec_aout.h \
+	exec_coff.h exec_ecoff.h exec_elf.h exec_script.h extent.h \
+	fcntl.h fdio.h featuretest.h file.h filedesc.h filio.h \
+	gmon.h hash.h \
+	inttypes.h ioccom.h ioctl.h ioctl_compat.h ipc.h \
+	kcore.h kernel.h kgdb.h ksem.h ktrace.h \
+	lkm.h localedef.h lock.h lockf.h lwp.h \
+	malloc.h mallocvar.h mbuf.h md4.h \
+	md5.h midiio.h mman.h mount.h msg.h msgbuf.h mtio.h \
+	namei.h null.h \
 	param.h pipe.h pmc.h poll.h pool.h proc.h properties.h \
-	protosw.h ptrace.h queue.h ras.h reboot.h radioio.h resource.h \
-	resourcevar.h rnd.h sa.h scanio.h sched.h scsiio.h select.h sem.h \
-	sha1.h shm.h siginfo.h signal.h signalvar.h sigtypes.h \
-	socket.h socketvar.h sockio.h \
-	stat.h syscall.h syscallargs.h sysctl.h stdint.h swap.h syslimits.h \
-	syslog.h systm.h tablet.h termios.h time.h timeb.h timepps.h times.h \
-	timex.h tprintf.h trace.h tty.h ttychars.h ttycom.h ttydefaults.h \
-	ttydev.h types.h ucontext.h ucred.h uio.h un.h unistd.h unpcb.h user.h \
-	utsname.h vadvise.h verified_exec.h vmmeter.h vnode.h vnode_if.h wait.h wdog.h
+	protosw.h ptrace.h queue.h \
+	ras.h reboot.h radioio.h resource.h resourcevar.h rnd.h \
+	sa.h scanio.h sched.h scsiio.h select.h sem.h sha1.h shm.h \
+	siginfo.h signal.h signalvar.h sigtypes.h socket.h \
+	socketvar.h sockio.h stat.h syscall.h syscallargs.h \
+	sysctl.h stdint.h swap.h syslimits.h syslog.h systm.h \
+	tablet.h termios.h time.h timeb.h timepps.h times.h \
+	timex.h tprintf.h trace.h tree.h tty.h ttychars.h ttycom.h \
+	ttydefaults.h ttydev.h types.h \
+	ucontext.h ucred.h uio.h un.h unistd.h unpcb.h user.h utsname.h \
+	vadvise.h verified_exec.h vmmeter.h vnode.h vnode_if.h \
+	wait.h wdog.h
 
 SYMLINKS= sys/exec_elf.h /usr/include/elf.h \
 	sys/fcntl.h /usr/include/fcntl.h \
