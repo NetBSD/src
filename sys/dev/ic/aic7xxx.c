@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.63 2001/01/18 20:28:16 jdolecek Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.64 2001/01/22 14:30:43 jdolecek Exp $	*/
 
 /*
  * Generic driver for the aic7xxx based adaptec SCSI controllers
@@ -250,7 +250,7 @@ static void	ahc_handle_devreset(struct ahc_softc *, struct ahc_devinfo *,
 static void	ahc_dumpseq(struct ahc_softc *);
 #endif
 static void	ahc_loadseq(struct ahc_softc *);
-static int	ahc_check_patch(struct ahc_softc *, struct patch **,
+static int	ahc_check_patch(struct ahc_softc *, const struct patch **,
 				int, int *);
 static void	ahc_download_instr(struct ahc_softc *, int, u_int8_t *);
 static int	ahc_match_scb(struct scb *, int, char, int, u_int, role_t);
@@ -4401,7 +4401,7 @@ ahc_dumpseq(struct ahc_softc* ahc)
 static void
 ahc_loadseq(struct ahc_softc *ahc)
 {
-	struct patch *cur_patch;
+	const struct patch *cur_patch;
 	int i;
 	int downloaded;
 	int skip_addr;
@@ -4440,11 +4440,11 @@ ahc_loadseq(struct ahc_softc *ahc)
 }
 
 static int
-ahc_check_patch(struct ahc_softc *ahc, struct patch **start_patch,
+ahc_check_patch(struct ahc_softc *ahc, const struct patch **start_patch,
 		int start_instr, int *skip_addr)
 {
-	struct	patch *cur_patch;
-	struct	patch *last_patch;
+	const struct	patch *cur_patch;
+	const struct	patch *last_patch;
 	int	num_patches;
 
 	num_patches = sizeof(patches)/sizeof(struct patch);
@@ -4503,7 +4503,7 @@ ahc_download_instr(struct ahc_softc *ahc, int instrptr, u_int8_t *dconsts)
 	case AIC_OP_JE:
 	case AIC_OP_JZ:
 	{
-		struct patch *cur_patch;
+		const struct patch *cur_patch;
 		int address_offset;
 		u_int address;
 		int skip_addr;
