@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_vm.c,v 1.14 2002/11/28 21:21:33 manu Exp $ */
+/*	$NetBSD: mach_vm.c,v 1.15 2002/12/04 22:55:11 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_vm.c,v 1.14 2002/11/28 21:21:33 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_vm.c,v 1.15 2002/12/04 22:55:11 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -71,13 +71,20 @@ mach_vm_map(p, msgh, maxlen, dst)
 	mach_vm_map_request_t req;
 	mach_vm_map_reply_t rep;
 	struct sys_mmap_args cup;
-	int error;
+	vaddr_t addr;
+	int error, flags;
+	void *ret;
 
 	if ((error = copyin(msgh, &req, sizeof(req))) != 0)
 		return error;
 
-	DPRINTF(("mach_vm_map(addr = %p, size = 0x%08x);\n",
-	    (void *)req.req_address, req.req_size));
+	DPRINTF(("mach_vm_map(addr = %p, size = 0x%08x, obj = 0x%x, "
+	    "mask = 0x%08x, flags = 0x%x, offset = 0x%08llx, "
+	    "copy = %d, cur_prot = 0x%x, max_prot = 0x%x, inh = 0x%x);\n",
+	    (void *)req.req_address, req.req_size, req.req_object.name,
+	    req.req_mask, req.req_flags, (off_t)req.req_offset, req.req_copy,
+	    req.req_cur_protection, req.req_max_protection, 
+	    req.req_inherance));
 
 #if 1
 	/* XXX Darwin fails on mapping a page at address 0 */
@@ -87,12 +94,54 @@ mach_vm_map(p, msgh, maxlen, dst)
 
 	bzero(&rep, sizeof(rep));
 
-	SCARG(&cup, addr) = (void *)req.req_address;
+	req.req_size = round_page(req.req_size);
+
+	/* Where Mach uses 0x00ff, we use 0x0100 */
+	if ((req.req_mask & (req.req_mask + 1)) || (req.req_mask == 0))
+		req.req_mask = 0;
+	else
+		req.req_mask += 1;
+
+	if (req.req_flags & MACH_VM_FLAGS_ANYWHERE) {
+		SCARG(&cup, flags) = MAP_ANON;
+		flags = 0;
+	} else {
+		SCARG(&cup, flags) = MAP_ANON | MAP_FIXED;
+		flags = MAP_FIXED;
+	}
+
+	/* 
+	 * Use uvm_map_findspace to find a place which conforms to the 
+	 * requested alignement.
+	 */
+	vm_map_lock(&p->p_vmspace->vm_map);
+	ret = uvm_map_findspace(&p->p_vmspace->vm_map,
+	    trunc_page(req.req_address), req.req_size, &addr, 
+	    NULL, 0, req.req_mask, flags); 
+	vm_map_unlock(&p->p_vmspace->vm_map);
+
+	if (ret == NULL)
+		return MACH_MSG_ERROR(msgh, &req, &rep, ENOMEM, maxlen, dst);
+
+	switch(req.req_inherance) {
+	case MACH_VM_INHERIT_SHARE:
+		SCARG(&cup, flags) |= MAP_INHERIT;
+		break;
+	case MACH_VM_INHERIT_NONE:
+		break;
+	case MACH_VM_INHERIT_COPY:
+	case MACH_VM_INHERIT_DONATE_COPY:
+	default:
+		uprintf("mach_vm_map: unsupported inherance flag %d\n",
+		    req.req_inherance);
+		break;
+	}
+
+	SCARG(&cup, addr) = (void *)addr;
 	SCARG(&cup, len) = req.req_size;
-	SCARG(&cup, prot) = PROT_READ | PROT_WRITE;
-	SCARG(&cup, flags) = MAP_ANON | MAP_FIXED;
-	SCARG(&cup, fd) = -1;
-	SCARG(&cup, pos) = 0;
+	SCARG(&cup, prot) = req.req_cur_protection;
+	SCARG(&cup, fd) = -1;		/* XXX For now, no object mapping */
+	SCARG(&cup, pos) = req.req_offset;
 	
 	if ((error = sys_mmap(p, &cup, &rep.rep_retval)) != 0)
 		return MACH_MSG_ERROR(msgh, &req, &rep, error, maxlen, dst);
@@ -125,7 +174,6 @@ mach_vm_allocate(p, msgh, maxlen, dst)
 	mach_vm_allocate_reply_t rep;
 	struct sys_mmap_args cup;
 	vaddr_t addr;
-	quad_t endaddr;
 	size_t size;
 	int error;
 
@@ -144,8 +192,8 @@ mach_vm_allocate(p, msgh, maxlen, dst)
 	else
 		addr = trunc_page(addr);
 
-	endaddr = (quad_t)addr;
-	if ((endaddr + size) > vm_map_max(&p->p_vmspace->vm_map))
+	if (((addr + size) > vm_map_max(&p->p_vmspace->vm_map)) ||
+	    ((addr + size) <= addr))
 		addr = vm_map_min(&p->p_vmspace->vm_map);
 
 	bzero(&rep, sizeof(rep));
@@ -156,6 +204,8 @@ mach_vm_allocate(p, msgh, maxlen, dst)
 	SCARG(&cup, len) = size;
 	SCARG(&cup, prot) = PROT_READ | PROT_WRITE;
 	SCARG(&cup, flags) = MAP_ANON;
+	if ((req.req_flags & MACH_VM_FLAGS_ANYWHERE) == 0)
+		SCARG(&cup, flags) |= MAP_FIXED;
 	SCARG(&cup, fd) = -1;
 	SCARG(&cup, pos) = 0;
 
@@ -279,8 +329,8 @@ mach_sys_map_fd(p, v, retval)
 
 		vm_map_lock(&p->p_vmspace->vm_map);
 		if ((ret = uvm_map_findspace(&p->p_vmspace->vm_map,
-		    0x8000, evc.ev_len, (vaddr_t *)&evc.ev_addr,
-		    NULL, 0, PAGE_SIZE, 0)) == NULL) {
+		    vm_map_min(&p->p_vmspace->vm_map), evc.ev_len, 
+		    (vaddr_t *)&evc.ev_addr, NULL, 0, PAGE_SIZE, 0)) == NULL) {
 			vm_map_unlock(&p->p_vmspace->vm_map);
 			goto bad2;
 		}

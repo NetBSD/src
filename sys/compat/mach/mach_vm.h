@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_vm.h,v 1.5 2002/11/28 21:21:33 manu Exp $ */
+/*	$NetBSD: mach_vm.h,v 1.6 2002/12/04 22:55:11 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -61,7 +61,10 @@ typedef struct mach_sf_mapping {
 } mach_sf_mapping_t;
 
 /* vm_map */
-
+#define MACH_VM_INHERIT_SHARE 0
+#define MACH_VM_INHERIT_COPY 1
+#define MACH_VM_INHERIT_NONE 2
+#define MACH_VM_INHERIT_DONATE_COPY 3
 typedef struct {
 	mach_msg_header_t req_msgh;
 	mach_msg_body_t req_body;
