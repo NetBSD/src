@@ -2,11 +2,11 @@
 # Distribution kernel (NEC VR based model) kernel config file
 
 #
-# 	$NetBSD: GENERIC,v 1.51 2000/05/17 08:38:25 shin Exp $
+# 	$NetBSD: GENERIC,v 1.52 2000/06/03 08:00:42 takemura Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
-#ident 		"GENERIC-$Revision: 1.51 $"
+#ident 		"GENERIC-$Revision: 1.52 $"
 
 maxusers	8
 
@@ -247,6 +247,7 @@ pcic0   at isa2 port 0x3e0 iomem 0x70000 iosiz 0x4000 irq 0x00060003
 # Vadem Clio and Sharp Tripad
 #
 vrisab3 at vrgiu? platform SHARP_TRIPAD isaportoffset 0x1000000
+vrisab3 at vrgiu? platform VADEM_CLIO_C isaportoffset 0x1000000
 isa3    at vrisab3
 pcic0   at isa3 port 0x3e0 iomem 0x70000 iosiz 0x4000 irq 0x000d0003
 
