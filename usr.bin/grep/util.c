@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.1.1.2 2004/01/02 15:00:34 cjep Exp $	*/
+/*	$NetBSD: util.c,v 1.2 2004/10/30 17:37:10 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.1.1.2 2004/01/02 15:00:34 cjep Exp $");
+__RCSID("$NetBSD: util.c,v 1.2 2004/10/30 17:37:10 dsl Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -202,7 +202,7 @@ procfile(char *fn)
  * Process an individual line in a file. Return non-zero if it matches.
  */
 
-#define isword(x) (isalnum(x) || (x) == '_')
+#define isword(x) (isalnum((unsigned char)(x)) || (x) == '_')
 
 static int
 procline(str_t *l, int nottext)
