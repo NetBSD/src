@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee80211subr.c,v 1.25 2003/04/08 04:31:23 kml Exp $	*/
+/*	$NetBSD: if_ieee80211subr.c,v 1.26 2003/05/13 05:43:43 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ieee80211subr.c,v 1.25 2003/04/08 04:31:23 kml Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ieee80211subr.c,v 1.26 2003/05/13 05:43:43 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -1489,8 +1489,9 @@ ieee80211_send_prreq(struct ieee80211com *ic, struct ieee80211_node *ni,
 
 	*frm++ = IEEE80211_ELEMID_RATES;
 	for (i = 0; i < IEEE80211_RATE_SIZE; i++) {
-		if (ic->ic_sup_rates[i] != 0)
-			frm[i + 1] = ic->ic_sup_rates[i];
+		if (ic->ic_sup_rates[i] == 0)
+			break;
+		frm[i + 1] = ic->ic_sup_rates[i];
 	}
 	*frm++ = i;
 	frm += i;
@@ -2395,6 +2396,7 @@ ieee80211_new_state(struct ifnet *ifp, enum ieee80211_state nstate, int mgt)
 {
 	struct ieee80211com *ic = (void *)ifp;
 	struct ieee80211_node *ni = &ic->ic_bss;
+	u_int8_t old_bssid[IEEE80211_ADDR_LEN];
 	int i, error, ostate;
 #ifdef IEEE80211_DEBUG
 	static const char *stname[] = 
@@ -2476,6 +2478,7 @@ ieee80211_new_state(struct ifnet *ifp, enum ieee80211_state nstate, int mgt)
 		ni = &ic->ic_bss;
 		/* initialize bss for probe request */
 		IEEE80211_ADDR_COPY(ni->ni_macaddr, ifp->if_broadcastaddr);
+		IEEE80211_ADDR_COPY(old_bssid, ic->ic_bss.ni_bssid);
 		IEEE80211_ADDR_COPY(ni->ni_bssid, ifp->if_broadcastaddr);
 		ni->ni_nrate = 0;
 		memset(ni->ni_rates, 0, IEEE80211_RATE_SIZE);
@@ -2515,8 +2518,7 @@ ieee80211_new_state(struct ifnet *ifp, enum ieee80211_state nstate, int mgt)
 			if (ifp->if_flags & IFF_DEBUG)
 				printf("%s: no recent beacons from %s;"
 				    " rescanning\n",
-				    ifp->if_xname,
-				    ether_sprintf(ic->ic_bss.ni_bssid));
+				    ifp->if_xname, ether_sprintf(old_bssid));
 			ieee80211_free_allnodes(ic);
 			/* FALLTHRU */
 		case IEEE80211_S_AUTH:
