@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs.c,v 1.29 1997/10/01 02:21:34 enami Exp $	*/
+/*	$NetBSD: newfs.c,v 1.30 1997/11/01 18:25:46 drochner Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.13 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: newfs.c,v 1.29 1997/10/01 02:21:34 enami Exp $");
+__RCSID("$NetBSD: newfs.c,v 1.30 1997/11/01 18:25:46 drochner Exp $");
 #endif
 #endif /* not lint */
 
@@ -57,6 +57,7 @@ __RCSID("$NetBSD: newfs.c,v 1.29 1997/10/01 02:21:34 enami Exp $");
 #include <sys/file.h>
 #include <sys/mount.h>
 #include <sys/sysctl.h>
+#include <sys/wait.h>
 
 #include <ufs/ufs/dir.h>
 #include <ufs/ufs/dinode.h>
@@ -70,6 +71,7 @@ __RCSID("$NetBSD: newfs.c,v 1.29 1997/10/01 02:21:34 enami Exp $");
 #include <string.h>
 #include <syslog.h>
 #include <unistd.h>
+#include <signal.h>
 #include <err.h>
 #include <util.h>
 
@@ -197,7 +199,13 @@ main(argc, argv)
 	struct stat st;
 	struct statfs *mp;
 	int fsi = 0, fso, len, n, maxpartitions;
-	char *cp = NULL, *s1, *s2, *special, *opstring, buf[BUFSIZ];
+	char *cp = NULL, *s1, *s2, *special, *opstring;
+#ifdef MFS
+	char mountfromname[100];
+	pid_t pid, res;
+	struct statfs sf;
+	int status;
+#endif
 
 	if (strstr(__progname, "mfs")) {
 		mfs = 1;
@@ -520,8 +528,56 @@ havelabel:
 	if (mfs) {
 		struct mfs_args args;
 
-		sprintf(buf, "mfs:%d", getpid());
-		args.fspec = buf;
+		switch (pid = fork()) {
+		case -1:
+			perror("mfs");
+			exit(10);
+		case 0:
+			sprintf(mountfromname, "mfs:%d", getpid());
+			break;
+		default:
+			sprintf(mountfromname, "mfs:%d", pid);
+			for (;;) {
+				/*
+				 * spin until the mount succeeds
+				 * or the child exits
+				 */
+				usleep(1);
+
+				/*
+				 * XXX Here is a race condition: another process
+				 * can mount a filesystem which hides our
+				 * ramdisk before we see the success.
+				 */
+				if (statfs(argv[1], &sf) < 0)
+					err(88, "statfs %s", argv[1]);
+				if (!strcmp(sf.f_mntfromname, mountfromname) &&
+				    !strncmp(sf.f_mntonname, argv[1],
+					     MNAMELEN) &&
+				    !strcmp(sf.f_fstypename, "mfs"))
+					exit(0);
+
+				res = waitpid(pid, &status, WNOHANG);
+				if (res == -1)
+					err(11, "waitpid");
+				if (res != pid)
+					continue;
+				if (WIFEXITED(status))
+					errx(1, "%s: mount: %s", argv[1],
+					     strerror(WEXITSTATUS(status)));
+				else
+					errx(11, "abnormal termination");
+			}
+			/* NOTREACHED */
+		}
+
+		(void) setsid();
+		(void) close(0);
+		(void) close(1);
+		(void) close(2);
+		(void) chdir("/");
+
+		args.fspec = mountfromname;
 		args.export.ex_root = -2;
 		if (mntflags & MNT_RDONLY)
 			args.export.ex_flags = MNT_EXRDONLY;
@@ -530,7 +586,7 @@ havelabel:
 		args.base = membase;
 		args.size = fssize * sectorsize;
 		if (mount(MOUNT_MFS, argv[1], mntflags, &args) < 0)
-			err(1, "%s: mount", argv[1]);
+			exit(errno); /* parent prints message */
 	}
 #endif
 	exit(0);
