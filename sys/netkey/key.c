@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.61 2002/05/19 07:54:05 itojun Exp $	*/
+/*	$NetBSD: key.c,v 1.62 2002/05/19 08:12:55 itojun Exp $	*/
 /*	$KAME: key.c,v 1.203 2001/07/28 03:12:18 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.61 2002/05/19 07:54:05 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.62 2002/05/19 08:12:55 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -206,9 +206,9 @@ static const int maxsize[] = {
 	sizeof(struct sadb_x_sa2),	/* SADB_X_SA2 */
 };
 
-static const int ipsec_esp_keymin = 256;
-static const int ipsec_esp_auth = 0;
-static const int ipsec_ah_keymin = 128;
+static int ipsec_esp_keymin = 256;
+static int ipsec_esp_auth = 0;
+static int ipsec_ah_keymin = 128;
 
 #ifndef LIST_FOREACH
 #define LIST_FOREACH(elm, head, field)                                     \
@@ -7162,6 +7162,15 @@ key_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 	case KEYCTL_BLOCKACQ_LIFETIME:
 		return sysctl_int(oldp, oldlenp, newp, newlen,
 		    &key_blockacq_lifetime);
+	case KEYCTL_ESP_KEYMIN:
+		return sysctl_int(oldp, oldlenp, newp, newlen,
+		    &ipsec_esp_keymin);
+	case KEYCTL_ESP_AUTH:
+		return sysctl_int(oldp, oldlenp, newp, newlen,
+		    &ipsec_esp_auth);
+	case KEYCTL_AH_KEYMIN:
+		return sysctl_int(oldp, oldlenp, newp, newlen,
+		    &ipsec_ah_keymin);
 	default:
 		return EOPNOTSUPP;
 	}

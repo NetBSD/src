@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.8,v 1.76 2002/05/14 10:27:30 itojun Exp $
+.\"	$NetBSD: sysctl.8,v 1.77 2002/05/19 08:12:56 itojun Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -326,7 +326,10 @@ privilege can change the value.
 .It net.inet6.udp6.sendspace	integer	yes
 .It net.key.acq_exp_int	integer	yes
 .It net.key.acq_maxtime	integer	yes
+.It net.key.ah_keymin	integer	yes
 .It net.key.debug	integer	yes
+.It net.key.esp_auth	integer	yes
+.It net.key.esp_keymin	integer	yes
 .It net.key.kill_int	integer	yes
 .It net.key.random_int	integer	yes
 .It net.key.spi_max_value	integer	yes
@@ -416,6 +419,8 @@ definitions for fourth level UDP identifiers
 definitions for fourth level IPv6 UDP identifiers
 .It Pa \*[Lt]netinet6/ipsec.h\*[Gt]
 definitions for fourth level IPsec identifiers
+.It Pa \*[Lt]netkey/key_var.h\*[Gt]
+definitions for third level PF_KEY identifiers
 .El
 .Sh EXAMPLES
 For example, to retrieve the maximum number of processes allowed
