@@ -1,4 +1,4 @@
-.\"	$NetBSD: yacc.1,v 1.8 1997/01/09 20:23:29 tls Exp $
+.\"	$NetBSD: yacc.1,v 1.9 1997/07/19 19:47:38 perry Exp $
 .\"
 .\" Copyright (c) 1989, 1990 The Regents of the University of California.
 .\" All rights reserved.
@@ -35,7 +35,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)yacc.1	5.7 (Berkeley) 7/30/91
-.\"	$NetBSD: yacc.1,v 1.8 1997/01/09 20:23:29 tls Exp $
+.\"	$NetBSD: yacc.1,v 1.9 1997/07/19 19:47:38 perry Exp $
 .\"
 .Dd July 30, 1991
 .Dt YACC 1
@@ -49,6 +49,7 @@ parser generator
 .Nm yacc
 .Op Fl dlrtv
 .Op Fl b Ar prefix
+.Op Fl o Ar outputfile
 .Op Fl p Ar symbol_prefix
 .Ar filename
 .Sh DESCRIPTION
@@ -96,6 +97,11 @@ option is specified,
 .Nm yacc
 will not insert the #line directives.
 #line directives specified by the user will be retained.
+.It Fl o Ar outputfile
+The
+.Fl o
+option specifies an explicit output file name should be used instead
+of the default.
 .It Fl p Ar symbol_prefix
 The
 .Fl p

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.6 1997/06/18 19:08:29 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.7 1997/07/19 19:47:38 perry Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -46,7 +46,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	5.5 (Berkeley) 5/24/93";
 #else
-static char rcsid[] = "$NetBSD: main.c,v 1.6 1997/06/18 19:08:29 christos Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.7 1997/07/19 19:47:38 perry Exp $";
 #endif
 #endif /* not lint */
 
@@ -66,6 +66,8 @@ char *temp_form = "yacc.XXXXXXX";
 
 int lineno;
 int outline;
+
+int explicit_file_name;
 
 char *action_file_name;
 char *code_file_name;
@@ -150,7 +152,8 @@ set_signals()
 
 usage()
 {
-    fprintf(stderr, "usage: %s [-dlrtv] [-b file_prefix] [-p symbol_prefix] filename\n", myname);
+    fprintf(stderr, "usage: %s [-dlrtv] [-b file_prefix] [-o outputfile] "
+	"[-p symbol_prefix] filename\n", myname);
     exit(1);
 }
 
@@ -194,6 +197,16 @@ char *argv[];
 	case 'l':
 	    lflag = 1;
 	    break;
+
+	case 'o':
+	    if (*++s)
+		output_file_name = s;
+	    else if (++i < argc)
+		output_file_name = argv[i];
+	    else
+		usage();
+	    explicit_file_name = 1;
+		continue;
 
 	case 'p':
 	    if (*++s)
@@ -318,11 +331,14 @@ create_file_names()
 
     len = strlen(file_prefix);
 
-    output_file_name = MALLOC(len + 7);
-    if (output_file_name == 0)
-	no_space();
-    strcpy(output_file_name, file_prefix);
-    strcpy(output_file_name + len, OUTPUT_SUFFIX);
+    if (!output_file_name)
+    {
+	output_file_name = MALLOC(len + 7);
+	if (output_file_name == 0)
+	    no_space();
+	strcpy(output_file_name, file_prefix);
+	strcpy(output_file_name + len, OUTPUT_SUFFIX);
+    }
 
     if (rflag)
     {
@@ -337,11 +353,23 @@ create_file_names()
 
     if (dflag)
     {
-	defines_file_name = MALLOC(len + 7);
-	if (defines_file_name == 0)
-	    no_space();
-	strcpy(defines_file_name, file_prefix);
-	strcpy(defines_file_name + len, DEFINES_SUFFIX);
+	if (explicit_file_name)
+	{
+	    defines_file_name = MALLOC(strlen(output_file_name));
+	    if (defines_file_name == 0)
+		no_space();
+	    strcpy(defines_file_name, output_file_name);
+	    if (!strcmp(output_file_name + (strlen(output_file_name)-2), ".c"))
+		defines_file_name [strlen(output_file_name)-1] = 'h';
+	}
+	else
+	{
+	    defines_file_name = MALLOC(len + 7);
+	    if (defines_file_name == 0)
+		no_space();
+	    strcpy(defines_file_name, file_prefix);
+	    strcpy(defines_file_name + len, DEFINES_SUFFIX);
+	}
     }
 
     if (vflag)
