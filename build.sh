@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.89 2003/01/31 01:38:35 lukem Exp $
+#	$NetBSD: build.sh,v 1.90 2003/02/06 22:19:06 enami Exp $
 #
 # Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -244,7 +244,8 @@ Usage: ${progname} [-EnorUu] [-a arch] [-B buildid] [-D dest] [-j njob] [-M obj]
 
  Other operations:
     help		Show this message (and exit)
-    makewrapper		Create ${toolprefix}make-${MACHINE} wrapper and ${toolprefix}make.  (Always done)
+    makewrapper		Create ${toolprefix}make-\${MACHINE} wrapper and ${toolprefix}make.
+			(Always done)
     obj			Run "make obj" (default unless -o is used)
     tools 		Build and install tools
     kernel=conf		Build kernel with config file \`conf'
@@ -688,7 +689,7 @@ createmakewrapper()
 	eval cat <<EOF $makewrapout
 #! /bin/sh
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.89 2003/01/31 01:38:35 lukem Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.90 2003/02/06 22:19:06 enami Exp $
 #
 
 EOF
