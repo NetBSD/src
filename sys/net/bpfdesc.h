@@ -1,4 +1,4 @@
-/*	$NetBSD: bpfdesc.h,v 1.16 2003/08/07 16:32:48 agc Exp $	*/
+/*	$NetBSD: bpfdesc.h,v 1.16.2.1 2004/04/21 03:56:20 jmc Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -41,6 +41,7 @@
 #ifndef _NET_BPFDESC_H_
 #define _NET_BPFDESC_H_
 
+#include <sys/callout.h>
 #include <sys/select.h>
 
 /*
@@ -70,11 +71,13 @@ struct bpf_d {
 	struct bpf_insn *bd_filter; 	/* filter code */
 	u_long		bd_rcount;	/* number of packets received */
 	u_long		bd_dcount;	/* number of packets dropped */
+	u_long		bd_ccount;	/* number of packets captured */
 
 	u_char		bd_promisc;	/* true if listening promiscuously */
 	u_char		bd_state;	/* idle, waiting, or timed out */
 	u_char		bd_immediate;	/* true to return on packet arrival */
 	int		bd_hdrcmplt;	/* false to fill in src lladdr */
+	int		bd_seesent;	/* true if bpf should see sent packets */
 	int		bd_async;	/* non-zero if packet reception should generate signal */
 	pid_t		bd_pgid;	/* process or group id for signal */
 #if BSD < 199103
@@ -85,7 +88,14 @@ struct bpf_d {
 	u_char		bd_pad;		/* explicit alignment */
 	struct selinfo	bd_sel;		/* bsd select info */
 #endif
+	struct callout	bd_callout;	/* for BPF timeouts with select */
 };
+
+
+/* Values for bd_state */
+#define BPF_IDLE	0		/* no select in progress */
+#define BPF_WAITING	1		/* waiting for read timeout in select */
+#define BPF_TIMED_OUT	2		/* read timeout has expired in select */
 
 /*
  * Descriptor associated with each attached hardware interface.
