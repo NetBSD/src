@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.70 2000/07/13 01:24:04 matt Exp $	*/
+/*	$NetBSD: exec.h,v 1.71 2000/09/24 02:40:29 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -107,7 +107,7 @@ struct exec_vmcmd_set {
 	struct	exec_vmcmd *evs_cmds;
 };
 
-#define	EXEC_DEFAULT_VMCMD_SETSIZE	5	/* # of cmds in set to start */
+#define	EXEC_DEFAULT_VMCMD_SETSIZE	9	/* # of cmds in set to start */
 
 struct exec_package {
 	const char *ep_name;		/* file's name */
