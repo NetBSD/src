@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.24 2002/02/15 21:28:05 is Exp $
+# $NetBSD: INSTALL,v 1.25 2002/03/04 13:24:08 sommerfeld Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running make in this directory.
@@ -24,7 +24,7 @@
 #device.
 include "arch/amiga/conf/std.amiga"
 
-#ident  		"GENERIC-$Revision: 1.24 $"
+#ident  		"GENERIC-$Revision: 1.25 $"
 
 makeoptions	COPTS="-Os"
 
@@ -352,7 +352,6 @@ pseudo-device	ppp		1	# PPP network interfaces
 pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 pseudo-device	tun		1	# network tunnel line discipline
 #pseudo-device	gre		2	# generic L3 over IP tunnel
-#pseudo-device	ipip		2	# IP Encapsulation within IP (RFC 2003)
 pseudo-device	bpfilter	16	# Berkeley packet filter
 pseudo-device	ipfilter		# IP Filter package
 pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)

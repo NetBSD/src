@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.42 2002/02/25 19:09:43 kleink Exp $
+# $NetBSD: GENERIC,v 1.43 2002/03/04 13:24:11 sommerfeld Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include 	"arch/prep/conf/std.prep"
 
-#ident		"GENERIC-$Revision: 1.42 $"
+#ident		"GENERIC-$Revision: 1.43 $"
 
 maxusers	32
 
@@ -442,7 +442,6 @@ pseudo-device	sl		2	# Serial Line IP
 pseudo-device	strip		2	# Starmode Radio IP (Metricom)
 pseudo-device	tun		2	# network tunneling over tty
 pseudo-device	gre		2	# generic L3 over IP tunnel
-pseudo-device	ipip		2	# IP Encapsulation within IP (RFC 2003)
 pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith		2	# IPv[46] tcp relay translation i/f
 #pseudo-device	stf		2	# 6to4 IPv6 over IPv4 encapsulation
