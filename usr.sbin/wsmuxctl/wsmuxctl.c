@@ -1,4 +1,4 @@
-/* $NetBSD: wsmuxctl.c,v 1.6 2002/07/20 08:40:21 grant Exp $ */
+/* $NetBSD: wsmuxctl.c,v 1.7 2003/07/13 12:10:32 itojun Exp $ */
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -95,7 +95,8 @@ listdevs(int fd, int rec, int ind)
 		printf("%*s%s%d\n", ind, "", devnames[devs.devices[i].type],
 		       devs.devices[i].idx);
 		if (rec && devs.devices[i].type == WSMUX_MUX) {
-			sprintf(buf, "%s%d", ctlpath, devs.devices[i].idx);
+			snprintf(buf, sizeof(buf), "%s%d", ctlpath,
+			    devs.devices[i].idx);
 			rfd = open(buf, O_WRONLY, 0);
 			if (rfd < 0)
 				warn("%s", buf);
@@ -157,7 +158,7 @@ main(int argc, char **argv)
 	wsfd = open(wsdev, O_WRONLY, 0);
 	if (wsfd < 0) {
 		if (isdigit(wsdev[0])) {
-			sprintf(buf, "%s%s", ctlpath, wsdev);
+			snprintf(buf, sizeof(buf), "%s%s", ctlpath, wsdev);
 			wsdev = buf;
 			wsfd = open(wsdev, O_WRONLY, 0);
 		}

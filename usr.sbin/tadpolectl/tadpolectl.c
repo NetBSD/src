@@ -1,4 +1,4 @@
-/* $NetBSD: tadpolectl.c,v 1.5 2000/04/14 06:26:54 simonb Exp $ */
+/* $NetBSD: tadpolectl.c,v 1.6 2003/07/13 12:09:56 itojun Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -629,14 +629,14 @@ FUNC(hw_poweronseconds)
 /* ARGSUSED */                                              
 FUNC(hw_microcontroller_version)
 {
-	char *bufp, buf[BUFSIZ];
+	char buf[BUFSIZ];
 	struct tctrl_req req;
 
 	READ_ONLY;
 	READ_REQ(0x04, 1, 3);
-	bufp = buf;
-	sprintf(bufp, "%d%d", req.rspbuf[0]*1000, req.rspbuf[1]*10);
-	table[num].value = atoi(strdup(bufp));
+	snprintf(buf, sizeof(buf), "%d%d", req.rspbuf[0]*1000,
+	    req.rspbuf[1]*10);
+	table[num].value = atoi(strdup(buf));
 	return(1);
 }
 
@@ -644,14 +644,14 @@ FUNC(hw_microcontroller_version)
 /* ARGSUSED */                                              
 FUNC(hw_version)
 {
-	char *bufp, buf[BUFSIZ];
+	char buf[BUFSIZ];
 	struct tctrl_req req;
 
 	READ_ONLY;
 	READ_REQ(0x03, 1, 3);
-	bufp = buf;
-	sprintf(bufp, "%d%d", req.rspbuf[0]*1000, req.rspbuf[1]*10);
-	table[num].value = atoi(strdup(bufp));
+	snprintf(buf, sizeof(buf), "%d%d", req.rspbuf[0]*1000,
+	    req.rspbuf[1]*10);
+	table[num].value = atoi(strdup(buf));
 	return(1);
 }
 
