@@ -1,4 +1,4 @@
-/*	$NetBSD: sysfpga.c,v 1.2 2002/08/30 11:03:25 scw Exp $	*/
+/*	$NetBSD: sysfpga.c,v 1.3 2002/08/31 09:30:02 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -162,6 +162,10 @@ sysfpgaattach(struct device *parent, struct device *self, void *args)
 
 	if (sc->sc_ih[SYSFPGA_IGROUP_SUPERIO] == NULL)
 		panic("sysfpga: failed to register superio isr");
+
+#ifdef DEBUG
+	sysfpga_reg_write(sc, SYSFPGA_REG_NMIMR, 1);
+#endif
 
 	/*
 	 * Attach configured children
