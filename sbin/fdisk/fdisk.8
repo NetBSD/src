@@ -1,4 +1,4 @@
-.\"	$NetBSD: fdisk.8,v 1.35 2003/04/30 19:47:10 dsl Exp $
+.\"	$NetBSD: fdisk.8,v 1.36 2003/05/01 09:50:12 wiz Exp $
 .\"
 .Dd April 30, 2003
 .Dt FDISK 8
@@ -226,7 +226,7 @@ Display the partitions and interactively ask which one you want to edit.
 will step through each field showing the old value and asking for a new one.
 The
 .Em start
-and 
+and
 .Em size
 can be specified in blocks (nn), cylinders (nnc) or megabytes (nnm), values
 in megabytes will be rounded to the nearest cylinder boundary.
@@ -364,7 +364,7 @@ is the size of the partition in megabytes.
 are the bounds of this partition displayed as cylinder/head/sector.
 If the partition starts (or ends) on a cylinder boundary the head and
 sector values are omitted.
-If 
+If
 .Fl v
 is not specified the start of extended partitions and the first partition
 on the disk are rounded down to include the mandatory red tape in the
