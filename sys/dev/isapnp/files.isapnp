@@ -1,4 +1,4 @@
-#	$NetBSD: files.isapnp,v 1.26 2001/02/18 09:24:49 martin Exp $
+#	$NetBSD: files.isapnp,v 1.27 2001/02/24 02:04:27 lukem Exp $
 #
 # Config file and device description for machine-independent ISAPnP code.
 # Included by ports that need it.
@@ -9,7 +9,7 @@ device	isapnp {[port = -1], [size = 0],
 	     [iomem = -1], [iosiz = 0],
 	     [irq = -1], [drq = -1]}
 attach	isapnp at isa
-file	dev/isapnp/isapnp.c			isapnp needs-flag
+file	dev/isapnp/isapnp.c			isapnp		needs-flag
 file	dev/isapnp/isapnpdebug.c		isapnp
 file	dev/isapnp/isapnpres.c			isapnp
 file	dev/isapnp/isapnpdevs.c			isapnp
@@ -28,7 +28,7 @@ file	dev/isapnp/if_ne_isapnp.c		ne_isapnp
 
 # TROPIC based Token-Ring (IBM/3COM)
 attach	tr at isapnp with tr_isapnp
-file  dev/isapnp/if_tr_isapnp.c			tr_isapnp
+file	dev/isapnp/if_tr_isapnp.c		tr_isapnp
 
 # Aironet 802.11 ISA
 attach	an at isapnp with an_isapnp
@@ -53,7 +53,7 @@ file	dev/isapnp/sb_isapnp.c			sb_isapnp
 # GUS Pnp (Interwave)
 device	guspnp: audio, isadma, interwave, mulaw
 attach	guspnp at isapnp
-file	dev/isapnp/gus_isapnp.c			guspnp needs-flag
+file	dev/isapnp/gus_isapnp.c			guspnp		needs-flag
 
 # Yamaha OPL3-SA3 driver
 attach	ym at isapnp with ym_isapnp
@@ -61,7 +61,7 @@ file	dev/isapnp/ym_isapnp.c			ym_isapnp
 
 # WSS compatibles
 attach	wss at isapnp with wss_isapnp
-file	dev/isapnp/wss_isapnp.c			wss_isapnp needs-flag
+file	dev/isapnp/wss_isapnp.c			wss_isapnp	needs-flag
 
 # ESS compatibles
 attach	ess at isapnp with ess_isapnp
