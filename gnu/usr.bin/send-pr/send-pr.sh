@@ -63,27 +63,12 @@ TEMP=$TMPDIR/p$$
 BAD=$TMPDIR/pbad$$
 REF=$TMPDIR/pf$$
 
-if [ -z "$HOSTNAME" ]; then
-  if [ -f /bin/hostname ] ; then HOSTNAME=`/bin/hostname` 
-  elif [ -f /usr/bin/hostname ] ; then HOSTNAME=`/usr/bin/hostname` 
-  # Solaris et al.
-  elif [ -f /usr/ucb/hostname ] ; then HOSTNAME=`/usr/ucb/hostname`
-  # Irix
-  elif [ -f /usr/bsd/hostname ] ; then HOSTNAME=`/usr/bsd/hostname`
-  else echo "$COMMAND: HOSTNAME not set and hostname not found"; exit 1
-  fi
-fi
-
 if [ -z "$LOGNAME" -a -n "$USER" ]; then
   LOGNAME=$USER
 fi
-if [ -z "$LOGNAME" ]; then
-  FROM=
-  REPLY_TO=
-else
-  FROM="$LOGNAME@$HOSTNAME"
-  REPLY_TO="$LOGNAME@$HOSTNAME"
-fi
+
+FROM="$LOGNAME"
+REPLY_TO="$LOGNAME"
 
 # Find out the name of the originator of this PR.
 if [ -n "$NAME" ]; then
