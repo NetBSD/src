@@ -1,4 +1,4 @@
-/*	$NetBSD: gets.c,v 1.5 1994/10/26 05:44:46 cgd Exp $	*/
+/*	$NetBSD: gets.c,v 1.6 1995/10/11 21:16:57 pk Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -60,10 +60,12 @@ gets(buf)
 				putchar('\b');
 			}
 			break;
+#if HASH_ERASE
 		case '#':
 			if (lp > buf)
 				--lp;
 			break;
+#endif
 		case 'r'&037: {
 			register char *p;
 
@@ -72,7 +74,9 @@ gets(buf)
 				putchar(*p);
 			break;
 		}
+#if AT_ERASE
 		case '@':
+#endif
 		case 'u'&037:
 		case 'w'&037:
 			lp = buf;
