@@ -1,4 +1,4 @@
-/*	$NetBSD: dtop.c,v 1.62 2002/10/23 09:11:48 jdolecek Exp $	*/
+/*	$NetBSD: dtop.c,v 1.63 2003/01/18 06:15:23 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -94,7 +94,7 @@ SOFTWARE.
 ********************************************************/
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: dtop.c,v 1.62 2002/10/23 09:11:48 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dtop.c,v 1.63 2003/01/18 06:15:23 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "rasterconsole.h"
@@ -337,7 +337,8 @@ dtopopen(dev, flag, mode, p)
 		}
 		(void) dtopparam(tp, &tp->t_termios);
 		ttsetwater(tp);
-	} else if ((tp->t_state & TS_XCLUDE) && curproc->p_ucred->cr_uid != 0)
+	} else if ((tp->t_state & TS_XCLUDE)
+	    && curproc->p_ucred->cr_uid != 0)
 		return (EBUSY);
 	s = spltty();
 	while (!(flag & O_NONBLOCK) && !(tp->t_cflag & CLOCAL) &&
