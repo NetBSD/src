@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.3.4,v 1.1.2.10 1999/02/01 06:10:28 cgd Exp $
+#	$NetBSD: CHANGES-1.3.4,v 1.1.2.11 1999/02/01 07:49:16 cgd Exp $
 
 Changes from NetBSD 1.3.3 to NetBSD 1.3.4:
 
@@ -165,4 +165,32 @@ etc/etc.sparc/disktab				1.5-1.8
   Give floppy entry a BSD partition type in partition a.  Add an
   "instfs" entry used to build the ramdisk.  (mrg)
 
+usr.bin/vi/cl/cl_screen.c			1.2-1.3
 
+  If TERM was unset vi would report 'no such file or directory'.
+  Now reports 'terminal type unknown'.  (abs)
+
+sys/arch/alpha/include/stdarg.h			1.8
+sys/arch/arm32/include/stdarg.h			1.4
+sys/arch/arm32/include/varargs.h		1.4
+sys/arch/i386/include/stdarg.h			1.13-1.15
+sys/arch/m68k/include/stdarg.h			1.15-1.16
+sys/arch/mips/include/stdarg.h			1.12-1.14
+sys/arch/mips/include/varargs.h			1.14-1.16
+sys/arch/pc532/include/stdarg.h			1.13-1.14
+sys/arch/sparc/include/stdarg.h			1.11
+sys/arch/vax/include/stdarg.h			1.9-1.10
+
+  Use __builtin_next_arg(), since the `last' argument is a variable, and
+  may have been moved by code before va_start().  Fixes PR#6862.  (mycroft)
+
+etc/man.conf					1.11-1.13
+
+  Remove references to obsolete directories (PR#5599), sort sections in
+  a consistent order, and add sections 'n' and 'l' for pkg, X11, and
+  local manual pages.  (abs)
+
+sys/dev/ic/z8530tty.c                           patch
+
+  Revert pullup of revision 1.53 done for NetBSD 1.3.3.  It caused
+  problems for various users of the serial port, e.g. ppp.  (wrstuden)
