@@ -1,6 +1,9 @@
-$NetBSD: README.files,v 1.4 1996/04/25 13:09:31 cgd Exp $
+$NetBSD: README.files,v 1.5 1996/06/06 19:20:46 cgd Exp $
 
 README.files			This list.
+
+ported-software			A list of software ported to NetBSD/Alpha,
+				and patches to make software go.
 
 Snapshots are organized by release.  Releases are numbered by year, month,
 and day, in directories with names of the form "YYMMDD".
