@@ -1,4 +1,4 @@
-/*	$NetBSD: sel_subs.c,v 1.12 2000/02/17 03:12:26 itohy Exp $	*/
+/*	$NetBSD: sel_subs.c,v 1.13 2001/10/25 05:33:33 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)sel_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: sel_subs.c,v 1.12 2000/02/17 03:12:26 itohy Exp $");
+__RCSID("$NetBSD: sel_subs.c,v 1.13 2001/10/25 05:33:33 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -66,10 +66,10 @@ __RCSID("$NetBSD: sel_subs.c,v 1.12 2000/02/17 03:12:26 itohy Exp $");
 #include "sel_subs.h"
 #include "extern.h"
 
-static int str_sec __P((const char *, time_t *));
-static int usr_match __P((ARCHD *));
-static int grp_match __P((ARCHD *));
-static int trng_match __P((ARCHD *));
+static int str_sec(const char *, time_t *);
+static int usr_match(ARCHD *);
+static int grp_match(ARCHD *);
+static int trng_match(ARCHD *);
 
 static TIME_RNG *trhead = NULL;		/* time range list head */
 static TIME_RNG *trtail = NULL;		/* time range list tail */
@@ -87,14 +87,8 @@ static GRPT **grptb = NULL;		/* group selection table */
  *	0 if this archive member should be processed, 1 if it should be skipped
  */
 
-#if __STDC__
 int
 sel_chk(ARCHD *arcn)
-#else
-int
-sel_chk(arcn)
-	ARCHD *arcn;
-#endif
 {
 	if (((usrtb != NULL) && usr_match(arcn)) ||
 	    ((grptb != NULL) && grp_match(arcn)) ||
@@ -118,14 +112,8 @@ sel_chk(arcn)
  *	0 if added ok, -1 otherwise;
  */
 
-#if __STDC__
 int
 usr_add(char *str)
-#else
-int
-usr_add(str)
-	char *str;
-#endif
 {
 	u_int indx;
 	USRT *pt;
@@ -159,11 +147,7 @@ usr_add(str)
 		}
 		uid = (uid_t)pw->pw_uid;
 	} else
-#		ifdef NET2_STAT
-		uid = (uid_t)atoi(str+1);
-#		else
 		uid = (uid_t)strtoul(str+1, (char **)NULL, 10);
-#		endif
 	endpwent();
 
 	/*
@@ -198,14 +182,8 @@ usr_add(str)
  *	0 if this archive member should be processed, 1 if it should be skipped
  */
 
-#if __STDC__
 static int
 usr_match(ARCHD *arcn)
-#else
-static int
-usr_match(arcn)
-	ARCHD *arcn;
-#endif
 {
 	USRT *pt;
 
@@ -232,14 +210,8 @@ usr_match(arcn)
  *	0 if added ok, -1 otherwise;
  */
 
-#if __STDC__
 int
 grp_add(char *str)
-#else
-int
-grp_add(str)
-	char *str;
-#endif
 {
 	u_int indx;
 	GRPT *pt;
@@ -274,11 +246,7 @@ grp_add(str)
 		}
 		gid = (gid_t)gr->gr_gid;
 	} else
-#		ifdef NET2_STAT
-		gid = (gid_t)atoi(str+1);
-#		else
 		gid = (gid_t)strtoul(str+1, (char **)NULL, 10);
-#		endif
 	endgrent();
 
 	/*
@@ -313,14 +281,8 @@ grp_add(str)
  *	0 if this archive member should be processed, 1 if it should be skipped
  */
 
-#if __STDC__
 static int
 grp_match(ARCHD *arcn)
-#else
-static int
-grp_match(arcn)
-	ARCHD *arcn;
-#endif
 {
 	GRPT *pt;
 
@@ -369,14 +331,8 @@ grp_match(arcn)
  *	0 if the time range was added to the list, -1 otherwise
  */
 
-#if __STDC__
 int
 trng_add(char *str)
-#else
-int
-trng_add(str)
-	char *str;
-#endif
 {
 	TIME_RNG *pt;
 	char *up_pt = NULL;
@@ -516,14 +472,8 @@ trng_add(str)
  *	0 if this archive member should be processed, 1 if it should be skipped
  */
 
-#if __STDC__
 static int
 trng_match(ARCHD *arcn)
-#else
-static int
-trng_match(arcn)
-	ARCHD *arcn;
-#endif
 {
 	TIME_RNG *pt;
 
@@ -593,15 +543,8 @@ trng_match(arcn)
 
 #define ATOI2(s)	((s) += 2, ((s)[-2] - '0') * 10 + ((s)[-1] - '0'))
 
-#if __STDC__
 static int
 str_sec(const char *p, time_t *tval)
-#else
-static int
-str_sec(p, tval)
-	const char *p;
-	time_t *tval;
-#endif
 {
 	struct tm *lt;
 	const char *dot, *t;

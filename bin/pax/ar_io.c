@@ -1,4 +1,4 @@
-/*	$NetBSD: ar_io.c,v 1.19 2001/09/16 16:34:23 wiz Exp $	*/
+/*	$NetBSD: ar_io.c,v 1.20 2001/10/25 05:33:32 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ar_io.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: ar_io.c,v 1.19 2001/09/16 16:34:23 wiz Exp $");
+__RCSID("$NetBSD: ar_io.c,v 1.20 2001/10/25 05:33:32 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -92,11 +92,11 @@ int minusCfd = -1;			/* active -C directory */
 int curdirfd = -1;			/* original current directory */
 int force_one_volume;			/* 1 if we ignore volume changes */
 
-static int get_phys __P((void));
+static int get_phys(void);
 extern sigset_t s_mask;
-static void ar_start_gzip __P((int));
-static const char *timefmt __P((char *, size_t, off_t, time_t));
-static const char *sizefmt __P((char *, size_t, off_t));
+static void ar_start_gzip(int);
+static const char *timefmt(char *, size_t, off_t, time_t);
+static const char *sizefmt(char *, size_t, off_t);
 
 /*
  * ar_open()
@@ -107,14 +107,8 @@ static const char *sizefmt __P((char *, size_t, off_t));
  *	-1 on failure, 0 otherwise
  */
 
-#if __STDC__
 int
 ar_open(const char *name)
-#else
-int
-ar_open(name)
-	const char *name;
-#endif
 {
 	struct mtget mb;
 
@@ -324,13 +318,8 @@ ar_open(name)
  * ar_close()
  *	closes archive device, increments volume number, and prints i/o summary
  */
-#if __STDC__
 void
 ar_close(void)
-#else
-void
-ar_close()
-#endif
 {
 	FILE *outf;
 
@@ -417,13 +406,8 @@ ar_close()
  *	other side of the pipe from getting a SIGPIPE (pax will stop
  *	reading an archive once a format dependent trailer is detected).
  */
-#if __STDC__
 void
 ar_drain(void)
-#else
-void
-ar_drain()
-#endif
 {
 	int res;
 	char drbuf[MAXBLK];
@@ -454,13 +438,8 @@ ar_drain()
  *	0 if all ready to write, -1 otherwise
  */
 
-#if __STDC__
 int
 ar_set_wr(void)
-#else
-int
-ar_set_wr()
-#endif
 {
 	off_t cpos;
 
@@ -497,13 +476,8 @@ ar_set_wr()
  *	0 if we can append, -1 otherwise.
  */
 
-#if __STDC__
 int
 ar_app_ok(void)
-#else
-int
-ar_app_ok()
-#endif
 {
 	if (artyp == ISPIPE) {
 		tty_warn(1,
@@ -528,16 +502,8 @@ ar_app_ok()
  *	Number of bytes written.  -1 indicates an error.
  */
 
-#if __STDC__
 int
 read_with_restart(int fd, void *buf, int bsz)
-#else
-int
-read_with_restart(fd, buf, bsz)
-	int fd;
-	void *buf;
-	int bsz;
-#endif
 {
 	int r;
 
@@ -556,16 +522,8 @@ read_with_restart(fd, buf, bsz)
  *	Number of bytes read.  0 for end of file, -1 for an error.
  */
 
-#if __STDC__
 int
 xread(int fd, void *buf, int bsz)
-#else
-int
-xread(fd, buf, bsz)
-	int fd;
-	void *buf;
-	int bsz;
-#endif
 {
 	char *b = buf;
 	int nread = 0;
@@ -591,16 +549,8 @@ xread(fd, buf, bsz)
  *	Number of bytes written.  -1 indicates an error.
  */
 
-#if __STDC__
 int
 write_with_restart(int fd, void *buf, int bsz)
-#else
-int
-write_with_restart(fd, buf, bsz)
-	int fd;
-	void *buf;
-	int bsz;
-#endif
 {
 	int r;
 
@@ -619,16 +569,8 @@ write_with_restart(fd, buf, bsz)
  *	Number of bytes written.  -1 indicates an error.
  */
 
-#if __STDC__
 int
 xwrite(int fd, void *buf, int bsz)
-#else
-int
-xwrite(fd, buf, bsz)
-	int fd;
-	void *buf;
-	int bsz;
-#endif
 {
 	char *b = buf;
 	int written = 0;
@@ -654,15 +596,8 @@ xwrite(fd, buf, bsz)
  *	Number of bytes in buffer. 0 for end of file, -1 for a read error.
  */
 
-#if __STDC__
 int
 ar_read(char *buf, int cnt)
-#else
-int
-ar_read(buf, cnt)
-	char *buf;
-	int cnt;
-#endif
 {
 	int res = 0;
 
@@ -744,15 +679,8 @@ ar_read(buf, cnt)
  *	error in the archive occurred.
  */
 
-#if __STDC__
 int
 ar_write(char *buf, int bsz)
-#else
-int
-ar_write(buf, bsz)
-	char *buf;
-	int bsz;
-#endif
 {
 	int res;
 	off_t cpos;
@@ -872,13 +800,8 @@ ar_write(buf, bsz)
  *	0 when ok to try i/o again, -1 otherwise.
  */
 
-#if __STDC__
 int
 ar_rdsync(void)
-#else
-int
-ar_rdsync()
-#endif
 {
 	long fsbz;
 	off_t cpos;
@@ -963,15 +886,8 @@ ar_rdsync()
  *	partial move (the amount moved is in skipped)
  */
 
-#if __STDC__
 int
 ar_fow(off_t sksz, off_t *skipped)
-#else
-int
-ar_fow(sksz, skipped)
-	off_t sksz;
-	off_t *skipped;
-#endif
 {
 	off_t cpos;
 	off_t mpos;
@@ -1032,14 +948,8 @@ ar_fow(sksz, skipped)
  *	0 if moved the requested distance, -1 on complete failure
  */
 
-#if __STDC__
 int
 ar_rev(off_t sksz)
-#else
-int
-ar_rev(sksz)
-	off_t sksz;
-#endif
 {
 	off_t cpos;
 	struct mtop mb;
@@ -1171,13 +1081,8 @@ ar_rev(sksz)
  *	physical block size if ok (ok > 0), -1 otherwise
  */
 
-#if __STDC__
 static int
 get_phys(void)
-#else
-static int
-get_phys()
-#endif
 {
 	int padsz = 0;
 	int res;
@@ -1289,13 +1194,8 @@ get_phys()
  *	0 when ready to continue, -1 when all done
  */
 
-#if __STDC__
 int
 ar_next(void)
-#else
-int
-ar_next()
-#endif
 {
 	char buf[PAXPATHLEN+2];
 	static int freeit = 0;
@@ -1441,16 +1341,11 @@ ar_next()
  * to keep the fd the same in the calling function (parent).
  */
 void
-#ifdef __STDC__
 ar_start_gzip(int fd)
-#else
-ar_start_gzip(fd)
-	int fd;
-#endif
 {
 	pid_t pid;
 	int fds[2];
-	char *gzip_flags;
+	const char *gzip_flags;
 
 	if (pipe(fds) < 0)
 		err(1, "could not pipe");
@@ -1504,13 +1399,8 @@ timefmt(buf, size, sz, tm)
 	off_t sz;
 	time_t tm;
 {
-#ifdef NET2_STAT
-	(void)snprintf(buf, size, "%lu secs (%lu bytes/sec)",
-	    (unsigned long)tm, (unsigned long)(sz / tm));
-#else
-	(void)snprintf(buf, size, "%lu secs (%llu bytes/sec)",
-	    (unsigned long)tm, (unsigned long long)(sz / tm));
-#endif
+	(void)snprintf(buf, size, "%lu secs (" OFFT_F " bytes/sec)",
+	    (unsigned long)tm, (OFFT_T)(sz / tm));
 	return buf;
 }
 
@@ -1520,22 +1410,12 @@ sizefmt(buf, size, sz)
 	size_t size;
 	off_t sz;
 {
-#ifdef NET2_STAT
-	(void)snprintf(buf, size, "%lu bytes", (unsigned long)sz);
-#else
-	(void)snprintf(buf, size, "%llu bytes", (unsigned long long)sz);
-#endif
+	(void)snprintf(buf, size, OFFT_F " bytes", (OFFT_T)sz);
 	return buf;
 }
 
-#if __STDC__
 void
 ar_summary(int n)
-#else
-void
-ar_summary(n)
-	int n;
-#endif
 {
 	time_t secs;
 	int len;
@@ -1614,14 +1494,8 @@ ar_summary(n)
  * Returns 0 if all went well, else -1.
  */
 
-#ifdef __STDC__
 int
 ar_dochdir(char *name)
-#else
-int
-ar_dochdir(name)
-	char *name;
-#endif
 {
 	if (curdirfd == -1) {
 		/* first time. remember where we came from */
