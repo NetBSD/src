@@ -1,4 +1,4 @@
-/*	$NetBSD: ebsa285_machdep.c,v 1.3 1998/10/12 03:32:51 mark Exp $	*/
+/*	$NetBSD: ebsa285_machdep.c,v 1.4 1998/11/10 04:34:05 mark Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -824,6 +824,10 @@ arm32_cachectl(va, len, flags)
 }
 #endif
 
+extern struct bus_space footbridge_pci_io_bs_tag;
+extern struct bus_space footbridge_pci_mem_bs_tag;
+void footbridge_pci_bs_tag_init __P((void));
+
 void
 consinit(void)
 {
@@ -841,6 +845,8 @@ consinit(void)
 	isa_cats_init(DC21285_PCI_IO_VBASE, DC21285_PCI_MEM_VBASE);
 #endif
 
+	footbridge_pci_bs_tag_init();
+
 	get_bootconf_option(boot_args, "console", BOOTOPT_TYPE_STRING,
 	    &console);
 
@@ -849,7 +855,8 @@ consinit(void)
 		fcomcnattach(DC21285_ARMCSR_VBASE, comcnspeed, comcnmode);
 #if (NVGA > 0)
 	else if (strncmp(console, "vga", 3) == 0) {
-		vga_cnattach(&isa_io_bs_tag, &isa_mem_bs_tag, -1, 0);
+		vga_cnattach(&footbridge_pci_io_bs_tag,
+		    &footbridge_pci_mem_bs_tag, - 1, 0);
 #if (NPCKBC > 0)
 		pckbc_cnattach(&isa_io_bs_tag, PCKBC_KBD_SLOT);
 #endif	/* NPCKBC */
