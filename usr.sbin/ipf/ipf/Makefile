@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2004/03/29 23:28:11 jmc Exp $
+#	$NetBSD: Makefile,v 1.20 2004/03/31 00:34:32 lukem Exp $
 
 .include <bsd.own.mk>		# for MKDYNAMICROOT definition
 
@@ -8,26 +8,28 @@ MAN=		ipf.8 ipf.4 ipf.5 ipl.4
 MLINKS=		ipl.4 ipfilter.4 ipf.5 ipf.conf.5 ipf.5 ipf6.conf.5
 CPPFLAGS+=	-I.
 
+DPSRCS+=	ipf_l.h ipf_y.h
+
 CLEANFILES+=	ipf_y.c ipf_y.h
 CLEANFILES+=	ipf_l.c ipf_l.h
 
-ipf_y.c: ipf_y.y ipf_l.h
+ipf_y.c: ipf_y.y
 	${_MKTARGET_CREATE}
-	${YACC} -d ${NETBSDSRCDIR}/dist/ipf/tools/ipf_y.y
+	${YACC} -d ${.ALLSRC}
 	sed -e 's/yy/ipf_yy/g' \
 	    -e 's/"ipf_y.y"/"..\/tools\/ipf_y.y"/' \
-		y.tab.c > ${.TARGET}
+	    y.tab.c > ${.TARGET}
 	sed -e 's/yy/ipf_yy/g' \
-		y.tab.h > ${.TARGET:.c=.h}
+	    y.tab.h > ${.TARGET:.c=.h}
 
 ipf_y.h: ipf_y.c
 
-ipf_l.c: lexer.c ipf_l.h ipf_y.h
+ipf_l.c: lexer.c
 	${_MKTARGET_CREATE}
 	sed -e 's/yy/ipf_yy/g' \
-	     -e 's/y.tab.h/ipf_y.h/' \
-	     -e 's/lexer.h/ipf_l.h/' \
-		${NETBSDSRCDIR}/dist/ipf/tools/lexer.c > ${.TARGET}
+	    -e 's/y.tab.h/ipf_y.h/' \
+	    -e 's/lexer.h/ipf_l.h/' \
+	    ${.ALLSRC} > ${.TARGET}
 
 ipf_l.h: lexer.h
 	${_MKTARGET_CREATE}

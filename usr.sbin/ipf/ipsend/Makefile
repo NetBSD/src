@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22 2004/03/29 23:28:12 jmc Exp $
+#	$NetBSD: Makefile,v 1.23 2004/03/31 00:34:32 lukem Exp $
 
 NOGCCERROR=	# defined
 
@@ -24,7 +24,7 @@ DPSRCS+=	iplang_y.h
 
 iplang_y.c: iplang_y.y
 	${_MKTARGET_CREATE}
-	${YACC} -d ${NETBSDSRCDIR}/dist/ipf/iplang/iplang_y.y
+	${YACC} -d ${.ALLSRC}
 	mv y.tab.c ${.TARGET}
 	mv y.tab.h ${.TARGET:.c=.h}
 
