@@ -1,4 +1,4 @@
-/*	$NetBSD: iostat.c,v 1.41 2004/02/13 11:36:24 wiz Exp $	*/
+/*	$NetBSD: iostat.c,v 1.42 2004/02/25 03:39:14 dbj Exp $	*/
 
 /*
  * Copyright (c) 1996 John M. Vinopal
@@ -71,7 +71,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)iostat.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: iostat.c,v 1.41 2004/02/13 11:36:24 wiz Exp $");
+__RCSID("$NetBSD: iostat.c,v 1.42 2004/02/25 03:39:14 dbj Exp $");
 #endif
 #endif /* not lint */
 
@@ -248,8 +248,8 @@ header()
 	if (ISSET(todo, SHOW_STATS_X)) {
 		if (ISSET(todo, SHOW_TOTALS)) {
 			(void)printf(
-			    "device  read KB/t    xfr   time     MB/s");
-			(void)printf(" write KB/t    xfr   time     MB/s\n");
+			    "device  read KB/t    xfr   time     MB  ");
+			(void)printf(" write KB/t    xfr   time     MB\n");
 		} else {
 			(void)printf(
 			    "device  read KB/t    r/s   time     MB/s");
