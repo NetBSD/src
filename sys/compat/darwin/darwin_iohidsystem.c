@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_iohidsystem.c,v 1.10 2003/09/11 23:16:19 manu Exp $ */
+/*	$NetBSD: darwin_iohidsystem.c,v 1.11 2003/09/13 07:56:54 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_iohidsystem.c,v 1.10 2003/09/11 23:16:19 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_iohidsystem.c,v 1.11 2003/09/13 07:56:54 manu Exp $");
 
 #include "ioconf.h"
 #include "wsmux.h"
@@ -86,7 +86,8 @@ static void mach_notify_iohidsystem(struct lwp *, struct mach_right *);
 
 struct darwin_iohidsystem_thread_args {
 	vaddr_t dita_shmem;
-	struct proc **dita_p;
+	struct proc *dita_p;
+	int dita_done;
 };
 
 #if 0
@@ -137,7 +138,6 @@ darwin_iohidsystem_connect_method_scalari_scalaro(args)
 	case DARWIN_IOHIDCREATESHMEM: {
 		/* Create the shared memory for HID events */
 		int version;
-		struct proc *newpp;
 		int error;
 		size_t memsize;
 		vaddr_t kvaddr;
@@ -175,10 +175,21 @@ darwin_iohidsystem_connect_method_scalari_scalaro(args)
 
 			dita = malloc(sizeof(*dita), M_TEMP, M_WAITOK);
 			dita->dita_shmem = kvaddr;
-			dita->dita_p = &newpp;
+			dita->dita_done = 0;
 
 			kthread_create1(darwin_iohidsystem_thread, 
-			    (void *)dita, &newpp, "iohidsystem");
+			    (void *)dita, &dita->dita_p, "iohidsystem");
+
+			/* 
+			 * Make sure the thread got the informations
+			 * before exitting and destroying dita.
+			 */
+			while (!dita->dita_done)
+				(void)tsleep(&dita->dita_done, 
+				    PZERO, "iohid_done", 0);
+
+			free(dita, M_TEMP);
+
 		}
 		rep->rep_outcount = 0;
 		break;
@@ -294,9 +305,15 @@ darwin_iohidsystem_thread(args)
 	printf("darwin_iohidsystem_thread: start\n");
 #endif
 	dita = (struct darwin_iohidsystem_thread_args *)args;
-	shmem = (struct  darwin_iohidsystem_shmem *)dita->dita_shmem;
-	p = *dita->dita_p;
+	shmem = (struct darwin_iohidsystem_shmem *)dita->dita_shmem;
+	p = dita->dita_p;
 	l = proc_representative_lwp(p);
+
+	/* 
+	 * Allow the parent to get rid of dita.
+	 */
+	dita->dita_done = 1;
+	wakeup(&dita->dita_done);
 
 	evg = (struct darwin_iohidsystem_evglobals *)&shmem->dis_evglobals;
 
@@ -351,7 +368,6 @@ darwin_iohidsystem_thread(args)
 	}
 
 exit:
-	free(dita, M_TEMP);	
 	kthread_exit(error);
 	/* NOTREACHED */
 };
