@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.147 1999/04/25 02:56:30 simonb Exp $	*/
+/*	$NetBSD: init_main.c,v 1.148 1999/04/30 18:42:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -115,6 +115,7 @@ struct	pgrp pgrp0;
 struct	proc proc0;
 struct	pcred cred0;
 struct	filedesc0 filedesc0;
+struct	cwdinfo cwdi0;
 struct	plimit limit0;
 struct	vmspace vmspace0;
 #ifndef curproc
@@ -256,6 +257,11 @@ main()
 	p->p_fd = &filedesc0.fd_fd;
 	fdinit1(&filedesc0);
 
+	/* Create the CWD info. */
+	p->p_cwdi = &cwdi0;
+	cwdi0.cwdi_cmask = cmask;
+	cwdi0.cwdi_refcnt = 1;
+
 	/* Create the limits structures. */
 	p->p_limit = &limit0;
 	for (i = 0; i < sizeof(p->p_rlimit)/sizeof(p->p_rlimit[0]); i++)
@@ -375,10 +381,10 @@ main()
 	 */
 	if (VFS_ROOT(mountlist.cqh_first, &rootvnode))
 		panic("cannot find root vnode");
-	filedesc0.fd_fd.fd_cdir = rootvnode;
-	VREF(filedesc0.fd_fd.fd_cdir);
+	cwdi0.cwdi_cdir = rootvnode;
+	VREF(cwdi0.cwdi_cdir);
 	VOP_UNLOCK(rootvnode, 0);
-	filedesc0.fd_fd.fd_rdir = NULL;
+	cwdi0.cwdi_rdir = NULL;
 	uvm_swap_init();
 
 	/*
