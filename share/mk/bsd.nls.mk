@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.nls.mk,v 1.7 1997/05/07 15:53:33 mycroft Exp $
+#	$NetBSD: bsd.nls.mk,v 1.8 1997/05/07 16:46:07 mycroft Exp $
 
 .if !target(.MAIN)
 .if exists(${.CURDIR}/../Makefile.inc)
@@ -9,6 +9,7 @@
 .endif
 .PHONY:		cleannls nlsinstall
 install:	nlsinstall
+cleandir:	cleannls
 
 .SUFFIXES: .cat .msg
 
@@ -31,7 +32,6 @@ NLSNAME=lib${LIB}
 .if defined(NLSALL)
 all: ${NLSALL}
 
-cleandir: cleannls
 cleannls:
 	rm -f ${NLSALL}
 
@@ -50,6 +50,8 @@ ${DESTDIR}${NLSDIR}/${F:T:R}/${NLSNAME}.cat: ${F}
 	${INSTALL} ${COPY} -o ${NLSOWN} -g ${NLSGRP} -m ${NLSMODE} ${.ALLSRC} \
 		${.TARGET}
 .endfor
+.else
+cleannls:
 .endif
 
 .if !target(nlsinstall)
