@@ -3281,8 +3281,17 @@ pc|ibmpc|ibm pc PC/IX:\
 	:li#24:co#80:am:bs:bw:eo:\
 	:cd=\E[J:ce=\E[K:cl=\Ec:cm=\E[%i%2;%2H:do=\E[B:ho=\E[;H:\
 	:nd=\E[C:up=\E[A:so=\E[7m:se=\E[0m:us=\E[4m:ue=\E[0m:
+# this pc3 termcap entry posted to comp.unix.bsd on Mon, 22 Feb 1993
+# by "Alex R.N. Wetmore" <aw2t+@andrew.cmu.edu>
 pc3|ibmpc3|IBM PC 386BSD Console:\
-        :li#25:tc=pc:
+	:li#25:co#80:am:bs:bw:eo:\
+	:ac=l\332q\304k\277x\263j\331m\300w\302u\264v\301t\303n\305:\
+	:kh=\E[Y:ku=\E[A:kd=\E[B:kl=\E[D:kr=\E[C:\
+	:sr=\E[T:sf=\E[S:\
+	:cd=\E[J:ce=\E[K:cl=\Ec:cm=\E[%i%2;%2H:do=\E[B:ho=\E[;H:\
+	:nd=\E[C:up=\E[A:so=\E[1;7x\E[2;0x:se=\E[1;0x\E[2;7x:\
+	:us=\E[1;7x\E[2;0x:ue=\E[1;0x\E[2;7x:\
+	:md=\E[7m:me=\E[0m\E[1;0x\E[2;7x:
 ibmx|ibmpcx|IBM PC xenix console display:\
 	:al=\E[L:am:bs:cd=\E[J:ce=\E[K:cl=^L:cm=\E[%d;%dH:co#80:\
 	:dc=\E[P:dl=\E[M:do=\E[B:ei=:ho=\E[H:ic=\E[@:im=:li#25:\
@@ -3518,6 +3527,24 @@ ifmr|Informer D304:\
 	:am:bs:cd=\E/:ce=\EQ:cl=\EZ:cm=\EY%r%+ %+ :co#80:dc=\E\\:\
 	:do=^J:im=:ei=:ic=\E[:li#24:nd=\EC:so=\EJ:se=\EK:up=\EA:\
 	:sr=\En:ho=\EH:
+#
+# Termcap for SCO Console (extended ANSI)
+#
+li|scoansi|scoansi80x25|SCO Extended Ansi standard crt:\
+	:al=\E[L:am:bs:cd=\E[J:ce=\E[K:cl=\E[2J\E[H:cm=\E[%i%d;%dH:co#80:\
+	:dc=\E[P:dl=\E[M:do=\E[B:bt=\E[Z:ei=:ho=\E[H:ic=\E[from: @:im=:li#25:\
+	:nd=\E[C:pt:so=\E[7m:se=\E[m:us=\E[4m:ue=\E[m:up=\E[A:\
+	:k1=\E[M:k2=\E[N:k3=\E[O:k4=\E[P:k5=\E[Q:k6=\E[R:\
+	:k7=\E[S:k8=\E[T:k9=\E[U:k0=\E[V:\
+	:kb=^h:ku=\E[A:kd=\E[B:kl=\E[D:kr=\E[C:eo:sf=\E[S:sr=\E[T:\
+	:mb=\E[5m:md=\E[1m:me=\E[m:\
+	:GS=\E[12m:GE=\E[10m:GV=\63:GH=D:\
+	:GC=E:GL=\64:GR=C:RT=^J:G1=?:G2=Z:G3=@:G4=Y:G5=;:G6=I:G7=H:G8=<:\
+	:GU=A:GD=B:\
+	:CW=\E[M:NU=\E[N:RF=\E[O:RC=\E[P:\
+	:WL=\E[S:WR=\E[T:CL=\E[U:CR=\E[V:\
+	:HM=\E[H:EN=\E[F:PU=\E[I:PD=\E[G:\
+	:Gc=N:Gd=K:Gh=M:Gl=L:Gu=J:Gv=\072:
 #
 # END OF TERMCAP
 #  ------------------------
