@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.30 2003/11/09 22:36:17 uwe Exp $
+# $NetBSD: GENERIC,v 1.31 2004/01/18 03:00:48 uwe Exp $
 #
 # GENERIC machine description file
 # 
@@ -120,8 +120,8 @@ wskbd*		at hpckbd? mux 1
 #
 # Serial Devices
 # don't need to define SCICONSOLE. you can select from bootloader.
+scif0		at shb?
 options 	SCIFCN_SPEED=19200
-scif0 at shb?
 
 adc*		at shb?			# analog->digital converter
 
@@ -156,8 +156,9 @@ pcmcia0 at hd64461pcmcia? controller 0 socket ?	# I/O card, memory card
 pcmcia1 at hd64461pcmcia? controller 1 socket ? # memory card only
 
 # PCMCIA network interfaces
-ne*	at pcmcia0 function ?		# NE2000-compatible Ethernet
 mbe*	at pcmcia0 function ?		# MB8696x based Ethernet
+ne*	at pcmcia0 function ?		# NE2000-compatible Ethernet
+wi*	at pcmcia0 function ?		# Lucent/Intersil WaveLan IEEE (802.11)
 
 ukphy*	at mii? phy ?			# generic unknown PHYs
 
@@ -181,7 +182,7 @@ pseudo-device	loop			# network loopback
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	clockctl		# user control of clock subsystem
+pseudo-device	ksyms			# kernel symbol table interface
 
 # mouse & keyboard multiplexor pseudo-devices
 pseudo-device	wsmux
-pseudo-device	ksyms			# /dev/ksyms
