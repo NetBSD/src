@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.20 2002/03/15 05:55:38 gmcgarry Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.21 2002/11/05 07:41:21 chs Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.20 2002/03/15 05:55:38 gmcgarry Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.21 2002/11/05 07:41:21 chs Exp $");                                                  
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -533,4 +533,19 @@ pmap_bootstrap(nextpa, firstpa)
 		va += m68k_round_page(MSGBUFSIZE);
 		RELOC(virtual_avail, vaddr_t) = va;
 	}
+}
+
+void
+pmap_init_md(void)
+{
+	vaddr_t addr;
+
+	addr = (vaddr_t) intiobase;
+	if (uvm_map(kernel_map, &addr,
+		    m68k_ptob(IIOMAPSIZE+EIOMAPSIZE),
+		    NULL, UVM_UNKNOWN_OFFSET, 0,
+		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE,
+				UVM_INH_NONE, UVM_ADV_RANDOM,
+				UVM_FLAG_FIXED)) != 0)
+		panic("pmap_init_md: uvm_map failed");
 }

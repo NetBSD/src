@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.1 2001/05/14 18:23:03 drochner Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.2 2002/11/05 07:41:17 chs Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -460,4 +460,10 @@ pmap_bootstrap(nextpa, firstpa)
 		va += m68k_round_page(MSGBUFSIZE);
 		RELOC(virtual_avail, vm_offset_t) = va;
 	}
+}
+
+void
+pmap_init_md(void)
+{
+	/* Nothing here. */
 }
