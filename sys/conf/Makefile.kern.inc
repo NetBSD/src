@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.2 2001/11/16 13:14:10 atatat Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.3 2001/11/16 16:15:08 atatat Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}. There are
@@ -17,6 +17,15 @@
 #	makeoptions DEBUGLIST="uvm* trap if_*"
 #
 # all ports are expected to include bsd.own.mk for toolchain settings
+
+##
+## (0) toolchain settings for things that aren't part of the standard
+## toolchain
+##
+MKDEP?=		mkdep
+STRIP?=		strip
+OBJCOPY?=	objcopy
+OBJDUMP?=	objdump
 
 ##
 ## (1) port independent source tree identification
@@ -200,7 +209,6 @@ depend: .depend
 
 .if !target(.depend)
 SRCS?=		${MD_SFILES} ${MD_CFILES} ${MI_CFILES} ${CFILES} ${SFILES}
-MKDEP?=		mkdep
 MKDEP_AFLAGS?=	${AFLAGS}
 MKDEP_CFLAGS?=	${CFLAGS}
 .depend: ${SRCS} assym.h
