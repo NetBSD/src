@@ -38,7 +38,7 @@
  *
  *	from: Utah Hdr: locore.s 1.58 91/04/22
  *	from: (hp300) @(#)locore.s	7.11 (Berkeley) 5/9/91
- *	$Id: copy.s,v 1.5 1994/01/21 22:50:10 cgd Exp $
+ *	$Id: copy.s,v 1.6 1994/01/21 23:10:13 cgd Exp $
  */
 
 #ifdef sun3	/* but code this simple prolly won't work for sun3x -- cgd */
@@ -286,7 +286,8 @@ Lcoflt:
 /*
  * {fu,su},{byte,sword,word}
  */
-TWOENTRY(fuword,fuiword)
+ALTENTRY(fuiword, _fuword)
+ENTRY(fuword)
 	SETUP_SFC
 	movl	sp@(4),a0		| address to read
 	movl	_curpcb,a1		| current pcb
@@ -303,7 +304,8 @@ ENTRY(fusword)
 	movsw	a0@,d0			| do read from user space
 	jra	Lfdone
 
-TWOENTRY(fubyte,fuibyte)
+ALTENTRY(fuibyte, _fubyte)
+ENTRY(fubyte)
 	SETUP_SFC
 	movl	sp@(4),a0		| address to read
 	movl	_curpcb,a1		| current pcb
@@ -319,7 +321,8 @@ Lfdone:
 	clrl	a1@(PCB_ONFAULT) 	| clear fault address
 	rts
 
-TWOENTRY(suword,suiword)
+ALTENTRY(suiword, _suword)
+ENTRY(suword)
 	SETUP_DFC
 	movl	sp@(4),a0		| address to write
 	movl	sp@(8),d0		| value to put there
@@ -339,7 +342,8 @@ ENTRY(susword)
 	moveq	#0,d0			| indicate no fault
 	jra	Lsdone
 
-TWOENTRY(subyte,suibyte)
+ALTENTRY(suibyte, _subyte)
+ENTRY(subyte)
 	SETUP_DFC
 	movl	sp@(4),a0		| address to write
 	movb	sp@(11),d0		| value to put there
