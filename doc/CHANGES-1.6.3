@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.52 2004/03/29 05:39:07 jmc Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.53 2004/03/29 05:43:06 jmc Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -305,3 +305,8 @@ usr.sbin/arp/arp.c			1.39
 
 	Plug memory leak. PR#22479
 	[fair, ticket #1636]
+
+libexec/fingerd/fingerd.c		1.21
+
+	Correct option parse error reporting. PR#24917
+	[fair, ticket #1639]
