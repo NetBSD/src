@@ -19,7 +19,7 @@
  * commenced: Sun Sep 27 18:14:01 PDT 1992
  * slight mod to make work with 34F as well: Wed Jun  2 18:05:48 WST 1993
  *
- *      $Id: ultra14f.c,v 1.13.2.8 1993/12/04 01:07:45 mycroft Exp $
+ *      $Id: ultra14f.c,v 1.13.2.9 1994/02/02 19:13:27 mycroft Exp $
  */
 
 #include "uha.h"
@@ -225,12 +225,12 @@ struct uha_data {
 	int dma;
 	int nummscps;
 	struct scsi_link sc_link;
-}	*uhadata[NUHA];
+};
 
 void uha_send_mbox __P((struct uha_data *, struct mscp *));
 int uha_abort __P((struct uha_data *, struct mscp *));
 int uha_poll __P((struct uha_data *, int));
-int uhaprobe __P((struct device *, struct cfdata *, void *));
+int uhaprobe __P((struct device *, struct device *, void *));
 void uhaattach __P((struct device *, struct device *, void *));
 u_int uha_adapter_info __P((struct uha_data *));
 int uhaintr __P((void *));
@@ -395,46 +395,32 @@ uha_poll(uha, wait)
  * from autoconf.c
  */
 int
-uhaprobe(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
+uhaprobe(parent, self, aux)
+	struct device *parent, *self;
 	void *aux;
 {
-	int unit = cf->cf_unit;
-	struct uha_data *uha;
 	struct isa_attach_args *ia = aux;
-	u_short iobase = ia->ia_iobase;
+	struct uha_data *uha = (void *)self;
 
-	if (iobase == IOBASEUNK)
+	if (ia->ia_iobase == IOBASEUNK)
 		return 0;
 
-	uha = malloc(sizeof(struct uha_data), M_TEMP, M_NOWAIT);
-	if (!uha) {
-		printf("uha%d: cannot malloc!\n", unit);
-		return 0;
-	}
-	bzero(uha, sizeof(*uha));
-	uhadata[unit] = uha;
-	uha->sc_iobase = iobase;
+	uha->sc_iobase = ia->ia_iobase;
 
 	/*
 	 * Try initialise a unit at this location
 	 * sets up dma and bus speed, loads uha->vect
 	 */
-	if (uha_find(uha) != 0) {
-		uhadata[unit] = NULL;
-		free(uha, M_TEMP);
+	if (uha_find(uha) != 0)
 		return 0;
-	}
 
 	if (ia->ia_irq == IRQUNK) {
 		ia->ia_irq = (1 << uha->vect);
 	} else {
 		if (ia->ia_irq != (1 << uha->vect)) {
-			printf("uha%d: irq mismatch, %x != %x\n", unit,
-				ia->ia_irq, (1 << uha->vect));
-			uhadata[unit] = NULL;
-			free(uha, M_TEMP);
+			printf("uha%d: irq mismatch, %x != %x\n",
+				uha->sc_dev.dv_unit, ia->ia_irq,
+				(1 << uha->vect));
 			return 0;
 		}
 	}
@@ -443,10 +429,8 @@ uhaprobe(parent, cf, aux)
 		ia->ia_drq = uha->dma;
 	} else {
 		if (ia->ia_drq != uha->dma) {
-			printf("uha%d: drq mismatch, %x != %x\n", unit,
-				ia->ia_drq, uha->dma);
-			uhadata[unit] = NULL;
-			free(uha, M_TEMP);
+			printf("uha%d: drq mismatch, %x != %x\n",
+				uha->sc_dev.dv_unit, ia->ia_drq, uha->dma);
 			return 0;
 		}
 	}
@@ -469,15 +453,8 @@ uhaattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	int unit = self->dv_unit;
-	struct uha_data *uha = uhadata[unit];
 	struct isa_attach_args *ia = aux;
-
-	bcopy((char *)uha + sizeof(struct device),
-	      (char *)self + sizeof(struct device),
-	      sizeof(struct uha_data) - sizeof(struct device));
-	free(uha, M_TEMP);
-	uhadata[unit] = uha = (struct uha_data *)self;
+	struct uha_data *uha = (void *)self;
 
 	uha_init(uha);
 
