@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.109 2003/09/27 13:29:02 darcy Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.110 2003/10/30 01:58:18 simonb Exp $	*/
 
 /*
  * Copyright (c) 1993, 1995
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.109 2003/09/27 13:29:02 darcy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.110 2003/10/30 01:58:18 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1091,8 +1091,7 @@ procfs_readdir(v)
 	case PFSfd: {
 		struct proc *p;
 		struct filedesc	*fdp;
-		struct file *fp;
-		int lim, last, nc = 0;
+		int lim, nc = 0;
 
 		p = PFIND(pfs->pfs_pid);
 		if (p == NULL)
@@ -1101,7 +1100,6 @@ procfs_readdir(v)
 		fdp = p->p_fd;
 
 		lim = min((int)p->p_rlimit[RLIMIT_NOFILE].rlim_cur, maxfiles);
-		last = min(fdp->fd_nfiles, lim);
 		if (i >= lim)
 			return 0;
 
@@ -1130,7 +1128,7 @@ procfs_readdir(v)
 			break;
 		}
 		for (; uio->uio_resid >= UIO_MX && i < fdp->fd_nfiles; i++) {
-			if ((fp = fd_getfile(fdp, i - 2)) == NULL)
+			if (fd_getfile(fdp, i - 2) == NULL)
 				continue;
 			d.d_fileno = PROCFS_FILENO(pfs->pfs_pid, PFSfd, i - 2);
 			d.d_namlen = snprintf(d.d_name, sizeof(d.d_name),

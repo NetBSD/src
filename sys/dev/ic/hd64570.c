@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64570.c,v 1.23 2003/05/03 18:11:17 wiz Exp $	*/
+/*	$NetBSD: hd64570.c,v 1.24 2003/10/30 01:58:17 simonb Exp $	*/
 
 /*
  * Copyright (c) 1999 Christian E. Hopps
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64570.c,v 1.23 2003/05/03 18:11:17 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64570.c,v 1.24 2003/10/30 01:58:17 simonb Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -1469,7 +1469,6 @@ sca_get_packets(sca_port_t *scp)
 static int
 sca_frame_avail(sca_port_t *scp)
 {
-	struct sca_softc *sc;
 	u_int16_t cda;
 	u_int32_t desc_p;	/* physical address (lower 16 bits) */
 	sca_desc_t *desc;
@@ -1479,7 +1478,6 @@ sca_frame_avail(sca_port_t *scp)
 	/*
 	 * Read the current descriptor from the SCA.
 	 */
-	sc = scp->sca;
 	cda = dmac_read_2(scp, SCA_CDAL0);
 
 	/*
@@ -1970,11 +1968,8 @@ sca_shutdown(struct sca_softc *sca)
 static void
 sca_port_starttx(sca_port_t *scp)
 {
-	struct sca_softc *sc;
 	u_int32_t	startdesc_p, enddesc_p;
 	int enddesc;
-
-	sc = scp->sca;
 
 	SCA_DPRINTF(SCA_DEBUG_TX, ("TX: starttx\n"));
 

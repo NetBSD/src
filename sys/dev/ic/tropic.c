@@ -1,4 +1,4 @@
-/*	$NetBSD: tropic.c,v 1.20 2003/01/06 13:05:13 wiz Exp $	*/
+/*	$NetBSD: tropic.c,v 1.21 2003/10/30 01:58:17 simonb Exp $	*/
 
 /* 
  * Ported to NetBSD by Onno van der Linden
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tropic.c,v 1.20 2003/01/06 13:05:13 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tropic.c,v 1.21 2003/10/30 01:58:17 simonb Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -243,10 +243,7 @@ tr_attach(sc)
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 
 	if (sc->sc_init_status & FAST_PATH_TRANSMIT) {
-		bus_size_t srb;
 		int	nbuf = 0;
-
-		srb = sc->sc_srb;
 
 		switch (sc->sc_memsize) {
 		case 65536:

@@ -1,4 +1,4 @@
-/* $NetBSD: adwlib.c,v 1.29 2003/10/29 02:31:55 mycroft Exp $        */
+/* $NetBSD: adwlib.c,v 1.30 2003/10/30 01:58:17 simonb Exp $        */
 
 /*
  * Low level routines for the Advanced Systems Inc. SCSI controllers chips
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adwlib.c,v 1.29 2003/10/29 02:31:55 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adwlib.c,v 1.30 2003/10/30 01:58:17 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1728,7 +1728,6 @@ ADW_SCSI_REQ_Q	*scsiq;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	ADW_CCB		*ccb;
-	long		req_size;
 	u_int32_t	req_paddr;
 	ADW_CARRIER	*new_carrp;
 
@@ -1764,7 +1763,6 @@ ADW_SCSI_REQ_Q	*scsiq;
 	 */
 	new_carrp->next_ba = htole32(ASC_CQ_STOPPER);
 
-	req_size = sizeof(ADW_SCSI_REQ_Q);
 	req_paddr = sc->sc_dmamap_control->dm_segs[0].ds_addr +
 		ADW_CCB_OFF(ccb) + offsetof(struct adw_ccb, scsiq);
 
@@ -2010,7 +2008,6 @@ ADW_SOFTC	*sc;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	u_int8_t	int_stat;
-	u_int16_t	target_bit;
 	ADW_CARRIER	*free_carrp/*, *ccb_carr*/;
 	u_int32_t	irq_next_pa;
 	ADW_SCSI_REQ_Q	*scsiq;
@@ -2106,9 +2103,6 @@ ADW_SOFTC	*sc;
 					: sc->carr_freelist->carr_ba;
 		sc->carr_freelist = free_carrp;
 		sc->carr_pending_cnt--;
-
-
-		target_bit = ADW_TID_TO_TIDMASK(scsiq->target_id);
 
 		/*
 		 * Clear request microcode control flag.

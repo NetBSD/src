@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_syscall.c,v 1.23 2003/10/27 14:11:46 junyoung Exp $	*/
+/*	$NetBSD: ibcs2_syscall.c,v 1.24 2003/10/30 02:07:37 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_syscall.c,v 1.23 2003/10/27 14:11:46 junyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_syscall.c,v 1.24 2003/10/30 02:07:37 simonb Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
@@ -194,14 +194,12 @@ ibcs2_syscall_fancy(frame)
 	register caddr_t params;
 	register const struct sysent *callp;
 	struct lwp *l;
-	register struct proc *p;
 	int error;
 	size_t argsize;
 	register_t code, args[8], rval[2];
 
 	uvmexp.syscalls++;
 	l = curlwp;
-	p = l->l_proc;
 
 	code = frame->tf_eax;
 	if (IBCS2_HIGH_SYSCALL(code))
