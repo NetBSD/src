@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.3 2001/10/06 13:32:18 manu Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.4 2001/10/14 17:21:47 manu Exp $ */
 
 /*-
  * Copyright (c) 1995, 2000, 2001 The NetBSD Foundation, Inc.
@@ -128,9 +128,13 @@ linux_sendsig(catcher, sig, mask, code)  /* XXX Check me */
 	int i,onstack;
 	struct linux_sigframe sf;
 
+#ifdef DEBUG_LINUX
 	printf("linux_sendsig()\n");
+#endif /* DEBUG_LINUX */
 	f = (struct frame *)p->p_md.md_regs;
+#ifdef DEBUG_LINUX
 	printf("f = %p\n", f);
+#endif /* DEBUG_LINUX */
 
 	/* 
 	 * Do we need to jump onto the signal stack? 
@@ -140,7 +144,7 @@ linux_sendsig(catcher, sig, mask, code)  /* XXX Check me */
 	    (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
 
 	/*
-	 * Signal stack is broken (see at the end of linux_sigreturn), so we do
+	 * Signal stack is broken (see at the end of linux_Sigreturn), so we do
 	 * not use it yet. XXX fix this.
 	 */
 	onstack=0;
@@ -156,26 +160,31 @@ linux_sendsig(catcher, sig, mask, code)  /* XXX Check me */
 		/* cast for _MIPS_BSD_API == _MIPS_BSD_API_LP32_64CLEAN case */
 		fp = (struct linux_sigframe *)(u_int32_t)f->f_regs[SP];
 
+#ifdef DEBUG_LINUX
 	printf("fp = %p, sf = %p\n", fp, &sf);
-	/* Build stack frame for signal trampoline. */
+#endif /* DEBUG_LINUX */
+
+	/* 
+	 * Build stack frame for signal trampoline. 
+	 */
 	memset(&sf, 0, sizeof sf);
-	sf.lsf_ass[0] = 0;			/* XXX */
-	sf.lsf_ass[1] = 0;
+
+	/*
+	 * This is the signal trampoline used by Linux, we don't use it,
+	 * but we set ip up in case an application expects it to be there
+	 */
 	sf.lsf_code[0] = 0x24020000;	/* li	v0, __NR_sigreturn	*/
-	sf.lsf_code[0] = 0x0000000c;	/* syscall			*/
+	sf.lsf_code[1] = 0x0000000c;	/* syscall			*/
+
 	native_to_linux_sigset(mask, &sf.lsf_mask);
 	for (i=0; i<32; i++)
 		sf.lsf_sc.lsc_regs[i] = f->f_regs[i];
 	sf.lsf_sc.lsc_mdhi = f->f_regs[MULHI];
 	sf.lsf_sc.lsc_mdlo = f->f_regs[MULLO];
 	sf.lsf_sc.lsc_pc = f->f_regs[PC];
-	sf.lsf_sc.lsc_status = 0;		/* XXX */
-	sf.lsf_sc.lsc_ownedfp = 0;		/* XXX */
-	sf.lsf_sc.lsc_fpc_csr = f->f_regs[SR];
-	sf.lsf_sc.lsc_fpc_eir = f->f_regs[RA];	/* XXX */
+	sf.lsf_sc.lsc_status = f->f_regs[SR];	/* XXX */
 	sf.lsf_sc.lsc_cause = f->f_regs[CAUSE];
 	sf.lsf_sc.lsc_badvaddr = f->f_regs[BADVADDR];	/* XXX */
-
 
 	/* 
 	 * Save signal stack.  XXX broken
@@ -191,6 +200,9 @@ linux_sendsig(catcher, sig, mask, code)  /* XXX Check me */
 		 * Process has trashed its stack; give it an illegal
 		 * instruction to halt it in its tracks.
 		 */
+#ifdef DEBUG_LINUX
+		printf("linux_sendsig: stack trashed\n");
+#endif /* DEBUG_LINUX */
 		sigexit(p, SIGILL);
 		/* NOTREACHED */
 	}
@@ -198,14 +210,17 @@ linux_sendsig(catcher, sig, mask, code)  /* XXX Check me */
 	/* Set up the registers to return to sigcode. */
 	f->f_regs[A0] = native_to_linux_sig[sig];
 	f->f_regs[A1] = 0;
-	f->f_regs[A2] = (int)&fp->lsf_sc;
+	f->f_regs[A2] = (unsigned long)&fp->lsf_sc;
 
-	f->f_regs[SP] = (int)fp;
-	f->f_regs[RA] = (int)p->p_sigctx.ps_sigcode;
-	f->f_regs[T9] = (int)catcher;
-	f->f_regs[PC] = (int)catcher;
+#ifdef DEBUG_LINUX
+	printf("sigcontext is at %p\n", &fp->lsf_sc);
+#endif /* DEBUG_LINUX */
 
+	f->f_regs[SP] = (unsigned long)fp;
 	/* Signal trampoline code is at base of user stack. */
+	f->f_regs[RA] = (unsigned long)p->p_sigctx.ps_sigcode;
+	f->f_regs[T9] = (unsigned long)catcher;
+	f->f_regs[PC] = (unsigned long)catcher;
 
 	/* Remember that we're now on the signal stack. */
 	if (onstack)
@@ -234,13 +249,16 @@ linux_sys_sigreturn(p, v, retval)
 	sigset_t mask;
 	int i, error;
 
+#ifdef DEBUG_LINUX
 	printf("linux_sys_sigreturn()\n");
+#endif /* DEBUG_LINUX */
+
 	/*
 	 * The trampoline code hands us the context.
 	 * It is unsafe to keep track of it ourselves, in the event that a
 	 * program jumps out of a signal handler.
 	 */
-	regs = SCARG(uap, regs);
+	regs = SCARG(uap, regs); 
 
 	kregs = regs;
 	/* if ((error = copyin(regs, &kregs, sizeof(kregs))) != 0)
@@ -252,12 +270,14 @@ linux_sys_sigreturn(p, v, retval)
 
 	/* Restore the register context. */
 	f = (struct frame *)p->p_md.md_regs;
+#ifdef DEBUG_LINUX
 	printf("sf = %p, f = %p\n", sf, f);
+#endif /* DEBUG_LINUX */
 	for (i=0; i<32; i++)
 		f->f_regs[i] = kregs.lregs[i];
 	f->f_regs[MULLO] = kregs.llo;
 	f->f_regs[MULHI] = kregs.lhi;
-	f->f_regs[PC] = kregs.lcp0_spc;
+	f->f_regs[PC] = kregs.lcp0_epc;
 	f->f_regs[BADVADDR] = kregs.lcp0_badvaddr;
 	f->f_regs[CAUSE] = kregs.lcp0_cause;
 
@@ -295,7 +315,7 @@ linux_sys_modify_ldt(p, v, retval)
 	 */
 #ifdef DEBUG_LINUX
 	printf("linux_sys_modify_ldt: should not be here.\n");	 
-#endif
+#endif /* DEBUG_LINUX */
   return 0;
 }
 #endif
@@ -338,7 +358,7 @@ linux_sys_ioperm(p, v, retval)
 	 */
 #ifdef DEBUG_LINUX
 	printf("linux_sys_ioperm: should not be here.\n");	 
-#endif
+#endif /* DEBUG_LINUX */
 	return 0;
 }
 
@@ -351,7 +371,27 @@ linux_sys_new_uname(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	 return linux_sys_uname(p, v, retval);
+/*
+ * Use this if you want to try Linux emulation with a glibc-2.2 
+ * or higher. Note that signals will not work
+ */
+#if 0
+        struct linux_sys_uname_args /* {
+                syscallarg(struct linux_utsname *) up;
+        } */ *uap = v;
+        struct linux_utsname luts;
+
+        strncpy(luts.l_sysname, linux_sysname, sizeof(luts.l_sysname));
+        strncpy(luts.l_nodename, hostname, sizeof(luts.l_nodename));
+        strncpy(luts.l_release, "2.4.0", sizeof(luts.l_release));
+        strncpy(luts.l_version, linux_version, sizeof(luts.l_version));
+        strncpy(luts.l_machine, machine, sizeof(luts.l_machine));
+        strncpy(luts.l_domainname, domainname, sizeof(luts.l_domainname));
+
+        return copyout(&luts, SCARG(uap, up), sizeof(luts));
+#else
+	return linux_sys_uname(p, v, retval);
+#endif
 }
 
 /*
