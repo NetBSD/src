@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.171 2004/01/04 21:06:04 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.172 2004/01/10 14:39:50 yamt Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -146,7 +146,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.171 2004/01/04 21:06:04 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.172 2004/01/10 14:39:50 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -1829,6 +1829,8 @@ rf_DispatchKernelIO(RF_DiskQueue_t *queue, RF_DiskQueueData_t *req)
 	 */
 	raidbp->rf_obp = bp;
 	raidbp->req = req;
+
+	BIO_COPYPRIO(&raidbp->rf_buf, bp);
 
 	switch (req->type) {
 	case RF_IO_TYPE_NOP:	/* used primarily to unlock a locked queue */

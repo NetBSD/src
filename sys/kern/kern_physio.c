@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_physio.c,v 1.57 2003/08/07 16:31:47 agc Exp $	*/
+/*	$NetBSD: kern_physio.c,v 1.58 2004/01/10 14:39:50 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_physio.c,v 1.57 2003/08/07 16:31:47 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_physio.c,v 1.58 2004/01/10 14:39:50 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -207,6 +207,8 @@ physio(strategy, bp, dev, flags, minphys, uio)
 				goto after_vsunlock;
 			}
 			vmapbuf(bp, todo);
+
+			BIO_SETPRIO(bp, BPRIO_TIMECRITICAL);
 
 			/* [call strategy to start the transfer] */
 			(*strategy)(bp);
