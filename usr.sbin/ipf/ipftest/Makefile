@@ -1,6 +1,4 @@
-#	$NetBSD: Makefile,v 1.29 2004/10/01 15:26:35 christos Exp $
-
-NOGCCERROR=	# defined
+#	$NetBSD: Makefile,v 1.30 2005/01/01 13:56:21 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -15,6 +13,8 @@ MAN=		ipftest.1
 CPPFLAGS+=	-DIPFILTER_LOG -DIPFILTER_LOOKUP \
 		-DIPFILTER_SCAN -DIPFILTER_SYNC -DIPFILTER_CKSUM -D_RADIX_H_ \
 		-I.
+
+CPPFLAGS.radix.c=	-Wno-error
 
 .PATH:		${NETBSDSRCDIR}/sys/dist/ipf/netinet
 

@@ -1,9 +1,6 @@
-#	$NetBSD: Makefile,v 1.3 2004/05/23 02:24:52 lukem Exp $
+#	$NetBSD: Makefile,v 1.4 2005/01/01 13:56:21 lukem Exp $
 
 MKPRIVATELIB=	yes
-USE_SHLIBDIR=	yes
-
-NOGCCERROR=	# defined
 
 LIB=		ipf
 
