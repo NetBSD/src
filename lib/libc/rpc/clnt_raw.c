@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_raw.c,v 1.9 1998/02/11 11:52:53 lukem Exp $	*/
+/*	$NetBSD: clnt_raw.c,v 1.10 1998/02/12 01:57:31 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)clnt_raw.c 1.22 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)clnt_raw.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: clnt_raw.c,v 1.9 1998/02/11 11:52:53 lukem Exp $");
+__RCSID("$NetBSD: clnt_raw.c,v 1.10 1998/02/12 01:57:31 lukem Exp $");
 #endif
 #endif
 
@@ -51,10 +51,8 @@ __RCSID("$NetBSD: clnt_raw.c,v 1.9 1998/02/11 11:52:53 lukem Exp $");
  */
 
 #include "namespace.h"
-
 #include <stdio.h>
 #include <stdlib.h>
-
 #include <rpc/rpc.h>
 
 #ifdef __weak_alias
@@ -67,21 +65,21 @@ __weak_alias(clntraw_create,_clntraw_create);
  * This is the "network" we will be moving stuff over.
  */
 static struct clntraw_private {
-	CLIENT		client_object;
-	XDR		xdr_stream;
-	char		_raw_buf[UDPMSGSIZE];
-	char		mashl_callmsg[MCALL_MSG_SIZE];
-	u_int32_t	mcnt;
+	CLIENT	client_object;
+	XDR	xdr_stream;
+	char	_raw_buf[UDPMSGSIZE];
+	char	mashl_callmsg[MCALL_MSG_SIZE];
+	u_int	mcnt;
 } *clntraw_private;
 
 
 
-static enum clnt_stat clntraw_call __P((CLIENT *, u_int32_t, xdrproc_t,
+static enum clnt_stat clntraw_call __P((CLIENT *, u_long, xdrproc_t,
     caddr_t, xdrproc_t, caddr_t, struct timeval));
 static void clntraw_geterr __P((CLIENT *, struct rpc_err *));
 static bool_t clntraw_freeres __P((CLIENT *, xdrproc_t, caddr_t));
 static void clntraw_abort __P((CLIENT *));
-static bool_t clntraw_control __P((CLIENT *, u_int, caddr_t));
+static bool_t clntraw_control __P((CLIENT *, u_int, char *));
 static void clntraw_destroy __P((CLIENT *));
 
 static struct clnt_ops client_ops = {
@@ -98,18 +96,18 @@ static struct clnt_ops client_ops = {
  */
 CLIENT *
 clntraw_create(prog, vers)
-	u_int32_t prog;
-	u_int32_t vers;
+	u_long prog;
+	u_long vers;
 {
-	struct clntraw_private *clp = clntraw_private;
+	register struct clntraw_private *clp = clntraw_private;
 	struct rpc_msg call_msg;
 	XDR *xdrs = &clp->xdr_stream;
 	CLIENT	*client = &clp->client_object;
 
-	if (clp == NULL) {
+	if (clp == 0) {
 		clp = (struct clntraw_private *)calloc(1, sizeof (*clp));
-		if (clp == NULL)
-			return (NULL);
+		if (clp == 0)
+			return (0);
 		clntraw_private = clp;
 	}
 	/*
@@ -142,20 +140,20 @@ clntraw_create(prog, vers)
 static enum clnt_stat 
 clntraw_call(h, proc, xargs, argsp, xresults, resultsp, timeout)
 	CLIENT *h;
-	u_int32_t proc;
+	u_long proc;
 	xdrproc_t xargs;
 	caddr_t argsp;
 	xdrproc_t xresults;
 	caddr_t resultsp;
 	struct timeval timeout;
 {
-	struct clntraw_private *clp = clntraw_private;
-	XDR *xdrs = &clp->xdr_stream;
+	register struct clntraw_private *clp = clntraw_private;
+	register XDR *xdrs = &clp->xdr_stream;
 	struct rpc_msg msg;
 	enum clnt_stat status;
 	struct rpc_err error;
 
-	if (clp == NULL)
+	if (clp == 0)
 		return (RPC_FAILED);
 call_again:
 	/*
@@ -244,11 +242,12 @@ clntraw_freeres(cl, xdr_res, res_ptr)
 	xdrproc_t xdr_res;
 	caddr_t res_ptr;
 {
-	struct clntraw_private *clp = clntraw_private;
-	XDR *xdrs = &clp->xdr_stream;
+	register struct clntraw_private *clp = clntraw_private;
+	register XDR *xdrs = &clp->xdr_stream;
 	bool_t rval;
 
-	if (clp == NULL) {
+	if (clp == 0)
+	{
 		rval = (bool_t) RPC_FAILED;
 		return (rval);
 	}
@@ -268,7 +267,7 @@ static bool_t
 clntraw_control(cl, ui, str)
 	CLIENT *cl;
 	u_int ui;
-	caddr_t str;
+	char *str;
 {
 	return (FALSE);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_perror.c,v 1.12 1998/02/10 04:54:28 lukem Exp $	*/
+/*	$NetBSD: clnt_perror.c,v 1.13 1998/02/12 01:57:31 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)clnt_perror.c 1.15 87/10/07 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)clnt_perror.c	2.1 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: clnt_perror.c,v 1.12 1998/02/10 04:54:28 lukem Exp $");
+__RCSID("$NetBSD: clnt_perror.c,v 1.13 1998/02/12 01:57:31 lukem Exp $");
 #endif
 #endif
 
@@ -45,13 +45,10 @@ __RCSID("$NetBSD: clnt_perror.c,v 1.12 1998/02/10 04:54:28 lukem Exp $");
  * Copyright (C) 1984, Sun Microsystems, Inc.
  *
  */
-
 #include "namespace.h"
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
 #include <rpc/rpc.h>
 #include <rpc/types.h>
 #include <rpc/auth.h>
@@ -76,7 +73,7 @@ static char *
 _buf()
 {
 
-	if (buf == NULL)
+	if (buf == 0)
 		buf = (char *)malloc(256);
 	buflen = 256;
 	return (buf);
@@ -87,8 +84,8 @@ _buf()
  */
 char *
 clnt_sperror(rpch, s)
-	CLIENT		*rpch;
-	const char	*s;
+	CLIENT *rpch;
+	char *s;
 {
 	struct rpc_err e;
 	char *err;
@@ -96,8 +93,8 @@ clnt_sperror(rpch, s)
 	char *strstart = str;
 	int len = buflen, i;
 
-	if (str == NULL)
-		return (NULL);
+	if (str == 0)
+		return (0);
 	CLNT_GETERR(rpch, &e);
 
 	i = snprintf(str, len, "%s: ", s);  
@@ -178,10 +175,10 @@ clnt_sperror(rpch, s)
 
 void
 clnt_perror(rpch, s)
-	CLIENT		*rpch;
-	const char	*s;
+	CLIENT *rpch;
+	char *s;
 {
-	(void) fprintf(stderr, "%s\n", clnt_sperror(rpch,s));
+	(void) fprintf(stderr,"%s\n",clnt_sperror(rpch,s));
 }
 
 static const char *const rpc_errlist[] = {
@@ -225,19 +222,19 @@ void
 clnt_perrno(num)
 	enum clnt_stat num;
 {
-	(void) fprintf(stderr, "%s\n", clnt_sperrno(num));
+	(void) fprintf(stderr,"%s\n",clnt_sperrno(num));
 }
 
 
 char *
 clnt_spcreateerror(s)
-	const char *s;
+	char *s;
 {
 	char *str = _buf();
 	int len = buflen, i;
 
-	if (str == NULL)
-		return(NULL);
+	if (str == 0)
+		return(0);
 	i = snprintf(str, len, "%s: ", s);
 	len -= i;
 	(void)strncat(str, clnt_sperrno(rpc_createerr.cf_stat), len - 1);
@@ -277,9 +274,9 @@ clnt_spcreateerror(s)
 
 void
 clnt_pcreateerror(s)
-	const char *s;
+	char *s;
 {
-	(void) fprintf(stderr, "%s\n", clnt_spcreateerror(s));
+	(void) fprintf(stderr,"%s\n",clnt_spcreateerror(s));
 }
 
 static const char *const auth_errlist[] = {

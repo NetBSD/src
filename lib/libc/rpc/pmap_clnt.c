@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_clnt.c,v 1.6 1998/02/10 04:54:36 lukem Exp $	*/
+/*	$NetBSD: pmap_clnt.c,v 1.7 1998/02/12 01:57:37 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)pmap_clnt.c 1.37 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)pmap_clnt.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: pmap_clnt.c,v 1.6 1998/02/10 04:54:36 lukem Exp $");
+__RCSID("$NetBSD: pmap_clnt.c,v 1.7 1998/02/12 01:57:37 lukem Exp $");
 #endif
 #endif
 
@@ -47,12 +47,10 @@ __RCSID("$NetBSD: pmap_clnt.c,v 1.6 1998/02/10 04:54:36 lukem Exp $");
  */
 
 #include "namespace.h"
-
-#include <unistd.h>
-
 #include <rpc/rpc.h>
 #include <rpc/pmap_prot.h>
 #include <rpc/pmap_clnt.h>
+#include <unistd.h>
 
 #ifdef __weak_alias
 __weak_alias(pmap_set,_pmap_set);
@@ -68,14 +66,14 @@ static struct timeval tottimeout = { 60, 0 };
  */
 bool_t
 pmap_set(program, version, protocol, port)
-	u_int32_t	program;
-	u_int32_t	version;
-	int		protocol;
-	in_port_t	port;
+	u_long program;
+	u_long version;
+	int protocol;
+	u_short port;
 {
 	struct sockaddr_in myaddress;
 	int socket = -1;
-	CLIENT *client;
+	register CLIENT *client;
 	struct pmap parms;
 	bool_t rslt;
 
@@ -105,12 +103,12 @@ pmap_set(program, version, protocol, port)
  */
 bool_t
 pmap_unset(program, version)
-	u_int32_t program;
-	u_int32_t version;
+	u_long program;
+	u_long version;
 {
 	struct sockaddr_in myaddress;
 	int socket = -1;
-	CLIENT *client;
+	register CLIENT *client;
 	struct pmap parms;
 	bool_t rslt;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: xdr_reference.c,v 1.9 1998/02/11 11:53:01 lukem Exp $	*/
+/*	$NetBSD: xdr_reference.c,v 1.10 1998/02/12 01:57:55 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)xdr_reference.c 1.11 87/08/11 SMI";
 static char *sccsid = "@(#)xdr_reference.c	2.1 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: xdr_reference.c,v 1.9 1998/02/11 11:53:01 lukem Exp $");
+__RCSID("$NetBSD: xdr_reference.c,v 1.10 1998/02/12 01:57:55 lukem Exp $");
 #endif
 #endif
 
@@ -49,12 +49,9 @@ __RCSID("$NetBSD: xdr_reference.c,v 1.9 1998/02/11 11:53:01 lukem Exp $");
  */
 
 #include "namespace.h"
-
-#include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
 #include <rpc/types.h>
 #include <rpc/xdr.h>
 
@@ -74,13 +71,13 @@ __weak_alias(xdr_reference,_xdr_reference);
  */
 bool_t
 xdr_reference(xdrs, pp, size, proc)
-	XDR *xdrs;
+	register XDR *xdrs;
 	caddr_t *pp;		/* the pointer to work on */
-	u_int32_t size;		/* size of the object pointed to */
+	u_int size;		/* size of the object pointed to */
 	xdrproc_t proc;		/* xdr routine to handle the object */
 {
-	caddr_t loc = *pp;
-	bool_t stat;
+	register caddr_t loc = *pp;
+	register bool_t stat;
 
 	if (loc == NULL)
 		switch (xdrs->x_op) {
@@ -90,7 +87,8 @@ xdr_reference(xdrs, pp, size, proc)
 		case XDR_DECODE:
 			*pp = loc = (caddr_t) mem_alloc(size);
 			if (loc == NULL) {
-				warnx("xdr_reference: out of memory");
+				(void) fprintf(stderr,
+				    "xdr_reference: out of memory\n");
 				return (FALSE);
 			}
 			memset(loc, 0, (int)size);
@@ -131,11 +129,12 @@ xdr_reference(xdrs, pp, size, proc)
  */
 bool_t
 xdr_pointer(xdrs,objpp,obj_size,xdr_obj)
-	XDR *xdrs;
-	caddr_t *objpp;
-	u_int32_t obj_size;
+	register XDR *xdrs;
+	char **objpp;
+	u_int obj_size;
 	xdrproc_t xdr_obj;
 {
+
 	bool_t more_data;
 
 	more_data = (*objpp != NULL);
@@ -146,5 +145,5 @@ xdr_pointer(xdrs,objpp,obj_size,xdr_obj)
 		*objpp = NULL;
 		return (TRUE);
 	}
-	return (xdr_reference(xdrs, objpp, obj_size, xdr_obj));
+	return (xdr_reference(xdrs,objpp,obj_size,xdr_obj));
 }

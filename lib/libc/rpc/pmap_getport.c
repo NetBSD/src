@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_getport.c,v 1.5 1998/02/10 04:54:40 lukem Exp $	*/
+/*	$NetBSD: pmap_getport.c,v 1.6 1998/02/12 01:57:39 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)pmap_getport.c 1.9 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)pmap_getport.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: pmap_getport.c,v 1.5 1998/02/10 04:54:40 lukem Exp $");
+__RCSID("$NetBSD: pmap_getport.c,v 1.6 1998/02/12 01:57:39 lukem Exp $");
 #endif
 #endif
 
@@ -47,17 +47,12 @@ __RCSID("$NetBSD: pmap_getport.c,v 1.5 1998/02/10 04:54:40 lukem Exp $");
  */
 
 #include "namespace.h"
-
-#include <sys/types.h>
-#include <sys/socket.h>
-
-#include <net/if.h>
-
-#include <unistd.h>
-
 #include <rpc/rpc.h>
 #include <rpc/pmap_prot.h>
 #include <rpc/pmap_clnt.h>
+#include <sys/socket.h>
+#include <net/if.h>
+#include <unistd.h>
 
 #ifdef __weak_alias
 __weak_alias(pmap_getport,_pmap_getport);
@@ -71,16 +66,16 @@ static struct timeval tottimeout = { 60, 0 };
  * Calls the pmap service remotely to do the lookup.
  * Returns 0 if no map exists.
  */
-in_port_t
+u_short
 pmap_getport(address, program, version, protocol)
 	struct sockaddr_in *address;
-	u_int32_t program;
-	u_int32_t version;
+	u_long program;
+	u_long version;
 	u_int protocol;
 {
-	in_port_t port = 0;
+	u_short port = 0;
 	int socket = -1;
-	CLIENT *client;
+	register CLIENT *client;
 	struct pmap parms;
 
 	address->sin_port = htons(PMAPPORT);
@@ -92,7 +87,7 @@ pmap_getport(address, program, version, protocol)
 		parms.pm_prot = protocol;
 		parms.pm_port = 0;  /* not needed or used */
 		if (CLNT_CALL(client, PMAPPROC_GETPORT, xdr_pmap, &parms,
-		    xdr_u_int16_t, &port, tottimeout) != RPC_SUCCESS){
+		    xdr_u_short, &port, tottimeout) != RPC_SUCCESS){
 			rpc_createerr.cf_stat = RPC_PMAPFAILURE;
 			clnt_geterr(client, &rpc_createerr.cf_error);
 		} else if (port == 0) {

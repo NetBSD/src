@@ -1,4 +1,4 @@
-/*	$NetBSD: xdr_stdio.c,v 1.7 1998/02/11 11:53:01 lukem Exp $	*/
+/*	$NetBSD: xdr_stdio.c,v 1.8 1998/02/12 01:57:56 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)xdr_stdio.c 1.16 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)xdr_stdio.c	2.1 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: xdr_stdio.c,v 1.7 1998/02/11 11:53:01 lukem Exp $");
+__RCSID("$NetBSD: xdr_stdio.c,v 1.8 1998/02/12 01:57:56 lukem Exp $");
 #endif
 #endif
 
@@ -50,10 +50,8 @@ __RCSID("$NetBSD: xdr_stdio.c,v 1.7 1998/02/11 11:53:01 lukem Exp $");
  */
 
 #include "namespace.h"
-
-#include <stdio.h>
-
 #include <rpc/types.h>
+#include <stdio.h>
 #include <rpc/xdr.h>
 
 #ifdef __weak_alias
@@ -61,13 +59,13 @@ __weak_alias(xdrstdio_create,_xdrstdio_create);
 #endif
 
 static void xdrstdio_destroy __P((XDR *));
-static bool_t xdrstdio_getlong __P((XDR *, int32_t *));
-static bool_t xdrstdio_putlong __P((XDR *, int32_t *));
-static bool_t xdrstdio_getbytes __P((XDR *, caddr_t, u_int32_t));
-static bool_t xdrstdio_putbytes __P((XDR *, caddr_t, u_int32_t));
-static u_int32_t xdrstdio_getpos __P((XDR *));
-static bool_t xdrstdio_setpos __P((XDR *, u_int32_t));
-static int32_t *xdrstdio_inline __P((XDR *, u_int32_t));
+static bool_t xdrstdio_getlong __P((XDR *, long *));
+static bool_t xdrstdio_putlong __P((XDR *, long *));
+static bool_t xdrstdio_getbytes __P((XDR *, caddr_t, u_int));
+static bool_t xdrstdio_putbytes __P((XDR *, caddr_t, u_int));
+static u_int xdrstdio_getpos __P((XDR *));
+static bool_t xdrstdio_setpos __P((XDR *, u_int));
+static int32_t *xdrstdio_inline __P((XDR *, u_int));
 
 /*
  * Ops vector for stdio type XDR
@@ -90,14 +88,14 @@ static struct xdr_ops	xdrstdio_ops = {
  */
 void
 xdrstdio_create(xdrs, file, op)
-	XDR *xdrs;
+	register XDR *xdrs;
 	FILE *file;
 	enum xdr_op op;
 {
 
 	xdrs->x_op = op;
 	xdrs->x_ops = &xdrstdio_ops;
-	xdrs->x_private = (void *)file;
+	xdrs->x_private = (caddr_t)file;
 	xdrs->x_handy = 0;
 	xdrs->x_base = 0;
 }
@@ -108,7 +106,7 @@ xdrstdio_create(xdrs, file, op)
  */
 static void
 xdrstdio_destroy(xdrs)
-	XDR *xdrs;
+	register XDR *xdrs;
 {
 	(void)fflush((FILE *)xdrs->x_private);
 	/* xx should we close the file ?? */
@@ -117,24 +115,24 @@ xdrstdio_destroy(xdrs)
 static bool_t
 xdrstdio_getlong(xdrs, lp)
 	XDR *xdrs;
-	int32_t *lp;
+	register long *lp;
 {
 
-	if (fread((void *)lp, sizeof(int32_t), 1,
+	if (fread((caddr_t)lp, sizeof(int32_t), 1,
 	    (FILE *)xdrs->x_private) != 1)
 		return (FALSE);
-	*lp = (int32_t)ntohl((int32_t)*lp);
+	*lp = (long)ntohl((int32_t)*lp);
 	return (TRUE);
 }
 
 static bool_t
 xdrstdio_putlong(xdrs, lp)
 	XDR *xdrs;
-	int32_t *lp;
+	long *lp;
 {
-	int32_t mycopy = (int32_t)htonl((int32_t)*lp);
+	long mycopy = (long)htonl((int32_t)*lp);
 
-	if (fwrite((void *)&mycopy, sizeof(int32_t), 1,
+	if (fwrite((caddr_t)&mycopy, sizeof(int32_t), 1,
 	    (FILE *)xdrs->x_private) != 1)
 		return (FALSE);
 	return (TRUE);
@@ -144,11 +142,10 @@ static bool_t
 xdrstdio_getbytes(xdrs, addr, len)
 	XDR *xdrs;
 	caddr_t addr;
-	u_int32_t len;
+	u_int len;
 {
 
-	if ((len != 0) &&
-	    (fread(addr, (int)len, 1, (FILE *)xdrs->x_private) != 1))
+	if ((len != 0) && (fread(addr, (int)len, 1, (FILE *)xdrs->x_private) != 1))
 		return (FALSE);
 	return (TRUE);
 }
@@ -157,7 +154,7 @@ static bool_t
 xdrstdio_putbytes(xdrs, addr, len)
 	XDR *xdrs;
 	caddr_t addr;
-	u_int32_t len;
+	u_int len;
 {
 
 	if ((len != 0) && (fwrite(addr, (int)len, 1, (FILE *)xdrs->x_private) != 1))
@@ -165,35 +162,35 @@ xdrstdio_putbytes(xdrs, addr, len)
 	return (TRUE);
 }
 
-static u_int32_t
+static u_int
 xdrstdio_getpos(xdrs)
 	XDR *xdrs;
 {
 
-	return ((u_int32_t) ftell((FILE *)xdrs->x_private));
+	return ((u_int) ftell((FILE *)xdrs->x_private));
 }
 
 static bool_t
 xdrstdio_setpos(xdrs, pos) 
 	XDR *xdrs;
-	u_int32_t pos;
+	u_int pos;
 { 
 
-	return ((fseek((FILE *)xdrs->x_private, (int32_t)pos, 0) < 0) ?
+	return ((fseek((FILE *)xdrs->x_private, (long)pos, 0) < 0) ?
 		FALSE : TRUE);
 }
 
 static int32_t *
 xdrstdio_inline(xdrs, len)
 	XDR *xdrs;
-	u_int32_t len;
+	u_int len;
 {
 
 	/*
 	 * Must do some work to implement this: must insure
 	 * enough data in the underlying stdio buffer,
 	 * that the buffer is aligned so that we can indirect through a
-	 * int32_t *, and stuff this pointer in xdrs->x_buf.  Doing
+	 * long *, and stuff this pointer in xdrs->x_buf.  Doing
 	 * a fread or fwrite to a scratch buffer would defeat
 	 * most of the gains to be had here and require storage
 	 * management on this buffer, so we don't do this.
