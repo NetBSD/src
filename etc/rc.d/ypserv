@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: ypserv,v 1.1.1.1 2000/03/10 11:53:25 lukem Exp $
+# $NetBSD: ypserv,v 1.2 2000/03/16 22:22:15 lukem Exp $
 #
 
 # PROVIDE: ypserv
@@ -16,13 +16,14 @@ start_precmd="ypserv_precmd"
 
 ypserv_precmd()
 {
-	if [ -z "$domainname" ]; then
-		warn "\$domainname is not set; ${name} not started"
+	_domain=`domainname`
+	if [ -z "$_domain" ]; then
+		warn "domainname(1) is not set; ${name} not started"
 		return 1
 	fi
 
-	if [ ! -d /var/yp/$domainname/. ]; then
-		warn "/var/yp/$domainname is not a directory; ${name} not started"
+	if [ ! -d /var/yp/$_domain/. ]; then
+		warn "/var/yp/$_domain is not a directory; ${name} not started"
 		return 1
 	fi
 }
