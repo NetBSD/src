@@ -1,4 +1,4 @@
-/* $NetBSD: prom.c,v 1.5 1998/10/15 01:02:15 ross Exp $ */
+/* $NetBSD: prom.c,v 1.6 1999/03/31 03:10:00 cgd Exp $ */
 
 /*  
  * Mach Operating System
@@ -36,6 +36,7 @@
 int console;
 
 static int test_getchar(prom_return_t *, int *);
+static void putonechar(int c);
 
 void
 init_prom_calls()
@@ -81,26 +82,30 @@ getchar()
 	}
 }
 
+static void
+putonechar(c)
+	int c;
+{
+	prom_return_t ret;
+	char cbuf = c;
+
+	do {
+		ret.bits = prom_dispatch(PROM_R_PUTS, console, &cbuf, 1);
+	} while ((ret.u.retval & 1) == 0);
+}
+
 void
 putchar(c)
 	int c;
 {
 	prom_return_t ret;
-	char cbuf;
 	int typed_c;
 
 	if (c == '\r' || c == '\n') {
-		cbuf = '\r';
-		do {
-			ret.bits = prom_dispatch(PROM_R_PUTS, console,
-			    &cbuf, 1);
-		} while ((ret.u.retval & 1) == 0);
-		cbuf = '\n';
-	} else
-		cbuf = c;
-	do {
-		ret.bits = prom_dispatch(PROM_R_PUTS, console, &cbuf, 1);
-	} while ((ret.u.retval & 1) == 0);
+		putonechar('\r');
+		c = '\n';
+	}
+	putonechar(c);
 	ret.bits = prom_dispatch(PROM_R_GETC, console);
 	if (ret.u.status == 0 || ret.u.status == 1)
 		if (ret.u.retval == 3)
