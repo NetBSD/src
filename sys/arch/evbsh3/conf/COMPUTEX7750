@@ -1,4 +1,4 @@
-#	$NetBSD: COMPUTEX7750,v 1.4 2000/08/03 11:30:30 msaitoh Exp $
+#	$NetBSD: COMPUTEX7750,v 1.5 2000/08/12 06:53:37 msaitoh Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -61,7 +61,6 @@ options 	HZ=64		# clock interrupt generates every 1/HZ sec
 #options 	NTP		# NTP phase/frequency locked loop
 
 #options 	KTRACE		# system call tracing via ktrace(1)
-options 	PMAP_NEW	# new pmap interface
 
 #options 	SYSVMSG		# System V-like message queues
 #options 	SYSVSEM		# System V-like semaphores
@@ -100,7 +99,7 @@ file-system 	UMAPFS		# NULLFS + uid and gid remapping
 #options 	NFSSERVER	# Network File System server
 
 # Networking options
-#options 	INET		# IP + ICMP + TCP + UDP
+options 	INET		# IP + ICMP + TCP + UDP
 #options 	NFS_BOOT_DHCP	# Support DHCP NFS root
 
 #options 	PCIVERBOSE	# verbose PCI device autoconfig messages
@@ -150,7 +149,7 @@ sci0 at shb? port 0xffe00000 irq 11
 #pseudo-device	vnd		4	# disk-like interface to files
 #pseudo-device	bpfilter	8	# Berkeley packet filter
 #pseudo-device	ipfilter		# IP filter (firewall) and NAT
-#pseudo-device	loop			# network loopback
+pseudo-device	loop			# network loopback
 pseudo-device	pty		16	# pseudo-terminals
 #pseudo-device	ppp		2	# Point-to-Point Protocol
 #pseudo-device	tun		2	# network tunneling over tty
