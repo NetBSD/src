@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.5 1997/10/12 21:25:01 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.6 1997/10/13 22:18:32 cjs Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.5 1997/10/12 21:25:01 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.6 1997/10/13 22:18:32 cjs Exp $");
 #endif
 #endif /* not lint */
 
@@ -53,6 +53,7 @@ __RCSID("$NetBSD: main.c,v 1.5 1997/10/12 21:25:01 christos Exp $");
 #include <stdlib.h>
 #include <unistd.h>
 #include <err.h>
+#include <time.h>
 #include "trek.h"
 #include "getpar.h"
 
@@ -166,6 +167,7 @@ main(argc, argv)
 int	argc;
 char	**argv;
 {
+	time_t		curtime;
 	long			vect;
 	char		opencode;
 	int			prio;
@@ -176,7 +178,8 @@ char	**argv;
 	av = argv;
 	ac = argc;
 	av++;
-	time(&vect);
+	time(&curtime);
+	vect = (long) curtime;
 	srand(vect);
 	opencode = 'w';
 	prio = PRIO;
