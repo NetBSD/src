@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.17 1998/07/06 18:13:26 mark Exp $	*/
+/*	$NetBSD: cpu.c,v 1.18 1998/07/07 03:05:16 mark Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -42,6 +42,7 @@
  */
 
 #include "opt_armfpe.h"
+#include "opt_cputypes.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

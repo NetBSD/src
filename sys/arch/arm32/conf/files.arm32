@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm32,v 1.46 1998/07/06 02:35:34 mark Exp $
+#	$NetBSD: files.arm32,v 1.47 1998/07/07 03:05:15 mark Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -8,6 +8,9 @@ maxusers 2 8 64
 
 # Floating point emulator
 defopt	ARMFPE
+
+# CPU types
+defopt	opt_cputypes.h CPU_ARM6 CPU_ARM7 CPU_ARM7500 CPU_ARM8 CPU_SA110
 
 # COMPAT_OLD_OFW for SHARKs
 defopt	COMPAT_OLD_OFW

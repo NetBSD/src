@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_irq.S,v 1.3 1998/07/06 00:53:07 mark Exp $	*/
+/*	$NetBSD: isa_irq.S,v 1.4 1998/07/07 03:05:16 mark Exp $	*/
 
 /*
  * Copyright 1997
@@ -76,7 +76,9 @@
  * Created      : 27/09/94
  */
 
+#include "opt_cputypes.h"
 #include "opt_irqstats.h"
+#include "opt_uvm.h"
 
 #include "assym.h"
 #include <machine/cpu.h>
@@ -85,7 +87,6 @@
 #include <arm32/isa/icu.h>
 #include <machine/asm.h>
 #include <machine/irqhandler.h>
-#include "opt_uvm.h"
 
 sp	.req	r13
 lr	.req	r14

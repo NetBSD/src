@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_machdep.c,v 1.10 1998/07/06 02:40:44 mark Exp $	*/
+/*	$NetBSD: rpc_machdep.c,v 1.11 1998/07/07 03:05:17 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -45,6 +45,7 @@
  * Created      : 17/09/94
  */
 
+#include "opt_cputypes.h"
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
 
