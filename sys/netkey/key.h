@@ -1,5 +1,5 @@
-/*	$NetBSD: key.h,v 1.14 2003/08/22 06:22:26 itojun Exp $	*/
-/*	$KAME: key.h,v 1.28 2003/06/29 07:00:54 sakane Exp $	*/
+/*	$NetBSD: key.h,v 1.15 2003/09/07 15:59:38 itojun Exp $	*/
+/*	$KAME: key.h,v 1.32 2003/09/07 05:25:20 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -35,7 +35,12 @@
 
 #ifdef _KERNEL
 
+#include <sys/queue.h>
+
 extern struct key_cb key_cb;
+
+extern TAILQ_HEAD(_satailq, secasvar) satailq;
+extern TAILQ_HEAD(_sptailq, secpolicy) sptailq;
 
 struct secpolicy;
 struct secpolicyindex;
