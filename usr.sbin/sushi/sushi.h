@@ -1,4 +1,4 @@
-/*      $NetBSD: sushi.h,v 1.3 2003/11/12 13:31:08 grant Exp $       */
+/*      $NetBSD: sushi.h,v 1.4 2005/01/12 17:38:40 peter Exp $       */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -40,6 +40,6 @@
 
 #include <nl_types.h>
 
-void bailout(const char *fmt, ...);
+void bailout(const char *, ...);
 
 #endif	/* _SUSHI_H_ */

@@ -1,4 +1,4 @@
-/*      $NetBSD: handlers.c,v 1.6 2004/03/09 19:22:22 garbled Exp $       */
+/*      $NetBSD: handlers.c,v 1.7 2005/01/12 17:38:40 peter Exp $       */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -35,14 +35,15 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/types.h>
+#include <sys/ioctl.h>
+#include <sys/stat.h>
+#include <sys/queue.h>
+
 #include <err.h>
 #include <limits.h>
 #include <stdio.h>
 #include <string.h>
-#include <sys/ioctl.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/queue.h>
 
 #include <cdk/cdk.h>
 #include <curses.h>
@@ -69,7 +70,7 @@ handle_script(char *path)
 	args[1] = NULL;
 	run_prog(1, args);
 	/* don't run this thing 10 billion times if it fails */
-	return(0);
+	return (0);
 }
 
 int
@@ -92,8 +93,8 @@ handle_exec(char *path)
 			continue;
 		}
 		exec[len - 1] = '\0'; /* NUL terminate */
-		for (; *exec != '\0' && isspace((unsigned char)*exec);
-			++exec);
+		while (*exec != '\0' && isspace((unsigned char)*exec))
+			++exec;
 		if (*exec == '\0' || *exec == '#')
 			continue;
 		p = strsep(&exec, " ");
@@ -105,7 +106,7 @@ handle_exec(char *path)
 
 	run_prog(1, args);
 
-	return(0);
+	return (0);
 }
 
 int
@@ -127,8 +128,8 @@ handle_func(char *path)
 			continue;
 		}
 		exec[len - 1] = '\0'; /* NUL terminate */
-		for (; *exec != '\0' && isspace((unsigned char)*exec);
-			++exec);
+		while (*exec != '\0' && isspace((unsigned char)*exec))
+			++exec;
 		if (*exec == '\0' || *exec == '#')
 			continue;
 		p = strdup(strsep(&exec, ","));
@@ -136,17 +137,17 @@ handle_func(char *path)
 	}
 	fclose(f);
 
-	for (i=0; func_map[i].funcname != NULL; i++)
+	for (i = 0; func_map[i].funcname != NULL; i++)
 		if (strcmp(func_map[i].funcname, p) == 0)
 			break;
 
 	if (func_map[i].function == NULL)
 		bailout("%s: %s",catgets(catalog, 1, 5,
-		    "function not found") , p);
+		    "function not found"), p);
 
-	(void) func_map[i].function(arg);
-	
-	return(0);
+	(void)func_map[i].function(arg);
+
+	return (0);
 }
 
 int
@@ -160,10 +161,10 @@ handle_help(char *path)
 	CDKVIEWER *viewer;
 
 	f = fopen(path, "r");
-	if (!f)
-		return(0); /* hrmm */
+	if (f == NULL)
+		return (0); /* hrmm */
 	lnum = 0;
-	while (fgets(buf, sizeof(buf), f))
+	while (fgets(buf, sizeof(buf), f) != NULL)
 		lnum++;
 	rewind(f);
 
@@ -172,7 +173,7 @@ handle_help(char *path)
 		bailout("malloc: %s", strerror(errno));
 
 	lnum = 0;
-	while(fgets(buf, sizeof(buf), f)) {
+	while (fgets(buf, sizeof(buf), f) != NULL) {
 		data[lnum] = strdup(buf);
 		lnum++;
 	}
@@ -187,11 +188,11 @@ handle_help(char *path)
 	activateCDKViewer(viewer, NULL);
 	destroyCDKViewer(viewer);
 
-	return(0);
+	return (0);
 }
 
 int
-simple_lang_handler(char *path, char *file, int(* handler)(char *) )
+simple_lang_handler(char *path, char *file, int (*handler)(char *) )
 {
 	struct stat sb;
 	char buf[PATH_MAX+30];
@@ -201,13 +202,13 @@ simple_lang_handler(char *path, char *file, int(* handler)(char *) )
 	else
 		snprintf(buf, sizeof(buf), "%s/%s.%s", path, file, lang_id);
 	if (stat(buf, &sb) == 0)
-		return(handler(buf));
+		return (handler(buf));
 	else {
 		snprintf(buf, sizeof(buf), "%s/%s", path, file);
 		if (stat(buf, &sb) == 0)
-			return(handler(buf));
+			return (handler(buf));
 	}
-	return(-2); /* special */
+	return (-2); /* special */
 }
 
 int
@@ -224,11 +225,11 @@ handle_endpoint(char *path)
 		snprintf(buf, sizeof(buf), "%s/%s.%s", path, PREFORMFILE,
 		    lang_id);
 	if (stat(buf, &sb) == 0)
-		return(handle_preform(path, buf));
+		return (handle_preform(path, buf));
 	else {
 		snprintf(buf, sizeof(buf), "%s/%s", path, PREFORMFILE);
 		if (stat(buf, &sb) == 0)
-			return(handle_preform(path, buf));
+			return (handle_preform(path, buf));
 	}
 
 	args[0] = NULL;
@@ -237,31 +238,31 @@ handle_endpoint(char *path)
 	else
 		snprintf(buf, sizeof(buf), "%s/%s.%s", path, FORMFILE, lang_id);
 	if (stat(buf, &sb) == 0)
-		return(handle_form(path, buf, args));
+		return (handle_form(path, buf, args));
 	else {
 		snprintf(buf, sizeof(buf), "%s/%s", path, FORMFILE);
 		if (stat(buf, &sb) == 0)
-			return(handle_form(path, buf, args));
+			return (handle_form(path, buf, args));
 	}
 
 	rc = simple_lang_handler(path, SCRIPTFILE, handle_script);
 	if (rc != -2)
-		return(rc);
+		return (rc);
 
 	rc = simple_lang_handler(path, EXECFILE, handle_exec);
 	if (rc != -2)
-		return(rc);
+		return (rc);
 
 	rc = simple_lang_handler(path, FUNCFILE, handle_func);
 	if (rc != -2)
-		return(rc);
+		return (rc);
 
 	rc = simple_lang_handler(path, HELPFILE, handle_help);
 	if (rc != -2)
-		return(rc);
+		return (rc);
 
 	bailout("%s: %s", catgets(catalog, 1, 6, "empty endpoint"), path);
-	return(0);
+	return (0);
 }
 
 void

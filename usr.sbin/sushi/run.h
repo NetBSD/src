@@ -1,4 +1,4 @@
-/*      $NetBSD: run.h,v 1.2 2003/11/12 13:31:08 grant Exp $       */
+/*      $NetBSD: run.h,v 1.3 2005/01/12 17:38:40 peter Exp $       */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,6 +38,6 @@
 #ifndef _RUN_H_
 #define _RUN_H_
 
-int run_prog(int display, char **args);
+int run_prog(int, char **);
 
 #endif	/* _RUN_H_ */
