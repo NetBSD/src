@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: netstart,v 1.59 1999/07/04 05:20:52 itojun Exp $
+#	$NetBSD: netstart,v 1.60 1999/07/04 12:51:30 itojun Exp $
 #	from: @(#)netstart	8.1 (Berkeley) 7/23/93
 
 if [ -f /etc/rc.subr ]; then
@@ -186,7 +186,7 @@ fi
 
 # IPv6
 # Note that manual configuration can be done in the above, using ifconfig.
-dadcount=`sysctl net.inet6.ip6.dad_count | awk '{print $NF}'`
+dadcount=`sysctl net.inet6.ip6.dad_count 2>/dev/null | awk '{print $NF}'`
 if [ "x$dadcount" = "x" ]; then
 	# IPv6 is not configured in the kernel.  do not bother.
 else
