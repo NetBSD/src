@@ -6,7 +6,7 @@
  * Modified 1991 by William Jolitz at UUNET Technologies, Inc.
  *
  *	from: @(#)m-i386bsd.h	6.7 (Berkeley) 5/8/91
- *	$Id: m-i386bsd.h,v 1.3 1993/08/01 18:48:32 mycroft Exp $
+ *	$Id: m-i386bsd.h,v 1.4 1994/01/09 23:45:26 cgd Exp $
  */
 
 /* Macro definitions for i386.
@@ -70,11 +70,9 @@ the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
 #define READ_DBX_FORMAT
 
-/* number of traps that happen between exec'ing the shell 
- * to run an inferior, and when we finally get to 
- * the inferior code.  This is 2 on most implementations.
- */
-#define START_INFERIOR_TRAPS_EXPECTED 2
+/* Do implement the attach and detach commands.  */
+
+#define ATTACH_DETACH
 
 /* Offset from address of function to start of its code.
    Zero on most machines.  */
