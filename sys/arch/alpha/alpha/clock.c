@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.1 1995/02/13 23:06:50 cgd Exp $	*/
+/*	$NetBSD: clock.c,v 1.2 1995/03/03 01:35:21 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -143,16 +143,24 @@ cpu_initclocks()
 {
 	register volatile struct chiptime *c;
 	extern int tickadj;
+	int fractick;
 
 	if (clock_addr == NULL)
 		panic("cpu_initclocks: no clock to initialize");
 
-	tick = 15625;		/* number of micro-seconds between interrupts */
-	hz = 1000000 / 15625;	/* 64 Hz */
-	tickadj = 240000 / (60000000 / 15625);
+	hz = 1024;		/* 1024 Hz clock */
+	tick = 1000000 / hz;	/* number of microseconds between interrupts */
+	tickfix = 1000000 - (hz * tick);
+	if (tickfix) {
+		int ftp;
+
+		ftp = min(ffs(tickfix), ffs(hz));
+		tickfix >>= (ftp - 1);
+		tickfixinterval = hz >> (ftp - 1);
+        }
 
 	c = clock_addr;
-	c->rega = REGA_TIME_BASE | SELECTED_RATE;
+	c->rega = REGA_TIME_BASE | RATE_1024_HZ;
 	c->regb = REGB_PER_INT_ENA | REGB_DATA_MODE | REGB_HOURS_FORMAT;
 	MB();
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: clockreg.h,v 1.1 1995/02/13 23:06:51 cgd Exp $	*/
+/*	$NetBSD: clockreg.h,v 1.2 1995/03/03 01:35:25 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -106,7 +106,12 @@ struct chiptime {
 /*
  * Set the interval at 15.625 ms.
  */
-#define SELECTED_RATE		0xA
+#define RATE_2048_HZ	0x5	/* 488.281 usecs/interrupt */
+#define RATE_1024_HZ	0x6	/* 976.562 usecs/interrupt */
+#define RATE_512_HZ	0x7	/* 1.953125 ms/interrupt */
+#define RATE_256_HZ	0x8	/* 3.90625 ms/interrupt */
+#define RATE_128_HZ	0x9	/* 7.8125 ms/interrupt */
+#define RATE_64_HZ	0xa	/* 15.625 ms/interrupt */
 
 /*
  * Control register B fields.
