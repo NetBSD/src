@@ -1,10 +1,7 @@
-#	$NetBSD: airport,v 1.18 2002/02/18 16:27:10 pooka Exp $
+#	$NetBSD: airport,v 1.19 2002/02/18 17:25:50 wiz Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 # 
-# Some of this information from the Airport Search Engine at
-# http://www.uni-karlsruhe.de/~un9v/atm/ase.html, more are
-# available at http://www.cowtown.net/users/rcr/aaa/ccmain.htm
-# and http://www.mapping.com/airportcodes.html.
+# Some of this information from http://www.mapping.com/airportcodes.html.
 #
 # Airport Code : Airport
 AAR:Tirstrup, Aarhus, Denmark
@@ -288,6 +285,7 @@ TYO:All Airports around Tokyo, Japan
 TYS:Knoxville McGhee Tyson, Tennessee, USA
 UCA:Utica/Oneida County, New York, USA
 UVF:St. Lucia, LC
+VIE:Wien (Vienna) [Schwechat], Wien, Austria
 WAS:All Airports around Washington, District of Columbia, USA
 YAM:Sault Ste Marie, Ontario, Canada
 YBC:Baie-Comeau, Quebec, Canada
