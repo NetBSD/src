@@ -1,4 +1,4 @@
-|	$NetBSD: vectors.s,v 1.11 1997/04/25 02:16:38 thorpej Exp $
+|	$NetBSD: vectors.s,v 1.12 1997/07/14 19:18:32 thorpej Exp $
 
 | Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
 | Copyright (c) 1988 University of Utah
@@ -46,12 +46,17 @@
 	VECTOR(badtrap) ; VECTOR(badtrap) ; \
 	VECTOR(badtrap) ; VECTOR(badtrap)
 
+	/*
+	 * bus error and address error vectors are initialized
+	 * in locore.s once we know our CPU type.
+	 */
+
 	.text
 GLOBAL(vectab)
 	VECTOR_UNUSED		/* 0: NOT USED (reset SSP) */
 	VECTOR_UNUSED		/* 1: NOT USED (reset PC) */
-	VECTOR(buserr)		/* 2: bus error */
-	VECTOR(addrerr)		/* 3: address error */
+	VECTOR_UNUSED		/* 2: bus error */
+	VECTOR_UNUSED		/* 3: address error */
 	VECTOR(illinst)		/* 4: illegal instruction */
 	VECTOR(zerodiv)		/* 5: zero divide */
 	VECTOR(chkinst)		/* 6: CHK instruction */
