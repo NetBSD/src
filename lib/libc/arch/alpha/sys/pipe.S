@@ -1,4 +1,4 @@
-/* $NetBSD: pipe.S,v 1.3 2000/09/28 08:38:53 kleink Exp $ */
+/* $NetBSD: pipe.S,v 1.4 2001/05/07 17:19:18 kleink Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -39,4 +39,4 @@ LEAF(_pipe, 0)
 	stl	a4, 4(a0)
 	mov	zero, v0
 	RET
-END(pipe)
+END(_pipe)
