@@ -1,4 +1,4 @@
-/*	$NetBSD: lprint.c,v 1.17 2002/09/10 03:02:40 kim Exp $	*/
+/*	$NetBSD: lprint.c,v 1.18 2002/09/12 01:31:41 kim Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)lprint.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID( "$NetBSD: lprint.c,v 1.17 2002/09/10 03:02:40 kim Exp $");
+__RCSID( "$NetBSD: lprint.c,v 1.18 2002/09/12 01:31:41 kim Exp $");
 #endif
 #endif /* not lint */
 
@@ -364,7 +364,7 @@ vputc(ch)
 {
 	char visout[5], *s2;
 
-	if ((isprint(ch)) || (isspace(ch))) {
+	if (eightflag || isprint(ch) || isspace(ch)) {
 	    (void)putchar(ch);
 	    return;
 	}
