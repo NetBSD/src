@@ -1,4 +1,4 @@
-/*	$NetBSD: emacs.c,v 1.10 2002/03/18 16:00:52 christos Exp $	*/
+/*	$NetBSD: emacs.c,v 1.11 2002/10/27 21:41:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)emacs.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: emacs.c,v 1.10 2002/03/18 16:00:52 christos Exp $");
+__RCSID("$NetBSD: emacs.c,v 1.11 2002/10/27 21:41:50 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -215,7 +215,7 @@ em_copy_region(EditLine *el, int c)
 {
 	char *kp, *cp;
 
-	if (el->el_chared.c_kill.mark)
+	if (!el->el_chared.c_kill.mark)
 		return (CC_ERROR);
 
 	if (el->el_chared.c_kill.mark > el->el_line.cursor) {

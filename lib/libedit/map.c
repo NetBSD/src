@@ -1,4 +1,4 @@
-/*	$NetBSD: map.c,v 1.15 2002/03/18 16:00:55 christos Exp $	*/
+/*	$NetBSD: map.c,v 1.16 2002/10/27 21:41:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)map.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: map.c,v 1.15 2002/03/18 16:00:55 christos Exp $");
+__RCSID("$NetBSD: map.c,v 1.16 2002/10/27 21:41:50 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -379,7 +379,7 @@ private const el_action_t  el_map_vi_insert[] = {
 	/*   5 */	ED_MOVE_TO_END,		/* ^E */
 	/*   6 */	ED_NEXT_CHAR,		/* ^F */
 	/*   7 */	ED_UNASSIGNED,		/* ^G */
-	/*   8 */	ED_DELETE_PREV_CHAR,	/* ^H */   /* BackSpace key */
+	/*   8 */	VI_DELETE_PREV_CHAR,	/* ^H */   /* BackSpace key */
 	/*   9 */	ED_UNASSIGNED,		/* ^I */   /* Tab Key */
 	/*  10 */	ED_NEWLINE,		/* ^J */
 	/*  11 */	ED_KILL_LINE,		/* ^K */
@@ -499,7 +499,7 @@ private const el_action_t  el_map_vi_insert[] = {
 	/* 124 */	ED_INSERT,		/* | */
 	/* 125 */	ED_INSERT,		/* } */
 	/* 126 */	ED_INSERT,		/* ~ */
-	/* 127 */	ED_DELETE_PREV_CHAR,	/* ^? */
+	/* 127 */	VI_DELETE_PREV_CHAR,	/* ^? */
 	/* 128 */	ED_UNASSIGNED,		/* M-^@ */
 	/* 129 */	ED_UNASSIGNED,		/* M-^A */
 	/* 130 */	ED_UNASSIGNED,		/* M-^B */
@@ -639,7 +639,7 @@ private const el_action_t el_map_vi_command[] = {
 	/*   5 */	ED_MOVE_TO_END,		/* ^E */
 	/*   6 */	ED_UNASSIGNED,		/* ^F */
 	/*   7 */	ED_UNASSIGNED,		/* ^G */
-	/*   8 */	ED_PREV_CHAR,		/* ^H */
+	/*   8 */	ED_DELETE_PREV_CHAR,	/* ^H */
 	/*   9 */	ED_UNASSIGNED,		/* ^I */
 	/*  10 */	ED_NEWLINE,		/* ^J */
 	/*  11 */	ED_KILL_LINE,		/* ^K */
@@ -697,10 +697,10 @@ private const el_action_t el_map_vi_command[] = {
 	/*  63 */	VI_SEARCH_NEXT,		/* ? */
 	/*  64 */	ED_UNASSIGNED,		/* @ */
 	/*  65 */	VI_ADD_AT_EOL,		/* A */
-	/*  66 */	VI_PREV_SPACE_WORD,	/* B */
+	/*  66 */	VI_PREV_BIG_WORD,	/* B */
 	/*  67 */	VI_CHANGE_TO_EOL,	/* C */
 	/*  68 */	ED_KILL_LINE,		/* D */
-	/*  69 */	VI_TO_END_WORD,		/* E */
+	/*  69 */	VI_END_BIG_WORD,	/* E */
 	/*  70 */	VI_PREV_CHAR,		/* F */
 	/*  71 */	ED_UNASSIGNED,		/* G */
 	/*  72 */	ED_UNASSIGNED,		/* H */
@@ -718,7 +718,7 @@ private const el_action_t el_map_vi_command[] = {
 	/*  84 */	VI_TO_PREV_CHAR,	/* T */
 	/*  85 */	ED_UNASSIGNED,		/* U */
 	/*  86 */	ED_UNASSIGNED,		/* V */
-	/*  87 */	VI_NEXT_SPACE_WORD,	/* W */
+	/*  87 */	VI_NEXT_BIG_WORD,	/* W */
 	/*  88 */	ED_DELETE_PREV_CHAR,	/* X */
 	/*  89 */	ED_UNASSIGNED,		/* Y */
 	/*  90 */	ED_UNASSIGNED,		/* Z */

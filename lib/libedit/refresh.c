@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.19 2002/10/27 20:04:36 christos Exp $	*/
+/*	$NetBSD: refresh.c,v 1.20 2002/10/27 21:41:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.19 2002/10/27 20:04:36 christos Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.20 2002/10/27 21:41:50 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -64,21 +64,21 @@ private void	re__strncopy(char *, char *, size_t);
 private void	re__copy_and_pad(char *, const char *, size_t);
 
 #ifdef DEBUG_REFRESH
-private void	re_printstr(EditLine *, char *, char *, char *);
+private void	re_printstr(EditLine *, const char *, char *, char *);
 #define	__F el->el_errfile
 #define	ELRE_ASSERT(a, b, c)	do 				\
-				    if (a) {			\
+				    if (/*CONSTCOND*/ a) {	\
 					(void) fprintf b;	\
 					c;			\
 				    }				\
-				while (0)
+				while (/*CONSTCOND*/0)
 #define	ELRE_DEBUG(a, b)	ELRE_ASSERT(a,b,;)
 
 /* re_printstr():
  *	Print a string on the debugging pty
  */
 private void
-re_printstr(EditLine *el, char *str, char *f, char *t)
+re_printstr(EditLine *el, const char *str, char *f, char *t)
 {
 
 	ELRE_DEBUG(1, (__F, "%s:\"", str));
