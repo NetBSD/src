@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3var.h,v 1.27 2001/03/22 12:00:26 jdolecek Exp $	*/
+/*	$NetBSD: elink3var.h,v 1.28 2001/03/22 16:54:46 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994 Herb Peyerl <hpeyerl@beer.org>
@@ -96,6 +96,7 @@ struct ep_softc {
 #define	ELINK_BUS_PCMCIA	  	0x1
 #define	ELINK_BUS_EISA	  	0x2
 #define ELINK_BUS_PCI	  	0x3
+#define ELINK_BUS_MCA	  	0x6
 
 #define ELINK_IS_BUS_32(a)	((a) & 0x2)
 	int ep_pktlenshift;		/* scale factor for pkt lengths */
