@@ -1,4 +1,4 @@
-/*	$NetBSD: tftp.c,v 1.6 1999/03/31 01:50:26 cgd Exp $	 */
+/*	$NetBSD: tftp.c,v 1.7 1999/07/12 12:34:57 drochner Exp $	 */
 
 /*
  * Copyright (c) 1996
@@ -116,20 +116,19 @@ recvtftp(d, pkt, len, tleft)
 	register size_t len;
 	time_t          tleft;
 {
+	ssize_t n;
 	struct tftphdr *t;
 
 	errno = 0;
 
-	len = readudp(d, pkt, len, tleft);
+	n = readudp(d, pkt, len, tleft);
 
-	if (len < 4)
+	if (n < 4)
 		return (-1);
 
 	t = (struct tftphdr *) pkt;
 	switch (ntohs(t->th_opcode)) {
-	case DATA: {
-		int got;
-
+	case DATA:
 		if (htons(t->th_block) != d->xid) {
 			/*
 			 * Expected block?
@@ -144,9 +143,7 @@ recvtftp(d, pkt, len, tleft)
 			uh = (struct udphdr *) pkt - 1;
 			d->destport = uh->uh_sport;
 		} /* else check uh_sport has not changed??? */
-		got = len - (t->th_data - (char *) t);
-		return got;
-	}
+		return (n - (t->th_data - (char *)t));
 	case ERROR:
 		if ((unsigned) ntohs(t->th_code) >= 8) {
 			printf("illegal tftp error %d\n", ntohs(t->th_code));
