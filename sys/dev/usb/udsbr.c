@@ -1,12 +1,11 @@
-/*	$NetBSD: udsbr.c,v 1.2 2002/01/02 03:44:56 augustss Exp $	*/
+/*	$NetBSD: udsbr.c,v 1.3 2002/01/02 03:47:35 augustss Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Lennart Augustsson (lennart@augustsson.net) at
- * Carlstedt Research & Technology.
+ * by Lennart Augustsson (lennart@augustsson.net).
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -39,14 +38,14 @@
 
 /*
  * Driver for the D-Link DSB-R100 FM radio.
- * I apologize for the magix hex constants, but this is what happens
+ * I apologize for the magic hex constants, but this is what happens
  * when you have to reverse engineer the driver.
  * Parts of the code borrowed from Linux and parts from Warner Losh's
  * FreeBSD driver.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udsbr.c,v 1.2 2002/01/02 03:44:56 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udsbr.c,v 1.3 2002/01/02 03:47:35 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
