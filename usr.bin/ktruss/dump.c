@@ -1,4 +1,4 @@
-/*	$NetBSD: dump.c,v 1.9 2000/04/10 09:42:37 jdolecek Exp $	*/
+/*	$NetBSD: dump.c,v 1.10 2000/10/12 19:02:18 is Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #endif
-__RCSID("$NetBSD: dump.c,v 1.9 2000/04/10 09:42:37 jdolecek Exp $");
+__RCSID("$NetBSD: dump.c,v 1.10 2000/10/12 19:02:18 is Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -286,7 +286,7 @@ ioctldecode(cmd)
 	*dir = '\0';
 
 	printf(decimal ? ",_IO%s('%c',%ld" : ",_IO%s('%c',%#lx",
-	    dirbuf, (cmd >> 8) & 0xff, cmd & 0xff);
+	    dirbuf, (int) ((cmd >> 8) & 0xff), cmd & 0xff);
 	if ((cmd & IOC_VOID) == 0)
 		printf(decimal ? ",%ld)" : ",%#lx)", (cmd >> 16) & 0xff);
 	else
