@@ -1,4 +1,4 @@
-#	$NetBSD: TOUR,v 1.7 1995/05/11 21:28:38 christos Exp $
+#	$NetBSD: TOUR,v 1.8 1996/10/16 14:24:56 christos Exp $
 #	@(#)TOUR	8.1 (Berkeley) 5/31/93
 
 NOTE -- This is the original TOUR paper distributed with ash and
@@ -29,7 +29,7 @@ programs is:
         mknodes         nodetypes           nodes.h nodes.c
         mksignames          -               signames.h signames.c
         mksyntax            -               syntax.h syntax.c
-        mktokens            -               token.def
+        mktokens            -               token.h
         bltin/mkexpr    unary_op binary_op  operators.h operators.c
 
 There are undoubtedly too many of these.  Mkinit searches all the
