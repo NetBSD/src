@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.96 2004/09/06 09:43:29 yamt Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.97 2004/09/08 11:59:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2001 The NetBSD Foundation, Inc.
@@ -439,6 +439,7 @@ do {									\
 	}								\
 } while (/* CONSTCOND */ 0)
 
+#if defined(_KERNEL)
 #define	_M_
 /*
  * Macros for tracking external storage associated with an mbuf.
@@ -564,26 +565,8 @@ do {									\
 do {									\
 	int _ms_ = splvm(); /* MBUFLOCK */				\
 	_MOWNERREVOKE((m), 0, (m)->m_flags);				\
-	if (MCLISREFERENCED(m)) {					\
-		_MCLDEREFERENCE(m);					\
-		splx(_ms_);						\
-	} else if ((m)->m_flags & M_CLUSTER) {				\
-		pool_cache_put_paddr((m)->m_ext.ext_arg,		\
-		    (m)->m_ext.ext_buf, (m)->m_ext.ext_paddr);		\
-		splx(_ms_);						\
-	} else if ((m)->m_ext.ext_free) {				\
-		/*							\
-		 * NOTE: We assume that MEXTREMOVE() is called from	\
-		 * code where it is safe to invoke the free routine	\
-		 * without the mbuf to perform bookkeeping.		\
-		 */							\
-		(*((m)->m_ext.ext_free))(NULL, (m)->m_ext.ext_buf,	\
-		    (m)->m_ext.ext_size, (m)->m_ext.ext_arg);		\
-		splx(_ms_);						\
-	} else {							\
-		splx(_ms_);						\
-		free((m)->m_ext.ext_buf, (m)->m_ext.ext_type);		\
-	}								\
+	m_ext_free(m, FALSE);						\
+	splx(_ms_);							\
 	(m)->m_flags &= ~M_EXTCOPYFLAGS;				\
 	(m)->m_ext.ext_size = 0;	/* why ??? */			\
 } while (/* CONSTCOND */ 0)
@@ -614,28 +597,7 @@ do {									\
 		(n) = (m)->m_next;					\
 		_MOWNERREVOKE((m), 1, m->m_flags);			\
 		if ((m)->m_flags & M_EXT) {				\
-			if (MCLISREFERENCED(m)) {			\
-				_MCLDEREFERENCE(m);			\
-				pool_cache_put(&mbpool_cache, (m));	\
-			} else if ((m)->m_flags & M_CLUSTER) {		\
-				pool_cache_put_paddr((m)->m_ext.ext_arg,\
-				    (m)->m_ext.ext_buf,			\
-				    (m)->m_ext.ext_paddr);		\
-				pool_cache_put(&mbpool_cache, (m));	\
-			} else if ((m)->m_ext.ext_free) {		\
-				/*					\
-				 * (*ext_free)() is responsible for	\
-				 * freeing the mbuf when it is safe.	\
-				 */					\
-				(*((m)->m_ext.ext_free))((m),		\
-				    (m)->m_ext.ext_buf,			\
-				    (m)->m_ext.ext_size,		\
-				    (m)->m_ext.ext_arg);		\
-			} else {					\
-				free((m)->m_ext.ext_buf,		\
-				    (m)->m_ext.ext_type);		\
-				pool_cache_put(&mbpool_cache, (m));	\
-			}						\
+			m_ext_free(m, TRUE);				\
 		} else {						\
 			pool_cache_put(&mbpool_cache, (m));		\
 		}							\
@@ -762,6 +724,8 @@ do {									\
 #define	M_GETCTX(m, t)		((t) (m)->m_pkthdr.rcvif + 0)
 #define	M_SETCTX(m, c)		((void) ((m)->m_pkthdr.rcvif = (void *) (c)))
 
+#endif /* defined(_KERNEL) */
+
 /*
  * Mbuf statistics.
  * For statistics related to mbuf and cluster allocations, see also the
@@ -860,7 +824,8 @@ void	m_reclaim(void *, int);
 void	mbinit(void);
 
 /* Inline routines. */
-static	u_int m_length(struct mbuf *);
+static __inline u_int m_length(struct mbuf *) __unused;
+static __inline void m_ext_free(struct mbuf *, boolean_t) __unused;
 
 /* Packet tag routines */
 struct	m_tag *m_tag_get(int, int, int);
@@ -917,6 +882,33 @@ m_length(struct mbuf *m)
 		pktlen += m0->m_len;
 	return pktlen;
 }
+
+/*
+ * m_ext_free: release a reference to the mbuf external storage. 
+ *
+ * => if 'dofree', free the mbuf m itsself as well.
+ * => called at splvm.
+ */
+static __inline void
+m_ext_free(struct mbuf *m, boolean_t dofree)
+{
+
+	if (MCLISREFERENCED(m)) {
+		_MCLDEREFERENCE(m);
+	} else if (m->m_flags & M_CLUSTER) {
+		pool_cache_put_paddr(m->m_ext.ext_arg,
+		    m->m_ext.ext_buf, m->m_ext.ext_paddr);
+	} else if (m->m_ext.ext_free) {
+		(*m->m_ext.ext_free)(dofree ? m : NULL, m->m_ext.ext_buf,
+		    m->m_ext.ext_size, m->m_ext.ext_arg);
+		dofree = FALSE;
+	} else {
+		free(m->m_ext.ext_buf, m->m_ext.ext_type);
+	}
+	if (dofree)
+		pool_cache_put(&mbpool_cache, m);
+}
+
 
 #endif /* _KERNEL */
 #endif /* !_SYS_MBUF_H_ */
