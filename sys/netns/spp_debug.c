@@ -1,4 +1,4 @@
-/*	$NetBSD: spp_debug.c,v 1.14 2004/04/19 00:10:48 matt Exp $	*/
+/*	$NetBSD: spp_debug.c,v 1.15 2004/04/21 02:30:56 matt Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spp_debug.c,v 1.14 2004/04/19 00:10:48 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spp_debug.c,v 1.15 2004/04/21 02:30:56 matt Exp $");
 
 #include "opt_inet.h"
 
@@ -60,8 +60,6 @@ __KERNEL_RCSID(0, "$NetBSD: spp_debug.c,v 1.14 2004/04/19 00:10:48 matt Exp $");
 #define SANAMES
 #include <netns/spp_debug.h>
 
-extern char *prurequests[];
-extern char *tcpstates[];
 extern const char * const sanames[];
 extern const char * const sppnames[];
 
