@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses.3,v 1.48 2003/06/20 06:56:30 jdc Exp $
+.\"	$NetBSD: curses.3,v 1.49 2003/06/20 06:58:54 jdc Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -204,6 +204,7 @@ must be called before any of the other routines that deal with color are used.
 .It nocbreak Ta Xr curses_tty 3
 .It nodelay Ta Xr curses_input 3
 .It noecho Ta Xr curses_tty 3
+.It noqiflush Ta Xr curses_tty 3
 .It nonl Ta Xr curses_tty 3
 .It noraw Ta Xr curses_tty 3
 .It notimeout Ta Xr curses_input 3
@@ -213,6 +214,7 @@ must be called before any of the other routines that deal with color are used.
 .It pnoutrefresh Ta Xr curses_pad 3
 .It prefresh Ta Xr curses_pad 3
 .It printw Ta Xr curses_print 3
+.It qiflush Ta Xr curses_tty 3
 .It raw Ta Xr curses_tty 3
 .It refresh Ta Xr curses_refresh 3
 .It reset_prog_mode Ta Xr curses_tty 3

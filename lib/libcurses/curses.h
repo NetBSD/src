@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.h,v 1.76 2003/06/20 06:56:29 jdc Exp $	*/
+/*	$NetBSD: curses.h,v 1.77 2003/06/20 06:58:53 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -420,6 +420,10 @@ extern int	 ESCDELAY;		/* Delay between keys in esc seq's. */
 #define	mvwinstr(w, y, x, s) \
 	(wmove(w, y, x) == ERR ? ERR : winstr(w, s))
 
+/* Miscellaneous. */
+#define	noqiflush()		intrflush(stdscr, FALSE)
+#define	qiflush()		intrflush(stdscr, TRUE)
+
 #else
 /* Use functions not macros... */
 __BEGIN_DECLS
@@ -599,6 +603,7 @@ int	 nocbreak(void);
 void	 nodelay(WINDOW *, bool);
 int	 noecho(void);
 int	 nonl(void);
+void	 noqiflush(void);
 int	 noraw(void);
 int	 notimeout(WINDOW *, bool);
 int	 overlay(const WINDOW *, WINDOW *);
@@ -608,6 +613,7 @@ int	 pnoutrefresh(WINDOW *, int, int, int, int, int, int);
 int	 prefresh(WINDOW *, int, int, int, int, int, int);
 int	 printw(const char *, ...)
 		__attribute__((__format__(__printf__, 1, 2)));
+void	 qiflush(void);
 int	 raw(void);
 int	 reset_prog_mode(void);
 int	 reset_shell_mode(void);

@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.32 2003/04/05 10:07:00 jdc Exp $	*/
+/*	$NetBSD: tty.c,v 1.33 2003/06/20 06:58:53 jdc Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tty.c	8.6 (Berkeley) 1/10/95";
 #else
-__RCSID("$NetBSD: tty.c,v 1.32 2003/04/05 10:07:00 jdc Exp $");
+__RCSID("$NetBSD: tty.c,v 1.33 2003/06/20 06:58:53 jdc Exp $");
 #endif
 #endif				/* not lint */
 
@@ -464,6 +464,20 @@ nonl(void)
 			  TCSASOFT | TCSADRAIN : TCSADRAIN,
 			  _cursesi_screen->curt) ? ERR : OK);
 }
+
+#ifndef _CURSES_USE_MACROS
+void
+noqiflush(void)
+{
+	(void) intrflush(stdscr, FALSE);
+}
+
+void
+qiflush(void)
+{
+	(void) intrflush(stdscr, TRUE);
+}
+#endif	/* _CURSES_USE_MACROS */
 
 int
 intrflush(WINDOW *win, bool bf)	/*ARGSUSED*/

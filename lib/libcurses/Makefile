@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.46 2003/06/20 06:56:30 jdc Exp $
+#	$NetBSD: Makefile,v 1.47 2003/06/20 06:58:54 jdc Exp $
 #	@(#)Makefile	8.2 (Berkeley) 1/2/94
 
 .include <bsd.own.mk>
@@ -21,12 +21,11 @@ SRCS=	acs.c addbytes.c addch.c addchnstr.c addnstr.c attributes.c \
 	curses.c delch.c deleteln.c delwin.c erase.c flushok.c fullname.c \
 	getch.c getstr.c getyx.c id_subwins.c idlok.c idcok.c inch.c \
 	inchstr.c initscr.c insch.c insdelln.c insertln.c instr.c keypad.c \
-	keyname.c \
-	leaveok.c line.c longname.c meta.c move.c mvwin.c newwin.c nodelay.c \
-	notimeout.c overlay.c overwrite.c pause.c printw.c putchar.c \
-	refresh.c resize.c scanw.c screen.c scroll.c scrollok.c setterm.c \
-	standout.c timeout.c toucholap.c touchwin.c tscroll.c tstp.c tty.c \
-	unctrl.c underscore.c
+	keyname.c leaveok.c line.c longname.c meta.c move.c mvwin.c newwin.c \
+	nodelay.c notimeout.c overlay.c overwrite.c pause.c printw.c \
+	putchar.c refresh.c resize.c scanw.c screen.c scroll.c scrollok.c \
+	setterm.c standout.c timeout.c toucholap.c touchwin.c tscroll.c \
+	tstp.c tty.c unctrl.c underscore.c
 
 MAN=	curses.3 curses_addch.3 curses_addchstr.3 curses_addstr.3 \
 	curses_attributes.3 curses_background.3 curses_border.3 \
@@ -110,10 +109,12 @@ MLINKS+= curses_addch.3 addch.3 curses_addchstr.3 addchnstr.3 \
 	 curses_window.3 newwin.3 curses_tty.3 nl.3 \
 	 curses_tty.3 nocbreak.3 curses_input.3 nodelay.3 \
 	 curses_tty.3 noecho.3 curses_tty.3 nonl.3 \
+	 curses_tty.3 noqiflush.3 \
 	 curses_tty.3 noraw.3 curses_input.3 notimeout.3 \
 	 curses_window.3 overlay.3 curses_window.3 overwrite.3 \
 	 curses_color.3 pair_content.3 curses_pad.3 pnoutrefresh.3 \
 	 curses_pad.3 prefresh.3 curses_print.3 printw.3 \
+	 curses_tty.3 qiflush.3 \
 	 curses_tty.3 raw.3 curses_refresh.3 refresh.3 \
 	 curses_tty.3 reset_prog_mode.3 curses_tty.3 reset_shell_mode.3 \
 	 curses_tty.3 resetty.3 curses_screen.3 resizeterm.3 \
