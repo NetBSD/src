@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.145 1999/07/20 20:59:03 drochner Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.146 1999/07/27 00:24:06 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.138 1999/07/20 20:58:20 drochner Exp 
+ *	NetBSD: pcidevs,v 1.139 1999/07/27 00:23:47 thorpej Exp 
  */
 
 /*
@@ -1155,6 +1155,7 @@
 #define	PCI_PRODUCT_SMC_37C665	0x1000		/* FDC 37C665 */
 #define	PCI_PRODUCT_SMC_37C922	0x1001		/* FDC 37C922 */
 #define	PCI_PRODUCT_SMC_83C170	0x0005		/* 83C170 (\"EPIC/100\") Fast Ethernet */
+#define	PCI_PRODUCT_SMC_83C175	0x0006		/* 83C175 (\"EPIC/100\") Fast Ethernet */
 
 /* Surecom Technology products */
 #define	PCI_PRODUCT_SURECOM_NE34	0x0e34		/* NE-34 Ethernet */
