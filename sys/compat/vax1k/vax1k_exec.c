@@ -1,4 +1,4 @@
-/*	$NetBSD: vax1k_exec.c,v 1.3 2001/08/29 03:43:53 chuck Exp $	*/
+/*	$NetBSD: vax1k_exec.c,v 1.4 2001/08/31 18:44:12 chuck Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -92,10 +92,13 @@ exec_vax1k_makecmds(p, epp)
 		goto done;
 
 	case (MID_VAX1K << 16) | NMAGIC:
+		error = exec_vax1k_prep_anymagic(p, epp,
+						 sizeof(struct exec), 1);
+		goto done;
+
 	case (MID_VAX1K << 16) | OMAGIC:
 		error = exec_vax1k_prep_anymagic(p, epp,
 						 sizeof(struct exec), 0);
-		/* XXXCDC: should we pad NMAGIC? */
 		goto done;
 	}
 
