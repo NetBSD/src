@@ -33,18 +33,16 @@
 
 #include <sys/ipc.h>
 
-#define SHM_RDONLY  010000  /* Attach read-only (else read-write) (origin ?)*/
-#define SHM_RND     020000  /* Round attach address to SHMLBA (origin XXX) */
-#define SHMLBA      CLBYTES /* Segment low boundry address multiple (origin, machdep XXX*/
-
-typedef u_short shmatt_t;
+#define SHM_RDONLY  010000  /* Attach read-only (else read-write) */
+#define SHM_RND     020000  /* Round attach address to SHMLBA */
+#define SHMLBA      CLBYTES /* Segment low boundry address multiple */
 
 struct shmid_ds {
 	struct ipc_perm shm_perm;	/* operation permission structure */
 	int             shm_segsz;	/* size of segment in bytes */
 	pid_t           shm_lpid;   /* process ID of last shared memory op */
 	pid_t           shm_cpid;	/* process ID of creator */
-	shmatt_t        shm_nattch;	/* number of current attaches */
+	short		shm_nattch;	/* number of current attaches */
 	time_t          shm_atime;	/* time of last shmat() */
 	time_t          shm_dtime;	/* time of last shmdt() */
 	time_t          shm_ctime;	/* time of last change by shmctl() */
