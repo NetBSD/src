@@ -1,4 +1,4 @@
-/*	$NetBSD: isareg.h,v 1.6 1998/03/22 15:44:02 drochner Exp $	*/
+/*	$NetBSD: isareg.h,v 1.7 2003/05/05 12:55:41 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -160,4 +160,10 @@
 #define	IOM_BEGIN	0x0a0000		/* Start of I/O Memory "hole" */
 #define	IOM_END		0x100000		/* End of I/O Memory "hole" */
 #define	IOM_SIZE	(IOM_END - IOM_BEGIN)
+
+/*
+ * ISA DMA works < 16M (24 address lines).
+ */
+#define ISA_DMA_BOUNCE_THRESHOLD	(16 * 1024 * 1024)
+
 #endif /* !IOM_BEGIN */
