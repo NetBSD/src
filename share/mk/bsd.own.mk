@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.73 1998/07/22 18:21:39 perry Exp $
+#	$NetBSD: bsd.own.mk,v 1.74 1998/07/27 00:58:05 tv Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -107,10 +107,9 @@ OBJECT_FMT?=a.out
 # Uncomment to turn off lint library generation.
 #NOLINT=
 
-# Profiling and shared libraries don't work on PowerPC yet.
+# Profiling doesn't work on PowerPC yet.
 .if (${MACHINE_ARCH} == "powerpc")
 NOPROFILE=
-NOSHLIB=
 .endif
 
 # GNU sources and packages sometimes see architecture names differently.
@@ -120,11 +119,14 @@ GNU_ARCH.alpha=alpha
 GNU_ARCH.arm32=arm
 GNU_ARCH.i386=i386
 GNU_ARCH.m68k=m68k
-GNU_ARCH.mips=mips
+GNU_ARCH.mipseb=mipseb
+GNU_ARCH.mipsel=mipsel
 GNU_ARCH.ns32k=ns32k
 GNU_ARCH.powerpc=powerpc
 GNU_ARCH.sparc=sparc
 GNU_ARCH.vax=vax
+# XXX temporary compatibility
+GNU_ARCH.mips=mipsel
 MACHINE_GNU_ARCH=${GNU_ARCH.${MACHINE_ARCH}}
 
 TARGETS+=	all clean cleandir depend includes install lint obj regress \
