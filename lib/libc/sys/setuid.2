@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)setuid.3	6.4 (Berkeley) 4/19/91
-.\"	$Id: setuid.2,v 1.1 1994/04/06 23:29:33 cgd Exp $
+.\"	$Id: setuid.2,v 1.2 1994/04/10 00:16:58 cgd Exp $
 .\"
 .Dd April 19, 1991
 .Dt SETUID 2
@@ -95,9 +95,21 @@ these functions return \-1.
 .Xr getuid 2 ,
 .Xr getgid 2
 .Sh HISTORY
-A
+The
 .Fn setuid
 and
 .Fn setgid
-syscall appeared in 
-.At v6 .
+functions are compliant with the
+.St -p1003.1-88
+specification with
+.Li _POSIX_SAVED_IDS
+not defined.
+The
+.Fn seteuid
+and
+.Fn setegid
+functions are extensions based on the 
+.Tn POSIX
+concept of
+.Li _POSIX_SAVED_IDS ,
+and have been proposed for a future revision of the standard.
