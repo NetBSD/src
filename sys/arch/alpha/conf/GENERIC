@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.215 2002/09/24 13:30:41 ad Exp $
+# $NetBSD: GENERIC,v 1.216 2002/09/24 14:47:56 provos Exp $
 #
 # GENERIC machine description file
 # 
@@ -25,7 +25,7 @@ include		"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.215 $"
+#ident 		"GENERIC-$Revision: 1.216 $"
 
 maxusers 32
 
@@ -52,6 +52,7 @@ options 	API_UP1000	# EV6:		Alpha Processor, Inc. UP1000
 
 # Standard system options
 options 	KTRACE			# System call tracing support
+options 	SYSTRACE		# System call vetting via systrace(1)
 options 	NTP			# kernel PLL for NTP
 
 # Diagnostic/debugging support options
