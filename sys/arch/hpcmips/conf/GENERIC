@@ -2,11 +2,11 @@
 # Distribution kernel (any  model) kernel config file
 
 #
-# 	$NetBSD: GENERIC,v 1.44 2000/04/19 06:50:31 itojun Exp $
+# 	$NetBSD: GENERIC,v 1.45 2000/04/25 06:20:14 uch Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
-#ident 		"GENERIC-$Revision: 1.44 $"
+#ident 		"GENERIC-$Revision: 1.45 $"
 
 maxusers	8
 
@@ -92,8 +92,7 @@ options 	INET6		# IPV6
 #options 	CCITT,LLC,HDLC	# X.25
 
 # NetBSD backwards compatibility
-options 	COMPAT_43, COMPAT_13, COMPAT_14
-options 	COMPAT_386BSD_MBRPART # recognize old partition ID
+options 	COMPAT_43
 
 options 	NFS_BOOT_DHCP
 
