@@ -150,16 +150,13 @@ ka48_mchk(addr)
 	return 0;
 }
 
+extern caddr_t le_iomem;
+
 void
 ka48_steal_pages()
 {
 	extern	vm_offset_t avail_start, virtual_avail, avail_end;
 	int	i;
-
-        /* Interrupt vector number in interrupt mask table */
-        inr_ni = VS4000_NI;
-        inr_sr = VS4000_SR;
-        inr_st = VS4000_ST;
 
 	MAPPHYS(le_iomem, (NI_IOSIZE/VAX_NBPG), VM_PROT_READ|VM_PROT_WRITE);
 
