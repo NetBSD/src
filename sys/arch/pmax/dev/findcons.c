@@ -1,4 +1,4 @@
-/*	$NetBSD: findcons.c,v 1.2 1998/03/24 09:51:23 jonathan Exp $	*/
+/*	$NetBSD: findcons.c,v 1.3 1998/03/25 07:35:05 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone
@@ -34,7 +34,7 @@
 
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: findcons.c,v 1.2 1998/03/24 09:51:23 jonathan Exp $$");
+__KERNEL_RCSID(0, "$NetBSD: findcons.c,v 1.3 1998/03/25 07:35:05 jonathan Exp $$");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,7 +43,6 @@ __KERNEL_RCSID(0, "$NetBSD: findcons.c,v 1.2 1998/03/24 09:51:23 jonathan Exp $$
 #include <sys/termios.h>
 
 #include <pmax/pmax/pmaxtype.h>
-extern int	pmax_boardtype;		/* Motherboard type */
 
 /*
  * Default consdev, for errors or warnings before
@@ -156,7 +155,7 @@ dc_ds_kbd(kbd_slot)
 {
 
 #if NDC_DS > 0
-	if (pmax_boardtype == DS_PMAX) {
+	if (systype == DS_PMAX) {
 		cd.cn_getc = LKgetc;
 		lk_divert(dcGetc, makedev(DCDEV, DCKBD_PORT));
 		return 1;
@@ -211,7 +210,7 @@ int
 dtop_kbd(kbd_slot)
 	int kbd_slot;
 {
-	if (pmax_boardtype != DS_MAXINE)
+	if (systype != DS_MAXINE)
 		return 0;
 #if  NDTOP > 0
 	if (kbd_slot == 3) {
@@ -231,7 +230,7 @@ int
 find_kbd(kbd)
 	int kbd;
 {
-	switch(pmax_boardtype) {
+	switch(systype) {
 	case DS_PMAX:
 		return (dc_ds_kbd(kbd));
 		break;
@@ -283,7 +282,7 @@ int
 xcfb_screen(crtslot)
 	int crtslot;
 {
-	if (pmax_boardtype != DS_MAXINE)
+	if (systype != DS_MAXINE)
 		return 0;
 
 #if NXCFB > 0
@@ -316,7 +315,7 @@ int
 find_screen(crtslot)
 	int crtslot;
 {
-	switch(pmax_boardtype) {
+	switch(systype) {
 	case DS_PMAX:
 		if (pm_screen(crtslot))
 			return (1);
@@ -384,7 +383,7 @@ scc_serial(comslot)
 	 * On the MAXINE, there is only  serial port, which
 	 * configures at the lower address.
 	 */
-	dev = (pmax_boardtype == DS_MAXINE) ? SCCCOMM2_PORT: SCCCOMM3_PORT;
+	dev = (systype == DS_MAXINE) ? SCCCOMM2_PORT: SCCCOMM3_PORT;
 
 #ifdef notyet	/* no boot-time init entrypoint for scc */
 	cd.cn_dev = makedev(SCCDEV, DCPRINTER_PORT);
@@ -407,7 +406,7 @@ int
 find_serial(comslot)
 	int comslot;
 {
-	switch(pmax_boardtype) {
+	switch(systype) {
 	case DS_PMAX:
 		return (dc_ds_serial(comslot));
 		break;
@@ -455,7 +454,6 @@ consinit()
 	/*  if the prom is using a screen, try that. */
 	if (prom_using_screen) {
 		if (find_kbd(kbd) && find_screen(crt)) {
-
 #if NRASTERCONSOLE > 0
 			cd.cn_pri = CN_NORMAL;
 			rcons_indev(&cd);
@@ -467,15 +465,14 @@ consinit()
 		/* PROM is using fb console, but we have no driver for it. */
 		printf("No supported console device in slot %d. ", crt);
 	    	printf("Trying serial console.\n");
+		DELAY(500000);
 	} else {
-
 		/*
 		 * If we found a keyboard and framebuffer, wire it up
 		 * as an rcons device even if it's not the OS console.
 		 */
 	}
 	
-
 	/* Otherwise, try a serial port as console. */
 	if (find_serial(kbd)) {
 		cd.cn_pri = CN_REMOTE;
@@ -490,5 +487,6 @@ consinit()
 	cd = promcd;
 
 	printf("No driver for console device, using prom for console I/O.\n");
+	DELAY(500000);
 	return;
 }
