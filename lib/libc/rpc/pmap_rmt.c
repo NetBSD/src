@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_rmt.c,v 1.18 1999/01/20 11:37:37 lukem Exp $	*/
+/*	$NetBSD: pmap_rmt.c,v 1.19 1999/01/31 20:45:31 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)pmap_rmt.c 1.21 87/08/27 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)pmap_rmt.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: pmap_rmt.c,v 1.18 1999/01/20 11:37:37 lukem Exp $");
+__RCSID("$NetBSD: pmap_rmt.c,v 1.19 1999/01/31 20:45:31 christos Exp $");
 #endif
 #endif
 
@@ -116,8 +116,9 @@ pmap_rmtcall(addr, prog, vers, proc, xdrargs, argsp, xdrres, resp, tout,
 		r.port_ptr = port_ptr;
 		r.results_ptr = resp;
 		r.xdr_results = xdrres;
-		stat = CLNT_CALL(client, PMAPPROC_CALLIT, xdr_rmtcall_args, &a,
-		    xdr_rmtcallres, &r, tout);
+		stat = CLNT_CALL(client, PMAPPROC_CALLIT,
+		    (xdrproc_t)xdr_rmtcall_args, &a, (xdrproc_t)xdr_rmtcallres,
+		    &r, tout);
 		CLNT_DESTROY(client);
 	} else {
 		stat = RPC_FAILED;
@@ -173,7 +174,7 @@ xdr_rmtcallres(xdrs, crp)
 
 	port_ptr = (caddr_t)(void *)crp->port_ptr;
 	if (xdr_reference(xdrs, &port_ptr, sizeof (u_long),
-	    xdr_u_long) && xdr_u_long(xdrs, &crp->resultslen)) {
+	    (xdrproc_t)xdr_u_long) && xdr_u_long(xdrs, &crp->resultslen)) {
 		crp->port_ptr = (u_long *)(void *)port_ptr;
 		return ((*(crp->xdr_results))(xdrs, crp->results_ptr));
 	}
@@ -346,7 +347,7 @@ clnt_broadcast(prog, vers, proc, xargs, argsp, xresults, resultsp, eachresult)
 		milliseconds = (int)(t.tv_sec * 1000 + t.tv_usec / 1000);
 		msg.acpted_rply.ar_verf = _null_auth;
 		msg.acpted_rply.ar_results.where = (caddr_t)(void *)&r;
-                msg.acpted_rply.ar_results.proc = xdr_rmtcallres;
+                msg.acpted_rply.ar_results.proc = (xdrproc_t)xdr_rmtcallres;
 		switch (poll(&fd, 1, milliseconds)) {
 
 		case 0:  /* timed out */
@@ -397,7 +398,7 @@ clnt_broadcast(prog, vers, proc, xargs, argsp, xresults, resultsp, eachresult)
 #endif
 		}
 		xdrs->x_op = XDR_FREE;
-		msg.acpted_rply.ar_results.proc = xdr_void;
+		msg.acpted_rply.ar_results.proc = (xdrproc_t)xdr_void;
 		(void)xdr_replymsg(xdrs, &msg);
 		(void)(*xresults)(xdrs, resultsp);
 		xdr_destroy(xdrs);
