@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.h,v 1.10 2002/01/14 23:14:43 bjh21 Exp $	*/
+/*	$NetBSD: linux_socket.h,v 1.11 2003/07/27 19:30:03 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -123,6 +123,56 @@
 #define	LINUX_TCP_NODELAY	1
 #define	LINUX_TCP_MAXSEG	2
 
+/* "Socket"-level control message types: */
+#define LINUX_SCM_RIGHTS	1	/* same as SCM_RIGHTS */
+#define LINUX_SCM_CREDENTIALS	2	/* accepts ucred rather than sockcred */
+#define LINUX_SCM_CONNECT	3	/* not supported in NetBSD */
+#define LINUX_SCM_TIMESTAMP	LINUX_SO_TIMESTAMP
+				/* not actually implemented in Linux 2.5.15? */
+
+/*
+ * Message flags (for sendmsg/recvmsg)
+ */
+#define LINUX_MSG_OOB		0x001
+#define LINUX_MSG_PEEK		0x002
+#define LINUX_MSG_DONTROUTE	0x004
+#define LINUX_MSG_TRYHARD	0x004
+#define LINUX_MSG_CTRUNC	0x008
+#define LINUX_MSG_PROBE		0x010	/* Don't send, only probe path */
+#define LINUX_MSG_TRUNC		0x020
+#define LINUX_MSG_DONTWAIT	0x040	/* this msg should be nonblocking */
+#define LINUX_MSG_EOR		0x080	/* data completes record */
+#define LINUX_MSG_WAITALL	0x100	/* wait for full request or error */
+#define LINUX_MSG_FIN		0x200
+#define LINUX_MSG_EOF		LINUX_MSG_FIN
+#define LINUX_MSG_SYN		0x400
+#define LINUX_MSG_CONFIRM	0x800	/* Confirm path validity */
+#define LINUX_MSG_RST		0x1000
+#define LINUX_MSG_ERRQUEUE	0x2000	/* fetch message from error queue */
+#define LINUX_MSG_NOSIGNAL	0x4000	/* do not generate SIGPIPE */
+#define LINUX_MSG_MORE		0x8000	/* Sender will send more */
+
+/*
+ * Linux alignment requirement for CMSG struct manipulation.
+ * Linux aligns on (long) boundary on all architectures.
+ */
+#define LINUX_CMSG_ALIGN(n)	\
+	(((n) + sizeof(long)-1) & ~(sizeof(long)-1))
+#define LINUX_CMSG_DATA(cmsg)	\
+	((u_char *)(void *)(cmsg) + __CMSG_ALIGN(sizeof(struct cmsghdr)))
+#define	LINUX_CMSG_NXTHDR(mhdr, cmsg)	\
+	(((__caddr_t)(cmsg) + LINUX_CMSG_ALIGN((cmsg)->cmsg_len) + \
+			    LINUX_CMSG_ALIGN(sizeof(struct cmsghdr)) > \
+	    (((__caddr_t)(mhdr)->msg_control) + (mhdr)->msg_controllen)) ? \
+	    (struct cmsghdr *)NULL : \
+	    (struct cmsghdr *)((__caddr_t)(cmsg) + \
+	        LINUX_CMSG_ALIGN((cmsg)->cmsg_len)))
+#define LINUX_CMSG_ALIGNDIFF	\
+	(CMSG_ALIGN(sizeof(struct cmsghdr)) - LINUX_CMSG_ALIGN(sizeof(struct cmsghdr)))
+
+/*
+ * Machine specific definitions.
+ */
 #if defined(__i386__)
 #include <compat/linux/arch/i386/linux_socket.h>
 #elif defined(__m68k__)
