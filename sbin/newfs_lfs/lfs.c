@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.c,v 1.31 2003/09/06 12:50:00 itojun Exp $	*/
+/*	$NetBSD: lfs.c,v 1.32 2003/10/09 14:28:34 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)lfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: lfs.c,v 1.31 2003/09/06 12:50:00 itojun Exp $");
+__RCSID("$NetBSD: lfs.c,v 1.32 2003/10/09 14:28:34 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -468,7 +468,8 @@ make_lfs(int fd, uint secsize, struct partition *partp, int minfree,
 		/* Segment 0 eats the label, except for version 1 */
 		if (lfsp->lfs_version > 1 && lfsp->lfs_start < label_fsb)
 			sb_addr -= label_fsb - start;
-		if (sb_addr > dbtofsb(lfsp, partp->p_size))
+		if (sb_addr + sizeof(struct dlfs)
+		    >= dbtofsb(lfsp, partp->p_size))
 			break;
 		lfsp->lfs_sboffs[i] = sb_addr;
 		lfsp->lfs_dsize -= sb_fsb;
@@ -906,6 +907,7 @@ make_lfs(int fd, uint secsize, struct partition *partp, int minfree,
 			curw = ww;
 		} else
 			printf("%s", tbuf);
+		fflush(stdout);
 
 		/* Leave the time stamp on the alt sb, zero the rest */
 		if (i == 2) {
