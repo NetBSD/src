@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: install.sub,v 1.38 2000/11/14 20:37:25 is Exp $
+#	$NetBSD: install.sub,v 1.39 2000/11/22 21:04:46 abs Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -496,11 +496,18 @@ configure_ifs() {
 enable_network() {
 
 	# Set up the hostname.
-	if [ ! -f /mnt/etc/myname ]; then
+	if [ -f /mnt/etc/myname ]; then
+		hostname=`cat /mnt/etc/myname`
+	elif [ -f /mnt/etc/rc.conf ];then
+		hostname=`sh -c '. /mnt/etc/rc.conf ; echo $hostname'`
+	else
 		echo "ERROR: no /etc/myname!"
 		return 1
 	fi
-	hostname=`cat /mnt/etc/myname`
+	if [ -z "$hostname" ];then
+		echo "ERROR: hostname not set in /etc/myname or /etc/rc.conf!"
+		return 1
+	fi
 	hostname $hostname
 
 	# configure all the interfaces which we know about.
