@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)chown.8	8.3 (Berkeley) 3/31/94
-.\"	$NetBSD: chown.8,v 1.7 1997/10/17 08:10:10 enami Exp $
+.\"	$NetBSD: chown.8,v 1.8 1997/10/18 04:08:16 lukem Exp $
 .\"
 .Dd March 31, 1994
 .Dt CHOWN 8
@@ -39,7 +39,7 @@
 .Nm chown
 .Nd change file owner and group
 .Sh SYNOPSIS
-.Nm chown
+.Nm
 .Oo
 .Fl R
 .Op Fl H | Fl L | Fl P
@@ -47,7 +47,7 @@
 .Op Fl fh
 .Ar owner Op Ar :group
 .Ar file ...
-.Nm chown
+.Nm ""
 .Oo
 .Fl R
 .Op Fl H | Fl L | Fl P
@@ -56,7 +56,7 @@
 .Ar :group
 .Ar file ...
 .Sh DESCRIPTION
-.Nm Chown
+.Nm
 sets the user ID and/or the group ID of the specified files.
 .Pp
 The options are as follows:
@@ -93,7 +93,7 @@ is not given, unless the
 or 
 .Fl L 
 option is set,
-.Nm chown
+.Nm
 on a symbolic link always succeeds and has no effect.
 The
 .Fl H ,
@@ -130,17 +130,17 @@ The ownership of a file may only be altered by a super-user for
 obvious security reasons.
 .Pp
 The
-.Nm chown
+.Nm
 utility exits 0 on success, and >0 if an error occurs.
 .Sh COMPATIBILITY
 Previous versions of the
-.Nm chown
+.Nm
 utility used the dot (``.'') character to distinguish the group name.
 This has been changed to be a colon (``:'') character so that user and
 group names may contain the dot character.
 .Pp
 Previous versions of the
-.Nm chown
+.Nm
 utility changed the owner of symbolic links specified on the command
 line.
 In this system, symbolic links do not have owners.
@@ -152,5 +152,5 @@ In this system, symbolic links do not have owners.
 .Xr symlink 7
 .Sh STANDARDS
 The
-.Nm chown
+.Nm
 command is expected to be POSIX 1003.2 compliant.
