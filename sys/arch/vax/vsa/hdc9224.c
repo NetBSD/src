@@ -1,4 +1,4 @@
-/*	$NetBSD: hdc9224.c,v 1.19 2002/09/06 13:18:43 gehenna Exp $ */
+/*	$NetBSD: hdc9224.c,v 1.20 2002/09/25 22:21:30 thorpej Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -60,7 +60,6 @@
 #include <sys/buf.h>
 #include <sys/proc.h>
 #include <sys/user.h>
-#include <sys/map.h>
 #include <sys/device.h>
 #include <sys/dkstat.h> 
 #include <sys/disklabel.h>

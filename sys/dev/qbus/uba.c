@@ -1,4 +1,4 @@
-/*	$NetBSD: uba.c,v 1.60 2002/06/01 23:51:02 lukem Exp $	   */
+/*	$NetBSD: uba.c,v 1.61 2002/09/25 22:21:39 thorpej Exp $	   */
 /*
  * Copyright (c) 1996 Jonathan Stone.
  * Copyright (c) 1994, 1996 Ludd, University of Lule}, Sweden.
@@ -38,12 +38,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uba.c,v 1.60 2002/06/01 23:51:02 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uba.c,v 1.61 2002/09/25 22:21:39 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
 #include <sys/systm.h>
-#include <sys/map.h>
 #include <sys/buf.h>
 #include <sys/proc.h>
 #include <sys/user.h>

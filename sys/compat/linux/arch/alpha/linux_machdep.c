@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.24 2002/07/04 23:32:10 thorpej Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.25 2002/09/25 22:21:33 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,13 +42,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.24 2002/07/04 23:32:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.25 2002/09/25 22:21:33 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/signalvar.h>
 #include <sys/kernel.h>
-#include <sys/map.h>
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/buf.h>

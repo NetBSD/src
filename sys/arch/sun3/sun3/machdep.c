@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.158 2002/09/19 10:38:04 ragge Exp $	*/
+/*	$NetBSD: machdep.c,v 1.159 2002/09/25 22:21:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -49,7 +49,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/map.h>
 #include <sys/proc.h>
 #include <sys/buf.h>
 #include <sys/reboot.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: ts.c,v 1.19 2002/09/06 13:18:43 gehenna Exp $ */
+/*	$NetBSD: ts.c,v 1.20 2002/09/25 22:21:28 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -125,7 +125,6 @@ int tstrace = 1;
 #include <sys/conf.h>
 #include <sys/errno.h>
 #include <sys/file.h>
-#include <sys/map.h>
 #include <sys/syslog.h>
 #include <sys/ioctl.h>
 #include <sys/mtio.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm86.c,v 1.27 2002/06/24 10:10:17 itojun Exp $	*/
+/*	$NetBSD: vm86.c,v 1.28 2002/09/25 22:21:10 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,13 +37,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm86.c,v 1.27 2002/06/24 10:10:17 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm86.c,v 1.28 2002/09/25 22:21:10 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/signalvar.h>
 #include <sys/kernel.h>
-#include <sys/map.h>
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/exec.h>

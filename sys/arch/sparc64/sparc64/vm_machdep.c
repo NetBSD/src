@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.45 2002/09/22 07:19:53 chs Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.46 2002/09/25 22:21:23 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -58,7 +58,6 @@
 #include <sys/buf.h>
 #include <sys/exec.h>
 #include <sys/vnode.h>
-#include <sys/map.h>
 
 #include <uvm/uvm_extern.h>
 

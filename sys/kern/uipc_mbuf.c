@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.60 2002/06/30 22:40:32 thorpej Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.61 2002/09/25 22:21:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -73,13 +73,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.60 2002/06/30 22:40:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.61 2002/09/25 22:21:45 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/malloc.h>
-#include <sys/map.h>
 #define MBTYPES
 #include <sys/mbuf.h>
 #include <sys/kernel.h>

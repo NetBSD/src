@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.59 2002/09/24 17:18:45 thorpej Exp $ */
+/*	$NetBSD: autoconf.c,v 1.60 2002/09/25 22:21:22 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/map.h>
 #include <sys/buf.h>
 #include <sys/disklabel.h>
 #include <sys/device.h>

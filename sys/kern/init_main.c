@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.206 2002/09/04 01:32:31 matt Exp $	*/
+/*	$NetBSD: init_main.c,v 1.207 2002/09/25 22:21:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.206 2002/09/04 01:32:31 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.207 2002/09/25 22:21:40 thorpej Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfsserver.h"
@@ -63,7 +63,6 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.206 2002/09/04 01:32:31 matt Exp $")
 #include <sys/callout.h>
 #include <sys/kernel.h>
 #include <sys/mount.h>
-#include <sys/map.h>
 #include <sys/proc.h>
 #include <sys/kthread.h>
 #include <sys/resourcevar.h>

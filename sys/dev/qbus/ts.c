@@ -1,4 +1,4 @@
-/*	$NetBSD: ts.c,v 1.5 2002/09/06 13:18:43 gehenna Exp $ */
+/*	$NetBSD: ts.c,v 1.6 2002/09/25 22:21:39 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ts.c,v 1.5 2002/09/06 13:18:43 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ts.c,v 1.6 2002/09/25 22:21:39 thorpej Exp $");
 
 #undef	TSDEBUG
 
@@ -89,7 +89,6 @@ __KERNEL_RCSID(0, "$NetBSD: ts.c,v 1.5 2002/09/06 13:18:43 gehenna Exp $");
 #include <sys/conf.h>
 #include <sys/errno.h>
 #include <sys/file.h>
-#include <sys/map.h>
 #include <sys/syslog.h>
 #include <sys/ioctl.h>
 #include <sys/mtio.h>

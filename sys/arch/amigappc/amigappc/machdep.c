@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.21 2002/08/25 20:21:34 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.22 2002/09/25 22:21:03 thorpej Exp $ */
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -38,7 +38,6 @@
 #include <sys/buf.h>
 #include <sys/exec.h>
 #include <sys/malloc.h>
-#include <sys/map.h>
 #include <sys/mbuf.h>
 #include <sys/mount.h>
 #include <sys/msgbuf.h>

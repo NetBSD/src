@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.73 2002/09/24 03:14:43 itojun Exp $	*/
+/*	$NetBSD: bpf.c,v 1.74 2002/09/25 22:21:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.73 2002/09/24 03:14:43 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.74 2002/09/25 22:21:46 thorpej Exp $");
 
 #include "bpfilter.h"
 
@@ -55,7 +55,6 @@ __KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.73 2002/09/24 03:14:43 itojun Exp $");
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/ioctl.h>
-#include <sys/map.h>
 #include <sys/conf.h>
 #include <sys/vnode.h>
 

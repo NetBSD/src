@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.93 2002/09/22 07:20:29 chs Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.94 2002/09/25 22:21:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.93 2002/09/22 07:20:29 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.94 2002/09/25 22:21:42 thorpej Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -86,7 +86,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.93 2002/09/22 07:20:29 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/map.h>
 #include <sys/filedesc.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>

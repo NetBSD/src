@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.c,v 1.2 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: profile.c,v 1.3 2002/09/25 22:21:20 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -46,7 +46,6 @@
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/ioctl.h>
-#include <sys/map.h>
 #include <sys/conf.h>
 #include <sys/errno.h>
 #include <sys/fcntl.h>

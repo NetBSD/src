@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.2 2000/10/14 07:19:24 tsutsui Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.3 2002/09/25 22:21:14 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -43,7 +43,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/map.h>
 
 #include <machine/bus.h>
 
