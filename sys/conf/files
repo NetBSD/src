@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.237 1998/08/26 09:31:24 mrg Exp $
+#	$NetBSD: files,v 1.238 1998/08/26 14:20:37 dante Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -156,6 +156,10 @@ file	dev/ic/aic6360.c		aic
 defopt	opt_ahc.h	AHC_BROKEN_CACHE AHC_DEBUG AHC_TAGENABLE 
 device	ahc: scsi
 file	dev/ic/aic7xxx.c		ahc
+
+# AdvanSys 1200A, 1200B and ULTRA SCSI controllers
+device	adv: scsi
+file	dev/ic/adv.c			adv
 
 # AMD 7930 audio/ISDN codec
 device audioamd: audio
