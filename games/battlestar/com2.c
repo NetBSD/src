@@ -1,4 +1,4 @@
-/*	$NetBSD: com2.c,v 1.21 2000/09/25 19:37:58 jsm Exp $	*/
+/*	$NetBSD: com2.c,v 1.22 2001/06/02 17:30:28 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)com2.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: com2.c,v 1.21 2000/09/25 19:37:58 jsm Exp $");
+__RCSID("$NetBSD: com2.c,v 1.22 2001/06/02 17:30:28 christos Exp $");
 #endif
 #endif				/* not lint */
 
@@ -54,7 +54,7 @@ wearit()
 	while (wordnumber <= wordcount && (wordtype[wordnumber] == OBJECT ||
 	    wordtype[wordnumber] == NOUNS) && wordvalue[wordnumber] != DOOR) {
 		value = wordvalue[wordnumber];
-		if (objsht[value] == NULL)
+		if (value >= 0 && objsht[value] == NULL)
 			break;
 		switch (value) {
 
