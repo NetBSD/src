@@ -1,6 +1,6 @@
 #define	AU1x00_UART	/* XXX */
 
-/*	$NetBSD: aucom.c,v 1.5 2003/06/23 11:01:29 martin Exp $	*/
+/*	$NetBSD: aucom.c,v 1.6 2003/06/27 07:39:34 he Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  * XXX: hacked to work with almost 16550-alike Alchemy Au1X00 on-chip uarts
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aucom.c,v 1.5 2003/06/23 11:01:29 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aucom.c,v 1.6 2003/06/27 07:39:34 he Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -1520,9 +1520,12 @@ comparam(struct tty *tp, struct termios *t)
 	 *    overflows.
 	 *  * Otherwise set it a bit higher.
 	 */
+#ifdef COM_HAYESP
 	if (ISSET(sc->sc_hwflags, COM_HW_HAYESP))
 		sc->sc_fifo = FIFO_DMA_MODE | FIFO_ENABLE | FIFO_TRIGGER_8;
-	else if (ISSET(sc->sc_hwflags, COM_HW_FIFO))
+	else
+#endif
+	if (ISSET(sc->sc_hwflags, COM_HW_FIFO))
 		sc->sc_fifo = FIFO_ENABLE |
 		    (t->c_ospeed <= 1200 ? FIFO_TRIGGER_1 :
 		     t->c_ospeed <= 38400 ? FIFO_TRIGGER_8 : FIFO_TRIGGER_4);
@@ -2409,9 +2412,10 @@ struct consdev comcons = {
 };
 
 
+/*ARGSUSED*/
 int
 comcnattach(bus_space_tag_t iot, bus_addr_t iobase, int rate, int frequency,
-    tcflag_t cflag)
+    int type, tcflag_t cflag)
 {
 	int res;
 
