@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.27.2.1 2002/06/10 16:13:50 tv Exp $
+.\"	$NetBSD: prep,v 1.27.2.2 2002/06/14 17:50:38 lukem Exp $
 .
 .Ss2 Prepare yourself
 .
@@ -1093,15 +1093,15 @@ one hard drive (such as the iBook, iMac, PowerBook, and PowerMacintosh Cube
 systems).
 .bullet)
 .Pp
-.Em "Using the"
-.Em Nx 
-.Em "installer to install a disklabel or bootloader will"
-.Em "render your disk unusable by"
-.Tn MacOS No Ns .
-.Em "Either will also prevent Open Firmware 3 machines from booting."
-.Em "You will need to use the installer's" 
-.Em Dq "Re-install sets" 
-.Em "option.  More information is provided below on this process."
+Using the
+.Nx 
+installer to install a disklabel or bootloader will
+render your disk unusable by
+.Tn MacOS .
+Either will also prevent Open Firmware 3 machines from booting.
+You will need to use the installer's
+.Dq Re-install sets
+option.  More information is provided below on this process.
 .Pp
 There are several contradictory partition numbering schemes.  You may want 
 to look at the explanation in the FAQ.
