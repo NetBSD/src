@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.21 1995/05/07 15:37:02 chopps Exp $	*/
+/*	$NetBSD: grf.c,v 1.22 1995/08/18 16:21:33 chopps Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -272,7 +272,11 @@ grfioctl(dev, cmd, data, flag, p)
     	case GRFIOCSETMON:
 	case GRFTOGGLE: /* Toggles between Cirrus boards and native ECS on
                      Amiga. 15/11/94 ill */
-		return(gp->g_mode(gp, GM_GRFIOCTL, cmd, data));
+		/*
+		 * We need the minor dev number to get the overlay/image
+		 * information for grf_ul.
+		 */
+		return(gp->g_mode(gp, GM_GRFIOCTL, cmd, data, dev));
 	default:
 #if NVIEW > 0
 		/*
