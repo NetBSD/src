@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.21 2003/01/17 23:36:18 thorpej Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.22 2003/06/30 13:39:36 simonb Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.21 2003/01/17 23:36:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.22 2003/06/30 13:39:36 simonb Exp $");
 
 /*
  * This file may seem a bit stylized, but that so that it's easier to port.
@@ -75,18 +75,15 @@ __KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.21 2003/01/17 23:36:18 thorpej
 #include <mips/regnum.h>			/* symbolic register indices */
 
 int
-process_read_regs(l, regs)
-	struct lwp *l;
-	struct reg *regs;
+process_read_regs(struct lwp *l, struct reg *regs)
 {
+
 	memcpy(regs, l->l_md.md_regs, sizeof(struct reg));
 	return 0;
 }
 
 int
-process_write_regs(l, regs)
-	struct lwp *l;
-	struct reg *regs;
+process_write_regs(struct lwp *l, struct reg *regs)
 {
 	struct frame *f;
 	mips_reg_t sr;
@@ -99,10 +96,9 @@ process_write_regs(l, regs)
 }
 
 int
-process_read_fpregs(l, regs)
-	struct lwp *l;
-	struct fpreg *regs;
+process_read_fpregs(struct lwp *l, struct fpreg *regs)
 {
+
 	if ((l->l_md.md_flags & MDP_FPUSED) && l == fpcurlwp)
 		savefpregs(l);
 	memcpy(regs, &l->l_addr->u_pcb.pcb_fpregs, sizeof(struct fpreg));
@@ -110,10 +106,9 @@ process_read_fpregs(l, regs)
 }
 
 int
-process_write_fpregs(l, regs)
-	struct lwp *l;
-	struct fpreg *regs;
+process_write_fpregs(struct lwp *l, struct fpreg *regs)
 {
+
 	/* to load FPA contents next time when FP insn is executed */
 	if ((l->l_md.md_flags & MDP_FPUSED) && l == fpcurlwp)
 		fpcurlwp = (struct lwp *)0;
@@ -122,9 +117,9 @@ process_write_fpregs(l, regs)
 }
 
 int
-process_sstep(l, sstep)
-	struct lwp *l;
+process_sstep(struct lwp *l, int sstep)
 {
+
 	/* XXX what are the correct semantics: sstep once, or forevermore? */
 	if (sstep)
 		mips_singlestep(l);
@@ -132,10 +127,9 @@ process_sstep(l, sstep)
 }
 
 int
-process_set_pc(l, addr)
-	struct lwp *l;
-	caddr_t addr;
+process_set_pc(struct lwp *l, caddr_t addr)
 {
+
 	((struct frame *)l->l_md.md_regs)->f_regs[PC] = (int)addr;
 	return 0;
 }
