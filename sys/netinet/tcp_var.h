@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.54 1998/10/04 21:33:53 matt Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.55 1998/10/06 00:20:45 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -386,7 +386,8 @@ struct	tcpstat {
 #define	TCPCTL_KEEPINTVL	18	/* keepalive probe interval */
 #define	TCPCTL_KEEPCNT		19	/* keepalive count */
 #define	TCPCTL_SLOWHZ		20	/* PR_SLOWHZ (read-only) */
-#define	TCPCTL_MAXID		21
+#define	TCPCTL_NEWRENO		21	/* NewReno Congestion Control */
+#define	TCPCTL_MAXID		22
 
 #define	TCPCTL_NAMES { \
 	{ 0, 0 }, \
@@ -410,6 +411,7 @@ struct	tcpstat {
 	{ "keepintvl",	CTLTYPE_INT }, \
 	{ "keepcnt",	CTLTYPE_INT }, \
 	{ "slowhz",	CTLTYPE_INT }, \
+	{ "newreno",	CTLTYPE_INT }, \
 }
 
 #ifdef _KERNEL
@@ -420,6 +422,7 @@ extern	int tcp_do_rfc1323;	/* enabled/disabled? */
 extern	int tcp_do_sack;	/* SACK enabled/disabled? */
 extern	int tcp_do_win_scale;	/* RFC1323 window scaling enabled/disabled? */
 extern	int tcp_do_timestamps;	/* RFC1323 timestamps enabled/disabled? */
+extern	int tcp_do_newreno;	/* Use the New Reno algorithms */
 extern	int tcp_mssdflt;	/* default seg size */
 extern	int tcp_init_win;	/* initial window */
 extern	int tcp_mss_ifmtu;	/* take MSS from interface, not in_maxmtu */
@@ -458,6 +461,7 @@ extern	u_long syn_cache_count;
 	{ 1, 0, &tcp_keepintvl },		\
 	{ 1, 0, &tcp_keepcnt },			\
 	{ 1, 1, 0, PR_SLOWHZ },			\
+	{ 1, 0, &tcp_do_newreno },		\
 }
 
 int	 tcp_attach __P((struct socket *));
