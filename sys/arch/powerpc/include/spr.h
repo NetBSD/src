@@ -1,4 +1,4 @@
-/*	$NetBSD: spr.h,v 1.26 2003/02/26 21:10:51 jklos Exp $	*/
+/*	$NetBSD: spr.h,v 1.27 2003/03/14 06:22:51 matt Exp $	*/
 
 #ifndef _POWERPC_SPR_H_
 #define	_POWERPC_SPR_H_
@@ -6,10 +6,12 @@
 #ifndef _LOCORE
 #define	mtspr(reg, val)							\
 	__asm __volatile("mtspr %0,%1" : : "K"(reg), "r"(val))
+#ifdef __GNUC__
 #define	mfspr(reg)							\
 	( { register_t val;						\
 	  __asm __volatile("mfspr %0,%1" : "=r"(val) : "K"(reg));	\
 	  val; } )
+#endif
 #endif /* _LOCORE */
 
 /*
@@ -90,7 +92,6 @@
 #define	  MPC8245		  0x8081
 
 #define	SPR_IBAT0U		0x210	/* .68 Instruction BAT Reg 0 Upper */
-#define	SPR_IBAT0U		0x210	/* .6. Instruction BAT Reg 0 Upper */
 #define	SPR_IBAT0L		0x211	/* .6. Instruction BAT Reg 0 Lower */
 #define	SPR_IBAT1U		0x212	/* .6. Instruction BAT Reg 1 Upper */
 #define	SPR_IBAT1L		0x213	/* .6. Instruction BAT Reg 1 Lower */
