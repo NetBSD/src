@@ -1,4 +1,4 @@
-/*	$NetBSD: renice.c,v 1.6 1998/12/19 21:07:12 christos Exp $	*/
+/*	$NetBSD: renice.c,v 1.6.10.1 2000/08/23 19:49:21 kleink Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993\n\
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)renice.c	8.1 (Berkeley) 6/9/93";*/
-__RCSID("$NetBSD: renice.c,v 1.6 1998/12/19 21:07:12 christos Exp $");
+__RCSID("$NetBSD: renice.c,v 1.6.10.1 2000/08/23 19:49:21 kleink Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -148,7 +148,8 @@ donice(which, who, prio, incr)
 {
 	int oldprio;
 
-	if ((oldprio = getpriority(which, who)) == -1) {
+	errno = 0;
+	if ((oldprio = getpriority(which, who)) == -1 && errno != 0) {
 		warn("%d: getpriority", who);
 		return (1);
 	}
