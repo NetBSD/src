@@ -1,4 +1,4 @@
-#	$NetBSD: DUALITY,v 1.15 1995/02/23 22:22:07 mycroft Exp $
+#	$NetBSD: DUALITY,v 1.16 1995/03/05 23:04:25 mycroft Exp $
 #
 # DUALITY (mycroft's hp370 test machine)
 #
@@ -44,10 +44,10 @@ options		MSDOSFS
 options		FDESC
 options		FIFO
 options		KERNFS
-options		NULLFS
-options		PORTAL
+#options	NULLFS
+#options	PORTAL
 options		PROCFS
-options		UMAPFS
+#options	UMAPFS
 options		UNION
 
 options		GATEWAY
