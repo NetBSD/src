@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.43 2001/11/21 06:28:09 itojun Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.44 2002/04/28 00:54:41 thorpej Exp $	*/
 /*	$KAME: ipsec.c,v 1.125 2001/09/12 23:01:16 sakane Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.43 2001/11/21 06:28:09 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.44 2002/04/28 00:54:41 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -3418,7 +3418,7 @@ ipsec_copypkt(m)
 			 * references to the cluster.
 			 * XXX: is this approach effective?
 			 */
-			if (n->m_ext.ext_free || MCLISREFERENCED(n)) {
+			if (M_READONLY(n)) {
 				int remain, copied;
 				struct mbuf *mm;
 
