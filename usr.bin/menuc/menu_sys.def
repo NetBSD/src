@@ -1,4 +1,4 @@
-/*	$NetBSD: menu_sys.def,v 1.46 2003/09/21 02:17:39 takemura Exp $	*/
+/*	$NetBSD: menu_sys.def,v 1.47 2003/09/27 09:44:13 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -150,6 +150,10 @@ init_menu(menudesc *m)
 	}
 	exithadd = ((m->mopt & MC_NOEXITOPT) ? 0 : 1);
 
+#ifdef MSG_DEFS_H
+	if (m->y == -1)
+		m->y = msg_row();
+#endif
 
 	/* Calculate h? h == number of visible options. */
 	if (m->h == 0)
@@ -581,8 +585,6 @@ process_menu(int num, void *arg)
 		wrefresh(stdscr);
 		__m_endwin = 0;
 	}
-	if (m->mw == NULL)
-		init_menu(m);
 
 	/* Default to select option 0 and display from 0 */
 	m->topline = 0;
@@ -601,6 +603,8 @@ process_menu(int num, void *arg)
 		/* Process the display action */
 		if (m->post_act)
 			(*m->post_act)(m, arg);
+		if (m->mw == NULL)
+			init_menu(m);
 		draw_menu(m, arg);
 
 		while ((req = menucmd(m->mw)) != REQ_EXECUTE)
@@ -637,15 +641,8 @@ process_menu(int num, void *arg)
 			done = TRUE;
 
 		/* Reselect m just in case */
-		if (num != last_num) {
+		if (num != last_num)
 			m = &menus[num];
-
-			/* Initialize? */
-			if (m->mw == NULL)
-				init_menu(m);
-			if (m->post_act)
-				(*m->post_act)(m,arg);
-		}
 	}
 
 	if (m->mopt & MC_NOCLEAR) {
@@ -712,8 +709,6 @@ new_menu(const char *title, menu_ent *opts, int numopts,
 	m->exit_act = exit_act;
 	m->helpstr  = help;
 	m->exitstr  = exit_str ? exit_str : "Exit";
-
-	init_menu(m);
 
 	return ix;
 }
