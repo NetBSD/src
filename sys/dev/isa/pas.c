@@ -1,4 +1,4 @@
-/*	$NetBSD: pas.c,v 1.23 1997/03/24 05:30:28 jtk Exp $	*/
+/*	$NetBSD: pas.c,v 1.24 1997/04/06 00:54:25 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -341,6 +341,7 @@ pasprobe(parent, match, aux)
 
 	/* Now a SoundBlaster */
 	sc->sc_sbdsp.sc_iobase = ia->ia_iobase;
+	sc->sc_sbdsp.sc_iot = ia->ia_iot;
 	if (sbdsp_reset(&sc->sc_sbdsp) < 0) {
 		DPRINTF(("pas: couldn't reset card\n"));
 		return 0;
