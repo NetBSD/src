@@ -1,4 +1,4 @@
-/*	$NetBSD: a_md5encrypt.c,v 1.3 1998/01/09 03:15:49 perry Exp $	*/
+/*	$NetBSD: a_md5encrypt.c,v 1.4 1998/03/06 18:17:12 christos Exp $	*/
 
 /*
  *  md5crypt - MD5 based authentication routines
@@ -9,7 +9,7 @@
 #include "md5.h"
 #include "ntp_stdlib.h"
 
-extern u_long cache_keyid;
+extern u_int32 cache_keyid;
 extern char *cache_key;
 extern int cache_keylen;
 
@@ -41,13 +41,15 @@ extern u_int32 authnokey;
 
 int
 MD5authencrypt(keyno, pkt, length)
-    u_long keyno;
+    u_int32 keyno;
     u_int32 *pkt;
     int length;		/* length of encrypted portion of packet */
 {
     MD5_CTX ctx;
-    u_char hash[16];
     int len;		/* in 4 byte quantities */
+#ifdef __NetBSD__
+    unsigned char hash[16];
+#endif
 
     authencryptions++;
 
@@ -67,10 +69,18 @@ MD5authencrypt(keyno, pkt, length)
     MD5Init(&ctx);
     MD5Update(&ctx, (unsigned const char *)cache_key, cache_keylen);
     MD5Update(&ctx, (unsigned const char *)pkt, length);
+#ifdef __NetBSD__
     MD5Final(hash, &ctx);
+#else
+    MD5Final(&ctx);
+#endif
 
     memmove((char *)&pkt[NOCRYPT_int32S + len],
+#ifdef __NetBSD__
 	    (char *) hash,
+#else
+	    (char *) ctx.digest,
+#endif
 	    BLOCK_OCTETS);
     return (4 + BLOCK_OCTETS);	/* return size of key and MAC  */
 }

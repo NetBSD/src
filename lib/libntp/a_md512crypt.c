@@ -1,4 +1,4 @@
-/*	$NetBSD: a_md512crypt.c,v 1.3 1998/01/09 03:15:47 perry Exp $	*/
+/*	$NetBSD: a_md512crypt.c,v 1.4 1998/03/06 18:17:12 christos Exp $	*/
 
 /*
  *  md5crypt - MD5 based authentication routines
@@ -9,7 +9,7 @@
 #include "md5.h"
 #include "ntp_stdlib.h"
 
-extern u_long cache_keyid;
+extern u_int32 cache_keyid;
 extern char *cache_key;
 extern int cache_keylen;
 
@@ -46,7 +46,7 @@ static MD5_CTX ctx;
 
 void
 MD5auth1crypt(keyno, pkt, length)
-    u_long keyno;
+    u_int32 keyno;
     u_int32 *pkt;
     int length;	/* length of all encrypted data */
 {
@@ -72,11 +72,13 @@ MD5auth1crypt(keyno, pkt, length)
  */
 int
 MD5auth2crypt(keyno, pkt, length)
-    u_long keyno;
+    u_int32 keyno;
     u_int32 *pkt;
     int length;	/* total length of encrypted area */
 {
-    u_char hash[16];
+#ifdef __NetBSD__
+    unsigned char hash[16];
+#endif
     /*
      *  Don't bother checking the keys.  The first stage would have
      *  handled that.  Finish up the generation by also including the
@@ -84,10 +86,18 @@ MD5auth2crypt(keyno, pkt, length)
      */
 
     MD5Update(&ctx, (unsigned const char *)(pkt) + length - 8, 8);
+#ifdef __NetBSD__
     MD5Final(hash, &ctx);
+#else
+    MD5Final(&ctx);
+#endif
 
     memmove((char *) &pkt[NOCRYPT_int32S + length/sizeof(u_int32)],
-	    (char *) hash,	    
+#ifdef __NetBSD__
+	    (char *) hash,
+#else
+	    (char *) ctx.digest,
+#endif
 	    BLOCK_OCTETS);
     return (4 + BLOCK_OCTETS);
 }
