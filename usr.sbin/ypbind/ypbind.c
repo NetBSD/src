@@ -28,7 +28,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$Id: ypbind.c,v 1.5 1993/11/15 21:51:30 cgd Exp $";
+static char rcsid[] = "$Id: ypbind.c,v 1.6 1993/12/03 10:08:12 deraadt Exp $";
 #endif
 
 #include <sys/param.h>
@@ -38,6 +38,7 @@ static char rcsid[] = "$Id: ypbind.c,v 1.5 1993/11/15 21:51:30 cgd Exp $";
 #include <sys/socket.h>
 #include <sys/file.h>
 #include <sys/fcntl.h>
+#include <sys/uio.h>
 #include <sys/syslog.h>
 #include <stdio.h>
 #include <errno.h>
@@ -92,6 +93,7 @@ struct rmtcallargs rmtca;
 struct rmtcallres rmtcr;
 char rmtcr_outval;
 u_long rmtcr_port;
+SVCXPRT *udptransp, *tcptransp;
 
 void *
 ypbindproc_null_2(transp, argp, clnt)
@@ -280,7 +282,6 @@ char **argv;
 {
 	char path[MAXPATHLEN];
 	struct timeval tv;
-	SVCXPRT *transp;
 	fd_set fdsr;
 	int width;
 	int i;
@@ -317,23 +318,25 @@ char **argv;
 
 	pmap_unset(YPBINDPROG, YPBINDVERS);
 
-	transp = svcudp_create(RPC_ANYSOCK);
-	if (transp == NULL) {
+	udptransp = svcudp_create(RPC_ANYSOCK);
+	if (udptransp == NULL) {
 		fprintf(stderr, "cannot create udp service.");
 		exit(1);
 	}
-	if (!svc_register(transp, YPBINDPROG, YPBINDVERS, ypbindprog_2, IPPROTO_UDP)) {
+	if (!svc_register(udptransp, YPBINDPROG, YPBINDVERS, ypbindprog_2,
+	    IPPROTO_UDP)) {
 		fprintf(stderr, "unable to register (YPBINDPROG, YPBINDVERS, udp).");
 		exit(1);
 	}
 
-	transp = svctcp_create(RPC_ANYSOCK, 0, 0);
-	if (transp == NULL) {
+	tcptransp = svctcp_create(RPC_ANYSOCK, 0, 0);
+	if (tcptransp == NULL) {
 		fprintf(stderr, "cannot create tcp service.");
 		exit(1);
 	}
 
-	if (!svc_register(transp, YPBINDPROG, YPBINDVERS, ypbindprog_2, IPPROTO_TCP)) {
+	if (!svc_register(tcptransp, YPBINDPROG, YPBINDVERS, ypbindprog_2,
+	    IPPROTO_TCP)) {
 		fprintf(stderr, "unable to register (YPBINDPROG, YPBINDVERS, tcp).");
 		exit(1);
 	}
@@ -342,6 +345,7 @@ char **argv;
 		perror("socket");
 		return -1;
 	}
+	
 	fcntl(rpcsock, F_SETFL, fcntl(rpcsock, F_GETFL, 0) | FNDELAY);
 	i = 1;
 	setsockopt(rpcsock, SOL_SOCKET, SO_BROADCAST, &i, sizeof(i));
@@ -588,6 +592,8 @@ struct sockaddr_in *raddrp;
 int force;
 {
 	struct _dom_binding *ypdb;
+	struct iovec iov[2];
+	struct ypbind_resp ybr;
 	char path[MAXPATHLEN];
 	int fd;
 
@@ -646,7 +652,18 @@ int force;
 	 * then write to it..
 	 */
 	ypdb->dom_lockfd = fd;
-	if( write(ypdb->dom_lockfd, raddrp, sizeof *raddrp) != sizeof *raddrp) {
+
+	iov[0].iov_base = (caddr_t)&(udptransp->xp_port);
+	iov[0].iov_len = sizeof udptransp->xp_port;
+	iov[1].iov_base = (caddr_t)&ybr;
+	iov[1].iov_len = sizeof ybr;
+
+	bzero(&ybr, sizeof ybr);
+	ybr.ypbind_status = YPBIND_SUCC_VAL;
+	ybr.ypbind_respbody.ypbind_bindinfo.ypbind_binding_addr = raddrp->sin_addr;
+	ybr.ypbind_respbody.ypbind_bindinfo.ypbind_binding_port = raddrp->sin_port;
+
+	if( writev(ypdb->dom_lockfd, iov, 2) != iov[0].iov_len + iov[1].iov_len) {
 		perror("write");
 		close(ypdb->dom_lockfd);
 		ypdb->dom_lockfd = -1;
