@@ -1,6 +1,8 @@
+/*	$NetBSD: errlist.c,v 1.4 1995/02/25 13:40:51 cgd Exp $	*/
+
 /*
- * Copyright (c) 1982, 1985 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1985, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,8 +34,11 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)errlst.c	5.10 (Berkeley) 2/19/91";*/
-static char *rcsid = "$Id: errlist.c,v 1.3 1994/12/12 22:42:07 jtc Exp $";
+#if 0
+static char sccsid[] = "@(#)errlst.c	8.2 (Berkeley) 11/16/93";
+#else
+static char *rcsid = "$NetBSD: errlist.c,v 1.4 1995/02/25 13:40:51 cgd Exp $";
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 const char *const _sys_errlist[] = {
@@ -107,7 +112,7 @@ const char *const _sys_errlist[] = {
 	"Socket is not connected",		/* 57 - ENOTCONN */
 	"Can't send after socket shutdown",	/* 58 - ESHUTDOWN */
 	"Too many references: can't splice",	/* 59 - ETOOMANYREFS */
-	"Connection timed out",			/* 60 - ETIMEDOUT */
+	"Operation timed out",			/* 60 - ETIMEDOUT */
 	"Connection refused",			/* 61 - ECONNREFUSED */
 
 	"Too many levels of symbolic links",	/* 62 - ELOOP */

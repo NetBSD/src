@@ -1,3 +1,5 @@
+/*	$NetBSD: err.c,v 1.11 1995/02/25 13:41:01 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -32,8 +34,11 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/* from: static char sccsid[] = "@(#)err.c	8.1 (Berkeley) 6/4/93"; */
-static char *rcsid = "$Id: err.c,v 1.10 1994/12/17 16:16:00 pk Exp $";
+#if 0
+static char sccsid[] = "@(#)err.c	8.1 (Berkeley) 6/4/93";
+#else
+static char rcsid[] = "$NetBSD: err.c,v 1.11 1995/02/25 13:41:01 cgd Exp $";
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <err.h>
@@ -49,25 +54,6 @@ static char *rcsid = "$Id: err.c,v 1.10 1994/12/17 16:16:00 pk Exp $";
 #endif
 
 extern char *__progname;		/* Program name, from crt0. */
-
-__dead void
-_verr(eval, fmt, ap)
-	int eval;
-	const char *fmt;
-	va_list ap;
-{
-	int sverrno;
-
-	sverrno = errno;
-	(void)fprintf(stderr, "%s: ", __progname);
-	if (fmt != NULL) {
-		(void)vfprintf(stderr, fmt, ap);
-		(void)fprintf(stderr, ": ");
-	}
-	(void)fprintf(stderr, "%s\n", strerror(sverrno));
-	exit(eval);
-}
-
 
 __dead void
 #ifdef __STDC__
@@ -92,20 +78,23 @@ _err(va_alist)
 	va_end(ap);
 }
 
-
 __dead void
-_verrx(eval, fmt, ap)
+_verr(eval, fmt, ap)
 	int eval;
 	const char *fmt;
 	va_list ap;
 {
+	int sverrno;
+
+	sverrno = errno;
 	(void)fprintf(stderr, "%s: ", __progname);
-	if (fmt != NULL)
+	if (fmt != NULL) {
 		(void)vfprintf(stderr, fmt, ap);
-	(void)fprintf(stderr, "\n");
+		(void)fprintf(stderr, ": ");
+	}
+	(void)fprintf(stderr, "%s\n", strerror(sverrno));
 	exit(eval);
 }
-
 
 __dead void
 #if __STDC__
@@ -130,21 +119,17 @@ _errx(va_alist)
 	va_end(ap);
 }
 
-
-void
-_vwarn(fmt, ap)
+__dead void
+_verrx(eval, fmt, ap)
+	int eval;
 	const char *fmt;
 	va_list ap;
 {
-	int sverrno;
-
-	sverrno = errno;
 	(void)fprintf(stderr, "%s: ", __progname);
-	if (fmt != NULL) {
+	if (fmt != NULL)
 		(void)vfprintf(stderr, fmt, ap);
-		(void)fprintf(stderr, ": ");
-	}
-	(void)fprintf(stderr, "%s\n", strerror(sverrno));
+	(void)fprintf(stderr, "\n");
+	exit(eval);
 }
 
 
@@ -169,18 +154,21 @@ _warn(va_alist)
 	va_end(ap);
 }
 
-
 void
-_vwarnx(fmt, ap)
+_vwarn(fmt, ap)
 	const char *fmt;
 	va_list ap;
 {
-	(void)fprintf(stderr, "%s: ", __progname);
-	if (fmt != NULL)
-		(void)vfprintf(stderr, fmt, ap);
-	(void)fprintf(stderr, "\n");
-}
+	int sverrno;
 
+	sverrno = errno;
+	(void)fprintf(stderr, "%s: ", __progname);
+	if (fmt != NULL) {
+		(void)vfprintf(stderr, fmt, ap);
+		(void)fprintf(stderr, ": ");
+	}
+	(void)fprintf(stderr, "%s\n", strerror(sverrno));
+}
 
 void
 #ifdef __STDC__
@@ -201,4 +189,15 @@ _warnx(va_alist)
 #endif
 	_vwarnx(fmt, ap);
 	va_end(ap);
+}
+
+void
+_vwarnx(fmt, ap)
+	const char *fmt;
+	va_list ap;
+{
+	(void)fprintf(stderr, "%s: ", __progname);
+	if (fmt != NULL)
+		(void)vfprintf(stderr, fmt, ap);
+	(void)fprintf(stderr, "\n");
 }
