@@ -1,4 +1,4 @@
-/*	$NetBSD: wdvar.h,v 1.1.2.1 1998/06/04 16:52:36 bouyer Exp $	*/
+/*	$NetBSD: wdvar.h,v 1.1.2.2 1998/08/13 14:27:49 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -46,6 +46,7 @@ struct ata_bio {
     int multi; /* number of blocks to transfert in multi-mode */
     struct disklabel *lp; /* pointer to drive's label info */
     daddr_t blkno; /* block addr */
+    daddr_t blkdone; /* number of blks transfered */
     daddr_t nblks; /* number of block currently transfering */
     int     nbytes; /* number of bytes currently transfering */
     long    bcount; /* total number of bytes */

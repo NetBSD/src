@@ -1,4 +1,4 @@
-/*	$NetBSD: atapiconf.c,v 1.9.2.1 1998/06/04 16:53:07 bouyer Exp $	*/
+/*	$NetBSD: atapiconf.c,v 1.9.2.2 1998/08/13 14:27:51 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996 Manuel Bouyer.  All rights reserved.
@@ -177,11 +177,15 @@ atapibusattach(parent, self, aux)
 	int nbytes;
 
 	printf("\n");
+
+	/* Initialize shared data. */
+	scsipi_init();
+
 	sc_link_proto = malloc(sizeof(struct scsipi_link),
 	    M_DEVBUF, M_NOWAIT);
 	if (sc_link_proto == NULL)
 	    printf("atapibusattach : can't allocate scsipi link proto\n");
-	bzero(sc_link_proto, sizeof(struct scsipi_link));
+	memset(sc_link_proto, 0, sizeof(struct scsipi_link));
 
 	sc_link_proto->type = BUS_ATAPI;
 	sc_link_proto->openings = aa_link->aa_openings;
@@ -202,7 +206,7 @@ atapibusattach(parent, self, aux)
 	    M_NOWAIT);
 	if (sc_ab->sc_link == NULL)
 		panic("scsibusattach: can't allocate target links");
-	bzero(sc_ab->sc_link, nbytes);
+	memset(sc_ab->sc_link, 0, nbytes);
 	atapi_probe_bus(sc_ab->sc_dev.dv_unit, -1);
 }
 
@@ -288,9 +292,9 @@ atapi_probedev(atapi, target)
 		    id->atap_config & ATAPI_CFG_REMOV ? T_REMOV : T_FIXED;
 		if (sa.sa_inqbuf.removable)
 			sc_link->flags |= SDEV_REMOVABLE;
-		scsipi_strvis(model, id->atap_model, 40);
-		scsipi_strvis(serial_number, id->atap_serial, 20);
-		scsipi_strvis(firmware_revision, id->atap_revision, 8);
+		scsipi_strvis(model, 40, id->atap_model, 40);
+		scsipi_strvis(serial_number, 20, id->atap_serial, 20);
+		scsipi_strvis(firmware_revision, 8, id->atap_revision, 8);
 		sa.sa_inqbuf.vendor = model;
 		sa.sa_inqbuf.product = serial_number;
 		sa.sa_inqbuf.revision = firmware_revision;
@@ -309,6 +313,7 @@ atapi_probedev(atapi, target)
 			drvp->drv_softc = config_attach(&atapi->sc_dev, cf,
 			    &sa, atapibusprint);
 			wdc_probe_caps(drvp);
+			/* drvp->drive_flags &= ~DRIVE_DMA; XXX */
 			return;
 		} else {
 			atapibusprint(&sa, atapi->sc_dev.dv_xname);

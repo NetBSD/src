@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.175.2.6 1998/06/13 14:26:16 bouyer Exp $ */
+/*	$NetBSD: wd.c,v 1.175.2.7 1998/08/13 14:27:48 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.  All rights reserved.
@@ -406,8 +406,13 @@ __wdstart(wd, bp)
 		p_offset = 0;
 	wd->sc_wdc_bio.blkno = bp->b_blkno + p_offset;
 	wd->sc_wdc_bio.blkno /= (wd->sc_dk.dk_label->d_secsize / DEV_BSIZE);
+	wd->sc_wdc_bio.blkdone =0;
 	wd->sc_bp = bp;
-	/* If we're retrying, retry in single-sector mode, just in case ... */
+	/*
+	 * If we're retrying, retry in single-sector mode. This will give us
+	 * the sector number of the problem, and will eventually allow the
+	 * transfert to succeed.
+	 */
 	if (wd->sc_multi == 1 || wd->retries > 0)
 		wd->sc_wdc_bio.flags = ATA_SINGLE;
 	else
@@ -443,7 +448,7 @@ wddone(v)
 	char buf[256], *errbuf = buf;
 	WDCDEBUG_PRINT(("wddone\n"), DEBUG_FUNCS | DEBUG_XFERS);
 
-	bp->b_resid = wd->sc_wdc_bio.nbytes;
+	bp->b_resid = wd->sc_wdc_bio.bcount;
 	errbuf[0] = '\0';
 	switch (wd->sc_wdc_bio.error) {
 	case ERR_DMA:
@@ -463,7 +468,8 @@ wddone(v)
 		print_wderror(wd->sc_wdc_bio.r_error, errbuf);
 retry:		/* Just reset and retry. Can we do more ? */
 		wdc_reset_channel(wd->drvp);
-		printf("%s: %s", wd->sc_dev.dv_xname, errbuf);
+		diskerr(bp, "wd", errbuf, LOG_PRINTF,
+		    wd->sc_wdc_bio.blkdone, wd->sc_dk.dk_label);
 		if (wd->retries++ < WDIORETRIES) {
 			printf(", retrying\n");
 			timeout(wdrestart, wd, RECOVERYTIME);
@@ -686,7 +692,7 @@ wdgetdefaultlabel(wd, lp)
 {
 
 	WDCDEBUG_PRINT(("wdgetdefaultlabel\n"), DEBUG_FUNCS);
-	bzero(lp, sizeof(struct disklabel));
+	memset(lp, 0, sizeof(struct disklabel));
 
 	lp->d_secsize = DEV_BSIZE;
 	lp->d_ntracks = wd->sc_params.atap_heads;
@@ -731,7 +737,7 @@ wdgetdisklabel(wd)
 
 	WDCDEBUG_PRINT(("wdgetdisklabel\n"), DEBUG_FUNCS);
 
-	bzero(wd->sc_dk.dk_cpulabel, sizeof(struct cpu_disklabel));
+	memset(wd->sc_dk.dk_cpulabel, 0, sizeof(struct cpu_disklabel));
 
 	wdgetdefaultlabel(wd, lp);
 
@@ -922,8 +928,9 @@ wdsize(dev)
 
 #ifndef __BDEVSW_DUMP_OLD_TYPE
 /* #define WD_DUMP_NOT_TRUSTED if you just want to watch */
-static int wddoingadump;
-static int wddumprecalibrated;
+static int wddoingadump = 0;
+static int wddumprecalibrated = 0;
+static int wddumpmulti = 1;
 
 /*
  * Dump core after a system crash.
@@ -939,6 +946,7 @@ wddump(dev, blkno, va, size)
 	struct disklabel *lp;   /* disk's disklabel */
 	int unit, part;
 	int nblks;	/* total number of sectors left to write */
+	int err;
 	char errbuf[256];
 
 	/* Check if recursive dump; if so, punt. */
@@ -975,19 +983,21 @@ wddump(dev, blkno, va, size)
 
 	/* Recalibrate, if first dump transfer. */
 	if (wddumprecalibrated == 0) {
+		wddumpmulti = wd->sc_multi;
 		wddumprecalibrated = 1;
 		wd->drvp->state = RECAL;
 	}
-   
+  
 	while (nblks > 0) {
+again:
 		wd->sc_wdc_bio.blkno = blkno;
 		wd->sc_wdc_bio.flags = ATA_POLL;
-		if (wd->sc_multi == 1)
+		if (wddumpmulti == 1)
 			wd->sc_wdc_bio.flags |= ATA_SINGLE;
 		if (wd->sc_flags & WDF_LBA)
 			wd->sc_wdc_bio.flags |= ATA_LBA;
 		wd->sc_wdc_bio.bcount =
-			min(nblks, wd->sc_wdc_bio.multi) * lp->d_secsize;
+			min(nblks, wddumpmulti) * lp->d_secsize;
 		wd->sc_wdc_bio.databuf = va;
 #ifndef WD_DUMP_NOT_TRUSTED
 		switch (wdc_ata_bio(wd->drvp, &wd->sc_wdc_bio)) {
@@ -1002,23 +1012,37 @@ wddump(dev, blkno, va, size)
 		}
 		switch(wd->sc_wdc_bio.error) {
 		case TIMEOUT:
-			printf("wddump: device timed out\n");
-			return EIO;
+			printf("wddump: device timed out");
+			err = EIO;
+			break;
 		case ERR_DF:
-			printf("wddump: drive fault\n");
-			return EIO;
+			printf("wddump: drive fault");
+			err = EIO;
+			break;
 		case ERR_DMA:
-			printf("wddump: DMA error\n");
-			return EIO;
+			printf("wddump: DMA error");
+			err = EIO;
+			break;
 		case ERROR:
 			errbuf[0] = '\0';
 			print_wderror(wd->sc_wdc_bio.r_error, errbuf);
-			printf("wddump: %s\n", errbuf);
-			return EIO;
+			printf("wddump: %s", errbuf);
+			err = EIO;
+			break;
 		case NOERROR: 
+			err = 0;
 			break;
 		default:
 			panic("wddump: unknown error type");
+		}
+		if (err != 0) {
+			if (wddumpmulti != 1) {
+				wddumpmulti = 1; /* retry in single-sector */
+				printf(", retrying\n");
+				goto again;
+			}
+			printf("\n");
+			return err;
 		}
 #else	/* WD_DUMP_NOT_TRUSTED */
 		/* Let's just talk about this first... */
@@ -1028,9 +1052,9 @@ wddump(dev, blkno, va, size)
 #endif
 
 		/* update block count */
-		nblks -= min(nblks, wd->sc_wdc_bio.multi);
-		blkno += min(nblks, wd->sc_wdc_bio.multi);
-		va += min(nblks, wd->sc_wdc_bio.multi) * lp->d_secsize;
+		nblks -= min(nblks, wddumpmulti);
+		blkno += min(nblks, wddumpmulti);
+		va += min(nblks, wddumpmulti) * lp->d_secsize;
 	}
 
 	wddoingadump = 0;
