@@ -1,4 +1,4 @@
-#	$NetBSD: files.sbus,v 1.14 2000/03/25 19:58:05 mycroft Exp $
+#	$NetBSD: files.sbus,v 1.15 2000/08/22 21:31:16 pk Exp $
 #
 # Config file and device description for machine-independent SBUS code.
 # Included by ports that need it.
@@ -84,3 +84,24 @@ device	nell: pcmciabus
 attach	nell at sbus
 file	dev/sbus/stp4020.c		nell
 
+#
+# Framebuffer devices (requires dev/sun/files.sun)
+#
+attach	bwtwo at sbus with bwtwo_sbus
+file	dev/sbus/bwtwo_sbus.c		bwtwo_sbus
+
+attach	cgsix at sbus with cgsix_sbus
+file	dev/sbus/cgsix_sbus.c		cgsix_sbus
+
+attach	cgthree at sbus with cgthree_sbus
+file	dev/sbus/cgthree_sbus.c		cgthree_sbus
+
+# framebuffer devices implemented only on SBus
+device	tcx: bt_dac, fb, rasops8, rasops24
+attach	tcx at sbus
+file	dev/sbus/tcx.c			tcx needs-flag
+
+# Tadpole 3GX/3GS (P9100 -- P Nine One Zero Zero -> pnozz)
+device	pnozz: fb, bt_dac, rasops8, rasops16, rasops32
+attach	pnozz at sbus
+file	dev/sbus/p9100.c		pnozz needs-flag
