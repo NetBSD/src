@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.11 1998/10/11 23:18:20 chuck Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.12 1998/10/18 23:50:00 chs Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -151,7 +151,7 @@ ReStart:
 		aio = NULL;
 	}
 
-	size = npages * PAGE_SIZE;
+	size = npages << PAGE_SHIFT;
 	kva = NULL;			/* let system choose VA */
 
 	if (uvm_map(pager_map, &kva, size, NULL, 
@@ -210,7 +210,7 @@ uvm_pagermapout(kva, npages)
 	vaddr_t kva;
 	int npages;
 {
-	vsize_t size = npages * PAGE_SIZE;
+	vsize_t size = npages << PAGE_SHIFT;
 	vm_map_entry_t entries;
 	UVMHIST_FUNC("uvm_pagermapout"); UVMHIST_CALLED(maphist);
 	
@@ -288,7 +288,7 @@ uvm_mk_pcluster(uobj, pps, npages, center, flags, mlo, mhi)
 		if (hi > mhi)
 			hi = mhi;
 	}
-	if ((hi - lo) / PAGE_SIZE > *npages) {	/* pps too small, bail out! */
+	if ((hi - lo) >> PAGE_SHIFT > *npages) {  /* pps too small, bail out! */
 #ifdef DIAGNOSTIC
 	    printf("uvm_mk_pcluster: provided page array too small (fixed)\n");
 #endif
@@ -302,7 +302,7 @@ uvm_mk_pcluster(uobj, pps, npages, center, flags, mlo, mhi)
 	 * edges
 	 */
 
-	center_idx = (center->offset - lo) / PAGE_SIZE;
+	center_idx = (center->offset - lo) >> PAGE_SHIFT;
 	pps[center_idx] = center;	/* plug in the center page */
 	ppsp = &pps[center_idx];
 	*npages = 1;
@@ -321,8 +321,8 @@ uvm_mk_pcluster(uobj, pps, npages, center, flags, mlo, mhi)
 
 		curoff = center->offset + PAGE_SIZE * (forward) ? 1 : -1;
 		for ( ;(forward == 0 && curoff >= lo) ||
-		       (forward && curoff < hi); curoff +=
-		    PAGE_SIZE * (forward) ? 1 : -1) {
+		       (forward && curoff < hi);
+		      curoff += (forward ? 1 : -1) << PAGE_SHIFT) {
 
 			pclust = uvm_pagelookup(uobj, curoff); /* lookup page */
 			if (pclust == NULL)
@@ -650,7 +650,7 @@ int swblk;			/* valid if (uobj == NULL && PGO_REALLOCSWAP) */
 				simple_lock(&ppsp[lcv]->uobject->vmobjlock);
 				if (flags & PGO_REALLOCSWAP)
 					uao_set_swslot(ppsp[lcv]->uobject,
-					    ppsp[lcv]->offset / PAGE_SIZE, 0);
+					    ppsp[lcv]->offset >> PAGE_SHIFT, 0);
 			}
 		}
 
@@ -756,7 +756,7 @@ int swblk;			/* valid if (uobj == NULL && PGO_REALLOCSWAP) */
 			} else {
 				simple_lock(&pg->uobject->vmobjlock);
 				uao_set_swslot(pg->uobject,
-				    pg->offset / PAGE_SIZE, swblk);
+				    pg->offset >> PAGE_SHIFT, swblk);
 				simple_unlock(&pg->uobject->vmobjlock);
 			}
 		}
