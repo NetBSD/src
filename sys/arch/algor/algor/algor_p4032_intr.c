@@ -1,4 +1,4 @@
-/*	$NetBSD: algor_p4032_intr.c,v 1.3 2001/06/10 09:13:06 thorpej Exp $	*/
+/*	$NetBSD: algor_p4032_intr.c,v 1.4 2001/06/15 04:01:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -126,6 +126,15 @@ const char *p4032_intrnames[NIRQMAPS] = {
 	"mcclock",
 };
 
+struct p4032_irqmap {
+	int	irqidx;         
+	int	cpuintr;
+	int	irqreg;
+	int	irqbit;
+	int	xbarreg;        
+	int	xbarshift;
+};      
+
 const struct p4032_irqmap p4032_irqmap[NIRQMAPS] = {
 	/*
 	 * PCI INTERRUPTS
@@ -153,35 +162,35 @@ const struct p4032_irqmap p4032_irqmap[NIRQMAPS] = {
 	/*
 	 * 8-BIT DEVICE INTERRUPTS
 	 */
-	{ 4,			1,
+	{ P4032_IRQ_PCICTLR,	1,
 	  IRQREG_8BIT,		IRR0_PCICTLR,
 	  0,			0 },
 
-	{ 5,			1,
+	{ P4032_IRQ_FLOPPY,	1,
 	  IRQREG_8BIT,		IRR0_FLOPPY,
 	  0,			2 },
 
-	{ 6,			1,
+	{ P4032_IRQ_PCKBC,	1,
 	  IRQREG_8BIT,		IRR0_PCKBC,
 	  0,			4 },
 
-	{ 7,			1,
+	{ P4032_IRQ_COM1,	1,
 	  IRQREG_8BIT,		IRR0_COM1,
 	  0,			6 },
 
-	{ 8,			1,
+	{ P4032_IRQ_COM2,	1,
 	  IRQREG_8BIT,		IRR0_COM2,
 	  1,			0 },
 
-	{ 9,			1,
+	{ P4032_IRQ_LPT,	1,
 	  IRQREG_8BIT,		IRR0_LPT,
 	  1,			2 },
 
-	{ 10,			1,
+	{ P4032_IRQ_GPIO,	1,
 	  IRQREG_8BIT,		IRR0_GPIO,
 	  1,			4 },
 
-	{ 11,			1,
+	{ P4032_IRQ_RTC,	1,
 	  IRQREG_8BIT,		IRR0_RTC,
 	  1,			6 },
 };
@@ -210,12 +219,15 @@ const char *p4032_intrgroups[NINTRS] = {
 	"8-bit",
 };
 
+void	*algor_p4032_intr_establish(int, int (*)(void *), void *);
+void	algor_p4032_intr_disestablish(void *);
 
 int	algor_p4032_pci_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
 const char *algor_p4032_pci_intr_string(void *, pci_intr_handle_t);
 const struct evcnt *algor_p4032_pci_intr_evcnt(void *, pci_intr_handle_t);
 void	*algor_p4032_pci_intr_establish(void *, pci_intr_handle_t, int,
 	    int (*)(void *), void *);
+void	algor_p4032_pci_intr_disestablish(void *, void *);
 void	algor_p4032_pci_conf_interrupt(void *, int, int, int, int, int *);
 
 void	algor_p4032_iointr(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
@@ -255,10 +267,12 @@ algor_p4032_intr_init(struct p4032_config *acp)
 	acp->ac_pc.pc_intr_string = algor_p4032_pci_intr_string;
 	acp->ac_pc.pc_intr_evcnt = algor_p4032_pci_intr_evcnt;
 	acp->ac_pc.pc_intr_establish = algor_p4032_pci_intr_establish;
-	acp->ac_pc.pc_intr_disestablish = algor_p4032_intr_disestablish;
+	acp->ac_pc.pc_intr_disestablish = algor_p4032_pci_intr_disestablish;
 	acp->ac_pc.pc_conf_interrupt = algor_p4032_pci_conf_interrupt;
 	acp->ac_pc.pc_pciide_compat_intr_establish = NULL;
 
+	algor_intr_establish = algor_p4032_intr_establish;
+	algor_intr_disestablish = algor_p4032_intr_disestablish;
 	algor_iointr = algor_p4032_iointr;
 }
 
@@ -328,11 +342,15 @@ algor_p4032_cal_timer(bus_space_tag_t st, bus_space_handle_t sh)
 }
 
 void *
-algor_p4032_intr_establish(const struct p4032_irqmap *irqmap,
-    int (*func)(void *), void *arg)
+algor_p4032_intr_establish(int irq, int (*func)(void *), void *arg)
 {
+	const struct p4032_irqmap *irqmap;
 	struct algor_intrhand *ih;
 	int s;
+
+	irqmap = &p4032_irqmap[irq];
+
+	KASSERT(irq == irqmap->irqidx);
 
 	ih = malloc(sizeof(*ih), M_DEVBUF, M_NOWAIT);
 	if (ih == NULL)
@@ -366,11 +384,13 @@ algor_p4032_intr_establish(const struct p4032_irqmap *irqmap,
 }
 
 void
-algor_p4032_intr_disestablish(void *v, void *cookie)
+algor_p4032_intr_disestablish(void *cookie)
 {
 	const struct p4032_irqmap *irqmap;
-	struct algor_intrhand *ih = v;
+	struct algor_intrhand *ih = cookie;
 	int s;
+
+	irqmap = ih->ih_irqmap;
 
 	s = splhigh();
 
@@ -544,7 +564,14 @@ algor_p4032_pci_intr_establish(void *v, pci_intr_handle_t ih, int level,
 	if (ih >= NPCIIRQS)
 		panic("algor_p4032_intr_establish: bogus IRQ %ld\n", ih);
 
-	return (algor_p4032_intr_establish(&p4032_irqmap[ih], func, arg));
+	return (algor_p4032_intr_establish(ih, func, arg));
+}
+
+void
+algor_p4032_pci_intr_disestablish(void *v, void *cookie)
+{
+
+	return (algor_p4032_intr_disestablish(cookie));
 }
 
 void

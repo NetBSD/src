@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.4 2001/06/14 19:03:43 thorpej Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.5 2001/06/15 04:01:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -61,6 +61,9 @@
 #ifdef ALGOR_P6032
 #include <algor/algor/algor_p6032var.h>
 #endif
+
+void	*(*algor_intr_establish)(int, int (*)(void *), void *);
+void	(*algor_intr_disestablish)(void *);
 
 void	(*algor_iointr)(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
 
