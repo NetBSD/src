@@ -1,4 +1,4 @@
-/*	$NetBSD: in_proto.c,v 1.57 2002/09/25 07:37:12 itojun Exp $	*/
+/*	$NetBSD: in_proto.c,v 1.58 2002/11/02 19:03:44 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.57 2002/09/25 07:37:12 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.58 2002/11/02 19:03:44 itojun Exp $");
 
 #include "opt_mrouting.h"
 #include "opt_eon.h"			/* ISO CLNL over IP */
@@ -114,6 +114,7 @@ __KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.57 2002/09/25 07:37:12 itojun Exp $")
  */
 
 #ifdef IPSEC
+#include <netinet6/ipsec.h>
 #include <netinet6/ah.h>
 #ifdef IPSEC_ESP
 #include <netinet6/esp.h>

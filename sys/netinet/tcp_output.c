@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.86 2002/09/13 18:26:55 mycroft Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.87 2002/11/02 19:03:44 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -142,7 +142,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.86 2002/09/13 18:26:55 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.87 2002/11/02 19:03:44 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -177,6 +177,10 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.86 2002/09/13 18:26:55 mycroft Exp 
 #include <netinet6/ip6_var.h>
 #include <netinet6/in6_pcb.h>
 #include <netinet6/nd6.h>
+#endif
+
+#ifdef IPSEC
+#include <netinet6/ipsec.h>
 #endif
 
 #include <netinet/tcp.h>
