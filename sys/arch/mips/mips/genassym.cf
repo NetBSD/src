@@ -45,8 +45,12 @@ include <sys/map.h>
 include <sys/proc.h>
 include <sys/mbuf.h>
 include <sys/user.h>
+include <sys/vmmeter.h>
+
+include <vm/vm.h>
 
 include <machine/reg.h>
+include <machine/vmparam.h>
 
 include <mips/locore.h>
 
