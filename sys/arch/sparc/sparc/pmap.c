@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.126 1998/09/01 18:05:27 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.127 1998/09/07 23:04:28 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -3538,7 +3538,7 @@ static u_long prom_ctxreg;
 
 void
 mmu_install_tables(sc)
-	struct cpu_softc *sc;
+	struct cpu_info *sc;
 {
 
 #ifdef DEBUG
@@ -3580,7 +3580,7 @@ srmmu_restore_prom_ctx()
  */
 void
 pmap_alloc_cpu(sc)
-	struct cpu_softc *sc;
+	struct cpu_info *sc;
 {
 	caddr_t cpustore;
 	int *ctxtable;

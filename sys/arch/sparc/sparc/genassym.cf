@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.8 1998/09/06 21:14:56 pk Exp $
+#	$NetBSD: genassym.cf,v 1.9 1998/09/07 23:13:07 pk Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -146,9 +146,9 @@ define	V_FAULTS	offsetof(struct vmmeter, v_faults)
 endif
 
 # CPU info structure
-define	CPUINFO_FAULTSTATUS	offsetof(struct cpu_softc, get_faultstatus)
-define	CPUINFO_PURE_VCACHE_FLS	offsetof(struct cpu_softc, pure_vcache_flush)
-define	CPUINFO_MEMERR		offsetof(struct cpu_softc, memerr)
+define	CPUINFO_FAULTSTATUS	offsetof(struct cpu_info, get_faultstatus)
+define	CPUINFO_PURE_VCACHE_FLS	offsetof(struct cpu_info, pure_vcache_flush)
+define	CPUINFO_MEMERR		offsetof(struct cpu_info, memerr)
 
 # PTE bits and related information
 define	PG_W		PG_W
