@@ -1,4 +1,4 @@
-/*	$NetBSD: file.c,v 1.16 2000/05/14 22:53:38 christos Exp $	*/
+/*	$NetBSD: file.c,v 1.17 2000/09/22 16:34:59 pooka Exp $	*/
 
 /*
  * file - find type of a file or files - main program.
@@ -26,13 +26,14 @@
  *
  * 4. This notice may not be removed or altered.
  */
+#include <sys/types.h>
+#include <sys/param.h>	/* for MAXPATHLEN */
+#include <sys/stat.h>
+
 #include "file.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/types.h>
-#include <sys/param.h>	/* for MAXPATHLEN */
-#include <sys/stat.h>
 #include <fcntl.h>	/* for open() */
 #ifdef RESTORE_TIME
 # if (__COHERENT__ >= 0x420)
@@ -60,7 +61,7 @@
 #if 0
 FILE_RCSID("@(#)Id: file.c,v 1.51 2000/05/14 17:58:36 christos Exp ")
 #else
-__RCSID("$NetBSD: file.c,v 1.16 2000/05/14 22:53:38 christos Exp $");
+__RCSID("$NetBSD: file.c,v 1.17 2000/09/22 16:34:59 pooka Exp $");
 #endif
 #endif	/* lint */
 
@@ -232,7 +233,7 @@ main(argc, argv)
  */
 static void
 unwrap(fn)
-char *fn;
+	char *fn;
 {
 	char buf[MAXPATHLEN];
 	FILE *f;
@@ -277,29 +278,28 @@ char *fn;
  */
 static int
 byteconv4(from, same, big_endian)
-    int from;
-    int same;
-    int big_endian;
+	int from;
+	int same;
+	int big_endian;
 {
-  if (same)
-    return from;
-  else if (big_endian)		/* lsb -> msb conversion on msb */
-  {
-    union {
-      int i;
-      char c[4];
-    } retval, tmpval;
+	if (same)
+		return from;
+	else if (big_endian) {		/* lsb -> msb conversion on msb */
+		union {
+			int i;
+			char c[4];
+		} retval, tmpval;
 
-    tmpval.i = from;
-    retval.c[0] = tmpval.c[3];
-    retval.c[1] = tmpval.c[2];
-    retval.c[2] = tmpval.c[1];
-    retval.c[3] = tmpval.c[0];
+		tmpval.i = from;
+		retval.c[0] = tmpval.c[3];
+		retval.c[1] = tmpval.c[2];
+		retval.c[2] = tmpval.c[1];
+		retval.c[3] = tmpval.c[0];
 
-    return retval.i;
-  }
-  else
-    return ntohl(from);		/* msb -> lsb conversion on lsb */
+		return retval.i;
+	}
+	else
+		return ntohl(from);	/* msb -> lsb conversion on lsb */
 }
 
 /*
@@ -312,23 +312,22 @@ byteconv2(from, same, big_endian)
 	int same;
 	int big_endian;
 {
-  if (same)
-    return from;
-  else if (big_endian)		/* lsb -> msb conversion on msb */
-  {
-    union {
-      short s;
-      char c[2];
-    } retval, tmpval;
+	if (same)
+		return from;
+	else if (big_endian) {		/* lsb -> msb conversion on msb */
+		union {
+			short s;
+			char c[2];
+		} retval, tmpval;
 
-    tmpval.s = (short) from;
-    retval.c[0] = tmpval.c[1];
-    retval.c[1] = tmpval.c[0];
+		tmpval.s = (short) from;
+		retval.c[0] = tmpval.c[1];
+		retval.c[1] = tmpval.c[0];
 
-    return retval.s;
-  }
-  else
-    return ntohs(from);		/* msb -> lsb conversion on lsb */
+		return retval.s;
+	}
+	else
+		return ntohs(from);	/* msb -> lsb conversion on lsb */
 }
 #endif
 
@@ -337,8 +336,8 @@ byteconv2(from, same, big_endian)
  */
 void
 process(inname, wid)
-const char	*inname;
-int wid;
+	const char	*inname;
+	int wid;
 {
 	int	fd = 0;
 	static  const char stdname[] = "standard input";
@@ -361,22 +360,22 @@ int wid;
 			   (int) (wid - strlen(inname)), "");
 
 	if (inname != stdname) {
-	    /*
-	     * first try judging the file based on its filesystem status
-	     */
-	    if (fsmagic(inname, &sb) != 0) {
-		    putchar('\n');
-		    return;
-	    }
+		/*
+		 * first try judging the file based on its filesystem status
+		 */
+		if (fsmagic(inname, &sb) != 0) {
+			putchar('\n');
+			return;
+		}
 
-	    if ((fd = open(inname, O_RDONLY)) < 0) {
-		    /* We can't open it, but we were able to stat it. */
-		    if (sb.st_mode & 0002) ckfputs("writeable, ", stdout);
-		    if (sb.st_mode & 0111) ckfputs("executable, ", stdout);
-		    ckfprintf(stdout, "can't read `%s' (%s).\n",
-			inname, strerror(errno));
-		    return;
-	    }
+		if ((fd = open(inname, O_RDONLY)) < 0) {
+			/* We can't open it, but we were able to stat it. */
+			if (sb.st_mode & 0002) ckfputs("writeable, ", stdout);
+			if (sb.st_mode & 0111) ckfputs("executable, ", stdout);
+			ckfprintf(stdout, "can't read `%s' (%s).\n",
+			    inname, strerror(errno));
+			return;
+		}
 	}
 
 
@@ -396,8 +395,17 @@ int wid;
 	}
 
 #ifdef BUILTIN_ELF
-	if (match == 's' && nbytes > 5)
+	if (match == 's' && nbytes > 5) {
+		/*
+		 * We matched something in the file, so this *might*
+		 * be an ELF file, and the file is at least 5 bytes long,
+		 * so if it's an ELF file it has at least one byte
+		 * past the ELF magic number - try extracting information
+		 * from the ELF headers that can't easily be extracted
+		 * with rules in the magic file.
+		 */
 		tryelf(fd, buf, nbytes);
+	}
 #endif
 
 	if (inname != stdname) {
@@ -430,8 +438,8 @@ int wid;
 
 int
 tryit(buf, nb, zflag)
-unsigned char *buf;
-int nb, zflag;
+	unsigned char *buf;
+	int nb, zflag;
 {
 	/* try compression stuff */
 	if (zflag && zmagic(buf, nb))
@@ -444,10 +452,6 @@ int nb, zflag;
 	/* try known keywords, check whether it is ASCII */
 	if (ascmagic(buf, nb))
 		return 'a';
-
-	/* see if it's international language text */
-	if (internatmagic(buf, nb))
-		return 'i';
 
 	/* abandon hope, all ye who remain here */
 	ckfputs("data", stdout);

@@ -1,3 +1,4 @@
+# Magic
 # Magic data for file(1) command.
 # Machine-generated from src/cmd/file/magdir/*; edit there only!
 # Format is described in magic(files), where:
