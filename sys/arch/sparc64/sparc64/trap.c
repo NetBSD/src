@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.111 2004/01/16 05:03:02 mrg Exp $ */
+/*	$NetBSD: trap.c,v 1.112 2004/01/16 09:10:10 martin Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.111 2004/01/16 05:03:02 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.112 2004/01/16 09:10:10 martin Exp $");
 
 #define NEW_FPSTATE
 
@@ -2193,7 +2193,7 @@ child_return(arg)
 #endif
 
 	/*
-	 * Return values in the frame set by cpu_fork().
+	 * Return values in the frame set by cpu_lwp_fork().
 	 */
 	KERNEL_PROC_UNLOCK(l);
 	userret(l, l->l_md.md_tf->tf_pc, 0);
