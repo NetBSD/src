@@ -1,12 +1,12 @@
-# $NetBSD: md.i386,v 1.102 2003/07/26 08:43:02 dsl Exp $
+# $NetBSD: md.i386,v 1.103 2003/09/11 19:21:00 christos Exp $
 ./lib/libm387.so.0			base-sys-shlib
 ./lib/libm387.so.0.0			base-sys-shlib
 ./sbin/fdisk				base-sysutil-root
 ./sbin/ldconfig				base-sysutil-root
 ./usr/bin/fdformat			base-util-bin
 ./usr/bin/pmc				base-util-bin
-./usr/lib/libi386.so.0			base-sys-shlib
-./usr/lib/libi386.so.0.4		base-sys-shlib
+./usr/lib/libi386.so.1			base-sys-shlib
+./usr/lib/libi386.so.1.0		base-sys-shlib
 ./usr/lib/libm387.so.0			base-sys-shlib
 ./usr/lib/libm387.so.0.0		base-sys-shlib
 ./usr/lib/libpmc.so.0			base-sys-shlib
