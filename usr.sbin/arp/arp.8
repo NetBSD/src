@@ -29,10 +29,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	from: @(#)arp.8	8.1 (Berkeley) 6/6/93
-.\"	$Id: arp.8,v 1.1.1.2 1994/05/13 08:08:57 mycroft Exp $
+.\"     @(#)arp.8	8.2 (Berkeley) 4/27/95
 .\"
-.Dd June 6, 1993
+.Dd April 27, 1995
 .Dt ARP 8
 .Os BSD 4.3
 .Sh NAME
@@ -49,7 +48,6 @@
 .Fl s Ar hostname ether_addr
 .Op Ar temp
 .Op Ar pub
-.Op Ar trail
 .Nm arp
 .Fl f Ar filename
 .Sh DESCRIPTION
@@ -97,9 +95,6 @@ server,
 responding to requests for 
 .Ar hostname
 even though the host address is not its own.
-The word
-.Ar trail
-indicates that trailer encapsulations may be sent to this host.
 .It Fl f
 Causes the file
 .Ar filename
@@ -112,7 +107,6 @@ in the file should be of the form
 .Ar hostname ether_addr
 .Op Ar temp
 .Op Ar pub
-.Op Ar trail
 .Ed
 .Pp
 with argument meanings as given above.
