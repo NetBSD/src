@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: lorder.sh,v 1.8 1998/11/09 04:52:44 mycroft Exp $
+#	$NetBSD: lorder.sh,v 1.9 2001/06/18 12:07:32 lukem Exp $
 #
 # Copyright (c) 1990, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -63,12 +63,13 @@ case $# in
 esac
 
 # temporary files
-N=/tmp/_nm_$$
-R=/tmp/_reference_$$
-S=/tmp/_symbol_$$
+N=`mktemp /tmp/_nm_.XXXXXX` || exit 1
+R=`mktemp /tmp/_reference_.XXXXXX` || exit 1
+S=`mktemp /tmp/_symbol_.XXXXXX` || exit 1
 
-# remove temporary files on HUP, INT, QUIT, PIPE, TERM
-trap "rm -f $N $R $S; exit 1" 1 2 3 13 15
+# remove temporary files on exit
+trap "rm -f $N $R $S; exit 0" EXIT
+trap "rm -f $N $R $S; exit 1" HUP INT QUIT PIPE TERM
 
 # if the line ends in a colon, assume it's the first occurrence of a new
 # object file.  Echo it twice, just to make sure it gets into the output.
@@ -88,4 +89,3 @@ sed -ne 's/:.* U / /p' <$N >$R
 sort +1 $R -o $R
 sort +1 $S -o $S
 join -j 2 -o 1.1 2.1 $R $S
-rm -f $N $R $S
