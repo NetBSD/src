@@ -1,4 +1,4 @@
-/*	$NetBSD: menu.c,v 1.10 2001/06/13 10:45:59 wiz Exp $	*/
+/*	$NetBSD: menu.c,v 1.11 2002/02/04 13:02:05 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn (blymn@baea.com.au, brett_lymn@yahoo.com.au)
@@ -64,7 +64,7 @@ MENU _menui_default_menu = {
         NULL,       /* function called when current item changes */
         NULL,       /* the menu window */
 	NULL,       /* the menu subwindow */
-	0           /* subwindow was created by library call */
+	NULL,       /* the window to write to */
 };
 
 
@@ -147,10 +147,18 @@ menu_unmark(menu)
 int
 set_menu_win(MENU *menu, WINDOW *win)
 {
-	if (menu == NULL)
+	if (menu == NULL) {
 		_menui_default_menu.menu_win = win;
-	else
-		menu->menu_win = win;
+		_menui_default_menu.scrwin = win;
+	} else {
+		if (menu->posted == TRUE) {
+			return E_POSTED;
+		} else {
+			menu->menu_win = win;
+			menu->scrwin = win;
+		}
+	}
+	
         return E_OK;
 }
 
@@ -174,10 +182,17 @@ set_menu_sub(menu, sub)
         MENU *menu;
         WINDOW *sub;
 {
-	if (menu == NULL)
+	if (menu == NULL) {
 		_menui_default_menu.menu_subwin = sub;
-	else
+		_menui_default_menu.scrwin = sub;
+	} else {
+		if (menu->posted == TRUE)
+			return E_POSTED;
+		
 		menu->menu_subwin = sub;
+		menu->scrwin = sub;
+	}
+	
         return E_OK;
 }
 
@@ -394,7 +409,7 @@ new_menu(ITEM **items)
 
 	  /* set a default window if none already set. */
 	if (the_menu->menu_win == NULL)
-		the_menu->menu_win = stdscr;
+		the_menu->scrwin = stdscr;
 	
           /* now attach the items, if any */
         if (items != NULL) {
@@ -628,7 +643,7 @@ pos_menu_cursor(MENU *menu)
 	if (menu->match_len > 0)
 		movx += menu->match_len - 1;
 	
-	wmove(menu->menu_subwin,
+	wmove(menu->scrwin,
 	      menu->items[menu->cur_item]->row - menu->top_row, movx);
 
 	return E_OK;
