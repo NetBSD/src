@@ -1,4 +1,4 @@
-/* $NetBSD: ispmbox.h,v 1.22 2000/02/19 01:49:47 mjacob Exp $ */
+/* $NetBSD: ispmbox.h,v 1.23 2000/05/13 16:53:04 he Exp $ */
 /*
  * Copyright (C) 1997, 1998, 1999 National Aeronautics & Space Administration
  * All rights reserved.
@@ -561,7 +561,7 @@ typedef struct {
 	u_int16_t	pdb_options;
 	u_int8_t	pdb_mstate;
 	u_int8_t	pdb_sstate;
-#define	BITS2WORD(x)	(x)[0] << 16 | (x)[3] << 8 | (x)[2]
+#define	BITS2WORD(x)	((x)[0] << 16 | (x)[3] << 8 | (x)[2])
 	u_int8_t	pdb_hardaddr_bits[4];
 	u_int8_t	pdb_portid_bits[4];
 	u_int8_t	pdb_nodename[8];
