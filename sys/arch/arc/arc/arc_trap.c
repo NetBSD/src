@@ -1,4 +1,4 @@
-/*	$NetBSD: arc_trap.c,v 1.21 2002/07/07 00:22:18 gmcgarry Exp $	*/
+/*	$NetBSD: arc_trap.c,v 1.22 2003/01/17 22:19:05 thorpej Exp $	*/
 /*	$OpenBSD: trap.c,v 1.22 1999/05/24 23:08:59 jason Exp $	*/
 
 /*
@@ -124,7 +124,7 @@ arc_set_intr(mask, int_hand, prio)
 
 /*
  * Handle an interrupt.
- * N.B., curproc might be NULL.
+ * N.B., curlwp might be NULL.
  */
 void
 cpu_intr(status, cause, pc, ipending)
@@ -156,7 +156,7 @@ cpu_intr(status, cause, pc, ipending)
 			panic("kernel used FPU: PC %x, CR %x, SR %x",
 			    pc, cause, status);
 #if !defined(SOFTFLOAT)
-		MachFPInterrupt(status, cause, pc, curproc->p_md.md_regs);
+		MachFPInterrupt(status, cause, pc, curlwp->l_md.md_regs);
 #endif
 	}
 #endif

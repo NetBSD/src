@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.68 2002/10/02 04:06:37 thorpej Exp $ */
+/* $NetBSD: cpu.c,v 1.69 2003/01/17 22:11:17 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.68 2002/10/02 04:06:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.69 2003/01/17 22:11:17 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -348,8 +348,8 @@ recognized:
 	/*
 	 * Initialize the idle PCB.
 	 */
-	pcb->pcb_hw.apcb_asn = proc0.p_addr->u_pcb.pcb_hw.apcb_asn;
-	pcb->pcb_hw.apcb_ptbr = proc0.p_addr->u_pcb.pcb_hw.apcb_ptbr;
+	pcb->pcb_hw.apcb_asn = lwp0.l_addr->u_pcb.pcb_hw.apcb_asn;
+	pcb->pcb_hw.apcb_ptbr = lwp0.l_addr->u_pcb.pcb_hw.apcb_ptbr;
 #if 0
 	printf("%s: hwpcb ksp = 0x%lx\n", sc->sc_dev.dv_xname,
 	    pcb->pcb_hw.apcb_ksp);
@@ -704,8 +704,8 @@ cpu_debug_dump(void)
 		    ci->ci_cpuid,
 		    ci->ci_flags,
 		    ci->ci_ipis,
-		    ci->ci_curproc,
-		    ci->ci_fpcurproc);
+		    ci->ci_curlwp,
+		    ci->ci_fpcurlwp);
 	}
 }
 

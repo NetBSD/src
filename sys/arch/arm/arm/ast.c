@@ -1,4 +1,4 @@
-/*	$NetBSD: ast.c,v 1.3 2002/03/24 16:10:11 bjh21 Exp $	*/
+/*	$NetBSD: ast.c,v 1.4 2003/01/17 22:28:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe
@@ -49,6 +49,7 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/signal.h>
+#include <sys/savar.h>
 #include <sys/vmmeter.h>
 #include <machine/cpu.h>
 #include <machine/frame.h>
@@ -71,15 +72,24 @@ int want_resched = 0;
 int astpending;
 
 void
-userret(struct proc *p)
+userret(struct lwp *l)
 {
+	struct proc *p = l->l_proc;
 	int sig;
 
 	/* Take pending signals. */
-	while ((sig = (CURSIG(p))) != 0)
+	while ((sig = (CURSIG(l))) != 0)
 		postsig(sig);
 
-	curcpu()->ci_schedstate.spc_curpriority = p->p_priority = p->p_usrpri;
+	/* Invoke per-process kernel-exit handling, if any */
+	if (p->p_userret)
+		(p->p_userret)(l, p->p_userret_arg);
+
+	/* Invoke any pending upcalls. */
+	while (l->l_flag & L_SA_UPCALL)
+		sa_upcall_userret(l);
+
+	curcpu()->ci_schedstate.spc_curpriority = l->l_priority = l->l_usrpri;
 }
 
 
@@ -92,7 +102,8 @@ userret(struct proc *p)
 void
 ast(struct trapframe *tf)
 {
-	struct proc *p = curproc;
+	struct lwp *l = curlwp;
+	struct proc *p;
 
 #ifdef acorn26
 	/* Enable interrupts if they were enabled before the trap. */
@@ -106,11 +117,13 @@ ast(struct trapframe *tf)
 	uvmexp.softs++;
 
 #ifdef DEBUG
-	if (p == NULL)
-		panic("ast: no curproc!");
-	if (&p->p_addr->u_pcb == 0)
+	if (l == NULL)
+		panic("ast: no curlwp!");
+	if (&l->l_addr->u_pcb == 0)
 		panic("ast: no pcb!");
 #endif	
+
+	p = l->l_proc;
 
 	if (p->p_flag & P_OWEUPC) {
 		p->p_flag &= ~P_OWEUPC;
@@ -119,9 +132,9 @@ ast(struct trapframe *tf)
 
 	/* Allow a forced task switch. */
 	if (want_resched)
-		preempt(NULL);
+		preempt(0);
 
-	userret(p);
+	userret(l);
 }
 
 /* End of ast.c */

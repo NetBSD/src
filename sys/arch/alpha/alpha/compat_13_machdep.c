@@ -1,4 +1,4 @@
-/* $NetBSD: compat_13_machdep.c,v 1.10 2001/07/12 23:35:42 thorpej Exp $ */
+/* $NetBSD: compat_13_machdep.c,v 1.11 2003/01/17 22:11:17 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.10 2001/07/12 23:35:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.11 2003/01/17 22:11:17 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -38,6 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.10 2001/07/12 23:35:42 thorp
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/mount.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <machine/cpu.h>
@@ -56,8 +57,8 @@ __KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.10 2001/07/12 23:35:42 thorp
  */
 /* ARGSUSED */
 int
-compat_13_sys_sigreturn(p, v, retval)
-	struct proc *p;
+compat_13_sys_sigreturn(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -84,25 +85,25 @@ compat_13_sys_sigreturn(p, v, retval)
 		return (EINVAL);
 
 	/* Restore register context. */
-	p->p_md.md_tf->tf_regs[FRAME_PC] = ksc.sc_pc;
-	p->p_md.md_tf->tf_regs[FRAME_PS] =
+	l->l_md.md_tf->tf_regs[FRAME_PC] = ksc.sc_pc;
+	l->l_md.md_tf->tf_regs[FRAME_PS] =
 	    (ksc.sc_ps | ALPHA_PSL_USERSET) & ~ALPHA_PSL_USERCLR;
 
-	regtoframe((struct reg *)ksc.sc_regs, p->p_md.md_tf);
+	regtoframe((struct reg *)ksc.sc_regs, l->l_md.md_tf);
 	alpha_pal_wrusp(ksc.sc_regs[R_SP]);
 
 	/* XXX ksc.sc_ownedfp ? */
-	if (p->p_addr->u_pcb.pcb_fpcpu != NULL)
-		fpusave_proc(p, 0);
-	memcpy(&p->p_addr->u_pcb.pcb_fp, (struct fpreg *)ksc.sc_fpregs,
+	if (l->l_addr->u_pcb.pcb_fpcpu != NULL)
+		fpusave_proc(l, 0);
+	memcpy(&l->l_addr->u_pcb.pcb_fp, (struct fpreg *)ksc.sc_fpregs,
 	    sizeof(struct fpreg));
 	/* XXX ksc.sc_fp_control ? */
 
 	/* Restore signal stack. */
 	if (ksc.sc_onstack & SS_ONSTACK)
-		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
+		l->l_proc->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
 	else
-		p->p_sigctx.ps_sigstk.ss_flags &= ~SS_ONSTACK;
+		l->l_proc->p_sigctx.ps_sigstk.ss_flags &= ~SS_ONSTACK;
 
 	/*
 	 * Restore signal mask.  Note the mask is a "long" in the stack
@@ -110,7 +111,7 @@ compat_13_sys_sigreturn(p, v, retval)
 	 */
 	mask13 = ksc.sc_mask;
 	native_sigset13_to_sigset(&mask13, &mask);
-	(void) sigprocmask1(p, SIG_SETMASK, &mask, 0);
+	(void) sigprocmask1(l->l_proc, SIG_SETMASK, &mask, 0);
 
 	return (EJUSTRETURN);
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: signal.h,v 1.5 1998/09/13 01:51:30 thorpej Exp $ */
+/* $NetBSD: signal.h,v 1.6 2003/01/17 22:11:16 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -76,6 +76,44 @@ struct sigcontext {
 	long	sc_xxx[8];		/* XXX */
 	sigset_t sc_mask;		/* signal mask to restore (new style) */
 };
+
+/*
+ * The following macros are used to convert from a ucontext to sigcontext,
+ * and vice-versa.  This is for building a sigcontext to deliver to old-style
+ * signal handlers, and converting back (in the event the handler modifies
+ * the context).
+ */
+#define	_MCONTEXT_TO_SIGCONTEXT(uc, sc)					\
+do {									\
+	(sc)->sc_pc = (uc)->uc_mcontext.__gregs[_REG_PC];		\
+	(sc)->sc_ps = (uc)->uc_mcontext.__gregs[_REG_PS];		\
+	memcpy(&(sc)->sc_regs, &(uc)->uc_mcontext.__gregs,		\
+	    31 * sizeof(unsigned long));				\
+	if ((uc)->uc_flags & _UC_FPU) {					\
+		(sc)->sc_ownedfp = 1;					\
+		memcpy(&(sc)->sc_fpregs,				\
+		    &(uc)->uc_mcontext.__fpregs.__fp_fr,		\
+		    31 * sizeof(unsigned long));			\
+		(sc)->sc_fpcr = (uc)->uc_mcontext.__fpregs.__fp_fpcr;	\
+		/* XXX sc_fp_control */					\
+	} else								\
+		(sc)->sc_ownedfp = 0;					\
+} while (/*CONSTCOND*/0)
+
+#define	_SIGCONTEXT_TO_MCONTEXT(sc, uc)					\
+do {									\
+	(uc)->uc_mcontext.__gregs[_REG_PC] = (sc)->sc_pc;		\
+	(uc)->uc_mcontext.__gregs[_REG_PS] = (sc)->sc_ps;		\
+	memcpy(&(uc)->uc_mcontext.__gregs, &(sc)->sc_regs,		\
+	    31 * sizeof(unsigned long));				\
+	if ((sc)->sc_ownedfp) {						\
+		memcpy(&(uc)->uc_mcontext.__fpregs.__fp_fr,		\
+		    &(sc)->sc_fpregs, 31 * sizeof(unsigned long));	\
+		(sc)->sc_fpcr = (uc)->uc_mcontext.__fpregs.__fp_fpcr;	\
+		/* XXX sc_fp_control */					\
+		(uc)->uc_flags |= _UC_FPU;				\
+	}								\
+} while (/*CONSTCOND*/0)
 
 #endif /* !_ANSI_SOURCE && !_POSIX_C_SOURCE && !_XOPEN_SOURCE */
 #endif /* !_ALPHA_SIGNAL_H_*/

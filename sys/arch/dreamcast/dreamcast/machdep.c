@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.21 2002/05/10 20:14:39 uch Exp $	*/
+/*	$NetBSD: machdep.c,v 1.22 2003/01/17 22:43:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2002 The NetBSD Foundation, Inc.
@@ -154,7 +154,7 @@ dreamcast_startup()
 	__asm__ __volatile__(
 		"jmp	@%0;"
 		"mov	%1, sp"
-		:: "r"(main),"r"(proc0.p_md.md_pcb->pcb_sf.sf_r7_bank));
+		:: "r"(main),"r"(lwp0.l_md.md_pcb->pcb_sf.sf_r7_bank));
 	/* NOTREACHED */
 	while (1)
 		;
