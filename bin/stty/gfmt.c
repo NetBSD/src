@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)gfmt.c	5.4 (Berkeley) 6/10/91";*/
-static char rcsid[] = "$Id: gfmt.c,v 1.6 1994/03/23 04:05:28 mycroft Exp $";
+static char rcsid[] = "$Id: gfmt.c,v 1.7 1994/03/23 05:05:30 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -66,6 +66,7 @@ gread(tp, s)
 	char *s;
 {
 	register char *ep, *p;
+	register struct cchar *cp;
 	long tmp;
 
 #define	CHK(s)	(*p == s[0] && !strcmp(p, s))
@@ -83,36 +84,8 @@ gread(tp, s)
 			tp->c_cflag = tmp;
 			continue;
 		}
-		if (CHK("discard")) {
-			tp->c_cc[VDISCARD] = tmp;
-			continue;
-		}
-		if (CHK("dsusp")) {
-			tp->c_cc[VDSUSP] = tmp;
-			continue;
-		}
-		if (CHK("eof")) {
-			tp->c_cc[VEOF] = tmp;
-			continue;
-		}
-		if (CHK("eol")) {
-			tp->c_cc[VEOL] = tmp;
-			continue;
-		}
-		if (CHK("eol2")) {
-			tp->c_cc[VEOL2] = tmp;
-			continue;
-		}
-		if (CHK("erase")) {
-			tp->c_cc[VERASE] = tmp;
-			continue;
-		}
 		if (CHK("iflag")) {
 			tp->c_iflag = tmp;
-			continue;
-		}
-		if (CHK("intr")) {
-			tp->c_cc[VINTR] = tmp;
 			continue;
 		}
 		if (CHK("ispeed")) {
@@ -120,21 +93,8 @@ gread(tp, s)
 			tp->c_ispeed = tmp;
 			continue;
 		}
-		if (CHK("kill")) {
-			tp->c_cc[VKILL] = tmp;
-			continue;
-		}
 		if (CHK("lflag")) {
 			tp->c_lflag = tmp;
-			continue;
-		}
-		if (CHK("lnext")) {
-			tp->c_cc[VLNEXT] = tmp;
-			continue;
-		}
-		if (CHK("min")) {
-			(void)sscanf(ep, "%ld", &tmp);
-			tp->c_cc[VMIN] = tmp;
 			continue;
 		}
 		if (CHK("oflag")) {
@@ -146,40 +106,16 @@ gread(tp, s)
 			tp->c_ospeed = tmp;
 			continue;
 		}
-		if (CHK("quit")) {
-			tp->c_cc[VQUIT] = tmp;
-			continue;
+		for (cp = cchars1; cp->name; ++cp) {
+			if (CHK(cp->name)) {
+				if (cp->sub == VMIN || cp->sub == VTIME)
+					(void)sscanf(ep, "%ld", &tmp);
+				tp->c_cc[cp->sub] = tmp;
+				break;
+			}
 		}
-		if (CHK("reprint")) {
-			tp->c_cc[VREPRINT] = tmp;
-			continue;
-		}
-		if (CHK("start")) {
-			tp->c_cc[VSTART] = tmp;
-			continue;
-		}
-		if (CHK("status")) {
-			tp->c_cc[VSTATUS] = tmp;
-			continue;
-		}
-		if (CHK("stop")) {
-			tp->c_cc[VSTOP] = tmp;
-			continue;
-		}
-		if (CHK("susp")) {
-			tp->c_cc[VSUSP] = tmp;
-			continue;
-		}
-		if (CHK("time")) {
-			(void)sscanf(ep, "%ld", &tmp);
-			tp->c_cc[VTIME] = tmp;
-			continue;
-		}
-		if (CHK("werase")) {
-			tp->c_cc[VWERASE] = tmp;
-			continue;
-		}
-		gerr(p);
+		if (!cp->name)
+			gerr(p);
 	}
 }
 
