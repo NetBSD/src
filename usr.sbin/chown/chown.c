@@ -1,3 +1,5 @@
+/*	$NetBSD: chown.c,v 1.17 1999/03/14 01:42:20 kleink Exp $	*/
+
 /*
  * Copyright (c) 1988, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -41,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)chown.c	8.8 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: chown.c,v 1.16 1999/03/14 01:39:48 kleink Exp $");
+__RCSID("$NetBSD: chown.c,v 1.17 1999/03/14 01:42:20 kleink Exp $");
 #endif
 #endif /* not lint */
 
