@@ -1,4 +1,4 @@
-/*	$NetBSD: ascvar.h,v 1.1 1996/05/05 06:16:28 briggs Exp $	*/
+/*	$NetBSD: ascvar.h,v 1.2 1997/02/11 07:47:37 scottr Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -29,7 +29,20 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-int	asc_setbellparams __P((int freq, int length, int volume));
-int	asc_getbellparams __P((int *freq, int *length, int *volume));
-void	asc_bellstop __P((int param));
-int	asc_ringbell __P((void));
+#define ASCUNIT(d)	((d) & 0x7)
+
+struct asc_softc {
+	struct device		sc_dev;
+	bus_space_tag_t		sc_tag;
+	bus_space_handle_t	sc_handle;
+	int			sc_open;
+	int			sc_ringing;
+};
+
+int	ascopen __P((dev_t dev, int flag, int mode, struct proc *p));
+int	ascclose __P((dev_t dev, int flag, int mode, struct proc *p));
+int	ascread __P((dev_t, struct uio *, int));
+int	ascwrite __P((dev_t, struct uio *, int));
+int	ascioctl __P((dev_t, int, caddr_t, int, struct proc *p));
+int	ascpoll __P((dev_t dev, int events, struct proc *p));
+int	ascmmap __P((dev_t dev, int off, int prot));
