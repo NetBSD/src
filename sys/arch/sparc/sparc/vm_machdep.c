@@ -42,7 +42,7 @@
  *	@(#)vm_machdep.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: vm_machdep.c,v 1.10 92/11/26 03:05:11 torek Exp  (LBL)
- * $Id: vm_machdep.c,v 1.7 1994/05/25 10:59:09 pk Exp $
+ * $Id: vm_machdep.c,v 1.8 1994/09/27 01:34:01 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -167,7 +167,7 @@ dvma_malloc(size)
 /*
  * The offset of the topmost frame in the kernel stack.
  */
-#define	TOPFRAMEOFF (UPAGES*NBPG-sizeof(struct trapframe)-sizeof(struct frame))
+#define	TOPFRAMEOFF (USPACE-sizeof(struct trapframe)-sizeof(struct frame))
 
 /*
  * Finish a fork operation, with process p2 nearly set up.
@@ -222,8 +222,8 @@ cpu_fork(p1, p2)
 	 * including the initial one in the child's pcb.
 	 */
 	sp = npcb->pcb_sp;		/* points to old kernel stack */
-	ssize = (u_int)opcb + UPAGES * NBPG - sp;
-	if (ssize >= UPAGES * NBPG - sizeof(struct pcb))
+	ssize = (u_int)opcb + USPACE - sp;
+	if (ssize >= USPACE - sizeof(struct pcb))
 		panic("cpu_fork 1");
 	off = (u_int)npcb - (u_int)opcb;
 	qcopy((caddr_t)sp, (caddr_t)sp + off, ssize);
@@ -263,7 +263,7 @@ cpu_exit(p)
 		free((void *)fs, M_SUBPROC);
 	}
 	vmspace_free(p->p_vmspace);
-	switchexit(kernel_map, p->p_addr, round_page(ctob(UPAGES)));
+	switchexit(kernel_map, p->p_addr, USPACE);
 	/* NOTREACHED */
 }
 
