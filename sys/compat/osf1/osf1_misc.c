@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_misc.c,v 1.24 1999/04/26 18:34:05 cgd Exp $ */
+/* $NetBSD: osf1_misc.c,v 1.25 1999/04/27 06:37:12 cgd Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -75,6 +75,8 @@
 #include <sys/exec.h>
 #include <sys/vnode.h>
 #include <sys/socketvar.h>
+#include <vm/vm.h>				/* XXX UVM headers are Cool */
+#include <uvm/uvm.h>				/* XXX see mmap emulation */
 
 #include <compat/osf1/osf1.h>
 #include <compat/osf1/osf1_syscall.h>
@@ -305,10 +307,70 @@ osf1_sys_mmap(p, v, retval)
 	if (leftovers != 0)
 		return (EINVAL);
 
-#if 0
-	/* XXX EVIL!!! */
-	SCARG(&a, flags) |= MAP_FIXED;
-#endif
+	/*
+	 * XXX The following code is evil.
+	 *
+	 * The OSF/1 mmap() function attempts to map non-fixed entries
+	 * near the address that the user specified.  Therefore, for
+	 * non-fixed entires we try to find space in the address space
+	 * starting at that address.  If the user specified zero, we
+	 * start looking at at least NBPG, so that programs can't
+	 * accidentally live through deferencing NULL.
+	 *
+	 * The need for this kludgery is increased by the fact that
+	 * the loader data segment is mapped at
+	 * (end of user address space) - 1G, MAXDSIZ is 1G, and
+	 * the VM system tries allocate non-fixed mappings _AFTER_
+	 * (start of data) + MAXDSIZ.  With the loader, of course,
+	 * that means that it'll start trying at
+	 * (end of user address space), and will never succeed!
+	 *
+	 * Notes:
+	 *
+	 * * Though we find space here, if something else (e.g. a second
+	 *   thread) were mucking with the address space the mapping
+	 *   we found might be used by another mmap(), and this call
+	 *   would clobber that region.
+	 *
+	 * * In general, tricks like this only work for MAP_ANON mappings,
+	 *   because of sharing/cache issues.  That's not a problem on
+	 *   the Alpha, and though it's not good style to abuse that fact,
+	 *   there's little choice.
+	 *
+	 * * In order for this to be done right, the VM system should
+	 *   really try to use the requested 'addr' passed in to mmap()
+	 *   as a hint, even if non-fixed.  If it's passed as zero,
+	 *   _maybe_ then try (start of data) + MAXDSIZ, or maybe
+	 *   provide a better way to avoid the data region altogether.
+	 */
+	if ((SCARG(&a, flags) & MAP_FIXED) == 0) {
+		vaddr_t addr = round_page(SCARG(&a, addr));
+		vsize_t size = round_page(SCARG(&a, len));
+		int fixed = 0;
+
+		vm_map_lock(&p->p_vmspace->vm_map);
+
+		/* if non-NULL address given, start looking there */
+		if (addr != 0 && uvm_map_findspace(&p->p_vmspace->vm_map,
+		    addr, size, &addr, NULL, 0, 0) != NULL) {
+			fixed = 1;
+			goto done;
+		}
+
+		/* didn't find anything.  take it again from the top. */
+		if (uvm_map_findspace(&p->p_vmspace->vm_map, NBPG, size, &addr,
+		    NULL, 0, 0) != NULL) {
+			fixed = 1;
+			goto done;
+		}
+
+done:
+		vm_map_unlock(&p->p_vmspace->vm_map);
+		if (fixed) {
+			SCARG(&a, flags) |= MAP_FIXED;
+			SCARG(&a, addr) = (void *)addr;
+		}
+	}
 
 	return sys_mmap(p, &a, retval);
 }
