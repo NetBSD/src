@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)chown.2	6.7 (Berkeley) 3/10/91
-.\"	$Id: chown.2,v 1.5 1994/01/10 23:54:14 jtc Exp $
+.\"	$Id: chown.2,v 1.6 1994/03/29 02:54:58 jtc Exp $
 .\"
 .Dd March 10, 1991
 .Dt CHOWN 2
@@ -45,7 +45,7 @@
 .Ft int
 .Fn chown "const char *path" "uid_t owner" "gid_t group"
 .Ft int
-.Fn fchown "int fd" "int owner" "int group"
+.Fn fchown "int fd" "uid_t owner" "gid_t group"
 .Sh DESCRIPTION
 The owner ID and group ID of the file
 named by
