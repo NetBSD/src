@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2003/05/17 02:26:27 nakayama Exp $
+#	$NetBSD: Makefile,v 1.7 2003/05/17 02:30:15 nakayama Exp $
 
 CURDIR=	${.CURDIR}
 S=	${CURDIR}/../../../..
@@ -75,6 +75,11 @@ machine:
 sparc64:
 	rm -f sparc64
 	ln -s ${.CURDIR}/../../../sparc64/include sparc64
+
+cleandir distclean: cleanlibdir
+
+cleanlibdir:
+	rm -rf lib
 
 vers.c: version
 	sh ${S}/conf/newvers_stand.sh ${CURDIR}/version "sparc64" ${NEWVERSWHAT}
