@@ -1,4 +1,4 @@
-.\"	$NetBSD: vlan.4,v 1.23 2003/05/07 03:33:49 fair Exp $
+.\"	$NetBSD: vlan.4,v 1.24 2003/05/07 16:49:59 jwise Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -188,6 +188,16 @@ and use
 .Tn VLAN
 tag six will see all traffic transmitted through
 .Sy vlan0 .
+.Pp
+The same
+.Tn VLAN
+can be created at system startup time
+by placing the following in
+.Pa /etc/ifconfig.vlan0 :
+.Bd -literal -offset indent
+create
+vlan 6 vlanif tlp0
+.Ed
 .Sh SEE ALSO
 .Xr ifconfig 8
 .Sh HISTORY
