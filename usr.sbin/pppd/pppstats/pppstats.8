@@ -1,0 +1,39 @@
+.\"	@(#) $Id: pppstats.8,v 1.1 1994/08/26 05:13:13 paulus Exp $
+.TH PPPSTATS 8 "23 Aug 1994"
+.SH NAME
+pppstats \- print PPP statistics
+.SH SYNOPSIS
+.B pppstats
+[
+.B -v
+] [
+.B -i
+.I <secs>
+] [
+.I <unit#>
+]
+.ti 12
+.br
+[
+.I objectfile
+[
+.I corefile
+]]
+.SH DESCRIPTION
+.B pppstats
+prints PPP-related statistics.
+.PP
+The
+.B -v
+flag causes
+.B pppstats
+to display additional statistics, such as the number of packets tossed.
+.PP
+The
+.B -i
+flag is used to specify the interval between printouts. The default is
+5 seconds.
+.PP
+.B pppstats
+must be installed set-group-id to kmem, or the user must have read
+access to /dev/kmem.
