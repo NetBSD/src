@@ -1,4 +1,4 @@
-/* $NetBSD: misc.c,v 1.15 2004/01/05 23:12:30 christos Exp $ */
+/* $NetBSD: misc.c,v 1.16 2004/01/06 00:20:16 christos Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: misc.c,v 1.15 2004/01/05 23:12:30 christos Exp $");
+__RCSID("$NetBSD: misc.c,v 1.16 2004/01/06 00:20:16 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -231,10 +231,8 @@ closem(void)
 #ifdef F_CLOSEM
     nofile = FOLDSTD + 1;
     if (fcntl(nofile, F_CLOSEM, 0) == -1)
-	stderror(ERR_SYSTEM, "", strerror(errno));
-#else
-    nofile = NOFILE;
 #endif
+	nofile = NOFILE;
 
     for (f = 0; f < nofile; f++)
 	if (f != SHIN && f != SHOUT && f != SHERR && f != OLDSTD &&
