@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.100.4.3 1999/07/04 01:46:53 chs Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.100.4.4 1999/07/11 05:43:58 chs Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -418,7 +418,6 @@ nfs_open(v)
 			if ((error = nfs_vinvalbuf(vp, V_SAVE, ap->a_cred,
 				ap->a_p, 1)) == EINTR)
 				return (error);
-			(void) uvm_vnp_uncache(vp);
 			np->n_brev = np->n_lrev;
 		    }
 		}
@@ -427,7 +426,6 @@ nfs_open(v)
 			if ((error = nfs_vinvalbuf(vp, V_SAVE, ap->a_cred,
 				ap->a_p, 1)) == EINTR)
 				return (error);
-			(void) uvm_vnp_uncache(vp);
 			np->n_attrstamp = 0;
 			if (vp->v_type == VDIR) {
 				nfs_invaldircache(vp, 0);
@@ -449,7 +447,6 @@ nfs_open(v)
 				if ((error = nfs_vinvalbuf(vp, V_SAVE,
 					ap->a_cred, ap->a_p, 1)) == EINTR)
 					return (error);
-				(void) uvm_vnp_uncache(vp);
 				np->n_mtime = vattr.va_mtime.tv_sec;
 			}
 		}

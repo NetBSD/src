@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.22.4.4 1999/07/04 01:55:41 chs Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.22.4.5 1999/07/11 05:44:00 chs Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -320,7 +320,6 @@ WRITE(v)
 			ip->i_ffs_size = uio->uio_offset + xfersize;
 			uvm_vnp_setsize(vp, ip->i_ffs_size);
 		}
-		(void)uvm_vnp_uncache(vp);
 
 		size = BLKSIZE(fs, ip, lbn) - bp->b_resid;
 		if (size < xfersize)

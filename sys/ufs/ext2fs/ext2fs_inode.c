@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_inode.c,v 1.13 1999/03/24 05:51:30 mrg Exp $	*/
+/*	$NetBSD: ext2fs_inode.c,v 1.13.4.1 1999/07/11 05:43:59 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -242,7 +242,6 @@ ext2fs_truncate(v)
 			return (error);
 		oip->i_e2fs_size = length;
 		uvm_vnp_setsize(ovp, length);
-		(void) uvm_vnp_uncache(ovp);
 		if (aflags & B_SYNC)
 			bwrite(bp);
 		else
@@ -270,7 +269,6 @@ ext2fs_truncate(v)
 			return (error);
 		oip->i_e2fs_size = length;
 		size = fs->e2fs_bsize;
-		(void) uvm_vnp_uncache(ovp);
 		memset((char *)bp->b_data + offset, 0,  (u_int)(size - offset));
 		allocbuf(bp, size);
 		if (aflags & B_SYNC)
