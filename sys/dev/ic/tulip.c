@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.117 2002/07/09 20:19:57 chuck Exp $	*/
+/*	$NetBSD: tulip.c,v 1.118 2002/07/14 21:02:41 chs Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.117 2002/07/09 20:19:57 chuck Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.118 2002/07/14 21:02:41 chs Exp $");
 
 #include "bpfilter.h"
 
@@ -3938,6 +3938,7 @@ tlp_get_minst(sc)
 void	tlp_sia_update_link __P((struct tulip_softc *));
 void	tlp_sia_get __P((struct tulip_softc *, struct ifmediareq *));
 int	tlp_sia_set __P((struct tulip_softc *));
+int	tlp_sia_media __P((struct tulip_softc *, struct ifmedia_entry *));
 void	tlp_sia_fixup __P((struct tulip_softc *));
 
 void
@@ -4079,10 +4080,17 @@ int
 tlp_sia_set(sc)
 	struct tulip_softc *sc;
 {
+
+	return (tlp_sia_media(sc, TULIP_CURRENT_MEDIA(sc)));
+}
+
+int
+tlp_sia_media(sc, ife)
+	struct tulip_softc *sc;
 	struct ifmedia_entry *ife;
+{
 	struct tulip_21x4x_media *tm;
 
-	ife = TULIP_CURRENT_MEDIA(sc);
 	tm = ife->ifm_aux;
 
 	/*
@@ -4111,7 +4119,7 @@ tlp_sia_set(sc)
 		TULIP_WRITE(sc, CSR_SIAGEN, tm->tm_siagen | tm->tm_gpdata);
 		break;
 	default:
-		TULIP_WRITE(sc, CSR_SIAGEN,  tm->tm_siagen);
+		TULIP_WRITE(sc, CSR_SIAGEN, tm->tm_siagen);
 	}
 
 	TULIP_WRITE(sc, CSR_SIACONN, tm->tm_siaconn);
@@ -5020,29 +5028,19 @@ tlp_2114x_nway_statchg(self)
 {
 	struct tulip_softc *sc = (struct tulip_softc *)self;
 	struct mii_data *mii = &sc->sc_mii;
+	struct ifmedia_entry *ife;
 
 	if (IFM_SUBTYPE(mii->mii_media_active) == IFM_NONE)
 		return;
+	
+	if ((ife = ifmedia_match(&mii->mii_media, mii->mii_media_active, 
+	    mii->mii_media.ifm_mask)) == NULL) {
+		printf("tlp_2114x_nway_statchg: no match for media 0x%x/0x%x\n",
+		    mii->mii_media_active, ~mii->mii_media.ifm_mask);
+		panic("tlp_2114x_nway_statchg");
+	}
 
-	/* Idle the transmit and receive processes. */
-	tlp_idle(sc, OPMODE_ST|OPMODE_SR);
-
-	sc->sc_opmode &= ~(OPMODE_TTM|OPMODE_FD|OPMODE_PS|OPMODE_PCS|
-	    OPMODE_SCR|OPMODE_HBD);
-
-	if (IFM_SUBTYPE(mii->mii_media_active) == IFM_10_T)
-		sc->sc_opmode |= OPMODE_TTM;
-	else
-		sc->sc_opmode |= OPMODE_PS|OPMODE_PCS|OPMODE_SCR|OPMODE_HBD;
-
-	if (mii->mii_media_active & IFM_FDX)
-		sc->sc_opmode |= OPMODE_FD|OPMODE_HBD;
-
-	/*
-	 * Write new OPMODE bits.  This also restarts the transmit
-	 * and receive processes.
-	 */
-	TULIP_WRITE(sc, CSR_OPMODE, sc->sc_opmode);
+	tlp_sia_media(sc, ife);
 }
 
 void
