@@ -1,4 +1,4 @@
-/*	$NetBSD: tset.c,v 1.7 1998/07/26 23:09:50 mycroft Exp $	*/
+/*	$NetBSD: tset.c,v 1.8 1998/12/19 23:19:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)tset.c	8.1 (Berkeley) 6/9/93";
 #endif
-__RCSID("$NetBSD: tset.c,v 1.7 1998/07/26 23:09:50 mycroft Exp $");
+__RCSID("$NetBSD: tset.c,v 1.8 1998/12/19 23:19:45 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -94,7 +94,7 @@ main(argc, argv)
 		++p;
 	else
 		p = *argv;
-	usingupper = isupper(*p);
+	usingupper = isupper((unsigned char)*p);
 	if (!strcasecmp(p, "reset")) {
 		isreset = 1;
 		reset_mode();
