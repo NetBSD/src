@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_3100.c,v 1.4 1998/04/19 10:54:55 jonathan Exp $	*/
+/*	$NetBSD: dec_3100.c,v 1.5 1998/07/21 17:36:04 drochner Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -103,6 +103,7 @@ struct ifnet;
 #include <net/if.h>		/* struct if socket, for... */
 #include <net/if_ether.h>	/* ethercom */
 #include <net/if_media.h>	/* ifmedia requests for am7990 */
+#include <dev/ic/lancevar.h>
 #include <dev/ic/am7990var.h>	/* all this to get lance intr */
 
 #include <pmax/ibus/ibusvar.h>

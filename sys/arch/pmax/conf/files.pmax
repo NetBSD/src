@@ -1,4 +1,4 @@
-#	$NetBSD: files.pmax,v 1.54 1998/05/22 21:14:04 thorpej Exp $
+#	$NetBSD: files.pmax,v 1.55 1998/07/21 17:36:03 drochner Exp $
 # DECstation-specific configuration info
 
 # maxpartitions must be first item in files.${ARCH}.
@@ -172,7 +172,7 @@ file	arch/pmax/dev/dtop.c		dtop needs-flag
 #   device defined in sys/conf/files.
 #   TC and ioasic attachment and files in sys/dev/tc/files.tc
 
-attach le at ibus with le_pmax:		le_dec_subr
+attach le at ibus with le_pmax:		le24, le_dec_subr
 file	dev/tc/if_le_ibus.c		le_pmax		needs-flag #for kn01_intr
 
 
