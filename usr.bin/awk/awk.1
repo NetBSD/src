@@ -1,4 +1,4 @@
-.\"	$NetBSD: awk.1,v 1.8 2001/12/01 19:06:43 wiz Exp $
+.\"	$NetBSD: awk.1,v 1.9 2002/02/08 01:36:19 ross Exp $
 .\"
 .\" Copyright (C) Lucent Technologies 1997
 .\" All Rights Reserved
@@ -187,15 +187,15 @@ Multiplication, division and modulus.
 Addition and subsctraction.
 .It Ar space
 String concatenation.
-.It Ic < >
-.It Ic <= >=
+.It Ic \*[Lt] \*[Gt]
+.It Ic \*[Le] \*[Ge]
 .It Ic != ==
 Regular relational operators
 .It Ic ~ !~
 Regular expression match and not match
 .It Ic in
 Array membership
-.It Ic "&&"
+.It Ic "\*[Am]\*[Am]"
 Logical AND
 .It Ic "||"
 Logical OR
@@ -273,7 +273,7 @@ returns 1 for a successful input,
 .It Xo
 .Ic getline
 .Bq Va var
-.Ic <
+.Ic \*[Lt]
 .Ar file
 .Xc
 Set
@@ -300,13 +300,13 @@ Skip rest of this file, open next, start at top.
 .It Xo
 .Ic print
 .Bq Ar expr-list
-.Bq Ic > Ar file
+.Bq Ic \*[Gt] Ar file
 .Xc
 The
 .Ic print
 statement prints its arguments on the standard output (or to a file
 if
-.Ic > file
+.Ic \*[Gt] file
 or to a pipe if
 .Ic | Ar expr
 is present),
@@ -325,7 +325,7 @@ different statements denote the same open file.
 .Ic printf
 .Ar format
 .Bq Ic , Ar expr-list
-.Bq Ic > Ar file
+.Bq Ic \*[Gt] Ar file
 .Xc
 Format and print its expression list according to
 .Ar format .
@@ -569,7 +569,7 @@ and returns its exit status
 .Ss Patterns
 Patterns are arbitrary Boolean combinations
 (with
-.Ic "! || &&" )
+.Ic "! || \*[Am]\*[Am]" )
 of regular expressions and
 relational expressions.
 Regular expressions are as in
@@ -686,7 +686,7 @@ Thus local variables may be created by providing excess parameters in
 the function definition.
 .Sh EXAMPLES
 .Bl -tag -width indent -compact
-.It Ic length($0) > 72
+.It Ic length($0) \*[Gt] 72
 Print lines longer than 72 characters.
 .Pp
 .It Ic { print $2, $1 }
@@ -706,7 +706,7 @@ Add up first column, print sum and average.
 Print all lines between start/stop pairs.
 .Pp
 .It Ic BEGIN { # Simulate echo(1)
-.It Ic "\ \ \ \ " for (i = 1; i < ARGC;\ i++)\ printf\ \&"%s\ \&",\ ARGV[i]
+.It Ic "\ \ \ \ " for (i = 1; i \*[Lt] ARGC;\ i++)\ printf\ \&"%s\ \&",\ ARGV[i]
 .It Ic "\ \ \ \ " printf \&"\en\&"
 .It Ic "\ \ \ \ " exit }
 .El

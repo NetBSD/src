@@ -1,4 +1,4 @@
-.\"	$NetBSD: patch.1,v 1.6 2001/12/01 16:43:22 wiz Exp $ -*- nroff -*-
+.\"	$NetBSD: patch.1,v 1.7 2002/02/08 01:36:30 ross Exp $ -*- nroff -*-
 .rn '' }`
 .de Sh
 .br
@@ -46,7 +46,7 @@ patch - apply a diff file to an original
 but usually just
 .sp
 .B patch
-<patchfile
+\*[Lt]patchfile
 .SH DESCRIPTION
 .I Patch
 will take a patch file containing any of the four forms of difference
@@ -260,7 +260,7 @@ This option does not suppress commentary; use
 .B \-s
 for that.
 .TP 5
-.B \-i <patchfile> or \-\-patchfile <patchfile>
+.B \-i \*[Lt]patchfile\*[Gt] or \-\-patchfile \*[Lt]patchfile\*[Gt]
 Read the patch to be applied from the specified file.
 .TP 5
 .B \-t or \-\-batch
@@ -272,7 +272,7 @@ skip patches for which the file has the wrong version for the ``Prereq:'' line
 in the patch; and assume that patches are reversed if they look like
 they are.
 .TP 5
-.B \-F<number> or \-\-fuzz <number>
+.B \-F\*[Lt]number\*[Gt] or \-\-fuzz \*[Lt]number\*[Gt]
 sets the maximum fuzz factor.
 This switch only applies to context diffs, and causes
 .I patch
@@ -304,7 +304,7 @@ See also
 .B \-o or \-\-output
 causes the next argument to be interpreted as the output file name.
 .TP 5
-.B \-p<number> or \-\-strip <number>
+.B \-p\*[Lt]number\*[Gt] or \-\-strip \*[Lt]number\*[Gt]
 sets the pathname strip count,
 which controls how pathnames found in the patch file are treated, in case
 the you keep your files in a different directory than the person who sent
@@ -386,7 +386,7 @@ to ignore this patch from the patch file, but continue on looking
 for the next patch in the file.
 Thus
 .sp
-	patch -S + -S + <patchfile
+	patch -S + -S + \*[Lt]patchfile
 .sp
 will ignore the first and second of three patches.
 .TP 5
@@ -431,12 +431,12 @@ This is the default.
 Always make simple backups.
 .RE
 .TP 5
-.B \-x<number> or \-\-debug <number>
+.B \-x\*[Lt]number\*[Gt] or \-\-debug \*[Lt]number\*[Gt]
 sets internal debugging flags, and is of interest only to
 .I patch
 patchers.
 .SH AUTHOR
-Larry Wall <lwall@netlabs.com>
+Larry Wall \*[Lt]lwall@netlabs.com\*[Gt]
 .br
 with many other contributors.
 .SH ENVIRONMENT

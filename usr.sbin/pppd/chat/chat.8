@@ -1,4 +1,4 @@
-.\"	$NetBSD: chat.8,v 1.15 2001/11/21 17:33:30 wiz Exp $
+.\"	$NetBSD: chat.8,v 1.16 2002/02/08 01:38:53 ross Exp $
 .\" -*- nroff -*-
 .\" manual page [] for chat 1.8
 .\" Id: chat.8,v 1.9 1999/09/06 05:10:23 paulus Exp
@@ -24,21 +24,21 @@ connection between the Point-to-Point Protocol Daemon (\fIpppd\fR) and
 the remote's \fIpppd\fR process.
 .SH OPTIONS
 .TP
-.B -f \fI<chat file>
+.B -f \fI\*[Lt]chat file\*[Gt]
 Read the chat script from the chat \fIfile\fR. The use of this option
 is mutually exclusive with the chat script parameters. The user must
 have read access to the file. Multiple lines are permitted in the
 file. Space or horizontal tab characters should be used to separate
 the strings.
 .TP
-.B -t \fI<timeout>
+.B -t \fI\*[Lt]timeout\*[Gt]
 Set the timeout for the expected string to be received. If the string
 is not received within the time limit then the reply string is not
 sent. An alternate reply may be sent or the script will fail if there
 is no alternate reply string. A failed script will cause the
 \fIchat\fR program to terminate with a non-zero error code.
 .TP
-.B -r \fI<report file>
+.B -r \fI\*[Lt]report file\*[Gt]
 Set the file for output of the report strings. If you use the keyword
 \fIREPORT\fR, the resulting strings are written to this file. If this
 option is not used and you still use \fIREPORT\fR keywords, the
@@ -78,11 +78,11 @@ Do not use the SYSLOG.  By default, error messages are sent to the
 SYSLOG.  The use of -S will prevent both log messages from '-v' and
 error messages from being sent to the SYSLOG (to facility LOG_LOCAL2).
 .TP
-.B -T \fI<phone number>
+.B -T \fI\*[Lt]phone number\*[Gt]
 Pass in an arbitary string, usually a phone number, that will be
 substituted for the \\T substitution metacharacter in a send string.
 .TP
-.B -U \fI<phone number 2>
+.B -U \fI\*[Lt]phone number 2\*[Gt]
 Pass in a second string, usually a phone number, that will be
 substituted for the \\U substitution metacharacter in a send string.
 This is useful when dialing an ISDN terminal adapter that requires two

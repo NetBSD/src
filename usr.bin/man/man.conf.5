@@ -1,4 +1,4 @@
-.\"	$NetBSD: man.conf.5,v 1.11 2001/12/01 20:35:54 wiz Exp $
+.\"	$NetBSD: man.conf.5,v 1.12 2002/02/08 01:36:28 ross Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -176,7 +176,7 @@ sect3		/usr/share/man/{old/,}cat3
 By default, the command
 .Dq Li man mktemp
 will search for
-``mktemp.<any_digit>'' and ``mktemp.tbl''
+``mktemp.\*[Lt]any_digit\*[Gt]'' and ``mktemp.tbl''
 in the directories
 .Dq Pa /usr/share/man/cat1 ,
 .Dq Pa /usr/share/man/cat2 ,
@@ -187,7 +187,7 @@ directory would be searched as well, before the directory was
 searched.
 .Pp
 If ``mktemp.tbl'' was found first, the command
-.Dq Li tbl <manual page> | nroff -man
+.Dq Li tbl \*[Lt]manual page\*[Gt] | nroff -man
 would be run to build a man page for display to the user.
 .Pp
 The command

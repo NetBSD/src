@@ -1,4 +1,4 @@
-.\"	$NetBSD: lesskey.1,v 1.5 2001/12/01 16:43:16 wiz Exp $
+.\"	$NetBSD: lesskey.1,v 1.6 2002/02/08 01:36:26 ross Exp $
 .\"
 .TH LESSKEY 1 "Version 358: 08 Jul 2000"
 .SH NAME
@@ -66,7 +66,7 @@ If the command section is the first section in the file,
 this line may be omitted.
 The command section consists of lines of the form:
 .sp
-	\fIstring\fP <whitespace> \fIaction\fP [extra-string] <newline>
+	\fIstring\fP \*[Lt]whitespace\*[Gt] \fIaction\fP [extra-string] \*[Lt]newline\*[Gt]
 .sp
 Whitespace is any sequence of one or more spaces and/or tabs.
 The \fIstring\fP is the command key(s) which invoke the action.
@@ -170,8 +170,8 @@ default command keys used by less:
 	^L		repaint
 	\eeu		undo-hilite
 	g		goto-line
-	<		goto-line
-	\ee<		goto-line
+	\*[Lt]		goto-line
+	\ee\*[Lt]		goto-line
 	p		percent
 	%		percent
 	\ee[		left-scroll
@@ -187,8 +187,8 @@ default command keys used by less:
 	\ee^F		forw-bracket
 	\ee^B		back-bracket
 	G		goto-end
-	\ee>		goto-end
-	>		goto-end
+	\ee\*[Gt]		goto-end
+	\*[Gt]		goto-end
 	=		status
 	^G		status
 	:f		status
@@ -375,7 +375,7 @@ Suite 330, Boston, MA  02111-1307, USA.
 
 .SH AUTHOR
 .PP
-Mark Nudelman <marknu@flash.net>
+Mark Nudelman \*[Lt]marknu@flash.net\*[Gt]
 .br
 Send bug reports or comments to the above address or to bug-less@gnu.org.
 

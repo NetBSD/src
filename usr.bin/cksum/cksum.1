@@ -1,4 +1,4 @@
-.\"	$NetBSD: cksum.1,v 1.16 2001/04/04 09:35:23 wiz Exp $
+.\"	$NetBSD: cksum.1,v 1.17 2002/02/08 01:36:20 ross Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -249,7 +249,7 @@ first.
 The smallest number of octets capable of representing this integer are used.
 .Pp
 M(x) is multiplied by x^32 (i.e., shifted left 32 bits) and divided by
-G(x) using mod 2 division, producing a remainder R(x) of degree <= 31.
+G(x) using mod 2 division, producing a remainder R(x) of degree \*[Le] 31.
 .Pp
 The coefficients of R(x) are considered to be a 32-bit sequence.
 .Pp
@@ -260,7 +260,7 @@ The
 .Nm
 and
 .Nm sum
-utilities exit 0 on success, and >0 if an error occurs.
+utilities exit 0 on success, and \*[Gt]0 if an error occurs.
 .Sh SEE ALSO
 The default calculation is identical to that given in pseudo-code
 in the following

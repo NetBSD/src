@@ -1,4 +1,4 @@
-.\" $NetBSD: pppd.8,v 1.33 2002/02/02 01:33:55 wiz Exp $
+.\" $NetBSD: pppd.8,v 1.34 2002/02/08 01:38:54 ross Exp $
 .\"
 .\" manual page [] for pppd 2.4
 .\" Id: pppd.8,v 1.53 2000/08/01 01:47:04 paulus Exp
@@ -34,7 +34,7 @@ establishing and configuring the Internet Protocol (IP) (called the IP
 Control Protocol, IPCP).
 .SH FREQUENTLY USED OPTIONS
 .TP
-.I <tty_name>
+.I \*[Lt]tty_name\*[Gt]
 Communicate over the named device.  The string "/dev/" is prepended if
 necessary.  If no device name is given, or if the name of the terminal
 connected to the standard input is given, pppd will use that terminal,
@@ -42,8 +42,8 @@ and will not fork to put itself in the background.  A value for this
 option from a privileged source cannot be overridden by a
 non-privileged user.
 .TP
-.I <speed>
-Set the baud rate to <speed> (a decimal number).  On systems such as
+.I \*[Lt]speed\*[Gt]
+Set the baud rate to \*[Lt]speed\*[Gt] (a decimal number).  On systems such as
 4.4BSD and NetBSD, any speed can be specified.  Other systems
 (e.g. SunOS) allow only a limited set of speeds.
 .TP
@@ -65,8 +65,8 @@ in the expression from being interpreted by the shell. This option
 is currently only available under NetBSD, and then only
 if both the kernel and pppd were compiled with PPP_FILTER defined.
 .TP
-.B asyncmap \fI<map>
-Set the async character map to <map>.  This map describes which
+.B asyncmap \fI\*[Lt]map\*[Gt]
+Set the async character map to \*[Lt]map\*[Gt].  This map describes which
 control characters cannot be successfully received over the serial
 line.  Pppd will ask the peer to send these characters as a 2-byte
 escape sequence.  The argument is a 32 bit hex number with each bit
@@ -173,7 +173,7 @@ peer, pppd will then just wait passively for a valid LCP packet from
 the peer, instead of exiting, as it would without this option.
 .SH OPTIONS
 .TP
-.I <local_IP_address>\fB:\fI<remote_IP_address>
+.I \*[Lt]local_IP_address\*[Gt]\fB:\fI\*[Lt]remote_IP_address\*[Gt]
 Set the local and/or remote interface IP addresses.  Either one may be
 omitted.  The IP addresses can be specified with a host name or in
 decimal dot notation (e.g. 150.234.56.78).  The default local
@@ -187,7 +187,7 @@ will not accept a different value from the peer in the IPCP
 negotiation, unless the \fIipcp-accept-local\fR and/or
 \fIipcp-accept-remote\fR options are given, respectively.
 .TP
-.B ipv6 \fI<local_interface_identifier>\fR,\fI<remote_interface_identifier>
+.B ipv6 \fI\*[Lt]local_interface_identifier\*[Gt]\fR,\fI\*[Lt]remote_interface_identifier\*[Gt]
 Set the local and/or remote 64-bit interface identifier. Either one may be
 omitted. The identifier must be specified in standard ascii notation of
 IPv6 addresses (e.g. ::dead:beef). If the
@@ -195,7 +195,7 @@ IPv6 addresses (e.g. ::dead:beef). If the
 option is given, the local identifier is the local IPv4 address (see above).
 On systems which supports a unique persistent id, such as EUI-48 derived
 from the Ethernet MAC address, \fIipv6cp-use-persistent\fR option can be
-used to replace the \fIipv6 <local>,<remote>\fR option. Otherwise the
+used to replace the \fIipv6 \*[Lt]local\*[Gt],\*[Lt]remote\*[Gt]\fR option. Otherwise the
 identifier is randomized.
 .TP
 .B active-filter \fIfilter-expression
@@ -324,9 +324,9 @@ specify \fIdomain Quotron.COM\fR.  Pppd would then use the name
 and as the default name to send to the peer when authenticating itself
 to the peer.  This option is privileged.
 .TP
-.B endpoint \fI<epdisc>
+.B endpoint \fI\*[Lt]epdisc\*[Gt]
 Sets the endpoint discriminator sent by the local machine to the peer
-during multilink negotiation to \fI<epdisc>\fR.  The default is to use
+during multilink negotiation to \fI\*[Lt]epdisc\*[Gt]\fR.  The default is to use
 the MAC address of the first ethernet interface on the system, if any,
 otherwise the IPv4 address corresponding to the hostname, if any,
 provided it is not in the multicast or locally-assigned IP address
@@ -432,7 +432,7 @@ numbers on the ipx-network must be unique. There is no valid
 default. If this option is not specified then the node numbers are
 obtained from the peer.
 .TP
-.B ipx-router-name \fI<string>
+.B ipx-router-name \fI\*[Lt]string\*[Gt]
 Set the name of the router. This is a string and is sent to the peer
 as information data.
 .TP
@@ -590,7 +590,7 @@ analogous to the MRU for the individual links.  This option is
 currently only available under Linux, and only has any effect if
 multilink is enabled (see the multilink option).
 .TP
-.B ms-dns \fI<addr>
+.B ms-dns \fI\*[Lt]addr\*[Gt]
 If pppd is acting as a server for Microsoft Windows clients, this
 option allows pppd to supply one or two DNS (Domain Name Server)
 addresses to the clients.  The first instance of this option specifies
@@ -598,7 +598,7 @@ the primary DNS address; the second instance (if given) specifies the
 secondary DNS address.  (This option was present in some older
 versions of pppd under the name \fBdns-addr\fR.)
 .TP
-.B ms-wins \fI<addr>
+.B ms-wins \fI\*[Lt]addr\*[Gt]
 If pppd is acting as a server for Microsoft Windows or "Samba"
 clients, this option allows pppd to supply one or two WINS (Windows
 Internet Name Services) server addresses to the clients.  The first
@@ -1227,7 +1227,7 @@ ABORT "Username/Password Incorrect"
 .br
 "" "at"
 .br
-OK "at&d0&c1"
+OK "at\*[Am]d0\*[Am]c1"
 .br
 OK "atdt2468135"
 .br

@@ -1,4 +1,4 @@
-.\"	$NetBSD: tr.1,v 1.9 2001/12/08 19:19:20 wiz Exp $
+.\"	$NetBSD: tr.1,v 1.10 2002/02/08 01:36:35 ross Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -142,13 +142,13 @@ A backslash followed by certain special characters maps to special
 values.
 .sp
 .Bl -column
-.It \ea	<alert character>
-.It \eb	<backspace>
-.It \ef	<form-feed>
-.It \en	<newline>
-.It \er	<carriage return>
-.It \et	<tab>
-.It \ev	<vertical tab>
+.It \ea	\*[Lt]alert character\*[Gt]
+.It \eb	\*[Lt]backspace\*[Gt]
+.It \ef	\*[Lt]form-feed\*[Gt]
+.It \en	\*[Lt]newline\*[Gt]
+.It \er	\*[Lt]carriage return\*[Gt]
+.It \et	\*[Lt]tab\*[Gt]
+.It \ev	\*[Lt]vertical tab\*[Gt]
 .El
 .sp
 A backslash followed by any other character maps to that character.
@@ -159,18 +159,18 @@ Represents all characters belonging to the defined character class.
 Class names are:
 .sp
 .Bl -column
-.It alnum	<alphanumeric characters>
-.It alpha	<alphabetic characters>
-.It blank	<blank characters>
-.It cntrl	<control characters>
-.It digit	<numeric characters>
-.It graph	<graphic characters>
-.It lower	<lower-case alphabetic characters>
-.It print	<printable characters>
-.It punct	<punctuation characters>
-.It space	<space characters>
-.It upper	<upper-case characters>
-.It xdigit	<hexadecimal characters>
+.It alnum	\*[Lt]alphanumeric characters\*[Gt]
+.It alpha	\*[Lt]alphabetic characters\*[Gt]
+.It blank	\*[Lt]blank characters\*[Gt]
+.It cntrl	\*[Lt]control characters\*[Gt]
+.It digit	\*[Lt]numeric characters\*[Gt]
+.It graph	\*[Lt]graphic characters\*[Gt]
+.It lower	\*[Lt]lower-case alphabetic characters\*[Gt]
+.It print	\*[Lt]printable characters\*[Gt]
+.It punct	\*[Lt]punctuation characters\*[Gt]
+.It space	\*[Lt]space characters\*[Gt]
+.It upper	\*[Lt]upper-case characters\*[Gt]
+.It xdigit	\*[Lt]hexadecimal characters\*[Gt]
 .El
 .Pp
 \." All classes may be used in
@@ -229,22 +229,22 @@ it's interpreted as a decimal value.
 .Pp
 The
 .Nm
-utility exits 0 on success, and >0 if an error occurs.
+utility exits 0 on success, and \*[Gt]0 if an error occurs.
 .Sh EXAMPLES
 The following examples are shown as given to the shell:
 .sp
 Create a list of the words in file1, one per line, where a word is taken to
 be a maximal string of letters.
 .sp
-.D1 Li "tr -cs \*q[:alpha:]\*q \*q\en\*q < file1"
+.D1 Li "tr -cs \*q[:alpha:]\*q \*q\en\*q \*[Lt] file1"
 .sp
 Translate the contents of file1 to upper-case.
 .sp
-.D1 Li "tr \*q[:lower:]\*q \*q[:upper:]\*q < file1"
+.D1 Li "tr \*q[:lower:]\*q \*q[:upper:]\*q \*[Lt] file1"
 .sp
 Strip out non-printable characters from file1.
 .sp
-.D1 Li "tr -cd \*q[:print:]\*q < file1"
+.D1 Li "tr -cd \*q[:print:]\*q \*[Lt] file1"
 .Sh COMPATIBILITY
 System V has historically implemented character ranges using the syntax
 ``[c-c]'' instead of the ``c-c'' used by historic

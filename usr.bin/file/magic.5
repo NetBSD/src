@@ -1,4 +1,4 @@
-.\" $NetBSD: magic.5,v 1.19 2001/12/01 16:43:13 wiz Exp $
+.\" $NetBSD: magic.5,v 1.20 2002/02/08 01:36:22 ross Exp $
 .\"
 .TH MAGIC 5 "Public Domain"
 .\" install as magic.4 on USG, magic.5 on V7 or Berkeley systems.
@@ -72,7 +72,7 @@ than UTC.
 .RE
 .PP
 The numeric types may optionally be followed by
-.B &
+.B \*[Am]
 and a numeric value,
 to specify that the value is to be AND'ed with the
 numeric value before any comparisons are done.  Prepending a
@@ -89,13 +89,13 @@ may be preceded by a character indicating the operation to be performed.
 It may be
 .BR = ,
 to specify that the value from the file must equal the specified value,
-.BR < ,
+.BR \*[Lt] ,
 to specify that the value from the file must be less than the specified
 value,
-.BR > ,
+.BR \*[Gt] ,
 to specify that the value from the file must be greater than the specified
 value,
-.BR & ,
+.BR \*[Am] ,
 to specify that the value from the file must have set all of the bits
 that are set in the specified value,
 .BR ^ ,
@@ -118,16 +118,16 @@ For string values, the byte string from the
 file must match the specified byte string.
 The operators
 .BR = ,
-.B <
+.B \*[Lt]
 and
-.B >
+.B \*[Gt]
 (but not
-.BR & )
+.BR \*[Am] )
 can be applied to strings.
 The length used for matching is that of the string argument
 in the magic file.  This means that a line can match any string, and
 then presumably print that string, by doing
-.B >\e0
+.B \*[Gt]\e0
 (because all strings are greater than the null string).
 .IP message
 The message to be printed if the comparison succeeds.  If the string
@@ -138,11 +138,11 @@ performed) is printed using the message as the format string.
 .PP
 Some file formats contain additional information which is to be printed
 along with the file type.  A line which begins with the character
-.B >
+.B \*[Gt]
 indicates additional tests and messages to be printed.  The number of
-.B >
+.B \*[Gt]
 on the line indicates the level of the test; a line with no
-.B >
+.B \*[Gt]
 at the beginning is considered to be at level 0.
 Each line at level
 .IB n \(pl1
@@ -158,7 +158,7 @@ line at level
 .I n
 terminates this.
 If the first character following the last
-.B >
+.B \*[Gt]
 is a
 .B (
 then the string after the parenthesis is interpreted as an indirect offset.
@@ -182,9 +182,9 @@ Sometimes you do not know the exact offset as this depends on the length of
 preceding fields. You can specify an offset relative to the end of the
 last uplevel field (of course this may only be done for sublevel tests, i.e.
 test beginning with
-.B >
+.B \*[Gt]
 ). Such a relative offset is specified using
-.B &
+.B \*[Am]
 as a prefix to the offset.
 .SH BUGS
 The formats

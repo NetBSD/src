@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)bad144.8	8.1 (Berkeley) 6/6/93
-.\"	$NetBSD: bad144.8,v 1.9 2002/01/19 03:06:26 wiz Exp $
+.\"	$NetBSD: bad144.8,v 1.10 2002/02/08 01:38:46 ross Exp $
 .\"
 .Dd June 6, 1993
 .Dt BAD144 8
@@ -123,7 +123,7 @@ The bad sector structure is as follows:
 struct dkbad {
 	int32_t   bt_csn;		/* cartridge serial number */
 	u_int16_t bt_mbz;		/* unused; should be 0 */
-	u_int16_t bt_flag;		/* -1 => alignment cartridge */
+	u_int16_t bt_flag;		/* -1 =\*[Gt] alignment cartridge */
 	struct bt_bad {
 		u_int16_t bt_cyl;	/* cylinder number of bad sector */
 		u_int16_t bt_trksec;	/* track and sector number */

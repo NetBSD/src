@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)dev_mkdb.8	8.1 (Berkeley) 6/6/93
-.\"	$NetBSD: dev_mkdb.8,v 1.8 2002/01/19 03:09:47 wiz Exp $
+.\"	$NetBSD: dev_mkdb.8,v 1.9 2002/02/08 01:38:48 ross Exp $
 .\"
 .Dd June 6, 1993
 .Os
@@ -61,7 +61,7 @@ directory is used.
 .Pp
 Keys are a structure containing a mode_t followed by a dev_t,
 with any padding zero'd out.
-The former is the type of the file (st_mode & S_IFMT),
+The former is the type of the file (st_mode \*[Am] S_IFMT),
 the latter is the st_rdev field.
 .Pp
 The options are as follows:

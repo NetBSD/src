@@ -1,4 +1,4 @@
-.\"	$NetBSD: sort.1,v 1.17 2001/12/08 19:16:07 wiz Exp $
+.\"	$NetBSD: sort.1,v 1.18 2002/02/08 01:36:33 ross Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -195,7 +195,7 @@ considered part of a field when determining key offsets.
 .Ar char
 is used as the record separator character.
 This should be used with discretion;
-.Fl R Ar <alphanumeric>
+.Fl R Ar \*[Lt]alphanumeric\*[Gt]
 usually produces undesirable results.
 The default record separator is newline.
 .It Xo
@@ -263,7 +263,7 @@ A
 .Ar field1
 position specified by
 .Ar m Ns Li \&. Ns Ar n
-.Pq Ar m , n No > 0
+.Pq Ar m , n No \*[Gt] 0
 is interpreted as the
 .Ar n Ns th
 character in the

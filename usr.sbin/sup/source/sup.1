@@ -1,4 +1,4 @@
-.\"	$NetBSD: sup.1,v 1.11 2002/01/19 11:45:02 wiz Exp $
+.\"	$NetBSD: sup.1,v 1.12 2002/02/08 01:38:56 ross Exp $
 .\"
 .\" Copyright (c) 1992 Carnegie Mellon University
 .\" All Rights Reserved.
@@ -367,7 +367,7 @@ subdirectory of the
 .I base directory.
 If it exists it may contain any of the following files:
 .TP
-.B when.<rel-suffix>
+.B when.\*[Lt]rel-suffix\*[Gt]
 This file is automatically updated by
 .I sup
 when a collection is successfully upgraded and contains the
@@ -393,7 +393,7 @@ preventing more than one
 .I sup
 from upgrading the same collection at the same time.
 .TP
-.B last.<rel-suffix>
+.B last.\*[Lt]rel-suffix\*[Gt]
 This file contains a list of files and directories, one per line, that
 have been upgraded by
 .I sup
@@ -626,16 +626,16 @@ file collection, in a format described below.
 This file describes any releases that the collection may have. Each
 line starts with the release name and then may specify any of the following
 files:
-.I prefix=<dirname>
+.I prefix=\*[Lt]dirname\*[Gt]
 to use a different parent directory for the files in this release.
-.I list=<listname>
+.I list=\*[Lt]listname\*[Gt]
 to specify the list of files in the release.
-.I scan=<scanfile>
+.I scan=\*[Lt]scanfile\*[Gt]
 must be used in multi-release collections that are scanned to keep
 the scan files for the different releases separate.
-.I host=<hostfile>
+.I host=\*[Lt]hostfile\*[Gt]
 to allow different host restrictions for this release.
-.I next=<release>
+.I next=\*[Lt]release\*[Gt]
 used to chain releases together. This has the effect of making one release
 be a combination of serveral other releases. If the same file appears in
 more than one chained release, the first one found will be used.
@@ -670,7 +670,7 @@ It should be noted that
 allows several different named collections to use the same base
 directory.  Separate encryption, remote host access, and file lists
 are used for each collection, since these files reside in subdirectories
-.I <basedir>/sup/<coll.name>.
+.I \*[Lt]basedir\*[Gt]/sup/\*[Lt]coll.name\*[Gt].
 
 The list file is a text file with one command on each line.
 Each command
@@ -791,19 +791,19 @@ supfile used for -s flag when -t flag is also specified
 .B /etc/supfiles/coll.host
 host name list for system collections
 .TP
-<\fIbase-directory\fR>\fB/sup/\fR<\fIcollection\fR>\fB/last\fR<\fI.release\fR>
+\*[Lt]\fIbase-directory\fR\*[Gt]\fB/sup/\fR\*[Lt]\fIcollection\fR\*[Gt]\fB/last\fR\*[Lt]\fI.release\fR\*[Gt]
 recorded list of files in collection as of last upgrade
 .TP
-<\fIbase-directory\fR>\fB/sup/\fR<\fIcollection\fR>\fB/lock
+\*[Lt]\fIbase-directory\fR\*[Gt]\fB/sup/\fR\*[Lt]\fIcollection\fR\*[Gt]\fB/lock
 file used to lock collection
 .TP
-<\fIbase-directory\fR>\fB/sup/\fR<\fIcollection\fR>\fB/refuse
+\*[Lt]\fIbase-directory\fR\*[Gt]\fB/sup/\fR\*[Lt]\fIcollection\fR\*[Gt]\fB/refuse
 list of files to refuse in collection
 .TP
-<\fIbase-directory\fR>\fB/sup/\fR<\fIcollection\fR>\fB/when\fR<\fI.release\fR>
+\*[Lt]\fIbase-directory\fR\*[Gt]\fB/sup/\fR\*[Lt]\fIcollection\fR\*[Gt]\fB/when\fR\*[Lt]\fI.release\fR\*[Gt]
 recorded time of last upgrade
 .TP
-\fB/usr/sup/\fR<\fIcollection\fR>
+\fB/usr/sup/\fR\*[Lt]\fIcollection\fR\*[Gt]
 default base directory for file collection
 .i0
 .DT
@@ -815,32 +815,32 @@ Files needed on each repository machine for the file server:
 base directory list for system
 collections
 .TP
-<\fIbase-directory\fR>\fB/sup/\fR<\fIcollection\fR>\fB/crypt
+\*[Lt]\fIbase-directory\fR\*[Gt]\fB/sup/\fR\*[Lt]\fIcollection\fR\*[Gt]\fB/crypt
 data encryption key for a
 collection. the owner of this file is the
 default account used when data encryption is specified
 .TP
-<\fIbase-directory\fR>\fB/sup/\fR<\fIcollection\fR>\fB/host
+\*[Lt]\fIbase-directory\fR\*[Gt]\fB/sup/\fR\*[Lt]\fIcollection\fR\*[Gt]\fB/host
 list of remote hosts allowed to
 upgrade a collection
 .TP
-<\fIbase-directory\fR>\fB/sup/\fR<\fIcollection\fR>\fB/list
+\*[Lt]\fIbase-directory\fR\*[Gt]\fB/sup/\fR\*[Lt]\fIcollection\fR\*[Gt]\fB/list
 list file for a collection
 .TP
-<\fIbase-directory\fR>\fB/sup/\fR<\fIcollection\fR>\fB/lock
+\*[Lt]\fIbase-directory\fR\*[Gt]\fB/sup/\fR\*[Lt]\fIcollection\fR\*[Gt]\fB/lock
 lock file for a collection
 .TP
-<\fIbase-directory\fR>\fB/sup/\fR<\fIcollection\fR>\fB/logfile
+\*[Lt]\fIbase-directory\fR\*[Gt]\fB/sup/\fR\*[Lt]\fIcollection\fR\*[Gt]\fB/logfile
 log file for a collection
 .TP
-<\fIbase-directory\fR>\fB/sup/\fR<\fIcollection\fR>\fB/prefix
+\*[Lt]\fIbase-directory\fR\*[Gt]\fB/sup/\fR\*[Lt]\fIcollection\fR\*[Gt]\fB/prefix
 file containing the name of the prefix directory
 for a collection
 .TP
-<\fIbase-directory\fR>\fB/sup/\fR<\fIcollection\fR>\fB/scan
+\*[Lt]\fIbase-directory\fR\*[Gt]\fB/sup/\fR\*[Lt]\fIcollection\fR\*[Gt]\fB/scan
 scan file for a collection
 .TP
-\fB/usr/\fR<\fIcollection\fR>
+\fB/usr/\fR\*[Lt]\fIcollection\fR\*[Gt]
 default base directory for a file collection
 .i0
 .DT
@@ -851,7 +851,7 @@ default base directory for a file collection
 \fIThe SUP Software Upgrade Protocol\fR, S. A. Shafer,
 CMU Computer Science Department, 1985.
 .SH "EXAMPLE"
-<example>
+\*[Lt]example\*[Gt]
 .SH "BUGS"
 The encryption mechanism should be strengthened, although it's
 not trivial.

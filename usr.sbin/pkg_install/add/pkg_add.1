@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_add.1,v 1.32 2002/02/07 03:15:12 ross Exp $
+.\" $NetBSD: pkg_add.1,v 1.33 2002/02/08 01:38:52 ross Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintainance
 .\" of non-core utilities.
@@ -373,11 +373,11 @@ after the package has been installed.
 After installation is complete, a copy of the packing list,
 .Ar deinstall
 script, description, and display files are copied into
-.Pa /var/db/pkg/<pkg-name>
+.Pa /var/db/pkg/\*[Lt]pkg-name\*[Gt]
 for subsequent possible use by
 .Xr pkg_delete 1 .
 Any package dependencies are recorded in the other packages'
-.Pa /var/db/pkg/<other-pkg>/+REQUIRED_BY
+.Pa /var/db/pkg/\*[Lt]other-pkg\*[Gt]/+REQUIRED_BY
 file
 (if the environment variable PKG_DBDIR is set, this overrides the
 .Pa /var/db/pkg/

@@ -1,4 +1,4 @@
-.\"	$NetBSD: less.1,v 1.11 2001/12/01 16:43:16 wiz Exp $
+.\"	$NetBSD: less.1,v 1.12 2002/02/08 01:36:26 ross Exp $
 .\"
 .TH LESS 1 "Version 358: 08 Jul 2000"
 .SH NAME
@@ -114,10 +114,10 @@ Normally this command would be used when already at the end of the file.
 It is a way to monitor the tail of a file which is growing
 while it is being viewed.
 (The behavior is similar to the "tail -f" command.)
-.IP "g or < or ESC-<"
+.IP "g or \*[Lt] or ESC-\*[Lt]"
 Go to line N in the file, default 1 (beginning of file).
 (Warning: this may be slow if N is large.)
-.IP "G or > or ESC->"
+.IP "G or \*[Gt] or ESC-\*[Gt]"
 Go to line N in the file, default the end of the file.
 (Warning: this may be slow if N is large,
 or if N is not specified and
@@ -153,14 +153,14 @@ Like }, but applies to square brackets rather than curly brackets.
 Followed by two characters,
 acts like {, but uses the two characters as open and close brackets,
 respectively.
-For example, "ESC ^F < >" could be used to
-go forward to the > which matches the < in the top displayed line.
+For example, "ESC ^F \*[Lt] \*[Gt]" could be used to
+go forward to the \*[Gt] which matches the \*[Lt] in the top displayed line.
 .IP "ESC-^B"
 Followed by two characters,
 acts like }, but uses the two characters as open and close brackets,
 respectively.
-For example, "ESC ^B < >" could be used to
-go backward to the < which matches the > in the bottom displayed line.
+For example, "ESC ^B \*[Lt] \*[Gt]" could be used to
+go backward to the \*[Lt] which matches the \*[Gt] in the bottom displayed line.
 .IP m
 Followed by any lowercase letter,
 marks the current position with that letter.
@@ -382,13 +382,13 @@ A pound sign (#) is replaced by the name of the previously examined file.
 On Unix systems, the shell is taken from the environment variable SHELL,
 or defaults to "sh".
 On MS-DOS and OS/2 systems, the shell is the normal command processor.
-.IP "| <m> shell-command"
-<m> represents any mark letter.
+.IP "| \*[Lt]m\*[Gt] shell-command"
+\*[Lt]m\*[Gt] represents any mark letter.
 Pipes a section of the input file to the given shell command.
 The section of the file to be piped is between the first line on
 the current screen and the position marked by the letter.
-<m> may also be ^ or $ to indicate beginning or end of file respectively.
-If <m> is . or newline, the current screen is piped.
+\*[Lt]m\*[Gt] may also be ^ or $ to indicate beginning or end of file respectively.
+If \*[Lt]m\*[Gt] is . or newline, the current screen is piped.
 .IP "s filename"
 Save the input to a file.
 This only works if the input is a pipe, not an ordinary file.
@@ -817,7 +817,7 @@ For example, +G tells
 .I less
 to start at the end of the file rather than the beginning,
 and +/xyz tells it to start at the first occurrence of "xyz" in the file.
-As a special case, +<number> acts like +<number>g;
+As a special case, +\*[Lt]number\*[Gt] acts like +\*[Lt]number\*[Gt]g;
 that is, it starts the display at the specified line number
 (however, see the caveat under the "g" command above).
 If the option starts with ++, the initial command applies to
@@ -999,7 +999,7 @@ lessopen.sh:
 .br
 	case "$1" in
 .br
-	*.Z)	uncompress -c $1  >/tmp/less.$$  2>/dev/null
+	*.Z)	uncompress -c $1  \*[Gt]/tmp/less.$$  2\*[Gt]/dev/null
 .br
 		if [ -s /tmp/less.$$ ]; then
 .br
@@ -1054,7 +1054,7 @@ lesspipe.sh:
 .br
 	case "$1" in
 .br
-	*.Z)	uncompress -c $1  2>/dev/null
+	*.Z)	uncompress -c $1  2\*[Gt]/dev/null
 .br
 		;;
 .br
@@ -1170,7 +1170,7 @@ The remainder of LESSBINFMT is a string which may include one
 printf-style escape sequence (a % followed by x, X, o, d, etc.).
 For example, if LESSBINFMT is "*u[%x]", binary characters
 are displayed in underlined hexadecimal surrounded by brackets.
-The default if no LESSBINFMT is specified is "*s<%X>".
+The default if no LESSBINFMT is specified is "*s\*[Lt]%X\*[Gt]".
 
 .SH "PROMPTS"
 The -P option allows you to tailor the prompt to your preference.
@@ -1525,7 +1525,7 @@ See the GNU General Public License for more details.
 
 .SH AUTHOR
 .PP
-Mark Nudelman <marknu@flash.net>
+Mark Nudelman \*[Lt]marknu@flash.net\*[Gt]
 .br
 Send bug reports or comments to the above address or to bug-less@gnu.org.
 

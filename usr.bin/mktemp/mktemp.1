@@ -1,4 +1,4 @@
-.\" $NetBSD: mktemp.1,v 1.6 2001/04/09 12:33:50 wiz Exp $
+.\" $NetBSD: mktemp.1,v 1.7 2002/02/08 01:36:29 ross Exp $
 .\" From: $FreeBSD: src/usr.bin/mktemp/mktemp.1,v 1.5 1999/08/28 01:04:13 peter Exp $
 .\" From: $OpenBSD: mktemp.1,v 1.8 1998/03/19 06:13:37 millert Exp $
 .\"
@@ -153,13 +153,13 @@ where the script should quit if it cannot get a safe
 temporary file.
 .Bd -literal -offset indent
 TMPFILE=`mktemp /tmp/$0.XXXXXX` || exit 1
-echo "program output" >> $TMPFILE
+echo "program output" \*[Gt]\*[Gt] $TMPFILE
 .Ed
 .Pp
 To allow the use of $TMPDIR:
 .Bd -literal -offset indent
 TMPFILE=`mktemp -t $0` || exit 1
-echo "program output" >> $TMPFILE
+echo "program output" \*[Gt]\*[Gt] $TMPFILE
 .Ed
 .Pp
 In this case, we want the script to catch the error itself.

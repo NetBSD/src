@@ -1,4 +1,4 @@
-.\" $NetBSD: sunlabel.8,v 1.2 2002/01/15 01:58:45 wiz Exp $
+.\" $NetBSD: sunlabel.8,v 1.3 2002/02/08 01:38:56 ross Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -75,7 +75,7 @@ Synthesize a new label rather than reading what is there.
 .It Fl q
 Quiet mode - don't print unnecessary babble (currently
 this suppresses the
-.Dq sunlabel>
+.Dq sunlabel\*[Gt]
 prompt).
 .It Fl s
 Ignore checksum errors when reading the label.
@@ -94,13 +94,13 @@ and the partition table printed by
 .Pp
 .Nm
 prints a prompt
-.Dq sunlabel>
+.Dq sunlabel\*[Gt]
 and expects commands.
 The following commands are understood:
 .Bl -tag -width 35n -offset indent -compact
 .It \&?
 Show a short help message.
-.It Ic [abcdefghijklmnop] Ar <cylno> Ar <size>
+.It Ic [abcdefghijklmnop] Ar \*[Lt]cylno\*[Gt] Ar \*[Lt]size\*[Gt]
 Change partition (see below).
 .It Ic L
 Print label, except for the partition table.
@@ -113,7 +113,7 @@ Quit program (unconditionally) [EOF also quits].
 .It Ic S
 Set label in the kernel (orthogonal to
 .Ic W ) .
-.It Ic V Ar <name> Ar <value>
+.It Ic V Ar \*[Lt]name\*[Gt] Ar \*[Lt]value\*[Gt]
 Change a non-partition label value.
 .It Ic W
 Write (possibly modified) label out.
@@ -124,7 +124,7 @@ The
 through
 .Ic p
 commands will accept, for the
-.Ar <size>
+.Ar \*[Lt]size\*[Gt]
 parameter, the
 .Ar nnn/nnn/nnn
 syntax used by
@@ -152,7 +152,7 @@ if
 .Fl n
 is used), this syntax is not very useful.  Some additional strings are
 accepted.  For the
-.Ar <cylno>
+.Ar \*[Lt]cylno\*[Gt]
 parameter,
 .Dq end-X
 (where
@@ -165,7 +165,7 @@ indicates that the partition should start at the same place as
 partition
 .Ar X .
 For the
-.Ar <size>
+.Ar \*[Lt]size\*[Gt]
 parameter,
 .Dq end-X
 indicates that the partition should end at the same place as partition

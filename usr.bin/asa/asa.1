@@ -1,4 +1,4 @@
-.\"	$NetBSD: asa.1,v 1.10 2001/09/17 18:47:58 wiz Exp $
+.\"	$NetBSD: asa.1,v 1.11 2002/02/08 01:36:18 ross Exp $
 .\"
 .\" Copyright (c) 1993 Winning Strategies, Inc.
 .\" All rights reserved.
@@ -47,24 +47,24 @@ and writes them to the standard output.
 .Pp
 The first character of each line is interpreted as a carriage-control
 character.  The following characters are interpreted as follows:
-.Bl -tag -width "<space>"
-.It <space>
+.Bl -tag -width "\*[Lt]space\*[Gt]"
+.It \*[Lt]space\*[Gt]
 Output the rest of the line without change.
 .It 0
-Output a <newline> character before printing the rest of the line.
+Output a \*[Lt]newline\*[Gt] character before printing the rest of the line.
 .It 1
-Output a <formfeed> character before printing the rest of the line.
+Output a \*[Lt]formfeed\*[Gt] character before printing the rest of the line.
 .It +
-The trailing <newline> of the previous line is replaced by a <carriage-return>
+The trailing \*[Lt]newline\*[Gt] of the previous line is replaced by a \*[Lt]carriage-return\*[Gt]
 before printing the rest of the line.
 .El
 .Pp
 Lines beginning with characters other than the above are treated as if they
-begin with <space>.
+begin with \*[Lt]space\*[Gt].
 .Sh EXIT STATUS
 The
 .Nm
-utility exit 0 on success, and >0 if an error occurs.
+utility exit 0 on success, and \*[Gt]0 if an error occurs.
 .Sh EXAMPLES
 To view a file containing the output of a
 .Tn FORTRAN

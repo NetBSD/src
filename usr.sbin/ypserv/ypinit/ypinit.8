@@ -1,4 +1,4 @@
-.\"	$NetBSD: ypinit.8,v 1.9 2002/02/02 02:28:17 wiz Exp $
+.\"	$NetBSD: ypinit.8,v 1.10 2002/02/08 01:38:58 ross Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -73,7 +73,7 @@ Create a
 .Tn YP
 client.
 Initialises
-.Pa /var/yp/binding/<domain>.ypservers
+.Pa /var/yp/binding/\*[Lt]domain\*[Gt].ypservers
 to contain a list of ypservers for
 .Xr ypbind 8
 to connect to.
@@ -100,8 +100,8 @@ server.
 .Pp
 To rebuild or refresh the maps for the
 .Tn YP
-domain <domain>, change to the
-.Pa /var/yp/<domain>
+domain \*[Lt]domain\*[Gt], change to the
+.Pa /var/yp/\*[Lt]domain\*[Gt]
 directory and run
 .Ic make .
 .Sh FILES
@@ -110,11 +110,11 @@ directory and run
 master
 .Tn YP
 directory; contains the template makefiles.
-.It Pa /var/yp/<domain>
+.It Pa /var/yp/\*[Lt]domain\*[Gt]
 directory to store
 .Tn YP
-maps for <domain>.
-.It Pa /var/yp/binding/<domain>.ypservers
+maps for \*[Lt]domain\*[Gt].
+.It Pa /var/yp/binding/\*[Lt]domain\*[Gt].ypservers
 list of
 .Tn YP
 servers to bind to.
@@ -131,5 +131,5 @@ servers to bind to.
 .Xr yppush 8 ,
 .Xr ypserv 8
 .Sh AUTHORS
-Originally written by Mats O Jansson <moj@stacken.kth.se>.
-Modified by Jason R. Thorpe <thorpej@NetBSD.ORG>
+Originally written by Mats O Jansson \*[Lt]moj@stacken.kth.se\*[Gt].
+Modified by Jason R. Thorpe \*[Lt]thorpej@NetBSD.ORG\*[Gt]

@@ -1,4 +1,4 @@
-.\"	$NetBSD: menuc.1,v 1.7 2001/12/01 20:39:13 wiz Exp $
+.\"	$NetBSD: menuc.1,v 1.8 2002/02/08 01:36:28 ross Exp $
 .\"
 .\" Copyright 1997 Piermont Information Systems Inc.
 .\" All rights reserved.
@@ -110,13 +110,13 @@ is to the taste of the programmer.
 All other C code that will appear in an
 .Em action .
 This will be specified as
-.Em <action>
+.Em \*[Lt]action\*[Gt]
 in later text.  Such an action will appear as:
-.Dl action <opt_endwin> <code>
+.Dl action \*[Lt]opt_endwin\*[Gt] \*[Lt]code\*[Gt]
 in the
 .Ar file .
 The
-.Em <opt_endwin> ,
+.Em \*[Lt]opt_endwin\*[Gt] ,
 if present is:
 .Dl ( endwin )
 and specifies that the curses
@@ -124,7 +124,7 @@ and specifies that the curses
 function should be called before executing the code and
 then reinstating the current curses window after the
 code has been run.  The
-.Em <code>
+.Em \*[Lt]code\*[Gt]
 is as described above.
 .Pp
 There are four kinds of menu definition elements.   The first
@@ -159,7 +159,7 @@ scrollable, the menu's title, whether shortcut letters are
 allowed, whether a standard exit option should be included
 in the menu and text associated with the standard exit option.
 The general format is:
-.Dl default <comma separated option list> ;
+.Dl default \*[Lt]comma separated option list\*[Gt] ;
 The options appear in three forms:
 .Dl variable = value
 .Dl [no] switch
@@ -207,11 +207,11 @@ may be overridden for that menu.
 The final element is the actual static menu menu definition.
 The format and order for a menu definition is:
 .Bd -ragged -offset indent
-menu <name> <options> ;
-  <display action>
-  <menu items>
-  <exit action>
-  <help string>
+menu \*[Lt]name\*[Gt] \*[Lt]options\*[Gt] ;
+  \*[Lt]display action\*[Gt]
+  \*[Lt]menu items\*[Gt]
+  \*[Lt]exit action\*[Gt]
+  \*[Lt]help string\*[Gt]
 .Ed
 .Pp
 Names are unquoted strings of alpha-numeric and underscore
@@ -233,14 +233,14 @@ recent default declaration.
 The display action is optional and provides C code to
 execute at each and every time the menu is displayed
 for processing.  If it is included, the format is:
-.Dl display <action> ;
+.Dl display \*[Lt]action\*[Gt] ;
 .Pp
 The bulk of the menu definition is the specification
 of the menu items.  The general format of a menu
 item is:
-.Dl option <string>, <element_list> ;
+.Dl option \*[Lt]string\*[Gt], \*[Lt]element_list\*[Gt] ;
 The
-.Em <string>
+.Em \*[Lt]string\*[Gt]
 is the text displayed for the menu item.  There
 may be an arbitrary number of these items.  (If
 there are shortcuts in the menu, a practical limit
@@ -249,7 +249,7 @@ a to w, y, z and A to Z.  x is the shortcut for the
 exit item.)
 .Pp
 The
-.Em <element_list>
+.Em \*[Lt]element_list\*[Gt]
 is a comma separated list of what to do when the
 item is selected.  They may appear in any order.
 .Pp
@@ -257,8 +257,8 @@ The first element processed when a menu item
 is selected is the associated action.  The next
 element to be processed is the sub or next
 menu option.  They are declared as:
-.Dl next menu <name>
-.Dl sub menu <name>
+.Dl next menu \*[Lt]name\*[Gt]
+.Dl sub menu \*[Lt]name\*[Gt]
 The difference between these two is that a sub
 menu will return to the current menu when exited.
 The next menu will just replace the current
@@ -283,11 +283,11 @@ elements may appear.
 The exit action is optional and provides C code to
 execute in the process of exiting a menu.
 If it is included, the format is:
-.Dl exit <action> ;
+.Dl exit \*[Lt]action\*[Gt] ;
 .Pp
 The final part of the menu definition is the optional
 help string.  The format is:
-.Dl help <text> ;
+.Dl help \*[Lt]text\*[Gt] ;
 This text is displayed in a full page
 help window if the question mark is typed.
 The actual help text starts with a left brace
@@ -414,8 +414,8 @@ distribution in a subdirectory called
 /* This is an example menu definition file for menuc. */
 
 {
-#include <stdio.h>
-#include <unistd.h>
+#include \*[Lt]stdio.h\*[Gt]
+#include \*[Lt]unistd.h\*[Gt]
 
 /* Main program! This is often in a different file. */
 int

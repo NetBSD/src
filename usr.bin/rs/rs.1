@@ -1,4 +1,4 @@
-.\"	$NetBSD: rs.1,v 1.5 2001/12/18 00:50:59 wiz Exp $
+.\"	$NetBSD: rs.1,v 1.6 2002/02/08 01:36:32 ross Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -195,7 +195,7 @@ To convert stream input into vector output and back again, use
 .Dl rs 1 0 | rs 0 1
 A 10 by 10 array of random numbers from 1 to 100 and
 its transpose can be generated with
-.Dl "jot \-r 100 | rs 10 10 | tee array | rs \-T > tarray"
+.Dl "jot \-r 100 | rs 10 10 | tee array | rs \-T \*[Gt] tarray"
 .Pp
 In the editor
 .Xr vi 1 ,

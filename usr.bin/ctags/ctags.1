@@ -1,4 +1,4 @@
-.\"	$NetBSD: ctags.1,v 1.10 2001/12/01 19:03:08 wiz Exp $
+.\"	$NetBSD: ctags.1,v 1.11 2002/02/08 01:36:22 ross Exp $
 .\"
 .\" Copyright (c) 1987, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -109,7 +109,7 @@ it may be desired to run the output through
 .Xr sort 1 .
 Sample use:
 .Bd -literal -offset indent
-ctags \-v files \&| sort \-f > index
+ctags \-v files \&| sort \-f \*[Gt] index
 vgrind \-x index
 .Ed
 .It Fl w

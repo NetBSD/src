@@ -1,4 +1,4 @@
-.\"	$NetBSD: cron.8,v 1.3 2002/01/19 03:08:50 wiz Exp $
+.\"	$NetBSD: cron.8,v 1.4 2002/02/08 01:38:47 ross Exp $
 .\"
 .\"/* Copyright 1988,1990,1993 by Paul Vixie
 .\" * All rights reserved
@@ -28,7 +28,7 @@ cron
 .SH DESCRIPTION
 .I Cron
 should be started from /etc/rc or /etc/rc.local.  It will return immediately,
-so you don't need to start it with '&'.
+so you don't need to start it with '\*[Am]'.
 .PP
 .I Cron
 searches /var/cron/tabs for crontab files which are named after accounts in
@@ -60,4 +60,4 @@ crontab.
 crontab(1), crontab(5)
 .SH AUTHOR
 .nf
-Paul Vixie <paul@vix.com>
+Paul Vixie \*[Lt]paul@vix.com\*[Gt]

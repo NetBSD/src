@@ -1,4 +1,4 @@
-.\"	$NetBSD: crontab.5,v 1.8 2002/01/19 03:09:21 wiz Exp $
+.\"	$NetBSD: crontab.5,v 1.9 2002/02/08 01:38:48 ross Exp $
 .\"
 .\"/* Copyright 1988,1990,1993,1994 by Paul Vixie
 .\" * All rights reserved
@@ -122,7 +122,7 @@ Lists are allowed.  A list is a set of numbers (or ranges)
 separated by commas.  Examples: ``1,2,5,9'', ``0-4,8-12''.
 .PP
 Step values can be used in conjunction with ranges.  Following
-a range with ``/<number>'' specifies skips of the number's value
+a range with ``/\*[Lt]number\*[Gt]'' specifies skips of the number's value
 through the range.  For example, ``0-23/2'' can be used in the hours
 field to specify command execution every other hour (the alternative
 in the V7 standard is ``0,2,4,6,8,10,12,14,16,18,20,22'').  Steps are
@@ -187,7 +187,7 @@ SHELL=/bin/sh
 MAILTO=paul
 #
 # run five minutes after midnight, every day
-5 0 * * *       $HOME/bin/daily.job >> $HOME/tmp/out 2>&1
+5 0 * * *       $HOME/bin/daily.job \*[Gt]\*[Gt] $HOME/tmp/out 2\*[Gt]\*[Am]1
 # run at 2:15pm on the first of every month -- output mailed to paul
 15 14 1 * *     $HOME/bin/monthly
 # run at 10 pm on weekdays, annoy Joe
@@ -221,4 +221,4 @@ All of the `@' commands that can appear in place of the first five fields
 are extensions.
 .SH AUTHOR
 .nf
-Paul Vixie <paul@vix.com>
+Paul Vixie \*[Lt]paul@vix.com\*[Gt]

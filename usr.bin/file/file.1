@@ -1,4 +1,4 @@
-.\" $NetBSD: file.1,v 1.24 2001/12/01 16:43:13 wiz Exp $
+.\" $NetBSD: file.1,v 1.25 2002/02/08 01:36:22 ross Exp $
 .\"
 .TH FILE 1 "Copyright but distributable"
 .\" Id: file.man,v 1.39 2001/04/27 22:48:33 christos Exp
@@ -79,7 +79,7 @@ Any known file types appropriate to the system you are running on
 implement them)
 are intuited if they are defined in
 the system header file
-.IR <sys/stat.h>  .
+.IR \*[Lt]sys/stat.h\*[Gt]  .
 .PP
 The magic number tests are used to check for files with data in
 particular fixed formats.
@@ -263,11 +263,11 @@ is that this version treats any white space
 as a delimiter, so that spaces in pattern strings must be escaped.
 For example,
 .br
->10	string	language impress\ 	(imPRESS data)
+\*[Gt]10	string	language impress\ 	(imPRESS data)
 .br
 in an existing magic file would have to be changed to
 .br
->10	string	language\e impress	(imPRESS data)
+\*[Gt]10	string	language\e impress	(imPRESS data)
 .br
 In addition, in this version, if a pattern string contains a backslash,
 it must be escaped.  For example
@@ -283,10 +283,10 @@ SunOS releases 3.2 and later from Sun Microsystems include a
 .BR file (1)
 command derived from the System V one, but with some extensions.
 My version differs from Sun's only in minor ways.
-It includes the extension of the `&' operator, used as,
+It includes the extension of the `\*[Am]' operator, used as,
 for example,
 .br
->16	long&0x7fffffff	>0		not stripped
+\*[Gt]16	long\*[Am]0x7fffffff	\*[Gt]0		not stripped
 .SH MAGIC DIRECTORY
 The magic file entries have been collected from various sources,
 mainly USENET, and contributed by various authors.
@@ -341,14 +341,14 @@ the external list of magic number types.
 This slowed the program down slightly but made it a lot more flexible.
 .PP
 This program, based on the System V version,
-was written by Ian Darwin <ian@darwinsys.com>
+was written by Ian Darwin \*[Lt]ian@darwinsys.com\*[Gt]
 without looking at anybody else's source code.
 .PP
 John Gilmore revised the code extensively, making it better than
 the first version.
 Geoff Collyer found several inadequacies
 and provided some magic file entries.
-Contributions by the `&' operator by Rob McMahon, cudcv@warwick.ac.uk, 1989.
+Contributions by the `\*[Am]' operator by Rob McMahon, cudcv@warwick.ac.uk, 1989.
 .PP
 Guy Harris, guy@netapp.com, made many changes from 1993 to the present.
 .PP
