@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.4,v 1.1.2.16 2002/09/04 01:51:35 itojun Exp $
+#	$NetBSD: CHANGES-1.5.4,v 1.1.2.17 2002/09/04 02:30:47 itojun Exp $
 
 A complete list of changes from NetBSD 1.5.3 to NetBSD 1.5.4:
 
@@ -1293,6 +1293,7 @@ lib/libc/net/inet_ntop.c			1.11-1.12
   be more picky about string buffer manipulation.  hints from freebsd.
   correct snprintf return value handling.
 
+lib/libc/net/getaddrinfo.c			1.56
 lib/libc/net/res_mkquery.c			1.22
   correct bad practice in the code - it uses two changing variables
   to manage buffer (buf and buflen).  we eliminate buflen and use
@@ -1302,3 +1303,50 @@ usr.sbin/pppd/pppd/tty.c			1.3
   don't try to chmod if fchmod fails when restoring the original tty modes.
   It could cause a symlink race. Just report the fchmod failure. Reported
   by itojun, found in FreeBSD.
+
+lib/libc/net/getaddrinfo.c			1.50
+  remove redundant declarations of h_errno and __hostalias
+
+lib/libc/net/getaddrinfo.c			1.52
+  make sure "qname" argument to getanswer() is properly given.  from lukem
+
+lib/libc/net/getaddrinfo.c			1.54
+lib/libc/net/gethnamaddr.c			1.43,1.49-1.50
+lib/libc/net/getnetnamadr.c			1.23
+  use snprintf, string manipulation cleanups
+
+lib/libc/net/getaddrinfo.c			1.57-1.59
+  correct port range check and signed/unsigned mixup
+
+lib/libc/net/getaddrinfo.c			1.60-1.61
+  lint clean
+
+lib/libc/net/getaddrinfo.c			1.62
+lib/libc/net/gethnamaddr.c			1.51
+  drop AAAA reply with IPv4 mapped address.  sync w/kame
+  draft-itojun-v6ops-v4mapped-harmful-00.txt
+
+lib/libc/net/getaddrinfo.c			1.63
+lib/libc/net/gethnamaddr.c			1.52
+lib/libc/net/getnetnamadr.c			1.24
+  allocate 64K recieve buffer for DNS responses.
+
+lib/libc/net/gethnamaddr.c			1.38
+  Varargsify dprintf to allow for format string checking
+
+lib/libc/net/gethnamaddr.c			1.39
+lib/libc/net/getnetnamadr.c			1.20
+  remove redundant declarations.
+
+lib/libc/net/gethnamaddr.c			1.41
+  do not reverse-lookup scoped IPv6 address.  it does not make sense as
+  there's no way to give scope identifier.  sync w/kame
+
+lib/libc/net/gethnamaddr.c			1.42
+  style
+
+lib/libc/net/gethnamaddr.c			1.45
+  do not pass uninitialized variable to nsdispatch().
+
+lib/libc/net/gethnamaddr.c			1.48
+  query ip6.arpa then ip6.int for IPv6 reverse lookup.  follows RFC3152.
