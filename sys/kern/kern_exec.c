@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.96 1998/09/11 12:50:10 mycroft Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.97 1999/01/22 20:51:04 kleink Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -422,7 +422,7 @@ sys_execve(p, v, retval)
 		if (copyout((char *)pack.ep_emul->e_sigcode,
 		    p->p_sigacts->ps_sigcode = (char *)PS_STRINGS - szsigcode,
 		    szsigcode))
-		goto exec_abort;
+			goto exec_abort;
 	}
 
 	fdcloseexec(p);		/* handle close on exec */
