@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm.h,v 1.12 1998/09/24 23:00:43 thorpej Exp $	*/
+/*	$NetBSD: uvm.h,v 1.13 1998/10/11 22:59:53 chuck Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -130,13 +130,11 @@ UVMHIST_DECL(pdhist);
  */
 
 #define UVM_ET_OBJ		0x01	/* it is a uvm_object */
-#define UVM_ET_MAP		0x02	/* it is a vm_map */
-#define UVM_ET_SUBMAP		0x04	/* it is a submap (MAP must be 1 too) */
-#define UVM_ET_COPYONWRITE 	0x08	/* copy_on_write */
-#define UVM_ET_NEEDSCOPY	0x10	/* needs_copy */
+#define UVM_ET_SUBMAP		0x02	/* it is a vm_map submap */
+#define UVM_ET_COPYONWRITE 	0x04	/* copy_on_write */
+#define UVM_ET_NEEDSCOPY	0x08	/* needs_copy */
 
 #define UVM_ET_ISOBJ(E)		(((E)->etype & UVM_ET_OBJ) != 0)
-#define UVM_ET_ISMAP(E)		(((E)->etype & UVM_ET_MAP) != 0)
 #define UVM_ET_ISSUBMAP(E)	(((E)->etype & UVM_ET_SUBMAP) != 0)
 #define UVM_ET_ISCOPYONWRITE(E)	(((E)->etype & UVM_ET_COPYONWRITE) != 0)
 #define UVM_ET_ISNEEDSCOPY(E)	(((E)->etype & UVM_ET_NEEDSCOPY) != 0)
