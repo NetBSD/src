@@ -1,4 +1,4 @@
-/* $NetBSD: locore.S,v 1.1 2000/05/09 21:55:56 bjh21 Exp $ */
+/* $NetBSD: locore.S,v 1.2 2000/06/08 22:33:53 bjh21 Exp $ */
 /*
  * Copyright (c) 1998, 2000 Ben Harris
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -38,11 +38,9 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: locore.S,v 1.1 2000/05/09 21:55:56 bjh21 Exp $")
+RCSID("$NetBSD: locore.S,v 1.2 2000/06/08 22:33:53 bjh21 Exp $")
 
 #include <sys/syscall.h>
-#include <machine/frame.h>
-#include <machine/cpu.h>
 #include <machine/armreg.h>
 #include "assym.h"
 
