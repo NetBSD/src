@@ -1,4 +1,4 @@
-/*	$NetBSD: iwm_fd.c,v 1.21 2003/01/06 20:30:32 wiz Exp $	*/
+/*	$NetBSD: iwm_fd.c,v 1.22 2003/02/03 22:38:23 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 Hauke Fath.  All rights reserved.
@@ -1045,8 +1045,8 @@ fdstrategy(bp)
 		    || (bp->b_bcount % sectSize) != 0) {
 			if (TRACE_STRAT)
 				printf(" Illegal transfer size: "
-				    "block %d, %ld bytes\n",
-				    bp->b_blkno, bp->b_bcount);
+				    "block %lld, %ld bytes\n",
+				    (long long) bp->b_blkno, bp->b_bcount);
 			err = EINVAL;
 		}
 	}
@@ -1064,9 +1064,9 @@ fdstrategy(bp)
 		if (bp->b_blkno + transferSize > fd->currentType->secPerDisk) {
 			if (TRACE_STRAT) {
 				printf("iwm: Transfer beyond end of disk!\n" \
-				    " (Starting block %d, # of blocks %d," \
+				    " (Starting block %lld, # of blocks %d," \
 				    " last disk block %d).\n",
-				    bp->b_blkno, transferSize,
+				    (long long) bp->b_blkno, transferSize,
 				    fd->currentType->secPerDisk);
 			}
 			/* Return EOF if we are exactly at the end of the
@@ -1096,8 +1096,8 @@ fdstrategy(bp)
 		bp->b_cylinder = physDiskLoc.track;
 
 		if (TRACE_STRAT) {
-			printf(" This job starts at b_blkno %d; ",
-			    bp->b_blkno);
+			printf(" This job starts at b_blkno %lld; ",
+			    (long long) bp->b_blkno);
 			printf("it gets sorted for cylinder # %ld.\n",
 			    bp->b_cylinder);
 		}
@@ -1256,7 +1256,7 @@ fdstart_Seek(fd)
 
 	/* Calculate the side/track/sector our block is at. */
 	if (TRACE_STRAT)
-		printf(" Remap block %d ", fd->startBlk);
+		printf(" Remap block %lld ", (long long) fd->startBlk);
 	remap_geometry(fd->startBlk,
 	    fd->currentType->heads, &fd->pos);
 	if (TRACE_STRAT)
