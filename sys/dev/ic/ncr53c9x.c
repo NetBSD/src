@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.19 1997/08/31 23:09:58 pk Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.20 1997/10/04 03:59:00 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1996 Charles M. Hannum.  All rights reserved.
@@ -134,6 +134,7 @@ const char *ncr53c9x_variant_names[] = {
 	"NCR53C96",
 	"ESP406",
 	"FAS408",
+	"FAS216",
 };
 
 /*
@@ -241,6 +242,7 @@ ncr53c9x_reset(sc)
 	case NCR_VARIANT_ESP406:
 	case NCR_VARIANT_FAS408:
 		NCR_SCSIREGS(sc);
+	case NCR_VARIANT_FAS216:
 	case NCR_VARIANT_NCR53C94:
 	case NCR_VARIANT_NCR53C96:
 	case NCR_VARIANT_ESP200:
