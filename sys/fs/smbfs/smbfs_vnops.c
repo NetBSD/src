@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vnops.c,v 1.23 2003/04/08 19:01:00 jdolecek Exp $	*/
+/*	$NetBSD: smbfs_vnops.c,v 1.24 2003/04/08 21:06:33 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.23 2003/04/08 19:01:00 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.24 2003/04/08 21:06:33 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1108,7 +1108,13 @@ smbfs_advlock(v)
 		error = lf_advlock(ap, &np->n_lockf, size);
 		if (error)
 			break;
-		error = smbfs_smb_lock(np, SMB_LOCK_EXCL,  ap->a_id, start, end, &scred);
+		/*
+		 * The ID we use for smb_lock is passed as PID to SMB
+		 * server. It MUST agree with PID as setup in basic
+		 * SMB header in later write requests, otherwise SMB server
+		 * returns EDEADLK. See also smb_rq_new() on SMB header setup.
+		 */
+		error = smbfs_smb_lock(np, lkop,(caddr_t)1, start, end, &scred);
 		if (error) {
 			ap->a_op = F_UNLCK;
 			lf_advlock(ap, &np->n_lockf, size);
