@@ -1,4 +1,4 @@
-/*	$NetBSD: dol.c,v 1.13 1998/08/19 01:31:46 thorpej Exp $	*/
+/*	$NetBSD: dol.c,v 1.13.2.1 2000/11/04 18:32:47 he Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)dol.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: dol.c,v 1.13 1998/08/19 01:31:46 thorpej Exp $");
+__RCSID("$NetBSD: dol.c,v 1.13.2.1 2000/11/04 18:32:47 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -853,10 +853,21 @@ heredoc(term)
     Char  **vp;
     bool    quoted;
     char   *tmp;
+    struct timeval tv;
 
+again:
     tmp = short2str(shtemp);
-    if (open(tmp, O_RDWR | O_CREAT | O_TRUNC, 0600) < 0)
+    if (open(tmp, O_RDWR | O_CREAT | O_TRUNC | O_EXCL, 0600) < 0) {
+	if (errno == EEXIST) {
+	    if (unlink(tmp) == -1) {
+		(void) gettimeofday(&tv, NULL);
+		shtemp = Strspl(STRtmpsh, putn((((int)tv.tv_sec) ^ 
+		    ((int)tv.tv_usec) ^ ((int)getpid())) & 0x00ffffff));
+	    }
+	    goto again;
+	}
 	stderror(ERR_SYSTEM, tmp, strerror(errno));
+    }
     (void) unlink(tmp);		/* 0 0 inode! */
     Dv[0] = term;
     Dv[1] = NULL;
