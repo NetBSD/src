@@ -1,4 +1,4 @@
-/*      $NetBSD: pmap.h,v 1.21 1997/11/05 04:23:41 thorpej Exp $     */
+/*      $NetBSD: pmap.h,v 1.22 1998/01/03 00:28:43 thorpej Exp $     */
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -48,16 +48,20 @@
 
 #include <machine/mtpr.h>
 
+struct pte;
+
 /*
  * Pmap structure
  *  pm_stack holds lowest allocated memory for the process stack.
- *  pm_pcb is a pointer to the corresponding pcb.
  */
 
 typedef struct pmap {
 	vm_offset_t		 pm_stack; /* Base of alloced p1 pte space */
-	struct pcb		*pm_pcb; /* Pointer to PCB for this pmap */
 	int                      ref_count;   /* reference count        */
+	struct pte		*pm_p0br; /* page 0 base register */
+	long			 pm_p0lr; /* page 0 length register */
+	struct pte		*pm_p1br; /* page 1 base register */
+	long			 pm_p1lr; /* page 1 length register */
 } *pmap_t;
 
 /*
@@ -97,7 +101,6 @@ extern	struct pmap kernel_pmap_store;
 #define	pmap_pageable(a,b,c,d)		/* Dont do anything */
 #define	pmap_collect(pmap)		/* No need so far */
 #define	pmap_reference(pmap)	if(pmap) (pmap)->ref_count++
-#define	pmap_pinit(pmap)	(pmap)->ref_count=1;
 #define	pmap_phys_address(phys) ((u_int)(phys)<<PAGE_SHIFT)
 #define	pmap_is_referenced(phys)	(FALSE)
 #define	pmap_clear_reference(pa)	pmap_page_protect(pa, VM_PROT_NONE)
@@ -116,4 +119,11 @@ extern	struct pmap kernel_pmap_store;
 
 /* Prototypes */
 void	pmap_bootstrap __P((void));
+
+void	pmap_pinit __P((pmap_t));
+
+struct proc;
+void	pmap_activate __P((struct proc *));
+void	pmap_deactivate __P((struct proc *));
+
 #endif PMAP_H
