@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_cout.c,v 1.20 2002/02/05 22:05:42 christos Exp $	*/
+/*	$NetBSD: rpc_cout.c,v 1.21 2002/02/05 22:41:47 christos Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)rpc_cout.c 1.13 89/02/22 (C) 1987 SMI";
 #else
-__RCSID("$NetBSD: rpc_cout.c,v 1.20 2002/02/05 22:05:42 christos Exp $");
+__RCSID("$NetBSD: rpc_cout.c,v 1.21 2002/02/05 22:41:47 christos Exp $");
 #endif
 #endif
 
@@ -220,9 +220,9 @@ print_ifsizeof(prefix, type)
 	char   *type;
 {
 	if (streq(type, "bool")) {
-		f_print(fout, ", sizeof(bool_t), (xdrproc_t)xdr_bool");
+		f_print(fout, ", (u_int)sizeof(bool_t), (xdrproc_t)xdr_bool");
 	} else {
-		f_print(fout, ", sizeof(");
+		f_print(fout, ", (u_int)sizeof(");
 		if (undefined(type) && prefix) {
 			f_print(fout, "%s ", prefix);
 		}
