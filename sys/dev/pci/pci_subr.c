@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.45 2001/09/13 21:42:57 thorpej Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.46 2001/11/13 03:12:44 enami Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -50,6 +50,7 @@
 #include <machine/intr.h>
 #else
 #include <pci.h>
+#include <stdio.h>
 #endif
 
 #include <dev/pci/pcireg.h>
