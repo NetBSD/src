@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.28.2.2 2002/10/19 11:59:36 bjh21 Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.28.2.3 2002/10/19 12:24:12 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -172,12 +172,13 @@ ASENTRY_NP(idle)
 ENTRY(cpu_switch)
 /*
  * Local register usage. Some of these registers are out of date.
- * r1 = oldproc
+ * r0-r2 = scratch
  * r3 = whichqs
  * r4 = queue
  * r5 = &qs[queue]
  * r6 = newproc
- * r7 = scratch
+ * r7 = &whichqs, new first proc in q, old pcb, new pcb
+ * r8 = oldproc
  */
 	mov	ip, sp
 	stmfd	sp!, {r4-r10, fp, ip, lr, pc}
@@ -188,15 +189,12 @@ ENTRY(cpu_switch)
 	 * a valid process (curproc = 0).  Zero the current PCB pointer
 	 * while we're at it.
 	 */
-	ldr	r7, .Lcurproc
-	ldr	r6, .Lcurpcb
+	ldr	r1, .Lcurproc
+	ldr	r2, .Lcurpcb
 	mov	r0, #0x00000000
-	ldr	r1, [r7]		/* r1 = curproc */
-	str	r0, [r7]		/* curproc = NULL */
-	str	r0, [r6]		/* curpcb = NULL */
-
-	/* stash the old proc while we call functions */
-	mov	r5, r1
+	ldr	r8, [r1]		/* r8 = curproc */
+	str	r0, [r1]		/* curproc = NULL */
+	str	r0, [r2]		/* curpcb = NULL */
 
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	/* release the sched_lock before handling interrupts */
@@ -223,8 +221,8 @@ ENTRY(cpu_switch)
 
 	ldr	r7, .Lwhichqs
 
-	/* rem: r5 = old proc */
 	/* rem: r7 = &whichqs */
+	/* rem: r8 = old proc */
 
 .Lswitch_search:
 	IRQdisable
@@ -239,10 +237,7 @@ ENTRY(cpu_switch)
 	teq	r3, #0x00000000
 	beq	_ASM_LABEL(idle)
 
-	/* put old proc back in r1 */
-	mov	r1, r5
-
-	/* rem: r1 = old proc */
+	/* rem: r8 = old proc */
 	/* rem: r3 = whichqs */
 	/* rem: interrupts are disabled */
 
@@ -270,9 +265,9 @@ ENTRY(cpu_switch)
 	ldrb	r4, [ r5, r4, lsr #26 ]
 
 	/* rem: r0 = bit mask of chosen queue (1 << r4) */
-	/* rem: r1 = old proc */
 	/* rem: r3 = whichqs */
 	/* rem: r4 = queue number */
+	/* rem: r8 = old proc */
 	/* rem: interrupts are disabled */
 
 	/* Get the address of the queue (&qs[queue]) */
@@ -289,6 +284,8 @@ ENTRY(cpu_switch)
 	ldr	r7, [r6, #(P_FORW)]
 	str	r7, [r5, #(P_FORW)]	
 
+	/* rem: r7 = new queue head */
+
 	/*
 	 * Test to see if the queue is now empty. If the head of the queue
 	 * points to the queue itself then there are no more processes in
@@ -299,8 +296,6 @@ ENTRY(cpu_switch)
 	teq	r5, r7
 	biceq	r3, r3, r0
 
-	/* rem: r0 = bit mask of chosen queue (1 << r4) - NOT NEEDED AN MORE */
-
 	/* Fix the back pointer for the process now at the head of the queue. */
 	ldr	r0, [r6, #(P_BACK)]
 	str	r0, [r7, #(P_BACK)]
@@ -309,16 +304,16 @@ ENTRY(cpu_switch)
 	ldr	r7, .Lwhichqs
 	str	r3, [r7]
 
-	/* rem: r1 = old proc */
+	/* rem: r8 = old proc */
 	/* rem: r3 = whichqs - NOT NEEDED ANY MORE */
 	/* rem: r4 = queue number - NOT NEEDED ANY MORE */
 	/* rem: r6 = new process */
 	/* rem: interrupts are disabled */
 
 	/* Clear the want_resched flag */
-	ldr	r7, .Lwant_resched
+	ldr	r1, .Lwant_resched
 	mov	r0, #0x00000000
-	str	r0, [r7]
+	str	r0, [r1]
 
 	/*
 	 * Clear the back pointer of the process we have removed from
@@ -330,9 +325,7 @@ ENTRY(cpu_switch)
 	/*
 	 * unlock the sched_lock, but leave interrupts off, for now.
 	 */
-	mov	r7, r1
 	bl	_C_LABEL(sched_unlock_idle)
-	mov	r1, r7
 #endif
 
 #ifdef MULTIPROCESSOR
@@ -359,7 +352,7 @@ ENTRY(cpu_switch)
 	/* At this point we can allow IRQ's again. */
 	IRQenable
 
-	/* rem: r1 = old proc */
+	/* rem: r8 = old proc */
 	/* rem: r6 = new process */
 	/* rem: interrupts are enabled */
 
@@ -367,14 +360,11 @@ ENTRY(cpu_switch)
 	 * If the new process is the same as the process that called
 	 * cpu_switch() then we do not need to save and restore any
 	 * contexts. This means we can make a quick exit.
-	 * The test is simple if curproc on entry (now in r1) is the
+	 * The test is simple if curproc on entry (now in r8) is the
 	 * same as the proc removed from the queue we can jump to the exit.
 	 */
-	teq	r1, r6
+	teq	r8, r6
 	beq	.Lswitch_return
-
-	/* Remember the old process in r0 */
-	mov	r0, r1
 
 	/*
 	 * If the curproc on entry to cpu_switch was zero then the
@@ -382,21 +372,23 @@ ENTRY(cpu_switch)
 	 * not need to save the current context. Instead we can jump
 	 * straight to restoring the context for the new process.
 	 */
-	teq	r0, #0x00000000
+	teq	r8, #0x00000000
 	beq	.Lswitch_exited
 
-	/* rem: r0 = old proc */
+	/* rem: r8 = old proc */
 	/* rem: r6 = new process */
 	/* rem: interrupts are enabled */
 
 	/* Stage two : Save old context */
 
 	/* Get the user structure for the old process. */
-	ldr	r1, [r0, #(P_ADDR)]
+	ldr	r7, [r8, #(P_ADDR)]
 
 	/* Save the remaining registers in the old process's pcb */
-	add	r7, r1, #(PCB_R11)
-	stmia	r7, {r11-r13}
+	add	r0, r7, #(PCB_R11)
+	stmia	r0, {r11-r13}
+
+	/* rem: r7 = old pcb */
 
 	/*
 	 * This can be optimised... We know we want to go from SVC32
@@ -407,23 +399,23 @@ ENTRY(cpu_switch)
 	orr	r2, r2, #(PSR_UND32_MODE | I32_bit)
         msr	cpsr_c, r2
 
-	str	sp, [r1, #(PCB_UND_SP)]
+	str	sp, [r7, #(PCB_UND_SP)]
 
         msr	cpsr_c, r3		/* Restore the old mode */
 
-	/* rem: r0 = old proc */
-	/* rem: r1 = old pcb */
 	/* rem: r6 = new process */
+	/* rem: r7 = old pcb */
+	/* rem: r8 = old proc */
 	/* rem: interrupts are enabled */
 
 	/* What else needs to be saved  Only FPA stuff when that is supported */
 
-	/* r1 now free! */
+	/* r7 now free! */
 
 	/* Third phase : restore saved context */
 
-	/* rem: r0 = old proc */
 	/* rem: r6 = new process */
+	/* rem: r8 = old proc */
 	/* rem: interrupts are enabled */
 
 	/*
@@ -452,10 +444,10 @@ ENTRY(cpu_switch)
 	str	r2, [r3]
 
 	/* Get the user structure for the new process in r1 */
-	ldr	r1, [r6, #(P_ADDR)]
+	ldr	r7, [r6, #(P_ADDR)]
 
 	/* Get the pagedir physical address for the process. */
-	ldr	r0, [r1, #(PCB_PAGEDIR)]
+	ldr	r0, [r7, #(PCB_PAGEDIR)]
 
 	/* Switch the memory to the new process */
 	ldr	r3, .Lcpufuncs
@@ -471,15 +463,13 @@ ENTRY(cpu_switch)
 	orr	r2, r2, #(PSR_UND32_MODE)
         msr	cpsr_c, r2
 
-	ldr	sp, [r1, #(PCB_UND_SP)]
+	ldr	sp, [r7, #(PCB_UND_SP)]
 
         msr	cpsr_c, r3		/* Restore the old mode */
 
 	/* Restore the saved registers from the PCB */
-	add	r7, r1, #PCB_R11
-	ldmia	r7, {r11-r13}
-
-	mov	r7, r1			/* preserve PCB pointer */
+	add	r0, r7, #PCB_R11
+	ldmia	r0, {r11-r13}
 
 #ifdef ARMFPE
 	add	r0, r1, #(USER_SIZE) & 0x00ff
@@ -610,7 +600,7 @@ ENTRY(switch_exit)
 	str	r0, [r1]
 
 	ldr	r7, .Lwhichqs		/* r7 = &whichqs */
-	mov	r5, #0x00000000		/* r5 = old proc = NULL */
+	mov	r8, #0x00000000		/* r8 = old proc = NULL */
 	b	.Lswitch_search
 
 /* LINTSTUB: Func: void savectx(struct pcb *pcb) */
