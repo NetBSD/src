@@ -1,4 +1,4 @@
-.\"     $NetBSD: lock.9,v 1.21 2004/05/25 14:54:56 hannken Exp $
+.\"     $NetBSD: lock.9,v 1.22 2004/05/27 00:51:24 wiz Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -291,9 +291,9 @@ Determine the status of lock
 Returns one of the following:
 .Bl -tag -width compact
 .It Dv LK_EXCLUSIVE
-The current lwp or cpu holds an exclusive-access lock.
+The current lwp or CPU holds an exclusive-access lock.
 .It Dv LK_EXCLOTHER
-The other lwp or cpu holds an exclusive-access lock.
+The other lwp or CPU holds an exclusive-access lock.
 .It Dv LK_SHARED
 Someone holds shared-access lock.
 .It 0
