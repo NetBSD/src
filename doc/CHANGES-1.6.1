@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.1,v 1.1.2.74 2002/12/15 16:29:11 he Exp $
+#	$NetBSD: CHANGES-1.6.1,v 1.1.2.75 2002/12/16 04:30:31 jmc Exp $
 
 A complete list of changes from NetBSD 1.6 to NetBSD 1.6.1:
 
@@ -2662,3 +2662,10 @@ sys/dev/pci/eap.c				1.59
 
 	Don't use tsleep() in attach, use delay().  Makes the driver
 	work properly with ``Ensoniq CT5880''-based audio card.
+	[pooka, ticket #1035]
+
+etc/etc.i386/MAKEDEV				1.188-1.189
+
+	Reorder dpti and dpt cases so that 'dptiN' is not interpreted as dpt 
+	unit number 'iN'.
+	[seb, ticket #1036]
