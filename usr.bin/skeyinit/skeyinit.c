@@ -1,4 +1,4 @@
-/*	$NetBSD: skeyinit.c,v 1.8 1997/10/19 23:24:45 lukem Exp $	*/
+/*	$NetBSD: skeyinit.c,v 1.9 1998/07/06 06:54:54 mrg Exp $	*/
 
 /* S/KEY v1.1b (skeyinit.c)
  *
@@ -38,7 +38,7 @@ main(argc, argv)
 {
 	int     rval, n, nn, i, defaultsetup, l;
 	time_t  now;
-	char	hostname[MAXHOSTNAMELEN];
+	char	hostname[MAXHOSTNAMELEN + 1];
 	char    seed[18], tmp[80], key[8], defaultseed[17];
 	char    passwd[256], passwd2[256], tbuf[27], buf[60];
 	char    lastc, me[80], *salt, *p, *pw;
@@ -52,6 +52,7 @@ main(argc, argv)
 
 	if (gethostname(hostname, sizeof(hostname)) < 0)
 		err(1, "gethostname");
+	hostname[sizeof(hostname) - 1] = '\0';
 	strncpy(defaultseed, hostname, sizeof(defaultseed)- 1);
 	defaultseed[4] = '\0';
 	strncat(defaultseed, tbuf, sizeof(defaultseed) - 5);

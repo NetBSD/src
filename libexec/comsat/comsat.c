@@ -1,4 +1,4 @@
-/*	$NetBSD: comsat.c,v 1.13 1998/07/04 19:38:39 mrg Exp $	*/
+/*	$NetBSD: comsat.c,v 1.14 1998/07/06 06:47:38 mrg Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)comsat.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: comsat.c,v 1.13 1998/07/04 19:38:39 mrg Exp $");
+__RCSID("$NetBSD: comsat.c,v 1.14 1998/07/06 06:47:38 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -128,6 +128,7 @@ main(argc, argv)
 	}
 	(void)time(&lastmsgtime);
 	(void)gethostname(hostname, sizeof(hostname));
+	hostname[sizeof(hostname) - 1] = '\0';
 	onalrm(0);
 	(void)signal(SIGALRM, onalrm);
 	(void)signal(SIGTTOU, SIG_IGN);

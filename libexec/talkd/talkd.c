@@ -1,4 +1,4 @@
-/*	$NetBSD: talkd.c,v 1.9 1998/07/04 19:31:06 mrg Exp $	*/
+/*	$NetBSD: talkd.c,v 1.10 1998/07/06 06:49:16 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)talkd.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: talkd.c,v 1.9 1998/07/04 19:31:06 mrg Exp $");
+__RCSID("$NetBSD: talkd.c,v 1.10 1998/07/06 06:49:16 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -110,7 +110,7 @@ main(argc, argv)
 			exit(1);
 		}
 
-	if (gethostname(hostname, sizeof (hostname) - 1) < 0) {
+	if (gethostname(hostname, sizeof hostname) < 0) {
 		syslog(LOG_ERR, "gethostname: %m");
 		_exit(1);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: su.c,v 1.21 1998/04/02 11:13:33 kleink Exp $	*/
+/*	$NetBSD: su.c,v 1.22 1998/07/06 06:55:08 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)su.c	8.3 (Berkeley) 4/2/94";*/
 #else
-__RCSID("$NetBSD: su.c,v 1.21 1998/04/02 11:13:33 kleink Exp $");
+__RCSID("$NetBSD: su.c,v 1.22 1998/07/06 06:55:08 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -355,7 +355,7 @@ kerberos(username, user, uid)
 	int kerno;
 	u_long faddr;
 	char lrealm[REALM_SZ], krbtkfile[MAXPATHLEN];
-	char hostname[MAXHOSTNAMELEN], savehost[MAXHOSTNAMELEN];
+	char hostname[MAXHOSTNAMELEN + 1], savehost[MAXHOSTNAMELEN + 1];
 
 	if (krb_get_lrealm(lrealm, 1) != KSUCCESS)
 		return (1);
@@ -418,6 +418,7 @@ kerberos(username, user, uid)
 		dest_tkt();
 		return (1);
 	}
+	hostname[sizeof(hostname) - 1] = '\0';
 
 	(void)strncpy(savehost, krb_get_phost(hostname), sizeof(savehost));
 	savehost[sizeof(savehost) - 1] = '\0';

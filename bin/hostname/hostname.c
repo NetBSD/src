@@ -1,4 +1,4 @@
-/*	$NetBSD: hostname.c,v 1.11 1997/07/20 17:34:52 christos Exp $	*/
+/*	$NetBSD: hostname.c,v 1.12 1998/07/06 06:46:20 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)hostname.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: hostname.c,v 1.11 1997/07/20 17:34:52 christos Exp $");
+__RCSID("$NetBSD: hostname.c,v 1.12 1998/07/06 06:46:20 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -64,7 +64,7 @@ main(argc, argv)
 	char *argv[];
 {
 	int ch, sflag;
-	char *p, hostname[MAXHOSTNAMELEN];
+	char *p, hostname[MAXHOSTNAMELEN + 1];
 
 	sflag = 0;
 	while ((ch = getopt(argc, argv, "s")) != -1)
@@ -88,6 +88,7 @@ main(argc, argv)
 	} else {
 		if (gethostname(hostname, sizeof(hostname)))
 			err(1, "gethostname");
+		hostname[sizeof(hostname) - 1] = '\0';
 		if (sflag && (p = strchr(hostname, '.')))
 			*p = '\0';
 		(void)printf("%s\n", hostname);
