@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.318 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.319 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -58,3 +58,4 @@ Changes from NetBSD 2.0 to NetBSD 2.1:
 	uep(4):	Added driver for eGalax USB touchpanel controller
 		[tsarna 20040524]
 	ptm(4): pty/98 pty multiplexor device [christos 20040526]
+	postfix: Postfix 2.1.1 imported. [heas 20040531]
