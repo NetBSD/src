@@ -1,4 +1,4 @@
-/*	$NetBSD: auth.c,v 1.16 1997/05/17 22:14:13 christos Exp $	*/
+/*	$NetBSD: auth.c,v 1.17 1997/06/27 14:44:46 christos Exp $	*/
 
 /*
  * auth.c - PPP authentication and phase control.
@@ -38,7 +38,7 @@
 #if 0
 static char rcsid[] = "Id: auth.c,v 1.31 1997/04/30 05:50:16 paulus Exp ";
 #else
-static char rcsid[] = "$NetBSD: auth.c,v 1.16 1997/05/17 22:14:13 christos Exp $";
+static char rcsid[] = "$NetBSD: auth.c,v 1.17 1997/06/27 14:44:46 christos Exp $";
 #endif
 #endif
 
@@ -880,6 +880,7 @@ get_pap_passwd(passwd)
     char *filename;
     FILE *f;
     struct wordlist *addrs;
+    int ret;
     char secret[MAXWORDLEN];
 
     filename = _PATH_UPAPFILE;
@@ -888,9 +889,11 @@ get_pap_passwd(passwd)
     if (f == NULL)
 	return 0;
     check_access(f, filename);
-    if (scan_authfile(f, user,
-		      remote_name[0]? remote_name: NULL,
-		      (u_int32_t)0, secret, NULL, filename) < 0)
+    ret = scan_authfile(f, user,
+		        remote_name[0]? remote_name: NULL,
+		        (u_int32_t)0, secret, NULL, filename);
+    fclose(f);
+    if (ret < 0)
 	return 0;
     if (passwd != NULL) {
 	strncpy(passwd, secret, MAXSECRETLEN);
