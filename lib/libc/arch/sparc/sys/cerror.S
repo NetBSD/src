@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  * from: Header: cerror.s,v 1.3 92/07/02 04:17:59 torek Exp
- * $Id: cerror.S,v 1.2 1994/02/10 20:15:57 pk Exp $
+ * $Id: cerror.S,v 1.3 1996/11/16 20:43:07 pk Exp $
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
@@ -45,6 +45,16 @@
 #include "DEFS.h"
 #include "SYS.h"
 
+#ifdef _REENTRANT
+FUNC(cerror)
+	save	%sp, -96, %sp
+	call	_C_LABEL(__errno)
+	 nop
+	st	%i0, [%o0]
+	mov	-1, %i0
+	ret
+	 restore %g0, -1, %o1
+#else
 	.globl	_errno
 #ifdef PIC
 FUNC(cerror)
@@ -61,3 +71,4 @@ FUNC(cerror)
 	retl
 	 mov	-1, %o1
 #endif
+#endif /* _REENTRANT */
