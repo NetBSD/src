@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.101 1997/08/27 11:26:19 bouyer Exp $	*/
+/*	$NetBSD: cd.c,v 1.102 1997/09/09 09:07:43 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1997 Charles M. Hannum.  All rights reserved.
@@ -1019,8 +1019,12 @@ cd_play_tracks(cd, strack, sindex, etrack, eindex)
 	if (strack < 0)
 		return EINVAL;
 
-	return cd_play(cd, toc.entries[strack].addr.lba,
-		toc.entries[etrack].addr.lba - toc.entries[strack].addr.lba);
+	return cd_play_msf(cd, toc.entries[strack].addr.msf.minute,
+		toc.entries[strack].addr.msf.second,
+		toc.entries[strack].addr.msf.frame,
+		toc.entries[etrack].addr.msf.minute,
+		toc.entries[etrack].addr.msf.second,
+		toc.entries[etrack].addr.msf.frame);
 }
 
 /*
@@ -1134,7 +1138,7 @@ cd_load_toc(cd, toc)
     struct cd_softc *cd;
 	struct cd_toc *toc;
 {
-	int i, ntracks, len, error;
+	int ntracks, len, error;
 
 	if ((error = cd_read_toc(cd, 0, 0, toc, sizeof(toc->header))) != 0)
 		return error;
@@ -1143,11 +1147,6 @@ cd_load_toc(cd, toc)
 	len = (ntracks+1)*sizeof(struct cd_toc_entry) + sizeof(toc->header);
 	if ((error = cd_read_toc(cd, CD_MSF_FORMAT, 0, toc, len)) != 0)
 		return error;
-	for (i = 0; i <= ntracks; i++) {
-		toc->entries[i].addr.lba = msf2lba(toc->entries[i].addr.msf.minute,
-			toc->entries[i].addr.msf.second,
-			toc->entries[i].addr.msf.frame);
-	}
 	return 0;
 }
 
