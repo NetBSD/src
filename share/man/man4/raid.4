@@ -1,4 +1,4 @@
-.\"     $NetBSD: raid.4,v 1.25 2003/04/13 01:45:06 wiz Exp $
+.\"     $NetBSD: raid.4,v 1.26 2004/01/31 18:02:52 heinz Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -128,7 +128,7 @@ If the driver determines that the labels are very inconsistent with
 respect to each other (e.g. two or more serial numbers do not match)
 or that the component label is not consistent with its assigned place
 in the set (e.g. the component label claims the component should be
-the 3rd one a 6-disk set, but the RAID set has it as the 3rd component
+the 3rd one in a 6-disk set, but the RAID set has it as the 3rd component
 in a 5-disk set) then the device will fail to configure.  If the
 driver determines that exactly one component label seems to be
 incorrect, and the RAID set is being configured as a set that supports
