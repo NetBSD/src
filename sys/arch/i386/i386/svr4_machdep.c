@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.56 2001/10/31 18:17:56 jdolecek Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.57 2001/11/15 07:03:31 lukem Exp $	 */
 
 /*-
  * Copyright (c) 1994, 2000 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.57 2001/11/15 07:03:31 lukem Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"

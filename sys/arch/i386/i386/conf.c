@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.147 2001/09/21 23:44:21 ad Exp $	*/
+/*	$NetBSD: conf.c,v 1.148 2001/11/15 07:03:29 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.148 2001/11/15 07:03:29 lukem Exp $");
 
 #include "opt_compat_svr4.h"
 

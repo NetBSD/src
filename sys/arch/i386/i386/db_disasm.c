@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.26 2000/12/06 03:20:35 chs Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.27 2001/11/15 07:03:29 lukem Exp $	*/
 
 /* 
  * Mach Operating System
@@ -31,6 +31,10 @@
 /*
  * Instruction disassembler.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.27 2001/11/15 07:03:29 lukem Exp $");
+
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <machine/db_machdep.h>

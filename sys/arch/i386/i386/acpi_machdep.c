@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_machdep.c,v 1.1 2001/09/28 01:46:56 thorpej Exp $	*/
+/*	$NetBSD: acpi_machdep.c,v 1.2 2001/11/15 07:03:28 lukem Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -38,6 +38,9 @@
 /*
  * Machine-dependent routines for ACPICA.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.2 2001/11/15 07:03:28 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

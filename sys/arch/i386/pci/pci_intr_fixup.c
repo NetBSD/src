@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_intr_fixup.c,v 1.17 2001/08/27 08:21:21 haya Exp $	*/
+/*	$NetBSD: pci_intr_fixup.c,v 1.18 2001/11/15 07:03:34 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -65,6 +65,9 @@
 /*
  * PCI Interrupt Router support.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pci_intr_fixup.c,v 1.18 2001/11/15 07:03:34 lukem Exp $");
 
 #include "opt_pcibios.h"
 
