@@ -1,4 +1,4 @@
-/*	$NetBSD: getNAME.c,v 1.8 1997/11/01 15:03:54 mrg Exp $	*/
+/*	$NetBSD: getNAME.c,v 1.9 1997/11/02 00:23:37 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)getNAME.c	8.1 (Berkeley) 6/30/93";
 #else
-__RCSID("$NetBSD: getNAME.c,v 1.8 1997/11/01 15:03:54 mrg Exp $");
+__RCSID("$NetBSD: getNAME.c,v 1.9 1997/11/02 00:23:37 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -129,13 +129,8 @@ getfrom(pathname)
 		if ((headbuf[1] == 'T' && headbuf[2] == 'H') ||
 		    (headbuf[1] == 't' && headbuf[2] == 'h'))
 			break;
-		if (headbuf[1] == 'D' && headbuf[2] == 't') {
-			if (typeflag) {
-				printf("%-60s	NEW\n", pathname);
-				return;
-			}
+		if (headbuf[1] == 'D' && headbuf[2] == 't')
 			goto newman;
-		}
 	}
 	if (typeflag) {
 		printf("%-60s	OLD\n", pathname);
@@ -191,6 +186,10 @@ getfrom(pathname)
 	return;
 
 newman:
+	if (typeflag) {
+		printf("%-60s	NEW\n", pathname);
+		return;
+	}
 	for (;;) {
 		if (fgets(linbuf, sizeof linbuf, stdin) == NULL)
 			return;
@@ -265,7 +264,7 @@ newman:
 
 void
 trimln(cp)
-	register char *cp;
+	char *cp;
 {
 
 	while (*cp)
@@ -278,7 +277,7 @@ void
 doname(name)
 	char *name;
 {
-	register char *dp = name, *ep;
+	char *dp = name, *ep;
 
 again:
 	while (*dp && *dp != '.')
@@ -302,7 +301,7 @@ void
 split(line, name)
 	char *line, *name;
 {
-	register char *cp, *dp;
+	char *cp, *dp;
 	char *sp, *sep;
 
 	cp = strchr(line, '-');
@@ -317,7 +316,7 @@ split(line, name)
 	for (sep = "", dp = line; dp && *dp; dp = cp, sep = "\n") {
 		cp = strchr(dp, ',');
 		if (cp) {
-			register char *tp;
+			char *tp;
 
 			for (tp = cp - 1; *tp == ' ' || *tp == '\t'; tp--)
 				;
@@ -335,7 +334,7 @@ void
 dorefname(name)
 	char *name;
 {
-	register char *dp = name, *ep;
+	char *dp = name, *ep;
 
 again:
 	while (*dp && *dp != '.')
@@ -356,6 +355,6 @@ again:
 void
 usage()
 {
-	(void)fprintf(stderr, "usage: getNAME [-it] file ...\n");
+	(void)fprintf(stderr, "usage: getNAME [-itw] file ...\n");
 	exit(1);
 }
