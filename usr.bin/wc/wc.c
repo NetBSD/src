@@ -1,4 +1,4 @@
-/*	$NetBSD: wc.c,v 1.21 2001/10/19 06:09:56 yamt Exp $	*/
+/*	$NetBSD: wc.c,v 1.22 2002/03/23 21:10:40 enami Exp $	*/
 
 /*
  * Copyright (c) 1980, 1987, 1991, 1993
@@ -43,31 +43,25 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1987, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)wc.c	8.2 (Berkeley) 5/2/95";
 #else
-__RCSID("$NetBSD: wc.c,v 1.21 2001/10/19 06:09:56 yamt Exp $");
+__RCSID("$NetBSD: wc.c,v 1.22 2002/03/23 21:10:40 enami Exp $");
 #endif
 #endif /* not lint */
 
 /* wc line, word and char count */
 
 #include <sys/param.h>
+#include <sys/file.h>
 #include <sys/stat.h>
-#include <sys/types.h>
 
+#include <ctype.h>
 #include <fcntl.h>
-#include <unistd.h>
+#include <err.h>
 #include <errno.h>
+#include <locale.h>
 #include <stdio.h>
-
 #include <stdlib.h>
 #include <string.h>
-#include <locale.h>
-#include <ctype.h>
-#include <errno.h>
-#include <sys/param.h>
-#include <sys/stat.h>
-#include <sys/file.h>
 #include <unistd.h>
-#include <err.h>
 #include <wchar.h>
 #include <wctype.h>
 
