@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.43 2002/10/10 01:41:59 thorpej Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.44 2002/10/10 17:02:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -184,7 +184,9 @@
 #define	__aligned(x)	/* delete */
 #define	__section(x)	/* delete */
 #else
-#error Need a __packed, __aligned, and __section for this compiler.
+#define	__packed	error: no __packed for this compiler
+#define	__aligned(x)	error: no __aligned for this compiler
+#define	__section(x)	error: no __section for this compiler
 #endif
 
 /*
