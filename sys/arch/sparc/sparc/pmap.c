@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.224 2003/01/08 16:16:46 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.225 2003/01/08 18:46:28 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -2401,7 +2401,6 @@ pv_changepte4m(pv0, bis, bic)
 	struct regmap *rp;
 	struct segmap *sp;
 
-	write_user_windows();		/* paranoid? */
 	s = splvm();			/* paranoid? */
 	if (pv0->pv_pmap == NULL) {
 		splx(s);
@@ -2455,7 +2454,6 @@ pv_syncflags4m(pv0)
 	struct segmap *sp;
 	boolean_t doflush;
 
-	write_user_windows();		/* paranoid? */
 	s = splvm();			/* paranoid? */
 	if (pv0->pv_pmap == NULL) {	/* paranoid */
 		splx(s);
@@ -2727,7 +2725,6 @@ pv_flushcache4m(struct pvlist *pv)
 	struct pmap *pm;
 	int s;
 
-	write_user_windows();	/* paranoia? */
 	s = splvm();		/* XXX extreme paranoia */
 	if ((pm = pv->pv_pmap) != NULL) {
 		for (;;) {
@@ -4064,7 +4061,8 @@ pmap_remove(pm, va, endva)
 		/*
 		 * Removing from user address space.
 		 */
-		write_user_windows();
+		if (!CPU_HAS_SRMMU)
+			write_user_windows();
 		rm = pmap_rmu;
 	}
 
@@ -4947,7 +4945,6 @@ pmap_page_protect4m(pg, prot)
 	if ((pv = pvhead(atop(pa))) == NULL || prot & VM_PROT_WRITE)
 		return;
 
-	write_user_windows();	/* paranoia */
 	if (prot & VM_PROT_READ) {
 		pv_changepte4m(pv, 0, PPROT_WRITE);
 		return;
@@ -5079,7 +5076,6 @@ pmap_protect4m(pm, sva, eva, prot)
 			pm->pm_ctx ? pm->pm_ctxnum : -1, sva, eva, prot);
 #endif
 
-	write_user_windows();
 	s = splvm();
 	simple_lock(&pm->pm_lock);
 
@@ -5162,8 +5158,6 @@ pmap_changeprot4m(pm, va, prot, wired)
 		printf("pmap_changeprot[%d](%p, 0x%lx, 0x%x, 0x%x)\n",
 		    cpu_number(), pm, va, prot, wired);
 #endif
-
-	write_user_windows();	/* paranoia */
 
 	va &= ~(NBPG-1);
 	if (pm == pmap_kernel())
@@ -5970,7 +5964,6 @@ pmap_enu4m(pm, va, prot, flags, pv, pteproto)
 		panic("pmap_enu4m: can't enter va 0x%lx above KERNBASE", va);
 #endif
 
-	write_user_windows();		/* XXX conservative */
 	vr = VA_VREG(va);
 	vs = VA_VSEG(va);
 	rp = &pm->pm_regmap[vr];
