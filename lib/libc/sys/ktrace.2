@@ -1,4 +1,4 @@
-.\"	$NetBSD: ktrace.2,v 1.10 2001/09/16 02:13:28 wiz Exp $
+.\"	$NetBSD: ktrace.2,v 1.11 2002/02/08 01:28:18 ross Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -42,8 +42,8 @@
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
-.Fd #include <sys/types.h>
-.Fd #include <sys/ktrace.h>
+.Fd #include \*[Lt]sys/types.h\*[Gt]
+.Fd #include \*[Lt]sys/ktrace.h\*[Gt]
 .Ft int
 .Fn ktrace "const char *tracefile" "int ops" "int trpoints" "pid_t pid"
 .Ft int
@@ -138,7 +138,7 @@ bytes of a
 .Nm ktr_type
 record.
 The type specific records are defined in the
-.Pa <sys/ktrace.h>
+.Pa \*[Lt]sys/ktrace.h\*[Gt]
 include file.
 .Sh RETURN VALUES
 On successful completion a value of 0 is returned.

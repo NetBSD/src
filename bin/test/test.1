@@ -1,4 +1,4 @@
-.\"	$NetBSD: test.1,v 1.16 2001/12/20 19:31:52 wiz Exp $
+.\"	$NetBSD: test.1,v 1.17 2002/02/08 01:22:01 ross Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -202,13 +202,13 @@ True if the strings
 and
 .Ar \&s\&2
 are not identical.
-.It Ar \&s\&1 Cm \&< Ar \&s\&2
+.It Ar \&s\&1 Cm \&\*[Lt] Ar \&s\&2
 True if string
 .Ar \&s\&1
 comes before
 .Ar \&s\&2
 based on the ASCII value of their characters.
-.It Ar \&s\&1 Cm \&> Ar \&s\&2
+.It Ar \&s\&1 Cm \&\*[Gt] Ar \&s\&2
 True if string
 .Ar \&s\&1
 comes after
@@ -301,7 +301,7 @@ expression evaluated to true.
 .It 1
 expression evaluated to false or expression was
 missing.
-.It >1
+.It \*[Gt]1
 An error occurred.
 .El
 .Sh STANDARDS

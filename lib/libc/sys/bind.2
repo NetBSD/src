@@ -1,4 +1,4 @@
-.\"	$NetBSD: bind.2,v 1.18 2001/10/16 20:09:59 kleink Exp $
+.\"	$NetBSD: bind.2,v 1.19 2002/02/08 01:28:16 ross Exp $
 .\"
 .\" Copyright (c) 1983, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -42,7 +42,7 @@
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
-.Fd #include <sys/socket.h>
+.Fd #include \*[Lt]sys/socket.h\*[Gt]
 .Ft int
 .Fn bind "int s" "const struct sockaddr *name" "socklen_t namelen"
 .Sh DESCRIPTION
@@ -91,7 +91,7 @@ The specified address is already in use.
 The socket is already bound to an address.
 .It Bq Er EINVAL
 The family of the socket and that requested in
-.Fa name->sa_family
+.Fa name-\*[Gt]sa_family
 are not equivalent.
 .It Bq Er EACCES
 The requested address is protected, and the current user

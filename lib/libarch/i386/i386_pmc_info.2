@@ -1,4 +1,4 @@
-.\"     $NetBSD: i386_pmc_info.2,v 1.2 2001/11/10 08:11:04 wiz Exp $
+.\"     $NetBSD: i386_pmc_info.2,v 1.3 2002/02/08 01:28:13 ross Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -45,9 +45,9 @@
 .Sh LIBRARY
 .Lb libi386
 .Sh SYNOPSIS
-.Fd #include <sys/types.h>
-.Fd #include <machine/sysarch.h>
-.Fd #include <machine/specialreg.h>
+.Fd #include \*[Lt]sys/types.h\*[Gt]
+.Fd #include \*[Lt]machine/sysarch.h\*[Gt]
+.Fd #include \*[Lt]machine/specialreg.h\*[Gt]
 .Ft int
 .Fn i386_pmc_info "struct i386_pmc_info_args *ia"
 .Ft int

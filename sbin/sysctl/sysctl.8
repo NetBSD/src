@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.8,v 1.73 2002/01/28 02:07:02 simonb Exp $
+.\"	$NetBSD: sysctl.8,v 1.74 2002/02/08 01:30:47 ross Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -117,7 +117,7 @@ and as such may differ from one process to another. The second-level name
 is the pid of the process (in decimal form), or the special word
 .Ql curproc .
 For variables below
-.Ql proc.<pid>.rlimit ,
+.Ql proc.\*[Lt]pid\*[Gt].rlimit ,
 the integer value may be replaced
 with the string
 .Ql unlimited
@@ -138,7 +138,7 @@ For a detailed description of these variable see
 .Xr sysctl 3 .
 The changeable column indicates whether a process with appropriate
 privilege can change the value.
-.Bl -column proc.<pid>.rlimit.coredumpsize.hardxxxxxx integerxxx
+.Bl -column proc.\*[Lt]pid\*[Gt].rlimit.coredumpsize.hardxxxxxx integerxxx
 .It Sy Name	Type	Changeable
 .It ddb.fromconsole	integer 	yes
 .It ddb.lines	integer		yes
@@ -321,23 +321,23 @@ privilege can change the value.
 .It net.key.spi_max_value	integer	yes
 .It net.key.spi_min_value	integer	yes
 .It net.key.spi_try	integer	yes
-.It proc.<pid>.corename	string	yes
-.It proc.<pid>.rlimit.coredumpsize.hard	integer	yes
-.It proc.<pid>.rlimit.coredumpsize.soft	integer	yes
-.It proc.<pid>.rlimit.cputime.hard	integer	yes
-.It proc.<pid>.rlimit.cputime.soft	integer	yes
-.It proc.<pid>.rlimit.datasize.hard	integer	yes
-.It proc.<pid>.rlimit.datasize.soft	integer	yes
-.It proc.<pid>.rlimit.filesize.hard	integer	yes
-.It proc.<pid>.rlimit.filesize.soft	integer	yes
-.It proc.<pid>.rlimit.maxproc.hard	integer	yes
-.It proc.<pid>.rlimit.maxproc.soft	integer	yes
-.It proc.<pid>.rlimit.memorylocked.hard	integer	yes
-.It proc.<pid>.rlimit.memorylocked.soft	integer	yes
-.It proc.<pid>.rlimit.memoryuse.hard	integer	yes
-.It proc.<pid>.rlimit.memoryuse.soft	integer	yes
-.It proc.<pid>.rlimit.stacksize.hard	integer	yes
-.It proc.<pid>.rlimit.stacksize.soft	integer	yes
+.It proc.\*[Lt]pid\*[Gt].corename	string	yes
+.It proc.\*[Lt]pid\*[Gt].rlimit.coredumpsize.hard	integer	yes
+.It proc.\*[Lt]pid\*[Gt].rlimit.coredumpsize.soft	integer	yes
+.It proc.\*[Lt]pid\*[Gt].rlimit.cputime.hard	integer	yes
+.It proc.\*[Lt]pid\*[Gt].rlimit.cputime.soft	integer	yes
+.It proc.\*[Lt]pid\*[Gt].rlimit.datasize.hard	integer	yes
+.It proc.\*[Lt]pid\*[Gt].rlimit.datasize.soft	integer	yes
+.It proc.\*[Lt]pid\*[Gt].rlimit.filesize.hard	integer	yes
+.It proc.\*[Lt]pid\*[Gt].rlimit.filesize.soft	integer	yes
+.It proc.\*[Lt]pid\*[Gt].rlimit.maxproc.hard	integer	yes
+.It proc.\*[Lt]pid\*[Gt].rlimit.maxproc.soft	integer	yes
+.It proc.\*[Lt]pid\*[Gt].rlimit.memorylocked.hard	integer	yes
+.It proc.\*[Lt]pid\*[Gt].rlimit.memorylocked.soft	integer	yes
+.It proc.\*[Lt]pid\*[Gt].rlimit.memoryuse.hard	integer	yes
+.It proc.\*[Lt]pid\*[Gt].rlimit.memoryuse.soft	integer	yes
+.It proc.\*[Lt]pid\*[Gt].rlimit.stacksize.hard	integer	yes
+.It proc.\*[Lt]pid\*[Gt].rlimit.stacksize.soft	integer	yes
 .It user.bc_base_max	integer	no
 .It user.bc_dim_max	integer	no
 .It user.bc_scale_max	integer	no
@@ -356,7 +356,7 @@ privilege can change the value.
 .It user.posix2_upe	integer	no
 .It user.posix2_version	integer	no
 .It user.re_dup_max	integer	no
-.It vendor.<vendor>.*	?	vendor specific
+.It vendor.\*[Lt]vendor\*[Gt].*	?	vendor specific
 .It vfs.generic.usermount	integer	yes
 .It vm.anonmax	integer	yes
 .It vm.anonmin	integer	yes
@@ -372,7 +372,7 @@ privilege can change the value.
 .El
 .Pp
 Entries found under
-.Dq vendor.<vendor>
+.Dq vendor.\*[Lt]vendor\*[Gt]
 are left to be specified (and used) by vendors
 using the
 .Nx
@@ -380,30 +380,30 @@ operating system in their products.
 Values and structure are vendor-defined, and no registry
 exists right now.
 .Sh FILES
-.Bl -tag -width <netinet6/udp6Xvar.h> -compact
-.It Pa <sys/sysctl.h>
+.Bl -tag -width \*[Lt]netinet6/udp6Xvar.h\*[Gt] -compact
+.It Pa \*[Lt]sys/sysctl.h\*[Gt]
 definitions for top level identifiers, second level kernel and hardware
 identifiers, and user level identifiers
-.It Pa <sys/socket.h>
+.It Pa \*[Lt]sys/socket.h\*[Gt]
 definitions for second level network identifiers
-.It Pa <sys/gmon.h>
+.It Pa \*[Lt]sys/gmon.h\*[Gt]
 definitions for third level profiling identifiers
-.It Pa <uvm/uvm_param.h>
+.It Pa \*[Lt]uvm/uvm_param.h\*[Gt]
 definitions for second level virtual memory identifiers
-.It Pa <netinet/in.h>
+.It Pa \*[Lt]netinet/in.h\*[Gt]
 definitions for third level IPv4/v6 identifiers and
 fourth level IPv4/v6 identifiers
-.It Pa <netinet/icmp_var.h>
+.It Pa \*[Lt]netinet/icmp_var.h\*[Gt]
 definitions for fourth level ICMP identifiers
-.It Pa <netinet/icmp6.h>
+.It Pa \*[Lt]netinet/icmp6.h\*[Gt]
 definitions for fourth level ICMPv6 identifiers
-.It Pa <netinet/tcp_var.h>
+.It Pa \*[Lt]netinet/tcp_var.h\*[Gt]
 definitions for fourth level TCP identifiers
-.It Pa <netinet/udp_var.h>
+.It Pa \*[Lt]netinet/udp_var.h\*[Gt]
 definitions for fourth level UDP identifiers
-.It Pa <netinet6/udp6_var.h>
+.It Pa \*[Lt]netinet6/udp6_var.h\*[Gt]
 definitions for fourth level IPv6 UDP identifiers
-.It Pa <netinet6/ipsec.h>
+.It Pa \*[Lt]netinet6/ipsec.h\*[Gt]
 definitions for fourth level IPsec identifiers
 .El
 .Sh EXAMPLES
@@ -437,7 +437,7 @@ sysctl proc.$$
 can be used if the shell interpreter replaces $$ with it's pid (this is true
 for most shells).
 .Pp
-To redirect core dumps to the /var/tmp/<username> directory,
+To redirect core dumps to the /var/tmp/\*[Lt]username\*[Gt] directory,
 .Bd -literal -offset indent -compact
 sysctl -w proc.$$.corename=/var/tmp/%u/%n.core
 .Ed

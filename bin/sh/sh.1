@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.44 2001/12/20 20:07:40 wiz Exp $
+.\"	$NetBSD: sh.1,v 1.45 2002/02/08 01:21:59 ross Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -176,7 +176,7 @@ Read commands from the command line.
 No commands will be read from the standard input.
 .It Fl C Em noclobber
 Don't overwrite existing files with
-.Dq > .
+.Dq \*[Gt] .
 (UNIMPLEMENTED for 4.4alpha)
 .It Fl e Em errexit
 If not interactive, exit immediately if any untested command fails.
@@ -189,7 +189,7 @@ an
 or
 .Ic until ;
 or if the command is the left hand operand of an
-.Dq &&
+.Dq \*[Am]\*[Am]
 or
 .Dq ||
 operator.
@@ -258,9 +258,9 @@ There are two types of operators: control operators and redirection
 operators (their meaning is discussed later). Following is a list of operators:
 .Bl -ohang -offset indent
 .It "Control operators:"
-.Dl &  &&  \&(  \&)  \&;  ;; | || <newline>
+.Dl \*[Am]  \*[Am]\*[Am]  \&(  \&)  \&;  ;; | || \*[Lt]newline\*[Gt]
 .It "Redirection operators:"
-.Dl <  >  >|  <<  >>  <&  >&  <<-  <>
+.Dl \*[Lt]  \*[Gt]  \*[Gt]|  \*[Lt]\*[Lt]  \*[Gt]\*[Gt]  \*[Lt]\*[Am]  \*[Gt]\*[Am]  \*[Lt]\*[Lt]-  \*[Lt]\*[Gt]
 .El
 .Ss Quoting
 Quoting is used to remove the special meaning of certain characters or
@@ -288,7 +288,7 @@ and backslash
 .Pq \e .
 The backslash inside double quotes is historically weird, and serves to
 quote only the following characters:
-.Dl $  `  \*q  \e  <newline> .
+.Dl $  `  \*q  \e  \*[Lt]newline\*[Gt] .
 Otherwise it remains literal.
 .Ss Reserved Words
 Reserved words are words that have special meaning to the
@@ -314,11 +314,11 @@ with the value
 .Dq "ls -F" ,
 then the input:
 .Pp
-.Dl lf foobar <return>
+.Dl lf foobar \*[Lt]return\*[Gt]
 .Pp
 would become
 .Pp
-.Dl ls -F foobar <return>
+.Dl ls -F foobar \*[Lt]return\*[Gt]
 .Pp
 Aliases provide a convenient way for naive users to create shorthands for
 commands without having to learn how to create functions with arguments.
@@ -373,25 +373,25 @@ is an optional number, as in
 .Sq Bq 3 ,
 that refers to a file descriptor.
 .Bl -tag -width aaabsfiles -offset indent
-.It [n] Ns > file
+.It [n] Ns \*[Gt] file
 Redirect standard output (or n) to file.
-.It [n] Ns >| file
+.It [n] Ns \*[Gt]| file
 Same, but override the
 .Fl C
 option.
-.It [n] Ns >> file
+.It [n] Ns \*[Gt]\*[Gt] file
 Append standard output (or n) to file.
-.It [n] Ns < file
+.It [n] Ns \*[Lt] file
 Redirect standard input (or n) from file.
-.It [n1] Ns <& Ns n2
+.It [n1] Ns \*[Lt]\*[Am] Ns n2
 Duplicate standard input (or n1) from file descriptor n2.
-.It [n] Ns <&-
+.It [n] Ns \*[Lt]\*[Am]-
 Close standard input (or n).
-.It [n1] Ns >& Ns n2
+.It [n1] Ns \*[Gt]\*[Am] Ns n2
 Duplicate standard output (or n1) from n2.
-.It [n] Ns >&-
+.It [n] Ns \*[Gt]\*[Am]-
 Close standard output (or n).
-.It [n] Ns <> file
+.It [n] Ns \*[Lt]\*[Gt] file
 Open file for reading and writing on standard input (or n).
 .El
 .Pp
@@ -399,7 +399,7 @@ The following redirection is often called a
 .Dq here-document .
 .Bl -item -offset indent
 .It
-.Li [n]<< delimiter
+.Li [n]\*[Lt]\*[Lt] delimiter
 .Dl here-doc-text ...
 .Li delimiter
 .El
@@ -412,9 +412,9 @@ subjected to parameter expansion, command substitution, and arithmetic
 expansion (as described in the section on
 .Dq Expansions ) .
 If the operator is
-.Dq <<-
+.Dq \*[Lt]\*[Lt]-
 instead of
-.Dq << ,
+.Dq \*[Lt]\*[Lt] ,
 then leading tabs in the here-doc-text are stripped.
 .Ss Search and Execution
 There are three types of commands: shell functions, builtin commands, and
@@ -527,27 +527,27 @@ Because pipeline assignment of standard input or standard output or both
 takes place before redirection, it can be modified by redirection.  For
 example:
 .Pp
-.Dl $ command1 2>&1 | command2
+.Dl $ command1 2\*[Gt]\*[Am]1 | command2
 .Pp
 sends both the standard output and standard error of command1
 to the standard input of command2.
 .Pp
-A ; or <newline> terminator causes the preceding AND-OR-list (described
-next) to be executed sequentially; a & causes asynchronous execution of
+A ; or \*[Lt]newline\*[Gt] terminator causes the preceding AND-OR-list (described
+next) to be executed sequentially; a \*[Am] causes asynchronous execution of
 the preceding AND-OR-list.
 .Pp
 Note that unlike some other shells, each process in the pipeline is a
 child of the invoking shell (unless it is a shell builtin, in which case
 it executes in the current shell -- but any effect it has on the
 environment is wiped).
-.Ss Background Commands -- &
-If a command is terminated by the control operator ampersand (&), the
+.Ss Background Commands -- \*[Am]
+If a command is terminated by the control operator ampersand (\*[Am]), the
 shell executes the command asynchronously -- that is, the shell does not
 wait for the command to finish before executing the next command.
 .Pp
 The format for running a command in background is:
 .Pp
-.Dl command1 & [command2 & ...]
+.Dl command1 \*[Am] [command2 \*[Am] ...]
 .Pp
 If the shell is not interactive, the standard input of an asynchronous
 command is set to
@@ -560,17 +560,17 @@ written. If command is followed by an ampersand, the shell starts the
 command and immediately proceed onto the next command; otherwise it waits
 for the command to terminate before proceeding to the next one.
 .Ss Short-Circuit List Operators
-.Dq &&
+.Dq \*[Am]\*[Am]
 and
 .Dq ||
 are AND-OR list operators.
-.Dq &&
+.Dq \*[Am]\*[Am]
 executes the first command, and then executes the second command iff the
 exit status of the first command is zero.
 .Dq ||
 is similar, but executes the second command iff the exit status of the first
 command is nonzero.
-.Dq &&
+.Dq \*[Am]\*[Am]
 and
 .Dq ||
 both have the same priority.
@@ -648,7 +648,7 @@ commands together this way allows you to redirect their output as though
 they were one program:
 .Pp
 .Bd -literal -offset indent
-{ echo -n \*q hello \*q ; echo \*q world" ; } > greeting
+{ echo -n \*q hello \*q ; echo \*q world" ; } \*[Gt] greeting
 .Ed
 .Pp
 Note that
@@ -710,7 +710,7 @@ alphabetics, numerics, and underscores - the first of which must not be
 numeric.  A parameter can also be denoted by a number or a special
 character as explained below.
 .Ss Positional Parameters
-A positional parameter is a parameter denoted by a number (n > 0). The
+A positional parameter is a parameter denoted by a number (n \*[Gt] 0). The
 shell sets these initially to the values of its command line arguments
 that follow the name of the shell script. The
 .Ic set
@@ -725,7 +725,7 @@ expansion occurs within a double-quoted string it expands to a single
 field with the value of each parameter separated by the first character of
 the
 .Ev IFS
-variable, or by a <space> if
+variable, or by a \*[Lt]space\*[Gt] if
 .Ev IFS
 is unset.
 .It @
@@ -917,9 +917,9 @@ version
 The shell expands the command substitution by executing command in a
 subshell environment and replacing the command substitution with the
 standard output of the command, removing sequences of one or more
-<newline>s at the end of the substitution.  (Embedded <newline>s before
+\*[Lt]newline\*[Gt]s at the end of the substitution.  (Embedded \*[Lt]newline\*[Gt]s before
 the end of the output are not removed; however, during field splitting,
-they may be translated into <space>s, depending on the value of
+they may be translated into \*[Lt]space\*[Gt]s, depending on the value of
 .Ev IFS
 and quoting that is in effect.)
 .Ss Arithmetic Expansion
@@ -1604,10 +1604,10 @@ unless you are the superuser, in which case it defaults to
 .Dq # \  .
 .It Ev PS2
 The secondary prompt string, which defaults to
-.Dq > \  .
+.Dq \*[Gt] \  .
 .It Ev IFS
-Input Field Separators.  This is normally set to <space> <tab> and
-<newline>.  See the
+Input Field Separators.  This is normally set to \*[Lt]space\*[Gt] \*[Lt]tab\*[Gt] and
+\*[Lt]newline\*[Gt].  See the
 .Sx White Space Splitting
 section for more details.
 .It Ev TERM

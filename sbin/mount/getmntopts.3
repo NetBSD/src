@@ -1,4 +1,4 @@
-.\"	$NetBSD: getmntopts.3,v 1.5 2001/11/16 10:25:46 wiz Exp $
+.\"	$NetBSD: getmntopts.3,v 1.6 2002/02/08 01:30:44 ross Exp $
 .\"
 .\" Copyright (c) 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -40,7 +40,7 @@
 .Nm getmntopts
 .Nd scan mount options
 .Sh SYNOPSIS
-.Fd #include <mntopts.h>
+.Fd #include \*[Lt]mntopts.h\*[Gt]
 .Ft void
 .Fn getmntopts "char *options" "struct mntopt *mopts" "int *flagp" "int *altflagp"
 .Sh DESCRIPTION
@@ -158,7 +158,7 @@ struct mntopt mopts[] = {
 	...
 	mntflags = mntaltflags = 0;
 	...
-	getmntopts(options, mopts, &mntflags, &mntaltflags);
+	getmntopts(options, mopts, \*[Am]mntflags, \*[Am]mntaltflags);
 	...
 .Ed
 .Sh DIAGNOSTICS

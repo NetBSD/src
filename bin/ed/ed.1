@@ -1,4 +1,4 @@
-.\"	$NetBSD: ed.1,v 1.20 2002/01/23 19:07:33 atatat Exp $
+.\"	$NetBSD: ed.1,v 1.21 2002/02/08 01:21:57 ross Exp $
 .\"
 .TH ED 1 "21 May 1993"
 .SH NAME
@@ -177,7 +177,7 @@ value of the second.  If only one address is given in a range, then
 the second address is set to the given address.  If an
 .IR n- tuple
 of addresses is given where
-.I n > 2,
+.I n \*[Gt] 2,
 then the corresponding range is determined by the last two addresses in
 the
 .IR n- tuple.
@@ -316,14 +316,14 @@ The following symbols are used in constructing regular expressions:
 c
 Any character
 .I c
-not listed below, including `{', '}', `(', `)', `<' and `>',
+not listed below, including `{', '}', `(', `)', `\*[Lt]' and `\*[Gt]',
 matches itself.
 
 .TP 8
 \fR\e\fIc\fR
 Any backslash-escaped character
 .IR c ,
-except for `{', '}', `(', `)', `<' and `>',
+except for `{', '}', `(', `)', `\*[Lt]' and `\*[Gt]',
 matches itself.
 
 .TP 8
@@ -398,13 +398,13 @@ anchors the regular expression to the end of a line.
 Otherwise, it matches itself.
 
 .TP 8
-\fR\e<\fR
+\fR\e\*[Lt]\fR
 Anchors the single character regular expression or subexpression
 immediately following it to the beginning of a word.
 (This may not be available)
 
 .TP 8
-\fR\e>\fR
+\fR\e\*[Gt]\fR
 Anchors the single character regular expression or subexpression
 immediately following it to the end of a word.
 (This may not be available)
@@ -600,7 +600,7 @@ The format of
 is the same as that of the
 .I `g'
 command.  A newline alone acts as a null command list.
-A single `&' repeats the last non-null command list.
+A single `\*[Am]' repeats the last non-null command list.
 
 .TP 8
 H
@@ -753,7 +753,7 @@ affected is printed as though the print suffix
 were specified.
 
 
-An unescaped `&' in
+An unescaped `\*[Am]' in
 .I replacement
 is replaced by the currently matched text.
 The character sequence

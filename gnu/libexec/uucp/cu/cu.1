@@ -1,4 +1,4 @@
-.\" $Id: cu.1,v 1.6 2001/10/26 14:44:13 briggs Exp $
+.\" $Id: cu.1,v 1.7 2002/02/08 01:26:48 ross Exp $
 .TH cu 1 "Taylor UUCP 1.06"
 .SH NAME
 cu \- Call up another system
@@ -83,12 +83,12 @@ Send a break signal, if possible.
 .B ~c directory, ~%cd directory
 Change the local directory.
 .TP 5
-.B ~> file
+.B ~\*[Gt] file
 Send a file to the remote system.  This just dumps the file over the
 communication line.  It is assumed that the remote system is expecting
 it.
 .TP 5
-.B ~<
+.B ~\*[Lt]
 Receive a file from the remote system.  This prompts for the local
 file name and for the remote command to execute to begin the file
 transfer.  It continues accepting data until the contents of the
@@ -196,12 +196,12 @@ fail.  The default is 10.
 .TP 5
 .B eofwrite
 The string to write after sending a file with the
-.B ~>
+.B ~\*[Gt]
 command.  The default is ^D.
 .TP 5
 .B eofread
 The string to look for when receiving a file with the
-.B ~<
+.B ~\*[Lt]
 command.  The default is $, which is intended to be a typical shell
 prompt.
 .TP 5
@@ -318,4 +318,4 @@ approximation.
 /etc/uucp/config - Configuration file.
 .SH AUTHOR
 Ian Lance Taylor
-<ian@airs.com>
+\*[Lt]ian@airs.com\*[Gt]

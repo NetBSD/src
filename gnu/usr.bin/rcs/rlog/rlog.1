@@ -1,4 +1,4 @@
-.\"	$NetBSD: rlog.1,v 1.4 1996/10/15 07:00:49 veego Exp $
+.\"	$NetBSD: rlog.1,v 1.5 2002/02/08 01:26:52 ross Exp $
 .\"
 .de Id
 .ds Rv \\$3
@@ -83,32 +83,32 @@ Print information about revisions with a checkin date/time in the ranges given b
 the semicolon-separated list of
 .IR dates .
 A range of the form
-.IB d1 < d2
+.IB d1 \*[Lt] d2
 or
-.IB d2 > d1
+.IB d2 \*[Gt] d1
 selects the revisions that were deposited between
 .I d1
 and
 .I d2
 exclusive.
 A range of the form
-.BI < d
+.BI \*[Lt] d
 or
-.IB d >
+.IB d \*[Gt]
 selects
 all revisions earlier than
 .IR d .
 A range of the form
-.IB d <
+.IB d \*[Lt]
 or
-.BI > d
+.BI \*[Gt] d
 selects
 all revisions dated later than
 .IR d .
 If
-.B <
+.B \*[Lt]
 or
-.B >
+.B \*[Gt]
 is followed by
 .B =
 then the ranges are inclusive, not exclusive.
@@ -125,9 +125,9 @@ and
 are in the free format explained in
 .BR co (1).
 Quoting is normally necessary, especially for
-.B <
+.B \*[Lt]
 and
-.BR > .
+.BR \*[Gt] .
 Note that the separator is
 a semicolon.
 .TP
@@ -296,7 +296,7 @@ rcsfile(5)
 .br
 Walter F. Tichy,
 \*r\*-A System for Version Control,
-.I "Software\*-Practice & Experience"
+.I "Software\*-Practice \*[Am] Experience"
 .BR 15 ,
 7 (July 1985), 637-654.
 .SH BUGS

@@ -1,4 +1,4 @@
-.\" $Id: gzip.1,v 1.6 2001/07/07 21:57:41 lukem Exp $
+.\" $Id: gzip.1,v 1.7 2002/02/08 01:26:49 ross Exp $
 .PU
 .TH GZIP 1
 .SH NAME
@@ -229,7 +229,7 @@ displayed:
 
     method: compression method
     crc: the 32-bit CRC of the uncompressed data
-    date & time: time stamp for the uncompressed file
+    date \*[Am] time: time stamp for the uncompressed file
 
 The compression methods currently supported are deflate, compress, lzh
 (SCO compress -H) and pack.  The crc is given as ffffffff for a file
@@ -319,8 +319,8 @@ Multiple compressed files can be concatenated. In this case,
 .I gunzip
 will extract all members at once. For example:
 
-      gzip -c file1  > foo.gz
-      gzip -c file2 >> foo.gz
+      gzip -c file1  \*[Gt] foo.gz
+      gzip -c file2 \*[Gt]\*[Gt] foo.gz
 
 Then
       gunzip -c foo
@@ -333,15 +333,15 @@ In case of damage to one member of a .gz file, other members can
 still be recovered (if the damaged member is removed). However,
 you can get better compression by compressing all members at once:
 
-      cat file1 file2 | gzip > foo.gz
+      cat file1 file2 | gzip \*[Gt] foo.gz
 
 compresses better than
 
-      gzip -c file1 file2 > foo.gz
+      gzip -c file1 file2 \*[Gt] foo.gz
 
 If you want to recompress concatenated files to get better compression, do:
 
-      gzip -cd old.gz | gzip > new.gz
+      gzip -cd old.gz | gzip \*[Gt] new.gz
 
 If a compressed file consists of several members, the uncompressed
 size and CRC reported by the --list option applies to the last member
@@ -391,7 +391,7 @@ Corrupt input. Use zcat to recover some data.
 The compressed file has been damaged. The data up to the point of failure
 can be recovered using
 .in +8
-zcat file > recover
+zcat file \*[Gt] recover
 .in -16
 .IR file :
 compressed with 

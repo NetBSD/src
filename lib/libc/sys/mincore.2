@@ -1,4 +1,4 @@
-.\"	$NetBSD: mincore.2,v 1.13 2001/09/16 01:39:01 wiz Exp $
+.\"	$NetBSD: mincore.2,v 1.14 2002/02/08 01:28:19 ross Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -42,7 +42,7 @@
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
-.Fd #include <sys/mman.h>
+.Fd #include \*[Lt]sys/mman.h\*[Gt]
 .Ft int
 .Fn mincore "void *addr" "size_t len" "char *vec"
 .Sh DESCRIPTION

@@ -1,4 +1,4 @@
-.\"	$NetBSD: madvise.2,v 1.15 2001/09/16 01:39:01 wiz Exp $
+.\"	$NetBSD: madvise.2,v 1.16 2002/02/08 01:28:19 ross Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -42,7 +42,7 @@
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
-.Fd #include <sys/mman.h>
+.Fd #include \*[Lt]sys/mman.h\*[Gt]
 .Ft int
 .Fn madvise "void *addr" "size_t len" "int behav"
 .Sh DESCRIPTION
@@ -52,7 +52,7 @@ system call
 allows a process that has knowledge of its memory behavior
 to describe it to the system.
 The known behaviors are given in
-.Pa <sys/mman.h> :
+.Pa \*[Lt]sys/mman.h\*[Gt] :
 .Bd -literal
 #define	MADV_NORMAL	0	/* no further special treatment */
 #define	MADV_RANDOM	1	/* expect random page references */

@@ -1,4 +1,4 @@
-.\"	$NetBSD: mv.1,v 1.17 2001/12/20 20:01:55 wiz Exp $
+.\"	$NetBSD: mv.1,v 1.18 2002/02/08 01:21:58 ross Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -120,14 +120,14 @@ will remove the destination file, copy the source file to the
 destination, and then remove the source.
 The effect is roughly equivalent to:
 .Bd -literal -offset indent
-rm -f destination_path && \e
-\tcp -PRp source_file destination_path && \e
+rm -f destination_path \*[Am]\*[Am] \e
+\tcp -PRp source_file destination_path \*[Am]\*[Am] \e
 \trm -rf source_file
 .Ed
 .Sh EXIT STATUS
 The
 .Nm
-utility exits 0 on success, and >0 if an error occurs.
+utility exits 0 on success, and \*[Gt]0 if an error occurs.
 .Sh SEE ALSO
 .Xr cp 1 ,
 .Xr rename 2 ,

@@ -1,4 +1,4 @@
-.\"	$NetBSD: fsdb.8,v 1.12 2001/11/16 11:21:38 wiz Exp $
+.\"	$NetBSD: fsdb.8,v 1.13 2002/02/08 01:30:43 ross Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -52,7 +52,7 @@ opens
 (usually a raw disk partition) and runs a command loop
 allowing manipulation of the file system's inode data.  You are prompted
 to enter a command with
-.Dq "fsdb (inum X)>"
+.Dq "fsdb (inum X)\*[Gt]"
 where
 .Va X
 is the currently selected i-number.  The initial selected inode is the
@@ -210,7 +210,7 @@ or
 .Va atimensec
 field will be set to zero.
 .Pp
-.It Cm quit, Cm q, Cm exit, Em <EOF>
+.It Cm quit, Cm q, Cm exit, Em \*[Lt]EOF\*[Gt]
 Exit the program.
 .El
 .Sh SEE ALSO

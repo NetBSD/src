@@ -1,4 +1,4 @@
-.\"	$NetBSD: df.1,v 1.24 2001/12/20 20:04:46 wiz Exp $
+.\"	$NetBSD: df.1,v 1.25 2002/02/08 01:21:56 ross Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -119,14 +119,14 @@ option is specified without the
 options, the output will be preceded by the following header line,
 formatted to matche the data following it:
 .Bd -literal
-"Filesystem <blksize>-blocks Used Available Capacity Mounted on\\n"
+"Filesystem \*[Lt]blksize\*[Gt]-blocks Used Available Capacity Mounted on\\n"
 .Ed
 .Pp
 The header line is followed by data formatted as follows:
 .Bd -literal
-"%s %d %d %d %d%% %s\\n", <file system name>, <total space>,
-    <space used>, <space free>, <percentage used>,
-    <file system root>
+"%s %d %d %d %d%% %s\\n", \*[Lt]file system name\*[Gt], \*[Lt]total space\*[Gt],
+    \*[Lt]space used\*[Gt], \*[Lt]space free\*[Gt], \*[Lt]percentage used\*[Gt],
+    \*[Lt]file system root\*[Gt]
 .Ed
 .It Fl t Ar type
 Is used to indicate the actions should only be taken on

@@ -1,4 +1,4 @@
-.\"	$NetBSD: hosts_options.5,v 1.6 2002/01/15 02:54:31 wiz Exp $
+.\"	$NetBSD: hosts_options.5,v 1.7 2002/02/08 01:28:25 ross Exp $
 .\"
 .TH HOSTS_OPTIONS 5
 .SH NAME
@@ -20,7 +20,7 @@ characters within options should be protected with a backslash.
 .PP
 An option is of the form "keyword" or "keyword value". Options are
 processed in the specified order. Some options are subjected to
-%<letter> substitutions. For the sake of backwards compatibility with
+%\*[Lt]letter\*[Gt] substitutions. For the sake of backwards compatibility with
 earlier versions, an "=" is permitted between keyword and value.
 .SH LOGGING
 .IP "severity mail.info"
@@ -58,14 +58,14 @@ Notice the leading dot on the domain name patterns.
 .SH RUNNING OTHER COMMANDS
 .IP "spawn shell_command"
 Execute, in a child process, the specified shell command, after
-performing the %<letter> expansions described in the hosts_access(5)
+performing the %\*[Lt]letter\*[Gt] expansions described in the hosts_access(5)
 manual page.  The command is executed with stdin, stdout and stderr
 connected to the null device, so that it won\'t mess up the
 conversation with the client host. Example:
 .sp
 .nf
 .ti +3
-spawn (/some/where/safe_finger -l @%h | /usr/ucb/mail root) &
+spawn (/some/where/safe_finger -l @%h | /usr/ucb/mail root) \*[Am]
 .fi
 .sp
 executes, in a background child process, the shell command "safe_finger
@@ -79,7 +79,7 @@ package; it is a wrapper around the regular finger command that filters
 the data sent by the remote host.
 .IP "twist shell_command"
 Replace the current process by an instance of the specified shell
-command, after performing the %<letter> expansions described in the
+command, after performing the %\*[Lt]letter\*[Gt] expansions described in the
 hosts_access(5) manual page.  Stdin, stdout and stderr are connected to
 the client process. This option must appear at the end of a rule.
 .sp
@@ -129,7 +129,7 @@ value is taken.
 Look for a file in `/some/directory' with the same name as the daemon
 process (for example in.telnetd for the telnet service), and copy its
 contents to the client. Newline characters are replaced by
-carriage-return newline, and %<letter> sequences are expanded (see
+carriage-return newline, and %\*[Lt]letter\*[Gt] sequences are expanded (see
 the hosts_access(5) manual page).
 .sp
 The tcp wrappers source code distribution provides a sample makefile
@@ -142,7 +142,7 @@ Change the nice value of the process (default 10).  Specify a positive
 value to spend more CPU resources on other processes.
 .IP "setenv name value"
 Place a (name, value) pair into the process environment. The value is
-subjected to %<letter> expansions and may contain whitespace (but
+subjected to %\*[Lt]letter\*[Gt] expansions and may contain whitespace (but
 leading and trailing blanks are stripped off).
 .sp
 Warning: many network daemons reset their environment before spawning a

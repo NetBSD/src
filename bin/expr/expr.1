@@ -1,4 +1,4 @@
-.\"	$NetBSD: expr.1,v 1.18 2001/12/20 20:05:12 wiz Exp $
+.\"	$NetBSD: expr.1,v 1.19 2002/02/08 01:21:57 ross Exp $
 .\"
 .\" Written by J.T. Conklin <jtc@netbsd.org>.
 .\" Public domain.
@@ -33,12 +33,12 @@ Returns the evaluation of
 if it is neither an empty string nor zero;
 otherwise, returns the evaluation of
 .Ar expr2 .
-.It Ar expr1 Li & Ar expr2
+.It Ar expr1 Li \*[Am] Ar expr2
 Returns the evaluation of
 .Ar expr1
 if neither expression evaluates to an empty string or zero;
 otherwise, returns zero.
-.It Ar expr1 Li "{=, >, >=, <, <=, !=}" Ar expr2
+.It Ar expr1 Li "{=, \*[Gt], \*[Ge], \*[Lt], \*[Le], !=}" Ar expr2
 Returns the results of integer comparison if both arguments are integers;
 otherwise, returns the results of string comparison using the locale-specific
 collation sequence.
@@ -91,7 +91,7 @@ and
 .It
 compare operators
 .It
-.Dq &
+.Dq \*[Am]
 .It
 .Dq \Z'\*[tty-rn]'|
 .El
@@ -106,7 +106,7 @@ the expression is neither an empty string nor 0.
 the expression is an empty string or 0.
 .It 2
 the expression is invalid.
-.It >2
+.It \*[Gt]2
 an error occurred (such as memory allocation failure).
 .El
 .Sh EXAMPLES
@@ -116,8 +116,8 @@ The following example adds one to the variable a.
 .Dl a=`expr $a + 1`
 .It
 The following example returns zero, due to deduction having higher precendence
-than '&' operator.
-.Dl expr 1 '&' 1 - 1
+than '\*[Am]' operator.
+.Dl expr 1 '\*[Am]' 1 - 1
 .It
 The following example returns the filename portion of a pathname stored
 in variable a.

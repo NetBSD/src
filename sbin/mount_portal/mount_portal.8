@@ -1,4 +1,4 @@
-.\"	$NetBSD: mount_portal.8,v 1.14 2001/11/16 12:01:22 wiz Exp $
+.\"	$NetBSD: mount_portal.8,v 1.15 2002/02/08 01:30:44 ross Exp $
 .\"
 .\" Copyright (c) 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -165,8 +165,8 @@ echo/		rfilter	echo/	echo %s
 echo_nostrip/	rfilter	nostrip	echo %s
 echo_noslash    rfilter echo_noslash    echo %s
 gzcat/		rfilter gzcat/ gzcat %s
-gzip/		wfilter	gzip/	gzip > %s
-gzip9/		wfilter	gzip9/	gzip -9 > %s
+gzip/		wfilter	gzip/	gzip \*[Gt] %s
+gzip9/		wfilter	gzip9/	gzip -9 \*[Gt] %s
 ftp/		rfilter	ftp/	ftp -Vo - %s
 ftp://		rfilter	nostrip	ftp -Vo - %s
 http://		rfilter	nostrip	ftp -Vo - %s

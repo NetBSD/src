@@ -1,4 +1,4 @@
-.\"	$NetBSD: atc.6,v 1.11 2001/06/05 11:14:30 wiz Exp $
+.\"	$NetBSD: atc.6,v 1.12 2002/02/08 01:25:12 ross Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -140,7 +140,7 @@ represented by a upper case letter, jets by a lower case letter.
 .Pp
 Airports are shown as a number and some indication of the direction
 planes must be going to land at the airport.
-On ascii terminals, this is one of `^', `>', `<', and `v', to indicate
+On ascii terminals, this is one of `^', `\*[Gt]', `\*[Lt]', and `v', to indicate
 north (0 degrees), east (90), west (270) and south (180), respectively.
 The planes will also
 take off in this direction.
@@ -220,7 +220,7 @@ command.
 In the following tables, the syntax
 .Em [0\-9]
 means any single digit, and
-.Em <dir>
+.Em \*[Lt]dir\*[Gt]
 refers to a direction, given by the keys around the `s' key: ``wedcxzaq''.
 In absolute references, `q' refers to North-West or 315 degrees, and `w'
 refers to North, or 0 degrees.
@@ -267,20 +267,20 @@ Right: Circle clockwise (default).
 .It "t [ l-r+LR ] [ dir ] or tt [ abe* ]" Em number
 Turn: Change direction.
 .Bl -tag -width "aaaaaaaaaa" -compact
-.It "t<dir>"
+.It "t\*[Lt]dir\*[Gt]"
 Turn to direction: Turn to the absolute compass heading given.
 The shortest turn will be taken.
 .It "tl [ dir ]"
 Left: Turn counterclockwise: 45 degrees by default, or the amount
-specified in <dir> (not
+specified in \*[Lt]dir\*[Gt] (not
 .Em to
-<dir>.) `w' (0 degrees) is no turn. `e' is 45 degrees; `q' gives -45
+\*[Lt]dir\*[Gt].) `w' (0 degrees) is no turn. `e' is 45 degrees; `q' gives -45
 degrees counterclockwise, that is, 45 degrees clockwise.
 .It "t- [ dir ]"
 Same as left.
 .It "tr [ dir ]"
 Right: Turn clockwise, 45 degrees by default, or the amount specified
-in <dir>.
+in \*[Lt]dir\*[Gt].
 .It "t+ [ dir ]"
 Same as right.
 .It tL

@@ -1,4 +1,4 @@
-.\"	$NetBSD: chio.1,v 1.12 2002/01/21 18:08:53 wiz Exp $
+.\"	$NetBSD: chio.1,v 1.13 2002/02/08 01:21:55 ross Exp $
 .\"
 .\" Copyright (c) 1996, 1998, 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -91,45 +91,45 @@ and the EU would be
 .Sh SUPPORTED COMMANDS
 .Nm
 .Ic move
-.Ar <from ET> <from EU> <to ET> <to EU>
+.Ar \*[Lt]from ET\*[Gt] \*[Lt]from EU\*[Gt] \*[Lt]to ET\*[Gt] \*[Lt]to EU\*[Gt]
 .Op Ar inv
 .Pp
 Moves the media unit from
-.Pa <from ET/EU>
+.Pa \*[Lt]from ET/EU\*[Gt]
 to
-.Pa <to ET/EU> .
+.Pa \*[Lt]to ET/EU\*[Gt] .
 If the optional modifier
 .Pa inv
 is specified, the media unit will be inverted before insertion.
 .Pp
 .Nm
 .Ic exchange
-.Ar <src ET> <src EU> <dst1 ET> <dst1 EU>
-.Op Ar <dst2 ET> <dst2 ET>
+.Ar \*[Lt]src ET\*[Gt] \*[Lt]src EU\*[Gt] \*[Lt]dst1 ET\*[Gt] \*[Lt]dst1 EU\*[Gt]
+.Op Ar \*[Lt]dst2 ET\*[Gt] \*[Lt]dst2 ET\*[Gt]
 .Op Ar inv1
 .Op Ar inv2
 .Pp
 Performs a media unit exchange operation.  The media unit in
-.Pa <src ET/EU>
+.Pa \*[Lt]src ET/EU\*[Gt]
 is moved to
-.Pa <dst1 ET/EU>
+.Pa \*[Lt]dst1 ET/EU\*[Gt]
 and the media unit previously in
-.Pa <dst1 ET/EU>
+.Pa \*[Lt]dst1 ET/EU\*[Gt]
 is moved to
-.Pa <dst2 ET/EU> .
+.Pa \*[Lt]dst2 ET/EU\*[Gt] .
 In the case of a simple exchange,
-.Pa <dst2 ET/EU>
+.Pa \*[Lt]dst2 ET/EU\*[Gt]
 is omitted and the values
-.Pa <src ET/EU>
+.Pa \*[Lt]src ET/EU\*[Gt]
 are used in their place.
 The optional modifiers
 .Pa inv1
 and
 .Pa inv2
 specify whether the media units are to be inverted before insertion into
-.Pa <dst1 ET/EU>
+.Pa \*[Lt]dst1 ET/EU\*[Gt]
 and
-.Pa <dst2 ET/EU>
+.Pa \*[Lt]dst2 ET/EU\*[Gt]
 respectively.
 .Pp
 Note that not all medium changers support the
@@ -139,11 +139,11 @@ multiple free pickers with transient storage.
 .Pp
 .Nm
 .Ic position
-.Ar <to ET> <to EU>
+.Ar \*[Lt]to ET\*[Gt] \*[Lt]to EU\*[Gt]
 .Op Ar inv
 .Pp
 Position the picker in front of the element described by
-.Pa <to ET/EU> .
+.Pa \*[Lt]to ET/EU\*[Gt] .
 If the optional modifier
 .Pa inv
 is specified, the media unit will be inverted before insertion.
@@ -163,20 +163,20 @@ Report which picker unit the changer is currently configured to use.
 .Pp
 .Nm
 .Ic setpicker
-.Ar <unit>
+.Ar \*[Lt]unit\*[Gt]
 .Pp
 Configure the changer to use picker
-.Pa <unit> .
+.Pa \*[Lt]unit\*[Gt] .
 .Pp
 .Nm
 .Ic status
-.Oo Ar <type> Oo unit Oo count Oc Oc Oc
+.Oo Ar \*[Lt]type\*[Gt] Oo unit Oo count Oc Oc Oc
 .Op Ar voltags
 .Pp
 Report the status of all elements in the changer.  If
-.Pa <type>
+.Pa \*[Lt]type\*[Gt]
 is specified, report the status of all elements of type
-.Pa <type> .
+.Pa \*[Lt]type\*[Gt] .
 .Pp
 The status bits are defined as follows:
 .Bl -tag -width indent
@@ -213,8 +213,8 @@ operation on the changer.
 .Pp
 .Nm
 .Ic cdlu
-.Ar <sub-command>
-.Ar <slot>
+.Ar \*[Lt]sub-command\*[Gt]
+.Ar \*[Lt]slot\*[Gt]
 .Pp
 This command is provided for controlling CD-ROM changer mechanisms which
 cannot use the standard changer control interface.  ATAPI CD-ROM changers

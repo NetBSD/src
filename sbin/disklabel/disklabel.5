@@ -1,4 +1,4 @@
-.\"	$NetBSD: disklabel.5,v 1.14 2001/11/16 11:29:09 wiz Exp $
+.\"	$NetBSD: disklabel.5,v 1.15 2002/02/08 01:30:43 ross Exp $
 .\"
 .\" Copyright (c) 1987, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -43,7 +43,7 @@
 .Nm disklabel
 .Nd disk pack label
 .Sh SYNOPSIS
-.Fd #include <sys/disklabel.h>
+.Fd #include \*[Lt]sys/disklabel.h\*[Gt]
 .Sh DESCRIPTION
 Each disk or disk pack on a system may contain a disk label
 which provides detailed information
@@ -119,15 +119,15 @@ is
  * label can describe and the number of the "whole disk" (raw)
  * paritition are machine dependent.
  */
-#include <machine/disklabel.h>
+#include \*[Lt]machine/disklabel.h\*[Gt]
 
 /*
  * The absolute maximum number of disk partitions allowed.
  * This is the maximum value of MAXPARTITIONS for which 'struct disklabel'
- * is <= DEV_BSIZE bytes long.  If MAXPARTITIONS is greater than this, beware.
+ * is \*[Le] DEV_BSIZE bytes long.  If MAXPARTITIONS is greater than this, beware.
  */
 #define MAXMAXPARTITIONS	22
-#if MAXPARTITIONS > MAXMAXPARTITIONS
+#if MAXPARTITIONS \*[Gt] MAXMAXPARTITIONS
 #warning beware: MAXPARTITIONS bigger than MAXMAXPARTITIONS
 #endif
 

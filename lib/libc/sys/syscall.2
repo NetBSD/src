@@ -1,4 +1,4 @@
-.\"	$NetBSD: syscall.2,v 1.10 2001/09/16 02:13:32 wiz Exp $
+.\"	$NetBSD: syscall.2,v 1.11 2002/02/08 01:28:23 ross Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -43,8 +43,8 @@
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
-.Fd #include <sys/syscall.h>
-.Fd #include <unistd.h>
+.Fd #include \*[Lt]sys/syscall.h\*[Gt]
+.Fd #include \*[Lt]unistd.h\*[Gt]
 .Ft int
 .Fn syscall "int number" "..."
 .Ft quad_t

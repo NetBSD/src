@@ -3,7 +3,7 @@
 .\"
 .\"	Written by John F. Woods <jfw@jfwhome.funhouse.com>
 .\"
-.\"	$NetBSD: tar.1,v 1.22 2002/02/06 19:24:52 wiz Exp $
+.\"	$NetBSD: tar.1,v 1.23 2002/02/08 01:26:52 ross Exp $
 .\"
 .Dd August 6, 1994
 .Os
@@ -412,7 +412,7 @@ which will add the files contained in
 onto the end of
 .Pa archive1.tar
 (note that this can't be done by simply typing
-.Dl cat archive2.tar >> archive1.tar
+.Dl cat archive2.tar \*[Gt]\*[Gt] archive1.tar
 because of the end-of-file block at the end of a tar archive).
 .Sh SEE ALSO
 .Xr bzip2 1 ,

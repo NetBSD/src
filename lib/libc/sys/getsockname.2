@@ -1,4 +1,4 @@
-.\"	$NetBSD: getsockname.2,v 1.15 2001/10/22 20:59:03 kleink Exp $
+.\"	$NetBSD: getsockname.2,v 1.16 2002/02/08 01:28:18 ross Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -42,7 +42,7 @@
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
-.Fd #include <sys/socket.h>
+.Fd #include \*[Lt]sys/socket.h\*[Gt]
 .Ft int
 .Fn getsockname "int s" "struct sockaddr * restrict name" "socklen_t * restrict namelen"
 .Sh DESCRIPTION

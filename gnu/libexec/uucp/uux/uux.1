@@ -1,4 +1,4 @@
-.\" $Id: uux.1,v 1.5 2001/04/06 14:06:03 wiz Exp $
+.\" $Id: uux.1,v 1.6 2002/02/08 01:26:49 ross Exp $
 .TH uux 1 "Taylor UUCP 1.06"
 .SH NAME
 uux \- Remote command execution over UUCP
@@ -50,7 +50,7 @@ used may contain exclamation points to indicate that they are on
 remote systems.  Note that the redirection characters must be quoted
 so that they are passed to
 .I uux
-rather than interpreted by the shell.  Append redirection (>>) does
+rather than interpreted by the shell.  Append redirection (\*[Gt]\*[Gt]) does
 not work.
 
 All specified files are gathered together into a single directory
@@ -59,7 +59,7 @@ must have a distinct base name.  For example,
 .br
 .in +0.5i
 .nf
-uux 'sys1!diff sys2!~user1/foo sys3!~user2/foo >!foo.diff'
+uux 'sys1!diff sys2!~user1/foo sys3!~user2/foo \*[Gt]!foo.diff'
 .fi
 .in -0.5i
 will fail because both files will be copied to sys1 and stored under
@@ -199,7 +199,7 @@ as standard input.  If a failure occurs, send a message using
 
 .br
 .nf
-uux 'diff -c sys1!~user1/file1 sys2!~user2/file2 >!file.diff'
+uux 'diff -c sys1!~user1/file1 sys2!~user2/file2 \*[Gt]!file.diff'
 .fi
 Fetch the two named files from system sys1 and system sys2 and execute
 .I diff

@@ -1,4 +1,4 @@
-.\"	$NetBSD: newfs.8,v 1.39 2002/01/04 10:47:49 lukem Exp $
+.\"	$NetBSD: newfs.8,v 1.40 2002/02/08 01:30:45 ross Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -144,11 +144,11 @@ The default size depends upon the size of the file system:
 .Bl -tag -width "file system size" -compact -offset indent
 .It Sy "file system size"
 .Ar block-size
-.It \&< 20 MB
+.It \&\*[Lt] 20 MB
 4 KB
-.It \&< 1024 MB
+.It \&\*[Lt] 1024 MB
 8 KB
-.It \&>\&= 1024 MB
+.It \&\*[Gt]\&= 1024 MB
 16 KB
 .El
 .It Fl c Ar cpg
@@ -188,11 +188,11 @@ The default size depends upon the size of the file system:
 .Bl -tag -width "file system size" -compact -offset indent
 .It Sy "file system size"
 .Ar frag-size
-.It \&< 20 MB
+.It \&\*[Lt] 20 MB
 0.5 KB
-.It \&< 1024 MB
+.It \&\*[Lt] 1024 MB
 1 KB
-.It \&>\&= 1024 MB
+.It \&\*[Gt]\&= 1024 MB
 2 KB
 .El
 .It Fl g Ar avgfilesize
@@ -210,11 +210,11 @@ bytes of data space:
 .Bl -tag -width "file system size" -compact -offset indent
 .It Sy "file system size"
 .Ar bytes-per-inode
-.It \&< 20 MB
+.It \&\*[Lt] 20 MB
 2 KB
-.It \&< 1024 MB
+.It \&\*[Lt] 1024 MB
 4 KB
-.It \&>\&= 1024 MB
+.It \&\*[Gt]\&= 1024 MB
 8 KB
 .El
 .It Fl m Ar free-space

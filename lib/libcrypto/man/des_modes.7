@@ -184,7 +184,7 @@ An error will affect the current and the following ciphertext blocks.
 .IX Subsection "Cipher Feedback Mode (CFB)"
 Normally, this is found as the function \fIalgorithm\fR\fI_cfb_encrypt()\fR.
 .Ip "\(bu" 2
-a number of bits (j) <= 64 are enciphered at a time.
+a number of bits (j) \*[Le] 64 are enciphered at a time.
 .Ip "\(bu" 2
 The \s-1CFB\s0 mode produces the same ciphertext whenever the same
 plaintext is encrypted using the same key and starting variable.
@@ -210,7 +210,7 @@ An error will affect the current and the following ciphertext variables.
 .IX Subsection "Output Feedback Mode (OFB)"
 Normally, this is found as the function \fIalgorithm\fR\fI_ofb_encrypt()\fR.
 .Ip "\(bu" 2
-a number of bits (j) <= 64 are enciphered at a time.
+a number of bits (j) \*[Le] 64 are enciphered at a time.
 .Ip "\(bu" 2
 The \s-1OFB\s0 mode produces the same ciphertext whenever the same
 plaintext enciphered using the same key and starting variable.  More

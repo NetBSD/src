@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)fork.2	6.5 (Berkeley) 3/10/91
-.\"	$NetBSD: i386_get_ldt.2,v 1.8 2001/07/04 17:15:07 kleink Exp $
+.\"	$NetBSD: i386_get_ldt.2,v 1.9 2002/02/08 01:28:13 ross Exp $
 .\"
 .Dd September 20, 1993
 .Dt I386_GET_LDT 2 i386
@@ -42,9 +42,9 @@
 .Sh LIBRARY
 .Lb libi386
 .Sh SYNOPSIS
-.Fd #include <sys/types.h>
-.Fd #include <machine/segments.h>
-.Fd #include <machine/sysarch.h>
+.Fd #include \*[Lt]sys/types.h\*[Gt]
+.Fd #include \*[Lt]machine/segments.h\*[Gt]
+.Fd #include \*[Lt]machine/sysarch.h\*[Gt]
 .Ft int
 .Fn i386_get_ldt "int start_sel" "union descriptor *descs" "int num_sels"
 .Ft int
@@ -67,7 +67,7 @@ will contain the descriptors to be set or returned
 The argument
 .Fa descs
 can be either segment_descriptor or gate_descriptor and are defined in
-.Fd <i386/segments.h> .
+.Fd \*[Lt]i386/segments.h\*[Gt] .
 These structures are defined by the architecure
 as disjoint bit-fields, so care must be taken in constructing them.
 .Sh RETURN VALUES

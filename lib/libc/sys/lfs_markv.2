@@ -1,4 +1,4 @@
-.\"	$NetBSD: lfs_markv.2,v 1.4 2001/09/16 02:13:29 wiz Exp $
+.\"	$NetBSD: lfs_markv.2,v 1.5 2002/02/08 01:28:18 ross Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -43,8 +43,8 @@
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
-.Fd #include <sys/types.h>
-.Fd #include <ufs/lfs/lfs.h>
+.Fd #include \*[Lt]sys/types.h\*[Gt]
+.Fd #include \*[Lt]ufs/lfs/lfs.h\*[Gt]
 .Ft int
 .Fn lfs_markv "fsid_t *fsidp" "BLOCK_INFO *blkiov" "int blkcnt"
 .Sh DESCRIPTION

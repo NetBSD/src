@@ -1,4 +1,4 @@
-.\"	$NetBSD: pax.1,v 1.30 2002/01/24 07:45:33 lukem Exp $
+.\"	$NetBSD: pax.1,v 1.31 2002/02/08 01:21:58 ross Exp $
 .\"
 .\" Copyright (c) 1992 Keith Muller.
 .\" Copyright (c) 1992, 1993
@@ -636,7 +636,7 @@ As in
 .Cm old
 is a basic regular expression and
 .Cm new
-can contain an ampersand (&), \\n (where n is a digit) back-references,
+can contain an ampersand (\*[Am]), \\n (where n is a digit) back-references,
 or subexpression matching.
 The
 .Cm old
@@ -661,7 +661,7 @@ The optional trailing
 will cause the final result of a successful substitution to be written to
 .Dv standard error
 in the following format:
-.Dl Ao "original pathname" Ac >> Ao "new pathname" Ac
+.Dl Ao "original pathname" Ac \*[Gt]\*[Gt] Ao "new pathname" Ac
 File or archive member names that substitute to the empty string
 are not selected and will be skipped.
 .It Fl t
@@ -699,7 +699,7 @@ For pathnames representing a hard link to a previous member of the archive,
 the output has the format:
 .Dl Ao "ls -l listing" Ac == Ao "link name" Ac
 For pathnames representing a symbolic link, the output has the format:
-.Dl Ao "ls -l listing" Ac => Ao "link name" Ac
+.Dl Ao "ls -l listing" Ac =\*[Gt] Ao "link name" Ac
 Where
 .Aq "ls -l listing"
 is the output format specified by the

@@ -1,4 +1,4 @@
-.\"	$NetBSD: mknod.8,v 1.20 2001/10/08 01:40:43 mycroft Exp $
+.\"	$NetBSD: mknod.8,v 1.21 2002/02/08 01:30:44 ross Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -97,7 +97,7 @@ check the file
 to see if the device is known, or check
 the system dependent device configuration file:
 .Bd -filled -offset indent
-.Dq Pa /usr/src/sys/arch/<arch>/<arch>/conf.c
+.Dq Pa /usr/src/sys/arch/\*[Lt]arch\*[Gt]/\*[Lt]arch\*[Gt]/conf.c
 .Ed
 .Pp
 .Po
