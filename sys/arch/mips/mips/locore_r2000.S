@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_r2000.S,v 1.35 1997/06/22 07:42:57 jonathan Exp $	*/
+/*	$NetBSD: locore_r2000.S,v 1.36 1997/06/23 21:45:05 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -826,7 +826,6 @@ NLEAF(mips1_TLBMissException)
 	mfc0	a1, MIPS_COP_0_EXC_PC
 	sw	a2, 16(sp)
 	sw	a3, 20(sp)
-	sw	sp, 24(sp)
 	move	a2, ra
 	jal	_C_LABEL(printf)
 	mfc0	a3, MIPS_COP_0_BAD_VADDR
@@ -834,6 +833,10 @@ NLEAF(mips1_TLBMissException)
 1:
 	.asciiz	"ktlbmiss: PC %x RA %x ADR %x\nSR %x CR %x SP %x\n"
 	.text
+
+	li	a0,0
+	jal	_C_LABEL(mips1_dump_tlb)
+	li	a1,3				# BDslot
 
 	la	sp, start - START_FRAME		# set sp to a valid place
 	PANIC("kernel stack overflow")
