@@ -1,6 +1,6 @@
-.\" $NetBSD: macros,v 1.4 1999/05/04 03:33:30 simonb Exp $
+.\" $NetBSD: macros,v 1.5 2000/10/05 08:54:04 lukem Exp $
 .\"
-.\" Copyright (c) 1999 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -105,10 +105,6 @@
 .
 .de Note)
 .	tag)
-..
-.
-.de Bdlit
-.	Bd -literal -offset indent
 ..
 .
 .de D2
