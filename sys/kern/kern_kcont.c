@@ -1,4 +1,4 @@
-/* $NetBSD: kern_kcont.c,v 1.6 2004/03/24 01:27:57 matt Exp $ */
+/* $NetBSD: kern_kcont.c,v 1.7 2004/03/24 10:01:46 pooka Exp $ */
 
 /*
  * Copyright 2003 Jonathan Stone.
@@ -37,7 +37,7 @@
 /*
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_kcont.c,v 1.6 2004/03/24 01:27:57 matt Exp $ ");
+__KERNEL_RCSID(0, "$NetBSD: kern_kcont.c,v 1.7 2004/03/24 10:01:46 pooka Exp $ ");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -81,7 +81,7 @@ static void *kc_si_softserial;
 #endif /* __HAVE_GENERIC_SOFT_INTERRUPTS */
 
 /*
- * Pool allocator strcuture.
+ * Pool allocator structure.
  */
 static struct pool kc_pool;
 
