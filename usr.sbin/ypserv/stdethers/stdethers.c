@@ -1,4 +1,4 @@
-/*	$NetBSD: stdethers.c,v 1.3 1997/07/18 21:57:08 thorpej Exp $	*/
+/*	$NetBSD: stdethers.c,v 1.4 1997/10/07 14:56:10 lukem Exp $	*/
 
 /*
  * Copyright (c) 1995 Mats O Jansson <moj@stacken.kth.se>
@@ -109,11 +109,7 @@ main(argc, argv)
 		line_no++;
 		len = strlen(data_line);
 
-		if (len > 1) {
-			if (data_line[0] == '#') {
-				continue;
-			}
-		} else
+		if (len <= 1 || data_line[0] == '#')
 			continue;
 
 		/*
