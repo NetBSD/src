@@ -1,4 +1,4 @@
-/*	$NetBSD: iso.c,v 1.14 1996/04/13 01:34:48 cgd Exp $	*/
+/*	$NetBSD: iso.c,v 1.14.4.1 1996/12/11 04:08:36 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -74,6 +74,7 @@ SOFTWARE.
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/errno.h>
+#include <sys/proc.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -444,13 +445,14 @@ iso_netof(isoa, buf)
  */
 /* ARGSUSED */
 int
-iso_control(so, cmd, data, ifp)
-	struct socket  *so;
-	u_long          cmd;
-	caddr_t         data;
+iso_control(so, cmd, data, ifp, p)
+	struct socket *so;
+	u_long cmd;
+	caddr_t data;
 	register struct ifnet *ifp;
+	struct proc *p;
 {
-	register struct iso_ifreq *ifr = (struct iso_ifreq *) data;
+	register struct ifreq *ifr = (struct ifreq *) data;
 	register struct iso_ifaddr *ia = 0;
 	struct iso_aliasreq *ifra = (struct iso_aliasreq *) data;
 	int             error, hostIsNew, maskIsNew;
@@ -465,21 +467,28 @@ iso_control(so, cmd, data, ifp)
 
 	switch (cmd) {
 
-	case SIOCAIFADDR_ISO:
-	case SIOCDIFADDR_ISO:
+	case SIOCAIFADDR:
+	case SIOCDIFADDR:
 		if (ifra->ifra_addr.siso_family == AF_ISO)
-			for (; ia; ia = ia->ia_list.tqe_next) {
+			for (; ia != 0; ia = ia->ia_list.tqe_next) {
 				if (ia->ia_ifp == ifp &&
-				SAME_ISOADDR(&ia->ia_addr, &ifra->ifra_addr))
+				    SAME_ISOADDR(&ia->ia_addr, &ifra->ifra_addr))
 					break;
 			}
-		if ((so->so_state & SS_PRIV) == 0)
+		if (cmd == SIOCDIFADDR && ia == 0)
+			return (EADDRNOTAVAIL);
+		/* FALLTHROUGH */
+#if 0
+	case SIOCSIFADDR:
+	case SIOCSIFNETMASK:
+	case SIOCSIFDSTADDR:
+#endif
+		if (p == 0 || (error = suser(p->p_ucred, &p->p_acflag)))
 			return (EPERM);
+
 		if (ifp == 0)
 			panic("iso_control");
 		if (ia == 0) {
-			if (cmd == SIOCDIFADDR_ISO)
-				return (EADDRNOTAVAIL);
 #ifdef TUBA
 			/* XXXXXX can't be done in the proto init routines */
 			if (tuba_tree == 0)
@@ -489,10 +498,10 @@ iso_control(so, cmd, data, ifp)
 			       M_IFADDR, M_WAITOK);
 			if (ia == 0)
 				return (ENOBUFS);
-			bzero((caddr_t) ia, sizeof(*ia));
+			bzero((caddr_t)ia, sizeof(*ia));
 			TAILQ_INSERT_TAIL(&iso_ifaddr, ia, ia_list);
-			TAILQ_INSERT_TAIL(&ifp->if_addrlist, (struct ifaddr *) ia,
-					  ifa_list);
+			TAILQ_INSERT_TAIL(&ifp->if_addrlist, (struct ifaddr *)ia,
+			    ifa_list);
 			ia->ia_ifa.ifa_addr = sisotosa(&ia->ia_addr);
 			ia->ia_ifa.ifa_dstaddr = sisotosa(&ia->ia_dstaddr);
 			ia->ia_ifa.ifa_netmask = sisotosa(&ia->ia_sockmask);
@@ -502,31 +511,31 @@ iso_control(so, cmd, data, ifp)
 		}
 		break;
 
-#define cmdbyte(x)	(((x) >> 8) & 0xff)
-	default:
-		if (cmdbyte(cmd) == 'a')
-			return (snpac_ioctl(so, cmd, data));
+	case SIOCGIFADDR:
+	case SIOCGIFNETMASK:
+	case SIOCGIFDSTADDR:
+	case SIOCGIFBRDADDR:
 		if (ia == 0)
 			return (EADDRNOTAVAIL);
 		break;
 	}
 	switch (cmd) {
 
-	case SIOCGIFADDR_ISO:
-		ifr->ifr_Addr = ia->ia_addr;
+	case SIOCGIFADDR:
+		*satosiso(&ifr->ifr_addr) = ia->ia_addr;
 		break;
 
-	case SIOCGIFDSTADDR_ISO:
+	case SIOCGIFDSTADDR:
 		if ((ifp->if_flags & IFF_POINTOPOINT) == 0)
 			return (EINVAL);
-		ifr->ifr_Addr = ia->ia_dstaddr;
+		*satosiso(&ifr->ifr_dstaddr) = ia->ia_dstaddr;
 		break;
 
-	case SIOCGIFNETMASK_ISO:
-		ifr->ifr_Addr = ia->ia_sockmask;
+	case SIOCGIFNETMASK:
+		*satosiso(&ifr->ifr_addr) = ia->ia_sockmask;
 		break;
 
-	case SIOCAIFADDR_ISO:
+	case SIOCAIFADDR:
 		maskIsNew = 0;
 		hostIsNew = 1;
 		error = 0;
@@ -549,24 +558,26 @@ iso_control(so, cmd, data, ifp)
 			maskIsNew = 1;	/* We lie; but the effect's the same */
 		}
 		if (ifra->ifra_addr.siso_family == AF_ISO &&
-		    (hostIsNew || maskIsNew)) {
+		    (hostIsNew || maskIsNew))
 			error = iso_ifinit(ifp, ia, &ifra->ifra_addr, 0);
-		}
 		if (ifra->ifra_snpaoffset)
 			ia->ia_snpaoffset = ifra->ifra_snpaoffset;
 		return (error);
 
-	case SIOCDIFADDR_ISO:
+	case SIOCDIFADDR:
 		iso_ifscrub(ifp, ia);
-		TAILQ_REMOVE(&ifp->if_addrlist, (struct ifaddr *) ia, ifa_list);
+		TAILQ_REMOVE(&ifp->if_addrlist, (struct ifaddr *)ia, ifa_list);
 		TAILQ_REMOVE(&iso_ifaddr, ia, ia_list);
 		IFAFREE((&ia->ia_ifa));
 		break;
 
+#define cmdbyte(x)	(((x) >> 8) & 0xff)
 	default:
+		if (cmdbyte(cmd) == 'a')
+			return (snpac_ioctl(so, cmd, data, p));
 		if (ifp == 0 || ifp->if_ioctl == 0)
 			return (EOPNOTSUPP);
-		return ((*ifp->if_ioctl) (ifp, cmd, data));
+		return ((*ifp->if_ioctl)(ifp, cmd, data));
 	}
 	return (0);
 }

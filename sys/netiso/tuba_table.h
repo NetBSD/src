@@ -1,4 +1,4 @@
-/*	$NetBSD: tuba_table.h,v 1.4 1996/02/13 22:12:37 christos Exp $	*/
+/*	$NetBSD: tuba_table.h,v 1.4.4.1 1996/12/11 04:08:48 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -84,6 +84,6 @@ int tuba_lookup __P((struct sockaddr_iso *, int ));
 
 /* tuba_usrreq.c */
 int tuba_usrreq __P((struct socket *, int, struct mbuf *, struct mbuf *,
-		     struct mbuf *));
+		     struct mbuf *, struct proc *));
 int tuba_ctloutput __P((int, struct socket *, int, int , struct mbuf **));
 #endif

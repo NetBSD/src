@@ -1,4 +1,4 @@
-/*	$NetBSD: cltp_var.h,v 1.7 1996/02/13 22:09:03 christos Exp $	*/
+/*	$NetBSD: cltp_var.h,v 1.7.4.1 1996/12/11 04:08:30 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -61,5 +61,5 @@ void cltp_notify __P((struct isopcb *));
 void cltp_ctlinput __P((int, struct sockaddr *, void *));
 int cltp_output __P((struct mbuf *, ...));
 int cltp_usrreq __P((struct socket *, int, struct mbuf *, struct mbuf *,
-		     struct mbuf *));
+		     struct mbuf *, struct proc *));
 #endif

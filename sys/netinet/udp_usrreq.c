@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.29.2.1 1996/11/10 21:57:55 thorpej Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.29.2.2 1996/12/11 04:01:12 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -76,7 +76,6 @@ int	udpcksum = 0;		/* XXX */
 
 struct	sockaddr_in udp_in = { sizeof(udp_in), AF_INET };
 
-static	void udp_detach __P((struct inpcb *));
 static	void udp_notify __P((struct inpcb *, int));
 static	struct mbuf *udp_saveopt __P((caddr_t, int, int));
 
@@ -414,43 +413,15 @@ udp_output(m, va_alist)
 #endif
 {
 	register struct inpcb *inp;
-	struct mbuf *addr, *control;
 	register struct udpiphdr *ui;
 	register int len = m->m_pkthdr.len;
-	struct in_addr laddr;
-	int s = 0, error = 0;
+	int error = 0;
 	va_list ap;
 
 	va_start(ap, m);
 	inp = va_arg(ap, struct inpcb *);
-	addr = va_arg(ap, struct mbuf *);
-	control = va_arg(ap, struct mbuf *);
 	va_end(ap);
 
-	if (control)
-		m_freem(control);		/* XXX */
-
-	if (addr) {
-		laddr = inp->inp_laddr;
-		if (inp->inp_faddr.s_addr != INADDR_ANY) {
-			error = EISCONN;
-			goto release;
-		}
-		/*
-		 * Must block input while temporarily connected.
-		 */
-		s = splsoftnet();
-		error = in_pcbconnect(inp, addr);
-		if (error) {
-			splx(s);
-			goto release;
-		}
-	} else {
-		if (inp->inp_faddr.s_addr == INADDR_ANY) {
-			error = ENOTCONN;
-			goto release;
-		}
-	}
 	/*
 	 * Calculate data length and get a mbuf
 	 * for UDP and IP headers.
@@ -496,16 +467,9 @@ udp_output(m, va_alist)
 	((struct ip *)ui)->ip_ttl = inp->inp_ip.ip_ttl;	/* XXX */
 	((struct ip *)ui)->ip_tos = inp->inp_ip.ip_tos;	/* XXX */
 	udpstat.udps_opackets++;
-	error = ip_output(m, inp->inp_options, &inp->inp_route,
+	return (ip_output(m, inp->inp_options, &inp->inp_route,
 	    inp->inp_socket->so_options & (SO_DONTROUTE | SO_BROADCAST),
-	    inp->inp_moptions);
-
-	if (addr) {
-		in_pcbdisconnect(inp);
-		inp->inp_laddr = laddr;
-		splx(s);
-	}
-	return (error);
+	    inp->inp_moptions));
 
 release:
 	m_freem(m);
@@ -518,22 +482,31 @@ u_long	udp_recvspace = 40 * (1024 + sizeof(struct sockaddr_in));
 
 /*ARGSUSED*/
 int
-udp_usrreq(so, req, m, addr, control)
+udp_usrreq(so, req, m, nam, control, p)
 	struct socket *so;
 	int req;
-	struct mbuf *m, *addr, *control;
+	struct mbuf *m, *nam, *control;
+	struct proc *p;
 {
-	struct inpcb *inp = sotoinpcb(so);
-	int error = 0;
+	register struct inpcb *inp;
 	int s;
+	register int error = 0;
 
 	if (req == PRU_CONTROL)
-		return (in_control(so, (long)m, (caddr_t)addr,
-			(struct ifnet *)control));
-	if (inp == NULL && req != PRU_ATTACH) {
+		return (in_control(so, (long)m, (caddr_t)nam,
+		    (struct ifnet *)control, p));
+
+	s = splsoftnet();
+	inp = sotoinpcb(so);
+#ifdef DIAGNOSTIC
+	if (req != PRU_SEND && req != PRU_SENDOOB && control)
+		panic("udp_usrreq: unexpected control mbuf");
+#endif
+	if (inp == 0 && req != PRU_ATTACH) {
 		error = EINVAL;
 		goto release;
 	}
+
 	/*
 	 * Note: need to block udp_input while changing
 	 * the udp pcb queue and/or pcb addresses.
@@ -541,29 +514,28 @@ udp_usrreq(so, req, m, addr, control)
 	switch (req) {
 
 	case PRU_ATTACH:
-		if (inp != NULL) {
-			error = EINVAL;
+		if (inp != 0) {
+			error = EISCONN;
 			break;
 		}
-		s = splsoftnet();
+		if (so->so_snd.sb_hiwat == 0 || so->so_rcv.sb_hiwat == 0) {
+			error = soreserve(so, udp_sendspace, udp_recvspace);
+			if (error)
+				break;
+		}
 		error = in_pcballoc(so, &udbtable);
-		splx(s);
 		if (error)
 			break;
-		error = soreserve(so, udp_sendspace, udp_recvspace);
-		if (error)
-			break;
-		((struct inpcb *) so->so_pcb)->inp_ip.ip_ttl = ip_defttl;
+		inp = sotoinpcb(so);
+		inp->inp_ip.ip_ttl = ip_defttl;
 		break;
 
 	case PRU_DETACH:
-		udp_detach(inp);
+		in_pcbdetach(inp);
 		break;
 
 	case PRU_BIND:
-		s = splsoftnet();
-		error = in_pcbbind(inp, addr);
-		splx(s);
+		error = in_pcbbind(inp, nam, p);
 		break;
 
 	case PRU_LISTEN:
@@ -571,97 +543,99 @@ udp_usrreq(so, req, m, addr, control)
 		break;
 
 	case PRU_CONNECT:
-		if (inp->inp_faddr.s_addr != INADDR_ANY) {
-			error = EISCONN;
+		error = in_pcbconnect(inp, nam);
+		if (error)
 			break;
-		}
-		s = splsoftnet();
-		error = in_pcbconnect(inp, addr);
-		splx(s);
-		if (error == 0)
-			soisconnected(so);
+		soisconnected(so);
 		break;
 
 	case PRU_CONNECT2:
 		error = EOPNOTSUPP;
 		break;
 
-	case PRU_ACCEPT:
-		error = EOPNOTSUPP;
-		break;
-
 	case PRU_DISCONNECT:
-		if (inp->inp_faddr.s_addr == INADDR_ANY) {
-			error = ENOTCONN;
-			break;
-		}
-		s = splsoftnet();
+		/*soisdisconnected(so);*/
+		so->so_state &= ~SS_ISCONNECTED;	/* XXX */
 		in_pcbdisconnect(inp);
-		inp->inp_laddr.s_addr = INADDR_ANY;
-		splx(s);
-		so->so_state &= ~SS_ISCONNECTED;		/* XXX */
+		inp->inp_laddr.s_addr = INADDR_ANY;	/* XXX */
 		break;
 
 	case PRU_SHUTDOWN:
 		socantsendmore(so);
 		break;
 
+	case PRU_RCVD:
+		error = EOPNOTSUPP;
+		break;
+
 	case PRU_SEND:
-		return (udp_output(m, inp, addr, control));
+		if (control && control->m_len) {
+			m_freem(control);
+			m_freem(m);
+			error = EINVAL;
+			break;
+		}
+	{
+		struct in_addr laddr;
 
-	case PRU_ABORT:
-		soisdisconnected(so);
-		udp_detach(inp);
-		break;
-
-	case PRU_SOCKADDR:
-		in_setsockaddr(inp, addr);
-		break;
-
-	case PRU_PEERADDR:
-		in_setpeeraddr(inp, addr);
+		if (nam) {
+			laddr = inp->inp_laddr;
+			if ((so->so_state & SS_ISCONNECTED) != 0) {
+				error = EISCONN;
+				goto die;
+			}
+			error = in_pcbconnect(inp, nam);
+			if (error) {
+			die:
+				m_freem(m);
+				break;
+			}
+		} else {
+			if ((so->so_state & SS_ISCONNECTED) == 0) {
+				error = ENOTCONN;
+				goto die;
+			}
+		}
+		error = udp_output(m, inp);
+		if (nam) {
+			in_pcbdisconnect(inp);
+			inp->inp_laddr = laddr;
+		}
+	}
 		break;
 
 	case PRU_SENSE:
 		/*
 		 * stat: don't bother with a blocksize.
 		 */
+		splx(s);
 		return (0);
 
-	case PRU_SENDOOB:
-	case PRU_FASTTIMO:
-	case PRU_SLOWTIMO:
-	case PRU_PROTORCV:
-	case PRU_PROTOSEND:
+	case PRU_RCVOOB:
 		error =  EOPNOTSUPP;
 		break;
 
-	case PRU_RCVD:
-	case PRU_RCVOOB:
-		return (EOPNOTSUPP);	/* do not free mbuf's */
+	case PRU_SENDOOB:
+		m_freem(control);
+		m_freem(m);
+		error =  EOPNOTSUPP;
+		break;
+
+	case PRU_SOCKADDR:
+		in_setsockaddr(inp, nam);
+		break;
+
+	case PRU_PEERADDR:
+		in_setpeeraddr(inp, nam);
+		break;
 
 	default:
 		panic("udp_usrreq");
 	}
 
 release:
-	if (control) {
-		printf("udp control data unexpectedly retained\n");
-		m_freem(control);
-	}
-	if (m)
-		m_freem(m);
-	return (error);
-}
-
-static void
-udp_detach(inp)
-	struct inpcb *inp;
-{
-	int s = splsoftnet();
-
-	in_pcbdetach(inp);
 	splx(s);
+	return (error);
 }
 
 /*

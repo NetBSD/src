@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_var.h,v 1.1 1996/02/13 22:12:29 christos Exp $	*/
+/*	$NetBSD: tp_var.h,v 1.1.4.1 1996/12/11 04:08:46 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Christos Zoulas.  All rights reserved.
@@ -120,7 +120,7 @@ int tp_set_npcb __P((struct tp_pcb *));
 int tp_attach   __P((struct socket *, long));
 void tp_detach  __P((struct tp_pcb *));
 int tp_tselinuse __P((int, caddr_t, struct sockaddr_iso *, int));
-int tp_pcbbind  __P((void *, struct mbuf *));
+int tp_pcbbind  __P((void *, struct mbuf *, struct proc *));
 
 /* tp_subr.c */
 int tp_goodXack __P((struct tp_pcb *, SeqNum));
@@ -173,7 +173,7 @@ int tp_rcvoob   __P((struct tp_pcb *, struct socket *, struct mbuf *,
 		     int *, int));
 int tp_sendoob  __P((struct tp_pcb *, struct socket *, struct mbuf *, int *));
 int tp_usrreq   __P((struct socket *, int, struct mbuf *, struct mbuf *,
-		     struct mbuf *));
+		     struct mbuf *, struct proc *));
 void tp_ltrace   __P((struct socket *, struct uio *));
 int tp_confirm  __P((struct tp_pcb *));
 int tp_snd_control __P((struct mbuf *, struct socket *, struct mbuf **));

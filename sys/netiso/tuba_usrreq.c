@@ -1,4 +1,4 @@
-/*	$NetBSD: tuba_usrreq.c,v 1.8 1996/02/13 22:12:40 christos Exp $	*/
+/*	$NetBSD: tuba_usrreq.c,v 1.8.4.1 1996/12/11 04:08:49 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -61,6 +61,7 @@
 #include <netinet/tcpip.h>
 #include <netinet/tcp_debug.h>
 
+#include <netiso/tp_param.h>
 #include <netiso/argo_debug.h>
 #include <netiso/iso.h>
 #include <netiso/clnp.h>
@@ -81,10 +82,11 @@ extern struct isopcb tuba_isopcb;
  */
 /* ARGSUSED */
 int
-tuba_usrreq(so, req, m, nam, control)
-	struct socket  *so;
-	int             req;
-	struct mbuf    *m, *nam, *control;
+tuba_usrreq(so, req, m, nam, control, p)
+	struct socket *so;
+	int req;
+	struct mbuf *m, *nam, *control;
+	struct proc *p;
 {
 	register struct inpcb *inp;
 	register struct isopcb *isop = NULL;
@@ -95,8 +97,8 @@ tuba_usrreq(so, req, m, nam, control)
 	struct sockaddr_iso *siso;
 
 	if (req == PRU_CONTROL)
-		return (iso_control(so, (long) m, (caddr_t) nam,
-				    (struct ifnet *) control));
+		return (iso_control(so, (long)m, (caddr_t)nam,
+		    (struct ifnet *)control, p));
 
 	s = splsoftnet();
 	inp = sotoinpcb(so);
@@ -106,15 +108,15 @@ tuba_usrreq(so, req, m, nam, control)
 	 * structure will point at a subsidary (struct tcpcb).
 	 */
 	if (inp == 0 && req != PRU_ATTACH) {
-		splx(s);
-		return (EINVAL);/* XXX */
+		error = EINVAL;
+		goto release;
 	}
 	if (inp) {
 		tp = intotcpcb(inp);
 		if (tp == 0)
 			panic("tuba_usrreq");
 		ostate = tp->t_state;
-		isop = (struct isopcb *) tp->t_tuba_pcb;
+		isop = (struct isopcb *)tp->t_tuba_pcb;
 		if (isop == 0)
 			panic("tuba_usrreq 2");
 	} else
@@ -132,7 +134,7 @@ tuba_usrreq(so, req, m, nam, control)
 			break;
 		isop = (struct isopcb *) so->so_pcb;
 		so->so_pcb = 0;
-		if ((error = tcp_usrreq(so, req, m, nam, control)) != 0) {
+		if ((error = tcp_usrreq(so, req, m, nam, control, p)) != 0) {
 			isop->isop_socket = 0;
 			iso_pcbdetach(isop);
 		} else {
@@ -174,7 +176,7 @@ tuba_usrreq(so, req, m, nam, control)
 			error = EINVAL;
 			break;
 		}
-		if ((error = iso_pcbbind(isop, nam)) ||
+		if ((error = iso_pcbbind(isop, nam, p)) ||
 		    (siso = isop->isop_laddr) == 0)
 			break;
 		bcopy(TSEL(siso), &inp->inp_lport, 2);
@@ -183,20 +185,28 @@ tuba_usrreq(so, req, m, nam, control)
 			error = ENOBUFS;
 		break;
 
+	case PRU_LISTEN:
+		if (inp->inp_lport == 0) {
+			error = iso_pcbbind(isop, (struct mbuf *)0,
+			    (struct proc *)0);
+			if (error)
+				break;
+		}
+		bcopy(TSEL(isop->isop_laddr), &inp->inp_lport, 2);
+		tp->t_state = TCPS_LISTEN;
+		break;
+
 		/*
 		 * Prepare to accept connections.
 		 */
 	case PRU_CONNECT:
-	case PRU_LISTEN:
-		if (inp->inp_lport == 0 &&
-		    (error = iso_pcbbind(isop, NULL)))
-			break;
-		bcopy(TSEL(isop->isop_laddr), &inp->inp_lport, 2);
-		if (req == PRU_LISTEN) {
-			tp->t_state = TCPS_LISTEN;
-			break;
+		if (inp->inp_lport == 0) {
+			error = iso_pcbbind(isop, (struct mbuf *)0,
+			    (struct proc *)0);
+			if (error)
+				break;
 		}
-		/* FALLTHROUGH */
+		bcopy(TSEL(isop->isop_laddr), &inp->inp_lport, 2);
 		/*
 		 * Initiate connection to peer.
 		 * Create a template for use in transmissions on this connection.
@@ -204,7 +214,6 @@ tuba_usrreq(so, req, m, nam, control)
 		 * Start keep-alive timer, and seed output sequence space.
 		 * Send initial segment on connection.
 		 */
-		/* case PRU_CONNECT: */
 		if ((error = iso_pcbconnect(isop, nam)) != 0)
 			break;
 		if ((siso = isop->isop_laddr) && siso->siso_nlen > 1)
@@ -236,6 +245,10 @@ tuba_usrreq(so, req, m, nam, control)
 		tuba_refcnt(isop, 1);
 		break;
 
+	case PRU_CONNECT2:
+		error = EOPNOTSUPP;
+		break;
+
 		/*
 		 * Initiate disconnect from peer.
 		 * If connection never passed embryonic stage, just drop;
@@ -258,8 +271,7 @@ tuba_usrreq(so, req, m, nam, control)
 		 * of the peer, storing through addr.
 		 */
 	case PRU_ACCEPT:
-		bcopy((caddr_t) isop->isop_faddr, mtod(nam, caddr_t),
-		      nam->m_len = isop->isop_faddr->siso_len);
+		iso_getnetaddr(isop, nam, TP_FOREIGN);
 		break;
 
 		/*
@@ -273,6 +285,7 @@ tuba_usrreq(so, req, m, nam, control)
 		else
 			tuba_pcbdetach(isop);
 		break;
+
 		/*
 		 * Abort the TCP.
 		 */
@@ -283,24 +296,21 @@ tuba_usrreq(so, req, m, nam, control)
 
 
 	case PRU_SOCKADDR:
-		if (isop->isop_laddr)
-			bcopy((caddr_t) isop->isop_laddr, mtod(nam, caddr_t),
-			      nam->m_len = isop->isop_laddr->siso_len);
+		iso_getnetaddr(isop, nam, TP_LOCAL);
 		break;
 
 	case PRU_PEERADDR:
-		if (isop->isop_faddr)
-			bcopy((caddr_t) isop->isop_faddr, mtod(nam, caddr_t),
-			      nam->m_len = isop->isop_faddr->siso_len);
+		iso_getnetaddr(isop, nam, TP_FOREIGN);
 		break;
 
 	default:
-		error = tcp_usrreq(so, req, m, nam, control);
+		error = tcp_usrreq(so, req, m, nam, control, p);
 		goto notrace;
 	}
 	if (tp && (so->so_options & SO_DEBUG))
-		tcp_trace(TA_USER, ostate, tp, (struct tcpiphdr *) 0, req);
+		tcp_trace(TA_USER, ostate, tp, (struct tcpiphdr *)0, req);
 notrace:
+release:
 	splx(s);
 	return (error);
 }

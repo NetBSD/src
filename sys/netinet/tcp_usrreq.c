@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.20.4.1 1996/12/11 04:01:10 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -47,6 +47,7 @@
 #include <sys/stat.h>
 #include <sys/proc.h>
 #include <sys/ucred.h>
+
 #include <vm/vm.h>
 #include <sys/sysctl.h>
 
@@ -79,10 +80,11 @@ extern	char *tcpstates[];
  */
 /*ARGSUSED*/
 int
-tcp_usrreq(so, req, m, nam, control)
+tcp_usrreq(so, req, m, nam, control, p)
 	struct socket *so;
 	int req;
 	struct mbuf *m, *nam, *control;
+	struct proc *p;
 {
 	register struct inpcb *inp;
 	register struct tcpcb *tp = NULL;
@@ -92,24 +94,22 @@ tcp_usrreq(so, req, m, nam, control)
 
 	if (req == PRU_CONTROL)
 		return (in_control(so, (long)m, (caddr_t)nam,
-			(struct ifnet *)control));
-	if (control && control->m_len) {
-		m_freem(control);
-		if (m)
-			m_freem(m);
-		return (EINVAL);
-	}
+		    (struct ifnet *)control, p));
 
 	s = splsoftnet();
 	inp = sotoinpcb(so);
+#ifdef DIAGNOSTIC
+	if (req != PRU_SEND && req != PRU_SENDOOB && control)
+		panic("tcp_usrreq: unexpected control mbuf");
+#endif
 	/*
 	 * When a TCP is attached to a socket, then there will be
 	 * a (struct inpcb) pointed at by the socket, and this
 	 * structure will point at a subsidary (struct tcpcb).
 	 */
 	if (inp == 0 && req != PRU_ATTACH) {
-		splx(s);
-		return (EINVAL);		/* XXX */
+		error = EINVAL;
+		goto release;
 	}
 	if (inp) {
 		tp = intotcpcb(inp);
@@ -120,6 +120,7 @@ tcp_usrreq(so, req, m, nam, control)
 		ostate = tp->t_state;
 	} else
 		ostate = 0;
+
 	switch (req) {
 
 	/*
@@ -127,7 +128,7 @@ tcp_usrreq(so, req, m, nam, control)
 	 * and an internet control block.
 	 */
 	case PRU_ATTACH:
-		if (inp) {
+		if (inp != 0) {
 			error = EISCONN;
 			break;
 		}
@@ -157,19 +158,20 @@ tcp_usrreq(so, req, m, nam, control)
 	 * Give the socket an address.
 	 */
 	case PRU_BIND:
-		error = in_pcbbind(inp, nam);
-		if (error)
-			break;
+		error = in_pcbbind(inp, nam, p);
 		break;
 
 	/*
 	 * Prepare to accept connections.
 	 */
 	case PRU_LISTEN:
-		if (inp->inp_lport == 0)
-			error = in_pcbbind(inp, (struct mbuf *)0);
-		if (error == 0)
-			tp->t_state = TCPS_LISTEN;
+		if (inp->inp_lport == 0) {
+			error = in_pcbbind(inp, (struct mbuf *)0,
+			    (struct proc *)0);
+			if (error)
+				break;
+		}
+		tp->t_state = TCPS_LISTEN;
 		break;
 
 	/*
@@ -181,7 +183,8 @@ tcp_usrreq(so, req, m, nam, control)
 	 */
 	case PRU_CONNECT:
 		if (inp->inp_lport == 0) {
-			error = in_pcbbind(inp, (struct mbuf *)0);
+			error = in_pcbbind(inp, (struct mbuf *)0,
+			    (struct proc *)0);
 			if (error)
 				break;
 		}
@@ -260,6 +263,12 @@ tcp_usrreq(so, req, m, nam, control)
 	 * marker if URG set.  Possibly send more data.
 	 */
 	case PRU_SEND:
+		if (control && control->m_len) {
+			m_freem(control);
+			m_freem(m);
+			error = EINVAL;
+			break;
+		}
 		sbappend(&so->so_snd, m);
 		error = tcp_output(tp);
 		break;
@@ -272,11 +281,19 @@ tcp_usrreq(so, req, m, nam, control)
 		break;
 
 	case PRU_SENSE:
-		((struct stat *) m)->st_blksize = so->so_snd.sb_hiwat;
-		(void) splx(s);
+		/*
+		 * stat: don't bother with a blocksize.
+		 */
+		splx(s);
 		return (0);
 
 	case PRU_RCVOOB:
+		if (control && control->m_len) {
+			m_freem(control);
+			m_freem(m);
+			error = EINVAL;
+			break;
+		}
 		if ((so->so_oobmark == 0 &&
 		    (so->so_state & SS_RCVATMARK) == 0) ||
 		    so->so_options & SO_OOBINLINE ||
@@ -337,6 +354,8 @@ tcp_usrreq(so, req, m, nam, control)
 	}
 	if (tp && (so->so_options & SO_DEBUG))
 		tcp_trace(TA_USER, ostate, tp, (struct tcpiphdr *)0, req);
+
+release:
 	splx(s);
 	return (error);
 }

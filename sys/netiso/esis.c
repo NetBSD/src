@@ -1,4 +1,4 @@
-/*	$NetBSD: esis.c,v 1.14 1996/05/07 02:45:04 thorpej Exp $	*/
+/*	$NetBSD: esis.c,v 1.14.4.1 1996/12/11 04:08:32 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -73,6 +73,7 @@ SOFTWARE.
 #include <sys/socketvar.h>
 #include <sys/errno.h>
 #include <sys/kernel.h>
+#include <sys/proc.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -90,6 +91,7 @@ SOFTWARE.
 #include <netiso/argo_debug.h>
 
 #include <machine/stdarg.h>
+
 /*
  *	Global variables to esis implementation
  *
@@ -158,48 +160,75 @@ esis_init()
  */
 /* ARGSUSED */
 int
-esis_usrreq(so, req, m, nam, control)
-	struct socket  *so;	/* socket: used only to get to this code */
-	int             req;	/* request */
-	struct mbuf    *m;	/* data for request */
-	struct mbuf    *nam;	/* optional name */
-	struct mbuf    *control;/* optional control */
+esis_usrreq(so, req, m, nam, control, p)
+	struct socket *so;
+	int req;
+	struct mbuf *m, *nam, *control;
+	struct proc *p;
 {
-	struct rawcb   *rp = sotorawcb(so);
-	int             error = 0;
+	struct rawcb *rp;
+	int error = 0;
 
-	if ((so->so_state & SS_PRIV) == 0) {
-		error = EACCES;
-		goto release;
-	}
-	if (rp == NULL && req != PRU_ATTACH) {
+	if (req == PRU_CONTROL)
+		return (EOPNOTSUPP);
+
+	rp = sotorawcb(so);
+#ifdef DIAGNOSTIC
+	if (req != PRU_SEND && req != PRU_SENDOOB && control)
+		panic("esis_usrreq: unexpected control mbuf");
+#endif
+	if (rp == 0 && req != PRU_ATTACH) {
 		error = EINVAL;
 		goto release;
 	}
+
 	switch (req) {
+
 	case PRU_ATTACH:
-		if (rp != NULL) {
-			error = EINVAL;
+		if (rp != 0) {
+			error = EISCONN;
 			break;
 		}
-		MALLOC(rp, struct rawcb *, sizeof(*rp), M_PCB, M_WAITOK);
-		if ((so->so_pcb = rp) != NULL) {
-			bzero(so->so_pcb, sizeof(*rp));
-			LIST_INSERT_HEAD(&esis_pcb, rp, rcb_list);
-			rp->rcb_socket = so;
+		if (p == 0 || (error = suser(p->p_ucred, &p->p_acflag))) {
+			error = EACCES;
+			break;
+		}
+		if (so->so_snd.sb_hiwat == 0 || so->so_rcv.sb_hiwat == 0) {
 			error = soreserve(so, esis_sendspace, esis_recvspace);
-		} else
+			if (error)
+				break;
+		}
+		MALLOC(rp, struct rawcb *, sizeof(*rp), M_PCB, M_WAITOK);
+		if (rp == 0) {
 			error = ENOBUFS;
+			break;
+		}
+		bzero(rp, sizeof(*rp));
+		rp->rcb_socket = so;
+		LIST_INSERT_HEAD(&esis_pcb, rp, rcb_list);
+		so->so_pcb = rp;
 		break;
 
 	case PRU_SEND:
+		if (control && control->m_len) {
+			m_freem(control);
+			m_freem(m);
+			error = EINVAL;
+			break;
+		}
 		if (nam == NULL) {
+			m_freem(m);
 			error = EINVAL;
 			break;
 		}
 		/* error checking here */
 		error = isis_output(m, mtod(nam, struct sockaddr_dl *));
-		m = NULL;
+		break;
+
+	case PRU_SENDOOB:
+		m_freem(control);
+		m_freem(m);
+		error = EOPNOTSUPP;
 		break;
 
 	case PRU_DETACH:
@@ -210,21 +239,18 @@ esis_usrreq(so, req, m, nam, control)
 		socantsendmore(so);
 		break;
 
-	case PRU_ABORT:
-		soisdisconnected(so);
-		raw_detach(rp);
-		break;
-
 	case PRU_SENSE:
+		/*
+		 * stat: don't bother with a blocksize.
+		 */
 		return (0);
 
 	default:
-		return (EOPNOTSUPP);
+		error = EOPNOTSUPP;
+		break;
 	}
-release:
-	if (m != NULL)
-		m_freem(m);
 
+release:
 	return (error);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_pcb.h,v 1.9 1996/02/13 22:11:44 christos Exp $	*/
+/*	$NetBSD: tp_pcb.h,v 1.9.4.1 1996/12/11 04:08:44 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -140,7 +140,7 @@ struct nl_protosw {
 	int		(*nlp_mtu)		/* figures out mtu based on */
 				__P((void *));	/* nl used */
 	int		(*nlp_pcbbind)		/* bind to pcb for net level */
-				__P((void *, struct mbuf *));
+				__P((void *, struct mbuf *, struct proc *));
 	int		(*nlp_pcbconn)		/* connect for net level */
 				__P((void *, struct mbuf *));
 	void		(*nlp_pcbdisc)		/* disconnect net level */

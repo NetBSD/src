@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_var.h,v 1.16.4.1 1996/11/10 21:57:52 thorpej Exp $	*/
+/*	$NetBSD: ip_var.h,v 1.16.4.2 1996/12/11 04:01:07 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -186,5 +186,5 @@ void	 rip_init __P((void));
 void	 rip_input __P((struct mbuf *, ...));
 int	 rip_output __P((struct mbuf *, ...));
 int	 rip_usrreq __P((struct socket *,
-	    int, struct mbuf *, struct mbuf *, struct mbuf *));
+	    int, struct mbuf *, struct mbuf *, struct mbuf *, struct proc *));
 #endif
