@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.34 1999/06/06 21:16:23 christos Exp $	*/
+/*	$NetBSD: var.c,v 1.35 1999/09/12 00:17:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: var.c,v 1.34 1999/06/06 21:16:23 christos Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.35 1999/09/12 00:17:50 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.34 1999/06/06 21:16:23 christos Exp $");
+__RCSID("$NetBSD: var.c,v 1.35 1999/09/12 00:17:50 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -204,6 +204,8 @@ static char *VarQuote __P((char *));
 static char *VarModify __P((char *, Boolean (*)(char *, Boolean, Buffer,
 						ClientData),
 			    ClientData));
+static char *VarSort __P((char *));
+static int VarWordCompare __P((const void *, const void *));
 static int VarPrintVar __P((ClientData, ClientData));
 
 /*-
@@ -1278,6 +1280,62 @@ VarModify (str, modProc, datum)
     return (str);
 }
 
+
+static int
+VarWordCompare(a, b)
+	const void *a;
+	const void *b;
+{
+	int r = strcmp(*(char **)a, *(char **)b);
+	return r;
+}
+
+/*-
+ *-----------------------------------------------------------------------
+ * VarSort --
+ *	Sort the words in the string.
+ *
+ * Results:
+ *	A string containing the words sorted
+ *
+ * Side Effects:
+ *	None.
+ *
+ *-----------------------------------------------------------------------
+ */
+static char *
+VarSort (str)
+    char    	  *str;	    	    /* String whose words should be sorted */
+				    /* Function to use to modify them */
+{
+    Buffer  	  buf;	    	    /* Buffer for the new string */
+    char **av;			    /* word list [first word does not count] */
+    char *as;			    /* word list memory */
+    int ac, i;
+
+    buf = Buf_Init (0);
+
+    av = brk_string(str, &ac, FALSE, &as);
+
+    if (ac > 0)
+	qsort(av, ac, sizeof(char *), VarWordCompare);
+
+    for (i = 0; i < ac; i++) {
+	Buf_AddBytes(buf, strlen(av[i]), (Byte *) av[i]);
+	if (i != ac - 1)
+	    Buf_AddByte (buf, ' ');
+    }
+
+    free(as);
+    free(av);
+
+    Buf_AddByte (buf, '\0');
+    str = (char *)Buf_GetAll (buf, (int *)NULL);
+    Buf_Destroy (buf, FALSE);
+    return (str);
+}
+
+
 /*-
  *-----------------------------------------------------------------------
  * VarGetPattern --
@@ -1724,6 +1782,7 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
      *  	  	    	each word
      *  	  :R	    	Substitute the root of each word
      *  	  	    	(pathname minus the suffix).
+     *		  :O		Sort words in variable.
      *		  :?<true-value>:<false-value>
      *				If the variable evaluates to true, return
      *				true value, else return the second value.
@@ -1988,6 +2047,13 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 			break;
 		    }
 		    /*FALLTHRU*/
+		case 'O':
+		    if (tstr[1] == endc || tstr[1] == ':') {
+			newStr = VarSort (str);
+			cp = tstr + 1;
+			termc = *cp;
+			break;
+		    }
 #ifdef SUNSHCMD
 		case 's':
 		    if (tstr[1] == 'h' && (tstr[2] == endc || tstr[2] == ':')) {
