@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.5 1998/01/27 09:16:00 sakamoto Exp $	*/
+/*	$NetBSD: types.h,v 1.6 1998/02/23 03:21:40 mycroft Exp $	*/
 
 /*-
  * Copyright (C) 1995 Wolfgang Solfrank.
@@ -36,29 +36,35 @@
 
 #include <sys/cdefs.h>
 
+#if !defined(_ANSI_SOURCE) && !defined(_POSIX_SOURCE)
+typedef struct _physadr {
+	int r[1];
+} *physadr;
+
+typedef struct label_t {
+        int val[40]; /* double check this XXX */
+} label_t;
+#endif
+
+typedef	unsigned long	vm_offset_t;
+typedef	unsigned long	vm_size_t;
+
+/*
+ * Basic integral types.  Omit the typedef if
+ * not possible for a machine/compiler combination.
+ */
 #define	__BIT_TYPES_DEFINED__
-typedef	signed char		int8_t;
-typedef	unsigned char		u_int8_t;
-typedef	short			int16_t;
+typedef	__signed char		   int8_t;
+typedef	unsigned char		 u_int8_t;
+typedef	short			  int16_t;
 typedef	unsigned short		u_int16_t;
-typedef	int			int32_t;
+typedef	int			  int32_t;
 typedef	unsigned int		u_int32_t;
 /* LONGLONG */
-typedef	long long		int64_t;
+typedef	long long		  int64_t;
 /* LONGLONG */
 typedef	unsigned long long	u_int64_t;
 
 typedef	int32_t			register_t;
-
-typedef	unsigned long		vm_size_t;
-typedef	unsigned long		vm_offset_t;
-
-#if 0
-/* This is only to make some unneeded function declaration happy */
-#define	label_t	void
-#endif 0
-typedef struct label_t {
-        int val[40]; /* double check this XXX */
-} label_t;
 
 #endif	/* _MACHTYPES_H_ */
