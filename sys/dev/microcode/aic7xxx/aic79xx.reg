@@ -37,9 +37,9 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $FreeBSD: /repoman/r/ncvs/src/sys/dev/aic7xxx/aic79xx.reg,v 1.9 2003/02/27 23:23:16 gibbs Exp $
+ * $FreeBSD: src/sys/dev/aic7xxx/aic79xx.reg,v 1.10 2003/03/25 22:16:27 scottl Exp $
  */
-VERSION = "$NetBSD: aic79xx.reg,v 1.1 2003/04/19 19:26:10 fvdl Exp $"
+VERSION = "$NetBSD: aic79xx.reg,v 1.2 2003/04/20 11:19:33 fvdl Exp $"
 
 /*
  * This file is processed by the aic7xxx_asm utility for use in assembling
@@ -2545,10 +2545,10 @@ const	AHD_PRECOMP_CUTBACK_37	0x07
 const	AHD_SLEWRATE_MASK	0x78
 const	AHD_SLEWRATE_SHIFT	3
 /*
- * Rev A has only a single bit of slew adjustment.
- * Rev B has 4 bits.
+ * Rev A has only a single bit (high bit of field) of slew adjustment.
+ * Rev B has 4 bits.  The current default happens to be the same for both.
  */
-const	AHD_SLEWRATE_DEF_REVA	0x01
+const	AHD_SLEWRATE_DEF_REVA	0x08
 const	AHD_SLEWRATE_DEF_REVB	0x08
 
 /* Rev A does not have any amplitude setting. */
