@@ -1,4 +1,4 @@
-/*	$NetBSD: fs.h,v 1.5 1994/12/14 13:03:42 mycroft Exp $	*/
+/*	$NetBSD: fs.h,v 1.6 1995/04/12 21:21:02 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -228,7 +228,8 @@ struct fs {
 	int32_t	 *fs_maxcluster;	/* max cluster in each cyl group */
 	int32_t	 fs_cpc;		/* cyl per cycle in postbl */
 	int16_t	 fs_opostbl[16][8];	/* old rotation block list head */
-	int32_t	 fs_sparecon[50];	/* reserved for future constants */
+	int32_t	 fs_sparecon[49];	/* reserved for future constants */
+	time_t	 fs_fscktime;		/* last time fsck(8)ed */
 	int32_t	 fs_contigsumsize;	/* size of cluster summary array */ 
 	int32_t	 fs_maxsymlinklen;	/* max length of an internal symlink */
 	int32_t	 fs_inodefmt;		/* format of on-disk inodes */
@@ -252,6 +253,13 @@ struct fs {
 #define	FS_OKAY		0x7c269d38	/* superblock checksum */
 #define FS_42INODEFMT	-1		/* 4.2BSD inode format */
 #define FS_44INODEFMT	2		/* 4.4BSD inode format */
+
+/*
+ * Filesystem clean flags
+ */
+#define	FS_ISCLEAN	0x01
+#define	FS_WASCLEAN	0x02
+
 /*
  * Preference for optimization.
  */
