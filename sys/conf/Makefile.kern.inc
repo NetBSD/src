@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.51.2.1 2004/04/29 04:21:26 jmc Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.51.2.2 2004/07/15 19:26:25 he Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -29,6 +29,7 @@ OBJCOPY?=	objcopy
 OBJDUMP?=	objdump
 CSCOPE?=	cscope
 MKID?=		mkid
+UUDECODE?=	${TOOL_UUDECODE:Uuudecode}
 .MAKEOVERRIDES+=USETOOLS	# make sure proper value is propagated
 
 _MKMSG?=		@\#
