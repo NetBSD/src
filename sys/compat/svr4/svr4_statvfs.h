@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_statvfs.h,v 1.1 1995/01/08 21:31:39 christos Exp $	 */
+/*	$NetBSD: svr4_statvfs.h,v 1.2 1997/07/21 23:02:41 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -31,21 +31,38 @@
 #define	_SVR4_STATVFS_H_
 
 typedef struct svr4_statvfs {
-	u_long	f_bsize;
-	u_long	f_frsize;
-	u_long	f_blocks;
-	u_long	f_bfree;
-	u_long	f_bavail;
-	u_long	f_files;
-	u_long	f_ffree;
-	u_long	f_favail;
-	u_long	f_fsid;
-	char	f_basetype[16];
-	u_long	f_flag;
-	u_long	f_namemax;
-	char	f_fstr[32];
-	u_long	f_filler[16];
+	u_long			f_bsize;
+	u_long			f_frsize;
+	svr4_fsblkcnt_t		f_blocks;
+	svr4_fsblkcnt_t		f_bfree;
+	svr4_fsblkcnt_t		f_bavail;
+	svr4_fsblkcnt_t		f_files;
+	svr4_fsblkcnt_t		f_ffree;
+	svr4_fsblkcnt_t		f_favail;
+	u_long			f_fsid;
+	char			f_basetype[16];
+	u_long			f_flag;
+	u_long			f_namemax;
+	char			f_fstr[32];
+	u_long			f_filler[16];
 } svr4_statvfs_t;
+
+typedef struct svr4_statvfs64 {
+	u_long			f_bsize;
+	u_long			f_frsize;
+	svr4_fsblkcnt64_t	f_blocks;
+	svr4_fsblkcnt64_t	f_bfree;
+	svr4_fsblkcnt64_t	f_bavail;
+	svr4_fsblkcnt64_t	f_files;
+	svr4_fsblkcnt64_t	f_ffree;
+	svr4_fsblkcnt64_t	f_favail;
+	u_long			f_fsid;
+	char			f_basetype[16];
+	u_long			f_flag;
+	u_long			f_namemax;
+	char			f_fstr[32];
+	u_long			f_filler[16];
+} svr4_statvfs64_t;
 
 #define	SVR4_ST_RDONLY	0x01
 #define	SVR4_ST_NOSUID	0x02

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_types.h,v 1.7 1995/10/14 20:25:04 christos Exp $	 */
+/*	$NetBSD: svr4_types.h,v 1.8 1997/07/21 23:02:46 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -30,29 +30,36 @@
 #ifndef	_SVR4_TYPES_H_
 #define	_SVR4_TYPES_H_
 
-typedef long    svr4_off_t;
-typedef u_long  svr4_dev_t;
-typedef u_long  svr4_ino_t;
-typedef u_long  svr4_mode_t;
-typedef u_long  svr4_nlink_t;
-typedef long    svr4_uid_t;
-typedef long    svr4_gid_t;
-typedef long    svr4_daddr_t;
-typedef long    svr4_pid_t;
-typedef long    svr4_time_t;
-typedef char   *svr4_caddr_t;
-typedef u_int   svr4_size_t;
+typedef u_quad_t	 svr4_ino64_t;
+typedef quad_t		 svr4_off64_t;
+typedef quad_t		 svr4_blkcnt64_t;
+typedef u_quad_t	 svr4_fsblkcnt64_t;
 
-typedef short   svr4_o_dev_t;
-typedef short   svr4_o_pid_t;
-typedef u_short svr4_o_ino_t;
-typedef u_short svr4_o_mode_t;
-typedef short   svr4_o_nlink_t;
-typedef u_short svr4_o_uid_t;
-typedef u_short svr4_o_gid_t;
-typedef long	svr4_clock_t;
-typedef int	svr4_key_t;
+typedef long  		 svr4_off_t;
+typedef u_long		 svr4_dev_t;
+typedef u_long		 svr4_ino_t;
+typedef u_long		 svr4_mode_t;
+typedef u_long		 svr4_nlink_t;
+typedef long		 svr4_uid_t;
+typedef long		 svr4_gid_t;
+typedef long		 svr4_daddr_t;
+typedef long		 svr4_pid_t;
+typedef long		 svr4_time_t;
+typedef long		 svr4_blkcnt_t;
+typedef u_long		 svr4_fsblkcnt_t;
+typedef char		*svr4_caddr_t;
+typedef u_int		 svr4_size_t;
 
-typedef struct timespec svr4_timestruc_t;
+typedef short		 svr4_o_dev_t;
+typedef short		 svr4_o_pid_t;
+typedef u_short		 svr4_o_ino_t;
+typedef u_short		 svr4_o_mode_t;
+typedef short		 svr4_o_nlink_t;
+typedef u_short		 svr4_o_uid_t;
+typedef u_short		 svr4_o_gid_t;
+typedef long		 svr4_clock_t;
+typedef int		 svr4_key_t;
+
+typedef struct timespec  svr4_timestruc_t;
 
 #endif /* !_SVR4_TYPES_H_ */

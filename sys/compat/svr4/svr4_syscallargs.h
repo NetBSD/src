@@ -319,6 +319,27 @@ struct svr4_sys_gettimeofday_args {
 	syscallarg(struct timeval *) tp;
 };
 
+struct svr4_sys_pread_args {
+	syscallarg(int) fd;
+	syscallarg(void *) buf;
+	syscallarg(size_t) nbyte;
+	syscallarg(svr4_off_t) off;
+};
+
+struct svr4_sys_pwrite_args {
+	syscallarg(int) fd;
+	syscallarg(const void *) buf;
+	syscallarg(size_t) nbyte;
+	syscallarg(svr4_off_t) off;
+};
+
+struct svr4_sys_llseek_args {
+	syscallarg(int) fd;
+	syscallarg(long) offset1;
+	syscallarg(long) offset2;
+	syscallarg(int) whence;
+};
+
 struct svr4_sys_acl_args {
 	syscallarg(char *) path;
 	syscallarg(int) cmd;
@@ -331,6 +352,87 @@ struct svr4_sys_facl_args {
 	syscallarg(int) cmd;
 	syscallarg(int) num;
 	syscallarg(struct svr4_aclent *) buf;
+};
+
+struct svr4_sys_getdents64_args {
+	syscallarg(int) fd;
+	syscallarg(struct svr4_dirent64 *) dp;
+	syscallarg(int) nbytes;
+};
+
+struct svr4_sys_mmap64_args {
+	syscallarg(svr4_caddr_t) addr;
+	syscallarg(svr4_size_t) len;
+	syscallarg(int) prot;
+	syscallarg(int) flags;
+	syscallarg(int) fd;
+	syscallarg(svr4_off64_t) pos;
+};
+
+struct svr4_sys_stat64_args {
+	syscallarg(char *) path;
+	syscallarg(struct svr4_stat64 *) sb;
+};
+
+struct svr4_sys_lstat64_args {
+	syscallarg(char *) path;
+	syscallarg(struct svr4_stat64 *) sb;
+};
+
+struct svr4_sys_fstat64_args {
+	syscallarg(int) fd;
+	syscallarg(struct svr4_stat64 *) sb;
+};
+
+struct svr4_sys_statvfs64_args {
+	syscallarg(char *) path;
+	syscallarg(struct svr4_statvfs64 *) fs;
+};
+
+struct svr4_sys_fstatvfs64_args {
+	syscallarg(int) fd;
+	syscallarg(struct svr4_statvfs64 *) fs;
+};
+
+struct svr4_sys_setrlimit64_args {
+	syscallarg(int) which;
+	syscallarg(struct rlimit *) rlp;
+};
+
+struct svr4_sys_getrlimit64_args {
+	syscallarg(int) which;
+	syscallarg(struct rlimit *) rlp;
+};
+
+struct svr4_sys_pread64_args {
+	syscallarg(int) fd;
+	syscallarg(void *) buf;
+	syscallarg(size_t) nbyte;
+	syscallarg(svr4_off64_t) off;
+};
+
+struct svr4_sys_pwrite64_args {
+	syscallarg(int) fd;
+	syscallarg(const void *) buf;
+	syscallarg(size_t) nbyte;
+	syscallarg(svr4_off64_t) off;
+};
+
+struct svr4_sys_creat64_args {
+	syscallarg(char *) path;
+	syscallarg(int) mode;
+};
+
+struct svr4_sys_open64_args {
+	syscallarg(char *) path;
+	syscallarg(int) flags;
+	syscallarg(int) mode;
+};
+
+struct svr4_sys_socket_args {
+	syscallarg(int) domain;
+	syscallarg(int) type;
+	syscallarg(int) protocol;
 };
 
 /*
@@ -448,7 +550,42 @@ int	svr4_sys_vhangup	__P((struct proc *, void *, register_t *));
 int	svr4_sys_gettimeofday	__P((struct proc *, void *, register_t *));
 int	sys_getitimer	__P((struct proc *, void *, register_t *));
 int	sys_setitimer	__P((struct proc *, void *, register_t *));
+int	svr4_sys_pread	__P((struct proc *, void *, register_t *));
+int	svr4_sys_pwrite	__P((struct proc *, void *, register_t *));
+int	svr4_sys_llseek	__P((struct proc *, void *, register_t *));
 int	svr4_sys_acl	__P((struct proc *, void *, register_t *));
 int	svr4_sys_facl	__P((struct proc *, void *, register_t *));
 int	sys_setreuid	__P((struct proc *, void *, register_t *));
 int	sys_setregid	__P((struct proc *, void *, register_t *));
+int	svr4_sys_getdents64	__P((struct proc *, void *, register_t *));
+int	svr4_sys_mmap64	__P((struct proc *, void *, register_t *));
+int	svr4_sys_stat64	__P((struct proc *, void *, register_t *));
+int	svr4_sys_lstat64	__P((struct proc *, void *, register_t *));
+int	svr4_sys_fstat64	__P((struct proc *, void *, register_t *));
+int	svr4_sys_statvfs64	__P((struct proc *, void *, register_t *));
+int	svr4_sys_fstatvfs64	__P((struct proc *, void *, register_t *));
+int	svr4_sys_setrlimit64	__P((struct proc *, void *, register_t *));
+int	svr4_sys_getrlimit64	__P((struct proc *, void *, register_t *));
+int	svr4_sys_pread64	__P((struct proc *, void *, register_t *));
+int	svr4_sys_pwrite64	__P((struct proc *, void *, register_t *));
+int	svr4_sys_creat64	__P((struct proc *, void *, register_t *));
+int	svr4_sys_open64	__P((struct proc *, void *, register_t *));
+int	svr4_sys_socket	__P((struct proc *, void *, register_t *));
+int	sys_socketpair	__P((struct proc *, void *, register_t *));
+int	sys_bind	__P((struct proc *, void *, register_t *));
+int	sys_listen	__P((struct proc *, void *, register_t *));
+int	compat_43_sys_accept	__P((struct proc *, void *, register_t *));
+int	sys_connect	__P((struct proc *, void *, register_t *));
+int	sys_shutdown	__P((struct proc *, void *, register_t *));
+int	compat_43_sys_recv	__P((struct proc *, void *, register_t *));
+int	compat_43_sys_recvfrom	__P((struct proc *, void *, register_t *));
+int	compat_43_sys_recvmsg	__P((struct proc *, void *, register_t *));
+int	compat_43_sys_send	__P((struct proc *, void *, register_t *));
+int	compat_43_sys_sendmsg	__P((struct proc *, void *, register_t *));
+int	sys_sendto	__P((struct proc *, void *, register_t *));
+int	compat_43_sys_getpeername	__P((struct proc *, void *, register_t *));
+int	compat_43_sys_getsockname	__P((struct proc *, void *, register_t *));
+int	sys_getsockopt	__P((struct proc *, void *, register_t *));
+int	sys_setsockopt	__P((struct proc *, void *, register_t *));
+int	sys_ntp_gettime	__P((struct proc *, void *, register_t *));
+int	sys_ntp_adjtime	__P((struct proc *, void *, register_t *));

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_systeminfo.h,v 1.3 1996/04/22 01:16:04 christos Exp $	 */
+/*	$NetBSD: svr4_systeminfo.h,v 1.4 1997/07/21 23:02:45 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -44,5 +44,6 @@
 #define	SVR4_SI_SET_KERB_REALM	266
 #define SVR4_SI_KERB_REALM	267
 #define	SVR4_SI_PLATFORM	513
+#define	SVR4_SI_ISALIST		514
 
 #endif /* !_SVR4_SYSTEMINFO_H_ */
