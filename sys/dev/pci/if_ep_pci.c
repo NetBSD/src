@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_pci.c,v 1.17 1996/12/31 21:26:10 jonathan Exp $	*/
+/*	$NetBSD: if_ep_pci.c,v 1.18 1997/02/18 10:51:12 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1994 Herb Peyerl <hpeyerl@beer.org>
@@ -133,8 +133,6 @@ ep_pci_attach(parent, self, aux)
 	bus_addr_t iobase;
 	bus_size_t iosize;
 	pci_intr_handle_t ih;
-	u_int conn = 0;
-	pcireg_t i;
 	char *model;
 	const char *intrstr = NULL;
 
@@ -150,34 +148,6 @@ ep_pci_attach(parent, self, aux)
 
 	sc->sc_iot = iot;
 	sc->bustype = EP_BUS_PCI;
-
-	/*
-	 * The EP_W3_RESET_OPTIONS register is mapped into PCI
-	 * configuration space.  Read RESET_OPTIONS to get
-	 * the media types present on this card.
-	 */
-	i = pci_conf_read(pc, pa->pa_tag, PCI_CONN);
-
-	/*
-	 * Bits 13,12,9 of the isa adapter are the same as bits 
-	 * 5,4,3 of the pci adapter
-	 */
-	if (i & IS_PCI_AUI)
-		conn |= IS_AUI;
-	if (i & IS_PCI_BNC)
-		conn |= IS_BNC;
-	if (i & IS_PCI_UTP)
-		conn |= IS_UTP;
-	if (i & IS_PCI_100BASE_TX)
-		conn |= IS_100BASE_TX;
-	if (i & IS_PCI_100BASE_T4)
-		conn |= IS_100BASE_T4;
-	if (i & IS_PCI_100BASE_FX)
-		conn |= IS_100BASE_FX;
-	if (i & IS_PCI_100BASE_MII)
-		conn |= IS_100BASE_MII;
-
-	GO_WINDOW(0);
 
 	switch (PCI_PRODUCT(pa->pa_id)) {
 	case PCI_PRODUCT_3COM_3C590:
@@ -204,7 +174,7 @@ ep_pci_attach(parent, self, aux)
 
 	printf(": %s\n", model);
 
-	epconfig(sc, conn);
+	epconfig(sc, EP_CHIPSET_VORTEX);
 
 	/* Enable the card. */
 	pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,

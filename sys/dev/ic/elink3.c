@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.19 1997/02/16 04:09:18 jonathan Exp $	*/
+/*	$NetBSD: elink3.c,v 1.20 1997/02/18 10:51:15 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Jonathan Stone <jonathan@NetBSD.org>
@@ -83,7 +83,9 @@ struct cfdriver ep_cd = {
 };
 
 void	ep_internalconfig __P((struct ep_softc *sc));
-void	ep_vortex_internalconfig __P((struct ep_softc *sc));
+void	ep_vortex_probemedia __P((struct ep_softc *sc));
+void	ep_default_probemedia __P((struct ep_softc *sc));
+
 static void eptxstat __P((struct ep_softc *));
 static int epstatus __P((struct ep_softc *));
 void epinit __P((struct ep_softc *));
@@ -133,10 +135,13 @@ ep_complete_cmd(sc, cmd, arg)
 
 
 
+/*
+ * Back-end attach and configure.
+ */
 void
-epconfig(sc, conn)
+epconfig(sc, chipset)
 	struct ep_softc *sc;
-	u_int conn;
+	u_short chipset;
 {
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	bus_space_tag_t iot = sc->sc_iot;
@@ -150,52 +155,7 @@ epconfig(sc, conn)
 	ep_internalconfig(sc);
 	GO_WINDOW(0);
 
-	/* determine connectors available */
-	sc->ep_connectors = 0;
-	if (conn & IS_AUI) {
-		printf("aui");
-		sc->ep_connectors |= AUI;
-	}
-	if (conn & IS_BNC) {
-		if (sc->ep_connectors)
-			printf("/");
-		printf("bnc");
-		sc->ep_connectors |= BNC;
-	}
-	if (conn & IS_UTP) {
-		if (sc->ep_connectors)
-			printf("/");
-		printf("10baseT");
-		sc->ep_connectors |= UTP;
-	}
-	if (conn & IS_100BASE_TX) {
-		if (sc->ep_connectors)
-			printf("/");
-		printf("100base-TX");
-		sc->ep_connectors |= TX;
-	}
-	if (conn & IS_100BASE_T4) {
-		if (sc->ep_connectors)
-			printf("/");
-		printf("100base-T4");
-		sc->ep_connectors |= T4;
-	}
-	if (conn & IS_100BASE_FX) {
-		if (sc->ep_connectors)
-			printf("/");
-		printf("100base-FX");
-		sc->ep_connectors |= FX;
-	}
-	if (conn & IS_100BASE_MII) {
-		if (sc->ep_connectors)
-			printf("/");
-		printf("MII");
-		sc->ep_connectors |= MII;
-	}
-
-	if (!sc->ep_connectors)
-		printf("no connectors!");
-	printf("\n");
+	sc->ep_chipset = chipset;
 
 	/*
 	 * Read the station address from the eeprom
@@ -213,8 +173,7 @@ epconfig(sc, conn)
 		sc->sc_arpcom.ac_enaddr[(i << 1) + 1] = x;
 	}
 
-	printf("%s: MAC address %s\n", sc->sc_dev.dv_xname,
-	    ether_sprintf(sc->sc_arpcom.ac_enaddr));
+	printf("MAC address %s\n", ether_sprintf(sc->sc_arpcom.ac_enaddr));
 
 	/*
 	 * Vortex-based (3c59x, eisa)? and Boomerang (3c900)cards allow
@@ -241,8 +200,6 @@ epconfig(sc, conn)
 	case (EP_LARGEWIN_PROBE << 2):
 		sc->ep_pktlenshift = 2;
 		/* XXX do 3c579, 3c515 support Vortex-style RESET_OPTIONS? */
-		if (sc->bustype == EP_BUS_PCI)
-			ep_vortex_internalconfig(sc);
 		break;
 
 	default:
@@ -251,6 +208,7 @@ epconfig(sc, conn)
 		    sc->sc_dev.dv_xname, EP_THRESH_DISABLE, (int) i);
 		return;
 	}
+
 	/*
 	 * Ensure Tx-available interrupts are enabled for 
 	 * start the interface.
@@ -259,6 +217,38 @@ epconfig(sc, conn)
 	bus_space_write_2(iot, ioh, EP_COMMAND,
 	    SET_TX_AVAIL_THRESH | (1600 >> sc->ep_pktlenshift));
 
+
+#ifdef notyet
+	/*
+	 * If we've got an indirect (ISA, PCMCIA?) board, the chipset
+	 * is unknown.  If the board has large-packet support, it's a
+	 * Vortex/Boomerang, otherwise it's a 3c509.
+	 * XXX use eeprom capability word instead?
+	 */
+	if (sc->sc_chipset == EP_CHIPSET_UNKNOWN && sc->ep_pktlenshift)  {
+		sc->sc_chipset = EP_CHIPSET_VORTEX;
+	}
+#endif	/* notyet */
+
+	/*
+	 * Ascertain which media types are present.
+	 */
+	switch (sc->ep_chipset) {
+	/* on a direct bus, the attach routine can tell, but check anyway. */
+	case EP_CHIPSET_VORTEX:
+	case EP_CHIPSET_BOOMERANG2:
+		ep_vortex_probemedia(sc);
+		break;
+
+	/* on ISA we can't yet tell 3c509 from 3c515. Assume the former. */
+	case EP_CHIPSET_3C509:
+	default:
+		ep_default_probemedia(sc);
+		break;
+	}
+	GO_WINDOW(1);		/* Window 1 is operating window */
+
+	
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 	ifp->if_softc = sc;
 	ifp->if_start = epstart;
@@ -280,16 +270,8 @@ epconfig(sc, conn)
 	/*  Establish callback to reset card when we reboot. */
 	shutdownhook_establish(epshutdown, sc);
 
-#if 1
-	/* XXX */
 	ep_complete_cmd(sc, EP_COMMAND, RX_RESET);
 	ep_complete_cmd(sc, EP_COMMAND, TX_RESET);
-#else
-	epinit(sc);		/*XXX fix up after probe */	
-	DELAY(5000);
-	epstop(sc);		/*XXX reset after probe, stop interface. */
-	DELAY(5000);
-#endif
 }
 
 /*
@@ -332,15 +314,42 @@ ep_internalconfig(sc)
 	    onboard_ram_config[ram_split]);
 }
 
-
 /*
- * Show onboard configuration of large-packet-capable elink3 devices (Demon,
- * Vortex, Boomerang),  using media and card-version info in window 3.
- *
- * XXX how much of this works with 3c515, pcmcia 10/100?  With 3c509, 3c589?
+ * Find media present on 3c509-generation hardware that doesn't have
+ * a "reset_options" register in window 3.
+ * Use the config_cntrl register in window 0.
+ * XXX ifmedia?
  */
 void
-ep_vortex_internalconfig(sc)
+ep_default_probemedia(sc)
+	struct ep_softc *sc;
+{
+	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
+	int conn;
+
+	GO_WINDOW(0);
+	conn = bus_space_read_2(iot, ioh, EP_W0_CONFIG_CTRL);
+	if (conn & IS_AUI)
+		sc->ep_connectors |= AUI;
+	if (conn & IS_BNC)
+		sc->ep_connectors |= BNC;
+	if (conn & IS_UTP)
+		sc->ep_connectors |= UTP;
+}
+
+
+/*
+ * Find media present on large-packet-capable elink3 devices (Demon,
+ * Vortex, Boomerang),  using media and card-version info in window 3.
+ *
+ * XXX How much of this works with 3c515, pcmcia 10/100?  With 3c509, 3c589?
+ * XXX Be noisy about what's present, as NetBSD provides no way to
+ * change media.  You need to run the vendor config utility under DOS.
+ * XXX ifmedia?
+ */
+void
+ep_vortex_probemedia(sc)
 	struct ep_softc *sc;
 {
 	bus_space_tag_t iot = sc->sc_iot;
@@ -348,8 +357,9 @@ ep_vortex_internalconfig(sc)
 	u_int config0;
 	u_int config1;
 	int reset_options;
+	int conn;
 
-	int  media_mask, autoselect;
+	int  defmedia, autoselect;
 	/*  Names for  media in the media bitmask field. */
 	const char *medium_name;
 	const char *media_names[8] ={
@@ -368,22 +378,40 @@ ep_vortex_internalconfig(sc)
 	reset_options  = (int)bus_space_read_1(iot, ioh, EP_W3_RESET_OPTIONS);
 	GO_WINDOW(0);
 
-	media_mask = (config1 & CONFIG_MEDIAMASK) >> CONFIG_MEDIAMASK_SHIFT;
+
+	defmedia = (config1 & CONFIG_MEDIAMASK) >> CONFIG_MEDIAMASK_SHIFT;
         autoselect = (config1 & CONFIG_AUTOSELECT) >> CONFIG_AUTOSELECT_SHIFT;
 
-	medium_name = (media_mask > 8) ? "(unknown/impossible media)"
-		                       : media_names[media_mask];
+	medium_name = (defmedia > 8) ? "(unknown/impossible media)"
+		                       : media_names[defmedia];
 
-	media_mask = (config1 & CONFIG_MEDIAMASK) >> CONFIG_MEDIAMASK_SHIFT;
-        autoselect = (config1 & CONFIG_AUTOSELECT) >> CONFIG_AUTOSELECT_SHIFT;
+	conn = 0;
+	if (reset_options & IS_PCI_AUI)
+		conn |= AUI;
+	if (reset_options & IS_PCI_BNC)
+		conn |= BNC;
+	if (reset_options & IS_PCI_UTP)
+		conn |= UTP;
+	if (reset_options & IS_PCI_100BASE_TX)
+		conn |= TX;
+	if (reset_options & IS_PCI_100BASE_T4)
+		conn |= T4;
+	if (reset_options & IS_PCI_100BASE_FX)
+		conn |= FX;
+	if (reset_options & IS_PCI_100BASE_MII)
+		conn |= MII;
 
+	sc->ep_connectors = conn;
 
 	printf("%s: default medium %s, autoselect %s\n",
 	       sc->sc_dev.dv_xname,
 	       medium_name,  (autoselect)? "on" : "off" );
 }
 
+
 /*
+ * Bring device up.
+ *
  * The order in here seems important. Otherwise we may not receive
  * interrupts. ?!
  */
@@ -463,6 +491,12 @@ epinit(sc)
 	epstart(ifp);
 }
 
+
+/*
+ * Set multicast receive filter. 
+ * elink3 hardware has no selective multicast filter in hardware.
+ * Enable reception of all multicasts and filter in software.
+ */
 void
 epsetfilter(sc)
 	register struct ep_softc *sc;
@@ -476,8 +510,9 @@ epsetfilter(sc)
 	    ((ifp->if_flags & IFF_PROMISC) ? FIL_PROMISC : 0 ));
 }
 
+
 /*
- * select media based on link{0,1,2} switches.
+ * Select media based on link{0,1,2} switches.
  * Assumes 10Mbit interface, totatlly broken for 10/100 adaptors.
  */
 void
