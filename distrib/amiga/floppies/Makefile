@@ -1,5 +1,5 @@
 #	$Id
 
-SUBDIR= inst
+SUBDIR= inst upgr
 
 .include <bsd.subdir.mk>
