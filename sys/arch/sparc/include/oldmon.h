@@ -1,4 +1,4 @@
-/*	$NetBSD: oldmon.h,v 1.10 1996/03/14 19:49:12 christos Exp $ */
+/*	$NetBSD: oldmon.h,v 1.11 1996/03/31 22:21:38 pk Exp $ */
 
 /*
  * Copyright (C) 1985 Regents of the University of California
@@ -109,13 +109,13 @@ struct saioreq {
  *
  * When using this interface, only one device can be open at once.
  *
- * NOTE: I am not sure what arguments boot, open, close, and strategy take.  
- * What is here is just translated verbatim from the sun monitor code.  We 
+ * NOTE: I am not sure what arguments boot, open, close, and strategy take.
+ * What is here is just translated verbatim from the sun monitor code.  We
  * should figure this out eventually if we need it.
  */
 struct om_boottable {
 	char	b_devname[2];		/* The name of the device */
-	int	(*b_probe) __P((void));	/* probe() --> -1 or found controller 
+	int	(*b_probe) __P((void));	/* probe() --> -1 or found controller
 					   number */
 	int	(*b_boot) __P((void));	/* boot(bp) --> -1 or start address */
 	int	(*b_open)
@@ -213,7 +213,7 @@ struct om_vector {
 	u_char	*leds;			/* RAM copy of LED register */
 	int	(*setLeds) __P((void));	/* Sets LED's and RAM copy */
 
-	/* Non-maskable interrupt  (nmi) information */ 
+	/* Non-maskable interrupt  (nmi) information */
 	int	(*nmiAddr) __P((void));	/* Addr for level 7 vector */
 	void	(*abortEntry) __P((void));/* Entry for keyboard abort */
 	int	*nmiClock;		/* Counts up in msec */
@@ -222,7 +222,7 @@ struct om_vector {
 	int	*fbType;
 
 	/* Assorted other things */
-	u_long	romvecVersion;		/* Version # of Romvec */ 
+	u_long	romvecVersion;		/* Version # of Romvec */
 	struct globram *globRam;	/* monitor global variables */
 	caddr_t	kbdZscc;		/* Addr of keyboard in use */
 
@@ -262,9 +262,9 @@ struct om_vector {
 
 /*
  * OLDMON_STARTVADDR and OLDMON_ENDVADDR denote the range of the damn monitor.
- * 
+ *
  * supposedly you can steal pmegs within this range that do not contain
- * valid pages. 
+ * valid pages.
  */
 #define OLDMON_STARTVADDR	0xFFD00000
 #define OLDMON_ENDVADDR		0xFFF00000

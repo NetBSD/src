@@ -1,4 +1,4 @@
-/*	$NetBSD: bsd_openprom.h,v 1.7 1996/03/16 23:51:44 christos Exp $ */
+/*	$NetBSD: bsd_openprom.h,v 1.8 1996/03/31 22:21:24 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,6 +39,14 @@
  */
 
 /*
+ * Sun4M support by Aaron Brown, Harvard University.
+ * Changes Copyright (c) 1995 The President and Fellows of Harvard College.
+ * All rights reserved.
+ *
+ * $Id: bsd_openprom.h,v 1.8 1996/03/31 22:21:24 pk Exp $
+ */
+
+/*
  * This file defines the interface between the kernel and the Openboot PROM.
  * N.B.: this has been tested only on interface versions 0 and 2 (we have
  * never seen interface version 1).
@@ -71,7 +79,7 @@ struct v0devops {
 	int	(*v0_open) __P((char *dev));
 	int	(*v0_close) __P((int d));
 	int	(*v0_rbdev) __P((int d, int nblks, int blkno, void *addr));
-	int	(*v0_wbdev) __P((int d, int nblks, int blkno, void *addr));	
+	int	(*v0_wbdev) __P((int d, int nblks, int blkno, void *addr));
 	int	(*v0_wnet) __P((int d, int nbytes, void *addr));
 	int	(*v0_rnet) __P((int d, int nbytes, void *addr));
 	int	(*v0_rcdev) __P((int d, int nbytes, int, void *addr));
@@ -252,7 +260,7 @@ struct promvec {
 	 */
 	void	(*pv_setctxt) __P((int ctxt, caddr_t va, int pmeg));
 #if defined(SUN4M) && defined(notyet)
-	/* 
+	/*
 	 * The following are V3 ROM functions to handle MP machines in the
 	 * Sun4m series. They have undefined results when run on a uniprocessor!
 	 */
