@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.9 2000/05/26 20:15:21 ragge Exp $ */
+/*	$NetBSD: boot.c,v 1.10 2000/07/10 10:38:23 ragge Exp $ */
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -55,7 +55,7 @@ int	bootdev, debug;
 extern	unsigned opendev;
 
 void	usage(char *), boot(char *), halt(char *);
-void	Xmain(struct rpb *);
+void	Xmain(void);
 void	autoconf(void);
 int	getsecs(void);
 int	setjmp(int *);
@@ -91,18 +91,11 @@ int sluttid, senast, skip, askname;
 struct rpb bootrpb;
 
 void
-Xmain(struct rpb *prpb)
+Xmain(void)
 {
 	int io;
 	int j, nu;
 
-	/* First copy rpb/bqo to its new location */
-	bcopy((caddr_t)prpb, &bootrpb, sizeof(struct rpb));
-	if (prpb->iovec) {
-		bootrpb.iovec = (int)alloc(prpb->iovecsz);
-		bcopy((caddr_t)prpb->iovec, (caddr_t)bootrpb.iovec,
-		    prpb->iovecsz);
-	}
 	io = 0;
 	skip = 1;
 	autoconf();

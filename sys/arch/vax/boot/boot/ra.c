@@ -1,4 +1,4 @@
-/*	$NetBSD: ra.c,v 1.7 2000/06/11 10:39:26 ragge Exp $ */
+/*	$NetBSD: ra.c,v 1.8 2000/07/10 10:38:23 ragge Exp $ */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -127,11 +127,11 @@ raopen(struct open_file *f, int adapt, int ctlr, int unit, int part)
 			nexaddr = bootrpb.csrphy;
 			dunit = bootrpb.unit;
 		} else {
-			nexaddr = (bootrpb.csrphy & ~(NODESIZE - 1)) + KDB_IP;
+			nexaddr = (bootrpb.csrphy & ~(BI_NODESIZE - 1)) + KDB_IP;
 			bootrpb.csrphy = nexaddr;
 		}
 
-		kdaddr = nexaddr & ~(NODESIZE - 1);
+		kdaddr = nexaddr & ~(BI_NODESIZE - 1);
 		ra_ip = (short *)(kdaddr + KDB_IP);
 		ra_sa = (short *)(kdaddr + KDB_SA);
 		ra_sw = (short *)(kdaddr + KDB_SW);
@@ -146,6 +146,9 @@ raopen(struct open_file *f, int adapt, int ctlr, int unit, int part)
 		ubauda = &uda;
 	}
 
+#ifdef DEV_DEBUG
+	printf("start init\n");
+#endif
 	/* Init of this uda */
 	while ((*ra_sa & MP_STEP1) == 0)
 		;
@@ -224,9 +227,10 @@ raopen(struct open_file *f, int adapt, int ctlr, int unit, int part)
 static void
 command(int cmd, int arg)
 {
-	volatile int hej;
+	volatile short hej;
+	int to;
 
-	uda.uda_cmd.mscp_opcode = cmd;
+igen:	uda.uda_cmd.mscp_opcode = cmd;
 	uda.uda_cmd.mscp_modifier = arg;
 
 	uda.uda_cmd.mscp_msglen = MSCP_MSGLEN;
@@ -237,9 +241,17 @@ command(int cmd, int arg)
 	printf("sending cmd %x...", cmd);
 #endif
 	hej = *ra_ip;
-	while(uda.uda_ca.ca_rspdsc<0)
-		if (uda.uda_ca.ca_cmdint)
-			uda.uda_ca.ca_cmdint = 0;
+	to = 1000000;
+	while (uda.uda_ca.ca_rspdsc < 0) {
+//		if (uda.uda_ca.ca_cmdint)
+//			uda.uda_ca.ca_cmdint = 0;
+		if (--to < 0) {
+#ifdef DEV_DEBUG
+			printf("timing out, retry\n");
+#endif
+			goto igen;
+		}
+	}
 #ifdef DEV_DEBUG
 	printf("sent.\n");
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.5 2000/06/11 10:39:26 ragge Exp $ */
+/*	$NetBSD: devopen.c,v 1.6 2000/07/10 10:38:23 ragge Exp $ */
 /*
  * Copyright (c) 1997 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -128,25 +128,36 @@ devopen(f, fname, file)
 	bootrpb.devtyp = dev;
 
 	nexaddr = bootrpb.adpphy;
-	switch (vax_cputype) {
-	case VAX_750:
+	switch (vax_boardtype) {
+	case VAX_BTYP_750:
 		csrbase = (nexaddr == 0xf30000 ? 0xffe000 : 0xfbe000);
 		if (adapt < 0)
 			break;
 		nexaddr = (NEX750 + NEXSIZE * adapt);
 		csrbase = (adapt == 8 ? 0xffe000 : 0xfbe000);
 		break;
-	case VAX_780:
-	case VAX_8600:
+	case VAX_BTYP_780:
+	case VAX_BTYP_790:
 		csrbase = 0x2007e000 + 0x40000 * ((nexaddr & 0x1e000) >> 13);
 		if (adapt < 0)
 			break;
 		nexaddr = ((int)NEX780 + NEXSIZE * adapt);
 		csrbase = 0x2007e000 + 0x40000 * adapt;
 		break;
-	case VAX_8200:
-	case VAX_8800:
-	case VAX_TYP_8PS:
+	case VAX_BTYP_9CC: /* 6000/200 */
+	case VAX_BTYP_9RR: /* 6000/400 */
+	case VAX_BTYP_1202: /* 6000/500 */
+		csrbase = 0;
+		if (ctlr < 0)
+			ctlr = bootrpb.adpphy & 15;
+		if (adapt < 0)
+			adapt = (bootrpb.adpphy >> 4) & 15;
+		nexaddr = BI_BASE(adapt, ctlr);
+		break;
+
+	case VAX_BTYP_8000:
+	case VAX_BTYP_8800:
+	case VAX_BTYP_8PS:
 		csrbase = 0; /* _may_ be a KDB */
 		nexaddr = bootrpb.csrphy;
 		if (ctlr < 0)
@@ -156,10 +167,6 @@ devopen(f, fname, file)
 		else
 			nexaddr = BI_BASE(adapt, ctlr);
 		break;
-#ifdef notyet
-	case VAX_6200:
-		...
-#endif
 	default:
 		nexaddr = 0; /* No map regs */
 		csrbase = 0x20000000;
@@ -175,6 +182,7 @@ devopen(f, fname, file)
 	printf("rpb.type %d rpb.unit %d rpb.csr %lx rpb.adp %lx\n",
 	    bootrpb.devtyp, bootrpb.unit, bootrpb.csrphy, bootrpb.adpphy);
 	printf("adapter %d ctlr %d unit %d part %d\n", adapt, ctlr, unit, part);
+	printf("nexaddr %x csrbase %x\n", nexaddr, csrbase);
 #endif
 
 	return (*dp->dv_open)(f, adapt, ctlr, unit, part);
