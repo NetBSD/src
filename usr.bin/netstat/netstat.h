@@ -1,4 +1,4 @@
-/*	$NetBSD: netstat.h,v 1.24 2002/02/27 03:55:14 lukem Exp $	*/
+/*	$NetBSD: netstat.h,v 1.25 2002/07/03 01:42:59 enami Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -52,6 +52,7 @@ int	numeric_addr;	/* show addresses numerically */
 int	numeric_port;	/* show ports numerically */
 int	Pflag;		/* dump a PCB */
 int	pflag;		/* show given protocol */
+int	qflag;		/* show softintrq */
 int	rflag;		/* show routing tables (or routing stats) */
 int	sflag;		/* show protocol statistics */
 int	tflag;		/* show i/f watchdog timers */

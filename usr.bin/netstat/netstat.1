@@ -1,4 +1,4 @@
-.\"	$NetBSD: netstat.1,v 1.34 2002/07/02 21:34:18 soren Exp $
+.\"	$NetBSD: netstat.1,v 1.35 2002/07/03 01:42:59 enami Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -46,7 +46,7 @@
 .Op Fl M Ar core
 .Op Fl N Ar system
 .Nm ""
-.Op Fl bdgiLmnrsSv
+.Op Fl bdgiLmnqrsSv
 .Op Fl f Ar address_family
 .Op Fl M Ar core
 .Op Fl N Ar system
@@ -232,6 +232,8 @@ report.
 The program will complain if
 .Ar protocol
 is unknown or if there is no statistics routine for it.
+.It Fl q
+Show software interrupt queue setting/statistics for all protocols.
 .It Fl s
 Show per-protocol statistics.
 If this option is repeated, counters with a value of zero are suppressed.
