@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.8 2003/11/07 15:48:09 christos Exp $
+#	$NetBSD: Makefile,v 1.9 2004/03/23 00:00:49 lukem Exp $
 
 # missing files: stdarg varargs
-SUBDIR+= bitstring okheaders
+SUBDIR+= bitstring bootblock okheaders
 
 .include <bsd.subdir.mk>
