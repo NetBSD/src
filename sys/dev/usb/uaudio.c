@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.32 2000/12/29 01:14:15 augustss Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.33 2000/12/29 13:28:41 augustss Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -94,7 +94,7 @@ struct mixerctl {
 #define MIX_SIGNED_8	4
 #define MIX_SIZE(n) ((n) == MIX_SIGNED_16 || (n) == MIX_UNSIGNED_16 ? 2 : 1)
 #define MIX_UNSIGNED(n) ((n) == MIX_UNSIGNED_16)
-	int		minval, maxval;
+	int		minval, maxval, delta;
 	u_int8_t	class;
 	char		ctlname[MAX_AUDIO_DEV_LEN];
 	char		*ctlunit;
@@ -524,6 +524,8 @@ uaudio_find_iface(char *buf, int size, int *offsp, int subtype)
 void
 uaudio_mixer_add_ctl(struct uaudio_softc *sc, struct mixerctl *mc)
 {
+	int res;
+
 	if (sc->sc_nctls == 0)
 		sc->sc_ctls = malloc(sizeof *mc, M_USBDEV, M_NOWAIT);
 	else
@@ -535,6 +537,7 @@ uaudio_mixer_add_ctl(struct uaudio_softc *sc, struct mixerctl *mc)
 		return;
 	}
 
+	mc->delta = 0;
 	if (mc->type != MIX_ON_OFF) {
 		/* Determine min and max values. */
 		mc->minval = uaudio_signext(mc->type, 
@@ -545,6 +548,14 @@ uaudio_mixer_add_ctl(struct uaudio_softc *sc, struct mixerctl *mc)
 			uaudio_get(sc, GET_MAX, UT_READ_CLASS_INTERFACE,
 				   mc->wValue[0], mc->wIndex,
 				   MIX_SIZE(mc->type)));
+		res = uaudio_get(sc, GET_RES, UT_READ_CLASS_INTERFACE,
+				 mc->wValue[0], mc->wIndex,
+				 MIX_SIZE(mc->type));
+		if (res > 0 && mc->maxval > mc->minval) {
+			mc->delta = res * 256 / (mc->maxval - mc->minval);
+			/* protect against rounding problems */
+			mc->delta += mc->delta >> 1;
+		}
 	} else {
 		mc->minval = 0;
 		mc->maxval = 1;
@@ -1344,6 +1355,7 @@ uaudio_query_devinfo(void *addr, mixer_devinfo_t *mi)
 		mi->type = AUDIO_MIXER_VALUE;
 		strncpy(mi->un.v.units.name, mc->ctlunit, MAX_AUDIO_DEV_LEN);
 		mi->un.v.num_channels = mc->nchan;
+		mi->un.v.delta = mc->delta;
 		break;
 	}
 	return (0);
