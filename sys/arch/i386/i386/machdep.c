@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.542 2003/10/27 14:11:46 junyoung Exp $	*/
+/*	$NetBSD: machdep.c,v 1.543 2003/10/28 22:52:53 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.542 2003/10/27 14:11:46 junyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.543 2003/10/28 22:52:53 mycroft Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -1723,18 +1723,18 @@ init386(first_avail)
 	 * Steal memory for the message buffer (at end of core).
 	 */
 	{
-		struct vm_physseg *vps = NULL;
+		struct vm_physseg *vps;
 		psize_t sz = round_page(MSGBUFSIZE);
 		psize_t reqsz = sz;
 
 		for (x = 0; x < vm_nphysseg; x++) {
 			vps = &vm_physmem[x];
 			if (ptoa(vps->avail_end) == avail_end)
-				break;
+				goto found;
 		}
-		if (x == vm_nphysseg)
-			panic("init386: can't find end of memory");
+		panic("init386: can't find end of memory");
 
+	found:
 		/* Shrink so it'll fit in the last segment. */
 		if ((vps->avail_end - vps->avail_start) < atop(sz))
 			sz = ptoa(vps->avail_end - vps->avail_start);
