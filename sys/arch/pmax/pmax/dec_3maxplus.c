@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_3maxplus.c,v 1.9 1998/08/29 16:16:37 mrg Exp $	*/
+/*	$NetBSD: dec_3maxplus.c,v 1.10 1999/03/02 09:24:17 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.9 1998/08/29 16:16:37 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.10 1999/03/02 09:24:17 jonathan Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -444,20 +444,20 @@ dec_3maxplus_intr(mask, pc, statusReg, causeReg)
 			printf ("can't handle tc2 interrupt\n");
 #endif /*DIAGNOSTIC*/
 	
-		if ((intr & IOASIC_INTR_SCSI) &&
-			tc_slot_info[KN03_SCSI_SLOT].intr) {
-			(*(tc_slot_info[KN03_SCSI_SLOT].intr))
-			(tc_slot_info[KN03_SCSI_SLOT].sc);
-			intrcnt[SCSI_INTR]++;
-		}
-	
 		if ((intr & KN03_INTR_LANCE) &&
 			tc_slot_info[KN03_LANCE_SLOT].intr) {
 			(*(tc_slot_info[KN03_LANCE_SLOT].intr))
 			(tc_slot_info[KN03_LANCE_SLOT].sc);
 			intrcnt[LANCE_INTR]++;
 		}
-	
+
+		if ((intr & IOASIC_INTR_SCSI) &&
+			tc_slot_info[KN03_SCSI_SLOT].intr) {
+			(*(tc_slot_info[KN03_SCSI_SLOT].intr))
+			(tc_slot_info[KN03_SCSI_SLOT].sc);
+			intrcnt[SCSI_INTR]++;
+		}
+
 		if (user_warned && ((intr & KN03_INTR_PSWARN) == 0)) {
 			printf("%s\n", "Power supply ok now.");
 			user_warned = 0;
