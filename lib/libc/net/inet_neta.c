@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_neta.c,v 1.2 1997/04/13 10:30:44 mrg Exp $	*/
+/*	$NetBSD: inet_neta.c,v 1.3 1997/04/14 03:08:05 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 by Internet Software Consortium.
@@ -21,7 +21,7 @@
 #if 0
 static char rcsid[] = "Id: inet_neta.c,v 8.2 1996/08/08 06:54:44 vixie Exp";
 #else
-static char rcsid[] = "$NetBSD: inet_neta.c,v 1.2 1997/04/13 10:30:44 mrg Exp $";
+static char rcsid[] = "$NetBSD: inet_neta.c,v 1.3 1997/04/14 03:08:05 cgd Exp $";
 #endif
 #endif
 
@@ -32,6 +32,7 @@ static char rcsid[] = "$NetBSD: inet_neta.c,v 1.2 1997/04/13 10:30:44 mrg Exp $"
 
 #include <errno.h>
 #include <stdio.h>
+#include <string.h>
 
 #ifdef SPRINTF_CHAR
 # define SPRINTF(x) strlen(sprintf/**/x)
