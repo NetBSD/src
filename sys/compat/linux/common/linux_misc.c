@@ -1,4 +1,40 @@
-/*	$NetBSD: linux_misc.c,v 1.46 1998/09/11 12:50:08 mycroft Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.47 1998/10/01 04:05:55 erh Exp $	*/
+
+/*-
+ * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Eric Haszlakiewicz.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -33,6 +69,26 @@
 
 /*
  * Linux compatibility module. Try to deal with various Linux system calls.
+ */
+
+/*
+ * These functions have been moved to multiarch to allow
+ * selection of which machines include them to be 
+ * determined by the individual files.linux_<arch> files.
+ *
+ * Function in multiarch:
+ *	linux_sys_break			: linux_break.c
+ *	linux_sys_alarm			: linux_misc_notalpha.c
+ *	linux_sys_nice			: linux_misc_notalpha.c
+ *	linux_sys_readdir		: linux_misc_notalpha.c
+ *	linux_sys_time			: linux_misc_notalpha.c
+ *	linux_sys_utime			: linux_misc_notalpha.c
+ *	linux_sys_waitpid		: linux_misc_notalpha.c
+ *	linux_sys_old_mmap		: linux_oldmmap.c
+ *	linux_sys_oldolduname		: linux_oldolduname.c
+ *	linux_sys_oldselect		: linux_oldselect.c
+ *	linux_sys_olduname		: linux_olduname.c
+ *	linux_sys_pipe			: linux_pipe.c
  */
 
 #include <sys/param.h>
@@ -72,22 +128,20 @@
 #include <compat/linux/linux_fcntl.h>
 #include <compat/linux/linux_mmap.h>
 #include <compat/linux/linux_signal.h>
+#include <compat/linux/linux_dirent.h>
 #include <compat/linux/linux_syscallargs.h>
 #include <compat/linux/linux_util.h>
-#include <compat/linux/linux_dirent.h>
+#include <compat/linux/linux_misc.h>
 
-/* linux_misc.c */
-static void bsd_to_linux_wstat __P((int *));
+/* Local linux_misc.c functions: */
 static void bsd_to_linux_statfs __P((struct statfs *, struct linux_statfs *));
-int linux_select1 __P((struct proc *, register_t *, int, fd_set *, fd_set *,
-		       fd_set *, struct timeval *));
 
 /*
  * The information on a terminated (or stopped) process needs
  * to be converted in order for Linux binaries to get a valid signal
  * number out of it.
  */
-static void
+void
 bsd_to_linux_wstat(status)
 	int *status;
 {
@@ -98,53 +152,6 @@ bsd_to_linux_wstat(status)
 	else if (WIFSTOPPED(*status))
 		*status = (*status & ~0xff00) |
 		    (native_to_linux_sig[WSTOPSIG(*status)] << 8);
-}
-
-/*
- * waitpid(2). Passed on to the NetBSD call, surrounded by code to
- * reserve some space for a NetBSD-style wait status, and converting
- * it to what Linux wants.
- */
-int
-linux_sys_waitpid(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	struct linux_sys_waitpid_args /* {
-		syscallarg(int) pid;
-		syscallarg(int *) status;
-		syscallarg(int) options;
-	} */ *uap = v;
-	struct sys_wait4_args w4a;
-	int error, *status, tstat;
-	caddr_t sg;
-
-	if (SCARG(uap, status) != NULL) {
-		sg = stackgap_init(p->p_emul);
-		status = (int *) stackgap_alloc(&sg, sizeof status);
-	} else
-		status = NULL;
-
-	SCARG(&w4a, pid) = SCARG(uap, pid);
-	SCARG(&w4a, status) = status;
-	SCARG(&w4a, options) = SCARG(uap, options);
-	SCARG(&w4a, rusage) = NULL;
-
-	if ((error = sys_wait4(p, &w4a, retval)))
-		return error;
-
-	sigdelset(&p->p_siglist, SIGCHLD);
-
-	if (status != NULL) {
-		if ((error = copyin(status, &tstat, sizeof tstat)))
-			return error;
-
-		bsd_to_linux_wstat(&tstat);
-		return copyout(&tstat, SCARG(uap, status), sizeof tstat);
-	}
-
-	return 0;
 }
 
 /*
@@ -194,25 +201,6 @@ linux_sys_wait4(p, v, retval)
 }
 
 /*
- * This is the old brk(2) call. I don't think anything in the Linux
- * world uses this anymore
- */
-int
-linux_sys_break(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-#if 0
-	struct linux_sys_brk_args /* {
-		syscallarg(char *) nsize;
-	} */ *uap = v;
-#endif
-
-	return ENOSYS;
-}
-
-/*
  * Linux brk(2). The check if the new address is >= the old one is
  * done in the kernel in Linux. NetBSD does it in the library.
  */
@@ -244,33 +232,6 @@ linux_sys_brk(p, v, retval)
 	else
 		retval[0] = (register_t)oldbrk;
 
-	return 0;
-}
-
-/*
- * I wonder why Linux has gettimeofday() _and_ time().. Still, we
- * need to deal with it.
- */
-int
-linux_sys_time(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	struct linux_sys_time_args /* {
-		linux_time_t *t;
-	} */ *uap = v;
-	struct timeval atv;
-	linux_time_t tt;
-	int error;
-
-	microtime(&atv);
-
-	tt = atv.tv_sec;
-	if (SCARG(uap, t) && (error = copyout(&tt, SCARG(uap, t), sizeof tt)))
-		return error;
-
-	retval[0] = tt;
 	return 0;
 }
 
@@ -399,90 +360,22 @@ linux_sys_uname(p, v, retval)
 
 	/* This part taken from the the uname() in libc */
 	len = sizeof(luts.l_version);
-	for (cp = luts.l_version; len--; ++cp) {
-		if (*cp == '\n' || *cp == '\t') {
+	for (cp = luts.l_version; len--; ++cp)
+		if (*cp == '\n' || *cp == '\t')
 			if (len > 1)
 				*cp = ' ';
 			else
 				*cp = '\0';
-		}
-	}
 
 	return copyout(&luts, SCARG(uap, up), sizeof(luts));
 }
 
-int
-linux_sys_olduname(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	struct linux_sys_uname_args /* {
-		syscallarg(struct linux_oldutsname *) up;
-	} */ *uap = v;
-	extern char ostype[], hostname[], osrelease[], version[], machine[];
-	struct linux_oldutsname luts;
-	int len;
-	char *cp;
-
-	strncpy(luts.l_sysname, ostype, sizeof(luts.l_sysname));
-	strncpy(luts.l_nodename, hostname, sizeof(luts.l_nodename));
-	strncpy(luts.l_release, osrelease, sizeof(luts.l_release));
-	strncpy(luts.l_version, version, sizeof(luts.l_version));
-	strncpy(luts.l_machine, machine, sizeof(luts.l_machine));
-
-	/* This part taken from the the uname() in libc */
-	len = sizeof(luts.l_version);
-	for (cp = luts.l_version; len--; ++cp) {
-		if (*cp == '\n' || *cp == '\t') {
-			if (len > 1)
-				*cp = ' ';
-			else
-				*cp = '\0';
-		}
-	}
-
-	return copyout(&luts, SCARG(uap, up), sizeof(luts));
-}
-
-int
-linux_sys_oldolduname(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	struct linux_sys_uname_args /* {
-		syscallarg(struct linux_oldoldutsname *) up;
-	} */ *uap = v;
-	extern char ostype[], hostname[], osrelease[], version[], machine[];
-	struct linux_oldoldutsname luts;
-	int len;
-	char *cp;
-
-	strncpy(luts.l_sysname, ostype, sizeof(luts.l_sysname));
-	strncpy(luts.l_nodename, hostname, sizeof(luts.l_nodename));
-	strncpy(luts.l_release, osrelease, sizeof(luts.l_release));
-	strncpy(luts.l_version, version, sizeof(luts.l_version));
-	strncpy(luts.l_machine, machine, sizeof(luts.l_machine));
-
-	/* This part taken from the the uname() in libc */
-	len = sizeof(luts.l_version);
-	for (cp = luts.l_version; len--; ++cp) {
-		if (*cp == '\n' || *cp == '\t') {
-			if (len > 1)
-				*cp = ' ';
-			else
-				*cp = '\0';
-		}
-	}
-
-	return copyout(&luts, SCARG(uap, up), sizeof(luts));
-}
+/* Used directly on: alpha, mips, ppc, sparc, sparc64 */
+/* Used indirectly on: arm, i386, m68k */
 
 /*
- * Linux wants to pass everything to a syscall in registers. However,
- * mmap() has 6 of them. Oops: out of register error. They just pass
- * everything in a structure.
+ * New type Linux mmap call.
+ * Only called directly on machines with >= 6 free regs.
  */
 int
 linux_sys_mmap(p, v, retval)
@@ -491,30 +384,32 @@ linux_sys_mmap(p, v, retval)
 	register_t *retval;
 {
 	struct linux_sys_mmap_args /* {
-		syscallarg(struct linux_mmap *) lmp;
+		syscallarg(unsigned long) addr;
+		syscallarg(size_t) len;
+		syscallarg(int) prot;
+		syscallarg(int) flags;
+		syscallarg(int) fd;
+		syscallarg(off_t) offset;
 	} */ *uap = v;
-	struct linux_mmap lmap;
 	struct sys_mmap_args cma;
-	int error, flags;
-
-	if ((error = copyin(SCARG(uap, lmp), &lmap, sizeof lmap)))
-		return error;
-
+	int flags;
+	
 	flags = 0;
-	flags |= cvtto_bsd_mask(lmap.lm_flags, LINUX_MAP_SHARED, MAP_SHARED);
-	flags |= cvtto_bsd_mask(lmap.lm_flags, LINUX_MAP_PRIVATE, MAP_PRIVATE);
-	flags |= cvtto_bsd_mask(lmap.lm_flags, LINUX_MAP_FIXED, MAP_FIXED);
-	flags |= cvtto_bsd_mask(lmap.lm_flags, LINUX_MAP_ANON, MAP_ANON);
+	flags |= cvtto_bsd_mask(SCARG(uap,flags), LINUX_MAP_SHARED, MAP_SHARED);
+	flags |= cvtto_bsd_mask(SCARG(uap,flags), LINUX_MAP_PRIVATE, MAP_PRIVATE);
+	flags |= cvtto_bsd_mask(SCARG(uap,flags), LINUX_MAP_FIXED, MAP_FIXED);
+	flags |= cvtto_bsd_mask(SCARG(uap,flags), LINUX_MAP_ANON, MAP_ANON);
+	/* XXX XAX ERH: Any other flags here?  There are more defined... */
 
-	SCARG(&cma,addr) = lmap.lm_addr;
-	SCARG(&cma,len) = lmap.lm_len;
-	if (lmap.lm_prot & VM_PROT_WRITE) /* XXX */
-		lmap.lm_prot |= VM_PROT_READ;
- 	SCARG(&cma,prot) = lmap.lm_prot;
+	SCARG(&cma,addr) = (void *)SCARG(uap, addr);
+	SCARG(&cma,len) = SCARG(uap, len);
+	SCARG(&cma,prot) = SCARG(uap, prot);
+	if (SCARG(&cma,prot) & VM_PROT_WRITE) /* XXX */
+		SCARG(&cma,prot) |= VM_PROT_READ;
 	SCARG(&cma,flags) = flags;
-	SCARG(&cma,fd) = lmap.lm_fd;
+	SCARG(&cma,fd) = SCARG(uap, fd);
 	SCARG(&cma,pad) = 0;
-	SCARG(&cma,pos) = lmap.lm_pos;
+	SCARG(&cma,pos) = SCARG(uap, offset);
 
 	return sys_mmap(p, &cma, retval);
 }
@@ -634,163 +529,6 @@ linux_sys_times(p, v, retval)
 }
 
 /*
- * NetBSD passes fd[0] in retval[0], and fd[1] in retval[1].
- * Linux directly passes the pointer.
- */
-int
-linux_sys_pipe(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	struct linux_sys_pipe_args /* {
-		syscallarg(int *) pfds;
-	} */ *uap = v;
-	int error;
-
-	if ((error = sys_pipe(p, 0, retval)))
-		return error;
-
-	/* Assumes register_t is an int */
-
-	if ((error = copyout(retval, SCARG(uap, pfds), 2 * sizeof (int))))
-		return error;
-
-	retval[0] = 0;
-	return 0;
-}
-
-/*
- * Alarm. This is a libc call which uses setitimer(2) in NetBSD.
- * Fiddle with the timers to make it work.
- */
-int
-linux_sys_alarm(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	struct linux_sys_alarm_args /* {
-		syscallarg(unsigned int) secs;
-	} */ *uap = v;
-	int s;
-	struct itimerval *itp, it;
-
-	itp = &p->p_realtimer;
-	s = splclock();
-	/*
-	 * Clear any pending timer alarms.
-	 */
-	untimeout(realitexpire, p);
-	timerclear(&itp->it_interval);
-	if (timerisset(&itp->it_value) &&
-	    timercmp(&itp->it_value, &time, >))
-		timersub(&itp->it_value, &time, &itp->it_value);
-	/*
-	 * Return how many seconds were left (rounded up)
-	 */
-	retval[0] = itp->it_value.tv_sec;
-	if (itp->it_value.tv_usec)
-		retval[0]++;
-
-	/*
-	 * alarm(0) just resets the timer.
-	 */
-	if (SCARG(uap, secs) == 0) {
-		timerclear(&itp->it_value);
-		splx(s);
-		return 0;
-	}
-
-	/*
-	 * Check the new alarm time for sanity, and set it.
-	 */
-	timerclear(&it.it_interval);
-	it.it_value.tv_sec = SCARG(uap, secs);
-	it.it_value.tv_usec = 0;
-	if (itimerfix(&it.it_value) || itimerfix(&it.it_interval)) {
-		splx(s);
-		return (EINVAL);
-	}
-
-	if (timerisset(&it.it_value)) {
-		timeradd(&it.it_value, &time, &it.it_value);
-		timeout(realitexpire, p, hzto(&it.it_value));
-	}
-	p->p_realtimer = it;
-	splx(s);
-
-	return 0;
-}
-
-/*
- * utime(). Do conversion to things that utimes() understands, 
- * and pass it on.
- */
-int
-linux_sys_utime(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	struct linux_sys_utime_args /* {
-		syscallarg(char *) path;
-		syscallarg(struct linux_utimbuf *)times;
-	} */ *uap = v;
-	caddr_t sg;
-	int error;
-	struct sys_utimes_args ua;
-	struct timeval tv[2], *tvp;
-	struct linux_utimbuf lut;
-
-	sg = stackgap_init(p->p_emul);
-	LINUX_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
-
-	SCARG(&ua, path) = SCARG(uap, path);
-
-	if (SCARG(uap, times) != NULL) {
-		if ((error = copyin(SCARG(uap, times), &lut, sizeof lut)))
-			return error;
-		tv[0].tv_usec = tv[1].tv_usec = 0;
-		tv[0].tv_sec = lut.l_actime;
-		tv[1].tv_sec = lut.l_modtime;
-		tvp = (struct timeval *) stackgap_alloc(&sg, sizeof(tv));
-		if ((error = copyout(tv, tvp, sizeof tv)))
-			return error;
-		SCARG(&ua, tptr) = tvp;
-	}
-	else
-		SCARG(&ua, tptr) = NULL;
-
-	return sys_utimes(p, &ua, retval);
-}
-
-/*
- * The old Linux readdir was only able to read one entry at a time,
- * even though it had a 'count' argument. In fact, the emulation
- * of the old call was better than the original, because it did handle
- * the count arg properly. Don't bother with it anymore now, and use
- * it to distinguish between old and new. The difference is that the
- * newer one actually does multiple entries, and the reclen field
- * really is the reclen, not the namelength.
- */
-int
-linux_sys_readdir(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	struct linux_sys_readdir_args /* {
-		syscallarg(int) fd;
-		syscallarg(struct linux_dirent *) dent;
-		syscallarg(unsigned int) count;
-	} */ *uap = v;
-
-	SCARG(uap, count) = 1;
-	return linux_sys_getdents(p, uap, retval);
-}
-
-/*
  * Linux 'readdir' call. This code is mostly taken from the
  * SunOS getdents call (see compat/sunos/sunos_misc.c), though
  * an attempt has been made to keep it a little cleaner (failing
@@ -810,16 +548,16 @@ linux_sys_getdents(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	struct linux_sys_readdir_args /* {
+	struct linux_sys_getdents_args /* {
 		syscallarg(int) fd;
-		syscallarg(caddr_t) dent;
+		syscallarg(struct linux_dirent *) dent;
 		syscallarg(unsigned int) count;
 	} */ *uap = v;
 	register struct dirent *bdp;
 	struct vnode *vp;
 	caddr_t	inp, buf;		/* BSD-format */
 	int len, reclen;		/* BSD-format */
-	caddr_t outp;			/* Linux-format */
+	struct linux_dirent *outp;	/* Linux-format */
 	int resid, linux_reclen = 0;	/* Linux-format */
 	struct file *fp;
 	struct uio auio;
@@ -950,30 +688,6 @@ out:
 		free(cookiebuf, M_TEMP);
 	free(buf, M_TEMP);
 	return error;
-}
-
-/*
- * Not sure why the arguments to this older version of select() were put
- * into a structure, because there are 5, and that can all be handled
- * in registers on the i386 like Linux wants to.
- */
-int
-linux_sys_oldselect(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	struct linux_sys_oldselect_args /* {
-		syscallarg(struct linux_select *) lsp;
-	} */ *uap = v;
-	struct linux_select ls;
-	int error;
-
-	if ((error = copyin(SCARG(uap, lsp), &ls, sizeof(ls))))
-		return error;
-
-	return linux_select1(p, retval, ls.nfds, ls.readfds, ls.writefds,
-	    ls.exceptfds, ls.timeout);
 }
 
 /*
@@ -1200,21 +914,4 @@ linux_sys___sysctl(p, v, retval)
 	SCARG(&bsa, newlen) = ls.newlen;
 
 	return sys___sysctl(p, &bsa, retval);
-}
-
-int
-linux_sys_nice(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	struct linux_sys_nice_args /* {
-		syscallarg(int) incr;
-	} */ *uap = v;
-        struct sys_setpriority_args bsa;
-
-        SCARG(&bsa, which) = PRIO_PROCESS;
-        SCARG(&bsa, who) = 0;
-	SCARG(&bsa, prio) = SCARG(uap, incr);
-        return sys_setpriority(p, &bsa, retval);
 }
