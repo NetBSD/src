@@ -211,7 +211,7 @@ initfs()
 
 	setfsent();
 	while (fs = getfsent()) {
-		if (strcmp(fs->fs_vfstype, "ufs"))
+		if (strcmp(fs->fs_vfstype, "ffs"))
 			continue;
 		if (!hasquota(fs, &qfpathname))
 			continue;
