@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.182 2004/04/03 17:42:27 chs Exp $ */
+/*	$NetBSD: cpu.c,v 1.183 2004/04/15 08:11:20 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.182 2004/04/03 17:42:27 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.183 2004/04/15 08:11:20 pk Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -730,7 +730,7 @@ xcall(func, arg0, arg1, arg2, arg3, cpuset)
 	 * this in the process).
 	 */
 	done = 0;
-	i = 10000;	/* time-out, not too long, but still an _AGE_ */
+	i = 100000;	/* time-out, not too long, but still an _AGE_ */
 	while (!done) {
 		if (--i < 0) {
 			printf_nolog("xcall(cpu%d,%p): couldn't ping cpus:",
@@ -754,7 +754,7 @@ xcall(func, arg0, arg1, arg2, arg3, cpuset)
 			}
 		}
 	}
-	if (!done)
+	if (i < 0)
 		printf_nolog("\n");
 
 	UNLOCK_XPMSG();
