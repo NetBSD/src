@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.66 2003/05/06 08:33:08 wiz Exp $
+.\"	$NetBSD: sh.1,v 1.67 2003/06/27 09:11:12 wiz Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -847,7 +847,7 @@ the two arguments:
 .Sm on
 .It #
 Expands to the number of positional parameters.
-.It ?
+.It \&?
 Expands to the exit status of the most recent pipeline.
 .It - (Hyphen.)
 Expands to the current option flags (the single-letter
@@ -857,7 +857,7 @@ by the shell.
 .It $
 Expands to the process ID of the invoked shell.
 A subshell retains the same value of $ as its parent.
-.It !
+.It \&!
 Expands to the process ID of the most recent background
 command executed from the current shell.
 For a pipeline, the process ID is that of the last command in the pipeline.
@@ -1082,11 +1082,11 @@ command.
 A pattern consists of normal characters, which match themselves,
 and meta-characters.
 The meta-characters are
-.Dq ! ,
+.Dq \&! ,
 .Dq * ,
-.Dq ? ,
+.Dq \&? ,
 and
-.Dq [ .
+.Dq \&[ .
 These characters lose their special meanings if they are quoted.
 When command or variable substitution is performed
 and the dollar sign or back quotes are not double quoted,
@@ -1381,7 +1381,7 @@ If an option character is not found where expected,
 will set the variable
 .Va var
 to a
-.Dq ? ;
+.Dq \&? ;
 .Ic getopts
 will then unset
 .Ev OPTARG
@@ -1400,7 +1400,7 @@ to the special option,
 otherwise, it will set
 .Va var
 to
-.Dq ? .
+.Dq \&? .
 .Pp
 The following code fragment shows how one might process the arguments
 for a command that can take the options
