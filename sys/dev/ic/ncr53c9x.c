@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.4 1997/03/24 17:16:45 gwr Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.5 1997/03/27 00:29:57 pk Exp $	*/
 
 /*
  * Copyright (c) 1996 Charles M. Hannum.  All rights reserved.
@@ -1241,6 +1241,7 @@ ncr53c9x_intr(sc)
 	struct ncr53c9x_tinfo *ti;
 	int loop;
 	size_t size;
+	int nfifo;
 
 	NCR_TRACE(("[ncr53c9x_intr]"));
 
@@ -1533,13 +1534,24 @@ if (sc->sc_flags & NCR_ICCS) printf("[[esp: BUMMER]]");
 					ncr53c9x_init(sc, 1);
 					return 1;
 				}
-				if ((NCR_READ_REG(sc, NCR_FFLAG) & NCRFIFO_FF)
-				    != 2) {
+				/*
+				 * The C90 only inhibits FIFO writes until
+				 * reselection is complete, instead of
+				 * waiting until the interrupt status register
+				 * has been read. So, if the reselect happens
+				 * while we were entering a command bytes (for
+				 * another target) some of those bytes can
+				 * appear in the FIFO here, after the
+				 * interrupt is taken.
+				 */
+				nfifo = NCR_READ_REG(sc,NCR_FFLAG) & NCRFIFO_FF;
+				if (nfifo < 2 ||
+				    (nfifo > 2 &&
+				     sc->sc_rev != NCR_VARIANT_ESP100)) {
 					printf("%s: RESELECT: "
 					    "%d bytes in FIFO!\n",
 						sc->sc_dev.dv_xname,
-						NCR_READ_REG(sc, NCR_FFLAG) &
-						NCRFIFO_FF);
+						nfifo);
 					ncr53c9x_init(sc, 1);
 					return 1;
 				}
@@ -1548,6 +1560,8 @@ if (sc->sc_flags & NCR_ICCS) printf("[[esp: BUMMER]]");
 
 				/* Handle identify message */
 				ncr53c9x_msgin(sc);
+				if (nfifo != 2)
+					NCRCMD(sc, NCRCMD_FLUSH);
 
 				if (sc->sc_state != NCR_CONNECTED) {
 					/* IDENTIFY fail?! */
