@@ -38,15 +38,15 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)setlogin.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$Id: setlogin.s,v 1.1 1994/05/24 07:13:20 glass Exp $")
+	ASMSTR("$Id: setlogin.s,v 1.2 1994/11/14 23:49:43 dean Exp $")
 #endif /* LIBC_SCCS and not lint */
 
-LEAF(setlogin)
+LEAF(_setlogin)
 	li	v0, SYS_setlogin	# setlogin(name)
 	syscall
 	bne	a3, zero, 1f
-	sw	zero, _logname_valid	# in getlogin()
+	sw	zero, ___logname_valid	# in getlogin()
 	j	ra
 1:
 	j	_cerror
-END(setlogin)
+END(_setlogin)

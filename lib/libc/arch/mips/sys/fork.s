@@ -38,10 +38,10 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)fork.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$Id: fork.s,v 1.1 1994/05/24 07:13:11 glass Exp $")
+	ASMSTR("$Id: fork.s,v 1.2 1994/11/14 23:49:38 dean Exp $")
 #endif /* LIBC_SCCS and not lint */
 
-LEAF(fork)
+LEAF(_fork)
 	li	v0, SYS_fork	# pid = fork()
 	syscall
 	bne	a3, zero, 2f
@@ -51,4 +51,4 @@ LEAF(fork)
 	j	ra
 2:
 	j	_cerror
-END(fork)
+END(_fork)

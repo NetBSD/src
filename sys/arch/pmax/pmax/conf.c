@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.5 1994/11/14 05:58:04 christos Exp $	*/
+/*	$NetBSD: conf.c,v 1.6 1994/11/14 23:50:41 dean Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -119,7 +119,7 @@ int	nblkdev = sizeof (bdevsw) / sizeof (bdevsw[0]);
 	dev_decl(n,open); dev_decl(n,close); dev_decl(n,read); \
 	dev_decl(n,write); dev_decl(n,ioctl); dev_decl(n,stop); \
 	dev_decl(n,reset); dev_decl(n,select); dev_decl(n,map); \
-	dev_decl(n,strategy); extern struct tty __CONCAT(n,_tty)[]
+	dev_decl(n,strategy); extern struct tty *__CONCAT(n,_tty)[]
 
 #define	dev_tty_init(c,n)	(c > 0 ? __CONCAT(n,_tty) : 0)
 

@@ -38,7 +38,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)fabs.s	8.1 (Berkeley) 2/16/94")
-	ASMSTR("$Id: fabs.s,v 1.1 1994/05/24 07:12:23 glass Exp $")
+	ASMSTR("$Id: fabs.s,v 1.2 1994/11/14 23:48:59 dean Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 	.set	noreorder
@@ -49,7 +49,7 @@
  *
  * Return absolute value of x.
  */
-LEAF(fabs)
+LEAF(_fabs)
 	j	ra
 	abs.d	$f0, $f12		# compute absolute value of x
-END(fabs)
+END(_fabs)

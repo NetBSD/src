@@ -38,13 +38,13 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)strcmp.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$Id: strcmp.S,v 1.1 1994/05/24 07:13:00 glass Exp $")
+	ASMSTR("$Id: strcmp.S,v 1.2 1994/11/14 23:49:22 dean Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 /*
  * NOTE: this version assumes unsigned chars in order to be "8 bit clean".
  */
-LEAF(strcmp)
+LEAF(_strcmp)
 1:
 	lbu	t0, 0(a0)		# get two bytes and compare them
 	lbu	t1, 0(a1)
@@ -62,4 +62,4 @@ NotEq:
 LessOrEq:
 	subu	v0, zero, t1
 	j	ra
-END(strcmp)
+END(_strcmp)

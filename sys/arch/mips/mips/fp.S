@@ -1,4 +1,4 @@
-/*	$NetBSD: fp.S,v 1.4 1994/10/26 21:10:21 cgd Exp $	*/
+/*	$NetBSD: fp.S,v 1.5 1994/11/14 23:50:43 dean Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -97,7 +97,7 @@
  *
  *----------------------------------------------------------------------------
  */
-NON_LEAF(MachEmulateFP, STAND_FRAME_SIZE, ra)
+NON_LEAF(_MachEmulateFP, STAND_FRAME_SIZE, ra)
 	subu	sp, sp, STAND_FRAME_SIZE
 	sw	ra, STAND_RA_OFFSET(sp)
 /*
@@ -2253,7 +2253,7 @@ done:
 	lw	ra, STAND_RA_OFFSET(sp)
 	addu	sp, sp, STAND_FRAME_SIZE
 	j	ra
-END(MachEmulateFP)
+END(_MachEmulateFP)
 
 /*----------------------------------------------------------------------------
  * get_fs_int --
@@ -2267,7 +2267,7 @@ END(MachEmulateFP)
  *
  *----------------------------------------------------------------------------
  */
-LEAF(get_fs_int)
+LEAF(_get_fs_int)
 	srl	a3, a0, 12 - 2			# get FS field (even regs only)
 	and	a3, a3, 0xF << 2		# mask FS field
 	lw	a3, get_fs_int_tbl(a3)		# switch on register number
@@ -2346,7 +2346,7 @@ get_fs_int_done:
 	negu	t2
 1:
 	j	ra
-END(get_fs_int)
+END(_get_fs_int)
 
 /*----------------------------------------------------------------------------
  * get_ft_fs_s --
@@ -2365,7 +2365,7 @@ END(get_fs_int)
  *
  *----------------------------------------------------------------------------
  */
-LEAF(get_ft_fs_s)
+LEAF(_get_ft_fs_s)
 	srl	a3, a0, 17 - 2			# get FT field (even regs only)
 	and	a3, a3, 0xF << 2		# mask FT field
 	lw	a3, get_ft_s_tbl(a3)		# switch on register number
@@ -2463,7 +2463,7 @@ get_ft_s_done:
  *
  *----------------------------------------------------------------------------
  */
-ALEAF(get_fs_s)
+ALEAF(_get_fs_s)
 	srl	a3, a0, 12 - 2			# get FS field (even regs only)
 	and	a3, a3, 0xF << 2		# mask FS field
 	lw	a3, get_fs_s_tbl(a3)		# switch on register number
@@ -2546,7 +2546,7 @@ get_fs_s_done:
 	bne	v0, zero, invalid_s
 1:
 	j	ra
-END(get_ft_fs_s)
+END(_get_ft_fs_s)
 
 /*----------------------------------------------------------------------------
  * get_ft_fs_d --
@@ -2567,7 +2567,7 @@ END(get_ft_fs_s)
  *
  *----------------------------------------------------------------------------
  */
-LEAF(get_ft_fs_d)
+LEAF(_get_ft_fs_d)
 	srl	a3, a0, 17 - 2			# get FT field (even regs only)
 	and	a3, a3, 0xF << 2		# mask FT field
 	lw	a3, get_ft_d_tbl(a3)		# switch on register number
@@ -2682,7 +2682,7 @@ get_ft_d_done:
  *
  *----------------------------------------------------------------------------
  */
-ALEAF(get_fs_d)
+ALEAF(_get_fs_d)
 	srl	a3, a0, 12 - 2			# get FS field (even regs only)
 	and	a3, a3, 0xF << 2		# mask FS field
 	lw	a3, get_fs_d_tbl(a3)		# switch on register number
@@ -2781,7 +2781,7 @@ get_fs_d_done:
 	bne	v0, zero, invalid_d
 1:
 	j	ra
-END(get_ft_fs_d)
+END(_get_ft_fs_d)
 
 /*----------------------------------------------------------------------------
  * get_cmp_s --
@@ -2800,7 +2800,7 @@ END(get_ft_fs_d)
  *
  *----------------------------------------------------------------------------
  */
-LEAF(get_cmp_s)
+LEAF(_get_cmp_s)
 	srl	a3, a0, 12 - 2			# get FS field (even regs only)
 	and	a3, a3, 0xF << 2		# mask FS field
 	lw	a3, cmp_fs_s_tbl(a3)		# switch on register number
@@ -2957,7 +2957,7 @@ cmp_ft_s_done:
 	and	t6, t4, 0x7FFFFF		# get fraction
 	srl	t4, t4, 31			# get sign
 	j	ra
-END(get_cmp_s)
+END(_get_cmp_s)
 
 /*----------------------------------------------------------------------------
  * get_cmp_d --
@@ -2978,7 +2978,7 @@ END(get_cmp_s)
  *
  *----------------------------------------------------------------------------
  */
-LEAF(get_cmp_d)
+LEAF(_get_cmp_d)
 	srl	a3, a0, 12 - 2			# get FS field (even regs only)
 	and	a3, a3, 0xF << 2		# mask FS field
 	lw	a3, cmp_fs_d_tbl(a3)		# switch on register number
@@ -3167,7 +3167,7 @@ cmp_ft_d_done:
 	and	t6, t4, 0xFFFFF			# get fraction
 	srl	t4, t4, 31			# get sign
 	j	ra
-END(get_cmp_d)
+END(_get_cmp_d)
 
 /*----------------------------------------------------------------------------
  * set_fd_s --
@@ -3192,12 +3192,12 @@ END(get_cmp_d)
  *
  *----------------------------------------------------------------------------
  */
-LEAF(set_fd_s)
+LEAF(_set_fd_s)
 	sll	t0, t0, 31			# position sign
 	sll	t1, t1, 23			# position exponent
 	or	t2, t2, t0
 	or	t2, t2, t1
-ALEAF(set_fd_word)
+ALEAF(_set_fd_word)
 	srl	a3, a0, 7 - 2			# get FD field (even regs only)
 	and	a3, a3, 0xF << 2		# mask FT field
 	lw	a3, set_fd_s_tbl(a3)		# switch on register number
@@ -3271,7 +3271,7 @@ set_fd_s_f28:
 set_fd_s_f30:
 	mtc1	t2, $f30
 	j	ra
-END(set_fd_s)
+END(_set_fd_s)
 
 /*----------------------------------------------------------------------------
  * set_fd_d --
@@ -3288,7 +3288,7 @@ END(set_fd_s)
  *
  *----------------------------------------------------------------------------
  */
-LEAF(set_fd_d)
+LEAF(_set_fd_d)
 	sll	t0, t0, 31			# set sign
 	sll	t1, t1, 20			# set exponent
 	or	t0, t0, t1
@@ -3382,7 +3382,7 @@ set_fd_d_f30:
 	mtc1	t3, $f30
 	mtc1	t0, $f31
 	j	ra
-END(set_fd_d)
+END(_set_fd_d)
 
 /*----------------------------------------------------------------------------
  * renorm_fs_s --
@@ -3393,7 +3393,7 @@ END(set_fd_d)
  *
  *----------------------------------------------------------------------------
  */
-LEAF(renorm_fs_s)
+LEAF(_renorm_fs_s)
 /*
  * Find out how many leading zero bits are in t2 and put in t9.
  */
@@ -3431,7 +3431,7 @@ LEAF(renorm_fs_s)
 	subu	t1, t1, t9		# adjust exponent
 	sll	t2, t2, t9
 	j	ra
-END(renorm_fs_s)
+END(_renorm_fs_s)
 
 /*----------------------------------------------------------------------------
  * renorm_fs_d --
@@ -3442,7 +3442,7 @@ END(renorm_fs_s)
  *
  *----------------------------------------------------------------------------
  */
-LEAF(renorm_fs_d)
+LEAF(_renorm_fs_d)
 /*
  * Find out how many leading zero bits are in t2,t3 and put in t9.
  */
@@ -3495,7 +3495,7 @@ LEAF(renorm_fs_d)
 	or	t2, t2, v1
 	sll	t3, t3, t9
 	j	ra
-END(renorm_fs_d)
+END(_renorm_fs_d)
 
 /*----------------------------------------------------------------------------
  * renorm_ft_s --
@@ -3506,7 +3506,7 @@ END(renorm_fs_d)
  *
  *----------------------------------------------------------------------------
  */
-LEAF(renorm_ft_s)
+LEAF(_renorm_ft_s)
 /*
  * Find out how many leading zero bits are in t6 and put in t9.
  */
@@ -3544,7 +3544,7 @@ LEAF(renorm_ft_s)
 	subu	t5, t5, t9		# adjust exponent
 	sll	t6, t6, t9
 	j	ra
-END(renorm_ft_s)
+END(_renorm_ft_s)
 
 /*----------------------------------------------------------------------------
  * renorm_ft_d --
@@ -3555,7 +3555,7 @@ END(renorm_ft_s)
  *
  *----------------------------------------------------------------------------
  */
-LEAF(renorm_ft_d)
+LEAF(_renorm_ft_d)
 /*
  * Find out how many leading zero bits are in t6,t7 and put in t9.
  */
@@ -3608,4 +3608,4 @@ LEAF(renorm_ft_d)
 	or	t6, t6, v1
 	sll	t7, t7, t9
 	j	ra
-END(renorm_ft_d)
+END(_renorm_ft_d)

@@ -38,7 +38,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)ldexp.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$Id: ldexp.S,v 1.1 1994/05/24 07:12:33 glass Exp $")
+	ASMSTR("$Id: ldexp.S,v 1.2 1994/11/14 23:49:01 dean Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 #define DEXP_INF	0x7ff
@@ -60,7 +60,7 @@
  *
  * Return x * (2**N), for integer values N.
  */
-LEAF(ldexp)
+LEAF(_ldexp)
 	mfc1	v1, $f13		# get MSW of x
 	mfc1	t3, $f12		# get LSW of x
 	sll	t1, v1, 1		# get x exponent
@@ -213,4 +213,4 @@ LEAF(ldexp)
 9:
 	mov.d	$f0, $f12		# yes, result is just x
 	j	ra
-END(ldexp)
+END(_ldexp)

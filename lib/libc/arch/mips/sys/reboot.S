@@ -38,14 +38,14 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)reboot.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$Id: reboot.S,v 1.1 1994/05/24 07:13:16 glass Exp $")
+	ASMSTR("$Id: reboot.S,v 1.2 1994/11/14 23:49:41 dean Exp $")
 #endif /* LIBC_SCCS and not lint */
 
-LEAF(reboot)
+LEAF(_reboot)
 	li	v0, SYS_reboot
 	syscall
 	bne	a3, zero, 1f
-	jal	abort
+	jal	_abort
 1:
 	j	_cerror
-END(reboot)
+END(_reboot)
