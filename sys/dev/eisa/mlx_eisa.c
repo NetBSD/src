@@ -1,4 +1,4 @@
-/*	$NetBSD: mlx_eisa.c,v 1.1 2001/05/06 19:55:00 ad Exp $	*/
+/*	$NetBSD: mlx_eisa.c,v 1.2 2001/05/06 20:34:41 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -57,8 +57,8 @@
 
 #define MLX_EISA_SLOT_OFFSET		0x0c89
 #define MLX_EISA_IOSIZE			(0x0ce0 - MLX_EISA_SLOT_OFFSET)
-#define MLX_EISA_IOCONF1		0x0cc1
-#define MLX_EISA_IOCONF2		0x0cc3
+#define MLX_EISA_IOCONF1		(0x0cc1 - MLX_EISA_SLOT_OFFSET)
+#define MLX_EISA_IOCONF2		(0x0cc3 - MLX_EISA_SLOT_OFFSET)
 
 static void	mlx_eisa_attach(struct device *, struct device *, void *);
 static int	mlx_eisa_match(struct device *, struct cfdata *, void *);
