@@ -1,7 +1,7 @@
-/*	$NetBSD: unsetenv.c,v 1.1 2003/04/07 13:41:14 kleink Exp $	*/
+/*	$NetBSD: unsetenv.c,v 1.2 2003/07/26 19:24:54 salo Exp $	*/
 
 /*
- * Written by Klaus Klein <kleink@netbsd.org>, April 1, 2003.
+ * Written by Klaus Klein <kleink@NetBSD.org>, April 1, 2003.
  * Public domain.
  */
 

@@ -1,13 +1,13 @@
-/*	$NetBSD: tolower_.c,v 1.8 1997/07/13 19:46:22 christos Exp $	*/
+/*	$NetBSD: tolower_.c,v 1.9 2003/07/26 19:24:45 salo Exp $	*/
 
 /*
- * Written by J.T. Conklin <jtc@netbsd.org>.
+ * Written by J.T. Conklin <jtc@NetBSD.org>.
  * Public domain.
  */
 
 #include <sys/cdefs.h>
 #if defined(LIBC_RCS) && !defined(lint)
-__RCSID("$NetBSD: tolower_.c,v 1.8 1997/07/13 19:46:22 christos Exp $");
+__RCSID("$NetBSD: tolower_.c,v 1.9 2003/07/26 19:24:45 salo Exp $");
 #endif /* LIBC_RCS and not lint */
 
 #include <stdio.h>

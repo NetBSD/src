@@ -1,12 +1,12 @@
 /*
- * Written by J.T. Conklin <jtc@netbsd.org>.
+ * Written by J.T. Conklin <jtc@NetBSD.org>.
  * Public domain.
  */
 
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: index.S,v 1.10 2000/08/07 14:46:52 ad Exp $")
+	RCSID("$NetBSD: index.S,v 1.11 2003/07/26 19:24:34 salo Exp $")
 #endif
 
 #ifdef STRCHR

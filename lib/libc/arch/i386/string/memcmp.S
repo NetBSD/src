@@ -1,12 +1,12 @@
 /*
- * Written by J.T. Conklin <jtc@netbsd.org>.
+ * Written by J.T. Conklin <jtc@NetBSD.org>.
  * Public domain.
  */
 
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: memcmp.S,v 1.10 2002/03/23 20:13:35 ross Exp $")
+	RCSID("$NetBSD: memcmp.S,v 1.11 2003/07/26 19:24:34 salo Exp $")
 #endif
 
 ENTRY(memcmp)

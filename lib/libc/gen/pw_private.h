@@ -1,7 +1,7 @@
-/*	$NetBSD: pw_private.h,v 1.1 1998/06/27 05:08:22 thorpej Exp $	*/
+/*	$NetBSD: pw_private.h,v 1.2 2003/07/26 19:24:43 salo Exp $	*/
 
 /*
- * Written by Jason R. Thorpe <thorpej@netbsd.org>, June 26, 1998.
+ * Written by Jason R. Thorpe <thorpej@NetBSD.org>, June 26, 1998.
  * Public domain.
  */
 

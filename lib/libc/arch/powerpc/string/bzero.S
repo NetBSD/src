@@ -1,7 +1,7 @@
-/*	$NetBSD: bzero.S,v 1.6 2003/03/15 14:10:21 hannken Exp $ */
+/*	$NetBSD: bzero.S,v 1.7 2003/07/26 19:24:37 salo Exp $ */
 
 /*-
- * Copyright (C) 2001	Martin J. Laubach <mjl@netbsd.org>
+ * Copyright (C) 2001	Martin J. Laubach <mjl@NetBSD.org>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

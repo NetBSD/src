@@ -1,4 +1,4 @@
-/* $NetBSD: hcreate.c,v 1.3 2001/02/21 16:31:01 lukem Exp $ */
+/* $NetBSD: hcreate.c,v 1.4 2003/07/26 19:24:53 salo Exp $ */
 
 /*
  * Copyright (c) 2001 Christopher G. Demetriou
@@ -15,7 +15,7 @@
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
  *          This product includes software developed for the
- *          NetBSD Project.  See http://www.netbsd.org/ for
+ *          NetBSD Project.  See http://www.NetBSD.org/ for
  *          information about NetBSD.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
@@ -48,7 +48,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: hcreate.c,v 1.3 2001/02/21 16:31:01 lukem Exp $");
+__RCSID("$NetBSD: hcreate.c,v 1.4 2003/07/26 19:24:53 salo Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #if !defined(lint)

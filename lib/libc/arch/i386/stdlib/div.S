@@ -1,13 +1,13 @@
-/*	$NetBSD: div.S,v 1.7 2001/01/08 15:21:37 lukem Exp $	*/
+/*	$NetBSD: div.S,v 1.8 2003/07/26 19:24:33 salo Exp $	*/
 /*
- * Written by J.T. Conklin <jtc@netbsd.org>.
+ * Written by J.T. Conklin <jtc@NetBSD.org>.
  * Public domain.
  */
 
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
-RCSID("$NetBSD: div.S,v 1.7 2001/01/08 15:21:37 lukem Exp $")
+RCSID("$NetBSD: div.S,v 1.8 2003/07/26 19:24:33 salo Exp $")
 #endif
 
 ENTRY(div)
