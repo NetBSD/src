@@ -1,4 +1,4 @@
-.\"	$NetBSD: rc.conf.5,v 1.77 2003/03/10 22:47:44 wiz Exp $
+.\"	$NetBSD: rc.conf.5,v 1.78 2003/04/02 18:26:53 atatat Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" Copyright (c) 1997 Curt J. Sampson
@@ -744,6 +744,30 @@ Runs
 .Xr sendmail 8
 and passes
 .Sy sendmail_flags .
+.It Sy sendmail_suidroot
+.Sq YES
+or
+.Sq NO .
+Asserts that sendmail is being used as a setuid root binary and adjusts
+some precmd checks accordingly.
+If this is set to
+.Sq YES ,
+you can remove the submit.cf file, and then turn off the
+.Sy smmsp
+process. 
+.It Sy smmsp
+.Sq YES
+or
+.Sq NO .
+Runs   
+.Xr sendmail 8
+as a client queue runner and passes
+.Sy smmsp_flags . 
+Note that the smmsp process is not a full-featured SMTP daemon.
+Its main purpose is to flush locally collected mail from the queue, but
+it can also be used as a non-privileged
+.Dq nullclient
+that forwards to a more functional SMTP gateway.
 .It Sy postfix
 .Sq YES
 or
