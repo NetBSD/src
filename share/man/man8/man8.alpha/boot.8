@@ -1,4 +1,4 @@
-.\" $NetBSD: boot.8,v 1.7 2003/05/01 09:15:56 fair Exp $
+.\" $NetBSD: boot.8,v 1.8 2003/05/06 07:56:54 wiz Exp $
 .\"
 .\" Copyright (c) 1999 Christopher G. Demetriou
 .\" All rights reserved.
@@ -102,7 +102,7 @@ requires
 .Tn SRM .
 .Pp
 .Tn SRM
-can boot from supported local storage devices, e.g.
+can boot from supported local storage devices, e.g.,
 .Tn IDE
 disks or
 .Tn CD-ROM
@@ -149,7 +149,8 @@ If the value of
 is
 .Qq halt
 then
-.Tn SRM will stop, print its prompt:
+.Tn SRM
+will stop, print its prompt:
 .Qq \*[Gt]\*[Gt]\*[Gt]
 and wait for commands to be entered on the console.
 If the value of
@@ -164,7 +165,7 @@ various non-volatile environment variables.
 .Tn SRM
 device names are not the same as in
 .Nx ,
-e.g.
+e.g.,
 .Sy ewa0
 is a
 .Tn DEC
@@ -235,7 +236,7 @@ help system.
 .Pp
 Set an
 .Tn SRM
-variable, e.g.
+variable, e.g.,
 .Bd -literal -offset indent
 set auto_action boot
 set bootdef_dev dka0
@@ -250,7 +251,7 @@ Show
 variables and values, or show system state or configuration.
 If a wildcard is used, then all matching
 .Tn SRM
-variables are shown, e.g.
+variables are shown, e.g.,
 .Pp
 .Bl -tag -width "show device" -compact -offset indent
 .It Ic show b*
@@ -280,7 +281,7 @@ prompt the user on the console for commands to execute.
 Some
 .Tn Alpha
 systems
-.Pq e.g. Tn AlphaServer 800
+.Pq e.g., Tn AlphaServer 800
 have a
 .Qq halt
 switch, which if set, will override the action of this variable, and cause
@@ -289,7 +290,7 @@ to stop after
 .Tn POST
 and prompt the user for commands to execute.
 .It Ev bootdef_dev
-The default boot device, e.g.
+The default boot device, e.g.,
 .Sy dka0 ,
 .Sy dqa0 .
 The
@@ -341,7 +342,7 @@ the media and speed for
 .Qq tulip
 Ethernet interfaces
 .Po
-e.g.
+e.g.,
 .Tn DECchip
 21040, 21140, 21143
 .Pc ;
@@ -353,7 +354,6 @@ the protocol to use when netbooting, i.e. MOP
 or BOOTP.
 .El
 .Ss After bootstrap
-.Pp
 Once the
 .Nx Ns Tn /alpha
 kernel is booted normally
