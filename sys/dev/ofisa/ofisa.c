@@ -1,4 +1,4 @@
-/*	$NetBSD: ofisa.c,v 1.4 1998/06/10 16:48:21 tv Exp $	*/
+/*	$NetBSD: ofisa.c,v 1.5 1998/06/11 08:43:01 thorpej Exp $	*/
 
 /*
  * Copyright 1997, 1998
@@ -43,6 +43,8 @@
 #include <dev/ofw/openfirm.h>
 #include <dev/isa/isavar.h>
 #include <dev/ofisa/ofisavar.h>
+
+#include "isadma.h"
 
 #define	OFW_MAX_STACK_BUF_SIZE	256
 
@@ -111,10 +113,12 @@ ofisaattach(parent, self, aux)
 
 	printf("\n");
 
+#if NISADMA > 0
 	/*
 	 * Initialize our DMA state.
 	 */
 	isa_dmainit(iba.iba_ic, iba.iba_iot, iba.iba_dmat, self);
+#endif
 
 	for (child = OF_child(oba->oba_phandle); child;
 	    child = OF_peer(child)) {
