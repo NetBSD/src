@@ -1,4 +1,4 @@
-/*	$NetBSD: __sigtramp1.S,v 1.3 2003/08/07 16:42:25 agc Exp $	*/
+/*	$NetBSD: __sigtramp1.S,v 1.4 2004/03/26 19:36:40 drochner Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -163,7 +163,7 @@ ENTRY_NOPROFILE(__sigtramp_sigcontext_1)
 	RESTORE_STATE
 
 	/* Get registers back and set syscall # */
-	restore	%g0, SYS___sigreturn14, %g1
+	restore	%g0, SYS_compat_16___sigreturn14, %g1
 	add	%sp, 64 + 16, %o0	/* compute scp */
 	t	ST_SYSCALL		/* call sigreturn */
 	mov	SYS_exit, %g1		/* exit with errno */
