@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 - 2002 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2003 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -33,8 +33,8 @@
 
 #include "gssapi_locl.h"
 
-__RCSID("$Heimdal: wrap.c,v 1.20 2002/09/03 17:33:36 joda Exp $"
-        "$NetBSD: wrap.c,v 1.1.1.6 2002/09/12 12:41:40 joda Exp $");
+__RCSID("$Heimdal: wrap.c,v 1.21 2003/03/16 17:57:48 lha Exp $"
+        "$NetBSD: wrap.c,v 1.1.1.7 2003/05/15 20:28:46 lha Exp $");
 
 OM_uint32
 gss_krb5_get_localkey(const gss_ctx_id_t context_handle,
@@ -110,6 +110,7 @@ gss_wrap_size_limit (
       break;
   }
   krb5_free_keyblock (gssapi_krb5_context, key);
+  *minor_status = 0;
   return ret;
 }
 
@@ -142,8 +143,10 @@ wrap_des
 
   output_message_buffer->length = total_len;
   output_message_buffer->value  = malloc (total_len);
-  if (output_message_buffer->value == NULL)
+  if (output_message_buffer->value == NULL) {
+    *minor_status = ENOMEM;
     return GSS_S_FAILURE;
+  }
 
   p = gssapi_krb5_make_header(output_message_buffer->value,
 			      len,
@@ -229,6 +232,7 @@ wrap_des
   }
   if(conf_state != NULL)
       *conf_state = conf_req_flag;
+  *minor_status = 0;
   return GSS_S_COMPLETE;
 }
 
@@ -260,8 +264,10 @@ wrap_des3
 
   output_message_buffer->length = total_len;
   output_message_buffer->value  = malloc (total_len);
-  if (output_message_buffer->value == NULL)
+  if (output_message_buffer->value == NULL) {
+    *minor_status = ENOMEM;
     return GSS_S_FAILURE;
+  }
 
   p = gssapi_krb5_make_header(output_message_buffer->value,
 			      len,
@@ -396,6 +402,7 @@ wrap_des3
   }
   if(conf_state != NULL)
       *conf_state = conf_req_flag;
+  *minor_status = 0;
   return GSS_S_COMPLETE;
 }
 

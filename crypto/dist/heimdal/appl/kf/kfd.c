@@ -32,8 +32,8 @@
  */
 
 #include "kf_locl.h"
-__RCSID("$Heimdal: kfd.c,v 1.10 2002/09/04 20:31:48 joda Exp $"
-        "$NetBSD: kfd.c,v 1.1.1.5 2002/09/12 12:41:33 joda Exp $");
+__RCSID("$Heimdal: kfd.c,v 1.11 2003/04/16 15:40:24 lha Exp $"
+        "$NetBSD: kfd.c,v 1.1.1.6 2003/05/15 20:28:41 lha Exp $");
 
 krb5_context context;
 char krb5_tkfile[MAXPATHLEN];
@@ -261,10 +261,10 @@ proto (int sock, const char *service)
 	       (char *)(remotename.data),ccname);
   out:
     if (status) {
-	strcpy(ret_string, "no");
+	strlcpy(ret_string, "no", sizeof(ret_string));
 	krb5_warnx(context, "failed");
     } else  {
-	strcpy(ret_string, "ok");
+	strlcpy(ret_string, "ok", sizeof(ret_string));
     }
 
     krb5_data_free (&tk_file);

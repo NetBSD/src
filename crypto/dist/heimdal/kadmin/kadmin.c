@@ -34,8 +34,8 @@
 #include "kadmin_locl.h"
 #include <sl.h>
 
-__RCSID("$Heimdal: kadmin.c,v 1.41 2001/08/10 08:06:13 joda Exp $"
-        "$NetBSD: kadmin.c,v 1.1.1.6 2002/09/12 12:41:39 joda Exp $");
+__RCSID("$Heimdal: kadmin.c,v 1.42 2003/03/31 10:20:19 lha Exp $"
+        "$NetBSD: kadmin.c,v 1.1.1.7 2003/05/15 20:28:45 lha Exp $");
 
 static char *config_file;
 static char *keyfile;
@@ -52,7 +52,7 @@ static struct getargs args[] = {
     {	"principal", 	'p',	arg_string,	&client_name,
 	"principal to authenticate as" },
     {   "keytab",	'K',	arg_string,	&keytab,
-   	"keytab for authentication pricipal" },
+   	"keytab for authentication principal" },
     { 
 	"config-file",	'c',	arg_string,	&config_file, 
 	"location of config file",	"file" 

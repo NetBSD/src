@@ -31,8 +31,8 @@
  * SUCH DAMAGE. 
  */
 
-/* $Heimdal: krb5.h,v 1.205 2002/09/03 17:31:47 joda Exp $
-   $NetBSD: krb5.h,v 1.1.1.6 2002/09/12 12:41:41 joda Exp $ */
+/* $Heimdal: krb5.h,v 1.209 2003/03/16 18:30:02 lha Exp $
+   $NetBSD: krb5.h,v 1.1.1.7 2003/05/15 20:28:48 lha Exp $ */
 
 #ifndef __KRB5_H__
 #define __KRB5_H__
@@ -44,12 +44,12 @@
 typedef socklen_t krb5_socklen_t;
 typedef ssize_t krb5_ssize_t;
 
-#include <asn1_err.h>
-#include <krb5_err.h>
-#include <heim_err.h>
-#include <k524_err.h>
+#include <krb5/asn1_err.h>
+#include <krb5/krb5_err.h>
+#include <krb5/heim_err.h>
+#include <krb5/k524_err.h>
 
-#include <krb5_asn1.h>
+#include <krb5/krb5_asn1.h>
 
 /* name confusion with MIT */
 #ifndef KRB5KDC_ERR_KEY_EXP
@@ -103,7 +103,7 @@ enum {
     ENCTYPE_DES_CBC_NONE	= ETYPE_DES_CBC_NONE,
     ENCTYPE_DES3_CBC_NONE	= ETYPE_DES3_CBC_NONE,
     ENCTYPE_DES_CFB64_NONE	= ETYPE_DES_CFB64_NONE,
-    ENCTYPE_DES_PCBC_NONE	= ETYPE_DES_PCBC_NONE,
+    ENCTYPE_DES_PCBC_NONE	= ETYPE_DES_PCBC_NONE
 };
 
 typedef PADATA_TYPE krb5_preauthtype;
@@ -224,6 +224,8 @@ typedef enum krb5_keytype {
     KEYTYPE_NULL	= 0,
     KEYTYPE_DES		= 1,
     KEYTYPE_DES3	= 7,
+    KEYTYPE_AES128	= 17,
+    KEYTYPE_AES256	= 18,
     KEYTYPE_ARCFOUR	= 23
 } krb5_keytype;
 
@@ -396,6 +398,7 @@ typedef struct krb5_context_data {
     char *error_string;
     char error_buf[256];
     krb5_addresses *ignore_addresses;
+    char *default_cc_name;
 } krb5_context_data;
 
 typedef struct krb5_ticket {
@@ -440,6 +443,8 @@ typedef struct krb5_kt_cursor {
 struct krb5_keytab_data;
 
 typedef struct krb5_keytab_data *krb5_keytab;
+
+#define KRB5_KT_PREFIX_MAX_LEN	30
 
 struct krb5_keytab_data {
     const char *prefix;
@@ -670,7 +675,7 @@ struct credentials; /* this is to keep the compiler happy */
 struct getargs;
 struct sockaddr;
 
-#include <krb5-protos.h>
+#include <krb5/krb5-protos.h>
 
 #endif /* __KRB5_H__ */
 

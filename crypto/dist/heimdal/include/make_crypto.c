@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002 Kungliga Tekniska Högskolan
+ * Copyright (c) 2002 - 2003 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -33,7 +33,8 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$Id");
+__RCSID("$Heimdal: make_crypto.c,v 1.4.2.1 2003/05/05 20:10:27 joda Exp $"
+        "$NetBSD: make_crypto.c,v 1.1.1.2 2003/05/15 20:28:44 lha Exp $");
 #endif
 #include <stdio.h>
 #include <string.h>
@@ -60,11 +61,15 @@ main(int argc, char **argv)
     fprintf(f, "#ifndef __%s__\n", argv[1]);
     fprintf(f, "#define __%s__\n", argv[1]);
 #ifdef HAVE_OPENSSL
+    fputs("#define OPENSSL_DES_LIBDES_COMPATIBILITY\n", f);
     fputs("#include <openssl/des.h>\n", f);
     fputs("#include <openssl/rc4.h>\n", f);
     fputs("#include <openssl/md4.h>\n", f);
     fputs("#include <openssl/md5.h>\n", f);
     fputs("#include <openssl/sha.h>\n", f);
+#if ENABLE_AES
+    fputs("#include <openssl/aes.h>\n", f);
+#endif    
 #else
     fputs("#include <des.h>\n", f);
     fputs("#include <md4.h>\n", f);

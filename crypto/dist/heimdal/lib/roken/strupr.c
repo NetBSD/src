@@ -33,8 +33,8 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-__RCSID("$Heimdal: strupr.c,v 1.4 1999/12/02 16:58:53 joda Exp $"
-        "$NetBSD: strupr.c,v 1.1.1.3 2002/09/12 12:41:42 joda Exp $");
+__RCSID("$Heimdal: strupr.c,v 1.5 2003/04/14 11:46:41 lha Exp $"
+        "$NetBSD: strupr.c,v 1.1.1.4 2003/05/15 20:28:49 lha Exp $");
 #endif
 #include <string.h>
 #include <ctype.h>
@@ -48,7 +48,7 @@ strupr(char *str)
   char *s;
 
   for(s = str; *s; s++)
-    *s = toupper(*s);
+    *s = toupper((unsigned char)*s);
   return str;
 }
 #endif

@@ -33,8 +33,8 @@
 
 #include "krb5_locl.h"
 
-__RCSID("$Heimdal: prompter_posix.c,v 1.6 2001/05/11 20:26:49 assar Exp $"
-        "$NetBSD: prompter_posix.c,v 1.1.1.4 2002/09/12 12:41:41 joda Exp $");
+__RCSID("$Heimdal: prompter_posix.c,v 1.7 2002/09/16 17:32:11 nectar Exp $"
+        "$NetBSD: prompter_posix.c,v 1.1.1.5 2003/05/15 20:28:48 lha Exp $");
 
 int
 krb5_prompter_posix (krb5_context context,
@@ -66,8 +66,7 @@ krb5_prompter_posix (krb5_context context,
 		     prompts[i].reply->length,
 		     stdin) == NULL)
 		return 1;
-	    if(s[strlen(s) - 1] == '\n')
-		s[strlen(s) - 1] = '\0';
+	    s[strcspn(s, "\n")] = '\0';
 	}
     }
     return 0;

@@ -31,14 +31,14 @@
  * SUCH DAMAGE. 
  */
 /* $Heimdal: ss.h,v 1.3 2000/05/25 00:15:21 assar Exp $
-   $NetBSD: ss.h,v 1.1.1.3 2002/09/12 12:41:43 joda Exp $ */
+   $NetBSD: ss.h,v 1.1.1.4 2003/05/15 20:28:50 lha Exp $ */
 
 /* SS compatibility for SL */
 
 #ifndef __ss_h__
 #define __ss_h__
 
-#include <sl.h>
+#include <krb5/sl.h>
 
 typedef SL_cmd ss_request_table;
 

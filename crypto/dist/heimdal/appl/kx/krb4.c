@@ -33,8 +33,8 @@
 
 #include "kx.h"
 
-__RCSID("$Heimdal: krb4.c,v 1.8 2000/10/08 13:19:22 assar Exp $"
-        "$NetBSD: krb4.c,v 1.1.1.4 2002/09/12 12:41:34 joda Exp $");
+__RCSID("$Heimdal: krb4.c,v 1.11 2003/04/16 16:45:41 joda Exp $"
+        "$NetBSD: krb4.c,v 1.1.1.5 2003/05/15 20:28:43 lha Exp $");
 
 #ifdef KRB4
 
@@ -72,6 +72,12 @@ krb4_authenticate (kx_context *kc, int s)
     krb4_kx_context *c = (krb4_kx_context *)kc->data;
     const char *host = kc->host;
 
+    if (kc->thisaddr->sa_family != AF_INET) {
+	warnx ("%s: used Kerberos v4 authentiocation on on non-IP4 address", 
+	       host);
+	return -1;
+    }
+
 #ifdef HAVE_KRB_GET_OUR_IP_FOR_REALM
     if (krb_get_config_bool("nat_in_use")) {
 	struct in_addr natAddr;
@@ -79,22 +85,23 @@ krb4_authenticate (kx_context *kc, int s)
 	if (krb_get_our_ip_for_realm(krb_realmofhost(kc->host),
 				     &natAddr) == KSUCCESS
 	    || krb_get_our_ip_for_realm (NULL, &natAddr) == KSUCCESS)
-	    kc->thisaddr.sin_addr = natAddr;
+	    ((struct sockaddr_in *)kc->thisaddr)->sin_addr = natAddr;
     }
 #endif
 
     status = krb_sendauth (KOPT_DO_MUTUAL, s, &text, "rcmd",
 			   (char *)host, krb_realmofhost (host),
 			   getpid(), &msg, &cred, c->schedule,
-			   &kc->thisaddr, &kc->thataddr, KX_VERSION);
+			   (struct sockaddr_in *)kc->thisaddr,
+			   (struct sockaddr_in *)kc->thataddr, KX_VERSION);
     if (status != KSUCCESS) {
-	warnx ("%s: %s\n", host, krb_get_err_text(status));
+	warnx ("%s: %s", host, krb_get_err_text(status));
 	return -1;
     }
     memcpy (c->key, cred.session, sizeof(des_cblock));
     return 0;
 }
-
+    
 /*
  * Read a krb4 priv packet from `fd' into `buf' (of size `len').
  * Return the number of bytes read or 0 on EOF or -1 on error.
@@ -122,7 +129,8 @@ krb4_read (kx_context *kc,
     if (krb_net_read (fd, buf, l) != l)
 	return -1;
     status = krb_rd_priv (buf, l, c->schedule, &c->key,
-			  &kc->thataddr, &kc->thisaddr, &msg);
+			  (struct sockaddr_in *)kc->thataddr,
+			  (struct sockaddr_in *)kc->thisaddr, &msg);
     if (status != RD_AP_OK) {
 	warnx ("krb4_read: %s", krb_get_err_text(status));
 	return -1;
@@ -149,7 +157,8 @@ krb4_write(kx_context *kc,
     if (outbuf == NULL)
 	return -1;
     outlen = krb_mk_priv ((void *)buf, outbuf, len, c->schedule, &c->key,
-			  &kc->thisaddr, &kc->thataddr);
+			  (struct sockaddr_in *)kc->thisaddr,
+			  (struct sockaddr_in *)kc->thataddr);
     if (outlen < 0) {
 	free (outbuf);
 	return -1;
@@ -304,6 +313,9 @@ recv_v4_auth (kx_context *kc, int sock, u_char *buf)
     AUTH_DAT auth;
     des_key_schedule schedule;
 
+    if (kc->thisaddr->sa_family != AF_INET)
+	return -1;
+
     if (memcmp (buf, KRB_SENDAUTH_VERS, 4) != 0)
 	return -1;
     if (net_read (sock, buf + 4, KRB_SENDAUTH_VLEN - 4) !=
@@ -322,8 +334,8 @@ recv_v4_auth (kx_context *kc, int sock, u_char *buf)
 			   &ticket,
 			   "rcmd",
 			   instance,
-			   &kc->thataddr,
-			   &kc->thisaddr,
+			   (struct sockaddr_in *)kc->thataddr,
+			   (struct sockaddr_in *)kc->thisaddr,
 			   &auth,
 			   "",
 			   schedule,

@@ -34,8 +34,8 @@
 #include "krb5_locl.h"
 #include <com_err.h>
 
-__RCSID("$Heimdal: context.c,v 1.81 2002/09/02 17:03:12 joda Exp $"
-        "$NetBSD: context.c,v 1.1.1.6 2002/09/12 12:41:41 joda Exp $");
+__RCSID("$Heimdal: context.c,v 1.83 2003/03/10 00:24:13 lha Exp $"
+        "$NetBSD: context.c,v 1.1.1.7 2003/05/15 20:28:47 lha Exp $");
 
 #define INIT_FIELD(C, T, E, D, F)					\
     (C)->E = krb5_config_get_ ## T ## _default ((C), NULL, (D), 	\
@@ -177,6 +177,7 @@ init_context_from_config_file(krb5_context context)
     /* prefer dns_lookup_kdc over srv_lookup. */
     INIT_FIELD(context, bool, srv_lookup, TRUE, "srv_lookup");
     INIT_FIELD(context, bool, srv_lookup, context->srv_lookup, "dns_lookup_kdc");
+    context->default_cc_name = NULL;
     return 0;
 }
 
@@ -228,6 +229,8 @@ out:
 void
 krb5_free_context(krb5_context context)
 {
+    if (context->default_cc_name)
+	free(context->default_cc_name);
     free(context->etypes);
     free(context->etypes_des);
     krb5_free_host_realm (context, context->default_realms);
@@ -260,7 +263,7 @@ krb5_set_config_files(krb5_context context, char **filenames)
     /* with this enabled and if there are no config files, Kerberos is
        considererd disabled */
     if(tmp == NULL)
-	return ENOENT;
+	return ENXIO;
 #endif
     krb5_config_file_free(context, context->cf);
     context->cf = tmp;

@@ -33,8 +33,8 @@
 
 #include "krb5_locl.h"
 
-__RCSID("$Heimdal: get_addrs.c,v 1.44 2002/08/16 20:50:15 joda Exp $"
-        "$NetBSD: get_addrs.c,v 1.1.1.6 2002/09/12 12:41:41 joda Exp $");
+__RCSID("$Heimdal: get_addrs.c,v 1.45 2003/01/25 15:19:49 lha Exp $"
+        "$NetBSD: get_addrs.c,v 1.1.1.7 2003/05/15 20:28:47 lha Exp $");
 
 #ifdef __osf__
 /* hate */
@@ -145,6 +145,8 @@ find_all_addresses (krb5_context context, krb5_addresses *res, int flags)
     for (ifa = ifa0, idx = 0; ifa != NULL; ifa = ifa->ifa_next) {
 	if ((ifa->ifa_flags & IFF_UP) == 0)
 	    continue;
+	if (ifa->ifa_addr == NULL)
+	    continue;
 	if (memcmp(ifa->ifa_addr, &sa_zero, sizeof(sa_zero)) == 0)
 	    continue;
 	if (krb5_sockaddr_uninteresting(ifa->ifa_addr))
@@ -185,6 +187,8 @@ find_all_addresses (krb5_context context, krb5_addresses *res, int flags)
     if ((flags & LOOP_IF_NONE) != 0 && idx == 0) {
 	for (ifa = ifa0; ifa != NULL; ifa = ifa->ifa_next) {
 	    if ((ifa->ifa_flags & IFF_UP) == 0)
+		continue;
+	    if (ifa->ifa_addr == NULL)
 		continue;
 	    if (memcmp(ifa->ifa_addr, &sa_zero, sizeof(sa_zero)) == 0)
 		continue;

@@ -12,7 +12,7 @@
 # PARTICULAR PURPOSE.
 
 dnl $Heimdal: acinclude.m4,v 1.15 1998/05/23 14:54:53 joda Exp $
-dnl $NetBSD: aclocal.m4,v 1.1.1.6 2002/09/12 12:41:31 joda Exp $
+dnl $NetBSD: aclocal.m4,v 1.1.1.7 2003/05/15 20:28:39 lha Exp $
 dnl
 dnl Only put things that for some reason can't live in the `cf'
 dnl directory in this file.
@@ -24,7 +24,7 @@ define(upcase,`echo $1 | tr abcdefghijklmnopqrstuvwxyz ABCDEFGHIJKLMNOPQRSTUVWXY
 
 
 dnl $Heimdal: misc.m4,v 1.5 2002/05/24 15:35:32 joda Exp $
-dnl $NetBSD: aclocal.m4,v 1.1.1.6 2002/09/12 12:41:31 joda Exp $
+dnl $NetBSD: aclocal.m4,v 1.1.1.7 2003/05/15 20:28:39 lha Exp $
 dnl
 AC_DEFUN([upcase],[`echo $1 | tr abcdefghijklmnopqrstuvwxyz ABCDEFGHIJKLMNOPQRSTUVWXYZ`])dnl
 AC_DEFUN([rk_LIBOBJ],[AC_LIBOBJ([$1])])dnl
@@ -855,6 +855,43 @@ AC_CONFIG_COMMANDS_PRE(
 Usually this means the macro was only invoked conditionally.])
 fi])])
 
+# Add --enable-maintainer-mode option to configure.
+# From Jim Meyering
+
+# Copyright 1996, 1998, 2000, 2001 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2, or (at your option)
+# any later version.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+# 02111-1307, USA.
+
+# serial 1
+
+AC_DEFUN([AM_MAINTAINER_MODE],
+[AC_MSG_CHECKING([whether to enable maintainer-specific portions of Makefiles])
+  dnl maintainer-mode is disabled by default
+  AC_ARG_ENABLE(maintainer-mode,
+[  --enable-maintainer-mode enable make rules and dependencies not useful
+                          (and sometimes confusing) to the casual installer],
+      USE_MAINTAINER_MODE=$enableval,
+      USE_MAINTAINER_MODE=no)
+  AC_MSG_RESULT([$USE_MAINTAINER_MODE])
+  AM_CONDITIONAL(MAINTAINER_MODE, [test $USE_MAINTAINER_MODE = yes])
+  MAINT=$MAINTAINER_MODE_TRUE
+  AC_SUBST(MAINT)dnl
+]
+)
+
 
 # Copyright 1998, 1999, 2000, 2001, 2002 Free Software Foundation, Inc.
 
@@ -889,7 +926,7 @@ if test "$LEX" = :; then
 fi])
 
 dnl $Heimdal: krb-prog-ln-s.m4,v 1.1 1997/12/14 15:59:01 joda Exp $
-dnl $NetBSD: aclocal.m4,v 1.1.1.6 2002/09/12 12:41:31 joda Exp $
+dnl $NetBSD: aclocal.m4,v 1.1.1.7 2003/05/15 20:28:39 lha Exp $
 dnl
 dnl
 dnl Better test for ln -s, ln or cp
@@ -919,7 +956,7 @@ AC_SUBST(LN_S)dnl
 
 
 dnl $Heimdal: mips-abi.m4,v 1.6 2002/04/30 16:46:05 joda Exp $
-dnl $NetBSD: aclocal.m4,v 1.1.1.6 2002/09/12 12:41:31 joda Exp $
+dnl $NetBSD: aclocal.m4,v 1.1.1.7 2003/05/15 20:28:39 lha Exp $
 dnl
 dnl
 dnl Check for MIPS/IRIX ABI flags. Sets $abi and $abilibdirext to some
@@ -1009,7 +1046,7 @@ esac
 
 dnl
 dnl $Heimdal: c-attribute.m4,v 1.2 1999/03/01 09:52:23 joda Exp $
-dnl $NetBSD: aclocal.m4,v 1.1.1.6 2002/09/12 12:41:31 joda Exp $
+dnl $NetBSD: aclocal.m4,v 1.1.1.7 2003/05/15 20:28:39 lha Exp $
 dnl
 
 dnl
@@ -4533,7 +4570,7 @@ AC_DEFUN([AM_PROG_NM],        [AC_PROG_NM])
 ifelse([AC_DISABLE_FAST_INSTALL])
 
 dnl $Heimdal: wflags.m4,v 1.3 1999/03/11 12:11:41 joda Exp $
-dnl $NetBSD: aclocal.m4,v 1.1.1.6 2002/09/12 12:41:31 joda Exp $
+dnl $NetBSD: aclocal.m4,v 1.1.1.7 2003/05/15 20:28:39 lha Exp $
 dnl
 dnl set WFLAGS
 
@@ -4556,7 +4593,7 @@ AC_SUBST(WFLAGS_NOIMPLICITINT)dnl
 ])
 
 dnl $Heimdal: test-package.m4,v 1.12 2002/09/10 15:23:38 joda Exp $
-dnl $NetBSD: aclocal.m4,v 1.1.1.6 2002/09/12 12:41:31 joda Exp $
+dnl $NetBSD: aclocal.m4,v 1.1.1.7 2003/05/15 20:28:39 lha Exp $
 dnl
 dnl rk_TEST_PACKAGE(package,headers,libraries,extra libs,
 dnl			default locations, conditional, config-program)
@@ -4683,7 +4720,7 @@ AC_SUBST(LIB_$1)
 ])
 
 dnl $Heimdal: find-func.m4,v 1.1 1997/12/14 15:58:58 joda Exp $
-dnl $NetBSD: aclocal.m4,v 1.1.1.6 2002/09/12 12:41:31 joda Exp $
+dnl $NetBSD: aclocal.m4,v 1.1.1.7 2003/05/15 20:28:39 lha Exp $
 dnl
 dnl AC_FIND_FUNC(func, libraries, includes, arguments)
 AC_DEFUN(AC_FIND_FUNC, [
@@ -4694,7 +4731,7 @@ fi
 ])
 
 dnl $Heimdal: find-func-no-libs.m4,v 1.5 1999/10/30 21:08:18 assar Exp $
-dnl $NetBSD: aclocal.m4,v 1.1.1.6 2002/09/12 12:41:31 joda Exp $
+dnl $NetBSD: aclocal.m4,v 1.1.1.7 2003/05/15 20:28:39 lha Exp $
 dnl
 dnl
 dnl Look for function in any of the specified libraries
@@ -4705,7 +4742,7 @@ AC_DEFUN(AC_FIND_FUNC_NO_LIBS, [
 AC_FIND_FUNC_NO_LIBS2([$1], ["" $2], [$3], [$4], [$5], [$6])])
 
 dnl $Heimdal: find-func-no-libs2.m4,v 1.6 2001/09/01 10:57:32 assar Exp $
-dnl $NetBSD: aclocal.m4,v 1.1.1.6 2002/09/12 12:41:31 joda Exp $
+dnl $NetBSD: aclocal.m4,v 1.1.1.7 2003/05/15 20:28:39 lha Exp $
 dnl
 dnl
 dnl Look for function in any of the specified libraries
@@ -4769,8 +4806,8 @@ esac
 AC_SUBST(LIB_$1)
 ])
 
-dnl $Heimdal: crypto.m4,v 1.13 2002/09/10 19:55:48 joda Exp $
-dnl $NetBSD: aclocal.m4,v 1.1.1.6 2002/09/12 12:41:31 joda Exp $
+dnl $Heimdal: crypto.m4,v 1.16.2.1 2003/05/05 20:08:32 joda Exp $
+dnl $NetBSD: aclocal.m4,v 1.1.1.7 2003/05/15 20:28:39 lha Exp $
 dnl
 dnl test for crypto libraries:
 dnl - libcrypto (from openssl)
@@ -4783,8 +4820,10 @@ m4_define([test_headers], [
 		#include <openssl/md4.h>
 		#include <openssl/md5.h>
 		#include <openssl/sha.h>
+		#define OPENSSL_DES_LIBDES_COMPATIBILITY
 		#include <openssl/des.h>
 		#include <openssl/rc4.h>
+		#include <openssl/rand.h>
 		#else
 		#include <md4.h>
 		#include <md5.h>
@@ -4816,6 +4855,9 @@ m4_define([test_body], [
 		MD4_Init(&md4);
 		MD5_Init(&md5);
 		SHA1_Init(&sha1);
+		#ifdef HAVE_OPENSSL
+		RAND_status();
+		#endif
 
 		des_cbc_encrypt(0, 0, 0, schedule, 0, 0);
 		RC4(0, 0, 0, 0);])
@@ -4847,23 +4889,31 @@ if test "$crypto_lib" = "unknown" -a "$with_krb4" != "no"; then
 	ires=
 	for i in $INCLUDE_krb4; do
 		CFLAGS="-DHAVE_OPENSSL $i $save_CFLAGS"
-		AC_TRY_COMPILE(test_headers, test_body,
-			openssl=yes ires="$i"; break)
+		for j in $cdirs; do
+			for k in $clibs; do
+				LIBS="$j $k $save_LIBS"
+				AC_TRY_LINK(test_headers, test_body,
+					openssl=yes ires="$i" lres="$j $k"; break 3)
+			done
+		done
 		CFLAGS="$i $save_CFLAGS"
-		AC_TRY_COMPILE(test_headers, test_body,
-			openssl=no ires="$i"; break)
-		CFLAGS="-DOLD_HASH_NAMES $i $save_CFLAGS"
-		AC_TRY_COMPILE(test_headers, test_body,
-			openssl=no ires="$i" old_hash=yes; break)
-	done
-	lres=
-	for i in $cdirs; do
-		for j in $clibs; do
-			LIBS="$i $j $save_LIBS"
-			AC_TRY_LINK(test_headers, test_body,
-				lres="$i $j"; break 2)
+		for j in $cdirs; do
+			for k in $clibs; do
+				LIBS="$j $k $save_LIBS"
+				AC_TRY_LINK(test_headers, test_body,
+					openssl=no ires="$i" lres="$j $k"; break 3)
+			done
+		done
+		CFLAGS="-DHAVE_OLD_HASH_NAMES $i $save_CFLAGS"
+		for j in $cdirs; do
+			for k in $clibs; do
+				LIBS="$j $k $save_LIBS"
+				AC_TRY_LINK(test_headers, test_body,
+					openssl=no ires="$i" lres="$j $k"; break 3)
+			done
 		done
 	done
+		
 	CFLAGS="$save_CFLAGS"
 	LIBS="$save_LIBS"
 	if test "$ires" -a "$lres"; then
@@ -4883,21 +4933,27 @@ if test "$crypto_lib" = "unknown" -a "$with_openssl" != "no"; then
 	INCLUDE_des=
 	LIB_des=
 	if test "$with_openssl_include" != ""; then
-		INCLUDE_des="-I${with_openssl}/include"
+		INCLUDE_des="-I${with_openssl_include}"
 	fi
 	if test "$with_openssl_lib" != ""; then
-		LIB_des="-L${with_openssl}/lib"
+		LIB_des="-L${with_openssl_lib}"
 	fi
 	CFLAGS="-DHAVE_OPENSSL ${INCLUDE_des} ${CFLAGS}"
-	LIB_des="${LIB_des} -lcrypto"
-	LIB_des_a="$LIB_des"
-	LIB_des_so="$LIB_des"
-	LIB_des_appl="$LIB_des"
-	LIBS="${LIBS} ${LIB_des}"
-	AC_TRY_LINK(test_headers, test_body, [
-		crypto_lib=libcrypto openssl=yes
-		AC_MSG_RESULT([libcrypto])
-	])
+	saved_LIB_des="$LIB_des"
+	for lres in "" "-lnsl -lsocket"; do
+		LIB_des="${saved_LIB_des} -lcrypto $lres"
+		LIB_des_a="$LIB_des"
+		LIB_des_so="$LIB_des"
+		LIB_des_appl="$LIB_des"
+		LIBS="${LIBS} ${LIB_des}"
+		AC_TRY_LINK(test_headers, test_body, [
+			crypto_lib=libcrypto openssl=yes
+			AC_MSG_RESULT([libcrypto])
+		])
+		if test "$crypto_lib" = libcrypto ; then
+			break;
+		fi
+	done
 	CFLAGS="$save_CFLAGS"
 	LIBS="$save_LIBS"
 fi
@@ -4939,7 +4995,7 @@ AC_SUBST(LIB_des_appl)
 
 dnl
 dnl $Heimdal: with-all.m4,v 1.1 2001/08/29 17:01:23 assar Exp $
-dnl $NetBSD: aclocal.m4,v 1.1.1.6 2002/09/12 12:41:31 joda Exp $
+dnl $NetBSD: aclocal.m4,v 1.1.1.7 2003/05/15 20:28:39 lha Exp $
 dnl
 
 dnl AC_WITH_ALL(name)
@@ -4981,7 +5037,7 @@ no)	;;
 esac
 ])
 dnl $Heimdal: db.m4,v 1.9 2002/09/10 14:29:47 joda Exp $
-dnl $NetBSD: aclocal.m4,v 1.1.1.6 2002/09/12 12:41:31 joda Exp $
+dnl $NetBSD: aclocal.m4,v 1.1.1.7 2003/05/15 20:28:39 lha Exp $
 dnl
 dnl tests for various db libraries
 dnl
@@ -5184,8 +5240,8 @@ AC_SUBST(DBLIB)dnl
 AC_SUBST(LIB_NDBM)dnl
 ])
 
-dnl $Heimdal: roken-frag.m4,v 1.44 2002/09/04 20:57:30 joda Exp $
-dnl $NetBSD: aclocal.m4,v 1.1.1.6 2002/09/12 12:41:31 joda Exp $
+dnl $Heimdal: roken-frag.m4,v 1.45 2002/12/18 17:34:25 joda Exp $
+dnl $NetBSD: aclocal.m4,v 1.1.1.7 2003/05/15 20:28:39 lha Exp $
 dnl
 dnl some code to get roken working
 dnl
@@ -5330,7 +5386,7 @@ AC_FIND_FUNC(res_nsearch, resolv,
 #include <resolv.h>
 #endif
 ],
-[0,0,0,0,0])
+[0,0,0,0,0,0])
 
 AC_FIND_FUNC(dn_expand, resolv,
 [
@@ -5838,7 +5894,7 @@ AC_SUBST(INCLUDES_roken)dnl
 ])
 
 dnl $Heimdal: have-type.m4,v 1.6 2000/07/15 18:10:00 joda Exp $
-dnl $NetBSD: aclocal.m4,v 1.1.1.6 2002/09/12 12:41:31 joda Exp $
+dnl $NetBSD: aclocal.m4,v 1.1.1.7 2003/05/15 20:28:39 lha Exp $
 dnl
 dnl check for existance of a type
 
@@ -5871,7 +5927,7 @@ fi
 
 dnl
 dnl $Heimdal: retsigtype.m4,v 1.1 2000/07/15 18:05:56 joda Exp $
-dnl $NetBSD: aclocal.m4,v 1.1.1.6 2002/09/12 12:41:31 joda Exp $
+dnl $NetBSD: aclocal.m4,v 1.1.1.7 2003/05/15 20:28:39 lha Exp $
 dnl
 dnl Figure out return type of signal handlers, and define SIGRETURN macro
 dnl that can be used to return from one
@@ -5890,7 +5946,7 @@ AH_BOTTOM([#ifdef VOID_RETSIGTYPE
 ])
 dnl
 dnl $Heimdal: check-netinet-ip-and-tcp.m4,v 1.3 2000/07/18 10:33:02 joda Exp $
-dnl $NetBSD: aclocal.m4,v 1.1.1.6 2002/09/12 12:41:31 joda Exp $
+dnl $NetBSD: aclocal.m4,v 1.1.1.7 2003/05/15 20:28:39 lha Exp $
 dnl
 
 dnl extra magic check for netinet/{ip.h,tcp.h} because on irix 6.5.3
@@ -5924,7 +5980,7 @@ fi
 ])
 
 dnl $Heimdal: krb-ipv6.m4,v 1.13 2002/04/30 16:48:13 joda Exp $
-dnl $NetBSD: aclocal.m4,v 1.1.1.6 2002/09/12 12:41:31 joda Exp $
+dnl $NetBSD: aclocal.m4,v 1.1.1.7 2003/05/15 20:28:39 lha Exp $
 dnl
 dnl test for IPv6
 dnl
@@ -6072,17 +6128,24 @@ sin6.sin6_addr = in6addr_loopback;
 	fi
 fi
 ])
-dnl $Heimdal: check-var.m4,v 1.6 2001/08/21 12:00:16 joda Exp $
-dnl $NetBSD: aclocal.m4,v 1.1.1.6 2002/09/12 12:41:31 joda Exp $
+dnl $Heimdal: check-var.m4,v 1.7 2003/02/17 00:44:57 lha Exp $
+dnl $NetBSD: aclocal.m4,v 1.1.1.7 2003/05/15 20:28:39 lha Exp $
 dnl
 dnl rk_CHECK_VAR(variable, includes)
 AC_DEFUN([rk_CHECK_VAR], [
 AC_MSG_CHECKING(for $1)
 AC_CACHE_VAL(ac_cv_var_$1, [
+m4_ifval([$2],[
+	AC_TRY_LINK([$2
+	void * foo() { return &$1; }],
+	    [foo()],
+	    ac_cv_var_$1=yes, ac_cv_var_$1=no)])
+if test "$ac_cv_var_$1" != yes ; then
 AC_TRY_LINK([extern int $1;
 int foo() { return $1; }],
 	    [foo()],
 	    ac_cv_var_$1=yes, ac_cv_var_$1=no)
+fi
 ])
 ac_foo=`eval echo \\$ac_cv_var_$1`
 AC_MSG_RESULT($ac_foo)
@@ -6095,8 +6158,9 @@ fi
 
 AC_WARNING_ENABLE([obsolete])
 AU_DEFUN([AC_CHECK_VAR], [rk_CHECK_VAR([$2], [$1])], [foo])
+
 dnl $Heimdal: check-declaration.m4,v 1.3 1999/03/01 13:03:08 joda Exp $
-dnl $NetBSD: aclocal.m4,v 1.1.1.6 2002/09/12 12:41:31 joda Exp $
+dnl $NetBSD: aclocal.m4,v 1.1.1.7 2003/05/15 20:28:39 lha Exp $
 dnl
 dnl
 dnl Check if we need the declaration of a variable
@@ -6123,7 +6187,7 @@ undefine([foo])
 ])
 
 dnl $Heimdal: broken-snprintf.m4,v 1.4 2001/09/01 11:56:05 assar Exp $
-dnl $NetBSD: aclocal.m4,v 1.1.1.6 2002/09/12 12:41:31 joda Exp $
+dnl $NetBSD: aclocal.m4,v 1.1.1.7 2003/05/15 20:28:39 lha Exp $
 dnl
 AC_DEFUN(AC_BROKEN_SNPRINTF, [
 AC_CACHE_CHECK(for working snprintf,ac_cv_func_snprintf_working,
@@ -6179,7 +6243,7 @@ fi
 ])
 
 dnl $Heimdal: need-proto.m4,v 1.4 2002/08/23 15:07:41 joda Exp $
-dnl $NetBSD: aclocal.m4,v 1.1.1.6 2002/09/12 12:41:31 joda Exp $
+dnl $NetBSD: aclocal.m4,v 1.1.1.7 2003/05/15 20:28:39 lha Exp $
 dnl
 dnl
 dnl Check if we need the prototype for a function
@@ -6205,7 +6269,7 @@ fi
 ])
 
 dnl $Heimdal: broken-glob.m4,v 1.4 2001/06/19 09:59:46 assar Exp $
-dnl $NetBSD: aclocal.m4,v 1.1.1.6 2002/09/12 12:41:31 joda Exp $
+dnl $NetBSD: aclocal.m4,v 1.1.1.7 2003/05/15 20:28:39 lha Exp $
 dnl
 dnl check for glob(3)
 dnl
@@ -6237,7 +6301,7 @@ fi
 
 dnl
 dnl $Heimdal: krb-func-getlogin.m4,v 1.1 1999/07/13 17:45:30 assar Exp $
-dnl $NetBSD: aclocal.m4,v 1.1.1.6 2002/09/12 12:41:31 joda Exp $
+dnl $NetBSD: aclocal.m4,v 1.1.1.7 2003/05/15 20:28:39 lha Exp $
 dnl
 dnl test for POSIX (broken) getlogin
 dnl
@@ -6260,7 +6324,7 @@ fi
 ])
 
 dnl $Heimdal: find-if-not-broken.m4,v 1.4 2002/05/19 19:37:08 joda Exp $
-dnl $NetBSD: aclocal.m4,v 1.1.1.6 2002/09/12 12:41:31 joda Exp $
+dnl $NetBSD: aclocal.m4,v 1.1.1.7 2003/05/15 20:28:39 lha Exp $
 dnl
 dnl
 dnl Mix between AC_FIND_FUNC and AC_BROKEN
@@ -6274,7 +6338,7 @@ fi
 ])
 
 dnl $Heimdal: broken.m4,v 1.6 2002/05/19 19:36:52 joda Exp $
-dnl $NetBSD: aclocal.m4,v 1.1.1.6 2002/09/12 12:41:31 joda Exp $
+dnl $NetBSD: aclocal.m4,v 1.1.1.7 2003/05/15 20:28:39 lha Exp $
 dnl
 dnl
 dnl Same as AC _REPLACE_FUNCS, just define HAVE_func if found in normal
@@ -6288,7 +6352,7 @@ AC_DEFUN([AC_BROKEN],
 		[rk_LIBOBJ(rk_func)])])])
 
 dnl $Heimdal: broken2.m4,v 1.4 2002/05/19 22:16:46 joda Exp $
-dnl $NetBSD: aclocal.m4,v 1.1.1.6 2002/09/12 12:41:31 joda Exp $
+dnl $NetBSD: aclocal.m4,v 1.1.1.7 2003/05/15 20:28:39 lha Exp $
 dnl
 dnl AC_BROKEN but with more arguments
 
@@ -6316,7 +6380,7 @@ else
 fi])
 
 dnl $Heimdal: have-struct-field.m4,v 1.6 1999/07/29 01:44:32 assar Exp $
-dnl $NetBSD: aclocal.m4,v 1.1.1.6 2002/09/12 12:41:31 joda Exp $
+dnl $NetBSD: aclocal.m4,v 1.1.1.7 2003/05/15 20:28:39 lha Exp $
 dnl
 dnl check for fields in a structure
 dnl
@@ -6337,7 +6401,7 @@ undefine([cache_val])
 ])
 
 dnl $Heimdal: broken-getnameinfo.m4,v 1.2 2000/12/05 09:09:00 joda Exp $
-dnl $NetBSD: aclocal.m4,v 1.1.1.6 2002/09/12 12:41:31 joda Exp $
+dnl $NetBSD: aclocal.m4,v 1.1.1.7 2003/05/15 20:28:39 lha Exp $
 dnl
 dnl test for broken AIX getnameinfo
 
@@ -6367,7 +6431,7 @@ main(int argc, char **argv)
 ]], ac_cv_func_getnameinfo_broken=no, ac_cv_func_getnameinfo_broken=yes))])
 
 dnl $Heimdal: broken-getaddrinfo.m4,v 1.3 2002/08/20 14:09:40 joda Exp $
-dnl $NetBSD: aclocal.m4,v 1.1.1.6 2002/09/12 12:41:31 joda Exp $
+dnl $NetBSD: aclocal.m4,v 1.1.1.7 2003/05/15 20:28:39 lha Exp $
 dnl
 dnl test if getaddrinfo can handle numeric services
 
@@ -6394,7 +6458,7 @@ main(int argc, char **argv)
 
 dnl
 dnl $Heimdal: broken-realloc.m4,v 1.1 2000/07/15 18:05:36 joda Exp $
-dnl $NetBSD: aclocal.m4,v 1.1.1.6 2002/09/12 12:41:31 joda Exp $
+dnl $NetBSD: aclocal.m4,v 1.1.1.7 2003/05/15 20:28:39 lha Exp $
 dnl
 dnl Test for realloc that doesn't handle NULL as first parameter
 dnl
@@ -6421,7 +6485,7 @@ AH_BOTTOM([#ifdef BROKEN_REALLOC
 ])
 
 dnl $Heimdal: proto-compat.m4,v 1.3 1999/03/01 13:03:48 joda Exp $
-dnl $NetBSD: aclocal.m4,v 1.1.1.6 2002/09/12 12:41:31 joda Exp $
+dnl $NetBSD: aclocal.m4,v 1.1.1.7 2003/05/15 20:28:39 lha Exp $
 dnl
 dnl
 dnl Check if the prototype of a function is compatible with another one
@@ -6444,7 +6508,7 @@ fi
 undefine([foo])
 ])
 dnl $Heimdal: krb-struct-winsize.m4,v 1.3 2001/09/01 11:56:05 assar Exp $
-dnl $NetBSD: aclocal.m4,v 1.1.1.6 2002/09/12 12:41:31 joda Exp $
+dnl $NetBSD: aclocal.m4,v 1.1.1.7 2003/05/15 20:28:39 lha Exp $
 dnl
 dnl
 dnl Search for struct winsize
@@ -6471,7 +6535,7 @@ AC_EGREP_HEADER(ws_ypixel, termios.h,
 ])
 
 dnl $Heimdal: krb-struct-spwd.m4,v 1.3 1999/07/13 21:04:11 assar Exp $
-dnl $NetBSD: aclocal.m4,v 1.1.1.6 2002/09/12 12:41:31 joda Exp $
+dnl $NetBSD: aclocal.m4,v 1.1.1.7 2003/05/15 20:28:39 lha Exp $
 dnl
 dnl Test for `struct spwd'
 
@@ -6495,7 +6559,7 @@ fi
 ])
 
 dnl $Heimdal: otp.m4,v 1.2 2002/05/19 20:51:08 joda Exp $
-dnl $NetBSD: aclocal.m4,v 1.1.1.6 2002/09/12 12:41:31 joda Exp $
+dnl $NetBSD: aclocal.m4,v 1.1.1.7 2003/05/15 20:28:39 lha Exp $
 dnl
 dnl check requirements for OTP library
 dnl
@@ -6524,7 +6588,7 @@ AM_CONDITIONAL(OTP, test "$enable_otp" = yes)dnl
 ])
 
 dnl $Heimdal: osfc2.m4,v 1.3 2002/04/30 16:46:18 joda Exp $
-dnl $NetBSD: aclocal.m4,v 1.1.1.6 2002/09/12 12:41:31 joda Exp $
+dnl $NetBSD: aclocal.m4,v 1.1.1.7 2003/05/15 20:28:39 lha Exp $
 dnl
 dnl enable OSF C2 stuff
 
@@ -6540,7 +6604,7 @@ AC_SUBST(LIB_security)
 ])
 
 dnl $Heimdal: check-man.m4,v 1.3 2000/11/30 01:47:17 joda Exp $
-dnl $NetBSD: aclocal.m4,v 1.1.1.6 2002/09/12 12:41:31 joda Exp $
+dnl $NetBSD: aclocal.m4,v 1.1.1.7 2003/05/15 20:28:39 lha Exp $
 dnl check how to format manual pages
 dnl
 
@@ -6600,7 +6664,7 @@ AC_SUBST(CATMANEXT)
 ])
 dnl
 dnl $Heimdal: krb-bigendian.m4,v 1.8 2002/08/28 19:20:19 joda Exp $
-dnl $NetBSD: aclocal.m4,v 1.1.1.6 2002/09/12 12:41:31 joda Exp $
+dnl $NetBSD: aclocal.m4,v 1.1.1.7 2003/05/15 20:28:39 lha Exp $
 dnl
 
 dnl check if this computer is little or big-endian
@@ -6664,7 +6728,7 @@ AH_BOTTOM([
 
 dnl
 dnl $Heimdal: aix.m4,v 1.9 2002/08/28 19:19:43 joda Exp $
-dnl $NetBSD: aclocal.m4,v 1.1.1.6 2002/09/12 12:41:31 joda Exp $
+dnl $NetBSD: aclocal.m4,v 1.1.1.7 2003/05/15 20:28:39 lha Exp $
 dnl
 
 AC_DEFUN(rk_AIX,[
@@ -6723,7 +6787,7 @@ struct sockaddr_in;
 
 dnl
 dnl $Heimdal: dlopen.m4,v 1.1 2002/08/28 16:32:16 joda Exp $
-dnl $NetBSD: aclocal.m4,v 1.1.1.6 2002/09/12 12:41:31 joda Exp $
+dnl $NetBSD: aclocal.m4,v 1.1.1.7 2003/05/15 20:28:39 lha Exp $
 dnl
 
 AC_DEFUN([rk_DLOPEN], [
@@ -6733,7 +6797,7 @@ AC_DEFUN([rk_DLOPEN], [
 
 dnl
 dnl $Heimdal: irix.m4,v 1.1 2002/08/28 19:11:44 joda Exp $
-dnl $NetBSD: aclocal.m4,v 1.1.1.6 2002/09/12 12:41:31 joda Exp $
+dnl $NetBSD: aclocal.m4,v 1.1.1.7 2003/05/15 20:28:39 lha Exp $
 dnl
 
 AC_DEFUN([rk_IRIX],
@@ -6760,8 +6824,8 @@ AH_BOTTOM([
 ])
 
 dnl
-dnl $Heimdal: sunos.m4,v 1.1 2002/08/28 19:53:51 joda Exp $
-dnl $NetBSD: aclocal.m4,v 1.1.1.6 2002/09/12 12:41:31 joda Exp $
+dnl $Heimdal: sunos.m4,v 1.2 2002/10/16 14:42:13 joda Exp $
+dnl $NetBSD: aclocal.m4,v 1.1.1.7 2003/05/15 20:28:39 lha Exp $
 dnl
 
 AC_DEFUN([rk_SUNOS],[
@@ -6773,7 +6837,7 @@ case "$host" in
 *-*-solaris2.7)
 	sunos=57
 	;;
-*-*-solaris2.[89])
+*-*-solaris2.[[89]])
 	sunos=58
 	;;
 *-*-solaris2*)
@@ -6789,7 +6853,7 @@ dnl
 dnl See if there is any X11 present
 dnl
 dnl $Heimdal: check-x.m4,v 1.2 1999/11/05 04:25:23 assar Exp $
-dnl $NetBSD: aclocal.m4,v 1.1.1.6 2002/09/12 12:41:31 joda Exp $
+dnl $NetBSD: aclocal.m4,v 1.1.1.7 2003/05/15 20:28:39 lha Exp $
 
 AC_DEFUN(KRB_CHECK_X,[
 AC_PATH_XTRA
@@ -6840,7 +6904,7 @@ fi
 ])
 
 dnl $Heimdal: check-xau.m4,v 1.3 1999/05/14 01:17:06 assar Exp $
-dnl $NetBSD: aclocal.m4,v 1.1.1.6 2002/09/12 12:41:31 joda Exp $
+dnl $NetBSD: aclocal.m4,v 1.1.1.7 2003/05/15 20:28:39 lha Exp $
 dnl
 dnl check for Xau{Read,Write}Auth and XauFileName
 dnl
@@ -6900,7 +6964,7 @@ LDFLAGS=$save_LDFLAGS
 ])
 
 dnl $Heimdal: check-type-extra.m4,v 1.2 1999/03/01 09:52:23 joda Exp $
-dnl $NetBSD: aclocal.m4,v 1.1.1.6 2002/09/12 12:41:31 joda Exp $
+dnl $NetBSD: aclocal.m4,v 1.1.1.7 2003/05/15 20:28:39 lha Exp $
 dnl
 dnl ac_check_type + extra headers
 
@@ -6926,7 +6990,7 @@ fi
 
 dnl
 dnl $Heimdal: capabilities.m4,v 1.2 1999/09/01 11:02:26 joda Exp $
-dnl $NetBSD: aclocal.m4,v 1.1.1.6 2002/09/12 12:41:31 joda Exp $
+dnl $NetBSD: aclocal.m4,v 1.1.1.7 2003/05/15 20:28:39 lha Exp $
 dnl
 
 dnl
@@ -6941,7 +7005,7 @@ AC_CHECK_FUNCS(sgi_getcapabilitybyname cap_set_proc)
 ])
 
 dnl $Heimdal: check-getpwnam_r-posix.m4,v 1.2 1999/03/23 16:47:31 joda Exp $
-dnl $NetBSD: aclocal.m4,v 1.1.1.6 2002/09/12 12:41:31 joda Exp $
+dnl $NetBSD: aclocal.m4,v 1.1.1.7 2003/05/15 20:28:39 lha Exp $
 dnl
 dnl check for getpwnam_r, and if it's posix or not
 
@@ -6966,7 +7030,7 @@ fi
 fi
 ])
 dnl $Heimdal: krb-readline.m4,v 1.5 2002/08/29 02:22:32 assar Exp $
-dnl $NetBSD: aclocal.m4,v 1.1.1.6 2002/09/12 12:41:31 joda Exp $
+dnl $NetBSD: aclocal.m4,v 1.1.1.7 2003/05/15 20:28:39 lha Exp $
 dnl
 dnl Tests for readline functions
 dnl
@@ -7008,7 +7072,7 @@ AC_DEFINE(HAVE_READLINE, 1,
 
 dnl
 dnl $Heimdal: telnet.m4,v 1.1 2002/08/28 19:19:01 joda Exp $
-dnl $NetBSD: aclocal.m4,v 1.1.1.6 2002/09/12 12:41:31 joda Exp $
+dnl $NetBSD: aclocal.m4,v 1.1.1.7 2003/05/15 20:28:39 lha Exp $
 dnl
 dnl stuff used by telnet
 
@@ -7086,8 +7150,8 @@ AH_BOTTOM([
 ])
 ])
 
-dnl $Heimdal: check-compile-et.m4,v 1.6 2001/09/02 17:08:48 assar Exp $
-dnl $NetBSD: aclocal.m4,v 1.1.1.6 2002/09/12 12:41:31 joda Exp $
+dnl $Heimdal: check-compile-et.m4,v 1.7 2003/03/12 16:48:52 lha Exp $
+dnl $NetBSD: aclocal.m4,v 1.1.1.7 2003/05/15 20:28:39 lha Exp $
 dnl
 dnl CHECK_COMPILE_ET
 AC_DEFUN([CHECK_COMPILE_ET], [
@@ -7095,6 +7159,7 @@ AC_DEFUN([CHECK_COMPILE_ET], [
 AC_CHECK_PROG(COMPILE_ET, compile_et, [compile_et])
 
 krb_cv_compile_et="no"
+krb_cv_com_err_need_r=""
 if test "${COMPILE_ET}" = "compile_et"; then
 
 dnl We have compile_et.  Now let's see if it supports `prefix' and `index'.
@@ -7123,6 +7188,20 @@ int main(){return (CONFTEST_CODE2 - CONFTEST_CODE1) != 127;}
   ], [krb_cv_compile_et="yes"],[CPPFLAGS="${save_CPPFLAGS}"])
 fi
 AC_MSG_RESULT(${krb_cv_compile_et})
+if test "${krb_cv_compile_et}" = "yes"; then
+  AC_MSG_CHECKING(for if com_err needs to have a initialize_error_table_r)
+  save2_CPPFLAGS="$CPPFLAGS"
+  CPPFLAGS="$CPPFLAGS"
+  AC_EGREP_CPP(initialize_error_table_r,[#include "conftest_et.c"],
+     [krb_cv_com_err_need_r="initialize_error_table_r(0,0,0,0);"
+      CPPFLAGS="$save2_CPPFLAGS"],
+     [CPPFLAGS="${save_CPPFLAGS}"])
+  if test X"$krb_cv_com_err_need_r" = X ; then
+    AC_MSG_RESULT(no)
+  else
+    AC_MSG_RESULT(yes)
+  fi
+fi
 rm -fr conftest*
 fi
 
@@ -7134,6 +7213,7 @@ if test "${krb_cv_compile_et}" = "yes"; then
   AC_TRY_LINK([#include <com_err.h>],[
     const char *p;
     p = error_message(0);
+    $krb_cv_com_err_need_r
   ],[krb_cv_com_err="yes"],[krb_cv_com_err="no"; CPPFLAGS="${save_CPPFLAGS}"])
   AC_MSG_RESULT(${krb_cv_com_err})
   LIBS="${krb_cv_save_LIBS}"
@@ -7166,7 +7246,7 @@ AC_SUBST(LIB_com_err_so)
 ])
 
 dnl $Heimdal: auth-modules.m4,v 1.5 2002/09/09 13:31:45 joda Exp $
-dnl $NetBSD: aclocal.m4,v 1.1.1.6 2002/09/12 12:41:31 joda Exp $
+dnl $NetBSD: aclocal.m4,v 1.1.1.7 2003/05/15 20:28:39 lha Exp $
 dnl
 dnl Figure what authentication modules should be built
 dnl
@@ -7214,7 +7294,7 @@ AC_SUBST(LIB_AUTH_SUBDIRS)dnl
 
 dnl
 dnl $Heimdal: destdirs.m4,v 1.2 2002/08/12 15:12:50 joda Exp $
-dnl $NetBSD: aclocal.m4,v 1.1.1.6 2002/09/12 12:41:31 joda Exp $
+dnl $NetBSD: aclocal.m4,v 1.1.1.7 2003/05/15 20:28:39 lha Exp $
 dnl
 
 AC_DEFUN([rk_DESTDIRS], [

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 - 2002 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2003 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -37,8 +37,8 @@
 #include <netinet/in.h>
 #include <netdb.h>
 
-__RCSID("$Heimdal: init_c.c,v 1.44 2002/06/16 15:13:25 nectar Exp $"
-        "$NetBSD: init_c.c,v 1.1.1.5 2002/09/12 12:41:40 joda Exp $");
+__RCSID("$Heimdal: init_c.c,v 1.45 2003/04/01 15:06:41 lha Exp $"
+        "$NetBSD: init_c.c,v 1.1.1.6 2003/05/15 20:28:47 lha Exp $");
 
 static void
 set_funcs(kadm5_client_context *c)
@@ -336,6 +336,7 @@ kadm_connect(kadm5_client_context *ctx)
     int error;
     char portstr[NI_MAXSERV];
     char *hostname, *slash;
+    char *service_name;
     krb5_context context = ctx->context;
 
     memset (&hints, 0, sizeof(hints));
@@ -378,7 +379,20 @@ kadm_connect(kadm5_client_context *ctx)
 	close(s);
 	return ret;
     }
-    ret = krb5_parse_name(context, KADM5_ADMIN_SERVICE, &server);
+
+    if (ctx->realm)
+	asprintf(&service_name, "%s@%s", KADM5_ADMIN_SERVICE, ctx->realm);
+    else
+	asprintf(&service_name, "%s", KADM5_ADMIN_SERVICE);
+
+    if (service_name == NULL) {
+	freeaddrinfo (ai);
+	close(s);
+	return ENOMEM;
+    }
+
+    ret = krb5_parse_name(context, service_name, &server);
+    free(service_name);
     if(ret) {
 	freeaddrinfo (ai);
 	if(ctx->ccache == NULL)

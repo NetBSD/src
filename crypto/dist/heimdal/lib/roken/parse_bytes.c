@@ -33,14 +33,14 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-__RCSID("$Heimdal: parse_bytes.c,v 1.3 2001/09/04 09:56:00 assar Exp $"
-        "$NetBSD: parse_bytes.c,v 1.1.1.3 2002/09/12 12:41:42 joda Exp $");
+__RCSID("$Heimdal: parse_bytes.c,v 1.4 2003/03/07 15:51:53 lha Exp $"
+        "$NetBSD: parse_bytes.c,v 1.1.1.4 2003/05/15 20:28:49 lha Exp $");
 #endif
 
 #include <parse_units.h>
 #include "parse_bytes.h"
 
-static units bytes_units[] = {
+static struct units bytes_units[] = {
     { "gigabyte", 1024 * 1024 * 1024 },
     { "gbyte", 1024 * 1024 * 1024 },
     { "GB", 1024 * 1024 * 1024 },
@@ -53,7 +53,7 @@ static units bytes_units[] = {
     { NULL, 0 }
 };
 
-static units bytes_short_units[] = {
+static struct units bytes_short_units[] = {
     { "GB", 1024 * 1024 * 1024 },
     { "MB", 1024 * 1024 },
     { "KB", 1024 },

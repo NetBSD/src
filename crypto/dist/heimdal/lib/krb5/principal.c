@@ -41,8 +41,8 @@
 #include <fnmatch.h>
 #include "resolve.h"
 
-__RCSID("$Heimdal: principal.c,v 1.81 2002/08/26 13:31:40 assar Exp $"
-        "$NetBSD: principal.c,v 1.1.1.6 2002/09/12 12:41:41 joda Exp $");
+__RCSID("$Heimdal: principal.c,v 1.82 2002/10/21 15:30:53 joda Exp $"
+        "$NetBSD: principal.c,v 1.1.1.7 2003/05/15 20:28:48 lha Exp $");
 
 #define princ_num_comp(P) ((P)->name.name_string.len)
 #define princ_type(P) ((P)->name.name_type)
@@ -141,6 +141,12 @@ krb5_parse_name(krb5_context context,
 		c = '\b';
 	    else if(c == '0')
 		c = '\0';
+	    else if(c == '\0') {
+		krb5_set_error_string (context,
+				       "trailing \\ in principal name");
+		ret = KRB5_PARSE_MALFORMED;
+		goto exit;
+	    }
 	}else if(c == '/' || c == '@'){
 	    if(got_realm){
 		krb5_set_error_string (context,

@@ -33,16 +33,16 @@
 
 #include "gen_locl.h"
 
-__RCSID("$Heimdal: gen.c,v 1.49 2002/09/04 15:06:18 joda Exp $"
-        "$NetBSD: gen.c,v 1.1.1.4 2002/09/12 12:41:40 joda Exp $");
+__RCSID("$Heimdal: gen.c,v 1.50 2003/04/17 07:09:18 lha Exp $"
+        "$NetBSD: gen.c,v 1.1.1.5 2003/05/15 20:28:46 lha Exp $");
 
 FILE *headerfile, *codefile, *logfile;
 
 #define STEM "asn1"
 
 static const char *orig_filename;
-static char header[1024];
-static char headerbase[1024] = STEM;
+static char *header;
+static char *headerbase = STEM;
 
 /*
  * list of all IMPORTs
@@ -76,8 +76,8 @@ init_generate (const char *filename, const char *base)
 {
     orig_filename = filename;
     if(base)
-	strcpy(headerbase, base);
-    sprintf(header, "%s.h", headerbase);
+	asprintf(&headerbase, "%s", base);
+    asprintf(&header, "%s.h", headerbase);
     headerfile = fopen (header, "w");
     if (headerfile == NULL)
 	err (1, "open %s", header);

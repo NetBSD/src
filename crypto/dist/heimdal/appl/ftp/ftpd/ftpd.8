@@ -1,4 +1,4 @@
-.\"	$NetBSD: ftpd.8,v 1.1.1.6 2002/09/12 12:41:35 joda Exp $
+.\"	$NetBSD: ftpd.8,v 1.1.1.7 2003/05/15 20:28:43 lha Exp $
 .\"
 .\" Copyright (c) 1985, 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -269,7 +269,7 @@ interprets file names according to the
 .Dq globbing
 conventions used by
 .Xr csh 1 .
-This allows users to utilize the metacharacters
+This allows users to use the metacharacters
 .Dq Li \&*?[]{}~ .
 .Pp
 .Nm Ftpd
@@ -281,7 +281,7 @@ If Kerberos authentication is used, the user must pass valid tickets
 and the principal must be allowed to login as the remote user.
 .It
 The login name must be in the password data base, and not have a null
-password (if kerberos is used the password field is not checked).  In
+password (if Kerberos is used the password field is not checked).  In
 this case a password must be provided by the client before any file
 operations may be performed.  If the user has an OTP key, the response
 from a successful USER command will include an OTP challenge. The

@@ -34,8 +34,8 @@
 #include "krb5_locl.h"
 #include <resolve.h>
 
-__RCSID("$Heimdal: krbhst.c,v 1.41 2002/08/16 18:48:19 nectar Exp $"
-        "$NetBSD: krbhst.c,v 1.1.1.6 2002/09/12 12:41:41 joda Exp $");
+__RCSID("$Heimdal: krbhst.c,v 1.43.2.1 2003/04/22 15:00:38 lha Exp $"
+        "$NetBSD: krbhst.c,v 1.1.1.7 2003/05/15 20:28:48 lha Exp $");
 
 static int
 string_to_proto(const char *string)
@@ -105,7 +105,9 @@ srv_find_realm(krb5_context context, krb5_krbhst_info ***res, int *count,
     for(num_srv = 0, rr = r->head; rr; rr = rr->next) 
 	if(rr->type == T_SRV) {
 	    krb5_krbhst_info *hi;
-	    hi = calloc(1, sizeof(*hi) + strlen(rr->u.srv->target));
+	    size_t len = strlen(rr->u.srv->target);
+
+	    hi = calloc(1, sizeof(*hi) + len);
 	    if(hi == NULL) {
 		dns_free_data(r);
 		while(--num_srv >= 0)
@@ -123,7 +125,7 @@ srv_find_realm(krb5_context context, krb5_krbhst_info ***res, int *count,
 	    else
 		hi->port = rr->u.srv->port;
 
-	    strcpy(hi->hostname, rr->u.srv->target);
+	    strlcpy(hi->hostname, rr->u.srv->target, len + 1);
 	}
 
     *count = num_srv;

@@ -34,8 +34,8 @@
 #include "krb5_locl.h"
 #include <err.h>
 
-__RCSID("$Heimdal: warn.c,v 1.13 2001/05/07 21:04:34 assar Exp $"
-        "$NetBSD: warn.c,v 1.1.1.5 2002/09/12 12:41:41 joda Exp $");
+__RCSID("$Heimdal: warn.c,v 1.14 2003/04/16 16:13:08 lha Exp $"
+        "$NetBSD: warn.c,v 1.1.1.6 2003/05/15 20:28:48 lha Exp $");
 
 static krb5_error_code _warnerr(krb5_context context, int do_errtext, 
 	 krb5_error_code code, int level, const char *fmt, va_list ap)
@@ -53,9 +53,9 @@ _warnerr(krb5_context context, int do_errtext,
     args[0] = args[1] = NULL;
     arg = args;
     if(fmt){
-	strcat(xfmt, "%s");
+	strlcat(xfmt, "%s", sizeof(xfmt));
 	if(do_errtext)
-	    strcat(xfmt, ": ");
+	    strlcat(xfmt, ": ", sizeof(xfmt));
 	vasprintf(&msg, fmt, ap);
 	if(msg == NULL)
 	    return ENOMEM;
@@ -64,7 +64,7 @@ _warnerr(krb5_context context, int do_errtext,
     if(context && do_errtext){
 	const char *err_msg;
 
-	strcat(xfmt, "%s");
+	strlcat(xfmt, "%s", sizeof(xfmt));
 
 	err_str = krb5_get_error_string(context);
 	if (err_str != NULL) {

@@ -36,8 +36,8 @@
 #define O_BINARY 0
 #endif
 
-__RCSID("$Heimdal: mkey.c,v 1.14 2002/08/16 18:59:49 assar Exp $"
-        "$NetBSD: mkey.c,v 1.1.1.4 2002/09/12 12:41:40 joda Exp $");
+__RCSID("$Heimdal: mkey.c,v 1.15 2003/03/28 02:01:33 lha Exp $"
+        "$NetBSD: mkey.c,v 1.1.1.5 2003/05/15 20:28:46 lha Exp $");
 
 struct hdb_master_key_data {
     krb5_keytab_entry keytab;
@@ -378,6 +378,7 @@ hdb_unseal_keys_mkey(krb5_context context, hdb_entry *ent, hdb_master_key mkey)
     int i;
     krb5_error_code ret;
     krb5_data res;
+    size_t keysize;
     Key *k;
 
     for(i = 0; i < ent->keys.len; i++){
@@ -399,9 +400,21 @@ hdb_unseal_keys_mkey(krb5_context context, hdb_entry *ent, hdb_master_key mkey)
 	if (ret)
 	    return ret;
 
+	/* fixup keylength if the key got padded when encrypting it */
+	ret = krb5_enctype_keysize(context, k->key.keytype, &keysize);
+	if (ret) {
+	    krb5_data_free(&res);
+	    return ret;
+	}
+	if (keysize > res.length) {
+	    krb5_data_free(&res);
+	    return KRB5_BAD_KEYSIZE;
+	}
+
 	memset(k->key.keyvalue.data, 0, k->key.keyvalue.length);
 	free(k->key.keyvalue.data);
 	k->key.keyvalue = res;
+	k->key.keyvalue.length = keysize;
 	free(k->mkvno);
 	k->mkvno = NULL;
     }
