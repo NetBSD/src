@@ -7460,11 +7460,6 @@ tc_gen_reloc (section, fixp)
 	}
 
     case BFD_RELOC_ARM_PCREL_BRANCH:
-      if (pic_code)
-	{
-	  code = BFD_RELOC_ARM_JUMP_SLOT;
-	  break;
-	}
     case BFD_RELOC_ARM_PCREL_BLX:
     case BFD_RELOC_RVA:
     case BFD_RELOC_THUMB_PCREL_BRANCH9:
