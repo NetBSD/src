@@ -1,4 +1,4 @@
-/*	$NetBSD: dp8390.c,v 1.42 2001/02/12 18:49:03 thorpej Exp $	*/
+/*	$NetBSD: dp8390.c,v 1.43 2001/02/12 18:52:22 thorpej Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -142,9 +142,12 @@ dp8390_config(sc)
 	    IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
 	IFQ_SET_READY(&ifp->if_snd);
 
+	/* Print additional info when attached. */
+	printf("%s: Ethernet address %s\n", sc->sc_dev.dv_xname,
+	    ether_sprintf(sc->sc_enaddr));
+
 	/* Initialize media goo. */
 	(*sc->sc_media_init)(sc);
-
 
 	/*
 	 * We can support 802.1Q VLAN-sized frames.
@@ -159,10 +162,6 @@ dp8390_config(sc)
 	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname,
 	    RND_TYPE_NET, 0);
 #endif
-
-	/* Print additional info when attached. */
-	printf("%s: Ethernet address %s\n", sc->sc_dev.dv_xname,
-	    ether_sprintf(sc->sc_enaddr));
 
 	/* The attach is successful. */
 	sc->sc_flags |= DP8390_ATTACHED;
