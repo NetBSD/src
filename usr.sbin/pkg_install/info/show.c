@@ -1,10 +1,10 @@
-/* $NetBSD: show.c,v 1.2 1997/06/05 12:59:42 agc Exp $ */
+/* $NetBSD: show.c,v 1.3 1997/10/11 20:26:22 hubertf Exp $ */
 
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: show.c,v 1.10 1997/02/22 16:09:43 peter Exp";
 #else
-static const char *rcsid = "$NetBSD: show.c,v 1.2 1997/06/05 12:59:42 agc Exp $";
+static const char *rcsid = "$NetBSD: show.c,v 1.3 1997/10/11 20:26:22 hubertf Exp $";
 #endif
 #endif
 
@@ -108,6 +108,10 @@ show_plist(char *title, Package *plist, plist_t type)
 
 	case PLIST_CMD:
 	    printf(Quiet ? "@exec %s\n" : "\tEXEC '%s'\n", p->name);
+	    break;
+
+	case PLIST_UNEXEC:
+	    printf(Quiet ? "@unexec %s\n" : "\tUNEXEC '%s'\n", p->name);
 	    break;
 
 	case PLIST_CHMOD:
