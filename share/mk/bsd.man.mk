@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.man.mk,v 1.35 1997/10/30 12:57:19 mrg Exp $
+#	$NetBSD: bsd.man.mk,v 1.36 1997/12/02 08:42:28 mikel Exp $
 #	@(#)bsd.man.mk	8.1 (Berkeley) 6/8/93
 
 .if !target(__initialized__)
@@ -86,7 +86,7 @@ catpages::
 .   for P in ${MANPAGES}
 manpages:: ${DESTDIR}${MANDIR}/man${P:T:E}${MANSUBDIR}/${P}${MCOMPRESSSUFFIX}
 .	if !defined(UPDATE)
-.PHONY: ${DESTDIR}${MANDIR}/${P:T:E}${MANSUBDIR}/${P}${MCOMPRESSSUFFIX}
+.PHONY: ${DESTDIR}${MANDIR}/man${P:T:E}${MANSUBDIR}/${P}${MCOMPRESSSUFFIX}
 .	endif
 
 .PRECIOUS: ${DESTDIR}${MANDIR}/man${P:T:E}${MANSUBDIR}/${P}${MCOMPRESSSUFFIX}
