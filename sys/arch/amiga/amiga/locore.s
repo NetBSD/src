@@ -810,6 +810,8 @@ _Umap:	.long	0
 	.globl	_edata
 	.globl	_etext,_end
 	.globl	start
+	.word	0x0001			| loadbsd version required
+					| XXX should be a symbol?
 start:
 	movw	#PSL_HIGHIPL,sr		| no interrupts
 	lea	tmpstk,sp		| give ourselves a temporary stack
@@ -2411,7 +2413,7 @@ Lm68881rdone:
 	.globl	_doboot
 _doboot:
 	movl	#CACHE_OFF,d0
-	tstl	_cpu040
+	movl	_cpu040,d1		| load 68040 flag
 	jeq	Ldoboot0
 	.word	0xf4f8		| cpusha bc - push and invalidate caches
 	nop
@@ -2448,7 +2450,7 @@ Ldb2:
 
 	| ok, turn off MMU..
 Ldoreboot:
-	tstl	_cpu040
+	tstl	d1
 	jne	Lmmuoff040
 	lea	zero,a0
 	pmove	a0@,tc			| Turn off MMU
@@ -2468,7 +2470,9 @@ Ldoboot1:
 	subl	a0@(-0x14),a0
 	movl	a0@(4),a0
 	subl	#2,a0
-	jra	Ldoreset
+	cmpw	#0x4e70,a0@		| 68040 kludge: if ROM entry is not
+	jne	Ldoreset		| a reset, do the reset here
+	jmp	a0@			| otherwise, jump to the ROM to reset
 	| reset needs to be on longword boundary
 	nop
 	.align	2

@@ -89,8 +89,6 @@ bdev_decl(no);	/* dummy declarations */
 
 #include "sd.h"
 #include "st.h"
-#include "rz.h"
-#include "tz.h"
 #include "vn.h"
 
 #ifdef LKM
@@ -112,8 +110,6 @@ int lkmenodev();
 
 bdev_decl(sd);
 bdev_decl(st);
-bdev_decl(rz);
-bdev_decl(tz);
 bdev_decl(vn);
 
 
@@ -124,14 +120,10 @@ struct bdevsw	bdevsw[] =
 	bdev_notdef(),		/* 2 */
 	bdev_swap_init(),	/* 3: swap pseudo-device */
 	bdev_disk_init(NSD,sd),	/* 4: scsi disk */
-#if 0
 	bdev_notdef(),		/* 5 */
-#else
-	bdev_disk_init(NRZ,rz),	/* 5: scsi disk */
-#endif
 	bdev_disk_init(NVN,vn),	/* 6: vnode disk driver (swap to files) */
 	bdev_tape_init(NST,st),	/* 7: exabyte tape */
-	bdev_tape_init(NTZ,tz),	/* 8: scsi tape */
+	bdev_notdef(),		/* 8: */
 #ifdef LKM
 	LKM_BDEV(),		/* 9: Empty slot for LKM */
 	LKM_BDEV(),		/* 10: Empty slot for LKM */
@@ -246,8 +238,6 @@ cdev_decl(log);
 
 cdev_decl(st);
 cdev_decl(sd);
-cdev_decl(tz);
-cdev_decl(rz);
 
 cdev_decl(grf);
 /* open, close, ioctl, select, map -- XXX should be a map device */
@@ -356,11 +346,7 @@ struct cdevsw	cdevsw[] =
 	cdev_log_init(1,log),		/* 6: /dev/klog */
 	cdev_notdef(),			/* 7: */
 	cdev_disk_init(NSD,sd),		/* 8: scsi disk */
-#if 0
 	cdev_notdef(),			/* 9: */
-#else
-	cdev_disk_init(NRZ,rz),		/* 9: scsi disk */
-#endif
 	cdev_grf_init(NITE,grf),	/* 10: frame buffer */
 	cdev_par_init(NPAR,par),	/* 11: parallel interface */
 	cdev_tty_init(1,ser),		/* 12: built-in single-port serial */
@@ -378,7 +364,7 @@ struct cdevsw	cdevsw[] =
 	cdev_tape_init(NST,st),		/* 20: exabyte tape */
 	cdev_fd_init(1,fd),		/* 21: file descriptor pseudo-dev */
 	cdev_bpf_init(NBPFILTER,bpf),	/* 22: berkeley packet filter */
-	cdev_tape_init(NTZ,tz),		/* 23: scsi tape */
+	cdev_notdef(),			/* 23: */
 #ifdef LKM
 	cdev_lkm_init(1,lkm),		/* 24: loadable kernel modules pseudo-dev */
 	LKM_CDEV(),			/* 25: Empty slot for LKM */

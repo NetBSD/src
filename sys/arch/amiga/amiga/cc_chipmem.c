@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: cc_chipmem.c,v 1.3 1994/01/30 08:50:17 chopps Exp $
+ *	$Id: cc_chipmem.c,v 1.4 1994/02/01 11:49:59 chopps Exp $
  */
 #include "types.h"
 #include "cc_chipmem.h"
@@ -73,12 +73,23 @@ allocate (mem_list_t *m, u_long size)
 		    break;
 		} else {
 		    /* split the node's memory. */
+#if 0
 		    mem_node_t *new = (mem_node_t *)(MNODES_MEM(mn) + size);
 		    new->size = mn->size - (size + sizeof (mem_node_t));
 		    mn->size = size;		  /* this node is now exactly size big. */
 		    
 		    dappend (&mn->node, &new->node); /* add the new node to big list */
 		    dappend (&mn->free, &new->free); /* add the new node to free list */
+#else
+		    mem_node_t *new = mn;
+		    new->size -= size + sizeof (mem_node_t);
+		    mn = (mem_node_t *)(MNODES_MEM(new) + new->size);
+		    mn->size = size;		  /* this node is now exactly size big. */
+		    n = &mn->free;
+
+		    dappend (&new->node, &mn->node); /* add the new node to big list */
+		    dappend (&new->free, &mn->free); /* add the new node to free list */
+#endif
 
 		    dremove (&mn->free);	  /* remove the old node from free list. */
 		    n->next = NULL;		  /* mark as removed. */
@@ -223,12 +234,7 @@ cc_init_chipmem (void)
     mem_node_t *mem;
     extern u_byte *chipmem_end, *chipmem_start;
 
-#ifdef GODZILLA /* XXX */
-    /* spare the lower chipmem regions.. */
-    chip.size = 512*1024;
-#else
-    chip.size = chipmem_end - (chipmem_start+1);
-#endif
+    chip.size = chipmem_end - (chipmem_start+NBPG);
     chip.memory = (u_byte *)chipmem_steal (chip.size);
 
     chip.free_nodes = 1;
