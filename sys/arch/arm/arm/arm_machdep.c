@@ -1,4 +1,4 @@
-/*	$NetBSD: arm_machdep.c,v 1.2.6.6 2001/11/17 21:38:23 thorpej Exp $	*/
+/*	$NetBSD: arm_machdep.c,v 1.2.6.7 2001/11/17 21:41:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.2.6.6 2001/11/17 21:38:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.2.6.7 2001/11/17 21:41:00 thorpej Exp $");
 
 #include <sys/exec.h>
 #include <sys/proc.h>
@@ -291,18 +291,19 @@ cpu_upcall(struct lwp *l)
 	 */
 	if (sau->sau_arg) {
 		ap = (char *)sapp - sau->sau_argsize;
+		sf = (struct saframe *)ap - 1;
 		if (copyout(sau->sau_arg, ap, sau->sau_argsize) != 0) {
 			/* Copying onto the stack didn't work. Die. */
 			sadata_upcall_free(sau);
 			sigexit(l, SIGILL);
 			/* NOTREACHED */
 		}
-	} else
+	} else {
 		ap = NULL;
+		sf = (struct saframe *)sapp - 1;
+	}
 
 	/* Finally, copy out the rest of the frame. */
-	sf = (struct saframe *)sapp - 1;
-
 #if 0 /* First 4 args in regs (see below). */
 	frame.sa_type = sau->sau_type;
 	frame.sa_sas = sapp;
