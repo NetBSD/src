@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.10 1998/07/27 01:55:23 mycroft Exp $	*/
+/*	$NetBSD: extern.h,v 1.11 1998/09/06 10:39:40 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -93,3 +93,31 @@ struct ftpclass {
 	unsigned int	 timeout;	/* Default timeout */
 	mode_t		 umask;		/* Umask to use */
 };
+
+extern  int yyparse __P((void));
+
+extern	char		cbuf[];
+extern	struct ftpclass	curclass;
+extern	struct sockaddr_in data_dest;
+extern	int		debug;
+extern	int		form;
+extern	int		guest;
+extern	int		hasyyerrored;
+extern	struct sockaddr_in his_addr;
+extern	char		hostname[];
+extern	jmp_buf		errcatch;
+#ifdef KERBEROS5
+extern	krb5_context	kcontext;
+#endif
+extern	int		logged_in;
+extern	int		logging;
+extern	int		pdata;
+extern	char		proctitle[];
+extern	struct passwd  *pw;
+extern	char		remotehost[];
+extern	off_t		restart_point;
+extern	char		tmpline[];
+extern	int		transflag;
+extern	int		type;
+extern	int		usedefault;
+extern	const char	version[];

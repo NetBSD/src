@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.56 1998/09/05 17:00:01 lukem Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.57 1998/09/06 10:39:40 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1988, 1990, 1992, 1993, 1994
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.56 1998/09/05 17:00:01 lukem Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.57 1998/09/06 10:39:40 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -100,11 +100,7 @@ __RCSID("$NetBSD: ftpd.c,v 1.56 1998/09/05 17:00:01 lukem Exp $");
 #include <varargs.h>
 #endif
 
-static char version[] = "Version 7.02";
-
-extern	off_t restart_point;
-extern	char cbuf[];
-extern  int yyparse __P((void));
+const char version[] = "Version: 7.03";
 
 struct	sockaddr_in ctrl_addr;
 struct	sockaddr_in data_source;
@@ -135,18 +131,14 @@ char	hostname[MAXHOSTNAMELEN+1];
 char	remotehost[MAXHOSTNAMELEN+1];
 static char ttyline[20];
 char	*tty = ttyline;		/* for klogin */
+
 static char *anondir = NULL;
 static char confdir[MAXPATHLEN];
-
-extern struct ftpclass curclass;
 
 #if defined(KERBEROS) || defined(KERBEROS5)
 int	notickets = 1;
 char	*krbtkfile_env = NULL;
 #endif 
-#ifdef KERBEROS5
-extern krb5_context kcontext;
-#endif
 
 /*
  * Timeout intervals for retrying connections
@@ -332,6 +324,7 @@ main(argc, argv)
 	stru = STRU_F;
 	mode = MODE_S;
 	tmpline[0] = '\0';
+	hasyyerrored = 0;
 
 #ifdef KERBEROS5
 	kerror = krb5_init_context(&kcontext);
@@ -367,8 +360,8 @@ main(argc, argv)
 	(void)gethostname(hostname, sizeof(hostname));
 	hostname[sizeof(hostname) - 1] = '\0';
 	reply(220, "%s FTP server (%s) ready.", hostname, version);
-	(void) setjmp(errcatch);
 	curclass.timeout = 300;		/* 5 minutes, as per login(1) */
+	(void) setjmp(errcatch);
 	for (;;)
 		(void) yyparse();
 	/* NOTREACHED */
@@ -1464,18 +1457,6 @@ nack(s)
 	reply(502, "%s command not implemented.", s);
 }
 
-/* ARGSUSED */
-void
-yyerror(s)
-	char *s;
-{
-	char *cp;
-
-	if ((cp = strchr(cbuf,'\n')) != NULL)
-		*cp = '\0';
-	reply(500, "'%s': command not understood.", cbuf);
-}
-
 void
 delete(name)
 	char *name;
@@ -1561,7 +1542,7 @@ renamefrom(name)
 
 	if (stat(name, &st) < 0) {
 		perror_reply(550, name);
-		return ((char *)0);
+		return (NULL);
 	}
 	reply(350, "File exists, ready for destination name");
 	return (name);
@@ -1725,7 +1706,7 @@ gunique(local)
 		*cp = '\0';
 	if (stat(cp ? local : ".", &st) < 0) {
 		perror_reply(553, cp ? local : ".");
-		return ((char *) 0);
+		return (NULL);
 	}
 	if (cp)
 		*cp = '/';
