@@ -1,7 +1,7 @@
 /* Authors: Markus Wild, Bryan Ford, Niklas Hallqvist 
  *          Michael L. Hitch - initial 68040 support
  *
- *	$Id: amiga_init.c,v 1.9 1994/02/28 06:05:41 chopps Exp $
+ *	$Id: amiga_init.c,v 1.10 1994/03/08 10:48:47 chopps Exp $
  */
 
 
@@ -81,7 +81,9 @@ int num_ConfigDev;
 struct ConfigDev *ConfigDev;
 
 /* Called by the console et al to steal chip memory during initialization */
-void *chipmem_steal(long amount)
+void *
+chipmem_steal(amount)
+	long amount;
 {
   /* steal from top of chipmem, so we don't collide with the kernel loaded
      into chipmem in the not-yet-mapped state. */
@@ -98,7 +100,9 @@ void *chipmem_steal(long amount)
    A2091 and GVP11 scsi driver as a dma bounce buffer.  If use_z2_mem
    is patched to 0, then only chip memory will be allocated. */
 
-void *alloc_z2mem(long amount)		/* XXX */
+void *
+alloc_z2mem(amount)			/* XXX */
+	long amount;
 {					/* XXX */
 	if (use_z2_mem && z2mem_end && (z2mem_end - amount) >= z2mem_start) {
 		z2mem_end -= amount;
@@ -137,10 +141,13 @@ u_long orig_fastram_start, orig_fastram_size, orig_chipram_size;
 u_int cache_copyback = PG_CC;		/* patchable to disable copyback cache */
 
 void
-start_c (int id, u_int fastram_start, u_int fastram_size, u_int chipram_size)
+start_c(id, fastram_start, fastram_size, chipram_size)
+	int id;
+	u_int fastram_start, fastram_size, chipram_size;
 {
   extern char end[];
   extern void etext();
+  extern u_int protorp[2];
   u_int pstart, pend, vstart, vend, avail;
   u_int Sysseg_pa, Sysptmap_pa, umap_pa;
   u_int Sysseg1_pa, Sysptmap1_pa, umap1_pa;
@@ -148,7 +155,6 @@ start_c (int id, u_int fastram_start, u_int fastram_size, u_int chipram_size)
   u_int pagetable, pagetable_pa, pagetable_size, pagetable_extra;
   u_int sg_proto, pg_proto, *sg, *pg, *pg2, i;
   u_int p0_pagetable_pa, p0_u_area_pa;
-  extern u_int protorp[2];
   u_int tc;
   u_int hw_va;
   u_int chip_pt, cia_pt;
@@ -584,7 +590,8 @@ start_c (int id, u_int fastram_start, u_int fastram_size, u_int chipram_size)
 
 #ifdef DEBUG
 void
-rollcolor (u_int color)
+rollcolor(color)
+	u_int color;
 {
   int s, i;
 
@@ -597,7 +604,8 @@ rollcolor (u_int color)
 
 
 void
-dump_segtable (struct ste *ste)
+dump_segtable(ste)
+	struct ste *ste;
 {
   int i;
 
@@ -614,7 +622,10 @@ dump_segtable (struct ste *ste)
 }
 
 void
-dump_pagetable (caddr_t voff, struct pte *pte, int num_pte)
+dump_pagetable(voff, pte, num_pte)
+	caddr_t voff;
+	struct pte *pte;
+	int num_pte;
 {
   int i;
 
@@ -630,10 +641,12 @@ dump_pagetable (caddr_t voff, struct pte *pte, int num_pte)
 }
 
 u_int
-vmtophys (u_int *ste, u_int vm)
+vmtophys(ste, vm)
+	u_int *ste, vm;
 {
-  u_int *s = (u_int *)((*(ste + (vm >> SEGSHIFT))) & SG_FRAME);
- 
+  u_int *s;
+
+  s = (u_int *)((*(ste + (vm >> SEGSHIFT))) & SG_FRAME);
   s += (vm & (cpu040 ? SG_040PMASK : SG_PMASK)) >> PGSHIFT;
 
   return (*s & (-AMIGA_PAGE_SIZE)) | (vm & (AMIGA_PAGE_SIZE-1));
@@ -648,14 +661,17 @@ vmtophys (u_int *ste, u_int vm)
 
 /* This is called below to find out how much magic storage
    will be needed after a kernel image to be reloaded.  */
-static int kernel_image_magic_size()
+static int
+kernel_image_magic_size()
 {
   return 4 + num_ConfigDev * sizeof(struct ConfigDev)
     + mem_list->num_mem*sizeof(struct Mem_Seg) + 4;
 }
 
 /* This actually copies the magic information.  */
-static void kernel_image_magic_copy(u_char *dest)
+static void
+kernel_image_magic_copy(dest)
+	u_char *dest;
 {
   *((int*)dest) = num_ConfigDev;
   dest += 4;
@@ -666,11 +682,15 @@ static void kernel_image_magic_copy(u_char *dest)
 #undef __LDPGSZ
 #define __LDPGSZ 8192 /* XXX ??? */
 
-int kernel_reload_write(struct uio *uio)
+int
+kernel_reload_write(uio)
+	struct uio *uio;
 {
-  struct iovec *iov = uio->uio_iov;
+  struct iovec *iov;
   int error;
 
+  iov = uio->uio_iov;
+  
   if (kernel_image == 0)
     {
       /* We have to get at least the whole exec header
