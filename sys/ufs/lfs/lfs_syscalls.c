@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.94 2003/07/02 13:43:04 yamt Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.95 2003/07/30 12:34:00 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.94 2003/07/02 13:43:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.95 2003/07/30 12:34:00 yamt Exp $");
 
 #ifndef LFS
 # define LFS		/* for prototypes in syscallargs.h */
@@ -119,8 +119,6 @@ pid_t lfs_cleaner_pid = 0;
 extern TAILQ_HEAD(bqueues, buf) bufqueues[BQUEUES];
 
 #define LFS_FORCE_WRITE UNASSIGNED
-
-#define LFS_VREF_THRESHOLD 128
 
 /*
  * sys_lfs_markv:
