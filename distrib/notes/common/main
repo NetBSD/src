@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.275 2004/12/23 12:25:24 hamajima Exp $
+.\"	$NetBSD: main,v 1.276 2005/03/02 21:30:43 schwarz Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1664,6 +1664,7 @@ If you're one of them, and would like to mentioned, tell us!)
 .It Ta Karl Schilke (rAT) Ta Mt rat@NetBSD.org
 .It Ta Amitai Schlair Ta Mt schmonz@NetBSD.org
 .It Ta Konrad Schroder Ta Mt perseant@NetBSD.org
+.It Ta Georg Schwarz Ta Mt schwarz@NetBSD.org
 .It Ta Lubomir Sedlacik Ta Mt salo@NetBSD.org
 .It Ta Christopher SEKIYA Ta Mt sekiya@NetBSD.org
 .It Ta Reed Shadgett Ta Mt dent@NetBSD.org
