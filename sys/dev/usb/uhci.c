@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.93 2000/03/25 00:11:21 augustss Exp $	*/
+/*	$NetBSD: uhci.c,v 1.94 2000/03/25 07:13:05 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -558,19 +558,25 @@ uhci_allocx(bus)
 	usbd_xfer_handle xfer;
 
 	xfer = SIMPLEQ_FIRST(&sc->sc_free_xfers);
-	if (xfer != NULL)
+	if (xfer != NULL) {
 		SIMPLEQ_REMOVE_HEAD(&sc->sc_free_xfers, xfer, next);
-	else
+		if (xfer->busy_free != XFER_FREE) {
+			printf("uhci_freex: xfer=%p not free, 0x%08x\n", xfer,
+			       xfer->busy_free);
+		}
+	} else {
 		xfer = malloc(sizeof(struct uhci_xfer), M_USB, M_NOWAIT);
+	}
 	if (xfer != NULL) {
 		memset(xfer, 0, sizeof (struct uhci_xfer));
 		UXFER(xfer)->iinfo.sc = sc;
+		usb_callout_init(UXFER(xfer)->iinfo.timeout_handle);
 #ifdef DIAGNOSTIC
 		UXFER(xfer)->iinfo.isdone = 1;
 #endif
 	}
 #ifdef DIAGNOSTIC
-	xfer->isfree = 0;
+	xfer->busy_free = XFER_BUSY;
 #endif
 	return (xfer);
 }
@@ -583,11 +589,19 @@ uhci_freex(bus, xfer)
 	struct uhci_softc *sc = (struct uhci_softc *)bus;
 
 #ifdef DIAGNOSTIC
-	if (xfer->isfree) {
-		printf("uhci_freex: xfer=%p already free\n", xfer);
+#ifdef __NetBSD__
+	if (callout_pending(&UXFER(xfer)->iinfo.timeout_handle)) {
+		printf("uhci_free_intr_info: pending callout");
 		return;
 	}
-	xfer->isfree = 1;
+#endif
+
+	if (xfer->busy_free != XFER_BUSY) {
+		printf("uhci_freex: xfer=%p not busy, 0x%08x\n", xfer,
+		       xfer->busy_free);
+		return;
+	}
+	xfer->busy_free = XFER_FREE;
 #endif
 	SIMPLEQ_INSERT_HEAD(&sc->sc_free_xfers, xfer, next);
 }
@@ -2584,8 +2598,9 @@ uhci_device_isoc_done(xfer)
 	DPRINTFN(4, ("uhci_isoc_done: length=%d\n", xfer->actlen));
 
 #ifdef DIAGNOSTIC
-	if (xfer->isfree) {
-		printf("uhci_device_isoc_done: xfer=%p is free\n", xfer);
+	if (xfer->busy_free != XFER_BUSY) {
+		printf("uhci_device_isoc_done: xfer=%p not busy 0x%08x\n",
+		       xfer, xfer->busy_free);
 		return;
 	}
 
@@ -2820,6 +2835,7 @@ uhci_open(pipe)
 		     pipe, pipe->device->address, 
 		     ed->bEndpointAddress, sc->sc_addr));
 
+	usb_callout_init(upipe->abort_timeout);
 	upipe->aborting = 0;
 	upipe->nexttoggle = 0;
 
@@ -2979,8 +2995,9 @@ uhci_root_ctrl_transfer(xfer)
 	if (err)
 		return (err);
 
-	/* Pipe isn't running (otherwise err would be USBD_INPROG),
-	 * start first
+	/* 
+	 * Pipe isn't running (otherwise err would be USBD_INPROG),
+	 * so start it first.
 	 */
 	return (uhci_root_ctrl_start(SIMPLEQ_FIRST(&xfer->pipe->queue)));
 }
