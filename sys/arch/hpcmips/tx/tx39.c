@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39.c,v 1.27 2001/09/23 14:32:53 uch Exp $ */
+/*	$NetBSD: tx39.c,v 1.28 2002/01/02 13:08:05 uch Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -44,6 +44,8 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+
+#include <mips/cache.h>
 
 #include <machine/locore.h>   /* cpu_id */
 #include <machine/bootinfo.h> /* bootinfo */
@@ -181,66 +183,58 @@ tx_mem_init(paddr_t kernend)
 	
 	/* search DRAM bank 1 */
 	tx_find_dram(0x02000000, 0x04000000);
-	/* 
-	 *  Clear currently unused D-RAM area 
-	 *  (For reboot Windows CE clearly)
-	 */
-	memset((void *)(KERNBASE + 0x400), 0, KERNTEXTOFF - 
-	    (KERNBASE + 0x800));
 }
 
 void
 tx_find_dram(paddr_t start, paddr_t end)
 {
 	caddr_t page, startaddr, endaddr;
+	u_int32_t magic0, magic1;
+#define MAGIC0		(*(__volatile u_int32_t *)(page + 0))
+#define MAGIC1		(*(__volatile u_int32_t *)(page + 4))
 
-	startaddr = (void*)MIPS_PHYS_TO_KSEG1(start);
-	endaddr = (void*)MIPS_PHYS_TO_KSEG1(end);
-
-#define DRAM_MAGIC0 0xac1dcafe
-#define DRAM_MAGIC1 0x19700220
+	startaddr = (void *)MIPS_PHYS_TO_KSEG1(start);
+	endaddr = (void *)MIPS_PHYS_TO_KSEG1(end);
 
 	page = startaddr;
 	if (badaddr(page, 4))
 		return;
 
-	*(volatile int *)(page + 0) = DRAM_MAGIC0;
-	*(volatile int *)(page + 4) = DRAM_MAGIC1;
+	do {
+		magic0 = random();
+		magic1 = random();
+	} while (MAGIC0 == magic0 || MAGIC0 == magic1);
+
+	MAGIC0 = magic0;
+	MAGIC1 = magic1;
 	wbflush();
 
-	if (*(volatile int *)(page + 0) != DRAM_MAGIC0 ||
-	    *(volatile int *)(page + 4) != DRAM_MAGIC1)
+	if (MAGIC0 != magic0 || MAGIC1 != magic1)
 		return;
 
 	for (page += NBPG; page < endaddr; page += NBPG) {
 		if (badaddr(page, 4))
 			return;
-
-		if (*(volatile int *)(page + 0) == DRAM_MAGIC0 &&
-		    *(volatile int *)(page + 4) == DRAM_MAGIC1) {
+		if (MAGIC0 == magic0 &&
+		    MAGIC1 == magic1) {
 			goto memend_found;
 		}
 	}
 
 	/* check for 32MByte memory */
 	page -= NBPG;
-	*(volatile int *)(page + 0) = DRAM_MAGIC0;
-	*(volatile int *)(page + 4) = DRAM_MAGIC1;
+	MAGIC0 = magic0;
+	MAGIC1 = magic1;
 	wbflush();
-
-	if (*(volatile int *)(page + 0) != DRAM_MAGIC0 ||
-	    *(volatile int *)(page + 4) != DRAM_MAGIC1)
+	if (MAGIC0 != magic0 || MAGIC1 != magic1)
 		return; /* no memory in this bank */
 
  memend_found:
 	mem_clusters[mem_cluster_cnt].start = start;
 	mem_clusters[mem_cluster_cnt].size = page - startaddr;
-
-	/* skip kernel area */
-	if (mem_cluster_cnt == 1)
-		mem_clusters[mem_cluster_cnt].size -= start;
-	
 	mem_cluster_cnt++;
+#undef MAGIC0
+#undef MAGIC1
 }
 
 void
