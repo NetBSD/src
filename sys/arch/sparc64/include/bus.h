@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.19 2000/06/29 14:10:16 pk Exp $	*/
+/*	$NetBSD: bus.h,v 1.20 2000/07/07 02:50:19 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -870,10 +870,14 @@ bus_space_copy_region_8(t, h1, o1, h2, o2, c)
 #define	BUS_DMA_ALLOCNOW	0x02	/* perform resource allocation now */
 #define	BUS_DMA_COHERENT	0x04	/* hint: map memory DMA coherent */
 #define	BUS_DMA_NOWRITE		0x08	/* I suppose the following two should default on */
-#define	BUS_DMA_NOCACHE		0x10	
+#define	BUS_DMA_BUS1		0x10	
 #define	BUS_DMA_BUS2		0x20
 #define	BUS_DMA_BUS3		0x40
 #define	BUS_DMA_BUS4		0x80
+
+
+#define	BUS_DMA_NOCACHE		BUS_DMA_BUS1
+#define	BUS_DMA_DVMA		BUS_DMA_BUS2	/* Don't bother with alignment */
 
 /* Forwards needed by prototypes below. */
 struct mbuf;
@@ -900,6 +904,7 @@ struct sparc_bus_dma_segment {
 	bus_addr_t	ds_addr;	/* DVMA address */
 	bus_size_t	ds_len;		/* length of transfer */
 	bus_size_t	_ds_boundary;	/* don't cross this */
+	bus_size_t	_ds_align;	/* align to this */
 	void		*_ds_mlist;	/* XXX - dmamap_alloc'ed pages */
 };
 typedef struct sparc_bus_dma_segment	bus_dma_segment_t;
