@@ -1,4 +1,4 @@
-/* $NetBSD: bus_dma.c,v 1.17 2001/07/18 17:21:49 scw Exp $	*/
+/* $NetBSD: bus_dma.c,v 1.18 2001/08/12 18:13:45 scw Exp $	*/
 
 /*
  * This file was taken from from next68k/dev/bus_dma.c, which was originally
@@ -46,7 +46,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.17 2001/07/18 17:21:49 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.18 2001/08/12 18:13:45 scw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -540,13 +540,17 @@ _bus_dmamap_sync_0460(t, map, offset, len, ops)
 		 * cachelines at the start and end of the required region.
 		 */
 		if (ops & BUS_DMASYNC_PREREAD) {
-			if (ps & 0xf)
-				DCFL_40(ps);
-			if (pe & 0xf)
-				DCFL_40(pe);
+			if (ps & 0xf) {
+				DCFL_40(ps & ~0xf);
+				ICPL_40(ps & ~0xf);
+			}
+			if (pe & 0xf) {
+				DCFL_40(pe & ~0xf);
+				ICPL_40(pe & ~0xf);
+			}
 
-			p = ps & ~0xf;
-			e = (pe + 15) & ~0xf;
+			p = (ps + 15) & ~0xf;
+			e = pe & ~0xf;
 
 			/* purge cache line */
 			while((p < e) && (p % NBPG)) {
