@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_ecoff.c,v 1.3 1994/06/29 06:32:10 cgd Exp $	*/
+/*	$NetBSD: exec_ecoff.c,v 1.4 1994/08/01 14:04:47 glass Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass
@@ -166,7 +166,7 @@ exec_ecoff_prep_omagic(p, epp, efp, eap)
 	epp->ep_taddr = ECOFF_SEGMENT_ALIGN(eap, eap->ea_text_start);
 	epp->ep_tsize = eap->ea_tsize;
 	epp->ep_daddr = ECOFF_SEGMENT_ALIGN(eap, eap->ea_data_start);
-	epp->ep_dsize = eap->ea_dsize;
+	epp->ep_dsize = eap->ea_dsize + eap->ea_bsize;
 	epp->ep_entry = eap->ea_entry;
 
 	/* set up command for text and data segments */
@@ -200,7 +200,7 @@ exec_ecoff_prep_nmagic(p, epp, efp, eap)
 	epp->ep_taddr = ECOFF_SEGMENT_ALIGN(eap, eap->ea_text_start);
 	epp->ep_tsize = eap->ea_tsize;
 	epp->ep_daddr = ECOFF_ROUND(eap->ea_data_start, ECOFF_LDPGSZ);
-	epp->ep_dsize = eap->ea_dsize;
+	epp->ep_dsize = eap->ea_dsize + eap->ea_bsize;
 	epp->ep_entry = eap->ea_entry;
 
 	/* set up command for text segment */
@@ -243,7 +243,7 @@ exec_ecoff_prep_zmagic(p, epp, efp, eap)
 	epp->ep_taddr = ECOFF_SEGMENT_ALIGN(eap, eap->ea_text_start);
 	epp->ep_tsize = eap->ea_tsize;
 	epp->ep_daddr = ECOFF_SEGMENT_ALIGN(eap, eap->ea_data_start);
-	epp->ep_dsize = eap->ea_dsize;
+	epp->ep_dsize = eap->ea_dsize + eap->ea_bsize;
 	epp->ep_entry = eap->ea_entry;
 
 	/*
