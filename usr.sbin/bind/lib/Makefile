@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2000/03/01 10:50:02 itojun Exp $
+#	$NetBSD: Makefile,v 1.9 2000/05/06 16:07:43 he Exp $
 
 LIB=bind
 
@@ -55,15 +55,4 @@ SRCS+=	dns.c dns_gr.c dns_ho.c dns_nw.c dns_pr.c dns_pw.c \
 # only needed during build
 libinstall::
 
-port_ipv6.h:
-	env CC="${CC}" CPPFLAGS="${CPPFLAGS}" /bin/sh \
-	${BIND_DIST_DIR}/bin/probe_ipv6
-
-CLEANFILES+=port_ipv6.h
-
-# mention explicit dependency, so port_ipv6.h will appear timely
-res_debug.c: port_ipv6.h
-
 .include <bsd.lib.mk>
-
-${OBJS}: port_ipv6.h
