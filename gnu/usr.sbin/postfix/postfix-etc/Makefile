@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2000/05/02 02:36:20 perry Exp $
+#	$NetBSD: Makefile,v 1.3 2002/02/02 23:21:48 perry Exp $
 
 # This Makefile is called only by src/etc, not by usr.sbin/postfix/Makefile
 
@@ -19,7 +19,6 @@ FILES=	main.cf master.cf README
 # this should be considered configuration and not a candidate for
 # libexec, but Wietse explicitly wants it this way, since he wants
 # the user to be able to use postfix-script as a place to install hooks.
-SCRIPTS=	postfix-script-sgid
-SCRIPTSNAME=	postfix-script
+SCRIPTS=	postfix-script
 
 .include <bsd.prog.mk>
