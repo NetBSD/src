@@ -1,8 +1,9 @@
 divert(-1)
 #
+# Copyright (c) 1993 Adam Glass
 # Copyright (c) 1983 Eric P. Allman
-# Copyright (c) 1988, 1993
-#	The Regents of the University of California.  All rights reserved.
+# Copyright (c) 1988 The Regents of the University of California.
+# All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -32,8 +33,15 @@ divert(-1)
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-VERSIONID(`@(#)version.m4	8.6.11.1 (Berkeley) 3/4/95')
-#
-divert(0)
-# Configuration version number
-DZ8.6.11
+
+include(`../m4/cf.m4')
+VERSIONID(`@(#)boat-anchor.mc	$Revision: 1.1.1.1 $')
+OSTYPE(bsd4.4)dnl
+MAILER(local)dnl
+MAILER(smtp)dnl
+define(`UUCP_RELAY', ucbvax.Berkeley.EDU)dnl
+define(`BITNET_RELAY', mailhost.Berkeley.EDU)dnl
+define(`CSNET_RELAY', mailhost.Berkeley.EDU)dnl
+define(`LOCAL_RELAY', sun-lamp.CS.Berkeley.EDU)
+define(`MAIL_HUB', sun-lamp.CS.Berkeley.EDU)
+define(`confCHECKPOINT_INTERVAL', 4)dnl

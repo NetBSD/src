@@ -1,5 +1,6 @@
 divert(-1)
 #
+# Copyright (c) 1994 Adam Glass
 # Copyright (c) 1983 Eric P. Allman
 # Copyright (c) 1988, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -32,8 +33,18 @@ divert(-1)
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-VERSIONID(`@(#)version.m4	8.6.11.1 (Berkeley) 3/4/95')
+
 #
-divert(0)
-# Configuration version number
-DZ8.6.11
+#  This is the prototype file for a configuration that supports nothing
+#  but basic SMTP connections via TCP.
+#
+#  You may want to add an OSTYPE macro to get the location of various
+#  support files for your operating system environment.
+#
+
+include(`../m4/cf.m4')
+VERSIONID(`@(#)netbsd-proto.mc	$Revision: 1.1.1.1 $')
+OSTYPE(bsd4.4)dnl
+MAILER(local)dnl
+MAILER(smtp)dnl
+
