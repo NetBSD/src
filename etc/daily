@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: daily,v 1.35 2001/04/22 20:34:48 aymeric Exp $
+#	$NetBSD: daily,v 1.36 2001/06/18 10:54:02 lukem Exp $
 #	@(#)daily	8.2 (Berkeley) 1/25/94
 #
 
@@ -65,15 +65,12 @@ echo "Uptime: " `uptime`
 #	find . ! -name . -mtime +7 -exec rm -f -- {} \; ; }
 #fi
 
-TMPDIR=/tmp/_daily.$$
+DAILYDIR=`mktemp -d /tmp/_daily.XXXXXX` || exit 1
 
-if ! mkdir $TMPDIR; then
-	echo can not create $TMPDIR.
-	exit 1
-fi
+trap "/bin/rm -rf $DAILYDIR ; exit 0" EXIT INT QUIT
 
-if ! cd $TMPDIR; then
-	echo can not cd to $TMPDIR.
+if ! cd "$DAILYDIR"; then
+	echo "Can not cd to $DAILYDIR".
 	exit 1
 fi
 
@@ -214,12 +211,12 @@ if checkyesno run_rdist && [ -f /etc/Distfile ]; then
 fi
 
 if checkyesno run_security; then
-	SECOUT=$TMPDIR/sec
-	sh /etc/security 2>&1 > $SECOUT
-	if [ ! -s $SECOUT ]; then
-		echo "Nothing to report on $date" > $SECOUT
+	SECOUT="$DAILYDIR/sec"
+	sh /etc/security 2>&1 > "$SECOUT"
+	if [ ! -s "$SECOUT" ]; then
+		echo "Nothing to report on $date" > "$SECOUT"
 	fi
-	mail -s "$host daily insecurity output for $date" $MAILTO < $SECOUT
+	mail -s "$host daily insecurity output for $date" $MAILTO < "$SECOUT"
 fi
 
 if checkyesno run_skeyaudit; then
@@ -233,5 +230,3 @@ if [ -f /etc/daily.local ]; then
 	echo "Running /etc/daily.local:"
 	. /etc/daily.local
 fi
-
-rm -rf $TMPDIR
