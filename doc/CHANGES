@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.391 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.392 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -162,4 +162,4 @@ Changes from NetBSD 2.0 to NetBSD 3.0:
 		[bouyer 20041124]
 	am-utils: import 6.1b5pre 20040916 [christos 20041126]
 	iteide(4): Add driver for the ITE 8212 IDE controller.
-		[grant 20041130]
+		[grant 20041201]
