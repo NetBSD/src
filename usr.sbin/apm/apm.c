@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.12 2001/09/13 11:05:58 enami Exp $ */
+/*	$NetBSD: apm.c,v 1.13 2002/07/20 08:40:17 grant Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -335,7 +335,7 @@ printval:
 			break;
 		}
 	} else
-		errx(rval, "cannot get reply from APM daemon\n");
+		errx(rval, "cannot get reply from APM daemon");
 
 	exit(0);
 }

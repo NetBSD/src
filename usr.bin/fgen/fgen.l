@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: fgen.l,v 1.19 2002/06/11 00:04:28 eeh Exp $	*/
+/*	$NetBSD: fgen.l,v 1.20 2002/07/20 08:40:16 grant Exp $	*/
 /* FLEX input for FORTH input file scanner */
 /*  
  * Copyright (c) 1998 Eduardo Horvath.
@@ -1013,7 +1013,7 @@ main(argc, argv)
 			break;
 		case '?':
 		default:
-			warnx("Illegal argument: %c\n", ch);
+			warnx("Illegal argument: %c", ch);
 			usage(myname);
 		}
 	argc -= optind;

@@ -1,4 +1,4 @@
-/* $NetBSD: wsmuxctl.c,v 1.5 2002/07/07 15:13:55 drochner Exp $ */
+/* $NetBSD: wsmuxctl.c,v 1.6 2002/07/20 08:40:21 grant Exp $ */
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@ parsedev(const char *dev, struct wsmux_device *mdev)
 		mdev->type = WSMUX_MUX;
 		return;
 	}
-	errx(1, "bad device: `%s', use wsmouse, wskdb, or wsmux\n", dev);
+	errx(1, "bad device: `%s', use wsmouse, wskdb, or wsmux", dev);
 }
 
 static void

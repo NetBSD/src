@@ -1,4 +1,4 @@
-/* $NetBSD: user.c,v 1.53 2002/07/08 22:17:47 agc Exp $ */
+/* $NetBSD: user.c,v 1.54 2002/07/20 08:40:21 grant Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -35,7 +35,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1999 \
 	        The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: user.c,v 1.53 2002/07/08 22:17:47 agc Exp $");
+__RCSID("$NetBSD: user.c,v 1.54 2002/07/20 08:40:21 grant Exp $");
 #endif
 
 #include <sys/types.h>
@@ -245,7 +245,7 @@ removehomedir(const char *user, int uid, const char *dir)
 
 	/* userid matches directory owner? */
 	if (st.st_uid != uid) {
-		warnx("User `%s' doesn't own directory `%s', not removed\n", user, dir);
+		warnx("User `%s' doesn't own directory `%s', not removed", user, dir);
 		return 0;
 	}
 
@@ -254,7 +254,7 @@ removehomedir(const char *user, int uid, const char *dir)
 	(void) asystem("%s -rf %s > /dev/null 2>&1 || true", RM, dir);
 	(void) seteuid(0);
 	if (rmdir(dir) < 0) {
-		warnx("Unable to remove all files in `%s'\n", dir);
+		warnx("Unable to remove all files in `%s'", dir);
 		return 0;
 	}
 	return 1;
