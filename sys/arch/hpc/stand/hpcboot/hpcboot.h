@@ -1,7 +1,7 @@
-/*	$NetBSD: hpcboot.h,v 1.4 2002/03/02 22:01:05 uch Exp $	*/
+/*	$NetBSD: hpcboot.h,v 1.5 2004/08/06 17:21:28 uch Exp $	*/
 
 /*-
- * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -162,6 +162,10 @@ void _dbg_bit_print(u_int32_t, u_int32_t, const char *);
 __END_DECLS
 
 /* Runtime Windows CE version */
+#if _WIN32_WCE <= 200
+extern OSVERSIONINFO WinCEVersion;
+#else
 extern OSVERSIONINFOW WinCEVersion;
+#endif
 
 #endif /* _HPCBOOT_H_ */
