@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.3 1999/02/01 15:13:01 he Exp $
+#	$NetBSD: Makefile.inc,v 1.4 1999/03/13 20:44:16 sommerfe Exp $
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -94,13 +94,16 @@ netbsd: netbsd.ram.gz
 
 # This is "cheating", just so that we have the available
 # space at the start of the tar file.  Installboot will overwrite
-# the start of the bootcode with the "real", aligned second-stage
-# boot loader when it is run (which is quite a bit shorter than the
-# entire ${BOOTCODE} file.
+# the start of the bootcode with the tail end of the "real", aligned 
+# second-stage boot loader when it is run (which is quite a bit shorter
+# than the entire ${BOOTCODE} file, even when symbols are removed.
+# (the first 15*512 bytes are put into the first 8K filesystem block,
+# around the disklabel)
 
 boot: ${BOOTCODE}
 	rm -f boot
 	cp ${BOOTCODE} boot
+	strip boot
 
 clean cleandir distclean:
 	/bin/rm -f *.core ${CLEANFILES} ${BASENAME}?.fs
