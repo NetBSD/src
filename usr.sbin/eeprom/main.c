@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.10 2000/09/24 09:45:55 bjh21 Exp $	*/
+/*	$NetBSD: main.c,v 1.11 2000/11/19 11:15:01 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #ifndef lint
 __COPYRIGHT(
 "@(#) Copyright (c) 1996 The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: main.c,v 1.10 2000/09/24 09:45:55 bjh21 Exp $");
+__RCSID("$NetBSD: main.c,v 1.11 2000/11/19 11:15:01 mrg Exp $");
 #endif
 
 #include <sys/param.h>
@@ -99,12 +99,12 @@ struct	keytabent eekeytab[] = {
 	{ NULL,			0,	ee_notsupp },
 };
 
-int	main __P((int, char *[]));
-static	void action __P((char *));
-static	void dump_prom __P((void));
-static	void usage __P((void));
+int	main (int, char *[]);
+static	void action (char *);
+static	void dump_prom (void);
+static	void usage (void);
 #ifdef __sparc__
-static	int getcputype __P((void));
+static	int getcputype (void);
 #endif /* __sparc__ */
 
 char	*path_eeprom = _PATH_EEPROM;
