@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.20 1996/10/13 03:30:53 christos Exp $	*/
+/*	$NetBSD: trap.c,v 1.21 1996/10/23 07:46:08 matthias Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller. All rights reserved.
@@ -186,7 +186,8 @@ trap(frame)
 		type |= T_USER;
 		sticks = p->p_sticks;
 		p->p_md.md_regs = &frame.tf_regs;
-	}
+	} else
+		sticks = 0;
 
 	switch (type) {
 
@@ -207,20 +208,20 @@ trap(frame)
 		usp = db_frame->tf_regs.r_sp;
 		db_frame->tf_regs.r_sp = ((int)&frame) + sizeof(frame);
 		sprd(sp, sp);
-		if (sp >= (VM_MIN_KERNEL_ADDRESS + 0x2000))
+		if (sp >= (VM_MIN_KERNEL_ADDRESS + 0x1000))
 			lprd(sp, VM_MIN_KERNEL_ADDRESS + 0x1000 - 4);
 		else
 			lprd(sp, sp - 64);
-#ifdef KGDB
+# ifdef KGDB
 		r = kgdb_trap(type, db_frame);
-#endif
-#ifdef DDB
+# endif
+# ifdef DDB
 		if (r == 0) {
 			extern int db_active_ipl;
 			db_active_ipl = s;
 			r = kdb_trap(type, 0, db_frame);
 		}
-#endif
+# endif
 		splx(s);
 		if (r) {
 			sp = db_frame->tf_regs.r_sp - sizeof(frame);
