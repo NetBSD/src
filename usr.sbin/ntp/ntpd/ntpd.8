@@ -1,4 +1,4 @@
-.\"	$NetBSD: ntpd.8,v 1.11 2002/02/21 17:10:15 mason Exp $
+.\"	$NetBSD: ntpd.8,v 1.12 2002/02/21 18:57:44 wiz Exp $
 .\" Converted from HTML to mandoc by ntp-html2mdoc.pl
 .\"
 .Dd February 21, 2002
@@ -227,16 +227,17 @@ For
 .%T "Miscellaneous Options" ,
 refer to
 .Pa /usr/share/doc/html/ntp/miscopt.htm .
-.Pp
 .Sh FILES
-.Pa /etc/ntp.conf
-- the default name of the configuration file
-<BR>
-.Pa /etc/ntp.drift
-- the default name of the drift file
-<BR>
-.Pa /etc/ntp.keys
-- the default name of the key file
+.Bl -tag -width /etc/ntp.drift -compact
+.It Pa /etc/ntp.conf
+the default name of the configuration file
+.It Pa /etc/ntp.drift
+the default name of the drift file
+.It Pa /etc/ntp.keys
+the default name of the key file
+.El
+.Sh AUTHORS
+David L. Mills \*[Lt]mills@udel.edu\*[Gt]
 .Sh BUGS
 .Nm
 has gotten rather fat. While not huge, it has gotten
@@ -244,5 +245,3 @@ larger than might be desirable for an elevated-priority daemon running
 on a workstation, particularly since many of the fancy features which
 consume the space were designed more with a busy primary server, rather
 than a high stratum workstation, in mind.
-.Sh AUTHOR
-Home David L. Mills <mills@udel.edu> 
