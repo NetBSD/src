@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_anon.h,v 1.9 1999/01/24 23:53:15 chuck Exp $	*/
+/*	$NetBSD: uvm_anon.h,v 1.10 1999/03/26 17:34:15 chs Exp $	*/
 
 /*
  *
@@ -101,5 +101,6 @@ void uvm_anfree __P((struct vm_anon *));
 void uvm_anon_init __P((void));
 void uvm_anon_add __P((int));
 struct vm_page *uvm_anon_lockloanpg __P((struct vm_anon *));
+void uvm_anon_dropswap __P((struct vm_anon *));
 
 #endif /* _UVM_UVM_ANON_H_ */
