@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.471.4.3 2003/02/08 06:40:59 jmc Exp $	*/
+/*	$NetBSD: machdep.c,v 1.471.4.4 2003/08/16 16:17:11 tron Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.471.4.3 2003/02/08 06:40:59 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.471.4.4 2003/08/16 16:17:11 tron Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -2032,8 +2032,14 @@ sendsig(catcher, sig, mask, code)
 	if (onstack)
 		fp = (struct sigframe *)((caddr_t)p->p_sigctx.ps_sigstk.ss_sp +
 					  p->p_sigctx.ps_sigstk.ss_size);
-	else
-		fp = (struct sigframe *)tf->tf_esp;
+	else {
+#ifdef VM86
+		if (tf->tf_eflags & PSL_VM)
+			fp = (struct sigframe *)(tf->tf_esp + (tf->tf_ss << 4));
+		else
+#endif
+			fp = (struct sigframe *)tf->tf_esp;
+	}
 	fp--;
 
 	/* Build stack frame for signal trampoline. */
