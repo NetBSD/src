@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ray.c,v 1.9 2000/02/02 18:39:44 chopps Exp $	*/
+/*	$NetBSD: if_ray.c,v 1.10 2000/02/03 21:27:35 chopps Exp $	*/
 /* 
  * Copyright (c) 2000 Christian E. Hopps
  * All rights reserved.
@@ -2900,6 +2900,7 @@ ray_read_region(sc, off, vp, c)
 	void *vp;
 	size_t c;
 {
+#ifdef RAY_USE_OPTIMIZED_COPY
 	u_int n2, n4, tmp;
 	u_int8_t *p;
 
@@ -2942,6 +2943,9 @@ ray_read_region(sc, off, vp, c)
 		bus_space_read_region_1(sc->sc_memt, sc->sc_memh, off, p, c);
 		break;
 	}
+#else
+	bus_space_read_region_1(sc->sc_memt, sc->sc_memh, off, vp, c);
+#endif
 }
 
 /*
@@ -2956,6 +2960,7 @@ ray_write_region(sc, off, vp, c)
 	void *vp;
 	size_t c;
 {
+#ifdef RAY_USE_OPTIMIZED_COPY
 	size_t n2, n4, tmp;
 	u_int8_t *p;
 
@@ -2997,6 +3002,9 @@ ray_write_region(sc, off, vp, c)
 		bus_space_write_region_1(sc->sc_memt, sc->sc_memh, off, p, c);
 		break;
 	}
+#else
+	bus_space_write_region_1(sc->sc_memt, sc->sc_memh, off, vp, c);
+#endif
 }
 
 #ifdef RAY_DEBUG
