@@ -1,4 +1,4 @@
-/*	$NetBSD: termcap.c,v 1.33 2000/06/02 13:13:12 itojun Exp $	*/
+/*	$NetBSD: termcap.c,v 1.34 2000/06/02 18:00:42 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)termcap.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: termcap.c,v 1.33 2000/06/02 13:13:12 itojun Exp $");
+__RCSID("$NetBSD: termcap.c,v 1.34 2000/06/02 18:00:42 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -346,16 +346,16 @@ t_getstr(info, id, area, limit)
 		 * area
 		 */
 		if (limit != NULL && (*limit < i)) {
-			errno = E2BIG;
 			free(s);
+			errno = E2BIG;
 			return NULL;
 		}
-  	
-		strcpy(*area, s);
+		(void)strcpy(*area, s);
+		free(s);
+		s = *area;
 		*area += i + 1;
 		if (limit != NULL) *limit -= i;
-  	
-		return (s);
+		return (*area);
 	} else {
 		_DIAGASSERT(limit != NULL);
 		*limit = i;
