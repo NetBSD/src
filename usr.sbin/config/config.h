@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.41 1999/01/21 13:10:08 pk Exp $	*/
+/*	$NetBSD: config.h,v 1.42 1999/04/02 06:36:30 gwr Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -75,6 +75,14 @@
 #define _PATH_DEVNULL "/dev/null"
 #endif
 
+#ifdef	MAKE_BOOTSTRAP
+#undef	major
+#undef	minor
+#undef	makedev
+#define	major(x)	((int)(((u_int)(x) >> 8) & 0xff))
+#define	minor(x)	((int)((x) & 0xff))
+#define	makedev(x,y)	((int)(((x) << 8) | (y)))
+#endif	/* MAKE_BOOTSTRAP */
 
 #define ARRCHR '#'
 
