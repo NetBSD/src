@@ -1,4 +1,4 @@
-/*	$NetBSD: bktr_core.c,v 1.15 2001/01/18 20:28:24 jdolecek Exp $	*/
+/*	$NetBSD: bktr_core.c,v 1.16 2001/03/01 22:53:13 mjl Exp $	*/
 
 /* FreeBSD: src/sys/dev/bktr/bktr_core.c,v 1.114 2000/10/31 13:09:56 roger Exp */
 
@@ -2493,7 +2493,7 @@ dump_bt848( bktr_ptr_t bktr )
 		       r[i], INL(bktr, r[i]),
 		       r[i+1], INL(bktr, r[i+1]),
 		       r[i+2], INL(bktr, r[i+2]),
-		       r[i+3], INL(bktr, r[i+3]]));
+		       r[i+3], INL(bktr, r[i+3]));
 	}
 
 	printf("%s: INT STAT %x \n", bktr_name(bktr),
