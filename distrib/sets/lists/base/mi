@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.215 2001/01/24 09:28:27 jwise Exp $
+# $NetBSD: mi,v 1.216 2001/01/24 09:38:26 garbled Exp $
 .
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -1304,9 +1304,12 @@
 ./usr/share/sushi/install/index		base-sysutil-share
 ./usr/share/sushi/install/install		base-sysutil-share
 ./usr/share/sushi/install/install/form		base-sysutil-share
+./usr/share/sushi/install/install/preform		base-sysutil-share
 ./usr/share/sushi/install/install/script		base-sysutil-share
+./usr/share/sushi/install/install/script2		base-sysutil-share
 ./usr/share/sushi/install/install/script1		base-sysutil-share
 ./usr/share/sushi/install/installb		base-sysutil-share
+./usr/share/sushi/install/installb/preform		base-sysutil-share
 ./usr/share/sushi/install/installb/form		base-sysutil-share
 ./usr/share/sushi/install/installb/script		base-sysutil-share
 ./usr/share/sushi/install/list		base-sysutil-share
