@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vfsops.c,v 1.21 1999/07/17 01:08:30 wrstuden Exp $	*/
+/*	$NetBSD: mfs_vfsops.c,v 1.22 2000/01/21 23:43:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1993, 1994
@@ -143,7 +143,7 @@ mfs_mountroot()
 	mfsp->mfs_size = mfs_rootsize;
 	mfsp->mfs_vnode = rootvp;
 	mfsp->mfs_pid = p->p_pid;
-	mfsp->mfs_buflist = (struct buf *)0;
+	BUFQ_INIT(&mfsp->mfs_buflist);
 	if ((error = ffs_mountfs(rootvp, mp, p)) != 0) {
 		mp->mnt_op->vfs_refcount--;
 		vfs_unbusy(mp);
@@ -246,9 +246,9 @@ mfs_mount(mp, path, data, ndp, p)
 	mfsp->mfs_size = args.size;
 	mfsp->mfs_vnode = devvp;
 	mfsp->mfs_pid = p->p_pid;
-	mfsp->mfs_buflist = (struct buf *)0;
+	BUFQ_INIT(&mfsp->mfs_buflist);
 	if ((error = ffs_mountfs(devvp, mp, p)) != 0) {
-		mfsp->mfs_buflist = (struct buf *)-1;
+		BUFQ_FIRST(&mfsp->mfs_buflist) = (struct buf *) -1;
 		vrele(devvp);
 		return (error);
 	}
@@ -287,7 +287,7 @@ mfs_start(mp, flags, p)
 	int sleepreturn = 0;
 
 	base = mfsp->mfs_baseoff;
-	while (mfsp->mfs_buflist != (struct buf *)-1) {
+	while (BUFQ_FIRST(&mfsp->mfs_buflist) != (struct buf *) -1) {
 		/*
 		 * If a non-ignored signal is received, try to unmount.
 		 * If that fails, or the filesystem is already in the
@@ -303,8 +303,8 @@ mfs_start(mp, flags, p)
 			continue;
 		}
 
-		while ((bp = mfsp->mfs_buflist) != NULL) {
-			mfsp->mfs_buflist = bp->b_actf;
+		while ((bp = BUFQ_FIRST(&mfsp->mfs_buflist)) != NULL) {
+			BUFQ_REMOVE(&mfsp->mfs_buflist, bp);
 			mfs_doio(bp, base);
 			wakeup((caddr_t)bp);
 		}
