@@ -1,4 +1,4 @@
-/*	$NetBSD: skip.c,v 1.1.1.2 2002/06/20 10:30:07 itojun Exp $	*/
+/*	$NetBSD: skip.c,v 1.2 2002/06/20 11:43:00 itojun Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989

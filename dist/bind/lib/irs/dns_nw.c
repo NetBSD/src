@@ -1,4 +1,4 @@
-/*	$NetBSD: dns_nw.c,v 1.1.1.2 2002/06/20 10:30:21 itojun Exp $	*/
+/*	$NetBSD: dns_nw.c,v 1.2 2002/06/20 11:43:03 itojun Exp $	*/
 
 /*
  * Copyright (c) 1996-1999 by Internet Software Consortium.
