@@ -1,4 +1,4 @@
-/*	$NetBSD: puc.c,v 1.3 1999/02/06 06:29:54 cgd Exp $	*/
+/*	$NetBSD: puc.c,v 1.4 2000/04/17 16:45:04 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998, 1999
@@ -121,6 +121,12 @@ puc_match(parent, match, aux)
 	if (desc != NULL)
 		return (10);
 
+#if 0
+	/*
+	 * XXX this is obviously bogus.  eventually, we might want
+	 * XXX to match communications/modem, etc., but that needs some
+	 * XXX special work in the match fn.
+	 */
 	/*
 	 * Match class/subclass, so we can tell people to compile kernel
 	 * with options that cause this driver to spew.
@@ -128,6 +134,7 @@ puc_match(parent, match, aux)
 	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_COMMUNICATIONS &&
 	    PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_BRIDGE_PCI)
 		return (1);
+#endif
 
 	return (0);
 }
