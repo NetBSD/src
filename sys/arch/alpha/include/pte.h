@@ -1,4 +1,4 @@
-/* $NetBSD: pte.h,v 1.15 1998/03/07 03:15:06 thorpej Exp $ */
+/* $NetBSD: pte.h,v 1.16 1998/03/09 19:57:57 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -51,6 +51,8 @@ typedef	alpha_pt_entry_t	pt_entry_t;
 #define	PT_ENTRY_NULL	((pt_entry_t *) 0)
 #define	PTESHIFT	3			/* pte size == 1 << PTESHIFT */
 
+#define	NPTEPG_SHIFT	(PAGE_SHIFT - PTESHIFT)
+
 #define	PG_V		ALPHA_PTE_VALID
 #define	PG_NV		0
 #define	PG_FOR		ALPHA_PTE_FAULT_ON_READ
@@ -78,6 +80,9 @@ typedef	alpha_pt_entry_t	pt_entry_t;
 
 #define	ALPHA_STSIZE		((u_long)NBPG)			/* 8k */
 #define	ALPHA_MAX_PTSIZE	((u_long)(NPTEPG * NBPG))	/* 8M */
+
+#define	VPT_INDEX(va)	\
+	(((vm_offset_t)(va) >> PAGE_SHIFT) & ((1 << 3 * NPTEPG_SHIFT) - 1))
 
 #ifdef _KERNEL
 extern	pt_entry_t *Lev1map;		/* kernel level 1 page table */
