@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6.c,v 1.1 2000/01/08 23:12:37 itojun Exp $ */
+/*	$NetBSD: ip6.c,v 1.2 2000/01/10 21:06:16 itojun Exp $ */
 
 /*
  * Copyright (c) 1999 Andy Doran <ad@NetBSD.org>
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ip6.c,v 1.1 2000/01/08 23:12:37 itojun Exp $");
+__RCSID("$NetBSD: ip6.c,v 1.2 2000/01/10 21:06:16 itojun Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -193,13 +193,14 @@ showip6(void)
 int
 initip6(void)
 {
+	int n;
 
 	if (namelist[0].n_type == 0) {
-		if (kvm_nlist(kd, namelist)) {
+		n = kvm_nlist(kd, namelist);
+		if (n < 0) {
 			nlisterr(namelist);
 			return(0);
-		}
-		if (namelist[0].n_type == 0) {
+		} else if (n == sizeof(namelist) / sizeof(namelist[0]) - 1) {
 			error("No namelist");
 			return(0);
 		}
