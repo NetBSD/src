@@ -1,4 +1,4 @@
-/*	$NetBSD: tip.c,v 1.20 1998/06/30 23:42:08 thorpej Exp $	*/
+/*	$NetBSD: tip.c,v 1.21 1998/07/12 09:59:30 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)tip.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: tip.c,v 1.20 1998/06/30 23:42:08 thorpej Exp $");
+__RCSID("$NetBSD: tip.c,v 1.21 1998/07/12 09:59:30 mrg Exp $");
 #endif /* not lint */
 
 /*
@@ -136,7 +136,8 @@ main(argc, argv)
 			(int)sizeof(PNbuf) - 1);
 		exit(1);
 	}
-	strncpy( PNbuf, system, sizeof PNbuf - 1 );
+	strncpy(PNbuf, system, sizeof PNbuf - 1);
+	PNbuf[sizeof PNbuf - 1] = '\0';
 	for (p = system; *p; p++)
 		*p = '\0';
 	PN = PNbuf;
@@ -211,7 +212,7 @@ notnumber:
 	     fcntl(FD, F_SETFL, fcarg & ~O_NONBLOCK) < 0)) {
 		printf("tip: can't clear O_NONBLOCK: %s", strerror (errno));
 		daemon_uid();
-		(void)uu_unlock (uucplock);
+		(void)uu_unlock(uucplock);
 		exit(1);
 	}
 		
@@ -284,6 +285,7 @@ static int uidswapped;
 void
 user_uid()
 {
+
 	if (uidswapped == 0) {
 		seteuid(uid);
 		uidswapped = 1;
@@ -303,6 +305,7 @@ daemon_uid()
 void
 shell_uid()
 {
+
 	seteuid(uid);
 }
 
@@ -312,6 +315,7 @@ shell_uid()
 void
 raw()
 {
+
 	tcsetattr(0, TCSADRAIN, &term);
 }
 
@@ -322,6 +326,7 @@ raw()
 void
 unraw()
 {
+
 	tcsetattr(0, TCSADRAIN, &defterm);
 }
 
@@ -333,9 +338,10 @@ static	jmp_buf promptbuf;
  *  normal erase and kill characters.
  */
 int
-prompt(s, p)
+prompt(s, p, l)
 	char *s;
 	char *p;
+	size_t l;
 {
 	int c;
 	char *b = p;
@@ -351,7 +357,8 @@ prompt(s, p)
 	unraw();
 	printf("%s", s);
 	if (setjmp(promptbuf) == 0)
-		while ((c = getchar()) != -1 && (*p = c) != '\n')
+		while ((c = getchar()) != -1 && (*p = c) != '\n' &&
+		    b + l > p)
 			p++;
 	*p = '\0';
 
@@ -463,6 +470,7 @@ int
 any(c, p)
 	char c, *p;
 {
+
 	while (p && *p)
 		if (*p++ == c)
 			return (1);
@@ -476,7 +484,7 @@ interp(s)
 	static char buf[256];
 	char *p = buf, c, *q;
 
-	while ((c = *s++) != 0) {
+	while ((c = *s++) != 0 && buf + sizeof buf - p > 2) {
 		for (q = "\nn\rr\tt\ff\033E\bb"; *q; q++)
 			if (*q++ == c) {
 				*p++ = '\\'; *p++ = *q;

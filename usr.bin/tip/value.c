@@ -1,4 +1,4 @@
-/*	$NetBSD: value.c,v 1.8 1997/11/23 04:03:05 mrg Exp $	*/
+/*	$NetBSD: value.c,v 1.9 1998/07/12 09:59:30 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)value.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: value.c,v 1.8 1997/11/23 04:03:05 mrg Exp $");
+__RCSID("$NetBSD: value.c,v 1.9 1998/07/12 09:59:30 mrg Exp $");
 #endif /* not lint */
 
 #include "tip.h"
@@ -260,6 +260,7 @@ static int
 vaccess(mode, rw)
 	unsigned mode, rw;
 {
+
 	if (mode & (rw<<PUBLIC))
 		return (1);
 	if (mode & (rw<<PRIVATE))
