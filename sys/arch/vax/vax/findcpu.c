@@ -1,4 +1,4 @@
-/*	$NetBSD: findcpu.c,v 1.12 2003/07/15 02:15:03 lukem Exp $	*/
+/*	$NetBSD: findcpu.c,v 1.13 2003/10/18 12:06:11 ragge Exp $	*/
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: findcpu.c,v 1.12 2003/07/15 02:15:03 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: findcpu.c,v 1.13 2003/10/18 12:06:11 ragge Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -96,7 +96,10 @@ findcpu(void)
 		case VAX_BTYP_48:
 		case VAX_BTYP_IS1:
 			vax_confdata = *(int *)(0x20020000);
+			vax_bustype = VAX_VSBUS;
+			break;
 		case VAX_BTYP_49:
+			vax_confdata = *(int *)(0x25800000);
 			vax_bustype = VAX_VSBUS;
 			break;
 
