@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.6 1998/10/28 04:28:32 jonathan Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.7 1998/11/25 01:14:48 nisimura Exp $	*/
 
 /* 
  * Mach Operating System
@@ -357,26 +357,26 @@ boolean_t
 inst_call(inst)
 	int inst;
 {
-	register int rv = 0;
 	InstFmt i;
+	int call;
+
 	i.word = inst;
-
-	if (i.JType.op == OP_SPECIAL) {
-		if (i.RType.func == OP_JR || i.RType.func == OP_JAL)
-			rv = 1;
-	} else if (i.JType.op == OP_JAL)
-		rv = 1;
-
+	if (i.JType.op == OP_SPECIAL
+	    && (i.RType.func == OP_JR || i.RType.func == OP_JALR))
+		call = 1;
+	else if (i.JType.op == OP_JAL)
+		call = 1;
+	else
+		call = 0;
 #ifdef DEBUG_DDB
-	printf("  inst_call(0x%x) returns 0x%d\n",
-	        inst, rv);
-#endif	
-	return rv;
+	printf("  inst_call(0x%x) returns 0x%d\n", inst, call);
+#endif
+	return call;
 }
 
 
 /*
- * inst_unctiondional_flow_transfer()
+ * inst_unconditional_flow_transfer()
  *	return TRUE if the instruction is an unconditional
  *	transter of flow (i.e. unconditional branch)
  */
@@ -384,15 +384,15 @@ boolean_t
 inst_unconditional_flow_transfer(int inst)
 {
 	InstFmt i;
-	int rv = 0;
+	int jump;
 
-	if (i.JType.op == OP_J) rv = 1;
-
+	i.word = inst;
+	jump = (i.JType.op == OP_J);
 #ifdef DEBUG_DDB
 	printf("  insn_unconditional_flow_transfer(0x%x) returns %d\n",
-	        inst, rv);
+	        inst, jump);
 #endif	
-	return rv;
+	return jump;
 }
 
 /* 
