@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.54 1998/09/29 01:49:43 thorpej Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.55 1998/09/29 21:03:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -83,7 +83,7 @@ do {									\
 #else /* ! MULTIPROCESSOR */
 #define	KPRINTF_MUTEX_ENTER(s)	(s) = splhigh()
 #define	KPRINTF_MUTEX_EXIT(s)	splx((s))
-#endif
+#endif /* MULTIPROCESSOR */
 
 /*
  * note that stdarg.h and the ansi style va_start macro is used for both
@@ -614,6 +614,23 @@ sprintf(buf, fmt, va_alist)
 	va_end(ap);
 	*(buf + retval) = 0;	/* null terminate */
 	return(retval);
+}
+
+/*
+ * vsprintf: print a message to a buffer [already have va_alist]
+ */
+
+int
+vsprintf(buf, fmt, ap)
+	char *buf;
+	const char *fmt;
+	va_list ap;
+{
+	int retval;
+
+	retval = kprintf(fmt, TOBUFONLY, NULL, buf, ap);
+	*(buf + retval) = 0;	/* null terminate */
+	return (retval);
 }
 
 /*
