@@ -42,7 +42,7 @@
  *	@(#)locore.s	8.2 (Berkeley) 8/12/93
  *
  * from: Header: locore.s,v 1.51 93/04/21 06:19:37 torek Exp 
- * $Id: locore.s,v 1.2 1993/10/11 02:16:20 deraadt Exp $
+ * $Id: locore.s,v 1.3 1993/11/10 03:13:43 deraadt Exp $
  */
 
 #define	LOCORE
@@ -260,11 +260,6 @@ IE_reg_addr = _msgbuf + msgbufsize	! this page not used; points to IEreg
 #endif
 
 /* special high-speed 1-instruction-shaved-off traps (get nothing in %l3) */
-#ifdef COMPAT_SUNOS
-#define	SUN_SYSCALL	b sun_syscall; mov %psr, %l0; nop; nop
-#else
-#define	SUN_SYSCALL	TRAP(T_SUN_SYSCALL)
-#endif
 #define	SYSCALL		b syscall; mov %psr, %l0; nop; nop
 #define	WINDOW_OF	b window_of; mov %psr, %l0; nop; nop
 #define	WINDOW_UF	b window_uf; mov %psr, %l0; nop; nop
@@ -407,7 +402,7 @@ _trapbase:
 	UTRAP(0x7d)
 	UTRAP(0x7e)
 	UTRAP(0x7f)
-	SUN_SYSCALL		! 80 = sun syscall
+	SYSCALL			! 80 = sun syscall
 	BPT			! 81 = pseudo breakpoint instruction
 	TRAP(T_DIV0)		! 82 = divide by zero
 	TRAP(T_FLUSHWIN)	! 83 = flush windows
@@ -1407,19 +1402,8 @@ kgdb_rett:
  * XXX	should not have to save&reload ALL the registers just for
  *	ptrace...
  */
-#ifdef COMPAT_SUNOS
-sun_syscall:
-	TRAP_SETUP(-CCFSZ-80)
-	b	sys_merge
-	 mov	1, %o3			! third arg to syscall: sun compat
 syscall:
 	TRAP_SETUP(-CCFSZ-80)
-	clr	%o3			! third arg to syscall: native bsd
-sys_merge:
-#else
-syscall:
-	TRAP_SETUP(-CCFSZ-80)
-#endif
 	wr	%l0, PSR_ET, %psr
 	std	%l0, [%sp + CCFSZ + 0]	! tf_psr, tf_pc
 	rd	%y, %l3

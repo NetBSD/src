@@ -42,7 +42,7 @@
  *	@(#)trap.h	8.1 (Berkeley) 6/11/93
  *
  * from: Header: trap.h,v 1.9 92/11/26 02:04:47 torek Exp 
- * $Id: trap.h,v 1.1 1993/10/02 10:23:30 deraadt Exp $
+ * $Id: trap.h,v 1.2 1993/11/10 03:13:19 deraadt Exp $
  */
 
 #ifndef	_MACHINE_TRAP_H
@@ -140,6 +140,6 @@ extern struct trapvec trapbase[256];	/* the 256 vectors */
 #define	ST_BREAKPOINT	(T_BREAKPOINT & 0x7f)
 #define	ST_DIV0		(T_DIV0 & 0x7f)
 #define	ST_FLUSHWIN	(T_FLUSHWIN & 0x7f)
-#define	ST_SYSCALL	(T_BSD_SYSCALL & 0x7f)
+#define	ST_SYSCALL	(T_SUN_SYSCALL & 0x7f)
 
 #endif /* _MACHINE_TRAP_H_ */
