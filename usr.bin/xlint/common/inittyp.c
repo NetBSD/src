@@ -1,4 +1,4 @@
-/*	$NetBSD: inittyp.c,v 1.4 2002/01/31 19:36:53 tv Exp $	*/
+/*	$NetBSD: inittyp.c,v 1.5 2003/05/29 18:12:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: inittyp.c,v 1.4 2002/01/31 19:36:53 tv Exp $");
+__RCSID("$NetBSD: inittyp.c,v 1.5 2003/05/29 18:12:17 christos Exp $");
 #endif
 
 #include <ctype.h>
@@ -44,6 +44,12 @@ __RCSID("$NetBSD: inittyp.c,v 1.4 2002/01/31 19:36:53 tv Exp $");
 
 /* various type information */
 ttab_t	ttab[NTSPEC];
+
+#if INTPTR_IS_LONG
+#define INT_RSIZE	3
+#else
+#define INT_RSIZE	4
+#endif
 
 void
 inittyp(void)
@@ -74,10 +80,10 @@ inittyp(void)
 		{ USHORT,   { SHORT_SIZE, 2 * CHAR_BIT,
 				      SHORT, USHORT,
 				      1, 1, 0, 1, 1, "unsigned short" } },
-		{ INT,      { INT_SIZE, 3 * CHAR_BIT,
+		{ INT,      { INT_SIZE, INT_RSIZE * CHAR_BIT,
 				      INT, UINT,
 				      1, 0, 0, 1, 1, "int" } },
-		{ UINT,     { INT_SIZE, 3 * CHAR_BIT,
+		{ UINT,     { INT_SIZE, INT_RSIZE * CHAR_BIT,
 				      INT, UINT,
 				      1, 1, 0, 1, 1, "unsigned int" } },
 		{ LONG,     { LONG_SIZE, 4 * CHAR_BIT,

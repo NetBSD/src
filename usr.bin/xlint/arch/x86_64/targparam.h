@@ -1,4 +1,4 @@
-/*	$NetBSD: targparam.h,v 1.2 2002/01/30 06:55:02 thorpej Exp $	*/
+/*	$NetBSD: targparam.h,v 1.3 2003/05/29 18:12:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -45,6 +45,7 @@
 
 #define	PTRDIFF_IS_LONG		1
 #define	SIZEOF_IS_ULONG		1
+#define	INTPTR_IS_LONG		1
 
 #define	FLOAT_SIZE		(4 * CHAR_BIT)
 #define	DOUBLE_SIZE		(8 * CHAR_BIT)
