@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.199.4.15 2003/01/03 17:25:08 thorpej Exp $ */
+/*	$NetBSD: pmap.c,v 1.199.4.16 2003/01/03 17:40:17 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -2060,10 +2060,6 @@ ctx_alloc(pm)
 		}
 		simple_unlock(&pm->pm_lock);
 
-		/* Set context if not yet done above to flush the cache */
-		if (!doflush)
-			setcontext4m(cnum);
-
 		/* And finally switch to the new context */
 		(*cpuinfo.pure_vcache_flush)();
 		setcontext4m(cnum);
@@ -3863,26 +3859,6 @@ pmap_quiet_check(struct pmap *pm)
 			}
 			setcontext4(ctx);
 		}
-
-		/* Check for spurious pmeg entries in the MMU */
-		if (pm->pm_ctx == NULL)
-			continue;
-		if ((CPU_ISSUN4 || CPU_ISSUN4C)) {
-			int ctx;
-			if (mmu_has_hole && (vr >= 32 || vr < (256 - 32)))
-				continue;
-			ctx = getcontext4();
-			setcontext4(pm->pm_ctxnum);
-			for (vs = 0; vs < NSEGRG; vs++) {
-				vaddr_t va = VSTOVA(vr,vs);
-				int pmeg = getsegmap(va);
-				if (pmeg != seginval)
-					printf("pmap_chk: pm %p(%d,%d:%x): "
-						"spurious pmeg %d\n",
-						pm, vr, vs, (u_int)va, pmeg);
-			}
-			setcontext4(ctx);
-		}
 	}
 }
 #endif /* DEBUG */
@@ -5221,9 +5197,6 @@ pmap_changeprot4m(pm, va, prot, wired)
 	setpgt4m_va(va, &sp->sg_pte[VA_SUN4M_VPG(va)],
 		 (pte & ~SRMMU_PROT_MASK) | newprot,
 		 pm->pm_ctx != NULL, pm->pm_ctxnum);
-
-	if (pm->pm_ctx)
-		setcontext4m(ctx);
 
 out:
 	simple_unlock(&pm->pm_lock);
