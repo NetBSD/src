@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.23.2.9 2004/04/07 22:35:43 jmc Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.23.2.10 2004/12/10 23:08:12 jmc Exp $	*/
 /*	$KAME: ipsec.c,v 1.83 2000/11/09 17:45:30 itojun Exp $	*/
 
 /*
@@ -1504,6 +1504,7 @@ ipsec_get_reqlevel(isr)
 				level = ah_net_deflev;
 			else
 				level = ah_trans_deflev;
+			break;
 		case IPPROTO_IPCOMP:
 			/*
 			 * we don't really care, as IPcomp document says that
