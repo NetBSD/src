@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.21 1994/12/13 20:14:46 mycroft Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.22 1994/12/14 18:49:38 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -135,7 +135,6 @@ spec_open(ap)
 		int  a_mode;
 		struct ucred *a_cred;
 		struct proc *a_p;
-		struct file *a_fp;
 	} */ *ap;
 {
 	struct vnode *bvp, *vp = ap->a_vp;
@@ -178,8 +177,7 @@ spec_open(ap)
 			}
 		}
 		VOP_UNLOCK(vp);
-		error = (*cdevsw[maj].d_open)(dev, ap->a_mode, S_IFCHR,
-		    ap->a_p, ap->a_fp);
+		error = (*cdevsw[maj].d_open)(dev, ap->a_mode, S_IFCHR, ap->a_p);
 		VOP_LOCK(vp);
 		return (error);
 
@@ -199,8 +197,7 @@ spec_open(ap)
 		 */
 		if (error = vfs_mountedon(vp))
 			return (error);
-		return ((*bdevsw[maj].d_open)(dev, ap->a_mode, S_IFBLK,
-		    ap->a_p, ap->a_fp));
+		return ((*bdevsw[maj].d_open)(dev, ap->a_mode, S_IFBLK, ap->a_p));
 	}
 	return (0);
 }
