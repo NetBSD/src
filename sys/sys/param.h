@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.91 2000/03/26 20:57:02 kleink Exp $	*/
+/*	$NetBSD: param.h,v 1.92 2000/05/04 20:18:32 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -65,7 +65,7 @@
  *
  */
 
-#define __NetBSD_Version__  104240000	/* NetBSD 1.4X */
+#define __NetBSD_Version__  104250000	/* NetBSD 1.4Y */
 
 /*
  * Historical NetBSD #define
