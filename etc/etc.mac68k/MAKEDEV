@@ -20,7 +20,7 @@
 # MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 #
 #	from: @(#)MAKEDEV	5.2 (Berkeley) 6/22/90
-#	$Id: MAKEDEV,v 1.9 1994/10/31 23:31:06 briggs Exp $
+#	$Id: MAKEDEV,v 1.10 1994/12/22 05:54:27 briggs Exp $
 #
 # Device "make" file.  Valid arguments:
 #	std	standard devices
@@ -47,6 +47,7 @@
 #
 # Special purpose devices:
 #	bpf*	packet filter
+#	tun*	network tunnel driver
 #	lkm	Device to for loadable kernel modules
 #
 
@@ -265,6 +266,14 @@ bpf*)
 	rm -f bpf${unit}
 	mknod bpf${unit} c 22 ${unit}
 	chown root.wheel bpf${unit}
+	;;
+
+tun*)
+	unit=`expr $i : 'tun\(.*\)'`
+	rm -f tun$unit
+	mknod tun$unit c 24 $unit
+	chmod 600 tun$unit
+	chown root.wheel tun$unit
 	;;
 
 lkm)
