@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.h,v 1.43 2000/03/24 22:16:42 augustss Exp $	*/
+/*	$NetBSD: usb.h,v 1.44 2000/04/03 13:40:05 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb.h,v 1.14 1999/11/17 22:33:46 n_hibma Exp $	*/
 
 /*
@@ -424,7 +424,7 @@ typedef struct {
 #define USB_PORT_RESET_SETTLE	10  /* ms */
 #define USB_PORT_POWERUP_DELAY	100 /* ms */
 #define USB_SET_ADDRESS_SETTLE	2   /* ms */
-#define USB_RESUME_TIME		(20*5)  /* ms */
+#define USB_RESUME_DELAY	(20*5)  /* ms */
 #define USB_RESUME_WAIT		10  /* ms */
 #define USB_RESUME_RECOVERY	10  /* ms */
 #else
