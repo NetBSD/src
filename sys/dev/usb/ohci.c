@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.96 2000/12/29 01:24:55 augustss Exp $	*/
+/*	$NetBSD: ohci.c,v 1.97 2000/12/31 14:29:54 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -940,6 +940,7 @@ void
 ohci_power(int why, void *v)
 {
 	ohci_softc_t *sc = v;
+	u_int32_t ctl;
 	int s;
 
 #ifdef OHCI_DEBUG
@@ -951,10 +952,23 @@ ohci_power(int why, void *v)
 	switch (why) {
 	case PWR_SUSPEND:
 	case PWR_STANDBY:
-		OWRITE4(sc, OHCI_CONTROL, OHCI_HCFS_SUSPEND);
+		sc->sc_bus.use_polling++;
+		ctl = OREAD4(sc, OHCI_CONTROL);
+		ctl = (ctl & ~OHCI_HCFS_MASK) | OHCI_HCFS_SUSPEND;
+		OWRITE4(sc, OHCI_CONTROL, ctl);
+		usb_delay_ms(&sc->sc_bus, USB_RESUME_WAIT);
+		sc->sc_bus.use_polling--;
 		break;
 	case PWR_RESUME:
-		OWRITE4(sc, OHCI_CONTROL, OHCI_HCFS_RESUME);
+		sc->sc_bus.use_polling++;
+		ctl = OREAD4(sc, OHCI_CONTROL);
+		ctl = (ctl & ~OHCI_HCFS_MASK) | OHCI_HCFS_RESUME;
+		OWRITE4(sc, OHCI_CONTROL, ctl);
+		usb_delay_ms(&sc->sc_bus, USB_RESUME_DELAY);
+		ctl = (ctl & ~OHCI_HCFS_MASK) | OHCI_HCFS_OPERATIONAL;
+		OWRITE4(sc, OHCI_CONTROL, ctl);
+		usb_delay_ms(&sc->sc_bus, USB_RESUME_RECOVERY);
+		sc->sc_bus.use_polling--;
 		break;
 	case PWR_SOFTSUSPEND:
 	case PWR_SOFTSTANDBY:
