@@ -1,4 +1,4 @@
-/*	$NetBSD: ttyaction.c,v 1.8 1997/07/31 00:02:52 jtc Exp $	*/
+/*	$NetBSD: ttyaction.c,v 1.9 1998/07/26 22:02:38 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -65,9 +65,9 @@ static char *pathenv = __CONCAT("PATH=",_PATH_STDPATH);
 
 int
 ttyaction(tty, act, user)
-	char *tty;
-	char *act;
-	char *user;
+	const char *tty;
+	const char *act;
+	const char *user;
 {
 	FILE *fp;
 	char *p1, *p2;

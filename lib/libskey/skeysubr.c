@@ -1,4 +1,4 @@
-/*	$NetBSD: skeysubr.c,v 1.12 1998/03/18 19:22:12 christos Exp $	*/
+/*	$NetBSD: skeysubr.c,v 1.13 1998/07/26 21:58:46 mycroft Exp $	*/
 
 /* S/KEY v1.1b (skeysubr.c)
  *
@@ -36,8 +36,8 @@ static void echo_off __ARGS((void));
 int
 keycrunch(result,seed,passwd)
 char *result;	/* 8-byte result */
-char *seed;	/* Seed, any length */
-char *passwd;	/* Password, any length */
+const char *seed;	/* Seed, any length */
+const char *passwd;	/* Password, any length */
 {
 	char *buf;
 	MD4_CTX md;
@@ -176,7 +176,8 @@ trapped(sig)
  */
 int
 atob8(out, in)
-	char *out, *in;
+	char *out;
+	const char *in;
 {
 	int i;
 	int val;
@@ -203,7 +204,8 @@ atob8(out, in)
 /* Convert 8-byte binary array to hex-ascii string */
 int
 btoa8(out, in)
-	char *out, *in;
+	char *out;
+	const char *in;
 {
 	int i;
 
@@ -232,9 +234,9 @@ htoi(c)
 	return -1;
 }
 
-char *
+const char *
 skipspace(cp)
-	char *cp;
+	const char *cp;
 {
 	while (*cp == ' ' || *cp == '\t')
 		cp++;
