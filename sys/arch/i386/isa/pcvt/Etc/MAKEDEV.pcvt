@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.pcvt,v 1.2 1994/10/27 04:19:25 cgd Exp $
+#
 
 PATH=/sbin:/bin/:/usr/bin:/usr/sbin:
 umask 77

@@ -1,8 +1,7 @@
-/*	$NetBSD: pcvt_vtf.c,v 1.7 1995/08/30 00:29:56 fvdl Exp $	*/
-
 /*
- * Copyright (c) 1992,1993,1994 Hellmuth Michaelis, Brian Dunford-Shore
- *                              and Joerg Wunsch.
+ * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
+ *
+ * Copyright (c) 1992, 1993 Brian Dunford-Shore.
  *
  * All rights reserved.
  *
@@ -36,30 +35,47 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  *
- * @(#)pcvt_vtf.c, 3.00, Last Edit-Date: [Sun Feb 27 17:04:53 1994]
+ * @(#)pcvt_vtf.c, 3.32, Last Edit-Date: [Tue Oct  3 11:19:49 1995]
+ *
  */
 
 /*---------------------------------------------------------------------------*
  *
  *	pcvt_vtf.c	VT220 Terminal Emulator Functions
  *	-------------------------------------------------
- *	-hm	splitting off from pcvt_out.c
- *	-jw/hm	all ifdef's converted to if's 
- *	-hm	patch from Joerg: PCVT_INHIBIT_NUMLOCK
  *	-hm	------------ Release 3.00 --------------
+ *	-hm	integrating NetBSD-current patches
+ *	-hm	integrating patch from Thomas Gellekum
+ *	-hm	fixed bug fkey labels not properly (re)set after ris
+ *	-hm	Michael Havemester fixed NOFASTSCROLL define bug
+ *	-hm	set caps/scroll/num_lock in vt_str() and made led_update()
+ *	-hm	applying patch from Joerg fixing Crtat bug
+ *	-hm	fixing NOFASTSCROLL operation for MDA/Hercules
+ *	-jw/hm	fixing bug in roll_up() and roll_down()
+ *	-hm	fastscroll/Crtat bugfix from Lon Willett
+ *	-hm	patch for non-XSERVER/UCONSOLE compiles from Rafal Boni
+ *	-hm	bugfix: PCVT_USL_COMPAT renamed to PCVT_USL_VT_COMPAT ...
+ *	-hm	---------------- Release 3.30 -----------------------
+ *	-hm	patch from Thomas Gellekum fixes scroll region bug in vt_stbm()
+ *	-hm	patch from Thomas Gellekum to support C1 controls
+ *	-hm	patch from Thomas Gellekum re updating GL and GR
+ *	-hm	---------------- Release 3.32 -----------------------
  *
  *---------------------------------------------------------------------------*/
 
+#include "vt.h"
+#if NVT > 0
+
+#define PCVT_INCLUDE_VT_SELATTR	/* get inline function from pcvt_hdr.h */
+
 #include "pcvt_hdr.h"		/* global include */
 #include "pcvt_tbl.h"		/* character set conversion tables */
-#include "pcvt_vtf.h"		/* inline function */
 
 static void clear_dld ( struct video_state *svsp );
 static void init_dld ( struct video_state *svsp );
 static void init_udk ( struct video_state *svsp );
 static void respond ( struct video_state *svsp );
 static void roll_down ( struct video_state *svsp, int n );
-void roll_up ( struct video_state *svsp, int n );
 static void selective_erase ( struct video_state *svsp, u_short *pcrtat,
 			      int length );
 static void swcsp ( struct video_state *svsp, u_short *ctp );
@@ -71,7 +87,7 @@ void
 vt_stbm(struct video_state *svsp)
 {
 	/* both 0 => scrolling region = entire screen */
-	
+
 	if((svsp->parms[0] == 0) && (svsp->parms[1] == 0))
 	{
 		svsp->cur_offset = 0;
@@ -86,26 +102,30 @@ vt_stbm(struct video_state *svsp)
 		return;
 
 	/* range parm 1 */
-	
+
 	if(svsp->parms[0] < 1)
 		svsp->parms[0] = 1;
 	else if(svsp->parms[0] > svsp->screen_rows-1)
 		svsp->parms[0] = svsp->screen_rows-1;
 
 	/* range parm 2 */
-		
+
 	if(svsp->parms[1] < 2)
 		svsp->parms[1] = 2;
 	else if(svsp->parms[1] > svsp->screen_rows)
 		svsp->parms[1] = svsp->screen_rows;
 
-	svsp->scrr_beg = svsp->parms[0]-1;		/* begin of scrolling region */
-	svsp->scrr_len = svsp->parms[1] - svsp->parms[0] + 1;	/* no of lines */
+	svsp->scrr_beg = svsp->parms[0]-1;	/* begin of scrolling region */
+	svsp->scrr_len = svsp->parms[1] - svsp->parms[0] + 1; /* no of lines */
 	svsp->scrr_end = svsp->parms[1]-1;
+
+	/* cursor to first pos */
 	if(svsp->m_om)
-		svsp->cur_offset = svsp->scrr_beg * svsp->maxcol;	/* cursor to first pos */
+		svsp->cur_offset = svsp->scrr_beg * svsp->maxcol;
 	else
-		svsp->cur_offset = 0;			/* cursor to first pos */
+		svsp->cur_offset = 0;
+
+	svsp->abs_write = 0;
 	svsp->col = 0;
 }
 
@@ -118,7 +138,7 @@ vt_sgr(struct video_state *svsp)
 	register int i = 0;
 	u_short setcolor = 0;
 	char colortouched = 0;
-	
+
 	do
 	{
 		switch(svsp->parms[i++])
@@ -130,15 +150,15 @@ vt_sgr(struct video_state *svsp)
 			case 1:		/* bold */
 				svsp->vtsgr |= VT_BOLD;
 				break;
-				
+
 			case 4:		/* underline */
 				svsp->vtsgr |= VT_UNDER;
 				break;
-				
+
 			case 5:		/* blinking */
 				svsp->vtsgr |= VT_BLINK;
 				break;
-				
+
 			case 7:		/* reverse */
 				svsp->vtsgr |= VT_INVERSE;
 				break;
@@ -146,19 +166,19 @@ vt_sgr(struct video_state *svsp)
 			case 22:	/* not bold */
 				svsp->vtsgr &= ~VT_BOLD;
 				break;
-				
+
 			case 24:	/* not underlined */
 				svsp->vtsgr &= ~VT_UNDER;
 				break;
-				
+
 			case 25:	/* not blinking */
 				svsp->vtsgr &= ~VT_BLINK;
 				break;
-				
+
 			case 27:	/* not reverse */
 				svsp->vtsgr &= ~VT_INVERSE;
 				break;
-			
+
 			case 30:	/* foreground colors */
 			case 31:
 			case 32:
@@ -173,7 +193,7 @@ vt_sgr(struct video_state *svsp)
 				 setcolor |= ((fgansitopc[(svsp->parms[i-1]-30) & 7]) << 8);
 				}
 				break;
-				
+
 			case 40:	/* background colors */
 			case 41:
 			case 42:
@@ -217,11 +237,12 @@ vt_cuu(struct video_state *svsp)
 
 	if (p <= 0)				/* parameter min */
 		p = 1;
+
 	p = min(p, svsp->row - svsp->scrr_beg);
 
 	if (p <= 0)
 		return;
-		
+
 	svsp->cur_offset -= (svsp->maxcol * p);
 }
 
@@ -232,14 +253,15 @@ void
 vt_cud(struct video_state *svsp)
 {
 	register int p = svsp->parms[0];
-	
+
 	if (p <= 0)
 		p = 1;
+
 	p = min(p, svsp->scrr_end - svsp->row);
 
 	if (p <= 0)
 		return;
-	
+
 	svsp->cur_offset += (svsp->maxcol * p);
 }
 
@@ -249,16 +271,19 @@ vt_cud(struct video_state *svsp)
 void
 vt_cuf(struct video_state *svsp)
 {
-	register int p = svsp->parms[0];	
+	register int p = svsp->parms[0];
 
-	if(svsp->col == ((svsp->maxcol)-1))		/* already at right margin */
+	if(svsp->col == ((svsp->maxcol)-1))	/* already at right margin */
 		return;
-	if(p <= 0)			/* parameter min = 1 */
+
+	if(p <= 0)				/* parameter min = 1 */
 		p = 1;
 	else if(p > ((svsp->maxcol)-1))		/* parameter max = 79 */
 		p = ((svsp->maxcol)-1);
-	if((svsp->col + p) > ((svsp->maxcol)-1))		/* not more than right margin */
+
+	if((svsp->col + p) > ((svsp->maxcol)-1))/* not more than right margin */
 		p = ((svsp->maxcol)-1) - svsp->col;
+
 	svsp->cur_offset += p;
 	svsp->col += p;
 }
@@ -269,16 +294,19 @@ vt_cuf(struct video_state *svsp)
 void
 vt_cub(struct video_state *svsp)
 {
-	register int p = svsp->parms[0];	
+	register int p = svsp->parms[0];
 
 	if(svsp->col == 0)			/* already at left margin ? */
 		return;
-	if(p <= 0)			/* parameter min = 1 */
+
+	if(p <= 0)				/* parameter min = 1 */
 		p = 1;
 	else if(p > ((svsp->maxcol)-1))		/* parameter max = 79 */
 		p = ((svsp->maxcol)-1);
+
 	if((svsp->col - p) <= 0)		/* not more than left margin */
 		p = svsp->col;
+
 	svsp->cur_offset -= p;
 	svsp->col -= p;
 }
@@ -292,14 +320,21 @@ vt_clreos(struct video_state *svsp)
 	switch(svsp->parms[0])
 	{
 		case 0:
-			fillw(user_attr | ' ', (svsp->Crtat + svsp->cur_offset),
-				 svsp->Crtat + (svsp->maxcol * svsp->screen_rows) - (svsp->Crtat + svsp->cur_offset));
+			fillw(user_attr | ' ', svsp->Crtat + svsp->cur_offset,
+				svsp->Crtat +
+				(svsp->maxcol * svsp->screen_rows) -
+				(svsp->Crtat + svsp->cur_offset));
 			break;
+
 		case 1:
-			fillw(user_attr | ' ', svsp->Crtat, (svsp->Crtat + svsp->cur_offset) - svsp->Crtat + 1 );
+			fillw(user_attr | ' ', svsp->Crtat,
+				svsp->Crtat + svsp->cur_offset -
+				svsp->Crtat + 1 );
 			break;
-		case 2:				
-			fillw(user_attr | ' ', svsp->Crtat, svsp->maxcol * svsp->screen_rows);
+
+		case 2:
+			fillw(user_attr | ' ', svsp->Crtat,
+				svsp->maxcol * svsp->screen_rows);
 			break;
 	}
 }
@@ -313,13 +348,21 @@ vt_clreol(struct video_state *svsp)
 	switch(svsp->parms[0])
 	{
 		case 0:
-			fillw(user_attr | ' ', (svsp->Crtat + svsp->cur_offset), svsp->maxcol-svsp->col);
+			fillw(user_attr | ' ',
+				svsp->Crtat + svsp->cur_offset,
+				svsp->maxcol-svsp->col);
 			break;
+
 		case 1:
-			fillw(user_attr | ' ', (svsp->Crtat + svsp->cur_offset)-svsp->col, svsp->col + 1);
+			fillw(user_attr | ' ',
+				svsp->Crtat + svsp->cur_offset - svsp->col,
+				svsp->col + 1);
 			break;
+
 		case 2:
-			fillw(user_attr | ' ', (svsp->Crtat + svsp->cur_offset)-svsp->col, svsp->maxcol);
+			fillw(user_attr | ' ',
+				svsp->Crtat + svsp->cur_offset - svsp->col,
+				svsp->maxcol);
 			break;
 	}
 }
@@ -332,47 +375,60 @@ vt_curadr(struct video_state *svsp)
 {
 	if(svsp->m_om)	/* relative to scrolling region */
 	{
-		if((svsp->parms[0] == 0) && (svsp->parms[1] == 0)) 
+		if((svsp->parms[0] == 0) && (svsp->parms[1] == 0))
 		{
 			svsp->cur_offset = svsp->scrr_beg * svsp->maxcol;
 			svsp->col = 0;
+			svsp->abs_write = 0;
 			return;
 		}
-		
+
 		if(svsp->parms[0] <= 0)
 			svsp->parms[0] = 1;
 		else if(svsp->parms[0] > svsp->scrr_len)
 			svsp->parms[0] = svsp->scrr_len;
-	
+
 		if(svsp->parms[1] <= 0 )
 			svsp->parms[1] = 1;
 		if(svsp->parms[1] > svsp->maxcol)
 			svsp->parms[1] = svsp->maxcol;
-	
-		svsp->cur_offset = (svsp->scrr_beg * svsp->maxcol) + ((svsp->parms[0] - 1) * svsp->maxcol) + svsp->parms[1] - 1;
+
+		svsp->cur_offset = (svsp->scrr_beg * svsp->maxcol) +
+				   ((svsp->parms[0] - 1) * svsp->maxcol) +
+				   svsp->parms[1] - 1;
 		svsp->col = svsp->parms[1] - 1;
+		svsp->abs_write = 0;
 	}
 	else	/* relative to screen start */
 	{
-		if((svsp->parms[0] == 0) && (svsp->parms[1] == 0)) 
+		if((svsp->parms[0] == 0) && (svsp->parms[1] == 0))
 		{
 			svsp->cur_offset = 0;
 			svsp->col = 0;
+			svsp->abs_write = 0;
 			return;
 		}
-		
+
 		if(svsp->parms[0] <= 0)
 			svsp->parms[0] = 1;
 		else if(svsp->parms[0] > svsp->screen_rows)
 			svsp->parms[0] = svsp->screen_rows;
-	
+
 		if(svsp->parms[1] <= 0 )
 			svsp->parms[1] = 1;
-		if(svsp->parms[1] > svsp->maxcol)			/* col */
+		if(svsp->parms[1] > svsp->maxcol)	/* col */
 			svsp->parms[1] = svsp->maxcol;
-	
-		svsp->cur_offset = (((svsp->parms[0]-1)*svsp->maxcol)+(svsp->parms[1]-1));
+
+		svsp->cur_offset = (((svsp->parms[0]-1)*svsp->maxcol) +
+				    (svsp->parms[1]-1));
 		svsp->col = svsp->parms[1]-1;
+
+		if (svsp->cur_offset >=
+			((svsp->scrr_beg + svsp->scrr_len + 1) * svsp->maxcol))
+
+			svsp->abs_write = 1;
+		else
+			svsp->abs_write = 0;
 	}
 }
 
@@ -385,7 +441,7 @@ vt_ris(struct video_state *svsp)
 	fillw(user_attr | ' ', svsp->Crtat, svsp->maxcol * svsp->screen_rows);
 	svsp->cur_offset = 0;		/* cursor upper left corner */
 	svsp->col = 0;
-	svsp->row = 0;	
+	svsp->row = 0;
 	svsp->lnm = 0;			/* CR only */
 	clear_dld(svsp);		/* clear download charset */
 	vt_clearudk(svsp);		/* clear user defined keys */
@@ -396,19 +452,20 @@ vt_ris(struct video_state *svsp)
 /*---------------------------------------------------------------------------*
  *	DECSTR - soft terminal reset (SOFT emulator runtime reset)
  *---------------------------------------------------------------------------*/
-void 
+void
 vt_str(struct video_state *svsp)
 {
 	int i;
-	
+
 	clr_parms(svsp);			/* escape parameter init */
 	svsp->state = STATE_INIT;		/* initial state */
 
-	init_ufkl(svsp);			/* init user fkey labels */
-	init_sfkl(svsp);			/* init system fkey labels */  
+	svsp->dis_fnc = 0;			/* display functions reset */
 
 	svsp->sc_flag = 0;			/* save cursor position */
 	svsp->transparent = 0;			/* enable control code processing */
+	svsp->C1_ctls = 0;			/* but only for C0 codes */
+	svsp->sevenbit = 0;			/* data path 8 bits wide */
 
 	for(i = 0; i < MAXTAB; i++)		/* setup tabstops */
 	{
@@ -421,14 +478,20 @@ vt_str(struct video_state *svsp)
 	svsp->irm = 0;				/* replace mode */
 	svsp->m_om = 0;				/* origin mode */
 	svsp->m_awm = 1;			/* auto wrap mode */
+
 #if PCVT_INHIBIT_NUMLOCK
 	svsp->num_lock = 0;			/* keypad application mode */
 #else
 	svsp->num_lock = 1;			/* keypad numeric mode */
 #endif
+
+	svsp->scroll_lock = 0;			/* reset keyboard modes */
+	svsp->caps_lock = 0;
+
 	svsp->ckm = 1;				/* cursor key mode = "normal" ... */
 	svsp->scrr_beg = 0;			/* start of scrolling region */
 	svsp->scrr_len = svsp->screen_rows;	/* no. of lines in scrolling region */
+	svsp->abs_write = 0;			/* scrr is complete screen */
 	svsp->scrr_end = svsp->scrr_len - 1;
 
 	if(adaptor_type == EGA_ADAPTOR || adaptor_type == VGA_ADAPTOR)
@@ -455,12 +518,17 @@ vt_str(struct video_state *svsp)
 
 	svsp->selchar = 0;			/* selective attribute off */
 	vt_initsel(svsp);
+
+	init_ufkl(svsp);			/* init user fkey labels */
+	init_sfkl(svsp);			/* init system fkey labels */
+
+	update_led();				/* update keyboard LED's */
 }
 
 /*---------------------------------------------------------------------------*
  *	RI - reverse index, move cursor up
  *---------------------------------------------------------------------------*/
-void 
+void
 vt_ri(struct video_state *svsp)
 {
 	if(svsp->cur_offset >= ((svsp->scrr_beg * svsp->maxcol) + svsp->maxcol))
@@ -486,7 +554,7 @@ vt_ind(struct video_state *svsp)
  *---------------------------------------------------------------------------*/
 void
 vt_nel(struct video_state *svsp)
-{					
+{
 	if(svsp->cur_offset < (svsp->scrr_end * svsp->maxcol))
 	{
 		svsp->cur_offset += (svsp->maxcol-svsp->col);
@@ -515,15 +583,15 @@ vt_set_dec_priv_qm(struct video_state *svsp)
 
 		case 2:		/* ANM - ansi/vt52 mode */
 			break;
-			
+
 		case 3:		/* COLM - column mode */
 			vt_col(svsp, SCR_COL132);
 			break;
-			
+
 		case 4:		/* SCLM - scrolling mode */
 		case 5:		/* SCNM - screen mode */
 			break;
-			
+
 		case 6:		/* OM - origin mode */
 			svsp->m_om = 1;
 			break;
@@ -536,7 +604,7 @@ vt_set_dec_priv_qm(struct video_state *svsp)
 		case 8:		/* ARM - auto repeat mode */
 			kbrepflag = 1;
 			break;
-			
+
 		case 9:		/* INLM - interlace mode */
 		case 10:	/* EDM - edit mode */
 		case 11:	/* LTM - line transmit mode */
@@ -552,7 +620,7 @@ vt_set_dec_priv_qm(struct video_state *svsp)
 				sw_cursor(1);	/* cursor on */
 			svsp->cursor_on = 1;
 			break;
-			
+
 		case 42:	/* NRCM - 7bit NRC characters */
 			break;
 	}
@@ -573,7 +641,7 @@ vt_reset_dec_priv_qm(struct video_state *svsp)
 
 		case 2:		/* ANM - ansi/vt52 mode */
 			break;
-			
+
 		case 3:		/* COLM - column mode */
 			vt_col(svsp, SCR_COL80);
 			break;
@@ -581,7 +649,7 @@ vt_reset_dec_priv_qm(struct video_state *svsp)
 		case 4:		/* SCLM - scrolling mode */
 		case 5:		/* SCNM - screen mode */
 			break;
-			
+
 		case 6:		/* OM - origin mode */
 			svsp->m_om = 0;
 			break;
@@ -594,7 +662,7 @@ vt_reset_dec_priv_qm(struct video_state *svsp)
 		case 8:		/* ARM - auto repeat mode */
 			kbrepflag = 0;
 			break;
-		
+
 		case 9:		/* INLM - interlace mode */
 		case 10:	/* EDM - edit mode */
 		case 11:	/* LTM - line transmit mode */
@@ -610,7 +678,7 @@ vt_reset_dec_priv_qm(struct video_state *svsp)
 				sw_cursor(0);	/* cursor off */
 			svsp->cursor_on = 0;
 			break;
-		
+
 		case 42:	/* NRCM - 7bit NRC characters */
 			break;
 	}
@@ -629,7 +697,7 @@ vt_set_ansi(struct video_state *svsp)
 		case 2:		/* KAM - keyboard action mode */
 		case 3:		/* CRM - Control Representation mode */
 			break;
-			
+
 		case 4:		/* IRM - insert replacement mode */
 			svsp->irm = 1; /* Insert mode */
 			break;
@@ -648,7 +716,7 @@ vt_set_ansi(struct video_state *svsp)
 		case 18:	/* TSM - tabulation stop mode */
 		case 19:	/* EBM - editing boundary mode */
 			break;
-			
+
 		case 20:	/* LNM - line feed / newline mode */
 			svsp->lnm = 1;
 			break;
@@ -668,11 +736,11 @@ vt_reset_ansi(struct video_state *svsp)
 		case 2:		/* KAM - keyboard action mode */
 		case 3:		/* CRM - Control Representation mode */
 			break;
-			
+
 		case 4:		/* IRM - insert replacement mode */
 			svsp->irm = 0;  /* Replace mode */
 			break;
-			
+
 		case 5:		/* SRTM - status report transfer mode */
 		case 6:		/* ERM - erasue mode */
 		case 7:		/* VEM - vertical editing mode */
@@ -687,7 +755,7 @@ vt_reset_ansi(struct video_state *svsp)
 		case 18:	/* TSM - tabulation stop mode */
 		case 19:	/* EBM - editing boundary mode */
 			break;
-			
+
 		case 20:	/* LNM - line feed / newline mode */
 			svsp->lnm = 0;
 			break;
@@ -697,7 +765,7 @@ vt_reset_ansi(struct video_state *svsp)
 /*---------------------------------------------------------------------------*
  *	clear tab stop(s)
  *---------------------------------------------------------------------------*/
-void 
+void
 vt_clrtab(struct video_state *svsp)
 {
 	int i;
@@ -726,10 +794,10 @@ vt_sc(struct video_state *svsp)
 	svsp->sc_om = svsp->m_om;
 	svsp->sc_G0 = svsp->G0;
 	svsp->sc_G1 = svsp->G1;
-	svsp->sc_G2 = svsp->G2;	
+	svsp->sc_G2 = svsp->G2;
 	svsp->sc_G3 = svsp->G3;
 	svsp->sc_GL = svsp->GL;
-	svsp->sc_GR = svsp->GR;		
+	svsp->sc_GR = svsp->GR;
 	svsp->sc_sel = svsp->selchar;
 	svsp->sc_vtsgr = svsp->vtsgr;
 }
@@ -768,7 +836,7 @@ vt_designate(struct video_state *svsp)
 {
 	u_short *ctp = NULL;
 	u_char ch;
-	
+
 	if(svsp->whichi == 1)
 		ch = svsp->which[0];
 	else
@@ -777,10 +845,13 @@ vt_designate(struct video_state *svsp)
 
 		if(svsp->dld_id[0] == '\0')
 			return;
-			
-		if(!(((adaptor_type == EGA_ADAPTOR) || (adaptor_type == VGA_ADAPTOR)) &&
-			(vgacs[svsp->vga_charset].secondloaded)))
+
+		if(!(((adaptor_type == EGA_ADAPTOR) ||
+		     (adaptor_type == VGA_ADAPTOR)) &&
+		     (vgacs[svsp->vga_charset].secondloaded)))
+		{
 			return;
+		}
 
 		for(i = (svsp->whichi)-1; i >= 0; i--)
 		{
@@ -790,10 +861,10 @@ vt_designate(struct video_state *svsp)
 #ifdef HAVECSE_DOWNLOADABLE
 		ctp = cse_downloadable;
 		swcsp(svsp, ctp);
-#endif		
+#endif
 		return;
 	}
-	
+
 	if(((adaptor_type == EGA_ADAPTOR) || (adaptor_type == VGA_ADAPTOR)) &&
 	   (vgacs[svsp->vga_charset].secondloaded))
 	{
@@ -802,38 +873,38 @@ vt_designate(struct video_state *svsp)
 #ifdef HAVECSE_DOWNLOADABLE
 			ctp = cse_downloadable;
 			swcsp(svsp, ctp);
-#endif			
+#endif
 			return;
 		}
-			
+
 		switch(ch)
 		{
 			case 'A': /* British or ISO-Latin-1 */
 				switch(svsp->state)
 				{
-					case STATE_BROPN:	/* designate G0 */
-					case STATE_BRCLO:	/* designate G1 */
-					case STATE_STAR:	/* designate G2 */
-					case STATE_PLUS:	/* designate G3 */
+					case STATE_BROPN: /* designate G0 */
+					case STATE_BRCLO: /* designate G1 */
+					case STATE_STAR:  /* designate G2 */
+					case STATE_PLUS:  /* designate G3 */
 #ifdef HAVECSE_BRITISH
 						ctp = cse_british;
 #endif
 						break;
-	
-					case STATE_MINUS:	/* designate G1 (96) */
-					case STATE_DOT:		/* designate G2 (96) */
-					case STATE_SLASH:	/* designate G3 (96) */
+
+					case STATE_MINUS: /* designate G1 (96)*/
+					case STATE_DOT:	  /* designate G2 (96)*/
+					case STATE_SLASH: /* designate G3 (96)*/
 #ifdef HAVECSE_ISOLATIN
 						ctp = cse_isolatin;
 #endif
 						break;
 				}
 				break;
-				
+
 			case 'B': /* USASCII */
 #ifdef HAVECSE_ASCII
 				ctp = cse_ascii;
-#endif			
+#endif
 				break;
 
 			case 'C': /* Finnish */
@@ -854,87 +925,87 @@ vt_designate(struct video_state *svsp)
 			case '7': /* Swedish */
 #ifdef HAVECSE_SWEDISH
 				ctp = cse_swedish;
-#endif			
+#endif
 				break;
-	
+
 			case 'K': /* German */
 #ifdef HAVECSE_GERMAN
 				ctp = cse_german;
-#endif			
+#endif
 				break;
-				
+
 			case 'Q': /* French Canadien */
 #ifdef HAVECSE_FRENCHCANADA
 				ctp = cse_frenchcanada;
-#endif			
+#endif
 				break;
 
 			case 'R': /* French */
 #ifdef HAVECSE_FRENCH
 				ctp = cse_french;
-#endif			
+#endif
 				break;
 
 			case 'Y': /* Italian */
 #ifdef HAVECSE_ITALIAN
 				ctp = cse_italian;
-#endif			
+#endif
 				break;
 
 			case 'Z': /* Spanish */
 #ifdef HAVECSE_SPANISH
 				ctp = cse_spanish;
-#endif			
+#endif
 				break;
-				
+
 			case '0': /* special graphics */
 #ifdef HAVECSE_SPECIAL
 				ctp = cse_special;
-#endif			
+#endif
 				break;
 
 			case '1': /* alternate ROM */
 #ifdef HAVECSE_ALTERNATEROM1
 				ctp = cse_alternaterom1;
-#endif			
+#endif
 				break;
 
 			case '2': /* alt ROM, spec graphics */
 #ifdef HAVECSE_ALTERNATEROM2
 				ctp = cse_alternaterom2;
-#endif			
+#endif
 				break;
 
 			case '3': /* HP Roman 8, upper 128 chars*/
 #ifdef HAVECSE_ROMAN8
 				ctp = cse_roman8;
-#endif			
+#endif
 				break;
 
 			case '4': /* Dutch */
 #ifdef HAVECSE_DUTCH
 				ctp = cse_dutch;
-#endif			
+#endif
 				break;
 
 			case '<': /* DEC Supplemental */
 #ifdef HAVECSE_SUPPLEMENTAL
 				ctp = cse_supplemental;
-#endif			
+#endif
 				break;
 
 			case '=': /* Swiss */
 #ifdef HAVECSE_SWISS
 				ctp = cse_swiss;
-#endif			
+#endif
 				break;
 
 			case '>': /* DEC Technical */
 #ifdef HAVECSE_TECHNICAL
 				ctp = cse_technical;
-#endif			
+#endif
 				break;
-	
+
 			default:
 				break;
 		}
@@ -946,29 +1017,29 @@ vt_designate(struct video_state *svsp)
 			case 'A': /* British or ISO-Latin-1 */
 				switch(svsp->state)
 				{
-					case STATE_BROPN:	/* designate G0 */
-					case STATE_BRCLO:	/* designate G1 */
-					case STATE_STAR:	/* designate G2 */
-					case STATE_PLUS:	/* designate G3 */
+					case STATE_BROPN: /* designate G0 */
+					case STATE_BRCLO: /* designate G1 */
+					case STATE_STAR:  /* designate G2 */
+					case STATE_PLUS:  /* designate G3 */
 #ifdef HAVECSD_BRITISH
 						ctp = csd_british;
 #endif
 						break;
-	
-					case STATE_MINUS:	/* designate G1 (96) */
-					case STATE_DOT:		/* designate G2 (96) */
-					case STATE_SLASH:	/* designate G3 (96) */
+
+					case STATE_MINUS: /* designate G1 (96)*/
+					case STATE_DOT:	  /* designate G2 (96)*/
+					case STATE_SLASH: /* designate G3 (96)*/
 #ifdef HAVECSD_ISOLATIN
 						ctp = csd_isolatin;
 #endif
 						break;
 				}
 				break;
-				
+
 			case 'B': /* USASCII */
 #ifdef HAVECSD_ASCII
 				ctp = csd_ascii;
-#endif			
+#endif
 				break;
 
 			case 'C': /* Finnish */
@@ -989,94 +1060,94 @@ vt_designate(struct video_state *svsp)
 			case '7': /* Swedish */
 #ifdef HAVECSD_SWEDISH
 				ctp = csd_swedish;
-#endif			
+#endif
 				break;
-	
+
 			case 'K': /* German */
 #ifdef HAVECSD_GERMAN
 				ctp = csd_german;
-#endif			
+#endif
 				break;
-				
+
 			case 'Q': /* French Canadien */
 #ifdef HAVECSD_FRENCHCANADA
 				ctp = csd_frenchcanada;
-#endif			
+#endif
 				break;
 
 			case 'R': /* French */
 #ifdef HAVECSD_FRENCH
 				ctp = csd_french;
-#endif			
+#endif
 				break;
 
 			case 'Y': /* Italian */
 #ifdef HAVECSD_ITALIAN
 				ctp = csd_italian;
-#endif			
+#endif
 				break;
 
 			case 'Z': /* Spanish */
 #ifdef HAVECSD_SPANISH
 				ctp = csd_spanish;
-#endif			
+#endif
 				break;
-				
+
 			case '0': /* special graphics */
 #ifdef HAVECSD_SPECIAL
 				ctp = csd_special;
-#endif			
+#endif
 				break;
 
 			case '1': /* alternate ROM */
 #ifdef HAVECSD_ALTERNATEROM1
 				ctp = csd_alternaterom1;
-#endif			
+#endif
 				break;
 
 			case '2': /* alt ROM, spec graphics */
 #ifdef HAVECSD_ALTERNATEROM2
 				ctp = csd_alternaterom2;
-#endif			
+#endif
 				break;
 
 			case '3': /* HP Roman 8, upper 128 chars*/
 #ifdef HAVECSD_ROMAN8
 				ctp = csd_roman8;
-#endif			
+#endif
 				break;
 
 			case '4': /* Dutch */
 #ifdef HAVECSD_DUTCH
 				ctp = csd_dutch;
-#endif			
+#endif
 				break;
 
 			case '<': /* DEC Supplemental */
 #ifdef HAVECSD_SUPPLEMENTAL
 				ctp = csd_supplemental;
-#endif			
+#endif
 				break;
 
 			case '=': /* Swiss */
 #ifdef HAVECSD_SWISS
 				ctp = csd_swiss;
-#endif			
+#endif
 				break;
 
 			case '>': /* DEC Technical */
 #ifdef HAVECSD_TECHNICAL
 				ctp = csd_technical;
-#endif			
+#endif
 				break;
-	
+
 			default:
 				break;
 		}
 	}
 	swcsp(svsp, ctp);
 }
-		
+
 /*---------------------------------------------------------------------------*
  *	device attributes
  *---------------------------------------------------------------------------*/
@@ -1084,7 +1155,7 @@ void
 vt_da(struct video_state *svsp)
 {
 	static u_char *response = (u_char *)DA_VT220;
-	
+
 	svsp->report_chars = response;
 	svsp->report_count = 18;
 	respond(svsp);
@@ -1111,13 +1182,13 @@ vt_aln(struct video_state *svsp)
 
 	svsp->cur_offset = 0;	/* reset everything ! */
 	svsp->col = 0;
-	svsp->row = 0;	
+	svsp->row = 0;
 }
 
 /*---------------------------------------------------------------------------*
  *	request terminal parameters
  *---------------------------------------------------------------------------*/
-void 
+void
 vt_reqtparm(struct video_state *svsp)
 {
 	static u_char *answr = (u_char *)"\033[3;1;1;120;120;1;0x";
@@ -1148,7 +1219,7 @@ vt_dsr(struct video_state *svsp)
 	static u_char *langanswr = (u_char *)"\033[?27;1n"; /* North American*/
 	static u_char buffer[16];
 	int i = 0;
-	
+
 	switch(svsp->parms[0])
 	{
 		case 5:		/* return status */
@@ -1163,13 +1234,13 @@ vt_dsr(struct video_state *svsp)
 			if((svsp->row+1) > 10)
 				buffer[i++] = ((svsp->row+1) / 10) + '0';
 			buffer[i++] = ((svsp->row+1) % 10) + '0';
-			buffer[i++] = ';';	
+			buffer[i++] = ';';
 			if((svsp->col+1) > 10)
 				buffer[i++] = ((svsp->col+1) / 10) + '0';
 			buffer[i++] = ((svsp->col+1) % 10) + '0';
 			buffer[i++] = 'R';
 			buffer[i++] = '\0';
-		
+
 			svsp->report_chars = buffer;
 			svsp->report_count = i;
 			respond(svsp);
@@ -1199,13 +1270,13 @@ vt_dsr(struct video_state *svsp)
 }
 
 /*---------------------------------------------------------------------------*
- *	IL - insert line 
+ *	IL - insert line
  *---------------------------------------------------------------------------*/
-void 
+void
 vt_il(struct video_state *svsp)
 {
 	register int p = svsp->parms[0];
-	
+
 	if((svsp->row >= svsp->scrr_beg) && (svsp->row <= svsp->scrr_end))
 	{
 		if(p <= 0)
@@ -1219,12 +1290,13 @@ vt_il(struct video_state *svsp)
 			roll_down(svsp, p);
 		else
 		{
-			bcopy(  svsp->Crtat + svsp->cur_offset,
-				svsp->Crtat + svsp->cur_offset + (p * svsp->maxcol),
-				svsp->maxcol * (svsp->scrr_end - svsp->row + 1 - p) * CHR );
-			fillw(	user_attr | ' ',
-				svsp->Crtat + svsp->cur_offset,
-				p * svsp->maxcol);
+		    bcopy(svsp->Crtat + svsp->cur_offset,
+			  svsp->Crtat + svsp->cur_offset + (p * svsp->maxcol),
+			  svsp->maxcol * (svsp->scrr_end-svsp->row+1-p) * CHR );
+
+		    fillw(user_attr | ' ',
+			  svsp->Crtat + svsp->cur_offset,
+			  p * svsp->maxcol);
 		}
 	}
 }
@@ -1241,10 +1313,13 @@ vt_ic(struct video_state *svsp)
 		p = 1;
 	else if(p > svsp->maxcol-svsp->col)
 		p = svsp->maxcol-svsp->col;
-	
+
 	while(p--)
 	{
-		bcopy((svsp->Crtat + svsp->cur_offset), (svsp->Crtat + svsp->cur_offset) + 1,(((svsp->maxcol)-1)-svsp->col) * CHR);
+		bcopy((svsp->Crtat + svsp->cur_offset),
+		      (svsp->Crtat + svsp->cur_offset) + 1,
+		      (((svsp->maxcol)-1)-svsp->col) * CHR);
+
 		*(svsp->Crtat + svsp->cur_offset) = user_attr | ' ';
 		vt_selattr(svsp);
 	}
@@ -1257,7 +1332,7 @@ void
 vt_dl(struct video_state *svsp)
 {
 	register int p = svsp->parms[0];
-	
+
 	if((svsp->row >= svsp->scrr_beg) && (svsp->row <= svsp->scrr_end))
 	{
 		if(p <= 0)
@@ -1267,18 +1342,20 @@ vt_dl(struct video_state *svsp)
 
 		svsp->cur_offset -= svsp->col;
 		svsp->col = 0;
+
 		if(svsp->row == svsp->scrr_beg)
 			roll_up(svsp, p);
 		else
 		{
-			bcopy(	svsp->Crtat + svsp->cur_offset + (p * svsp->maxcol),
-				svsp->Crtat + svsp->cur_offset,
-				svsp->maxcol * (svsp->scrr_end - svsp->row + 1 - p) * CHR );
-			fillw(	user_attr | ' ',
-				svsp->Crtat + ((svsp->scrr_end - p + 1) * svsp->maxcol),
-				p * svsp->maxcol);
+		    bcopy(svsp->Crtat + svsp->cur_offset + (p * svsp->maxcol),
+			  svsp->Crtat + svsp->cur_offset,
+			  svsp->maxcol * (svsp->scrr_end-svsp->row+1-p) * CHR );
+
+		    fillw(user_attr | ' ',
+			  svsp->Crtat + ((svsp->scrr_end-p+1) * svsp->maxcol),
+			  p * svsp->maxcol);
 		}
-	}		
+	}
 }
 
 /*---------------------------------------------------------------------------*
@@ -1293,11 +1370,15 @@ vt_dch(struct video_state *svsp)
 		p = 1;
 	else if(p > svsp->maxcol-svsp->col)
 		p = svsp->maxcol-svsp->col;
-	
+
 	while(p--)
 	{
-		bcopy((svsp->Crtat + svsp->cur_offset)+1 , (svsp->Crtat + svsp->cur_offset),(((svsp->maxcol)-1) - svsp->col)* CHR );
-		*((svsp->Crtat + svsp->cur_offset)+((svsp->maxcol)-1)-svsp->col) = user_attr | ' ';
+		bcopy((svsp->Crtat + svsp->cur_offset)+1,
+		      (svsp->Crtat + svsp->cur_offset),
+		      (((svsp->maxcol)-1) - svsp->col)* CHR );
+
+		*((svsp->Crtat + svsp->cur_offset) +
+			((svsp->maxcol)-1)-svsp->col) = user_attr | ' ';
 	}
 }
 
@@ -1308,12 +1389,12 @@ void
 vt_su(struct video_state *svsp)
 {
 	register int p = svsp->parms[0];
-	
+
 	if(p <= 0)
 		p = 1;
 	else if(p > svsp->screen_rows-1)
 		p = svsp->screen_rows-1;
-	
+
 	roll_up(svsp, p);
 }
 
@@ -1324,12 +1405,12 @@ void
 vt_sd(struct video_state *svsp)
 {
 	register int p = svsp->parms[0];
-	
+
 	if(p <= 0)
 		p = 1;
 	else if(p > svsp->screen_rows-1)
 		p = svsp->screen_rows-1;
-	
+
 	roll_down(svsp, p);
 }
 
@@ -1345,7 +1426,7 @@ vt_ech(struct video_state *svsp)
 		p = 1;
 	else if(p > svsp->maxcol-svsp->col)
 		p = svsp->maxcol-svsp->col;
-	
+
 	fillw(user_attr | ' ', (svsp->Crtat + svsp->cur_offset), p);
 }
 
@@ -1385,9 +1466,9 @@ vt_dcsentry(U_char ch, struct video_state *svsp)
 					svsp->parms[svsp->parmi] *= 10;
 					svsp->parms[svsp->parmi] += (ch -'0');
 					break;
-	
+
 				case ';':	/* next parameter */
-					svsp->parmi = 
+					svsp->parmi =
 						(svsp->parmi+1 < MAXPARMS) ?
 						svsp->parmi+1 : svsp->parmi;
 					break;
@@ -1436,7 +1517,7 @@ vt_dcsentry(U_char ch, struct video_state *svsp)
 				case 0x1b:	 /* ESC */
 					svsp->dcs_state = DCS_UDK_ESC;
 					break;
-	
+
 				default:
 					svsp->transparent = 0;
 					svsp->state = STATE_INIT;
@@ -1522,7 +1603,7 @@ vt_dcsentry(U_char ch, struct video_state *svsp)
 				case 0x1b:	 /* ESC */
 					svsp->dcs_state = DCS_UDK_ESC;
 					break;
-	
+
 				default:
 					svsp->transparent = 0;
 					svsp->state = STATE_INIT;
@@ -1530,7 +1611,7 @@ vt_dcsentry(U_char ch, struct video_state *svsp)
 					break;
 			}
 			break;
-		
+
 		case DCS_UDK_ESC:	 /* DCS ... | fkey/def ... ESC */
 			switch(ch)
 			{
@@ -1548,13 +1629,13 @@ vt_dcsentry(U_char ch, struct video_state *svsp)
 					break;
 			}
 			break;
-							
+
 
 		case DCS_DLD_DSCS:	 /* got DCS ... { */
 			if(ch >= ' ' && ch <= '/')	/* intermediates ... */
 			{
 				svsp->dld_dscs[svsp->dld_dscsi] = ch;
-				svsp->dld_id[svsp->dld_dscsi] = ch;		
+				svsp->dld_id[svsp->dld_dscsi] = ch;
 				if(svsp->dld_dscsi >= DSCS_LENGTH)
 				{
 					svsp->transparent = 0;
@@ -1589,16 +1670,16 @@ vt_dcsentry(U_char ch, struct video_state *svsp)
 				case 0x1b:	 /* ESC */
 					svsp->dcs_state = DCS_DLD_ESC;
 					break;
-	
+
 				case '/':	 /* sixel upper / lower divider */
 					svsp->dld_sixel_lower = 1;
 					break;
-	
+
 				case ';':	 /* character divider */
 					vt_dld(svsp);
 					svsp->parms[1]++;	/* next char */
 					break;
-	
+
  				default:
 					if (svsp->dld_sixel_lower)
 					{
@@ -1655,7 +1736,7 @@ vt_udk(struct video_state *svsp)
 {
 	int key, start, max, i;
 	int usedff = 0;
-	
+
 	if(svsp->parms[0] != 1)		/* clear all ? */
 	{
 		vt_clearudk(svsp);
@@ -1669,7 +1750,7 @@ vt_udk(struct video_state *svsp)
 	}
 
 	key = svsp->udk_fnckey - 17;	/* index into table */
-	
+
 	if(svsp->ukt.length[key] == 0)			/* never used ? */
 	{
 		if(svsp->udkff < MAXUDKDEF-2)		/* space available ? */
@@ -1698,7 +1779,7 @@ vt_udk(struct video_state *svsp)
 	}
 
 	max--;		/* adjust for tailing '\0' */
-	
+
 	for(i = 0; i < max && i < svsp->udk_defi; i++)
 		svsp->udkbuf[start++] = svsp->udk_def[i];
 
@@ -1706,7 +1787,7 @@ vt_udk(struct video_state *svsp)
 	svsp->ukt.length[key] = i+1;	/* count for tailing '\0' */
 	if(usedff)
 		svsp->udkff += (i+2);	/* new start location */
-	
+
 	init_udk(svsp);
 }
 
@@ -1741,7 +1822,7 @@ vt_dld(struct video_state *svsp)
 	else
 		return;
 
-	svsp->parms[1] = (svsp->parms[1] < 1) ? 1 : 
+	svsp->parms[1] = (svsp->parms[1] < 1) ? 1 :
 		((svsp->parms[1] > 0x7E) ? 0x7E : svsp->parms[1]);
 
 	if(svsp->parms[2] != 1)   /* Erase all characters ? */
@@ -1778,6 +1859,38 @@ vt_dld(struct video_state *svsp)
 }
 
 /*---------------------------------------------------------------------------*
+ *	select compatibility level
+ *---------------------------------------------------------------------------*/
+void
+vt_scl(struct video_state *svsp)
+{
+	/* poor man's scl. normally this also enables/disables the editing
+	 * keypad and the available character sets. we only enable/disable
+	 * support for C1 control codes.
+	 */
+
+	register int p0, p1;
+
+	p0 = svsp->parms[0];
+	p1 = svsp->parms[1];
+
+	vt_str(svsp);
+
+	switch(p0)
+	{
+		case 61:
+			svsp->sevenbit = 1;
+			break;
+		case 62:
+		/* case 63: vt320 */
+		default:
+			if(p1 != 1)
+				svsp->C1_ctls = 1;
+			break;
+	}
+}
+
+/*---------------------------------------------------------------------------*
  *	select character attributes
  *---------------------------------------------------------------------------*/
 void
@@ -1803,7 +1916,7 @@ void
 vt_initsel(struct video_state *svsp)
 {
 	register int i;
-	
+
 	for(i = 0;i < MAXDECSCA;i++)
 		svsp->decsca[i] = 0;
 }
@@ -1817,15 +1930,18 @@ vt_sel(struct video_state *svsp)
 	switch(svsp->parms[0])
 	{
 		case 0:
-			selective_erase(svsp, (svsp->Crtat + svsp->cur_offset), svsp->maxcol-svsp->col);
+			selective_erase(svsp, (svsp->Crtat + svsp->cur_offset),
+					 svsp->maxcol-svsp->col);
 			break;
 
 		case 1:
-			selective_erase(svsp, (svsp->Crtat + svsp->cur_offset)-svsp->col, svsp->col + 1);
+			selective_erase(svsp, (svsp->Crtat + svsp->cur_offset)-
+					svsp->col, svsp->col + 1);
 			break;
 
 		case 2:
-			selective_erase(svsp, (svsp->Crtat + svsp->cur_offset)-svsp->col, svsp->maxcol);
+			selective_erase(svsp, (svsp->Crtat + svsp->cur_offset)-
+					svsp->col, svsp->maxcol);
 			break;
 	}
 }
@@ -1839,44 +1955,50 @@ vt_sed(struct video_state *svsp)
 	switch(svsp->parms[0])
 	{
 		case 0:
-			selective_erase(svsp, (svsp->Crtat + svsp->cur_offset), svsp->Crtat + (svsp->maxcol * svsp->screen_rows) - (svsp->Crtat + svsp->cur_offset));
+			selective_erase(svsp, (svsp->Crtat + svsp->cur_offset),
+			      svsp->Crtat + (svsp->maxcol * svsp->screen_rows) -
+			      (svsp->Crtat + svsp->cur_offset));
 			break;
 
 		case 1:
-			selective_erase(svsp, svsp->Crtat, (svsp->Crtat + svsp->cur_offset) - svsp->Crtat + 1 );
+			selective_erase(svsp, svsp->Crtat,
+			   (svsp->Crtat + svsp->cur_offset) - svsp->Crtat + 1 );
 			break;
 
-		case 2:				
-			selective_erase(svsp, svsp->Crtat, svsp->maxcol * svsp->screen_rows);
+		case 2:
+			selective_erase(svsp, svsp->Crtat,
+				svsp->maxcol * svsp->screen_rows);
 			break;
 	}
 }
 
-/* ====================== */
-/* module local functions */
-/* ====================== */
-
 /*---------------------------------------------------------------------------*
- *	scroll screen one line up
+ *	scroll screen n lines up
  *---------------------------------------------------------------------------*/
 void
 roll_up(struct video_state *svsp, int n)
 {
 
-#ifndef PCVT_NOFASTSCROLL
-	if ((svsp->scrr_beg == 0) && (svsp->scrr_len == svsp->screen_rows) &&
-	    ((svsp->screen_rows == svsp->screen_rowsize) || (svsp != vsp)))
+#if (PCVT_NOFASTSCROLL==0)
+
+	if(svsp->scrr_beg == 0 &&       /* if scroll region is whole screen */
+	   svsp->scrr_len == svsp->screen_rows &&
+	   (svsp != vsp ||		  /* and either running in memory */
+	    (svsp->screen_rows == svsp->screen_rowsize       /* or no fkeys */
+
+#if (PCVT_MDAFASTSCROLL==0)
+		&& adaptor_type != MDA_ADAPTOR   /* and not on MDA/Hercules */
+#endif
+
+	  )))
+
 	{
 		u_short *Memory =
-#if PCVT_USL_VT_COMPAT
-		    (svsp != vsp || (vsp->vt_status & VT_GRAFX)) ?
-#else
-		    (svsp != vsp) ?
-#endif
-		    svsp->Memory : Crtat;
+		    (vsp != svsp || (vsp->vt_status & VT_GRAFX)) ?
+				svsp->Memory : Crtat;
 
-		if (svsp->Crtat > (Memory + (svsp->screen_rows - n) *
-		     			    svsp->maxcol))
+		if(svsp->Crtat > (Memory + (svsp->screen_rows - n) *
+					svsp->maxcol))
 		{
 			bcopy(svsp->Crtat + svsp->maxcol * n, Memory,
 		       	      svsp->maxcol * (svsp->screen_rows - n) * CHR);
@@ -1884,13 +2006,11 @@ roll_up(struct video_state *svsp, int n)
 			svsp->Crtat = Memory;
 		}
 		else
+		{
 			svsp->Crtat += n * svsp->maxcol;
+		}
 
-#if PCVT_USL_VT_COMPAT
-		if (svsp == vsp && !(vsp->vt_status & VT_GRAFX))
-#else
-		if (svsp == vsp)
-#endif
+		if(vsp == svsp && !(vsp->vt_status & VT_GRAFX))
 		{
 			outb(addr_6845, CRTC_STARTADRH);
 			outb(addr_6845+1, (svsp->Crtat - Crtat) >> 8);
@@ -1905,7 +2025,7 @@ roll_up(struct video_state *svsp, int n)
 			svsp->Crtat + (svsp->scrr_beg * svsp->maxcol),
 			svsp->maxcol * (svsp->scrr_len - n) * CHR );
 	}
-		
+
 	fillw(	user_attr | ' ',
 		svsp->Crtat + ((svsp->scrr_end - n + 1) * svsp->maxcol),
 		n * svsp->maxcol);
@@ -1915,17 +2035,29 @@ roll_up(struct video_state *svsp, int n)
 }
 
 /*---------------------------------------------------------------------------*
- *	scroll screen one line down
+ *	scroll screen n lines down
  *---------------------------------------------------------------------------*/
 static void
 roll_down(struct video_state *svsp, int n)
 {
 
-#ifndef PCVT_NOFASTSCROLL
-	if ((svsp->scrr_beg == 0) && (svsp->scrr_len == svsp->screen_rows) &&
-	    ((svsp->screen_rows == svsp->screen_rowsize) || (svsp != vsp)))
+#if (PCVT_NOFASTSCROLL==0)
+
+	if(svsp->scrr_beg == 0 &&	/* if scroll region is whole screen */
+	   svsp->scrr_len == svsp->screen_rows &&
+	   (svsp != vsp ||		    /* and either running in memory */
+	    (svsp->screen_rows == svsp->screen_rowsize       /* or no fkeys */
+
+#if (PCVT_MDAFASTSCROLL==0)
+		&& adaptor_type != MDA_ADAPTOR   /* and not on MDA/Hercules */
+#endif
+
+	  )))
+
 	{
-		u_short *Memory = (svsp == vsp) ? Crtat : svsp->Memory;
+		u_short *Memory =
+		    (vsp != svsp || (vsp->vt_status & VT_GRAFX)) ?
+				svsp->Memory : Crtat;
 
 		if (svsp->Crtat < (Memory + n * svsp->maxcol))
 		{
@@ -1936,9 +2068,11 @@ roll_down(struct video_state *svsp, int n)
 			svsp->Crtat = Memory + svsp->maxcol * svsp->screen_rows;
 		}
 		else
+		{
 			svsp->Crtat -= n * svsp->maxcol;
+		}
 
-		if (svsp == vsp)
+		if(vsp == svsp && !(vsp->vt_status & VT_GRAFX))
 		{
 			outb(addr_6845, CRTC_STARTADRH);
 			outb(addr_6845+1, (svsp->Crtat - Crtat) >> 8);
@@ -1953,7 +2087,7 @@ roll_down(struct video_state *svsp, int n)
 			svsp->Crtat + ((svsp->scrr_beg + n) * svsp->maxcol),
 			svsp->maxcol * (svsp->scrr_len - n) * CHR );
 	}
-		
+
 	fillw(	user_attr | ' ',
 		svsp->Crtat + (svsp->scrr_beg * svsp->maxcol),
 		n * svsp->maxcol);
@@ -1970,25 +2104,43 @@ swcsp(struct video_state *svsp, u_short *ctp)
 {
 	if(ctp == NULL)
 		return;
-		
+
+        /* update GL or GR if the designated charset is currently displayed */
+        
 	switch(svsp->state)
 	{
 		case STATE_BROPN:	/* designate G0 */
+                        if (svsp->GL == svsp->G0)
+                            svsp->GL = ctp;
+                        if (svsp->GR == svsp->G0)
+                            svsp->GR = ctp;
 			svsp->G0 = ctp;
 			break;
 
 		case STATE_BRCLO:	/* designate G1 */
 		case STATE_MINUS:	/* designate G1 (96) */
+                        if (svsp->GL == svsp->G1)
+                            svsp->GL = ctp;
+                        if (svsp->GR == svsp->G1)
+                            svsp->GR = ctp;
 			svsp->G1 = ctp;
 			break;
 
 		case STATE_STAR:	/* designate G2 */
 		case STATE_DOT:		/* designate G2 (96) */
+                        if (svsp->GL == svsp->G2)
+                            svsp->GL = ctp;
+                        if (svsp->GR == svsp->G2)
+                            svsp->GR = ctp;
 			svsp->G2 = ctp;
 			break;
 
 		case STATE_PLUS:	/* designate G3 */
 		case STATE_SLASH:	/* designate G3 (96) */
+                        if (svsp->GL == svsp->G3)
+                            svsp->GL = ctp;
+                        if (svsp->GR == svsp->G3)
+                            svsp->GR = ctp;
 			svsp->G3 = ctp;
 			break;
 	}
@@ -2000,15 +2152,15 @@ swcsp(struct video_state *svsp, u_short *ctp)
 static void
 respond(struct video_state *svsp)
 {
-        if(!(svsp->openf))              /* are we opened ? */
-                return;
+	if(!(svsp->openf))	      /* are we opened ? */
+		return;
 
-        while (*svsp->report_chars && svsp->report_count > 0)
-        {
+	while (*svsp->report_chars && svsp->report_count > 0)
+	{
 		(*linesw[svsp->vs_tty->t_line].l_rint)
 			(*svsp->report_chars++ & 0xff, svsp->vs_tty);
 		svsp->report_count--;
-        }
+	}
 }
 
 /*---------------------------------------------------------------------------*
@@ -2036,7 +2188,7 @@ clear_dld(struct video_state *svsp)
 		vgacharset = vgacs[svsp->vga_charset].secondloaded;
 	else
 		return;
-	
+
 	for(i=0;i < 16;i++)  /* A zeroed character, vt220 has inverted '?' */
 		vgachar[i] = 0x00;
 
@@ -2061,7 +2213,6 @@ init_dld(struct video_state *svsp)
 		svsp->sixel.lower[i] = svsp->sixel.upper[i] = 0;
 }
 
-
 /*---------------------------------------------------------------------------*
  *	selective erase a region
  *---------------------------------------------------------------------------*/
@@ -2069,7 +2220,7 @@ static void
 selective_erase(struct video_state *svsp, u_short *pcrtat, int length)
 {
 	register int i, j;
-	
+
 	for(j = pcrtat - svsp->Crtat, i = 0;i < length;i++,pcrtat++)
 	{
 		if(!(svsp->decsca[INT_INDEX(j+i)] & (1 << BIT_INDEX(j+i))))
@@ -2079,6 +2230,8 @@ selective_erase(struct video_state *svsp, u_short *pcrtat, int length)
 		}
 	}
 }
+
+#endif	/* NVT > 0 */
 
 /* ------------------------- E O F ------------------------------------------*/
 

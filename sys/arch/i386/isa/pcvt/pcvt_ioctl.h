@@ -1,8 +1,7 @@
-/*	$NetBSD: pcvt_ioctl.h,v 1.3 1995/03/28 18:17:55 jtc Exp $	*/
-
 /*
- * Copyright (c) 1992,1993,1994 Hellmuth Michaelis, Brian Dunford-Shore,
- *                              Joerg Wunsch and Holger Veit.
+ * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
+ *
+ * Copyright (c) 1992, 1993 Brian Dunford-Shore and Holger Veit.
  *
  * Copyright (C) 1992, 1993 Soeren Schmidt.
  *
@@ -45,18 +44,42 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  *
- * @(#)ioctl_pcvt.h, 3.00, Last Edit-Date: [Sun Feb 27 17:04:52 1994]
+ * @(#)ioctl_pcvt.h, 3.32, Last Edit-Date: [Tue Oct  3 11:19:48 1995]
  *
  */
 
-#ifndef	_IOCTL_PCVT_H_
-#define	_IOCTL_PCVT_H_
+/*---------------------------------------------------------------------------
+ *
+ *	pcvt_ioctl.h	ioctl's for the VT220 video driver 'pcvt'
+ *	---------------------------------------------------------
+ *	-hm	------------ Release 3.00 --------------
+ *	-hm	some new PCVT_xxx (and CONF_xxx) values
+ *	-hm	version definitions moved to begin of file
+ *	-hm	removed PCVT_FAKE_SYSCONS10
+ *	-hm	accept KERNEL or _KERNEL
+ *	-hm	changed _IOCTL_PCVT_H_ to _MACHINE_PCVT_IOCTL_H_ (bde)
+ *	-hm	added PCVT_MDAFASTSCROLL
+ *	-hm	---------------- Release 3.30 -----------------------
+ *	-hm	patch to support Cirrus CL-GD62x5 from Martin
+ *	-hm	removed KBDGLEDS and KBDSLEDS ioctls
+ *	-hm	---------------- Release 3.32 -----------------------
+ *
+ *---------------------------------------------------------------------------*/
 
-#ifndef _KERNEL
+#ifndef	_MACHINE_PCVT_IOCTL_H_
+#define	_MACHINE_PCVT_IOCTL_H_
+
+/* pcvt version information for VGAPCVTID ioctl */
+
+#define PCVTIDNAME    "pcvt"		/* driver id - string		*/
+#define PCVTIDMAJOR   3			/* driver id - major release	*/
+#define PCVTIDMINOR   32		/* driver id - minor release	*/
+
+#if defined(KERNEL) || defined(_KERNEL)
+#include "ioctl.h"
+#else
 #include <sys/ioctl.h>
 #include <sys/types.h>
-#else
-#include "ioctl.h"
 #endif
 
 /*---------------------------------------------------------------------------*
@@ -114,13 +137,12 @@
 #define		KBD_REPEATOFF	0
 #define		KBD_REPEATON	1
 
-#define KBDGLEDS	_IOR('K', 6, int)	/* get LED state */
-#define KBDSLEDS	_IOW('K', 7, int)	/* set LED state, does not influence */
-#define 	KBD_SCROLLLOCK	0x0001		/* the driver's idea of lock key state */
-#define		KBD_NUMLOCK	0x0002
-#define		KBD_CAPSLOCK	0x0004
-#define KBDGLOCK	_IOR('K', 8, int)	/* gets state of SCROLL,NUM,CAPS */
-#define KBDSLOCK	_IOW('K', 9, int)	/* sets state of SCROLL,NUM,CAPS + LEDs */
+#define KBDGLOCK	_IOR('K', 8, int)	/* gets SCROLL,NUM,CAPS state */
+#define KBDSLOCK	_IOW('K', 9, int)	/* sets SCROLL,NUM,CAPS state */
+						/*  _and_ sets keyboard LEDs! */
+#define 	KBD_SCROLLLOCK	0x0001		/* the driver's idea of */
+#define		KBD_NUMLOCK	0x0002		/*       lock key state */
+#define		KBD_CAPSLOCK	0x0004		/*       for kbdioctl() */
 
 #define KBDMAXOVLKEYSIZE	15		/* + zero byte */
 
@@ -141,7 +163,7 @@ struct kbd_ovlkey				/* complete definition of a key */
 /*	Max value for keynum field	*/
 
 #define	KBDMAXKEYS	128		/* Max No. of Keys */
-	
+
 /*	Values for type field	*/
 
 #define	KBD_NONE	0	/* no function, key is disabled */
@@ -167,11 +189,11 @@ struct kbd_ovlkey				/* complete definition of a key */
 
 
 #define	KBD_OVERLOAD	0x8000	/* Key is overloaded, ignored in ioctl */
-#define	KBD_MASK	(~KBD_OVERLOAD)	/* mask for type */ 
+#define	KBD_MASK	(~KBD_OVERLOAD)	/* mask for type */
 
 #define KBDGCKEY	_IOWR('K',16, struct kbd_ovlkey)	/* get current key values */
 #define KBDSCKEY	_IOW('K',17, struct kbd_ovlkey)		/* set new key assignment values*/
-#define KBDGOKEY	_IOWR('K',18, struct kbd_ovlkey) 	/* get original key assignment values*/ 
+#define KBDGOKEY	_IOWR('K',18, struct kbd_ovlkey) 	/* get original key assignment values*/
 
 #define KBDRMKEY	_IOW('K',19, int)	/* remove a key assignment */
 #define KBDDEFAULT	_IO('K',20)		/* remove all key assignments */
@@ -257,6 +279,11 @@ struct mousedefs {
 #define VGA_CL_GD5424	31	/* Cirrus CL-GD5424	*/
 #define VGA_CL_GD5426	32	/* Cirrus CL-GD5426	*/
 #define VGA_CL_GD5428	33	/* Cirrus CL-GD5428	*/
+#define VGA_CL_GD5430	34	/* Cirrus CL-GD543x	*/
+#define	VGA_CL_GD6225	35	/* Cirrus CL-GD62x5	*/
+#define VGA_CL_UNKNOWN	36	/* Unknown Cirrus CL	*/
+
+#define VGA_MAX_CHIPSET	37	/* max no of chips	*/
 
 /*****************************************************************************/
 /* NOTE: update the 'scon' utility when adding support for more chipsets !!! */
@@ -384,12 +411,8 @@ struct vgapel {
 
 #define VGAPCVTID	_IOWR('V',113, struct pcvtid)	/* get driver id */
 
+struct pcvtid {				/* THIS STRUCTURE IS NOW FROZEN !!! */
 #define PCVTIDNAMELN  16		/* driver id - string length	*/
-#define PCVTIDNAME    "pcvt"		/* driver id - string		*/
-#define PCVTIDMAJOR   3			/* driver id - major release	*/
-#define PCVTIDMINOR   00		/* driver id - minor release	*/
-
-struct pcvtid {				/* THIS IS NOW FROZEN !!!	*/
 	char name[PCVTIDNAMELN];	/* driver name, == PCVTIDSTR	*/
 	int rmajor;			/* revision number, major	*/
 	int rminor;			/* revision number, minor	*/
@@ -400,7 +423,7 @@ struct pcvtid {				/* THIS IS NOW FROZEN !!!	*/
 struct pcvtinfo {			/* compile time option values */
 	u_int opsys;			/* PCVT_xxx(x)BSD */
 #define CONF_UNKNOWNOPSYS	0
-#define CONF_386BSD		1
+#define CONF_386BSD		1	/* unsupported */
 #define CONF_NETBSD		2
 #define CONF_FREEBSD		3
 	u_int opsysrel;			/* Release */
@@ -409,7 +432,8 @@ struct pcvtinfo {			/* compile time option values */
 	u_int updatefast;		/* PCVT_UPDATEFAST */
 	u_int updateslow;		/* PCVT_UPDATESLOW */
 	u_int sysbeepf;			/* PCVT_SYSBEEPF */
-	u_int pcburst;			/* PCVT_PCBURST, NetBSD ONLY ! */
+	u_int pcburst;			/* PCVT_PCBURST */
+	u_int kbd_fifo_sz;		/* PCVT_KBD_FIFO_SZ */
 
 /* config booleans */
 
@@ -427,17 +451,21 @@ struct pcvtinfo {			/* compile time option values */
 #define CONF_SIGWINCH		0x00000200
 #define CONF_NULLCHARS		0x00000400
 #define CONF_BACKUP_FONTS	0x00000800
-#define CONF_FORCE8BIT		0x00001000
-#define CONF_NEEDPG		0x00002000
+#define CONF_SW0CNOUTP		0x00001000
+#define CONF_MDAFASTSCROLL	0x00002000
 #define CONF_SETCOLOR		0x00004000
 #define CONF_132GENERIC		0x00008000
 #define CONF_PALFLICKER		0x00010000
 #define CONF_WAITRETRACE	0x00020000
 #define CONF_XSERVER		0x00040000
-#define CONF_USL_VT_COMPAT	0x00080000
-#define CONF_FAKE_SYSCONS10	0x00100000
+/* #define CONF_USL_VT_COMPAT	0x00080000 */
+#define CONF_PORTIO_DELAY	0x00100000
 #define CONF_INHIBIT_NUMLOCK	0x00200000
 #define CONF_META_ESC		0x00400000
+#define CONF_NOFASTSCROLL	0x00800000
+#define CONF_SLOW_INTERRUPT	0x01000000
+#define CONF_KBD_FIFO		0x02000000
+#define CONF_NO_LED_UPDATE	0x04000000
 };
 
 #define VGASETCOLMS	_IOW('V', 115, int) /* set number of columns (80/132)*/
@@ -473,16 +501,13 @@ struct pcvtinfo {			/* compile time option values */
  * NB: Some of the definitions below apparently override the definitions
  * in the KBD section above. But, due to BSDs encoding of the IO direction
  * and transfer size, the resulting ioctl cmds differ, so we can take them
- * here. The only real conflict would appear if we implemented KDGKBMODE,
- * which would be identical to KBDGLEDS above. Since this command is not
- * necessary for XFree86 2.0, we omit it.
+ * here. 
  */
-  
-/* #define KDGKBMODE 	_IOR('K', 6, int) */ /* not yet implemented */
 
-#define KDSKBMODE 	_IO('K', 7 /*, int */)
-#define K_RAW		0		/* keyboard returns scancodes	*/
-#define K_XLATE		1		/* keyboard returns ascii 	*/
+#define KDGKBMODE 	_IOR('K', 6, int)	/* get keyboard mode */
+#define KDSKBMODE 	_IO('K', 7 /*, int */)	/* set keyboard mode */
+#define K_RAW		0		/* kbd switched to raw mode */
+#define K_XLATE		1		/* kbd switched to "normal" mode */
 
 #define KDMKTONE	_IO('K', 8 /*, int */)
 
@@ -498,7 +523,7 @@ struct pcvtinfo {			/* compile time option values */
 #define KDDISABIO	_IO('K', 61)
 
 #define KDGETLED	_IOR('K', 65, int)
-#define KDSETLED	_IO('K', 66 /*, int */) 
+#define KDSETLED	_IO('K', 66 /*, int */)
 #define LED_CAP		1
 #define LED_NUM		2
 #define LED_SCR		4
@@ -515,7 +540,7 @@ struct pcvtinfo {			/* compile time option values */
 #define GIO_KEYMAP 	_IOR('k', 6, keymap_t)
 
 #define VT_OPENQRY	_IOR('v', 1, int)
-#define VT_SETMODE	_IOW('v', 2, vtmode_t)	
+#define VT_SETMODE	_IOW('v', 2, vtmode_t)
 #define VT_GETMODE	_IOR('v', 3, vtmode_t)
 
 #define VT_RELDISP	_IO('v', 4 /*, int */)
@@ -559,17 +584,6 @@ struct keymap {
 
 typedef struct keymap keymap_t;
 
-/*
- * If PCVT_FAKE_SYSCONS10 has been defined, this command is also understood.
- * pcvt then fakes to be syscons 1.0; this should not be taken by any prog-
- * ram since it is a lie (but for at least XFree86 2.0 the only way to make
- * use of the VT_OPENQRY command - this has been broken in syscons prior
- * to 1.0).
- * Once that XFree86 has been fixed, we will cease to support this command
- * anymore.
- */
-#define CONS_GETVERS	_IOR('c', 74, long)
-
 /* end of USL VT compatibility stuff */
 
-#endif	/* _IOCTL_PC_H_ */
+#endif	/* ! _MACHINE_PCVT_IOCTL_H_ */

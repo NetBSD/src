@@ -1,4 +1,3 @@
-$NetBSD: Charsets,v 1.2 1994/10/27 04:19:12 cgd Exp $
 
 I.	Character Set Selection on VT220 Terminals
 ==================================================
@@ -64,7 +63,7 @@ MDA/HCG/CGA:
 EGA/VGA:
 
 	these cards have provisions for downloadable charactersets and so
-	many vt220/vt320 charctersets are fully supported:
+	many vt220/vt320 charactersets are fully supported:
 
 		- US Ascii
 		- DEC Supplemental
@@ -91,7 +90,7 @@ EGA/VGA:
 				Graphic, DEC Technical and ISO Latin-1
 		0xa0 ... 0xff	VT220 Downloadable Font
 	
-	the mapping between vt220 charactersets and the charctersets inside
+	the mapping between vt220 charactersets and the charactersets inside
 	the ega/vga is done by tables found in the file pcvt_tbl.h.
 	
 	there is a MSDOS fonteditor called "EVAFONT" available on the

@@ -1,7 +1,5 @@
-/*	$NetBSD: scon.c,v 1.2 1994/10/27 04:20:40 cgd Exp $	*/
-
 /*
- * Copyright (c) 1992,1993,1994 Hellmuth Michaelis and Joerg Wunsch
+ * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch
  *
  * All rights reserved.
  *
@@ -34,7 +32,7 @@
  */
 
 static char *id =
-	"@(#)scon.c, 3.00, Last Edit-Date: [Mon Jan 10 21:31:39 1994]";
+	"@(#)scon.c, 3.30, Last Edit-Date: [Wed Aug 30 13:57:10 1995]";
 
 /*---------------------------------------------------------------------------*
  *
@@ -53,6 +51,8 @@ static char *id =
  *	-hm	S3 chipsets ..
  *	-hm	Cirrus chipsets support from Onno van der Linden
  *	-hm	-m option, display monitor type
+ *	-hm	bugfix, scon -c <screen-num> cleared dest screen, fixed
+ *	-hm	patch to support Cirrus CL-GD62x5 from Martin
  *
  *---------------------------------------------------------------------------*/
 
@@ -447,12 +447,12 @@ char *argv[];
 	screeninfo.current_screen = current;
 	screeninfo.pure_vt_mode = -1;
 	screeninfo.screen_size = res;	
+	screeninfo.force_24lines = -1;
 	
 	if(current != -1)	/* set current screen */
 	{
 		if(vflag)
 			printf("processing option -c, setting current screen to %d\n",current);
-
 		
 		if(ioctl(1, VGASETSCREEN, &screeninfo) == -1)
 		{
@@ -647,6 +647,9 @@ char *vga_type(int number)
  		"CL-GD5424",
  		"CL-GD5426",
  		"CL-GD5428",
+ 		"CL-GD5430",
+ 		"CL-GD62x5",
+ 		"Unknown Cirrus",
 
 	};
 	return(vga_tab[number]);

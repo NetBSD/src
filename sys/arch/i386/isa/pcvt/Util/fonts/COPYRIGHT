@@ -1,14 +1,11 @@
-$NetBSD: COPYRIGHT,v 1.2 1994/10/27 04:19:57 cgd Exp $
-
 The font files:
 
-	vt100pc.814.uu, vt100sg.814.uu, vt220h.808.uu, vt220h.810.uu,
-	vt220h.814.uu, vt220h.816.uu, vt220l.808.uu, vt220l.810.uu,
-	vt220l.814.uu and vt220l.816.uu
+	vt220h.808.uu, vt220h.810.uu, vt220h.814.uu, vt220h.816.uu,
+	vt220l.808.uu, vt220l.810.uu, vt220l.814.uu and vt220l.816.uu
 
-in this directory are 
+in this directory are
 
-  Copyright (c) 1992, 1993, 1994 Hellmuth Michaelis and Joerg Wunsch
+  Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch
   
   All rights reserved.
  

@@ -1,8 +1,7 @@
-/*	$NetBSD: vgaio.y,v 1.2 1994/10/27 04:20:50 cgd Exp $	*/
-
+/* Hello emacs, this should be edited in -*- Fundamental -*- mode */
 %{
 /*
- * Copyright (c) 1994 Joerg Wunsch
+ * Copyright (c) 1994,1995 Joerg Wunsch
  *
  * All rights reserved.
  *
@@ -35,13 +34,17 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ident "$NetBSD: vgaio.y,v 1.2 1994/10/27 04:20:50 cgd Exp $"
+#ident "$Header: /cvsroot/src/sys/arch/i386/isa/pcvt/Util/vgaio/Attic/vgaio.y,v 1.3 1995/10/07 21:46:03 jtc Exp $"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/fcntl.h>
 #include <machine/cpufunc.h>
-#include <machine/console.h>
+#include <machine/pcvt_ioctl.h>
+
+#ifdef __NetBSD__
+#include <machine/pio.h>
+#endif
 
 #include "vgaio.h"
 
@@ -60,7 +63,7 @@ unsigned short vgabase;
 	struct reg reg;
 }
 
-%token GR CR SR AR NEWLINE
+%token MI GR CR SR AR NEWLINE
 %token <num> NUM
 
 %type <num> reggroup
@@ -89,12 +92,15 @@ statement:	register '?'		{ getreg($1); }
 		;
 
 register:	reggroup NUM 		{ $$.num = $2; $$.group = $1; }
+		/* useful for the MI register: */
+		| reggroup		{ $$.num = 0; $$.group = $1; }
 		;
 
 reggroup:	GR		{ $$ = GR; }
 		| CR		{ $$ = CR; }
 		| SR		{ $$ = SR; }
 		| AR		{ $$ = AR; }
+		| MI		{ $$ = MI; }
 		;
 
 %%
@@ -103,7 +109,7 @@ static struct {
 	int id;
 	const char *name;
 } regnames[] = {
-	{GR, "gr"}, {CR, "cr"}, {SR, "sr"}, {AR, "ar"},
+	{GR, "gr"}, {CR, "cr"}, {SR, "sr"}, {AR, "ar"}, {MI, "mi"},
 	{0, 0}
 };
 
@@ -115,8 +121,32 @@ const char *getname(struct reg r) {
 	return "??";
 }	
 
+/* return ptr to string of 1s and 0s for value */
+char *
+bin_str(unsigned long val, int length) {
+	static char buffer[80];
+	int i = 0;
+
+	if (length > 32)
+		length = 32;
+
+	val = val << (32 - length);
+
+	while (length--)
+	{
+		if (val & 0x80000000)
+			buffer[i++] = '1';
+		else
+			buffer[i++] = '0';
+		if ((length % 4) == 0 && length)
+			buffer[i++] = '.';
+		val = val << 1;
+	}
+	return (buffer);
+}
+
 void getreg(struct reg r) {
-	unsigned char val;
+	int val;			/* FreeBSD gcc ONLY accepts an int */
 
 	switch(r.group) {
 	case GR:
@@ -140,9 +170,14 @@ void getreg(struct reg r) {
 		outb(0x3c4, r.num);
 		val = inb(0x3c5);
 		break;
+
+	case MI:
+		val = inb(0x3cc);
+		break;
 	}
 		
-	printf("%s%x = 0x%x\n", getname(r), r.num, val);
+	printf("%s%02x = 0x%02x = %sB\n",
+	       getname(r), r.num, val, bin_str(val, 8));
 }
 
 void setreg(struct reg r, int val) {
@@ -169,22 +204,52 @@ void setreg(struct reg r, int val) {
 		outb(0x3c4, r.num);
 		outb(0x3c5, val);
 		break;
+
+	case MI:
+		outb(0x3c2, val);
+		break;
 	}
 		
-	printf("%s%x set to 0x%x now\n", getname(r), r.num, val);
+	printf("%s%02x set to 0x%02x = %sB now\n",
+	       getname(r), r.num, val, bin_str(val, 8));
 }
 
 void yyerror(const char *msg) {
 	fprintf(stderr, "yyerror: %s\n", msg);
 }
 
+void usage(void) {
+	fprintf(stderr, "usage: vgaio [-d] [-f devname]\n");
+	exit(2);
+}
+
 int main(int argc, char **argv) {
-	int fd;
+	int fd, c;
+	const char *devname = "/dev/console";
 
-	if(argc > 1) yydebug = 1;
+	while((c = getopt(argc, argv, "df:")) != EOF)
+		switch(c) {
+		case 'd':
+			yydebug = 1;
+			break;
 
-	if((fd = open("/dev/console", O_RDONLY)) < 0)
-		fd = 0;
+		case 'f':
+			devname = optarg;
+			break;
+
+		case '?':
+		default:
+			usage();
+		}
+	argc -= optind;
+	argv += optind;
+	if(argc > 0)
+		usage();
+
+	if((fd = open(devname, O_RDONLY)) < 0) {
+		perror("open(vga)");
+		return 1;
+	}
 
 	if(ioctl(fd, KDENABIO, 0) < 0) {
 		perror("ioctl(KDENABIO)");

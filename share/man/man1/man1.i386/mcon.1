@@ -1,6 +1,4 @@
-.\"	$NetBSD: mcon.1,v 1.2 1994/10/27 04:20:34 cgd Exp $
-.\"
-.\" Copyright (c) 1994 Joerg Wunsch
+.\" Copyright (c) 1994, 1995 Joerg Wunsch
 .\"
 .\" All rights reserved.
 .\"
@@ -29,7 +27,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" @(#)mcon.1, 3.00, Last Edit-Date: [Mon Jan 10 21:28:22 1994]
+.\" @(#)mcon.1, 3.30, Last Edit-Date: [Fri Jun 30 20:14:42 1995]
 .\"
 .Dd January 3, 1994
 .Dt MCON 1
@@ -93,7 +91,7 @@ Maps the named
 to emulate either the left, middle, or right mouse button.
 .Ar Button key
 is the usual name for that key. Normal ASCII keys are denoted by the
-character they're labelled with, function keys are named
+character they're labeled with, function keys are named
 .Em f1
 through
 .Em f10 .
@@ -109,13 +107,13 @@ it only allows basic PC-scancode keys to be used.
 .It Fl a Ar accel-time
 Set the time limit for the internal accelerator to
 .Ar accel-time
-milliseconds. Key events occuring after a longer time than this limit
+milliseconds. Key events occurring after a longer time than this limit
 will move the mouse cursor in single steps. Key events arriving more
 frequently will move the cursor accelerated by a factor of 6. Note that
 despite of
 .Em milliseconds
 being the unit of choice here, the time resolution is restricted by the
-timer tick distance of the underlaying operating system, usually to a
+timer tick distance of the underlying operating system, usually to a
 granularity of 10 milliseconds.
 
 .It Fl s Ar 0 | false | \&no

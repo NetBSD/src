@@ -1,6 +1,4 @@
-$NetBSD: EscapeSequences,v 1.2 1994/10/27 04:19:13 cgd Exp $
-
-  Control Codes and Escape Sequences supported by the pcvt-driver Release 2.20
+             Control Codes and Escape Sequences supported by pcvt
 ===============================================================================
 
 CONTROL CODES
@@ -16,7 +14,7 @@ CONTROL CODES
 
 	BEL (0x07)	beep
 
-	BS  (0x08)	move one caracter position to the left
+	BS  (0x08)	move one character position to the left
 			until at left margin
 
 	HT  (0x09)	move to next tab stop
@@ -61,6 +59,9 @@ ESCAPE SEQUENCES                                              DIGITAL EQUIPMENT
 
 (ni) = not implemented yet, all hooks available inside emulator!
 <p>  = numeric parameter
+
+	ESC space F	select 7-bit c1 control transmission (ni)
+	ESC space G	select 8-bit c1 control transmission (ni)
 
 	ESC # 3		double height top half		(ni)
 	ESC # 4		double height bottom half	(ni)
@@ -112,6 +113,10 @@ ESCAPE SEQUENCES                                              DIGITAL EQUIPMENT
 		 1	CKM - cursor key mode
 		 6	OM - origin mode
 		 7	AWM - auto wrap mode
+
+	ESC [ <p> ' z	DECELR - Enable Locator Report			(ni)
+
+	ESC [ <p> ' {	DECSLE - Select type of locator events		(ni)
 
 	ESC [ ? n	Terminal Reports
 

@@ -1,5 +1,3 @@
-#	$NetBSD: keycap.src,v 1.2 1994/10/27 04:20:25 cgd Exp $
-#
 # Copyright (c) 1992, 1993, 1994 Hellmuth Michaelis, Joerg Wunsch and
 #                                Holger Veit.
 #
@@ -33,7 +31,7 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-# @(#)keycap.src, 3.00, Last Edit-Date: [Sun Jan  2 13:50:08 1994]
+# @(#)keycap.src, 3.20, Last Edit-Date: [Wed Mar  8 20:53:01 1995]
 #
 #---------------------------------------------------------------------------
 #
@@ -50,6 +48,11 @@
 #	send it to hm@hcshh.hcs.de, thank you !
 #
 #	Many entries are taken from the 386BSD patchkit 0.2.4 codrv
+#
+#---------------------------------------------------------------------------
+#
+#	-hm	patch from Thomas Gellekum
+#	-hm	renamed finnish "f8" entry to "f1"
 #
 #---------------------------------------------------------------------------
 
@@ -293,26 +296,62 @@ fi|finland|finland7b|finland-ascii|Finnish ASCII mapping:\
 # from codrv, untested
 # Finnish keyboard map with the Latin1 national chars in
 # their "right" place. --Petri.Wessman@hut.fi
-f8|finland8b|finland-latin1|Finnish Latin1 mapping:\
+f1|finland8b|finland-latin1|Finnish Latin1 mapping:\
 	:A8={:A9=[:A10=]:A11=}:A12=\\:\
 	:K40=\366:S40=\326:K41=\344:S41=\304:K27=\345:S27=\305:\
 	:tc=finland:
 
-fr|france|French mapping:\
-	:de:
 
-# from codrv, untested
-f1|france120|French 120 mapping:\
-	:tc=belgium:
+# French keyboard mapping
+# From Matthieu Herrb <matthieu@laas.fr>
+# For 102 keys keyboards, produces 8 bits characters
+# with ISO Latin-1 encoding
+f8|france-iso-8859-1|French ISO 8859-1 102 keys keyboard:\
+	:l1#62:\
+	:K1=\262:S1=:\
+	:K2=&:S2=1:\
+	:K3=\351:S3=2:C3=\211:A3=~:\
+	:K4=":S4=3:A4=#:\
+	:K5=':S5=4:A5={:\
+	:K6=(:S6=5:A6=[:\
+	:K7=-:S7=6:C7=\036:A7=|:\
+	:K8=\350:S8=7:C8=\210:A8=`:\
+	:K9=_:S9=8:C9=\037:A9=\\:\
+	:K10=\347:S10=9:C10=\207:A10=\136:\
+	:K11=\340:S11=0:C11=\340:A11=@:\
+	:K12=):S12=\260:A12=]:\
+	:A13=}:\
+	:K17=a:S17=A:C17=\001:\
+	:K18=z:S18=Z:C18=\032:\
+	:D27:\
+	:K28=$:S28=\243:\
+	:K29=*:S29=\265:\
+	:K31=q:S31=Q:C31=\021:\
+	:K40=m:S40=M:C40=\015;\
+	:K41=\371:C41=\231:S41=%:\
+	:K42=*:S42=\265:\
+	:K46=w:S46=W:C46=\027:\
+	:K52=,:S52=?:\
+	:K53=;:S53=.:\
+	:K54=\072:S54=/:C54=\037\
+	:K55=!:S55=\266:
 
+# fr|france|French mapping:\
+#	:de:
+#
 # from codrv, untested
-f2|france189|French 189 mapping:\
-	:S1=:A1=':p3#1:\
-	:A2=:A3=~:A5={:A6=[:A7=|:A8=`:\
-	:S9=_:A9=\\:A10=\136:A11=@:A12=]:A13=}:\
-	:A27=:A28=\244:A41=:A42=:\
-	:A45=:!:S45=\247:\
-	:tc=belgium:
+# f1|france120|French 120 mapping:\
+#	:tc=belgium:
+#
+#
+# from codrv, untested
+#f2|france189|French 189 mapping:\
+#	:S1=:A1=':p3#1:\
+#	:A2=:A3=~:A5={:A6=[:A7=|:A8=`:\
+#	:S9=_:A9=\\:A10=\136:A11=@:A12=]:A13=}:\
+#	:A27=:A28=\244:A41=:A42=:\
+#	:A45=:!:S45=\247:\
+#	:tc=belgium:
 
 # From: Andy Duplain, duplain@rtf.bt.co.uk
 gb|greatbritain|British mapping for MF-2 keyboard:\
@@ -527,6 +566,46 @@ s2|sweden2|Swedish 8bit mapping ISO 8859-1:\
 	:C45=\034:C53=:C54=:C55=:\
 	:A45=|:\
 	:C61=\000:
+
+#
+# tg: my idiosyncratic mappings (thomas@ghpc8.ihf.rwth-aachen.de)
+#
+#     the six function keys above the cursor keys are arranged 
+#     identical to a real VT220:
+#
+#     find	insert 	remove
+#     select	up	down
+#
+#     since i don't have a use for the numbers on the keypad,
+#     i map NumLock, /, *, - to PF1-PF4;
+#     + is mapped to SS3 l, shifted + is mapped to SS3 m
+#
+#     they convinced me finally to add some support for german umlauts.
+#     so, i stole the mapping from jörg wunsch's de-prog entry.
+#
+#     tg
+#
+
+tg:\
+	:l1#62:\
+	:A12=\337:\
+	:A27=\374:C27=\334:\
+	:A40=\366:C40=\326:\
+	:A41=\344:C41=\304:\
+	:K126=\032:C126=\003:\
+	:K75=[1~:S75=[1~:C75=[1~:\
+	:K76=[4~:S76=[4~:C76=[4~:\
+	:K80=[2~:S80=[2~:C80=[2~:\
+	:K81=[5~:S81=[5~:C81=[5~:\
+	:K85=[3~:S85=[3~:C85=[3~:\
+	:K86=[6~:S86=[6~:C86=[6~:\
+	:K90=OP:S90=OP:C90=OP:\
+	:K95=OQ:S95=OQ:C95=OQ:\
+	:K100=OR:S100=OR:C100=OR:\
+	:K104=On:S104=On:C104=On:\
+	:K105=OS:S105=OS:C105=OS:\
+	:K106=Ol:S106=Om:\
+	:K108=OM:S108=OM:C108=OM:
 
 us|usa|United States mapping:\
 	:de:

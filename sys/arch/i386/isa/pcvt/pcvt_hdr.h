@@ -1,8 +1,7 @@
-/*	$NetBSD: pcvt_hdr.h,v 1.20 1995/09/03 01:20:37 mycroft Exp $	*/
-
 /*
- * Copyright (c) 1992,1993,1994 Hellmuth Michaelis, Brian Dunford-Shore
- *                              and Joerg Wunsch
+ * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
+ *
+ * Copyright (c) 1992, 1993 Brian Dunford-Shore.
  *
  * All rights reserved.
  *
@@ -33,7 +32,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  *
- * @(#)pcvt_hdr.h, 3.00, Last Edit-Date: [Tue Mar  1 20:15:21 1994]
+ * @(#)pcvt_hdr.h, 3.32, Last Edit-Date: [Tue Oct  3 11:19:48 1995]
  *
  */
 
@@ -41,52 +40,55 @@
  *
  *	pcvt_hdr.h	VT220 Driver Global Include File
  *	------------------------------------------------
- *	-hm	screensaver update from joerg
- *	-hm	ctrl-alt-delete enclosed in ifdef's
- *	-hm	driver name changed from "pc" -> "vt"
- *	-hm	#define-able compile time options
- *	-jw	include rather primitive X stuff
- *	-hm	NetBSD 0.8 support
- *	-hm	NetBSD-current support
- *	-hm	converting to memory mapped virtual screens
- *	-hm	adding et4000/wd/paradise vga register names
- *	-hm	132 column support for et4000/wd/paradise
- *	-hm	updated WD90C11 register definitions
- *	-hm	patches from joerg for 2.20 alpha 1
- *	-hm	max screen memory definitions
- *	-hm	Video 7 register definitions
- *	-hm	keyboard initialization for ddb activists ...
- *	-hm	include cpufunc.h for netbsd 0.9
- *	-hm	Trident definitions
- *	-hm	cpufunc.h only for netbsd
- *	-hm	ignore keyboard security lock conditional
- *	-hm	vga chiptype definitions moved to pcvt-ioctl.h
- *	-hm	force 24 lines operation
- *	-jw	USL VT compatibility
- *	-hm	int pcstart() -> void pcstart()
- *	-hm	opsys defines from joerg
- *	-hm	made sleeping-while-scrollock-patch from joerg running
- *	-hm	keyboard again ....
- *	-hm	housekeeping and source restructuring
- *	-jw	mouse emulation mode
- *	-jw	all ifdef's converted to if's
- *	-hm	patch from Joerg, PCVT_INHIBIT_NUMLOCK for notebooks
- *	-jw	cleaned up the key prefix recognition
- *	-jw	included PCVT_META_ESC
- *	-hm	kludge to get NetBSD 0.9 compilation right (!?)
- *	-hm	FreeBSD-current patches from Joerg
- *	-hm	PCVT_NETBSD=XXX for version defines
- *	-hm	#include dev/cons.h for NetBSD-current
- *	-hm	intro of PCVT_PCBURST for netbsd
- *	-hm	last second nitty-gritty from Joerg  :-)
  *	-hm	------------ Release 3.00 --------------
+ *	-hm	integrating NetBSD-current patches
+ *	-hm	integrating patches from Thomas Gellekum
+ *	-hm	moving vt_selattr() inline into this file
+ *	-hm	Michael's keyboard fifo diffs
+ *	-hm	documenting some #ifdef's ...
+ *	-hm	Joerg's patches for FreeBSD's ttymalloc
+ *	-jw	introduced kbd_emulate_pc() if scanset > 1
+ *	-hm	moved user configurable items to pcvt_conf.h
+ *	-hm	applying Joerg's patches for FreeBSD 2.0
+ *	-hm	patch from Onno & Martin for NetBSD-current (post 1.0)
+ *	-hm	some adjustments for NetBSD 1.0
+ *	-hm	patch from Joerg fixing FreeBSD 2.0 support
+ *	-hm	patch from Onno/John for NetBSD-current
+ *	-hm	applying patch from Joerg fixing Crtat bug
+ *	-hm	removed PCVT_FAKE_SYSCONS10
+ *	-hm	added pcstop (patch from Onno)
+ *	-hm	multiple X server bugfixes from Lon Willett
+ *	-hm	patch from Joerg for FreeBSD pre-2.1
+ *	-jw	adding more support for FreeBSD pre-2.1
+ *	-hm	patches from Michael for NetBSD-current (Apr/21/95) support
+ *	-hm	several NetBSD-current patches from John Kohl
+ *	-hm	---------------- Release 3.30 -----------------------
+ *	-hm	patch from Thomas Gellekum to support C1 controls
+ *	-hm	patch from Frank van der Linden for keyboard state per VT
+ *	-hm	---------------- Release 3.32 -----------------------
  *
  *---------------------------------------------------------------------------*/
 
-#ifdef PCVT_NETBSD
-#undef PCVT_NETBSD
-#endif
-#define	PCVT_NETBSD		11
+#define	PCVT_REL "3.32"		/* driver attach announcement	*/
+				/* see also: pcvt_ioctl.h	*/
+
+#if PCVT_FREEBSD >= 200
+
+#include <sys/param.h>
+#include <sys/conf.h>
+#include <sys/ioctl.h>
+#include <sys/proc.h>
+#include <sys/user.h>
+#include <sys/tty.h>
+#include <sys/uio.h>
+#include <sys/callout.h>
+#include <sys/systm.h>
+#include <sys/kernel.h>
+#include <sys/syslog.h>
+#include <sys/malloc.h>
+#include <sys/time.h>
+
+#else /* ! PCVT_FREEBSD >= 200 */
 
 #include "param.h"
 #include "conf.h"
@@ -101,364 +103,114 @@
 #include "syslog.h"
 #include "malloc.h"
 #include "time.h"
+
+#endif /* PCVT_FREEBSD >= 200 */
+
+#include "pcvt_conf.h"
+
 #if PCVT_NETBSD > 9
 #include "device.h"
 #endif
 
 #if PCVT_NETBSD > 9
+#if PCVT_NETBSD > 101
+#include "i386/isa/isa_machdep.h"
 #include "dev/isa/isavar.h"
 #else
+#include "i386/isa/isavar.h"
+#endif
+
+#include "i386/cpufunc.h"
+#elif PCVT_FREEBSD >= 200
+#include <i386/isa/isa_device.h>
+#else
 #include "i386/isa/isa_device.h"
+#endif
+
+#if PCVT_FREEBSD >= 200
+#include <i386/isa/icu.h>
+#else
 #include "i386/isa/icu.h"
 #endif
+
+#if PCVT_NETBSD > 100
+#if PCVT_NETBSD > 101
 #include "dev/isa/isareg.h"
+#else
+#include "i386/isa/isareg.h"
+#endif
+#elif PCVT_FREEBSD >= 200
+#include <i386/isa/isa.h>
+#else
+#include "i386/isa/isa.h"
+#endif
 
 #if PCVT_NETBSD > 9
 #include "dev/cons.h"
+#if PCVT_NETBSD > 100
 #include "dev/ic/mc146818reg.h"
 #include "i386/isa/nvram.h"
+#endif
+#elif PCVT_FREEBSD >= 200
+#include <i386/i386/cons.h>
 #else
 #include "i386/i386/cons.h"
 #endif
 
 #if PCVT_NETBSD <= 9
+#if PCVT_FREEBSD >= 200
+#include <machine/psl.h>
+#include <machine/frame.h>
+#else /* ! PCVT_FREEBSD >= 200 */
 #include "machine/psl.h"
 #include "machine/frame.h"
-#endif
+#endif /* PCVT_FREEBSD >= 200 */
+#endif /* PCVT_NETBSD <= 9 */
+
+#if PCVT_FREEBSD >= 200
+#include <machine/stdarg.h>
+#else
 #include "machine/stdarg.h"
+#endif
+
 #if PCVT_NETBSD > 9
-#include "i386/isa/isa_machdep.h"
-#include "i386/isa/pcvt/pcvt_ioctl.h"
+#include "pcvt_ioctl.h"
+#elif PCVT_FREEBSD >= 200
+#include <machine/pcvt_ioctl.h>
 #else
 #include "machine/pcvt_ioctl.h"
 #endif
+
+#if PCVT_FREEBSD >= 200
+#include <machine/pc/display.h>
+#if PCVT_FREEBSD > 200
+#include <machine/clock.h>
+#include <machine/md_var.h>
+#endif
+#include <vm/vm_kern.h>
+#else /* PCVT_FREEBSD >= 200 */
 #include "machine/pc/display.h"
-
 #include "vm/vm_kern.h"
+#endif /* PCVT_FREEBSD >= 200 */
 
-#define	PCVT_REL "3.00"		/* driver attach announcement	*/
-				/* this is checked with ispcvt	*/
-				/* see also: pcvt_ioctl.h	*/
-
-/*======================================================================*
- *		START OF CONFIGURATION SECTION				*
- *======================================================================*/
-
-/*
- * Note that each of the options below should rather be overriden by the
- * kernel config file instead of this .h file - this allows for different
- * definitions in different kernels compiled at the same machine
- *
- * The convention is as follows:
- *
- * options "PCVT_FOO=1"  - enables the option
- * options "PCVT_FOO"    - is a synonym for the above
- * options "PCVT_FOO=0"  - disables the option
- *
- * omitting an option defaults to what is shown below
- *
- * exceptions from this rule:
- *
- *   options "PCVT_NSCREENS=x"
- *   options "PCVT_SCANSET=x"
- *   options "PCVT_UPDATEFAST=x"
- *   options "PCVT_UPDATESLOW=x"
- *   options "PCVT_SYSBEEPF=x"
- *
- * are always numeric!
- */
-
-/* -------------------------------------------------------------------- */
-/* -------------------- OPERATING SYSTEM ------------------------------ */
-/* -------------------------------------------------------------------- */
-  
-/* one of the following options must be set in the kernel config file:	*/
-
-/* options "PCVT_386BSD" 	enable support for 386BSD + pk 0.2.4	*/
-
-/* options "PCVT_NETBSD" 	enable support for NetBSD		*/
-/* PCVT_NETBSD = 9 for the NetBSD 0.9 release				*/
-/* PCVT_NETBSD > 9 for NetBSD-current (tested with february 5th '94)	*/
-
-/* options "PCVT_FREEBSD"	enable support for FreeBSD		*/
-/* PCVT_FREEBSD = 102 for 1.0 release (actually 1.0.2)			*/
-/* PCVT_FREEBSD = 103 for -current [as around 31 Jan 94]		*/
-/* PCVT_FREEBSD = 110 for 1.1 release (still to come :-)		*/
-
-/* -------------------------------------------------------------------- */
-/* ---------------- USER PREFERENCE DRIVER OPTIONS -------------------- */
-/* -------------------------------------------------------------------- */
-
-#if !defined PCVT_NSCREENS	/* ---------- DEFAULT: 8 -------------- */
-#define	PCVT_NSCREENS 	8	/* this option defines how many virtual	*/
-#endif				/* screens you want to have in your	*/
-				/* system. each screen allocates memory,*/
-				/* so you can't have an unlimited num-	*/
-				/* ber...; the value is intented to be	*/
-				/* compile-time overridable by a config	*/
-				/* options "PCVT_NSCREENS=x" line	*/
-
-#if !defined PCVT_VT220KEYB	/* ---------- DEFAULT: OFF ------------ */
-# define PCVT_VT220KEYB 0	/* this compiles a more vt220-like	*/
-#elif PCVT_VT220KEYB != 0	/* keyboardlayout as described in the	*/	
-# undef PCVT_VT220KEYB		/* file Keyboard.VT220.			*/
-# define PCVT_VT220KEYB 1	/* if undefined, a more HP-like         */	
-#endif				/* keyboardlayout is compiled		*/
-				/* try to find out what YOU like !	*/
-
-#if !defined PCVT_SCREENSAVER	/* ---------- DEFAULT: ON ------------- */
-# define PCVT_SCREENSAVER 1	/* enable screen saver feature - this	*/
-#elif PCVT_SCREENSAVER != 0	/* just blanks the display screen.	*/
-# undef PCVT_SCREENSAVER	/* see PCVT_PRETTYSCRNS below ...	*/
-# define PCVT_SCREENSAVER 1
+#if PCVT_FREEBSD > 205
+#include <sys/devconf.h>
 #endif
 
-#if !defined PCVT_PRETTYSCRNS	/* ---------- DEFAULT: ON ------------- */
-# define PCVT_PRETTYSCRNS 0	/* for the cost of some microseconds of	*/
-#elif PCVT_PRETTYSCRNS != 0	/* cpu time this adds a more "pretty"	*/
-#undef PCVT_PRETTYSCRNS		/* version to the screensaver, an "*"	*/
-#define PCVT_PRETTYSCRNS 1	/* in random locations of the display.	*/
-#endif				/* NOTE: this should not be defined if	*/
-				/* you have an energy-saving monitor 	*/
-				/* which turns off the display if its	*/
-				/* black !!!!!!				*/
+/* setup irq disable function to use */
 
-#if !defined PCVT_CTRL_ALT_DEL	/* ---------- DEFAULT: OFF ------------ */
-# define PCVT_CTRL_ALT_DEL 0	/* this enables the execution of a cpu	*/
-#elif PCVT_CTRL_ALT_DEL != 0	/* reset by pressing the CTRL, ALT and	*/
-# undef PCVT_CTRL_ALT_DEL	/* DEL keys simultanously. Because this	*/
-# define PCVT_CTRL_ALT_DEL 1	/* is a feature of an ancient simple	*/
-#endif				/* bootstrap loader, it does not belong */
-				/* into modern operating systems and 	*/
-				/* was commented out by default ...	*/
-
-#if !defined PCVT_USEKBDSEC	/* ---------- DEFAULT: ON ------------- */
-# define PCVT_USEKBDSEC 1	/* do not set the COMMAND_INHOVR bit	*/
-#elif PCVT_USEKBDSEC != 0	/* (1 = override security lock inhibit) */
-#undef PCVT_USEKBDSEC		/* when initializing the keyboard, so   */
-#define PCVT_USEKBDSEC 1	/* that security locking should work    */
-#endif				/* now. I guess this has to be done also*/
-				/* in the boot code to prevent single   */
-				/* user startup ....                    */
-
-#if !defined PCVT_24LINESDEF	/* ---------- DEFAULT: OFF ------------ */
-# define PCVT_24LINESDEF 0	/* use 24 lines in VT 25 lines mode and	*/
-#elif PCVT_24LINESDEF != 0	/* HP 28 lines mode by default to have	*/
-#undef PCVT_24LINESDEF		/* the the better compatibility to the	*/
-#define PCVT_24LINESDEF 1	/* real VT220 - you can switch between	*/
-#endif				/* the maximum possible screensizes in	*/
-				/* those two modes (25 lines) and true	*/
-				/* compatibility (24 lines) by using	*/
-				/* the scon utility at runtime		*/
-
-#if !defined PCVT_EMU_MOUSE	/* ---------- DEFAULT: OFF ------------ */
-# define PCVT_EMU_MOUSE 0	/* emulate a mouse systems mouse via	*/
-#elif PCVT_EMU_MOUSE != 0	/* the keypad; this is experimental	*/
-# undef PCVT_EMU_MOUSE		/* code intented to be used on note-	*/
-# define PCVT_EMU_MOUSE 1	/* books in conjunction with XFree86;	*/
-#endif				/* look at the comments in pcvt_kbd.c	*/
-				/* if you are interested in testing it.	*/
-
-#if !defined PCVT_META_ESC      /* ---------- DEFAULT: OFF ------------ */
-# define PCVT_META_ESC 0        /* if ON, send the sequence "ESC key"	*/
-#elif PCVT_META_ESC != 0        /* for a meta-shifted key; if OFF,	*/
-# undef PCVT_META_ESC           /* send the normal key code with 0x80	*/
-# define PCVT_META_ESC 1        /* added.				*/
+#if !(PCVT_SLOW_INTERRUPT) && (PCVT_NETBSD > 9)
+# define PCVT_DISABLE_INTR()	disable_intr()
+# define PCVT_ENABLE_INTR()	enable_intr()
+# undef PCVT_SLOW_INTERRUPT
+#else
+# define PCVT_DISABLE_INTR()	s = spltty()
+# define PCVT_ENABLE_INTR()	splx(s)
+# undef PCVT_SLOW_INTERRUPT
+# define PCVT_SLOW_INTERRUPT 1
 #endif
 
-/* -------------------------------------------------------------------- */
-/* -------------------- DRIVER DEBUGGING ------------------------------ */
-/* -------------------------------------------------------------------- */
-
-#if !defined PCVT_SHOWKEYS	/* ---------- DEFAULT: OFF ------------ */
-# define PCVT_SHOWKEYS 0	/* this replaces the system load line	*/
-#elif PCVT_SHOWKEYS != 0	/* on the vt 0 in hp mode with a display*/
-# undef PCVT_SHOWKEYS		/* of the most recent keyboard scan-	*/
-# define PCVT_SHOWKEYS 1	/* and status codes received from the	*/
-#endif				/* keyboard controller chip.		*/
-				/* this is just for some hardcore	*/
-				/* keyboarders ....			*/
-	
-/* -------------------------------------------------------------------- */
-/* -------------------- DRIVER OPTIONS -------------------------------- */
-/* -------------------------------------------------------------------- */
-/*     it is unlikely that anybody wants to change anything below       */
-
-#if !defined PCVT_PCBURST	/* ---------- DEFAULT: 256 ------------ */
-#define PCVT_PCBURST 256	/* NETBSD only: this is the number of	*/
-#endif				/* characters handled as a burst in	*/
-				/* routine pcstart(), file pcvt_drv.c	*/
-
-#if !defined PCVT_SCANSET	/* ---------- DEFAULT: 1 -------------- */
-# define PCVT_SCANSET 1		/* define the keyboard scancode set you	*/
-#endif				/* want to use:				*/
-				/* 1 - code set 1	(supported)	*/
-				/* 2 - code set 2	(supported)	*/
-				/* 3 - code set 3	(UNsupported)	*/
-
-#if !defined PCVT_KEYBDID	/* ---------- DEFAULT: ON ------------- */
-# define PCVT_KEYBDID 1		/* check type of keyboard connected. at	*/
-#elif PCVT_KEYBDID != 0		/* least HP-keyboards send a id other	*/
-# undef PCVT_KEYBDID		/* than the industry standard, so it	*/	
-# define PCVT_KEYBDID 1		/* CAN lead to problems. if you have	*/
-#endif				/* problems with this, TELL ME PLEASE !	*/
-
-#if !defined PCVT_SIGWINCH	/* ---------- DEFAULT: ON ------------- */
-# define PCVT_SIGWINCH 1	/* this sends a SIGWINCH signal in case	*/
-#elif PCVT_SIGWINCH != 0	/* the window size is changed. to try,	*/
-#undef PCVT_SIGWINCH		/* issue "scons -s<size>" while in elvis*/
-#define PCVT_SIGWINCH 1		/* and you'll see the effect.		*/
-#endif				/* i'm not sure, whether this feature	*/
-				/* has to be in the driver or has to    */
-				/* move as a ioctl call to scon ....	*/
-				
-#if !defined PCVT_NULLCHARS	/* ---------- DEFAULT: ON ------------- */
-# define PCVT_NULLCHARS 1	/* allow the keyboard to send null 	*/
-#elif PCVT_NULLCHARS != 0	/* (0x00) characters to the calling	*/
-# undef PCVT_NULLCHARS		/* program. this has the side effect,	*/
-# define PCVT_NULLCHARS 1	/* that every undefined key also sends	*/
-#endif				/* out nulls. take it as experimental	*/
-				/* code, this behaviour will change in	*/
-				/* a future release			*/
-
-#if !defined PCVT_BACKUP_FONTS	/* ---------- DEFAULT: ON ------------- */
-# define PCVT_BACKUP_FONTS 1	/* fonts are always kept memory-backed;	*/
-#elif  PCVT_BACKUP_FONTS != 0	/* otherwise copies are only made if	*/
-# undef PCVT_BACKUP_FONTS	/* they are needed.			*/
-# define PCVT_BACKUP_FONTS 1
-#endif
-
-#if !defined PCVT_FORCE8BIT	/* ---------- DEFAULT: OFF ------------ */
-#define PCVT_FORCE8BIT 0	/* this forces the read channel to	*/
-#elif PCVT_FORCE8BIT != 0	/* 8 bit on terminal reads. this is 	*/
-#undef PCVT_FORCE8BIT		/* a real kludge, have a look at file	*/
-#define PCVT_FORCE8BIT 1	/* pcvt_drv.c to see what this does ..	*/
-#endif
-
-#ifndef PCVT_UPDATEFAST		/* this is the rate at which the cursor */
-#define PCVT_UPDATEFAST	(hz/10)	/* gets updated with it's new position	*/
-#endif				/* see: async_update() in pcvt_sup.c	*/
-
-#ifndef PCVT_UPDATESLOW		/* this is the rate at which the cursor	*/
-#define PCVT_UPDATESLOW	3	/* position display and the system load	*/
-#endif				/* (or the keyboard scancode display)	*/
-				/* is updated. the relation is:		*/
-				/* PCVT_UPDATEFAST/PCVT_UPDATESLOW	*/
-
-#ifndef PCVT_SYSBEEPF		/* timer chip value to be used for the	*/
-#define PCVT_SYSBEEPF 1193182	/* sysbeep frequency value.		*/
-#endif				/* this should really go somewhere else,*/
-				/* e.g. in isa.h; but it used to be in 	*/
-				/* each driver, sometimes even with	*/
-				/* different values (:-)		*/
-
-#if !defined PCVT_NEEDPG	/* ---------- DEFAULT: OFF ------------ */
-# define PCVT_NEEDPG 0		/* pg moved out to cons.c with pk 0.2.2	*/
-#elif PCVT_NEEDPG != 0		/* if you run a system with patchkit	*/
-# undef PCVT_NEEDPG		/* 0.2.1 or earlier you must define this*/
-# define PCVT_NEEDPG 1
-#endif
-
-#if !defined PCVT_SETCOLOR	/* ---------- DEFAULT: OFF ------------ */
-# define PCVT_SETCOLOR 0	/* enable making colors settable. this	*/
-#elif PCVT_SETCOLOR != 0	/* introduces a new escape sequence	*/
-# undef PCVT_SETCOLOR		/* <ESC d> which is (i think) not 	*/
-# define PCVT_SETCOLOR 1	/* standardized, so this is an option	*/
-#endif
-				
-
-#if !defined PCVT_132GENERIC	/* ---------- DEFAULT: OFF ------------ */
-# define PCVT_132GENERIC 0	/* if you #define this, you enable	*/
-#elif PCVT_132GENERIC != 0	/*	EXPERIMENTAL (!!!!!!!!!!!!)	*/
-# undef PCVT_132GENERIC		/* 	USE-AT-YOUR-OWN-RISK, 		*/
-# define PCVT_132GENERIC 1	/*	MAY-DAMAGE-YOUR-MONITOR		*/
-#endif				/* code to switch generic VGA boards/	*/
-				/* chipsets to 132 column mode. Since	*/
-				/* i could not verify this option, i	*/
-				/* prefer to NOT generally enable this,	*/
-				/* if you want to play, look at the 	*/
-				/* hints and the code in pcvt_sup.c and	*/
-				/* get in contact with Joerg Wunsch, who*/
-				/* submitted this code. Be careful !!!	*/
-
-#if !defined PCVT_PALFLICKER	/* ---------- DEFAULT: OFF ------------ */
-#define PCVT_PALFLICKER 0	/* this option turns off the screen 	*/
-#elif PCVT_PALFLICKER != 0	/* during accesses to the VGA DAC	*/
-#undef PCVT_PALFLICKER		/* registers. why: on one fo the tested	*/
-#define PCVT_PALFLICKER 1	/* pc's (WD-chipset), accesses to the	*/
-#endif				/* vga dac registers caused distortions	*/
-				/* on the screen. Ferraro says, one has	*/
-				/* to blank the screen. the method used	*/
-				/* to accomplish this stopped the noise	*/
-				/* but introduced another flicker, so	*/
-				/* this is for you to experiment .....	*/
-				/* - see also PCVT_WAITRETRACE below --	*/
-				
-#if !defined PCVT_WAITRETRACE	/* ---------- DEFAULT: OFF ------------ */
-#define PCVT_WAITRETRACE 0	/* this option waits for being in a 	*/
-#elif PCVT_WAITRETRACE != 0	/* retrace window prior to accessing	*/
-#undef PCVT_WAITRETRACE		/* the VGA DAC registers.		*/
-#define PCVT_WAITRETRACE 1	/* this is the other method Ferraro	*/
-#endif				/* mentioned in his book. this option 	*/
-				/* did eleminate the flicker noticably	*/
-				/* but not completely. besides that, it	*/
-				/* is implemented as a busy-wait loop	*/
-				/* which is a no-no-no in environments	*/
-				/* like this - VERY BAD PRACTICE !!!!!	*/
-				/* the other method implementing it is	*/
-				/* using the vertical retrace irq, but	*/
-				/* we get short of irq-lines on pc's.	*/
-				/* this is for you to experiment .....	*/
-				/* -- see also PCVT_PALFLICKER above -- */
-
-#if !defined PCVT_INHIBIT_NUMLOCK /* --------- DEFAULT: OFF ----------- */
-#define PCVT_INHIBIT_NUMLOCK 0 	/* A notebook hack: since i am getting	*/
-#elif PCVT_INHIBIT_NUMLOCK != 0	/* tired of the numlock LED always	*/
-#undef PCVT_INHIBIT_NUMLOCK    	/* being turned on - which causes the	*/
-#define PCVT_INHIBIT_NUMLOCK 1 	/* right half of my keyboard being	*/
-#endif                         	/* interpreted as a numeric keypad and	*/
-				/* thus going unusable - i want to	*/
-				/* have a better control over it. If	*/
-				/* this option is enabled, only the	*/
-				/* numlock key itself and the related	*/
-				/* ioctls will modify the numlock	*/
-				/* LED. (The ioctl is needed for the	*/
-				/* ServerNumLock feature of XFree86.)	*/
-				/* The default state is changed to	*/
-				/* numlock off, and the escape		*/
-				/* sequences to switch between numeric	*/
-				/* and application mode keypad are	*/
-				/* silently ignored.			*/
-
-#ifdef XSERVER
-
-#if !defined PCVT_USL_VT_COMPAT	/* ---------- DEFAULT: ON ------------- */
-# define PCVT_USL_VT_COMPAT 1	/* emulate some compatibility ioctls	*/
-#elif PCVT_USL_VT_COMPAT != 0	/* this is not a full USL VT compatibi-	*/
-#undef PCVT_USL_VT_COMPAT	/* lity, but just enough to fool XFree86*/
-#define PCVT_USL_VT_COMPAT 1	/* release 2 (or higher) in believing	*/
-#endif				/* it runs on syscons and thus enabling	*/
-				/* the stuff to switch VTs within an X	*/
-				/* session				*/
-
-#if !defined PCVT_FAKE_SYSCONS10/* ---------- DEFAULT: OFF ------------ */
-# define PCVT_FAKE_SYSCONS10 0	/* fake syscons 1.0; this causes XFree86*/
-#elif PCVT_FAKE_SYSCONS10 != 0	/* 2.0 to use the VT_OPENQRY ioctl in	*/
-# undef PCVT_FAKE_SYSCONS10	/* order to test for a free vt to use	*/
-# define PCVT_FAKE_SYSCONS10 1	/* This is NOT REQUIRED, and not enabled*/
-#endif				/* by default due to the possible	*/
-				/* confusion for other utilities.	*/
-				/* NB: XFree86 (tm) version 2.1 will be	*/
-				/* fixed w.r.t. VT_OPENQRY		*/
-
-#endif /* XSERVER */				
-
-/* perform some consistency checks */
-
-#if defined PCVT_386BSD && PCVT_386BSD != 0
-#undef PCVT_386BSD
-#define PCVT_386BSD 1
-#endif
+/* perform option consistency checks */
 
 #if defined PCVT_FREEBSD && PCVT_FREEBSD == 1
 # undef PCVT_FREEBSD
@@ -470,45 +222,25 @@
 #define PCVT_NETBSD 9		/* assume 0.9 release for now */
 #endif
 
-#if PCVT_386BSD + PCVT_FREEBSD + PCVT_NETBSD == 0
-# error "pcvt_hdr.h: You MUST define one of PCVT_{386,NET,FREE}BSD \
+#if PCVT_FREEBSD + PCVT_NETBSD == 0
+# error "pcvt_hdr.h: You MUST define one of PCVT_{NET,FREE}BSD \
 in the config file"
-#elif (PCVT_386BSD && (PCVT_FREEBSD || PCVT_NETBSD)) || \
-      (PCVT_NETBSD && (PCVT_FREEBSD || PCVT_386BSD)) || \
-      (PCVT_FREEBSD && (PCVT_386BSD || PCVT_NETBSD))
-# error "pcvt_hdr.h: You should only define *one* of PCVT_{386,NET,FREE}BSD \
+#elif (PCVT_FREEBSD && PCVT_NETBSD)
+# error "pcvt_hdr.h: You CAN only define *one* of PCVT_{NET,FREE}BSD \
 in the config file"
 #endif
 
 #ifdef XSERVER
 
 /* PCVT_NULLCHARS is mandatory for X server */
-#if !PCVT_NULLCHARS
 #undef PCVT_NULLCHARS
 #define PCVT_NULLCHARS 1
-#endif
 
-/* PCVT_BACKUP_FONTS is mandatory for PCVT_USL_VT_COMPAT */
-#if PCVT_USL_VT_COMPAT && !PCVT_BACKUP_FONTS
+/* PCVT_BACKUP_FONTS is mandatory for XSERVER */
 #undef PCVT_BACKUP_FONTS
 #define PCVT_BACKUP_FONTS 1
-#endif
-
-#else /* XSERVER */
-  
-#if PCVT_USL_VT_COMPAT
-#warning "Option PCVT_USL_VT_COMPAT meaningless without XSERVER"
-#undef PCVT_USL_VT_COMPAT
-#define PCVT_USL_VT_COMPAT 0
-#endif
 
 #endif /* XSERVER */
-
-/* #undef PCVT_NEEDPG is mandatory for PCVT_NETBSD and PCVT_FREEBSD */
-#if (PCVT_NETBSD || PCVT_FREEBSD) && PCVT_NEEDPG
-#undef PCVT_NEEDPG
-#define PCVT_NEEDPG 0
-#endif
 
 /* PCVT_SCREENSAVER is mandatory for PCVT_PRETTYSCRNS */
 #if PCVT_PRETTYSCRNS && !PCVT_SCREENSAVER
@@ -516,58 +248,24 @@ in the config file"
 #define PCVT_SCREENSAVER 1
 #endif
 
-/* PCVT_FAKE_SYSCONS10 meaningless without PCVT_USL_VT_COMPAT */
-#if PCVT_FAKE_SYSCONS10 && !PCVT_USL_VT_COMPAT
-#undef PCVT_FAKE_SYSCONS10
-#define PCVT_FAKE_SYSCONS10 0
-#endif
-
-#if PCVT_FAKE_SYSCONS10
-# warning "options PCVT_FAKE_SYSCONS10 will be removed in the next release"
-#endif
-
 /* get the inline inb/outb back again ... */
 
 #if PCVT_NETBSD
 #if PCVT_NETBSD == 9
 #include "machine/cpufunc.h"	/* NetBSD 0.9 [...and earlier -currents] */
-#undef PCVT_USL_VT_COMPAT
-#define PCVT_USL_VT_COMPAT 0	/* does not work, workaround ... */
 #else
 #include "machine/pio.h"	/* recent NetBSD -currents */
 #define NEW_AVERUNNABLE		/* averunnable changes for younger currents */
 #endif /* PCVT_NETBSD == 9 */
 #endif /* PCVT_NETBSD */
 
+#if PCVT_FREEBSD >= 200
+#define NEW_AVERUNNABLE		/* new averunnable changes for FreeBSD 2.0 */
+#endif
+
 #if PCVT_SCANSET !=1 && PCVT_SCANSET !=2
 #error "Supported keyboard scancode sets are 1 and 2 only (for now)!!!"
 #endif
-
-/*---------------------------------------------------------------------------
-	COLORS:
-
-	be careful when designing color combinations, because on
-	EGA and VGA displays, bit 3 of the attribute byte is used
-	for characterset switching, and is no longer available for
-	foreground intensity (bold)!
-
----------------------------------------------------------------------------*/
-
-/*---------------------------------------------------------------------------*
- *	INTERNAL COLOR DEFINITIONS - KERNEL
- *---------------------------------------------------------------------------*/
-
-#define COLOR_KERNEL_FG	FG_LIGHTGREY	/* kernel messages, foreground */
-#define COLOR_KERNEL_BG	BG_RED		/* kernel messages, background */
-
-/* monochrome displays - really don't know if it fits ... */
-
-#define MONO_KERNEL_FG	FG_UNDERLINE	/* kernel messages, foreground */
-#define MONO_KERNEL_BG	BG_BLACK	/* kernel messages, background */
-
-/*======================================================================*
- *		END OF CONFIGURATION SECTION				*
- *======================================================================*/
 
 /*---------------------------------------------------------------------------*
  *	Keyboard and Keyboard Controller
@@ -643,6 +341,23 @@ in the config file"
 #define KB_UNKNOWN	0	/* unknown keyboard type */
 #define KB_AT		1	/* AT (84 keys) Keyboard */
 #define KB_MFII		2	/* MF II (101/102 keys) Keyboard */
+
+/*---------------------------------------------------------------------------*
+ *	CMOS ram access to get the "Equipment Byte"
+ *---------------------------------------------------------------------------*/
+
+#if PCVT_NETBSD > 100
+#define EQ_EGAVGA	NVRAM_EQUIPMENT_EGAVGA
+#define EQ_40COLOR	NVRAM_EQUIPMENT_COLOR40
+#define EQ_80COLOR	NVRAM_EQUIPMENT_COLOR80
+#define EQ_80MONO	NVRAM_EQUIPMENT_MONO80
+#else
+#define RTC_EQUIPMENT	0x14	/* equipment byte in cmos ram	*/
+#define EQ_EGAVGA	0	/* reserved (= ega/vga)		*/
+#define EQ_40COLOR	1	/* display = 40 col color	*/
+#define EQ_80COLOR	2	/* display = 80 col color	*/
+#define EQ_80MONO	3	/* display = 80 col mono	*/
+#endif
 
 /*---------------------------------------------------------------------------*
  *	VT220 -> internal color conversion table fields
@@ -861,11 +576,11 @@ in the config file"
 /*---------------------------------------------------------------------------*
  *	VGA palette handling (output DAC palette)
  *---------------------------------------------------------------------------*/
- 
+
 #define VGA_DAC		0x3C6		/* vga dac address */
 #define VGA_PMSK	0x3F		/* palette mask, 64 distinct values */
 #define NVGAPEL 	256		/* number of palette entries */
- 
+
 /*---------------------------------------------------------------------------*
  *	function key labels
  *---------------------------------------------------------------------------*/
@@ -887,20 +602,21 @@ in the config file"
 
 #define STATE_INIT	0	/* normal	*/
 #define	STATE_ESC	1	/* got ESC	*/
-#define STATE_HASH	2	/* got ESC #	*/
-#define STATE_BROPN	3	/* got ESC (	*/
-#define STATE_BRCLO	4	/* got ESC )	*/
-#define STATE_CSI	5	/* got ESC [	*/
-#define STATE_CSIQM	6	/* got ESC [ ?	*/
-#define STATE_AMPSND	7	/* got ESC &	*/
-#define STATE_STAR	8	/* got ESC *	*/
-#define STATE_PLUS	9	/* got ESC +	*/
-#define STATE_DCS	10	/* got ESC P	*/
-#define STATE_SCA	11	/* got ESC <Ps> " */
-#define STATE_STR	12	/* got ESC !	*/
-#define STATE_MINUS	13	/* got ESC -	*/
-#define STATE_DOT	14	/* got ESC .	*/
-#define STATE_SLASH	15	/* got ESC /	*/
+#define STATE_BLANK	2	/* got ESC space*/
+#define STATE_HASH	3	/* got ESC #	*/
+#define STATE_BROPN	4	/* got ESC (	*/
+#define STATE_BRCLO	5	/* got ESC )	*/
+#define STATE_CSI	6	/* got ESC [	*/
+#define STATE_CSIQM	7	/* got ESC [ ?	*/
+#define STATE_AMPSND	8	/* got ESC &	*/
+#define STATE_STAR	9	/* got ESC *	*/
+#define STATE_PLUS	10	/* got ESC +	*/
+#define STATE_DCS	11	/* got ESC P	*/
+#define STATE_DQUOTE	12	/* got ESC <Ps> " */
+#define STATE_STR	13	/* got ESC !	*/
+#define STATE_MINUS	14	/* got ESC -	*/
+#define STATE_DOT	15	/* got ESC .	*/
+#define STATE_SLASH	16	/* got ESC /	*/
 
 /* for storing escape sequence parameters */
 
@@ -1024,6 +740,12 @@ in the config file"
 #define SYS_FKL		0	/* in hp mode, sys-fkls are active */
 #define USR_FKL		1	/* in hp mode, user-fkls are active */
 
+/* arguments to async_update() */
+
+#define UPDATE_START	0	/* do cursor update and requeue */
+#define UPDATE_STOP	1	/* suspend cursor updates */
+#define UPDATE_KERN	2	/* do cursor updates for kernel output */
+
 /* variables */
 
 #ifdef EXTERN
@@ -1040,13 +762,29 @@ EXTERN	u_short	kern_attr;		/* kernel messages char attributes */
 EXTERN	u_short	user_attr;		/* character attributes */
 
 #if !PCVT_EMU_MOUSE
-#if !PCVT_NETBSD
+
+#if PCVT_NETBSD > 100
+/* nothing */
+#elif PCVT_NETBSD
+EXTERN struct tty *pc_tty[PCVT_NSCREENS];
+#elif !(PCVT_FREEBSD > 110 && PCVT_FREEBSD < 200)
 EXTERN struct tty pccons[PCVT_NSCREENS];
+#else
+EXTERN struct tty *pccons[PCVT_NSCREENS];
 #endif /* PCVT_NETBSD */
+
 #else /* PCVT_EMU_MOUSE */
-#if !PCVT_NETBSD
+
+#if PCVT_NETBSD > 100
+/* nothing */
+#elif PCVT_NETBSD
+EXTERN struct tty *pc_tty[PCVT_NSCREENS + 1];
+#elif !(PCVT_FREEBSD > 110 && PCVT_FREEBSD < 200)
 EXTERN struct tty pccons[PCVT_NSCREENS + 1];
+#else
+EXTERN struct tty *pccons[PCVT_NSCREENS + 1];
 #endif
+
 #endif /* PCVT_EMU_MOUSE */
 
 struct sixels {
@@ -1076,30 +814,26 @@ typedef struct video_state {
 	u_char	bell_on;		/* flag, bell enabled */
 	u_char	sevenbit;		/* flag, data path 7 bits wide */
 	u_char	dis_fnc;		/* flag, display functions enable */
-	u_char	transparent;		/* flag, make path temp transparent
-					 * for ctrls */
+	u_char	transparent;		/* flag, mk path tmp trnsprnt for ctls*/
+	u_char	C1_ctls;		/* flag, process C1 ctls */
 	u_char	scrr_beg;		/* scrolling region, begin */
 	u_char	scrr_len;		/* scrolling region, length */
 	u_char	scrr_end;		/* scrolling region, end */
-	u_char	screen_rows;		/* screen size, length (minus status
-					 * lines) */
+	u_char	screen_rows;		/* screen size, length - status lines */
 	u_char	screen_rowsize; 	/* screen size, length */
 	u_char	vga_charset;		/* VGA character set value */
-	u_char	lastchar;		/* flag, vt100 behaviour of last char
-					 * on line */
-	u_char	lastrow;		/* save row, vt100 behaviour of last
-					 * char on line */
+	u_char	lastchar;		/* flag, vt100 behaviour of last char */
+	u_char	lastrow;		/* save row, --------- " -----------  */
 	u_char	*report_chars;		/* ptr, status reports from terminal */
-	u_char	report_count;		/* count, -"- */
+	u_char	report_count;		/* count, ----------- " ------------ */
 	u_char	state;			/* escape sequence state machine */
 	u_char	m_awm;			/* flag, vt100 mode, auto wrap */
 	u_char	m_om;			/* flag, vt100 mode, origin mode */
-	u_char	sc_flag;		/* flag, vt100 mode, saved parms
-					 * valid */
+	u_char	sc_flag;		/* flag, vt100 mode,saved parms valid */
 	u_char	sc_row;			/* saved row */
 	u_char	sc_col;			/* saved col */
 	u_short sc_cur_offset;		/* saved cursor addr offset */
-	u_short	sc_attr;		/* saved attributes */	
+	u_short	sc_attr;		/* saved attributes */
 	u_char	sc_vtsgr;		/* saved sgr configuration */
 	u_char	sc_awm;			/* saved auto wrap mode */
 	u_char	sc_om;			/* saved origin mode */
@@ -1108,12 +842,11 @@ typedef struct video_state {
 	u_short	*sc_G2;			/* save G2 ptr */
 	u_short	*sc_G3;			/* save G3 ptr */
 	u_short	*sc_GL;			/* save GL ptr */
-	u_short	*sc_GR;			/* save GR ptr */	
+	u_short	*sc_GR;			/* save GR ptr */
 	u_char	sc_sel;			/* selective erase state */
 	u_char	ufkl[8][17];		/* user fkey-labels */
 	u_char	sfkl[8][17];		/* system fkey-labels */
-	u_char	labels_on;		/* display fkey labels and status
-					 * line on/off */
+	u_char	labels_on;		/* display fkey labels etc. on/off */
 	u_char	which_fkl;		/* which fkey labels are active */
 	char	tab_stops[MAXTAB]; 	/* table of active tab stops */
 	u_char	parmi;			/* parameter index */
@@ -1122,7 +855,7 @@ typedef struct video_state {
 	u_char	attribute;		/* attribute normal, tx only, local */
 	u_char	key;			/* fkey label no */
 	u_char	l_len;			/* buffer length's */
-	u_char	s_len;	
+	u_char	s_len;
 	u_char	m_len;
 	u_char	i;			/* help (got short of names ...) */
 	u_char	l_buf[MAX_LABEL+1]; 	/* buffers */
@@ -1153,8 +886,7 @@ typedef struct video_state {
 	u_short *GR;			/* ptr to current GR conversion table*/
 	u_short *G0;			/* ptr to current G0 conversion table*/
 	u_short *G1;			/* ptr to current G1 conversion table*/
-	u_char force24;			/* force 24 lines in DEC 25 and HP 28
-					 * lines */
+	u_char force24;			/* force 24 lines in DEC 25 and HP 28*/
 	u_short *G2;			/* ptr to current G2 conversion table*/
 	u_short *G3;			/* ptr to current G3 conversion table*/
 	u_char	dld_id[DSCS_LENGTH+1];	/* soft character set id */
@@ -1171,23 +903,25 @@ typedef struct video_state {
 	u_char	caps_lock;		/* caps lock active */
 	u_char	shift_lock;		/* shiftlock flag (virtual ..) */
 	u_char	num_lock;		/* num lock, true = keypad num mode */
-	
-#if PCVT_USL_VT_COMPAT			/* SysV compatibility :-( */
-	struct vt_mode smode;
-	struct proc *proc;
-	pid_t pid;
-	unsigned vt_status;
-	int kbd_state;
+	u_char	abs_write;		/* write outside of scroll region */
+	struct vt_mode smode;		/* screen mode */
+	struct proc *proc;		/* current process */
+	pid_t	pid;			/* current process id */
+	unsigned vt_status;		/* state of the vt */
+					/*  becoming active */
+	int	kbd_state;		/* keyboard raw or translated */
+} video_state;
+
+EXTERN video_state vs[PCVT_NSCREENS];	/* parameters for screens */
+
+/* possible states for video_state.vt_status: */
+
 #define	VT_WAIT_REL 1			/* wait till process released vt */
 #define VT_WAIT_ACK 2			/* wait till process ack vt acquire */
 #define VT_GRAFX    4			/* vt runs graphics mode */
 #define VT_WAIT_ACT 8			/* a process is sleeping on this vt */
-					/*  becoming active */
-#endif /* PCVT_USL_VT_COMPAT */
 
-} video_state;
-
-EXTERN video_state vs[PCVT_NSCREENS];	/* parameters for screens */
+/* struct describing one slot in the font ram */
 
 struct vga_char_state {
 	int	loaded;		/* Whether a font is loaded here */
@@ -1215,19 +949,27 @@ struct mousestat {
 
 #if PCVT_NETBSD > 9
 
+#if PCVT_NETBSD > 101
 struct vt_softc {
 	struct	device sc_dev;
 	void	*sc_ih;
 };
+#endif /* PCVT_NETBSD > 101 */
 
-int pcprobe (struct device *, void *, void *);
-void pcattach (struct device *, struct device *, void *);
+int pcprobe ();
+void pcattach ();
 
+#if PCVT_NETBSD > 101
 struct cfdriver vtcd = {
 	NULL, "vt", pcprobe, pcattach, DV_TTY, sizeof(struct vt_softc)
 };
+#else /* !PCVT_NETBSD > 101 */
+struct cfdriver vtcd = {
+	NULL, "vt", pcprobe, pcattach, DV_TTY, sizeof(struct device)
+};
+#endif /* PCVT_NETBSD > 101 */
 
-#else
+#else /* !PCVT_NETBSD > 9 */
 
 int pcprobe ( struct isa_device *dev );
 int pcattach ( struct isa_device *dev );
@@ -1250,10 +992,18 @@ u_char bgansitopc[] = {			/* background ANSI color -> pc */
 
 #if !PCVT_NETBSD
 u_short *Crtat	=	(u_short *)MONO_BUF;	/* screen start address */
+#if !(PCVT_FREEBSD > 110 && PCVT_FREEBSD < 200)
 struct tty *pcconsp =	&pccons[0];		/* ptr to current device */
+#else /* PCVT_FREEBSD > 110 */
+struct tty *pcconsp;
+#endif /* !(PCVT_FREEBSD > 110) */
 #else
-u_short *Crtat;			/* screen start address */
 struct tty *pcconsp;		/* ptr to current device, see pcattach() */
+
+#if PCVT_NETBSD > 101
+u_short *Crtat;			/* screen start address */
+#endif /* PCVT_NETBSD > 101 */
+
 #endif /* PCVT_NETBSD */
 
 #if PCVT_EMU_MOUSE
@@ -1263,13 +1013,11 @@ struct mousedefs	mousedef = {0x3b, 0x3c, 0x3d, 0,     250000};
 
 video_state *vsp 		= &vs[0]; /* ptr to current screen parms */
 
-#if PCVT_USL_VT_COMPAT
 int	vt_switch_pending	= 0; 		/* if > 0, a vt switch is */
-#endif /* PCVT_USL_VT_COMPAT */			/* pending; contains the # */
 						/* of the old vt + 1 */
-
 u_int	addr_6845		= MONO_BASE;	/* crtc base addr */
 u_char	do_initialization	= 1;		/* we have to init ourselves */
+u_char	pcvt_is_console		= 0;		/* until we know it */
 u_char 	shift_down 		= 0;		/* shift key down flag */
 u_char	ctrl_down		= 0; 		/* ctrl key down flag */
 u_char	meta_down		= 0; 		/* alt key down flag */
@@ -1303,9 +1051,6 @@ u_char	scrnsv_active		= 0;		/* active flag */
 
 #ifdef XSERVER
 unsigned scrnsv_timeout		= 0;		/* initially off */
-#if !PCVT_USL_VT_COMPAT
-u_char pcvt_xmode		= 0;		/* display is grafx */
-#endif /* PCVT_USL_VT_COMPAT */
 #endif /* XSERVER */
 
 #if PCVT_BACKUP_FONTS
@@ -1397,14 +1142,12 @@ extern struct mousestat mouse;
 extern struct mousedefs mousedef;
 #endif /* PCVT_EMU_MOUSE */
 
-#if PCVT_USL_VT_COMPAT
 extern int		vt_switch_pending;
-#endif /* PCVT_USL_VT_COMPAT */
-
 extern u_int		addr_6845;
 extern u_short		*Crtat;
 extern struct isa_driver vtdriver;
 extern u_char		do_initialization;
+extern u_char		pcvt_is_console;
 extern u_char		bgansitopc[];
 extern u_char		fgansitopc[];
 extern u_char 		shift_down;
@@ -1443,16 +1186,13 @@ extern u_char		sgr_tab_imono[];
 
 #ifdef XSERVER
 extern unsigned		scrnsv_timeout;
-extern u_char		pcvt_xmode;
 #endif /* XSERVER */
 
 #if PCVT_BACKUP_FONTS
 extern u_char		*saved_charsets[NVGAFONTS];
 #endif /* PCVT_BACKUP_FONTS */
 
-
 #endif	/* WAS_EXTERN */
-
 
 /*
  * FreeBSD > 1.0.2 cleaned up the kernel definitions (with the aim of
@@ -1465,49 +1205,95 @@ extern u_char		*saved_charsets[NVGAFONTS];
  * be, regardless of its actual promotion to "int".
  */
 
-#define Dev_t int
-#define U_short int
-#define U_char int
 
+#define Dev_t	int
+#define U_short	int
+#define U_char	int
+
+/*
+ * In FreeBSD >= 2.0, dev_t has type `unsigned long', so promoting it
+ * doesn't cause any problems in prototypes.
+ */
+
+#if PCVT_FREEBSD >= 200
+#undef Dev_t
+#define Dev_t	dev_t
+#endif
+
+/* in FreeBSD > 102 arguments for timeout()/untimeout() are a special type */
+
+#if PCVT_FREEBSD > 102
+#define	TIMEOUT_FUNC_T	timeout_func_t
+#else
+#define	TIMEOUT_FUNC_T	void *
+#endif
+
+#if !PCVT_FREEBSD || (PCVT_FREEBSD < 210)
 extern void bcopyb(void *from, void *to, u_int length);
+#endif
+
+#if !PCVT_FREEBSD || (PCVT_FREEBSD < 200)
 extern void fillw(U_short value, void *addr, u_int length);
+#endif
 
 int	pcopen ( Dev_t dev, int flag, int mode, struct proc *p );
 int	pcclose ( Dev_t dev, int flag, int mode, struct proc *p );
 int	pcread ( Dev_t dev, struct uio *uio, int flag );
 int	pcwrite ( Dev_t dev, struct uio *uio, int flag );
+int	pcioctl ( Dev_t dev, int cmd, caddr_t data, int flag, struct proc *p );
+int	pcmmap ( Dev_t dev, int offset, int nprot );
+#if PCVT_FREEBSD > 205
+struct tty *pcdevtotty ( Dev_t dev );
+#endif /* PCVT_FREEBSD > 205 */
+
+#if PCVT_NETBSD
+#if PCVT_NETBSD > 101
 struct tty *
 	pctty ( Dev_t dev );
-int	pcioctl ( Dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p );
-int	pcmmap ( Dev_t dev, int offset, int nprot );
-int	pcintr ( void * );
-int	pcparam ( struct tty *tp, struct termios *t );
+int	pcintr ( void *arg);
 void	pccnprobe ( struct consdev *cp );
 void	pccninit ( struct consdev *cp );
 void	pccnputc ( Dev_t dev, U_char c );
-int	pccngetc ( Dev_t dev );
-
-#if PCVT_NETBSD
-void	pcstart ( struct tty *tp );
 #else
-void	pcstart ( struct tty *tp );
-void	consinit ( void );
-#endif /*  PCVT_NETBSD */
+int	pcrint ( void );
+int	pccnprobe ( struct consdev *cp );
+int	pccninit ( struct consdev *cp );
+int	pccnputc ( Dev_t dev, U_char c );
+#endif
+int	pccngetc ( Dev_t dev );
+#endif /* PCVT_NETBSD */
 
-#if PCVT_USL_VT_COMPAT
-void	switch_screen ( int n, int dontsave );
-int	usl_vt_ioctl (Dev_t dev, u_long cmd, caddr_t data, int flag,
-		      struct proc *);
+int	pcparam ( struct tty *tp, struct termios *t );
+void	pcstart ( struct tty *tp );
+void	pcstop ( struct tty *tp, int flag );
+
+#if PCVT_FREEBSD
+/*
+ * In FreeBSD > 2.0.6, driver console functions are declared in i386/cons.h
+ * and some return void, so don't declare them here.
+ */
+#if PCVT_FREEBSD <= 205
+int	pccnprobe ( struct consdev *cp );
+int	pccninit ( struct consdev *cp );
+int	pccngetc ( Dev_t dev );
+int	pccncheckc ( Dev_t dev );
+int	pccnputc ( Dev_t dev, U_char c );
+#endif
+
+# if PCVT_FREEBSD < 200
+void	consinit ( void );
+# endif
+#endif /* PCVT_FREEBSD */
+
+void	switch_screen ( int n, int oldgrafx, int newgrafx );
+int	usl_vt_ioctl (Dev_t dev,int cmd,caddr_t data,int flag,struct proc *);
 int	vt_activate ( int newscreen );
-void	kbd_setmode(int mode);
 int	vgapage ( int n );
 void	get_usl_keymap( keymap_t *map );
-#else
-void	vgapage ( int n );
-#endif /* PCVT_USL_VT_COMPAT */
+void	reset_usl_modes (struct video_state *vsx);
 
 #if PCVT_EMU_MOUSE
-int mouse_ioctl ( Dev_t dev, u_long cmd, caddr_t data );
+int	mouse_ioctl ( Dev_t dev, int cmd, caddr_t data );
 #endif /*  PCVT_EMU_MOUSE */
 
 #if PCVT_SCREENSAVER
@@ -1522,26 +1308,25 @@ void 	pcvt_set_scrnsv_tmo ( int );
 void	vga_move_charset ( unsigned n, unsigned char *b, int save_it);
 #endif /* XSERVER */
 
-void	async_update ( void *arg );
+void	async_update ( int arg );
 void	clr_parms ( struct video_state *svsp );
 void	cons_highlight ( void );
 void	cons_normal ( void );
-void	dprintf ( unsigned flgs, const char *fmt, ... );
 int	egavga_test ( void );
 void	fkl_off ( struct video_state *svsp );
 void	fkl_on ( struct video_state *svsp );
+struct tty *get_pccons ( Dev_t dev );
 void	init_sfkl ( struct video_state *svsp );
 void	init_ufkl ( struct video_state *svsp );
 int	kbd_cmd ( int val );
 void	kbd_code_init ( void );
 void	kbd_code_init1 ( void );
-int	kbdioctl ( Dev_t dev, u_long cmd, caddr_t data, int flag );
+void	kbd_setmode(int mode);
+int	kbdioctl ( Dev_t dev, int cmd, caddr_t data, int flag );
 void	loadchar ( int fontset, int character, int char_scanlines,
 		   u_char *char_table );
-#if PCVT_NEEDPG
-int	pg ( char *p, int q, int r, int s, int t, int u, int v,
-	     int w, int x, int y, int z );
-#endif
+void	mda2egaorvga ( void );
+void	roll_up ( struct video_state *svsp, int n );
 void	select_vga_charset ( int vga_charset );
 void	set_2ndcharset ( void );
 void	set_charset ( struct video_state *svsp, int curvgacs );
@@ -1559,7 +1344,7 @@ void	toggl_bell ( struct video_state *svsp );
 void	toggl_columns ( struct video_state *svsp );
 void	toggl_dspf ( struct video_state *svsp );
 void	toggl_sevenbit ( struct video_state *svsp );
-struct tty *get_pccons ( Dev_t dev );
+void 	update_hp ( struct video_state *svsp );
 void	update_led ( void );
 void	vga10_vga10 ( u_char *invga, u_char *outvga );
 void	vga10_vga14 ( u_char *invga, u_char *outvga );
@@ -1571,7 +1356,7 @@ void	vga_screen_off ( void );
 void	vga_screen_on ( void );
 char   *vga_string ( int number );
 int	vga_test ( void );
-int	vgaioctl ( Dev_t dev, u_long cmd, caddr_t data, int flag );
+int	vgaioctl ( Dev_t dev, int cmd, caddr_t data, int flag );
 void	vgapaletteio ( unsigned idx, struct rgb *val, int writeit );
 void	vt_aln ( struct video_state *svsp );
 void	vt_clearudk ( struct video_state *svsp );
@@ -1579,7 +1364,6 @@ void	vt_clreol ( struct video_state *svsp );
 void	vt_clreos ( struct video_state *svsp );
 void	vt_clrtab ( struct video_state *svsp );
 int	vt_col ( struct video_state *svsp, int cols );
-void	vt_coldinit ( void );
 void	vt_coldmalloc ( void );
 void	vt_cub ( struct video_state *svsp );
 void	vt_cud ( struct video_state *svsp );
@@ -1609,6 +1393,7 @@ void	vt_reset_dec_priv_qm ( struct video_state *svsp );
 void	vt_ri ( struct video_state *svsp );
 void	vt_ris ( struct video_state *svsp );
 void	vt_sc ( struct video_state *svsp );
+void	vt_scl ( struct video_state *svsp );
 void	vt_sca ( struct video_state *svsp );
 void	vt_sd ( struct video_state *svsp );
 void	vt_sed ( struct video_state *svsp );
@@ -1621,5 +1406,57 @@ void	vt_str ( struct video_state *svsp );
 void	vt_su ( struct video_state *svsp );
 void	vt_tst ( struct video_state *svsp );
 void	vt_udk ( struct video_state *svsp );
+void	toggl_24l ( struct video_state *svsp );
+
+#ifdef PCVT_INCLUDE_VT_SELATTR
+
+#define INT_BITS	(sizeof(unsigned int) * 8)
+#define INT_INDEX(n)	((n) / INT_BITS)
+#define BIT_INDEX(n)	((n) % INT_BITS)
+
+/*---------------------------------------------------------------------------*
+ *	set selective attribute if appropriate
+ *---------------------------------------------------------------------------*/
+static __inline void vt_selattr(struct video_state *svsp)
+{
+	int i;
+
+	i = (svsp->Crtat + svsp->cur_offset) - svsp->Crtat;
+
+	if(svsp->selchar)
+		svsp->decsca[INT_INDEX(i)] |=  (1 << BIT_INDEX(i));
+	else
+		svsp->decsca[INT_INDEX(i)] &= ~(1 << BIT_INDEX(i));
+}
+
+#endif /* PCVT_INCLUDE_VT_SELATTR */
+
+
+/*---------------------------------------------------------------------------*
+ *	produce 7 us delay accessing the keyboard controller
+ *---------------------------------------------------------------------------*/
+
+#if PCVT_PORTIO_DELAY
+				/* use multiple dummy accesses to port    */
+				/* 0x84 to produce keyboard controller    */
+				/* access delays                          */
+#define PCVT_KBD_DELAY()          \
+	{ u_char x = inb(0x84); } \
+	{ u_char x = inb(0x84); } \
+	{ u_char x = inb(0x84); } \
+	{ u_char x = inb(0x84); } \
+	{ u_char x = inb(0x84); } \
+	{ u_char x = inb(0x84); }
+
+#else /* PCVT_PORTIO_DELAY */
+				/* use system supplied delay function for */
+				/* producing delays for accesssing the    */
+				/* keyboard controller                    */
+#if PCVT_NETBSD > 9
+#define PCVT_KBD_DELAY()	delay(7)
+#elif PCVT_FREEBSD || (PCVT_NETBSD <= 9)
+#define PCVT_KBD_DELAY()	DELAY(7)
+#endif
+#endif /* PCVT_PORTIO_DELAY */
 
 /*---------------------------------- E O F ----------------------------------*/

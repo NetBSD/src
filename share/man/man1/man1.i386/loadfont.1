@@ -1,6 +1,4 @@
-.\"	$NetBSD: loadfont.1,v 1.2 1994/10/27 04:20:30 cgd Exp $
-.\"
-.\" Copyright (c) 1992,1993,1994 Hellmuth Michaelis
+.\" Copyright (c) 1992, 1995 Hellmuth Michaelis
 .\"
 .\" All rights reserved.
 .\"
@@ -29,19 +27,20 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" @(#)loadfont.1, 3.00, Last Edit-Date: [Mon Jan 10 21:25:01 1994]
+.\" @(#)loadfont.1, 3.31, Last Edit-Date: [Thu Aug 24 10:44:42 1995]
 .\"
-.Dd January 3, 1993
+.Dd August 24, 1995
 .Dt LOADFONT 1
 .Sh NAME
 .Nm loadfont
-.Nd is used to load fonts into EGA or VGA boards for use by the 'pcvt' video
-driver.
+.Nd EGA/VGA fontloader for pcvt video driver.
 .Sh SYNOPSIS
 .Nm loadfont
 .Op Fl c Ar charsetno
+.Op Fl d Ar devicefile
 .Op Fl f Ar fontfilename
 .Op Fl i
+.Op Fl s Ar scanlines
 .Sh DESCRIPTION
 The
 .Nm loadfont
@@ -53,32 +52,35 @@ The options are as follows:
 .It Fl c
 Specifies the slot, the font is to load into. EGA boards have four 
 slots and VGA boards have eight slots available for downloading fonts.
+.It Fl d
+Specifies the devicefile to use.
 .It Fl f
 Specifies the file which contains the font to be downloaded.
 .It Fl i
 Gives information what type(s) of font do currently reside in which slot.
 This is also the default behaviour if no options are specified on the commandline.
+.It Fl s
+Specifies the number of scanlines of the display.
 .El
 .Pp
 This utility is used only on EGA and VGA boards, as MDA, HCG and CGA boards
 do not have downloadable charactersets available.
 .Sh FILES
-Unless otherwise specified in the Makefile, the following fontfiles are
-available for the pcvt 2.0 distribution:
+The following fontfiles are available in the pcvt distribution:
 
 .nf
-/usr/share/misc/vgafonts/vt220l.808:	8x8  IBM II font
-/usr/share/misc/vgafonts/vt220h.808:	8x8  Extension font
-/usr/share/misc/vgafonts/vt220l.810:	8x10 IBM II font
-/usr/share/misc/vgafonts/vt220h.810:	8x10 Extension font
-/usr/share/misc/vgafonts/vt220l.814:	8x14 IBM II font
-/usr/share/misc/vgafonts/vt220h.814:	8x14 Extension font
-/usr/share/misc/vgafonts/vt220l.816:	8x16 IBM II font
-/usr/share/misc/vgafonts/vt220h.816:	8x16 Extension font
+/usr/share/misc/pcvtfonts/vt220l.808:	8x8  IBM II font
+/usr/share/misc/pcvtfonts/vt220h.808:	8x8  Extension font
+/usr/share/misc/pcvtfonts/vt220l.810:	8x10 IBM II font
+/usr/share/misc/pcvtfonts/vt220h.810:	8x10 Extension font
+/usr/share/misc/pcvtfonts/vt220l.814:	8x14 IBM II font
+/usr/share/misc/pcvtfonts/vt220h.814:	8x14 Extension font
+/usr/share/misc/pcvtfonts/vt220l.816:	8x16 IBM II font
+/usr/share/misc/pcvtfonts/vt220h.816:	8x16 Extension font
 .fi
 .Sh EXAMPLES
 The command
-.Dq Li loadfont -c0 -f/usr/share/misc/vgafonts/vt220l.816
+.Dq Li loadfont -c0 -f/usr/share/misc/pcvtfonts/vt220l.816
 loads a 8x16 font containing the standard IBM characterset II into font slot
 0 on a VGA or EGA board.
 .Sh BUGS

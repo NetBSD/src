@@ -1,25 +1,9 @@
-#	$NetBSD: Makefile,v 1.2 1994/10/27 04:19:33 cgd Exp $
+SUBDIR= 	keycap cursor fontedit fonts kcon loadfont scon \
+		userkeys vttest ispcvt mcon pcvtdoc
 
-.if !exists(Makefile.inc)
-
-error:
-	@echo
-	@echo "                      You MUST link/copy"
-	@echo
-	@echo "       Makefile.inc.NetBSD    or   Makefile.inc.FreeBSD"
-	@echo
-	@echo "             to Makefile.inc before you can proceed !"
-	@echo
-
-all:		error
-clean:		error
-cleandir:	error
-depend:		error
-install:	error
-
-.else
-SUBDIR= keycap cursor fontedit fonts kcon loadfont scon \
-	userkeys vttest ispcvt mcon demo
+.if make(clean) || make(cleandir) || make(obj)
+SUBDIR+=	vgaio kbdio set2061
+SUBDIR+=	demo
+.endif
 
 .include <bsd.subdir.mk>
-.endif
