@@ -1,4 +1,4 @@
-/* $NetBSD: user.c,v 1.35 2000/12/23 16:29:35 wiz Exp $ */
+/* $NetBSD: user.c,v 1.36 2000/12/23 17:19:48 wiz Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -35,7 +35,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1999 \
 	        The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: user.c,v 1.35 2000/12/23 16:29:35 wiz Exp $");
+__RCSID("$NetBSD: user.c,v 1.36 2000/12/23 17:19:48 wiz Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1006,6 +1006,7 @@ moduser(char *login, char *newlogin, user_t *up)
 	struct group	*grp;
 	struct tm	tm;
 	const char	*homedir;
+	char		newdir[MaxFileNameLen];
 	size_t		colonc, len, loginc;
 	FILE		*master;
 	char		*buf, *colon, *line;
@@ -1047,6 +1048,15 @@ moduser(char *login, char *newlogin, user_t *up)
 				errx(EXIT_FAILURE, "already a `%s' user", newlogin);
 			}
 			pwp->pw_name = newlogin;
+
+			/*
+			 * Provide a new directory name in case the
+			 * home directory is to be moved.
+			 */
+			if (up->u_flags & F_MKDIR) {
+				snprintf(newdir, sizeof(newdir), "%s/%s", up->u_basedir, newlogin);
+				pwp->pw_dir = newdir;
+			}
 		}
 		if (up->u_flags & F_PASSWORD) {
 			if (up->u_password != NULL && strlen(up->u_password) == PasswordLength)
@@ -1442,8 +1452,9 @@ usermod(int argc, char **argv)
 #endif
 		}
 	}
-	if ((u.u_flags & F_MKDIR) && !(u.u_flags & F_HOMEDIR)) {
-		warnx("option 'm' useless without 'd' -- ignored");
+	if ((u.u_flags & F_MKDIR) && !(u.u_flags & F_HOMEDIR) &&
+	    !(u.u_flags & F_USERNAME)) {
+		warnx("option 'm' useless without 'd' or 'l' -- ignored");
 		u.u_flags &= !F_MKDIR;
 	}
 
