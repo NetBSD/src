@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppvar.h,v 1.4 2002/03/02 16:23:42 martin Exp $	*/
+/*	$NetBSD: if_spppvar.h,v 1.5 2002/07/28 19:54:47 christos Exp $	*/
 
 /*
  * Defines for synchronous PPP/Cisco link level subroutines.
@@ -63,6 +63,8 @@ struct sauth {
 	u_short	flags;
 	char	*name;			/* system identification name */
 	char	*secret;		/* secret password */
+	u_char	name_len;		/* no need to have a bigger size */
+	u_char	secret_len;		/* because proto gives size in a byte */
 	char	challenge[16];		/* random challenge [don't change size! it's realy hardcoded!] */
 };
 
