@@ -1,4 +1,4 @@
-#	$NetBSD: README,v 1.4 2001/07/22 13:34:08 wiz Exp $
+#	$NetBSD: README,v 1.5 2001/12/04 17:56:36 wiz Exp $
 
 			 IEEE handler README
 			 -------------------
@@ -249,7 +249,7 @@ Notes:
 
 The integration of his FPU-handler into NetBSD/pc532 was really
 straightforward. His FPU-handler should be in sys/arch/pc532/fpu in
-any NetBSD version newer then 960415. This piece of code is from
+any NetBSD version newer than 960415. This piece of code is from
 sys/arch/pc532/pc532/trap.c:trap
 
 	case T_SLAVE | T_USER: {

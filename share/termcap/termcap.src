@@ -1,4 +1,4 @@
-#	$NetBSD: termcap.src,v 1.64 2001/01/14 19:10:59 jdc Exp $
+#	$NetBSD: termcap.src,v 1.65 2001/12/04 17:56:34 wiz Exp $
 #
 ######## TERMINAL TYPE DESCRIPTIONS SOURCE FILE
 #
@@ -11433,7 +11433,7 @@ masscomp2|masscomp large screen version 2:\
 # respectively, to be able to restore them when color changes
 # (because any color change turns off ALL attributes)
 # 3. :md: and :mr: sequences alternate modes,
-# rather then simply  entering them.  Thus we have to check the
+# rather than simply  entering them.  Thus we have to check the
 # static register B and H to determine the status, before sending the 
 # escape sequence.
 # 4. :me: now must set the status of all 3 register (A,B,H) to zero

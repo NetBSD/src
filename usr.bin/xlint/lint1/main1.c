@@ -1,4 +1,4 @@
-/*	$NetBSD: main1.c,v 1.8 2001/05/28 12:40:37 lukem Exp $	*/
+/*	$NetBSD: main1.c,v 1.9 2001/12/04 17:56:34 wiz Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main1.c,v 1.8 2001/05/28 12:40:37 lukem Exp $");
+__RCSID("$NetBSD: main1.c,v 1.9 2001/12/04 17:56:34 wiz Exp $");
 #endif
 
 #define FD_SETSIZE 512	/* more than the total number of error messages */
@@ -55,7 +55,7 @@ int	yflag;
  * Print warnings if an assignment of an integertype to another integertype
  * causes an implizit narrowing conversion. If aflag is 1, these warnings
  * are printed only if the source type is at least as wide as long. If aflag
- * is greather then 1, they are always printed.
+ * is greater than 1, they are always printed.
  */
 int	aflag;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_fg.c,v 1.1.1.1 2000/03/29 12:38:53 simonb Exp $	*/
+/*	$NetBSD: refclock_fg.c,v 1.2 2001/12/04 17:56:31 wiz Exp $	*/
 
 /*
  * refclock_fg - clock driver for the Forum Graphic GPS datating station
@@ -331,7 +331,7 @@ fg_receive(
         if (peer->stratum <= 1)
                 peer->refid = pp->refid;
         pp->disp =  (10e-6);
-	pp->lastrec = rbufp->recv_time; /* Is it better then get_systime()? */
+	pp->lastrec = rbufp->recv_time; /* Is it better than get_systime()? */
 	/* pp->leap = LEAP_NOWARNING; */
 
         /*

@@ -35,7 +35,7 @@
  *	i4b daemon - charging rates description file handling
  *	-----------------------------------------------------
  *
- *	$Id: rates.c,v 1.1.1.1 2001/01/06 13:00:24 martin Exp $ 
+ *	$Id: rates.c,v 1.2 2001/12/04 17:56:34 wiz Exp $ 
  *
  * $FreeBSD$
  *
@@ -306,7 +306,7 @@ readrates(char *filename)
 
 			if( rt->end_time <= rt->start_time )
 				{
-				snprintf(error, sizeof(error), "rates: end_time must be greater then start_time %d", line);
+				snprintf(error, sizeof(error), "rates: end_time must be greater than start_time %d", line);
 				goto rate_error;
 				}
 

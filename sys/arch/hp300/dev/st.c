@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.28 2000/05/27 04:52:28 thorpej Exp $	*/
+/*	$NetBSD: st.c,v 1.29 2001/12/04 17:56:35 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -167,7 +167,7 @@ int st_dmaoddretry = 0;
  * From adb can have access to fixed vs. variable length modes.
  * Use 0x400 for 1k (best capacity) fixed length records.
  * In st_open, if minor bit 4 set then 1k records are used.
- * If st_exblken is set to anything other then 0 we are in fixed length mode.
+ * If st_exblken is set to anything other than 0 we are in fixed length mode.
  * Minor bit 5 requests 1K fixed-length, overriding any setting of st_exblklen.
  */
 int st_exblklen = 0;

@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: scan.l,v 1.19 2001/05/28 12:40:37 lukem Exp $ */
+/* $NetBSD: scan.l,v 1.20 2001/12/04 17:56:34 wiz Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: scan.l,v 1.19 2001/05/28 12:40:37 lukem Exp $");
+__RCSID("$NetBSD: scan.l,v 1.20 2001/12/04 17:56:34 wiz Exp $");
 #endif
 
 #include <stdlib.h>
@@ -644,7 +644,7 @@ xsign(quad_t q, tspec_t t, int len)
  * representation. Type and value are returned in yylval. fcon()
  * (and yylex()) returns T_CON.
  * XXX Currently it is not possible to convert constants of type
- * long double which are greater then DBL_MAX.
+ * long double which are greater than DBL_MAX.
  */
 static int
 fcon(void)
