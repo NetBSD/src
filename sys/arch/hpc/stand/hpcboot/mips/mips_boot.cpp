@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: mips_boot.cpp,v 1.4 2001/05/16 08:40:51 enami Exp $	*/
+/* -*-C++-*-	$NetBSD: mips_boot.cpp,v 1.5 2001/06/18 11:31:04 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -101,6 +101,8 @@ MIPSBoot::create()
 			_cons = Console::Instance();
 			DPRINTF((TEXT("use LCD console instead.\n")));
 		}
+	} else {
+		_cons = Console::Instance();
 	}
 
 	// Architercure dependent ops.
