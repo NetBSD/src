@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.11 2003/10/09 20:49:06 matt Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.12 2004/02/17 22:03:52 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.11 2003/10/09 20:49:06 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.12 2004/02/17 22:03:52 matt Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_multiprocessor.h"
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.11 2003/10/09 20:49:06 matt Exp $");
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/malloc.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -767,24 +768,29 @@ struct envsys_basic_info cpu_tau_info[] = {
 void
 cpu_tau_setup(struct cpu_info *ci)
 {
-	struct sysmon_envsys *sme;
+	struct {
+		struct sysmon_envsys sme;
+		struct envsys_tre_data tau_info;
+	} *datap;
 	int error;
 
-	sme = &ci->ci_sysmon;
-	sme->sme_nsensors = 1;
-	sme->sme_envsys_version = 1000;
-	sme->sme_ranges = cpu_tau_ranges;
-	sme->sme_sensor_info = cpu_tau_info;
-	sme->sme_sensor_data = &ci->ci_tau_info;
-	
-	sme->sme_sensor_data->sensor = 0;
-	sme->sme_sensor_data->warnflags = ENVSYS_WARN_OK;
-	sme->sme_sensor_data->validflags = ENVSYS_FVALID|ENVSYS_FCURVALID;
-	sme->sme_cookie = ci;
-	sme->sme_gtredata = cpu_tau_gtredata;
-	sme->sme_streinfo = cpu_tau_streinfo;
+	datap = malloc(sizeof(*datap), M_DEVBUF, M_WAITOK);
 
-	if ((error = sysmon_envsys_register(sme)) != 0)
+	ci->ci_sysmon_cookie = &datap->sme;
+	datap->sme.sme_nsensors = 1;
+	datap->sme.sme_envsys_version = 1000;
+	datap->sme.sme_ranges = cpu_tau_ranges;
+	datap->sme.sme_sensor_info = cpu_tau_info;
+	datap->sme.sme_sensor_data = &datap->tau_info;
+	
+	datap->sme.sme_sensor_data->sensor = 0;
+	datap->sme.sme_sensor_data->warnflags = ENVSYS_WARN_OK;
+	datap->sme.sme_sensor_data->validflags = ENVSYS_FVALID|ENVSYS_FCURVALID;
+	datap->sme.sme_cookie = ci;
+	datap->sme.sme_gtredata = cpu_tau_gtredata;
+	datap->sme.sme_streinfo = cpu_tau_streinfo;
+
+	if ((error = sysmon_envsys_register(&datap->sme)) != 0)
 		aprint_error("%s: unable to register with sysmon (%d)\n",
 		    ci->ci_dev->dv_xname, error);
 }
@@ -792,11 +798,8 @@ cpu_tau_setup(struct cpu_info *ci)
 
 /* Find the temperature of the CPU. */
 int
-cpu_tau_gtredata(sme, tred)
-	 struct sysmon_envsys *sme;
-	 struct envsys_tre_data *tred;
+cpu_tau_gtredata(struct sysmon_envsys *sme, struct envsys_tre_data *tred)
 {
-	struct cpu_info *ci;
 	int i, threshold, count;
 
 	if (tred->sensor != 0) {
@@ -841,19 +844,16 @@ cpu_tau_gtredata(sme, tred)
 	}
 	threshold += 2;
 
-	ci = (struct cpu_info *)sme->sme_cookie;
 	/* Convert the temperature in degrees C to microkelvin */
-	ci->ci_tau_info.cur.data_us = (threshold * 1000000) + 273150000;
+	sme->sme_sensor_data->cur.data_us = (threshold * 1000000) + 273150000;
 	
-	*tred = ci->ci_tau_info;
+	*tred = *sme->sme_sensor_data;
 
 	return 0;
 }
 
 int
-cpu_tau_streinfo(sme, binfo)
-	 struct sysmon_envsys *sme;
-	 struct envsys_basic_info *binfo;
+cpu_tau_streinfo(struct sysmon_envsys *sme, struct envsys_basic_info *binfo)
 {
 
 	/* There is nothing to set here. */
