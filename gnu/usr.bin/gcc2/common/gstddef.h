@@ -1,4 +1,4 @@
-/*	$Id: gstddef.h,v 1.2 1993/08/02 17:34:43 mycroft Exp $ */
+/*	$Id: gstddef.h,v 1.3 1993/12/06 09:50:17 cgd Exp $ */
 
 #ifndef _STDDEF_H
 #ifndef _STDDEF_H_
@@ -21,7 +21,7 @@
 
 /* On 4.3bsd-net2, make sure ansi.h is included, so we have
    one less case to deal with in the following.  */
-#if defined (__BSD_NET2__) || defined (____386BSD____)
+#ifdef __NetBSD__
 #include <machine/ansi.h>
 #endif
 

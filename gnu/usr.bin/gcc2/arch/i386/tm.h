@@ -1,6 +1,6 @@
-/* Configuration for an i386 running 386BSD as the target machine. 
+/* Configuration for an i386 running NetBSD as the target machine. 
 
-	$Id: tm.h,v 1.4 1993/12/05 00:49:43 cgd Exp $
+	$Id: tm.h,v 1.5 1993/12/06 09:49:15 cgd Exp $
 */
 
 /* This is tested by i386gas.h.  */
@@ -12,7 +12,7 @@
 #include "i386/perform.h"
 
 #undef CPP_PREDEFINES
-#define CPP_PREDEFINES "-Di386 -D__NetBSD__ -D__386BSD__ -Dunix"
+#define CPP_PREDEFINES "-Di386 -D__NetBSD__ -Dunix"
 
 /* Like the default, except no -lg.  */
 #define LIB_SPEC "%{!p:%{!pg:-lc}}%{p:-lc_p}%{pg:-lc_p}"
@@ -31,7 +31,7 @@
 #undef WCHAR_TYPE_SIZE
 #define WCHAR_TYPE_SIZE 16
 
-/* 386BSD does have atexit.  */
+/* NetBSD does have atexit.  */
 
 #define HAVE_ATEXIT
 
