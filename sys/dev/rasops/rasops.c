@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops.c,v 1.23 1999/12/02 22:57:13 drochner Exp $	*/
+/*	 $NetBSD: rasops.c,v 1.24 1999/12/04 13:57:35 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.23 1999/12/02 22:57:13 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.24 1999/12/04 13:57:35 drochner Exp $");
 
 #include "opt_rasops.h"
 #include "rasops_glue.h"
@@ -259,11 +259,11 @@ rasops_reconfig(ri, wantrows, wantcols)
 	
 	if (ri->ri_depth < 8 || (ri->ri_flg & RI_FORCEMONO) != 0) {
 		ri->ri_ops.alloc_attr = rasops_alloc_mattr;
-		ri->ri_caps = WSATTR_UNDERLINE | WSATTR_REVERSE;
+		ri->ri_caps = WSSCREEN_UNDERLINE | WSSCREEN_REVERSE;
 	} else {
 		ri->ri_ops.alloc_attr = rasops_alloc_cattr;
-		ri->ri_caps = WSATTR_UNDERLINE | WSATTR_HILIT | 
-		    WSATTR_WSCOLORS | WSATTR_REVERSE;
+		ri->ri_caps = WSSCREEN_UNDERLINE | WSSCREEN_HILIT | 
+		    WSSCREEN_WSCOLORS | WSSCREEN_REVERSE;
 	}
 
 	switch (ri->ri_depth) {
@@ -669,7 +669,8 @@ rasops_unpack_attr(attr, fg, bg, underline)
 	
 	*fg = ((u_int)attr >> 24) & 15;
 	*bg = ((u_int)attr >> 16) & 15;
-	*underline = (u_int)attr & 1;
+	if (underline)
+		*underline = (u_int)attr & 1;
 }
 
 /*
