@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.9 2002/10/02 04:40:09 thorpej Exp $	*/
+/*	$NetBSD: zs.c,v 1.10 2002/12/20 16:23:48 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -63,10 +63,8 @@
 
 #include <news68k/dev/hbvar.h>
 
-int zs_getc __P((void *));
-void zs_putc __P((void *, int));
-
-extern void Debugger __P((void));
+int  zs_getc(void *);
+void zs_putc(void *, int);
 
 /*
  * Some warts needed by z8530tty.c -
@@ -143,19 +141,19 @@ static u_char zs_init_reg[16] = {
  ****************************************************************/
 
 /* Definition of the driver for autoconfig. */
-static int zs_match __P((struct device *, struct cfdata *, void *));
-static void zs_attach __P((struct device *, struct device *, void *));
-static int zs_print __P((void *, const char *name));
+static int  zs_match(struct device *, struct cfdata *, void *);
+static void zs_attach(struct device *, struct device *, void *);
+static int  zs_print(void *, const char *name);
 
 CFATTACH_DECL(zsc, sizeof(struct zsc_softc),
     zs_match, zs_attach, NULL, NULL);
 
 extern struct cfdriver zsc_cd;
 
-static int zshard __P((void *));
-void zssoft __P((void *));
+static int zshard(void *);
+void zssoft(void *);
 #if 0
-static int zs_get_speed __P((struct zs_chanstate *));
+static int zs_get_speed(struct zs_chanstate *);
 #endif
 
 /*
@@ -574,10 +572,10 @@ zs_putc(arg, c)
 
 /*****************************************************************/
 
-static void zscnprobe __P((struct consdev *));
-static void zscninit __P((struct consdev *));
-static int  zscngetc __P((dev_t));
-static void zscnputc __P((dev_t, int));
+static void zscnprobe(struct consdev *);
+static void zscninit(struct consdev *);
+static int  zscngetc(dev_t);
+static void zscnputc(dev_t, int);
 
 struct consdev consdev_zs = {
 	zscnprobe,
