@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.h,v 1.1 2001/06/13 06:01:57 simonb Exp $	*/
+/*	$NetBSD: pci_machdep.h,v 1.2 2002/02/11 17:24:01 kleink Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -76,6 +76,7 @@ const struct evcnt *pci_intr_evcnt(pci_chipset_tag_t, pci_intr_handle_t);
 void		*pci_intr_establish(pci_chipset_tag_t, pci_intr_handle_t,
 		    int, int (*)(void *), void *);
 void		pci_intr_disestablish(pci_chipset_tag_t, void *);
+int		pci_conf_hook(pci_chipset_tag_t, int, int, int, int);
 
 void		pci_machdep_init(void);
 /*
