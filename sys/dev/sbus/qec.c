@@ -1,4 +1,4 @@
-/*	$NetBSD: qec.c,v 1.5 1998/08/29 20:38:38 pk Exp $ */
+/*	$NetBSD: qec.c,v 1.6 1998/08/30 21:25:30 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -110,28 +110,21 @@ qecattach(parent, self, aux)
 	bus_space_handle_t bh;
 	struct bootpath *bp;
 	int error;
-	int nreg;
-	struct rom_reg *rr;
 
 	sc->sc_bustag = sa->sa_bustag;
 	sc->sc_dmatag = sa->sa_dmatag;
 	node = sa->sa_node;
 
-	rr = NULL;
-	if (getpropA(node, "reg", sizeof(struct rom_reg),
-		     &nreg, (void **)&rr) != 0) {
-		printf("%s: cannot get register property\n", self->dv_xname);
-		return;
-	}
-	if (nreg < 2) {
-		printf("%s: only %d register sets\n", self->dv_xname, nreg);
+	if (sa->sa_nreg < 2) {
+		printf("%s: only %d register sets\n",
+			self->dv_xname, sa->sa_nreg);
 		return;
 	}
 
 	if (sbus_bus_map(sa->sa_bustag,
-			 (bus_type_t)rr[0].rr_iospace,
-			 (bus_addr_t)rr[0].rr_paddr,
-			 (bus_size_t)rr[0].rr_len,
+			 sa->sa_reg[0].sbr_slot,
+			 sa->sa_reg[0].sbr_offset,
+			 sa->sa_reg[0].sbr_size,
 			 BUS_SPACE_MAP_LINEAR, 0, &bh) != 0) {
 		printf("%s: attach: cannot map registers\n", self->dv_xname);
 		return;
@@ -144,15 +137,15 @@ qecattach(parent, self, aux)
 	 * and size, so the child driver can pick them up.
 	 */
 	if (sbus_bus_map(sa->sa_bustag,
-			 (bus_type_t)rr[1].rr_iospace,
-			 (bus_addr_t)rr[1].rr_paddr,
-			 (bus_size_t)rr[1].rr_len,
+			 sa->sa_reg[1].sbr_slot,
+			 sa->sa_reg[1].sbr_offset,
+			 sa->sa_reg[1].sbr_size,
 			 BUS_SPACE_MAP_LINEAR, 0, &bh) != 0) {
 		printf("%s: attach: cannot map registers\n", self->dv_xname);
 		return;
 	}
 	sc->sc_buffer = (caddr_t)bh;
-	sc->sc_bufsiz = (bus_size_t)rr[1].rr_len;
+	sc->sc_bufsiz = (bus_size_t)sa->sa_reg[1].sbr_size;
 
 	/*
 	 * Get transfer burst size from PROM
@@ -175,7 +168,7 @@ qecattach(parent, self, aux)
 	/*
 	 * Collect address translations from the OBP.
 	 */
-	error = getpropA(node, "ranges", sizeof(struct sbus_range),
+	error = getprop(node, "ranges", sizeof(struct sbus_range),
 			 &sc->sc_nrange, (void **)&sc->sc_range);
 	switch (error) {
 	case 0:
@@ -214,7 +207,6 @@ qecattach(parent, self, aux)
 		(void)config_found(&sc->sc_dev, (void *)&sa, qecprint);
 		sbus_destroy_attach_args(&sa);
 	}
-	free(rr, M_DEVBUF);
 }
 
 int
