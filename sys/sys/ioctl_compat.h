@@ -1,4 +1,4 @@
-/*	$NetBSD: ioctl_compat.h,v 1.12 2001/11/11 00:00:15 perry Exp $	*/
+/*	$NetBSD: ioctl_compat.h,v 1.13 2002/12/01 22:57:17 matt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -40,11 +40,11 @@
  *	@(#)ioctl_compat.h	8.4 (Berkeley) 1/21/94
  */
 
-#ifndef _SYS_IOCTL_COMPAT_H_
-#define	_SYS_IOCTL_COMPAT_H_
-
 #include <sys/ttychars.h>
 #include <sys/ttydev.h>
+
+#ifndef _SYS_IOCTL_COMPAT_H_
+#define	_SYS_IOCTL_COMPAT_H_
 
 struct tchars {
 	char	t_intrc;	/* interrupt */
