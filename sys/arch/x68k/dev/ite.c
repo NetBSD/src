@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.2.2.1 1996/06/05 18:06:38 oki Exp $	*/
+/*	$NetBSD: ite.c,v 1.2.2.2 1996/07/17 20:59:25 jtc Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -263,7 +263,7 @@ iteon(dev, flag)
 	int unit = UNIT(dev);
 	struct ite_softc *ip = getitesp(unit);
 
-	if (unit < 0 || unit >= NITE || (ip->flags&ITE_ALIVE) == 0)
+	if (unit < 0 || unit >= ite_cd.cd_ndevs || (ip->flags&ITE_ALIVE) == 0)
 		return(ENXIO);
 	/* force ite active, overriding graphics mode */
 	if (flag & 1) {
@@ -294,8 +294,12 @@ iteoff(dev, flag)
 	dev_t dev;
 	int flag;
 {
-	register struct ite_softc *ip = getitesp(dev);
+	int unit = UNIT(dev);
+	register struct ite_softc *ip = getitesp(unit);
 
+	/* XXX check whether when call from grf.c */
+	if (unit < 0 || unit >= ite_cd.cd_ndevs || (ip->flags&ITE_ALIVE) == 0)
+		return;
 	if (flag & 2)
 		ip->flags |= ITE_INGRF;
 
@@ -538,6 +542,11 @@ ite_reinit(dev)
 	dev_t dev;
 {
 	struct ite_softc *ip;
+	int unit = UNIT(dev);
+
+	/* XXX check whether when call from grf.c */
+	if (unit < 0 || unit >= ite_cd.cd_ndevs)
+		return;
 
 	ip = getitesp(dev);
 	ip->flags &= ~ITE_INITED;
