@@ -1,3 +1,4 @@
+/*	$NetBSD: eject.c,v 1.4 1997/10/18 13:38:15 lukem Exp $	*/
 /*
  * Copyright (c) 1995
  *	Matthieu Herrb.  All rights reserved.
@@ -29,6 +30,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: eject.c,v 1.4 1997/10/18 13:38:15 lukem Exp $");
+#endif
 
 /*
  * Eject command
@@ -117,15 +123,24 @@ struct types {
 
 int verbose;
 
+static	void	usage __P((void));
+static	char   *device_by_name __P((char *, int *, char *));
+static	char   *device_by_nickname __P((char *, int *, char *));
+static	void	eject_disk __P((char *));
+static	void	eject_tape __P((char *));
+	int	main __P((int, char **));
+static	void	umount_mounted __P((char *));
+
 /*
  * remind the syntax of the command to the user
  */
 static void
 usage()
 {
-	errx(1, "usage: eject [-n][-f][-t devtype][[-d] raw device | nickname ]");
+	fprintf(stderr,
+	    "usage: eject [-n][-f][-t devtype][[-d] raw device | nickname ]");
+	exit(1);
 	/*NOTREACHED*/
-
 }
 
 
@@ -271,7 +286,7 @@ main(argc, argv)
 	devtype = -1;
 	umount_flag = 1;
 
-	while ((ch = getopt(argc, argv, "d:fnt:v")) != EOF) {
+	while ((ch = getopt(argc, argv, "d:fnt:v")) != -1) {
 		switch (ch) {
 		case 'd':
 			devpath = optarg;
