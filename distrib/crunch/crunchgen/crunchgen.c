@@ -78,6 +78,8 @@ char line[MAXLINELEN];
 char confname[MAXPATHLEN], infilename[MAXPATHLEN];
 char outmkname[MAXPATHLEN], outcfname[MAXPATHLEN], execfname[MAXPATHLEN];
 char tempfname[MAXPATHLEN], cachename[MAXPATHLEN], curfilename[MAXPATHLEN];
+char topdir[MAXPATHLEN];
+char libdir[MAXPATHLEN] = "/usr/lib";
 int linenum = -1;
 int goterror = 0;
 
@@ -114,7 +116,7 @@ int main(int argc, char **argv)
     
     if(argc > 0) pname = argv[0];
 
-    while((optc = getopt(argc, argv, "m:c:e:fq")) != -1) {
+    while((optc = getopt(argc, argv, "m:c:e:fqD:L:")) != -1) {
 	switch(optc) {
 	case 'f':	readcache = 0; break;
 	case 'q':	verbose = 0; break;
@@ -122,6 +124,9 @@ int main(int argc, char **argv)
 	case 'm':	strcpy(outmkname, optarg); break;
 	case 'c':	strcpy(outcfname, optarg); break;
 	case 'e':	strcpy(execfname, optarg); break;
+
+	case 'D':	strcpy(topdir, optarg); break;
+	case 'L':	strcpy(libdir, optarg); break;
 
 	case '?':
 	default:	usage();
@@ -280,13 +285,21 @@ void parse_line(char *line, int *fc, char **fv, int nf)
 void add_srcdirs(int argc, char **argv)
 {
     int i;
+    char tmppath[MAXPATHLEN];
 
     for(i=1;i<argc;i++) {
-	if(is_dir(argv[i]))
-	    add_string(&srcdirs, argv[i]);
+	if (argv[i][0] == '/' || topdir[0] == '\0')
+		strcpy(tmppath, argv[i]);
+	else {
+		strcpy(tmppath, topdir);
+		strcat(tmppath, "/");
+		strcat(tmppath, argv[i]);
+	}
+	if(is_dir(tmppath))
+	    add_string(&srcdirs, tmppath);
 	else {
 	    fprintf(stderr, "%s:%d: `%s' is not a directory, skipping it.\n", 
-		    curfilename, linenum, argv[i]);
+		    curfilename, linenum, tmppath);
 	    goterror = 1;
 	}
     }
@@ -730,6 +743,7 @@ void top_makefile_rules(FILE *outmk)
     prog_t *p;
 
     fprintf(outmk, "LIBS=");
+    fprintf(outmk, "-L%s ", libdir);
     output_strlst(outmk, libs);
 
     fprintf(outmk, "CRUNCHED_OBJS=");
