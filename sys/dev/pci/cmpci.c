@@ -1,4 +1,4 @@
-/*	$NetBSD: cmpci.c,v 1.11 2001/11/13 07:48:41 lukem Exp $	*/
+/*	$NetBSD: cmpci.c,v 1.12 2001/12/27 14:17:04 itohy Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cmpci.c,v 1.11 2001/11/13 07:48:41 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cmpci.c,v 1.12 2001/12/27 14:17:04 itohy Exp $");
 
 #if defined(AUDIO_DEBUG) || defined(DEBUG)
 #define DPRINTF(x) if (cmpcidebug) printf x
@@ -443,7 +443,7 @@ cmpci_attach(parent, self, aux)
 		/*
 		 * CMI8738 defaults are
 		 *  master:	0xe0	(0x00 - 0xf8)
-		 *  wave, DAC:	0xc0	(0x00 - 0xf8)
+		 *  FM, DAC:	0xc0	(0x00 - 0xf8)
 		 *  PC speaker:	0x80	(0x00 - 0xc0)
 		 *  others:	0
 		 */
@@ -1687,7 +1687,7 @@ cmpci_get_port(handle, cp)
 	case CMPCI_MIC_RECVOL:
 		if (cp->un.value.num_channels != 1)
 			return EINVAL;
-		/* fall into */
+		/*FALLTHROUGH*/
 	case CMPCI_DAC_VOL:
 	case CMPCI_FM_VOL:
 	case CMPCI_CD_VOL:
