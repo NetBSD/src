@@ -1,7 +1,7 @@
-/*	$NetBSD: kloader.c,v 1.13 2004/06/12 14:31:49 uch Exp $	*/
+/*	$NetBSD: kloader.c,v 1.1 2004/07/06 13:09:18 uch Exp $	*/
 
 /*-
- * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kloader.c,v 1.13 2004/06/12 14:31:49 uch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kloader.c,v 1.1 2004/07/06 13:09:18 uch Exp $");
 
 #include "debug_kloader.h"
 
@@ -45,21 +45,37 @@ __KERNEL_RCSID(0, "$NetBSD: kloader.c,v 1.13 2004/06/12 14:31:49 uch Exp $");
 #include <sys/vnode.h>
 #include <sys/namei.h>
 #include <sys/fcntl.h>
-#define ELFSIZE	32
+#define	ELFSIZE	32
 #include <sys/exec_elf.h>
 
 #include <uvm/uvm_extern.h>
 
 #include <machine/kloader.h>
 
+#define	PRINTF(fmt, args...)	printf("kloader: " fmt, ##args)
+
 #ifdef KLOADER_DEBUG
-#define DPRINTF_ENABLE
-#define DPRINTF_DEBUG	kloader_debug
-#define DPRINTF_LEVEL	1
+int	kloader_debug = 1;
+#define	DPRINTF(fmt, args...)						\
+	if (kloader_debug)						\
+		printf("%s: " fmt, __FUNCTION__ , ##args)
+#define	_DPRINTF(fmt, args...)						\
+	if (kloader_debug)						\
+		printf(fmt, ##args)
+#define	DPRINTFN(n, fmt, args...)					\
+	if (kloader_debug > (n))					\
+		printf("%s: " fmt, __FUNCTION__ , ##args)
+#define	_DPRINTFN(n, fmt, args...)					\
+	if (kloader_debug > (n))					\
+		printf(fmt, ##args)
+#define	STATIC
+#else
+#define	DPRINTF(fmt, args...)		((void)0)
+#define	_DPRINTF(fmt, args...)		((void)0)
+#define	DPRINTFN(n, fmt, args...)	((void)0)
+#define	_DPRINTFN(n, fmt, args...)	((void)0)
+#define	STATIC	static
 #endif
-#define USE_HPC_DPRINTF
-#define __DPRINTF_EXT
-#include <machine/debug.h>
 
 struct kloader {
 	struct pglist pg_head;
@@ -73,16 +89,14 @@ struct kloader {
 	kloader_bootfunc_t *loader;
 	int setuped;
 	int called;
-
 	struct kloader_ops *ops;
 };
 
-#define BUCKET_SIZE	(PAGE_SIZE - sizeof(struct kloader_page_tag))
-#define KLOADER_PROC	(&proc0)
+#define	BUCKET_SIZE	(PAGE_SIZE - sizeof(struct kloader_page_tag))
+#define	KLOADER_PROC	(&proc0)
 STATIC struct kloader kloader;
 
-#define ROUND4(x)	(((x) + 3) & ~3)
-
+#define	ROUND4(x)	(((x) + 3) & ~3)
 
 STATIC int kloader_load(void);
 
@@ -100,14 +114,11 @@ STATIC int kloader_read(size_t, size_t, void *);
 
 #ifdef KLOADER_DEBUG
 STATIC void kloader_pagetag_dump(void);
-STATIC void kloader_bootinfo_dump(void);
 #endif
-
 
 void
 __kloader_reboot_setup(struct kloader_ops *ops, const char *filename)
 {
-	static const char fatal_msg[] = "*** FATAL ERROR ***\n";
 
 	if (kloader.bootinfo == NULL) {
 		PRINTF("No bootinfo.\n");
@@ -120,42 +131,23 @@ __kloader_reboot_setup(struct kloader_ops *ops, const char *filename)
 	}
 	kloader.ops = ops;
 
-	switch (kloader.called++) {
-	case 0:
-		/* normal operation */
-		break;
- 	case 1:
-		/* try to reboot anyway. */
-		printf("%s", fatal_msg);
-		kloader.setuped = TRUE;
-		kloader_load ();
-		kloader_reboot();
-		/* NOTREACHED */
-		break;
-	case 2:
-		/* if reboot method exits, reboot. */
-		printf("%s", fatal_msg);
-		/* try to reset */
-		if (kloader.ops->reset != NULL)
-			(*kloader.ops->reset) ();
-		/* NOTREACHED */
-		break;
-	}
+	if (kloader.called++ == 0) {
+		PRINTF("kernel file name: %s\n", filename);
+		kloader.vp = kloader_open(filename);
+		if (kloader.vp == NULL)
+			return;
 
-	PRINTF("kernel file name: %s\n", filename);
-	kloader.vp = kloader_open(filename);
-	if (kloader.vp == NULL)
-		return;
-
-	if (kloader_load() != 0)
-		goto end;
-
-	kloader.setuped = TRUE;
+		if (kloader_load() == 0) {
+			kloader.setuped = TRUE;
 #ifdef KLOADER_DEBUG
-	kloader_pagetag_dump();
+			kloader_pagetag_dump();
 #endif
- end:
-	kloader_close();
+		}
+		kloader_close();
+	} else {
+		/* Fatal case. reboot from DDB etc. */
+		kloader_reboot();
+	}
 }
 
 
@@ -163,13 +155,19 @@ void
 kloader_reboot()
 {
 
-	if (!kloader.setuped)
-		return;
+	if (kloader.setuped) {
+		PRINTF("Rebooting...\n");
+		(*kloader.ops->jump)(kloader.loader, kloader.loader_sp,
+		    kloader.rebootinfo, kloader.tagstart);
+	}
 
-	printf("Rebooting...\n");
-
-	(*kloader.ops->jump) (kloader.loader, kloader.loader_sp,
-	    kloader.rebootinfo, kloader.tagstart);
+	if (kloader.ops->reset != NULL) {
+		PRINTF("Reseting...\n");
+		(*kloader.ops->reset)();
+	}
+	while (/*CONSTCOND*/1)
+		;
+	/* NOTREACHED */
 }
 
 
@@ -656,8 +654,8 @@ kloader_bootinfo_set(struct kloader_bootinfo *kbi, int argc, char *argv[],
 
 	kloader.bootinfo = kbi;
 	buf = kbi->_argbuf;
-
-	memcpy(&kbi->bootinfo, bi, sizeof(struct bootinfo));
+	if (bi != NULL)
+		memcpy(&kbi->bootinfo, bi, sizeof(struct bootinfo));
 	kbi->argc = argc;
 	kbi->argv = (char **)buf;
 
@@ -677,53 +675,10 @@ kloader_bootinfo_set(struct kloader_bootinfo *kbi, int argc, char *argv[],
 		memcpy(p, q, len);
 		p += len;
 	}
-#ifdef KLOADER_DEBUG
-	if (printok)
-		kloader_bootinfo_dump();
-#endif
 }
 
 
-/*
- * debug
- */
 #ifdef KLOADER_DEBUG
-void
-kloader_bootinfo_dump()
-{
-	struct kloader_bootinfo *kbi = kloader.bootinfo;
-	struct bootinfo *bi;
-	int i;
-
-	if (kbi == NULL) {
-		PRINTF("no bootinfo available.\n");
-		return;
-	}
-	bi = &kbi->bootinfo;
-
-	dbg_banner_function();
-	printf("[bootinfo] addr=%p\n", kbi);
-#define PRINT(m, fmt)	printf(" - %-15s= " #fmt "\n", #m, bi->m)
-	PRINT(length, %d);
-	PRINT(magic, 0x%08x);
-	PRINT(fb_addr, %p);
-	PRINT(fb_line_bytes, %d);
-	PRINT(fb_width, %d);
-	PRINT(fb_height, %d);
-	PRINT(fb_type, %d);
-	PRINT(bi_cnuse, %d);
-	PRINT(platid_cpu, 0x%08lx);
-	PRINT(platid_machine, 0x%08lx);
-	PRINT(timezone, %ld);
-#undef PRINT
-
-	printf("[args: %d at %p]\n", kbi->argc, kbi->argv);
-	for (i = 0; i < kbi->argc; i++) {
-		printf("[%d] at %p = \"%s\"\n", i, kbi->argv[i], kbi->argv[i]);
-	}
-	dbg_banner_line();
-}
-
 void
 kloader_pagetag_dump()
 {
@@ -736,7 +691,6 @@ kloader_pagetag_dump()
 	op = NULL;
 	i = 0, n = 15;
 
-	dbg_banner_function();
 	PRINTF("[page tag chain]\n");
 	do  {
 		print = FALSE;
@@ -764,9 +718,6 @@ kloader_pagetag_dump()
 	if (op != NULL)
 		printf("[%d(last)] next 0x%08x src 0x%08x dst 0x%08x sz 0x%x\n",
 		    i - 1, op->next, op->src, op->dst, op->sz);
-	dbg_banner_line();
 }
 
 #endif /* KLOADER_DEBUG */
-
-

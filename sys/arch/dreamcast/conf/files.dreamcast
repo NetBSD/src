@@ -1,4 +1,4 @@
-#	$NetBSD: files.dreamcast,v 1.25 2003/08/24 17:33:27 marcus Exp $
+#	$NetBSD: files.dreamcast,v 1.26 2004/07/06 13:09:19 uch Exp $
 
 # maxpartitions must be first item in files.${MACHINE}
 maxpartitions 16
@@ -18,7 +18,8 @@ file	arch/dreamcast/dreamcast/autoconf.c
 file	arch/dreamcast/dreamcast/clock_machdep.c
 file	arch/sh3/sh3/disksubr.c				disk
 
-file	arch/dreamcast/dreamcast/kloader.c		kloader
+file	dev/kloader.c					kloader
+file	arch/dreamcast/dreamcast/kloader_machdep.c	kloader
 defflag	opt_kloader.h	KLOADER
 defflag	debug_kloader.h	KLOADER_DEBUG
 
