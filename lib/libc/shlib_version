@@ -1,7 +1,7 @@
-# $NetBSD: shlib_version,v 1.34.2.1 1997/05/23 21:17:02 lukem Exp $
+# $NetBSD: shlib_version,v 1.34.2.2 1997/05/26 16:26:28 lukem Exp $
 # Note: the next time $major is changed, look at:
 #	gen/setproctitle.c (XXX __ps_strings)
 #	arch/*/sys/{Ov,}fork.S (no longer needed)
 #
 major=12
-minor=15
+minor=16
