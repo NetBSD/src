@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.40 2005/03/17 10:30:25 tron Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.41 2005/03/20 12:03:53 tron Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -873,4 +873,20 @@ lib/libpthread/pthread.3			1.4
 
 	Document PTHREAD_CONCURRENCY.
 	[daniel, ticket #1166]
+
+sys/arch/sparc/sparc/machdep.c			1.252
+sys/arch/sparc64/sparc64/machdep.c		1.177
+sys/kern/kern_sa.c				1.57 via patch
+sys/sys/lwp.h					1.25 via patch
+
+	Define a new LWP flag which indicates that we're in the process of
+	doing a context switch.  use this on sparc and sparc64 to avoid trying
+	to access user memory (writing the register windows back to the stack)
+	in this case (since it's both unnecessary and wrong).
+	[chs, ticket #1160]
+
+sys/dev/cgd_crypto.c				1.4
+
+	Clear freed memory.
+	[dan, ticket #1343]
 
