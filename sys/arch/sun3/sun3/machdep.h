@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.h,v 1.22 2001/02/03 12:46:04 tsutsui Exp $	*/
+/*	$NetBSD: machdep.h,v 1.23 2001/02/03 12:53:23 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -63,8 +63,6 @@ struct reg;
 struct trapframe;
 struct uio;
 
-extern int fputype;
-
 extern label_t *nofault;
 
 extern vm_offset_t vmmap;	/* XXX - See mem.c */
@@ -89,9 +87,6 @@ void	enable_init __P((void));
 void	enable_video __P((int));
 
 int 	fpu_emulate __P((struct trapframe *, struct fpframe *));
-
-int 	getdfc __P((void));
-int 	getsfc __P((void));
 
 /* Backward compatibility... */
 #define getsr	_getsr
