@@ -1,4 +1,4 @@
-/* $NetBSD: prom.h,v 1.10 1998/10/06 21:10:46 thorpej Exp $ */
+/* $NetBSD: prom.h,v 1.11 1998/10/15 00:47:28 ross Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -46,9 +46,8 @@ typedef union {
 	u_int64_t bits;
 } prom_return_t;
 
-#ifdef STANDALONE
+#ifdef _STANDALONE
 int	getchar __P((void));
-int	prom_open __P((char *, int));
 void	putchar __P((int));
 #endif
 
@@ -67,6 +66,13 @@ void	hwrpb_restart_setup __P((void));
 #define	PROM_R_PUTS		0x02
 #define	PROM_R_READ		0x13
 #define	PROM_R_WRITE		0x14
+#define	PROM_R_IOCTL		0x12
+
+/* Prom IOCTL operation subcodes */
+#define	PROM_I_SKIP2IRG		1
+#define	PROM_I_SKIP2MARK	2
+#define	PROM_I_REWIND		3
+#define	PROM_I_WRITEMARK	4
 
 /* Environment variable values. */
 #define	PROM_E_BOOTED_DEV	0x4
@@ -76,24 +82,32 @@ void	hwrpb_restart_setup __P((void));
 #define	PROM_E_SCSIID		0x42
 #define	PROM_E_SCSIFAST		0x43
 
+#if defined(_STANDALONE) || defined(ENABLEPROM)
 /*
+ * These can't be called from the kernel without great care.
+ *
  * There have to be stub routines to do the copying that ensures that the
  * PROM doesn't get called with an address larger than 32 bits.  Calls that
  * either don't need to copy anything, or don't need the copy because it's
  * already being done elsewhere, are defined here.
  */
+#define	prom_open(dev, len)						\
+	prom_dispatch(PROM_R_OPEN, (dev), (len), 0, 0)
 #define	prom_close(chan)						\
 	prom_dispatch(PROM_R_CLOSE, chan, 0, 0, 0)
 #define	prom_read(chan, len, buf, blkno)				\
 	prom_dispatch(PROM_R_READ, chan, len, (u_int64_t)buf, blkno)
 #define	prom_write(chan, len, buf, blkno)				\
 	prom_dispatch(PROM_R_WRITE, chan, len, (u_int64_t)buf, blkno)
+#define	prom_ioctl(chan, op, count)					\
+	prom_dispatch(PROM_R_IOCTL, chan, op, (int64_t)count, 0, 0)
 #define	prom_putstr(chan, str, len)					\
 	prom_dispatch(PROM_R_PUTS, chan, (u_int64_t)str, len, 0)
 #define	prom_getc(chan)							\
 	prom_dispatch(PROM_R_GETC, chan, 0, 0, 0)
 #define prom_getenv_disp(id, buf, len)					\
 	prom_dispatch(PROM_R_GETENV, id, (u_int64_t)buf, len, 0)
+#endif
 
 #ifndef ASSEMBLER
 #ifdef _KERNEL
