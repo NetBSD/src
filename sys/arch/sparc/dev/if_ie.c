@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.5 1994/11/20 20:52:18 deraadt Exp $ */
+/*	$NetBSD: if_ie.c,v 1.6 1994/11/23 22:28:12 deraadt Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -498,7 +498,7 @@ ieattach(parent, self, aux)
 		return;
 	case BUS_VME16:
 	    {
-		struct ievme *iev;
+		volatile struct ievme *iev;
 		u_long  rampaddr;
 		int     lcv;
 
@@ -509,7 +509,7 @@ ieattach(parent, self, aux)
 		sc->sc_msize = 65536;	/* XXX */
 		sc->sc_reg = mapiodev(ca->ca_ra.ra_paddr, sizeof(struct ievme),
 		    ca->ca_bustype);
-		iev = (struct ievme *) sc->sc_reg;
+		iev = (volatile struct ievme *) sc->sc_reg;
 		/* top 12 bits */
 		rampaddr = (u_long)ca->ca_ra.ra_paddr & 0xfff00000;
 		/* 4 more */
@@ -517,6 +517,7 @@ ieattach(parent, self, aux)
 		sc->sc_maddr = mapiodev((caddr_t)rampaddr, sc->sc_msize,
 		    ca->ca_bustype);
 		sc->sc_iobase = sc->sc_maddr;
+		iev->pectrl = iev->pectrl | IEVME_PARACK; /* clear to start */
 
 		/*
 		 * set up mappings, direct map except for last page
