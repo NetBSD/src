@@ -1,4 +1,4 @@
-/*	$NetBSD: globalcmds.c,v 1.2 1999/12/16 04:49:33 jwise Exp $ */
+/*	$NetBSD: globalcmds.c,v 1.3 1999/12/16 06:16:17 jwise Exp $ */
 
 /*-
  * Copyright (c) 1980, 1992, 1993 Jim Wise
@@ -50,6 +50,30 @@ global_help(args)
 	}
 	clrtoeol();
 }
+
+void
+global_interval(args)
+	char *args;
+{
+	int interval;
+
+	if (!args) {
+		interval = 5;
+	} else {
+		interval = atoi(args);
+	}
+
+	if (interval <= 0) {
+		error("%d: bad interval.", interval);
+		return;
+	}
+
+	alarm(0);
+	naptime = interval;
+	display(0);
+	status();
+}
+
 
 void
 global_load(args)
