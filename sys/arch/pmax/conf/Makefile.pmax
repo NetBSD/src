@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.pmax,v 1.67 1999/01/15 23:37:07 thorpej Exp $
+#	$NetBSD: Makefile.pmax,v 1.68 1999/03/15 01:12:00 mrg Exp $
 
 # Makefile for NetBSD
 #
@@ -147,8 +147,8 @@ newvers: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP}
 
 __CLEANKERNEL: .USE
 	@echo "${.TARGET}ing the kernel objects"
-	rm -f eddep *netbsd netbsd.gdb tags *.[io] [a-z]*.s \
-	  [Ee]rrs linterrs makelinks assym.h.tmp assym.h
+	rm -f eddep *netbsd netbsd.aout netbsd.ecoff netbsd.gdb tags *.[io] \
+	  [a-z]*.s [Ee]rrs linterrs makelinks assym.h.tmp assym.h
 
 __CLEANDEPEND: .USE
 	rm -f .depend
