@@ -1,4 +1,4 @@
-/*	$NetBSD: mkboot.c,v 1.8 1999/01/30 10:14:45 simonb Exp $	*/
+/*	$NetBSD: mkboot.c,v 1.9 1999/02/22 11:01:43 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -48,7 +48,7 @@ static char copyright[] =
 #ifdef notdef
 static char sccsid[] = "@(#)mkboot.c	8.1 (Berkeley) 6/10/93";
 #endif
-static char rcsid[] = "$NetBSD: mkboot.c,v 1.8 1999/01/30 10:14:45 simonb Exp $";
+static char rcsid[] = "$NetBSD: mkboot.c,v 1.9 1999/02/22 11:01:43 simonb Exp $";
 #endif not lint
 
 #include <sys/param.h>
@@ -114,14 +114,14 @@ main(argc, argv)
 	/*
 	 * Write the boot information block.
 	 */
-	decBootInfo.magic = DEC_BOOT_MAGIC;
-	decBootInfo.mode = 0;
-	decBootInfo.loadAddr = loadAddr;
-	decBootInfo.execAddr = execAddr;
+	read(ifd, &decBootInfo, sizeof(decBootInfo));
+	if (decBootInfo.magic != DEC_BOOT_MAGIC) {
+		fprintf(stderr, "bootfile does not contain boot sector\n");
+		exit(1);
+	}
 	decBootInfo.map[0].numBlocks = nsectors =
-		(length + DEV_BSIZE - 1) >> DEV_BSHIFT;
-	decBootInfo.map[0].startBlock = 1;
-	decBootInfo.map[1].numBlocks = 0;
+	    (length + DEV_BSIZE - 1) >> DEV_BSHIFT;
+	length -= sizeof(decBootInfo);
 	if (write(ofd1, (char *)&decBootInfo, sizeof(decBootInfo)) !=
 	    sizeof(decBootInfo) || close(ofd1) != 0)
 		goto xxboot_err;
@@ -132,10 +132,10 @@ main(argc, argv)
 	/*
 	 * Write the boot code to the bootxx file.
 	 */
-	for (i = 0; i < nsectors && length > 0; i++) {
+	for (i = 1; i < nsectors && length > 0; i++) {
 		if (length < DEV_BSIZE) {
 			n = length;
-			bzero(block, DEV_BSIZE);
+			memset(block, 0, DEV_BSIZE);
 		} else
 			n = DEV_BSIZE;
 		if (read(ifd, block, n) != n) {
@@ -150,7 +150,7 @@ main(argc, argv)
 	}
 	if (length > 0)
 		printf("Warning: didn't reach end of boot program!\n");
-	if (nsectors > 15)
+	if (nsectors > 16)
 		printf("\n!!!!!! WARNING: BOOT PROGRAM TOO BIG !!!!!!!\n\n");
 	exit(0);
 }
