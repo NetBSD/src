@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.13 2003/06/23 11:01:36 martin Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.14 2003/07/31 15:30:41 matt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -89,10 +89,10 @@ GLOBAL(powersave)
  * When we get here, interrupts are off (MSR[EE]=0) and sched_lock is held.
  */
 ASENTRY(Idle)
-	lis	8,_C_LABEL(sched_whichqs)@ha
-	lwz	9,_C_LABEL(sched_whichqs)@l(8)
+	lis	%r8,_C_LABEL(sched_whichqs)@ha
+	lwz	%r9,_C_LABEL(sched_whichqs)@l(%r8)
 
-	or.	9,9,9
+	or.	%r9,%r9,%r9
 	bne+	.Lsw1			/* at least one queue non-empty */
 
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
@@ -102,23 +102,23 @@ ASENTRY(Idle)
 #if defined(PPC_IBM4XX)
 	wrteei	1			/* reenable ints again */
 #else /* PPC_OEA */
-	mfmsr	3
-	ori	3,3,PSL_EE@l		/* reenable ints again */
-	mtmsr	3
+	mfmsr	%r3
+	ori	%r3,%r3,PSL_EE@l	/* reenable ints again */
+	mtmsr	%r3
 	isync
 #endif
 
 /* Check if we can use power saving mode */
-	lis	8,_C_LABEL(powersave)@ha
-	lwz	9,_C_LABEL(powersave)@l(8)
+	lis	%r8,_C_LABEL(powersave)@ha
+	lwz	%r9,_C_LABEL(powersave)@l(%r8)
 
-	add.	9,9,9
+	add.	%r9,%r9,%r9
 	ble	1f
 
 #if defined(PPC_OEA)
 	sync
-	oris	3,3,PSL_POW@h		/* enter power saving mode */
-	mtmsr	3
+	oris	%r3,%r3,PSL_POW@h	/* enter power saving mode */
+	mtmsr	%r3
 	isync
 #endif /* PPC_OEA */
 
@@ -127,9 +127,9 @@ ASENTRY(Idle)
 	wrteei	0			/* disable interrupts while
 					   manipulating runque */
 #else /* PPC_OEA */
-	andi.	3,3,~PSL_EE@l		/* disable interrupts while
+	andi.	%r3,%r3,~PSL_EE@l	/* disable interrupts while
 					   manipulating runque */
-	mtmsr	3
+	mtmsr	%r3
 #endif
 
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
@@ -143,19 +143,19 @@ ASENTRY(Idle)
  */
 ENTRY(switch_exit)
 /* First switch to the idle pcb/kernel stack */
-	GET_CPUINFO(7)
-	lwz	6,CI_IDLE_PCB(7)
-	stw	6,CI_CURPCB(7)
+	GET_CPUINFO(%r7)
+	lwz	%r6,CI_IDLE_PCB(%r7)
+	stw	%r6,CI_CURPCB(%r7)
 
 	/*
 	 * Adjust the stack to provide space for the callee to save LR.
 	 */
-	addi	1,6,USPACE-16
+	addi	%r1,%r6,USPACE-CALLFRAMELEN
 	/*
 	 * Schedule the vmspace and stack to be freed (the proc arg is
 	 * already in r3).  Function to call is in r4.
 	 */
-	mtctr	4
+	mtctr	%r4
 	bctrl
 
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
@@ -163,49 +163,53 @@ ENTRY(switch_exit)
 #endif
 
 /* Fall through to cpu_switch to actually select another proc */
-	li	3,0			/* indicate exited process */
+	li	%r3,0			/* indicate exited process */
 
 /*
  * void cpu_switch(struct lwp *l)
  * Find a runnable process and switch to it.
  */
 ENTRY_NOPROFILE(cpu_switch)
-	mflr	0			/* save lr */
-	stw	0,4(1)
-	stwu	1,-16(1)
-	stw	31,12(1)
-	stw	30,8(1)
+	mflr	%r0			/* save lr */
+	stw	%r0,SZREG(%r1)
+	stwu	%r1,-CALLFRAMELEN(%r1)
+	stw	%r31,(3*SZREG)(%r1)
+	stw	%r30,(2*SZREG)(%r1)
 
-	mr	30,3
+	mr	%r30,%r3
 #if defined(MULTIPROCESSOR)
 	/* Switch to the idle PCB unless we're already running on it. */
-	GET_CPUINFO(7)
-	cmpwi	30,0			/* old process was exiting? */
+	GET_CPUINFO(%r7)
+	cmpwi	%r30,0			/* old process was exiting? */
 	beq	1f
 
-	mfsr	10,USER_SR		/* save USER_SR for copyin/copyout */
-	mfcr	11			/* save cr */
-	mr	12,2			/* save r2 */
-	stwu	1,-SFRAMELEN(1)		/* still running on old stack */
-	stmw	10,8(1)
-	lwz	3,L_ADDR(30)
-	stw	1,PCB_SP(3)		/* save SP */
+#if defined(PPC_OEA) && !defined(_LP64)
+	mfsr	%r10,USER_SR		/* save USER_SR for copyin/copyout */
+#else
+	li	%r10,0			/* no USER_SR needed */
+#endif
+	mfcr	%r11			/* save cr */
+	mr	%r12,%r2		/* save r2 */
+	stwu	%r1,-SFRAMELEN(%r1)	/* still running on old stack */
+	stmw	%r10,(2*SZREG)(%r1)	/* save USER_SR, CR, R2, non-volatile */
+	lwz	%r3,L_ADDR(%r30)	/* get PCB address */
+	stw	%r1,PCB_SP(%r3)		/* save SP */
 
-	lwz	6,CI_IDLE_PCB(7)
-	addi	1,6,USPACE-16		/* 16 bytes are reserved at stack top */
+	lwz	%r6,CI_IDLE_PCB(%r7)
+	addi	%r1,%r6,USPACE-CALLFRAMELEN /* callframe rsvd at stack top */
 
 1:
-	li	31,0
-	stw	31,CI_CURLWP(7)		/* Zero to not accumulate cpu time */
-	lwz	31,CI_CURPCB(7)
+	li	%r31,0
+	stw	%r31,CI_CURLWP(%r7)	/* Zero to not accumulate cpu time */
+	lwz	%r31,CI_CURPCB(%r7)
 
-	lwz	3,CI_CPL(7)
-	stw	3,PCB_SPL(31)		/* save spl */
+	lwz	%r3,CI_CPL(%r7)
+	stw	%r3,PCB_SPL(%r31)	/* save spl */
 #else
-	GET_CPUINFO(3)
-	li	31,0
-	stw	31,CI_CURLWP(3)		/* Zero to not accumulate cpu time */
-	lwz	31,CI_CURPCB(3)
+	GET_CPUINFO(%r3)
+	li	%r31,0
+	stw	%r31,CI_CURLWP(%r3)	/* Zero to not accumulate cpu time */
+	lwz	%r31,CI_CURPCB(%r3)
 #endif
 
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
@@ -213,10 +217,10 @@ ENTRY_NOPROFILE(cpu_switch)
 	bl	_C_LABEL(sched_unlock_idle)
 #endif
 
-	li	3,0			/* spl0() */
+	li	%r3,0			/* spl0() */
 	bl	_C_LABEL(lcsplx)
 #if !defined(MULTIPROCESSOR)
-	stw	3,PCB_SPL(31)		/* save spl */
+	stw	%r3,PCB_SPL(%r31)	/* save spl */
 #endif
 
 /* Lock the scheduler. */
@@ -224,10 +228,10 @@ ENTRY_NOPROFILE(cpu_switch)
 	wrteei	0			/* disable interrupts while
 					   manipulating runque */
 #else /* PPC_OEA */
-	mfmsr	3
-	andi.	3,3,~PSL_EE@l		/* disable interrupts while
+	mfmsr	%r3
+	andi.	%r3,%r3,~PSL_EE@l	/* disable interrupts while
 					   manipulating runque */
-	mtmsr	3
+	mtmsr	%r3
 	isync
 #endif
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
@@ -235,104 +239,99 @@ ENTRY_NOPROFILE(cpu_switch)
 #endif
 
 /* Find a new process */
-	lis	8,_C_LABEL(sched_whichqs)@ha
-	lwz	9,_C_LABEL(sched_whichqs)@l(8)
+	lis	%r8,_C_LABEL(sched_whichqs)@ha
+	lwz	%r9,_C_LABEL(sched_whichqs)@l(%r8)
 
-	or.	9,9,9
+	or.	%r9,%r9,%r9
 	beq-	_ASM_LABEL(Idle)	/* all queues empty */
 .Lsw1:
-	cntlzw	10,9
-	lis	4,_C_LABEL(sched_qs)@ha
-	addi	4,4,_C_LABEL(sched_qs)@l
-	slwi	3,10,3
-	add	3,3,4			/* select queue */
+	cntlzw	%r10,%r9
+	lis	%r4,_C_LABEL(sched_qs)@ha
+	addi	%r4,%r4,_C_LABEL(sched_qs)@l
+	slwi	%r3,%r10,3
+	add	%r3,%r3,%r4		/* select queue */
 
-	lwz	31,L_FORW(3)		/* unlink first proc from queue */
-	lwz	4,L_FORW(31)
-	stw	4,L_FORW(3)
-	stw	3,L_BACK(4)
+	lwz	%r31,L_FORW(%r3)	/* unlink first proc from queue */
+	lwz	%r4,L_FORW(%r31)
+	stw	%r4,L_FORW(%r3)
+	stw	%r3,L_BACK(%r4)
 
-	cmpl	0,3,4			/* queue empty? */
+	cmpl	%cr0,%r3,%r4		/* queue empty? */
 	bne	1f
 
-	lis	3,0x80000000@h
-	srw	3,3,10
-	andc	9,9,3
-	stw	9,_C_LABEL(sched_whichqs)@l(8) /* mark it empty */
+	lis	%r3,0x80000000@h
+	srw	%r3,%r3,%r10
+	andc	%r9,%r9,%r3
+	stw	%r9,_C_LABEL(sched_whichqs)@l(%r8) /* mark it empty */
 
 switch_common:
 1:
 	/* just did this resched thing */
-	li	3,0
-	GET_CPUINFO(4)
-	stw	3,CI_WANT_RESCHED(4)
-	stw	3,L_BACK(31)		/* probably superfluous */
+	li	%r3,0
+	GET_CPUINFO(%r4)
+	stw	%r3,CI_WANT_RESCHED(%r4)
+	stw	%r3,L_BACK(%r31)	/* probably superfluous */
 
 #ifdef MULTIPROCESSOR
-	stw	4,L_CPU(31)		/* l->l_cpu = curcpu() */
+	stw	%r4,L_CPU(%r31)		/* l->l_cpu = curcpu() */
 #endif
 
 	/* Process now running on a processor. */
-	li	3,LSONPROC		/* l->l_stat = LSONPROC */
-	stw	3,L_STAT(31)
+	li	%r3,LSONPROC		/* l->l_stat = LSONPROC */
+	stw	%r3,L_STAT(%r31)
 
 	/* record new process */
-	stw	31,CI_CURLWP(4)
-	lwz	4,L_ADDR(31)
+	stw	%r31,CI_CURLWP(%r4)
+	lwz	%r4,L_ADDR(%r31)
 
 #if !defined(MULTIPROCESSOR)		/* XXX */
-	li	3,0			/* if it is the same lwp, return 0 */
-	cmpl	0,31,30			/* is it the same lwp? */
+	li	%r3,0			/* if it is the same lwp, return 0 */
+	cmpl	%cr0,%r31,%r30		/* is it the same lwp? */
 	beq	switch_return
 
-	or.	30,30,30		/* old lwp was exiting? */
+	or.	%r30,%r30,%r30		/* old lwp was exiting? */
 	beq	switch_exited
 
-#if defined(PPC_IBM4XX)
-	li	10,0			/* no SR for 4xx CPUs */
+#if defined(PPC_OEA) && !defined(_LP64)
+	mfsr	%r10,USER_SR		/* save USER_SR for copyin/copyout */
 #else /* PPC_OEA */
-	mfsr	10,USER_SR		/* save USER_SR for copyin/copyout */
+	li	%r10,0			/* no SR needed */
 #endif
-	mfcr	11			/* save cr */
-	mr	12,2			/* save r2 */
-	stwu	1,-SFRAMELEN(1)		/* still running on old stack */
-	stmw	10,8(1)
-	lwz	3,L_ADDR(30)
-	stw	1,PCB_SP(3)		/* save SP */
+	mfcr	%r11			/* save cr */
+	mr	%r12,%r2		/* save r2 */
+	stwu	%r1,-SFRAMELEN(%r1)	/* still running on old stack */
+	stmw	%r10,(2*SZREG)(%r1)
+	lwz	%r3,L_ADDR(%r30)
+	stw	%r1,PCB_SP(%r3)		/* save SP */
 
 switch_exited:
 #endif
 
 	/* indicate new pcb */
-	GET_CPUINFO(6)
-	stw	4,CI_CURPCB(6)
+	GET_CPUINFO(%r6)
+	stw	%r4,CI_CURPCB(%r6)
 
 	/* save real pmap pointer for spill fill */
-	lwz	5,PCB_PMR(4)
-	stwu	5,CI_CURPM(6)
-	stwcx.	5,0,6			/* clear possible reservation */
+	lwz	%r5,PCB_PMR(%r4)
+	stwu	%r5,CI_CURPM(%r6)
+	stwcx.	%r5,%r0,%r6		/* clear possible reservation */
 	isync
 
-	lwz	1,PCB_SP(4)		/* get new procs SP */
-	lmw	10,8(1)			/* get other regs */
-	lwz	1,0(1)			/* get saved SP */
-	mr	2,12			/* get saved r2 */
-	mtcr	11			/* get saved cr */
+	lwz	%r1,PCB_SP(%r4)		/* get new procs SP */
+	lmw	%r10,(2*SZREG)(%r1)	/* get non-volatile, CR, R2, USER_SR */
+	lwz	%r1,0(%r1)		/* get saved SP */
+	mr	%r2,%r12		/* get saved r2 */
+	mtcr	%r11			/* get saved cr */
 	isync
-#if defined(PPC_IBM4XX)
-	/*
-	 * Don't have to do anything here; TLB PID gets updated on
-	 * return from trap.
-	 */
-#else /* PPC_OEA */
-	mtsr	USER_SR,10		/* get saved USER_SR */
+#if defined(PPC_OEA) && !defined(_LP64)
+	mtsr	USER_SR,%r10		/* get saved USER_SR */
 	isync
 #endif
 
-	li	3,1			/* switched lwps */
+	li	%r3,1			/* switched lwps */
 
 switch_return:
-	mr	30,3			/* save return value */
+	mr	%r30,%r3		/* save return value */
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	/* Unlock the sched_lock, but leave interrupts off, for now. */
 	bl	_C_LABEL(sched_unlock_idle)
@@ -341,33 +340,33 @@ switch_return:
 #if defined(PPC_IBM4XX)
 	wrteei	1			/* interrupts are okay again */
 #else /* PPC_OEA */
-	mfmsr	3
-	ori	3,3,PSL_EE@l		/* interrupts are okay again */
-	mtmsr	3
+	mfmsr	%r3
+	ori	%r3,%r3,PSL_EE@l	/* interrupts are okay again */
+	mtmsr	%r3
 #endif
 
-	lwz	3,PCB_SPL(4)
+	lwz	%r3,PCB_SPL(%r4)
 	bl	_C_LABEL(lcsplx)
 
 #if defined(PPC_IBM4XX)
 0:
-	GET_CPUINFO(3)
-	lwz	3,CI_CURPM(3)		/* Do we need a context? */
-	lwz	4,PM_CTX(3)
-	cmpwi	4,0
+	GET_CPUINFO(%r3)
+	lwz	%r3,CI_CURPM(%r3)	/* Do we need a context? */
+	lwz	%r4,PM_CTX(%r3)
+	cmpwi	%r4,0
 #	mtspr	SPR_SPR0,4		/* Always keep the current ctx here */
 	bne	1f
 	bl	_C_LABEL(ctx_alloc)
 	b	0b			/* reload */
 1:
 #endif
-	mr	3,30			/* restore return value */
+	mr	%r3,%r30		/* restore return value */
 
-	lwz	31,12(1)
-	lwz	30,8(1)
-	addi	1,1,16
-	lwz	0,4(1)
-	mtlr	0
+	lwz	%r31,(3*SZREG)(%r1)
+	lwz	%r30,(2*SZREG)(%r1)
+	addi	%r1,1,CALLFRAMELEN
+	lwz	%r0,SZREG(%r1)
+	mtlr	%r0
 	blr
 
 /*
@@ -379,46 +378,50 @@ switch_return:
  * 	r4 - LWP to switch to
  */
 ENTRY(cpu_switchto)
-	mflr	0			/* save lr */
-	stw	0,4(1)
-	stwu	1,-16(1)
-	stw	31,12(1)
-	stw	30,8(1)
+	mflr	%r0			/* save lr */
+	stw	%r0,SZREG(%r1)
+	stwu	%r1,-CALLFRAMELEN(%r1)
+	stw	%r31,(3*SZREG)(%r1)
+	stw	%r30,(2*SZREG)(%r1)
 
-	stwu	1,-16(1)
-	stw	29,8(1)
-	mr	30,3			/* r30 = curlwp */
-	mr	29,4			/* r29 = newlwp */
+	stwu	%r1,-CALLFRAMELEN(%r1)
+	stw	%r29,(2*SZREG)(%r1)
+	mr	%r30,%r3			/* r30 = curlwp */
+	mr	%r29,%r4			/* r29 = newlwp */
 
 #if defined(MULTIPROCESSOR)
 	/* Switch to the idle PCB unless we're already running on it. */
-	GET_CPUINFO(7)
-	cmpwi	30,0			/* old process was exiting? */
+	GET_CPUINFO(%r7)
+	cmpwi	%r30,0			/* old process was exiting? */
 	beq	1f
 
-	mfsr	10,USER_SR		/* save USER_SR for copyin/copyout */
-	mfcr	11			/* save cr */
-	mr	12,2			/* save r2 */
-	stwu	1,-SFRAMELEN(1)		/* still running on old stack */
-	stmw	10,8(1)
-	lwz	3,L_ADDR(30)
-	stw	1,PCB_SP(3)		/* save SP */
+#if defined(PPC_OEA) && !defined(_LP64)
+	mfsr	%r10,USER_SR		/* save USER_SR for copyin/copyout */
+#else
+	li	%r10,0			/* USER_SR not needed */
+#endif
+	mfcr	%r11			/* save cr */
+	mr	%r12,%r2		/* save r2 */
+	stwu	%r1,-SFRAMELEN(%r1)	/* still running on old stack */
+	stmw	%r10,(2*SZREG)(%r1)	/* save USER_SR, CR, R2, non-volatile */
+	lwz	%r3,L_ADDR(%r30)	/* get PCB */
+	stw	%r1,PCB_SP(%r3)		/* save SP */
 
-	lwz	6,CI_IDLE_PCB(7)
-	addi	1,6,USPACE-16		/* 16 bytes are reserved at stack top */
+	lwz	%r6,CI_IDLE_PCB(%r7)
+	addi	%r1,%r6,USPACE-CALLFRAMELEN /* callframe rsvd at stack top */
 
 1:
-	li	31,0
-	stw	31,CI_CURLWP(7)		/* Zero to not accumulate cpu time */
-	lwz	31,CI_CURPCB(7)
+	li	%r31,0
+	stw	%r31,CI_CURLWP(%r7)	/* Zero to not accumulate cpu time */
+	lwz	%r31,CI_CURPCB(%r7)
 
-	lwz	3,CI_CPL(7)
-	stw	3,PCB_SPL(31)		/* save spl */
+	lwz	%r3,CI_CPL(%r7)
+	stw	%r3,PCB_SPL(%r31)	/* save spl */
 #else
-	GET_CPUINFO(3)
-	li	31,0
-	stw	31,CI_CURLWP(3)		/* Zero to not accumulate cpu time */
-	lwz	31,CI_CURPCB(3)
+	GET_CPUINFO(%r3)
+	li	%r31,0
+	stw	%r31,CI_CURLWP(%r3)	/* Zero to not accumulate cpu time */
+	lwz	%r31,CI_CURPCB(%r3)
 #endif
 
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
@@ -426,10 +429,10 @@ ENTRY(cpu_switchto)
 	bl	_C_LABEL(sched_unlock_idle)
 #endif
 
-	li	3,0
+	li	%r3,0
 	bl	_C_LABEL(lcsplx)
 #if !defined(MULTIPROCESSOR)
-	stw	3,PCB_SPL(31)		/* save spl */
+	stw	%r3,PCB_SPL(%r31)	/* save spl */
 #endif
 
 /* Lock the scheduler. */
@@ -437,10 +440,10 @@ ENTRY(cpu_switchto)
 	wrteei	0			/* disable interrupts while
 					   manipulating runque */
 #else /* PPC_OEA */
-	mfmsr	3
-	andi.	3,3,~PSL_EE@l		/* disable interrupts while
+	mfmsr	%r3
+	andi.	%r3,%r3,~PSL_EE@l	/* disable interrupts while
 					   manipulating runque */
-	mtmsr	3
+	mtmsr	%r3
 	isync
 #endif
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
@@ -448,9 +451,9 @@ ENTRY(cpu_switchto)
 #endif
 
 	/* Make stack normal, r31 newlwp, r30 oldlwp */
-	mr	31,29
-	lwz	29,8(1)
-	addi	1,1,16
+	mr	%r31,%r29
+	lwz	%r29,(2*SZREG)(%r1)
+	addi	%r1,%r1,CALLFRAMELEN
 
 	b	switch_common
 /* NOTREACHED */
@@ -464,9 +467,9 @@ _C_LABEL(fork_trampoline):
 #if defined(MULTIPROCESSOR)
 	bl	_C_LABEL(proc_trampoline_mp)
 #endif
-	li	3,0
+	li	%r3,0
 	bl	_C_LABEL(lcsplx)
-	mtlr	31
-	mr	3,30
+	mtlr	%r31
+	mr	%r3,%r30
 	blrl				/* jump indirect to r31 */
 	b	trapexit
