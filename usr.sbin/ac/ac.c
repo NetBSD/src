@@ -1,4 +1,4 @@
-/* $NetBSD: ac.c,v 1.11 2000/06/14 17:26:03 cgd Exp $ */
+/* $NetBSD: ac.c,v 1.12 2000/10/10 14:33:23 ad Exp $ */
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -49,7 +49,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ac.c,v 1.11 2000/06/14 17:26:03 cgd Exp $");
+__RCSID("$NetBSD: ac.c,v 1.12 2000/10/10 14:33:23 ad Exp $");
 #endif
 
 #include <sys/types.h>
@@ -147,7 +147,9 @@ file(name)
 {
 	FILE *fp;
 
-	if ((fp = fopen(name, "r")) == NULL)
+	if (strcmp(name, "-") == 0)
+		fp = stdin;
+	else if ((fp = fopen(name, "r")) == NULL)
 		err(1, "%s", name);
 	/* in case we want to discriminate */
 	if (strcmp(_PATH_WTMP, name))
