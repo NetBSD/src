@@ -1,4 +1,4 @@
-/*	$NetBSD: db_sym.c,v 1.38 2003/04/28 15:55:45 ragge Exp $	*/
+/*	$NetBSD: db_sym.c,v 1.39 2003/05/11 08:23:23 jdolecek Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_sym.c,v 1.38 2003/04/28 15:55:45 ragge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_sym.c,v 1.39 2003/05/11 08:23:23 jdolecek Exp $");
 
 #include "opt_ddbparam.h"
 
@@ -199,7 +199,8 @@ db_search_symbol(db_addr_t val, db_strategy_t strategy, db_expr_t *offp)
 	unsigned int diff;
 	db_sym_t ret = DB_SYM_NULL;
 	db_addr_t naddr;
-	char *mod, *sym;
+	const char *mod;
+	char *sym;
 
 #ifdef DB_AOUT_SYMBOLS
 	db_expr_t newdiff;
@@ -233,7 +234,7 @@ db_search_symbol(db_addr_t val, db_strategy_t strategy, db_expr_t *offp)
 void
 db_symbol_values(db_sym_t sym, char **namep, db_expr_t *valuep)
 {
-	char *mod;
+	const char *mod;
 
 	if (sym == DB_SYM_NULL) {
 		*namep = 0;
@@ -283,7 +284,8 @@ unsigned int	db_maxoff = 0x10000000;
 void
 db_symstr(char *buf, db_expr_t off, db_strategy_t strategy)
 {
-	char  *name, *mod;
+	char  *name;
+	const char *mod;
 	long val;
 
 #ifdef DB_AOUT_SYMBOLS
@@ -347,7 +349,8 @@ void
 db_printsym(db_expr_t off, db_strategy_t strategy,
     void (*pr)(const char *, ...))
 {
-	char  *name, *mod;
+	char  *name;
+	const char *mod;
 	long val;
 #ifdef notyet
 	char *filename;
