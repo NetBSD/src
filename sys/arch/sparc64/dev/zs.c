@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.33 2002/03/20 18:54:48 eeh Exp $	*/
+/*	$NetBSD: zs.c,v 1.34 2002/03/21 01:19:41 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -238,7 +238,7 @@ zs_attach_mainbus(parent, self, aux)
 			 * sign-extend the address.
 			 */
 			sparc_promaddr_to_handle(sa->sa_bustag,
-				sa->sa_promvaddrs[0], &bh)
+				sa->sa_promvaddrs[0], &bh);
 
 		} else {
 
