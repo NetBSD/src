@@ -1,4 +1,4 @@
-/*	$NetBSD: wsmux.c,v 1.21 2001/10/29 01:02:11 augustss Exp $	*/
+/*	$NetBSD: wsmux.c,v 1.22 2001/11/02 13:02:20 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -203,6 +203,7 @@ wsmuxopen(dev_t dev, int flags, int mode, struct proc *p)
 
 	if (sc->sc_base.me_parent != NULL) {
 		/* Grab the mux out of the greedy hands of the parent mux. */
+		DPRINTF(("wsmuxopen: detach\n"));
 		wsmux_detach_sc(&sc->sc_base);
 	}
 
@@ -452,6 +453,7 @@ wsmux_do_ioctl(struct device *dv, u_long cmd, caddr_t data, int flag,
 		CIRCLEQ_FOREACH(me, &sc->sc_cld, me_next) {
 			if (me->me_ops->type == d->type &&
 			    me->me_dv.dv_unit == d->idx) {
+				DPRINTF(("wsmux_do_ioctl: detach\n"));
 				wsmux_detach_sc(me);
 				return (0);
 			}
@@ -612,8 +614,8 @@ wsmux_attach_sc(struct wsmux_softc *sc, struct wsevsrc *me)
 	if (sc == NULL)
 		return (EINVAL);
 
-	DPRINTF(("wsmux_attach_sc: %s: type=%d\n",
-		 sc->sc_base.me_dv.dv_xname, me->me_ops->type));
+	DPRINTF(("wsmux_attach_sc: %s(%p): type=%d\n",
+		 sc->sc_base.me_dv.dv_xname, sc, me->me_ops->type));
 
 #ifdef DIAGNOSTIC
 	if (me->me_parent != NULL) {
@@ -661,7 +663,8 @@ wsmux_attach_sc(struct wsmux_softc *sc, struct wsevsrc *me)
 		CIRCLEQ_REMOVE(&sc->sc_cld, me, me_next);
 	}
 
-	DPRINTF(("wsmux_attach_sc: done sc=%p, error=%d\n", sc, error));
+	DPRINTF(("wsmux_attach_sc: %s(%p) done, error=%d\n", 
+		 sc->sc_base.me_dv.dv_xname, sc, error));
 	return (error);
 }
 
@@ -671,7 +674,8 @@ wsmux_detach_sc(struct wsevsrc *me)
 {
 	struct wsmux_softc *sc = me->me_parent;
 
-	DPRINTF(("wsmux_detach_sc: %s\n", sc->sc_base.me_dv.dv_xname));
+	DPRINTF(("wsmux_detach_sc: %s(%p) parent=%p\n", 
+		 me->me_dv.dv_xname, me, sc));
 
 #ifdef DIAGNOSTIC
 	if (sc == NULL) {
