@@ -1,5 +1,3 @@
-/*	$NetBSD: strlen.c,v 1.2 1994/10/26 06:42:47 cgd Exp $	*/
-
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -34,10 +32,8 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-#ifdef notdef
-static char *sccsid = "@(#)strlen.c	5.5 (Berkeley) 1/26/91";
-#endif
-static char *rcsid = "$NetBSD: strlen.c,v 1.2 1994/10/26 06:42:47 cgd Exp $";
+/*static char *sccsid = "from: @(#)strlen.c	5.5 (Berkeley) 1/26/91";*/
+static char *rcsid = "$Id: strlen.c,v 1.3 1995/01/06 00:16:55 cgd Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/cdefs.h>
