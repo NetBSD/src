@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.3 2003/07/14 23:32:31 lukem Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.4 2003/09/26 18:04:11 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.3 2003/07/14 23:32:31 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.4 2003/09/26 18:04:11 christos Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_user_ldt.h"
@@ -124,7 +124,7 @@ netbsd32_setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 }
 
 void
-netbsd32_sendsig(int sig, sigset_t *mask, u_long code)
+netbsd32_sendsig(int sig, const sigset_t *mask, u_long code)
 {
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
