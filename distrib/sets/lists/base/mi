@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.408 2003/04/30 09:42:42 wiz Exp $
+# $NetBSD: mi,v 1.409 2003/05/04 00:54:41 gmcgarry Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -1865,14 +1865,17 @@
 ./usr/share/vi/catalog/swedish		base-util-share
 ./usr/share/wscons			base-util-share
 ./usr/share/wscons/fonts			base-util-share
-./usr/share/wscons/fonts/vt220h.808			base-util-share
-./usr/share/wscons/fonts/vt220h.810			base-util-share
-./usr/share/wscons/fonts/vt220h.814			base-util-share
-./usr/share/wscons/fonts/vt220h.816			base-util-share
-./usr/share/wscons/fonts/vt220l.808			base-util-share
-./usr/share/wscons/fonts/vt220l.810			base-util-share
-./usr/share/wscons/fonts/vt220l.814			base-util-share
-./usr/share/wscons/fonts/vt220l.816			base-util-share
+./usr/share/wscons/fonts/donna.816		base-util-share
+./usr/share/wscons/fonts/flori.816		base-util-share
+./usr/share/wscons/fonts/orator.816		base-util-share
+./usr/share/wscons/fonts/vt220h.808		base-util-share
+./usr/share/wscons/fonts/vt220h.810		base-util-share
+./usr/share/wscons/fonts/vt220h.814		base-util-share
+./usr/share/wscons/fonts/vt220h.816		base-util-share
+./usr/share/wscons/fonts/vt220l.808		base-util-share
+./usr/share/wscons/fonts/vt220l.810		base-util-share
+./usr/share/wscons/fonts/vt220l.814		base-util-share
+./usr/share/wscons/fonts/vt220l.816		base-util-share
 ./usr/share/wscons/keymaps			base-util-share
 ./usr/share/wscons/keymaps/pckbd.be.azerty	base-util-share
 ./usr/share/wscons/keymaps/pckbd.hu.iso8859-2	base-util-share
