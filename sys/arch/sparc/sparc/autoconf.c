@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.203 2004/03/17 17:04:59 pk Exp $ */
+/*	$NetBSD: autoconf.c,v 1.203.2.1 2004/05/30 11:54:06 tron Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.203 2004/03/17 17:04:59 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.203.2.1 2004/05/30 11:54:06 tron Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -842,7 +842,7 @@ crazymap(prop, map)
 	int *map;
 {
 	int i;
-	char propval[8+1];
+	char propval[8+2];
 
 	if (!CPU_ISSUN4 && prom_version() < 2) {
 		/*
