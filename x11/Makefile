@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2004/02/02 14:21:51 lukem Exp $
+#	$NetBSD: Makefile,v 1.9 2004/02/09 07:59:01 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -45,6 +45,11 @@ do-${dir:S/\//-/g}:
 	(cd ${.CURDIR}/${dir} && ${MAKE} ${targ})
 .  endfor
 .endfor
+
+afterinstall: .PHONY
+.if ${MKMAN} != "no"
+	(cd ${NETBSDSRCDIR}/share/man && ${MAKE} WHATISDBDIR=${X11MANDIR} makedb)
+.endif
 
 
 check_X11SRCDIR: .PHONY .NOTMAIN
