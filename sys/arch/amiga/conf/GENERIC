@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.124 1999/05/17 19:42:56 is Exp $
+#	$NetBSD: GENERIC,v 1.125 1999/06/18 05:56:45 is Exp $
 
 #
 #if 0
@@ -99,7 +99,7 @@ options 	COMPAT_SUNOS	# Support to run Sun (m68k) executables
 options 	COMPAT_SVR4	# Support to run SVR4 (m68k) executables
 options 	COMPAT_NOMID	# allow nonvalid machine id executables
 #options 	COMPAT_LINUX	# Support to run Linux/m68k executables
-#options 	EXEC_ELF32	# 32-bit ELF executables (Linux, SVR4)
+options 	EXEC_ELF32	# 32-bit ELF executables (Linux, SVR4)
 
 #
 # Support for System V IPC facilities.
