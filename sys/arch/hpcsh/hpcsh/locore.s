@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.5 2001/02/05 18:14:43 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.6 2001/02/07 15:29:21 uch Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1997
@@ -53,8 +53,6 @@
 #include <machine/param.h>
 #include <machine/pte.h>
 #include <machine/trap.h>
-
-#define INIT_STACK	IOM_RAM_BEGIN + IOM_RAM_SIZE - 0x00001000
 
 #ifdef SH4
 #define SHREG_BBRA	0xff200008
@@ -268,169 +266,29 @@
 	.globl	_C_LABEL(curpcb), _C_LABEL(PTDpaddr)
 _C_LABEL(PTDpaddr):
 		.long	0	/* paddr of PTD, for libkvm */
-KernelStack:	.long	0
 KernelSp:	.long	0	/* Cache for kernel stack pointer of
 				   current task */
 
+/*
+ * kernel entry point
+ */
 	.text
-	.globl	_C_LABEL(kernel_text)
 	.globl	start, _C_LABEL(_start)
-	.set	_C_LABEL(kernel_text), KERNTEXTOFF
 	.set	_C_LABEL(_start), start
-
+	/*
+	 * r4, r5, r6 are contains bootloader argument. don't use.
+	 */	
 start:
-	/* Set SP to initial position */
-	mov.l	XLtmpstk, r15
-
-	INTR_DISABLE
-
-	/* Set Register Bank to Bank 0 */
-	mov.l	SR_init, r0
-	ldc	r0, sr
-
-	xor	r0, r0
-	mov.l	XL_SHREG_MMUCR, r2
-	mov.l	r0, @r2		/* MMU OFF */
-
-	bra	start1
-	nop
-#if 0
-	mov	#0x20, r8
-	swap.b	r8, r8
-	swap.w	r8, r8
-	not	r8, r8
-	stc	sr, r9
-	and	r8, r9
-	ldc	r9, sr		 /* Change Register Bank to 0 */
-#endif
-	.align	2
-SR_init:	.long	0x500000F0
-XL_SHREG_MMUCR:	.long	SHREG_MMUCR
-start1:
-
-#ifdef ROMIMAGE
-	/* Initialize BUS State Control Regs. */
-	mov.l	_ROM_START, r3
-	mov.l	_C_LABEL(ram_start), r4
-	sub	r3, r4
-	/* Set Bus State Controler */
-	mov.l	XLInitializeBsc, r0
-	sub	r4, r0
-	jsr	@r0
-	nop
-
-	/* Move kernel image from ROM area to RAM area */
-	mov.l	___end, r0
-	mov.l	___start, r1
-	mov.l	_KERNBASE, r2
-	sub	r2, r0
-	sub	r2, r1
-	sub	r1, r0
-	add	#4, r0		/* size of bytes to be copied */
-	shlr2	r0		/* number of long word */
-	mov.l	_ROM_START, r3
-	add	r3, r1		/* src address */
-	mov.l	___start, r3
-	sub	r2, r3
-	mov.l	_C_LABEL(ram_start), r4
-	add	r4, r3		/* dest address */
-1:
-	mov.l	@r1+, r4
-	mov.l	r4, @r3
-	add	#4, r3
-	dt	r0		/* decrement and Test */
-	bf	1b
-	/* kernel image copy end */
-
-	mov.l	LXstart_in_RAM, r0
-	jmp	@r0		/* jump to RAM area */
-	nop
-
-	.align	2
-LXstart_in_RAM:
-	.long	start_in_RAM
-#else
-#ifndef	DONT_INIT_BSC
-	/* Set Bus State Controler */
-	mov.l	XLInitializeBsc, r0
-	jsr	@r0
-	nop
-#endif
-#endif
-
-start_in_RAM:
-	mova	1f, r0
-	mov	r0, r4
-	mov.l	XLinitSH3, r0
-	jsr	@r0		/* call initSH3() */
-	nop
-
-	.align	2
-1:
-#if 1
-	mov.l	XLKernelStack, r3
-	mov.l	r15, @r3
-#endif
-
-#ifdef SH4
-	/* CCR must be accessed from P2 area */
-	mova	cache_on, r0
-	mov	r0, r5
-	mov.l	XLtoP2, r1
-	add	r1, r5
-	mova	main_label, r0
-	mov	r0, r2
-	mov.l	XL_SHREG_CCR, r3
-	mov.l	XL_CCRVAL, r4
-	jmp	@r5
-	nop
-
-	.align	2
-cache_on:
-	mov.l	r4, @r3 /* Write to CCR */
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop
-	jmp @r2
-	nop
+	mov.l	XLmachine_startup, r0
+	mov.l	XLtmpksp, r1
+	add	#0xf0, r1
+	jmp	@r0
+	mov	r1, r15
 	
+	/* NOTREACHED */
 	.align	2
-main_label:
-#endif
-	mov.l	XLmain, r0
-	jsr	@r0		/* call main() */
-	nop
-
-		.align	2
-
-	.globl	_C_LABEL(ram_start)
-#ifndef	DONT_INIT_BSC
-XLInitializeBsc:.long	_C_LABEL(InitializeBsc)
-#endif
-___start:	.long	start
-___etext:	.long	_etext
-___end:		.long	_end
-XLtmpstk:	.long	INIT_STACK
-_KERNBASE:	.long	KERNBASE
-_C_LABEL(ram_start):	.long	IOM_RAM_BEGIN
-_ROM_START:	.long	IOM_ROM_BEGIN
-XLKernelStack:	.long	KernelStack
-XLinitSH3:	.long	_C_LABEL(initSH3)
-XLmain:		.long	_C_LABEL(main)
-XLtoP2:		.long	0x20000000
-XL_SHREG_CCR:	.long	SHREG_CCR
-#ifdef SH4
-#if 1
-XL_CCRVAL:	.long	0x0909 /* Operand cache ON */
-#else
-XL_CCRVAL:	.long	0x0000 /* cache OFF */
-#endif
-#endif
+XLmachine_startup:	.long	_C_LABEL(machine_startup)
+XLtmpksp:		.long	_C_LABEL(_start)
 
 NENTRY(proc_trampoline)
 	mov	r11, r4
@@ -719,7 +577,6 @@ ENTRY(cpu_switch)
 XXLcpl:		.long	_C_LABEL(cpl)
 XXLcurproc:	.long	_C_LABEL(curproc)
 XXLXspllower:	.long	_C_LABEL(Xspllower)
-XXLKernelStack:	.long	KernelStack
 XXLKernelSp:	.long	KernelSp
 
 switch_search:
@@ -1657,51 +1514,6 @@ ENTRY(cpu_printR15)
 	.align	2
 2:	.long	_C_LABEL(printf)
 
-load_and_reset:
-	mov.l	XL_start_address, r0
-	mov	r0, r8
-	mov.l	@r4+, r1	/* r1 = osimage size */
-	mov.l	@r4+, r2	/* r2 = check sum */
-	shlr2	r1		/* r1 = osimage size in dword */
-1:
-	mov.l	@r4+, r3
-	mov.l	r3, @r0
-	add	#4, r0
-	dt	r1
-	bf	1b
-
-	jmp	@r8		/* jump to start address */
-	nop
-
-	.align	2
-XL_start_address:
-	.long	IOM_RAM_BEGIN + 0x00010000
-load_and_reset_end:
-
-ENTRY(XLoadAndReset)
-	INTR_DISABLE
-	/* copy trampoline code to RAM area top */
-	mov.l	XL_load_and_reset, r0
-	mov.l	XL_load_and_reset_end, r1
-	mov.l	XL_load_trampoline_addr, r2
-	mov	r2, r8
-	sub	r0, r1		/* r1 = bytes to be copied */
-1:	mov.b	@r0+, r3
-	mov.b	r3, @r2
-	add	#1, r2
-	dt	r1
-	bf	1b
-
-	jmp	@r8		/* jump to trampoline code */
-	nop
-
-	.align	2
-XL_load_trampoline_addr:
-	.long	IOM_RAM_BEGIN + 0x00008000
-XL_load_and_reset:
-	.long	load_and_reset
-XL_load_and_reset_end:
-	.long	load_and_reset_end
 
 ENTRY(Sh3Reset)
 	mov.l	XL_reset_vector, r8
