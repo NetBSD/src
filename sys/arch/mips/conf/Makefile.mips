@@ -1,15 +1,15 @@
-#	$NetBSD: Makefile.sgimips,v 1.3 2000/12/02 20:27:37 matt Exp $
+#	$NetBSD: Makefile.mips,v 1.1 2000/12/03 02:07:05 matt Exp $
 
 # Makefile for NetBSD
 #
 # This makefile is constructed from a machine description:
 #	config machineid
 # Most changes should be made in the machine description
-#	/sys/arch/sgimips/conf/``machineid''
+#	/sys/arch/<machine>/conf/``machineid''
 # after which you should do
 #	config machineid
 # Machine generic makefile changes should be made in
-#	/sys/arch/sgimips/conf/Makefile.sgimips
+#	/sys/arch/mips/conf/Makefile.mips
 # after which config should be rerun for all machines of that type.
 #
 # N.B.: NO DEPENDENCIES ON FOLLOWING FLAGS ARE VISIBLE TO MAKEFILE
@@ -36,35 +36,42 @@ TSORT?=		tsort -q
 
 COPTS?=		-O2
 
-TEXTADDR?=	0x80002000
+TEXTADDR?=	${DEFTEXTADDR}
 
 # source tree is located via $S relative to the compilation directory
 .ifndef S
-#S!=	cd ../../../..; pwd
 S=	../../../..
 .endif
-SGIMIPS= $S/arch/sgimips
-MIPS=	$S/arch/mips
+THISMIPS=	$S/arch/${MACHINE}
+MIPS=		$S/arch/mips
 
 HAVE_EGCS!=	${CC} --version | egrep "^(2\.[89]|egcs)" ; echo
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
-CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -Dsgimips
+CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -D${MACHINE}
 CWARNFLAGS?=	-Wall -Werror -Wstrict-prototypes -Wmissing-prototypes \
 		-Wpointer-arith
 # XXX Delete -Wuninitialized for now, since the compiler doesn't
-# XXX always get it right.  --thorpej 
+# XXX always get it right.  --thorpej
 CWARNFLAGS+=	-Wno-uninitialized
 .if (${HAVE_EGCS} != "")
 CWARNFLAGS+=	-Wno-main
 .endif
 GP?=		-G 0
 CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS} ${GP} \
-		-mno-abicalls -mno-half-pic -EB
-AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE -EB
-LINKFLAGS=	-T ${MIPS}/conf/kern.ldscript.be -Ttext ${TEXTADDR} \
-		-e start ${GP}
-LD+=		-EB
+		-mno-abicalls -mno-half-pic ${ENDIAN}
+AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE ${ENDIAN}
+LINKFLAGS+=	-Ttext ${TEXTADDR} -e start ${GP}
+.if (${ENDIAN} == "-EB")
+LINKFLAGS+=	-T ${MIPS}/conf/kern.ldscript.be
+.else
+LINKFLAGS+=	-T ${MIPS}/conf/kern.ldscript.le
+.endif
+LD+=		${ENDIAN}
 STRIPFLAGS=	-g -X -x
+
+.if exists(${THISMIPS}/conf/Makefile.${MACHINE}.inc)
+.include "${THISMIPS}/conf/Makefile.${MACHINE}.inc"
+.endif
 
 %INCLUDES
 
@@ -111,33 +118,26 @@ SYSTEM_OBJ+=	locore_mips3.o
 .endif
 SYSTEM_OBJ+=	fp.o param.o ioconf.o ${OBJS} ${LIBKERN} ${LIBCOMPAT}
 SYSTEM_DEP=	Makefile ${SYSTEM_OBJ}
-SYSTEM_LD_HEAD=	@rm -f $@
-SYSTEM_LD=	@echo ${LD} ${LINKFLAGS} -o $@ '$${SYSTEM_OBJ}' vers.o ; \
+SYSTEM_LD_HEAD?=@rm -f $@
+SYSTEM_LD?=	@echo ${LD} ${LINKFLAGS} -o $@ '$${SYSTEM_OBJ}' vers.o ; \
 		${LD} ${LINKFLAGS} -o $@ ${SYSTEM_OBJ} vers.o
-# XXX
-SYSTEM_LD_TAIL=	@echo ${LD} -T ${MIPS}/conf/kern.ldscript.be -Ttext 0x88002000 \
-		-e start ${GP} -x -o $@.high '$${SYSTEM_OBJ}' vers.o ; \
-		${LD} -T ${MIPS}/conf/kern.ldscript.be -Ttext 0x88002000 \
-		-e start ${GP} -x -o $@.high ${SYSTEM_OBJ} vers.o swapnetbsd.o
-# XXX
-SYSTEM_LD_TAIL+=; \
-		${SIZE} $@; chmod 755 $@ ; \
-		${SIZE} $@.high; chmod 755 $@.high
+SYSTEM_LD_TAIL?= \
+		@${SIZE} $@; chmod 755 $@
 
 DEBUG?=
 .if ${DEBUG} == "-g"
 LINKFLAGS+=	-X
+.ifdef DEBUG_SYSTEM_LD_TAIL
+SYSTEM_LD_TAIL+=${DEBUG_SYSTEM_LD_TAIL}
+.else
 SYSTEM_LD_TAIL+=; \
 		echo mv -f $@ $@.gdb; mv -f $@ $@.gdb; \
 		echo ${STRIP} ${STRIPFLAGS} -o $@ $@.gdb; \
 		${STRIP} ${STRIPFLAGS} -o $@ $@.gdb
+.endif
 .else
 LINKFLAGS+=	-x
 .endif
-
-SYSTEM_LD_TAIL+=;\
-# XXX		echo elf2ecoff $@ $@.ecoff; elf2ecoff $@ $@.ecoff; \
-# XXX		chmod 755 $@.ecoff
 
 %LOAD
 
@@ -191,12 +191,12 @@ links:
 	sh makelinks && rm -f dontlink
 
 SRCS=	${MIPS}/mips/locore.S ${MIPS}/mips/fp.S \
-	${SGIMIPS}/sgimips/locore_machdep.S \
+	${THISMIPS}/${MACHINE}/locore_machdep.S \
 	param.c ioconf.c ${CFILES} ${SFILES}
 depend: .depend
 .depend: ${SRCS} assym.h param.c
 	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${MIPS}/mips/locore.S ${MIPS}/mips/fp.S
-	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SGIMIPS}/sgimips/locore_machdep.S
+	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${THISMIPS}/${MACHINE}/locore_machdep.S
 	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
 .if (${SFILES} != "")
 	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
@@ -205,6 +205,8 @@ depend: .depend
 	  ${CPPFLAGS} < ${MIPS}/mips/genassym.cf
 	@sed -e 's/.*\.o:.*\.c/assym.h:/' < assym.dep >> .depend
 	@rm -f assym.dep
+
+dependall: depend all
 
 
 # depend on root or device configuration
@@ -231,6 +233,12 @@ locore_mips1.o: ${MIPS}/mips/locore_mips1.S assym.h
 locore_mips3.o: ${MIPS}/mips/locore_mips3.S assym.h
 	${NORMAL_S}
 
+fp.o: ${MIPS}/mips/fp.S assym.h
+	${NORMAL_S}
+
+locore_machdep.o: ${THISMIPS}/${MACHINE}/locore_machdep.S assym.h
+	${NORMAL_S}
+
 # The install target can be redefined by putting a
 # install-kernel-${MACHINE_NAME} target into /etc/mk.conf
 MACHINE_NAME!=  uname -n
@@ -242,11 +250,5 @@ install-kernel-${MACHINE_NAME}:
 	cp netbsd /nnetbsd
 	mv /nnetbsd /netbsd
 .endif
-
-fp.o: ${MIPS}/mips/fp.S assym.h
-	${NORMAL_S}
-
-locore_machdep.o: ${SGIMIPS}/sgimips/locore_machdep.S assym.h
-	${NORMAL_S}
 
 %RULES
