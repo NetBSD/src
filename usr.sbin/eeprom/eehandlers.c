@@ -1,4 +1,4 @@
-/*	$NetBSD: eehandlers.c,v 1.6 1997/10/18 08:40:40 lukem Exp $	*/
+/*	$NetBSD: eehandlers.c,v 1.7 2000/07/07 15:11:44 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -78,14 +78,14 @@ static	int doio __P((struct keytabent *, u_char *, ssize_t, int));
 }
 
 #define FAILEDREAD(kt) {						\
-	warnx(err_str);							\
+	warnx("%s", err_str);						\
 	warnx("failed to read field `%s'", (kt)->kt_keyword);		\
 	++eval;								\
 	return;								\
 }
 
 #define FAILEDWRITE(kt) {						\
-	warnx(err_str);							\
+	warnx("%s", err_str);						\
 	warnx("failed to update field `%s'", (kt)->kt_keyword);		\
 	++eval;								\
 	return;								\

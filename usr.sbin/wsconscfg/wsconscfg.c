@@ -1,4 +1,4 @@
-/* $NetBSD: wsconscfg.c,v 1.6 2000/07/04 20:27:40 matt Exp $ */
+/* $NetBSD: wsconscfg.c,v 1.7 2000/07/07 15:11:47 itojun Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -120,7 +120,7 @@ main(argc, argv)
 
 	wsfd = open(wsdev, O_RDWR, 0);
 	if (wsfd < 0)
-		err(2, wsdev);
+		err(2, "%s", wsdev);
 
 	if (kbd) {
 		if (mux)
