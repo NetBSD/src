@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_isapnp.c,v 1.2.2.1 1998/06/04 16:54:36 bouyer Exp $	*/
+/*	$NetBSD: wdc_isapnp.c,v 1.2.2.2 1998/06/09 13:04:24 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles M. Hannum.  All rights reserved.
@@ -56,15 +56,12 @@
 struct wdc_isapnp_softc {
 	struct	wdc_softc sc_wdcdev;
 	struct	channel_softc wdc_channel;
+	isa_chipset_tag_t sc_ic;
 	void	*sc_ih;
 	int	sc_drq;
 };
 
-#ifdef __BROKEN_INDIRECT_CONFIG
-int	wdc_isapnp_probe 	__P((struct device *, void *, void *));
-#else
 int	wdc_isapnp_probe 	__P((struct device *, struct cfdata *, void *));
-#endif
 void	wdc_isapnp_attach 	__P((struct device *, struct device *, void *));
 
 struct cfattach wdc_isapnp_ca = {
@@ -80,11 +77,7 @@ static void	wdc_isapnp_dma_finish __P((void *));
 int
 wdc_isapnp_probe(parent, match, aux)
 	struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
-	void *match;
-#else
 	struct cfdata *match;
-#endif
 	void *aux;
 {
 	struct isapnp_attach_args *ipa = aux;
@@ -128,6 +121,7 @@ wdc_isapnp_attach(parent, self, aux)
 	sc->wdc_channel.cmd_ioh = ipa->ipa_io[0].h;
 	sc->wdc_channel.ctl_iot = ipa->ipa_iot;
 	sc->wdc_channel.ctl_ioh = ipa->ipa_io[1].h;
+	sc->sc_ic = ipa->ipa_ic;
 
 	sc->sc_ih = isa_intr_establish(ipa->ipa_ic, ipa->ipa_irq[0].num,
 	    ipa->ipa_irq[0].type, IPL_BIO, wdcintr, &sc->wdc_channel);
@@ -164,7 +158,7 @@ wdc_isapnp_dma_setup(sc)
 	struct wdc_isapnp_softc *sc;
 {
 
-	if (isa_dmamap_create(sc->sc_wdcdev.sc_dev.dv_parent, sc->sc_drq,
+	if (isa_dmamap_create(sc->sc_ic, sc->sc_drq,
 	    MAXPHYS, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW)) {
 		printf("%s: can't create map for drq %d\n",
 		    sc->sc_wdcdev.sc_dev.dv_xname, sc->sc_drq);
@@ -180,7 +174,7 @@ wdc_isapnp_dma_start(scv, buf, size, read)
 {
 	struct wdc_isapnp_softc *sc = scv;
 
-	isa_dmastart(sc->sc_wdcdev.sc_dev.dv_parent, sc->sc_drq, buf,
+	isa_dmastart(sc->sc_ic, sc->sc_drq, buf,
 	    size, NULL, read ? DMAMODE_READ : DMAMODE_WRITE,
 	    BUS_DMA_NOWAIT);
 }
@@ -191,6 +185,6 @@ wdc_isapnp_dma_finish(scv)
 {
 	struct wdc_isapnp_softc *sc = scv;
 
-	isa_dmadone(sc->sc_wdcdev.sc_dev.dv_parent, sc->sc_drq);
+	isa_dmadone(sc->sc_ic, sc->sc_drq);
 }
 #endif
