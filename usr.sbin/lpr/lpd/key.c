@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.2 1997/07/17 05:46:51 mikel Exp $	*/
+/*	$NetBSD: key.c,v 1.3 1997/10/20 08:08:28 scottr Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)key.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: key.c,v 1.2 1997/07/17 05:46:51 mikel Exp $");
+__RCSID("$NetBSD: key.c,v 1.3 1997/10/20 08:08:28 scottr Exp $");
 #endif
 #endif /* not lint */
 
@@ -251,7 +251,7 @@ f_sane(ip)
 	struct info *ip;
 {
 
-	ip->t.c_cflag = TTYDEF_CFLAG | (ip->t.c_cflag & (CLOCAL|CRTSCTS));
+	ip->t.c_cflag = TTYDEF_CFLAG | (ip->t.c_cflag & (CLOCAL|CRTSCTS|CDTRCTS));
 	ip->t.c_iflag = TTYDEF_IFLAG;
 	ip->t.c_iflag |= ICRNL;
 	/* preserve user-preference flags in lflag */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ttyflags.c,v 1.9 1997/09/15 11:24:41 lukem Exp $	*/
+/*	$NetBSD: ttyflags.c,v 1.10 1997/10/20 08:08:24 scottr Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -37,7 +37,7 @@ __COPYRIGHT("@(#) Copyright (c) 1994 Christopher G. Demetriou\n\
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: ttyflags.c,v 1.9 1997/09/15 11:24:41 lukem Exp $");
+__RCSID("$NetBSD: ttyflags.c,v 1.10 1997/10/20 08:08:24 scottr Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -184,6 +184,12 @@ change_ttyflags(tep)
 		if (sep++)
 			(void)strcat(strflags, "|");
 		(void)strcat(strflags, "rtscts");
+	}
+	if (st & TTY_DTRCTS) {
+		flags |= TIOCFLAG_CDTRCTS;
+		if (sep++)
+			(void)strcat(strflags, "|");
+		(void)strcat(strflags, "dtrcts");
 	}
 	if (st & TTY_SOFTCAR) {
 		flags |= TIOCFLAG_SOFTCAR;

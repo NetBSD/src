@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.5 1997/10/09 19:16:04 christos Exp $	*/
+/*	$NetBSD: tty.c,v 1.6 1997/10/20 08:07:56 scottr Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)tty.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: tty.c,v 1.5 1997/10/09 19:16:04 christos Exp $");
+__RCSID("$NetBSD: tty.c,v 1.6 1997/10/20 08:07:56 scottr Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -298,6 +298,9 @@ private ttymodes_t ttymodes[] = {
 # ifdef CRTS_IFLOW
     { "crts_iflow",CRTS_IFLOW,M_CTL },
 # endif /* CRTS_IFLOW */
+# ifdef CDTRCTS
+    { "cdtrcts",CDTRCTS,M_CTL },
+# endif /* CDTRCTS */
 # ifdef MDMBUF
     { "mdmbuf",	MDMBUF,	M_CTL },
 # endif /* MDMBUF */

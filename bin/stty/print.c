@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.13 1997/07/20 21:31:26 christos Exp $	*/
+/*	$NetBSD: print.c,v 1.14 1997/10/20 08:08:07 scottr Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.13 1997/07/20 21:31:26 christos Exp $");
+__RCSID("$NetBSD: print.c,v 1.14 1997/10/20 08:08:07 scottr Exp $");
 #endif
 #endif /* not lint */
 
@@ -177,6 +177,7 @@ print(tp, wp, ldisc, fmt)
 	put("-cstopb", CSTOPB, 0);
 	put("-crtscts", CRTSCTS, 0);
 	put("-mdmbuf", MDMBUF, 0);
+	put("-cdtrcts", CDTRCTS, 0);
 
 	/* special control characters */
 	cc = tp->c_cc;
