@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.38 1998/10/13 02:34:32 kim Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.39 1998/12/10 15:50:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -272,11 +272,9 @@ ether_output(ifp, m0, dst, rt0)
 #endif
 #ifdef IPX
 	case AF_IPX:
-		etype = ETHERTYPE_IPX;
- 		bcopy((caddr_t)&satosipx(dst)->sipx_addr.ipx_host,
+		etype = htons(ETHERTYPE_IPX);
+ 		bcopy((caddr_t)&(((struct sockaddr_ipx *)dst)->sipx_addr.x_host),
 		    (caddr_t)edst, sizeof (edst));
-		if (!bcmp((caddr_t)edst, (caddr_t)&ipx_thishost, sizeof(edst)))
-			return (looutput(ifp, m, dst, rt));
 		/* If broadcasting on a simplex interface, loopback a copy */
 		if ((m->m_flags & M_BCAST) && (ifp->if_flags & IFF_SIMPLEX))
 			mcopy = m_copy(m, 0, (int)M_COPYALL);
