@@ -1,11 +1,11 @@
-/*	$NetBSD: makecontext.c,v 1.1.2.5 2001/11/28 10:37:30 wdk Exp $	*/
+/*	$NetBSD: _resumecontext.S,v 1.1.2.1 2001/11/28 10:37:29 wdk Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Klaus Klein.
+ * by Wayne Knowles.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,50 +36,18 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
-#if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: makecontext.c,v 1.1.2.5 2001/11/28 10:37:30 wdk Exp $");
-#endif
+#include "SYS.h"
+#include <machine/mcontext.h>
 
-#include <inttypes.h>
-#include <stddef.h>
-#include <ucontext.h>
-#include "extern.h"
+#if defined(SYSLIBC_SCCS) && !defined(lint)
+	ASMSTR("$NetBSD: _resumecontext.S,v 1.1.2.1 2001/11/28 10:37:29 wdk Exp $")
+#endif /* SYSLIBC_SCCS && !lint */
 
-#include <stdarg.h>
-
-void
-makecontext(ucontext_t *ucp, void (*func)(void), int argc, ...)
-{
-	__greg_t *gr = ucp->uc_mcontext.__gregs;
-	uintptr_t *sp;
-	int i;
-	va_list ap;
-
-	void __resumecontext(void);
-
-	/* LINTED uintptr_t is safe */
-	sp  = (uintptr_t *)
-	    ((uintptr_t)ucp->uc_stack.ss_sp + ucp->uc_stack.ss_size);
-	/* LINTED uintptr_t is safe */
-	sp -= (argc >= 4 ? argc : 4);	/* Make room for >=4 arguments. */
-	sp  = (uintptr_t *)
-	      ((u_long)sp & ~0x7);	/* Align on double-word boundary. */
-
-	gr[_REG_SP]  = (__greg_t)sp;
-	gr[_REG_RA]  = (__greg_t)__resumecontext;
-	gr[_REG_T9]  = (__greg_t)func;	/* required for .abicalls */
-	gr[_REG_EPC] = (__greg_t)func;
-
-	/* Construct argument list. */
-	va_start(ap, argc);
-	/* Up to the first four arguments are passed in $a0-3. */
-	for (i = 0; i < argc && i < 4; i++)
-		/* LINTED uintptr_t is safe */
-		gr[_REG_A0 + i] = va_arg(ap, uintptr_t);
-	/* Pass remaining arguments on the stack above the $a0-3 gap. */
-	for (sp += 4; i < argc; i++)
-		/* LINTED uintptr_t is safe */
-		*sp++ = va_arg(ap, uintptr_t);
-	va_end(ap);
-}
+LEAF_NOPROFILE(__resumecontext)
+	move	t9, ra
+	PIC_PROLOGUE(_resumecontext, t9)
+	
+	la	t9, _C_LABEL(_resumecontext)
+	jr	t9
+	 nop
+END(__resumecontext)
