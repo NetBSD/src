@@ -36,11 +36,11 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /* from: static char sccsid[] = "@(#)fnmatch.c	8.1 (Berkeley) 6/4/93"; */
-static char *rcsid = "$Id: fnmatch.c,v 1.6 1993/11/06 00:52:40 cgd Exp $";
+static char *rcsid = "$Id: fnmatch.c,v 1.7 1993/11/09 18:22:09 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
- * Function fnmatch() as proposed in POSIX 1003.2 B.6 (D11.2).
+ * Function fnmatch() as specified in POSIX 1003.2-1992, section B.6.
  * Compares a filename or pathname to a pattern.
  */
 
@@ -49,7 +49,7 @@ static char *rcsid = "$Id: fnmatch.c,v 1.6 1993/11/06 00:52:40 cgd Exp $";
 
 #define	EOS	'\0'
 
-static const char *rangematch __P((const char *, int));
+static const char *rangematch __P((const char *, int, int));
 
 fnmatch(pattern, string, flags)
 	register const char *pattern, *string;
@@ -99,7 +99,7 @@ fnmatch(pattern, string, flags)
 			if ((test = *string++) == EOS ||
 			    test == '/' && flags & FNM_PATHNAME)
 				return (FNM_NOMATCH);
-			if ((pattern = rangematch(pattern, test)) == NULL)
+			if ((pattern = rangematch(pattern, test, flags)) == NULL)
 				return (FNM_NOMATCH);
 			break;
 		case '\\':
@@ -108,9 +108,6 @@ fnmatch(pattern, string, flags)
 					c = '\\';
 					--pattern;
 				}
-				if (c != *string++)
-					return (FNM_NOMATCH);
-				break;
 			}
 			/* FALLTHROUGH */
 		default:
@@ -122,30 +119,48 @@ fnmatch(pattern, string, flags)
 }
 
 static const char *
-rangematch(pattern, test)
+rangematch(pattern, test, flags)
 	register const char *pattern;
 	register int test;
+	int flags;
 {
 	register char c, c2;
 	int negate, ok;
 
-	if (negate = (*pattern == '!'))
-		++pattern;
-
-	/*
-	 * XXX
-	 * TO DO: quoting
+	/* A bracket expression starting with an unquoted circumflex
+	 * character produces unspecified results (IEEE 1003.2-1992,
+	 * 3.13.2).  I have chosen to treat it like '!', for 
+	 * consistancy with regular expression syntax.
 	 */
-	for (ok = 0; (c = *pattern++) != ']';) {
-		if (c == EOS)
-			return (NULL);		/* Illegal pattern. */
-		if (*pattern == '-' && (c2 = pattern[1]) != EOS && c2 != ']') {
-			if (c <= test && test <= c2)
-				ok = 1;
-			pattern += 2;
-		}
-		else if (c == test)
-			ok = 1;
+	if (negate = (*pattern == '!' || *pattern == '^')) {
+		pattern++;
 	}
+	
+	for (ok = 0; (c = *pattern++) != ']';) {
+		if (c == '\\' && !(flags & FNM_NOESCAPE)) {
+			c = *pattern++;
+	        }
+		if (c == EOS) {
+			return (NULL);
+		}
+
+		if (*pattern == '-' 
+		    && (c2 = *(pattern+1)) != EOS && c2 != ']') {
+			pattern += 2;
+			if (c2 == '\\' && !(flags & FNM_NOESCAPE)) {
+				c2 = *pattern++;
+			}
+			if (c2 == EOS) {
+				return (NULL);
+			}
+			
+			if (c <= test && test <= c2) {
+				ok = 1;
+			}
+		} else if (c == test) {
+			ok = 1;
+		}
+	}
+
 	return (ok == negate ? NULL : pattern);
 }
