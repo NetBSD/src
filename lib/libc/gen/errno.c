@@ -1,5 +1,3 @@
-/*
- * 	$Id: errno.c,v 1.1 1993/12/23 14:00:07 cgd Exp $
- */
+/*	$NetBSD: errno.c,v 1.2 1995/02/27 03:42:51 cgd Exp $	*/
 
 int errno;

@@ -1,3 +1,5 @@
+/*	$NetBSD: fts.c,v 1.12 1995/02/27 03:43:30 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1990, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -32,8 +34,11 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/* from: static char sccsid[] = "@(#)fts.c	8.6 (Berkeley) 8/14/94"; */
-static char *rcsid = "$Id: fts.c,v 1.11 1994/12/28 03:15:09 mycroft Exp $";
+#if 0
+static char sccsid[] = "@(#)fts.c	8.4 (Berkeley) 4/16/94";
+#else
+static char rcsid[] = "$NetBSD: fts.c,v 1.12 1995/02/27 03:43:30 cgd Exp $";
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>

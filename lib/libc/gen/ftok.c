@@ -1,3 +1,5 @@
+/*	$NetBSD: ftok.c,v 1.3 1995/02/27 03:43:18 cgd Exp $	*/
+
 /*
  * Copyright (c) 1994 SigmaSoft, Th. Lockert <tholo@sigmasoft.com>
  * All rights reserved.
@@ -26,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$Id: ftok.c,v 1.2 1994/06/26 16:27:34 jtc Exp $";
+static char *rcsid = "$NetBSD: ftok.c,v 1.3 1995/02/27 03:43:18 cgd Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -43,5 +45,6 @@ ftok(path, id)
 	if (stat(path, &st) < 0)
 		return (key_t)-1;
 
-	return (key_t) (id << 24 | (st.st_dev & 0xff) << 16 | (st.st_ino & 0xffff));
+	return (key_t)
+	    (id << 24 | (st.st_dev & 0xff) << 16 | (st.st_ino & 0xffff));
 }
