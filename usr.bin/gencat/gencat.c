@@ -1,4 +1,4 @@
-/*	$NetBSD: gencat.c,v 1.6 1997/10/08 22:28:15 jtc Exp $	*/
+/*	$NetBSD: gencat.c,v 1.7 1997/10/19 02:12:40 lukem Exp $	*/
 
 /*
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -36,6 +36,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: gencat.c,v 1.7 1997/10/19 02:12:40 lukem Exp $");
+#endif
+
 /***********************************************************
 Copyright 1990, by Alfalfa Software Incorporated, Cambridge, Massachusetts.
 
@@ -72,20 +77,13 @@ up-to-date.  Many thanks.
 
 #include <sys/queue.h>
 #include <ctype.h>
+#include <err.h>
+#include <fcntl.h>
+#include <nl_types.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <fcntl.h>
-#include <nl_types.h>
-
-extern void MCAddSet __P((int setId));
-extern void MCDelSet __P((int setId));
-extern void MCAddMsg __P((int msgId, const char *msg));
-extern void MCDelMsg __P((int msgId));
-extern void MCParse __P((int fd));
-extern void MCReadCat __P((int fd));
-extern void MCWriteCat __P((int fd));
 
 struct _msgT {
 	long    msgId;
@@ -105,10 +103,37 @@ static struct _setT *curSet;
 static char *curline = NULL;
 static long lineno = 0;
 
+extern	char	*__progname;		/* from crt0.o */
+
+#if 0	/* XXX unused */
+static	void	corrupt __P((void));
+#endif
+static	char   *cskip __P((char *));
+static	void	error __P((char *, char *));
+static	void	nomem __P((void));
+static	char   *getline __P((int));
+static	char   *getmsg __P((int, char *, char));
+static	void	warning __P((char *, char *));
+static	char   *wskip __P((char *));
+static	char   *xstrdup __P((const char *));
+static	void   *xmalloc __P((size_t));
+static	void   *xrealloc __P((void *, size_t));
+
+void	MCParse __P((int fd));
+void	MCReadCat __P((int fd));
+void	MCWriteCat __P((int fd));
+void	MCDelMsg __P((int msgId));
+void	MCAddMsg __P((int msgId, const char *msg));
+void	MCAddSet __P((int setId));
+void	MCDelSet __P((int setId));
+int	main __P((int, char **));
+void	usage __P((void));
+
+
 void
 usage()
 {
-	fprintf(stderr, "Use: gencat catfile msgfile ...\n");
+	fprintf(stderr, "Usage: %s catfile msgfile ...\n", __progname);
 	exit(1);
 }
 
@@ -139,19 +164,14 @@ main(argc, argv)
 	catfile = *argv++;
 
 	for (; *argv; argv++) {
-		if ((ifd = open(*argv, O_RDONLY)) < 0) {
-			fprintf(stderr, "gencat: Unable to read %s\n", *argv);
-			exit(1);
-		}
+		if ((ifd = open(*argv, O_RDONLY)) < 0)
+			err(1, "Unable to read %s", *argv);
 		MCParse(ifd);
 		close(ifd);
 	}
 
-	if ((ofd = open(catfile, O_WRONLY | O_TRUNC | O_CREAT, 0666)) < 0) {
-		fprintf(stderr, "gencat: Unable to create a new %s.\n",
-		    catfile);
-		exit(1);
-	}
+	if ((ofd = open(catfile, O_WRONLY | O_TRUNC | O_CREAT, 0666)) < 0)
+		err(1, "Unable to create a new %s", catfile);
 	MCWriteCat(ofd);
 	exit(0);
 }
@@ -161,7 +181,7 @@ warning(cptr, msg)
 	char   *cptr;
 	char   *msg;
 {
-	fprintf(stderr, "gencat: %s on line %ld\n", msg, lineno);
+	fprintf(stderr, "%s: %s on line %ld\n", __progname, msg, lineno);
 	fprintf(stderr, "%s\n", curline);
 	if (cptr) {
 		char   *tptr;
@@ -180,11 +200,13 @@ error(cptr, msg)
 	exit(1);
 }
 
+#if 0	/* XXX unused */
 static void
 corrupt()
 {
 	error(NULL, "corrupt message catalog");
 }
+#endif
 
 static void
 nomem()
@@ -215,11 +237,13 @@ xrealloc(ptr, size)
 
 static char *
 xstrdup(str)
-	char   *str;
+	const char   *str;
 {
-	if ((str = strdup(str)) == NULL)
+	char *nstr;
+
+	if ((nstr = strdup(str)) == NULL)
 		nomem();
-	return (str);
+	return (nstr);
 }
 
 static char *
