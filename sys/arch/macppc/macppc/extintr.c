@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.10 1999/09/17 20:04:37 thorpej Exp $	*/
+/*	$NetBSD: extintr.c,v 1.11 2000/02/11 13:15:43 tsubai Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -55,12 +55,14 @@ volatile int cpl, ipending, astpending, tickspending;
 int imask[NIPL];
 u_char *interrupt_reg;
 
+#define NIRQ 32
+
 void intr_calculatemasks __P((void));
 char *intr_typename __P((int));
 int fakeintr __P((void *));
 
-int intrtype[ICU_LEN], intrmask[ICU_LEN], intrlevel[ICU_LEN];
-struct intrhand *intrhand[ICU_LEN];
+int intrtype[NIRQ], intrmask[NIRQ], intrlevel[NIRQ];
+struct intrhand *intrhand[NIRQ];
 
 extern u_int *heathrow_FCR;
 
@@ -69,7 +71,7 @@ static __inline int read_irq __P((void));
 static __inline int mapirq __P((int));
 static void enable_irq __P((int));
 
-static int hwirq[ICU_LEN], virq[64];
+static int hwirq[NIRQ], virq[ICU_LEN];
 static int virq_max = 0;
 
 #define HWIRQ_MAX 27
@@ -93,7 +95,7 @@ mapirq(irq)
 {
 	int v;
 
-	if (irq < 0 || irq >= 64)
+	if (irq < 0 || irq >= ICU_LEN)
 		panic("invalid irq");
 	if (virq[irq])
 		return virq[irq];
@@ -193,7 +195,7 @@ intr_calculatemasks()
 	struct intrhand *q;
 
 	/* First, figure out which levels each IRQ uses. */
-	for (irq = 0; irq < ICU_LEN; irq++) {
+	for (irq = 0; irq < NIRQ; irq++) {
 		register int levels = 0;
 		for (q = intrhand[irq]; q; q = q->ih_next)
 			levels |= 1 << q->ih_level;
@@ -203,7 +205,7 @@ intr_calculatemasks()
 	/* Then figure out which IRQs use each level. */
 	for (level = 0; level < NIPL; level++) {
 		register int irqs = 0;
-		for (irq = 0; irq < ICU_LEN; irq++)
+		for (irq = 0; irq < NIRQ; irq++)
 			if (intrlevel[irq] & (1 << level))
 				irqs |= 1 << irq;
 		imask[level] = irqs;
@@ -265,7 +267,7 @@ intr_calculatemasks()
 	imask[IPL_SERIAL] |= imask[IPL_HIGH];
 
 	/* And eventually calculate the complete masks. */
-	for (irq = 0; irq < ICU_LEN; irq++) {
+	for (irq = 0; irq < NIRQ; irq++) {
 		register int irqs = 1 << irq;
 		for (q = intrhand[irq]; q; q = q->ih_next)
 			irqs |= imask[q->ih_level];
@@ -275,7 +277,7 @@ intr_calculatemasks()
 	/* Lastly, determine which IRQs are actually in use. */
 	{
 		register int irqs = 0;
-		for (irq = 0; irq < ICU_LEN; irq++)
+		for (irq = 0; irq < NIRQ; irq++)
 			if (intrhand[irq])
 				irqs |= 1 << irq;
 		imen = ~irqs;
@@ -291,7 +293,7 @@ fakeintr(arg)
 	return 0;
 }
 
-#define	LEGAL_IRQ(x)	((x) >= 0 && (x) < ICU_LEN)
+#define	LEGAL_IRQ(x)	((x) >= 0 && (x) < NIRQ)
 
 char *
 intr_typename(type)
