@@ -1,4 +1,4 @@
-/*	$NetBSD: cputypes.h,v 1.7 1994/10/27 04:16:01 cgd Exp $	*/
+/*	$NetBSD: cputypes.h,v 1.8 1996/12/03 23:54:55 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1993 Christopher G. Demetriou
@@ -28,20 +28,48 @@
  */
 
 /*
- *	Classes of Processor
+ * Classes of Processor. CPU identification code depends on
+ * this starting at 0, and having an increment of one.
  */
 
 #define	CPUCLASS_386	0
 #define	CPUCLASS_486	1
 #define	CPUCLASS_586	2
+#define	CPUCLASS_686	3
 
 /*
- *	Kinds of Processor
+ * Kinds of Processor. Only the first 6 are used, as they are processors
+ * that might not have a cpuid instruction.
  */
 
 #define	CPU_386SX	0	/* Intel 80386SX */
 #define	CPU_386		1	/* Intel 80386DX */
 #define	CPU_486SX	2	/* Intel 80486SX */
 #define	CPU_486		3	/* Intel 80486DX */
-#define	CPU_586		4	/* Intel P.....m (I hate lawyers; it's TM) */
-#define	CPU_486DLC	5	/* Cyrix 486DLC */
+#define	CPU_486DLC	4	/* Cyrix 486DLC */
+#define CPU_NX586	5	/* NexGen 586 */
+#define	CPU_586		6	/* Intel P.....m (I hate lawyers; it's TM) */
+#define CPU_AM586	7	/* AMD Am486 and Am5x86 */
+#define CPU_K5		8	/* AMD K5 */
+#define CPU_K6		9	/* NexGen 686 aka AMD K6 */
+#define CPU_686		10	/* Intel Pentium Pro */
+#define CPU_6x686	11	/* Cyrix/IBM 6x86 */
+
+/*
+ * CPU vendors
+ */
+
+#define CPUVENDOR_UNKNOWN	-1
+#define CPUVENDOR_INTEL		0
+#define CPUVENDOR_CYRIX		1
+#define CPUVENDOR_NEXGEN	2
+#define CPUVENDOR_AMD		3
+
+/*
+ * Some other defines, dealing with values returned by cpuid.
+ */
+
+#define CPU_MAXMODEL	15	/* Models within family range 0-15 */
+#define CPU_DEFMODEL	16	/* Value we use for unknown model -> default  */
+#define CPU_MINFAMILY	 4	/* Lowest that can be returned by cpuid (486) */
+#define CPU_MAXFAMILY	 6	/* Highest we know of (686) */
