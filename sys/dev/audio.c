@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.21 1996/03/07 15:00:07 christos Exp $	*/
+/*	$NetBSD: audio.c,v 1.22 1996/03/14 19:08:32 christos Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -76,6 +76,7 @@
 #include <sys/systm.h>
 #include <sys/syslog.h>
 #include <sys/kernel.h>
+#include <sys/signalvar.h>
 
 #include <sys/audioio.h>
 #include <dev/audiovar.h>
