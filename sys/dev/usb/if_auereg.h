@@ -1,4 +1,4 @@
-/*	$NetBSD: if_auereg.h,v 1.2 2000/01/19 00:25:23 augustss Exp $	*/
+/*	$NetBSD: if_auereg.h,v 1.3 2000/01/28 00:29:53 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -212,7 +212,6 @@ struct aue_chain {
 	usbd_xfer_handle	aue_xfer;
 	char			*aue_buf;
 	struct mbuf		*aue_mbuf;
-	int			aue_accum;
 	int			aue_idx;
 };
 
@@ -259,8 +258,6 @@ struct aue_softc {
 #define AUE_TIMEOUT		1000
 #define ETHER_ALIGN		2
 #define AUE_BUFSZ		1536
-#define AUE_CUTOFF		1088
-//#define AUE_CUTOFF		1536
 #define AUE_MIN_FRAMELEN	60
 #define AUE_TX_TIMEOUT		10000 /* ms */
 #define AUE_INTR_INTERVAL	100 /* ms */

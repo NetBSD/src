@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cue.c,v 1.2 2000/01/18 19:46:55 augustss Exp $	*/
+/*	$NetBSD: if_cue.c,v 1.3 2000/01/28 00:34:12 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -770,7 +770,6 @@ cue_rx_list_init(sc)
 		c = &cd->cue_rx_chain[i];
 		c->cue_sc = sc;
 		c->cue_idx = i;
-		c->cue_accum = 0;
 		if (cue_newbuf(sc, c, NULL) == ENOBUFS)
 			return (ENOBUFS);
 		if (c->cue_xfer == NULL) {
@@ -831,7 +830,7 @@ cue_rxstart(ifp)
 
 	/* Setup new transfer. */
 	usbd_setup_xfer(c->cue_xfer, sc->cue_ep[CUE_ENDPT_RX],
-	    c, c->cue_buf, CUE_CUTOFF, USBD_SHORT_XFER_OK | USBD_NO_COPY,
+	    c, c->cue_buf, CUE_BUFSZ, USBD_SHORT_XFER_OK | USBD_NO_COPY,
 	    USBD_NO_TIMEOUT, cue_rxeof);
 	usbd_transfer(c->cue_xfer);
 
@@ -877,35 +876,10 @@ cue_rxeof(xfer, priv, status)
 
 	usbd_get_xfer_status(xfer, NULL, NULL, &total_len, NULL);
 
-	/* XXX copy data to mbuf */
-	memcpy(mtod(c->cue_mbuf, char*) + c->cue_accum, c->cue_buf, total_len);
-
-	/*
-	 * See if we've already accumulated some data from
-	 * a previous transfer.
-	 */
-	if (c->cue_accum) {
-		total_len += c->cue_accum;
-		c->cue_accum = 0;
-	}
+	memcpy(mtod(c->cue_mbuf, char *), c->cue_buf, total_len);
 
 	m = c->cue_mbuf;
 	len = UGETW(mtod(m, u_int8_t *));
-
-	/*
-	 * Check to see if this is just the first chunk of a
-	 * split transfer. We really need a more reliable way
-	 * to detect this.
-	 */
-	if (len != total_len && total_len == CUE_CUTOFF) {
-		c->cue_accum = CUE_CUTOFF;
-		usbd_setup_xfer(xfer, sc->cue_ep[CUE_ENDPT_RX],
-		    c, c->cue_buf,
-		    CUE_CUTOFF, USBD_SHORT_XFER_OK | USBD_NO_COPY,
-		    USBD_NO_TIMEOUT, cue_rxeof);
-		usbd_transfer(xfer);
-		return;
-	}
 
 	/* No errors; receive the packet. */
 	total_len = len;
@@ -964,7 +938,7 @@ cue_rxeof(xfer, priv, status)
 done:
 	/* Setup new transfer. */
 	usbd_setup_xfer(c->cue_xfer, sc->cue_ep[CUE_ENDPT_RX],
-	    c, c->cue_buf, CUE_CUTOFF, USBD_SHORT_XFER_OK | USBD_NO_COPY,
+	    c, c->cue_buf, CUE_BUFSZ, USBD_SHORT_XFER_OK | USBD_NO_COPY,
 	    USBD_NO_TIMEOUT, cue_rxeof);
 	usbd_transfer(c->cue_xfer);
 
@@ -1227,7 +1201,7 @@ cue_init(xsc)
 	for (i = 0; i < CUE_RX_LIST_CNT; i++) {
 		c = &sc->cue_cdata.cue_rx_chain[i];
 		usbd_setup_xfer(c->cue_xfer, sc->cue_ep[CUE_ENDPT_RX],
-		    c, c->cue_buf, CUE_CUTOFF,
+		    c, c->cue_buf, CUE_BUFSZ,
 		    USBD_SHORT_XFER_OK | USBD_NO_COPY, USBD_NO_TIMEOUT,
 		    cue_rxeof);
 		usbd_transfer(c->cue_xfer);

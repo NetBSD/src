@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.14 2000/01/19 00:25:23 augustss Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.15 2000/01/28 00:29:53 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -155,10 +155,6 @@ int	auedebug = 0;
 #define DPRINTF(x)
 #define DPRINTFN(n,x)
 #endif
-
-int aue_cutoff = AUE_CUTOFF;
-#undef AUE_CUTOFF
-#define AUE_CUTOFF aue_cutoff
 
 /*
  * Various supported device vendors/products.
@@ -1005,7 +1001,6 @@ aue_rx_list_init(sc)
 		c = &cd->aue_rx_chain[i];
 		c->aue_sc = sc;
 		c->aue_idx = i;
-		c->aue_accum = 0;
 		if (aue_newbuf(sc, c, NULL) == ENOBUFS)
 			return (ENOBUFS);
 		if (c->aue_xfer == NULL) {
@@ -1101,7 +1096,7 @@ aue_rxstart(ifp)
 
 	/* Setup new transfer. */
 	usbd_setup_xfer(c->aue_xfer, sc->aue_ep[AUE_ENDPT_RX],
-	    c, mtod(c->aue_mbuf, char *), AUE_CUTOFF, USBD_SHORT_XFER_OK,
+	    c, mtod(c->aue_mbuf, char *), AUE_BUFSZ, USBD_SHORT_XFER_OK,
 	    USBD_NO_TIMEOUT, aue_rxeof);
 	usbd_transfer(c->aue_xfer);
 }
@@ -1153,52 +1148,24 @@ aue_rxeof(xfer, priv, status)
 
 	usbd_get_xfer_status(xfer, NULL, NULL, &total_len, NULL);
 
-	/* XXX copy data to mbuf */
-	memcpy(mtod(c->aue_mbuf, char*) + c->aue_accum, c->aue_buf, total_len);
-
-	/*
-	 * See if we've already accumulated some data from
-	 * a previous transfer.
-	 */
-	if (c->aue_accum) {
-		total_len += c->aue_accum;
-		c->aue_accum = 0;
-	}
+	memcpy(mtod(c->aue_mbuf, char*), c->aue_buf, total_len);
 
 	if (total_len <= 4 + ETHER_CRC_LEN) {
 		ifp->if_ierrors++;
 		goto done;
 	}
 
-	m = c->aue_mbuf;
-	memcpy(&r, mtod(m, char *) + total_len - 4, sizeof(r));
+	memcpy(&r, c->aue_buf + total_len - 4, sizeof(r));
 
 	/* Turn off all the non-error bits in the rx status word. */
 	r.aue_rxstat &= AUE_RXSTAT_MASK;
-
-	/*
-	 * Check to see if this is just the first chunk of a
-	 * split transfer. We really need a more reliable way
-	 * to detect this.
-	 */
-	if (UGETW(r.aue_pktlen) != total_len && total_len == AUE_CUTOFF) {
-		c->aue_accum = AUE_CUTOFF;
-		usbd_setup_xfer(xfer, sc->aue_ep[AUE_ENDPT_RX],
-		    c, c->aue_buf,
-		    AUE_CUTOFF, USBD_SHORT_XFER_OK | USBD_NO_COPY,
-		    USBD_NO_TIMEOUT, aue_rxeof);
-		DPRINTFN(5,("%s: %s: extra rx\n", USBDEVNAME(sc->aue_dev),
-			    __FUNCTION__));
-		usbd_transfer(xfer);
-		return;
-	}
-
 	if (r.aue_rxstat) {
 		ifp->if_ierrors++;
 		goto done;
 	}
 
 	/* No errors; receive the packet. */
+	m = c->aue_mbuf;
 	total_len -= ETHER_CRC_LEN + 4;
 	m->m_pkthdr.len = m->m_len = total_len;
 	ifp->if_ipackets++;
@@ -1250,7 +1217,7 @@ aue_rxeof(xfer, priv, status)
 
 	/* Setup new transfer. */
 	usbd_setup_xfer(xfer, sc->aue_ep[AUE_ENDPT_RX],
-	    c, c->aue_buf, AUE_CUTOFF,
+	    c, c->aue_buf, AUE_BUFSZ,
 	    USBD_SHORT_XFER_OK | USBD_NO_COPY,
 	    USBD_NO_TIMEOUT, aue_rxeof);
 	usbd_transfer(xfer);
@@ -1538,7 +1505,7 @@ aue_init(xsc)
 	for (i = 0; i < AUE_RX_LIST_CNT; i++) {
 		c = &sc->aue_cdata.aue_rx_chain[i];
 		usbd_setup_xfer(c->aue_xfer, sc->aue_ep[AUE_ENDPT_RX],
-		    c, c->aue_buf, AUE_CUTOFF,
+		    c, c->aue_buf, AUE_BUFSZ,
 		    USBD_SHORT_XFER_OK | USBD_NO_COPY, USBD_NO_TIMEOUT,
 		    aue_rxeof);
 		usbd_transfer(c->aue_xfer);

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cuereg.h,v 1.1 2000/01/17 17:12:21 augustss Exp $	*/
+/*	$NetBSD: if_cuereg.h,v 1.2 2000/01/28 00:34:13 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -119,7 +119,6 @@
 #define CUE_TIMEOUT		1000
 #define ETHER_ALIGN		2
 #define CUE_BUFSZ		1536
-#define CUE_CUTOFF		1088
 #define CUE_MIN_FRAMELEN	60
 #define CUE_RX_FRAMES		1
 #define CUE_TX_FRAMES		1
@@ -154,7 +153,6 @@ struct cue_chain {
 	usbd_xfer_handle	cue_xfer;
 	char			*cue_buf;
 	struct mbuf		*cue_mbuf;
-	int			cue_accum;
 	int			cue_idx;
 };
 
