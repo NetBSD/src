@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 1999/01/03 12:46:31 veego Exp $
+#	$NetBSD: Makefile,v 1.17 1999/02/06 23:17:07 is Exp $
 
 ### what we need:
 
@@ -27,7 +27,7 @@ SOBJS += libstubs.o
 
 OBJS=	$(SOBJS) $(COBJS)
 
-DEFS = -DSTANDALONE -DINSECURE
+DEFS = -D_STANDALONE -DINSECURE
 
 ### main target: ###
 
