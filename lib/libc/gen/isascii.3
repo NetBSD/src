@@ -30,14 +30,14 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)isascii.3	5.1 (Berkeley) 5/2/91
-.\"	$Id: isascii.3,v 1.2 1993/07/30 08:37:09 mycroft Exp $
+.\"	$Id: isascii.3,v 1.3 1993/09/21 01:27:07 cgd Exp $
 .\"
 .Dd May 2, 1991
 .Dt ISASCII 3
 .Os
 .Sh NAME
 .Nm isascii
-.Nd 
+.Nd test for ASCII character
 .Sh SYNOPSIS
 .Fd #include <ctype.h>
 .Ft int
@@ -47,13 +47,8 @@ The
 .Fn isascii
 function tests for an
 .Tn ASCII
-character, which is any character
-for which either
-.Xr iscntrl 3
-(character codes 000 through 037 and also including
-0177) or 
-.Xr isprint 3
-(character codes 040 through 0176) is true.
+character, which is any character with a value less than than or
+equal to 0177.
 .Sh SEE ALSO
 .Xr isalnum 3 ,
 .Xr isalpha 3 ,
