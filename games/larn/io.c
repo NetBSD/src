@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.8 1999/10/04 23:27:02 lukem Exp $	*/
+/*	$NetBSD: io.c,v 1.9 2000/05/22 12:42:46 blymn Exp $	*/
 
 /*
  * io.c			 Larn is copyrighted 1986 by Noah Morgan.
@@ -62,7 +62,7 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: io.c,v 1.8 1999/10/04 23:27:02 lukem Exp $");
+__RCSID("$NetBSD: io.c,v 1.9 2000/05/22 12:42:46 blymn Exp $");
 #endif /* not lint */
 
 #include "header.h"
@@ -763,7 +763,8 @@ cursors()
  * obvious meanings.
  */
 
-static char     cap[256];
+static char     *cap;
+struct tinfo   *info;
 char           *CM, *CE, *CD, *CL, *SO, *SE, *AL, *DL;	/* Termcap capabilities */
 static char    *outbuf = 0;	/* translated output buffer */
 
@@ -773,11 +774,11 @@ static char    *outbuf = 0;	/* translated output buffer */
 void
 init_term()
 {
-	char            termbuf[1024];
-	char           *capptr = cap + 10;
+	char           *capptr;
 	char           *term;
 
-	switch (tgetent(termbuf, term = getenv("TERM"))) {
+	*cap = NULL;
+	switch (t_getent(&info, term = getenv("TERM"))) {
 	case -1:
 		write(2, "Cannot open termcap file.\n", 26);
 		exit(1);
@@ -788,16 +789,16 @@ init_term()
 		exit(1);
 	};
 
-	CM = tgetstr("cm", &capptr);	/* Cursor motion */
-	CE = tgetstr("ce", &capptr);	/* Clear to eoln */
-	CL = tgetstr("cl", &capptr);	/* Clear screen */
+	CM = t_agetstr(info, "cm", &cap, &capptr);	/* Cursor motion */
+	CE = t_agetstr(info, "ce", &cap, &capptr);	/* Clear to eoln */
+	CL = t_agetstr(info, "cl", &cap, &capptr);	/* Clear screen */
 
 	/* OPTIONAL */
-	AL = tgetstr("al", &capptr);	/* Insert line */
-	DL = tgetstr("dl", &capptr);	/* Delete line */
-	SO = tgetstr("so", &capptr);	/* Begin standout mode */
-	SE = tgetstr("se", &capptr);	/* End standout mode */
-	CD = tgetstr("cd", &capptr);	/* Clear to end of display */
+	AL = t_agetstr(info, "al", &cap, &capptr);	/* Insert line */
+	DL = t_agetstr(info, "dl", &cap, &capptr);	/* Delete line */
+	SO = t_agetstr(info, "so", &cap, &capptr);	/* Begin standout mode */
+	SE = t_agetstr(info, "se", &cap, &capptr);	/* End standout mode */
+	CD = t_agetstr(info, "cd", &cap, &capptr);	/* Clear to end of display */
 
 	if (!CM) {		/* can't find cursor motion entry */
 		write(2, "Sorry, for a ", 13);
@@ -936,6 +937,7 @@ lflush()
 	u_char  *str;
 	static int      curx = 0;
 	static int      cury = 0;
+	char tgoto_buf[256];
 
 	if ((lpoint = lpnt - lpbuf) > 0) {
 #ifdef EXTRA
@@ -978,7 +980,9 @@ lflush()
 				case CURSOR:
 					curx = *++str - 1;
 					cury = *++str - 1;
-					tputs(tgoto(CM, curx, cury), 0, xputchar);
+					if (t_goto(info, CM, curx, cury,
+						   tgoto_buf, 255) == 0)
+						tputs(tgoto_buf, 0, xputchar);
 					break;
 
 				case '\n':
@@ -989,17 +993,41 @@ lflush()
 
 							if (++scrline > 23)
 								scrline = 19;
-							tputs(tgoto(CM, 0, scrline), 0, xputchar);
+							if (t_goto(info, CM, 0,
+								   scrline,
+								   tgoto_buf,
+								   255) == 0)
+								tputs(tgoto_buf,
+								      0,
+								      xputchar);
 							tputs(CE, 0, xputchar);
 
 							if (--scrline < 19)
 								scrline = 23;
-							tputs(tgoto(CM, 0, scrline), 0, xputchar);
+							if (t_goto(info, CM, 0,
+								   scrline,
+								   tgoto_buf,
+								   255) == 0)
+								tputs(tgoto_buf,
+								      0,
+								      xputchar);
 							tputs(CE, 0, xputchar);
 						} else {
-							tputs(tgoto(CM, 0, 19), 0, xputchar);
+							if (t_goto(info, CM, 0,
+								   19,
+								   tgoto_buf,
+								   255) == 0)
+								tputs(tgoto_buf,
+								      0,
+								      xputchar);
 							tputs(DL, 0, xputchar);
-							tputs(tgoto(CM, 0, 23), 0, xputchar);
+							if (t_goto(info, CM, 0,
+								   23,
+								   tgoto_buf,
+								   255) == 0)
+								tputs(tgoto_buf,
+								      0,
+								      xputchar);
 							/*
 							 * tputs (AL, 0,
 							 * xputchar);
