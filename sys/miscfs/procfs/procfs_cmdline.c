@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_cmdline.c,v 1.1 1999/03/12 18:45:40 christos Exp $	*/
+/*	$NetBSD: procfs_cmdline.c,v 1.2 1999/03/13 01:01:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999 Jaromir Dolecek <dolecek@ics.muni.cz>
@@ -46,6 +46,11 @@
 #include <sys/exec.h>
 #include <miscfs/procfs/procfs.h>
 
+#include <vm/vm.h>
+#if defined(UVM)
+#include <uvm/uvm_extern.h>
+#endif
+
 /*
  * code for returning process's command line arguments
  */
@@ -57,30 +62,142 @@ procfs_docmdline(curp, p, pfs, uio)
 	struct uio *uio;
 {
 	struct ps_strings pss;
-	char arg[ARG_MAX], *argv;
-	int xlen, len, count, i;
+	char arg[ARG_MAX];
+	int xlen, len, count, error;
+	struct uio auio;
+	struct iovec aiov;
+	vaddr_t argv;
 
-	/* don't write; can't work for zombies -- they don't have any stack */
-	if (uio->uio_rw != UIO_READ || p->p_stat == SZOMB)
-		return EOPNOTSUPP;
+	/* Don't allow writing. */
+	if (uio->uio_rw != UIO_READ)
+		return (EOPNOTSUPP);
 
-	if (copyin(PS_STRINGS, &pss, sizeof(struct ps_strings)))
-		return EFAULT;
-	if (copyin(pss.ps_argvstr, &argv, sizeof(argv)))
-		return EFAULT;
+	/*
+	 * Zombies don't have a stack, so we can't read their psstrings.
+	 * System processes also don't have a user stack.  This is what
+	 * ps(1) would display.
+	 */
+	if (p->p_stat == SZOMB || (p->p_flag & P_SYSTEM) != 0) {
+		snprintf(arg, sizeof(arg), "(%s)", p->p_comm);
+		len = strlen(arg);	/* exclude last NUL */
+		goto doio;
+	}
+
+	/*
+	 * NOTE: Don't bother doing a procfs_checkioperm() here
+	 * because the psstrings info is available by using ps(1),
+	 * so it's not like there's anything to protect here.
+	 */
+
+	/*
+	 * Lock the process down in memory.
+	 */
+#if defined(UVM)
+	/* XXXCDC: how should locking work here? */
+	if ((p->p_flag & P_WEXIT) || (p->p_vmspace->vm_refcnt < 1))
+		return (EFAULT);
+	PHOLD(p);
+	p->p_vmspace->vm_refcnt++;	/* XXX */
+#else
+	PHOLD(p);
+#endif
+
+	/*
+	 * Read in the ps_strings structure.
+	 */
+	aiov.iov_base = &pss;
+	aiov.iov_len = sizeof(pss);
+	auio.uio_iov = &aiov;
+	auio.uio_iovcnt = 1;
+	auio.uio_offset = (vaddr_t)PS_STRINGS;
+	auio.uio_resid = sizeof(pss);
+	auio.uio_segflg = UIO_SYSSPACE;
+	auio.uio_rw = UIO_READ;
+	auio.uio_procp = NULL;
+#if defined(UVM)
+	error = uvm_io(&p->p_vmspace->vm_map, &auio);
+#else
+	error = procfs_rwmem(p, &auio);
+#endif
+	if (error)
+		goto bad;
+
+	/*
+	 * Now read the address of the argument vector.
+	 */
+	aiov.iov_base = &argv;
+	aiov.iov_len = sizeof(argv);
+	auio.uio_iov = &aiov;
+	auio.uio_iovcnt = 1;
+	auio.uio_offset = (vaddr_t)pss.ps_argvstr;
+	auio.uio_resid = sizeof(argv);
+	auio.uio_segflg = UIO_SYSSPACE;
+	auio.uio_rw = UIO_READ; 
+	auio.uio_procp = NULL;
+#if defined(UVM)
+	error = uvm_io(&p->p_vmspace->vm_map, &auio);
+#else
+	error = procfs_rwmem(p, &auio);
+#endif
+	if (error)
+		goto bad;
+
+	/*
+	 * Now copy in the actual argument vector, one byte at a time,
+	 * since we don't know how long the vector is (though, we do
+	 * know how many NUL-terminated strings are in the vector).
+	 */
 	len = 0;
 	count = pss.ps_nargvstr;
-	/* don't know how long the argument string is, so let's find out */
-	while(count && len < ARG_MAX && copyin(argv+len, &arg[len], 1) == 0) {
-		if (len > 0 && arg[len] == '\0') count--;
+	while (count && len < ARG_MAX) {
+		aiov.iov_base = &arg[len];
+		aiov.iov_len = 1;
+		auio.uio_iov = &aiov;
+		auio.uio_iovcnt = 1;
+		auio.uio_offset = argv + len;
+		auio.uio_resid = 1;
+		auio.uio_segflg = UIO_SYSSPACE;
+		auio.uio_rw = UIO_READ;
+		auio.uio_procp = NULL;
+#if defined(UVM)
+		error = uvm_io(&p->p_vmspace->vm_map, &auio);
+#else
+		error = procfs_rwmem(p, &auio);
+#endif
+		if (error)
+			goto bad;
+
+		if (len > 0 && arg[len] == '\0')
+			count--;	/* one full string */
 		len++;
 	}
-	if (len > 0) len--; /* exclude last NULL */
+	if (len > 0)
+		len--;			/* exclude last NUL */
 
+	/*
+	 * No longer need the process to be locked down.
+	 */
+#if defined(UVM)
+	PRELE(p);
+	uvmspace_free(p->p_vmspace);
+#else
+	PRELE(p);
+#endif
+
+ doio:
 	xlen = len - uio->uio_offset;
 	xlen = imin(xlen, uio->uio_resid);
 	if (xlen <= 0) 
 		return 0;
 	else
 		return (uiomove(arg + uio->uio_offset, xlen, uio));
+
+ bad:
+#if defined(UVM)
+	PRELE(p);
+	uvmspace_free(p->p_vmspace);
+#else
+	PRELE(p);
+#endif
+	return (error);
 }
