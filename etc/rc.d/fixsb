@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: fixsb,v 1.6 2004/04/21 17:26:42 dbj Exp $
+# $NetBSD: fixsb,v 1.7 2004/04/21 18:06:06 dbj Exp $
 #
 
 # PROVIDE: fixsb
@@ -33,6 +33,18 @@ verbose()
   fi
 }
 
+# This reads a field from the ffs superblock
+# at the specified offset and length in bytes
+# from the start of the superblock
+readsbfield()
+{
+  # The first dd command reads in the superblock using block aligned i/o so
+  # that it works on a raw character device.  The second dd extracts the
+  # exact field from the superblock that we wish to read.
+  (dd if="$1" bs=8192 count=1 skip=1 | \
+     dd bs=1 skip="$2" count="$3" ) 2> /dev/null
+}
+
 # This shell function extracts the `ffs superblock' of the file
 # provided as its argument and tests for the following condition:
 # ((fs_magic == FS_UFS1_MAGIC) || fs_magic == FS_UFS1_MAGIC_SWAPPED) &&
@@ -51,23 +63,19 @@ check_part()
   fsmagicn="^@^A^YT"  # 0x00011954 FS_UFS1_MAGIC
   fsmagics="T^Y^A^@"  # 0x54190100 FS_UFS1_MAGIC_SWAPPED
 
-  # In each of the foo=$(dd | dd | cat -v) pipelines below, the first dd command reads in
-  # the superblock using block aligned i/o so that it works on a raw character device.
-  # The second dd extracts the exact field from the superblock that we with to
-  # read.  The data is put through cat -v to avoid having binary data in shell strings.
-
   verbose -n "Checking $1 ... "
 
-  # First we extract the superblock magic number field:
-  magic="$( (dd if="$1" bs=8192 skip=1 count=1 | dd bs=1 count=4 skip=1372 | cat -v) 2> /dev/null)"
+  # First we extract the superblock magic number field.
+  # We use cat -v to avoid having binary data in shell strings.
+  magic="$( readsbfield "$1" 1372 4 | cat -v)"
   
   # First we check if the magic number is valid either swapped or unswapped:
   if [ "${magic}" = "${fsmagicn}" -o "${magic}" = "${fsmagics}" ]; then
 
     # Then we read fs_bsize, fs_maxbsize and fs_old_flags fields from the disk:
-    bsize="$( (dd if="$1" bs=8192 skip=1 count=1 | dd bs=1 count=4 skip=48 | cat -v) 2> /dev/null)"
-    maxbsize="$( (dd if="$1" bs=8192 skip=1 count=1 | dd bs=1 count=4 skip=860 | cat -v) 2> /dev/null)"
-    oldflags="$( (dd if="$1" bs=8192 skip=1 count=1 | dd bs=1 count=1 skip=211 | cat -v) 2> /dev/null)"
+    bsize="$( readsbfield "$1" 48 4 | cat -v)"
+    maxbsize="$( readsbfield "$1" 860 4 | cat -v)"
+    oldflags="$( readsbfield "$1" 211 1 | cat -v)"
 
     # Compare the fs_bsize with fs_maxbsize to see if they are the same
     if [ "${bsize}" = "${maxbsize}" ]; then
