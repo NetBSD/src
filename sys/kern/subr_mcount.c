@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)subr_mcount.c	7.10 (Berkeley) 5/7/91
- *	$Id: subr_mcount.c,v 1.6 1994/02/24 01:04:50 paulus Exp $
+ *	$Id: subr_mcount.c,v 1.7 1994/02/24 01:10:11 cgd Exp $
  */
 
 #ifdef GPROF
@@ -137,7 +137,7 @@ mcount()
 #if defined(tahoe)
 	Fix Me!!
 #endif
-#if defined(hp300) || defined(amiga) || defined(da30)
+#if defined(m68k)
 	/*
 	 * selfpc = pc pushed by mcount jsr,
 	 * frompcindex = pc pushed by jsr into self.
@@ -175,7 +175,7 @@ mcount()
 	asm("	movl (fp),r11");
 	asm("	movl -8(r11),r11");	/* frompcindex = 1 callf frame back */
 #endif
-#if defined(hp300) || defined(amiga) || defined(da30)
+#if defined(m68k)
 	Fix Me!!
 #endif
 #endif /* not __GNUC__ */
@@ -185,7 +185,7 @@ mcount()
 	 * this requires that splhigh() and splx() below
 	 * do NOT call mcount!
 	 */
-#if defined(hp300) || defined(amiga) || defined(da30)
+#if defined(m68k)
 	asm("movw	sr,%0" : "=g" (s));
 	asm("movw	#0x2700,sr");
 #else
@@ -268,7 +268,7 @@ mcount()
 
 	}
 done:
-#if defined(hp300) || defined(amiga) || defined(da30)
+#if defined(m68k)
 	asm("movw	%0,sr" : : "g" (s));
 #else
 	splx(s);
