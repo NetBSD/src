@@ -1,4 +1,4 @@
-.\"	$NetBSD: we.4,v 1.7 1999/03/16 01:19:19 garbled Exp $
+.\"	$NetBSD: we.4,v 1.8 1999/04/02 08:25:23 tron Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -50,6 +50,31 @@ The
 .Nm
 device driver supports Western Digital/SMC WD80x3, SMC Elite Ultra, and
 SMC EtherEZ Ethernet cards.
+.Sh FLAG VALUES
+For some clone boards the driver is not able to recognize 16bit or 8bit
+interfaces correctly. Since this makes a huge difference (see diagnostic
+section below)
+you can override this by specifying flags values in the config file:
+.Pp
+.Cd "we2 at isa? port 0x300 iomem 0xe0000 irq 15 flags 4"
+.Pp
+The values to add together for flags are:
+.Pp
+.Bl -diag
+.It 2
+force adapter to be treated as 8bit, even if it probes
+as a 16bit interface. Improper use of this flag will make the
+driver fail or send invalid ethernet packets.
+.It 4
+force adapter to be treated as 16bit, even if it probes
+as a 8bit interface. For example the COMPEX ENT/U boards
+identify as WD8003 compatibles, but are in fact 16bit cards.
+Using this flag on a board that realy is a 8bit board will
+result in bogus packets being sent.
+.It 8
+disable the use of double transmit buffers to save space in
+the on-board RAM for more receive buffers.
+.El
 .Sh MEDIA SELECTION
 The ability to select media from software is dependent on the particular
 model of WD/SMC card.  The following models support only manual configuration:
