@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_route.c,v 1.5 2004/07/23 21:34:01 manu Exp $ */
+/*	$NetBSD: darwin_route.c,v 1.6 2004/07/24 01:00:29 manu Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_route.c,v 1.5 2004/07/23 21:34:01 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_route.c,v 1.6 2004/07/24 01:00:29 manu Exp $");
 
 #include <sys/errno.h>
 #include <sys/systm.h>
@@ -68,8 +68,30 @@ darwin_ifaddrs(af, dst, sizep)
 
 	TAILQ_FOREACH(ifp, &ifnet, if_list) {
 		struct ifaddr *ifa;
+		struct sockaddr_dl *laddr = NULL;
+		struct sockaddr_storage dladdr;
 
-		dim.dim_len = sizeof(dim);
+		/* 
+		 * Find the link layer info as it is needed 
+		 * for computing darwin_if_msghdr's dim_len
+		 */
+		TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
+			if ((ifa->ifa_addr) &&
+			    (ifa->ifa_addr->sa_family == AF_LINK)) {
+				laddr = (struct sockaddr_dl *)ifa->ifa_addr;
+				break;
+			}
+		}
+
+		if (laddr == NULL) {
+#ifdef DEBUG_DARWIN
+			printf("darwin_ifaddrs: cannot find link address\n");
+#endif
+			continue;
+		}
+		native_to_darwin_sockaddr((struct sockaddr *)laddr, &dladdr);	
+				
+		dim.dim_len = sizeof(dim) + ALIGN(dladdr.ss_len);
 		dim.dim_vers = DARWIN_RTM_VERSION;
 		dim.dim_type = DARWIN_RTM_IFINFO;
 		dim.dim_addrs = DARWIN_RTA_IFP;
@@ -104,14 +126,6 @@ darwin_ifaddrs(af, dst, sizep)
 		dim.dim_data.did_default_proto = 0; /* XXX */
 		dim.dim_data.did_hwassist = 0; /* XXX */
 		
-		dim.dim_index2 = dim.dim_index;
-		dim.dim_type2 = dim.dim_data.did_type;
-		dim.dim_xnamelen = strlen(ifp->if_xname);
-		strlcpy(&dim.dim_xname[0], &ifp->if_xname[0], IFNAMSIZ);
-
-#ifdef DEBUG_DARWIN
-		printf("copyout dim 0x%x@%p\n", sizeof(dim), dst);
-#endif
 		size += sizeof(dim);	
 		if (dst && (size <= maxsize)) {
 			if ((error = copyout(&dim, dst, sizeof(dim))) != 0)
@@ -119,16 +133,30 @@ darwin_ifaddrs(af, dst, sizep)
 			dst += sizeof(dim);	
 		}
 
+		/* Copy the link sockaddr. */
+		size += ALIGN(dladdr.ss_len);
+		if (dst && (size <= maxsize)) {
+			if ((error = copyout(&dladdr, dst, dladdr.ss_len)) != 0)
+				return error;
+			dst += ALIGN(dladdr.ss_len);
+		}
+		
 		TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
 			struct darwin_ifa_msghdr diam;
+			int iaf;
 
 			if (ifa->ifa_addr) {
-				if ((af != 0) && 
-				    (ifa->ifa_addr->sa_family != af))
+				iaf = ifa->ifa_addr->sa_family;
+				if ((af != 0) && (iaf != af))
 					continue;
-				if (ifa->ifa_addr->sa_family > AF_MAX)
+				if (iaf > AF_MAX)
 					continue;
-				if (ifa->ifa_addr->sa_family == 0)
+				if (iaf == 0)
+					continue;
+				if (native_to_darwin_af[iaf] == 0)
+					continue;
+				/* Already handled earlier */
+				if (iaf == AF_LINK)
 					continue;
 			}
 
@@ -138,6 +166,11 @@ darwin_ifaddrs(af, dst, sizep)
 			diam.diam_vers = DARWIN_RTM_VERSION;
 			diam.diam_type = DARWIN_RTM_NEWADDR;
 
+			/*
+			 * XXX the following code assumes that
+			 * Darwin sockaddr have the same size as
+			 * the original.
+			 */
 			if (ifa->ifa_addr) {
 				diam.diam_addrs |= DARWIN_RTA_IFA;
 				diam.diam_len += ALIGN(ifa->ifa_addr->sa_len);
@@ -164,9 +197,6 @@ darwin_ifaddrs(af, dst, sizep)
 			diam.diam_index = dim.dim_index;
 			diam.diam_metric = ifa->ifa_metric;
 			
-#ifdef DEBUG_DARWIN
-			printf("copyout diam 0x%x@%p\n", sizeof(diam), dst);
-#endif
 			size += sizeof(diam);
 			if (dst && (size <= maxsize)) {
 				error = copyout(&diam, dst, sizeof(diam));
@@ -175,11 +205,27 @@ darwin_ifaddrs(af, dst, sizep)
 				dst += sizeof(diam);	
 			}
 
-			/* Interface netmask */
-			if (diam.diam_addrs & DARWIN_RTA_NETMASK)
-				if ((error = copyout_sockaddr(ifa->ifa_netmask, 
-				    &dst, &size, maxsize)) != 0)
+			/* 
+			 * Interface netmask 
+			 * We sometime lack the af in native version:
+			 * copy it from ifa_addr.
+			 */
+			if (diam.diam_addrs & DARWIN_RTA_NETMASK) {
+				struct sockaddr_storage ss;
+
+				memcpy(&ss, ifa->ifa_netmask, 
+				    ifa->ifa_netmask->sa_len);
+				if ((ss.ss_family == 0) &&
+				    (ifa->ifa_addr != NULL) &&
+				    (ifa->ifa_addr->sa_family != 0))
+					ss.ss_family = 
+					    ifa->ifa_addr->sa_family;
+
+				if ((error = copyout_sockaddr(
+				    (struct sockaddr *)&ss, &dst, 
+				    &size, maxsize)) != 0)
 					return error;
+			}
 
 			/* Interface address */
 			if (diam.diam_addrs & DARWIN_RTA_IFA) 
