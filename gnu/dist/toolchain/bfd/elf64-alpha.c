@@ -3347,12 +3347,10 @@ elf64_alpha_size_dynamic_sections (output_bfd, info)
 	    return false;
 	}
 
-      if (! bfd_elf64_add_dynamic_entry (info, DT_PLTGOT, 0))
-	return false;
-
       if (relplt)
 	{
-	  if (! bfd_elf64_add_dynamic_entry (info, DT_PLTRELSZ, 0)
+	  if (! bfd_elf64_add_dynamic_entry (info, DT_PLTGOT, 0)
+	      || ! bfd_elf64_add_dynamic_entry (info, DT_PLTRELSZ, 0)
 	      || ! bfd_elf64_add_dynamic_entry (info, DT_PLTREL, DT_RELA)
 	      || ! bfd_elf64_add_dynamic_entry (info, DT_JMPREL, 0))
 	    return false;
