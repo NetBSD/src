@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.38 1994/11/05 03:17:37 mycroft Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.39 1994/11/06 23:43:28 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -81,6 +81,20 @@ cpu_fork(p1, p2)
 	int addr, i;
 	extern char kstack[];
 
+#if NNPX > 0
+	/*
+	 * If npxproc != p1, then the npx h/w state is irrelevant and the
+	 * state had better already be in the pcb.  This is true for forks
+	 * but not for dumps (the old book-keeping with FP flags in the pcb
+	 * always lost for dumps because the dump pcb has 0 flags).
+	 *
+	 * If npxproc == p1, then we have to save the npx h/w state to
+	 * p1's pcb so that we can copy it.
+	 */
+	if (p1 == npxproc)
+		npxsave(&p1->p_addr->u_pcb.pcb_savefpu);
+#endif
+
 	/* Copy the pcb. */
 	p2->p_addr->u_pcb = p1->p_addr->u_pcb;
 	p2->p_md.md_regs = p1->p_md.md_regs;
@@ -123,13 +137,7 @@ cpu_fork(p1, p2)
 	 * process; savectx() returns 0.  Thus we can look for a non-zero
 	 * return value to indicate that we're in the child.
 	 */
-	if (savectx(up, 1)) {
-		/*
-		 * Return 1 in child.
-		 */
-		return (1);
-	}
-	return (0);
+	return (savectx(up, 1) != 0);
 }
 
 /*
@@ -146,11 +154,6 @@ cpu_exit(p)
 {
 	extern int _default_ldt, currentldt;
 	struct vmspace *vm;
-
-#if NNPX > 0
-	if (npxproc == p)
-		npxexit();
-#endif
 
 #ifdef USER_LDT
 	if (p->p_addr->u_pcb.pcb_ldt) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.129 1994/11/05 02:47:06 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.130 1994/11/06 23:43:24 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -880,8 +880,7 @@ setregs(p, entry, stack, retval)
 
 	p->p_addr->u_pcb.pcb_flags &= 0 /* FM_SYSCTRC */; /* no fp at all */
 #if NNPX > 0
-	npxexit();
-	npxinit(__INITIAL_NPXCW__);
+	npxinit();
 #else
 	lcr0(rcr0() | CR0_TS);	/* start emulating */
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.26 1994/11/04 19:13:52 mycroft Exp $	*/
+/*	$NetBSD: npx.c,v 1.27 1994/11/06 23:43:50 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1994 Charles Hannum.
@@ -44,8 +44,8 @@
 #include <sys/conf.h>
 #include <sys/file.h>
 #include <sys/proc.h>
+#include <sys/user.h>
 #include <sys/ioctl.h>
-#include <sys/vmmeter.h>
 #include <sys/device.h>
 
 #include <machine/cpu.h>
@@ -74,13 +74,16 @@
 #define	fp_divide_by_0()	__asm("fldz; fld1; fdiv %st,%st(1); fwait")
 #define	frstor(addr)		__asm("frstor %0" : : "m" (*addr))
 #define	fwait()			__asm("fwait")
-#define	read_eflags()		({u_long ef; \
-				  __asm("pushf; popl %0" : "=a" (ef)); \
-				  ef; })
-#define	start_emulating()	__asm("smsw %%ax; orb %0,%%al; lmsw %%ax" \
-				      : : "n" (CR0_TS) : "ax")
+#define	read_eflags()		({register u_long ef; \
+				  __asm("pushfl; popl %0" : "=r" (ef)); \
+				  ef;})
+#define	write_eflags(x)		({register u_long ef = (x); \
+				  __asm("pushl %0; popfl" : : "r" (ef));})
+#define	start_emulating()	({register u_short msw; \
+				  __asm("smsw %0" : "=r" (msw)); \
+				  msw |= CR0_TS; \
+				  __asm("lmsw %0" : : "r" (msw));})
 #define	stop_emulating()	__asm("clts")
-#define	write_eflags(ef)	__asm("pushl %0; popf" : : "a" ((u_long) ef))
 
 #else	/* not __GNUC__ */
 
@@ -108,7 +111,7 @@ extern	struct gate_descriptor idt[];
 
 int	npxdna		__P((void));
 void	npxexit		__P((void));
-void	npxinit		__P((u_int control));
+void	npxinit		__P((void));
 int	npxintr		__P((struct intrframe *frame));
 void	npxsave		__P((struct save87 *addr));
 int	npxprobe1	__P((struct isa_attach_args *));
@@ -347,42 +350,7 @@ npxattach(parent, self, aux)
 		panic("npxattach: no math emulator in kernel!");
 #endif
 	}
-	npxinit(__INITIAL_NPXCW__);
-}
-
-/*
- * Initialize floating point unit.
- */
-void
-npxinit(control)
-	u_int control;
-{
-	struct save87 dummy;
-
-	if (!npx_exists)
-		return;
-	/*
-	 * fninit has the same h/w bugs as fnsave.  Use the detoxified
-	 * fnsave to throw away any junk in the fpu.  fnsave initializes
-	 * the fpu and sets npxproc = NULL as important side effects.
-	 */
-	npxsave(&dummy);
-	stop_emulating();
-	fldcw(&control);
-	if (curpcb != NULL)
-		fnsave(&curpcb->pcb_savefpu);
-	start_emulating();
-}
-
-/*
- * Free coprocessor (if we have it).
- */
-void
-npxexit()
-{
-
-	start_emulating();
-	npxproc = NULL;
+	npxinit();
 }
 
 /*
@@ -404,32 +372,34 @@ int
 npxintr(frame)
 	struct intrframe *frame;
 {
+	register struct proc *p = npxproc;
+	register struct save87 *addr;
 	int code;
 
 	cnt.v_trap++;
 
-	if (npxproc == NULL || !npx_exists) {
+	if (p == 0 || !npx_exists) {
 		/* XXX no %p in stand/printf.c.  Cast to quiet gcc -Wall. */
-		printf("npxintr: npxproc = %lx, curproc = %lx, npx_exists = %d\n",
-		       (u_long) npxproc, (u_long) curproc, npx_exists);
+		printf("npxintr: p = %lx, curproc = %lx, npx_exists = %d\n",
+		       (u_long) p, (u_long) curproc, npx_exists);
 		panic("npxintr from nowhere");
 	}
-	if (npxproc != curproc) {
-		printf("npxintr: npxproc = %lx, curproc = %lx, npx_exists = %d\n",
-		       (u_long) npxproc, (u_long) curproc, npx_exists);
-		panic("npxintr from non-current process");
-	}
+	/*
+	 * We used to check that p == curproc here, but with delayed saves,
+	 * that may not be true.
+	 */
+	addr = &p->p_addr->u_pcb.pcb_savefpu;
 	/*
 	 * Save state.  This does an implied fninit.  It had better not halt
 	 * the cpu or we'll hang.
 	 */
 	outb(0xf0, 0);
-	fnsave(&curpcb->pcb_savefpu);
+	fnsave(addr);
 	fwait();
 	/*
 	 * Restore control word (was clobbered by fnsave).
 	 */
-	fldcw(&curpcb->pcb_savefpu.sv_env.en_cw);
+	fldcw(&addr->sv_env.en_cw);
 	fwait();
 	/*
 	 * Remember the exception status word and tag word.  The current
@@ -439,13 +409,14 @@ npxintr(frame)
 	 * preserved the control word and will copy the status and tag
 	 * words, so the complete exception state can be recovered.
 	 */
-	curpcb->pcb_savefpu.sv_ex_sw = curpcb->pcb_savefpu.sv_env.en_sw;
-	curpcb->pcb_savefpu.sv_ex_tw = curpcb->pcb_savefpu.sv_env.en_tw;
+	addr->sv_ex_sw = addr->sv_env.en_sw;
+	addr->sv_ex_tw = addr->sv_env.en_tw;
 
 	/*
-	 * Pass exception to process.
+	 * Pass exception to process.  If it's the current process, try to do
+	 * it immediately.
 	 */
-	if (ISPL(frame->if_cs) == SEL_UPL) {
+	if (p == curproc && ISPL(frame->if_cs) == SEL_UPL) {
 		/*
 		 * Interrupt is essentially a trap, so we can afford to call
 		 * the SIGFPE handler (if any) as soon as the interrupt
@@ -457,17 +428,17 @@ npxintr(frame)
 		 * in doreti, and the frame for that could easily be set up
 		 * just before it is used).
 		 */
-		curproc->p_md.md_regs = (int *)&frame->if_es;
+		p->p_md.md_regs = (int *)&frame->if_es;
 #ifdef notyet
 		/*
 		 * Encode the appropriate code for detailed information on
 		 * this exception.
 		 */
-		code = XXX_ENCODE(curpcb->pcb_savefpu.sv_ex_sw);
+		code = XXX_ENCODE(addr->sv_ex_sw);
 #else
 		code = 0;	/* XXX */
 #endif
-		trapsignal(curproc, SIGFPE, code);
+		trapsignal(p, SIGFPE, code);
 	} else {
 		/*
 		 * Nested interrupt.  These losers occur when:
@@ -483,7 +454,7 @@ npxintr(frame)
 		 *
 		 * Treat them like a true async interrupt.
 		 */
-		psignal(npxproc, SIGFPE);
+		psignal(p, SIGFPE);
 	}
 
 	return 1;
@@ -498,18 +469,17 @@ npxintr(frame)
 int
 npxdna()
 {
+
 	if (!npx_exists)
 		return (0);
-	if (npxproc != NULL) {
-		printf("npxdna: npxproc = %lx, curproc = %lx\n",
-		       (u_long) npxproc, (u_long) curproc);
-		panic("npxdna");
+	if (npxproc != 0) {
+		if (npxproc == curproc) {
+			stop_emulating();
+			return (1);
+		}
+		npxsave(&npxproc->p_addr->u_pcb.pcb_savefpu);
 	}
 	stop_emulating();
-	/*
-	 * Record new context early in case frstor causes an IRQ13.
-	 */
-	npxproc = curproc;
 	/*
 	 * The following frstor may cause an IRQ13 when the state being
 	 * restored has a pending error.  The error will appear to have been
@@ -522,8 +492,7 @@ npxdna()
 	 * fnsave are broken, so our treatment breaks fnclex if it is the
 	 * first FPU instruction after a context switch.
 	 */
-	frstor(&curpcb->pcb_savefpu);
-
+	frstor(&(npxproc = curproc)->p_addr->u_pcb.pcb_savefpu);
 	return (1);
 }
 
@@ -552,8 +521,41 @@ npxsave(addr)
 	stop_emulating();
 	fnsave(addr);
 	fwait();
+	npxproc = 0;
 	start_emulating();
-	npxproc = NULL;
+	disable_intr();
+	imen = save_imen;
+	SET_ICUS();
+	idt[npx_intrno] = save_idt_npxintr;
+	enable_intr();		/* back to usual state */
+}
+
+/*
+ * Initialize floating point unit.
+ */
+void
+npxinit()
+{
+	static u_short control = __INITIAL_NPXCW__;
+	unsigned save_imen;
+	struct gate_descriptor save_idt_npxintr;
+
+	disable_intr();
+	save_imen = imen;
+	save_idt_npxintr = idt[npx_intrno];
+	idt[npx_intrno] = npx_idt_probeintr;
+	imen &= ~npx_intrmask;
+	SET_ICUS();
+	enable_intr();
+	stop_emulating();
+	if (npxproc != 0 && npxproc != curproc)
+		fnsave(&npxproc->p_addr->u_pcb.pcb_savefpu);
+	else
+		fninit();
+	fwait();
+	npxproc = curproc;
+	fldcw(&control);
+	fwait();
 	disable_intr();
 	imen = save_imen;
 	SET_ICUS();

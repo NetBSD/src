@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.93 1994/11/06 20:51:46 mycroft Exp $	*/
+/*	$NetBSD: locore.s,v 1.94 1994/11/06 23:43:17 mycroft Exp $	*/
 
 #undef DIAGNOSTIC
 #define DIAGNOSTIC
@@ -1634,11 +1634,22 @@ sw1:	bsfl	%ecx,%ebx		# find a full q
 	 * Registers:
 	 *   %eax - 0
 	 *   %ecx - scratch
-	 *   %esi - old pcb
+	 *   %esi - old process, then old pcb
 	 *   %edi - new process
 	 */
 
-	/* Save context. */
+#if NNPX > 0
+	/* Have we used fp, and need a save? */
+	cmpl	%esi,_npxproc
+	jne	1f
+
+	/* Just turn off FPU for now; npxdna() will save the state later. */
+	smsw	%cx
+	orb	$CR0_TS,%cl
+	lmsw	%cx
+1:
+#endif
+
 	movl	P_ADDR(%esi),%esi
 
 	movl	%esp,PCB_ESP(%esi)
@@ -1647,18 +1658,6 @@ sw1:	bsfl	%ecx,%ebx		# find a full q
 	movl	%ecx,PCB_FS(%esi)
 	movl	%gs,%cx
 	movl	%ecx,PCB_GS(%esi)
-
-#if NNPX > 0
-	/* Have we used fp, and need a save? */
-	cmpl	%eax,_npxproc
-	jne	1f
-
-	leal	PCB_SAVEFPU(%esi),%ecx
-	pushl	%ecx
-	call	_npxsave		# do it in a big C function
-	addl	$4,%esp
-1:
-#endif
 
 switch_exited:
 	/*
@@ -1736,6 +1735,19 @@ ENTRY(switch_exit)
 	/* In case we fault... */
 	movl	$0,_curproc
 
+#if NNPX > 0
+	/* Have we used fp, and need a save? */
+	cmpl	%edi,_npxproc
+	jne	1f
+
+	/* Just turn off FPU and forget npxproc. */
+	smsw	%cx
+	orb	$CR0_TS,%cl
+	lmsw	%cx
+	movl	$0,_npxproc
+1:
+#endif
+
 	/* Restore proc0's context. */
 	cli
 	movl	P_ADDR(%ebx),%esi
@@ -1794,37 +1806,6 @@ ENTRY(savectx)
 	movl	%gs,%cx
 	movl	%ecx,PCB_GS(%esi)
 
-#if NNPX > 0
-	/*
-	 * If npxproc == NULL, then the npx h/w state is irrelevant and the
-	 * state had better already be in the pcb.  This is true for forks
-	 * but not for dumps (the old book-keeping with FP flags in the pcb
-	 * always lost for dumps because the dump pcb has 0 flags).
-	 *
-	 * If npxproc != NULL, then we have to save the npx h/w state to
-	 * npxproc's pcb and copy it to the requested pcb, or save to the
-	 * requested pcb and reload.  Copying is easier because we would
-	 * have to handle h/w bugs for reloading.  We used to lose the
-	 * parent's npx state for forks by forgetting to reload.
-	 */
-	cmpl	$0,_npxproc
-	jne	1f
-
-	leal	PCB_SAVEFPU(%esi),%ebx	# ebx = esi->u_pcb.pcb_savefpu
-	pushl	%ebx
-	call	_npxsave
-	addl	$4,%esp
-
-	pushl	$108+8*2		# XXX h/w state size + padding
-	movl	P_ADDR(%edi),%edi	# edi = p1->p_addr
-	leal	PCB_SAVEFPU(%edi),%edi	# edi = edi->u_pcb.pcb_savefpu
-	pushl	%edi
-	pushl	%ebx
-	call	_bcopy
-	addl	$12,%esp
-1:
-#endif
-
 	/* Copy the stack if requested. */
 	cmpl	$0,24(%esp)
 	je	1f
@@ -1842,6 +1823,7 @@ ENTRY(savectx)
 	
 1:	/* This is the parent.  The child will return from cpu_switch(). */
 	xorl	%eax,%eax		# return 0
+
 	addl	$4,%esp			# drop saved _cpl on the floor
 	popl	%edi
 	popl	%esi
