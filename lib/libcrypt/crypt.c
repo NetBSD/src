@@ -1,4 +1,4 @@
-/*	$NetBSD: crypt.c,v 1.12 1998/06/01 20:25:24 kleink Exp $	*/
+/*	$NetBSD: crypt.c,v 1.13 1998/10/20 02:02:30 matt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)crypt.c	8.1.1.1 (Berkeley) 8/18/93";
 #else
-__RCSID("$NetBSD: crypt.c,v 1.12 1998/06/01 20:25:24 kleink Exp $");
+__RCSID("$NetBSD: crypt.c,v 1.13 1998/10/20 02:02:30 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -73,7 +73,7 @@ __RCSID("$NetBSD: crypt.c,v 1.12 1998/06/01 20:25:24 kleink Exp $");
  * long integers at arbitrary (e.g. odd) memory locations.
  * (Either that or never pass unaligned addresses to des_cipher!)
  */
-#if !defined(vax)
+#if !defined(__vax__) && !defined(__i386__)
 #define	MUST_ALIGN
 #endif
 
@@ -634,7 +634,7 @@ des_cipher(in, out, salt, num_iter)
 	L0 = salt;
 	TO_SIX_BIT(salt, L0);	/* convert to 4*(6+2) format */
 
-#if defined(vax) || defined(pdp11)
+#if defined(__vax__) || defined(pdp11)
 	salt = ~salt;	/* "x &~ y" is faster than "x & y". */
 #define	SALT (~salt)
 #else
