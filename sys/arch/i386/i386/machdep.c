@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.316 1998/08/15 05:16:42 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.317 1998/08/17 22:33:09 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -356,8 +356,8 @@ static int exec_nomid	__P((struct proc *, struct exec_package *));
 int	i386_mem_add_mapping __P((bus_addr_t, bus_size_t,
 	    int, bus_space_handle_t *));
 
-int	_bus_dmamap_load_buffer __P((bus_dmamap_t, void *, bus_size_t,
-	    struct proc *, int, bus_addr_t, paddr_t *, int *, int));
+int	_bus_dmamap_load_buffer __P((bus_dma_tag_t, bus_dmamap_t, void *,
+	    bus_size_t, struct proc *, int, paddr_t *, int *, int));
 
 void cyrix6x86_cpu_setup __P((void));
 
@@ -2610,8 +2610,8 @@ _bus_dmamap_load(t, map, buf, buflen, p, flags)
 		return (EINVAL);
 
 	seg = 0;
-	error = _bus_dmamap_load_buffer(map, buf, buflen, p, flags,
-	    t->_bounce_thresh, &lastaddr, &seg, 1);
+	error = _bus_dmamap_load_buffer(t, map, buf, buflen, p, flags,
+	    &lastaddr, &seg, 1);
 	if (error == 0) {
 		map->dm_mapsize = buflen;
 		map->dm_nsegs = seg + 1;
@@ -2651,8 +2651,8 @@ _bus_dmamap_load_mbuf(t, map, m0, flags)
 	seg = 0;
 	error = 0;
 	for (m = m0; m != NULL && error == 0; m = m->m_next) {
-		error = _bus_dmamap_load_buffer(map, m->m_data, m->m_len,
-		    NULL, flags, t->_bounce_thresh, &lastaddr, &seg, first);
+		error = _bus_dmamap_load_buffer(t, map, m->m_data, m->m_len,
+		    NULL, flags, &lastaddr, &seg, first);
 		first = 0;
 	}
 	if (error == 0) {
@@ -2717,8 +2717,8 @@ _bus_dmamap_load_uio(t, map, uio, flags)
 
 		addr = (caddr_t)iov[i].iov_base + offset;
 
-		error = _bus_dmamap_load_buffer(map, addr, minlen,
-		    p, flags, t->_bounce_thresh, &lastaddr, &seg, first);
+		error = _bus_dmamap_load_buffer(t, map, addr, minlen,
+		    p, flags, &lastaddr, &seg, first);
 		first = 0;
 
 		offset = 0;
@@ -2953,14 +2953,13 @@ _bus_dmamem_mmap(t, segs, nsegs, off, prot, flags)
  * first indicates if this is the first invocation of this function.
  */
 int
-_bus_dmamap_load_buffer(map, buf, buflen, p, flags, bounce_thresh, lastaddrp,
-    segp, first)
+_bus_dmamap_load_buffer(t, map, buf, buflen, p, flags, lastaddrp, segp, first)
+	bus_dma_tag_t t;
 	bus_dmamap_t map;
 	void *buf;
 	bus_size_t buflen;
 	struct proc *p;
 	int flags;
-	bus_addr_t bounce_thresh;
 	paddr_t *lastaddrp;
 	int *segp;
 	int first;
@@ -2989,7 +2988,7 @@ _bus_dmamap_load_buffer(map, buf, buflen, p, flags, bounce_thresh, lastaddrp,
 		 * If we're beyond the bounce threshold, notify
 		 * the caller.
 		 */
-		if (bounce_thresh != 0 && curaddr >= bounce_thresh)
+		if (t->_bounce_thresh != 0 && curaddr >= t->_bounce_thresh)
 			return (EINVAL);
 
 		/*
