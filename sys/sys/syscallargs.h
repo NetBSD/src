@@ -1,4 +1,4 @@
-/*	$NetBSD: syscallargs.h,v 1.78 1999/03/28 17:32:52 kleink Exp $	*/
+/*	$NetBSD: syscallargs.h,v 1.79 1999/06/08 03:08:33 thorpej Exp $	*/
 
 /*
  * System call argument lists.
@@ -348,7 +348,7 @@ struct sys_madvise_args {
 };
 
 struct sys_mincore_args {
-	syscallarg(caddr_t) addr;
+	syscallarg(void *) addr;
 	syscallarg(size_t) len;
 	syscallarg(char *) vec;
 };
