@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.19 1999/02/08 07:05:51 sommerfe Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.20 1999/02/08 14:48:07 sommerfe Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -33,7 +33,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$NetBSD: wsdisplay.c,v 1.19 1999/02/08 07:05:51 sommerfe Exp $";
+    "$NetBSD: wsdisplay.c,v 1.20 1999/02/08 14:48:07 sommerfe Exp $";
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -174,7 +174,6 @@ static int wsdisplayparam __P((struct tty *, struct termios *));
 #define	WSDISPLAYSCREEN(dev)	(minor(dev) & 0xff)
 #define ISWSDISPLAYCTL(dev)	(WSDISPLAYSCREEN(dev) == 255)
 #define WSDISPLAYMINOR(unit, screen)	(((unit) << 8) | (screen))
-#define	WSDISPLAYBURST		OBUFSIZ*4
 
 #define	WSSCREEN_HAS_EMULATOR(scr)	((scr)->scr_dconf->wsemul != NULL)
 #define	WSSCREEN_HAS_TTY(scr)	((scr)->scr_tty != NULL)
@@ -1101,7 +1100,7 @@ wsdisplaystart(tp)
 	struct wsdisplay_softc *sc;
 	struct wsscreen *scr;
 	register int s, n;
-	u_char buf[WSDISPLAYBURST];
+	u_char *buf;
 		
 	s = spltty();
 	if (tp->t_state & (TS_TIMEOUT | TS_BUSY | TS_TTSTOP)) {
@@ -1118,12 +1117,34 @@ wsdisplaystart(tp)
 	tp->t_state |= TS_BUSY; 
 	splx(s);
 	
-	n = q_to_b(&tp->t_outq, buf, sizeof(buf));
+	/*
+	 * Drain output from ring buffer.
+	 * The output will normally be in one contiguous chunk, but when the 
+	 * ring wraps, it will be in two pieces.. one at the end of the ring, 
+	 * the other at the start.  For performance, rather than loop here, 
+	 * we output one chunk, see if there's another one, and if so, output 
+	 * it too.
+	 */
+
+	n = ndqb(&tp->t_outq, 0);
+	buf = tp->t_outq.c_cf;
 
 	if (!(scr->scr_flags & SCR_GRAPHICS)) {
 		KASSERT(WSSCREEN_HAS_EMULATOR(scr));
 		(*scr->scr_dconf->wsemul->output)(scr->scr_dconf->wsemulcookie,
-		    buf, n, 0);
+						  buf, n, 0);
+	}
+	ndflush(&tp->t_outq, n);
+
+	if ((n = ndqb(&tp->t_outq, 0)) > 0) {
+		buf = tp->t_outq.c_cf;
+
+		if (!(scr->scr_flags & SCR_GRAPHICS)) {
+			KASSERT(WSSCREEN_HAS_EMULATOR(scr));
+			(*scr->scr_dconf->wsemul->output)(scr->scr_dconf->wsemulcookie,
+							  buf, n, 0);
+		}
+		ndflush(&tp->t_outq, n);
 	}
 
 	s = spltty();
