@@ -1,4 +1,4 @@
-#	$NetBSD: IPAQ,v 1.19 2002/04/25 15:06:27 atatat Exp $
+#	$NetBSD: IPAQ,v 1.20 2002/05/03 16:50:51 rjs Exp $
 #
 #	iPAQ H3600 -- Windows-CE based PDA
 #
@@ -16,13 +16,12 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 #options 	NTP		# NTP phase/frequency locked loop
 
 # CPU options
-options 	CPU_SA110	# Support the SA110 core
-options 	CPU_SA1110	# Support the SA110 core
+
+options 	CPU_SA1110	# Support the SA1110 core
 
 # Architecture options
 options 	SAEGPIO_BASE="0x49000000"
 				# we have Extended GPIO
-
 # FPA options
 #options 	ARMFPE		# ARM Ltd FPE
 
