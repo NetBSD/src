@@ -1,4 +1,4 @@
-/*	$NetBSD: zlib.c,v 1.10.4.1 2002/03/20 23:18:36 he Exp $	*/
+/*	$NetBSD: zlib.c,v 1.10.4.2 2002/03/21 19:32:37 he Exp $	*/
 /*
  * This file is derived from various .h and .c files from the zlib-1.0.4
  * distribution by Jean-loup Gailly and Mark Adler, with some additions
@@ -11,7 +11,7 @@
  * - added inflateIncomp and deflateOutputPending
  * - allow strm->next_out to be NULL, meaning discard the output
  *
- * $Id: zlib.c,v 1.10.4.1 2002/03/20 23:18:36 he Exp $
+ * $Id: zlib.c,v 1.10.4.2 2002/03/21 19:32:37 he Exp $
  */
 
 /* 
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zlib.c,v 1.10.4.1 2002/03/20 23:18:36 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zlib.c,v 1.10.4.2 2002/03/21 19:32:37 he Exp $");
 
 #define NO_DUMMY_DECL
 #define NO_ZCFUNCS
@@ -45,7 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: zlib.c,v 1.10.4.1 2002/03/20 23:18:36 he Exp $");
    subject to change. Applications should only use zlib.h.
  */
 
-/* @(#) $Id: zlib.c,v 1.10.4.1 2002/03/20 23:18:36 he Exp $ */
+/* @(#) $Id: zlib.c,v 1.10.4.2 2002/03/21 19:32:37 he Exp $ */
 
 #ifndef _Z_UTIL_H
 #define _Z_UTIL_H
@@ -293,7 +293,7 @@ void   zcfree  __P((voidpf opaque, voidpf ptr));
    subject to change. Applications should only use zlib.h.
  */
 
-/* @(#) $Id: zlib.c,v 1.10.4.1 2002/03/20 23:18:36 he Exp $ */
+/* @(#) $Id: zlib.c,v 1.10.4.2 2002/03/21 19:32:37 he Exp $ */
 
 #ifndef _DEFLATE_H
 #define _DEFLATE_H
@@ -655,7 +655,7 @@ void _tr_stored_type_only __P((deflate_state *));
  *
  */
 
-/* @(#) $Id: zlib.c,v 1.10.4.1 2002/03/20 23:18:36 he Exp $ */
+/* @(#) $Id: zlib.c,v 1.10.4.2 2002/03/21 19:32:37 he Exp $ */
 
 /* #include "deflate.h" */
 
@@ -2017,7 +2017,7 @@ local block_state deflate_slow(s, flush)
  *          Addison-Wesley, 1983. ISBN 0-201-06672-6.
  */
 
-/* @(#) $Id: zlib.c,v 1.10.4.1 2002/03/20 23:18:36 he Exp $ */
+/* @(#) $Id: zlib.c,v 1.10.4.2 2002/03/21 19:32:37 he Exp $ */
 
 /* #define GEN_TREES_H */
 
@@ -2065,6 +2065,10 @@ local const uch bl_order[BL_CODES]
 /* Number of bits used within bi_buf. (bi_buf might be implemented on
  * more than 16 bits on some systems.)
  */
+
+
+#define MAX(a,b) (a >= b ? a : b)
+/* the arguments must not have side effects */
 
 /* ===========================================================================
  * Local data. These are initialized only once.
@@ -5875,7 +5879,7 @@ void  zcfree (opaque, ptr)
  * For conditions of distribution and use, see copyright notice in zlib.h 
  */
 
-/* @(#) $Id: zlib.c,v 1.10.4.1 2002/03/20 23:18:36 he Exp $ */
+/* @(#) $Id: zlib.c,v 1.10.4.2 2002/03/21 19:32:37 he Exp $ */
 
 /* #include "zlib.h" */
 
