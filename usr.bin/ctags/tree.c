@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.7 2002/01/31 19:26:35 tv Exp $	*/
+/*	$NetBSD: tree.c,v 1.8 2003/07/14 09:40:27 itojun Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tree.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: tree.c,v 1.7 2002/01/31 19:26:35 tv Exp $");
+__RCSID("$NetBSD: tree.c,v 1.8 2003/07/14 09:40:27 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -80,7 +80,7 @@ pfnote(name, ln)
 			fp = curfile;
 		else
 			++fp;
-		(void)sprintf(nbuf, "M%s", fp);
+		(void)snprintf(nbuf, sizeof(nbuf), "M%s", fp);
 		fp = strrchr(nbuf, '.');
 		if (fp && !fp[2])
 			*fp = EOS;
