@@ -1,5 +1,5 @@
-/*	$NetBSD: nd6_nbr.c,v 1.22 2000/05/19 01:40:19 itojun Exp $	*/
-/*	$KAME: nd6_nbr.c,v 1.36 2000/05/17 12:35:59 jinmei Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.22.4.1 2001/04/06 00:29:03 he Exp $	*/
+/*	$KAME: nd6_nbr.c,v 1.51 2001/01/20 17:27:00 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -493,7 +493,7 @@ nd6_ns_output(ifp, daddr6, taddr6, ln, dad)
 
 #ifdef IPSEC
 	/* Don't lookup socket */
-	ipsec_setsocket(m, NULL);
+	(void)ipsec_setsocket(m, NULL);
 #endif
 	ip6_output(m, NULL, NULL, dad ? IPV6_DADOUTPUT : 0, &im6o, &outif);
 	if (outif) {
@@ -913,7 +913,7 @@ nd6_na_output(ifp, daddr6, taddr6, flags, tlladdr, sdl0)
 
 #ifdef IPSEC
 	/* Don't lookup socket */
-	ipsec_setsocket(m, NULL);
+	(void)ipsec_setsocket(m, NULL);
 #endif
 	ip6_output(m, NULL, NULL, 0, &im6o, &outif);
 	if (outif) {
