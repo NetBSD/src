@@ -1,10 +1,11 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.9 2001/04/02 05:28:38 dbj Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.10 2002/09/11 01:46:35 mycroft Exp $	*/
 
 /*
  * This file was taken from mvme68k/mvme68k/pmap_bootstrap.c
  * should probably be re-synced when needed.
  * cvs id of source for the most recent syncing:
  *	NetBSD: pmap_bootstrap.c,v 1.15 2000/11/20 19:35:30 scw Exp 
+ *	NetBSD: pmap_bootstrap.c,v 1.17 2001/11/08 21:53:44 scw Exp
  */
 
 
@@ -52,9 +53,12 @@
 #include <machine/kcore.h>
 #include <machine/pte.h>
 #include <machine/vmparam.h>
+#include <machine/bus.h>
 #include <machine/cpu.h>
 
 #include <next68k/next68k/seglist.h>
+
+#include <next68k/dev/intiovar.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -280,7 +284,7 @@ pmap_bootstrap(nextpa, firstpa)
 		 */
 		pte = (u_int *)kptmpa;
 		epte = &pte[nptpages+1];
-		protopte = kptpa | PG_RW | PG_CI | PG_V;
+		protopte = kptpa | PG_RW | PG_CI | PG_U | PG_V;
 		while (pte < epte) {
 			*pte++ = protopte;
 			protopte += NBPG;
@@ -296,7 +300,7 @@ pmap_bootstrap(nextpa, firstpa)
 		 * Initialize the last to point to the page
 		 * table page allocated earlier.
 		 */
-		*pte = lkptpa | PG_RW | PG_CI | PG_V;
+		*pte = lkptpa | PG_RW | PG_CI | PG_U | PG_V;
 	} else
 #endif /* M68040 || M68060 */
 	{
@@ -342,7 +346,7 @@ pmap_bootstrap(nextpa, firstpa)
 		*pte++ = PG_NV;
 #ifdef MAXADDR
 	/* tmp double-map for cpu's with physmem at the end of memory */
-	*pte = MAXADDR | PG_RW | PG_CI | PG_V;
+	*pte = MAXADDR | PG_RW | PG_CI | PG_U | PG_V;
 #endif
 	/*
 	 * Initialize kernel page table.
@@ -358,7 +362,7 @@ pmap_bootstrap(nextpa, firstpa)
 	 */
 	pte = &((u_int *)kptpa)[m68k_btop(KERNBASE + NBPG)];
 	epte = &pte[m68k_btop(m68k_trunc_page(&etext))];
-	protopte = (firstpa + NBPG) | PG_RO | PG_V;
+	protopte = (firstpa + NBPG) | PG_RO | PG_U | PG_V;
 	while (pte < epte) {
 		*pte++ = protopte;
 		protopte += NBPG;
@@ -387,8 +391,8 @@ pmap_bootstrap(nextpa, firstpa)
 	epte = &((u_int *)kptpa)[m68k_btop(nextpa - firstpa)];
 	protopte = (protopte & ~PG_PROT) | PG_RW;
 	if (RELOC(mmutype, int) == MMU_68040) {
-		protopte &= ~PG_CCB;
-		protopte |= PG_CIN;
+		protopte &= ~PG_CMASK;
+		protopte |= PG_CI;
 	}
 	while (pte < epte) {
 		*pte++ = protopte;
@@ -403,7 +407,7 @@ pmap_bootstrap(nextpa, firstpa)
 	 */
 	pte = (u_int *)iiopa;
 	epte = (u_int *)eiiopa;
-	protopte = INTIOBASE | PG_RW | PG_CI | PG_V;
+	protopte = INTIOBASE | PG_RW | PG_CI | PG_U | PG_V;
 	while (pte < epte) {
 		*pte++ = protopte;
 		protopte += NBPG;
@@ -412,7 +416,7 @@ pmap_bootstrap(nextpa, firstpa)
 	/* validate the mono fb space PTEs */
 	pte = (u_int *)monopa;
 	epte = (u_int *)emonopa;
-	protopte = MONOBASE | PG_RW | PG_CI | PG_V;
+	protopte = MONOBASE | PG_RW | PG_CI | PG_U | PG_V;
 	while (pte < epte) {
 		*pte++ = protopte;
 		protopte += NBPG;
@@ -421,7 +425,7 @@ pmap_bootstrap(nextpa, firstpa)
 	/* validate the color fb space PTEs */
 	pte = (u_int *)colorpa;
 	epte = (u_int *)ecolorpa;
-	protopte = COLORBASE | PG_RW | PG_CI | PG_V;
+	protopte = COLORBASE | PG_RW | PG_CI | PG_U | PG_V;
 	while (pte < epte) {
 		*pte++ = protopte;
 		protopte += NBPG;

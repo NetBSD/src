@@ -1,4 +1,4 @@
-/*	$NetBSD: nextcons.c,v 1.3 2000/09/29 06:35:57 deberg Exp $	*/
+/*	$NetBSD: nextcons.c,v 1.4 2002/09/11 01:46:32 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1999 Darrin B. Jewell
@@ -43,13 +43,15 @@
 #include <sys/lock.h>
 
 #include <machine/autoconf.h>
+#include <machine/bus.h>
 #include <machine/cpu.h>
 #include <machine/intr.h>
-#include <machine/bus.h>
 
 #include <dev/cons.h>
 #include <dev/wscons/wskbdvar.h>
 #include <dev/wscons/wsdisplayvar.h>
+
+#include <next68k/dev/intiovar.h>
 #include <next68k/dev/nextdisplayvar.h>
 #include <next68k/dev/nextkbdvar.h>
 

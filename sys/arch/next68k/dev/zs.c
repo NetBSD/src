@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.16 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: zs.c,v 1.17 2002/09/11 01:46:33 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -75,6 +75,8 @@
 #include <machine/z8530var.h>
 
 #include <next68k/next68k/isr.h>
+
+#include <next68k/dev/intiovar.h>
 #include <next68k/dev/zs_cons.h>
 
 #include "zsc.h" 	/* NZSC */
@@ -191,6 +193,13 @@ zs_match(parent, cf, aux)
 	struct cfdata *cf;
 	void *aux;
 {
+	struct intio_attach_args *ia = (struct intio_attach_args *)aux;
+
+	if (zsaddr[cf->cf_unit] == NULL)
+		return(0);
+
+	ia->ia_addr = (void *)zsaddr[cf->cf_unit];
+
 	return(1);
 }
 
@@ -281,7 +290,7 @@ zs_attach(parent, self, aux)
 		}
 	}
 
-	isrlink_autovec(zshard, NULL, NEXT_I_IPL(NEXT_I_SCC), 0);
+	isrlink_autovec(zshard, NULL, NEXT_I_IPL(NEXT_I_SCC), 0, NULL);
 	INTR_ENABLE(NEXT_I_SCC);
 
 	{
