@@ -41,8 +41,8 @@ char copyright[] =
 #endif not lint
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)mountd.c	5.14 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$Id: mountd.c,v 1.5 1993/08/01 18:26:21 mycroft Exp $";
+static char sccsid[] = "@(#)mountd.c	5.14 (Berkeley) 2/26/91";
+static char rcsid[] = "/b/source/CVS/src/sbin/mountd/mountd.c,v 1.4 1993/03/23 00:29:10 cgd Exp";
 #endif not lint
 
 #include <sys/param.h>
@@ -60,8 +60,8 @@ static char rcsid[] = "$Id: mountd.c,v 1.5 1993/08/01 18:26:21 mycroft Exp $";
 #include <rpc/rpc.h>
 #include <rpc/pmap_clnt.h>
 #include <rpc/pmap_prot.h>
-#include <nfs/rpcv2.h>
 #include <nfs/nfsv2.h>
+#include <rpcsvc/mount.h>
 #include "pathnames.h"
 
 struct ufid {
@@ -74,8 +74,8 @@ struct ufid {
  */
 struct mountlist {
 	struct mountlist *ml_next;
-	char	ml_host[RPCMNT_NAMELEN+1];
-	char	ml_dirp[RPCMNT_PATHLEN+1];
+	char	ml_host[MNTNAMLEN+1];
+	char	ml_dirp[MNTPATHLEN+1];
 };
 
 struct exportlist {
@@ -85,7 +85,7 @@ struct exportlist {
 	int	ex_rootuid;
 	int	ex_exflags;
 	dev_t	ex_dev;
-	char	ex_dirp[RPCMNT_PATHLEN+1];
+	char	ex_dirp[MNTPATHLEN+1];
 };
 
 struct grouplist {
@@ -94,7 +94,8 @@ struct grouplist {
 };
 
 /* Global defs */
-int mntsrv(), umntall_each(), xdr_fhs(), xdr_mlist(), xdr_dir(), xdr_explist();
+void mntsrv();
+int umntall_each(), xdr_fhs(), xdr_mlist(), xdr_dir(), xdr_explist();
 void add_mlist(), del_mlist(), get_exportlist(), get_mountlist();
 void send_umntall();
 struct exportlist exphead;
@@ -103,11 +104,6 @@ char exname[MAXPATHLEN];
 int def_rootuid = -2;
 int root_only = 1;
 extern int errno;
-#ifdef DEBUG
-int debug = 1;
-#else
-int debug = 0;
-#endif
 
 /*
  * Mountd server for NFS mount protocol as described in:
@@ -120,10 +116,16 @@ main(argc, argv)
 	int argc;
 	char **argv;
 {
-	SVCXPRT *transp;
-	int c;
+        FILE *pidfile;
 	extern int optind;
 	extern char *optarg;
+        SVCXPRT *transp;
+	int c;
+        int sock = 0;
+        int proto = 0;
+        int from_inetd = 1;
+	struct sockaddr_in from;
+	int fromlen;
 
 	while ((c = getopt(argc, argv, "n")) != EOF)
 		switch (c) {
@@ -136,38 +138,53 @@ main(argc, argv)
 		};
 	argc -= optind;
 	argv += optind;
+
 	exphead.ex_next = exphead.ex_prev = (struct exportlist *)0;
 	mlhead = (struct mountlist *)0;
+
 	if (argc == 1) {
 		strncpy(exname, *argv, MAXPATHLEN-1);
 		exname[MAXPATHLEN-1] = '\0';
 	} else
 		strcpy(exname, _PATH_EXPORTS);
-	openlog("mountd:", LOG_PID, LOG_DAEMON);
-	get_exportlist();
-	get_mountlist();
-	if (debug == 0) {
+
+        if (getsockname(0, (struct sockaddr *)&from, &fromlen) < 0) {
+                from_inetd = 0;
+                sock = RPC_ANYSOCK;
+                proto = IPPROTO_UDP;
+        }
+        
+        if (!from_inetd) {
 		daemon(0, 0);
+                pmap_unset(MOUNTPROG, MOUNTVERS);
 		signal(SIGINT, SIG_IGN);
 		signal(SIGQUIT, SIG_IGN);
 	}
-	signal(SIGHUP, get_exportlist);
-	signal(SIGTERM, send_umntall);
-	{ FILE *pidfile = fopen(_PATH_MOUNTDPID, "w");
-	  if (pidfile != NULL) {
-		fprintf(pidfile, "%d\n", getpid());
-		fclose(pidfile);
-	  }
-	}
-	if ((transp = svcudp_create(RPC_ANYSOCK)) == NULL) {
-		syslog(LOG_ERR, "Can't create socket");
+
+	openlog("mountd", LOG_PID, LOG_DAEMON);
+
+	if ((transp = svcudp_create(sock)) == NULL) {
+		syslog(LOG_ERR, "Can't create socket: %m");
 		exit(1);
 	}
-	pmap_unset(RPCPROG_MNT, RPCMNT_VER1);
-	if (!svc_register(transp, RPCPROG_MNT, RPCMNT_VER1, mntsrv, IPPROTO_UDP)) {
+
+	if (!svc_register(transp, MOUNTPROG, MOUNTVERS, mntsrv, proto)) {
 		syslog(LOG_ERR, "Can't register mount");
 		exit(1);
 	}
+
+	get_exportlist();
+	get_mountlist();
+
+	signal(SIGHUP, get_exportlist);
+	signal(SIGTERM, send_umntall);
+
+        pidfile = fopen(_PATH_MOUNTDPID, "w");
+        if (pidfile != NULL) {
+		fprintf(pidfile, "%d\n", getpid());
+		fclose(pidfile);
+        }
+
 	svc_run();
 	syslog(LOG_ERR, "Mountd died");
 	exit(1);
@@ -176,6 +193,7 @@ main(argc, argv)
 /*
  * The mount rpc service
  */
+void
 mntsrv(rqstp, transp)
 	register struct svc_req *rqstp;
 	register SVCXPRT *transp;
@@ -188,7 +206,7 @@ mntsrv(rqstp, transp)
 	struct stat stb;
 	struct hostent *hp;
 	u_long saddr;
-	char dirpath[RPCMNT_PATHLEN+1];
+	char dirpath[MNTPATHLEN+1];
 	int bad = ENOENT;
 	int omask;
 	uid_t uid = -2;
@@ -211,7 +229,7 @@ mntsrv(rqstp, transp)
 		if (!svc_sendreply(transp, xdr_void, (caddr_t)0))
 			syslog(LOG_ERR, "Can't send reply");
 		return;
-	case RPCMNT_MOUNT:
+	case MOUNTPROC_MNT:
 		if (uid != 0 && root_only) {
 			svcerr_weakauth(transp);
 			return;
@@ -283,11 +301,11 @@ mntsrv(rqstp, transp)
 		if (hp)
 			add_mlist(hp->h_name, dirpath);
 		return;
-	case RPCMNT_DUMP:
+	case MOUNTPROC_DUMP:
 		if (!svc_sendreply(transp, xdr_mlist, (caddr_t)0))
 			syslog(LOG_ERR, "Can't send reply");
 		return;
-	case RPCMNT_UMOUNT:
+	case MOUNTPROC_UMNT:
 		if (uid != 0 && root_only) {
 			svcerr_weakauth(transp);
 			return;
@@ -302,7 +320,7 @@ mntsrv(rqstp, transp)
 		if (hp)
 			del_mlist(hp->h_name, dirpath);
 		return;
-	case RPCMNT_UMNTALL:
+	case MOUNTPROC_UMNTALL:
 		if (uid != 0 && root_only) {
 			svcerr_weakauth(transp);
 			return;
@@ -313,8 +331,10 @@ mntsrv(rqstp, transp)
 		if (hp)
 			del_mlist(hp->h_name, (char *)0);
 		return;
-	case RPCMNT_EXPORT:
-		if (!svc_sendreply(transp, xdr_explist, (caddr_t)0))
+	case MOUNTPROC_EXPORT:
+        case MOUNTPROC_EXPORTALL:
+                get_exportlist();
+		if (!svc_sendreply(transp, xdr_explist, (caddr_t)exphead.ex_next))
 			syslog(LOG_ERR, "Can't send reply");
 		return;
 	default:
@@ -330,7 +350,7 @@ xdr_dir(xdrsp, dirp)
 	XDR *xdrsp;
 	char *dirp;
 {
-	return (xdr_string(xdrsp, &dirp, RPCMNT_PATHLEN));
+	return (xdr_string(xdrsp, &dirp, MNTPATHLEN));
 }
 
 /*
@@ -340,7 +360,7 @@ xdr_fhs(xdrsp, nfh)
 	XDR *xdrsp;
 	nfsv2fh_t *nfh;
 {
-	int ok = 0;
+	long ok = 0;
 
 	if (!xdr_long(xdrsp, &ok))
 		return (0);
@@ -361,10 +381,10 @@ xdr_mlist(xdrsp, cp)
 		if (!xdr_bool(xdrsp, &true))
 			return (0);
 		strp = &mlp->ml_host[0];
-		if (!xdr_string(xdrsp, &strp, RPCMNT_NAMELEN))
+		if (!xdr_string(xdrsp, &strp, MNTNAMLEN))
 			return (0);
 		strp = &mlp->ml_dirp[0];
-		if (!xdr_string(xdrsp, &strp, RPCMNT_PATHLEN))
+		if (!xdr_string(xdrsp, &strp, MNTPATHLEN))
 			return (0);
 		mlp = mlp->ml_next;
 	}
@@ -380,7 +400,7 @@ xdr_explist(xdrsp, cp)
 	XDR *xdrsp;
 	caddr_t cp;
 {
-	register struct exportlist *ep;
+	register struct exportlist *ep = (struct exportlist *)cp;
 	register struct grouplist *grp;
 	int true = 1;
 	int false = 0;
@@ -388,19 +408,18 @@ xdr_explist(xdrsp, cp)
 	int omask;
 
 	omask = sigblock(sigmask(SIGHUP));
-	ep = exphead.ex_next;
 	while (ep != NULL) {
 		if (!xdr_bool(xdrsp, &true))
 			goto errout;
 		strp = &ep->ex_dirp[0];
-		if (!xdr_string(xdrsp, &strp, RPCMNT_PATHLEN))
+		if (!xdr_string(xdrsp, &strp, MNTPATHLEN))
 			goto errout;
 		grp = ep->ex_groups;
 		while (grp != NULL) {
 			if (!xdr_bool(xdrsp, &true))
 				goto errout;
 			strp = grp->gr_hp->h_name;
-			if (!xdr_string(xdrsp, &strp, RPCMNT_NAMELEN))
+			if (!xdr_string(xdrsp, &strp, MNTNAMLEN))
 				goto errout;
 			grp = grp->gr_next;
 		}
@@ -423,6 +442,7 @@ char line[LINESIZ];
 /*
  * Get the export list
  */
+
 void
 get_exportlist()
 {
@@ -441,7 +461,27 @@ get_exportlist()
 	int rootuid, exflags;
 	u_long saddr;
 	struct exportlist *fep;
-
+        static int first = 0;
+        static struct stat last_exportstat;
+        
+        /*
+         * Check if the file has changed
+         */
+        if (first++) {
+                if (stat(exname, &sb) < 0) {
+                        syslog(LOG_ERR, "stat of export file %s failed. %m", exname);
+                        ep = exphead.ex_next;
+                        while (ep != NULL) {
+                                ep2 = ep;
+                                ep = ep->ex_next;
+                                free_exp(ep2);
+                        }
+                        return;
+                }
+                if (last_exportstat.st_mtime == sb.st_mtime)
+                        return;
+        }
+        
 	/*
 	 * First, get rid of the old list
 	 */
@@ -494,7 +534,7 @@ get_exportlist()
 		 * Create new exports list entry
 		 */
 		len = endcp-cp;
-		if (len <= RPCMNT_PATHLEN && len > 0) {
+		if (len <= MNTPATHLEN && len > 0) {
 			ep = (struct exportlist *)malloc(sizeof(*ep));
 			if (ep == NULL)
 				goto err;
@@ -513,7 +553,7 @@ get_exportlist()
 		while (len > 0) {
 			savedc = *endcp;
 			*endcp = '\0';
-			if (len > RPCMNT_NAMELEN)
+			if (len > MNTNAMLEN)
 				goto more;
 			if (*cp == '-') {
 				do_opt(cp + 1, fep, ep, &exflags, &rootuid);
@@ -694,7 +734,7 @@ do_opt(cpopt, fep, ep, exflagsp, rootuidp)
 	}
 }
 
-#define	STRSIZ	(RPCMNT_NAMELEN+RPCMNT_PATHLEN+50)
+#define	STRSIZ	(MNTNAMLEN+MNTPATHLEN+50)
 /*
  * Routines that maintain the remote mounttab
  */
@@ -718,8 +758,8 @@ void get_mountlist()
 			continue;
 		mlp = (struct mountlist *)malloc(sizeof (*mlp));
 		len = dirp-str;
-		if (len > RPCMNT_NAMELEN)
-			len = RPCMNT_NAMELEN;
+		if (len > MNTNAMLEN)
+			len = MNTNAMLEN;
 		bcopy(str, mlp->ml_host, len);
 		mlp->ml_host[len] = '\0';
 		while (*dirp == '\t' || *dirp == ' ')
@@ -730,8 +770,8 @@ void get_mountlist()
 			len = strlen(dirp);
 		else
 			len = eos-dirp;
-		if (len > RPCMNT_PATHLEN)
-			len = RPCMNT_PATHLEN;
+		if (len > MNTPATHLEN)
+			len = MNTPATHLEN;
 		bcopy(dirp, mlp->ml_dirp, len);
 		mlp->ml_dirp[len] = '\0';
 		mlp->ml_next = (struct mountlist *)0;
@@ -789,10 +829,10 @@ void add_mlist(hostp, dirp)
 		mlp = mlp->ml_next;
 	}
 	mlp = (struct mountlist *)malloc(sizeof (*mlp));
-	strncpy(mlp->ml_host, hostp, RPCMNT_NAMELEN);
-	mlp->ml_host[RPCMNT_NAMELEN] = '\0';
-	strncpy(mlp->ml_dirp, dirp, RPCMNT_PATHLEN);
-	mlp->ml_dirp[RPCMNT_PATHLEN] = '\0';
+	strncpy(mlp->ml_host, hostp, MNTNAMLEN);
+	mlp->ml_host[MNTNAMLEN] = '\0';
+	strncpy(mlp->ml_dirp, dirp, MNTPATHLEN);
+	mlp->ml_dirp[MNTPATHLEN] = '\0';
 	mlp->ml_next = (struct mountlist *)0;
 	*mlpp = mlp;
 	if ((mlfile = fopen(_PATH_RMOUNTLIST, "a")) == NULL) {
@@ -810,7 +850,7 @@ void add_mlist(hostp, dirp)
 void
 send_umntall()
 {
-	(void) clnt_broadcast(RPCPROG_MNT, RPCMNT_VER1, RPCMNT_UMNTALL,
+	(void) clnt_broadcast(MOUNTPROG, MOUNTVERS, MOUNTPROC_UMNTALL,
 		xdr_void, (caddr_t)0, xdr_void, (caddr_t)0, umntall_each);
 	exit();
 }
