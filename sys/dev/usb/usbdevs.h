@@ -1,10 +1,10 @@
-/*	$NetBSD: usbdevs.h,v 1.27 1999/05/09 14:35:13 augustss Exp $	*/
+/*	$NetBSD: usbdevs.h,v 1.28 1999/05/11 09:56:56 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: usbdevs,v 1.27 1999/05/09 14:34:41 augustss Exp 
+ *	NetBSD: usbdevs,v 1.28 1999/05/11 09:56:32 augustss Exp 
  */
 
 /*
@@ -117,6 +117,7 @@
 #define	USB_PRODUCT_MICROSOFT_DDS80	0x0014		/* Digital Sound System 80 */
 
 /* Kensington products */
+#define	USB_PRODUCT_KENSINGTON_COMFORT	0x4d01		/* Comfort */
 #define	USB_PRODUCT_KENSINGTON_MOUSEINABOX	0x4d02		/* Mouse-in-a-Box */
 
 /* Cherry products */
