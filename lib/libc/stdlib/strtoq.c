@@ -1,4 +1,4 @@
-/*	$NetBSD: strtoq.c,v 1.11 1998/11/15 17:13:52 christos Exp $	*/
+/*	$NetBSD: strtoq.c,v 1.12 1999/08/17 04:02:34 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)strtoq.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: strtoq.c,v 1.11 1998/11/15 17:13:52 christos Exp $");
+__RCSID("$NetBSD: strtoq.c,v 1.12 1999/08/17 04:02:34 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -49,6 +49,10 @@ __RCSID("$NetBSD: strtoq.c,v 1.11 1998/11/15 17:13:52 christos Exp $");
 #include <errno.h>
 #include <limits.h>
 #include <stdlib.h>
+
+#ifdef __weak_alias
+__weak_alias(strtoq, _strtoq)
+#endif
 
 /*
  * Convert a string to a quad integer.
