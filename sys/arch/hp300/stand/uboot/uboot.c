@@ -1,4 +1,4 @@
-/*	$NetBSD: uboot.c,v 1.6 2001/07/01 01:38:14 gmcgarry Exp $	*/
+/*	$NetBSD: uboot.c,v 1.7 2001/07/01 02:58:38 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -114,7 +114,7 @@ getbootdev(howto)
 {
 	char c, *ptr = line;
 
-	printf("Boot: [[[%s%d%c:]%s][-s][-a][-d][-v][-q]] :- ",
+	printf("Boot: [[[%s%d%c:]%s][-a][-c][-d][-s][-v][-q]] :- ",
 	    devsw[bdev].dv_name, bctlr + (8 * badapt), 'a' + bpart, name);
 
 	if (tgets(line)) {
