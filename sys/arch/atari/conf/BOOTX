@@ -1,12 +1,12 @@
 #
-# $NetBSD: BOOTX,v 1.36 2002/04/12 08:10:53 gmcgarry Exp $
+# $NetBSD: BOOTX,v 1.37 2002/04/12 22:34:13 leo Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
 #
 # Created from:
 #		NetBSD: FALCON.in,v 1.5 2001/11/20 11:29:41 lukem Exp $
-#		NetBSD: GENERIC.in,v 1.14 2002/01/27 13:23:13 jdolecek Exp $
+#		NetBSD: GENERIC.in,v 1.16 2002/04/12 22:29:14 leo Exp $
 
 #This configuration file is for a generic ATARI-Falcon
 
@@ -69,7 +69,6 @@ options 	COMPAT_14	# Compatibility to NetBSD1.4
 options 	COMPAT_AOUT_M68K # Compatibility to a.out executables
 options 	EXEC_AOUT	# a.out format executables
 
-#options 	USERCONF	# userconf(4) support
 options		PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 #These options enable verbose messages for several subsystems.
@@ -126,7 +125,7 @@ ser0		at mainbus0	# UART on first 68901 (ttyB0)
 wdc0		at mainbus0	# IDE-bus
 wd*		at wdc? channel ? drive ?
 
- #ATAPI bus support
+ # ATAPI bus support
 atapibus* at wdc? channel ?
 
 #ATAPI devices
