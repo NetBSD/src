@@ -1,4 +1,4 @@
-/* $NetBSD: ptsc.c,v 1.13 1996/12/10 21:27:35 thorpej Exp $ */
+/* $NetBSD: ptsc.c,v 1.14 1997/01/17 01:12:26 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Scott Stevens
@@ -169,7 +169,7 @@ ptscattach(pdp, dp, auxp)
 	sc->sc_softc.sc_build_dma_chain = ptsc_build_dma_chain;
 	sc->sc_softc.sc_need_bump	= ptsc_need_bump;
 
-	sc->sc_softc.sc_clock_freq   = 8;   /* Power-Tec runs at 8MHz */
+	sc->sc_softc.sc_clock_freq   = 40;   /* Power-Tec runs at 8MHz */
 	sc->sc_softc.sc_timeout      = 250;  /* Set default timeout to 250ms */
 	sc->sc_softc.sc_config_flags = SFAS_NO_DMA /*| SFAS_NF_DEBUG*/;
 	sc->sc_softc.sc_host_id      = 7;    /* Should check the jumpers */
@@ -205,6 +205,8 @@ ptscattach(pdp, dp, auxp)
 	if (irq_claim(IRQ_PODULE /*IRQ_EXPCARD0 + sc->sc_specific.sc_podule_number */,
 		      &sc->sc_softc.sc_ih))
 	    panic("%s: Cannot install IRQ handler\n", dp->dv_xname);
+#else
+	printf(" polling");
 #endif
 	
 	printf("\n");
