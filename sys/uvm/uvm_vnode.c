@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.16 1998/10/18 23:50:01 chs Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.17 1998/11/04 06:21:40 chs Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -420,8 +420,8 @@ uvn_detach(uobj)
 	if (uvn->u_flags & UVM_VNODE_CANPERSIST) {
 		/* won't block */
 		uvn_flush(uobj, 0, 0, PGO_DEACTIVATE|PGO_ALLPAGES);
-		vrele(vp);			/* drop vnode reference */
 		simple_unlock(&uobj->vmobjlock);
+		vrele(vp);			/* drop vnode reference */
 		UVMHIST_LOG(maphist,"<- done/vrele!  (persist)", 0,0,0,0);
 		return;
 	}
