@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93"; */
-static char *rcsid = "$Id: sysctl.c,v 1.7 1995/06/07 17:41:17 cgd Exp $";
+static char *rcsid = "$Id: sysctl.c,v 1.8 1995/09/30 07:05:22 thorpej Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -58,6 +58,9 @@ static char *rcsid = "$Id: sysctl.c,v 1.7 1995/06/07 17:41:17 cgd Exp $";
 #include <netinet/ip_var.h>
 #include <netinet/udp.h>
 #include <netinet/udp_var.h>
+#include <netinet/tcp.h>
+#include <netinet/tcp_timer.h>
+#include <netinet/tcp_var.h>
 
 #include <errno.h>
 #include <stdio.h>
@@ -475,6 +478,7 @@ debuginit()
 struct ctlname inetname[] = CTL_IPPROTO_NAMES;
 struct ctlname ipname[] = IPCTL_NAMES;
 struct ctlname icmpname[] = ICMPCTL_NAMES;
+struct ctlname tcpname[] = TCPCTL_NAMES;
 struct ctlname udpname[] = UDPCTL_NAMES;
 struct list inetlist = { inetname, IPPROTO_MAXID };
 struct list inetvars[] = {
@@ -484,7 +488,7 @@ struct list inetvars[] = {
 	{ 0, 0 },			/* ggmp */
 	{ 0, 0 },
 	{ 0, 0 },
-	{ 0, 0 },			/* tcp */
+	{ tcpname, TCPCTL_MAXID },	/* tcp */
 	{ 0, 0 },
 	{ 0, 0 },			/* egp */
 	{ 0, 0 },
