@@ -1,4 +1,4 @@
-/*	$NetBSD: mms.c,v 1.5.26.2 2002/01/10 19:40:47 thorpej Exp $	*/
+/*	$NetBSD: mms.c,v 1.5.26.3 2002/10/02 22:02:23 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -360,7 +360,7 @@ mmspoll(dev, events, p)
 static void
 filt_mmsrdetach(struct knote *kn)
 {
-	struct mms_softc *sc = (void *) kn->kn_hook;
+	struct mms_softc *sc = kn->kn_hook;
 	int s;
 
 	s = spltty();
@@ -371,7 +371,7 @@ filt_mmsrdetach(struct knote *kn)
 static int
 filt_mmsread(struct knote *kn, long hint)
 {
-	struct mms_softc *sc = (void *) kn->kn_hook;
+	struct mms_softc *sc = kn->kn_hook;
 
 	kn->kn_data = sc->sc_q.c_cc;
 	return (kn->kn_data > 0);
@@ -397,7 +397,7 @@ mmskqfilter(dev_t dev, struct knote *kn)
 		return (1);
 	}
 
-	kn->kn_hook = (void *) sc;
+	kn->kn_hook = sc;
 
 	s = spltty();
 	SLIST_INSERT_HEAD(klist, kn, kn_selnext);

@@ -1,4 +1,4 @@
-/*	$NetBSD: uhid.c,v 1.42.4.7 2002/09/06 08:46:56 jdolecek Exp $	*/
+/*	$NetBSD: uhid.c,v 1.42.4.8 2002/10/02 22:02:28 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.42.4.7 2002/09/06 08:46:56 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.42.4.8 2002/10/02 22:02:28 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -555,7 +555,7 @@ uhidpoll(dev_t dev, int events, usb_proc_ptr p)
 static void
 filt_uhidrdetach(struct knote *kn)
 {
-	struct uhid_softc *sc = (void *) kn->kn_hook;
+	struct uhid_softc *sc = kn->kn_hook;
 	int s;
 
 	s = splusb();
@@ -566,7 +566,7 @@ filt_uhidrdetach(struct knote *kn)
 static int
 filt_uhidread(struct knote *kn, long hint)
 {
-	struct uhid_softc *sc = (void *) kn->kn_hook;
+	struct uhid_softc *sc = kn->kn_hook;
 
 	kn->kn_data = sc->sc_q.c_cc;
 	return (kn->kn_data > 0);
@@ -605,7 +605,7 @@ uhidkqfilter(dev_t dev, struct knote *kn)
 		return (1);
 	}
 
-	kn->kn_hook = (void *) sc;
+	kn->kn_hook = sc;
 
 	s = splusb();
 	SLIST_INSERT_HEAD(klist, kn, kn_selnext);

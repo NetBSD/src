@@ -1,4 +1,4 @@
-/*	$NetBSD: bpp.c,v 1.8.4.5 2002/06/23 17:48:37 jdolecek Exp $ */
+/*	$NetBSD: bpp.c,v 1.8.4.6 2002/10/02 22:02:27 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpp.c,v 1.8.4.5 2002/06/23 17:48:37 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpp.c,v 1.8.4.6 2002/10/02 22:02:27 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -506,7 +506,7 @@ bpppoll(dev, events, p)
 static void
 filt_bpprdetach(struct knote *kn)
 {
-	struct bpp_softc *sc = (void *) kn->kn_hook;
+	struct bpp_softc *sc = kn->kn_hook;
 	int s;
 
 	s = splbpp();
@@ -527,7 +527,7 @@ static const struct filterops bppread_filtops =
 static void
 filt_bppwdetach(struct knote *kn)
 {
-	struct bpp_softc *sc = (void *) kn->kn_hook;
+	struct bpp_softc *sc = kn->kn_hook;
 	int s;
 
 	s = splbpp();
@@ -538,7 +538,7 @@ filt_bppwdetach(struct knote *kn)
 static int
 filt_bpfwrite(struct knote *kn, long hint)
 {
-	struct bpp_softc *sc = (void *) kn->kn_hook;
+	struct bpp_softc *sc = kn->kn_hook;
 
 	if (sc->sc_flags & BPP_LOCKED)
 		return (0);
@@ -572,7 +572,7 @@ bppkqfilter(dev_t dev, struct knote *kn)
 		return (1);
 	}
 
-	kn->kn_hook = (void *) sc;
+	kn->kn_hook = sc;
 
 	s = splbpp();
 	SLIST_INSERT_HEAD(klist, kn, kn_selnext);

@@ -1,4 +1,4 @@
-/*	$NetBSD: oboe.c,v 1.5.4.2 2002/01/10 18:29:10 thorpej Exp $	*/
+/*	$NetBSD: oboe.c,v 1.5.4.3 2002/10/02 22:02:26 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -485,7 +485,7 @@ oboe_poll(void *h, int events, struct proc *p)
 static void
 filt_oboerdetach(struct knote *kn)
 {
-	struct oboe_softc *sc = (void *) kn->kn_hook;
+	struct oboe_softc *sc = kn->kn_hook;
 	int s;
 
 	s = splir();
@@ -496,7 +496,7 @@ filt_oboerdetach(struct knote *kn)
 static int
 filt_oboeread(struct knote *kn, long hint)
 {
-	struct oboe_softc *sc = (void *) kn->kn_hook;
+	struct oboe_softc *sc = kn->kn_hook;
 
 	kn->kn_data = sc->sc_saved;
 	return (kn->kn_data > 0);
@@ -505,7 +505,7 @@ filt_oboeread(struct knote *kn, long hint)
 static void
 filt_oboewdetach(struct knote *kn)
 {
-	struct oboe_softc *sc = (void *) kn->kn_hook;
+	struct oboe_softc *sc = kn->kn_hook;
 	int s;
 
 	s = splir();
@@ -538,7 +538,7 @@ oboe_kqfilter(void *h, struct knote *kn)
 		return (1);
 	}
 
-	kn->kn_hook = (void *) sc;
+	kn->kn_hook = sc;
 
 	s = splir();
 	SLIST_INSERT_HEAD(klist, kn, kn_selnext);

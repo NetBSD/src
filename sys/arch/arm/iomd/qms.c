@@ -1,4 +1,4 @@
-/*	$NetBSD: qms.c,v 1.1.6.3 2002/06/17 19:49:40 jdolecek Exp $	*/
+/*	$NetBSD: qms.c,v 1.1.6.4 2002/10/02 22:02:22 jdolecek Exp $	*/
 
 /*
  * Copyright (c) Scott Stevens 1995 All rights reserved
@@ -471,7 +471,7 @@ qmsputbuffer(sc, buffer)
 static void
 filt_qmsrdetach(struct knote *kn)
 {
-	struct qms_softc *sc = (void *) kn->kn_hook;
+	struct qms_softc *sc = kn->kn_hook;
 	int s;
 
 	s = spltty();
@@ -482,7 +482,7 @@ filt_qmsrdetach(struct knote *kn)
 static int
 filt_qmsread(struct knote *kn, long hint)
 {
-	struct qms_softc *sc = (void *) kn->kn_hook;
+	struct qms_softc *sc = kn->kn_hook;
 
 	kn->kn_data = sc->sc_buffer.c_cc;
 	return (kn->kn_data > 0);
@@ -508,7 +508,7 @@ qmskqfilter(dev_t dev, struct knote *kn)
 		return (1);
 	}
 
-	kn->kn_hook = (void *) sc;
+	kn->kn_hook = sc;
 
 	s = spltty();
 	SLIST_INSERT_HEAD(klist, kn, kn_selnext);

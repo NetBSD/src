@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.1.6.2 2002/09/06 08:37:06 jdolecek Exp $	*/
+/*	$NetBSD: apm.c,v 1.1.6.3 2002/10/02 22:02:24 jdolecek Exp $	*/
 /*	$OpenBSD: apm.c,v 1.5 2002/06/07 07:13:59 miod Exp $	*/
 
 /*-
@@ -430,7 +430,7 @@ filt_apmrdetach(struct knote *kn)
 static int
 filt_apmread(struct knote *kn, long hint)
 {
-	struct apm_softc *sc = (void *) kn->kn_hook;
+	struct apm_softc *sc = kn->kn_hook;
 
 	kn->kn_data = sc->event_count;
 	return (kn->kn_data > 0);
@@ -456,7 +456,7 @@ apmkqfilter(dev, kn)
 		return (1);
 	}
 
-	kn->kn_hook = (void *) sc;
+	kn->kn_hook = sc;
 
 	APM_LOCK(sc);
 	SLIST_INSERT_HEAD(klist, kn, kn_selnext);

@@ -1,4 +1,4 @@
-/* 	$NetBSD: px.c,v 1.35.2.4 2002/09/06 08:38:49 jdolecek Exp $	*/
+/* 	$NetBSD: px.c,v 1.35.2.5 2002/10/02 22:02:25 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.35.2.4 2002/09/06 08:38:49 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.35.2.5 2002/10/02 22:02:25 jdolecek Exp $");
 
 /*
  * px.c: driver for the DEC TURBOchannel 2D and 3D accelerated framebuffers
@@ -1878,7 +1878,7 @@ pxpoll(dev, events, p)
 static void
 filt_pxrdetach(struct knote *kn)
 {
-	struct fbinfo *fi = (void *) kn->kn_hook;
+	struct fbinfo *fi = kn->kn_hook;
 	int s;
 
 	s = spltty();
@@ -1889,7 +1889,7 @@ filt_pxrdetach(struct knote *kn)
 static int
 filt_pxread(struct knote *kn, long hint)
 {
-	struct fbinfo *fi = (void *) kn->kn_hook;
+	struct fbinfo *fi = kn->kn_hook;
 
 	if (fi->fi_fbu->scrInfo.qe.eHead == fi->fi_fbu->scrInfo.qe.eTail)
 		return (0);
@@ -1918,7 +1918,7 @@ pxkqfilter(dev_t dev, struct knote *kn)
 		return (1);
 	}
 
-	kn->kn_hook = (void *) fi;
+	kn->kn_hook = fi;
 
 	s = spltty();
 	SLIST_INSERT_HEAD(klist, kn, kn_selnext);

@@ -1,4 +1,4 @@
-/*	$NetBSD: apmdev.c,v 1.5.4.3 2002/06/18 20:03:43 jdolecek Exp $ */
+/*	$NetBSD: apmdev.c,v 1.5.4.4 2002/10/02 22:02:23 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -910,7 +910,7 @@ apmdevpoll(dev_t dev, int events, struct proc *p)
 static void
 filt_apmrdetach(struct knote *kn)
 {
-	struct apm_softc *sc = (void *) kn->kn_hook;
+	struct apm_softc *sc = kn->kn_hook;
 
 	APM_LOCK(sc); 
 	SLIST_REMOVE(&sc->sc_rsel.si_klist, kn, knote, kn_selnext);
@@ -920,7 +920,7 @@ filt_apmrdetach(struct knote *kn)
 static int
 filt_apmread(struct knote *kn, long hint)
 {
-	struct apm_softc *sc = (void *) kn->kn_hook;
+	struct apm_softc *sc = kn->kn_hook;
 
 	kn->kn_data = sc->event_count;
 	return (kn->kn_data > 0);
@@ -945,7 +945,7 @@ apmdevkqfilter(dev_t dev, struct knote *kn)
 		return (1);
 	}
 
-	kn->kn_hook = (void *) sc;
+	kn->kn_hook = sc;
 
 	APM_LOCK(sc);
 	SLIST_INSERT_HEAD(klist, kn, kn_selnext);

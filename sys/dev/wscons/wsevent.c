@@ -1,4 +1,4 @@
-/* $NetBSD: wsevent.c,v 1.5.8.3 2002/02/11 20:10:21 jdolecek Exp $ */
+/* $NetBSD: wsevent.c,v 1.5.8.4 2002/10/02 22:02:29 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsevent.c,v 1.5.8.3 2002/02/11 20:10:21 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsevent.c,v 1.5.8.4 2002/10/02 22:02:29 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/fcntl.h>
@@ -201,7 +201,7 @@ wsevent_poll(struct wseventvar *ev, int events, struct proc *p)
 static void
 filt_wseventrdetach(struct knote *kn)
 {
-	struct wseventvar *ev = (void *) kn->kn_hook;
+	struct wseventvar *ev = kn->kn_hook;
 	int s;
 
 	s = splwsevent();
@@ -212,7 +212,7 @@ filt_wseventrdetach(struct knote *kn)
 static int
 filt_wseventread(struct knote *kn, long hint)
 {
-	struct wseventvar *ev = (void *) kn->kn_hook;
+	struct wseventvar *ev = kn->kn_hook;
 
 	if (ev->get == ev->put)
 		return (0);
@@ -247,7 +247,7 @@ wsevent_kqfilter(struct wseventvar *ev, struct knote *kn)
 		return (1);
 	}
 
-	kn->kn_hook = (void *) ev;
+	kn->kn_hook = ev;
 
 	s = splwsevent();
 	SLIST_INSERT_HEAD(klist, kn, kn_selnext);

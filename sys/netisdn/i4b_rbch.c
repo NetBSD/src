@@ -27,7 +27,7 @@
  *	i4b_rbch.c - device driver for raw B channel data
  *	---------------------------------------------------
  *
- *	$Id: i4b_rbch.c,v 1.3.2.3 2002/06/23 17:51:31 jdolecek Exp $
+ *	$Id: i4b_rbch.c,v 1.3.2.4 2002/10/02 22:02:30 jdolecek Exp $
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_rbch.c,v 1.3.2.3 2002/06/23 17:51:31 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_rbch.c,v 1.3.2.4 2002/10/02 22:02:30 jdolecek Exp $");
 
 #include "isdnbchan.h"
 
@@ -793,7 +793,7 @@ isdnbchanpoll(dev_t dev, int events, struct proc *p)
 static void
 filt_i4brbchdetach(struct knote *kn)
 {
-	struct rbch_softc *sc = (void *) kn->kn_hook;
+	struct rbch_softc *sc = kn->kn_hook;
 	int s;
 
 	s = splhigh();
@@ -804,7 +804,7 @@ filt_i4brbchdetach(struct knote *kn)
 static int
 filt_i4brbchread(struct knote *kn, long hint)
 {
-	struct rbch_softc *sc = (void *) kn->kn_hook;
+	struct rbch_softc *sc = kn->kn_hook;
 	struct ifqueue *iqp;
 
 	if ((sc->sc_devstate & ST_CONNECTED) == 0)
@@ -828,7 +828,7 @@ static const struct filterops i4brbchread_filtops =
 static int
 filt_i4brbchwrite(struct knote *kn, long hint)
 {
-	struct rbch_softc *sc = (void *) kn->kn_hook;
+	struct rbch_softc *sc = kn->kn_hook;
 
 	if ((sc->sc_devstate & ST_CONNECTED) == 0)
 		return (0);
@@ -865,7 +865,7 @@ isdnbchankqfilter(dev_t dev, struct knote *kn)
 		return (1);
 	}
 
-	kn->kn_hook = (void *) sc;
+	kn->kn_hook = sc;
 
 	s = splhigh();
 	SLIST_INSERT_HEAD(klist, kn, kn_selnext);

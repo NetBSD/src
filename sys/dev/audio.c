@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.137.2.7 2002/09/06 08:43:44 jdolecek Exp $	*/
+/*	$NetBSD: audio.c,v 1.137.2.8 2002/10/02 22:02:29 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.137.2.7 2002/09/06 08:43:44 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.137.2.8 2002/10/02 22:02:29 jdolecek Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -1960,7 +1960,7 @@ audio_poll(struct audio_softc *sc, int events, struct proc *p)
 static void
 filt_audiordetach(struct knote *kn)
 {
-	struct audio_softc *sc = (void *) kn->kn_hook;
+	struct audio_softc *sc = kn->kn_hook;
 	int s;
 
 	s = splaudio();
@@ -1971,7 +1971,7 @@ filt_audiordetach(struct knote *kn)
 static int
 filt_audioread(struct knote *kn, long hint)
 {
-	struct audio_softc *sc = (void *) kn->kn_hook;
+	struct audio_softc *sc = kn->kn_hook;
 	int s;
 
 	/* XXXLUKEM (thorpej): please make sure this is right */
@@ -1992,7 +1992,7 @@ static const struct filterops audioread_filtops =
 static void
 filt_audiowdetach(struct knote *kn)
 {
-	struct audio_softc *sc = (void *) kn->kn_hook;
+	struct audio_softc *sc = kn->kn_hook;
 	int s;
 
 	s = splaudio();
@@ -2003,7 +2003,7 @@ filt_audiowdetach(struct knote *kn)
 static int
 filt_audiowrite(struct knote *kn, long hint)
 {
-	struct audio_softc *sc = (void *) kn->kn_hook;
+	struct audio_softc *sc = kn->kn_hook;
 	int s;
 
 	/* XXXLUKEM (thorpej): please make sure this is right */
@@ -2039,7 +2039,7 @@ audio_kqfilter(struct audio_softc *sc, struct knote *kn)
 		return (1);
 	}
 
-	kn->kn_hook = (void *) sc;
+	kn->kn_hook = sc;
 
 	s = splaudio();
 	SLIST_INSERT_HEAD(klist, kn, kn_selnext);

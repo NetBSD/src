@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.43.2.8 2002/09/06 08:49:00 jdolecek Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.43.2.9 2002/10/02 22:02:30 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -15,7 +15,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.43.2.8 2002/09/06 08:49:00 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.43.2.9 2002/10/02 22:02:30 jdolecek Exp $");
 
 #include "tun.h"
 
@@ -916,7 +916,7 @@ tunpoll(dev, events, p)
 static void
 filt_tunrdetach(struct knote *kn)
 {
-	struct tun_softc *tp = (void *) kn->kn_hook;
+	struct tun_softc *tp = kn->kn_hook;
 	int s;
 
 	s = splnet();
@@ -927,7 +927,7 @@ filt_tunrdetach(struct knote *kn)
 static int
 filt_tunread(struct knote *kn, long hint)
 {
-	struct tun_softc *tp = (void *) kn->kn_hook;
+	struct tun_softc *tp = kn->kn_hook;
 	struct ifnet *ifp = &tp->tun_if;
 	struct mbuf *m;
 	int s;
@@ -974,7 +974,7 @@ tunkqfilter(dev_t dev, struct knote *kn)
 		return (1);
 	}
 
-	kn->kn_hook = (void *) tp;
+	kn->kn_hook = tp;
 
 	s = splnet();
 	SLIST_INSERT_HEAD(klist, kn, kn_selnext);

@@ -27,7 +27,7 @@
  *	i4b_tel.c - device driver for ISDN telephony
  *	--------------------------------------------
  *
- *	$Id: i4b_tel.c,v 1.4.2.4 2002/06/23 17:51:32 jdolecek Exp $
+ *	$Id: i4b_tel.c,v 1.4.2.5 2002/10/02 22:02:31 jdolecek Exp $
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_tel.c,v 1.4.2.4 2002/06/23 17:51:32 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_tel.c,v 1.4.2.5 2002/10/02 22:02:31 jdolecek Exp $");
 
 #include "isdntel.h"
 
@@ -937,7 +937,7 @@ isdntelpoll(dev_t dev, int events, struct proc *p)
 static void
 filt_i4btel_detach(struct knote *kn)
 {
-	tel_sc_t *sc = (void *) kn->kn_hook;
+	tel_sc_t *sc = kn->kn_hook;
 	int s;
 
 	s = splhigh();
@@ -948,7 +948,7 @@ filt_i4btel_detach(struct knote *kn)
 static int
 filt_i4btel_telread(struct knote *kn, long hint)
 {
-	tel_sc_t *sc = (void *) kn->kn_hook;
+	tel_sc_t *sc = kn->kn_hook;
 
 	if ((sc->devstate & ST_CONNECTED) == 0)
 		return (0);
@@ -967,7 +967,7 @@ static const struct filterops i4btel_telread_filtops =
 static int
 filt_i4btel_telwrite(struct knote *kn, long hint)
 {
-	tel_sc_t *sc = (void *) kn->kn_hook;
+	tel_sc_t *sc = kn->kn_hook;
 
 	if ((sc->devstate & ST_CONNECTED) == 0)
 		return (0);
@@ -986,7 +986,7 @@ static const struct filterops i4btel_telwrite_filtops =
 static int
 filt_i4btel_dialread(struct knote *kn, long hint)
 {
-	tel_sc_t *sc = (void *) kn->kn_hook;
+	tel_sc_t *sc = kn->kn_hook;
 
 	if (sc->result == 0)
 		return (0);
@@ -1036,7 +1036,7 @@ isdntelkqfilter(dev_t dev, struct knote *kn)
 		return (1);
 	}
 
-	kn->kn_hook = (void *) sc;
+	kn->kn_hook = sc;
 
 	s = splhigh();
 	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
