@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.37 2001/11/19 11:56:50 lukem Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.38 2001/12/18 10:57:23 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.37 2001/11/19 11:56:50 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.38 2001/12/18 10:57:23 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -792,9 +792,31 @@ ufs_direnter(dvp, tvp, dirp, cnp, newdirbp)
 				   (bp->b_data + blkoff))->d_reclen = DIRBLKSIZ;
 				blkoff += DIRBLKSIZ;
 			}
-			softdep_setup_directory_add(bp, dp, dp->i_offset,
-			    ufs_rw32(dirp->d_ino, needswap), newdirbp);
-			bdwrite(bp);
+			if (softdep_setup_directory_add(bp, dp, dp->i_offset,
+			    ufs_rw32(dirp->d_ino, needswap), newdirbp, 1) == 0) {
+				bdwrite(bp);
+				TIMEVAL_TO_TIMESPEC(&time, &ts);
+				return VOP_UPDATE(dvp, &ts, &ts, UPDATE_DIROP);
+			}
+			/* We have just allocated a directory block in an
+			 * indirect block. Rather than tracking when it gets
+			 * claimed by the inode, we simply do a VOP_FSYNC
+			 * now to ensure that it is there (in case the user
+			 * does a future fsync). Note that we have to unlock
+			 * the inode for the entry that we just entered, as
+			 * the VOP_FSYNC may need to lock other inodes which
+			 * can lead to deadlock if we also hold a lock on
+			 * the newly entered node.
+			 */
+			error = VOP_BWRITE(bp);
+			if (error != 0)
+				return (error);
+			if (tvp != NULL)
+				VOP_UNLOCK(tvp, 0);
+			error = VOP_FSYNC(dvp, p->p_ucred, FSYNC_WAIT, 0, 0, p);
+			if (tvp != 0)
+				vn_lock(tvp, LK_EXCLUSIVE | LK_RETRY);
+			return (error);
 		} else {
 			error = VOP_BWRITE(bp);
 		}
@@ -894,7 +916,7 @@ ufs_direnter(dvp, tvp, dirp, cnp, newdirbp)
 	if (DOINGSOFTDEP(dvp)) {
 		softdep_setup_directory_add(bp, dp,
 		    dp->i_offset + (caddr_t)ep - dirbuf,
-			ufs_rw32(dirp->d_ino, needswap), newdirbp);
+			ufs_rw32(dirp->d_ino, needswap), newdirbp, 0);
 		bdwrite(bp);
 	} else {
 		error = VOP_BWRITE(bp);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_inode.c,v 1.30 2001/11/22 02:42:37 chs Exp $	*/
+/*	$NetBSD: ufs_inode.c,v 1.31 2001/12/18 10:57:23 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.30 2001/11/22 02:42:37 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.31 2001/12/18 10:57:23 fvdl Exp $");
 
 #include "opt_quota.h"
 
@@ -86,6 +86,8 @@ ufs_inactive(v)
 	 */
 	if (ip->i_ffs_mode == 0)
 		goto out;
+	if (ip->i_ffs_effnlink == 0 && DOINGSOFTDEP(vp))
+		softdep_releasefile(ip);
 
 	if (ip->i_ffs_nlink <= 0 && (vp->v_mount->mnt_flag & MNT_RDONLY) == 0) {
 #ifdef QUOTA
