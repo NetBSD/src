@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.26 2004/04/01 23:08:12 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.27 2004/04/01 23:29:07 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -257,3 +257,11 @@ sys/dev/pci/pcidevs_data.h			regen
 	Correct entry for PCI vendor id 0x11af. It is assigned to Avid 
 	Technology Inc. and not to Pro-Log Corporation. PR#25004
 	[tron, ticket #38]
+
+sys/kern/kern_sig.c				1.190
+
+	If a signal is the result of trap, only invoke a supplied handler
+	if it's not blocked.  Otherwise (it if it blocked or the handler
+	is set to SIG_IGN) reset the signal back to its default settings
+	so that a coredump can be generated.
+	[matt, ticket #43]
