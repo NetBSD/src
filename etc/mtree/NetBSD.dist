@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.52.2.1 1997/10/24 02:12:16 mellon Exp $
+#	$NetBSD: NetBSD.dist,v 1.52.2.2 1997/10/30 02:10:54 mellon Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -1760,7 +1760,7 @@ rdist
 ..
 
 # ./var/mail
-mail
+mail		mode=1777
 # ./var/mail
 ..
 
