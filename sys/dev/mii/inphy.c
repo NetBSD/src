@@ -1,4 +1,4 @@
-/*	$NetBSD: inphy.c,v 1.23 2001/06/02 21:39:39 thorpej Exp $	*/
+/*	$NetBSD: inphy.c,v 1.23.2.1 2001/08/25 06:16:21 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -142,7 +142,7 @@ inphyattach(parent, self, aux)
 	sc->mii_phy = ma->mii_phyno;
 	sc->mii_funcs = &inphy_funcs;
 	sc->mii_pdata = mii;
-	sc->mii_flags = mii->mii_flags;
+	sc->mii_flags = mii->mii_flags | ma->mii_flags;	/* XXX */
 	sc->mii_anegticks = 5;
 
 	PHY_RESET(sc);

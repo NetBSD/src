@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.69 2001/07/03 06:15:17 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.69.2.1 2001/08/25 06:16:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -694,7 +694,7 @@ pmap_bootstrap(nextva)
 	 * then compute a pointer for mmuCbase instead of this...
 	 *
 	 * Allocate user MMU tables. 
-	 * These must be contiguous with the preceeding.
+	 * These must be contiguous with the preceding.
 	 */
 
 #ifndef	FIXED_NTABLES

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_43.c,v 1.17 2001/05/30 11:37:28 mrg Exp $	*/
+/*	$NetBSD: netbsd32_compat_43.c,v 1.17.2.1 2001/08/25 06:16:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -122,7 +122,7 @@ compat_43_netbsd32_olseek(p, v, retval)
 	NETBSD32TOX_UAP(offset, long);
 	NETBSD32TO64_UAP(whence);
 	rv = sys_lseek(p, &ua, (register_t *)&rt);
-	*(netbsd32_long *)retval = rt;
+	*retval = rt;
 
 	return (rv);
 }

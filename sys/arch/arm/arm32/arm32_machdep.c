@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.2.2.2 2001/08/03 04:10:57 lukem Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.2.2.3 2001/08/25 06:15:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -346,10 +346,8 @@ cpu_startup()
 
 	/* msgbufphys was setup during the secondary boot strap */
 	for (loop = 0; loop < btoc(MSGBUFSIZE); ++loop)
-		pmap_enter(pmap_kernel(),
-		    (vaddr_t)msgbufaddr + loop * NBPG,
-		    msgbufphys + loop * NBPG, VM_PROT_READ|VM_PROT_WRITE,
-		    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
+		pmap_kenter_pa((vaddr_t)msgbufaddr + loop * NBPG,
+		    msgbufphys + loop * NBPG, VM_PROT_READ|VM_PROT_WRITE);
 	pmap_update();
 	initmsgbuf(msgbufaddr, round_page(MSGBUFSIZE));
 
@@ -398,6 +396,12 @@ cpu_startup()
 		vaddr_t curbuf;
 		struct vm_page *pg;
 
+		/*
+		 * Each buffer has MAXBSIZE bytes of VM space allocated.  Of
+		 * that MAXBSIZE space, we allocate and map (base+1) pages
+		 * for the first "residual" buffers, and then we allocate
+		 * "base" pages for the rest.
+		 */
 		curbuf = (vaddr_t) buffers + (loop * MAXBSIZE);
 		curbufsize = NBPG * ((loop < residual) ? (base+1) : base);
 
@@ -405,9 +409,8 @@ cpu_startup()
 			pg = uvm_pagealloc(NULL, 0, NULL, 0);
 			if (pg == NULL)
 				panic("cpu_startup: not enough memory for buffer cache");
-			pmap_enter(kernel_map->pmap, curbuf,
-			    VM_PAGE_TO_PHYS(pg), VM_PROT_READ|VM_PROT_WRITE,
-			    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
+			pmap_kenter_pa(curbuf, VM_PAGE_TO_PHYS(pg),
+				VM_PROT_READ|VM_PROT_WRITE);
 			curbuf += PAGE_SIZE;
 			curbufsize -= PAGE_SIZE;
 		}

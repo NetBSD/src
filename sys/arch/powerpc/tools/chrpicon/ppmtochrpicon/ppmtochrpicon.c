@@ -1,4 +1,4 @@
-/*	$NetBSD: ppmtochrpicon.c,v 1.1.1.1 1999/11/19 00:43:20 lonhyn Exp $	*/
+/*	$NetBSD: ppmtochrpicon.c,v 1.1.1.1.12.1 2001/08/25 06:15:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  * or from stdin if no args are given. It tries to find a <ICON...>
  * tag in the file and read a CHRP style ASCII boot icon. It is not
  * overly intelligent at dealing with other confusing stuff in the 
- * file or wierd formatting due to the specialized nature of the input
+ * file or weird formatting due to the specialized nature of the input
  * files.
  *
  * It then produces a PPM file on stdout containing the boot icon's image.

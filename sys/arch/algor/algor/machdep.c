@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.11 2001/06/25 21:25:07 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.11.2.1 2001/08/25 06:14:59 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -743,6 +743,7 @@ struct user dumppcb;	/* Actually, struct pcb would do. */
 void
 cpu_reboot(int howto, char *bootstr)
 {
+	int tmp;
 
 	/* Take a snapshot before clobbering any registers. */
 	if (curproc)
@@ -781,24 +782,25 @@ cpu_reboot(int howto, char *bootstr)
 	doshutdownhooks();
 
 	if (boothowto & RB_HALT) {
-		printf("halted.\n");
+		printf("\n");
+		printf("The operating system has halted.\n");
+		printf("Please press any key to return to the monitor.\n\n");
 		led_display('h','a','l','t');
-		for (;;)
-			/* spin forever */ ;
-	} else {
-		int tmp;
-
-		printf("rebooting...");
-		led_display('r', 'v', 'e', 'c');
-		/* Jump to the reset vector. */
-		__asm __volatile("li %0, 0xbfc00000; jr %0; nop"
-			: "=r" (tmp)
-			: /* no inputs */
-			: "memory");
-		led_display('R', 'S', 'T', 'F');
-		for (;;)
-			/* spin forever */ ;
+		cnpollc(1);
+		(void) cngetc();
+		cnpollc(0);
 	}
+
+	printf("Returning to the monitor...\n\n");
+	led_display('r', 'v', 'e', 'c');
+	/* Jump to the reset vector. */
+	__asm __volatile("li %0, 0xbfc00000; jr %0; nop"
+		: "=r" (tmp)
+		: /* no inputs */
+		: "memory");
+	led_display('R', 'S', 'T', 'F');
+	for (;;)
+		/* spin forever */ ;
 }
 
 /*

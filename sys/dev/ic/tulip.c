@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.94.2.1 2001/08/03 04:13:05 lukem Exp $	*/
+/*	$NetBSD: tulip.c,v 1.94.2.2 2001/08/25 06:16:18 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -600,7 +600,7 @@ tlp_detach(sc)
 	int i;
 
 	/*
-	 * Suceed now if there isn't any work to do.
+	 * Succeed now if there isn't any work to do.
 	 */
 	if ((sc->sc_flags & TULIPF_ATTACHED) == 0)
 		return (0);
@@ -738,7 +738,7 @@ tlp_start(ifp)
 		 * likely we'll trip the alignment test than the
 		 * more-than-one-segment test.
 		 */
-		if ((sc->sc_ntxsegs == 1 && (mtod(m0, bus_addr_t) & 3) != 0) ||
+		if ((sc->sc_ntxsegs == 1 && (mtod(m0, uintptr_t) & 3) != 0) ||
 		    bus_dmamap_load_mbuf(sc->sc_dmat, dmamap, m0,
 		      BUS_DMA_WRITE|BUS_DMA_NOWAIT) != 0) {
 			MGETHDR(m, M_DONTWAIT, MT_DATA);

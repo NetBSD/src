@@ -1,4 +1,4 @@
-#       $NetBSD: files.vax,v 1.86 2001/06/13 06:43:08 lukem Exp $
+#       $NetBSD: files.vax,v 1.86.2.1 2001/08/25 06:16:02 thorpej Exp $
 #
 # new style config file for vax architecture
 #
@@ -395,7 +395,6 @@ include "compat/vax1k/files.vax1k"
 #arch/vax/if/if_ex.c          optional ex device-driver
 #arch/vax/if/if_hdh.c         optional hdh device-driver
 #arch/vax/if/if_hy.c          optional hy device-driver
-#arch/vax/if/if_il.c          optional il device-driver
 #arch/vax/if/if_pcl.c         optional pcl device-driver
 #arch/vax/if/if_vv.c          optional vv device-driver
 #arch/vax/if/raw_hy.c         optional hy device-driver

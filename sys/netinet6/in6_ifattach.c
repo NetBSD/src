@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_ifattach.c,v 1.36.2.1 2001/08/03 04:13:59 lukem Exp $	*/
+/*	$NetBSD: in6_ifattach.c,v 1.36.2.2 2001/08/25 06:17:04 thorpej Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -584,6 +584,16 @@ in6_ifattach(ifp, altifp)
 	struct in6_ifaddr *ia;
 	struct in6_addr in6;
 
+	/* some of the interfaces are inherently not IPv6 capable */
+	switch (ifp->if_type) {
+	case IFT_PROPVIRTUAL:
+		if (strncmp("bridge", ifp->if_xname, sizeof("bridge")) == 0 &&
+		    '0' <= ifp->if_xname[sizeof("bridge")] &&
+		    ifp->if_xname[sizeof("bridge")] <= '9')
+			return;
+		break;
+	}
+
 	/*
 	 * We have some arrays that should be indexed by if_index.
 	 * since if_index will grow dynamically, they should grow too.
@@ -635,8 +645,10 @@ in6_ifattach(ifp, altifp)
 #ifdef IFT_STF
 	case IFT_STF:
 		/*
-		 * 6to4 interface is a very speical kind of beast.
-		 * no multicast, no linklocal (based on 03 draft).
+		 * 6to4 interface is a very special kind of beast.
+		 * no multicast, no linklocal.  RFC2529 specifies how to make
+		 * linklocals for 6to4 interface, but there's no use and
+		 * it is rather harmful to have one.
 		 */
 		goto statinit;
 #endif
@@ -648,7 +660,8 @@ in6_ifattach(ifp, altifp)
 	 * usually, we require multicast capability to the interface
 	 */
 	if ((ifp->if_flags & IFF_MULTICAST) == 0) {
-		printf("%s: not multicast capable, IPv6 not enabled\n",
+		log(LOG_INFO, "in6_ifattach: "
+		    "%s is not multicast capable, IPv6 not enabled\n",
 		    if_name(ifp));
 		return;
 	}

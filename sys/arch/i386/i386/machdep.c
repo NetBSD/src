@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.446.2.1 2001/08/03 04:11:43 lukem Exp $	*/
+/*	$NetBSD: machdep.c,v 1.446.2.2 2001/08/25 06:15:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -2831,45 +2831,6 @@ init386(first_avail)
 	}
 
 	identifycpu(curcpu());
-}
-
-struct queue {
-	struct queue *q_next, *q_prev;
-};
-
-/*
- * insert an element into a queue
- */
-void
-_insque(v1, v2)
-	void *v1;
-	void *v2;
-{
-	struct queue *elem = v1, *head = v2;
-	struct queue *next;
-
-	next = head->q_next;
-	elem->q_next = next;
-	head->q_next = elem;
-	elem->q_prev = head;
-	next->q_prev = elem;
-}
-
-/*
- * remove an element from a queue
- */
-void
-_remque(v)
-	void *v;
-{
-	struct queue *elem = v;
-	struct queue *next, *prev;
-
-	next = elem->q_next;
-	prev = elem->q_prev;
-	next->q_prev = prev;
-	prev->q_next = next;
-	elem->q_prev = 0;
 }
 
 #ifdef COMPAT_NOMID

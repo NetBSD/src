@@ -1,4 +1,4 @@
-#	$NetBSD: PCCONS,v 1.8 2001/07/08 16:32:14 abs Exp $
+#	$NetBSD: PCCONS,v 1.8.2.1 2001/08/25 06:15:07 thorpej Exp $
 #	$OpenBSD: GENERIC,v 1.29 1999/08/29 12:14:03 niklas Exp $
 #
 #	PCCONS -- generic but pccons rather than wscons
@@ -266,7 +266,7 @@ scsibus*	at iha?
 #scsibus* 	at siop?
 
 #de*		at pci? dev ? function ?
-ex*		at pci? dev ? function ?	# 3Com 90x[B]
+ex*		at pci? dev ? function ?	# 3Com 90x[BC]
 fxp*		at pci? dev ? function ?	# Intel EtherExpress PRO
 le*		at pci? dev ? function ?	# PCnet-PCI
 ne*		at pci? dev ? function ?	# NE2000-compatible

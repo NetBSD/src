@@ -1,4 +1,4 @@
-/* $NetBSD: ioc.c,v 1.12 2001/06/19 13:42:12 wiz Exp $ */
+/* $NetBSD: ioc.c,v 1.12.2.1 2001/08/25 06:15:13 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
@@ -33,7 +33,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: ioc.c,v 1.12 2001/06/19 13:42:12 wiz Exp $");
+__RCSID("$NetBSD: ioc.c,v 1.12.2.1 2001/08/25 06:15:13 thorpej Exp $");
 
 #include <sys/device.h>
 #include <sys/kernel.h>
@@ -254,8 +254,8 @@ ioc_irq_status_full()
 	       bus_space_read_1(bst, bsh, IOC_IRQMSKA) | 
 	       (bus_space_read_1(bst, bsh, IOC_IRQMSKB) << 8));
 #endif
-	return bus_space_read_1(bst, bsh, IOC_IRQSTA) |
-	    (bus_space_read_1(bst, bsh, IOC_IRQSTB) << 8);
+	return bus_space_read_1(bst, bsh, IOC_IRQRQA) |
+	    (bus_space_read_1(bst, bsh, IOC_IRQRQB) << 8);
 }
 
 void
@@ -313,6 +313,21 @@ int ioc_get_irq_level(struct device *self, int irq)
 }
 
 #endif /* 0 */
+
+/*
+ * FIQs
+ */
+
+void
+ioc_fiq_setmask(u_int32_t mask)
+{
+	struct ioc_softc *sc = (void *)the_ioc;
+	bus_space_tag_t bst = sc->sc_bst;
+	bus_space_handle_t bsh = sc->sc_bsh;
+
+	bus_space_write_1(bst, bsh, IOC_FIQMSK, mask);
+}
+
 
 
 /*

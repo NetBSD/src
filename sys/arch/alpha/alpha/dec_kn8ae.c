@@ -1,4 +1,4 @@
-/* $NetBSD: dec_kn8ae.c,v 1.25.2.1 2001/08/03 04:10:38 lukem Exp $ */
+/* $NetBSD: dec_kn8ae.c,v 1.25.2.2 2001/08/25 06:15:00 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_kn8ae.c,v 1.25.2.1 2001/08/03 04:10:38 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_kn8ae.c,v 1.25.2.2 2001/08/25 06:15:00 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -199,7 +199,7 @@ dec_kn8ae_device_register(dev, aux)
 		/* XXX LUN! */
 
 		/*
-		 * the value in boot_dev_type is some wierd number
+		 * the value in boot_dev_type is some weird number
 		 * XXX: Only support SD booting for now.
 		 */
 		if (strcmp(cd->cd_name, "sd") &&

@@ -1,10 +1,10 @@
-/*	$NetBSD: miidevs.h,v 1.23.2.1 2001/08/03 04:13:14 lukem Exp $	*/
+/*	$NetBSD: miidevs.h,v 1.23.2.2 2001/08/25 06:16:22 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: miidevs,v 1.27 2001/07/27 17:54:40 thorpej Exp 
+ *	NetBSD: miidevs,v 1.28 2001/08/23 04:47:05 thorpej Exp 
  */
 
 /*-
@@ -114,6 +114,8 @@
 /* Advanced Micro Devices PHYs */
 #define	MII_MODEL_xxAMD_79C873	0x0000
 #define	MII_STR_xxAMD_79C873	"Am79C873 10/100 media interface"
+#define	MII_MODEL_yyAMD_79C972_10T	0x0001
+#define	MII_STR_yyAMD_79C972_10T	"Am79C972 internal 10BASE-T interface"
 #define	MII_MODEL_yyAMD_79c973phy	0x0036
 #define	MII_STR_yyAMD_79c973phy	"Am79C973 internal PHY"
 #define	MII_MODEL_yyAMD_79c901	0x0037

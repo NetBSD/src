@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.h,v 1.4.2.1 2001/08/03 04:12:02 lukem Exp $	*/
+/*	$NetBSD: mainbus.h,v 1.4.2.2 2001/08/25 06:15:35 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -49,7 +49,8 @@ struct mainbus_attach_args {
 /*
  * Mainbus offsets for devices on MVME147
  */
-#define	MAINBUS_PCC_OFFSET		0x0000u
+#define	MAINBUS_TK147_OFFSET		0x0000u
+#define	MAINBUS_PCC_OFFSET		0x1000u
 
 /*
  * Mainbus offsets for devices on all other boards.
@@ -59,6 +60,7 @@ struct mainbus_attach_args {
 #define MAINBUS_MEMC1_OFFSET	0x3000u
 #define MAINBUS_MEMC2_OFFSET	0x3100u
 #define	MAINBUS_IPACK_OFFSET	0x18000u	/* mvme162/mvme172 only */
+#define	MAINBUS_TIMEKEEPER_OFFSET 0x80000u
 
 extern struct mvme68k_bus_space_tag _mainbus_space_tag;
 extern struct mvme68k_bus_dma_tag   _mainbus_dma_tag;

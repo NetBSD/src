@@ -1,4 +1,4 @@
-/*	$NetBSD: ccdvar.h,v 1.19 1999/08/11 02:44:35 thorpej Exp $	*/
+/*	$NetBSD: ccdvar.h,v 1.19.16.1 2001/08/25 06:16:09 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
  */
 struct ccd_ioctl {
 	char	**ccio_disks;		/* pointer to component paths */
-	int	ccio_ndisks;		/* number of disks to concatenate */
+	u_int	ccio_ndisks;		/* number of disks to concatenate */
 	int	ccio_ileave;		/* interleave (DEV_BSIZE blocks) */
 	int	ccio_flags;		/* see sc_flags below */
 	int	ccio_unit;		/* unit number: use varies */
@@ -166,7 +166,8 @@ struct ccd_softc {
 	int		 sc_flags;		/* flags */
 	size_t		 sc_size;		/* size of ccd */
 	int		 sc_ileave;		/* interleave */
-	int		 sc_nccdisks;		/* number of components */
+	u_int		 sc_nccdisks;		/* number of components */
+#define	CCD_MAXNDISKS	65536
 	struct ccdcinfo	 *sc_cinfo;		/* component info */
 	struct ccdiinfo	 *sc_itable;		/* interleave table */
 	struct ccdgeom   sc_geom;		/* pseudo geometry info */

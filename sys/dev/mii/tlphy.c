@@ -1,4 +1,4 @@
-/*	$NetBSD: tlphy.c,v 1.30 2001/06/02 21:39:41 thorpej Exp $	*/
+/*	$NetBSD: tlphy.c,v 1.30.2.1 2001/08/25 06:16:22 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -316,7 +316,6 @@ tlphy_status(physc)
 {
 	struct tlphy_softc *sc = (void *) physc;
 	struct mii_data *mii = sc->sc_mii.mii_pdata;
-	struct tl_softc *tlsc = (struct tl_softc *)sc->sc_mii.mii_dev.dv_parent;
 	int bmsr, bmcr, tlctrl;
 
 	mii->mii_media_status = IFM_AVALID;
@@ -338,8 +337,7 @@ tlphy_status(physc)
 		else
 			printf("%s: AUI selected with no matching media !\n",
 			    sc->sc_mii.mii_dev.dv_xname);
-		if (tlsc->tl_flags & TL_IFACT)
-			mii->mii_media_status |= IFM_ACTIVE;
+		mii->mii_media_status |= IFM_ACTIVE;
 		return;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.109.2.1 2001/08/03 04:13:48 lukem Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.109.2.2 2001/08/25 06:16:54 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -954,7 +954,7 @@ abortit:
 	/*
 	 * If ".." must be changed (ie the directory gets a new
 	 * parent) then the source directory must not be in the
-	 * directory heirarchy above the target, as this would
+	 * directory hierarchy above the target, as this would
 	 * orphan everything below the source directory. Also
 	 * the user must have write permission in the source so
 	 * as to be able to change "..". We must repeat the call

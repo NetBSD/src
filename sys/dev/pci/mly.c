@@ -1,4 +1,4 @@
-/*	$NetBSD: mly.c,v 1.6.2.2 2001/08/03 04:13:18 lukem Exp $	*/
+/*	$NetBSD: mly.c,v 1.6.2.3 2001/08/25 06:16:24 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -1882,11 +1882,6 @@ mly_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 		ss->command_control |= MLY_CMDCTL_DISABLE_DISCONNECT;
 #endif
 
-		if ((xs->xs_control & XS_CTL_DATA_OUT) != 0)
-			mc->mc_flags |= MLY_CCB_DATAOUT;
-		else if ((xs->xs_control & XS_CTL_DATA_IN) != 0)
-			mc->mc_flags |= MLY_CCB_DATAIN;
-
 		ss->data_size = htole32(xs->datalen);
 		_lto3l(MLY_PHYADDR(0, chan->chan_channel,
 		    periph->periph_target, periph->periph_lun), ss->addr);
@@ -1905,13 +1900,19 @@ mly_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 		ss->cdb_length = xs->cmdlen;
 		memcpy(ss->cdb, xs->cmd, xs->cmdlen);
 
-		if (mc->mc_length != 0)
+		if (mc->mc_length != 0) {
+			if ((xs->xs_control & XS_CTL_DATA_OUT) != 0)
+				mc->mc_flags |= MLY_CCB_DATAOUT;
+			else /* if ((xs->xs_control & XS_CTL_DATA_IN) != 0) */
+				mc->mc_flags |= MLY_CCB_DATAIN;
+
 			if (mly_ccb_map(mly, mc) != 0) {
 				xs->error = XS_DRIVER_STUFFUP;
 				mly_ccb_free(mly, mc);
 				scsipi_done(xs);
 				break;
 			}
+		}
 
 		/*
 		 * Give the command to the controller.

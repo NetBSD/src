@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.8 2000/12/11 20:05:33 scw Exp $	*/
+/*	$NetBSD: psl.h,v 1.8.4.1 2001/08/25 06:15:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -83,7 +83,7 @@ _spl(int s)
 	int sr;
 
 	__asm __volatile ("movew %%sr,%0; movew %1,%%sr" :
-	    "&=d" (sr) : "di" (s));
+	    "=&d" (sr) : "di" (s));
 
 	return sr;
 }

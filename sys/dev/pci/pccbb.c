@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.65 2001/07/06 18:06:59 mcr Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.65.2.1 2001/08/25 06:16:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -103,7 +103,7 @@ struct cfdriver cbb_cd = {
 	    if (tick <= 1) {						\
 		tick = 2;						\
 	    }								\
-	    tsleep((void *)(param), PCATCH, "pccbb", tick);		\
+	    tsleep((void *)(param), PWAIT, "pccbb", tick);		\
 	} else {							\
 	    delay((time)*1000);						\
 	}								\

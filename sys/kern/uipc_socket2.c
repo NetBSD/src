@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.39.2.2 2001/08/03 04:13:44 lukem Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.39.2.3 2001/08/25 06:16:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -52,9 +52,10 @@
  */
 
 /* strings for sleep message: */
-const char	netio[] = "netio";
 const char	netcon[] = "netcon";
 const char	netcls[] = "netcls";
+const char	netio[] = "netio";
+const char	netlck[] = "netlck";
 
 /*
  * Procedures to manipulate state flags of socket
@@ -278,8 +279,8 @@ sb_lock(struct sockbuf *sb)
 	while (sb->sb_flags & SB_LOCK) {
 		sb->sb_flags |= SB_WANT;
 		error = tsleep((caddr_t)&sb->sb_flags, 
-			       (sb->sb_flags & SB_NOINTR) ?
-					PSOCK : PSOCK|PCATCH, netio, 0);
+		    (sb->sb_flags & SB_NOINTR) ?  PSOCK : PSOCK|PCATCH,
+		    netlck, 0);
 		if (error)
 			return (error);
 	}

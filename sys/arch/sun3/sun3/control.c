@@ -1,4 +1,4 @@
-/*	$NetBSD: control.c,v 1.17 1998/02/05 04:57:29 gwr Exp $	*/
+/*	$NetBSD: control.c,v 1.17.28.1 2001/08/25 06:16:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -76,39 +76,10 @@ get_segmap(va)
 	return (get_control_byte(CONTROL_ADDR_BUILD(SEGMAP_BASE, va)));
 }
 
-void set_segmap(va, sme)
+void
+set_segmap(va, sme)
 	vm_offset_t va;
 	int sme;
 {
 	set_control_byte(CONTROL_ADDR_BUILD(SEGMAP_BASE, va), sme);
-}
-
-/*
- * Set a segmap entry in all contexts.
- * (i.e. somewhere in kernel space.)
- * XXX - Should optimize:  "(get|set)_control_(word|byte)"
- * calls so this does save/restore of sfc/dfc only once!
- */
-void
-set_segmap_allctx(va, sme)
-	vm_offset_t va;
-	int sme;	/* segmap entry */
-{
-	vm_offset_t ctrladdr;
-	register int ctx, oldctx;
-
-	/* Inline get_context() */
-	oldctx = get_control_byte(CONTEXT_REG);
-	oldctx &= CONTEXT_MASK;
-
-	ctrladdr = CONTROL_ADDR_BUILD(SEGMAP_BASE, va);
-	for (ctx = 0; ctx < CONTEXT_NUM; ctx++) {
-		/* Inlined set_context() */
-		set_control_byte(CONTEXT_REG, ctx);
-		/* Inlined set_segmap() */
-		set_control_byte(ctrladdr, sme);
-	}
-
-	/* Inlined set_context(ctx); */
-	set_control_byte(CONTEXT_REG, oldctx);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: aha.c,v 1.34.2.1 2001/08/03 04:12:55 lukem Exp $	*/
+/*	$NetBSD: aha.c,v 1.34.2.2 2001/08/25 06:16:11 thorpej Exp $	*/
 
 #include "opt_ddb.h"
 
@@ -374,7 +374,7 @@ AGAIN:
 		case AHA_MBI_UNKNOWN:
 			/*
 			 * Even if the CCB wasn't found, we clear it anyway.
-			 * See preceeding comment.
+			 * See preceding comment.
 			 */
 			break;
 

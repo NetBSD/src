@@ -1,4 +1,4 @@
-/*	$NetBSD: vidc20config.c,v 1.3.2.1 2001/08/03 04:11:14 lukem Exp $	*/
+/*	$NetBSD: vidc20config.c,v 1.3.2.2 2001/08/25 06:15:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Reinoud Zandijk
@@ -193,9 +193,8 @@ char *cursor_normal;
 char *cursor_transparent;
 int p_cursor_normal;
 int p_cursor_transparent;
-
-/* XXX static irqhandler_t cursor_ih; */
-irqhandler_t flash_ih;
+int cursor_width;
+int cursor_height;
 
 
 /*
@@ -467,6 +466,24 @@ void *vidcvideo_hwscroll(int bytes) {
 }
 
 
+/* reset the HW scroll to be at the start for the benefit of f.e. X */
+void *vidcvideo_hwscroll_reset(void) {
+	void *cookie = (void *) dispstart;
+
+	dispstart = dispbase;
+	dispend = dispstart + dispsize;
+	return cookie;
+}
+
+
+/* put HW scroll back to where it was */
+void *vidcvideo_hwscroll_back(void *cookie) {
+	dispstart = (int) cookie;
+	dispend = dispstart + dispsize;
+	return cookie;
+}
+
+
 /* this function is to be called at vsync */
 void vidcvideo_progr_scroll(void) {
 	IOMD_WRITE_WORD(IOMD_VIDINIT, dispstart-ptov);
@@ -503,6 +520,9 @@ vidcvideo_setmode(struct vidc_mode *mode)
 	int best_r, best_v, best_match;
 #endif
 
+#ifdef NC
+return;
+#endif
 	/*
 	 * Find out what bit mask we need to or with the vidc20 control register
 	 * in order to generate the desired number of bits per pixel.
@@ -678,6 +698,7 @@ vidcvideo_init(void)
 
 	/* setting a mode goes wrong in 32 bpp ... 8 and 16 seem OK */
 	vidcvideo_setmode(vidc_currentmode);
+	vidcvideo_blank(0);			/* display on */
 
 	vidcvideo_textpalette();
 
@@ -685,8 +706,9 @@ vidcvideo_init(void)
 		vidcvideo_write(VIDC_CP1, 0x0);
 		vidcvideo_write(VIDC_CP2, 0x0);
 		vidcvideo_write(VIDC_CP3, 0x0);
-	} else
-		vidcvideo_cursor_init(8, 8); /* XXX HACK HACK XXX */
+	} else {
+		vidcvideo_cursor_init(CURSOR_MAX_WIDTH, CURSOR_MAX_HEIGHT);
+	};
 
 	cold_init=1;
 	return 0;
@@ -722,6 +744,9 @@ vidcvideo_cursor_init(int width, int height)
 	int line;
 	paddr_t pa;
 
+	cursor_width  = width;
+	cursor_height = height;
+
 	if (!cursor_data) {
 		/* Allocate cursor memory first time round */
 		cursor_data = (char *)uvm_km_zalloc(kernel_map, NBPG);
@@ -740,13 +765,13 @@ vidcvideo_cursor_init(int width, int height)
  	cursor_normal       = cursor_data;
 	cursor_transparent  = cursor_data + (height * width);
 
- 	cursor_transparent += 32;
+ 	cursor_transparent += 32;					/* ALIGN */
 	cursor_transparent = (char *)((int)cursor_transparent & (~31) );
 
 	for ( line = 0; line<height; ++ line )
 	{
 	    for ( counter=0; counter<width/4;counter++ )
-		cursor_normal[line * width + counter]=0x55;
+		cursor_normal[line * width + counter]=0x55;		/* why 0x55 ? */
 	    for ( ; counter<8; counter++ )
 		cursor_normal[line * width + counter]=0;
 	}
@@ -765,18 +790,42 @@ vidcvideo_cursor_init(int width, int height)
 	(void) pmap_extract(pmap_kernel(), (vaddr_t)cursor_transparent,
 	    (paddr_t *)&p_cursor_transparent);
 
-/*
-	memset ( cursor_normal, 0x55,
-		R_DATA->font->pixel_width*R_DATA->font->pixel_height );
+	memset ( cursor_normal, 0x55, width*height );			/* white? */
+	memset ( cursor_transparent, 0x00, width*height );		/* to see the diffence */
 
-	memset ( cursor_transparent, 0x55,
-		R_DATA->font->pixel_width*R_DATA->font->pixel_height );
-*/
+	/* Ok, now program the cursor; should be blank */
+	vidcvideo_enablecursor(0);
 
-	/* Ok, now see the cursor */
-
-	vidcvideo_write ( VIDC_CP1, 0xffffff );
         return 0;
+}
+
+
+void
+vidcvideo_updatecursor(xcur, ycur)
+	int xcur, ycur;
+{
+	int frontporch = vidc_currentmode->hswr + vidc_currentmode->hbsr + vidc_currentmode->hdsr;
+	int topporch   = vidc_currentmode->vswr + vidc_currentmode->vbsr + vidc_currentmode->vdsr;
+
+	vidcvideo_write(VIDC_HCSR, frontporch -17 + xcur);
+	vidcvideo_write(VIDC_VCSR, topporch   -2  + (ycur+1)-2 + 3 - cursor_height);
+	vidcvideo_write(VIDC_VCER, topporch   -2  + (ycur+3)+2 + 3 );
+	return;
+}
+
+
+void
+vidcvideo_enablecursor(on)
+	int on;
+{
+	if (on) {
+		IOMD_WRITE_WORD(IOMD_CURSINIT,p_cursor_normal);
+	} else {
+		IOMD_WRITE_WORD(IOMD_CURSINIT,p_cursor_transparent);
+	};
+	vidcvideo_write ( VIDC_CP1, 0xffffff );		/* enable */
+
+	return;
 }
 
 
@@ -804,8 +853,8 @@ vidcvideo_textpalette()
 }
 
 int
-vidcvideo_blank(video_on)
-	int video_on;
+vidcvideo_blank(video_off)
+	int video_off;
 {
         int ereg;
 
@@ -815,7 +864,7 @@ vidcvideo_blank(video_on)
 	if (vidc_currentmode->sync_pol & 0x02)
 		ereg |= 1<<18;
 
-	if (video_on) {
+	if (!video_off) {
 #ifdef RC7500
 		vidcvideo_write(VIDC_EREG, 0x51<<12);
 #else
@@ -828,4 +877,3 @@ vidcvideo_blank(video_on)
 }
 
 /* end of vidc20config.c */
-

@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.40 2001/01/05 13:09:15 martin Exp $
+#	$NetBSD: Makefile,v 1.40.4.1 2001/08/25 06:14:57 thorpej Exp $
 
 SUBDIR=	adosfs altq arch compat dev filecorefs isofs miscfs msdosfs net \
-	netatalk netccitt netinet netinet6 netiso netkey netnatm netns \
-	nfs ntfs sys ufs uvm netisdn
+	netatalk netccitt netinet netinet6 netisdn netiso netkey netnatm \
+	netns nfs ntfs sys ufs uvm
 
 .if (${MACHINE_ARCH} != "mipseb" && ${MACHINE_ARCH} != "mipsel")
 

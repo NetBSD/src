@@ -1,4 +1,4 @@
-/*	$NetBSD: sh3_machdep.c,v 1.15 2001/06/02 18:09:20 chs Exp $	*/
+/*	$NetBSD: sh3_machdep.c,v 1.15.2.1 2001/08/25 06:15:51 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -428,41 +428,3 @@ setregs(p, pack, stack)
 #endif
 }
 
-struct queue {
-	struct queue *q_next, *q_prev;
-};
-
-/*
- * insert an element into a queue
- */
-void
-_insque(v1, v2)
-	void *v1;
-	void *v2;
-{
-	struct queue *elem = v1, *head = v2;
-	struct queue *next;
-
-	next = head->q_next;
-	elem->q_next = next;
-	head->q_next = elem;
-	elem->q_prev = head;
-	next->q_prev = elem;
-}
-
-/*
- * remove an element from a queue
- */
-void
-_remque(v)
-	void *v;
-{
-	struct queue *elem = v;
-	struct queue *next, *prev;
-
-	next = elem->q_next;
-	prev = elem->q_prev;
-	next->q_prev = prev;
-	prev->q_next = next;
-	elem->q_prev = 0;
-}

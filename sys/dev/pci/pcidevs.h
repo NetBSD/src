@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.342.2.1 2001/08/03 04:13:19 lukem Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.342.2.2 2001/08/25 06:16:25 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.340 2001/07/31 22:27:25 matt Exp 
+ *	NetBSD: pcidevs,v 1.347 2001/08/23 03:41:36 thorpej Exp 
  */
 
 /*
@@ -511,6 +511,7 @@
 #define	PCI_VENDOR_SILMOTION	0x126f		/* Silicon Motion */
 #define	PCI_VENDOR_ENSONIQ	0x1274		/* Ensoniq */
 #define	PCI_VENDOR_NETAPP	0x1275		/* Network Appliance */
+#define	PCI_VENDOR_TRANSMETA	0x1279		/* Transmeta Corp */
 #define	PCI_VENDOR_ROCKWELL	0x127a		/* Rockwell Semiconductor Systems */
 #define	PCI_VENDOR_DAVICOM	0x1282		/* Davicom Semiconductor */
 #define	PCI_VENDOR_ESSTECH2	0x1285		/* ESS Technology Inc */
@@ -666,6 +667,8 @@
 #define	PCI_PRODUCT_ALI_M5229	0x5229		/* M5229 UDMA IDE Controller */
 #define	PCI_PRODUCT_ALI_M5237	0x5237		/* M5237 USB Host Controller */
 #define	PCI_PRODUCT_ALI_M5243	0x5243		/* M5243 PCI-AGP Bridge */
+#define	PCI_PRODUCT_ALI_M5451	0x5451		/* M5451 AC-Link Controller Audio Device */
+#define	PCI_PRODUCT_ALI_M5453	0x5453		/* M5453 AC-Link Controller Modem Device */
 #define	PCI_PRODUCT_ALI_M7101	0x7101		/* M7101 Power Management Controller */
 
 /* Adaptec products */
@@ -727,17 +730,19 @@
 #define	PCI_PRODUCT_ALTEON_ACENIC_COPPER	0x0002		/* ACEnic 1000baseT Gigabit Ethernet */
 
 /* AMD products */
-#define	PCI_PRODUCT_AMD_PCNET_PCI	0x2000		/* 79c970 PCnet-PCI LANCE Ethernet */
-#define	PCI_PRODUCT_AMD_PCNET_HOME	0x2001		/* 79c978 PCnet-PCI Home */
-#define	PCI_PRODUCT_AMD_PCSCSI_PCI	0x2020		/* 53c974 PCscsi-PCI SCSI */
-#define	PCI_PRODUCT_AMD_PCNETS_PCI	0x2040		/* 79C974 PCnet-PCI Ethernet & SCSI */
+#define	PCI_PRODUCT_AMD_PCNET_PCI	0x2000		/* PCnet-PCI Ethernet */
+#define	PCI_PRODUCT_AMD_PCNET_HOME	0x2001		/* PCnet-Home HomePNA Ethernet */
+#define	PCI_PRODUCT_AMD_PCSCSI_PCI	0x2020		/* PCscsi-PCI SCSI */
+#define	PCI_PRODUCT_AMD_PCNETS_PCI	0x2040		/* PCnet-PCI Ethernet & SCSI */
 #define	PCI_PRODUCT_AMD_SC751_SC	0x7006		/* AMD751 System Controller */
 #define	PCI_PRODUCT_AMD_SC751_PPB	0x7007		/* AMD751 PCI-to-PCI Bridge */
 #define	PCI_PRODUCT_AMD_PBC756_ISA	0x7408		/* AMD756 PCI-to-ISA Bridge */
 #define	PCI_PRODUCT_AMD_PBC756_IDE	0x7409		/* AMD756 IDE controller */
 #define	PCI_PRODUCT_AMD_PBC756_PMC	0x740b		/* AMD756 Power Management Controller */
 #define	PCI_PRODUCT_AMD_PBC756_USB	0x740c		/* AMD756 USB Host Controller */
-#define	PCI_PRODUCT_AMD_PBC766_ISA	0x7410		/* AMD766 PCI-to-ISA Bridge */
+#define	PCI_PRODUCT_AMD_SC762_NB	0x700c		/* AMD762 NorthBridge */
+#define	PCI_PRODUCT_AMD_SC762_PPB	0x700d		/* AMD762 AGP Bridge */
+#define	PCI_PRODUCT_AMD_PBC766_ISA	0x7410		/* AMD766 SouthBridge */
 #define	PCI_PRODUCT_AMD_PBC766_IDE	0x7411		/* AMD766 IDE controller */
 #define	PCI_PRODUCT_AMD_PBC766_PMC	0x7413		/* AMD766 Power Management Controller */
 #define	PCI_PRODUCT_AMD_PBC766_USB	0x7414		/* AMD766 USB Host Controller */
@@ -770,6 +775,9 @@
 #define	PCI_PRODUCT_APPLE_PANGEA_AGP	0x0027		/* Pangea AGP Interface */
 #define	PCI_PRODUCT_APPLE_PANGEA_PCI1	0x0028		/* Pangea Host-PCI Bridge */
 #define	PCI_PRODUCT_APPLE_PANGEA_PCI2	0x0029		/* Pangea Host-PCI Bridge */
+#define	PCI_PRODUCT_APPLE_UNIN_AGP	0x002d		/* Uni-N AGP Interface */
+#define	PCI_PRODUCT_APPLE_UNIN_PCI1	0x002e		/* Uni-N Host-External PCI Bridge */
+#define	PCI_PRODUCT_APPLE_UNIN_PCI2	0x002f		/* Uni-N Host-Internal PCI Bridge */
 
 /* ARC Logic products */
 #define	PCI_PRODUCT_ARC_1000PV	0xa091		/* 1000PV */
@@ -863,6 +871,7 @@
 #define	PCI_PRODUCT_AVANCE_AVG2302	0x2302		/* AVG2302 */
 #define	PCI_PRODUCT_AVANCE2_ALG2301	0x2301		/* ALG2301 */
 #define	PCI_PRODUCT_AVANCE2_ALG2302	0x2302		/* ALG2302 */
+#define	PCI_PRODUCT_AVANCE2_ALS4000	0x4000		/* ALS4000 Audio */
 
 /* CCUBE products */
 #define	PCI_PRODUCT_CCUBE_CINEMASTER	0x8888		/* Cinemaster C 3.0 DVD Decoder */
@@ -1445,6 +1454,7 @@
 #define	PCI_PRODUCT_NEC_VRC4173_AC97U	0x00a6		/* VRC4173 AC97 Unit */
 #define	PCI_PRODUCT_NEC_PD72870	0x00cd		/* uPD72870 IEEE 1394 OHCI Host Controller */
 #define	PCI_PRODUCT_NEC_PD72871	0x00ce		/* uPD72871 IEEE 1394 OHCI Host Controller */
+#define	PCI_PRODUCT_NEC_PD720100A	0x00e0		/* USB Host Controller */
 #define	PCI_PRODUCT_NEC_VA26D	0x803c		/* NEC Versa Pro LX VA26D */
 #define	PCI_PRODUCT_NEC_VERSALX	0x8058		/* NEC Versa LX */
 
@@ -1531,7 +1541,8 @@
 #define	PCI_PRODUCT_PROMISE_ULTRA33	0x4d33		/* Ultra33/ATA Bus Master IDE Accelerator */
 #define	PCI_PRODUCT_PROMISE_ULTRA66	0x4d38		/* Ultra66/ATA Bus Master IDE Accelerator */
 #define	PCI_PRODUCT_PROMISE_ULTRA100	0x4d30		/* Ultra100/ATA Bus Master IDE Accelerator */
-#define	PCI_PRODUCT_PROMISE_ULTRA100X	0x0d30		/* Ultra100/ATA Bus Master IDE Accelerator */
+#define	PCI_PRODUCT_PROMISE_ULTRA100X	0x0d30		/* Ultra100X/ATA Bus Master IDE Accelerator */
+#define	PCI_PRODUCT_PROMISE_ULTRA100TX2	0x4d68		/* Ultra100TX2/ATA Bus Master IDE Accelerator */
 
 /* QLogic products */
 #define	PCI_PRODUCT_QLOGIC_ISP1020	0x1020		/* ISP1020 */
@@ -1762,6 +1773,12 @@
 #define	PCI_PRODUCT_TOSHIBA2_ToPIC100	0x0617		/* ToPIC100 CardBus-PCI Bridge */
 #define	PCI_PRODUCT_TOSHIBA2_OBOE	0x0701		/* Fast Infrared Type O */
 #define	PCI_PRODUCT_TOSHIBA2_DONAUOBOE	0x0d01		/* Fast Infrared Type DO */
+
+/* Transmeta products */
+#define	PCI_PRODUCT_TRANSMETA_NORTHBRIDGE	0x0295		/* Virtual Northbridge */
+#define	PCI_PRODUCT_TRANSMETA_LONGRUN	0x0395		/* LongRun Northbridge */
+#define	PCI_PRODUCT_TRANSMETA_SDRAM	0x0396		/* SDRAM Controller */
+#define	PCI_PRODUCT_TRANSMETA_BIOS_SCRATCH	0x0397		/* BIOS Scratchpad */
 
 /* Trident products */
 #define	PCI_PRODUCT_TRIDENT_CYBERBLADE_I7	0x8420		/* CyberBlade i7 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vnops.c,v 1.33.4.1 2001/08/03 04:14:06 lukem Exp $	*/
+/*	$NetBSD: ext2fs_vnops.c,v 1.33.4.2 2001/08/25 06:17:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -747,7 +747,7 @@ abortit:
 	/*
 	 * If ".." must be changed (ie the directory gets a new
 	 * parent) then the source directory must not be in the
-	 * directory heirarchy above the target, as this would
+	 * directory hierarchy above the target, as this would
 	 * orphan everything below the source directory. Also
 	 * the user must have write permission in the source so
 	 * as to be able to change "..". We must repeat the call 
@@ -1527,6 +1527,9 @@ const struct vnodeopv_entry_desc ext2fs_specop_entries[] = {
 	{ &vop_truncate_desc, spec_truncate },		/* truncate */
 	{ &vop_update_desc, ext2fs_update },		/* update */
 	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
+	{ &vop_getpages_desc, spec_getpages },		/* getpages */
+	{ &vop_putpages_desc, spec_putpages },		/* putpages */
+	{ &vop_size_desc, spec_size },			/* size */
 	{ NULL, NULL }
 };
 const struct vnodeopv_desc ext2fs_specop_opv_desc =

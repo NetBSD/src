@@ -1,4 +1,4 @@
-/*	$NetBSD: ehcireg.h,v 1.2 2000/12/24 06:42:35 augustss Exp $	*/
+/*	$NetBSD: ehcireg.h,v 1.2.6.1 2001/08/25 06:16:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,8 +37,8 @@
  */
 
 /*
- * EHCI 0.95 spec can be found at
- * http://developer.intel.com/technology/usb/download/ehci-r095.pdf
+ * EHCI 0.96 spec can be found at
+ * http://developer.intel.com/technology/usb/download/ehci-r096.pdf
  */
 
 #ifndef _DEV_PCI_EHCIREG_H_

@@ -1,4 +1,4 @@
-/* $NetBSD: if_eh.c,v 1.18 2001/06/28 23:01:55 bjh21 Exp $ */
+/* $NetBSD: if_eh.c,v 1.18.2.1 2001/08/25 06:15:13 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -53,7 +53,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: if_eh.c,v 1.18 2001/06/28 23:01:55 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eh.c,v 1.18.2.1 2001/08/25 06:15:13 thorpej Exp $");
 
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -696,7 +696,7 @@ eh_writemem(struct eh_softc *sc, u_int8_t *src, int dst, size_t len)
 	if (maxwait == 0)
 		printf("eh_writemem: failed to complete "
 		    "(RSAR=0x%04x, RBCR=0x%04x, CRDA=0x%02x%02x)\n",
-		    dst, len,
+		    dst, (u_int)len,
 		    bus_space_read_1(nict, nich, ED_P0_CRDA1),
 		    bus_space_read_1(nict, nich, ED_P0_CRDA0));
 }
@@ -839,10 +839,11 @@ eh_mediastatus(struct dp8390_softc *dsc, struct ifmediareq *ifmr)
 	if (ctrl2 & EH_CTRL2_10B2) {
 		ifmr->ifm_active = IFM_ETHER | IFM_10_2;
 	} else {
-		ifmr->ifm_active = IFM_ETHER | IFM_10_T | IFM_AVALID;
+		ifmr->ifm_active = IFM_ETHER | IFM_10_T;
+		ifmr->ifm_status = IFM_AVALID;
 		if ((bus_space_read_1(sc->sc_ctlt, sc->sc_ctlh, 0) &
 		    EH_CTRL_NOLINK) == 0)
-			ifmr->ifm_active |= IFM_ACTIVE;
+			ifmr->ifm_status |= IFM_ACTIVE;
 	}
 
 }

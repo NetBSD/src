@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.101.2.1 2001/08/03 04:12:31 lukem Exp $	*/
+/*	$NetBSD: pmap.c,v 1.101.2.2 2001/08/25 06:15:58 thorpej Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
 /*
@@ -1306,21 +1306,6 @@ remap_data:
 			phys_msgbuf += NBPG;
 		} while (psize-=NBPG);
 	}
-		
-	/*
-	 * Also add a global NFO mapping for page zero.
-	 */
-	data = TSB_DATA(0 /* global */,
-		PGSZ_8K,
-		0 /* Physaddr */,
-		1 /* priv */,
-		0 /* Write */,
-		1 /* Cacheable */,
-		0 /* No ALIAS */,
-		1 /* valid */,
-		0 /* IE */);
-	data |= TLB_NFO;
-	pmap_enter_kpage(NULL, data);
 	BDPRINTF(PDB_BOOT1, ("Done inserting mesgbuf into pmap_kernel()\r\n"));
 	
 	BDPRINTF(PDB_BOOT1, ("Inserting PROM mappings into pmap_kernel()\r\n"));
@@ -1406,6 +1391,14 @@ remap_data:
 		/* Now map in all 8 pages of cpu_info */
 		pa = cpu0paddr;
 		prom_map_phys(pa, 64*KB, vmmap, -1);
+		/* 
+		 * Also map it in as the interrupt stack.
+		 * This lets the PROM see this if needed.
+		 *
+		 * XXXX locore.s does not flush these mappings
+		 * before installing the locked TTE.
+		 */
+		prom_map_phys(pa, 64*KB, CPUINFO_VA, -1);
 		for (i=0; i<8; i++) {
 			int64_t data;
 
@@ -1971,7 +1964,7 @@ pmap_kenter_pa(va, pa, prot)
 		enter_stats.ci ++;
 #endif
 	tte.tag = TSB_TAG(0,pm->pm_ctx,va);
-	tte.data = TSB_DATA(0, PGSZ_8K, pa, pm == pmap_kernel(),
+	tte.data = TSB_DATA(0, PGSZ_8K, pa, 1 /* Privileged */,
 				 (VM_PROT_WRITE & prot),
 				 (!(pa & PMAP_NC)), pa & (PMAP_NVC), 1, 0);
 	/* We don't track modification here. */
@@ -2219,13 +2212,9 @@ pmap_enter(pm, va, pa, prot, flags)
 #ifdef DEBUG
 	enter_stats.ci ++;
 #endif
-	/*
-	 * Not used any more.
-	tte.tag = TSB_TAG(0,pm->pm_ctx,va);
-	 */
 	tte.data = TSB_DATA(0, size, pa, pm == pmap_kernel(),
-				 (flags & VM_PROT_WRITE),
-				 (!(pa & PMAP_NC)),aliased,1,(pa & PMAP_LITTLE));
+		(flags & VM_PROT_WRITE), (!(pa & PMAP_NC)), 
+		aliased, 1, (pa & PMAP_LITTLE));
 #ifdef HWREF
 	if (prot & VM_PROT_WRITE) tte.data |= TLB_REAL_W;
 #else

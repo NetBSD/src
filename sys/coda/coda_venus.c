@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_venus.c,v 1.7.24.1 2001/08/03 04:12:40 lukem Exp $	*/
+/*	$NetBSD: coda_venus.c,v 1.7.24.2 2001/08/25 06:16:05 thorpej Exp $	*/
 
 /*
  * 
@@ -266,6 +266,9 @@ venus_ioctl(void *mdp, ViceFid *fid,
     tmp = ((com >> 16) & IOCPARM_MASK) - sizeof (char *) - sizeof (int);
     inp->cmd |= (tmp & IOCPARM_MASK) <<	16;
 
+    if (iap->vi.in_size < 0 || iap->vi.in_size > VC_MAXMSGSIZE)
+	return (EINVAL);
+
     inp->rwflag = flag;
     inp->len = iap->vi.in_size;
     inp->data = (char *)(sizeof (struct coda_ioctl_in));
@@ -410,7 +413,7 @@ venus_lookup(void *mdp, ViceFid *fid,
     /* NOTE:
      * Between version 1 and version 2 we have added an extra flag field
      * to this structure.  But because the string was at the end and because
-     * of the wierd way we represent strings by having the slot point to
+     * of the weird way we represent strings by having the slot point to
      * where the string characters are in the "heap", we can just slip the
      * flag parameter in after the string slot pointer and veni that don't
      * know better won't see this new flag field ...

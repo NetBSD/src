@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.86 2001/06/02 16:17:10 thorpej Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.86.2.1 2001/08/25 06:17:03 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -792,9 +792,10 @@ in_delayed_cksum(struct mbuf *m)
 	offset += m->m_pkthdr.csum_data;	/* checksum offset */
 
 	if ((offset + sizeof(u_int16_t)) > m->m_len) {
-		/* XXX This should basically never happen. */
+		/* This happen when ip options were inserted
 		printf("in_delayed_cksum: pullup len %d off %d proto %d\n",
 		    m->m_len, offset, ip->ip_p);
+		 */
 		m_copyback(m, offset, sizeof(csum), (caddr_t) &csum);
 	} else
 		*(u_int16_t *)(mtod(m, caddr_t) + offset) = csum;
@@ -843,7 +844,8 @@ ip_insertoptions(m, opt, phlen)
 		MGETHDR(n, M_DONTWAIT, MT_HEADER);
 		if (n == 0)
 			return (m);
-		n->m_pkthdr.len = m->m_pkthdr.len + optlen;
+		M_COPY_PKTHDR(n, m);
+		m->m_flags &= ~M_PKTHDR;
 		m->m_len -= sizeof(struct ip);
 		m->m_data += sizeof(struct ip);
 		n->m_next = m;
@@ -854,9 +856,9 @@ ip_insertoptions(m, opt, phlen)
 	} else {
 		m->m_data -= optlen;
 		m->m_len += optlen;
-		m->m_pkthdr.len += optlen;
 		memmove(mtod(m, caddr_t), ip, sizeof(struct ip));
 	}
+	m->m_pkthdr.len += optlen;
 	ip = mtod(m, struct ip *);
 	bcopy((caddr_t)p->ipopt_list, (caddr_t)(ip + 1), (unsigned)optlen);
 	*phlen = sizeof(struct ip) + optlen;

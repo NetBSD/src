@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.84 2001/07/07 07:51:38 scw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.84.2.1 2001/08/25 06:15:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -297,8 +297,7 @@ mvme147_init()
 	/*
 	 * Set up a temporary mapping to the PCC's registers
 	 */
-	bus_space_map(bt, intiobase_phys + MAINBUS_PCC_OFFSET + PCC_REG_OFF,
-	    PCCREG_SIZE, 0, &bh);
+	bus_space_map(bt, intiobase_phys + MAINBUS_PCC_OFFSET, PCCREG_SIZE, 0, &bh);
 
 	/*
 	 * calibrate delay() using the 6.25 usec counter.

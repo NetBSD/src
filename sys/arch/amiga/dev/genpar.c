@@ -1,4 +1,4 @@
-/*	$NetBSD: genpar.c,v 1.6 1995/02/16 21:57:31 chopps Exp $	*/
+/* $NetBSD: genpar.c,v 1.6.46.1 2001/08/25 06:15:04 thorpej Exp $ */
 
 /*
  * Copyright (c) 1993 Markus Wild
@@ -30,20 +30,27 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#define bset(i,b) ((i & (1<<b))?1:0)
+#include <stdio.h>
 
-main()
+int main(void);
+
+#define BSET(i,b) ((i & (1 << b)) ? 1 : 0)
+
+int
+main(void)
 {
 	int i;
 	unsigned char par;
   
 	printf("u_char even_parity[] = {\n\t");
 	for (i = 0; i < 0x80; i++) {
-		par = bset(i,0) + bset(i,1) + bset(i,2) + bset(i,3)
-		    + bset(i,4) + bset(i,5) + bset(i,6) + bset(i,7);
+		par = BSET(i,0) + BSET(i,1) + BSET(i,2) + BSET(i,3) +
+		    BSET(i,4) + BSET(i,5) + BSET(i,6) + BSET(i,7);
 		printf("%2d, ", par & 1);
 		if ((i & 15) == 15)
 			printf("\n\t");
 	}
 	printf("};\n");
+	exit(0);
+	/* NOTREACHED */
 }

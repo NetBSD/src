@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.451.2.2 2001/08/03 04:12:49 lukem Exp $
+#	$NetBSD: files,v 1.451.2.3 2001/08/25 06:16:07 thorpej Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -29,12 +29,14 @@ defopt	NFSSERVER
 
 defopt	opt_kmempages.h	NKMEMPAGES NKMEMPAGES_MIN NKMEMPAGES_MAX
 defopt	opt_malloclog.h	MALLOCLOG MALLOCLOGSIZE
+defopt	opt_malloc_debug.h MALLOC_DEBUG
 defopt	opt_pool.h	POOL_DIAGNOSTIC
 defopt	opt_poollog.h	POOL_LOGSIZE
 
 defopt	opt_revcache.h	NAMECACHE_ENTER_REVERSE
 
-defopt	opt_execfmt.h	EXEC_AOUT EXEC_COFF EXEC_ECOFF EXEC_ELF32 EXEC_ELF64 EXEC_MACHO EXEC_SCRIPT EXEC_ELF_CATCHALL
+defopt	opt_execfmt.h	EXEC_AOUT EXEC_COFF EXEC_ECOFF EXEC_ELF32 EXEC_ELF64
+			EXEC_MACHO EXEC_SCRIPT EXEC_ELF_CATCHALL
 
 # compatibility options
 defopt	COMPAT_FREEBSD
@@ -562,6 +564,10 @@ file	dev/ic/mm58167.c		mm58167
 define	dl10019
 file	dev/ic/dl10019.c		dl10019
 
+# ASIX AX88190 NE2000-compatible network interface subroutines
+define	ax88190
+file	dev/ic/ax88190.c		ax88190
+
 # WD/SMC 80x3 family, SMC Elite Ultra [8216], SMC EtherEZ
 device	we: ether, ifnet, arp, dp8390nic
 file	dev/ic/we.c			we
@@ -849,6 +855,7 @@ file	kern/kern_ktrace.c
 file	kern/kern_lkm.c			lkm
 file	kern/kern_lock.c
 file	kern/kern_malloc.c
+file	kern/kern_malloc_debug.c	malloc_debug
 file	kern/kern_ntptime.c
 file	kern/kern_physio.c
 file	kern/kern_proc.c

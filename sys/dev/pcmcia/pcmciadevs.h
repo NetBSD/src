@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.132.2.1 2001/08/03 04:13:23 lukem Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.132.2.2 2001/08/25 06:16:30 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.133 2001/07/31 17:01:15 christos Exp 
+ *	NetBSD: pcmciadevs,v 1.134 2001/08/07 13:57:24 christos Exp 
  */
 /*$FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.8 2001/01/20 01:48:55 imp Exp $*/
 
@@ -72,6 +72,7 @@
 #define	PCMCIA_VENDOR_SIMPLETECH	0x014d	/* Simple Technology */
 #define	PCMCIA_VENDOR_LUCENT	0x0156	/* Lucent Technologies */
 #define	PCMCIA_VENDOR_AIRONET	0x015f	/* Aironet Wireless Communications */
+#define	PCMCIA_VENDOR_PSION	0x016c	/* Psion */
 #define	PCMCIA_VENDOR_COMPAQ2	0x0183	/* Compaq */
 #define	PCMCIA_VENDOR_KINGSTON	0x0186	/* Kingston */
 #define	PCMCIA_VENDOR_DAYNA	0x0194	/* Dayna Corporation */
@@ -88,6 +89,7 @@
 #define	PCMCIA_VENDOR_LEXARMEDIA	0x4e01	/* Lexar Media */
 #define	PCMCIA_VENDOR_COMPEX	0x8a01	/* Compex Corporation */
 #define	PCMCIA_VENDOR_MELCO	0x8a01	/* Melco Corporation */
+#define	PCMCIA_VENDOR_ZONET	0x8a01	/* Zonet Technology Inc. */
 #define	PCMCIA_VENDOR_CONTEC	0xc001	/* Contec */
 #define	PCMCIA_VENDOR_MACNICA	0xc00b	/* MACNICA */
 #define	PCMCIA_VENDOR_ROLAND	0xc00c	/* Roland */
@@ -326,6 +328,11 @@
 #define	PCMCIA_PRODUCT_PANASONIC_KXLC003	0x0504
 #define	PCMCIA_STR_PANASONIC_KXLC003	"Panasonic 8X CD-ROM Interface Card"
 
+/* Psion */
+#define	PCMCIA_CIS_PSION_GOLDCARD	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_PSION_GOLDCARD	0x0020
+#define	PCMCIA_STR_PSION_GOLDCARD	"Psion Gold Card"
+
 /* US Robotics Products */
 #define	PCMCIA_CIS_USROBOTICS_WORLDPORT144	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_USROBOTICS_WORLDPORT144	0x3330
@@ -506,6 +513,12 @@
 #define	PCMCIA_CIS_BUFFALO_WLI_PCM_S11	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_BUFFALO_WLI_PCM_S11	0x0305
 #define	PCMCIA_STR_BUFFALO_WLI_PCM_S11	"BUFFALO AirStation 11Mbps WLAN"
+
+/* ZONET */
+#define	PCMCIA_CIS_ZONET_ZEN	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_ZONET_ZEN	0x0100
+#define	PCMCIA_STR_ZONET_ZEN	"Zonet Zen 10/10"
+
 
 /* Cards we know only by their cis */
 #define	PCMCIA_VENDOR_PREMAX	-1	/* Premax */

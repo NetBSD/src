@@ -1,4 +1,4 @@
-/*	$NetBSD: comvar.h,v 1.40 2001/05/30 15:24:23 lukem Exp $	*/
+/*	$NetBSD: comvar.h,v 1.40.2.1 2001/08/25 06:16:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -146,8 +146,6 @@ struct com_softc {
 int comprobe1 __P((bus_space_tag_t, bus_space_handle_t));
 int comintr __P((void *));
 void com_attach_subr __P((struct com_softc *));
-int cominit __P((bus_space_tag_t, bus_addr_t, int, int, tcflag_t,
-	bus_space_handle_t *));
 int com_detach __P((struct device *, int));
 int com_activate __P((struct device *, enum devact));
 

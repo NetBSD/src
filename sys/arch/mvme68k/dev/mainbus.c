@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.9.2.1 2001/08/03 04:12:02 lukem Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.9.2.2 2001/08/25 06:15:35 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -81,6 +81,7 @@ struct mainbus_devices {
 #ifdef MVME147
 static struct mainbus_devices mainbusdevs_147[] = {
 	{"pcc", MAINBUS_PCC_OFFSET},
+	{"timekeeper", MAINBUS_TK147_OFFSET},
 	{NULL, 0}
 };
 #endif
@@ -89,6 +90,7 @@ static struct mainbus_devices mainbusdevs_147[] = {
 static struct mainbus_devices mainbusdevs_1x7[] = {
 	{"pcctwo", MAINBUS_PCCTWO_OFFSET},
 	{"vmetwo", MAINBUS_VMETWO_OFFSET},
+	{"timekeeper", MAINBUS_TIMEKEEPER_OFFSET},
 	{NULL, 0}
 };
 #endif

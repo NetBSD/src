@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_iop.c,v 1.7 2001/06/10 10:48:43 ad Exp $	*/
+/*	$NetBSD: ld_iop.c,v 1.7.2.1 2001/08/25 06:16:11 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -136,15 +136,15 @@ ld_iop_attach(struct device *parent, struct device *self, void *aux)
 	int rv, evreg, enable;
 	char *typestr, *fixedstr;
 	u_int cachesz;
+	u_int32_t timeoutbase, rwvtimeoutbase, rwvtimeout;
 	struct {
 		struct	i2o_param_op_results pr;
 		struct	i2o_param_read_results prr;
 		union {
 			struct	i2o_param_rbs_cache_control cc;
 			struct	i2o_param_rbs_device_info bdi;
-			struct	i2o_param_rbs_operation op;
 		} p;
-	} param /* XXX gcc __attribute__ ((__packed__)) */;
+	} __attribute__ ((__packed__)) param;
 
 	sc = (struct ld_iop_softc *)self;
 	ld = &sc->sc_ld;
@@ -163,7 +163,7 @@ ld_iop_attach(struct device *parent, struct device *self, void *aux)
 	/* Register another initiator to handle events from the device. */
 	sc->sc_eventii.ii_dv = self;
 	sc->sc_eventii.ii_intr = ld_iop_intr_event;
-	sc->sc_eventii.ii_flags = II_DISCARD | II_UTILITY;
+	sc->sc_eventii.ii_flags = II_NOTCTX | II_UTILITY;
 	sc->sc_eventii.ii_tid = ia->ia_tid;
 	iop_initiator_register(iop, &sc->sc_eventii);
 
@@ -204,13 +204,10 @@ ld_iop_attach(struct device *parent, struct device *self, void *aux)
 	    I2O_UTIL_CLAIM_PRIMARY_USER);
 	sc->sc_flags = rv ? 0 : LD_IOP_CLAIMED;
 
-	rv = iop_param_op(iop, ia->ia_tid, NULL, 0, I2O_PARAM_RBS_DEVICE_INFO,
-	    &param, sizeof(param));
-	if (rv != 0) {
-		printf("%s: unable to get parameters (0x%04x; %d)\n",
-		   ld->sc_dv.dv_xname, I2O_PARAM_RBS_DEVICE_INFO, rv);
+	rv = iop_field_get_all(iop, ia->ia_tid, I2O_PARAM_RBS_DEVICE_INFO,
+	    &param, sizeof(param), NULL);
+	if (rv != 0)
 		goto bad;
-	}
 
 	ld->sc_secsize = le32toh(param.p.bdi.blocksize);
 	ld->sc_secperunit = (int)
@@ -254,13 +251,10 @@ ld_iop_attach(struct device *parent, struct device *self, void *aux)
 	 * cache size.  Even if the device doesn't appear to have a cache,
 	 * we perform a flush at shutdown.
 	 */
-	rv = iop_param_op(iop, ia->ia_tid, NULL, 0,
-	    I2O_PARAM_RBS_CACHE_CONTROL, &param, sizeof(param));
-	if (rv != 0) {
-		printf("%s: unable to get parameters (0x%04x; %d)\n",
-		   ld->sc_dv.dv_xname, I2O_PARAM_RBS_CACHE_CONTROL, rv);
+	rv = iop_field_get_all(iop, ia->ia_tid, I2O_PARAM_RBS_CACHE_CONTROL,
+	    &param, sizeof(param), NULL);
+	if (rv != 0)
 		goto bad;
-	}
 
 	if ((cachesz = le32toh(param.p.cc.totalcachesize)) != 0)
 		printf(", %dkB cache", cachesz >> 10);
@@ -271,32 +265,19 @@ ld_iop_attach(struct device *parent, struct device *self, void *aux)
 	 * Configure the DDM's timeout functions to time out all commands
 	 * after 30 seconds.
 	 */
-	rv = iop_param_op(iop, ia->ia_tid, NULL, 0, I2O_PARAM_RBS_OPERATION,
-	    &param, sizeof(param));
-	if (rv != 0) {
-		printf("%s: unable to get parameters (0x%04x; %d)\n",
-		   ld->sc_dv.dv_xname, I2O_PARAM_RBS_OPERATION, rv);
-		goto bad;
-	}
+	timeoutbase = htole32(LD_IOP_TIMEOUT * 1000); 
+	rwvtimeoutbase = htole32(LD_IOP_TIMEOUT * 1000); 
+	rwvtimeout = 0;
 
-	param.p.op.timeoutbase = htole32(LD_IOP_TIMEOUT * 1000); 
-	param.p.op.rwvtimeoutbase = htole32(LD_IOP_TIMEOUT * 1000); 
-	param.p.op.rwvtimeout = 0; 
-
-	rv = iop_param_op(iop, ia->ia_tid, NULL, 1, I2O_PARAM_RBS_OPERATION,
-	    &param, sizeof(param));
-#ifdef notdef
-	/*
-	 * Intel RAID adapters don't like the above, but do post a
-	 * `parameter changed' event.  Perhaps we're doing something
-	 * wrong...
-	 */
-	if (rv != 0) {
-		printf("%s: unable to set parameters (0x%04x; %d)\n",
-		   ld->sc_dv.dv_xname, I2O_PARAM_RBS_OPERATION, rv);
-		goto bad;
-	}
-#endif
+	iop_field_set(iop, ia->ia_tid, I2O_PARAM_RBS_OPERATION,
+	    &timeoutbase, sizeof(timeoutbase),
+	    I2O_PARAM_RBS_OPERATION_timeoutbase);
+	iop_field_set(iop, ia->ia_tid, I2O_PARAM_RBS_OPERATION,
+	    &rwvtimeoutbase, sizeof(rwvtimeoutbase),
+	    I2O_PARAM_RBS_OPERATION_rwvtimeoutbase);
+	iop_field_set(iop, ia->ia_tid, I2O_PARAM_RBS_OPERATION,
+	    &rwvtimeout, sizeof(rwvtimeout),
+	    I2O_PARAM_RBS_OPERATION_rwvtimeoutbase);
 
 	if (enable)
 		ld->sc_flags |= LDF_ENABLED;
@@ -390,7 +371,7 @@ ld_iop_start(struct ld_softc *ld, struct buf *bp)
 	sc = (struct ld_iop_softc *)ld;
 	iop = (struct iop_softc *)ld->sc_dv.dv_parent;
 
-	im = iop_msg_alloc(iop, &sc->sc_ii, 0);
+	im = iop_msg_alloc(iop, 0);
 	im->im_dvcontext = bp;
 
 	write = ((bp->b_flags & B_READ) == 0);
@@ -428,7 +409,7 @@ ld_iop_start(struct ld_softc *ld, struct buf *bp)
 	/* Map the data transfer and enqueue the command. */
 	rv = iop_msg_map_bio(iop, im, mb, bp->b_data, bp->b_bcount, write);
 	if (rv == 0) {
-		if ((rv = iop_msg_post(iop, im, mb, 0)) != 0) {
+		if ((rv = iop_post(iop, mb)) != 0) {
 			iop_msg_unmap(iop, im);
 			iop_msg_free(iop, im);
 		}
@@ -451,7 +432,7 @@ ld_iop_dump(struct ld_softc *ld, void *data, int blkno, int blkcnt)
 	iop = (struct iop_softc *)ld->sc_dv.dv_parent;
 	bcount = blkcnt * ld->sc_secsize;
 	ba = (u_int64_t)blkno * ld->sc_secsize;
-	im = iop_msg_alloc(iop, &sc->sc_ii, IM_POLL);
+	im = iop_msg_alloc(iop, IM_POLL);
 
 	mf = (struct i2o_rbs_block_write *)mb;
 	mf->msgflags = I2O_MSGFLAGS(i2o_rbs_block_write);
@@ -463,7 +444,7 @@ ld_iop_dump(struct ld_softc *ld, void *data, int blkno, int blkcnt)
 	mf->lowoffset = (u_int32_t)ba;
 	mf->highoffset = (u_int32_t)(ba >> 32);
 
-	if ((rv = iop_msg_map(iop, im, mb, data, bcount, 1)) != 0) {
+	if ((rv = iop_msg_map(iop, im, mb, data, bcount, 1, NULL)) != 0) {
 		iop_msg_free(iop, im);
 		return (rv);
 	}
@@ -485,7 +466,7 @@ ld_iop_flush(struct ld_softc *ld)
 
 	sc = (struct ld_iop_softc *)ld;
 	iop = (struct iop_softc *)ld->sc_dv.dv_parent;
-	im = iop_msg_alloc(iop, &sc->sc_ii, IM_WAIT);
+	im = iop_msg_alloc(iop, IM_WAIT);
 
 	mf.msgflags = I2O_MSGFLAGS(i2o_rbs_cache_flush);
 	mf.msgfunc = I2O_MSGFUNC(sc->sc_ii.ii_tid, I2O_RBS_CACHE_FLUSH);
@@ -493,10 +474,7 @@ ld_iop_flush(struct ld_softc *ld)
 	mf.msgtctx = im->im_tctx;
 	mf.flags = 1 << 16;			/* time multiplier */
 
-	/*
-	 * XXX Aincent disks will return an error here.  Also, we shouldn't
-	 * be polling on completion while the system is running.
-	 */
+	/* XXX Aincent disks will return an error here. */
 	rv = iop_msg_post(iop, im, &mf, LD_IOP_TIMEOUT * 2);
 	iop_msg_free(iop, im);
 	return (rv);

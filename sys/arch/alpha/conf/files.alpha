@@ -1,4 +1,4 @@
-# $NetBSD: files.alpha,v 1.140 2001/06/18 02:00:48 christos Exp $
+# $NetBSD: files.alpha,v 1.140.2.1 2001/08/25 06:15:02 thorpej Exp $
 #
 # alpha-specific configuration info
 
@@ -169,12 +169,22 @@ file	arch/alpha/tc/ioasic.c		ioasic
 # PMAG-B CX
 device	cfb: wsemuldisplaydev, wsrasteremulops
 attach	cfb at tc
-file	arch/alpha/tc/cfb.c		cfb		needs-flag
+file	dev/tc/cfb.c			cfb		needs-flag
 
 # PMAGB-B HX or CXT
 device	sfb: wsemuldisplaydev, rasops8
 attach	sfb at tc
 file	dev/tc/sfb.c			sfb		needs-flag
+
+# PMAG-A MX
+device	mfb: wsemuldisplaydev, wsrasteremulops
+attach	mfb at tc
+file	dev/tc/mfb.c			mfb		needs-flag
+
+# PMAG-RO/JA TX
+device	tfb: wsemuldisplaydev, wsrasteremulops
+attach	tfb at tc
+file	dev/tc/tfb.c			tfb		needs-flag
 
 # PMAGD HX+
 device	sfbp: wsemuldisplaydev, rasops32
@@ -492,7 +502,6 @@ file	arch/alpha/alpha/pmap.c
 file	arch/alpha/alpha/process_machdep.c
 file	arch/alpha/alpha/procfs_machdep.c	procfs
 file	arch/alpha/alpha/prom.c
-file	arch/alpha/alpha/support.c
 file	arch/alpha/alpha/sys_machdep.c
 file	arch/alpha/alpha/syscall.c
 file	arch/alpha/alpha/trap.c

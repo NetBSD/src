@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc.c,v 1.1 2001/05/11 03:11:20 thorpej Exp $	*/
+/*	$NetBSD: hpc.c,v 1.1.2.1 2001/08/25 06:15:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -61,6 +61,8 @@ struct hpc_softc {
 extern int mach_type;		/* IPxx type */
 extern int mach_subtype;	/* subtype: eg., Guiness/Fullhouse for IP22 */
 extern int mach_boardrev;	/* machine board revision, in case it matters */
+
+extern struct sgimips_bus_dma_tag sgimips_default_bus_dma_tag;
 
 static int	hpc_match(struct device *, struct cfdata *, void *);
 static void	hpc_attach(struct device *, struct device *, void *);
@@ -143,10 +145,13 @@ hpc_search(parent, cf, aux)
 	struct hpc_softc *sc = (struct hpc_softc *)parent;
 
 	do {
+		haa->ha_name = cf->cf_driver->cd_name;
 		haa->ha_offset = cf->cf_loc[HPCCF_OFFSET];
 
-		haa->ha_iot = 1;
+		haa->ha_iot = 1;	/* XXX */
 		haa->ha_ioh = MIPS_PHYS_TO_KSEG1(sc->sc_base);
+		haa->ha_dmat = &sgimips_default_bus_dma_tag;
+
 		if ((*cf->cf_attach->ca_match)(parent, cf, haa) > 0)
 			config_attach(parent, cf, haa, hpc_print);
 	} while (cf->cf_fstate == FSTATE_STAR);

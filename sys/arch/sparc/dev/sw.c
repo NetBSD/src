@@ -1,4 +1,4 @@
-/*	$NetBSD: sw.c,v 1.4 2001/04/25 17:53:22 bouyer Exp $	*/
+/*	$NetBSD: sw.c,v 1.4.2.1 2001/08/25 06:15:51 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -676,7 +676,7 @@ sw_intr_off(ncr_sc)
 
 /*
  * This function is called during the COMMAND or MSG_IN phase
- * that preceeds a DATA_IN or DATA_OUT phase, in case we need
+ * that precedes a DATA_IN or DATA_OUT phase, in case we need
  * to setup the DMA engine before the bus enters a DATA phase.
  *
  * On the OBIO version we just clear the DMA count and address

@@ -1,4 +1,4 @@
-/* $NetBSD: dec_kn300.c,v 1.22 2001/06/05 04:53:12 thorpej Exp $ */
+/* $NetBSD: dec_kn300.c,v 1.22.2.1 2001/08/25 06:15:00 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_kn300.c,v 1.22 2001/06/05 04:53:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_kn300.c,v 1.22.2.1 2001/08/25 06:15:00 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -302,7 +302,7 @@ dec_kn300_device_register(dev, aux)
 		/* XXX LUN! */
 
 		/*
-		 * the value in boot_dev_type is some wierd number
+		 * the value in boot_dev_type is some weird number
 		 * XXX: Only support SD booting for now.
 		 */
 		if (strcmp(cd->cd_name, "sd") &&

@@ -1,4 +1,4 @@
-/*	$NetBSD: ibm405gp.h,v 1.3 2001/06/25 01:49:15 simonb Exp $	*/
+/*	$NetBSD: ibm405gp.h,v 1.3.2.1 2001/08/25 06:15:46 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -229,8 +229,8 @@
 #define	  MR1_RFS_2KB		  0x00200000	/* 2kByte */
 #define	  MR1_RFS_4KB		  0x00300000	/* 4kByte */
 #define	  MR1_TFS_MASK		  0x000c0000	/* Transmit FIFO size */
-#define	  MR1_TFS_1KB		  0x00080000	/* 1kByte */
-#define	  MR1_TFS_2KB		  0x00040000	/* 2kByte */
+#define	  MR1_TFS_1KB		  0x00040000	/* 1kByte */
+#define	  MR1_TFS_2KB		  0x00080000	/* 2kByte */
 #define	  MR1_TR0_MASK		  0x00018000	/* Transmit Request 0 */
 #define	  MR1_TR0_SINGLE	  0x00000000	/* Single Packet mode */
 #define	  MR1_TR0_MULTIPLE	  0x00008000	/* Multiple Packet mode */

@@ -1,4 +1,4 @@
-/*	$NetBSD: core.h,v 1.8 1999/12/30 15:45:09 eeh Exp $	*/
+/*	$NetBSD: core.h,v 1.8.8.1 2001/08/25 06:17:13 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 /*
  * A core file consists of a header followed by a number of segments.
- * Each segment is preceeded by a `coreseg' structure giving the
+ * Each segment is preceded by a `coreseg' structure giving the
  * segment's type, the virtual address where the bits resided in
  * process address space and the size of the segment.
  *

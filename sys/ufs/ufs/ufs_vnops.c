@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.78.4.2 2001/08/03 04:14:11 lukem Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.78.4.3 2001/08/25 06:17:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -933,7 +933,7 @@ ufs_rename(void *v)
 	/*
 	 * If ".." must be changed (ie the directory gets a new
 	 * parent) then the source directory must not be in the
-	 * directory heirarchy above the target, as this would
+	 * directory hierarchy above the target, as this would
 	 * orphan everything below the source directory. Also
 	 * the user must have write permission in the source so
 	 * as to be able to change "..". We must repeat the call 

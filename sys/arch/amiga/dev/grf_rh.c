@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_rh.c,v 1.29.22.1 2001/08/03 04:10:54 lukem Exp $	*/
+/*	$NetBSD: grf_rh.c,v 1.29.22.2 2001/08/25 06:15:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Markus Wild
@@ -1655,7 +1655,7 @@ rh_getvmode(gp, vm)
 	 * that the horizontal timings are in units of longwords. Hence, I 
 	 * get the pixels by multiplication with 32 and division by the depth.
 	 * The text modes, apparently marked by depth == 4, are even more 
-	 * wierd. According to a comment above, they are computed from a 
+	 * weird. According to a comment above, they are computed from a 
 	 * depth==8 mode thats for us: * 32 / 8) by applying another factor 
 	 * of 4 / font width.
 	 * Reverse applying the latter formula most of the constants cancel	

@@ -1,4 +1,4 @@
-/* $NetBSD: locore.h,v 1.53 2001/06/11 23:52:38 thorpej Exp $ */
+/* $NetBSD: locore.h,v 1.53.2.1 2001/08/25 06:15:32 thorpej Exp $ */
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -53,10 +53,10 @@ void	mips_cp0_status_write(u_int32_t);
 int	mips1_icsize(void);
 int	mips1_dcsize(void);
 void	mips1_FlushCache(void);
-void	mips1_FlushDCache(vaddr_t addr, vsize_t len);
-void	mips1_FlushICache(vaddr_t addr, vsize_t len);
+void	mips1_FlushDCache(vaddr_t, vsize_t);
+void	mips1_FlushICache(vaddr_t, vsize_t);
 
-void	mips1_SetPID(int pid);
+void	mips1_SetPID(int);
 void	mips1_TBIA(int);
 void	mips1_TBIAP(int);
 void	mips1_TBIS(vaddr_t);
@@ -67,11 +67,11 @@ void	mips1_cpu_switch_resume(void);
 
 void	mips3_ConfigCache(int);
 void	mips3_FlushCache(void);
-void	mips3_FlushDCache(vaddr_t addr, vsize_t len);
-void	mips3_FlushICache(vaddr_t addr, vsize_t len);
+void	mips3_FlushDCache(vaddr_t, vsize_t);
+void	mips3_FlushICache(vaddr_t, vsize_t);
 void	mips3_HitFlushDCache(vaddr_t, vsize_t);
 
-void	mips3_SetPID(int pid);
+void	mips3_SetPID(int);
 void	mips3_TBIA(int);
 void	mips3_TBIAP(int);
 void	mips3_TBIS(vaddr_t);
@@ -82,18 +82,18 @@ void	mips3_proc_trampoline(void);
 void	mips3_cpu_switch_resume(void);
 
 void	mips3_FlushCache_2way(void);
-void	mips3_FlushDCache_2way(vaddr_t addr, vaddr_t len);
-void	mips3_FlushICache_2way(vaddr_t addr, vaddr_t len);
+void	mips3_FlushDCache_2way(vaddr_t, vaddr_t);
+void	mips3_FlushICache_2way(vaddr_t, vaddr_t);
 void	mips3_HitFlushDCache_2way(vaddr_t, vsize_t);
 
 u_int32_t mips3_cp0_compare_read(void);
 void	mips3_cp0_compare_write(u_int32_t);
 
 u_int32_t mips3_cp0_config_read(void);
-void	mips3_cp0_count_write(u_int32_t);
+void	mips3_cp0_config_write(u_int32_t);
 
 u_int32_t mips3_cp0_count_read(void);
-void	mips3_cp0_config_write(u_int32_t);
+void	mips3_cp0_count_write(u_int32_t);
 
 u_int32_t mips3_cp0_wired_read(void);
 void	mips3_cp0_wired_write(u_int32_t);
@@ -193,6 +193,8 @@ typedef int mips_prid_t;
 #define	MIPS_PRID_CID(x)	(((x) >> 16) & 0x00ff)	/* Company ID */
 #define	    MIPS_PRID_CID_PREHISTORIC	0x00	/* Not MIPS32 */
 #define	    MIPS_PRID_CID_MTI		0x01	/* MIPS Technologies, Inc. */
+#define	    MIPS_PRID_CID_ALCHEMY	0x03	/* Alchemy Semiconductor */
+#define	    MIPS_PRID_CID_SIBYTE	0x04	/* SiByte */
 
 #ifdef _KERNEL
 

@@ -1,4 +1,4 @@
-/* $NetBSD: fp_complete.c,v 1.3 2001/04/26 04:16:17 ross Exp $ */
+/* $NetBSD: fp_complete.c,v 1.3.4.1 2001/08/25 06:15:00 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2001 Ross Harvey
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: fp_complete.c,v 1.3 2001/04/26 04:16:17 ross Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fp_complete.c,v 1.3.4.1 2001/08/25 06:15:00 thorpej Exp $");
 
 #include "opt_compat_osf1.h"
 
@@ -234,7 +234,7 @@ compare_eq(float64 a, float64 b)
  * For the purely vax ones, it's hard to imagine ever running them.
  * (Generated VAX fp ops with completion flags? Hmm.)  We are careful never
  * to panic, assert, or print unlimited output based on a path through the
- * decoder, so wierd cases don't become security issues.
+ * decoder, so weird cases don't become security issues.
  */
 static void
 cvt_qs_ts_st_gf_qf(u_int32_t inst_bits, struct proc *p)

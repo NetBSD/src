@@ -1,4 +1,4 @@
-/* $NetBSD: bt463.c,v 1.3 2000/06/28 17:12:55 mrg Exp $ */
+/* $NetBSD: bt463.c,v 1.3.6.1 2001/08/25 06:16:14 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -361,10 +361,11 @@ bt463_set_cmap(rc, cmapp)
 	struct wsdisplay_cmap *cmapp;
 {
 	struct bt463data *data = (struct bt463data *)rc;
-	int count, index, s;
+	u_int count, index;
+	int s;
 
-	if ((u_int)cmapp->index >= BT463_NCMAP_ENTRIES ||
-	    ((u_int)cmapp->index + (u_int)cmapp->count) > BT463_NCMAP_ENTRIES)
+	if (cmapp->index >= BT463_NCMAP_ENTRIES ||
+	    (cmapp->index + cmapp->count) > BT463_NCMAP_ENTRIES)
 		return (EINVAL);
 	if (!uvm_useracc(cmapp->red, cmapp->count, B_READ) ||
 	    !uvm_useracc(cmapp->green, cmapp->count, B_READ) ||

@@ -1,4 +1,4 @@
-/*	$NetBSD: bha.c,v 1.44.2.1 2001/08/03 04:12:57 lukem Exp $	*/
+/*	$NetBSD: bha.c,v 1.44.2.2 2001/08/25 06:16:13 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -1616,7 +1616,7 @@ bha_finish_ccbs(sc)
 		case BHA_MBI_UNKNOWN:
 			/*
 			 * Even if the CCB wasn't found, we clear it anyway.
-			 * See preceeding comment.
+			 * See preceding comment.
 			 */
 			break;
 

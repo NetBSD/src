@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.76 2001/07/04 02:29:58 itojun Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.76.2.1 2001/08/25 06:17:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -82,6 +82,8 @@
 #include "opt_inet.h"
 
 #ifdef INET
+
+#include "bridge.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -756,6 +758,9 @@ in_arpinput(m)
 	struct llinfo_arp *la = 0;
 	struct rtentry  *rt;
 	struct in_ifaddr *ia;
+#if NBRIDGE > 0
+	struct in_ifaddr *bridge_ia = NULL;
+#endif
 	struct sockaddr_dl *sdl;
 	struct sockaddr sa;
 	struct in_addr isaddr, itaddr, myaddr;
@@ -797,8 +802,32 @@ in_arpinput(m)
 	 * as a dummy address in the rest of this function
 	 */
 	INADDR_TO_IA(itaddr, ia);
-	while ((ia != NULL) && ia->ia_ifp != m->m_pkthdr.rcvif)
+	while (ia != NULL) {
+		if (ia->ia_ifp == m->m_pkthdr.rcvif)
+			break;
+
+#if NBRIDGE > 0
+		/*
+		 * If the interface we received the packet on
+		 * is part of a bridge, check to see if we need
+		 * to "bridge" the packet to ourselves at this
+		 * layer.  Note we still prefer a perfect match,
+		 * but allow this weaker match if necessary.
+		 */
+		if (m->m_pkthdr.rcvif->if_bridge != NULL &&
+		    m->m_pkthdr.rcvif->if_bridge == ia->ia_ifp->if_bridge)
+			bridge_ia = ia;
+#endif /* NBRIDGE > 0 */
+
 		NEXT_IA_WITH_SAME_ADDR(ia);
+	}
+
+#if NBRIDGE > 0
+	if (ia == NULL && bridge_ia != NULL) {
+		ia = bridge_ia;
+		ifp = bridge_ia->ia_ifp;
+	}
+#endif
 
 	if (ia == NULL) {
 		INADDR_TO_IA(isaddr, ia);
@@ -816,12 +845,14 @@ in_arpinput(m)
 
 	myaddr = ia->ia_addr.sin_addr;
 
+	/* XXX checks for bridge case? */
 	if (!bcmp((caddr_t)ar_sha(ah), LLADDR(ifp->if_sadl),
 	    ifp->if_data.ifi_addrlen)) {
 		arpstat.as_rcvlocalsha++;
 		goto out;	/* it's from me, ignore it. */
 	}
 
+	/* XXX checks for bridge case? */
 	if (!bcmp((caddr_t)ar_sha(ah), (caddr_t)ifp->if_broadcastaddr,
 	    ifp->if_data.ifi_addrlen)) {
 		arpstat.as_rcvbcastsha++;

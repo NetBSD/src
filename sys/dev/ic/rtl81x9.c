@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9.c,v 1.34.2.1 2001/08/03 04:13:03 lukem Exp $	*/
+/*	$NetBSD: rtl81x9.c,v 1.34.2.2 2001/08/25 06:16:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -754,7 +754,7 @@ rtk_attach(sc)
 	 */
 	sc->sc_sdhook = shutdownhook_establish(rtk_shutdown, sc);
 	if (sc->sc_sdhook == NULL)
-		printf("%s: WARNING: unbale to establish shutdown hook\n",
+		printf("%s: WARNING: unable to establish shutdown hook\n",
 		    sc->sc_dev.dv_xname);
 	/*
 	 * Add a suspend hook to make sure we come back up after a
@@ -846,7 +846,7 @@ rtk_detach(sc)
 	int i;
 
 	/*
-	 * Succeed now if thereisn't any work to do.
+	 * Succeed now if there isn't any work to do.
 	 */
 	if ((sc->sc_flags & RTK_ATTACHED) == 0)
 		return (0);
@@ -960,7 +960,7 @@ rtk_power(why, arg)
  * attempt to document it here. The driver provides a buffer area and
  * places its base address in the RX buffer start address register.
  * The chip then begins copying frames into the RX buffer. Each frame
- * is preceeded by a 32-bit RX status word which specifies the length
+ * is preceded by a 32-bit RX status word which specifies the length
  * of the frame and certain other status bits. Each frame (starting with
  * the status word) is also 32-bit aligned. The frame length is in the
  * first 16 bits of the status word; the lower 15 bits correspond with
@@ -1290,7 +1290,7 @@ STATIC void rtk_start(ifp)
 		 * fit in one DMA segment, and we need to copy.  Note,
 		 * the packet must also be aligned.
 		 */
-		if ((mtod(m_head, bus_addr_t) & 3) != 0 ||
+		if ((mtod(m_head, uintptr_t) & 3) != 0 ||
 		    bus_dmamap_load_mbuf(sc->sc_dmat, txd->txd_dmamap,
 			m_head, BUS_DMA_WRITE|BUS_DMA_NOWAIT) != 0) {
 			MGETHDR(m_new, M_DONTWAIT, MT_DATA);

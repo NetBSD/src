@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_gif.h,v 1.4.8.1 2001/08/03 04:13:59 lukem Exp $	*/
+/*	$NetBSD: in6_gif.h,v 1.4.8.2 2001/08/25 06:17:04 thorpej Exp $	*/
 /*	$KAME: in6_gif.h,v 1.7 2001/07/26 06:53:16 jinmei Exp $	*/
 
 /*
@@ -37,7 +37,7 @@
 
 struct gif_softc;
 int in6_gif_input __P((struct mbuf **, int *, int));
-int in6_gif_output __P((struct ifnet *, int, struct mbuf *, struct rtentry *));
+int in6_gif_output __P((struct ifnet *, int, struct mbuf *));
 int gif_encapcheck6 __P((const struct mbuf *, int, int, void *));
 int in6_gif_attach __P((struct gif_softc *));
 int in6_gif_detach __P((struct gif_softc *));

@@ -1,4 +1,4 @@
-/* $NetBSD: linux_exec_powerpc.c,v 1.3.2.1 2001/08/03 04:12:42 lukem Exp $ */
+/* $NetBSD: linux_exec_powerpc.c,v 1.3.2.2 2001/08/25 06:16:05 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@ ELFNAME2(linux,copyargs)(pack, arginfo, stackp, argp)
 	 * aligned address. And we need one more 16 byte shift if it was already
 	 * 16 bytes aligned,	
 	 */
-	*stackp = (char *)((unsigned long)*stackp - 1) & ~LINUX_SHIFT; 
+	*stackp = (char *)(((unsigned long)*stackp - 1) & ~LINUX_SHIFT);
 #endif
 
 	if ((error = copyargs(pack, arginfo, stackp, argp)) != 0)

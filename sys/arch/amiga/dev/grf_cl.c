@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cl.c,v 1.25 1999/06/29 19:51:28 is Exp $	*/
+/*	$NetBSD: grf_cl.c,v 1.25.16.1 2001/08/25 06:15:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Klaus Burkert
@@ -905,7 +905,7 @@ cl_setspriteinfo(gp, data)
 
 	if (data->set & GRFSPRSET_SHAPE) {
 
-                short dsx, dsy, i;
+                unsigned short dsx, dsy, i;
                 unsigned long *di, *dm, *si, *sm;
                 unsigned long ssi[128], ssm[128];
                 struct grf_position gpos;

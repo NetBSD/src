@@ -1,4 +1,4 @@
-/* $NetBSD: irq.c,v 1.18 2001/05/01 22:19:09 bjh21 Exp $ */
+/* $NetBSD: irq.c,v 1.18.2.1 2001/08/25 06:15:11 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -33,7 +33,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: irq.c,v 1.18 2001/05/01 22:19:09 bjh21 Exp $");
+__RCSID("$NetBSD: irq.c,v 1.18.2.1 2001/08/25 06:15:11 thorpej Exp $");
 
 #include <sys/device.h>
 #include <sys/kernel.h> /* for cold */
@@ -54,11 +54,15 @@ __RCSID("$NetBSD: irq.c,v 1.18 2001/05/01 22:19:09 bjh21 Exp $");
 #include <arch/arm26/iobus/iocvar.h>
 
 #include "opt_ddb.h"
+#include "fiq.h"
 #include "ioeb.h"
 #include "unixbp.h"
 
 #ifdef DDB
 #include <ddb/db_output.h>
+#endif
+#if NFIQ > 0
+#include <machine/fiq.h>
 #endif
 #if NIOEB > 0
 #include <arch/arm26/ioc/ioebvar.h>
@@ -71,6 +75,10 @@ __RCSID("$NetBSD: irq.c,v 1.18 2001/05/01 22:19:09 bjh21 Exp $");
 extern char *irqnames[];
 
 int current_intr_depth = 0;
+
+#if NFIQ > 0
+int fiq_want_downgrade;
+#endif
 
 /*
  * Interrupt masks are held in 32-bit integers.  At present, the
@@ -129,9 +137,8 @@ irq_handler(struct irqframe *irqf)
 	status |= unixbp_irq_status_full() << IRQ_UNIXBP_BASE;
 #endif
 
-	/* Get interrupt-disabling back to the IOC */
+	/* We're already in splhigh, but make sure the kernel knows that. */
 	s = splhigh();
-	int_on();
 
 #if 0
 	printf("*");
@@ -139,6 +146,14 @@ irq_handler(struct irqframe *irqf)
 	uvmexp.intrs++;
 
 	stray = 1;
+#if NFIQ > 0
+	/* Check for downgraded FIQs. */
+	if (fiq_want_downgrade) {
+		fiq_want_downgrade = 0;
+		(fiq_downgrade_handler)();
+		goto handled;
+	}
+#endif
 	/* Find the highest-priority requested interrupt. */
 	for (h = irq_list_head.lh_first;
 	     h != NULL && h->ipl > s;
@@ -168,15 +183,17 @@ irq_handler(struct irqframe *irqf)
 				stray = 0;
 		}
 
-	if (__predict_false(stray))
+	if (__predict_false(stray)) {
 		log(LOG_WARNING, "Stray IRQ, status = 0x%x, spl = %d, "
 		    "mask = 0x%x\n", status, s, irqmask[s]);
+		Debugger();
+	}
+handled:
 #if 0
 	printf(" handled\n");
 #endif
 	dosoftints(s); /* May lower spl to s + 1, but no lower. */
 
-	int_off();
 	hardsplx(s);
 	current_intr_depth--;
 }
@@ -292,17 +309,40 @@ __inline int
 hardsplx(int s)
 {
 	int was;
+	u_int32_t mask;
 
+	KASSERT(s < IPL_HIGH);
 	int_off();
 	was = current_spl;
+	mask = irqmask[s];
+#if NFIQ > 0
+	if (fiq_want_downgrade)
+		mask |= IOC_IRQ_1;
+#endif
 	/* Don't try this till we've found the IOC */
 	if (the_ioc != NULL)
-		ioc_irq_setmask(irqmask[s]);
+		ioc_irq_setmask(mask);
 #if NUNIXBP > 0
-	unixbp_irq_setmask(irqmask[s] >> IRQ_UNIXBP_BASE);
+	unixbp_irq_setmask(mask >> IRQ_UNIXBP_BASE);
 #endif
 	current_spl = s;
 	int_on();
+	return was;
+}
+
+int
+splhigh(void)
+{
+	int was;
+
+	int_off();
+	was = current_spl;
+	current_spl = IPL_HIGH;
+#ifdef DEBUG
+	/* Make sure that anything that turns off the I flag gets spotted. */
+	if (the_ioc != NULL)
+		ioc_irq_setmask(0xffff);
+#endif
 	return was;
 }
 

@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3max.c,v 1.32 2001/04/12 19:24:05 thorpej Exp $ */
+/* $NetBSD: dec_3max.c,v 1.32.2.1 2001/08/25 06:15:44 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.32 2001/04/12 19:24:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.32.2.1 2001/08/25 06:15:44 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -115,7 +115,7 @@ dec_3max_init()
 	platform.cons_init = dec_3max_cons_init;
 	platform.iointr = dec_3max_intr;
 	platform.intr_establish = dec_3max_intr_establish;
-	platform.memsize = memsize_scan;
+	platform.memsize = memsize_bitmap;
 	/* no high resolution timer available */
 
 	/* clear any memory errors */
@@ -265,7 +265,7 @@ dec_3max_intr(status, cause, pc, ipending)
 		cf.pc = pc;
 		cf.sr = status;
 		hardclock(&cf);
-		intrcnt[HARDCLOCK]++;
+		pmax_clock_evcnt.ev_count++;
 
 		/* keep clock interrupts enabled when we return */
 		cause &= ~MIPS_INT_MASK_1;

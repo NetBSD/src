@@ -1,4 +1,4 @@
-/*	$NetBSD: promdev.c,v 1.10 2001/04/04 15:41:46 pk Exp $ */
+/*	$NetBSD: promdev.c,v 1.10.2.1 2001/08/25 06:15:53 thorpej Exp $ */
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -118,7 +118,7 @@ devopen(f, fname, file)
 	const char *fname;
 	char **file;
 {
-	int	error = 0, fd;
+	int	error = 0, fd = 0;
 	struct	promdata *pd;
 
 	pd = (struct promdata *)alloc(sizeof *pd);

@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vnops.c,v 1.64.2.1 2001/08/03 04:13:38 lukem Exp $	*/
+/*	$NetBSD: cd9660_vnops.c,v 1.64.2.2 2001/08/25 06:16:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -1018,6 +1018,9 @@ const struct vnodeopv_entry_desc cd9660_specop_entries[] = {
 	{ &vop_truncate_desc, spec_truncate },		/* truncate */
 	{ &vop_update_desc, cd9660_update },		/* update */
 	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
+	{ &vop_getpages_desc, spec_getpages },		/* getpages */
+	{ &vop_putpages_desc, spec_putpages },		/* putpages */
+	{ &vop_size_desc, spec_size },			/* size */
 	{ NULL, NULL }
 };
 const struct vnodeopv_desc cd9660_specop_opv_desc =

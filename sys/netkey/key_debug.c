@@ -1,4 +1,4 @@
-/*	$NetBSD: key_debug.c,v 1.15.2.1 2001/08/03 04:14:02 lukem Exp $	*/
+/*	$NetBSD: key_debug.c,v 1.15.2.2 2001/08/25 06:17:11 thorpej Exp $	*/
 /*	$KAME: key_debug.c,v 1.25 2000/07/24 13:23:12 itojun Exp $	*/
 
 /*
@@ -55,8 +55,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #endif /* !_KERNEL */
-
-#if !defined(_KERNEL) || (defined(_KERNEL) && defined(IPSEC_DEBUG))
 
 static void kdebug_sadb_prop __P((struct sadb_ext *));
 static void kdebug_sadb_identity __P((struct sadb_ext *));
@@ -671,7 +669,7 @@ void
 kdebug_sockaddr(addr)
 	struct sockaddr *addr;
 {
-	struct sockaddr_in *sin;
+	struct sockaddr_in *sin4;
 #ifdef INET6
 	struct sockaddr_in6 *sin6;
 #endif
@@ -685,9 +683,9 @@ kdebug_sockaddr(addr)
 
 	switch (addr->sa_family) {
 	case AF_INET:
-		sin = (struct sockaddr_in *)addr;
-		printf(" port=%u\n", ntohs(sin->sin_port));
-		ipsec_hexdump((caddr_t)&sin->sin_addr, sizeof(sin->sin_addr));
+		sin4 = (struct sockaddr_in *)addr;
+		printf(" port=%u\n", ntohs(sin4->sin_port));
+		ipsec_hexdump((caddr_t)&sin4->sin_addr, sizeof(sin4->sin_addr));
 		break;
 #ifdef INET6
 	case AF_INET6:
@@ -738,5 +736,3 @@ ipsec_hexdump(buf, len)
 
 	return;
 }
-
-#endif /* !defined(_KERNEL) || (defined(_KERNEL) && defined(IPSEC_DEBUG)) */

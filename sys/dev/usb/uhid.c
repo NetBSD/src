@@ -1,4 +1,4 @@
-/*	$NetBSD: uhid.c,v 1.42 2000/12/29 01:47:49 augustss Exp $	*/
+/*	$NetBSD: uhid.c,v 1.42.4.1 2001/08/25 06:16:40 thorpej Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhid.c,v 1.22 1999/11/17 22:33:43 n_hibma Exp $	*/
 
 /*
@@ -171,6 +171,8 @@ USB_MATCH(uhid)
 	id = usbd_get_interface_descriptor(uaa->iface);
 	if (id == NULL || id->bInterfaceClass != UICLASS_HID)
 		return (UMATCH_NONE);
+	if (uaa->matchlvl)
+		return (uaa->matchlvl);
 	return (UMATCH_IFACECLASS_GENERIC);
 }
 

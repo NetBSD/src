@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64570.c,v 1.18 2001/07/07 15:53:18 thorpej Exp $	*/
+/*	$NetBSD: hd64570.c,v 1.18.2.1 2001/08/25 06:16:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999 Christian E. Hopps
@@ -184,7 +184,7 @@ static	void sca_frame_print(sca_port_t *, sca_desc_t *, u_int8_t *);
 #define	sca_write_1(sc, reg, val)	(sc)->sc_write_1(sc, reg, val)
 #define	sca_write_2(sc, reg, val)	(sc)->sc_write_2(sc, reg, val)
 
-#define	sca_page_addr(sc, addr)	((bus_addr_t)(addr) & (sc)->scu_pagemask)
+#define	sca_page_addr(sc, addr)	((bus_addr_t)(u_long)(addr) & (sc)->scu_pagemask)
 
 static inline void
 msci_write_1(sca_port_t *scp, u_int reg, u_int8_t val)

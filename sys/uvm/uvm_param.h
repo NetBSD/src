@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_param.h,v 1.10.2.1 2001/08/03 04:14:12 lukem Exp $	*/
+/*	$NetBSD: uvm_param.h,v 1.10.2.2 2001/08/25 06:17:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -71,7 +71,9 @@
 #ifndef	_VM_PARAM_
 #define	_VM_PARAM_
 
+#ifdef _KERNEL
 #include <machine/vmparam.h>
+#endif
 
 /*
  * This belongs in types.h, but breaks too many existing programs.

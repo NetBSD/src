@@ -1,4 +1,4 @@
-#	$NetBSD: files.shbus,v 1.5 2000/04/21 07:12:54 tsubai Exp $
+#	$NetBSD: files.shbus,v 1.5.8.1 2001/08/25 06:15:34 thorpej Exp $
 #
 # Config file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -28,7 +28,7 @@ attach	com at shb with com_sh
 file	arch/mmeye/mmeye/com_sh.c		com_sh
 
 # never enable this entry
-#device	sci
+#device	sci: tty
 #attach	sci at shb
 #file	arch/sh3/dev/sci.c			sci needs-flag
 

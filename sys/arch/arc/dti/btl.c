@@ -1,4 +1,4 @@
-/*	$NetBSD: btl.c,v 1.6 2001/06/13 15:09:32 soda Exp $	*/
+/*	$NetBSD: btl.c,v 1.6.2.1 2001/08/25 06:15:07 thorpej Exp $	*/
 /*	NetBSD: bt.c,v 1.10 1996/05/12 23:51:54 mycroft Exp 	*/
 
 #undef BTDIAG
@@ -486,7 +486,7 @@ AGAIN:
 		case BT_MBI_UNKNOWN:
 			/*
 			 * Even if the CCB wasn't found, we clear it anyway.
-			 * See preceeding comment.
+			 * See preceding comment.
 			 */
 			break;
 

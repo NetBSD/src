@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.2 2001/05/11 04:53:25 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.2.2.1 2001/08/25 06:15:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -92,5 +92,11 @@ findroot(devpp, partp)
 	struct device **devpp;
 	int *partp;
 {
+	/*
+	 * Default to "not found".
+	 */
+	*devpp = NULL;
+	*partp = 0;
+
 	return;
 }

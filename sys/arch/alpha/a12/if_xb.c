@@ -1,4 +1,4 @@
-/* $NetBSD: if_xb.c,v 1.7.2.1 2001/08/03 04:10:38 lukem Exp $ */
+/* $NetBSD: if_xb.c,v 1.7.2.2 2001/08/25 06:15:00 thorpej Exp $ */
 
 /* [Notice revision 2.2]
  * Copyright (c) 1997, 1998 Avalon Computer Systems, Inc.
@@ -74,7 +74,7 @@
 #include "opt_avalon_a12.h"		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: if_xb.c,v 1.7.2.1 2001/08/03 04:10:38 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xb.c,v 1.7.2.2 2001/08/25 06:15:00 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -159,7 +159,7 @@ typedef struct ccode_struct {
  * forward the rest of the switch frame.  Obviously, this helps if the second
  * switch word in the frame is the address word for a cascaded switch. (This
  * can be repeated for an arbitrary depth of MSN.) The words aren't quite as
- * wierd as they look: the switch is really lots of narrow switches in an
+ * weird as they look: the switch is really lots of narrow switches in an
  * array, and they don't switch an even number of hex digits.  Also, there is
  * a parity bit on most of the subunits.
  */
@@ -234,7 +234,7 @@ xbattach(parent, self, aux)
 	xbfound = 1;
 	ccp = &xb_configuration;
 	xb_init_config(ccp, 1);
-	printf(": driver %s mtu %d\n", "$Revision: 1.7.2.1 $", xbi.if_mtu);
+	printf(": driver %s mtu %d\n", "$Revision: 1.7.2.2 $", xbi.if_mtu);
 }
 
 static void

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.61 2001/06/26 17:55:14 thorpej Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.61.2.1 2001/08/25 06:16:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -235,6 +235,10 @@ malloc(size, type, flags)
 	if ((flags & M_NOWAIT) == 0)
 		simple_lock_only_held(NULL, "malloc");
 #endif
+#ifdef MALLOC_DEBUG
+	if (debug_malloc(size, type, flags, (void **) &va))
+		return ((void *) va);
+#endif
 	indx = BUCKETINDX(size);
 	kbp = &bucket[indx];
 	s = splvm();
@@ -435,6 +439,11 @@ free(addr, type)
 #endif
 #ifdef KMEMSTATS
 	struct kmemstats *ksp = &kmemstats[type];
+#endif
+
+#ifdef MALLOC_DEBUG
+	if (debug_free(addr, type))
+		return;
 #endif
 
 #ifdef DIAGNOSTIC
@@ -714,6 +723,9 @@ kmeminit()
 	for (indx = 0; indx < M_LAST; indx++)
 		kmemstats[indx].ks_limit =
 		    ((u_long)nkmempages << PAGE_SHIFT) * 6U / 10U;
+#endif
+#ifdef MALLOC_DEBUG
+	debug_malloc_init();
 #endif
 }
 

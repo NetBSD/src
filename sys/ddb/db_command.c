@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.60.2.1 2001/08/03 04:12:50 lukem Exp $	*/
+/*	$NetBSD: db_command.c,v 1.60.2.2 2001/08/25 06:16:07 thorpej Exp $	*/
 
 /* 
  * Mach Operating System
@@ -39,6 +39,7 @@
 #include <sys/vnode.h>
 #include <sys/pool.h>
 #include <sys/namei.h>
+#include <sys/malloc.h>
 
 #include <machine/db_machdep.h>		/* type definitions */
 
@@ -361,6 +362,24 @@ db_map_print_cmd(addr, have_addr, count, modif)
 
 /*ARGSUSED*/
 void
+db_malloc_print_cmd(addr, have_addr, count, modif)
+	db_expr_t	addr;
+	int		have_addr;
+	db_expr_t	count;
+	char *		modif;
+{
+#ifdef MALLOC_DEBUG
+	if (!have_addr)
+		addr = 0;
+
+	debug_malloc_printit(db_printf, (vaddr_t) addr);
+#else
+	db_printf("The kernel is not built with the MALLOC_DEBUG option.\n");
+#endif /* MALLOC_DEBUG */
+}
+
+/*ARGSUSED*/
+void
 db_object_print_cmd(addr, have_addr, count, modif)
 	db_expr_t	addr;
 	int		have_addr;
@@ -482,6 +501,7 @@ static const struct db_command db_show_cmds[] = {
 	{ "uvmexp",	db_uvmexp_print_cmd,	0,	NULL },
 	{ "vnode",	db_vnode_print_cmd,	0,	NULL },
 	{ "watches",	db_listwatch_cmd, 	0,	NULL },
+	{ "malloc",	db_malloc_print_cmd,	0,	NULL },
 	{ NULL,		NULL,			0,	NULL }
 };
 

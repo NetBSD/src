@@ -27,7 +27,7 @@
  *	i4b_ioctl.h - messages kernel <--> userland
  *	-------------------------------------------
  *
- *	$Id: i4b_ioctl.h,v 1.1.1.1 2001/01/05 12:49:56 martin Exp $ 
+ *	$Id: i4b_ioctl.h,v 1.1.1.1.6.1 2001/08/25 06:17:07 thorpej Exp $ 
  *
  * $FreeBSD$
  *
@@ -688,6 +688,7 @@ struct isdn_diagnostic_request {
 	int controller;		/* controller number */
 	u_int32_t cmd;		/* diagnostic command to execute */
 	size_t in_param_len;	/* length of additional input parameter */
+#define I4B_ACTIVE_DIAGNOSTIC_MAXPARAMLEN	65536
 	void *in_param;		/* optional input parameter */
 	size_t out_param_len;	/* available output space */
 	void *out_param;	/* output data goes here */

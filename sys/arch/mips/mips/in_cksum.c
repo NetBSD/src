@@ -1,4 +1,4 @@
-/*	$NetBSD: in_cksum.c,v 1.5 1999/04/24 08:10:39 simonb Exp $	*/
+/*	$NetBSD: in_cksum.c,v 1.5.16.1 2001/08/25 06:15:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993 Regents of the University of California.
@@ -80,6 +80,10 @@ fastsum(buf, n, oldsum, odd_aligned)
 
 	/* Align to 32 bits. */
 	if (buf.u & 0x3) {
+		/* Skip to the end for very small mbufs */
+		if (n < 3)
+			goto verylittleleft;
+
 		/*
 	         * 16-bit-align.
 		 * If buf is odd-byte-aligned, add the byte and toggle
@@ -206,13 +210,15 @@ fastsum(buf, n, oldsum, odd_aligned)
 		sum += *(buf.s++);
 	}
 
-	/* handle trailing byte */
-	if (n > 0)
+ verylittleleft:
+	/* handle trailing byte and short (possibly) unaligned payloads */
+	while (n-- > 0) {
 #if BYTE_ORDER == BIG_ENDIAN
 		sum += *buf.c << 8;
 #else
 		sum += *buf.c;
 #endif
+	}
 
 	/*
 	 * compensate for a trailing byte in previous mbuf

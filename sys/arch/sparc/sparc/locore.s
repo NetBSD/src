@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.145 2001/07/07 20:09:15 mrg Exp $	*/
+/*	$NetBSD: locore.s,v 1.145.2.1 2001/08/25 06:15:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -5058,31 +5058,6 @@ ENTRY(fkbyte)
 	retl				! made it
 	 st	%g0, [%o2 + PCB_ONFAULT]! but first clear onfault
 
-
-/*
- * Insert entry into doubly-linked queue.
- * We could just do this in C, but gcc does not do leaves well (yet).
- */
-ENTRY(_insque)
-	! %o0 = e = what to insert; %o1 = after = entry to insert after
-	st	%o1, [%o0 + 4]		! e->prev = after;
-	ld	[%o1], %o2		! tmp = after->next;
-	st	%o2, [%o0]		! e->next = tmp;
-	st	%o0, [%o1]		! after->next = e;
-	retl
-	st	%o0, [%o2 + 4]		! tmp->prev = e;
-
-
-/*
- * Remove entry from doubly-linked queue.
- */
-ENTRY(_remque)
-	! %o0 = e = what to remove
-	ld	[%o0], %o1		! n = e->next;
-	ld	[%o0 + 4], %o2		! p = e->prev;
-	st	%o2, [%o1 + 4]		! n->prev = p;
-	retl
-	st	%o1, [%o2]		! p->next = n;
 
 /*
  * copywords(src, dst, nbytes)

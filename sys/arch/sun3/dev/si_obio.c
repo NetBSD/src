@@ -1,4 +1,4 @@
-/*	$NetBSD: si_obio.c,v 1.21 1999/11/22 18:34:01 jdolecek Exp $	*/
+/*	$NetBSD: si_obio.c,v 1.21.8.1 2001/08/25 06:16:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -267,7 +267,7 @@ si_obio_udc_read(si, regnum)
 
 /*
  * This function is called during the COMMAND or MSG_IN phase
- * that preceeds a DATA_IN or DATA_OUT phase, in case we need
+ * that precedes a DATA_IN or DATA_OUT phase, in case we need
  * to setup the DMA engine before the bus enters a DATA phase.
  *
  * The OBIO "si" IGNORES any attempt to set the FIFO count
