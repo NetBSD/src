@@ -1,4 +1,4 @@
-.\"	$NetBSD: sigaction.2,v 1.11 1997/10/16 23:19:50 christos Exp $
+.\"	$NetBSD: sigaction.2,v 1.12 1997/11/01 07:29:50 mycroft Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -86,8 +86,7 @@ call, or when a signal is delivered to the process.
 .Pp
 When a signal
 condition arises for a process, the signal is added to a set of
-signals pending for the process.
-If the signal is not currently
+signals pending for the process.  If the signal is not currently
 .Em blocked
 by the process then it is delivered to the process.
 Signals may be delivered any time a process enters the operating system
@@ -115,13 +114,12 @@ installed for the duration of the process' signal handler
 (or until a
 .Xr sigprocmask
 call is made).
-This mask is formed by taking the union of the current signal mask set,
+This mask is formed by taking the union of the current signal mask,
 the signal to be delivered, and 
 the signal mask associated with the handler to be invoked.
 .Pp
 .Fn Sigaction
-assigns an action for a specific signal.
-If
+assigns an action for a specific signal.  If
 .Fa act
 is non-zero, it
 specifies an action
@@ -181,7 +179,7 @@ bit is set in
 the system will deliver the signal to the process on a
 .Em "signal stack" ,
 specified with
-.Xr sigstack 2 .
+.Xr sigaltstack 2 .
 .Pp
 If a signal is caught during the system calls listed below,
 the call may be forced to terminate
@@ -189,7 +187,7 @@ with the error
 .Dv EINTR ,
 the call may return with a data transfer shorter than requested,
 or the call may be restarted.
-Restart of pending calls is requested
+Restarting of pending calls is requested
 by setting the
 .Dv SA_RESTART
 bit in
@@ -267,10 +265,10 @@ is possible on a descriptor (see
 .Xr setitimer 2 )
 .It Dv SIGPROF No "	terminate process" "	profiling timer alarm (see"
 .Xr setitimer 2 )
-.It Dv SIGWINCH No "	discard signal" "	Window size change"
+.It Dv SIGWINCH No "	discard signal" "	window size change"
 .It Dv SIGINFO No "	discard signal" "	status request from keyboard"
-.It Dv SIGUSR1 No "	terminate process" "	User defined signal 1"
-.It Dv SIGUSR2 No "	terminate process" "	User defined signal 2"
+.It Dv SIGUSR1 No "	terminate process" "	user-defined signal 1"
+.It Dv SIGUSR2 No "	terminate process" "	user-defined signal 2"
 .El
 .Sh NOTE
 The mask specified in 
@@ -279,7 +277,7 @@ is not allowed to block
 .Dv SIGKILL
 or
 .Dv SIGSTOP .
-This is done silently by the system.
+This is enforced silently by the system.
 .Sh RETURN VALUES
 A 0 value indicates that the call succeeded.  A \-1 return value
 indicates an error occurred and
@@ -288,6 +286,7 @@ is set to indicated the reason.
 .Sh EXAMPLE
 The handler routine can be declared:
 .Bd -literal -offset indent
+void
 handler(sig, code, scp)
 	int sig, code;
 	struct sigcontext *scp;
@@ -299,8 +298,7 @@ is the signal number, into which the hardware faults and traps are
 mapped.
 .Fa Code
 is a parameter that is either a constant
-or the code provided by
-the hardware.
+or the code provided by the hardware.
 .Fa Scp
 is a pointer to the
 .Fa sigcontext
@@ -349,7 +347,7 @@ The
 and
 .Dv SA_RESTART
 flags are Berkeley extensions,
-as are the signals,
+as are the signals
 .Dv SIGTRAP ,
 .Dv SIGEMT ,
 .Dv SIGBUS ,
@@ -363,17 +361,16 @@ as are the signals,
 .Dv SIGWINCH ,
 and
 .Dv SIGINFO .
-Those signals are available on most
+These signals are available on most
 .Tn BSD Ns \-derived
 systems.
 .Sh SEE ALSO
 .Xr kill 1 ,
-.Xr ptrace 2 ,
 .Xr kill 2 ,
+.Xr ptrace 2 ,
+.Xr sigaltstack 2 ,
 .Xr sigprocmask 2 ,
 .Xr sigsuspend 2 ,
-.Xr sigaltstack 2 ,
 .Xr setjmp 3 ,
-.Xr siginterrupt 3 ,
 .Xr sigsetops 3 ,
 .Xr tty 4
