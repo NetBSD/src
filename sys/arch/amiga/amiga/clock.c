@@ -38,7 +38,7 @@
  * from: Utah $Hdr: clock.c 1.18 91/01/21$
  *
  *	@(#)clock.c	7.6 (Berkeley) 5/7/91
- *	$Id: clock.c,v 1.6 1994/02/13 21:13:16 chopps Exp $
+ *	$Id: clock.c,v 1.7 1994/02/22 02:05:25 chopps Exp $
  */
 
 #include <sys/param.h>
@@ -49,8 +49,8 @@
 #include <machine/psl.h>
 #include <machine/cpu.h>
 
-#if defined(GPROF) && defined(PROFTIMER)
-#include <sys/gprof.h>
+#if defined(PROF) && defined(PROFTIMER)
+#include <sys/PROF.h>
 #endif
 
 /* the clocks run at NTSC: 715.909kHz or PAL: 709.379kHz. 
@@ -206,7 +206,7 @@ clockopen(dev, flags)
 	dev_t dev;
 {
 #ifdef PROFTIMER
-#ifdef GPROF
+#ifdef PROF
 	/*
 	 * Kernel profiling enabled, give up.
 	 */
@@ -426,7 +426,7 @@ stopprofclock()
   ciab.crb = ciab.crb & 0xc0;
 }
 
-#ifdef GPROF
+#ifdef PROF
 /*
  * profclock() is expanded in line in lev6intr() unless profiling kernel.
  * Assumes it is called with clock interrupts blocked.
