@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.22 1995/06/12 00:47:41 mycroft Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.23 1995/06/12 06:46:36 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -966,7 +966,7 @@ ip_stripoptions(m, mopt)
 	ip->ip_hl = sizeof(struct ip) >> 2;
 }
 
-u_char inetctlerrmap[PRC_NCMDS] = {
+int inetctlerrmap[PRC_NCMDS] = {
 	0,		0,		0,		0,
 	0,		EMSGSIZE,	EHOSTDOWN,	EHOSTUNREACH,
 	EHOSTUNREACH,	EHOSTUNREACH,	ECONNREFUSED,	ECONNREFUSED,

@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.19 1995/06/12 06:24:22 mycroft Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.20 1995/06/12 06:46:40 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -365,21 +365,24 @@ udp_ctlinput(cmd, sa, ip)
 {
 	register struct udphdr *uh;
 	extern struct in_addr zeroin_addr;
-	extern u_char inetctlerrmap[];
+	extern int inetctlerrmap[], errno;
 	void (*notify) __P((struct inpcb *, int)) = udp_notify;
 
+	if ((unsigned)cmd >= PRC_NCMDS)
+		return;
+	errno = inetctlerrmap[cmd];
 	if (PRC_IS_REDIRECT(cmd))
 		notify = in_rtchange, ip = 0;
 	else if (cmd == PRC_HOSTDEAD)
 		ip = 0;
-	else if ((unsigned)cmd >= PRC_NCMDS || inetctlerrmap[cmd] == 0)
+	else if (errno = 0)
 		return;
 	if (ip) {
 		uh = (struct udphdr *)((caddr_t)ip + (ip->ip_hl << 2));
 		in_pcbnotify(&udbtable, sa, uh->uh_dport, ip->ip_src,
-		    uh->uh_sport, cmd, notify);
+		    uh->uh_sport, errno, notify);
 	} else
-		in_pcbnotifyall(&udbtable, sa, cmd, notify);
+		in_pcbnotifyall(&udbtable, sa, errno, notify);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.17 1995/06/12 06:24:21 mycroft Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.18 1995/06/12 06:46:38 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -414,23 +414,26 @@ tcp_ctlinput(cmd, sa, ip)
 {
 	register struct tcphdr *th;
 	extern struct in_addr zeroin_addr;
-	extern u_char inetctlerrmap[];
+	extern int inetctlerrmap[], errno;
 	void (*notify) __P((struct inpcb *, int)) = tcp_notify;
 
+	if ((unsigned)cmd >= PRC_NCMDS)
+		return;
+	errno = inetctlerrmap[cmd];
 	if (cmd == PRC_QUENCH)
 		notify = tcp_quench;
 	else if (PRC_IS_REDIRECT(cmd))
 		notify = in_rtchange, ip = 0;
 	else if (cmd == PRC_HOSTDEAD)
 		ip = 0;
-	else if ((unsigned)cmd >= PRC_NCMDS || inetctlerrmap[cmd] == 0)
+	else if (errno == 0)
 		return;
 	if (ip) {
 		th = (struct tcphdr *)((caddr_t)ip + (ip->ip_hl << 2));
 		in_pcbnotify(&tcbtable, sa, th->th_dport, ip->ip_src,
-		    th->th_sport, cmd, notify);
+		    th->th_sport, errno, notify);
 	} else
-		in_pcbnotifyall(&tcbtable, sa, cmd, notify);
+		in_pcbnotifyall(&tcbtable, sa, errno, notify);
 }
 
 /*
