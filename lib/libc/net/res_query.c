@@ -1,4 +1,4 @@
-/*	$NetBSD: res_query.c,v 1.25 2000/01/22 22:19:16 mycroft Exp $	*/
+/*	$NetBSD: res_query.c,v 1.26 2000/04/25 13:27:22 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -59,7 +59,7 @@
 static char sccsid[] = "@(#)res_query.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: res_query.c,v 8.10 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: res_query.c,v 1.25 2000/01/22 22:19:16 mycroft Exp $");
+__RCSID("$NetBSD: res_query.c,v 1.26 2000/04/25 13:27:22 itojun Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -156,21 +156,21 @@ res_query(name, class, type, answer, anslen)
 			    ntohs(hp->ancount));
 #endif
 		switch (hp->rcode) {
-			case NXDOMAIN:
-				h_errno = HOST_NOT_FOUND;
-				break;
-			case SERVFAIL:
-				h_errno = TRY_AGAIN;
-				break;
-			case NOERROR:
-				h_errno = NO_DATA;
-				break;
-			case FORMERR:
-			case NOTIMP:
-			case REFUSED:
-			default:
-				h_errno = NO_RECOVERY;
-				break;
+		case NXDOMAIN:
+			h_errno = HOST_NOT_FOUND;
+			break;
+		case SERVFAIL:
+			h_errno = TRY_AGAIN;
+			break;
+		case NOERROR:
+			h_errno = NO_DATA;
+			break;
+		case FORMERR:
+		case NOTIMP:
+		case REFUSED:
+		default:
+			h_errno = NO_RECOVERY;
+			break;
 		}
 		return (-1);
 	}
@@ -292,7 +292,7 @@ res_search(name, class, type, answer, anslen)
 			 * we only wanted one iteration of the loop, so stop.
 			 */
 			if (!(_res.options & RES_DNSRCH))
-			        done++;
+				done++;
 		}
 	}
 
@@ -362,7 +362,7 @@ res_querydomain(name, domain, class, type, answer, anslen)
 			h_errno = NO_RECOVERY;
 			return (-1);
 		}
-		if (n-- != 0 && name[n] == '.') {
+		if (n > 0 && name[--n] == '.') {
 			strncpy(nbuf, name, n);
 			nbuf[n] = '\0';
 		} else
