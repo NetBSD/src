@@ -1,4 +1,4 @@
-/*	$NetBSD: audioio.h,v 1.18 1997/10/28 03:26:45 mikel Exp $	*/
+/*	$NetBSD: audioio.h,v 1.19 1998/04/27 19:11:38 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -268,6 +268,7 @@ typedef struct mixer_ctrl {
 #define AudioNline	"line"
 #define AudioNcd	"cd"
 #define AudioNdac	"dac"
+#define AudioNaux	"aux"
 #define AudioNrecord	"record"
 #define AudioNvolume	"volume"
 #define AudioNmonitor	"monitor"
