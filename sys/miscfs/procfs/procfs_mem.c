@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_mem.c,v 1.15 1997/09/10 13:44:26 christos Exp $	*/
+/*	$NetBSD: procfs_mem.c,v 1.16 1997/09/13 04:25:35 enami Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -264,7 +264,7 @@ procfs_checkioperm(p, t)
 	 *	    (unless you're root), or...
 	 */
 	if ((t->p_cred->p_ruid != p->p_cred->p_ruid ||
-	    ISSET(t->p_flag, P_SUGID)) &&
+		ISSET(t->p_flag, P_SUGID)) &&
 	    (error = suser(p->p_ucred, &p->p_acflag)) != 0)
 		return (error);
 
