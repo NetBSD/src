@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.6 2001/05/09 17:34:40 matt Exp $	*/
+/*	$NetBSD: clock.c,v 1.7 2001/06/02 12:51:28 matthias Exp $	*/
 
 /*
  * Copyright 1997
@@ -255,9 +255,9 @@ startrtclock()
 	timer0last     = 0;
 
 	/* initialize 8253 clock */
-	outb(TIMER_MODE, TIMER_SEL0|TIMER_RATEGEN|TIMER_16BIT);
-	outb(TIMER_CNTR0, TIMER0_ROLLOVER % 256);
-	outb(TIMER_CNTR0, TIMER0_ROLLOVER / 256);
+	outb(IO_TIMER1 + TIMER_MODE, TIMER_SEL0|TIMER_RATEGEN|TIMER_16BIT);
+	outb(IO_TIMER1 + TIMER_CNTR0, TIMER0_ROLLOVER % 256);
+	outb(IO_TIMER1 + TIMER_CNTR0, TIMER0_ROLLOVER / 256);
 
 #ifdef TESTHAT
 	hatCount = timer_hz_to_count(HATHZ);
@@ -399,9 +399,9 @@ gettick()
 	/* Don't want someone screwing with the counter while we're here. */
 	savedints = disable_interrupts(I32_bit);
 	/* Select counter 0 and latch it. */
-	outb(TIMER_MODE, TIMER_SEL0 | TIMER_LATCH);
-	lo = inb(TIMER_CNTR0);
-	hi = inb(TIMER_CNTR0);
+	outb(IO_TIMER1 + TIMER_MODE, TIMER_SEL0 | TIMER_LATCH);
+	lo = inb(IO_TIMER1 + TIMER_CNTR0);
+	hi = inb(IO_TIMER1 + TIMER_CNTR0);
 	restore_interrupts(savedints);
 	return ((hi << 8) | lo);
 }
@@ -494,9 +494,9 @@ findcpuspeed()
 
 	while (1) { /* loop until accurate enough */
 	  /* Put counter in count down mode */
-	  outb(TIMER_MODE, TIMER_SEL0 | TIMER_16BIT | TIMER_RATEGEN);
-	  outb(TIMER_CNTR0, 0xff);
-	  outb(TIMER_CNTR0, 0xff);
+	  outb(IO_TIMER1 + TIMER_MODE, TIMER_SEL0 | TIMER_16BIT | TIMER_RATEGEN);
+	  outb(IO_TIMER1 + TIMER_CNTR0, 0xff);
+	  outb(IO_TIMER1 + TIMER_CNTR0, 0xff);
 	  delayloop(guess);
 
 	  /* Read the value left in the counter */
