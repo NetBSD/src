@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.2 1998/07/04 22:18:34 jonathan Exp $	*/
+/*	$NetBSD: locore.s,v 1.3 1998/08/28 22:47:12 dbj Exp $	*/
 
 /*
  * Copyright (c) 1998 Darrin B. Jewell
@@ -131,7 +131,9 @@ ASENTRY_NOPROFILE(start)
 #else
 	clrl	a0@			| no symbol table, yet
 #endif
-        
+
+        | Create a new stack at address tmpstk, and push
+        | The existing sp onto it as an arg for next68k_bootargs.
 	ASRELOC(tmpstk, a0)
 	movel	sp,a0@-
 	moveal  a0,sp
@@ -337,6 +339,16 @@ Lcodecopy:
 Lhighcode:
 #endif /* ENABLE_MAXADDR_TRAMPOLINE */
 
+       	/*
+	 * Set up the vector table, and race to get the MMU
+	 * enabled.
+	 */
+        movc    vbr,d0                  | Keep copy of ROM VBR
+        ASRELOC(save_vbr,a0)
+        movl    d0,a0@
+        movl	#_C_LABEL(vectab),d0	| set Vector Base Register
+	movc	d0,vbr
+
 	RELOC(mmutype, a0)
 #if defined(ENABLE_HP_CODE)
 	tstl	a0@			| HP MMU?
@@ -359,7 +371,7 @@ Lhighcode:
         movel	#0x0403c000,d0          | kernel text and data at 0x04000000
 	.long	0x4e7b0005		| movc d0,itt1
 	.long	0x4e7b0007		| movc d0,dtt1
-        
+
 	.word	0xf4d8			| cinva bc
 	.word	0xf518			| pflusha
 	movl	#0x8000,d0
@@ -371,8 +383,8 @@ Lhighcode:
 Lturnoffttr:
 	moveq	#0,d0			| ensure TT regs are disabled
 	.long	0x4e7b0004		| movc d0,itt0
-	.long	0x4e7b0005		| movc d0,itt1
 	.long	0x4e7b0006		| movc d0,dtt0
+	.long	0x4e7b0005		| movc d0,itt1
 	.long	0x4e7b0007		| movc d0,dtt1
 	jmp	Lenab1
 Lmotommu2:
@@ -404,7 +416,13 @@ Lehighcode:
 Lenab1:
 /* select the software page size now */
 	lea	_ASM_LABEL(tmpstk),sp	| temporary stack
+
 	jbsr	_C_LABEL(vm_set_page_size) | select software page size
+
+        bsr     Lpushpc                 | Push the PC on the stack.
+Lpushpc:
+
+
 /* set kernel stack, user SP, and initial pcb */
 	movl	_C_LABEL(proc0paddr),a1	| get proc0 pcb addr
 	lea	a1@(USPACE-4),sp	| set kernel stack to end of area
@@ -434,13 +452,10 @@ Lenab2:
 	orl	#MMU_CEN,a0@(MMUCMD)	| turn on external cache
 #endif
 Lnocache0:
-/* Final setup for call to main(). */
-        movc    vbr,d0                  | Keep copy of ROM VBR
-        movl    d0, _ASM_LABEL(save_vbr)
-        movl	#_C_LABEL(vectab),d0	| set Vector Base Register
-	movc	d0,vbr
-	jbsr	_C_LABEL(next68k_init)
 
+       	jbsr	_C_LABEL(next68k_init)
+        
+/* Final setup for call to main(). */
 /*
  * Create a fake exception frame so that cpu_fork() can copy it.
  * main() nevers returns; we exit to user mode from a forked process
@@ -1811,16 +1826,16 @@ hloop:
  */
 	.data
 GLOBAL(machineid)
-	.long	40		| default to @@@
+	.long	0xdeadbeef	| default to @@@
 
 GLOBAL(mmuid)
 	.long	0		| default to nothing
 
 GLOBAL(mmutype)
-	.long	MMU_68040	| default to 68040 mmu
+	.long	0xdeadbeef	| default to 68040 mmu
 
 GLOBAL(cputype)
-	.long	CPU_68040	| default to 68020 CPU
+	.long	0xdeadbeef	| default to 68020 CPU
 
 #if defined(ENABLE_HP_CODE)
 GLOBAL(ectype)
@@ -1828,7 +1843,7 @@ GLOBAL(ectype)
 #endif
 
 GLOBAL(fputype)
-	.long	FPU_68882	| default to 68882 FPU
+	.long	0xdeadbeef	| default to 68882 FPU
 
 GLOBAL(protorp)
 	.long	0,0		| prototype root pointer
@@ -1849,10 +1864,10 @@ GLOBAL(intiobase)
 	.long	INTIOBASE       | KVA of base of internal IO space
 
 GLOBAL(intiolimit)
-	.long	0		| KVA of end of internal IO space
+	.long	INTIOTOP        | KVA of end of internal IO space
 
 ASLOCAL(save_vbr)               | VBR from ROM
-        .long 0
+        .long 0xdeadbeef
         
 halt:
         .asciz "-h"
