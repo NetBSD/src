@@ -1,8 +1,8 @@
 #	from: @(#)Makefile.inc	5.21 (Berkeley) 5/24/91
-#	$Id: Makefile.inc,v 1.16 1993/10/04 18:56:51 jtc Exp $
+#	$Id: Makefile.inc,v 1.17 1993/10/07 00:23:03 cgd Exp $
 
 # gen sources
-.PATH: ${.CURDIR}/${MACHINE}/gen ${.CURDIR}/gen ${.CURDIR}/gen/regexp
+.PATH: ${.CURDIR}/arch/${MACHINE}/gen ${.CURDIR}/gen ${.CURDIR}/gen/regexp
 
 SRCS+=	alarm.c assert.c clock.c crypt.c ctermid.c ctime.c ctype_.c difftime.c \
 	directory.c disklabel.c err.c errlst.c exec.c fnmatch.c frexp.c \
