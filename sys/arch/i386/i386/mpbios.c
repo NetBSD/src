@@ -1,3 +1,5 @@
+/*	$NetBSD: mpbios.c,v 1.1.2.10 2001/01/03 17:02:06 thorpej Exp $	*/
+
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,7 +37,6 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
 
 /*
  * Copyright (c) 1999 Stefan Grefen
@@ -94,8 +95,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	$Id: mpbios.c,v 1.1.2.9 2000/09/23 17:25:33 sommerfeld Exp $
  */
 
 /*
@@ -1137,4 +1136,3 @@ mpbios_cpu_start_cleanup(struct cpu_info *ci)
 	outb(IO_RTC, NVRAM_RESET);
 	outb(IO_RTC+1, NVRAM_RESET_RST);
 }
-
