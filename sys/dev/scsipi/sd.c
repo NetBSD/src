@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.137 1998/11/20 00:35:40 thorpej Exp $	*/
+/*	$NetBSD: sd.c,v 1.138 1998/12/08 00:18:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -431,11 +431,13 @@ sdclose(dev, flag, fmt, p)
 		    sd->sc_ops->sdo_flush != NULL)
 			(*sd->sc_ops->sdo_flush)(sd, 0);
 
-		/* XXXX Must wait for I/O to complete! */
+		scsipi_wait_drain(sd->sc_link);
 
 		scsipi_prevent(sd->sc_link, PR_ALLOW,
 		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_NOT_READY);
 		sd->sc_link->flags &= ~(SDEV_OPEN|SDEV_MEDIA_LOADED);
+
+		scsipi_wait_drain(sd->sc_link);
 
 		scsipi_adapter_delref(sd->sc_link);
 	}
