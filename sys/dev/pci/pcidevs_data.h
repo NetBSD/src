@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.312 2001/03/13 17:22:28 bouyer Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.313 2001/03/17 02:26:49 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.308 2001/03/13 17:21:16 bouyer Exp 
+ *	NetBSD: pcidevs,v 1.309 2001/03/17 02:26:26 thorpej Exp 
  */
 
 /*
@@ -2434,16 +2434,16 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "PRO/1000 Gigabit Ethernet (i82452)",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_LIVENGOOD,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82453,
 	    0,
 	    "Intel",
-	    "PRO/1000 Gigabit Ethernet (LIVENGOOD)",
+	    "PRO/1000 Gigabit Ethernet (i82453)",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82452_SC,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82453_SC,
 	    0,
 	    "Intel",
-	    "PRO/1000 Gigabit Ethernet (i82452-SC)",
+	    "PRO/1000 Gigabit Ethernet (i82453-SC)",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82815_DC100_HUB,
