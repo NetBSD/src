@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.c,v 1.25 2001/02/20 15:35:21 itojun Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.26 2001/02/21 00:17:09 itojun Exp $	*/
 /*	$KAME: if_gif.c,v 1.43 2001/02/20 08:51:07 itojun Exp $	*/
 
 /*
@@ -807,7 +807,7 @@ struct eonhdr {
 	u_int8_t version;
 	u_int8_t class;
 	u_int16_t cksum;
-} *ehdr;
+};
 
 /*
  * prepend EON header to ISO PDU
