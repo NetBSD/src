@@ -1,4 +1,4 @@
-/*	$NetBSD: am7990.c,v 1.55 1999/10/29 19:50:07 ragge Exp $	*/
+/*	$NetBSD: am7990.c,v 1.56 1999/12/01 00:40:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -362,9 +362,11 @@ am7990_tint(sc)
 			if (tmd.tmd3 & LE_T3_LCOL)
 				ifp->if_collisions++;
 			if (tmd.tmd3 & LE_T3_RTRY) {
+#ifdef LEDEBUG
 				printf("%s: excessive collisions, tdr %d\n",
 				    sc->sc_dev.dv_xname,
 				    tmd.tmd3 & LE_T3_TDR_MASK);
+#endif
 				ifp->if_collisions += 16;
 			}
 			ifp->if_oerrors++;
