@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_subr.c,v 1.3 1997/10/17 03:25:05 gwr Exp $	*/
+/*	$NetBSD: bus_subr.c,v 1.3.4.1 1998/01/27 19:26:34 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -50,11 +50,13 @@
 
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
-#include <machine/control.h>
-#include <machine/pte.h>
-#include <machine/pmap.h>
-#include <machine/machdep.h>
 #include <machine/mon.h>
+#include <machine/pmap.h>
+#include <machine/pte.h>
+
+#include <sun3/sun3/control.h>
+#include <sun3/sun3/machdep.h>
+#include <sun3/sun3/vme.h>
 
 /*
  * bus_scan:
@@ -81,17 +83,13 @@ int bus_scan(parent, cf, aux)
 		panic("bus_scan: FSTATE_STAR");
 #endif
 
-	/* ca->ca_bustype set by parent */
+	/*
+	 * Copy the locators into our confargs.
+	 * Our parent set ca->ca_bustype already.
+	 */
 	ca->ca_paddr  = cf->cf_paddr;
 	ca->ca_intpri = cf->cf_intpri;
-
-	/* The sun3 supports vectors only on VME. */
-	ca->ca_intvec = -1;
-	if ((ca->ca_bustype == BUS_VME16) ||
-		(ca->ca_bustype == BUS_VME32))
-	{
-		ca->ca_intvec = cf->cf_intvec;
-	}
+	ca->ca_intvec = cf->cf_intvec;
 
 	/*
 	 * Note that this allows the match function to save
@@ -125,7 +123,7 @@ bus_print(args, name)
 	if (ca->ca_paddr != -1)
 		printf(" addr 0x%x", ca->ca_paddr);
 	if (ca->ca_intpri != -1)
-		printf(" level %d", ca->ca_intpri);
+		printf(" ipl %d", ca->ca_intpri);
 	if (ca->ca_intvec != -1)
 		printf(" vect 0x%x", ca->ca_intvec);
 
@@ -138,11 +136,26 @@ bus_print(args, name)
 label_t *nofault;
 
 extern vm_offset_t tmp_vpages[];
-static const int bustype_to_ptetype[4] = {
-	PGT_OBMEM,
-	PGT_OBIO,
-	PGT_VME_D16,
-	PGT_VME_D32,
+
+#define OBIO_MASK 0xFFffff
+#define PMAP_OBMEM 0
+
+static const struct {
+	int  type;
+	long base;
+	long mask;
+} bus_info[BUS__NTYPES] = {
+	{ PMAP_OBIO,  0, OBIO_MASK },
+	{ PMAP_OBMEM, 0, ~0 },
+	/* VME A16 */
+	{ PMAP_VME16, VME16_BASE, VME16_MASK },
+	{ PMAP_VME32, VME16_BASE, VME16_MASK },
+	/* VME A24 */
+	{ PMAP_VME16, VME24_BASE, VME24_MASK },
+	{ PMAP_VME32, VME24_BASE, VME24_MASK },
+	/* VME A32 */
+	{ PMAP_VME16, VME32_BASE, VME32_MASK },
+	{ PMAP_VME32, VME32_BASE, VME32_MASK },
 };
 
 /*
@@ -154,20 +167,24 @@ static const int bustype_to_ptetype[4] = {
  *	Clean up temp. mapping
  */
 int
-bus_peek(bustype, paddr, sz)
-	int bustype, paddr, sz;
+bus_peek(bustype, pa, sz)
+	int bustype, pa, sz;
 {
 	int off, pte, rv;
 	vm_offset_t pgva;
 	caddr_t va;
 
-	if (bustype & ~3)
-		return -1;
+	if ((bustype < 0) || (bustype >= BUS__NTYPES))
+		panic("bus_peek: bustype");
 
-	off = paddr & PGOFSET;
-	paddr -= off;
-	pte = PA_PGNUM(paddr);
-	pte |= bustype_to_ptetype[bustype];
+	pa &= bus_info[bustype].mask;
+	pa |= bus_info[bustype].base;
+
+	off = pa & PGOFSET;
+	pa -= off;
+	pte = PA_PGNUM(pa);
+
+	pte |= (bus_info[bustype].type << PG_MOD_SHIFT);
 	pte |= (PG_VALID | PG_WRITE | PG_SYSTEM | PG_NC);
 
 	pgva = tmp_vpages[0];
@@ -176,16 +193,15 @@ bus_peek(bustype, paddr, sz)
 	/* All mappings in tmp_vpages are non-cached, so no flush. */
 	set_pte(pgva, pte);
 
-	/*
-	 * OK, try the access using one of the assembly routines
-	 * that will set pcb_onfault and catch any bus errors.
-	 */
 	switch (sz) {
 	case 1:
 		rv = peek_byte(va);
 		break;
 	case 2:
 		rv = peek_word(va);
+		break;
+	case 4:
+		rv = peek_long(va);
 		break;
 	default:
 		printf(" bus_peek: invalid size=%d\n", sz);
@@ -198,40 +214,44 @@ bus_peek(bustype, paddr, sz)
 	return (rv);
 }
 
-static const int bustype_to_pmaptype[4] = {
-	0,
-	PMAP_OBIO,
-	PMAP_VME16,
-	PMAP_VME32,
-};
-
 void *
 bus_mapin(bustype, pa, sz)
 	int bustype, pa, sz;
 {
-	vm_offset_t va, retval;
+	void *rv;
+	vm_offset_t va;
 	int off;
 
-	if (bustype & ~3)
-		return (NULL);
+	if ((bustype < 0) || (bustype >= BUS__NTYPES))
+		panic("bus_mapin: bustype");
+
+	/* Borrow PROM mappings if we can. */
+	if (bustype == BUS_OBIO) {
+		rv = obio_find_mapping(pa, sz);
+		if (rv)
+			return (rv);
+	}
+
+	pa &= bus_info[bustype].mask;
+	pa |= bus_info[bustype].base;
 
 	off = pa & PGOFSET;
 	pa -= off;
 	sz += off;
 	sz = m68k_round_page(sz);
 
-	pa |= bustype_to_pmaptype[bustype];
+	pa |= bus_info[bustype].type;
 	pa |= PMAP_NC;	/* non-cached */
 
 	/* Get some kernel virtual address space. */
 	va = kmem_alloc_wait(kernel_map, sz);
 	if (va == 0)
 		panic("bus_mapin");
-	retval = va + off;
+	rv = (void*)(va + off);
 
 	/* Map it to the specified bus. */
 #if 0
-	/* This has a problem with wrap-around... */
+	/* XXX: This has a problem with wrap-around... */
 	pmap_map((int)va, pa, pa + sz, VM_PROT_ALL);
 #else
 	do {
@@ -242,7 +262,7 @@ bus_mapin(bustype, pa, sz)
 	} while (sz > 0);
 #endif
 
-	return ((void*)retval);
+	return (rv);
 }
 
 /* from hp300: badbaddr() */
@@ -254,11 +274,11 @@ peek_byte(addr)
 	register int x;
 
 	nofault = &faultbuf;
-	if (setjmp(&faultbuf)) {
-		nofault = NULL;
-		return(-1);
-	}
-	x = *(volatile u_char *)addr;
+	if (setjmp(&faultbuf))
+		x = -1;
+	else
+		x = *(volatile u_char *)addr;
+
 	nofault = NULL;
 	return(x);
 }
@@ -271,11 +291,11 @@ peek_word(addr)
 	register int x;
 
 	nofault = &faultbuf;
-	if (setjmp(&faultbuf)) {
-		nofault = NULL;
-		return(-1);
-	}
-	x = *(volatile u_short *)addr;
+	if (setjmp(&faultbuf))
+		x = -1;
+	else
+		x = *(volatile u_short *)addr;
+
 	nofault = NULL;
 	return(x);
 }
@@ -288,11 +308,16 @@ peek_long(addr)
 	register int x;
 
 	nofault = &faultbuf;
-	if (setjmp(&faultbuf)) {
-		nofault = NULL;
-		return(-1);
+	if (setjmp(&faultbuf))
+		x = -1;
+	else {
+		x = *(volatile int *)addr;
+		if (x == -1) {
+			printf("peek_long: uh-oh, actually read -1!\n");
+			x &= 0x7FFFffff; /* XXX */
+		}
 	}
-	x = *(volatile int *)addr;
+
 	nofault = NULL;
 	return(x);
 }
