@@ -1,4 +1,4 @@
-#	$NetBSD: files.pmax,v 1.58 1998/11/27 00:09:33 simonb Exp $
+#	$NetBSD: files.pmax,v 1.59 1999/03/01 00:18:13 simonb Exp $
 # DECstation-specific configuration info
 
 # maxpartitions must be first item in files.${ARCH}.
@@ -23,7 +23,7 @@ defopt	DEC_3MIN	# "kn02ba":	Decstation 5000/{20,25,33,50}
 defopt	DEC_MAXINE	# "kn02ca":	Decstation 5000/{20,25,33,50}
 defopt	DEC_3MAXPLUS	# "kn03":	Decstation 5000/240, 5000/260
 
-defopt	DEC_5800	# "kn??":	Decstation 5800 isis (XMI)
+defopt	DEC_5800	# "kn5800":	Decstation 5800 isis (XMI)
 defopt	DEC_5400	# "kn210":	Decstation 5400 mipsfair
 defopt	DEC_5500	# "kn220":	Decstation 5500 mipsfair2
 defopt	DEC_5100	# "kn230":	Decstation 5100 mipsmate
