@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.h,v 1.10 2003/12/29 02:38:18 oster Exp $	*/
+/*	$NetBSD: rf_reconstruct.h,v 1.11 2003/12/30 23:23:17 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -102,7 +102,7 @@ struct RF_ReconEvent_s {
  */
 struct RF_PerDiskReconCtrl_s {
 	RF_ReconCtrl_t *reconCtrl;
-	RF_RowCol_t row, col;	/* to make this structure self-identifying */
+	RF_RowCol_t col;	/* to make this structure self-identifying */
 	RF_StripeNum_t curPSID;	/* the next parity stripe ID to check on this
 				 * disk */
 	RF_HeadSepLimit_t headSepCounter;	/* counter used to control
