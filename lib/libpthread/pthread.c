@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.1.2.40 2003/01/02 19:06:20 nathanw Exp $	*/
+/*	$NetBSD: pthread.c,v 1.1.2.41 2003/01/03 22:04:55 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -313,6 +313,7 @@ pthread__create_tramp(void *(*start)(void *), void *arg)
 	pthread_exit(retval);
 
 	/* NOTREACHED */
+	assert(0);
 }
 
 
@@ -344,6 +345,9 @@ pthread__idle(void)
 	 * PT_FLAG_IDLED set), and so we can yield the processor safely.
 	 */
          sa_yield();
+
+	 /* NOTREACHED*/
+	 assert(0);
 }
 
 
