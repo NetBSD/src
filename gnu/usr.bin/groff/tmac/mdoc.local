@@ -1,4 +1,4 @@
-.\" $NetBSD: mdoc.local,v 1.7 2003/09/08 17:22:18 wiz Exp $
+.\" $NetBSD: mdoc.local,v 1.8 2003/09/08 17:55:22 wiz Exp $
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -131,10 +131,6 @@
 .as str-St--isoC-tcor2      " (\*[Lq]\*[doc-Tn-font-size]ISO\~C\^90\*[doc-str-St], Technical Corrigendum 2\*[Rq])
 .ds str-St--ieee1275-94     \*[doc-Tn-font-size]\%IEEE\*[doc-str-St] Std 1275-1994
 .as str-St--ieee1275-94     " (\*[Lq]\*[doc-Tn-font-size]Open Firmware\*[doc-str-St]\*[Rq])
-.\" for a short time only -- use -isoC-90 or -isoC
-.als str-St--isoC90 str-St--isoC
-.\" for a short time only -- use -isoC-99
-.als str-St--isoC99 str-St--isoC-99
 .
 .\" Default .Os value
 .ds operating-system NetBSD\~1.6
