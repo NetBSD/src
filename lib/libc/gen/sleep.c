@@ -33,17 +33,12 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)sleep.c	5.6 (Berkeley) 2/23/91";*/
-static char *rcsid = "$Id: sleep.c,v 1.3 1993/08/26 00:45:11 jtc Exp $";
+static char *rcsid = "$Id: sleep.c,v 1.4 1994/05/28 06:25:04 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/time.h>
-#include <sys/signal.h>
+#include <signal.h>
 #include <unistd.h>
-
-#define	setvec(vec, a) \
-	vec.sv_handler = a; vec.sv_mask = vec.sv_onstack = 0
-
-static int ringring;
 
 unsigned int
 sleep(seconds)
@@ -51,22 +46,46 @@ sleep(seconds)
 {
 	register struct itimerval *itp;
 	struct itimerval itv, oitv;
-	struct sigvec vec, ovec;
-	long omask;
+	struct sigaction act, oact;
+	struct timeval diff;
+	sigset_t set, oset;
 	static void sleephandler();
 
 	itp = &itv;
 	if (!seconds)
 		return 0;
+
+	sigemptyset (&set);
+	sigaddset (&set, SIGALRM);
+	sigprocmask(SIG_BLOCK, &set, &oset);
+
+	act.sa_handler = sleephandler;
+	act.sa_flags   = 0;
+	sigemptyset(&act.sa_mask);
+	sigaction(SIGALRM, &act, &oact);
+
 	timerclear(&itp->it_interval);
-	timerclear(&itp->it_value);
-	if (setitimer(ITIMER_REAL, itp, &oitv) < 0)
-		return seconds;
 	itp->it_value.tv_sec = seconds;
+	itp->it_value.tv_usec = 0;
+	diff.tv_sec = diff.tv_usec = 0;
+	setitimer(ITIMER_REAL, itp, &oitv);
+
 	if (timerisset(&oitv.it_value)) {
-		if (timercmp(&oitv.it_value, &itp->it_value, >))
-			oitv.it_value.tv_sec -= itp->it_value.tv_sec;
-		else {
+		if (timercmp(&oitv.it_value, &itp->it_value, >)) {
+			oitv.it_value.tv_sec -= itv.it_value.tv_sec;
+		} else {
+			/* The existing timer was scheduled to fire 
+			   before ours, so we compute the time diff
+			   so we can add it back in the end. */
+
+			itp->it_value.tv_sec  -= oitv.it_value.tv_sec;
+			itp->it_value.tv_usec -= oitv.it_value.tv_usec;
+			if (itp->it_value.tv_usec < 0) {
+				itp->it_value.tv_sec--;
+				itp->it_value.tv_usec += 1000000;
+			}
+			diff = itp->it_value;
+
 			itp->it_value = oitv.it_value;
 			/*
 			 * This is a hack, but we must have time to return
@@ -74,25 +93,33 @@ sleep(seconds)
 			 * be restarted.  And, anyway, sleep never did
 			 * anything more than this before.
 			 */
-			oitv.it_value.tv_sec = 1;
+			oitv.it_value.tv_sec  = 1;
 			oitv.it_value.tv_usec = 0;
+
+			setitimer(ITIMER_REAL, &itv, NULL);
 		}
 	}
-	setvec(vec, sleephandler);
-	(void) sigvec(SIGALRM, &vec, &ovec);
-	omask = sigblock(sigmask(SIGALRM));
-	ringring = 0;
-	(void) setitimer(ITIMER_REAL, itp, (struct itimerval *)0);
-	while (!ringring)
-		sigpause(omask &~ sigmask(SIGALRM));
-	(void) sigvec(SIGALRM, &ovec, (struct sigvec *)0);
-	(void) sigsetmask(omask);
-	(void) setitimer(ITIMER_REAL, &oitv, (struct itimerval *)0);
-	return 0;
+
+ 	(void) sigsuspend (&oset);
+
+	sigaction(SIGALRM, &oact, NULL);
+	sigprocmask(SIG_SETMASK, &oset, NULL);
+
+	(void) setitimer(ITIMER_REAL, &oitv, itp);
+
+	if (diff.tv_sec != 0 || diff.tv_usec != 0) {
+		itp->it_value.tv_sec  += diff.tv_sec;
+		itp->it_value.tv_usec += diff.tv_usec;
+		if (itp->it_value.tv_usec > 1000000) {
+			itp->it_value.tv_usec -= 1000000;
+			itp->it_value.tv_sec++;
+		}
+	}
+
+	return (itp->it_value.tv_sec);
 }
 
 static void
 sleephandler()
 {
-	ringring = 1;
 }
