@@ -1,4 +1,4 @@
-/*      $NetBSD: procfs_linux.c,v 1.7 2003/05/28 18:03:16 christos Exp $      */
+/*      $NetBSD: procfs_linux.c,v 1.8 2003/05/29 08:13:41 hannken Exp $      */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.7 2003/05/28 18:03:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.8 2003/05/29 08:13:41 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -152,7 +152,7 @@ procfs_do_pid_stat(struct proc *p, struct lwp *l, struct pfsnode *pfs,
 	    "%u "
 	    "%lu %lu %lu %lu %lu %lu %lu %lu "
 	    "%d %d %d "
-	    "%lu %lu %lu %lu %qu "
+	    "%lu %lu %lu %lu %" PRIu64 " "
 	    "%lu %lu %lu "
 	    "%u %u "
 	    "%u %u %u %u "
