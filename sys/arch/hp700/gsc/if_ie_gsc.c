@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_gsc.c,v 1.1 2002/06/06 19:48:05 fredette Exp $	*/
+/*	$NetBSD: if_ie_gsc.c,v 1.2 2002/08/11 19:39:37 fredette Exp $	*/
 
 /*	$OpenBSD: if_ie_gsc.c,v 1.6 2001/01/12 22:57:04 mickey Exp $	*/
 
@@ -271,9 +271,11 @@ ie_gsc_read16(sc, offset)
 	int offset;
 {
 	u_int16_t val;
-	pdcache_small(0, (vaddr_t)sc->sc_maddr + offset, 2);
-	val = *(volatile u_int16_t *)((caddr_t)sc->sc_maddr + offset);
-	pdcache_small(0, (vaddr_t)sc->sc_maddr + offset, 2);
+	__asm __volatile(
+	"	ldh	0(%1), %0	\n"
+	"	fdc	%%r0(%1)	\n"
+	: "=&r" (val)
+	: "r" ((caddr_t)sc->sc_maddr + offset));
 	return (val);
 }
 
@@ -283,8 +285,11 @@ ie_gsc_write16(sc, offset, v)
 	int offset;
 	u_int16_t v;
 {
-	*(volatile u_int16_t *)((caddr_t)sc->sc_maddr + offset) = v;
-	fdcache_small(0, (vaddr_t)sc->sc_maddr + offset, 2);
+	__asm __volatile(
+	"	sth	%0, 0(%1)	\n"
+	"	fdc	%%r0(%1)	\n"
+	: /* no outputs */
+	: "r" (v), "r" ((caddr_t)sc->sc_maddr + offset));
 }
 
 void
@@ -299,9 +304,16 @@ ie_gsc_write24(sc, offset, addr)
 	 * zero, so we have to add in the appropriate offset here.
 	 */
 	addr += sc->sc_dmamap->dm_segs[0].ds_addr;
-	*(volatile u_int16_t *)((caddr_t)sc->sc_maddr + offset + 0) = (addr      ) & 0xffff;
-	*(volatile u_int16_t *)((caddr_t)sc->sc_maddr + offset + 2) = (addr >> 16) & 0xffff;
-	fdcache_small(0, (vaddr_t)sc->sc_maddr + offset, 4);
+	__asm __volatile(
+	"	ldi	2, %%r21		\n"
+	"	extru	%0, 15, 16, %%r22	\n"
+	"	sth	%0, 0(%1)		\n"
+	"	sth	%%r22, 2(%1)		\n"
+	"	fdc	%%r0(%1)		\n"
+	"	fdc	%%r21(%1)		\n"
+	: /* No outputs */
+	: "r" (addr), "r" ((caddr_t)sc->sc_maddr + offset)
+	: "r21", "r22");
 }
 
 void
@@ -313,9 +325,9 @@ ie_gsc_memcopyin(sc, p, offset, size)
 {
 	struct ie_gsc_softc *gsc = (struct ie_gsc_softc *) sc;
 
-	bus_dmamap_sync(gsc->iemt, sc->sc_dmamap, offset, size,
-			BUS_DMASYNC_POSTREAD);
 	memcpy (p, (void *)((caddr_t)sc->sc_maddr + offset), size);
+	bus_dmamap_sync(gsc->iemt, sc->sc_dmamap, offset, size,
+			BUS_DMASYNC_PREREAD);
 }
 
 void
