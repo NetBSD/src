@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_pccvar.h,v 1.5 2000/08/20 21:51:32 scw Exp $	*/
+/*	$NetBSD: vme_pccvar.h,v 1.6 2000/08/21 20:50:13 scw Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -39,10 +39,11 @@
 #ifndef _MVME68K_VME_PCCVAR_H
 #define _MVME68K_VME_PCCVAR_H
 
-#define VME1_SLAVE_A32	0
-#define VME1_SLAVE_A24	1
-#define VME1_SLAVE_A16	2
-#define VME1_NSLAVES	3
+#define VME1_SLAVE_OFFBOARD_RAM	0
+#define VME1_SLAVE_A32		1
+#define VME1_SLAVE_A24		2
+#define VME1_SLAVE_A16		3
+#define VME1_NSLAVES		4
 
 struct vme_pcc_softc {
 	struct mvmebus_softc	sc_mvmebus;
