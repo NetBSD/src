@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus.c,v 1.39 2001/03/18 15:56:05 bjh21 Exp $ */
+/* $NetBSD: podulebus.c,v 1.40 2001/03/24 00:10:43 bjh21 Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -713,6 +713,27 @@ podulebus_irq_establish(ih, ipl, func, arg, ev)
 	/* XXX We don't actually use the evcnt supplied, just its name. */
 	return intr_claim(podules[ih].interrupt, ipl, ev->ev_group, func,
 	    arg);
+}
+
+/*
+ * Generate a bus_space_tag_t with the specified address-bus shift.
+ */
+void
+podulebus_shift_tag(tag, shift, tagp)
+	bus_space_tag_t tag, *tagp;
+	u_int shift;
+{
+
+	/*
+	 * For the podulebus, the bus tag cookie is the shift to apply
+	 * to registers, so duplicate the bus space tag and change the
+	 * cookie.
+	 */
+
+	/* XXX never freed, but podules are never detached anyway. */
+        *tagp = malloc(sizeof(struct bus_space), M_DEVBUF, M_WAITOK);
+	**tagp = *tag;
+	(*tagp)->bs_cookie = (void *)shift;
 }
 
 /* End of podulebus.c */
