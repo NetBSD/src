@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw.c,v 1.33 2003/11/05 10:09:10 scw Exp $	*/
+/*	$NetBSD: ofw.c,v 1.34 2005/01/05 10:25:43 tsutsui Exp $	*/
 
 /*
  * Copyright 1997
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw.c,v 1.33 2003/11/05 10:09:10 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw.c,v 1.34 2005/01/05 10:25:43 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,7 +111,7 @@ extern int ofw_handleticks;
  */
 extern void dump_spl_masks  __P((void));
 extern void dumpsys	    __P((void));
-extern void dotickgrovelling __P((vm_offset_t));
+extern void dotickgrovelling __P((vaddr_t));
 #if defined(SHARK) && (NPC > 0)
 extern void shark_screen_cleanup __P((int));
 #endif
@@ -127,10 +127,10 @@ extern void shark_screen_cleanup __P((int));
  *  Exported variables
  */
 /* These should all be in a meminfo structure. */
-vm_offset_t physical_start;
-vm_offset_t physical_freestart;
-vm_offset_t physical_freeend;
-vm_offset_t physical_end;
+paddr_t physical_start;
+paddr_t physical_freestart;
+paddr_t physical_freeend;
+paddr_t physical_end;
 u_int free_pages;
 int physmem;
 pv_addr_t systempage;
@@ -141,10 +141,10 @@ pv_addr_t undstack;
 pv_addr_t abtstack;
 pv_addr_t kernelstack;
 
-vm_offset_t msgbufphys;
+paddr_t msgbufphys;
 
 /* for storage allocation, used to be local to ofw_construct_proc0_addrspace */
-static vm_offset_t  virt_freeptr;	    
+static vaddr_t  virt_freeptr;	    
 
 int ofw_callbacks = 0;		/* debugging counter */
 
@@ -157,42 +157,42 @@ int ofw_callbacks = 0;		/* debugging counter */
  */
 
 struct mem_region {
-	vm_offset_t start;
-	vm_size_t size;
+	paddr_t start;
+	psize_t size;
 };
 
 struct mem_translation {
-	vm_offset_t virt;
-	vm_size_t size;
-	vm_offset_t phys;
+	vaddr_t virt;
+	vsize_t size;
+	paddr_t phys;
 	unsigned int mode;
 };
 
 struct isa_range {
-	vm_offset_t isa_phys_hi;
-	vm_offset_t isa_phys_lo;
-	vm_offset_t parent_phys_start;
-	vm_size_t   isa_size;
+	paddr_t isa_phys_hi;
+	paddr_t isa_phys_lo;
+	paddr_t parent_phys_start;
+	psize_t isa_size;
 };
 
 struct vl_range {
-	vm_offset_t vl_phys_hi;
-	vm_offset_t vl_phys_lo;
-	vm_offset_t parent_phys_start;
-	vm_size_t   vl_size;
+	paddr_t vl_phys_hi;
+	paddr_t vl_phys_lo;
+	paddr_t parent_phys_start;
+	psize_t vl_size;
 };
 
 struct vl_isa_range {
-	vm_offset_t isa_phys_hi;
-	vm_offset_t isa_phys_lo;
-	vm_offset_t parent_phys_hi;
-	vm_offset_t parent_phys_lo;
-	vm_size_t   isa_size;
+	paddr_t isa_phys_hi;
+	paddr_t isa_phys_lo;
+	paddr_t parent_phys_hi;
+	paddr_t parent_phys_lo;
+	psize_t isa_size;
 };
 
 struct dma_range {
-	vm_offset_t start;
-	vm_size_t   size;
+	paddr_t start;
+	psize_t   size;
 };
 
 struct ofw_cbargs {
@@ -222,21 +222,21 @@ static void ofw_callbackhandler __P((void *));
 static void ofw_construct_proc0_addrspace __P((pv_addr_t *));
 static void ofw_getphysmeminfo __P((void));
 static void ofw_getvirttranslations __P((void));
-static void *ofw_malloc(vm_size_t size);
-static void ofw_claimpages __P((vm_offset_t *, pv_addr_t *, vm_size_t));
-static void ofw_discardmappings __P ((vm_offset_t, vm_offset_t, vm_size_t));
+static void *ofw_malloc(vsize_t size);
+static void ofw_claimpages __P((vaddr_t *, pv_addr_t *, vsize_t));
+static void ofw_discardmappings __P ((vaddr_t, vaddr_t, vsize_t));
 static int ofw_mem_ihandle  __P((void));
 static int ofw_mmu_ihandle  __P((void));
-static vm_offset_t ofw_claimphys __P((vm_offset_t, vm_size_t, vm_offset_t));
+static paddr_t ofw_claimphys __P((paddr_t, psize_t, paddr_t));
 #if 0
-static vm_offset_t ofw_releasephys __P((vm_offset_t, vm_size_t));
+static paddr_t ofw_releasephys __P((paddr_t, psize_t));
 #endif
-static vm_offset_t ofw_claimvirt __P((vm_offset_t, vm_size_t, vm_offset_t));
-static void ofw_settranslation __P ((vm_offset_t, vm_offset_t, vm_size_t, int));
+static vaddr_t ofw_claimvirt __P((vaddr_t, vsize_t, vaddr_t));
+static void ofw_settranslation __P ((vaddr_t, paddr_t, vsize_t, int));
 static void ofw_initallocator __P((void));
-static void ofw_configisaonly __P((vm_offset_t *, vm_offset_t *));
-static void ofw_configvl __P((int, vm_offset_t *, vm_offset_t *));
-static vm_offset_t ofw_valloc __P((vm_offset_t, vm_offset_t));
+static void ofw_configisaonly __P((paddr_t *, paddr_t *));
+static void ofw_configvl __P((int, paddr_t *, paddr_t *));
+static vaddr_t ofw_valloc __P((vsize_t, vaddr_t));
 
 
 /*
@@ -556,11 +556,12 @@ ofw_getbootinfo(bp_pp, ba_pp)
 #endif
 }
 
-vm_offset_t
+paddr_t
 ofw_getcleaninfo(void)
 {
 	int cpu;
-	vm_offset_t vclean, pclean;
+	vaddr_t vclean;
+	paddr_t pclean;
 
 	if ((cpu = OF_finddevice("/cpu")) == -1)
 		panic("no /cpu from OFW");
@@ -582,8 +583,8 @@ ofw_getcleaninfo(void)
 
 void
 ofw_configisa(pio, pmem)
-	vm_offset_t *pio;
-	vm_offset_t *pmem;
+	paddr_t *pio;
+	paddr_t *pmem;
 {
 	int vl;
 
@@ -595,13 +596,13 @@ ofw_configisa(pio, pmem)
 
 static void
 ofw_configisaonly(pio, pmem)
-	vm_offset_t *pio;
-	vm_offset_t *pmem;
+	paddr_t *pio;
+	paddr_t *pmem;
 {
 	int isa;
 	int rangeidx;
 	int size;
-	vm_offset_t hi, start;
+	paddr_t hi, start;
 	struct isa_range ranges[2];
   
 	if ((isa = OF_finddevice("/isa")) == -1)
@@ -635,13 +636,13 @@ ofw_configisaonly(pio, pmem)
 static void
 ofw_configvl(vl, pio, pmem)
 	int vl;
-	vm_offset_t *pio;
-	vm_offset_t *pmem;
+	paddr_t *pio;
+	paddr_t *pmem;
 {
 	int isa;
 	int ir, vr;
 	int size;
-	vm_offset_t hi, start;
+	paddr_t hi, start;
 	struct vl_isa_range isa_ranges[2];
 	struct vl_range     vl_ranges[2];
   
@@ -693,7 +694,7 @@ int shark_isa_dma_nranges;
 
 void
 ofw_configisadma(pdma)
-	vm_offset_t *pdma;
+	paddr_t *pdma;
 {
 	int root;
 	int rangeidx;
@@ -995,7 +996,7 @@ ofw_callbackhandler(v)
 #if defined(OFWGENCFG)
 	/* Check this first, so that we don't waste IRQ time parsing. */
 	if (strcmp(name, "tick") == 0) {
-		vm_offset_t frame;
+		vaddr_t frame;
 
 		/* Check format. */
 		if (nargs != 1 || nreturns < 1) {
@@ -1021,7 +1022,7 @@ ofw_callbackhandler(v)
 		 *  It's simplest to do this in assembler, since it requires
 		 *  switching frames and grovelling about with registers.
 		 */
-		frame = (vm_offset_t)args_n_results[0];
+		frame = (vaddr_t)args_n_results[0];
 		if (ofw_handleticks)
 			dotickgrovelling(frame);
 		args_n_results[nargs + 1] = frame;
@@ -1030,9 +1031,9 @@ ofw_callbackhandler(v)
 #endif
 
 	if (strcmp(name, "map") == 0) {
-		vm_offset_t va;
-		vm_offset_t pa;
-		vm_size_t size;
+		vaddr_t va;
+		paddr_t pa;
+		vsize_t size;
 		int mode;
 		int ap_bits;
 		int dom_bits;
@@ -1046,9 +1047,9 @@ ofw_callbackhandler(v)
 		}
 		args_n_results[nargs] =	0;	/* properly formatted request */
 
-		pa = (vm_offset_t)args_n_results[0];
-		va = (vm_offset_t)args_n_results[1];
-		size = (vm_size_t)args_n_results[2];
+		pa = (paddr_t)args_n_results[0];
+		va = (vaddr_t)args_n_results[1];
+		size = (vsize_t)args_n_results[2];
 		mode = args_n_results[3];
 		ap_bits =  (mode & 0x00000C00);
 		dom_bits = (mode & 0x000001E0);
@@ -1085,8 +1086,8 @@ ofw_callbackhandler(v)
 		args_n_results[nargs + 1] = 0;
 		args->nreturns = 2;
 	} else if (strcmp(name, "unmap") == 0) {
-		vm_offset_t va;
-		vm_size_t size;
+		vaddr_t va;
+		vsize_t size;
 
 		/* Check format. */
 		if (nargs != 2 || nreturns < 1) {
@@ -1096,8 +1097,8 @@ ofw_callbackhandler(v)
 		}
 		args_n_results[nargs] =	0;	/* properly formatted request */
 
-		va = (vm_offset_t)args_n_results[0];
-		size = (vm_size_t)args_n_results[1];
+		va = (vaddr_t)args_n_results[0];
+		size = (vsize_t)args_n_results[1];
 
 		/* Sanity checks. */
 		if ((va & PGOFSET) != 0 || va < OFW_VIRT_BASE ||
@@ -1126,8 +1127,8 @@ ofw_callbackhandler(v)
 
 		args->nreturns = 1;
 	} else if (strcmp(name, "translate") == 0) {
-		vm_offset_t va;
-		vm_offset_t pa;
+		vaddr_t va;
+		paddr_t pa;
 		int mode;
 		pt_entry_t pte;
 
@@ -1139,7 +1140,7 @@ ofw_callbackhandler(v)
 		}
 		args_n_results[nargs] =	0;	/* properly formatted request */
 
-		va = (vm_offset_t)args_n_results[0];
+		va = (vaddr_t)args_n_results[0];
 
 		/* Sanity checks.
 		 * For now, I am only willing to translate va's in the
@@ -1170,8 +1171,8 @@ ofw_callbackhandler(v)
 		}
 	} else if (strcmp(name, "claim-phys") == 0) {
 		struct pglist alloclist;
-		vm_offset_t low, high;
-		vm_size_t align, size;
+		paddr_t low, high, align;
+		psize_t size;
 
 		/*
 		 * XXX
@@ -1223,9 +1224,9 @@ ofw_callbackhandler(v)
 		args_n_results[nargs] = -1;
 		args->nreturns = 1;
 	} else if (strcmp(name, "claim-virt") == 0) {
-		vm_offset_t va;
-		vm_size_t size;
-		vm_offset_t align;
+		vaddr_t va;
+		vsize_t size;
+		vaddr_t align;
 
 		/* XXX - notyet */
 /*		printf("unimplemented ofw callback - %s\n", name);*/
@@ -1242,8 +1243,8 @@ ofw_callbackhandler(v)
 		args_n_results[nargs] =	0;	/* properly formatted request */
 
 		/* Allocate size bytes with specified alignment. */
-		size = (vm_size_t)args_n_results[0];
-		align = (vm_offset_t)args_n_results[1];
+		size = (vsize_t)args_n_results[0];
+		align = (vaddr_t)args_n_results[1];
 		if (align % PAGE_SIZE != 0) {
 			args_n_results[nargs + 1] = -1;
 			args->nreturns = 2;
@@ -1261,8 +1262,8 @@ ofw_callbackhandler(v)
 			args->nreturns = 3;
 		}
 	} else if (strcmp(name, "release-virt") == 0) {
-		vm_offset_t va;
-		vm_size_t size;
+		vaddr_t va;
+		vsize_t size;
 
 		/* XXX - notyet */
 		printf("unimplemented ofw callback - %s\n", name);
@@ -1279,8 +1280,8 @@ ofw_callbackhandler(v)
 		args_n_results[nargs] =	0;	/* properly formatted request */
 
 		/* Release bytes. */
-		va = (vm_offset_t)args_n_results[0];
-		size = (vm_size_t)args_n_results[1];
+		va = (vaddr_t)args_n_results[0];
+		size = (vsize_t)args_n_results[1];
 
 		args->nreturns = 1;
 	} else {
@@ -1300,7 +1301,7 @@ ofw_construct_proc0_addrspace(pv_addr_t *proc0_ttbbase)
 	static pv_addr_t proc0_pt_ofw[KERNEL_OFW_PTS];
 	static pv_addr_t proc0_pt_io[KERNEL_IO_PTS];
 	static pv_addr_t msgbuf;
-	vm_offset_t L1pagetable;
+	vaddr_t L1pagetable;
 	struct mem_translation *tp;
 
 	/* Set-up the system page. */
@@ -1381,7 +1382,8 @@ ofw_construct_proc0_addrspace(pv_addr_t *proc0_ttbbase)
 	for (oft = 0,  tp = OFtranslations; oft < nOFtranslations;
 	    oft++, tp++) {
 
-		vm_offset_t va, pa;
+		vaddr_t va;
+		paddr_t pa;
 		int npages = tp->size / PAGE_SIZE;
 
 		/* Size must be an integral number of pages. */
@@ -1455,8 +1457,8 @@ ofw_construct_proc0_addrspace(pv_addr_t *proc0_ttbbase)
 	 * cache flush more efficient: blast l1 ptes for sections.
          */
 	for (oft = 0, tp = OFtranslations; oft < nOFtranslations; oft++, tp++) {
-		vm_offset_t va = tp->virt;
-		vm_offset_t pa = tp->phys;
+		vaddr_t va = tp->virt;
+		paddr_t pa = tp->phys;
 
 		if (((va | pa) & L1_S_OFFSET) == 0) {
 			int nsections = tp->size / L1_S_SIZE;
@@ -1607,23 +1609,23 @@ ofw_getvirttranslations(void)
  */
 typedef struct _vfree {
 	struct _vfree *pNext;
-	vm_offset_t start;
-	vm_size_t   size;
+	vaddr_t start;
+	vsize_t size;
 } VFREE, *PVFREE;
 
 static VFREE vfinitial = { NULL, IO_VIRT_BASE, IO_VIRT_SIZE };
 
 static PVFREE vflist = &vfinitial;
 
-static vm_offset_t
+static vaddr_t
 ofw_valloc(size, align)
-	vm_offset_t size;
-	vm_offset_t align;
+	vsize_t size;
+	vaddr_t align;
 {
 	PVFREE        *ppvf;
 	PVFREE        pNew;
-	vm_offset_t   new;
-	vm_offset_t   lead;
+	vaddr_t       new;
+	vaddr_t       lead;
 
 	for (ppvf = &vflist; *ppvf; ppvf = &((*ppvf)->pNext)) {
 		if (align == 0) {
@@ -1645,7 +1647,7 @@ ofw_valloc(size, align)
 					(*ppvf)->size -= size;
 				}
 			} else {
-				vm_size_t tail = ((*ppvf)->start
+				vsize_t tail = ((*ppvf)->start
 				    + (*ppvf)->size) - (new + size);
 				/* free space at beginning */
 				(*ppvf)->size = lead;
@@ -1666,13 +1668,13 @@ ofw_valloc(size, align)
 	return -1;
 }
 
-vm_offset_t
+vaddr_t
 ofw_map(pa, size, cb_bits)
-	vm_offset_t pa;
-	vm_size_t size;
+	paddr_t pa;
+	vsize_t size;
 	int cb_bits;
 {
-	vm_offset_t va;
+	vaddr_t va;
 
 	if ((va = ofw_valloc(size, size)) == -1)
 		panic("cannot alloc virtual memory for %#lx", pa);
@@ -1723,11 +1725,11 @@ ofw_mmu_ihandle(void)
 
 
 /* Return -1 on failure. */
-static vm_offset_t
+static paddr_t
 ofw_claimphys(pa, size, align)
-	vm_offset_t pa;
-	vm_size_t size;
-	vm_offset_t align;
+	paddr_t pa;
+	psize_t size;
+	paddr_t align;
 {
 	int mem_ihandle = ofw_mem_ihandle();
 
@@ -1747,10 +1749,10 @@ ofw_claimphys(pa, size, align)
 
 #if 0
 /* Return -1 on failure. */
-static vm_offset_t
+static paddr_t
 ofw_releasephys(pa, size)
-	vm_offset_t pa;
-	vm_size_t size;
+	paddr_t pa;
+	psize_t size;
 {
 	int mem_ihandle = ofw_mem_ihandle();
 
@@ -1761,11 +1763,11 @@ ofw_releasephys(pa, size)
 #endif
 
 /* Return -1 on failure. */
-static vm_offset_t
+static vaddr_t
 ofw_claimvirt(va, size, align)
-	vm_offset_t va;
-	vm_size_t size;
-	vm_offset_t align;
+	vaddr_t va;
+	vsize_t size;
+	vaddr_t align;
 {
 	int mmu_ihandle = ofw_mmu_ihandle();
 
@@ -1784,12 +1786,12 @@ ofw_claimvirt(va, size, align)
 
 
 /* Return -1 if no mapping. */
-vm_offset_t
+paddr_t
 ofw_gettranslation(va)
-	vm_offset_t va;
+	vaddr_t va;
 {
 	int mmu_ihandle = ofw_mmu_ihandle();
-	vm_offset_t pa;
+	paddr_t pa;
 	int mode;
 	int exists;
 
@@ -1806,9 +1808,9 @@ ofw_gettranslation(va)
 
 static void
 ofw_settranslation(va, pa, size, mode)
-	vm_offset_t va;
-	vm_offset_t pa;
-	vm_size_t size;
+	vaddr_t va;
+	paddr_t pa;
+	vsize_t size;
 	int mode;
 {
 	int mmu_ihandle = ofw_mmu_ihandle();
@@ -1831,7 +1833,7 @@ ofw_settranslation(va, pa, size, mode)
 
 typedef struct _leftover {
 	struct _leftover *pNext;
-	vm_size_t size;
+	vsize_t size;
 } LEFTOVER, *PLEFTOVER;
 
 /* leftover bits of pages.  first word is pointer to next.
@@ -1840,12 +1842,12 @@ static PLEFTOVER leftovers = NULL;
 
 static void *
 ofw_malloc(size)
-	vm_size_t size;
+	vsize_t size;
 {
 	PLEFTOVER   *ppLeftover;
 	PLEFTOVER   pLeft;
 	pv_addr_t   new;
-	vm_size_t   newSize, claim_size;
+	vsize_t   newSize, claim_size;
 
 	/* round and set minimum size */
 	size = max(sizeof(LEFTOVER), 
@@ -1858,7 +1860,7 @@ ofw_malloc(size)
 
 	if (*ppLeftover) { /* have a leftover of the right size */
 		/* remember the leftover */
-		new.pv_va = (vm_offset_t)*ppLeftover;
+		new.pv_va = (vaddr_t)*ppLeftover;
 		if ((*ppLeftover)->size < (size + sizeof(LEFTOVER))) {
 			/* splice out of chain */
 			*ppLeftover = (*ppLeftover)->pNext;
@@ -1867,7 +1869,7 @@ ofw_malloc(size)
 			pLeft = (*ppLeftover)->pNext;
 			newSize = (*ppLeftover)->size - size; /* reduce size */
 			/* move pointer */
-			*ppLeftover = (PLEFTOVER)(((vm_offset_t)*ppLeftover)
+			*ppLeftover = (PLEFTOVER)(((vaddr_t)*ppLeftover)
 			    + size); 
 			(*ppLeftover)->pNext = pLeft;
 			(*ppLeftover)->size  = newSize;
@@ -1894,8 +1896,8 @@ ofw_malloc(size)
 #if 0
 static void
 ofw_free(addr, size)
-	vm_offset_t addr;
-	vm_size_t size;
+	vaddr_t addr;
+	vsize_t size;
 {
 	PLEFTOVER pLeftover = (PLEFTOVER)addr;
 
@@ -1919,14 +1921,15 @@ ofw_free(addr, size)
  */
 static void
 ofw_claimpages(free_pp, pv_p, size)
-	vm_offset_t *free_pp;
+	vaddr_t *free_pp;
 	pv_addr_t *pv_p;
-	vm_size_t size;
+	vsize_t size;
 {
 	/* round-up to page boundary */
-	vm_size_t alloc_size = (size + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1);
-	vm_size_t aligned_size;
-	vm_offset_t va, pa;
+	vsize_t alloc_size = (size + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1);
+	vsize_t aligned_size;
+	vaddr_t va;
+	paddr_t pa;
 
 	if (alloc_size == 0)
 		panic("ofw_claimpages zero");
@@ -1959,12 +1962,12 @@ ofw_claimpages(free_pp, pv_p, size)
 
 static void
 ofw_discardmappings(L2pagetable, va, size)
-	vm_offset_t L2pagetable;
-	vm_offset_t va;
-	vm_size_t size;
+	vaddr_t L2pagetable;
+	vaddr_t va;
+	vsize_t size;
 {
 	/* round-up to page boundary */
-	vm_size_t alloc_size = (size + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1);
+	vsize_t alloc_size = (size + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1);
 	int npages = alloc_size / PAGE_SIZE;
 
 	if (npages == 0)
