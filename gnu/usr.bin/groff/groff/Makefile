@@ -1,4 +1,4 @@
-# Makefile for groff
+#	$Id: Makefile,v 1.5 1993/08/02 17:43:00 mycroft Exp $
 
 PROG=		groff
 SRCS=		groff.cc pipeline.c

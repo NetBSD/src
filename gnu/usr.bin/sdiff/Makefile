@@ -1,3 +1,5 @@
+#	$Id: Makefile,v 1.2 1993/08/02 17:48:13 mycroft Exp $
+
 PROG=		sdiff
 SRCS=		sdiff.c getopt.c getopt1.c version.c
 CFLAGS+=	-I$(.CURDIR)/../diff\

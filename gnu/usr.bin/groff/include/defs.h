@@ -1,3 +1,4 @@
+/*	$Id: defs.h,v 1.2 1993/08/02 17:43:29 mycroft Exp $ */
 #define PROG_PREFIX ""
 #define DEVICE "ps"
 #define FONTPATH "/usr/share/groff_font"

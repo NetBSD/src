@@ -17,7 +17,10 @@
    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
    The author may be reached (Email) at the address mike@ai.mit.edu,
-   or (US mail) as Mike Haertel c/o Free Software Foundation. */
+   or (US mail) as Mike Haertel c/o Free Software Foundation.
+
+	$Id: kwset.h,v 1.2 1993/08/02 17:41:31 mycroft Exp $
+*/
 
 struct kwsmatch
 {

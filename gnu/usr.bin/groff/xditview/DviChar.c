@@ -5,6 +5,10 @@
  * font indexes and back
  */
 
+#ifndef lint
+static char rcsid[] = "$Id: DviChar.c,v 1.2 1993/08/02 17:45:52 mycroft Exp $";
+#endif /* not lint */
+
 #include   "DviChar.h"
 
 extern char *xmalloc();

@@ -20,6 +20,9 @@
    You are forbidden to forbid anyone else to use, share and improve
    what you give them.   Help stamp out software-hoarding!  */
 
+#ifndef lint
+static char rcsid[] = "$Id: regex.c,v 1.2 1993/08/02 17:41:06 mycroft Exp $";
+#endif /* not lint */
 
 /* To test, compile with -Dtest.
  This Dtestable feature turns this into a self-contained program

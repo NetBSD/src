@@ -1,4 +1,4 @@
-# Makefile for pic
+#	$Id: Makefile,v 1.8 1993/08/02 17:44:44 mycroft Exp $
 
 PROG=		pic
 SRCS=		lex.cc main.cc object.cc common.cc troff.cc tex.cc pic.cc

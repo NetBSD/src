@@ -1,4 +1,7 @@
-/* keymaps.h -- Manipulation of readline keymaps. */
+/* keymaps.h -- Manipulation of readline keymaps.
+
+	$Id: keymaps.h,v 1.2 1993/08/02 17:40:39 mycroft Exp $
+*/
 
 #ifndef _KEYMAPS_H_
 #define _KEYMAPS_H_

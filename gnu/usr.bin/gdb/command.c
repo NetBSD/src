@@ -15,6 +15,10 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
+#ifndef lint
+static char rcsid[] = "$Id: command.c,v 1.2 1993/08/02 17:40:52 mycroft Exp $";
+#endif /* not lint */
+
 #include "command.h"
 #include "defs.h"
 #include <stdio.h>

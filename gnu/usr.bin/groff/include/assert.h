@@ -16,7 +16,10 @@ for more details.
 
 You should have received a copy of the GNU General Public License along
 with groff; see the file COPYING.  If not, write to the Free Software
-Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. */
+Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+
+	$Id: assert.h,v 1.2 1993/08/02 17:43:26 mycroft Exp $
+*/
 
 #ifndef ASSERT_H
 #define ASSERT_H

@@ -1,4 +1,4 @@
-#	%W% (Berkeley) %G%
+#	$Id: Makefile,v 1.2 1993/08/02 17:40:43 mycroft Exp $
 
 .include "../config/Makefile.$(MACHINE)"
 

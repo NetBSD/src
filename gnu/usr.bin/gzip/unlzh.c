@@ -3,6 +3,10 @@
  * written by Haruhiko Okumura.
  */
 
+#ifndef lint
+static char rcsid[] = "$Id: unlzh.c,v 1.2 1993/08/02 17:46:24 mycroft Exp $";
+#endif /* not lint */
+
 #include <stdio.h>
 
 #include "tailor.h"

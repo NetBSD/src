@@ -1,3 +1,5 @@
+#	$Id: Makefile,v 1.3 1993/08/02 17:41:21 mycroft Exp $
+
 PROG=	grep
 SRCS=	dfa.c grep.c getopt.c kwset.c obstack.c regex.c search.c
 CFLAGS+=-DGREP -DHAVE_STRING_H=1 -DHAVE_SYS_PARAM_H=1 -DHAVE_UNISTD_H=1 \

@@ -1,4 +1,8 @@
-/* chardefs.h -- Character definitions for readline. */
+/* chardefs.h -- Character definitions for readline.
+
+	$Id: chardefs.h,v 1.2 1993/08/02 17:40:32 mycroft Exp $
+*/
+
 #ifndef _CHARDEFS_
 
 #ifndef savestring

@@ -15,7 +15,10 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with GDB; see the file COPYING.  If not, write to
-the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
+the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. 
+
+	$Id: convex-opcode.h,v 1.2 1993/08/02 17:39:42 mycroft Exp $
+*/
 
 #define xxx 0
 #define rrr 1

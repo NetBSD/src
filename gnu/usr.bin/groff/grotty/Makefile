@@ -1,4 +1,4 @@
-# Makefile for grotty
+#	$Id: Makefile,v 1.6 1993/08/02 17:43:18 mycroft Exp $
 
 PROG=		grotty
 SRCS=		tty.cc

@@ -1,5 +1,9 @@
 /* device.c */
 
+#ifndef lint
+static char rcsid[] = "$Id: device.c,v 1.2 1993/08/02 17:45:57 mycroft Exp $";
+#endif /* not lint */
+
 #include <stdio.h>
 #include <ctype.h>
 

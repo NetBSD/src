@@ -1,5 +1,6 @@
+#	$Id: Makefile,v 1.2 1993/08/02 17:46:59 mycroft Exp $
+
 PROG=	co
-SRCS=	co.c 
 CFLAGS+= -I${.CURDIR}/../lib
 LDADD=  ${LIBRCS}
 DPADD=	${LIBRCS}

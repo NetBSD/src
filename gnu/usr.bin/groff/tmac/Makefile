@@ -1,4 +1,4 @@
-# Makefile for groff macros
+#	$Id: Makefile,v 1.4 1993/08/02 17:45:24 mycroft Exp $
 
 # XXX -- this depends on ../include/defs.h
 TMACDIR?=	/usr/share/tmac

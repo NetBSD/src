@@ -25,11 +25,9 @@
  *   Display ditroff output in an X window
  */
 
-#ifndef SABER
 #ifndef lint
-static char rcsid[] = "$XConsortium: xditview.c,v 1.17 89/12/10 17:05:08 rws Exp $";
-#endif /* lint */
-#endif /* SABER */
+static char rcsid[] = "$Id: xditview.c,v 1.2 1993/08/02 17:46:04 mycroft Exp $";
+#endif /* not lint */
 
 #include <X11/Xatom.h>
 #include <X11/Xlib.h>

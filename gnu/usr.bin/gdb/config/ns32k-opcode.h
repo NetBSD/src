@@ -1,4 +1,7 @@
-/* ns32k-opcode.h */
+/* ns32k-opcode.h
+
+	$Id: ns32k-opcode.h,v 1.2 1993/08/02 17:40:16 mycroft Exp $
+*/
 
 #ifndef ns32k_opcodeT
 #define ns32k_opcodeT int

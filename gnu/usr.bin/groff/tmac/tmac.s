@@ -17,6 +17,8 @@ for more details.
 You should have received a copy of the GNU General Public License along
 with groff; see the file COPYING.  If not, write to the Free Software
 Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+
+	$Id: tmac.s,v 1.2 1993/08/02 17:45:26 mycroft Exp $
 ..
 .if !\n(.g .ab These ms macros require groff.
 .if \n(.C \

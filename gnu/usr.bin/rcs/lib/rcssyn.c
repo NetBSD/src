@@ -35,97 +35,6 @@ Report problems and direct all questions to:
 
 */
 
-
-/* rcssyn.c,v
- * Revision 1.1.1.1  1993/06/18  04:22:12  jkh
- * Updated GNU utilities
- *
- * Revision 5.8  1991/08/19  03:13:55  eggert
- * Tune.
- *
- * Revision 5.7  1991/04/21  11:58:29  eggert
- * Disambiguate names on shortname hosts.
- * Fix errno bug.  Add MS-DOS support.
- *
- * Revision 5.6  1991/02/28  19:18:51  eggert
- * Fix null termination bug in reporting keyword expansion.
- *
- * Revision 5.5  1991/02/25  07:12:44  eggert
- * Check diff output more carefully; avoid overflow.
- *
- * Revision 5.4  1990/11/01  05:28:48  eggert
- * When ignoring unknown phrases, copy them to the output RCS file.
- * Permit arbitrary data in logs and comment leaders.
- * Don't check for nontext on initial checkin.
- *
- * Revision 5.3  1990/09/20  07:58:32  eggert
- * Remove the test for non-text bytes; it caused more pain than it cured.
- *
- * Revision 5.2  1990/09/04  08:02:30  eggert
- * Parse RCS files with no revisions.
- * Don't strip leading white space from diff commands.  Count RCS lines better.
- *
- * Revision 5.1  1990/08/29  07:14:06  eggert
- * Add -kkvl.  Clean old log messages too.
- *
- * Revision 5.0  1990/08/22  08:13:44  eggert
- * Try to parse future RCS formats without barfing.
- * Add -k.  Don't require final newline.
- * Remove compile-time limits; use malloc instead.
- * Don't output branch keyword if there's no default branch,
- * because RCS version 3 doesn't understand it.
- * Tune.  Remove lint.
- * Add support for ISO 8859.  Ansify and Posixate.
- * Check that a newly checked-in file is acceptable as input to 'diff'.
- * Check diff's output.
- *
- * Revision 4.6  89/05/01  15:13:32  narten
- * changed copyright header to reflect current distribution rules
- * 
- * Revision 4.5  88/08/09  19:13:21  eggert
- * Allow cc -R; remove lint.
- * 
- * Revision 4.4  87/12/18  11:46:16  narten
- * more lint cleanups (Guy Harris)
- * 
- * Revision 4.3  87/10/18  10:39:36  narten
- * Updating version numbers. Changes relative to 1.1 actually relative to
- * 4.1
- * 
- * Revision 1.3  87/09/24  14:00:49  narten
- * Sources now pass through lint (if you ignore printf/sprintf/fprintf 
- * warnings)
- * 
- * Revision 1.2  87/03/27  14:22:40  jenkins
- * Port to suns
- * 
- * Revision 4.1  83/03/28  11:38:49  wft
- * Added parsing and printing of default branch.
- * 
- * Revision 3.6  83/01/15  17:46:50  wft
- * Changed readdelta() to initialize selector and log-pointer.
- * Changed puttree to check for selector==DELETE; putdtext() uses DELNUMFORM.
- *
- * Revision 3.5  82/12/08  21:58:58  wft
- * renamed Commentleader to Commleader.
- *
- * Revision 3.4  82/12/04  13:24:40  wft
- * Added routine gettree(), which updates keeplock after reading the
- * delta tree.
- *
- * Revision 3.3  82/11/28  21:30:11  wft
- * Reading and printing of Suffix removed; version COMPAT2 skips the
- * Suffix for files of release 2 format. Fixed problems with printing nil.
- *
- * Revision 3.2  82/10/18  21:18:25  wft
- * renamed putdeltatext to putdtext.
- *
- * Revision 3.1  82/10/11  19:45:11  wft
- * made sure getc() returns into an integer.
- */
-
-
-
 /* version COMPAT2 reads files of the format of release 2 and 3, but
  * generates files of release 3 format. Need not be defined if no
  * old RCS files generated with release 2 exist.
@@ -136,7 +45,7 @@ Report problems and direct all questions to:
 
 #include "rcsbase.h"
 
-libId(synId, "rcssyn.c,v 1.1.1.1 1993/06/18 04:22:12 jkh Exp")
+libId(synId, "$Id: rcssyn.c,v 1.2 1993/08/02 17:47:30 mycroft Exp $")
 
 /* forward */
 static char const *getkeyval P((char const*,enum tokens,int));

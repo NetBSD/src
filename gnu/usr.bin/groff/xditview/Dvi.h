@@ -1,6 +1,4 @@
-/*
-* $XConsortium: Dvi.h,v 1.4 89/07/21 14:22:06 jim Exp $
-*/
+/*	$Id: Dvi.h,v 1.2 1993/08/02 17:45:51 mycroft Exp $ */
 
 #ifndef _XtDvi_h
 #define _XtDvi_h

@@ -1,4 +1,4 @@
-# Makefile for indxbib
+#	$Id: Makefile,v 1.4 1993/08/02 17:43:45 mycroft Exp $
 
 PROG=		indxbib
 SRCS=		indxbib.cc dirnamemax.c signal.c

@@ -1,4 +1,4 @@
-# Makefile for libgroff
+#	$Id: Makefile,v 1.5 1993/08/02 17:44:00 mycroft Exp $
 
 LIB=		groff
 SRCS=		assert.cc change_lf.cc cmap.cc cset.cc device.cc errarg.cc\
