@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)cpu.h	5.4 (Berkeley) 5/9/91
- *	$Id: cpu.h,v 1.8 1993/06/03 01:31:15 cgd Exp $
+ *	$Id: cpu.h,v 1.9 1993/06/16 22:28:12 jtc Exp $
  */
 
 /*
@@ -55,9 +55,9 @@
  * rather than inline or machine-dependent implementations
  */
 #define	NEED_MINMAX		/* need {,i,l,ul}{min,max} functions */
-#define	NEED_FFS		/* need ffs function */
+#undef	NEED_FFS		/* need ffs function */
 #define	NEED_BCMP		/* need bcmp function */
-#define	NEED_STRLEN		/* need strlen function */
+#undef	NEED_STRLEN		/* need strlen function */
 
 #define	cpu_exec(p)	/* nothing */
 
