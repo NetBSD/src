@@ -1,4 +1,4 @@
-/*	$NetBSD: pcnfsd.x,v 1.3 1997/10/25 13:45:56 lukem Exp $	*/
+/*	$NetBSD: pcnfsd.x,v 1.4 2002/10/31 08:39:13 petrov Exp $	*/
 
 /* The maximum number of bytes in a user name argument */
 const IDENTLEN = 32;
@@ -630,7 +630,7 @@ program PCNFSDPROG {
 ** The following forces a publically-visible msg_out()
 */
 %#if RPC_SVC
-% static void _msgout __P((char *));
+% static void _msgout __P((const char *));
 % void msg_out(msg) char *msg; {_msgout(msg);}
 %#endif
 %#if RPC_HDR
