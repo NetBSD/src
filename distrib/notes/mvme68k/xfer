@@ -1,4 +1,4 @@
-.\"	$NetBSD: xfer,v 1.8 2000/11/01 10:58:29 scw Exp $
+.\"	$NetBSD: xfer,v 1.9 2000/11/21 12:39:00 scw Exp $
 .
 Installation is supported from several media types, including:
 .(bullet
@@ -108,9 +108,14 @@ a chroot'ed environment). The netboot program may be found in the
 install directory of this distribution.
 .Pp
 The
-.Tn MVME162-LX
-and
+.Tn MVME162
+,
 .Tn MVME167
+,
+.Tn MVME172
+,
+and
+.Tn MVME177
 boot ROMs have code builtin to boot over ethernet from a
 TFTP server. You should configure it to download the same
 .Pa netboot

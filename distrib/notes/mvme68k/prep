@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.9 2000/11/01 10:58:29 scw Exp $
+.\"	$NetBSD: prep,v 1.10 2000/11/21 12:39:00 scw Exp $
 .
 \*M machines usually need little or no preparation before installing
 .Nx ,
@@ -7,19 +7,34 @@ other than the usual, well advised precaution of
 on any attached storage devices.
 .Pp
 The exception to the above is that
-.Tn MVME162-LX
-and
+.Tn MVME162
+,
 .Tn MVME167
-boards require a jumper to be removed before
+,
+.Tn MVME172
+and
+.Tn MVME177
+boards require a jumper to be removed or DIP switch changed before
 .Nx
 can be installed.
 On
 .Tn MVME162-LX
+and
+.Tn MVME172-LX
 pins 1-2 of jumper J11
 .Em must
 be removed.
 On
+.Tn MVME162-P2/P4
+and
+.Tn MVME172-P2/P4
+switch S4, position 8
+.Em must
+be set to OFF.
+On
 .Tn MVME167
+and
+.Tn MVME177
 pins 1-2 of jumper J1
 .Em must
 be removed.
@@ -38,8 +53,8 @@ Onboard  RAM start = $00000000,  stop = $007FFFFF
 147-Bug\*>
 .disp)
 .Pp
-Or, if you have an MVME162-LX or MVME167 board (the following boot
-message is from MVME167; MVME162-LX is similar):
+Or, if you have an MVME162/172 or MVME167/177 board (the following boot
+message is from MVME167; the others are similar):
 .(disp
 MVME167 Debugger/Diagnostics Release Version 2.3 - 02/25/94
 COLD Start
@@ -79,17 +94,17 @@ doesn't use it.
 Motorola has acknowledged a year 2000 bug in some versions of the MVME147
 whereby the day of the week
 doesn't get set correctly by the 147Bug PROM.
-.Em \It does not affect
+.Em It does not affect
 .Nx "" !
 .Pp
 Also make sure that your board's ethernet address is initialised to
 the correct value. You'll find the address on a label on the inside of
-the MVME147's front panel, and on the VMEbus P2 connector of the MVME162-LX
-and MVME167.
+the MVME147's front panel, and on the VMEbus P2 connector of the other
+board types.
 On the MVME147, enter the last five digits of the address
 using the
 .Ic lsad
-command. On the MVME162-LX and MVME167, you should use the
+command. On the MVME162/172 and MVME167/177, you should use the
 .Ic cnfg
 command.
 .Pp
