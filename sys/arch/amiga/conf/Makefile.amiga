@@ -1,5 +1,5 @@
 #	@(#)Makefile.hp300	7.10 (Berkeley) 6/27/91
-#	$Id: Makefile.amiga,v 1.16 1994/05/08 05:52:50 chopps Exp $
+#	$Id: Makefile.amiga,v 1.17 1994/05/11 19:03:34 chopps Exp $
 #
 # Makefile for 4.4 BSD
 #
@@ -122,8 +122,8 @@ assym.s: genassym
 	./genassym >assym.s
 
 genassym:
-	${CC} ${INCLUDES} ${IDENT} ${PARAM} -Dmc68020 -Damiga -o genassym \
-	    ${AMIGA}/amiga/genassym.c
+	${CC} -static ${INCLUDES} ${IDENT} ${PARAM} -Dmc68020 -Damiga \
+	    -o genassym ${AMIGA}/amiga/genassym.c
 
 depend: assym.s param.c
 	mkdep ${COPTS} ${CFILES} ioconf.c param.c

@@ -1,7 +1,7 @@
 #
 # GENERIC AMIGA
 #
-#	$Id: GENERIC,v 1.6 1994/05/08 05:52:49 chopps Exp $
+#	$Id: GENERIC,v 1.7 1994/05/11 19:03:33 chopps Exp $
 #
 # This configuration file contains all possible options
 #
@@ -56,7 +56,7 @@ sd5	at scsibus? target 5 lun 0
 sd6	at scsibus? target 6 lun 0
 st0	at scsibus? target ? lun 0
 
-config	netbsd swap generic
+config	netbsd swap on generic
 
 options		FPSP		# MC68040 floating point support
 options		FPCOPROC	# Support for MC68881/MC68882 (Required)
@@ -90,6 +90,7 @@ options		ISOFS		# ISO 9660 file system, with Rock Ridge
 options		PORTAL		# Portal filesystem
 
 options		FIFO		# FIFO operations on vnodes (Recommended)
+options		ADOSFS
 
 options		SWAPPAGER	# Pager for processes (Required)
 options		VNODEPAGER	# Pager for vnodes (Required)
@@ -120,7 +121,7 @@ options		KTRACE		# Add kernel tracing system call
 options		PANICWAIT	# Require keystroke to dump/reboot
 options		DIAGNOSTIC	# Add additional error checking code
 options		DEBUG		# Add debugging statements
-options		SYSCALL_DEBUG	# debug all syscalls.
+#options	SYSCALL_DEBUG	# debug all syscalls.
 #options	SCSIDEBUG	# Add SCSI debugging statements
 #options	KGDB		# Kernel debugger (KGDB) support
 options		DDB		# Kernel debugger
