@@ -1,4 +1,4 @@
-#	$NetBSD: files.isapnp,v 1.1 1997/01/16 22:00:57 christos Exp $
+#	$NetBSD: files.isapnp,v 1.2 1997/01/22 23:44:03 mycroft Exp $
 #
 # Config.new file and device description for machine-independent ISAPnP code.
 # Included by ports that need it.
@@ -12,6 +12,10 @@ attach	isapnp at isa
 file	dev/isapnp/isapnp.c			isapnp
 file	dev/isapnp/isapnpdebug.c		isapnp
 file	dev/isapnp/isapnpres.c			isapnp
+
+# 3Com 3C509B
+attach	ep at isapnp with ep_isapnp
+file	dev/isapnp/if_ep_isapnp.c		ep_isapnp
 
 #
 # ISAPnP Sound hardware
