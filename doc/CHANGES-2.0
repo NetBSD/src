@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.253 2004/06/05 04:57:35 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.254 2004/06/05 04:58:40 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -3487,3 +3487,8 @@ bin/df/df.1					patch
 
 	Mention -g in synopsis. PR#25800.
 	[cjep, ticket #439]
+
+dist/ipf/tools/ipf_y.y				1.7
+
+	ipfilter 4.1.1 does not behave according to rules in ipf.conf. PR#24989
+	[christos, ticket #440]
