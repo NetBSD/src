@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.2 2002/08/26 10:16:45 scw Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.3 2002/09/01 09:01:33 scw Exp $	*/
 
 /*
  * This is still very much experimental. There is as yet no DB support
@@ -56,8 +56,6 @@ db_regs_t		ddb_regs;	/* register state */
 #define	BKPT_SIZE	4		/* size of breakpoint inst */
 #define	BKPT_SET(inst)	BKPT_INST
 
-#define	FIXUP_PC_AFTER_BREAK(regs)	/* Nothing to do */
-
 #define	IS_BREAKPOINT_TRAP(type, code)	((type) == T_BREAK)
 #define	IS_WATCHPOINT_TRAP(type, code)	(0) /* XXX (msaitoh) */
 
@@ -112,12 +110,12 @@ extern int kdb_trap(int, void *);
  */
 #define	SOFTWARE_SSTEP
 extern boolean_t inst_branch(int);
-extern boolean_t inst_call(int);
 extern boolean_t inst_load(int);
 extern boolean_t inst_store(int);
 extern boolean_t inst_unconditional_flow_transfer(int);
 extern db_addr_t branch_taken(int, db_addr_t, db_regs_t *);
-extern db_addr_t next_instr_address(db_addr_t, boolean_t);
+#define next_instr_address(v, b) ((db_addr_t) ((b) ? (v) : ((v) + 4)))
+#define	inst_call(ins)		(((ins) & M_CALL) == I_CALL)
 #define	inst_return(ins)	(((ins) & M_RET) == I_RET)
 #define	inst_trap_return(ins)	((ins) == I_RTE)
 
@@ -130,9 +128,9 @@ extern db_addr_t next_instr_address(db_addr_t, boolean_t);
 #define	DB_ELFSIZE	32
 
 /*
- * We have no machine-dependent commands.
+ * We have machine-dependent commands.
  */
-#undef	DB_MACHINE_COMMANDS
+#define	DB_MACHINE_COMMANDS
 
 extern const char kgdb_devname[];
 
