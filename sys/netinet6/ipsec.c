@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.76 2003/09/06 04:20:57 itojun Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.77 2003/09/07 15:59:36 itojun Exp $	*/
 /*	$KAME: ipsec.c,v 1.136 2002/05/19 00:36:39 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.76 2003/09/06 04:20:57 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.77 2003/09/07 15:59:36 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -507,7 +507,7 @@ ipsec4_getpolicybyaddr(m, dir, flag, error)
 
 	bzero(&spidx, sizeof(spidx));
 
-	/* make a index to look for a policy */
+	/* make an index to look for a policy */
 	*error = ipsec_setspidx_mbuf(&spidx, AF_INET, m,
 	    (flag & IP_FORWARDING) ? 0 : 1);
 
@@ -717,7 +717,7 @@ ipsec6_getpolicybyaddr(m, dir, flag, error)
 
 	bzero(&spidx, sizeof(spidx));
 
-	/* make a index to look for a policy */
+	/* make an index to look for a policy */
 	*error = ipsec_setspidx_mbuf(&spidx, AF_INET6, m,
 	    (flag & IP_FORWARDING) ? 0 : 1);
 
@@ -1733,7 +1733,8 @@ ipsec4_in_reject_so(m, so)
 	 * ipsec4_getpolicybyaddr() with IP_FORWARDING flag.
 	 */
 	if (so == NULL)
-		sp = ipsec4_getpolicybyaddr(m, IPSEC_DIR_INBOUND, IP_FORWARDING, &error);
+		sp = ipsec4_getpolicybyaddr(m, IPSEC_DIR_INBOUND,
+		    IP_FORWARDING, &error);
 	else
 		sp = ipsec4_getpolicybysock(m, IPSEC_DIR_INBOUND, so, &error);
 
@@ -1786,7 +1787,8 @@ ipsec6_in_reject_so(m, so)
 	 * ipsec6_getpolicybyaddr() with IP_FORWARDING flag.
 	 */
 	if (so == NULL)
-		sp = ipsec6_getpolicybyaddr(m, IPSEC_DIR_INBOUND, IP_FORWARDING, &error);
+		sp = ipsec6_getpolicybyaddr(m, IPSEC_DIR_INBOUND,
+		    IP_FORWARDING, &error);
 	else
 		sp = ipsec6_getpolicybysock(m, IPSEC_DIR_INBOUND, so, &error);
 
@@ -2165,6 +2167,8 @@ ipsec6_encapsulate(m, sav)
  * 0 (zero) is returned if packet disallowed, 1 if packet permitted.
  *
  * based on RFC 2401.
+ *
+ * XXX need to update for 64bit sequence number - 2401bis
  */
 int
 ipsec_chkreplay(seq, sav)
@@ -2224,6 +2228,7 @@ ipsec_chkreplay(seq, sav)
  * check replay counter whether to update or not.
  * OUT:	0:	OK
  *	1:	NG
+ * XXX need to update for 64bit sequence number - 2401bis
  */
 int
 ipsec_updatereplay(seq, sav)
@@ -2231,7 +2236,7 @@ ipsec_updatereplay(seq, sav)
 	struct secasvar *sav;
 {
 	struct secreplay *replay;
-	u_int32_t diff;
+	u_int64_t diff;
 	int fr;
 	u_int32_t wsizeb;	/* constant: bits of window size */
 	int frlast;		/* constant: last frame */
@@ -2300,7 +2305,7 @@ ipsec_updatereplay(seq, sav)
 	}
 
 ok:
-	if (replay->count == ~0) {
+	if (replay->count == 0xffffffff) {
 
 		/* set overflow flag */
 		replay->overflow++;
