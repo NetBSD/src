@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sig.c,v 1.15 2003/07/17 18:15:21 fvdl Exp $	*/
+/*	$NetBSD: pthread_sig.c,v 1.16 2003/07/21 22:24:09 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_sig.c,v 1.15 2003/07/17 18:15:21 fvdl Exp $");
+__RCSID("$NetBSD: pthread_sig.c,v 1.16 2003/07/21 22:24:09 nathanw Exp $");
 
 /* We're interposing a specific version of the signal interface. */
 #define	__LIBC12_SOURCE__
@@ -780,7 +780,9 @@ pthread__kill(pthread_t self, pthread_t target, int sig, int code)
 		 */
 		__sigaddset14(&target->pt_sigblocked, sig);
 		__sigaddset14(&target->pt_sigmask, sig);
+		pthread_spinlock(self, &target->pt_flaglock);
 		target->pt_flags |= PT_FLAG_SIGDEFERRED;
+		pthread_spinunlock(self, &target->pt_flaglock);
 		pthread_spinunlock(self, &target->pt_statelock);
 		_lwp_wakeup(target->pt_blockedlwp);
 		return;
