@@ -1,0 +1,104 @@
+README for sunndd-0.1
+
+Copyright (c) 2001 Matthew Fredette.  All rights reserved.
+
+See the file COPYING for no-warranty and distribution terms.
+
+sunndd is a daemon that serves Sun's old Network Disk (ND) protocol.
+This protocol was designed by Sun before they designed NFS.  ND simply
+makes the raw blocks of a disk available to network clients.  Contrast
+this with the true namespace and file abstractions that NFS provides.
+
+The only reason you're likely to encounter ND nowadays is if you have
+an old Sun-2 machine, like the 2/120 or 2/50.  The Sun-2 PROMs can
+only use ND to boot over the network.  (Later, the Sun-3 PROMs would
+use RARP and TFTP to boot over the network.)
+
+sunndd is a very simple ND server that only supports client reads.
+
+usage: sunndd [OPTIONS] BOOT1-BIN
+where OPTIONS are:
+  -s, --boot2 { BOOT2-BIN | DIR }
+                          find a second-stage boot program in the file
+                          BOOT2-BIN or in the directory DIR
+  -i, --interface NAME    use interface NAME
+  -w, --window-size COUNT 
+                          send at most COUNT unacknowledged packets [default=6]
+  -d, --debug             set debug mode
+
+sunndd exports a disk that the clients consider to be /dev/ndp0 (ND
+public unit zero).  The disk is available to any client listed in
+/etc/ethers (Sun-2 PROMs don't do RARP, but they do learn their IP
+address from the first ND response they receive from the server.)
+
+BOOT1-BIN is a file containing the mandatory first-stage network boot
+program.  The layout of the exported disk is:
+
+block 0: normally a Sun disklabel (but ignored by the PROM)
+blocks 1-15: the first-stage network boot program
+
+With the --boot2 option, sunndd will also make a second-stage network
+boot program available to clients.  When --boot2 is used with a
+filename BOOT2-BIN, that file is the second-stage network boot program
+to be served to all clients.
+
+When --boot2 is used with a directory name DIR, sunndd finds a
+client's second-stage network boot program by turning its IP address
+into a filename in that directory, in the same manner later Sun-3
+PROMs do when TFTPing (i.e., if a client has IP address 192.168.1.10,
+sunndd expects to find DIR/C0A8010A.SUN2).  The expected use of
+--boot2 is with the /tftpboot directory, making sunndd a functional
+replacement for tftp when used with an ND-aware first-stage boot
+program.
+
+Any second-stage network boot program always begins at block 16 of the
+exported disk, regardless of the length of the first-stage network
+boot program.
+
+Whether or not there is a second-stage network boot program, the
+exported disk appears to have infinite length.  The content of all
+blocks not used by the first- or second-stage network boot programs is
+undefined.
+
+All first- and second-stage network boot programs must have had their
+exec headers stripped off.
+
+Normally, sunndd listens on the first up and running IP interface it
+finds.  Use the --interface option to give a specific interface.
+
+One parameter of the ND protocol is a sort of window size.  This is
+the number of 1-kilobyte packets that can be transmitted before
+waiting for an acknowledgement.  To change this from the default 6,
+use the --window-size option.
+
+When debug support is compiled in (it is by default), the --debug
+option turns on debugging.
+
+sunndd has only been compiled and tested under NetBSD with BPF
+support, although there is a fair autoconf framework, and the raw
+interface support is broken out, which should allow for reasonable
+porting.
+
+Note that sunndd was developed specifically to help me to boot my
+experimental NetBSD port on my Sun-2/120.  In this scenario, the
+first-stage network boot (bootyy) continues to use ND to load in the
+second-stage boot program (netboot), which can do a full
+RARP/bootparams/NFS boot.  (If the program netboot ever fit in 16
+blocks, we could eliminate bootyy, but this is unlikely.)
+
+(Aside: it is unusual for a network boot to have two stages of boot
+programs before the kernel; this is normally only done on real disks.
+But to the Sun-2 PROMs, /dev/ndp0 is just like a real disk in that it
+provides no EOF condition (like a tape boot gets, or like the Sun-3
+TFTP method gets), so it only loads a fixed number of blocks.)
+
+Whether sunndd can be used to netboot SunOS on a Sun-2 is unknown, but
+the hope is that you can use the SunOS-provided sun2.bb file as the
+first-stage boot program, not use any --boot2 option, and sunndd will
+perform as the SunOS ndbootd did.
+
+To configure sunndd for compiling, run the 'configure' script,
+followed by make.  To report bugs in compiling or using sunndd, email
+fredette@alum.mit.edu, and please include as much information as you
+can about what you're trying to do and what goes wrong.  I don't have
+much time to do support, but I'll try.
