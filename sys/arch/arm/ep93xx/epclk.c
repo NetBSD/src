@@ -1,4 +1,4 @@
-/*	$NetBSD: epclk.c,v 1.1 2004/12/22 19:09:29 joff Exp $	*/
+/*	$NetBSD: epclk.c,v 1.2 2004/12/27 02:46:22 joff Exp $	*/
 
 /*
  * Copyright (c) 2004 Jesse Off
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epclk.c,v 1.1 2004/12/22 19:09:29 joff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epclk.c,v 1.2 2004/12/27 02:46:22 joff Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -64,6 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: epclk.c,v 1.1 2004/12/22 19:09:29 joff Exp $");
 #include <arm/ep93xx/epsocvar.h> 
 #include <arm/ep93xx/epclkreg.h> 
 #include <arm/ep93xx/ep93xxvar.h>
+#include <dev/clock_subr.h>
 
 static int	epclk_match(struct device *, struct cfdata *, void *);
 static void	epclk_attach(struct device *, struct device *, void *);
@@ -296,15 +297,89 @@ delay(unsigned int len)
 	}
 }
 
+todr_chip_handle_t todr_handle;
+
+/*
+ * todr_attach:
+ *
+ *	Set the specified time-of-day register as the system real-time clock.
+ */
 void
-resettodr(void)
+todr_attach(todr_chip_handle_t todr)
 {
+
+	if (todr_handle)
+		panic("todr_attach: rtc already configured");
+	todr_handle = todr;
 }
 
+/*
+ * inittodr:
+ *
+ *	Initialize time from the time-of-day register.
+ */
+#define	MINYEAR		2003	/* minimum plausible year */
 void
 inittodr(time_t base)
 {
+	time_t deltat;
+	int badbase;
 
-	time.tv_sec = base;
-	time.tv_usec = 0;
+	if (base < (MINYEAR - 1970) * SECYR) {
+		printf("WARNING: preposterous time in file system");
+		/* read the system clock anyway */
+		base = (MINYEAR - 1970) * SECYR;
+		badbase = 1;
+	} else
+		badbase = 0;
+
+	if (todr_handle == NULL ||
+	    todr_gettime(todr_handle, (struct timeval *)&time) != 0 ||
+	    time.tv_sec == 0) {
+		/*
+		 * Believe the time in the file system for lack of
+		 * anything better, resetting the TODR.
+		 */
+		time.tv_sec = base;
+		time.tv_usec = 0;
+		if (todr_handle != NULL && !badbase) {
+			printf("WARNING: preposterous clock chip time\n");
+			resettodr();
+		}
+		goto bad;
+	}
+
+	if (!badbase) {
+		/*
+		 * See if we tained/lost two or more days; if
+		 * so, assume something is amiss.
+		 */
+		deltat = time.tv_sec - base;
+		if (deltat < 0)
+			deltat = -deltat;
+		if (deltat < 2 * SECDAY)
+			return;		/* all is well */
+		printf("WARNING: clock %s %ld days\n",
+		    time.tv_sec < base ? "lost" : "gained",
+		    (long)deltat / SECDAY);
+	}
+ bad:
+	printf("WARNING: CHECK AND RESET THE DATE!\n");
+}
+
+/*
+ * resettodr:
+ *
+ *	Reset the time-of-day register with the current time.
+ */
+void
+resettodr(void)
+{
+
+	if (time.tv_sec == 0)
+		return;
+
+	if (todr_handle != NULL &&
+	    todr_settime(todr_handle, (struct timeval *)&time) != 0)
+		printf("resettodr: failed to set time\n");
 }
