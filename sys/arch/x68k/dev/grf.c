@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.10 1998/08/06 14:08:53 minoura Exp $	*/
+/*	$NetBSD: grf.c,v 1.11 1998/08/22 14:38:37 minoura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -568,12 +568,12 @@ grfmap(dev, addrp, p)
 	vn.v_specinfo = &si;			/* XXX */
 	vn.v_rdev = dev;			/* XXX */
 #if defined(UVM)
-	error = uvm_mmap(&p->p_vmspace->vm_map, (vm_offset_t *)addrp,
-			 (vm_size_t)len, VM_PROT_ALL, VM_PROT_ALL,
+	error = uvm_mmap(&p->p_vmspace->vm_map, (vaddr_t *)addrp,
+			 (vsize_t)len, VM_PROT_ALL, VM_PROT_ALL,
 			 flags, (caddr_t)&vn, 0);
 #else
-	error = vm_mmap(&p->p_vmspace->vm_map, (vm_offset_t *)addrp,
-			(vm_size_t)len, VM_PROT_ALL, VM_PROT_ALL,
+	error = vm_mmap(&p->p_vmspace->vm_map, (vaddr_t *)addrp,
+			(vsize_t)len, VM_PROT_ALL, VM_PROT_ALL,
 			flags, (caddr_t)&vn, 0);
 #endif
 	if (error == 0)
@@ -588,7 +588,7 @@ grfunmap(dev, addr, p)
 	struct proc *p;
 {
 	struct grf_softc *gp = grf_cd.cd_devs[GRFUNIT(dev)];
-	vm_size_t size;
+	vsize_t size;
 	int rv;
 
 #ifdef DEBUG
@@ -600,10 +600,10 @@ grfunmap(dev, addr, p)
 	(void) (*gp->g_sw->gd_mode)(gp, GM_UNMAP, 0);
 	size = round_page(gp->g_display.gd_regsize + gp->g_display.gd_fbsize);
 #if defined(UVM)
-	rv = uvm_unmap(&p->p_vmspace->vm_map, (vm_offset_t)addr,
-	    (vm_offset_t)addr + size, FALSE);
+	rv = uvm_unmap(&p->p_vmspace->vm_map, (vaddr_t)addr,
+	    (vaddr_t)addr + size, FALSE);
 #else
-	rv = vm_deallocate(&p->p_vmspace->vm_map, (vm_offset_t)addr, size);
+	rv = vm_deallocate(&p->p_vmspace->vm_map, (vaddr_t)addr, size);
 #endif
 	return(rv == KERN_SUCCESS ? 0 : EINVAL);
 }
