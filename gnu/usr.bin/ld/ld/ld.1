@@ -27,7 +27,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$Id: ld.1,v 1.2 1993/10/18 23:34:31 pk Exp $
+.\"	$Id: ld.1,v 1.3 1993/11/02 22:56:51 pk Exp $
 .\"
 .Dd October 14, 1993
 .Dt LD 8
@@ -89,6 +89,9 @@ The counterpart of -Bdynamic. This options turns off dynamic linking for
 all library specifiers until a -Bdynamic is once again given. Any explicitly
 mentioned shared object encountered on the command line while this option is
 in effect is flagged as an error.
+.It Fl B Ar shareable
+Instructs the linker to build a shared object from the object files rather
+than a normal executable image.
 .It Fl B Ar symbolic
 This option causes all symbolic references in the output to be resolved in
 this link-edit session. The only remaining run-time relocation requirements are
@@ -111,8 +114,7 @@ obtain shareable code in the presence of run-time relocations as such
 calls will be re-directed through the Procedure Linkage Table (see
 .Xr link 5)
 .It Fl e Ar entry-symbol
-Specifies the entry symbol for an executable. The absence of an entry
-point means that the ouput file will become a shared object.
+Specifies the entry symbol for an executable.
 .It Fl L Ar path
 Add
 .Ar path
