@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2002/03/31 15:49:58 bjh21 Exp $
+#	$NetBSD: Makefile,v 1.11 2002/04/11 06:11:10 lukem Exp $
 
 # The `all' target must appear before bsd.own.mk is pulled in.
 all:
@@ -6,10 +6,11 @@ all:
 	@false
 
 .include <bsd.own.mk>
+.include "${_SRC_TOP_}/distrib/Makefile.inc"
 
 SETSENV=	DESTDIR=${DESTDIR:Q} \
 		MACHINE=${MACHINE:Q} MACHINE_ARCH=${MACHINE_ARCH:Q} \
-		CKSUM=${CKSUM:Q} MAKE=${MAKE:Q} MTREE=${MTREE:Q} PAX=${PAX:Q} 
+		MAKE=${MAKE:Q} MTREE=${MTREE:Q} PAX=${PAX:Q} 
 
 print_machine: .PHONY
 	@echo ${MACHINE}
@@ -56,7 +57,7 @@ maketars: check_DESTDIR check_RELEASEDIR
 
 .PRECIOUS: makesums
 makesums: check_RELEASEDIR
-	${SETSENV} sh ${.CURDIR}/makesums -t ${RELEASEDIR}/binary/sets
+	${SETSENV} ${MAKESUMS} -t ${RELEASEDIR}/binary/sets
 
 #
 # MAIN ENTRY POINTS
