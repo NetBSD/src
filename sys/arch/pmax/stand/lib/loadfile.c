@@ -1,4 +1,4 @@
-/* $NetBSD: loadfile.c,v 1.3 1999/04/10 01:52:33 simonb Exp $ */
+/* $NetBSD: loadfile.c,v 1.4 1999/04/17 11:24:16 simonb Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@ loadfile(fname, marks, flags)
 
 	/* Open the file. */
 	if ((fd = open(fname, 0)) < 0) {
-		WARN(("open %s", fname));
+		WARN(("open %s", fname ? fname : "<default>"));
 		return -1;
 	}
 
@@ -162,7 +162,7 @@ loadfile(fname, marks, flags)
 	{
 		rval = 1;
 		errno = EFTYPE;
-		WARN(("%s", fname));
+		WARN(("%s", fname ? fname : "<default>"));
 	}
 
 	if (rval == 0) {
