@@ -1,4 +1,4 @@
-/*	$NetBSD: euctw.c,v 1.2 2000/12/21 12:17:35 itojun Exp $	*/
+/*	$NetBSD: euctw.c,v 1.3 2000/12/25 09:25:15 itojun Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: euctw.c,v 1.2 2000/12/21 12:17:35 itojun Exp $");
+__RCSID("$NetBSD: euctw.c,v 1.3 2000/12/25 09:25:15 itojun Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -98,7 +98,7 @@ _euc_count(set)
 		abort();
 		/*NOTREACHED*/
 	}
-    return 0;
+	return 0;
 }
 
 rune_t
