@@ -1,14 +1,16 @@
-/*	$NetBSD: endian_machdep.h,v 1.1 2002/07/05 13:31:58 scw Exp $	*/
+/*	$NetBSD: endian_machdep.h,v 1.2 2002/07/12 19:33:27 scw Exp $	*/
 
-#ifndef _BYTE_ORDER
-# error  Define SH target CPU endian-ness in port-specific header file.
+#ifdef __LITTLE_ENDIAN__
+#define _BYTE_ORDER     _LITTLE_ENDIAN
+#else
+#define _BYTE_ORDER     _BIG_ENDIAN
 #endif
 
 #ifdef	__GNUC__
 
 #include <sh5/bswap.h>
 
-#if BTYE_ORDER == LITTLE_ENDIAN
+#if _BTYE_ORDER == _LITTLE_ENDIAN
 #define	ntohl(x)	((in_addr_t)bswap32(x))
 #define	ntohs(x)	((in_port_t)bswap16(x))
 #define	htonl(x)	((in_addr_t)bswap32(x))

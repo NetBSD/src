@@ -1,4 +1,4 @@
-#	$NetBSD: SIMULATOR,v 1.1 2002/07/05 13:31:37 scw Exp $
+#	$NetBSD: SIMULATOR,v 1.2 2002/07/12 19:33:28 scw Exp $
 
 # NetBSD/sh5 on the simple `chess' based simulator.
 #
@@ -11,10 +11,13 @@ maxusers	2
 
 options 	INCLUDE_CONFIG_FILE
 
-#ident		"SIMULATOR-$Revision: 1.1 $"
+#ident		"SIMULATOR-$Revision: 1.2 $"
 
 options 	CPU_STB1
 options 	SIMULATED_CLOCK
+
+# Uncomment this to build a 64-bit kernel
+#makeoptions 	SH5_ABI=64
 
 options 	DIAGNOSTIC
 options 	DEBUG
