@@ -1,4 +1,4 @@
-/*	$NetBSD: newport.c,v 1.2 2004/01/22 14:15:51 lonewolf Exp $	*/
+/*	$NetBSD: newport.c,v 1.3 2004/01/26 07:12:33 sekiya Exp $	*/
 
 /*
  * Copyright (c) 2003 Ilpo Ruotsalainen
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: newport.c,v 1.2 2004/01/22 14:15:51 lonewolf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: newport.c,v 1.3 2004/01/26 07:12:33 sekiya Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,8 +58,12 @@ struct newport_devconfig {
 	bus_space_handle_t	dc_sh;
 
 	int			dc_boardrev;
+	int			dc_cmaprev;
+	int			dc_xmaprev;
+	int			dc_rexrev;
 	int			dc_xres;
 	int			dc_yres;
+	int			dc_depth;
 
 	int			dc_screens;
 	
@@ -336,6 +340,19 @@ vc2_write_ram(struct newport_devconfig *dc, uint16_t addr, uint16_t val)
 	rex3_write(dc, REX3_REG_DCBDATA0, val << 16);
 }
 
+static u_int32_t
+xmap9_read(struct newport_devconfig *dc, int crs)
+{
+	rex3_write(dc, REX3_REG_DCBMODE,
+		REX3_DCBMODE_DW_1 |
+		(NEWPORT_DCBADDR_XMAP_0 << REX3_DCBMODE_DCBADDR_SHIFT) |
+		(crs << REX3_DCBMODE_DCBCRS_SHIFT) |
+		(3 << REX3_DCBMODE_CSWIDTH_SHIFT) |
+		(2 << REX3_DCBMODE_CSHOLD_SHIFT) |
+		(1 << REX3_DCBMODE_CSSETUP_SHIFT));
+	return rex3_read(dc, REX3_REG_DCBDATA0);
+}
+
 static void
 xmap9_write(struct newport_devconfig *dc, int crs, uint8_t val)
 {
@@ -374,7 +391,7 @@ newport_fill_rectangle(struct newport_devconfig *dc, int x1, int y1, int x2,
 	rex3_write(dc, REX3_REG_DRAWMODE0, REX3_DRAWMODE0_OPCODE_DRAW |
 	    REX3_DRAWMODE0_ADRMODE_BLOCK | REX3_DRAWMODE0_DOSETUP |
 	    REX3_DRAWMODE0_STOPONX | REX3_DRAWMODE0_STOPONY);
-	rex3_write(dc, REX3_REG_WRMASK, 0xff);
+	rex3_write(dc, REX3_REG_WRMASK, 0xffffffff);
 	rex3_write(dc, REX3_REG_COLORI, color);
 	rex3_write(dc, REX3_REG_XYSTARTI, (x1 << REX3_XYSTARTI_XSHIFT) | y1);
 
@@ -477,8 +494,9 @@ newport_setup_hw(struct newport_devconfig *dc)
 {
 	uint16_t curp,tmp;
 	int i;
+	uint32_t scratch;
 
-	/* Get newport board revision */
+	/* Get various revisions */
 	rex3_write(dc, REX3_REG_DCBMODE,
 	    REX3_DCBMODE_DW_1 |
 	    (NEWPORT_DCBADDR_CMAP_0 << REX3_DCBMODE_DCBADDR_SHIFT) |
@@ -487,7 +505,11 @@ newport_setup_hw(struct newport_devconfig *dc)
 	    (1 << REX3_DCBMODE_CSHOLD_SHIFT) |
 	    (1 << REX3_DCBMODE_CSSETUP_SHIFT));
 
-	dc->dc_boardrev = (rex3_read(dc, REX3_REG_DCBDATA0) >> 28) & 0x07;
+	scratch = rex3_read(dc, REX3_REG_DCBDATA0);
+
+	dc->dc_boardrev = (scratch >> 28) & 0x07;
+	dc->dc_cmaprev = scratch & 0x07;
+	dc->dc_xmaprev = xmap9_read(dc, XMAP9_DCBCRS_REVISION) & 0x07;
 
 	/* Setup cursor glyph */
 	curp = vc2_read_ireg(dc, VC2_IREG_CURSOR_ENTRY);
@@ -615,8 +637,9 @@ newport_attach(struct device *parent, struct device *self, void *aux)
 
 	aprint_naive(": Display adapter\n");
 
-	aprint_normal(": SGI NG1 (board revision %d)\n",
-	    sc->sc_dc->dc_boardrev);
+	aprint_normal(": SGI NG1 (board revision %d, cmap revision %d, xmap revision %d), depth %d\n",
+	    sc->sc_dc->dc_boardrev, sc->sc_dc->dc_cmaprev,
+	    sc->sc_dc->dc_xmaprev, sc->sc_dc->dc_depth);
 
 	wa.scrdata = &newport_screenlist;
 	wa.accessops = &newport_accessops;
@@ -729,7 +752,7 @@ newport_putchar(void *c, int row, int col, u_int ch, long attr)
 	rex3_write(dc, REX3_REG_COLORI, NEWPORT_ATTR_FG(attr));
 	rex3_write(dc, REX3_REG_COLORBACK, NEWPORT_ATTR_BG(attr));
 
-	rex3_write(dc, REX3_REG_WRMASK, 0xff);
+	rex3_write(dc, REX3_REG_WRMASK, 0xffffffff);
 
 	for (i=0; i<font->fontheight; i++) {
 		/* XXX Works only with font->fontwidth == 8 XXX */
@@ -830,6 +853,21 @@ newport_allocattr(void *c, int fg, int bg, int flags, long *attr)
 static int
 newport_ioctl(void *c, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
+	struct newport_softc *sc = c;
+
+#define FBINFO (*(struct wsdisplay_fbinfo*)data)
+
+	switch (cmd) {
+	case WSDISPLAYIO_GINFO:
+		FBINFO.width  = sc->sc_dc->dc_xres;
+		FBINFO.height = sc->sc_dc->dc_yres;
+		FBINFO.depth  = sc->sc_dc->dc_depth;
+		FBINFO.cmsize = 1 << FBINFO.depth;
+		return 0;
+	case WSDISPLAYIO_GTYPE:
+		*(u_int *)data = WSDISPLAY_TYPE_NEWPORT;
+		return 0;
+	}
 	return EPASSTHROUGH;
 }
 
