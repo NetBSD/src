@@ -1,8 +1,0 @@
-@cwd /
-./usr/lkm/compat_freebsd.o
-./usr/lkm/compat_linux.o
-./usr/lkm/compat_svr4.o
-./usr/lkm/exec_freebsd_aout.o
-./usr/lkm/exec_freebsd_elf.o
-./usr/lkm/exec_linux_elf.o
-./usr/lkm/exec_svr4_elf.o

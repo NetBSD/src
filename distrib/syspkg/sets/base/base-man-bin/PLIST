@@ -1,6 +1,0 @@
-@cwd /
-./usr/bin/apropos
-./usr/bin/man
-./usr/libexec/getNAME
-./usr/libexec/makewhatis
-./usr/sbin/catman

@@ -1,9 +1,0 @@
-@cwd /
-./usr/lib/libipsec.so.2
-./usr/lib/libipsec.so.2.0
-./usr/lib/libpcap.so.1
-./usr/lib/libpcap.so.1.2
-./usr/lib/libresolv.so.1
-./usr/lib/libresolv.so.1.0
-./usr/lib/libwrap.so.0
-./usr/lib/libwrap.so.0.2
