@@ -1,4 +1,4 @@
-/*	$NetBSD: ps.h,v 1.9 1995/08/14 05:00:07 cgd Exp $	*/
+/*	$NetBSD: ps.h,v 1.10 1995/08/15 14:01:02 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -67,7 +67,7 @@ typedef struct var {
 #define	COMM	0x01		/* needs exec arguments and environment (XXX) */
 #define	LJUST	0x02		/* left adjust on output (trailing blanks) */
 #define	USER	0x04		/* needs user structure */
-#define	TWODGT	0x08		/* print as two digits, as 99 if > 99 */
+#define	INF127	0x08		/* 127 = infinity: if > 127, print 127. */
 	u_int	flag;
 				/* output routine */
 	void	(*oproc) __P((struct kinfo *, struct varent *));
