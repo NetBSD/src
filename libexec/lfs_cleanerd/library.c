@@ -1,4 +1,4 @@
-/*	$NetBSD: library.c,v 1.40 2004/04/21 01:05:32 christos Exp $	*/
+/*	$NetBSD: library.c,v 1.41 2005/02/26 05:43:04 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)library.c	8.3 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: library.c,v 1.40 2004/04/21 01:05:32 christos Exp $");
+__RCSID("$NetBSD: library.c,v 1.41 2005/02/26 05:43:04 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -43,15 +43,19 @@ __RCSID("$NetBSD: library.c,v 1.40 2004/04/21 01:05:32 christos Exp $");
 #include <sys/stat.h>
 #include <sys/mount.h>
 #include <sys/types.h>
+#include <sys/fstypes.h>
 #include <sys/mman.h>
 
 #include <ufs/ufs/dinode.h>
 #include <ufs/lfs/lfs.h>
 
+#include <dirent.h>
 #include <err.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdarg.h>
 #include <string.h>
 #include <unistd.h>
 #include <syslog.h>
@@ -121,8 +125,7 @@ get_fs_info(struct statvfs *lstatvfsp, int use_mmap)
 
 	fsp->fi_statvfsp = lstatvfsp;
 	if (get_superblock(fsp, &fsp->fi_lfs)) {
-		syslog(LOG_ERR, "get_fs_info: get_superblock failed (%m)");
-                exit(1);
+		log_exit(0, LOG_ERR, "get_fs_info: get_superblock failed (%m)");
         }
 	get_ifile(fsp, use_mmap);
 	return (fsp);
@@ -137,14 +140,12 @@ void
 reread_fs_info(FS_INFO *fsp, int use_mmap)
 {
 	if (ifile_fd != -1) {
-		if (fstatvfs(ifile_fd, fsp->fi_statvfsp) == -1) {
-			syslog(LOG_ERR, "reread_fs_info: fstatvfs failed (%m)");
-                	exit(1);
-		}
+		if (fstatvfs(ifile_fd, fsp->fi_statvfsp) == -1)
+			log_exit(EBADF, LOG_ERR, "reread_fs_info: fstatvfs failed (%m)");
 	} else if (statvfs(fsp->fi_statvfsp->f_mntonname, fsp->fi_statvfsp)) {
-		syslog(LOG_ERR, "reread_fs_info: statvfs `%s' failed (%m)",
-		    fsp->fi_statvfsp->f_mntonname);
-                exit(1);
+		log_exit(EBADF, LOG_ERR, "reread_fs_info: "
+			 "fstatvfs `%s' failed (%m)",
+			 fsp->fi_statvfsp->f_mntonname);
         }
 	get_ifile(fsp, use_mmap);
 }
@@ -159,10 +160,8 @@ getdevfd(FS_INFO *fsp)
 
 	(void)snprintf(rdev, sizeof(rdev), "/dev/r%s",
 	    fsp->fi_statvfsp->f_mntfromname + 5);
-	if ((dev_fd = open(rdev, O_RDONLY)) == -1) {
-		syslog(LOG_ERR, "Cannot open `%s' (%m)", rdev);
-		exit(1);
-	}
+	if ((dev_fd = open(rdev, O_RDONLY)) == -1)
+		log_exit(0, LOG_ERR, "Cannot open `%s' (%m)", rdev);
 	return dev_fd;
 }
 
@@ -265,45 +264,33 @@ get_superblock(FS_INFO *fsp, struct lfs *sbp)
 void
 get_ifile(FS_INFO *fsp, int use_mmap)
 {
+	struct fhandle fh;
 	struct stat file_stat;
-	struct statvfs statvfsbuf;
 	caddr_t ifp;
 	char *ifile_name;
 	int count;
+	int rfd; /* Root file descriptor */
 
 	ifp = NULL;
-	asprintf(&ifile_name, "%s/%s", fsp->fi_statvfsp->f_mntonname,
-	    IFILE_NAME);
-	if (!ifile_name) {
-		syslog(LOG_ERR, "get_ifile: malloc failed: %m");
-		exit(1);
-	}
-
 	if(ifile_fd == -1) {
-		/* XXX KS - Do we ever *write* to the ifile? */
-		if ((ifile_fd = open(ifile_name, O_RDONLY)) == -1) {
-			syslog(LOG_ERR, "get_ifile: cannot open `%s': %m",
-			    ifile_name);
-			exit(1);
-		}
+		rfd = open(fsp->fi_statvfsp->f_mntonname, O_RDONLY);
+		if (rfd < 0)
+			log_exit(0, LOG_ERR, "get_ifile: cannot open %s: %m",
+			    fsp->fi_statvfsp->f_mntonname);
+		if (fcntl(rfd, LFCNIFILEFH, &fh) == -1)
+			log_exit(EOPNOTSUPP, LOG_ERR,
+				 "get_ifile: fcntl LFCNIFILEFH on %s: %m",
+				 fsp->fi_statvfsp->f_mntonname);
+		if ((ifile_fd = fhopen(&fh, O_RDONLY)) < 0)
+			log_exit(0, LOG_ERR,
+				 "get_ifile: cannot fhopen ifile from %s: %m",
+				 fsp->fi_statvfsp->f_mntonname);
+		close(rfd);
 	} else
 		lseek(ifile_fd, (off_t)0, SEEK_SET);
 
-	if (fstat(ifile_fd, &file_stat) == -1) {
-		/* If the fs was unmounted, don't complain */
-		if (statvfs(fsp->fi_statvfsp->f_mntonname, &statvfsbuf) != -1) {
-			if(memcmp(&statvfsbuf.f_fsidx,
-			    &fsp->fi_statvfsp->f_fsidx,
-			    sizeof(statvfsbuf.f_fsidx)) != 0) {
-				/* Filesystem still mounted, 
-				 * this error is real
-				 */
-				syslog(LOG_ERR, "get_ifile: fstat failed: %m");
-				exit(1);
-			}
-		}
-		exit(0);
-        }
+	if (fstat(ifile_fd, &file_stat) == -1)
+		log_exit(EBADF, LOG_ERR, "get_ifile: fstat failed: %m");
 	fsp->fi_fs_tstamp = file_stat.st_mtimespec.tv_sec;
 
 	if (use_mmap && file_stat.st_size == fsp->fi_ifile_length) {
@@ -319,31 +306,23 @@ get_ifile(FS_INFO *fsp, int use_mmap)
                 /* XXX KS - Do we ever *write* to the ifile? */
 		ifp = mmap((caddr_t)0, file_stat.st_size,
 		    PROT_READ, MAP_FILE|MAP_PRIVATE, ifile_fd, (off_t)0);
-		if (ifp == (caddr_t)(-1)) {
-                    syslog(LOG_ERR, "get_ifile: mmap failed (%m)");
-                    exit(1);
-                }
+		if (ifp == (caddr_t)(-1))
+                    log_exit(0, LOG_ERR, "get_ifile: mmap failed (%m)");
 	} else {
 		if (fsp->fi_cip)
 			free(fsp->fi_cip);
-		if ((ifp = malloc(file_stat.st_size)) == NULL) {
-			syslog(LOG_ERR, "get_ifile: malloc failed (%m)");
-                        exit(1);
-                }
+		if ((ifp = malloc(file_stat.st_size)) == NULL)
+			log_exit(0, LOG_ERR, "get_ifile: malloc failed (%m)");
 redo_read:
 		count = read(ifile_fd, ifp, (size_t)file_stat.st_size);
 
-		if (count < 0) {
-			syslog(LOG_ERR, "get_ifile: bad ifile read (%m)");
-                        exit(1);
-                }
+		if (count < 0)
+			log_exit(EIO, LOG_ERR, "get_ifile: bad read (%m)");
 		else if (count < file_stat.st_size) {
 			syslog(LOG_WARNING, "get_ifile (%m)");
-			if (lseek(ifile_fd, 0, SEEK_SET) < 0) {
-                                syslog(LOG_ERR,
-				    "get_ifile: bad ifile lseek (%m)");
-                                exit(1);
-                        }
+			if (lseek(ifile_fd, 0, SEEK_SET) < 0)
+                                log_exit(0, LOG_ERR,
+					 "get_ifile: bad ifile lseek (%m)");
 			goto redo_read;
 		}
 	}
@@ -467,12 +446,10 @@ lfs_segmapv(FS_INFO *fsp, int seg, caddr_t seg_buf, BLOCK_INFO **blocks, int *bc
 			    (fip->fi_nblocks - 1) * sizeof(int32_t);
 			fip = (FINFO *)(&fip->fi_blocks[fip->fi_nblocks]);
 		}
-		if (sumsize > lfsp->lfs_sumsize) {
-                        syslog(LOG_ERR,
+		if (sumsize > lfsp->lfs_sumsize)
+                        log_exit(0, LOG_ERR,
 			    "Segment %d summary block too big: %d",
 			    seg, sumsize);
-			exit(1);
-		}
 #endif
 
 		if (*bcount + nblocks + sp->ss_ninos > nelem) {
@@ -853,4 +830,20 @@ toss(void *p, int *nump, size_t size, int (*dotoss)(const void *, const void *, 
 		} else
 			p0 += size;
 	}
+}
+
+void
+log_exit(int gooderr, int pri, char *fmt, ...)
+{
+	va_list ap;
+	int err;
+
+	err = errno;
+	if (err == gooderr)
+		pri = LOG_DEBUG;
+	va_start(ap, fmt);
+	vsyslog(pri, fmt, ap);
+	va_end(ap);
+
+	exit(err != gooderr);
 }
