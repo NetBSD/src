@@ -1,7 +1,7 @@
-/*	$NetBSD: linux_blkio.c,v 1.1 2001/01/10 02:28:01 fvdl Exp $	*/
+/*	$NetBSD: linux_blkio.c,v 1.2 2001/01/10 02:33:47 fvdl Exp $	*/
 
 /*
- * Copyright (c) 2000 Wasabi Systems, Inc.
+ * Copyright (c) 2001 Wasabi Systems, Inc.
  * All rights reserved.
  *
  * Written by Frank van der Linden for Wasabi Systems, Inc.
