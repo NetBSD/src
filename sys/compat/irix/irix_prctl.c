@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_prctl.c,v 1.21 2003/01/28 23:47:42 manu Exp $ */
+/*	$NetBSD: irix_prctl.c,v 1.22 2003/11/08 21:33:35 manu Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_prctl.c,v 1.21 2003/01/28 23:47:42 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_prctl.c,v 1.22 2003/11/08 21:33:35 manu Exp $");
 
 #include <sys/errno.h>
 #include <sys/types.h>
@@ -284,7 +284,7 @@ irix_sproc(entry, inh, arg, sp, len, pid, l, retval)
 	struct irix_sproc_child_args *isc;	
 	struct irix_emuldata *ied;
 	struct irix_emuldata *iedp;
-	struct irix_share_group *isg;
+	struct irix_share_group *isg = NULL;
 	segsz_t stacksize;
 
 #ifdef DEBUG_IRIX
