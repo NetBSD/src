@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eca.c,v 1.4 2001/09/17 22:41:59 bjh21 Exp $	*/
+/*	$NetBSD: if_eca.c,v 1.5 2001/09/20 21:54:11 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -29,7 +29,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: if_eca.c,v 1.4 2001/09/17 22:41:59 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eca.c,v 1.5 2001/09/20 21:54:11 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <sys/malloc.h>
@@ -146,8 +146,7 @@ eca_init(struct ifnet *ifp)
 		return err;
 
 	/* Claim the FIQ early, in case we don't get it. */
-	if (fiq_claim(eca_fiqhandler_rx,
-	    eca_efiqhandler_rx - eca_fiqhandler_rx))
+	if (fiq_claim(eca_fiqhandler, eca_efiqhandler - eca_fiqhandler))
 		return EBUSY;
 
 	if (sc->sc_rcvmbuf == NULL) {
@@ -223,16 +222,16 @@ eca_txframe(struct ifnet *ifp, struct mbuf *m)
 	/* Start flag-filling while we work out what to do next. */
 	sc->sc_cr2 |= MC6854_CR2_RTS | MC6854_CR2_F_M_IDLE;
 	bus_space_write_1(iot, ioh, MC6854_CR2, sc->sc_cr2);
-	fiq_installhandler(eca_fiqhandler_tx,
-	    eca_efiqhandler_tx - eca_fiqhandler_tx);
+	sc->sc_fiqstate.efs_fiqhandler = eca_fiqhandler_tx;
+	fiq_installhandler(eca_fiqhandler, eca_efiqhandler - eca_fiqhandler);
 	sc->sc_transmitting = 1;
 	sc->sc_txmbuf = m;
 	fr.r8_fiq = (register_t)sc->sc_ioh.a1;
 	fr.r9_fiq = (register_t)sc->sc_txmbuf->m_data;
 	fr.r10_fiq = (register_t)sc->sc_txmbuf->m_len;
-	fr.r11_fiq = (register_t)&sc->sc_txstate;
+	fr.r11_fiq = (register_t)&sc->sc_fiqstate;
 	fiq_setregs(&fr);
-	sc->sc_txstate.etx_curmbuf = sc->sc_txmbuf;
+	sc->sc_fiqstate.efs_tx_curmbuf = sc->sc_txmbuf;
 	fiq_downgrade_handler = eca_tx_downgrade;
 	/* Read and clear Tx status. */
 	bus_space_read_1(iot, ioh, MC6854_SR1);
@@ -252,13 +251,10 @@ eca_tx_downgrade(void)
 	bus_space_handle_t ioh = sc->sc_ioh;
 	int sr1;
 	char buf[128];
-#if 0
-	struct fiq_regs fr;
-#endif
 
 	KASSERT(sc->sc_transmitting);
 	sc->sc_cr2 = 0;
-	if (__predict_true(sc->sc_txstate.etx_curmbuf == NULL)) {
+	if (__predict_true(sc->sc_fiqstate.efs_tx_curmbuf == NULL)) {
 		/* Entire frame got transmitted. */
 	} else {
 		sr1 = bus_space_read_1(iot, ioh, MC6854_SR1);
@@ -347,9 +343,11 @@ eca_init_rx(struct eca_softc *sc)
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	struct fiq_regs fr;
+	int sr2;
 
-	fiq_installhandler(eca_fiqhandler_rx,
-	    eca_efiqhandler_rx - eca_fiqhandler_rx);
+	sr2 = bus_space_read_1(iot, ioh, MC6854_SR2);
+	sc->sc_fiqstate.efs_fiqhandler = eca_fiqhandler_rx;
+	fiq_installhandler(eca_fiqhandler, eca_efiqhandler - eca_fiqhandler);
 	sc->sc_transmitting = 0;
 	sc->sc_cr1 = MC6854_CR1_RIE;
 	bus_space_write_1(iot, ioh, MC6854_CR1, sc->sc_cr1);
@@ -357,13 +355,14 @@ eca_init_rx(struct eca_softc *sc)
 	fr.r8_fiq = (register_t)sc->sc_ioh.a1;
 	fr.r9_fiq = (register_t)sc->sc_rcvmbuf->m_data;
 	fr.r10_fiq = (register_t)ECO_ADDR_LEN;
-	fr.r11_fiq = (register_t)&sc->sc_rxstate;
-	sc->sc_rxstate.erx_curmbuf = sc->sc_rcvmbuf;
-	sc->sc_rxstate.erx_flags = 0;
-	sc->sc_rxstate.erx_myaddr = LLADDR(ifp->if_sadl)[0];
+	fr.r11_fiq = (register_t)&sc->sc_fiqstate;
+	sc->sc_fiqstate.efs_rx_curmbuf = sc->sc_rcvmbuf;
+	sc->sc_fiqstate.efs_rx_flags = 0;
+	sc->sc_fiqstate.efs_rx_myaddr = LLADDR(ifp->if_sadl)[0];
 	fiq_setregs(&fr);
 	fiq_downgrade_handler = eca_rx_downgrade;
 	eca_fiqowner = sc;
+	sr2 = bus_space_read_1(iot, ioh, MC6854_SR2);
 	ioc_fiq_setmask(IOC_FIQ_BIT(FIQ_EFIQ));
 }
 
@@ -425,6 +424,7 @@ eca_gotframe(void *arg)
 	if (__predict_false(sr2 & MC6854_SR2_OVRN)) {
 		log(LOG_ERR, "%s: Rx overrun\n", sc->sc_dev.dv_xname);
 		ifp->if_ierrors++;
+
 		/* Discard the rest of the frame. */
 		if (!sc->sc_transmitting)
 			bus_space_write_1(iot, ioh, MC6854_CR1,
@@ -433,7 +433,7 @@ eca_gotframe(void *arg)
 		/* Frame Valid. */
 		fiq_getregs(&fr);
 		m = sc->sc_rcvmbuf;
-		mtail = sc->sc_rxstate.erx_curmbuf;
+		mtail = sc->sc_fiqstate.efs_rx_curmbuf;
 		/*
 		 * Before we process this buffer, make sure we can get
 		 * a new one.
@@ -468,7 +468,7 @@ eca_gotframe(void *arg)
 	if (sr2 & MC6854_SR2_RX_IDLE)
 		eco_inputidle(ifp);
 
-	if (sc->sc_rxstate.erx_curmbuf == NULL) {
+	if (sc->sc_fiqstate.efs_rx_curmbuf == NULL) {
 		log(LOG_NOTICE, "%s: Oversized frame\n", sc->sc_dev.dv_xname);
 		ifp->if_ierrors++;
 		/* Discard the rest of the frame. */
