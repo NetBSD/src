@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.36 1994/10/20 14:03:38 mycroft Exp $	*/
+/*	$NetBSD: cd.c,v 1.37 1994/10/20 14:09:10 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -208,7 +208,7 @@ cdopen(dev, flag, fmt, p)
 	 * forbid re-entry.  (may have changed media)
 	 */
 	if ((sc_link->flags & SDEV_MEDIA_LOADED) == 0 &&
-	    cd->sc_dk.dk_openpart != 0)
+	    cd->sc_dk.dk_openmask != 0)
 		return ENXIO;
 
 	/*
@@ -267,20 +267,20 @@ cdopen(dev, flag, fmt, p)
 	/* Insure only one open at a time. */
 	switch (fmt) {
 	case S_IFCHR:
-		cd->sc_dk.dk_copenpart |= (1 << part);
+		cd->sc_dk.dk_copenmask |= (1 << part);
 		break;
 	case S_IFBLK:
-		cd->sc_dk.dk_bopenpart |= (1 << part);
+		cd->sc_dk.dk_bopenmask |= (1 << part);
 		break;
 	}
-	cd->sc_dk.dk_openpart = cd->sc_dk.dk_copenpart | cd->sc_dk.dk_bopenpart;
+	cd->sc_dk.dk_openmask = cd->sc_dk.dk_copenmask | cd->sc_dk.dk_bopenmask;
 
 	SC_DEBUG(sc_link, SDEV_DB3, ("open complete\n"));
 	sc_link->flags |= SDEV_MEDIA_LOADED;
 	return 0;
 
 bad:
-	if (cd->sc_dk.dk_openpart == 0) {
+	if (cd->sc_dk.dk_openmask == 0) {
 		scsi_prevent(sc_link, PR_ALLOW, SCSI_ERR_OK | SCSI_SILENT);
 		sc_link->flags &= ~SDEV_OPEN;
 	}
@@ -300,15 +300,15 @@ cdclose(dev)
 
 	switch (fmt) {
 	case S_IFCHR:
-		cd->sc_dk.dk_copenpart &= ~(1 << part);
+		cd->sc_dk.dk_copenmask &= ~(1 << part);
 		break;
 	case S_IFBLK:
-		cd->sc_dk.dk_bopenpart &= ~(1 << part);
+		cd->sc_dk.dk_bopenmask &= ~(1 << part);
 		break;
 	}
-	cd->sc_dk.dk_openpart = cd->sc_dk.dk_copenpart | cd->sc_dk.dk_bopenpart;
+	cd->sc_dk.dk_openmask = cd->sc_dk.dk_copenmask | cd->sc_dk.dk_bopenmask;
 
-	if (cd->sc_dk.dk_openpart == 0) {
+	if (cd->sc_dk.dk_openmask == 0) {
 		scsi_prevent(cd->sc_link, PR_ALLOW, SCSI_ERR_OK | SCSI_SILENT);
 		cd->sc_link->flags &= ~SDEV_OPEN;
 	}
