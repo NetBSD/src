@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.7 1999/02/11 15:28:05 mycroft Exp $	*/
+/*	$NetBSD: zs.c,v 1.8 1999/03/26 04:42:59 dbj Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -664,7 +664,11 @@ zscnprobe(cp)
     }
   }
   if (maj != nchrdev) {
+#ifdef SERCONSOLE
+    cp->cn_pri = CN_REMOTE;
+#else
     cp->cn_pri = CN_NORMAL;		 /* Lower than CN_INTERNAL */
+#endif
     zs_major = maj;
     zs_consunit = 0;
     zsaddr[0] = (void *)IIOV(NEXT_P_SCC);
