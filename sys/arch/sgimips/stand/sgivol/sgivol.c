@@ -1,4 +1,4 @@
-/*	$NetBSD: sgivol.c,v 1.4 2002/03/13 13:12:30 simonb Exp $	*/
+/*	$NetBSD: sgivol.c,v 1.4.6.1 2002/07/19 01:32:11 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,6 +41,7 @@
 #include <sys/disklabel.h>
 #include <sys/stat.h>
 
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -48,7 +49,14 @@
 #include <fcntl.h>
 #include <util.h>
 
-#define SGI_SIZE_VOLHDR	3135	/* XXX Irix: 2592, NetBSD: 3753 */
+/*
+ * Some IRIX man pages refer to the size being a multiple of whole cylinders.
+ * Later ones only refer to the size being "typically" 2MB.  IRIX fx(1)
+ * uses a default drive geometry if one can't be determined, suggesting
+ * that "whole cylinder" multiples are not required.
+ */
+
+#define SGI_SIZE_VOLHDR	3135	/* XXX This is really arbitrary */
 
 int	fd;
 int	opt_i;			/* Initialize volume header */
@@ -56,6 +64,8 @@ int	opt_r;			/* Read a file from volume header */
 int	opt_w;			/* Write a file to volume header */
 int	opt_d;			/* Delete a file from volume header */
 int	opt_p;			/* Modify a partition */
+int	opt_q;			/* quiet mode */
+int	opt_f;			/* Don't ask, just do what you're told */
 int	partno, partfirst, partblocks, parttype;
 struct sgilabel *volhdr;
 int32_t	checksum;
@@ -100,64 +110,87 @@ void	usage(void);
 int
 main(int argc, char *argv[])
 {
-	if (argc < 2)
-		usage();
-
-	if (argv[1][0] == '-') {
-		switch(argv[1][1]) {
+	int ch;
+	while ((ch = getopt(argc, argv, "irwpdqf")) != -1) {
+		switch (ch) {
+		/* -i, -r, -w, -d and -p override each other */
+		/* -q implies -f */
+		case 'q':
+			++opt_q;
+			++opt_f;
+			break;
+		case 'f':
+			++opt_f;
+			break;
 		case 'i':
 			++opt_i;
-			argv++;
-			argc--;
+			opt_r = opt_w = opt_d = opt_p = 0;
 			break;
 		case 'r':
+			++opt_r;
+			opt_i = opt_w = opt_d = opt_p = 0;
+			break;
 		case 'w':
-			if (argc < 4)
-				usage();
-			if (argv[1][1] == 'r')
-				++opt_r;
-			else
-				++opt_w;
-			vfilename = argv[2];
-			ufilename = argv[3];
-			argv += 3;
-			argc -= 3;
+			++opt_w;
+			opt_i = opt_r = opt_d = opt_p = 0;
 			break;
 		case 'd':
-			if (argc < 3)
-				usage();
 			++opt_d;
-			vfilename = argv[2];
-			argv += 2;
-			argc -= 2;
-				break;
-		case 'p':
-			if (argc < 6)
-				usage();
-			++opt_p;
-			partno = atoi(argv[2]);
-			partfirst = atoi(argv[3]);
-			partblocks = atoi(argv[4]);
-			parttype = atoi(argv[5]);
-			argv += 5;
-			argc -= 5;
+			opt_i = opt_r = opt_w = opt_p = 0;
 			break;
+		case 'p':
+			++opt_p;
+			opt_i = opt_r = opt_w = opt_d = 0;
+			partno = atoi(argv[0]);
+			partfirst = atoi(argv[1]);
+			partblocks = atoi(argv[2]);
+			parttype = atoi(argv[3]);
+			break;
+		case '?':
 		default:
-			printf("-%c Invalid\n", argv[1][1]);
 			usage();
 		}
 	}
+	argc -= optind;
+	argv += optind;
 
-	if (argc < 2)
+	if (opt_r || opt_w) {
+		if (argc != 3)
+			usage();
+		vfilename = argv[0];
+		ufilename = argv[1];
+		argc -= 2;
+		argv += 2;
+	}
+	if (opt_d) {
+		if (argc != 2)
+			usage();
+		vfilename = argv[0];
+		argc--;
+		argv++;
+	}
+
+	if (opt_p) {
+		if (argc != 5)
+			usage();
+		partno = atoi(argv[0]);
+		partfirst = atoi(argv[1]);
+		partblocks = atoi(argv[2]);
+		parttype = atoi(argv[3]);
+		argc -= 4;
+		argv += 4;
+	}
+	if (argc != 1)
 		usage();
-
-	fd = open(argv[1], (opt_i | opt_w | opt_d | opt_p) ? O_RDWR : O_RDONLY);
+	
+	fd = open(argv[0], (opt_i | opt_w | opt_d | opt_p) ? O_RDWR : O_RDONLY);
 	if (fd < 0) {
-		sprintf(buf, "/dev/r%s%c", argv[1], 'a' + getrawpartition());
-		fd = open(buf,
-		    (opt_i | opt_w | opt_d | opt_p) ? O_RDWR : O_RDONLY);
+		sprintf(buf, "/dev/r%s%c", argv[0], 'a' + getrawpartition());
+		fd = open(buf, (opt_i | opt_w | opt_d | opt_p) 
+				? O_RDWR : O_RDONLY);
 		if (fd < 0) {
-			perror("open");
+			printf("Error opening device %s: %s\n",
+				argv[0], strerror(errno));
 			exit(1);
 		}
 	}
@@ -175,7 +208,8 @@ main(int argc, char *argv[])
 		exit(0);
 	}
 	if (volhdr->magic != SGILABEL_MAGIC) {
-		printf("No SGI volume header found, magic=%x\n", volhdr->magic);
+		printf("No Volume Header found, magic=%x.  Use -i first.\n", 
+			volhdr->magic);
 		exit(1);
 	}
 	if (opt_r) {
@@ -194,7 +228,9 @@ main(int argc, char *argv[])
 		modify_partition();
 		exit(0);
 	}
-	display_vol();
+
+	if (!opt_q)
+		display_vol();
 
 	return 0;
 }
@@ -270,7 +306,8 @@ read_file(void)
 	FILE *fp;
 	int i;
 
-	printf("Reading file %s\n", vfilename);
+	if (!opt_q)
+		printf("Reading file %s\n", vfilename);
 	for (i = 0; i < 15; ++i) {
 		if (strncmp(vfilename, volhdr->voldir[i].name,
 		    sizeof(volhdr->voldir[i].name)) == NULL)
@@ -309,12 +346,14 @@ write_file(void)
 	struct stat st;
 	char fbuf[512];
 
-	printf("Writing file %s\n", ufilename);
+	if (!opt_q)
+		printf("Writing file %s\n", ufilename);
 	if (stat(ufilename, &st) < 0) {
 		perror("stat");
 		exit(1);
 	}
-	printf("File %s has %lld bytes\n", ufilename, st.st_size);
+	if (!opt_q)
+		printf("File %s has %lld bytes\n", ufilename, st.st_size);
 	slot = -1;
 	for (i = 0; i < 15; ++i) {
 		if (volhdr->voldir[i].name[0] == '\0' && slot < 0)
@@ -330,12 +369,14 @@ write_file(void)
 	}
 	/* -w can overwrite, -a won't overwrite */
 	if (volhdr->voldir[slot].block > 0) {
-		printf("File %s exists, removing old file\n", vfilename);
+		if (!opt_q)
+			printf("File %s exists, removing old file\n", 
+				vfilename);
 		volhdr->voldir[slot].name[0] = 0;
 		volhdr->voldir[slot].block = volhdr->voldir[slot].bytes = 0;
 	}
 	if (st.st_size == 0) {
-		printf("bad file size?\n");
+		printf("bad file size\n");
 		exit(1);
 	}
 	/* XXX assumes volume header starts at 0? */
@@ -400,6 +441,8 @@ delete_file(void)
 		printf("File %s not found\n", vfilename);
 		exit(1);
 	}
+
+	/* XXX: we don't compact the file space, so get fragmentation */
 	volhdr->voldir[i].name[0] = '\0';
 	volhdr->voldir[i].block = volhdr->voldir[i].bytes = 0;
 	write_volhdr();
@@ -408,10 +451,11 @@ delete_file(void)
 void
 modify_partition(void)
 {
-	printf("Modify partition %d start %d length %d\n", partno, partfirst,
-	    partblocks);
+	if (!opt_q)
+		printf("Modify partition %d start %d length %d\n", 
+			partno, partfirst, partblocks);
 	if (partno < 0 || partno > 15) {
-		printf("Invalue partition number: %d\n", partno);
+		printf("Invalid partition number: %d\n", partno);
 		exit(1);
 	}
 	volhdr->partitions[partno].blocks = partblocks;
@@ -426,11 +470,15 @@ write_volhdr(void)
 	int i;
 
 	checksum_vol();
-	display_vol();
-	printf("\nDo you want to update volume (y/n)? ");
-	i = getchar();
-	if (i != 'Y' && i != 'y')
-		exit(1);
+
+	if (!opt_q)
+		display_vol();
+	if (!opt_f) {
+		printf("\nDo you want to update volume (y/n)? ");
+		i = getchar();
+		if (i != 'Y' && i != 'y')
+			exit(1);
+	}
 	i = lseek(fd, 0 , SEEK_SET);
 	if (i < 0) {
 		perror("lseek 0");
@@ -454,7 +502,7 @@ allocate_space(int size)
 		if (volhdr->voldir[n].name[0]) {
 			if (first < (volhdr->voldir[n].block +
 			    (volhdr->voldir[n].bytes + 511) / 512) &&
-			    (first + blocks) >= volhdr->voldir[n].block) {
+			    (first + blocks) > volhdr->voldir[n].block) {
 				first = volhdr->voldir[n].block +
 				    (volhdr->voldir[n].bytes + 511) / 512;
 #if 0
@@ -494,10 +542,10 @@ checksum_vol(void)
 void
 usage(void)
 {
-	printf("Usage:	sgivol [-i] device\n"
-	       "	sgivol [-r vhfilename diskfilename] device\n"
-	       "	sgivol [-w vhfilename diskfilename] device\n"
-	       "	sgivol [-d vhfilename] device\n"
+	printf("Usage:	sgivol [-qf] [-i] device\n"
+	       "	sgivol [-qf] [-r vhfilename diskfilename] device\n"
+	       "	sgivol [-qf] [-w vhfilename diskfilename] device\n"
+	       "	sgivol [-qf] [-d vhfilename] device\n"
 	       );
 	exit(0);
 }
