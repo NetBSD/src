@@ -1,4 +1,4 @@
-/*	$NetBSD: promlib.h,v 1.2 1999/05/03 16:14:02 christos Exp $ */
+/*	$NetBSD: promlib.h,v 1.3 2000/11/15 16:14:13 pk Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -106,7 +106,7 @@ struct promops {
 	/* Device node properties */
 	int	(*po_getproplen) __P((int node, char *name));
 	int	(*po_getprop) __P((int node, char *name, void *, int));
-	int	(*po_setprop) __P((int node, char *name, void *, int));
+	int	(*po_setprop) __P((int node, char *name, const void *, int));
 	char	*(*po_nextprop) __P((int node, char *name));
 
 	int	(*po_finddevice) __P((char *name));
