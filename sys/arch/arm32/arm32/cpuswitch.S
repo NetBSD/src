@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.25 1998/07/06 01:56:40 mark Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.26 1998/08/12 01:10:29 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -61,18 +61,14 @@
  */
 
 #define IRQdisable \
-	stmfd	sp!, {r0} ; \
-	mrs	r0, cpsr_all ; \
-	orr	r0, r0, #(I32_bit) ; \
-	msr	cpsr_all, r0 ; \
-	ldmfd	sp!, {r0}
+	mrs	r14, cpsr_all ; \
+	orr	r14, r14, #(I32_bit) ; \
+	msr	cpsr_all, r14 ; \
 
 #define IRQenable \
-	stmfd	sp!, {r0} ; \
-	mrs	r0, cpsr_all ; \
-	bic	r0, r0, #(I32_bit) ; \
-	msr	cpsr_all, r0 ; \
-	ldmfd	sp!, {r0}		
+	mrs	r14, cpsr_all ; \
+	bic	r14, r14, #(I32_bit) ; \
+	msr	cpsr_all, r14 ; \
 
 /*
  * setrunqueue() and remrunqueue()
@@ -442,10 +438,7 @@ findqueue:
 	str	r0, [r7]
 
 	/* At this point we can allow IRQ's again. */
-/*
 	IRQenable
-	IRQdisable
-*/
 
 	/* rem: r1 = old proc */
 	/* rem: r6 = new process */
@@ -509,13 +502,6 @@ findqueue:
 	/* Third phase : restore saved context */
 
 switch_exited:
-	/* At this point we need to kill IRQ's again. */
-	mrs	r0, cpsr_all
-	orr	r0, r0, #(I32_bit)
-	msr	cpsr_all , r0
-
-/*	IRQdisable*/
-
 	stmfd	sp!, {r0-r3}
 	ldr	r0, Lcpufuncs
 	add	lr, pc, #Lcs_cache_purged - . - 8
@@ -523,6 +509,9 @@ switch_exited:
 
 Lcs_cache_purged:
 	ldmfd	sp!, {r0-r3}
+
+	/* At this point we need to kill IRQ's again. */
+	IRQdisable
 
 	/* Get the user structure for the new process in r1 */
 	ldr	r1, [r6, #(P_ADDR)]
@@ -557,16 +546,14 @@ Lcs_context_switched:
 	ldr	r7, Lcurpcb
 	str	r1, [r7]
 
-	/* We can enable interrupts again */
-/*
-	IRQenable
-*/
-
 #ifdef ARMFPE
 	add	r0, r1, #(USER_SIZE) & 0x00ff
 	add	r0, r0, #(USER_SIZE) & 0xff00 
 	bl	_arm_fpe_core_changecontext
 #endif
+
+	/* We can enable interrupts again */
+	IRQenable
 
 switch_return:
 	/* We have a new curproc now so make a note it */
@@ -578,8 +565,6 @@ switch_return:
 	/* Get the spl level from the stack and update the current spl level */
 	ldr	r0, [sp], #0x0004
 	bl	_splx
-
-	IRQenable		/***  just changed this ***/
 
 	/* cpu_switch returns the proc it switched to. */
 	mov	r0, r6
@@ -615,7 +600,6 @@ ENTRY(switch_exit)
 	str	r2, [r0]*/
 
 	/* Switch to proc0 context */
-	IRQdisable
 
 	stmfd	sp!, {r0-r3}
 
@@ -625,6 +609,8 @@ ENTRY(switch_exit)
 
 Lse_cache_purged:
 	ldmfd	sp!, {r0-r3}
+
+	IRQdisable
 
 	ldr	r2, [r1, #(P_ADDR)]
 	ldr	r0, [r2, #(PCB_PAGEDIR)]
@@ -644,7 +630,7 @@ Lse_context_switched:
 	ldr	r0, Lcurpcb
 	str	r2, [r0]
 
-/*	IRQenable*/
+	IRQenable
 
 	str	r3, [sp, #-0x0004]!
 
