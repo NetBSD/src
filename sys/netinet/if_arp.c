@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.38.4.2 1997/09/01 21:00:36 thorpej Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.38.4.3 1997/10/14 10:29:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -506,16 +506,15 @@ in_arpinput(m)
 	if (!bcmp((caddr_t)ar_sha(ah), LLADDR(ifp->if_sadl),
 	    ifp->if_data.ifi_addrlen))
 		goto out;	/* it's from me, ignore it. */
-/*
- *  XXX
- *	if (!bcmp((caddr_t)ar_sha(ah), (caddr_t)etherbroadcastaddr,
- *	    sizeof (ea->arp_sha))) {
- *		log(LOG_ERR,
- *		    "arp: ether address is broadcast for IP address %x!\n",
- *		    ntohl(isaddr.s_addr));
- *		goto out;
- *	}
- */
+
+	if (!bcmp((caddr_t)ar_sha(ah), (caddr_t)ifp->if_broadcastaddr,
+	    ifp->if_data.ifi_addrlen)) {
+		log(LOG_ERR,
+		    "%s: arp: link address is broadcast for IP address %x!\n",
+		    ifp->if_xname, ntohl(isaddr.s_addr));
+		goto out;
+	}
+
 	if (in_hosteq(isaddr, myaddr)) {
 		log(LOG_ERR,
 		   "duplicate IP address %08x sent from link address %s\n",

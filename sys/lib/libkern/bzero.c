@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)bzero.c	5.7 (Berkeley) 2/24/91";*/
-static char *rcsid = "$Id: bzero.c,v 1.6 1996/04/18 02:20:00 cgd Exp $";
+static char *rcsid = "$NetBSD: bzero.c,v 1.6.12.1 1997/10/14 10:26:41 thorpej Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #ifndef _KERNEL

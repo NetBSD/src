@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.h,v 1.15 1996/12/13 07:57:33 mikel Exp $	*/
+/*	$NetBSD: bpf.h,v 1.15.10.1 1997/10/14 10:28:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -38,10 +38,17 @@
  * SUCH DAMAGE.
  *
  *	@(#)bpf.h	8.1 (Berkeley) 6/10/93
+ * @(#) Header: bpf.h,v 1.36 97/06/12 14:29:53 leres Exp  (LBL)
  */
 
 #ifndef _NET_BPF_H_
 #define _NET_BPF_H_
+
+/* BSD style release date */
+#define BPF_RELEASE 199606
+
+typedef	int bpf_int32;
+typedef	u_int bpf_u_int32;
 
 /*
  * Alignment macros.  BPF_WORDALIGN rounds up to the next 
@@ -110,8 +117,8 @@ struct bpf_version {
 #define BIOCGSTATS	_IOR(B,111, struct bpf_stat)
 #define BIOCIMMEDIATE	_IOW(B,112, u_int)
 #define BIOCVERSION	_IOR(B,113, struct bpf_version)
-#define BIOCSRSIG	_IOW(B,114, u_int)
-#define BIOCGRSIG	_IOR(B,115, u_int)
+#define BIOCSTCPF	_IOW(B,114, struct bpf_program)
+#define BIOCSUDPF	_IOW(B,115, struct bpf_program)
 #else
 #define	BIOCGBLEN	_IOR('B',102, u_int)
 #define	BIOCSBLEN	_IOWR('B',102, u_int)
@@ -126,8 +133,8 @@ struct bpf_version {
 #define BIOCGSTATS	_IOR('B',111, struct bpf_stat)
 #define BIOCIMMEDIATE	_IOW('B',112, u_int)
 #define BIOCVERSION	_IOR('B',113, struct bpf_version)
-#define BIOCSRSIG	_IOW('B',114, u_int)
-#define BIOCGRSIG	_IOR('B',115, u_int)
+#define BIOCSTCPF	_IOW('B',114, struct bpf_program)
+#define BIOCSUDPF	_IOW('B',115, struct bpf_program)
 #endif
 
 /*
@@ -173,6 +180,9 @@ struct bpf_hdr {
 #define DLT_PPP		9	/* Point-to-point Protocol */
 #define DLT_FDDI	10	/* FDDI */
 #define DLT_ATM_RFC1483	11	/* LLC/SNAP encapsulated atm */
+#define DLT_RAW		12	/* raw IP */
+#define DLT_SLIP_BSDOS	13	/* BSD/OS Serial Line IP */
+#define DLT_PPP_BSDOS	14	/* BSD/OS Point-to-point Protocol */
 
 /*
  * The instruction encondings.
@@ -252,8 +262,9 @@ void	 bpf_tap __P((caddr_t, u_char *, u_int));
 void	 bpf_mtap __P((caddr_t, struct mbuf *));
 void	 bpfattach __P((caddr_t *, struct ifnet *, u_int, u_int));
 void	 bpfilterattach __P((int));
-u_int	 bpf_filter __P((struct bpf_insn *, u_char *, u_int, u_int));
 #endif
+
+u_int	 bpf_filter __P((struct bpf_insn *, u_char *, u_int, u_int));
 
 /*
  * Number of scratch memory words (for BPF_LD|BPF_MEM and BPF_ST).

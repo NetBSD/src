@@ -1,4 +1,4 @@
-/*	$NetBSD: fifo_vnops.c,v 1.23 1997/05/18 12:19:29 kleink Exp $	*/
+/*	$NetBSD: fifo_vnops.c,v 1.23.4.1 1997/10/14 10:28:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -151,7 +151,7 @@ fifo_open(v)
 	register struct fifoinfo *fip;
 	struct socket *rso, *wso;
 	int error;
-	static char openstr[] = "fifo";
+	static const char openstr[] = "fifo";
 
 	if ((fip = vp->v_fifoinfo) == NULL) {
 		MALLOC(fip, struct fifoinfo *, sizeof(*fip), M_VNODE, M_WAITOK);

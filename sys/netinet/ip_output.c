@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.39 1997/04/15 00:41:53 christos Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.39.4.1 1997/10/14 10:29:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -91,6 +91,7 @@ ip_output(m0, va_alist)
 	struct mbuf *opt;
 	struct route *ro;
 	int flags;
+	int *mtu_p;
 	struct ip_moptions *imo;
 	va_list ap;
 #ifdef PFIL_HOOKS
@@ -104,6 +105,10 @@ ip_output(m0, va_alist)
 	ro = va_arg(ap, struct route *);
 	flags = va_arg(ap, int);
 	imo = va_arg(ap, struct ip_moptions *);
+	if (flags & IP_RETURNMTU)
+		mtu_p = va_arg(ap, int *);
+	else
+		mtu_p = NULL;
 	va_end(ap);
 
 #ifdef	DIAGNOSTIC
@@ -329,6 +334,8 @@ sendit:
 	 * Must be able to put at least 8 bytes per fragment.
 	 */
 	if (ip->ip_off & IP_DF) {
+		if (flags & IP_RETURNMTU)
+			*mtu_p = ifp->if_mtu;
 		error = EMSGSIZE;
 		ipstat.ips_cantfrag++;
 		goto bad;
@@ -618,6 +625,7 @@ ip_ctloutput(op, so, level, optname, mp)
 		case IP_RECVRETOPTS:
 		case IP_RECVDSTADDR:
 		case IP_RECVIF:
+		case IP_ERRORMTU:
 			*mp = m = m_get(M_WAIT, MT_SOOPTS);
 			m->m_len = sizeof(int);
 			switch (optname) {
@@ -628,6 +636,10 @@ ip_ctloutput(op, so, level, optname, mp)
 
 			case IP_TTL:
 				optval = inp->inp_ip.ip_ttl;
+				break;
+
+			case IP_ERRORMTU:
+				optval = inp->inp_errormtu;
 				break;
 
 #define	OPTBIT(bit)	(inp->inp_flags & bit ? 1 : 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vnops.c,v 1.41 1997/05/05 07:13:59 mycroft Exp $	*/
+/*	$NetBSD: fdesc_vnops.c,v 1.41.4.1 1997/10/14 10:28:22 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -647,7 +647,7 @@ fdesc_readdir(v)
 		struct uio *a_uio;
 		struct ucred *a_cred;
 		int *a_eofflag;
-		u_long *a_cookies;
+		off_t *a_cookies;
 		int a_ncookies;
 	} */ *ap = v;
 	struct uio *uio = ap->a_uio;
@@ -655,7 +655,7 @@ fdesc_readdir(v)
 	struct filedesc *fdp;
 	int i;
 	int error;
-	u_long *cookies = ap->a_cookies;
+	off_t *cookies = ap->a_cookies;
 	int ncookies = ap->a_ncookies;
 
 	switch (VTOFDESC(ap->a_vp)->fd_type) {

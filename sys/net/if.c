@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.39.4.2 1997/08/29 00:59:31 thorpej Exp $	*/
+/*	$NetBSD: if.c,v 1.39.4.3 1997/10/14 10:29:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -132,6 +132,7 @@ if_attach(ifp)
 		sdl->sdl_data[--namelen] = 0xff;
 	if (ifp->if_snd.ifq_maxlen == 0)
 	    ifp->if_snd.ifq_maxlen = ifqmaxlen;
+	ifp->if_broadcastaddr = 0; /* reliably crash if used uninitialized */
 }
 /*
  * Locate an interface based on a complete address.

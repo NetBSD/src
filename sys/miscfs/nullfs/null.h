@@ -1,4 +1,4 @@
-/*	$NetBSD: null.h,v 1.8 1997/04/10 05:35:08 cgd Exp $	*/
+/*	$NetBSD: null.h,v 1.8.4.1 1997/10/14 10:28:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -88,7 +88,7 @@ extern struct vnode *null_checkvp __P((struct vnode *vp, char *fil, int lno));
 #endif
 
 extern int (**null_vnodeop_p) __P((void *));
-extern struct vfsops null_vfsops;
+extern struct vfsops nullfs_vfsops;
 
 void nullfs_init __P((void));
 

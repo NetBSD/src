@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  * from: Header: umul.s,v 1.4 92/06/25 13:24:05 torek Exp
- * $Id: umul.S,v 1.3 1996/11/18 22:50:37 pk Exp $
+ * $NetBSD: umul.S,v 1.3.10.1 1997/10/14 10:28:15 thorpej Exp $
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)

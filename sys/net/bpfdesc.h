@@ -1,4 +1,4 @@
-/*	$NetBSD: bpfdesc.h,v 1.11 1995/09/27 18:30:42 thorpej Exp $	*/
+/*	$NetBSD: bpfdesc.h,v 1.11.14.1 1997/10/14 10:29:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -38,9 +38,13 @@
  * SUCH DAMAGE.
  *
  *	@(#)bpfdesc.h	8.1 (Berkeley) 6/10/93
+ *
+ * @(#) Header: bpfdesc.h,v 1.14 96/06/16 22:28:07 leres Exp  (LBL)
  */
 
+#if BSD >= 199103
 #include <sys/select.h>
+#endif
 
 /*
  * Descriptor associated with each open bpf file.
@@ -74,7 +78,6 @@ struct bpf_d {
 	u_char		bd_state;	/* idle, waiting, or timed out */
 	u_char		bd_immediate;	/* true to return on packet arrival */
 	int		bd_async;	/* non-zero if packet reception should generate signal */
-	int		bd_sig;		/* signal to send upon packet reception */
 	pid_t		bd_pgid;	/* process or group id for signal */
 #if BSD < 199103
 	u_char		bd_selcoll;	/* true if selects collide */

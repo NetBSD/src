@@ -30,7 +30,7 @@
  * 11-May-92  Johannes Helander (jvh) at Helsinki University of Technology
  *	Created.
  *
- *	$Id: ntohl.S,v 1.3 1996/11/07 07:36:21 matthias Exp $
+ *	$NetBSD: ntohl.S,v 1.3.10.1 1997/10/14 10:27:50 thorpej Exp $
  */
 
 #include <machine/asm.h>

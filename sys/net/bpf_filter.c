@@ -1,7 +1,7 @@
-/*	$NetBSD: bpf_filter.c,v 1.13 1997/07/07 18:18:28 phil Exp $	*/
+/*	$NetBSD: bpf_filter.c,v 1.13.2.1 1997/10/14 10:28:58 thorpej Exp $	*/
 
-/*
- * Copyright (c) 1990, 1991, 1992, 1993
+/*-
+ * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
  *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from the Stanford/CMU enet packet filter,
@@ -39,6 +39,13 @@
  *
  *	@(#)bpf_filter.c	8.1 (Berkeley) 6/10/93
  */
+
+#if 0
+#if !(defined(lint) || defined(KERNEL))
+static const char rcsid[] =
+    "@(#) Header: bpf_filter.c,v 1.33 97/04/26 13:37:18 leres Exp  (LBL)";
+#endif
+#endif
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -161,7 +168,7 @@ bpf_filter(pc, p, wirelen, buflen)
 	u_int wirelen;
 	register u_int buflen;
 {
-	register u_int32_t A = 0, X = 0;
+	register u_int32_t A, X;
 	register int k;
 	int32_t mem[BPF_MEMWORDS];
 
@@ -170,6 +177,8 @@ bpf_filter(pc, p, wirelen, buflen)
 		 * No filter means accept all.
 		 */
 		return (u_int)-1;
+	A = 0;
+	X = 0;
 	--pc;
 	while (1) {
 		++pc;
@@ -300,7 +309,7 @@ bpf_filter(pc, p, wirelen, buflen)
 					return 0;
 				m = (struct mbuf *)p;
 				MINDEX(len, m, k);
-				A = mtod(m, char *)[k];
+				A = mtod(m, u_char *)[k];
 				continue;
 #else
 				return 0;

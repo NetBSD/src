@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  * from: Header: bzero.s,v 1.1 92/06/25 12:52:46 torek Exp
- * $Id: bzero.S,v 1.3 1996/11/18 22:50:30 pk Exp $
+ * $NetBSD: bzero.S,v 1.3.10.1 1997/10/14 10:27:59 thorpej Exp $
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)

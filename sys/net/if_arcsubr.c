@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arcsubr.c,v 1.15 1997/03/23 01:22:35 is Exp $	*/
+/*	$NetBSD: if_arcsubr.c,v 1.15.4.1 1997/10/14 10:29:07 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Ignatios Souvatzis
@@ -648,4 +648,5 @@ arc_ifattach(ifp, lla)
 		sdl->sdl_alen = ifp->if_addrlen;
 		bcopy((caddr_t)&lla, LLADDR(sdl), ifp->if_addrlen);
 	}
+	ifp->if_broadcastaddr = &arcbroadcastaddr;
 }
