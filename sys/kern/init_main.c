@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.172 2000/06/06 18:26:35 soren Exp $	*/
+/*	$NetBSD: init_main.c,v 1.172.2.1 2000/07/14 18:10:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -75,6 +75,7 @@
 #include <sys/protosw.h>
 #include <sys/reboot.h>
 #include <sys/user.h>
+#include <sys/sysctl.h>
 #ifdef SYSVSHM
 #include <sys/shm.h>
 #endif
@@ -109,7 +110,7 @@
 #include <net/if.h>
 #include <net/raw_cb.h>
 
-char	copyright[] = "\
+const char copyright[] = "\
 Copyright (c) 1996, 1997, 1998, 1999, 2000
     The NetBSD Foundation, Inc.  All rights reserved.
 Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -142,11 +143,11 @@ struct	timeval boottime;
 
 __volatile int start_init_exec;		/* semaphore for start_init() */
 
-static void check_console __P((struct proc *p));
-static void start_init __P((void *));
-static void start_pagedaemon __P((void *));
-static void start_reaper __P((void *));
-void main __P((void));
+static void check_console(struct proc *p);
+static void start_init(void *);
+static void start_pagedaemon(void *);
+static void start_reaper(void *);
+void main(void);
 
 extern char sigcode[], esigcode[];
 #ifdef SYSCALL_DEBUG
@@ -179,17 +180,17 @@ struct emul emul_netbsd = {
  * startup(), which does memory initialization and autoconfiguration.
  */
 void
-main()
+main(void)
 {
 	struct proc *p;
 	struct pdevinit *pdev;
 	int i, s, error;
 	extern struct pdevinit pdevinit[];
-	extern void roundrobin __P((void *));
-	extern void schedcpu __P((void *));
-	extern void disk_init __P((void));
+	extern void roundrobin(void *);
+	extern void schedcpu(void *);
+	extern void disk_init(void);
 #if defined(NFSSERVER) || defined(NFS)
-	extern void nfs_init __P((void));
+	extern void nfs_init(void);
 #endif
 
 	/*
@@ -231,6 +232,9 @@ main()
 #if NRND > 0
 	rnd_init();		/* initialize RNG */
 #endif
+
+	/* Initialize the sysctl subsystem. */
+	sysctl_init();
 
 	/*
 	 * Initialize process and pgrp structures.
@@ -506,8 +510,7 @@ main()
 }
 
 static void
-check_console(p)
-	struct proc *p;
+check_console(struct proc *p)
 {
 	struct nameidata nd;
 	int error;
@@ -525,7 +528,7 @@ check_console(p)
 /*
  * List of paths to try when searching for "init".
  */
-static char *initpaths[] = {
+static const char *initpaths[] = {
 	"/sbin/init",
 	"/sbin/oinit",
 	"/sbin/init.bak",
@@ -537,8 +540,7 @@ static char *initpaths[] = {
  * The program is invoked with one argument containing the boot flags.
  */
 static void
-start_init(arg)
-	void *arg;
+start_init(void *arg)
 {
 	struct proc *p = arg;
 	vaddr_t addr;
@@ -550,7 +552,8 @@ start_init(arg)
 	int options, i, error;
 	register_t retval[2];
 	char flags[4], *flagsp;
-	char **pathp, *path, *slash, *ucp, **uap, *arg0, *arg1 = NULL;
+	const char **pathp, *path, *slash;
+	char *ucp, **uap, *arg0, *arg1 = NULL;
 
 	/*
 	 * Now in process 1.
@@ -665,8 +668,7 @@ start_init(arg)
 
 /* ARGSUSED */
 static void
-start_pagedaemon(arg)
-	void *arg;
+start_pagedaemon(void *arg)
 {
 
 	uvm_pageout();
@@ -675,8 +677,7 @@ start_pagedaemon(arg)
 
 /* ARGSUSED */
 static void
-start_reaper(arg)
-	void *arg;
+start_reaper(void *arg)
 {
 
 	reaper();
