@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2003/12/20 12:56:00 rtr Exp $
+#	$NetBSD: Makefile,v 1.6 2004/02/09 04:30:05 lukem Exp $
 
 NOPIC=	1
 
@@ -20,8 +20,7 @@ CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11 \
 		-I${X11SRCDIR.xc}/programs/Xserver/include \
 		-I.
 
-MKG3STATESDIR!=	cd ${NETBSDSRCDIR}/x11/tools/mkg3states && ${PRINTOBJDIR}
-MKG3STATES=	${MKG3STATESDIR}/mkg3states
+.include "${NETBSDSRCDIR}/x11/tools/mkg3states/Makefile.mkg3states"
 
 g3states.h:
 	${_MKTARGET_CREATE}

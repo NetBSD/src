@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2004/02/08 22:13:10 lukem Exp $
+#	$NetBSD: Makefile,v 1.10 2004/02/09 04:30:05 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -32,11 +32,7 @@ CPPFLAGS.TMkey.c=	-DXKB
 LDADD+=	-lX11 -lSM -lICE
 DPADD+=	${LIBX11} ${LIBSM} ${LIBICE}
 
-MAKESTRSDIR!=	cd ${NETBSDSRCDIR}/x11/tools/makestrs && ${PRINTOBJDIR}
-MAKESTRS=	${MAKESTRSDIR}/makestrs
-
-${MAKESTRS}:
-	(cd ${NETBSDSRCDIR}/x11/tools/makestrs && ${MAKE})
+.include "${NETBSDSRCDIR}/x11/tools/makestrs/Makefile.makestrs"
 
 STRINGS_FILES=	StringDefs.c StringDefs.h Shell.h
 STRINGS_TMPLS=	util/StrDefs.ct util/StrDefs.ht util/Shell.ht
