@@ -1,4 +1,4 @@
-/*	$NetBSD: kd.c,v 1.9 2000/03/23 06:44:45 thorpej Exp $	*/
+/*	$NetBSD: kd.c,v 1.10 2000/03/24 11:46:46 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -369,7 +369,7 @@ kdstart(tp)
 			tp->t_state &= ~TS_BUSY;
 		} else {
 			/* called at interrupt level - do it later */
-			callout_reset(&tp->t_rstrt_ch, kd_later, tp, 0);
+			callout_reset(&tp->t_rstrt_ch, 0, kd_later, tp);
 		}
 	}
 	if (cl->c_cc <= tp->t_lowat) {
