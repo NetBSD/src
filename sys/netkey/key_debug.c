@@ -1,4 +1,4 @@
-/*	$NetBSD: key_debug.c,v 1.15 2001/04/06 11:13:56 wiz Exp $	*/
+/*	$NetBSD: key_debug.c,v 1.15.2.1 2001/08/03 04:14:02 lukem Exp $	*/
 /*	$KAME: key_debug.c,v 1.25 2000/07/24 13:23:12 itojun Exp $	*/
 
 /*
@@ -385,9 +385,9 @@ kdebug_sadb_x_sa2(ext)
 
 	printf("sadb_x_sa2{ mode=%u reqid=%u\n",
 	    sa2->sadb_x_sa2_mode, sa2->sadb_x_sa2_reqid);
-	printf("  reserved1=%u reserved2=%u reserved3=%u }\n",
-	    sa2->sadb_x_sa2_reserved1, sa2->sadb_x_sa2_reserved1,
-	    sa2->sadb_x_sa2_reserved1);
+	printf("  reserved1=%u reserved2=%u sequence=%u }\n",
+	    sa2->sadb_x_sa2_reserved1, sa2->sadb_x_sa2_reserved2,
+	    sa2->sadb_x_sa2_sequence);
 
 	return;
 }

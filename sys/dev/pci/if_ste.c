@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ste.c,v 1.3 2001/06/30 01:05:25 thorpej Exp $	*/
+/*	$NetBSD: if_ste.c,v 1.3.2.1 2001/08/03 04:13:16 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -644,7 +644,7 @@ ste_start(struct ifnet *ifp)
 		 * and try again.
 		 */
 		if (bus_dmamap_load_mbuf(sc->sc_dmat, dmamap, m0,
-		    BUS_DMA_NOWAIT) != 0) {
+		    BUS_DMA_WRITE|BUS_DMA_NOWAIT) != 0) {
 			MGETHDR(m, M_DONTWAIT, MT_DATA);
 			if (m == NULL) {
 				printf("%s: unable to allocate Tx mbuf\n",
@@ -663,7 +663,7 @@ ste_start(struct ifnet *ifp)
 			m_copydata(m0, 0, m0->m_pkthdr.len, mtod(m, caddr_t));
 			m->m_pkthdr.len = m->m_len = m0->m_pkthdr.len;
 			error = bus_dmamap_load_mbuf(sc->sc_dmat, dmamap,
-			    m, BUS_DMA_NOWAIT);
+			    m, BUS_DMA_WRITE|BUS_DMA_NOWAIT);
 			if (error) {
 				printf("%s: unable to load Tx buffer, "
 				    "error = %d\n", sc->sc_dev.dv_xname, error);
@@ -1154,6 +1154,7 @@ ste_reset(struct ste_softc *sc)
 	delay(50000);
 
 	for (i = 0; i < STE_TIMEOUT; i++) {
+		delay(1000);
 		if ((bus_space_read_4(sc->sc_st, sc->sc_sh, STE_AsicCtrl) &
 		     AC_ResetBusy) == 0)
 			break;
@@ -1215,7 +1216,8 @@ ste_init(struct ifnet *ifp)
 				ste_rxdrain(sc);
 				goto out;
 			}
-		}
+		} else
+			STE_INIT_RXDESC(sc, i);
 	}
 	sc->sc_rxptr = 0;
 
@@ -1391,10 +1393,10 @@ ste_eeprom_wait(struct ste_softc *sc)
 	int i;
 
 	for (i = 0; i < STE_TIMEOUT; i++) {
+		delay(1000);
 		if ((bus_space_read_2(sc->sc_st, sc->sc_sh, STE_EepromCtrl) &
 		     EC_EepromBusy) == 0)
 			return (0);
-		delay(2);
 	}
 	return (1);
 }
@@ -1448,7 +1450,8 @@ ste_add_rxbuf(struct ste_softc *sc, int idx)
 	ds->ds_mbuf = m;
 
 	error = bus_dmamap_load(sc->sc_dmat, ds->ds_dmamap,
-	    m->m_ext.ext_buf, m->m_ext.ext_size, NULL, BUS_DMA_NOWAIT);
+	    m->m_ext.ext_buf, m->m_ext.ext_size, NULL,
+	    BUS_DMA_READ|BUS_DMA_NOWAIT);
 	if (error) {
 		printf("%s: can't load rx DMA map %d, error = %d\n",
 		    sc->sc_dev.dv_xname, idx, error);

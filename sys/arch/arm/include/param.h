@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.1 2001/06/23 13:25:19 bjh21 Exp $	*/
+/*	$NetBSD: param.h,v 1.1.2.1 2001/08/03 04:11:01 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -39,7 +39,24 @@
  * Machine dependent constants for all ARM processors
  */
 
-/* MACHINE and MACHINE_ARCH are defined by individual ports. */
+/*
+ * For KERNEL code:
+ *	MACHINE must be defined by the individual port.
+ *	MACHINE_ARCH may be defined by an individual port.
+ *
+ * For non-KERNEL code:
+ *	MACHINE && MACHINE_ARCH default to "arm"
+ */
+
+#ifndef _KERNEL
+#ifndef MACHINE
+#define	MACHINE		"arm"
+#endif
+#endif /* !_KERNEL */
+
+#ifndef MACHINE_ARCH
+#define	MACHINE_ARCH	"arm"
+#endif
 
 #define	MID_MACHINE	MID_ARM6
 
@@ -57,6 +74,14 @@
 #define ALIGNBYTES		(sizeof(int) - 1)
 #define ALIGN(p)		(((u_int)(p) + ALIGNBYTES) &~ ALIGNBYTES)
 #define ALIGNED_POINTER(p,t)	((((u_long)(p)) & (sizeof(t)-1)) == 0)
+
+#define	DEV_BSHIFT	9		/* log2(DEV_BSIZE) */
+#define	DEV_BSIZE	(1 << DEV_BSHIFT)
+#define	BLKDEV_IOSIZE	2048
+
+#ifndef MAXPHYS
+#define	MAXPHYS		65536		/* max I/O transfer size */
+#endif
 
 /* pages ("clicks") to disk blocks */
 #define	ctod(x)	((x) << (PGSHIFT - DEV_BSHIFT))
@@ -80,5 +105,17 @@
  * For now though just use DEV_BSIZE.
  */
 #define	bdbtofsb(bn)	((bn) / (BLKDEV_IOSIZE / DEV_BSIZE))
+
+/*
+ * Constants related to network buffer management.
+ * MCLBYTES must be no larger than NBPG (the software page size), and,
+ * on machines that exchange pages of input or output buffers with mbuf
+ * clusters (MAPPED_MBUFS), MCLBYTES must also be an integral multiple
+ * of the hardware page size.
+ */
+#define	MSIZE		256		/* size of an mbuf */
+#define	MCLSHIFT	11		/* convert bytes to m_buf clusters */
+#define	MCLBYTES	(1 << MCLSHIFT)	/* size of a m_buf cluster */
+#define	MCLOFSET	(MCLBYTES - 1)	/* offset within a m_buf cluster */
 
 #endif /* _ARM_PARAM_H_ */

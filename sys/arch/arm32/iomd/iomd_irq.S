@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd_irq.S,v 1.24 2001/07/09 21:46:20 reinoud Exp $	*/
+/*	$NetBSD: iomd_irq.S,v 1.24.2.1 2001/08/03 04:11:11 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -39,7 +39,6 @@
  * Created      : 27/09/94
  */
 
-#include "opt_cputypes.h"
 #include "opt_irqstats.h"
 
 #include "assym.h"
@@ -271,6 +270,7 @@ irqloop:
 	
 	teq	r6, #0x00000000		/* Do we have a handler */
 	moveq	r0, r8			/* IRQ requests as arg 0 */
+	addeq	lr, pc, #nextirq - . - 8   /* return Address */
 	beq	_C_LABEL(stray_irqhandler) /* call special handler */
 	
 #ifdef IRQSTATS
@@ -306,7 +306,7 @@ nextinchain:
 	/* if it was it'll just fall through this: */
 	teqne	r6, #0x00000000
 	bne	irqchainloop
-
+nextirq:
 	/* Check for next irq */
 	rsb	r4, r11, #0
 	ands	r10, r11, r4

@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.91 2001/06/14 05:44:23 itojun Exp $	*/
+/*	$NetBSD: if.c,v 1.91.2.1 2001/08/03 04:13:49 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -127,6 +127,7 @@
 #include <net/if_types.h>
 #include <net/radix.h>
 #include <net/route.h>
+#include <net/netisr.h>
 #ifdef NETATALK
 #include <netatalk/at_extern.h>
 #include <netatalk/at.h>
@@ -156,6 +157,8 @@ int if_clone_list __P((struct if_clonereq *));
 
 LIST_HEAD(, if_clone) if_cloners = LIST_HEAD_INITIALIZER(if_cloners);
 int if_cloners_count;
+
+static void if_detach_queues __P((struct ifnet *, struct ifqueue *));
 
 /*
  * Network interface utility routines.
@@ -282,7 +285,7 @@ if_alloc_sadl(struct ifnet *ifp)
 	socksize = ROUNDUP(socksize);
 	ifasize = sizeof(*ifa) + 2 * socksize;
 	ifa = (struct ifaddr *)malloc(ifasize, M_IFADDR, M_WAITOK);
-	bzero((caddr_t)ifa, ifasize);
+	memset((caddr_t)ifa, 0, ifasize);
 	sdl = (struct sockaddr_dl *)(ifa + 1);
 	sdl->sdl_len = socksize;
 	sdl->sdl_family = AF_LINK;
@@ -370,7 +373,7 @@ if_attach(ifp)
 		/* grow ifnet_addrs */
 		n = if_indexlim * sizeof(struct ifaddr *);
 		q = (caddr_t)malloc(n, M_IFADDR, M_WAITOK);
-		bzero(q, n);
+		memset(q, 0, n);
 		if (ifnet_addrs) {
 			bcopy((caddr_t)ifnet_addrs, q, n/2);
 			free((caddr_t)ifnet_addrs, M_IFADDR);
@@ -380,7 +383,7 @@ if_attach(ifp)
 		/* grow ifindex2ifnet */
 		n = if_indexlim * sizeof(struct ifnet *);
 		q = (caddr_t)malloc(n, M_IFADDR, M_WAITOK);
-		bzero(q, n);
+		memset(q, 0, n);
 		if (ifindex2ifnet) {
 			bcopy((caddr_t)ifindex2ifnet, q, n/2);
 			free((caddr_t)ifindex2ifnet, M_IFADDR);
@@ -396,7 +399,7 @@ if_attach(ifp)
 	 */
 
 	if (ifp->if_snd.ifq_maxlen == 0)
-	    ifp->if_snd.ifq_maxlen = ifqmaxlen;
+		ifp->if_snd.ifq_maxlen = ifqmaxlen;
 	ifp->if_broadcastaddr = 0; /* reliably crash if used uninitialized */
 
 	ifp->if_link_state = LINK_STATE_UNKNOWN;
@@ -557,9 +560,84 @@ if_detach(ifp)
 	/* Announce that the interface is gone. */
 	rt_ifannouncemsg(ifp, IFAN_DEPARTURE);
 
+	ifindex2ifnet[ifp->if_index] = NULL;
+
 	TAILQ_REMOVE(&ifnet, ifp, if_list);
 
+	/*
+	 * remove packets came from ifp, from software interrupt queues.
+	 * net/netisr_dispatch.h is not usable, as some of them use
+	 * strange queue names.
+	 */
+#define IF_DETACH_QUEUES(x) \
+do { \
+	extern struct ifqueue x; \
+	if_detach_queues(ifp, & x); \
+} while (0)
+#ifdef INET
+#if NARP > 0
+	IF_DETACH_QUEUES(arpintrq);
+#endif
+	IF_DETACH_QUEUES(ipintrq);
+#endif
+#ifdef INET6
+	IF_DETACH_QUEUES(ip6intrq);
+#endif
+#ifdef NETATALK
+	IF_DETACH_QUEUES(atintrq1);
+	IF_DETACH_QUEUES(atintrq2);
+#endif
+#ifdef NS
+	IF_DETACH_QUEUES(nsintrq);
+#endif
+#ifdef ISO
+	IF_DETACH_QUEUES(clnlintrq);
+#endif
+#ifdef CCITT
+	IF_DETACH_QUEUES(llcintrq);
+	IF_DETACH_QUEUES(hdintrq);
+#endif
+#ifdef NATM
+	IF_DETACH_QUEUES(natmintrq);
+#endif
+#undef IF_DETACH_QUEUES
+
 	splx(s);
+}
+
+static void
+if_detach_queues(ifp, q)
+	struct ifnet *ifp;
+	struct ifqueue *q;
+{
+	struct mbuf *m, *prev, *next;
+
+	prev = NULL;
+	for (m = q->ifq_head; m; m = next) {
+		next = m->m_nextpkt;
+#ifdef DIAGNOSTIC
+		if ((m->m_flags & M_PKTHDR) == 0) {
+			prev = m;
+			continue;
+		}
+#endif
+		if (m->m_pkthdr.rcvif != ifp) {
+			prev = m;
+			continue;
+		}
+
+		if (prev)
+			prev->m_nextpkt = m->m_nextpkt;
+		else
+			q->ifq_head = m->m_nextpkt;
+		if (q->ifq_tail == m)
+			q->ifq_tail = prev;
+		q->ifq_len--;
+
+		m->m_nextpkt = NULL;
+		m_freem(m);
+		IF_DROP(q);
+	}
 }
 
 /*
@@ -1400,7 +1478,7 @@ ifconf(cmd, data)
 	for (ifp = ifnet.tqh_first; ifp != 0; ifp = ifp->if_list.tqe_next) {
 		bcopy(ifp->if_xname, ifr.ifr_name, IFNAMSIZ);
 		if ((ifa = ifp->if_addrlist.tqh_first) == 0) {
-			bzero((caddr_t)&ifr.ifr_addr, sizeof(ifr.ifr_addr));
+			memset((caddr_t)&ifr.ifr_addr, 0, sizeof(ifr.ifr_addr));
 			if (space >= (int)sizeof (ifr)) {
 				error = copyout((caddr_t)&ifr, (caddr_t)ifrp,
 						sizeof(ifr));

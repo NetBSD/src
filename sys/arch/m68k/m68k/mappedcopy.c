@@ -1,4 +1,4 @@
-/*	$NetBSD: mappedcopy.c,v 1.13 2001/04/24 04:31:00 thorpej Exp $	*/
+/*	$NetBSD: mappedcopy.c,v 1.13.2.1 2001/08/03 04:11:50 lukem Exp $	*/
 
 /*
  * XXX This doesn't work yet.  Soon.  --thorpej@netbsd.org
@@ -110,7 +110,7 @@ mappedcopyin(f, t, count)
 		if (fubyte(fromp) == -1)
 			return (EFAULT);
 		/*
-		 * Map in the page and bcopy data in from it
+		 * Map in the page and memcpy data in from it
 		 */
 		if (pmap_extract(upmap, trunc_page((vaddr_t)fromp), &upa)
 		    == FALSE)
@@ -122,7 +122,7 @@ mappedcopyin(f, t, count)
 		if (len == PAGE_SIZE && alignable && off == 0)
 			copypage((caddr_t)kva, top);
 		else
-			bcopy((void *)(kva + off), top, len);
+			memcpy(top, (void *)(kva + off), len);
 		fromp += len;
 		top += len;
 		count -= len;
@@ -169,7 +169,7 @@ mappedcopyout(f, t, count)
 		if (subyte(top, *((char *)fromp)) == -1)
 			return (EFAULT);
 		/*
-		 * Map in the page and bcopy data out to it
+		 * Map in the page and memcpy data out to it
 		 */
 		if (pmap_extract(upmap, trunc_page((vaddr_t)top), &upa)
 		    == FALSE)
@@ -182,7 +182,7 @@ mappedcopyout(f, t, count)
 		if (len == PAGE_SIZE && alignable && off == 0)
 			copypage(fromp, (caddr_t)kva);
 		else
-			bcopy(fromp, (void *)(kva + off), len);
+			memcpy((void *)(kva + off), fromp, len);
 		fromp += len;
 		top += len;
 		count -= len;

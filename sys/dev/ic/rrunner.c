@@ -1,4 +1,4 @@
-/*	$NetBSD: rrunner.c,v 1.26 2001/07/07 16:13:50 thorpej Exp $	*/
+/*	$NetBSD: rrunner.c,v 1.26.2.1 2001/08/03 04:13:03 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -1075,7 +1075,7 @@ esh_fpread(dev, uio, ioflag)
 #endif
 
 	error = bus_dmamap_load_uio(sc->sc_dmat, di->ed_dma, 
-				    uio, BUS_DMA_WAITOK);
+				    uio, BUS_DMA_READ|BUS_DMA_WAITOK);
 	if (error) {
 		printf("%s:  esh_fpread:  bus_dmamap_load_uio "
 		       "failed\terror code %d\n", 
@@ -1234,7 +1234,7 @@ esh_fpwrite(dev, uio, ioflag)
 #endif
 
 	error = bus_dmamap_load_uio(sc->sc_dmat, di->ed_dma, 
-				    uio, BUS_DMA_WAITOK);
+				    uio, BUS_DMA_WRITE|BUS_DMA_WAITOK);
 	if (error) {
 		printf("%s:  esh_fpwrite:  bus_dmamap_load_uio "
 		       "failed\terror code %d\n", 
@@ -1365,7 +1365,8 @@ esh_fpstrategy(bp)
 		di->ed_buf = bp;
 		error = bus_dmamap_load(sc->sc_dmat, di->ed_dma, 
 					bp->b_data, bp->b_bcount, 
-					bp->b_proc, BUS_DMA_WAITOK);
+					bp->b_proc,
+					BUS_DMA_READ|BUS_DMA_WAITOK);
 		if (error) {
 			printf("%s:  esh_fpstrategy:  "
 			       "bus_dmamap_load "
@@ -2016,7 +2017,7 @@ eshstart(ifp)
 			continue;
 
 		error = bus_dmamap_load_mbuf(sc->sc_dmat, send->ec_dma,
-					     m, BUS_DMA_NOWAIT);
+					     m, BUS_DMA_WRITE|BUS_DMA_NOWAIT);
 		if (error)
 			panic("%s:  eshstart:  "
 			      "bus_dmamap_load_mbuf failed err %d\n", 
@@ -2058,7 +2059,7 @@ eshstart(ifp)
 
 		error = bus_dmamap_load(sc->sc_dmat, send->ec_dma,
 					bp->b_data, bp->b_bcount, bp->b_proc,
-					BUS_DMA_NOWAIT);
+					BUS_DMA_WRITE|BUS_DMA_NOWAIT);
 
 		if (error)
 			panic("%s:  eshstart:  "
@@ -2586,7 +2587,7 @@ esh_fill_snap_ring(sc)
 
 		error = bus_dmamap_load(sc->sc_dmat, recv->ec_dma[offset],
 					mtod(m, void *), MCLBYTES,
-					NULL, BUS_DMA_NOWAIT);
+					NULL, BUS_DMA_READ|BUS_DMA_NOWAIT);
 		if (error) {
 			printf("%s:  esh_fill_recv_ring:  bus_dmamap_load "
 			       "failed\toffset %x, error code %d\n", 

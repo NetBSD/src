@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.39 2000/12/15 02:12:58 oster Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.39.4.1 2001/08/03 04:13:26 lukem Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -572,11 +572,7 @@ rf_AllocRaidAccDesc(
     RF_SectorCount_t numBlocks,
     caddr_t bufPtr,
     void *bp,
-    RF_DagHeader_t ** paramDAG,
-    RF_AccessStripeMapHeader_t ** paramASM,
     RF_RaidAccessFlags_t flags,
-    void (*cbF) (struct buf *),
-    void *cbA,
     RF_AccessState_t * states)
 {
 	RF_RaidAccessDesc_t *desc;
@@ -600,16 +596,16 @@ rf_AllocRaidAccDesc(
 	desc->numBlocks = numBlocks;
 	desc->bufPtr = bufPtr;
 	desc->bp = bp;
-	desc->paramDAG = paramDAG;
-	desc->paramASM = paramASM;
+	desc->paramDAG = NULL;
+	desc->paramASM = NULL;
 	desc->flags = flags;
 	desc->states = states;
 	desc->state = 0;
 
 	desc->status = 0;
-	bzero((char *) &desc->tracerec, sizeof(RF_AccTraceEntry_t));
-	desc->callbackFunc = (void (*) (RF_CBParam_t)) cbF;	/* XXX */
-	desc->callbackArg = cbA;
+	memset((char *) &desc->tracerec, 0, sizeof(RF_AccTraceEntry_t));
+	desc->callbackFunc = NULL;
+	desc->callbackArg = NULL;
 	desc->next = NULL;
 	desc->head = desc;
 	desc->numPending = 0;
@@ -648,12 +644,7 @@ rf_DoAccess(
     RF_SectorCount_t numBlocks,
     caddr_t bufPtr,
     void *bp_in,
-    RF_DagHeader_t ** paramDAG,
-    RF_AccessStripeMapHeader_t ** paramASM,
-    RF_RaidAccessFlags_t flags,
-    RF_RaidAccessDesc_t ** paramDesc,
-    void (*cbF) (struct buf *),
-    void *cbA)
+    RF_RaidAccessFlags_t flags)
 /*
 type should be read or write
 async_flag should be RF_TRUE or RF_FALSE
@@ -694,8 +685,7 @@ bp_in is a buf pointer.  void * to facilitate ignoring it outside the kernel
 		return (ENOSPC);
 	}
 	desc = rf_AllocRaidAccDesc(raidPtr, type, raidAddress,
-	    numBlocks, lbufPtr, bp, paramDAG, paramASM,
-	    flags, cbF, cbA, raidPtr->Layout.map->states);
+	    numBlocks, lbufPtr, bp, flags, raidPtr->Layout.map->states);
 
 	if (desc == NULL) {
 		return (ENOMEM);

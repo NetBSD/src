@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.60 2001/07/07 15:16:14 eeh Exp $ */
+/*	$NetBSD: db_interface.c,v 1.60.2.1 2001/08/03 04:12:29 lukem Exp $ */
 
 /*
  * Mach Operating System
@@ -670,14 +670,14 @@ db_dump_dtsb(addr, have_addr, count, modif)
 	db_printf("TSB:\n");
 	for (i=0; i<TSBENTS; i++) {
 		db_printf("%4d:%4d:%08x %08x:%08x ", i, 
-			  (int)((tsb[i].tag.tag&TSB_TAG_G)?-1:TSB_TAG_CTX(tsb[i].tag.tag)),
-			  (int)((i<<13)|TSB_TAG_VA(tsb[i].tag.tag)),
-			  (int)(tsb[i].data.data>>32), (int)tsb[i].data.data);
+			  (int)((tsb[i].tag&TSB_TAG_G)?-1:TSB_TAG_CTX(tsb[i].tag)),
+			  (int)((i<<13)|TSB_TAG_VA(tsb[i].tag)),
+			  (int)(tsb[i].data>>32), (int)tsb[i].data);
 		i++;
 		db_printf("%4d:%4d:%08x %08x:%08x\n", i,
-			  (int)((tsb[i].tag.tag&TSB_TAG_G)?-1:TSB_TAG_CTX(tsb[i].tag.tag)),
-			  (int)((i<<13)|TSB_TAG_VA(tsb[i].tag.tag)),
-			  (int)(tsb[i].data.data>>32), (int)tsb[i].data.data);
+			  (int)((tsb[i].tag&TSB_TAG_G)?-1:TSB_TAG_CTX(tsb[i].tag)),
+			  (int)((i<<13)|TSB_TAG_VA(tsb[i].tag)),
+			  (int)(tsb[i].data>>32), (int)tsb[i].data);
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_utils.c,v 1.5 2000/01/07 03:41:03 oster Exp $	*/
+/*	$NetBSD: rf_utils.c,v 1.5.8.1 2001/08/03 04:13:28 lukem Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -54,7 +54,7 @@ rf_make_2d_array(b, k, allocList)
 	RF_MallocAndAdd(retval, b * sizeof(RF_RowCol_t *), (RF_RowCol_t **), allocList);
 	for (i = 0; i < b; i++) {
 		RF_MallocAndAdd(retval[i], k * sizeof(RF_RowCol_t), (RF_RowCol_t *), allocList);
-		(void) bzero((char *) retval[i], k * sizeof(RF_RowCol_t));
+		(void) memset((char *) retval[i], 0, k * sizeof(RF_RowCol_t));
 	}
 	return (retval);
 }
@@ -82,7 +82,7 @@ rf_make_1d_array(c, allocList)
 	RF_RowCol_t *retval;
 
 	RF_MallocAndAdd(retval, c * sizeof(RF_RowCol_t), (RF_RowCol_t *), allocList);
-	(void) bzero((char *) retval, c * sizeof(RF_RowCol_t));
+	(void) memset((char *) retval, 0, c * sizeof(RF_RowCol_t));
 	return (retval);
 }
 

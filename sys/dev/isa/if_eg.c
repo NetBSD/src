@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eg.c,v 1.52 2000/12/14 06:59:02 thorpej Exp $	*/
+/*	$NetBSD: if_eg.c,v 1.52.4.1 2001/08/03 04:13:09 lukem Exp $	*/
 
 /*
  * Copyright (c) 1993 Dean Huxley <dean@fsa.ca>
@@ -276,7 +276,7 @@ egreadPCB(iot, ioh, pcb)
 	bus_space_write_1(iot, ioh, EG_CONTROL,
 	    (bus_space_read_1(iot, ioh, EG_CONTROL) & ~EG_PCB_STAT) | EG_PCB_NULL);
 
-	bzero(pcb, EG_PCBLEN);
+	memset(pcb, 0, EG_PCBLEN);
 
 	if (egreadPCBready(iot, ioh))
 		return 1;
@@ -448,7 +448,7 @@ egattach(parent, self, aux)
 		egprintpcb(sc->eg_pcb);
 		return;
 	}
-	bcopy(&sc->eg_pcb[2], myaddr, ETHER_ADDR_LEN);
+	memcpy(myaddr, &sc->eg_pcb[2], ETHER_ADDR_LEN);
 
 	printf("%s: ROM v%d.%02d %dk address %s\n", self->dv_xname,
 	    sc->eg_rom_major, sc->eg_rom_minor, sc->eg_ram,
@@ -474,7 +474,7 @@ egattach(parent, self, aux)
 	}
 
 	/* Initialize ifnet structure. */
-	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
+	strcpy(ifp->if_xname, sc->sc_dev.dv_xname);
 	ifp->if_softc = sc;
 	ifp->if_start = egstart;
 	ifp->if_ioctl = egioctl;
@@ -636,7 +636,7 @@ loop:
 
 	buffer = sc->eg_outbuf;
 	for (m = m0; m != 0; m = m->m_next) {
-		bcopy(mtod(m, caddr_t), buffer, m->m_len);
+		memcpy(buffer, mtod(m, caddr_t), m->m_len);
 		buffer += m->m_len;
 	}
 
@@ -709,9 +709,9 @@ egintr(arg)
 		case EG_RSP_GETSTATS:
 			DPRINTF(("%s: Card Statistics\n",
 			    sc->sc_dev.dv_xname));
-			bcopy(&sc->eg_pcb[2], &i, sizeof(i));
+			memcpy(&i, &sc->eg_pcb[2], sizeof(i));
 			DPRINTF(("Receive Packets %d\n", i));
-			bcopy(&sc->eg_pcb[6], &i, sizeof(i));
+			memcpy(&i, &sc->eg_pcb[6], sizeof(i));
 			DPRINTF(("Transmit Packets %d\n", i));
 			DPRINTF(("CRC errors %d\n",
 			    *(short *) &sc->eg_pcb[10]));
@@ -810,7 +810,7 @@ egget(sc, buf, totlen)
 		}
 
 		m->m_len = len = min(totlen, len);
-		bcopy((caddr_t)buf, mtod(m, caddr_t), len);
+		memcpy(mtod(m, caddr_t), (caddr_t)buf, len);
 		buf += len;
 
 		totlen -= len;
@@ -863,7 +863,7 @@ egioctl(ifp, cmd, data)
 				ina->x_host =
 				   *(union ns_host *)LLADDR(ifp->if_sadl);
 			else
-				bcopy(ina->x_host.c_host, LLADDR(ifp->if_sadl),
+				memcpy(LLADDR(ifp->if_sadl), ina->x_host.c_host,
 				    ETHER_ADDR_LEN);
 			/* Set new address. */
 			eginit(sc);

@@ -1,13 +1,13 @@
-#	$NetBSD: Makefile,v 1.29 2001/03/21 13:43:59 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.29.2.1 2001/08/03 04:12:33 lukem Exp $
 
 LIB=sa
 
 # 
-# We're not actually building a lint version, but this way the separate object
-# files get built
+# We're not actually building a profiled version,
+# but this way the separate object files get built
 #
 
-LOBJS=SRT0.o SRT1.o
+POBJS=SRT0.o SRT1.o
 
 MKLINT=no
 MKPIC=no

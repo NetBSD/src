@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcarm,v 1.20 2001/06/23 09:20:06 toshii Exp $
+#	$NetBSD: files.hpcarm,v 1.20.2.1 2001/08/03 04:11:31 lukem Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -30,7 +30,6 @@ file	arch/hpcarm/hpcarm/exception.S
 file	arch/hpcarm/hpcarm/fault.c
 file	arch/hpcarm/hpcarm/fusu.S
 file	arch/hpcarm/hpcarm/intr.c
-file	arch/hpcarm/hpcarm/machdep.c
 file	arch/hpcarm/hpcarm/mem.c
 file	arch/hpcarm/hpcarm/process_machdep.c
 file	arch/hpcarm/hpcarm/procfs_machdep.c	procfs
@@ -75,6 +74,11 @@ device	sacc { [addr=-1], [size=0], [membase=-1], [memsize=0], [intr=-1] }
 attach	sacc at saip
 file	arch/hpcarm/sa11x0/sa1111.c		sacc
 
+# iPAQ Virtual bus
+device	ipaqbus {}
+attach	ipaqbus at saip
+file	arch/hpcarm/dev/ipaq_saip.c			ipaqbus
+
 #
 # H/PC Platform common files.
 #
@@ -86,9 +90,9 @@ include	"dev/hpc/files.hpckbd"
 include	"dev/hpc/files.hpctp"
 
 # LCD
-device	salcd: hpcfbif
-attach	salcd at saip
-file	arch/hpcarm/sa11x0/sa11x0_lcd.c		salcd
+device	ipaqlcd: hpcfbif
+attach	ipaqlcd at ipaqbus
+file	arch/hpcarm/dev/ipaq_lcd.c		ipaqlcd
 
 device	sed: hpcfbif
 attach	sed at saip
@@ -116,11 +120,23 @@ device	sacpcic: pcmciabus
 attach	sacpcic at sacc
 file	arch/hpcarm/sa11x0/sa11x1_pcic.c	sacpcic needs-flag
 
-device	sagpcic: pcmciabus
-attach	sagpcic at saip
-file	arch/hpcarm/sa11x0/sa11x0_pcic.c	sagpcic needs-flag
+device	ipaqpcic: pcmciabus
+attach	ipaqpcic at ipaqbus
+file	arch/hpcarm/dev/ipaq_pcic.c		ipaqpcic needs-flag
 
-file	arch/hpcarm/sa11x0/sa11xx_pcic.c	sacpcic | sagpcic
+file	arch/hpcarm/sa11x0/sa11xx_pcic.c	sacpcic | ipaqpcic
+
+# Atmel microcontroller
+device	atmelgpioif {}
+device	atmelgpio: atmelgpioif
+attach	atmelgpio at ipaqbus
+file	arch/hpcarm/dev/ipaq_atmelgpio.c	atmelgpio
+
+# uda1341 Codec
+device	udaif {}
+device	uda: udaif
+attach	uda at ipaqbus
+file	arch/hpcarm/dev/uda1341.c		uda
 
 # Include ISA stuff
 include "dev/isa/files.isa"

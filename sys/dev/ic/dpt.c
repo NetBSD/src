@@ -1,4 +1,4 @@
-/*	$NetBSD: dpt.c,v 1.29 2001/04/25 17:53:32 bouyer Exp $	*/
+/*	$NetBSD: dpt.c,v 1.29.2.1 2001/08/03 04:12:58 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -737,7 +737,8 @@ dpt_ccb_map(struct dpt_softc *sc, struct dpt_ccb *ccb)
 
 	rv = bus_dmamap_load(sc->sc_dmat, xfer, xs->data, xs->datalen, NULL,
 	    ((xs->xs_control & XS_CTL_NOSLEEP) != 0 ? 
-	    BUS_DMA_NOWAIT : BUS_DMA_WAITOK) | BUS_DMA_STREAMING);
+	    BUS_DMA_NOWAIT : BUS_DMA_WAITOK) | BUS_DMA_STREAMING |
+	    ((xs->xs_control & XS_CTL_DATA_IN) ? BUS_DMA_READ : BUS_DMA_WRITE));
 
 	switch (rv) {
 	case 0:

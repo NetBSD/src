@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fddisubr.c,v 1.40 2001/06/14 05:44:24 itojun Exp $	*/
+/*	$NetBSD: if_fddisubr.c,v 1.40.2.1 2001/08/03 04:13:50 lukem Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -873,6 +873,12 @@ fddi_ifattach(ifp, lla)
 #ifdef IFF_NOTRAILERS
 	ifp->if_flags |= IFF_NOTRAILERS;
 #endif
+
+	/*
+	 * Update the max_linkhdr
+	 */
+	if (ALIGN(ifp->if_hdrlen) > max_linkhdr)
+		max_linkhdr = ALIGN(ifp->if_hdrlen);
 
 	if_alloc_sadl(ifp);
 	memcpy(LLADDR(ifp->if_sadl), lla, ifp->if_addrlen);

@@ -1,4 +1,4 @@
-| $NetBSD: fastboot,v 1.1 2001/02/19 14:09:03 reinoud Exp $
+| $NetBSD: fastboot,v 1.1.6.1 2001/08/03 04:11:14 lukem Exp $
 |
 | Fast boot configuration file, edit by hand, save and run !BtNetBSD
 | Part of !BtNetBSD
@@ -10,11 +10,26 @@ Run <BtNetBSD$Dir>.native.mountufs ADFS 4
 | Run The PreBoot file for various extra settings nessisary
 Run <BtNetBSD$Dir>.PreBoot
 
-| Select the screenmode from the allready loaded modedef file
-|*WimpMode X1024 Y768 C32K
-*WimpMode X1280 Y1024 C256
+| Select the monito defintion file and screenmode
+Set NetBSD$MDF ADFS::4.$.AKF85
+Set NetBSD$ScreenMode "X1024 Y768 C32K"
 
-| Start the bootloader with this size WimpSlot
-| Additional parameters need to be appended to the bootline
-*Wimpslot 3000k
-Run <BtNetBSD$Dir>.BtNetBSD UnixFS:$.netbsd root=/dev/wd0a maxproc=64 nofpa  
+| Select Kernel, Root and Bootoptions
+Set NetBSD$Kernel UnixFS:$.netbsd
+Set NetBSD$Root /dev/wd0a
+Set NetBSD$BootOptions maxproc=64 noftp symtab
+
+| Set WimpSlot
+*Wimpslot 4000k
+
+
+| End of options
+| -----------------------
+| Set environment and try to boot NetBSD!
+|
+*loadmodefile <NetBSD$MDF>
+*Set Alias$SetNetBSDMode Wimpmode <NetBSD$ScreenMode>
+SetNetBSDMode
+
+*Set Alias$RunNetBSD <BtNetBSD$Dir>.BtNetBSD <NetBSD$Kernel> root=<NetBSD$Root> <NetBSD$BootOptions>
+RunNetBSD

@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.1 2001/05/09 15:58:07 matt Exp $	*/
+/*	$NetBSD: conf.c,v 1.1.2.1 2001/08/03 04:11:25 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -44,7 +44,6 @@
  * Created      : 17/09/94
  */
 
-#include "opt_footbridge.h"
  
 #include <sys/param.h>
 #include <sys/systm.h>

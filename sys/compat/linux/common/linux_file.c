@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file.c,v 1.39 2001/06/16 21:32:51 manu Exp $	*/
+/*	$NetBSD: linux_file.c,v 1.39.2.1 2001/08/03 04:12:44 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -671,7 +671,7 @@ linux_sys_mknod(p, v, retval)
 	CHECK_ALT_CREAT(p, &sg, SCARG(uap, path));
 
 	/*
-	 * BSD handles FIFOs seperately
+	 * BSD handles FIFOs separately
 	 */
 	if (SCARG(uap, mode) & S_IFIFO) {
 		SCARG(&bma, path) = SCARG(uap, path);

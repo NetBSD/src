@@ -1,4 +1,4 @@
-/* $NetBSD: pci_alphabook1.c,v 1.6 2000/12/28 22:59:07 sommerfeld Exp $ */
+/* $NetBSD: pci_alphabook1.c,v 1.6.4.1 2001/08/03 04:10:47 lukem Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_alphabook1.c,v 1.6 2000/12/28 22:59:07 sommerfeld Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_alphabook1.c,v 1.6.4.1 2001/08/03 04:10:47 lukem Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -131,7 +131,6 @@ pci_alphabook1_pickintr(lcp)
 
 #if NSIO
 	sio_intr_setup(pc, iot);
-	set_iointr(&sio_iointr);
 #else
 	panic("pci_alphabook1_pickintr: no I/O interrupt handler (no sio)");
 #endif

@@ -1,4 +1,4 @@
-/* $NetBSD: lca_dma.c,v 1.14 2001/01/03 19:16:00 thorpej Exp $ */
+/* $NetBSD: lca_dma.c,v 1.14.4.1 2001/08/03 04:10:46 lukem Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lca_dma.c,v 1.14 2001/01/03 19:16:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lca_dma.c,v 1.14.4.1 2001/08/03 04:10:46 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,6 +84,12 @@ void	lca_bus_dmamap_unload_sgmap __P((bus_dma_tag_t, bus_dmamap_t));
  */
 #define	LCA_SGMAP_MAPPED_BASE	(8*1024*1024)
 #define	LCA_SGMAP_MAPPED_SIZE	(8*1024*1024)
+
+/*
+ * The LCA doesn't have a DMA prefetch threshold.  However, it is known
+ * to lose if we don't allocate a spill page.  So initialize it to 256.
+ */
+#define	LCA_SGMAP_PFTHRESH	256
 
 /*
  * Macro to flush LCA scatter/gather TLB.
@@ -137,6 +143,7 @@ lca_dma_init(lcp)
 	t->_next_window = NULL;
 	t->_boundary = 0;
 	t->_sgmap = &lcp->lc_sgmap;
+	t->_pfthresh = LCA_SGMAP_PFTHRESH;
 	t->_get_tag = lca_dma_get_tag;
 	t->_dmamap_create = alpha_sgmap_dmamap_create;
 	t->_dmamap_destroy = alpha_sgmap_dmamap_destroy;

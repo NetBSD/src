@@ -1,4 +1,4 @@
-;	$NetBSD: arm.asm,v 1.2 2001/03/23 08:48:12 toshii Exp $	
+;	$NetBSD: arm.asm,v 1.2.2.1 2001/08/03 04:11:31 lukem Exp $	
 ;
 ; Copyright (c) 2001 The NetBSD Foundation, Inc.
 ; All rights reserved.
@@ -285,7 +285,7 @@
 	
 	; FlatJump (kaddr_t bootinfo, kaddr_t pvec, kaddr_t stack
 	;		kaddr_t jump)
-	;	bootinfo	boot infomation block address.
+	;	bootinfo	boot information block address.
 	;	pvec		page vector of kernel.
 	;	stack		physical address of stack
 	;	jump		physical address of boot function 

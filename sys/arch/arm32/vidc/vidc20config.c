@@ -1,4 +1,4 @@
-/*	$NetBSD: vidc20config.c,v 1.3 2001/04/09 19:23:32 reinoud Exp $	*/
+/*	$NetBSD: vidc20config.c,v 1.3.2.1 2001/08/03 04:11:14 lukem Exp $	*/
 
 /*
  * Copyright (c) 2001 Reinoud Zandijk
@@ -213,7 +213,7 @@ extern struct vidc_mode vidcmodes[];
 void
 vidcvideo_printdetails(void)
 {
-        printf(": refclk=%dMHz %dKB %s ", (VIDC_FREF / 1000000),
+        printf(": refclk=%dMHz %dKB %s ", (vidc_fref / 1000000),
             videomemory.vidm_size / 1024,
             (videomemory.vidm_type == VIDEOMEM_TYPE_VRAM) ? "VRAM" : "DRAM");
 }
@@ -561,7 +561,7 @@ vidcvideo_setmode(struct vidc_mode *mode)
 			int r, v, f;
 			for (v = 63; v > 0; v--)
 				for (r = 63; r > 0; r--) {
-					f = (v * VIDC_FREF/1000) / r;
+					f = ((v * vidc_fref) /1000) / r;
 					if (least_error >= mod(f - vidc_currentmode->pixel_rate)) {
 						best_match = f;
 						least_error = mod(f - vidc_currentmode->pixel_rate);
@@ -727,7 +727,7 @@ vidcvideo_cursor_init(int width, int height)
 		cursor_data = (char *)uvm_km_zalloc(kernel_map, NBPG);
 		if (!cursor_data)
 			panic("Cannot allocate memory for hardware cursor\n");
-		(void) pmap_extract(kernel_pmap, (vaddr_t)cursor_data, &pa);
+		(void) pmap_extract(pmap_kernel(), (vaddr_t)cursor_data, &pa);
 		IOMD_WRITE_WORD(IOMD_CURSINIT, pa);
 	}
 
@@ -760,9 +760,9 @@ vidcvideo_cursor_init(int width, int height)
 	}
 
 
-	(void) pmap_extract(kernel_pmap, (vaddr_t)cursor_normal,
+	(void) pmap_extract(pmap_kernel(), (vaddr_t)cursor_normal,
 	    (paddr_t *)&p_cursor_normal);
-	(void) pmap_extract(kernel_pmap, (vaddr_t)cursor_transparent,
+	(void) pmap_extract(pmap_kernel(), (vaddr_t)cursor_transparent,
 	    (paddr_t *)&p_cursor_transparent);
 
 /*

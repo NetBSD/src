@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vnops.c,v 1.64 2001/05/28 02:50:52 chs Exp $	*/
+/*	$NetBSD: cd9660_vnops.c,v 1.64.2.1 2001/08/03 04:13:38 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -711,7 +711,7 @@ cd9660_readlink(v)
 		return (error);
 	}
 	uio->uio_resid -= symlen;
-	(char *)uio->uio_iov->iov_base += symlen;
+	uio->uio_iov->iov_base = (char *)uio->uio_iov->iov_base + symlen;
 	uio->uio_iov->iov_len -= symlen;
 	return (0);
 }

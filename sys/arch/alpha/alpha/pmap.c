@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.180 2001/05/26 21:27:02 chs Exp $ */
+/* $NetBSD: pmap.c,v 1.180.2.1 2001/08/03 04:10:40 lukem Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -154,7 +154,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.180 2001/05/26 21:27:02 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.180.2.1 2001/08/03 04:10:40 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -439,6 +439,7 @@ struct pmap_tlb_shootdown_q {
 	TAILQ_HEAD(, pmap_tlb_shootdown_job) pq_head;
 	int pq_pte;			/* aggregate PTE bits */
 	int pq_count;			/* number of pending requests */
+	int pq_tbia;			/* pending global flush */
 	struct simplelock pq_slock;	/* spin lock on queue */
 } pmap_tlb_shootdown_q[ALPHA_MAXPROCS];
 
@@ -459,6 +460,7 @@ do {									\
 
 struct pool pmap_tlb_shootdown_job_pool;
 
+void	pmap_tlb_shootdown_q_drain(struct pmap_tlb_shootdown_q *);
 struct pmap_tlb_shootdown_job *pmap_tlb_shootdown_job_get
 	    (struct pmap_tlb_shootdown_q *);
 void	pmap_tlb_shootdown_job_put(struct pmap_tlb_shootdown_q *,
@@ -1220,8 +1222,6 @@ pmap_destroy(pmap_t pmap)
 	if (pmapdebug & PDB_FOLLOW)
 		printf("pmap_destroy(%p)\n", pmap);
 #endif
-	if (pmap == NULL)
-		return;
 
 	PMAP_LOCK(pmap);
 	refs = --pmap->pm_count;
@@ -1262,11 +1262,10 @@ pmap_reference(pmap_t pmap)
 	if (pmapdebug & PDB_FOLLOW)
 		printf("pmap_reference(%p)\n", pmap);
 #endif
-	if (pmap != NULL) {
-		PMAP_LOCK(pmap);
-		pmap->pm_count++;
-		PMAP_UNLOCK(pmap);
-	}
+
+	PMAP_LOCK(pmap);
+	pmap->pm_count++;
+	PMAP_UNLOCK(pmap);
 }
 
 /*
@@ -1310,9 +1309,6 @@ pmap_do_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva, boolean_t dowired)
 	if (pmapdebug & (PDB_FOLLOW|PDB_REMOVE|PDB_PROTECT))
 		printf("pmap_remove(%p, %lx, %lx)\n", pmap, sva, eva);
 #endif
-
-	if (pmap == NULL)
-		return;
 
 	/*
 	 * If this is the kernel pmap, we can use a faster method
@@ -1465,6 +1461,7 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 	pv_entry_t pv, nextpv;
 	boolean_t needkisync = FALSE;
 	long cpu_id = cpu_number();
+	PMAP_TLB_SHOOTDOWN_CPUSET_DECL
 #ifdef DEBUG
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
 
@@ -1483,9 +1480,27 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 	case VM_PROT_READ:
 		PMAP_HEAD_TO_MAP_LOCK();
 		simple_lock(&pg->mdpage.pvh_slock);
-/* XXX */	pmap_changebit(pg, 0, ~(PG_KWE | PG_UWE), cpu_id);
+
+		for (pv = pg->mdpage.pvh_list; pv != NULL; pv = pv->pv_next) {
+			/* XXX Don't write-protect pager mappings. */
+			if (pv->pv_va >= uvm.pager_sva &&
+			    pv->pv_va < uvm.pager_eva)
+				continue;
+
+			PMAP_LOCK(pv->pv_pmap);
+
+			if (*pv->pv_pte & (PG_KWE | PG_UWE)) {
+				*pv->pv_pte &= ~(PG_KWE | PG_UWE);
+				PMAP_INVALIDATE_TLB(pv->pv_pmap, pv->pv_va,
+				    pmap_pte_asm(pv->pv_pte),
+				    PMAP_ISACTIVE(pv->pv_pmap, cpu_id), cpu_id);
+			}
+		}
+
 		simple_unlock(&pg->mdpage.pvh_slock);
 		PMAP_HEAD_TO_MAP_UNLOCK();
+
+		PMAP_TLB_SHOOTNOW();
 		return;
 	/* remove_all */
 	default:
@@ -1547,15 +1562,13 @@ pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 	boolean_t hadasm;
 	vaddr_t l1eva, l2eva;
 	long cpu_id = cpu_number();
+	PMAP_TLB_SHOOTDOWN_CPUSET_DECL
 
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_PROTECT))
 		printf("pmap_protect(%p, %lx, %lx, %x)\n",
 		    pmap, sva, eva, prot);
 #endif
-
-	if (pmap == NULL)
-		return;
 
 	if ((prot & VM_PROT_READ) == VM_PROT_NONE) {
 		pmap_remove(pmap, sva, eva);
@@ -1603,6 +1616,8 @@ pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 		}
 	}
 
+	PMAP_TLB_SHOOTNOW();
+
 	if (prot & VM_PROT_EXECUTE)
 		PMAP_SYNC_ISTREAM(pmap);
 
@@ -1637,6 +1652,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	boolean_t wired;
 	long cpu_id = cpu_number();
 	int error = 0;
+	PMAP_TLB_SHOOTDOWN_CPUSET_DECL
 
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_ENTER))
@@ -1930,6 +1946,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	if (tflush) {
 		PMAP_INVALIDATE_TLB(pmap, va, hadasm, isactive, cpu_id);
 		PMAP_TLB_SHOOTDOWN(pmap, va, hadasm ? PG_ASM : 0);
+		PMAP_TLB_SHOOTNOW();
 	}
 	if (setisync)
 		PMAP_SET_NEEDISYNC(pmap);
@@ -1958,6 +1975,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 	long cpu_id = cpu_number();
 	boolean_t needisync = FALSE;
 	pmap_t pmap = pmap_kernel();
+	PMAP_TLB_SHOOTDOWN_CPUSET_DECL
 
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_ENTER))
@@ -2003,6 +2021,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 	 */
 	PMAP_INVALIDATE_TLB(pmap, va, TRUE, TRUE, cpu_id);
 	PMAP_TLB_SHOOTDOWN(pmap, va, PG_ASM);
+	PMAP_TLB_SHOOTNOW();
 
 	if (needisync)
 		PMAP_SYNC_ISTREAM_KERNEL();
@@ -2021,6 +2040,7 @@ pmap_kremove(vaddr_t va, vsize_t size)
 	boolean_t needisync = FALSE;
 	long cpu_id = cpu_number();
 	pmap_t pmap = pmap_kernel();
+	PMAP_TLB_SHOOTDOWN_CPUSET_DECL
 
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_ENTER))
@@ -2058,6 +2078,8 @@ pmap_kremove(vaddr_t va, vsize_t size)
 		}
 	}
 
+	PMAP_TLB_SHOOTNOW();
+
 	if (needisync)
 		PMAP_SYNC_ISTREAM_KERNEL();
 }
@@ -2078,8 +2100,6 @@ pmap_unwire(pmap_t pmap, vaddr_t va)
 	if (pmapdebug & PDB_FOLLOW)
 		printf("pmap_unwire(%p, %lx)\n", pmap, va);
 #endif
-	if (pmap == NULL)
-		return;
 
 	PMAP_LOCK(pmap);
 
@@ -2234,12 +2254,12 @@ pmap_activate(struct proc *p)
 		printf("pmap_activate(%p)\n", p);
 #endif
 
+	PMAP_LOCK(pmap);
+
 	/*
 	 * Mark the pmap in use by this processor.
 	 */
 	atomic_setbits_ulong(&pmap->pm_cpus, (1UL << cpu_id));
-
-	PMAP_LOCK(pmap);
 
 	/*
 	 * Allocate an ASN.
@@ -2583,6 +2603,7 @@ pmap_remove_mapping(pmap_t pmap, vaddr_t va, pt_entry_t *pte,
 	boolean_t hadasm;
 	boolean_t isactive;
 	boolean_t needisync = FALSE;
+	PMAP_TLB_SHOOTDOWN_CPUSET_DECL
 
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_REMOVE|PDB_PROTECT))
@@ -2637,6 +2658,7 @@ pmap_remove_mapping(pmap_t pmap, vaddr_t va, pt_entry_t *pte,
 
 	PMAP_INVALIDATE_TLB(pmap, va, hadasm, isactive, cpu_id);
 	PMAP_TLB_SHOOTDOWN(pmap, va, hadasm ? PG_ASM : 0);
+	PMAP_TLB_SHOOTNOW();
 
 	/*
 	 * If we're removing a user mapping, check to see if we
@@ -2676,9 +2698,6 @@ pmap_remove_mapping(pmap_t pmap, vaddr_t va, pt_entry_t *pte,
  *	Note: we assume that the pv_head is already locked, and that
  *	the caller has acquired a PV->pmap mutex so that we can lock
  *	the pmaps as we encounter them.
- *
- *	XXX This routine could stand to have some I-stream
- *	XXX optimization done.
  */
 void
 pmap_changebit(struct vm_page *pg, u_long set, u_long mask, long cpu_id)
@@ -2687,7 +2706,7 @@ pmap_changebit(struct vm_page *pg, u_long set, u_long mask, long cpu_id)
 	pt_entry_t *pte, npte;
 	vaddr_t va;
 	boolean_t hadasm, isactive;
-	boolean_t needisync, needkisync = FALSE;
+	PMAP_TLB_SHOOTDOWN_CPUSET_DECL
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_BITS)
@@ -2701,15 +2720,6 @@ pmap_changebit(struct vm_page *pg, u_long set, u_long mask, long cpu_id)
 	for (pv = pg->mdpage.pvh_list; pv != NULL; pv = pv->pv_next) {
 		va = pv->pv_va;
 
-		/*
-		 * XXX don't write protect pager mappings
-		 */
-		if (pv->pv_pmap == pmap_kernel() &&
-/* XXX */	    mask == ~(PG_KWE | PG_UWE)) {
-			if (va >= uvm.pager_sva && va < uvm.pager_eva)
-				continue;
-		}
-
 		PMAP_LOCK(pv->pv_pmap);
 
 		pte = pv->pv_pte;
@@ -2717,25 +2727,7 @@ pmap_changebit(struct vm_page *pg, u_long set, u_long mask, long cpu_id)
 		if (*pte != npte) {
 			hadasm = (pmap_pte_asm(pte) != 0);
 			isactive = PMAP_ISACTIVE(pv->pv_pmap, cpu_id);
-			/*
-			 * Determine what we need to do about the I-stream.
-			 * If PG_EXEC was set, we mark a user pmap as needing
-			 * an I-sync on the way out to userspace.  We always
-			 * need an immediate I-sync for the kernel pmap.
-			 */
-			needisync = FALSE;
-			if (pmap_pte_exec(pte)) {
-				if (pv->pv_pmap == pmap_kernel())
-					needkisync = TRUE;
-				else {
-					PMAP_SET_NEEDISYNC(pv->pv_pmap);
-					if (pv->pv_pmap->pm_cpus != 0)
-						needisync = TRUE;
-				}
-			}
 			PMAP_SET_PTE(pte, npte);
-			if (needisync)
-				PMAP_SYNC_ISTREAM_USER(pv->pv_pmap);
 			PMAP_INVALIDATE_TLB(pv->pv_pmap, va, hadasm, isactive,
 			    cpu_id);
 			PMAP_TLB_SHOOTDOWN(pv->pv_pmap, va,
@@ -2744,8 +2736,7 @@ pmap_changebit(struct vm_page *pg, u_long set, u_long mask, long cpu_id)
 		PMAP_UNLOCK(pv->pv_pmap);
 	}
 
-	if (needkisync)
-		PMAP_SYNC_ISTREAM_KERNEL();
+	PMAP_TLB_SHOOTNOW();
 }
 
 /*
@@ -3486,6 +3477,7 @@ void
 pmap_l3pt_delref(pmap_t pmap, vaddr_t va, pt_entry_t *l3pte, long cpu_id)
 {
 	pt_entry_t *l1pte, *l2pte;
+	PMAP_TLB_SHOOTDOWN_CPUSET_DECL
 
 	l1pte = pmap_l1pte(pmap, va);
 	l2pte = pmap_l2pte(pmap, va, l1pte);
@@ -3519,6 +3511,7 @@ pmap_l3pt_delref(pmap_t pmap, vaddr_t va, pt_entry_t *l3pte, long cpu_id)
 		    PMAP_ISACTIVE(pmap, cpu_id), cpu_id);
 		PMAP_TLB_SHOOTDOWN(pmap,
 		    (vaddr_t)(&VPT[VPT_INDEX(va)]), 0);
+		PMAP_TLB_SHOOTNOW();
 
 		/*
 		 * We've freed a level 3 table, so delete the reference
@@ -3752,49 +3745,98 @@ pmap_asn_alloc(pmap_t pmap, long cpu_id)
  * pmap_tlb_shootdown:
  *
  *	Cause the TLB entry for pmap/va to be shot down.
+ *
+ *	NOTE: The pmap must be locked here.
  */
 void
-pmap_tlb_shootdown(pmap_t pmap, vaddr_t va, pt_entry_t pte)
+pmap_tlb_shootdown(pmap_t pmap, vaddr_t va, pt_entry_t pte, u_long *cpumaskp)
 {
 	struct pmap_tlb_shootdown_q *pq;
 	struct pmap_tlb_shootdown_job *pj;
 	struct cpu_info *ci, *self = curcpu();
-	u_long ipinum;
+	u_long cpumask;
 	CPU_INFO_ITERATOR cii;
 	int s;
+
+	LOCK_ASSERT((pmap == pmap_kernel()) ||
+	    simple_lock_held(&pmap->pm_slock));
+
+	cpumask = 0;
 
 	for (CPU_INFO_FOREACH(cii, ci)) {
 		if (ci == self)
 			continue;
 
+		/*
+		 * The pmap must be locked (unless its the kernel
+		 * pmap, in which case it is okay for it to be
+		 * unlocked), which prevents it from  becoming
+		 * active on any additional processors.  This makes
+		 * it safe to check for activeness.  If it's not
+		 * active on the processor in question, then just
+		 * mark it as needing a new ASN the next time it
+		 * does, saving the IPI.  We always have to send
+		 * the IPI for the kernel pmap.
+		 *
+		 * Note if it's marked active now, and it becomes
+		 * inactive by the time the processor receives
+		 * the IPI, that's okay, because it does the right
+		 * thing with it later.
+		 */
+		if (pmap != pmap_kernel() &&
+		    PMAP_ISACTIVE(pmap, ci->ci_cpuid) == 0) {
+			PMAP_INVALIDATE_ASN(pmap, ci->ci_cpuid);
+			continue;
+		}
+
 		pq = &pmap_tlb_shootdown_q[ci->ci_cpuid];
 
 		PSJQ_LOCK(pq, s);
 
-		pj = pmap_tlb_shootdown_job_get(pq);
 		pq->pq_pte |= pte;
+
+		/*
+		 * If a global flush is already pending, we
+		 * don't really have to do anything else.
+		 */
+		if (pq->pq_tbia) {
+			PSJQ_UNLOCK(pq, s);
+			continue;
+		}
+
+		pj = pmap_tlb_shootdown_job_get(pq);
 		if (pj == NULL) {
 			/*
-			 * Couldn't allocate a job entry.  Just do a
-			 * TBIA[P].
+			 * Couldn't allocate a job entry.  Just
+			 * tell the processor to kill everything.
 			 */
-			if (pq->pq_pte & PG_ASM)
-				ipinum = ALPHA_IPI_TBIA;
-			else
-				ipinum = ALPHA_IPI_TBIAP;
-			alpha_send_ipi(ci->ci_cpuid, ipinum);
+			pq->pq_tbia = 1;
 		} else {
 			pj->pj_pmap = pmap;
 			pj->pj_va = va;
 			pj->pj_pte = pte;
 			TAILQ_INSERT_TAIL(&pq->pq_head, pj, pj_list);
-			ipinum = ALPHA_IPI_SHOOTDOWN;
 		}
 
-		alpha_send_ipi(ci->ci_cpuid, ipinum);
+		cpumask |= 1UL << ci->ci_cpuid;
 
 		PSJQ_UNLOCK(pq, s);
 	}
+
+	*cpumaskp |= cpumask;
+}
+
+/*
+ * pmap_tlb_shootnow:
+ *
+ *	Process the TLB shootdowns that we have been accumulating
+ *	for the specified processor set.
+ */
+void
+pmap_tlb_shootnow(u_long cpumask)
+{
+
+	alpha_multicast_ipi(cpumask, ALPHA_IPI_SHOOTDOWN);
 }
 
 /*
@@ -3813,14 +3855,23 @@ pmap_do_tlb_shootdown(struct cpu_info *ci, struct trapframe *framep)
 
 	PSJQ_LOCK(pq, s);
 
-	while ((pj = TAILQ_FIRST(&pq->pq_head)) != NULL) {
-		TAILQ_REMOVE(&pq->pq_head, pj, pj_list);
-		PMAP_INVALIDATE_TLB(pj->pj_pmap, pj->pj_va,
-		    pj->pj_pte & PG_ASM, pj->pj_pmap->pm_cpus & cpu_mask,
-		    cpu_id);
-		pmap_tlb_shootdown_job_put(pq, pj);
+	if (pq->pq_tbia) {
+		if (pq->pq_pte & PG_ASM)
+			ALPHA_TBIA();
+		else
+			ALPHA_TBIAP();
+		pq->pq_tbia = 0;
+		pmap_tlb_shootdown_q_drain(pq);
+	} else {
+		while ((pj = TAILQ_FIRST(&pq->pq_head)) != NULL) {
+			TAILQ_REMOVE(&pq->pq_head, pj, pj_list);
+			PMAP_INVALIDATE_TLB(pj->pj_pmap, pj->pj_va,
+			    pj->pj_pte & PG_ASM,
+			    pj->pj_pmap->pm_cpus & cpu_mask, cpu_id);
+			pmap_tlb_shootdown_job_put(pq, pj);
+		}
+		pq->pq_pte = 0;
 	}
-	pq->pq_pte = 0;
 
 	PSJQ_UNLOCK(pq, s);
 }
@@ -3831,28 +3882,19 @@ pmap_do_tlb_shootdown(struct cpu_info *ci, struct trapframe *framep)
  *	Drain a processor's TLB shootdown queue.  We do not perform
  *	the shootdown operations.  This is merely a convenience
  *	function.
+ *
+ *	Note: We expect the queue to be locked.
  */
 void
-pmap_tlb_shootdown_q_drain(u_long cpu_id, boolean_t all)
+pmap_tlb_shootdown_q_drain(struct pmap_tlb_shootdown_q *pq)
 {
-	struct pmap_tlb_shootdown_q *pq = &pmap_tlb_shootdown_q[cpu_id];
-	struct pmap_tlb_shootdown_job *pj, *npj;
-	pt_entry_t npte = 0;
-	int s;
+	struct pmap_tlb_shootdown_job *pj;
 
-	PSJQ_LOCK(pq, s);
-
-	for (pj = TAILQ_FIRST(&pq->pq_head); pj != NULL; pj = npj) {
-		npj = TAILQ_NEXT(pj, pj_list);
-		if (all || (pj->pj_pte & PG_ASM) == 0) {
-			TAILQ_REMOVE(&pq->pq_head, pj, pj_list);
-			pmap_tlb_shootdown_job_put(pq, pj);
-		} else
-			npte |= pj->pj_pte;
+	while ((pj = TAILQ_FIRST(&pq->pq_head)) != NULL) {
+		TAILQ_REMOVE(&pq->pq_head, pj, pj_list);
+		pmap_tlb_shootdown_job_put(pq, pj);
 	}
-	pq->pq_pte = npte;
-
-	PSJQ_UNLOCK(pq, s);
+	pq->pq_pte = 0;
 }
 
 /*

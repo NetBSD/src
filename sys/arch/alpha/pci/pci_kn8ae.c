@@ -1,4 +1,4 @@
-/* $NetBSD: pci_kn8ae.c,v 1.18 2000/12/28 22:59:07 sommerfeld Exp $ */
+/* $NetBSD: pci_kn8ae.c,v 1.18.4.1 2001/08/03 04:10:48 lukem Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_kn8ae.c,v 1.18 2000/12/28 22:59:07 sommerfeld Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_kn8ae.c,v 1.18.4.1 2001/08/03 04:10:48 lukem Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -62,17 +62,10 @@ void	*dec_kn8ae_intr_establish __P((void *, pci_intr_handle_t,
 	    int, int (*func)(void *), void *));
 void	dec_kn8ae_intr_disestablish __P((void *, void *));
 
-struct vectab {
-	int (*func) __P((void *));
-	void *arg;
-} vectab[DWLPX_NIONODE][DWLPX_NHOSE][DWLPX_MAXDEV];
 static u_int32_t imaskcache[DWLPX_NIONODE][DWLPX_NHOSE][NHPC];
 
-int	kn8ae_spurious __P((void *));
-void	kn8ae_iointr __P((void *framep, unsigned long vec));
-void	kn8ae_enadis_intr __P((pci_intr_handle_t, int));
-void	kn8ae_enable_intr __P((pci_intr_handle_t irq));
-void	kn8ae_disable_intr __P((pci_intr_handle_t irq));
+void	kn8ae_spurious __P((void *, u_long));
+void	kn8ae_enadis_intr __P((struct dwlpx_config *, pci_intr_handle_t, int));
 
 void
 pci_kn8ae_pickintr(ccp, first)
@@ -98,22 +91,19 @@ pci_kn8ae_pickintr(ccp, first)
 
 	for (io = 0; io < DWLPX_NIONODE; io++) {
 		for (hose = 0; hose < DWLPX_NHOSE; hose++) {
-			for (dev = 0; dev < DWLPX_MAXDEV; dev++) {
-				vectab[io][hose][dev].func = kn8ae_spurious;
-				vectab[io][hose][dev].arg = (void *)
-				    (u_int64_t) DWLPX_MVEC(io, hose, dev);
-			}
-		}
-	}
-	for (io = 0; io < DWLPX_NIONODE; io++) {
-		for (hose = 0; hose < DWLPX_NHOSE; hose++) {
 			for (dev = 0; dev < NHPC; dev++) {
 				imaskcache[io][hose][dev] = DWLPX_IMASK_DFLT;
 			}
 		}
 	}
-	set_iointr(kn8ae_iointr);
 }
+
+#define	IH_MAKE(vec, dev, pin)						\
+	((vec) | ((dev) << 16) | ((pin) << 24))
+
+#define	IH_VEC(ih)	((ih) & 0xffff)
+#define	IH_DEV(ih)	(((ih) >> 16) & 0xff)
+#define	IH_PIN(ih)	(((ih) >> 24) & 0xff)
 
 int     
 dec_kn8ae_intr_map(pa, ihp)
@@ -123,8 +113,8 @@ dec_kn8ae_intr_map(pa, ihp)
 	pcitag_t bustag = pa->pa_intrtag;
 	int buspin = pa->pa_intrpin;
 	pci_chipset_tag_t pc = pa->pa_pc;
-	struct dwlpx_config *ccp = (struct dwlpx_config *)pc->pc_intr_v;
-	int device, ionode, hose;
+	int device;
+	u_long vec;
 
 	if (buspin == 0) {
 		/* No IRQ used. */
@@ -135,16 +125,16 @@ dec_kn8ae_intr_map(pa, ihp)
 		return 1;
 	}
 	alpha_pci_decompose_tag(pc, bustag, NULL, &device, NULL);
-	ionode = ccp->cc_sc->dwlpx_node - 4;
-	hose = ccp->cc_sc->dwlpx_hosenum;
 
-	/*
-	 * handle layout:
-	 *	bits 0..15	DWLPX_MVEC(ionode, hose, device)
-	 *	bits 16-24	buspin (1..N)
-	 *	bits 24-31	IPL
-	 */
-	*ihp = DWLPX_MVEC(ionode, hose, device) | (buspin << 16) | (14 << 24);
+	vec = scb_alloc(kn8ae_spurious, NULL);
+	if (vec == SCB_ALLOC_FAILED) {
+		printf("dec_kn8ae_intr_map: no vector available for "
+		    "device %d pin %d\n", device, buspin);
+		return 1;
+	}
+
+	*ihp = IH_MAKE(vec, device, buspin);
+
 	return (0);
 }
 
@@ -154,8 +144,9 @@ dec_kn8ae_intr_string(ccv, ih)
 	pci_intr_handle_t ih;
 {
 	static char irqstr[64];
-        sprintf(irqstr, "kn8ae irq %ld vector 0x%lx PCI Interrupt Pin %c",
-	    (ih >> 24), ih & 0xffff, (int)(((ih >> 16) & 0x7) - 1) + 'A');
+
+	sprintf(irqstr, "vector 0x%lx", IH_VEC(ih));
+
         return (irqstr);
 }
 
@@ -178,37 +169,48 @@ dec_kn8ae_intr_establish(ccv, ih, level, func, arg)
 	void *arg;
 {           
 	struct dwlpx_config *ccp = ccv;
-	void *cookie = NULL;
-	int ionode, hose, device, s;
-	struct vectab *vp;
+	void *cookie;
+	struct scbvec *scb;
+	u_long vec;
+	int pin, device, hpc;
 
-	ionode	= ccp->cc_sc->dwlpx_node - 4;
-	hose	= ccp->cc_sc->dwlpx_hosenum;
-	device	= DWLPX_MVEC_PCISLOT(ih);
+	device = IH_DEV(ih);
+	pin = IH_PIN(ih);
+	vec = IH_VEC(ih);
 
-	if (ionode < 0 || ionode >= DWLPX_NIONODE) {
-		panic("dec_kn8ae_intr_establish: bad ionode %d\n", ionode);
-	}
-	if (hose < 0 || hose >= DWLPX_NHOSE) {
-		panic("dec_kn8ae_intr_establish: bad hose %d\n", hose);
-	}
-	if (device < 0 || device >= DWLPX_MAXDEV) {
-		panic("dec_kn8ae_intr_establish: bad device %d\n", device);
-	}
+	scb = &scb_iovectab[SCB_VECTOIDX(vec) - SCB_IOVECBASE];
 
-	vp = &vectab[ionode][hose][device];
-	if (vp->func != kn8ae_spurious) {
-		printf("dec_kn8ae_intr_establish: vector 0x%lx already used\n",
-		    ih & 0xffff);
-		return (cookie);
+	if (scb->scb_func != kn8ae_spurious) {
+		printf("dec_kn8ae_intr_establish: vector 0x%lx not mapped\n",
+		    vec);
+		return (NULL);
 	}
 
-	s = splhigh();
-	vp->func = func;
-	vp->arg = arg;
-	(void) splx(s);
-	kn8ae_enable_intr(ih);
-	cookie = (void *) (u_int64_t) DWLPX_MVEC(ionode, hose, device);
+	/*
+	 * NOTE: The PCIA hardware doesn't support interrupt sharing,
+	 * so we don't have to worry about it (in theory, at least).
+	 */
+
+	scb->scb_arg = arg;
+	alpha_mb();
+	scb->scb_func = (void (*)(void *, u_long))func;
+	alpha_mb();
+
+	if (device < 4) {
+		hpc = 0;
+	} else if (device < 8) {
+		device -= 4;
+		hpc = 1;
+	} else {
+		device -= 8;
+		hpc = 2;
+	}
+	REGVAL(PCIA_DEVVEC(hpc, device, pin) + ccp->cc_sysbase) = vec;
+
+	kn8ae_enadis_intr(ccp, ih, 1);
+
+	cookie = (void *) ih;
+
 	return (cookie);
 }
 
@@ -216,88 +218,49 @@ void
 dec_kn8ae_intr_disestablish(ccv, cookie)
         void *ccv, *cookie;
 {
-	int ionode, hose, device, s;
-	struct vectab *vp;
+	struct dwlpx_config *ccp = ccv;
+	pci_intr_handle_t ih = (u_long) cookie;
+	struct scbvec *scb;
+	u_long vec;
 
-	ionode = DWLPX_MVEC_IONODE(cookie);
-	hose = DWLPX_MVEC_HOSE(cookie);
-	device = DWLPX_MVEC_PCISLOT(cookie);
-	if (ionode < 0 || ionode >= DWLPX_NIONODE ||
-	    hose < 0 || hose >= DWLPX_NHOSE ||
-	    device < 0 || device >= DWLPX_MAXDEV) {
-		return;
-	}
-	vp = &vectab[ionode][hose][device];
-	s = splhigh();
-	vp->func = kn8ae_spurious;
-	vp->arg = cookie;
-	(void) splx(s);
-}
+	vec = IH_VEC(ih);
 
-int
-kn8ae_spurious(arg)
-	void *arg;
-{
-	int ionode, hose, device;
-	ionode = DWLPX_MVEC_IONODE(arg);
-	hose = DWLPX_MVEC_HOSE(arg);
-	device = DWLPX_MVEC_PCISLOT(arg);
-	printf("Spurious Interrupt from TLSB Node %d Hose %d Slot %d\n",
-	    ionode + 4, hose, device);
-	return (-1);
-}
+	scb = &scb_iovectab[SCB_VECTOIDX(vec) - SCB_IOVECBASE];
 
+	kn8ae_enadis_intr(ccp, ih, 0);
 
-void
-kn8ae_iointr(framep, vec)
-	void *framep;
-	unsigned long vec;
-{
-	struct vectab *vp;
-	int ionode, hose, device;
-	if ((vec & DWLPX_VEC_EMARK) != 0) {
-		dwlpx_iointr(framep, vec);
-		return;
-	}
-	if ((vec & DWLPX_VEC_MARK) == 0) {
-		panic("kn8ae_iointr: vec 0x%lx\n", vec);
-		/* NOTREACHED */
-	}
-	ionode = DWLPX_MVEC_IONODE(vec);
-	hose = DWLPX_MVEC_HOSE(vec);
-	device = DWLPX_MVEC_PCISLOT(vec);
-
-	if (ionode < 0 || ionode >= DWLPX_NIONODE ||
-	    hose < 0 || hose >= DWLPX_NHOSE ||
-	    device < 0 || device >= DWLPX_MAXDEV) {
-		panic("kn8ae_iointr: malformed vector 0x%lx\n", vec);
-		/* NOTREACHED */
-	}
-	vp = &vectab[ionode][hose][device];
-	if ((*vp->func)(vp->arg) == 0) {
-#if	0
-		printf("kn8ae_iointr: TLSB Node %d Hose %d Slot %d - "
-		    " unclaimed interrupt\n", ionode + 4, hose, device);
-#endif
-	}
+	scb_free(vec);
 }
 
 void
-kn8ae_enadis_intr(irq, onoff)
+kn8ae_spurious(void *arg, u_long vec)
+{
+
+	printf("Spurious interrupt on temporary interrupt vector 0x%lx\n",
+	    vec);
+}
+
+void
+kn8ae_enadis_intr(ccp, irq, onoff)
+	struct dwlpx_config *ccp;
 	pci_intr_handle_t irq;
 	int onoff;
 {
+	struct dwlpx_softc *sc = ccp->cc_sc;
 	unsigned long paddr;
 	u_int32_t val;
 	int ionode, hose, device, hpc, busp, s;
 
-	ionode = DWLPX_MVEC_IONODE(irq);
-	hose = DWLPX_MVEC_HOSE(irq);
-	device = DWLPX_MVEC_PCISLOT(irq);
-	busp = 1 << (((irq >> 16) & 0xff) - 1);
+	ionode = sc->dwlpx_node - 4;
+	hose = sc->dwlpx_hosenum;
+
+	device = IH_DEV(irq);
+	busp = (1 << (IH_PIN(irq) - 1));
+
 	paddr = (1LL << 39);
 	paddr |= (unsigned long) ionode << 36;
 	paddr |= (unsigned long) hose << 34;
+
 	if (device < 4) {
 		hpc = 0;
 	} else if (device < 8) {
@@ -322,18 +285,4 @@ kn8ae_enadis_intr(irq, onoff)
 	REGVAL(PCIA_IMASK(hpc) + paddr) = val;
 	alpha_mb();
 	(void) splx(s);
-}
-
-void
-kn8ae_enable_intr(irq)
-	pci_intr_handle_t irq;
-{
-	kn8ae_enadis_intr(irq, 1);
-}
-
-void
-kn8ae_disable_intr(irq)
-	pci_intr_handle_t irq;
-{
-	kn8ae_enadis_intr(irq, 0);
 }

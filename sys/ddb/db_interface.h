@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.h,v 1.6 2001/01/22 13:56:56 jdolecek Exp $	*/
+/*	$NetBSD: db_interface.h,v 1.6.4.1 2001/08/03 04:12:50 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -59,6 +59,9 @@ void db_show_all_procs __P((db_expr_t, int, db_expr_t, char *));
 
 /* kern/kern_clock.c */
 void db_show_callout __P((db_expr_t, int, db_expr_t, char *));
+
+/* kern/subr_log.c */
+void db_dmesg __P((db_expr_t, int, db_expr_t, char *));
 
 /* netinet/if_arp.c */
 void db_show_arptab __P((db_expr_t, int, db_expr_t, char *));

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2001/06/23 12:20:29 bjh21 Exp $
+#	$NetBSD: Makefile,v 1.5.2.1 2001/08/03 04:12:06 lukem Exp $
 
 KDIR=	/sys/arch/netwinder/include
 INCSDIR= /usr/include/arm/netwinder
@@ -12,7 +12,6 @@ INCS=	bootconfig.h \
 	netwinder_boot.h \
 	param.h pcb.h pci_machdep.h pmap.h psl.h \
 	rtc.h \
-	sysarch.h \
 	types.h \
 	vmparam.h
 

@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.132 2001/07/09 06:58:26 itojun Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.132.2.1 2001/08/03 04:13:23 lukem Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.132 2001/07/09 06:57:59 itojun Exp 
+ *	NetBSD: pcmciadevs,v 1.133 2001/07/31 17:01:15 christos Exp 
  */
 /*$FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.8 2001/01/20 01:48:55 imp Exp $*/
 
@@ -554,6 +554,9 @@
 #define	PCMCIA_CIS_DLINK_DE660	{ "D-Link", "DE-660", NULL, NULL }
 #define	PCMCIA_PRODUCT_DLINK_DE660	-1
 #define	PCMCIA_STR_DLINK_DE660	"D-Link DE-660"
+#define	PCMCIA_CIS_DLINK_DE660PLUS	{ "D-Link", "DE-660+", NULL, NULL }
+#define	PCMCIA_PRODUCT_DLINK_DE660PLUS	-1
+#define	PCMCIA_STR_DLINK_DE660PLUS	"D-Link DE-660+"
 #define	PCMCIA_CIS_RPTI_EP400	{ "RPTI LTD.", "EP400", "CISV100", NULL }
 #define	PCMCIA_PRODUCT_RPTI_EP400	-1
 #define	PCMCIA_STR_RPTI_EP400	"RPTI EP400"

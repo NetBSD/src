@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mips,v 1.14 2001/05/29 02:20:24 mrg Exp $
+#	$NetBSD: Makefile.mips,v 1.14.2.1 2001/08/03 04:11:58 lukem Exp $
 
 # Makefile for NetBSD
 #
@@ -201,39 +201,26 @@ links:
 	  sed 's,../.*/\(.*.o\),rm -f \1; ln -s ../GENERIC/\1 \1,' > makelinks
 	sh makelinks && rm -f dontlink
 
-SRCS=	${MIPS}/mips/locore.S \
-	${THISMIPS}/${TARGET_MACHINE}/locore_machdep.S \
-	param.c ioconf.c ${CFILES} ${SFILES}
 .if !empty(IDENT:M-DMIPS1)
-SRCS+=	${MIPS}/mips/locore_mips1.S
+SFILES+=${MIPS}/mips/locore_mips1.S
 .endif
 .if !empty(IDENT:M-DMIPS3)
-SRCS+=	${MIPS}/mips/locore_mips3.S
+SFILES+=${MIPS}/mips/locore_mips3.S
 .endif
 .if empty(IDENT:M-DNOFPU)
-SRCS+=	${MIPS}/mips/fp.S
+SFILES+=${MIPS}/mips/fp.S
 .endif
+SFILES+=${MIPS}/mips/locore.S \
+	${THISMIPS}/${TARGET_MACHINE}/locore_machdep.S
+SRCS=	param.c ioconf.c ${CFILES} ${SFILES}
 
 depend: .depend
 .depend: ${SRCS} assym.h param.c
-	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${MIPS}/mips/locore.S
-.if !empty(IDENT:M-DMIPS1)
-	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${MIPS}/mips/locore_mips1.S
-.endif
-.if !empty(IDENT:M-DMIPS3)
-	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${MIPS}/mips/locore_mips3.S
-.endif
-.if empty(IDENT:M-DNOFPU)
-	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${MIPS}/mips/fp.S
-.endif
-	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${THISMIPS}/${TARGET_MACHINE}/locore_machdep.S
 	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
-.if (${SFILES} != "")
 	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
-.endif
 	sh $S/kern/genassym.sh ${MKDEP} -f assym.dep ${CFLAGS} \
 	  ${CPPFLAGS} < ${MIPS}/mips/genassym.cf
-	@sed -e 's/.*\.o:.*\.c/assym.h:/' < assym.dep >> .depend
+	@sed -e 's/.*\.o:.*\.c /assym.h: /' < assym.dep >> .depend
 	@rm -f assym.dep
 
 dependall: depend all
@@ -263,8 +250,10 @@ locore_mips1.o: ${MIPS}/mips/locore_mips1.S assym.h
 locore_mips3.o: ${MIPS}/mips/locore_mips3.S assym.h
 	${NORMAL_S}
 
+.if empty(IDENT:M-DNOFPU)
 fp.o: ${MIPS}/mips/fp.S assym.h
 	${NORMAL_S}
+.endif
 
 locore_machdep.o: ${THISMIPS}/${TARGET_MACHINE}/locore_machdep.S assym.h
 	${NORMAL_S}

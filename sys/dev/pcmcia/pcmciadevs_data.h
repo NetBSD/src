@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.132 2001/07/09 06:58:26 itojun Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.132.2.1 2001/08/03 04:13:24 lukem Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.132 2001/07/09 06:57:59 itojun Exp 
+ *	NetBSD: pcmciadevs,v 1.133 2001/07/31 17:01:15 christos Exp 
  */
 /*$FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.8 2001/01/20 01:48:55 imp Exp $*/
 
@@ -821,6 +821,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "D-Link",
 	    "D-Link DE-660"	},
+	},
+	{
+	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_DLINK_DE660PLUS,
+	    PCMCIA_CIS_DLINK_DE660PLUS,
+	    0,
+	    "D-Link",
+	    "D-Link DE-660+"	},
 	},
 	{
 	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_RPTI_EP400,

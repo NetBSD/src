@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.39 2001/01/20 13:44:30 pk Exp $ */
+/*	$NetBSD: clock.c,v 1.39.4.1 2001/08/03 04:12:28 lukem Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -83,6 +83,7 @@
 
 #include <dev/clock_subr.h>
 #include <dev/ic/mk48txxreg.h>
+#include <dev/ic/mc146818reg.h>
 
 #include <sparc64/sparc64/intreg.h>
 #include <sparc64/sparc64/timerreg.h>
@@ -93,6 +94,13 @@
 #include <sparc64/dev/ebusvar.h>
 
 extern u_int64_t cpu_clockrate;
+
+struct rtc_info {
+	bus_space_tag_t	rtc_bt;		/* bus tag & handle */
+	bus_space_handle_t rtc_bh;	/* */
+	u_int		rtc_year0;	/* What year is represented on the system
+					   by the chip's year counter at 0 */
+};
 
 /*
  * Statistics clock interval and variance, in usec.  Variance must be a
@@ -122,6 +130,8 @@ static int	clockmatch_sbus __P((struct device *, struct cfdata *, void *));
 static void	clockattach_sbus __P((struct device *, struct device *, void *));
 static int	clockmatch_ebus __P((struct device *, struct cfdata *, void *));
 static void	clockattach_ebus __P((struct device *, struct device *, void *));
+static int	clockmatch_rtc __P((struct device *, struct cfdata *, void *));
+static void	clockattach_rtc __P((struct device *, struct device *, void *));
 static void	clockattach __P((int, bus_space_tag_t, bus_space_handle_t));
 
 
@@ -133,10 +143,14 @@ struct cfattach clock_ebus_ca = {
 	sizeof(struct device), clockmatch_ebus, clockattach_ebus
 };
 
+struct cfattach rtc_ebus_ca = {
+	sizeof(struct device), clockmatch_rtc, clockattach_rtc
+};
+
 extern struct cfdriver clock_cd;
 
 /* Global TOD clock handle & idprom pointer */
-static todr_chip_handle_t todr_handle;
+static todr_chip_handle_t todr_handle = NULL;
 static struct idprom *idprom;
 
 static int	timermatch __P((struct device *, struct cfdata *, void *));
@@ -157,6 +171,15 @@ void timetochip __P((struct chiptime *));
 void stopcounter __P((struct timer_4u *));
 
 int timerblurb = 10; /* Guess a value; used before clock is attached */
+
+u_int8_t rtc_read_reg(bus_space_tag_t, bus_space_handle_t, int);
+void rtc_write_reg(bus_space_tag_t, bus_space_handle_t, int, u_int8_t);
+int rtc_gettime(todr_chip_handle_t, struct timeval *);
+int rtc_settime(todr_chip_handle_t, struct timeval *);
+int rtc_getcal(todr_chip_handle_t, int *);
+int rtc_setcal(todr_chip_handle_t, int);
+
+int rtc_auto_century_adjust = 1;
 
 /*
  * The OPENPROM calls the clock the "eeprom", so we have to have our
@@ -182,6 +205,17 @@ clockmatch_ebus(parent, cf, aux)
 	struct ebus_attach_args *ea = aux;
 
 	return (strcmp("eeprom", ea->ea_name) == 0);
+}
+
+static int
+clockmatch_rtc(parent, cf, aux)
+	struct device *parent;
+	struct cfdata *cf;
+	void *aux;
+{
+	struct ebus_attach_args *ea = aux;
+
+	return (strcmp("rtc", ea->ea_name) == 0);
 }
 
 /*
@@ -359,6 +393,7 @@ ebus_wenable(handle, onoff)
 	return (err);
 }
 
+
 static void
 clockattach(node, bt, bh)
 	int node;
@@ -391,6 +426,100 @@ clockattach(node, bt, bh)
 	printf(": hostid %x\n", (u_int)hostid);
 
 	idprom = idp;
+}
+
+/*
+ * `rtc' is a ds1287 on an ebus (actually an isa bus, but we use the
+ * ebus driver for isa.)  So we can use ebus_wenable() but need to do
+ * different attach work and use different todr routines.  It does not
+ * incorporate an IDPROM.
+ */
+
+/*
+ * XXX the stupid ds1287 is not mapped directly but uses an address
+ * and a data reg so we cannot access the stuuupid thing w/o having
+ * write access to the registers.
+ *
+ * XXXX We really need to mutex register access!
+ */
+#define	RTC_ADDR	0
+#define	RTC_DATA	1
+u_int8_t 
+rtc_read_reg(bus_space_tag_t bt, bus_space_handle_t bh, int reg)
+{
+	bus_space_write_1(bt, bh, RTC_ADDR, reg);
+	return (bus_space_read_1(bt, bh, RTC_DATA));
+}
+void 
+rtc_write_reg(bus_space_tag_t bt, bus_space_handle_t bh, int reg, u_int8_t val) {
+	bus_space_write_1(bt, bh, RTC_ADDR, reg);
+	bus_space_write_1(bt, bh, RTC_DATA, reg);
+}
+
+/* ARGSUSED */
+static void
+clockattach_rtc(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
+{
+	struct ebus_attach_args *ea = aux;
+	bus_space_tag_t bt = ea->ea_bustag;
+	todr_chip_handle_t handle;
+	struct rtc_info *rtc;
+	char *model;
+	int sz;
+	static struct ebus_info ebi;
+
+	/* hard code to 8K? */
+	sz = ea->ea_regs[0].size;
+
+	if (ebus_bus_map(bt,
+			 0,
+			 EBUS_PADDR_FROM_REG(&ea->ea_regs[0]),
+			 sz,
+			 BUS_SPACE_MAP_LINEAR,
+			 0,
+			 &ebi.ei_bh) != 0) {
+		printf("%s: can't map register\n", self->dv_xname);
+		return;
+	}
+
+	model = getpropstring(ea->ea_node, "model");
+#ifdef DIAGNOSTIC
+	if (model == NULL)
+		panic("clockattach_rtc: no model property");
+#endif
+	printf(": %s\n", model);
+
+	/* 
+	 * Turn interrupts off, just in case. (Although they shouldn't
+	 * be wired to an interrupt controller on sparcs).
+	 */
+	rtc_write_reg(bt, ebi.ei_bh, 
+		MC_REGB, MC_REGB_BINARY | MC_REGB_24HR);
+
+	/* Setup our todr_handle */
+	sz = ALIGN(sizeof(struct todr_chip_handle)) + sizeof(struct rtc_info);
+	handle = malloc(sz, M_DEVBUF, M_NOWAIT);
+	rtc = (struct rtc_info*)((u_long)handle +
+				 ALIGN(sizeof(struct todr_chip_handle)));
+	handle->cookie = rtc;
+	handle->todr_gettime = rtc_gettime;
+	handle->todr_settime = rtc_settime;
+	handle->todr_getcal = rtc_getcal;
+	handle->todr_setcal = rtc_setcal;
+	handle->todr_setwen = NULL;
+	rtc->rtc_bt = bt;
+	rtc->rtc_bh = ebi.ei_bh;
+	/* Our TOD clock year 0 is 1968 */
+	rtc->rtc_year0 = 1968;	/* XXX Really? */
+
+	/* Save info for the clock wenable call. */
+	ebi.ei_bt = bt;
+	ebi.ei_reg = ea->ea_regs[0];
+	handle->bus_cookie = &ebi;
+	handle->todr_setwen = ebus_wenable;
+	todr_handle = handle;
 }
 
 /*
@@ -828,8 +957,9 @@ inittodr(base)
 		badbase = 1;
 	}
 
-	if (todr_gettime(todr_handle, (struct timeval *)&time) != 0 ||
-	    time.tv_sec == 0) {
+	if (todr_handle &&
+		(todr_gettime(todr_handle, (struct timeval *)&time) != 0 ||
+		time.tv_sec == 0)) {
 		printf("WARNING: bad date in battery clock");
 		/*
 		 * Believe the time in the file system for lack of
@@ -867,7 +997,8 @@ resettodr()
 		return;
 
 	sparc_clock_time_is_ok = 1;
-	if (todr_settime(todr_handle, (struct timeval *)&time) != 0)
+	if (todr_handle == 0 ||
+		todr_settime(todr_handle, (struct timeval *)&time) != 0)
 		printf("Cannot set time in time-of-day clock\n");
 }
 
@@ -882,3 +1013,129 @@ eeprom_uio(uio)
 {
 	return (ENODEV);
 }
+
+
+/*
+ * RTC todr routines.
+ */
+
+/*
+ * Get time-of-day and convert to a `struct timeval'
+ * Return 0 on success; an error number otherwise.
+ */
+int
+rtc_gettime(handle, tv)
+	todr_chip_handle_t handle;
+	struct timeval *tv;
+{
+	struct rtc_info *rtc = handle->cookie;
+	bus_space_tag_t bt = rtc->rtc_bt;
+	bus_space_handle_t bh = rtc->rtc_bh;
+	struct clock_ymdhms dt;
+	int year;
+	u_int8_t csr;
+
+	todr_wenable(handle, 1);
+
+	/* Stop updates. */
+	csr = rtc_read_reg(bt, bh, MC_REGB);
+	csr |= MC_REGB_SET;
+	rtc_write_reg(bt, bh, MC_REGB, csr);
+
+	/* Read time */
+	dt.dt_sec = rtc_read_reg(bt, bh, MC_SEC);
+	dt.dt_min = rtc_read_reg(bt, bh, MC_MIN);
+	dt.dt_hour = rtc_read_reg(bt, bh, MC_HOUR);
+	dt.dt_day = rtc_read_reg(bt, bh, MC_DOM);
+	dt.dt_wday = rtc_read_reg(bt, bh, MC_DOW);
+	dt.dt_mon = rtc_read_reg(bt, bh, MC_MONTH);
+	year = rtc_read_reg(bt, bh, MC_YEAR);
+printf("rtc_gettime: read y %x/%d m %x/%d wd %d d %x/%d "
+	"h %x/%d m %x/%d s %x/%d\n",
+	year, year, dt.dt_mon, dt.dt_mon, dt.dt_wday,
+	dt.dt_day, dt.dt_day, dt.dt_hour, dt.dt_hour,
+	dt.dt_min, dt.dt_min, dt.dt_sec, dt.dt_sec);
+
+	year += rtc->rtc_year0;
+	if (year < POSIX_BASE_YEAR && rtc_auto_century_adjust != 0)
+		year += 100;
+
+	dt.dt_year = year;
+
+	/* time wears on */
+	csr = rtc_read_reg(bt, bh, MC_REGB);
+	csr &= ~MC_REGB_SET;
+	rtc_write_reg(bt, bh, MC_REGB, csr);
+	todr_wenable(handle, 0);
+
+	/* simple sanity checks */
+	if (dt.dt_mon > 12 || dt.dt_day > 31 ||
+	    dt.dt_hour >= 24 || dt.dt_min >= 60 || dt.dt_sec >= 60)
+		return (1);
+
+	tv->tv_sec = clock_ymdhms_to_secs(&dt);
+	tv->tv_usec = 0;
+	return (0);
+}
+
+/*
+ * Set the time-of-day clock based on the value of the `struct timeval' arg.
+ * Return 0 on success; an error number otherwise.
+ */
+int
+rtc_settime(handle, tv)
+	todr_chip_handle_t handle;
+	struct timeval *tv;
+{
+	struct rtc_info *rtc = handle->cookie;
+	bus_space_tag_t bt = rtc->rtc_bt;
+	bus_space_handle_t bh = rtc->rtc_bh;
+	struct clock_ymdhms dt;
+	u_int8_t csr;
+	int year;
+
+	/* Note: we ignore `tv_usec' */
+	clock_secs_to_ymdhms(tv->tv_sec, &dt);
+
+	year = dt.dt_year - rtc->rtc_year0;
+	if (year > 99 && rtc_auto_century_adjust != 0)
+		year -= 100;
+
+	todr_wenable(handle, 1);
+	/* enable write */
+	csr = rtc_read_reg(bt, bh, MC_REGB);
+	csr |= MC_REGB_SET;
+	rtc_write_reg(bt, bh, MC_REGB, csr);
+
+	rtc_write_reg(bt, bh, MC_SEC, dt.dt_sec);
+	rtc_write_reg(bt, bh, MC_MIN, dt.dt_min);
+	rtc_write_reg(bt, bh, MC_HOUR, dt.dt_hour);
+	rtc_write_reg(bt, bh, MC_DOW, dt.dt_wday);
+	rtc_write_reg(bt, bh, MC_DOM, dt.dt_day);
+	rtc_write_reg(bt, bh, MC_MONTH, dt.dt_mon);
+	rtc_write_reg(bt, bh, MC_YEAR, year);
+
+	/* load them up */
+	csr = rtc_read_reg(bt, bh, MC_REGB);
+	csr &= ~MC_REGB_SET;
+	rtc_write_reg(bt, bh, MC_REGB, csr);
+	todr_wenable(handle, 0);
+	return (0);
+}
+
+int
+rtc_getcal(handle, vp)
+	todr_chip_handle_t handle;
+	int *vp;
+{
+	return (EOPNOTSUPP);
+}
+
+int
+rtc_setcal(handle, v)
+	todr_chip_handle_t handle;
+	int v;
+{
+	return (EOPNOTSUPP);
+}
+

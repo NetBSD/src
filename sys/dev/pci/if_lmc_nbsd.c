@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lmc_nbsd.c,v 1.10 2001/07/07 16:39:16 thorpej Exp $	*/
+/*	$NetBSD: if_lmc_nbsd.c,v 1.10.2.1 2001/08/03 04:13:15 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-1999 LAN Media Corporation (LMC)
@@ -378,4 +378,6 @@ lmc_shutdown(void *arg)
 
 	sc->lmc_miireg16 = 0;  /* deassert ready, and all others too */
 	lmc_led_on(sc, LMC_MII16_LED_ALL);
+
+	sppp_flush(&sc->lmc_if);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_hy.c,v 1.12 1998/06/25 23:57:33 thorpej Exp $	*/
+/*	$NetBSD: grf_hy.c,v 1.12.28.1 2001/08/03 04:11:27 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -236,7 +236,7 @@ hy_init(gp, scode, addr)
 			gp->g_fbkva = addr + gi->gd_regsize;
 		} else {
 			/*
-			 * For DIO space we need to map the seperate
+			 * For DIO space we need to map the separate
 			 * framebuffer.
 			 */
 			gp->g_regkva = addr;

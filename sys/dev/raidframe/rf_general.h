@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_general.h,v 1.6 2000/12/15 02:12:58 oster Exp $	*/
+/*	$NetBSD: rf_general.h,v 1.6.4.1 2001/08/03 04:13:26 lukem Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -81,11 +81,11 @@ extern char rf_panicbuf[];
 #define RF_GETTIME(_t) microtime(&(_t))
 
 /*
- * zero memory- not all bzero calls go through here, only
+ * zero memory- not all memset calls go through here, only
  * those which in the kernel may have a user address
  */
 
-#define RF_BZERO(_bp,_b,_l)  bzero(_b,_l)	/* XXX This is likely
+#define RF_BZERO(_bp,_b,_l)  memset(_b,0,_l)	/* XXX This is likely
 						 * incorrect. GO */
 
 

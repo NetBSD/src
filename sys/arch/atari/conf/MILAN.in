@@ -1,5 +1,5 @@
 #
-#	$NetBSD: MILAN.in,v 1.6 2001/06/07 07:56:57 leo Exp $
+#	$NetBSD: MILAN.in,v 1.6.4.1 2001/08/03 04:11:16 lukem Exp $
 #
 # Milan
 #
@@ -53,7 +53,7 @@ fdisa0 		at fdcisa0 drive 0
 # swap the bytelanes on the IDE controller. So all data on the disk was
 # byteswapped and all CDROM drivers had to byteswap the data to make
 # this nice idea work... To remain compatible with the 'current' drivers,
-# this sceme was adopted by the Hades hardware (hence wdc_mb.c). On the Milan
+# this scheme was adopted by the Hades hardware (hence wdc_mb.c). On the Milan
 # however, the change was reverted. But... now the hardware is connected to
 # a little endian (ISA) bus, in PIO mode this is essentially the same as
 # swapping the bytelanes. The fun starts when you use the PCIIDE DMA mode

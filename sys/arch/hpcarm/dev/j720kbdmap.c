@@ -1,4 +1,4 @@
-/*	$NetBSD: j720kbdmap.c,v 1.1 2001/06/23 09:20:05 toshii Exp $	*/
+/*	$NetBSD: j720kbdmap.c,v 1.1.2.1 2001/08/03 04:11:33 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2001 The NetBSD Foundation, Inc.
@@ -76,6 +76,7 @@ static const keysym_t j720kbd_keydesc_us[] = {
     KC(40), 			KS_i,
     KC(41), 			KS_o,
     KC(42), 			KS_p,
+    KC(43), 			KS_backslash,	KS_bar,
     KC(44),			KS_BackSpace,
     KC(49), 			KS_a,
     KC(50), 			KS_s,
@@ -95,7 +96,6 @@ static const keysym_t j720kbd_keydesc_us[] = {
     KC(71), 			KS_m,
     KC(72), 			KS_comma,	KS_less,
     KC(73), 			KS_period,	KS_greater,
-    KC(74), 			KS_slash,	KS_question,
     KC(76), 			KS_Return,
     KC(81), 			KS_Tab,
     KC(83), 			KS_Shift_L,
@@ -105,15 +105,13 @@ static const keysym_t j720kbd_keydesc_us[] = {
     KC(113),			KS_Meta_L,
     KC(114),  KS_Cmd1,		KS_Control_L,
     KC(116), 			KS_space,
+    KC(120), 			KS_slash,	KS_question,
     KC(121),  KS_Cmd_ResetEmul,	KS_Delete,
 
     /* below are guesses from Japanese model key layout */
-    KC(43),			KS_bracketleft,	KS_braceleft,
     KC(59),			KS_bracketright, KS_braceright,
     KC(58), 			KS_semicolon,	KS_colon,
     KC(75), 			KS_apostrophe,	KS_quotedbl,
-    KC(91), 			KS_backslash,	KS_bar,
-    KC(120), 			KS_grave,	KS_asciitilde,
 
     KC(90),			KS_Up,
     KC(105),			KS_Left,

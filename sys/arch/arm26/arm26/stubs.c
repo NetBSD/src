@@ -1,11 +1,11 @@
-/* $NetBSD: stubs.c,v 1.8 2001/04/29 15:13:45 bjh21 Exp $ */
+/* $NetBSD: stubs.c,v 1.8.2.1 2001/08/03 04:11:03 lukem Exp $ */
 /*
  * stubs.c -- functions I haven't written yet
  */
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: stubs.c,v 1.8 2001/04/29 15:13:45 bjh21 Exp $");
+__RCSID("$NetBSD: stubs.c,v 1.8.2.1 2001/08/03 04:11:03 lukem Exp $");
 
 #include <sys/kernel.h>
 #include <sys/systm.h>
@@ -99,12 +99,4 @@ pagemove(foo, bar, len)
 	size_t len;
 {
 	panic("pagemove not implemented");
-}
-
-int sys_sysarch(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	panic("sys_sysarch not implemented");
 }

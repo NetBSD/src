@@ -1,4 +1,4 @@
-/*	$NetBSD: bootp.c,v 1.20 2000/11/02 03:22:23 thorpej Exp $	*/
+/*	$NetBSD: bootp.c,v 1.20.4.1 2001/08/03 04:13:45 lukem Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -90,7 +90,7 @@ struct in_addr dhcp_serverip;
  */
 int bootp_flags;
 
-/* Fetch required bootp infomation */
+/* Fetch required bootp information */
 void
 bootp(sock)
 	int sock;

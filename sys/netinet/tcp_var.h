@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.81 2001/05/30 12:04:54 mrg Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.81.2.1 2001/08/03 04:13:57 lukem Exp $	*/
 
 /*
 %%% portions-copyright-nrl-98
@@ -518,6 +518,8 @@ struct	tcpstat {
 	u_quad_t tcps_sc_dropped;	/* # of SYNs dropped (no route/mem) */
 	u_quad_t tcps_sc_collisions;	/* # of hash collisions */
 	u_quad_t tcps_sc_retransmitted;	/* # of retransmissions */
+
+	u_quad_t tcps_selfquench;	/* # of ENOBUFS we get on output */
 };
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: ite8181.c,v 1.12 2001/06/11 09:36:44 sato Exp $	*/
+/*	$NetBSD: ite8181.c,v 1.12.2.1 2001/08/03 04:11:35 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2000,2001 SATO Kazumi
@@ -520,7 +520,7 @@ ite8181_fbinit(fb)
 	    bootinfo->fb_line_bytes == 0 ||
 	    bootinfo->fb_width == 0 ||
 	    bootinfo->fb_height == 0) {
-		printf("no frame buffer infomation.\n");
+		printf("no frame buffer information.\n");
 		return (-1);
 	}
 
@@ -607,9 +607,7 @@ ite8181_fbinit(fb)
 	case BIFB_D16_0000:
 		fb->hf_class = HPCFB_CLASS_RGBCOLOR;
 		fb->hf_access_flags |= HPCFB_ACCESS_STATIC;
-#if BYTE_ORDER == BIG_ENDIAN /* XXXX */
-		fb->hf_swap_flags = HPCFB_SWAP_BYTE;
-#endif
+		fb->hf_order_flags = HPCFB_REVORDER_BYTE;
 		fb->hf_pack_width = 16;
 		fb->hf_pixels_per_pack = 1;
 		fb->hf_pixel_width = 16;

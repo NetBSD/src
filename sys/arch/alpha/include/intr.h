@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.47 2001/04/28 06:10:50 thorpej Exp $ */
+/* $NetBSD: intr.h,v 1.47.2.1 2001/08/03 04:10:44 lukem Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -71,6 +71,34 @@
 #include <sys/lock.h>
 #include <sys/queue.h>
 #include <machine/atomic.h>
+
+/*
+ * The Alpha System Control Block.  This is 8k long, and you get
+ * 16 bytes per vector (i.e. the vector numbers are spaced 16
+ * apart).
+ *
+ * This is sort of a "shadow" SCB -- rather than the CPU jumping
+ * to (SCBaddr + (16 * vector)), like it does on the VAX, we get
+ * a vector number in a1.  We use the SCB to look up a routine/arg
+ * and jump to it.
+ *
+ * Since we use the SCB only for I/O interrupts, we make it shorter
+ * than normal, starting it at vector 0x800 (the start of the I/O
+ * interrupt vectors).
+ */
+#define	SCB_IOVECBASE	0x0800
+#define	SCB_VECSIZE	0x0010
+#define	SCB_SIZE	0x2000
+
+#define	SCB_VECTOIDX(x)	((x) >> 4)
+#define	SCB_IDXTOVEC(x)	((x) << 4)
+
+#define	SCB_NIOVECS	SCB_VECTOIDX(SCB_SIZE - SCB_IOVECBASE)
+
+struct scbvec { 
+	void	(*scb_func)(void *, u_long);
+	void	*scb_arg;
+};
 
 /*
  * Alpha interrupts come in at one of 4 levels:
@@ -160,17 +188,15 @@ _splraise(int s)
  */
 #define	ALPHA_IPI_HALT			(1UL << 0)
 #define	ALPHA_IPI_MICROSET		(1UL << 1)
-#define	ALPHA_IPI_TBIA			(1UL << 2)
-#define	ALPHA_IPI_TBIAP			(1UL << 3)
-#define	ALPHA_IPI_SHOOTDOWN		(1UL << 4)
-#define	ALPHA_IPI_IMB			(1UL << 5)
-#define	ALPHA_IPI_AST			(1UL << 6)
-#define	ALPHA_IPI_SYNCH_FPU		(1UL << 7)
-#define	ALPHA_IPI_DISCARD_FPU		(1UL << 8)
-#define	ALPHA_IPI_PAUSE			(1UL << 9)
-#define	ALPHA_IPI_PMAP_REACTIVATE	(1UL << 10)
+#define	ALPHA_IPI_SHOOTDOWN		(1UL << 2)
+#define	ALPHA_IPI_IMB			(1UL << 3)
+#define	ALPHA_IPI_AST			(1UL << 4)
+#define	ALPHA_IPI_SYNCH_FPU		(1UL << 5)
+#define	ALPHA_IPI_DISCARD_FPU		(1UL << 6)
+#define	ALPHA_IPI_PAUSE			(1UL << 7)
+#define	ALPHA_IPI_PMAP_REACTIVATE	(1UL << 8)
 
-#define	ALPHA_NIPIS		11	/* must not exceed 64 */
+#define	ALPHA_NIPIS		9	/* must not exceed 64 */
 
 struct cpu_info;
 struct trapframe;
@@ -268,6 +294,8 @@ int	alpha_shared_intr_get_sharetype(struct alpha_shared_intr *,
 	    unsigned int);
 int	alpha_shared_intr_isactive(struct alpha_shared_intr *,
 	    unsigned int);
+int	alpha_shared_intr_firstactive(struct alpha_shared_intr *,
+	    unsigned int);
 void	alpha_shared_intr_set_dfltsharetype(struct alpha_shared_intr *,
 	    unsigned int, int);
 void	alpha_shared_intr_set_maxstrays(struct alpha_shared_intr *,
@@ -283,7 +311,14 @@ char	*alpha_shared_intr_string(struct alpha_shared_intr *,
 struct evcnt *alpha_shared_intr_evcnt(struct alpha_shared_intr *,
 	    unsigned int);
 
-void	set_iointr(void (*)(void *, unsigned long));
+extern struct scbvec scb_iovectab[];
+
+void	scb_init(void);
+void	scb_set(u_long, void (*)(void *, u_long), void *);
+u_long	scb_alloc(void (*)(void *, u_long), void *);
+void	scb_free(u_long);
+
+#define	SCB_ALLOC_FAILED	((u_long) -1)
 
 #endif /* _KERNEL */
 #endif /* ! _ALPHA_INTR_H_ */

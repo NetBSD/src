@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn.c,v 1.29 2001/06/19 12:59:15 wiz Exp $	*/
+/*	$NetBSD: if_sn.c,v 1.29.2.1 2001/08/03 04:11:51 lukem Exp $	*/
 
 /*
  * National Semiconductor  DP8393X SONIC Driver
@@ -711,7 +711,7 @@ camprogram(sc)
 			 * addresses. It has no way to specify a range.
 			 * (Well, thats not exactly true. If the
 			 * range is small one could program each addr
-			 * within the range as a seperate CAM entry)
+			 * within the range as a separate CAM entry)
 			 */
 			ifp->if_flags |= IFF_ALLMULTI;
 			break;

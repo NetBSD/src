@@ -1,4 +1,4 @@
-/* $NetBSD: dwlpxvar.h,v 1.7 1998/04/15 00:49:17 mjacob Exp $ */
+/* $NetBSD: dwlpxvar.h,v 1.7.28.1 2001/08/03 04:10:46 lukem Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -80,11 +80,6 @@ void	dwlpx_bus_io_init __P((bus_space_tag_t, void *));
 void	dwlpx_bus_mem_init __P((bus_space_tag_t, void *));
 
 /*
- * IO Interrupt handler.
- */
-void 	dwlpx_iointr __P((void *, unsigned long));
-
-/*
  * Each DWLPX supports up to 15 devices, 12 of which are PCI slots.
  *
  * Since the STD I/O modules in slots 12-14 are really a PCI-EISA
@@ -94,32 +89,6 @@ void 	dwlpx_iointr __P((void *, unsigned long));
 
 #define	DWLPX_NIONODE	5
 #define	DWLPX_NHOSE	4
-
-/*
- * Interrupt Cookie for DWLPX vectors.
- *
- * Bits 0..3	PCI Slot (0..11)
- * Bits 4..7	I/O Hose (0..3)
- * Bits 8..11	I/O Node (0..4)
- * Bit	15	Constant 1
- */
-#define	DWLPX_VEC_MARK	(1<<15)
-#define	DWLPX_MVEC(ionode, hose, pcislot)	\
-	(DWLPX_VEC_MARK | (ionode << 8) | (hose << 4) | (pcislot))
-
-#define	DWLPX_MVEC_IONODE(cookie)	\
-	((((u_int64_t)(cookie)) >> 8) & 0xf)
-#define	DWLPX_MVEC_HOSE(cookie)	\
-	((((u_int64_t)(cookie)) >> 4) & 0xf)
-#define	DWLPX_MVEC_PCISLOT(cookie)	\
-	(((u_int64_t)(cookie)) & 0xf)
-
-/*
- * DWLPX Error Interrupt
- */
-#define	DWLPX_VEC_EMARK	(1<<14)
-#define	DWLPX_ERRVEC(ionode, hose)	\
-	(DWLPX_VEC_EMARK | (ionode << 8) | (hose << 4))
 
 /*
  * Default values to put into DWLPX IMASK register(s)

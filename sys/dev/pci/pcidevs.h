@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.342 2001/06/30 01:04:25 thorpej Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.342.2.1 2001/08/03 04:13:19 lukem Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.336 2001/06/30 01:03:59 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.340 2001/07/31 22:27:25 matt Exp 
  */
 
 /*
@@ -546,6 +546,7 @@
 #define	PCI_VENDOR_GEOCAST	0x15a1		/* Geocast Network Systems */
 #define	PCI_VENDOR_NETSEC	0x1660		/* NetSec */
 #define	PCI_VENDOR_SIBYTE	0x166d		/* SiByte, Inc. */
+#define	PCI_VENDOR_ANTARES	0x1754		/* Antares Microsystems, Inc. */
 #define	PCI_VENDOR_SYMPHONY2	0x1c1c		/* Symphony Labs (2nd PCI Vendor ID) */
 #define	PCI_VENDOR_TEKRAM2	0x1de1		/* Tekram Technology (2nd PCI Vendor ID) */
 #define	PCI_VENDOR_LAVA	0x1407		/* Lava Semiconductor Manufacturing, Inc. */
@@ -579,6 +580,7 @@
 
 /* 3COM Products */
 #define	PCI_PRODUCT_3COM_3C985	0x0001		/* 3c985 Gigabit Ethernet */
+#define	PCI_PRODUCT_3COM_3C556MODEM	0x1007		/* 3c556 V.90 MiniPCI Modem */
 #define	PCI_PRODUCT_3COM_3C450TX	0x4500		/* 3c450-TX 10/100 Ethernet */
 #define	PCI_PRODUCT_3COM_3C590	0x5900		/* 3c590 Ethernet */
 #define	PCI_PRODUCT_3COM_3C595TX	0x5950		/* 3c595-TX 10/100 Ethernet */
@@ -744,6 +746,9 @@
 #define	PCI_PRODUCT_AMI_MEGARAID	0x9010		/* MegaRAID */
 #define	PCI_PRODUCT_AMI_MEGARAID2	0x9060		/* MegaRAID 2 */
 #define	PCI_PRODUCT_AMI_MEGARAID3	0x1960		/* MegaRAID 3 */
+
+/* Antares Microsystems, Inc. products */
+#define	PCI_PRODUCT_ANTARES_TC9021	0x1021		/* Antares Gigabit Ethernet */
 
 /* Apple products */
 #define	PCI_PRODUCT_APPLE_BANDIT	0x0001		/* Bandit Host-PCI Bridge */
@@ -1161,6 +1166,7 @@
 #define	PCI_PRODUCT_IMS_TT128M	0x9128		/* TwinTurbo 128M */
 
 /* Intel products */
+#define	PCI_PRODUCT_INTEL_80312	0x030d		/* 80310 I/O Companion Chip */
 #define	PCI_PRODUCT_INTEL_PCEB	0x0482		/* 82375EB/SB PCI-EISA Bridge (PCEB) */
 #define	PCI_PRODUCT_INTEL_CDC	0x0483		/* 82424ZX Cache and DRAM controller (CDC) */
 #define	PCI_PRODUCT_INTEL_SIO	0x0484		/* 82378ZB System I/O (SIO) */
@@ -1246,6 +1252,7 @@
 #define	PCI_PRODUCT_INTEL_82801BA_HPB	0x244e		/* 82801BA Hub-to-PCI Bridge */
 #define	PCI_PRODUCT_INTEL_82820_MCH	0x2501		/* 82820 MCH (Camino) */
 #define	PCI_PRODUCT_INTEL_82820_AGP	0x250f		/* 82820 AGP */
+#define	PCI_PRODUCT_INTEL_80312_ATU	0x530d		/* 80310 ATU */
 #define	PCI_PRODUCT_INTEL_82371SB_ISA	0x7000		/* 82371SB PCI-to-ISA Bridge (PIIX3) */
 #define	PCI_PRODUCT_INTEL_82371SB_IDE	0x7010		/* 82371SB IDE Interface (PIIX3) */
 #define	PCI_PRODUCT_INTEL_82371SB_USB	0x7020		/* 82371SB USB Host Controller (PIIX3) */
@@ -1739,6 +1746,7 @@
 
 /* Titan Electronics products */
 #define	PCI_PRODUCT_TITAN_PCI800H	0xa003		/* PCI-800H */
+#define	PCI_PRODUCT_TITAN_PCI100H	0xa001		/* PCI-100H */
 
 /* Toshiba America products */
 #define	PCI_PRODUCT_TOSHIBA_R4X00	0x0009		/* R4x00 Host-PCI Bridge */

@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_io.c,v 1.1 2001/06/09 10:29:12 chris Exp $	*/
+/*	$NetBSD: footbridge_io.c,v 1.1.2.1 2001/08/03 04:11:00 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997 Causality Limited
@@ -209,7 +209,7 @@ footbridge_mem_bs_map(t, bpa, size, cacheable, bshp)
 	/* Now map the pages */
 	/* The cookie is the physical base address for the I/O area */
 	while (startpa < endpa) {
-		pmap_enter(kernel_pmap, va, (bus_addr_t)t + startpa,
+		pmap_enter(pmap_kernel(), va, (bus_addr_t)t + startpa,
 		    VM_PROT_READ | VM_PROT_WRITE, 0);
 		va += NBPG;
 		startpa += NBPG;

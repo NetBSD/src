@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.5 2001/07/02 20:43:39 jdolecek Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.5.2.1 2001/08/03 04:13:43 lukem Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -181,7 +181,7 @@ static int amountpipekva = 0;
 
 static void pipeclose __P((struct pipe *cpipe));
 static void pipe_free_kmem __P((struct pipe *cpipe));
-static int pipe_create __P((struct pipe **cpipep));
+static int pipe_create __P((struct pipe **cpipep, int allockva));
 static __inline int pipelock __P((struct pipe *cpipe, int catch));
 static __inline void pipeunlock __P((struct pipe *cpipe));
 static __inline void pipeselwakeup __P((struct pipe *selp,
@@ -230,7 +230,6 @@ sys_pipe(p, v, retval)
 	register_t *retval;
 #endif
 {
-	struct filedesc *fdp = p->p_fd;
 	struct file *rf, *wf;
 	struct pipe *rpipe, *wpipe;
 	int fd, error;
@@ -238,16 +237,14 @@ sys_pipe(p, v, retval)
 #ifdef __FreeBSD__
 	if (pipe_zone == NULL)
 		pipe_zone = zinit("PIPE", sizeof(struct pipe), 0, 0, 4);
-#endif
 
 	rpipe = wpipe = NULL;
-	if (pipe_create(&rpipe) || pipe_create(&wpipe)) {
+	if (pipe_create(&rpipe, 1) || pipe_create(&wpipe, 1)) {
 		pipeclose(rpipe);
 		pipeclose(wpipe);
 		return (ENFILE);
 	}
 
-#ifdef __FreeBSD__
 	error = falloc(p, &rf, &fd);
 	if (error) {
 		pipeclose(rpipe);
@@ -269,6 +266,8 @@ sys_pipe(p, v, retval)
 	rf->f_ops = &pipeops;
 	error = falloc(p, &wf, &fd);
 	if (error) {
+		struct filedesc *fdp = p->p_fd;
+
 		if (fdp->fd_ofiles[p->p_retval[0]] == rf) {
 			fdp->fd_ofiles[p->p_retval[0]] = NULL;
 			fdrop(rf, p);
@@ -290,6 +289,13 @@ sys_pipe(p, v, retval)
 #endif /* FreeBSD */
 
 #ifdef __NetBSD__
+	rpipe = wpipe = NULL;
+	if (pipe_create(&rpipe, 1) || pipe_create(&wpipe, 0)) {
+		pipeclose(rpipe);
+		pipeclose(wpipe);
+		return (ENFILE);
+	}
+
 	/*
 	 * Note: the file structure returned from falloc() is marked
 	 * as 'larval' initially. Unless we mark it as 'mature' by
@@ -327,7 +333,7 @@ sys_pipe(p, v, retval)
 free3:
 	FILE_UNUSE(rf, p);
 	ffree(rf);
-	fdremove(fdp, retval[0]);
+	fdremove(p->p_fd, retval[0]);
 free2:
 	pipeclose(wpipe);
 	pipeclose(rpipe);
@@ -405,8 +411,9 @@ pipespace(cpipe, size)
  * initialize and allocate VM and memory for pipe
  */
 static int
-pipe_create(cpipep)
+pipe_create(cpipep, allockva)
 	struct pipe **cpipep;
+	int allockva;
 {
 	struct pipe *cpipe;
 	int error;
@@ -422,34 +429,11 @@ pipe_create(cpipep)
 
 	cpipe = *cpipep;
 
-#ifdef __FreeBSD__
-	/* so pipespace()->pipe_free_kmem() doesn't follow junk pointer */
-	cpipe->pipe_buffer.object = NULL;
-#endif /* FreeBSD */
-	/*
-	 * protect so pipeclose() doesn't follow a junk pointer
-	 * if pipespace() fails.
-	 */
-	cpipe->pipe_buffer.buffer = NULL;
-	bzero(&cpipe->pipe_sel, sizeof(cpipe->pipe_sel));
+	/* Initialize */ 
+	memset(cpipe, 0, sizeof(*cpipe));
 	cpipe->pipe_state = PIPE_SIGNALR;
-	cpipe->pipe_peer = NULL;
-	cpipe->pipe_busy = 0;
 
-#ifndef PIPE_NODIRECT
-	/*
-	 * pipe data structure initializations to support direct pipe I/O
-	 */
-	cpipe->pipe_map.cnt = 0;
-	cpipe->pipe_map.kva = NULL;
-	cpipe->pipe_map.pos = 0;
-	cpipe->pipe_map.npages = 0;
-#ifdef __NetBSD__
-	cpipe->pipe_map.ms = NULL;
-#endif
-#endif /* !PIPE_NODIRECT */
-
-	if ((error = pipespace(cpipe, PIPE_SIZE)))
+	if (allockva && (error = pipespace(cpipe, PIPE_SIZE)))
 		return (error);
 
 	vfs_timestamp(&cpipe->pipe_ctime);
@@ -834,8 +818,8 @@ pipe_clone_write_buffer(wpipe)
 
 	size = wpipe->pipe_map.cnt;
 	pos = wpipe->pipe_map.pos;
-	bcopy((caddr_t) wpipe->pipe_map.kva + pos,
-	    (caddr_t) wpipe->pipe_buffer.buffer, size);
+	memcpy((caddr_t) wpipe->pipe_buffer.buffer,
+	    (caddr_t) wpipe->pipe_map.kva + pos, size);
 
 	wpipe->pipe_buffer.in = size;
 	wpipe->pipe_buffer.out = 0;
@@ -1122,8 +1106,8 @@ retry:
 		return (error);
 	}
 
-	uio->uio_offset += bcnt;
 	uio->uio_resid  -= bcnt;
+	/* uio_offset not updated, not set/used for write(2) */
 
 	return (0);
 }
@@ -1182,8 +1166,8 @@ pipe_write(fp, offset, uio, cred, flags)
 			pipeunlock(wpipe);
 		} else {
 			/*
-			 * If an error occured, unbusy and return, waking up any
-			 * pending readers.
+			 * If an error occurred, unbusy and return, waking up
+			 * any waiting readers.
 			 */ 
 			--wpipe->pipe_busy;
 			if (wpipe->pipe_busy == 0
@@ -1216,7 +1200,7 @@ pipe_write(fp, offset, uio, cred, flags)
 		 * away on us.
 		 */
 		if ((uio->uio_iov[0].iov_len >= PIPE_MINDIRECT) &&
-		    (uio->uio_offset == 0) &&
+		    (uio->uio_resid == orig_resid) &&
 		    (fp->f_flag & FNONBLOCK) == 0 &&
 		    (wpipe->pipe_map.kva || (amountpipekva < limitpipekva))) {
 			error = pipe_direct_write(wpipe, uio);
@@ -1553,7 +1537,7 @@ pipe_stat(fp, ub, p)
 {
 	struct pipe *pipe = (struct pipe *)fp->f_data;
 
-	bzero((caddr_t)ub, sizeof(*ub));
+	memset((caddr_t)ub, 0, sizeof(*ub));
 	ub->st_mode = S_IFIFO;
 	ub->st_blksize = pipe->pipe_buffer.size;
 	ub->st_size = pipe->pipe_buffer.cnt;

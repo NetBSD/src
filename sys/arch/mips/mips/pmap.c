@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.127 2001/06/26 00:31:32 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.127.2.1 2001/08/03 04:11:59 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.127 2001/06/26 00:31:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.127.2.1 2001/08/03 04:11:59 lukem Exp $");
 
 /*
  *	Manages physical address maps.
@@ -1358,14 +1358,16 @@ pmap_kenter_pa(va, pa, prot)
 		printf("pmap_kenter_pa(%lx, %lx, %x)\n", va, pa, prot);
 #endif
 
-	npte = mips_paddr_to_tlbpfn(pa) | mips_pg_wired_bit() | MIPS3_PG_G;
+	npte = mips_paddr_to_tlbpfn(pa) | mips_pg_wired_bit();
 	if (prot & VM_PROT_WRITE) {
 		npte |= mips_pg_rwpage_bit();
 	} else {
 		npte |= mips_pg_ropage_bit();
 	}
-	if (!CPUISMIPS3) {
-		npte |= MIPS1_PG_V;
+	if (CPUISMIPS3) {
+		npte |= MIPS3_PG_G;
+	} else {
+		npte |= MIPS1_PG_V | MIPS1_PG_G;
 	}
 	pte = kvtopte(va);
 #if 0 /* XXXJRT */
@@ -1485,32 +1487,27 @@ pmap_extract(pmap, va, pap)
 	paddr_t *pap;
 {
 	paddr_t pa;
+	pt_entry_t *pte;
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
 		printf("pmap_extract(%p, %lx) -> ", pmap, va);
 #endif
-
 	if (pmap == pmap_kernel()) {
-#ifdef PARANOIADIAG
-		if (va < VM_MIN_KERNEL_ADDRESS || va >= virtual_end)
-			panic("pmap_extract");
-#endif
-		pa = mips_tlbpfn_to_paddr(kvtopte(va)->pt_entry);
-	} else {
-		pt_entry_t *pte;
-
-		if (!(pte = pmap_segmap(pmap, va)))
+		pte = kvtopte(va);
+		if (!mips_pg_v(pte->pt_entry)) {
 			return (FALSE);
-		else {
-			pte += (va >> PGSHIFT) & (NPTEPG - 1);
-			pa = mips_tlbpfn_to_paddr(pte->pt_entry);
 		}
+	} else {
+		if (!(pte = pmap_segmap(pmap, va))) {
+			return (FALSE);
+		}
+		pte += (va >> PGSHIFT) & (NPTEPG - 1);
 	}
-	pa |= va & PGOFSET;
-	if (pap != NULL)
+	pa = mips_tlbpfn_to_paddr(pte->pt_entry) | (va & PGOFSET);
+	if (pap != NULL) {
 		*pap = pa;
-
+	}
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
 		printf("pmap_extract: pa %lx\n", pa);

@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.h,v 1.60 2001/05/05 12:47:58 kleink Exp $	*/
+/*	$NetBSD: socket.h,v 1.60.2.1 2001/08/03 04:14:05 lukem Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -501,10 +501,6 @@ int	shutdown __P((int, int));
 int	socket __P((int, int, int));
 int	socketpair __P((int, int, int, int *));
 __END_DECLS
-#else
-#ifdef COMPAT_OLDSOCK
-#define MSG_COMPAT	0x8000
-#endif
 #endif /* !_KERNEL */
 
 #endif /* !_SYS_SOCKET_H_ */

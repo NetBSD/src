@@ -1,4 +1,4 @@
-/*	$NetBSD: vga.c,v 1.3 1999/06/28 01:20:45 sakamoto Exp $	*/
+/*	$NetBSD: vga.c,v 1.3.16.1 2001/08/03 04:11:20 lukem Exp $	*/
 
 /*-
  * Copyright (C) 1995-1997 Gary Thomas (gdt@linuxppc.org)
@@ -279,16 +279,17 @@ vga_putc(int c)
 		case 'L':	/* Insert line */
 			i = (d->cp - base) / COL;
 			/* avoid deficiency of bcopy implementation */
+			/* XXX: comment and hack relevant? */
 			pp = base + COL * (ROW-2);
 			for (j = ROW - 1 - i; j--; pp -= COL)
-				bcopy(pp, pp + COL, COL * CHR);
+				memmove(pp + COL, pp, COL * CHR);
 			fillw(d->color|(' '<<8), base + i * COL, COL);
 			break;
 
 		case 'M':	/* Delete line */
 			i = (d->cp - base) / COL;
 			pp = base + i * COL;
-			bcopy(pp + COL, pp, (ROW-1 - i)*COL*CHR);
+			memmove(pp, pp + COL, (ROW-1 - i)*COL*CHR);
 			fillw(d->color|(' '<<8), base + COL * (ROW - 1), COL);
 			break;
 
@@ -381,7 +382,7 @@ vga_putc(int c)
 		break;
 	}
 	if (d->cp >= base + (COL * ROW)) { /* scroll check */
-		bcopy(base + COL, base, COL * (ROW - 1) * CHR);
+		memmove(base, base + COL, COL * (ROW - 1) * CHR);
 		fillw(d->color|(' '<<8), base + COL * (ROW - 1), COL);
 		d->cp -= COL;
 	}	

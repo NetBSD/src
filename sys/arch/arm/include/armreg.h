@@ -1,4 +1,4 @@
-/*	$NetBSD: armreg.h,v 1.7 2001/03/10 16:19:59 bjh21 Exp $	*/
+/*	$NetBSD: armreg.h,v 1.7.2.1 2001/08/03 04:11:01 lukem Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Ben Harris
@@ -63,6 +63,7 @@
 #define F32_bit (1 << 6)	/* FIQ disable */
 
 #define PSR_T_bit (1 << 5)	/* Thumb state */
+#define PSR_J_bit (1 << 24)	/* Java mode */
 
 #define PSR_MODE	0x0000001f	/* mode mask */
 #define PSR_USR26_MODE	0x00000000

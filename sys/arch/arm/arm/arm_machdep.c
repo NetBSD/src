@@ -1,4 +1,4 @@
-/*	$NetBSD: arm_machdep.c,v 1.1 2001/03/04 23:25:00 bjh21 Exp $	*/
+/*	$NetBSD: arm_machdep.c,v 1.1.6.1 2001/08/03 04:10:57 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -41,7 +41,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.1 2001/03/04 23:25:00 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.1.6.1 2001/08/03 04:10:57 lukem Exp $");
 
 #include <sys/exec.h>
 #include <sys/proc.h>
@@ -62,7 +62,7 @@ setregs(struct proc *p, struct exec_package *pack, u_long stack)
 
 	tf = p->p_addr->u_pcb.pcb_tf;
 
-	bzero(tf, sizeof(*tf));
+	memset(tf, 0, sizeof(*tf));
 	tf->tf_r0 = (u_int)PS_STRINGS;
 #ifdef COMPAT_13
 	tf->tf_r12 = stack;			/* needed by pre 1.4 crt0.c */

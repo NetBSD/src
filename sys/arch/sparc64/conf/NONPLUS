@@ -1,4 +1,4 @@
-# 	$NetBSD: NONPLUS,v 1.27 2001/07/08 16:32:24 abs Exp $
+# 	$NetBSD: NONPLUS,v 1.27.2.1 2001/08/03 04:12:25 lukem Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
@@ -87,7 +87,7 @@ makeoptions 	DEBUG="-g"
 ## Adds code to the kernel that does internal consistency checks, and will
 ## cause the kernel to panic if corruption of internal data structures
 ## is detected.
-options 	DIAGNOSTIC	# extra kernel sanity checking
+#options 	DIAGNOSTIC	# extra kernel sanity checking
 
 ## Enable (possibly expensive) debugging code that may also display messages
 ## on the system console
@@ -243,7 +243,7 @@ timer0	at mainbus0
 #ms0	at zstty3		# mouse
 
 #wildcard attach scheme
-zs*	at sbus0 slot ? offset ?
+zs*	at sbus? slot ? offset ?
 zstty*	at zs? channel ?
 kbd0	at zstty?
 ms0	at zstty?

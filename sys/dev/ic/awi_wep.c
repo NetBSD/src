@@ -1,4 +1,4 @@
-/*	$NetBSD: awi_wep.c,v 1.8 2001/06/28 10:40:04 onoe Exp $	*/
+/*	$NetBSD: awi_wep.c,v 1.8.2.1 2001/08/03 04:12:57 lukem Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -139,7 +139,8 @@ awi_wep_setnwkey(sc, nwkey)
 	struct awi_softc *sc;
 	struct ieee80211_nwkey *nwkey;
 {
-	int i, len, error;
+	int i, error;
+	size_t len;
 	u_int8_t keybuf[AWI_MAX_KEYLEN];
 
 	if (nwkey->i_defkid <= 0 ||

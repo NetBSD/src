@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.arm,v 1.2 2001/06/11 17:50:34 matt Exp $
+#	$NetBSD: Makefile.arm,v 1.2.4.1 2001/08/03 04:11:00 lukem Exp $
 
 # Makefile for NetBSD
 #
@@ -31,6 +31,7 @@ TSORT?=	tsort -q
 COPTS?=	-O2
 
 ARM32=		$S/arch/arm32
+ARM=		$S/arch/arm
 THISARM=	$S/arch/${TARGET_MACHINE}
 
 HAVE_EGCS!=	${CC} --version | egrep "^(2\.[89]|egcs)" ; echo 
@@ -47,14 +48,13 @@ CWARNFLAGS+=	-Wno-main
 CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS}
 AFLAGS=		-x assembler-with-cpp -D_LOCORE
 
-.if !defined(LOADADDRESS)
-LOADADDRESS=	0xF0000000
-.endif
-LINKFLAGS=	-Ttext ${LOADADDRESS} -e start ${EXTRA_LINKFLAGS}
+LOADADDRESS?=	0xF0000000
+LINKENTRY?=	-e start
+LINKFLAGS=	-Ttext ${LOADADDRESS} ${LINKENTRY} ${EXTRA_LINKFLAGS}
 STRIPFLAGS=	-g
 
-.if exists($S/arch/${TARGET_MACHINE}/Makefile.${TARGET_MACHINE}.inc)
-.include	$S/arch/${TARGET_MACHINE}/Makefile.${TARGET_MACHINE}.inc
+.if exists($S/arch/${TARGET_MACHINE}/conf/Makefile.${TARGET_MACHINE}.inc)
+.include	"$S/arch/${TARGET_MACHINE}/conf/Makefile.${TARGET_MACHINE}.inc"
 .endif
 
 %INCLUDES
@@ -117,14 +117,14 @@ SYSTEM_LD_TAIL+=; \
 		${STRIP} ${STRIPFLAGS} -o $@ $@.gdb
 .else
 #LINKFLAGS+=	-S
-LINKFLAGS+=	-x
+LINKFLAGS+=	-X
 .endif
 
 %LOAD
 
-assym.h: $S/kern/genassym.sh ${ARM32}/arm32/genassym.cf
+assym.h: $S/kern/genassym.sh ${ARM}/arm32/genassym.cf
 	sh $S/kern/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} \
-	    < ${ARM32}/arm32/genassym.cf > assym.h.tmp && \
+	    < ${ARM}/arm32/genassym.cf > assym.h.tmp && \
 	mv -f assym.h.tmp assym.h
 
 param.c: $S/conf/param.c
@@ -170,18 +170,18 @@ links:
 	  sed 's,../.*/\(.*.o\),rm -f \1; ln -s ../GENERIC/\1 \1,' > makelinks
 	sh makelinks && rm -f dontlink
 
-SRCS=	${ARM32}/arm32/locore.S param.c ioconf.c ${CFILES} ${SFILES} \
+SRCS=	${ARM}/arm32/locore.S param.c ioconf.c ${CFILES} ${SFILES} \
 	${EXTRA_CFILES} ${EXTRA_SFILES} ${SYSTEM_FIRST_SFILE}
 
 depend: .depend
 .depend: ${SRCS} assym.h param.c
 	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${SYSTEM_FIRST_SFILE} \
-	    ${ARM32}/arm32/locore.S ${EXTRA_SFILES}
+	    ${ARM}/arm32/locore.S ${EXTRA_SFILES}
 	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES} \
 	    ${EXTRA_CFILES}
 	test -z "${SFILES}" || ${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
 	sh $S/kern/genassym.sh ${MKDEP} -f assym.dep ${CFLAGS} \
-	    ${CPPFLAGS} < ${ARM32}/arm32/genassym.cf
+	    ${CPPFLAGS} < ${ARM}/arm32/genassym.cf
 	@sed -e 's/.*\.o:.*\.c/assym.h:/' < assym.dep >> .depend
 	@rm -f assym.dep
 
@@ -221,7 +221,7 @@ ${SYSTEM_FIRST_OBJ}: ${SYSTEM_FIRST_SFILE} assym.h
 	${NORMAL_S}
 .endif
 
-locore.o: ${ARM32}/arm32/locore.S assym.h
+locore.o: ${ARM}/arm32/locore.S assym.h
 	${NORMAL_S}
 
 # The install target can be redefined by putting a

@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.158 2001/06/11 13:58:18 pk Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.158.2.1 2001/08/03 04:13:30 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -257,8 +257,6 @@ scsibusdetach(self, flags)
 {
 	struct scsibus_softc *sc = (void *) self;
 	struct scsipi_channel *chan = sc->sc_channel;
-	struct scsipi_periph *periph;
-	int target, lun, error;
 
 	/*
 	 * Shut down the channel.
@@ -268,21 +266,7 @@ scsibusdetach(self, flags)
 	/*
 	 * Now detach all of the periphs.
 	 */
-	for (target = 0; target < chan->chan_ntargets; target++) {
-		if (target == chan->chan_id)
-			continue;
-		for (lun = 0; lun < chan->chan_nluns; lun++) {
-			periph = scsipi_lookup_periph(chan, target, lun);
-			if (periph == NULL)
-				continue;
-			error = config_detach(periph->periph_dev, flags);
-			if (error)
-				return (error);
-			scsipi_remove_periph(chan, periph);
-			free(periph, M_DEVBUF);
-		}
-	}
-	return (0);
+	return scsipi_target_detach(chan, -1, -1, flags);
 }
 
 /*
@@ -938,6 +922,7 @@ scsibusioctl(dev, cmd, addr, flag, p)
 	 */
 	switch (cmd) {
 	case SCBUSIOSCAN:
+	case SCBUSIODETACH:
 	case SCBUSIORESET:
 		if ((flag & FWRITE) == 0)
 			return (EBADF);
@@ -952,6 +937,16 @@ scsibusioctl(dev, cmd, addr, flag, p)
 		error = scsi_probe_bus(sc, a->sa_target, a->sa_lun);
 		break;
 	    }
+
+	case SCBUSIODETACH:
+	    {
+		struct scbusiodetach_args *a =
+		    (struct scbusiodetach_args *)addr;
+
+		error = scsipi_target_detach(chan, a->sa_target, a->sa_lun, 0);
+		break;
+	    }
+
 
 	case SCBUSIORESET:
 		/* FALLTHROUGH */

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_elf.c,v 1.14 2001/01/17 19:50:03 jdolecek Exp $	*/
+/*	$NetBSD: db_elf.c,v 1.14.4.1 2001/08/03 04:12:50 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -104,8 +104,8 @@ db_elf_sym_init(symsize, symtab, esymtab, name)
 	Elf_Ehdr *elf;
 	Elf_Shdr *shp;
 	Elf_Sym *symp, *symtab_start, *symtab_end;
-	char *shstrtab, *strtab_start, *strtab_end;
-	int i;
+	char *strtab_start, *strtab_end;
+	int i, j;
 
 	if (ALIGNED_POINTER(symtab, long) == 0) {
 		printf("[ %s symbol table has bad start address %p ]\n",
@@ -147,24 +147,30 @@ db_elf_sym_init(symsize, symtab, esymtab, name)
 	}
 
 	/*
-	 * Find the section header string table (.shstrtab), and look up
-	 * the symbol table (.symtab) and string table (.strtab) via their
-	 * names in shstrtab, rather than by table type.
-	 * This works in the presence of multiple string tables, such as
-	 * stabs data found when booting netbsd.gdb.
+	 * Find the first (and, we hope, only) SHT_SYMTAB section in
+	 * the file, and the SHT_STRTAB section that goes with it.
 	 */
+	if (elf->e_shoff == 0)
+		goto badheader;
 	shp = (Elf_Shdr *)((char *)symtab + elf->e_shoff);
-	shstrtab = (char*)symtab + shp[elf->e_shstrndx].sh_offset;
 	for (i = 0; i < elf->e_shnum; i++) {
-		if (strcmp(".strtab", shstrtab+shp[i].sh_name) == 0) {
-			strtab_start = (char *)symtab + shp[i].sh_offset;
-			strtab_end = (char *)symtab + shp[i].sh_offset +
-			    shp[i].sh_size;
-		} else if (strcmp(".symtab", shstrtab+shp[i].sh_name) == 0) {
+		if (shp[i].sh_type == SHT_SYMTAB) {
+			if (shp[i].sh_offset == 0)
+				continue;
+			/* Got the symbol table. */
 			symtab_start = (Elf_Sym *)((char *)symtab + 
 			    shp[i].sh_offset);
 			symtab_end = (Elf_Sym *)((char *)symtab + 
 			    shp[i].sh_offset + shp[i].sh_size);
+			/* Find the string table to go with it. */
+			j = shp[i].sh_link;
+			if (shp[j].sh_offset == 0)
+				continue;
+			strtab_start = (char *)symtab + shp[j].sh_offset;
+			strtab_end = (char *)symtab + shp[j].sh_offset +
+			    shp[j].sh_size;
+			/* There should only be one symbol table. */
+			break;
 		}
 	}
 
@@ -207,13 +213,11 @@ db_elf_find_strtab(stab)
 {
 	Elf_Ehdr *elf = STAB_TO_EHDR(stab);
 	Elf_Shdr *shp = STAB_TO_SHDR(stab, elf);
-	char *shstrtab;
 	int i;
 
-	shstrtab = (char*)elf + shp[elf->e_shstrndx].sh_offset;
 	for (i = 0; i < elf->e_shnum; i++) {
-		if (strcmp(".strtab", shstrtab+shp[i].sh_name) == 0)
-			return ((char*)elf + shp[i].sh_offset);
+		if (shp[i].sh_type == SHT_SYMTAB)
+			return ((char*)elf + shp[shp[i].sh_link].sh_offset);
 	}
 
 	return (NULL);

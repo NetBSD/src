@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_parityscan.c,v 1.9 2000/05/28 03:00:31 oster Exp $	*/
+/*	$NetBSD: rf_parityscan.c,v 1.9.6.1 2001/08/03 04:13:27 lukem Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -243,7 +243,7 @@ rf_VerifyParityBasic(raidPtr, raidAddr, parityPDA, correct_it, flags)
 	blockNode->succedents[layoutPtr->numDataCol]->params[0].p = asmap->parityInfo;
 
 	/* fire off the DAG */
-	bzero((char *) &tracerec, sizeof(tracerec));
+	memset((char *) &tracerec, 0, sizeof(tracerec));
 	rd_dag_h->tracerec = &tracerec;
 
 	if (rf_verifyParityDebug) {
@@ -288,7 +288,7 @@ rf_VerifyParityBasic(raidPtr, raidAddr, parityPDA, correct_it, flags)
 		wrBlock->succedents[0]->params[0].p = asmap->parityInfo;
 		wrBlock->succedents[0]->params[2].v = psID;
 		wrBlock->succedents[0]->params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, 0, 0, which_ru);
-		bzero((char *) &tracerec, sizeof(tracerec));
+		memset((char *) &tracerec, 0, sizeof(tracerec));
 		wr_dag_h->tracerec = &tracerec;
 		if (rf_verifyParityDebug) {
 			printf("Parity verify write dag:\n");

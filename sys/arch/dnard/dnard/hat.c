@@ -1,4 +1,4 @@
-/*	$NetBSD: hat.c,v 1.1 2001/05/09 15:58:07 matt Exp $	*/
+/*	$NetBSD: hat.c,v 1.1.2.1 2001/08/03 04:11:25 lukem Exp $	*/
 
 /*
  * Copyright 1997
@@ -54,7 +54,7 @@
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
 
-#include <dnard/isa/timerreg.h>
+#include <dev/ic/i8253reg.h>
 #include <dnard/dnard/fiq.h>
 #include <dnard/dnard/sequoia.h>
 

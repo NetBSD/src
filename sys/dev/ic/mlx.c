@@ -1,4 +1,4 @@
-/*	$NetBSD: mlx.c,v 1.10 2001/06/10 10:34:44 ad Exp $	*/
+/*	$NetBSD: mlx.c,v 1.10.2.1 2001/08/03 04:13:01 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -69,11 +69,7 @@
  *
  * TODO:
  *
- * o Homogenize return values everywhere.
- * o Verify that status messages are correct.
  * o Test and enable channel pause.
- * o Time out commands on software queue.
- * o Don't use a S/G list for single-segment transfers.
  * o SCSI pass-through.
  */
 
@@ -541,13 +537,15 @@ mlx_configure(struct mlx_softc *mlx, int waitok)
 	int i, nunits;
 	u_int size;
 
+	mlx->mlx_flags |= MLXF_RESCANNING;
+
 	if (mlx->mlx_iftype == 2) {
 		meo = mlx_enquire(mlx, MLX_CMD_ENQUIRY_OLD,
 		    sizeof(struct mlx_enquiry_old), NULL, waitok);
 		if (meo == NULL) {
 			printf("%s: ENQUIRY_OLD failed\n",
 			    mlx->mlx_dv.dv_xname);
-			return;
+			goto out;
 		}
 		mlx->mlx_numsysdrives = meo->me_num_sys_drvs;
 		free(meo, M_DEVBUF);
@@ -556,7 +554,7 @@ mlx_configure(struct mlx_softc *mlx, int waitok)
 		    sizeof(struct mlx_enquiry), NULL, waitok);
 		if (me == NULL) {
 			printf("%s: ENQUIRY failed\n", mlx->mlx_dv.dv_xname);
-			return;
+			goto out;
 		}
 		mlx->mlx_numsysdrives = me->me_num_sys_drvs;
 		free(me, M_DEVBUF);
@@ -568,7 +566,7 @@ mlx_configure(struct mlx_softc *mlx, int waitok)
 		printf("%s: error fetching drive status\n",
 		    mlx->mlx_dv.dv_xname);
 		free(me, M_DEVBUF);
-		return;
+		goto out;
 	}
 
 	/* Allow 1 queued command per unit while re-configuring. */
@@ -612,6 +610,8 @@ mlx_configure(struct mlx_softc *mlx, int waitok)
 	if (nunits != 0)
 		mlx_adjqparam(mlx, mlx->mlx_max_queuecnt / nunits,
 		    mlx->mlx_max_queuecnt % nunits);
+ out:
+ 	mlx->mlx_flags &= ~MLXF_RESCANNING;
 }
 
 /*
@@ -726,6 +726,9 @@ mlxioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	struct mlx_pause *mp;
 	struct mlx_sysdrive *ms;
 	int i, rv, *arg, result;
+
+	if (securelevel >= 2)
+		return (EPERM);
 
 	mlx = device_lookup(&mlx_cd, minor(dev));
 
@@ -973,10 +976,6 @@ mlx_periodic(struct mlx_softc *mlx)
 	    	 */
 		mlx_pause_action(mlx);
 		mlx->mlx_pause.mp_when = 0;
-#ifdef notdef
-		sysbeep(500, hz);
-
-#endif
 	} else if ((mlx->mlx_pause.mp_which != 0) &&
 		   (mlx->mlx_pause.mp_when == 0)) {
 		/*
@@ -986,11 +985,6 @@ mlx_periodic(struct mlx_softc *mlx)
 			mlx_pause_action(mlx);
 			mlx->mlx_pause.mp_which = 0;
 		}
-#ifdef notdef
-			sysbeep(500, hz);
-		} else
-			sysbeep((ct % 5) * 100 + 500, hz/8);
-#endif
 	} else if (ct > (mlx->mlx_lastpoll + 10)) {
 		/* 
 		 * Run normal periodic activities...
@@ -1155,8 +1149,16 @@ mlx_periodic_enquiry(struct mlx_ccb *mc)
 		break;
 
 	case MLX_CMD_ENQSYSDRIVE:
-		mes = (struct mlx_enq_sys_drive *)mc->mc_mx.mx_context;
+		/*
+		 * Perform drive status comparison to see if something 
+		 * has failed.  Don't perform the comparison if we're
+		 * reconfiguring, since the system drive table will be
+		 * changing.
+		 */
+		if ((mlx->mlx_flags & MLXF_RESCANNING) != 0)
+			break;
 
+		mes = (struct mlx_enq_sys_drive *)mc->mc_mx.mx_context;
 		dr = &mlx->mlx_sysdrive[0];
 
 		for (i = 0; i < mlx->mlx_numsysdrives; i++) {
@@ -1321,9 +1323,12 @@ mlx_periodic_eventlog_respond(struct mlx_ccb *mc)
 				    mlx->mlx_dv.dv_xname, chan, targ, sensekey,
 				    el->el_asc, el->el_asq);
 				printf("%s:   info = %d:%d:%d:%d "
-				    " csi = %d:%d:%d:%d\n", mlx->mlx_dv.dv_xname,
-				    el->el_information[0], el->el_information[1],
-				    el->el_information[2], el->el_information[3],
+				    " csi = %d:%d:%d:%d\n",
+				    mlx->mlx_dv.dv_xname,
+				    el->el_information[0],
+				    el->el_information[1],
+				    el->el_information[2],
+				    el->el_information[3],
 				    el->el_csi[0], el->el_csi[1],
 				    el->el_csi[2], el->el_csi[3]);
 			}
@@ -1886,7 +1891,7 @@ mlx_ccb_enqueue(struct mlx_softc *mlx, struct mlx_ccb *mc)
 		if (mlx_ccb_submit(mlx, mc) != 0)
 			break;
 		SIMPLEQ_REMOVE_HEAD(&mlx->mlx_ccb_queue, mc, mc_chain.simpleq);
-		TAILQ_INSERT_TAIL(&mlx->mlx_ccb_worklist, mc, mc_chain.tailq); 
+		TAILQ_INSERT_TAIL(&mlx->mlx_ccb_worklist, mc, mc_chain.tailq);
 	}
 
 	splx(s);
@@ -1907,7 +1912,8 @@ mlx_ccb_map(struct mlx_softc *mlx, struct mlx_ccb *mc, void *data, int size,
 	xfer = mc->mc_xfer_map;
 
 	rv = bus_dmamap_load(mlx->mlx_dmat, xfer, data, size, NULL,
-	    BUS_DMA_NOWAIT | BUS_DMA_STREAMING);
+	    BUS_DMA_NOWAIT | BUS_DMA_STREAMING |
+	    ((dir & MC_XFER_IN) ? BUS_DMA_READ : BUS_DMA_WRITE));
 	if (rv != 0)
 		return (rv);
 

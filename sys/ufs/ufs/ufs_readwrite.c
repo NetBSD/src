@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.31.4.1 2001/07/10 13:55:14 lukem Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.31.4.2 2001/08/03 04:14:10 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -381,10 +381,10 @@ WRITE(void *v)
 		}
 #ifdef LFS_READWRITE
 		if (!error)
-			error = lfs_reserve(fs, vp, fsbtodb(fs, NIADDR + 1));
+			error = lfs_reserve(fs, vp, btofsb(fs, (NIADDR + 1) << fs->lfs_bshift));
 		(void)VOP_BWRITE(bp);
 		if (!error)
-			lfs_reserve(fs, vp, fsbtodb(fs, -(NIADDR + 1)));
+			lfs_reserve(fs, vp, -btofsb(fs, (NIADDR + 1) << fs->lfs_bshift));
 #else
 		if (ioflag & IO_SYNC)
 			(void)bwrite(bp);

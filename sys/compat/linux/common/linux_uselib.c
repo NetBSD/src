@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_uselib.c,v 1.2 2000/12/12 17:52:56 jdolecek Exp $	*/
+/*	$NetBSD: linux_uselib.c,v 1.2.4.1 2001/08/03 04:12:44 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  *
  * Yes, both text and data are mapped at once, so we're left with
  * writeable text for the shared libs. The Linux crt0 seemed to break
- * sometimes when data was mapped seperately. It munmapped a uselib()
+ * sometimes when data was mapped separately. It munmapped a uselib()
  * of ld.so by hand, which failed with shared text and data for ld.so
  * Yuck.
  *

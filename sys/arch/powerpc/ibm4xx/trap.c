@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.1 2001/06/13 06:01:48 simonb Exp $	*/
+/*	$NetBSD: trap.c,v 1.1.2.1 2001/08/03 04:12:14 lukem Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -194,7 +194,7 @@ frame->srr0, (ftype&VM_PROT_WRITE) ? "write" : "read", (void *)va, frame->esr));
 				frame->fixreg[2] = (*fb)[2];
 				frame->fixreg[3] = 1; /* Return TRUE */
 				frame->cr = (*fb)[3];
-				bcopy(&(*fb)[4], &frame->fixreg[13],
+				memcpy(&frame->fixreg[13], &(*fb)[4],
 				      19 * sizeof(register_t));
 				goto done;
 			}
@@ -374,7 +374,7 @@ syscall_bad:
 		 */
 		uvmexp.traps ++;
 		if (!(p->p_addr->u_pcb.pcb_flags & PCB_FPU)) {
-			bzero(&p->p_addr->u_pcb.pcb_fpu, 
+			memset(&p->p_addr->u_pcb.pcb_fpu, 0,
 				sizeof p->p_addr->u_pcb.pcb_fpu);
 			p->p_addr->u_pcb.pcb_flags |= PCB_FPU;
 		}
@@ -399,7 +399,7 @@ syscall_bad:
 				frame->fixreg[2] = (*fb)[2];
 				frame->fixreg[3] = 1; /* Return TRUE */
 				frame->cr = (*fb)[3];
-				bcopy(&(*fb)[4], &frame->fixreg[13],
+				memcpy(&frame->fixreg[13], &(*fb)[4],
 				      19 * sizeof(register_t));
 				goto done;
 			}
@@ -564,7 +564,7 @@ bigcopyin(const void *udaddr, void *kaddr, size_t len)
 	}
 	up = (char *)vmaprange(p, (vaddr_t)udaddr, len, VM_PROT_READ);
 
-	bcopy(up, kp, len);
+	memcpy(kp, up, len);
 	vunmaprange((vaddr_t)up, len);
 	uvm_vsunlock(p, (caddr_t)udaddr, len);
 	PRELE(p);
@@ -642,7 +642,7 @@ bigcopyout(const void *kaddr, void *udaddr, size_t len)
 	up = (char *)vmaprange(p, (vaddr_t)udaddr, len, 
 		VM_PROT_READ|VM_PROT_WRITE);
 
-	bcopy(kp, up, len);
+	memcpy(up, kp, len);
 	vunmaprange((vaddr_t)up, len);
 	uvm_vsunlock(p, udaddr, len);
 	PRELE(p);
@@ -671,7 +671,7 @@ kcopy(const void *src, void *dst, size_t len)
 		return EFAULT;
 	}
 
-	bcopy(src, dst, len);
+	memcpy(dst, src, len);
 
 	curpcb->pcb_onfault = oldfault;
 	return 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: load_elf.cpp,v 1.5 2001/07/08 17:19:02 uch Exp $	*/
+/*	$NetBSD: load_elf.cpp,v 1.5.2.1 2001/08/03 04:11:30 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -289,7 +289,7 @@ ElfLoader::read_header()
   
 	if (_eh.e_phoff == 0 || _eh.e_phnum == 0 || _eh.e_phnum > 16 ||
 	    _eh.e_phentsize != sizeof(Elf_Phdr)) {
-		DPRINTF((TEXT("invalid program header infomation.\n")));
+		DPRINTF((TEXT("invalid program header information.\n")));
 		return FALSE;
 	}
 

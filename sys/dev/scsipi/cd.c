@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.151 2001/06/26 15:32:03 bouyer Exp $	*/
+/*	$NetBSD: cd.c,v 1.151.2.1 2001/08/03 04:13:29 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -687,7 +687,7 @@ cdstart(periph)
 			/*
 			 * We can fit in a small cdb.
 			 */
-			bzero(&cmd_small, sizeof(cmd_small));
+			memset(&cmd_small, 0, sizeof(cmd_small));
 			cmd_small.opcode = (bp->b_flags & B_READ) ?
 			    SCSI_READ_COMMAND : SCSI_WRITE_COMMAND;
 			_lto3b(bp->b_rawblkno, cmd_small.addr);
@@ -700,7 +700,7 @@ cdstart(periph)
 			/*
 			 * Need a large cdb.
 			 */
-			bzero(&cmd_big, sizeof(cmd_big));
+			memset(&cmd_big, 0, sizeof(cmd_big));
 			cmd_big.opcode = (bp->b_flags & B_READ) ?
 			    READ_BIG : WRITE_BIG;
 			_lto4b(bp->b_rawblkno, cmd_big.addr);
@@ -1059,7 +1059,7 @@ cdioctl(dev, cmd, addr, flag, p)
 #endif
 		} else
 			th.len = ntohs(th.len);
-		bcopy(&th, addr, sizeof(th));
+		memcpy(addr, &th, sizeof(th));
 		return (0);
 	}
 	case CDIOREADTOCENTRYS: {
@@ -1253,7 +1253,7 @@ cdgetdefaultlabel(cd, lp)
 	struct disklabel *lp;
 {
 
-	bzero(lp, sizeof(struct disklabel));
+	memset(lp, 0, sizeof(struct disklabel));
 
 	lp->d_secsize = cd->params.blksize;
 	lp->d_ntracks = 1;
@@ -1308,7 +1308,7 @@ cdgetdisklabel(cd)
 {
 	struct disklabel *lp = cd->sc_dk.dk_label;
 
-	bzero(cd->sc_dk.dk_cpulabel, sizeof(struct cpu_disklabel));
+	memset(cd->sc_dk.dk_cpulabel, 0, sizeof(struct cpu_disklabel));
 
 	cdgetdefaultlabel(cd, lp);
 }
@@ -1340,7 +1340,7 @@ cd_size(cd, flags)
 	 * make up a scsi command and ask the scsi driver to do
 	 * it for you.
 	 */
-	bzero(&scsipi_cmd, sizeof(scsipi_cmd));
+	memset(&scsipi_cmd, 0, sizeof(scsipi_cmd));
 	scsipi_cmd.opcode = READ_CD_CAPACITY;
 
 	/*
@@ -1378,7 +1378,7 @@ cd_play(cd, blkno, nblks)
 {
 	struct scsipi_play scsipi_cmd;
 
-	bzero(&scsipi_cmd, sizeof(scsipi_cmd));
+	memset(&scsipi_cmd, 0, sizeof(scsipi_cmd));
 	scsipi_cmd.opcode = PLAY;
 	_lto4b(blkno, scsipi_cmd.blk_addr);
 	_lto2b(nblks, scsipi_cmd.xfer_len);
@@ -1432,7 +1432,7 @@ cd_play_msf(cd, startm, starts, startf, endm, ends, endf)
 {
 	struct scsipi_play_msf scsipi_cmd;
 
-	bzero(&scsipi_cmd, sizeof(scsipi_cmd));
+	memset(&scsipi_cmd, 0, sizeof(scsipi_cmd));
 	scsipi_cmd.opcode = PLAY_MSF;
 	scsipi_cmd.start_m = startm;
 	scsipi_cmd.start_s = starts;
@@ -1455,7 +1455,7 @@ cd_pause(cd, go)
 {
 	struct scsipi_pause scsipi_cmd;
 
-	bzero(&scsipi_cmd, sizeof(scsipi_cmd));
+	memset(&scsipi_cmd, 0, sizeof(scsipi_cmd));
 	scsipi_cmd.opcode = PAUSE;
 	scsipi_cmd.resume = go & 0xff;
 	return (scsipi_command(cd->sc_periph,
@@ -1487,7 +1487,7 @@ cd_read_subchannel(cd, mode, format, track, data, len, flags)
 {
 	struct scsipi_read_subchannel scsipi_cmd;
 
-	bzero(&scsipi_cmd, sizeof(scsipi_cmd));
+	memset(&scsipi_cmd, 0, sizeof(scsipi_cmd));
 	scsipi_cmd.opcode = READ_SUBCHANNEL;
 	if (mode == CD_MSF_FORMAT)
 		scsipi_cmd.byte2 |= CD_MSF;
@@ -1514,7 +1514,7 @@ cd_read_toc(cd, mode, start, data, len, flags, control)
 	struct scsipi_read_toc scsipi_cmd;
 	int ntoc;
 
-	bzero(&scsipi_cmd, sizeof(scsipi_cmd));
+	memset(&scsipi_cmd, 0, sizeof(scsipi_cmd));
 #if 0
 	if (len != sizeof(struct ioc_toc_header))
 		ntoc = ((len) - sizeof(struct ioc_toc_header)) /

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.63 2001/07/07 07:51:39 scw Exp $        */
+/*	$NetBSD: pmap.c,v 1.63.2.1 2001/08/03 04:12:04 lukem Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -145,7 +145,6 @@
 
 #include <machine/cpu.h>
 #include <m68k/cacheops.h>
-
 
 #ifdef DEBUG
 #define PDB_FOLLOW	0x0001
@@ -486,7 +485,7 @@ pmap_init()
 	s = ptoa(npages);
 	addr2 = addr + s;
 	kpt_pages = &((struct kpt_page *)addr2)[npages];
-	kpt_free_list = (struct kpt_page *) 0;
+	kpt_free_list = NULL;
 	do {
 		addr2 -= NBPG;
 		(--kpt_pages)->kpt_next = kpt_free_list;
@@ -798,9 +797,6 @@ pmap_destroy(pmap)
 {
 	int count;
 
-	if (pmap == NULL)
-		return;
-
 	PMAP_DPRINTF(PDB_FOLLOW, ("pmap_destroy(%p)\n", pmap));
 
 	simple_lock(&pmap->pm_lock);
@@ -850,10 +846,6 @@ void
 pmap_reference(pmap)
 	pmap_t	pmap;
 {
-
-	if (pmap == NULL)
-		return;
-
 	PMAP_DPRINTF(PDB_FOLLOW, ("pmap_reference(%p)\n", pmap));
 
 	simple_lock(&pmap->pm_lock);
@@ -929,9 +921,6 @@ pmap_do_remove(pmap, sva, eva, remove_wired)
 
 	PMAP_DPRINTF(PDB_FOLLOW|PDB_REMOVE|PDB_PROTECT,
 	    ("pmap_remove(%p, %lx, %lx)\n", pmap, sva, eva));
-
-	if (pmap == NULL)
-		return;
 
 	flags = active_pmap(pmap) ? PRM_TFLUSH : 0;
 	while (sva < eva) {
@@ -1045,9 +1034,6 @@ pmap_protect(pmap, sva, eva, prot)
 	    ("pmap_protect(%p, %lx, %lx, %x)\n",
 	    pmap, sva, eva, prot));
 
-	if (pmap == NULL)
-		return;
-
 #ifdef PMAPSTATS
 	protect_stats.calls++;
 #endif
@@ -1055,9 +1041,6 @@ pmap_protect(pmap, sva, eva, prot)
 		pmap_remove(pmap, sva, eva);
 		return;
 	}
-	if (prot & VM_PROT_WRITE)
-		return;
-
 	isro = pte_prot(pmap, prot);
 	needtflush = active_pmap(pmap);
 	firstpage = TRUE;
@@ -1357,30 +1340,39 @@ pmap_kenter_pa(va, pa, prot)
 {
 	pmap_t pmap = pmap_kernel();
 	pt_entry_t *pte;
-	int npte;
+	int s, npte;
 
 	PMAP_DPRINTF(PDB_FOLLOW|PDB_ENTER,
 	    ("pmap_kenter_pa(%lx, %lx, %x)\n", va, pa, prot));
 
-#ifdef DIAGNOSTIC
-	/*
-	 * pmap_kenter() should never be used for CADDR1 and CADDR2.
-	 */
-	if (va == (vaddr_t)CADDR1 || va == (vaddr_t)CADDR2)
-		panic("pmap_kenter_pa: used for CADDR1 or CADDR2");
-#endif
-
 	/*
 	 * Segment table entry not valid, we need a new PT page
 	 */
-	if (!pmap_ste_v(pmap, va))
+
+	if (!pmap_ste_v(pmap, va)) {
+		s = splvm();
 		pmap_enter_ptpage(pmap, va);
+		splx(s);
+	}
+
+	pa = m68k_trunc_page(pa);
+	pte = pmap_pte(pmap, va);
+
+	PMAP_DPRINTF(PDB_ENTER, ("enter: pte %p, *pte %x\n", pte, *pte));
+	KASSERT(!pmap_pte_v(pte));
+
+	/*
+	 * Increment counters
+	 */
+
+	pmap->pm_stats.resident_count++;
+	pmap->pm_stats.wired_count++;
 
 	/*
 	 * Build the new PTE.
 	 */
-	pte = pmap_pte(pmap, va);
-	npte = pa | pte_prot(pmap, prot) | PG_V;
+
+	npte = pa | pte_prot(pmap, prot) | PG_V | PG_W;
 #if defined(M68040) || defined(M68060)
 #if defined(M68020) || defined(M68030)
 	if (mmutype == MMU_68040 && (npte & PG_PROT) == PG_RW)
@@ -1394,8 +1386,7 @@ pmap_kenter_pa(va, pa, prot)
 #endif
 
 	*pte = npte;
-	TBIS (va);
-	pmap->pm_stats.resident_count++;
+	TBIS(va);
 }
 
 void
@@ -1419,18 +1410,15 @@ pmap_kremove(sva, size)
 		/*
 		 * Invalidate every valid mapping within this segment.
 		 */
+
 		pte = pmap_pte(pmap, sva);
 		while (sva < nssva) {
 			if (!pmap_pte_v(pte)) {
-				printf ("pmap_kremove: attempt to remove invalid mapping.\n");
 				pte++;
 				sva += NBPG;
 				continue;
 			}
-			if (pmap_pte_w(pte)) {
-				printf ("pmap_kremove: attempt to remove wired mapping.\n");
-				pmap->pm_stats.wired_count--;
-			}
+			pmap->pm_stats.wired_count--;
 			pmap->pm_stats.resident_count--;
 			*pte = PG_NV;
 			TBIS(sva);
@@ -1456,9 +1444,6 @@ pmap_unwire(pmap, va)
 
 	PMAP_DPRINTF(PDB_FOLLOW,
 	    ("pmap_unwire(%p, %lx)\n", pmap, va));
-
-	if (pmap == NULL)
-		return;
 
 	pte = pmap_pte(pmap, va);
 #ifdef DEBUG
@@ -1517,7 +1502,7 @@ pmap_extract(pmap, va, pap)
 	PMAP_DPRINTF(PDB_FOLLOW,
 	    ("pmap_extract(%p, %lx) -> ", pmap, va));
 
-	if (pmap && pmap_ste_v(pmap, va)) {
+	if (pmap_ste_v(pmap, va)) {
 		pte = *(u_int *)pmap_pte(pmap, va);
 		if (pte) {
 			pa = (pte & PG_FRAME) | (va & ~PG_FRAME);
@@ -1686,12 +1671,12 @@ ok:
 		 * that page back on the free list.
 		 */
 		for (pkpt = &kpt_used_list, kpt = *pkpt;
-		     kpt != (struct kpt_page *)0;
+		     kpt != NULL;
 		     pkpt = &kpt->kpt_next, kpt = *pkpt)
 			if (kpt->kpt_pa == kpa)
 				break;
 #ifdef DEBUG
-		if (kpt == (struct kpt_page *)0)
+		if (kpt == NULL)
 			panic("pmap_collect: lost a KPT page");
 		if (pmapdebug & (PDB_PTPAGE|PDB_COLLECT))
 			printf("collect: %lx (%lx) to free list\n",
@@ -2054,6 +2039,11 @@ pmap_remove_mapping(pmap, va, pte, flags)
 		pmap->pm_stats.wired_count--;
 	pmap->pm_stats.resident_count--;
 
+	if ((flags & PRM_CFLUSH)) {
+		DCFP(pa);
+		ICPP(pa);
+	}
+
 	/*
 	 * Invalidate the PTE after saving the reference modify info.
 	 */
@@ -2201,6 +2191,11 @@ pmap_remove_mapping(pmap, va, pte, flags)
 				PMAP_DPRINTF(PDB_REMOVE|PDB_SEGTAB,
 				    ("remove: free stab %p\n",
 				    ptpmap->pm_stab));
+				pmap_remove(pmap_kernel(),
+				    (vaddr_t)ptpmap->pm_stab,
+				    (vaddr_t)ptpmap->pm_stab + HP_STSIZE);
+				uvm_pagefree(PHYS_TO_VM_PAGE((paddr_t)
+							     ptpmap->pm_stpa));
 				uvm_km_free_wakeup(st_map,
 						 (vaddr_t)ptpmap->pm_stab,
 						 HP_STSIZE);
@@ -2260,14 +2255,13 @@ pmap_testbit(pa, bit)
 	pt_entry_t *pte;
 	int s;
 
-	if (PAGE_IS_MANAGED(pa) == 0)
-		return(FALSE);
-
 	pv = pa_to_pvh(pa);
 	s = splvm();
+
 	/*
 	 * Check saved info first
 	 */
+
 	if (*pa_to_attribute(pa) & bit) {
 		splx(s);
 		return(TRUE);
@@ -2315,15 +2309,13 @@ pmap_changebit(pa, set, mask)
 	PMAP_DPRINTF(PDB_BITS,
 	    ("pmap_changebit(%lx, %x, %x)\n", pa, set, mask));
 
-	if (PAGE_IS_MANAGED(pa) == 0)
-		return(r);
-
 	pv = pa_to_pvh(pa);
 	s = splvm();
 
 	/*
 	 * Clear saved attributes (modify, reference)
 	 */
+
 	*pa_to_attribute(pa) &= mask;
 
 	/*
@@ -2339,15 +2331,6 @@ pmap_changebit(pa, set, mask)
 			toflush |= (pv->pv_pmap == pmap_kernel()) ? 2 : 1;
 #endif
 			va = pv->pv_va;
-
-			/*
-			 * XXX don't write protect pager mappings
-			 */
-			if (set == PG_RO) {
-				if (va >= uvm.pager_sva && va < uvm.pager_eva)
-					continue;
-			}
-
 			pte = pmap_pte(pv->pv_pmap, va);
 			npte = (*pte | set) & mask;
 			if (*pte != npte) {
@@ -2419,7 +2402,11 @@ pmap_enter_ptpage(pmap, va)
 #ifdef DEBUG
 			if (dowriteback && dokwriteback)
 #endif
-			pmap_changebit((paddr_t)pmap->pm_stpa, PG_CI, ~PG_CCB);
+			{
+				if (pmap_changebit((paddr_t)pmap->pm_stpa,
+				    PG_CI, ~PG_CCB))
+					DCIS();
+			}
 			pmap->pm_stfree = protostfree;
 		}
 #endif
@@ -2486,7 +2473,7 @@ pmap_enter_ptpage(pmap, va)
 		struct kpt_page *kpt;
 
 		s = splvm();
-		if ((kpt = kpt_free_list) == (struct kpt_page *)0) {
+		if ((kpt = kpt_free_list) == NULL) {
 			/*
 			 * No PT pages available.
 			 * Try once to free up unused ones.
@@ -2494,7 +2481,7 @@ pmap_enter_ptpage(pmap, va)
 			PMAP_DPRINTF(PDB_COLLECT,
 			    ("enter: no KPT pages, collecting...\n"));
 			pmap_collect(pmap_kernel());
-			if ((kpt = kpt_free_list) == (struct kpt_page *)0)
+			if ((kpt = kpt_free_list) == NULL)
 				panic("pmap_enter_ptpage: can't get KPT page");
 		}
 		kpt_free_list = kpt->kpt_next;
@@ -2502,8 +2489,8 @@ pmap_enter_ptpage(pmap, va)
 		kpt_used_list = kpt;
 		ptpa = kpt->kpt_pa;
 		memset((caddr_t)kpt->kpt_va, 0, NBPG);
-		pmap_enter(pmap, va, ptpa, VM_PROT_DEFAULT,
-		    VM_PROT_DEFAULT|PMAP_WIRED);
+		pmap_enter(pmap, va, ptpa, VM_PROT_READ | VM_PROT_WRITE,
+		    VM_PROT_READ | VM_PROT_WRITE | PMAP_WIRED);
 		pmap_update();
 #ifdef DEBUG
 		if (pmapdebug & (PDB_ENTER|PDB_PTPAGE)) {
@@ -2560,7 +2547,8 @@ pmap_enter_ptpage(pmap, va)
 			       pmap == pmap_kernel() ? "Kernel" : "User",
 			       va, ptpa, pte, *pte);
 #endif
-		pmap_changebit(ptpa, PG_CI, ~PG_CCB);
+		if (pmap_changebit(ptpa, PG_CI, ~PG_CCB))
+			DCIS();
 	}
 #endif
 	/*
@@ -2619,7 +2607,6 @@ pmap_enter_ptpage(pmap, va)
 		    ("enter: stab %p refcnt %d\n",
 		    pmap->pm_stab, pmap->pm_sref));
 	}
-#if 0
 	/*
 	 * Flush stale TLB info.
 	 */
@@ -2627,7 +2614,6 @@ pmap_enter_ptpage(pmap, va)
 		TBIAS();
 	else
 		TBIAU();
-#endif
 	pmap->pm_ptpages++;
 	splx(s);
 }
@@ -2688,27 +2674,25 @@ _pmap_set_page_cacheable(pm, va)
 	struct pmap *pm;
 	vaddr_t va;
 {
-	pt_entry_t *pte;
 
 	if (!pmap_ste_v(pm, va))
 		return;
 
-	pte = pmap_pte(pm, va);
-
-	if ( pmap_pte_ci(pte) ) {
 #if defined(M68040) || defined(M68060)
 #if defined(M68020) || defined(M68030)
-		if (mmutype == MMU_68040)
+	if (mmutype == MMU_68040)
+	{
 #endif
-		{
-			paddr_t pa = pmap_pte_pa(pte);
-			DCFP(pa);
-			ICPP(pa);
-		}
+	if (pmap_changebit(pmap_pte_pa(pmap_pte(pm, va)), PG_CCB, ~PG_CI))
+		DCIS();
+
+#if defined(M68020) || defined(M68030)
+	} else
+		pmap_changebit(pmap_pte_pa(pmap_pte(pm, va)), 0, ~PG_CI);
 #endif
-		*pte &= ~PG_CI;
-		TBIS(va);
-	}
+#else
+	pmap_changebit(pmap_pte_pa(pmap_pte(pm, va)), 0, ~PG_CI);
+#endif
 }
 
 void
@@ -2716,27 +2700,24 @@ _pmap_set_page_cacheinhibit(pm, va)
 	struct pmap *pm;
 	vaddr_t va;
 {
-	pt_entry_t *pte;
 
 	if (!pmap_ste_v(pm, va))
 		return;
 
-	pte = pmap_pte(pm, va);
-
-	if ( ! pmap_pte_ci(pte) ) {
 #if defined(M68040) || defined(M68060)
 #if defined(M68020) || defined(M68030)
-		if (mmutype == MMU_68040)
+	if (mmutype == MMU_68040)
+	{
 #endif
-		{
-			paddr_t pa = pmap_pte_pa(pte);
-			DCFP(pa);
-			ICPP(pa);
-		}
+	if (pmap_changebit(pmap_pte_pa(pmap_pte(pm, va)), PG_CI, ~PG_CCB))
+		DCIS();
+#if defined(M68020) || defined(M68030)
+	} else
+		pmap_changebit(pmap_pte_pa(pmap_pte(pm, va)), PG_CI, ~0);
 #endif
-		*pte |= PG_CI;
-		TBIS(va);
-	}
+#else
+	pmap_changebit(pmap_pte_pa(pmap_pte(pm, va)), PG_CI, ~0);
+#endif
 }
 
 int
@@ -2744,17 +2725,11 @@ _pmap_page_is_cacheable(pm, va)
 	struct pmap *pm;
 	vaddr_t va;
 {
-	pt_entry_t *pte;
 
 	if (!pmap_ste_v(pm, va))
 		return (0);
 
-	pte = pmap_pte(pm, va);
-
-	if (pmap_pte_ci(pte))
-		return (0);
-	else
-		return (1);
+	return ((pmap_pte_ci(pmap_pte(pm, va)) == 0) ? 1 : 0);
 }
 
 #ifdef DEBUG

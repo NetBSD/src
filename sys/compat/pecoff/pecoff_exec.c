@@ -1,4 +1,4 @@
-/*	$NetBSD: pecoff_exec.c,v 1.9 2001/06/18 02:00:53 christos Exp $	*/
+/*	$NetBSD: pecoff_exec.c,v 1.9.2.1 2001/08/03 04:12:48 lukem Exp $	*/
 
 /*
  * Copyright (c) 2000 Masaru OKI
@@ -77,8 +77,6 @@ int exec_pecoff_prep_nmagic __P((struct proc *p, struct exec_package *epp,
 int exec_pecoff_prep_zmagic __P((struct proc *p, struct exec_package *epp,
 				     struct coff_filehdr *fp,
 				     struct coff_aouthdr *ap, int peofs));
-int pecoff_read_from __P((struct proc *p, struct vnode *vp, int pos,
-			 caddr_t buf, int siz));
 
 
 extern char sigcode[], esigcode[];
@@ -119,32 +117,31 @@ const struct emul emul_pecoff = {
 };
 #endif
 
-void *
-pecoff_copyargs(pack, arginfo, stack, argp)
+int
+pecoff_copyargs(pack, arginfo, stackp, argp)
 	struct exec_package *pack;
 	struct ps_strings *arginfo;
-	void *stack;
+	char **stackp;
 	void *argp;
 {
 	int len = sizeof(struct pecoff_args);
 	struct pecoff_imghdr *ap;
+	int error;
 
-	stack = copyargs(pack, arginfo, stack, argp);
-	if (!stack) {
-		return NULL;
-	}
+	if ((error = copyargs(pack, arginfo, stackp, argp)) != 0)
+		return error;
+
 	ap = (struct pecoff_imghdr *)pack->ep_emul_arg;
-	if (copyout(ap, stack, len)) {
-		return NULL;
-	}
+	if ((error = copyout(ap, *stackp, len)) != 0)
+		return error;
+
 #if 0 /*  kern_exec.c? */
 	free((char *)ap, M_TEMP);
 	pack->ep_emul_arg = 0;
 #endif
 
-	stack = (caddr_t)stack + len;
-	
-	return stack;
+	*stackp += len;
+	return error;
 }
 
 #define PECOFF_SIGNATURE "PE\0\0"
@@ -165,7 +162,7 @@ pecoff_signature(p, vp, dp)
 	if (DOS_BADMAG(dp)) {
 		return ENOEXEC;
 	}
-	error = pecoff_read_from(p, vp, dp->d_peofs, buf, sizeof(buf));
+	error = exec_read_from(p, vp, dp->d_peofs, buf, sizeof(buf));
 	if (error) {
 		return error;
 	}
@@ -233,15 +230,14 @@ pecoff_load_file(p, epp, path, vcset, entry, argp)
 	/*
 	 * Read header.
 	 */
-	error = pecoff_read_from(p, vp, 0, (caddr_t)&dh, sizeof(dh));
+	error = exec_read_from(p, vp, 0, &dh, sizeof(dh));
 	if (error != 0)
 		goto bad;
 	if ((error = pecoff_signature(p, vp, &dh)) != 0)
 		goto bad;
 	fp = malloc(PECOFF_HDR_SIZE, M_TEMP, M_WAITOK);
 	peofs = dh.d_peofs + sizeof(signature) - 1;
-	if ((error = pecoff_read_from(p, vp, peofs, (caddr_t)fp,
-				     PECOFF_HDR_SIZE)) != 0)
+	if ((error = exec_read_from(p, vp, peofs, fp, PECOFF_HDR_SIZE)) != 0)
 		goto bad;
 	if (COFF_BADMAG(fp)) {
 		error = ENOEXEC;
@@ -252,8 +248,8 @@ pecoff_load_file(p, epp, path, vcset, entry, argp)
 	/* read section header */
 	scnsiz = sizeof(struct coff_scnhdr) * fp->f_nscns;
 	sh = malloc(scnsiz, M_TEMP, M_WAITOK);
-	if ((error = pecoff_read_from(p, vp, peofs + PECOFF_HDR_SIZE,
-				     (caddr_t)sh, scnsiz)) != 0)
+	if ((error = exec_read_from(p, vp, peofs + PECOFF_HDR_SIZE, sh,
+	    scnsiz)) != 0)
 		goto bad;
 
 	/*
@@ -365,8 +361,7 @@ exec_pecoff_makecmds(p, epp)
 		return error;
 	peofs = dp->d_peofs + sizeof(signature) - 1;
 	fp = malloc(PECOFF_HDR_SIZE, M_TEMP, M_WAITOK);
-	error = pecoff_read_from(p, epp->ep_vp, peofs, (caddr_t)fp,
-				PECOFF_HDR_SIZE);
+	error = exec_read_from(p, epp->ep_vp, peofs, fp, PECOFF_HDR_SIZE);
 	if (error) {
 		free(fp, M_TEMP);
 		return error;
@@ -480,8 +475,8 @@ exec_pecoff_prep_zmagic(p, epp, fp, ap, peofs)
 	epp->ep_dsize = 0;
 	/* read section header */
 	sh = malloc(scnsiz, M_TEMP, M_WAITOK);
-	error = pecoff_read_from(p, epp->ep_vp, peofs + PECOFF_HDR_SIZE,
-				(caddr_t)sh, scnsiz);
+	error = exec_read_from(p, epp->ep_vp, peofs + PECOFF_HDR_SIZE, sh,
+	    scnsiz);
 	if (error) {
 		free(sh, M_TEMP);
 		return error;
@@ -558,29 +553,4 @@ exec_pecoff_prep_zmagic(p, epp, fp, ap, peofs)
 
 	free(sh, M_TEMP);
 	return exec_pecoff_setup_stack(p, epp);
-}
-
-/*
- */
-int
-pecoff_read_from(p, vp, pos, buf, siz)
-	struct proc *p;
-	struct vnode *vp;
-	int pos;
-	caddr_t buf;
-	int siz;
-{
-	int error;
-	size_t resid;
-
-	error = vn_rdwr(UIO_READ, vp, buf, siz, pos,
-			UIO_SYSSPACE, IO_NODELOCKED, p->p_ucred,
-			&resid, p);
-	if (error)
-		return error;
-
-	if (resid != 0) {
-		return ENOEXEC;
-	}
-	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.124 2001/07/08 21:05:11 eeh Exp $	*/
+/*	$NetBSD: locore.s,v 1.124.2.1 2001/08/03 04:12:29 lukem Exp $	*/
 
 /*
  * Copyright (c) 1996-2001 Eduardo Horvath
@@ -61,10 +61,9 @@
 #undef	NO_VCACHE		/* Map w/D$ disabled */
 #define	TRAPTRACE		/* Keep history of all traps (unsafe) */
 #undef	FLTRACE			/* Keep history of all page faults */
-#define	TRAPSTATS		/* Count traps */
+#undef	TRAPSTATS		/* Count traps */
 #undef	TRAPS_USE_IG		/* Use Interrupt Globals for all traps */
 #define	HWREF			/* Track ref/mod bits in trap handlers */
-#undef	MMUDEBUG		/* Check use of regs during MMU faults */
 #define	VECTORED_INTERRUPTS	/* Use interrupt vectors */
 #undef	PMAP_FPSTATE		/* Allow nesting of VIS pmap copy/zero */
 #define	NEW_FPSTATE
@@ -877,7 +876,7 @@ _C_LABEL(trapbase):
 	ZS_INTERRUPT4U			! 04c = level 12 (zs) interrupt
 	HARDINT4U(13)			! 04d = level 13 interrupt
 	HARDINT4U(14)			! 04e = level 14 interrupt
-	VTRAP(15, winfault)		! 04f = nonmaskable interrupt
+	HARDINT4U(15)			! 04f = nonmaskable interrupt
 	UTRAP(0x050); UTRAP(0x051); UTRAP(0x052); UTRAP(0x053); UTRAP(0x054); UTRAP(0x055)
 	UTRAP(0x056); UTRAP(0x057); UTRAP(0x058); UTRAP(0x059); UTRAP(0x05a); UTRAP(0x05b)
 	UTRAP(0x05c); UTRAP(0x05d); UTRAP(0x05e); UTRAP(0x05f)
@@ -887,54 +886,30 @@ _C_LABEL(trapbase):
 	UTRAP(T_ECCERR)			! We'll implement this one later
 ufast_IMMU_miss:			! 064 = fast instr access MMU miss
 	TRACEFLT			! DEBUG
-	ldxa	[%g0] ASI_IMMU_8KPTR, %g2	!				Load IMMU 8K TSB pointer
-	ldxa	[%g0] ASI_IMMU, %g1	! Hard coded for unified 8K TSB		Load IMMU tag target register
-	ldda	[%g2] ASI_NUCLEUS_QUAD_LDD, %g4	!				Load TSB tag and data into %g4 and %g5
-#ifdef MMUDEBUG
-	rdpr	%tstate, %g7				! DEBUG record if we're on MMU globals
-	srlx	%g7, TSTATE_PSTATE_SHIFT, %g7		! DEBUG
-	btst	PSTATE_MG, %g7				! DEBUG
-	bz	0f					! DEBUG
-	 sethi	%hi(_C_LABEL(missmmu)), %g7		! DEBUG
-	lduw	[%g7+%lo(_C_LABEL(missmmu))], %g6	! DEBUG
-	inc	%g6					! DEBUG
-	stw	%g6, [%g7+%lo(_C_LABEL(missmmu))]	! DEBUG
-0:							! DEBUG
-#endif
+	ldxa	[%g0] ASI_IMMU_8KPTR, %g2	! Load IMMU 8K TSB pointer
 #ifdef NO_TSB
 	ba,a	%icc, instr_miss;
-	 nop
 #endif
-	brgez,pn %g5, instr_miss	!					Entry invalid?  Punt
-	 xor	%g1, %g4, %g4		!					Compare TLB tags
-	brnz,pn %g4, instr_miss		!					Got right tag?
+	ldxa	[%g0] ASI_IMMU, %g1	!	Load IMMU tag target register
+	ldda	[%g2] ASI_NUCLEUS_QUAD_LDD, %g4	!Load TSB tag:data into %g4:%g5
+	brgez,pn %g5, instr_miss	!	Entry invalid?  Punt
+	 cmp	%g1, %g4		!	Compare TLB tags
+	bne,pn %xcc, instr_miss		!	Got right tag?
 	 nop
 	CLRTT
-	stxa	%g5, [%g0] ASI_IMMU_DATA_IN!					Enter new mapping
-	retry				!					Try new mapping
+	stxa	%g5, [%g0] ASI_IMMU_DATA_IN!	Enter new mapping
+	retry				!	Try new mapping
 1:
 	sir
 	TA32
 ufast_DMMU_miss:			! 068 = fast data access MMU miss
 	TRACEFLT			! DEBUG
 	ldxa	[%g0] ASI_DMMU_8KPTR, %g2!					Load DMMU 8K TSB pointer
-	ldxa	[%g0] ASI_DMMU, %g1	! Hard coded for unified 8K TSB		Load DMMU tag target register
-	ldda	[%g2] ASI_NUCLEUS_QUAD_LDD, %g4	!				Load TSB tag and data into %g4 and %g5
-#ifdef MMUDEBUG
-	rdpr	%tstate, %g7				! DEBUG record if we're on MMU globals
-	srlx	%g7, TSTATE_PSTATE_SHIFT, %g7		! DEBUG
-	btst	PSTATE_MG, %g7				! DEBUG
-	bz	0f					! DEBUG
-	 sethi	%hi(_C_LABEL(missmmu)), %g7		! DEBUG
-	lduw	[%g7+%lo(_C_LABEL(missmmu))], %g6	! DEBUG
-	inc	%g6					! DEBUG
-	stw	%g6, [%g7+%lo(_C_LABEL(missmmu))]	! DEBUG
-0:							! DEBUG
-#endif
 #ifdef NO_TSB
 	ba,a	%icc, data_miss;
-	 nop
 #endif
+	ldxa	[%g0] ASI_DMMU, %g1	! Hard coded for unified 8K TSB		Load DMMU tag target register
+	ldda	[%g2] ASI_NUCLEUS_QUAD_LDD, %g4	!				Load TSB tag and data into %g4 and %g5
 	brgez,pn %g5, data_miss		!					Entry invalid?  Punt
 	 xor	%g1, %g4, %g4		!					Compare TLB tags
 	brnz,pn	%g4, data_miss		!					Got right tag?
@@ -958,17 +933,6 @@ ufast_DMMU_protection:			! 06c = fast data access MMU protection
 	lduw	[%g1+%lo(_C_LABEL(udprot))], %g2
 	inc	%g2
 	stw	%g2, [%g1+%lo(_C_LABEL(udprot))]
-#endif
-#ifdef MMUDEBUG
-	rdpr	%tstate, %g7				! DEBUG record if we're on MMU globals
-	srlx	%g7, TSTATE_PSTATE_SHIFT, %g7		! DEBUG
-	btst	PSTATE_MG, %g7				! DEBUG
-	bz	0f					! DEBUG
-	 sethi	%hi(_C_LABEL(protmmu)), %g7		! DEBUG
-	lduw	[%g7+%lo(_C_LABEL(protmmu))], %g6	! DEBUG
-	inc	%g6					! DEBUG
-	stw	%g6, [%g7+%lo(_C_LABEL(protmmu))]	! DEBUG
-0:							! DEBUG
 #endif
 #ifdef HWREF
 	ba,a,pt	%xcc, dmmu_write_fault
@@ -1152,7 +1116,7 @@ kdatafault:
 	ZS_INTERRUPT4U			! 04c = level 12 (zs) interrupt
 	HARDINT4U(13)			! 04d = level 13 interrupt
 	HARDINT4U(14)			! 04e = level 14 interrupt
-	VTRAP(15, winfault)		! 04f = nonmaskable interrupt
+	HARDINT4U(15)			! 04f = nonmaskable interrupt
 	UTRAP(0x050); UTRAP(0x051); UTRAP(0x052); UTRAP(0x053); UTRAP(0x054); UTRAP(0x055)
 	UTRAP(0x056); UTRAP(0x057); UTRAP(0x058); UTRAP(0x059); UTRAP(0x05a); UTRAP(0x05b)
 	UTRAP(0x05c); UTRAP(0x05d); UTRAP(0x05e); UTRAP(0x05f)
@@ -1162,54 +1126,30 @@ kdatafault:
 	UTRAP(T_ECCERR)			! We'll implement this one later
 kfast_IMMU_miss:			! 064 = fast instr access MMU miss
 	TRACEFLT			! DEBUG
-	ldxa	[%g0] ASI_IMMU_8KPTR, %g2	!				Load IMMU 8K TSB pointer
-	ldxa	[%g0] ASI_IMMU, %g1	! Hard coded for unified 8K TSB		Load IMMU tag target register
-	ldda	[%g2] ASI_NUCLEUS_QUAD_LDD, %g4	!				Load TSB tag and data into %g4 and %g5
-#ifdef MMUDEBUG
-	rdpr	%tstate, %g7				! DEBUG record if we're on MMU globals
-	srlx	%g7, TSTATE_PSTATE_SHIFT, %g7		! DEBUG
-	btst	PSTATE_MG, %g7				! DEBUG
-	bz	0f					! DEBUG
-	 sethi	%hi(_C_LABEL(missmmu)), %g7		! DEBUG
-	lduw	[%g7+%lo(_C_LABEL(missmmu))], %g6	! DEBUG
-	inc	%g6					! DEBUG
-	stw	%g6, [%g7+%lo(_C_LABEL(missmmu))]	! DEBUG
-0:							! DEBUG
-#endif
+	ldxa	[%g0] ASI_IMMU_8KPTR, %g2	! Load IMMU 8K TSB pointer
 #ifdef NO_TSB
 	ba,a	%icc, instr_miss;
-	 nop
 #endif
-	brgez,pn %g5, instr_miss	!					Entry invalid?  Punt
-	 xor	%g1, %g4, %g4		!					Compare TLB tags
-	brnz,pn %g4, instr_miss		!					Got right tag?
+	ldxa	[%g0] ASI_IMMU, %g1	!	Load IMMU tag target register
+	ldda	[%g2] ASI_NUCLEUS_QUAD_LDD, %g4	!Load TSB tag:data into %g4:%g5
+	brgez,pn %g5, instr_miss	!	Entry invalid?  Punt
+	 cmp	%g1, %g4		!	Compare TLB tags
+	bne,pn %xcc, instr_miss		!	Got right tag?
 	 nop
 	CLRTT
-	stxa	%g5, [%g0] ASI_IMMU_DATA_IN!					Enter new mapping
-	retry				!					Try new mapping
+	stxa	%g5, [%g0] ASI_IMMU_DATA_IN!	Enter new mapping
+	retry				!	Try new mapping
 1:
 	sir
 	TA32
 kfast_DMMU_miss:			! 068 = fast data access MMU miss
 	TRACEFLT			! DEBUG
 	ldxa	[%g0] ASI_DMMU_8KPTR, %g2!					Load DMMU 8K TSB pointer
-	ldxa	[%g0] ASI_DMMU, %g1	! Hard coded for unified 8K TSB		Load DMMU tag target register
-	ldda	[%g2] ASI_NUCLEUS_QUAD_LDD, %g4	!				Load TSB tag and data into %g4 and %g5
-#ifdef MMUDEBUG
-	rdpr	%tstate, %g7				! DEBUG record if we're on MMU globals
-	srlx	%g7, TSTATE_PSTATE_SHIFT, %g7		! DEBUG
-	btst	PSTATE_MG, %g7				! DEBUG
-	bz	0f					! DEBUG
-	 sethi	%hi(_C_LABEL(missmmu)), %g7		! DEBUG
-	lduw	[%g7+%lo(_C_LABEL(missmmu))], %g6	! DEBUG
-	inc	%g6					! DEBUG
-	stw	%g6, [%g7+%lo(_C_LABEL(missmmu))]	! DEBUG
-0:							! DEBUG
-#endif
 #ifdef NO_TSB
 	ba,a	%icc, data_miss;
-	 nop
 #endif
+	ldxa	[%g0] ASI_DMMU, %g1	! Hard coded for unified 8K TSB		Load DMMU tag target register
+	ldda	[%g2] ASI_NUCLEUS_QUAD_LDD, %g4	!				Load TSB tag and data into %g4 and %g5
 	brgez,pn %g5, data_miss		!					Entry invalid?  Punt
 	 xor	%g1, %g4, %g4		!					Compare TLB tags
 	brnz,pn	%g4, data_miss		!					Got right tag?
@@ -1233,17 +1173,6 @@ kfast_DMMU_protection:			! 06c = fast data access MMU protection
 	lduw	[%g1+%lo(_C_LABEL(kdprot))], %g2
 	inc	%g2
 	stw	%g2, [%g1+%lo(_C_LABEL(kdprot))]
-#endif
-#ifdef MMUDEBUG
-	rdpr	%tstate, %g7				! DEBUG record if we're on MMU globals
-	srlx	%g7, TSTATE_PSTATE_SHIFT, %g7		! DEBUG
-	btst	PSTATE_MG, %g7				! DEBUG
-	bz	0f					! DEBUG
-	 sethi	%hi(_C_LABEL(protmmu)), %g7		! DEBUG
-	lduw	[%g7+%lo(_C_LABEL(protmmu))], %g6	! DEBUG
-	inc	%g6					! DEBUG
-	stw	%g6, [%g7+%lo(_C_LABEL(protmmu))]	! DEBUG
-0:							! DEBUG
 #endif
 #ifdef HWREF
 	ba,a,pt	%xcc, dmmu_write_fault
@@ -1988,10 +1917,10 @@ intr_setup_msg:
 	sra	%g5, 0, %g5;					/* Sign extend the damn thing */ \
 	subcc	%g7, WSTATE_KERN, %g7;				/* Compare & leave in register */ \
 	movz	%icc, %sp, %g6;					/* Select old (kernel) stack or base of kernel stack */ \
-	add	%g6, %g5, %g6;					/* Allocate a stack frame */ \
-	btst	1, %g6;						/* Fixup 64-bit stack if necessary */ \
-	add	%g6, BIAS, %g5; \
 	srl	%g6, 0, %g6;					/* truncate at 32-bits */ \
+	btst	1, %g6;						/* Fixup 64-bit stack if necessary */ \
+	add	%g6, %g5, %g6;					/* Allocate a stack frame */ \
+	add	%g6, BIAS, %g5; \
 	movne	%icc, %g5, %g6; \
 	\
 	stx	%g1, [%g6 + CC64FSZ + STKB + TF_FAULT]; \
@@ -2439,45 +2368,46 @@ winfault:
 	stb	%g4, [%g7 + 0x20]			! debug
 	CHKPT(%g4,%g7,0x19)
 #endif
-	mov	TLB_TAG_ACCESS, %g3			! Get real fault page from tag access register
-	ldxa	[%g3] ASI_DMMU, %g3			! And put it into the non-MMU alternate regs
+	mov	TLB_TAG_ACCESS, %g3	! Get real fault page from tag access register
+	ldxa	[%g3] ASI_DMMU, %g3	! And put it into the non-MMU alternate regs
 ! 	nop; nop; nop		! Linux sez we need this after reading TAG_ACCESS
 winfix:
 	rdpr	%tl, %g2
 	subcc	%g2, 1, %g1
-	brlez,pt	%g1, datafault			! Don't go below trap level 1
+	brlez,pt	%g1, datafault	! Don't go below trap level 1
 	 sethi	%hi(CPCB), %g6		! get current pcb
 
 
 	CHKPT(%g4,%g7,0x20)
-	wrpr	%g1, 0, %tl				! Pop a trap level
-	rdpr	%tt, %g7				! Read type of prev. trap
-	rdpr	%tstate, %g4				! Try to restore prev %cwp if we were executing a restore
-	andn	%g7, 0x3f, %g5				!   window fill traps are all 0b 0000 11xx xxxx
+	wrpr	%g1, 0, %tl		! Pop a trap level
+	rdpr	%tt, %g7		! Read type of prev. trap
+	rdpr	%tstate, %g4		! Try to restore prev %cwp if we were executing a restore
+	andn	%g7, 0x3f, %g5		!   window fill traps are all 0b 0000 11xx xxxx
 
 #if 1
-	cmp	%g7, 0x68				! If we took a datafault just before this trap
-	bne,pt	%icc, winfixfill			! our stack's probably bad so we need to switch somewhere else
+	cmp	%g7, 0x68		! If we took a datafault just before this trap
+	bne,pt	%icc, winfixfill	! our stack's probably bad so we need to switch somewhere else
 	 nop
 
 	!!
 	!! Double data fault -- bad stack?
 	!!
-	mov	%fp, %l6				! Save the frame pointer
-	set	EINTSTACK+USPACE+CC64FSZ-STKB, %fp	! Set the frame pointer to the middle of the idle stack
-	add	%fp, -CC64FSZ, %sp			! Create a stackframe
-	wrpr	%g0, 15, %pil				! Disable interrupts, too
-	wrpr	%g0, %g0, %canrestore			! Our stack is hozed and our PCB
-	wrpr	%g0, 7, %cansave			!  probably is too, so blow away
-	ta	1					!  all our register windows.
-	ba	slowtrap
+	wrpr	%g2, %tl	! Restore trap level.
+	sir			! Just issue a reset and don't try to recover.
+	mov	%fp, %l6		! Save the frame pointer
+	set	EINTSTACK+USPACE+CC64FSZ-STKB, %fp ! Set the frame pointer to the middle of the idle stack
+	add	%fp, -CC64FSZ, %sp	! Create a stackframe
+	wrpr	%g0, 15, %pil		! Disable interrupts, too
+	wrpr	%g0, %g0, %canrestore	! Our stack is hozed and our PCB
+	wrpr	%g0, 7, %cansave	!  probably is too, so blow away
+	ba	slowtrap		!  all our register windows.
 	 wrpr	%g0, 0x101, %tt
 #endif
 
 winfixfill:
-	cmp	%g5, 0x0c0				!   so we mask lower bits & compare to 0b 0000 1100 0000
-	bne,pt	%icc, winfixspill			! Dump our trap frame -- we will retry the fill when the page is loaded
-	 cmp	%g5, 0x080				!   window spill traps are all 0b 0000 10xx xxxx
+	cmp	%g5, 0x0c0		!   so we mask lower bits & compare to 0b 0000 1100 0000
+	bne,pt	%icc, winfixspill	! Dump our trap frame -- we will retry the fill when the page is loaded
+	 cmp	%g5, 0x080		!   window spill traps are all 0b 0000 10xx xxxx
 
 	!!
 	!! This was a fill
@@ -2488,11 +2418,11 @@ winfixfill:
 	inc	%g5
 	stw	%g5, [%g1]
 #endif
-	btst	TSTATE_PRIV, %g4			! User mode?
-	and	%g4, CWP, %g5				! %g4 = %cwp of trap
+	btst	TSTATE_PRIV, %g4	! User mode?
+	and	%g4, CWP, %g5		! %g4 = %cwp of trap
 	wrpr	%g7, 0, %tt
-	bz,a,pt	%icc, datafault				! We were in user mode -- normal fault
-	 wrpr	%g5, %cwp				! Restore cwp from before fill trap -- regs should now be consisent
+	bz,a,pt	%icc, datafault		! We were in user mode -- normal fault
+	 wrpr	%g5, %cwp		! Restore cwp from before fill trap -- regs should now be consisent
 
 	/*
 	 * We're in a pickle here.  We were trying to return to user mode
@@ -3212,7 +3142,6 @@ Ldatafault_internal:
 	 nop
 
 data_error:
-	wrpr	%g0, PSTATE_INTR, %pstate		! reenable interrupts
 	call	_C_LABEL(data_access_error)		! data_access_error(type, sfva, sfsr,
 							!		afva, afsr, &tf);
 	 add	%sp, CC64FSZ + STKB, %o5				! (argument: &tf)
@@ -4066,7 +3995,22 @@ interrupt_vector:
 	DLFLUSH(%g5, %g6)
 	LDPTR	[%g5], %g5		! We have a pointer to the handler
 	DLFLUSH2(%g6)
-#ifdef DEBUG
+#if DEBUG
+	brnz,pt %g5, 1f
+	 nop
+	STACKFRAME(-CC64FSZ)		! Get a clean register window
+	mov	%g2, %o1
+
+	LOAD_ASCIZ(%o0, "interrupt_vector: vector %lx NULL\r\n")
+	GLOBTOLOC
+	call	prom_printf
+	 clr	%g4
+	LOCTOGLOB
+	restore
+	 nop
+1:	
+#endif
+#ifdef NOT_DEBUG
 	tst	%g5
 	tz	56
 #endif
@@ -5608,9 +5552,9 @@ _C_LABEL(cpu_initialize):
 	ldx	[%l5], %l5
 
 	set	_C_LABEL(ektext), %l1		! And the ends...
-	ldx	[%l1], %l1
+	LDPTR	[%l1], %l1
 	set	_C_LABEL(ekdata), %l4
-	ldx	[%l4], %l4
+	LDPTR	[%l4], %l4
 
 	sethi	%hi(0xe0000000), %o0		! V=1|SZ=11|NFO=0|IE=0
 	sllx	%o0, 32, %o0			! Shift it into place
@@ -9356,6 +9300,12 @@ ENTRY(pseg_find)
 	.globl	block_disable
 block_disable:	.xword	1
 	.text
+
+#if 0
+#define ASI_STORE	ASI_BLK_COMMIT_P
+#else
+#define ASI_STORE	ASI_BLK_P
+#endif
 	
 #if 1
 /*
@@ -9394,6 +9344,16 @@ ENTRY(bcopy) /* src, dest, size */
 	.text
 3:
 #endif
+	/*
+	 * Check for overlaps and punt.
+	 *
+	 * If src <= dest <= src+len we have a problem.
+	 */
+
+	sub	%o1, %o0, %o3
+
+	cmp	%o3, %o2
+	blu,pn	%xcc, Lovbcopy
 	 cmp	%o2, BCOPY_SMALL
 Lbcopy_start:
 	bge,pt	%xcc, 2f	! if >= this many, go be fancy.
@@ -9419,6 +9379,36 @@ Lbcopy_start:
 	NOTREACHED
 
 	/*
+	 * Overlapping bcopies -- punt.
+	 */
+Lovbcopy:
+
+	/*
+	 * Since src comes before dst, and the regions might overlap,
+	 * we have to do the copy starting at the end and working backwards.
+	 *
+	 * We could optimize this, but it almost never happens.
+	 */
+	mov	%o1, %o5	! Retval
+	add	%o2, %o0, %o0	! src += len
+	add	%o2, %o1, %o1	! dst += len
+	
+	deccc	%o2
+	bl,pn	%xcc, 1f
+	 dec	%o0
+0:
+	dec	%o1
+	ldsb	[%o0], %o4
+	dec	%o0
+	
+	deccc	%o2
+	bge,pt	%xcc, 0b
+	 stb	%o4, [%o1]
+1:
+	retl
+	 mov	%o5, %o0
+
+	/*
 	 * Plenty of data to copy, so try to do it optimally.
 	 */
 2:
@@ -9435,99 +9425,99 @@ Lbcopy_fancy:
 
 	save	%sp, -CC64FSZ, %sp
 	
-	mov	%i0, %o0
-	mov	%i1, %o1
+	mov	%i0, %l0
+	mov	%i1, %l1
 	
-	mov	%i2, %o2
-	btst	1, %o1
+	mov	%i2, %l2
+	btst	1, %l1
 	
 	bz,pt	%icc, 4f
-	 btst	2, %o1
-	ldub	[%o0], %o4				! Load 1st byte
+	 btst	2, %l1
+	ldub	[%l0], %l4				! Load 1st byte
 	
-	deccc	1, %o2
+	deccc	1, %l2
 	ble,pn	%xcc, Lbcopy_finish			! XXXX
-	 inc	1, %o0
+	 inc	1, %l0
 	
-	stb	%o4, [%o1]				! Store 1st byte
-	inc	1, %o1					! Update address
-	btst	2, %o1
+	stb	%l4, [%l1]				! Store 1st byte
+	inc	1, %l1					! Update address
+	btst	2, %l1
 4:	
 	bz,pt	%icc, 4f
 	
-	 btst	1, %o0
+	 btst	1, %l0
 	bz,a	1f
-	 lduh	[%o0], %o4				! Load short
+	 lduh	[%l0], %l4				! Load short
 
-	ldub	[%o0], %o4				! Load bytes
+	ldub	[%l0], %l4				! Load bytes
 	
-	ldub	[%o0+1], %o3
-	sllx	%o4, 8, %o4
-	or	%o3, %o4, %o4
+	ldub	[%l0+1], %l3
+	sllx	%l4, 8, %l4
+	or	%l3, %l4, %l4
 	
 1:	
-	deccc	2, %o2
+	deccc	2, %l2
 	ble,pn	%xcc, Lbcopy_finish			! XXXX
-	 inc	2, %o0
-	sth	%o4, [%o1]				! Store 1st short
+	 inc	2, %l0
+	sth	%l4, [%l1]				! Store 1st short
 	
-	inc	2, %o1
+	inc	2, %l1
 4:
-	btst	4, %o1
+	btst	4, %l1
 	bz,pt	%xcc, 4f
 	
-	 btst	3, %o0
+	 btst	3, %l0
 	bz,a,pt	%xcc, 1f
-	 lduw	[%o0], %o4				! Load word -1
+	 lduw	[%l0], %l4				! Load word -1
 
-	btst	1, %o0
+	btst	1, %l0
 	bz,a,pt	%icc, 2f
-	 lduh	[%o0], %o4
+	 lduh	[%l0], %l4
 	
-	ldub	[%o0], %o4
+	ldub	[%l0], %l4
 	
-	lduh	[%o0+1], %o3
-	sllx	%o4, 16, %o4
-	or	%o4, %o3, %o4
+	lduh	[%l0+1], %l3
+	sllx	%l4, 16, %l4
+	or	%l4, %l3, %l4
 	
-	ldub	[%o0+3], %o3
-	sllx	%o4, 8, %o4
+	ldub	[%l0+3], %l3
+	sllx	%l4, 8, %l4
 	ba,pt	%icc, 1f
-	 or	%o4, %o3, %o4
+	 or	%l4, %l3, %l4
 	
 2:
-	lduh	[%o0+2], %o3
-	sllx	%o4, 16, %o4
-	or	%o4, %o3, %o4
+	lduh	[%l0+2], %l3
+	sllx	%l4, 16, %l4
+	or	%l4, %l3, %l4
 	
 1:	
-	deccc	4, %o2
+	deccc	4, %l2
 	ble,pn	%xcc, Lbcopy_finish		! XXXX
-	 inc	4, %o0
+	 inc	4, %l0
 	
-	st	%o4, [%o1]				! Store word
-	inc	4, %o1
+	st	%l4, [%l1]				! Store word
+	inc	4, %l1
 4:
 	!!
 	!! We are now 32-bit aligned in the dest.
 	!!
-Lbcopy__common:	
+Lbcopy_common:	
 
-	and	%o0, 7, %o4				! Shift amount
-	andn	%o0, 7, %o0				! Source addr
+	and	%l0, 7, %l4				! Shift amount
+	andn	%l0, 7, %l0				! Source addr
 	
-	brz,pt	%o4, Lbcopy_noshift8			! No shift version...
+	brz,pt	%l4, Lbcopy_noshift8			! No shift version...
 
-	 sllx	%o4, 3, %o4				! In bits
-	mov	8<<3, %o3
+	 sllx	%l4, 3, %l4				! In bits
+	mov	8<<3, %l3
 	
-	ldx	[%o0], %l0				! Load word -1
-	sub	%o3, %o4, %o3				! Reverse shift
-	deccc	16*8, %o2				! Have enough room?
+	ldx	[%l0], %o0				! Load word -1
+	sub	%l3, %l4, %l3				! Reverse shift
+	deccc	12*8, %l2				! Have enough room?
 	
-	sllx	%l0, %o4, %l0
+	sllx	%o0, %l4, %o0
 	bl,pn	%xcc, 2f
-	 and	%o3, 0x38, %o3
+	 and	%l3, 0x38, %l3
 Lbcopy_unrolled8:
 
 	/*
@@ -9536,249 +9526,216 @@ Lbcopy_unrolled8:
 	 * 3 dependent operations on the data.
 	 */ 
 
-!	ldx	[%o0+0*8], %l0				! Already done
-!	sllx	%l0, %o4, %l0				! Already done
-	ldx	[%o0+1*8], %l1
-	ldx	[%o0+2*8], %l2
-	ldx	[%o0+3*8], %l3
-	ldx	[%o0+4*8], %l4
-	ldx	[%o0+5*8], %l5
-	ldx	[%o0+6*8], %l6
+!	ldx	[%l0+0*8], %o0				! Already done
+!	sllx	%o0, %l4, %o0				! Already done
+	ldx	[%l0+1*8], %o1
+	ldx	[%l0+2*8], %o2
+	ldx	[%l0+3*8], %o3
+	ldx	[%l0+4*8], %o4
 	ba,pt	%icc, 1f
-	 ldx	[%o0+7*8], %l7
+	 ldx	[%l0+5*8], %o5
 	.align	8
 1:
-	srlx	%l1, %o3, %g1
-	inc	8*8, %o0
+	srlx	%o1, %l3, %g1
+	inc	6*8, %l0
 	
-	sllx	%l1, %o4, %l1
-	or	%g1, %l0, %o5
-	ldx	[%o0+0*8], %l0
+	sllx	%o1, %l4, %o1
+	or	%g1, %o0, %g6
+	ldx	[%l0+0*8], %o0
 	
-	stx	%o5, [%o1+0*8]
-	srlx	%l2, %o3, %g1
+	stx	%g6, [%l1+0*8]
+	srlx	%o2, %l3, %g1
 
-	sllx	%l2, %o4, %l2
-	or	%g1, %l1, %o5
-	ldx	[%o0+1*8], %l1
+	sllx	%o2, %l4, %o2
+	or	%g1, %o1, %g6
+	ldx	[%l0+1*8], %o1
 	
-	stx	%o5, [%o1+1*8]
-	srlx	%l3, %o3, %g1
+	stx	%g6, [%l1+1*8]
+	srlx	%o3, %l3, %g1
 	
-	sllx	%l3, %o4, %l3
-	or	%g1, %l2, %o5
-	ldx	[%o0+2*8], %l2
+	sllx	%o3, %l4, %o3
+	or	%g1, %o2, %g6
+	ldx	[%l0+2*8], %o2
 	
-	stx	%o5, [%o1+2*8]
-	srlx	%l4, %o3, %g1
+	stx	%g6, [%l1+2*8]
+	srlx	%o4, %l3, %g1
 	
-	sllx	%l4, %o4, %l4	
-	or	%g1, %l3, %o5
-	ldx	[%o0+3*8], %l3
+	sllx	%o4, %l4, %o4	
+	or	%g1, %o3, %g6
+	ldx	[%l0+3*8], %o3
 	
-	stx	%o5, [%o1+3*8]
-	srlx	%l5, %o3, %g1
+	stx	%g6, [%l1+3*8]
+	srlx	%o5, %l3, %g1
 	
-	sllx	%l5, %o4, %l5
-	or	%g1, %l4, %o5
-	ldx	[%o0+4*8], %l4
+	sllx	%o5, %l4, %o5
+	or	%g1, %o4, %g6
+	ldx	[%l0+4*8], %o4
+
+	stx	%g6, [%l1+4*8]
+	srlx	%o0, %l3, %g1
+	deccc	6*8, %l2				! Have enough room?
+
+	sllx	%o0, %l4, %o0				! Next loop
+	or	%g1, %o5, %g6
+	ldx	[%l0+5*8], %o5
 	
-	stx	%o5, [%o1+4*8]
-	srlx	%l6, %o3, %g1
-	
-	sllx	%l6, %o4, %l6
-	or	%g1, %l5, %o5
-	ldx	[%o0+5*8], %l5
-	
-	stx	%o5, [%o1+5*8]
-	srlx	%l7, %o3, %g1
-	
-	sllx	%l7, %o4, %l7
-	or	%g1, %l6, %o5
-	ldx	[%o0+6*8], %l6
-	
-	stx	%o5, [%o1+6*8]
-	srlx	%l0, %o3, %g1
-	deccc	8*8, %o2				! Have enough room?
-	
-	sllx	%l0, %o4, %l0				! Next loop
-	or	%g1, %l7, %o5
-	ldx	[%o0+7*8], %l7
-	
-	stx	%o5, [%o1+7*8]
+	stx	%g6, [%l1+5*8]
 	bge,pt	%xcc, 1b
-	 inc	8*8, %o1
+	 inc	6*8, %l1
 
 Lbcopy_unrolled8_cleanup:	
 	!!
 	!! Finished 8 byte block, unload the regs.
 	!! 
-	srlx	%l1, %o3, %g1
-	inc	7*8, %o0
+	srlx	%o1, %l3, %g1
+	inc	5*8, %l0
 	
-	sllx	%l1, %o4, %l1
-	or	%g1, %l0, %o5
+	sllx	%o1, %l4, %o1
+	or	%g1, %o0, %g6
 		
-	stx	%o5, [%o1+0*8]
-	srlx	%l2, %o3, %g1
+	stx	%g6, [%l1+0*8]
+	srlx	%o2, %l3, %g1
 	
-	sllx	%l2, %o4, %l2
-	or	%g1, %l1, %o5
+	sllx	%o2, %l4, %o2
+	or	%g1, %o1, %g6
 		
-	stx	%o5, [%o1+1*8]
-	srlx	%l3, %o3, %g1
+	stx	%g6, [%l1+1*8]
+	srlx	%o3, %l3, %g1
 	
-	sllx	%l3, %o4, %l3
-	or	%g1, %l2, %o5
+	sllx	%o3, %l4, %o3
+	or	%g1, %o2, %g6
 		
-	stx	%o5, [%o1+2*8]
-	srlx	%l4, %o3, %g1
+	stx	%g6, [%l1+2*8]
+	srlx	%o4, %l3, %g1
 	
-	sllx	%l4, %o4, %l4	
-	or	%g1, %l3, %o5
+	sllx	%o4, %l4, %o4	
+	or	%g1, %o3, %g6
 		
-	stx	%o5, [%o1+3*8]
-	srlx	%l5, %o3, %g1
+	stx	%g6, [%l1+3*8]
+	srlx	%o5, %l3, %g1
 	
-	sllx	%l5, %o4, %l5
-	or	%g1, %l4, %o5
+	sllx	%o5, %l4, %o5
+	or	%g1, %o4, %g6
 		
-	stx	%o5, [%o1+4*8]
-	srlx	%l6, %o3, %g1
+	stx	%g6, [%l1+4*8]
+	inc	5*8, %l1
 	
-	sllx	%l6, %o4, %l6
-	or	%g1, %l5, %o5
-		
-	stx	%o5, [%o1+5*8]
-	srlx	%l7, %o3, %g1
-	
-	sllx	%l7, %o4, %l7
-	or	%g1, %l6, %o5
-		
-	stx	%o5, [%o1+6*8]
-	inc	7*8, %o1
-	
-	mov	%l7, %l0				! Save our unused data
-	dec	7*8, %o2
+	mov	%o5, %o0				! Save our unused data
+	dec	5*8, %l2
 2:
-	inccc	16*8, %o2
+	inccc	12*8, %l2
 	bz,pn	%icc, Lbcopy_complete
 	
 	!! Unrolled 8 times
 Lbcopy_aligned8:	
-!	ldx	[%o0], %l0				! Already done
-!	sllx	%l0, %o4, %l0				! Shift high word
+!	ldx	[%l0], %o0				! Already done
+!	sllx	%o0, %l4, %o0				! Shift high word
 	
-	 deccc	8, %o2					! Pre-decrement
+	 deccc	8, %l2					! Pre-decrement
 	bl,pn	%xcc, Lbcopy_finish
 1:
-	ldx	[%o0+8], %l1				! Load word 0
-	inc	8, %o0
+	ldx	[%l0+8], %o1				! Load word 0
+	inc	8, %l0
 	
-	srlx	%l1, %o3, %o5
-	or	%o5, %l0, %o5				! Combine
+	srlx	%o1, %l3, %g6
+	or	%g6, %o0, %g6				! Combine
 	
-	stx	%o5, [%o1]				! Store result
-	 inc	8, %o1
+	stx	%g6, [%l1]				! Store result
+	 inc	8, %l1
 	
-	deccc	8, %o2
+	deccc	8, %l2
 	bge,pn	%xcc, 1b
-	 sllx	%l1, %o4, %l0	
+	 sllx	%o1, %l4, %o0	
 
-	btst	7, %o2					! Done?
+	btst	7, %l2					! Done?
 	bz,pt	%xcc, Lbcopy_complete
 
 	!!
-	!! Loadup the last dregs into %l0 and shift it into place
+	!! Loadup the last dregs into %o0 and shift it into place
 	!! 
-	 srlx	%o3, 3, %o5				! # bytes in %l0
-	dec	8, %o5					!  - 8
+	 srlx	%l3, 3, %g6				! # bytes in %o0
+	dec	8, %g6					!  - 8
 	!! n-8 - (by - 8) -> n - by
-	subcc	%o2, %o5, %g0				! # bytes we need
+	subcc	%l2, %g6, %g0				! # bytes we need
 	ble,pt	%icc, Lbcopy_finish
 	 nop
-	ldx	[%o0+8], %l1				! Need another word
-	srlx	%l1, %o3, %l1
+	ldx	[%l0+8], %o1				! Need another word
+	srlx	%o1, %l3, %o1
 	ba,pt	%icc, Lbcopy_finish
-	 or	%l0, %l1, %l0				! All loaded up.
+	 or	%o0, %o1, %o0				! All loaded up.
 	
 Lbcopy_noshift8:
-	deccc	8*8, %o2				! Have enough room?
+	deccc	6*8, %l2				! Have enough room?
 	bl,pn	%xcc, 2f
 	 nop
 	ba,pt	%icc, 1f
 	 nop
 	.align	32
 1:	
-	ldx	[%o0+0*8], %l0
-	ldx	[%o0+1*8], %l1
-	ldx	[%o0+2*8], %l2
-	ldx	[%o0+3*8], %l3
-	stx	%l0, [%o1+0*8]
-	stx	%l1, [%o1+1*8]
-	stx	%l2, [%o1+2*8]
-	stx	%l3, [%o1+3*8]
+	ldx	[%l0+0*8], %o0
+	ldx	[%l0+1*8], %o1
+	ldx	[%l0+2*8], %o2
+	stx	%o0, [%l1+0*8]
+	stx	%o1, [%l1+1*8]
+	stx	%o2, [%l1+2*8]
 
 	
-	ldx	[%o0+4*8], %l4
-	ldx	[%o0+5*8], %l5
-	ldx	[%o0+6*8], %l6
-	ldx	[%o0+7*8], %l7
-	inc	8*8, %o0
-	stx	%l4, [%o1+4*8]
-	stx	%l5, [%o1+5*8]
-	deccc	8*8, %o2
-	stx	%l6, [%o1+6*8]
-	stx	%l7, [%o1+7*8]
-	stx	%l2, [%o1+2*8]
+	ldx	[%l0+3*8], %o3
+	ldx	[%l0+4*8], %o4
+	ldx	[%l0+5*8], %o5
+	inc	6*8, %l0
+	stx	%o3, [%l1+3*8]
+	deccc	6*8, %l2
+	stx	%o4, [%l1+4*8]
+	stx	%o5, [%l1+5*8]
 	bge,pt	%xcc, 1b
-	 inc	8*8, %o1
+	 inc	6*8, %l1
 2:
-	inc	8*8, %o2
+	inc	6*8, %l2
 1:	
-	deccc	8, %o2
+	deccc	8, %l2
 	bl,pn	%icc, 1f				! < 0 --> sub word
 	 nop
-	ldx	[%o0], %o5
-	inc	8, %o0
-	stx	%o5, [%o1]
+	ldx	[%l0], %g6
+	inc	8, %l0
+	stx	%g6, [%l1]
 	bg,pt	%icc, 1b				! Exactly 0 --> done
-	 inc	8, %o1
+	 inc	8, %l1
 1:
-	btst	7, %o2					! Done?
+	btst	7, %l2					! Done?
 	bz,pt	%xcc, Lbcopy_complete
-	 clr	%o4
-	ldx	[%o0], %l0
+	 clr	%l4
+	ldx	[%l0], %o0
 Lbcopy_finish:
 	
-	brz,pn	%o2, 2f					! 100% complete?
-	 cmp	%o2, 8					! Exactly 8 bytes?
+	brz,pn	%l2, 2f					! 100% complete?
+	 cmp	%l2, 8					! Exactly 8 bytes?
 	bz,a,pn	%xcc, 2f
-	 stx	%l0, [%o1]
+	 stx	%o0, [%l1]
 
-	btst	4, %o2					! Word store?
+	btst	4, %l2					! Word store?
 	bz	%xcc, 1f
-	 srlx	%l0, 32, %o5				! Shift high word down
-	stw	%o5, [%o1]
-	inc	4, %o1
-	mov	%l0, %o5				! Operate on the low bits
+	 srlx	%o0, 32, %g6				! Shift high word down
+	stw	%g6, [%l1]
+	inc	4, %l1
+	mov	%o0, %g6				! Operate on the low bits
 1:
-	btst	2, %o2
-	mov	%o5, %l0
+	btst	2, %l2
+	mov	%g6, %o0
 	bz	1f
-	 srlx	%l0, 16, %o5
+	 srlx	%o0, 16, %g6
 	
-	sth	%o5, [%o1]				! Store short
-	inc	2, %o1
-	mov	%l0, %o5				! Operate on low bytes
+	sth	%g6, [%l1]				! Store short
+	inc	2, %l1
+	mov	%o0, %g6				! Operate on low bytes
 1:
-	mov	%o5, %l0
-	btst	1, %o2					! Byte aligned?
+	mov	%g6, %o0
+	btst	1, %l2					! Byte aligned?
 	bz	2f
-	 srlx	%l0, 8, %o5
+	 srlx	%o0, 8, %g6
 
-	stb	%o5, [%o1]				! Store last byte
-	inc	1, %o1					! Update address
+	stb	%g6, [%l1]				! Store last byte
+	inc	1, %l1					! Update address
 2:	
 Lbcopy_complete:
 #if 0
@@ -9803,23 +9760,19 @@ Lbcopy_complete:
 	 nop
 
 1:
-	set	block_disable, %o0
-	stx	%o0, [%o0]
-	
 	set	0f, %o0
-	call	prom_printf
+	call	printf
 	 sub	%i2, %l4, %o5
 	set	1f, %o0
 	mov	%i0, %o1
 	mov	%i1, %o2
-	call	prom_printf
+	call	printf
 	 mov	%i2, %o3
 	ta	1
 	.data
-	_ALIGN
-0:	.asciz	"bcopy failed: %x@%p != %x@%p byte %d\r\n"
-1:	.asciz	"bcopy(%p, %p, %lx)\r\n"
-	_ALIGN
+0:	.asciz	"bcopy failed: %x@%p != %x@%p byte %d\n"
+1:	.asciz	"bcopy(%p, %p, %lx)\n"
+	.align 8
 	.text
 2:	
 #endif
@@ -9831,7 +9784,9 @@ Lbcopy_complete:
 /*
  * Block copy.  Useful for >256 byte copies.
  *
- * It seems the integer version is always faster.  Go figure.
+ * Benchmarking has shown this always seems to be slower than
+ * the integer version, so this is disabled.  Maybe someone will
+ * figure out why sometime.
  */
 	
 Lbcopy_block:
@@ -9895,12 +9850,6 @@ Lbcopy_block:
  * %o5		last safe fetchable address
  */
 
-#define	ASI_STORE	ASI_BLK_P
-
-	!!
-	!! This code will allow us to save the fpstate around this
-	!! routine and nest FP use in the kernel
-	!!
 #if 1
 	ENABLE_FPU(0)
 #else
@@ -11043,23 +10992,6 @@ Lbcopy_blockfinish:
  * XXXXXXXXXXXXXXXXXXXX
  */
 /*
- * memset(addr, c, len)
- *
- * Duplicate the pattern so it fills 64-bits, then swap around the
- * arguments and call bzero.
- */
-ENTRY(memset)
-	and	%o1, 0x0ff, %o3
-	mov	%o2, %o1
-	sllx	%o3, 8, %o2
-	or	%o2, %o3, %o2
-	mov	%o0, %o4		! Save original pointer
-	sllx	%o2, 16, %o3
-	or	%o2, %o3, %o2
-	sllx	%o2, 32, %o3
-	ba,pt	%icc, Lbzero_internal
-	 or	%o2, %o3, %o2
-/*
  * bzero(addr, len)
  *
  * We want to use VIS instructions if we're clearing out more than
@@ -11068,126 +11000,85 @@ ENTRY(memset)
  * to keep track of the current owner of the FPU, hence the different
  * code.
  *
+ * XXXXX To produce more efficient code, we do not allow lengths
+ * greater than 0x80000000000000000, which are negative numbers.
+ * This should not really be an issue since the VA hole should
+ * cause any such ranges to fail anyway.
  */
 ENTRY(bzero)
 	! %o0 = addr, %o1 = len
-	clr	%o2			! Initialize our pattern
+	mov	%o1, %o2
+	clr	%o1			! Initialize our pattern
+/*
+ * memset(addr, c, len)
+ *
+ */
+ENTRY(memset)
+	! %o0 = addr, %o1 = pattern, %o2 = len
+	mov	%o0, %o4		! Save original pointer
+
 Lbzero_internal:
-#ifndef _LP64
-#ifdef	DEBUG
-	tst	%o1			! DEBUG
-	tneg	%icc, 1			! DEBUG -- trap if negative.
-#endif
-	sra	%o1, 0, %o1		! Sign extend 32-bits
-#endif
-	brlez,pn	%o1, Lbzero_done	! No bytes to copy??
-!	 cmp	%o1, 8			! Less than 8 bytes to go?
-!	ble,a,pn	%icc, Lbzero_small	! Do it byte at a time.
-!	 deccc	8, %o1			! pre-decrement
-
-	 btst	7, %o0			! 64-bit aligned?  Optimization
-	bz,pt	%xcc, 2f
-	 btst	3, %o0			! 32-bit aligned?
-	bz,pt	%xcc, 1f
-	 btst	1, %o0			! 16-bit aligned?
-	bz,pt	%xcc, 0f
-	 btst	3, %o0
-
-	!! unaligned -- store 1 byte
-	stb	%o2, [%o0]
-	dec	1, %o1			! Record storing 1 byte
-	inc	%o0
-	cmp	%o1, 2
-	bl,a,pn	%icc, 7f		! 1 or 0 left
-	 dec	8, %o1			! Fixup count -8
-0:
-	btst	3, %o0
-	bz,pt	%xcc, 1f
-	 btst	7, %o0			! 64-bit aligned?
-
-	!! 16-bit aligned -- store half word
-	sth	%o2, [%o0]
-	dec	2, %o1			! Prepare to store 2 bytes
-	inc	2, %o0
-	cmp	%o1, 4
-	bl,a,pn	%icc, 5f		! Less than 4 left
-	 dec	8, %o1			! Fixup count -8
-1:
-	btst	7, %o0			! 64-bit aligned?
-	bz,pt	%xcc, 2f
+	btst	7, %o0			! Word aligned?
+	bz,pn	%xcc, 0f
 	 nop
-	!! 32-bit aligned -- store word
-	stw	%o2, [%o0]
-	dec	4, %o1
-	inc	4, %o0
-	cmp	%o1, 8
-	bl,a,pn	%icc, Lbzero_cleanup	! Less than 8 left
-	 dec	8, %o1			! Fixup count -8
-2:
-	!! Now we're 64-bit aligned
-#if 1
+	inc	%o0
+	deccc	%o2			! Store up to 7 bytes
+	bge,a,pt	%xcc, Lbzero_internal
+	 stb	%o1, [%o0 - 1]
+
+	retl				! Duplicate Lbzero_done
+	 mov	%o4, %o0
+0:
 	/*
-	 * Userland tests indicate it is *slower* to use block
-	 * stores to clear memory.
+	 * Duplicate the pattern so it fills 64-bits.
 	 */
-	cmp	%o1, 256		! Use block clear if len > 256
+	andcc	%o1, 0x0ff, %o1		! No need to extend zero
+	bz,pt	%icc, 1f
+	 sllx	%o1, 8, %o3		! sigh.  all dependent insns.
+	or	%o1, %o3, %o1
+	sllx	%o1, 16, %o3
+	or	%o1, %o3, %o1
+	sllx	%o1, 32, %o3
+	 or	%o1, %o3, %o1
+1:	
+#if 1
+	!! Now we are 64-bit aligned
+	cmp	%o2, 256		! Use block clear if len > 256
 	bge,pt	%xcc, Lbzero_block	! use block store insns
-#endif
-	 deccc	8, %o1
+#endif	
+	 deccc	8, %o2
 Lbzero_longs:
 	bl,pn	%xcc, Lbzero_cleanup	! Less than 8 bytes left
 	 nop
-3:
-	stx	%o2, [%o0]		! Do 1 longword at a time
-	deccc	8, %o1
-#ifdef _LP64
-	brgez,pt	%o1, 3b
-#else
-	bge,pt	%icc, 3b
-#endif
-	 inc	8, %o0
+3:	
+	inc	8, %o0
+	deccc	8, %o2
+	bge,pt	%xcc, 3b
+	 stx	%o1, [%o0 - 8]		! Do 1 longword at a time
 
 	/*
 	 * Len is in [-8..-1] where -8 => done, -7 => 1 byte to zero,
 	 * -6 => two bytes, etc.  Mop up this remainder, if any.
 	 */
-Lbzero_cleanup:
-	btst	4, %o1
-	bz,pt	%xcc, 6f		! if (len & 4) {
-	 btst	2, %o1
-	stw	%o2, [%o0]		!	*(int *)addr = 0;
+Lbzero_cleanup:	
+	btst	4, %o2
+	bz,pt	%xcc, 5f		! if (len & 4) {
+	 nop
+	stw	%o1, [%o0]		!	*(int *)addr = 0;
 	inc	4, %o0			!	addr += 4;
-5:
-	btst	2, %o1
-6:
-	bz,pt	%xcc, 8f		! if (len & 2) {
-	 btst	1, %o1
-	sth	%o2, [%o0]		!	*(short *)addr = 0;
+5:	
+	btst	2, %o2
+	bz,pt	%xcc, 7f		! if (len & 2) {
+	 nop
+	sth	%o1, [%o0]		!	*(short *)addr = 0;
 	inc	2, %o0			!	addr += 2;
-7:
-	btst	1, %o1
-8:
+7:	
+	btst	1, %o2
 	bnz,a	%icc, Lbzero_done	! if (len & 1)
-	 stb	%o2, [%o0]		!	*addr = 0;
+	 stb	%o1, [%o0]		!	*addr = 0;
 Lbzero_done:
 	retl
 	 mov	%o4, %o0		! Restore ponter for memset (ugh)
-
-	/*
-	 * Len is in [-8..-1] where -8 => done, -7 => 1 byte to zero,
-	 * -6 => two bytes, etc. but we're potentially unaligned.
-	 * Do byte stores since it's easiest.
-	 */
-Lbzero_small:
-	inccc	8, %o1
-	bz,pn	%icc, Lbzero_done
-1:
-	 deccc	%o1
-	stb	%o2, [%o0]
-	bge,pt	%icc, 1b
-	 inc	%o0
-	ba,a,pt	%icc, Lbzero_done
-	 nop				! XXX spitfire bug?
 
 #if 1
 Lbzero_block:
@@ -11273,41 +11164,41 @@ Lbzero_block:
 	bz,pt	%xcc, 2f
 	 nop
 1:
-	stx	%i2, [%i0]
+	stx	%i1, [%i0]
 	inc	8, %i0
 	btst	63, %i0
 	bnz,pt	%xcc, 1b
-	 dec	8, %i1
+	 dec	8, %i2
 
 2:
-	brz	%i2, 3f					! Skip the memory op
+	brz	%i1, 3f					! Skip the memory op
 	 fzero	%f0					! for bzero
 
 #ifdef _LP64
-	stx	%i2, [%sp + BIAS + 0x50]		! Flush this puppy to RAM
+	stx	%i1, [%i0]				! Flush this puppy to RAM
 	membar	#StoreLoad
-	ldd	[%sp + BIAS + 0x50], %f0
+	ldd	[%i0], %f0
 #else
-	stw	%i2, [%sp + 0x28]			! Flush this puppy to RAM
+	stw	%i1, [%i0]				! Flush this puppy to RAM
 	membar	#StoreLoad
-	ld	[%sp + 0x28], %f0
+	ld	[%i0], %f0
 	fmovsa	%icc, %f0, %f1
 #endif
 	
 3:	
-	fmovda	%icc, %f0, %f2				! Duplicate the pattern
-	fmovda	%icc, %f0, %f4
-	fmovda	%icc, %f0, %f6
-	fmovda	%icc, %f0, %f8
-	fmovda	%icc, %f0, %f10
-	fmovda	%icc, %f0, %f12
-	fmovda	%icc, %f0, %f14
+	fmovd	%f0, %f2				! Duplicate the pattern
+	fmovd	%f0, %f4
+	fmovd	%f0, %f6
+	fmovd	%f0, %f8
+	fmovd	%f0, %f10
+	fmovd	%f0, %f12
+	fmovd	%f0, %f14
 
 	!! Remember: we were 8 bytes too far
-	dec	56, %i1					! Go one iteration too far
+	dec	56, %i2					! Go one iteration too far
 5:
 	stda	%f0, [%i0] ASI_BLK_P			! Store 64 bytes
-	deccc	BLOCK_SIZE, %i1
+	deccc	BLOCK_SIZE, %i2
 	bg,pt	%icc, 5b
 	 inc	BLOCK_SIZE, %i0
 
@@ -11318,7 +11209,7 @@ Lbzero_block:
  */
 #if 1
 	RESTORE_FPU
-	addcc	%i1, 56, %i1	! Restore the count
+	addcc	%i2, 56, %i2	! Restore the count
 	ba,pt	%xcc, Lbzero_longs	! Finish up the remainder
 	 restore
 #else
@@ -11333,7 +11224,7 @@ Lbzero_block:
 	STPTR	%g0, [%l1 + %lo(FPPROC)]		! Clear fpproc
 	STPTR	%l6, [%l5 + P_FPSTATE]			! Restore old fpstate
 	wr	%g0, 0, %fprs				! Disable FPU
-	addcc	%i1, 56, %i1	! Restore the count
+	addcc	%i2, 56, %i2	! Restore the count
 	ba,pt	%xcc, Lbzero_longs	! Finish up the remainder
 	 restore
 #endif

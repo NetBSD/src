@@ -1,4 +1,4 @@
-#	$NetBSD: RAMDISK,v 1.9 2001/07/03 17:36:01 scw Exp $
+#	$NetBSD: RAMDISK,v 1.9.2.1 2001/08/03 04:12:01 lukem Exp $
 
 #
 # RAMDISK: Root/swap on ramdisk
@@ -66,6 +66,7 @@ wdsc0		at pcc? ipl 2
 
 # MVME1x2 and MVME1x7 shared devices
 pcctwo0		at mainbus0
+memc*		at mainbus0
 clock0		at pcctwo? ipl 5
 ie0		at pcctwo? ipl 3
 osiop0		at pcctwo? ipl 2

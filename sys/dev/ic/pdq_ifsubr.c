@@ -1,4 +1,4 @@
-/*	$NetBSD: pdq_ifsubr.c,v 1.35 2001/07/07 15:53:21 thorpej Exp $	*/
+/*	$NetBSD: pdq_ifsubr.c,v 1.35.2.1 2001/08/03 04:13:03 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -202,7 +202,8 @@ pdq_ifstart(
 	    }
 	    if (!bus_dmamap_create(sc->sc_dmatag, m->m_pkthdr.len, 255,
 				   m->m_pkthdr.len, 0, BUS_DMA_NOWAIT, &map)) {
-		if (!bus_dmamap_load_mbuf(sc->sc_dmatag, map, m, BUS_DMA_NOWAIT)) {
+		if (!bus_dmamap_load_mbuf(sc->sc_dmatag, map, m,
+					  BUS_DMA_WRITE|BUS_DMA_NOWAIT)) {
 		    bus_dmamap_sync(sc->sc_dmatag, map, 0, m->m_pkthdr.len,
 				    BUS_DMASYNC_PREWRITE);
 		    M_SETCTX(m, map);
@@ -795,7 +796,8 @@ pdq_os_databuf_alloc(
 	m_free(m);
 	return NULL;
     }
-    if (bus_dmamap_load_mbuf(sc->sc_dmatag, map, m, BUS_DMA_NOWAIT)) {
+    if (bus_dmamap_load_mbuf(sc->sc_dmatag, map, m,
+    			     BUS_DMA_READ|BUS_DMA_NOWAIT)) {
 	printf("%s: can't load dmamap\n", sc->sc_dev.dv_xname);
 	bus_dmamap_destroy(sc->sc_dmatag, map);
 	m_free(m);

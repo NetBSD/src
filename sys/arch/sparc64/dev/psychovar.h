@@ -1,4 +1,4 @@
-/*	$NetBSD: psychovar.h,v 1.5 2001/03/06 08:09:17 mrg Exp $	*/
+/*	$NetBSD: psychovar.h,v 1.5.2.1 2001/08/03 04:12:27 lukem Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -45,8 +45,6 @@ struct psycho_pbm {
 	 */
 	struct psycho_registers		*pp_regs;
 	struct psycho_ranges		*pp_range;
-	struct psycho_interrupt_map	*pp_intmap;
-	struct psycho_interrupt_map_mask pp_intmapmask;
 
 	/* counts of above */
 	int				pp_nregs;
@@ -78,11 +76,8 @@ struct psycho_softc {
 	 * one sabre has two simba's.  psycho's are separately attached,
 	 * with the `other' psycho_pbm allocated at the first's attach.
 	 */
-	struct psycho_pbm		*sc_sabre;
 	struct psycho_pbm		*__sc_psycho_this;
 	struct psycho_pbm		*__sc_psycho_other;
-#define	sc_simba_a	__sc_psycho_this
-#define	sc_simba_b	__sc_psycho_other
 #define	sc_psycho_this	__sc_psycho_this
 #define	sc_psycho_other	__sc_psycho_other
 

@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.51 2001/05/30 12:28:38 mrg Exp $ */
+/* $NetBSD: pmap.h,v 1.51.2.1 2001/08/03 04:10:44 lukem Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -180,13 +180,18 @@ struct trapframe;
 
 void	pmap_do_reactivate(struct cpu_info *, struct trapframe *);
 
-void	pmap_tlb_shootdown(pmap_t, vaddr_t, pt_entry_t);
+void	pmap_tlb_shootdown(pmap_t, vaddr_t, pt_entry_t, u_long *);
+void	pmap_tlb_shootnow(u_long);
 void	pmap_do_tlb_shootdown(struct cpu_info *, struct trapframe *);
-void	pmap_tlb_shootdown_q_drain(u_long, boolean_t);
+#define	PMAP_TLB_SHOOTDOWN_CPUSET_DECL		u_long shootset = 0;
 #define	PMAP_TLB_SHOOTDOWN(pm, va, pte)					\
-	pmap_tlb_shootdown((pm), (va), (pte))
+	pmap_tlb_shootdown((pm), (va), (pte), &shootset)
+#define	PMAP_TLB_SHOOTNOW()						\
+	pmap_tlb_shootnow(shootset)
 #else
+#define	PMAP_TLB_SHOOTDOWN_CPUSET_DECL		/* nothing */
 #define	PMAP_TLB_SHOOTDOWN(pm, va, pte)		/* nothing */
+#define	PMAP_TLB_SHOOTNOW()			/* nothing */
 #endif /* MULTIPROCESSOR */
 #endif /* _LKM */
 

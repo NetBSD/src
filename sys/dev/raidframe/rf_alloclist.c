@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_alloclist.c,v 1.4 1999/08/13 03:41:53 oster Exp $	*/
+/*	$NetBSD: rf_alloclist.c,v 1.4.16.1 2001/08/03 04:13:24 lukem Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -182,6 +182,6 @@ rf_real_MakeAllocList(lockflag)
 	if (p == NULL) {
 		return (NULL);
 	}
-	bzero((char *) p, sizeof(RF_AllocListElem_t));
+	memset((char *) p, 0, sizeof(RF_AllocListElem_t));
 	return (p);
 }

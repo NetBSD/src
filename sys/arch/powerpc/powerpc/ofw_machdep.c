@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_machdep.c,v 1.8 2001/06/10 11:36:03 tsubai Exp $	*/
+/*	$NetBSD: ofw_machdep.c,v 1.8.2.1 2001/08/03 04:12:15 lukem Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -68,7 +68,7 @@ mem_regions(memp, availp)
 	if ((phandle = OF_finddevice("/memory")) == -1)
 		goto error;
 
-	bzero(OFmem, sizeof OFmem);
+	memset(OFmem, 0, sizeof OFmem);
 	cnt = OF_getprop(phandle, "reg",
 		OFmem, sizeof OFmem[0] * OFMEM_REGIONS);
 	if (cnt <= 0)
@@ -78,13 +78,13 @@ mem_regions(memp, availp)
 	cnt /= sizeof OFmem[0];
 	for (i = 0; i < cnt; )
 		if (OFmem[i].size == 0) {
-			bcopy(&OFmem[i + 1], &OFmem[i],
-			      (cnt - i) * sizeof OFmem[0]);
+			memmove(&OFmem[i], &OFmem[i + 1],
+				(cnt - i) * sizeof OFmem[0]);
 			cnt--;
 		} else
 			i++;
 
-	bzero(OFavail, sizeof OFavail);
+	memset(OFavail, 0, sizeof OFavail);
 	cnt = OF_getprop(phandle, "available",
 		OFavail, sizeof OFavail[0] * OFMEM_REGIONS);
 	if (cnt <= 0)
@@ -93,8 +93,8 @@ mem_regions(memp, availp)
 	cnt /= sizeof OFavail[0];
 	for (i = 0; i < cnt; )
 		if (OFavail[i].size == 0) {
-			bcopy(&OFavail[i + 1], &OFavail[i],
-			      (cnt - i) * sizeof OFavail[0]);
+			memmove(&OFavail[i], &OFavail[i + 1],
+				(cnt - i) * sizeof OFavail[0]);
 			cnt--;
 		} else
 			i++;
@@ -265,7 +265,7 @@ dk_match(name)
 		 * First try the NetBSD name.
 		 */
 		l = strlen(od->ofb_dev->dv_xname);
-		if (!bcmp(name, od->ofb_dev->dv_xname, l)) {
+		if (!memcmp(name, od->ofb_dev->dv_xname, l)) {
 			if (name[l] == '\0') {
 				/* Default partition, (or none at all) */
 				dk_setroot(od, -1);

@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcfbio.h,v 1.1 2001/02/22 18:37:55 uch Exp $	*/
+/*	$NetBSD: hpcfbio.h,v 1.1.6.1 2001/08/03 04:12:53 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -79,10 +79,31 @@
 #define	HPCFB_ACCESS_PIXEL_BLANK (1<<24)/* pixel has a blank at MSB	*/
 #define	HPCFB_ACCESS_ALPHA_REVERSE (1<<25) /* alpha value 0 means thick	*/
 
-#define	HPCFB_SWAP_BYTE		(1<<0)
-#define	HPCFB_SWAP_WORD		(1<<1)
-#define	HPCFB_SWAP_DWORD	(1<<2)
-#define	HPCFB_SWAP_QWORD	(1<<3)
+/*
+ * These bits mean that pack data should be stored in reverse order on
+ * memory.
+ *
+ * HPCFB_REVORDER_BYTE:  0x00 0x01
+ *                       +----+-----+
+ *                       |7..0|15..8|
+ *                       +----+-----+
+ * HPCFB_REVORDER_WORD:  0x00       0x02
+ *                       +----+-----+----+----+
+ *                       |15..0     |31..15   |
+ *                       +----+-----+----+----+
+ * HPCFB_REVORDER_DWORD: 0x00                 0x04
+ *                       +----+-----+----+----+----+----+----+----+
+ *                       |31..0               |63..32             |
+ *                       +----+-----+----+----+----+----+----+----+
+ * HPCFB_REVORDER_QWORD: 0x00                      0x08
+ *                       +----+-----+----+----~----+----+----+----~----+
+ *                       |63..0                    |127..64            |
+ *                       +----+-----+----+----~----+----+----+----~----+
+ */
+#define	HPCFB_REVORDER_BYTE	(1<<0)
+#define	HPCFB_REVORDER_WORD	(1<<1)
+#define	HPCFB_REVORDER_DWORD	(1<<2)
+#define	HPCFB_REVORDER_QWORD	(1<<3)
 
 struct hpcfb_fbconf {
 	short	hf_conf_index;		/* configuration index		*/
@@ -109,7 +130,7 @@ struct hpcfb_fbconf {
 	short	hf_pixel_width;		/* effective bits width	       	*/
 
 	u_long	hf_access_flags;	/* HPCFB_ACCESS_*		*/
-	u_long	hf_swap_flags;		/* HPCFB_SWAP_*			*/
+	u_long	hf_order_flags;		/* HPCFB_REVORDER_*		*/
 	u_long	hf_reg_offset;   	/* hardware register offset for mmap */
 	u_long	hf_reserved[3];
 

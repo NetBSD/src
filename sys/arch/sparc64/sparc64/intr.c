@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.38 2001/01/15 20:19:58 thorpej Exp $ */
+/*	$NetBSD: intr.c,v 1.38.4.1 2001/08/03 04:12:29 lukem Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -267,7 +267,8 @@ intr_establish(level, ih)
 			 * Interrupt is already there.  We need to create a
 			 * new interrupt handler and interpose it.
 			 */
-			printf("intr_establish: intr reused %d\n", ih->ih_number);
+			printf("intr_establish: intr reused %x\n", 
+				ih->ih_number);
 
 			if (q->ih_fun != intr_list_handler) {
 				nih = (struct intrhand *)
@@ -286,12 +287,15 @@ intr_establish(level, ih)
 		else
 			intrlev[ih->ih_number] = ih;
 #ifdef NOT_DEBUG
-		printf("\nintr_establish: vector %x pil %x mapintr %p clrintr %p fun %p arg %p\n",
-		       ih->ih_number, ih->ih_pil, (long)ih->ih_map, (long)ih->ih_clr, ih->ih_fun, ih->ih_arg);
+		printf("\nintr_establish: vector %x pil %x mapintr %p "
+			"clrintr %p fun %p arg %p\n",
+			ih->ih_number, ih->ih_pil, (void *)ih->ih_map,
+			(void *)ih->ih_clr, (void *)ih->ih_fun,
+			(void *)ih->ih_arg);
 		/*Debugger();*/
 #endif
 	} else
-		panic("intr_establish: bad intr number %d", ih->ih_number);
+		panic("intr_establish: bad intr number %x", ih->ih_number);
 	splx(s);
 }
 

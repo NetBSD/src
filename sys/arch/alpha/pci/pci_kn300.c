@@ -1,4 +1,4 @@
-/* $NetBSD: pci_kn300.c,v 1.22 2000/12/28 22:59:07 sommerfeld Exp $ */
+/* $NetBSD: pci_kn300.c,v 1.22.4.1 2001/08/03 04:10:48 lukem Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_kn300.c,v 1.22 2000/12/28 22:59:07 sommerfeld Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_kn300.c,v 1.22.4.1 2001/08/03 04:10:48 lukem Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -104,7 +104,6 @@ pci_kn300_pickintr(ccp, first)
 			    "kn300", cp);
 			savirqs[g] = (char) -1;
 		}
-		set_iointr(kn300_iointr);
 	}
 
 	pc->pc_intr_v = ccp;
@@ -218,7 +217,10 @@ dec_kn300_intr_establish(ccv, ih, level, func, arg)
 	cookie = alpha_shared_intr_establish(kn300_pci_intr, irq, IST_LEVEL,
 	    level, func, arg, "kn300 irq");
 
-	if (cookie != NULL && alpha_shared_intr_isactive(kn300_pci_intr, irq)) {
+	if (cookie != NULL &&
+	    alpha_shared_intr_firstactive(kn300_pci_intr, irq)) {
+		scb_set(MCPCIA_VEC_PCI + SCB_IDXTOVEC(irq),
+		    kn300_iointr, NULL);
 		alpha_shared_intr_set_private(kn300_pci_intr, irq, ccp);
 		savirqs[irq] = (ih >> 11) & 0x1f;
 		kn300_enable_intr(ccp, savirqs[irq]);
@@ -235,44 +237,14 @@ dec_kn300_intr_disestablish(ccv, cookie)
 }
 
 void
-kn300_iointr(framep, vec)
-	void *framep;
+kn300_iointr(arg, vec)
+	void *arg;
 	unsigned long vec;
 {
 	struct mcpcia_softc *mcp;
 	u_long irq;
 
-	if (vec >= MCPCIA_VEC_EISA && vec < MCPCIA_VEC_PCI) {
-#if NSIO > 0 || NPCEB > 0
-		sio_iointr(framep, vec);
-		return;
-#else
-		static const char *plaint = "kn300_iointr: (E)ISA interrupt "
-		    "support not configured for vector 0x%x";
-		if (mcpcia_eisaccp) {
-			kn300_disable_intr(mcpcia_eisaccp, KN300_PCEB_IRQ);
-			printf(plaint, vec);
-		} else {
-			panic(plaint, vec);
-		}
-#endif
-	} 
-
-	irq = (vec - MCPCIA_VEC_PCI) >> 4;
-
-	/*
-	 * Check for I2C interrupts.  These are technically within
-	 * the PCI vector range, but no PCI device should ever map
-	 * to them.
-	 */
-	if (vec == MCPCIA_I2C_CVEC) {
-		printf("i2c: controller interrupt\n");
-		return;
-	}
-	if (vec == MCPCIA_I2C_BVEC) {
-		printf("i2c: bus interrupt\n");
-		return;
-	}
+	irq = SCB_VECTOIDX(vec - MCPCIA_VEC_PCI);
 
 	if (alpha_shared_intr_dispatch(kn300_pci_intr, irq)) {
 		/*

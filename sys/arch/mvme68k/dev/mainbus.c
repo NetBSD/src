@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.9 2001/07/06 19:00:13 scw Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.9.2.1 2001/08/03 04:12:02 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -201,6 +201,28 @@ mainbus_attach(parent, self, args)
 		    intiobase_phys + MAINBUS_VMETWO_OFFSET);
 	}
 #endif
+#endif
+
+	/*
+	 * Attach the memory controllers on mvme162->mvme177.
+	 * Note: These *must* be attached after the PCCChip2/MCChip.
+	 * They must also be attached *after* the VMEchip2 has been
+	 * initialised (either by the driver, or the vmetwo_probe()
+	 * call above).
+	 */
+#if defined(MVME162) || defined(MVME172) || defined(MVME167) || defined(MVME177)
+#if defined(MVME147)
+	if (machineid != MVME_147)
+#endif
+	{
+		ma.ma_name = "memc";
+		ma.ma_dmat = &_mainbus_dma_tag;
+		ma.ma_bust = &_mainbus_space_tag;
+		ma.ma_offset = MAINBUS_MEMC1_OFFSET + intiobase_phys;
+		(void) config_found(self, &ma, mainbus_print);
+		ma.ma_offset = MAINBUS_MEMC2_OFFSET + intiobase_phys;
+		(void) config_found(self, &ma, mainbus_print);
+	}
 #endif
 
 	/*

@@ -1,4 +1,4 @@
-#	$NetBSD: README,v 1.3 1998/01/05 20:51:46 perry Exp $
+#	$NetBSD: README,v 1.3.28.1 2001/08/03 04:12:12 lukem Exp $
 
 			 IEEE handler README
 			 -------------------
@@ -140,7 +140,7 @@ uses this addressing mode.
 
 The FSR fields are defined in fpu_status.h. There is a macro
 GET_SET_FSR which gets the old value of the FSR and sets the new value
-of the FSR. There are also seperate GET_FSR and SET_FSR macros.
+of the FSR. There are also separate GET_FSR and SET_FSR macros.
 Eg:
 
     #include <fpu_status.h>

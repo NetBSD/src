@@ -1,4 +1,4 @@
-/*	$NetBSD: stdint.h,v 1.1 2001/04/28 15:41:30 kleink Exp $	*/
+/*	$NetBSD: stdint.h,v 1.1.4.1 2001/08/03 04:14:05 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -43,52 +43,52 @@
 
 #ifndef	int8_t
 typedef	__int8_t	int8_t;
-#define	int8_t		int8_t
+#define	int8_t		__int8_t
 #endif
 
 #ifndef	uint8_t
 typedef	__uint8_t	uint8_t;
-#define	uint8_t		uint8_t
+#define	uint8_t		__uint8_t
 #endif
 
 #ifndef	int16_t
 typedef	__int16_t	int16_t;
-#define	int16_t		int16_t
+#define	int16_t		__int16_t
 #endif
 
 #ifndef	uint16_t
 typedef	__uint16_t	uint16_t;
-#define	uint16_t	uint16_t
+#define	uint16_t	__uint16_t
 #endif
 
 #ifndef	int32_t
 typedef	__int32_t	int32_t;
-#define	int32_t		int32_t
+#define	int32_t		__int32_t
 #endif
 
 #ifndef	uint32_t
 typedef	__uint32_t	uint32_t;
-#define	uint32_t	uint32_t
+#define	uint32_t	__uint32_t
 #endif
 
 #ifndef	int64_t
 typedef	__int64_t	int64_t;
-#define	int64_t		int64_t
+#define	int64_t		__int64_t
 #endif
 
 #ifndef	uint64_t
 typedef	__uint64_t	uint64_t;
-#define	uint64_t	uint64_t
+#define	uint64_t	__uint64_t
 #endif
 
 #ifndef	intptr_t
 typedef	__intptr_t	intptr_t;
-#define	intptr_t	intptr_t
+#define	intptr_t	__intptr_t
 #endif
 
 #ifndef	uintptr_t
 typedef	__uintptr_t	uintptr_t;
-#define	uintptr_t	uintptr_t
+#define	uintptr_t	__uintptr_t
 #endif
 
 #include <machine/int_mwgwtypes.h>

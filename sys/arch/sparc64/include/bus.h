@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.27 2001/03/07 22:42:21 thorpej Exp $	*/
+/*	$NetBSD: bus.h,v 1.27.2.1 2001/08/03 04:12:27 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -1383,6 +1383,8 @@ bus_space_copy_region_stream_8(t, h1, o1, h2, o2, c)
 #define	BUS_DMA_BUS3		0x040
 #define	BUS_DMA_BUS4		0x080
 #define	BUS_DMA_STREAMING	0x100	/* hint: sequential, unidirectional */
+#define	BUS_DMA_READ		0x200	/* mapping is device -> memory only */
+#define	BUS_DMA_WRITE		0x400	/* mapping is memory -> device only */
 
 
 #define	BUS_DMA_NOCACHE		BUS_DMA_BUS1

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.106 2001/06/02 18:09:21 chs Exp $ */
+/*	$NetBSD: machdep.c,v 1.106.2.1 2001/08/03 04:12:30 lukem Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -132,7 +132,7 @@
 
 /* #include "fb.h" */
 
-int bus_space_debug = 1; /* This may be used by macros elsewhere. */
+int bus_space_debug = 0; /* This may be used by macros elsewhere. */
 #ifdef DEBUG
 #define DPRINTF(l, s)   do { if (bus_space_debug & l) printf s; } while (0)
 #else
@@ -834,14 +834,15 @@ haltsys:
 
 	if (howto & RB_HALT) {
 		printf("halted\n\n");
-		romhalt();
+		OF_exit();
+		panic("PROM exit failed");
 	}
 
 	printf("rebooting\n\n");
 	if (user_boot_string && *user_boot_string) {
 		i = strlen(user_boot_string);
 		if (i > sizeof(str))
-			romboot(user_boot_string);	/* XXX */
+			OF_boot(user_boot_string);	/* XXX */
 		bcopy(user_boot_string, str, i);
 	} else {
 		i = 1;
@@ -858,7 +859,7 @@ haltsys:
 		str[i] = 0;
 	} else
 		str[0] = 0;
-	romboot(str);
+	OF_boot(str);
 	panic("cpu_reboot -- failed");
 	/*NOTREACHED*/
 }

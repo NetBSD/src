@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips3.S,v 1.69 2001/06/11 23:52:39 thorpej Exp $	*/
+/*	$NetBSD: locore_mips3.S,v 1.69.2.1 2001/08/03 04:11:59 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -2127,6 +2127,16 @@ LEAF(mips3_proc_trampoline)
 	jal	ra, s0
 	move	a0, s1
 	.set	noat
+	#
+	# Make sure to disable interrupts here, as otherwise
+	# we can take an interrupt *after* EXL is set, and
+	# end up returning to a bogus PC since the PC is not
+	# saved if EXL=1.
+	#
+	mtc0	zero, MIPS_COP_0_STATUS		# disable int
+	nop					# 3 op delay
+	nop
+	nop
 	li	a0, MIPS_SR_EXL			# set exception level
 	mtc0	a0, MIPS_COP_0_STATUS
 	nop

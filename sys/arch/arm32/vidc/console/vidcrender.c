@@ -1,4 +1,4 @@
-/*	$NetBSD: vidcrender.c,v 1.5 2001/04/09 19:33:22 reinoud Exp $	*/
+/*	$NetBSD: vidcrender.c,v 1.5.2.1 2001/08/03 04:11:15 lukem Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -406,7 +406,7 @@ vidcrender_mode(vc, mode)
 			int r, v, f;
 			for (v = 63; v > 0; v--)
 				for (r = 63; r > 0; r--) {
-					f = (v * VIDC_FREF/1000) / r;
+					f = ((v * vidc_fref)/1000) / r;
 					if (least_error >= mod(f - vidc_currentmode->pixel_rate)) {
 						best_match = f;
 						least_error = mod(f - vidc_currentmode->pixel_rate);
@@ -1325,7 +1325,7 @@ vidc_cursor_init(vc)
 		cursor_data = (char *)uvm_km_zalloc(kernel_map, NBPG);
 		if (!cursor_data)
 			panic("Cannot allocate memory for hardware cursor\n");
-		(void) pmap_extract(kernel_pmap, (vaddr_t)cursor_data, &pa);
+		(void) pmap_extract(pmap_kernel(), (vaddr_t)cursor_data, &pa);
 		IOMD_WRITE_WORD(IOMD_CURSINIT, pa);
 	}
 
@@ -1359,9 +1359,9 @@ vidc_cursor_init(vc)
 	}
 
 
-	(void) pmap_extract(kernel_pmap, (vaddr_t)cursor_normal,
+	(void) pmap_extract(pmap_kernel(), (vaddr_t)cursor_normal,
 	    (paddr_t *)&p_cursor_normal);
-	(void) pmap_extract(kernel_pmap, (vaddr_t)cursor_transparent,
+	(void) pmap_extract(pmap_kernel(), (vaddr_t)cursor_transparent,
 	    (paddr_t *)&p_cursor_transparent);
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: grackle.c,v 1.1 2000/02/03 19:27:45 tsubai Exp $	*/
+/*	$NetBSD: grackle.c,v 1.1.10.1 2001/08/03 04:11:57 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -64,7 +64,7 @@ grackle_match(parent, cf, aux)
 	if (strcmp(ca->ca_name, "pci") != 0)
 		return 0;
 
-	bzero(compat, sizeof(compat));
+	memset(compat, 0, sizeof(compat));
 	OF_getprop(ca->ca_node, "compatible", compat, sizeof(compat));
 	if (strcmp(compat, "grackle") != 0)
 		return 0;
@@ -118,7 +118,7 @@ grackle_attach(parent, self, aux)
 		rp++;
 	}
 
-	bzero(&pba, sizeof(pba));
+	memset(&pba, 0, sizeof(pba));
 	pba.pba_busname = "pci";
 	pba.pba_memt = pc->memt;
 	pba.pba_iot = pc->iot;

@@ -1,4 +1,4 @@
-/*	$NetBSD: sunscpal.c,v 1.5 2001/07/08 18:06:46 wiz Exp $	*/
+/*	$NetBSD: sunscpal.c,v 1.5.2.1 2001/08/03 04:13:05 lukem Exp $	*/
 
 /*
  * Copyright (c) 2001 Matthew Fredette
@@ -309,7 +309,9 @@ sunscpal_dma_poll(sc)
 
 #ifdef	SUNSCPAL_DEBUG
 	if (sunscpal_debug & SUNSCPAL_DBG_DMA) {
-		printf("sunscpal_dma_poll: done, icr=0x%x\n", SUNSCPAL_READ_2(sc, sunscpal_icr));
+		char buffer[64];
+		bitmask_snprintf(SUNSCPAL_READ_2(sc, sunscpal_icr), SUNSCPAL_ICR_BITS, buffer, sizeof(buffer));
+		printf("sunscpal_dma_poll: done, icr=%s\n", buffer);
 	}
 #endif
 }
@@ -352,7 +354,9 @@ sunscpal_dma_stop(sc)
 
 
 	if (icr & (SUNSCPAL_ICR_BUS_ERROR)) {
-		printf("sc: DMA error, icr=0x%x, reset\n", icr);
+		char buffer[64];
+		bitmask_snprintf(icr, SUNSCPAL_ICR_BITS, buffer, sizeof(buffer));
+		printf("sc: DMA error, icr=%s, reset\n", buffer);
 		sr->sr_xs->error = XS_DRIVER_STUFFUP;
 		sc->sc_state |= SUNSCPAL_ABORTING;
 		goto out;

@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.45 2001/06/21 16:55:20 bouyer Exp $	*/
+/*	$NetBSD: siop.c,v 1.45.2.1 2001/08/03 04:13:04 lukem Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -1283,7 +1283,9 @@ siop_scsipi_request(chan, req, arg)
 		if (xs->xs_control & (XS_CTL_DATA_IN | XS_CTL_DATA_OUT)) {
 			error = bus_dmamap_load(sc->sc_dmat,
 			    siop_cmd->dmamap_data, xs->data, xs->datalen,
-			    NULL, BUS_DMA_NOWAIT | BUS_DMA_STREAMING);
+			    NULL, BUS_DMA_NOWAIT | BUS_DMA_STREAMING |
+			    ((xs->xs_control & XS_CTL_DATA_IN) ?
+			     BUS_DMA_READ : BUS_DMA_WRITE));
 			if (error) {
 				printf("%s: unable to load cmd DMA map: %d",
 				    sc->sc_dev.dv_xname, error);

@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.c,v 1.5 2001/05/17 05:25:32 enami Exp $	*/
+/*	$NetBSD: rtc.c,v 1.5.2.1 2001/08/03 04:11:37 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura. All rights reserved.
@@ -54,7 +54,7 @@
 
 /*
  * for debugging definitions
- * 	VRRTCDEBUG	print rtc debugging infomation
+ * 	VRRTCDEBUG	print rtc debugging information
  *	VRRTC_HEARTBEAT	print HEARTBEAT (too many print...)
  */
 #ifdef VRRTCDEBUG

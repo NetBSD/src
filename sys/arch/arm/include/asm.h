@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.2 2001/04/26 23:20:02 bjh21 Exp $	*/
+/*	$NetBSD: asm.h,v 1.2.2.1 2001/08/03 04:11:01 lukem Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -93,6 +93,16 @@
 #define	ASENTRY_NP(y)	_ENTRY(_ASM_LABEL(y))
 
 #define	ASMSTR		.asciz
+
+#if defined(__ELF__) && defined(PIC)
+#ifdef __STDC__
+#define	PIC_SYM(x,y)	x ## ( ## y ## )
+#else
+#define	PIC_SYM(x,y)	x/**/(/**/y/**/)
+#endif
+#else
+#define	PIC_SYM(x,y)	x
+#endif
 
 #ifdef __ELF__
 #define RCSID(x)	.section ".ident"; .asciz x

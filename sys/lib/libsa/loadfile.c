@@ -1,4 +1,4 @@
-/* $NetBSD: loadfile.c,v 1.10 2000/12/03 02:53:04 tsutsui Exp $ */
+/* $NetBSD: loadfile.c,v 1.10.4.1 2001/08/03 04:13:46 lukem Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -273,13 +273,11 @@ elf_exec(fd, elf, marks, flags)
 	int flags;
 {
 	Elf_Shdr *shp;
-	Elf_Off off;
-	int i;
+	int i, j;
 	size_t sz;
 	int first;
-	int havesyms;
-	paddr_t minp = ~0, maxp = 0, pos;
-	paddr_t offset = marks[MARK_START], shpp, elfp;
+	paddr_t minp = ~0, maxp = 0, pos = 0;
+	paddr_t offset = marks[MARK_START], shpp, elfp = NULL;
 
 	for (first = 1, i = 0; i < elf->e_phnum; i++) {
 		Elf_Phdr phdr;
@@ -372,20 +370,26 @@ elf_exec(fd, elf, marks, flags)
 		maxp += roundup(sz, sizeof(long));
 
 		/*
-		 * Now load the symbol sections themselves.  Make sure the
-		 * sections are aligned. Don't bother with string tables if
-		 * there are no symbol sections.
+		 * Now load the symbol sections themselves.  Make sure
+		 * the sections are aligned. Don't bother with any
+		 * string table that isn't referenced by a symbol
+		 * table.
 		 */
-		off = roundup((sizeof(Elf_Ehdr) + sz), sizeof(long));
-
-		for (havesyms = i = 0; i < elf->e_shnum; i++)
-			if (shp[i].sh_type == SHT_SYMTAB)
-				havesyms = 1;
-
 		for (first = 1, i = 0; i < elf->e_shnum; i++) {
-			if (shp[i].sh_type == SHT_SYMTAB ||
-			    shp[i].sh_type == SHT_STRTAB) {
-				if (havesyms && (flags & LOAD_SYM)) {
+			switch (shp[i].sh_type) {
+			case SHT_STRTAB:
+				for (j = 0; j < elf->e_shnum; j++)
+					if (shp[j].sh_type == SHT_SYMTAB &&
+					    shp[j].sh_link == i)
+						goto havesym;
+				/* FALLTHROUGH */
+			default:
+				/* Not loading this, so zero out the offset. */
+				shp[i].sh_offset = 0;
+				break;
+			havesym:
+			case SHT_SYMTAB:
+				if (flags & LOAD_SYM) {
 					PROGRESS(("%s%ld", first ? " [" : "+",
 					    (u_long)shp[i].sh_size));
 					if (lseek(fd, shp[i].sh_offset,
@@ -401,20 +405,21 @@ elf_exec(fd, elf, marks, flags)
 						return 1;
 					}
 				}
+				shp[i].sh_offset = maxp - elfp;
 				maxp += roundup(shp[i].sh_size,
 				    sizeof(long));
-				shp[i].sh_offset = off;
-				off += roundup(shp[i].sh_size, sizeof(long));
 				first = 0;
 			}
+			/* Since we don't load .shstrtab, zero the name. */
+			shp[i].sh_name = 0;
 		}
 		if (flags & LOAD_SYM) {
 			BCOPY(shp, shpp, sz);
-			FREE(shp, sz);
 
-			if (havesyms && first == 0)
+			if (first == 0)
 				PROGRESS(("]"));
 		}
+		FREE(shp, sz);
 	}
 
 	/*
@@ -426,11 +431,19 @@ elf_exec(fd, elf, marks, flags)
 		elf->e_shoff = sizeof(Elf_Ehdr);
 		elf->e_phentsize = 0;
 		elf->e_phnum = 0;
+		elf->e_shstrndx = SHN_UNDEF;
 		BCOPY(elf, elfp, sizeof(*elf));
 	}
 
 	marks[MARK_START] = LOADADDR(minp);
 	marks[MARK_ENTRY] = LOADADDR(elf->e_entry);
+	/*
+	 * Since there can be more than one symbol section in the code
+	 * and we need to find strtab too in order to do anything
+	 * useful with the symbols, we just pass the whole elf
+	 * header back and we let the kernel debugger find the
+	 * location and number of symbols by itself.
+	 */
 	marks[MARK_NSYM] = 1;	/* XXX: Kernel needs >= 0 */
 	marks[MARK_SYM] = LOADADDR(elfp);
 	marks[MARK_END] = LOADADDR(maxp);

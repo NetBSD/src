@@ -1,6 +1,6 @@
 /*
 #
-# $NetBSD: netbsd060sp.S,v 1.6 2000/11/30 21:00:51 scw Exp $
+# $NetBSD: netbsd060sp.S,v 1.6.4.1 2001/08/03 04:11:49 lukem Exp $
 #
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # MOTOROLA MICROPROCESSOR & MEMORY TECHNOLOGY GROUP
@@ -44,6 +44,8 @@
 */
 
 #include <machine/asm.h>
+
+#include "assym.h"
 
 /*
 #
@@ -176,7 +178,7 @@ ASENTRY_NOPROFILE(_060_dmem_read_byte)
 	bnes	dmrbs			|# supervisor
 dmrbu:
 	movl	_C_LABEL(curpcb),%a1	| fault handler
-	movl	#Lferr,%a1@(64)		| set it
+	movl	#Lferr,%a1@(PCB_ONFAULT)| set it
 	movsb	%a0@,%d0
 	bra	Lfdone
 
@@ -208,7 +210,7 @@ ASENTRY_NOPROFILE(_060_dmem_read_word)
 	bnes	dmrws			|# supervisor
 dmrwu:
 	movl	_C_LABEL(curpcb),%a1	| fault handler
-	movl	#Lferr,%a1@(64)		| set it
+	movl	#Lferr,%a1@(PCB_ONFAULT)| set it
 	movsw	%a0@,%d0
 	bra	Lfdone
 dmrws:
@@ -239,7 +241,7 @@ ASENTRY_NOPROFILE(_060_dmem_read_long)
 	bnes	dmrls			|# supervisor
 dmrlu:
 	movl	_C_LABEL(curpcb),%a1	| fault handler
-	movl	#Lferr,%a1@(64)		| set it
+	movl	#Lferr,%a1@(PCB_ONFAULT)| set it
 	movsl	%a0@,%d0
 	bra	Lfdone
 dmrls:
@@ -266,7 +268,7 @@ ASENTRY_NOPROFILE(_060_dmem_write_byte)
 	bnes	dmwbs			|# supervisor
 dmwbu:
 	movl	_C_LABEL(curpcb),%a1	| fault handler
-	movl	#Lferr,%a1@(64)		| set it
+	movl	#Lferr,%a1@(PCB_ONFAULT)| set it
 	movsb	%d0,%a0@
 	bra	Lfdone
 dmwbs:
@@ -293,7 +295,7 @@ ASENTRY_NOPROFILE(_060_dmem_write_word)
 	bnes	dmwws			|# supervisor
 dmwwu:
 	movl	_C_LABEL(curpcb),%a1	| fault handler
-	movl	#Lferr,%a1@(64)		| set it
+	movl	#Lferr,%a1@(PCB_ONFAULT)| set it
 	movsw	%d0,%a0@
 	bra	Lfdone
 dmwws:
@@ -320,7 +322,7 @@ ASENTRY_NOPROFILE(_060_dmem_write_long)
 	bnes	dmwls			|# supervisor
 dmwlu:
 	movl	_C_LABEL(curpcb),%a1	| fault handler
-	movl	#Lferr,%a1@(64)		| set it
+	movl	#Lferr,%a1@(PCB_ONFAULT)| set it
 	movsl	%d0,%a0@
 	bra	Lfdone
 dmwls:
@@ -331,7 +333,7 @@ dmwls:
 Lferr:
 	moveq	#-1,%d1
 Lfdone:
-	clrl	%a1@(64)		| clear fault handler
+	clrl	%a1@(PCB_ONFAULT)	| clear fault handler
 	rts
 
 |############################################################################

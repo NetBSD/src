@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.32 2001/05/30 15:24:35 lukem Exp $	*/
+/*	$NetBSD: locore.s,v 1.32.2.1 2001/08/03 04:12:09 lukem Exp $	*/
 
 /*
  * Copyright (c) 1998 Darrin B. Jewell
@@ -628,7 +628,7 @@ Lbe10:
 	btst	#8,%d0			| data fault?
 	jne	Lbe10a
 	movql	#1,%d0			| user program access FC
-					| (we dont seperate data/program)
+					| (we dont separate data/program)
 	btst	#5,%sp@(FR_HW+8)	| supervisor mode?
 	jeq	Lbe10a			| if no, done
 	movql	#5,%d0			| else supervisor program access

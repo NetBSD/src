@@ -1,4 +1,4 @@
-/*	$NetBSD: smc83c170.c,v 1.46 2001/07/07 05:35:42 thorpej Exp $	*/
+/*	$NetBSD: smc83c170.c,v 1.46.2.1 2001/08/03 04:13:05 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -376,7 +376,7 @@ epic_start(ifp)
 		 * again.
 		 */
 		if (bus_dmamap_load_mbuf(sc->sc_dmat, dmamap, m0,
-		    BUS_DMA_NOWAIT) != 0) {
+		    BUS_DMA_WRITE|BUS_DMA_NOWAIT) != 0) {
 			MGETHDR(m, M_DONTWAIT, MT_DATA);
 			if (m == NULL) {
 				printf("%s: unable to allocate Tx mbuf\n",
@@ -395,7 +395,7 @@ epic_start(ifp)
 			m_copydata(m0, 0, m0->m_pkthdr.len, mtod(m, caddr_t));
 			m->m_pkthdr.len = m->m_len = m0->m_pkthdr.len;
 			error = bus_dmamap_load_mbuf(sc->sc_dmat, dmamap,
-			    m, BUS_DMA_NOWAIT);
+			    m, BUS_DMA_WRITE|BUS_DMA_NOWAIT);
 			if (error) {
 				printf("%s: unable to load Tx buffer, "
 				    "error = %d\n", sc->sc_dev.dv_xname, error);
@@ -986,7 +986,8 @@ epic_init(ifp)
 				epic_rxdrain(sc);
 				goto out;
 			}
-		}
+		} else
+			EPIC_INIT_RXDESC(sc, i);
 	}
 	sc->sc_rxptr = 0;
 
@@ -1221,7 +1222,8 @@ epic_add_rxbuf(sc, idx)
 	ds->ds_mbuf = m;
 
 	error = bus_dmamap_load(sc->sc_dmat, ds->ds_dmamap,
-	    m->m_ext.ext_buf, m->m_ext.ext_size, NULL, BUS_DMA_NOWAIT);
+	    m->m_ext.ext_buf, m->m_ext.ext_size, NULL,
+	    BUS_DMA_READ|BUS_DMA_NOWAIT);
 	if (error) {
 		printf("%s: can't load rx DMA map %d, error = %d\n",
 		    sc->sc_dev.dv_xname, idx, error);

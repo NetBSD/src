@@ -1,4 +1,4 @@
-/*	$NetBSD: maple.c,v 1.8 2001/05/26 21:27:06 chs Exp $	*/
+/*	$NetBSD: maple.c,v 1.8.2.1 2001/08/03 04:11:26 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt
@@ -280,9 +280,8 @@ maple_scanbus(sc)
 		    u_int32_t *to_swap;
 		    int i;
 		    
-		    bcopy(sc->sc_rxbuf[p][s]+1,
-			  (to_swap = &sc->sc_unit[p][s].devinfo.di_func),
-			  sizeof(struct maple_devinfo));
+		    memcpy((to_swap = &sc->sc_unit[p][s].devinfo.di_func),
+			   sc->sc_rxbuf[p][s]+1, sizeof(struct maple_devinfo));
 		    
 		    for (i = 0; i < 4; i++, to_swap++)
 		      *to_swap = ntohl(*to_swap);
@@ -517,7 +516,7 @@ mapleattach(parent, self, aux)
 
 	maple_scanbus(sc);
 
-	bzero(&sc->maple_callout_ch, sizeof(sc->maple_callout_ch));
+	memset(&sc->maple_callout_ch, 0, sizeof(sc->maple_callout_ch));
 
 	callout_reset(&sc->maple_callout_ch, MAPLE_CALLOUT_TICKS,
 		      (void *)maple_callout, sc);
@@ -645,7 +644,7 @@ maple_internal_ioctl(sc, port, subunit, cmd, data, flag, p)
 
 	switch(cmd) {
 	case MAPLEIO_GDEVINFO:
-		bcopy(&u->devinfo, data, sizeof(struct maple_devinfo));
+		memcpy(data, &u->devinfo, sizeof(struct maple_devinfo));
 		return (0);
 	default:
 		return (EINVAL);

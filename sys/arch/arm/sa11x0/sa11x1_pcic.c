@@ -1,4 +1,4 @@
-/*      $NetBSD: sa11x1_pcic.c,v 1.1 2001/07/08 23:37:54 rjs Exp $        */
+/*      $NetBSD: sa11x1_pcic.c,v 1.1.2.1 2001/08/03 04:11:03 lukem Exp $        */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -145,10 +145,8 @@ sacpcic_attach(parent, self, aux)
 	for(i = 0; i < 2; i++) {
 		sc->sc_socket[i].sc = (struct sapcic_softc *)sc;
 		sc->sc_socket[i].socket = i;
-		sc->sc_socket[i].saip_sc = NULL;
-		sc->sc_socket[i].sacc_sc = psc;
+		sc->sc_socket[i].pcictag_cookie = psc;
 		sc->sc_socket[i].pcictag = &sacpcic_functions;
-		sc->sc_socket[i].pddata = NULL;		/* XXX */
 		sc->sc_socket[i].event_thread = NULL;
 		sc->sc_socket[i].event = 0;
 		sc->sc_socket[i].laststatus = SAPCIC_CARD_INVALID;
@@ -306,6 +304,7 @@ sacpcic_set_power(so, arg)
 {
 	/* XXX this should go to dev/jornada720.c */
 	int newval, oldval, s;
+	struct sacc_softc *sc = so->pcictag_cookie;
 
 	/* XXX this isn't well confirmed. DANGER DANGER */
 	switch (arg) {
@@ -323,7 +322,7 @@ sacpcic_set_power(so, arg)
 	}
 
 	s = splbio();
-	oldval = bus_space_read_4(so->sacc_sc->sc_iot, so->sacc_sc->sc_ioh,
+	oldval = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
 				  SACCGPIOA_DVR);
 	switch (so->socket) {
 	case 0:
@@ -336,8 +335,7 @@ sacpcic_set_power(so, arg)
 		splx(s);
 		panic("sacpcic_set_power\n");
 	}
-	bus_space_write_4(so->sacc_sc->sc_iot, so->sacc_sc->sc_ioh,
-			  SACCGPIOA_DVR, newval);
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, SACCGPIOA_DVR, newval);
 	splx(s);
 }
 
@@ -357,7 +355,7 @@ sacpcic_intr_establish(so, level, ih_fun, ih_arg)
 	int irq;
 
 	irq = so->socket ? IRQ_S1_READY : IRQ_S0_READY;
-	return (sacc_intr_establish((sacc_chipset_tag_t)so->sacc_sc, irq,
+	return (sacc_intr_establish((sacc_chipset_tag_t)so->pcictag_cookie, irq,
 				    IST_EDGE_FALL, level, ih_fun, ih_arg));
 }
 
@@ -366,5 +364,5 @@ sacpcic_intr_disestablish(so, ih)
 	struct sapcic_socket *so;
 	void *ih;
 {
-	sacc_intr_disestablish((sacc_chipset_tag_t)so->sacc_sc, ih);
+	sacc_intr_disestablish((sacc_chipset_tag_t)so->pcictag_cookie, ih);
 }

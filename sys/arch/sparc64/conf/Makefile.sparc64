@@ -1,4 +1,4 @@
-# 	$NetBSD: Makefile.sparc64,v 1.37 2001/05/29 02:20:26 mrg Exp $
+# 	$NetBSD: Makefile.sparc64,v 1.37.2.1 2001/08/03 04:12:25 lukem Exp $
 
 # Makefile for NetBSD
 #
@@ -73,7 +73,7 @@ AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE -Wa,-Av9a
 # Gotta find a way to make kernel base tuneable.
 #
 
-LINKFLAGS=	-Ttext 01000000 -Tdata 01400000 -e start
+LINKFLAGS=	-Ttext 01000000 -Tdata 01800000 -e start
 #LINKFLAGS=	-Ttext f1000000 -Tdata f1400000 -e start
 
 LINKFLAGS+=	-n -T ${SPARC64}/conf/${KERN_LDSCRIPT}

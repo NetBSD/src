@@ -1,12 +1,13 @@
-#	$NetBSD: LAMB,v 1.7 2001/07/08 16:32:18 abs Exp $
+#	$NetBSD: LAMB,v 1.7.2.1 2001/08/03 04:11:40 lukem Exp $
 #
 #	LAMB -- for "LAMB" router, http://www.wildlab.com/
+#	Be sure to check pkgsrc/sysutils/lambd as well.
 #
 
 include "arch/i386/conf/std.i386"
 
 # based on:
-#ident 		"GENERIC-Revision: 1.405"
+#ident 		"GENERIC-Revision: 1.410"
 
 maxusers	32		# estimated number of users
 
@@ -53,6 +54,10 @@ options 	KTRACE		# system call tracing via ktrace(1)
 
 options 	SYSVMSG		# System V-like message queues
 options 	SYSVSEM		# System V-like semaphores
+#options	SEMMNI=10	# number of semaphore identifiers
+#options	SEMMNS=60	# number of semaphores in system
+#options	SEMUME=10	# max number of undo entries per process
+#options	SEMMNU=30	# number of undo structures in system
 options 	SYSVSHM		# System V-like memory sharing
 #options 	SHMMAXPGS=1024	# 1024 pages is the default
 

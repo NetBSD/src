@@ -1,4 +1,4 @@
-$NetBSD: version,v 1.12 2000/09/26 05:13:36 simonb Exp $
+$NetBSD: version,v 1.12.4.1 2001/08/03 04:10:49 lukem Exp $
 
 NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.  The format of this
 file is important - make sure the entries are appended on end, last item
@@ -11,10 +11,11 @@ is taken as the current.
 1.4-2:	Complete rewrite of boot block code
 1.5:	Update for new ECOFF headers
 1.6:	Don't pass arguments to the kernel, trim unnecessary environment
-	calls, kill 'ask' loop (i.e. if boot fails, halt), seperate
-	ECOFF and a.out support into seperate options.
+	calls, kill 'ask' loop (i.e. if boot fails, halt), separate
+	ECOFF and a.out support into separate options.
 1.7:	Use libsa and libkern rather than building the objects locally.
 1.8:	Search for a kernel, if none specified.
 1.9:	Add support for gzipped kernels.
 1.10:	The Great Boot Block Cleanup of April 1999.
 1.11:	Add support for booting off RAIDframe RAID1 mirrors.
+1.12:	loadfile() update:  ELF symbols no longer need backward seeks.

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.85 2001/07/06 19:00:14 scw Exp $	*/
+/*	$NetBSD: locore.s,v 1.85.2.1 2001/08/03 04:12:04 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -429,7 +429,7 @@ Linit1x7:
 	/*
 	 * Verify the user has removed the GPIO#0 jumper...
 	 */
-	movel	#0x01000000,%d0
+	movel	#0x00000001,%d0
 	andl	0xfff40088,%d0		| Clear == jumper installed
 	jne	1f			| Ok.
 
@@ -858,7 +858,7 @@ Lbe10:
 	btst	#8,%d0			| data fault?
 	jne	Lbe10a
 	movql	#1,%d0			| user program access FC
-					| (we dont seperate data/program)
+					| (we dont separate data/program)
 	btst	#5,%sp@(FR_HW+8)	| supervisor mode?
 	jeq	Lbe10a			| if no, done
 	movql	#5,%d0			| else supervisor program access
@@ -1430,9 +1430,8 @@ Lswnofpsave:
 	moveml	%a1@(PCB_REGS),#0xFCFC	| and registers
 	movl	%a1@(PCB_USP),%a0
 	movl	%a0,%usp		| and USP
-
-	tstl	_C_LABEL(fputype)	| If we don't have an FPU,
-	jeq	Lnofprest		|  don't try to restore it.
+	tstl	_C_LABEL(fputype)	| Do we have an FPU?
+	jeq	Lnofprest		| No  Then don't attempt restore.
 	lea	%a1@(PCB_FPCTX),%a0	| pointer to FP save area
 #if defined(M68020) || defined(M68030) || defined(M68040)
 #if defined(M68060)
@@ -1443,28 +1442,26 @@ Lswnofpsave:
 	jeq	Lresfprest		| yes, easy
 	fmovem	%a0@(FPF_FPCR),%fpcr/%fpsr/%fpi | restore FP control registers
 	fmovem	%a0@(FPF_REGS),%fp0-%fp7	| restore FP general registers
-Lresfprest:
+#if defined(M68060)
+	jra	Lresfprest
 #endif
-	frestore %a0@			| restore state
-Lnofprest:
-	movw	%a1@(PCB_PS),%sr	| restore PS
-	moveq	#1,%d0			| return 1 (for alternate returns)
-	rts
+#endif
 
 #if defined(M68060)
 Lresfp60rest1:
 	tstb	%a0@(2)			| null state frame?
-	jeq	Lresfp60rest2		| yes, easy
+	jeq	Lresfprest		| yes, easy
 	fmovem	%a0@(FPF_FPCR),%fpcr	| restore FP control registers
 	fmovem	%a0@(FPF_FPSR),%fpsr
 	fmovem	%a0@(FPF_FPI),%fpi
 	fmovem	%a0@(FPF_REGS),%fp0-%fp7 | restore FP general registers
-Lresfp60rest2:
+#endif
+Lresfprest:
 	frestore %a0@			| restore state
+Lnofprest:
 	movw	%a1@(PCB_PS),%sr	| no, restore PS
 	moveq	#1,%d0			| return 1 (for alternate returns)
 	rts
-#endif
 
 /*
  * savectx(pcb)

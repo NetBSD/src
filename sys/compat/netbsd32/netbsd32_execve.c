@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_execve.c,v 1.4 2001/06/15 17:24:20 thorpej Exp $	*/
+/*	$NetBSD: netbsd32_execve.c,v 1.4.2.1 2001/08/03 04:12:47 lukem Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -308,12 +308,16 @@ netbsd32_execve2(p, uap, retval)
 
 	stack = (char *) (vm->vm_minsaddr - len);
 	/* Now copy argc, args & environ to new stack */
-	if (!(*pack.ep_es->es_copyargs)(&pack, &arginfo, stack, argp)) {
+	error = (*pack.ep_es->es_copyargs)(&pack, &arginfo,
+	    &stack, argp);
+	if (error) {
 #ifdef DEBUG
 		printf("netbsd32_execve: copyargs failed\n");
 #endif
 		goto exec_abort;
 	}
+	/* restore the stack back to its original point */
+	stack = (char *) (vm->vm_minsaddr - len);
 
 	/* fill process ps_strings info */
 	p->p_psstr = (struct ps_strings *)(stack - sizeof(struct ps_strings));
@@ -493,8 +497,7 @@ exec_abort:
 	vput(pack.ep_vp);
 	uvm_km_free_wakeup(exec_map, (vaddr_t) argp, NCARGS);
 	free(pack.ep_hdr, M_EXEC);
-	exit1(p, W_EXITCODE(0, SIGABRT));
-	exit1(p, -1);
+	exit1(p, W_EXITCODE(error, SIGABRT));
 
 	/* NOTREACHED */
 	return 0;

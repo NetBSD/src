@@ -1,4 +1,4 @@
-/*	$NetBSD: null_vfsops.c,v 1.30 2001/06/07 13:44:46 wiz Exp $	*/
+/*	$NetBSD: null_vfsops.c,v 1.30.2.1 2001/08/03 04:13:47 lukem Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -139,7 +139,7 @@ nullfs_mount(mp, path, data, ndp, p)
 	/*
 	 * Find lower node
 	 */
-	NDINIT(ndp, LOOKUP, FOLLOW|WANTPARENT|LOCKLEAF,
+	NDINIT(ndp, LOOKUP, FOLLOW|LOCKLEAF,
 		UIO_USERSPACE, args.la.target, p);
 	if ((error = namei(ndp)) != 0)
 		return (error);
@@ -148,9 +148,6 @@ nullfs_mount(mp, path, data, ndp, p)
 	 * Sanity check on lower vnode
 	 */
 	lowerrootvp = ndp->ni_vp;
-
-	vrele(ndp->ni_dvp);
-	ndp->ni_dvp = NULL;
 
 	/*
 	 * First cut at fixing up upper mount point

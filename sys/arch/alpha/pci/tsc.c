@@ -1,4 +1,4 @@
-/* $NetBSD: tsc.c,v 1.5 2000/11/29 06:30:09 thorpej Exp $ */
+/* $NetBSD: tsc.c,v 1.5.4.1 2001/08/03 04:10:49 lukem Exp $ */
 
 /*-
  * Copyright (c) 1999 by Ross Harvey.  All rights reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.5 2000/11/29 06:30:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.5.4.1 2001/08/03 04:10:49 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -133,7 +133,7 @@ void tscattach(parent, self, aux)
 	}
 	printf(", Dchip 0 rev %d\n", (int)LDQP(TS_D_DREV) & 0xf);
 
-	bzero(&tsp, sizeof tsp);
+	memset(&tsp, 0, sizeof tsp);
 	tsp.tsp_name = "tsp";
 	config_found(self, &tsp, NULL);
 

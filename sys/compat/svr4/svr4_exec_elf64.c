@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_exec_elf64.c,v 1.1 2001/02/21 23:53:02 eeh Exp $	 */
+/*	$NetBSD: svr4_exec_elf64.c,v 1.1.6.1 2001/08/03 04:12:48 lukem Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -58,17 +58,20 @@
 #include <compat/svr4/svr4_exec.h>
 #include <compat/svr4/svr4_errno.h>
 
-void *
-svr4_copyargs64(pack, arginfo, stack, argp)
+int
+svr4_copyargs64(pack, arginfo, stackp, argp)
 	struct exec_package *pack;
 	struct ps_strings *arginfo;
-	void *stack;
+	char **stackp;
 	void *argp;
 {
 	AuxInfo *a;
+	int error;
 
-	if (!(a = (AuxInfo *) elf64_copyargs(pack, arginfo, stack, argp)))
-		return NULL;
+	if ((error = elf64_copyargs(pack, arginfo, stackp, argp)) != 0)
+		return error;
+
+	a = (AuxInfo *)*stackp;
 #ifdef SVR4_COMPAT_SOLARIS2
 	if (pack->ep_emul_arg) {
 		a->au_type = AT_SUN_UID;
@@ -88,7 +91,8 @@ svr4_copyargs64(pack, arginfo, stack, argp)
 		a++;
 	}
 #endif
-	return a;
+	*stackp = (char *)a;
+	return 0;
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6915.c,v 1.2 2001/07/05 05:28:29 thorpej Exp $	*/
+/*	$NetBSD: aic6915.c,v 1.2.2.1 2001/08/03 04:12:55 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -401,7 +401,7 @@ sf_start(struct ifnet *ifp)
 		 * again.
 		 */
 		if (bus_dmamap_load_mbuf(sc->sc_dmat, dmamap, m0,
-		    BUS_DMA_NOWAIT) != 0) {
+		    BUS_DMA_WRITE|BUS_DMA_NOWAIT) != 0) {
 			MGETHDR(m, M_DONTWAIT, MT_DATA);
 			if (m == NULL) {
 				printf("%s: unable to allocate Tx mbuf\n",
@@ -420,7 +420,7 @@ sf_start(struct ifnet *ifp)
 			m_copydata(m0, 0, m0->m_pkthdr.len, mtod(m, caddr_t));
 			m->m_pkthdr.len = m->m_len = m0->m_pkthdr.len;
 			error = bus_dmamap_load_mbuf(sc->sc_dmat, dmamap,
-			    m, BUS_DMA_NOWAIT);
+			    m, BUS_DMA_WRITE|BUS_DMA_NOWAIT);
 			if (error) {
 				printf("%s: unable to load Tx buffer, "
 				    "error = %d\n", sc->sc_dev.dv_xname, error);
@@ -991,7 +991,8 @@ sf_init(struct ifnet *ifp)
 				sf_rxdrain(sc);
 				goto out;
 			}
-		}
+		} else
+			SF_INIT_RXDESC(sc, i);
 	}
 	sf_funcreg_write(sc, SF_RxDescQueueHighAddress, 0);
 	sf_funcreg_write(sc, SF_RxDescQueue1LowAddress, SF_CDRXDADDR(sc, 0));
@@ -1230,7 +1231,8 @@ sf_add_rxbuf(struct sf_softc *sc, int idx)
 	ds->ds_mbuf = m;
 
 	error = bus_dmamap_load(sc->sc_dmat, ds->ds_dmamap,
-	    m->m_ext.ext_buf, m->m_ext.ext_size, NULL, BUS_DMA_NOWAIT);
+	    m->m_ext.ext_buf, m->m_ext.ext_size, NULL,
+	    BUS_DMA_READ|BUS_DMA_NOWAIT);
 	if (error) {
 		printf("%s: can't load rx DMA map %d, error = %d\n",
 		    sc->sc_dev.dv_xname, idx, error);

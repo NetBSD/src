@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw.c,v 1.1 2001/05/09 16:08:44 matt Exp $	*/
+/*	$NetBSD: ofw.c,v 1.1.2.1 2001/08/03 04:11:25 lukem Exp $	*/
 
 /*
  * Copyright 1997
@@ -426,7 +426,7 @@ get_fw_dhcp_data(bdp)
 	int chosen;
 	int dhcplen;
 
-	bzero((char *)bdp, sizeof(*bdp));
+	memset((char *)bdp, 0, sizeof(*bdp));
 	if ((chosen = OF_finddevice("/chosen")) == -1)
 		panic("no /chosen from OFW");
 	if ((dhcplen = OF_getproplen(chosen, "bootp-response")) > 0) {
@@ -448,7 +448,7 @@ get_fw_dhcp_data(bdp)
 		 */
 		bdp->ip_address = bdp->dhcp_packet.yiaddr;
 		ip = ip2dotted(bdp->ip_address);
-		if (bcmp(bdp->dhcp_packet.options, DHCP_OPTIONS_COOKIE, 4) == 0)
+		if (memcmp(bdp->dhcp_packet.options, DHCP_OPTIONS_COOKIE, 4) == 0)
 			parse_dhcp_options(&bdp->dhcp_packet,
 			    bdp->dhcp_packet.options + 4,
 			    &bdp->dhcp_packet.options[dhcplen
@@ -1230,7 +1230,7 @@ ofw_construct_proc0_addrspace(proc0_ttbbase, proc0_ptpt)
 		    NBPG, -1);	/* XXX - mode? -JJK */
 
 		/* Zero the memory. */
-		bzero((char *)systempage.pv_va, NBPG);
+		memset((char *)systempage.pv_va, 0, NBPG);
 	}
 
 	/* Allocate/initialize space for the proc0, NetBSD-managed */
@@ -1507,7 +1507,7 @@ ofw_getphysmeminfo()
 
 			/* Handle empty block. */
 			if (mp->size == 0) {
-				bcopy(mp + 1, mp, (cnt - (mp - tmp))
+				memmove(mp, mp + 1, (cnt - (mp - tmp))
 				    * sizeof(struct mem_region));
 				cnt--;
 				mp--;
@@ -1521,7 +1521,7 @@ ofw_getphysmeminfo()
 				if (s < mp1->start)
 					break;
 			if (mp1 < mp) {
-				bcopy(mp1, mp1 + 1, (char *)mp - (char *)mp1);
+				memmove(mp1 + 1, mp1, (char *)mp - (char *)mp1);
 				mp1->start = s;
 				mp1->size = sz;
 			}
@@ -1916,7 +1916,7 @@ ofw_claimpages(free_pp, pv_p, size)
 	ofw_settranslation(va, pa, alloc_size, -1);
 
 	/* The memory's mapped-in now, so we can zero it. */
-	bzero((char *)va, alloc_size);
+	memset((char *)va, 0, alloc_size);
 
 	/* Set OUT parameters. */
 	*free_pp = va;

@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.80 2001/07/03 08:06:20 itojun Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.80.2.1 2001/08/03 04:13:57 lukem Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -536,6 +536,7 @@ udp4_sendup(m, off, src, so)
 			m_freem(n);
 			if (opts)
 				m_freem(opts);
+			udpstat.udps_fullsock++;
 		} else
 			sorwakeup(so);
 	}
@@ -669,18 +670,6 @@ udp4_realinput(src, dst, m, off)
 			    (SO_REUSEPORT|SO_REUSEADDR)) == 0)
 				break;
 		}
-
-#if 0
-		if (last == NULL) {
-			/*
-			 * No matching pcb found; discard datagram.
-			 * (No need to send an ICMP Port Unreachable
-			 * for a broadcast or multicast datgram.)
-			 */
-			udpstat.udps_noportbcast++;
-			goto bad;
-		}
-#endif
 	} else {
 		/*
 		 * Locate pcb for datagram.
@@ -689,32 +678,8 @@ udp4_realinput(src, dst, m, off)
 		if (inp == 0) {
 			++udpstat.udps_pcbhashmiss;
 			inp = in_pcblookup_bind(&udbtable, *dst4, *dport);
-			if (inp == 0) {
-#if 0
-				struct mbuf *n;
-
-				if (m->m_flags & (M_BCAST | M_MCAST)) {
-					udpstat.udps_noportbcast++;
-					goto bad;
-				}
-				udpstat.udps_noport++;
-#ifdef IPKDB
-				if (checkipkdb(src4, *sport, *dport, m, off,
-					       m->m_pkthdr.len - off)) {
-					/*
-					 * It was a debugger connect packet,
-					 * just drop it now
-					 */
-					goto bad;
-				}
-#endif
-				if ((n = m_copy(m, 0, M_COPYALL)) != NULL) {
-					icmp_error(n, ICMP_UNREACH,
-						ICMP_UNREACH_PORT, 0, 0);
-				}
-#endif
+			if (inp == 0)
 				return rcvcnt;
-			}
 		}
 
 		udp4_sendup(m, off, (struct sockaddr *)src, inp->inp_socket);
@@ -850,25 +815,6 @@ udp6_realinput(af, src, dst, m, off)
 			    (SO_REUSEPORT|SO_REUSEADDR)) == 0)
 				break;
 		}
-
-#if 0
-		if (last == NULL) {
-			/*
-			 * No matching pcb found; discard datagram.
-			 * (No need to send an ICMP Port Unreachable
-			 * for a broadcast or multicast datgram.)
-			 */
-			switch (af) {
-			case AF_INET:
-				udpstat.udps_noportbcast++;
-				break;
-			case AF_INET6:
-				udp6stat.udp6s_noportmcast++;
-				break;
-			}
-			goto bad;
-		}
-#endif
 	} else {
 		/*
 		 * Locate pcb for datagram.
@@ -878,36 +824,8 @@ udp6_realinput(af, src, dst, m, off)
 		if (in6p == 0) {
 			++udpstat.udps_pcbhashmiss;
 			in6p = in6_pcblookup_bind(&udb6, &dst6, dport, 0);
-			if (in6p == 0) {
-#if 0
-				struct mbuf *n;
-				n = m_copy(m, 0, M_COPYALL);
-				switch (af) {
-				case AF_INET:
-					if (m->m_flags & (M_BCAST | M_MCAST)) {
-						udpstat.udps_noportbcast++;
-						goto bad;
-					}
-					udpstat.udps_noport++;
-					if (n != NULL)
-						icmp_error(n, ICMP_UNREACH,
-						    ICMP_UNREACH_PORT, 0, 0);
-					break;
-				case AF_INET6:
-					if (m->m_flags & M_MCAST) {
-						udp6stat.udp6s_noportmcast++;
-						goto bad;
-					}
-					udp6stat.udp6s_noport++;
-					if (n != NULL)
-						icmp6_error(n, ICMP6_DST_UNREACH,
-						    ICMP6_DST_UNREACH_NOPORT, 0);
-					break;
-				}
-#endif
-
+			if (in6p == 0)
 				return rcvcnt;
-			}
 		}
 
 		udp6_sendup(m, off, (struct sockaddr *)src, in6p->in6p_socket);
@@ -1107,6 +1025,7 @@ udp_input(m, va_alist)
 						m_freem(n);
 						if (opts)
 							m_freem(opts);
+						udpstat.udps_fullsock++;
 					} else
 						sorwakeup(last->inp_socket);
 					opts = 0;
@@ -1417,13 +1336,6 @@ udp_usrreq(so, req, m, nam, control, p)
 			break;
 		inp = sotoinpcb(so);
 		inp->inp_ip.ip_ttl = ip_defttl;
-#ifdef IPSEC
-		error = ipsec_init_policy(so, &inp->inp_sp);
-		if (error != 0) {
-			in_pcbdetach(inp);
-			break;
-		}
-#endif /*IPSEC*/
 		break;
 
 	case PRU_DETACH:

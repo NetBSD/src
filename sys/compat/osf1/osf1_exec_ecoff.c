@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_exec_ecoff.c,v 1.1 2000/12/08 21:39:31 jdolecek Exp $ */
+/* $NetBSD: osf1_exec_ecoff.c,v 1.1.6.1 2001/08/03 04:12:47 lukem Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -114,11 +114,11 @@ osf1_exec_ecoff_probe(struct proc *p, struct exec_package *epp)
  * copy arguments onto the stack in the normal way, then copy out
  * any ELF-like AUX entries used by the dynamic loading scheme.
  */
-void *
-osf1_copyargs(pack, arginfo, stack, argp)
+int
+osf1_copyargs(pack, arginfo, stackp, argp)
 	struct exec_package *pack;
 	struct ps_strings *arginfo;
-	void *stack;
+	char **stackp;
 	void *argp;
 {
 	struct proc *p = curproc;			/* XXX !!! */
@@ -126,17 +126,18 @@ osf1_copyargs(pack, arginfo, stack, argp)
 	struct osf1_auxv ai[OSF1_MAX_AUX_ENTRIES], *a;
 	char *prognameloc, *loadernameloc;
 	size_t len;
+	int error;
 
-	stack = copyargs(pack, arginfo, stack, argp);
-	if (!stack)
-		goto bad;
+	if ((error = copyargs(pack, arginfo, stackp, argp)) != 0)
+		goto out;
 
 	a = ai;
 	memset(ai, 0, sizeof ai);
 
-	prognameloc = (char *)stack + sizeof ai;
-	if (copyoutstr(emul_arg->exec_name, prognameloc, MAXPATHLEN + 1, NULL))
-	    goto bad;
+	prognameloc = *stackp + sizeof ai;
+	if ((error = copyoutstr(emul_arg->exec_name, prognameloc,
+	    MAXPATHLEN + 1, NULL)) != 0)
+	    goto out;
 	a->a_type = OSF1_AT_EXEC_FILENAME;
 	a->a_un.a_ptr = prognameloc;
 	a++;
@@ -147,9 +148,9 @@ osf1_copyargs(pack, arginfo, stack, argp)
 	if (emul_arg->flags & OSF1_EXEC_EMUL_FLAGS_HAVE_LOADER) {
 
 		loadernameloc = prognameloc + MAXPATHLEN + 1;
-		if (copyoutstr(emul_arg->loader_name, loadernameloc,
-		    MAXPATHLEN + 1, NULL))
-			goto bad;
+		if ((error = copyoutstr(emul_arg->loader_name, loadernameloc,
+		    MAXPATHLEN + 1, NULL)) != 0)
+			goto out;
 		a->a_type = OSF1_AT_EXEC_LOADER_FILENAME;
 		a->a_un.a_ptr = loadernameloc;
 		a++;
@@ -170,18 +171,14 @@ osf1_copyargs(pack, arginfo, stack, argp)
 	a++;
 
 	len = (a - ai) * sizeof(struct osf1_auxv);
-	if (copyout(ai, stack, len))
-		goto bad;
-	stack = (caddr_t)stack + len;
+	if ((error = copyout(ai, *stackp, len)) != 0)
+		goto out;
+	*stackp += len;
 
 out:
 	free(pack->ep_emul_arg, M_TEMP);
 	pack->ep_emul_arg = NULL;
-	return stack;
-
-bad:
-	stack = NULL;
-	goto out;
+	return error;
 }
 
 static int

@@ -1,4 +1,4 @@
-/*	$NetBSD: ss.c,v 1.35 2001/06/26 12:46:56 bouyer Exp $	*/
+/*	$NetBSD: ss.c,v 1.35.2.1 2001/08/03 04:13:33 lukem Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -529,7 +529,7 @@ ssioctl(dev, cmd, addr, flag, p)
 			/* XXX add code for SCSI2 scanner, if any */
 			return (EOPNOTSUPP);
 		}
-		bcopy(&ss->sio, addr, sizeof(struct scan_io));
+		memcpy(addr, &ss->sio, sizeof(struct scan_io));
 		break;
 	case SCIOCSET:
 		sio = (struct scan_io *)addr;

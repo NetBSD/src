@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_misc.c,v 1.64 2001/05/30 11:37:30 mrg Exp $ */
+/* $NetBSD: osf1_misc.c,v 1.64.2.1 2001/08/03 04:12:47 lukem Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -198,7 +198,7 @@ osf1_sys_getsysinfo(struct proc *p, void *v, register_t *retval)
 		if (SCARG(uap, nbytes) < sizeof(cpuinfo))
 			error = EINVAL;
 		else {
-			bzero(&cpuinfo, sizeof(cpuinfo));
+			memset(&cpuinfo, 0, sizeof(cpuinfo));
 			unit = alpha_pal_whami();
 			cpuinfo.current_cpu = unit;
 			cpuinfo.cpus_in_box = ncpus;

@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep.c,v 1.14 2000/06/29 08:58:49 mrg Exp $ */
+/* $NetBSD: pci_machdep.c,v 1.14.4.1 2001/08/03 04:10:48 lukem Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.14 2000/06/29 08:58:49 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.14.4.1 2001/08/03 04:10:48 lukem Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -92,6 +92,8 @@ pci_display_console(iot, memt, pc, bus, device, function)
 #endif
 #if NTGA
 	nmatch = DEVICE_IS_TGA(class, id);
+	if (nmatch > match)
+		nmatch = tga_cnmatch(iot, memt, pc, tag);
 	if (nmatch > match) {
 		match = nmatch;
 		fn = tga_cnattach;

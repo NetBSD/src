@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.h,v 1.26 2001/06/02 16:17:11 thorpej Exp $	*/
+/*	$NetBSD: in6.h,v 1.26.2.1 2001/08/03 04:13:58 lukem Exp $	*/
 /*	$KAME: in6.h,v 1.83 2001/03/29 02:55:07 jinmei Exp $	*/
 
 /*
@@ -387,9 +387,9 @@ struct route_in6 {
 #define IPV6_RECVRETOPTS	6  /* bool; receive IP6 opts for response */
 #define IPV6_RECVDSTADDR	7  /* bool; receive IP6 dst addr w/dgram */
 #define IPV6_RETOPTS		8  /* ip6_opts; set/get IP6 options */
-#define IPV6_MULTICAST_IF	9  /* u_char; set/get IP6 multicast i/f  */
-#define IPV6_MULTICAST_HOPS	10 /* u_char; set/get IP6 multicast hops */
-#define IPV6_MULTICAST_LOOP	11 /* u_char; set/get IP6 multicast loopback */
+#define IPV6_MULTICAST_IF	9  /* u_int; set/get IP6 multicast i/f  */
+#define IPV6_MULTICAST_HOPS	10 /* int; set/get IP6 multicast hops */
+#define IPV6_MULTICAST_LOOP	11 /* u_int; set/get IP6 multicast loopback */
 #define IPV6_JOIN_GROUP		12 /* ip6_mreq; join a group membership */
 #define IPV6_LEAVE_GROUP	13 /* ip6_mreq; leave a group membership */
 #define IPV6_PORTRANGE		14 /* int; range to choose for unspec port */

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sl.c,v 1.76 2001/06/14 05:44:24 itojun Exp $	*/
+/*	$NetBSD: if_sl.c,v 1.76.2.1 2001/08/03 04:13:51 lukem Exp $	*/
 
 /*
  * Copyright (c) 1987, 1989, 1992, 1993
@@ -853,6 +853,7 @@ slintr(void *arg)
 					}
 					sc->sc_if.if_obytes += 2;
 				}
+				bp = cp;
 			}
 			MFREE(m, m2);
 			m = m2;

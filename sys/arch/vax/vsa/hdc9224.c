@@ -1,4 +1,4 @@
-/*	$NetBSD: hdc9224.c,v 1.15 2001/04/12 18:34:56 thorpej Exp $ */
+/*	$NetBSD: hdc9224.c,v 1.15.2.1 2001/08/03 04:12:37 lukem Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -347,7 +347,7 @@ rdattach(struct device *parent, struct device *self, void *aux)
 
 	/*
 	 * if it's not a floppy then evaluate the on-disk geometry.
-	 * if neccessary correct the label...
+	 * if necessary correct the label...
 	 */
 	rd_readgeom(sc, rd);
 	disk_printtype(rd->sc_drive, rd->sc_xbn.media_id);

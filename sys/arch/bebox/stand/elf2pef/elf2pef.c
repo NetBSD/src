@@ -1,4 +1,4 @@
-/*	$NetBSD: elf2pef.c,v 1.7 1999/12/03 15:44:41 sakamoto Exp $	*/
+/*	$NetBSD: elf2pef.c,v 1.7.8.1 2001/08/03 04:11:20 lukem Exp $	*/
 
 /*-
  * Copyright (C) 1997-1998 Kazuki Sakamoto (sakamoto@netbsd.org)
@@ -122,7 +122,7 @@ main(argc, argv)
 			argv[1], strerror(errno));
 		exit(3);
 	}
-	if (bcmp(hdr.e_ident, ELFMAG, SELFMAG) != 0 ||
+	if (memcmp(hdr.e_ident, ELFMAG, SELFMAG) != 0 ||
 	    hdr.e_ident[EI_CLASS] != ELFCLASS32) {
 		fprintf(stderr, "input '%s' is not ELF32 format\n", argv[1]);
 		exit(3);
@@ -182,7 +182,7 @@ main(argc, argv)
 	/*
 	 * Create the File Header
 	 */
-	bzero(&fileHdr, sizeof (fileHdr));
+	memset(&fileHdr, 0, sizeof (fileHdr));
 	fileHdr.magic = _BE_long(PEF_MAGIC);
 	fileHdr.fileTypeID = _BE_long(PEF_FILE);
 	fileHdr.archID = _BE_long(PEF_PPC);
@@ -194,7 +194,7 @@ main(argc, argv)
 	/*
 	 * Create the Section Header for TEXT
 	 */
-	bzero(&textHdr, sizeof (textHdr));
+	memset(&textHdr, 0, sizeof (textHdr));
 	textHdr.sectionName = _BE_long(-1);
 	textHdr.sectionAddress = _BE_long(0);
 	textHdr.execSize = _BE_long(elf_image_len);
@@ -209,7 +209,7 @@ main(argc, argv)
 	/*
 	 * Create the Section Header for DATA
 	 */
-	bzero(&dataHdr, sizeof (dataHdr));
+	memset(&dataHdr, 0, sizeof (dataHdr));
 	dataHdr.sectionName = _BE_long(-1);
 	dataHdr.sectionAddress = _BE_long(0);
 	dataHdr.execSize = _BE_long(sizeof (entry_vector) + kern_len);
@@ -224,7 +224,7 @@ main(argc, argv)
 	/*
 	 * Create the Section Header for loader stuff
 	 */
-	bzero(&ldrHdr, sizeof (ldrHdr));
+	memset(&ldrHdr, 0, sizeof (ldrHdr));
 	ldrHdr.sectionName = _BE_long(-1);
 	ldrHdr.sectionAddress = _BE_long(0);
 	ldrHdr.execSize = _BE_long(sizeof (lh));
@@ -239,7 +239,7 @@ main(argc, argv)
 	/*
 	 * Create the Loader Header
 	 */
-	bzero(&lh, sizeof (lh));
+	memset(&lh, 0, sizeof (lh));
 	lh.entryPointSection = _BE_long(1);	/* Data */
 	lh.entryPointOffset = _BE_long(0);
 	lh.initPointSection = _BE_long(-1);
@@ -252,7 +252,7 @@ main(argc, argv)
 	/*
 	 * Copy the pseudo-DATA
 	 */
-	bzero(entry_vector, sizeof (entry_vector));
+	memset(entry_vector, 0, sizeof (entry_vector));
 	entry_vector[0] = _BE_long(ENTRY);	/* Magic */
 	lseek(pef_fd, dataOffset, 0);
 	write(pef_fd, entry_vector, sizeof (entry_vector));

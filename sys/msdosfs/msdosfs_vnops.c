@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.109 2001/06/12 14:59:29 wiz Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.109.2.1 2001/08/03 04:13:48 lukem Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -179,21 +179,9 @@ msdosfs_mknod(v)
 		struct vattr *a_vap;
 	} */ *ap = v;
 
-	switch (ap->a_vap->va_type) {
-	case VDIR:
-		return (msdosfs_mkdir((struct vop_mkdir_args *)ap));
-		break;
-
-	case VREG:
-		return (msdosfs_create((struct vop_create_args *)ap));
-		break;
-
-	default:
-		PNBUF_PUT(ap->a_cnp->cn_pnbuf);
-		vput(ap->a_dvp);
-		return (EINVAL);
-	}
-	/* NOTREACHED */
+	PNBUF_PUT(ap->a_cnp->cn_pnbuf);
+	vput(ap->a_dvp);
+	return (EINVAL);
 }
 
 int

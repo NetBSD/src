@@ -1,4 +1,4 @@
-/*	$NetBSD: ss_scanjet.c,v 1.22 2001/04/25 17:53:41 bouyer Exp $	*/
+/*	$NetBSD: ss_scanjet.c,v 1.22.2.1 2001/08/03 04:13:33 lukem Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -100,19 +100,19 @@ scanjet_attach(ss, sa)
 
 	/* first, check the model (which determines nothing yet) */
 
-	if (!bcmp(sa->sa_inqbuf.product, "C1750A", 6)) {
+	if (!memcmp(sa->sa_inqbuf.product, "C1750A", 6)) {
 		ss->sio.scan_scanner_type = HP_SCANJET_IIC;
 		printf("HP ScanJet IIc");
 	}
-	if (!bcmp(sa->sa_inqbuf.product, "C2500A", 6)) {
+	if (!memcmp(sa->sa_inqbuf.product, "C2500A", 6)) {
 		ss->sio.scan_scanner_type = HP_SCANJET_IIC;
 		printf("HP ScanJet IIcx");
 	}
-	if (!bcmp(sa->sa_inqbuf.product, "C1130A", 6)) {
+	if (!memcmp(sa->sa_inqbuf.product, "C1130A", 6)) {
 		ss->sio.scan_scanner_type = HP_SCANJET_IIC;
 		printf("HP ScanJet 4p");
 	}
-	if (!bcmp(sa->sa_inqbuf.product, "C5110A", 6)) {
+	if (!memcmp(sa->sa_inqbuf.product, "C5110A", 6)) {
 		ss->sio.scan_scanner_type = HP_SCANJET_IIC;
 		printf("HP ScanJet 5p");
 	}
@@ -209,7 +209,7 @@ scanjet_set_params(ss, sio)
 
 	/* change ss_softc to the new values, but save ro-variables */
 	sio->scan_scanner_type = ss->sio.scan_scanner_type;
-	bcopy(sio, &ss->sio, sizeof(struct scan_io));
+	memcpy(&ss->sio, sio, sizeof(struct scan_io));
 
 	error = scanjet_set_window(ss);
 	if (error) {
@@ -271,7 +271,7 @@ scanjet_read(ss, bp)
 	/*
 	 *  Fill out the scsi command
 	 */
-	bzero(&cmd, sizeof(cmd));
+	memset(&cmd, 0, sizeof(cmd));
 	cmd.opcode = READ;
 
 	/*
@@ -316,7 +316,7 @@ scanjet_ctl_write(ss, buf, size)
 	if ((ss->flags & SSF_AUTOCONF) != 0)
 		flags |= XS_CTL_DISCOVERY;
 
-	bzero(&cmd, sizeof(cmd));
+	memset(&cmd, 0, sizeof(cmd));
 	cmd.opcode = WRITE;
 	_lto3b(size, cmd.len);
 	return (scsipi_command(ss->sc_periph,
@@ -342,7 +342,7 @@ scanjet_ctl_read(ss, buf, size)
 	if ((ss->flags & SSF_AUTOCONF) != 0)
 		flags |= XS_CTL_DISCOVERY;
 
-	bzero(&cmd, sizeof(cmd));
+	memset(&cmd, 0, sizeof(cmd));
 	cmd.opcode = READ;
 	_lto3b(size, cmd.len);
 	return (scsipi_command(ss->sc_periph,

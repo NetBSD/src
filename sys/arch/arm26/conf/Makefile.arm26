@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.arm26,v 1.7 2001/05/29 02:20:21 mrg Exp $
+#	$NetBSD: Makefile.arm26,v 1.7.2.1 2001/08/03 04:11:04 lukem Exp $
 
 # Makefile for NetBSD/arm26
 #
@@ -53,10 +53,11 @@ CFLAGS=		-ffixed-r14 ${DEBUG} ${COPTS} ${CWARNFLAGS}
 AFLAGS=		-x assembler-with-cpp -D_LOCORE
 
 LOADADDRESS=	0x02098000
+LINKFLAGS=	-N # No gap between text and data
 .ifdef ROMTEXTBASE
-LINKFLAGS=	-Ttext ${ROMTEXTBASE} -Tdata ${LOADADDRESS} -e start
+LINKFLAGS+=	-Ttext ${ROMTEXTBASE} -Tdata ${LOADADDRESS} -e start
 .else
-LINKFLAGS=	-Ttext ${LOADADDRESS} -e start
+LINKFLAGS+=	-Ttext ${LOADADDRESS} -e start
 .endif
 STRIPFLAGS=	-g
 

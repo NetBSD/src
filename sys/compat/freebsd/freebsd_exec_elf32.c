@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_exec_elf32.c,v 1.1 2000/12/01 19:13:47 jdolecek Exp $	*/
+/*	$NetBSD: freebsd_exec_elf32.c,v 1.1.6.1 2001/08/03 04:12:41 lukem Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -78,8 +78,8 @@ ELFNAME2(freebsd,probe)(p, epp, veh, itp, pos)
 	if (i != 0) {
 		phsize = i * sizeof(Elf_Phdr);
 		ph = (Elf_Phdr *) malloc(phsize, M_TEMP, M_WAITOK);
-		if ((error = ELFNAME(read_from)(p, epp->ep_vp, eh->e_phoff,
-		    (caddr_t) ph, phsize)) != 0)
+		if ((error = exec_read_from(p, epp->ep_vp, eh->e_phoff, ph,
+		    phsize)) != 0)
 			goto bad1;
 
 		for (ephp = ph; i--; ephp++) {
@@ -93,8 +93,8 @@ ELFNAME2(freebsd,probe)(p, epp, veh, itp, pos)
 			np = (Elf_Nhdr *) malloc(ephp->p_filesz+1,
 			    M_TEMP, M_WAITOK);
 
-			if (((error = ELFNAME(read_from)(p, epp->ep_vp,
-			    ephp->p_offset, (caddr_t)np, ephp->p_filesz)) != 0))
+			if (((error = exec_read_from(p, epp->ep_vp,
+			    ephp->p_offset, np, ephp->p_filesz)) != 0))
 				goto bad2;
 
 			if (strncmp((char *)np, wantInterp,

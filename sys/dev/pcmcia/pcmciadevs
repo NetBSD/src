@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.132 2001/07/09 06:57:59 itojun Exp $
+$NetBSD: pcmciadevs,v 1.132.2.1 2001/08/03 04:13:23 lukem Exp $
 /*$FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.8 2001/01/20 01:48:55 imp Exp $*/
 
 /*-
@@ -325,6 +325,7 @@ product PLANEX FNW3600T		-1 Planex FNW-3600-T
 product PLANEX FNW3700T		-1 Planex FNW-3700-T
 product DLINK DE650		{ "D-Link", "DE-650", NULL, NULL } D-Link DE-650
 product DLINK DE660		{ "D-Link", "DE-660", NULL, NULL } D-Link DE-660
+product DLINK DE660PLUS		{ "D-Link", "DE-660+", NULL, NULL } D-Link DE-660+
 product RPTI EP400		{ "RPTI&spLTD.", "EP400", "CISV100", NULL } RPTI EP400
 product RPTI EP401		{ "RPTI", "EP401&spEthernet&spNE2000&spCompatible", NULL, NULL } RPTI EP401
 product ACCTON EN2212		{ "ACCTON", "EN2212", NULL, NULL } Accton EN2212

@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohcivar.h,v 1.14 2001/05/15 06:52:31 jmc Exp $	*/
+/*	$NetBSD: fwohcivar.h,v 1.14.2.1 2001/08/03 04:13:07 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -50,13 +50,14 @@
 #define	OHCI_BUF_ARRS_CNT	8
 #define	OHCI_BUF_ATRQ_CNT	(8*8)
 #define	OHCI_BUF_ATRS_CNT	(8*8)
-#define	OHCI_BUF_IR_CNT		16
+#define	OHCI_BUF_IR_CNT		8
 #define	OHCI_BUF_CNT							\
 	(OHCI_BUF_ARRQ_CNT + OHCI_BUF_ARRS_CNT + OHCI_BUF_ATRQ_CNT +	\
 	    OHCI_BUF_ATRS_CNT + OHCI_BUF_IR_CNT + 1 + 1)
 
 #define	OHCI_LOOP		1000
 #define	OHCI_SELFID_TIMEOUT	(hz * 3)
+#define OHCI_ASYNC_STREAM	0x40
 
 struct fwohci_softc;
 struct fwohci_pkt;
@@ -65,10 +66,10 @@ struct fwohci_buf {
 	TAILQ_ENTRY(fwohci_buf) fb_list;
 	bus_dma_segment_t fb_seg;
 	int fb_nseg;
-	bus_dmamap_t fb_dmamap;
-	caddr_t fb_buf;
-	struct fwohci_desc *fb_desc;
-	bus_addr_t fb_daddr;
+	bus_dmamap_t fb_dmamap;		/* DMA map of the buffer */
+	caddr_t fb_buf;			/* kernel virtual addr of the buffer */
+	struct fwohci_desc *fb_desc;	/* kernel virtual addr of descriptor */
+	bus_addr_t fb_daddr;		/* physical addr of the descriptor */
 	int fb_off;
 	struct mbuf *fb_m;
 	void *fb_statusarg;
@@ -103,10 +104,11 @@ struct fwohci_handler {
 
 struct fwohci_ctx {
 	int	fc_ctx;
-	int	fc_isoch;
+	int	fc_type;	/* FWOHCI_CTX_(ASYNC|ISO_SINGLE|ISO_MULTI) */
 	int	fc_bufcnt;
 	u_int32_t	*fc_branch;
 	TAILQ_HEAD(fwohci_buf_s, fwohci_buf) fc_buf;
+	struct fwohci_buf_s fc_buf2; /* for iso */
 	LIST_HEAD(, fwohci_handler) fc_handler;
 };
 
@@ -131,6 +133,8 @@ struct fwohci_cb {
 struct fwohci_softc {
 	struct ieee1394_softc sc_sc1394;
 	struct evcnt sc_intrcnt;
+	struct evcnt sc_isocnt;
+	struct evcnt sc_isopktcnt;
 
 	bus_space_tag_t sc_memt;
 	bus_space_handle_t sc_memh;
@@ -194,6 +198,10 @@ int fwohci_print (void *, const char *);
 	bus_space_write_4((sc)->sc_memt, (sc)->sc_memh, reg, htole32(val))
 #define	OHCI_CSR_READ(sc, reg) \
 	le32toh(bus_space_read_4((sc)->sc_memt, (sc)->sc_memh, reg))
+
+#define FWOHCI_CTX_ASYNC	0
+#define FWOHCI_CTX_ISO_SINGLE	1	/* for async stream */
+#define FWOHCI_CTX_ISO_MULTI	2	/* for isochronous */
 
 /* Locators. */
 

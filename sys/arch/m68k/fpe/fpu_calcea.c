@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_calcea.c,v 1.12 2001/07/05 08:38:25 toshii Exp $	*/
+/*	$NetBSD: fpu_calcea.c,v 1.12.2.1 2001/08/03 04:11:50 lukem Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -392,7 +392,7 @@ fpu_load_ea(frame, insn, ea, dst)
 #ifdef DEBUG_FPE
 	printf("load_ea: src %p\n", src);
 #endif
-	bcopy(src, dst, len);
+	memcpy(dst, src, len);
     } else
 #endif
     if (ea->ea_flags & EA_IMMED) {
@@ -407,7 +407,7 @@ fpu_load_ea(frame, insn, ea, dst)
 	    printf("load_ea: short/byte immed opr - addr adjusted\n");
 #endif
 	}
-	bcopy(src, dst, len);
+	memcpy(dst, src, len);
     } else if (ea->ea_flags & EA_ABS) {
 #ifdef DEBUG_FPE
 	printf("load_ea: abs addr %08x\n", ea->ea_absaddr);
@@ -568,7 +568,7 @@ fpu_store_ea(frame, insn, ea, src)
 #ifdef DEBUG_FPE
 	printf("store_ea: dst %p\n", dst);
 #endif
-	bcopy(src, dst, len);
+	memcpy(dst, src, len);
     } else /* One of MANY indirect forms... */ {
 #ifdef DEBUG_FPE
 	printf("store_ea: using register %c%d\n",

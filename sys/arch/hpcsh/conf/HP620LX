@@ -1,4 +1,4 @@
-#	$NetBSD: HP620LX,v 1.2 2001/07/08 17:02:36 uch Exp $
+#	$NetBSD: HP620LX,v 1.2.2.1 2001/08/03 04:11:38 lukem Exp $
 #
 #	HP620LX
 #
@@ -96,6 +96,11 @@ mhzc*	at pcmcia0 function ?		# Megahertz Ethernet/Modem combo cards
 com*	at mhzc?
 sm*	at mhzc?
 
+ukphy*	at mii? phy ?			# generic unknown PHYs
+
+# PCMCIA serial interfaces
+com*	at pcmcia? function ?		# Modems and serial cards
+
 # PCMCIA SCSI interfaces
 aic*	at pcmcia0 function ?		# Adaptec APA-1460 SCSI
 
@@ -121,9 +126,11 @@ pseudo-device	biconsdev	1	# build-in console device
 pseudo-device	bpfilter	8	# Berkeley packet filter
 pseudo-device	ipfilter		# IP filter (firewall) and NAT
 pseudo-device	loop			# network loopback
+pseudo-device	ppp		2	# Point-to-Point Protocol
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
+pseudo-device	rnd			# /dev/random and in-kernel generator
 
 # mouse & keyboard multiplexor pseudo-devices
 pseudo-device	wsmux		2

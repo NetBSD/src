@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.78.4.1 2001/07/10 13:55:14 lukem Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.78.4.2 2001/08/03 04:14:11 lukem Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -145,6 +145,8 @@ ufs_mknod(void *v)
 	struct vnode	**vpp;
 	struct inode	*ip;
 	int		error;
+	struct mount	*mp;	
+	ino_t		ino;
 
 	vap = ap->a_vap;
 	vpp = ap->a_vpp;
@@ -154,6 +156,8 @@ ufs_mknod(void *v)
 		return (error);
 	VN_KNOTE(ap->a_dvp, NOTE_WRITE);
 	ip = VTOI(*vpp);
+	mp  = (*vpp)->v_mount;
+	ino = ip->i_number;
 	ip->i_flag |= IN_ACCESS | IN_CHANGE | IN_UPDATE;
 	if (vap->va_rdev != VNOVAL) {
 		/*
@@ -161,7 +165,7 @@ ufs_mknod(void *v)
 		 * inodes, so don't truncate the dev number.
 		 */
 		ip->i_ffs_rdev = ufs_rw32(vap->va_rdev,
-		    UFS_MPNEEDSWAP((*vpp)->v_mount));
+		    UFS_MPNEEDSWAP(mp));
 	}
 	/*
 	 * Remove inode so that it will be reloaded by VFS_VGET and
@@ -171,7 +175,11 @@ ufs_mknod(void *v)
 	vput(*vpp);
 	(*vpp)->v_type = VNON;
 	vgone(*vpp);
-	*vpp = 0;
+	error = VFS_VGET(mp, ino, vpp);
+	if (error != 0) {
+		*vpp = NULL;
+		return (error);
+	}
 	return (0);
 }
 
@@ -1472,7 +1480,8 @@ ufs_symlink(void *v)
 		error = vn_rdwr(UIO_WRITE, vp, ap->a_target, len, (off_t)0,
 		    UIO_SYSSPACE, IO_NODELOCKED, ap->a_cnp->cn_cred, NULL,
 		    (struct proc *)0);
-	vput(vp);
+	if (error)
+		vput(vp);
 	return (error);
 }
 

@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.68 2001/04/26 03:10:45 ross Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.68.2.1 2001/08/03 04:10:41 lukem Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.68 2001/04/26 03:10:45 ross Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.68.2.1 2001/08/03 04:10:41 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,7 +71,7 @@ cpu_coredump(struct proc *p, struct vnode *vp, struct ucred *cred,
 			fpusave_proc(p, 1);
 		cpustate.md_fpstate = p->p_addr->u_pcb.pcb_fp;
 	} else
-		bzero(&cpustate.md_fpstate, sizeof(cpustate.md_fpstate));
+		memset(&cpustate.md_fpstate, 0, sizeof(cpustate.md_fpstate));
 
 	CORE_SETMAGIC(cseg, CORESEGMAGIC, MID_MACHINE, CORE_CPU);
 	cseg.c_addr = 0;
@@ -161,9 +161,13 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack, size_t stacksize,
 
 	/*
 	 * Copy pcb and user stack pointer from proc p1 to p2.
+	 * If specificed, give the child a different stack.
 	 */
 	p2->p_addr->u_pcb = p1->p_addr->u_pcb;
-	p2->p_addr->u_pcb.pcb_hw.apcb_usp = alpha_pal_rdusp();
+	if (stack != NULL)
+		p2->p_addr->u_pcb.pcb_hw.apcb_usp = (u_long)stack + stacksize;
+	else
+		p2->p_addr->u_pcb.pcb_hw.apcb_usp = alpha_pal_rdusp();
 	simple_lock_init(&p2->p_addr->u_pcb.pcb_fpcpu_slock);
 
 	/*
@@ -194,7 +198,7 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack, size_t stacksize,
 		 */
 		p2tf = p2->p_md.md_tf = (struct trapframe *)
 		    ((char *)p2->p_addr + USPACE - sizeof(struct trapframe));
-		bcopy(p1->p_md.md_tf, p2->p_md.md_tf,
+		memcpy(p2->p_md.md_tf, p1->p_md.md_tf,
 		    sizeof(struct trapframe));
 
 		/*
@@ -203,12 +207,6 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack, size_t stacksize,
 		p2tf->tf_regs[FRAME_V0] = p1->p_pid;	/* parent's pid */
 		p2tf->tf_regs[FRAME_A3] = 0;		/* no error */
 		p2tf->tf_regs[FRAME_A4] = 1;		/* is child */
-
-		/*
-		 * If specificed, give the child a different stack.
-		 */
-		if (stack != NULL)
-			p2tf->tf_regs[FRAME_SP] = (u_long)stack + stacksize;
 
 		up->u_pcb.pcb_hw.apcb_ksp = (u_int64_t)p2tf;	
 		up->u_pcb.pcb_context[0] =
@@ -265,6 +263,7 @@ pagemove(caddr_t from, caddr_t to, size_t size)
 {
 	long fidx, tidx;
 	ssize_t todo;
+	PMAP_TLB_SHOOTDOWN_CPUSET_DECL
 
 	if (size % NBPG)
 		panic("pagemove");
@@ -287,6 +286,8 @@ pagemove(caddr_t from, caddr_t to, size_t size)
 		from += NBPG;
 		to += NBPG;
 	}
+
+	PMAP_TLB_SHOOTNOW();
 }
 
 /*

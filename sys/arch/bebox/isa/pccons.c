@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.20 2001/05/02 10:32:15 scw Exp $	*/
+/*	$NetBSD: pccons.c,v 1.20.2.1 2001/08/03 04:11:19 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1294,9 +1294,9 @@ sput(cp, n)
 					else if (cx > nrow)
 						cx = nrow;
 					if (cx < nrow)
-						bcopy(crtAt + vs.ncol * cx,
-						    crtAt, vs.ncol * (nrow -
-						    cx) * CHR);
+						memmove(crtAt, crtAt + vs.ncol *
+						    cx, vs.ncol * (nrow - cx) *
+						    CHR);
 					fillw((vs.at << 8) | ' ',
 					    crtAt + vs.ncol * (nrow - cx),
 					    vs.ncol * cx);
@@ -1310,8 +1310,8 @@ sput(cp, n)
 					else if (cx > vs.nrow)
 						cx = vs.nrow;
 					if (cx < vs.nrow)
-						bcopy(Crtat + vs.ncol * cx,
-						    Crtat, vs.ncol * (vs.nrow -
+						memmove(Crtat, Crtat + vs.ncol *
+						    cx, vs.ncol * (vs.nrow -
 						    cx) * CHR);
 					fillw((vs.at << 8) | ' ',
 					    Crtat + vs.ncol * (vs.nrow - cx),
@@ -1332,10 +1332,9 @@ sput(cp, n)
 					else if (cx > nrow)
 						cx = nrow;
 					if (cx < nrow)
-						bcopy(crtAt,
-						    crtAt + vs.ncol * cx,
-						    vs.ncol * (nrow - cx) *
-						    CHR);
+						memmove(crtAt + vs.ncol * cx,
+						    crtAt, vs.ncol * (nrow -
+						    cx) * CHR);
 					fillw((vs.at << 8) | ' ', 
 					    crtAt, vs.ncol * cx);
 					vs.state = 0;
@@ -1348,10 +1347,9 @@ sput(cp, n)
 					else if (cx > vs.nrow)
 						cx = vs.nrow;
 					if (cx < vs.nrow)
-						bcopy(Crtat,
-						    Crtat + vs.ncol * cx,
-						    vs.ncol * (vs.nrow - cx) *
-						    CHR);
+						memmove(Crtat + vs.ncol * cx,
+						    Crtat, vs.ncol * (vs.nrow -
+						    cx) * CHR);
 					fillw((vs.at << 8) | ' ', 
 					    Crtat, vs.ncol * cx);
 #if 0
@@ -1416,7 +1414,7 @@ sput(cp, n)
 			scroll = 0;
 			/* scroll check */
 			if (crtat >= Crtat + vs.nchr) {
-				bcopy(Crtat + vs.ncol, Crtat,
+				memmove(Crtat, Crtat + vs.ncol,
 				    (vs.nchr - vs.ncol) * CHR);
 				fillw((vs.at << 8) | ' ',
 				    Crtat + vs.nchr - vs.ncol,

@@ -1,4 +1,4 @@
-$NetBSD: mmu,v 1.2 1994/10/26 02:02:18 cgd Exp $
+$NetBSD: mmu,v 1.2.46.1 2001/08/03 04:10:53 lukem Exp $
 
 Overview:
 --------
@@ -8,7 +8,7 @@ Overview:
 
 	Page and segment table entries mimic the Motorola 68851 PMMU,
 	in an effort at upward compatibility.  The HP MMU uses a two
-	level translation scheme.  There are seperate (but equal!)
+	level translation scheme.  There are separate (but equal!)
 	translation tables for both supervisor and user modes.  At the
 	lowest level are page tables.  Each page table consists of one
 	or more 4k pages of 1024x4 byte page table entries.  Each PTE
@@ -20,7 +20,7 @@ Overview:
 	unused valid bit in page and segment table entries must be
 	zero.
 
-	There are seperate translation lookaside buffers for the user
+	There are separate translation lookaside buffers for the user
 	and supervisor modes, each containing 1024 entries.
 
 	To augment the 68020's instruction cache, the HP CPU has an

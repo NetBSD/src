@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_rt.c,v 1.37 1999/03/25 23:20:00 is Exp $	*/
+/*	$NetBSD: grf_rt.c,v 1.37.22.1 2001/08/03 04:10:54 lukem Exp $	*/
 
 /*
  * Copyright (c) 1993 Markus Wild
@@ -73,7 +73,7 @@ int retina_inited;
  * This code offers low-level routines to access the Retina graphics-board
  * manufactured by MS MacroSystem GmbH from within NetBSD for the Amiga.
  * 
- * Thanks to MacroSystem for providing me with the neccessary information
+ * Thanks to MacroSystem for providing me with the necessary information
  * to create theese routines. The sparse documentation of this code
  * results from the agreements between MS and me.
  */

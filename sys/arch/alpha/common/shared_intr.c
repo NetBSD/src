@@ -1,4 +1,4 @@
-/* $NetBSD: shared_intr.c,v 1.15 2000/06/05 21:47:17 thorpej Exp $ */
+/* $NetBSD: shared_intr.c,v 1.15.6.1 2001/08/03 04:10:43 lukem Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: shared_intr.c,v 1.15 2000/06/05 21:47:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: shared_intr.c,v 1.15.6.1 2001/08/03 04:10:43 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -210,6 +210,14 @@ alpha_shared_intr_isactive(struct alpha_shared_intr *intr, unsigned int num)
 {
 
 	return (intr[num].intr_q.tqh_first != NULL);
+}
+
+int
+alpha_shared_intr_firstactive(struct alpha_shared_intr *intr, unsigned int num)
+{
+
+	return (intr[num].intr_q.tqh_first != NULL &&
+		intr[num].intr_q.tqh_first->ih_q.tqe_next == NULL);
 }
 
 void

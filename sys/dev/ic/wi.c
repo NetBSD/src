@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.21 2001/07/07 16:13:51 thorpej Exp $	*/
+/*	$NetBSD: wi.c,v 1.21.2.1 2001/08/03 04:13:06 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1931,7 +1931,8 @@ wi_set_nwkey(sc, nwkey)
 	struct wi_softc *sc;
 	struct ieee80211_nwkey *nwkey;
 {
-	int i, len, error;
+	int i, error;
+	size_t len;
 	struct wi_req wreq;
 	struct wi_ltv_keys *wk = (struct wi_ltv_keys *)&wreq;
 

@@ -1,4 +1,4 @@
-/* $NetBSD: uba_dma.c,v 1.5 2000/06/29 07:14:22 mrg Exp $ */
+/* $NetBSD: uba_dma.c,v 1.5.4.1 2001/08/03 04:12:36 lukem Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -114,7 +114,7 @@ uba_dma_init(sc)
 		pte = sc->uv_uba->uba_map;
 	} else {
 		pte = (struct pte *)vax_map_physmem(sc->uv_addr,
-		    sc->uv_size/(VAX_NBPG/sizeof(struct pte)));
+		    vax_btoc(vax_btoc(sc->uv_size) * sizeof(struct pte)));
 		if (pte == 0)
 			panic("uba_dma_init");
 	}

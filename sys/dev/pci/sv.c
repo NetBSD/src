@@ -1,4 +1,4 @@
-/*      $NetBSD: sv.c,v 1.12 2000/12/28 22:59:15 sommerfeld Exp $ */
+/*      $NetBSD: sv.c,v 1.12.4.1 2001/08/03 04:13:22 lukem Exp $ */
 /*      $OpenBSD: sv.c,v 1.2 1998/07/13 01:50:15 csapuntz Exp $ */
 
 /*
@@ -130,7 +130,7 @@ struct audio_device sv_device = {
 
 #define ARRAY_SIZE(foo)  ((sizeof(foo)) / sizeof(foo[0]))
 
-int	sv_allocmem __P((struct sv_softc *, size_t, size_t, struct sv_dma *));
+int	sv_allocmem __P((struct sv_softc *, size_t, size_t, int, struct sv_dma *));
 int	sv_freemem __P((struct sv_softc *, struct sv_dma *));
 
 int	sv_open __P((void *, int));
@@ -508,10 +508,11 @@ sv_intr(p)
 }
 
 int
-sv_allocmem(sc, size, align, p)
+sv_allocmem(sc, size, align, direction, p)
 	struct sv_softc *sc;
 	size_t size;
 	size_t align;
+	int direction;
 	struct sv_dma *p;
 {
 	int error;
@@ -534,7 +535,8 @@ sv_allocmem(sc, size, align, p)
 		goto unmap;
 
 	error = bus_dmamap_load(sc->sc_dmatag, p->map, p->addr, p->size, NULL, 
-				BUS_DMA_NOWAIT);
+				BUS_DMA_NOWAIT |
+                                (direction == AUMODE_RECORD) ? BUS_DMA_READ : BUS_DMA_WRITE);
 	if (error)
 		goto destroy;
 	DPRINTF(("sv_allocmem: pa=%lx va=%lx pba=%lx\n",
@@ -1441,7 +1443,7 @@ sv_malloc(addr, direction, size, pool, flags)
 	p = malloc(sizeof(*p), pool, flags);
 	if (!p)
 		return (0);
-	error = sv_allocmem(sc, size, 16, p);
+	error = sv_allocmem(sc, size, 16, direction, p);
 	if (error) {
 		free(p, pool);
 		return (0);

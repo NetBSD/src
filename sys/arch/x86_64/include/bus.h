@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.1 2001/06/19 00:20:10 fvdl Exp $	*/
+/*	$NetBSD: bus.h,v 1.1.2.1 2001/08/03 04:12:39 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
 
 /*
  * XXXfvdl plain copy of x86_64 stuff. The arrival of the real hardware
- * may cause enough changes to this file to be seperate.
+ * may cause enough changes to this file to be separate.
  */
 
 #ifndef _X86_64_BUS_H_
@@ -1042,15 +1042,17 @@ x86_64_memio_copy_region_4(t, h1, o1, h2, o2, c)
 /*
  * Flags used in various bus DMA methods.
  */
-#define	BUS_DMA_WAITOK		0x00	/* safe to sleep (pseudo-flag) */
-#define	BUS_DMA_NOWAIT		0x01	/* not safe to sleep */
-#define	BUS_DMA_ALLOCNOW	0x02	/* perform resource allocation now */
-#define	BUS_DMA_COHERENT	0x04	/* hint: map memory DMA coherent */
-#define	BUS_DMA_STREAMING	0x08	/* hint: sequential, unidirectional */
-#define	BUS_DMA_BUS1		0x10	/* placeholders for bus functions... */
-#define	BUS_DMA_BUS2		0x20
-#define	BUS_DMA_BUS3		0x40
-#define	BUS_DMA_BUS4		0x80
+#define	BUS_DMA_WAITOK		0x000	/* safe to sleep (pseudo-flag) */
+#define	BUS_DMA_NOWAIT		0x001	/* not safe to sleep */
+#define	BUS_DMA_ALLOCNOW	0x002	/* perform resource allocation now */
+#define	BUS_DMA_COHERENT	0x004	/* hint: map memory DMA coherent */
+#define	BUS_DMA_STREAMING	0x008	/* hint: sequential, unidirectional */
+#define	BUS_DMA_BUS1		0x010	/* placeholders for bus functions... */
+#define	BUS_DMA_BUS2		0x020
+#define	BUS_DMA_BUS3		0x040
+#define	BUS_DMA_BUS4		0x080
+#define	BUS_DMA_READ		0x100	/* mapping is device -> memory only */
+#define	BUS_DMA_WRITE		0x200	/* mapping is memory -> device only */
 
 /* Forwards needed by prototypes below. */
 struct mbuf;

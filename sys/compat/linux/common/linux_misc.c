@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.92 2001/06/04 07:44:39 manu Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.92.2.1 2001/08/03 04:12:44 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -182,13 +182,16 @@ linux_sys_wait4(p, v, retval)
 	linux_options = SCARG(uap, options);
 	options = 0;
 	if (linux_options &
-	    ~(LINUX_WAIT4_WNOHANG|LINUX_WAIT4_WUNTRACED|LINUX_WAIT4_WCLONE))
+	    ~(LINUX_WAIT4_WNOHANG|LINUX_WAIT4_WUNTRACED|LINUX_WAIT4_WALL|
+	      LINUX_WAIT4_WCLONE))
 		return (EINVAL);
 
 	if (linux_options & LINUX_WAIT4_WNOHANG)
 		options |= WNOHANG;
 	if (linux_options & LINUX_WAIT4_WUNTRACED)
 		options |= WUNTRACED;
+	if (linux_options & LINUX_WAIT4_WALL)
+		options |= WALLSIG;
 	if (linux_options & LINUX_WAIT4_WCLONE)
 		options |= WALTSIG;
 

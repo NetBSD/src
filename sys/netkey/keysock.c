@@ -1,4 +1,4 @@
-/*	$NetBSD: keysock.c,v 1.11 2000/09/22 08:28:56 itojun Exp $	*/
+/*	$NetBSD: keysock.c,v 1.11.4.1 2001/08/03 04:14:02 lukem Exp $	*/
 /*	$KAME: keysock.c,v 1.23 2000/09/22 08:26:33 itojun Exp $	*/
 
 /*
@@ -72,20 +72,20 @@ struct pfkeystat pfkeystat;
 #ifndef __NetBSD__
 int
 key_usrreq(so, req, m, nam, control)
-	register struct socket *so;
+	struct socket *so;
 	int req;
 	struct mbuf *m, *nam, *control;
 #else
 int
 key_usrreq(so, req, m, nam, control, p)
-	register struct socket *so;
+	struct socket *so;
 	int req;
 	struct mbuf *m, *nam, *control;
 	struct proc *p;
 #endif /*__NetBSD__*/
 {
-	register int error = 0;
-	register struct keycb *kp = (struct keycb *)sotorawcb(so);
+	int error = 0;
+	struct keycb *kp = (struct keycb *)sotorawcb(so);
 	int s;
 
 #ifdef __NetBSD__

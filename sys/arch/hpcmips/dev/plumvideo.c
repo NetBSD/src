@@ -1,4 +1,4 @@
-/*	$NetBSD: plumvideo.c,v 1.18 2001/05/21 18:37:30 uch Exp $ */
+/*	$NetBSD: plumvideo.c,v 1.18.2.1 2001/08/03 04:11:36 lukem Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -259,6 +259,7 @@ plumvideo_hpcfbinit(struct plumvideo_softc *sc, int reverse_flag)
 	case 16:
 		fb->hf_class = HPCFB_CLASS_RGBCOLOR;
 		fb->hf_access_flags |= HPCFB_ACCESS_STATIC;
+		fb->hf_order_flags = HPCFB_REVORDER_BYTE;
 		fb->hf_pack_width = 16;
 		fb->hf_pixels_per_pack = 1;
 		fb->hf_pixel_width = 16;

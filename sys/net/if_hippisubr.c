@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hippisubr.c,v 1.12 2001/06/14 05:44:24 itojun Exp $	*/
+/*	$NetBSD: if_hippisubr.c,v 1.12.2.1 2001/08/03 04:13:50 lukem Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -201,7 +201,7 @@ hippi_output(ifp, m0, dst, rt0)
 	if (m == 0)
 		senderr(ENOBUFS);
 	cci = mtod(m, u_int32_t *);
-	bzero(cci, sizeof(struct hippi_header) + 8);
+	memset(cci, 0, sizeof(struct hippi_header) + 8);
 	cci[0] = 0;
 	cci[1] = ifield;
 	hh = (struct hippi_header *) &cci[2];
