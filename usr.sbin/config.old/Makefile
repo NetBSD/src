@@ -1,7 +1,8 @@
 #	from: @(#)Makefile	5.12 (Berkeley) 1/16/91
-#	$Id: Makefile,v 1.7 1993/12/02 18:18:30 jtc Exp $
+#	$Id: Makefile,v 1.8 1994/12/11 22:29:42 mycroft Exp $
 
 PROG=	config
+BINDIR=	/usr/sbin
 CFLAGS+=-I. -I${.CURDIR}
 SRCS=	config.c main.c lang.c mkioconf.c mkmakefile.c mkglue.c mkheaders.c \
 	mkswapconf.c specfile.c
