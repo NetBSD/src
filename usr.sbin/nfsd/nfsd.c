@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsd.c,v 1.32 2000/06/09 00:05:02 fvdl Exp $	*/
+/*	$NetBSD: nfsd.c,v 1.33 2001/01/11 01:43:10 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)nfsd.c	8.9 (Berkeley) 3/29/95";
 #else
-__RCSID("$NetBSD: nfsd.c,v 1.32 2000/06/09 00:05:02 fvdl Exp $");
+__RCSID("$NetBSD: nfsd.c,v 1.33 2001/01/11 01:43:10 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -357,7 +357,7 @@ main(argc, argv)
 				err(1, "rpcb_set tcp6 failed");
 	}
 
-	openlog("nfsd:", LOG_PID, LOG_DAEMON);
+	openlog("nfsd", LOG_PID, LOG_DAEMON);
 
 	for (i = 0; i < nfsdcnt; i++) {
 		switch (fork()) {
