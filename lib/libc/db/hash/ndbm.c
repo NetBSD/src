@@ -1,4 +1,4 @@
-/*	$NetBSD: ndbm.c,v 1.9 1996/05/04 00:38:58 cgd Exp $	*/
+/*	$NetBSD: ndbm.c,v 1.10 1996/11/07 06:48:03 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)ndbm.c	8.4 (Berkeley) 7/21/94";
 #else
-static char rcsid[] = "$NetBSD: ndbm.c,v 1.9 1996/05/04 00:38:58 cgd Exp $";
+static char rcsid[] = "$NetBSD: ndbm.c,v 1.10 1996/11/07 06:48:03 jtc Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -207,7 +207,7 @@ dbm_error(db)
 	HTAB *hp;
 
 	hp = (HTAB *)db->internal;
-	return (hp->errno);
+	return (hp->err);
 }
 
 extern int
@@ -217,7 +217,7 @@ dbm_clearerr(db)
 	HTAB *hp;
 
 	hp = (HTAB *)db->internal;
-	hp->errno = 0;
+	hp->err = 0;
 	return (0);
 }
 
