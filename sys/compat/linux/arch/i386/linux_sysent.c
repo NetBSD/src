@@ -1,4 +1,4 @@
-/* $NetBSD: linux_sysent.c,v 1.49 2003/08/10 20:17:23 jdolecek Exp $ */
+/* $NetBSD: linux_sysent.c,v 1.50 2004/08/01 10:32:40 jdolecek Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sysent.c,v 1.49 2003/08/10 20:17:23 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sysent.c,v 1.50 2004/08/01 10:32:40 jdolecek Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_43.h"
@@ -466,10 +466,10 @@ struct sysent linux_sysent[] = {
 	    linux_sys_getfsuid },		/* 216 = getfsuid */
 	{ 0, 0, 0,
 	    linux_sys_nosys },			/* 217 = unimplemented pivot_root */
-	{ 0, 0, 0,
-	    linux_sys_nosys },			/* 218 = unimplemented mincore */
-	{ 0, 0, 0,
-	    linux_sys_nosys },			/* 219 = unimplemented madvise */
+	{ 3, s(struct sys_mincore_args), 0,
+	    sys_mincore },			/* 218 = mincore */
+	{ 3, s(struct sys_madvise_args), 0,
+	    sys_madvise },			/* 219 = madvise */
 	{ 3, s(struct linux_sys_getdents64_args), 0,
 	    linux_sys_getdents64 },		/* 220 = getdents64 */
 	{ 3, s(struct linux_sys_fcntl64_args), 0,
