@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.242.2.6 2000/08/22 02:12:47 enami Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.242.2.7 2000/09/13 16:51:38 tron Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.236.2.6 2000/08/22 02:08:40 enami Exp 
+ *	NetBSD: pcidevs,v 1.236.2.7 2000/09/13 16:48:25 tron Exp 
  */
 
 /*
@@ -1549,6 +1549,7 @@
 #define	PCI_PRODUCT_VIATECH_VT3043	0x3043		/* VT3043 (Rhine) 10/100 Ethernet */
 #define	PCI_PRODUCT_VIATECH_VT82C686A_SMB	0x3057		/* VT82C686A SMBus Controller */
 #define	PCI_PRODUCT_VIATECH_VT82C686A_AC97	0x3058		/* VT82C686A AC-97 Audio Controller */
+#define	PCI_PRODUCT_VIATECH_VT6102	0x3065		/* VT6102 (Rhine II) 10/100 Ethernet */
 #define	PCI_PRODUCT_VIATECH_VT82C686A_MC97	0x3068		/* VT82C686A MC-97 Modem Controller */
 #define	PCI_PRODUCT_VIATECH_VT86C100A	0x6100		/* VT86C100A (Rhine-II) 10/100 Ethernet */
 #define	PCI_PRODUCT_VIATECH_VT8371_PPB	0x8391		/* VT8371 (Apollo KX133) PCI-PCI Bridge */
