@@ -1,10 +1,10 @@
 #
 # SUN_LAMP -- kernel for one of cgd's 486/50 EISA boxes...
 #
-#	$Id: SUN_LAMP,v 1.15 1993/05/07 08:33:37 cgd Exp $
+#	$Id: SUN_LAMP,v 1.16 1993/05/20 14:32:39 cgd Exp $
 #
 machine		"i386"
-cpu		"i486"
+cpu		"I486_CPU"
 ident		SUN_LAMP
 timezone	8 dst
 maxusers	24

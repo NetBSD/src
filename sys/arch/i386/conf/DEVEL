@@ -1,16 +1,18 @@
 #
 # Developement config
 #
-#	$Id: DEVEL,v 1.6 1993/05/07 08:33:10 cgd Exp $
+#	$Id: DEVEL,v 1.7 1993/05/20 14:32:24 cgd Exp $
 #
 machine		"i386"
-cpu		"i386"
+cpu		"I386_CPU"
+cpu		"I486_CPU"
 ident		DEVEL
 timezone	8 dst
 maxusers	2
 options		INET,DDB
 options		"COMPAT_43"
 options		"TCP_COMPAT_42"
+options		"MATH_EMULATE"
 
 config		netbsd	root on dk0 swap on dk0
 

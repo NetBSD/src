@@ -1,11 +1,12 @@
 #
 # GENERICISA -- Generic ISA machine with aha1742 -- distribution floppy
 #
-#	$Id: GENERICAHBBT,v 1.11 1993/05/07 08:33:18 cgd Exp $
+#	$Id: GENERICAHBBT,v 1.12 1993/05/20 14:32:28 cgd Exp $
 #
 
 machine		"i386"
-cpu		"i386"
+cpu		"I386_CPU"
+cpu		"I486_CPU"
 ident		GENERICAHBBT
 timezone	8 dst
 maxusers	10
@@ -15,6 +16,7 @@ options		"TCP_COMPAT_42"
 options		XSERVER,UCONSOLE
 options		PCFS,KERNFS
 options		SCSI
+options		"MATH_EMULATE"
 
 config		netbsd	root on wd0 swap on wd0 and sd0
 

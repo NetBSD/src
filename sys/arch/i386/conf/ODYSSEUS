@@ -1,10 +1,10 @@
 #
 # Laptop 386SX Odysseus
 #
-#	$Id: ODYSSEUS,v 1.7 1993/05/07 08:33:28 cgd Exp $
+#	$Id: ODYSSEUS,v 1.8 1993/05/20 14:32:33 cgd Exp $
 #
 machine		"i386"
-cpu		"i386"
+cpu		"I386_CPU"
 ident		ODYSSEUS
 timezone	8 dst
 maxusers	2
@@ -17,6 +17,7 @@ options		DEBUG
 options		DIAGNOSTIC
 options		KGDB
 options		"KGDBDEV=0x800"
+options		"MATH_EMULATE"
 
 config		netbsd	root on dk0 swap on dk0
 

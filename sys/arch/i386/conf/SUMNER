@@ -1,10 +1,10 @@
 #
 # Thos Sumner's 50Mhz 486
 #
-#	$Id: SUMNER,v 1.9 1993/05/07 08:33:35 cgd Exp $
+#	$Id: SUMNER,v 1.10 1993/05/20 14:32:38 cgd Exp $
 #
 machine		"i386"
-cpu		"i486"
+cpu		"I486_CPU"
 ident		SUMNER
 timezone	8 dst
 maxusers	4
