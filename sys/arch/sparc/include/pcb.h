@@ -42,7 +42,7 @@
  *	@(#)pcb.h	8.1 (Berkeley) 6/11/93
  *
  * from: Header: pcb.h,v 1.6 92/11/26 02:04:39 torek Exp 
- * $Id: pcb.h,v 1.1 1993/10/02 10:23:17 deraadt Exp $
+ * $Id: pcb.h,v 1.2 1994/05/19 08:23:36 deraadt Exp $
  */
 
 #include <machine/reg.h>
@@ -88,9 +88,9 @@
  * trap returns, and it can never persist across entry to user code.
  */
 struct pcb {
-	int	pcb_sp;		/* sp (%o6) when swtch() was called */
-	int	pcb_pc;		/* pc (%o7) when swtch() was called */
-	int	pcb_psr;	/* %psr when swtch() was called */
+	int	pcb_sp;		/* sp (%o6) when switch() was called */
+	int	pcb_pc;		/* pc (%o7) when switch() was called */
+	int	pcb_psr;	/* %psr when switch() was called */
 
 	caddr_t	pcb_onfault;	/* for copyin/out */
 

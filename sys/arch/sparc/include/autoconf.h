@@ -39,10 +39,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)autoconf.h	8.1 (Berkeley) 6/11/93
+ *	@(#)autoconf.h	8.2 (Berkeley) 9/30/93
  *
- * from: Header: autoconf.h,v 1.10 92/11/26 02:04:32 torek Exp  (LBL)
- * $Id: autoconf.h,v 1.2 1993/10/11 02:28:23 deraadt Exp $
+ * from: Header: autoconf.h,v 1.11 93/09/28 05:26:41 leres Exp (LBL)
+ * $Id: autoconf.h,v 1.3 1994/05/19 08:23:00 deraadt Exp $
  */
 
 /*
