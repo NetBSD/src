@@ -1,4 +1,4 @@
-/* 	$NetBSD: cdplay.c,v 1.15 2001/08/20 09:50:10 ad Exp $	*/
+/* 	$NetBSD: cdplay.c,v 1.16 2001/08/20 11:24:57 ad Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Andrew Doran.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: cdplay.c,v 1.15 2001/08/20 09:50:10 ad Exp $");
+__RCSID("$NetBSD: cdplay.c,v 1.16 2001/08/20 11:24:57 ad Exp $");
 #endif /* not lint */
 
 #include <sys/endian.h>
@@ -52,6 +52,7 @@ __RCSID("$NetBSD: cdplay.c,v 1.15 2001/08/20 09:50:10 ad Exp $");
 #include <err.h>
 #include <errno.h>
 #include <histedit.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -59,21 +60,23 @@ __RCSID("$NetBSD: cdplay.c,v 1.15 2001/08/20 09:50:10 ad Exp $");
 #include <util.h>
 
 enum cmd {
+	CMD_CLOSE,
 	CMD_EJECT,
 	CMD_HELP,
 	CMD_INFO,
+	CMD_NEXT,
 	CMD_PAUSE,
 	CMD_PLAY,
+	CMD_PREV,
 	CMD_QUIT,
+	CMD_RESET,
 	CMD_RESUME,
+	CMD_SET,
+	CMD_SHUFFLE,
+	CMD_SKIP,
+	CMD_STATUS,
 	CMD_STOP,
 	CMD_VOLUME,
-	CMD_CLOSE,
-	CMD_RESET,
-	CMD_SET,
-	CMD_STATUS,
-	CMD_NEXT,
-	CMD_PREV,
 };
 
 struct cmdtab {
@@ -82,25 +85,27 @@ struct cmdtab {
 	unsigned int	min;
 	const char	*args;
 } const cmdtab[] = {
-	{ CMD_HELP,	"?",	  1, 0 },
-	{ CMD_CLOSE,	"close",  1, NULL },
-	{ CMD_EJECT,	"eject",  1, NULL },
-	{ CMD_HELP,	"help",   1, NULL },
-	{ CMD_INFO,	"info",   1, NULL },
-	{ CMD_NEXT,	"next",   1, NULL },
-	{ CMD_PAUSE,	"pause",  2, NULL },
-	{ CMD_PLAY,	"play",   1, "min1:sec1[.fram1] [min2:sec2[.fram2]]" },
-	{ CMD_PLAY,	"play",   1, "track1[.index1] [track2[.index2]]" },
-	{ CMD_PLAY,	"play",   1, "tr1 m1:s1[.f1] [[tr2] [m2:s2[.f2]]]" },
-	{ CMD_PLAY,	"play",   1, "[#block [len]]" },
-	{ CMD_PREV,	"prev",   2, NULL },
-	{ CMD_QUIT,	"quit",   1, NULL },
-	{ CMD_RESET,	"reset",  4, NULL },
-	{ CMD_RESUME,	"resume", 4, NULL },
-	{ CMD_SET,	"set",    2, "msf | lba" },
-	{ CMD_STATUS,	"status", 3, NULL },
-	{ CMD_STOP,	"stop",   3, NULL },
-	{ CMD_VOLUME,	"volume", 1, "<l> <r>|left|right|mute|mono|stereo" },
+	{ CMD_HELP,	"?",	   1, 0 },
+	{ CMD_CLOSE,	"close",   1, NULL },
+	{ CMD_EJECT,	"eject",   1, NULL },
+	{ CMD_HELP,	"help",    1, NULL },
+	{ CMD_INFO,	"info",    1, NULL },
+	{ CMD_NEXT,	"next",    1, NULL },
+	{ CMD_PAUSE,	"pause",   2, NULL },
+	{ CMD_PLAY,	"play",    1, "min1:sec1[.fram1] [min2:sec2[.fram2]]" },
+	{ CMD_PLAY,	"play",    1, "track1[.index1] [track2[.index2]]" },
+	{ CMD_PLAY,	"play",    1, "tr1 m1:s1[.f1] [[tr2] [m2:s2[.f2]]]" },
+	{ CMD_PLAY,	"play",    1, "[#block [len]]" },
+	{ CMD_PREV,	"prev",    2, NULL },
+	{ CMD_QUIT,	"quit",    1, NULL },
+	{ CMD_RESET,	"reset",   4, NULL },
+	{ CMD_RESUME,	"resume",  4, NULL },
+	{ CMD_SET,	"set",     2, "msf | lba" },
+	{ CMD_SHUFFLE,	"shuffle", 2, NULL },
+	{ CMD_SKIP,	"skip",    2, NULL },
+	{ CMD_STATUS,	"status",  3, NULL },
+	{ CMD_STOP,	"stop",    3, NULL },
+	{ CMD_VOLUME,	"volume",  1, "<l> <r>|left|right|mute|mono|stereo" },
 };
 
 struct cd_toc_entry toc_buffer[100];
@@ -108,13 +113,16 @@ struct cd_toc_entry toc_buffer[100];
 const char *cdname;
 int     fd = -1;
 int     msf = 1;
+int	shuffle;
+int	interactive = 1;
+struct	itimerval itv_timer;
 
 History *hist;
 HistEvent he;
 EditLine *elptr;
 
 int	get_vol(int *, int *);
-int	get_status(int *, int *, int *, int *);
+int	get_status(int *, int *, int *, int *, int *);
 void	help(void);
 int	info(const char *);
 void	lba2msf(u_long, u_int *, u_int *, u_int *);
@@ -122,7 +130,7 @@ int 	main(int, char **);
 u_int	msf2lba(u_int, u_int, u_int);
 int	opencd(void);
 const char   *parse(char *, int *);
-int	play(const char *);
+int	play(const char *, int);
 int	play_blocks(int, int);
 int	play_msf(int, int, int, int, int, int);
 int	play_track(int, int, int, int);
@@ -132,7 +140,8 @@ const char	*prompt(void);
 int	read_toc_entrys(int);
 int	run(int, const char *);
 int	setvol(int, int);
-int	skip(int);
+void	sig_timer(int, int, struct sigcontext *);
+int	skip(int, int);
 const char	*strstatus(int);
 void 	usage(void);
 
@@ -145,7 +154,8 @@ main(int argc, char **argv)
 	int cmd, len, c;
 	char *line;
 	const char *elline;
-	int scratch;
+	int scratch, rv;
+	struct sigaction sa_timer;
 
 	cdname = getenv("MUSIC_CD");
 	if (cdname == NULL)
@@ -177,8 +187,10 @@ main(int argc, char **argv)
 	}
 
 	opencd();
-
+	srandom(time(NULL));
+	
 	if (argc > 0) {
+		interactive = 0;
 		for (p = buf; argc-- > 0; argv++) {
 			len = strlen(*argv);
 
@@ -204,6 +216,12 @@ main(int argc, char **argv)
 	el_set(elptr, EL_PROMPT, prompt);
 	el_set(elptr, EL_HIST, history, hist);
 	el_source(elptr, NULL);
+
+	sigemptyset(&sa_timer.sa_mask);
+	sa_timer.sa_handler = (void (*)(int))sig_timer;
+	sa_timer.sa_flags = SA_RESTART;
+	if ((rv = sigaction(SIGALRM, &sa_timer, NULL)) < 0)
+		err(EXIT_FAILURE, "sigaction()");
 
 	for (;;) {
 		line = NULL;
@@ -274,6 +292,7 @@ run(int cmd, const char *arg)
 	int l, r, rv;
 
 	if (cmd == CMD_QUIT) {
+		close(fd);
 		exit(EXIT_SUCCESS);
 		/* NOTREACHED */
 	}
@@ -316,6 +335,8 @@ run(int cmd, const char *arg)
 		return (0);
 
 	case CMD_EJECT:
+		if (shuffle)
+			run(CMD_SHUFFLE, NULL);
 		if (ioctl(fd, CDIOCALLOW) < 0)
 			warn("ioctl(CDIOCALLOW)");
 		if ((rv = ioctl(fd, CDIOCEJECT)) < 0)
@@ -334,15 +355,50 @@ run(int cmd, const char *arg)
 	case CMD_PLAY:
 		while (isspace(*arg))
 			arg++;
-		rv = play(arg);
+		rv = play(arg, 1);
 		break;
 
 	case CMD_PREV:
-		rv = skip(-1);
+		rv = skip(-1, 1);
 		break;
 
 	case CMD_NEXT:
-		rv = skip(1);
+		rv = skip(1, 1);
+		break;
+
+	case CMD_SHUFFLE:
+		if (interactive == 0)
+			errx(EXIT_FAILURE,
+			    "`shuffle' valid only in interactive mode");
+		if (shuffle == 0) {
+			itv_timer.it_interval.tv_sec = 1;
+			itv_timer.it_interval.tv_usec = 0;
+			itv_timer.it_value.tv_sec = 1;
+			itv_timer.it_value.tv_usec = 0;
+			if (setitimer(ITIMER_REAL, &itv_timer, NULL) == 0) {
+				shuffle = 1;
+				skip(0, 1);
+			}
+		} else {
+			itv_timer.it_interval.tv_sec = 0;
+			itv_timer.it_interval.tv_usec = 0;
+			itv_timer.it_value.tv_sec = 0;
+			itv_timer.it_value.tv_usec = 0;
+			if (setitimer(ITIMER_REAL, &itv_timer, NULL) == 0)
+				shuffle = 0;
+		}
+		printf("shuffle play:\t%s\n", shuffle ? "on" : "off");
+		rv = 0;
+		break;
+
+	case CMD_SKIP:
+		if (!interactive)
+			errx(EXIT_FAILURE,
+			    "`skip' valid only in interactive mode");
+		if (!shuffle)
+			warnx("`skip' valid only in shuffle mode");
+		else
+			skip(0, 1);
 		break;
 
 	case CMD_SET:
@@ -390,11 +446,16 @@ run(int cmd, const char *arg)
 }
 
 int
-play(const char *arg)
+play(const char *arg, int fromuser)
 {
 	int rv, n, start, end, istart, iend, blk, len;
 	u_int tr1, tr2, m1, m2, s1, s2, f1, f2, tm, ts, tf;
 	struct ioc_toc_header h;
+
+	if (shuffle && fromuser) {
+		warn("`play' not valid in shuffle mode");
+		return (0);
+	}
 
 	if ((rv = ioctl(fd, CDIOREADTOCHEADER, &h)) <  0) {
 		warn("ioctl(CDIOREADTOCHEADER)");
@@ -410,7 +471,7 @@ play(const char *arg)
 
 	if (arg == NULL || *arg == '\0') {
 		/* Play the whole disc */
-		return (play_track(h.starting_track, 1, h.ending_track, 1));
+		return (play_track(h.starting_track, 1, h.ending_track, 99));
 	}
 
 	if (strchr(arg, '#') != NULL) {
@@ -654,24 +715,54 @@ Clean_up:
 	return (0);
 }
 
+void
+sig_timer(int sig, int code, struct sigcontext *scp)
+{
+	sigset_t anymore;
+
+	sigpending(&anymore);
+	if (sigismember(&anymore, SIGALRM))
+		return;
+	setitimer(ITIMER_REAL, &itv_timer, NULL);
+	if (fd != -1)
+		skip(0, 0);
+}
+
 int
-skip(int dir)
+skip(int dir, int fromuser)
 {
 	char str[16];
-	int rv, trk, m, s, f;
+	int rv, trk, idx, m, s, f;
 	struct ioc_toc_header h;
 
 	if ((rv = ioctl(fd, CDIOREADTOCHEADER, &h)) <  0) {
 		warn("ioctl(CDIOREADTOCHEADER)");
 		return (rv);
 	}
-	if ((rv = get_status(&trk, &m, &s, &f)) < 0)
+	if ((rv = get_status(&trk, &idx, &m, &s, &f)) < 0)
 		return (rv);
-	trk += dir;
-	if (trk > h.ending_track || trk < h.starting_track)
-		return (0);
-	sprintf(str, "%d", trk);
-	return (play(str));
+
+	if (dir == 0) {
+		if (fromuser || (rv != CD_AS_PLAY_IN_PROGRESS &&
+		    rv != CD_AS_PLAY_PAUSED))
+			trk = h.starting_track +
+			    random() % (h.ending_track - h.starting_track + 1);
+		else
+			return (0);
+	} else {
+		trk += dir;
+		if (trk > h.ending_track)
+			trk = h.starting_track;
+		else if(trk < h.starting_track)
+			trk = h.ending_track;
+	}
+
+	if (shuffle)
+		sprintf(str, "%d %d", trk, trk);
+	else
+		sprintf(str, "%d", trk);
+
+	return (play(str, 0));
 }
 
 const char *
@@ -711,15 +802,18 @@ print_status(const char *arg)
 {
 	struct cd_sub_channel_info data;
 	struct ioc_read_subchannel ss;
-	int rc, trk, m, s, f;
+	int rv, trk, idx, m, s, f;
 	struct ioc_vol v;
 
-	if ((rc = get_status(&trk, &m, &s, &f)) >= 0) {
-		printf("audio status:\t%s\n", strstatus(rc));
+	if ((rv = get_status(&trk, &idx, &m, &s, &f)) >= 0) {
+		printf("audio status:\t%s\n", strstatus(rv));
 		printf("current track:\t%d\n", trk);
+		printf("current index:\t%d\n", idx);
 		printf("position:\t%d:%02d.%02d\n", m, s, f);
 	} else
 		printf("audio status:\tno info available\n");
+
+	printf("shuffle play:\t%s\n", shuffle ? "on" : "off");
 
 	bzero(&ss, sizeof(ss));
 	ss.data = &data;
@@ -727,7 +821,7 @@ print_status(const char *arg)
 	ss.address_format = msf ? CD_MSF_FORMAT : CD_LBA_FORMAT;
 	ss.data_format = CD_MEDIA_CATALOG;
 
-	if ((rc = ioctl(fd, CDIOCREADSUBCHANNEL, (char *)&ss)) >= 0) {
+	if (ioctl(fd, CDIOCREADSUBCHANNEL, (char *)&ss) >= 0) {
 		printf("media catalog:\t%sactive",
 		    ss.data->what.media_catalog.mc_valid ? "" : "in");
 		if (ss.data->what.media_catalog.mc_valid &&
@@ -738,7 +832,7 @@ print_status(const char *arg)
 	} else
 		printf("media catalog:\tnone\n");
 
-	if ((rc = ioctl(fd, CDIOCGETVOL, &v)) >= 0) {
+	if (ioctl(fd, CDIOCGETVOL, &v) >= 0) {
 		printf("left volume:\t%d\n", v.vol[0]);
 		printf("right volume:\t%d\n", v.vol[1]);
 	} else {
@@ -746,7 +840,7 @@ print_status(const char *arg)
 		printf("right volume:\tnot available\n");
 	}
 
-	return (0);
+;	return (0);
 }
 
 int
@@ -915,7 +1009,7 @@ play_msf(int start_m, int start_s, int start_f, int end_m, int end_s,
 }
 
 int
-get_status(int *trk, int *min, int *sec, int *frame)
+get_status(int *trk, int *idx, int *min, int *sec, int *frame)
 {
 	struct ioc_read_subchannel s;
 	struct cd_sub_channel_info data;
@@ -934,6 +1028,7 @@ get_status(int *trk, int *min, int *sec, int *frame)
 	}
 
 	*trk = s.data->what.position.track_number;
+	*idx = s.data->what.position.index_number;
 	if (msf) {
 		*min = s.data->what.position.reladdr.msf.minute;
 		*sec = s.data->what.position.reladdr.msf.second;
