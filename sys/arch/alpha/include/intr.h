@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.15 1998/08/01 18:52:36 thorpej Exp $ */
+/* $NetBSD: intr.h,v 1.16 1998/09/21 00:33:16 matt Exp $ */
 
 /*
  * Copyright (c) 1997 Christopher G. Demetriou.  All rights reserved.
@@ -39,6 +39,7 @@
 #define	IPL_TTY		3	/* disable terminal interrupts */
 #define	IPL_CLOCK	4	/* disable clock interrupts */
 #define	IPL_HIGH	5	/* disable all interrupts */
+#define	IPL_SERIAL	6	/* disable serial interrupts */
 
 #define	IST_UNUSABLE	-1	/* interrupt cannot be used */
 #define	IST_NONE	0	/* none (dummy) */
@@ -51,8 +52,9 @@
 #define splx(s)								\
     ((s) == ALPHA_PSL_IPL_0 ? spl0() : alpha_pal_swpipl(s))
 #define splsoft()               alpha_pal_swpipl(ALPHA_PSL_IPL_SOFT)
-#define splsoftclock()          splsoft()
-#define splsoftnet()            splsoft()
+#define splsoftserial()		splsoft()
+#define splsoftclock()		splsoft()
+#define splsoftnet()		splsoft()
 
 /* IPL-raising functions/macros */
 static __inline int _splraise __P((int)) __attribute__ ((unused));
@@ -67,6 +69,7 @@ _splraise(s)
 #define splbio()                _splraise(ALPHA_PSL_IPL_IO)
 #define splimp()                _splraise(ALPHA_PSL_IPL_IO)
 #define spltty()                _splraise(ALPHA_PSL_IPL_IO)
+#define splserial()             _splraise(ALPHA_PSL_IPL_IO)
 #define splclock()              _splraise(ALPHA_PSL_IPL_CLOCK)
 #define splstatclock()          _splraise(ALPHA_PSL_IPL_CLOCK)
 #define splhigh()               _splraise(ALPHA_PSL_IPL_HIGH)
@@ -80,9 +83,11 @@ extern u_int64_t ssir;
 
 #define	SIR_NET		0x1
 #define	SIR_CLOCK	0x2
+#define	SIR_SERIAL	0x4
 
 #define	setsoftnet()	ssir |= SIR_NET
 #define	setsoftclock()	ssir |= SIR_CLOCK
+#define	setsoftserial()	ssir |= SIR_SERIAL
 
 /*
  * Alpha shared-interrupt-line common code.

@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.142 1998/09/13 11:57:58 mycroft Exp $ */
+/* $NetBSD: machdep.c,v 1.143 1998/09/21 00:33:17 matt Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.142 1998/09/13 11:57:58 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.143 1998/09/21 00:33:17 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -180,6 +180,11 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.142 1998/09/13 11:57:58 mycroft Exp $"
 #include <ddb/db_sym.h>
 #include <ddb/db_extern.h>
 #include <ddb/db_interface.h>
+#endif
+
+#include "com.h"
+#if NCOM > 0
+extern void comsoft __P((void));
 #endif
 
 #if defined(UVM)
@@ -2067,6 +2072,9 @@ do_sir()
 
 		DO_SIR(SIR_NET, netintr());
 		DO_SIR(SIR_CLOCK, softclock());
+#if NCOM > 0
+		DO_SIR(SIR_SERIAL, comsoft());
+#endif
 
 #undef COUNT_SOFT
 #undef DO_SIR
