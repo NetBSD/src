@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.62.2.9 2000/11/01 02:26:17 tv Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.62.2.10 2000/11/15 19:43:58 tv Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -341,11 +341,9 @@ now need to follow the instructions in the INSTALL document as to
 what you need to do to get your system reconfigured for your
 situation.  Your old /etc has been saved as /etc.old.
 
-At a minimum, you must edit rc.conf for your local environment and change
-rc_configured=NO to rc_configured=YES or reboots will stop at single-user,
-and copy back the password files (taking into account new system accounts
-that may have been created for this release) if you were using local
-password files.
+You should copy back the password files (taking into account new system
+accounts that may have been created for this release) if you were using
+local password files, and edit /etc/rc.conf to enable or disable services.
 }
 
 
@@ -356,8 +354,7 @@ saved by an earlier upgrade was not touched.  You will now need to
 follow the instructions in the INSTALL document to get your system
 reconfigured for your situation.
 
-At a minimum, you must edit rc.conf for your local environment and change
-rc_configured=NO to rc_configured=YES or reboots will stop at single-user.
+You should edit /etc/rc.conf to enable or disable services.
 }
 
 message distmedium
