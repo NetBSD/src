@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.39 1998/08/15 03:02:46 mycroft Exp $	*/
+/*	$NetBSD: pci.c,v 1.40 1998/11/07 16:47:22 drochner Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -327,4 +327,39 @@ pcisubmatch(parent, cf, aux)
 	    cf->pcicf_function != pa->pa_function)
 		return 0;
 	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
+}
+
+int
+pci_get_capability(pc, tag, capid, offset, value)
+	pci_chipset_tag_t pc;
+	pcitag_t tag;
+	int capid;
+	int *offset;
+	pcireg_t *value;
+{
+	pcireg_t reg;
+	unsigned int ofs;
+
+	reg = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
+	if (!(reg & PCI_STATUS_CAPLIST_SUPPORT))
+		return (0);
+
+	ofs = PCI_CAPLIST_PTR(pci_conf_read(pc, tag, PCI_CAPLISTPTR_REG));
+	while (ofs != 0) {
+#ifdef DIAGNOSTIC
+		if ((ofs & 3) || (ofs < 0x40))
+			panic("pci_get_capability");
+#endif
+		reg = pci_conf_read(pc, tag, ofs);
+		if (PCI_CAPLIST_CAP(reg) == capid) {
+			if (offset)
+				*offset = ofs;
+			if (value)
+				*value = reg;
+			return (1);
+		}
+		ofs = PCI_CAPLIST_NEXT(reg);
+	}
+
+	return (0);
 }

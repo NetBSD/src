@@ -1,4 +1,4 @@
-/*	$NetBSD: pcivar.h,v 1.36 1998/08/15 03:02:47 mycroft Exp $	*/
+/*	$NetBSD: pcivar.h,v 1.37 1998/11/07 16:47:22 drochner Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -174,6 +174,9 @@ int	pci_mapreg_info __P((pci_chipset_tag_t, pcitag_t, int, pcireg_t,
 int	pci_mapreg_map __P((struct pci_attach_args *, int, pcireg_t, int,
 	    bus_space_tag_t *, bus_space_handle_t *, bus_addr_t *,
 	    bus_size_t *));
+
+int pci_get_capability __P((pci_chipset_tag_t, pcitag_t, int,
+			    int *, pcireg_t *));
 
 /*
  * Helper functions for autoconfiguration.
