@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.h,v 1.18 2000/05/03 11:12:13 veego Exp $	*/
+/*	$NetBSD: ip_nat.h,v 1.19 2000/05/21 18:45:55 veego Exp $	*/
 
 /*
  * Copyright (C) 1995-2000 by Darren Reed.
@@ -8,7 +8,7 @@
  * to the original author and the contributors.
  *
  * @(#)ip_nat.h	1.5 2/4/96
- * Id: ip_nat.h,v 2.17 2000/03/16 01:38:38 darrenr Exp
+ * Id: ip_nat.h,v 2.17.2.1 2000/05/15 06:50:14 darrenr Exp
  */
 
 #ifndef _NETINET_IP_NAT_H_
@@ -194,6 +194,8 @@ typedef	struct	natstat	{
 	u_long	ns_inuse;
 	u_long	ns_logged;
 	u_long	ns_logfail;
+	u_long	ns_memfail;
+	u_long	ns_badnat;
 	nat_t	**ns_table[2];
 	ipnat_t	*ns_list;
 	void	*ns_apslist;

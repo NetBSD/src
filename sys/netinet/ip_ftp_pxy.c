@@ -1,10 +1,10 @@
-/*	$NetBSD: ip_ftp_pxy.c,v 1.15 2000/05/11 19:46:06 veego Exp $	*/
+/*	$NetBSD: ip_ftp_pxy.c,v 1.16 2000/05/21 18:45:54 veego Exp $	*/
 
 /*
  * Simple FTP transparent proxy for in-kernel use.  For use with the NAT
  * code.
  *
- * Id: ip_ftp_pxy.c,v 2.7.2.5 2000/05/09 11:41:46 darrenr Exp
+ * Id: ip_ftp_pxy.c,v 2.7.2.7 2000/05/13 14:28:14 darrenr Exp
  */
 #if SOLARIS && defined(_KERNEL)
 extern	kmutex_t	ipf_rw;
@@ -311,21 +311,14 @@ ftpside_t *f;
 int dlen;
 {
 	tcphdr_t *tcp, tcph, *tcp2 = &tcph;
-	char *s;
 	struct in_addr swip, swip2;
 	u_short a5, a6, sp, dp;
 	u_int a1, a2, a3, a4;
-#if 0
-	char newbuf[IPF_FTPBUFSZ];
-	size_t nlen, olen;
-	mb_t *m;
-#if	SOLARIS
-	mb_t *m1;
-#endif
-#endif
 	fr_info_t fi;
 	int inc, off;
 	nat_t *ipn;
+	char *s;
+
 	/*
 	 * Check for PASV reply message.
 	 */
@@ -631,7 +624,7 @@ int rv;
 	 * apart from causing packets to go through here ordered).
 	 */
 	if (ntohl(tcp->th_seq) != f->ftps_seq + (wptr - rptr)) {
-		return APR_ERR(-1);
+		return APR_ERR(0);
 	}
 
 	while (mlen > 0) {
