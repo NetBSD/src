@@ -27,11 +27,12 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: grfabs_ccglb.c,v 1.2 1994/02/17 09:10:37 chopps Exp $
+ *	$Id: grfabs_ccglb.c,v 1.3 1994/03/27 06:23:32 chopps Exp $
  */
 
 #include <sys/types.h>
-#include <amiga/amiga/dlists.h>
+#include <sys/queue.h>
+
 #include <amiga/amiga/cc.h>
 #include <amiga/dev/grfabs_reg.h>
 #include <amiga/dev/grfabs_ccreg.h>

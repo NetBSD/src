@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: grfabs_ccreg.h,v 1.1 1994/02/13 21:10:34 chopps Exp $
+ *	$Id: grfabs_ccreg.h,v 1.2 1994/03/27 06:23:35 chopps Exp $
  */
 
 #if ! defined (_GRFABS_CCREG_H)
@@ -36,24 +36,24 @@
 typedef colormap_t *alloc_colormap_func (int);
 
 typedef struct monitor_data {
-    dll_list_t  modes;				  /* a list of supported modes. */
+    LIST_HEAD(modelist, display_mode) modes; /* a list of supported modes. */
     dmode_t *current_mode;
-    u_long    flags;				  /* monitor flags. */
+    u_long    flags;		  /* monitor flags. */
 } mdata_t;
 
 typedef struct display_mode_data {
-    monitor_t  * monitor;			  /* the monitor that owns this mode. */
-    view_t * current_view;			  /* current view to be displayed. */
+    monitor_t  * monitor;	/* the monitor that owns this mode. */
+    view_t * current_view;	/* current view to be displayed. */
     cop_t  **frames;
-    u_short    hedley_current;			  /* current hedley quadrent. */
-    u_short    bplcon0;				  /* bplcon0 data. */
+    u_short    hedley_current;	/* current hedley quadrent. */
+    u_short    bplcon0;		/* bplcon0 data. */
     u_short    std_start_x;
     u_short    std_start_y;
 #if defined (GRF_ECS)
     /* ECS registers. */
     u_short   beamcon0;
-    u_short   hbstart;				  /* no modes use the rest of these */
-    u_short   hbstop;				  /* ECS registers. */
+    u_short   hbstart;		/* no modes use the rest of these */
+    u_short   hbstop;		/* ECS registers. */
     u_short   hsstart;
     u_short   hsstop;
     u_short   vbstart;
@@ -62,17 +62,17 @@ typedef struct display_mode_data {
     u_short   vsstop;
 #endif
     /* some limit stuff. */
-    dimen_t   max_size;				  /* largest fit. */
-    dimen_t   min_size;				  /* smallest fit. */
+    dimen_t   max_size;		/* largest fit. */
+    dimen_t   min_size;		/* smallest fit. */
     u_short   min_depth;
     u_short   max_depth;
-    u_long   flags;				  /* mode specific flags. */
+    u_long   flags;		/* mode specific flags. */
     use_colormap_func *use_colormap;
     get_colormap_func *get_colormap;
     alloc_colormap_func *alloc_colormap;
     display_view_func  *display_view;
-    vbl_handler_func   *vbl_handler;		  /* gets called every vertical blank. */
-						  /* when this is the current mode.*/
+    vbl_handler_func   *vbl_handler;	/* gets called every vertical blank. */
+					/* when this is the current mode.*/
 } dmdata_t;
 
 enum dmode_flag_bits {
@@ -86,9 +86,9 @@ enum dmode_flags {
 };
 
 typedef struct view_data {
-    dmode_t *mode;				  /* the mode for this view */
+    dmode_t *mode;		/* the mode for this view */
     colormap_t *colormap;
-    u_long    flags;				  /* view specific flags. */
+    u_long    flags;		/* view specific flags. */
 } vdata_t;
 
 enum view_flag_bits {
@@ -96,7 +96,7 @@ enum view_flag_bits {
 };
 
 enum view_flags {
-    VF_DISPLAY = 1 << VB_DISPLAY,		  /* set if view is being displayed */
+    VF_DISPLAY = 1 << VB_DISPLAY,  /* set if view is being displayed */
 };
 
 /*
