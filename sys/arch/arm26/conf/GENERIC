@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.20 2001/04/22 00:26:35 bjh21 Exp $
+# $NetBSD: GENERIC,v 1.21 2001/06/02 10:47:55 bjh21 Exp $
 
 # GENERIC arm26 configuration -- everything I've implemented so far
 
@@ -139,6 +139,9 @@ eh*		at podulebus0 slot ?	# i-cubed EtherH (E100/200/500)
 #dtide*		at podulebus0 slot ?	# D.T. Software IDE interface
 #wd*		at dtide? channel ? drive ?
 
+hcsc*		at podulebus0 slot ?	# HCCS 8-bit SCSI interface
+scsibus*	at hcsc?
+
 upc0		at iobus0 base 0x010000	# I/O chip on IOEB machines
 com0		at upc0			# Serial port
 lpt0		at upc0			# Parallel port
@@ -149,6 +152,13 @@ wd*		at wdc? drive ?		# IDE hard discs
 #cd*     	at atapibus? drive ?	# ATAPI CD-ROM drives
 #sd*     	at atapibus? drive ? 	# ATAPI disk drives
 #uk*     	at atapibus? drive ?	# ATAPI unknown
+
+sd*		at scsibus? target ? lun ?	# SCSI disk drives
+st*		at scsibus? target ? lun ?	# SCSI tape drives
+cd*		at scsibus? target ? lun ?	# SCSI CD-ROM drives
+ch*		at scsibus? target ? lun ?	# SCSI auto-changers
+uk*		at scsibus? target ? lun ?	# SCSI unknown device
+ss*		at scsibus? target ? lun ?	# SCSI scanner
 
 arcvideo0	at root			# On-board video
 wsdisplay0	at arcvideo0
