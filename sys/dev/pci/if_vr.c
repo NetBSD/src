@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.28 1999/11/12 18:14:19 thorpej Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.29 1999/11/19 18:27:18 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -137,6 +137,7 @@
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
+#include <dev/mii/mii_bitbang.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
@@ -312,8 +313,6 @@ static void vr_tick		__P((void *));
 static int vr_ifmedia_upd	__P((struct ifnet *));
 static void vr_ifmedia_sts	__P((struct ifnet *, struct ifmediareq *));
 
-static void vr_mii_sync		__P((struct vr_softc *));
-static void vr_mii_send		__P((struct vr_softc *, u_int32_t, int));
 static int vr_mii_readreg	__P((struct device *, int, int));
 static void vr_mii_writereg	__P((struct device *, int, int, int));
 static void vr_mii_statchg	__P((struct device *));
@@ -348,57 +347,41 @@ int	vr_copy_small = 0;
 	CSR_WRITE_4(sc, reg,				\
 		CSR_READ_4(sc, reg) & ~x)
 
-#define	SIO_SET(x)					\
-	CSR_WRITE_1(sc, VR_MIICMD,			\
-		CSR_READ_1(sc, VR_MIICMD) | x)
-
-#define	SIO_CLR(x)					\
-	CSR_WRITE_1(sc, VR_MIICMD,			\
-		CSR_READ_1(sc, VR_MIICMD) & ~x)
-
 /*
- * Sync the PHYs by setting data bit and strobing the clock 32 times.
+ * MII bit-bang glue.
  */
-static void
-vr_mii_sync(sc)
-	struct vr_softc *sc;
-{
-	int i;
+u_int32_t vr_mii_bitbang_read __P((struct device *));
+void vr_mii_bitbang_write __P((struct device *, u_int32_t));
 
-	SIO_SET(VR_MIICMD_DIR|VR_MIICMD_DATAOUT);
-
-	for (i = 0; i < 32; i++) {
-		SIO_SET(VR_MIICMD_CLK);
-		DELAY(1);
-		SIO_CLR(VR_MIICMD_CLK);
-		DELAY(1);
+const struct mii_bitbang_ops vr_mii_bitbang_ops = {
+	vr_mii_bitbang_read,
+	vr_mii_bitbang_write,
+	{
+		VR_MIICMD_DATAOUT,	/* MII_BIT_MDO */
+		VR_MIICMD_DATAIN,	/* MII_BIT_MDI */
+		VR_MIICMD_CLK,		/* MII_BIT_MDC */
+		VR_MIICMD_DIR,		/* MII_BIT_DIR_HOST_PHY */
+		0,			/* MII_BIT_DIR_PHY_HOST */
 	}
+};
+
+u_int32_t
+vr_mii_bitbang_read(self)
+	struct device *self;
+{
+	struct vr_softc *sc = (void *) self;
+
+	return (CSR_READ_1(sc, VR_MIICMD));
 }
 
-/*
- * Clock a series of bits through the MII.
- */
-static void
-vr_mii_send(sc, bits, cnt)
-	struct vr_softc *sc;
-	u_int32_t bits;
-	int cnt;
+void
+vr_mii_bitbang_write(self, val)
+	struct device *self;
+	u_int32_t val;
 {
-	int i;
+	struct vr_softc *sc = (void *) self;
 
-	SIO_CLR(VR_MIICMD_CLK);
-
-	for (i = (0x1 << (cnt - 1)); i; i >>= 1) {
-		if (bits & i) {
-			SIO_SET(VR_MIICMD_DATAOUT);
-		} else {
-			SIO_CLR(VR_MIICMD_DATAOUT);
-		}
-		DELAY(1);
-		SIO_CLR(VR_MIICMD_CLK);
-		DELAY(1);
-		SIO_SET(VR_MIICMD_CLK);
-	}
+	CSR_WRITE_1(sc, VR_MIICMD, (val & 0xff) | VR_MIICMD_DIRECTPGM);
 }
 
 /*
@@ -409,77 +392,10 @@ vr_mii_readreg(self, phy, reg)
 	struct device *self;
 	int phy, reg;
 {
-	struct vr_softc *sc = (struct vr_softc *)self;
-	int i, ack, val = 0;
+	struct vr_softc *sc = (void *) self;
 
-	CSR_WRITE_1(sc, VR_MIICMD, 0);
-	VR_SETBIT(sc, VR_MIICMD, VR_MIICMD_DIRECTPGM);
-
-	/*
-	 * Turn on data xmit.
-	 */
-	SIO_SET(VR_MIICMD_DIR);
-
-	vr_mii_sync(sc);
-
-	/*
-	 * Send command/address info.
-	 */
-	vr_mii_send(sc, MII_COMMAND_START, 2);
-	vr_mii_send(sc, MII_COMMAND_READ, 2);
-	vr_mii_send(sc, phy, 5);
-	vr_mii_send(sc, reg, 5);
-
-	/* Idle bit */
-	SIO_CLR((VR_MIICMD_CLK|VR_MIICMD_DATAOUT));
-	DELAY(1);
-	SIO_SET(VR_MIICMD_CLK);
-	DELAY(1);
-
-	/* Turn off xmit. */
-	SIO_CLR(VR_MIICMD_DIR);
-
-	/* Check for ack */
-	SIO_CLR(VR_MIICMD_CLK);
-	DELAY(1);
-	SIO_SET(VR_MIICMD_CLK);
-	DELAY(1);
-	ack = CSR_READ_4(sc, VR_MIICMD) & VR_MIICMD_DATAIN;
-
-	/*
-	 * Now try reading data bits. If the ack failed, we still
-	 * need to clock through 16 cycles to keep the PHY(s) in sync.
-	 */
-	if (ack) {
-		for (i = 0; i < 16; i++) {
-			SIO_CLR(VR_MIICMD_CLK);
-			DELAY(1);
-			SIO_SET(VR_MIICMD_CLK);
-			DELAY(1);
-		}
-		goto fail;
-	}
-
-	for (i = 0x8000; i; i >>= 1) {
-		SIO_CLR(VR_MIICMD_CLK);
-		DELAY(1);
-		if (!ack) {
-			if (CSR_READ_4(sc, VR_MIICMD) & VR_MIICMD_DATAIN)
-				val |= i;
-			DELAY(1);
-		}
-		SIO_SET(VR_MIICMD_CLK);
-		DELAY(1);
-	}
-
- fail:
-
-	SIO_CLR(VR_MIICMD_CLK);
-	DELAY(1);
-	SIO_SET(VR_MIICMD_CLK);
-	DELAY(1);
-
-	return (val);
+	CSR_WRITE_1(sc, VR_MIICMD, VR_MIICMD_DIRECTPGM);
+	return (mii_bitbang_readreg(self, &vr_mii_bitbang_ops, phy, reg));
 }
 
 /*
@@ -490,35 +406,10 @@ vr_mii_writereg(self, phy, reg, val)
 	struct device *self;
 	int phy, reg, val;
 {
-	struct vr_softc *sc = (struct vr_softc *)self;
+	struct vr_softc *sc = (void *) self;
 
-	CSR_WRITE_1(sc, VR_MIICMD, 0);
-	VR_SETBIT(sc, VR_MIICMD, VR_MIICMD_DIRECTPGM);
-
-	/*
-	 * Turn on data output.
-	 */
-	SIO_SET(VR_MIICMD_DIR);
-
-	vr_mii_sync(sc);
-
-	vr_mii_send(sc, MII_COMMAND_START, 2);
-	vr_mii_send(sc, MII_COMMAND_WRITE, 2);
-	vr_mii_send(sc, phy, 5);
-	vr_mii_send(sc, reg, 5);
-	vr_mii_send(sc, MII_COMMAND_ACK, 2);
-	vr_mii_send(sc, val, 16);
-
-	/* Idle bit. */
-	SIO_SET(VR_MIICMD_CLK);
-	DELAY(1);
-	SIO_CLR(VR_MIICMD_CLK);
-	DELAY(1);
-
-	/*
-	 * Turn off xmit.
-	 */
-	SIO_CLR(VR_MIICMD_DIR);
+	CSR_WRITE_1(sc, VR_MIICMD, VR_MIICMD_DIRECTPGM);
+	mii_bitbang_writereg(self, &vr_mii_bitbang_ops, phy, reg, val);
 }
 
 static void
