@@ -1,4 +1,4 @@
-/* $NetBSD: autoconf.c,v 1.2 2002/03/24 23:37:42 bjh21 Exp $ */
+/* $NetBSD: autoconf.c,v 1.3 2003/07/14 15:17:13 lukem Exp $ */
 /*-
  * Copyright (c) 1998, 1999 Ben Harris
  * All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: autoconf.c,v 1.2 2002/03/24 23:37:42 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.3 2003/07/14 15:17:13 lukem Exp $");
 
 #include <sys/conf.h>
 #include <sys/device.h>
