@@ -1,4 +1,4 @@
-/*	$NetBSD: curses_private.h,v 1.20 2002/01/02 10:38:27 blymn Exp $	*/
+/*	$NetBSD: curses_private.h,v 1.21 2002/06/26 18:14:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998-2000 Brett Lymn
@@ -231,7 +231,7 @@ struct __screen {
 	unsigned int len;
 	int meta_state;
 	char pad_char;
-	char ttytype[1024];
+	char ttytype[128];
 	int endwin;
 };
 
@@ -255,7 +255,8 @@ void     _cursesi_resetterm(SCREEN *screen);
 int      _cursesi_setterm(char *type, SCREEN *screen);
 int      _cursesi_wnoutrefresh(SCREEN *screen, WINDOW *win);
 int	 __delay(void);
-unsigned int __hash(char *s, int len);
+unsigned int __hash_more(char *s, size_t len, u_int h);
+#define	__hash(s, len)	__hash_more(s, len, 0u)
 void	 __id_subwins(WINDOW *orig);
 void	 __init_getch(SCREEN *screen);
 void	 __init_acs(SCREEN *screen);

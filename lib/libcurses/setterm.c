@@ -1,4 +1,4 @@
-/*	$NetBSD: setterm.c,v 1.31 2002/01/02 10:38:29 blymn Exp $	*/
+/*	$NetBSD: setterm.c,v 1.32 2002/06/26 18:14:07 christos Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)setterm.c	8.8 (Berkeley) 10/25/94";
 #else
-__RCSID("$NetBSD: setterm.c,v 1.31 2002/01/02 10:38:29 blymn Exp $");
+__RCSID("$NetBSD: setterm.c,v 1.32 2002/06/26 18:14:07 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -123,11 +123,10 @@ setterm(char *type)
 int
 _cursesi_setterm(char *type, SCREEN *screen)
 {
-	static char cm_buff[1024], tc[1024], *tcptr;
 	int unknown;
-	size_t limit;
 	struct winsize win;
 	char *p;
+	char cm_buff[64];
 
 #ifdef DEBUG
 	__CTRACE("setterm: (\"%s\")\nLINES = %d, COLS = %d\n",
@@ -187,7 +186,7 @@ _cursesi_setterm(char *type, SCREEN *screen)
 	 * Test for cursor motion capability.
 	 *
 	 */
-	if (t_goto(NULL, screen->tc_cm, 0, 0, cm_buff, 1023) < 0) {
+	if (t_goto(NULL, screen->tc_cm, 0, 0, cm_buff, sizeof(cm_buff) - 1) < 0) {
 		screen->CA = 0;
 		screen->tc_cm = 0;
 	} else
@@ -199,14 +198,20 @@ _cursesi_setterm(char *type, SCREEN *screen)
 	 */
 	screen->pad_char = screen->tc_pc ? screen->tc_pc[0] : 0; 
 
+	/* Get full name of terminal */
 	if (unknown) {
 		strcpy(screen->ttytype, "dumb");
 	} else {
-		tcptr = tc;
-		limit = 1023;
-		if (t_getterm(screen->cursesi_genbuf, &tcptr, &limit) < 0)
+		char *tcptr;
+		size_t limit = 0;
+		if (t_getterm(screen->cursesi_genbuf, 0, &limit))
 			return ERR;
-		__longname(tc, screen->ttytype);
+		if ((tcptr = malloc(limit + 1)) == NULL)
+			return ERR;
+		if (t_getterm(screen->cursesi_genbuf, &tcptr, 0) < 0)
+ 			return ERR;
+		__longname(tcptr, screen->ttytype);
+		free(tcptr);
 	}
 
 	/* If no scrolling commands, no quick change. */
@@ -351,7 +356,7 @@ zap(SCREEN *screen)
 		*(tmp + 1) = *(namp + 1);
 		*vp++ = t_getnum(screen->cursesi_genbuf, tmp);
 #ifdef DEBUG
-		__CTRACE("%2.2s = %d\n", namp, *vp[-1]);
+		__CTRACE("%2.2s = %d\n", namp, vp[-1]);
 #endif
 		namp += 2;
 		screen->int_count++;
@@ -367,7 +372,7 @@ zap(SCREEN *screen)
 		*(tmp + 1) = *(namp + 1);
 		*sp++ = t_agetstr(screen->cursesi_genbuf, tmp);
 #ifdef DEBUG
-		__CTRACE("%2.2s = %s", namp, *sp[-1] == NULL ? "NULL\n" : "\"");
+		__CTRACE("%2.2s = %s", namp, sp[-1] == NULL ? "NULL\n" : "\"");
 		if (sp[-1] != NULL) {
 			for (cp = sp[-1]; *cp; cp++)
 				__CTRACE("%s", unctrl(*cp));
