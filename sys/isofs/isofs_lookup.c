@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ufs_lookup.c	7.33 (Berkeley) 5/19/91
- *	$Id: isofs_lookup.c,v 1.7 1993/09/07 15:40:54 ws Exp $
+ *	$Id: isofs_lookup.c,v 1.8 1993/09/16 16:54:09 ws Exp $
  */
 
 #include "param.h"
@@ -285,10 +285,12 @@ searchloop:
 					saveoffset = ndp->ni_ufs.ufs_offset;
 				} else if (ino)
 					goto foundino;
+#ifdef	NOSORTBUG	/* On some CDs directory entries are not sorted correctly */
 				else if (res < 0)
 					goto notfound;
 				else if (res > 0 && numdirpasses == 2)
 					numdirpasses++;
+#endif
 			}
 			break;
 		case ISO_FTYPE_RRIP:

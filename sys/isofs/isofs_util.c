@@ -1,5 +1,5 @@
 /*
- *	$Id: isofs_util.c,v 1.5 1993/09/07 15:40:59 ws Exp $
+ *	$Id: isofs_util.c,v 1.6 1993/09/16 16:54:10 ws Exp $
  */
 #include "param.h"
 #include "systm.h"
@@ -146,8 +146,12 @@ isofncmp(unsigned char *fn,int fnlen,unsigned char *isofn,int isolen)
 		}
 		if (c != *fn) {
 			if (c >= 'A' && c <= 'Z') {
-				if ((c += ('a' - 'A')) != *fn)
-					return *fn - c;
+				if (c + ('a' - 'A') != *fn) {
+					if (*fn >= 'a' && *fn <= 'z')
+						return *fn - ('a' - 'A') - c;
+					else
+						return *fn - c;
+				}
 			} else
 				return *fn - c;
 		}
