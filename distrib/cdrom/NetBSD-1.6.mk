@@ -1,4 +1,4 @@
-# $NetBSD: NetBSD-1.6.mk,v 1.1 2002/06/24 14:49:15 mrg Exp $
+# $NetBSD: NetBSD-1.6.mk,v 1.2 2002/09/25 04:15:41 lukem Exp $
 #
 # Configuration file for the NetBSD 1.6 binary release.
 
@@ -23,7 +23,7 @@ INTFILES.macppc=	ofwboot.xcf:macppc/installation/ofwboot.xcf,link \
 # BOOTFILE.pmax is absolute
 BOOTFILE.pmax=		${EXTFILEDIR}/pmax.bootxx
 EXTFILES.pmax=		pmax.bootxx:pmax/binary/sets/base.tgz,./usr/mdec/bootxx_cd9660
-INTFILES.pmax=		netbsd.pmax:pmax/binary/kernel/install.gz,link \
+INTFILES.pmax=		netbsd.pmax:pmax/binary/kernel/netbsd-INSTALL.gz,link \
 			boot.pmax:pmax/binary/sets/base.tgz,./usr/mdec/boot.pmax
 
 # BOOTFILE.sparc is absolute
