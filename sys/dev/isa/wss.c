@@ -1,9 +1,14 @@
-/*	$NetBSD: wss.c,v 1.20 1997/04/05 23:50:26 augustss Exp $	*/
+/*	$NetBSD: wss.c,v 1.21 1997/04/06 00:33:08 augustss Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
  * Copyright (c) 1991-1993 Regents of the University of California.
  * All rights reserved.
+ *
+ * MAD support:
+ * Copyright (c) 1996 Lennart Augustsson
+ * Based on code which is
+ * Copyright (c) 1995 Hannu Savolainen
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -34,6 +39,30 @@
  * SUCH DAMAGE.
  *
  */
+/*
+ * Copyright by Hannu Savolainen 1994
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met: 1. Redistributions of source code must retain the above copyright
+ * notice, this list of conditions and the following disclaimer. 2.
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND ANY
+ * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE FOR
+ * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+ * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ */
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,6 +86,7 @@
 #include <dev/ic/ad1848reg.h>
 #include <dev/isa/ad1848var.h>
 #include <dev/isa/wssreg.h>
+#include <dev/isa/madreg.h>
 
 /*
  * Mixer devices
@@ -96,6 +126,8 @@ struct wss_softc {
 #define wss_drq    sc_ad1848.sc_drq
 
 	int 	mic_mute, cd_mute, dac_mute;
+	int	mad_chip_type;		/* chip type if MAD emulation of WSS */
+	bus_space_handle_t sc_mad_ioh;	/* handle */
 };
 
 struct audio_device wss_device = {
@@ -118,6 +150,10 @@ int	wss_query_devinfo __P((void *, mixer_devinfo_t *));
 
 static int wss_to_vol __P((mixer_ctrl_t *, struct ad1848_volume *));
 static int wss_from_vol __P((mixer_ctrl_t *, struct ad1848_volume *));
+
+static int 	madprobe __P((struct wss_softc *, int));
+static void	madprobedone __P((struct wss_softc *));
+
 /*
  * Define our interface to the higher level audio driver.
  */
@@ -186,6 +222,11 @@ wssprobe(parent, match, aux)
     };
     static u_char dma_bits[4] = {1, 2, 0, 3};
     
+    if (sc->sc_dev.dv_cfdata->cf_flags & 1)
+	sc->mad_chip_type = madprobe(sc, ia->ia_iobase);
+    else
+	sc->mad_chip_type = MAD_NONE;
+
     if (!WSS_BASE_VALID(ia->ia_iobase)) {
 	DPRINTF(("wss: configured iobase %x invalid\n", ia->ia_iobase));
 	return 0;
@@ -233,10 +274,15 @@ wssprobe(parent, match, aux)
     bus_space_write_1(sc->sc_iot, sc->sc_ioh, WSS_CONFIG,
 		      (interrupt_bits[ia->ia_irq] | dma_bits[ia->ia_drq]));
 
+    if (sc->mad_chip_type != MAD_NONE)
+	madprobedone(sc);
+
     return 1;
 
 bad:
     bus_space_unmap(sc->sc_iot, sc->sc_ioh, WSS_CODEC);
+    if (sc->mad_chip_type != MAD_NONE)
+	bus_space_unmap(sc->sc_iot, sc->sc_mad_ioh, MAD_NPORT);
     return 0;
 }
 
@@ -266,6 +312,11 @@ wssattach(parent, self, aux)
     
     version = bus_space_read_1(sc->sc_iot, sc->sc_ioh, WSS_STATUS) & WSS_VERSMASK;
     printf(" (vers %d)", version);
+    if (sc->mad_chip_type != MAD_NONE)
+        printf(", %s",
+               sc->mad_chip_type == MAD_82C929 ? "82C929" :
+               sc->mad_chip_type == MAD_82C928 ? "82C928" :
+               "OTI-601D");
     printf("\n");
 
     sc->sc_ad1848.parent = sc;
@@ -716,4 +767,186 @@ wss_query_devinfo(addr, dip)
     DPRINTF(("AUDIO_MIXER_DEVINFO: name=%s\n", dip->label.name));
 
     return 0;
+}
+
+/*
+ * Initialization code for OPTi MAD16 compatible audio chips. Including
+ *
+ *      OPTi 82C928     MAD16           (replaced by C929)
+ *      OAK OTI-601D    Mozart
+ *      OPTi 82C929     MAD16 Pro
+ *
+ */
+static unsigned int mad_read __P((struct wss_softc *, int, int));
+static void mad_write __P((struct wss_softc *, int, int, int));
+static int detect_mad16 __P((struct wss_softc *, int));
+
+static unsigned int
+mad_read(sc, chip_type, port)
+    struct wss_softc *sc;
+    int chip_type;
+    int port;
+{
+    unsigned int tmp;
+    int s = splaudio();		/* don't want an interrupt between outb&inb */
+    
+    switch (chip_type) {	/* Output password */
+    case MAD_82C928:
+    case MAD_OTI601D:
+	bus_space_write_1(sc->sc_iot, sc->sc_mad_ioh, MC_PASSWD_REG, M_PASSWD_928);
+	break;
+    case MAD_82C929:
+	bus_space_write_1(sc->sc_iot, sc->sc_mad_ioh, MC_PASSWD_REG, M_PASSWD_929);
+	break;
+    }
+    tmp = bus_space_read_1(sc->sc_iot, sc->sc_mad_ioh, port);
+    splx(s);
+    return tmp;
+}
+
+static void
+mad_write(sc, chip_type, port, value)
+    struct wss_softc *sc;
+    int chip_type;
+    int port;
+    int value;
+{
+    int s = splaudio();		/* don't want an interrupt between outb&outb */
+
+    switch (chip_type) {	/* Output password */
+    case MAD_82C928:
+    case MAD_OTI601D:
+	bus_space_write_1(sc->sc_iot, sc->sc_mad_ioh, MC_PASSWD_REG, M_PASSWD_928);
+	break;
+    case MAD_82C929:
+	bus_space_write_1(sc->sc_iot, sc->sc_mad_ioh, MC_PASSWD_REG, M_PASSWD_929);
+	break;
+    }
+    bus_space_write_1(sc->sc_iot, sc->sc_mad_ioh, port, value & 0xff);
+    splx(s);
+}
+
+static int
+detect_mad16(sc, chip_type)
+    struct wss_softc *sc;
+    int chip_type;
+{
+    unsigned char tmp, tmp2;
+
+    /*
+     * Check that reading a register doesn't return bus float (0xff)
+     * when the card is accessed using password. This may fail in case
+     * the card is in low power mode. Normally at least the power saving mode
+     * bit should be 0.
+     */
+    if ((tmp = mad_read(sc, chip_type, MC1_PORT)) == 0xff) {
+	DPRINTF(("MC1_PORT returned 0xff\n"));
+	return 0;
+    }
+
+    /*
+     * Now check that the gate is closed on first I/O after writing
+     * the password. (This is how a MAD16 compatible card works).
+     */
+    if ((tmp2 = bus_space_read_1(sc->sc_iot, sc->sc_mad_ioh, MC1_PORT)) == tmp)	{ /* It didn't close */
+	DPRINTF(("MC1_PORT didn't close after read (0x%02x)\n", tmp2));
+	return 0;
+    }
+
+    mad_write(sc, chip_type, MC1_PORT, tmp ^ 0x80);	/* Toggle a bit */
+
+    /* Compare the bit */
+    if ((tmp2 = mad_read(sc, chip_type, MC1_PORT)) != (tmp ^ 0x80)) {
+	mad_write(sc, chip_type, MC1_PORT, tmp);	/* Restore */
+	DPRINTF(("Bit revert test failed (0x%02x, 0x%02x)\n", tmp, tmp2));
+	return 0;
+    }
+
+    mad_write(sc, chip_type, MC1_PORT, tmp);	/* Restore */
+    return 1;
+}
+
+static int
+madprobe(sc, iobase)
+    struct wss_softc *sc;
+    int iobase;
+{
+    static int valid_ports[M_WSS_NPORTS] = 
+        { M_WSS_PORT0, M_WSS_PORT1, M_WSS_PORT2, M_WSS_PORT3 };
+    int i;
+    int chip_type;
+
+    if (bus_space_map(sc->sc_iot, MAD_BASE, MAD_NPORT, 0, &sc->sc_mad_ioh))
+	return MAD_NONE;
+
+    DPRINTF(("mad: Detect using password = 0xE2\n"));
+    if (!detect_mad16(sc, MAD_82C928)) {
+	/* No luck. Try different model */
+	DPRINTF(("mad: Detect using password = 0xE3\n"));
+	if (!detect_mad16(sc, MAD_82C929))
+	    goto bad;
+	chip_type = MAD_82C929;
+	DPRINTF(("mad: 82C929 detected\n"));
+    } else {
+	if ((mad_read(sc, MAD_82C928, MC3_PORT) & 0x03) == 0x03) {
+	    DPRINTF(("mad: Mozart detected\n"));
+	    chip_type = MAD_OTI601D;
+	} else {
+	    DPRINTF(("mad: 82C928 detected?\n"));
+	    chip_type = MAD_82C928;
+	}
+    }
+
+#ifdef AUDIO_DEBUG
+    for (i = MC1_PORT; i <= MC7_PORT; i++)
+	printf("mad: port %03x = %02x\n", i, mad_read(sc, chip_type, i));
+#endif
+
+    /* Set the WSS address. */
+    for (i = 0; i < 4; i++)
+	if (valid_ports[i] == iobase)
+	    break;
+    if (i > 3) {		/* Not a valid port */
+	printf("mad: Bad WSS base address 0x%x\n", iobase);
+	goto bad;
+    }
+    /* enable WSS emulation at the I/O port, keep joystck */
+    mad_write(sc, chip_type, MC1_PORT, M_WSS_PORT_SELECT(i));
+
+    mad_write(sc, chip_type, MC2_PORT, 0x03); /* ? */
+    mad_write(sc, chip_type, MC3_PORT, 0xf0); /* Disable SB */
+
+    return chip_type;
+bad:
+    bus_space_unmap(sc->sc_iot, sc->sc_mad_ioh, MAD_NPORT);
+    return MAD_NONE;
+}
+
+static void
+madprobedone(sc)
+    struct wss_softc *sc;
+{
+    int chip_type = sc->mad_chip_type;
+    unsigned char cs4231_mode;
+
+    cs4231_mode = 
+	strncmp(sc->sc_ad1848.chip_name, "CS4248", 6) == 0 ||
+	strncmp(sc->sc_ad1848.chip_name, "CS4231", 6) == 0 ? 0x02 : 0;
+
+    if (chip_type == MAD_82C929) {
+	mad_write(sc, chip_type, MC4_PORT, 0xa2);
+	mad_write(sc, chip_type, MC5_PORT, 0xA5 | cs4231_mode);
+	mad_write(sc, chip_type, MC6_PORT, 0x03);	/* Disable MPU401 */
+    } else {
+	mad_write(sc, chip_type, MC4_PORT, 0x02);
+	mad_write(sc, chip_type, MC5_PORT, 0x30 | cs4231_mode);
+    }
+
+#ifdef AUDIO_DEBUG
+    if (wssdebug) {
+	int i;
+	for (i = MC1_PORT; i <= MC7_PORT; i++)
+	    DPRINTF(("port %03x after init = %02x\n", i, mad_read(sc, chip_type, i)));
+    }
+#endif
 }
