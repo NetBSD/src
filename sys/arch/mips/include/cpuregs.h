@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuregs.h,v 1.40 2001/05/15 21:48:50 simonb Exp $	*/
+/*	$NetBSD: cpuregs.h,v 1.41 2001/05/30 07:21:51 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -656,6 +656,7 @@
 #define MIPS_R12000	0x0e	/* MIPS R12000			ISA IV	*/
 #define MIPS_R14000	0x0f	/* MIPS R14000			ISA IV	*/
 #define MIPS_R8000	0x10	/* MIPS R8000 Blackbird/TFP	ISA IV	*/
+#define MIPS_RC32334	0x18	/* IDT RC32332/RC32334		ISA 32  */
 #define MIPS_R4600	0x20	/* QED R4600 Orion		ISA III */
 #define MIPS_R4700	0x21	/* QED R4700 Orion		ISA III */
 #define MIPS_R3SONY	0x21	/* Sony R3000 based 		ISA I	*/
