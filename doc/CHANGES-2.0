@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.196 2004/05/10 15:57:38 tron Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.197 2004/05/10 19:31:45 tron Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -2146,4 +2146,11 @@ usr.bin/make/var.c				1.88
 	Lines prefixed with '+' are executed even when -n is given.
 	[Actually posix says they should also be done for -q and -t]
 	[sjg, ticket #282]
+
+distrib/sets/lists/base/mi			1.475
+distrib/sets/lists/comp/mi			1.699
+
+	Remove empty line.
+	Add /usr/include/netipsec.
+	[groo, ticket #305]
 
