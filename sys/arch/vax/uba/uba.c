@@ -1,4 +1,4 @@
-/*      $NetBSD: uba.c,v 1.7 1995/03/30 20:55:34 ragge Exp $      */
+/*      $NetBSD: uba.c,v 1.8 1995/06/16 15:26:11 ragge Exp $      */
 
 /*
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -824,9 +824,16 @@ ubareset(uban)
 	printf("uba%d: reset", uban);
 	ubainit(uh->uh_uba);
 	ubameminit(uban);
-	for (cdp = cdevsw; cdp < cdevsw + nchrdev; cdp++)
-		(*cdp->d_reset)(uban);
-/*	ifubareset(uban); Don't think we need this */
+/* XXX Intressant, vi m}ste l|sa det h{r med ubareset() p} n}t smart
+ *     s{tt. En l{nkad lista som s{tts upp vid autoconfiggen? Kanske.
+ *     N{r anv{nds dom? Jag vet faktiskt inte; det verkar vara en
+ *     ren sm|rja den gamla koden. F}r peturba lite mer docs...
+ *     950428/Ragge
+ */
+/*	for (cdp = cdevsw; cdp < cdevsw + nchrdev; cdp++)
+		(*cdp->d_reset)(uban); 
+	ifubareset(uban);
+ */
 	printf("\n");
 	splx(s);
 }
