@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.107 2003/03/22 10:39:47 dsl Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.108 2003/05/16 14:40:41 itojun Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.107 2003/03/22 10:39:47 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.108 2003/05/16 14:40:41 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1504,7 +1504,7 @@ fdcheckstd(p)
 		if (fdp->fd_ofiles[i] != NULL)
 			continue;
 		snprintf(which, sizeof(which), ",%d", i);
-		strcat(closed, which);
+		strlcat(closed, which, sizeof(closed));
 		if (devnull < 0) {
 			if ((error = falloc(p, &fp, &fd)) != 0)
 				return (error);
