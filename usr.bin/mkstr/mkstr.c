@@ -1,4 +1,4 @@
-/*	$NetBSD: mkstr.c,v 1.7 1997/10/19 05:13:12 lukem Exp $	*/
+/*	$NetBSD: mkstr.c,v 1.8 1997/10/19 14:12:34 mrg Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)mkstr.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: mkstr.c,v 1.7 1997/10/19 05:13:12 lukem Exp $");
+__RCSID("$NetBSD: mkstr.c,v 1.8 1997/10/19 14:12:34 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -277,6 +277,9 @@ hashit(str, really, fakept)
 	long hashval = 0;
 	char *cp;
 
+#ifdef __GNUC__
+	hp = NULL;	/* XXX gcc */
+#endif
 	if (really)
 		fflush(mesgwrite);
 	for (cp = str; *cp;)

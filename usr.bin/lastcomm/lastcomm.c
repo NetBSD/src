@@ -1,4 +1,4 @@
-/*	$NetBSD: lastcomm.c,v 1.12 1997/10/19 03:55:13 lukem Exp $	*/
+/*	$NetBSD: lastcomm.c,v 1.13 1997/10/19 14:12:22 mrg Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)lastcomm.c	8.2 (Berkeley) 4/29/95";
 #endif
-__RCSID("$NetBSD: lastcomm.c,v 1.12 1997/10/19 03:55:13 lukem Exp $");
+__RCSID("$NetBSD: lastcomm.c,v 1.13 1997/10/19 14:12:22 mrg Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -138,7 +138,8 @@ main(argc, argv)
 			t = expand(ab.ac_utime) + expand(ab.ac_stime);
 			(void)printf(
 			    "%-*.*s %-7s %-*.*s %-*.*s %6.2f secs %.16s",
-			     fldsiz(acct, ac_comm), (int)fldsiz(acct, ac_comm),
+			     (int)fldsiz(acct, ac_comm),
+			     (int)fldsiz(acct, ac_comm),
 			     ab.ac_comm, flagbits(ab.ac_flag),
 			     UT_NAMESIZE, UT_NAMESIZE,
 			     user_from_uid(ab.ac_uid, 0), UT_LINESIZE,
