@@ -31,7 +31,8 @@ or implied warranty.
 
 #include <kdc.h>
 
-RCSID("$Id: krb_kdb_utils.c,v 1.3 2001/09/17 12:21:42 assar Exp $");
+__RCSID("$KTH-KRB: krb_kdb_utils.c,v 1.27 2001/09/16 22:41:55 assar Exp $"
+      "$NetBSD: krb_kdb_utils.c,v 1.4 2002/09/12 12:33:13 joda Exp $");
 
 /* always try /.k for backwards compatibility */
 static char *master_key_files[] = { MKEYFILE, "/.k", NULL };

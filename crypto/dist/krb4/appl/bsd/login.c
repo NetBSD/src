@@ -45,7 +45,8 @@
 #include <sys/capability.h>
 #endif
 
-RCSID("$Id: login.c,v 1.2 2002/07/20 08:36:21 grant Exp $");
+__RCSID("$KTH-KRB: login.c,v 1.133 2002/08/28 18:54:46 joda Exp $"
+      "$NetBSD: login.c,v 1.3 2002/09/12 12:33:10 joda Exp $");
 
 #ifdef OTP
 #include <otp.h>
@@ -65,7 +66,7 @@ static	char	*stypeof (char *);
 static	RETSIGTYPE	 timedout (int);
 static	int	 doremotelogin (char *);
 void	login_fbtab (char *, uid_t, gid_t);
-#ifdef KERBEROS
+#ifdef KRB4
 int	klogin (struct passwd *, char *, char *, char *);
 #endif
 
@@ -78,7 +79,7 @@ int	klogin (struct passwd *, char *, char *, char *);
 
 static	u_int	login_timeout;
 
-#ifdef KERBEROS
+#ifdef KRB4
 int	notickets = 1;
 int	noticketsdontcomplain = 1;
 char	*instance;
@@ -362,7 +363,7 @@ main(int argc, char **argv)
 		}
 		rootlogin = 0;
 		rval = 1;
-#ifdef	KERBEROS
+#ifdef	KRB4
 		if ((instance = strchr(username, '.')) != NULL) {
 		    if (strcmp(instance, ".root") == 0)
 			rootlogin = 1;
@@ -489,7 +490,7 @@ main(int argc, char **argv)
 		 * If trying to log in as root without Kerberos,
 		 * but with insecure terminal, refuse the login attempt.
 		 */
-#ifdef KERBEROS
+#ifdef KRB4
 		if (authok == 0)
 #endif
 		if (pwd && !rval && rootlogin && !rootterm(tty)
@@ -663,7 +664,7 @@ main(int argc, char **argv)
 		strlcpy(term, stypeof(tty), sizeof(term));
         /* set up a somewhat censored environment. */
         sysv_newenv(argc, argv, pwd, term, pflag);
-#ifdef KERBEROS
+#ifdef KRB4
 	if (krbtkfile_env)
 	    esetenv("KRBTKFILE", krbtkfile_env, 1);
 #endif
@@ -680,7 +681,7 @@ main(int argc, char **argv)
 			syslog(LOG_NOTICE, "ROOT LOGIN (%s) ON %s", username, tty);
 	}
 
-#ifdef KERBEROS
+#ifdef KRB4
 	if (!quietlog && notickets == 1 && !noticketsdontcomplain)
 		printf("Warning: no Kerberos tickets issued.\n");
 #endif
@@ -855,7 +856,7 @@ main(int argc, char **argv)
 	return 1;
 }
 
-#ifdef	KERBEROS
+#ifdef	KRB4
 #define	NBUFSIZ		(UT_NAMESIZE + 1 + 5)	/* .root suffix */
 #else
 #define	NBUFSIZ		(UT_NAMESIZE + 1)

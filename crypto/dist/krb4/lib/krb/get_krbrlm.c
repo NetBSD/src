@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995 - 2001 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2002 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -33,7 +33,8 @@
 
 #include "krb_locl.h"
 
-RCSID("$Id: get_krbrlm.c,v 1.5 2001/09/17 15:06:49 assar Exp $");
+__RCSID("$KTH-KRB: get_krbrlm.c,v 1.27 2002/09/09 15:51:02 joda Exp $"
+      "$NetBSD: get_krbrlm.c,v 1.6 2002/09/12 12:33:14 joda Exp $");
 
 /*
  * krb_get_lrealm takes a pointer to a string, and a number, n.  It fills
@@ -67,18 +68,18 @@ krb_get_lrealm_f(char *r, int n, FILE *f)
     p = buf + strspn(buf, " \t");
 
     /* Collect realmname. */
-    nchar    = strcspn(p, " \t\n");
+    nchar = strcspn(p, " \t\n");
     if (nchar == 0 || nchar > REALM_SZ)
-	return KFAILURE;	/* No realmname */
+        return KFAILURE;	/* No realmname */
+
     strncpy(r, p, nchar);
-    r[nchar] = 0;
+    r[nchar] = '\0';
 
     /* Does more junk follow? */
     p += nchar;
     nchar = strspn(p, " \t\n");
     if (p[nchar] == 0)
-	return KSUCCESS;	/* This was a realm name only line. */
-
+        return KSUCCESS;		/* This was a realm name only line. */
     return KFAILURE;
 }
 
@@ -93,7 +94,7 @@ krb_get_lrealm(char *r, int n)
 
     for (i = 0; krb_get_krbconf(i, fname, sizeof(fname)) == 0; i++) {
 	f = fopen(fname, "r");
-	if (f == 0)
+	if(f == NULL)
 	    continue;
 	have_krb_conf = 1;
 	if (krb_get_lrealm_f(r, n, f) == KSUCCESS) {
@@ -103,22 +104,24 @@ krb_get_lrealm(char *r, int n)
 	fclose(f);
     }
 
+#if 1
     /*
      * If there is no krb.conf file, don't continue; it is not
      * intended that Kerberos be used.
      */
     if (!have_krb_conf)
 	return KFAILURE;
+#endif
 
     /* When nothing else works try default realm */
     if (n == 1) {
-      char *t = krb_get_default_realm();
+	char *t = krb_get_default_realm();
 
-      if (strcmp(t, no_default_realm) == 0)
-	return KFAILURE;	/* Can't figure out default realm */
+	if (strcmp(t, no_default_realm) == 0)
+	    return KFAILURE;	/* Can't figure out default realm */
 
-      strcpy(r, t);
-      return KSUCCESS;
+	strcpy(r, t);
+	return KSUCCESS;
     }
     else
 	return(KFAILURE);
