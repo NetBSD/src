@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vnops.c,v 1.15 1998/09/29 10:24:58 bouyer Exp $	*/
+/*	$NetBSD: ext2fs_vnops.c,v 1.16 1998/12/02 10:44:53 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -698,21 +698,22 @@ abortit:
 		goto abortit;
 	}
 	if ((ip->i_e2fs_mode & IFMT) == IFDIR) {
-        error = VOP_ACCESS(fvp, VWRITE, tcnp->cn_cred, tcnp->cn_proc);
-        if (!error && tvp)
-                error = VOP_ACCESS(tvp, VWRITE, tcnp->cn_cred, tcnp->cn_proc);
-        if (error) {
-                VOP_UNLOCK(fvp, 0);
-                error = EACCES;
-                goto abortit;
-        }
+        	error = VOP_ACCESS(fvp, VWRITE, tcnp->cn_cred, tcnp->cn_proc);
+        	if (!error && tvp)
+                	error = VOP_ACCESS(tvp, VWRITE, tcnp->cn_cred,
+			    tcnp->cn_proc);
+        	if (error) {
+                	VOP_UNLOCK(fvp, 0);
+                	error = EACCES;
+                	goto abortit;
+        	}
 		/*
 		 * Avoid ".", "..", and aliases of "." for obvious reasons.
 		 */
 		if ((fcnp->cn_namelen == 1 && fcnp->cn_nameptr[0] == '.') ||
 		    dp == ip ||
-			(fcnp->cn_flags&ISDOTDOT) ||
-			(tcnp->cn_flags & ISDOTDOT) ||
+		    (fcnp->cn_flags&ISDOTDOT) ||
+		    (tcnp->cn_flags & ISDOTDOT) ||
 		    (ip->i_flag & IN_RENAME)) {
 			VOP_UNLOCK(fvp, 0);
 			error = EINVAL;
@@ -1279,8 +1280,8 @@ ext2fs_vinit(mntp, specops, fifoops, vpp)
 	case VCHR:
 	case VBLK:
 		vp->v_op = specops;
-		if ((nvp = checkalias(vp, fs2h32(ip->i_din.e2fs_din.e2di_rdev), mntp))
-			!= NULL) {
+		if ((nvp = checkalias(vp,
+		    fs2h32(ip->i_din.e2fs_din.e2di_rdev), mntp)) != NULL) {
 			/*
 			 * Discard unneeded vnode, but save its inode.
 			 * Note that the lock is carried over in the inode
