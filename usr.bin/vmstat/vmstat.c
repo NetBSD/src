@@ -1,4 +1,4 @@
-/*	$NetBSD: vmstat.c,v 1.32 1996/11/25 22:55:59 cgd Exp $	*/
+/*	$NetBSD: vmstat.c,v 1.33 1996/11/29 19:40:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: vmstat.c,v 1.32 1996/11/25 22:55:59 cgd Exp $";
+static char rcsid[] = "$NetBSD: vmstat.c,v 1.33 1996/11/29 19:40:56 thorpej Exp $";
 #endif
 #endif /* not lint */
 
@@ -436,7 +436,7 @@ dovmstat(interval, reps)
 		 * We round upward to avoid losing low-frequency events
 		 * (i.e., >= 1 per interval but < 1 per second).
 		 */
-		halfuptime = (uptime + 1) / 2;
+		halfuptime = uptime == 1 ? 0 : (uptime + 1) / 2;
 		(void)sleep(interval);
 	}
 }
