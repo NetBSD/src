@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)pmap.c	7.5 (Berkeley) 5/10/91
- *	$Id: pmap.c,v 1.12 1994/05/21 10:05:39 chopps Exp $
+ *	$Id: pmap.c,v 1.13 1994/05/25 07:58:33 chopps Exp $
  */
 
 /*
@@ -309,6 +309,38 @@ pmap_bootstrap(firstaddr, loadaddr)
 	virtual_avail = va;
 #endif
 }
+
+/*
+ * Bootstrap memory allocator. This function allows for early dynamic
+ * memory allocation until the virtual memory system has been bootstrapped.
+ * After that point, either kmem_alloc or malloc should be used. This
+ * function works by stealing pages from the (to be) managed page pool,
+ * stealing virtual address space, then mapping the pages and zeroing them.
+ *
+ * It should be used from pmap_bootstrap till vm_page_startup, afterwards
+ * it cannot be used, and will generate a panic if tried. Note that this
+ * memory will never be freed, and in essence it is wired down.
+ */
+void *
+pmap_bootstrap_alloc(size)
+	int size;
+{
+	extern boolean_t vm_page_startup_initialized;
+	vm_offset_t val;
+	
+	if (vm_page_startup_initialized)
+		panic("pmap_bootstrap_alloc: called after startup initialized");
+	size = round_page(size);
+	val = virtual_avail;
+
+	virtual_avail = pmap_map(virtual_avail, avail_start,
+		avail_start + size, VM_PROT_READ|VM_PROT_WRITE);
+	avail_start += size;
+
+	blkclr((caddr_t) val, size);
+	return((void *) val);
+}
+
 
 /*
  *	Initialize the pmap module.
@@ -1551,6 +1583,7 @@ pmap_activate(pmap, pcbp)
  *	bzero to clear its contents, one machine dependent page
  *	at a time.
  */
+void
 pmap_zero_page(phys)
 	register vm_offset_t	phys;
 {
@@ -1573,6 +1606,7 @@ pmap_zero_page(phys)
  *	bcopy to copy the page, one machine dependent page at a
  *	time.
  */
+void
 pmap_copy_page(src, dst)
 	register vm_offset_t	src, dst;
 {
@@ -1605,6 +1639,7 @@ pmap_copy_page(src, dst)
  *		will specify that these pages are to be wired
  *		down (or not) as appropriate.
  */
+void
 pmap_pageable(pmap, sva, eva, pageable)
 	pmap_t		pmap;
 	vm_offset_t	sva, eva;
