@@ -334,6 +334,14 @@ sys/arch/pmax/dev/dtop.c			1.34
   Make handler FSM robust enough to not lose its place after data
   overrun.  Stops keyboard from going catatonic.  (jonathan)
 
+gnu/usr.bin/ld/ld/ld.c				1.51-1.53
+gnu/usr.bin/ld/ld/ld.1				1.13-1.16
+
+  Add emulation of binutils 2.x ld options (-rpath dir,
+  -shared, -soname, --whole-archive, --no-whole-archive,
+  --export-dynamic) for compatibility with ELF ports and
+  to aid migration to bintils.  (jonathan)
+
 
 NOT YET PULLED UP (expecting patches):
 
