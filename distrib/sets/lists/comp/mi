@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.180 2000/01/07 23:01:02 kleink Exp $
+# $NetBSD: mi,v 1.181 2000/01/10 17:18:04 kleink Exp $
 ./sys
 ./usr/bin/ar
 ./usr/bin/as
@@ -730,7 +730,6 @@
 ./usr/include/ntfs/ntfs.h
 ./usr/include/ntfs/ntfs_inode.h
 ./usr/include/ntfs/ntfsmount.h
-./usr/include/null.h
 ./usr/include/objc/NXConstStr.h
 ./usr/include/objc/Object.h
 ./usr/include/objc/Protocol.h
@@ -884,6 +883,7 @@
 ./usr/include/sys/msgbuf.h
 ./usr/include/sys/mtio.h
 ./usr/include/sys/namei.h
+./usr/include/sys/null.h
 ./usr/include/sys/param.h
 ./usr/include/sys/poll.h
 ./usr/include/sys/pool.h
