@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.9 2002/06/19 15:00:07 wiz Exp $
+#	$NetBSD: MAKEDEV,v 1.10 2002/06/26 18:26:46 abs Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -151,7 +151,7 @@ all)
 	makedev ttyv0
 	makedev bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7
 	makedev lpa0 lpt0 tun0 tun1 tun2 ipl
-	makedev beep lkm qms0 pms0 local
+	makedev audio audio0 beep lkm qms0 pms0 local
 	makedev usbs isdns
 	makedev mouse-qms0 random openfirm
 	makedev music rmidi0 rmidi1 rmidi2 rmidi3 rmidi4 rmidi5 rmidi6 rmidi7
