@@ -1,4 +1,4 @@
-/*	$NetBSD: hil.c,v 1.34 1997/04/02 22:37:32 scottr Exp $	*/
+/*	$NetBSD: hil.c,v 1.35 1997/10/16 18:02:19 carrel Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -62,12 +62,6 @@
 #include <hp300/dev/kbdmap.h>
 
 #include <machine/cpu.h>
-
-#include <vm/vm_param.h>
-#include <vm/vm_map.h>
-#include <vm/vm_kern.h>
-#include <vm/vm_page.h>
-#include <vm/vm_pager.h>
 
 #ifdef hp300
 #define NHIL	1	/* XXX */
