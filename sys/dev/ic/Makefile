@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2001/02/18 14:17:45 taca Exp $
+#	$NetBSD: Makefile,v 1.16 2001/02/25 16:15:07 ad Exp $
 
 INCSDIR= /usr/include/dev/ic
 
@@ -13,8 +13,7 @@ INCS=	ad1848reg.h ahareg.h ahavar.h aic6360reg.h aic6360var.h \
 	i82595reg.h ics2101reg.h ims332reg.h intersil7170.h interwavereg.h \
 	interwavevar.h ispmbox.h ispreg.h ispvar.h lemacreg.h lemacvar.h \
 	lptreg.h lptvar.h mb86960reg.h mb86960var.h mc146818reg.h \
-	mc68450reg.h mc6845reg.h midwayreg.h midwayvar.h \
-	mlxio.h mlxreg.h mlxvar.h \
+	mc68450reg.h mc6845reg.h midwayreg.h midwayvar.h mlxio.h mlxreg.h \
 	ncr5380reg.h ncr5380var.h ncr53c400reg.h ncr53c9xreg.h ncr53c9xvar.h \
 	ne2000reg.h ne2000var.h \
 	nec765reg.h ns16450reg.h ns16550reg.h opl3sa3reg.h pcdisplay.h \
