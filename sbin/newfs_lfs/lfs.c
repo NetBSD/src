@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.c,v 1.17 2000/09/09 04:49:56 perseant Exp $	*/
+/*	$NetBSD: lfs.c,v 1.18 2000/09/11 01:32:21 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)lfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: lfs.c,v 1.17 2000/09/09 04:49:56 perseant Exp $");
+__RCSID("$NetBSD: lfs.c,v 1.18 2000/09/11 01:32:21 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -65,6 +65,7 @@ __RCSID("$NetBSD: lfs.c,v 1.17 2000/09/09 04:49:56 perseant Exp $");
 #include "config.h"
 #include "extern.h"
 
+extern int Nflag; /* Don't write anything */
 daddr_t *ifib = NULL; /* Ifile single indirect block (lbn -NDADDR) */
 
 /*
@@ -341,7 +342,9 @@ make_lfs(fd, lp, partp, minfree, block_size, frag_size, seg_size, minfreeseg)
 			ssize, lfsp->lfs_bsize);
 	}
 
-	printf("Using %d segments of size %d\n", lfsp->lfs_nseg, ssize);
+	printf("%.1fMB in %d segments of size %d\n", 
+	       (lfsp->lfs_nseg * (double)ssize) / 1048576.0,
+	       lfsp->lfs_nseg, ssize);
 
 	/* 
 	 * The number of free blocks is set from the number of segments
@@ -732,6 +735,9 @@ put(fd, off, p, len)
 	size_t len;
 {
 	int wbytes;
+
+	if (Nflag)
+		return;
 
 	if (lseek(fd, off, SEEK_SET) < 0)
 		fatal("%s: seek: %s", special, strerror(errno));
