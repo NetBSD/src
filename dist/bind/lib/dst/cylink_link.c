@@ -1,7 +1,7 @@
-/*	$NetBSD: cylink_link.c,v 1.1.1.1 1999/11/20 18:54:06 veego Exp $	*/
+/*	$NetBSD: cylink_link.c,v 1.1.1.1.8.1 2001/01/28 15:52:21 he Exp $	*/
 
 #ifdef CYLINK_DSS
-static const char rcsid[] = "$Header: /cvsroot/src/dist/bind/lib/dst/Attic/cylink_link.c,v 1.1.1.1 1999/11/20 18:54:06 veego Exp $";
+static const char rcsid[] = "Header: /proj/cvs/isc/bind8/src/lib/dst/cylink_link.c,v 1.7 1999/10/13 16:39:22 vixie Exp";
 
 /*
  * Portions Copyright (c) 1995-1998 by Trusted Information Systems, Inc.
