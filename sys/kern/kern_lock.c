@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.73 2003/11/23 08:57:17 yamt Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.74 2003/12/08 14:21:25 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.73 2003/11/23 08:57:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.74 2003/12/08 14:21:25 hannken Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -100,7 +100,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.73 2003/11/23 08:57:17 yamt Exp $");
 void	lock_printf(const char *fmt, ...)
     __attribute__((__format__(__printf__,1,2)));
 
-static int acquire(__volatile struct lock *, int, int, int);
+static int acquire(__volatile struct lock *, int *, int, int, int);
 
 int	lock_debug_syslog = 0;	/* defaults to printf, but can be patched */
 
@@ -209,14 +209,14 @@ do {									\
  * Acquire a resource.
  */
 static int
-acquire(__volatile struct lock *lkp, int extflags, int drain, int wanted)
+acquire(__volatile struct lock *lkp, int *s, int extflags,
+    int drain, int wanted)
 {
 	int error;
 
 	KASSERT(drain || (wanted & LK_WAIT_NONZERO) == 0);
 
 	if (extflags & LK_SPIN) {
-		int s = 0; /* XXX gcc */
 		int interlocked;
 
 		SPINLOCK_SPINCHECK_DECL;
@@ -229,14 +229,14 @@ acquire(__volatile struct lock *lkp, int extflags, int drain, int wanted)
 			SPINLOCK_SPINCHECK;
 			if ((lkp->lk_flags & wanted) != 0) {
 				if (interlocked) {
-					INTERLOCK_RELEASE(lkp, LK_SPIN, s);
+					INTERLOCK_RELEASE(lkp, LK_SPIN, *s);
 					interlocked = 0;
 				}
 				SPINLOCK_SPIN_HOOK;
 			} else if (interlocked) {
 				break;
 			} else {
-				INTERLOCK_ACQUIRE(lkp, LK_SPIN, s);
+				INTERLOCK_ACQUIRE(lkp, LK_SPIN, *s);
 				interlocked = 1;
 			}
 		}
@@ -583,7 +583,7 @@ lockmgr(__volatile struct lock *lkp, u_int flags,
 			/*
 			 * Wait for exclusive locks and upgrades to clear.
 			 */
-			error = acquire(lkp, extflags, 0,
+			error = acquire(lkp, &s, extflags, 0,
 			    LK_HAVE_EXCL | LK_WANT_EXCL | LK_WANT_UPGRADE);
 			if (error)
 				break;
@@ -666,7 +666,7 @@ lockmgr(__volatile struct lock *lkp, u_int flags,
 			 * drop to zero, then take exclusive lock.
 			 */
 			lkp->lk_flags |= LK_WANT_UPGRADE;
-			error = acquire(lkp, extflags, 0, LK_SHARE_NONZERO);
+			error = acquire(lkp, &s, extflags, 0, LK_SHARE_NONZERO);
 			lkp->lk_flags &= ~LK_WANT_UPGRADE;
 			if (error)
 				break;
@@ -726,14 +726,15 @@ lockmgr(__volatile struct lock *lkp, u_int flags,
 		/*
 		 * Try to acquire the want_exclusive flag.
 		 */
-		error = acquire(lkp, extflags, 0, LK_HAVE_EXCL | LK_WANT_EXCL);
+		error = acquire(lkp, &s, extflags, 0,
+		    LK_HAVE_EXCL | LK_WANT_EXCL);
 		if (error)
 			break;
 		lkp->lk_flags |= LK_WANT_EXCL;
 		/*
 		 * Wait for shared locks and upgrades to finish.
 		 */
-		error = acquire(lkp, extflags, 0,
+		error = acquire(lkp, &s, extflags, 0,
 		    LK_WANT_UPGRADE | LK_SHARE_NONZERO);
 		lkp->lk_flags &= ~LK_WANT_EXCL;
 		if (error)
@@ -811,7 +812,7 @@ lockmgr(__volatile struct lock *lkp, u_int flags,
 			error = EBUSY;
 			break;
 		}
-		error = acquire(lkp, extflags, 1,
+		error = acquire(lkp, &s, extflags, 1,
 		    LK_HAVE_EXCL | LK_WANT_EXCL | LK_WANT_UPGRADE |
 		    LK_SHARE_NONZERO | LK_WAIT_NONZERO);
 		if (error)
@@ -937,12 +938,13 @@ spinlock_acquire_count(__volatile struct lock *lkp, int count)
 	/*
 	 * Try to acquire the want_exclusive flag.
 	 */
-	error = acquire(lkp, LK_SPIN, 0, LK_HAVE_EXCL | LK_WANT_EXCL);
+	error = acquire(lkp, &s, LK_SPIN, 0, LK_HAVE_EXCL | LK_WANT_EXCL);
 	lkp->lk_flags |= LK_WANT_EXCL;
 	/*
 	 * Wait for shared locks and upgrades to finish.
 	 */
-	error = acquire(lkp, LK_SPIN, 0, LK_SHARE_NONZERO | LK_WANT_UPGRADE);
+	error = acquire(lkp, &s, LK_SPIN, 0,
+	    LK_SHARE_NONZERO | LK_WANT_UPGRADE);
 	lkp->lk_flags &= ~LK_WANT_EXCL;
 	lkp->lk_flags |= LK_HAVE_EXCL;
 	SETHOLDER(lkp, LK_NOPROC, 0, cpu_id);
