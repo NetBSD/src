@@ -1,4 +1,4 @@
-# $NetBSD: _mips.mk,v 1.7 1997/10/19 10:44:54 jonathan Exp $
+# $NetBSD: _mipsel.mk,v 1.1 1998/07/27 01:03:48 tv Exp $
 
 BFD_MACHINES =	cpu-mips.c
 BFD_BACKENDS =	elf32-mips.c elf32.c elf.c elflink.c ecofflink.c \
