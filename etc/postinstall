@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.84 2004/10/12 13:29:05 lukem Exp $
+# $NetBSD: postinstall,v 1.85 2004/12/09 04:42:54 jmc Exp $
 #
 # Copyright (c) 2002-2004 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -523,7 +523,7 @@ do_gid()
 	[ -n "$1" ] || err 2 "USAGE: do_gid  fix|check"
 
 	check_ids $1 groups "${DEST_DIR}/etc/group" \
-	    named ntpd sshd smmsp
+	    named ntpd sshd smmsp authpf
 }
 
 #
