@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.107 2000/08/01 22:47:28 lukem Exp $	*/
+/*	$NetBSD: ftp.c,v 1.108 2000/08/06 08:51:22 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-2000 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.107 2000/08/01 22:47:28 lukem Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.108 2000/08/06 08:51:22 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -169,20 +169,21 @@ struct sockinet myctladdr, hisctladdr, data_addr;
 char *
 hookup(char *host, char *port)
 {
-	int s = -1, len, error;
+	int s = -1, len, error, portnum;
 	struct addrinfo hints, *res, *res0;
 	char hbuf[MAXHOSTNAMELEN];
 	static char hostnamebuf[MAXHOSTNAMELEN];
 	char *cause = "unknown";
-	
+
 	memset((char *)&hisctladdr, 0, sizeof (hisctladdr));
 	memset((char *)&myctladdr, 0, sizeof (myctladdr));
 	memset(&hints, 0, sizeof(hints));
+	portnum = parseport(port, FTP_PORT);
 	hints.ai_flags = AI_CANONNAME;
 	hints.ai_family = AF_UNSPEC;
 	hints.ai_socktype = SOCK_STREAM;
 	hints.ai_protocol = 0;
-	error = getaddrinfo(host, port, &hints, &res0);
+	error = getaddrinfo(host, NULL, &hints, &res0);
 	if (error) {
 		warnx("%s", gai_strerror(error));
 		code = -1;
@@ -226,6 +227,7 @@ hookup(char *host, char *port)
 			    hbuf, sizeof(hbuf), NULL, 0, NI_NUMERICHOST);
 			fprintf(ttyout, "Trying %s...\n", hbuf);
 		}
+		((struct sockaddr_in *)res->ai_addr)->sin_port = htons(portnum);
 		s = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
 		if (s < 0) {
 			cause = "socket";
