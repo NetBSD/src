@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2003/09/11 18:37:09 lukem Exp $
+#	$NetBSD: Makefile,v 1.2 2003/09/12 08:08:22 lukem Exp $
 
 NOPIC=	1
 
@@ -17,8 +17,8 @@ CPPFLAGS+=	-DFONTENC_NO_LIBFONT
 CPPFLAGS+=	-DFONT_ENCODINGS_DIRECTORY=\"${X11FONTDIR}/encodings/encodings.dir\"
 CPPFLAGS+=	-I${DESTDIR}/${X11INCDIR}/X11/fonts
 
-#LM#	LDADD+=	-lz
-#LM#	DPADD+=	${LIBZ}
+LDADD+=	-lz
+DPADD+=	${LIBZ}
 
 .include <bsd.lib.mk>
 .include <bsd.x11.mk>

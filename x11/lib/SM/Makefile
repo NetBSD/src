@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2003/09/12 02:52:20 lukem Exp $
+#	$NetBSD: Makefile,v 1.2 2003/09/12 08:08:11 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -18,8 +18,8 @@ CONN_DEFINES=	${X11FLAGS.CONNECTION} -DICE_t
 CPPFLAGS.sm_manager.c=	$(CONN_DEFINES)
 CPPFLAGS.sm_genid.c=	$(CONN_DEFINES)
 
-#LM#	LDADD+=	-lICE
-#LM#	DPADD+=	${LIBICE}
+LDADD+=	-lICE
+DPADD+=	${LIBICE}
 
 .include <bsd.lib.mk>
 .include <bsd.x11.mk>

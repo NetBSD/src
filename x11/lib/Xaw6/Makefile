@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2003/09/11 18:37:08 lukem Exp $
+#	$NetBSD: Makefile,v 1.2 2003/09/12 08:08:12 lukem Exp $
 
 NOCHECKVER=	yes	# we want to install an older version ...
 MKLINKLIB=	no
@@ -19,8 +19,8 @@ SRCS=	Actions.c AllWidgets.c AsciiSink.c AsciiSrc.c AsciiText.c \
 
 CPPFLAGS+=	-DHAS_WCHAR_H -DHAS_WCTYPE_H -DNO_WIDEC_H -DOLDXAW
 
-#LM#	LDADD+=	-lXmu -lXt -lSM -lICE -lXext -lX11
-#LM#	DPADD+=	${LIBXMU} ${LIBXT} ${LIBSM} ${LIBICE} ${LIBXEXT} ${LIBX11}
+LDADD+=	-lXmu -lXt -lSM -lICE -lXext -lX11
+DPADD+=	${LIBXMU} ${LIBXT} ${LIBSM} ${LIBICE} ${LIBXEXT} ${LIBX11}
 
 .include <bsd.lib.mk>
 .include <bsd.x11.mk>
