@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.79 2004/04/17 15:15:29 christos Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.80 2004/04/23 02:13:29 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.79 2004/04/17 15:15:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.80 2004/04/23 02:13:29 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -952,8 +952,8 @@ chgsbsize(uid_t uid, u_long *hiwat, u_long to, rlim_t max)
 
 	if ((uip = getuidinfo(uid)) == NULL)
 		uip = allocuidinfo(uid);
-	nsb = uip->ui_sbsize + to + *hiwat;
-	if (nsb > *hiwat && nsb > max)
+	nsb = uip->ui_sbsize + to - *hiwat;
+	if (to > *hiwat && nsb > max)
 		goto done;
 	*hiwat = to;
 	uip->ui_sbsize = nsb;
