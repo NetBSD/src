@@ -1,7 +1,9 @@
-/*	$NetBSD: config.h,v 1.1 1998/05/19 19:09:32 tv Exp $
+/*	$NetBSD: config.h,v 1.2 1998/05/21 18:43:27 cgd Exp $
  *
  * Munged from actual 2.8.1 config.h file for machine independence.
- * NOTE: Define BFD_ASSEMBLER and __TARGET_CPU elsewhere.
+ *
+ * NOTE: Define BFD_ASSEMBLER, TARGET_ALIAS, TARGET_CPU, and
+ * 	TARGET_CANONICAL must be defined elsewhere.
  */
 
 /* config.h.  Generated automatically by make.  */
@@ -49,10 +51,10 @@
 /* #undef CROSS_COMPILE */
 
 /* Some gas code wants to know these parameters.  */
-#include <sys/cdefs.h>
-#define TARGET_ALIAS __STRING(__CONCAT(__TARGET_CPU,-netbsd))
-#define TARGET_CPU __STRING(__TARGET_CPU)
-#define TARGET_CANONICAL __STRING(__CONCAT(__TARGET_CPU,-unknown-netbsd))
+#if !defined(TARGET_ALIAS) || !defined(TARGET_CPU) || \
+    !defined(TARGET_CANONICAL)
+#error TARGET_ALIAS, TARGET_CPU, and TARGET_CANONICAL must all be defined
+#endif
 #define TARGET_OS "netbsd"
 #define TARGET_VENDOR "unknown"
 
