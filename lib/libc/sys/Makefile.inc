@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	5.11 (Berkeley) 6/23/91
-#	$Id: Makefile.inc,v 1.8 1993/08/25 02:51:03 brezak Exp $
+#	$Id: Makefile.inc,v 1.9 1993/09/19 18:51:55 brezak Exp $
 
 # sys sources
 .PATH: ${.CURDIR}/${MACHINE}/sys ${.CURDIR}/sys
@@ -29,7 +29,7 @@ ASM=	accept.o access.o acct.o adjtime.o async_daemon.o bind.o chdir.o \
 	shutdown.o sigaction.o sigstack.o socket.o socketpair.o stat.o \
 	statfs.o swapon.o symlink.o sync.o truncate.o umask.o unlink.o \
 	unmount.o utimes.o vadvise.o wait4.o write.o writev.o getdomainname.o \
-	setdomainname.o uname.o
+	setdomainname.o uname.o sysarch.o
 PASM=	${ASM:.o=.po}
 
 PSEUDO=	_exit.o _getlogin.o
