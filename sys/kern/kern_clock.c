@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.65 2000/08/21 23:43:30 thorpej Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.66 2000/08/21 23:51:33 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -312,7 +312,6 @@ long clock_cpu = 0;		/* CPU clock adjust */
 int	stathz;
 int	profhz;
 int	profprocs;
-u_int64_t hardclock_ticks, softclock_ticks;
 int	softclock_running;		/* 1 => softclock() is running */
 static int psdiv, pscnt;		/* prof => stat divider */
 int	psratio;			/* ratio: prof / stat */
@@ -388,6 +387,12 @@ do {									\
 } while (0)
 
 static void callout_stop_locked(struct callout *);
+
+/*
+ * These are both protected by callwheel_lock.
+ * XXX SHOULD BE STATIC!!
+ */
+u_int64_t hardclock_ticks, softclock_ticks;
 
 /*
  * Initialize clock frequencies and start both clocks running.
@@ -538,7 +543,6 @@ hardclock(struct clockframe *frame)
 	 * if we are still adjusting the time (see adjtime()),
 	 * ``tickdelta'' may also be added in.
 	 */
-	hardclock_ticks++;
 	delta = tick;
 
 #ifndef NTP
@@ -856,7 +860,10 @@ hardclock(struct clockframe *frame)
 	 * Process callouts at a very low cpu priority, so we don't keep the
 	 * relatively high clock interrupt priority any longer than necessary.
 	 */
+	simple_lock(&callwheel_slock);	/* already at splclock() */
+	hardclock_ticks++;
 	if (TAILQ_FIRST(&callwheel[hardclock_ticks & callwheelmask]) != NULL) {
+		simple_unlock(&callwheel_slock);
 		if (CLKF_BASEPRI(frame)) {
 			/*
 			 * Save the overhead of a software interrupt;
@@ -871,8 +878,10 @@ hardclock(struct clockframe *frame)
 		} else
 			setsoftclock();
 	} else if (softclock_running == 0 &&
-		   (softclock_ticks + 1) == hardclock_ticks)
+		   (softclock_ticks + 1) == hardclock_ticks) {
 		softclock_ticks++;
+		simple_unlock(&callwheel_slock);
+	}
 }
 
 /*
