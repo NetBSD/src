@@ -1,6 +1,6 @@
 #! /bin/sh
 
-# $NetBSD: linkfarm.sh,v 1.1.2.13 2003/08/24 07:06:45 jlam Exp $
+# $NetBSD: linkfarm.sh,v 1.1.2.14 2003/08/24 09:28:39 jlam Exp $
 
 #
 # Copyright (c) 2002 Alistair G. Crooks.  All rights reserved.
@@ -121,8 +121,8 @@ esac
 
 # Set the directory from which we symlink.
 case $subdir in
-"")	fromdir=$stowdir/$package
-*)	fromdir=$stowdir/$package/$subdir
+"")	fromdir=$stowdir/$package ;;
+*)	fromdir=$stowdir/$package/$subdir ;;
 esac
 
 # Set the directory to which we symlink.
