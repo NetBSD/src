@@ -40,7 +40,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)config.h	8.1 (Berkeley) 6/6/93
- *	$Id: config.h,v 1.5 1994/06/22 10:44:06 pk Exp $
+ *	$Id: config.h,v 1.6 1995/01/25 20:44:39 cgd Exp $
  */
 
 /*
@@ -204,6 +204,7 @@ int	minmaxusers;		/* minimum "maxusers" parameter */
 int	defmaxusers;		/* default "maxusers" parameter */
 int	maxmaxusers;		/* default "maxusers" parameter */
 int	maxusers;		/* configuration's "maxusers" parameter */
+int	maxpartitions;		/* configuration's "maxpartitions" parameter */
 struct	nvlist *options;	/* options */
 struct	nvlist *mkoptions;	/* makeoptions */
 struct	hashtab *devbasetab;	/* devbase lookup */
