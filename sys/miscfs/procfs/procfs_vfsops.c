@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vfsops.c,v 1.28 1998/03/01 02:21:16 fvdl Exp $	*/
+/*	$NetBSD: procfs_vfsops.c,v 1.29 1998/07/05 08:49:46 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -42,6 +42,10 @@
 /*
  * procfs VFS interface
  */
+
+#if defined(_KERNEL) && !defined(_LKM)
+#include "opt_compat_netbsd.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/time.h>
