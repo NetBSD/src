@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.22 2000/01/08 11:09:56 lukem Exp $	*/
+/*	$NetBSD: extern.h,v 1.23 2000/01/12 22:39:28 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -171,7 +171,9 @@ struct ftpclass {
 					   UMASK */
 	char		*motd;		/* MotD file to display after login */
 	char		*notify;	/* Files to notify about upon chdir */
-	int		 passive;	/* Allow PASV */
+	int		 passive;	/* Allow PASV mode */
+	int		 portmin;	/* Minumum port for passive mode */
+	int		 portmax;	/* Maximum port for passive mode */
 	int		 rateget;	/* Get (RETR) transfer rate throttle */
 	int		 rateput;	/* Put (STOR) transfer rate throttle */
 	unsigned int	 timeout;	/* Default timeout */
@@ -196,37 +198,41 @@ union sockunion {
 #define su_family	su_si.si_family
 #define su_port		su_si.si_port
 
-extern  int yyparse __P((void));
+extern  int		yyparse __P((void));
 
-extern	char		cbuf[];
-extern	int		connections;
-extern	struct ftpclass	curclass;
-extern	union sockunion data_dest;
-extern	int		debug;
-extern	int		form;
-extern	int		hasyyerrored;
-extern	union sockunion his_addr;
-extern	char		hostname[];
-#ifdef KERBEROS5
-extern	krb5_context	kcontext;
+#ifndef	GLOBAL
+#define	GLOBAL	extern
 #endif
-extern	int		logged_in;
-extern	int		logging;
-extern	int		pdata;
-extern	char		proctitle[];
-extern	struct passwd  *pw;
-extern	char		remotehost[];
-extern	off_t		restart_point;
-extern	char		tmpline[];
-extern	sig_atomic_t	transflag;
-extern	int		type;
-extern	int		usedefault;
-extern	const char	version[];
 
-extern	off_t		total_data_in,  total_data_out,  total_data;
-extern	off_t		total_files_in, total_files_out, total_files;
-extern	off_t		total_bytes_in, total_bytes_out, total_bytes;
-extern	off_t		total_xfers_in, total_xfers_out, total_xfers;
+GLOBAL	int		connections;
+GLOBAL	struct ftpclass	curclass;
+GLOBAL	union sockunion data_dest;
+GLOBAL	int		debug;
+GLOBAL	jmp_buf		errcatch;
+GLOBAL	int		form;
+GLOBAL	int		hasyyerrored;
+GLOBAL	union sockunion his_addr;
+GLOBAL	char		hostname[];
+#ifdef KERBEROS5
+GLOBAL	krb5_context	kcontext;
+#endif
+GLOBAL	int		logged_in;
+GLOBAL	int		logging;
+GLOBAL	int		pdata;
+GLOBAL	char		proctitle[];
+GLOBAL	struct passwd  *pw;
+GLOBAL	char		remotehost[];
+GLOBAL	off_t		restart_point;
+GLOBAL	char		tmpline[];
+GLOBAL	sig_atomic_t	transflag;
+GLOBAL	int		type;
+GLOBAL	int		usedefault;
+GLOBAL	const char	version[];
+
+GLOBAL	off_t		total_data_in,  total_data_out,  total_data;
+GLOBAL	off_t		total_files_in, total_files_out, total_files;
+GLOBAL	off_t		total_bytes_in, total_bytes_out, total_bytes;
+GLOBAL	off_t		total_xfers_in, total_xfers_out, total_xfers;
 
 
 #define EMPTYSTR(p)	((p) == NULL || *(p) == '\0')
