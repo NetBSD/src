@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.603 2004/05/11 23:07:35 wiz Exp $
+# $NetBSD: GENERIC,v 1.604 2004/05/21 03:30:40 atatat Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.603 $"
+#ident 		"GENERIC-$Revision: 1.604 $"
 
 maxusers	32		# estimated number of users
 
@@ -345,7 +345,7 @@ pci*	at ppb? bus ?
 #options 	PCIBIOS_INTR_FIXUP	# fixup PCI interrupt routing
 #options 	PCIBIOS_IRQS_HINT=0x0a00 # PCI interrupts hint. IRQ 9 or 11
 #options 	PCIBIOS_INTR_GUESS	# see pcibios(4)
-#options	PCIBIOS_LIBRETTO_FIXUP	# this code makes the Toshiba Libretto
+#options 	PCIBIOS_LIBRETTO_FIXUP	# this code makes the Toshiba Libretto
 					# L2/L3 work, but should not be enabled
 					# on anything else.
 #options 	PCIINTR_DEBUG		# super-verbose PCI interrupt fixup
@@ -484,7 +484,7 @@ com2	at isa? port 0x3e8 irq 5
 #com*	at addcom? slave ?
 #moxa0	at isa?	port 0x100 irq 5	# MOXA C168H serial card (experimental)
 #com*	at moxa? slave ?
-#ioat*	at isa?	port 0x220 irq 5	# BOCA IOAT66 6-port serial card
+#ioat*	at isa? port 0x220 irq 5	# BOCA IOAT66 6-port serial card
 #com*	at ioat? slave ?
 
 # MCA serial interfaces
