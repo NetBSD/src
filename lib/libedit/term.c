@@ -1,4 +1,4 @@
-/*	$NetBSD: term.c,v 1.31 2001/01/10 22:42:56 jdolecek Exp $	*/
+/*	$NetBSD: term.c,v 1.32 2001/01/23 15:55:31 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)term.c	8.2 (Berkeley) 4/30/95";
 #else
-__RCSID("$NetBSD: term.c,v 1.31 2001/01/10 22:42:56 jdolecek Exp $");
+__RCSID("$NetBSD: term.c,v 1.32 2001/01/23 15:55:31 jdolecek Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -1055,18 +1055,18 @@ private void
 term_reset_arrow(EditLine *el)
 {
 	fkey_t *arrow = el->el_term.t_fkey;
-	static char strA[] = {033, '[', 'A', '\0'};
-	static char strB[] = {033, '[', 'B', '\0'};
-	static char strC[] = {033, '[', 'C', '\0'};
-	static char strD[] = {033, '[', 'D', '\0'};
-	static char strH[] = {033, '[', 'H', '\0'};
-	static char strF[] = {033, '[', 'F', '\0'};
-	static char stOA[] = {033, 'O', 'A', '\0'};
-	static char stOB[] = {033, 'O', 'B', '\0'};
-	static char stOC[] = {033, 'O', 'C', '\0'};
-	static char stOD[] = {033, 'O', 'D', '\0'};
-	static char stOH[] = {033, 'O', 'H', '\0'};
-	static char stOF[] = {033, 'O', 'F', '\0'};
+	static const char strA[] = {033, '[', 'A', '\0'};
+	static const char strB[] = {033, '[', 'B', '\0'};
+	static const char strC[] = {033, '[', 'C', '\0'};
+	static const char strD[] = {033, '[', 'D', '\0'};
+	static const char strH[] = {033, '[', 'H', '\0'};
+	static const char strF[] = {033, '[', 'F', '\0'};
+	static const char stOA[] = {033, 'O', 'A', '\0'};
+	static const char stOB[] = {033, 'O', 'B', '\0'};
+	static const char stOC[] = {033, 'O', 'C', '\0'};
+	static const char stOD[] = {033, 'O', 'D', '\0'};
+	static const char stOH[] = {033, 'O', 'H', '\0'};
+	static const char stOF[] = {033, 'O', 'F', '\0'};
 
 	key_add(el, strA, &arrow[A_K_UP].fun, arrow[A_K_UP].type);
 	key_add(el, strB, &arrow[A_K_DN].fun, arrow[A_K_DN].type);
