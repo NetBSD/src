@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386.newconf,v 1.23 1994/11/03 16:43:26 mycroft Exp $
+#	$NetBSD: files.i386.newconf,v 1.24 1994/11/03 16:46:42 mycroft Exp $
 #
 # new style config file for i386 architecture
 #
@@ -152,7 +152,7 @@ device	eg at isa: ether, ifnet
 file	arch/i386/isa/if_eg.c		eg
 device	el at isa: ether, ifnet
 file	arch/i386/isa/if_el.c		el
-device	ep at isa: ether, ifnet, elink
+device	ep at isa, eisa: ether, ifnet, elink
 file	arch/i386/isa/if_ep.c		ep
 #device	hp at isa: ether, ifnet
 #file	arch/i386/isa/if_hp.c		hp
