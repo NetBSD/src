@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.127 1999/05/17 17:08:08 drochner Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.128 1999/05/20 09:23:33 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.120 1999/05/17 17:07:00 drochner Exp 
+ *	NetBSD: pcidevs,v 1.121 1999/05/20 09:23:08 augustss Exp 
  */
 
 /*
@@ -473,7 +473,7 @@
 #define	PCI_VENDOR_NETPERIPH	0x11bc		/* Network Peripherals */
 #define	PCI_VENDOR_PINNACLE	0x11bd		/* Pinnacle Systems */
 #define	PCI_VENDOR_IMI	0x11be		/* International Microcircuts */
-#define	PCI_VENDOR_FUJITSU4	0x11c1		/* Fujitsu Limited (4th PCI Vendor ID) */
+#define	PCI_VENDOR_LUCENT	0x11c1		/* AT&T Microelectronics */
 #define	PCI_VENDOR_NEC2	0x11c3		/* NEC (2nd PCI Vendor ID) */
 #define	PCI_VENDOR_DOCTECH	0x11c4		/* Document Technologies */
 #define	PCI_VENDOR_SHIVA	0x11c5		/* Shiva */
@@ -813,7 +813,8 @@
 #define	PCI_PRODUCT_FORE_PCA200E	0x0300		/* ATM PCA-200e */
 
 /* Fujtsu products */
-#define	PCI_PRODUCT_FUJITSU4_LTMODEM	0x0440		/* K56flex DSVD LTMODEM */
+#define	PCI_PRODUCT_LUCENT_LTMODEM	0x0440		/* K56flex DSVD LTMODEM */
+#define	PCI_PRODUCT_LUCENT_USBHC	0x5801		/* USB Host Controller */
 
 /* Future Domain products */
 #define	PCI_PRODUCT_FUTUREDOMAIN_TMC_18C30	0x0000		/* TMC-18C30 (36C70) */
