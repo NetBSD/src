@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)ps.1	6.17 (Berkeley) 6/20/91
-.\"	$Id: ps.1,v 1.7 1993/08/01 07:48:14 mycroft Exp $
+.\"	$Id: ps.1,v 1.8 1993/10/07 00:45:59 cgd Exp $
 .\"
 .Dd June 20, 1991
 .Dt PS 1
@@ -140,7 +140,7 @@ option implies the
 option.
 .It Fl v
 Display information associated with the following keywords:
-pid, state, time, sl, re, pagein, vsz, rss, lim, tsiz, trss,
+pid, state, time, sl, re, pagein, vsz, rss, lim, tsiz,
 %cpu, %mem and command.
 The
 .Fl v
@@ -450,8 +450,6 @@ accumulated cpu time, user + system (alias cputime)
 .It tpgid
 control terminal process group
 .Tn ID
-.It trss
-text resident set size (in Kbytes)
 .It tsess
 control terminal session pointer
 .It tsiz
