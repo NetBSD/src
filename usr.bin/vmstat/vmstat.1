@@ -1,4 +1,4 @@
-.\"	$NetBSD: vmstat.1,v 1.14 2005/01/26 13:41:47 wiz Exp $
+.\"	$NetBSD: vmstat.1,v 1.15 2005/03/10 16:23:42 he Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -68,7 +68,7 @@
 .Nd report virtual memory statistics
 .Sh SYNOPSIS
 .Nm
-.Op Fl efHiLlmsUvW
+.Op Fl efHiLlmstUvW
 .Op Fl c Ar count
 .Op Fl h Ar hashname
 .Op Fl M Ar core
@@ -126,6 +126,49 @@ Display the contents of the
 .Dv uvmexp
 structure.
 This contains various paging event and memory status counters.
+.It Fl t
+Display the contents of the
+.Dv vmtotal
+structure.
+This includes information about processes and virtual memory.
+.Pp
+The process part shows the number of processes in the following states:
+.Pp
+.Bl -tag -width abc -compact
+.It ru
+on the run queue
+.It dw
+in disk I/O wait
+.It pw
+waiting for paging
+.It sl
+sleeping while resident
+.It sw
+swapped out, but either runnable or in short-term blocking state
+.El
+.Pp
+The virtual memory section shows:
+.Pp
+.Bl -tag -width abcdefgh -compact
+.It total-v
+Total virtual memory
+.It active-v
+Active virtual memory in use
+.It active-r
+Active real memory in use
+.It vm-sh
+Shared virtual memory
+.It avm-sh
+Active shared virtual memory
+.It rm-sh
+Shared real memory
+.It arm-sh
+Active shared real memory
+.It free
+Free memory
+.El
+.Pp
+All memory values are shown in number of pages.
 .It Fl U
 Dump all UVM histories.
 .It Fl u Ar histname

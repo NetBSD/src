@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.129 2005/02/26 21:19:18 dsl Exp $ */
+/* $NetBSD: vmstat.c,v 1.130 2005/03/10 16:23:42 he Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.129 2005/02/26 21:19:18 dsl Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.130 2005/03/10 16:23:42 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -237,6 +237,7 @@ kvm_t *kd;
 #define	HISTDUMP	1<<7
 #define	HASHSTAT	1<<8
 #define	HASHLIST	1<<9
+#define	VMTOTAL		1<<10
 
 void	cpustats(void);
 void	deref_kptr(const void *, void *, size_t, const char *);
@@ -249,6 +250,8 @@ void	dopool(int, int);
 void	dopoolcache(struct pool *, int);
 void	dosum(void);
 void	dovmstat(struct timespec *, int);
+void	print_total_hdr(void);
+void	dovmtotal(struct timespec *, int);
 void	kread(int, void *, size_t);
 void	needhdr(int);
 long	getuptime(void);
@@ -285,7 +288,7 @@ main(int argc, char *argv[])
 	reps = todo = verbose = wide = 0;
 	interval.tv_sec = 0;
 	interval.tv_nsec = 0;
-	while ((c = getopt(argc, argv, "c:efh:HilLM:mN:su:UvWw:")) != -1) {
+	while ((c = getopt(argc, argv, "c:efh:HilLM:mN:stu:UvWw:")) != -1) {
 		switch (c) {
 		case 'c':
 			reps = atoi(optarg);
@@ -322,6 +325,9 @@ main(int argc, char *argv[])
 			break;
 		case 's':
 			todo |= SUMSTAT;
+			break;
+		case 't':
+			todo |= VMTOTAL;
 			break;
 		case 'u':
 			histname = optarg;
@@ -417,7 +423,7 @@ main(int argc, char *argv[])
 	 * VMSTAT/dovmstat() output. So perform the interval/reps handling
 	 * for it here.
 	 */
-	if ((todo & VMSTAT) == 0) {
+	if ((todo & (VMSTAT|VMTOTAL)) == 0) {
 		for (;;) {
 			if (todo & (HISTLIST|HISTDUMP)) {
 				if ((todo & (HISTLIST|HISTDUMP)) ==
@@ -461,8 +467,15 @@ main(int argc, char *argv[])
 				break;
 			nanosleep(&interval, NULL);
 		}
-	} else
-		dovmstat(&interval, reps);
+	} else {
+		if ((todo & (VMSTAT|VMTOTAL)) == (VMSTAT|VMTOTAL)) {
+			errx(1, "you may not both do vmstat and vmtotal");
+		}
+		if (todo & VMSTAT)
+			dovmstat(&interval, reps);
+		if (todo & VMTOTAL)
+			dovmtotal(&interval, reps);
+	}
 	exit(0);
 }
 
@@ -518,6 +531,67 @@ getuptime(void)
 }
 
 int	hz, hdrcnt;
+
+void
+print_total_hdr()
+{
+
+	(void)printf("procs            memory\n");
+	(void)printf("ru dw pw sl sw");
+	(void)printf("   total-v  active-v  active-r");
+	(void)printf(" vm-sh avm-sh rm-sh arm-sh free\n");
+	hdrcnt = winlines - 2;
+}
+
+void
+dovmtotal(struct timespec *interval, int reps)
+{
+	struct vmtotal total;
+	int mib[2];
+	size_t size;
+
+	(void)signal(SIGCONT, needhdr);
+
+	for (hdrcnt = 1;;) {
+		if (!--hdrcnt)
+			print_total_hdr();
+		if (memf != NULL) {
+			printf("Unable to get vmtotals from crash dump.\n");
+			memset(&total, 0, sizeof(total));
+		} else {
+			size = sizeof(total);
+			mib[0] = CTL_VM;
+			mib[1] = VM_METER;
+			if (sysctl(mib, 2, &total, &size, NULL, 0) < 0) {
+				printf("Can't get vmtotals: %s\n",
+				    strerror(errno));
+				memset(&total, 0, sizeof(total));
+			}
+		}
+		printf("%2d ", total.t_rq);
+		printf("%2d ", total.t_dw);
+		printf("%2d ", total.t_pw);
+		printf("%2d ", total.t_sl);
+		printf("%2d ", total.t_sw);
+
+		printf("%9d ", total.t_vm);
+		printf("%9d ", total.t_avm);
+		printf("%9d ", total.t_arm);
+		printf("%5d ", total.t_vmshr);
+		printf("%6d ", total.t_avmshr);
+		printf("%5d ", total.t_rmshr);
+		printf("%6d ", total.t_armshr);
+		printf("%5d",  total.t_free);
+
+		putchar('\n');
+
+		(void)fflush(stdout);
+		if (reps >= 0 && --reps <= 0)
+			break;
+
+		nanosleep(interval, NULL);
+	}
+}
 
 void
 dovmstat(struct timespec *interval, int reps)
