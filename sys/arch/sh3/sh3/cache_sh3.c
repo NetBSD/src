@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_sh3.c,v 1.5 2002/04/28 17:10:38 uch Exp $	*/
+/*	$NetBSD: cache_sh3.c,v 1.6 2002/05/10 15:28:45 uch Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -190,7 +190,7 @@ sh3_cache_wbinv_all()
 	vaddr_t va;
 
 	for (va = 0; va < sh_cache_way_size; va += 16 * 8)
-		cache_sh3_op_8lines_16_nway(sh_cache_ways, va, CCA_U | CCA_V); 
+		cache_sh3_op_8lines_16_nway(sh_cache_ways, va, CCA_U | CCA_V);
 }
 
 void

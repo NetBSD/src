@@ -1,4 +1,4 @@
-#	$NetBSD: files.shb,v 1.1 2002/03/24 18:00:41 uch Exp $
+#	$NetBSD: files.shb,v 1.2 2002/05/10 15:28:45 uch Exp $
 #
 # SuperH internal devices.
 #
@@ -15,10 +15,10 @@ defflag	opt_sci.h	SCICONSOLE
 defparam opt_sci.h	SCICN_SPEED
 device	sci: tty
 attach	sci at shb
-file	arch/sh3/dev/sci.c		sci needs-flag
+file	arch/sh3/dev/sci.c		sci	needs-flag
 
 defflag	opt_scif.h	SCIFCONSOLE
 defparam opt_scif.h	SCIFCN_SPEED
 device	scif: tty
 attach	scif at shb
-file	arch/sh3/dev/scif.c		scif needs-flag
+file	arch/sh3/dev/scif.c		scif	needs-flag
