@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.69.2.13 2004/11/17 01:29:48 thorpej Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.69.2.14 2004/11/17 02:11:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.69.2.13 2004/11/17 01:29:48 thorpej Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.69.2.14 2004/11/17 02:11:28 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -217,6 +217,7 @@ int	Debug;			/* debug flag */
 int	daemonized = 0;		/* we are not daemonized yet */
 char	LocalHostName[MAXHOSTNAMELEN];	/* our hostname */
 char	*LocalDomain;		/* our local domain name */
+size_t	LocalDomainLen;		/* length of LocalDomain */
 int	*finet = NULL;		/* Internet datagram sockets */
 int	Initialized;		/* set when we have initialized ourselves */
 int	ShuttingDown;		/* set when we die() */
@@ -250,6 +251,7 @@ void	printline(char *, char *);
 void	printsys(char *);
 int	p_open(char *, pid_t *);
 void	sighup(int);
+void	trim_localdomain(char *);
 void	reapchild(int);
 void	usage(void);
 void	wallmsg(struct filed *, struct iovec *);
@@ -400,6 +402,7 @@ getgroup:
 		LocalDomain = p;
 	} else
 		LocalDomain = "";
+	LocalDomainLen = strlen(LocalDomain);
 	linesize = getmsgbufsize();
 	if (linesize < MAXLINE)
 		linesize = MAXLINE;
@@ -1233,7 +1236,6 @@ char *
 cvthname(struct sockaddr_storage *f)
 {
 	int error;
-	char *p;
 	const int niflag = NI_DGRAM;
 	static char host[NI_MAXHOST], ip[NI_MAXHOST];
 
@@ -1256,9 +1258,24 @@ cvthname(struct sockaddr_storage *f)
 		dprintf("Host name for your address (%s) unknown\n", ip);
 		return (ip);
 	}
-	if ((p = strchr(host, '.')) && strcasecmp(p + 1, LocalDomain) == 0)
-		*p = '\0';
+
+	trim_localdomain(host);
+
 	return (host);
+}
+
+void
+trim_localdomain(char *host)
+{
+	size_t hl;
+
+	hl = strlen(host);
+	if (hl > 0 && host[hl - 1] == '.')
+		host[--hl] = '\0';
+
+	if (hl > LocalDomainLen && host[hl - LocalDomainLen - 1] == '.' &&
+	    strcasecmp(&host[hl - LocalDomainLen], LocalDomain) == 0)
+		host[hl - LocalDomainLen - 1] = '\0';
 }
 
 void
@@ -1655,8 +1672,10 @@ cfline(char *line, struct filed *f, char *prog, char *host)
 	/* save host name, if any */
 	if (*host == '*')
 		f->f_host = NULL;
-	else
+	else {
 		f->f_host = strdup(host);
+		trim_localdomain(f->f_host);
+	}
 
 	/* save program name, if any */
 	if (*prog == '*')
