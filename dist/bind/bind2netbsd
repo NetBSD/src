@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: bind2netbsd,v 1.12 2000/11/10 09:23:42 itojun Exp $
+#	$NetBSD: bind2netbsd,v 1.13 2000/11/10 09:41:14 itojun Exp $
 #
 # Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -68,7 +68,7 @@ mkdir -p $d/doc
 
 ### Copy the files and directories
 cd $r/src
-pax -rvw LICENSE README bin include lib $d
+pax -rvw LICENSE LICENSE_RSA README bin include lib $d
 cd $r/src/port/netbsd/include
 pax -rvw port_after.h port_before.h prand_conf.h $d/include
 cd $r/src/port/netbsd/bin
@@ -150,6 +150,7 @@ done
 # Make sure you add the RCS Id before you do the import.
 # This is the list of missing files as of 8.2.2-P5:
 # LICENSE
+# LICENSE_RSA
 # README
 # bin/probe_ipv6
 # bin/irpd/irs-irpd.conf
