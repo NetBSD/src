@@ -1,4 +1,4 @@
-/* $NetBSD: identd.c,v 1.24 2004/11/05 21:56:01 dsl Exp $ */
+/* $NetBSD: identd.c,v 1.25 2005/03/11 15:49:52 peter Exp $ */
 
 /*
  * identd.c - TCP/IP Ident protocol server.
@@ -31,17 +31,18 @@
 #include <poll.h>
 #include <pwd.h>
 #include <signal.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <syslog.h>
 #include <unistd.h>
 
-__RCSID("$NetBSD: identd.c,v 1.24 2004/11/05 21:56:01 dsl Exp $");
+__RCSID("$NetBSD: identd.c,v 1.25 2005/03/11 15:49:52 peter Exp $");
 
-#define OPSYS_NAME      "UNIX"
-#define IDENT_SERVICE   "auth"
-#define TIMEOUT         30      /* seconds */
+#define OPSYS_NAME	"UNIX"
+#define IDENT_SERVICE	"auth"
+#define TIMEOUT		30	/* seconds */
 
 static int   idhandle(int, const char *, const char *, const char *,
 		const char *, int);
@@ -53,10 +54,11 @@ static int   sysctl_getuid(struct sockaddr_storage *, socklen_t, uid_t *);
 static int   check_noident(const char *);
 static int   check_userident(const char *, char *, size_t);
 static void  random_string(char *, size_t);
-static void  change_format(const char *, struct passwd *, char *, size_t);
+static int   change_format(const char *, struct passwd *, char *, size_t);
 static void  timeout_handler(int);
 static void  waitchild(int);
 static void  fatal(const char *);
+static void  maybe_syslog(int, const char *, ...);
 
 static int   bflag, eflag, fflag, Fflag, iflag, Iflag;
 static int   lflag, Lflag, nflag, Nflag, rflag;
@@ -65,9 +67,8 @@ int
 main(int argc, char *argv[])
 {
 	int IPv4or6, ch, *socks, timeout;
-	char *address, *charset, *fmt;
+	char *address, *charset, *fmt, *p;
 	const char *osname, *portno;
-	char *p;
 	char user[LOGIN_NAME_MAX];
 	struct group *grp;
 	struct passwd *pw;
@@ -78,19 +79,16 @@ main(int argc, char *argv[])
 	osname = OPSYS_NAME;
 	portno = IDENT_SERVICE;
 	timeout = TIMEOUT;
-	address = NULL;
-	charset = NULL;
-	fmt = NULL;
-	socks = NULL;
-	gid = uid = 0;
+	address = charset = fmt = NULL;
+	uid = gid = 0;
 	bflag = eflag = fflag = Fflag = iflag = Iflag = 0;
 	lflag = Lflag = nflag = Nflag = rflag = 0;
 
-	/* Started from a tty? then run as daemon */
+	/* Started from a tty? then run as daemon. */
 	if (isatty(0))
 		bflag = 1;
 
-	/* Parse arguments */
+	/* Parse command line arguments. */
 	while ((ch = getopt(argc, argv, "46a:bceF:f:g:IiL:lNno:p:rt:u:")) != -1)
 		switch (ch) {
 		case '4':
@@ -125,7 +123,8 @@ main(int argc, char *argv[])
 				if ((grp = getgrnam(optarg)) != NULL)
 					gid = grp->gr_gid;
 				else
-					errx(1, "No such group '%s'", optarg);
+					errx(EXIT_FAILURE,
+					    "No such group '%s'", optarg);
 			}
 			break;
 		case 'I':
@@ -159,7 +158,8 @@ main(int argc, char *argv[])
 		case 't':
 			timeout = (int)strtol(optarg, &p, 0);
 			if (*p != '\0') 
-				errx(1, "Invalid timeout value '%s'", optarg);
+				errx(EXIT_FAILURE,
+				    "Invalid timeout value '%s'", optarg);
 			break;
 		case 'u':
 			uid = (uid_t)strtol(optarg, &p, 0);
@@ -168,46 +168,47 @@ main(int argc, char *argv[])
 					uid = pw->pw_uid;
 					gid = pw->pw_gid;
 				} else
-					errx(1, "No such user '%s'", optarg);
+					errx(EXIT_FAILURE,
+					    "No such user '%s'", optarg);
 			}
 			break;
 		default:
-			exit(1);
+			exit(EXIT_FAILURE);
 		}
 
 	if (lflag)
 		openlog("identd", LOG_PID, LOG_DAEMON);
 
-	/* Setup sockets if -b flag */
-	if (bflag) {
+	/* Setup sockets when running in the background. */
+	if (bflag)
 		socks = socketsetup(address, portno, IPv4or6);
-		if (socks == NULL)
-			return 1;
-	}
 
-	/* Switch to another uid/gid ? */
+	/* Switch to another uid/gid? */
 	if (gid && setgid(gid) == -1) {
-		if (lflag)
-			syslog(LOG_ERR, "setgid: %m");
+		maybe_syslog(LOG_ERR, "setgid: %m");
 		if (bflag)
 			warn("setgid");
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 	if (uid && setuid(uid) == -1) {
-		if (lflag)
-			syslog(LOG_ERR, "setuid: %m");
+		maybe_syslog(LOG_ERR, "setuid: %m");
 		if (bflag)
 			warn("setuid");
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 
-	/* Daemonize, setup pollfds and start mainloop if -b flag */
+	/*
+	 * When running as daemon: daemonize, setup pollfds and go into
+	 * the mainloop.  Otherwise, just read the input from stdin and
+	 * let inetd handle the sockets.
+	 */
 	if (bflag) {
 		int fd, i, nfds, rv;
 		struct pollfd *rfds;
 
 		(void)signal(SIGCHLD, waitchild);
-		(void)daemon(0, 0);
+		if (daemon(0, 0) < 0)
+			err(EXIT_FAILURE, "daemon");
 
 		rfds = malloc(*socks * sizeof(struct pollfd));
 		if (rfds == NULL)
@@ -218,33 +219,32 @@ main(int argc, char *argv[])
 			rfds[i].events = POLLIN;
 			rfds[i].revents = 0;
 		}
-		/* Mainloop for daemon */
+		/* Mainloop for daemon. */
 		for (;;) {
 			rv = poll(rfds, nfds, INFTIM);
-			if (rv < 0 && errno == EINTR)
-				continue;
-			if (rv < 0)
+			if (rv < 0) {
+				if (errno == EINTR)
+					continue;
 				fatal("poll");
+			}
 			for (i = 0; i < nfds; i++) {
 				if (rfds[i].revents & POLLIN) {
 					fd = accept(rfds[i].fd, NULL, NULL);
 					if (fd < 0) {
-						if (lflag)
-							syslog(LOG_ERR,
-							    "accept: %m");
+						maybe_syslog(LOG_ERR,
+						    "accept: %m");
 						continue;
 					}
 					switch (fork()) {
 					case -1:	/* error */
-						if (lflag)
-							syslog(LOG_ERR,
-							    "fork: %m");
+						maybe_syslog(LOG_ERR,
+						    "fork: %m");
 						(void)sleep(1);
 						break;
 					case 0:		/* child */
 						(void)idhandle(fd, charset,
 						    fmt, osname, user, timeout);
-						_exit(0);
+						_exit(EXIT_SUCCESS);
 					default:	/* parent */
 						(void)close(fd);
 					}
@@ -277,38 +277,35 @@ idhandle(int fd, const char *charset, const char *fmt, const char *osname,
 	(void)signal(SIGALRM, timeout_handler);
 	(void)alarm(timeout);
 
-	/* Get foreign internet address */
+	/* Get foreign internet address. */
 	len = sizeof(ss[0]);
 	if (getpeername(fd, (struct sockaddr *)&ss[0], &len) < 0)
 		fatal("getpeername");
 
-	if (lflag)
-		syslog(LOG_INFO, "Connection from %s", gethost(&ss[0]));
+	maybe_syslog(LOG_INFO, "Connection from %s", gethost(&ss[0]));
 
-	/* Get local internet address */
+	/* Get local internet address. */
 	len = sizeof(ss[1]);
 	if (getsockname(fd, (struct sockaddr *)&ss[1], &len) < 0)
 		fatal("getsockname");
 
-	/* Be sure to have the same address family's */
+	/* Be sure to have the same address families. */
 	if (ss[0].ss_family != ss[1].ss_family) {
-		if (lflag)
-			syslog(LOG_ERR, "Foreign/local AF are different!");
+		maybe_syslog(LOG_ERR, "Different foreign/local address family");
 		return 1;
 	}
 
-	/* Receive data from the client */
+	/* Receive data from the client. */
 	if ((n = recv(fd, buf, sizeof(buf) - 1, 0)) < 0) {
 		fatal("recv");
 	} else if (n == 0) {
-		if (lflag)
-			syslog(LOG_NOTICE, "recv: EOF");
+		maybe_syslog(LOG_NOTICE, "recv: EOF");
 		iderror(fd, 0, 0, "UNKNOWN-ERROR");
 		return 1;
 	}
 	buf[n] = '\0';
 
-	/* Get local and remote ports from the received data */
+	/* Get local and remote ports from the received data. */
 	p = buf;
 	while (*p != '\0' && isspace((unsigned char)*p))
 		p++;
@@ -320,23 +317,21 @@ idhandle(int fd, const char *charset, const char *fmt, const char *osname,
 
 	/* Are the ports valid? */
 	if (lport < 1 || lport > 65535 || fport < 1 || fport > 65535) {
-		if (lflag)
-			syslog(LOG_NOTICE, "Invalid port(s): %d, %d from %s",
-			    lport, fport, gethost(&ss[0]));
+		maybe_syslog(LOG_NOTICE, "Invalid port(s): %d, %d from %s",
+		    lport, fport, gethost(&ss[0]));
 		iderror(fd, 0, 0, eflag ? "UNKNOWN-ERROR" : "INVALID-PORT");
 		return 1;
 	}
 
-	/* If there is a 'lie' user enabled, then handle it now and quit */
+	/* If there is a 'lie' user enabled, then handle it now and stop. */
 	if (Lflag) {
-		if (lflag)
-			syslog(LOG_NOTICE, "Lying with name %s to %s",
-			    idbuf, gethost(&ss[0]));
+		maybe_syslog(LOG_NOTICE, "Lying with name %s to %s",
+		    idbuf, gethost(&ss[0]));
 		idparse(fd, lport, fport, charset, osname, idbuf);
 		return 0;
 	}
 
-	/* Protocol dependent stuff */
+	/* Protocol dependent stuff. */
 	switch (ss[0].ss_family) {
 	case AF_INET:
 		((struct sockaddr_in *)&ss[0])->sin_port = htons(fport);
@@ -347,20 +342,17 @@ idhandle(int fd, const char *charset, const char *fmt, const char *osname,
 		((struct sockaddr_in6 *)&ss[1])->sin6_port = htons(lport);
 		break;
 	default:
-		if (lflag)
-			syslog(LOG_ERR, "Unsupported protocol, proto no. %d",
-			    ss[0].ss_family);
+		maybe_syslog(LOG_ERR, "Unsupported protocol (no. %d)",
+		    ss[0].ss_family);
 		return 1;
 	}
 
-	/* Do sysctl call */
+	/* Try to get the UID of the connection owner using sysctl. */
 	if (sysctl_getuid(ss, sizeof(ss), &uid) == -1) {
-		if (lflag)
-			syslog(LOG_ERR, "sysctl: %m");
+		maybe_syslog(LOG_ERR, "sysctl: %m");
 		if (fflag) {
-			if (lflag)
-				syslog(LOG_NOTICE, "Using fallback name %s "
-				    "to %s", idbuf, gethost(&ss[0]));
+			maybe_syslog(LOG_NOTICE, "Using fallback name %s to %s",
+			    idbuf, gethost(&ss[0]));
 			idparse(fd, lport, fport, charset, osname, idbuf);
 			return 0;
 		}
@@ -368,48 +360,43 @@ idhandle(int fd, const char *charset, const char *fmt, const char *osname,
 		return 1;
 	}
 
-	/* Fill in userbuf with user name if possible, else numeric uid */
+	/* Fill in userbuf with user name if possible, else numeric UID. */
 	if ((pw = getpwuid(uid)) == NULL) {
-		if (lflag)
-			syslog(LOG_ERR, "Couldn't map uid (%u) to name", uid);
+		maybe_syslog(LOG_ERR, "Couldn't map uid (%u) to name", uid);
 		(void)snprintf(userbuf, sizeof(userbuf), "%u", uid);
 	} else {
-		if (lflag)
-		    syslog(LOG_INFO, "Successfull lookup: %d, %d: %s for %s",
-			lport, fport, pw->pw_name, gethost(&ss[0]));
+		maybe_syslog(LOG_INFO, "Successful lookup: %d, %d: %s for %s",
+		    lport, fport, pw->pw_name, gethost(&ss[0]));
 		(void)strlcpy(userbuf, pw->pw_name, sizeof(userbuf));
 	}
 
 	/* No ident enabled? */
 	if (Nflag && pw && check_noident(pw->pw_dir)) {
-		if (lflag)
-			syslog(LOG_NOTICE, "Returning HIDDEN-USER for user %s"
-			    " to %s", pw->pw_name, gethost(&ss[0]));
+		maybe_syslog(LOG_NOTICE, "Returning HIDDEN-USER for user %s"
+		    " to %s", pw->pw_name, gethost(&ss[0]));
 		iderror(fd, lport, fport, "HIDDEN-USER");
 		return 1;
 	}
 
-	/* User ident enabled ? */
+	/* User ident enabled? */
 	if (iflag && pw && check_userident(pw->pw_dir, idbuf, sizeof(idbuf))) {
 		if (!Iflag) {
 			if ((strspn(idbuf, "0123456789") &&
-			    getpwuid(atoi(idbuf)) != NULL)
-			    || (getpwnam(idbuf) != NULL)) {
-				if (lflag)
-					syslog(LOG_NOTICE,
-					    "Ignoring user-specified '%s' for "
-					    "user %s", idbuf, userbuf);
+			     getpwuid(atoi(idbuf)) != NULL) ||
+			    (getpwnam(idbuf) != NULL)) {
+				maybe_syslog(LOG_NOTICE,
+				    "Ignoring user-specified '%s' for user %s",
+				    idbuf, userbuf);
 				(void)strlcpy(idbuf, userbuf, sizeof(idbuf));
 			}
 		}
-		if (lflag)
-			syslog(LOG_NOTICE, "Returning user-specified '%s' for "
-			    "user %s to %s", idbuf, userbuf, gethost(&ss[0]));
+		maybe_syslog(LOG_NOTICE, "Returning user-specified '%s' for "
+		    "user %s to %s", idbuf, userbuf, gethost(&ss[0]));
 		idparse(fd, lport, fport, charset, osname, idbuf);
 		return 0;
 	}
 
-	/* Send random crap? */
+	/* Send a random message? */
 	if (rflag) {
 		/* Random number or string? */
 		if (nflag)
@@ -418,30 +405,31 @@ idhandle(int fd, const char *charset, const char *fmt, const char *osname,
 		else
 			random_string(idbuf, sizeof(idbuf));
 
-		if (lflag)
-			syslog(LOG_NOTICE, "Returning random '%s' for user %s"
-			    " to %s", idbuf, userbuf, gethost(&ss[0]));
+		maybe_syslog(LOG_NOTICE, "Returning random '%s' for user %s"
+		    " to %s", idbuf, userbuf, gethost(&ss[0]));
 		idparse(fd, lport, fport, charset, osname, idbuf);
 		return 0;
 	}
 
-	/* Return number? */
+	/* Return numberic user ID? */
 	if (nflag)
 		(void)snprintf(idbuf, sizeof(idbuf), "%u", uid);
 	else
 		(void)strlcpy(idbuf, userbuf, sizeof(idbuf));
 
-	if (Fflag) {
-		/* RFC 1413 says that 512 is the limit */
-		change_format(fmt, pw, buf, 512);
+	/*
+	 * Change the output format?  Note that 512 is the maximum
+	 * size of the result according to RFC 1413.
+	 */
+	if (Fflag && change_format(fmt, pw, buf, 512))
 		idparse(fd, lport, fport, charset, osname, buf);
-	} else
+	else
 		idparse(fd, lport, fport, charset, osname, idbuf);
 
 	return 0;
 }
 
-/* Send/parse the ident result */
+/* Send/parse the ident result. */
 static void
 idparse(int fd, int lport, int fport, const char *charset, const char *osname,
     const char *user)
@@ -458,7 +446,7 @@ idparse(int fd, int lport, int fport, const char *charset, const char *osname,
 	free(p);
 }
 
-/* Return a specified ident error */
+/* Return a specified ident error. */
 static void
 iderror(int fd, int lport, int fport, const char *error)
 {
@@ -473,7 +461,7 @@ iderror(int fd, int lport, int fport, const char *error)
 	free(p);
 }
 
-/* Return the IP address of the connecting host */
+/* Return the IP address of the connecting host. */
 static const char *
 gethost(struct sockaddr_storage *ss)
 {
@@ -486,7 +474,7 @@ gethost(struct sockaddr_storage *ss)
 	return "UNKNOWN";
 }
 
-/* Setup sockets, for daemon mode */
+/* Setup sockets, for daemon mode. */
 static int *
 socketsetup(const char *address, const char *port, int af)
 {
@@ -500,21 +488,19 @@ socketsetup(const char *address, const char *port, int af)
 	hints.ai_socktype = SOCK_STREAM;
 	error = getaddrinfo(address, port, &hints, &res0);
 	if (error) {
-		if (lflag)
-			syslog(LOG_ERR, "getaddrinfo: %s", gai_strerror(error));
-		errx(1, "%s", gai_strerror(error));
-		/*NOTREACHED*/
+		maybe_syslog(LOG_ERR, "getaddrinfo: %s", gai_strerror(error));
+		errx(EXIT_FAILURE, "%s", gai_strerror(error));
+		/* NOTREACHED */
 	}
 
-	/* Count max number of sockets we may open */
+	/* Count max number of sockets we may open. */
 	for (maxs = 0, res = res0; res != NULL; res = res->ai_next)
 		maxs++;
 
 	socks = malloc((maxs + 1) * sizeof(int));
 	if (socks == NULL) {
-		if (lflag)
-			syslog(LOG_ERR, "malloc: %m");
-		err(1, "malloc");
+		maybe_syslog(LOG_ERR, "malloc: %m");
+		err(EXIT_FAILURE, "malloc");
 		/* NOTREACHED */
 	}
 
@@ -543,9 +529,8 @@ socketsetup(const char *address, const char *port, int af)
 
 	if (*socks == 0) {
 		free(socks);
-		if (lflag)
-			syslog(LOG_ERR, "%s: %m", cause);
-		err(1, "%s", cause);
+		maybe_syslog(LOG_ERR, "%s: %m", cause);
+		err(EXIT_FAILURE, "%s", cause);
 		/* NOTREACHED */
 	}
 	if (res0)
@@ -554,7 +539,7 @@ socketsetup(const char *address, const char *port, int af)
 	return socks;
 }
 
-/* Return the UID for the connection owner */
+/* Try to get the UID of the connection owner using sysctl. */
 static int
 sysctl_getuid(struct sockaddr_storage *ss, socklen_t len, uid_t *uid)
 {
@@ -576,7 +561,7 @@ sysctl_getuid(struct sockaddr_storage *ss, socklen_t len, uid_t *uid)
 	return 0;
 }
 
-/* Check if a .noident file exists in the user home directory */
+/* Check if a .noident file exists in the user home directory. */
 static int
 check_noident(const char *homedir)
 {
@@ -625,7 +610,7 @@ check_userident(const char *homedir, char *username, size_t len)
 	}
 	username[n] = '\0';
 
-	if ((p = strpbrk(username, "\r\n")))
+	if ((p = strpbrk(username, "\r\n")) != NULL)
 		*p = '\0';
 
 	(void)close(fd);
@@ -633,7 +618,7 @@ check_userident(const char *homedir, char *username, size_t len)
 	return 1;
 }
 
-/* Generate a random string */
+/* Generate a random string. */
 static void
 random_string(char *str, size_t len)
 {
@@ -647,8 +632,8 @@ random_string(char *str, size_t len)
 	*p = '\0';
 }
 
-/* Change the output format */
-static void
+/* Change the output format. */
+static int
 change_format(const char *format, struct passwd *pw, char *dest, size_t len)
 {
 	struct group *gr;
@@ -656,10 +641,8 @@ change_format(const char *format, struct passwd *pw, char *dest, size_t len)
 	char **gmp;
 	int bp;
 
-	if (len == 0)
-		return;
-	if ((gr = getgrgid(pw->pw_gid)) == NULL)
-		return;
+	if (len == 0 || ((gr = getgrgid(pw->pw_gid)) == NULL))
+		return 0;
 
 	for (bp = 0, cp = format; *cp != '\0' && bp < 490; cp++) {
 		if (*cp != '%') {
@@ -742,18 +725,19 @@ change_format(const char *format, struct passwd *pw, char *dest, size_t len)
 		bp = 493;
 	}
 	dest[bp] = '\0';
+
+	return 1;
 }
 
-/* Just exit when we caught SIGALRM */
+/* Just exit when we caught SIGALRM. */
 static void
 timeout_handler(int s)
 {
-	if (lflag)
-		syslog(LOG_DEBUG, "SIGALRM triggered, exiting...");
-	exit(1);
+	maybe_syslog(LOG_DEBUG, "SIGALRM triggered, exiting...");
+	exit(EXIT_FAILURE);
 }
 
-/* This is to clean up zombie processes when in daemon mode */
+/* This is to clean up zombie processes when in daemon mode. */
 static void
 waitchild(int s)
 {
@@ -761,11 +745,23 @@ waitchild(int s)
 		continue;
 }
 
-/* Report errno through syslog and quit */
+/* Report error message string through syslog and quit. */
 static void
 fatal(const char *func)
 {
-	if (lflag)
-		syslog(LOG_ERR, "%s: %m", func);
-	exit(1);
+	maybe_syslog(LOG_ERR, "%s: %m", func);
+	exit(EXIT_FAILURE);
+}
+
+/* Log using syslog, but only if enabled with the -l flag. */
+static void
+maybe_syslog(int priority, const char *message, ...)
+{
+	va_list ap;
+
+	if (lflag) {
+		va_start(ap, message);
+		vsyslog(priority, message, ap);
+		va_end(ap);
+	}
 }
