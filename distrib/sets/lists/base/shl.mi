@@ -1,9 +1,9 @@
-# $NetBSD: shl.mi,v 1.60 2000/04/06 21:22:49 erh Exp $
+# $NetBSD: shl.mi,v 1.61 2000/04/14 22:55:56 thorpej Exp $
 ./usr/lib/libamu.so.1.1
 ./usr/lib/libbz2.so.0.0
 ./usr/lib/libc.so.12.60
 ./usr/lib/libcrypt.so.0.0
-./usr/lib/libcurses.so.2.5
+./usr/lib/libcurses.so.3.1
 ./usr/lib/libedit.so.2.3
 ./usr/lib/libg2c.so.0.0
 ./usr/lib/libgnumalloc.so.0.0
