@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.115 1998/02/10 14:09:22 mrg Exp $	*/
+/*	$NetBSD: init_main.c,v 1.116 1998/02/14 00:37:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -224,6 +224,7 @@ main(framep)
 
 	pgrp0.pg_session = &session0;
 	session0.s_count = 1;
+	session0.s_sid = p->p_pid;
 	session0.s_leader = p;
 
 	p->p_flag = P_INMEM | P_SYSTEM;

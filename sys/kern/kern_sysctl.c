@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.32 1998/02/10 14:09:46 mrg Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.33 1998/02/14 00:37:33 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -783,6 +783,7 @@ fill_eproc(p, ep)
 	else
 		ep->e_ppid = 0;
 	ep->e_pgid = p->p_pgrp->pg_id;
+	ep->e_sid = ep->e_sess->s_sid;
 	ep->e_jobc = p->p_pgrp->pg_jobc;
 	if ((p->p_flag & P_CONTROLT) &&
 	     (tp = ep->e_sess->s_ttyp)) {
