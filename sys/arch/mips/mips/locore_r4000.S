@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_r4000.S,v 1.43 1998/04/19 01:48:34 jonathan Exp $	*/
+/*	$NetBSD: locore_r4000.S,v 1.44 1998/09/09 00:07:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -2113,9 +2113,9 @@ END(mips3_proc_trampoline)
 
 /*
  * mips3_switch_exit(struct proc *)
- * Make the named process exit.  Switch SP to nullproc stack, free the
- * exiting proc's USPACE, then jump into the middle of cpu_switch().
- * MUST BE CALLED AT SPLHIGH.
+ * Make the named process exit.  Switch SP to nullproc stack, schedule
+ * the exiting proc's vmspace and stack to be freed, then jump into the
+ * middle of cpu_switch().  MUST BE CALLED AT SPLHIGH.
  */
 LEAF(mips3_switch_exit)
 	la	v1, _C_LABEL(nullproc)		# !! SP runs on p->p_addr !!
@@ -2141,15 +2141,8 @@ LEAF(mips3_switch_exit)
 	tlbwi					# Write the TLB entry.
 
 	addu	sp, v0, USPACE - START_FRAME
-	li	a2, USPACE
-	lw	a1, P_ADDR(a0)
-	lw	a0, kernel_map
 	la	ra, sw1				# goto cpu_switch()
-#if defined(UVM)
-	j	uvm_km_free			# free exiting USPACE
-#else
-	j	kmem_free			# free exiting USPACE
-#endif
+	j	exit2				# proc already in a0
 	nop					# XXX schedule better
 END(mips3_switch_exit)
 

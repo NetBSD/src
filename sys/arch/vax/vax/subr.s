@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.s,v 1.25 1998/07/04 22:18:45 jonathan Exp $	   */
+/*	$NetBSD: subr.s,v 1.26 1998/09/09 00:09:19 thorpej Exp $	   */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -265,23 +265,13 @@ noque:	.asciz	"swtch"
 #
 
 ENTRY(cpu_exit,0)
-	movl	4(ap),r6	# Process pointer in r0
-	pushl	P_VMSPACE(r6)	# free current vm space
-#if defined(UVM)
-	calls	$1,_uvmspace_free
-#else
-	calls	$1,_vmspace_free
-#endif
+	movl	4(ap),r6	# Process pointer in r6
 	mtpr	$0x18,$PR_IPL	# Block almost everything
-	addl3	$512,_scratch,sp # Change stack, we will free it now
-	pushl	$USPACE		# stack size
-	pushl	P_ADDR(r6)	# pointer to stack space
-	pushl	_kernel_map	# the correct vm map
-#if defined(UVM)
-	calls	$3,_uvm_km_free
-#else
-	calls	$3,_kmem_free
-#endif
+	addl3	$512,_scratch,sp # Change stack, and schedule it to be freed
+
+	pushl	r6		# exit2(p)
+	calls	$1,_exit2
+
 	clrl	r0		# No process to switch from
 	bicl3	$0xc0000000,_scratch,r1
 	mtpr	r1,$PR_PCBB

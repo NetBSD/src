@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.27 1998/08/16 02:17:17 mark Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.28 1998/09/09 00:07:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -649,27 +649,10 @@ Lse_context_switched:
 	str	r3, [sp, #-0x0004]!
 
 	/*
-	 * Have to wait until we have switched to proc0 as the
-	 * pmap gets released in vmspace_free()
+	 * Schedule the vmspace and stack to be freed.
 	 */
-	ldr	r0, [r3, #(P_VMSPACE)]
-#if defined(UVM)
-	bl	_uvmspace_free
-#else
-	bl	_vmspace_free
-#endif
-
-	/* This has to be done here */
-	mov	r2, #(UPAGES << PGSHIFT)
-	ldr	r0, [sp], #0x0004
-	ldr	r1, [r0, #(P_ADDR)]
-	ldr	r0, Lkernel_map
-	ldr	r0, [r0]
-#if defined(UVM)
-	bl	_uvm_km_free
-#else
-	bl	_kmem_free
-#endif
+	mov	r0, r3			/* exit2(p) */
+	bl	_exit2
 
 	/* Paranoia */
 	mov	r0, #0x00000000
