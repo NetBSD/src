@@ -1,4 +1,4 @@
-/*	$NetBSD: video_subr.h,v 1.1 2001/02/22 18:37:57 uch Exp $	*/
+/*	$NetBSD: video_subr.h,v 1.2 2001/06/05 15:02:40 uch Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -57,6 +57,7 @@ struct video_chip {
 	int vc_fbdepth;
 	int vc_fbwidth;
 	int vc_fbheight;
+	int vc_reverse;
 
 	void (*vc_drawline)(struct video_chip *, int, int, int, int);
 	void (*vc_drawdot)(struct video_chip *, int, int);
