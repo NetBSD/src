@@ -1,6 +1,6 @@
 /**************************************************************************
 **
-**  $Id: ncr.c,v 1.2 1994/10/01 06:27:56 mycroft Exp $
+**  $Id: ncr.c,v 1.3 1994/10/27 02:02:00 andrew Exp $
 **
 **  Device driver for the   NCR 53C810   PCI-SCSI-Controller.
 **
@@ -107,7 +107,7 @@
 */
 
 #ifndef SCSI_NCR_MAX_TAGS
-#define SCSI_NCR_MAX_TAGS    (8)
+#define SCSI_NCR_MAX_TAGS    (0)
 #endif /* SCSI_NCR_MAX_TAGS */
 
 /*==========================================================
@@ -369,6 +369,7 @@ int ncr_debug = 0;
 */
 
 #define CCB_MAGIC	(0xf2691ad2)
+#define	MAX_TAGS	(16)		/* hard limit */
 
 /*==========================================================
 **
@@ -1326,7 +1327,7 @@ static	u_long	getirr (void)
 
 
 static char ident[] =
-	"\n$Id: ncr.c,v 1.2 1994/10/01 06:27:56 mycroft Exp $\n";
+	"\n$Id: ncr.c,v 1.3 1994/10/27 02:02:00 andrew Exp $\n";
 
 u_long	ncr_version = NCR_VERSION
 	+ (u_long) sizeof (struct ncb)
@@ -3433,7 +3434,7 @@ static	int ncr_attach (pcici_t config_id)
 		ncr_name (np));
 	DELAY (1000000);
 #endif
-	printf ("%s scanning for targets 0..%d ($Revision: 1.2 $)\n",
+	printf ("%s scanning for targets 0..%d ($Revision: 1.3 $)\n",
 		ncr_name (np), MAX_TARGET-1);
 
 	/*
@@ -3767,12 +3768,16 @@ static INT32 ncr_start (struct scsi_xfer * xp)
 				cp2 = cp2->next_ccb;
 			if (cp2) continue;
 			cp->tag=lp->lasttag;
-			PRINT_ADDR(xp);
-			printf ("using tag #%d.\n", cp->tag);
+#ifdef SCSI_NCR_DEBUG
+			if (ncr_debug & DEBUG_TAGS) {
+				PRINT_ADDR(xp);
+				printf ("using tag #%d.\n", cp->tag);
+			};
+#endif /* SCSI_NCR_DEBUG */
 		};
 	} else {
 		cp->tag=0;
-#if !defined(ANCIENT) && !defined(__NetBSD__)
+#if !defined(ANCIENT) && !defined(__NetBSD__) && !(__FreeBSD__ >= 2)
 		/*
 		** @GENSCSI@	Bug in "/sys/scsi/cd.c"
 		**
@@ -3815,7 +3820,7 @@ static INT32 ncr_start (struct scsi_xfer * xp)
 		}
 
 		/*
-		**	can be overwritten by ncrstat
+		**	can be overwritten by ncrcontrol
 		*/
 		switch (np->order) {
 		case M_SIMPLE_TAG:
@@ -4363,6 +4368,8 @@ void ncr_wakeup (ncb_p np, u_long code)
 	**	complete all jobs that are not IDLE.
 	*/
 
+	int s=splbio();
+
 	ccb_p cp = &np->ccb;
 	while (cp) {
 		switch (cp->host_status) {
@@ -4389,6 +4396,7 @@ void ncr_wakeup (ncb_p np, u_long code)
 		};
 		cp = cp -> link_ccb;
 	};
+	splx (s);
 }
 
 /*==========================================================
@@ -4760,7 +4768,7 @@ static void ncr_usercmd (ncb_p np)
 		break;
 
 	case UC_SETTAGS:
-		if (np->user.data > SCSI_NCR_MAX_TAGS)
+		if (np->user.data > MAX_TAGS)
 			break;
 		for (t=0; t<MAX_TARGET; t++) {
 			if (!((np->user.target>>t)&1)) continue;
@@ -5024,7 +5032,8 @@ void ncr_exception (ncb_p np)
 		printf ("<%d|%x:%x|%x:%x>",
 			INB(nc_scr0),
 			dstat,sist,
-			INL(nc_dsp),INL(nc_dbc));
+			INL(nc_dsp),
+			INL(nc_dbc));
 #endif /* SCSI_NCR_DEBUG */
 	if ((dstat==DFE) && (sist==PAR)) return;
 
@@ -6211,6 +6220,8 @@ static	void ncr_alloc_ccb (ncb_p np, struct scsi_xfer * xp)
 		tp->jump_lcb.l_cmd   = (SCR_JUMP);
 		tp->jump_lcb.l_paddr = vtophys (&np->script->abort);
 		np->jump_tcb.l_paddr = vtophys (&tp->jump_tcb);
+
+		ncr_setmaxtags (tp, SCSI_NCR_MAX_TAGS);
 	}
 
 	/*
@@ -6480,7 +6491,7 @@ static	int	ncr_scatter
 **
 **	Test the pci bus snoop logic :-(
 **
-**	Has to be called with disabled interupts.
+**	Has to be called with interrupts disabled.
 **
 **
 **==========================================================
@@ -6629,6 +6640,7 @@ static struct table_entry device_tab[] =
 {
 	{"WangDAT", "Model 2600", "01.7", QUIRK_NOMSG},
 	{"WangDAT", "Model 3200", "02.2", QUIRK_NOMSG},
+	{"WangDAT", "Model 1300", "02.4", QUIRK_NOMSG},
 	{"", "", "", 0} /* catch all: must be last entry. */
 };
 
@@ -6641,17 +6653,17 @@ static u_long ncr_lookup(char * id)
 
 		d = id+8;
 		r = p->manufacturer;
-		while (c=*r++) if (c!=*d++) break;
+		while ((c=*r++)) if (c!=*d++) break;
 		if (c) continue;
 
 		d = id+16;
 		r = p->model;
-		while (c=*r++) if (c!=*d++) break;
+		while ((c=*r++)) if (c!=*d++) break;
 		if (c) continue;
 
 		d = id+32;
 		r = p->version;
-		while (c=*r++) if (c!=*d++) break;
+		while ((c=*r++)) if (c!=*d++) break;
 		if (c) continue;
 
 		return (p->info);
