@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sa.c,v 1.1.2.9 2001/07/31 21:10:07 nathanw Exp $	*/
+/*	$NetBSD: pthread_sa.c,v 1.1.2.10 2001/08/01 23:37:37 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -49,6 +49,14 @@
 
 #include "pthread.h"
 #include "pthread_int.h"
+
+#undef PTHREAD_SA_DEBUG
+
+#ifdef PTHREAD_SA_DEBUG
+#define SDPRINTF(x) DPRINTF(x)
+#else
+#define SDPRINTF(x)
+#endif
 
 extern struct pt_queue_t allqueue;
 
@@ -148,6 +156,7 @@ pthread__upcall(int type, struct sa_t *sas[], int ev, int intr)
 	 */
 
 	next = pthread__next(self);
+	SDPRINTF(("(upcall %p) switching to %p\n", self, next));
 	pthread__upcall_switch(self, next);
 	/* NOTREACHED */
 	assert(0);
@@ -238,14 +247,19 @@ pthread__resolve_locks(pthread_t self, pthread_t *intqueuep)
 	switchto = NULL;
 	victim = intqueue;
 
+	SDPRINTF(("(rl %p) entered\n", self));
+	
 	while (intqueue != self) {
 		/* Make a pass over the interrupted queue, cleaning out
 		 * any threads that have dropped all their locks and any
 		 * upcalls that have finished.
 		 */
+		SDPRINTF(("(rl %p) intqueue %p\n",self, intqueue));
 		prev = NULL;
 		for (victim = intqueue; victim != self; victim = next) {
 			next = victim->pt_next;
+		SDPRINTF(("(rl %p) victim %p (uc %p)", self, victim, 
+		    victim->pt_uc));
 
 			if (victim->pt_switchto) {
 				PTHREADD_ADD(PTHREADD_SWITCHTO);
@@ -253,9 +267,11 @@ pthread__resolve_locks(pthread_t self, pthread_t *intqueuep)
 				switchto->pt_uc = victim->pt_switchtouc;
 				victim->pt_switchto = NULL;
 				victim->pt_switchtouc = NULL;
+				SDPRINTF((" switchto: %p", switchto));
 			}
-			
+
 			if (victim->pt_type == PT_THREAD_NORMAL) {
+				SDPRINTF((" normal"));
 				if (victim->pt_spinlocks == 0) {
 					/* We can remove this guy
 					 * from the interrupted queue.
@@ -272,13 +288,19 @@ pthread__resolve_locks(pthread_t self, pthread_t *intqueuep)
 						/* Yes. Therefore, it's on
 						 * some sleep queue and
 						 * all we have to do is
-						 * release the lock.
+						 * release the lock and
+						 * restore the real
+						 * sleep contex.
 						 */
 						lock = victim->pt_heldlock;
 						victim->pt_heldlock = NULL;
 						__cpu_simple_unlock(lock);
+						victim->pt_uc = 
+						    victim->pt_sleepuc;
+						victim->pt_sleepuc = NULL;
 						victim->pt_next = NULL;
 						victim->pt_parent = NULL;
+						SDPRINTF((" heldlock: %p",lock));
 					} else {
 						/* No. Queue it for the 
 						 * run queue.
@@ -287,15 +309,19 @@ pthread__resolve_locks(pthread_t self, pthread_t *intqueuep)
 						runq = victim;
 					}
 				} else {
+					SDPRINTF((" spinlocks: %d", 
+					    victim->pt_spinlocks));
 					/* Still holding locks.
 					 * Leave it in the interrupted queue.
 					 */
 					prev = victim;
 				}
 			} else {
+				SDPRINTF((" upcall"));
 				/* Okay, an upcall. */
 				if (victim->pt_state == PT_STATE_RECYCLABLE) {
 					/* We're done with you. */
+					SDPRINTF((" recyclable"));
 					victim->pt_next = recycleq;
 					recycleq = victim;
 					if (prev)
@@ -307,10 +333,17 @@ pthread__resolve_locks(pthread_t self, pthread_t *intqueuep)
 			}
 			if (switchto) {
 				assert(switchto->pt_spinlocks == 0);
-				switchto->pt_next = runq;
-				runq = switchto;
+				/* Threads can have switchto set to themselves
+				 * if they hit new_preempt. Don't put them
+				 * on the run queue twice.
+				 */
+				if (switchto != victim) {
+					switchto->pt_next = runq;
+					runq = switchto;
+				}
 				switchto = NULL;
 			}
+			SDPRINTF(("\n"));
 		}
 
 		if (intqueue != self) {
@@ -320,7 +353,11 @@ pthread__resolve_locks(pthread_t self, pthread_t *intqueuep)
 			 * chain, and we will continue here, having
 			 * returned from the switch.
 			 */
+			SDPRINTF(("(rl %p) chain switching to %p\n",
+			    self, intqueue));
 			pthread__switch(self, intqueue);
+			SDPRINTF(("(rl %p) returned from chain switch\n",
+			    self));
 		}
 
 		if (self->pt_next) {
@@ -336,7 +373,7 @@ pthread__resolve_locks(pthread_t self, pthread_t *intqueuep)
 
 	/* Recycle upcalls. */
 	pthread__recycle_bulk(self, recycleq);
-
+	SDPRINTF(("(rl %p) exiting\n", self));
 	*intqueuep = runq;
 }
 
