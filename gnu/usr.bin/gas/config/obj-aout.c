@@ -141,8 +141,17 @@ char **where;
 object_headers *headers;
 {
 	tc_headers_hook(headers);
-	
-	md_number_to_chars(*where, headers->header.a_info, sizeof(headers->header.a_info));
+
+#ifdef NETBSD_AOUT
+	/* `a_info' (magic, mid, flags) is in network byte-order */
+	(*where)[0] = ((char *)&headers->header.a_info)[0];
+	(*where)[1] = ((char *)&headers->header.a_info)[1];
+	(*where)[2] = ((char *)&headers->header.a_info)[2];
+	(*where)[3] = ((char *)&headers->header.a_info)[3];
+#else
+	md_number_to_chars(*where, headers->header.a_info,
+			   sizeof(headers->header.a_info));
+#endif
 	*where += sizeof(headers->header.a_info);
 
 #ifdef TE_HPUX
@@ -617,11 +626,12 @@ char **where;
 void obj_pre_write_hook(headers)
 object_headers *headers;
 {
-	H_SET_DYNAMIC(headers, 0);
-	H_SET_VERSION(headers, 0);
-	H_SET_MACHTYPE(headers, AOUT_MACHTYPE);
+	H_SET_INFO(headers,
+		   DEFAULT_MAGIC_NUMBER_FOR_OBJECT_FILE,
+		   AOUT_MACHTYPE,
+		   AOUT_FLAGS,
+		   AOUT_VERSION);
 
-	H_SET_MAGIC_NUMBER(headers, DEFAULT_MAGIC_NUMBER_FOR_OBJECT_FILE);
 	H_SET_ENTRY_POINT(headers, 0);
 		
 	tc_aout_pre_write_hook(headers);

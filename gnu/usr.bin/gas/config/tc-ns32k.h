@@ -25,6 +25,8 @@
 
 #define NO_LISTING
 
+#define AOUT_MACHTYPE 137
+
 #define tc_aout_pre_write_hook(x)	{;} /* not used */
 #define tc_crawl_symbol_chain(a)	{;} /* not used */
 #define tc_headers_hook(a)		{;} /* not used */
