@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.c,v 1.32 2003/08/18 15:45:28 dsl Exp $	*/
+/*	$NetBSD: nfs.c,v 1.33 2003/08/31 22:40:48 fvdl Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -144,7 +144,7 @@ nfs_getrootfh(d, path, fhp)
 		n_long	h[RPC_HEADER_WORDS];
 		struct repl d;
 	} rdata;
-	size_t cc;
+	ssize_t cc;
 	
 #ifdef NFS_DEBUG
 	if (debug)
@@ -156,7 +156,7 @@ nfs_getrootfh(d, path, fhp)
 
 	bzero(args, sizeof(*args));
 	len = strlen(path);
-	if (len > sizeof(args->path))
+	if ((size_t)len > sizeof(args->path))
 		len = sizeof(args->path);
 	args->len = htonl(len);
 	bcopy(path, args->path, len);
@@ -222,7 +222,7 @@ nfs_lookupfh(d, name, len, newfd)
 
 	bzero(args, sizeof(*args));
 	bcopy(d->fh, args->fh, sizeof(args->fh));
-	if (len > sizeof(args->name))
+	if ((size_t)len > sizeof(args->name))
 		len = sizeof(args->name);
 	bcopy(name, args->name, len);
 	args->len = htonl(len);
@@ -314,9 +314,9 @@ nfs_readdata(d, off, addr, len)
 		n_long	h[RPC_HEADER_WORDS];
 		struct nfs_read_repl d;
 	} rdata;
-	size_t cc;
+	ssize_t cc;
 	long x;
-	int hlen, rlen;
+	size_t hlen, rlen;
 
 	args = &sdata.d;
 	repl = &rdata.d;
@@ -336,7 +336,7 @@ nfs_readdata(d, off, addr, len)
 		/* errno was already set by rpc_call */
 		return (-1);
 	}
-	if (cc < hlen) {
+	if (cc < (ssize_t)hlen) {
 		errno = EBADRPC;
 		return (-1);
 	}
@@ -346,7 +346,7 @@ nfs_readdata(d, off, addr, len)
 	}
 	rlen = cc - hlen;
 	x = ntohl(repl->count);
-	if (rlen < x) {
+	if (rlen < (size_t)x) {
 		printf("nfsread: short packet, %d < %ld\n", rlen, x);
 		errno = EBADRPC;
 		return(-1);

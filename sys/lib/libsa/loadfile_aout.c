@@ -1,4 +1,4 @@
-/* $NetBSD: loadfile_aout.c,v 1.5 2003/08/07 16:32:28 agc Exp $ */
+/* $NetBSD: loadfile_aout.c,v 1.6 2003/08/31 22:40:48 fvdl Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -144,7 +144,8 @@ loadfile_aout(fd, x, marks, flags)
 	if (flags & LOAD_TEXT) {
 		PROGRESS(("%ld", x->a_text));
 
-		if (READ(fd, maxp, x->a_text - sub) != x->a_text - sub) {
+		if (READ(fd, maxp, x->a_text - sub) !=
+		    (ssize_t)(x->a_text - sub)) {
 			WARN(("read text"));
 			return 1;
 		}
@@ -178,7 +179,7 @@ loadfile_aout(fd, x, marks, flags)
 	if (flags & LOAD_DATA) {
 		PROGRESS(("+%ld", x->a_data));
 
-		if (READ(fd, maxp, x->a_data) != x->a_data) {
+		if (READ(fd, maxp, x->a_data) != (ssize_t)x->a_data) {
 			WARN(("read data"));
 			return 1;
 		}
@@ -223,7 +224,7 @@ loadfile_aout(fd, x, marks, flags)
 		if (flags & LOAD_SYM) {
 			PROGRESS(("+[%ld", x->a_syms));
 
-			if (READ(fd, maxp, x->a_syms) != x->a_syms) {
+			if (READ(fd, maxp, x->a_syms) != (ssize_t)x->a_syms) {
 				WARN(("read symbols"));
 				return 1;
 			}
