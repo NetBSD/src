@@ -1,4 +1,41 @@
-/*	$NetBSD: vfs_init.c,v 1.8 1996/10/13 02:32:50 christos Exp $	*/
+/*	$NetBSD: vfs_init.c,v 1.9 1998/02/18 07:15:30 thorpej Exp $	*/
+
+/*-
+ * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
+ * NASA Ames Research Center.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright (c) 1989, 1993
@@ -62,10 +99,31 @@
 #define DODEBUG(A)
 #endif
 
-extern struct vnodeopv_desc *vfs_opv_descs[];
-				/* a list of lists of vnodeops defns */
+/*
+ * The global list of vnode operations.
+ */
 extern struct vnodeop_desc *vfs_op_descs[];
-				/* and the operations they perform */
+
+/*
+ * These vnodeopv_descs are listed here because they are not
+ * associated with any particular file system, and thus cannot
+ * be initialized by vfs_attach().
+ */
+extern struct vnodeopv_desc dead_vnodeop_opv_desc;
+#ifdef FIFO
+extern struct vnodeopv_desc fifo_vnodeop_opv_desc;
+#endif
+extern struct vnodeopv_desc spec_vnodeop_opv_desc;
+
+struct vnodeopv_desc *vfs_special_vnodeopv_descs[] = {
+	&dead_vnodeop_opv_desc,
+#ifdef FIFO
+	&fifo_vnodeop_opv_desc,
+#endif
+	&spec_vnodeop_opv_desc,
+	NULL,
+};
+
 /*
  * This code doesn't work if the defn is **vnodop_defns with cc.
  * The problem is because of the compiler sometimes putting in an
@@ -76,7 +134,6 @@ int vfs_opv_numops;
 
 typedef (*PFI) __P((void *));
 
-void vfs_opv_init __P((void));
 void vfs_opv_init_explicit __P((struct vnodeopv_desc *));
 void vfs_opv_init_default __P((struct vnodeopv_desc *));
 void vfs_op_init __P((void));
@@ -112,7 +169,7 @@ vn_default_error(v)
  */
 
 /*
- * Allocate and init the vector, if it needs it.
+ * Init the vector, if it needs it.
  * Also handle backwards compatibility.
  */
 void
@@ -123,16 +180,6 @@ vfs_opv_init_explicit(vfs_opv_desc)
 	struct vnodeopv_entry_desc *opve_descp;
 
 	opv_desc_vector = *(vfs_opv_desc->opv_desc_vector_p);
-
-	if (opv_desc_vector == NULL) {
-		/* XXX - shouldn't be M_VNODE */
-		MALLOC(opv_desc_vector, PFI *,
-		    vfs_opv_numops * sizeof(PFI), M_VNODE, M_WAITOK);
-		bzero(opv_desc_vector, vfs_opv_numops * sizeof(PFI));
-		*(vfs_opv_desc->opv_desc_vector_p) = opv_desc_vector;
-		DODEBUG(printf("vector at %p allocated\n",
-		    opv_desc_vector_p));
-	}
 
 	for (opve_descp = vfs_opv_desc->opv_desc_ops;
 	     opve_descp->opve_op;
@@ -191,38 +238,61 @@ vfs_opv_init_default(vfs_opv_desc)
 }
 
 void
-vfs_opv_init()
+vfs_opv_init(vopvdpp)
+	struct vnodeopv_desc **vopvdpp;
 {
+	int (**opv_desc_vector) __P((void *));
 	int i;
 
 	/*
-	 * Allocate the dynamic vectors and fill them in.
+	 * Allocate the vectors.
 	 */
-	for (i = 0; vfs_opv_descs[i]; i++)
-		vfs_opv_init_explicit(vfs_opv_descs[i]);
+	for (i = 0; vopvdpp[i] != NULL; i++) {
+		/* XXX - shouldn't be M_VNODE */
+		opv_desc_vector =
+		    malloc(vfs_opv_numops * sizeof(PFI), M_VNODE, M_WAITOK);
+		bzero(opv_desc_vector, vfs_opv_numops * sizeof(PFI));
+		*(vopvdpp[i]->opv_desc_vector_p) = opv_desc_vector;
+		DODEBUG(printf("vector at %p allocated\n",
+		    opv_desc_vector_p));
+	}
+
+	/*
+	 * ...and fill them in.
+	 */
+	for (i = 0; vopvdpp[i] != NULL; i++)
+		vfs_opv_init_explicit(vopvdpp[i]);
 
 	/*
 	 * Finally, go back and replace unfilled routines
 	 * with their default.
 	 */
-	for (i = 0; vfs_opv_descs[i]; i++)
-		vfs_opv_init_default(vfs_opv_descs[i]);
+	for (i = 0; vopvdpp[i] != NULL; i++)
+		vfs_opv_init_default(vopvdpp[i]);
 }
 
-/*
- * Initialize known vnode operations vectors.
- */
+void
+vfs_opv_free(vopvdpp)
+	struct vnodeopv_desc **vopvdpp;
+{
+	int i;
+
+	/*
+	 * Free the vectors allocated in vfs_opv_init().
+	 */
+	for (i = 0; vopvdpp[i] != NULL; i++) {
+		/* XXX - shouldn't be M_VNODE */
+		free(*(vopvdpp[i]->opv_desc_vector_p), M_VNODE);
+		*(vopvdpp[i]->opv_desc_vector_p) = NULL;
+	}
+}
+
 void
 vfs_op_init()
 {
 	int i;
 
 	DODEBUG(printf("Vnode_interface_init.\n"));
-	/*
-	 * Set all vnode vectors to a well known value.
-	 */
-	for (i = 0; vfs_opv_descs[i]; i++)
-		*(vfs_opv_descs[i]->opv_desc_vector_p) = NULL;
 	/*
 	 * Figure out how many ops there are by counting the table,
 	 * and assign each its offset.
@@ -237,8 +307,6 @@ vfs_op_init()
 /*
  * Routines having to do with the management of the vnode table.
  */
-extern struct vnodeops dead_vnodeops;
-extern struct vnodeops spec_vnodeops;
 struct vattr va_null;
 
 /*
@@ -247,28 +315,39 @@ struct vattr va_null;
 void
 vfsinit()
 {
-	struct vfsops **vfsp;
+	extern struct vfsops *vfs_list_initial[];
+	int i;
 
 	/*
 	 * Initialize the vnode table
 	 */
 	vntblinit();
+
 	/*
 	 * Initialize the vnode name cache
 	 */
 	nchinit();
+
 	/*
-	 * Build vnode operation vectors.
+	 * Initialize the list of vnode operations.
 	 */
 	vfs_op_init();
-	vfs_opv_init();   /* finish the job */
+
 	/*
-	 * Initialize each file system type.
+	 * Initialize the special vnode operations.
+	 */
+	vfs_opv_init(vfs_special_vnodeopv_descs);
+
+	/*
+	 * Establish each file system which was statically
+	 * included in the kernel.
 	 */
 	vattr_null(&va_null);
-	for (vfsp = &vfssw[0]; vfsp < &vfssw[nvfssw]; vfsp++) {
-		if (*vfsp == NULL)
-			continue;
-		(*(*vfsp)->vfs_init)();
+	for (i = 0; vfs_list_initial[i] != NULL; i++) {
+		if (vfs_attach(vfs_list_initial[i])) {
+			printf("multiple `%s' file systems",
+			    vfs_list_initial[i]->vfs_name);
+			panic("vfsinit");
+		}
 	}
 }
