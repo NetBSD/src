@@ -1,4 +1,4 @@
-/*	$NetBSD: db_sym.c,v 1.26 2001/06/13 06:01:45 simonb Exp $	*/
+/*	$NetBSD: db_sym.c,v 1.27 2001/11/08 15:00:17 christos Exp $	*/
 
 /* 
  * Mach Operating System
@@ -405,6 +405,7 @@ db_sifting(symstr, mode)
 		if (db_symtabs[i].name) {
 			db_printf("Sifting table %s:\n", db_symtabs[i].name);
 			X_db_forall(&db_symtabs[i], db_sift, &dsa);
+			db_printf("\n");
 		}
 
 	return;
