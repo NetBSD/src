@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993, 1994
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,14 +32,17 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)util.c	5.2 (Berkeley) 6/4/91";
+static char sccsid[] = "@(#)util.c	8.3 (Berkeley) 4/2/94";
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <unistd.h>
+
+#include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
+
 #include "stty.h"
 #include "extern.h"
 
@@ -58,54 +61,4 @@ checkredirect()
 	    !fstat(STDOUT_FILENO, &sb1) && !fstat(STDERR_FILENO, &sb2) &&
 	    (sb1.st_rdev != sb2.st_rdev))
 warn("stdout appears redirected, but stdin is the control descriptor");
-}
-
-#if __STDC__
-#include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
-
-void
-#if __STDC__
-err(const char *fmt, ...)
-#else
-err(fmt, va_alist)
-	char *fmt;
-        va_dcl
-#endif
-{
-	va_list ap;
-#if __STDC__
-	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
-	(void)fprintf(stderr, "stty: ");
-	(void)vfprintf(stderr, fmt, ap);
-	va_end(ap);
-	(void)fprintf(stderr, "\n");
-	exit(1);
-	/* NOTREACHED */
-}
-
-void
-#if __STDC__
-warn(const char *fmt, ...)
-#else
-warn(fmt, va_alist)
-	char *fmt;
-        va_dcl
-#endif
-{
-	va_list ap;
-#if __STDC__
-	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
-	(void)fprintf(stderr, "stty: ");
-	(void)vfprintf(stderr, fmt, ap);
-	va_end(ap);
-	(void)fprintf(stderr, "\n");
 }

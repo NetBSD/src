@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1980, 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1980, 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)misc.c	5.13 (Berkeley) 6/27/91";
+static char sccsid[] = "@(#)misc.c	8.1 (Berkeley) 5/31/93";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -82,9 +82,11 @@ strsave(s)
 
     if (s == NULL)
 	s = "";
-    for (p = s; *p++;);
+    for (p = s; *p++;)
+	continue;
     n = p = (char *) xmalloc((size_t) ((p - s) * sizeof(char)));
-    while (*p++ = *s++);
+    while ((*p++ = *s++) != '\0')
+	continue;
     return (n);
 }
 
@@ -100,14 +102,15 @@ blkend(up)
 
 
 void
-blkpr(av)
+blkpr(fp, av)
+    FILE *fp;
     register Char **av;
 {
 
     for (; *av; av++) {
-	xprintf("%s", short2str(*av));
+	(void) fprintf(fp, "%s", vis_str(*av));
 	if (av[1])
-	    xprintf(" ");
+	    (void) fprintf(fp, " ");
     }
 }
 
@@ -129,7 +132,7 @@ blkcpy(oav, bv)
 {
     register Char **av = oav;
 
-    while (*av++ = *bv++)
+    while ((*av++ = *bv++) != NULL)
 	continue;
     return (oav);
 }
@@ -200,11 +203,15 @@ strspl(cp, dp)
 	cp = "";
     if (!dp)
 	dp = "";
-    for (p = cp; *p++;);
-    for (q = dp; *q++;);
+    for (p = cp; *p++;)
+	continue;
+    for (q = dp; *q++;)
+	continue;
     ep = (char *) xmalloc((size_t) (((p - cp) + (q - dp) - 1) * sizeof(char)));
-    for (p = ep, q = cp; *p++ = *q++;);
-    for (p--, q = dp; *p++ = *q++;);
+    for (p = ep, q = cp; *p++ = *q++;)
+	continue;
+    for (p--, q = dp; *p++ = *q++;)
+	continue;
     return (ep);
 }
 
@@ -246,7 +253,7 @@ closem()
     register int f;
 
     for (f = 0; f < NOFILE; f++)
-	if (f != SHIN && f != SHOUT && f != SHDIAG && f != OLDSTD &&
+	if (f != SHIN && f != SHOUT && f != SHERR && f != OLDSTD &&
 	    f != FSHTTY)
 	    (void) close(f);
 }
@@ -254,10 +261,10 @@ closem()
 void
 donefds()
 {
-
     (void) close(0);
     (void) close(1);
     (void) close(2);
+
     didfds = 0;
 }
 
@@ -290,7 +297,7 @@ dcopy(i, j)
     register int i, j;
 {
 
-    if (i == j || i < 0 || j < 0 && i > 2)
+    if (i == j || i < 0 || (j < 0 && i > 2))
 	return (i);
     if (j >= 0) {
 	(void) dup2(i, j);
@@ -328,10 +335,10 @@ lshift(v, c)
     register Char **v;
     register int c;
 {
-    register Char **u = v;
+    register Char **u;
 
-    while (*u && --c >= 0)
-	xfree((ptr_t) * u++);
+    for (u = v; *u && --c >= 0; u++)
+	xfree((ptr_t) *u);
     (void) blkcpy(v, u);
 }
 
@@ -373,7 +380,7 @@ strend(cp)
     return (cp);
 }
 
-#endif				/* SHORT_STRINGS */
+#endif /* SHORT_STRINGS */
 
 Char   *
 strip(cp)
@@ -383,7 +390,7 @@ strip(cp)
 
     if (!cp)
 	return (cp);
-    while (*dp++ &= TRIM)
+    while ((*dp++ &= TRIM) != '\0')
 	continue;
     return (cp);
 }
@@ -393,7 +400,7 @@ udvar(name)
     Char   *name;
 {
 
-    setname(short2str(name));
+    setname(vis_str(name));
     stderror(ERR_NAME | ERR_UNDVAR);
 }
 

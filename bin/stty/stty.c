@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1989, 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1989, 1991, 1993, 1994
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,31 +32,33 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1989, 1991 The Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1989, 1991, 1993, 1994\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-static char sccsid[] = "@(#)stty.c	5.28 (Berkeley) 6/5/91";
+static char sccsid[] = "@(#)stty.c	8.3 (Berkeley) 4/2/94";
 #endif /* not lint */
 
 #include <sys/types.h>
-#include <fcntl.h>
-#include <errno.h>
-#include <unistd.h>
-#include <stdio.h>
+
 #include <ctype.h>
+#include <err.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
+
 #include "stty.h"
 #include "extern.h"
 
-char *usage = "usage: stty: [-eg] [-f file] [options]";
-
+int
 main(argc, argv) 
 	int argc;
-	char **argv;
+	char *argv[];
 {
 	struct info i;
 	enum FMT fmt;
@@ -66,7 +68,8 @@ main(argc, argv)
 	i.fd = STDIN_FILENO;
 
 	opterr = 0;
-	while (strspn(argv[optind], "-aefg") == strlen(argv[optind]) &&
+	while (optind < argc &&
+	    strspn(argv[optind], "-aefg") == strlen(argv[optind]) &&
 	    (ch = getopt(argc, argv, "aef:g")) != EOF)
 		switch(ch) {
 		case 'a':		/* undocumented: POSIX compatibility */
@@ -77,7 +80,7 @@ main(argc, argv)
 			break;
 		case 'f':
 			if ((i.fd = open(optarg, O_RDONLY | O_NONBLOCK)) < 0)
-				err("%s: %s", optarg, strerror(errno));
+				err(1, "%s", optarg);
 			break;
 		case 'g':
 			fmt = GFLAG;
@@ -91,9 +94,9 @@ args:	argc -= optind;
 	argv += optind;
 
 	if (ioctl(i.fd, TIOCGETD, &i.ldisc) < 0)
-		err("TIOCGETD: %s", strerror(errno));
+		err(1, "TIOCGETD");
 	if (tcgetattr(i.fd, &i.t) < 0)
-		err("tcgetattr: %s", strerror(errno));
+		err(1, "tcgetattr");
 	if (ioctl(i.fd, TIOCGWINSZ, &i.win) < 0)
 		warn("TIOCGWINSZ: %s\n", strerror(errno));
 
@@ -138,12 +141,21 @@ args:	argc -= optind;
 			continue;
 		}
 
-		err("illegal option -- %s\n%s", *argv, usage);
+		warnx("illegal option -- %s", *argv);
+		usage();
 	}
 
 	if (i.set && tcsetattr(i.fd, 0, &i.t) < 0)
-		err("tcsetattr: %s", strerror(errno));
+		err(1, "tcsetattr");
 	if (i.wset && ioctl(i.fd, TIOCSWINSZ, &i.win) < 0)
-		warn("TIOCSWINSZ: %s", strerror(errno));
+		warn("TIOCSWINSZ");
 	exit(0);
+}
+
+void
+usage()
+{
+
+	(void)fprintf(stderr, "usage: stty: [-a|-e|-g] [-f file] [options]\n");
+	exit (1);
 }

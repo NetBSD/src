@@ -1,7 +1,5 @@
-#	@(#)Makefile	5.3 (Berkeley) 12/8/90
+#	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
 PROG=	rm
-LDADD=	-lutil
-DPADD=	${LIBUTIL}
 
 .include <bsd.prog.mk>
