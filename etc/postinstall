@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.33 2002/10/09 14:55:54 elric Exp $
+# $NetBSD: postinstall,v 1.34 2002/11/07 06:12:50 enami Exp $
 #
 # Copyright (c) 2002 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -358,7 +358,8 @@ do_rc()
 	failed=$(( ${failed} + $? ))
 
 		# check for obsolete rc.d files
-	for f in NETWORK gated; do
+	for f in NETWORK fsck.sh kerberos nfsiod servers systemfs \
+	    daemon gated login portmap sunndd xntpd; do
 		fd=${DEST_DIR}/etc/rc.d/${f}
 		[ ! -e "${fd}" ] && continue
 		if [ "${op}" = "check" ]; then
