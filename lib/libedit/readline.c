@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.12 2000/12/23 22:02:20 jdolecek Exp $	*/
+/*	$NetBSD: readline.c,v 1.13 2000/12/31 09:50:32 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.12 2000/12/23 22:02:20 jdolecek Exp $");
+__RCSID("$NetBSD: readline.c,v 1.13 2000/12/31 09:50:32 jdolecek Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -1351,7 +1351,7 @@ _rl_qsort_string_compare(i1, i2)
 	const void *i1, *i2;
 {
 	const char *s1 = ((const char **)i1)[0];
-	const char *s2 = ((const char **)i1)[0];
+	const char *s2 = ((const char **)i2)[0];
 
 	return strcasecmp(s1, s2);
 }
@@ -1369,23 +1369,26 @@ rl_display_match_list (matches, len, max)
 	int i, idx, limit, count;
 	int screenwidth = e->el_term.t_size.h;
 
-	max += 2;	/* space between entries */
-	
-	/* find out how many entries can be put on one line */
-	limit = screenwidth / max;
+	/*
+	 * Find out how many entries can be put on one line, count
+	 * with two spaces between strings.
+	 */
+	limit = screenwidth / (max + 2);
 	if (limit == 0)
 		limit = 1;
 
 	/* how many lines of output */
 	count = len / limit;
+	if (count * limit < len)
+		count++;
 
 	/* Sort the items if they are not already sorted. */
-	qsort(matches + 1, len, sizeof(char *), _rl_qsort_string_compare);
+	qsort(&matches[1], len-1, sizeof(char *), _rl_qsort_string_compare);
 
 	idx = 1;
-	for(; count >= 0; count--) {
+	for(; count > 0; count--) {
 		for(i=0; i < limit && matches[idx]; i++, idx++)
-			fprintf(e->el_outfile, "%s  ", matches[idx]);
+			fprintf(e->el_outfile, "%-*s  ", max, matches[idx]);
 		fprintf(e->el_outfile, "\n");
 	}
 }
