@@ -1,4 +1,4 @@
-/*	$NetBSD: rpckbd.c,v 1.3 2001/05/03 23:05:48 reinoud Exp $	*/
+/*	$NetBSD: rpckbd.c,v 1.4 2001/05/03 23:07:08 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@ int
 rpckbd_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	struct rpckbd_softc *sc = (struct rpckbd_softc *)v;
-	int res, new_ledstate;;
+	int res, new_ledstate;
 
 	switch (cmd) {
 	    case WSKBDIO_GTYPE:
