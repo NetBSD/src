@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.69 2002/08/19 23:14:39 itojun Exp $	*/
+/*	$NetBSD: nd6.c,v 1.70 2002/08/19 23:21:11 itojun Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.69 2002/08/19 23:14:39 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.70 2002/08/19 23:21:11 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1950,7 +1950,7 @@ nd6_sysctl(name, oldp, oldlenp, newp, newlen)
 	int name;
 	void *oldp;	/* syscall arg, need copyout */
 	size_t *oldlenp;
-	void *newp;	/* syscall arg, need in */
+	void *newp;	/* syscall arg, need copyin */
 	size_t newlen;
 {
 	void *p;
