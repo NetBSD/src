@@ -1,4 +1,4 @@
-/*	$NetBSD: elf2ecoff.c,v 1.15 2002/03/19 09:29:04 bouyer Exp $	*/
+/*	$NetBSD: elf2ecoff.c,v 1.16 2002/03/23 17:11:45 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone
@@ -101,8 +101,10 @@ write_ecoff_symhdr(int outfile, struct ecoff_exechdr * ep,
     long strsize);
 
 void    pad16(int fd, int size, const char *msg);
+void	bswap32_region(u_int32_t* , int);
 
 int    *symTypeTable;
+int	needswap;
 
 
 
@@ -132,6 +134,8 @@ main(int argc, char **argv, char **envp)
 	unsigned long cur_vma = ULONG_MAX;
 	int     symflag = 0;
 	int     nsecs = 0;
+	int	mipsel;
+
 
 	text.len = data.len = bss.len = 0;
 	text.vaddr = data.vaddr = bss.vaddr = 0;
@@ -164,15 +168,56 @@ usage:
 		    argv[1], i ? strerror(errno) : "End of file reached");
 		exit(1);
 	}
+	if (ex.e_ident[EI_DATA] == ELFDATA2LSB)
+		mipsel = 1;
+	else if (ex.e_ident[EI_DATA] == ELFDATA2MSB)
+		mipsel = 0;
+	else {
+		fprintf(stderr, "invalid ELF byte order %d\n",
+		    ex.e_ident[EI_DATA]);
+		exit(1);
+	}
+#if BYTE_ORDER == BIG_ENDIAN
+	if (mipsel)
+		needswap = 1;
+	else
+		needswap = 0;
+#elif BYTE_ORDER == LITTLE_ENDIAN
+	if (mipsel)
+		needswap = 0;
+	else
+		needswap = 1;
+#else
+#error "unknown endian"
+#endif
+
+	if (needswap) {
+		ex.e_type	= bswap16(ex.e_type);
+		ex.e_machine	= bswap16(ex.e_machine);
+		ex.e_version	= bswap32(ex.e_version);
+		ex.e_entry 	= bswap32(ex.e_entry);
+		ex.e_phoff	= bswap32(ex.e_phoff);
+		ex.e_shoff	= bswap32(ex.e_shoff);
+		ex.e_flags	= bswap32(ex.e_flags);
+		ex.e_ehsize	= bswap16(ex.e_ehsize);
+		ex.e_phentsize	= bswap16(ex.e_phentsize);
+		ex.e_phnum	= bswap16(ex.e_phnum);
+		ex.e_shentsize	= bswap16(ex.e_shentsize);
+		ex.e_shnum	= bswap16(ex.e_shnum);
+		ex.e_shstrndx	= bswap16(ex.e_shstrndx);
+	}
+
 	/* Read the program headers... */
 	ph = (Elf32_Phdr *) saveRead(infile, ex.e_phoff,
 	    ex.e_phnum * sizeof(Elf32_Phdr), "ph");
+	if (needswap)
+		bswap32_region((u_int32_t*)ph, sizeof(Elf32_Phdr) * ex.e_phnum);
 	/* Read the section headers... */
 	sh = (Elf32_Shdr *) saveRead(infile, ex.e_shoff,
 	    ex.e_shnum * sizeof(Elf32_Shdr), "sh");
-	/* Read in the section string table. */
-	shstrtab = saveRead(infile, sh[ex.e_shstrndx].sh_offset,
-	    sh[ex.e_shstrndx].sh_size, "shstrtab");
+	if (needswap) 
+		bswap32_region((u_int32_t*)sh, sizeof(Elf32_Shdr) * ex.e_shnum);
+
 	/* Read in the section string table. */
 	shstrtab = saveRead(infile, sh[ex.e_shstrndx].sh_offset,
 	    sh[ex.e_shstrndx].sh_size, "shstrtab");
@@ -288,15 +333,10 @@ usage:
 	memset(&ep.a.cprmask, 0, sizeof ep.a.cprmask);
 	ep.a.gp_value = 0;	/* unused. */
 
-	if (ex.e_ident[EI_DATA] == ELFDATA2LSB)
+	if (mipsel)
 		ep.f.f_magic = ECOFF_MAGIC_MIPSEL;
-	else if (ex.e_ident[EI_DATA] == ELFDATA2MSB)
+	else 
 		ep.f.f_magic = ECOFF_MAGIC_MIPSEB;
-	else {
-		fprintf(stderr, "invalid ELF byte order %d\n",
-		    ex.e_ident[EI_DATA]);
-		exit(1);
-	}
 
 	ep.f.f_nscns = 6;
 	ep.f.f_timdat = 0;	/* bogus */
@@ -312,6 +352,39 @@ usage:
 	make_ecoff_section_hdrs(&ep, esecs);
 
 	nsecs = ep.f.f_nscns;
+
+	if (needswap) {
+		ep.f.f_magic	= bswap16(ep.f.f_magic);
+		ep.f.f_nscns	= bswap16(ep.f.f_nscns);
+		ep.f.f_timdat	= bswap32(ep.f.f_timdat);
+		ep.f.f_symptr	= bswap32(ep.f.f_symptr);
+		ep.f.f_nsyms	= bswap32(ep.f.f_nsyms);
+		ep.f.f_opthdr	= bswap16(ep.f.f_opthdr);
+		ep.f.f_flags	= bswap16(ep.f.f_flags);
+		ep.a.magic	= bswap16(ep.a.magic);
+		ep.a.vstamp	= bswap16(ep.a.vstamp);
+		ep.a.tsize	= bswap32(ep.a.tsize);
+		ep.a.dsize	= bswap32(ep.a.dsize);
+		ep.a.bsize	= bswap32(ep.a.bsize);
+		ep.a.entry	= bswap32(ep.a.entry);
+		ep.a.text_start	= bswap32(ep.a.text_start);
+		ep.a.data_start	= bswap32(ep.a.data_start);
+		ep.a.bss_start	= bswap32(ep.a.bss_start);
+		ep.a.gprmask	= bswap32(ep.a.gprmask);
+		bswap32_region((u_int32_t*)ep.a.cprmask, sizeof(ep.a.cprmask));
+		ep.a.gp_value	= bswap32(ep.a.gp_value);
+		for (i = 0; i < sizeof(esecs) / sizeof(esecs[0]); i++) {
+			esecs[i].s_paddr	= bswap32(esecs[i].s_paddr);
+			esecs[i].s_vaddr	= bswap32(esecs[i].s_vaddr);
+			esecs[i].s_size 	= bswap32(esecs[i].s_size);
+			esecs[i].s_scnptr	= bswap32(esecs[i].s_scnptr);
+			esecs[i].s_relptr	= bswap32(esecs[i].s_relptr);
+			esecs[i].s_lnnoptr	= bswap32(esecs[i].s_lnnoptr);
+			esecs[i].s_nreloc	= bswap16(esecs[i].s_nreloc);
+			esecs[i].s_nlnno	= bswap16(esecs[i].s_nlnno);
+			esecs[i].s_flags	= bswap32(esecs[i].s_flags);
+		}
+	}
 
 	/* Make the output file... */
 	if ((outfile = open(argv[2], O_WRONLY | O_CREAT, 0777)) < 0) {
@@ -590,6 +663,14 @@ write_ecoff_symhdr(out, ep, symhdrp, nesyms, extsymoff, extstroff, strsize)
 		    sizeof(*symhdrp), strsize,
 		    (nesyms * sizeof(struct ecoff_extsym)));
 
+	if (needswap) {
+		bswap32_region((u_int32_t*)&symhdrp->ilineMax,
+		    sizeof(*symhdrp) -  sizeof(symhdrp->magic) -
+		    sizeof(symhdrp->ilineMax));
+		symhdrp->magic = bswap16(symhdrp->magic);
+		symhdrp->ilineMax = bswap16(symhdrp->ilineMax);
+	}
+		
 	safewrite(out, symhdrp, sizeof(*symhdrp),
 	    "writing symbol header: %s\n");
 }
@@ -603,6 +684,7 @@ elf_read_syms(elfsymsp, in, symoff, symsize, stroff, strsize)
 	off_t   stroff, strsize;
 {
 	register int nsyms;
+	int i;
 	nsyms = symsize / sizeof(Elf32_Sym);
 
 	/* Suck in the ELF symbol list... */
@@ -610,6 +692,15 @@ elf_read_syms(elfsymsp, in, symoff, symsize, stroff, strsize)
 	    saveRead(in, symoff, nsyms * sizeof(Elf32_Sym),
 	    "ELF symboltable");
 	elfsymsp->nsymbols = nsyms;
+	if (needswap) {
+		for (i = 0; i < nsyms; i++) {
+			Elf32_Sym *s = &elfsymsp->elf_syms[i];
+			s->st_name	= bswap32(s->st_name);
+			s->st_value	= bswap32(s->st_value);
+			s->st_size	= bswap32(s->st_size);
+			s->st_shndx	= bswap16(s->st_shndx);
+		}
+	}
 
 	/* Suck in the ELF string table... */
 	elfsymsp->stringtab = (char *)
@@ -633,7 +724,7 @@ elf_symbol_table_to_ecoff(out, in, ep, symoff, symsize, stroff, strsize)
 	struct ecoff_syms ecoffsymtab;
 	register u_long ecoff_symhdr_off, symtaboff, stringtaboff;
 	register u_long nextoff, symtabsize, ecoff_strsize;
-	int     nsyms;
+	int     nsyms, i;
 	struct ecoff_symhdr symhdr;
 	int     padding;
 
@@ -672,6 +763,14 @@ elf_symbol_table_to_ecoff(out, in, ep, symoff, symsize, stroff, strsize)
 
 	/* Write out the symbol table... */
 	padding = symtabsize - (nsyms * sizeof(struct ecoff_extsym));
+
+	for (i = 0; i < nsyms; i++) {
+		struct ecoff_extsym *es = &ecoffsymtab.ecoff_syms[i];
+		es->es_flags	= bswap16(es->es_flags);
+		es->es_ifd	= bswap16(es->es_ifd);
+		bswap32_region(&es->es_strindex,
+		    sizeof(*es) - sizeof(es->es_flags) - sizeof(es->es_ifd));
+	}
 	safewrite(out, ecoffsymtab.ecoff_syms,
 	    nsyms * sizeof(struct ecoff_extsym),
 	    "symbol table: write: %s\n");
@@ -753,4 +852,14 @@ void
 pad16(int fd, int size, const char *msg)
 {
 	safewrite(fd, "\0\0\0\0\0\0\0\0\0\0\0\0\0\0", size, msg);
+}
+
+/* swap a 32bit region */
+void
+bswap32_region(u_int32_t* p, int len)
+{
+	int i;
+
+	for (i = 0; i < len / sizeof(u_int32_t); i++, p++)
+		*p = bswap32(*p);
 }
