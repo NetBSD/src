@@ -38,7 +38,7 @@
  * from: Utah $Hdr: machdep.c 1.63 91/04/24$
  *
  *	@(#)machdep.c	7.16 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.16 1994/04/05 23:04:05 chopps Exp $
+ *	$Id: machdep.c,v 1.17 1994/04/10 21:30:48 chopps Exp $
  */
 
 #include <sys/param.h>
@@ -98,6 +98,7 @@
 
 #include "ite.h"
 #include "le.h"
+#include "fd.h"
 #include "a3000scsi.h"
 #include "a2091scsi.h"
 #include "gvp11scsi.h"
@@ -1394,7 +1395,9 @@ intrhand(sr)
 	}
       if (ireq & INTF_DSKBLK)
 	{
+#if NFD > 0
 	  fdintr(0);
+#endif
 	  custom.intreq = INTF_DSKBLK;
 	}
       if (ireq & INTF_SOFTINT)
