@@ -1,4 +1,4 @@
-/*	$NetBSD: tables.c,v 1.5 1997/01/11 02:06:44 tls Exp $	*/
+/*	$NetBSD: tables.c,v 1.6 1997/03/22 03:14:27 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)tables.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: tables.c,v 1.5 1997/01/11 02:06:44 tls Exp $";
+static char rcsid[] = "$NetBSD: tables.c,v 1.6 1997/03/22 03:14:27 lukem Exp $";
 #endif
 #endif /* not lint */
 
@@ -376,16 +376,19 @@ ftime_start()
 	 * get random name and create temporary scratch file, unlink name
 	 * so it will get removed on exit
 	 */
-	if ((pt = tempnam((char *)NULL, (char *)NULL)) == NULL)
+	pt = strdup("/tmp/paxXXXXXX");
+	if (pt == NULL) {
+		warn(1, "Unable to allocate memory");
 		return(-1);
-	(void)unlink(pt);
-
-	if ((ffd = open(pt, O_RDWR | O_CREAT,  S_IRWXU)) < 0) {
-		syswarn(1, errno, "Unable to open temporary file: %s", pt);
+	}
+	if ((ffd = mkstemp(pt)) == -1) {
+		syswarn(1, errno, "Unable to create temporary file: %s", pt);
+		free(pt);
 		return(-1);
 	}
 
 	(void)unlink(pt);
+	free(pt);
 	return(0);
 }
 
@@ -1216,18 +1219,22 @@ dir_start()
 
 	if (dirfd != -1)
 		return(0);
-	if ((pt = tempnam((char *)NULL, (char *)NULL)) == NULL)
-		return(-1);
 
 	/*
 	 * unlink the file so it goes away at termination by itself
 	 */
-	(void)unlink(pt);
-	if ((dirfd = open(pt, O_RDWR|O_CREAT, 0600)) >= 0) {
+	pt = strdup("/tmp/paxXXXXXX");
+	if (pt == NULL) {
+		warn(1, "Unable to allocate memory");
+		return(-1);
+	}
+	if ((dirfd = mkstemp(pt)) >= 0) {
 		(void)unlink(pt);
+		free(pt);
 		return(0);
 	}
 	warn(1, "Unable to create temporary file for directory times: %s", pt);
+	free(pt);
 	return(-1);
 }
 
