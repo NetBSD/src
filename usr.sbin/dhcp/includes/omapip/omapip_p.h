@@ -3,7 +3,7 @@
    Private master include file for the OMAPI library. */
 
 /*
- * Copyright (c) 1996-1999 Internet Software Consortium.
+ * Copyright (c) 1996-2000 Internet Software Consortium.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -146,26 +146,29 @@ typedef struct {
 
 #include <omapip/buffer.h>
 
+typedef struct __omapi_listener_object {
+	OMAPI_OBJECT_PREAMBLE;
+	int socket;		/* Connection socket. */
+	struct sockaddr_in address;
+} omapi_listener_object_t;
+
 typedef struct __omapi_connection_object {
 	OMAPI_OBJECT_PREAMBLE;
 	int socket;		/* Connection socket. */
 	omapi_connection_state_t state;
 	struct sockaddr_in remote_addr;
 	struct sockaddr_in local_addr;
+	omapi_addr_list_t *connect_list;	/* List of addresses to which
+						   to connect. */
+	int cptr;		/* Current element we are connecting to. */
 	u_int32_t bytes_needed;	/* Bytes of input needed before wakeup. */
 	u_int32_t in_bytes;	/* Bytes of input already buffered. */
 	omapi_buffer_t *inbufs;
 	u_int32_t out_bytes;	/* Bytes of output in buffers. */
 	omapi_buffer_t *outbufs;
-	omapi_object_t *listener;	/* Listener that accepted this
-					   connection, if any. */
+	omapi_listener_object_t *listener;	/* Listener that accepted this
+						   connection, if any. */
 } omapi_connection_object_t;
-
-typedef struct __omapi_listener_object {
-	OMAPI_OBJECT_PREAMBLE;
-	int socket;		/* Connection socket. */
-	struct sockaddr_in address;
-} omapi_listener_object_t;
 
 typedef struct __omapi_io_object {
 	OMAPI_OBJECT_PREAMBLE;
@@ -202,6 +205,24 @@ typedef struct __omapi_handle_table {
 } omapi_handle_table_t;
 
 #include <omapip/alloc.h>
+
+OMAPI_OBJECT_ALLOC_DECL (omapi_protocol, omapi_protocol_object_t,
+			 omapi_type_protocol)
+OMAPI_OBJECT_ALLOC_DECL (omapi_protocol_listener,
+			 omapi_protocol_listener_object_t,
+			 omapi_type_protocol_listener)
+OMAPI_OBJECT_ALLOC_DECL (omapi_connection,
+			 omapi_connection_object_t, omapi_type_connection)
+OMAPI_OBJECT_ALLOC_DECL (omapi_listener,
+			 omapi_listener_object_t, omapi_type_listener)
+OMAPI_OBJECT_ALLOC_DECL (omapi_io,
+			 omapi_io_object_t, omapi_type_io_object)
+OMAPI_OBJECT_ALLOC_DECL (omapi_waiter,
+			 omapi_waiter_object_t, omapi_type_waiter)
+OMAPI_OBJECT_ALLOC_DECL (omapi_generic,
+			 omapi_generic_object_t, omapi_type_generic)
+OMAPI_OBJECT_ALLOC_DECL (omapi_message,
+			 omapi_message_object_t, omapi_type_message)
 
 extern int log_priority;
 extern int log_perror;
