@@ -1,4 +1,4 @@
-/*	$NetBSD: ping6.c,v 1.9 1999/12/13 15:26:00 itojun Exp $	*/
+/*	$NetBSD: ping6.c,v 1.10 2000/01/22 10:01:41 tron Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -80,7 +80,7 @@ static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping6.c,v 1.9 1999/12/13 15:26:00 itojun Exp $");
+__RCSID("$NetBSD: ping6.c,v 1.10 2000/01/22 10:01:41 tron Exp $");
 #endif
 #endif
 
@@ -252,8 +252,6 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	extern int errno, optind;
-	extern char *optarg;
 	struct itimerval itimer;
 	struct sockaddr_in6 from;
 	struct timeval timeout;
