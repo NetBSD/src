@@ -1,4 +1,4 @@
-#	$NetBSD: RISCPC,v 1.17 1998/08/25 22:07:47 mark Exp $
+#	$NetBSD: RISCPC,v 1.18 1998/09/01 02:27:21 mark Exp $
 #
 #	RISCPC -- Full RiscPC config
 #
@@ -210,6 +210,9 @@ scsibus* at cosc?
 
 ptsc*	at podulebus?			# Power-Tec SCSI II card
 scsibus* at ptsc?
+
+csc*	at podulebus?			# Cumana SCSI II card
+scsibus* at csc?
 
 oak*	at podulebus?			# Oak SCSI I card
 scsibus* at oak?

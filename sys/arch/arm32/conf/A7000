@@ -1,4 +1,4 @@
-#	$NetBSD: A7000,v 1.27 1998/08/25 22:07:46 mark Exp $
+#	$NetBSD: A7000,v 1.28 1998/09/01 02:27:21 mark Exp $
 #
 #	A7000 - Full A7000 configuration
 #
@@ -210,6 +210,9 @@ scsibus* at cosc?
 
 ptsc*	at podulebus?			# Power-Tec SCSI II card
 scsibus* at ptsc?
+
+csc*	at podulebus?			# Cumana SCSI II card
+scsibus* at csc?
 
 oak*	at podulebus?			# Oak SCSI I card
 scsibus* at oak?
