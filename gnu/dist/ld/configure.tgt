@@ -75,6 +75,7 @@ i[3456]86-*-linux*)	targ_emul=elf_i386
 			;;
 i[3456]86-*-sysv4*)	targ_emul=elf_i386 ;;
 i[3456]86-*-unixware)	targ_emul=elf_i386 ;;
+i[3456]86-*-netbsdelf*)	targ_emul=elf_i386 ;;
 i[3456]86-*-netbsd*)	targ_emul=i386nbsd ;;
 i[3456]86-*-netware)	targ_emul=i386nw ;;
 i[3456]86-*-elf*)	targ_emul=elf_i386 ;;
