@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_commpage.h,v 1.3 2004/07/03 22:17:18 manu Exp $ */
+/*	$NetBSD: darwin_commpage.h,v 1.4 2004/07/11 19:38:14 manu Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -84,15 +84,16 @@ struct darwin_commpage {
 	char dcp_spinlock_try[64];		/* 544/0x220 */
 	char dcp_spinlock_lock[64];		/* 608/0x260 */
 	char dcp_spinlock_unlock[32];		/* 672/0x2a0 */
-	char dcp_pthread_specific[32];		/* 704/0x2c0 */
+	char dcp_pthread_getspecific[32];	/* 704/0x2c0 */
 	char dcp_gettimeofday[512];		/* 736/0x2e0 */
 	char dcp_sys_dcache_flush[64];		/* 1248/0x4e0 */
 	char dcp_sys_icache_invalidate[96];	/* 1312/0x520 */
 	char dcp_pthread_self[64];		/* 1408/0x580 */
 	char dcp_spinlock_relinquish[64];	/* 1472/0x5c0 */
-	char dcp_bzero[416];			/* 1536/0x600 */
+	char dcp_bzero[384];			/* 1536/0x600 */
+	char dcp_bcopy[32];			/* 1920/0x780 */
 	char dcp_memcpy[2144];			/* 1952/0x7a0 */
-	char dcp_bigcopy;			/* 4096/0x1000 */
+	char dcp_bigcopy[1536];			/* 4096/0x1000 */
 };
 
 int darwin_commpage_map(struct proc *);
@@ -101,13 +102,14 @@ extern int darwin_commpage_mach_absolute_time[];
 extern int darwin_commpage_spinlock_try[];
 extern int darwin_commpage_spinlock_lock[];
 extern int darwin_commpage_spinlock_unlock[];
-extern int darwin_commpage_pthread_specific[];
+extern int darwin_commpage_pthread_getspecific[];
 extern int darwin_commpage_gettimeofday[];
 extern int darwin_commpage_sys_dcache_flush[];
 extern int darwin_commpage_sys_icache_invalidate[];
 extern int darwin_commpage_pthread_self[];
 extern int darwin_commpage_spinlock_relinquish[];
 extern int darwin_commpage_bzero[];
+extern int darwin_commpage_bcopy[];
 extern int darwin_commpage_memcpy[];
 extern int darwin_commpage_bigcopy[];
 
@@ -115,13 +117,14 @@ extern int darwin_commpage_mach_absolute_time_size[];
 extern int darwin_commpage_spinlock_try_size[];
 extern int darwin_commpage_spinlock_lock_size[];
 extern int darwin_commpage_spinlock_unlock_size[];
-extern int darwin_commpage_pthread_specific_size[];
+extern int darwin_commpage_pthread_getspecific_size[];
 extern int darwin_commpage_gettimeofday_size[];
 extern int darwin_commpage_sys_dcache_flush_size[];
 extern int darwin_commpage_sys_icache_invalidate_size[];
 extern int darwin_commpage_pthread_self_size[];
 extern int darwin_commpage_spinlock_relinquish_size[];
 extern int darwin_commpage_bzero_size[];
+extern int darwin_commpage_bcopy_size[];
 extern int darwin_commpage_memcpy_size[];
 extern int darwin_commpage_bigcopy_size[];
 
