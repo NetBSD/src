@@ -1,6 +1,8 @@
+/*	$NetBSD: externs.h,v 1.4 1995/03/21 15:07:25 cgd Exp $	*/
+
 /*
- * Copyright (c) 1983 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1983, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)externs.h	5.4 (Berkeley) 6/1/90
- *	$Id: externs.h,v 1.3 1995/02/28 18:31:09 jtc Exp $
+ *	@(#)externs.h	8.1 (Berkeley) 5/31/93
  */
 
 #include <signal.h>
