@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.19 1996/05/05 06:54:26 briggs Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.20 1996/05/05 16:50:34 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -195,7 +195,6 @@ cpu_coredump(p, vp, cred, chdr)
 		md_core.intreg.r_pc = f->f_pc;
 	}
 	if (fpu_type) {
-		void m68881_save __P((struct fpframe *));
 		register struct fpframe *f;
 
 		f = &up->u_pcb.pcb_fpregs;
