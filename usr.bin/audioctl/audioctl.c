@@ -1,4 +1,4 @@
-/*	$NetBSD: audioctl.c,v 1.5 1997/07/16 06:55:27 augustss Exp $	*/
+/*	$NetBSD: audioctl.c,v 1.6 1997/07/27 01:28:04 augustss Exp $	*/
 
 /*
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@ audio_info_t info;
 
 char encbuf[1000];
 
-int fullduplex, rerror;
+int properties, fullduplex, rerror;
 
 struct field {
 	char *name;
@@ -68,6 +68,7 @@ struct field {
 #define ULONG 5
 #define UCHAR 6
 #define ENC 7
+#define PROPS 8
 	char flags;
 #define READONLY 1
 #define ALIAS 2
@@ -77,7 +78,9 @@ struct field {
     { "version",		&adev.version,		STRING, READONLY },
     { "config",			&adev.config,		STRING, READONLY },
     { "encodings",		encbuf,			STRING, READONLY },
+    { "properties",		&properties,		PROPS,	READONLY },
     { "full_duplex",		&fullduplex,		INT,    0 },
+    { "buffersize",		&info.buffersize,	UINT,	0 },
     { "blocksize",		&info.blocksize,	UINT,	0 },
     { "hiwat",			&info.hiwat,		UINT,	0 },
     { "lowat",			&info.lowat,		UINT,	0 },
@@ -196,6 +199,18 @@ prfield(struct field *p, char *sep)
 	else
 	    fprintf(out, "%u", v);
 	break;
+    case PROPS:
+	v = *(u_int*)p->valp;
+	cm = "";
+	if (v & AUDIO_PROP_FULLDUPLEX) {
+		fprintf(out, "%sfull_duplex", cm);
+		cm = ",";
+	}
+	if (v & AUDIO_PROP_MMAP) {
+		fprintf(out, "%smmap", cm);
+		cm = ",";
+	}
+	break;
     default:
 	errx(1, "Invalid format.");
     }
@@ -246,6 +261,8 @@ getinfo(int fd)
 	pos += strlen(encbuf+pos);
     }
     if (ioctl(fd, AUDIO_GETFD, &fullduplex) < 0)
+	err(1, NULL);
+    if (ioctl(fd, AUDIO_GETPROPS, &properties) < 0)
 	err(1, NULL);
     if (ioctl(fd, AUDIO_RERROR, &rerror) < 0)
 	err(1, NULL);
@@ -336,10 +353,10 @@ main(int argc, char **argv)
 		    *q++ = 0;
 		    p = findfield(*argv);
 		    if (p == 0)
-			warnx("field %s does not exist", *argv);
+			warnx("field `%s' does not exist", *argv);
 		    else {
 			if (p->flags & READONLY)
-			    warnx("%s is read only", *argv);
+			    warnx("`%s' is read only", *argv);
 			else {
 			    rdfield(p, q);
 			    if (p->valp == &fullduplex)
