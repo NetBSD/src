@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_emu.c,v 1.4 2002/11/24 17:34:06 thorpej Exp $ */
+/*	$NetBSD: fpu_emu.c,v 1.5 2002/11/25 02:45:46 thorpej Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -102,7 +102,7 @@ static struct evcnt fpu_emu_ev_##name =					\
 EVCNT_ATTACH_STATIC(fpu_emu_ev_##name)
 
 #define	FPU_EMU_EVCNT_INCR(name)					\
-    fpu_emu_ev_##name##.ev_count++
+    fpu_emu_ev_##name.ev_count++
 
 FPU_EMU_EVCNT_DECL(stfiwx);
 FPU_EMU_EVCNT_DECL(fpstore);
