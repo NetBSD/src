@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.128 2001/07/08 07:27:14 lukem Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.129 2001/09/19 00:50:52 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997-2001 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.128 2001/07/08 07:27:14 lukem Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.129 2001/09/19 00:50:52 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -1126,9 +1126,7 @@ pass(const char *passwd)
 		reply(230, "Guest login ok, access restrictions apply.");
 #if HAVE_SETPROCTITLE
 		snprintf(proctitle, sizeof(proctitle),
-		    "%s: anonymous/%.*s", remotehost,
-		    (int) (sizeof(proctitle) - sizeof(remotehost) -
-		    sizeof(": anonymous/")), passwd);
+		    "%s: anonymous/%s", remotehost, passwd);
 		setproctitle("%s", proctitle);
 #endif /* HAVE_SETPROCTITLE */
 		if (logging)
