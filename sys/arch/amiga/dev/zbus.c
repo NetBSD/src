@@ -1,4 +1,4 @@
-/*	$NetBSD: zbus.c,v 1.35 1997/10/19 19:07:08 veego Exp $	*/
+/*	$NetBSD: zbus.c,v 1.36 1997/10/19 21:22:28 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -333,7 +333,7 @@ zbusprint(auxp, pnp)
 		if (zap->manid == -1)
 			rv = UNSUPP;
 	}
-	printf(" rom %p man/pro %d/%d", zap->pa, zap->manid, zap->prodid);
+	printf(" pa %p man/pro %d/%d", zap->pa, zap->manid, zap->prodid);
 	return(rv);
 }
 
