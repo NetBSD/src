@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.3 1994/10/26 08:02:02 cgd Exp $	*/
+/*      $NetBSD: cpu.h,v 1.4 1994/11/25 19:08:50 ragge Exp $      */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden
@@ -37,7 +37,6 @@
 
 #define enablertclock()
 
-#define setsoftclock()	mtpr(8,PR_SIRR)
 
 struct	cpu_dep {
 	int	(*cpu_loinit)();
@@ -73,17 +72,10 @@ struct clockops {
 	int (*p3)();
 };
 
-/*
- * Return timeofdayregister
- */
-
 #define todr()		mfpr(PR_TODR)
-/*
- * The following code are from the hp300 port/ragge.
- *      from: Utah Hdr: cpu.h 1.16 91/03/25
- *      from: @(#)cpu.h 7.7 (Berkeley) 6/27/91
- *      $Id: cpu.h,v 1.3 1994/10/26 08:02:02 cgd Exp $
- */
+#define	setsoftnet()	mtpr(12,PR_SIRR)
+#define setsoftclock()	mtpr(8,PR_SIRR)
+
 /*
  * Preempt the current process if in interrupt from user mode,
  * or after the current trap/syscall if in system mode.
@@ -95,19 +87,11 @@ struct clockops {
 	}
 
 /*
- * Give a profiling tick to the current process from the softclock
- * interrupt.  On hp300, request an ast to send us through trap(),
- * marking the proc as needing a profiling tick.
- */
-/* #define profile_tick(p, framep) { (p)->p_flag |= SOWEUPC; aston(); } */
-
-/*
  * Notify the current process (p) that it has a signal pending,
  * process as soon as possible.
  */
 
 #define signotify(p)     mtpr(AST_OK,PR_ASTLVL);
 
-/* extern	int     astpending;     /* need to trap before returning to user mode */
 extern	int     want_resched;   /* resched() was called */
 

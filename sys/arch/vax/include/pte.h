@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.2 1994/10/26 08:02:23 cgd Exp $	*/
+/*      $NetBSD: pte.h,v 1.3 1994/11/25 19:08:59 ragge Exp $      */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -33,7 +33,7 @@
  /* All bugs are subject to removal without further notice */
 		
 
-
+#include "vax/include/param.h"
 
 #ifndef ASSEMBLER
 
@@ -87,8 +87,8 @@ extern struct pte *Sysmap;
 #endif
 
 #define	kvtopte(va) \
-	(&Sysmap[((unsigned)(va) - VM_MIN_KERNEL_ADDRESS) >> PGSHIFT])
+	(&Sysmap[((unsigned)(va) - KERNBASE) >> PGSHIFT])
 #define	ptetokv(pt) \
-	((((pt_entry_t *)(pt) - Sysmap) << PGSHIFT) + VM_MIN_KERNEL_ADDRESS)
+	((((pt_entry_t *)(pt) - Sysmap) << PGSHIFT) + 0x80000000)
 #define	kvtophys(va) \
 	((kvtopte(va)->pg_pfnum << PGSHIFT) | ((int)(va) & PGOFSET))
