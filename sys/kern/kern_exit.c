@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.119 2003/08/07 16:31:44 agc Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.120 2003/08/20 13:50:53 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.119 2003/08/07 16:31:44 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.120 2003/08/20 13:50:53 yamt Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -683,7 +683,7 @@ find_stopped_child(struct proc *parent, pid_t pid, int options,
 	struct proc *child;
 	int c_found, error;
 
-	 for (;;) {
+	for (;;) {
 		c_found = 0;
 		LIST_FOREACH(child, &parent->p_children, p_sibling) {
 			if (pid != WAIT_ANY &&
