@@ -1,4 +1,4 @@
-/*	$NetBSD: menu_sys.def,v 1.16 1999/04/18 03:29:18 simonb Exp $	*/
+/*	$NetBSD: menu_sys.def,v 1.17 1999/06/19 06:38:49 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -99,7 +99,7 @@ static char *str_ptr = str_area;
 /* Initialization state. */
 static int __menu_init = 0;
 int __m_endwin = 0;
-static int max_lines = 0;
+static int max_lines = 0, max_cols = 0;
 static char *scrolltext = " <: page up, >: page down";
 
 static menudesc *menus = menu_def;
@@ -248,7 +248,7 @@ static void init_menu (struct menudesc *m)
 		if (!(m->mopt & MC_SCROLL) || m->h < 3) {
 			endwin();
 			(void) fprintf (stderr,
-				"Window too small for menu \"%s\"\n",
+				"Window too short for menu \"%s\"\n",
 				m->title);
 			exit(1);
 		}
@@ -259,7 +259,7 @@ static void init_menu (struct menudesc *m)
 	if (m->y + m->h + add > max_lines) {
 		endwin();
 		(void) fprintf (stderr,
-			"Screen too small for menu \"%s\"\n", m->title);
+			"Screen too short for menu \"%s\"\n", m->title);
 		exit(1);
 
 	}
@@ -272,6 +272,17 @@ static void init_menu (struct menudesc *m)
 			max = MAX(max,strlen(m->opts[i].opt_name)+3);
 		m->w = max;
 	}
+
+	/* check and adjust for screen fit */
+	if (m->w + add > max_cols) {
+		endwin();
+		(void) fprintf (stderr,
+			"Screen too narrow for menu \"%s\"\n", m->title);
+		exit(1);
+
+	}
+	if (m->x + m->w + add > max_cols)
+		m->x = max_cols - (m->w + add);
 
 	/* Get the windows. */
 	m->mw = newwin(m->h+add, m->w+add, m->y, m->x);
@@ -556,6 +567,37 @@ static void process_req (struct menudesc *m, int num, int req)
 	}
 }
 
+int menu_init (void)
+{
+
+	if (__menu_init)
+		return 0;
+
+	if (initscr() == NULL)
+		return 1;
+
+	cbreak();
+	noecho();
+	max_lines = getmaxy(stdscr);
+	max_cols = getmaxx(stdscr);
+	init_keyseq();
+#ifdef DYNAMIC_MENUS
+	num_menus = DYN_INIT_NUM;
+	while (num_menus < DYN_MENU_START)
+		num_menus *= 2;
+	menus = (menudesc *) malloc(sizeof(menudesc)*num_menus);
+	if (menus == NULL)
+		return 2;
+	(void) memset ((void *)menus, 0, sizeof(menudesc)*num_menus);
+	(void) memcpy ((void *)menus, (void *)menu_def,
+		sizeof(menudesc)*DYN_MENU_START);
+	 num_avail = num_menus - DYN_MENU_START;
+#endif
+
+	__menu_init = 1;
+	return (0);
+}
+
 void process_menu (int num)
 {
 	int sel = 0;
@@ -569,31 +611,11 @@ void process_menu (int num)
 	done = FALSE;
 
 	/* Initialize? */
-	if (!__menu_init) {
-		if (initscr() == NULL) {
-			__menu_initerror();
-			return;
-		}
-		cbreak();
-		noecho();
-		max_lines = getmaxy(stdscr);
-		init_keyseq();
-#ifdef DYNAMIC_MENUS
-		num_menus = DYN_INIT_NUM;
-		while (num_menus < DYN_MENU_START)
-			num_menus *= 2;
-		menus = (menudesc *) malloc(sizeof(menudesc)*num_menus);
-		if (menus == NULL) {
-			__menu_initerror();
-			return ;
-		}
-		(void) memset ((void *)menus, 0, sizeof(menudesc)*num_menus);
-		(void) memcpy ((void *)menus, (void *)menu_def,
-			sizeof(menudesc)*DYN_MENU_START);
-		 num_avail = num_menus - DYN_MENU_START;
-#endif
-		__menu_init = 1;
+	if (menu_init()) {
+		__menu_initerror();
+		return;
 	}
+
 	if (__m_endwin) {
      		wclear(stdscr);
 		wrefresh(stdscr);
