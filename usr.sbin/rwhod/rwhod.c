@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "@(#)rwhod.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$Id: rwhod.c,v 1.8 1994/05/29 02:53:23 jtc Exp $";
+static char rcsid[] = "$Id: rwhod.c,v 1.9 1996/09/07 21:12:57 explorer Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -193,12 +193,17 @@ main(argc, argv)
 			continue;
 		if (wd.wd_type != WHODTYPE_STATUS)
 			continue;
+		/* 
+		 * Ensure null termination of the name within the packet.
+		 * Otherwise we might overflow or read past the end.
+		 */
+		wd.wd_hostname[sizeof(wd.wd_hostname)-1] = 0;
 		if (!verify(wd.wd_hostname)) {
 			syslog(LOG_WARNING, "malformed host name from %x",
 				from.sin_addr);
 			continue;
 		}
-		(void) sprintf(path, "whod.%s", wd.wd_hostname);
+		snprintf(path, sizeof(path), "whod.%s", wd.wd_hostname);
 		/*
 		 * Rather than truncating and growing the file each time,
 		 * use ftruncate if size is less than previous size.

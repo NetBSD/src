@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.6 1995/05/21 16:54:10 mycroft Exp $	*/
+/*	$NetBSD: main.c,v 1.7 1996/09/07 21:05:37 explorer Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: main.c,v 1.6 1995/05/21 16:54:10 mycroft Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.7 1996/09/07 21:05:37 explorer Exp $";
 #endif /* not lint */
 
 /* Many bug fixes are from Jim Guyton <guyton@rand-unix> */
@@ -222,7 +222,8 @@ setpeer(argc, argv)
 		}
 		peeraddr.sin_family = host->h_addrtype;
 		bcopy(host->h_addr, &peeraddr.sin_addr, host->h_length);
-		(void) strcpy(hostname, host->h_name);
+ 		(void) strncpy(hostname, host->h_name, sizeof(hostname));
+ 		hostname[sizeof(hostname)-1] = 0;
 	}
 	port = sp->s_port;
 	if (argc == 3) {
@@ -359,7 +360,8 @@ put(argc, argv)
 		bcopy(hp->h_addr, (caddr_t)&peeraddr.sin_addr, hp->h_length);
 		peeraddr.sin_family = hp->h_addrtype;
 		connected = 1;
-		strcpy(hostname, hp->h_name);
+		strncpy(hostname, hp->h_name, sizeof(hostname));
+		hostname[sizeof(hostname)-1] = 0;
 	}
 	if (!connected) {
 		printf("No target machine specified.\n");
@@ -456,7 +458,8 @@ get(argc, argv)
 			    hp->h_length);
 			peeraddr.sin_family = hp->h_addrtype;
 			connected = 1;
-			strcpy(hostname, hp->h_name);
+			strncpy(hostname, hp->h_name, sizeof(hostname));
+			hostname[sizeof(hostname)-1] = 0;
 		}
 		if (argc < 4) {
 			cp = argc == 3 ? argv[2] : tail(src);
