@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc,v 1.39 2000/02/03 05:28:01 jwise Exp $
+# $NetBSD: md.sparc,v 1.40 2000/03/17 22:54:06 tron Exp $
 ./usr/include/sparc	comp-c-include
 ./usr/include/sparc/_G_config.h	comp-c-include
 ./usr/include/sparc/ansi.h	comp-c-include
@@ -16,6 +16,7 @@
 ./usr/include/sparc/eeprom.h	comp-c-include
 ./usr/include/sparc/elf_machdep.h	comp-c-include
 ./usr/include/sparc/endian.h	comp-c-include
+./usr/include/sparc/endian_machdep.h	comp-c-include
 ./usr/include/sparc/fbio.h	comp-c-include
 ./usr/include/sparc/float.h	comp-c-include
 ./usr/include/sparc/frame.h	comp-c-include

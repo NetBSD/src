@@ -1,4 +1,4 @@
-# $NetBSD: md.vax,v 1.11 2000/02/03 05:28:01 jwise Exp $
+# $NetBSD: md.vax,v 1.12 2000/03/17 22:54:07 tron Exp $
 ./usr/include/vax	comp-c-include
 ./usr/include/vax/_G_config.h	comp-c-include
 ./usr/include/vax/ansi.h	comp-c-include
@@ -12,6 +12,7 @@
 ./usr/include/vax/db_machdep.h	comp-c-include
 ./usr/include/vax/disklabel.h	comp-c-include
 ./usr/include/vax/endian.h	comp-c-include
+./usr/include/vax/endian_machdep.h	comp-c-include
 ./usr/include/vax/float.h	comp-c-include
 ./usr/include/vax/frame.h	comp-c-include
 ./usr/include/vax/ioa.h	comp-c-include

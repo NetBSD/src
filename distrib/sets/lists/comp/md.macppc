@@ -1,4 +1,4 @@
-# $NetBSD: md.macppc,v 1.11 2000/02/03 05:27:59 jwise Exp $
+# $NetBSD: md.macppc,v 1.12 2000/03/17 22:54:05 tron Exp $
 ./usr/include/macppc	comp-c-include
 ./usr/include/macppc/_G_config.h	comp-c-include
 ./usr/include/macppc/adbsys.h	comp-c-include
@@ -15,6 +15,7 @@
 ./usr/include/macppc/disklabel.h	comp-c-include
 ./usr/include/macppc/elf_machdep.h	comp-c-include
 ./usr/include/macppc/endian.h	comp-c-include
+./usr/include/macppc/endian_machdep.h	comp-c-include
 ./usr/include/macppc/float.h	comp-c-include
 ./usr/include/macppc/fpu.h	comp-c-include
 ./usr/include/macppc/frame.h	comp-c-include

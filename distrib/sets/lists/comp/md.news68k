@@ -1,4 +1,4 @@
-# $NetBSD: md.news68k,v 1.3 2000/02/03 05:28:00 jwise Exp $
+# $NetBSD: md.news68k,v 1.4 2000/03/17 22:54:06 tron Exp $
 ./usr/include/news68k	comp-c-include
 ./usr/include/news68k/_G_config.h	comp-c-include
 ./usr/include/news68k/ansi.h	comp-c-include
@@ -12,6 +12,7 @@
 ./usr/include/news68k/disklabel.h	comp-c-include
 ./usr/include/news68k/elf_machdep.h	comp-c-include
 ./usr/include/news68k/endian.h	comp-c-include
+./usr/include/news68k/endian_machdep.h	comp-c-include
 ./usr/include/news68k/float.h	comp-c-include
 ./usr/include/news68k/frame.h	comp-c-include
 ./usr/include/news68k/ieee.h	comp-c-include

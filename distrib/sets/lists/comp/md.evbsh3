@@ -15,6 +15,7 @@
 ./usr/include/evbsh3/disklabel.h	comp-c-include
 ./usr/include/evbsh3/elf_machdep.h	comp-c-include
 ./usr/include/evbsh3/endian.h	comp-c-include
+./usr/include/evbsh3/endian_machdep.h	comp-c-include
 ./usr/include/evbsh3/exec_coff.h	comp-c-include
 ./usr/include/evbsh3/float.h	comp-c-include
 ./usr/include/evbsh3/frame.h	comp-c-include

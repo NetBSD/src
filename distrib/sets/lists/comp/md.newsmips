@@ -1,4 +1,4 @@
-# $NetBSD: md.newsmips,v 1.5 2000/02/03 05:28:00 jwise Exp $
+# $NetBSD: md.newsmips,v 1.6 2000/03/17 22:54:06 tron Exp $
 ./usr/include/newsmips	comp-c-include
 ./usr/include/newsmips/_G_config.h	comp-c-include
 ./usr/include/newsmips/adrsmap.h	comp-c-include
@@ -15,6 +15,7 @@
 ./usr/include/newsmips/ecoff_machdep.h	comp-c-include
 ./usr/include/newsmips/elf_machdep.h	comp-c-include
 ./usr/include/newsmips/endian.h	comp-c-include
+./usr/include/newsmips/endian_machdep.h	comp-c-include
 ./usr/include/newsmips/float.h	comp-c-include
 ./usr/include/newsmips/framebuf.h	comp-c-include
 ./usr/include/newsmips/ieee.h	comp-c-include

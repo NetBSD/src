@@ -1,4 +1,4 @@
-# $NetBSD: md.sun3,v 1.35 2000/02/03 05:28:01 jwise Exp $
+# $NetBSD: md.sun3,v 1.36 2000/03/17 22:54:06 tron Exp $
 ./usr/include/sun3	comp-c-include
 ./usr/include/sun3/_G_config.h	comp-c-include
 ./usr/include/sun3/ansi.h	comp-c-include
@@ -17,6 +17,7 @@
 ./usr/include/sun3/eeprom.h	comp-c-include
 ./usr/include/sun3/elf_machdep.h	comp-c-include
 ./usr/include/sun3/endian.h	comp-c-include
+./usr/include/sun3/endian_machdep.h	comp-c-include
 ./usr/include/sun3/fbio.h	comp-c-include
 ./usr/include/sun3/float.h	comp-c-include
 ./usr/include/sun3/frame.h	comp-c-include
