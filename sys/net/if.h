@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.51 2000/07/02 00:20:49 thorpej Exp $	*/
+/*	$NetBSD: if.h,v 1.52 2000/07/04 19:09:17 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -288,7 +288,7 @@ struct ifnet {				/* and the entries */
 /* flags set internally only: */
 #define	IFF_CANTCHANGE \
 	(IFF_BROADCAST|IFF_POINTOPOINT|IFF_RUNNING|IFF_OACTIVE|\
-	    IFF_SIMPLEX|IFF_MULTICAST|IFF_ALLMULTI)
+	    IFF_SIMPLEX|IFF_MULTICAST|IFF_ALLMULTI|IFF_PROMISC)
 
 /*
  * Some convenience macros used for setting ifi_baudrate.
