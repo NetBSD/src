@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.10 1999/02/10 01:36:50 hubertf Exp $ */
+/*	$NetBSD: extern.h,v 1.11 1999/07/21 03:56:53 hubertf Exp $ */
 
 /*
  * Copyright (c) 1983, 1993
@@ -340,6 +340,7 @@ void murder __P((void));
 void news __P((void));
 void newway __P((int));
 void notarget __P((void));
+void open_score_file __P((void));
 void parse __P((void));
 void post __P((char));
 void printobjs __P((void));

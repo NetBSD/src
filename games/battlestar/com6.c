@@ -1,4 +1,4 @@
-/*	$NetBSD: com6.c,v 1.10 1999/02/10 01:36:50 hubertf Exp $	*/
+/*	$NetBSD: com6.c,v 1.11 1999/07/21 03:56:53 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)com6.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: com6.c,v 1.10 1999/02/10 01:36:50 hubertf Exp $");
+__RCSID("$NetBSD: com6.c,v 1.11 1999/07/21 03:56:53 hubertf Exp $");
 #endif
 #endif				/* not lint */
 
@@ -105,11 +105,20 @@ live()
 	exit(0);
 }
 
+static FILE *score_fp;
+
+void
+open_score_file()
+{
+	score_fp = fopen(_PATH_SCORE, "a");
+	if (score_fp == NULL)
+		warn("open %s for append", _PATH_SCORE);
+}
+
 void
 post(ch)
 	char    ch;
 {
-	FILE   *fp;
 	struct timeval tv;
 	time_t tvsec;
 	char   *date;
@@ -122,17 +131,16 @@ post(ch)
 	tvsec = (time_t) tv.tv_sec;
 	date = ctime(&tvsec);
 	date[24] = '\0';
-	if ((fp = fopen(_PATH_SCORE, "a")) != NULL) {
-		fprintf(fp, "%s  %8s  %c%20s", date, uname, ch, rate());
+	if (score_fp != NULL) {
+		fprintf(score_fp, "%s  %8s  %c%20s", date, uname, ch, rate());
 		if (wiz)
-			fprintf(fp, "   wizard\n");
+			fprintf(score_fp, "   wizard\n");
 		else
 			if (tempwiz)
-				fprintf(fp, "   WIZARD!\n");
+				fprintf(score_fp, "   WIZARD!\n");
 			else
-				fprintf(fp, "\n");
-	} else
-		warn("fopen %s", _PATH_SCORE);
+				fprintf(score_fp, "\n");
+	}
 	sigprocmask(SIG_SETMASK, &osigset, (sigset_t *) 0);
 }
 
