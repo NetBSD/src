@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.106 1998/03/21 20:33:31 pk Exp $ */
+/*	$NetBSD: machdep.c,v 1.107 1998/03/24 10:00:14 pk Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -1875,7 +1875,7 @@ sparc_bus_mmap(cookie, iospace, paddr, flags)
 	bus_addr_t paddr;
 	int flags;
 {
-	return (paddr | PMAP_IOENC(iospace));
+	return (paddr | PMAP_IOENC(iospace) | PMAP_NC);
 }
 
 
