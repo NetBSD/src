@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_reloc.c,v 1.5 2001/11/24 18:07:04 rafal Exp $	*/
+/*	$NetBSD: mips_reloc.c,v 1.6 2002/09/05 15:38:28 mycroft Exp $	*/
 
 /*
  * Copyright 1997 Michael L. Hitch <mhitch@montana.edu>
@@ -36,11 +36,32 @@
 #include "rtld.h"
 
 /*
- * Relocate a MIPS GOT
+ * _rtld_bind_mips(symbol_index, return_address, old_gp, stub_return_addr)
  */
 
+caddr_t
+_rtld_bind_mips(a0, a1, a2, a3)
+	Elf_Word a0;
+	Elf_Addr a1, a2, a3;
+{
+	Elf_Addr *u = (Elf_Addr *)(a2 - 0x7ff0);
+	Obj_Entry *obj = (Obj_Entry *)(u[1] & 0x7fffffff);
+	const Elf_Sym *def;
+	const Obj_Entry *defobj;
+
+	def = _rtld_find_symdef(_rtld_objlist, a0 << 8, NULL, obj, &defobj,
+	    true);
+	if (def) {
+		u[obj->local_gotno + a0 - obj->gotsym] = (Elf_Addr)
+		    (def->st_value + defobj->relocbase);
+		return((caddr_t)(def->st_value + defobj->relocbase));
+	}
+
+	return(NULL);	/* XXX */
+}
+
 void
-_rtld_relocate_mips_got(obj)
+_rtld_setup_pltgot(obj)
 	Obj_Entry *obj;
 {
 	Elf_Addr *got = obj->pltgot;
@@ -112,29 +133,8 @@ _rtld_relocate_mips_got(obj)
 		++sym;
 		++got;
 	}
-}
 
-/*
- * _rtld_bind_mips(symbol_index, return_address, old_gp, stub_return_addr)
- */
-
-caddr_t
-_rtld_bind_mips(a0, a1, a2, a3)
-	Elf_Word a0;
-	Elf_Addr a1, a2, a3;
-{
-	Elf_Addr *u = (Elf_Addr *)(a2 - 0x7ff0);
-	Obj_Entry *obj = (Obj_Entry *)(u[1] & 0x7fffffff);
-	const Elf_Sym *def;
-	const Obj_Entry *defobj;
-
-	def = _rtld_find_symdef(_rtld_objlist, a0 << 8, NULL, obj, &defobj,
-	    true);
-	if (def) {
-		u[obj->local_gotno + a0 - obj->gotsym] = (Elf_Addr)
-		    (def->st_value + defobj->relocbase);
-		return((caddr_t)(def->st_value + defobj->relocbase));
-	}
-
-	return(NULL);	/* XXX */
+	obj->pltgot[0] = (Elf_Addr) &_rtld_bind_start;
+	/* XXX only if obj->pltgot[1] & 0x80000000 ?? */
+	obj->pltgot[1] |= (Elf_Addr) obj;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: hppa_reloc.c,v 1.1 2002/07/10 15:12:38 fredette Exp $	*/
+/*	$NetBSD: hppa_reloc.c,v 1.2 2002/09/05 15:38:25 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -186,13 +186,6 @@ _rtld_fill_hppa_got_cache(const Obj_Entry *obj)
 	    (Elf_Addr *)(obj->relocbase + def->st_value);
 }
 
-/* This sets up an object's GOT. */
-void
-_rtld_setup_hppa_pltgot(const Obj_Entry *obj)
-{
-	__rtld_setup_hppa_pltgot(obj, HPPA_OBJ_GOT(obj));
-}
-
 /*
  * This allocates a PLABEL.  If called with a non-NULL def, the 
  * plabel is for the function associated with that definition
@@ -334,4 +327,11 @@ _rtld_relocate_plt_object(Obj_Entry *obj, const Elf_Rela *rela, caddr_t *addrp,
 	if (addrp != NULL)
 		*addrp = (caddr_t)where;
 	return 0;
+}
+
+/* This sets up an object's GOT. */
+void
+_rtld_setup_pltgot(const Obj_Entry *obj)
+{
+	__rtld_setup_hppa_pltgot(obj, HPPA_OBJ_GOT(obj));
 }

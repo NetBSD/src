@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.5 2001/12/14 22:11:47 thorpej Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.6 2002/09/05 15:38:33 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -237,4 +237,11 @@ _rtld_relocate_plt_object(Obj_Entry *obj, const Elf_Rela *rela, caddr_t *addrp,
 		*addrp = *(caddr_t *)(obj->relocbase + rela->r_offset) -
 		    rela->r_addend;
 	return 0;
+}
+
+void
+_rtld_setup_pltgot(const Obj_Entry *obj)
+{
+	obj->pltgot[1] = (Elf_Addr) obj;
+	obj->pltgot[2] = (Elf_Addr) &_rtld_bind_start;
 }

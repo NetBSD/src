@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile.inc,v 1.4 2001/12/20 19:20:02 thorpej Exp $
+#	$NetBSD: Makefile.inc,v 1.5 2002/09/05 15:38:27 mycroft Exp $
 
-SRCS+=	rtld_start.S
+SRCS+=	rtld_start.S mdreloc.c
 
 # XXX Should not be in CPPFLAGS!
 CPPFLAGS+= -fpic
