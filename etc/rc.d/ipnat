@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: ipnat,v 1.8 2002/09/24 11:03:53 martti Exp $
+# $NetBSD: ipnat,v 1.9 2003/02/16 22:18:46 grant Exp $
 #
 
 # PROVIDE: ipnat
@@ -14,7 +14,8 @@ rcvar=$name
 config="/etc/ipnat.conf"
 start_cmd="ipnat_start"
 stop_cmd="/usr/sbin/ipnat -F -C"
-reload_cmd="/usr/sbin/ipnat -F -C -f ${config}"
+reload_cmd="/usr/sbin/ipnat -C -f ${config}"
+restart_cmd="/usr/sbin/ipnat -F -C -f ${config}"
 extra_commands="reload"
 
 ipnat_start()
