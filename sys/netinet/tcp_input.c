@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.219 2005/02/02 21:41:55 perry Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.220 2005/02/03 23:39:32 perry Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.219 2005/02/02 21:41:55 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.220 2005/02/03 23:39:32 perry Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -349,11 +349,7 @@ static void tcp6_log_refused(const struct ip6_hdr *, const struct tcphdr *);
 POOL_INIT(tcpipqent_pool, sizeof(struct ipqent), 0, 0, 0, "tcpipqepl", NULL);
 
 int
-tcp_reass(tp, th, m, tlen)
-	struct tcpcb *tp;
-	struct tcphdr *th;
-	struct mbuf *m;
-	int *tlen;
+tcp_reass(struct tcpcb *tp, struct tcphdr *th, struct mbuf *m, int *tlen)
 {
 	struct ipqent *p, *q, *nq, *tiqe = NULL;
 	struct socket *so = NULL;
@@ -700,9 +696,7 @@ present:
 
 #ifdef INET6
 int
-tcp6_input(mp, offp, proto)
-	struct mbuf **mp;
-	int *offp, proto;
+tcp6_input(struct mbuf **mp, int *offp, int proto)
 {
 	struct mbuf *m = *mp;
 
@@ -731,9 +725,7 @@ tcp6_input(mp, offp, proto)
 
 #ifdef INET
 static void
-tcp4_log_refused(ip, th)
-	const struct ip *ip;
-	const struct tcphdr *th;
+tcp4_log_refused(const struct ip *ip, const struct tcphdr *th)
 {
 	char src[4*sizeof "123"];
 	char dst[4*sizeof "123"];
@@ -755,9 +747,7 @@ tcp4_log_refused(ip, th)
 
 #ifdef INET6
 static void
-tcp6_log_refused(ip6, th)
-	const struct ip6_hdr *ip6;
-	const struct tcphdr *th;
+tcp6_log_refused(const struct ip6_hdr *ip6, const struct tcphdr *th)
 {
 	char src[INET6_ADDRSTRLEN];
 	char dst[INET6_ADDRSTRLEN];
@@ -2732,14 +2722,8 @@ tcp_signature(struct mbuf *m, struct tcphdr *th, int thoff,
 #endif
 
 int
-tcp_dooptions(tp, cp, cnt, th, m, toff, oi)
-	struct tcpcb *tp;
-	u_char *cp;
-	int cnt;
-	struct tcphdr *th;
-	struct mbuf *m;
-	int toff;
-	struct tcp_opt_info *oi;
+tcp_dooptions(struct tcpcb *tp, u_char *cp, int cnt, struct tcphdr *th,
+    struct mbuf *m, int toff, struct tcp_opt_info *oi)
 {
 	u_int16_t mss;
 	int opt, optlen = 0;
@@ -2937,11 +2921,8 @@ tcp_dooptions(tp, cp, cnt, th, m, toff, oi)
  * sequencing purposes.
  */
 void
-tcp_pulloutofband(so, th, m, off)
-	struct socket *so;
-	struct tcphdr *th;
-	struct mbuf *m;
-	int off;
+tcp_pulloutofband(struct socket *so, struct tcphdr *th,
+    struct mbuf *m, int off)
 {
 	int cnt = off + th->th_urp - 1;
 
@@ -2969,9 +2950,7 @@ tcp_pulloutofband(so, th, m, off)
  * and update averages and current timeout.
  */
 void
-tcp_xmit_timer(tp, rtt)
-	struct tcpcb *tp;
-	uint32_t rtt;
+tcp_xmit_timer(struct tcpcb *tp, uint32_t rtt)
 {
 	int32_t delta;
 
@@ -3039,9 +3018,7 @@ tcp_xmit_timer(tp, rtt)
 }
 
 void
-tcp_reno_newack(tp, th)
-	struct tcpcb *tp;
-	struct tcphdr *th;
+tcp_reno_newack(struct tcpcb *tp, struct tcphdr *th)
 {
 	if (tp->t_partialacks < 0) {
 		/*
@@ -3066,9 +3043,7 @@ tcp_reno_newack(tp, th)
  * fast recovery.
  */
 void
-tcp_newreno_newack(tp, th)
-	struct tcpcb *tp;
-	struct tcphdr *th;
+tcp_newreno_newack(struct tcpcb *tp, struct tcphdr *th)
 {
 	if (tp->t_partialacks < 0) {
 		/*
@@ -3214,7 +3189,7 @@ do {									\
 #define	SYN_CACHE_TIMESTAMP(sc)	(tcp_now - (sc)->sc_timebase)
 
 void
-syn_cache_init()
+syn_cache_init(void)
 {
 	int i;
 
@@ -3224,9 +3199,7 @@ syn_cache_init()
 }
 
 void
-syn_cache_insert(sc, tp)
-	struct syn_cache *sc;
-	struct tcpcb *tp;
+syn_cache_insert(struct syn_cache *sc, struct tcpcb *tp)
 {
 	struct syn_cache_head *scp;
 	struct syn_cache *sc2;
@@ -3380,8 +3353,7 @@ syn_cache_timer(void *arg)
  * (if there's no tcb entry, syn cache entry will never be used)
  */
 void
-syn_cache_cleanup(tp)
-	struct tcpcb *tp;
+syn_cache_cleanup(struct tcpcb *tp)
 {
 	struct syn_cache *sc, *nsc;
 	int s;
@@ -3408,10 +3380,8 @@ syn_cache_cleanup(tp)
  * Find an entry in the syn cache.
  */
 struct syn_cache *
-syn_cache_lookup(src, dst, headp)
-	struct sockaddr *src;
-	struct sockaddr *dst;
-	struct syn_cache_head **headp;
+syn_cache_lookup(struct sockaddr *src, struct sockaddr *dst,
+    struct syn_cache_head **headp)
 {
 	struct syn_cache *sc;
 	struct syn_cache_head *scp;
@@ -3461,13 +3431,9 @@ syn_cache_lookup(src, dst, headp)
  *	associated with the connection.
  */
 struct socket *
-syn_cache_get(src, dst, th, hlen, tlen, so, m)
-	struct sockaddr *src;
-	struct sockaddr *dst;
-	struct tcphdr *th;
-	unsigned int hlen, tlen;
-	struct socket *so;
-	struct mbuf *m;
+syn_cache_get(struct sockaddr *src, struct sockaddr *dst,
+    struct tcphdr *th, unsigned int hlen, unsigned int tlen,
+    struct socket *so, struct mbuf *m)
 {
 	struct syn_cache *sc;
 	struct syn_cache_head *scp;
@@ -3764,10 +3730,7 @@ abort:
  */
 
 void
-syn_cache_reset(src, dst, th)
-	struct sockaddr *src;
-	struct sockaddr *dst;
-	struct tcphdr *th;
+syn_cache_reset(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th)
 {
 	struct syn_cache *sc;
 	struct syn_cache_head *scp;
@@ -3789,10 +3752,8 @@ syn_cache_reset(src, dst, th)
 }
 
 void
-syn_cache_unreach(src, dst, th)
-	struct sockaddr *src;
-	struct sockaddr *dst;
-	struct tcphdr *th;
+syn_cache_unreach(struct sockaddr *src, struct sockaddr *dst,
+    struct tcphdr *th)
 {
 	struct syn_cache *sc;
 	struct syn_cache_head *scp;
@@ -3844,16 +3805,9 @@ syn_cache_unreach(src, dst, th)
  */
 
 int
-syn_cache_add(src, dst, th, hlen, so, m, optp, optlen, oi)
-	struct sockaddr *src;
-	struct sockaddr *dst;
-	struct tcphdr *th;
-	unsigned int hlen;
-	struct socket *so;
-	struct mbuf *m;
-	u_char *optp;
-	int optlen;
-	struct tcp_opt_info *oi;
+syn_cache_add(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
+    unsigned int hlen, struct socket *so, struct mbuf *m, u_char *optp,
+    int optlen, struct tcp_opt_info *oi)
 {
 	struct tcpcb tb, *tp;
 	long win;
@@ -4015,9 +3969,7 @@ syn_cache_add(src, dst, th, hlen, so, m, optp, optlen, oi)
 }
 
 int
-syn_cache_respond(sc, m)
-	struct syn_cache *sc;
-	struct mbuf *m;
+syn_cache_respond(struct syn_cache *sc, struct mbuf *m)
 {
 	struct route *ro;
 	u_int8_t *optp;
