@@ -1,5 +1,5 @@
-.\"	$NetBSD: route6d.8,v 1.5 2000/02/25 06:22:05 itojun Exp $
-.\"	$KAME: route6d.8,v 1.5 2000/02/25 06:15:05 itojun Exp $
+.\"	$NetBSD: route6d.8,v 1.6 2000/05/16 14:04:32 itojun Exp $
+.\"	$KAME: route6d.8,v 1.6 2000/05/13 01:29:47 itojun Exp $
 .\"
 .\" Copyright (c) 1996 WIDE Project. All rights reserved.
 .\"
@@ -14,7 +14,6 @@
 .\" AND WITHOUT ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, WITHOUT
 .\" LIMITATION, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
 .\" A PARTICULAR PURPOSE.
-.\"
 .Dd January 31, 1997
 .Dt ROUTE6D 8
 .Os
@@ -93,7 +92,8 @@ Disables the split horizon processing.
 By default,
 .Nm
 will not exchange site local routes for safety reasons.
-This is because semantics of site local address space is rather vague,
+This is because semantics of site local address space is rather vague
+.Pq specification is still in being worked ,
 and there is no good way to define site local boundary.
 With
 .Fl l
