@@ -1,4 +1,4 @@
-/*	$NetBSD: if_loop.c,v 1.15 1996/05/07 02:40:33 thorpej Exp $	*/
+/*	$NetBSD: if_loop.c,v 1.16 1996/10/10 22:59:47 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -92,7 +92,7 @@ loopattach(n)
 
 	for (i = 0; i < NLOOP; i++) {
 		ifp = &loif[i];
-		sprintf(ifp->if_xname, "lo%d", i);
+		ksprintf(ifp->if_xname, "lo%d", i);
 		ifp->if_softc = NULL;
 		ifp->if_mtu = LOMTU;
 		ifp->if_flags = IFF_LOOPBACK | IFF_MULTICAST;
@@ -170,8 +170,8 @@ looutput(ifp, m, dst, rt)
 		break;
 #endif
 	default:
-		printf("%s: can't handle af%d\n", ifp->if_xname,
-			dst->sa_family);
+		kprintf("%s: can't handle af%d\n", ifp->if_xname,
+		    dst->sa_family);
 		m_freem(m);
 		return (EAFNOSUPPORT);
 	}

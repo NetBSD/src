@@ -1,4 +1,4 @@
-/*      $NetBSD: if_atmsubr.c,v 1.5 1996/07/03 17:17:10 chuck Exp $       */
+/*      $NetBSD: if_atmsubr.c,v 1.6 1996/10/10 22:59:44 christos Exp $       */
 
 /*
  *
@@ -149,11 +149,11 @@ atm_output(ifp, m0, dst, rt0)
 
 		default:
 #if defined(__NetBSD__) || defined(__OpenBSD__)
-			printf("%s: can't handle af%d\n", ifp->if_xname, 
-				dst->sa_family);
+			kprintf("%s: can't handle af%d\n", ifp->if_xname, 
+			    dst->sa_family);
 #elif defined(__FreeBSD__) || defined(__bsdi__)
-			printf("%s%d: can't handle af%d\n", ifp->if_name, 
-				ifp->if_unit, dst->sa_family);
+			kprintf("%s%d: can't handle af%d\n", ifp->if_name, 
+			    ifp->if_unit, dst->sa_family);
 #endif
 			senderr(EAFNOSUPPORT);
 		}
@@ -234,7 +234,7 @@ atm_input(ifp, ah, m, rxhand)
 	  inq = &natmintrq;
 	  m->m_pkthdr.rcvif = rxhand; /* XXX: overload */
 #else
-	  printf("atm_input: NATM detected but not configured in kernel\n");
+	  kprintf("atm_input: NATM detected but not configured in kernel\n");
 	  m_freem(m);
 	  return;
 #endif
@@ -249,10 +249,10 @@ atm_input(ifp, ah, m, rxhand)
 	    alc = mtod(m, struct atmllc *);
 	    if (bcmp(alc, ATMLLC_HDR, 6)) {
 #if defined(__NetBSD__) || defined(__OpenBSD__)
-	      printf("%s: recv'd invalid LLC/SNAP frame [vp=%d,vc=%d]\n",
+	      kprintf("%s: recv'd invalid LLC/SNAP frame [vp=%d,vc=%d]\n",
 		  ifp->if_xname, ATM_PH_VPI(ah), ATM_PH_VCI(ah));
 #elif defined(__FreeBSD__) || defined(__bsdi__)
-	      printf("%s%d: recv'd invalid LLC/SNAP frame [vp=%d,vc=%d]\n",
+	      kprintf("%s%d: recv'd invalid LLC/SNAP frame [vp=%d,vc=%d]\n",
 		  ifp->if_name, ifp->if_unit, ATM_PH_VPI(ah), ATM_PH_VCI(ah));
 #endif
 	      m_freem(m);

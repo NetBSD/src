@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.20 1996/10/10 22:59:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -194,10 +194,10 @@ ether_output(ifp, m0, dst, rt0)
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_ETHER]) {
 			int i;
-			printf("unoutput: sending pkt to: ");
+			kprintf("unoutput: sending pkt to: ");
 			for (i=0; i<6; i++)
-				printf("%x ", edst[i] & 0xff);
-			printf("\n");
+				kprintf("%x ", edst[i] & 0xff);
+			kprintf("\n");
 		}
 #endif
 		} break;
@@ -230,10 +230,10 @@ ether_output(ifp, m0, dst, rt0)
 			int i;
 			register struct llc *l = mtod(m, struct llc *);
 
-			printf("ether_output: sending LLC2 pkt to: ");
+			kprintf("ether_output: sending LLC2 pkt to: ");
 			for (i=0; i<6; i++)
-				printf("%x ", edst[i] & 0xff);
-			printf(" len 0x%x dsap 0x%x ssap 0x%x control 0x%x\n", 
+				kprintf("%x ", edst[i] & 0xff);
+			kprintf(" len 0x%x dsap 0x%x ssap 0x%x control 0x%x\n", 
 			    m->m_pkthdr.len, l->llc_dsap & 0xff, l->llc_ssap &0xff,
 			    l->llc_control & 0xff);
 
@@ -250,7 +250,7 @@ ether_output(ifp, m0, dst, rt0)
 		break;
 
 	default:
-		printf("%s: can't handle af%d\n", ifp->if_xname,
+		kprintf("%s: can't handle af%d\n", ifp->if_xname,
 			dst->sa_family);
 		senderr(EAFNOSUPPORT);
 	}
@@ -380,7 +380,7 @@ ether_input(ifp, eh, m)
 					*mtod(m, struct ether_header *) = *eh;
 #ifdef ARGO_DEBUG
 					if (argo_debug[D_ETHER])
-						printf("clnp packet");
+						kprintf("clnp packet");
 #endif
 					schednetisr(NETISR_ISO);
 					inq = &clnlintrq;
@@ -442,7 +442,7 @@ ether_input(ifp, eh, m)
 				panic("ETHER cons addr failure");
 			mtod(m, struct sdl_hdr *)->sdlhdr_len = etype;
 #ifdef LLC_DEBUG
-				printf("llc packet\n");
+				kprintf("llc packet\n");
 #endif /* LLC_DEBUG */
 			schednetisr(NETISR_CCITT);
 			inq = &llcintrq;
