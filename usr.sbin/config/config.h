@@ -47,6 +47,7 @@ struct file_list {
 	char	*f_fn;			/* the name */
 	u_char	f_type;			/* see below */
 	u_char	f_flags;		/* see below */
+	u_char  f_was_driver;	 /* to handle un-included pseudo-drivers*/
 	char	*f_special;		/* special make rule if present */
 	char	*f_needs;
 	/*
@@ -83,7 +84,8 @@ struct file_list {
 /*
  * Attributes (flags).
  */
-#define	CONFIGDEP	1
+#define	CONFIGDEP	0x1
+#define DUPLICATE       0x2
 
 struct	idlst {
 	char	*id;
@@ -193,5 +195,6 @@ int	debugging;
 
 int	maxfdescs;
 int	maxusers;
+int     fatal_errors;
 
 #define eq(a,b)	(!strcmp(a,b))

@@ -49,8 +49,8 @@ headers()
 	register struct file_list *fl;
 
 	for (fl = ftab; fl != 0; fl = fl->f_next)
-		if (fl->f_needs != 0)
-			do_count(fl->f_needs, fl->f_needs, 1);
+	    if (fl->f_was_driver)
+		    do_count(fl->f_needs, fl->f_needs, 1);
 }
 
 /*
@@ -95,7 +95,7 @@ do_header(dev, hname, count)
 	char *dev, *hname;
 	int count;
 {
-	char *file, *name, *inw, *toheader(), *tomacro();
+	char *file, *name, *inw, *toheader(), *tomacro(), *get_rword();
 	struct file_list *fl, *fl_head;
 	FILE *inf, *outf;
 	int inc, oldcount;
@@ -117,12 +117,12 @@ do_header(dev, hname, count)
 	fl_head = 0;
 	for (;;) {
 		char *cp;
-		if ((inw = get_word(inf)) == 0 || inw == (char *)EOF)
+		if ((inw = get_rword(inf)) == 0 || inw == (char *)EOF)
 			break;
-		if ((inw = get_word(inf)) == 0 || inw == (char *)EOF)
+		if ((inw = get_rword(inf)) == 0 || inw == (char *)EOF)
 			break;
 		inw = ns(inw);
-		cp = get_word(inf);
+		cp = get_rword(inf);
 		if (cp == 0 || cp == (char *)EOF)
 			break;
 		inc = atoi(cp);
@@ -130,7 +130,7 @@ do_header(dev, hname, count)
 			oldcount = inc;
 			inc = count;
 		}
-		cp = get_word(inf);
+		cp = get_rword(inf);
 		if (cp == (char *)EOF)
 			break;
 		fl = (struct file_list *) malloc(sizeof *fl);
