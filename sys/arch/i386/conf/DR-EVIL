@@ -1,4 +1,4 @@
-#	$NetBSD: DR-EVIL,v 1.46 2002/06/17 05:14:12 lukem Exp $
+#	$NetBSD: DR-EVIL,v 1.47 2002/06/21 22:57:55 ross Exp $
 #
 #	DR-EVIL -- Dell Inspiron 3800 laptop used by thorpej@netbsd.org
 #
@@ -455,7 +455,7 @@ uk*	at scsibus? target ? lun ?	# SCSI unknown
 
 # RAID controllers and devices
 cac*	at pci? dev ? function ?	# Compaq array controller
-ca*	at cac? unit ?			# Compaq array disk devices
+ld*	at cac? unit ?			# Logical disk devices
 
 # IDE and related devices
 # PCI IDE controllers - see pciide(4) for supported hardware.
