@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39io.c,v 1.9 2001/06/14 11:09:56 uch Exp $ */
+/*	$NetBSD: tx39io.c,v 1.10 2002/01/28 05:40:58 uch Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -300,9 +300,6 @@ tx391x_io_in(hpcio_chip_t arg, int port)
 void
 tx391x_io_out(hpcio_chip_t arg, int port, int onoff)
 {
-#ifdef DIAGNOSTIC
-	const char *devname;
-#endif
 	struct tx39io_softc *sc = arg->hc_sc;
 	tx_chipset_tag_t tc;
 	txreg_t reg, pos, iostat;
@@ -310,14 +307,14 @@ tx391x_io_out(hpcio_chip_t arg, int port, int onoff)
 	KASSERT(sc);
 	DPRINTF(("%s: port #%d\n", __FUNCTION__, port));
 
-	devname  =  sc->sc_dev.dv_xname;
 	tc = sc->sc_tc;
 
 	/* IO [0:6] */ 
 	pos = 1 << port;
 #ifdef DIAGNOSTIC
 	if (!(sc->sc_stat_io.dir & pos))
-		panic("%s: IO%d is not output port.\n", devname, port);
+		panic("%s: IO%d is not output port.\n", sc->sc_dev.dv_xname,
+		      port);
 #endif
 	reg = tx_conf_read(tc, TX39_IOCTRL_REG);
 	iostat = TX391X_IOCTRL_IODOUT(reg);
