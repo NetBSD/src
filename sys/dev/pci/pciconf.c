@@ -1,4 +1,4 @@
-/*	$NetBSD: pciconf.c,v 1.14 2001/11/28 23:48:34 thorpej Exp $	*/
+/*	$NetBSD: pciconf.c,v 1.15 2002/02/21 20:22:48 kleink Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciconf.c,v 1.14 2001/11/28 23:48:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciconf.c,v 1.15 2002/02/21 20:22:48 kleink Exp $");
 
 #include "opt_pci.h"
 
@@ -983,7 +983,7 @@ configure_bus(pciconf_bus_t *pb)
 		misc &= ~((PCI_LATTIMER_MASK << PCI_LATTIMER_SHIFT) |
 		    (PCI_CACHELINE_MASK << PCI_CACHELINE_SHIFT));
 		misc |= (ltim & PCI_LATTIMER_MASK) << PCI_LATTIMER_SHIFT;
-		misc |= (pb->cacheline_size & PCI_CACHELINE_MASK) <<
+		misc |= ((pb->cacheline_size >> 2) & PCI_CACHELINE_MASK) <<
 		    PCI_CACHELINE_SHIFT;
 		pci_conf_write(pd->pc, pd->tag, PCI_BHLC_REG, misc);
 
