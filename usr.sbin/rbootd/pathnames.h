@@ -1,4 +1,4 @@
-/*	$NetBSD: pathnames.h,v 1.4 2003/08/07 11:25:41 agc Exp $	*/
+/*	$NetBSD: pathnames.h,v 1.5 2004/12/01 23:13:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -84,7 +84,6 @@
  * Author: Jeff Forys, University of Utah CSS
  */
 
-#define	_PATH_BPF		"/dev/bpf%d"
 #define	_PATH_RBOOTDCONF	"/etc/rbootd.conf"
 #define	_PATH_RBOOTDDBG		"/tmp/rbootd.dbg"
 #define	_PATH_RBOOTDLIB		"/usr/mdec/rbootd"
