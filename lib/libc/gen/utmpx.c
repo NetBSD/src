@@ -1,4 +1,4 @@
-/*	$NetBSD: utmpx.c,v 1.12 2002/09/28 01:34:36 christos Exp $	 */
+/*	$NetBSD: utmpx.c,v 1.13 2002/09/28 01:43:24 christos Exp $	 */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include <sys/cdefs.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: utmpx.c,v 1.12 2002/09/28 01:34:36 christos Exp $");
+__RCSID("$NetBSD: utmpx.c,v 1.13 2002/09/28 01:43:24 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -297,7 +297,7 @@ updwtmpx(const char *file, const struct utmpx *utx)
 		(void)memset(&ut, 0, sizeof(ut));
 		ut.ut_type = SIGNATURE;
 		(void)memcpy(ut.ut_user, vers, sizeof(vers));
-		if ((write(fd, &ut, sizeof(ut)) == -1)
+		if (write(fd, &ut, sizeof(ut)) == -1)
 			return -1;
 	}
 	if (write(fd, utx, sizeof(*utx)) == -1)
