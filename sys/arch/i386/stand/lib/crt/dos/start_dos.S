@@ -1,4 +1,4 @@
-/*	$NetBSD: start_dos.S,v 1.2 1997/06/13 17:49:27 drochner Exp $	*/
+/*	$NetBSD: start_dos.S,v 1.3 1998/10/16 18:07:35 ws Exp $	*/
 	
 /* startup for DOS .COM programs
  with input from:
@@ -64,7 +64,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #define	data32	.byte 0x66
 
 	.data
-_ourseg:
+ENTRY(ourseg)
 	.long	0
 
 /**************************************************************************
@@ -218,7 +218,7 @@ ENTRY(prot_to_real)
 	# This is self-modifying code, but we need a writable
 	# code segment, and an intersegment return does not give us that.
 
-	movl	_ourseg, %eax
+	movl	_C_LABEL(ourseg), %eax
 	movw	%ax, xreal-2
 
 	# Change to use16 mode.
@@ -342,7 +342,7 @@ ENTRY(pvbcopy)
 	ret
 
 ENTRY(vtophys)
-	movl _ourseg, %eax
+	movl _C_LABEL(ourseg), %eax
 	shll	$4, %eax
 	addl 4(%esp), %eax
 	ret
