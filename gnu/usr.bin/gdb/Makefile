@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	6.4 (Berkley) 5/6/91
-#	$Id: Makefile,v 1.3 1993/08/01 05:42:13 mycroft Exp $
+#	$Id: Makefile,v 1.4 1993/10/07 07:24:47 cgd Exp $
 
 PROG=		gdb
 GDBSRCS=	blockframe.c breakpoint.c command.c copying.c core.c \
@@ -13,8 +13,8 @@ READLINESRCS=	funmap.c history.c keymaps.c readline.c
 SRCS=		param.h $(CONFIGSRCS) $(GDBSRCS) $(READLINESRCS) init.c
 CFLAGS+=	-I. -I$(.CURDIR) -I$(.CURDIR)/config -I$(.CURDIR)/readline \
 		-DHAVE_VPRINTF -DVI_MODE -DKERNELDEBUG -DNEWVM
-LDADD+=		-ltermcap
-DPADD+=		/usr/lib/libtermcap.a
+LDADD+=		-ltermcap -gnumalloc
+DPADD+=		${LIBTERMCAP} /usr/lib/libgnumalloc.a
 YFLAGS=
 .PATH: $(.CURDIR)/config $(.CURDIR)/readline
 

@@ -6,4 +6,7 @@ SRCS =	copyin.c copyout.c copypass.c defer.c dstring.c fnmatch.c global.c \
 	rtapelib.c dirname.c idcache.c makepath.c xmalloc.c stripslash.c \
 	userspec.c xstrdup.c
 
+LDADD+=	-lgnumalloc
+DPADD+=	/usr/lib/libgnumalloc.a
+
 .include <bsd.prog.mk>

@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.4 (Berkeley) 6/24/90
-#	$Id: Makefile,v 1.3 1993/08/01 05:41:56 mycroft Exp $
+#	$Id: Makefile,v 1.4 1993/10/07 07:25:46 cgd Exp $
 #
 # By default, flex will be configured to generate 8-bit scanners only if the
 # -8 flag is given.  If you want it to always generate 8-bit scanners, add
@@ -18,6 +18,9 @@ LFLAGS=	-is8
 SRCS=	ccl.c dfa.c ecs.c gen.c main.c misc.c nfa.c parse.c sym.c tblcmp.c \
 	yylex.c
 OBJS+=	scan.o
+LDADD+=	-lgnumalloc
+DPADD+=	/usr/lib/libgnumalloc.a
+
 SUBDIR=	lib
 CLEANFILES+=parse.c parse.h scan.c y.tab.h
 MAN1 = lex.0 flexdoc.0
