@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.116 2001/09/16 07:41:57 manu Exp $
+#	$NetBSD: Makefile.inc,v 1.117 2001/11/13 15:12:01 tv Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -82,92 +82,28 @@ PSEUDONOERR=	_exit.o
 PPSEUDONOERR=	${PSEUDONOERR:.o=.po}
 SPSEUDONOERR=	${PSEUDONOERR:.o=.so}
 
-ACPPFLAGS=${CPPFLAGS:M-[ID]*}
-.if defined(DESTDIR)
-ACPPFLAGS+= -nostdinc -idirafter ${DESTDIR}/usr/include
-.endif
+SRCS+=		${ASM:.o=.S} ${NOERR:.o=.S} ${PSEUDONOERR:.o=.S}
+CLEANFILES+=	${ASM:.o=.S} ${NOERR:.o=.S} ${PSEUDONOERR:.o=.S}
 
-OBJS+=	${ASM} ${NOERR} ${PSEUDONOERR}
+.for F in ${ASM:.o=.S}
+${F}: ${ARCHDIR}/SYS.h ${DESTDIR}/usr/include/sys/syscall.h
+	printf '#include "SYS.h"\nRSYSCALL(${.PREFIX})\n' >${.TARGET}
+.endfor
 
-${PASM}: ${ARCHDIR}/SYS.h \
-    ${DESTDIR}/usr/include/sys/syscall.h
-	@echo creating ${.TARGET}
-	@printf '#include "SYS.h"\nRSYSCALL(${.PREFIX})\n' | \
-	    ${CPP} -DGPROF ${ACPPFLAGS} ${AINC} | \
-	    ${AS} -o ${.TARGET}.o
-	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
-	@rm -f ${.TARGET}.o
+.for F in ${NOERR:.o=.S}
+${F}: ${ARCHDIR}/SYS.h ${DESTDIR}/usr/include/sys/syscall.h
+	printf '#include "SYS.h"\nRSYSCALL_NOERROR(${.PREFIX})\n' >${.TARGET}
+.endfor
 
-${SASM}: ${ARCHDIR}/SYS.h \
-    ${DESTDIR}/usr/include/sys/syscall.h
-	@echo creating ${.TARGET}
-	@printf '#include "SYS.h"\nRSYSCALL(${.PREFIX})\n' | \
-	    ${CPP} ${CPPPICFLAGS} ${ACPPFLAGS} ${AINC} | \
-	    ${AS} ${APICFLAGS} -o ${.TARGET}
-
-${ASM}: ${ARCHDIR}/SYS.h \
-    ${DESTDIR}/usr/include/sys/syscall.h
-	@echo creating ${.TARGET}
-	@printf '#include "SYS.h"\nRSYSCALL(${.PREFIX})\n' | \
-	    ${CPP} ${ACPPFLAGS} ${AINC} | ${AS} -o ${.TARGET}.o
-	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
-	@rm -f ${.TARGET}.o
-
-${PNOERR}: ${ARCHDIR}/SYS.h \
-    ${DESTDIR}/usr/include/sys/syscall.h
-	@echo creating ${.TARGET}
-	@printf '#include "SYS.h"\nRSYSCALL_NOERROR(${.PREFIX})\n' | \
-	    ${CPP} -DGPROF ${ACPPFLAGS} ${AINC} | ${AS} -o ${.TARGET}.o
-	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
-	@rm -f ${.TARGET}.o
-
-${SNOERR}: ${ARCHDIR}/SYS.h \
-    ${DESTDIR}/usr/include/sys/syscall.h
-	@echo creating ${.TARGET}
-	@printf '#include "SYS.h"\nRSYSCALL_NOERROR(${.PREFIX})\n' | \
-	    ${CPP} ${CPPPICFLAGS} ${ACPPFLAGS} ${AINC} | \
-	    ${AS} ${APICFLAGS} -o ${.TARGET}
-
-${NOERR}: ${ARCHDIR}/SYS.h \
-    ${DESTDIR}/usr/include/sys/syscall.h
-	@echo creating ${.TARGET}
-	@printf '#include "SYS.h"\nRSYSCALL_NOERROR(${.PREFIX})\n' | \
-	    ${CPP} ${ACPPFLAGS} ${AINC} | ${AS} -o ${.TARGET}.o
-	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
-	@rm -f ${.TARGET}.o
-
-${PPSEUDONOERR}: ${ARCHDIR}/SYS.h \
-    ${DESTDIR}/usr/include/sys/syscall.h
-	@echo creating ${.TARGET}
-	@printf '#include "SYS.h"\n \
-	    PSEUDO_NOERROR(${.PREFIX},${.PREFIX:S/_//})\n' | \
-	    ${CPP} -DGPROF ${ACPPFLAGS} ${AINC} | ${AS} -o ${.TARGET}.o
-	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
-	@rm -f ${.TARGET}.o
-
-${SPSEUDONOERR}: ${ARCHDIR}/SYS.h \
-    ${DESTDIR}/usr/include/sys/syscall.h
-	@echo creating ${.TARGET}
-	@printf '#include "SYS.h"\n \
-	    PSEUDO_NOERROR(${.PREFIX},${.PREFIX:S/_//})\n' | \
-	    ${CPP} ${CPPPICFLAGS} ${ACPPFLAGS} ${AINC} | \
-	    ${AS} ${APICFLAGS} -o ${.TARGET}
-
-
-${PSEUDONOERR}: ${ARCHDIR}/SYS.h \
-    ${DESTDIR}/usr/include/sys/syscall.h
-	@echo creating ${.TARGET}
-	@printf '#include "SYS.h"\n \
-	    PSEUDO_NOERROR(${.PREFIX},${.PREFIX:S/_//})\n' | \
-	    ${CPP} ${ACPPFLAGS} ${AINC} | ${AS} -o ${.TARGET}.o
-	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
-	@rm -f ${.TARGET}.o
+.for F in ${PSEUDONOERR:.o=.S}
+${F}: ${ARCHDIR}/SYS.h ${DESTDIR}/usr/include/sys/syscall.h
+	@printf '#include "SYS.h"\n\PSEUDO_NOERROR(${.PREFIX},${.PREFIX:S/_//})\n' >${.TARGET}
+.endfor
 
 # Lint stubs for all automatically-generated assembly stubs (GENERATED)
-LSRCS+=	LintSysNormal.c LintSysNoerr.c LintSysPseudoNoerr.c
-DPSRCS+= LintSysNormal.c LintSysNoerr.c LintSysPseudoNoerr.c
-
-CLEANFILES+= LintSysNormal.c LintSysNoerr.c LintSysPseudo.c
+LSRCS+=		LintSysNormal.c LintSysNoerr.c LintSysPseudoNoerr.c
+DPSRCS+=	LintSysNormal.c LintSysNoerr.c LintSysPseudoNoerr.c
+CLEANFILES+=	LintSysNormal.c LintSysNoerr.c LintSysPseudoNoerr.c
 
 LintSysNormal.c: ${.CURDIR}/sys/makelintstub \
     ${DESTDIR}/usr/include/sys/syscall.h
