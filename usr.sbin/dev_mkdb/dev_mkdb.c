@@ -1,4 +1,4 @@
-/*	$NetBSD: dev_mkdb.c,v 1.17 2001/07/15 17:27:32 manu Exp $	*/
+/*	$NetBSD: dev_mkdb.c,v 1.18 2002/12/15 18:23:00 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)dev_mkdb.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: dev_mkdb.c,v 1.17 2001/07/15 17:27:32 manu Exp $");
+__RCSID("$NetBSD: dev_mkdb.c,v 1.18 2002/12/15 18:23:00 hannken Exp $");
 #endif
 #endif /* not lint */
 
@@ -65,6 +65,15 @@ __RCSID("$NetBSD: dev_mkdb.c,v 1.17 2001/07/15 17:27:32 manu Exp $");
 
 int	main __P((int, char *[]));
 void	usage __P((void));
+
+HASHINFO openinfo = {
+	4096,		/* bsize */
+	128,		/* ffactor */
+	1024,		/* nelem */
+	2048 * 1024,	/* cachesize */
+	NULL,		/* hash() */
+	0		/* lorder */
+};
 
 int
 main(argc, argv)
@@ -145,7 +154,7 @@ main(argc, argv)
 		(void)snprintf(q, MAXPATHLEN - (long)(q - dbtmp), 
 			    "%ld.tmp", tv.tv_usec);
 		db = dbopen(dbtmp, O_CREAT|O_EXCL|O_EXLOCK|O_RDWR|O_TRUNC,
-		    S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH, DB_HASH, NULL);
+		    S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH, DB_HASH, &openinfo);
 	} while (!db && (errno == EEXIST));
 	if (db == NULL)
 		err(1, "%s", dbtmp);
