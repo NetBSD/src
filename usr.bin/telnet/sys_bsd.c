@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_bsd.c,v 1.25 2003/07/14 15:56:29 itojun Exp $	*/
+/*	$NetBSD: sys_bsd.c,v 1.26 2003/07/14 16:00:53 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 from: static char sccsid[] = "@(#)sys_bsd.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: sys_bsd.c,v 1.25 2003/07/14 15:56:29 itojun Exp $");
+__RCSID("$NetBSD: sys_bsd.c,v 1.26 2003/07/14 16:00:53 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -141,14 +141,7 @@ TerminalRead(unsigned char *buf, int  n)
 int
 TerminalAutoFlush(void)
 {
-#ifdef LNOFLSH
-    int flush;
-
-    ioctl(0, TIOCLGET, (char *)&flush);
-    return !(flush&LNOFLSH);	/* if LNOFLSH, no autoflush */
-#else	/* LNOFLSH */
     return 1;
-#endif	/* LNOFLSH */
 }
 
 #ifdef	KLUDGELINEMODE
