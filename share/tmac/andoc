@@ -1,4 +1,4 @@
-.\"	$NetBSD: andoc,v 1.4 1998/02/15 00:40:09 thorpej Exp $
+.\"	$NetBSD: andoc,v 1.5 2002/01/03 16:30:16 tv Exp $
 .\"
 .\" Copyright (c) 1990 The Regents of the University of California.
 .\" All rights reserved.
@@ -38,15 +38,15 @@
 .\"
 .de Dd
 .rn Dd xX
-.so /usr/share/tmac/tmac.doc
-.\" XXX the following is groff-specific
+.\" XXX the following two are groff-specific
+.mso tmac.doc
 .Dd \\$@
 .rm xX
 ..
 .de TH
 .rn TH xX
-.so /usr/share/tmac/tmac.an.old
-.\" XXX the following is groff-specific
+.\" XXX the following two are groff-specific
+.mso tmac.an.old
 .TH \\$@
 .rm xX
 ..
