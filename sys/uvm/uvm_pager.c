@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.17 1999/05/24 23:30:44 thorpej Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.18 1999/05/24 23:36:23 thorpej Exp $	*/
 
 /*
  *
@@ -700,8 +700,6 @@ int swblk;			/* valid if (uobj == NULL && PGO_REALLOCSWAP) */
 		 * had a successful pageout update the page!
 		 */
 		if (flags & PGO_PDFREECLUST) {
-			/* XXX: with PMAP_NEW ref should already be clear,
-			 * but don't trust! */
 			pmap_clear_reference(PMAP_PGARG(ppsp[lcv]));
 			pmap_clear_modify(PMAP_PGARG(ppsp[lcv]));
 			ppsp[lcv]->flags |= PG_CLEAN;
