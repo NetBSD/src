@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_bmap.c,v 1.13 2001/11/08 02:39:15 lukem Exp $	*/
+/*	$NetBSD: ufs_bmap.c,v 1.14 2001/11/08 05:00:51 chs Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_bmap.c,v 1.13 2001/11/08 02:39:15 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_bmap.c,v 1.14 2001/11/08 05:00:51 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -139,14 +139,7 @@ ufs_bmaparray(vp, bn, bnp, ap, nump, runp)
 		maxrun = MAXBSIZE / mp->mnt_stat.f_iosize - 1;
 	}
 
-	xap = ap == NULL ? a : ap;
-	if (!nump)
-		nump = &num;
-	if ((error = ufs_getlbns(vp, bn, xap, nump)) != 0)
-		return (error);
-
-	num = *nump;
-	if (num == 0) {
+	if (bn < NDADDR) {
 		*bnp = blkptrtodb(ump, ufs_rw32(ip->i_ffs_db[bn],
 		    UFS_MPNEEDSWAP(vp->v_mount)));
 		if (*bnp == 0)
@@ -162,6 +155,13 @@ ufs_bmaparray(vp, bn, bnp, ap, nump, runp)
 		return (0);
 	}
 
+	xap = ap == NULL ? a : ap;
+	if (!nump)
+		nump = &num;
+	if ((error = ufs_getlbns(vp, bn, xap, nump)) != 0)
+		return (error);
+
+	num = *nump;
 
 	/* Get disk address out of indirect block array */
 	daddr = ufs_rw32(ip->i_ffs_ib[xap->in_off],
@@ -256,10 +256,7 @@ ufs_getlbns(vp, bn, ap, nump)
 	realbn = bn;
 	if ((long)bn < 0)
 		bn = -(long)bn;
-
-	/* The first NDADDR blocks are direct blocks. */
-	if (bn < NDADDR)
-		return (0);
+	KASSERT(bn >= NDADDR);
 
 	/* 
 	 * Determine the number of levels of indirection.  After this loop
@@ -311,7 +308,7 @@ ufs_getlbns(vp, bn, ap, nump)
 		ap->in_exists = 0;
 		++ap;
 
-		metalbn -= -1 + off * blockcnt;
+		metalbn -= -1 + (off << lbc);
 	}
 	if (nump)
 		*nump = numlevels;
