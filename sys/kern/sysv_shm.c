@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_shm.c,v 1.26 1994/10/20 04:23:19 cgd Exp $	*/
+/*	$NetBSD: sysv_shm.c,v 1.27 1994/12/22 13:30:40 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass and Charles Hannum.  All rights reserved.
@@ -298,10 +298,8 @@ shmctl(p, uap, retval)
 			shm_last_free = IPCID_TO_IX(SCARG(uap, shmid));
 		}
 		break;
-#if 0
 	case SHM_LOCK:
 	case SHM_UNLOCK:
-#endif
 	default:
 		return EINVAL;
 	}
