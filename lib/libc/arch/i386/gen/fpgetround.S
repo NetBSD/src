@@ -8,7 +8,7 @@
 ENTRY(fpgetround)
 	subl $4,%esp
 	fnstcw (%esp)
-	movw (%esp),%ax
+	movl (%esp),%eax
 	shrl $10,%eax
 	andl $3,%eax
 	addl $4,%esp
