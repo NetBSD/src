@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia.c,v 1.10 1998/11/14 01:54:25 thorpej Exp $	*/
+/*	$NetBSD: pcmcia.c,v 1.11 1998/11/17 08:49:12 thorpej Exp $	*/
 
 #define	PCMCIADEBUG
 
@@ -167,7 +167,16 @@ pcmcia_card_attach(dev)
 		if (pf->cfe_head.sqh_first == NULL)
 			continue;
 
+#ifdef DIAGNOSTIC
+		if (pf->child != NULL) {
+			printf("%s: %s still attached to function %d!\n",
+			    sc->dev.dv_xname, pf->child->dv_xname,
+			    pf->number);
+			panic("pcmcia_card_attach");
+		}
+#endif
 		pf->sc = sc;
+		pf->child = NULL;
 		pf->cfe = NULL;
 		pf->ih_fct = NULL;
 		pf->ih_arg = NULL;
@@ -183,8 +192,8 @@ pcmcia_card_attach(dev)
 		paa.card = &sc->card;
 		paa.pf = pf;
 
-		if (config_found_sm(&sc->dev, &paa, pcmcia_print,
-		    pcmcia_submatch)) {
+		if ((pf->child = config_found_sm(&sc->dev, &paa, pcmcia_print,
+		    pcmcia_submatch)) != NULL) {
 			attached++;
 
 			DPRINTF(("%s: function %d CCR at %d "
@@ -203,23 +212,57 @@ pcmcia_card_attach(dev)
 }
 
 void
-pcmcia_card_detach(dev)
+pcmcia_card_detach(dev, flags)
+	struct device *dev;
+	int flags;		/* DETACH_* flags */
+{
+	struct pcmcia_softc *sc = (struct pcmcia_softc *) dev;
+	struct pcmcia_function *pf;
+	int error;
+
+	/*
+	 * We are running on either the PCMCIA socket's event thread
+	 * or in user context detaching a device by user request.
+	 */
+	for (pf = SIMPLEQ_FIRST(&sc->card.pf_head); pf != NULL;
+	     pf = SIMPLEQ_NEXT(pf, pf_list)) {
+		if (SIMPLEQ_FIRST(&pf->cfe_head) == NULL)
+			continue;
+		if (pf->child == NULL)
+			continue;
+		DPRINTF(("%s: detaching %s (function %d)\n",
+		    sc->dev.dv_xname, pf->child->dv_xname, pf->number));
+		if ((error = config_detach(pf->child, flags)) != 0) {
+			printf("%s: error %d detaching %s (function %d)\n",
+			    sc->dev.dv_xname, error, pf->child->dv_xname,
+			    pf->number);
+		} else
+			pf->child = NULL;
+	}
+}
+
+void
+pcmcia_card_deactivate(dev)
 	struct device *dev;
 {
 	struct pcmcia_softc *sc = (struct pcmcia_softc *) dev;
+	struct pcmcia_function *pf;
 
-	/* XXX Implement me!
-	 *
-	 * Should:
-	 *
-	 *	- ensure child is deactivated
-	 *
-	 *	- config_detach child
-	 *
-	 * We assume we have context (and can block).
+	/*
+	 * We're in the chip's card removal interrupt handler.
+	 * Deactivate the child driver.  The PCMCIA socket's
+	 * event thread will run later to finish the detach.
 	 */
-
-	printf("%s: pcmcia_card_detach called!\n", sc->dev.dv_xname);
+	for (pf = SIMPLEQ_FIRST(&sc->card.pf_head); pf != NULL;
+	     pf = SIMPLEQ_NEXT(pf, pf_list)) {
+		if (SIMPLEQ_FIRST(&pf->cfe_head) == NULL)
+			continue;
+		if (pf->child == NULL)
+			continue;
+		DPRINTF(("%s: deactivating %s (function %d)\n",
+		    sc->dev.dv_xname, pf->child->dv_xname, pf->number));
+		config_deactivate(pf->child);
+	}
 }
 
 int
@@ -555,6 +598,17 @@ pcmcia_io_map(pf, width, offset, size, pcihp, windowp)
 		pcmcia_ccr_write(pf, PCMCIA_CCR_OPTION, reg);
 	}
 	return (0);
+}
+
+void
+pcmcia_io_unmap(pf, window)
+	struct pcmcia_function *pf;
+	int window;
+{
+
+	pcmcia_chip_io_unmap(pf->sc->pct, pf->sc->pch, window);
+
+	/* XXX Anything for multi-function cards? */
 }
 
 void *

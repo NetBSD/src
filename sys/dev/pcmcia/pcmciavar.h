@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmciavar.h,v 1.6 1998/10/10 21:59:40 thorpej Exp $	*/
+/*	$NetBSD: pcmciavar.h,v 1.7 1998/11/17 08:49:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -114,6 +114,7 @@ struct pcmcia_function {
 	SIMPLEQ_ENTRY(pcmcia_function) pf_list;
 	/* run-time state */
 	struct pcmcia_softc *sc;
+	struct device *child;
 	struct pcmcia_config_entry *cfe;
 	struct pcmcia_mem_handle pf_pcmh;
 #define	pf_ccrt		pf_pcmh.memt
@@ -246,6 +247,7 @@ void	pcmcia_function_disable __P((struct pcmcia_function *));
 
 int	pcmcia_io_map __P((struct pcmcia_function *, int, bus_addr_t,
 	    bus_size_t, struct pcmcia_io_handle *, int *));
+void	pcmcia_io_unmap __P((struct pcmcia_function *, int));
 
 #define pcmcia_mem_alloc(pf, size, pcmhp)				\
 	(pcmcia_chip_mem_alloc((pf)->sc->pct, (pf)->sc->pch, (size), (pcmhp)))
