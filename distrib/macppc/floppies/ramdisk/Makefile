@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4.2.1 2000/02/22 22:39:09 he Exp $
+#	$NetBSD: Makefile,v 1.4.2.2 2000/02/23 22:31:31 he Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -20,15 +20,15 @@ LISTS=		list
 CRUNCHCONF=	${CBIN}.conf
 MTREE=		mtree.conf
 
-SIZE=		1536k
-GEOM=		512/16/2/96
+SIZE=		1600k
+GEOM=		512/16/2/100
 DISKTYPE=	floppyinstfs
 
 all: ${CBIN} 
 	dd if=/dev/zero of=${IMAGE} bs=${SIZE} count=1
 	vnconfig -t ${DISKTYPE} -v -c ${VND_CDEV} ${IMAGE}
 	disklabel -rw ${VND_CDEV} ${DISKTYPE}
-	newfs -B be -m 0 -o space -i 4096 -c 80 ${VND_RDEV}
+	newfs -B be -m 0 -o space -i 4096 -c 100 ${VND_RDEV}
 	mount ${VND_DEV} ${MOUNT_POINT}
 	mtree -def ${.CURDIR}/${MTREE} -p ${MOUNT_POINT}/ -u
 	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
@@ -53,6 +53,8 @@ ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c libhack.o
 NOLIBHACKOPENDIR=1
 HACKSRC=${TOP}/../../utils/libhack
 .include "${HACKSRC}/Makefile.inc"
+# turn off small gethostby* temporarily
+HACKOBJS:= getcap.o getgrent.o getnet.o getnetgr.o getpwent.o setlocale.o yplib.o
 
 clean cleandir distclean:
 	/bin/rm -f *.core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache *.o *.lo *.c
