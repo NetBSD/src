@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.190 2004/12/13 17:21:35 dyoung Exp $	*/
+/*	$NetBSD: wi.c,v 1.191 2004/12/13 17:24:09 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -106,7 +106,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.190 2004/12/13 17:21:35 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.191 2004/12/13 17:24:09 dyoung Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -1770,7 +1770,8 @@ wi_tx_intr(struct wi_softc *sc)
 
 	fid = CSR_READ_2(sc, WI_TX_CMP_FID);
 	/* Read in the frame header */
-	if (wi_read_bap(sc, fid, 8, &frmhdr.wi_rx_rate, 2) != 0) {
+	if (wi_read_bap(sc, fid, offsetof(struct wi_frame, wi_tx_swsup2),
+	                &frmhdr.wi_tx_swsup2, 2) != 0) {
 		printf("%s: %s read fid %x failed\n", sc->sc_dev.dv_xname,
 		    __func__, fid);
 		wi_rssdescs_reset(ic, &sc->sc_rssd, &sc->sc_rssdfree,
