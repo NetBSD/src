@@ -1,10 +1,13 @@
-/*	$NetBSD: if_aereg.h,v 1.5 1994/12/04 19:40:16 briggs Exp $	*/
+/*	$NetBSD: if_aereg.h,v 1.6 1995/04/12 15:01:17 briggs Exp $	*/
 
 /*
- * National Semiconductor DS8390 NIC register definitions 
+ * National Semiconductor DS8390 NIC register definitions.
  *
- * $Id: if_aereg.h,v 1.5 1994/12/04 19:40:16 briggs Exp $
- *
+ * Copyright (C) 1993, David Greenman.  This software may be used, modified,
+ * copied, distributed, and sold, in both source and binary form provided that
+ * the above copyright and these terms are retained.  Under no circumstances is
+ * the author responsible for the proper functioning of this software, nor does
+ * the author assume any responsibility for damages incurred with its use.
  */
 
 /*
@@ -96,58 +99,56 @@
  */
 
 /*
- * STP: SToP. Software reset command. Takes the controller offline. No
- *	packets will be received or transmitted. Any reception or
- *	transmission in progress will continue to completion before
- *	entering reset state. To exit this state, the STP bit must
- *	reset and the STA bit must be set. The software reset has
- *	executed only when indicated by the RST bit in the ISR being
- *	set.
+ * STP: SToP.  Software reset command.  Takes the controller offline.  No
+ * packets will be received or transmitted.  Any reception or transmission in
+ * progress will continue to completion before entering reset state.  To exit
+ * this state, the STP bit must reset and the STA bit must be set.  The
+ * software reset has executed only when indicated by the RST bit in the ISR
+ * being set.
  */
 #define AE_CR_STP	0x01
 
 /*
- * STA: STArt. This bit is used to activate the NIC after either power-up,
- *	or when the NIC has been put in reset mode by software command
- *	or error.
+ * STA: STArt.  This bit is used to activate the NIC after either power-up, or
+ * when the NIC has been put in reset mode by software command or error.
  */
 #define AE_CR_STA	0x02
 
 /*
- * TXP: Transmit Packet. This bit must be set to indicate transmission of
- *	a packet. TXP is internally reset either after the transmission is
- *	completed or aborted. This bit should be set only after the Transmit
- *	Byte Count and Transmit Page Start register have been programmed.
+ * TXP: Transmit Packet.  This bit must be set to indicate transmission of a
+ * packet.  TXP is internally reset either after the transmission is completed
+ * or aborted.  This bit should be set only after the Transmit Byte Count and
+ * Transmit Page Start register have been programmed.
  */
 #define AE_CR_TXP	0x04
 
 /*
- * RD0, RD1, RD2: Remote DMA Command. These three bits control the operation
- *	of the remote DMA channel. RD2 can be set to abort any remote DMA
- *	command in progress. The Remote Byte Count registers should be cleared
- *	when a remote DMA has been aborted. The Remote Start Addresses are not
- *	restored to the starting address if the remote DMA is aborted.
+ * RD0, RD1, RD2: Remote DMA Command.  These three bits control the operation
+ * of the remote DMA channel.  RD2 can be set to abort any remote DMA command
+ * in progress.  The Remote Byte Count registers should be cleared when a
+ * remote DMA has been aborted.  The Remote Start Addresses are not restored
+ * to the starting address if the remote DMA is aborted.
  *
- *	RD2 RD1 RD0	function
- *	 0   0   0	not allowed
- *	 0   0   1	remote read
- *	 0   1   0	remote write
- *	 0   1   1	send packet
- *	 1   X   X	abort
+ * RD2 RD1 RD0	function
+ *  0   0   0	not allowed
+ *  0   0   1	remote read
+ *  0   1   0	remote write
+ *  0   1   1	send packet
+ *  1   X   X	abort
  */
 #define AE_CR_RD0	0x08
 #define AE_CR_RD1	0x10
 #define AE_CR_RD2	0x20
 
 /*
- * PS0, PS1: Page Select. The two bits select which register set or 'page' to
- *	access.
+ * PS0, PS1: Page Select.  The two bits select which register set or 'page' to
+ * access.
  *
- *	PS1 PS0		page
- *	 0   0		0
- *	 0   1		1
- *	 1   0		2
- *	 1   1		reserved
+ * PS1 PS0  page
+ *  0   0   0
+ *  0   1   1
+ *  1   0   2
+ *  1   1   reserved
  */
 #define AE_CR_PS0	0x40
 #define AE_CR_PS1	0x80
@@ -161,53 +162,53 @@
  */
 
 /*
- * PRX: Packet Received. Indicates packet received with no errors.
+ * PRX: Packet Received.  Indicates packet received with no errors.
  */
 #define AE_ISR_PRX	0x01
 
 /*
- * PTX: Packet Transmitted. Indicates packet transmitted with no errors.
+ * PTX: Packet Transmitted.  Indicates packet transmitted with no errors.
  */
 #define AE_ISR_PTX	0x02
 
 /*
- * RXE: Receive Error. Indicates that a packet was received with one or more
- *	the following errors: CRC error, frame alignment error, FIFO overrun,
- *	missed packet.
+ * RXE: Receive Error.  Indicates that a packet was received with one or more
+ * the following errors: CRC error, frame alignment error, FIFO overrun,
+ * missed packet.
  */
 #define AE_ISR_RXE	0x04
 
 /*
- * TXE: Transmission Error. Indicates that an attempt to transmit a packet
- *	resulted in one or more of the following errors: excessive
- *	collisions, FIFO underrun.
+ * TXE: Transmission Error.  Indicates that an attempt to transmit a packet
+ * resulted in one or more of the following errors: excessive collisions, FIFO
+ * underrun.
  */
 #define AE_ISR_TXE	0x08
 
 /*
- * OVW: OverWrite. Indicates a receive ring-buffer overrun. Incoming network
- *	would exceed (has exceeded?) the boundry pointer, resulting in data
- *	that was previously received and not yet read from the buffer to be
- *	overwritten.
+ * OVW: OverWrite.  Indicates a receive ring-buffer overrun.  Incoming network
+ * would exceed (has exceeded?) the boundary pointer, resulting in data that
+ * was previously received and not yet read from the buffer to be overwritten.
  */
 #define AE_ISR_OVW	0x10
 
 /*
- * CNT: Counter Overflow. Set when the MSB of one or more of the Network Talley
- *	Counters has been set.
+ * CNT: Counter Overflow.  Set when the MSB of one or more of the Network Tally
+ * Counters has been set.
  */
 #define AE_ISR_CNT	0x20
 
 /*
- * RDC: Remote Data Complete. Indicates that a Remote DMA operation has completed.
+ * RDC: Remote Data Complete.  Indicates that a Remote DMA operation has
+ * completed.
  */
 #define AE_ISR_RDC	0x40
 
 /*
- * RST: Reset status. Set when the NIC enters the reset state and cleared when a
- *	Start Command is issued to the CR. This bit is also set when a receive
- *	ring-buffer overrun (OverWrite) occurs and is cleared when one or more
- *	packets have been removed from the ring. This is a read-only bit.
+ * RST: Reset status.  Set when the NIC enters the reset state and cleared when
+ * a Start Command is issued to the CR.  This bit is also set when a receive
+ * ring-buffer overrun (OverWrite) occurs and is cleared when one or more
+ * packets have been removed from the ring.  This is a read-only bit.
  */
 #define AE_ISR_RST	0x80
 
@@ -216,49 +217,51 @@
  */
 
 /*
- * PRXE: Packet Received interrupt Enable. If set, a received packet will cause
- *	an interrupt.
+ * PRXE: Packet Received interrupt Enable.  If set, a received packet will
+ * cause an interrupt.
  */
 #define AE_IMR_PRXE	0x01
 
 /*
- * PTXE: Packet Transmit interrupt Enable. If set, an interrupt is generated when
- *	a packet transmission completes.
+ * PTXE: Packet Transmit interrupt Enable.  If set, an interrupt is generated
+ * when a packet transmission completes.
  */
 #define AE_IMR_PTXE	0x02
 
 /*
- * RXEE: Receive Error interrupt Enable. If set, an interrupt will occur whenever a
- *	packet is received with an error.
+ * RXEE: Receive Error interrupt Enable.  If set, an interrupt will occur
+ * whenever a packet is received with an error.
  */
 #define AE_IMR_RXEE 	0x04
 
 /*
- * TXEE: Transmit Error interrupt Enable. If set, an interrupt will occur whenever
- *	a transmission results in an error.
+ * TXEE: Transmit Error interrupt Enable.  If set, an interrupt will occur
+ * whenever a transmission results in an error.
  */
 #define AE_IMR_TXEE	0x08
 
 /*
- * OVWE: OverWrite error interrupt Enable. If set, an interrupt is generated whenever
- *	the receive ring-buffer is overrun. i.e. when the boundry pointer is exceeded.
+ * OVWE: OverWrite error interrupt Enable.  If set, an interrupt is generated
+ * whenever the receive ring-buffer is overrun.  i.e. when the boundary pointer
+ * is exceeded.
  */
 #define AE_IMR_OVWE	0x10
 
 /*
- * CNTE: Counter overflow interrupt Enable. If set, an interrupt is generated whenever
- *	the MSB of one or more of the Network Statistics counters has been set.
+ * CNTE: Counter overflow interrupt Enable.  If set, an interrupt is generated
+ * whenever the MSB of one or more of the Network Statistics counters has been
+ * set.
  */
 #define AE_IMR_CNTE	0x20
 
 /*
- * RDCE: Remote DMA Complete interrupt Enable. If set, an interrupt is generated
- *	when a remote DMA transfer has completed.
+ * RDCE: Remote DMA Complete interrupt Enable.  If set, an interrupt is
+ * generated when a remote DMA transfer has completed.
  */
 #define AE_IMR_RDCE	0x40
 
 /*
- * bit 7 is unused/reserved
+ * Bit 7 is unused/reserved.
  */
 
 /*
@@ -266,55 +269,49 @@
  */
 
 /*
- * WTS: Word Transfer Select. WTS establishes byte or word transfers for
- *	both remote and local DMA transfers
+ * WTS: Word Transfer Select.  WTS establishes byte or word transfers for both
+ * remote and local DMA transfers
  */
 #define AE_DCR_WTS	0x01
 
 /*
- * BOS: Byte Order Select. BOS sets the byte order for the host.
- *	Should be 0 for 80x86, and 1 for 68000 series processors
+ * BOS: Byte Order Select.  BOS sets the byte order for the host.  Should be 0
+ * for 80x86, and 1 for 68000 series processors
  */
 #define AE_DCR_BOS	0x02
 
 /*
- * LAS: Long Address Select. When LAS is 1, the contents of the remote
- *	DMA registers RSAR0 and RSAR1 are used to provide A16-A31
+ * LAS: Long Address Select.  When LAS is 1, the contents of the remote DMA
+ * registers RSAR0 and RSAR1 are used to provide A16-A31.
  */
 #define AE_DCR_LAS	0x04
 
-#ifdef huh
 /*
- * LS: Loopback Select. When 0, loopback mode is selected. Bits D1 and D2
- *	of the TCR must also be programmed for loopback operation.
- *	When 1, normal operation is selected.
+ * LS: Loopback Select.  When 0, loopback mode is selected.  Bits D1 and D2 of
+ * the TCR must also be programmed for loopback operation.  When 1, normal
+ * operation is selected.
  */
 #define AE_DCR_LS	0x08
-#endif
-/*
- * BMS: Burst Mode Select
- */
-#define AE_DCR_BMS	0x08
 
 /*
- * AR: Auto-initialize Remote. When 0, data must be removed from ring-buffer
- *	under program control. When 1, remote DMA is automatically initiated
- *	and the boundry pointer is automatically updated
+ * AR: Auto-initialize Remote.  When 0, data must be removed from ring-buffer
+ * under program control.  When 1, remote DMA is automatically initiated and
+ * the boundary pointer is automatically updated.
  */
 #define AE_DCR_AR	0x10
 
 /*
  * FT0, FT1: Fifo Threshold select.
- *		FT1	FT0	Word-width	Byte-width
- *		 0	 0	1 word		2 bytes
- *		 0	 1	2 words		4 bytes
- *		 1	 0	4 words		8 bytes
- *		 1	 1	8 words		12 bytes
  *
- *	During transmission, the FIFO threshold indicates the number of bytes
- *	or words that the FIFO has filled from the local DMA before BREQ is
- *	asserted. The transmission threshold is 16 bytes minus the receiver
- *	threshold.
+ * FT1 FT0  Word-width  Byte-width
+ *  0   0   1 word      2 bytes
+ *  0   1   2 words     4 bytes
+ *  1   0   4 words     8 bytes
+ *  1   1   8 words     12 bytes
+ *
+ * During transmission, the FIFO threshold indicates the number of bytes or
+ * words that the FIFO has filled from the local DMA before BREQ is asserted.
+ * The transmission threshold is 16 bytes minus the receiver threshold.
  */
 #define AE_DCR_FT0	0x20
 #define AE_DCR_FT1	0x40
@@ -328,35 +325,35 @@
  */
 
 /*
- * CRC: Inhibit CRC. If 0, CRC will be appended by the transmitter, if 0, CRC
- *	is not appended by the transmitter.
+ * CRC: Inhibit CRC.  If 0, CRC will be appended by the transmitter, if 0, CRC
+ * is not appended by the transmitter.
  */
 #define AE_TCR_CRC	0x01
 
 /*
- * LB0, LB1: Loopback control. These two bits set the type of loopback that is
- *	to be performed.
+ * LB0, LB1: Loopback control.  These two bits set the type of loopback that is
+ * to be performed.
  *
- *	LB1 LB0		mode
- *	 0   0		0 - normal operation (DCR_LS = 0)
- *	 0   1		1 - internal loopback (DCR_LS = 0)
- *	 1   0		2 - external loopback (DCR_LS = 1)
- *	 1   1		3 - external loopback (DCR_LS = 0)
+ * LB1 LB0		mode
+ *  0   0		0 - normal operation (DCR_LS = 0)
+ *  0   1		1 - internal loopback (DCR_LS = 0)
+ *  1   0		2 - external loopback (DCR_LS = 1)
+ *  1   1		3 - external loopback (DCR_LS = 0)
  */
 #define AE_TCR_LB0	0x02
 #define AE_TCR_LB1	0x04
 
 /*
- * ATD: Auto Transmit Disable. Clear for normal operation. When set, allows
- *	another station to disable the NIC's transmitter by transmitting to
- *	a multicast address hashing to bit 62. Reception of a multicast address
- *	hashing to bit 63 enables the transmitter.
+ * ATD: Auto Transmit Disable.  Clear for normal operation.  When set, allows
+ * another station to disable the NIC's transmitter by transmitting to a
+ * multicast address hashing to bit 62.  Reception of a multicast address
+ * hashing to bit 63 enables the transmitter.
  */
 #define AE_TCR_ATD	0x08
 
 /*
- * OFST: Collision Offset enable. This bit when set modifies the backoff
- *	algorithm to allow prioritization of nodes.
+ * OFST: Collision Offset enable.  This bit when set modifies the backoff
+ * algorithm to allow prioritization of nodes.
  */
 #define AE_TCR_OFST	0x10
  
@@ -369,7 +366,7 @@
  */
 
 /*
- * PTX: Packet Transmitted. Indicates successful transmission of packet.
+ * PTX: Packet Transmitted.  Indicates successful transmission of packet.
  */
 #define AE_TSR_PTX	0x01
 
@@ -378,41 +375,41 @@
  */
 
 /*
- * COL: Transmit Collided. Indicates that the transmission collided at least
- *	once with another station on the network.
+ * COL: Transmit Collided.  Indicates that the transmission collided at least
+ * once with another station on the network.
  */
 #define AE_TSR_COL	0x04
 
 /*
- * ABT: Transmit aborted. Indicates that the transmission was aborted due to
- *	excessive collisions.
+ * ABT: Transmit aborted.  Indicates that the transmission was aborted due to
+ * excessive collisions.
  */
 #define AE_TSR_ABT	0x08
 
 /*
- * CRS: Carrier Sense Lost. Indicates that carrier was lost during the
- *	transmission of the packet. (Transmission is not aborted because
- *	of a loss of carrier)
+ * CRS: Carrier Sense Lost.  Indicates that carrier was lost during the
+ * transmission of the packet.  (Transmission is not aborted because of a loss
+ * of carrier).
  */
 #define AE_TSR_CRS	0x10
 
 /*
- * FU: FIFO Underrun. Indicates that the NIC wasn't able to access bus/
- *	transmission memory before the FIFO emptied. Transmission of the
- *	packet was aborted.
+ * FU: FIFO Underrun.  Indicates that the NIC wasn't able to access bus/
+ * transmission memory before the FIFO emptied.  Transmission of the packet was
+ * aborted.
  */
 #define AE_TSR_FU	0x20
 
 /*
- * CDH: CD Heartbeat. Indicates that the collision detection circuitry
- *	isn't working correctly during a collision heartbeat test.
+ * CDH: CD Heartbeat.  Indicates that the collision detection circuitry isn't
+ * working correctly during a collision heartbeat test.
  */
 #define AE_TSR_CDH	0x40
 
 /*
- * OWC: Out of Window Collision: Indicates that a collision occurred after
- *	a slot time (51.2us). The transmission is rescheduled just as in
- *	normal collisions.
+ * OWC: Out of Window Collision: Indicates that a collision occurred after a
+ * slot time (51.2us).  The transmission is rescheduled just as in normal
+ * collisions.
  */
 #define AE_TSR_OWC	0x80
 
@@ -421,47 +418,48 @@
  */
 
 /*
- * SEP: Save Errored Packets. If 0, error packets are discarded. If set to 1,
- *	packets with CRC and frame errors are not discarded.
+ * SEP: Save Errored Packets.  If 0, error packets are discarded.  If set to 1,
+ * packets with CRC and frame errors are not discarded.
  */
 #define AE_RCR_SEP	0x01
 
 /*
- * AR: Accept Runt packet. If 0, packet with less than 64 byte are discarded.
- *	If set to 1, packets with less than 64 byte are not discarded.
+ * AR: Accept Runt packet.  If 0, packet with less than 64 byte are discarded.
+ * If set to 1, packets with less than 64 byte are not discarded.
  */
 #define AE_RCR_AR	0x02
 
 /*
- * AB: Accept Broadcast. If set, packets sent to the broadcast address will be
- *	accepted.
+ * AB: Accept Broadcast.  If set, packets sent to the broadcast address will be
+ * accepted.
  */
 #define AE_RCR_AB	0x04
 
 /*
- * AM: Accept Multicast. If set, packets sent to a multicast address are checked
- *	for a match in the hashing array. If clear, multicast packets are ignored.
+ * AM: Accept Multicast.  If set, packets sent to a multicast address are
+ * checked for a match in the hashing array.  If clear, multicast packets are
+ * ignored.
  */
 #define AE_RCR_AM	0x08
 
 /*
- * PRO: Promiscuous Physical. If set, all packets with a physical addresses are
- *	accepted. If clear, a physical destination address must match this
- *	station's address. Note: for full promiscuous mode, RCR_AB and RCR_AM
- *	must also be set. In addition, the multicast hashing array must be set
- *	to all 1's so that all multicast addresses are accepted.
+ * PRO: Promiscuous Physical.  If set, all packets with a physical addresses
+ * are accepted.  If clear, a physical destination address must match this
+ * station's address.  Note: for full promiscuous mode, RCR_AB and RCR_AM must
+ * also be set.  In addition, the multicast hashing array must be set to all
+ * 1's so that all multicast addresses are accepted.
  */
 #define AE_RCR_PRO	0x10
 
 /*
- * MON: Monitor Mode. If set, packets will be checked for good CRC and framing,
- *	but are not stored in the ring-buffer. If clear, packets are stored (normal
- *	operation).
+ * MON: Monitor Mode.  If set, packets will be checked for good CRC and
+ * framing, but are not stored in the ring-buffer.  If clear, packets are
+ * stored (normal operation).
  */
 #define AE_RCR_MON	0x20
 
 /*
- * bits 6 and 7 are unused/reserved.
+ * Bits 6 and 7 are unused/reserved.
  */
 
 /*
@@ -474,95 +472,99 @@
 #define AE_RSR_PRX	0x01
 
 /*
- * CRC: CRC error. Indicates that a packet has a CRC error. Also set for frame
- *	alignment errors.
+ * CRC: CRC error.  Indicates that a packet has a CRC error.  Also set for
+ * frame alignment errors.
  */
 #define AE_RSR_CRC	0x02
 
 /*
- * FAE: Frame Alignment Error. Indicates that the incoming packet did not end on
- *	a byte boundry and the CRC did not match at the last byte boundry.
+ * FAE: Frame Alignment Error.  Indicates that the incoming packet did not end
+ * on a byte boundary and the CRC did not match at the last byte boundary.
  */
 #define AE_RSR_FAE	0x04
 
 /*
- * FO: FIFO Overrun. Indicates that the FIFO was not serviced (during local DMA)
- *	causing it to overrun. Reception of the packet is aborted.
+ * FO: FIFO Overrun.  Indicates that the FIFO was not serviced (during local
+ * DMA) causing it to overrun.  Reception of the packet is aborted.
  */
 #define AE_RSR_FO	0x08
 
 /*
- * MPA: Missed Packet. Indicates that the received packet couldn't be stored in
- *	the ring-buffer because of insufficient buffer space (exceeding the
- *	boundry pointer), or because the transfer to the ring-buffer was inhibited
- *	by RCR_MON - monitor mode.
+ * MPA: Missed Packet.  Indicates that the received packet couldn't be stored
+ * in the ring-buffer because of insufficient buffer space (exceeding the
+ * boundary pointer), or because the transfer to the ring-buffer was inhibited
+ * by RCR_MON - monitor mode.
  */
 #define AE_RSR_MPA	0x10
 
 /*
- * PHY: Physical address. If 0, the packet received was sent to a physical address.
- *	If 1, the packet was accepted because of a multicast/broadcast address
- *	match.
+ * PHY: Physical address.  If 0, the packet received was sent to a physical
+ * address.  If 1, the packet was accepted because of a multicast/broadcast
+ * address match.
  */
 #define AE_RSR_PHY	0x20
 
 /*
- * DIS: Receiver Disabled. Set to indicate that the receiver has enetered monitor
- *	mode. Cleared when the receiver exits monitor mode.
+ * DIS: Receiver Disabled.  Set to indicate that the receiver has enetered
+ * monitor mode.  Cleared when the receiver exits monitor mode.
  */
 #define AE_RSR_DIS	0x40
 
 /*
- * DFR: Deferring. Set to indicate a 'jabber' condition. The CRS and COL inputs
- *	are active, and the transceiver has set the CD line as a result of the
- *	jabber.
+ * DFR: Deferring.  Set to indicate a 'jabber' condition.  The CRS and COL
+ * inputs are active, and the transceiver has set the CD line as a result of
+ * the jabber.
  */
 #define AE_RSR_DFR	0x80
 
 /*
  * receive ring discriptor
  *
- * The National Semiconductor DS8390 Network interface controller uses
- * the following receive ring headers.  The way this works is that the
- * memory on the interface card is chopped up into 256 bytes blocks.
- * A contiguous portion of those blocks are marked for receive packets
- * by setting start and end block #'s in the NIC.  For each packet that
- * is put into the receive ring, one of these headers (4 bytes each) is
- * tacked onto the front.
+ * The National Semiconductor DS8390 Network interface controller uses the
+ * following receive ring headers.  The way this works is that the memory on
+ * the interface card is chopped up into 256 bytes blocks.  A contiguous
+ * portion of those blocks are marked for receive packets by setting start and
+ * end block #'s in the NIC.  For each packet that is put into the receive
+ * ring, one of these headers (4 bytes each) is tacked onto the front.   The
+ * first byte is a copy of the receiver status register at the time the packet
+ * was received.
  */
 struct ae_ring	{
-	u_char	rcv_status;		/* received packet status	*/
-	u_char	next_packet;		/* pointer to next packet	*/
-	u_char	count[2];		/* bytes in packet (length + 4)	*/
+	u_char	rsr;			/* receiver status */
+	u_char	next_packet;		/* pointer to next packet */
+	u_short	count;			/* bytes in packet (length + 4) */
 };
 
 /*
- * 				Common constants
+ * Common constants
  */
-#define AE_PAGE_SIZE		256		/* Size of RAM pages in bytes */
-#define AE_TXBUF_SIZE		6		/* Size of TX buffer in pages */
+#define AE_PAGE_SIZE		256	/* Size of RAM pages in bytes */
+#define	AE_PAGE_MASK		255
+#define	AE_PAGE_SHIFT		8
+
+#define AE_TXBUF_SIZE		6	/* Size of TX buffer in pages */
 
 /*
  * Vendor types
  */
-#define AE_VENDOR_UNKNOWN	0xFF		/* Unknown network card */
-#define AE_VENDOR_APPLE		0x00		/* Apple Ethernet card */
-#define AE_VENDOR_INTERLAN	0x01		/* Interlan A310 card (GatorCard) */
-#define AE_VENDOR_DAYNA		0x02		/* DaynaPORT E/30s (and others?) */
-#define AE_VENDOR_ASANTE	0x03		/* Asante MacCon II/E */
+#define AE_VENDOR_UNKNOWN	0xFF	/* Unknown network card */
+#define AE_VENDOR_APPLE		0x00	/* Apple Ethernet card */
+#define AE_VENDOR_INTERLAN	0x01	/* Interlan A310 card (GatorCard) */
+#define AE_VENDOR_DAYNA		0x02	/* DaynaPORT E/30s (and others?) */
+#define AE_VENDOR_ASANTE	0x03	/* Asante MacCon II/E */
 
 /*
  * Compile-time config flags
  */
 /*
- * this sets the default for enabling/disablng the tranceiver
+ * This sets the default for enabling/disablng the tranceiver.
  */
-#define AE_FLAGS_DISABLE_TRANCEIVER	0x01
+#define AE_FLAGS_DISABLE_TRANCEIVER	0x0001
 
 /*
  * This disables the use of double transmit buffers.
  */
-#define AE_FLAGS_NO_DOUBLE_BUFFERING	0x08
+#define AE_FLAGS_NO_DOUBLE_BUFFERING	0x0008
 
 /* */
 #define	GC_RESET_OFFSET		0x000c0000 /* writes here reset NIC */
