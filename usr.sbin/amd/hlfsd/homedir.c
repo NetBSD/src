@@ -38,7 +38,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: homedir.c,v 1.1.1.3 1997/09/26 16:07:43 christos Exp $
+ * $Id: homedir.c,v 1.2 1997/10/10 16:12:10 christos Exp $
  *
  * HLFSD was written at Columbia University Computer Science Department, by
  * Erez Zadok <ezk@cs.columbia.edu> and Alexander Dupuy <dupuy@cs.columbia.edu>
@@ -607,16 +607,16 @@ plt_print(int signum)
       fprintf(dumpfile,
 	      "%4d %5lu %10lu %1d %4lu \"%s\" uname=\"%s\"\n",
 	      i,
-	      pwtab[i].child,
+	      (long) pwtab[i].child,
 	      pwtab[i].last_access_time,
 	      pwtab[i].last_status,
-	      pwtab[i].uid,
+	      (long) pwtab[i].uid,
 	      pwtab[i].home,
 	      pwtab[i].uname);
     fprintf(dumpfile, "\nUserName table by plt_print():\n");
     for (i = 0; i < cur_pwtab_num; ++i)
       fprintf(dumpfile, "%4d : \"%s\" %4lu \"%s\"\n", i,
-	      untab[i].username, untab[i].uid, untab[i].home);
+	      untab[i].username, (long) untab[i].uid, untab[i].home);
     fclose(dumpfile);
   }
 }
@@ -632,21 +632,22 @@ plt_dump(uid2home_t *lastc, pid_t this)
     fprintf(dumpfile, "\n\nNEW PLT_DUMP -- ");
     fprintf(dumpfile, "lastchild->child=%d ",
 	    (int) (lastc ? lastc->child : -999));
-    fprintf(dumpfile, ", child from wait3=%lu:\n", this);
+    fprintf(dumpfile, ", child from wait3=%lu:\n", (long) this);
     for (i = 0; i < cur_pwtab_num; ++i)
       fprintf(dumpfile, "%4d %5lu: %4lu \"%s\" uname=\"%s\"\n", i,
-	      pwtab[i].child, pwtab[i].uid, pwtab[i].home, pwtab[i].uname);
+	      (long) pwtab[i].child, (long) pwtab[i].uid,
+	      pwtab[i].home, pwtab[i].uname);
     fprintf(dumpfile, "\nUserName table by plt_dump():\n");
     for (i = 0; i < cur_pwtab_num; ++i)
       fprintf(dumpfile, "%4d : \"%s\" %4lu \"%s\"\n", i,
-	      untab[i].username, untab[i].uid, untab[i].home);
+	      untab[i].username, (long) untab[i].uid, untab[i].home);
     fprintf(dumpfile, "ezk: ent=%d, uid=%lu, home=\"%s\"\n",
 	    untab_index("ezk"),
-	    untab[untab_index("ezk")].uid,
+	    (long) untab[untab_index("ezk")].uid,
 	    pwtab[untab[untab_index("ezk")].uid].home);
     fprintf(dumpfile, "rezk: ent=%d, uid=%lu, home=\"%s\"\n",
 	    untab_index("rezk"),
-	    untab[untab_index("rezk")].uid,
+	    (long) untab[untab_index("rezk")].uid,
 	    pwtab[untab[untab_index("rezk")].uid].home);
     fclose(dumpfile);
   }
