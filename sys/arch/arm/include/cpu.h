@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.6 2001/02/27 16:00:27 reinoud Exp $	*/
+/*	$NetBSD: cpu.h,v 1.7 2001/02/27 17:35:49 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -51,6 +51,7 @@
 #if defined(_KERNEL) && !defined(_LKM)
 #include "opt_cputypes.h"
 #include "opt_lockdebug.h"
+#include "opt_progmode.h"
 #endif
 
 #ifndef _LOCORE
@@ -58,13 +59,17 @@
 #endif	/* !_LOCORE */
 #include <machine/psl.h>
 
-#if defined(CPU_ARM7500) && !defined(CPU_ARM7)
-#error "option CPU_ARM7 is required with CPU_ARM7500"
+#if defined(PROG26) && defined(PROG32)
+#error "26-bit and 32-bit CPU support are not compatible"
+#endif
+#if !defined(PROG26) && !defined(PROG32)
+#error "Support for at least one CPU type must be configured into the kernel"
 #endif
 
-#include <arm/armreg.h>
-
 #ifdef CPU_ARM7500
+#ifndef CPU_ARM7
+#error "option CPU_ARM7 is required with CPU_ARM7500"
+#endif
 #ifdef CPU_ARM6
 #error "CPU options CPU_ARM6 and CPU_ARM7500 are not compatible"
 #endif
@@ -75,6 +80,8 @@
 #error "CPU options CPU_SA110 and CPU_ARM7500 are not compatible"
 #endif
 #endif /* CPU_ARM7500 */
+
+#include <arm/armreg.h>
 
 #ifdef _LOCORE
 #define IRQdisable \
