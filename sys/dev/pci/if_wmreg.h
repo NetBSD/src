@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmreg.h,v 1.9 2004/01/14 14:29:48 tsutsui Exp $	*/
+/*	$NetBSD: if_wmreg.h,v 1.10 2004/02/19 05:19:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -120,7 +120,7 @@ typedef struct wiseman_txdesc {
 
 /* Descriptor types (if DEXT is set) */
 #define	WTX_DTYP_C	(0U << 20)	/* context */
-#define	WTC_DTYP_D	(1U << 20)	/* data */
+#define	WTX_DTYP_D	(1U << 20)	/* data */
 
 /* wtx_fields status bits */
 #define	WTX_ST_DD	(1U << 0)	/* descriptor done */

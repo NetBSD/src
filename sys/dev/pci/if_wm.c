@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.67 2004/02/19 05:18:47 thorpej Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.68 2004/02/19 05:19:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.67 2004/02/19 05:18:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.68 2004/02/19 05:19:52 thorpej Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -1395,7 +1395,7 @@ wm_tx_cksum(struct wm_softc *sc, struct wm_txsoft *txs, uint32_t *cmdp,
 		txs->txs_ndesc++;
 	}
 
-	*cmdp = WTX_CMD_DEXT | WTC_DTYP_D;
+	*cmdp = WTX_CMD_DEXT | WTX_DTYP_D;
 	*fieldsp = fields;
 
 	return (0);
