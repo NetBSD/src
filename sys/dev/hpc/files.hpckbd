@@ -1,7 +1,7 @@
-#	$NetBSD: files.hpckbd,v 1.1 2001/02/22 18:37:55 uch Exp $
+#	$NetBSD: files.hpckbd,v 1.2 2001/11/20 14:34:25 lukem Exp $
 #	H/PC keyboard interface for wskbd
 
-defopt	PCKBD_LAYOUT
+defparam PCKBD_LAYOUT
 
 device hpckbdif {}
 device hpckbd: wskbddev

@@ -1,4 +1,5 @@
-#	$NetBSD: files.powerpc,v 1.25 2001/11/20 12:56:37 lukem Exp $
+#	$NetBSD: files.powerpc,v 1.26 2001/11/20 14:34:22 lukem Exp $
+
 defopt	opt_altivec.h	ALTIVEC K_ALTIVEC
 defopt	opt_openpic.h	OPENPIC OPENPIC_SERIAL_MODE
 defopt	L2CR_CONFIG
