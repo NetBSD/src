@@ -38,7 +38,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)compat.c	5.7 (Berkeley) 3/1/91"; */
-static char *rcsid = "$Id: compat.c,v 1.8 1994/06/16 18:50:04 jtc Exp $";
+static char *rcsid = "$Id: compat.c,v 1.9 1994/11/25 19:16:45 christos Exp $";
 #endif /* not lint */
 
 /*-
@@ -108,7 +108,7 @@ CompatInterrupt (signo)
 	char 	  *file = Var_Value (TARGET, curTarg, &p1);
 	struct stat st;
 
-	if (lstat(file, &st) != -1 && !S_ISDIR(st.st_mode) && 
+	if (!noExecute && lstat(file, &st) != -1 && !S_ISDIR(st.st_mode) && 
 	    unlink(file) != -1) {
 	    printf ("*** %s removed\n", file);
 	}

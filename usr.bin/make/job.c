@@ -38,7 +38,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)job.c	5.15 (Berkeley) 3/1/91"; */
-static char *rcsid = "$Id: job.c,v 1.7 1994/06/16 18:50:08 jtc Exp $";
+static char *rcsid = "$Id: job.c,v 1.8 1994/11/25 19:16:48 christos Exp $";
 #endif /* not lint */
 
 /*-
@@ -2499,7 +2499,7 @@ JobInterrupt (runINTERRUPT)
 				 job->node->name :
 				 job->node->path);
 	    struct stat st;
-	    if (lstat(file, &st) != -1 && !S_ISDIR(st.st_mode) && 
+	    if (!noExecute && lstat(file, &st) != -1 && !S_ISDIR(st.st_mode) && 
 		unlink(file) != -1) {
 		Error ("*** %s removed", file);
 	    }
