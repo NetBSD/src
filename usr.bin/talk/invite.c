@@ -1,4 +1,4 @@
-/*	$NetBSD: invite.c,v 1.3 1994/12/09 02:14:18 jtc Exp $	*/
+/*	$NetBSD: invite.c,v 1.4 1997/10/20 00:23:23 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -33,23 +33,21 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)invite.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: invite.c,v 1.3 1994/12/09 02:14:18 jtc Exp $";
+__RCSID("$NetBSD: invite.c,v 1.4 1997/10/20 00:23:23 lukem Exp $");
 #endif /* not lint */
 
-#include <sys/types.h>
-#include <sys/socket.h>
+#include "talk.h"
 #include <sys/time.h>
 #include <signal.h>
-#include <netinet/in.h>
-#include <protocols/talkd.h>
 #include <errno.h>
 #include <setjmp.h>
+#include <unistd.h>
 #include "talk_ctl.h"
-#include "talk.h"
 
 /*
  * There wasn't an invitation waiting, so send a request containing
@@ -64,12 +62,12 @@ static char rcsid[] = "$NetBSD: invite.c,v 1.3 1994/12/09 02:14:18 jtc Exp $";
  * invitations.
  */
 int	local_id, remote_id;
-void	re_invite();
 jmp_buf invitebuf;
 
+void
 invite_remote()
 {
-	int nfd, read_mask, template, new_sockt;
+	int new_sockt;
 	struct itimerval itimer;
 	CTL_RESPONSE response;
 
@@ -123,7 +121,8 @@ invite_remote()
  * Routine called on interupt to re-invite the callee
  */
 void
-re_invite()
+re_invite(dummy)
+	int dummy;
 {
 
 	message("Ringing your party again");
@@ -150,6 +149,7 @@ static	char *answers[] = {
 /*
  * Transmit the invitation and process the response
  */
+void
 announce_invite()
 {
 	CTL_RESPONSE response;
@@ -170,6 +170,7 @@ announce_invite()
 /*
  * Tell the daemon to remove your invitation
  */
+void
 send_delete()
 {
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: msgs.c,v 1.3 1994/12/09 02:14:22 jtc Exp $	*/
+/*	$NetBSD: msgs.c,v 1.4 1997/10/20 00:23:27 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)msgs.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: msgs.c,v 1.3 1994/12/09 02:14:22 jtc Exp $";
+__RCSID("$NetBSD: msgs.c,v 1.4 1997/10/20 00:23:27 lukem Exp $");
 #endif /* not lint */
 
 /* 
@@ -56,11 +57,13 @@ char	*current_state;
 int	current_line = 0;
 
 void
-disp_msg()
+disp_msg(dummy)
+	int dummy;
 {
 	message(current_state);
 }
 
+void
 start_msgs()
 {
 	struct itimerval itimer;
@@ -72,6 +75,7 @@ start_msgs()
 	setitimer(ITIMER_REAL, &itimer, (struct itimerval *)0);
 }
 
+void
 end_msgs()
 {
 	struct itimerval itimer;
