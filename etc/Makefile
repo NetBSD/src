@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.11 (Berkeley) 5/21/91
-#	$Id: Makefile,v 1.38 1994/02/17 00:12:56 cgd Exp $
+#	$Id: Makefile,v 1.39 1994/02/19 08:08:30 cgd Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	US/Pacific
@@ -83,6 +83,8 @@ distribution: distrib-dirs
 		${DESTDIR}/var/log/messages
 	install -c -o ${BINOWN} -g ${BINGRP} -m 664 /dev/null \
 		${DESTDIR}/var/log/wtmp
+	install -c -o daemon -g staff -m 664 /dev/null \
+		${DESTDIR}/var/msgs/bounds
 	install -c -o ${BINOWN} -g ${BINGRP} -m 664 /dev/null \
 		${DESTDIR}/var/run/utmp
 	(cd etc.${MACHINE}; install -c -o ${BINOWN} -g ${BINGRP} -m 444 \

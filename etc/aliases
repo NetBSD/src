@@ -28,3 +28,6 @@ uucp:	root
 # manager:
 # dumper:
 # operator:
+
+# uncomment this for msgs:
+# msgs: "|/usr/bin/msgs -s"

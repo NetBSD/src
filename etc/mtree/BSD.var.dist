@@ -2,7 +2,7 @@
 #	by: bostic
 #
 #	from: @(#)BSD.var.dist	5.3 (Berkeley) 5/9/91
-#	$Id: BSD.var.dist,v 1.5 1994/02/10 02:34:30 cgd Exp $
+#	$Id: BSD.var.dist,v 1.6 1994/02/19 08:08:36 cgd Exp $
 #
 
 . type=dir
@@ -30,7 +30,7 @@ log
 ..
 mail
 ..
-msgs
+msgs	uname=daemon gname=staff mode=1775
 ..
 run
 ..
