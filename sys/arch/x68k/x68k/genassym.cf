@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.17 2001/09/27 09:55:10 minoura Exp $
+#	$NetBSD: genassym.cf,v 1.18 2001/09/29 01:24:01 minoura Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -59,6 +59,8 @@ include <machine/cpu.h>
 include <machine/psl.h>
 include <machine/reg.h>
 include <machine/pte.h>
+
+include <machine/bootinfo.h>
 
 # values for mmutype
 define	MMU_68060		MMU_68060
