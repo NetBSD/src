@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-	$Id: main.c,v 1.4 1995/01/18 07:13:21 pk Exp $
+	$Id: main.c,v 1.5 1995/01/24 23:03:51 cgd Exp $
 */
 
 #include "defs.h"
@@ -905,10 +905,8 @@ GDB manual (available as on-line info or a printed manual).\n", stdout);
   /* After the symbol file has been read, print a newline to get us
      beyond the copyright line...  But errors should still set off
      the error message with a (single) blank line.  */
-#if 0
   if (!quiet)
     printf_filtered ("\n");
-#endif
   error_pre_print = "\n";
   warning_pre_print = "\nwarning: ";
 
