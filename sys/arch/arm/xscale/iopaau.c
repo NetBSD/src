@@ -1,4 +1,4 @@
-/*	$NetBSD: iopaau.c,v 1.1 2002/08/02 00:35:48 thorpej Exp $	*/
+/*	$NetBSD: iopaau.c,v 1.2 2002/08/02 00:36:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD");
+__KERNEL_RCSID(0, "$NetBSD: iopaau.c,v 1.2 2002/08/02 00:36:38 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/pool.h>
