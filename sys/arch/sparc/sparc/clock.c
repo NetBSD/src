@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.76 2000/11/11 12:24:07 pk Exp $ */
+/*	$NetBSD: clock.c,v 1.77 2000/11/12 21:07:21 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -155,9 +155,9 @@ char		*eeprom_va = NULL;
 static int	eeprom_busy = 0;
 static int	eeprom_wanted = 0;
 static int	eeprom_nvram = 0;	/* non-zero if eeprom is on Mostek */
-static int	eeprom_take(void));
-static void	eeprom_give(void));
-static int	eeprom_update(char *, int, int));
+static int	eeprom_take(void);
+static void	eeprom_give(void);
+static int	eeprom_update(char *, int, int);
 #endif
 
 static int	eeprom_match(struct device *, struct cfdata *, void *);
