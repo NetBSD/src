@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.113 2001/03/03 19:40:28 pk Exp $ */
+/*	$NetBSD: cpu.c,v 1.114 2001/03/05 16:45:22 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -489,6 +489,9 @@ mp_pause_cpus()
 #ifdef SUN4M
 	int n;
 
+	if (cpus == NULL)
+		return;
+
 	for (n = 0; n < ncpu; n++) {
 		struct cpu_info *cpi = cpus[n];
 		if (cpi == NULL || cpuinfo.mid == cpi->mid)
@@ -505,6 +508,9 @@ mp_resume_cpus()
 {
 #ifdef SUN4M
 	int n;
+
+	if (cpus == NULL)
+		return;
 
 	for (n = 0; n < ncpu; n++) {
 		struct cpu_info *cpi = cpus[n];
