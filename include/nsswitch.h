@@ -1,4 +1,4 @@
-/*	$NetBSD: nsswitch.h,v 1.5 1999/01/19 07:55:14 lukem Exp $	*/
+/*	$NetBSD: nsswitch.h,v 1.6 1999/01/26 01:04:07 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -114,6 +114,7 @@ typedef struct {
  * macros to help build an ns_dtab[]
  */
 #define NS_FILES_CB(F,C)	{ NSSRC_FILES,	F,	C },
+#define NS_COMPAT_CB(F,C)	{ NSSRC_COMPAT,	F,	C },
  
 #ifdef HESIOD
 #   define NS_DNS_CB(F,C)	{ NSSRC_DNS,	F,	C },
@@ -125,12 +126,6 @@ typedef struct {
 #   define NS_NIS_CB(F,C)	{ NSSRC_NIS,	F,	C },
 #else
 #   define NS_NIS_CB(F,C)
-#endif
-
-#if defined(HESIOD) || defined(YP)
-#   define NS_COMPAT_CB(F,C)	{ NSSRC_COMPAT,	F,	C },
-#else
-#   define NS_COMPAT_CB(F,C)
 #endif
 
 /*
