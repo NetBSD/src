@@ -2103,7 +2103,7 @@ adm12|lsi adm12:\
 	:k0=^A0\r:k1=^A1\r:k2=^A2\r:k3=^A3\r:k4=^A4\r:\
 	:k5=^A5\r:k6=^A6\r:k7=^A7\r:k8=^A8\r:k9=^A9\r:kd=^J:\
 	:kl=^H:kr=^L:ku=^K:le=^H:nd=^L:se=\EG0:so=\EG4:\
-	:ue=\EG0:up=^K:us=\EG1:
+	:ue=\EG0:up=^K:us=\EG8:
 # (adm20: removed obsolete ":kn#7:"; mapped ":pt:" to ":it#8:" -- esr)
 adm20|lear siegler adm20:\
 	:am:bs:pt:\
