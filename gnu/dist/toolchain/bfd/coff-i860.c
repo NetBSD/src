@@ -1,5 +1,6 @@
 /* BFD back-end for Intel 860 COFF files.
-   Copyright 1990, 91, 92, 93, 94, 95, 97, 1999 Free Software Foundation, Inc.
+   Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1999, 2000
+   Free Software Foundation, Inc.
    Created mostly by substituting "860" for "386" in coff-i386.c
    Harry Dolan <dolan@ssd.intel.com>, October 1995
 

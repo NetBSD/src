@@ -95,7 +95,7 @@ Disassembly of section .text:
  181:	66 0f 16 2e[ 	]+movhpd \(%esi\),%xmm5
  185:	66 0f 13 07[ 	]+movlpd %xmm0,\(%edi\)
  189:	66 0f 12 00[ 	]+movlpd \(%eax\),%xmm0
- 18d:	66 0f 50 ca[ 	]+movmskpd %xmm2,%cx
+ 18d:	66 0f 50 ca[ 	]+movmskpd %xmm2,%ecx
  191:	66 0f 10 d3[ 	]+movupd %xmm3,%xmm2
  195:	66 0f 11 22[ 	]+movupd %xmm4,\(%edx\)
  199:	66 0f 10 65 00[ 	]+movupd 0x0\(%ebp\),%xmm4
@@ -143,14 +143,14 @@ Disassembly of section .text:
  245:	66 0f 6f c8[ 	]+movdqa %xmm0,%xmm1
  249:	f3 0f 6f c8[ 	]+movdqu %xmm0,%xmm1
  24d:	f3 0f 6f c8[ 	]+movdqu %xmm0,%xmm1
- 251:	f2 0f d6 c8[ 	]+movdq2q %mm1,%mm0
- 255:	f3 0f d6 c8 66[ 	]+movq2dq %mm0,%xmm0
- 25a:	0f f4 c8[ 	]+pmuludq %mm0,%mm1
+ 251:	f2 0f d6 c8[ 	]+movdq2q %xmm0,%mm1
+ 255:	f3 0f d6 c8[ 	]+movq2dq %mm0,%xmm1
+ 259:	66 0f f4 c8[ 	]+pmuludq %xmm0,%xmm1
  25d:	66 0f f4 c8[ 	]+pmuludq %xmm0,%xmm1
  261:	66 0f 70 c8 01[ 	]+pshufd \$0x1,%xmm0,%xmm1
  266:	f3 0f 70 c8 01[ 	]+pshufhw \$0x1,%xmm0,%xmm1
  26b:	f2 0f 70 c8 01[ 	]+pshuflw \$0x1,%xmm0,%xmm1
  270:	66 0f 73 f8 01[ 	]+pslldq \$0x1,%xmm0
  275:	66 0f 73 d8 01[ 	]+psrldq \$0x1,%xmm0
- 27a:	66 0f 6d c8[ 	]+punpckhqdq %xmm0,%xmm3
+ 27a:	66 0f 6d c8[ 	]+punpckhqdq %xmm0,%xmm1
  27e:	89 f6[ 	]+mov[ 	]+%esi,%esi

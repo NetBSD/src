@@ -1,5 +1,5 @@
 /* BFD back-end for Motorola 88000 COFF "Binary Compatability Standard" files.
-   Copyright 1990, 91, 92, 93, 94, 95, 97, 98, 1999
+   Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1997, 1998, 1999, 2000
    Free Software Foundation, Inc.
    Written by Cygnus Support.
 

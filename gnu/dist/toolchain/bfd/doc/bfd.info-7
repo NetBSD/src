@@ -409,6 +409,7 @@ Index
 * BFD_RELOC_MIPS_CALL16:                 howto manager.
 * BFD_RELOC_MIPS_CALL_HI16:              howto manager.
 * BFD_RELOC_MIPS_CALL_LO16:              howto manager.
+* BFD_RELOC_MIPS_DELETE:                 howto manager.
 * BFD_RELOC_MIPS_GOT16:                  howto manager.
 * BFD_RELOC_MIPS_GOT_DISP:               howto manager.
 * BFD_RELOC_MIPS_GOT_HI16:               howto manager.
@@ -417,8 +418,18 @@ Index
 * BFD_RELOC_MIPS_GOT_PAGE:               howto manager.
 * BFD_RELOC_MIPS_GPREL:                  howto manager.
 * BFD_RELOC_MIPS_GPREL32:                howto manager.
+* BFD_RELOC_MIPS_HIGHER:                 howto manager.
+* BFD_RELOC_MIPS_HIGHEST:                howto manager.
+* BFD_RELOC_MIPS_INSERT_A:               howto manager.
+* BFD_RELOC_MIPS_INSERT_B:               howto manager.
+* BFD_RELOC_MIPS_JALR:                   howto manager.
 * BFD_RELOC_MIPS_JMP:                    howto manager.
 * BFD_RELOC_MIPS_LITERAL:                howto manager.
+* BFD_RELOC_MIPS_REL16:                  howto manager.
+* BFD_RELOC_MIPS_RELGOT:                 howto manager.
+* BFD_RELOC_MIPS_SCN_DISP:               howto manager.
+* BFD_RELOC_MIPS_SHIFT5:                 howto manager.
+* BFD_RELOC_MIPS_SHIFT6:                 howto manager.
 * BFD_RELOC_MIPS_SUB:                    howto manager.
 * BFD_RELOC_MN10300_16_PCREL:            howto manager.
 * BFD_RELOC_MN10300_32_PCREL:            howto manager.
@@ -534,7 +545,9 @@ Index
 * BFD_RELOC_SPARC_REGISTER:              howto manager.
 * BFD_RELOC_SPARC_RELATIVE:              howto manager.
 * BFD_RELOC_SPARC_REV32:                 howto manager.
+* BFD_RELOC_SPARC_UA16:                  howto manager.
 * BFD_RELOC_SPARC_UA32:                  howto manager.
+* BFD_RELOC_SPARC_UA64:                  howto manager.
 * BFD_RELOC_SPARC_WDISP16:               howto manager.
 * BFD_RELOC_SPARC_WDISP19:               howto manager.
 * BFD_RELOC_SPARC_WDISP22:               howto manager.

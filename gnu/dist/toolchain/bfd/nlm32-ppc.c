@@ -1,5 +1,5 @@
 /* Support for 32-bit PowerPC NLM (NetWare Loadable Module)
-   Copyright (C) 1994, 1995, 1999 Free Software Foundation, Inc.
+   Copyright 1994, 1995, 2000 Free Software Foundation, Inc.
 
 This file is part of BFD, the Binary File Descriptor library.
 

@@ -1,6 +1,6 @@
 /* vms-gsd.c -- BFD back-end for VAX (openVMS/VAX) and
    EVAX (openVMS/Alpha) files.
-   Copyright 1996, 1997, 1998, 1999 Free Software Foundation Inc.
+   Copyright 1996, 1997, 1998, 1999, 2000 Free Software Foundation, Inc.
 
    go and read the openVMS linker manual (esp. appendix B)
    if you don't know what's going on here :-)

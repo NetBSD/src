@@ -1,5 +1,6 @@
 /* BFD support for the ns32k architecture.
-   Copyright (C) 1990, 91, 94, 95, 96, 98, 1999 Free Software Foundation, Inc.
+   Copyright 1990, 1991, 1994, 1995, 1998, 2000
+   Free Software Foundation, Inc.
    Almost totally rewritten by Ian Dall from initial work
    by Andrew Cagney.
 

@@ -1,6 +1,6 @@
 /* vms-tir.c -- BFD back-end for VAX (openVMS/VAX) and
    EVAX (openVMS/Alpha) files.
-   Copyright 1996, 1997, 1998, 1999 Free Software Foundation, Inc.
+   Copyright 1996, 1997, 1998, 1999, 2000 Free Software Foundation, Inc.
 
    TIR record handling functions
    ETIR record handling functions

@@ -1,5 +1,5 @@
 /* tc-cris.c -- Assembler code for the CRIS CPU core.
-   Copyright (C) 2000 Free Software Foundation, Inc.
+   Copyright 2000, 2001 Free Software Foundation, Inc.
 
    Contributed by Axis Communications AB, Lund, Sweden.
    Originally written for GAS 1.38.1 by Mikael Asker.
@@ -134,6 +134,7 @@ static void cris_force_reg_prefix PARAMS ((void));
 static void cris_relax_reg_prefix PARAMS ((void));
 static void cris_sym_leading_underscore PARAMS ((void));
 static void cris_sym_no_leading_underscore PARAMS ((void));
+static char *cris_insn_first_word_frag PARAMS ((void));
 
 /* Handle to the opcode hash table.  */
 static struct hash_control *op_hash = NULL;
@@ -650,6 +651,26 @@ md_create_long_jump (storep, from_addr, to_addr, fragP, to_symbol)
     }
 }
 
+/* Allocate space for the first piece of an insn, and mark it as the
+   start of the insn for debug-format use.  */
+
+static char *
+cris_insn_first_word_frag ()
+{
+  char *insnp = frag_more (2);
+
+  /* We need to mark the start of the insn by passing dwarf2_emit_insn
+     the offset from the current fragment position.  This must be done
+     after the first fragment is created but before any other fragments
+     (fixed or varying) are created.  Note that the offset only
+     corresponds to the "size" of the insn for a fixed-size,
+     non-expanded insn.  */
+  if (OUTPUT_FLAVOR == bfd_target_elf_flavour)
+    dwarf2_emit_insn (2);
+
+  return insnp;
+}
+
 /* Port-specific assembler initialization.  */
 
 void
@@ -694,7 +715,6 @@ md_assemble (str)
   struct cris_prefix prefix;
   char *opcodep;
   char *p;
-  int insn_size = 0;
 
   know (str);
 
@@ -717,8 +737,7 @@ md_assemble (str)
     case PREFIX_BDAP:
     case PREFIX_BIAP:
     case PREFIX_DIP:
-      insn_size += 2;
-      opcodep = frag_more (2);
+      opcodep = cris_insn_first_word_frag ();
 
       /* Output the prefix opcode.  */
       md_number_to_chars (opcodep, (long) prefix.opcode, 2);
@@ -728,7 +747,6 @@ md_assemble (str)
       if (prefix.reloc != BFD_RELOC_NONE)
 	{
 	  /* Output an absolute mode address.  */
-	  insn_size += 4;
 	  p = frag_more (4);
 	  fix_new_exp (frag_now, (p - frag_now->fr_literal), 4,
 		       &prefix.expr, 0, prefix.reloc);
@@ -736,8 +754,7 @@ md_assemble (str)
       break;
 
     case PREFIX_PUSH:
-      insn_size += 2;
-      opcodep = frag_more (2);
+      opcodep = cris_insn_first_word_frag ();
 
       /* Output the prefix opcode.  Being a "push", we add the negative
 	 size of the register to "sp".  */
@@ -763,8 +780,10 @@ md_assemble (str)
     return;
 
   /* Done with the prefix.  Continue with the main instruction.  */
-  insn_size += 2;
-  opcodep = frag_more (2);
+  if (prefix.kind == PREFIX_NONE)
+    opcodep = cris_insn_first_word_frag ();
+  else
+    opcodep = frag_more (2);
 
   /* Output the instruction opcode.  */
   md_number_to_chars (opcodep, (long) (output_instruction.opcode), 2);
@@ -803,7 +822,6 @@ md_assemble (str)
 	     This means it is a branch to a known symbol in another
 	     section.  Code in data?  Weird but valid.	Emit a 32-bit
 	     branch.  */
-	  insn_size += 10;
 	  gen_cond_branch_32 (opcodep, frag_more (10), frag_now,
 			      output_instruction.expr.X_add_symbol,
 			      (symbolS *) NULL,
@@ -835,7 +853,6 @@ md_assemble (str)
 	      BAD_CASE (output_instruction.imm_oprnd_size);
 	    }
 
-	  insn_size += output_instruction.imm_oprnd_size;
 	  p = frag_more (output_instruction.imm_oprnd_size);
 	  fix_new_exp (frag_now, (p - frag_now->fr_literal),
 		       output_instruction.imm_oprnd_size,
@@ -855,9 +872,6 @@ md_assemble (str)
 		       output_instruction.reloc);
 	}
     }
-
-  if (OUTPUT_FLAVOR == bfd_target_elf_flavour)
-    dwarf2_emit_insn (insn_size);
 }
 
 /* Low level text-to-bits assembly.  */
@@ -2224,7 +2238,7 @@ gen_bdap (base_regno, exprP)
 
   /* Put out the prefix opcode; assume quick immediate mode at first.  */
   opcode = BDAP_QUICK_OPCODE | (base_regno << 12);
-  opcodep = frag_more (2);
+  opcodep = cris_insn_first_word_frag ();
   md_number_to_chars (opcodep, opcode, 2);
 
   if (exprP->X_op == O_constant)

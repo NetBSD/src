@@ -1,5 +1,5 @@
 /* BFD back-end for HP/Intel IA-64 EFI application files.
-   Copyright 1999 Free Software Foundation, Inc.
+   Copyright 1999, 2000, 2001 Free Software Foundation, Inc.
    Contributed by David Mosberger <davidm@hpl.hp.com>
 
 This file is part of BFD, the Binary File Descriptor library.
@@ -25,11 +25,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #define TARGET_NAME "efi-app-ia64"
 #define COFF_IMAGE_WITH_PE
 #define COFF_WITH_PE
-#define COFF_WITH_PEP64
+#define COFF_WITH_pep
 #define PCRELOFFSET true
 #define TARGET_UNDERSCORE '_'
 #define COFF_LONG_SECTION_NAMES
-#define PEI_DEFAULT_TARGET_SUBSYSTEM	IMAGE_SUBSYSTEM_EFI_APPLICATION
+#define PEI_TARGET_SUBSYSTEM		IMAGE_SUBSYSTEM_EFI_APPLICATION
 #define PEI_FORCE_MINIMUM_ALIGNMENT
 
 #include "coff-ia64.c"

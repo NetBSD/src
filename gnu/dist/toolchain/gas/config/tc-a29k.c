@@ -1,5 +1,5 @@
 /* tc-a29k.c -- Assemble for the AMD 29000.
-   Copyright (C) 1989, 90, 91, 92, 93, 94, 95, 98, 2000
+   Copyright 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1998, 2000
    Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.

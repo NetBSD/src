@@ -12,4 +12,4 @@ Symbol table '.symtab' contains 12 entries:
      8: 00000000     0 NOTYPE  GLOBAL DEFAULT  UND external_symbol
      9: 00000000     0 OBJECT  GLOBAL DEFAULT    4 data_symbol
     10: 00000000     0 NOTYPE  LOCAL  DEFAULT    4 static_data_symbol
-    11: 00000004     4 OBJECT  GLOBAL DEFAULT  PRC common_symbol
+    11: 00000004     4 OBJECT  GLOBAL DEFAULT  (PRC|COM) common_symbol

@@ -1,5 +1,5 @@
 /* tc-ia64.c -- Assembler for the HP/Intel IA-64 architecture.
-   Copyright (C) 1998, 1999, 2000, 2001 Free Software Foundation.
+   Copyright 1998, 1999, 2000, 2001 Free Software Foundation, Inc.
    Contributed by David Mosberger-Tang <davidm@hpl.hp.com>
 
    This file is part of GAS, the GNU Assembler.
@@ -3165,6 +3165,7 @@ generate_unwind_image (text_name)
 			     SEC_LOAD | SEC_ALLOC | SEC_READONLY);
 
       /* Make sure the section has 8 byte alignment.  */
+      frag_align (3, 0, 0);
       record_alignment (now_seg, 3);
 
       /* Set expression which points to start of unwind descriptor area.  */
@@ -3613,9 +3614,9 @@ dot_spillmem_p (psprel)
     }
 
   if (psprel)
-    add_unwind_entry (output_spill_psprel_p (qp, ab, reg, e3.X_add_number));
+    add_unwind_entry (output_spill_psprel_p (ab, reg, e3.X_add_number, qp));
   else
-    add_unwind_entry (output_spill_sprel_p (qp, ab, reg, e3.X_add_number));
+    add_unwind_entry (output_spill_sprel_p (ab, reg, e3.X_add_number, qp));
 }
 
 static void
@@ -6869,19 +6870,19 @@ ia64_canonicalize_symbol_name (name)
   return name;
 }
 
+/* Return true if idesc is a conditional branch instruction.  */
+
 static int
 is_conditional_branch (idesc)
      struct ia64_opcode *idesc;
 {
-  return (strncmp (idesc->name, "br", 2) == 0
-	  && (strcmp (idesc->name, "br") == 0
-	      || strncmp (idesc->name, "br.cond", 7) == 0
-	      || strncmp (idesc->name, "br.call", 7) == 0
-	      || strncmp (idesc->name, "br.ret", 6) == 0
-	      || strcmp (idesc->name, "brl") == 0
-	      || strncmp (idesc->name, "brl.cond", 7) == 0
-	      || strncmp (idesc->name, "brl.call", 7) == 0
-	      || strncmp (idesc->name, "brl.ret", 6) == 0));
+  /* br is a conditional branch.  Everything that starts with br. except
+     br.ia is a conditional branch.  Everything that starts with brl is a
+     conditional branch.  */
+  return (idesc->name[0] == 'b' && idesc->name[1] == 'r'
+	  && (idesc->name[2] == '\0'
+	      || (idesc->name[2] == '.' && idesc->name[3] != 'i')
+	      || idesc->name[2] == 'l'));
 }
 
 /* Return whether the given opcode is a taken branch.  If there's any doubt,
