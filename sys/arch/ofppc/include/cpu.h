@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.18 2001/10/22 23:01:18 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.19 2002/09/18 01:44:13 chs Exp $	*/
 
 /*
  * Copyright (C) 1995-1997 Wolfgang Solfrank.
@@ -42,7 +42,6 @@ struct cpu_softc {
 
 #if defined(_KERNEL)
 #define	CPU_MAXNUM	1
-extern char *bootpath;
 extern struct cfdriver cpu_cd;
 #endif
 
