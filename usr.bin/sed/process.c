@@ -37,7 +37,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)process.c	8.1 (Berkeley) 6/6/93"; */
-static char *rcsid = "$Id: process.c,v 1.9 1994/02/03 23:44:57 cgd Exp $";
+static char *rcsid = "$Id: process.c,v 1.10 1994/02/09 00:06:07 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -348,7 +348,8 @@ substitute(cp)
 			/* Move past this match. */
 			s += match[0].rm_eo;
 			slen -= match[0].rm_eo;
-		} while(regexec_e(re, s, REG_NOTBOL, 0, slen));
+		} while(match[0].rm_so != match[0].rm_eo &&
+		    regexec_e(re, s, REG_NOTBOL, 0, slen));
 		/* Copy trailing retained string. */
 		cspace(&SS, s, slen, APPEND);
 		break;
