@@ -1,4 +1,4 @@
-/*	$NetBSD: delete.c,v 1.4 2001/09/09 11:03:02 aymeric Exp $	*/
+/*	$NetBSD: delete.c,v 1.5 2002/04/09 01:47:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -11,8 +11,13 @@
 
 #include "config.h"
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static const char sccsid[] = "@(#)delete.c	10.12 (Berkeley) 10/23/96";
+#else
+__RCSID("$NetBSD: delete.c,v 1.5 2002/04/09 01:47:31 thorpej Exp $");
+#endif
 #endif /* not lint */
 
 #include <sys/types.h>

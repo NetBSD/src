@@ -1,4 +1,4 @@
-/*	$NetBSD: options_f.c,v 1.3 2001/03/31 11:37:46 aymeric Exp $	*/
+/*	$NetBSD: options_f.c,v 1.4 2002/04/09 01:47:31 thorpej Exp $	*/
 /*-
  * Copyright (c) 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -10,8 +10,13 @@
 
 #include "config.h"
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static const char sccsid[] = "@(#)options_f.c	10.25 (Berkeley) 7/12/96";
+#else
+__RCSID("$NetBSD: options_f.c,v 1.4 2002/04/09 01:47:31 thorpej Exp $");
+#endif
 #endif /* not lint */
 
 #include <sys/types.h>
