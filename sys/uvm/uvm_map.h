@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.h,v 1.43 2005/01/12 09:34:35 yamt Exp $	*/
+/*	$NetBSD: uvm_map.h,v 1.44 2005/01/13 11:50:32 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -261,6 +261,7 @@ struct vm_map_kernel {
 #define	VM_MAP_DYING		0x20		/* rw: map is being destroyed */
 #define	VM_MAP_TOPDOWN		0x40		/* ro: arrange map top-down */
 #define	VM_MAP_VACACHE		0x80		/* ro: use kva cache */
+#define	VM_MAP_WANTVA		0x100		/* rw: want va */
 
 #ifdef _KERNEL
 struct uvm_mapent_reservation {

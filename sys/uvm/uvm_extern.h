@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.97 2005/01/09 16:42:44 chs Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.98 2005/01/13 11:50:32 yamt Exp $	*/
 
 /*
  *
@@ -135,7 +135,7 @@ typedef off_t voff_t;		/* XXX: offset within a uvm_object */
 /* 0x3: will need, 0x4: dontneed */
 #define UVM_ADV_MASK	0x7	/* mask */
 
-/* mapping flags */
+/* bits 0xffff0000: mapping flags */
 #define UVM_FLAG_FIXED   0x010000 /* find space */
 #define UVM_FLAG_OVERLAY 0x020000 /* establish overlay */
 #define UVM_FLAG_NOMERGE 0x040000 /* don't merge map entries */
@@ -144,6 +144,7 @@ typedef off_t voff_t;		/* XXX: offset within a uvm_object */
 #define UVM_FLAG_TRYLOCK 0x200000 /* fail if we can not lock map */
 #define UVM_FLAG_NOWAIT  0x400000 /* not allowed to sleep */
 #define UVM_FLAG_QUANTUM 0x800000 /* entry never be splitted later */
+#define UVM_FLAG_WAITVA  0x1000000 /* wait for va */
 
 /* macros to extract info */
 #define UVM_PROTECTION(X)	((X) & UVM_PROT_MASK)
@@ -596,7 +597,7 @@ int			uvm_io(struct vm_map *, struct uio *);
 /* uvm_km.c */
 vaddr_t			uvm_km_alloc1(struct vm_map *, vsize_t, boolean_t);
 void			uvm_km_free(struct vm_map *, vaddr_t, vsize_t);
-void			uvm_km_free_wakeup(struct vm_map *, vaddr_t, vsize_t);
+#define uvm_km_free_wakeup(map, start, size) uvm_km_free((map), (start), (size))
 vaddr_t			uvm_km_kmemalloc1(struct vm_map *, struct
 			    uvm_object *, vsize_t, vsize_t, voff_t, int);
 vaddr_t			uvm_km_kmemalloc(struct vm_map *, struct
