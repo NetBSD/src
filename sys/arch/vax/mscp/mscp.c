@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp.c,v 1.2 1996/07/10 23:35:58 ragge Exp $	*/
+/*	$NetBSD: mscp.c,v 1.3 1996/10/11 01:50:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -167,7 +167,7 @@ loop:
 		if ((mp->mscp_status & M_ST_MASK) == M_ST_SUCCESS) {
 			mi->mi_flags |= MSC_READY;
 		} else {
-			printf("%s: SETCTLRC failed: %d ",
+			kprintf("%s: SETCTLRC failed: %d ",
 			    mi->mi_dev.dv_xname, mp->mscp_status);
 			mscp_printevent(mp);
 		}
@@ -207,7 +207,7 @@ loop:
 
 	case MSCPT_MAINTENANCE:
 	default:
-		printf("%s: unit %d: unknown message type 0x%x ignored\n",
+		kprintf("%s: unit %d: unknown message type 0x%x ignored\n",
 			mi->mi_dev.dv_xname, mp->mscp_unit,
 			MSCP_MSGTYPE(mp->mscp_msgtc));
 		goto done;
@@ -229,7 +229,7 @@ loop:
 		 * invalid commands), but that is the way of it.
 		 */
 		if (st == M_ST_INVALCMD && mp->mscp_cmdref != 0) {
-			printf("%s: bad lbn (%d)?\n", drive->dv_xname,
+			kprintf("%s: bad lbn (%d)?\n", drive->dv_xname,
 				(int)mp->mscp_seq.seq_lbn);
 			error = EIO;
 			goto rwend;
@@ -309,7 +309,7 @@ loop:
 			/*
 			 * No buffer means there is a bug somewhere!
 			 */
-			printf("%s: io done, but no buffer?\n",
+			kprintf("%s: io done, but no buffer?\n",
 			    drive->dv_xname);
 			mscp_hexdump(mp);
 			break;
@@ -386,7 +386,7 @@ out:
 		 * handle it (if it does replaces).
 		 */
 		if (me->me_replace == NULL)
-			printf("%s: bogus REPLACE end\n", drive->dv_xname);
+			kprintf("%s: bogus REPLACE end\n", drive->dv_xname);
 		else
 			(*me->me_replace)(drive, mp);
 		break;
@@ -397,7 +397,7 @@ out:
 		 * (And we should not have received it, for that matter.)
 		 */
 unknown:
-		printf("%s: unknown opcode 0x%x status 0x%x ignored\n",
+		kprintf("%s: unknown opcode 0x%x status 0x%x ignored\n",
 			drive->dv_xname, mp->mscp_opcode, mp->mscp_status);
 		mscp_hexdump(mp);
 		break;

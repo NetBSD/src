@@ -1,4 +1,4 @@
-/*	$NetBSD: uvax.c,v 1.1 1996/07/20 18:29:54 ragge Exp $ */
+/*	$NetBSD: uvax.c,v 1.2 1996/10/11 01:51:36 christos Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -66,7 +66,7 @@ int
 uvax_notavail(s)
 	char *s;
 {
-	printf("\"%s()\" not available for uVAX (%s)\n", s, guc.uc_name);
+	kprintf("\"%s()\" not available for uVAX (%s)\n", s, guc.uc_name);
 	/*
 	 * should we panic() here???
 	 */
@@ -101,8 +101,8 @@ uvax_setup(flags)
 		break;
 #endif
 	default:
-		printf("don't know how to handle 0x%x\n", vax_boardtype);
-		printf("Let's try using the defaults...\n");
+		kprintf("don't know how to handle 0x%x\n", vax_boardtype);
+		kprintf("Let's try using the defaults...\n");
 	}
 	uvax_callsSetup = 1;
 }
@@ -248,7 +248,7 @@ uVAX_fillmap(um)
 		off = p->um_base - base;
 		size = ROUND_PAGE(off + p->um_size);
 		if (size < PAGE_SIZE) {
-			printf("invalid size %d in uVAX_fillmap\n", size);
+			kprintf("invalid size %d in uVAX_fillmap\n", size);
 			size = PAGE_SIZE;
 		}
 		end = base + size - 1;
@@ -279,7 +279,7 @@ uVAX_phys2virt(phys,um)
 	}
 
 	if (virt == 0) {
-		printf("invalid argument 0x%x to uvax_phys2virt()\n", phys);
+		kprintf("invalid argument 0x%x to uvax_phys2virt()\n", phys);
 		/* should we panic() here ??? */
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ts.c,v 1.7 1996/07/20 19:00:26 ragge Exp $ */
+/*	$NetBSD: ts.c,v 1.8 1996/10/11 01:50:53 christos Exp $ */
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -88,8 +88,8 @@
 
 #ifdef DEBUG
 int tsdebug = 1;
-# define debug(x)	if (tsdebug > 0) {DELAY(2000); printf x; DELAY(3000);}
-# define debug10(x)	if (tsdebug > 9) printf x
+# define debug(x)	if (tsdebug > 0) {DELAY(2000); kprintf x; DELAY(3000);}
+# define debug10(x)	if (tsdebug > 9) kprintf x
 #else
 # define debug(x)	/* just ignore it */
 # define debug10(x)	/* just ignore it */
@@ -97,7 +97,7 @@ int tsdebug = 1;
 
 #ifdef TRACE
 int tstrace = 1;
-# define trace(x)	if (tstrace > 0) {DELAY(2000); printf x; DELAY(3000);}
+# define trace(x)	if (tstrace > 0) {DELAY(2000); kprintf x; DELAY(3000);}
 #else
 # define trace(x)	/* just ignore it */
 #endif
@@ -315,7 +315,7 @@ tsexec (ctlr, cmd)
 
 	sr = tsreg->tssr;
 	if ((sr & TS_SSR) == 0) {	/* subsystem NOT ready */
-		printf ("%s%d: subsystem not ready [%x]\n", 
+		kprintf ("%s%d: subsystem not ready [%x]\n", 
 		    sc->sc_dev.dv_xname, sr);
 		return (-1);
 	}
@@ -326,7 +326,7 @@ tsexec (ctlr, cmd)
 
 	sr = tsreg->tssr;
 	if ((sr & TS_RMR) != 0) {	/* Register modification Refused */
-		printf ("ts: error writing TSDBX\n");
+		kprintf ("ts: error writing TSDBX\n");
 		return (-1);
 	}
 	/* now load bits 15-2 at pos 15-2 and bits 17,16 at pos 1,0 of TSDB */
@@ -338,14 +338,14 @@ tsexec (ctlr, cmd)
 	sr = tsreg->tssr;
 	if ((sr & TS_SSR) != 0) {	/* something went wrong .. */
 		if (sr & TS_RMR) {
-			printf ("ts: error writing TSDB (RMR)\n");
+			kprintf ("ts: error writing TSDB (RMR)\n");
 			return (-1);
 		}
 		if (sr & TS_NXM) {
-			printf ("ts: error writing TSDB (NXM)\n");
+			kprintf ("ts: error writing TSDB (NXM)\n");
 			return (-1);
 		}
-		printf ("ts: error 0x%x while writing TSDB\n", sr);
+		kprintf ("ts: error 0x%x while writing TSDB\n", sr);
 		tsstatus (sr);
 		return (-1);
 	}
@@ -477,7 +477,7 @@ tsstart (sc, bp)
 			i |= UBA_CANTWAIT;
 			break;
 		default:
-			printf ("unsupported cpu %d in tsstart.\n", vax_cputype);
+			kprintf ("unsupported cpu %d in tsstart.\n", vax_cputype);
 		} /* end switch (vax_cputype) */
 
 		if ((i = ubasetup(sc->sc_dev.dv_parent->dv_unit, bp, i)) == 0) {
@@ -541,7 +541,7 @@ tsstart (sc, bp)
 			cmd = TS_CMD_STAT;
 			break;
 		default:
-			printf ("%s: bad ioctl %d\n", sc->sc_dev.dv_xname,
+			kprintf ("%s: bad ioctl %d\n", sc->sc_dev.dv_xname,
 				(int)bp->b_resid);
 			/* Need a no-op. get status */
 			cmd = TS_CMD_STAT;
@@ -599,7 +599,7 @@ tswchar (ctlr)
 	 */
 	ma = (long)tsmsgp;
 	if (ma & 0x7FC00001) {	/* address must be even and 22-bit */
-		printf ("invalid address 0x%0x for msg-buffer.\n", ma);
+		kprintf ("invalid address 0x%0x for msg-buffer.\n", ma);
 		return (-1);
 	}
 
@@ -640,7 +640,7 @@ tswchar (ctlr)
 	tscmdp->cw3  = 10;		   /* size of charact.-data */
 
 	if (tsexec (ctlr, TS_CMD_WCHAR) < 0) {
-		printf ("%s: write characteristics command failed [%x]\n",
+		kprintf ("%s: write characteristics command failed [%x]\n",
 		    sc->sc_dev.dv_xname, tsregs->tssr);
 		return (-1);
 	}
@@ -651,7 +651,7 @@ tswchar (ctlr)
 		sr = tsregs->tssr;
 		debug10 (("\ttssr: 0x%x\n", sr));
 		if (timeout-- > 0) {
-			printf ("timeout during initialize.");
+			kprintf ("timeout during initialize.");
 			tsstatus (sr);
 			return (-1);
 		}
@@ -683,7 +683,7 @@ tsreset(ctlr)
 		debug10 (("\ttssr: 0x%x\n", sr));
 		if (timeout-- > 0) {
 			if (sr != 0)
-				printf ("%s: timeout waiting for TS_SSR\n",
+				kprintf ("%s: timeout waiting for TS_SSR\n",
 					sc->sc_dev.dv_xname);
 			tsstatus (sr);
 			return;
@@ -734,7 +734,7 @@ again:
 		debug10 (("\ttssr-1: 0x%x\n", sr));
 		if (timeout-- > 0) {
 			if (sr != 0)	/* the device exists !!! */
-				printf ("%s: timeout waiting for TS_SSR\n",
+				kprintf ("%s: timeout waiting for TS_SSR\n",
 					sc->sc_dev.dv_xname);
 			tsstatus (sr);
 			goto bad;
@@ -785,10 +785,10 @@ tsattach(parent, self, aux)
 	 */
 	sc->sc_state = ST_SLAVE;	/* tsintr() checks this ... */
 	if (tswchar (ctlr) < 0) {
-		printf ("%s: cannot initialize", sc->sc_dev.dv_xname);
+		kprintf ("%s: cannot initialize", sc->sc_dev.dv_xname);
 	}
 	sc->sc_micro = (tsmsgp->xst2 & TS_SF_MCRL) >> 2;
-	printf ("%s: rev %d, extended features %s, transport %s\n",
+	kprintf ("%s: rev %d, extended features %s, transport %s\n",
 		sc->sc_dev.dv_xname, sc->sc_micro,
 		(tsmsgp->xst2 & TS_SF_EFES ? "enabled" : "disabled"),
 		(ts[ctlr].reg->tssr & TS_OFL ? "offline" : "online"));
@@ -819,12 +819,12 @@ tsintr(ctlr)
 	short cmask = tscmdp->cmdr & TS_CF_CMASK;
 
 #ifdef DEBUG
-	printf ("TSSR: %b, MSG: %x ", sr, TS_TSSR_BITS, mh);
+	kprintf ("TSSR: %b, MSG: %x ", sr, TS_TSSR_BITS, mh);
 	switch (tsmsgp->hdr & 0x001F) {
-	case 16:	printf ("(End)");	break;
-	case 17:	printf ("(Fail)");	break;
-	case 18:	printf ("(Error)");	break;
-	case 19:	printf ("(Attention)"); break;
+	case 16:	kprintf ("(End)");	break;
+	case 17:	kprintf ("(Fail)");	break;
+	case 18:	kprintf ("(Error)");	break;
+	case 19:	kprintf ("(Attention)"); break;
 	}
 #endif
 
@@ -866,7 +866,7 @@ tsintr(ctlr)
 		 * initialization phase. Just ignore it ...
 		 */
 		if ((sr & TS_SC) != 0 || (sr & TS_TC) != TS_TC_NORM) {
-			printf("%s: problem during init [%x,%x]\n",
+			kprintf("%s: problem during init [%x,%x]\n",
 				sc->sc_dev.dv_xname, sr, mh);
 			/* return here ??? */
 			/* break and check the error outside switch ??? */
@@ -891,7 +891,7 @@ tsintr(ctlr)
 
 
 	default:
-		printf ("%s: unexpected interrupt during state %d [%x,%x]\n", 
+		kprintf ("%s: unexpected interrupt during state %d [%x,%x]\n", 
 			sc->sc_dev.dv_xname, sc->sc_state, sr, mh);
 		return;
 	}
@@ -967,19 +967,19 @@ tsintr(ctlr)
 		debug (("Function reject\n")); 
 		tsxstatus (tsmsgp);
 		if (sr & TS_OFL) {
-			printf ("tape is off-line.\n");
+			kprintf ("tape is off-line.\n");
 			break;
 		}
 		if (tsmsgp->xst0 & TS_SF_VCK) {
-			printf ("Volume check: repeating command ...\n");
+			kprintf ("Volume check: repeating command ...\n");
 			tsexec (ctlr, tscmdp->cmdr);
 			return;
 		}
 		if (tsmsgp->xst0 & TS_SF_BOT) {
-			printf ("bottom of tape.\n");
+			kprintf ("bottom of tape.\n");
 		}
 		if (tsmsgp->xst0 & TS_SF_WLE) {
-			printf ("Write Lock Error\n");
+			kprintf ("Write Lock Error\n");
 		}
 		break;
 
@@ -1023,11 +1023,11 @@ tsintr(ctlr)
 		 * Suggested recovery procedure is to log the error and
 		 * reissue the original command.
 		 */
-		printf ("Tape not moved\n"); 
+		kprintf ("Tape not moved\n"); 
 		if (sc->sc_rtc < 3) {
 			sc->sc_rtc++;
 			/* bertram: log the error !!! */
-			printf ("retrying command %x (%d)\n", 
+			kprintf ("retrying command %x (%d)\n", 
 				tscmdp->cmdr, sc->sc_rtc);
 			tsexec (ctlr, tscmdp->cmdr);
 			return;
@@ -1040,7 +1040,7 @@ tsintr(ctlr)
 		 * No valid recovery procedures exist unless the tape
 		 * has labels or sequence numbers.
 		 */
-		printf ("Tape position lost\n"); 
+		kprintf ("Tape position lost\n"); 
 		break;
 
 	case TS_TC_FCE:
@@ -1051,10 +1051,10 @@ tsintr(ctlr)
 		 * fatal class code field in the TSSR register for
 		 * additional information on the type of fatal error.
 		 */
-		printf ("Fatal Controller Error\n"); 
+		kprintf ("Fatal Controller Error\n"); 
 
 	default:
-		printf ("%s: error 0x%x, resetting controller\n", 
+		kprintf ("%s: error 0x%x, resetting controller\n", 
 			sc->sc_dev.dv_xname, sr & TS_TC);
 		tsreset (ctlr);
 	}
@@ -1117,7 +1117,7 @@ tsopen (dev, flag, type, p)
 
 	s = splbio ();
 	if (sc->sc_state < ST_RUNNING) {		/* XXX */
-		printf ("%s not running.\n", sc->sc_dev.dv_xname);
+		kprintf ("%s not running.\n", sc->sc_dev.dv_xname);
 		(void) splx (s);
 		sc->sc_openf = 0;
 		return (ENXIO);
@@ -1132,7 +1132,7 @@ tsopen (dev, flag, type, p)
 	 */
 	tscommand (dev, MTNOP, 1);
 	if (ts[unit].reg->tssr & TS_OFL) {
-		printf ("%s: transport is offline.\n", sc->sc_dev.dv_xname);
+		kprintf ("%s: transport is offline.\n", sc->sc_dev.dv_xname);
 		sc->sc_openf = 0;
 		return EIO;		/* transport is offline */
 	}
@@ -1357,25 +1357,25 @@ tsstatus (sr)
 	if (tsdebug < 5)
 		return (0);
 
-	if (sr & TS_SC)		printf ("special condition\n");
-	if (sr & TS_UPE)	printf ("UPE\n");
-	if (sr & TS_SCE)	printf ("Sanity Check Error\n");
-	if (sr & TS_RMR)	printf ("Register Modification Refused\n");
-	if (sr & TS_NXM)	printf ("Nonexistent Memory\n");
-	if (sr & TS_NBA)	printf ("Need Buffer Address\n");
-	if (sr & TS_A11)	printf ("Address Bits 17-16\n");
-	if (sr & TS_SSR)	printf ("Subsystem Ready\n");
-	if (sr & TS_OFL)	printf ("Off Line\n");
-	if (sr & TS_FTC)	printf ("Fatal Termination Class Code\n");
+	if (sr & TS_SC)		kprintf ("special condition\n");
+	if (sr & TS_UPE)	kprintf ("UPE\n");
+	if (sr & TS_SCE)	kprintf ("Sanity Check Error\n");
+	if (sr & TS_RMR)	kprintf ("Register Modification Refused\n");
+	if (sr & TS_NXM)	kprintf ("Nonexistent Memory\n");
+	if (sr & TS_NBA)	kprintf ("Need Buffer Address\n");
+	if (sr & TS_A11)	kprintf ("Address Bits 17-16\n");
+	if (sr & TS_SSR)	kprintf ("Subsystem Ready\n");
+	if (sr & TS_OFL)	kprintf ("Off Line\n");
+	if (sr & TS_FTC)	kprintf ("Fatal Termination Class Code\n");
 	switch (sr & TS_TC) {
-	case TS_TC_NORM:	printf ("Normal Termination\n"); break;
-	case TS_TC_ATTN:	printf ("Attention Condition\n"); break;
-	case TS_TC_TSA:		printf ("Tape status \n"); break;
-	case TS_TC_FR:		printf ("Function reject\n"); break;
-	case TS_TC_TPD:		printf ("Tape position down\n"); break;
-	case TS_TC_TNM:		printf ("Tape not moved\n"); break;
-	case TS_TC_TPL:		printf ("Tape position lost\n"); break;
-	case TS_TC_FCE:		printf ("Fatal Controller Error\n"); break;
+	case TS_TC_NORM:	kprintf ("Normal Termination\n"); break;
+	case TS_TC_ATTN:	kprintf ("Attention Condition\n"); break;
+	case TS_TC_TSA:		kprintf ("Tape status \n"); break;
+	case TS_TC_FR:		kprintf ("Function reject\n"); break;
+	case TS_TC_TPD:		kprintf ("Tape position down\n"); break;
+	case TS_TC_TNM:		kprintf ("Tape not moved\n"); break;
+	case TS_TC_TPL:		kprintf ("Tape position lost\n"); break;
+	case TS_TC_FCE:		kprintf ("Fatal Controller Error\n"); break;
 	}
 #endif
 	return (0);
@@ -1394,45 +1394,45 @@ tsxstatus (mp)
 	if (tsdebug < 10)
 		return (0);
 
-	if (mp->xst0 & TS_SF_TMK)	printf ("Tape Mark Detected\n");
-	if (mp->xst0 & TS_SF_RLS)	printf ("Record Length Short\n");
-	if (mp->xst0 & TS_SF_LET)	printf ("Logical End of Tape\n");
-	if (mp->xst0 & TS_SF_RLL)	printf ("Record Length Long\n");
-	if (mp->xst0 & TS_SF_WLE)	printf ("Write Lock Error\n");
-	if (mp->xst0 & TS_SF_NEF)	printf ("Nonexecutable Function\n");
-	if (mp->xst0 & TS_SF_ILC)	printf ("Illegal Command\n");
-	if (mp->xst0 & TS_SF_ILA)	printf ("Illegal Address\n");
-	if (mp->xst0 & TS_SF_MOT)	printf ("Motion\n");
-	if (mp->xst0 & TS_SF_ONL)	printf ("On-Line\n");
-	if (mp->xst0 & TS_SF_IE)	printf ("Interrupt Enable\n");
-	if (mp->xst0 & TS_SF_VCK)	printf ("Volume Check\n");
-	if (mp->xst0 & TS_SF_PED)	printf ("Phase Encoded Drive\n");
-	if (mp->xst0 & TS_SF_WLK)	printf ("Write Locked\n");
-	if (mp->xst0 & TS_SF_BOT)	printf ("Beginning of Tape\n");
-	if (mp->xst0 & TS_SF_EOT)	printf ("End of Tape\n");
+	if (mp->xst0 & TS_SF_TMK)	kprintf ("Tape Mark Detected\n");
+	if (mp->xst0 & TS_SF_RLS)	kprintf ("Record Length Short\n");
+	if (mp->xst0 & TS_SF_LET)	kprintf ("Logical End of Tape\n");
+	if (mp->xst0 & TS_SF_RLL)	kprintf ("Record Length Long\n");
+	if (mp->xst0 & TS_SF_WLE)	kprintf ("Write Lock Error\n");
+	if (mp->xst0 & TS_SF_NEF)	kprintf ("Nonexecutable Function\n");
+	if (mp->xst0 & TS_SF_ILC)	kprintf ("Illegal Command\n");
+	if (mp->xst0 & TS_SF_ILA)	kprintf ("Illegal Address\n");
+	if (mp->xst0 & TS_SF_MOT)	kprintf ("Motion\n");
+	if (mp->xst0 & TS_SF_ONL)	kprintf ("On-Line\n");
+	if (mp->xst0 & TS_SF_IE)	kprintf ("Interrupt Enable\n");
+	if (mp->xst0 & TS_SF_VCK)	kprintf ("Volume Check\n");
+	if (mp->xst0 & TS_SF_PED)	kprintf ("Phase Encoded Drive\n");
+	if (mp->xst0 & TS_SF_WLK)	kprintf ("Write Locked\n");
+	if (mp->xst0 & TS_SF_BOT)	kprintf ("Beginning of Tape\n");
+	if (mp->xst0 & TS_SF_EOT)	kprintf ("End of Tape\n");
 
-	if (mp->xst1 & TS_SF_DLT)	printf ("Data Late\n");
-	if (mp->xst1 & TS_SF_COR)	printf ("Correctable Data\n");
-	if (mp->xst1 & TS_SF_RBP)	printf ("Read Bus Parity Error\n");
-	if (mp->xst1 & TS_SF_UNC)	printf ("Uncorrectable Data or Hard Error\n");
+	if (mp->xst1 & TS_SF_DLT)	kprintf ("Data Late\n");
+	if (mp->xst1 & TS_SF_COR)	kprintf ("Correctable Data\n");
+	if (mp->xst1 & TS_SF_RBP)	kprintf ("Read Bus Parity Error\n");
+	if (mp->xst1 & TS_SF_UNC)	kprintf ("Uncorrectable Data or Hard Error\n");
 
-	if (mp->xst2 & TS_SF_OPM)	printf ("Operation in Progress\n");
-	if (mp->xst2 & TS_SF_RCE)	printf ("RAM Checksum Error\n");
-	if (mp->xst2 & TS_SF_WCF)	printf ("Write Clock Failure\n");
-	if (mp->xst2 & TS_SF_EFES)	printf ("extended features enabled\n");
-	if (mp->xst2 & TS_SF_BES)	printf ("Buffering enabled\n");
+	if (mp->xst2 & TS_SF_OPM)	kprintf ("Operation in Progress\n");
+	if (mp->xst2 & TS_SF_RCE)	kprintf ("RAM Checksum Error\n");
+	if (mp->xst2 & TS_SF_WCF)	kprintf ("Write Clock Failure\n");
+	if (mp->xst2 & TS_SF_EFES)	kprintf ("extended features enabled\n");
+	if (mp->xst2 & TS_SF_BES)	kprintf ("Buffering enabled\n");
 	
-	printf ("micro-code revision level: %d\n", (mp->xst2 & TS_SF_MCRL)>>2);
-	printf ("unit number: %d\n", (mp->xst2 & TS_SF_UNIT));
+	kprintf ("micro-code revision level: %d\n", (mp->xst2 & TS_SF_MCRL)>>2);
+	kprintf ("unit number: %d\n", (mp->xst2 & TS_SF_UNIT));
 
 	if (mp->xst3 & TS_SF_MDE)
-		printf ("Micro-Diagnostics Error Code: 0x%x\n", mp->xst3 >> 8);
-	if (mp->xst3 & TS_SF_OPI)	printf ("Operation Incomplete\n");
-	if (mp->xst3 & TS_SF_REV)	printf ("Revers\n");
-	if (mp->xst3 & TS_SF_DCK)	printf ("Density Check\n");
-	if (mp->xst3 & TS_SF_RIB)	printf ("Reverse into BOT\n");
+		kprintf ("Micro-Diagnostics Error Code: 0x%x\n", mp->xst3 >> 8);
+	if (mp->xst3 & TS_SF_OPI)	kprintf ("Operation Incomplete\n");
+	if (mp->xst3 & TS_SF_REV)	kprintf ("Revers\n");
+	if (mp->xst3 & TS_SF_DCK)	kprintf ("Density Check\n");
+	if (mp->xst3 & TS_SF_RIB)	kprintf ("Reverse into BOT\n");
 
-	if (mp->xst4 & TS_SF_HSP)	printf ("High Speed\n");
-	if (mp->xst4 & TS_SF_RCX)	printf ("Retry Count Exceeded\n");
+	if (mp->xst4 & TS_SF_HSP)	kprintf ("High Speed\n");
+	if (mp->xst4 & TS_SF_RCX)	kprintf ("Retry Count Exceeded\n");
 #endif
 }

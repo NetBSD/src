@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.32 1996/08/09 10:30:23 mrg Exp $  */
+/* $NetBSD: machdep.c,v 1.33 1996/10/11 01:51:26 christos Exp $  */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -172,8 +172,8 @@ cpu_startup()
 	/*
 	 * Good {morning,afternoon,evening,night}.
 	 */
-	printf("%s\n", version);
-	printf("realmem = %d\n", avail_end);
+	kprintf("%s\n", version);
+	kprintf("realmem = %d\n", avail_end);
 	physmem = btoc(avail_end);
 	panicstr = NULL;
 	mtpr(AST_NO, PR_ASTLVL);
@@ -258,8 +258,8 @@ cpu_startup()
 		callout[i - 1].c_next = &callout[i];
 	callout[i - 1].c_next = NULL;
 
-	printf("avail mem = %d\n", (int)ptoa(cnt.v_free_count));
-	printf("Using %d buffers containing %d bytes of memory.\n",
+	kprintf("avail mem = %d\n", (int)ptoa(cnt.v_free_count));
+	kprintf("Using %d buffers containing %d bytes of memory.\n",
 	       nbuf, bufpages * CLBYTES);
 
 	/*
@@ -545,7 +545,7 @@ boot(howto, bootstr)
 	}
 	splhigh();		/* extreme priority */
 	if (howto & RB_HALT) {
-		printf("halting (in tight loop); hit\n\t^P\n\tHALT\n\n");
+		kprintf("halting (in tight loop); hit\n\t^P\n\tHALT\n\n");
 		for ( ; ; )
 			;
 	} else {
@@ -663,28 +663,28 @@ dumpsys()
 		dumpconf();
 	if (dumplo < 0)
 		return;
-	printf("\ndumping to dev %x, offset %d\n", dumpdev, (int)dumplo);
-	printf("dump ");
+	kprintf("\ndumping to dev %x, offset %d\n", dumpdev, (int)dumplo);
+	kprintf("dump ");
 	switch ((*bdevsw[major(dumpdev)].d_dump) (dumpdev, 0, 0, 0)) {
 
 	case ENXIO:
-		printf("device bad\n");
+		kprintf("device bad\n");
 		break;
 
 	case EFAULT:
-		printf("device not ready\n");
+		kprintf("device not ready\n");
 		break;
 
 	case EINVAL:
-		printf("area improper\n");
+		kprintf("area improper\n");
 		break;
 
 	case EIO:
-		printf("i/o error\n");
+		kprintf("i/o error\n");
 		break;
 
 	default:
-		printf("succeeded\n");
+		kprintf("succeeded\n");
 		break;
 	}
 }

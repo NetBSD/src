@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.22 1996/08/20 14:07:33 ragge Exp $	*/
+/*	$NetBSD: if_de.c,v 1.23 1996/10/11 01:50:27 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989 Regents of the University of California.
@@ -196,7 +196,7 @@ deattach(parent, self, aux)
 	else
 		c = "deuna";
 
-	printf("\n%s: %s\n", ds->ds_dev.dv_xname, c);
+	kprintf("\n%s: %s\n", ds->ds_dev.dv_xname, c);
 	/*
 	 * Reset the board and temporarily map
 	 * the pcbb buffer onto the Unibus.
@@ -220,7 +220,7 @@ deattach(parent, self, aux)
 	ubarelse((void *)ds->ds_dev.dv_parent, &ds->ds_ubaddr);
  	bcopy((caddr_t)&ds->ds_pcbb.pcbb2, (caddr_t)ds->ds_addr,
 	    sizeof (ds->ds_addr));
-	printf("%s: hardware address %s\n", ds->ds_dev.dv_xname,
+	kprintf("%s: hardware address %s\n", ds->ds_dev.dv_xname,
 		ether_sprintf(ds->ds_addr));
 	ifp->if_ioctl = deioctl;
 	ifp->if_start = destart;
@@ -243,7 +243,7 @@ dereset(unit)
 	struct	de_softc *sc = de_cd.cd_devs[unit];
 	volatile struct dedevice *addr = sc->ds_vaddr;
 
-	printf(" de%d", unit);
+	kprintf(" de%d", unit);
 	sc->ds_if.if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 	sc->ds_flags &= ~DSF_RUNNING;
 	addr->pcsr0 = PCSR0_RSET;
@@ -276,7 +276,7 @@ deinit(ds)
 		if (if_ubaminit(&ds->ds_deuba, (void *)ds->ds_dev.dv_parent,
 		    sizeof (struct ether_header), (int)btoc(ETHERMTU),
 		    ds->ds_ifr, NRCV, ds->ds_ifw, NXMT) == 0) { 
-			printf("%s: can't initialize\n", ds->ds_dev.dv_xname);
+			kprintf("%s: can't initialize\n", ds->ds_dev.dv_xname);
 			ds->ds_if.if_flags &= ~IFF_UP;
 			return;
 		}
@@ -452,7 +452,7 @@ deintr(unit)
 				/* output error */
 				ds->ds_if.if_oerrors++;
 				if (dedebug)
-			printf("de%d: oerror, flags=%b tdrerr=%b (len=%d)\n",
+			kprintf("de%d: oerror, flags=%b tdrerr=%b (len=%d)\n",
 				    unit, rp->r_flags, XFLG_BITS,
 				    rp->r_tdrerr, XERR_BITS, rp->r_slen);
 			} else if (rp->r_flags & XFLG_ONE) {
@@ -523,7 +523,7 @@ derecv(unit)
 		    len < ETHERMIN || len > ETHERMTU) {
 			ds->ds_if.if_ierrors++;
 			if (dedebug)
-			printf("de%d: ierror, flags=%b lenerr=%b (len=%d)\n",
+			kprintf("de%d: ierror, flags=%b lenerr=%b (len=%d)\n",
 				unit, rp->r_flags, RFLG_BITS, rp->r_lenerr,
 				RERR_BITS, len);
 		} else
@@ -671,7 +671,7 @@ dewait(ds, fn)
 	csr0 = addr->pcsr0;
 	addr->pchigh = csr0 >> 8;
 	if (csr0 & PCSR0_PCEI)
-		printf("de%d: %s failed, csr0=%b csr1=%b\n", 
+		kprintf("de%d: %s failed, csr0=%b csr1=%b\n", 
 		    ds->ds_dev.dv_unit, fn, csr0, PCSR0_BITS, 
 		    addr->pcsr1, PCSR1_BITS);
 	return (csr0 & PCSR0_PCEI);

@@ -1,4 +1,4 @@
-/*      $NetBSD: trap.c,v 1.21 1996/05/19 16:44:27 ragge Exp $     */
+/*      $NetBSD: trap.c,v 1.22 1996/10/11 01:51:34 christos Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -148,7 +148,7 @@ arithflt(frame)
 
 #ifdef TRAPDEBUG
 if(frame->trap==7) goto fram;
-if(faultdebug)printf("Trap: type %x, code %x, pc %x, psl %x\n",
+if(faultdebug)kprintf("Trap: type %x, code %x, pc %x, psl %x\n",
 		frame->trap, frame->code, frame->pc, frame->psl);
 fram:
 #endif
@@ -159,7 +159,7 @@ faulter:
 #ifdef DDB
 		kdb_trap(frame);
 #endif
-		printf("Trap: type %x, code %x, pc %x, psl %x\n",
+		kprintf("Trap: type %x, code %x, pc %x, psl %x\n",
 		    frame->trap, frame->code, frame->pc, frame->psl);
 		showregs(frame);
 		panic("trap: adr %x",frame->code);
@@ -216,7 +216,7 @@ faulter:
 	case T_ACCFLT:
 	case T_ACCFLT|T_USER:
 #ifdef TRAPDEBUG
-if(faultdebug)printf("trap accflt type %x, code %x, pc %x, psl %x\n",
+if(faultdebug)kprintf("trap accflt type %x, code %x, pc %x, psl %x\n",
                         frame->trap, frame->code, frame->pc, frame->psl);
 #endif
 		if (!p)
@@ -265,7 +265,7 @@ if(faultdebug)printf("trap accflt type %x, code %x, pc %x, psl %x\n",
 					frame->pc=(int)p->p_addr->u_pcb.iftrap;
 					return;
 				}
-				printf("Segv in kernel mode: rv %d\n",rv);
+				kprintf("Segv in kernel mode: rv %d\n",rv);
 				goto faulter;
 			}
 			sig=SIGSEGV;
@@ -276,14 +276,14 @@ if(faultdebug)printf("trap accflt type %x, code %x, pc %x, psl %x\n",
 	case T_PTELEN|T_USER:	/* Page table length exceeded */
 		pm=&p->p_vmspace->vm_pmap;
 #ifdef TRAPDEBUG
-if(faultdebug)printf("trap ptelen type %x, code %x, pc %x, psl %x\n",
+if(faultdebug)kprintf("trap ptelen type %x, code %x, pc %x, psl %x\n",
                         frame->trap, frame->code, frame->pc, frame->psl);
 #endif
 		if(frame->code<0x40000000){ /* P0 */
 			int i;
 
 			if (p->p_vmspace == 0){
-				printf("no vmspace in fault\n");
+				kprintf("no vmspace in fault\n");
 				goto faulter;
 			}
 			i = p->p_vmspace->vm_tsize + p->p_vmspace->vm_dsize;
@@ -347,21 +347,21 @@ showstate(p)
 	struct proc *p;
 {
 if(p){
-	printf("\npid %d, command %s\n",p->p_pid, p->p_comm);
-	printf("text size %x, data size %x, stack size %x\n",
+	kprintf("\npid %d, command %s\n",p->p_pid, p->p_comm);
+	kprintf("text size %x, data size %x, stack size %x\n",
 		p->p_vmspace->vm_tsize, p->p_vmspace->vm_dsize,p->p_vmspace->
 		vm_ssize);
-	printf("virt text %x, virt data %x, max stack %x\n",
+	kprintf("virt text %x, virt data %x, max stack %x\n",
 		(u_int)p->p_vmspace->vm_taddr, (u_int)p->p_vmspace->vm_daddr,
 		(u_int)p->p_vmspace->vm_maxsaddr);
-	printf("kernel uarea %x, end uarea %x\n",(u_int)p->p_addr, 
+	kprintf("kernel uarea %x, end uarea %x\n",(u_int)p->p_addr, 
 		(u_int)p->p_addr + USPACE);
 } else {
-	printf("No process\n");
+	kprintf("No process\n");
 }
-	printf("kernel stack: %x, interrupt stack %x\n",
+	kprintf("kernel stack: %x, interrupt stack %x\n",
 		mfpr(PR_KSP),mfpr(PR_ISP));
-	printf("P0BR %x, P0LR %x, P1BR %x, P1LR %x\n",
+	kprintf("P0BR %x, P0LR %x, P1BR %x, P1LR %x\n",
 		mfpr(PR_P0BR),mfpr(PR_P0LR),mfpr(PR_P1BR),mfpr(PR_P1LR));
 }
 
@@ -391,7 +391,7 @@ syscall(frame)
 	struct proc *p = curproc;
 
 #ifdef TRAPDEBUG
-if(startsysc)printf("trap syscall %s pc %x, psl %x, sp %x, pid %d, frame %x\n",
+if(startsysc)kprintf("trap syscall %s pc %x, psl %x, sp %x, pid %d, frame %x\n",
                syscallnames[frame->code], frame->pc, frame->psl,frame->sp,
 		curproc->p_pid,frame);
 #endif
@@ -435,7 +435,7 @@ if(startsysc)printf("trap syscall %s pc %x, psl %x, sp %x, pid %d, frame %x\n",
 
 #ifdef TRAPDEBUG
 if(startsysc)
-	printf("retur %s pc %x, psl %x, sp %x, pid %d, v{rde %d r0 %d, r1 %d, frame %x\n",
+	kprintf("retur %s pc %x, psl %x, sp %x, pid %d, v{rde %d r0 %d, r1 %d, frame %x\n",
                syscallnames[exptr->code], exptr->pc, exptr->psl,exptr->sp,
                 curproc->p_pid,err,rval[0],rval[1],exptr);
 #endif
@@ -471,7 +471,7 @@ void
 stray(scb, vec)
 	int scb, vec;
 {
-	printf("stray interrupt scb %d, vec 0x%x\n", scb, vec);
+	kprintf("stray interrupt scb %d, vec 0x%x\n", scb, vec);
 }
 
 void
@@ -483,7 +483,7 @@ printstack(loaddr, highaddr)
 	(u_int)tmp = 0xfffffffc & (u_int)loaddr; /* Easy align */
 
 	for (;tmp < highaddr;tmp += 4)
-		printf("%8x:  %8x  %8x  %8x  %8x\n",
+		kprintf("%8x:  %8x  %8x  %8x  %8x\n",
 		    (int)tmp, *tmp, *(tmp + 1), *(tmp + 2), *(tmp + 3));
 }
 
@@ -491,16 +491,16 @@ void
 showregs(frame)
 	struct trapframe *frame;
 {
-	printf("P0BR %8x   P1BR %8x   P0LR %8x   P1LR %8x\n",
+	kprintf("P0BR %8x   P1BR %8x   P0LR %8x   P1LR %8x\n",
 	    mfpr(PR_P0BR), mfpr(PR_P1BR), mfpr(PR_P0LR), mfpr(PR_P1LR));
-	printf("KSP  %8x   ISP  %8x   USP  %8x\n",
+	kprintf("KSP  %8x   ISP  %8x   USP  %8x\n",
 	    mfpr(PR_KSP), mfpr(PR_ISP), mfpr(PR_USP));
-	printf("R0   %8x   R1   %8x   R2   %8x   R3   %8x\n",
+	kprintf("R0   %8x   R1   %8x   R2   %8x   R3   %8x\n",
 	    frame->r0, frame->r1, frame->r2, frame->r3);
-	printf("R4   %8x   R5   %8x   R6   %8x   R7   %8x\n",
+	kprintf("R4   %8x   R5   %8x   R6   %8x   R7   %8x\n",
 	    frame->r4, frame->r5, frame->r6, frame->r7);
-	printf("R8   %8x   R9   %8x   R10  %8x   R11  %8x\n",
+	kprintf("R8   %8x   R9   %8x   R10  %8x   R11  %8x\n",
 	    frame->r8, frame->r9, frame->r10, frame->r11);
-	printf("FP   %8x   AP   %8x   PC   %8x   PSL  %8x\n",
+	kprintf("FP   %8x   AP   %8x   PC   %8x   PSL  %8x\n",
 	    frame->fp, frame->ap, frame->pc, frame->psl);
 }

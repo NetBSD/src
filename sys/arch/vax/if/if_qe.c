@@ -1,4 +1,4 @@
-/*	$NetBSD: if_qe.c,v 1.16 1996/08/20 14:07:42 ragge Exp $ */
+/*	$NetBSD: if_qe.c,v 1.17 1996/10/11 01:50:30 christos Exp $ */
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -79,7 +79,7 @@
  *
  * 19 Oct 85 -- rjl
  *	Changed the watch dog timer from 30 seconds to 3.  VMS is using
- * 	less than 1 second in their's. Also turned the printf into an
+ * 	less than 1 second in their's. Also turned the kprintf into an
  *	mprintf.
  *
  *  09/16/85 -- Larry Cohen
@@ -361,7 +361,7 @@ qeattach(parent, self, aux)
 	struct qedevice *addr =(struct qedevice *)ua->ua_addr;
 	int i;
 
-	printf("\n");
+	kprintf("\n");
 	sc->qe_vaddr = addr;
 	bcopy(sc->qe_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 	ifp->if_softc = sc;
@@ -378,7 +378,7 @@ qeattach(parent, self, aux)
 		sc->setup_pkt[i][1] = sc->qe_addr[i] =
 		    addr->qe_sta_addr[i] & 0xff;
 	addr->qe_vector |= 1;
-	printf("qe%d: %s, hardware address %s\n", sc->qe_dev.dv_unit,
+	kprintf("qe%d: %s, hardware address %s\n", sc->qe_dev.dv_unit,
 		addr->qe_vector&01 ? "delqa":"deqna",
 		ether_sprintf(sc->qe_addr));
 	addr->qe_vector &= ~1;
@@ -405,7 +405,7 @@ qereset(unit)
 {
 	struct	qe_softc *sc = qe_cd.cd_devs[unit];
 
-	printf(" %s", sc->qe_dev.dv_xname);
+	kprintf(" %s", sc->qe_dev.dv_xname);
 	sc->qe_if.if_flags &= ~IFF_RUNNING;
 	qeinit(sc);
 }
@@ -451,7 +451,7 @@ qeinit(sc)
 		    sizeof (struct ether_header), (int)btoc(MAXPACKETSIZE),
 		    sc->qe_ifr, NRCV, sc->qe_ifw, NXMT) == 0) {
 	fail:
-			printf("%s: can't allocate uba resources\n", 
+			kprintf("%s: can't allocate uba resources\n", 
 			    sc->qe_dev.dv_xname);
 			sc->qe_if.if_flags &= ~IFF_UP;
 			return;
@@ -611,7 +611,7 @@ qeintr(unit)
 	if (csr & QE_XMIT_INT)
 		qetint(unit );
 	if (csr & QE_NEX_MEM_INT)
-		printf("qe%d: Nonexistent memory interrupt\n", unit);
+		kprintf("qe%d: Nonexistent memory interrupt\n", unit);
 
 	if (addr->qe_csr & QE_RL_INVALID && sc->rring[sc->rindex].qe_status1 ==
 	    QE_NOTYET) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: in_cksum.c,v 1.2 1996/04/08 18:32:38 ragge Exp $	*/
+/*	$NetBSD: in_cksum.c,v 1.3 1996/10/11 01:51:11 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1992, 1993
@@ -141,7 +141,7 @@ in_cksum(m, len)
 	}
 
 	if (len)
-		printf("cksum: out of data\n");
+		kprintf("cksum: out of data\n");
 	if (byte_swapped) {
 		UNSWAP;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.28 1996/07/20 18:20:42 ragge Exp $	   */
+/*	$NetBSD: pmap.c,v 1.29 1996/10/11 01:51:29 christos Exp $	   */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -238,16 +238,16 @@ pmap_bootstrap()
 	virtual_avail = ROUND_PAGE(virtual_avail);
 
 #ifdef PMAPDEBUG
-	printf("Sysmap %x, istack %x, scratch %x\n",Sysmap,istack,scratch);
-	printf("etext %x\n", &etext);
-	printf("SYSPTSIZE %x, USRPTSIZE %x\n",sysptsize,USRPTSIZE);
-	printf("pv_table %x, vmmap %x, pte_cmap %x\n",
+	kprintf("Sysmap %x, istack %x, scratch %x\n",Sysmap,istack,scratch);
+	kprintf("etext %x\n", &etext);
+	kprintf("SYSPTSIZE %x, USRPTSIZE %x\n",sysptsize,USRPTSIZE);
+	kprintf("pv_table %x, vmmap %x, pte_cmap %x\n",
 		pv_table,vmmap,pte_cmap);
-	printf("avail_start %x, avail_end %x\n",avail_start,avail_end);
-	printf("virtual_avail %x,virtual_end %x\n",virtual_avail,virtual_end);
-	printf("clearomr: %x \n",(uint)vmmap-(uint)Sysmap);
-/*	  printf("faultdebug %x, startsysc %x\n",&faultdebug, &startsysc);*/
-	printf("startpmapdebug %x\n",&startpmapdebug);
+	kprintf("avail_start %x, avail_end %x\n",avail_start,avail_end);
+	kprintf("virtual_avail %x,virtual_end %x\n",virtual_avail,virtual_end);
+	kprintf("clearomr: %x \n",(uint)vmmap-(uint)Sysmap);
+/*	  kprintf("faultdebug %x, startsysc %x\n",&faultdebug, &startsysc);*/
+	kprintf("startpmapdebug %x\n",&startpmapdebug);
 #endif
 
 
@@ -300,7 +300,7 @@ pmap_create(phys_size)
 	pmap_t	 pmap;
 
 #ifdef PMAPDEBUG
-if(startpmapdebug)printf("pmap_create: phys_size %x\n",phys_size);
+if(startpmapdebug)kprintf("pmap_create: phys_size %x\n",phys_size);
 #endif
 	if (phys_size)
 		return NULL;
@@ -322,7 +322,7 @@ pmap_release(pmap)
 	struct pmap *pmap;
 {
 #ifdef PMAPDEBUG
-if(startpmapdebug)printf("pmap_release: pmap %x\n",pmap);
+if(startpmapdebug)kprintf("pmap_release: pmap %x\n",pmap);
 #endif
 
 	if (pmap->pm_pcb->P0BR)
@@ -351,7 +351,7 @@ pmap_destroy(pmap)
 	int count;
   
 #ifdef PMAPDEBUG
-if(startpmapdebug)printf("pmap_destroy: pmap %x\n",pmap);
+if(startpmapdebug)kprintf("pmap_destroy: pmap %x\n",pmap);
 #endif
 	if (pmap == NULL)
 		return;
@@ -384,7 +384,7 @@ pmap_enter(pmap, v, p, prot, wired)
 
 #ifdef PMAPDEBUG
 if(startpmapdebug)
-printf("pmap_enter: pmap: %x,virt %x, phys %x,pv %x prot %x\n",
+kprintf("pmap_enter: pmap: %x,virt %x, phys %x,pv %x prot %x\n",
 	pmap,v,p,pv,prot);
 #endif
 	if (!pmap) return;
@@ -459,7 +459,7 @@ pmap_bootstrap_alloc(size)
 
 #ifdef PMAPDEBUG
 if(startpmapdebug)
-printf("pmap_bootstrap_alloc: size 0x %x\n",size);
+kprintf("pmap_bootstrap_alloc: size 0x %x\n",size);
 #endif
 	size = round_page(size);
 	mem = (void *)virtual_avail;
@@ -480,7 +480,7 @@ pmap_map(virtuell, pstart, pend, prot)
 
 #ifdef PMAPDEBUG
 if(startpmapdebug)
-	printf("pmap_map: virt %x, pstart %x, pend %x, Sysmap %x\n",
+	kprintf("pmap_map: virt %x, pstart %x, pend %x, Sysmap %x\n",
 	    virtuell, pstart, pend, Sysmap);
 #endif
 
@@ -503,7 +503,7 @@ pmap_extract(pmap, va)
 
 	int	*pte;
 #ifdef PMAPDEBUG
-if(startpmapdebug)printf("pmap_extract: pmap %x, va %x\n",pmap, va);
+if(startpmapdebug)kprintf("pmap_extract: pmap %x, va %x\n",pmap, va);
 #endif
 
 	pte=(int *)pmap_virt2pte(pmap,va);
@@ -524,7 +524,7 @@ pmap_protect(pmap, start, end, prot)
 	int pte, *patch, s;
 
 #ifdef PMAPDEBUG
-if(startpmapdebug) printf("pmap_protect: pmap %x, start %x, end %x, prot %x\n",
+if(startpmapdebug) kprintf("pmap_protect: pmap %x, start %x, end %x, prot %x\n",
 	pmap, start, end,prot);
 #endif
 	if(pmap==NULL) return;
@@ -572,7 +572,7 @@ pmap_remove(pmap, start, slut)
 	vm_offset_t	countup;
 
 #ifdef PMAPDEBUG
-if(startpmapdebug) printf("pmap_remove: pmap=0x %x, start=0x %x, slut=0x %x\n",
+if(startpmapdebug) kprintf("pmap_remove: pmap=0x %x, start=0x %x, slut=0x %x\n",
 	   pmap, start, slut);
 #endif
 
@@ -601,7 +601,7 @@ if(startpmapdebug) printf("pmap_remove: pmap=0x %x, start=0x %x, slut=0x %x\n",
 
 #ifdef PMAPDEBUG
 if(startpmapdebug)
-printf("pmap_remove: ptestart %x, pteslut %x, pv %x\n",ptestart, pteslut,pv);
+kprintf("pmap_remove: ptestart %x, pteslut %x, pv %x\n",ptestart, pteslut,pv);
 #endif
 
 	s=splimp();
@@ -667,7 +667,7 @@ pmap_copy_page(src, dst)
 	extern uint vmmap;
 
 #ifdef PMAPDEBUG
-if(startpmapdebug)printf("pmap_copy_page: src %x, dst %x\n",src, dst);
+if(startpmapdebug)kprintf("pmap_copy_page: src %x, dst %x\n",src, dst);
 #endif
 	s=splimp();
 	pte_cmap[0]=(src>>PGSHIFT)|PG_V|PG_RO;
@@ -727,7 +727,7 @@ alloc_pv_entry()
 		panic("alloc_pv_entry");
 #endif
 #ifdef PMAPDEBUG
-if(startpmapdebug) printf("alloc_pv_entry: %x\n",temporary);
+if(startpmapdebug) kprintf("alloc_pv_entry: %x\n",temporary);
 #endif
 	} else {
 		temporary=pv_head;
@@ -803,7 +803,7 @@ pmap_clear_reference(pa)
  */
 	pv=PHYS_TO_PV(pa);
 #ifdef PMAPDEBUG
-if(startpmapdebug) printf("pmap_clear_reference: pa %x, pv %x\n",pa,pv);
+if(startpmapdebug) kprintf("pmap_clear_reference: pa %x, pv %x\n",pa,pv);
 #endif
 
 	pv->pv_flags&=~PV_REF;
@@ -843,7 +843,7 @@ pmap_change_wiring(pmap, va, wired)
 {
 	int *pte;
 #ifdef PMAPDEBUG
-if(startpmapdebug) printf("pmap_change_wiring: pmap %x, va %x, wired %x\n",
+if(startpmapdebug) kprintf("pmap_change_wiring: pmap %x, va %x, wired %x\n",
 	pmap, va, wired);
 #endif
 
@@ -867,7 +867,7 @@ pmap_page_protect(pa, prot)
 	u_int s,*pte,*pte1,nyprot,kprot;
   
 #ifdef PMAPDEBUG
-if(startpmapdebug) printf("pmap_page_protect: pa %x, prot %x\n",pa, prot);
+if(startpmapdebug) kprintf("pmap_page_protect: pa %x, prot %x\n",pa, prot);
 #endif
 	pv = PHYS_TO_PV(pa);
 	if(!pv->pv_pmap) return;
@@ -934,7 +934,7 @@ pmap_zero_page(phys)
 	int	s;
 
 #ifdef PMAPDEBUG
-if(startpmapdebug)printf("pmap_zero_page(phys %x, vmmap %x, pte_cmap %x\n",
+if(startpmapdebug)kprintf("pmap_zero_page(phys %x, vmmap %x, pte_cmap %x\n",
 	phys,vmmap,pte_cmap);
 #endif
 	s = splimp();

@@ -1,4 +1,4 @@
-/*	$NetBSD: ka650.c,v 1.4 1996/07/20 18:14:55 ragge Exp $	*/
+/*	$NetBSD: ka650.c,v 1.5 1996/10/11 01:51:18 christos Exp $	*/
 /*
  * Copyright (c) 1988 The Regents of the University of California.
  * All rights reserved.
@@ -82,7 +82,7 @@ uvaxIII_conf(parent, self, aux)
 	strcpy(cpu_model,"MicroVAX III");
 	ka650encache();
 	if (ctob(physmem) > ka650merr_ptr->merr_qbmbr) {
-		printf("physmem(0x%x) > qbmbr(0x%x)\n",
+		kprintf("physmem(0x%x) > qbmbr(0x%x)\n",
 		    ctob(physmem), (int)ka650merr_ptr->merr_qbmbr);
 		panic("qbus map unprotected");
 	}
@@ -134,20 +134,20 @@ uvaxIII_steal_pages()
 void
 uvaxIII_memerr()
 {
-	printf("memory err!\n");
+	kprintf("memory err!\n");
 #if 0 /* XXX Fix this */
 	register char *cp = (char *)0;
 	register int m;
 	extern u_int cache2tag;
 
 	if (ka650cbd.cbd_cacr & CACR_CPE) {
-		printf("cache 2 tag parity error: ");
+		kprintf("cache 2 tag parity error: ");
 		if (time.tv_sec - cache2tag < 7) {
 			ka650discache();
-			printf("cacheing disabled\n");
+			kprintf("cacheing disabled\n");
 		} else {
 			cache2tag = time.tv_sec;
-			printf("flushing cache\n");
+			kprintf("flushing cache\n");
 			ka650encache();
 		}
 	}
@@ -161,7 +161,7 @@ uvaxIII_memerr()
 		cp = "Soft ECC";
 	}
 	if (cp) {
-		printf("%sMemory %s Error: page 0x%x\n",
+		kprintf("%sMemory %s Error: page 0x%x\n",
 			(m & MEM_DMA) ? "DMA " : "", cp,
 			(m & MEM_PAGE) >> MEM_PAGESHFT);
 	}
@@ -199,15 +199,15 @@ uvaxIII_mchk(cmcf)
 	register u_int type = mcf->mc65_summary;
 	register u_int i;
 
-	printf("machine check %x", type);
+	kprintf("machine check %x", type);
 	if (type >= 0x80 && type <= 0x83)
 		type -= (0x80 + 11);
 	if (type < NMC650 && mc650[type])
-		printf(": %s", mc650[type]);
-	printf("\n\tvap %x istate1 %x istate2 %x pc %x psl %x\n",
+		kprintf(": %s", mc650[type]);
+	kprintf("\n\tvap %x istate1 %x istate2 %x pc %x psl %x\n",
 	    mcf->mc65_mrvaddr, mcf->mc65_istate1, mcf->mc65_istate2,
 	    mcf->mc65_pc, mcf->mc65_psl);
-	printf("dmaser=0x%b qbear=0x%x dmaear=0x%x\n",
+	kprintf("dmaser=0x%b qbear=0x%x dmaear=0x%x\n",
 	    ka650merr_ptr->merr_dser, DMASER_BITS, 
 	    (int)ka650merr_ptr->merr_qbear,
 	    (int)ka650merr_ptr->merr_dear);
@@ -216,27 +216,27 @@ uvaxIII_mchk(cmcf)
 	i = mfpr(PR_CAER);
 	mtpr(CAER_MCC | CAER_DAT | CAER_TAG, PR_CAER);
 	if (i & CAER_MCC) {
-		printf("cache 1 ");
+		kprintf("cache 1 ");
 		if (i & CAER_DAT) {
-			printf("data");
+			kprintf("data");
 			i = cache1data;
 			cache1data = time.tv_sec;
 		}
 		if (i & CAER_TAG) {
-			printf("tag");
+			kprintf("tag");
 			i = cache1tag;
 			cache1tag = time.tv_sec;
 		}
 	} else if ((i & CAER_MCD) || (ka650merr_ptr->merr_errstat & MEM_CDAL)) {
-		printf("CDAL");
+		kprintf("CDAL");
 		i = cdalerr;
 		cdalerr = time.tv_sec;
 	}
 	if (time.tv_sec - i < 7) {
 		ka650discache();
-		printf(" parity error:	cacheing disabled\n");
+		kprintf(" parity error:	cacheing disabled\n");
 	} else {
-		printf(" parity error:	flushing cache\n");
+		kprintf(" parity error:	flushing cache\n");
 		ka650encache();
 	}
 	/*

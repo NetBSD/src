@@ -1,4 +1,4 @@
-/*	$NetBSD: hp.c,v 1.10 1996/07/11 19:34:04 ragge Exp $ */
+/*	$NetBSD: hp.c,v 1.11 1996/10/11 01:50:33 christos Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -161,8 +161,8 @@ hpattach(parent, self, aux)
 	 */
 	if ((msg = readdisklabel(makedev(0, self->dv_unit * 8), hpstrategy,
 	    dl, NULL)) != NULL)
-		printf(": %s", msg);
-	printf(": %s, size = %d sectors\n", dl->d_typename, dl->d_secperunit);
+		kprintf(": %s", msg);
+	kprintf(": %s, size = %d sectors\n", dl->d_typename, dl->d_secperunit);
 }
 
 
@@ -343,7 +343,7 @@ hpioctl(dev, cmd, addr, flag, p)
 		break;
 
 	default:
-		printf("hpioctl: command %x\n", (unsigned int)cmd);
+		kprintf("hpioctl: command %x\n", (unsigned int)cmd);
 		return ENOTTY;
 	}
 	return 0;
@@ -385,7 +385,7 @@ hper1:
 		break;
 
 	default:
-		printf("drive error :%s er1 %x er2 %x\n",
+		kprintf("drive error :%s er1 %x er2 %x\n",
 		    sc->sc_dev.dv_xname, er1, er2);
 		hr->hp_er1 = hr->hp_er2 = 0;
 		goto hper2;
@@ -395,7 +395,7 @@ hper1:
 hper2:
 	mbasr &= ~(MBASR_DTBUSY|MBASR_DTCMP|MBASR_ATTN);
 	if (mbasr)
-		printf("massbuss error :%s %x\n",
+		kprintf("massbuss error :%s %x\n",
 		    sc->sc_dev.dv_xname, mbasr);
 
 	md->md_q.b_actf->b_resid = 0;
@@ -419,7 +419,7 @@ hpattn(md)
         er1 = hr->hp_er1 & HPMASK;
         er2 = hr->hp_er2 & HPMASK;
 
-	printf("%s: Attention! er1 %x er2 %x\n",
+	kprintf("%s: Attention! er1 %x er2 %x\n",
 		sc->sc_dev.dv_xname, er1, er2);
 	return 0;
 }
@@ -447,7 +447,7 @@ hpdump(dev, a1, a2, size)
 	caddr_t	a1, a2;
 	size_t	size;
 {
-	printf("hpdump: Not implemented yet.\n");
+	kprintf("hpdump: Not implemented yet.\n");
 	return 0;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sbi.c,v 1.12 1996/08/27 21:58:33 cgd Exp $ */
+/*	$NetBSD: sbi.c,v 1.13 1996/10/11 01:51:32 christos Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -54,14 +54,14 @@ sbi_print(aux, name)
 	if (name) {
 		switch (sa->type) {
 		case NEX_MBA:
-			printf("mba%d at %s",nmba++, name);
+			kprintf("mba%d at %s",nmba++, name);
 			break;
 		default:
-			printf("unknown device 0x%x at %s", sa->type, name);
+			kprintf("unknown device 0x%x at %s", sa->type, name);
 			unsupp++;
 		}		
 	}
-	printf(" tr%d", sa->nexnum);
+	kprintf(" tr%d", sa->nexnum);
 	return (unsupp ? UNSUPP : UNCONF);
 }
 
@@ -85,7 +85,7 @@ sbi_attach(parent, self, aux)
 	u_int	nexnum, maxnex, minnex;
 	struct	sbi_attach_args sa;
 
-	printf("\n");
+	kprintf("\n");
 
 	/*
 	 * Now a problem: on different machines with SBI units identifies

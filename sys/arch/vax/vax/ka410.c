@@ -1,4 +1,4 @@
-/*	$NetBSD: ka410.c,v 1.1 1996/07/20 18:29:50 ragge Exp $ */
+/*	$NetBSD: ka410.c,v 1.2 1996/10/11 01:51:13 christos Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -127,7 +127,7 @@ ka410_conf(parent, self, aux)
 	else
 		strcpy(cpu_model,"VAXstation 2000");
 
-	printf(": %s\n", cpu_model);
+	kprintf(": %s\n", cpu_model);
 }
 
 
@@ -155,19 +155,19 @@ ka410_steal_pages()
 	srp = NULL;
 	p = (void*)KA410_SCR;
 	for (i=0; i<4; i++) {
-	  printf("p[%d] = %x, ", i, p[i].data);
+	  kprintf("p[%d] = %x, ", i, p[i].data);
 	  q[i]  = p[i].data;
 	}
 	p = (void*)KA410_SCRLEN;
-	printf("\nlen = %d\n", p->data);
-	printf("srp = 0x%x\n", srp);
+	kprintf("\nlen = %d\n", p->data);
+	kprintf("srp = 0x%x\n", srp);
 
 	for (i=0; i<0x2; i++) {
-	  printf("%x:0x%x ", i*4, srp[i]);
+	  kprintf("%x:0x%x ", i*4, srp[i]);
 	  if ((i & 0x07) == 0x07)
-	    printf("\n");
+	    kprintf("\n");
  	}
-	printf("\n");
+	kprintf("\n");
 
 	/* 
 	 * SCB is already copied/initialized at addr avail_start
@@ -202,7 +202,7 @@ ka410_steal_pages()
 	pmap_map((vm_offset_t)le_iomem, le_ioaddr, le_ioaddr + 0xffff,
 		 VM_PROT_READ|VM_PROT_WRITE);
 
-	printf("le_iomem: %x, le_ioaddr: %x, srp: %x, avail_end: %x\n",
+	kprintf("le_iomem: %x, le_ioaddr: %x, srp: %x, avail_end: %x\n",
 	       le_iomem, le_ioaddr, srp, avail_end);
 
 	/*

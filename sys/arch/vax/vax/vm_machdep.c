@@ -1,4 +1,4 @@
-/*      $NetBSD: vm_machdep.c,v 1.26 1996/07/20 18:02:47 ragge Exp $       */
+/*      $NetBSD: vm_machdep.c,v 1.27 1996/10/11 01:51:40 christos Exp $       */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -358,11 +358,11 @@ cpu_exec_aout_makecmds(p, epp)
 		error = reno_zmagic(p, epp);
 		break;
 	case 0x108:
-printf("Warning: reno_nmagic\n");
+kprintf("Warning: reno_nmagic\n");
 		error = exec_aout_prep_nmagic(p, epp);
 		break;
 	case 0x107:
-printf("Warning: reno_omagic\n");
+kprintf("Warning: reno_omagic\n");
 		error = exec_aout_prep_omagic(p, epp);
 		break;
 	default:

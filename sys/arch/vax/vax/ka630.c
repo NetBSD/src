@@ -1,4 +1,4 @@
-/*	$NetBSD: ka630.c,v 1.2 1996/08/20 14:13:58 ragge Exp $	*/
+/*	$NetBSD: ka630.c,v 1.3 1996/10/11 01:51:17 christos Exp $	*/
 /*-
  * Copyright (c) 1982, 1988, 1990, 1993
  * 	The Regents of the University of California.  All rights reserved.
@@ -96,13 +96,13 @@ ka630_conf(parent, self, aux)
 	extern char cpu_model[];
 
 	strcpy(cpu_model,"MicroVAX II");
-	printf(": %s\n", cpu_model);
+	kprintf(": %s\n", cpu_model);
 }
 
 /* log crd errors */
 uvaxII_memerr()
 {
-	printf("memory err!\n");
+	kprintf("memory err!\n");
 }
 
 #define NMC78032 10
@@ -127,19 +127,19 @@ uvaxII_mchk(cmcf)
 	register struct mc78032frame *mcf = (struct mc78032frame *)cmcf;
 	register u_int type = mcf->mc63_summary;
 
-	printf("machine check %x", type);
+	kprintf("machine check %x", type);
 	if (type < NMC78032 && mc78032[type])
-		printf(": %s", mc78032[type]);
-	printf("\n\tvap %x istate %x pc %x psl %x\n",
+		kprintf(": %s", mc78032[type]);
+	kprintf("\n\tvap %x istate %x pc %x psl %x\n",
 	    mcf->mc63_mrvaddr, mcf->mc63_istate,
 	    mcf->mc63_pc, mcf->mc63_psl);
 	if (uvaxIIcpu_ptr && uvaxIIcpu_ptr->uvaxII_mser & UVAXIIMSER_MERR) {
-		printf("\tmser=0x%x ", uvaxIIcpu_ptr->uvaxII_mser);
+		kprintf("\tmser=0x%x ", uvaxIIcpu_ptr->uvaxII_mser);
 		if (uvaxIIcpu_ptr->uvaxII_mser & UVAXIIMSER_CPUE)
-			printf("page=%d", uvaxIIcpu_ptr->uvaxII_cear);
+			kprintf("page=%d", uvaxIIcpu_ptr->uvaxII_cear);
 		if (uvaxIIcpu_ptr->uvaxII_mser & UVAXIIMSER_DQPE)
-			printf("page=%d", uvaxIIcpu_ptr->uvaxII_dear);
-		printf("\n");
+			kprintf("page=%d", uvaxIIcpu_ptr->uvaxII_dear);
+		kprintf("\n");
 	}
 	return (-1);
 }

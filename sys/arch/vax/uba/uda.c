@@ -1,4 +1,4 @@
-/*	$NetBSD: uda.c,v 1.21 1996/08/27 21:58:16 cgd Exp $	*/
+/*	$NetBSD: uda.c,v 1.22 1996/10/11 01:50:58 christos Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1988 Regents of the University of California.
@@ -138,7 +138,7 @@ udaprint(aux, name)
 	const char	*name;
 {
 	if (name)
-		printf("%s: mscpbus", name);
+		kprintf("%s: mscpbus", name);
 	return UNCONF;
 }
 
@@ -189,7 +189,7 @@ again:
 		(ivec_no >> 2);
 
 	if (mscp_waitstep(&mi, MP_STEP2, MP_STEP2) == 0) {
-		printf("udaprobe: init step2 no change. sa=%x\n", *mi.mi_sa);
+		kprintf("udaprobe: init step2 no change. sa=%x\n", *mi.mi_sa);
 		goto bad;
 	}
 
@@ -226,7 +226,7 @@ udaattach(parent, self, aux)
 	struct	mscp_attach_args ma;
 	int	ctlr, ubinfo;
 
-	printf("\n");
+	kprintf("\n");
 
 	uh->uh_lastiv -= 4;	/* remove dynamic interrupt vector */
 #ifdef QBA
@@ -253,7 +253,7 @@ udaattach(parent, self, aux)
 
 #ifdef DIAGNOSTIC
 	if (ubinfo == 0) {
-		printf("%s: uballoc map failed\n", sc->sc_dev.dv_xname);
+		kprintf("%s: uballoc map failed\n", sc->sc_dev.dv_xname);
 		return;
 	}
 #endif
@@ -399,7 +399,7 @@ udasaerror(usc, doreset)
 	for (e = saerr; e->code; e++)
 		if (e->code == code)
 			break;
-	printf("%s: controller error, sa=0%o (%s%s)\n",
+	kprintf("%s: controller error, sa=0%o (%s%s)\n",
 		sc->sc_dev.dv_xname, code, e->desc + 1,
 		*e->desc == 'E' ? " error" : "");
 	if (doreset) {
@@ -482,7 +482,7 @@ static void
 reset(sc)
 	struct uda_softc *sc;
 {
-	printf(" %s", sc->sc_dev.dv_xname);
+	kprintf(" %s", sc->sc_dev.dv_xname);
 
 	/*
 	 * Our BDP (if any) is gone; our command (if any) is
@@ -490,7 +490,7 @@ reset(sc)
 	 * UDA50 is not yet initialised.
 	 */
 	if (sc->sc_unit.uu_bdp) {
-		printf("<%d>", UBAI_BDP(sc->sc_unit.uu_bdp));
+		kprintf("<%d>", UBAI_BDP(sc->sc_unit.uu_bdp));
 		sc->sc_unit.uu_bdp = 0;
 	}
 	sc->sc_unit.uu_ubinfo = 0;
@@ -506,7 +506,7 @@ reset(sc)
 	 * initialisation.
 	 */
 /* XXX	if (udainit(sc)) */
-		printf(" (hung)");
+		kprintf(" (hung)");
 }
 
 void

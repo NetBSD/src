@@ -1,4 +1,4 @@
-/*	$NetBSD: uba.c,v 1.27 1996/08/27 21:58:12 cgd Exp $	   */
+/*	$NetBSD: uba.c,v 1.28 1996/10/11 01:50:55 christos Exp $	   */
 /*
  * Copyright (c) 1996 Jonathan Stone.
  * Copyright (c) 1994, 1996 Ludd, University of Lule}, Sweden.
@@ -136,7 +136,7 @@ dw780_attach(parent, self, aux)
 	struct sbi_attach_args *sa = aux;
 	int ubaddr = sa->type & 3;
 
-	printf(": DW780\n");
+	kprintf(": DW780\n");
 
 	/*
 	 * Fill in bus specific data.
@@ -280,12 +280,12 @@ ubaerror(uh, ipl, uvec)
 			uh->uh_zvcnt = 0;
 		}
 		if (++uh->uh_zvcnt > zvcnt_max) {
-			printf("%s: too many zero vectors (%d in <%d sec)\n",
+			kprintf("%s: too many zero vectors (%d in <%d sec)\n",
 				uh->uh_dev.dv_xname, uh->uh_zvcnt, (int)dt + 1);
-			printf("\tIPL 0x%x\n\tcnfgr: %b	 Adapter Code: 0x%x\n",
+			kprintf("\tIPL 0x%x\n\tcnfgr: %b	 Adapter Code: 0x%x\n",
 				*ipl, uba->uba_cnfgr&(~0xff), UBACNFGR_BITS,
 				uba->uba_cnfgr&0xff);
-			printf("\tsr: %b\n\tdcr: %x (MIC %sOK)\n",
+			kprintf("\tsr: %b\n\tdcr: %x (MIC %sOK)\n",
 				uba->uba_sr, ubasr_bits, uba->uba_dcr,
 				(uba->uba_dcr&0x8000000)?"":"NOT ");
 			ubareset(uh->uh_dev.dv_unit);
@@ -293,7 +293,7 @@ ubaerror(uh, ipl, uvec)
 		return;
 	}
 	if (uba->uba_cnfgr & NEX_CFGFLT) {
-		printf("%s: sbi fault sr=%b cnfgr=%b\n",
+		kprintf("%s: sbi fault sr=%b cnfgr=%b\n",
 		    uh->uh_dev.dv_xname, uba->uba_sr, ubasr_bits,
 		    uba->uba_cnfgr, NEXFLT_BITS);
 		ubareset(uh->uh_dev.dv_unit);
@@ -302,7 +302,7 @@ ubaerror(uh, ipl, uvec)
 	}
 	sr = uba->uba_sr;
 	s = spluba();
-	printf("%s: uba error sr=%b fmer=%x fubar=%o\n", uh->uh_dev.dv_xname,
+	kprintf("%s: uba error sr=%b fmer=%x fubar=%o\n", uh->uh_dev.dv_xname,
 	    uba->uba_sr, ubasr_bits, uba->uba_fmer, 4*uba->uba_fubar);
 	splx(s);
 	uba->uba_sr = sr;
@@ -310,7 +310,7 @@ ubaerror(uh, ipl, uvec)
 	if (++ubaerrcnt % ubawedgecnt == 0) {
 		if (ubaerrcnt > ubacrazy)
 			panic("uba crazy");
-		printf("ERROR LIMIT ");
+		kprintf("ERROR LIMIT ");
 		ubareset(uh->uh_dev.dv_unit);
 		*uvec = 0;
 		return;
@@ -343,7 +343,7 @@ dw750_attach(parent, self, aux)
 	struct sbi_attach_args *sa = aux;
 	int ubaddr = sa->nexinfo & 1;
 
-	printf(": DW750\n");
+	kprintf(": DW750\n");
 
 	/*
 	 * Fill in bus specific data.
@@ -416,7 +416,7 @@ qba_attach(parent, self, aux)
 	struct uba_softc *sc = (void *)self;
 	vm_offset_t mini, maxi;
 
-	printf(": Q22\n");
+	kprintf(": Q22\n");
 
 
 	/*
@@ -520,7 +520,7 @@ ubastray(arg)
 #endif
 			rcvec = vektor;
 	} else 
-		printf("uba%d: unexpected interrupt, vector 0x%x, br 0x%x\n",
+		kprintf("uba%d: unexpected interrupt, vector 0x%x, br 0x%x\n",
 		    arg, svec, rbr);
 }
 
@@ -788,12 +788,12 @@ ubareset(uban)
 	ubainitmaps(uh);
 	wakeup((caddr_t)&uh->uh_bdpwant);
 	wakeup((caddr_t)&uh->uh_mrwant);
-	printf("%s: reset", uh->uh_dev.dv_xname);
+	kprintf("%s: reset", uh->uh_dev.dv_xname);
 	(*uh->uh_ubainit)(uh);
 
 	for (i = 0; i < uh->uh_resno; i++)
 		(*uh->uh_reset[i])(uh->uh_resarg[i]);
-	printf("\n");
+	kprintf("\n");
 	splx(s);
 }
 
@@ -936,7 +936,7 @@ ubascan(parent, match)
 		}
 #ifdef DIAGNOSTIC
 		if (sc->uh_resno > 127) {
-			printf("%s: Expand reset table, skipping reset %s\n",
+			kprintf("%s: Expand reset table, skipping reset %s\n",
 			    sc->uh_dev.dv_xname, dev->dv_xname);
 		} else
 #endif
@@ -953,7 +953,7 @@ ubascan(parent, match)
 	return;
 
 fail:
-	printf("%s at %s csr %o %s\n", dev->dv_cfdata->cf_driver->cd_name, 
+	kprintf("%s at %s csr %o %s\n", dev->dv_cfdata->cf_driver->cd_name, 
 	    parent->dv_xname, dev->dv_cfdata->cf_loc[0], 
 	    rcvec ? "didn't interrupt\n" : "zero vector\n");
 
@@ -988,7 +988,7 @@ ubaprint(aux, uba)
 {
 	struct uba_attach_args *ua = aux;
 
-	printf(" csr %o vec %o ipl %x", ua->ua_iaddr,
+	kprintf(" csr %o vec %o ipl %x", ua->ua_iaddr,
 	    ua->ua_cvec << 2, ua->ua_br);
 	return UNCONF;
 }
