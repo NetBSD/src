@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mac68k,v 1.14 1995/03/23 19:47:05 jtc Exp $
+#	$NetBSD: Makefile.mac68k,v 1.15 1995/03/29 07:28:51 briggs Exp $
 
 # Makefile for NetBSD for the mac
 #	Derived from makefile for hp300 from NetBSD
@@ -44,7 +44,7 @@ LIBKERN=${KERNLIB_PROF}
 .include "$S/arch/m68k/fpsp/Makefile.inc"
 
 INCLUDES= -I. -I$S/arch -I$S -I$S/sys
-COPTS=	${INCLUDES} ${IDENT} -DKERNEL -D_KERNEL -DREFBIT -Dmac68k
+COPTS=	${INCLUDES} ${IDENT} -D_KERNEL -DREFBIT -Dmac68k
 CFLAGS=	-O ${COPTS}
 
 # compile rules: rules are named ${TYPE}_${SUFFIX}${CONFIG_DEP}
@@ -135,7 +135,7 @@ assym.s: genassym
 	./genassym >assym.s
 
 genassym:
-	${LOCAL_CC} ${INCLUDES} ${IDENT} -DKERNEL -D_KERNEL ${PARAM} -o genassym \
+	${LOCAL_CC} ${INCLUDES} ${IDENT} -D_KERNEL ${PARAM} -o genassym \
 	    ${MAC68K}/mac68k/genassym.c
 
 depend: assym.s param.c vnode_if.h
