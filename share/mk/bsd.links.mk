@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.links.mk,v 1.24 2003/07/28 01:00:52 lukem Exp $
+#	$NetBSD: bsd.links.mk,v 1.25 2003/11/07 00:05:24 lukem Exp $
 
 .include <bsd.init.mk>
 
@@ -21,7 +21,8 @@ linksinstall::	realinstall
 		    [ "$$l" = "$$ttarg" ]; then \
 			continue ; \
 		fi ; \
-		echo "$$t -> $$l"; \
+		${_MKSHMSG_INSTALL} $$t; \
+		${_MKSHECHO} ${INSTALL_SYMLINK} ${SYSPKGTAG} $$l $$t; \
 		${INSTALL_SYMLINK} ${SYSPKGTAG} $$l $$t; \
 	 done; )
 .endif
@@ -35,7 +36,8 @@ linksinstall::	realinstall
 		    [ "$$ldevino" = "$$tdevino" ]; then \
 			continue ; \
 		fi ; \
-		echo "$$t -> $$l"; \
+		${_MKSHMSG_INSTALL} $$t; \
+		${_MKSHECHO} ${INSTALL_LINK} ${SYSPKGTAG} $$l $$t; \
 		${INSTALL_LINK} ${SYSPKGTAG} $$l $$t; \
 	done ; )
 .endif

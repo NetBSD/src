@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.390 2003/11/05 07:14:31 skrll Exp $
+#	$NetBSD: bsd.own.mk,v 1.391 2003/11/07 00:05:24 lukem Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -755,6 +755,9 @@ _MKMSG_LINK?=		${_MKMSG} "   link "
 _MKMSG_LEX?=		${_MKMSG} "    lex "
 _MKMSG_REMOVE?=		${_MKMSG} " remove "
 _MKMSG_YACC?=		${_MKMSG} "   yacc "
+
+_MKSHMSG_CREATE?=	${_MKSHMSG} " create "
+_MKSHMSG_INSTALL?=	${_MKSHMSG} "install "
 
 _MKTARGET_BUILD?=	${_MKMSG_BUILD} ${.TARGET}
 _MKTARGET_CREATE?=	${_MKMSG_CREATE} ${.TARGET}

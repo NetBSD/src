@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kinc.mk,v 1.32 2003/10/20 01:53:02 chs Exp $
+#	$NetBSD: bsd.kinc.mk,v 1.33 2003/11/07 00:05:24 lukem Exp $
 
 # Variables:
 #
@@ -32,8 +32,10 @@ incinstall::	# ensure existence
 
 ${DESTDIR}${INCSDIR}:
 	@if [ ! -d ${.TARGET} ] || [ -h ${.TARGET} ] ; then \
-		echo creating ${.TARGET}; \
+		${_MKSHMSG_CREATE} ${.TARGET}; \
 		/bin/rm -rf ${.TARGET}; \
+		${_MKSHECHO} ${INSTALL_DIR} -o ${BINOWN} -g ${BINGRP} -m 755 \
+			${SYSPKGTAG} ${.TARGET}; \
 		${INSTALL_DIR} -o ${BINOWN} -g ${BINGRP} -m 755 \
 			${SYSPKGTAG} ${.TARGET}; \
 	fi
@@ -41,7 +43,7 @@ ${DESTDIR}${INCSDIR}:
 # -c is forced on here, in order to preserve modtimes for "make depend"
 __incinstall: .USE
 	@cmp -s ${.ALLSRC} ${.TARGET} > /dev/null 2>&1 || \
-	    (${_MKSHMSG} "install  ${.TARGET}"; \
+	    (${_MKSHMSG_INSTALL} ${.TARGET}; \
 	     ${_MKSHECHO} "${INSTALL_FILE:N-c} -c -o ${BINOWN} -g ${BINGRP} \
 		-m ${NONBINMODE} ${SYSPKGTAG} ${.ALLSRC} ${.TARGET}" && \
 	     ${INSTALL_FILE:N-c} -c -o ${BINOWN} -g ${BINGRP} \
@@ -72,7 +74,8 @@ incinstall::
 		    [ "$$l" = "$$ttarg" ]; then \
 			continue ; \
 		fi ; \
-		echo "$$t -> $$l"; \
+		${_MKSHMSG_INSTALL} $$t; \
+		${_MKSHECHO} ${INSTALL_SYMLINK} ${SYSPKGTAG} $$l $$t; \
 		${INSTALL_SYMLINK} ${SYSPKGTAG} $$l $$t; \
 	 done; )
 .endif
