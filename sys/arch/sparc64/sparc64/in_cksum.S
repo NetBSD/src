@@ -1,4 +1,4 @@
-/*	$NetBSD: in_cksum.S,v 1.3 2001/09/23 17:31:17 eeh Exp $ */
+/*	$NetBSD: in_cksum.S,v 1.4 2002/01/16 18:49:22 eeh Exp $ */
 
 /*
  * Copyright (c) 2001 Eduardo Horvath
@@ -182,7 +182,11 @@ Lfinish_byte:
 	add	%o3, %o4, %o3
 	
 Lnext:
+#ifdef __arch64__
 	ldx	[%o0 + M_NEXT], %o0
+#else
+	lduw	[%o0 + M_NEXT], %o0
+#endif
 Lfinish:
 	srlx	%o3, 32, %o4	! Reduce to 32-bits
 	srl	%o3, 0, %o3
