@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.75 2003/09/30 19:12:57 kleink Exp $
+# $NetBSD: obsolete.mi,v 1.76 2003/10/02 14:46:51 kleink Exp $
 ./bin/rcorder
 ./dev/i4b
 ./dev/i4bctl
@@ -211,18 +211,8 @@
 ./usr/share/man/man8/x86_64
 ./usr/share/man/man9/arm26
 ./usr/share/man/man9/arm32
-./usr/share/misc/airport
-./usr/share/misc/birthtoken
-./usr/share/misc/country
-./usr/share/misc/domains
-./usr/share/misc/flowers
 ./usr/share/misc/getopt
-./usr/share/misc/inter.phone
-./usr/share/misc/language
 ./usr/share/misc/more.help
-./usr/share/misc/na.phone
-./usr/share/misc/na.postal
-./usr/share/misc/zipcodes
 ./usr/share/sushi/scriptoff
 ./usr/share/sushi/scriptoff/func
 ./usr/share/sushi/scripton
