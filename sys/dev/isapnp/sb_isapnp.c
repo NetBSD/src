@@ -1,4 +1,4 @@
-/*	$NetBSD: sb_isapnp.c,v 1.27 1998/07/23 19:30:46 christos Exp $	*/
+/*	$NetBSD: sb_isapnp.c,v 1.28 1998/08/07 00:01:00 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -33,6 +33,8 @@
  * SUCH DAMAGE.
  *
  */
+
+#include "midi.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,15 +101,16 @@ sb_isapnp_attach(parent, self, aux)
 	printf("\n");
 
 	if (isapnp_config(ipa->ipa_iot, ipa->ipa_memt, ipa)) {
-		printf("%s: error in region allocation\n", sc->sc_dev.dv_xname);
+		printf("%s: error in region allocation\n", 
+		       sc->sc_dev.dv_xname);
 		return;
 	}
 
+	sc->sc_iot = ipa->ipa_iot;
+	sc->sc_ioh = ipa->ipa_io[0].h;
 	sc->sc_ic = ipa->ipa_ic;
 
-	sc->sc_iot = ipa->ipa_iot;
 	sc->sc_iobase = ipa->ipa_io[0].base;
-	sc->sc_ioh = ipa->ipa_io[0].h;
 
 	sc->sc_irq = ipa->ipa_irq[0].num;
 	sc->sc_ist = ipa->ipa_irq[0].type;
@@ -122,13 +125,21 @@ sb_isapnp_attach(parent, self, aux)
         } else
         	sc->sc_drq16 = DRQUNK;
 
+#if NMIDI > 0
+	if (ipa->ipa_nio > 1) {
+		sc->sc_mpu_sc.iobase = ipa->ipa_io[1].base;
+		sc->sc_mpu_sc.ioh = ipa->ipa_io[1].h;
+	} else
+		sc->sc_mpu_sc.iobase = 0;
+#endif
+
 	if (!sbmatch(sc)) {
 		printf("%s: sbmatch failed\n", sc->sc_dev.dv_xname);
 		return;
 	}
 
 	printf("%s: %s %s", sc->sc_dev.dv_xname, ipa->ipa_devident,
-	    ipa->ipa_devclass);
+	       ipa->ipa_devclass);
 
 	sbattach(sc);
 }

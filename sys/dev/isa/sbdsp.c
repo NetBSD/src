@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdsp.c,v 1.80 1998/06/09 00:05:46 thorpej Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.81 1998/08/07 00:01:00 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -44,6 +44,8 @@
  * Linux drivers.
  */
 
+#include "midi.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/errno.h>
@@ -69,11 +71,14 @@
 #include <dev/isa/sbreg.h>
 #include <dev/isa/sbdspvar.h>
 
+
 #ifdef AUDIO_DEBUG
 #define DPRINTF(x)	if (sbdspdebug) printf x
+#define DPRINTFN(n,x)	if (sbdspdebug >= (n)) printf x
 int	sbdspdebug = 0;
 #else
 #define DPRINTF(x)
+#define DPRINTFN(n,x)
 #endif
 
 #ifndef SBDSP_NPOLL
@@ -183,8 +188,10 @@ static	int sbdsp_dma_setup_input __P((struct sbdsp_softc *sc));
 static	int sbdsp_dma_setup_output __P((struct sbdsp_softc *sc));
 static	int sbdsp_adjust __P((int, int));
 
+void	sbdsp_midi_intr __P((struct sbdsp_softc *));
+
 #ifdef AUDIO_DEBUG
-void sb_printsc __P((struct sbdsp_softc *));
+void	sb_printsc __P((struct sbdsp_softc *));
 
 void
 sb_printsc(sc)
@@ -523,6 +530,9 @@ sbdsp_set_params(addr, setmode, usemode, play, rec)
 	struct audio_params *p;
 	int mode;
 
+	if (sc->sc_open == SB_OPEN_MIDI)
+		return EBUSY;
+
 	model = sc->sc_model;
 	if (model > SB_16) 
 		model = SB_16;	/* later models work like SB16 */
@@ -673,7 +683,7 @@ sbdsp_set_params(addr, setmode, usemode, play, rec)
 	if (sc->sc_fullduplex &&
 	    (usemode & (AUMODE_PLAY | AUMODE_RECORD)) == (AUMODE_PLAY | AUMODE_RECORD) &&
 	    sc->sc_i.dmachan == sc->sc_o.dmachan) {
-		DPRINTF(("sbdsp_commit: fd=%d, usemode=%d, idma=%d, odma=%d\n", sc->sc_fullduplex, usemode, sc->sc_i.dmachan, sc->sc_o.dmachan));
+		DPRINTF(("sbdsp_set_params: fd=%d, usemode=%d, idma=%d, odma=%d\n", sc->sc_fullduplex, usemode, sc->sc_i.dmachan, sc->sc_o.dmachan));
 		if (sc->sc_o.dmachan == sc->sc_drq8) {
 			/* Use 16 bit DMA for playing by expanding the samples. */
 			play->sw_code = linear8_to_linear16;
@@ -684,7 +694,8 @@ sbdsp_set_params(addr, setmode, usemode, play, rec)
 			return EINVAL;
 		}
 	}
-	DPRINTF(("sbdsp_set_params ichan=%d, ochan=%d\n", sc->sc_i.dmachan, sc->sc_o.dmachan));
+	DPRINTF(("sbdsp_set_params ichan=%d, ochan=%d\n", 
+		 sc->sc_i.dmachan, sc->sc_o.dmachan));
 
 	return 0;
 }
@@ -741,6 +752,9 @@ sbdsp_set_in_ports(sc, mask)
 	int bitsl, bitsr;
 	int sbport;
 
+	if (sc->sc_open == SB_OPEN_MIDI)
+		return EBUSY;
+
 	DPRINTF(("sbdsp_set_in_ports: model=%d, mask=%x\n",
 		 sc->sc_mixer_model, mask));
 
@@ -785,7 +799,6 @@ sbdsp_set_in_ports(sc, mask)
 		sbdsp_mix_write(sc, SBP_RECORD_SOURCE_R, bitsr);
 		break;
 	}
-
 	sc->in_mask = mask;
 
 	return 0;
@@ -797,6 +810,9 @@ sbdsp_speaker_ctl(addr, newstate)
 	int newstate;
 {
 	struct sbdsp_softc *sc = addr;
+
+	if (sc->sc_open == SB_OPEN_MIDI)
+		return EBUSY;
 
 	if ((newstate == SPKR_ON) &&
 	    (sc->spkr_state == SPKR_OFF)) {
@@ -816,8 +832,7 @@ sbdsp_round_blocksize(addr, blk)
 	void *addr;
 	int blk;
 {
-	blk &= -4;		/* round to biggest sample size */
-	return blk;
+	return blk & -4;	/* round to biggest sample size */
 }
 
 int
@@ -829,12 +844,14 @@ sbdsp_open(addr, flags)
 
         DPRINTF(("sbdsp_open: sc=%p\n", sc));
 
-	if (sc->sc_open != 0 || sbdsp_reset(sc) != 0)
-		return ENXIO;
+	if (sc->sc_open != SB_CLOSED)
+		return EBUSY;
+	if (sbdsp_reset(sc) != 0)
+		return EIO;
 
-	sc->sc_open = 1;
+	sc->sc_open = SB_OPEN_AUDIO;
 	sc->sc_openflags = flags;
-	sc->sc_mintr = 0;
+	sc->sc_intrm = 0;
 	if (ISSBPRO(sc) &&
 	    sbdsp_wdsp(sc, SB_DSP_RECORD_MONO) < 0) {
 		DPRINTF(("sbdsp_open: can't set mono mode\n"));
@@ -860,12 +877,12 @@ sbdsp_close(addr)
 
         DPRINTF(("sbdsp_close: sc=%p\n", sc));
 
-	sc->sc_open = 0;
+	sc->sc_open = SB_CLOSED;
 	sbdsp_spkroff(sc);
 	sc->spkr_state = SPKR_OFF;
 	sc->sc_intr8 = 0;
 	sc->sc_intr16 = 0;
-	sc->sc_mintr = 0;
+	sc->sc_intrm = 0;
 	sbdsp_haltdma(sc);
 
 	DPRINTF(("sbdsp_close: closed\n"));
@@ -1078,7 +1095,7 @@ sbversion(sc)
 			sc->sc_model = SB_64;
 		else
 #endif
-		sc->sc_model = SB_16;
+			sc->sc_model = SB_16;
 		break;
 	}
 }
@@ -1188,11 +1205,8 @@ sbdsp_dma_input(addr, p, cc, intr, arg)
 {
 	struct sbdsp_softc *sc = addr;
 	
-#ifdef AUDIO_DEBUG
-	if (sbdspdebug > 1)
-		printf("sbdsp_dma_input: sc=%p buf=%p cc=%d intr=%p(%p)\n", 
-		       addr, p, cc, intr, arg);
-#endif
+	DPRINTFN(2, ("sbdsp_dma_input: sc=%p buf=%p cc=%d intr=%p(%p)\n", 
+		    addr, p, cc, intr, arg));
 #ifdef DIAGNOSTIC
 	if (sc->sc_i.modep->channels == 2 && (cc & 1)) {
 		DPRINTF(("stereo record odd bytes (%d)\n", cc));
@@ -1231,11 +1245,8 @@ sbdsp_dma_input(addr, p, cc, intr, arg)
 		/* fall into */
 	case SB_RUNNING:
 		/* Non-looping mode, start DMA */
-#ifdef AUDIO_DEBUG
-		if (sbdspdebug > 2)
-			printf("sbdsp_dma_input: dmastart buf=%p cc=%d chan=%d\n", 
-			       p, cc, sc->sc_i.dmachan);
-#endif
+		DPRINTFN(3,("sbdsp_dma_input: dmastart buf=%p cc=%d chan=%d\n",
+			   p, cc, sc->sc_i.dmachan));
 		isa_dmastart(sc->sc_ic, sc->sc_i.dmachan, p,
 			     cc, NULL, DMAMODE_READ, BUS_DMA_NOWAIT);
 
@@ -1262,11 +1273,8 @@ sbdsp_dma_input(addr, p, cc, intr, arg)
 		--cc;
 		/* Initialize looping PCM */
 		if (ISSB16CLASS(sc)) {
-#ifdef AUDIO_DEBUG
-			if (sbdspdebug > 2)
-				printf("sbdsp16 input command cmd=0x%02x bmode=0x%02x cc=%d\n",
-				       sc->sc_i.modep->cmd, sc->sc_i.bmode, cc);
-#endif
+			DPRINTFN(3, ("sbdsp16 input command cmd=0x%02x bmode=0x%02x cc=%d\n",
+				   sc->sc_i.modep->cmd, sc->sc_i.bmode, cc));
 			if (sbdsp_wdsp(sc, sc->sc_i.modep->cmd) < 0 || 
 			    sbdsp_wdsp(sc, sc->sc_i.bmode) < 0 ||
 			    sbdsp_wdsp(sc, cc) < 0 ||
@@ -1363,10 +1371,8 @@ sbdsp_dma_output(addr, p, cc, intr, arg)
 {
 	struct sbdsp_softc *sc = addr;
 	
-#ifdef AUDIO_DEBUG
-	if (sbdspdebug > 1)
-		printf("sbdsp_dma_output: sc=%p buf=%p cc=%d intr=%p(%p)\n", addr, p, cc, intr, arg);
-#endif
+	DPRINTFN(2, ("sbdsp_dma_output: sc=%p buf=%p cc=%d intr=%p(%p)\n", 
+		   addr, p, cc, intr, arg));
 #ifdef DIAGNOSTIC
 	if (sc->sc_o.modep->channels == 2 && (cc & 1)) {
 		DPRINTF(("stereo playback odd bytes (%d)\n", cc));
@@ -1405,11 +1411,8 @@ sbdsp_dma_output(addr, p, cc, intr, arg)
 		/* fall into */
 	case SB_RUNNING:
 		/* Non-looping mode, initialized. Start DMA and PCM */
-#ifdef AUDIO_DEBUG
-		if (sbdspdebug > 2)
-			printf("sbdsp: start dma out addr=%p, cc=%d, chan=%d\n",
-			       p, cc, sc->sc_o.dmachan);
-#endif
+		DPRINTFN(3, ("sbdsp: start dma out addr=%p, cc=%d, chan=%d\n",
+			    p, cc, sc->sc_o.dmachan));
 		isa_dmastart(sc->sc_ic, sc->sc_o.dmachan, p,
 			     cc, NULL, DMAMODE_WRITE, BUS_DMA_NOWAIT);
 		if ((sc->sc_model == SB_JAZZ && sc->sc_o.dmachan > 3) ||
@@ -1486,14 +1489,11 @@ sbdsp_intr(arg)
 	int loop = sc->sc_model != SB_1;
 	u_char irq;
 
-#ifdef AUDIO_DEBUG
-	if (sbdspdebug > 1)
-		printf("sbdsp_intr: intr8=%p, intr16=%p\n",
-		       sc->sc_intr8, sc->sc_intr16);
-#endif
+	DPRINTFN(2, ("sbdsp_intr: intr8=%p, intr16=%p\n",
+		   sc->sc_intr8, sc->sc_intr16));
 	if (ISSB16CLASS(sc)) {
 		irq = sbdsp_mix_read(sc, SBP_IRQ_STATUS);
-		if ((irq & (SBP_IRQ_DMA8 | SBP_IRQ_DMA16)) == 0) {
+		if ((irq & (SBP_IRQ_DMA8 | SBP_IRQ_DMA16 | SBP_IRQ_MPU401)) == 0) {
 			DPRINTF(("sbdsp_intr: Spurious interrupt 0x%x\n", irq));
 			return 0;
 		}
@@ -1504,13 +1504,7 @@ sbdsp_intr(arg)
 	}
 	sc->sc_interrupts++;
 	delay(10);		/* XXX why? */
-#if 0
-	if (sc->sc_mintr != 0) {
-		x = sbdsp_rdsp(sc);
-		(*sc->sc_mintr)(sc->sc_arg, x);
-	} else
-#endif
-	if (sc->sc_intr8 == 0 && sc->sc_intr16 == 0) {
+	if (sc->sc_intr8 == 0 && sc->sc_intr16 == 0 && sc->sc_intrm == 0) {
 		DPRINTF(("sbdsp_intr: Unexpected interrupt 0x%x\n", irq));
 		/* XXX return 0;*/	/* Did not expect an interrupt */
 	}
@@ -1518,59 +1512,32 @@ sbdsp_intr(arg)
 	/* clear interrupt */
 	if (irq & SBP_IRQ_DMA8) {
 		bus_space_read_1(sc->sc_iot, sc->sc_ioh, SBP_DSP_IRQACK8);
-		if (!loop)
-			isa_dmadone(sc->sc_ic, sc->sc_drq8);
-		if (sc->sc_intr8)
-			(*sc->sc_intr8)(sc->sc_arg8);
+#if NMIDI > 0
+		if (sc->sc_open == SB_OPEN_MIDI)
+			sbdsp_midi_intr(sc);
+		else 
+#endif
+		{
+			if (!loop)
+				isa_dmadone(sc->sc_ic, sc->sc_drq8);
+			if (sc->sc_intr8)
+				sc->sc_intr8(sc->sc_arg8);
+		}
 	}
 	if (irq & SBP_IRQ_DMA16) {
 		bus_space_read_1(sc->sc_iot, sc->sc_ioh, SBP_DSP_IRQACK16);
 		if (sc->sc_intr16)
-			(*sc->sc_intr16)(sc->sc_arg16);
+			sc->sc_intr16(sc->sc_arg16);
 	}
+#if NMIDI > 0
+	if ((irq & SBP_IRQ_MPU401) & sc->sc_hasmpu) {
+		mpu401_intr(&sc->sc_mpu_sc);
+	}
+#endif
 	return 1;
 }
 
-#if 0
-/*
- * Enter midi uart mode and arrange for read interrupts
- * to vector to `intr'.  This puts the card in a mode
- * which allows only midi I/O; the card must be reset
- * to leave this mode.  Unfortunately, the card does not
- * use transmit interrupts, so bytes must be output
- * using polling.  To keep the polling overhead to a
- * minimum, output should be driven off a timer.
- * This is a little tricky since only 320us separate
- * consecutive midi bytes.
- */
-void
-sbdsp_set_midi_mode(sc, intr, arg)
-	struct sbdsp_softc *sc;
-	void (*intr)();
-	void *arg;
-{
-
-	sbdsp_wdsp(sc, SB_MIDI_UART_INTR);
-	sc->sc_mintr = intr;
-	sc->sc_intr = 0;
-	sc->sc_arg = arg;
-}
-
-/*
- * Write a byte to the midi port, when in midi uart mode.
- */
-void
-sbdsp_midi_output(sc, v)
-	struct sbdsp_softc *sc;
-	int v;
-{
-
-	if (sbdsp_wdsp(sc, v) < 0)
-		++sberr.wmidi;
-}
-#endif
-
-/* Mask a value 0-255, but round it first */
+/* Like val & mask, but make sure the result is correctly rounded. */
 #define MAXVAL 256
 static int
 sbdsp_adjust(val, mask)
@@ -1697,6 +1664,9 @@ sbdsp_mixer_set_port(addr, cp)
 	int lmask, rmask, lbits, rbits;
 	int mute, swap;
     
+	if (sc->sc_open == SB_OPEN_MIDI)
+		return EBUSY;
+
 	DPRINTF(("sbdsp_mixer_set_port: port=%d num_channels=%d\n", cp->dev,
 	    cp->un.value.num_channels));
 
@@ -1881,6 +1851,9 @@ sbdsp_mixer_get_port(addr, cp)
 {
 	struct sbdsp_softc *sc = addr;
     
+	if (sc->sc_open == SB_OPEN_MIDI)
+		return EBUSY;
+
 	DPRINTF(("sbdsp_mixer_get_port: port=%d\n", cp->dev));
 
 	if (sc->sc_mixer_model == SBM_NONE)
@@ -2317,3 +2290,84 @@ sbdsp_get_props(addr)
 	return AUDIO_PROP_MMAP | 
 	       (sc->sc_fullduplex ? AUDIO_PROP_FULLDUPLEX : 0);
 }
+
+#if NMIDI > 0
+/*
+ * MIDI related routines.
+ */
+
+int
+sbdsp_midi_open(addr, flags, iintr, ointr, arg)
+	void *addr;
+	int flags;
+	void (*iintr)__P((void *, int));
+	void (*ointr)__P((void *));
+	void *arg;
+{
+	struct sbdsp_softc *sc = addr;
+
+        DPRINTF(("sbdsp_midi_open: sc=%p\n", sc));
+
+	if (sc->sc_open != SB_CLOSED)
+		return EBUSY;
+	if (sbdsp_reset(sc) != 0)
+		return EIO;
+
+	if (sc->sc_model >= SB_20)
+		if (sbdsp_wdsp(sc, SB_MIDI_UART_INTR)) /* enter UART mode */
+			return EIO;
+	sc->sc_open = SB_OPEN_MIDI;
+	sc->sc_openflags = flags;
+	sc->sc_intrm = iintr;
+	sc->sc_argm = arg;
+	return 0;
+}
+
+void
+sbdsp_midi_close(addr)
+	void *addr;
+{
+	struct sbdsp_softc *sc = addr;
+
+        DPRINTF(("sbdsp_midi_close: sc=%p\n", sc));
+
+	if (sc->sc_model >= SB_20)
+		sbdsp_reset(sc); /* exit UART mode */
+	sc->sc_open = SB_CLOSED;
+	sc->sc_intrm = 0;
+}
+
+int
+sbdsp_midi_output(addr, d)
+	void *addr;
+	int d;
+{
+	struct sbdsp_softc *sc = addr;
+
+	if (sc->sc_model < SB_20 && sbdsp_wdsp(sc, SB_MIDI_WRITE))
+		return EIO;
+	if (sbdsp_wdsp(sc, d))
+		return EIO;
+	return 0;
+}
+
+void
+sbdsp_midi_getinfo(addr, mi)
+	void *addr;
+	struct midi_info *mi;
+{
+	struct sbdsp_softc *sc = addr;
+
+	mi->name = sc->sc_model < SB_20 ? "SB MIDI cmd" : "SB MIDI UART";
+	mi->props = MIDI_PROP_CAN_INPUT;
+}
+
+void
+sbdsp_midi_intr(sc)
+	struct sbdsp_softc *sc;
+{
+	sc->sc_intrm(sc->sc_argm, sbdsp_rdsp(sc));
+}
+
+#endif
+

@@ -1,4 +1,4 @@
-/*	$NetBSD: sb.c,v 1.59 1998/06/29 22:40:56 thorpej Exp $	*/
+/*	$NetBSD: sb.c,v 1.60 1998/08/07 00:00:59 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -34,6 +34,8 @@
  *
  */
 
+#include "midi.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/errno.h>
@@ -55,6 +57,31 @@
 #include <dev/isa/sbreg.h>
 #include <dev/isa/sbvar.h>
 #include <dev/isa/sbdspvar.h>
+
+#if NMIDI > 0
+int	sb_mpu401_open __P((void *, int, 
+			     void (*iintr)__P((void *, int)),
+			     void (*ointr)__P((void *)), void *arg));
+void	sb_mpu401_close __P((void *));
+int	sb_mpu401_output __P((void *, int));
+void	sb_mpu401_getinfo __P((void *, struct midi_info *));
+
+struct midi_hw_if sb_midi_hw_if = {
+	sbdsp_midi_open,
+	sbdsp_midi_close,
+	sbdsp_midi_output,
+	sbdsp_midi_getinfo,
+	0,			/* ioctl */
+};
+
+struct midi_hw_if sb_mpu401_hw_if = {
+	sb_mpu401_open,
+	sb_mpu401_close,
+	sb_mpu401_output,
+	sb_mpu401_getinfo,
+	0,			/* ioctl */
+};
+#endif
 
 struct audio_device sb_device = {
 	"SoundBlaster",
@@ -167,7 +194,7 @@ sbmatch(sc)
 		}
 		else {
 			if (!SB_IRQ_VALID(sc->sc_irq)) {
-				printf("%s: couldn't auto-detect interrupt\n");
+				printf("%s: couldn't auto-detect interrupt\n",
 					sc->sc_dev.dv_xname);
 				return 0;
 			}
@@ -237,41 +264,30 @@ void
 sbattach(sc)
 	struct sbdsp_softc *sc;
 {
+#if NMIDI > 0
+	struct midi_hw_if *mhw = &sb_midi_hw_if;
+#else
+	struct midi_hw_if *mhw = 0;
+#endif
+
 	sc->sc_ih = isa_intr_establish(sc->sc_ic, sc->sc_irq, sc->sc_ist,
 	    IPL_AUDIO, sbdsp_intr, sc);
 
 	sbdsp_attach(sc);
 
-	audio_attach_mi(&sb_hw_if, 0, sc, &sc->sc_dev);
-}
-
-#ifdef NEWCONFIG
-void
-sbforceintr(aux)
-	void *aux;
-{
-	static char dmabuf;
-	struct sbdsp_softc *sc = aux;
-
-	/*
-	 * Set up a DMA read of one byte.
-	 * XXX Note that at this point we haven't called 
-	 * at_setup_dmachan().  This is okay because it just
-	 * allocates a buffer in case it needs to make a copy,
-	 * and it won't need to make a copy for a 1 byte buffer.
-	 * (I think that calling at_setup_dmachan() should be optional;
-	 * if you don't call it, it will be called the first time
-	 * it is needed (and you pay the latency).  Also, you might
-	 * never need the buffer anyway.)
-	 */
-	at_dma(DMAMODE_READ, &dmabuf, 1, sc->sc_drq8);
-	if (sbdsp_wdsp(sc, SB_DSP_RDMA) == 0) {
-		(void)sbdsp_wdsp(sc, 0);
-		(void)sbdsp_wdsp(sc, 0);
+#if NMIDI > 0
+	sc->sc_hasmpu = 0;
+	if (ISSB16CLASS(sc) && sc->sc_mpu_sc.iobase != 0) {
+		sc->sc_mpu_sc.iot = sc->sc_iot;
+		if (mpu401_find(&sc->sc_mpu_sc)) {
+			sc->sc_hasmpu = 1;
+			mhw = &sb_mpu401_hw_if;
+		}
 	}
-}
 #endif
 
+	audio_attach_mi(&sb_hw_if, mhw, sc, &sc->sc_dev);
+}
 
 /*
  * Various routines to interface to higher level audio driver
@@ -301,3 +317,46 @@ sb_getdev(addr, retp)
 		
 	return 0;
 }
+
+#if NMIDI > 0
+
+#define SBMPU(a) (&((struct sbdsp_softc *)addr)->sc_mpu_sc)
+
+int
+sb_mpu401_open(addr, flags, iintr, ointr, arg)
+	void *addr;
+	int flags;
+	void (*iintr)__P((void *, int));
+	void (*ointr)__P((void *));
+	void *arg;
+{
+	return mpu401_open(SBMPU(addr), flags, iintr, ointr, arg);
+}
+
+int
+sb_mpu401_output(addr, d)
+	void *addr;
+	int d;
+{
+	return mpu401_output(SBMPU(addr), d);
+}
+
+void
+sb_mpu401_close(addr)
+	void *addr;
+{
+	mpu401_close(SBMPU(addr));
+}
+
+
+
+void
+sb_mpu401_getinfo(addr, mi)
+	void *addr;
+	struct midi_info *mi;
+{
+	mi->name = "SB MPU-401 UART";
+	mi->props = 0;
+}
+#endif
+

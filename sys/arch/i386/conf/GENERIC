@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.169 1998/07/29 12:36:47 augustss Exp $
+#	$NetBSD: GENERIC,v 1.170 1998/08/07 00:00:56 augustss Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -468,6 +468,9 @@ audio*	at sp?
 audio*	at wss?
 audio*	at ym?
 
+# MIDI support
+midi*	at sb?
+
 # The spkr driver provides a simple tone interface to the built in speaker.
 #spkr0	at pcppi?		# PC speaker
 
@@ -521,6 +524,7 @@ pseudo-device	tun		2	# network tunneling over tty
 # miscellaneous pseudo-devices
 pseudo-device	pty		64	# pseudo-terminals
 pseudo-device	tb		1	# tablet line discipline
+pseudo-device	sequencer	1	# MIDI sequencer
 
 # rnd is EXPERIMENTAL at this point.
 #pseudo-device	rnd			# /dev/random and in-kernel generator

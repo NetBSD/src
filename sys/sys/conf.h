@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.57 1998/07/24 15:25:14 rvb Exp $	*/
+/*	$NetBSD: conf.h,v 1.58 1998/08/07 00:01:01 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -314,6 +314,12 @@ extern struct cdevsw cdevsw[];
 	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
 	0, dev_init(c,n,poll), dev_init(c,n,mmap) }
 
+/* open, close, read, write, ioctl, poll */
+#define cdev_midi_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
+	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
+	0, dev_init(c,n,poll), (dev_type_mmap((*))) enodev }
+
 /* open, close, read, ioctl */
 #define cdev_ipf_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
@@ -468,6 +474,8 @@ cdev_decl(tun);
  * [bc]dev_decl()s for miscellaneous 'fake' devices. 
  */
 cdev_decl(audio);
+cdev_decl(midi);
+cdev_decl(sequencer);
 
 cdev_decl(filedesc);
 

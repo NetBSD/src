@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.69 1998/08/03 11:43:14 thorpej Exp $
+#	$NetBSD: MAKEDEV,v 1.70 1998/08/07 00:00:56 augustss Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -467,6 +467,29 @@ audio*)
 	mknod $audioctl c $major $(($unit + 192))
 	chown root.wheel $audio $sound $mixer $audioctl
 	chmod 666 $audio $sound $mixer $audioctl
+	;;
+
+rmidi*)
+	unit=${i#rmidi}
+	major=58
+	rmidi=rmidi$unit
+	rm -f $rmidi
+	mknod $rmidi c $major $unit
+	chown root.wheel $rmidi
+	chmod 666 $rmidi
+	;;
+
+music*)
+	unit=${i#music}
+	music=music$unit
+	sequencer=sequencer$unit
+	major=59
+	if [ "$unit" = "" ]; then unit=0; fi
+	rm -f $sequencer $music
+	mknod $music     c $major $(($unit + 0))
+	mknod $sequencer c $major $(($unit + 128))
+	chown root.wheel $music $sequencer
+	chmod 666 $music $sequencer
 	;;
 
 apm*)

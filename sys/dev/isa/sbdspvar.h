@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdspvar.h,v 1.35 1998/06/29 22:40:56 thorpej Exp $	*/
+/*	$NetBSD: sbdspvar.h,v 1.36 1998/08/07 00:01:00 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -33,6 +33,11 @@
  * SUCH DAMAGE.
  *
  */
+
+#include "midi.h"
+#if NMIDI > 0
+#include <dev/isa/mpu401var.h>
+#endif
 
 #define SB_MASTER_VOL	0
 #define SB_MIDI_VOL	1
@@ -100,7 +105,10 @@ struct sbdsp_softc {
 	int	sc_drq8;		/* DMA (8-bit) */
 	int	sc_drq16;		/* DMA (16-bit) */
 
-	u_short	sc_open;		/* reference count of open calls */
+	int	sc_open;		/* reference count of open calls */
+#define SB_CLOSED 0
+#define SB_OPEN_AUDIO 1
+#define SB_OPEN_MIDI 2
 	int	sc_openflags;		/* flags used on open */
 	u_char	sc_fullduplex;		/* can do full duplex */
 
@@ -133,7 +141,8 @@ struct sbdsp_softc {
 	void	*sc_arg8;		/* arg for sc_intr8() */
 	void	(*sc_intr16)(void*);	/* dma completion intr handler */
 	void	*sc_arg16;		/* arg for sc_intr16() */
-	void	(*sc_mintr)(void*, int);/* midi input intr handler */
+	void	(*sc_intrm)(void*, int);/* midi input intr handler */
+	void	*sc_argm;		/* arg for sc_mintr() */
 
 	u_int	sc_mixer_model;
 #define SBM_NONE	0
@@ -159,6 +168,11 @@ struct sbdsp_softc {
 	u_int	sc_version;		/* DSP version */
 #define SBVER_MAJOR(v)	(((v)>>8) & 0xff)
 #define SBVER_MINOR(v)	((v)&0xff)
+
+#if NMIDI > 0
+	int	sc_hasmpu;
+	struct	mpu401_softc sc_mpu_sc;	/* MPU401 Uart state */
+#endif
 };
 
 #define ISSBPRO(sc) ((sc)->sc_model == SB_PRO || (sc)->sc_model == SB_JAZZ)
@@ -223,4 +237,11 @@ int	sb_mappage __P((void *, void *, int, int));
 
 int	sbdsp_get_props __P((void *));
 
+
+int	sbdsp_midi_open __P((void *, int, 
+			     void (*iintr)__P((void *, int)),
+			     void (*ointr)__P((void *)), void *arg));
+void	sbdsp_midi_close __P((void *));
+int	sbdsp_midi_output __P((void *, int));
+void	sbdsp_midi_getinfo __P((void *, struct midi_info *));
 #endif
