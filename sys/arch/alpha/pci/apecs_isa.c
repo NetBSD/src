@@ -1,4 +1,4 @@
-/*	$NetBSD: apecs_isa.c,v 1.1 1995/06/28 01:25:24 cgd Exp $	*/
+/*	$NetBSD: apecs_isa.c,v 1.2 1995/08/03 00:46:52 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -91,7 +91,7 @@ apecs_inb(ioaddr)
 	u_int8_t rval;
 	int offset;
 
-	MB();
+	wbflush();
 	offset = ioaddr & 3;
 	port = (int32_t *)phystok0seg(APECS_PCI_SIO | 0 << 3 | ioaddr << 5);
 	val = *port;
@@ -109,7 +109,7 @@ apecs_inw(ioaddr)
 	u_int16_t rval;
 	int offset;
 
-	MB();
+	wbflush();
 	offset = ioaddr & 3;
 	port = (int32_t *)phystok0seg(APECS_PCI_SIO | 1 << 3 | ioaddr << 5);
 	val = *port;
@@ -129,7 +129,7 @@ apecs_inl(ioaddr)
 	u_int32_t rval;
 	int offset;
 
-	MB();
+	wbflush();
 	offset = ioaddr & 3;
 	port = (int32_t *)phystok0seg(APECS_PCI_SIO | 3 << 3 | ioaddr << 5);
 	val = *port;
@@ -153,7 +153,7 @@ apecs_outb(ioaddr, val)
 	port = (int32_t *)phystok0seg(APECS_PCI_SIO | 0 << 3 | ioaddr << 5);
 
 	*port = nval;
-	MB();
+	wbflush();
 }
 
 void
@@ -169,7 +169,7 @@ apecs_outw(ioaddr, val)
 	port = (int32_t *)phystok0seg(APECS_PCI_SIO | 1 << 3 | ioaddr << 5);
 
 	*port = nval;
-	MB();
+	wbflush();
 }
 
 void
@@ -185,7 +185,7 @@ apecs_outl(ioaddr, val)
 	port = (int32_t *)phystok0seg(APECS_PCI_SIO | 3 << 3 | ioaddr << 5);
 
 	*port = nval;
-	MB();
+	wbflush();
 }
 
 static caddr_t bounced_addr;
