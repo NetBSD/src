@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_balloc.c,v 1.23 2000/07/03 20:12:42 perseant Exp $	*/
+/*	$NetBSD: lfs_balloc.c,v 1.24 2000/07/04 22:30:37 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -139,12 +139,6 @@ lfs_balloc(v)
 	iosize = ap->a_size;
 	lbn = lblkno(fs, ap->a_startoffset);
 	(void)lfs_check(vp, lbn, 0);
-	
-#ifdef DEBUG
-	if(!VOP_ISLOCKED(vp)) {
-		printf("lfs_balloc: warning: ino %d not locked\n",ip->i_number);
-	}
-#endif
 	
 	/* 
 	 * Three cases: it's a block beyond the end of file, it's a block in
