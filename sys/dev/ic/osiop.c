@@ -1,4 +1,4 @@
-/*	$NetBSD: osiop.c,v 1.15 2003/09/29 09:50:22 wiz Exp $	*/
+/*	$NetBSD: osiop.c,v 1.16 2003/10/29 18:03:22 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2001 Izumi Tsutsui.  All rights reserved.
@@ -108,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osiop.c,v 1.15 2003/09/29 09:50:22 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osiop.c,v 1.16 2003/10/29 18:03:22 tsutsui Exp $");
 
 /* #define OSIOP_DEBUG */
 
@@ -1103,7 +1103,7 @@ osiop_checkintr(sc, istat, dstat, sstat0, status)
 	int *status;
 {
 	struct osiop_acb *acb = sc->sc_nexus;
-	struct osiop_ds *ds;
+	struct osiop_ds *ds = NULL;	/* XXX */
 	bus_dmamap_t dsdma = sc->sc_dsdma;
 	bus_addr_t scraddr = sc->sc_scrdma->dm_segs[0].ds_addr;
 	int target = 0;
