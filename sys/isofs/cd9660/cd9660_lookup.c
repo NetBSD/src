@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_lookup.c,v 1.12 1994/12/13 22:33:14 mycroft Exp $	*/
+/*	$NetBSD: cd9660_lookup.c,v 1.13 1994/12/24 15:30:03 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993, 1994
@@ -91,6 +91,7 @@ struct	nchstats iso_nchstats;
  *
  * NOTE: (LOOKUP | LOCKPARENT) currently returns the parent inode unlocked.
  */
+int
 cd9660_lookup(ap)
 	struct vop_lookup_args /* {
 		struct vnode *a_dvp;
