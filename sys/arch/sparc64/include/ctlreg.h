@@ -1,4 +1,4 @@
-/*	$NetBSD: ctlreg.h,v 1.3 1998/09/05 23:57:26 eeh Exp $ */
+/*	$NetBSD: ctlreg.h,v 1.4 1998/11/13 03:47:15 eeh Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -523,12 +523,11 @@
 #else
 /* native load 64-bit int from alternate address space w/32-bit compiler*/
 #define	ldxa(loc, asi) ({ \
-	volatile register long _ldxa_tmp = 0; \
-	volatile int64_t _ldxa_v; \
-	volatile int64_t *_ldxa_a = &_ldxa_v; \
-	__asm __volatile("wr %2,%%g0,%%asi; ldxa [%1]%%asi,%1; stx %1,[%3]; membar #Sync" : "=r" (_ldxa_tmp) : \
-	    "r" ((long)(loc)), "r" (asi), "r" ((long)(_ldxa_a))); \
-	_ldxa_v; \
+	volatile register long _ldxa_lo, _ldxa_hi; \
+	__asm __volatile("wr %3,%%g0,%%asi; ldxa [%2]%%asi,%0; srlx %0,32,%1; srl %0,0,%0;" : \
+	    "=r" (_ldxa_lo), "=r" (_ldxa_hi) : \
+	    "r" ((long)(loc)), "r" (asi)); \
+	((((int64_t)_ldxa_hi)<<32)|_ldxa_lo); \
 })
 #endif
 
