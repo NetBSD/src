@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.13 2003/06/13 22:27:05 dsl Exp $ */
+/*	$NetBSD: md.c,v 1.14 2003/07/11 15:29:01 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -114,9 +114,10 @@ md_make_bsd_partitions(void)
 	/*
 	 * Setup the disktype so /etc/disktab gets proper info
 	 */
-	if (strncmp (disk->dd_name, "sd", 2) == 0)
-	    disktype = "SCSI";
-	else disktype = "ST506";
+	if (strncmp (diskdev, "sd", 2) == 0)
+		disktype = "SCSI";
+	else
+		disktype = "ST506";
 
 	return 1;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.63 2003/07/08 17:38:55 dsl Exp $ */
+/*	$NetBSD: disks.c,v 1.64 2003/07/11 15:28:58 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -61,10 +61,25 @@
 #include "menu_defs.h"
 #include "txtwalk.h"
 
-
+/* Disk descriptions */
+#define MAX_DISKS 15
+struct disk_desc {
+	char dd_name[SSTRSIZE];
+	struct disk_geom {
+		int  dg_cyl;
+		int  dg_head;
+		int  dg_sec;
+		int  dg_secsize;
+		int  dg_totsec;
+	} dg;
+};
+#define dd_cyl dg.dg_cyl
+#define dd_head dg.dg_head
+#define dd_sec dg.dg_sec
+#define dd_secsize dg.dg_secsize
+#define dd_totsec dg.dg_totsec
 
 /* Local prototypes */
-static void get_disks (void);
 static void foundffs(struct data *, size_t);
 static int do_fsck(const char *);
 static int fsck_root(void);
@@ -78,21 +93,19 @@ static int target_mount_with_error_menu(const char *, char *, const char *);
 #define DISK_NAMES "wd", "sd", "ld"
 #endif
 
-static char *disk_names[] = { DISK_NAMES, NULL };
+static char *disk_names[] = { DISK_NAMES, "vnd", NULL };
 
-static void
-get_disks(void)
+static int
+get_disks(struct disk_desc *dd)
 {
 	char **xd;
 	char d_name[SSTRSIZE];
 	struct disklabel l;
-	struct disk_desc *dd;
 	int i;
+	int numdisks;
 
 	/* initialize */
-	disknames[0] = 0;
 	numdisks = 0;
-	dd = disks;
 
 	for (xd = disk_names; *xd != NULL; xd++) {
 		for (i = 0; i < MAX_DISKS; i++) {
@@ -102,9 +115,7 @@ get_disks(void)
 					break;
 				continue;
 			}
-			strncpy(dd->dd_name, d_name, sizeof dd->dd_name);
-			strlcat(disknames, d_name, sizeof disknames);
-			strlcat(disknames, " ", sizeof disknames);
+			strlcpy(dd->dd_name, d_name, sizeof dd->dd_name);
 			dd->dd_cyl = l.d_ncylinders;
 			dd->dd_head = l.d_ntracks;
 			dd->dd_sec = l.d_nsectors;
@@ -113,22 +124,32 @@ get_disks(void)
 			dd++;
 			numdisks++;
 			if (numdisks >= MAX_DISKS)
-				return;
+				return numdisks;
 		}
 	}
+	return numdisks;
 }
 
+static int
+set_dsk_select(menudesc *m, menu_ent *opt, void *arg)
+{
+	*(int *)arg = m->cursel;
+	return 1;
+}
 
 int
 find_disks(const char *doingwhat)
 {
-	char *tp;
-	const char *prompt;
-	char defname[STRSIZE];
-	int  i;
+	struct disk_desc disks[MAX_DISKS];
+	menu_ent dsk_menu[nelem(disks)];
+	struct disk_desc *disk;
+	int i;
+	int numdisks;
+	int selected_disk = 0;
+	int menu_no;
 
 	/* Find disks. */
-	get_disks();
+	numdisks = get_disks(disks);
 
 	/* need a redraw here, kernel messages hose everything */
 	touchwin(stdscr);
@@ -144,43 +165,37 @@ find_disks(const char *doingwhat)
 
 	if (numdisks == 1) {
 		/* One disk found! */
-		/* Remove that space we added. */
-		disknames[strlen(disknames) - 1] = 0;
-		msg_display(MSG_onedisk, disknames, doingwhat);
+		msg_display(MSG_onedisk, disks[0].dd_name, doingwhat);
 		process_menu(MENU_ok, NULL);
-		strlcpy(diskdev, disknames, sizeof diskdev);
 	} else {
 		/* Multiple disks found! */
-		strcpy(defname, disknames);
-		tp = defname;
-		strsep(&tp, " ");
-		prompt = MSG_askdisk;
-		do {
-			msg_prompt(prompt, defname,  diskdev, 10, disknames);
-			prompt = MSG_badname;
-			tp = diskdev;
-			strsep(&tp, " ");
-			diskdev[strlen(diskdev) + 1] = 0;
-			diskdev[strlen(diskdev)] = ' ';
-			tp = strstr(disknames, diskdev);
-		} while (tp == NULL || (tp != disknames && tp[-1] != ' '));
-
-		/* Remove that space we added. */
-		diskdev[strlen(diskdev) - 1] = 0;
+		for (i = 0; i < numdisks; i++) {
+			dsk_menu[i].opt_name = disks[i].dd_name;
+			dsk_menu[i].opt_menu = OPT_NOMENU;
+			dsk_menu[i].opt_flags = OPT_EXIT;
+			dsk_menu[i].opt_action = set_dsk_select;
+		}
+		menu_no = new_menu(MSG_Available_disks,
+			dsk_menu, numdisks, -1, 4, 0, 0,
+			MC_SCROLL | MC_NOEXITOPT,
+			NULL, NULL, NULL, NULL, NULL);
+		if (menu_no == -1)
+			return -1;
+		msg_display(MSG_ask_disk);
+		process_menu(menu_no, &selected_disk);
+		free_menu(menu_no);
 	}
 
-	/* Set disk. */
-	for (i = 0; i < numdisks; i++)
-		if (strcmp(diskdev, disks[i].dd_name) == 0)
-			disk = &disks[i];
+	disk = disks + selected_disk;
+	strlcpy(diskdev, disk->dd_name, sizeof diskdev);
 
 	sectorsize = disk->dd_secsize;
-	if (disk->dd_totsec == 0)
-		disk->dd_totsec = disk->dd_cyl * disk->dd_head * disk->dd_sec;
 	dlcyl = disk->dd_cyl;
 	dlhead = disk->dd_head;
 	dlsec = disk->dd_sec;
 	dlsize = disk->dd_totsec;
+	if (dlsize == 0)
+		dlsize = disk->dd_cyl * disk->dd_head * disk->dd_sec;
 	dlcylsize = dlhead * dlsec;
 
 	/* Get existing/default label */
