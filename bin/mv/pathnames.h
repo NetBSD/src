@@ -1,4 +1,4 @@
-/*	$NetBSD: pathnames.h,v 1.7 2003/08/07 09:05:18 agc Exp $	*/
+/*	$NetBSD: pathnames.h,v 1.8 2004/08/19 22:26:07 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -31,5 +31,10 @@
  *	@(#)pathnames.h	8.1 (Berkeley) 5/31/93
  */
 
+#ifdef RESCUEDIR
+#define	_PATH_RM	RESCUEDIR "/rm"
+#define	_PATH_CP	RESCUEDIR "/cp"
+#else
 #define	_PATH_RM	"/bin/rm"
 #define	_PATH_CP	"/bin/cp"
+#endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: pathnames.h,v 1.3 1997/10/10 05:39:49 mrg Exp $	*/
+/*	$NetBSD: pathnames.h,v 1.4 2004/08/19 22:25:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Matthew R. Green
@@ -28,4 +28,8 @@
  * SUCH DAMAGE.
  */
 
+#ifdef RESCUEDIR
+#define	_PATH_BIN_RCMD	RESCUEDIR /rcmd"
+#else
 #define	_PATH_BIN_RCMD	"/bin/rcmd"
+#endif
