@@ -1,10 +1,10 @@
-/*	$NetBSD: usbdevs.h,v 1.11 1998/12/21 17:22:33 augustss Exp $	*/
+/*	$NetBSD: usbdevs.h,v 1.12 1998/12/29 15:21:33 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: usbdevs,v 1.11 1998/12/21 17:18:29 augustss Exp 
+ *	NetBSD: usbdevs,v 1.12 1998/12/29 15:19:40 augustss Exp 
  */
 
 /*
@@ -64,6 +64,7 @@
 #define	USB_VENDOR_SHUTTLE	0x04e6		/* Shuttle Technology */
 #define	USB_VENDOR_JAZZ	0x04fa		/* Jazz */
 #define	USB_VENDOR_ATEN	0x0557		/* ATen */
+#define	USB_VENDOR_PERACOM	0x0565		/* Peracom */
 #define	USB_VENDOR_EIZO	0x056d		/* EIZO */
 #define	USB_VENDOR_AGILER	0x056e		/* Agiler */
 #define	USB_VENDOR_BELKIN	0x05ab		/* Belkin */
@@ -112,6 +113,9 @@
 /* Connectix products */
 #define	USB_PRODUCT_CONNECTIX_QUICKCAM	0x0001		/* QuickCam */
 
+/* Cypress Semiconduuctor products */
+#define	USB_PRODUCT_CYPRESS_MOUSE	0x0001		/* mouse */
+
 /* 3Com products */
 #define	USB_PRODUCT_3COM_USR56K	0x3021		/* U.S.Robotics 56000 Voice USB Modem */
 
@@ -121,11 +125,15 @@
 /* Jazz products */
 #define	USB_PRODUCT_JAZZ_J6502	0x4201		/* J-6502 speakers */
 
-/* Cypress Semiconduuctor products */
-#define	USB_PRODUCT_CYPRESS_MOUSE	0x0001		/* mouse */
-
-/* ATen */
+/* ATen products */
 #define	USB_PRODUCT_ATEN_UC1284	0x2001		/* Parallel printer adapter */
+
+/* Peracom products */
+#define	USB_PRODUCT_PERACOM_SERIAL1	0x0001		/* Serial Converter */
+
+/* EIZO products */
+#define	USB_PRODUCT_EIZO_HUB	0x0000		/* hub */
+#define	USB_PRODUCT_EIZO_MONITOR	0x0001		/* monitor */
 
 /* Agiler products */
 #define	USB_PRODUCT_AGILER_MOUSE29UO	0x0002		/* mouse 29UO */
@@ -134,8 +142,6 @@
 #define	USB_PRODUCT_BELKIN_F5U002	0x0002		/* Parallel printer adapter */
 
 /* EIZO Nanao products */
-#define	USB_PRODUCT_EIZO_HUB	0x0000		/* hub */
-#define	USB_PRODUCT_EIZO_MONITOR	0x0001		/* monitor */
 #define	USB_PRODUCT_EIZONANAO_HUB	0x0000		/* hub */
 #define	USB_PRODUCT_EIZONANAO_MONITOR	0x0001		/* monitor */
 
