@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.6 2000/10/11 14:46:18 is Exp $	*/
+/*	$NetBSD: extern.h,v 1.7 2002/01/23 19:07:34 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -37,7 +37,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)extern.h	8.1 (Berkeley) 6/6/93
- *	$NetBSD: extern.h,v 1.6 2000/10/11 14:46:18 is Exp $
+ *	$NetBSD: extern.h,v 1.7 2002/01/23 19:07:34 atatat Exp $
  */
 
 extern struct s_command *prog;
@@ -48,6 +48,7 @@ extern u_long linenum;
 extern int appendnum;
 extern int lastline;
 extern int aflag, eflag, nflag;
+extern int ere;
 extern char *fname;
 
 void	 cfclose __P((struct s_command *, struct s_command *));
