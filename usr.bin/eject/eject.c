@@ -1,4 +1,4 @@
-/*	$NetBSD: eject.c,v 1.9 1999/02/18 17:18:46 cjs Exp $	*/
+/*	$NetBSD: eject.c,v 1.10 1999/02/18 20:02:43 tron Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -36,14 +36,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * Eject program.  Deals with floppies, cdroms, and tapes.  We could
- * really use a generic GDIOCEJECT ioctl, that would work with
- * everything.  This eject also knows how to load media into cdrom
- * drives, and it will attempt to extrapolate a device name from a
- * nickname and number.
- */
-
 #include <sys/cdefs.h>
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1999 The NetBSD Foundation, Inc.\n\
@@ -51,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1999 The NetBSD Foundation, Inc.\n\
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: eject.c,v 1.9 1999/02/18 17:18:46 cjs Exp $");
+__RCSID("$NetBSD: eject.c,v 1.10 1999/02/18 20:02:43 tron Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
