@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.11 1997/08/19 13:33:04 lukem Exp $
+#	$NetBSD: MAKEDEV,v 1.12 1997/08/22 12:16:28 lukem Exp $
 #
 #	from: @(#)MAKEDEV	8.1 (Berkeley) 6/9/93
 #
@@ -39,18 +39,20 @@ do
 case $i in
 
 all)
-	sh MAKEDEV std fd rz0 rz1 rz2 rz3 rz4 tz0 tz1
-	sh MAKEDEV cd0
-	sh MAKEDEV pty0 vnd0 vnd1 vnd2 vnd3 ccd0 ccd1 ccd2 ccd3
-	sh MAKEDEV tun0 tun1 tun2 tun3
-	sh MAKEDEV bpf0 bpf1 bpf2 bpf3
-	sh MAKEDEV lkm local
-#	sh MAKEDEV audio pm0 cfb0 xcfb0 mfb0 sfb0
-	sh MAKEDEV fb0 fb1 fb2
-	sh MAKEDEV ipl
+	sh $0 std fd rz0 rz1 rz2 rz3 rz4 tz0 tz1
+	sh $0 cd0
+	sh $0 pty0 vnd0 vnd1 vnd2 vnd3 ccd0 ccd1 ccd2 ccd3
+	sh $0 tun0 tun1 tun2 tun3
+	sh $0 bpf0 bpf1 bpf2 bpf3
+	sh $0 lkm local
+#	sh $0 audio pm0 cfb0 xcfb0 mfb0 sfb0
+	sh $0 fb0 fb1 fb2
+	sh $0 ipl
 	;;
 
 std)
+	rm -f console drum tty kmem mem
+	rm -f null zero klog stdin stdout stderr
 	mknod console		c 0 0
 	mknod drum		c 1 0	; chmod 640 drum ; chgrp kmem drum
 	mknod tty		c 2 0	; chmod 666 tty
@@ -78,31 +80,27 @@ fd)
 	;;
 
 tz*)
-	umask 0 ; unit=`expr $i : '..\(.*\)'`
 	case $i in
-	tz*) chr=10;;
+	tz*) unit=${i#tz}; chr=10;;
 	esac
 	case $unit in
-	0|1|2|3|4|5|6)
-		unit0=`expr $unit \* 16`
-		unit1=`expr $unit \* 16 + 1`
-		unit2=`expr $unit \* 16 + 2`
-		unit3=`expr $unit \* 16 + 3`
-		mknod rmt$unit c $chr $unit0
-		mknod nrmt$unit c $chr $unit1
-		mknod rmth$unit c $chr $unit2
-		mknod nrmth$unit c $chr $unit3
-		chmod 666 rmt$unit nrmt$unit rmth$unit nrmth$unit
+	[0-6])
+		rm -f rmt$unit nrmt$unit rmth$unit nrmth$unit
+		mknod rmt$unit c $chr   $(($unit * 16 + 0))
+		mknod nrmt$unit c $chr  $(($unit * 16 + 1))
+		mknod rmth$unit c $chr  $(($unit * 16 + 2))
+		mknod nrmth$unit c $chr $(($unit * 16 + 3))
+		chgrp operator rmt$unit nrmt$unit rmth$unit nrmth$unit
+		chmod 660 rmt$unit nrmt$unit rmth$unit nrmth$unit
 		;;
 	*)
-		echo bad unit for tape in: $1
+		echo bad unit for tape in: $i
 		;;
 	esac
-	umask 77
 	;;
 
 bpf*)
-	unit=`expr $i : 'bpf\(.*\)'`
+	unit=${i#bpf};
 	rm -f bpf$unit
 	mknod bpf$unit c 12 $unit
 	chmod 600 bpf$unit
@@ -110,7 +108,7 @@ bpf*)
 	;;
 
 tun*)
-#	unit=`expr $i : 'tun\(.*\)'`
+#	unit=${i#tun}
 #	rm -f tun$unit
 #	mknod tun$unit c 111 $unit
 #	chmod 600 tun$unit
@@ -125,33 +123,30 @@ lkm)
 	;;
 
 rz*|vnd*|ccd*)
-	umask 2 ; unit=`expr $i : '.*[dz]\(.*\)'`
 	case $i in
-	rz*) name=rz; blk=21; chr=56;;
-	vnd*) name=vnd; blk=2; chr=11;;
-	ccd*) name=ccd; blk=24; chr=87;;
+	rz*) name=rz;	unit=${i#rz};	blk=21; chr=56;;
+	vnd*) name=vnd;	unit=${i#vnd};	blk=2; chr=11;;
+	ccd*) name=ccd;	unit=${i#ccd};	blk=24; chr=87;;
 	esac
 	case $unit in
-	0|1|2|3|4|5|6)
-		mknod ${name}${unit}c	b $blk `expr $unit '*' 8 + 2`
-		mknod r${name}${unit}c	c $chr `expr $unit '*' 8 + 2`
-		if [ $name != vnd ]
-		then
-		mknod ${name}${unit}a	b $blk `expr $unit '*' 8 + 0`
-		mknod ${name}${unit}b	b $blk `expr $unit '*' 8 + 1`
-		mknod ${name}${unit}d	b $blk `expr $unit '*' 8 + 3`
-		mknod ${name}${unit}e	b $blk `expr $unit '*' 8 + 4`
-		mknod ${name}${unit}f	b $blk `expr $unit '*' 8 + 5`
-		mknod ${name}${unit}g	b $blk `expr $unit '*' 8 + 6`
-		mknod ${name}${unit}h	b $blk `expr $unit '*' 8 + 7`
-		mknod r${name}${unit}a	c $chr `expr $unit '*' 8 + 0`
-		mknod r${name}${unit}b	c $chr `expr $unit '*' 8 + 1`
-		mknod r${name}${unit}d	c $chr `expr $unit '*' 8 + 3`
-		mknod r${name}${unit}e	c $chr `expr $unit '*' 8 + 4`
-		mknod r${name}${unit}f	c $chr `expr $unit '*' 8 + 5`
-		mknod r${name}${unit}g	c $chr `expr $unit '*' 8 + 6`
-		mknod r${name}${unit}h	c $chr `expr $unit '*' 8 + 7`
-		fi
+	[0-6])
+		rm -f ${name}${unit}[a-h] r${name}${unit}[a-h]
+		mknod ${name}${unit}a	b $blk $(($unit * 8 + 0))
+		mknod ${name}${unit}b	b $blk $(($unit * 8 + 1))
+		mknod ${name}${unit}c	b $blk $(($unit * 8 + 2))
+		mknod ${name}${unit}d	b $blk $(($unit * 8 + 3))
+		mknod ${name}${unit}e	b $blk $(($unit * 8 + 4))
+		mknod ${name}${unit}f	b $blk $(($unit * 8 + 5))
+		mknod ${name}${unit}g	b $blk $(($unit * 8 + 6))
+		mknod ${name}${unit}h	b $blk $(($unit * 8 + 7))
+		mknod r${name}${unit}a	c $chr $(($unit * 8 + 0))
+		mknod r${name}${unit}b	c $chr $(($unit * 8 + 1))
+		mknod r${name}${unit}c	c $chr $(($unit * 8 + 2))
+		mknod r${name}${unit}d	c $chr $(($unit * 8 + 3))
+		mknod r${name}${unit}e	c $chr $(($unit * 8 + 4))
+		mknod r${name}${unit}f	c $chr $(($unit * 8 + 5))
+		mknod r${name}${unit}g	c $chr $(($unit * 8 + 6))
+		mknod r${name}${unit}h	c $chr $(($unit * 8 + 7))
 		chgrp operator ${name}${unit}[a-h] r${name}${unit}[a-h]
 		chmod 640 ${name}${unit}[a-h] r${name}${unit}[a-h]
 		;;
@@ -159,94 +154,56 @@ rz*|vnd*|ccd*)
 		echo bad unit for disk in: $i
 		;;
 	esac
-	umask 77
 	;;
 
-dc*)
-	unit=`expr $i : 'dc\(.*\)'`
-	case $unit in
-	0)
-		mknod tty00 c 16 2
-		mknod tty01 c 16 3
-		;;
-	*)
-		echo bad unit for dc in: $i
-		;;
+dc*|scc*)
+	case $i in
+	dc*)	name=dc;	unit=${i#dc};	chr=16;;
+	scc*)	name=scc;	unit=${i#scc};	chr=17;;
 	esac
-	;;
-
-scc*)
-	unit=`expr $i : 'scc\(.*\)'`
 	case $unit in
 	0)
-		mknod tty00 c 17 2
-		mknod tty01 c 17 3
+		rm -f tty00 tty01
+		mknod tty00 c $chr 2
+		mknod tty01 c $chr 3
 		;;
 	*)
-		echo bad unit for scc in: $i
+		echo bad unit for $name in: $i
 		;;
 	esac
 	;;
 
 fb*)
-	unit=`expr $i : 'fb\(.*\)'`
-	mknod fb$unit c 86 $unit ; chmod 666 fb$unit
+	unit=${i#fb}
+	rm -f fb$unit
+	mknod fb$unit c 86 $unit
+	chmod 666 fb$unit
 	;;
 
 # NOTE:
 # framebuffer-specific devices pm*, cfb*, xfb*, sfb* ,mfb* are not 
 # supported in 1.2.  Use the generic fb device intsead.
 #
-pm*)
-	unit=`expr $i : 'pm\(.*\)'`
-	case $unit in
-	0)
-		mknod pm0 c 8 0
-		;;
-	*)
-		echo bad unit for pm in: $i
-		;;
+pm*|cfb*|xcfb*|mfb*)
+	case $i in
+	pm*)	name=pm;	unit=$i{#pm};	chr=8;;
+	cfb*)	name=cfb;	unit=$i{#cfb};	chr=13;;
+	xcfb*)	name=xcfb;	unit=$i{#xcfb};	chr=14;;
+	mfb*)	name=mfb;	unit=$i{#mfb};	chr=18;;
 	esac
-	;;
-
-cfb*)
-	unit=`expr $i : 'cfb\(.*\)'`
 	case $unit in
 	0)
-		mknod cfb0 c 13 0
+		rm -f $name$unit
+		mknod $name$unit c $chr 0
 		;;
 	*)
-		echo bad unit for cfb in: $i
-		;;
-	esac
-	;;
-
-xcfb*)
-	unit=`expr $i : 'xcfb\(.*\)'`
-	case $unit in
-	0)
-		mknod xcfb0 c 14 0
-		;;
-	*)
-		echo bad unit for xcfb in: $i
-		;;
-	esac
-	;;
-
-mfb*)
-	unit=`expr $i : 'mfb\(.*\)'`
-	case $unit in
-	0)
-		mknod mfb0 c 18 0
-		;;
-	*)
-		echo bad unit for mfb in: $i
+		echo bad unit for $name in: $i
 		;;
 	esac
 	;;
 
 pty*)
-	class=`expr $i : 'pty\(.*\)'`
+	class=${i#pty}
 	case $class in
 	0)      name=p;;
 	1)      name=q;;
@@ -254,9 +211,7 @@ pty*)
 	3)      name=s;;
 	4)      name=t;;
 	5)      name=u;;
-	6)      name=v
-		echo "$0: $i: pty unit conflicts with another use."
-		continue;;
+	6)      name=v;;
 	7)      name=w;;
 	8)      name=x;;
 	9)      name=y;;
@@ -287,13 +242,9 @@ pty*)
 	done
         chgrp wheel tty$name? pty$name?
         chmod 666 tty$name? pty$name?
-	if [ $class = 1 ]; then
-		mv ttyqf ttyv0; mv ptyqf ptyv0
-	fi
 	;;
 
 ipl)
-	umask 0
 	rm -f ipl ipnat ipstate ipauth
 	mknod ipl c 91 0
 	mknod ipnat c 91 1
@@ -305,11 +256,13 @@ ipl)
 
 local)
 	umask 0
-	sh MAKEDEV.local all
+	sh $0.local all
+	umask 77
 	;;
 
 *)
 	echo $i: unknown device
 	;;
+
 esac
 done
