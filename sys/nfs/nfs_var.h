@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_var.h,v 1.17 2000/04/15 21:14:52 tsarna Exp $	*/
+/*	$NetBSD: nfs_var.h,v 1.17.4.1 2000/12/14 23:37:15 he Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -109,10 +109,9 @@ int nfs_sillyrename __P((struct vnode *, struct vnode *,
 			 struct componentname *));
 int nfs_lookitup __P((struct vnode *, const char *, int, struct ucred *,
 		      struct proc *, struct nfsnode **));
-int nfs_commit __P((struct vnode *, u_quad_t, int, struct ucred *,
+int nfs_commit __P((struct vnode *, u_quad_t, unsigned, struct ucred *,
 		    struct proc *));
 int nfs_flush __P((struct vnode *, struct ucred *, int, struct proc *, int));
-int nfs_writebp __P((struct buf *, int));
 
 /* nfs_nqlease.c */
 void nqnfs_lease_updatetime __P((int));
@@ -265,7 +264,16 @@ int nfsrv_setpublicfs __P((struct mount *, struct netexport *,
 			   struct export_args *));
 int nfs_ispublicfh __P((fhandle_t *));
 int netaddr_match __P((int, union nethostaddr *, struct mbuf *));
+
 void nfs_clearcommit __P((struct mount *));
+void nfs_merge_commit_ranges __P((struct vnode *));
+int nfs_in_committed_range __P((struct vnode *, struct buf *));
+int nfs_in_tobecommitted_range __P((struct vnode *, struct buf *));
+void nfs_add_committed_range __P((struct vnode *, struct buf *));
+void nfs_del_committed_range __P((struct vnode *, struct buf *));
+void nfs_add_tobecommitted_range __P((struct vnode *, struct buf *));
+void nfs_del_tobecommitted_range __P((struct vnode *, struct buf *));
+
 int nfsrv_errmap __P((struct nfsrv_descript *, int));
 void nfsrvw_sort __P((gid_t *, int));
 void nfsrv_setcred __P((struct ucred *, struct ucred *));
