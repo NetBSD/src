@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.41 1998/08/03 01:49:25 lukem Exp $	*/
+/*	$NetBSD: cmds.c,v 1.42 1998/08/08 02:51:49 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: cmds.c,v 1.41 1998/08/03 01:49:25 lukem Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.42 1998/08/08 02:51:49 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -92,6 +92,7 @@ __RCSID("$NetBSD: cmds.c,v 1.41 1998/08/03 01:49:25 lukem Exp $");
 #include <signal.h>
 #include <err.h>
 #include <glob.h>
+#include <limits.h>
 #include <netdb.h>
 #include <stdio.h>
 #include <stdlib.h>
