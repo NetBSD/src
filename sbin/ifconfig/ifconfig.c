@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.76 2000/04/03 03:54:42 enami Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.77 2000/04/13 07:16:54 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.76 2000/04/03 03:54:42 enami Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.77 2000/04/13 07:16:54 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -260,7 +260,6 @@ int	getinfo __P((struct ifreq *));
 int	carrier __P((void));
 void	getsock __P((int));
 void	printall __P((void));
-void	printalias __P((const char *, int));
 void 	printb __P((char *, unsigned short, char *));
 int	prefix __P((void *, int));
 void 	status __P((const u_int8_t *, int));
@@ -613,55 +612,6 @@ getinfo(ifr)
 }
 
 void
-printalias(iname, af)
-	const char *iname;
-	int af;
-{
-	char inbuf[8192];
-	struct ifconf ifc;
-	struct ifreq *ifr;
-	int i, siz;
-	char ifrbuf[8192], *cp;
-
-	ifc.ifc_len = sizeof(inbuf);
-	ifc.ifc_buf = inbuf;
-	getsock(af);
-	if (s < 0)
-		err(1, "socket");
-	if (ioctl(s, SIOCGIFCONF, &ifc) < 0)
-		err(1, "SIOCGIFCONF");
-	for (i = 0; i < ifc.ifc_len; ) {
-		/* Copy the mininum ifreq into the buffer. */
-		cp = ((caddr_t)ifc.ifc_req + i);
-		memcpy(ifrbuf, cp, sizeof(*ifr));
-
-		/* Now compute the actual size of the ifreq. */
-		ifr = (struct ifreq *)ifrbuf;
-		siz = ifr->ifr_addr.sa_len;
-		if (siz < sizeof(ifr->ifr_addr))
-			siz = sizeof(ifr->ifr_addr);
-		siz += sizeof(ifr->ifr_name);
-		i += siz;
-
-		/* Now copy the whole thing. */
-		if (sizeof(ifrbuf) < siz)
-			errx(1, "ifr too big");
-		memcpy(ifrbuf, cp, siz);
-
-		if (!strncmp(iname, ifr->ifr_name, sizeof(ifr->ifr_name))) {
-			if (ifr->ifr_addr.sa_family == af)
-				switch (af) {
-				case AF_INET:
-					in_alias(ifr);
-					break;
-				default:
-					/*none*/
-				}
-		}
-	}
-}
-
-void
 printall()
 {
 	char inbuf[8192];
@@ -700,11 +650,8 @@ printall()
 		if (ifr->ifr_addr.sa_family == AF_LINK)
 			sdl = (const struct sockaddr_dl *) &ifr->ifr_addr;
 		if (!strncmp(ifreq.ifr_name, ifr->ifr_name,
-			     sizeof(ifr->ifr_name))) {
-			if (Aflag && ifr->ifr_addr.sa_family == AF_INET)
-				in_alias(ifr);
+			     sizeof(ifr->ifr_name)))
 			continue;
-		}
 		(void) strncpy(name, ifr->ifr_name, sizeof(ifr->ifr_name));
 		ifreq = *ifr;
 
@@ -1409,13 +1356,9 @@ status(ap, alen)
  proto_status:
 	if ((p = afp) != NULL) {
 		(*p->af_status)(1);
-		if (Aflag & !aflag)
-			printalias(name, p->af_af);
 	} else for (p = afs; p->af_name; p++) {
 		ifr.ifr_addr.sa_family = p->af_af;
 		(*p->af_status)(0);
-		if (Aflag & !aflag && p->af_af == AF_INET)
-			printalias(name, p->af_af);
 	}
 }
 
@@ -1424,9 +1367,12 @@ in_alias(creq)
 	struct ifreq *creq;
 {
 	struct sockaddr_in *sin;
+	int alias;
 
 	if (lflag)
 		return;
+
+	alias = 1;
 
 	/* Get the non-alias address for this interface. */
 	getsock(AF_INET);
@@ -1446,6 +1392,9 @@ in_alias(creq)
 	/* If creq and ifr are the same address, this is not an alias. */
 	if (memcmp(&ifr.ifr_addr, &creq->ifr_addr,
 		   sizeof(creq->ifr_addr)) == 0)
+		alias = 0;
+	/* we print aliases only with -A */
+	if (alias && !Aflag)
 		return;
 	(void) memset(&addreq, 0, sizeof(addreq));
 	(void) strncpy(addreq.ifra_name, name, sizeof(addreq.ifra_name));
@@ -1458,7 +1407,7 @@ in_alias(creq)
 	}
 
 	sin = (struct sockaddr_in *)&addreq.ifra_addr;
-	printf("\tinet alias %s", inet_ntoa(sin->sin_addr));
+	printf("\tinet %s%s", alias ? "alias " : "", inet_ntoa(sin->sin_addr));
 
 	if (flags & IFF_POINTOPOINT) {
 		sin = (struct sockaddr_in *)&addreq.ifra_dstaddr;
@@ -1479,62 +1428,42 @@ void
 in_status(force)
 	int force;
 {
-	struct sockaddr_in *sin;
+	char inbuf[8192];
+	struct ifconf ifc;
+	struct ifreq *ifr;
+	int i, siz;
+	char ifrbuf[8192], *cp;
 
-	getsock(AF_INET);
-	if (s < 0) {
-		if (errno == EPROTONOSUPPORT)
-			return;
+	ifc.ifc_len = sizeof(inbuf);
+	ifc.ifc_buf = inbuf;
+	getsock(af);
+	if (s < 0)
 		err(1, "socket");
-	}
-	(void) memset(&ifr, 0, sizeof(ifr));
-	(void) strncpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
-	if (ioctl(s, SIOCGIFADDR, (caddr_t)&ifr) < 0) {
-		if (errno == EADDRNOTAVAIL || errno == EAFNOSUPPORT) {
-			if (!force)
-				return;
-			(void) memset(&ifr.ifr_addr, 0, sizeof(ifr.ifr_addr));
-		} else
-			warn("SIOCGIFADDR");
-	}
-	(void) strncpy(ifr.ifr_name, name, sizeof (ifr.ifr_name));
-	sin = (struct sockaddr_in *)&ifr.ifr_addr;
-	printf("\tinet %s ", inet_ntoa(sin->sin_addr));
-	(void) strncpy(ifr.ifr_name, name, sizeof (ifr.ifr_name));
-	if (ioctl(s, SIOCGIFNETMASK, (caddr_t)&ifr) < 0) {
-		if (errno != EADDRNOTAVAIL)
-			warn("SIOCGIFNETMASK");
-		(void) memset(&ifr.ifr_addr, 0, sizeof(ifr.ifr_addr));
-	} else
-		netmask.sin_addr =
-		    ((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr;
-	if (flags & IFF_POINTOPOINT) {
-		if (ioctl(s, SIOCGIFDSTADDR, (caddr_t)&ifr) < 0) {
-			if (errno == EADDRNOTAVAIL)
-			    (void) memset(&ifr.ifr_addr, 0,
-				sizeof(ifr.ifr_addr));
-			else
-			    warn("SIOCGIFDSTADDR");
+	if (ioctl(s, SIOCGIFCONF, &ifc) < 0)
+		err(1, "SIOCGIFCONF");
+	for (i = 0; i < ifc.ifc_len; ) {
+		/* Copy the mininum ifreq into the buffer. */ 
+		cp = ((caddr_t)ifc.ifc_req + i);
+		memcpy(ifrbuf, cp, sizeof(*ifr));
+
+		/* Now compute the actual size of the ifreq. */
+		ifr = (struct ifreq *)ifrbuf;
+		siz = ifr->ifr_addr.sa_len;
+		if (siz < sizeof(ifr->ifr_addr))
+			siz = sizeof(ifr->ifr_addr);
+		siz += sizeof(ifr->ifr_name);
+		i += siz;
+
+		/* Now copy the whole thing. */
+		if (sizeof(ifrbuf) < siz)
+			errx(1, "ifr too big");
+		memcpy(ifrbuf, cp, siz);
+
+		if (!strncmp(name, ifr->ifr_name, sizeof(ifr->ifr_name))) {
+			if (ifr->ifr_addr.sa_family == AF_INET)
+				in_alias(ifr);
 		}
-		(void) strncpy(ifr.ifr_name, name, sizeof (ifr.ifr_name));
-		sin = (struct sockaddr_in *)&ifr.ifr_dstaddr;
-		printf("--> %s ", inet_ntoa(sin->sin_addr));
 	}
-	printf("netmask 0x%x ", ntohl(netmask.sin_addr.s_addr));
-	if (flags & IFF_BROADCAST) {
-		if (ioctl(s, SIOCGIFBRDADDR, (caddr_t)&ifr) < 0) {
-			if (errno == EADDRNOTAVAIL)
-				(void) memset(&ifr.ifr_addr, 0,
-				    sizeof(ifr.ifr_addr));
-			else
-			    warn("SIOCGIFBRDADDR");
-		}
-		(void) strncpy(ifr.ifr_name, name, sizeof (ifr.ifr_name));
-		sin = (struct sockaddr_in *)&ifr.ifr_addr;
-		if (sin->sin_addr.s_addr != 0)
-			printf("broadcast %s", inet_ntoa(sin->sin_addr));
-	}
-	putchar('\n');
 }
 
 void
