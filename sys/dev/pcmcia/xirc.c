@@ -1,4 +1,4 @@
-/*	$NetBSD: xirc.c,v 1.7 2004/08/09 19:34:00 mycroft Exp $	*/
+/*	$NetBSD: xirc.c,v 1.8 2004/08/09 22:24:37 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xirc.c,v 1.7 2004/08/09 19:34:00 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xirc.c,v 1.8 2004/08/09 22:24:37 mycroft Exp $");
 
 #include "opt_inet.h" 
 #include "opt_ns.h"
@@ -329,12 +329,16 @@ xirc_mako_alloc(sc)
 		    &sc->sc_modem_pcioh))
 			continue;
 
-		if (pcmcia_io_alloc(sc->sc_pf, cfe->iospace[0].start+8,
-		    XI_IOSIZE+2, XI_IOSIZE, &sc->sc_ethernet_pcioh) &&
-		    pcmcia_io_alloc(sc->sc_pf, cfe->iospace[0].start-24,
-		    XI_IOSIZE+2, XI_IOSIZE, &sc->sc_ethernet_pcioh)) {
-			pcmcia_io_free(sc->sc_pf, &sc->sc_modem_pcioh);
-			continue;
+		cfe->iospace[1].start = cfe->iospace[0].start+8;
+		cfe->iospace[1].length = 18;
+		if (pcmcia_io_alloc(sc->sc_pf, cfe->iospace[1].start,
+		    cfe->iospace[1].length, 0x20,
+		    &sc->sc_ethernet_pcioh)) {
+			cfe->iospace[1].start = cfe->iospace[0].start-24;
+			if (pcmcia_io_alloc(sc->sc_pf, cfe->iospace[1].start,
+			    cfe->iospace[1].length, 0x20,
+			    &sc->sc_ethernet_pcioh))
+				continue;
 		}
 
 		/* Found one! */
