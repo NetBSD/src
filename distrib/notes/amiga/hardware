@@ -1,4 +1,4 @@
-	$NetBSD: hardware,v 1.21 1998/01/09 18:45:43 perry Exp $	
+	$NetBSD: hardware,v 1.22 1998/02/11 17:23:16 is Exp $	
 
 NetBSD/amiga _VER runs on any Amiga that has a 68020 or better CPU with
 some form of MMU, and on 68060 DraCos.
@@ -62,7 +62,7 @@ Supported devices include:
 		Hydra Ethernet
 		ASDG Ethernet
 		A4066 Ethernet
-		Ariadne Ethernet
+		Ariadne Ethernet *****)
 		Quicknet Ethernet
 	ARCnet controllers:
 		A2060 ARCnet
@@ -113,3 +113,6 @@ Known problems with some hardware:
 	anything due to the buffer cache. Also note that HD floppy
 	drives only get detected as such if a HD floppy is inserted at
 	boot time.
+
+	*****) There are some people whose NetBSD-1.3 system crashes when
+	using the Ariadne for some time. Others claim it runs stable.
