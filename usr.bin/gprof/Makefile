@@ -14,7 +14,7 @@ beforeinstall:
         else \
                 true ; \
         fi
-	install -c -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
+	install -c -o ${BINOWN} -g ${BINGRP} -m 444 \
 	    ${.CURDIR}/gprof.flat ${.CURDIR}/gprof.callg \
 	    ${DESTDIR}/usr/share/misc
 
