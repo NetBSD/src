@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 1997/10/24 09:00:47 lukem Exp $
+#	$NetBSD: Makefile,v 1.18.2.1 2000/10/19 16:31:47 he Exp $
 #	@(#)Makefile	5.2 (Berkeley) 12/28/90
 
 CPPFLAGS+= -I${.CURDIR}
@@ -11,7 +11,7 @@ SRCS+=	lstAppend.c lstAtEnd.c lstAtFront.c lstClose.c lstConcat.c \
 	lstInit.c lstInsert.c lstIsAtEnd.c lstIsEmpty.c lstLast.c \
 	lstMember.c lstNext.c lstOpen.c lstRemove.c lstReplace.c lstSucc.c
 .PATH:	${.CURDIR}/lst.lib
-
+WFORMAT= 1
 .if make(install)
 SUBDIR=	PSD.doc
 .endif
