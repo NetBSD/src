@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.2 1999/03/09 13:23:08 mrg Exp $
+/*	$NetBSD: namespace.h,v 1.2.2.1 1999/12/04 17:10:57 he Exp $
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -64,5 +64,8 @@
 #define res_querydomain		bind_res_querydomain
 #define res_query		bind_res_query
 #define res_search		bind_res_search
+#define res_state		bind_res_state
+#define _res			bind__res
+#define _res_opcodes		bind__res_opcodes
 
 #endif /* _NAMESPACE_H_ */
