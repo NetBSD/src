@@ -1,6 +1,6 @@
 /* RCS compile-time configuration */
 
-	/* $Id: conf.h,v 1.7 1995/02/24 02:08:00 mycroft Exp $ */
+	/* $Id: conf.h,v 1.8 1995/02/24 02:44:22 mycroft Exp $ */
 
 /*
  * This file is generated automatically.
@@ -224,10 +224,10 @@ typedef void *malloc_type; /* type returned by malloc() */
 /* Do struct stat s and t describe the same file?  Answer d if unknown.  */
 #define same_file(s,t,d) ((s).st_ino==(t).st_ino && (s).st_dev==(t).st_dev)
 #define has_utimbuf 1 /* Does struct utimbuf work?  */
-#define CO "/usr/local/bin/co" /* name of 'co' program */
+#define CO "/usr/bin/co" /* name of 'co' program */
 #define COMPAT2 0 /* Are version 2 files supported?  */
-#define DIFF "/usr/local/bin/diff" /* name of 'diff' program */
-#define DIFF3 "/usr/local/bin/diff3" /* name of 'diff3' program */
+#define DIFF "/usr/bin/diff" /* name of 'diff' program */
+#define DIFF3 "/usr/bin/diff3" /* name of 'diff3' program */
 #define DIFF3_A 1 /* Does diff3 -A work?  */
 #define DIFF3_BIN 1 /* Is diff3 user-visible (not the /usr/lib auxiliary)?  */
 #define DIFF_FLAGS , "-an" /* Make diff output suitable for RCS.  */
@@ -236,7 +236,7 @@ typedef void *malloc_type; /* type returned by malloc() */
 #define DIFF_FAILURE 1 /* DIFF status if differences are found */
 #define DIFF_TROUBLE 2 /* DIFF status if trouble */
 #define ED "/bin/ed" /* name of 'ed' program (used only if !DIFF3_BIN) */
-#define MERGE "/usr/local/bin/merge" /* name of 'merge' program */
+#define MERGE "/usr/bin/merge" /* name of 'merge' program */
 #define TMPDIR "/tmp" /* default directory for temporary files */
 #define SLASH '/' /* principal filename separator */
 #define SLASHes '/' /* `case SLASHes:' labels all filename separators */
