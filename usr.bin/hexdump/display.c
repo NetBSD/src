@@ -1,4 +1,4 @@
-/*	$NetBSD: display.c,v 1.4 1997/01/09 20:19:52 tls Exp $	*/
+/*	$NetBSD: display.c,v 1.5 1997/07/11 06:28:27 mikel Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -34,18 +34,21 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)display.c	5.11 (Berkeley) 3/9/91";*/
-static char rcsid[] = "$NetBSD: display.c,v 1.4 1997/01/09 20:19:52 tls Exp $";
+#if 0
+static char sccsid[] = "from: @(#)display.c	5.11 (Berkeley) 3/9/91";
+#else
+static char rcsid[] = "$NetBSD: display.c,v 1.5 1997/07/11 06:28:27 mikel Exp $";
+#endif
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/stat.h>
-#include <unistd.h>
-#include <errno.h>
 #include <ctype.h>
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include "hexdump.h"
 
 enum _vflag vflag = FIRST;
@@ -134,18 +137,18 @@ static off_t savaddress;		/* saved address/offset in stream */
 	} \
 }
 
+void
 display()
 {
-	extern FU *endfu;
 	register FS *fs;
 	register FU *fu;
 	register PR *pr;
 	register int cnt;
 	register u_char *bp;
 	off_t saveaddress;
-	u_char savech, *savebp, *get();
+	u_char savech, *savebp;
 
-	while (bp = get())
+	while ((bp = get()) != NULL)
 	    for (fs = fshead, savebp = bp, saveaddress = address; fs;
 		fs = fs->nextfs, bp = savebp, address = saveaddress)
 		    for (fu = fs->nextfu; fu; fu = fu->nextfu) {
@@ -188,10 +191,11 @@ display()
 	}
 }
 
+void
 bpad(pr)
 	PR *pr;
 {
-	static char *spec = " -0+#";
+	static const char *spec = " -0+#";
 	register char *p1, *p2;
 
 	/*
@@ -201,8 +205,8 @@ bpad(pr)
 	pr->flags = F_BPAD;
 	*pr->cchar = 's';
 	for (p1 = pr->fmt; *p1 != '%'; ++p1);
-	for (p2 = ++p1; *p1 && index(spec, *p1); ++p1);
-	while (*p2++ = *p1++);
+	for (p2 = ++p1; *p1 && strchr(spec, *p1); ++p1);
+	while ((*p2++ = *p1++) != '\0');
 }
 
 static char **_argv;
@@ -210,8 +214,6 @@ static char **_argv;
 u_char *
 get()
 {
-	extern enum _vflag vflag;
-	extern int length;
 	static int ateof = 1;
 	static u_char *curp, *savp;
 	register int n;
@@ -233,13 +235,13 @@ get()
 		 * and no other files are available, zero-pad the rest of the
 		 * block and set the end flag.
 		 */
-		if (!length || ateof && !next((char **)NULL)) {
+		if (!length || (ateof && !next(NULL))) {
 			if (need == blocksize)
-				return((u_char *)NULL);
+				return(NULL);
 			if (vflag != ALL && !bcmp(curp, savp, nread)) {
 				if (vflag != DUP)
 					(void)printf("*\n");
-				return((u_char *)NULL);
+				return(NULL);
 			}
 			bzero((char *)curp + nread, need);
 			eaddress = address + nread;
@@ -276,12 +278,10 @@ get()
 	}
 }
 
-extern off_t skip;			/* bytes to skip */
-
+int
 next(argv)
 	char **argv;
 {
-	extern int exitval;
 	static int done;
 	int statok;
 
@@ -314,6 +314,7 @@ next(argv)
 	/* NOTREACHED */
 }
 
+void
 doskip(fname, statok)
 	char *fname;
 	int statok;
@@ -353,6 +354,7 @@ emalloc(size)
 	return(p);
 }
 
+void
 nomem()
 {
 	(void)fprintf(stderr, "hexdump: %s.\n", strerror(errno));
