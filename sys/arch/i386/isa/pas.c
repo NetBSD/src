@@ -1,4 +1,4 @@
-/*	$NetBSD: pas.c,v 1.1 1995/02/21 02:27:18 brezak Exp $	*/
+/*	$NetBSD: pas.c,v 1.2 1995/02/28 21:47:53 brezak Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: pas.c,v 1.1 1995/02/21 02:27:18 brezak Exp $
+ *	$Id: pas.c,v 1.2 1995/02/28 21:47:53 brezak Exp $
  */
 /*
  * Todo:
@@ -338,10 +338,10 @@ pasprobe(parent, self, aux)
                         printf("pas: sb emulation requires known irq\n");
                         return (0);
                 } 
-                irq = ffs(ia->ia_irq) - 1;
+                irq = ia->ia_irq;
                 pasconf(sc->model, ia->ia_iobase, irq, 1);
         } else {
-                DPRINTF(("sb: could not probe pas\n"));
+                DPRINTF(("pas: could not probe pas\n"));
                 return (0);
         }
 
@@ -358,7 +358,7 @@ pasprobe(parent, self, aux)
 	 * Cannot auto-discover DMA channel.
 	 */
 	if (!SB_DRQ_VALID(ia->ia_drq)) {
-		printf("sb: configured dma chan %d invalid\n", ia->ia_drq);
+		printf("pas: configured dma chan %d invalid\n", ia->ia_drq);
 		return 0;
 	}
 #ifdef NEWCONFIG
@@ -375,12 +375,12 @@ pasprobe(parent, self, aux)
 	} else
 #endif
 	if (!SB_IRQ_VALID(ia->ia_irq)) {
-		int irq = ffs(ia->ia_irq) - 1;
+		int irq = ia->ia_irq;
 		printf("pas: configured irq %d invalid\n", irq);
 		return 0;
 	}
 
-	sc->sc_sbdsp.sc_irq = ffs(ia->ia_irq) - 1;
+	sc->sc_sbdsp.sc_irq = ia->ia_irq;
 	sc->sc_sbdsp.sc_drq = ia->ia_drq;
 	
 	if (sbdsp_probe(&sc->sc_sbdsp) == 0) {
