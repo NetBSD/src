@@ -1,4 +1,4 @@
-/*	$NetBSD: fpsetround.c,v 1.2 2002/01/13 21:45:42 thorpej Exp $	*/
+/*	$NetBSD: fpsetround.c,v 1.3 2002/03/19 13:36:30 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -61,8 +61,7 @@ __weak_alias(fpsetround,_fpsetround)
  */
 
 fp_rnd
-fpsetround(rnd_dir)
-	fp_rnd rnd_dir;
+fpsetround(fp_rnd rnd_dir)
 {
 	fp_rnd old_rnd;
 
