@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_LAPTOP,v 1.90.2.5 2004/07/02 17:38:25 he Exp $
+#	$NetBSD: GENERIC_LAPTOP,v 1.90.2.6 2004/07/04 15:21:36 he Exp $
 #	From: NetBSD: GENERIC,v 1.414 2001/07/30 19:59:05 ad Exp
 #
 #	GENERIC_LAPTOP -- GENERIC with cardbus and some USB devices enabled
@@ -8,7 +8,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.90.2.5 $"
+#ident 		"GENERIC-$Revision: 1.90.2.6 $"
 
 maxusers	32		# estimated number of users
 
@@ -535,6 +535,7 @@ bge* 	at pci? dev ? function ?	# Broadcom 570x gigabit Ethernet
 ex*	at pci? dev ? function ?	# 3Com 90x[BC]
 fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
 ne* 	at pci? dev ? function ?	# NE2000-compatible Ethernet
+re*	at pci? dev ? function ?	# Realtek 8139C+/8169/8169S/8110S
 rtk* 	at pci? dev ? function ?	# Realtek 8129/8139
 tlp*	at pci? dev ? function ?	# DECchip 21x4x and clones
 wm*	at pci? dev ? function ?	# Intel 8254x gigabit
