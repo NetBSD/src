@@ -1,4 +1,6 @@
-#	$NetBSD: tc.shl,v 1.9 2004/12/12 14:31:45 he Exp $
+#	$NetBSD: tc.shl,v 1.10 2004/12/13 07:19:17 he Exp $
+./usr/lib/libbfd.so.6				comp-obsolete	obsolete
+./usr/lib/libbfd.so.6.0				comp-obsolete	obsolete
 ./usr/lib/libbfd.so.7				comp-c-shlib		bfd
 ./usr/lib/libbfd.so.7.0				comp-c-shlib		bfd
 ./usr/lib/libg2c_pic.a				comp-fortran-lib
