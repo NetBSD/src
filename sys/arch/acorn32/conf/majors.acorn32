@@ -1,4 +1,4 @@
-#	$NetBSD: majors.acorn32,v 1.14 2003/12/10 02:04:00 jmc Exp $
+#	$NetBSD: majors.acorn32,v 1.15 2004/01/25 13:46:59 bjh21 Exp $
 #
 # Device majors for acorn32
 #
@@ -13,7 +13,7 @@ device-major	ptc		char 6			pty
 device-major	pts		char 7			pty
 device-major	lpt		char 8			lpt
 device-major	qms		char 9			qms
-device-major	beep		char 10			beep
+
 device-major	kbd		char 11			kbd
 device-major	com		char 12			com
 

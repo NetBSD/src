@@ -1,4 +1,4 @@
-#	$NetBSD: LOWMEM_WSCONS,v 1.20 2004/01/17 21:49:24 bjh21 Exp $
+#	$NetBSD: LOWMEM_WSCONS,v 1.21 2004/01/25 13:46:59 bjh21 Exp $
 #
 #	LOWMEM_WSCONS -- RiscPC config with wscons for SMALL machines
 #
@@ -228,9 +228,6 @@ com*	at pioc? offset 0x03f8 irq 10
 lpt*	at pioc? offset 0x0278 irq 0
 #lpt*	at pioc? offset 0x0378 irq -1
 #lpt*	at pioc? offset 0x03bc irq -1
-
-# Crude sound device
-beep0	at vidc?
 
 # Audio device
 vidcaudio0	at vidc?

@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.18 2004/01/17 21:52:02 bjh21 Exp $
+#	$NetBSD: INSTALL,v 1.19 2004/01/25 13:46:59 bjh21 Exp $
 #
 #	INSTALL -- NetBSD/acorn32 install configuration
 #
@@ -22,7 +22,7 @@ include		"arch/acorn32/conf/std.acorn32"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"INSTALL-$Revision: 1.18 $"
+#ident		"INSTALL-$Revision: 1.19 $"
 
 # estimated number of users
 maxusers	32
@@ -251,9 +251,6 @@ com*	at pioc? offset 0x03f8 irq 10
 lpt*	at pioc? offset 0x0278 irq 0
 #lpt*	at pioc? offset 0x0378 irq -1
 #lpt*	at pioc? offset 0x03bc irq -1
-
-# Crude sound device
-beep0	at vidc?
 
 # Audio device
 vidcaudio0	at vidc?
