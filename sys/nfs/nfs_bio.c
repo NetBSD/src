@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.115 2004/01/10 14:52:53 yamt Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.116 2004/03/12 16:52:14 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.115 2004/01/10 14:52:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.116 2004/03/12 16:52:14 yamt Exp $");
 
 #include "opt_nfs.h"
 #include "opt_ddb.h"
@@ -142,7 +142,7 @@ nfs_bioread(vp, uio, ioflag, cred, cflag)
 				if (error)
 					return (error);
 			}
-			np->n_attrstamp = 0;
+			NFS_INVALIDATE_ATTRCACHE(np);
 			error = VOP_GETATTR(vp, &vattr, cred, p);
 			if (error)
 				return (error);
@@ -532,13 +532,13 @@ nfs_write(v)
 #endif
 	if (ioflag & (IO_APPEND | IO_SYNC)) {
 		if (np->n_flag & NMODIFIED) {
-			np->n_attrstamp = 0;
+			NFS_INVALIDATE_ATTRCACHE(np);
 			error = nfs_vinvalbuf(vp, V_SAVE, cred, p, 1);
 			if (error)
 				return (error);
 		}
 		if (ioflag & IO_APPEND) {
-			np->n_attrstamp = 0;
+			NFS_INVALIDATE_ATTRCACHE(np);
 			error = VOP_GETATTR(vp, &vattr, cred, p);
 			if (error)
 				return (error);
