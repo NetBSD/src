@@ -1,4 +1,4 @@
-/*	$NetBSD: dumpfs.c,v 1.24 2001/07/26 05:49:00 lukem Exp $	*/
+/*	$NetBSD: dumpfs.c,v 1.25 2001/08/14 01:02:03 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1992, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)dumpfs.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: dumpfs.c,v 1.24 2001/07/26 05:49:00 lukem Exp $");
+__RCSID("$NetBSD: dumpfs.c,v 1.25 2001/08/14 01:02:03 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -77,25 +77,28 @@ union {
 #define	acg	cgun.cg
 
 long	dev_bsize = 1;
-int needswap = 0;
+int	needswap = 0;
 
-int	dumpfs __P((const char *));
-int	dumpcg __P((const char *, int, int));
-int	main __P((int, char **));
-void	pbits __P((void *, int));
-void	usage __P((void));
-void swap_cg __P((struct cg *));
+int	dumpfs(const char *);
+int	dumpcg(const char *, int, int);
+int	main(int, char **);
+void	pbits(void *, int);
+void	usage(void);
+void	swap_cg(struct cg *);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	struct fstab *fs;
 	int ch, eval;
+	int Fflag;
 
-	while ((ch = getopt(argc, argv, "")) != -1)
+	Fflag = 0;
+	while ((ch = getopt(argc, argv, "F")) != -1)
 		switch(ch) {
+		case 'F':
+			Fflag = 1;
+			break;
 		case '?':
 		default:
 			usage();
@@ -107,7 +110,7 @@ main(argc, argv)
 		usage();
 
 	for (eval = 0; *argv; ++argv)
-		if ((fs = getfsfile(*argv)) == NULL)
+		if (Fflag || ((fs = getfsfile(*argv)) == NULL))
 			eval |= dumpfs(*argv);
 		else
 			eval |= dumpfs(fs->fs_spec);
@@ -115,8 +118,7 @@ main(argc, argv)
 }
 
 int
-dumpfs(name)
-	const char *name;
+dumpfs(const char *name)
 {
 	int fd, c, i, j, k, size;
 	time_t t;
@@ -133,7 +135,8 @@ dumpfs(name)
 			ffs_sb_swap(&afs, &afs, 0);
 			needswap = 1;
 		} else {
-			warnx("%s: superblock has bad magic number, skipped", name);
+			warnx("%s: superblock has bad magic number, skipped",
+			    name);
 			(void)close(fd);
  			return (1);
  		}
@@ -267,9 +270,7 @@ err:	if (fd != -1)
 };
 
 int
-dumpcg(name, fd, c)
-	const char *name;
-	int fd, c;
+dumpcg(const char *name, int fd, int c)
 {
 	off_t cur;
 	int i, j;
@@ -338,9 +339,7 @@ dumpcg(name, fd, c)
 };
 
 void
-pbits(vp, max)
-	void *vp;
-	int max;
+pbits(void *vp, int max)
 {
 	int i;
 	char *p;
@@ -362,16 +361,15 @@ pbits(vp, max)
 }
 
 void
-usage()
+usage(void)
 {
 
-	(void)fprintf(stderr, "usage: dumpfs filesys | device\n");
+	(void)fprintf(stderr, "usage: dumpfs [-F] filesys | device [...]\n");
 	exit(1);
 }
 
 void
-swap_cg(cg)
-	struct cg *cg;
+swap_cg(struct cg *cg)
 {
 	int i;
 	u_int32_t *n32;
