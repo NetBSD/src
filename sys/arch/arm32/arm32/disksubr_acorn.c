@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr_acorn.c,v 1.1 1998/06/08 20:21:17 mark Exp $	*/
+/*	$NetBSD: disksubr_acorn.c,v 1.2 1998/10/06 01:47:53 mark Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -289,7 +289,7 @@ filecore_label_locate(dev, strat, lp, osdep, cylp, netbsd_label_offp)
 	struct filecore_bootblock *bb;
 	int heads;
 	int sectors;
-	int rv = 1;
+	int rv;
 	int cyl, netbsdpartoff;
 	struct buf *bp;
 
@@ -318,6 +318,7 @@ filecore_label_locate(dev, strat, lp, osdep, cylp, netbsd_label_offp)
 	}
 
 	bb = (struct filecore_bootblock *)bp->b_data;
+	rv = 1;
 
 	/* Validate boot block */
        
