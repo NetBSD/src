@@ -1,4 +1,4 @@
-/*	$NetBSD: uba.c,v 1.36 1998/10/18 18:51:29 ragge Exp $	   */
+/*	$NetBSD: uba.c,v 1.37 1998/11/05 19:48:04 ragge Exp $	   */
 /*
  * Copyright (c) 1996 Jonathan Stone.
  * Copyright (c) 1994, 1996 Ludd, University of Lule}, Sweden.
@@ -257,7 +257,7 @@ ubaerror(uh, ipl, uvec)
 	int *ipl, *uvec;
 {
 	struct	uba_regs *uba = uh->uh_uba;
-	register sr, s;
+	register int sr, s;
 
 	if (*uvec == 0) {
 		/*

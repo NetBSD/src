@@ -1,4 +1,4 @@
-/*	$NetBSD: dz.c,v 1.12 1998/08/10 14:41:16 ragge Exp $	*/
+/*	$NetBSD: dz.c,v 1.13 1998/11/05 19:48:05 ragge Exp $	*/
 /*
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
  * Copyright (c) 1992, 1993
@@ -212,7 +212,7 @@ dzxint(cntlr)
 	register struct dz_softc *sc = dz_cd.cd_devs[cntlr];
 	register struct tty *tp;
 	register struct clist *cl;
-	register line, ch, csr;
+	register int line, ch, csr;
 	u_char tcr;
 
 	/*
