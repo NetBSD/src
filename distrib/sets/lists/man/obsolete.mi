@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.62 2003/04/18 15:01:23 wiz Exp $
+# $NetBSD: obsolete.mi,v 1.63 2003/04/27 15:29:06 wiz Exp $
 ./usr/share/info/g++FAQ.info
 ./usr/share/info/tar.info
 ./usr/share/man/cat1/amq.0
@@ -159,6 +159,8 @@
 ./usr/share/man/cat8/vmstat.0
 ./usr/share/man/cat8/walnut/MAKEDEV.0
 ./usr/share/man/cat8/walnut/makedev.0
+./usr/share/man/cat8/x86_64/MAKEDEV.0
+./usr/share/man/cat8/x86_64/makedev.0
 ./usr/share/man/cat8/xntpd.0
 ./usr/share/man/cat8/xntpdc.0
 ./usr/share/man/cat9/boot.0
@@ -319,6 +321,8 @@
 ./usr/share/man/man8/vmstat.8
 ./usr/share/man/man8/walnut/MAKEDEV.8
 ./usr/share/man/man8/walnut/makedev.8
+./usr/share/man/man8/x86_64/MAKEDEV.8
+./usr/share/man/man8/x86_64/makedev.8
 ./usr/share/man/man8/xntpd.8
 ./usr/share/man/man8/xntpdc.8
 ./usr/share/man/man9/boot.9
