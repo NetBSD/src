@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.42 1998/02/19 00:54:13 thorpej Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.43 1998/04/25 17:41:01 matt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -389,7 +389,7 @@ nfs_send(so, nam, top, rep)
 	else
 		flags = 0;
 
-	error = sosend(so, sendnam, (struct uio *)0, top,
+	error = (*so->so_send)(so, sendnam, (struct uio *)0, top,
 		(struct mbuf *)0, flags);
 	if (error) {
 		if (rep) {
@@ -509,7 +509,7 @@ tryagain:
 			auio.uio_procp = p;
 			do {
 			   rcvflg = MSG_WAITALL;
-			   error = soreceive(so, (struct mbuf **)0, &auio,
+			   error = (*so->so_receive)(so, (struct mbuf **)0, &auio,
 				(struct mbuf **)0, (struct mbuf **)0, &rcvflg);
 			   if (error == EWOULDBLOCK && rep) {
 				if (rep->r_flags & R_SOFTTERM)
@@ -549,7 +549,7 @@ tryagain:
 			auio.uio_resid = len;
 			do {
 			    rcvflg = MSG_WAITALL;
-			    error =  soreceive(so, (struct mbuf **)0,
+			    error =  (*so->so_receive)(so, (struct mbuf **)0,
 				&auio, mp, (struct mbuf **)0, &rcvflg);
 			} while (error == EWOULDBLOCK || error == EINTR ||
 				 error == ERESTART);
@@ -574,7 +574,7 @@ tryagain:
 			auio.uio_procp = p;
 			do {
 			    rcvflg = 0;
-			    error =  soreceive(so, (struct mbuf **)0,
+			    error =  (*so->so_receive)(so, (struct mbuf **)0,
 				&auio, mp, &control, &rcvflg);
 			    if (control)
 				m_freem(control);
@@ -618,7 +618,7 @@ errout:
 		auio.uio_procp = p;
 		do {
 			rcvflg = 0;
-			error =  soreceive(so, getnam, &auio, mp,
+			error =  (*so->so_receive)(so, getnam, &auio, mp,
 				(struct mbuf **)0, &rcvflg);
 			if (error == EWOULDBLOCK &&
 			    (rep->r_flags & R_SOFTTERM))
@@ -1839,7 +1839,7 @@ nfsrv_rcv(so, arg, waitflag)
 		 */
 		auio.uio_resid = 1000000000;
 		flags = MSG_DONTWAIT;
-		error = soreceive(so, &nam, &auio, &mp, (struct mbuf **)0, &flags);
+		error = (*so->so_receive)(so, &nam, &auio, &mp, (struct mbuf **)0, &flags);
 		if (error || mp == (struct mbuf *)0) {
 			if (error == EWOULDBLOCK)
 				slp->ns_flag |= SLP_NEEDQ;
@@ -1873,7 +1873,7 @@ nfsrv_rcv(so, arg, waitflag)
 		do {
 			auio.uio_resid = 1000000000;
 			flags = MSG_DONTWAIT;
-			error = soreceive(so, &nam, &auio, &mp,
+			error = (*so->so_receive)(so, &nam, &auio, &mp,
 						(struct mbuf **)0, &flags);
 			if (mp) {
 				if (nam) {

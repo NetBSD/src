@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.28 1998/02/19 00:54:13 thorpej Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.29 1998/04/25 17:41:01 matt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -443,6 +443,7 @@ nfssvc_addsock(fp, mynam)
 	s = splsoftnet();
 	so->so_upcallarg = (caddr_t)slp;
 	so->so_upcall = nfsrv_rcv;
+	so->so_rcv.sb_flags |= SB_UPCALL;
 	slp->ns_flag = (SLP_VALID | SLP_NEEDQ);
 	nfsrv_wakenfsd(slp);
 	splx(s);
@@ -755,6 +756,8 @@ nfsrv_zapsock(slp)
 		slp->ns_fp = (struct file *)0;
 		so = slp->ns_so;
 		so->so_upcall = NULL;
+		so->so_upcallarg = NULL;
+		so->so_rcv.sb_flags &= ~SB_UPCALL;
 		soshutdown(so, 2);
 		closef(fp, (struct proc *)0);
 		if (slp->ns_nam)
