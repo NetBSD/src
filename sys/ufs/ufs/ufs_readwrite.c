@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ufs_readwrite.c	8.7 (Berkeley) 1/21/94
- *	$Id: ufs_readwrite.c,v 1.1 1994/06/08 11:43:21 mycroft Exp $
+ *	$Id: ufs_readwrite.c,v 1.2 1994/06/14 22:56:33 mycroft Exp $
  */
 
 #ifdef LFS_READWRITE
@@ -88,7 +88,8 @@ READ(ap)
 
 	if (vp->v_type == VLNK) {
 		if ((int)ip->i_size < vp->v_mount->mnt_maxsymlinklen ||
-		    OLDFASTLINK(&ip->i_din))
+		    (vp->v_mount->mnt_maxsymlinklen == 0 &&
+		     ip->i_din.di_blocks == 0))
 			panic("%s: short symlink", READ_S);
 	} else if (vp->v_type != VREG && vp->v_type != VDIR)
 		panic("%s: type %d", READ_S, vp->v_type);

@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ufs_vnops.c	8.10 (Berkeley) 4/1/94
- *	$Id: ufs_vnops.c,v 1.1 1994/06/08 11:43:24 mycroft Exp $
+ *	$Id: ufs_vnops.c,v 1.2 1994/06/14 22:56:42 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -1458,7 +1458,7 @@ ufs_readlink(ap)
 
 	isize = ip->i_size;
 	if (isize < vp->v_mount->mnt_maxsymlinklen ||
-	    (vp->v_mount->mnt_maxsymlinklen == 0 && OLDFASTLINK(&ip->i_din))) {
+	    (vp->v_mount->mnt_maxsymlinklen == 0 && ip->i_din.di_blocks == 0)) {
 		uiomove((char *)ip->i_shortlink, isize, ap->a_uio);
 		return (0);
 	}
