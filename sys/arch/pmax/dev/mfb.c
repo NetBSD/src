@@ -1,4 +1,4 @@
-/*	$NetBSD: mfb.c,v 1.22 1997/04/10 08:37:54 jonathan Exp $	*/
+/*	$NetBSD: mfb.c,v 1.23 1997/04/19 08:25:31 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -700,7 +700,7 @@ bt455_video_off(fi)
 	mfbRestoreCursorColor (fi);
 
 	bcopy (cursor_save, cursor_RGB, 6);
-	fi -> fi_blanked = 0;
+	fi -> fi_blanked = 1;
 
 	return 0;
 }
