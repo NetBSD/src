@@ -1,4 +1,4 @@
-/*	$NetBSD: sbp2.c,v 1.6 2002/12/06 02:19:34 jmc Exp $	*/
+/*	$NetBSD: sbp2.c,v 1.7 2002/12/08 05:59:05 jmc Exp $	*/
 
 /*
  * Copyright (c) 2001,2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbp2.c,v 1.6 2002/12/06 02:19:34 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbp2.c,v 1.7 2002/12/08 05:59:05 jmc Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -1171,12 +1171,11 @@ sbp2_alloc_data_mapping(struct sbp2 *sbp2, struct sbp2_mapping *map,
 	
 	/* Handle the bits on the front end if they start in the middle */
 	if (startbit) {
-		if (size < CHAR_BIT) 
-			count = CHAR_BIT - (size - 1);
-		else
-			count = CHAR_BIT;
-		for (bitpos = startbit; bitpos < count; bitpos++) {
-			bit = 0x1 << bitpos;
+		count = CHAR_BIT - startbit;
+		if (size < count)
+			count = size;
+		for (bitpos = 0; bitpos < count; bitpos++) {
+			bit = 0x1 << (bitpos + startbit);
 			size--;
 			sbp2->map->datamap[startbyte] |= bit;
 		}
