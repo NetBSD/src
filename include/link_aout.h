@@ -1,4 +1,4 @@
-/*	$NetBSD: link_aout.h,v 1.15 1998/10/19 00:30:57 matt Exp $	*/
+/*	$NetBSD: link_aout.h,v 1.16 1998/12/15 21:28:28 pk Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -48,6 +48,7 @@
 #define _LINK_H_
 
 #include <dlfcn.h>			/* for Dl_info */
+#include <a.out.h>			/* for struct nlist */
 
 /*
  * A `Shared Object Descriptor' descibes a shared object that is needed
