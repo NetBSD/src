@@ -1,4 +1,4 @@
-/*	$NetBSD: dc.c,v 1.45 1998/11/28 09:52:55 jonathan Exp $	*/
+/*	$NetBSD: dc.c,v 1.46 1998/11/29 00:28:29 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.45 1998/11/28 09:52:55 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.46 1998/11/29 00:28:29 jonathan Exp $");
 
 /*
  * devDC7085.c --
@@ -240,13 +240,6 @@ dc_consinit(dev, dcaddr)
 	/* reset chip */
 	dc_reset(dcaddr);
 
-#if	1	/*XXX failsafe */
-	dcaddr->dc_lpr = LPR_RXENAB | LPR_8_BIT_CHAR |
-		LPR_B9600 | DCLINE(dev);
-	wbflush();
-	DELAY(10);
-#endif
-
 	dccons.cn_dev = dev;
 	*cn_tab = dccons;
 	sc->dcsoftCAR |= 1 << DCLINE(cn_tab->cn_dev);
@@ -268,24 +261,23 @@ dcattach(sc, addr, dtr_mask, rtscts_mask, speed,
 	register struct pdma *pdp;
 	register struct tty *tp;
 	register int line;
-	int s;
 	
 	dcaddr = (dcregs *)addr;
 
 	/*
 	 * For a remote console, wait a while for previous output to
 	 * complete.
-	 * XXX both cn_dev == 0 and cn_pri == CN_DEAD are bug workarounds.
-	 * The interface between ttys and cpu_cons.c should be reworked.
 	 */
-	if (sc->sc_dv.dv_unit == 0 &&	/* XXX why only unit 0? */
-	    (major(cn_tab->cn_dev) == DCDEV || major(cn_tab->cn_dev) == 0) &&
-	    (cn_tab->cn_pri == CN_REMOTE || (cn_tab->cn_pri == CN_DEAD))) {
+	if (sc->sc_dv.dv_unit == 0 && major(cn_tab->cn_dev) == DCDEV &&
+	    cn_tab->cn_pri == CN_REMOTE) {
 		DELAY(10000);
 	}
+
 	/* reset chip and enable interrupts */
 	dc_reset(dcaddr);
 	dcaddr->dc_csr |= (CSR_MSE | CSR_TIE | CSR_RIE);
+	wbflush();
+	DELAY(10);
 
 	/* init pseudo DMA structures */
 	pdp = &sc->dc_pdma[0];
@@ -317,10 +309,7 @@ dcattach(sc, addr, dtr_mask, rtscts_mask, speed,
 	if (sc->sc_dv.dv_unit == 0) {
 		if (major(cn_tab->cn_dev) == DCDEV) {
 			/* set params for serial console */
-			s = spltty();
-			dc_consinit(cn_tab->cn_dev, dcaddr);
-			dcaddr->dc_csr |= (CSR_MSE | CSR_TIE | CSR_RIE);
-			splx(s);
+			dc_tty_init(sc, cn_tab->cn_dev);
 		}
 
 		if (major(cn_tab->cn_dev) == RCONSDEV) {
@@ -371,10 +360,6 @@ dc_tty_init(sc, dev)
 	s = spltty();
 	ctty.t_dev = dev;
 	cterm.c_cflag = (TTYDEF_CFLAG & ~(CSIZE | PARENB)) | CS8;
-#ifdef pmax
-	/* XXX -- why on pmax, not on Alpha? */
-	cterm.c_cflag  |= CLOCAL;
-#endif
 	cterm.c_ospeed = cterm.c_ispeed = 9600;
 	(void) cold_dcparam(&ctty, &cterm,  sc);
 	DELAY(1000);
@@ -393,11 +378,6 @@ dc_kbd_init(sc, dev)
 	s = spltty();
 	ctty.t_dev = dev;
 	cterm.c_cflag = CS8;
-
-#ifdef pmax
-	/* XXX -- why on pmax, not on Alpha? */
-	cterm.c_cflag |= CLOCAL;
-#endif /* pmax */
 	cterm.c_ospeed = cterm.c_ispeed = 4800;
 
 	(void) cold_dcparam(&ctty, &cterm, sc);
@@ -424,21 +404,18 @@ dc_mouse_init(sc, dev)
 	cterm.c_ospeed = cterm.c_ispeed = 4800;
 	(void) cold_dcparam(&ctty, &cterm, sc);
 
-#ifdef HAVE_RCONS
+
+#if	NRASTERCONSOLE > 0 
 	/*
 	 * This is a hack.  As Ted Lemon observed, we want bstreams,
 	 * or failing that, a line discipline to do the inkernel DEC
 	 * mouse tracking required by Xservers.
 	 */
-	if (major(cn_tab->cn_dev) != RCONSDEV)
-		goto done;
 
 	DELAY(10000);
 	MouseInit(ctty.t_dev, dcPutc, dcGetc);
 	DELAY(10000);
-
-done:
-#endif	/* HAVE_RCONS */
+#endif	/* NRASTERCONSOLE */
 
 	splx(s);
 }
