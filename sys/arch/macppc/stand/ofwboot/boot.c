@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.3 1998/07/24 15:52:04 tsubai Exp $	*/
+/*	$NetBSD: boot.c,v 1.4 1999/03/05 06:18:38 tsubai Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -132,12 +132,16 @@ parseargs(str, howtop)
 		OF_exit();
 
 	*howtop = 0;
+
+	cp = str;
+	if (*cp == '-')
+		goto found;
 	for (cp = str; *cp; cp++)
-		if (*cp == ' ' || *cp == '-')
-			break;
-	if (!*cp)
-		return;
-	
+		if (*cp == ' ')
+			goto found;
+	return;
+
+found:
 	*cp++ = 0;
 	while (*cp) {
 		switch (*cp++) {
