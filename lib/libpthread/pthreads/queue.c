@@ -1,5 +1,5 @@
 /* ==== queue.c ============================================================
- * Copyright (c) 1993 by Chris Provenzano, proven@mit.edu
+ * Copyright (c) 1993, 1994 by Chris Provenzano, proven@mit.edu
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -34,6 +34,10 @@
  *  1.00 93/07/15 proven
  *      -Started coding this file.
  */
+
+#ifndef lint
+static const char rcsid[] = "$Id: queue.c,v 1.3 1994/02/07 22:04:28 proven Exp $ $provenid: queue.c,v 1.16 1994/02/07 02:19:24 proven Exp $";
+#endif
 
 #include <pthread.h>
 

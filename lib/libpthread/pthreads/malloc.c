@@ -1,6 +1,6 @@
 /* ==== malloc.c ============================================================
  * Copyright (c) 1983 Regents of the University of California.
- * Copyright (c) 1993 by Chris Provenzano, proven@mit.edu
+ * Copyright (c) 1993, 1994 by Chris Provenzano, proven@mit.edu
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -45,10 +45,9 @@
  *
  */
 
-#if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)malloc.c     5.11 (Berkeley) 2/23/91";*/
-static char *rcsid = "$Id: malloc.c,v 1.3 1993/12/20 19:31:17 proven Exp $";
-#endif /* LIBC_SCCS and not lint */
+#ifndef lint
+static const char rcsid[] = "$Id: malloc.c,v 1.4 1994/02/07 22:04:20 proven Exp $ $provenid: malloc.c,v 1.16 1994/02/07 02:19:00 proven Exp $";
+#endif
 
 #include <pthread.h>
 #include <sys/types.h>
