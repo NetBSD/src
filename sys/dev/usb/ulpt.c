@@ -1,4 +1,5 @@
-/*	$NetBSD: ulpt.c,v 1.29 1999/11/17 23:00:50 augustss Exp $	*/
+/*	$NetBSD: ulpt.c,v 1.30 1999/11/18 23:32:30 augustss Exp $	*/
+/*	$FreeBSD: src/sys/dev/usb/ulpt.c,v 1.24 1999/11/17 22:33:44 n_hibma Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -327,8 +328,8 @@ USB_DETACH(ulpt)
 #elif defined(__FreeBSD__)
 	/* XXX not implemented yet */
 
-	remove_dev(sc->dev);
-	remove_dev(sc->dev_noprime);
+	destroy_dev(sc->dev);
+	destroy_dev(sc->dev_noprime);
 #endif
 
 	return (0);
@@ -348,7 +349,7 @@ ulpt_status(sc)
 	USETW(req.wIndex, sc->sc_ifaceno);
 	USETW(req.wLength, 1);
 	err = usbd_do_request(sc->sc_udev, &req, &status);
-	DPRINTFN(1, ("ulpt_status: status=0x%02x r=%d\n", status, err));
+	DPRINTFN(1, ("ulpt_status: status=0x%02x err=%d\n", status, err));
 	if (!err)
 		return (status);
 	else
@@ -387,7 +388,7 @@ ulptopen(dev, flag, mode, p)
 
 	USB_GET_SC_OPEN(ulpt, ULPTUNIT(dev), sc);
 
-	if (sc->sc_iface == NULL || sc->sc_dying)
+	if (sc == NULL || sc->sc_iface == NULL || sc->sc_dying)
 		return (ENXIO);
 
 	if (sc->sc_state)
@@ -553,7 +554,6 @@ ulptioctl(dev, cmd, data, flag, p)
 	switch (cmd) {
 	default:
 		error = ENODEV;
-		break;
 	}
 
 	return (error);
@@ -585,6 +585,5 @@ ieee1284_print_id(str)
 #endif
 
 #if defined(__FreeBSD__)
-DEV_DRIVER_MODULE(ulpt, uhub, ulpt_driver, ulpt_devclass,
-	ulpt_cdevsw, usbd_driver_load, 0);
+DRIVER_MODULE(ulpt, uhub, ulpt_driver, ulpt_devclass, usbd_driver_load, 0);
 #endif

@@ -1,4 +1,5 @@
-/*	$NetBSD: uhcivar.h,v 1.17 1999/11/12 00:34:57 augustss Exp $	*/
+/*	$NetBSD: uhcivar.h,v 1.18 1999/11/18 23:32:29 augustss Exp $	*/
+/*	$FreeBSD: src/sys/dev/usb/uhcivar.h,v 1.14 1999/11/17 22:33:42 n_hibma Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -168,6 +169,8 @@ typedef struct uhci_softc {
 
 usbd_status	uhci_init __P((uhci_softc_t *));
 int		uhci_intr __P((void *));
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 int		uhci_detach __P((uhci_softc_t *, int));
 int		uhci_activate __P((device_ptr_t, enum devact));
+#endif
 

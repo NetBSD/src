@@ -1,4 +1,5 @@
-/*	$NetBSD: uhid.c,v 1.27 1999/11/12 00:34:57 augustss Exp $	*/
+/*	$NetBSD: uhid.c,v 1.28 1999/11/18 23:32:29 augustss Exp $	*/
+/*	$FreeBSD: src/sys/dev/usb/uhid.c,v 1.22 1999/11/17 22:33:43 n_hibma Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -160,10 +161,10 @@ USB_MATCH(uhid)
 	USB_MATCH_START(uhid, uaa);
 	usb_interface_descriptor_t *id;
 	
-	if (!uaa->iface)
+	if (uaa->iface == NULL)
 		return (UMATCH_NONE);
 	id = usbd_get_interface_descriptor(uaa->iface);
-	if (!id || id->bInterfaceClass != UCLASS_HID)
+	if (id == NULL || id->bInterfaceClass != UCLASS_HID)
 		return (UMATCH_NONE);
 	return (UMATCH_IFACECLASS_GENERIC);
 }
@@ -230,6 +231,17 @@ USB_ATTACH(uhid)
 
 	sc->sc_repdesc = desc;
 	sc->sc_repdesc_size = size;
+
+#ifdef __FreeBSD__
+	{
+		static int global_init_done = 0;
+
+		if (!global_init_done) {
+			cdevsw_add(&uhid_cdevsw);
+			global_init_done = 1;
+		}
+	}
+#endif
 
 	USB_ATTACH_SUCCESS_RETURN;
 }
@@ -664,6 +676,5 @@ uhidpoll(dev, events, p)
 }
 
 #if defined(__FreeBSD__)
-DEV_DRIVER_MODULE(uhid, uhub, uhid_driver, uhid_devclass, 
-		  uhid_cdevsw, usbd_driver_load, 0);
+DRIVER_MODULE(uhid, uhub, uhid_driver, uhid_devclass, usbd_driver_load, 0);
 #endif

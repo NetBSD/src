@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.11 1999/11/17 23:00:50 augustss Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.12 1999/11/18 23:32:27 augustss Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -1513,7 +1513,7 @@ uaudio_set(sc, which, type, wValue, wIndex, len, val)
 		    type, which, wValue, wIndex, len, val & 0xffff));
 	err = usbd_do_request(sc->sc_udev, &req, &data);
 #ifdef UAUDIO_DEBUG
-	if (err != USBD_NORMAL_COMPLETION)
+	if (err)
 		DPRINTF(("uaudio_set: err=%d\n", err));
 #endif
 }
