@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.39 1996/05/17 22:39:52 mark Exp $
+#	$NetBSD: Makefile,v 1.40 1996/05/19 05:49:37 cgd Exp $
 
 SUBDIR+=	bc cpio dc diff diff3 gawk grep groff
 SUBDIR+=	gzip rcs sdiff send-pr sort tar
@@ -20,7 +20,7 @@ SUBDIR+=	gcc
 .if (${MACHINE_ARCH} == "alpha")
 afterinstall:
 	install -c -o $(BINOWN) -g $(BINGRP) -m $(BINMODE) \
-	    $(.CURDIR)/gcc2/cpp/usr.bin.cpp.sh $(DESTDIR)/usr/bin/cpp
+	    $(.CURDIR)/gcc/cpp/usr.bin.cpp.sh $(DESTDIR)/usr/bin/cpp
 .endif
 
 .include <bsd.subdir.mk>
