@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.2 2003/01/18 10:34:15 thorpej Exp $	*/
+/*	$NetBSD: pthread.c,v 1.3 2003/01/18 18:45:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -296,7 +296,7 @@ pthread__create_tramp(void *(*start)(void *), void *arg)
 
 	pthread_exit(retval);
 
-	/* NOTREACHED */
+	/*NOTREACHED*//*CONSTCOND*/
 	assert(0);
 }
 
@@ -335,6 +335,7 @@ pthread__idle(void)
 	/* NOTREACHED */
 	self->pt_spinlocks++; /* XXX make sure we get to finish the assert! */
 	SDPRINTF(("(pthread__idle %p) Returned! Error.\n", self));
+	/* CONSTCOND */
 	assert(0);
 }
 
@@ -402,7 +403,7 @@ pthread_exit(void *retval)
 		pthread__block(self, &self->pt_join_lock);
 	}
 
-	/* NOTREACHED */
+	/*NOTREACHED*//*CONSTCOND*/
 	assert(0);
 	exit(1);
 }
@@ -537,6 +538,7 @@ pthread_attr_init(pthread_attr_t *attr)
 
 
 int
+/*ARGSUSED*/
 pthread_attr_destroy(pthread_attr_t *attr)
 {
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_debug.h,v 1.2 2003/01/18 10:34:15 thorpej Exp $	*/
+/*	$NetBSD: pthread_debug.h,v 1.3 2003/01/18 18:45:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -78,9 +78,9 @@
 struct	pthread_msgbuf {
 #define BUF_MAGIC	0x090976
 	int	msg_magic;
-	long	msg_bufw;
-	long	msg_bufr;
-	long	msg_bufs;
+	size_t	msg_bufw;
+	size_t	msg_bufr;
+	size_t	msg_bufs;
 	char	msg_bufc[1];
 };
 

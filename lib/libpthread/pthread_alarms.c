@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_alarms.c,v 1.2 2003/01/18 10:34:15 thorpej Exp $	*/
+/*	$NetBSD: pthread_alarms.c,v 1.3 2003/01/18 18:45:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@ pthread__alarm_init(void)
 
 	ev.sigev_notify = SIGEV_SA;
 	ev.sigev_signo = 0;
-	ev.sigev_value.sival_int = PT_ALARMTIMER_MAGIC;
+	ev.sigev_value.sival_int = (int)PT_ALARMTIMER_MAGIC;
 	retval = timer_create(CLOCK_REALTIME, &ev, &pthread_alarmtimer);
 	if (retval)
 		err(1, "timer_create");
@@ -154,6 +154,7 @@ pthread__alarm_fired(struct pt_alarm_t *alarm)
 }
 
 void
+/*ARGSUSED*/
 pthread__alarm_process(pthread_t self, void *arg)
 {
 	struct timeval tv;
