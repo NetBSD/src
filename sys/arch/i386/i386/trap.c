@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.141 2000/11/21 00:37:50 jdolecek Exp $	*/
+/*	$NetBSD: trap.c,v 1.142 2000/11/21 21:27:04 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -191,7 +191,7 @@ userret(p, pc, oticks)
 	curcpu()->ci_schedstate.spc_curpriority = p->p_priority;
 }
 
-char	*trap_type[] = {
+const char *trap_type[] = {
 	"privileged instruction fault",		/*  0 T_PRIVINFLT */
 	"breakpoint trap",			/*  1 T_BPTFLT */
 	"arithmetic trap",			/*  2 T_ARITHTRAP */
