@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.10 2004/07/19 03:12:31 chs Exp $	*/
+/*	$NetBSD: types.h,v 1.11 2004/08/07 21:42:10 chs Exp $	*/
 
 /*	$OpenBSD: types.h,v 1.6 2001/08/11 01:58:34 art Exp $	*/
 
@@ -63,7 +63,7 @@ typedef unsigned long vm_size_t;
 /*
  * Semaphores must be aligned on 16-byte boundaries on the PA-RISC.
  */
-typedef __volatile unsigned long __cpu_simple_lock_t __attribute__ ((aligned (16)));
+typedef __volatile unsigned long __cpu_simple_lock_t;
 
 #define __SIMPLELOCK_LOCKED	0
 #define __SIMPLELOCK_UNLOCKED	1
