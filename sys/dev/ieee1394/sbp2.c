@@ -1,4 +1,4 @@
-/*	$NetBSD: sbp2.c,v 1.7 2002/12/08 05:59:05 jmc Exp $	*/
+/*	$NetBSD: sbp2.c,v 1.8 2002/12/09 07:23:43 jmc Exp $	*/
 
 /*
  * Copyright (c) 2001,2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbp2.c,v 1.7 2002/12/08 05:59:05 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbp2.c,v 1.8 2002/12/09 07:23:43 jmc Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -665,8 +665,6 @@ sbp2_free(struct sbp2 *sbp2)
 	}
 	simple_lock(&sbp2_maps_lock);
 	if (!--sbp2->map->refcnt) {
-		if (sbp2->map->datamaps.maps)
-			free(sbp2->map->datamaps.maps, M_1394DATA);
 		TAILQ_REMOVE(&sbp2_maps, sbp2->map, map_list);
 		free(sbp2->map, M_1394DATA);
 	}
@@ -1001,6 +999,7 @@ sbp2_data_resp(struct ieee1394_abuf *abuf, int rcode)
 	case IEEE1394_TCODE_READ_REQ_BLOCK:
 		orb->resp.ab_addr = abuf->ab_addr;
 		orb->resp.ab_tcode = IEEE1394_TCODE_READ_RESP_BLOCK;
+		orb->resp.ab_tlabel = abuf->ab_tlabel;
 		orb->resp.ab_length = abuf->ab_retlen;
 		orb->resp.ab_req = abuf->ab_req;
 		orb->resp.ab_data = (u_int32_t *)(addr + offset);
@@ -1104,10 +1103,10 @@ sbp2_free_orb(struct sbp2_orb *orb)
 {
 	simple_lock(&orb->orb_lock);
 	if (orb->data_map.laddr) {
-		if (0) orb->sbp2->sc->sc1394_callback.sc1394_unreg(&orb->data, 1);
-		if (0) sbp2_free_data_mapping(orb->sbp2, &orb->data_map);
+		orb->sbp2->sc->sc1394_callback.sc1394_unreg(&orb->data, 1);
+		sbp2_free_data_mapping(orb->sbp2, &orb->data_map);
 	}
-	if (0) sbp2_free_addr(orb->sbp2, orb->cmd.ab_addr);
+	sbp2_free_addr(orb->sbp2, orb->cmd.ab_addr);
 
 	simple_lock(&sbp2_freeorbs_lock);
 	memset(orb->cmd.ab_data, 0, SBP2_MAX_ORB);
@@ -1127,7 +1126,7 @@ static void
 sbp2_alloc_data_mapping(struct sbp2 *sbp2, struct sbp2_mapping *map,
     u_char *data, u_int32_t datalen, u_int8_t rw)
 {
-	int i, byte, bitpos, next, found;
+	int byte, bitpos, found;
 	u_int32_t size, count, startbyte, startbit;
 	unsigned char bit;
 	
@@ -1140,11 +1139,10 @@ sbp2_alloc_data_mapping(struct sbp2 *sbp2, struct sbp2_mapping *map,
 	map->rw = rw;
 	
 	simple_lock(&sbp2->map->maplock);
-	next = sbp2->map->next_data;
 	count = found = 0;
-	startbyte = next;
+	startbyte = 0;
 	startbit = 0;
-	for (byte = next; byte < (sizeof(sbp2->map->datamap) - next); byte++) {
+	for (byte = 0; byte < sizeof(sbp2->map->datamap); byte++) {
 		for (bitpos = 0; bitpos < CHAR_BIT; bitpos++) {
 			bit = 0x1 << bitpos;
 			if ((sbp2->map->datamap[byte] & bit) == 0) {
@@ -1194,6 +1192,11 @@ sbp2_alloc_data_mapping(struct sbp2 *sbp2, struct sbp2_mapping *map,
 		}
 		/* If any bits are left allocate them out of the next byte */
 		if (size) {
+#ifdef DEBUG
+			if (size >= CHAR_BIT)
+				panic ("Too many bits left to allocate: %d",
+				    size);
+#endif
 			for (bitpos = 0; bitpos < size; bitpos++) {
 				bit = 0x1 << bitpos;
 				sbp2->map->datamap[byte] |= bit;
@@ -1201,19 +1204,12 @@ sbp2_alloc_data_mapping(struct sbp2 *sbp2, struct sbp2_mapping *map,
 		}
 	}
 
-	sbp2->map->next_data = startbyte;
-
 	/* Adjust back one if the bits started 1 byte back */
 	if (startbit)
 		startbyte--;
 	map->fwaddr = SBP_DATA_BEG +
 	    (((startbyte * CHAR_BIT) + startbit) * SBP_DATA_BLOCK_SIZE);
 
-	i = sbp2->map->datamaps.nmaps;
-	sbp2->map->datamaps.maps = realloc(sbp2->map->datamaps.maps,
-	    sizeof(struct sbp2_mapping *) * (i + 1), M_1394DATA, M_WAITOK);
-	sbp2->map->datamaps.maps[i] = map;
-	sbp2->map->datamaps.nmaps++;
 	simple_unlock(&sbp2->map->maplock);
 }
 
@@ -1263,7 +1259,82 @@ sbp2_alloc_addr(struct sbp2 *sbp2)
 static void
 sbp2_free_data_mapping(struct sbp2 *sbp2, struct sbp2_mapping *map)
 {
-	DPRINTF(("Called sbp2_free_data_map\n"));
+	int byte, bitpos;
+	u_int32_t size, count, startbyte, off, startbit;
+	unsigned char bit;
+
+	simple_lock(&sbp2->map->maplock);
+
+        size = map->size / SBP_DATA_BLOCK_SIZE;
+        if (map->size % SBP_DATA_BLOCK_SIZE)
+                size++;
+	off = ((int)(map->fwaddr - SBP_DATA_BEG) / SBP_DATA_BLOCK_SIZE);
+	
+	startbyte = off / CHAR_BIT;
+	startbit = off % CHAR_BIT;
+
+	/*
+	 * 3 parts. Any bits in the middle of the first byte.
+	 * Then bytes until whole bytes are done.
+	 * Finally, any left over remaining bits.
+	 */
+
+	if (startbit) {
+		count = CHAR_BIT - startbit;
+		if (size < count)
+			count = size;
+		for (bitpos = 0; bitpos < count; bitpos++) {
+			bit = 0x1 << (bitpos + startbit);
+#ifdef DIAGNOSTIC
+			if (!(sbp2->map->datamap[startbyte] & bit))
+				panic("Freeing addr not allocated: 0x%016qx",
+				    map->fwaddr);
+#endif
+			bit = ~bit;
+			size--;
+			sbp2->map->datamap[startbyte] &= bit;
+		}
+		startbyte++;
+	}
+
+	if (size) {
+		for (byte = startbyte; byte < (startbyte + (size / CHAR_BIT)); 
+		    byte++) {
+			for (bitpos = 0; bitpos < CHAR_BIT; bitpos++) {
+				bit = 0x1 << bitpos;
+#ifdef DIAGNOSTIC
+				if (!(sbp2->map->datamap[byte] & bit))
+					panic("Freeing addr not allocated: "
+					    "0x%016qx", map->fwaddr);
+#endif
+				bit = ~bit;
+				size--;
+				sbp2->map->datamap[byte] &= bit;
+			}
+		}
+		/* If any bits are left free them out of the next byte */
+		if (size) {
+#ifdef DEBUG
+			if (size >= CHAR_BIT)
+				panic ("Too many bits left to free: %d", size);
+#endif
+			for (bitpos = 0; bitpos < size; bitpos++) {
+				bit = 0x1 << bitpos;
+#ifdef DIAGNOSTIC
+				if (!(sbp2->map->datamap[byte] & bit))
+					panic("Freeing addr not allocated: "
+					    "0x%016qx", map->fwaddr);
+#endif
+				bit = ~bit;
+				sbp2->map->datamap[byte] &= bit;
+			}
+		}
+	}
+	if (startbit)
+		startbyte--;
+
+	simple_unlock(&sbp2->map->maplock);
+
 	return;
 }
 
@@ -1279,12 +1350,12 @@ sbp2_free_addr(struct sbp2 *sbp2, u_int64_t addr)
 	bitpos = off % CHAR_BIT;
 	bit = 0x1 << bitpos;
 
+	simple_lock(&sbp2->map->maplock);
 #ifdef DIAGNOSTIC
 	if (!(sbp2->map->addrmap[byte] & bit))
 		panic("Freeing addr not allocated: 0x%016qx\n", addr);
 #endif
 	bit = ~bit;
-	simple_lock(&sbp2->map->maplock);
 	sbp2->map->addrmap[byte] &= bit;
 	if (sbp2->map->next_addr > off)
 		sbp2->map->next_addr = off;
