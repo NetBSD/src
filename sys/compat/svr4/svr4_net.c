@@ -1,18 +1,19 @@
-/*	$NetBSD: svr4_net.c,v 1.12 1996/09/07 12:40:51 mycroft Exp $	 */
+/*	$NetBSD: svr4_net.c,v 1.12.14.1 1997/11/17 02:28:20 thorpej Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
+ * Copyright (c) 1997 Todd Vierling
  * All rights reserved.
  *
- * Redistribution ast use in source ast binary forms, with or without
- * modification, are permitted provided that the following costitions
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of costitions ast the following disclaimer.
+ *    notice, this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of costitions ast the following disclaimer in the
- *    documentation ast/or other materials provided with the distribution.
- * 3. The name of the author may not be used to estorse or promote products
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. The names of the authors may not be used to endorse or promote products
  *    derived from this software without specific prior written permission
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
@@ -40,6 +41,7 @@
 #include <sys/tty.h>
 #include <sys/file.h>
 #include <sys/filedesc.h>
+#include <sys/fcntl.h>
 #include <sys/select.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
@@ -51,7 +53,9 @@
 #include <sys/vnode.h>
 #include <sys/device.h>
 #include <sys/conf.h>
+#include <sys/mount.h>
 
+#include <sys/syscallargs.h>
 
 #include <compat/svr4/svr4_types.h>
 #include <compat/svr4/svr4_util.h>
@@ -65,6 +69,7 @@
  * Device minor numbers
  */
 enum {
+	dev_ptm			= 10,
 	dev_arp			= 26,
 	dev_icmp		= 27,
 	dev_ip			= 28,
@@ -78,7 +83,8 @@ enum {
 
 int svr4_netattach __P((int));
 
-static int svr4_soo_close __P((struct file *fp, struct proc *p));
+static int svr4_soo_close __P((struct file *, struct proc *));
+static int svr4_ptm_alloc __P((struct proc *));
 
 static struct fileops svr4_netops = {
 	soo_read, soo_write, soo_ioctl, soo_poll, svr4_soo_close
@@ -160,13 +166,17 @@ svr4_netopen(dev, flag, mode, p)
 		DPRINTF(("unix-stream, "));
 		break;
 
+	case dev_ptm:
+		DPRINTF(("ptm);\n"));
+		return svr4_ptm_alloc(p);
+
 	default:
 		DPRINTF(("%d);\n", minor(dev)));
 		return EOPNOTSUPP;
 	}
 
 	if ((error = falloc(p, &fp, &fd)) != 0)
-		return (error);
+		return error;
 
 	if ((error = socreate(family, &so, type, protocol)) != 0) {
 		DPRINTF(("socreate error %d\n", error));
@@ -188,15 +198,79 @@ svr4_netopen(dev, flag, mode, p)
 	return ENXIO;
 }
 
+
 static int
 svr4_soo_close(fp, p)
 	struct file *fp;
 	struct proc *p;
 {
 	struct socket *so = (struct socket *) fp->f_data;
+
 	svr4_delete_socket(p, fp);
 	free(so->so_internal, M_NETADDR);
 	return soo_close(fp, p);
+}
+
+
+static int
+svr4_ptm_alloc(p)
+	struct proc *p;
+{
+	/*
+	 * XXX this is very, very ugly.  But I can't find a better
+	 * way that won't duplicate a big amount of code from
+	 * sys_open().  Ho hum...
+	 *
+	 * Fortunately for us, Solaris (at least 2.5.1) makes the
+	 * /dev/ptmx open automatically just open a pty, that (after
+	 * STREAMS I_PUSHes), is just a plain pty.  fstat() is used
+	 * to get the minor device number to map to a tty.
+	 * 
+	 * Cycle through the names. If sys_open() returns ENOENT (or
+	 * ENXIO), short circuit the cycle and exit.
+	 */
+	static char ptyname[] = "/dev/ptyXX";
+#if _MACHINE_ARCH == i386
+	/* XXX.  Fix this, pcvt people! */
+	static char ttyletters[] = "pqrstuwxyzPQRST";
+#else
+	static char ttyletters[] = "pqrstuvwxyzPQRST";
+#endif
+	static char ttynumbers[] = "0123456789abcdef";
+	caddr_t sg = stackgap_init(p->p_emul);
+	char *path = stackgap_alloc(&sg, sizeof(ptyname));
+	struct sys_open_args oa;
+	int l = 0, n = 0;
+	register_t fd = -1;
+	int error;
+
+	SCARG(&oa, path) = path;
+	SCARG(&oa, flags) = O_RDWR;
+	SCARG(&oa, mode) = 0;
+
+	while (fd == -1) {
+		ptyname[8] = ttyletters[l];
+		ptyname[9] = ttynumbers[n];
+
+		if ((error = copyout(ptyname, path, sizeof(ptyname))) != 0)
+			return error;
+
+		switch (error = sys_open(p, &oa, &fd)) {
+		case ENOENT:
+		case ENXIO:
+			return error;
+		case 0:
+			p->p_dupfd = fd;
+			return ENXIO;
+		default:
+			if (ttynumbers[++n] == '\0') {
+				if (ttyletters[++l] == '\0')
+					break;
+				n = 0;
+			}
+		}
+	}
+	return ENOENT;
 }
 
 
