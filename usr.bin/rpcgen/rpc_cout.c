@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_cout.c,v 1.5 1995/08/29 23:05:49 cgd Exp $	*/
+/*	$NetBSD: rpc_cout.c,v 1.6 1996/10/01 04:13:53 cgd Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -173,7 +173,7 @@ print_header(def)
 	if (inline == 0)
 		return;
 	/* May cause lint to complain. but  ... */
-	f_print(fout, "\t register long *buf;\n\n");
+	f_print(fout, "\t register int32_t *buf;\n\n");
 
 }
 
@@ -528,16 +528,16 @@ emit_struct(def)
 						/* were already looking at a
 						 * xdr_inlineable structure */
 						if (sizestr == NULL)
-							f_print(fout, "\t buf = (long *)XDR_INLINE(xdrs,%d * BYTES_PER_XDR_UNIT);",
+							f_print(fout, "\t buf = (int32_t *)XDR_INLINE(xdrs,%d * BYTES_PER_XDR_UNIT);",
 							    size);
 						else
 							if (size == 0)
 								f_print(fout,
-								    "\t buf = (long *)XDR_INLINE(xdrs,%s * BYTES_PER_XDR_UNIT);",
+								    "\t buf = (int32_t *)XDR_INLINE(xdrs,%s * BYTES_PER_XDR_UNIT);",
 								    sizestr);
 							else
 								f_print(fout,
-								    "\t buf = (long *)XDR_INLINE(xdrs,(%d + %s)* BYTES_PER_XDR_UNIT);",
+								    "\t buf = (int32_t *)XDR_INLINE(xdrs,(%d + %s)* BYTES_PER_XDR_UNIT);",
 								    size, sizestr);
 
 						f_print(fout, "\n\t   if (buf == NULL) {\n");
@@ -578,16 +578,16 @@ emit_struct(def)
 				/* were already looking at a xdr_inlineable
 				 * structure */
 				if (sizestr == NULL)
-					f_print(fout, "\t\tbuf = (long *)XDR_INLINE(xdrs,%d * BYTES_PER_XDR_UNIT);",
+					f_print(fout, "\t\tbuf = (int32_t *)XDR_INLINE(xdrs,%d * BYTES_PER_XDR_UNIT);",
 					    size);
 				else
 					if (size == 0)
 						f_print(fout,
-						    "\t\tbuf = (long *)XDR_INLINE(xdrs,%s * BYTES_PER_XDR_UNIT);",
+						    "\t\tbuf = (int32_t *)XDR_INLINE(xdrs,%s * BYTES_PER_XDR_UNIT);",
 						    sizestr);
 					else
 						f_print(fout,
-						    "\t\tbuf = (long *)XDR_INLINE(xdrs,(%d + %s)* BYTES_PER_XDR_UNIT);",
+						    "\t\tbuf = (int32_t *)XDR_INLINE(xdrs,(%d + %s)* BYTES_PER_XDR_UNIT);",
 						    size, sizestr);
 
 				f_print(fout, "\n\t\tif (buf == NULL) {\n");
