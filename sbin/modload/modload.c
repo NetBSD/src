@@ -29,7 +29,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: modload.c,v 1.9 1994/05/23 05:42:41 cgd Exp $
+ *	$Id: modload.c,v 1.10 1994/09/18 19:53:46 mycroft Exp $
  */
 
 #include <stdio.h>
@@ -212,7 +212,7 @@ main(argc, argv)
 		errx(2, "module object must end in .o");
 	if (out == NULL) {
 		out = modout;
-		*p == 0;
+		*p = '\0';
 	}
 
 	/*
@@ -330,6 +330,28 @@ main(argc, argv)
 	 */
 	fileopen &= ~PART_RESRV;	/* loaded */
 	printf("Module loaded as ID %d\n", resrv.slot);
+
+	/*
+	 * Execute the post-install program, if specified.
+	 */
+	if (post) {
+		struct lmc_stat sbuf;
+		char id[16], type[16], offset[16];
+
+		sbuf.id = resrv.slot;
+		if (ioctl(devfd, LMSTAT, &sbuf) == -1)
+			err(15, "error fetching module stats for post-install");
+		sprintf(id, "%d", sbuf.id);
+		sprintf(type, "0x%x", sbuf.type);
+		sprintf(offset, "%d", sbuf.offset);
+		/*
+		 * XXX
+		 * The modload docs say that drivers can install bdevsw &
+		 * cdevsw, but the interface only supports one at a time.
+		 */
+		execl(post, post, id, type, offset, 0);
+		err(16, "can't exec `%s'", post);
+	}
 
 	return 0;
 }
