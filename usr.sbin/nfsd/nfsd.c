@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsd.c,v 1.23 1997/10/17 11:53:30 lukem Exp $	*/
+/*	$NetBSD: nfsd.c,v 1.24 1997/10/18 11:02:19 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)nfsd.c	8.9 (Berkeley) 3/29/95";
 #else
-__RCSID("$NetBSD: nfsd.c,v 1.23 1997/10/17 11:53:30 lukem Exp $");
+__RCSID("$NetBSD: nfsd.c,v 1.24 1997/10/18 11:02:19 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -323,9 +323,10 @@ main(argc, argv)
 				kin.t1 = kverf.t1;
 				kin.t2 = kverf.t2;
 				kin.w2 = kverf.w2;
-				bzero((caddr_t)kivec, sizeof (kivec));
-				bcopy((caddr_t)kauth.session,
-				    (caddr_t)nsd.nsd_key,sizeof(kauth.session));
+				memset((caddr_t)kivec, 0, sizeof (kivec));
+				memmove((caddr_t)nsd.nsd_key,
+				    (caddr_t)kauth.session,
+				    sizeof(kauth.session));
 
 				/*
 				 * Decrypt the timestamp verifier in CBC mode.
