@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.22 1998/08/23 09:53:47 pk Exp $ */
+/*	$NetBSD: iommu.c,v 1.23 1998/08/28 20:02:19 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -455,13 +455,7 @@ iommu_dmamap_load(t, map, buf, buflen, p, flags)
 
 	sgsize = round_page(buflen + (vaddr & PGOFSET));
 
-	/*
-	 * XXX Need to implement "don't dma across this boundry".
-	 */
-	if (map->_dm_boundary != 0)
-		panic("bus_dmamap_load: boundaries not implemented");
-
-	if (extent_alloc(iommu_dvmamap, sgsize, NBPG, EX_NOBOUNDARY,
+	if (extent_alloc(iommu_dvmamap, sgsize, NBPG, map->_dm_boundary,
             EX_NOWAIT, (u_long *)&dvmaddr) != 0)
 		return (ENOMEM);
 
@@ -617,7 +611,7 @@ iommu_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
 	if (error != 0)
 		return (error);
 
-	if (extent_alloc(iommu_dvmamap, size, NBPG, boundary,
+	if (extent_alloc(iommu_dvmamap, size, alignment, boundary,
 			 (flags & BUS_DMA_NOWAIT) == 0 ? EX_WAITOK : EX_NOWAIT,
 			 (u_long *)&dvmaddr) != 0)
 		return (ENOMEM);
