@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.96 2002/04/24 17:35:10 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.97 2002/05/14 19:22:34 chris Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -143,7 +143,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.96 2002/04/24 17:35:10 thorpej Exp $");        
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.97 2002/05/14 19:22:34 chris Exp $");        
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
 	if (pmap_debug_level >= (_lev_)) \
@@ -1597,11 +1597,16 @@ pmap_destroy(struct pmap *pmap)
 	 * entries looking for pt's
 	 * taken from i386 pmap.c
 	 */
+	/*
+	 * vmobjlock must be held while freeing pages
+	 */
+	simple_lock(&pmap->pm_obj.vmobjlock);
 	while ((page = TAILQ_FIRST(&pmap->pm_obj.memq)) != NULL) {
 		KASSERT((page->flags & PG_BUSY) == 0);
 		page->wire_count = 0;
 		uvm_pagefree(page);
 	}
+	simple_unlock(&pmap->pm_obj.vmobjlock);
 	
 	/* Free the page dir */
 	pmap_freepagedir(pmap);
@@ -2999,6 +3004,7 @@ pmap_dump_pvlist(phys, m)
 	simple_lock(&pg->mdpage.pvh_slock);
 	printf("%s %08lx:", m, phys);
 	if (pg->mdpage.pvh_list == NULL) {
+		simple_unlock(&pg->mdpage.pvh_slock);
 		printf(" no mappings\n");
 		return;
 	}
