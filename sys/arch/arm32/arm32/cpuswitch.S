@@ -1,4 +1,4 @@
-/* $NetBSD: cpuswitch.S,v 1.11 1996/10/13 16:52:01 christos Exp $ */
+/* $NetBSD: cpuswitch.S,v 1.12 1996/10/15 22:04:19 mark Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -578,6 +578,12 @@ switch_exited:
 
 /*	IRQdisable*/
 
+#ifdef	CPU_SA110
+	stmfd	sp!, {r0-r3}
+	bl	_cache_clean
+	ldmfd	sp!, {r0-r3}
+#endif
+
 /* Get the user structure for the new process in r1 */
 
 	ldr	r1, [r6, #(P_ADDR)]
@@ -589,10 +595,17 @@ switch_exited:
 /* Switch the memory to the new process */
 
 /* For good measure we will flush the IDC as well */
-        mcr     15, 0, r0, c7, c0, 0
+#ifndef CPU_SA110
+        mcr     15, 0, r0, c7, c0, 0		/* flush cache */
+#else	/* CPU_SA110 */
+	mcr	15, 0, r0, c7, c10, 4		/* drain write buffer */
+	mcr	15, 0, r0, c7, c7, 0		/* flush i+d cache */
+#endif	/* CPU_SA110 */
 
 /* Write the TTB */
         mcr     15, 0, r0, c2, c0, 0
+
+#ifndef CPU_SA110
 
 /* If we have updated the TTB we must flush the TLB */
         mcr     15, 0, r0, c5, c0, 0
@@ -603,6 +616,19 @@ switch_exited:
 /* Make sure that pipeline is emptied */
         mov     r0, r0
         mov     r0, r0
+#else	/* CPU_SA110 */
+
+/* If we have updated the TTB we must flush the TLB */
+        mcr     15, 0, r0, c8, c7, 0		/* flush the i+d tlb */
+
+/* For good measure we will flush the IDC as well */	
+        mcr     15, 0, r0, c7, c7, 0		/* flush the i+d cache */
+
+/* Make sure that pipeline is emptied */
+        mov     r0, r0
+        mov     r0, r0
+        mov     r0, r0
+#endif	/* CPU_SA110 */
 
 /*
  * This can be optimised... We know we want to go from SVC32 mode to UND32
@@ -697,14 +723,27 @@ _switch_exit:
 
 	IRQdisable
 
+#ifdef	CPU_SA110
+	stmfd	sp!, {r0-r3}
+	bl	_cache_clean
+	ldmfd	sp!, {r0-r3}
+#endif
+
 	ldr	r2, [r1, #(P_ADDR)]
 	ldr	r3, [r2, #(PCB_PAGEDIR)]
 
 /* For good measure we will flush the IDC as well */
+#ifndef CPU_SA110
         mcr     15, 0, r0, c7, c0, 0
+#else	/* CPU_SA110 */
+	mcr	15, 0, r0, c7, c10, 4		/* drain write buffer */
+	mcr	15, 0, r0, c7, c7, 0		/* flush i+d cache */
+#endif	/* CPU_SA110 */
 
 /* Write the TTB */
         mcr     15, 0, r3, c2, c0, 0
+
+#ifndef CPU_SA110
 
 /* If we have updated the TTB we must flush the TLB */
         mcr     15, 0, r0, c5, c0, 0
@@ -715,6 +754,19 @@ _switch_exit:
 /* Make sure that pipeline is emptied */
         mov     r0, r0
         mov     r0, r0
+#else	/* CPU_SA110 */
+
+/* If we have updated the TTB we must flush the TLB */
+        mcr     15, 0, r0, c8, c7, 0		/* flush i+d tlb */
+
+/* For good measure we will flush the IDC as well */
+        mcr     15, 0, r0, c7, c7, 0		/* flush i+d cache */
+
+/* Make sure that pipeline is emptied */
+        mov     r0, r0
+        mov     r0, r0
+        mov     r0, r0
+#endif	/* CPU_SA110 */
 
 /* Restore all the save registers */
 
