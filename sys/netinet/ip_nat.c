@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.c,v 1.48.4.5 2003/11/26 09:41:12 cyber Exp $	*/
+/*	$NetBSD: ip_nat.c,v 1.48.4.6 2003/12/30 21:21:18 jmc Exp $	*/
 
 /*
  * Copyright (C) 1995-2001 by Darren Reed.
@@ -112,7 +112,7 @@ extern struct ifnet vpnif;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_nat.c,v 1.48.4.5 2003/11/26 09:41:12 cyber Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_nat.c,v 1.48.4.6 2003/12/30 21:21:18 jmc Exp $");
 #else
 static const char sccsid[] = "@(#)ip_nat.c	1.11 6/5/96 (C) 1995 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_nat.c,v 2.37.2.70 2002/08/28 12:45:48 darrenr Exp";
@@ -122,7 +122,6 @@ static const char rcsid[] = "@(#)Id: ip_nat.c,v 2.37.2.70 2002/08/28 12:45:48 da
 nat_t	**nat_table[2] = { NULL, NULL },
 	*nat_instances = NULL;
 ipnat_t	*nat_list = NULL;
-u_int	ipf_nattable_max = NAT_TABLE_MAX;
 u_int	ipf_nattable_sz = NAT_TABLE_SZ;
 u_int	ipf_natrules_sz = NAT_SIZE;
 u_int	ipf_rdrrules_sz = RDR_SIZE;
@@ -1226,11 +1225,6 @@ int direction;
 #if SOLARIS && defined(_KERNEL) && (SOLARIS2 >= 6)
 	qif_t *qf = fin->fin_qif;
 #endif
-
-	if (nat_stats.ns_inuse >= ipf_nattable_max) {
-		nat_stats.ns_memfail++;
-		return NULL;
-	}
 
 	nflags = flags & np->in_flags;
 	if (flags & IPN_TCPUDP) {
