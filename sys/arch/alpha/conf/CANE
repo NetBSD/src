@@ -1,4 +1,4 @@
-# $NetBSD: CANE,v 1.4 1999/01/26 01:38:00 thorpej Exp $
+# $NetBSD: CANE,v 1.5 1999/02/18 20:39:04 thorpej Exp $
 #
 # cane.nas.nasa.gov - thorpej's Multia
 #
@@ -180,6 +180,7 @@ spkr0	at	pcppi?				# IBM BASIC emulation
 com*	at	isa? port 0x3f8 irq 4		# standard serial ports
 com*	at	isa? port 0x2f8 irq 3
 #ep*	at	isa? port ? irq ?		# 3COM 3c509 Ethernet
+fdc0	at	isa? port 0x3f0 irq 6 drq 2	# floppy controller
 #lc0	at	isa? port 0x300 iomem ? irq ?	# DEC EtherWORKS III (LEMAC)
 #lc1	at	isa? port 0x320 iomem ? irq ?	# DEC EtherWORKS III (LEMAC)
 #depca0	at	isa? port 0x300 iomem 0xd0000 iosiz 0x10000 irq 5 	# DEPCA
@@ -245,6 +246,9 @@ atapibus* at	wdc?
 # ATAPI devices
 sd*	at	atapibus? drive ?		# ATAPI disk devices
 cd*	at	atapibus? drive ?		# ATAPI CD-ROM devices
+
+# Floppy drives
+fd*	at	fdc? drive ?
 
 # Workstation Console attachments
 #wsdisplay*	at	cfb?

@@ -1,4 +1,4 @@
-# $NetBSD: RAWHIDE,v 1.5 1998/09/02 02:02:34 enami Exp $
+# $NetBSD: RAWHIDE,v 1.6 1999/02/18 20:39:05 thorpej Exp $
 #
 # Alpha 4100 stripped for action server kernel.
 #
@@ -69,6 +69,9 @@ isa*	at	sio?
 mcclock* at	isa? port 0x70
 com*	at	isa? port 0x3f8 irq 4
 com*	at	isa? port 0x2f8 irq 3
+
+fdc0	at	isa? port 0x3f0 irq 6 drq 2	# floppy controller
+fd*	at	fdc? drive ?			# floppy drives
 
 scsibus* at	ahc?
 scsibus* at	bha?
