@@ -1,4 +1,4 @@
-/* $NetBSD: if_an_pcmcia.c,v 1.23 2004/08/10 18:43:49 mycroft Exp $ */
+/* $NetBSD: if_an_pcmcia.c,v 1.24 2004/08/10 19:12:25 mycroft Exp $ */
 
 /*-
  * Copyright (c) 2000, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_an_pcmcia.c,v 1.23 2004/08/10 18:43:49 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_an_pcmcia.c,v 1.24 2004/08/10 19:12:25 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,7 +89,7 @@ struct an_pcmcia_softc {
 CFATTACH_DECL(an_pcmcia, sizeof(struct an_pcmcia_softc),
     an_pcmcia_match, an_pcmcia_attach, an_pcmcia_detach, an_activate);
 
-static struct pcmcia_product an_pcmcia_products[] = {
+static const struct pcmcia_product an_pcmcia_products[] = {
 	{ PCMCIA_VENDOR_AIRONET,	PCMCIA_PRODUCT_AIRONET_PC4800,
 	  PCMCIA_CIS_AIRONET_PC4800 },
 	{ PCMCIA_VENDOR_AIRONET,	PCMCIA_PRODUCT_AIRONET_PC4500,

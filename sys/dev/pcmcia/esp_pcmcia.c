@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_pcmcia.c,v 1.22 2004/08/10 18:43:49 mycroft Exp $	*/
+/*	$NetBSD: esp_pcmcia.c,v 1.23 2004/08/10 19:12:25 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_pcmcia.c,v 1.22 2004/08/10 18:43:49 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_pcmcia.c,v 1.23 2004/08/10 19:12:25 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,7 +111,7 @@ void	esp_pcmcia_dma_go __P((struct ncr53c9x_softc *));
 void	esp_pcmcia_dma_stop __P((struct ncr53c9x_softc *));
 int	esp_pcmcia_dma_isactive __P((struct ncr53c9x_softc *));
 
-struct ncr53c9x_glue esp_pcmcia_glue = {
+const struct ncr53c9x_glue esp_pcmcia_glue = {
 	esp_pcmcia_read_reg,
 	esp_pcmcia_write_reg,
 	esp_pcmcia_dma_isintr,
