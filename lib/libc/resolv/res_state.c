@@ -1,4 +1,4 @@
-/*	$NetBSD: res_state.c,v 1.1 2004/05/20 18:00:55 christos Exp $	*/
+/*	$NetBSD: res_state.c,v 1.2 2004/05/21 16:02:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: res_state.c,v 1.1 2004/05/20 18:00:55 christos Exp $");
+__RCSID("$NetBSD: res_state.c,v 1.2 2004/05/21 16:02:40 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -53,8 +53,10 @@ struct __res_state _res;
 res_state __res_get_state_nothread(void);
 void __res_put_state_nothread(res_state);
 
+#ifdef __weak_alias
 __weak_alias(__res_get_state, __res_get_state_nothread)
 __weak_alias(__res_put_state, __res_put_state_nothread)
+#endif
 
 res_state
 __res_get_state_nothread(void)
