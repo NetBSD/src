@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.24 2001/05/01 04:48:11 jmc Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.25 2001/05/01 05:17:08 jmc Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -3008,7 +3008,6 @@ fwohci_extract_resp(struct fwohci_softc *sc, void *arg, struct fwohci_pkt *pkt)
             if (rv) 
                 return rv;
             sc->sc_tlabel = (sc->sc_tlabel + 1) & 0x3f;
-            printf("Calling at_output\n");
             fwohci_at_output(sc, sc->sc_ctx_atrq, &newpkt);
         } else {
                 
@@ -3158,7 +3157,6 @@ fwohci_parse_input(struct fwohci_softc *sc, void *arg, struct fwohci_pkt *pkt)
         break;
     case IEEE1394_TCODE_READ_REQ_BLOCK:
         ab->ab_retlen = (pkt->fp_hdr[3] >> 16) & 0xffff;
-        printf("csr: 0x%016qx retlen: %d\n", csr, ab->ab_retlen);
         if (ab->ab_data) {
             if ((csr + ab->ab_retlen) > (ab->ab_csr + ab->ab_length))
                 return IEEE1394_RCODE_ADDRESS_ERROR;
