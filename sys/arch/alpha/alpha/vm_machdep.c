@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.23 1997/04/07 23:40:09 cgd Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.23.4.1 1997/09/04 00:52:59 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -27,10 +27,9 @@
  * rights to redistribute these changes.
  */
 
-#include <machine/options.h>		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.23 1997/04/07 23:40:09 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.23.4.1 1997/09/04 00:52:59 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -156,7 +155,7 @@ cpu_fork(p1, p2)
 #else
 	p2->p_md.md_pcbpaddr = (void *)vtophys((vm_offset_t)&up->u_pcb);
 	printf("process %d pcbpaddr = 0x%lx, pmap = %p\n",
-	    p2->p_pid, p2->p_md.md_pcbpaddr, &p2->p_vmspace->vm_pmap);
+	    p2->p_pid, p2->p_md.md_pcbpaddr, p2->p_vmspace->vm_map.pmap);
 #endif
 
 	/*
@@ -186,9 +185,7 @@ cpu_fork(p1, p2)
 	 */
 	p2->p_addr->u_pcb = p1->p_addr->u_pcb;
 	p2->p_addr->u_pcb.pcb_hw.apcb_usp = alpha_pal_rdusp();
-#ifndef NEW_PMAP
-	PMAP_ACTIVATE(&p2->p_vmspace->vm_pmap, 0);
-#else
+#ifdef NEW_PMAP
 printf("NEW PROCESS %d USP = %p\n", p2->p_pid, p2->p_addr->u_pcb.pcb_hw.apcb_usp);
 #endif
 

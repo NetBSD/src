@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.8 1997/07/15 06:50:11 leo Exp $	*/
+/*	$NetBSD: bus.h,v 1.8.2.1 1997/09/04 00:57:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.  All rights reserved.
@@ -56,6 +56,9 @@ typedef void	*bus_dmamap_t;
  */
 typedef u_long	bus_space_tag_t;
 typedef caddr_t	bus_space_handle_t;
+
+#define	BUS_SPACE_MAP_CACHEABLE	0x01
+#define	BUS_SPACE_MAP_LINEAR	0x02
 
 int	bus_space_map __P((bus_space_tag_t, bus_addr_t, bus_size_t,
 				int, bus_space_handle_t *));

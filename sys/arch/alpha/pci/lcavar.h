@@ -1,4 +1,4 @@
-/* $NetBSD: lcavar.h,v 1.7 1997/06/06 23:54:32 thorpej Exp $ */
+/* $NetBSD: lcavar.h,v 1.7.4.1 1997/09/04 00:53:43 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -40,7 +40,7 @@
 struct lca_config {
 	int	lc_initted;
 
-	bus_space_tag_t lc_iot, lc_memt;
+	struct alpha_bus_space lc_iot, lc_memt;
 	struct alpha_pci_chipset lc_pc;
 
 	struct alpha_bus_dma_tag lc_dmat_direct;
@@ -64,5 +64,5 @@ void	lca_init __P((struct lca_config *, int));
 void	lca_pci_init __P((pci_chipset_tag_t, void *));
 void	lca_dma_init __P((struct lca_config *));
 
-bus_space_tag_t lca_bus_io_init __P((void *));
-bus_space_tag_t lca_bus_mem_init __P((void *));
+void	lca_bus_io_init __P((bus_space_tag_t, void *));
+void	lca_bus_mem_init __P((bus_space_tag_t, void *));

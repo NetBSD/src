@@ -1,4 +1,4 @@
-/* $NetBSD: apecs.c,v 1.22.2.1 1997/09/01 20:00:31 thorpej Exp $ */
+/* $NetBSD: apecs.c,v 1.22.2.2 1997/09/04 00:53:20 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -27,10 +27,12 @@
  * rights to redistribute these changes.
  */
 
-#include <machine/options.h>		/* Config options headers */
+#include "opt_dec_2100_a50.h"
+#include "opt_dec_eb64plus.h"
+
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: apecs.c,v 1.22.2.1 1997/09/01 20:00:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apecs.c,v 1.22.2.2 1997/09/04 00:53:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,32 +108,16 @@ apecs_init(acp, mallocsafe)
 	acp->ac_haxr1 = REGVAL(EPIC_HAXR1);
 	acp->ac_haxr2 = REGVAL(EPIC_HAXR2);
 
-	/*
-	 * Can't set up SGMAP data here; can be called before malloc().
-	 * XXX THIS COMMENT NO LONGER MAKES SENSE.
-	 */
-
 	if (!acp->ac_initted) {
 		/* don't do these twice since they set up extents */
-		acp->ac_iot = apecs_bus_io_init(acp);
-		acp->ac_memt = apecs_bus_mem_init(acp);
+		apecs_bus_io_init(&acp->ac_iot, acp);
+		apecs_bus_mem_init(&acp->ac_memt, acp);
 	}
 	acp->ac_mallocsafe = mallocsafe;
 
 	apecs_pci_init(&acp->ac_pc, acp);
 
-	/* Turn off DMA window enables in PCI Base Reg 1. */
-	REGVAL(EPIC_PCI_BASE_1) = 0;
-	alpha_mb();
-
-	/* XXX SGMAP? */
-
-	/* XXX XXX BEGIN XXX XXX */
-	{							/* XXX */
-		extern vm_offset_t alpha_XXX_dmamap_or;		/* XXX */
-		alpha_XXX_dmamap_or = 0x40000000;		/* XXX */
-	}							/* XXX */
-	/* XXX XXX END XXX XXX */
+	apecs_dma_init(acp);
 
 	acp->ac_initted = 1;
 }
@@ -180,8 +166,9 @@ apecsattach(parent, self, aux)
 	}
 
 	pba.pba_busname = "pci";
-	pba.pba_iot = acp->ac_iot;
-	pba.pba_memt = acp->ac_memt;
+	pba.pba_iot = &acp->ac_iot;
+	pba.pba_memt = &acp->ac_memt;
+	pba.pba_dmat = &acp->ac_dmat_direct;
 	pba.pba_pc = &acp->ac_pc;
 	pba.pba_bus = 0;
 	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;

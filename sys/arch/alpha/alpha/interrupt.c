@@ -1,4 +1,4 @@
-/* $NetBSD: interrupt.c,v 1.18.2.1 1997/09/01 20:00:12 thorpej Exp $ */
+/* $NetBSD: interrupt.c,v 1.18.2.2 1997/09/04 00:52:38 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -27,10 +27,9 @@
  * rights to redistribute these changes.
  */
 
-#include <machine/options.h>		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.18.2.1 1997/09/01 20:00:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.18.2.2 1997/09/04 00:52:38 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

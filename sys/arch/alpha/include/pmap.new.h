@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.new.h,v 1.5 1997/05/16 21:35:30 gwr Exp $ */
+/* $NetBSD: pmap.new.h,v 1.5.4.1 1997/09/04 00:53:10 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993, 1996 Carnegie Mellon University
@@ -153,11 +153,27 @@ boolean_t	cpu_update_needed[NCPUS];
  *	External declarations for PMAP_ACTIVATE.
  */
 
-void		pmap_activate __P((pmap_t, struct alpha_pcb *, int));
-void		pmap_deactivate __P((pmap_t, struct alpha_pcb *, int));
+struct proc;
+void		pmap_activate __P((struct proc *));
+void		pmap_deactivate __P((struct proc *));
 void		process_pmap_updates();
 void		pmap_update_interrupt();
+int		pmap_tlbpid_assign __P((pmap_t));
 extern	pmap_t	kernel_pmap;
+
+/*
+ *	Inline version of pmap_activate(), used to activate the
+ *	kernel pmap at bootstrap time.
+ */
+#define	PMAP_ACTIVATE(pmap, hwpcb, cpu)					\
+{									\
+	if ((pmap)->pid < 0)						\
+		pmap_tlbpid_assign(pmap);				\
+	(hwpcb)->apcb_asn = pmap->pid;					\
+	(hwpcb)->apcb_ptbr = pmap->dirpfn;				\
+	if ((pmap) != kernel_pmap)					\
+		(pmap)->cpus_using = TRUE;				\
+}
 
 #endif	/* NCPUS > 1 */
 

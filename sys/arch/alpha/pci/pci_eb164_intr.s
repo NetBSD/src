@@ -1,4 +1,4 @@
-/* $NetBSD: pci_eb164_intr.s,v 1.4 1997/04/08 00:19:05 cgd Exp $ */
+/* $NetBSD: pci_eb164_intr.s,v 1.4.4.1 1997/09/04 00:53:47 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -43,10 +43,9 @@
  * interrupt mask PLD).
  */
 
-#include <machine/options.h>		/* Config options headers */
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pci_eb164_intr.s,v 1.4 1997/04/08 00:19:05 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_eb164_intr.s,v 1.4.4.1 1997/09/04 00:53:47 thorpej Exp $");
 
 	.text
 LEAF(eb164_intr_enable,1)

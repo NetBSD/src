@@ -1,4 +1,4 @@
-/* $NetBSD: lca.c,v 1.20 1997/06/06 23:54:30 thorpej Exp $ */
+/* $NetBSD: lca.c,v 1.20.4.1 1997/09/04 00:53:38 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -27,10 +27,11 @@
  * rights to redistribute these changes.
  */
 
-#include <machine/options.h>		/* Config options headers */
+#include "opt_dec_axppci_33.h"
+
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lca.c,v 1.20 1997/06/06 23:54:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lca.c,v 1.20.4.1 1997/09/04 00:53:38 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,8 +108,8 @@ lca_init(lcp, mallocsafe)
 
 	if (!lcp->lc_initted) {
 		/* don't do these twice since they set up extents */
-		lcp->lc_iot = lca_bus_io_init(lcp);
-		lcp->lc_memt = lca_bus_mem_init(lcp);
+		lca_bus_io_init(&lcp->lc_iot, lcp);
+		lca_bus_mem_init(&lcp->lc_memt, lcp);
 	}
 	lcp->lc_mallocsafe = mallocsafe;
 
@@ -180,8 +181,8 @@ lcaattach(parent, self, aux)
 	}
 
 	pba.pba_busname = "pci";
-	pba.pba_iot = lcp->lc_iot;
-	pba.pba_memt = lcp->lc_memt;
+	pba.pba_iot = &lcp->lc_iot;
+	pba.pba_memt = &lcp->lc_memt;
 	pba.pba_dmat = &lcp->lc_dmat_direct;
 	pba.pba_pc = &lcp->lc_pc;
 	pba.pba_bus = 0;
