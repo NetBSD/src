@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_node.h,v 1.9 2004/04/30 22:57:32 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_node.h,v 1.10 2004/07/22 17:04:38 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -35,6 +35,7 @@
 #ifndef _NET80211_IEEE80211_NODE_H_
 #define _NET80211_IEEE80211_NODE_H_
 
+#ifdef _KERNEL
 #define	IEEE80211_PSCAN_WAIT 	5		/* passive scan wait */
 #define	IEEE80211_TRANS_WAIT 	5		/* transition wait */
 #define	IEEE80211_INACT_WAIT	5		/* inactivity timer interval */
@@ -44,6 +45,7 @@
 /* simple hash is enough for variation of macaddr */
 #define	IEEE80211_NODE_HASH(addr)	\
 	(((u_int8_t *)(addr))[IEEE80211_ADDR_LEN - 1] % IEEE80211_NODE_HASHSIZE)
+#endif /* _KERNEL */
 
 #define	IEEE80211_RATE_SIZE	8		/* 802.11 standard */
 #define	IEEE80211_RATE_MAXSIZE	15		/* max rates we'll handle */
@@ -53,6 +55,7 @@ struct ieee80211_rateset {
 	u_int8_t		rs_rates[IEEE80211_RATE_MAXSIZE];
 };
 
+#ifdef _KERNEL
 /*
  * Node specific information.  Note that drivers are expected
  * to derive from this structure to add device-specific per-node
@@ -201,4 +204,5 @@ extern	int ieee80211_match_bss(struct ieee80211com *,
 		struct ieee80211_node *);
 extern	void ieee80211_create_ibss(struct ieee80211com* ,
 		struct ieee80211_channel *);
+#endif /* _KERNEL */
 #endif /* _NET80211_IEEE80211_NODE_H_ */
