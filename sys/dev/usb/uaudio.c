@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.33 2000/12/29 13:28:41 augustss Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.34 2000/12/29 14:49:28 augustss Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -94,7 +94,9 @@ struct mixerctl {
 #define MIX_SIGNED_8	4
 #define MIX_SIZE(n) ((n) == MIX_SIGNED_16 || (n) == MIX_UNSIGNED_16 ? 2 : 1)
 #define MIX_UNSIGNED(n) ((n) == MIX_UNSIGNED_16)
-	int		minval, maxval, delta;
+	int		minval, maxval;
+	u_int		delta;
+	u_int		mul;
 	u_int8_t	class;
 	char		ctlname[MAX_AUDIO_DEV_LEN];
 	char		*ctlunit;
@@ -548,14 +550,14 @@ uaudio_mixer_add_ctl(struct uaudio_softc *sc, struct mixerctl *mc)
 			uaudio_get(sc, GET_MAX, UT_READ_CLASS_INTERFACE,
 				   mc->wValue[0], mc->wIndex,
 				   MIX_SIZE(mc->type)));
+		mc->mul = mc->maxval - mc->minval;
+		if (mc->mul == 0)
+			mc->mul = 1;
 		res = uaudio_get(sc, GET_RES, UT_READ_CLASS_INTERFACE,
 				 mc->wValue[0], mc->wIndex,
 				 MIX_SIZE(mc->type));
-		if (res > 0 && mc->maxval > mc->minval) {
-			mc->delta = res * 256 / (mc->maxval - mc->minval);
-			/* protect against rounding problems */
-			mc->delta += mc->delta >> 1;
-		}
+		if (res > 0)
+			mc->delta = (res * 256 + mc->mul/2) / mc->mul;
 	} else {
 		mc->minval = 0;
 		mc->maxval = 1;
@@ -1583,8 +1585,8 @@ uaudio_value2bsd(struct mixerctl *mc, int val)
 	if (mc->type == MIX_ON_OFF)
 		val = val != 0;
 	else
-		val = (uaudio_signext(mc->type, val) - mc->minval) * 256
-			/ (mc->maxval - mc->minval);
+		val = ((uaudio_signext(mc->type, val) - mc->minval) * 256
+			+ mc->mul/2) / mc->mul;
 	DPRINTFN(5, ("val'=%d\n", val));
 	return (val);
 }
@@ -1597,7 +1599,7 @@ uaudio_bsd2value(struct mixerctl *mc, int val)
 	if (mc->type == MIX_ON_OFF)
 		val = val != 0;
 	else
-		val = val * (mc->maxval - mc->minval) / 256 + mc->minval;
+		val = (val + mc->delta/2) * mc->mul / 256 + mc->minval;
 	DPRINTFN(5, ("val'=%d\n", val));
 	return (val);
 }
