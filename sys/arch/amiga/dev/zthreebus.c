@@ -144,8 +144,8 @@ zthreeattach(pdp, dp, auxp)
 			printf (" I/O size 0x%08x", ZTHREEAVAIL);
 #if 0
 		if (ZTHREEMEMADDR)
-			printf(" mem %08x-%08x\n",
-			    ZTHREEMEMADDR, ZTHREEMEMADDR + ZTHREEMEMSIZE - 1);
+			printf(" mem %08x-%08x\n", ZTHREEMEMADDR,
+			    ZTHREEMEMADDR + NZTHREEMEMPG * NBPG - 1);
 #endif
 		printf("\n");
 	}
@@ -224,10 +224,10 @@ zthreemap (pa, size)
 	caddr_t pa;
 	u_int size;
 {
-	static caddr_t nextkva = 0;
-	caddr_t kva;
+	static vm_offset_t nextkva = 0;
+	vm_offset_t kva;
 
-	if (! nextkva)
+	if (nextkva == 0)
 		nextkva = ZTHREEADDR;
 
 	if (nextkva > ZTHREEADDR + ZTHREEAVAIL)
@@ -238,6 +238,6 @@ zthreemap (pa, size)
 	nextkva += size;
 	if (nextkva > ZTHREEADDR + ZTHREEAVAIL)
 		panic("allocating too much Zorro III address space");
-	physaccess  (kva, pa, size, PG_RW|PG_CI);
-	return kva;
+	physaccess((caddr_t)kva, (caddr_t)pa, size, PG_RW|PG_CI);
+	return((caddr_t)kva);
 }

@@ -38,7 +38,7 @@
  * from: Utah $Hdr: cpu.h 1.16 91/03/25$
  *
  *	@(#)cpu.h	7.7 (Berkeley) 6/27/91
- *	$Id: cpu.h,v 1.13 1994/05/25 07:59:57 chopps Exp $
+ *	$Id: cpu.h,v 1.14 1994/06/04 11:59:25 chopps Exp $
  */
 #ifndef _MACHINE_CPU_H_
 #define _MACHINE_CPU_H_
@@ -138,7 +138,7 @@ extern unsigned char ssir;
 /* values for mmutype (assigned for quick testing) */
 #define	MMU_68030	-1	/* 68030 on-chip subset of 68851 */
 #define	MMU_68851	1	/* Motorola 68851 */
-#define MMU_68040	0	/* 68040 on-chip subsubset */
+#define MMU_68040	-2	/* 68040 on-chip subsubset */
 
 /* values for cpuspeed (not really related to clock speed due to caches) */
 #define	MHZ_8		1
@@ -148,74 +148,8 @@ extern unsigned char ssir;
 #define	MHZ_50		6
 
 #ifdef KERNEL
-extern	int machineid, mmutype, cpu040;
+int machineid, mmutype, cpu040;
 #endif
-
-/* physical memory sections */
-#define CHIPMEMBASE	(0x00000000)
-/* maximum for mapping, not the whole range is needed in physical equivalence */
-#define CHIPMEMTOP	(0x00200000)
-#define CHIPMEMSIZE	btoc(CHIPMEMTOP-CHIPMEMBASE)
-/* CIA-A and CIA-B */
-#define CIABASE		(0x00BFC000)
-#define CIATOP		(0x00C00000)
-#define CIASIZE		btoc(CIATOP-CIABASE)
-#if 0
-#define CUSTOMBASE	(0x00DFE000)
-#define CUSTOMTOP	(0x00E00000)
-#define CUSTOMSIZE	btoc(CUSTOMTOP-CUSTOMBASE)
-#ifdef A3000
-#define SCSIBASE	(0x00DD0000)
-#define SCSITOP		(0x00DD0000+AMIGA_PAGE_SIZE)
-#define SCSISIZE	btoc(SCSITOP-SCSIBASE)
-#endif
-#else
-/* zorro2 really starts at 0x00E00000, but starting mapping at D8 also
-   includes the clock and scsi space on the A3000, as well as the 
-   normal custom chip area on any amiga. That's nice :-)) */
-#define CUSTOMBASE	(0x00DFF000)	/* now just offset rel to zorro2 */
-#endif
-
-/* XXX only correct for A3000 memory map!
- * corresponds to address of last physical memory page, for A3000
- * this is always 0x08000000 - pagesize (== NBPS)
- */
-#define MAXADDR		(0x08000000 - UPAGES)
-
-
-#if 0
-/* these are not used, verbatim from hp300, but not used :-)) */
-
-/* Amiga specific mappings:
- *
- * phys-start	map-start	  phys-end	map-end		name
- *
- * 0x00000000	chipmembase	- 0x00200000	chipmemlimit	CHIP MEM
- * 0x00be0000	ciabase		- 0x00c00000	cialimit	CIA-B/CIA-A
- * 0x00d80000	customchipbase	- 0x00f00000	customchiplimit	CUSTOM/ZTWO
- */
-#define ISCHIPMEM(va) \
-	((char *)(va) >= chipmembase && (char *)(va) < chipmemlimit)
-#define	CHIPMEMV(pa)	((int)(pa)-CHIPMEMBASE+(int)chipmembase)
-#define	CHIPMEMP(va)	((int)(va)-(int)chipmembase+CHIPMEMBASE)
-#define	CHIPMEMPOFF(pa)	((int)(pa)-CHIPMEMBASE)
-#define	CHIPMEMMAPSIZE	btoc(CHIPMEMTOP-CHIPMEMBASE)	/* 2mb */
-
-#define ISCIA(va) \
-	((char *)(va) >= ciabase && (char *)(va) < cialimit)
-#define	CIAV(pa)	((int)(pa)-CIABASE+(int)ciabase)
-#define	CIAP(va)	((int)(va)-(int)ciabase+CIABASE)
-#define	CIAPOFF(pa)	((int)(pa)-CIABASE)
-#define	CIAMAPSIZE	btoc(CIATOP-CIABASE)	/* 8k */
-
-#define ISCUSTOMCHIP(va) \
-	((char *)(va) >= customchipbase && (char *)(va) < customchiplimit)
-#define	CUSTOMCHIPV(pa)	((int)(pa)-CUSTOMCHIPBASE+(int)customchipbase)
-#define	CUSTOMCHIPP(va)	((int)(va)-(int)customchipbase+CUSTOMCHIPBASE)
-#define	CUSTOMCHIPPOFF(pa)	((int)(pa)-CUSTOMCHIPBASE)
-#define	CUSTOMCHIPMAPSIZE	btoc(CUSTOMCHIPTOP-CUSTOMCHIPBASE)	/* 1.5mb */
-#endif
-
 
 /*
  * 68851 and 68030 MMU
