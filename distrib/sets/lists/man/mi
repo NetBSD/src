@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.253.2.28 2001/06/07 16:50:12 he Exp $
+# $NetBSD: mi,v 1.253.2.29 2001/06/10 12:14:41 he Exp $
 ./usr/share/info/am-utils.info
 ./usr/share/info/as.info
 ./usr/share/info/awk.info
@@ -1222,7 +1222,6 @@
 ./usr/share/man/cat8/mrinfo.0
 ./usr/share/man/cat8/mrouted.0
 ./usr/share/man/cat8/mtrace.0
-./usr/share/man/cat8/mtrace6.0
 ./usr/share/man/cat8/mtree.0
 ./usr/share/man/cat8/mvme68k/MAKEDEV.0
 ./usr/share/man/cat8/mvme68k/boot.0
@@ -2643,7 +2642,6 @@
 ./usr/share/man/man8/mrinfo.8
 ./usr/share/man/man8/mrouted.8
 ./usr/share/man/man8/mtrace.8
-./usr/share/man/man8/mtrace6.8
 ./usr/share/man/man8/mtree.8
 ./usr/share/man/man8/mvme68k/MAKEDEV.8
 ./usr/share/man/man8/mvme68k/boot.8
