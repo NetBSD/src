@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho.c,v 1.19 2000/07/05 12:11:59 pk Exp $	*/
+/*	$NetBSD: psycho.c,v 1.20 2000/07/07 12:53:30 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -1042,7 +1042,7 @@ psycho_dmamap_load_raw(t, map, segs, nsegs, size, flags)
 	struct psycho_pbm *pp = (struct psycho_pbm *)t->_cookie;
 	struct psycho_softc *sc = pp->pp_sc;
 
-	return (iommu_dvmamap_load_raw(t, &sc->sc_is, map, segs, nsegs, size, flags));
+	return (iommu_dvmamap_load_raw(t, &sc->sc_is, map, segs, nsegs, flags, size));
 }
 
 void
