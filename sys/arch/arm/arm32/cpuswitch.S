@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.11 2002/08/12 21:00:12 thorpej Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.12 2002/08/14 23:07:36 chris Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -109,10 +109,10 @@ ENTRY(setrunqueue)
 
 	/* Get the priority of the queue */
 	ldrb	r1, [r0, #(P_PRIORITY)]
-	mov	r1, r1, lsr #2
 
 	/* Indicate that there is a process on this queue */
 	ldr	r12, Lwhichqs
+	mov	r1, r1, lsr #2
 	ldr	r2, [r12]
 	mov	r3, #0x00000001
 	mov	r3, r3, lsl r1
@@ -187,8 +187,8 @@ ENTRY(remrunqueue)
 
 	/* This could be reworked to avoid the use of r4 */
 	ldreq	r12, Lwhichqs
-	ldreq	r2, [r12]
 	moveq	r3, #0x00000001
+	ldreq	r2, [r12]
 	moveq	r3, r3, lsl r1
 	biceq	r2, r2, r3
 	streq	r2, [r12]
