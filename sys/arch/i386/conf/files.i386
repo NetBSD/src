@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.229 2003/02/16 17:42:13 augustss Exp $
+#	$NetBSD: files.i386,v 1.230 2003/02/26 21:33:36 fvdl Exp $
 #
 # new style config file for i386 architecture
 #
@@ -34,9 +34,6 @@ defflag			USER_LDT
 # Speed hack; make NOPs dummies (might break on some machines)
 defflag			DUMMY_NOPS
 
-# MTRR support
-defflag			MTRR
-
 # X server support in console drivers
 defflag	opt_xserver.h	XSERVER XSERVER_DDB
 
@@ -45,8 +42,6 @@ defparam opt_realmem.h	REALBASEMEM REALEXTMEM
 
 # understand boot device passed by pre-1.3 bootblocks
 defflag			COMPAT_OLDBOOT
-
-defflag	opt_mpbios.h MPBIOS MPVERBOSE MPDEBUG
 
 defflag opt_mpacpi.h MPACPI
 
@@ -67,7 +62,6 @@ defflag			NOREDZONE
 defflag	opt_kstack_dr0.h		KSTACK_CHECK_DR0
 
 file	arch/i386/i386/autoconf.c
-file	arch/i386/i386/bus_machdep.c
 file	arch/i386/i386/consinit.c
 file	arch/i386/i386/db_dbgreg.S	ddb | kstack_check_dr0
 file	arch/i386/i386/db_disasm.c	ddb
@@ -76,9 +70,7 @@ file	arch/i386/i386/db_memrw.c	ddb | kgdb
 file	arch/i386/i386/db_trace.c	ddb
 file	arch/i386/i386/disksubr.c	disk
 file	arch/i386/i386/gdt.c
-file	arch/i386/i386/i8259.c
 file	arch/i386/i386/in_cksum.S	inet | inet6
-file	arch/i386/i386/intr.c
 file	arch/i386/i386/ipkdb_glue.c	ipkdb
 file	arch/i386/i386/kgdb_machdep.c	kgdb
 file	arch/i386/i386/machdep.c
@@ -86,13 +78,11 @@ file	arch/i386/i386/math_emulate.c	math_emulate
 file	arch/i386/i386/mem.c
 file	arch/i386/i386/microtime.S
 file	kern/kern_microtime.c		i586_cpu | i686_cpu
-file	arch/i386/i386/mtrr_i686.c	mtrr
 file	arch/i386/i386/mtrr_k6.c	mtrr
 file	netns/ns_cksum.c		ns
 file	arch/i386/i386/pmap.c
 file	arch/i386/i386/process_machdep.c
 file	arch/i386/i386/procfs_machdep.c	procfs
-file	arch/i386/i386/softintr.c
 file	arch/i386/i386/sys_machdep.c
 file	arch/i386/i386/syscall.c
 file	arch/i386/i386/trap.c
@@ -145,7 +135,6 @@ file	arch/i386/i386/bios32.c		bios32 needs-flag
 # System bus types
 #
 
-define	mainbus { [apid = -1] }
 # XXX BIOS32 only if something that uses it is configured!
 device	mainbus: isabus, eisabus, mcabus, pcibus, mainbus, bios32, acpibus
 attach	mainbus at root
@@ -320,9 +309,6 @@ attach	apm at mainbus
 file	arch/i386/i386/apm.c		apm needs-count
 file	arch/i386/i386/apmcall.S	apm
 
-# MP configuration using Intel SMP specification 1.4
-file    arch/i386/i386/mpbios.c		mpbios
-
 # MP configuration using ACPI
 file	arch/i386/i386/mpacpi.c		mpacpi & acpi
 
@@ -332,18 +318,6 @@ define cpu { [apid = -1] }
 device cpu
 attach cpu at mainbus
 file	arch/i386/i386/cpu.c		cpu
-
-# Common APIC support routines
-file	arch/i386/i386/apic.c		ioapic | lapic 
-
-# Local APIC (required for multiprocessor)
-define lapic
-file	arch/i386/i386/lapic.c		lapic needs-flag
-
-# I/O apics
-device ioapic: bioscall, lapic
-attach ioapic at mainbus
-file	arch/i386/i386/ioapic.c		ioapic needs-flag
 
 #
 # Compatibility modules
