@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.29 1999/01/16 20:45:57 chuck Exp $ */
+/*	$NetBSD: machdep.c,v 1.30 1999/01/31 09:21:18 mrg Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -479,7 +479,7 @@ allocsys(v)
  * Set up registers on exec.
  */
 
-#ifdef _LP64
+#ifdef __arch64__
 #define rwindow		rwindow64
 #define STACK_OFFSET	BIAS
 #define CPOUTREG(l,v)	copyout(&(v), (l), sizeof(v))
@@ -559,7 +559,7 @@ int sigpid = 0;
 struct sigframe {
 	int	sf_signo;		/* signal number */
 	int	sf_code;		/* code */
-#ifndef _LP64
+#ifndef __arch64__
 	struct	sigcontext *sf_scp;	/* SunOS user addr of sigcontext */
 	int	sf_addr;		/* SunOS compat, always 0 for now */
 #endif
@@ -654,7 +654,7 @@ sendsig(catcher, sig, mask, code)
 	 */
 	sf.sf_signo = sig;
 	sf.sf_code = code;
-#ifndef _LP64
+#ifndef __arch64__
 	sf.sf_scp = 0;
 	sf.sf_addr = 0;			/* XXX */
 #endif

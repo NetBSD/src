@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.6 1998/10/08 02:31:39 eeh Exp $ */
+/*	$NetBSD: db_machdep.h,v 1.7 1999/01/31 09:21:19 mrg Exp $ */
 
 /*
  * Mach Operating System
@@ -119,7 +119,7 @@ int kdb_trap __P((int, struct trapframe *));
  */
 #if 1
 #define	DB_ELF_SYMBOLS
-#ifdef _LP64
+#ifdef __arch64__
 #define DB_ELFSIZE	64
 #else
 #define DB_ELFSIZE	32

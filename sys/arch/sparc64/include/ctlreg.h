@@ -1,4 +1,4 @@
-/*	$NetBSD: ctlreg.h,v 1.4 1998/11/13 03:47:15 eeh Exp $ */
+/*	$NetBSD: ctlreg.h,v 1.5 1999/01/31 09:21:19 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -512,7 +512,7 @@
 	    "r" ((long long)(value)), "r" ((int)(loc)), "r" (asi)); \
 })
 
-#ifdef _LP64
+#ifdef __arch64__
 /* native load 64-bit int from alternate address space w/64-bit compiler*/
 #define	ldxa(loc, asi) ({ \
 	register long _lda_v; \
@@ -531,7 +531,7 @@
 })
 #endif
 
-#ifdef _LP64
+#ifdef __arch64__
 /* native store 64-bit int to alternate address space w/64-bit compiler*/
 #define	stxa(loc, asi, value) ({ \
 	__asm __volatile("wr %2,%%g0,%%asi; stxa %0,[%1]%%asi; membar #Sync" : : \
@@ -556,7 +556,7 @@
 
 #define membar_sync() __asm __volatile("membar #Sync" : :)
 
-#ifdef _LP64
+#ifdef __arch64__
 /* read 64-bit %tick register */
 #define	tick() ({ \
 	register u_long _tick_tmp; \

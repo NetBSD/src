@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.21 1998/12/14 16:18:47 kleink Exp $ */
+/*	$NetBSD: trap.c,v 1.22 1999/01/31 09:21:19 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -1865,7 +1865,7 @@ syscall(code, tf, pc)
 		callp += p->p_emul->e_nosys;
 	else if (tf->tf_out[6] & 1L) {
 		register64_t *argp;
-#ifndef _LP64
+#ifndef __arch64__
 #ifdef DEBUG
 		printf("syscall(): 64-bit stack on a 32-bit kernel????\n");
 		Debugger();
@@ -1936,7 +1936,7 @@ syscall(code, tf, pc)
 		/* 32-bit stack */
 		callp += code;
 
-#if defined(_LP64) && COMPAT_SPARC32 != 1
+#if defined(__arch64__) && COMPAT_SPARC32 != 1
 #ifdef DEBUG
 		printf("syscall(): 32-bit stack on a 64-bit kernel????\n");
 		Debugger();
