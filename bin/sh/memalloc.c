@@ -44,6 +44,7 @@ static char sccsid[] = "@(#)memalloc.c	8.1 (Berkeley) 5/31/93";
 #include "error.h"
 #include "machdep.h"
 #include "mystring.h"
+#include <stdlib.h>
 #include <unistd.h>
 
 /*
@@ -53,7 +54,6 @@ static char sccsid[] = "@(#)memalloc.c	8.1 (Berkeley) 5/31/93";
 pointer
 ckmalloc(nbytes) {
 	register pointer p;
-	pointer malloc();
 
 	if ((p = malloc(nbytes)) == NULL)
 		error("Out of space");
@@ -69,7 +69,6 @@ pointer
 ckrealloc(p, nbytes)
 	register pointer p;
 	{
-	pointer realloc();
 
 	if ((p = realloc(p, nbytes)) == NULL)
 		error("Out of space");
