@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.s,v 1.27 1997/04/25 02:22:00 thorpej Exp $	*/
+/*	$NetBSD: copy.s,v 1.28 1997/05/21 03:51:04 jeremy Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995 Charles Hannum.
@@ -393,8 +393,8 @@ ENTRY(suword)
 	bra	Lsdone
 
 /*
- * fusword(caddr_t uaddr);
- * Fetch a short from the user's address space.
+ * susword(caddr_t uaddr, short x);
+ * Store a short in the user's address space.
  */
 ENTRY(susword)
 	CHECK_DFC
