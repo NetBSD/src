@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.7 1997/04/01 22:10:04 gwr Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.8 1997/04/27 22:08:51 pk Exp $	*/
 
 /*
  * Copyright (c) 1996 Charles M. Hannum.  All rights reserved.
@@ -391,6 +391,7 @@ ncr53c9x_setsync(sc, ti)
 	}
 }
 
+int ncr53c9x_dmaselect = 0;
 /*
  * Send a command to a target, set the driver state to NCR_SELECTING
  * and let the caller take care of the rest.
@@ -410,7 +411,7 @@ ncr53c9x_select(sc, ecb)
 	int clen;
 
 	NCR_TRACE(("[ncr53c9x_select(t%d,l%d,cmd:%x)] ",
-	    sc_link->target, sc_link->lun, ecb->cmd.opcode));
+	    sc_link->target, sc_link->lun, ecb->cmd.cmd.opcode));
 
 	/* new state NCR_SELECTING */
 	sc->sc_state = NCR_SELECTING;
@@ -433,6 +434,27 @@ ncr53c9x_select(sc, ecb)
 	NCR_WRITE_REG(sc, NCR_SELID, target);
 	ncr53c9x_setsync(sc, ti);
 
+	if (ncr53c9x_dmaselect && (ti->flags & T_NEGOTIATE) == 0) {
+		ecb->cmd.id = 
+		    MSG_IDENTIFY(sc_link->lun, (ti->flags & T_RSELECTOFF)?0:1);
+
+		/* setup DMA transfer for command */
+		clen = ecb->clen + 1;
+		sc->sc_cmdlen = clen;
+		sc->sc_cmdp = (caddr_t)&ecb->cmd;
+		NCRDMA_SETUP(sc, &sc->sc_cmdp, &sc->sc_cmdlen, 0, &clen);
+		/* Program the SCSI counter */
+		NCR_WRITE_REG(sc, NCR_TCL, clen);
+		NCR_WRITE_REG(sc, NCR_TCM, clen >> 8);
+		if (sc->sc_cfg2 & NCRCFG2_FE) {
+			NCR_WRITE_REG(sc, NCR_TCH, clen >> 16);
+		}
+
+		/* And get the targets attention */
+		NCRCMD(sc, NCRCMD_SELATN | NCRCMD_DMA);
+		NCRDMA_GO(sc);
+		return;
+	}
 	/*
 	 * Who am I. This is where we tell the target that we are
 	 * happy for it to disconnect etc.
@@ -447,7 +469,7 @@ ncr53c9x_select(sc, ecb)
 	}
 
 	/* Now the command into the FIFO */
-	cmd = (u_char *)&ecb->cmd;
+	cmd = (u_char *)&ecb->cmd.cmd;
 	clen = ecb->clen;
 	while (clen--)
 		NCR_WRITE_REG(sc, NCR_FIFO, *cmd++);
@@ -538,7 +560,7 @@ ncr53c9x_scsi_cmd(xs)
 		ecb->clen = 0;
 		ecb->dleft = 0;
 	} else {
-		bcopy(xs->cmd, &ecb->cmd, xs->cmdlen);
+		bcopy(xs->cmd, &ecb->cmd.cmd, xs->cmdlen);
 		ecb->clen = xs->cmdlen;
 		ecb->daddr = xs->data;
 		ecb->dleft = xs->datalen;
@@ -645,7 +667,7 @@ ncr53c9x_sense(sc, ecb)
 	struct scsi_xfer *xs = ecb->xs;
 	struct scsi_link *sc_link = xs->sc_link;
 	struct ncr53c9x_tinfo *ti = &sc->sc_tinfo[sc_link->target];
-	struct scsi_sense *ss = (void *)&ecb->cmd;
+	struct scsi_sense *ss = (void *)&ecb->cmd.cmd;
 
 	NCR_MISC(("requesting sense "));
 	/* Next, setup a request sense command block */
@@ -980,6 +1002,7 @@ gotit:
 			NCR_MSGS(("disconnect "));
 			ti->dconns++;
 			sc->sc_state = NCR_DISCONNECT;
+
 			if ((ecb->xs->sc_link->quirks & SDEV_AUTOSAVE) == 0)
 				break;
 			/*FALLTHROUGH*/
@@ -1341,6 +1364,11 @@ ncr53c9x_intr(sc)
 			}
 
 			if (sc->sc_espintr & NCRINTR_ILL) {
+				if (sc->sc_flags & NCR_EXPECT_ILLCMD) {
+printf("%s: ILL: ESP100 work-around activated\n", sc->sc_dev.dv_xname);
+					sc->sc_flags &= ~NCR_EXPECT_ILLCMD;
+					continue;
+				}
 				/* illegal command, out of sync ? */
 				printf("%s: illegal command: 0x%x "
 				    "(state %d, phase %x, prevphase %x)\n",
@@ -1351,10 +1379,11 @@ ncr53c9x_intr(sc)
 					NCRCMD(sc, NCRCMD_FLUSH);
 					DELAY(1);
 				}
-				ncr53c9x_init(sc, 0); /* Restart everything */
+				ncr53c9x_init(sc, 1); /* Restart everything */
 				return 1;
 			}
 		}
+		sc->sc_flags &= ~NCR_EXPECT_ILLCMD;
 
 		/*
 		 * Call if DMA is active.
@@ -1553,9 +1582,14 @@ if (sc->sc_flags & NCR_ICCS) printf("[[esp: BUMMER]]");
 				    (nfifo > 2 &&
 				     sc->sc_rev != NCR_VARIANT_ESP100)) {
 					printf("%s: RESELECT: "
-					    "%d bytes in FIFO!\n",
+					    "%d bytes in FIFO! "
+					    "[intr %x, stat %x, step %d, prevphase %x]\n",
 						sc->sc_dev.dv_xname,
-						nfifo);
+						nfifo,
+						sc->sc_espintr,
+						sc->sc_espstat,
+						sc->sc_espstep,
+						sc->sc_prevphase);
 					ncr53c9x_init(sc, 1);
 					return 1;
 				}
@@ -1564,8 +1598,10 @@ if (sc->sc_flags & NCR_ICCS) printf("[[esp: BUMMER]]");
 
 				/* Handle identify message */
 				ncr53c9x_msgin(sc);
-				if (nfifo != 2)
+				if (nfifo != 2) {
+					sc->sc_flags |= NCR_EXPECT_ILLCMD;
 					NCRCMD(sc, NCRCMD_FLUSH);
+				}
 
 				if (sc->sc_state != NCR_CONNECTED) {
 					/* IDENTIFY fail?! */
@@ -1620,7 +1656,11 @@ if (sc->sc_flags & NCR_ICCS) printf("[[esp: BUMMER]]");
 					 * went out.
 					 * (Timing problems?)
 					 */
-					if ((NCR_READ_REG(sc, NCR_FFLAG)
+					if (ncr53c9x_dmaselect) {
+					    if (sc->sc_cmdlen == 0)
+						/* Hope for the best.. */
+						break;
+					} else if ((NCR_READ_REG(sc, NCR_FFLAG)
 					    & NCRFIFO_FF) == 0) {
 						/* Hope for the best.. */
 						break;
@@ -1642,6 +1682,14 @@ if (sc->sc_flags & NCR_ICCS) printf("[[esp: BUMMER]]");
 					/* Select stuck at Command Phase */
 					NCRCMD(sc, NCRCMD_FLUSH);
 				case 4:
+					if (ncr53c9x_dmaselect &&
+					    sc->sc_cmdlen != 0)
+						printf("(%s:%d:%d): select; "
+						      "%d left in DMA buffer\n",
+							sc->sc_dev.dv_xname,
+							sc_link->target,
+							sc_link->lun,
+							sc->sc_cmdlen);
 					/* So far, everything went fine */
 					break;
 				}
@@ -1761,23 +1809,47 @@ if (sc->sc_flags & NCR_ICCS) printf("[[esp: BUMMER]]");
 			}
 			sc->sc_prevphase = MESSAGE_IN_PHASE;
 			break;
-		case COMMAND_PHASE: {
-			/* well, this means send the command again */
-			u_char *cmd = (u_char *)&ecb->cmd;
-			int i;
+		case COMMAND_PHASE:
+			/*
+			 * Send the command block. Normally we don't see this
+			 * phase because the SEL_ATN command takes care of
+			 * all this. However, we end up here if either the
+			 * target or we wanted exchange some more messages
+			 * first (e.g. to start negotiations).
+			 */
 
 			NCR_PHASE(("COMMAND_PHASE 0x%02x (%d) ",
-				ecb->cmd.opcode, ecb->clen));
+				ecb->cmd.cmd.opcode, ecb->clen));
 			if (NCR_READ_REG(sc, NCR_FFLAG) & NCRFIFO_FF) {
 				NCRCMD(sc, NCRCMD_FLUSH);
 				DELAY(1);
 			}
-			/* Now the command into the FIFO */
-			for (i = 0; i < ecb->clen; i++)
-				NCR_WRITE_REG(sc, NCR_FIFO, *cmd++);
-			NCRCMD(sc, NCRCMD_TRANS);
-			sc->sc_prevphase = COMMAND_PHASE;
+			if (ncr53c9x_dmaselect) {
+				size_t size;
+				/* setup DMA transfer for command */
+				size = ecb->clen;
+				sc->sc_cmdlen = size;
+				sc->sc_cmdp = (caddr_t)&ecb->cmd.cmd;
+				NCRDMA_SETUP(sc, &sc->sc_cmdp, &sc->sc_cmdlen,
+					     0, &size);
+				/* Program the SCSI counter */
+				NCR_WRITE_REG(sc, NCR_TCL, size);
+				NCR_WRITE_REG(sc, NCR_TCM, size >> 8);
+				if (sc->sc_cfg2 & NCRCFG2_FE) {
+					NCR_WRITE_REG(sc, NCR_TCH, size >> 16);
+				}
+
+				NCRCMD(sc, NCRCMD_TRANS | NCRCMD_DMA);
+				NCRDMA_GO(sc);
+			} else {
+				u_char *cmd = (u_char *)&ecb->cmd.cmd;
+				int i;
+				/* Now the command into the FIFO */
+				for (i = 0; i < ecb->clen; i++)
+					NCR_WRITE_REG(sc, NCR_FIFO, *cmd++);
+				NCRCMD(sc, NCRCMD_TRANS);
 			}
+			sc->sc_prevphase = COMMAND_PHASE;
 			break;
 		case DATA_OUT_PHASE:
 			NCR_PHASE(("DATA_OUT_PHASE [%ld] ",(long)sc->sc_dleft));
