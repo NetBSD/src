@@ -1,4 +1,4 @@
-/*	$NetBSD: pica.c,v 1.1.1.1 1996/03/13 04:58:12 jonathan Exp $	*/
+/*	$NetBSD: pica.c,v 1.2 1996/03/17 01:42:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -47,8 +47,14 @@ struct pica_softc {
 int	picamatch(struct device *, void *, void *);
 void	picaattach(struct device *, struct device *, void *);
 int	picaprint(void *, char *);
-struct cfdriver picacd =
-    { NULL, "pica", picamatch, picaattach, DV_DULL, sizeof (struct pica_softc) };
+
+struct cfattach pica_ca = {
+	sizeof (struct pica_softc), picamatch, picaattach
+};
+
+struct cfdriver pica_cd = {
+	NULL, "pica", DV_DULL
+};
 
 void	pica_intr_establish __P((struct confargs *, int (*)(void *), void *));
 void	pica_intr_disestablish __P((struct confargs *));
@@ -138,7 +144,7 @@ picamatch(parent, cfdata, aux)
 	struct confargs *ca = aux;
 
         /* Make sure that we're looking for a PICA. */
-        if (strcmp(ca->ca_name, picacd.cd_name) != 0)
+        if (strcmp(ca->ca_name, pica_cd.cd_name) != 0)
                 return (0);
 
         /* Make sure that unit exists. */
@@ -207,7 +213,7 @@ caddr_t
 pica_cvtaddr(ca)
 	struct confargs *ca;
 {
-	struct pica_softc *sc = picacd.cd_devs[0];
+	struct pica_softc *sc = pica_cd.cd_devs[0];
 
 	return(sc->sc_devs[ca->ca_slot].ps_base + ca->ca_offset);
 
@@ -219,7 +225,7 @@ pica_intr_establish(ca, handler, val)
 	intr_handler_t handler;
 	void *val;
 {
-	struct pica_softc *sc = picacd.cd_devs[0];
+	struct pica_softc *sc = pica_cd.cd_devs[0];
 
 	int slot;
 
@@ -244,7 +250,7 @@ void
 pica_intr_disestablish(ca)
 	struct confargs *ca;
 {
-	struct pica_softc *sc = picacd.cd_devs[0];
+	struct pica_softc *sc = pica_cd.cd_devs[0];
 
 	int slot;
 

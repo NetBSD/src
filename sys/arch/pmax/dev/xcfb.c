@@ -1,4 +1,4 @@
-/*	$NetBSD: xcfb.c,v 1.12 1996/02/15 19:13:11 jonathan Exp $	*/
+/*	$NetBSD: xcfb.c,v 1.13 1996/03/17 01:46:54 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -133,7 +133,7 @@ struct fbuaccess xcfbu;
 struct pmax_fbtty xcfbfb;
 
 struct fbinfo	xcfbfi;	/*XXX*/
-extern struct cfdriver cfb;
+extern struct cfdriver cfb_cd;
 
 #define CMAP_BITS	(3 * 256)		/* 256 entries, 3 bytes per. */
 static u_char cmap_bits [CMAP_BITS];		/* colormap for console... */
@@ -178,8 +178,12 @@ extern u_short defCursor[32];
 int xcfbmatch __P((struct device *, void *, void *));
 void xcfbattach __P((struct device *, struct device *, void *));
 
-struct cfdriver xcfbcd = {
-	NULL, "xcfb", xcfbmatch, xcfbattach, DV_DULL, sizeof(struct device), 0
+struct cfattach xcfb_ca = {
+	sizeof(struct device), xcfbmatch, xcfbattach
+};
+
+struct cfdriver xcfb_cd = {
+	NULL, "xcfb", DV_DULL
 };
 
 int

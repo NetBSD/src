@@ -1,4 +1,4 @@
-/*	$NetBSD: pm.c,v 1.13 1996/02/15 19:13:08 jonathan Exp $	*/
+/*	$NetBSD: pm.c,v 1.14 1996/03/17 01:46:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -160,8 +160,12 @@ static u_char cmap_bits [CMAP_BITS];		/* colormap for console... */
 int pmmatch __P((struct device *, void *, void *));
 void pmattach __P((struct device *, struct device *, void *));
 
-struct cfdriver pmcd = {
-	NULL, "pm", pmmatch, pmattach, DV_DULL, sizeof(struct device), 0
+struct cfattach pm_ca = {
+	sizeof(struct device), pmmatch, pmattach
+};
+
+struct cfdriver pm_cd = {
+	NULL, "pm", DV_DULL
 };
 
 /* new-style raster-cons "driver" methods */

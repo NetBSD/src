@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.16 1995/12/28 19:16:55 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.17 1996/03/17 01:39:07 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -204,9 +204,13 @@ setroot()
 static int membusprobe();
 static void membusattach();
 
-struct cfdriver membuscd =
-      {	NULL, "membus", membusprobe, membusattach,
-	DV_DULL, sizeof(struct device), NULL, 0 };
+struct cfattach membus_ca = {
+	sizeof(struct device), membusprobe, membusattach
+};
+
+struct cfdriver membus_cd = {
+	NULL, "membus", DV_DULL, NULL, 0
+};
 
 static int
 membusprobe(parent, cf, aux)

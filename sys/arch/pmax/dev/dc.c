@@ -1,4 +1,4 @@
-/*	$NetBSD: dc.c,v 1.14 1996/02/02 18:07:17 mycroft Exp $	*/
+/*	$NetBSD: dc.c,v 1.15 1996/03/17 01:46:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -108,9 +108,14 @@ void	dcattach __P((struct device *parent, struct device *self, void *aux));
 int	dc_doprobe __P((void *addr, int unit, int flags, int pri));
 int	dcintr __P((void * xxxunit));
 
-extern struct cfdriver dccd;
-struct  cfdriver dccd = {
-	NULL, "dc", dcmatch, dcattach, DV_TTY, sizeof(struct dc_softc), 0
+extern struct cfdriver dc_cd;
+
+struct cfattach dc_ca = {
+	sizeof(struct dc_softc), dcmatch, dcattach
+};
+
+struct  cfdriver dc_cd = {
+	NULL, "dc", DV_TTY
 };
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.7 1995/11/30 00:58:45 jtc Exp $	*/
+/*	$NetBSD: lpt.c,v 1.8 1996/03/17 01:38:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Matthias Pfaller.
@@ -179,15 +179,12 @@ static void plipstart(struct ifnet *);
 static void plipoutput(struct lpt_softc *);
 #endif
 
-struct cfdriver lptcd = {
-	NULL,
-	"lpt",
-	lptmatch,
-	lptattach,
-	DV_TTY,
-	sizeof(struct lpt_softc),
-	NULL,
-	0
+struct cfattach lpt_ca = {
+	sizeof(struct lpt_softc), lptmatch, lptattach
+};
+
+struct cfdriver lpt_cd = {
+	NULL, "lpt", DV_TTY, NULL, 0
 };
 
 lptmatch(struct device *parent, void *cf, void *aux)
@@ -255,7 +252,7 @@ lptattach(struct device *parent, struct device *self, void *aux)
 int
 lptopen(dev_t dev, int flag)
 {
-	struct lpt_softc *sc = (struct lpt_softc *) lptcd.cd_devs[LPTUNIT(dev)];
+	struct lpt_softc *sc = (struct lpt_softc *) lpt_cd.cd_devs[LPTUNIT(dev)];
 	volatile struct i8255 *i8255 = sc->sc_i8255;
 	u_char flags = LPTFLAGS(dev);
 	int error;
@@ -344,7 +341,7 @@ lptout(void *arg)
  */
 lptclose(dev_t dev, int flag)
 {
-	struct lpt_softc *sc = (struct lpt_softc *) lptcd.cd_devs[LPTUNIT(dev)];
+	struct lpt_softc *sc = (struct lpt_softc *) lpt_cd.cd_devs[LPTUNIT(dev)];
 
 	if (sc->sc_count)
 		(void) pushbytes(sc);
@@ -377,7 +374,7 @@ pushbytes(struct lpt_softc *sc)
  */
 lptwrite(dev_t dev, struct uio *uio)
 {
-	struct lpt_softc *sc = (struct lpt_softc *) lptcd.cd_devs[LPTUNIT(dev)];
+	struct lpt_softc *sc = (struct lpt_softc *) lpt_cd.cd_devs[LPTUNIT(dev)];
 	size_t n;
 	int error = 0;
 
@@ -489,7 +486,7 @@ static int
 plipioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct proc *p = curproc;
-	struct lpt_softc *sc = (struct lpt_softc *) lptcd.cd_devs[ifp->if_unit];
+	struct lpt_softc *sc = (struct lpt_softc *) lpt_cd.cd_devs[ifp->if_unit];
 	volatile struct i8255 *i8255 = sc->sc_i8255;
 	struct ifaddr *ifa = (struct ifaddr *)data;
 	struct ifreq *ifr = (struct ifreq *)data; 
@@ -764,7 +761,7 @@ pliptransmit(volatile struct i8255 *i8255, u_char *buf, int len)
 static void
 plipstart(struct ifnet *ifp)
 {
-	struct lpt_softc *sc = (struct lpt_softc *) lptcd.cd_devs[ifp->if_unit];
+	struct lpt_softc *sc = (struct lpt_softc *) lpt_cd.cd_devs[ifp->if_unit];
 	sc->sc_pending |= PLIP_OPENDING;
 	softintr(sc->sc_ifsoftint);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.1.1.1 1996/03/13 04:58:06 jonathan Exp $	*/
+/*	$NetBSD: lpt.c,v 1.2 1996/03/17 01:42:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -107,8 +107,12 @@ int lptprobe __P((struct device *, void *, void *));
 void lptattach __P((struct device *, struct device *, void *));
 int lptintr __P((void *));
 
-struct cfdriver lptcd = {
-	NULL, "lpt", lptprobe, lptattach, DV_TTY, sizeof(struct lpt_softc)
+struct cfattach lpt_ca = {
+	sizeof(struct lpt_softc), lptprobe, lptattach
+};
+
+struct cfdriver lpt_cd = {
+	NULL, "lpt", DV_TTY
 };
 
 #define	LPTUNIT(s)	(minor(s) & 0x1f)
@@ -251,9 +255,9 @@ lptopen(dev, flag)
 	int error;
 	int spin;
 
-	if (unit >= lptcd.cd_ndevs)
+	if (unit >= lpt_cd.cd_ndevs)
 		return ENXIO;
-	sc = lptcd.cd_devs[unit];
+	sc = lpt_cd.cd_devs[unit];
 	if (!sc)
 		return ENXIO;
 
@@ -354,7 +358,7 @@ lptclose(dev, flag)
 	int flag;
 {
 	int unit = LPTUNIT(dev);
-	struct lpt_softc *sc = lptcd.cd_devs[unit];
+	struct lpt_softc *sc = lpt_cd.cd_devs[unit];
 	int iobase = sc->sc_iobase;
 
 	if (sc->sc_count)
@@ -404,7 +408,7 @@ lptwrite(dev, uio)
 	dev_t dev;
 	struct uio *uio;
 {
-	struct lpt_softc *sc = lptcd.cd_devs[LPTUNIT(dev)];
+	struct lpt_softc *sc = lpt_cd.cd_devs[LPTUNIT(dev)];
 	size_t n;
 	int error = 0;
 
