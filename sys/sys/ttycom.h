@@ -1,4 +1,4 @@
-/*	$NetBSD: ttycom.h,v 1.4 1996/05/19 17:17:53 jonathan Exp $	*/
+/*	$NetBSD: ttycom.h,v 1.5 1997/07/19 15:44:39 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993, 1994
@@ -61,8 +61,6 @@ struct winsize {
 	unsigned short	ws_ypixel;	/* vertical size, pixels */
 };
 
-#define	TIOCMODG	_IOR('t', 3, int)	/* get modem control state */
-#define	TIOCMODS	_IOW('t', 4, int)	/* set modem control state */
 #define		TIOCM_LE	0001		/* line enable */
 #define		TIOCM_DTR	0002		/* data terminal ready */
 #define		TIOCM_RTS	0004		/* request to send */
