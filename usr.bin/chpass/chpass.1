@@ -1,4 +1,4 @@
-.\"	$NetBSD: chpass.1,v 1.19 2002/09/30 09:41:49 grant Exp $
+.\"	$NetBSD: chpass.1,v 1.20 2003/02/16 16:18:23 wiz Exp $
 .\"
 .\" Copyright (c) 1988, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)chpass.1	8.2 (Berkeley) 12/30/93
 .\"
-.Dd December 30, 1993
+.Dd February 16, 2003
 .Dt CHPASS 1
 .Os
 .Sh NAME
@@ -180,11 +180,13 @@ is the year.
 .Pp
 The
 .Ar class
-field is currently unused.
-In the near future it will be a key to
-a
+field is a key for a user's login class.
+Login classes are defined in
+.Xr login.conf 5 ,
+which is a
 .Xr termcap 5
-style database of user attributes.
+style database of user attributes, accounting, resource and
+environment settings.
 .Pp
 The user's
 .Ar home directory
