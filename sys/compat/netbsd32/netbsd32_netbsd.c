@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.49 2001/02/02 07:08:18 mrg Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.50 2001/02/02 13:05:18 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -1557,6 +1557,24 @@ netbsd32_fchflags(p, v, retval)
 }
 
 int
+netbsd32_lchflags(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct netbsd32_lchflags_args /* {
+		syscallarg(int) fd;
+		syscallarg(netbsd32_u_long) flags;
+	} */ *uap = v;
+	struct sys_lchflags_args ua;
+
+	NETBSD32TOP_UAP(path, const char);
+	NETBSD32TO64_UAP(flags);
+
+	return (sys_lchflags(p, &ua, retval));
+}
+
+int
 netbsd32_kill(p, v, retval)
 	struct proc *p;
 	void *v;
@@ -1633,6 +1651,25 @@ netbsd32_ktrace(p, v, retval)
 	return (sys_ktrace(p, &ua, retval));
 }
 #endif /* KTRACE */
+
+int
+netbsd32_utrace(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct netbsd32_utrace_args /* {
+		syscallarg(const netbsd32_charp) label;
+		syscallarg(netbsd32_voidp) addr;
+		syscallarg(netbsd32_size_t) len;
+	} */ *uap = v;
+	struct sys_utrace_args ua;
+
+	NETBSD32TOP_UAP(label, const char);
+	NETBSD32TOP_UAP(addr, void);
+	NETBSD32TO64_UAP(len);
+	return (sys_utrace(p, &ua, retval));
+}
 
 int
 netbsd32_sigaction(p, v, retval)
