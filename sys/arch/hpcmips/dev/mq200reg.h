@@ -1,4 +1,4 @@
-/*	$NetBSD: mq200reg.h,v 1.4 2001/01/07 07:29:33 takemura Exp $	*/
+/*	$NetBSD: mq200reg.h,v 1.5 2001/03/11 13:53:31 takemura Exp $	*/
 
 /*-
  * Copyright (c) 2000 Takemura Shin
@@ -37,6 +37,11 @@
 #define MQ200_POWERSTATE_D1	1
 #define MQ200_POWERSTATE_D2	2
 #define MQ200_POWERSTATE_D3	3
+
+#define MQ200_CLOCK_BUS		0
+#define MQ200_CLOCK_PLL1	1
+#define MQ200_CLOCK_PLL2	2
+#define MQ200_CLOCK_PLL3	3
 
 #define MQ200_FRAMEBUFFER	0x000000	/* frame buffer base address */
 #define MQ200_PM		0x600000	/* power management	*/
@@ -78,7 +83,7 @@
  */
 #define MQ200_GC1		0	/* graphice controller 1*/
 #define MQ200_GC2		1	/* graphice controller 2*/
-#define MQ200_GCR(n)		(MQ200_GC(1)+(n)*4)
+#define MQ200_GCR(n)		(MQ200_GC(0)+(n)*4)
 /* GC Control (GC00R and GC20R)	*/
 #define MQ200_GCCR(n)		(MQ200_GC(n)+0x00)
 #	define MQ200_GCC_ENABLE		(1<<0)
@@ -667,6 +672,7 @@
  * Fout: PLL output frequency
  * Fref: reference frequency(internal oscillator or external clock)
  */
+#define MQ200_PLL1R	(MQ200_DC + 0x00)
 #define MQ200_PLL2R	(MQ200_PM + 0x18)
 #define MQ200_PLL3R	(MQ200_PM + 0x1c)
 #define MQ200_PLL_EXTCLK	(1<<0)
@@ -677,5 +683,6 @@
 #define MQ200_PLL_N_SHIFT	8
 #define MQ200_PLL_M_MASK	0x00ff0000
 #define MQ200_PLL_M_SHIFT	16
+#define MQ200_PLL_PARAM_MASK	(MQ200_PLL_P_MASK|MQ200_PLL_N_MASK|MQ200_PLL_M_MASK)
 #define MQ200_PLL_TRIM_MASK	0xf0000000
 #define MQ200_PLL_TRIM_SHIFT	28
