@@ -1,4 +1,4 @@
-/*	$NetBSD: am7990.c,v 1.37 1997/10/10 01:13:00 explorer Exp $	*/
+/*	$NetBSD: am7990.c,v 1.38 1997/10/13 00:47:22 explorer Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -77,6 +77,7 @@
  */
 
 #include "bpfilter.h"
+#include "rnd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,7 +88,9 @@
 #include <sys/malloc.h>
 #include <sys/ioctl.h>
 #include <sys/errno.h>
+#if NRND > 0
 #include <sys/rnd.h>
+#endif
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -263,8 +266,10 @@ am7990_config(sc)
 		panic(...);
 #endif
 
+#if NRND > 0
 	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname,
 			  RND_TYPE_NET);
+#endif
 }
 
 void
@@ -805,7 +810,9 @@ am7990_intr(arg)
 	if (isr & LE_C0_TINT)
 		am7990_tint(sc);
 
+#if NRND > 0
 	rnd_add_uint32(&sc->rnd_source, isr);
+#endif
 
 	return (1);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: cd_link.h,v 1.3 1997/10/10 01:09:07 explorer Exp $	*/
+/*	$NetBSD: cd_link.h,v 1.4 1997/10/13 00:47:54 explorer Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -52,7 +52,9 @@ struct cd_softc {
 	struct buf buf_queue;
 	const struct cd_ops *sc_ops;	/* our bus-dependent ops vector */
 
+#if NRND > 0
 	rndsource_element_t	rnd_source;
+#endif
 };
 
 struct cd_ops {
