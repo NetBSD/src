@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.1 2001/10/16 15:38:40 uch Exp $
+#	$NetBSD: Makefile,v 1.2 2001/10/18 15:41:15 uch Exp $
 
 KDIR=	/sys/arch/playstation2/include
 INCSDIR= /usr/include/playstation2
 
 INCS=	ansi.h aout_machdep.h asm.h \
 	bswap.h \
-	cdefs.h conf.h cpu.h \
+	cdefs.h cpu.h \
 	db_machdep.h disklabel.h \
 	ecoff_machdep.h elf_machdep.h endian.h endian_machdep.h \
 	float.h \
