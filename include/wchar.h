@@ -1,4 +1,4 @@
-/*	$NetBSD: wchar.h,v 1.15 2003/03/05 20:18:15 tshiozak Exp $	*/
+/*	$NetBSD: wchar.h,v 1.16 2003/03/07 07:11:35 tshiozak Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -151,9 +151,11 @@ double wcstod __P((const wchar_t * __restrict, wchar_t ** __restrict));
 
 wint_t ungetwc __P((wint_t, FILE *));
 wint_t fgetwc __P((FILE *));
+wchar_t *fgetws __P((wchar_t * __restrict, int, FILE * __restrict));
 wint_t getwc __P((FILE *));
 wint_t getwchar __P((void));
 wint_t fputwc __P((wchar_t, FILE *));
+int fputws __P((const wchar_t * __restrict, FILE * __restrict));
 wint_t putwc __P((wchar_t, FILE *));
 wint_t putwchar __P((wchar_t));
 

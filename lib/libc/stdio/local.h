@@ -1,4 +1,4 @@
-/*	$NetBSD: local.h,v 1.14 2003/02/01 03:25:00 nathanw Exp $	*/
+/*	$NetBSD: local.h,v 1.15 2003/03/07 07:11:38 tshiozak Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -73,6 +73,8 @@ extern int	__sdidinit;
 
 extern int	__gettemp __P((char *, int *, int));
 
+extern wint_t	__fgetwc_unlock __P((FILE *));
+extern wint_t	__fputwc_unlock __P((wchar_t, FILE *));
 /*
  * Return true iff the given FILE cannot be written now.
  */
