@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80321reg.h,v 1.2 2003/04/18 12:01:33 scw Exp $	*/
+/*	$NetBSD: iq80321reg.h,v 1.3 2003/04/19 08:18:13 scw Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -81,7 +81,6 @@
 #define	IQ80321_IOW_VBASE	IQ80321_IOPXS_VBASE
 #define	IQ80321_80321_VBASE	(IQ80321_IOW_VBASE +			\
 				 VERDE_OUT_XLATE_IO_WIN_SIZE)
-#define	IQ80321_IOPXS_VSIZE	0x00500000	/* 5MB total size */
 
 /*
  * The IQ80321 on-board devices are mapped VA==PA during bootstrap.
