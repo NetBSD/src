@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.91 2000/06/02 00:19:04 fredb Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.92 2000/06/02 14:47:19 explorer Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.91 2000/06/02 00:19:04 fredb Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.92 2000/06/02 14:47:19 explorer Exp $");
 #endif
 #endif /* not lint */
 
@@ -188,6 +188,7 @@ int	has_ccache = 0;
 int	notickets = 1;
 char	*krbtkfile_env = NULL;
 char	*tty = ttyline;
+int	login_krb5_forwardable_tgt = 0;
 #endif
 
 int epsvall = 0;
@@ -226,9 +227,13 @@ static struct passwd *sgetpwnam(const char *);
 
 int	main(int, char *[]);
 
-#if defined(KERBEROS) || defined(KERBEROS5)
+#if defined(KERBEROS)
 int	klogin(struct passwd *, char *, char *, char *);
 void	kdestroy(void);
+#endif
+#if defined(KERBEROS5)
+int	k5login(struct passwd *, char *, char *, char *);
+void	k5destroy(void);
 #endif
 
 int
@@ -516,8 +521,11 @@ user(const char *name)
 		}
 	}
 
-#if defined(KERBEROS) || defined(KERBEROS5)
+#if defined(KERBEROS)
 	kdestroy();
+#endif
+#if defined(KERBEROS5)
+	k5destroy();
 #endif
 
 	curclass.type = CLASS_REAL;
@@ -757,8 +765,14 @@ pass(const char *passwd)
 			rval = 1;	/* failure below */
 			goto skip;
 		}
-#if defined(KERBEROS) || defined(KERBEROS5)
+#if defined(KERBEROS)
 		if (klogin(pw, "", hostname, (char *)passwd) == 0) {
+			rval = 0;
+			goto skip;
+		}
+#endif
+#if defined(KERBEROS5)
+		if (k5login(pw, "", hostname, (char *)passwd) == 0) {
 			rval = 0;
 			goto skip;
 		}
