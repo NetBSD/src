@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.277 2002/03/25 14:03:06 shiba Exp $
+#	$NetBSD: bsd.own.mk,v 1.278 2002/03/28 06:59:39 matt Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -16,7 +16,7 @@ NEED_OWN_INSTALL_TARGET?=	yes
 .if !(${MACHINE_ARCH} == "arm32" || \
       ${MACHINE_ARCH} == "ns32k" || \
       ${MACHINE_ARCH} == "sh3eb" || ${MACHINE_ARCH} == "sh3el" || \
-      ${MACHINE_ARCH} == "vax")
+      (${MACHINE_ARCH} == "vax" && ${OBJECT_FMT} != "ELF"))
 USE_NEW_TOOLCHAIN=nowarn
 .endif
 
