@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.28 1997/07/06 23:17:55 is Exp $	*/
+/*	$NetBSD: clock.c,v 1.29 1997/07/17 23:29:29 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -52,7 +52,6 @@
 #include <amiga/amiga/custom.h>
 #include <amiga/amiga/cia.h>
 #ifdef DRACO
-#include <dev/ic/ds.h>
 #include <amiga/amiga/drcustom.h>
 #endif
 #include <amiga/dev/rtc.h>
@@ -646,28 +645,12 @@ profclock(pc, ps)
 #endif
 #endif
 
-/* this is a hook set by a clock driver for the configured realtime clock,
-   returning plain current unix-time */
-time_t (*gettod) __P((void));
-int (*settod) __P((time_t));
 void *clockaddr;
 
 time_t a3gettod __P((void));
 time_t a2gettod __P((void));
 int a3settod __P((time_t));
 int a2settod __P((time_t));
-
-#ifdef DRACO
-int draco_ds_read_bit __P((void *));
-void draco_ds_write_bit __P((void *, int));
-void draco_ds_reset __P((void *));
-
-time_t dracogettod __P((void));
-
-#ifdef __NOTYET__
-int dracosettod __P((time_t));
-#endif
-#endif
 
 int rtcinit __P((void));
 
@@ -706,13 +689,7 @@ int
 rtcinit()
 {
 	clockaddr = (void *)ztwomap(0xdc0000);
-#ifdef DRACO
-	if (is_draco()) {
-		/* XXX to be done */
-		gettod = dracogettod;
-		settod = (void *)0;
-	} else
-#endif
+
 	if (is_a3000() || is_a4000()) {
 		if (a3gettod() == 0)
 			return(0);
@@ -933,99 +910,3 @@ a2settod(secs)
 
 	return (1);
 }
-
-#ifdef DRACO
-
-
-int
-draco_ds_read_bit(p)
-	void *p;
-{
-	struct drioct *draco_ioct;
-
-	draco_ioct = p;
-
-	while (draco_ioct->io_status & DRSTAT_CLKBUSY);
-
-	draco_ioct->io_clockw1 = 0;
-
-	while (draco_ioct->io_status & DRSTAT_CLKBUSY);
-
-	return (draco_ioct->io_status & DRSTAT_CLKDAT);
-}
-
-void
-draco_ds_write_bit(p, b)
-	void *p;
-	int b;
-{
-	struct drioct *draco_ioct;
-
-	draco_ioct = p;
-
-	while (draco_ioct->io_status & DRSTAT_CLKBUSY);
-
-	if (b)
-		draco_ioct->io_clockw1 = 0;
-	else
-		draco_ioct->io_clockw0 = 0;
-}
-
-void
-draco_ds_reset(p)
-	void *p;
-{
-	struct drioct *draco_ioct;
-
-	draco_ioct = p;
-
-	draco_ioct->io_clockrst = 0;
-}
-
-/*
- * We could return 1/256 of a seconds, but would need to change the interface
- */
-
-time_t
-dracogettod()
-{
-	u_int32_t clkbuf;
-	u_int8_t rombuf[8];
-	int i;
-	struct ds_handle draco_dsh;
-
-	draco_dsh.ds_read_bit = draco_ds_read_bit;
-	draco_dsh.ds_write_bit = draco_ds_write_bit;
-	draco_dsh.ds_reset = draco_ds_reset;
-	draco_dsh.ds_hw_handle = (void *)(DRCCADDR + DRIOCTLPG*NBPG);
-
-	draco_dsh.ds_reset(draco_dsh.ds_hw_handle);
-
-	ds_write_byte(&draco_dsh, DS_ROM_READ);
-	for (i=0; i<8; ++i) 
-		rombuf[i] = ds_read_byte(&draco_dsh);
-
-	printf("DraCo RTC: sernum %d (ROM %02x%02x%02x%02x%02x%02x%02x%02x)\n",
-		(rombuf[3] << 24) + (rombuf[2] << 16) +
-		(rombuf[1] << 8) + rombuf[7],
-		rombuf[7], rombuf[6], rombuf[5], rombuf[4], 
-		rombuf[3], rombuf[2], rombuf[1], rombuf[0]); 
-		
-
-	ds_write_byte(&draco_dsh, DS_MEM_READ_MEMORY);
-	ds_write_byte(&draco_dsh, 0x03); /* low ads byte of realtime second */
-	ds_write_byte(&draco_dsh, 0x02); /* high ads byte of realtime second */
-	
-	clkbuf = ds_read_byte(&draco_dsh)
-	    + (ds_read_byte(&draco_dsh)<<8)
-	    + (ds_read_byte(&draco_dsh)<<16)
-	    + (ds_read_byte(&draco_dsh)<<24);
-
-	/* BSD time is wr. 1.1.1970; AmigaOS time wrt. 1.1.1978 */
-
-	clkbuf += (8*365 + 2) * 86400;
-
-	return ((time_t)clkbuf);
-}
-
-#endif

@@ -1,4 +1,4 @@
-#	$NetBSD: DRACO,v 1.13 1997/07/06 23:17:54 is Exp $
+#	$NetBSD: DRACO,v 1.14 1997/07/17 23:29:33 is Exp $
 
 #
 # Macro System GmbH "DraCo", currently 68060-only until FPE is integrated.
@@ -129,6 +129,7 @@ mfcs1		at mfc0 unit 1		# MFC serial
 #mfcs3		at mfc1 unit 1
 #mfcp1		at mfc1 unit 0
 
+drbbc0		at mainbus0		# DraCo battery backed clock
 drcom0		at mainbus0		# DraCo serial ports
 drcom1		at mainbus0		# unit 1 normally connected to mouse
 

@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.79 1997/07/16 00:01:52 is Exp $
+#	$NetBSD: GENERIC,v 1.80 1997/07/17 23:29:32 is Exp $
 
 #
 # GENERIC AMIGA
@@ -192,6 +192,7 @@ mfcs1		at mfc0 unit 1		# MFC serial
 #mfcs3		at mfc1 unit 1
 #mfcp1		at mfc1 unit 0
 
+drbbc0		at mainbus0		# DraCo battery backed clock
 drcom0		at mainbus0		# DraCo serial 0
 drcom1		at mainbus0		# DraCo serial 1, normally mouse
 

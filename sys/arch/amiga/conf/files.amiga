@@ -1,4 +1,4 @@
-#	$NetBSD: files.amiga,v 1.58 1997/07/16 00:01:51 is Exp $
+#	$NetBSD: files.amiga,v 1.59 1997/07/17 23:29:31 is Exp $
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
@@ -279,6 +279,11 @@ file	arch/amiga/dev/idesc.c		idesc needs-flag
 device	drsc: scsi, siop
 attach	drsc at mainbus
 file  arch/amiga/dev/drsc.c           drsc needs-flag
+
+# MacroSystem DraCo internal DS2404 hwc
+device	drbbc
+attach	drbbc at mainbus
+file	arch/amiga/dev/drbbc.c		drbbc
 
 # list of standard files...
 include	"arch/m68k/fpe/files.fpe"
