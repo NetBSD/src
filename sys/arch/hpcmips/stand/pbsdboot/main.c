@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.51 2001/02/25 12:58:38 takemura Exp $	*/
+/*	$NetBSD: main.c,v 1.52 2001/03/04 05:11:31 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 Shin Takemura.
@@ -322,9 +322,9 @@ struct fb_setting fb_settings[] = {
 #define UNICODE_MEMORY_CARD \
 	TEXT('\\'), 0xff92, 0xff93, 0xff98, TEXT(' '), 0xff76, 0xff70, \
 	0xff84, 0xff9e
-TCHAR unicode_memory_card[] = { UNICODE_MEMORY_CARD,  TEXT('\\') };
-TCHAR unicode_memory_card1[] = { UNICODE_MEMORY_CARD,  TEXT('1'), TEXT('\\') };
-TCHAR unicode_memory_card2[] = { UNICODE_MEMORY_CARD,  TEXT('2'), TEXT('\\') };
+TCHAR unicode_memory_card[] = { UNICODE_MEMORY_CARD,  TEXT('\\'), 0 };
+TCHAR unicode_memory_card1[] = { UNICODE_MEMORY_CARD, TEXT('1'),TEXT('\\'),0 };
+TCHAR unicode_memory_card2[] = { UNICODE_MEMORY_CARD, TEXT('2'),TEXT('\\'),0 };
 #endif
 
 #define LANGID_DEFAULT MAKELANGID(LANG_ENGLISH, SUBLANG_DEFAULT)
