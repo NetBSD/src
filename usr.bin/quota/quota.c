@@ -42,7 +42,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)quota.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$Id: quota.c,v 1.6 1994/06/28 07:47:25 deraadt Exp $";
+static char rcsid[] = "$Id: quota.c,v 1.7 1994/12/24 17:31:23 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -56,6 +56,7 @@ static char rcsid[] = "$Id: quota.c,v 1.6 1994/06/28 07:47:25 deraadt Exp $";
 #include <sys/socket.h>
 #include <ufs/ufs/quota.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <fstab.h>
 #include <ctype.h>
 #include <string.h>
