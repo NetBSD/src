@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.365 1999/09/17 19:59:43 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.366 1999/10/06 20:04:26 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -226,6 +226,7 @@ int	dumpmem_low;
 int	dumpmem_high;
 int	boothowto;
 int	cpu_class;
+int	i386_fpu_present = 0;
 
 vaddr_t	msgbuf_vaddr;
 paddr_t msgbuf_paddr;
@@ -960,6 +961,9 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 
 	case CPU_NKPDE:
 		return (sysctl_rdint(oldp, oldlenp, newp, nkpde));
+
+	case CPU_FPU_PRESENT:
+		return (sysctl_rdint(oldp, oldlenp, newp, i386_fpu_present));
 
 	case CPU_BOOTED_KERNEL:
 	        bibp = lookup_bootinfo(BTINFO_BOOTPATH);
