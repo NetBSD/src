@@ -1,4 +1,4 @@
-/*	$NetBSD: bootblock.h,v 1.25 2004/04/23 04:14:41 matt Exp $	*/
+/*	$NetBSD: bootblock.h,v 1.26 2004/04/23 16:26:18 matt Exp $	*/
 
 /*-
  * Copyright (c) 2002-2004 The NetBSD Foundation, Inc.
@@ -129,6 +129,7 @@
 #define	_SYS_BOOTBLOCK_H
 
 #if !defined(__ASSEMBLER__)
+#include <sys/cdefs.h>
 #if defined(_KERNEL) || defined(_STANDALONE)
 #include <sys/stdint.h>
 #else
