@@ -1,4 +1,4 @@
-/*	$NetBSD: ip.h,v 1.11 1996/09/12 22:56:03 explorer Exp $	*/
+/*	$NetBSD: ip.h,v 1.12 1996/09/12 23:11:40 mrg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -162,9 +162,11 @@ struct	ip_timestamp {
 
 #ifdef _KERNEL
 
+/* XXX this belongs elsewhere. */
 /* we need this for the packet filter structure */
 #include <sys/queue.h>
 struct ifnet;
+struct mbuf;
 
 /*
  * The packet filter hooks are designed for anything to call them to
