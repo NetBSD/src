@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_alarms.c,v 1.1.2.3 2002/02/19 23:56:08 nathanw Exp $	*/
+/*	$NetBSD: pthread_alarms.c,v 1.1.2.4 2002/05/20 17:44:28 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -36,6 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <assert.h>
 #include <err.h>
 #include <sys/time.h>
 #include <stdlib.h>
@@ -53,8 +54,16 @@ struct pt_alarm_t {
 };
 
 timer_t pthread_alarmtimer;
-static PTQ_HEAD(, pt_alarm_t) pthread_alarmqueue = PTQ_HEAD_INITIALIZER;
-static pthread_spin_t pthread_alarmqlock;
+PTQ_HEAD(, pt_alarm_t) pthread_alarmqueue = PTQ_HEAD_INITIALIZER;
+pthread_spin_t pthread_alarmqlock;
+
+#define PTHREAD_ALARM_DEBUG
+
+#ifdef PTHREAD_ALARM_DEBUG
+#define SDPRINTF(x) DPRINTF(x)
+#else
+#define SDPRINTF(x)
+#endif
 
 void
 pthread__alarm_init(void)
@@ -85,6 +94,8 @@ pthread__alarm_add(pthread_t self, const struct timespec *ts,
 	alarm->pta_arg = arg;
 	alarm->pta_fired = 0;
 
+	SDPRINTF(("(alarm_add %p) alarm %p for %d.%06ld\n",
+	    self, alarm, ts->tv_sec, ts->tv_nsec/1000));
 	prev = NULL;
 	pthread_spinlock(self, &pthread_alarmqlock);
 	iterator = PTQ_FIRST(&pthread_alarmqueue);
@@ -98,7 +109,11 @@ pthread__alarm_add(pthread_t self, const struct timespec *ts,
 		PTQ_INSERT_HEAD(&pthread_alarmqueue, alarm, pta_next);
 		timespecclear(&it.it_interval);
 		it.it_value = *ts;
-		retval = timer_settime(pthread_alarmtimer, TIMER_ABSTIME, &it, NULL);
+		SDPRINTF(("(add %p) resetting alarm timer to %d.%06d\n",
+		    self, it.it_value.tv_sec, it.it_value.tv_nsec/1000));
+		retval = timer_settime(pthread_alarmtimer, TIMER_ABSTIME, 
+		    &it, NULL);
+		assert(retval == 0);
 		if (retval)
 			err(1, "timer_settime");
 			
@@ -115,6 +130,7 @@ pthread__alarm_del(pthread_t self, void *arg)
 {
 	struct pt_alarm_t *alarm, *next;
 	struct itimerspec it;
+	int retval;
 
 	alarm = arg;
 
@@ -128,8 +144,13 @@ pthread__alarm_del(pthread_t self, void *arg)
 				it.it_value = *next->pta_time;
 			else
 				timespecclear(&it.it_value);
-			timer_settime(pthread_alarmtimer, TIMER_ABSTIME, &it, 
+			SDPRINTF(("(del %p) resetting alarm timer to %d.%06d\n",
+			    self, it.it_value.tv_sec, it.it_value.tv_nsec/1000));
+			retval = timer_settime(pthread_alarmtimer, TIMER_ABSTIME, &it, 
 			    NULL);
+			assert(retval == 0);
+			if (retval)
+				err(1, "timer_settime");
 		} else {
 			PTQ_REMOVE(&pthread_alarmqueue, alarm, pta_next);
 		}
@@ -154,17 +175,24 @@ pthread__alarm_process(pthread_t self, void *arg)
 {
 	struct timeval tv;
 	struct timespec ts;
+	struct itimerspec it;
 	struct pt_alarm_t *iterator, *next;
 	PTQ_HEAD(, pt_alarm_t) runq;
+	int retval;
 
 	gettimeofday(&tv, NULL);
 	TIMEVAL_TO_TIMESPEC(&tv, &ts);
 
+	SDPRINTF(("(pro %p) alarm time %d.%09ld\n",
+	    self, ts.tv_sec, ts.tv_nsec));
+
 	PTQ_INIT(&runq);
 	pthread_spinlock(self, &pthread_alarmqlock);
-	
-	iterator = PTQ_FIRST(&pthread_alarmqueue);
-	while (iterator) {
+
+	/* 1. Collect a list of all alarms whose time has passed. */
+	for (iterator = PTQ_FIRST(&pthread_alarmqueue), next = NULL;
+	     iterator; 
+	     iterator = next) {
 		if (timespeccmp(&ts, iterator->pta_time, <))
 			break;
 		next = PTQ_NEXT(iterator, pta_next);
@@ -175,11 +203,22 @@ pthread__alarm_process(pthread_t self, void *arg)
 	}
 	pthread_spinunlock(self, &pthread_alarmqlock);
 
+	/* 2. Call the functions for all passed alarms. */
 	PTQ_FOREACH(iterator, &runq, pta_next) {
+		SDPRINTF(("(pro %p) calling function for alarm %p\n", self, iterator));
 		(*iterator->pta_func)(iterator->pta_arg);
 		iterator->pta_fired = 1;
 	}
 
+	/* 3. Reset the timer for the next element in the queue. */
+	if (next) {
+		timespecclear(&it.it_interval);
+		it.it_value = *next->pta_time;
+		SDPRINTF(("(pro %p) resetting alarm timer to %d.%09d\n", self,
+		    it.it_value.tv_sec, it.it_value.tv_nsec));
+		retval = timer_settime(pthread_alarmtimer, TIMER_ABSTIME, &it, NULL);
+		assert(retval == 0);
+		if (retval)
+			err(1, "timer_settime");
+	}
 }
-
-
