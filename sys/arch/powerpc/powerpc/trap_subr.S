@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.S,v 1.9 2001/06/23 02:36:14 matt Exp $	*/
+/*	$NetBSD: trap_subr.S,v 1.10 2001/06/30 01:24:13 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -542,6 +542,20 @@ _C_LABEL(ipkdbsize) = .-_C_LABEL(ipkdblow)
 /* Restore user & kernel access SR: */					\
 	lis	2,_C_LABEL(curpm)@ha;	/* get real address of pmap */	\
 	lwz	2,_C_LABEL(curpm)@l(2);					\
+	lwz	3,PM_SR+4(2);						\
+	mtsr	1,3;			/* restore SR1 */		\
+	lwz	3,PM_SR+8(2);						\
+	mtsr	2,3;			/* restore SR2 */		\
+	lwz	3,PM_SR+12(2);						\
+	mtsr	3,3;			/* restore SR3 */		\
+	lwz	3,PM_SR+16(2);						\
+	mtsr	4,3;			/* restore SR4 */		\
+	lwz	3,PM_SR+20(2);						\
+	mtsr	5,3;			/* restore SR5 */		\
+	lwz	3,PM_SR+24(2);						\
+	mtsr	6,3;			/* restore SR6 */		\
+	lwz	3,PM_SR+28(2);						\
+	mtsr	7,3;			/* restore SR7 */		\
 	lwz	3,PM_USRSR(2);						\
 	mtsr	USER_SR,3;						\
 	lwz	3,PM_KERNELSR(2);					\
@@ -585,6 +599,16 @@ s_trap:
 	lis	31,KERNEL_SEGMENT@h
 	ori	31,31,KERNEL_SEGMENT@l
 	mtsr	KERNEL_SR,31
+/* Obliterate SRs so BAT spills work correctly */
+	lis	31,EMPTY_SEGMENT@h
+	ori	31,31,EMPTY_SEGMENT@l
+	mtsr	1,31
+	mtsr	2,31
+	mtsr	3,31
+	mtsr	4,31
+	mtsr	5,31
+	mtsr	6,31
+	mtsr	7,31
 	FRAME_SETUP(tempsave)
 /* Now we can recover interrupts again: */
 	mfmsr	7
@@ -729,11 +753,22 @@ s_isitrap:
 	stw	5,20(1);						\
 	stw	4,12(1);						\
 	stw	3,8(1);							\
+	mtcr	3;							\
+	bc	4,17,99f;	/* branch if PSL_PR is false */		\
+	lis	3,EMPTY_SEGMENT@h;					\
+	ori	3,3,EMPTY_SEGMENT@l;					\
+	mtsr	1,3;		/* reset SRs so BAT spills work */	\
+	mtsr	2,3;							\
+	mtsr	3,3;							\
+	mtsr	4,3;							\
+	mtsr	5,3;							\
+	mtsr	6,3;							\
+	mtsr	7,3;							\
 /* interrupts are recoverable here, and enable translation */		\
 	lis	3,(KERNEL_SEGMENT|SR_SUKEY|SR_PRKEY)@h;			\
 	ori	3,3,(KERNEL_SEGMENT|SR_SUKEY|SR_PRKEY)@l;		\
 	mtsr	KERNEL_SR,3;						\
-	mfmsr	5;							\
+99:	mfmsr	5;							\
 	ori	5,5,(PSL_IR|PSL_DR|PSL_RI);				\
 	mtmsr	5;							\
 	isync
@@ -770,6 +805,20 @@ intr_exit:
 	bc	4,17,1f			/* branch if PSL_PR is false */
 	lis	3,_C_LABEL(curpm)@ha	/* get current pmap real address */
 	lwz	3,_C_LABEL(curpm)@l(3)
+	lwz	4,PM_SR+4(3)
+	mtsr	1,4			/* Restore SR1 */
+	lwz	4,PM_SR+8(3)
+	mtsr	2,4			/* Restore SR2 */
+	lwz	4,PM_SR+12(3)
+	mtsr	3,4			/* Restore SR3 */
+	lwz	4,PM_SR+16(3)
+	mtsr	4,4			/* Restore SR4 */
+	lwz	4,PM_SR+20(3)
+	mtsr	5,4			/* Restore SR5 */
+	lwz	4,PM_SR+24(3)
+	mtsr	6,4			/* Restore SR6 */
+	lwz	4,PM_SR+28(3)
+	mtsr	7,4			/* Restore SR7 */
 	lwz	3,PM_KERNELSR(3)
 	mtsr	KERNEL_SR,3		/* Restore kernel SR */
 	lis	3,_C_LABEL(astpending)@ha /* Test AST pending */
