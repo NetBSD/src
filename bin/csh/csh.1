@@ -1,4 +1,4 @@
-.\"	$NetBSD: csh.1,v 1.29 2000/11/07 01:45:04 lukem Exp $
+.\"	$NetBSD: csh.1,v 1.30 2001/03/16 08:45:33 fair Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -1354,7 +1354,12 @@ then the job or process will be sent a CONT (continue) signal as well.
 .It Ic limit Fl h
 .It Ic limit Fl h Ar resource
 .It Ic limit Fl h Ar resource maximum-use
-Limits the consumption by the current process and each process
+Manipulates per-process system resource limits via the
+.Xr getrlimit 2
+and
+.Xr setrlimit 2
+system calls; this
+limits the consumption by the current process and each process
 it creates to not individually exceed
 .Ar maximum-use
 on the
@@ -1366,7 +1371,9 @@ is given, then
 the current limit is printed; if no
 .Ar resource
 is given, then
-all limitations are given.  If the
+all limitations are given.
+.Pp
+If the
 .Fl h
 flag is given, the hard limits are used instead of the current
 limits.  The hard limits impose a ceiling on the values of
@@ -1411,6 +1418,11 @@ of the names suffice.
 Limits of an arbitrary process can be displayed or set using the
 .Xr sysctl 8
 utility.
+See the
+.Xr getrlimit 2
+and
+.Xr setrlimit 2
+man pages for an additional description of system resource limits.
 .Pp
 .It Ic login
 Terminate a login shell, replacing it with an instance of
