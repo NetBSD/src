@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.61 2000/06/06 17:34:22 thorpej Exp $	*/
+/*	$NetBSD: pciide.c,v 1.62 2000/06/06 17:48:12 soren Exp $	*/
 
 
 /*
@@ -290,12 +290,12 @@ const struct pciide_product_desc pciide_cmd_products[] =  {
 const struct pciide_product_desc pciide_via_products[] =  {
 	{ PCI_PRODUCT_VIATECH_VT82C586_IDE,
 	  0,
-	  "VIA Technologies VT82C586 (Apollo VP) IDE Controller",
+	  "VIA Tech VT82C586 IDE Controller",
 	  apollo_chip_map,
 	 },
 	{ PCI_PRODUCT_VIATECH_VT82C586A_IDE,
 	  0,
-	  "VIA Technologies VT82C586A IDE Controller",
+	  "VIA Tech VT82C586A IDE Controller",
 	  apollo_chip_map,
 	},
 	{ 0,
