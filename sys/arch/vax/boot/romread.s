@@ -1,4 +1,4 @@
-/*	$NetBSD: romread.s,v 1.1 1995/03/29 21:24:14 ragge Exp $ */
+/*	$NetBSD: romread.s,v 1.2 1995/04/25 14:14:31 ragge Exp $ */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -37,12 +37,12 @@
 		
 
 
-#include "DEFS.h"
+#include "../include/asm.h"
 
 /*
  * read630 (int block, int *regs)
  */
-ENTRY (read630, 0xFFE)
+ENTRY(read630, 0xFFE)
 	movl	8(ap), r11	# array of bootregs
 	movl	44(r11), r11	# restore boot-contents of r11 (rpb)
 	movl    52(r11), r7     # load iovec/bqo into r7
@@ -59,7 +59,7 @@ ENTRY (read630, 0xFFE)
 /*
  * read750 (int block, int *regs)
  */
-ENTRY (read750, 0xFFE)
+ENTRY(read750, 0xFFE)
 	movl	8(ap), r8
 	movl	4(r8), r1
 	movl	8(r8), r2
@@ -77,7 +77,7 @@ ENTRY (read750, 0xFFE)
 /*
  * bulkread630 (int lbn, int size, void *buf, int *regs)
  */
-ENTRY (bulkread630, 0xFFE)
+ENTRY(bulkread630, 0xFFE)
 	movl	16(ap), r11	# array of bootregs
 	movl	44(r11), r11	# restore boot-contents of r11 (rpb)
 	movl    52(r11), r7     # load iovec/bqo into r7
