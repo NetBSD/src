@@ -1,4 +1,4 @@
-/*	$NetBSD: pmc.h,v 1.2 2002/08/07 05:38:47 briggs Exp $	*/
+/*	$NetBSD: pmc.h,v 1.3 2002/08/07 05:58:01 briggs Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -33,7 +33,10 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifdef _KERNEL
+#if defined(_KERNEL)
+/*
+ * LEGACY PMC support
+ */
 struct i386_pmc_info_args;
 struct i386_pmc_startstop_args;
 struct i386_pmc_read_args;
@@ -43,4 +46,26 @@ int	pmc_startstop(struct proc *, struct i386_pmc_startstop_args *,
 	    register_t *);
 int	pmc_read(struct proc *, struct i386_pmc_read_args *,
 	    register_t *);
+/* END LEGACY PMC SUPPORT */
+
+#define pmc_md_fork(p1,p2)
+#define pmc_get_num_counters()			(0)
+#define pmc_get_counter_type(c)			(0)
+#define pmc_save_context(p)
+#define pmc_restore_context(p)
+#define pmc_enable_counter(p,c)
+#define pmc_disable_counter(p,c)
+#define pmc_accumulate(p1,p2)
+#define pmc_process_exit(p1)
+#define pmc_counter_isconfigured(p,c)		(0)
+#define pmc_counter_isrunning(p,c)		(0)
+#define pmc_start_profiling(c,f)		(0)
+#define pmc_stop_profiling(c)			(0)
+#define pmc_alloc_kernel_counter(c,f)		(0)
+#define pmc_free_kernel_counter(c)		(0)
+#define pmc_configure_counter(p,c,f)		(0)
+#define pmc_get_counter_value(p,c,f,pv)		(0)
+
+#define PMC_ENABLED(p)		(0)
+
 #endif
