@@ -1,4 +1,4 @@
-.\"	$NetBSD: mount_ptyfs.8,v 1.1 2004/11/11 01:42:17 christos Exp $
+.\"	$NetBSD: mount_ptyfs.8,v 1.2 2004/11/11 13:20:42 wiz Exp $
 .\"
 .Dd November 8, 2004
 .Dt MOUNT_PTYFS 8
@@ -14,16 +14,16 @@
 .Sh DESCRIPTION
 The
 .Nm
-command attaches an instance of the pseudo terminal device filesystem
-the global filesystem namespace.
+command attaches an instance of the pseudo-terminal device filesystem
+to the global filesystem namespace.
 The conventional mount point is
 .Pa /dev/pts .
 This command is normally executed by
 .Xr mount 8
 at boot time.
 .Pp
-The filesystem contains pseudo terminal slave device nodes which are
-allocated dynamically via 
+The filesystem contains pseudo-terminal slave device nodes which are
+allocated dynamically via
 .Xr ptm 4 ,
 or they are already open via traditional BSD style ptys.
 .Pp
@@ -40,14 +40,14 @@ man page for possible options and their meanings.
 .Sh FILES
 .Bl -tag -width n -compact
 .It Pa n
-The 'nth pseudo terminal device in use.
+The nth pseudo-terminal device in use.
 .El
 .Sh SEE ALSO
 .Xr mount 2 ,
 .Xr unmount 2 ,
 .Xr ptm 4 ,
 .Xr fstab 5 ,
-.Xr mount 8 ,
+.Xr mount 8
 .Sh HISTORY
 The
 .Nm
