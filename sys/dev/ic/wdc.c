@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.14 1998/01/15 02:23:43 cgd Exp $ */
+/*	$NetBSD: wdc.c,v 1.15 1998/01/23 01:06:45 mycroft Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -258,13 +258,13 @@ wdcattach(wdc, adp)
 
 	wdc->sc_adp = adp;
 	if (wdc_init_controller(wdc, adp) <= 0) {
-		printf(": controller wouldn't initialize properly\n");
+		printf("%s: controller wouldn't initialize properly\n",
+		    wdc->sc_dev.dv_xname);
 		return;
 	}
 
 	TAILQ_INIT(&wdc->sc_xfer);
 
-	printf("\n");
 	if (wdc->sc_cap & WDC_CAPABILITY_DMA)
 		(*wdc->sc_dma_setup)(wdc->sc_dma_arg);
 
