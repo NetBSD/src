@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysinst,v 1.62 2002/12/09 14:03:54 scw Exp $
+.\"	$NetBSD: sysinst,v 1.63 2003/06/01 17:36:07 mbw Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -974,7 +974,7 @@ installation.
 .\}
 .if \n[macppc] \{\
 .It
-.To 2 "Preparing a disk which will be used for Mac OS and NetBSD"
+.To 2 "Preparing a disk for Mac OS and NetBSD"
 .Em "Preparing a disk which will be used for"
 .Tn Mac OS
 .Em and NetBSD
