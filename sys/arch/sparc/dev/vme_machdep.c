@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_machdep.c,v 1.27 2000/06/26 04:56:05 simonb Exp $	*/
+/*	$NetBSD: vme_machdep.c,v 1.28 2000/06/27 09:05:23 pk Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@ static int	sparc_vme_error __P((void));
 
 
 static int	sparc_vme_probe __P((void *, vme_addr_t, vme_size_t,
-	vme_am_t, vme_datasize_t,
+				vme_am_t, vme_datasize_t,
 	int (*) __P((void *, bus_space_tag_t, bus_space_handle_t)), void *));
 static int	sparc_vme_map __P((void *, vme_addr_t, vme_size_t, vme_am_t,
 				   vme_datasize_t, vme_swap_t,
@@ -112,7 +112,7 @@ static void	sparc_vme_intr_disestablish __P((void *, void *));
 static int	vmebus_translate __P((struct sparcvme_softc *, vme_am_t,
 				      vme_addr_t, bus_type_t *, bus_addr_t *));
 #if defined(SUN4M)
-static void	sparc_vme4m_barrier __P(( bus_space_tag_t, bus_space_handle_t,
+static void	sparc_vme_iommu_barrier __P(( bus_space_tag_t, bus_space_handle_t,
 					  bus_size_t, bus_size_t, int));
 
 #endif
@@ -134,16 +134,16 @@ static void	sparc_vme4_dmamap_sync __P((bus_dma_tag_t, bus_dmamap_t,
 #endif
 
 #if defined(SUN4M)
-static int	sparc_vct4m_dmamap_create __P((void *, vme_size_t, vme_am_t,
+static int	sparc_vct_iommu_dmamap_create __P((void *, vme_size_t, vme_am_t,
 		    vme_datasize_t, vme_swap_t, int, vme_size_t, vme_addr_t,
 		    int, bus_dmamap_t *));
-static int	sparc_vme4m_dmamap_create __P((bus_dma_tag_t, bus_size_t, int,
-		    bus_size_t, bus_size_t, int, bus_dmamap_t *));
+static int	sparc_vme_iommu_dmamap_create __P((bus_dma_tag_t, bus_size_t,
+		    int, bus_size_t, bus_size_t, int, bus_dmamap_t *));
 
-static int	sparc_vme4m_dmamap_load __P((bus_dma_tag_t, bus_dmamap_t, void *,
-		    bus_size_t, struct proc *, int));
-static void	sparc_vme4m_dmamap_unload __P((bus_dma_tag_t, bus_dmamap_t));
-static void	sparc_vme4m_dmamap_sync __P((bus_dma_tag_t, bus_dmamap_t,
+static int	sparc_vme_iommu_dmamap_load __P((bus_dma_tag_t, bus_dmamap_t,
+		    void *, bus_size_t, struct proc *, int));
+static void	sparc_vme_iommu_dmamap_unload __P((bus_dma_tag_t, bus_dmamap_t));
+static void	sparc_vme_iommu_dmamap_sync __P((bus_dma_tag_t, bus_dmamap_t,
 		    bus_addr_t, bus_size_t, int));
 #endif
 
@@ -183,10 +183,27 @@ struct rom_range vmebus_translations[] = {
 };
 
 /*
- * DMA on sun4 VME devices use the last MB of virtual space, which
- * is mapped by hardware onto the first MB of VME space.
+ * The VME bus logic on sun4 machines maps DMA requests in the first MB
+ * of VME space to the last MB of DVMA space. `vme_dvmamap' is used
+ * for DVMA space allocations. The DMA addresses returned by
+ * bus_dmamap_load*() must be relocated by -VME4_DVMA_BASE.
  */
 struct extent *vme_dvmamap;
+
+/*
+ * The VME hardware on the sun4m IOMMU maps the first 8MB of 32-bit
+ * VME space to the last 8MB of DVMA space and the first 1MB of
+ * 24-bit VME space to the first 1MB of the last 8MB of DVMA space
+ * (thus 24-bit VME space overlaps the first 1MB of of 32-bit space).
+ * The following constants define subregions in the IOMMU DVMA map
+ * for VME DVMA allocations.  The DMA addresses returned by
+ * bus_dmamap_load*() must be relocated by -VME_IOMMU_DVMA_BASE.
+ */
+#define VME_IOMMU_DVMA_BASE		0xff800000
+#define VME_IOMMU_DVMA_AM24_BASE	VME_IOMMU_DVMA_BASE
+#define VME_IOMMU_DVMA_AM24_END		0xff900000
+#define VME_IOMMU_DVMA_AM32_BASE	VME_IOMMU_DVMA_BASE
+#define VME_IOMMU_DVMA_AM32_END		IOMMU_DVMA_END
 
 struct sparc_bus_space_tag sparc_vme_bus_tag = {
 	NULL, /* cookie */
@@ -231,16 +248,16 @@ struct sparc_bus_dma_tag sparc_vme4_dma_tag = {
 #endif
 
 #if defined(SUN4M)
-struct sparc_bus_dma_tag sparc_vme4m_dma_tag = {
+struct sparc_bus_dma_tag sparc_vme_iommu_dma_tag = {
 	NULL,	/* cookie */
-	sparc_vme4m_dmamap_create,
+	sparc_vme_iommu_dmamap_create,
 	_bus_dmamap_destroy,
-	sparc_vme4m_dmamap_load,
+	sparc_vme_iommu_dmamap_load,
 	_bus_dmamap_load_mbuf,
 	_bus_dmamap_load_uio,
 	_bus_dmamap_load_raw,
-	sparc_vme4m_dmamap_unload,
-	sparc_vme4m_dmamap_sync,
+	sparc_vme_iommu_dmamap_unload,
+	sparc_vme_iommu_dmamap_sync,
 
 	_bus_dmamem_alloc,
 	_bus_dmamem_free,
@@ -354,16 +371,16 @@ vmeattach_iommu(parent, self, aux)
 	sc->sc_vmeintr = vmeintr4m;
 
 /*XXX*/	sparc_vme_chipset_tag.cookie = self;
-/*XXX*/	sparc_vme_chipset_tag.vct_dmamap_create = sparc_vct4m_dmamap_create;
+/*XXX*/	sparc_vme_chipset_tag.vct_dmamap_create = sparc_vct_iommu_dmamap_create;
 /*XXX*/	sparc_vme_chipset_tag.vct_dmamap_destroy = sparc_vct_dmamap_destroy;
-/*XXX*/	sparc_vme4m_dma_tag._cookie = self;
-	sparc_vme_bus_tag.sparc_bus_barrier = sparc_vme4m_barrier;
+/*XXX*/	sparc_vme_iommu_dma_tag._cookie = self;
+	sparc_vme_bus_tag.sparc_bus_barrier = sparc_vme_iommu_barrier;
 
 #if 0
 	vba.vba_bustag = &sparc_vme_bus_tag;
 #endif
 	vba.va_vct = &sparc_vme_chipset_tag;
-	vba.va_bdt = &sparc_vme4m_dma_tag;
+	vba.va_bdt = &sparc_vme_iommu_dma_tag;
 	vba.va_slaveconfig = 0;
 
 	node = ia->iom_node;
@@ -596,7 +613,7 @@ sparc_vme_mmap_cookie(addr, mod, hp)
 
 #if defined(SUN4M)
 void
-sparc_vme4m_barrier(t, h, offset, size, flags)
+sparc_vme_iommu_barrier(t, h, offset, size, flags)
 	bus_space_tag_t t;
 	bus_space_handle_t h;
 	bus_size_t offset;
@@ -981,7 +998,8 @@ sparc_vme4_dmamap_sync(t, map, offset, len, ops)
 
 #if defined(SUN4M)
 static int
-sparc_vme4m_dmamap_create (t, size, nsegments, maxsegsz, boundary, flags, dmamp)
+sparc_vme_iommu_dmamap_create (t, size, nsegments, maxsegsz,
+				boundary, flags, dmamp)
 	bus_dma_tag_t t;
 	bus_size_t size;
 	int nsegments;
@@ -991,13 +1009,13 @@ sparc_vme4m_dmamap_create (t, size, nsegments, maxsegsz, boundary, flags, dmamp)
 	bus_dmamap_t *dmamp;
 {
 
-	printf("sparc_vme4m_dmamap_create: please use `vme_dmamap_create'\n");
+	printf("sparc_vme_dmamap_create: please use `vme_dmamap_create'\n");
 	return (EINVAL);
 }
 
 static int
-sparc_vct4m_dmamap_create(cookie, size, am, datasize, swap, nsegments, maxsegsz,
-			  boundary, flags, dmamp)
+sparc_vct_iommu_dmamap_create(cookie, size, am, datasize, swap, nsegments,
+			      maxsegsz, boundary, flags, dmamp)
 	void *cookie;
 	vme_size_t size;
 	vme_am_t am;
@@ -1030,13 +1048,13 @@ sparc_vct4m_dmamap_create(cookie, size, am, datasize, swap, nsegments, maxsegsz,
 	case VME_AM_A16:
 	case VME_AM_A24:
 		/* 1 MB of DVMA space */
-		map->_dm_ex_start = 0xff800000;
-		map->_dm_ex_end   = 0xff900000;
+		map->_dm_ex_start = VME_IOMMU_DVMA_AM24_BASE;
+		map->_dm_ex_end   = VME_IOMMU_DVMA_AM24_END;
 		break;
 	case VME_AM_A32:
 		/* 8 MB of DVMA space */
-		map->_dm_ex_start = 0xff800000;
-		map->_dm_ex_end   = IOMMU_DVMA_END;
+		map->_dm_ex_start = VME_IOMMU_DVMA_AM32_BASE;
+		map->_dm_ex_end   = VME_IOMMU_DVMA_AM32_END;
 		break;
 	}
 
@@ -1045,7 +1063,7 @@ sparc_vct4m_dmamap_create(cookie, size, am, datasize, swap, nsegments, maxsegsz,
 }
 
 int
-sparc_vme4m_dmamap_load(t, map, buf, buflen, p, flags)
+sparc_vme_iommu_dmamap_load(t, map, buf, buflen, p, flags)
 	bus_dma_tag_t t;
 	bus_dmamap_t map;
 	void *buf;
@@ -1070,18 +1088,28 @@ sparc_vme4m_dmamap_load(t, map, buf, buflen, p, flags)
 		ioctags += VME_IOC_LINESZ/sizeof(*ioctags);
 		buflen -= VME_IOC_PAGESZ;
 	}
+
+	/*
+	 * Adjust DVMA address to VME view.
+	 * Note: the DVMA base address is the same for all
+	 * VME address spaces.
+	 */
+	map->dm_segs[0].ds_addr -= VME_IOMMU_DVMA_BASE;
 	return (0);
 }
 
 
 void
-sparc_vme4m_dmamap_unload(t, map)
+sparc_vme_iommu_dmamap_unload(t, map)
 	bus_dma_tag_t t;
 	bus_dmamap_t map;
 {
 	struct sparcvme_softc	*sc = (struct sparcvme_softc *)t->_cookie;
 	volatile u_int32_t	*flushregs;
 	int			len;
+
+	/* Go from VME to CPU view */
+	map->dm_segs[0].ds_addr += VME_IOMMU_DVMA_BASE;
 
 	/* Flush VME I/O cache */
 	len = map->dm_segs[0]._ds_sgsize;
@@ -1102,7 +1130,7 @@ sparc_vme4m_dmamap_unload(t, map)
 }
 
 void
-sparc_vme4m_dmamap_sync(t, map, offset, len, ops)
+sparc_vme_iommu_dmamap_sync(t, map, offset, len, ops)
 	bus_dma_tag_t t;
 	bus_dmamap_t map;
 	bus_addr_t offset;
