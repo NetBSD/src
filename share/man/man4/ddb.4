@@ -1,4 +1,4 @@
-.\"	$NetBSD: ddb.4,v 1.51 2001/04/11 23:26:09 msaitoh Exp $
+.\"	$NetBSD: ddb.4,v 1.52 2001/05/06 23:48:32 wiz Exp $
 .\"
 .\" Copyright (c) 1997 - 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -42,24 +42,24 @@
 .\" Mach Operating System
 .\" Copyright (c) 1991,1990 Carnegie Mellon University
 .\" All Rights Reserved.
-.\" 
+.\"
 .\" Permission to use, copy, modify and distribute this software and its
 .\" documentation is hereby granted, provided that both the copyright
 .\" notice and this permission notice appear in all copies of the
 .\" software, derivative works or modified versions, and any portions
 .\" thereof, and that both notices appear in supporting documentation.
-.\" 
+.\"
 .\" CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
 .\" CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND FOR
 .\" ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
-.\" 
+.\"
 .\" Carnegie Mellon requests users of this software to return to
-.\" 
+.\"
 .\"  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
 .\"  School of Computer Science
 .\"  Carnegie Mellon University
 .\"  Pittsburgh PA 15213-3890
-.\" 
+.\"
 .\" any improvements or extensions that they make and grant Carnegie Mellon
 .\" the rights to redistribute these changes.
 .\"
@@ -189,7 +189,7 @@ Specifying
 sets
 .Em dot
 to the address.
-If 
+If
 .Cm address
 is omitted,
 .Em dot
@@ -223,11 +223,11 @@ and waits for a response, which may be one of:
 one more line.
 .It <space>
 one more page.
-.It Ic q 
+.It Ic q
 abort the current command, and return to the command input mode.
 .El
 .Pp
-If 
+If
 .Nm
 history editing is enabled (by defining the
 .D1 Cd options DDB_HISTORY_SIZE=num
@@ -346,7 +346,7 @@ command.
 .Ic examine Ns Op Cm / Ns Ar modifier
 .Ar address Ns Op Cm , Ns Ar count
 .Xc
-Display the address locations according to the format in 
+Display the address locations according to the format in
 .Ar modifier .
 Multiple modifier formats display multiple locations.
 If
@@ -569,7 +569,7 @@ does nothing at this time.
 .It Xo
 .Ic "show map" Ns Op Cm /f
 .Ar address
-.Xc 
+.Xc
 Print the vm_map at
 .Ar address .
 If
@@ -581,7 +581,7 @@ Dump the namecache list associated with vnode at
 .It Xo
 .Ic "show object" Ns Op Cm /f
 .Ar address
-.Xc 
+.Xc
 Print the vm_object at
 .Ar address .
 If
@@ -648,7 +648,7 @@ name indicating the type of symbol.
 .Pp
 For
 .Ns Xr a.out 5 -format
-symbol tables, 
+symbol tables,
 absolute symbols display
 .Sy @ ,
 text segment symbols display
@@ -726,7 +726,7 @@ code supports it.
 .Xc
 Stack trace by
 .Dq thread
-(process, on 
+(process, on
 .Nx )
 rather than by stack frame address.
 Note that
@@ -844,7 +844,7 @@ Call the PROM monitor to reboot the CPU.
 .Bl -tag -width "intrchain" -compact
 .It Ic vmstat
 Equivalent to
-.Xr vmstat 8
+.Xr vmstat 1
 output with "-s" option (statistics).
 .It Ic vnode
 Print out a description of a vnode.
@@ -888,7 +888,7 @@ Display information about the listed mapping in the kernel pmap.  Use the
 modifier to get a full listing.
 .It Ic pcb
 Display information about the
-.Dq struct pcb 
+.Dq struct pcb
 listed.
 .It Ic pctx
 Attempt to change process context.
@@ -933,7 +933,7 @@ to be watched, or
 .Dq 0
 to clear the watchpoint.  Append
 .Dq p
-to the watch point to use the physical watchpoing registers.
+to the watch point to use the physical watchpoint registers.
 .It Ic window
 Print register window information about given address.
 .El
@@ -990,7 +990,7 @@ If the kernel configuration option
 .D1 Cd options DDB_ONPANIC=0
 is used,
 .Va onpanic
-will be initialised to off.
+will be initialized to off.
 .It Va fromconsole
 If non-zero (the default),
 the kernel allows to enter
@@ -1000,7 +1000,7 @@ If the kernel configuration option
 .D1 Cd options DDB_FROMCONSOLE=0
 is used,
 .Va fromconsole
-will be initialised to off.
+will be initialized to off.
 .It Va radix
 Input and output radix.
 .It Va tabstops
