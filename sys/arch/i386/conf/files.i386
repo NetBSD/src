@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.210 2002/07/07 13:03:47 drochner Exp $
+#	$NetBSD: files.i386,v 1.211 2002/07/10 19:15:43 drochner Exp $
 #
 # new style config file for i386 architecture
 #
@@ -451,6 +451,17 @@ file	arch/i386/acpi/vald_acpi.c		vald_acpi
 attach	spic at acpi with spic_acpi
 file	arch/i386/acpi/spic_acpi.c		spic_acpi
 
-device	vesabios
+device	vesabios {}
 attach vesabios at mainbus
 file	arch/i386/bios/vesabios.c		vesabios needs-flag
+defflag	opt_vesabios.h	VESABIOSVERBOSE
+
+include	"dev/rasops/files.rasops"
+
+device vesarasterviii: rasops8
+attach vesarasterviii at vesabios
+file	arch/i386/bios/vesa_raster8.c	vesarasterviii
+
+device vesatext
+attach vesatext at vesabios
+file	arch/i386/bios/vesa_text.c	vesatext
