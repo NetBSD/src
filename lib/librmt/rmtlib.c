@@ -1,4 +1,4 @@
-/*	$NetBSD: rmtlib.c,v 1.9 1997/10/21 19:58:21 thorpej Exp $	*/
+/*	$NetBSD: rmtlib.c,v 1.10 1998/03/08 23:36:46 mrg Exp $	*/
 
 /*
  *	rmt --- remote tape emulator subroutines
@@ -59,6 +59,8 @@
 #else
 #include <varargs.h>
 #endif
+
+#include "pathnames.h"
 
 static	int	_rmt_close __P((int));
 static	int	_rmt_ioctl __P((int, unsigned long, char *));
@@ -354,6 +356,8 @@ _rmt_open(path, oflag, mode)
 
 	if (rc == 0)
 	{
+		char	*rshpath, *rsh;
+
 		close(0);
 		dup(Ptc[i][0]);
 		close(Ptc[i][0]); close(Ptc[i][1]);
@@ -362,15 +366,23 @@ _rmt_open(path, oflag, mode)
 		close(Ctp[i][0]); close(Ctp[i][1]);
 		(void) setuid (getuid ());
 		(void) setgid (getgid ());
+		
+		if ((rshpath = getenv("RCMD_CMD")) == NULL)
+			rshpath = _PATH_RSH;
+		if ((rsh = strrchr(rshpath, '/')) == NULL)
+			rsh = rshpath;
+		else
+			rsh++;
+		
 		if (*login)
 		{
-			execl("/usr/bin/rsh", "rsh", system, "-l", login,
-				"/etc/rmt", (char *) 0);
+			execl(rshpath, rsh, system, "-l", login,
+				_PATH_RMT, (char *) 0);
 		}
 		else
 		{
-			execl("/usr/bin/rsh", "rsh", system,
-				"/etc/rmt", (char *) 0);
+			execl(rshpath, rsh, system,
+				_PATH_RMT, (char *) 0);
 		}
 
 /*
