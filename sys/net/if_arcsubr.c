@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arcsubr.c,v 1.28 1999/09/25 17:49:28 is Exp $	*/
+/*	$NetBSD: if_arcsubr.c,v 1.28.8.1 1999/12/27 18:36:07 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Ignatios Souvatzis
@@ -233,13 +233,13 @@ arc_output(ifp, m0, dst, rt0)
 #endif
 #ifdef INET6
 	case AF_INET6:
-#ifdef NEWIP6OUTPUT
-		if (!nd6_storelladdr(ifp, rt, m, dst, (u_char *)&adst))
-			return(0); /* it must be impossible, but... */
-#else
+#ifdef OLDIP6OUTPUT
 		if (!nd6_resolve(ifp, rt, m, dst, (u_char *)&adst))
 			return(0);	/* if not yet resolves */
-#endif /* NEWIP6OUTPUT */
+#else
+		if (!nd6_storelladdr(ifp, rt, m, dst, (u_char *)&adst))
+			return(0); /* it must be impossible, but... */
+#endif /* OLDIP6OUTPUT */
 		atype = htons(ARCTYPE_INET6);
 		newencoding = 1;
 		break;

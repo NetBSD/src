@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.43.12.1 1999/12/21 23:20:01 wrstuden Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.43.12.2 1999/12/27 18:36:05 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -63,6 +63,16 @@ const char	devout[] = "devout";
 const char	devioc[] = "devioc";
 const char	devcls[] = "devcls";
 
+/*
+ * This vnode operations vector is used for two things only:
+ * - special device nodes created from whole cloth by the kernel.
+ * - as a temporary vnodeops replacement for vnodes which were found to
+ *	be aliased by callers of checkalias().
+ * For the ops vector for vnodes built from special devices found in a
+ * filesystem, see (e.g) ffs_specop_entries[] in ffs_vnops.c or the
+ * equivalent for other filesystems.
+ */
+
 int (**spec_vnodeop_p) __P((void *));
 struct vnodeopv_entry_desc spec_vnodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
@@ -77,6 +87,7 @@ struct vnodeopv_entry_desc spec_vnodeop_entries[] = {
 	{ &vop_read_desc, spec_read },			/* read */
 	{ &vop_write_desc, spec_write },		/* write */
 	{ &vop_lease_desc, spec_lease_check },		/* lease */
+	{ &vop_fcntl_desc, spec_fcntl },		/* fcntl */
 	{ &vop_ioctl_desc, spec_ioctl },		/* ioctl */
 	{ &vop_poll_desc, spec_poll },			/* poll */
 	{ &vop_revoke_desc, spec_revoke },		/* revoke */
@@ -501,8 +512,13 @@ spec_strategy(v)
 	struct vop_strategy_args /* {
 		struct buf *a_bp;
 	} */ *ap = v;
+	struct buf *bp;
 
-	(*bdevsw[major(ap->a_bp->b_dev)].d_strategy)(ap->a_bp);
+	bp = ap->a_bp;
+	if (!(bp->b_flags & B_READ) &&
+	    (LIST_FIRST(&bp->b_dep)) != NULL && bioops.io_start)
+		(*bioops.io_start)(bp);
+	(*bdevsw[major(bp->b_dev)].d_strategy)(bp);
 	return (0);
 }
 
@@ -560,7 +576,12 @@ spec_close(v)
 	register struct vnode *vp = ap->a_vp;
 	dev_t dev = vp->v_rdev;
 	int (*devclose) __P((dev_t, int, int, struct proc *));
-	int mode, error;
+	int mode, error, count, flags, flags1;
+
+	simple_lock(&vp->v_interlock);
+	count = vcount(vp);
+	flags = vp->v_flag;
+	simple_unlock(&vp->v_interlock);
 
 	switch (vp->v_type) {
 
@@ -574,9 +595,10 @@ spec_close(v)
 		 * if the reference count is 2 (this last descriptor
 		 * plus the session), release the reference from the session.
 		 */
-		if (vcount(vp) == 2 && ap->a_p &&
+		if (count == 2 && ap->a_p &&
 		    vp == ap->a_p->p_session->s_ttyvp) {
 			vrele(vp);
+			count--;
 			ap->a_p->p_session->s_ttyvp = NULL;
 		}
 		/*
@@ -584,7 +606,7 @@ spec_close(v)
 		 * of forcably closing the device, otherwise we only
 		 * close on last reference.
 		 */
-		if (vcount(vp) > 1 && (vp->v_flag & VXLOCK) == 0)
+		if (count > 1 && (flags & VXLOCK) == 0)
 			return (0);
 		devclose = cdevsw[major(dev)].d_close;
 		mode = S_IFCHR;
@@ -608,7 +630,7 @@ spec_close(v)
 		 * sum of the reference counts on all the aliased
 		 * vnodes descends to one, we are on last close.
 		 */
-		if (vcount(vp) > 1 && (vp->v_flag & VXLOCK) == 0)
+		if (count > 1 && (flags & VXLOCK) == 0)
 			return (0);
 		devclose = bdevsw[major(dev)].d_close;
 		mode = S_IFBLK;
@@ -618,7 +640,30 @@ spec_close(v)
 		panic("spec_close: not special");
 	}
 
-	return ((*devclose)(dev, ap->a_fflag, mode, ap->a_p));
+	flags1 = ap->a_fflag;
+
+	/*
+	 * if VXLOCK is set, then we're going away soon, so make this
+	 * non-blocking. Also ensures that we won't wedge in vn_lock below.
+	 */
+	if (flags & VXLOCK)
+		flags1 |= FNONBLOCK;
+
+	/*
+	 * If we're able to block, release the vnode lock & reaquire. We
+	 * might end up sleaping for someone else who wants our queues. They
+	 * won't get them if we hold the vnode locked. Also, if VXLOCK is set,
+	 * don't release the lock as we won't be able to regain it.
+	 */
+	if (!(flags1 & FNONBLOCK))
+		VOP_UNLOCK(vp, 0);
+
+	error =  (*devclose)(dev, flags1, mode, ap->a_p);
+
+	if (!(flags1 & FNONBLOCK))
+		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+
+	return (error);
 }
 
 /*

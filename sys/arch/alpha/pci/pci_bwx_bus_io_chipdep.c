@@ -1,4 +1,4 @@
-/* $NetBSD: pci_bwx_bus_io_chipdep.c,v 1.5 1998/08/30 23:29:10 cgd Exp $ */
+/* $NetBSD: pci_bwx_bus_io_chipdep.c,v 1.5.18.1 1999/12/27 18:31:28 wrstuden Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -83,6 +83,8 @@
  */
 
 #include <sys/extent.h>
+
+#include <machine/bwx.h>
 
 #define	__C(A,B)	__CONCAT(A,B)
 #define	__S(S)		__STRING(S)

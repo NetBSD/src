@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.3 1997/07/22 17:41:02 drochner Exp $	*/
+/*	$NetBSD: conf.c,v 1.3.26.1 1999/12/27 18:31:59 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -51,33 +51,61 @@
 
 int	debug = 0;	/* XXX */
 
-/*
- * Device configuration
- */
-int	netstrategy __P((void *, int, daddr_t, size_t, void *, size_t *));
-int	netopen __P((struct open_file *, ...));
-int	netclose __P((struct open_file *));
-#define netioctl	noioctl
-
-int	ctstrategy __P((void *, int, daddr_t, size_t, void *, size_t *));
-int	ctopen __P((struct open_file *, ...));
-int	ctclose __P((struct open_file *));
-#define	ctioctl		noioctl
-
-int	rdstrategy __P((void *, int, daddr_t, size_t, void *, size_t *));
-int	rdopen __P((struct open_file *, ...));
-int	rdclose __P((struct open_file *));
-#define rdioctl		noioctl
-
-int	sdstrategy __P((void *, int, daddr_t, size_t, void *, size_t *));
-int	sdopen __P((struct open_file *, ...));
-int	sdclose __P((struct open_file *));
-#define	sdioctl		noioctl
-
 #define xxstrategy	\
 	(int (*) __P((void *, int, daddr_t, size_t, void *, size_t *)))nullsys
 #define xxopen		(int (*) __P((struct open_file *, ...)))nodev
 #define xxclose		(int (*) __P((struct open_file *)))nullsys
+
+/*
+ * Device configuration
+ */
+#ifdef SUPPORT_ETHERNET
+int	netstrategy __P((void *, int, daddr_t, size_t, void *, size_t *));
+int	netopen __P((struct open_file *, ...));
+int	netclose __P((struct open_file *));
+#define netioctl	noioctl
+#else
+#define	netstrategy	xxstrategy
+#define	netopen		xxopen
+#define	netclose	xxclose
+#define	netioctl	noioctl
+#endif
+
+#ifdef SUPPORT_TAPE
+int	ctstrategy __P((void *, int, daddr_t, size_t, void *, size_t *));
+int	ctopen __P((struct open_file *, ...));
+int	ctclose __P((struct open_file *));
+#define	ctioctl		noioctl
+#else
+#define	ctstrategy	xxstrategy
+#define	ctopen		xxopen
+#define	ctclose		xxclose
+#define	ctioctl		noioctl
+#endif
+
+#ifdef SUPPORT_DISK
+int	rdstrategy __P((void *, int, daddr_t, size_t, void *, size_t *));
+int	rdopen __P((struct open_file *, ...));
+int	rdclose __P((struct open_file *));
+#define rdioctl		noioctl
+#else
+#define	rdstrategy	xxstrategy
+#define	rdopen		xxopen
+#define	rdclose		xxclose
+#define	rdioctl		noioctl
+#endif
+
+#ifdef SUPPORT_DISK
+int	sdstrategy __P((void *, int, daddr_t, size_t, void *, size_t *));
+int	sdopen __P((struct open_file *, ...));
+int	sdclose __P((struct open_file *));
+#define	sdioctl		noioctl
+#else
+#define	sdstrategy	xxstrategy
+#define	sdopen		xxopen
+#define	sdclose		xxclose
+#define	sdioctl		noioctl
+#endif
 
 /*
  * Note: "le" isn't a major offset.
@@ -93,12 +121,14 @@ struct devsw devsw[] = {
 };
 int	ndevs = (sizeof(devsw) / sizeof(devsw[0]));
 
+#ifdef SUPPORT_ETHERNET
 extern struct netif_driver le_driver;
 
 struct netif_driver *netif_drivers[] = {
 	&le_driver,
 };
 int	n_netif_drivers = (sizeof(netif_drivers) / sizeof(netif_drivers[0]));
+#endif
 
 /*
  * Physical unit/lun detection.
@@ -114,8 +144,12 @@ punitzero(ctlr, slave, punit)
 	return (0);
 }
 
-extern	int ctpunit __P((int, int, int *));
 #define	xxpunit		punitzero
+#ifdef SUPPORT_TAPE
+extern int ctpunit __P((int, int, int *));
+#else
+#define	ctpunit		xxpunit
+#endif
 #define	rdpunit		punitzero
 #define	sdpunit		punitzero
 #define	lepunit		punitzero
@@ -158,7 +192,11 @@ int	nfsys = 1;		/* we always know which one we want */
  */
 void ctlrinit()
 {
+#ifdef SUPPORT_ETHERNET
 	leinit();
+#endif
+#if defined(SUPPORT_DISK) || defined(SUPPORT_TAPE)
 	hpibinit();
 	scsiinit();
+#endif
 }

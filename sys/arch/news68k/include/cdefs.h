@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.1 1999/12/09 14:53:10 tsutsui Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.1.2.1 1999/12/27 18:32:57 wrstuden Exp $	*/
 
 #ifndef _MACHINE_CDEFS_H_
 #define _MACHINE_CDEFS_H_

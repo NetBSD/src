@@ -1,4 +1,4 @@
-#	$NetBSD: files.isa,v 1.90 1999/10/05 03:48:27 itohy Exp $
+#	$NetBSD: files.isa,v 1.90.6.1 1999/12/27 18:34:55 wrstuden Exp $
 #
 # Config file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -43,6 +43,11 @@ file	dev/isa/boca.c			boca
 device	rtfps: commulti
 attach	rtfps at isa
 file	dev/isa/rtfps.c			rtfps
+
+# BOCA 6-port board (3x 16552)
+device  ioat: commulti
+attach  ioat at isa
+file    dev/isa/ioat66.c                ioat
 
 #
 # Serial and parallel drivers
@@ -224,7 +229,7 @@ file	dev/isa/if_depca_isa.c	depca
 
 # DEC EtherWORKS III (LEMAC-based: DE203, DE204, DE205) cards
 attach  lc at isa with lc_isa
-file    dev/isa/if_lc_isa.c		lc
+file    dev/isa/if_lc_isa.c		lc_isa
 
 # Novell NE1000, NE2000, and clones
 attach	ne at isa with ne_isa: rtl80x9
@@ -255,6 +260,10 @@ file	dev/isa/if_tr_isa.c		tr_isa
 attach	tr at isa with tr_isa: tr_isa, elink
 file	dev/isa/if_tribm_isa.c		tr_isa
 file	dev/isa/if_trtcm_isa.c		tr_isa
+
+# ISA NCR/AT&T/Lucent WaveLAN (non-802.11) card
+attach	wl at isa with wl_isa: i82586, wavelan
+file	dev/isa/if_wl_isa.c		wl_isa
 
 #
 # ISA Sound hardware
@@ -358,16 +367,18 @@ device satlink: isadma
 attach satlink at isa
 file dev/isa/satlink.c			satlink	needs-flag
 
-#
-# PC keyboard controller
-#
-device  pckbc {[slot = -1]}
-attach  pckbc at isa
-file    dev/isa/pckbc.c          pckbc	needs-flag
+# ISA PC keyboard controller
+attach  pckbc at isa with pckbc_isa
+file    dev/isa/pckbc_isa.c		pckbc	needs-flag
 
 # generic ISA VGA
 attach	vga at isa with vga_isa
 file	dev/isa/vga_isa.c	vga_isa	needs-flag
+
+# generic EGA
+device ega: wsemuldisplaydev, pcdisplayops
+attach	ega at isa
+file	dev/isa/ega.c		ega	needs-flag
 
 # generic PC graphics adapter (MGA, CGA, ...)
 device pcdisplay: wsemuldisplaydev, pcdisplayops

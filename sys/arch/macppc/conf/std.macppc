@@ -1,8 +1,12 @@
-#	$NetBSD: std.macppc,v 1.7 1999/09/12 01:17:11 chs Exp $
+#	$NetBSD: std.macppc,v 1.7.8.1 1999/12/27 18:32:41 wrstuden Exp $
 #
 # Standard/required options for NetBSD/macppc.
 
 machine	macppc powerpc
+
+prefix ../gnu/sys
+cinclude "conf/files.softdep"
+prefix
 
 # standard ("mandatory") kernel options.
 

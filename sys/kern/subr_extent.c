@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_extent.c,v 1.28 1999/06/27 06:18:33 ross Exp $	*/
+/*	$NetBSD: subr_extent.c,v 1.28.2.1 1999/12/27 18:35:52 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -49,6 +49,11 @@
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/lock.h>
+
+#include <vm/vm.h>
+#include <vm/vm_kern.h>
+
+#define	KMEM_IS_RUNNING		(kmem_map != NULL)
 #elif defined(_EXTENT_TESTING)
 /*
  * user-land definitions, so it can fit into a testing harness.
@@ -70,6 +75,8 @@
 #define	panic(a)			printf(a)
 #define	splhigh()			(1)
 #define	splx(s)				((void)(s))
+
+#define	KMEM_IS_RUNNING			(1)
 #endif
 
 static	pool_handle_t expool_create __P((void));
@@ -999,6 +1006,13 @@ extent_alloc_region_descriptor(ex, flags)
 	struct extent_region *rp;
 	int exflags;
 	int s;
+
+	/*
+	 * If the kernel memory allocator is not yet running, we can't
+	 * use it (obviously).
+	 */
+	if (KMEM_IS_RUNNING == 0)
+		flags &= ~EX_MALLOCOK;
 
 	/*
 	 * XXX Make a static, create-time flags word, so we don't

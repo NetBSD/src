@@ -1,4 +1,4 @@
-/*	$NetBSD: gencode.c,v 1.17 1999/07/25 05:52:16 itojun Exp $	*/
+/*	$NetBSD: gencode.c,v 1.17.2.1 1999/12/27 18:30:06 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -26,7 +26,7 @@
 static const char rcsid[] =
     "@(#) Header: gencode.c,v 1.93 97/06/12 14:22:47 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: gencode.c,v 1.17 1999/07/25 05:52:16 itojun Exp $");
+__RCSID("$NetBSD: gencode.c,v 1.17.2.1 1999/12/27 18:30:06 wrstuden Exp $");
 #endif
 #endif
 
@@ -43,6 +43,7 @@ struct rtentry;
 
 #include <netinet/in.h>
 #ifdef __NetBSD__
+#include <net/if_arc.h>
 #include <net/if_ether.h>
 #else
 #include <netinet/if_ether.h>
@@ -154,6 +155,7 @@ static struct block *gen_hostop(bpf_u_int32, bpf_u_int32, int, int, u_int, u_int
 #ifdef INET6
 static struct block *gen_hostop6(struct in6_addr *, struct in6_addr *, int, int, u_int, u_int);
 #endif
+static struct block *gen_ahostop(const u_char *, int);
 static struct block *gen_ehostop(const u_char *, int);
 static struct block *gen_fhostop(const u_char *, int);
 static struct block *gen_dnhostop(bpf_u_int32, int, u_int);
@@ -161,7 +163,9 @@ static struct block *gen_host(bpf_u_int32, bpf_u_int32, int, int);
 #ifdef INET6
 static struct block *gen_host6(struct in6_addr *, struct in6_addr *, int, int);
 #endif
+#ifndef INET6
 static struct block *gen_gateway(const u_char *, bpf_u_int32 **, int, int);
+#endif
 static struct block *gen_ipfrag(void);
 static struct block *gen_portatom(int, bpf_int32);
 #ifdef INET6
@@ -174,6 +178,7 @@ struct block *gen_portop6(int, int, int);
 static struct block *gen_port6(int, int, int);
 #endif
 static int lookup_proto(const char *, int);
+static struct block *gen_protochain(int, int, int);
 static struct block *gen_proto(int, int, int);
 static struct slist *xfer_to_x(struct arth *);
 static struct slist *xfer_to_a(struct arth *);
@@ -491,6 +496,11 @@ init_linktype(type)
 
 	switch (type) {
 
+	case DLT_ARCNET:
+		off_linktype = 2;
+		off_nl = 6;	/* XXX in reality, variable! */
+		return;
+
 	case DLT_EN10MB:
 		off_linktype = 12;
 		off_nl = 14;
@@ -582,7 +592,7 @@ init_linktype(type)
 		off_nl = 0;
 		return;
 	}
-	bpf_error("unknown data link type 0x%x", linktype);
+	bpf_error("libpcap: unknown data link type 0x%x", linktype);
 	/* NOTREACHED */
 }
 
@@ -657,6 +667,7 @@ gen_linktype(proto)
 #ifdef INET6
 		case ETHERTYPE_IPV6:
 			proto = PPP_IPV6;
+			/* more to go? */
 			break;
 #endif /* INET6 */
 
@@ -684,6 +695,39 @@ gen_linktype(proto)
 #endif /* INET6 */
 		else
 			return gen_false();
+		break;
+	case DLT_ARCNET:
+		/*
+		 * XXX should we check for first fragment if the protocol
+		 * uses PHDS?
+		 */
+		switch(proto) {
+		default:
+			return gen_false();
+#ifdef INET6
+		case ETHERTYPE_IPV6:
+			return(gen_cmp(2, BPF_B,
+					(bpf_int32)htonl(ARCTYPE_INET6)));
+#endif /* INET6 */
+		case ETHERTYPE_IP:
+			b0 = gen_cmp(2, BPF_B, (bpf_int32)htonl(ARCTYPE_IP));
+			b1 = gen_cmp(2, BPF_B,
+					(bpf_int32)htonl(ARCTYPE_IP_OLD));
+			gen_or(b0, b1);
+			return(b1);
+		case ETHERTYPE_ARP:
+			b0 = gen_cmp(2, BPF_B, (bpf_int32)htonl(ARCTYPE_ARP));
+			b1 = gen_cmp(2, BPF_B,
+					(bpf_int32)htonl(ARCTYPE_ARP_OLD));
+			gen_or(b0, b1);
+			return(b1);
+		case ETHERTYPE_REVARP:
+			return(gen_cmp(2, BPF_B,
+					(bpf_int32)htonl(ARCTYPE_REVARP)));
+		case ETHERTYPE_ATALK:
+			return(gen_cmp(2, BPF_B,
+					(bpf_int32)htonl(ARCTYPE_ATALK)));
+		}
 	}
 	return gen_cmp(off_linktype, BPF_H, (bpf_int32)proto);
 }
@@ -740,6 +784,7 @@ gen_hostop6(addr, mask, dir, proto, src_off, dst_off)
 {
 	struct block *b0, *b1;
 	u_int offset;
+	u_int32_t *a, *m;
 
 	switch (dir) {
 
@@ -768,16 +813,14 @@ gen_hostop6(addr, mask, dir, proto, src_off, dst_off)
 		abort();
 	}
 	/* this order is important */
-	b1 = gen_mcmp(offset + 12, BPF_W, ntohl(addr->s6_addr32[3]),
-		ntohl(mask->s6_addr32[3]));
-	b0 = gen_mcmp(offset + 8, BPF_W, ntohl(addr->s6_addr32[2]),
-		ntohl(mask->s6_addr32[2]));
+	a = (u_int32_t *)addr;
+	m = (u_int32_t *)mask;
+	b1 = gen_mcmp(offset + 12, BPF_W, ntohl(a[3]), ntohl(m[3]));
+	b0 = gen_mcmp(offset + 8, BPF_W, ntohl(a[2]), ntohl(m[2]));
 	gen_and(b0, b1);
-	b0 = gen_mcmp(offset + 4, BPF_W, ntohl(addr->s6_addr32[1]),
-		ntohl(mask->s6_addr32[1]));
+	b0 = gen_mcmp(offset + 4, BPF_W, ntohl(a[1]), ntohl(m[1]));
 	gen_and(b0, b1);
-	b0 = gen_mcmp(offset + 0, BPF_W, ntohl(addr->s6_addr32[0]),
-		ntohl(mask->s6_addr32[0]));
+	b0 = gen_mcmp(offset + 0, BPF_W, ntohl(a[0]), ntohl(m[0]));
 	gen_and(b0, b1);
 	b0 = gen_linktype(proto);
 	gen_and(b0, b1);
@@ -1111,6 +1154,7 @@ gen_host6(addr, mask, proto, dir)
 }
 #endif /*INET6*/
 
+#ifndef INET6
 static struct block *
 gen_gateway(eaddr, alist, proto, dir)
 	const u_char *eaddr;
@@ -1149,6 +1193,7 @@ gen_gateway(eaddr, alist, proto, dir)
 	bpf_error("illegal modifier of 'gateway'");
 	/* NOTREACHED */
 }
+#endif	/*INET6*/
 
 struct block *
 gen_proto_abbrev(proto)
@@ -1498,15 +1543,7 @@ lookup_proto(name, proto)
 	return v;
 }
 
-struct stmt *
-gen_joinsp(s, n)
-	struct stmt **s;
-	int n;
-{
-	return NULL;
-}
-
-struct block *
+static struct block *
 gen_protochain(v, proto, dir)
 	int v;
 	int proto;
@@ -1529,7 +1566,7 @@ gen_protochain(v, proto, dir)
 		break;
 	case Q_DEFAULT:
 		b0 = gen_protochain(v, Q_IP, dir);
-		b = gen_protochain(v, Q_IP, dir);
+		b = gen_protochain(v, Q_IPV6, dir);
 		gen_or(b0, b);
 		return b;
 	default:
@@ -1926,8 +1963,9 @@ gen_scode(name, q)
 	int tproto;
 	u_char *eaddr;
 	bpf_u_int32 mask, addr;
+#ifndef INET6
 	bpf_u_int32 **alist;
-#ifdef INET6
+#else
 	int tproto6;
 	struct sockaddr_in *sin;
 	struct sockaddr_in6 *sin6;
@@ -2066,6 +2104,7 @@ gen_scode(name, q)
 #endif /* INET6 */
 
 	case Q_GATEWAY:
+#ifndef INET6
 		eaddr = pcap_ether_hostton(name);
 		if (eaddr == NULL)
 			bpf_error("unknown ether host: %s", name);
@@ -2074,6 +2113,9 @@ gen_scode(name, q)
 		if (alist == NULL || *alist == NULL)
 			bpf_error("unknown host '%s'", name);
 		return gen_gateway(eaddr, alist, proto, dir);
+#else
+		bpf_error("'gateway' not supported in this configuration");
+#endif /*INET6*/
 
 	case Q_PROTO:
 		real_proto = lookup_proto(name, proto);
@@ -2235,6 +2277,7 @@ gen_mcode6(s1, s2, masklen, q)
 	struct in6_addr *addr;
 	struct in6_addr mask;
 	struct block *b;
+	u_int32_t *a, *m;
 
 	if (s2)
 		bpf_error("no mask %s supported", s2);
@@ -2247,17 +2290,17 @@ gen_mcode6(s1, s2, masklen, q)
 	addr = &((struct sockaddr_in6 *)res->ai_addr)->sin6_addr;
 
 	if (sizeof(mask) * 8 < masklen)
-		bpf_error("mask length must be <= %u", (int)(sizeof(mask) * 8));
+		bpf_error("mask length must be <= %u", (unsigned int)(sizeof(mask) * 8));
 	memset(&mask, 0xff, masklen / 8);
 	if (masklen % 8) {
-		mask.s6_addr8[masklen / 8] =
+		mask.s6_addr[masklen / 8] =
 			(0xff << (8 - masklen % 8)) & 0xff;
 	}
 
-	if ((addr->s6_addr32[0] & ~mask.s6_addr32[0])
-	 || (addr->s6_addr32[1] & ~mask.s6_addr32[1])
-	 || (addr->s6_addr32[2] & ~mask.s6_addr32[2])
-	 || (addr->s6_addr32[3] & ~mask.s6_addr32[3])) {
+	a = (u_int32_t *)addr;
+	m = (u_int32_t *)&mask;
+	if ((a[0] & ~m[0]) || (a[1] & ~m[1])
+	 || (a[2] & ~m[2]) || (a[3] & ~m[3])) {
 		bpf_error("non-network bits set in \"%s/%d\"", s1, masklen);
 	}
 
@@ -2672,6 +2715,8 @@ gen_byteop(op, idx, val)
 	return b;
 }
 
+static u_char abroadcast[] = { 0x0 };
+
 struct block *
 gen_broadcast(proto)
 	int proto;
@@ -2684,6 +2729,8 @@ gen_broadcast(proto)
 
 	case Q_DEFAULT:
 	case Q_LINK:
+		if (linktype == DLT_ARCNET)
+			return gen_ahostop(abroadcast, Q_DST);
 		if (linktype == DLT_EN10MB)
 			return gen_ehostop(ebroadcast, Q_DST);
 		if (linktype == DLT_FDDI)
@@ -2715,6 +2762,10 @@ gen_multicast(proto)
 
 	case Q_DEFAULT:
 	case Q_LINK:
+		if (linktype == DLT_ARCNET)
+			/* all ARCnet multicasts use the same address */
+			return gen_ahostop(abroadcast, Q_DST);
+
 		if (linktype == DLT_EN10MB) {
 			/* ether[0] & 1 != 0 */
 			s = new_stmt(BPF_LD|BPF_B|BPF_ABS);
@@ -2788,4 +2839,49 @@ gen_inbound(dir)
 			  gen_loadi(0),
 			  dir);
 	return (b0);
+}
+
+struct block *
+gen_acode(eaddr, q)
+	register const u_char *eaddr;
+	struct qual q;
+{
+	if ((q.addr == Q_HOST || q.addr == Q_DEFAULT) && q.proto == Q_LINK) {
+		if (linktype == DLT_ARCNET)
+			return gen_ahostop(eaddr, (int)q.dir);
+	}
+	bpf_error("ARCnet address used in non-arc expression");
+	/* NOTREACHED */
+}
+
+static struct block *
+gen_ahostop(eaddr, dir)
+	register const u_char *eaddr;
+	register int dir;
+{
+	register struct block *b0, *b1;
+
+	switch (dir) {
+	/* src comes first, different from Ethernet */
+	case Q_SRC:
+		return gen_bcmp(0, 1, eaddr);
+
+	case Q_DST:
+		return gen_bcmp(1, 1, eaddr);
+
+	case Q_AND:
+		b0 = gen_ahostop(eaddr, Q_SRC);
+		b1 = gen_ahostop(eaddr, Q_DST);
+		gen_and(b0, b1);
+		return b1;
+
+	case Q_DEFAULT:
+	case Q_OR:
+		b0 = gen_ahostop(eaddr, Q_SRC);
+		b1 = gen_ahostop(eaddr, Q_DST);
+		gen_or(b0, b1);
+		return b1;
+	}
+	abort();
+	/* NOTREACHED */
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: pnpbioscall.s,v 1.1 1999/11/12 18:36:46 drochner Exp $ */
+/* $NetBSD: pnpbioscall.s,v 1.1.4.1 1999/12/27 18:32:27 wrstuden Exp $ */
 /*
  * Copyright (c) 1999
  * 	Matthias Drochner.  All rights reserved.

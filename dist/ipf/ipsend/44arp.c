@@ -1,4 +1,4 @@
-/*	$NetBSD: 44arp.c,v 1.1.1.1 1999/12/11 22:24:07 veego Exp $	*/
+/*	$NetBSD: 44arp.c,v 1.1.1.1.4.1 1999/12/27 18:27:58 wrstuden Exp $	*/
 
 /*
  * Based upon 4.4BSD's /usr/sbin/arp

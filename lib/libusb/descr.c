@@ -1,4 +1,4 @@
-/*	$NetBSD: descr.c,v 1.6 1999/09/20 04:48:12 lukem Exp $	*/
+/*	$NetBSD: descr.c,v 1.6.2.1 1999/12/27 18:30:09 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1999 Lennart Augustsson <augustss@netbsd.org>
@@ -33,6 +33,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <sys/time.h>
 
 #include <dev/usb/usb.h>
 

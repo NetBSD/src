@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21 1999/02/16 12:32:52 he Exp $
+#	$NetBSD: Makefile,v 1.21.4.1 1999/12/27 18:36:50 wrstuden Exp $
 
 .include <bsd.own.mk>
 
@@ -13,7 +13,7 @@ FILES=		${MFILES}
 PROG=		file
 SRCS=		file.c apprentice.c fsmagic.c softmagic.c ascmagic.c is_tar.c \
 		print.c compress.c readelf.c internat.c
-CPPFLAGS+=	-DMAGIC='"$(MAGIC)"' -DHAVE_SYS_WAIT_H -DHAVE_ST_RDEV
+CPPFLAGS+=	-DMAGIC='"$(MAGIC)"' -DHAVE_CONFIG_H -I${.CURDIR}
 CPPFLAGS+=	-DBUILTIN_ELF -DELFCORE
 MAN=		file.1 magic.5
 

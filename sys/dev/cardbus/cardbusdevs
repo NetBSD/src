@@ -1,4 +1,4 @@
-$NetBSD: cardbusdevs,v 1.7 1999/12/11 22:22:34 explorer Exp $
+$NetBSD: cardbusdevs,v 1.7.2.1 1999/12/27 18:34:37 wrstuden Exp $
 
 /*
  * Copyright (C) 1999  Hayakawa Koichi.

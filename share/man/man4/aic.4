@@ -1,4 +1,4 @@
-.\"	$NetBSD: aic.4,v 1.7 1999/03/16 01:19:15 garbled Exp $
+.\"	$NetBSD: aic.4,v 1.7.6.1 1999/12/27 18:30:39 wrstuden Exp $
 .\"
 .\" Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
 .\" Copyright (c) 1994 James A. Jegers
@@ -44,41 +44,33 @@ AIC-6260 and AIC-6360
 .Tn SCSI
 controller chips.
 .Pp
-The
-.Tn ISA
-attachment of the
+.Pp
+The PCMCIA
+.Tn SCSI
+host adapters and many ISA cards do not include boot ROMs and therefore
+cannot be used to connect the boot device.
+.Sh HARDWARE
+Cards supported by the 
 .Nm
-driver supports the
+driver include:
+.Pp
+.Bl -item -offset indent
+.It
 .Tn Adaptec
-152x, the
+1502 ISA SCSI host adaptor
+.It
+.Tn Adaptec
+152x ISA SCSI host adaptor
+.It
+.Tn Adaptec
+AHA-1520B ISAPNP SCSI host adaptor
+.It
+.Tn Adaptec
+APA-1460 PCMCIA SCSI host adaptor
+.It
 .Tn "Creative Labs"
-SoundBlaster
-.Tn SCSI
-host adapter, and compatibles.
-Many
-.Tn ISA
-cards that use this chip do not have boot ROMs, and therefore cannot
-be used to connect the boot device.
-.Pp
-The
-.Tn "ISA Plug-and-Play"
-attachment of the
-.Nm
-driver supports the
-.Tn Adaptec
-AHA-1520B host adapter.
-.Pp
-The
-.Tn PCMCIA
-attachment of the
-.Nm
-driver supports the
-.Tn Adaptec
-APA-1460.
-These
-.Tn SCSI
-host adapters do not include boot ROMs and therefore cannot be used
-to connect the boot device.
+SoundBlaster ISA SCSI host adaptor, and compatibles
+.El
 .Sh SEE ALSO
 .Xr cd 4 ,
 .Xr ch 4 ,

@@ -1,4 +1,4 @@
-.\" $NetBSD: usb.4,v 1.17 1999/09/09 12:35:53 augustss Exp $
+.\" $NetBSD: usb.4,v 1.17.4.1 1999/12/27 18:30:47 wrstuden Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -41,8 +41,9 @@
 .Nm usb
 .Nd Universal Serial Bus driver
 .Sh SYNOPSIS
-.Cd "uhci*   at pci? function ?"
-.Cd "ohci*   at pci? function ?"
+.Cd "uhci*   at pci? dev ? function ?"
+.Cd "ohci*   at cardbus? dev ? function ?"
+.Cd "ohci*   at pci? dev ? function ?"
 .Cd "usb*    at uhci?"
 .Cd "usb*    at ohci?"
 .Cd "uhub*   at usb?"
@@ -88,6 +89,33 @@ hubs and must always be present since there is at least a root hub in any
 .Tn USB
 system.
 .Pp
+
+.Sh SUPPORTED DEVICES
+.Nx
+includes machine-independent
+.Tn USB
+drivers, sorted by driver name:
+.Bl -tag -width speaker -offset indent
+.It uaudio
+driver for audio devices.
+.It ugen
+generic driver for
+.Tn USB
+devices.
+.It uhid
+generic driver for Human Interface Devices.
+.It ukbd
+keyboard driver
+.It ulpt
+printer driver.
+.It umass
+driver for mass storage devices, such as disks.
+.It umodem
+driver for communication devices that use the Abstract Control Model.
+.It ums
+mouse driver
+.El
+
 .Sh INTRODUCTION TO USB
 The
 .Tn USB
@@ -114,7 +142,7 @@ such as descriptors, from the device.
 Each endpoint, except the control endpoint, is unidirectional.
 .Pp
 The endpoints in a device are grouped into interfaces.
-An interface is a logical unit within a device; e.g.
+An interface is a logical unit within a device; e.g.,
 a compound device with both a keyboard and a trackball would present
 one interface for each.
 An interface can sometimes be set into different modes,
@@ -130,7 +158,7 @@ and interfaces.
 Each device located on a hub has several
 .Xr config 8
 locators:
-.Bl -tag -compact -width xxxxxxx
+.Bl -tag -compact -width xxxxxxxxx
 .It Cd port
 this is the number of the port on closest upstream hub.
 .It Cd configuration
@@ -313,6 +341,7 @@ The
 specifications can be found at
 .Dv http://www.usb.org/developers/docs.htm .
 .Pp
+.Xr cardbus 4 ,
 .Xr pci 4 ,
 .Xr uaudio 4 ,
 .Xr ugen 4 ,
@@ -322,7 +351,6 @@ specifications can be found at
 .Xr umass 4 ,
 .Xr ums 4 ,
 .Xr usb 3 ,
-.Xr usbd 8 ,
 .Xr usbdevs 8
 .Sh HISTORY
 The

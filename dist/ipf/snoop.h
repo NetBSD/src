@@ -1,4 +1,4 @@
-/*	$NetBSD: snoop.h,v 1.1.1.1 1999/12/11 22:23:59 veego Exp $	*/
+/*	$NetBSD: snoop.h,v 1.1.1.1.4.1 1999/12/27 18:27:54 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 1993-1998 by Darren Reed.

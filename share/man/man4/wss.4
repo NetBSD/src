@@ -1,4 +1,4 @@
-.\"   $NetBSD: wss.4,v 1.13 1999/08/14 21:18:05 augustss Exp $
+.\"   $NetBSD: wss.4,v 1.13.4.1 1999/12/27 18:30:48 wrstuden Exp $
 .\"
 .\" Copyright (c) 1995 Michael Long.
 .\" All rights reserved.
@@ -30,11 +30,12 @@
 .Os
 .Sh NAME
 .Nm wss
-.Nd Windows Sound System hardware driver
+.Nd Windows Sound System hardware audio driver
 .Sh SYNOPSIS
 .Cd "wss0   at isa? port 0x530 irq 10 drq 0 drq2 1"
 .Cd "wss0   at isa? port 0x530 irq 10 drq 0 flags 1"
 .Cd "wss*   at isapnp?"
+.Cd "wss*   at pnpbios? index ?"
 .Cd "audio* at wss?"
 .Cd "opl*   at wss?"
 .Sh DESCRIPTION
@@ -64,4 +65,5 @@ disables the joystick port on MAD16 hardware.
 .Xr isa 4 ,
 .Xr isapnp 4 ,
 .Xr joy 4 ,
-.Xr opl 4
+.Xr opl 4 ,
+.Xr pnpbios 4

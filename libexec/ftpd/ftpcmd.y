@@ -1,4 +1,40 @@
-/*	$NetBSD: ftpcmd.y,v 1.38 1999/09/06 06:01:44 simonb Exp $	*/
+/*	$NetBSD: ftpcmd.y,v 1.38.2.1 1999/12/27 18:30:11 wrstuden Exp $	*/
+
+/*-
+ * Copyright (c) 1997-1999 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Luke Mewburn.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright (c) 1985, 1988, 1993, 1994
@@ -47,7 +83,7 @@
 #if 0
 static char sccsid[] = "@(#)ftpcmd.y	8.3 (Berkeley) 4/6/94";
 #else
-__RCSID("$NetBSD: ftpcmd.y,v 1.38 1999/09/06 06:01:44 simonb Exp $");
+__RCSID("$NetBSD: ftpcmd.y,v 1.38.2.1 1999/12/27 18:30:11 wrstuden Exp $");
 #endif
 #endif /* not lint */
 
@@ -124,7 +160,7 @@ extern	jmp_buf		errcatch;
 	MAIL	MLFL	MRCP	MRSQ	MSAM	MSND
 	MSOM
 
-	UMASK	IDLE	CHMOD
+	CHMOD	IDLE	RATEGET	RATEPUT	UMASK
 
 	LEXERR
 
@@ -132,7 +168,7 @@ extern	jmp_buf		errcatch;
 %token	<s> ALL
 %token	<i> NUMBER
 
-%type	<i> check_login check_modify octal_number byte_size
+%type	<i> check_login check_modify check_upload octal_number byte_size
 %type	<i> struct_code mode_code type_code form_code decimal_integer
 %type	<s> pathstring pathname password username
 %type	<s> mechanism_name base64data prot_code
@@ -165,6 +201,7 @@ cmd
 	| PASS SP password CRLF
 		{
 			pass($3);
+			memset($3, 0, strlen($3));
 			free($3);
 		}
 
@@ -245,6 +282,8 @@ cmd
 
 	| LPRT check_login SP host_long_port4 CRLF
 		{
+			if ($2) {
+
 			/* reject invalid host_long_port4 */
 			if (data_dest.su_family != AF_INET) {
 				reply(500, "Illegal LPRT command rejected");
@@ -269,10 +308,14 @@ cmd
 				}
 				reply(200, "LPRT command successful.");
 			}
+
+			}
 		}
 
 	| LPRT check_login SP host_long_port6 CRLF
 		{
+			if ($2) {
+
 			/* reject invalid host_long_port6 */
 			if (data_dest.su_family != AF_INET6) {
 				reply(500, "Illegal LPRT command rejected");
@@ -297,6 +340,8 @@ cmd
 				}
 				reply(200, "LPRT command successful.");
 			}
+
+			}
 		}
 
 	| EPRT check_login SP STRING CRLF
@@ -309,6 +354,8 @@ cmd
 			struct addrinfo *res;
 			int i;
 
+			if ($2) {
+
 			if (epsvall) {
 				reply(501, "EPRT disallowed after EPSV ALL");
 				goto eprt_done;
@@ -319,13 +366,7 @@ cmd
 				pdata = -1;
 			}
 
-			/*XXX checks for login */
-
-			tmp = strdup($4);
-			if (!tmp) {
-				fatal("not enough core.");
-				/*NOTREACHED*/
-			}
+			tmp = xstrdup($4);
 			p = tmp;
 			delim = p[0];
 			p++;
@@ -334,9 +375,8 @@ cmd
 				q = strchr(p, delim);
 				if (!q || *q != delim) {
 		parsefail:
-					reply(500, "Invalid argument, rejected.");
-					if (tmp)
-						free(tmp);
+					reply(500,
+					    "Invalid argument, rejected.");
 					usedefault = 1;
 					goto eprt_done;
 				}
@@ -388,12 +428,14 @@ cmd
 					fail++;
 				switch (data_dest.su_family) {
 				case AF_INET:
-					fail += memcmp(&data_dest.su_sin.sin_addr,
+					fail += memcmp(
+					    &data_dest.su_sin.sin_addr,
 					    &his_addr.su_sin.sin_addr,
 					    sizeof(data_dest.su_sin.sin_addr));
 					break;
 				case AF_INET6:
-					fail += memcmp(&data_dest.su_sin6.sin6_addr,
+					fail += memcmp(
+					    &data_dest.su_sin6.sin6_addr,
 					    &his_addr.su_sin6.sin6_addr,
 					    sizeof(data_dest.su_sin6.sin6_addr));
 					break;
@@ -406,68 +448,78 @@ cmd
 					return (NULL);
 				}
 			}
-			free(tmp);
-			tmp = NULL;
 			if (pdata >= 0) {
 				(void) close(pdata);
 				pdata = -1;
 			}
 			reply(200, "EPRT command successful.");
 		eprt_done:;
+			if (tmp != NULL)
+				free(tmp);
+
+			}
+			free($4);
 		}
 
 	| PASV check_login CRLF
 		{
-			if (curclass.passive) {
-				passive();
-			} else {
-				reply(500, "PASV mode not available.");
+			if ($2) {
+				if (curclass.passive)
+					passive();
+				else
+					reply(500, "PASV mode not available.");
 			}
 		}
 
-	| LPSV CRLF
+	| LPSV check_login CRLF
 		{
-			if (epsvall)
-				reply(501, "LPSV disallowed after EPSV ALL");
-			else
-				long_passive("LPSV", PF_UNSPEC);
-		}
-
-	| EPSV SP NUMBER CRLF
-		{
-			int pf;
-			switch ($3) {
-			case 1:
-				pf = PF_INET;
-				break;
-			case 2:
-				pf = PF_INET6;
-				break;
-			default:
-				pf = -1;	/*junk*/
-				break;
+			if ($2) {
+				if (epsvall)
+					reply(501,
+					    "LPSV disallowed after EPSV ALL");
+				else
+					long_passive("LPSV", PF_UNSPEC);
 			}
-			long_passive("EPSV", pf);
 		}
 
-	| EPSV SP ALL CRLF
+	| EPSV check_login SP NUMBER CRLF
 		{
-			if (!logged_in) {
-				syslog(LOG_NOTICE, "long passive but not logged in");
-				reply(503, "Login with USER first.");
-			} else {
+			if ($2) {
+				int pf;
+
+				switch ($4) {
+				case 1:
+					pf = PF_INET;
+					break;
+				case 2:
+					pf = PF_INET6;
+					break;
+				default:
+					pf = -1;	/*junk*/
+					break;
+				}
+				long_passive("EPSV", pf);
+			}
+		}
+
+	| EPSV check_login SP ALL CRLF
+		{
+			if ($2) {
 				reply(200, "EPSV ALL command successful.");
 				epsvall++;
 			}
 		}
 
-	| EPSV CRLF
+	| EPSV check_login CRLF
 		{
-			long_passive("EPSV", PF_UNSPEC);
+			if ($2)
+				long_passive("EPSV", PF_UNSPEC);
 		}
 
-	| TYPE SP type_code CRLF
+	| TYPE check_login SP type_code CRLF
 		{
+			if ($2) {
+
 			switch (cmd_type) {
 
 			case TYPE_A:
@@ -500,31 +552,37 @@ cmd
 				UNIMPLEMENTED for NBBY != 8
 #endif /* NBBY == 8 */
 			}
-		}
-
-	| STRU SP struct_code CRLF
-		{
-			switch ($3) {
-
-			case STRU_F:
-				reply(200, "STRU F ok.");
-				break;
-
-			default:
-				reply(504, "Unimplemented STRU type.");
+			
 			}
 		}
 
-	| MODE SP mode_code CRLF
+	| STRU check_login SP struct_code CRLF
 		{
-			switch ($3) {
+			if ($2) {
+				switch ($4) {
 
-			case MODE_S:
-				reply(200, "MODE S ok.");
-				break;
+				case STRU_F:
+					reply(200, "STRU F ok.");
+					break;
 
-			default:
-				reply(502, "Unimplemented MODE type.");
+				default:
+					reply(504, "Unimplemented STRU type.");
+				}
+			}
+		}
+
+	| MODE check_login SP mode_code CRLF
+		{
+			if ($2) {
+				switch ($4) {
+
+				case MODE_S:
+					reply(200, "MODE S ok.");
+					break;
+
+				default:
+					reply(502, "Unimplemented MODE type.");
+				}
 			}
 		}
 
@@ -536,7 +594,7 @@ cmd
 				free($4);
 		}
 
-	| STOR check_login SP pathname CRLF
+	| STOR check_upload SP pathname CRLF
 		{
 			if ($2 && $4 != NULL)
 				store($4, "w", 0);
@@ -544,7 +602,7 @@ cmd
 				free($4);
 		}
 
-	| STOU check_login SP pathname CRLF
+	| STOU check_upload SP pathname CRLF
 		{
 			if ($2 && $4 != NULL)
 				store($4, "w", 1);
@@ -552,7 +610,7 @@ cmd
 				free($4);
 		}
 		
-	| APPE check_login SP pathname CRLF
+	| APPE check_upload SP pathname CRLF
 		{
 			if ($2 && $4 != NULL)
 				store($4, "a", 0);
@@ -560,31 +618,36 @@ cmd
 				free($4);
 		}
 
-	| ALLO SP NUMBER CRLF
+	| ALLO check_login SP NUMBER CRLF
 		{
-			reply(202, "ALLO command ignored.");
+			if ($2)
+				reply(202, "ALLO command ignored.");
 		}
 
-	| ALLO SP NUMBER SP R SP NUMBER CRLF
+	| ALLO check_login SP NUMBER SP R SP NUMBER CRLF
 		{
-			reply(202, "ALLO command ignored.");
+			if ($2)
+				reply(202, "ALLO command ignored.");
 		}
 
-	| RNTO SP pathname CRLF
+	| RNTO check_login SP pathname CRLF
 		{
-			if (fromname) {
-				renamecmd(fromname, $3);
-				free(fromname);
-				fromname = NULL;
-			} else {
-				reply(503, "Bad sequence of commands.");
+			if ($2) {
+				if (fromname) {
+					renamecmd(fromname, $4);
+					free(fromname);
+					fromname = NULL;
+				} else {
+					reply(503, "Bad sequence of commands.");
+				}
 			}
-			free($3);
+			free($4);
 		}
 
-	| ABOR CRLF
+	| ABOR check_login CRLF
 		{
-			reply(225, "ABOR command successful.");
+			if ($2)
+				reply(225, "ABOR command successful.");
 		}
 
 	| DELE check_modify SP pathname CRLF
@@ -619,14 +682,20 @@ cmd
 
 	| LIST check_login CRLF
 		{
+			char *argv[] = { INTERNAL_LS, "-lgA", NULL };
+			
 			if ($2)
-				retrieve("/bin/ls -lgA", "");
+				retrieve(argv, "");
 		}
 
 	| LIST check_login SP pathname CRLF
 		{
-			if ($2 && $4 != NULL)
-				retrieve("/bin/ls -lgA %s", $4);
+			char *argv[] = { INTERNAL_LS, "-lgA", NULL, NULL };
+
+			if ($2 && $4 != NULL) {
+				argv[2] = $4;
+				retrieve(argv, $4);
+			}
 			if ($4 != NULL)
 				free($4);
 		}
@@ -639,10 +708,9 @@ cmd
 
 	| NLST check_login SP STRING CRLF
 		{
-			if ($2 && $4 != NULL)
+			if ($2)
 				send_file_list($4);
-			if ($4 != NULL)
-				free($4);
+			free($4);
 		}
 
 	| SITE SP HELP CRLF
@@ -650,9 +718,115 @@ cmd
 			help(sitetab, NULL);
 		}
 
+	| SITE SP CHMOD check_modify SP octal_number SP pathname CRLF
+		{
+			if ($4 && ($8 != NULL)) {
+				if ($6 > 0777)
+					reply(501,
+				"CHMOD: Mode value must be between 0 and 0777");
+				else if (chmod($8, $6) < 0)
+					perror_reply(550, $8);
+				else
+					reply(200, "CHMOD command successful.");
+			}
+			if ($8 != NULL)
+				free($8);
+		}
+
 	| SITE SP HELP SP STRING CRLF
 		{
 			help(sitetab, $5);
+			free($5);
+		}
+
+	| SITE SP IDLE check_login CRLF
+		{
+			if ($4) {
+				reply(200,
+			    "Current IDLE time limit is %d seconds; max %d",
+				    curclass.timeout, curclass.maxtimeout);
+			}
+		}
+
+	| SITE SP IDLE check_login SP NUMBER CRLF
+		{
+			if ($4) {
+				if ($6 < 30 || $6 > curclass.maxtimeout) {
+					reply(501,
+			    "IDLE time limit must be between 30 and %d seconds",
+					    curclass.maxtimeout);
+				} else {
+					curclass.timeout = $6;
+					(void) alarm(curclass.timeout);
+					reply(200,
+					    "IDLE time limit set to %d seconds",
+					    curclass.timeout);
+				}
+			}
+		}
+
+	| SITE SP RATEGET check_login CRLF
+		{
+			if ($4) {
+				reply(200, "Current RATEGET is %d bytes/sec",
+				    curclass.rateget);
+			}
+		}
+
+	| SITE SP RATEGET check_login SP STRING CRLF
+		{
+			char *p = $6;
+			int rate;
+
+			if ($4) {
+				rate = strsuftoi(p);
+				if (rate == -1)
+					reply(501, "Invalid RATEGET %s", p);
+				else if (curclass.maxrateget &&
+				    rate > curclass.maxrateget)
+					reply(501,
+				"RATEGET %d is larger than maximum RATEGET %d",
+					    rate, curclass.maxrateget);
+				else {
+					curclass.rateget = rate;
+					reply(200,
+					    "RATEGET set to %d bytes/sec",
+					    curclass.rateget);
+				}
+			}
+			free($6);
+		}
+
+	| SITE SP RATEPUT check_login CRLF
+		{
+			if ($4) {
+				reply(200, "Current RATEPUT is %d bytes/sec",
+				    curclass.rateput);
+			}
+		}
+
+	| SITE SP RATEPUT check_login SP STRING CRLF
+		{
+			char *p = $6;
+			int rate;
+
+			if ($4) {
+				rate = strsuftoi(p);
+				if (rate == -1)
+					reply(501, "Invalid RATEPUT %s", p);
+				else if (curclass.maxrateput &&
+				    rate > curclass.maxrateput)
+					reply(501,
+				"RATEPUT %d is larger than maximum RATEPUT %d",
+					    rate, curclass.maxrateput);
+				else {
+					curclass.rateput = rate;
+					reply(200,
+					    "RATEPUT set to %d bytes/sec",
+					    curclass.rateput);
+				}
+			}
+			free($6);
 		}
 
 	| SITE SP UMASK check_login CRLF
@@ -679,43 +853,6 @@ cmd
 					    "UMASK set to %03o (was %03o)",
 					    $6, oldmask);
 				}
-			}
-		}
-
-	| SITE SP CHMOD check_modify SP octal_number SP pathname CRLF
-		{
-			if ($4 && ($8 != NULL)) {
-				if ($6 > 0777)
-					reply(501,
-				"CHMOD: Mode value must be between 0 and 0777");
-				else if (chmod($8, $6) < 0)
-					perror_reply(550, $8);
-				else
-					reply(200, "CHMOD command successful.");
-			}
-			if ($8 != NULL)
-				free($8);
-		}
-
-	| SITE SP IDLE CRLF
-		{
-			reply(200,
-			    "Current IDLE time limit is %d seconds; max %d",
-				curclass.timeout, curclass.maxtimeout);
-		}
-
-	| SITE SP IDLE SP NUMBER CRLF
-		{
-			if ($5 < 30 || $5 > curclass.maxtimeout) {
-				reply(501,
-			"IDLE time limit must be between 30 and %d seconds",
-				    curclass.maxtimeout);
-			} else {
-				curclass.timeout = $5;
-				(void) alarm(curclass.timeout);
-				reply(200,
-				    "IDLE time limit set to %d seconds",
-				    curclass.timeout);
 			}
 		}
 
@@ -756,6 +893,7 @@ cmd
 					help(sitetab, NULL);
 			} else
 				help(cmdtab, $3);
+			free($3);
 		}
 
 	| NOOP CRLF
@@ -767,18 +905,21 @@ cmd
 	| AUTH SP mechanism_name CRLF
 		{
 			reply(502, "RFC 2228 authentication not implemented.");
+			free($3);
 		}
 
 	| ADAT SP base64data CRLF
 		{
 			reply(503,
 			    "Please set authentication state with AUTH.");
+			free($3);
 		}
 
 	| PROT SP prot_code CRLF
 		{
 			reply(503,
 			    "Please set protection buffer size with PBSZ.");
+			free($3);
 		}
 
 	| PBSZ SP decimal_integer CRLF
@@ -795,16 +936,19 @@ cmd
 	| MIC SP base64data CRLF
 		{
 			reply(502, "RFC 2228 authentication not implemented.");
+			free($3);
 		}
 
 	| CONF SP base64data CRLF
 		{
 			reply(502, "RFC 2228 authentication not implemented.");
+			free($3);
 		}
 
 	| ENC SP base64data CRLF
 		{
 			reply(502, "RFC 2228 authentication not implemented.");
+			free($3);
 		}
 
 						/* RFC 2389 */
@@ -821,6 +965,7 @@ cmd
 		{
 			
 			opts($3);
+			free($3);
 		}
 
 
@@ -879,23 +1024,25 @@ cmd
 	;
 
 rcmd
-	: REST SP byte_size CRLF
+	: REST check_login SP byte_size CRLF
 		{
-			fromname = NULL;
-			restart_point = $3;	/* XXX $3 is only "int" */
-			reply(350, "Restarting at %qd. %s",
-			    (qdfmt_t)restart_point,
+			if ($2) {
+				fromname = NULL;
+				restart_point = $4; /* XXX $3 is only "int" */
+				reply(350, "Restarting at %qd. %s",
+				    (qdfmt_t)restart_point,
 			    "Send STORE or RETRIEVE to initiate transfer.");
+			}
 		}
+
 	| RNFR check_modify SP pathname CRLF
 		{
 			restart_point = (off_t) 0;
 			if ($2 && $4) {
 				fromname = renamefrom($4);
-				if (fromname == NULL && $4) {
-					free($4);
-				}
 			}
+			if ($4)
+				free($4);
 		}
 	;
 
@@ -1195,6 +1342,26 @@ check_modify
 			}
 		}
 
+check_upload
+	: /* empty */
+		{
+			if (logged_in) {
+				if (curclass.upload)
+					$$ = 1;
+				else {
+					reply(502,
+					"No permission to use this command.");
+					$$ = 0;
+					hasyyerrored = 1;
+				}
+			} else {
+				reply(530, "Please login with USER and PASS.");
+				$$ = 0;
+				hasyyerrored = 1;
+			}
+		}
+
+
 %%
 
 #define	CMD	0	/* beginning of command */
@@ -1294,10 +1461,12 @@ struct tab cmdtab[] = {
 };
 
 struct tab sitetab[] = {
-	{ "UMASK", UMASK, ARGS,	1, 0,	"[ <sp> umask ]" },
-	{ "IDLE",  IDLE,  ARGS,	1, 0,	"[ <sp> maximum-idle-time ]" },
 	{ "CHMOD", CHMOD, NSTR,	1, 0,	"<sp> mode <sp> file-name" },
 	{ "HELP",  HELP,  OSTR,	1, 0,	"[ <sp> <string> ]" },
+	{ "IDLE",  IDLE,  ARGS,	1, 0,	"[ <sp> maximum-idle-time ]" },
+	{ "RATEGET", RATEGET, OSTR, 1,0,"[ <sp> get-throttle-rate ]" },
+	{ "RATEPUT", RATEPUT, OSTR, 1,0,"[ <sp> put-throttle-rate ]" },
+	{ "UMASK", UMASK, ARGS,	1, 0,	"[ <sp> umask ]" },
 	{ NULL,    0,     0,	0, 0,	0 }
 };
 
@@ -1396,7 +1565,8 @@ getline(s, n, iop)
 		return (NULL);
 	*cs++ = '\0';
 	if (debug) {
-		if (!guest && strncasecmp("pass ", s, 5) == 0) {
+		if (curclass.type != CLASS_GUEST &&
+		    strncasecmp("pass ", s, 5) == 0) {
 			/* Don't syslog passwords */
 			syslog(LOG_DEBUG, "command: %.5s ???", s);
 		} else {
@@ -1426,7 +1596,7 @@ toolong(signo)
 	    curclass.timeout);
 	if (logging)
 		syslog(LOG_INFO, "User %s timed out after %d seconds",
-		    (pw ? pw -> pw_name : "unknown"), curclass.timeout);
+		    (pw ? pw->pw_name : "unknown"), curclass.timeout);
 	dologout(1);
 }
 
@@ -1450,11 +1620,12 @@ yylex()
 			dologout(0);
 		}
 		(void) alarm(0);
-#ifdef HASSETPROCTITLE
-		if (strncasecmp(cbuf, "PASS", 4) != 0)
-			setproctitle("%s: %s", proctitle, cbuf);
-#endif /* HASSETPROCTITLE */
 		if ((cp = strchr(cbuf, '\r'))) {
+			*cp = '\0';
+#ifdef HASSETPROCTITLE
+			if (strncasecmp(cbuf, "PASS", 4) != 0)
+				setproctitle("%s: %s", proctitle, cbuf);
+#endif /* HASSETPROCTITLE */
 			*cp++ = '\n';
 			*cp = '\0';
 		}
@@ -1516,7 +1687,7 @@ yylex()
 	dostr1:
 		if (cbuf[cpos] == ' ') {
 			cpos++;
-			state = state == OSTR ? STR2 : ++state;
+			state = state == OSTR ? STR2 : state+1;
 			return (SP);
 		}
 		break;
@@ -1832,11 +2003,8 @@ opts(command)
 		return;
 	}
 
-	if (ep != NULL && *ep != '\0') {
-		if (c->options != NULL)
-			free(c->options);
-		c->options = xstrdup(ep);
-	}
+	if (ep != NULL && *ep != '\0')
+		REASSIGN(c->options, xstrdup(ep));
 	if (c->options != NULL)
 		reply(200, "Options for %s are '%s'.", c->name, c->options);
 	else

@@ -1,4 +1,4 @@
-/*	$NetBSD: apprentice.c,v 1.16 1999/09/04 19:51:11 mycroft Exp $	*/
+/*	$NetBSD: apprentice.c,v 1.16.2.1 1999/12/27 18:36:50 wrstuden Exp $	*/
 
 /*
  * apprentice - make one pass through /etc/magic, learning its secrets.
@@ -39,7 +39,7 @@
 #if 0
 FILE_RCSID("@(#)Id: apprentice.c,v 1.28 1998/09/12 13:17:52 christos Exp ")
 #else
-__RCSID("$NetBSD: apprentice.c,v 1.16 1999/09/04 19:51:11 mycroft Exp $");
+__RCSID("$NetBSD: apprentice.c,v 1.16.2.1 1999/12/27 18:36:50 wrstuden Exp $");
 #endif
 #endif	/* lint */
 
@@ -297,7 +297,10 @@ int *ndx, check;
 	}
 
 	/* get type, skip it */
-	if (strncmp(l, "byte", NBYTE)==0) {
+	if (strncmp(l, "char", NBYTE)==0) {	/* HP/UX compat */
+		m->type = BYTE;
+		l += NBYTE;
+	} else if (strncmp(l, "byte", NBYTE)==0) {
 		m->type = BYTE;
 		l += NBYTE;
 	} else if (strncmp(l, "short", NSHORT)==0) {
@@ -352,6 +355,10 @@ int *ndx, check;
 	case '=':
   		m->reln = *l;
   		++l;
+		if (*l == '=') {
+		   /* HP compat: ignore &= etc. */
+		   ++l;
+		}
 		break;
 	case '!':
 		if (m->type != STRING) {

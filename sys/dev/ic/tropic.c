@@ -1,4 +1,4 @@
-/*	$NetBSD: tropic.c,v 1.5 1999/05/29 22:44:11 bad Exp $	*/
+/*	$NetBSD: tropic.c,v 1.5.8.1 1999/12/27 18:34:50 wrstuden Exp $	*/
 
 /* 
  * Ported to NetBSD by Onno van der Linden
@@ -97,6 +97,7 @@ int	tr_mediachange __P((struct ifnet *));
 void	tr_mediastatus __P((struct ifnet *, struct ifmediareq *));
 int	tropic_mediachange __P((struct tr_softc *));
 void	tropic_mediastatus __P((struct tr_softc *, struct ifmediareq *));
+void	tr_reinit __P((void *));
 
 /*
  * TODO:
@@ -192,7 +193,7 @@ tr_config(sc)
 			delay(100);
 		}
 
-		if ((ACA_RDB(sc, ACA_ISRP_o) & SRB_RESP_INT) == 0) {
+		if (i == 30000 && sc->sc_srb == ACA_RDW(sc, ACA_WRBR)) {
 			printf("No response for fast path cfg\n");
 			return 1;
 		}
@@ -498,7 +499,7 @@ struct tr_softc *sc;
 {
 	int i;
 
-	tr_stop(sc);
+	sc->sc_srb = 0;
 
 	/* 
 	 * Reset the card.
@@ -524,10 +525,11 @@ struct tr_softc *sc;
 		delay(100);
 	}
 
-	if ((ACA_RDB(sc, ACA_ISRP_o) & SRB_RESP_INT) == 0) {
+	if (i == 35000 && sc->sc_srb == 0) {
 		printf("No response from adapter after reset\n");
 		return 1;
 	}
+
 	ACA_RSTB(sc, ACA_ISRP_o, ~(SRB_RESP_INT));
 
 	ACA_OUTB(sc, ACA_RRR_e, (sc->sc_maddr >> 12));
@@ -587,6 +589,17 @@ tr_shutdown(arg)
 	struct tr_softc *sc = arg;
 
 	tr_stop(sc);
+}
+
+void
+tr_reinit(arg)
+	void *arg;
+{
+	if (tr_reset((struct tr_softc *) arg))
+		return;
+	if (tr_config((struct tr_softc *) arg))
+		return;
+	tr_init(arg);
 }
 
 /*
@@ -826,14 +839,19 @@ tr_intr(arg)
 		 */
 		else if (status & SRB_RESP_INT) { /* Adapter response in SRB? */
 			bus_size_t sap_srb;
+			bus_size_t srb;
 #ifdef TROPICDEBUG
 			bus_size_t log_srb;
 #endif
-			bus_size_t srb = sc->sc_srb; /* pointer to SRB */
+			if (sc->sc_srb == 0)
+				sc->sc_srb = ACA_RDW(sc, ACA_WRBR);
+			srb = sc->sc_srb; /* pointer to SRB */
 			retcode = SRB_INB(sc, srb, SRB_RETCODE);
 			command = SRB_INB(sc, srb, SRB_CMD);
 			switch (command) {
-
+			case 0x80: /* 0x80 == initialization complete */
+			case DIR_CONFIG_FAST_PATH_RAM:
+				break;
 			case XMIT_DIR_FRAME:	/* Response to xmit request */
 			case XMIT_UI_FRM:	/* Response to xmit request */
 				/* Response not valid? */
@@ -1017,7 +1035,8 @@ tr_intr(arg)
 					    sc->sc_dev.dv_xname);
 					ifp->if_flags &= ~IFF_RUNNING;
 					ifp->if_flags &= ~IFF_UP;
-					timeout(tr_init, sc ,hz*30);
+					if_qflush(&ifp->if_snd);
+					timeout(tr_reinit, sc ,hz*30);
 				}
 				else {
 #ifdef TROPICDEBUG
@@ -1032,12 +1051,11 @@ tr_intr(arg)
 				}
 				if (ARB_INW(sc, arb, ARB_RINGSTATUS) &
 				    LOG_OFLOW){
-					bus_size_t srb = sc->sc_srb;
 /*
  * XXX CMD_IN_SRB, handle with SRB_FREE_INT ?
  */
 					ifp->if_flags |= IFF_OACTIVE;
-					SRB_OUTB(sc, srb, SRB_CMD,
+					SRB_OUTB(sc, sc->sc_srb, SRB_CMD,
 					    DIR_READ_LOG);
 					/* Read & reset err log cmnd in SRB. */
 					ACA_SETB(sc, ACA_ISRA_o, CMD_IN_SRB);

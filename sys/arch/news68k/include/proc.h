@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.1 1999/12/09 14:53:12 tsutsui Exp $	*/
+/*	$NetBSD: proc.h,v 1.1.2.1 1999/12/27 18:32:59 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993

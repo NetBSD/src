@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.3 1999/09/23 05:34:03 msaitoh Exp $	*/
+/*	$NetBSD: clock.c,v 1.3.8.1 1999/12/27 18:33:44 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -151,10 +151,13 @@ microtime(tvp)
 {
 	int s = splclock();
 	static struct timeval lasttime;
+#if 0
 	u_long ticks = 0;
+#endif
 
 	*tvp = time;
 
+#if 0
 #ifdef USE_RTCCLK
 	/* ticks = (16000 - SHREG_TCNT1)*1000000/16000; */
 	ticks = 1000000 - SHREG_TCNT1*1000/16;
@@ -167,6 +170,7 @@ microtime(tvp)
 		tvp->tv_usec -= 1000000;
 		tvp->tv_sec++;
 	}
+#endif
 	if (tvp->tv_sec == lasttime.tv_sec &&
 	    tvp->tv_usec <= lasttime.tv_usec &&
 	    (tvp->tv_usec = lasttime.tv_usec + 1) > 1000000) {

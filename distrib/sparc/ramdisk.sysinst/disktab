@@ -1,4 +1,4 @@
-#	$NetBSD: disktab,v 1.1 1999/11/09 15:48:02 mycroft Exp $
+#	$NetBSD: disktab,v 1.1.4.1 1999/12/27 18:28:41 wrstuden Exp $
 #
 # Disk geometry and partition layout tables.
 # Key:

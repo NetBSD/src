@@ -1,4 +1,4 @@
-/*	$NetBSD: kmem.h,v 1.1.1.1 1999/12/11 22:23:59 veego Exp $	*/
+/*	$NetBSD: kmem.h,v 1.1.1.1.4.1 1999/12/27 18:27:53 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 1993-1998 by Darren Reed.

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.71 1999/09/06 09:27:18 is Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.71.6.1 1999/12/27 18:36:30 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1597,15 +1597,26 @@ nfs_loadattrcache(vpp, fp, vaper)
 	vap->va_rdev = (dev_t)rdev;
 	vap->va_mtime = mtime;
 	vap->va_fsid = vp->v_mount->mnt_stat.f_fsid.val[0];
+	switch (vtyp) {
+	case VDIR:
+		vap->va_blocksize = NFS_DIRFRAGSIZ;
+		break;
+	case VBLK:
+		vap->va_blocksize = BLKDEV_IOSIZE;
+		break;
+	case VCHR:
+		vap->va_blocksize = MAXBSIZE;
+		break;
+	default:
+		vap->va_blocksize = v3 ? vp->v_mount->mnt_stat.f_iosize :
+		    fxdr_unsigned(int32_t, fp->fa2_blocksize);
+		break;
+	}
 	if (v3) {
 		vap->va_nlink = fxdr_unsigned(u_short, fp->fa_nlink);
 		vap->va_uid = fxdr_unsigned(uid_t, fp->fa_uid);
 		vap->va_gid = fxdr_unsigned(gid_t, fp->fa_gid);
 		vap->va_size = fxdr_hyper(&fp->fa3_size);
-		if (vtyp == VDIR)
-			vap->va_blocksize = NFS_DIRFRAGSIZ;
-		else
-			vap->va_blocksize = NFS_FABLKSIZE;
 		vap->va_bytes = fxdr_hyper(&fp->fa3_used);
 		vap->va_fileid = fxdr_unsigned(int32_t,
 		    fp->fa3_fileid.nfsuquad[1]);
@@ -1618,11 +1629,6 @@ nfs_loadattrcache(vpp, fp, vaper)
 		vap->va_uid = fxdr_unsigned(uid_t, fp->fa_uid);
 		vap->va_gid = fxdr_unsigned(gid_t, fp->fa_gid);
 		vap->va_size = fxdr_unsigned(u_int32_t, fp->fa2_size);
-		if (vtyp == VDIR)
-			vap->va_blocksize = NFS_DIRFRAGSIZ;
-		else
-			vap->va_blocksize =
-				fxdr_unsigned(int32_t, fp->fa2_blocksize);
 		vap->va_bytes = fxdr_unsigned(int32_t, fp->fa2_blocks)
 		    * NFS_FABLKSIZE;
 		vap->va_fileid = fxdr_unsigned(int32_t, fp->fa2_fileid);

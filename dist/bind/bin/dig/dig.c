@@ -1,4 +1,4 @@
-/*	$NetBSD: dig.c,v 1.1.1.1 1999/11/20 18:53:58 veego Exp $	*/
+/*	$NetBSD: dig.c,v 1.1.1.1.4.1 1999/12/27 18:27:15 wrstuden Exp $	*/
 
 #ifndef lint
 static const char rcsid[] = "Id: dig.c,v 8.36 1999/11/05 05:05:14 vixie Exp";

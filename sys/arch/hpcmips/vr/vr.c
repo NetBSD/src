@@ -1,4 +1,4 @@
-/*	$NetBSD: vr.c,v 1.1.1.1 1999/09/16 12:23:32 takemura Exp $	*/
+/*	$NetBSD: vr.c,v 1.1.1.1.2.1 1999/12/27 18:32:15 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -37,6 +37,7 @@
 #include <sys/types.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/reboot.h>
 
 #include <machine/cpu.h>
 #include <machine/intr.h>
@@ -51,9 +52,25 @@
 #include <mips/mips/mips_mcclock.h>	/* mcclock CPUspeed estimation */
 
 #include <hpcmips/vr/vr.h>
+#include <hpcmips/vr/vripreg.h>
 #include <hpcmips/vr/rtcreg.h>
 #include <hpcmips/hpcmips/machdep.h>	/* XXXjrs replace with vectors */
 #include <machine/bootinfo.h>
+
+#include "vrip.h"
+#if NVRIP > 0
+#include <hpcmips/vr/vripvar.h>
+#endif
+
+#include "vrbcu.h"
+#if NVRBCU > 0
+#include <hpcmips/vr/bcuvar.h>
+#endif
+
+#include "vrdsu.h"
+#if NVRDSU > 0
+#include <hpcmips/vr/vrdsuvar.h>
+#endif
 
 #include "com.h"
 #if NCOM > 0
@@ -68,16 +85,30 @@
 #endif
 #endif
 
+#include "fb.h"
+#include "vrkiu.h"
+#if NFB > 0 || NVRKIU > 0
+#include <dev/rcons/raster.h>
+#include <dev/wscons/wsdisplayvar.h>
+#endif
+
+#if NFB > 0
+#include <arch/hpcmips/dev/fbvar.h>
+#endif
+
+#if NFB > 0
+#include <arch/hpcmips/vr/vrkiuvar.h>
+#endif
+
 void	vr_init __P((void));
 void	vr_os_init __P((void));
 void	vr_bus_reset __P((void));
 int	vr_intr __P((u_int32_t mask, u_int32_t pc, u_int32_t statusReg, u_int32_t causeReg));
 void	vr_cons_init __P((void));
 void	vr_device_register __P((struct device *, void *));
-
-char	*vrbcu_vrip_getcpuname __P((void));
-int	vrbcu_vrip_getcpumajor __P((void));
-int	vrbcu_vrip_getcpuminor __P((void));
+void    vr_fb_init __P((caddr_t*));
+int     vr_mem_init __P((caddr_t));
+void	vr_reboot __P((int howto, char *bootstr));
 
 extern unsigned nullclkread __P((void));
 extern unsigned (*clkread) __P((void));
@@ -109,11 +140,56 @@ vr_init()
 	platform.bus_reset = vr_bus_reset;
 	platform.cons_init = vr_cons_init;
 	platform.device_register = vr_device_register;
+	platform.fb_init = vr_fb_init;
+	platform.mem_init = vr_mem_init;
+	platform.reboot = vr_reboot;
 
-	sprintf(cpu_model, "NEC %s rev%d.%d", 
+#if NVRBCU > 0
+	sprintf(cpu_model, "NEC %s rev%d.%d %d.%03dMHz", 
 		vrbcu_vrip_getcpuname(),
 		vrbcu_vrip_getcpumajor(),
-		vrbcu_vrip_getcpuminor());
+		vrbcu_vrip_getcpuminor(),
+		vrbcu_vrip_getcpuclock() / 1000000,
+		(vrbcu_vrip_getcpuclock() % 1000000) / 1000);
+#else
+	sprintf(cpu_model, "NEC VR41xx");
+#endif
+}
+
+int
+vr_mem_init(kernend)
+	caddr_t kernend; /* kseg0 */
+{
+	u_int32_t startaddr, endaddr, page;
+	int npage;
+#define VR41_SYSADDR_DRAMSTART 0x0
+#define VR41_SYSADDR_DRAM_LEN 0x04000000
+	startaddr = MIPS_PHYS_TO_KSEG1(
+		(btoc((u_int32_t)kernend - MIPS_KSEG0_START)) << PGSHIFT);
+	endaddr = MIPS_PHYS_TO_KSEG1(VR41_SYSADDR_DRAMSTART +
+				     VR41_SYSADDR_DRAM_LEN);
+	for(page = startaddr, npage = 0; page < endaddr; 
+	    page+= NBPG, npage++) {
+		if (badaddr((char*)page, 4))
+			break;
+		((volatile int *)page)[0] = 0xa5a5a5a5;
+		((volatile int *)page)[4] = 0x5a5a5a5a;
+		wbflush();
+		if (*(volatile int *)page != 0xa5a5a5a5)
+			break;
+	}
+	/* Clear currently unused D-RAM area (For reboot Windows CE clearly)*/
+	memset((void*)startaddr, 0, npage * NBPG);
+	memset((void*)(KERNBASE + 0x400), 0, KERNTEXTOFF - KERNBASE - 0x800); 
+
+	return npage;
+}
+
+void
+vr_fb_init(kernend)
+	caddr_t *kernend;
+{
+	/* Nothing to do */
 }
 
 void
@@ -162,7 +238,7 @@ vr_bus_reset()
 void
 vr_cons_init()
 {
-#if NCOM > 0
+#if NCOM > 0 || NFB > 0 || NVRKIU > 0
 	extern bus_space_tag_t system_bus_iot;
 	extern bus_space_tag_t mb_bus_space_init __P((void));
 #endif
@@ -181,6 +257,24 @@ vr_cons_init()
 	}
 #endif
 
+#if NFB > 0
+	mb_bus_space_init(); /* At this time, not initialized yet */
+	if(fb_cnattach(system_bus_iot, 0x0c000000, 0, 0)) {
+		printf("%s(%d): can't init fb console", __FILE__, __LINE__);
+	} else {
+		goto find_keyboard;
+	}
+#endif
+
+ find_keyboard:
+#if NVRKIU > 0
+	if (vrkiu_cnattach(system_bus_iot, VRIP_KIU_ADDR)) {
+		printf("%s(%d): can't init vrkiu as console",
+		       __FILE__, __LINE__);
+	} else {
+		return;
+	}
+#endif
 }
 
 void
@@ -188,9 +282,61 @@ vr_device_register(dev, aux)
 	struct device *dev;
 	void *aux;
 {
-	printf("%s(%d): vr_bus_reset() not implemented.\n",
+	printf("%s(%d): vr_device_register() not implemented.\n",
 	       __FILE__, __LINE__);
 	panic("abort");
+}
+
+void
+vr_reboot(howto, bootstr)
+	int howto;
+	char *bootstr;
+{
+	/*
+	 * power down
+	 */
+	if ((howto & RB_POWERDOWN) == RB_POWERDOWN) {
+		printf("fake powerdown\n");
+		__asm(__CONCAT(".word	",___STRING(VR_OPCODE_HIBERNATE)));
+		__asm("nop");
+		__asm("nop");
+		__asm("nop");
+		__asm("nop");
+		__asm("nop");
+		__asm(".set reorder");
+		/* not reach */
+		vr_reboot(howto&~RB_HALT, bootstr);
+	}
+	/*
+	 * halt
+	 */
+	if (howto & RB_HALT) {
+#if NVRIP > 0
+		_spllower(~MIPS_INT_MASK_0);
+		vrip_intr_suspend();
+#else
+		splhigh();
+#endif
+		__asm(".set noreorder");
+		__asm(__CONCAT(".word	",___STRING(VR_OPCODE_SUSPEND)));
+		__asm("nop");
+		__asm("nop");
+		__asm("nop");
+		__asm("nop");
+		__asm("nop");
+		__asm(".set reorder");
+#if NVRIP > 0
+		vrip_intr_resume();
+#endif
+	}
+	/*
+	 * reset
+	 */
+#if NVRDSU
+	vrdsu_reset();
+#else
+	printf("%s(%d): There is no DSU.", __FILE__, __LINE__);
+#endif
 }
 
 void *

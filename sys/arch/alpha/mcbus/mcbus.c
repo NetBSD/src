@@ -1,4 +1,4 @@
-/* $NetBSD: mcbus.c,v 1.6 1999/04/15 22:19:52 thorpej Exp $ */
+/* $NetBSD: mcbus.c,v 1.6.8.1 1999/12/27 18:31:26 wrstuden Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcbus.c,v 1.6 1999/04/15 22:19:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcbus.c,v 1.6.8.1 1999/12/27 18:31:26 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,6 +54,8 @@ __KERNEL_RCSID(0, "$NetBSD: mcbus.c,v 1.6 1999/04/15 22:19:52 thorpej Exp $");
 #include "locators.h"
 
 #define KV(_addr)	((caddr_t)ALPHA_PHYS_TO_K0SEG((_addr)))
+#define	MCPCIA_EXISTS(mid, gid)	\
+	(!badaddr((void *)KV(MCPCIA_BRIDGE_ADDR(gid, mid)), sizeof (u_int32_t)))
 
 extern struct cfdriver mcbus_cd;
 
@@ -62,7 +64,7 @@ struct mcbus_cpu_busdep mcbus_primary;
 static int	mcbusmatch __P((struct device *, struct cfdata *, void *));
 static void	mcbusattach __P((struct device *, struct device *, void *));
 static int	mcbusprint __P((void *, const char *));
-static int	mcbussubmatch __P((struct device *, struct cfdata *, void *));
+static int	mcbussbm __P((struct device *, struct cfdata *, void *));
 static char	*mcbus_node_type_str __P((u_int8_t));
 
 typedef struct {
@@ -98,7 +100,7 @@ mcbusprint(aux, cp)
 }
 
 static int
-mcbussubmatch(parent, cf, aux)
+mcbussbm(parent, cf, aux)
 	struct device *parent;
 	struct cfdata *cf;
 	void *aux;
@@ -166,7 +168,7 @@ mcbusattach(parent, self, aux)
 	ta.ma_mid = 1;
 	ta.ma_type = MCBUS_TYPE_MEM;
 	mbp->mcbus_types[1] = MCBUS_TYPE_MEM;
-	(void) config_found_sm(self, &ta, mcbusprint, mcbussubmatch);
+	(void) config_found_sm(self, &ta, mcbusprint, mcbussbm);
 
 	/*
 	 * Now find PCI busses.
@@ -182,10 +184,9 @@ mcbusattach(parent, self, aux)
 		ta.ma_gid = MCBUS_GID_FROM_INSTANCE(0);
 		ta.ma_mid = mid;
 		ta.ma_type = MCBUS_TYPE_PCI;
-		/*
-		 * XXX MUST ACTUALLY PROBE FOR MCPCIA!
-		 */
-		(void) config_found_sm(self, &ta, mcbusprint, mcbussubmatch);
+		if (MCPCIA_EXISTS(ta.ma_mid, ta.ma_gid)) {
+			(void) config_found_sm(self, &ta, mcbusprint, mcbussbm);
+		}
 	}
 
 	/*
@@ -212,7 +213,7 @@ mcbusattach(parent, self, aux)
 		ta.ma_mid = mid;
 		ta.ma_type = MCBUS_TYPE_CPU;
 		mbp->mcbus_types[mid] = MCBUS_TYPE_CPU;
-		(void) config_found_sm(self, &ta, mcbusprint, mcbussubmatch);
+		(void) config_found_sm(self, &ta, mcbusprint, mcbussbm);
 #endif
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: elf_machdep.h,v 1.1.1.1 1999/09/16 12:23:22 takemura Exp $	*/
+/*	$NetBSD: elf_machdep.h,v 1.1.1.1.6.1 1999/12/27 18:32:05 wrstuden Exp $	*/
 
 #include <mips/elf_machdep.h>
 
@@ -6,6 +6,6 @@
  * HPCMIPS are mipsel machines
  */
 
-#define ELF32_MACHDEP_ENDIANNESS	Elf_ed_2lsb
+#define ELF32_MACHDEP_ENDIANNESS	ELFDATA2LSB
 
 #define ELF64_MACHDEP_ENDIANNESS	XXX	/* break compilation */

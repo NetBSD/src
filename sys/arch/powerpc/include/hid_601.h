@@ -1,4 +1,4 @@
-/*	$NetBSD: hid_601.h,v 1.1 1999/12/18 01:33:45 thorpej Exp $	*/
+/*	$NetBSD: hid_601.h,v 1.1.2.1 1999/12/27 18:33:40 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.

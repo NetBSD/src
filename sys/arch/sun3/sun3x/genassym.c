@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.21 1999/07/01 20:46:42 thorpej Exp $	*/
+/*	$NetBSD: genassym.c,v 1.21.6.1 1999/12/27 18:34:09 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -128,6 +128,7 @@ struct nv assyms[] = {
 	def1(PSL_HIGHIPL),
 	def1(PSL_USER),
 	def1(PSL_S),
+	def("PSL_TS", PSL_T | PSL_S),
 	def1(FC_CONTROL),
 	def1(FC_SUPERD),
 	def1(FC_USERD),

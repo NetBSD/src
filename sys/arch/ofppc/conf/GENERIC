@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.19.8.1 1999/12/21 23:16:11 wrstuden Exp $
+#	$NetBSD: GENERIC,v 1.19.8.2 1999/12/27 18:33:15 wrstuden Exp $
 #
 # First try for PPC config file
 #
@@ -50,8 +50,26 @@ file-system 	UNION
 
 options 	NFSSERVER
 #options 	FFS_EI		# FFS Endian Independant support
+#options 	SOFTDEP         # FFS soft updates support.
+
+# Pull in config fragments for kernel crypto.  This is required for
+# options IPSEC etc. to work. If you want to run with IPSEC, uncomment
+# one of these, based on whether you use crypto-us or crypto-intl, and
+# adjust the prefixes as necessary.
+
+#prefix ../crypto-us/sys
+#cinclude "conf/files.crypto-us"
+#prefix
+
+#prefix ../crypto-intl/sys
+#cinclude "conf/files.crypto-intl"
+#prefix
 
 options 	INET
+options 	INET6		# IPV6
+#options 	IPSEC		# IP security
+#options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
+#options 	IPSEC_DEBUG	# debug for IP security
 options 	NMBCLUSTERS=1024
 
 config		netbsd	root on ? type ?
@@ -72,6 +90,8 @@ ofrtc*		at ofbus?
 
 pseudo-device	loop
 pseudo-device	bpfilter	8	# packet filter
+pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
+#pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
 pseudo-device	pty		64
 #pseudo-device	raid		4	# RAIDframe disk driver
 # rnd is EXPERIMENTAL

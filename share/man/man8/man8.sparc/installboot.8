@@ -1,4 +1,4 @@
-.\"	$NetBSD: installboot.8,v 1.5 1999/04/06 04:54:21 cgd Exp $
+.\"	$NetBSD: installboot.8,v 1.5.4.1 1999/12/27 18:31:07 wrstuden Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -42,8 +42,7 @@
 .Nd install a bootstrap on an FFS filesystem partition
 .Sh SYNOPSIS
 .Nm installboot
-.Op Fl nvh
-.Op Fl a Ar karch
+.Op Fl nv
 .Ar boot
 .Ar bootxx
 .Ar device
@@ -56,11 +55,14 @@ is written into the superblock area in a partition
 and hence is limited in size to SBSIZE - DEV_BSIZE bytes
 .Pc ,
 and a second-stage program that resides in the filesystem proper.
+.Pp
 The first-stage program is loaded into memory by the PROM. After it receiving
 control, it loads the second stage program from a set of filesystem block
 numbers that have been hard-coded into it by the
 .Nm installboot
-program. The second-stage boot program uses the device driver interface to
+program.
+.Pp
+The second-stage boot program uses the device driver interface to
 the PROM and the stand-alone filesystem code in
 .Dq libsa.a
 to locate and load the kernel.
@@ -75,42 +77,35 @@ as
 The utility
 .Pa /usr/mdec/binstall
 can be used to properly copy the a second-stage bootprogram to its
-destination. This script takes care of post-processing that is required
-on
-.Pf non- Tn Openboot
-machines.
+destination.
 .Pp
-The options are as follows:
-.Bl -tag -width flag
-.It Fl a Ar karch
-Set the machine architecture. The argument
-.Ar karch
-can be one of
-.Dq sun4 ,
-.Dq sun4c
-or
-.Dq sun4m .
-Sun 4c models with
-.Tn Openboot
-PROMs need the header to be present, while Sun 4 systems with the
+Note that not all PROM versions accept the same layout of the first-stage
+boot program: Sun 4 systems with the
 .Dq old monitor
-interface require the header to be stripped off. This is normally taken
-care of by
-.Nm
-automatically, but it's useful when preparing a bootable filesystem for
-another system.
-.It Fl h
-Leave the
+interface require that executable instructions be present right at the
+start of the program, while
+.Tn Openboot
+machines expect a
 .Xr a.out 5
-header on the installed
-.Ar bootxx
-program. This option has been superseded by the
-.Fl a Ar karch
-option.
+header on the front of the boot program.
+.Nm
+takes care of this by constructing an artificial a.out header which has
+enough of the magic numbers in it to appease
+.Tn Openboot
+ROMs, while simultaneously consisting of instructions
+.Po
+in fact, just a branch past the rest of the header
+.Pc
+for Sun 4
+.Dq old monitor
+ROMs to execute.
+.Pp
+There are two options with these meaning:
+.Bl -tag -width flag
 .It Fl n
 Do not actually write anything on the disk.
 .It Fl v
-Verbose mode.
+Verbose mode: prints internal informational messages on standard output.
 .El
 .Pp
 The arguments are:

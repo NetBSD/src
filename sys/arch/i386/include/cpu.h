@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.55 1999/08/10 21:08:07 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.55.2.1 1999/12/27 18:32:22 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -146,6 +146,7 @@ void	switch_exit __P((struct proc *));
 void	proc_trampoline __P((void));
 
 /* clock.c */
+void	initrtclock __P((void));
 void	startrtclock __P((void));
 
 /* npx.c */
@@ -188,6 +189,10 @@ void	vm86_gpfault __P((struct proc *, int));
 /* trap.c */
 void	child_return __P((void *));
 
+/* consinit.c */
+void consinit __P((void));
+void kgdb_port_init __P((void));
+
 #endif /* _KERNEL */
 
 /* 
@@ -199,7 +204,8 @@ void	child_return __P((void *));
 #define	CPU_NKPDE		4	/* int: number of kernel PDEs */
 #define	CPU_BOOTED_KERNEL	5	/* string: booted kernel name */
 #define CPU_DISKINFO		6	/* disk geometry information */
-#define	CPU_MAXID		7	/* number of valid machdep ids */
+#define CPU_FPU_PRESENT		7	/* FPU is present */
+#define	CPU_MAXID		8	/* number of valid machdep ids */
 
 #define	CTL_MACHDEP_NAMES { \
 	{ 0, 0 }, \
@@ -209,6 +215,7 @@ void	child_return __P((void *));
 	{ "nkpde", CTLTYPE_INT }, \
 	{ "booted_kernel", CTLTYPE_STRING }, \
 	{ "diskinfo", CTLTYPE_STRUCT }, \
+	{ "fpu_present", CTLTYPE_INT }, \
 }
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_cardbus.c,v 1.6 1999/12/11 00:39:13 thorpej Exp $	*/
+/*	$NetBSD: if_tlp_cardbus.c,v 1.6.2.1 1999/12/27 18:34:40 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.

@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_cksum.c,v 1.5 1999/07/11 17:45:11 itojun Exp $	*/
+/*	$NetBSD: in6_cksum.c,v 1.5.8.1 1999/12/27 18:36:23 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -70,6 +70,8 @@
 #include <netinet/in.h>
 #include <netinet6/ip6.h>
 
+#include <net/net_osdep.h>
+
 /*
  * Checksum routine for Internet Protocol family headers (Portable Version).
  *
@@ -100,7 +102,7 @@ int
 in6_cksum(m, nxt, off, len)
 	register struct mbuf *m;
 	u_int8_t nxt;
-	register int off, len;
+	u_int32_t off, len;
 {
 	register u_int16_t *w;
 	register int sum = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.11.6.1 1999/12/21 23:20:09 wrstuden Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.11.6.2 1999/12/27 18:36:39 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -115,8 +115,8 @@ extern int lfs_dostats;
 #define LFS_MAX_BUFS        ((nbuf >> 2) - 10)
 #define LFS_WAIT_BUFS       ((nbuf >> 1) - (nbuf >> 3) - 10)
 /* These are new ... is LFS taking up too much memory in its buffers? */
-#define LFS_MAX_BYTES       (((bufpages >> 2) - 10) * CLBYTES)
-#define LFS_WAIT_BYTES      (((bufpages >> 1) - (bufpages >> 3) - 10) * CLBYTES)
+#define LFS_MAX_BYTES       (((bufpages >> 2) - 10) * NBPG)
+#define LFS_WAIT_BYTES      (((bufpages >> 1) - (bufpages >> 3) - 10) * NBPG)
 #define LFS_BUFWAIT         2
 /*
  *
@@ -140,8 +140,10 @@ lfs_bwrite(v)
 	register struct buf *bp = ap->a_bp;
 
 #ifdef DIAGNOSTIC
-	if(bp->b_flags & B_ASYNC)
+        if(VTOI(bp->b_vp)->i_lfs->lfs_ronly == 0
+	   && (bp->b_flags & B_ASYNC)) {
 		panic("bawrite LFS buffer");
+	}
 #endif /* DIAGNOSTIC */
 	return lfs_bwrite_ext(bp,0);
 }
@@ -185,6 +187,19 @@ lfs_bwrite_ext(bp, flags)
 	struct inode *ip;
 	int db, error, s;
 	
+	/*
+	 * Don't write *any* blocks if we're mounted read-only.
+	 * In particular the cleaner can't write blocks either.
+	 */
+        if(VTOI(bp->b_vp)->i_lfs->lfs_ronly) {
+		bp->b_flags &= ~(B_DELWRI|B_LOCKED|B_READ|B_ERROR);
+		if(bp->b_flags & B_CALL)
+			bp->b_flags &= ~B_BUSY;
+		else
+			brelse(bp);
+		return EROFS;
+	}
+
 	/*
 	 * Set the delayed write flag and use reassignbuf to move the buffer
 	 * from the clean list to the dirty one.
@@ -242,19 +257,9 @@ lfs_bwrite_ext(bp, flags)
 		fs->lfs_avail -= db;
 		++locked_queue_count;
 		locked_queue_bytes += bp->b_bufsize;
-#ifdef LFS_HONOR_RDONLY
-		/*
-		 * XXX KS - Don't write blocks if we're mounted ro.
-		 * Placement here means that the cleaner can't write
-		 * blocks either.
-		 */
-	        if(VTOI(bp->b_vp)->i_lfs->lfs_ronly)
-			bp->b_flags &= ~(B_DELWRI|B_LOCKED);
-		else
-#endif
-			bp->b_flags |= B_DELWRI | B_LOCKED;
-		bp->b_flags &= ~(B_READ | B_ERROR);
 		s = splbio();
+		bp->b_flags |= B_DELWRI | B_LOCKED;
+		bp->b_flags &= ~(B_READ | B_ERROR);
 		reassignbuf(bp, bp->b_vp);
 		splx(s);
 
@@ -317,8 +322,12 @@ lfs_flush(fs, flags)
 	
 	if(lfs_dostats) 
 		++lfs_stats.write_exceeded;
-	if (lfs_writing && flags==0) /* XXX flags */
+	if (lfs_writing && flags==0) {/* XXX flags */
+#ifdef DEBUG_LFS
+		printf("lfs_flush: not flushing because another flush is active\n");
+#endif
 		return;
+	}
 	lfs_writing = 1;
 	
 	simple_lock(&mountlist_slock);
@@ -349,10 +358,9 @@ lfs_check(vp, blkno, flags)
 {
 	int error;
 	struct lfs *fs;
+	extern int lfs_dirvcount;
 
 	error = 0;
-	if (incore(vp, blkno))
-		return (0);
 	
 	/* If out of buffers, wait on writer */
 	/* XXX KS - if it's the Ifile, we're probably the cleaner! */
@@ -366,7 +374,7 @@ lfs_check(vp, blkno, flags)
 
 	if (locked_queue_count > LFS_MAX_BUFS
 	    || locked_queue_bytes > LFS_MAX_BYTES
-	    || fs->lfs_dirvcount > LFS_MAXDIROP
+	    || lfs_dirvcount > LFS_MAXDIROP
 	    || fs->lfs_diropwait > 0)
 	{
 		++fs->lfs_writer;
@@ -380,6 +388,10 @@ lfs_check(vp, blkno, flags)
 	{
 		if(lfs_dostats)
 			++lfs_stats.wait_exceeded;
+#ifdef DEBUG_LFS
+		printf("lfs_check: waiting: count=%d, bytes=%ld\n",
+			locked_queue_count, locked_queue_bytes);
+#endif
 		error = tsleep(&locked_queue_count, PCATCH | PUSER,
 			       "buffers", hz * LFS_BUFWAIT);
 	}

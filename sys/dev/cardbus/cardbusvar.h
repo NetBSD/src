@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbusvar.h,v 1.13 1999/12/17 14:06:43 augustss Exp $	*/
+/*	$NetBSD: cardbusvar.h,v 1.13.2.1 1999/12/27 18:34:39 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1998 and 1999

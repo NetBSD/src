@@ -1,4 +1,4 @@
-.\" $NetBSD: hardware,v 1.33 1999/06/28 21:28:37 is Exp $	
+.\" $NetBSD: hardware,v 1.33.4.1 1999/12/27 18:28:27 wrstuden Exp $	
 .
 .Nx \*V
 runs on any Amiga that has a 68020 or better CPU with
@@ -82,6 +82,7 @@ Ethernet controllers:
 	Ariadne Ethernet
 	Ariadne II Ethernet
 	Quicknet Ethernet
+	X-surf Ethernet port
 ARCnet controllers:
 	A2060 ARCnet
 Tape drives:

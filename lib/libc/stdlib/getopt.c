@@ -1,4 +1,4 @@
-/*	$NetBSD: getopt.c,v 1.15 1999/09/20 04:39:37 lukem Exp $	*/
+/*	$NetBSD: getopt.c,v 1.15.4.1 1999/12/27 18:29:44 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getopt.c	8.3 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: getopt.c,v 1.15 1999/09/20 04:39:37 lukem Exp $");
+__RCSID("$NetBSD: getopt.c,v 1.15.4.1 1999/12/27 18:29:44 wrstuden Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -72,7 +72,7 @@ char	*optarg;		/* argument associated with option */
 int
 getopt(nargc, nargv, ostr)
 	int nargc;
-	char * const *nargv;
+	char * const nargv[];
 	const char *ostr;
 {
 	extern char *__progname;

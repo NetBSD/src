@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 
-##	$NetBSD: named-bootconf.pl,v 1.2 1999/11/20 19:03:48 veego Exp $
+##	$NetBSD: named-bootconf.pl,v 1.2.4.1 1999/12/27 18:27:23 wrstuden Exp $
 ##
 ## Copyright (c) 1996-1999 by Internet Software Consortium
 ##

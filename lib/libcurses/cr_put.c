@@ -1,4 +1,4 @@
-/*	$NetBSD: cr_put.c,v 1.13 1999/06/28 13:32:43 simonb Exp $	*/
+/*	$NetBSD: cr_put.c,v 1.13.2.1 1999/12/27 18:29:56 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cr_put.c	8.3 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: cr_put.c,v 1.13 1999/06/28 13:32:43 simonb Exp $");
+__RCSID("$NetBSD: cr_put.c,v 1.13.2.1 1999/12/27 18:29:56 wrstuden Exp $");
 #endif
 #endif				/* not lint */
 
@@ -64,7 +64,7 @@ mvcur(ly, lx, y, x)
 
 static void fgoto __P((int));
 static int plod __P((int, int));
-static void plodput __P((int));
+static int plodput __P((int));
 static int tabcol __P((int, int));
 
 static int outcol, outline, destcol, destline;
@@ -189,7 +189,7 @@ fgoto(in_refresh)
 
 static int plodcnt, plodflg;
 
-static void
+static int
 plodput(c)
 	int     c;
 {
@@ -197,6 +197,7 @@ plodput(c)
 		--plodcnt;
 	else
 		putchar(c);
+	return (0);
 }
 
 static int

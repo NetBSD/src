@@ -1,4 +1,4 @@
-/* $NetBSD: pcdisplay.c,v 1.6 1999/01/11 21:35:54 drochner Exp $ */
+/* $NetBSD: pcdisplay.c,v 1.6.14.1 1999/12/27 18:34:55 wrstuden Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -112,7 +112,8 @@ static int pcdisplay_mmap __P((void *, off_t, int));
 static int pcdisplay_alloc_screen __P((void *, const struct wsscreen_descr *,
 				       void **, int *, int *, long *));
 static void pcdisplay_free_screen __P((void *, void *));
-static void pcdisplay_show_screen __P((void *, void *));
+static int pcdisplay_show_screen __P((void *, void *, int,
+				      void (*) (void *, int, int), void *));
 
 const struct wsdisplay_accessops pcdisplay_accessops = {
 	pcdisplay_ioctl,
@@ -386,10 +387,13 @@ pcdisplay_free_screen(v, cookie)
 	sc->nscreens--;
 }
 
-static void
-pcdisplay_show_screen(v, cookie)
+static int
+pcdisplay_show_screen(v, cookie, waitok, cb, cbarg)
 	void *v;
 	void *cookie;
+	int waitok;
+	void (*cb) __P((void *, int, int));
+	void *cbarg;
 {
 #ifdef DIAGNOSTIC
 	struct pcdisplay_softc *sc = v;
@@ -397,6 +401,7 @@ pcdisplay_show_screen(v, cookie)
 	if (cookie != sc->sc_dc)
 		panic("pcdisplay_show_screen: bad screen");
 #endif
+	return (0);
 }
 
 static int

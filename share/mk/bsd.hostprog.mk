@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.hostprog.mk,v 1.2 1999/09/14 01:31:11 perry Exp $
+#	$NetBSD: bsd.hostprog.mk,v 1.2.2.1 1999/12/27 18:31:11 wrstuden Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .if !target(__initialized__)
@@ -12,8 +12,7 @@ __initialized__:
 .MAIN:		all
 .endif
 
-.PHONY:		cleanprog proginstall scriptsinstall
-realinstall:	proginstall scriptsinstall
+.PHONY:		cleanprog 
 clean cleandir distclean: cleanprog
 
 CFLAGS+=	${COPTS}
@@ -35,6 +34,7 @@ LIBKRB?=	/usr/lib/libkrb.a
 LIBKVM?=	/usr/lib/libkvm.a
 LIBL?=		/usr/lib/libl.a
 LIBM?=		/usr/lib/libm.a
+LIBMENU?=	/usr/lib/libmenu.a
 LIBMP?=		/usr/lib/libmp.a
 LIBNTP?=	/usr/lib/libntp.a
 LIBOBJC?=	/usr/lib/libobjc.a
@@ -105,10 +105,6 @@ all: ${HOSTPROG}
 cleanprog:
 	rm -f a.out [Ee]rrs mklog core *.core \
 	    ${HOSTPROG} ${OBJS} ${LOBJS} ${CLEANFILES}
-
-proginstal:
-
-scriptinstall:
 
 beforedepend:
 CPPFLAGS=	${HOST_CPPFLAGS}

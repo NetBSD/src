@@ -1,4 +1,4 @@
-/* $NetBSD: adwlib.c,v 1.5 1999/08/16 02:01:11 thorpej Exp $        */
+/* $NetBSD: adwlib.c,v 1.5.8.1 1999/12/27 18:34:42 wrstuden Exp $        */
 
 /*
  * Low level routines for the Advanced Systems Inc. SCSI controllers chips
@@ -1266,6 +1266,7 @@ AdvInquiryHandling(sc, scsiq)
 		 * device's 'wdtr_able' bit and write the new value to the
 		 * microcode.
 		 */
+#ifndef ADW_WDTR_DISABLE
 		if ((sc->wdtr_able & tidmask) && inq->byte7.WBus16) {
 			ADW_READ_WORD_LRAM(iot, ioh, ASC_MC_WDTR_ABLE,
 					   cfg_word);
@@ -1286,6 +1287,7 @@ AdvInquiryHandling(sc, scsiq)
 						    cfg_word);
 			}
 		}
+#endif
 		/*
 		 * Synchronous Transfers
 		 *
@@ -1293,6 +1295,7 @@ AdvInquiryHandling(sc, scsiq)
 		 * supports synchronous transfers, then turn on the device's
 		 * 'sdtr_able' bit. Write the new value to the microcode.
 		 */
+#ifndef ADW_SDTR_DISABLE
 		if ((sc->sdtr_able & tidmask) && inq->byte7.Sync) {
 			ADW_READ_WORD_LRAM(iot, ioh, ASC_MC_SDTR_ABLE,
 					   cfg_word);
@@ -1313,6 +1316,7 @@ AdvInquiryHandling(sc, scsiq)
 						    cfg_word);
 			}
 		}
+#endif
 		/*
 		 * If the EEPROM enabled Tag Queuing for device and the
 		 * device supports Tag Queuing, then turn on the device's
@@ -1325,6 +1329,7 @@ AdvInquiryHandling(sc, scsiq)
 		 * disabling Tag Queuing in the BIOS devices with Tag Queuing
 		 * bugs will at least work with the BIOS.
 		 */
+#ifndef ADW_TAGQ_DISABLE
 		if ((sc->tagqng_able & tidmask) && inq->byte7.CmdQue) {
 			ADW_READ_WORD_LRAM(iot, ioh, ASC_MC_TAGQNG_ABLE,
 					   cfg_word);
@@ -1335,6 +1340,7 @@ AdvInquiryHandling(sc, scsiq)
 					    ASC_MC_NUMBER_OF_MAX_CMD + tid,
 					    sc->max_dvc_qng);
 		}
+#endif
 	}
 }
 

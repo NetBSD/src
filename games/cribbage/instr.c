@@ -1,4 +1,4 @@
-/*	$NetBSD: instr.c,v 1.8 1999/09/13 17:27:36 jsm Exp $	*/
+/*	$NetBSD: instr.c,v 1.8.4.1 1999/12/27 18:28:59 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)instr.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: instr.c,v 1.8 1999/09/13 17:27:36 jsm Exp $");
+__RCSID("$NetBSD: instr.c,v 1.8.4.1 1999/12/27 18:28:59 wrstuden Exp $");
 #endif
 #endif /* not lint */
 
@@ -90,7 +90,7 @@ instructions()
 			_exit(1);
 		}
 		execl("/bin/sh", "sh", "-c", path, NULL);
-		warn("%s", "");
+		warn(NULL);
 		_exit(1);
 	default:
 		do {

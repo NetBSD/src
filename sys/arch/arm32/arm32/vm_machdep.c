@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.45 1999/05/26 22:19:34 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.45.8.1 1999/12/27 18:31:40 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -248,7 +248,7 @@ cpu_swapin(p)
 
 	/* Map the system page */
 	pmap_enter(p->p_vmspace->vm_map.pmap, 0x00000000, systempage.pv_pa,
-	    VM_PROT_READ, TRUE, VM_PROT_READ);
+	    VM_PROT_READ, VM_PROT_READ|PMAP_WIRED);
 }
 
 
@@ -281,7 +281,7 @@ pagemove(from, to, size)
 {
 	register pt_entry_t *fpte, *tpte;
 
-	if (size % CLBYTES)
+	if (size % NBPG)
 		panic("pagemove: size=%08x", size);
 
 #ifdef PMAP_DEBUG

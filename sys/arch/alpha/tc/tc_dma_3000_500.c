@@ -1,4 +1,4 @@
-/* $NetBSD: tc_dma_3000_500.c,v 1.8 1998/06/03 18:25:54 thorpej Exp $ */
+/* $NetBSD: tc_dma_3000_500.c,v 1.8.20.1 1999/12/27 18:31:30 wrstuden Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,10 +39,11 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tc_dma_3000_500.c,v 1.8 1998/06/03 18:25:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tc_dma_3000_500.c,v 1.8.20.1 1999/12/27 18:31:30 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <vm/vm.h>

@@ -4,7 +4,7 @@
 |	written by Yasha (ITOH Yasufumi)
 |	public domain
 |
-|	$NetBSD: dos_cerror.S,v 1.1 1999/11/11 08:14:43 itohy Exp $
+|	$NetBSD: dos_cerror.S,v 1.1.4.1 1999/12/27 18:34:18 wrstuden Exp $
 
 #include "dos_asm.h"
 #include "dos_errno.h"

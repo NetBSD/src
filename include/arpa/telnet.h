@@ -1,4 +1,4 @@
-/*	$NetBSD: telnet.h,v 1.7 1998/02/10 00:32:56 perry Exp $	*/
+/*	$NetBSD: telnet.h,v 1.7.4.1 1999/12/27 18:29:22 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -275,6 +275,13 @@ extern char *slc_names[];
 #define	AUTH_HOW_ONE_WAY	0
 #define	AUTH_HOW_MUTUAL		2
 #define	AUTH_HOW_MASK		2
+
+/*
+ * should we be encrypting? (not yet formally standardized)
+ */
+#define AUTH_ENCRYPT_OFF	0
+#define AUTH_ENCRYPT_ON		4
+#define AUTH_ENCRYPT_MASK	4
 
 #define	AUTHTYPE_NULL		0
 #define	AUTHTYPE_KERBEROS_V4	1

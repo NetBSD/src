@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.28.14.1 1999/12/21 23:20:07 wrstuden Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.28.14.2 1999/12/27 18:36:37 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -103,7 +103,7 @@ ffs_update(v)
 	FFS_ITIMES(ip,
 	    ap->a_access ? ap->a_access : &ts,
 	    ap->a_modify ? ap->a_modify : &ts, &ts);
-	if ((ip->i_flag & IN_MODIFIED) == 0)
+	if ((ip->i_flag & IN_MODIFIED) == 0 && ap->a_waitfor != MNT_WAIT)
 		return (0);
 	ip->i_flag &= ~IN_MODIFIED;
 	fs = ip->i_fs;
@@ -122,17 +122,21 @@ ffs_update(v)
 		brelse(bp);
 		return (error);
 	}
+	if (DOINGSOFTDEP(ap->a_vp))
+		softdep_update_inodeblock(ip, bp, ap->a_waitfor);
+	else if (ip->i_ffs_effnlink != ip->i_ffs_nlink)
+		panic("ffs_update: bad link cnt");
 	cp = (caddr_t)bp->b_data +
 	    (ino_to_fsbo(fs, ip->i_number) * DINODE_SIZE);
 #ifdef FFS_EI
-	if (UFS_MPNEEDSWAP(ap->a_vp->v_mount))
+	if (UFS_FSNEEDSWAP(fs))
 		ffs_dinode_swap(&ip->i_din.ffs_din, (struct dinode *)cp);
 	else
 #endif
 		memcpy(cp, &ip->i_din.ffs_din, DINODE_SIZE);
-	if (ap->a_waitfor && (ap->a_vp->v_mount->mnt_flag & MNT_ASYNC) == 0)
+	if (ap->a_waitfor && (ap->a_vp->v_mount->mnt_flag & MNT_ASYNC) == 0) {
 		return (bwrite(bp));
-	else {
+	} else {
 		bdwrite(bp);
 		return (0);
 	}
@@ -173,6 +177,14 @@ ffs_truncate(v)
 	if (length < 0)
 		return (EINVAL);
 	oip = VTOI(ovp);
+#if 1
+	/*
+	 * XXX. Was in Kirk's patches. Is it good behavior to just
+	 * return and not update modification times?
+	 */
+	if (oip->i_ffs_size == length)
+		return (0);
+#endif
 	if (ovp->v_type == VLNK &&
 	    (oip->i_ffs_size < ovp->v_mount->mnt_maxsymlinklen ||
 	     (ovp->v_mount->mnt_maxsymlinklen == 0 &&
@@ -197,6 +209,33 @@ ffs_truncate(v)
 	fs = oip->i_fs;
 	osize = oip->i_ffs_size;
 	ovp->v_lasta = ovp->v_clen = ovp->v_cstart = ovp->v_lastw = 0;
+
+	if (DOINGSOFTDEP(ovp)) {
+		uvm_vnp_setsize(ovp, length);
+		(void) uvm_vnp_uncache(ovp);
+		if (length > 0) {
+			/*
+			 * If a file is only partially truncated, then
+			 * we have to clean up the data structures
+			 * describing the allocation past the truncation
+			 * point. Finding and deallocating those structures
+			 * is a lot of work. Since partial truncation occurs
+			 * rarely, we solve the problem by syncing the file
+			 * so that it will have no data structures left.
+			 */
+			if ((error = VOP_FSYNC(ovp, ap->a_cred, FSYNC_WAIT,
+			    ap->a_p)) != 0)
+				return (error);
+		} else {
+#ifdef QUOTA
+ 			(void) chkdq(oip, -oip->i_ffs_blocks, NOCRED, 0);
+#endif
+			softdep_setup_freeblocks(oip, length);
+			(void) vinvalbuf(ovp, 0, ap->a_cred, ap->a_p, 0, 0);
+			oip->i_flag |= IN_CHANGE | IN_UPDATE;
+			return (VOP_UPDATE(ovp, NULL, NULL, 0));
+		}
+	}
 	/*
 	 * Lengthen the size of the file. We must ensure that the
 	 * last byte of the file is allocated. Since the smallest
@@ -205,13 +244,10 @@ ffs_truncate(v)
 	if (osize < length) {
 		if (length > fs->fs_maxfilesize)
 			return (EFBIG);
-		offset = blkoff(fs, length - 1);
-		lbn = lblkno(fs, length - 1);
 		aflags = B_CLRBUF;
 		if (ap->a_flags & IO_SYNC)
 			aflags |= B_SYNC;
-		error = ffs_balloc(oip, lbn, offset + 1, ap->a_cred, &bp,
-				   aflags);
+		error = VOP_BALLOC(ovp, length - 1, 1, ap->a_cred, aflags, &bp);
 		if (error)
 			return (error);
 		oip->i_ffs_size = length;
@@ -226,10 +262,11 @@ ffs_truncate(v)
 	}
 	/*
 	 * Shorten the size of the file. If the file is not being
-	 * truncated to a block boundry, the contents of the
+	 * truncated to a block boundary, the contents of the
 	 * partial block following the end of the file must be
-	 * zero'ed in case it ever become accessable again because
-	 * of subsequent file growth.
+	 * zero'ed in case it ever becomes accessible again because
+	 * of subsequent file growth. Directories however are not
+	 * zero'ed as they should grow back initialized to empty.
 	 */
 	offset = blkoff(fs, length);
 	if (offset == 0) {
@@ -239,13 +276,15 @@ ffs_truncate(v)
 		aflags = B_CLRBUF;
 		if (ap->a_flags & IO_SYNC)
 			aflags |= B_SYNC;
-		error = ffs_balloc(oip, lbn, offset, ap->a_cred, &bp, aflags);
+		error = VOP_BALLOC(ovp, length - 1, 1, ap->a_cred, aflags, &bp);
 		if (error)
 			return (error);
 		oip->i_ffs_size = length;
 		size = blksize(fs, oip, lbn);
 		(void) uvm_vnp_uncache(ovp);
-		memset((char *)bp->b_data + offset, 0,  (u_int)(size - offset));
+		if (ovp->v_type != VDIR)
+			memset((char *)bp->b_data + offset, 0,
+			       (u_int)(size - offset));
 		allocbuf(bp, size);
 		if (aflags & B_SYNC)
 			bwrite(bp);
@@ -300,7 +339,7 @@ ffs_truncate(v)
 	indir_lbn[DOUBLE] = indir_lbn[SINGLE] - NINDIR(fs) - 1;
 	indir_lbn[TRIPLE] = indir_lbn[DOUBLE] - NINDIR(fs) * NINDIR(fs) - 1;
 	for (level = TRIPLE; level >= SINGLE; level--) {
-		bn = ufs_rw32(oip->i_ffs_ib[level], UFS_MPNEEDSWAP(ovp->v_mount));
+		bn = ufs_rw32(oip->i_ffs_ib[level], UFS_FSNEEDSWAP(fs));
 		if (bn != 0) {
 			error = ffs_indirtrunc(oip, indir_lbn[level],
 			    fsbtodb(fs, bn), lastiblock[level], level, &count);
@@ -323,7 +362,7 @@ ffs_truncate(v)
 	for (i = NDADDR - 1; i > lastblock; i--) {
 		register long bsize;
 
-		bn = ufs_rw32(oip->i_ffs_db[i], UFS_MPNEEDSWAP(ovp->v_mount));
+		bn = ufs_rw32(oip->i_ffs_db[i], UFS_FSNEEDSWAP(fs));
 		if (bn == 0)
 			continue;
 		oip->i_ffs_db[i] = 0;
@@ -338,7 +377,7 @@ ffs_truncate(v)
 	 * Finally, look for a change in size of the
 	 * last direct block; release any frags.
 	 */
-	bn = ufs_rw32(oip->i_ffs_db[lastblock], UFS_MPNEEDSWAP(ovp->v_mount));
+	bn = ufs_rw32(oip->i_ffs_db[lastblock], UFS_FSNEEDSWAP(fs));
 	if (bn != 0) {
 		long oldspace, newspace;
 
@@ -474,7 +513,7 @@ ffs_indirtrunc(ip, lbn, dbn, lastbn, level, countp)
 	 */
 	for (i = NINDIR(fs) - 1, nlbn = lbn + 1 - i * factor; i > last;
 	    i--, nlbn += factor) {
-		nb = ufs_rw32(bap[i], UFS_MPNEEDSWAP(vp->v_mount));
+		nb = ufs_rw32(bap[i], UFS_FSNEEDSWAP(fs));
 		if (nb == 0)
 			continue;
 		if (level > SINGLE) {
@@ -494,7 +533,7 @@ ffs_indirtrunc(ip, lbn, dbn, lastbn, level, countp)
 	 */
 	if (level > SINGLE && lastbn >= 0) {
 		last = lastbn % factor;
-		nb = ufs_rw32(bap[i], UFS_MPNEEDSWAP(vp->v_mount));
+		nb = ufs_rw32(bap[i], UFS_FSNEEDSWAP(fs));
 		if (nb != 0) {
 			error = ffs_indirtrunc(ip, nlbn, fsbtodb(fs, nb),
 					       last, level - 1, &blkcount);

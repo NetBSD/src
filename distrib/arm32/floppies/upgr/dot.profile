@@ -1,4 +1,4 @@
-#	$NetBSD: dot.profile,v 1.4 1999/06/26 06:12:52 cgd Exp $
+#	$NetBSD: dot.profile,v 1.4.4.1 1999/12/27 18:28:19 wrstuden Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # All rights reserved.
@@ -46,9 +46,6 @@ if [ "X${DONEPROFILE}" = "X" ]; then
 	echo 'erase ^H, werase ^W, kill ^U, intr ^C'
 	stty newcrt werase ^W intr ^C kill ^U erase ^H 9600
 	echo ''
-
-	# run update, so that installed software is written as it goes.
-	update
 
 	# pull in the functions that people will use from the shell prompt.
 	. /.commonutils

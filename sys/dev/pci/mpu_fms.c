@@ -1,4 +1,4 @@
-/*	$NetBSD: mpu_fms.c,v 1.1 1999/11/01 20:43:13 augustss Exp $	*/
+/*	$NetBSD: mpu_fms.c,v 1.1.6.1 1999/12/27 18:35:19 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.

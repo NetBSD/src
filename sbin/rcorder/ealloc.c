@@ -1,4 +1,4 @@
-/*	$NetBSD: ealloc.c,v 1.1 1999/11/23 05:28:20 mrg Exp $	*/
+/*	$NetBSD: ealloc.c,v 1.1.2.1 1999/12/27 18:30:30 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ealloc.c,v 1.1 1999/11/23 05:28:20 mrg Exp $");
+__RCSID("$NetBSD: ealloc.c,v 1.1.2.1 1999/12/27 18:30:30 wrstuden Exp $");
 #endif /* not lint */
 
 #include <stdio.h>

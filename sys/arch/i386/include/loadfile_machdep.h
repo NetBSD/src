@@ -1,4 +1,4 @@
-/*	$NetBSD: loadfile_machdep.h,v 1.2 1999/04/28 10:58:10 christos Exp $	 */
+/*	$NetBSD: loadfile_machdep.h,v 1.2.10.1 1999/12/27 18:32:23 wrstuden Exp $	 */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
 
 #ifdef _STANDALONE
 
-#define LOADADDR(a)		((((u_long)(a)) & 0x00ffffff) + offset)
+#define LOADADDR(a)		((((u_long)(a)) & 0x07ffffff) + offset)
 #define ALIGNENTRY(a)		((u_long)(a) & 0x00100000)
 #define READ(f, b, c)		pread((f), (void *)LOADADDR(b), (c))
 #define BCOPY(s, d, c)		vpbcopy((s), (void *)LOADADDR(d), (c))

@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.h,v 1.15 1996/09/07 12:40:55 mycroft Exp $	*/
+/*	$NetBSD: cons.h,v 1.15.34.1 1999/12/27 18:34:34 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -41,6 +41,9 @@
  *
  *	@(#)cons.h	8.1 (Berkeley) 6/10/93
  */
+
+#ifndef _SYS_DEV_CONS_H_
+#define _SYS_DEV_CONS_H_
 
 struct consdev {
 	void	(*cn_probe)	/* probe hardware and fill in consdev info */
@@ -100,3 +103,5 @@ void	nullcnpollc __P((dev_t, int));
 	dev_init(1,n,cnputc), dev_init(1,n,cnpollc) }
 
 #endif
+
+#endif /* _SYS_DEV_CONS_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_param.h,v 1.21 1999/04/11 00:59:07 simonb Exp $	*/
+/*	$NetBSD: vm_param.h,v 1.21.8.1 1999/12/27 18:36:45 wrstuden Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -138,7 +138,7 @@ typedef int	boolean_t;
  */
 #ifdef _KERNEL
 #define	atop(x)		(((unsigned long)(x)) >> PAGE_SHIFT)
-#define	ptoa(x)		((vaddr_t)((x) << PAGE_SHIFT))
+#define	ptoa(x)		((vaddr_t)((vaddr_t)(x) << PAGE_SHIFT))
 
 /*
  * Round off or truncate to the nearest page.  These will work

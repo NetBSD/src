@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.18 1999/09/22 07:18:45 leo Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.18.6.1 1999/12/27 18:31:50 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.  All rights reserved.
@@ -66,7 +66,18 @@
  */
 #define PCI_MEM_START   0x00100000      /*   1 MByte */
 #define PCI_IO_START    0x00004000      /*  16 kByte (some PCI cards allow only
-					    I/O addresses up to 0xffff) */
+					    I/O adresses up to 0xffff) */
+
+/*
+ * PCI memory and IO should be aligned acording to this masks
+ */
+#define PCI_MACHDEP_IO_ALIGN_MASK	0xffffff00
+#define PCI_MACHDEP_MEM_ALIGN_MASK	0xfffff000
+
+/*
+ * Convert a PCI 'device' number to a slot number.
+ */
+#define	DEV2SLOT(dev)	(3 - dev)
 
 /*
  * Struct to hold the memory and I/O datas of the pci devices
@@ -348,6 +359,14 @@ enable_pci_devices()
 		p->size = PCI_MAPREG_IO_SIZE(mask);
 
 		/*
+		 * Align IO if necessary
+		 */
+		if (p->size < PCI_MAPREG_IO_SIZE(PCI_MACHDEP_IO_ALIGN_MASK)) {
+		    p->mask = PCI_MACHDEP_IO_ALIGN_MASK;
+		    p->size = PCI_MAPREG_IO_SIZE(p->mask);
+		}
+
+		/*
 		 * if I/O is already enabled (probably by the console driver)
 		 * save the address in order to take care about it later.
 		 */
@@ -357,6 +376,14 @@ enable_pci_devices()
 		insert_into_list(&iolist, p);
 	    } else {
 		p->size = PCI_MAPREG_MEM_SIZE(mask);
+
+		/*
+		 * Align memory if necessary
+		 */
+		if (p->size < PCI_MAPREG_IO_SIZE(PCI_MACHDEP_MEM_ALIGN_MASK)) {
+		    p->mask = PCI_MACHDEP_MEM_ALIGN_MASK;
+		    p->size = PCI_MAPREG_MEM_SIZE(p->mask);
+		}
 
 		/*
 		 * if memory is already enabled (probably by the console driver)
@@ -377,8 +404,8 @@ enable_pci_devices()
 	 * number. This makes sense on the atari because the
 	 * individual slots are hard-wired to a specific MFP-pin.
 	 */
-	csr  = (dev << PCI_INTERRUPT_PIN_SHIFT);
-	csr |= (dev << PCI_INTERRUPT_LINE_SHIFT);
+	csr  = (DEV2SLOT(dev) << PCI_INTERRUPT_PIN_SHIFT);
+	csr |= (DEV2SLOT(dev) << PCI_INTERRUPT_LINE_SHIFT);
 	pci_conf_write(pc, tag, PCI_INTERRUPT_REG, csr);
     }
 
@@ -441,6 +468,7 @@ enable_pci_devices()
 		csr = pci_conf_read(pc, p->tag, PCI_COMMAND_STATUS_REG);
 		csr |= PCI_COMMAND_MEM_ENABLE | PCI_COMMAND_MASTER_ENABLE;
 		pci_conf_write(pc, p->tag, PCI_COMMAND_STATUS_REG, csr);
+		p->csr = csr;
 	    }
 	}
 	p = LIST_NEXT(p, link);
@@ -481,6 +509,7 @@ enable_pci_devices()
 		csr = pci_conf_read(pc, p->tag, PCI_COMMAND_STATUS_REG);
 		csr |= PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MASTER_ENABLE;
 		pci_conf_write(pc, p->tag, PCI_COMMAND_STATUS_REG, csr);
+		p->csr = csr;
 	    }
 	}
 	p = LIST_NEXT(p, link);

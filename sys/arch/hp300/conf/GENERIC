@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.47.8.1 1999/12/21 23:15:58 wrstuden Exp $
+#	$NetBSD: GENERIC,v 1.47.8.2 1999/12/27 18:31:54 wrstuden Exp $
 #
 # Generic kernel - one size fits all.
 #
@@ -55,11 +55,29 @@ file-system	MFS		# Memory-based filesystem
 # Filesystem options
 options 	QUOTA		# User and group quotas in FFS
 #options 	FFS_EI		# FFS Endian Independant support
+#options 	SOFTDEP         # FFS soft updates support.
 options 	NFSSERVER	# Network filesystem server
 options 	NFS_BOOT_BOOTPARAM # use Sun bootparams for NFS boot
 
+# Pull in config fragments for kernel crypto.  This is required for
+# options IPSEC etc. to work. If you want to run with IPSEC, uncomment
+# one of these, based on whether you use crypto-us or crypto-intl, and
+# adjust the prefixes as necessary.
+
+#prefix ../crypto-us/sys
+#cinclude "conf/files.crypto-us"
+#prefix
+
+#prefix ../crypto-intl/sys
+#cinclude "conf/files.crypto-intl"
+#prefix
+
 # Networking options
 options 	INET		# Internet protocols
+options 	INET6		# IPV6
+#options 	IPSEC		# IP security
+#options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
+#options 	IPSEC_DEBUG	# debug for IP security
 options 	GATEWAY		# IP forwarding + larger mb_map
 options 	MROUTING	# Multicast routing
 options 	TCP_COMPAT_42	# compatibility with 4.2BSD TCP/IP
@@ -181,5 +199,7 @@ pseudo-device	ccd		4	# concatenated disk devices
 pseudo-device	loop			# loopback network interface
 pseudo-device	ipfilter 		# IP Filter package
 #pseudo-device	gre		2	# generic L3 over IP tunnel
+pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
+#pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
 # rnd is EXPERIMENTAL
 #pseudo-device	rnd			# /dev/random and in-kernel generator

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_13.c,v 1.3 1999/03/25 16:22:49 mrg Exp $	*/
+/*	$NetBSD: netbsd32_compat_13.c,v 1.3.8.1 1999/12/27 18:34:28 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -39,12 +39,12 @@
 #include <compat/netbsd32/netbsd32_syscallargs.h>
 
 int
-compat_13_compat_netbsd32_sigaltstack13(p, v, retval)
+compat_13_netbsd32_sigaltstack13(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_13_compat_netbsd32_sigaltstack13_args /* {
+	struct compat_13_netbsd32_sigaltstack13_args /* {
 		syscallarg(const netbsd32_sigaltstack13p_t) nss;
 		syscallarg(netbsd32_sigaltstack13p_t) oss;
 	} */ *uap = v;

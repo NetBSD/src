@@ -27,7 +27,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-#       $NetBSD: dot.profile,v 1.6 1999/06/26 06:12:59 cgd Exp $
+#       $NetBSD: dot.profile,v 1.6.4.1 1999/12/27 18:28:30 wrstuden Exp $
 
 PATH=/sbin:/bin:/usr/bin:/usr/sbin:/usr/games:/
 export PATH
@@ -46,9 +46,6 @@ if [ "X${DONEPROFILE}" = "X" ]; then
 	echo 'erase ^?, werase ^W, kill ^U, intr ^C'
 	stty werase ^W intr ^C kill ^U erase ^?
 	echo ''
-
-	# run update, so that installed software is written as it goes.
-	update
 
 	# pull in the functions that people will use from the shell prompt.
 	. /.commonutils

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_signal.c,v 1.24 1999/10/04 17:46:37 fvdl Exp $	*/
+/*	$NetBSD: linux_signal.c,v 1.24.8.1 1999/12/27 18:34:27 wrstuden Exp $	*/
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -330,7 +330,7 @@ linux_sys_rt_sigaction(p, v, retval)
 	} */ *uap = v;
 	struct linux_sigaction nlsa, olsa;
 	struct sigaction nbsa, obsa;
-	int error;
+	int error, sig;
 
 	if (SCARG(uap, sigsetsize) != sizeof(linux_sigset_t))
 		return (EINVAL);
@@ -341,7 +341,10 @@ linux_sys_rt_sigaction(p, v, retval)
 			return (error);
 		linux_to_native_sigaction(&nlsa, &nbsa);
 	}
-	error = sigaction1(p, linux_to_native_sig[SCARG(uap, signum)],
+	sig = SCARG(uap, signum);
+	if (sig < 0 || sig >= LINUX__NSIG)
+		return (EINVAL);
+	error = sigaction1(p, linux_to_native_sig[sig],
 	    SCARG(uap, nsa) ? &nbsa : 0, SCARG(uap, osa) ? &obsa : 0);
 	if (error)
 		return (error);
@@ -572,8 +575,12 @@ linux_sys_kill(p, v, retval)
 		syscallarg(int) signum;
 	} */ *uap = v;
 	struct sys_kill_args ka;
+	int sig;
 
 	SCARG(&ka, pid) = SCARG(uap, pid);
-	SCARG(&ka, signum) = linux_to_native_sig[SCARG(uap, signum)];
+	sig = SCARG(uap, signum);
+	if (sig < 0 || sig >= LINUX__NSIG)
+		return (EINVAL);
+	SCARG(&ka, signum) = linux_to_native_sig[sig];
 	return sys_kill(p, &ka, retval);
 }

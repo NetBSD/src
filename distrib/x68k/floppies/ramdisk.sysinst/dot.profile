@@ -1,4 +1,4 @@
-#	$NetBSD: dot.profile,v 1.1 1999/12/05 15:53:10 minoura Exp $
+#	$NetBSD: dot.profile,v 1.1.2.1 1999/12/27 18:28:48 wrstuden Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # Copyright (c) 1997 Perry E. Metzger

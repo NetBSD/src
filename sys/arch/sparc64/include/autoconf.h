@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.7 1999/03/18 03:23:53 eeh Exp $ */
+/*	$NetBSD: autoconf.h,v 1.7.14.1 1999/12/27 18:33:57 wrstuden Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -116,6 +116,7 @@ struct mainbus_attach_args {
 	u_int		*ma_address;	/* "address" properties -- 32 bits */
 	u_int		*ma_interrupts;	/* "interrupts" properties */
 	struct bootpath *ma_bp;		/* used for locating boot device */
+	int		ma_upaid;	/* UPA bus ID */
 	int		ma_node;	/* PROM handle */
 	int		ma_nreg;	/* Counts for those properties */
 	int		ma_naddress;
@@ -152,24 +153,6 @@ int	matchbyname __P((struct device *, struct cfdata *cf, void *aux));
  * (this is just a frill).
  */
 char	*clockfreq __P((long freq));
-
-#if 0
-/*
- * Memory description arrays.  Shared between pmap.c and autoconf.c; no
- * one else should use this (except maybe mem.c, e.g., if we fix the VM to
- * handle discontiguous physical memory).
- */
-struct memarr {
-	u_int	addr;
-	u_int	len;
-};
-int	makememarr(struct memarr *, int max, int which);
-#define	MEMARR_AVAILPHYS	0
-#define	MEMARR_TOTALPHYS	1
-
-/* Pass a string to the FORTH interpreter.  May fail silently. */
-void	rominterpret __P((char *));
-#endif
 
 /* Openprom V2 style boot path */
 struct bootpath {

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tl.c,v 1.24 1999/05/18 23:52:58 thorpej Exp $	*/
+/*	$NetBSD: if_tl.c,v 1.24.8.1 1999/12/27 18:35:18 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -428,7 +428,8 @@ tl_pci_attach(parent, self, aux)
 	sc->tl_mii.mii_statchg = tl_statchg;
 	ifmedia_init(&sc->tl_mii.mii_media, IFM_IMASK, tl_mediachange,
 	    tl_mediastatus);
-	mii_phy_probe(self, &sc->tl_mii, 0xffffffff);
+	mii_phy_probe(self, &sc->tl_mii, 0xffffffff, MII_PHY_ANY,
+	    MII_OFFSET_ANY);
 	if (LIST_FIRST(&sc->tl_mii.mii_phys) == NULL) { 
 		ifmedia_add(&sc->tl_mii.mii_media, IFM_ETHER|IFM_NONE, 0, NULL);
 		ifmedia_set(&sc->tl_mii.mii_media, IFM_ETHER|IFM_NONE);
@@ -514,6 +515,9 @@ static void tl_shutdown(v)
 	/* stop statistics reading loop, read stats */ 
 	untimeout(tl_ticks, sc);
 	tl_read_stats(sc);
+
+	/* Down the MII. */
+	mii_down(&sc->tl_mii);
 
 	/* deallocate memory allocations */
 	for (i=0; i< TL_NBUF; i++) {

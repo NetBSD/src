@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.79 1999/08/18 03:59:36 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.79.8.1 1999/12/27 18:32:21 wrstuden Exp $	*/
 
 /*
  *
@@ -265,14 +265,14 @@ simple_lock_data_t pmap_zero_page_lock;
 simple_lock_data_t pmap_tmpptp_lock;
 
 #define PMAP_MAP_TO_HEAD_LOCK() \
-     lockmgr(&pmap_main_lock, LK_SHARED, (void *) 0)
+     spinlockmgr(&pmap_main_lock, LK_SHARED, (void *) 0)
 #define PMAP_MAP_TO_HEAD_UNLOCK() \
-     lockmgr(&pmap_main_lock, LK_RELEASE, (void *) 0)
+     spinlockmgr(&pmap_main_lock, LK_RELEASE, (void *) 0)
 
 #define PMAP_HEAD_TO_MAP_LOCK() \
-     lockmgr(&pmap_main_lock, LK_EXCLUSIVE, (void *) 0)
+     spinlockmgr(&pmap_main_lock, LK_EXCLUSIVE, (void *) 0)
 #define PMAP_HEAD_TO_MAP_UNLOCK() \
-     lockmgr(&pmap_main_lock, LK_RELEASE, (void *) 0)
+     spinlockmgr(&pmap_main_lock, LK_RELEASE, (void *) 0)
 
 #else
 
@@ -866,7 +866,7 @@ pmap_bootstrap(kva_start)
 	 */
 
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
-	lockinit(&pmap_main_lock, PVM, "pmaplk", 0, 0);
+	spinlockinit(&pmap_main_lock, "pmaplk", 0);
 	simple_lock_init(&pvalloc_lock);
 	simple_lock_init(&pmaps_lock);
 	simple_lock_init(&pmap_copy_page_lock);
@@ -904,7 +904,8 @@ pmap_bootstrap(kva_start)
 				  atop(avail_start), atop(hole_start),
 				  first16q);
 
-	if (first16q == VM_FREELIST_FIRST16) {
+	if (first16q != VM_FREELIST_DEFAULT &&
+	    hole_end < 16 * 1024 * 1024) {
 		uvm_page_physload(atop(hole_end), atop(16 * 1024 * 1024),
 				  atop(hole_end), atop(16 * 1024 * 1024),
 				  first16q);
@@ -913,7 +914,8 @@ pmap_bootstrap(kva_start)
 				  VM_FREELIST_DEFAULT);
 	} else {
 		uvm_page_physload(atop(hole_end), atop(avail_end),
-				  atop(hole_end), atop(avail_end), first16q);
+				  atop(hole_end), atop(avail_end),
+				  VM_FREELIST_DEFAULT);
 	}
 
 	/*
@@ -2037,7 +2039,7 @@ pmap_map(va, spa, epa, prot)
 	vm_prot_t prot;
 {
 	while (spa < epa) {
-		pmap_enter(pmap_kernel(), va, spa, prot, FALSE, 0);
+		pmap_enter(pmap_kernel(), va, spa, prot, 0);
 		va += NBPG;
 		spa += NBPG;
 	}
@@ -3364,20 +3366,20 @@ pmap_transfer_ptes(srcpmap, srcl, dstpmap, dstl, toxfer, move)
  * => we set pmap => pv_head locking
  */
 
-void
-pmap_enter(pmap, va, pa, prot, wired, access_type)
+int
+pmap_enter(pmap, va, pa, prot, flags)
 	struct pmap *pmap;
 	vaddr_t va;
 	paddr_t pa;
 	vm_prot_t prot;
-	boolean_t wired;
-	vm_prot_t access_type;
+	int flags;
 {
 	pt_entry_t *ptes, opte, npte;
 	struct vm_page *ptp;
 	struct pv_head *pvh;
 	struct pv_entry *pve;
 	int bank, off;
+	boolean_t wired = (flags & PMAP_WIRED) != 0;
 
 #ifdef DIAGNOSTIC
 	/* sanity check: totally out of range? */
@@ -3525,6 +3527,8 @@ enter_now:
 
 	pmap_unmap_ptes(pmap);
 	PMAP_MAP_TO_HEAD_UNLOCK();
+
+	return (KERN_SUCCESS);
 }
 
 /*

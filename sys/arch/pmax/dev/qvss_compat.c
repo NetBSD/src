@@ -1,4 +1,4 @@
-/*	$NetBSD: qvss_compat.c,v 1.20 1999/09/05 11:34:30 simonb Exp $	*/
+/*	$NetBSD: qvss_compat.c,v 1.20.8.1 1999/12/27 18:33:24 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -90,8 +90,7 @@
 #include <pmax/pmax/cons.h>
 #include <pmax/pmax/pmaxtype.h>
 
-#include "dc_ds.h"
-#include "dc_ioasic.h"
+#include "dc.h"
 #include "scc.h"
 #include "dtop.h"
 
@@ -548,21 +547,15 @@ genConfigMouse()
 
 	s = spltty();
 	switch (systype) {
-#if NDC_IOASIC > 0
+
+#if NDC > 0
+	case DS_PMAX:
 	case DS_3MAX:
 		dcDivertXInput = genKbdEvent;
 		dcMouseEvent = (void (*) __P((int)))genMouseEvent;
 		dcMouseButtons = (void (*) __P((int)))genMouseButtons;
 		break;
-#endif /* NDC_IOASIC */
-
-#if NDC_DS > 0
-	case DS_PMAX:
-		dcDivertXInput = genKbdEvent;
-		dcMouseEvent = (void (*) __P((int)))genMouseEvent;
-		dcMouseButtons = (void (*) __P((int)))genMouseButtons;
-		break;
-#endif /* NDC_DS */
+#endif /* NDC */
 
 #if NSCC > 0
 	case DS_3MIN:
@@ -595,22 +588,15 @@ genDeconfigMouse()
 
 	s = spltty();
 	switch (systype) {
-#if NDC_IOASIC > 0
-	case DS_3MAX:
 
-		dcDivertXInput = (void (*) __P((int)) )0;
-		dcMouseEvent = (void (*) __P((int)) )0;
-		dcMouseButtons = (void (*) __P((int)) )0;
-		break;
-#endif  /* NDC_IOASIC */
-
-#if NDC_DS > 0
+#if NDC > 0
 	case DS_PMAX:
+	case DS_3MAX:
 		dcDivertXInput = (void (*) __P((int)) )0;
 		dcMouseEvent = (void (*) __P((int)) )0;
 		dcMouseButtons =  (void (*) __P((int)) )0;
 		break;
-#endif /* NDC_DS */
+#endif /* NDC */
 
 #if NSCC > 0
 	case DS_3MIN:

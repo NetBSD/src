@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.4 1998/11/04 18:27:21 christos Exp $	*/
+/*	$NetBSD: io.c,v 1.4.4.1 1999/12/27 18:27:02 wrstuden Exp $	*/
 
 /*
  * shell buffered IO and formatted output
@@ -7,6 +7,8 @@
 #include <ctype.h>
 #include "sh.h"
 #include "ksh_stat.h"
+
+static int initio_done;
 
 /*
  * formatted output functions
@@ -127,7 +129,10 @@ void
 error_prefix(fileline)
 	int fileline;
 {
-	shf_fprintf(shl_out, "%s: ", kshname + (*kshname == '-'));
+	/* Avoid foo: foo[2]: ... */
+	if (!fileline || !source || !source->file
+	    || strcmp(source->file, kshname) != 0)
+		shf_fprintf(shl_out, "%s: ", kshname + (*kshname == '-'));
 	if (fileline && source && source->file != NULL) {
 		shf_fprintf(shl_out, "%s[%d]: ", source->file,
 			source->errline > 0 ? source->errline : source->line);
@@ -147,6 +152,8 @@ shellf(fmt, va_alist)
 {
 	va_list va;
 
+	if (!initio_done) /* shl_out may not be set up yet... */
+		return;
 	SH_VA_START(va, fmt);
 	shf_vfprintf(shl_out, fmt, va);
 	va_end(va);
@@ -172,6 +179,69 @@ shprintf(fmt, va_alist)
 	va_end(va);
 }
 
+#ifdef KSH_DEBUG
+static struct shf *kshdebug_shf;
+
+void
+kshdebug_init_()
+{
+	if (kshdebug_shf)
+		shf_close(kshdebug_shf);
+	kshdebug_shf = shf_open("/tmp/ksh-debug.log",
+				O_WRONLY|O_APPEND|O_CREAT, 0600,
+				SHF_WR|SHF_MAPHI);
+	if (kshdebug_shf) {
+		shf_fprintf(kshdebug_shf, "\nNew shell[pid %d]\n", getpid());
+		shf_flush(kshdebug_shf);
+	}
+}
+
+/* print to debugging log */
+void
+# ifdef HAVE_PROTOTYPES
+kshdebug_printf_(const char *fmt, ...)
+# else
+kshdebug_printf_(fmt, va_alist)
+	const char *fmt;
+	va_dcl
+# endif
+{
+	va_list va;
+
+	if (!kshdebug_shf)
+		return;
+	SH_VA_START(va, fmt);
+	shf_fprintf(kshdebug_shf, "[%d] ", getpid());
+	shf_vfprintf(kshdebug_shf, fmt, va);
+	va_end(va);
+	shf_flush(kshdebug_shf);
+}
+
+void
+kshdebug_dump_(str, mem, nbytes)
+	const char *str;
+	const void *mem;
+	int nbytes;
+{
+	int i, j;
+	int nprow = 16;
+
+	if (!kshdebug_shf)
+		return;
+	shf_fprintf(kshdebug_shf, "[%d] %s:\n", getpid(), str);
+	for (i = 0; i < nbytes; i += nprow) {
+		char c = '\t';
+		for (j = 0; j < nprow && i + j < nbytes; j++) {
+			shf_fprintf(kshdebug_shf, "%c%02x",
+				c, ((const unsigned char *) mem)[i + j]);
+			c = ' ';
+		}
+		shf_fprintf(kshdebug_shf, "\n");
+	}
+	shf_flush(kshdebug_shf);
+}
+#endif /* KSH_DEBUG */
+
 /* test if we can seek backwards fd (returns 0 or SHF_UNBUF) */
 int
 can_seek(fd)
@@ -191,6 +261,8 @@ initio()
 	shf_fdopen(1, SHF_WR, shl_stdout);	/* force buffer allocation */
 	shf_fdopen(2, SHF_WR, shl_out);
 	shf_fdopen(2, SHF_WR, shl_spare);	/* force buffer allocation */
+	initio_done = 1;
+	kshdebug_init();
 }
 
 /* A dup2() with error checking */
@@ -422,31 +494,35 @@ coproc_cleanup(reuse)
 }
 #endif /* KSH */
 
+
 /*
  * temporary files
  */
 
 struct temp *
-maketemp(ap)
+maketemp(ap, type, tlist)
 	Area *ap;
+	Temp_type type;
+	struct temp **tlist;
 {
 	static unsigned int inc;
 	struct temp *tp;
 	int len;
 	int fd;
 	char *path;
-	const char *tmp;
+	const char *dir;
 
-	tmp = tmpdir ? tmpdir : "/tmp";
+	dir = tmpdir ? tmpdir : "/tmp";
 	/* The 20 + 20 is a paranoid worst case for pid/inc */
-	len = strlen(tmp) + 3 + 20 + 20 + 1;
+	len = strlen(dir) + 3 + 20 + 20 + 1;
 	tp = (struct temp *) alloc(sizeof(struct temp) + len, ap);
 	tp->name = path = (char *) &tp[1];
 	tp->shf = (struct shf *) 0;
+	tp->type = type;
 	while (1) {
 		/* Note that temp files need to fit 8.3 DOS limits */
 		shf_snprintf(path, len, "%s/sh%05u.%03x",
-			tmp, (unsigned) procpid, inc++);
+			     dir, (unsigned) procpid, inc++);
 		/* Mode 0600 to be paranoid, O_TRUNC in case O_EXCL isn't
 		 * really there.
 		 */
@@ -463,12 +539,16 @@ maketemp(ap)
 		    && errno != EISDIR
 #endif /* EISDIR */
 			)
-			/* Error must be printed by called: don't know here if
+			/* Error must be printed by caller: don't know here if
 			 * errorf() or bi_errorf() should be used.
 			 */
 			break;
 	}
 	tp->next = NULL;
 	tp->pid = procpid;
+
+	tp->next = *tlist;
+	*tlist = tp;
+
 	return tp;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: bswap32.S,v 1.1 1999/01/15 13:31:18 bouyer Exp $	*/
+/*	$NetBSD: bswap32.S,v 1.1.4.1 1999/12/27 18:29:29 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 1996 Scott Reynolds.  All rights reserved.
@@ -29,8 +29,8 @@
 #include <machine/asm.h>
 
 ENTRY(bswap32)
-	movl	sp@(4),d0
-	rolw	#8,d0
-	swap	d0
-	rolw	#8,d0
+	movl	%sp@(4),%d0
+	rolw	#8,%d0
+	swap	%d0
+	rolw	#8,%d0
 	rts

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.37 1999/07/08 18:08:57 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.37.8.1 1999/12/27 18:33:19 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller.
@@ -290,7 +290,7 @@ pagemove(from, to, size)
 {
 	register pt_entry_t *fpte, *tpte, ofpte, otpte;
 
-	if (size % CLBYTES)
+	if (size % NBPG)
 		panic("pagemove");
 	fpte = kvtopte(from);
 	tpte = kvtopte(to);
@@ -373,7 +373,7 @@ vmapbuf(bp, len)
 		(void) pmap_extract(vm_map_pmap(&bp->b_proc->p_vmspace->vm_map),
 		    faddr, &fpa);
 		pmap_enter(vm_map_pmap(phys_map), taddr, fpa,
-			   VM_PROT_READ|VM_PROT_WRITE, TRUE, 0);
+			   VM_PROT_READ|VM_PROT_WRITE, PMAP_WIRED);
 		faddr += PAGE_SIZE;
 		taddr += PAGE_SIZE;
 		len -= PAGE_SIZE;

@@ -1,4 +1,4 @@
-#	$NetBSD: CATS,v 1.16 1999/09/13 05:19:45 mark Exp $
+#	$NetBSD: CATS,v 1.16.8.1 1999/12/27 18:31:40 wrstuden Exp $
 #
 #	CATS -- CHALTECH CATS Development kernel
 #
@@ -10,6 +10,9 @@ include	"arch/arm32/conf/std.arm32"
 maxusers	32
 
 # Standard system options
+
+options		UCONSOLE	# users can use TIOCCONS (for xconsole)
+options		INSECURE	# disable kernel securelevel
 
 options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 #options 	NTP		# NTP phase/frequency locked loop
@@ -63,11 +66,27 @@ file-system	PROCFS		# /proc
 #options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
 options 	NFSSERVER
+#options        SOFTDEP         # FFS soft updates support
 
 # Networking options
 
+# Pull in config fragments for kernel crypto.  Use only one of these,
+# and adjust the prefixes as necessary.
+
+#prefix ../crypto-us/sys
+#cinclude "conf/files.crypto-us"
+#prefix
+
+#prefix ../crypto-intl/sys
+#cinclude "conf/files.crypto-intl"
+#prefix
+
 #options 	GATEWAY		# packet forwarding
 options 	INET		# IP + ICMP + TCP + UDP
+options 	INET6		# IPV6
+#options 	IPSEC		# IP security
+#options 	IPSEC_ESP	# IP security (encryption part; define w/ IPSEC)
+#options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	NS		# XNS
 #options 	NSIP		# XNS tunneling over IP
@@ -176,7 +195,7 @@ ppb*	at pci? dev ? function ?	# PCI-PCI bridges
 #puc*	at pci? dev ? function ?	# PCI "universal" comm. cards
 
 # PCI serial interfaces
-#com*	at puc? port ?			# 16x450s on "universal" comm boards
+#com*	at puc? port ?			# 16x50s on "universal" comm boards
 #cy*	at pci? dev ? function ?	# Cyclades Cyclom-Y serial boards
 
 # PCI parallel printer interfaces
@@ -191,8 +210,8 @@ ahc*	at pci? dev ? function ?	# Adaptec [23]94x, aic78x0 SCSI controllers
 scsibus* at ahc?
 #bha*	at pci? dev ? function ?	# BusLogic 9xx SCSI
 #scsibus* at bha?
-isp*	at pci? dev ? function ?	# Qlogic ISP 10x0 SCSI controllers
-scsibus* at isp?
+#isp*	at pci? dev ? function ?	# Qlogic ISP 10x0 SCSI controllers
+#scsibus* at isp?
 #ncr*	at pci? dev ? function ?	# NCR 53c8xx SCSI
 #scsibus* at ncr?
 #pcscp*	at pci? dev ? function ?	# AMD 53c974 PCscsi-PCI SCSI
@@ -398,3 +417,7 @@ pseudo-device	rnd			# /dev/random and in-kernel generator
 
 # mouse & keyboard multiplexor pseudo-devices
 pseudo-device	wsmux		2
+
+# for IPv6
+pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
+pseudo-device	faith		1	# IPv[46] tcp relay translation i/f

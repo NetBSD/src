@@ -1,4 +1,4 @@
-.\"	$NetBSD: restore.8,v 1.26 1999/07/01 19:18:47 abs Exp $
+.\"	$NetBSD: restore.8,v 1.26.4.1 1999/12/27 18:30:31 wrstuden Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -39,7 +39,7 @@
 .Sh NAME
 .Nm restore ,
 .Nm rrestore
-.Nd restore files or file systems from backups made with dump
+.Nd "restore files or file systems from backups made with dump"
 .Sh SYNOPSIS
 .Nm
 .Fl i
@@ -65,14 +65,14 @@
 .Op Fl b Ar blocksize
 .Op Fl f Ar file
 .Op Fl s Ar fileno
-.Op file ...
+.Op Ar
 .Nm ""
 .Fl x
 .Op Fl cdhmuvyN
 .Op Fl b Ar blocksize
 .Op Fl f Ar file
 .Op Fl s Ar fileno
-.Op file ...
+.Op Ar
 .Pp
 .in -\\n(iSu
 (The
@@ -455,8 +455,8 @@ information passed between incremental restores.
 .Sh SEE ALSO
 .Xr environ 7 ,
 .Xr dump 8 ,
-.Xr newfs 8 ,
 .Xr mount 8 ,
+.Xr newfs 8 ,
 .Xr rmt 8
 .Sh BUGS
 .Nm

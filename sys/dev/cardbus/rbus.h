@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus.h,v 1.3 1999/12/15 12:28:55 kleink Exp $	*/
+/*	$NetBSD: rbus.h,v 1.3.2.1 1999/12/27 18:34:41 wrstuden Exp $	*/
 /*
  * Copyright (c) 1999
  *     HAYAKAWA Koichi.  All rights reserved.

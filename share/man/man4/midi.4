@@ -1,4 +1,4 @@
-.\" $NetBSD: midi.4,v 1.9 1999/09/16 19:49:04 augustss Exp $
+.\" $NetBSD: midi.4,v 1.9.2.1 1999/12/27 18:30:44 wrstuden Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -41,11 +41,12 @@
 .Nm midi
 .Nd device-independent MIDI driver layer
 .Sh SYNOPSIS
+.Cd "midi* at eap?"
 .Cd "midi* at mpu?"
 .Cd "midi* at opl?"
 .Cd "midi* at pcppi?"
 .Cd "midi* at sb?"
-.Cd "midi* at wss?"
+.\" .Cd "midi* at wss?"
 .Cd "pseudo-device sequencer"
 .Pp
 .Fd #include <sys/types.h>
@@ -105,8 +106,7 @@ interface.
 For ports using the ISA bus:
 .Xr mpu 4 ,
 .Xr pcppi 4 ,
-.Xr sb 4 ,
-.Xr wss 4 .
+.Xr sb 4
 .Sh HISTORY
 The
 .Nm

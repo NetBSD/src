@@ -6,7 +6,7 @@
  *	(based on PD libc 1.1.32 by PROJECT C Library)
  *	public domain
  *
- *	$NetBSD: iocs.h,v 1.1 1998/09/01 19:53:54 itohy Exp $
+ *	$NetBSD: iocs.h,v 1.1.20.1 1999/12/27 18:34:19 wrstuden Exp $
  */
 /*
  * PROJECT C Library, X68000 PROGRAMMING INTERFACE DEFINITION
@@ -82,7 +82,7 @@ struct iocs_paintptr {
 	unsigned short	color;
 	void		*buf_start;
 	void		*buf_end;
-};
+} __attribute__((__packed__));
 
 struct iocs_pointptr {
 	short		x;
@@ -114,7 +114,7 @@ struct iocs_symbolptr {
 	unsigned short	color;
 	unsigned char	font_type;
 	unsigned char	angle;
-};
+} __attribute__((__packed__));
 
 struct iocs_regs {
 	int	d0;
@@ -136,13 +136,13 @@ struct iocs_regs {
 struct iocs_chain {
 	void		*addr;
 	unsigned short	len;
-};
+} __attribute__((__packed__));
 
 struct iocs_chain2 {
 	void			*addr;
 	unsigned short		len;
 	__const struct iocs_chain2 *next;
-};
+} __attribute__((__packed__));
 
 struct iocs_clipxy {
 	short	xs;

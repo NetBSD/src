@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 1999/06/09 01:45:28 christos Exp $
+#	$NetBSD: Makefile,v 1.16.2.1 1999/12/27 18:28:21 wrstuden Exp $
 
 TOP=		${.CURDIR}/..
 WARNS=1
@@ -8,7 +8,7 @@ IMAGE=		ramdisk.fs
 
 AUXTARGETS=	install.sh upgrade.sh start.sh
 AUXDEPENDS= 	dot.profile dot.hdprofile disktab.preinstall \
-		termcap.mini termcap.pc3
+		termcap.mini
 AUXCLEAN=	${AUXTARGETS}
 
 CBIN=		ramdiskbin
@@ -74,6 +74,7 @@ HACKSRC=${TOP}/../../utils/libhack
 # turn off small gethostby* temporarily
 HACKOBJS:= getcap.o getgrent.o getnet.o getnetgr.o getpwent.o setlocale.o yplib.o
 
+release:
 
 clean cleandir distclean:
 	/bin/rm -f ${AUXCLEAN} *.core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache *.o *.cro *.c

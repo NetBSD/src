@@ -1,4 +1,4 @@
-/*	$NetBSD: rm.c,v 1.25 1999/06/30 10:18:59 is Exp $	*/
+/*	$NetBSD: rm.c,v 1.25.4.1 1999/12/27 18:27:12 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)rm.c	8.8 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: rm.c,v 1.25 1999/06/30 10:18:59 is Exp $");
+__RCSID("$NetBSD: rm.c,v 1.25.4.1 1999/12/27 18:27:12 wrstuden Exp $");
 #endif
 #endif /* not lint */
 
@@ -173,7 +173,7 @@ rm_tree(argv)
 		flags |= FTS_WHITEOUT;
 	if (!(fts = fts_open(argv, flags,
 		(int (*) __P((const FTSENT **, const FTSENT **)))NULL)))
-		err(1, "%s", "");
+		err(1, NULL);
 	while ((p = fts_read(fts)) != NULL) {
 		switch (p->fts_info) {
 		case FTS_DNR:

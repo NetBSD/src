@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.71 1999/09/25 21:47:05 is Exp $	*/
+/*	$NetBSD: trap.c,v 1.71.8.1 1999/12/27 18:31:32 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -403,7 +403,7 @@ trapmmufault(type, code, v, fp, p, sticks)
 	 */
 	nss = 0;
 	if (map != kernel_map && (caddr_t)va >= vm->vm_maxsaddr) {
-		nss = clrnd(btoc(USRSTACK - (unsigned)va));
+		nss = btoc(USRSTACK - (unsigned)va);
 		if (nss > btoc(p->p_rlimit[RLIMIT_STACK].rlim_cur)) {
 			rv = KERN_FAILURE;
 			goto nogo;
@@ -493,7 +493,7 @@ trapmmufault(type, code, v, fp, p, sticks)
 	 */
 	if (map != kernel_map && (caddr_t)va >= vm->vm_maxsaddr) {
 		if (rv == KERN_SUCCESS) {
-			nss = clrnd(btoc(USRSTACK-(unsigned)va));
+			nss = btoc(USRSTACK-(unsigned)va);
 			if (nss > vm->vm_ssize)
 				vm->vm_ssize = nss;
 		} else if (rv == KERN_PROTECTION_FAILURE)

@@ -1,4 +1,4 @@
-.\" $NetBSD: ohci.4,v 1.3 1999/09/12 18:47:12 kleink Exp $
+.\" $NetBSD: ohci.4,v 1.3.4.1 1999/12/27 18:30:44 wrstuden Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -41,7 +41,8 @@
 .Nm ohci
 .Nd USB Open Host Controller driver
 .Sh SYNOPSIS
-.Cd "ohci*    at pci? function ?"
+.Cd "ohci*    at cardbus? dev ? function ?"
+.Cd "ohci*    at pci? dev ? function ?"
 .Cd "usb*     at ohci?"
 .Pp
 .Sh DESCRIPTION
@@ -49,6 +50,7 @@ The
 .Nm
 driver provides support for USB Open Host Controller Interface.
 .Sh SEE ALSO
+.Xr cardbus 4 ,
 .Xr pci 4 ,
 .Xr usb 4
 .Sh HISTORY

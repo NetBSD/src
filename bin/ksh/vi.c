@@ -1,4 +1,4 @@
-/*	$NetBSD: vi.c,v 1.3 1998/11/04 18:27:21 christos Exp $	*/
+/*	$NetBSD: vi.c,v 1.3.4.1 1999/12/27 18:27:05 wrstuden Exp $	*/
 
 /*
  *	vi command editing
@@ -65,6 +65,7 @@ static void 	x_vi_zotc ARGS((int c));
 static void	vi_pprompt ARGS((int full));
 static void	vi_error ARGS((void));
 static void	vi_macro_reset ARGS((void));
+static int	x_vi_putbuf	ARGS((const char *s, size_t len));
 
 #define C_	0x1		/* a valid command that isn't a M_, E_, U_ */
 #define M_	0x2		/* movement command (h, l, etc.) */
@@ -208,8 +209,9 @@ x_vi(buf, len)
 				vi_macro_reset();
 				c = x_getc();
 			}
-		} else
+		} else {
 			c = x_getc();
+		}
 		if (c == -1)
 			break;
 		if (state != VLIT) {
@@ -503,7 +505,7 @@ vi_hook(ch)
 		state = VNORMAL;
 		if (argc1 != 0)
 			lastac = argc1;
-		switch (vi_cmd(lastac, lastcmd) != 0) {
+		switch (vi_cmd(lastac, lastcmd)) {
 		case -1:
 			vi_error();
 			refresh(0);
@@ -525,8 +527,8 @@ vi_hook(ch)
 			refresh(0);
 			return 1;
 		case 2:
-			/* back from a 'v' command - don't redraw the screen */
-			return 1;
+			/* back from a 'v' command - can't happen */
+			break;
 		}
 		break;
 
@@ -1471,6 +1473,17 @@ edit_reset(buf, len)
 	holdlen = 0;
 }
 
+/*
+ * this is used for calling x_escape() in complete_word()
+ */
+static int
+x_vi_putbuf(s, len)
+	const char *s;
+	size_t len;
+{
+	return putbuf(s, len, 0);
+}
+
 static int
 putbuf(buf, len, repl)
 	const char *buf;
@@ -2069,9 +2082,12 @@ complete_word(command, count)
 	buf = save_edstate(es);
 	del_range(start, end);
 	es->cursor = start;
-	if (putbuf(match, match_len, 0) != 0)
-		rval = -1;
-	else if (is_unique) {
+
+	/* escape all shell-sensitive characters and put the result into
+	 * command buffer */
+	rval = x_escape(match, match_len, x_vi_putbuf);
+
+	if (rval == 0 && is_unique) {
 		/* If exact match, don't undo.  Allows directory completions
 		 * to be used (ie, complete the next portion of the path).
 		 */

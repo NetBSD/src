@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus.c,v 1.16 1999/12/11 00:29:11 thorpej Exp $	*/
+/*	$NetBSD: cardbus.c,v 1.16.2.1 1999/12/27 18:34:37 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 and 1999

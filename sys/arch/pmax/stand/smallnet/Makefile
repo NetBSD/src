@@ -1,19 +1,18 @@
-#	$NetBSD: Makefile,v 1.1 1999/05/13 08:38:05 simonb Exp $
+#	$NetBSD: Makefile,v 1.1.10.1 1999/12/27 18:33:36 wrstuden Exp $
 #	@(#)Makefile	8.3 (Berkeley) 2/16/94
 
-S=	${.CURDIR}/../../../..
+KERNELSIZE!=		expr 400 \* 1024
 
-KERNELSIZE!=	expr 400 \* 1024
+SUBDIR=			setnetimage
 
-SUBDIR=		setnetimage
+SECONDARY_PROG=		smallnet
+SECONDARY_LOAD_ADDRESS=	0x80300000	# 3MB - should work on 4MB machines
+SRCS=			start.S smallnet.c
+SRCS+=			bootinfo.c callvec.c putchar.c
 
-PROG=		smallnet
-RELOC=		80300000		# 3MB - should work on 4MB machines
-SRCS=		start.S smallnet.c
-BOOTDEFADD=	-DBOOT_TYPE_NAME='"Compressed Kernel Network"' \
-		-DRELOC=0x${RELOC} -DKERNELSIZE=${KERNELSIZE}
-VERSIONFILE=	${.CURDIR}/version
-.PATH:  	${.CURDIR}/../lib
+CPPFLAGS+=		-DBOOT_TYPE_NAME='"Compressed Kernel Network"' \
+			-DRELOC=${SECONDARY_LOAD_ADDRESS} \
+			-DKERNELSIZE=${KERNELSIZE}
 
 .include <bsd.subdir.mk>
 .include <bsd.obj.mk>

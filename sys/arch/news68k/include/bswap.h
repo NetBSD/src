@@ -1,3 +1,3 @@
-/*     $NetBSD: bswap.h,v 1.1 1999/12/09 14:53:08 tsutsui Exp $   */
+/*     $NetBSD: bswap.h,v 1.1.2.1 1999/12/27 18:32:57 wrstuden Exp $   */
 
 #include <m68k/bswap.h>

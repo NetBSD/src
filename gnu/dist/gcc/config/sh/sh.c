@@ -22,6 +22,7 @@ Boston, MA 02111-1307, USA.  */
    Improved by Jim Wilson (wilson@cygnus.com).  */
 
 #include "config.h"
+#include "system.h"
 
 #include <stdio.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.2 1999/11/22 13:26:59 tsubai Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.2.2.1 1999/12/27 18:33:41 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.

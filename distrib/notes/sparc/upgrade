@@ -1,4 +1,4 @@
-.\"	$NetBSD: upgrade,v 1.8 1999/01/13 07:30:08 ross Exp $	
+.\"	$NetBSD: upgrade,v 1.8.4.1 1999/12/27 18:28:29 wrstuden Exp $	
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -32,8 +32,9 @@
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
 .
-To upgrade to NetBSD _VER from a previous version follow the instructions
-in the section
+To upgrade to 
+.Nx \*V
+from a previous version follow the instructions in the section
 .Sx Installing NetBSD ,
 but run the script
 .Pa upgrade.sh

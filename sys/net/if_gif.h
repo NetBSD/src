@@ -1,3 +1,5 @@
+/*	$NetBSD: if_gif.h,v 1.3.8.1 1999/12/27 18:36:09 wrstuden Exp $	*/
+
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.

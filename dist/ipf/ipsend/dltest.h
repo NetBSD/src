@@ -1,4 +1,4 @@
-/*	$NetBSD: dltest.h,v 1.1.1.1 1999/12/11 22:24:07 veego Exp $	*/
+/*	$NetBSD: dltest.h,v 1.1.1.1.4.1 1999/12/27 18:27:59 wrstuden Exp $	*/
 
 /*
  * Common DLPI Test Suite header file

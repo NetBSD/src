@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.40 1999/09/29 22:42:02 thorpej Exp $	*/
+/*	$NetBSD: if.h,v 1.40.6.1 1999/12/27 18:36:07 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -69,6 +69,10 @@
 /*  XXX fast fix for SNMP, going away soon */
 #include <sys/time.h>
 
+#if defined(_KERNEL) && !defined(_LKM)
+#include "opt_compat_netbsd.h"
+#endif
+
 struct mbuf;
 struct proc;
 struct rtentry;
@@ -80,6 +84,31 @@ struct ether_header;
  * interface.
  */
 struct	if_data {
+	/* generic interface information */
+	u_char	ifi_type;		/* ethernet, tokenring, etc. */
+	u_char	ifi_addrlen;		/* media address length */
+	u_char	ifi_hdrlen;		/* media header length */
+	u_quad_t ifi_mtu;		/* maximum transmission unit */
+	u_quad_t ifi_metric;		/* routing metric (external only) */
+	u_quad_t ifi_baudrate;		/* linespeed */
+	/* volatile statistics */
+	u_quad_t ifi_ipackets;		/* packets received on interface */
+	u_quad_t ifi_ierrors;		/* input errors on interface */
+	u_quad_t ifi_opackets;		/* packets sent on interface */
+	u_quad_t ifi_oerrors;		/* output errors on interface */
+	u_quad_t ifi_collisions;	/* collisions on csma interfaces */
+	u_quad_t ifi_ibytes;		/* total number of octets received */
+	u_quad_t ifi_obytes;		/* total number of octets sent */
+	u_quad_t ifi_imcasts;		/* packets received via multicast */
+	u_quad_t ifi_omcasts;		/* packets sent via multicast */
+	u_quad_t ifi_iqdrops;		/* dropped on input, this interface */
+	u_quad_t ifi_noproto;		/* destined for unsupported protocol */
+	struct	timeval ifi_lastchange;	/* last updated */
+};
+
+#ifdef COMPAT_14
+/* Pre-1.5 if_data struct */
+struct	if_data14 {
 	/* generic interface information */
 	u_char	ifi_type;		/* ethernet, tokenring, etc. */
 	u_char	ifi_addrlen;		/* media address length */
@@ -101,6 +130,7 @@ struct	if_data {
 	u_long	ifi_noproto;		/* destined for unsupported protocol */
 	struct	timeval ifi_lastchange;	/* last updated */
 };
+#endif
 
 /*
  * Structure defining a queue for a network interface.
@@ -258,8 +288,8 @@ struct ifaddr {
 	struct	ifaddr_data	ifa_data;	/* statistics on the address */
 	void	(*ifa_rtrequest)	/* check or clean routes (+ or -)'d */
 		    __P((int, struct rtentry *, struct sockaddr *));
-	u_short	ifa_flags;		/* mostly rt_flags for cloning */
-	short	ifa_refcnt;		/* count of references */
+	u_int	ifa_flags;		/* mostly rt_flags for cloning */
+	int	ifa_refcnt;		/* count of references */
 	int	ifa_metric;		/* cost of going out this interface */
 };
 #define	IFA_ROUTE	RTF_UP		/* route installed */
@@ -267,7 +297,7 @@ struct ifaddr {
 /*
  * The prefix structure contains information about one prefix
  * of an interface.  They are maintained by the different address families,
- * are allocated and attached when an prefix or an address is set, 
+ * are allocated and attached when an prefix or an address is set,
  * and are linked together so all prfefixes for an interface can be located.
  */
 struct ifprefix {
@@ -275,6 +305,7 @@ struct ifprefix {
 	struct	ifnet *ifpr_ifp;	/* back-pointer to interface */
 	struct ifprefix *ifpr_next;
 	u_char	ifpr_plen;		/* prefix length in bits */
+	u_char	ifpr_type;		/* protocol dependent prefix type */
 };
 
 /*
@@ -290,6 +321,19 @@ struct if_msghdr {
 	u_short	ifm_index;	/* index for associated ifp */
 	struct	if_data ifm_data;/* statistics and other data about if */
 };
+
+#ifdef COMPAT_14
+/* pre-1.5 if_msghdr (ifm_data changed) */
+struct if_msghdr14 {
+	u_short	ifm_msglen;	/* to skip over non-understood messages */
+	u_char	ifm_version;	/* future binary compatability */
+	u_char	ifm_type;	/* message type */
+	int	ifm_addrs;	/* like rtm_addrs */
+	int	ifm_flags;	/* value of if_flags */
+	u_short	ifm_index;	/* index for associated ifp */
+	struct	if_data14 ifm_data; /* statistics and other data about if */
+};
+#endif
 
 /*
  * Message format for use in obtaining information about interface addresses

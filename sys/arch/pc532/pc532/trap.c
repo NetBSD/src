@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.36 1999/06/17 00:22:43 thorpej Exp $	*/
+/*	$NetBSD: trap.c,v 1.36.8.1 1999/12/27 18:33:19 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller. All rights reserved.
@@ -401,7 +401,7 @@ trap(frame)
 		if ((caddr_t)va >= vm->vm_maxsaddr
 		    && (caddr_t)va < (caddr_t)VM_MAXUSER_ADDRESS
 		    && map != kernel_map) {
-			nss = clrnd(btoc(USRSTACK-(unsigned)va));
+			nss = btoc(USRSTACK-(unsigned)va);
 			if (nss > btoc(p->p_rlimit[RLIMIT_STACK].rlim_cur)) {
 				rv = KERN_FAILURE;
 				goto nogo;

@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.31 1999/07/09 23:41:16 thorpej Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.31.8.1 1999/12/27 18:36:12 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -99,7 +99,7 @@ struct walkarg {
 	caddr_t	w_tmem;
 };
 
-static struct mbuf *rt_msg1 __P((int, struct rt_addrinfo *));
+static struct mbuf *rt_msg1 __P((int, struct rt_addrinfo *, caddr_t, int));
 static int rt_msg2 __P((int, struct rt_addrinfo *, caddr_t, struct walkarg *,
     int *));
 static void rt_xaddrs __P((caddr_t, caddr_t, struct rt_addrinfo *));
@@ -520,9 +520,11 @@ rt_xaddrs(cp, cplim, rtinfo)
 }
 
 static struct mbuf *
-rt_msg1(type, rtinfo)
+rt_msg1(type, rtinfo, data, datalen)
 	int type;
 	register struct rt_addrinfo *rtinfo;
+	caddr_t data;
+	int datalen;
 {
 	register struct rt_msghdr *rtm;
 	register struct mbuf *m;
@@ -540,6 +542,12 @@ rt_msg1(type, rtinfo)
 		len = sizeof(struct ifa_msghdr);
 		break;
 
+#ifdef COMPAT_14
+	case RTM_OIFINFO:
+		len = sizeof(struct if_msghdr14);
+		break;
+#endif
+
 	case RTM_IFINFO:
 		len = sizeof(struct if_msghdr);
 		break;
@@ -547,12 +555,21 @@ rt_msg1(type, rtinfo)
 	default:
 		len = sizeof(struct rt_msghdr);
 	}
-	if (len > MHLEN)
-		panic("rt_msg1");
-	m->m_pkthdr.len = m->m_len = len;
+	if (len > MHLEN) {
+		m->m_next = m_get(M_DONTWAIT, MT_DATA);
+		if (m->m_next == NULL) {
+			m_freem(m);
+			return (NULL);
+		}
+		m->m_pkthdr.len = len;
+		m->m_len = MHLEN;
+		m->m_next->m_len = len - MHLEN;
+	} else {
+		m->m_pkthdr.len = m->m_len = len;
+	}
 	m->m_pkthdr.rcvif = 0;
+	m_copyback(m, 0, datalen, data);
 	rtm = mtod(m, struct rt_msghdr *);
-	bzero(rtm, len);
 	for (i = 0; i < RTAX_MAX; i++) {
 		if ((sa = rtinfo->rti_info[i]) == NULL)
 			continue;
@@ -560,10 +577,6 @@ rt_msg1(type, rtinfo)
 		dlen = ROUNDUP(sa->sa_len);
 		m_copyback(m, len, dlen, (caddr_t)sa);
 		len += dlen;
-	}
-	if (m->m_pkthdr.len != len) {
-		m_freem(m);
-		return (NULL);
 	}
 	rtm->rtm_msglen = len;
 	rtm->rtm_version = RTM_VERSION;
@@ -604,6 +617,11 @@ again:
 	case RTM_NEWADDR:
 		len = sizeof(struct ifa_msghdr);
 		break;
+#ifdef COMPAT_14
+	case RTM_OIFINFO:
+		len = sizeof(struct if_msghdr14);
+		break;
+#endif
 
 	case RTM_IFINFO:
 		len = sizeof(struct if_msghdr);
@@ -673,19 +691,19 @@ rt_missmsg(type, rtinfo, flags, error)
 	int type, flags, error;
 	register struct rt_addrinfo *rtinfo;
 {
-	register struct rt_msghdr *rtm;
+	struct rt_msghdr rtm;
 	register struct mbuf *m;
 	struct sockaddr *sa = rtinfo->rti_info[RTAX_DST];
 
 	if (route_cb.any_count == 0)
 		return;
-	m = rt_msg1(type, rtinfo);
+	bzero(&rtm, sizeof(rtm));
+	rtm.rtm_flags = RTF_DONE | flags;
+	rtm.rtm_errno = error;
+	m = rt_msg1(type, rtinfo, (caddr_t)&rtm, sizeof(rtm));
 	if (m == 0)
 		return;
-	rtm = mtod(m, struct rt_msghdr *);
-	rtm->rtm_flags = RTF_DONE | flags;
-	rtm->rtm_errno = error;
-	rtm->rtm_addrs = rtinfo->rti_addrs;
+	mtod(m, struct rt_msghdr *)->rtm_addrs = rtinfo->rti_addrs;
 	route_proto.sp_protocol = sa ? sa->sa_family : 0;
 	raw_input(m, &route_proto, &route_src, &route_dst);
 }
@@ -698,23 +716,56 @@ void
 rt_ifmsg(ifp)
 	register struct ifnet *ifp;
 {
-	register struct if_msghdr *ifm;
+	struct if_msghdr ifm;
+#ifdef COMPAT_14
+	struct if_msghdr14 oifm;
+#endif
 	struct mbuf *m;
 	struct rt_addrinfo info;
 
 	if (route_cb.any_count == 0)
 		return;
 	bzero(&info, sizeof(info));
-	m = rt_msg1(RTM_IFINFO, &info);
+	bzero(&ifm, sizeof(ifm));
+	ifm.ifm_index = ifp->if_index;
+	ifm.ifm_flags = ifp->if_flags;
+	ifm.ifm_data = ifp->if_data;
+	ifm.ifm_addrs = 0;
+	m = rt_msg1(RTM_IFINFO, &info, (caddr_t)&ifm, sizeof(ifm));
 	if (m == 0)
 		return;
-	ifm = mtod(m, struct if_msghdr *);
-	ifm->ifm_index = ifp->if_index;
-	ifm->ifm_flags = ifp->if_flags;
-	ifm->ifm_data = ifp->if_data;
-	ifm->ifm_addrs = 0;
 	route_proto.sp_protocol = 0;
 	raw_input(m, &route_proto, &route_src, &route_dst);
+#ifdef COMPAT_14
+	bzero(&info, sizeof(info));
+	bzero(&oifm, sizeof(ifm));
+	oifm.ifm_index = ifp->if_index;
+	oifm.ifm_flags = ifp->if_flags;
+	oifm.ifm_data.ifi_type = ifp->if_data.ifi_type;
+	oifm.ifm_data.ifi_addrlen = ifp->if_data.ifi_addrlen;
+	oifm.ifm_data.ifi_hdrlen = ifp->if_data.ifi_hdrlen;
+	oifm.ifm_data.ifi_mtu = ifp->if_data.ifi_mtu;
+	oifm.ifm_data.ifi_metric = ifp->if_data.ifi_metric;
+	oifm.ifm_data.ifi_baudrate = ifp->if_data.ifi_baudrate;
+	oifm.ifm_data.ifi_ipackets = ifp->if_data.ifi_ipackets;
+	oifm.ifm_data.ifi_ierrors = ifp->if_data.ifi_ierrors;
+	oifm.ifm_data.ifi_opackets = ifp->if_data.ifi_opackets;
+	oifm.ifm_data.ifi_oerrors = ifp->if_data.ifi_oerrors;
+	oifm.ifm_data.ifi_collisions = ifp->if_data.ifi_collisions;
+	oifm.ifm_data.ifi_ibytes = ifp->if_data.ifi_ibytes;
+	oifm.ifm_data.ifi_obytes = ifp->if_data.ifi_obytes;
+	oifm.ifm_data.ifi_imcasts = ifp->if_data.ifi_imcasts;
+	oifm.ifm_data.ifi_omcasts = ifp->if_data.ifi_omcasts;
+	oifm.ifm_data.ifi_iqdrops = ifp->if_data.ifi_iqdrops;
+	oifm.ifm_data.ifi_noproto = ifp->if_data.ifi_noproto;
+	oifm.ifm_data.ifi_lastchange = ifp->if_data.ifi_lastchange;
+	oifm.ifm_addrs = 0;
+	m = rt_msg1(RTM_OIFINFO, &info, (caddr_t)&oifm, sizeof(oifm));
+	if (m == 0)
+		return;
+	route_proto.sp_protocol = 0;
+	raw_input(m, &route_proto, &route_src, &route_dst);
+#endif
 }
 
 /*
@@ -743,37 +794,40 @@ rt_newaddrmsg(cmd, ifa, error, rt)
 		bzero(&info, sizeof(info));
 		if ((cmd == RTM_ADD && pass == 1) ||
 		    (cmd == RTM_DELETE && pass == 2)) {
-			register struct ifa_msghdr *ifam;
+			struct ifa_msghdr ifam;
 			int ncmd = cmd == RTM_ADD ? RTM_NEWADDR : RTM_DELADDR;
 
 			ifaaddr = sa = ifa->ifa_addr;
 			ifpaddr = ifp->if_addrlist.tqh_first->ifa_addr;
 			netmask = ifa->ifa_netmask;
 			brdaddr = ifa->ifa_dstaddr;
-			if ((m = rt_msg1(ncmd, &info)) == NULL)
+			bzero(&ifam, sizeof(ifam));
+			ifam.ifam_index = ifp->if_index;
+			ifam.ifam_metric = ifa->ifa_metric;
+			ifam.ifam_flags = ifa->ifa_flags;
+			m = rt_msg1(ncmd, &info, (caddr_t)&ifam, sizeof(ifam));
+			if (m == NULL)
 				continue;
-			ifam = mtod(m, struct ifa_msghdr *);
-			ifam->ifam_index = ifp->if_index;
-			ifam->ifam_metric = ifa->ifa_metric;
-			ifam->ifam_flags = ifa->ifa_flags;
-			ifam->ifam_addrs = info.rti_addrs;
+			mtod(m, struct ifa_msghdr *)->ifam_addrs =
+			    info.rti_addrs;
 		}
 		if ((cmd == RTM_ADD && pass == 2) ||
 		    (cmd == RTM_DELETE && pass == 1)) {
-			register struct rt_msghdr *rtm;
+			struct rt_msghdr rtm;
 			
 			if (rt == 0)
 				continue;
 			netmask = rt_mask(rt);
 			dst = sa = rt_key(rt);
 			gate = rt->rt_gateway;
-			if ((m = rt_msg1(cmd, &info)) == NULL)
+			bzero(&rtm, sizeof(rtm));
+			rtm.rtm_index = ifp->if_index;
+			rtm.rtm_flags |= rt->rt_flags;
+			rtm.rtm_errno = error;
+			m = rt_msg1(cmd, &info, (caddr_t)&rtm, sizeof(rtm));
+			if (m == NULL)
 				continue;
-			rtm = mtod(m, struct rt_msghdr *);
-			rtm->rtm_index = ifp->if_index;
-			rtm->rtm_flags |= rt->rt_flags;
-			rtm->rtm_errno = error;
-			rtm->rtm_addrs = info.rti_addrs;
+			mtod(m, struct rt_msghdr *)->rtm_addrs = info.rti_addrs;
 		}
 		route_proto.sp_protocol = sa ? sa->sa_family : 0;
 		raw_input(m, &route_proto, &route_src, &route_dst);
@@ -826,9 +880,10 @@ sysctl_dumpentry(rn, v)
 }
 
 int
-sysctl_iflist(af, w)
+sysctl_iflist(af, w, type)
 	int	af;
 	register struct	walkarg *w;
+	int type;
 {
 	register struct ifnet *ifp;
 	register struct ifaddr *ifa;
@@ -841,21 +896,92 @@ sysctl_iflist(af, w)
 			continue;
 		ifa = ifp->if_addrlist.tqh_first;
 		ifpaddr = ifa->ifa_addr;
-		if ((error = rt_msg2(RTM_IFINFO, &info, (caddr_t)0, w, &len)))
+		switch(type) {
+		case NET_RT_IFLIST:
+			error =
+			    rt_msg2(RTM_IFINFO, &info, (caddr_t)0, w, &len);
+			break;
+#ifdef COMPAT_14
+		case NET_RT_OIFLIST:
+			error =
+			    rt_msg2(RTM_OIFINFO, &info, (caddr_t)0, w, &len);
+			break;
+#endif
+		default:
+			panic("sysctl_iflist(1)");
+		}
+		if (error)
 			return (error);
 		ifpaddr = 0;
 		if (w->w_where && w->w_tmem && w->w_needed <= 0) {
-			register struct if_msghdr *ifm;
+			switch(type) {
+			case NET_RT_IFLIST: {
+				register struct if_msghdr *ifm;
 
-			ifm = (struct if_msghdr *)w->w_tmem;
-			ifm->ifm_index = ifp->if_index;
-			ifm->ifm_flags = ifp->if_flags;
-			ifm->ifm_data = ifp->if_data;
-			ifm->ifm_addrs = info.rti_addrs;
-			error = copyout(ifm, w->w_where, len);
-			if (error)
-				return (error);
-			w->w_where += len;
+				ifm = (struct if_msghdr *)w->w_tmem;
+				ifm->ifm_index = ifp->if_index;
+				ifm->ifm_flags = ifp->if_flags;
+				ifm->ifm_data = ifp->if_data;
+				ifm->ifm_addrs = info.rti_addrs;
+				error = copyout(ifm, w->w_where, len);
+				if (error)
+					return (error);
+				w->w_where += len;
+				break;
+			}
+
+#ifdef COMPAT_14
+			case NET_RT_OIFLIST: {
+				register struct if_msghdr14 *ifm;
+
+				ifm = (struct if_msghdr14 *)w->w_tmem;
+				ifm->ifm_index = ifp->if_index;
+				ifm->ifm_flags = ifp->if_flags;
+				ifm->ifm_data.ifi_type = ifp->if_data.ifi_type;
+				ifm->ifm_data.ifi_addrlen =
+				    ifp->if_data.ifi_addrlen;
+				ifm->ifm_data.ifi_hdrlen =
+				    ifp->if_data.ifi_hdrlen;
+				ifm->ifm_data.ifi_mtu = ifp->if_data.ifi_mtu;
+				ifm->ifm_data.ifi_metric =
+				    ifp->if_data.ifi_metric;
+				ifm->ifm_data.ifi_baudrate =
+				    ifp->if_data.ifi_baudrate;
+				ifm->ifm_data.ifi_ipackets =
+				    ifp->if_data.ifi_ipackets;
+				ifm->ifm_data.ifi_ierrors =
+				    ifp->if_data.ifi_ierrors;
+				ifm->ifm_data.ifi_opackets =
+				    ifp->if_data.ifi_opackets;
+				ifm->ifm_data.ifi_oerrors =
+				    ifp->if_data.ifi_oerrors;
+				ifm->ifm_data.ifi_collisions =
+				    ifp->if_data.ifi_collisions;
+				ifm->ifm_data.ifi_ibytes =
+				    ifp->if_data.ifi_ibytes;
+				ifm->ifm_data.ifi_obytes =
+				    ifp->if_data.ifi_obytes;
+				ifm->ifm_data.ifi_imcasts =
+				    ifp->if_data.ifi_imcasts;
+				ifm->ifm_data.ifi_omcasts =
+				    ifp->if_data.ifi_omcasts;
+				ifm->ifm_data.ifi_iqdrops =
+				    ifp->if_data.ifi_iqdrops;
+				ifm->ifm_data.ifi_noproto =
+				    ifp->if_data.ifi_noproto;
+				ifm->ifm_data.ifi_lastchange =
+				    ifp->if_data.ifi_lastchange;
+				ifm->ifm_addrs = info.rti_addrs;
+				error = copyout(ifm, w->w_where, len);
+				if (error)
+					return (error);
+				w->w_where += len;
+				break;
+			}
+#endif
+			default:
+				panic("sysctl_iflist(2)");
+			}
 		}
 		while ((ifa = ifa->ifa_list.tqe_next) != NULL) {
 			if (af && af != ifa->ifa_addr->sa_family)
@@ -931,8 +1057,14 @@ again:
 				break;
 		break;
 
+#ifdef COMPAT_14
+	case NET_RT_OIFLIST:
+		error = sysctl_iflist(af, &w, w.w_op);
+		break;
+#endif
+
 	case NET_RT_IFLIST:
-		error = sysctl_iflist(af, &w);
+		error = sysctl_iflist(af, &w, w.w_op);
 	}
 	splx(s);
 

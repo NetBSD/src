@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.1.1.1 1999/09/16 12:23:22 takemura Exp $	*/
+/*	$NetBSD: intr.h,v 1.1.1.1.8.1 1999/12/27 18:32:05 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -98,11 +98,14 @@ extern struct splvec splvec;
 #define MIPS_SPLHIGH (MIPS_INT_MASK)
 #define MIPS_SPL0 (MIPS_INT_MASK_0|MIPS_SOFT_INT_MASK_0|MIPS_SOFT_INT_MASK_1)
 #define MIPS_SPL1 (MIPS_INT_MASK_1|MIPS_SOFT_INT_MASK_0|MIPS_SOFT_INT_MASK_1)
+#define MIPS_SPL2 (MIPS_INT_MASK_2|MIPS_SOFT_INT_MASK_0|MIPS_SOFT_INT_MASK_1)
 #define MIPS_SPL3 (MIPS_INT_MASK_3|MIPS_SOFT_INT_MASK_0|MIPS_SOFT_INT_MASK_1)
+#define MIPS_SPL4 (MIPS_INT_MASK_4|MIPS_SOFT_INT_MASK_0|MIPS_SOFT_INT_MASK_1)
 #define MIPS_SPL_0_1	 (MIPS_INT_MASK_1|MIPS_SPL0)
 #define MIPS_SPL_0_1_2	 (MIPS_INT_MASK_2|MIPS_SPL_0_1)
 #define MIPS_SPL_0_1_3	 (MIPS_INT_MASK_3|MIPS_SPL_0_1)
 #define MIPS_SPL_0_1_2_3 (MIPS_INT_MASK_3|MIPS_SPL_0_1_2)
+#define MIPS_SPL_2_4     (MIPS_INT_MASK_4|MIPS_SPL2)
 
 /*
  * Index into intrcnt[], which is defined in locore

@@ -1,4 +1,4 @@
-/* $NetBSD: lock.h,v 1.3 1999/07/27 21:45:39 thorpej Exp $ */
+/* $NetBSD: lock.h,v 1.3.8.1 1999/12/27 18:31:26 wrstuden Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -39,11 +39,106 @@
 
 /*
  * Machine-dependent spin lock operations.
+ *
+ * NOTE: We assume that SIMPLELOCK_UNLOCKED == 0, so we can simply
+ * store `zero' to release a lock.
  */
 
-#if defined(_KERNEL)
-void	cpu_simple_lock_init __P((__volatile struct simplelock *));
-void	cpu_simple_lock __P((__volatile struct simplelock *));
-int	cpu_simple_lock_try __P((__volatile struct simplelock *));
-void	cpu_simple_unlock __P((__volatile struct simplelock *));
-#endif /* _KERNEL */
+#ifndef _ALPHA_LOCK_H_
+#define	_ALPHA_LOCK_H_
+
+static __inline void cpu_simple_lock_init __P((__volatile struct simplelock *))
+	__attribute__((__unused__));
+static __inline void cpu_simple_lock __P((__volatile struct simplelock *))
+	__attribute__((__unused__));
+static __inline int cpu_simple_lock_try __P((__volatile struct simplelock *))
+	__attribute__((__unused__));
+static __inline void cpu_simple_unlock __P((__volatile struct simplelock *))
+	__attribute__((__unused__));
+
+static __inline void
+cpu_simple_lock_init(alp)
+	__volatile struct simplelock *alp;
+{
+
+	__asm __volatile(
+		"# BEGIN cpu_simple_lock_init\n"
+		"	stl	$31, %0		\n"
+		"	mb			\n"
+		"	# END cpu_simple_lock_init"
+		: "=m" (alp->lock_data));
+}
+
+static __inline void
+cpu_simple_lock(alp)
+	__volatile struct simplelock *alp;
+{
+	unsigned long t0;
+
+	/*
+	 * Note, if we detect that the lock is held when
+	 * we do the initial load-locked, we spin using
+	 * a non-locked load to save the coherency logic
+	 * some work.
+	 */
+
+	__asm __volatile(
+		"# BEGIN cpu_simple_lock\n"
+		"1:	ldl_l	%0, %3		\n"
+		"	bne	%0, 2f		\n"
+		"	bis	$31, %2, %0	\n"
+		"	stl_c	%0, %1		\n"
+		"	beq	%0, 3f		\n"
+		"	mb			\n"
+		"	br	4f		\n"
+		"2:	ldl	%0, %3		\n"
+		"	beq	%0, 1b		\n"
+		"	br	2b		\n"
+		"3:	br	1b		\n"
+		"4:				\n"
+		"	# END cpu_simple_lock\n"
+		: "=r" (t0), "=m" (alp->lock_data)
+		: "i" (SIMPLELOCK_LOCKED), "1" (alp->lock_data));
+}
+
+static __inline int
+cpu_simple_lock_try(alp)
+	__volatile struct simplelock *alp;
+{
+	unsigned long t0, v0;
+
+	__asm __volatile(
+		"# BEGIN cpu_simple_lock_try\n"
+		"1:	ldl_l	%0, %4		\n"
+		"	bne	%0, 2f		\n"
+		"	bis	$31, %3, %0	\n"
+		"	stl_c	%0, %2		\n"
+		"	beq	%0, 3f		\n"
+		"	mb			\n"
+		"	bis	$31, 1, %1	\n"
+		"	br	4f		\n"
+		"2:	bis	$31, $31, %1	\n"
+		"	br	4f		\n"
+		"3:	br	1b		\n"
+		"4:				\n"
+		"	# END cpu_simple_lock_try"
+		: "=r" (t0), "=r" (v0), "=m" (alp->lock_data)
+		: "i" (SIMPLELOCK_LOCKED), "2" (alp->lock_data));
+
+	return (v0);
+}
+
+static __inline void
+cpu_simple_unlock(alp)
+	__volatile struct simplelock *alp;
+{
+
+	__asm __volatile(
+		"# BEGIN cpu_simple_unlock\n"
+		"	stl	$31, %0		\n"
+		"	mb			\n"
+		"	# END cpu_simple_unlock"
+		: "=m" (alp->lock_data));
+}
+
+#endif /* _ALPHA_LOCK_H_ */

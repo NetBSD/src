@@ -1,4 +1,4 @@
-/*	$NetBSD: xdr.c,v 1.18 1998/11/15 17:32:46 christos Exp $	*/
+/*	$NetBSD: xdr.c,v 1.18.6.1 1999/12/27 18:29:44 wrstuden Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)xdr.c 1.35 87/08/12";
 static char *sccsid = "@(#)xdr.c	2.1 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: xdr.c,v 1.18 1998/11/15 17:32:46 christos Exp $");
+__RCSID("$NetBSD: xdr.c,v 1.18.6.1 1999/12/27 18:29:44 wrstuden Exp $");
 #endif
 #endif
 
@@ -65,19 +65,25 @@ __weak_alias(xdr_bytes,_xdr_bytes);
 __weak_alias(xdr_char,_xdr_char);
 __weak_alias(xdr_enum,_xdr_enum);
 __weak_alias(xdr_free,_xdr_free);
+__weak_alias(xdr_hyper,_xdr_hyper);
 __weak_alias(xdr_int,_xdr_int);
 __weak_alias(xdr_int16_t,_xdr_int16_t);
 __weak_alias(xdr_int32_t,_xdr_int32_t);
+__weak_alias(xdr_int64_t,_xdr_int64_t);
 __weak_alias(xdr_long,_xdr_long);
+__weak_alias(xdr_longlong_t,_xdr_longlong_t);
 __weak_alias(xdr_netobj,_xdr_netobj);
 __weak_alias(xdr_opaque,_xdr_opaque);
 __weak_alias(xdr_short,_xdr_short);
 __weak_alias(xdr_string,_xdr_string);
 __weak_alias(xdr_u_char,_xdr_u_char);
+__weak_alias(xdr_u_hyper,_xdr_u_hyper);
 __weak_alias(xdr_u_int,_xdr_u_int);
 __weak_alias(xdr_u_int16_t,_xdr_u_int16_t);
 __weak_alias(xdr_u_int32_t,_xdr_u_int32_t);
+__weak_alias(xdr_u_int64_t,_xdr_u_int64_t);
 __weak_alias(xdr_u_long,_xdr_u_long);
+__weak_alias(xdr_u_longlong_t,_xdr_u_longlong_t);
 __weak_alias(xdr_u_short,_xdr_u_short);
 __weak_alias(xdr_union,_xdr_union);
 __weak_alias(xdr_void,_xdr_void);
@@ -758,4 +764,145 @@ xdr_wrapstring(xdrs, cpp)
 	char **cpp;
 {
 	return xdr_string(xdrs, cpp, LASTUNSIGNED);
+}
+
+/*
+ * NOTE: xdr_hyper(), xdr_u_hyper(), xdr_longlong_t(), and xdr_u_longlong_t()
+ * are in the "non-portable" section because they require that a `long long'
+ * be a 64-bit type.
+ *
+ *	--thorpej@netbsd.org, November 30, 1999
+ */
+
+/*
+ * XDR 64-bit integers
+ */
+bool_t
+xdr_int64_t(xdrs, llp)
+	XDR *xdrs;
+	int64_t *llp;
+{
+	u_long ul[2];
+
+	switch (xdrs->x_op) {
+	case XDR_ENCODE:
+		ul[0] = (*llp >> 32) & 0xffffffff;
+		ul[1] = *llp & 0xffffffff;
+		if (XDR_PUTLONG(xdrs, (long *)&ul[0]) == FALSE)
+			return (FALSE);
+		return (XDR_PUTLONG(xdrs, (long *)&ul[1]));
+	case XDR_DECODE:
+		if (XDR_GETLONG(xdrs, (long *)&ul[0]) == FALSE)
+			return (FALSE);
+		if (XDR_GETLONG(xdrs, (long *)&ul[1]) == FALSE)
+			return (FALSE);
+		*llp = (int64_t)
+		    (((u_int64_t)ul[0] << 32) | ((u_int64_t)ul[1]));
+		return (TRUE);
+	case XDR_FREE:
+		return (TRUE);
+	}
+	/* NOTREACHED */
+	return (FALSE);
+}
+
+
+/*
+ * XDR unsigned 64-bit integers
+ */
+bool_t
+xdr_u_int64_t(xdrs, ullp)
+	XDR *xdrs;
+	u_int64_t *ullp;
+{
+	u_long ul[2];
+
+	switch (xdrs->x_op) {
+	case XDR_ENCODE:
+		ul[0] = (*ullp >> 32) & 0xffffffff;
+		ul[1] = *ullp & 0xffffffff;
+		if (XDR_PUTLONG(xdrs, (long *)&ul[0]) == FALSE)
+			return (FALSE);
+		return (XDR_PUTLONG(xdrs, (long *)&ul[1]));
+	case XDR_DECODE:
+		if (XDR_GETLONG(xdrs, (long *)&ul[0]) == FALSE)
+			return (FALSE);
+		if (XDR_GETLONG(xdrs, (long *)&ul[1]) == FALSE)
+			return (FALSE);
+		*ullp = (u_int64_t)
+		    (((u_int64_t)ul[0] << 32) | ((u_int64_t)ul[1]));
+		return (TRUE);
+	case XDR_FREE:
+		return (TRUE);
+	}
+	/* NOTREACHED */
+	return (FALSE);
+}
+
+
+/*
+ * XDR hypers
+ */
+bool_t
+xdr_hyper(xdrs, llp)
+	XDR *xdrs;
+	longlong_t *llp;
+{
+
+	/*
+	 * Don't bother open-coding this; it's a fair amount of code.  Just
+	 * call xdr_int64_t().
+	 */
+	return (xdr_int64_t(xdrs, (int64_t *)llp));
+}
+
+
+/*
+ * XDR unsigned hypers
+ */
+bool_t
+xdr_u_hyper(xdrs, ullp)
+	XDR *xdrs;
+	u_longlong_t *ullp;
+{
+
+	/*
+	 * Don't bother open-coding this; it's a fair amount of code.  Just
+	 * call xdr_u_int64_t().
+	 */
+	return (xdr_u_int64_t(xdrs, (u_int64_t *)ullp));
+}
+
+
+/*
+ * XDR longlong_t's
+ */
+bool_t
+xdr_longlong_t(xdrs, llp)
+	XDR *xdrs;
+	longlong_t *llp;
+{
+
+	/*
+	 * Don't bother open-coding this; it's a fair amount of code.  Just
+	 * call xdr_int64_t().
+	 */
+	return (xdr_int64_t(xdrs, (int64_t *)llp));
+}
+
+
+/*
+ * XDR u_longlong_t's
+ */
+bool_t
+xdr_u_longlong_t(xdrs, ullp)
+	XDR *xdrs;
+	u_longlong_t *ullp;
+{
+
+	/*
+	 * Don't bother open-coding this; it's a fair amount of code.  Just
+	 * call xdr_u_int64_t().
+	 */
+	return (xdr_u_int64_t(xdrs, (u_int64_t *)ullp));
 }

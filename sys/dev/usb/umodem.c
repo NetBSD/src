@@ -1,4 +1,4 @@
-/*	$NetBSD: umodem.c,v 1.15 1999/09/11 08:19:27 augustss Exp $	*/
+/*	$NetBSD: umodem.c,v 1.15.8.1 1999/12/27 18:35:44 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -94,7 +94,13 @@ int	umodemdebug = 0;
 #define	UMODEMDIALOUT(x)	(minor(x) & UMODEMDIALOUT_MASK)
 #define	UMODEMCALLUNIT(x)	(minor(x) & UMODEMCALLUNIT_MASK)
 
+/* 
+ * These are the maximum number of bytes transferred per frame.
+ * If some really high speed devices should use this driver they
+ * may need to be increased, but this is good enough for modems.
+ */
 #define UMODEMIBUFSIZE 64
+#define UMODEMOBUFSIZE 256
 
 struct umodem_softc {
 	USBBASEDEVICE		sc_dev;		/* base device */
@@ -108,12 +114,13 @@ struct umodem_softc {
 
 	int			sc_bulkin_no;	/* bulk in endpoint address */
 	usbd_pipe_handle	sc_bulkin_pipe;	/* bulk in pipe */
-	usbd_request_handle	sc_ireqh;	/* read request */
+	usbd_xfer_handle	sc_ixfer;	/* read request */
 	u_char			*sc_ibuf;	/* read buffer */
 
 	int			sc_bulkout_no;	/* bulk out endpoint address */
 	usbd_pipe_handle	sc_bulkout_pipe;/* bulk out pipe */
-	usbd_request_handle	sc_oreqh;	/* read request */
+	usbd_xfer_handle	sc_oxfer;	/* write request */
+	u_char			*sc_obuf;	/* write buffer */
 
 	int			sc_cm_cap;	/* CM capabilities */
 	int			sc_acm_cap;	/* ACM capabilities */
@@ -146,9 +153,9 @@ void	umodem_shutdown	__P((struct umodem_softc *));
 void	umodem_modem	__P((struct umodem_softc *, int));
 void	umodem_break	__P((struct umodem_softc *, int));
 usbd_status umodemstartread __P((struct umodem_softc *));
-void	umodemreadcb	__P((usbd_request_handle, usbd_private_handle, 
+void	umodemreadcb	__P((usbd_xfer_handle, usbd_private_handle, 
 			     usbd_status status));
-void	umodemwritecb	__P((usbd_request_handle, usbd_private_handle, 
+void	umodemwritecb	__P((usbd_xfer_handle, usbd_private_handle, 
 			     usbd_status status));
 
 USB_DECLARE_DRIVER(umodem);
@@ -186,7 +193,7 @@ USB_ATTACH(umodem)
 	usb_endpoint_descriptor_t *ed;
 	usb_cdc_cm_descriptor_t *cmd;
 	char devinfo[1024];
-	usbd_status r;
+	usbd_status err;
 	int data_ifaceno;
 	int i;
 	struct tty *tp;
@@ -206,7 +213,7 @@ USB_ATTACH(umodem)
 
 	/* Get the data interface no. */
 	cmd = umodem_get_desc(dev, UDESC_CS_INTERFACE, UDESCSUB_CDC_CM);
-	if (!cmd) {
+	if (cmd == NULL) {
 		DPRINTF(("%s: no CM desc\n", USBDEVNAME(sc->sc_dev)));
 		goto bad;
 	}
@@ -228,7 +235,7 @@ USB_ATTACH(umodem)
 			}
 		}
 	}
-	if (!sc->sc_data_iface) {
+	if (sc->sc_data_iface == NULL) {
 		printf("%s: no data interface\n", USBDEVNAME(sc->sc_dev));
 		goto bad;
 	}
@@ -242,7 +249,7 @@ USB_ATTACH(umodem)
 	id = usbd_get_interface_descriptor(sc->sc_data_iface);
 	for (i = 0; i < id->bNumEndpoints; i++) {
 		ed = usbd_interface2endpoint_descriptor(sc->sc_data_iface, i);
-		if (!ed) {
+		if (ed == NULL) {
 			printf("%s: no endpoint descriptor for %d\n",
 				USBDEVNAME(sc->sc_dev), i);
 			goto bad;
@@ -268,9 +275,9 @@ USB_ATTACH(umodem)
 	}
 
 	if (sc->sc_cm_cap & USB_CDC_CM_OVER_DATA) {
-		r = umodem_set_comm_feature(sc, UCDC_ABSTRACT_STATE,
+		err = umodem_set_comm_feature(sc, UCDC_ABSTRACT_STATE,
 					    UCDC_DATA_MULTIPLEXED);
-		if (r != USBD_NORMAL_COMPLETION)
+		if (err)
 			goto bad;
 		sc->sc_cm_over_data = 1;
 	}
@@ -356,20 +363,28 @@ umodemstart(tp)
 
 	SET(tp->t_state, TS_BUSY);
 
+	/* XXX Is it really correct not to transfer all of the buffer? */
+	if (cnt > UMODEMOBUFSIZE) {
+		DPRINTF(("umodemstart: big buffer %d chars\n", cnt));
+		cnt = UMODEMOBUFSIZE;
+	}
+
+	memcpy(sc->sc_obuf, data, cnt);
+
 	DPRINTFN(4,("umodemstart: %d chars\n", cnt));
 	/* XXX what can we do on error? */
-	usbd_setup_request(sc->sc_oreqh, sc->sc_bulkout_pipe, 
-			   (usbd_private_handle)sc, data, cnt,
-			   0, USBD_NO_TIMEOUT, umodemwritecb);
-	(void)usbd_transfer(sc->sc_oreqh);
+	usbd_setup_xfer(sc->sc_oxfer, sc->sc_bulkout_pipe, 
+			(usbd_private_handle)sc, sc->sc_obuf, cnt,
+			USBD_NO_COPY, USBD_NO_TIMEOUT, umodemwritecb);
+	(void)usbd_transfer(sc->sc_oxfer);
 
 out:
 	splx(s);
 }
 
 void
-umodemwritecb(reqh, p, status)
-	usbd_request_handle reqh;
+umodemwritecb(xfer, p, status)
+	usbd_xfer_handle xfer;
 	usbd_private_handle p;
 	usbd_status status;
 {
@@ -390,7 +405,7 @@ umodemwritecb(reqh, p, status)
 		return;
 	}
 
-	usbd_get_request_status(reqh, 0, 0, &cc, 0);
+	usbd_get_xfer_status(xfer, 0, 0, &cc, 0);
 	DPRINTFN(5,("umodemwritecb: cc=%d\n", cc));
 
 	s = spltty();
@@ -480,7 +495,7 @@ umodemopen(dev, flag, mode, p)
 	struct proc *p;
 {
 	int unit = UMODEMUNIT(dev);
-	usbd_status r;
+	usbd_status err;
 	struct umodem_softc *sc;
 	struct tty *tp;
 	int s;
@@ -489,7 +504,7 @@ umodemopen(dev, flag, mode, p)
 	if (unit >= umodem_cd.cd_ndevs)
 		return (ENXIO);
 	sc = umodem_cd.cd_devs[unit];
-	if (sc == 0)
+	if (sc == NULL)
 		return (ENXIO);
 
 	if (sc->sc_dying)
@@ -548,16 +563,16 @@ umodemopen(dev, flag, mode, p)
 		DPRINTF(("umodemopen: open pipes\n"));
 
 		/* Open the bulk pipes */
-		r = usbd_open_pipe(sc->sc_data_iface, sc->sc_bulkin_no, 0,
-				   &sc->sc_bulkin_pipe);
-		if (r != USBD_NORMAL_COMPLETION) {
+		err = usbd_open_pipe(sc->sc_data_iface, sc->sc_bulkin_no, 0,
+				     &sc->sc_bulkin_pipe);
+		if (err) {
 			DPRINTF(("%s: cannot open bulk out pipe (addr %d)\n",
 				 USBDEVNAME(sc->sc_dev), sc->sc_bulkin_no));
 			return (EIO);
 		}
-		r = usbd_open_pipe(sc->sc_data_iface, sc->sc_bulkout_no,
-				   USBD_EXCLUSIVE_USE, &sc->sc_bulkout_pipe);
-		if (r != USBD_NORMAL_COMPLETION) {
+		err = usbd_open_pipe(sc->sc_data_iface, sc->sc_bulkout_no,
+				     USBD_EXCLUSIVE_USE, &sc->sc_bulkout_pipe);
+		if (err) {
 			DPRINTF(("%s: cannot open bulk in pipe (addr %d)\n",
 				 USBDEVNAME(sc->sc_dev), sc->sc_bulkout_no));
 			usbd_close_pipe(sc->sc_bulkin_pipe);
@@ -565,21 +580,37 @@ umodemopen(dev, flag, mode, p)
 		}
 		
 		/* Allocate a request and an input buffer and start reading. */
-		sc->sc_ireqh = usbd_alloc_request(sc->sc_udev);
-		if (sc->sc_ireqh == 0) {
+		sc->sc_ixfer = usbd_alloc_xfer(sc->sc_udev);
+		if (sc->sc_ixfer == NULL) {
 			usbd_close_pipe(sc->sc_bulkin_pipe);
 			usbd_close_pipe(sc->sc_bulkout_pipe);
 			return (ENOMEM);
 		}
-		sc->sc_oreqh = usbd_alloc_request(sc->sc_udev);
-		if (sc->sc_oreqh == 0) {
+		sc->sc_ibuf = usbd_alloc_buffer(sc->sc_ixfer, UMODEMIBUFSIZE);
+		if (sc->sc_ibuf == NULL) {
+			usbd_free_xfer(sc->sc_ixfer);
 			usbd_close_pipe(sc->sc_bulkin_pipe);
 			usbd_close_pipe(sc->sc_bulkout_pipe);
-			usbd_free_request(sc->sc_ireqh);
 			return (ENOMEM);
 		}
-		sc->sc_ibuf = malloc(UMODEMIBUFSIZE, M_USBDEV, M_WAITOK);
-		umodemstartread(sc);
+
+		sc->sc_oxfer = usbd_alloc_xfer(sc->sc_udev);
+		if (sc->sc_oxfer == NULL) {
+			usbd_free_xfer(sc->sc_ixfer);
+			usbd_close_pipe(sc->sc_bulkin_pipe);
+			usbd_close_pipe(sc->sc_bulkout_pipe);
+			return (ENOMEM);
+		}
+		sc->sc_obuf = usbd_alloc_buffer(sc->sc_oxfer, UMODEMOBUFSIZE);
+		if (sc->sc_obuf == NULL) {
+			usbd_free_xfer(sc->sc_oxfer);
+			usbd_free_xfer(sc->sc_ixfer);
+			usbd_close_pipe(sc->sc_bulkin_pipe);
+			usbd_close_pipe(sc->sc_bulkout_pipe);
+			return (ENOMEM);
+		}
+
+		(void)umodemstartread(sc);
 	}
 	sc->sc_opening = 0;
 	wakeup(&sc->sc_opening);
@@ -611,29 +642,32 @@ usbd_status
 umodemstartread(sc)
 	struct umodem_softc *sc;
 {
-	usbd_status r;
+	usbd_status err;
 
 	DPRINTFN(5,("umodemstartread: start\n"));
-	usbd_setup_request(sc->sc_ireqh, sc->sc_bulkin_pipe, 
-			   (usbd_private_handle)sc, 
-			   sc->sc_ibuf,  UMODEMIBUFSIZE, USBD_SHORT_XFER_OK, 
-			   USBD_NO_TIMEOUT, umodemreadcb);
-	r = usbd_transfer(sc->sc_ireqh);
-	if (r != USBD_IN_PROGRESS)
-		return (r);
+	usbd_setup_xfer(sc->sc_ixfer, sc->sc_bulkin_pipe, 
+			(usbd_private_handle)sc, 
+			sc->sc_ibuf, UMODEMIBUFSIZE, 
+			USBD_SHORT_XFER_OK | USBD_NO_COPY,
+			USBD_NO_TIMEOUT, umodemreadcb);
+	err = usbd_transfer(sc->sc_ixfer);
+	if (err != USBD_IN_PROGRESS) {
+		printf("%s: start read failed, err=%s\n", 
+		       USBDEVNAME(sc->sc_dev), usbd_errstr(err));
+		return (err);
+	}
 	return (USBD_NORMAL_COMPLETION);
 }
  
 void
-umodemreadcb(reqh, p, status)
-	usbd_request_handle reqh;
+umodemreadcb(xfer, p, status)
+	usbd_xfer_handle xfer;
 	usbd_private_handle p;
 	usbd_status status;
 {
 	struct umodem_softc *sc = (struct umodem_softc *)p;
 	struct tty *tp = sc->sc_tty;
 	int (*rint) __P((int c, struct tty *tp)) = linesw[tp->t_line].l_rint;
-	usbd_status r;
 	u_int32_t cc;
 	u_char *cp;
 	int s;
@@ -648,7 +682,7 @@ umodemreadcb(reqh, p, status)
 		return;
 	}
 
-	usbd_get_request_status(reqh, 0, (void **)&cp, &cc, 0);
+	usbd_get_xfer_status(xfer, 0, (void **)&cp, &cc, 0);
 	DPRINTFN(5,("umodemreadcb: got %d chars, tp=%p\n", cc, tp));
 	s = spltty();
 	/* Give characters to tty layer. */
@@ -661,11 +695,7 @@ umodemreadcb(reqh, p, status)
 	}
 	splx(s);
 
-	r = umodemstartread(sc);
-	if (r != USBD_NORMAL_COMPLETION) {
-		printf("%s: read start failed\n", USBDEVNAME(sc->sc_dev));
-		/* XXX what should we dow now? */
-	}
+	(void)umodemstartread(sc);
 }
 
 int
@@ -709,9 +739,8 @@ umodem_cleanup(sc)
 	usbd_close_pipe(sc->sc_bulkin_pipe);
 	usbd_abort_pipe(sc->sc_bulkout_pipe);
 	usbd_close_pipe(sc->sc_bulkout_pipe);
-	usbd_free_request(sc->sc_ireqh);
-	usbd_free_request(sc->sc_oreqh);
-	free(sc->sc_ibuf, M_USBDEV);
+	usbd_free_xfer(sc->sc_ixfer);
+	usbd_free_xfer(sc->sc_oxfer);
 }
 
 int
@@ -932,7 +961,7 @@ umodem_set_comm_feature(sc, feature, state)
 	int state;
 {
 	usb_device_request_t req;
-	usbd_status r;
+	usbd_status err;
 	usb_cdc_abstract_state_t ast;
 
 	req.bmRequestType = UT_WRITE_CLASS_INTERFACE;
@@ -942,11 +971,11 @@ umodem_set_comm_feature(sc, feature, state)
 	USETW(req.wLength, UCDC_ABSTRACT_STATE_LENGTH);
 	USETW(ast.wState, state);
 
-	r = usbd_do_request(sc->sc_udev, &req, &ast);
-	if (r != USBD_NORMAL_COMPLETION) {
+	err = usbd_do_request(sc->sc_udev, &req, &ast);
+	if (err) {
 		DPRINTF(("umodem_set_comm_feature: feature=%d failed, r=%d\n",
-			 feature, r));
-		return (r);
+			 feature, err));
+		return (err);
 	}
 
 	return (USBD_NORMAL_COMPLETION);
@@ -958,7 +987,7 @@ umodem_set_line_coding(sc, state)
 	usb_cdc_line_state_t *state;
 {
 	usb_device_request_t req;
-	usbd_status r;
+	usbd_status err;
 
 	DPRINTF(("umodem_set_line_coding: rate=%d fmt=%d parity=%d bits=%d\n",
 		 UGETDW(state->dwDTERate), state->bCharFormat,
@@ -975,10 +1004,10 @@ umodem_set_line_coding(sc, state)
 	USETW(req.wIndex, sc->sc_ctl_iface_no);
 	USETW(req.wLength, UCDC_LINE_STATE_LENGTH);
 
-	r = usbd_do_request(sc->sc_udev, &req, state);
-	if (r != USBD_NORMAL_COMPLETION) {
-		DPRINTF(("umodem_set_line_coding: failed, r=%d\n", r));
-		return (r);
+	err = usbd_do_request(sc->sc_udev, &req, state);
+	if (err) {
+		DPRINTF(("umodem_set_line_coding: failed, err=%d\n", err));
+		return (err);
 	}
 
 	sc->sc_line_state = *state;

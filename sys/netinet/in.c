@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.48 1999/07/01 08:12:49 itojun Exp $	*/
+/*	$NetBSD: in.c,v 1.48.8.1 1999/12/27 18:36:13 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -562,6 +562,7 @@ in_lifaddr_ioctl(so, cmd, data, ifp, p)
 {
 	struct if_laddrreq *iflr = (struct if_laddrreq *)data;
 	struct ifaddr *ifa;
+	struct sockaddr *sa;
 
 	/* sanity checks */
 	if (!data || !ifp) {
@@ -578,16 +579,17 @@ in_lifaddr_ioctl(so, cmd, data, ifp, p)
 	case SIOCALIFADDR:
 	case SIOCDLIFADDR:
 		/* address must be specified on ADD and DELETE */
-		if (iflr->addr.__ss_family != AF_INET)
+		sa = (struct sockaddr *)&iflr->addr;
+		if (sa->sa_family != AF_INET)
 			return EINVAL;
-		if (iflr->addr.__ss_len != sizeof(struct sockaddr_in))
+		if (sa->sa_len != sizeof(struct sockaddr_in))
 			return EINVAL;
 		/* XXX need improvement */
-		if (iflr->dstaddr.__ss_family
-		 && iflr->dstaddr.__ss_family != AF_INET)
+		sa = (struct sockaddr *)&iflr->dstaddr;
+		if (sa->sa_family
+		 && sa->sa_family != AF_INET)
 			return EINVAL;
-		if (iflr->dstaddr.__ss_family
-		 && iflr->dstaddr.__ss_len != sizeof(struct sockaddr_in))
+		if (sa->sa_len && sa->sa_len != sizeof(struct sockaddr_in))
 			return EINVAL;
 		break;
 	default: /*shouldn't happen*/
@@ -614,11 +616,12 @@ in_lifaddr_ioctl(so, cmd, data, ifp, p)
 		bcopy(iflr->iflr_name, ifra.ifra_name,
 			sizeof(ifra.ifra_name));
 
-		bcopy(&iflr->addr, &ifra.ifra_addr, iflr->addr.__ss_len);
+		bcopy(&iflr->addr, &ifra.ifra_addr,
+			((struct sockaddr *)&iflr->addr)->sa_len);
 
-		if (iflr->dstaddr.__ss_family) {	/*XXX*/
+		if (((struct sockaddr *)&iflr->dstaddr)->sa_family) {	/*XXX*/
 			bcopy(&iflr->dstaddr, &ifra.ifra_dstaddr,
-				iflr->dstaddr.__ss_len);
+				((struct sockaddr *)&iflr->dstaddr)->sa_len);
 		}
 
 		ifra.ifra_mask.sin_family = AF_INET;

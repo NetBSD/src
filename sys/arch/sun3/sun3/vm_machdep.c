@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.54 1999/07/08 18:11:01 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.54.8.1 1999/12/27 18:34:07 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -316,7 +316,7 @@ pagemove(from, to, len)
 	boolean_t rv;
 
 #ifdef DEBUG
-	if (len & CLOFSET)
+	if (len & PGOFSET)
 		panic("pagemove");
 #endif
 	while (len > 0) {
@@ -329,7 +329,7 @@ pagemove(from, to, len)
 #endif
 		/* pmap_remove does the necessary cache flush.*/
 		pmap_remove(kpmap, fva, fva + NBPG);
-		pmap_enter(kpmap, tva, pa, prot, 1, prot);
+		pmap_enter(kpmap, tva, pa, prot, prot|PMAP_WIRED);
 		fva += NBPG;
 		tva += NBPG;
 		len -= NBPG;
@@ -378,7 +378,7 @@ vmapbuf(bp, len)
 #endif
 		/* Now map the page into kernel space. */
 		pmap_enter(kpmap, kva, pa | PMAP_NC,
-		    VM_PROT_READ|VM_PROT_WRITE, TRUE, 0);
+		    VM_PROT_READ|VM_PROT_WRITE, PMAP_WIRED);
 		uva += NBPG;
 		kva += NBPG;
 		len -= NBPG;

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.50 1999/09/19 19:05:44 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.50.8.1 1999/12/27 18:34:09 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -1671,19 +1671,18 @@ pmap_stroll(pmap, va, a_tbl, b_tbl, c_tbl, pte, a_idx, b_idx, pte_idx)
  * would save my hair!!)
  * This function ought to be easier to read.
  */
-void
-pmap_enter(pmap, va, pa, prot, wired, access_type)
+int
+pmap_enter(pmap, va, pa, prot, flags)
 	pmap_t	pmap;
 	vm_offset_t va;
 	vm_offset_t pa;
 	vm_prot_t prot;
-	boolean_t wired;
-	vm_prot_t access_type;
+	int flags;
 {
 	boolean_t insert, managed; /* Marks the need for PV insertion.*/
 	u_short nidx;            /* PV list index                     */
 	int s;                   /* Used for splimp()/splx()          */
-	int flags;               /* Mapping flags. eg. Cache inhibit  */
+	int mapflags;            /* Flags for the mapping (see NOTE1) */
 	u_int a_idx, b_idx, pte_idx; /* table indices                 */
 	a_tmgr_t *a_tbl;         /* A: long descriptor table manager  */
 	b_tmgr_t *b_tbl;         /* B: short descriptor table manager */
@@ -1692,17 +1691,41 @@ pmap_enter(pmap, va, pa, prot, wired, access_type)
 	mmu_short_dte_t *b_dte;  /* B: short descriptor table         */
 	mmu_short_pte_t *c_pte;  /* C: short page descriptor table    */
 	pv_t      *pv;           /* pv list head                      */
+	boolean_t wired;         /* is the mapping to be wired?       */
 	enum {NONE, NEWA, NEWB, NEWC} llevel; /* used at end   */
 
 	if (pmap == NULL)
-		return;
+		return (KERN_SUCCESS);
 	if (pmap == pmap_kernel()) {
 		pmap_enter_kernel(va, pa, prot);
-		return;
+		return (KERN_SUCCESS);
 	}
 
-	flags  = (pa & ~MMU_PAGE_MASK);
-	pa    &= MMU_PAGE_MASK;
+	/*
+	 * Determine if the mapping should be wired.
+	 */
+	wired = ((flags & PMAP_WIRED) != 0);
+
+	/*
+	 * NOTE1:
+	 *
+	 * On November 13, 1999, someone changed the pmap_enter() API such
+	 * that it now accepts a 'flags' argument.  This new argument
+	 * contains bit-flags for the architecture-independent (UVM) system to
+	 * use in signalling certain mapping requirements to the architecture-
+	 * dependent (pmap) system.  The argument it replaces, 'wired', is now
+	 * one of the flags within it.
+	 *
+	 * In addition to flags signaled by the architecture-independent
+	 * system, parts of the architecture-dependent section of the sun3x
+	 * kernel pass their own flags in the lower, unused bits of the
+	 * physical address supplied to this function.  These flags are
+	 * extracted and stored in the temporary variable 'mapflags'.
+	 *
+	 * Extract sun3x specific flags from the physical address.
+	 */ 
+	mapflags  = (pa & ~MMU_PAGE_MASK);
+	pa       &= MMU_PAGE_MASK;
 
 	/*
 	 * Determine if the physical address being mapped is on-board RAM.
@@ -1710,7 +1733,7 @@ pmap_enter(pmap, va, pa, prot, wired, access_type)
 	 * device and hence it would be disasterous to cache its contents.
 	 */
 	if ((managed = is_managed(pa)) == FALSE)
-		flags |= PMAP_NC;
+		mapflags |= PMAP_NC;
 
 	/*
 	 * For user mappings we walk along the MMU tables of the given
@@ -2000,7 +2023,7 @@ pmap_enter(pmap, va, pa, prot, wired, access_type)
 	 * bits found on the lower order of the physical address.)
 	 * mark the PTE as a cache inhibited page.
 	 */
-	if (flags & PMAP_NC)
+	if (mapflags & PMAP_NC)
 		c_pte->attr.raw |= MMU_SHORT_PTE_CI;
 
 	/*
@@ -2033,6 +2056,8 @@ pmap_enter(pmap, va, pa, prot, wired, access_type)
 		default:
 			break;
 	}
+
+	return (KERN_SUCCESS);
 }
 
 /* pmap_enter_kernel			INTERNAL
@@ -2135,7 +2160,7 @@ pmap_kenter_pa(va, pa, prot)
 	paddr_t pa;
 	vm_prot_t prot;
 {
-	pmap_enter(pmap_kernel(), va, pa, prot, TRUE, 0);
+	pmap_enter(pmap_kernel(), va, pa, prot, PMAP_WIRED);
 }
 
 void
@@ -2148,7 +2173,7 @@ pmap_kenter_pgs(va, pgs, npgs)
 
 	for (i = 0; i < npgs; i++, va += PAGE_SIZE) {
 		pmap_enter(pmap_kernel(), va, VM_PAGE_TO_PHYS(pgs[i]),
-				VM_PROT_READ|VM_PROT_WRITE, TRUE, 0);
+				VM_PROT_READ|VM_PROT_WRITE, PMAP_WIRED);
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_exec.c,v 1.15 1999/03/26 04:29:26 eeh Exp $	*/
+/*	$NetBSD: netbsd32_exec.c,v 1.15.8.1 1999/12/27 18:34:29 wrstuden Exp $	*/
 /*	from: NetBSD: exec_aout.c,v 1.15 1996/09/26 23:34:46 cgd Exp */
 
 /*
@@ -84,7 +84,9 @@ struct emul emul_netbsd32 = {
 	NULL,
 #endif
 	0,
+#if FIXED
 	netbsd32_copyinargs,
+#endif
 	netbsd32_copyargs,
 	netbsd32_setregs,	/* XXX needs to be written?? */
 	netbsd32_sigcode,

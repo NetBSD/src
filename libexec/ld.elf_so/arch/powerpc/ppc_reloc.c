@@ -1,4 +1,4 @@
-/*	$NetBSD: ppc_reloc.c,v 1.4 1999/04/17 21:16:46 ws Exp $	*/
+/*	$NetBSD: ppc_reloc.c,v 1.4.2.1 1999/12/27 18:30:16 wrstuden Exp $	*/
 
 /*-
  * Copyright (C) 1998	Tsubai Masanari
@@ -32,16 +32,17 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <machine/cpu.h>
 
 #include "debug.h"
 #include "rtld.h"
 
-caddr_t _rtld_bind_powerpc __P((const Obj_Entry *, Elf_Word));
+caddr_t _rtld_bind_powerpc __P((Obj_Entry *, Elf_Word));
 void _rtld_powerpc_pltcall __P((Elf_Word));
 void _rtld_powerpc_pltresolve __P((Elf_Word, Elf_Word));
 
-static Elf_Addr _rtld_bind_pltgot __P((const Obj_Entry *, const Elf_RelA *));
+static Elf_Addr _rtld_bind_pltgot __P((Obj_Entry *, const Elf_RelA *));
 
 #define ha(x) ((((u_int32_t)(x) & 0x8000) ? \
 			((u_int32_t)(x) + 0x10000) : (u_int32_t)(x)) >> 16)
@@ -52,7 +53,7 @@ static Elf_Addr _rtld_bind_pltgot __P((const Obj_Entry *, const Elf_RelA *));
  */
 caddr_t
 _rtld_bind_powerpc(obj, reloff)
-	const Obj_Entry *obj;
+	Obj_Entry *obj;
 	Elf_Word reloff;
 {
 	Elf_Addr addr;
@@ -77,7 +78,7 @@ _rtld_bind_powerpc(obj, reloff)
  */
 int
 _rtld_reloc_powerpc_plt(
-	const Obj_Entry *obj,
+	Obj_Entry *obj,
 	const Elf_RelA *rela,
 	bool bind_now)
 {
@@ -108,7 +109,7 @@ _rtld_reloc_powerpc_plt(
  */
 Elf_Addr
 _rtld_bind_pltgot(obj, rela)
-	const Obj_Entry *obj;
+	Obj_Entry *obj;
 	const Elf_RelA *rela;
 {
 	Elf_Word *where = (Elf_Word *)(obj->relocbase + rela->r_offset);

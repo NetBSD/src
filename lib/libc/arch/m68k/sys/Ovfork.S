@@ -1,4 +1,4 @@
-/*	$NetBSD: Ovfork.S,v 1.9 1999/05/02 20:52:02 kleink Exp $	*/
+/*	$NetBSD: Ovfork.S,v 1.9.2.1 1999/12/27 18:29:34 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -43,7 +43,7 @@
 #if 0
 	RCSID("from: @(#)Ovfork.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: Ovfork.S,v 1.9 1999/05/02 20:52:02 kleink Exp $")
+	RCSID("$NetBSD: Ovfork.S,v 1.9.2.1 1999/12/27 18:29:34 wrstuden Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -67,43 +67,48 @@ WARN_REFERENCES(vfork, \
  */
 
 ENTRY(vfork)
-	movl	sp@+,a0
-	movl	#SYS_vfork,d0
+	movl	%sp@+,%a0
+	movl	#SYS_vfork,%d0
 	trap	#0
 	jcs	err
-	subql	#1,d1	/* from 1 to 0 in child, 0 to -1 in parent */
-	andl	d1,d0
-	jmp	a0@
+	subql	#1,%d1	/* from 1 to 0 in child, 0 to -1 in parent */
+	andl	%d1,%d0
+	jmp	%a0@
 err:
 #ifdef	_REENTRANT
 	.globl	_C_LABEL(__errno)
-	movl	a0,sp@-
-	movl	d0,sp@-
-#ifdef	PIC
-	movl	#_C_LABEL(_GLOBAL_OFFSET_TABLE_),a1
-	lea	pc@(0,a1:l),a1
-	movl	a1@(_C_LABEL(__errno):l),a1
-	jsr	a1@
+	movl	%a0,%sp@-
+	movl	%d0,%sp@-
+#if defined(PIC) && !defined(__ELF__)
+	movl	#_C_LABEL(_GLOBAL_OFFSET_TABLE_),%a1
+	lea	%pc@(0,a1:l),%a1
+	movl	%a1@(_C_LABEL(__errno):l),%a1
+	jsr	%a1@
 #else
-	jbsr	_C_LABEL(__errno)
+	jbsr	PIC_PLT(_C_LABEL(__errno))
 #endif	/* PIC */
 #ifdef	__SVR4_ABI__
-	movl	sp@+,a0@
+	movl	%sp@+,%a0@
 #else
-	movl	d0,a1
-	movl	sp@+,a1@
+	movl	%d0,%a1
+	movl	%sp@+,%a1@
 #endif	/* __SVR4_ABI__ */
-	movl	sp@+,a0
+	movl	%sp@+,%a0
 #else
 	.globl	_C_LABEL(errno)
 #ifdef	PIC
-	movl	#_C_LABEL(_GLOBAL_OFFSET_TABLE_),a1
-	lea	pc@(0,a1:l),a1
-	movl	a1@(_C_LABEL(errno):w),a1
-	movl	d0,a1@
+#ifdef	__ELF__
+	lea	%pc@(_GLOBAL_OFFSET_TABLE_@GOTPC),%a1
+	movl	%a1@(_C_LABEL(errno)@GOT:w),%a1
 #else
-	movl	d0,_C_LABEL(errno)
+	movl	#_C_LABEL(_GLOBAL_OFFSET_TABLE_),%a1
+	lea	%pc@(0,a1:l),%a1
+	movl	%a1@(_C_LABEL(errno):w),%a1
+#endif
+	movl	%d0,%a1@
+#else
+	movl	%d0,_C_LABEL(errno)
 #endif	/* PIC */
 #endif	/* _REENTRANT */
-	moveq	#-1,d0
-	jmp	a0@
+	moveq	#-1,%d0
+	jmp	%a0@

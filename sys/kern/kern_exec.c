@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.103 1999/09/28 14:47:03 bouyer Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.103.8.1 1999/12/27 18:35:51 wrstuden Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -413,6 +413,10 @@ sys_execve(p, v, retval)
 		    p->p_sigacts->ps_sigcode = (char *)PS_STRINGS - szsigcode,
 		    szsigcode))
 			goto exec_abort;
+#ifdef PMAP_NEED_PROCWR
+		/* This is code. Let the pmap do what is needed. */
+		pmap_procwr(p, (vaddr_t)p->p_sigacts->ps_sigcode, szsigcode);
+#endif
 	}
 
 	stopprofclock(p);	/* stop profiling */

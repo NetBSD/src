@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.8 1999/07/12 21:55:20 kleink Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.8.2.1 1999/12/27 18:34:28 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -172,6 +172,15 @@ struct netbsd32_ipc_perm {
 	ushort	uid;		/* user id */
 	ushort	gid;		/* group id */
 	ushort	mode;		/* r/w permission */
+	ushort	_seq;		/* sequence # (to generate unique msg/sem/shm id) */
+	netbsd32_key_t	_key;	/* user specified msg/sem/shm key */
+};
+struct netbsd32_ipc_perm14 {
+	ushort	cuid;		/* creator user id */
+	ushort	cgid;		/* creator group id */
+	ushort	uid;		/* user id */
+	ushort	gid;		/* group id */
+	ushort	mode;		/* r/w permission */
 	ushort	seq;		/* sequence # (to generate unique msg/sem/shm id) */
 	netbsd32_key_t	key;	/* user specified msg/sem/shm key */
 };
@@ -188,8 +197,29 @@ struct netbsd32_msg {
 };
 
 typedef u_int32_t netbsd32_msqid_dsp_t;
+typedef u_int32_t netbsd32_msgqnum_t;
+typedef netbsd32_size_t netbsd32_msglen_t;
+
 struct netbsd32_msqid_ds {
-	struct	netbsd32_ipc_perm msg_perm;	/* msg queue permission bits */
+	struct netbsd32_ipc_perm	msg_perm;	/* operation permission strucure */
+	netbsd32_msgqnum_t	msg_qnum;	/* number of messages in the queue */
+	netbsd32_msglen_t	msg_qbytes;	/* max # of bytes in the queue */
+	pid_t		msg_lspid;	/* process ID of last msgsend() */
+	pid_t		msg_lrpid;	/* process ID of last msgrcv() */
+	time_t		msg_stime;	/* time of last msgsend() */
+	time_t		msg_rtime;	/* time of last msgrcv() */
+	time_t		msg_ctime;	/* time of last change */
+
+	/*
+	 * These members are private and used only in the internal
+	 * implementation of this interface.
+	 */
+	netbsd32_msgp_t _msg_first;	/* first message in the queue */
+	netbsd32_msgp_t	_msg_last;	/* last message in the queue */
+	netbsd32_msglen_t	_msg_cbytes;	/* # of bytes currently in queue */
+};
+struct netbsd32_msqid_ds14 {
+	struct	netbsd32_ipc_perm14 msg_perm;	/* msg queue permission bits */
 	netbsd32_msgp_t	msg_first;	/* first message in the queue */
 	netbsd32_msgp_t	msg_last;	/* last message in the queue */
 	netbsd32_u_long	msg_cbytes;	/* number of bytes in use on the queue */
@@ -211,6 +241,19 @@ typedef u_int32_t netbsd32_semp_t;
 
 typedef u_int32_t netbsd32_semid_dsp_t;
 struct netbsd32_semid_ds {
+	struct netbsd32_ipc_perm	sem_perm;/* operation permission struct */
+	unsigned short	sem_nsems;	/* number of sems in set */
+	time_t		sem_otime;	/* last operation time */
+	time_t		sem_ctime;	/* last change time */
+
+	/*
+	 * These members are private and used only in the internal
+	 * implementation of this interface.
+	 */
+	netbsd32_semp_t	_sem_base;	/* pointer to first semaphore in set */
+};
+
+struct netbsd32_semid_ds14 {
 	struct netbsd32_ipc_perm	sem_perm;/* operation permission struct */
 	netbsd32_semp_t	sem_base;	/* pointer to first semaphore in set */
 	unsigned short	sem_nsems;	/* number of sems in set */
@@ -248,7 +291,7 @@ struct netbsd32_shmid_ds {
 	time_t		shm_atime;	/* time of last shmat() */
 	time_t		shm_dtime;	/* time of last shmdt() */
 	time_t		shm_ctime;	/* time of last change by shmctl() */
-	netbsd32_voidp	shm_internal;	/* sysv stupidity */
+	netbsd32_voidp	_shm_internal;	/* sysv stupidity */
 };
 
 /* from <sys/signal.h> */
@@ -423,7 +466,7 @@ typedef u_int32_t netbsd32_outsnamep_t;
  *		- type of pointer to above, normally u_int32_t
  *	void netbsd32_setregs(struct proc *p, struct exec_package *pack,
  *	    u_long stack);
- *	int compat_netbsd32_sigreturn(struct proc *p, void *v,
+ *	int netbsd32_sigreturn(struct proc *p, void *v,
  *	    register_t *retval);
  *	void netbsd32_sendsig(sig_t catcher, int sig, int mask, u_long code);
  *	char netbsd32_esigcode[], netbsd32_sigcode[]

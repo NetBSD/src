@@ -1,4 +1,4 @@
-/*	$NetBSD: sprite.h,v 1.1 1999/11/23 05:28:22 mrg Exp $	*/
+/*	$NetBSD: sprite.h,v 1.1.2.1 1999/12/27 18:30:31 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993

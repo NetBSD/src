@@ -1,3 +1,5 @@
+/*	$NetBSD: s_log1p.S,v 1.4.4.1 1999/12/27 18:30:02 wrstuden Exp $	*/
+
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -40,13 +42,13 @@
 ;_sccsid:
 ;.asciz	"from: @(#)log1p.s	5.1 (Berkeley) 5/17/90"
 
-RCSID("$NetBSD: s_log1p.S,v 1.4 1999/08/15 18:45:18 kleink Exp $")
+RCSID("$NetBSD: s_log1p.S,v 1.4.4.1 1999/12/27 18:30:02 wrstuden Exp $")
 
 ENTRY(log1p)
-	flognp1d	sp@(4),fp0
+	flognp1d %sp@(4),%fp0
 #ifndef __SVR4_ABI__
-	fmoved	fp0,sp@-
-	movel	sp@+,d0
-	movel	sp@+,d1
+	fmoved	%fp0,%sp@-
+	movel	%sp@+,%d0
+	movel	%sp@+,%d1
 #endif
 	rts

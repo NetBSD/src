@@ -1,6 +1,8 @@
-#	$NetBSD: checktab.awk,v 1.2 1998/01/09 04:11:57 perry Exp $
+#	$NetBSD: checktab.awk,v 1.2.6.1 1999/12/27 18:29:55 wrstuden Exp $
 
 # Check tz tables for consistency.
+
+# @(#)checktab.awk	1.6
 
 # Contributed by Paul Eggert <eggert@twinsun.com>.
 
@@ -15,7 +17,7 @@ BEGIN {
 		iso_NR++
 		if ($0 ~ /^#/) continue
 		if (NF != 2) {
-			printf "%s:%d: wrong number of columns\n",
+			printf "%s:%d: wrong number of columns\n", \
 				iso_table, iso_NR >>"/dev/stderr"
 			status = 1
 		}
@@ -27,9 +29,14 @@ BEGIN {
 			status = 1
 		}
 		if (cc <= cc0) {
+			if (cc == cc0) {
+				s = "duplicate";
+			} else {
+				s = "out of order";
+			}
+
 			printf "%s:%d: country code `%s' is %s\n", \
-				iso_table, iso_NR, cc, \
-				cc==cc0 ? "duplicate"  : "out of order" \
+				iso_table, iso_NR, cc, s \
 				>>"/dev/stderr"
 			status = 1
 		}
@@ -52,7 +59,7 @@ BEGIN {
 		zone_NR++
 		if ($0 ~ /^#/) continue
 		if (NF != 3 && NF != 4) {
-			printf "%s:%d: wrong number of columns\n",
+			printf "%s:%d: wrong number of columns\n", \
 				zone_table, zone_NR >>"/dev/stderr"
 			status = 1
 		}
@@ -143,8 +150,8 @@ END {
 	if (0 < want_warnings) {
 		for (cc in cc2name) {
 			if (!cc_used[cc]) {
-				printf "%s:%d: warning:" \
-					"no Zone entries for %s (%s)\n",
+				printf "%s:%d: warning: " \
+					"no Zone entries for %s (%s)\n", \
 					iso_table, cc2NR[cc], cc, cc2name[cc]
 			}
 		}

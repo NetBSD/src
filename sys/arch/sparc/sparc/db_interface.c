@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.29 1999/04/12 20:38:20 pk Exp $ */
+/*	$NetBSD: db_interface.c,v 1.29.2.1 1999/12/27 18:33:50 wrstuden Exp $ */
 
 /*
  * Mach Operating System
@@ -108,7 +108,7 @@ db_write_bytes(addr, size, data)
  * Data and functions used by DDB only.
  */
 void
-Debugger()
+cpu_Debugger()
 {
 	asm("ta 0x81");
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: _setjmp.S,v 1.4 1998/07/01 06:44:14 thorpej Exp $	*/
+/*	$NetBSD: _setjmp.S,v 1.4.4.1 1999/12/27 18:29:28 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -43,7 +43,7 @@
 #if 0
 	RCSID("from: @(#)_setjmp.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: _setjmp.S,v 1.4 1998/07/01 06:44:14 thorpej Exp $")
+	RCSID("$NetBSD: _setjmp.S,v 1.4.4.1 1999/12/27 18:29:28 wrstuden Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -59,34 +59,34 @@
  */
 
 ENTRY(_setjmp)
-	movl	sp@(4),a0	/* save area pointer */
-	clrl	a0@+		/* no old onstack */
-	clrl	a0@+		/* no old sigmask */
-	movl	sp,a0@+		/* save old SP */
-	movl	a6,a0@+		/* save old FP */
-	clrl	a0@+		/* no old AP */
-	movl	sp@,a0@+	/* save old PC */
-	clrl	a0@+		/* clear PS */
-	moveml	#0x3CFC,a0@	/* save other non-scratch regs */
-	clrl	d0		/* return zero */
+	movl	%sp@(4),%a0	/* save area pointer */
+	clrl	%a0@+		/* no old onstack */
+	clrl	%a0@+		/* no old sigmask */
+	movl	%sp,%a0@+	/* save old SP */
+	movl	%a6,%a0@+	/* save old FP */
+	clrl	%a0@+		/* no old AP */
+	movl	%sp@,%a0@+	/* save old PC */
+	clrl	%a0@+		/* clear PS */
+	moveml	#0x3CFC,%a0@	/* save other non-scratch regs */
+	clrl	%d0		/* return zero */
 	rts
 
 ENTRY(_longjmp)
-	movl	sp@(4),a0	/* save area pointer */
-	addql	#8,a0		/* skip onstack/sigmask */
-	tstl	a0@		/* ensure non-zero SP */
+	movl	%sp@(4),%a0	/* save area pointer */
+	addql	#8,%a0		/* skip onstack/sigmask */
+	tstl	%a0@		/* ensure non-zero SP */
 	jeq	botch		/* oops! */
-	movl	sp@(8),d0	/* grab return value */
+	movl	%sp@(8),%d0	/* grab return value */
 	jne	ok		/* non-zero ok */
-	moveq	#1,d0		/* else make non-zero */
+	moveq	#1,%d0		/* else make non-zero */
 ok:
-	movl	a0@+,sp		/* restore SP */
-	movl	a0@+,a6		/* restore FP */
-	addql	#4,a0		/* skip AP */
-	movl	a0@+,sp@	/* restore PC */
-	moveml	a0@(4),#0x3CFC	/* restore non-scratch regs */
+	movl	%a0@+,%sp	/* restore SP */
+	movl	%a0@+,%a6	/* restore FP */
+	addql	#4,%a0		/* skip AP */
+	movl	%a0@+,%sp@	/* restore PC */
+	moveml	%a0@(4),#0x3CFC	/* restore non-scratch regs */
 	rts
 
 botch:
-	jbsr	_C_LABEL(longjmperror)
+	jbsr	PIC_PLT(_C_LABEL(longjmperror))
 	stop	#0

@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.32 1999/09/30 22:57:54 thorpej Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.32.6.1 1999/12/27 18:35:35 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -235,6 +235,7 @@ struct scsipi_link {
 	    int timeout, struct buf *bp, int flags));
 	int (*scsipi_interpret_sense) __P((struct scsipi_xfer *));
 	void (*sc_print_addr) __P((struct scsipi_link *sc_link));
+	void (*scsipi_kill_pending) __P((struct scsipi_link *));
 };
 #define scsipi_scsi _scsipi_link.scsipi_scsi
 #define scsipi_atapi _scsipi_link.scsipi_atapi

@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.11 1999/06/05 20:17:41 bouyer Exp $
+#	$NetBSD: list,v 1.11.4.1 1999/12/27 18:28:30 wrstuden Exp $
 
 # copy the MAKEDEV script and make some devices
 COPY	${DESTDIR}/dev/MAKEDEV	dev/MAKEDEV
@@ -97,7 +97,6 @@ SYMLINK	/instbin		usr/sbin/pppd
 SYMLINK	/instbin		usr/sbin/pppstats
 SYMLINK	/instbin		usr/sbin/sysctl
 SYMLINK	/instbin		usr/sbin/traceroute
-SYMLINK	/instbin		usr/sbin/update
 SYMLINK /instbin		usr/local/bin/download
 
 #SPECIAL	/bin/rm instbin

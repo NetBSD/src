@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci_pci.c,v 1.13 1999/09/15 10:25:30 augustss Exp $	*/
+/*	$NetBSD: ohci_pci.c,v 1.13.2.1 1999/12/27 18:35:20 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -65,10 +65,18 @@
 
 int	ohci_pci_match __P((struct device *, struct cfdata *, void *));
 void	ohci_pci_attach __P((struct device *, struct device *, void *));
+int	ohci_pci_detach __P((device_ptr_t, int));
+
+struct ohci_pci_softc {
+	ohci_softc_t		sc;
+	pci_chipset_tag_t	sc_pc;
+	bus_size_t		sc_size;
+	void 			*sc_ih;		/* interrupt vectoring */
+};
 
 struct cfattach ohci_pci_ca = {
-	sizeof(struct ohci_softc), ohci_pci_match, ohci_pci_attach,
-	ohci_detach, ohci_activate
+	sizeof(struct ohci_pci_softc), ohci_pci_match, ohci_pci_attach,
+	ohci_pci_detach, ohci_activate
 };
 
 int
@@ -82,9 +90,9 @@ ohci_pci_match(parent, match, aux)
 	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_SERIALBUS &&
 	    PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_SERIALBUS_USB &&
 	    PCI_INTERFACE(pa->pa_class) == PCI_INTERFACE_OHCI)
-		return 1;
+		return (1);
  
-	return 0;
+	return (0);
 }
 
 void
@@ -93,7 +101,7 @@ ohci_pci_attach(parent, self, aux)
 	struct device *self;
 	void *aux;
 {
-	struct ohci_softc *sc = (struct ohci_softc *)self;
+	struct ohci_pci_softc *sc = (struct ohci_pci_softc *)self;
 	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	char const *intrstr;
@@ -102,21 +110,24 @@ ohci_pci_attach(parent, self, aux)
 	char devinfo[256];
 	usbd_status r;
 	char *vendor;
+	char *devname = sc->sc.sc_bus.bdev.dv_xname;
 
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
 	printf(": %s (rev. 0x%02x)\n", devinfo, PCI_REVISION(pa->pa_class));
 
 	/* Map I/O registers */
 	if (pci_mapreg_map(pa, PCI_CBMEM, PCI_MAPREG_TYPE_MEM, 0,
-			   &sc->iot, &sc->ioh, NULL, NULL)) {
-		printf("%s: can't map mem space\n", sc->sc_bus.bdev.dv_xname);
+			   &sc->sc.iot, &sc->sc.ioh, NULL, &sc->sc_size)) {
+		printf("%s: can't map mem space\n", devname);
 		return;
 	}
 
-	/* Disable interrupts, so we don't can any spurious ones. */
-	bus_space_write_4(sc->iot, sc->ioh, OHCI_INTERRUPT_DISABLE, OHCI_ALL_INTRS);
+	/* Disable interrupts, so we don't get any spurious ones. */
+	bus_space_write_4(sc->sc.iot, sc->sc.ioh, OHCI_INTERRUPT_DISABLE,
+			  OHCI_ALL_INTRS);
 
-	sc->sc_bus.dmatag = pa->pa_dmat;
+	sc->sc_pc = pc;
+	sc->sc.sc_bus.dmatag = pa->pa_dmat;
 
 	/* Enable the device. */
 	csr = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
@@ -126,37 +137,59 @@ ohci_pci_attach(parent, self, aux)
 	/* Map and establish the interrupt. */
 	if (pci_intr_map(pc, pa->pa_intrtag, pa->pa_intrpin,
 	    pa->pa_intrline, &ih)) {
-		printf("%s: couldn't map interrupt\n", 
-		       sc->sc_bus.bdev.dv_xname);
+		printf("%s: couldn't map interrupt\n", devname);
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih);
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_USB, ohci_intr, sc);
 	if (sc->sc_ih == NULL) {
-		printf("%s: couldn't establish interrupt",
-		    sc->sc_bus.bdev.dv_xname);
+		printf("%s: couldn't establish interrupt", devname);
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
 		return;
 	}
-	printf("%s: interrupting at %s\n", sc->sc_bus.bdev.dv_xname, intrstr);
+	printf("%s: interrupting at %s\n", devname, intrstr);
 
 	/* Figure out vendor for root hub descriptor. */
 	vendor = pci_findvendor(pa->pa_id);
-	sc->sc_id_vendor = PCI_VENDOR(pa->pa_id);
+	sc->sc.sc_id_vendor = PCI_VENDOR(pa->pa_id);
 	if (vendor)
-		strncpy(sc->sc_vendor, vendor, sizeof(sc->sc_vendor) - 1);
+		strncpy(sc->sc.sc_vendor, vendor, 
+			sizeof(sc->sc.sc_vendor) - 1);
 	else
-		sprintf(sc->sc_vendor, "vendor 0x%04x", PCI_VENDOR(pa->pa_id));
+		sprintf(sc->sc.sc_vendor, "vendor 0x%04x", 
+			PCI_VENDOR(pa->pa_id));
 	
-	r = ohci_init(sc);
+	r = ohci_init(&sc->sc);
 	if (r != USBD_NORMAL_COMPLETION) {
-		printf("%s: init failed, error=%d\n", sc->sc_bus.bdev.dv_xname,
-		       r);
+		printf("%s: init failed, error=%d\n", devname, r);
 		return;
 	}
 
 	/* Attach usb device. */
-	sc->sc_child = config_found((void *)sc, &sc->sc_bus, usbctlprint);
+	sc->sc.sc_child = config_found((void *)sc, &sc->sc.sc_bus,
+				       usbctlprint);
+}
+
+int
+ohci_pci_detach(self, flags)
+	device_ptr_t self;
+	int flags;
+{
+	struct ohci_pci_softc *sc = (struct ohci_pci_softc *)self;
+	int rv;
+
+	rv = ohci_detach(&sc->sc, flags);
+	if (rv)
+		return (rv);
+	if (sc->sc_ih) {
+		pci_intr_disestablish(sc->sc_pc, sc->sc_ih);
+		sc->sc_ih = 0;
+	}
+	if (sc->sc_size) {
+		bus_space_unmap(sc->sc.iot, sc->sc.ioh, sc->sc_size);
+		sc->sc_size = 0;
+	}
+	return (0);
 }

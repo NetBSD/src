@@ -1,4 +1,4 @@
-/*	$NetBSD: it8368reg.h,v 1.1 1999/11/21 06:48:59 uch Exp $ */
+/*	$NetBSD: it8368reg.h,v 1.1.2.1 1999/12/27 18:32:01 wrstuden Exp $ */
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi

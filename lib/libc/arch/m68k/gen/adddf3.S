@@ -1,4 +1,4 @@
-/*	$NetBSD: adddf3.S,v 1.4 1999/05/02 20:17:20 kleink Exp $	*/
+/*	$NetBSD: adddf3.S,v 1.4.2.1 1999/12/27 18:29:28 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -43,17 +43,17 @@
 #if 0
 	RCSID("from: @(#)adddf3.s	5.1 (Berkeley) 6/7/90")
 #else
-	RCSID("$NetBSD: adddf3.S,v 1.4 1999/05/02 20:17:20 kleink Exp $")
+	RCSID("$NetBSD: adddf3.S,v 1.4.2.1 1999/12/27 18:29:28 wrstuden Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 /* double + double */
 ENTRY(__adddf3)
-	fmoved	sp@(4),fp0
-	faddd	sp@(12),fp0
+	fmoved	%sp@(4),%fp0
+	faddd	%sp@(12),%fp0
 #ifndef __SVR4_ABI__
-	fmoved	fp0,sp@-
-	movel	sp@+,d0
-	movel	sp@+,d1
+	fmoved	%fp0,%sp@-
+	movel	%sp@+,%d0
+	movel	%sp@+,%d1
 #endif
 	rts

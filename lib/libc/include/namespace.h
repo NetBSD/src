@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.40 1999/09/20 15:07:21 kleink Exp $	*/
+/*	$NetBSD: namespace.h,v 1.40.4.1 1999/12/27 18:29:40 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -342,6 +342,8 @@
 #define strptime		_strptime
 #define strsep			_strsep
 #define strsignal		_strsignal
+#define strsvis			_strsvis
+#define strsvisx		_strsvisx
 #define strtok_r		_strtok_r
 #define strunvis		_strunvis
 #define strvis			_strvis
@@ -365,6 +367,7 @@
 #define svcudp_bufcreate	_svcudp_bufcreate
 #define svcudp_create		_svcudp_create
 #define svcudp_enablecache	_svcudp_enablecache
+#define svis			_svis
 #define sysconf			_sysconf
 #define sysctl			_sysctl
 #define syslog			_syslog
@@ -419,10 +422,13 @@
 #define xdr_enum		_xdr_enum
 #define xdr_float		_xdr_float
 #define xdr_free		_xdr_free
+#define	xdr_hyper		_xdr_hyper
 #define xdr_int			_xdr_int
 #define xdr_int16_t		_xdr_int16_t
 #define xdr_int32_t		_xdr_int32_t
+#define xdr_int64_t		_xdr_int64_t
 #define xdr_long		_xdr_long
+#define	xdr_longlong_t		_xdr_longlong_t
 #define xdr_mapname		_xdr_mapname
 #define xdr_netobj		_xdr_netobj
 #define xdr_opaque		_xdr_opaque
@@ -439,10 +445,13 @@
 #define xdr_short		_xdr_short
 #define xdr_string		_xdr_string
 #define xdr_u_char		_xdr_u_char
+#define	xdr_u_hyper		_xdr_u_hyper
 #define xdr_u_int		_xdr_u_int
 #define xdr_u_int16_t		_xdr_u_int16_t
 #define xdr_u_int32_t		_xdr_u_int32_t
+#define xdr_u_int64_t		_xdr_u_int64_t
 #define xdr_u_long		_xdr_u_long
+#define	xdr_u_longlong_t	_xdr_u_longlong_t
 #define xdr_u_short		_xdr_u_short
 #define xdr_union		_xdr_union
 #define xdr_vector		_xdr_vector

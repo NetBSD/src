@@ -1,4 +1,4 @@
-/*	$NetBSD: _errno.c,v 1.4 1997/07/30 23:53:32 jtc Exp $	*/
+/*	$NetBSD: _errno.c,v 1.4.8.1 1999/12/27 18:29:36 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,8 +38,9 @@
 
 #include <errno.h>
 
+
 int *
-__errno()
+__errno(void)
 {
 #undef errno
 	extern int errno;

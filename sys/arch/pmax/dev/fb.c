@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.28 1999/09/05 11:34:30 simonb Exp $	*/
+/*	$NetBSD: fb.c,v 1.28.8.1 1999/12/27 18:33:23 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -85,16 +85,17 @@
 
 #include <machine/fbio.h>
 #include <machine/fbvar.h>
+
 #include <pmax/dev/fbreg.h>
 #include <pmax/dev/qvssvar.h>
+#include <pmax/dev/rconsvar.h>
 
 #include <pmax/pmax/cons.h>
 #include <pmax/pmax/pmaxtype.h>
 
 #include "rasterconsole.h"
 
-#include "dc_ioasic.h"
-#include "dc_ds.h"
+#include "dc.h"
 #include "scc.h"
 #include "dtop.h"
 
@@ -115,7 +116,7 @@
 extern void fbScreenInit __P (( struct fbinfo *fi));
 
 
-#if (NDC_DS > 0) || (NDC_IOASIC > 0)
+#if NDC > 0
 #include <machine/dc7085cons.h>
 #include <pmax/dev/dcvar.h>
 #endif
@@ -133,26 +134,12 @@ extern void fbScreenInit __P (( struct fbinfo *fi));
 */
 #include <pmax/dev/lk201var.h>
 
-extern void rcons_connect __P((struct fbinfo *info));	/* XXX */
-
 /*
  * The "blessed" framebuffer; the fb that gets
  * the qvss-style ring buffer of mouse/kbd events, and is used
  * for glass-tty fb console output.
  */
 struct fbinfo *firstfi = NULL;
-
-/*
- * The default cursor.
- */
-u_short defCursor[32] = {
-/* plane A */ 0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF,
-	      0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF,
-/* plane B */ 0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF,
-              0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF
-
-};
-
 
 /*
  * Pro-tem framebuffer pseudo-device driver
@@ -291,13 +278,13 @@ tb_kbdmouseconfig(fi)
 
 	switch (systype) {
 
-#if (NDC_DS > 0) || (NDC_IOASIC > 0)
+#if NDC > 0
 	case DS_PMAX:
 	case DS_3MAX:
 		fi->fi_glasstty->KBDPutc = dcPutc;
 		fi->fi_glasstty->kbddev = makedev(DCDEV, DCKBD_PORT);
 		break;
-#endif	/* NDC_DS || NDC_IOASIC */
+#endif /* NDC */
 
 #if NSCC > 0
 	case DS_3MIN:

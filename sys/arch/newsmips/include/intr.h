@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.3 1999/08/05 18:08:11 thorpej Exp $	*/
+/*	$NetBSD: intr.h,v 1.3.2.1 1999/12/27 18:33:09 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -33,40 +33,57 @@
 #ifndef _MACHINE_INTR_H_
 #define _MACHINE_INTR_H_
 
-#define	IPL_NONE	0	/* disable only this interrupt */
-#define	IPL_BIO		1	/* disable block I/O interrupts */
-#define	IPL_NET		2	/* disable network interrupts */
-#define	IPL_TTY		3	/* disable terminal interrupts */
-#define	IPL_CLOCK	4	/* disable clock interrupts */
-#define	IPL_STATCLOCK	5	/* disable profiling interrupts */
-#define	IPL_SERIAL	6	/* disable serial hardware interrupts */
-#define	IPL_HIGH	7	/* disable all interrupts */
+#define IPL_NONE	0	/* disable only this interrupt */
+#define IPL_BIO		1	/* disable block I/O interrupts */
+#define IPL_NET		2	/* disable network interrupts */
+#define IPL_TTY		3	/* disable terminal interrupts */
+#define IPL_CLOCK	4	/* disable clock interrupts */
+#define IPL_STATCLOCK	5	/* disable profiling interrupts */
+#define IPL_SERIAL	6	/* disable serial hardware interrupts */
+#define IPL_HIGH	7	/* disable all interrupts */
 
+#ifdef _KERNEL
 #ifndef _LOCORE
+#include <mips/cpuregs.h>
 
-#define splbio cpu_spl0
-#define splnet cpu_spl1
-#define spltty cpu_spl1
-#define splimp cpu_spl1
-#define splclock cpu_spl2
-#define splstatclock cpu_spl2
+extern int _splraise __P((int));
+extern int _spllower __P((int));
+extern int _splset __P((int));
+extern int _splget __P((void));
+extern void _splnone __P((void));
+extern void _setsoftintr __P((int));
+extern void _clrsoftintr __P((int));
 
-extern void setsoftnet __P((void)), clearsoftnet __P((void));
-extern void setsoftclock __P((void)), clearsoftclock __P((void));
+#define setsoftclock()	_setsoftintr(MIPS_SOFT_INT_MASK_0)
+#define setsoftnet()	_setsoftintr(MIPS_SOFT_INT_MASK_1)
+#define clearsoftclock() _clrsoftintr(MIPS_SOFT_INT_MASK_0)
+#define clearsoftnet()	_clrsoftintr(MIPS_SOFT_INT_MASK_1)
 
-extern int splhigh __P((void));
-extern int splclock __P((void));
-extern int splstatclock __P((void));
-extern int splimp __P((void));
-extern int spltty __P((void));
-extern int splnet __P((void));
-extern int splbio __P((void));
-extern int splsoftnet __P((void));
-extern int spllowersoftclock __P((void));
-#define	splsoftclock()	spllowersoftclock()	/* XXX XXX XXX */
-extern int spl0 __P((void));
-extern void splx __P((int));
+/*
+ * nesting interrupt masks.
+ */
+#define MIPS_INT_MASK_SPL_SOFT0	MIPS_SOFT_INT_MASK_0
+#define MIPS_INT_MASK_SPL_SOFT1	(MIPS_SOFT_INT_MASK_1|MIPS_INT_MASK_SPL_SOFT0)
+#define MIPS_INT_MASK_SPL0	(MIPS_INT_MASK_0|MIPS_INT_MASK_SPL_SOFT1)
+#define MIPS_INT_MASK_SPL1	(MIPS_INT_MASK_1|MIPS_INT_MASK_SPL0)
+#define MIPS_INT_MASK_SPL2	(MIPS_INT_MASK_2|MIPS_INT_MASK_SPL1)
+#define MIPS_INT_MASK_SPL3	(MIPS_INT_MASK_3|MIPS_INT_MASK_SPL2)
+#define MIPS_INT_MASK_SPL4	(MIPS_INT_MASK_4|MIPS_INT_MASK_SPL3)
+#define MIPS_INT_MASK_SPL5	(MIPS_INT_MASK_5|MIPS_INT_MASK_SPL4)
 
+#define spl0()		(void)_spllower(0)
+#define splx(s)		(void)_splset(s)
+#define splbio()	_splraise(MIPS_INT_MASK_SPL0)
+#define splnet()	_splraise(MIPS_INT_MASK_SPL1)
+#define spltty()	_splraise(MIPS_INT_MASK_SPL1)
+#define splimp()	_splraise(MIPS_INT_MASK_SPL1)
+#define splclock()	_splraise(MIPS_INT_MASK_SPL2)
+#define splstatclock()	_splraise(MIPS_INT_MASK_SPL2)
+#define splhigh()	_splraise(MIPS_INT_MASK_SPL2)
+
+#define splsoftclock()	_splraise(MIPS_INT_MASK_SPL_SOFT0)
+#define splsoftnet()	_splraise(MIPS_INT_MASK_SPL_SOFT1)
+#define spllowersoftclock() _spllower(MIPS_INT_MASK_SPL_SOFT0)
 
 /*
  * Index into intrcnt[], which is defined in locore
@@ -93,5 +110,10 @@ extern u_int intrcnt[];
 extern int (*mips_hardware_intr) __P((u_int, u_int, u_int, u_int));
 extern int news3400_intr __P((u_int, u_int, u_int, u_int));
 
+/* handle software interrupts */
+extern void (*mips_software_intr) __P((int));
+extern void news3400_softintr __P((int));
+
 #endif /* !_LOCORE */
+#endif /* _KERNEL */
 #endif /* _MACHINE_INTR_H_ */

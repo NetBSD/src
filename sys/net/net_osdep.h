@@ -1,4 +1,4 @@
-/*	$NetBSD: net_osdep.h,v 1.2 1999/12/13 15:17:19 itojun Exp $	*/
+/*	$NetBSD: net_osdep.h,v 1.2.2.1 1999/12/27 18:36:11 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.

@@ -3,7 +3,7 @@
 .\"
 .\"	Written by John F. Woods <jfw@jfwhome.funhouse.com>
 .\"
-.\"	$NetBSD: tar.1,v 1.11 1999/08/17 03:36:36 enami Exp $
+.\"	$NetBSD: tar.1,v 1.11.2.1 1999/12/27 18:29:21 wrstuden Exp $
 .\"
 .Dd 6 August 1994
 .Os
@@ -295,7 +295,8 @@ Filter the archive through
 .Ar program
 (which must accept
 .Fl d
-to mean ``decompress'').
+to mean
+.Do decompress Dc Ns ).
 .It Fl -block-compress
 Block the output of compression program for tapes or floppies
 (otherwise writes will be of odd length, which device drivers may reject).
@@ -310,7 +311,11 @@ Unlink files before creating them.
 To create an archive on tape drive
 .Pa /dev/rst0
 with a block size of 20
-blocks, containing files named "bert" and "ernie", you can enter
+blocks, containing files named
+.Pa bert
+and
+.Pa ernie ,
+you can enter
 .Dl tar cfb /dev/rst0 20 bert ernie
 or
 .Dl tar --create --file /dev/rst0 --block-size 20 bert ernie
@@ -328,29 +333,35 @@ size, the above example could have simply been
 .Dl tar c bert ernie
 .Pp
 To extract all the C sources and headers from an archive named
-"backup.tar", type
-.Dl tar xf backup.tar "*.[ch]"
+.Pa backup.tar ,
+type
+.Dl tar xf backup.tar \&"*.[ch]\&"
 Note that the pattern must be quoted to prevent the shell from
 attempting to expand it according the files in the current working
 directory (the shell does not have access to the list of files in
 the archive, of course).
 .Pp
 To copy a file hierarchy while preserving metadata, type
+.\" "-C destdir" and "36 tar/" are hack to prevent not to pass
+.\" more than 10 argument to .Dl
 .Dl tar cf - -C srcdir ". |" tar xpf "-C destdir"
 .Pp
 To create a compressed archive on diskette, using gzip, use a command-line like
-.Dl tar --block-compress -z -c -v -f /dev/rfd1a -b 36 tar/
+.Dl tar --block-compress -z -c -v -f /dev/rfd1a -b "36 tar/"
 Note that you cannot mix bundled flags and --style flags; you can use
 single-letter flags in the manner above, rather than having to type
-.Dl tar --block-compress --gzip --verbose --file /dev/rfd1a --block-size 20 tar/
+.Dl tar --block-compress --gzip --create --verbose --file /dev/rfd1a --block-size "36 tar/"
 .Pp
 The above-created diskette can be listed with
 .Dl tar tvfbz /dev/rfd1a 36
 .Pp
 To join two tar archives into a single archive, use
 .Dl tar Af archive1.tar archive2.tar
-which will add the files contained in archive2.tar onto the end of
-archive1.tar (note that this can't be done by simply typing
+which will add the files contained in
+.Pa archive2.tar
+onto the end of
+.Pa archive1.tar
+(note that this can't be done by simply typing
 .Dl cat archive2.tar >> archive1.tar
 because of the end-of-file block at the end of a tar archive).
 .Sh ENVIRONMENT
@@ -368,7 +379,9 @@ to consider the first
 non-flag argument to terminate flag processing, as per the POSIX specification.
 .It Ev SHELL
 In interactive mode, a permissible response to the prompt is to
-request to spawn a subshell, which will be "/bin/sh" unless the
+request to spawn a subshell, which will be
+.Pa /bin/sh
+unless the
 .Ev SHELL
 variable is set.
 .It Ev TAPE
@@ -388,6 +401,8 @@ The default tape drive.
 .Xr compress 1 ,
 .Xr gzip 1 ,
 .Xr pax 1 ,
+.Xr cpio 1 ,
+.Xr symlink 7 ,
 .Xr rmt 8
 .\" .Sh STANDARDS
 .Sh HISTORY

@@ -1,4 +1,4 @@
-/* 	$NetBSD: px.c,v 1.18 1999/09/25 14:45:21 ad Exp $ */
+/* 	$NetBSD: px.c,v 1.18.6.1 1999/12/27 18:33:24 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.18 1999/09/25 14:45:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.18.6.1 1999/12/27 18:33:24 wrstuden Exp $");
 
 /*
  * px.c: driver for the DEC TURBOchannel 2D and 3D accelerated framebuffers
@@ -300,7 +300,7 @@ px_attach(parent, self, aux)
 
 	/* Init the card only if it hasn't been done before... */
 	if (!px_cons_info || slotbase != (caddr_t)px_cons_info->pxi_slotbase)
-		px_init((struct fbinfo *)1, slotbase, sc->px_dv.dv_unit, 1);
+		px_init((struct fbinfo *)1, slotbase, sc->px_dv.dv_unit, 0);
 
 	/* px_init() fills in px_unit[#] */
 	pxi = px_unit[sc->px_dv.dv_unit];
@@ -344,7 +344,7 @@ px_init(fi, slotbase, unit, console)
 	struct px_info *pxi;
 	u_long bufpa;
 	int i;
-
+	
 #if NPX > 1
 	if (px_cons_rbuf_use)
 		/* XXX allocate buffers */;
@@ -371,7 +371,7 @@ px_init(fi, slotbase, unit, console)
 	pxi->pxi_stamp = (caddr_t) (pxi->pxi_slotbase + PX_STAMP_OFFSET);
 	pxi->pxi_poll = (int32_t *) (pxi->pxi_slotbase + PX_STIC_POLL_OFFSET);
 	pxi->pxi_stic = (struct stic_regs *) (pxi->pxi_slotbase + PX_STIC_OFFSET);
-	pxi->pxi_rbuf = (int *)MIPS_PHYS_TO_KSEG0(bufpa);
+	pxi->pxi_rbuf = (int *)MIPS_PHYS_TO_KSEG1(bufpa);
 	pxi->pxi_rbuf_phys = bufpa;
 	pxi->pxi_rbuf_size = PXMAP_RBUF_SIZE;
 	pxi->pxi_pbuf_select = 0;
@@ -411,10 +411,11 @@ px_init(fi, slotbase, unit, console)
 	/* Clear ringbuffer and then the screen */
 	bzero(pxi->pxi_rbuf, pxi->pxi_rbuf_size);
 	px_rect(pxi, 0, 0, 1280, 1024, 0);
-	pxi->pxi_fontscale = pxi->pxi_font->fontheight * pxi->pxi_font->stride;
 
 	/* Connect to rcons if this is the console device */
 	if (console) {
+		pxi->pxi_fontscale = pxi->pxi_font->fontheight * 
+		    pxi->pxi_font->stride;
 		px_cons_info = pxi;
 		
 		/* XXX no multiscreen X support yet */
@@ -450,7 +451,6 @@ px_qvss_init(pxi)
 	fi->fi_fbu = &pxi->pxi_fbuaccess;
 	fi->fi_type.fb_width = 1280;
 	fi->fi_type.fb_height = 1024;
-	fi->fi_type.fb_height = 1024;
 	fi->fi_type.fb_boardtype = PMAX_FBTYPE_PX;
 	fi->fi_type.fb_cmsize = 256;
 	fi->fi_type.fb_depth = 8;
@@ -474,7 +474,7 @@ px_bt459_init(pxi)
 	int i;
 
 	/* Hit it... */
-	BT459_SELECT(vdac, BT459_REG_COMMAND_0);
+	BT459_SELECT(vdac, BT459_IREG_COMMAND_0);
 	BT459_WRITE_REG(vdac, 0xc0c0c0);
 
 	/* Now reset the VDAC */
@@ -486,7 +486,7 @@ px_bt459_init(pxi)
 	tc_wmb();
 
 	/* Finish the initalization */
-	BT459_SELECT(vdac, BT459_REG_COMMAND_1);
+	BT459_SELECT(vdac, BT459_IREG_COMMAND_1);
 	BT459_WRITE_REG(vdac, 0x000000);
 	BT459_WRITE_REG(vdac, 0xc2c2c2);
 	BT459_WRITE_REG(vdac, 0xffffff);
@@ -495,7 +495,7 @@ px_bt459_init(pxi)
 		BT459_WRITE_REG(vdac, 0);
 
 	/* Set cursor colormap */
-	BT459_SELECT(vdac, BT459_REG_CCOLOR_1);
+	BT459_SELECT(vdac, BT459_IREG_CCOLOR_1);
 	BT459_WRITE_REG(vdac, 0xffffff);
 	BT459_WRITE_REG(vdac, 0xffffff);
 	BT459_WRITE_REG(vdac, 0xffffff);
@@ -522,11 +522,11 @@ px_bt459_init(pxi)
 		px_load_cursor(pxi);
 
 		/* Enable cursor */
-		BT459_SELECT(vdac, BT459_REG_CCR);
+		BT459_SELECT(vdac, BT459_IREG_CCR);
 		BT459_WRITE_REG(vdac, 0x1c1c1c1);
 		pxi->pxi_flg |= PX_CURSOR_ENABLE;
 	} else {
-		BT459_SELECT(vdac, BT459_REG_CCR);
+		BT459_SELECT(vdac, BT459_IREG_CCR);
 		BT459_WRITE_REG(vdac, 0);
 	}
 }
@@ -549,7 +549,7 @@ px_probe_planes(pxi, buf)
 		 * VDAC ID. One color is active at level 0x4a for 8 bits, all
 		 * colors are active at 0x4a on the 24 bit cards.
 		 */
-		BT459_SELECT(pxi->pxi_vdac, BT459_REG_ID);
+		BT459_SELECT(pxi->pxi_vdac, BT459_IREG_ID);
 		i = pxi->pxi_vdac->reg & 0x00ffffff;
 
 		/* 3 VDACs */
@@ -780,7 +780,7 @@ px_load_cursor_data(pxi, pos, val)
 	val = DUPBYTE0(val);
 		
 	for (cnt = 10; cnt; cnt--) {
-		BT459_SELECT(vdac, BT459_REG_CRAM_BASE + pos);
+		BT459_SELECT(vdac, BT459_IREG_CRAM_BASE + pos);
 		BT459_WRITE_REG(vdac, val);
 
 		if ((BT459_READ_REG(vdac) & pxi->pxi_planemask) == val)
@@ -805,7 +805,7 @@ px_load_cursor(pxi)
 	mp = pxi->pxi_cursor + (sizeof(pxi->pxi_cursor) >> 1);
 
 	bcnt = 0;
-	BT459_SELECT(vdac, BT459_REG_CRAM_BASE + 0);
+	BT459_SELECT(vdac, BT459_IREG_CRAM_BASE + 0);
 
 	/* 64 pixel scan line is made with 8 bytes of cursor RAM */
 	while (bcnt < sizeof(pxi->pxi_cursor)) {
@@ -862,7 +862,7 @@ px_bt459_flush(pxi)
 	vdac = pxi->pxi_vdac;
 
 	if (pxi->pxi_dirty & PX_DIRTY_CURSOR_POS) {
-		BT459_SELECT(vdac, BT459_REG_CURSOR_X_LOW);
+		BT459_SELECT(vdac, BT459_IREG_CURSOR_X_LOW);
 		BT459_WRITE_REG(vdac, DUPBYTE0(pxi->pxi_curx));
 		BT459_WRITE_REG(vdac, DUPBYTE1(pxi->pxi_curx));
 		BT459_WRITE_REG(vdac, DUPBYTE0(pxi->pxi_cury));
@@ -875,7 +875,7 @@ px_bt459_flush(pxi)
 	if (pxi->pxi_dirty & PX_DIRTY_CURSOR_CMAP) {
 		cp = pxi->pxi_curcmap;
 
-		BT459_SELECT(vdac, BT459_REG_CCOLOR_1);
+		BT459_SELECT(vdac, BT459_IREG_CCOLOR_1);
 		BT459_WRITE_REG(vdac, DUPBYTE0(cp[3]));
 		BT459_WRITE_REG(vdac, DUPBYTE0(cp[4]));
 		BT459_WRITE_REG(vdac, DUPBYTE0(cp[5]));
@@ -889,12 +889,12 @@ px_bt459_flush(pxi)
 
 	if (pxi->pxi_dirty & PX_DIRTY_ENABLE) {
 		if (pxi->pxi_flg & PX_ENABLE) {
-			BT459_SELECT(vdac, BT459_REG_PRM);
+			BT459_SELECT(vdac, BT459_IREG_PRM);
 			BT459_WRITE_REG(vdac, 0xffffff);
 			px_load_cmap(pxi, 0, 1);
 			pxi->pxi_dirty |= PX_DIRTY_CURSOR_ENABLE;
 		} else {
-			BT459_SELECT(vdac, BT459_REG_PRM);
+			BT459_SELECT(vdac, BT459_IREG_PRM);
 			BT459_WRITE_REG(vdac, 0);
 
 			BT459_SELECT(vdac, 0);
@@ -902,7 +902,7 @@ px_bt459_flush(pxi)
 			BT459_WRITE_CMAP(vdac, 0);
 			BT459_WRITE_CMAP(vdac, 0);
 
-			BT459_SELECT(vdac, BT459_REG_CCR);
+			BT459_SELECT(vdac, BT459_IREG_CCR);
 			BT459_WRITE_REG(vdac, 0);
 		}
 	}
@@ -922,7 +922,7 @@ px_bt459_flush(pxi)
 			} else
 				i = 0;
 
-			BT459_SELECT(vdac, BT459_REG_CCR);
+			BT459_SELECT(vdac, BT459_IREG_CCR);
 			BT459_WRITE_REG(vdac, i);
 		}
 	}
@@ -1695,11 +1695,6 @@ pxopen(dev, flag, mode, p)
 	pmEventQueueInit(&pxi->pxi_fbuaccess.scrInfo.qe);
 	genConfigMouse();
 
-	/* Enable interrupt driven operation */
-	pxi->pxi_lpw = 0;
-	pxi->pxi_lpr = 0;
-	pxi->pxi_flg = (pxi->pxi_flg & ~PX_ISR_MASK) | PX_ISR_ENABLE;
-
 	/* Turn packet-done interrupts on */
 	stic = pxi->pxi_stic;
 	s = stic->ipdvint | STIC_INT_P_WE | STIC_INT_P_EN;
@@ -1907,14 +1902,27 @@ pxmmap(dev, off, prot)
 
 	if ((pxi->pxi_flg & PX_OPEN) == 0)
 		return (EBADF);
-
-	if (off < PXMAP_INFO_SIZE + PXMAP_RBUF_SIZE)
-		return mips_btop(MIPS_KSEG1_TO_PHYS(pxi) + off);
-
-	off -= (PXMAP_INFO_SIZE + PXMAP_RBUF_SIZE);
-
+	
+	/* 
+	 * STIC control registers
+	 */	
 	if (off < NBPG)
 		return mips_btop(MIPS_KSEG1_TO_PHYS(pxi->pxi_stic) + off);
+	off -= NBPG;
+	
+	/*
+	 * STIC poll registers
+	 */
+	if (off < sizeof(int32_t) * 4096)
+		return mips_btop(MIPS_KSEG1_TO_PHYS(pxi->pxi_poll) + off);
+	off -= sizeof(int32_t) * 4096;
+
+	/*
+	 * 'struct px_info' and ringbuffer
+	 */ 
+	if (off < PXMAP_INFO_SIZE + PXMAP_RBUF_SIZE)
+		return mips_btop(MIPS_KSEG1_TO_PHYS(pxi) + off);
+	off -= (PXMAP_INFO_SIZE + PXMAP_RBUF_SIZE);
 
 	return (-1);
 }

@@ -1,0 +1,5 @@
+#	$NetBSD: shl.elf,v 1.2.2.2 1999/12/27 18:28:36 wrstuden Exp $
+./usr/lib/libcrypt.so.0
+./usr/lib/libcrypto.so.0
+./usr/lib/libssl.so.0
+./usr/lib/libdes.so.3

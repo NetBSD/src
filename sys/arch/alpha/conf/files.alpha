@@ -1,4 +1,4 @@
-# $NetBSD: files.alpha,v 1.104 1999/08/04 07:17:50 nisimura Exp $
+# $NetBSD: files.alpha,v 1.104.8.1 1999/12/27 18:31:24 wrstuden Exp $
 #
 # alpha-specific configuration info
 
@@ -10,6 +10,7 @@ maxusers 8 16 64
 # CPU support option headers
 defopt	DEC_2000_300	# "Jensen":	2000/300 (DECpc AXP 150)
 defopt	DEC_2100_A50	# Avanti etc:	AlphaStation 400, 200, etc.
+defopt	DEC_2100_A500	# Sable etc:	AlphaServer 2100
 defopt	DEC_3000_300	# Pelican etc:	3000/300*
 defopt	DEC_3000_500	# Flamingo etc:	3000/[4-9]00*
 defopt	DEC_550		# Miata:	Personal Workstation (550)
@@ -311,8 +312,38 @@ file	arch/alpha/pci/tsp_pci.c	tsp
 file	arch/alpha/pci/tsp_bus_io.c	tsp
 file	arch/alpha/pci/tsp_bus_mem.c	tsp
 
+device	ttwoga { hose = -1 }
+attach	ttwoga at mainbus
+device	ttwopci: pcibus, alpha_sgmap, alpha_pci_sgmap_pte64
+attach	ttwopci at ttwoga
+file	arch/alpha/pci/ttwoga.c		ttwoga
+file	arch/alpha/pci/ttwoga_bus_io.c	ttwoga
+file	arch/alpha/pci/ttwoga_bus_mem.c	ttwoga
+file	arch/alpha/pci/ttwoga_dma.c	ttwoga
+file	arch/alpha/pci/ttwoga_pci.c	ttwoga
+
+#
+# Sable STDIO support
+#
+device	sableio { port = -1 }
+attach	sableio at pcibus
+file	arch/alpha/sableio/sableio.c		sableio
+
+attach	com at sableio with com_sableio
+file	arch/alpha/sableio/com_sableio.c	com_sableio
+
+attach	lpt at sableio with lpt_sableio
+file	arch/alpha/sableio/lpt_sableio.c	lpt_sableio
+
+attach	pckbc at sableio with pckbc_sableio
+file	arch/alpha/sableio/pckbc_sableio.c	pckbc_sableio
+
+#attach	fdc at sableio with fdc_sableio
+#file	arch/alpha/sableio/fdc_sableio.c	fdc_sableio
+
 # CPU support files
 file	arch/alpha/pci/pci_2100_a50.c	dec_2100_a50
+file	arch/alpha/pci/pci_2100_a500.c	dec_2100_a500
 file	arch/alpha/pci/pci_a12.c	avalon_a12
 file	arch/alpha/pci/pci_alphabook1.c	dec_alphabook1
 file	arch/alpha/pci/pci_axppci_33.c	dec_axppci_33
@@ -392,7 +423,6 @@ file	arch/alpha/alpha/conf.c
 file	arch/alpha/alpha/cpuconf.c
 file	arch/alpha/alpha/interrupt.c
 file	arch/alpha/alpha/ipifuncs.c		multiprocessor
-file	arch/alpha/alpha/lock_machdep.c		multiprocessor
 file	arch/alpha/alpha/machdep.c
 file	arch/alpha/alpha/mainbus.c
 file	arch/alpha/alpha/mem.c
@@ -417,6 +447,7 @@ file	arch/alpha/alpha/promcons.c
 
 # CPU support
 file	arch/alpha/alpha/dec_2100_a50.c		dec_2100_a50
+file	arch/alpha/alpha/dec_2100_a500.c	dec_2100_a500
 file	arch/alpha/alpha/dec_3000_300.c		dec_3000_300
 file	arch/alpha/alpha/dec_3000_500.c		dec_3000_500
 file	arch/alpha/alpha/dec_550.c		dec_550

@@ -1,4 +1,4 @@
-/*	$NetBSD: gencode.h,v 1.7 1999/07/02 16:03:41 simonb Exp $	*/
+/*	$NetBSD: gencode.h,v 1.7.2.1 1999/12/27 18:30:07 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996
@@ -162,10 +162,9 @@ void gen_and(struct block *, struct block *);
 void gen_or(struct block *, struct block *);
 void gen_not(struct block *);
 
-struct stmt *gen_joinsp __P((struct stmt **, int));
-struct block *gen_protochain __P((int, int, int));
 struct block *gen_scode(const char *, struct qual);
 struct block *gen_ecode(const u_char *, struct qual);
+struct block *gen_acode(const u_char *, struct qual);
 struct block *gen_mcode(const char *, const char *, int, struct qual);
 #ifdef INET6
 struct block *gen_mcode6(const char *, const char *, int, struct qual);

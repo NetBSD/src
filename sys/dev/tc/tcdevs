@@ -1,4 +1,4 @@
-$NetBSD: tcdevs,v 1.12 1999/09/26 09:18:53 mrg Exp $
+$NetBSD: tcdevs,v 1.12.6.1 1999/12/27 18:35:39 wrstuden Exp $
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou
@@ -39,7 +39,7 @@ device	KZTSA-AA	tza	TZA FWD SCSI
 device	OTTO		otto	DEC SRC \"OTTO\" ATM
 device	PMAD-AA		le	LANCE Ethernet
 device	PMAF-AA		fza	DEC FDDIcontroller 700 (DEFZA; fiber optic)
-device	PMAF-F		fta	DEFTA FDDI
+device	PMAF-FA		fta	DEFTA FDDI
 device	PMAG-AA		mfb	Monochrome Frame Buffer
 device	PMAG-BA		cfb	Color Frame Buffer
 device	PMAG-CA		px	2D Graphics
@@ -55,11 +55,14 @@ device	PMAZ-AA		asc	53c94 SCSI
 device	PMAZ-DS		tcds	53c94 TCDS SCSI (baseboard)
 device	PMAZ-FS		tcds	53c94 TCDS Fast SCSI (baseboard)
 device	PMAZB-AA	tcds	53c94 TCDS SCSI option card
+device	PMAZB-AB	tcds	53c94 TCDS SCSI option card
 device	PMAZC-AA	tcds	53c94 TCDS Fast SCSI option card
 device	PMTNV-AA	???	Non-volatile RAM option card
 device	T1D4PKT		ds	DECWRL Turbochannel T1
 device	T3PKT		tt	DECWRL Turbochannel T3
 device	PMAT-AA 	tra	DEC TurboChannel Token Ring Controller
+device	PMABV-AA	vba	VME Adapter
+device	PMAP-AA		???	Prestoserve
 
 # the following entries are unconfirmed
 #device	PMAD-AB		le	LANCE Ethernet

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.77 1999/09/25 00:00:38 shin Exp $	*/
+/*	$NetBSD: locore.S,v 1.77.6.1 1999/12/27 18:32:47 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -99,6 +99,16 @@ _C_LABEL(kernel_text):
 #ifdef __GP_SUPPORT__
 	la	gp, _C_LABEL(_gp)
 #endif
+	
+#ifdef R3900_CACHE_DISABLE	
+	li	t0, ~(R3900_CONFIG_ICE|R3900_CONFIG_DCE)
+	mfc0	t1, R3900_COP_0_CONFIG
+	and	t1, t0, t1
+	nop
+	mtc0	t1, R3900_COP_0_CONFIG
+	nop
+#endif /* R3900_CACHE_DISABLE */
+	
 #ifdef SOFTFLOAT /* No FPU; avoid touching FPU registers */
 	li	t0, 0				# Disable interrupts and
 	mtc0	t0, MIPS_COP_0_STATUS		# the fp coprocessor
@@ -497,6 +507,18 @@ LEAF(_spllower)
 	and	v0, v0, (MIPS_INT_MASK | MIPS_SR_INT_IE)
 END(_spllower)
 
+LEAF(_splrestore)
+	mfc0	v0, MIPS_COP_0_STATUS		# fetch status register
+	and	a0, a0, MIPS_INT_MASK
+	li	v1, ~MIPS_INT_MASK
+	and	v1, v1, v0			# turn off every INT bit
+	or	v1, v1, a0			# set old INT bits
+	mtc0	v1, MIPS_COP_0_STATUS		# store back
+	nop
+	j	ra
+	and	v0, v0, MIPS_INT_MASK
+END(_splrestore)
+
 LEAF(_splset)
 	mfc0	v0, MIPS_COP_0_STATUS		# fetch status register
 	and	a0, a0, (MIPS_INT_MASK | MIPS_SR_INT_IE)
@@ -560,6 +582,7 @@ END(_splnone)
  */
 LEAF(copystr)
 	move	t0, a2
+	beq	a2, zero, 4f
 1:
 	lbu	v0, 0(a0)
 	subu	a2, a2, 1
@@ -568,6 +591,7 @@ LEAF(copystr)
 	addu	a0, a0, 1
 	bne	a2, zero, 1b			# less than maxlen
 	addu	a1, a1, 1
+4:
 	li	v0, ENAMETOOLONG		# run out of space
 2:
 	beq	a3, zero, 3f			# return num. of copied bytes
@@ -591,6 +615,7 @@ LEAF(copyinstr)
 	blt	a0, zero, _C_LABEL(copystrerr)
 	sw	v0, U_PCB_ONFAULT(v1)
 	move	t0, a2
+	beq	a2, zero, 4f
 1:
 	lbu	v0, 0(a0)
 	subu	a2, a2, 1
@@ -599,6 +624,7 @@ LEAF(copyinstr)
 	addu	a0, a0, 1
 	bne	a2, zero, 1b
 	addu	a1, a1, 1
+4:
 	li	v0, ENAMETOOLONG
 2:
 	beq	a3, zero, 3f
@@ -622,6 +648,7 @@ LEAF(copyoutstr)
 	blt	a1, zero, _C_LABEL(copystrerr)
 	sw	v0, U_PCB_ONFAULT(v1)
 	move	t0, a2
+	beq	a2, zero, 4f
 1:
 	lbu	v0, 0(a0)
 	subu	a2, a2, 1
@@ -630,6 +657,7 @@ LEAF(copyoutstr)
 	addu	a0, a0, 1
 	bne	a2, zero, 1b
 	addu	a1, a1, 1
+4:
 	li	v0, ENAMETOOLONG
 2:
 	beq	a3, zero, 3f
@@ -990,6 +1018,7 @@ LEAF_NOPROFILE(mips_read_causereg)
 END(mips_read_causereg)
 
 
+#ifndef SOFTFLOAT
 /*
  * void switchfpregs(struct proc *old, struct proc *new)
  *
@@ -1167,6 +1196,7 @@ LEAF(savefpregs)
 	j	ra
 	mtc0	v0, MIPS_COP_0_STATUS	# Restore the status register.
 END(savefpregs)
+#endif /* !SOFTFLOAT */
 
 /*----------------------------------------------------------------------------
  *
@@ -1209,12 +1239,14 @@ XNESTED(MachFPTrap)
 	nop				# 1st extra nop for r4k
 	nop				# 2nd extra nop for r4k
 
+#ifndef SOFTFLOAT
 	cfc1	t0, MIPS_FPU_CSR	# stall til FP done
 	cfc1	t0, MIPS_FPU_CSR	# now get status
 	nop
 	sll	t2, t0, (31 - 17)	# unimplemented operation?
 	bgez	t2, 3f			# no, normal trap
 	nop
+#endif
 /*
  * We got an unimplemented operation trap so
  * fetch the instruction, compute the next PC and emulate the instruction.
@@ -1253,18 +1285,28 @@ XNESTED(MachFPTrap)
  * Check to see if the instruction to be emulated is a floating-point
  * instruction.
  */
+	sw	zero, FRAME_ZERO(a3)
+
 	srl	t0, a0, MIPS_OPCODE_SHIFT
-	beq	t0, MIPS_OPCODE_C1, 4f		# this should never fail
+	beq	t0, MIPS_OPCODE_C1, 4f
 	nop
+
+#ifdef SOFTFLOAT
+	beq	t0, 0x31, 5f	# lwc1
+	nop
+	beq	t0, 0x35, 6f	# ldc1
+	nop
+	beq	t0, 0x39, 7f	# swc1
+	nop
+	beq	t0, 0x3d, 8f	# sdc1
+	nop
+#endif
+
 /*
- * Send a floating point exception signal to the current process.
+ * Send a illegal instruction signal to the current process.
  */
 3:
-	lw	a0, _C_LABEL(curproc)		# get current process
-	cfc1	a2, MIPS_FPU_CSR		# code = FP execptions
-	ctc1	zero, MIPS_FPU_CSR		# Clear exceptions
-	jal	_C_LABEL(trapsignal)
-	li	a1, SIGFPE
+	li	v0, SIGILL
 	b	FPReturn
 	nop
 
@@ -1272,9 +1314,20 @@ XNESTED(MachFPTrap)
  * Finally, we can call MachEmulateFP() where a0 is the instruction to emulate.
  */
 4:
+#ifdef SOFTFLOAT
+	move	a1, a3		
+#endif
 	jal	_C_LABEL(MachEmulateFP)
 	nop
 
+FPemuldone:
+	beq	v0, zero, FPReturn
+	nop
+
+	move	a2, a0				# code = instruction
+	lw	a0, _C_LABEL(curproc)		# get current process
+	jal	_C_LABEL(trapsignal)
+	move	a1, v0
 /*
  * Turn off the floating point coprocessor and return.
  */
@@ -1285,7 +1338,35 @@ FPReturn:
 	mtc0	t0, MIPS_COP_0_STATUS
 	j	ra
 	addu	sp, sp, CALLFRAME_SIZ
+
+#ifdef SOFTFLOAT
+5:	# lwc1
+	jal	_C_LABEL(MachEmulateLWC1)
+	move	a1, a3
+	j	FPemuldone
+	nop
+
+6:	# ldc1
+	jal	_C_LABEL(MachEmulateLDC1)
+	move	a1, a3
+	j	FPemuldone
+	nop
+
+7:	# swc1
+	jal	_C_LABEL(MachEmulateSWC1)
+	move	a1, a3
+	j	FPemuldone
+	nop
+
+8:	# sdc1
+	jal	_C_LABEL(MachEmulateSDC1)
+	move	a1, a3
+	j	FPemuldone
+	nop
+
+#endif
 END(MachFPInterrupt)
+
 
 #ifndef DDB_TRACE
 

@@ -20,7 +20,7 @@
 # MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 #
 #	from: @(#)MAKEDEV	5.2 (Berkeley) 6/22/90
-#	$NetBSD: MAKEDEV,v 1.9 1999/09/21 14:25:46 hubertf Exp $
+#	$NetBSD: MAKEDEV,v 1.9.2.1 1999/12/27 18:28:55 wrstuden Exp $
 #
 ###########################################################################
 #
@@ -49,7 +49,7 @@
 #	vnd*	vnode pseudo-disks
 #	ccd*	concatenated disk driver
 #	raid*	RAIDframe disk driver
-#	md*	memory pseudo-disks
+#	md*	memory pseudo-disk devices
 #
 # Terminal ports:
 #	ttye*	ite consoles
@@ -210,18 +210,13 @@ fd)
 	;;
 
 md*)
-	case $i in
-	md*) name=md;	unit=${i#md};	blk=13;	chr=32;;
-	esac
-	rm -f $name$unit? r$name$unit?
-	mknod ${name}${unit}a	b $blk $(($unit * 8 + 0))
-	mknod ${name}${unit}b	b $blk $(($unit * 8 + 1))
-	mknod ${name}${unit}c	b $blk $(($unit * 8 + 2))
-	mknod r${name}${unit}a	c $chr $(($unit * 8 + 0))
-	mknod r${name}${unit}b	c $chr $(($unit * 8 + 1))
-	mknod r${name}${unit}c	c $chr $(($unit * 8 + 2))
-	chgrp operator $name$unit? r$name$unit?
-	chmod 640 $name$unit? r$name$unit?
+	unit=${i#md}; blk=13; chr=32;
+	rm -f md${unit} md${unit}c rmd${unit}
+	mknod md${unit}  b $blk $((($unit +  0) * 8)) 
+	mknod md${unit}c b $blk $((($unit + 16) * 8)) 
+#	mknod rmd${unit} c $chr $((($unit + 16) * 8)) 
+	chgrp operator md${unit} md${unit}c #rmd${unit}
+	chmod 640 md${unit} md${unit}c #rmd${unit}
 	;;
 
 ss*)

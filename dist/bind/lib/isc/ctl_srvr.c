@@ -1,4 +1,4 @@
-/*	$NetBSD: ctl_srvr.c,v 1.2 1999/11/20 20:38:54 veego Exp $	*/
+/*	$NetBSD: ctl_srvr.c,v 1.2.4.1 1999/12/27 18:27:45 wrstuden Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 static const char rcsid[] = "Id: ctl_srvr.c,v 8.21 1999/10/17 08:41:57 cyarnell Exp";

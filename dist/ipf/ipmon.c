@@ -1,4 +1,4 @@
-/*	$NetBSD: ipmon.c,v 1.2 1999/12/11 23:33:07 veego Exp $	*/
+/*	$NetBSD: ipmon.c,v 1.2.4.1 1999/12/27 18:27:53 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 1993-1998 by Darren Reed.

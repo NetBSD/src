@@ -1,4 +1,4 @@
-/*	$NetBSD: am79900.c,v 1.3 1998/08/08 23:51:39 mycroft Exp $	*/
+/*	$NetBSD: am79900.c,v 1.3.18.1 1999/12/27 18:34:43 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1998
@@ -323,8 +323,10 @@ am79900_tint(sc)
 			if (tmd.tmd2 & LE_T2_LCOL)
 				ifp->if_collisions++;
 			if (tmd.tmd2 & LE_T2_RTRY) {
+#ifdef LEDEBUG
 				printf("%s: excessive collisions\n",
 				    sc->sc_dev.dv_xname);
+#endif
 				ifp->if_collisions += 16;
 			}
 			ifp->if_oerrors++;

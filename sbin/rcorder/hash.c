@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.c,v 1.1 1999/11/23 05:28:20 mrg Exp $	*/
+/*	$NetBSD: hash.c,v 1.1.2.1 1999/12/27 18:30:30 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: hash.c,v 1.1 1999/11/23 05:28:20 mrg Exp $";
+static char rcsid[] = "$NetBSD: hash.c,v 1.1.2.1 1999/12/27 18:30:30 wrstuden Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)hash.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: hash.c,v 1.1 1999/11/23 05:28:20 mrg Exp $");
+__RCSID("$NetBSD: hash.c,v 1.1.2.1 1999/12/27 18:30:30 wrstuden Exp $");
 #endif
 #endif /* not lint */
 #endif

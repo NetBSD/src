@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.24 1999/07/08 18:05:27 thorpej Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.24.8.1 1999/12/27 18:31:51 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -420,8 +420,8 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 			if (size == 0)
 				panic("_bus_dmamem_map: size botch");
 			pmap_enter(pmap_kernel(), va, addr,
-			    VM_PROT_READ | VM_PROT_WRITE, TRUE,
-			    VM_PROT_READ | VM_PROT_WRITE);
+			    VM_PROT_READ | VM_PROT_WRITE,
+			    VM_PROT_READ | VM_PROT_WRITE | PMAP_WIRED);
 #if 0
 			if (flags & BUS_DMA_COHERENT)
 				pmap_changebit(addr, PG_N, ~0);
@@ -531,7 +531,7 @@ _bus_dmamap_load_buffer(t, map, buf, buflen, p, flags, lastaddrp, segp, first)
 		/*
 		 * Get the physical address for this segment.
 		 */
-		(void) pmap_extract(pmap, vaddr, &curaddr);
+		(void) pmap_extract(pmap, vaddr, (paddr_t *)&curaddr);
 
 		/*
 		 * If we're beyond the bounce threshold, notify

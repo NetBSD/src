@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuconf.c,v 1.22 1999/06/29 06:50:41 ross Exp $	*/
+/*	$NetBSD: cpuconf.c,v 1.22.8.1 1999/12/27 18:31:19 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -142,6 +142,13 @@ extern void dec_6600_init __P((void));
 #define	dec_6600_init		platform_not_configured
 #endif
 
+#include "opt_dec_2100_a500.h"
+#ifdef DEC_2100_A500
+extern void dec_2100_a500_init __P((void));
+#else
+#define	dec_2100_a500_init	platform_not_configured
+#endif
+
 struct cpuinit cpuinit[] = {
 	cpu_notsupp("???"),			     /*  0: ??? */
 	cpu_notsupp("ST_ADU"),			     /*  1: ST_ADU */
@@ -151,8 +158,8 @@ struct cpuinit cpuinit[] = {
 	cpu_notsupp("???"),			     /*  5: ??? */
 	cpu_notsupp("ST_DEC_2000_300"),		     /*  6: ST_DEC_2000_300 */
 	cpu_init(dec_3000_300_init,"DEC_3000_300"),  /*  7: ST_DEC_3000_300 */
-	cpu_init(avalon_a12_init,"AVALON_A12"),   /*  8: ST_AVALON_A12 */
-	cpu_notsupp("ST_DEC_2100_A500"),	     /*  9: ST_DEC_2100_A500 */
+	cpu_init(avalon_a12_init,"AVALON_A12"),      /*  8: ST_AVALON_A12 */
+	cpu_init(dec_2100_a500_init,"DEC_2100_A500"),/*  9: ST_DEC_2100_A500 */
 	cpu_notsupp("ST_DEC_APXVME_64"),	     /* 10: ST_DEC_APXVME_64 */
 	cpu_init(dec_axppci_33_init,"DEC_AXPPCI_33"),/* 11: ST_DEC_AXPPCI_33 */
 	cpu_init(dec_kn8ae_init,"DEC_KN8AE"),	     /* 12: ST_DEC_21000 */

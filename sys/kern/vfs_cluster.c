@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cluster.c,v 1.21.18.1 1999/12/21 23:19:58 wrstuden Exp $	*/
+/*	$NetBSD: vfs_cluster.c,v 1.21.18.2 1999/12/27 18:35:53 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -330,7 +330,7 @@ cluster_rbuild(vp, filesize, bp, lbn, blkno, size, run, flags)
 	 * is no way of doing the necessary page moving, so
 	 * terminate early.
 	 */
-	if (size != roundup(size, CLBYTES))
+	if (size != roundup(size, NBPG))
 		return (bp);
 
 	inc = btodb(size, bp->b_bshift);
@@ -724,17 +724,21 @@ redo:
 			panic("Clustered write to wrong blocks");
 		}
 
-		pagemove(tbp->b_data, cp, size);
-		bp->b_bcount += size;
-		bp->b_bufsize += size;
-
-		tbp->b_bufsize -= size;
 		tbp->b_flags &= ~(B_READ | B_DONE | B_ERROR | B_DELWRI);
 		/*
 		 * We might as well AGE the buffer here; it's either empty, or
 		 * contains data that we couldn't get rid of (but wanted to).
 		 */
 		tbp->b_flags |= (B_ASYNC | B_AGE);
+
+		if (LIST_FIRST(&tbp->b_dep) != NULL && bioops.io_start)
+			(*bioops.io_start)(tbp);
+
+		pagemove(tbp->b_data, cp, size);
+		bp->b_bcount += size;
+		bp->b_bufsize += size;
+
+		tbp->b_bufsize -= size;
 		s = splbio();
 		reassignbuf(tbp, tbp->b_vp);		/* put on clean list */
 		++tbp->b_vp->v_numoutput;

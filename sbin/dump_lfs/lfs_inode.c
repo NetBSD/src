@@ -1,4 +1,4 @@
-/*      $NetBSD: lfs_inode.c,v 1.2 1999/10/01 04:35:23 perseant Exp $ */
+/*      $NetBSD: lfs_inode.c,v 1.2.4.1 1999/12/27 18:30:23 wrstuden Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c      8.6 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: lfs_inode.c,v 1.2 1999/10/01 04:35:23 perseant Exp $");
+__RCSID("$NetBSD: lfs_inode.c,v 1.2.4.1 1999/12/27 18:30:23 wrstuden Exp $");
 #endif
 #endif /* not lint */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: elfXX_exec.c,v 1.3 1998/08/27 06:23:33 eeh Exp $	*/
+/*	$NetBSD: elfXX_exec.c,v 1.3.16.1 1999/12/27 18:34:03 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
@@ -84,8 +84,8 @@ printf("lseek sez: %lx %s\n", (long)size, (size<0)?strerror(errno):"");
 			return (1);
 		}
 printf("reading phdr worked, type %lx flags %lx\n", (long)phdr.p_type, (long)phdr.p_flags);
-		if (phdr.p_type != Elf_pt_load ||
-		    (phdr.p_flags & (Elf_pf_w|Elf_pf_x)) == 0)
+		if (phdr.p_type != PT_LOAD ||
+		    (phdr.p_flags & (PF_W|PF_X)) == 0)
 			continue;
 
 		/* Read in segment. */
@@ -127,12 +127,12 @@ printf("reading phdr worked, type %lx flags %lx\n", (long)phdr.p_type, (long)phd
 		return (1);
 	}
 	for (i = 0; i < elf->e_shnum; i++, shp++) {
-		if (shp->sh_type == Elf_sht_null)
+		if (shp->sh_type == SHT_NULL)
 			continue;
-		if (shp->sh_type != Elf_sht_symtab
-		    && shp->sh_type != Elf_sht_strtab) {
+		if (shp->sh_type != SHT_SYMTAB
+		    && shp->sh_type != SHT_STRTAB) {
 			shp->sh_offset = 0; 
-			shp->sh_type = Elf_sht_nobits;
+			shp->sh_type = SHT_NOBITS;
 			continue;
 		}
 		size += shp->sh_size;
@@ -165,8 +165,8 @@ printf("reading phdr worked, type %lx flags %lx\n", (long)phdr.p_type, (long)phd
 	addr += sizeof(CAT3(Elf,ELFSIZE,_Ehdr)) + (elf->e_shnum * sizeof(CAT3(Elf,ELFSIZE,_Shdr)));
 	off = sizeof(CAT3(Elf,ELFSIZE,_Ehdr)) + (elf->e_shnum * sizeof(CAT3(Elf,ELFSIZE,_Shdr)));
 	for (first = 1, i = 0; i < elf->e_shnum; i++, shp++) {
-		if (shp->sh_type == Elf_sht_symtab
-		    || shp->sh_type == Elf_sht_strtab) {
+		if (shp->sh_type == SHT_SYMTAB
+		    || shp->sh_type == SHT_STRTAB) {
 			if (first)
 				printf("symbols @ 0x%lx ", (u_long)addr);
 			printf("%s%d", first ? "" : "+", (int)shp->sh_size);

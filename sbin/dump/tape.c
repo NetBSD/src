@@ -1,4 +1,4 @@
-/*	$NetBSD: tape.c,v 1.18 1999/03/23 14:22:59 bouyer Exp $	*/
+/*	$NetBSD: tape.c,v 1.18.4.1 1999/12/27 18:30:22 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tape.c	8.4 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: tape.c,v 1.18 1999/03/23 14:22:59 bouyer Exp $");
+__RCSID("$NetBSD: tape.c,v 1.18.4.1 1999/12/27 18:30:22 wrstuden Exp $");
 #endif
 #endif /* not lint */
 
@@ -53,7 +53,6 @@ __RCSID("$NetBSD: tape.c,v 1.18 1999/03/23 14:22:59 bouyer Exp $");
 #include <ufs/inode.h>
 #else
 #include <ufs/ufs/dinode.h>
-#include <ufs/ffs/fs.h>
 #endif
 
 #include <protocols/dumprestore.h>
@@ -202,7 +201,7 @@ dumpblock(blkno, size)
 {
 	int avail, tpblks, dblkno;
 
-	dblkno = fsbtodb(sblock, blkno);
+	dblkno = fsatoda(ufsib, blkno);
 	tpblks = size >> tp_bshift;
 	while ((avail = MIN(tpblks, ntrec - trecno)) > 0) {
 		slp->req[trecno].dblk = dblkno;

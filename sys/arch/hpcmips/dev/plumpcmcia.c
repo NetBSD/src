@@ -1,4 +1,4 @@
-/*	$NetBSD: plumpcmcia.c,v 1.2 1999/12/07 17:23:54 uch Exp $ */
+/*	$NetBSD: plumpcmcia.c,v 1.2.2.1 1999/12/27 18:32:02 wrstuden Exp $ */
 
 /*
  * Copyright (c) 1999 UCHIYAMA Yasushi

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.43 1999/09/17 20:04:46 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.43.2.1 1999/12/27 18:33:16 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -106,6 +106,7 @@ struct machvec machine_interface = {
 	fake_spl,
 	fake_spl,
 	fake_spl,
+	fake_spl,
 	fake_splx,
 	fake_setsoft,
 	fake_setsoft,
@@ -172,8 +173,8 @@ initppc(startkernel, endkernel, args)
 	/*
 	 * Set up initial BAT table to only map the lowest 256 MB area
 	 */
-	battable[0].batl = BATL(0x00000000, BAT_M);
-	battable[0].batu = BATU(0x00000000);
+	battable[0].batl = BATL(0x00000000, BAT_M, BAT_PP_RW);
+	battable[0].batu = BATU(0x00000000, BAT_BL_256M, BAT_Vs);
 
 	/*
 	 * Now setup fixed bat registers
@@ -381,8 +382,8 @@ cpu_startup()
 		panic("startup: no room for message buffer");
 	for (i = 0; i < btoc(MSGBUFSIZE); i++)
 		pmap_enter(pmap_kernel(), msgbuf_vaddr + i * NBPG,
-		    msgbuf_paddr + i * NBPG, VM_PROT_READ|VM_PROT_WRITE, TRUE,
-		    VM_PROT_READ|VM_PROT_WRITE);
+		    msgbuf_paddr + i * NBPG, VM_PROT_READ|VM_PROT_WRITE,
+		    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
 	initmsgbuf((caddr_t)msgbuf_vaddr, round_page(MSGBUFSIZE));
 
 	printf("%s", version);
@@ -431,7 +432,7 @@ cpu_startup()
 		 * "base" pages for the rest.
 		 */
 		curbuf = (vaddr_t) buffers + (i * MAXBSIZE);
-		curbufsize = CLBYTES * ((i < residual) ? (base+1) : base);
+		curbufsize = NBPG * ((i < residual) ? (base+1) : base);
 
 		while (curbufsize) {
 			pg = uvm_pagealloc(NULL, 0, NULL, 0);
@@ -440,7 +441,7 @@ cpu_startup()
 					"buffer cache");
 			pmap_enter(kernel_map->pmap, curbuf,
 			    VM_PAGE_TO_PHYS(pg), VM_PROT_READ|VM_PROT_WRITE,
-			    TRUE, VM_PROT_READ|VM_PROT_WRITE);
+			    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
 			curbuf += PAGE_SIZE;
 			curbufsize -= PAGE_SIZE;
 		}
@@ -474,7 +475,7 @@ cpu_startup()
 
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
-	format_bytes(pbuf, sizeof(pbuf), bufpages * CLBYTES);
+	format_bytes(pbuf, sizeof(pbuf), bufpages * NBPG);
 	printf("using %d buffers containing %s of memory\n", nbuf, pbuf);
 
 	/*
@@ -563,126 +564,6 @@ setregs(p, pack, stack)
 	tf->srr0 = pack->ep_entry;
 	tf->srr1 = PSL_MBO | PSL_USERSET | PSL_FE_DFLT;
 	p->p_addr->u_pcb.pcb_flags = 0;
-}
-
-/*
- * Send a signal to process.
- */
-void
-sendsig(catcher, sig, mask, code)
-	sig_t catcher;
-	int sig;
-	sigset_t *mask;
-	u_long code;
-{
-	struct proc *p = curproc;
-	struct trapframe *tf;
-	struct sigframe *fp, frame;
-	struct sigacts *psp = p->p_sigacts;
-	int onstack;
-
-	tf = trapframe(p);
-
-	/* Do we need to jump onto the signal stack? */
-	onstack =
-	    (psp->ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
-	    (psp->ps_sigact[sig].sa_flags & SA_ONSTACK) != 0;
-
-	/* Allocate space for the signal handler context. */
-	if (onstack)
-		fp = (struct sigframe *)((caddr_t)psp->ps_sigstk.ss_sp +
-						  psp->ps_sigstk.ss_size);
-	else
-		fp = (struct sigframe *)tf->fixreg[1];
-	fp = (struct sigframe *)((int)(fp - 1) & ~0xf);
-
-	/* Build stack frame for signal trampoline. */
-	frame.sf_signum = sig;
-	frame.sf_code = code;
-
-	/* Save register context. */
-	bcopy(tf, &frame.sf_sc.sc_frame, sizeof *tf);
-
-	/* Save signal stack. */
-	frame.sf_sc.sc_onstack = psp->ps_sigstk.ss_flags & SS_ONSTACK;
-
-	/* Save signal mask. */
-	frame.sf_sc.sc_mask = *mask;
-
-#ifdef COMPAT_13
-	/*
-	 * XXX We always have to save an old style signal mask because
-	 * XXX we might be delivering a signal to a process which will
-	 * XXX escape from the signal in a non-standard way and invoke
-	 * XXX sigreturn() directly.
-	 */
-	native_sigset_to_sigset13(mask, &frame.sf_sc.__sc_mask13);
-#endif
-
-	if (copyout(&frame, fp, sizeof frame) != 0) {
-		/*
-		 * Process has trashed its stack; give it an illegal
-		 * instructoin to halt it in its tracks.
-		 */
-		sigexit(p, SIGILL);
-		/* NOTREACHED */
-	}
-
-	/*
-	 * Build context to run handler in.
-	 */
-	tf->fixreg[1] = (int)fp;
-	tf->lr = (int)catcher;
-	tf->fixreg[3] = (int)sig;
-	tf->fixreg[4] = (int)code;
-	tf->fixreg[5] = (int)&frame.sf_sc;
-	tf->srr0 = (int)psp->ps_sigcode;
-
-	/* Remember that we're now on the signal stack. */
-	if (onstack)
-		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
-}
-
-/*
- * System call to cleanup state after a signal handler returns.
- */
-int
-sys___sigreturn14(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	struct sys___sigreturn14_args /* {
-		syscallarg(struct sigcontext *) sigcntxp;
-	} */ *uap = v;
-	struct sigcontext sc;
-	struct trapframe *tf;
-	int error;
-
-	/*
-	 * The trampoline hands us the context.
-	 * It is unsafe to keep track of it ourselves, in the event that a
-	 * program jumps out of a signal hander.
-	 */
-	if ((error = copyin(SCARG(uap, sigcntxp), &sc, sizeof sc)) != 0)
-		return (error);
-
-	/* Restore the register context. */
-	tf = trapframe(p);
-	if ((sc.sc_frame.srr1 & PSL_USERSTATIC) != (tf->srr1 & PSL_USERSTATIC))
-		return (EINVAL);
-	bcopy(&sc.sc_frame, tf, sizeof *tf);
-
-	/* Restore signal stack. */
-	if (sc.sc_onstack & SS_ONSTACK)
-		p->p_sigacts->ps_sigstk.ss_flags |= SS_ONSTACK;
-	else
-		p->p_sigacts->ps_sigstk.ss_flags &= ~SS_ONSTACK;
-
-	/* Restore signal mask. */
-	(void) sigprocmask1(p, SIG_SETMASK, &sc.sc_mask, 0);
-
-	return (EJUSTRETURN);
 }
 
 /*

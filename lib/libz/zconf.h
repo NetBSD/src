@@ -1,4 +1,4 @@
-/* $NetBSD: zconf.h,v 1.7 1999/07/03 12:30:57 simonb Exp $ */
+/* $NetBSD: zconf.h,v 1.7.2.1 1999/12/27 18:30:10 wrstuden Exp $ */
 
 /* zconf.h -- configuration of the zlib compression library
  * Copyright (C) 1995-1998 Jean-loup Gailly.
@@ -242,7 +242,7 @@ typedef uLong FAR uLongf;
    typedef Byte     *voidp;
 #endif
 
-#ifdef HAVE_UNISTD_H
+#if defined(HAVE_UNISTD_H) || defined(__NetBSD__)
 #  include <sys/types.h> /* for off_t */
 #  include <unistd.h>    /* for SEEK_* and off_t */
 #  define z_off_t  off_t

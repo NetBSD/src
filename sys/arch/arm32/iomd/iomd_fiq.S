@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd_fiq.S,v 1.5 1998/04/01 22:53:32 mark Exp $	*/
+/*	$NetBSD: iomd_fiq.S,v 1.5.18.1 1999/12/27 18:31:43 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -73,12 +73,12 @@ ENTRY_NP(floppy_read_fiq)
 	ldrb	r8, [r9]
 	tst	r8, #0x01
 	addne	r13, r13, #0x00000001
-	bne	_floppy_read_fiq
+	bne	_C_LABEL(floppy_read_fiq)
 #endif
 	subs	pc, lr, #0x00000004
 
-	.global	_floppy_read_fiq_end
-_floppy_read_fiq_end:
+	.global	_C_LABEL(floppy_read_fiq_end)
+_C_LABEL(floppy_read_fiq_end):
 
 
 /*
@@ -103,11 +103,11 @@ ENTRY_NP(floppy_write_fiq)
 	ldrb	r8, [r9]
 	tst	r8, #0x01
 	addne	r13, r13, #0x00000001
-	bne	_floppy_write_fiq
+	bne	_C_LABEL(floppy_write_fiq)
 #endif
 	subs	pc, lr, #0x00000004
 
-	.global	_floppy_write_fiq_end
-_floppy_write_fiq_end:
+	.global	_C_LABEL(floppy_write_fiq_end)
+_C_LABEL(floppy_write_fiq_end):
 
 /* End of fiq.S */

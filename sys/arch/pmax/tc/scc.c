@@ -1,4 +1,4 @@
-/*	$NetBSD: scc.c,v 1.52 1999/09/17 20:04:50 thorpej Exp $	*/
+/*	$NetBSD: scc.c,v 1.52.8.1 1999/12/27 18:33:37 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.52 1999/09/17 20:04:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.52.8.1 1999/12/27 18:33:37 wrstuden Exp $");
 
 #include "opt_ddb.h"
 
@@ -105,6 +105,7 @@ __KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.52 1999/09/17 20:04:50 thorpej Exp $");
 
 #ifdef pmax
 #include <mips/cpuregs.h>	/* phys to uncached */
+#include <pmax/pmax/cons.h>
 #include <pmax/pmax/pmaxtype.h>
 #include <pmax/pmax/maxine.h>
 #include <pmax/pmax/asic.h>
@@ -135,11 +136,6 @@ extern void ttrstrt	__P((void *));
 
 #ifdef alpha
 #define	SCCDEV		15			/* XXX */
-#endif
-
-#ifdef pmax
-#define SCCDEV		17			/* XXX */
-#define RCONSDEV	85			/* XXXXXX */
 #endif
 
 /*
@@ -1140,6 +1136,7 @@ scc_rxintr(sc, chan, regs, unit)
 	int cc, rr1 = 0, rr2 = 0;	/* XXX */
 #ifdef HAVE_RCONS
 	char *cp;
+	int cl;
 #endif
 
 	SCC_READ_DATA(regs, chan, cc);
@@ -1172,10 +1169,10 @@ scc_rxintr(sc, chan, regs, unit)
 			return;
 		}
 #ifdef HAVE_RCONS
-		if ((cp = kbdMapChar(cc)) == NULL)
+		if ((cp = kbdMapChar(cc, &cl)) == NULL)
 			return;
 
-		while (*cp)
+		while (cl--)
 			rcons_input(0, *cp++);
 #endif
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_hb.c,v 1.1 1999/12/09 14:53:03 tsutsui Exp $	*/
+/*	$NetBSD: clock_hb.c,v 1.1.2.1 1999/12/27 18:32:55 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.

@@ -1,4 +1,4 @@
-/*	$NetBSD: resolv.h,v 1.2 1999/11/20 19:15:54 veego Exp $	*/
+/*	$NetBSD: resolv.h,v 1.2.4.1 1999/12/27 18:27:27 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1983, 1987, 1989

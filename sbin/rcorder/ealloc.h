@@ -1,4 +1,4 @@
-/*	$NetBSD: ealloc.h,v 1.1 1999/11/23 05:28:20 mrg Exp $	*/
+/*	$NetBSD: ealloc.h,v 1.1.2.1 1999/12/27 18:30:30 wrstuden Exp $	*/
 
 void	*emalloc __P((size_t len));
 char	*estrdup __P((const char *str));

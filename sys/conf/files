@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.319.2.1 1999/12/21 23:19:51 wrstuden Exp $
+#	$NetBSD: files,v 1.319.2.2 1999/12/27 18:34:32 wrstuden Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -7,6 +7,7 @@
 defopt	INSECURE
 defopt	KMEMSTATS
 defopt	KTRACE
+defopt	MAXUPRC
 defopt	LOCKDEBUG
 defopt	RTC_OFFSET
 defopt	DEFCORENAME
@@ -52,7 +53,8 @@ defopt	opt_inet.h	INET INET6
 defopt	opt_ipsec.h	IPSEC IPSEC_ESP
 defopt	opt_inet_conf.h	SUBNETSARELOCAL HOSTZEROBROADCAST
 defopt	opt_atalk.h	NETATALK
-defopt	opt_ns.h	NSIP	 	# XNS tunneled over IP
+defopt	opt_ns.h	NS NSIP	 	# NS network stack,
+					# XNS tunneled over IP
 defopt	opt_iso.h	ISO TPIP	# ISO network stack
 defopt  IPX				# IPX network stack
 defopt	EON				# ISO clnp over IP
@@ -94,6 +96,7 @@ deffs	fs_union.h UNION
 deffs	fs_coda.h CODA
 
 # file system options
+defopt	SOFTDEP
 defopt	QUOTA
 defopt	opt_ffs.h	FFS_EI
 defopt	opt_ntfs.h	NTFS_DEBUG
@@ -173,6 +176,12 @@ file	ipkdb/ipkdb_slip.c		ipkdbslip		needs-flag
 # Support for ppp	(for now only fake)
 file	ipkdb/ipkdb_ppp.c		ipkdbppp		needs-flag
 
+# Attribute for devices that read/write an IEEE 802.3u MII bus
+# using the bit-bang method.
+# XXX Can't be in dev/mii/files.mii because that file hasn't
+# XXX been included yet.
+define	mii_bitbang
+file	dev/mii/mii_bitbang.c		mii_bitbang
 
 # "Chipset" drivers.  These are the bus-independent routines which
 # contain the cfdrivers.  Attachments are provided by files.<bus>
@@ -214,7 +223,7 @@ file	dev/ic/aha.c			aha
 # Qlogic ISP 10x0 SCSI Controllers
 defopt	opt_isp.h	ISP2100_FABRIC ISP2100_SCCLUN ISP_DISABLE_1020_SUPPORT
 			ISP_DISABLE_1080_SUPPORT ISP_DISABLE_2100_SUPPORT
-			ISP_DISABLE_2200_SUPPORT
+			ISP_DISABLE_2200_SUPPORT ISP_DISABLE_FW
 device	isp: scsi
 file	dev/ic/isp.c			isp
 file	dev/ic/isp_netbsd.c		isp
@@ -224,11 +233,11 @@ device	uha: scsi
 file	dev/ic/uha.c			uha
 
 # 3Com Etherlink-III Ethernet controller
-device	ep: arp, ether, ifnet, mii
+device	ep: arp, ether, ifnet, mii, mii_bitbang
 file	dev/ic/elink3.c			ep
 
 # 3Com EtherLink XL Controller
-device	ex: arp, ether, ifnet, mii
+device	ex: arp, ether, ifnet, mii, mii_bitbang
 file	dev/ic/elinkxl.c		ex
 
 # DEC EtherWORKS III (LEMAC) Ethernet controllers
@@ -322,8 +331,13 @@ file	dev/ic/ne2000.c			ne
 
 # 8250/16[45]50-based "com" ports
 # XXX In a perfect world, this would be done with attributes
+defopt	opt_com.h	COM16650 COM_HAYESP COM_DEBUG
 device	com: tty
 file	dev/ic/com.c			com needs-flag
+
+# PC-like keyboard controller
+device	pckbc { [slot = -1] }
+file	dev/ic/pckbc.c			pckbc needs-flag
 
 # Cirrus Logic CD240[01] 4-port Multi-Protocol Communications Controller
 device	clmpcc: tty
@@ -362,6 +376,10 @@ file	dev/ic/am7930.c			audioamd
 device	audiocs: audio, auconv, ad1848
 file	dev/ic/cs4231.c			audiocs
 
+# AC-97 CODECs
+define	ac97
+file	dev/ic/ac97.c			ac97
+
 # LSI64854 DMA controller back-end
 define	lsi64854
 file	dev/ic/lsi64854.c		lsi64854
@@ -374,9 +392,18 @@ file	dev/ic/rtl80x9.c		rtl80x9
 device  wdc: ata, atapi, wdc_base
 file    dev/ic/wdc.c wdc_base
 
+# Common code for ISA/PCMCIA (non 802.11) WaveLAN adapters
+define	wavelan
+device	wl: ether, ifnet, arp
+file	dev/ic/wavelan.c		wavelan
+
 # DECchip 21x4x Ethernet controller family, and assorted clones.
-device	tlp: arp, ether, ifnet, mii
+device	tlp: arp, ether, ifnet, mii, mii_bitbang
 file	dev/ic/tulip.c			tlp
+
+# Adaptec AIC-6915 Ethernet interface
+device	sf: arp, ether, ifnet, mii
+file	dev/ic/aic6915.c		sf
 
 # Definitions for wscons
 # device attributes: display, display with emulator, keyboard, and mouse
@@ -407,6 +434,8 @@ define	tcbus { }			# TurboChannel attachment
 define	usbus { }			# USB attachment
 define	vmebus { }			# VME bus attachment
 define	pcmciabus { [controller = -1], [socket = -1]}	# PCMCIA bus attachment
+define	cbbus {[slot = -1]}		# CardBus attachment
+define	pcmciaslot {[slot = -1]}	# PCMCIA slot itself:
 
 # We need the USB bus controllers here so different busses can
 # use them in an 'attach-with'.
@@ -571,11 +600,13 @@ file netkey/keysock.c			ipsec
 # inet6 stuff
 file net/if_faith.c			faith			needs-count
 file net/if_gif.c			gif			needs-count
+file net/net_osdep.c
 file netinet/ip_ecn.c			inet | inet6
 file netinet/in_gif.c			gif & inet
 file netinet6/in6_gif.c			gif & inet6
 file netinet6/in6.c			inet6
 file netinet6/in6_ifattach.c		inet6
+file netinet/in4_cksum.c
 file netinet6/in6_cksum.c		inet6
 file netinet6/in6_pcb.c			inet6
 file netinet6/in6_prefix.c		inet6
@@ -657,6 +688,7 @@ file kern/tty_tb.c			tb			needs-count
 file kern/tty_tty.c
 file kern/uipc_domain.c
 file kern/uipc_mbuf.c
+file kern/uipc_mbuf2.c
 file kern/uipc_proto.c
 file kern/uipc_socket.c
 file kern/uipc_socket2.c
@@ -699,6 +731,8 @@ file miscfs/procfs/procfs_subr.c	procfs
 file miscfs/procfs/procfs_vfsops.c	procfs
 file miscfs/procfs/procfs_vnops.c	procfs
 file miscfs/specfs/spec_vnops.c
+file miscfs/syncfs/sync_vnops.c
+file miscfs/syncfs/sync_subr.c
 file miscfs/umapfs/umap_subr.c		umapfs
 file miscfs/umapfs/umap_vfsops.c	umapfs
 file miscfs/umapfs/umap_vnops.c		umapfs
@@ -794,17 +828,6 @@ file netatalk/at_rmx.c			netatalkdebug
 file netatalk/ddp_input.c		netatalk
 file netatalk/ddp_output.c		netatalk
 file netatalk/ddp_usrreq.c		netatalk
-file netipx/ipx.c			ipx
-file netipx/ipx_cksum.c			ipx
-file netipx/ipx_input.c			ipx
-file netipx/ipx_ip.c			ipx
-file netipx/ipx_outputfl.c		ipx
-file netipx/ipx_pcb.c			ipx
-file netipx/ipx_proto.c			ipx
-file netipx/ipx_tun.c			ipx
-file netipx/ipx_usrreq.c		ipx
-file netipx/spx_debug.c			ipx
-file netipx/spx_usrreq.c		ipx
 file netiso/clnp_debug.c		iso
 file netiso/clnp_er.c			iso
 file netiso/clnp_frag.c			iso
@@ -846,7 +869,7 @@ file netns/idp_usrreq.c			ns
 file netns/ns.c				ns
 file netns/ns_error.c			ns
 file netns/ns_input.c			ns
-file netns/ns_ip.c			ns
+file netns/ns_ip.c			ns & nsip
 file netns/ns_output.c			ns
 file netns/ns_pcb.c			ns
 file netns/ns_proto.c			ns
@@ -883,8 +906,9 @@ file ufs/ext2fs/ext2fs_vfsops.c		ext2fs
 file ufs/ext2fs/ext2fs_vnops.c		ext2fs
 file ufs/ffs/ffs_alloc.c		ffs | mfs
 file ufs/ffs/ffs_balloc.c		ffs | mfs
-file ufs/ffs/ffs_bswap.c		(ffs | mfs | lfs) & ffs_ei
+file ufs/ffs/ffs_bswap.c		(ffs | mfs) & ffs_ei
 file ufs/ffs/ffs_inode.c		ffs | mfs
+file ufs/ffs/ffs_softdep.stub.c		(ffs & !softdep) | (!ffs & (lfs | mfs | ext2fs))
 file ufs/ffs/ffs_subr.c			ffs | mfs
 file ufs/ffs/ffs_tables.c		ffs | mfs
 file ufs/ffs/ffs_vfsops.c		ffs | mfs

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_ledma.c,v 1.5 1998/09/26 08:31:20 pk Exp $	*/
+/*	$NetBSD: if_le_ledma.c,v 1.5.18.1 1999/12/27 18:35:33 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -424,8 +424,10 @@ leattach_ledma(parent, self, aux)
 	sc->sc_nocarrier = lenocarrier;
 	sc->sc_hwreset = lehwreset;
 
-	(void)bus_intr_establish(sa->sa_bustag, sa->sa_pri, 0,
-				 am7990_intr, sc);
+	/* Establish interrupt handler */
+	if (sa->sa_nintr != 0)
+		(void)bus_intr_establish(sa->sa_bustag, sa->sa_pri, 0,
+					 am7990_intr, sc);
 
 	am7990_config(&lesc->sc_am7990);
 

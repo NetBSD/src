@@ -1,4 +1,4 @@
-/*	$NetBSD: ipcomp_input.c,v 1.5 1999/07/30 10:35:37 itojun Exp $	*/
+/*	$NetBSD: ipcomp_input.c,v 1.5.6.1 1999/12/27 18:36:26 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 1999 WIDE Project.
@@ -167,7 +167,7 @@ ipcomp4_input(m, va_alist)
 			/* other parameters to look at? */
 		}
 	}
-	if (cpi < IPCOMP_MAX || ipcomp_algorithms[cpi].decompress != NULL)
+	if (cpi < IPCOMP_MAX && ipcomp_algorithms[cpi].decompress != NULL)
 		algo = &ipcomp_algorithms[cpi];
 	else
 		algo = NULL;
@@ -331,7 +331,7 @@ ipcomp6_input(mp, offp, proto)
 			/* other parameters to look at? */
 		}
 	}
-	if (cpi < IPCOMP_MAX || ipcomp_algorithms[cpi].decompress != NULL)
+	if (cpi < IPCOMP_MAX && ipcomp_algorithms[cpi].decompress != NULL)
 		algo = &ipcomp_algorithms[cpi];
 	else
 		algo = NULL;

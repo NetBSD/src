@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_13_machdep.c,v 1.5 1999/03/26 04:29:21 eeh Exp $	*/
+/*	$NetBSD: compat_13_machdep.c,v 1.5.14.1 1999/12/27 18:33:58 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@ compat_13_sys_sigreturn(p, v, retval)
 	} */ *uap = v;
 	struct sigcontext13 sc, *scp;
 	sigset_t mask;
-	struct trapframe *tf;
+	struct trapframe64 *tf;
 
 	/* First ensure consistent stack state (see sendsig). */
 	write_user_windows();

@@ -1,4 +1,4 @@
-/*	$NetBSD: gai_strerror.c,v 1.1.1.1 1999/11/20 18:54:08 veego Exp $	*/
+/*	$NetBSD: gai_strerror.c,v 1.1.1.1.4.1 1999/12/27 18:27:33 wrstuden Exp $	*/
 
 /*
 %%% copyright-cmetz-97

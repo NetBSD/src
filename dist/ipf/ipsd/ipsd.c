@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsd.c,v 1.1.1.1 1999/12/11 22:24:07 veego Exp $	*/
+/*	$NetBSD: ipsd.c,v 1.1.1.1.4.1 1999/12/27 18:27:57 wrstuden Exp $	*/
 
 /*
  * (C)opyright 1995-1998 Darren Reed.

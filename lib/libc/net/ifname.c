@@ -1,4 +1,4 @@
-/*	$NetBSD: ifname.c,v 1.5 1999/09/20 04:39:13 lukem Exp $	*/
+/*	$NetBSD: ifname.c,v 1.5.4.1 1999/12/27 18:29:42 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -195,7 +195,7 @@ if_nameindex()
 		errno = ENOMEM;
 		goto end;
 	}
-	bcopy(ifbuf, cp + hlen, off);
+	(void)memcpy(cp + hlen, ifbuf, off);
 	ret = (struct if_nameindex *)cp;
 	for (i = 0; i < ifn; i++) {
 		ret[i].if_index = ifx[i].if_index;

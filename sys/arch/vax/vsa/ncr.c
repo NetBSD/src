@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.22 1999/09/21 18:07:54 ragge Exp $	*/
+/*	$NetBSD: ncr.c,v 1.22.6.1 1999/12/27 18:34:14 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -17,8 +17,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
+ *	  This product includes software developed by the NetBSD
+ *	  Foundation, Inc. and its contributors.
  * 4. Neither the name of The NetBSD Foundation nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
@@ -61,6 +61,9 @@
 #include <sys/proc.h>
 #include <sys/user.h>
 
+#include <vm/vm.h>
+#include <vm/vm_kern.h>
+
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsipi_debug.h>
@@ -77,17 +80,23 @@
 
 #define MIN_DMA_LEN 128
 
-#ifdef notyet
 struct si_dma_handle {
 	int	dh_flags;
 #define SIDH_BUSY	1
 #define SIDH_OUT	2
-	u_char	*dh_addr;
+	caddr_t dh_addr;
+	int	dh_len;
+	struct	proc *dh_proc;
 };
-#endif
 
 struct si_softc {
-	struct ncr5380_softc	ncr_sc;
+	struct	ncr5380_softc	ncr_sc;
+	caddr_t ncr_addr;
+	int	ncr_off;
+	int	ncr_dmaaddr;
+	int	ncr_dmacount;
+	int	ncr_dmadir;
+	struct	si_dma_handle ncr_dma[SCI_OPENINGS];
 };
 
 /* This is copied from julian's bt driver */
@@ -99,23 +108,23 @@ static struct scsipi_device si_dev = {
 	NULL,	/* Use default "done" routine. */
 };
 
-static int si_match(struct device *, struct cfdata *, void *);
-static void si_attach(struct device *, struct device *, void *);
-static void si_minphys(struct buf *);
-static void si_intr(int);
-void dk_establish(void);
+static	int si_match(struct device *, struct cfdata *, void *);
+static	void si_attach(struct device *, struct device *, void *);
+static	void si_minphys(struct buf *);
+static	void si_intr(int);
+
+static	void si_dma_alloc __P((struct ncr5380_softc *));
+static	void si_dma_free __P((struct ncr5380_softc *));
+static	void si_dma_setup __P((struct ncr5380_softc *));
+static	void si_dma_start __P((struct ncr5380_softc *));
+static	void si_dma_poll __P((struct ncr5380_softc *));
+static	void si_dma_eop __P((struct ncr5380_softc *));
+static	void si_dma_stop __P((struct ncr5380_softc *));
+
 
 struct cfattach ncr_ca = {
 	sizeof(struct si_softc), si_match, si_attach
 };
-
-void
-dk_establish(void)
-{
-#if 0
-	printf("faking dk_establish()...\n");
-#endif
-}
 
 static int
 si_match(parent, cf, aux)
@@ -149,24 +158,38 @@ si_attach(parent, self, aux)
 
 	printf("\n");
 	/*
-	 * MD function pointers used by the MI code.
+	 * DMA area mapin.
+	 * On VS3100, split the 128K block between the two devices.
+	 * On VS2000, don't care for now.
 	 */
+#define DMASIZE (64*1024)
+	if (vax_boardtype != VAX_BTYP_410) {
+		if (va->va_paddr & 0x100) /* Magic */
+			sc->ncr_off = DMASIZE;
+		sc->ncr_addr = (caddr_t)uvm_km_valloc(kernel_map, DMASIZE);
+		
+		ioaccess((vaddr_t)sc->ncr_addr,
+		    0x202d0000 + sc->ncr_off, DMASIZE/VAX_NBPG);
+
+		/*
+		 * MD function pointers used by the MI code.
+		 */
+		ncr_sc->sc_dma_alloc = si_dma_alloc;
+		ncr_sc->sc_dma_free  = si_dma_free;
+		ncr_sc->sc_dma_setup = si_dma_setup;
+		ncr_sc->sc_dma_start = si_dma_start;
+		ncr_sc->sc_dma_poll  = si_dma_poll;
+		ncr_sc->sc_dma_eop   = si_dma_eop;
+		ncr_sc->sc_dma_stop  = si_dma_stop;
+
+		/* DMA control register offsets */
+		sc->ncr_dmaaddr = 32;	/* DMA address in buffer, longword */
+		sc->ncr_dmacount = 64;	/* DMA count register */
+		sc->ncr_dmadir = 68;	/* Direction of DMA transfer */
+	}
 	ncr_sc->sc_pio_out = ncr5380_pio_out;
 	ncr_sc->sc_pio_in =  ncr5380_pio_in;
 
-#ifdef notyet
-	ncr_sc->sc_dma_alloc = si_dma_alloc;
-	ncr_sc->sc_dma_free  = si_dma_free;
-	ncr_sc->sc_dma_setup = si_dma_setup;
-	ncr_sc->sc_dma_start = si_dma_start;
-	ncr_sc->sc_dma_poll  = si_dma_poll;
-	ncr_sc->sc_dma_eop   = si_dma_eop;
-	ncr_sc->sc_dma_stop  = si_dma_stop;
-#endif
-	ncr_sc->sc_intr_on   = NULL /*si_intr_on*/;
-	ncr_sc->sc_intr_off  = NULL /*si_intr_off*/;
-
-	ncr_sc->sc_dma_alloc = NULL;
 	ncr_sc->sc_min_dma_len = MIN_DMA_LEN;
 
 	/*
@@ -227,4 +250,184 @@ static void
 si_intr(int arg)
 {
 	ncr5380_intr(ncr_cd.cd_devs[arg]);
+}
+
+void
+si_dma_alloc(ncr_sc)
+	struct ncr5380_softc *ncr_sc;
+{
+	struct si_softc *sc = (struct si_softc *)ncr_sc;
+	struct sci_req *sr = ncr_sc->sc_current;
+	struct scsipi_xfer *xs = sr->sr_xs;
+	struct si_dma_handle *dh;
+	int xlen, i;
+
+#ifdef DIAGNOSTIC
+	if (sr->sr_dma_hand != NULL)
+		panic("si_dma_alloc: already have DMA handle");
+#endif
+
+	/* Polled transfers shouldn't allocate a DMA handle. */
+	if (sr->sr_flags & SR_IMMED)
+		return;
+
+	xlen = ncr_sc->sc_datalen;
+
+	/* Make sure our caller checked sc_min_dma_len. */
+	if (xlen < MIN_DMA_LEN)
+		panic("si_dma_alloc: len=0x%x\n", xlen);
+
+	/*
+	 * Find free PDMA handle.  Guaranteed to find one since we
+	 * have as many PDMA handles as the driver has processes.
+	 * (instances?)
+	 */
+	 for (i = 0; i < SCI_OPENINGS; i++) {
+		if ((sc->ncr_dma[i].dh_flags & SIDH_BUSY) == 0)
+			goto found;
+	}
+	panic("sbc: no free PDMA handles");
+found:
+	dh = &sc->ncr_dma[i];
+	dh->dh_flags = SIDH_BUSY;
+	dh->dh_addr = ncr_sc->sc_dataptr;
+	dh->dh_len = xlen;
+	dh->dh_proc = xs->bp->b_proc;
+
+	/* Remember dest buffer parameters */
+	if (xs->xs_control & XS_CTL_DATA_OUT)
+		dh->dh_flags |= SIDH_OUT;
+
+	sr->sr_dma_hand = dh;
+}
+
+void
+si_dma_free(ncr_sc)
+	struct ncr5380_softc *ncr_sc;
+{
+	struct sci_req *sr = ncr_sc->sc_current;
+	struct si_dma_handle *dh = sr->sr_dma_hand;
+
+	if (dh->dh_flags & SIDH_BUSY)
+		dh->dh_flags = 0;
+	else
+		printf("si_dma_free: free'ing unused buffer\n");
+
+	sr->sr_dma_hand = NULL;
+}
+
+void
+si_dma_setup(ncr_sc)
+	struct ncr5380_softc *ncr_sc;
+{
+	/* Do nothing here */
+}
+
+void
+si_dma_start(ncr_sc)
+	struct ncr5380_softc *ncr_sc;
+{
+	struct si_softc *sc = (struct si_softc *)ncr_sc;
+	struct sci_req *sr = ncr_sc->sc_current;
+	struct si_dma_handle *dh = sr->sr_dma_hand;
+
+	/*
+	 * Set the VAX-DMA-specific registers, and copy the data if
+	 * it is directed "outbound".
+	 */
+	if (dh->dh_flags & SIDH_OUT) {
+		if ((vaddr_t)dh->dh_addr & KERNBASE)
+			bcopy(dh->dh_addr, sc->ncr_addr, dh->dh_len);
+		else
+			vsbus_copyfromproc(dh->dh_proc, dh->dh_addr,
+			    sc->ncr_addr, dh->dh_len);
+		bus_space_write_1(ncr_sc->sc_regt, ncr_sc->sc_regh,
+		    sc->ncr_dmadir, 0);
+	} else {
+		bus_space_write_1(ncr_sc->sc_regt, ncr_sc->sc_regh,
+		    sc->ncr_dmadir, 1);
+	}
+	bus_space_write_4(ncr_sc->sc_regt, ncr_sc->sc_regh,
+	    sc->ncr_dmacount, -dh->dh_len);
+	bus_space_write_4(ncr_sc->sc_regt, ncr_sc->sc_regh,
+	    sc->ncr_dmaaddr, sc->ncr_off);
+	/*
+	 * Now from the 5380-internal DMA registers.
+	 */
+	if (dh->dh_flags & SIDH_OUT) {
+		NCR5380_WRITE(ncr_sc, sci_tcmd, PHASE_DATA_OUT);
+		NCR5380_WRITE(ncr_sc, sci_icmd, SCI_ICMD_DATA);
+		NCR5380_WRITE(ncr_sc, sci_mode, NCR5380_READ(ncr_sc, sci_mode)
+		    | SCI_MODE_DMA | SCI_MODE_DMA_IE);
+		NCR5380_WRITE(ncr_sc, sci_dma_send, 0);
+	} else {
+		NCR5380_WRITE(ncr_sc, sci_tcmd, PHASE_DATA_IN);
+		NCR5380_WRITE(ncr_sc, sci_icmd, 0);
+		NCR5380_WRITE(ncr_sc, sci_mode, NCR5380_READ(ncr_sc, sci_mode)
+		    | SCI_MODE_DMA | SCI_MODE_DMA_IE);
+		NCR5380_WRITE(ncr_sc, sci_irecv, 0);
+	}
+	ncr_sc->sc_state |= NCR_DOINGDMA;
+}
+
+/*
+ * When?
+ */
+void
+si_dma_poll(ncr_sc)
+	struct ncr5380_softc *ncr_sc;
+{
+	printf("si_dma_poll\n");
+}
+
+/*
+ * When?
+ */
+void
+si_dma_eop(ncr_sc)
+	struct ncr5380_softc *ncr_sc;
+{
+	printf("si_dma_eop\n");
+}
+
+void
+si_dma_stop(ncr_sc)
+	struct ncr5380_softc *ncr_sc;
+{
+	struct si_softc *sc = (struct si_softc *)ncr_sc;
+	struct sci_req *sr = ncr_sc->sc_current;
+	struct si_dma_handle *dh = sr->sr_dma_hand;
+	int count, i;
+
+	if (ncr_sc->sc_state & NCR_DOINGDMA) 
+		ncr_sc->sc_state &= ~NCR_DOINGDMA;
+
+	/*
+	 * Sometimes the FIFO buffer isn't drained when the
+	 * interrupt is posted. Just loop here and hope that
+	 * it will drain soon.
+	 */
+	for (i = 0; i < 20000; i++) {
+		count = bus_space_read_4(ncr_sc->sc_regt,
+		    ncr_sc->sc_regh, sc->ncr_dmacount);
+		if (count == 0)
+			break;
+		DELAY(100);
+	}
+	if (count == 0) {
+		if (((dh->dh_flags & SIDH_OUT) == 0)) {
+			if ((vaddr_t)dh->dh_addr & KERNBASE)
+				bcopy(sc->ncr_addr, dh->dh_addr, dh->dh_len);
+			else
+				vsbus_copytoproc(dh->dh_proc, sc->ncr_addr,
+				    dh->dh_addr, dh->dh_len);
+
+		}
+		ncr_sc->sc_dataptr += dh->dh_len;
+		ncr_sc->sc_datalen -= dh->dh_len;
+	}
+
+	NCR5380_WRITE(ncr_sc, sci_mode, NCR5380_READ(ncr_sc, sci_mode) &
+	    ~(SCI_MODE_DMA | SCI_MODE_DMA_IE));
+	NCR5380_WRITE(ncr_sc, sci_icmd, 0);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.1 1999/12/09 14:53:17 tsutsui Exp $	*/
+/*	$NetBSD: isr.c,v 1.1.2.1 1999/12/27 18:33:01 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.

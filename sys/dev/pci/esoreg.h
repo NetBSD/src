@@ -1,4 +1,4 @@
-/*	$NetBSD: esoreg.h,v 1.3 1999/09/23 11:50:19 kleink Exp $	*/
+/*	$NetBSD: esoreg.h,v 1.3.8.1 1999/12/27 18:35:15 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1999 Klaus J. Klein
@@ -48,6 +48,7 @@
 /* PCI Revision IDs of the Solo-1 PCI AudioDrive family */
 #define ESO_PCI_REVISION_ES1938	0x00	/* ES1938 */
 #define ESO_PCI_REVISION_ES1946	0x01	/* ES1946 */
+#define ESO_PCI_REVISION_ES1946E 0x02	/* ES1946 Revision E */
 
 /*
  * Check the validity of a PCI I/O space base address for use in
@@ -141,10 +142,16 @@
 #define ESO_MIXREG_SPATLVL	0x52	/* Spatializer Level */
 #define ESO_MIXREG_LMVM		0x60	/* Left Master Volume and Mute */
 #define  ESO_MIXREG_LMVM_MUTE	0x40	 /* Mute enable */
+#define ESO_MIXREG_LHVCC	0x61	/* Left Hardware Volume Control Ctr */
 #define ESO_MIXREG_RMVM		0x62	/* Right Master Volume and Mute */
 #define  ESO_MIXREG_RMVM_MUTE	0x40	 /* Mute enable */
+#define ESO_MIXREG_RHVCC	0x63	/* Left Hardware Volume Control Ctr */
 #define ESO_MIXREG_MVCTL	0x64	/* Master Volume Control */
+#define  ESO_MIXREG_MVCTL_HVIRQM 0x02	 /* Hardware Volume Control intr mask */
 #define  ESO_MIXREG_MVCTL_MPUIRQM 0x40	 /* MPU-401 interrupt unmask */
+#define  ESO_MIXREG_MVCTL_SPLIT 0x80	 /* Split xHVCC/xMVM registers */
+#define ESO_MIXREG_CHVIR	0x66	/* Clear Hardware Volume IRQ */
+#define ESO_MIXREG_CHVIR_CHVIR	0x00	 /* Any value will do */
 #define ESO_MIXREG_RVR_MIC	0x68	/* Record mixer: Microphone */
 #define ESO_MIXREG_RVR_A2	0x69	/* Record mixer: Audio 2 */
 #define ESO_MIXREG_RVR_CD	0x6a	/* Record mixer: AuxA/CD */

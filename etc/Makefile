@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.125 1999/09/16 00:30:06 sommerfeld Exp $
+#	$NetBSD: Makefile,v 1.125.2.1 1999/12/27 18:28:49 wrstuden Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -89,6 +89,8 @@ BIN1+=	bootptab changelist csh.cshrc csh.login \
 	(${MACHINE_ARCH} == "vax") || \
 	(${MACHINE_ARCH} == "arm32")
 BIN1+=	ld.so.conf
+.elif exists(etc.${MACHINE_ARCH}/ld.so.conf)
+BIN1+=	ld.so.conf
 .endif
 
 # IPv6
@@ -128,7 +130,6 @@ distribution: distrib-dirs
 	    ${DESTDIR}/etc
 	${INSTALL} ${INSTPRIV} -c -o ${BINOWN} -g ${BINGRP} -m 644 aliases \
 	    ${DESTDIR}/etc
-	/usr/libexec/sendmail/sendmail -O AliasFile=${DESTDIR}/etc/aliases -bi
 	${INSTALL} ${INSTPRIV} -c -o root -g wheel -m 600 crontab \
 	    ${DESTDIR}/var/cron/tabs/root
 	${INSTALL} ${INSTPRIV} -c -o root -g wheel -m 600 master.passwd \
@@ -147,6 +148,8 @@ distribution: distrib-dirs
 		    ${DESTDIR}/root/.login; \
 		${INSTALL} ${INSTPRIV} -c -o root -g wheel -m 644 dot.profile \
 		    ${DESTDIR}/root/.profile; \
+		${INSTALL} ${INSTPRIV} -c -o root -g wheel -m 644 dot.shrc \
+		    ${DESTDIR}/root/.shrc; \
 		rm -f ${DESTDIR}/.cshrc ${DESTDIR}/.profile; \
 		ln ${DESTDIR}/root/.cshrc ${DESTDIR}/.cshrc; \
 		ln ${DESTDIR}/root/.profile ${DESTDIR}/.profile)
@@ -162,6 +165,8 @@ distribution: distrib-dirs
 		${DESTDIR}/etc/dumpdates
 	${INSTALL} ${INSTPRIV} -c -o ${BINOWN} -g operator -m 600 /dev/null \
 		${DESTDIR}/etc/skeykeys
+	${INSTALL} ${INSTPRIV} -c -o root -g wheel -m 600 /dev/null \
+		${DESTDIR}/var/at/at.deny
 	${INSTALL} ${INSTPRIV} -c -o root -g wheel -m 600 /dev/null \
 		${DESTDIR}/var/cron/log
 	${INSTALL} ${INSTPRIV} -c -o nobody -g ${BINGRP} -m 664 /dev/null \
@@ -220,6 +225,7 @@ distribution: distrib-dirs
 	(cd ../usr.bin/mail; ${MAKE} distribution)
 .ifndef NO_SENDMAIL
 	(cd ../usr.sbin/sendmail/cf/cf; ${MAKE} distribution)
+	${DESTDIR}/usr/libexec/sendmail/sendmail -C ${DESTDIR}/etc/sendmail.cf -O AliasFile=${DESTDIR}/etc/aliases -bi
 .endif
 .ifdef BUILD_POSTFIX
 	(cd ../usr.sbin/postfix/etc; ${MAKE} distribution)

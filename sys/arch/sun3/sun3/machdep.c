@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.132 1999/09/12 01:17:25 chs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.132.8.1 1999/12/27 18:34:06 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -152,7 +152,7 @@ consinit()
 
 		ddb_init(end[0], end + 1, (int*)esym);
 	}
-#endif DDB
+#endif /* DDB */
 
 	/*
 	 * Now that the console can do input as well as
@@ -254,7 +254,7 @@ cpu_startup()
 		 * "base" pages for the rest.
 		 */
 		curbuf = (vm_offset_t) buffers + (i * MAXBSIZE);
-		curbufsize = CLBYTES * ((i < residual) ? (base+1) : base);
+		curbufsize = NBPG * ((i < residual) ? (base+1) : base);
 
 		while (curbufsize) {
 			pg = uvm_pagealloc(NULL, 0, NULL, 0);
@@ -299,7 +299,7 @@ cpu_startup()
 
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
-	format_bytes(pbuf, sizeof(pbuf), bufpages * CLBYTES);
+	format_bytes(pbuf, sizeof(pbuf), bufpages * NBPG);
 	printf("using %d buffers containing %s of memory\n", nbuf, pbuf);
 
 	/*
@@ -554,7 +554,7 @@ long	dumplo = 0; 		/* blocks */
 
 /*
  * This is called by main to set dumplo, dumpsize.
- * Dumps always skip the first CLBYTES of disk space
+ * Dumps always skip the first NBPG of disk space
  * in case there might be a disk label stored there.
  * If there is extra space, put dump at the end to
  * reduce the chance that swapping trashes it.
@@ -732,7 +732,7 @@ dumpsys()
 		if ((todo & 0xf) == 0)
 			printf("\r%4d", todo);
 		pmap_enter(pmap_kernel(), vmmap, paddr | PMAP_NC,
-		    VM_PROT_READ, FALSE, VM_PROT_READ);
+		    VM_PROT_READ, VM_PROT_READ);
 		error = (*dsw->d_dump)(dumpdev, blkno, vaddr, NBPG);
 		pmap_remove(pmap_kernel(), vmmap, vmmap + NBPG);
 		if (error)

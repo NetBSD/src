@@ -1,9 +1,12 @@
-/*	$NetBSD: shf.h,v 1.2 1997/01/12 19:12:14 tls Exp $	*/
+/*	$NetBSD: shf.h,v 1.2.6.1 1999/12/27 18:27:04 wrstuden Exp $	*/
+
+#ifndef SHF_H
+# define SHF_H
 
 /*
  * Shell file I/O routines
  */
-/* $NetBSD: shf.h,v 1.2 1997/01/12 19:12:14 tls Exp $ */
+/* $Id: shf.h,v 1.2.6.1 1999/12/27 18:27:04 wrstuden Exp $ */
 
 #define SHF_BSIZE	512
 
@@ -80,3 +83,5 @@ int	    shf_fprintf ARGS((struct shf *shf, const char *fmt, ...));
 int	    shf_snprintf ARGS((char *buf, int bsize, const char *fmt, ...));
 char	    *shf_smprintf ARGS((const char *fmt, ...));
 int	    shf_vfprintf ARGS((struct shf *, const char *fmt, va_list args));
+
+#endif /* SHF_H */

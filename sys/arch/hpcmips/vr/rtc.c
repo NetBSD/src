@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.c,v 1.1.1.1 1999/09/16 12:23:32 takemura Exp $	*/
+/*	$NetBSD: rtc.c,v 1.1.1.1.8.1 1999/12/27 18:32:15 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura. All rights reserved.
@@ -311,23 +311,18 @@ cvt_timehl_ct(timeh, timel, ct)
 	u_long timel; /* 1/32768 sec */
 	struct clocktime *ct;
 {
-#define	EPOCHOFF	0
-#define EPOCHYEAR	1850	/* XXXX */
-#define	EPOCHMONTH	0
-#define	EPOCHDATE	0
-
 	u_long year, month, date, hour, min, sec, sec2;
 
 	timeh -= EPOCHOFF;
 
-	timeh += (rtc_offset*(SECMIN/2));
+	timeh += (rtc_offset*SEC2MIN);
 
 	year = EPOCHYEAR;
-	sec2 = LEAPYEAR4(year)?(SECYR+SECDAY)/2:SECYR/2;
+	sec2 = LEAPYEAR4(year)?SEC2YR+SEC2DAY:SEC2YR;
 	while (timeh > sec2) {
 		year++;
 		timeh -= sec2;
-		sec2 = LEAPYEAR4(year)?(SECYR+SECDAY)/2:SECYR/2;
+		sec2 = LEAPYEAR4(year)?SEC2YR+SEC2DAY:SEC2YR;
 	}
 
 #ifdef RTCDEBUG
@@ -336,13 +331,13 @@ cvt_timehl_ct(timeh, timel, ct)
 #endif /* RTCDEBUG */
 
 	month = 0; /* now month is 0..11 */
-	sec2 = (SECDAY * m2d[month])/2;
+	sec2 = SEC2DAY * m2d[month];
 	while (timeh > sec2) {
 		timeh -= sec2;
 		month++;
-		sec2 = (SECDAY * m2d[month])/2;
+		sec2 = SEC2DAY * m2d[month];
 		if (month == 1 && LEAPYEAR4(year)) /* feb. and leapyear */
-			sec2 += SECDAY/2;
+			sec2 += SEC2DAY;
 	}
 	month +=1; /* now month is 1..12 */
 
@@ -351,7 +346,7 @@ cvt_timehl_ct(timeh, timel, ct)
 		timeh, month, sec2);
 #endif /* RTCDEBUG */
 
-	sec2 = SECDAY/2;
+	sec2 = SEC2DAY;
 	date = timeh/sec2+1; /* date is 1..31 */
 	timeh -= (date-1)*sec2;
 
@@ -360,11 +355,11 @@ cvt_timehl_ct(timeh, timel, ct)
 		timeh, date, sec2);
 #endif /* RTCDEBUG */
 
-	sec2 = SECHOUR/2;
+	sec2 = SEC2HOUR;
 	hour = timeh/sec2;
 	timeh -= hour*sec2;
 
-	sec2 = SECMIN/2;
+	sec2 = SEC2MIN;
 	min = timeh/sec2;
 	timeh -= min*sec2;
 
@@ -375,7 +370,7 @@ cvt_timehl_ct(timeh, timel, ct)
 #endif /* RTCDEBUG */
 
 	if (ct) {
-		ct->year = year - 1900; /* base 1900 */
+		ct->year = year - YBASE; /* base 1900 */
 		ct->mon = month;
 		ct->day = date;
 		ct->hour = hour;
@@ -430,39 +425,39 @@ clock_set(dev, ct)
 	printf("clock_set: %d/%d/%d/%d/%d/%d\n", 
 		ct->year, ct->mon, ct->day, ct->hour, ct->min, ct->sec);
 #endif /* RTCDEBUG */
-	ct->year += 1900;
+	ct->year += YBASE;
 #ifdef RTCDEBUG
 	printf("clock_set: %d/%d/%d/%d/%d/%d\n", 
 		ct->year, ct->mon, ct->day, ct->hour, ct->min, ct->sec);
 #endif /* RTCDEBUG */
 	year = EPOCHYEAR;
-	sec2 = LEAPYEAR4(year)?(SECYR+SECDAY)/2:SECYR/2;
+	sec2 = LEAPYEAR4(year)?SEC2YR+SEC2DAY:SEC2YR;
 	while (year < ct->year) {
 		year++;
 		timeh += sec2;
-		sec2 = LEAPYEAR4(year)?(SECYR+SECDAY)/2:SECYR/2;
+		sec2 = LEAPYEAR4(year)?SEC2YR+SEC2DAY:SEC2YR;
 	}
 	month = 1; /* now month is 1..12 */
-	sec2 = (SECDAY * m2d[month-1])/2;
+	sec2 = SEC2DAY * m2d[month-1];
 	while (month < ct->mon) {
 		month++;
 		timeh += sec2;
-		sec2 = (SECDAY * m2d[month-1])/2;
+		sec2 = SEC2DAY * m2d[month-1];
 		if (month == 2 && LEAPYEAR4(year)) /* feb. and leapyear */
-			sec2 += SECDAY/2;
+			sec2 += SEC2DAY;
 	}
 
-	timeh += (ct->day - 1)*(SECDAY/2);
+	timeh += (ct->day - 1)*SEC2DAY;
 
-	timeh += ct->hour*(SECHOUR/2);
+	timeh += ct->hour*SEC2HOUR;
 
-	timeh += ct->min*(SECMIN/2);
+	timeh += ct->min*SEC2MIN;
 
 	timeh += ct->sec/2;
 	timel += (ct->sec%2)*ETIME_L_HZ;
 
 	timeh += EPOCHOFF;
-	timeh -= (rtc_offset*(SECMIN/2));
+	timeh -= (rtc_offset*SEC2MIN);
 
 #ifdef RTCDEBUG
 	cvt_timehl_ct(timeh, timel, NULL);

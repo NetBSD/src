@@ -1,11 +1,11 @@
-/*	$NetBSD: linux_sched.c,v 1.1 1999/10/04 16:55:56 tron Exp $	*/
+/*	$NetBSD: linux_sched.c,v 1.1.2.1 1999/12/27 18:34:27 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by by Jason R. Thorpe * of the Numerical Aerospace Simulation Facility,
+ * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
  * NASA Ames Research Center; by Matthias Scheler.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -48,6 +48,8 @@
 #include <sys/systm.h>
 #include <sys/syscallargs.h>
 
+#include <machine/cpu.h>
+
 #include <compat/linux/common/linux_types.h>
 #include <compat/linux/common/linux_signal.h>
 
@@ -87,7 +89,7 @@ linux_sys_clone(p, v, retval)
 		flags |= FORK_PPWAIT;
 
 	sig = SCARG(uap, flags) & LINUX_CLONE_CSIGNAL;
-	if (sig < 0 || sig >= LINUX_NSIG)
+	if (sig < 0 || sig >= LINUX__NSIG)
 		return (EINVAL);
 	sig = linux_to_native_sig[sig];
 

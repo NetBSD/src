@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.42 1999/05/06 01:10:28 thorpej Exp $	*/
+/*	$NetBSD: pci.c,v 1.42.8.1 1999/12/27 18:35:21 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -184,14 +184,15 @@ pci_probe_bus(self)
 			pa.pa_id = id;
 			pa.pa_class = class;
 
-			/* set up memory and I/O enable flags as appropriate */
-			pa.pa_flags = 0;
-			if ((sc->sc_flags & PCI_FLAGS_IO_ENABLED) &&
-			    (csr & PCI_COMMAND_IO_ENABLE))
-				pa.pa_flags |= PCI_FLAGS_IO_ENABLED;
-			if ((sc->sc_flags & PCI_FLAGS_MEM_ENABLED) &&
-			    (csr & PCI_COMMAND_MEM_ENABLE))
-				pa.pa_flags |= PCI_FLAGS_MEM_ENABLED;
+			/*
+			 * Set up memory, I/O enable, and PCI command flags
+			 * as appropriate.
+			 */
+			pa.pa_flags = sc->sc_flags;
+			if ((csr & PCI_COMMAND_IO_ENABLE) == 0)
+				pa.pa_flags &= ~PCI_FLAGS_IO_ENABLED;
+			if ((csr & PCI_COMMAND_MEM_ENABLE) == 0)
+				pa.pa_flags &= ~PCI_FLAGS_MEM_ENABLED;
 
 			if (bus == 0) {
 				pa.pa_intrswiz = 0;
@@ -227,28 +228,46 @@ pciattach(parent, self, aux)
 {
 	struct pcibus_attach_args *pba = aux;
 	struct pci_softc *sc = (struct pci_softc *)self;
-	int io_enabled, mem_enabled;
+	int io_enabled, mem_enabled, mrl_enabled, mrm_enabled, mwi_enabled;
+	const char *sep = "";
 
 	pci_attach_hook(parent, self, pba);
 	printf("\n");
 
 	io_enabled = (pba->pba_flags & PCI_FLAGS_IO_ENABLED);
 	mem_enabled = (pba->pba_flags & PCI_FLAGS_MEM_ENABLED);
+	mrl_enabled = (pba->pba_flags & PCI_FLAGS_MRL_OKAY);
+	mrm_enabled = (pba->pba_flags & PCI_FLAGS_MRM_OKAY);
+	mwi_enabled = (pba->pba_flags & PCI_FLAGS_MWI_OKAY);
 
 	if (io_enabled == 0 && mem_enabled == 0) {
 		printf("%s: no spaces enabled!\n", self->dv_xname);
 		return;
 	}
 
+#define	PRINT(s)	do { printf("%s%s", sep, s); sep = ", "; } while (0)
+
 	printf("%s: ", self->dv_xname);
+
 	if (io_enabled)
-		printf("i/o enabled");
-	if (mem_enabled) {
-		if (io_enabled)
-			printf(", ");
-		printf("memory enabled");
+		PRINT("i/o space");
+	if (mem_enabled)
+		PRINT("memory space");
+	printf(" enabled");
+
+	if (mrl_enabled || mrm_enabled || mwi_enabled) {
+		if (mrl_enabled)
+			PRINT("rd/line");
+		if (mrm_enabled)
+			PRINT("rd/mult");
+		if (mwi_enabled)
+			PRINT("wr/inv");
+		printf(" ok");
 	}
+
 	printf("\n");
+
+#undef PRINT
 
 	sc->sc_iot = pba->pba_iot;
 	sc->sc_memt = pba->pba_memt;

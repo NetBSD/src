@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ex_cardbus.c,v 1.9 1999/11/17 08:49:16 thorpej Exp $	*/
+/*	$NetBSD: if_ex_cardbus.c,v 1.9.2.1 1999/12/27 18:34:40 wrstuden Exp $	*/
 
 /*
  * CardBus specific routines for 3Com 3C575-family CardBus ethernet adapter

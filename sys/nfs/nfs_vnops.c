@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.106.8.1 1999/12/21 23:20:03 wrstuden Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.106.8.2 1999/12/27 18:36:31 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -301,10 +301,22 @@ nfs_access(v)
 	register caddr_t cp;
 	register int32_t t1, t2;
 	caddr_t bpos, dpos, cp2;
-	int error = 0, attrflag;
+	int error = 0, attrflag, cachevalid;
 	struct mbuf *mreq, *mrep, *md, *mb, *mb2;
 	u_int32_t mode, rmode;
 	int v3 = NFS_ISV3(vp);
+	struct nfsnode *np = VTONFS(vp);
+
+	cachevalid = (np->n_accstamp != -1 &&
+	    (time.tv_sec - np->n_accstamp) < NFS_ATTRTIMEO(np) &&
+	    np->n_accuid == ap->a_cred->cr_uid);
+
+	/*
+	 * Check access cache first. If this request has been made for this
+	 * uid shortly before, use the cached result.
+	 */
+	if (cachevalid && ((np->n_accmode & ap->a_mode) == ap->a_mode))
+		return np->n_accerror;
 
 	/*
 	 * For nfs v3, do an access rpc, otherwise you are stuck emulating
@@ -350,8 +362,6 @@ nfs_access(v)
 				error = EACCES;
 		}
 		nfsm_reqdone;
-		if (error)
-			return (error);
 	} else
 		return (nfsspec_access(ap));
 	/*
@@ -359,17 +369,35 @@ nfs_access(v)
 	 * unless the file is a socket, fifo, or a block or character
 	 * device resident on the filesystem.
 	 */
-	if ((ap->a_mode & VWRITE) && (vp->v_mount->mnt_flag & MNT_RDONLY)) {
+	if (!error && (ap->a_mode & VWRITE) &&
+	    (vp->v_mount->mnt_flag & MNT_RDONLY)) {
 		switch (vp->v_type) {
 		case VREG:
 		case VDIR:
 		case VLNK:
-			return (EROFS);
+			error = EROFS;
 		default:
 			break;
 		}
 	}
-	return (0);
+
+	if (!error || error == EACCES) {
+		/*
+		 * If we got the same result as for a previous,
+		 * different request, OR it in. Don't update
+		 * the timestamp in that case.
+		 */
+		if (cachevalid && error == np->n_accerror)
+			np->n_accmode |= ap->a_mode;
+		else {
+			np->n_accstamp = time.tv_sec;
+			np->n_accuid = ap->a_cred->cr_uid;
+			np->n_accmode = ap->a_mode;
+			np->n_accerror = error;
+		}
+	}
+
+	return (error);
 }
 
 /*
@@ -748,6 +776,7 @@ nfs_lookup(v)
 		return (EROFS);
 	if (dvp->v_type != VDIR)
 		return (ENOTDIR);
+
 	lockparent = flags & LOCKPARENT;
 	wantparent = flags & (LOCKPARENT|WANTPARENT);
 	nmp = VFSTONFS(dvp->v_mount);
@@ -764,6 +793,18 @@ nfs_lookup(v)
 	 */
 	if ((error = cache_lookup(dvp, vpp, cnp)) >= 0) {
 		struct vattr vattr;
+		int err2;
+
+		if (error && error != ENOENT) {
+			*vpp = NULLVP;
+			return (error);
+		}
+
+		err2 = VOP_ACCESS(dvp, VEXEC, cnp->cn_cred, cnp->cn_proc);
+		if (err2) {
+			*vpp = NULLVP;
+			return (err2);
+		}
 
 		if (error == ENOENT) {
 			if (!VOP_GETATTR(dvp, &vattr, cnp->cn_cred,
@@ -773,9 +814,10 @@ nfs_lookup(v)
 			cache_purge(dvp);
 			np->n_nctime = 0;
 			goto dorpc;
-		}
-		else if (error > 0)
+		} else if (error > 0) {
+			*vpp = NULLVP;
 			return error;
+		}
 
 		newvp = *vpp;
 		if (!VOP_GETATTR(newvp, &vattr, cnp->cn_cred, cnp->cn_proc)
@@ -2804,11 +2846,13 @@ again:
 			if (retv)
 			    brelse(bp);
 			else {
+			    s = splbio();
 			    vp->v_numoutput++;
 			    bp->b_flags |= B_ASYNC;
 			    bp->b_flags &= ~(B_READ|B_DONE|B_ERROR|B_DELWRI);
 			    bp->b_dirtyoff = bp->b_dirtyend = 0;
 			    reassignbuf(bp, vp);
+			    splx(s);
 			    biodone(bp);
 			}
 		}
@@ -2857,19 +2901,23 @@ loop:
 		goto again;
 	}
 	if (waitfor == MNT_WAIT) {
+		s = splbio();
 		while (vp->v_numoutput) {
 			vp->v_flag |= VBWAIT;
 			error = tsleep((caddr_t)&vp->v_numoutput,
 				slpflag | (PRIBIO + 1), "nfsfsync", slptimeo);
 			if (error) {
+			    splx(s);
 			    if (nfs_sigintr(nmp, (struct nfsreq *)0, p))
 				return (EINTR);
 			    if (slpflag == PCATCH) {
 				slpflag = 0;
 				slptimeo = 2 * hz;
 			    }
+			    s = splbio();
 			}
 		}
+		splx(s);
 		if (vp->v_dirtyblkhd.lh_first && commit) {
 #if 0
 			vprint("nfs_fsync: dirty", vp);
@@ -3086,7 +3134,7 @@ nfs_writebp(bp, force)
 	register struct buf *bp;
 	int force;
 {
-	register int oldflags = bp->b_flags, retv = 1;
+	register int oldflags = bp->b_flags, retv = 1, s;
 	register struct proc *p = curproc;	/* XXX */
 	off_t off;
 
@@ -3100,6 +3148,7 @@ nfs_writebp(bp, force)
 #endif
 	bp->b_flags &= ~(B_READ|B_DONE|B_ERROR|B_DELWRI|B_AGE);
 
+	s = splbio();
 	if (oldflags & B_ASYNC) {
 		if (oldflags & B_DELWRI) {
 			reassignbuf(bp, bp->b_vp);
@@ -3108,6 +3157,7 @@ nfs_writebp(bp, force)
 		}
 	}
 	bp->b_vp->v_numoutput++;
+	splx(s);
 
 	/*
 	 * If B_NEEDCOMMIT is set, a commit rpc may do the trick. If not
@@ -3136,7 +3186,9 @@ nfs_writebp(bp, force)
 	if( (oldflags & B_ASYNC) == 0) {
 		int rtval = biowait(bp);
 		if (oldflags & B_DELWRI) {
+			s = splbio();
 			reassignbuf(bp, bp->b_vp);
+			splx(s);
 		} else if (p) {
 			++p->p_stats->p_ru.ru_oublock;
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: screen.c,v 1.12 1999/09/08 21:45:31 jsm Exp $	*/
+/*	$NetBSD: screen.c,v 1.12.2.1 1999/12/27 18:29:06 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -127,12 +127,12 @@ static char combuf[1024], tbuf[1024];
 /*
  * Routine used by tputs().
  */
-void
+int
 put(c)
 	int c;
 {
 
-	(void) putchar(c);
+	return (putchar(c));
 }
 
 /*

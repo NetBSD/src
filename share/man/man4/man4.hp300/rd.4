@@ -1,4 +1,4 @@
-.\"	$NetBSD: rd.4,v 1.4 1997/10/19 12:57:33 mrg Exp $
+.\"	$NetBSD: rd.4,v 1.4.8.1 1999/12/27 18:30:51 wrstuden Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -46,8 +46,8 @@
 .Tn CS/80
 disk interface
 .Sh SYNOPSIS
-.Cd "master hpib? at scode?"
-.Cd "disk rd? at hpib? slave?"
+.Cd "hpib* at scode?"
+.Cd "rd* at hpib? slave?"
 .Sh DESCRIPTION
 This is a generic
 .Tn CS/80

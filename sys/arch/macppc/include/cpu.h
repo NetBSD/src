@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.9 1999/08/10 21:08:07 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.9.2.1 1999/12/27 18:32:42 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 1995-1997 Wolfgang Solfrank.
@@ -56,7 +56,7 @@ extern __volatile int astpending;
 #define	need_proftick(p)	((p)->p_flag |= P_OWEUPC, astpending = 1)
 #define	signotify(p)		(astpending = 1)
 
-extern char *bootpath;
+extern char bootpath[];
 
 #if defined(_KERNEL) || defined(_STANDALONE)
 #define	CACHELINESIZE	32

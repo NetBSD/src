@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.16 1999/08/05 18:08:11 thorpej Exp $	*/
+/*	$NetBSD: intr.h,v 1.16.8.1 1999/12/27 18:32:35 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds
@@ -49,24 +49,21 @@ extern unsigned short mac68k_ipls[];
 #define	MAC68K_IPL_IMP		4
 #define	MAC68K_IPL_AUDIO	5
 #define	MAC68K_IPL_SERIAL	6
-#define	MAC68K_IPL_CLOCK	7
-#define	MAC68K_IPL_STATCLOCK	8
-#define	MAC68K_IPL_SCHED	9
-#define	MAC68K_IPL_HIGH		10
-#define	MAC68K_NIPLS		11
+#define	MAC68K_IPL_ADB		7
+#define	MAC68K_IPL_CLOCK	8
+#define	MAC68K_IPL_STATCLOCK	9
+#define	MAC68K_IPL_SCHED	10
+#define	MAC68K_IPL_HIGH		11
+#define	MAC68K_NIPLS		12
 
 /* These spl calls are _not_ to be used by machine-independent code. */
-#define	spladb()	splhigh()
+#define	spladb()	_splraise(mac68k_ipls[MAC68K_IPL_ADB])
 #define	splzs()		splserial()
 
 /*
  * These should be used for:
  * 1) ensuring mutual exclusion (why use processor level?)
  * 2) allowing faster devices to take priority
- *
- * Note that on the Mac, most things are masked at spl1, almost
- * everything at spl2, and everything but the panic switch and
- * power at spl4.
  */
 #define	spllowersoftclock() spl1()
 #define	splsoftclock()	_splraise(mac68k_ipls[MAC68K_IPL_SOFT])

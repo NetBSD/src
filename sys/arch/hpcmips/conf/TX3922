@@ -2,7 +2,7 @@
 # Distribution kernel (TX3922 based model) kernel config file
 
 #
-#	$NetBSD: TX3922,v 1.3 1999/12/12 17:08:37 uch Exp $
+#	$NetBSD: TX3922,v 1.3.2.1 1999/12/27 18:32:00 wrstuden Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 

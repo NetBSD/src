@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.52 1999/09/23 02:21:31 itojun Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.52.8.1 1999/12/27 18:36:19 wrstuden Exp $	*/
 
 /*
 %%% portions-copyright-nrl-95
@@ -946,8 +946,16 @@ send:
 #ifdef INET6
 	case AF_INET6:
 		ip6->ip6_nxt = IPPROTO_TCP;
-		if (tp->t_in6pcb)
-			ip6->ip6_hlim = tp->t_in6pcb->in6p_ip6.ip6_hlim;
+		if (tp->t_in6pcb) {
+			/*
+			 * we separately set hoplimit for every segment, since
+			 * the user might want to change the value via
+			 * setsockopt. Also, desired default hop limit might
+			 * be changed via Neighbor Discovery.
+			 */
+			ip6->ip6_hlim = in6_selecthlim(tp->t_in6pcb,
+				ro->ro_rt ? ro->ro_rt->rt_ifp : NULL);
+		}
 		/* ip6->ip6_flow = ??? */
 		/* ip6_plen will be filled in ip6_output(). */
 		break;
@@ -1043,18 +1051,12 @@ send:
 	    {
 		struct ip6_pktopts *opts;
 
-#if BSD >= 43
 		if (tp->t_in6pcb)
 			opts = tp->t_in6pcb->in6p_outputopts;
 		else
 			opts = NULL;
 		error = ip6_output(m, opts, (struct route_in6 *)ro,
-			so->so_options & SO_DONTROUTE, 0);
-#else
-		opts = NULL;
-		error = ip6_output(m, opts, (struct route_in6 *)ro,
-			so->so_options & SO_DONTROUTE);
-#endif
+			so->so_options & SO_DONTROUTE, 0, NULL);
 		break;
 	    }
 #endif

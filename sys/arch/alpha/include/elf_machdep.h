@@ -1,13 +1,13 @@
-/* $NetBSD: elf_machdep.h,v 1.4 1998/10/03 18:17:14 christos Exp $ */
+/* $NetBSD: elf_machdep.h,v 1.4.16.1 1999/12/27 18:31:25 wrstuden Exp $ */
 
 #define	ELF32_MACHDEP_ENDIANNESS	XXX	/* break compilation */
 #define	ELF32_MACHDEP_ID_CASES						\
 		/* no 32-bit ELF machine types supported */
 
-#define	ELF64_MACHDEP_ENDIANNESS	Elf_ed_2lsb
+#define	ELF64_MACHDEP_ENDIANNESS	ELFDATA2LSB
 #define	ELF64_MACHDEP_ID_CASES						\
-		case Elf_em_alpha:					\
-		case Elf_em_alpha_exp:					\
+		case EM_ALPHA:						\
+		case EM_ALPHA_EXP:					\
 			break;
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.1.1.1.8.1 1999/12/21 23:16:00 wrstuden Exp $	*/
+/*	$NetBSD: param.h,v 1.1.1.1.8.2 1999/12/27 18:32:06 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -69,12 +69,9 @@
 #define BLKDEV_IOSIZE	2048
 #define	MAXPHYS		(64 * 1024)	/* max raw I/O transfer size */
 
-#define	CLSIZE		1
-#define	CLSIZELOG2	0
-
 /*
  * Constants related to network buffer management.
- * MCLBYTES must be no larger than CLBYTES (the software page size), and,
+ * MCLBYTES must be no larger than NBPG (the software page size), and,
  * on machines that exchange pages of input or output buffers with mbuf
  * clusters (MAPPED_MBUFS), MCLBYTES must also be an integral multiple
  * of the hardware page size.

@@ -1,4 +1,4 @@
-/*	$NetBSD: tx3912videovar.h,v 1.2 1999/12/12 17:04:55 uch Exp $ */
+/*	$NetBSD: tx3912videovar.h,v 1.2.2.1 1999/12/27 18:32:10 wrstuden Exp $ */
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi

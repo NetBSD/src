@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.21 1999/07/21 23:41:27 simonb Exp $	
+.\"	$NetBSD: install,v 1.21.2.1 1999/12/27 18:28:29 wrstuden Exp $	
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -301,7 +301,7 @@ host pmax {
 .Ed
 .Pp
 For the TFTP server, You will need to copy the
-.Ic install
+.Ic install.ecoff
 kernel to the directory used by the TFTP server.  This file must be
 gunziped.
 .Pp

@@ -1,4 +1,4 @@
-/*	$NetBSD: pcibios.c,v 1.2 1999/11/17 07:33:41 thorpej Exp $	*/
+/*	$NetBSD: pcibios.c,v 1.2.2.1 1999/12/27 18:32:26 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.

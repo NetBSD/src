@@ -1,4 +1,4 @@
-/* $NetBSD: loadbootstrap.c,v 1.2 1999/12/01 05:02:03 simonb Exp $ */
+/* $NetBSD: loadbootstrap.c,v 1.2.2.1 1999/12/27 18:33:34 wrstuden Exp $ */
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.

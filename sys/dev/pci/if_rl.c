@@ -1,4 +1,4 @@
-/* $NetBSD: if_rl.c,v 1.2 1999/08/20 03:36:59 sommerfeld Exp $ */
+/* $NetBSD: if_rl.c,v 1.2.10.1 1999/12/27 18:35:17 wrstuden Exp $ */
 
 /*
  * Copyright (c) 1997, 1998
@@ -930,7 +930,7 @@ rl_attach(parent, self, aux)
 	sc->mii.mii_writereg = rl_phy_writereg;
 	sc->mii.mii_statchg = rl_phy_statchg;
 	ifmedia_init(&sc->mii.mii_media, 0, rl_ifmedia_upd, rl_ifmedia_sts);
-	mii_phy_probe(self, &sc->mii, 0xffffffff);
+	mii_phy_probe(self, &sc->mii, 0xffffffff, MII_PHY_ANY, MII_OFFSET_ANY);
 
 	/* Choose a default media. */
 	if (LIST_FIRST(&sc->mii.mii_phys) == NULL) {
@@ -1647,6 +1647,8 @@ static void rl_stop(sc)
 	ifp->if_timer = 0;
 
 	untimeout(rl_tick, sc);
+
+	mii_down(&sc->mii);
 
 	CSR_WRITE_1(sc, RL_COMMAND, 0x00);
 	CSR_WRITE_2(sc, RL_IMR, 0x0000);

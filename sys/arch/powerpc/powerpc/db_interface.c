@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.4 1998/08/31 14:43:40 tsubai Exp $ */
+/*	$NetBSD: db_interface.c,v 1.4.12.1 1999/12/27 18:33:40 wrstuden Exp $ */
 /*	$OpenBSD: db_interface.c,v 1.2 1996/12/28 06:21:50 rahnds Exp $	*/
 
 #include "opt_ddb.h"
@@ -11,7 +11,7 @@
 #include <machine/db_machdep.h>
 
 void
-Debugger()
+cpu_Debugger()
 {
 	ddb_trap();
 }

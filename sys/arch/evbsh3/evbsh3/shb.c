@@ -1,4 +1,4 @@
-/*	$NetBSD: shb.c,v 1.3 1999/09/17 19:59:41 thorpej Exp $	*/
+/*	$NetBSD: shb.c,v 1.3.8.1 1999/12/27 18:31:53 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.  All rights reserved.
@@ -495,6 +495,9 @@ mask_irq(irq)
 	case TMU1_IRQ:
 		SHREG_IPRA &= ~((15)<<8);
 		break;
+	case SCI_IRQ:
+		SHREG_IPRB &= ~((15)<<4);
+		break;
 #if defined(SH7709) || defined(SH7709A)
 	case SCIF_IRQ:
 		SHREG_IPRE &= ~((15)<<4);
@@ -527,6 +530,9 @@ unmask_irq(int irq)
 	switch (irq) {
 	case TMU1_IRQ:
 		SHREG_IPRA |= ((15 - irq)<<8);
+		break;
+	case SCI_IRQ:
+		SHREG_IPRB |= ((15 - irq)<<4);
 		break;
 #if defined(SH7709) || defined(SH7709A)
 	case SCIF_IRQ:

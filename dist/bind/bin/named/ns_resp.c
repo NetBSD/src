@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_resp.c,v 1.1.1.1 1999/11/20 18:54:00 veego Exp $	*/
+/*	$NetBSD: ns_resp.c,v 1.1.1.1.4.1 1999/12/27 18:27:21 wrstuden Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 static const char sccsid[] = "@(#)ns_resp.c	4.65 (Berkeley) 3/3/91";

@@ -1,4 +1,4 @@
-/* $NetBSD: pci_1000a.c,v 1.8 1999/06/29 17:10:57 ross Exp $ */
+/* $NetBSD: pci_1000a.c,v 1.8.8.1 1999/12/27 18:31:28 wrstuden Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_1000a.c,v 1.8 1999/06/29 17:10:57 ross Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_1000a.c,v 1.8.8.1 1999/12/27 18:31:28 wrstuden Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -90,7 +90,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci_1000a.c,v 1.8 1999/06/29 17:10:57 ross Exp $");
 #include <machine/intrcnt.h>
 
 #include "sio.h"
-#if NSIO
+#if NSIO > 0 || NPCEB > 0
 #include <alpha/pci/siovar.h>
 #endif
 
@@ -145,7 +145,7 @@ pci_1000a_pickintr(core, iot, memt, pc)
 		    PCI_STRAY_MAX);
 
 	pci_1000a_imi();
-#if NSIO
+#if NSIO > 0 || NPCEB > 0
 	sio_intr_setup(pc, iot);
 #endif
 	set_iointr(dec_1000a_iointr);
@@ -279,7 +279,7 @@ dec_1000a_iointr(framep, vec)
 		}
 		return;
 	}
-#if NSIO
+#if NSIO > 0 || NPCEB > 0
 	if (vec >= 0x800) {
 		sio_iointr(framep, vec);
 		return;

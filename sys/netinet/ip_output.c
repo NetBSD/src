@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.62 1999/07/09 22:57:19 thorpej Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.62.8.1 1999/12/27 18:36:17 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -275,10 +275,12 @@ ip_output(m0, va_alist)
 		if (ro->ro_rt->rt_flags & RTF_GATEWAY)
 			dst = satosin(ro->ro_rt->rt_gateway);
 	}
-	if (IN_MULTICAST(ip->ip_dst.s_addr)) {
+	if (IN_MULTICAST(ip->ip_dst.s_addr) ||
+	    (ip->ip_dst.s_addr == INADDR_BROADCAST)) {
 		struct in_multi *inm;
 
-		m->m_flags |= M_MCAST;
+		m->m_flags |= (ip->ip_dst.s_addr == INADDR_BROADCAST) ?
+			M_BCAST : M_MCAST;
 		/*
 		 * IP destination address is multicast.  Make sure "dst"
 		 * still points to the address in "ro".  (It may have been
@@ -299,7 +301,10 @@ ip_output(m0, va_alist)
 		/*
 		 * Confirm that the outgoing interface supports multicast.
 		 */
-		if ((ifp->if_flags & IFF_MULTICAST) == 0) {
+		if (((m->m_flags & M_MCAST) &&
+		     (ifp->if_flags & IFF_MULTICAST) == 0) ||
+		    ((m->m_flags & M_BCAST) && 
+		     (ifp->if_flags & IFF_BROADCAST) == 0))  {
 			ipstat.ips_noroute++;
 			error = ENETUNREACH;
 			goto bad;
@@ -549,6 +554,19 @@ skip_ipsec:
 	 * If small enough for mtu of path, can just send directly.
 	 */
 	if ((u_int16_t)ip->ip_len <= mtu) {
+#if IFA_STATS
+		/*
+		 * search for the source address structure to
+		 * maintain output statistics.
+		 */
+		bzero((caddr_t*) &src, sizeof(src));
+		src.sin_family = AF_INET;
+		src.sin_addr.s_addr = ip->ip_src.s_addr;
+		src.sin_len = sizeof(src);
+		ia = ifatoia(ifa_ifwithladdr(sintosa(&src)));
+		if (ia)
+			ia->ia_ifa.ifa_data.ifad_outbytes += ntohs(ip->ip_len);
+#endif
 		HTONS(ip->ip_len);
 		HTONS(ip->ip_off);
 		ip->ip_sum = 0;
@@ -659,10 +677,25 @@ sendorfree:
 	for (m = m0; m; m = m0) {
 		m0 = m->m_nextpkt;
 		m->m_nextpkt = 0;
-		if (error == 0)
+		if (error == 0) {
+#if IFA_STATS
+			/*
+			 * search for the source address structure to
+			 * maintain output statistics.
+			 */
+			bzero((caddr_t*) &src, sizeof(src));
+			src.sin_family = AF_INET;
+			src.sin_addr.s_addr = ip->ip_src.s_addr;
+			src.sin_len = sizeof(src);
+			ia = ifatoia(ifa_ifwithladdr(sintosa(&src)));
+			if (ia) {
+				ia->ia_ifa.ifa_data.ifad_outbytes +=
+					ntohs(ip->ip_len);
+			}
+#endif
 			error = (*ifp->if_output)(ifp, m, sintosa(dst),
 			    ro->ro_rt);
-		else
+		} else
 			m_freem(m);
 	}
 
@@ -674,19 +707,6 @@ done:
 		RTFREE(ro->ro_rt);
 		ro->ro_rt = 0;
 	}
-#if IFA_STATS
-	if (error == 0) {
-		/* search for the source address structure to maintain output
-		 * statistics. */
-		bzero((caddr_t*) &src, sizeof(src));
-		src.sin_family = AF_INET;
-		src.sin_addr.s_addr = ip->ip_src.s_addr;
-		src.sin_len = sizeof(src);
-		ia = ifatoia(ifa_ifwithladdr(sintosa(&src)));
-		if (ia)
-			ia->ia_ifa.ifa_data.ifad_outbytes += ntohs(ip->ip_len);
-	}
-#endif
 
 #ifdef IPSEC
 	if (sp != NULL) {
@@ -1466,6 +1486,9 @@ ip_mloopback(ifp, m, dst)
 	struct mbuf *copym;
 
 	copym = m_copy(m, 0, M_COPYALL);
+        if (copym != NULL
+	 && (copym->m_flags & M_EXT || copym->m_len < sizeof(struct ip)))
+		copym = m_pullup(copym, sizeof(struct ip));
 	if (copym != NULL) {
 		/*
 		 * We don't bother to fragment if the IP length is greater

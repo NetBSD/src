@@ -1,4 +1,4 @@
-/*	$NetBSD: skbdvar.h,v 1.1 1999/12/08 15:49:19 uch Exp $ */
+/*	$NetBSD: skbdvar.h,v 1.1.2.1 1999/12/27 18:32:03 wrstuden Exp $ */
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi

@@ -1,7 +1,12 @@
-#	$NetBSD: std.hpcmips,v 1.3 1999/09/27 08:39:44 enami Exp $
+#	$NetBSD: std.hpcmips,v 1.3.8.1 1999/12/27 18:32:01 wrstuden Exp $
 # standard, required hpcmips info
 
 machine hpcmips mips
+
+prefix ../gnu/sys
+cinclude "conf/files.softdep"
+prefix
+
 mainbus0 at root
 cpu* at mainbus0
 

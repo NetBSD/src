@@ -1,4 +1,4 @@
-.\" $NetBSD: gre.4,v 1.7 1999/06/28 07:56:56 explorer Exp $
+.\" $NetBSD: gre.4,v 1.7.2.1 1999/12/27 18:30:42 wrstuden Exp $
 .\"
 .\" Copyright 1998 (c) The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -83,11 +83,11 @@ Set the IP address of the local tunnel end.
 .It GRESADDRD: 
 Set the IP address of the remote tunnel end.
 .It GREGADDRS: 
-Query the the IP address that is set for the local tunnel end.
+Query the IP address that is set for the local tunnel end.
 .It GREGADDRD: 
-Query the the IP address that is set for the remote tunnel end.
+Query the IP address that is set for the remote tunnel end.
 .It GRESPROTO: 
-Set the operation mode to the the specified IP protocol value. The
+Set the operation mode to the specified IP protocol value. The
 protocol is passed to the interface in (struct ifreq)->ifr_flags.
 The operation mode can also
 be given as 
@@ -132,8 +132,8 @@ Host X-- Host A  ----------------tunnel---------- cisco D------Host E
    On Host D (Cisco):
 
    Interface TunnelX 	
-    ip unnumbered D   ! e.g. address from ethernet interface
-    tunnel source D   ! e.g. address from ethernet interface
+    ip unnumbered D   ! e.g. address from Ethernet interface
+    tunnel source D   ! e.g. address from Ethernet interface
     tunnel destination A
    ip route C <some interface and mask>
    ip route A mask C
@@ -149,7 +149,7 @@ Host X-- Host A  ----------------tunnel---------- cisco D------Host E
 If all goes well, you should see packets flowing ;-)
 .Pp
 If you want to reach Host A over the tunnel (from the Cisco D), then 
-you have to have an alias on Host A for e.g. the ethernet interface like:
+you have to have an alias on Host A for e.g. the Ethernet interface like:
      ifconfig <etherif> alias Y
  and on the cisco
      ip route Y mask tunnelX

@@ -1,4 +1,4 @@
-/*	$NetBSD: fixcoff.c,v 1.1 1999/11/23 01:32:37 wrstuden Exp $ */
+/*	$NetBSD: fixcoff.c,v 1.1.2.1 1999/12/27 18:32:44 wrstuden Exp $ */
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration

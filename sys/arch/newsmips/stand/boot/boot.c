@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.1 1999/07/08 11:48:05 tsubai Exp $	*/
+/*	$NetBSD: boot.c,v 1.1.8.1 1999/12/27 18:33:10 wrstuden Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -30,6 +30,7 @@
 #include <lib/libsa/stand.h>
 #include <lib/libsa/loadfile.h>
 
+#include <machine/bootinfo.h>
 #include <machine/romcall.h>
 
 void flushicache __P((void *, int));
@@ -55,12 +56,15 @@ boot(a0, a1, a2, a3, a4, a5)
 	u_long marks[MARK_MAX];
 	char devname[32], file[32];
 	void (*entry)();
+	struct btinfo_symtab bi_sym;
 
 	/* Clear BSS. */
 	bzero(_edata, _end - _edata);
 
 	printf("\n");
 	printf("NetBSD/newsmips Secondary Boot\n");
+
+	bi_init(BOOTINFO_ADDR);
 
 	/* bootname is "/boot" by default. */
 	if (netbsd == NULL || strcmp(netbsd, "/boot") == 0)
@@ -105,6 +109,11 @@ boot(a0, a1, a2, a3, a4, a5)
 	DPRINTF("entry = 0x%x\n", (int)marks[MARK_ENTRY]);
 	DPRINTF("ssym = 0x%x\n", (int)marks[MARK_SYM]);
 	DPRINTF("esym = 0x%x\n", (int)marks[MARK_END]);
+
+	bi_sym.nsym = marks[MARK_NSYM];
+	bi_sym.ssym = marks[MARK_SYM];
+	bi_sym.esym = marks[MARK_END];
+	bi_add(&bi_sym, BTINFO_SYMTAB, sizeof(bi_sym));
 
 	entry = (void *)marks[MARK_ENTRY];
 	flushicache(entry, marks[MARK_SYM] - marks[MARK_ENTRY]);

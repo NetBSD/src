@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.52 1999/08/21 06:19:33 simonb Exp $
+#	$NetBSD: bsd.README,v 1.52.4.1 1999/12/27 18:31:11 wrstuden Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new make "include" files for the BSD
@@ -89,7 +89,11 @@ MKMAN		If "no", don't build or install the man or catman pages.
 
 MKNLS		If "no", don't build or install the NLS files.
 
-MKOBJ		If "no", don't create objdirs.
+MKOBJ		If "no", don't enable the rule which creates objdirs.
+		"yes" by default.
+
+MKOBJDIRS	If "no", don't create objdirs during a "make build".
+		"no" by default.
 
 MKPIC		If "no", don't build or install shared libraries.
 
@@ -366,6 +370,7 @@ DPADD		Additional dependencies for the program.  Usually used for
 		LIBKVM?=	${DESTDIR}/usr/lib/libkvm.a
 		LIBL?=		${DESTDIR}/usr/lib/libl.a
 		LIBM?=		${DESTDIR}/usr/lib/libm.a
+		LIBMENU?=	${DESTDIR}/usr/lib/libmenu.a
 		LIBMP?=		${DESTDIR}/usr/lib/libmp.a
 		LIBNTP?=	${DESTDIR}/usr/lib/libntp.a
 		LIBPC?=		${DESTDIR}/usr/lib/libpc.a
@@ -526,6 +531,11 @@ MKLINKLIB	If "no", act as "MKPICINSTALL=no MKPROFILE=no".
 		I.e, only install the shared library (and the .so.major
 		symlink on ELF).
 
+MKPICLIB	If "no", don't build _pic.a libraries, and build the
+		shared object libraries from the .a libraries.  A
+		symlink is installed in ${DESTDIR}/usr/lib for the
+		_pic.a library pointing to the .a library.
+
 NOCHECKVER_<library>
 NOCHECKVER	If set, disables checking for installed shared object
 		libraries with versions greater than the source.  A
@@ -610,5 +620,41 @@ and CPP flags.
 
 The "EXPORTABLE_SYSTEM" variable, if set, causes CRYPTOBASE to be set
 to "none".  This is for compatibilty with older NetBSD build environments.
+
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+The include file <bsd.obj.mk> defines targets related to the creation
+and use of separated object and source directories.
+
+make(1) looks for the existance of a subdirectory (or a symlink to a
+directory) of the source directory into which built targets should be
+placed.  If an environment variable named MAKEOBJDIR is set, make(1)
+uses its value as the name of the object directory; failing that, make
+first looks for a subdirectory named "obj.${MACHINE}", and if that
+doesn't exist, it looks for "obj".
+
+Object directories are not created automatically by make(1) if they
+don't exist; you need to run a separate "make obj".  (This will happen
+during a top-level build if "MKOBJDIRS" is set to a value other than
+"no").  When the source directory is a subdirectory of ${BSDSRCDIR},
+object directories are created in a separate object directory tree,
+and a symlink to the object directory in that tree is created in the
+source directory.
+
+Several variables used by <bsd.obj.mk> control exactly what
+directories and links get created during a "make obj":
+
+MAKEOBJDIR	If set, this is the component name of the object
+		directory.
+
+OBJMACHINE	If this is set but MAKEOBJDIR is not set, creates
+		object directories or links named "obj.${MACHINE}";
+		otherwise, just creates ones named "obj".
+
+USR_OBJMACHINE  If set, and the current directory is a subdirectory of
+		${BSDSRCDIR}, create object directory in the
+		corresponding subdirectory of ${BSDOBJDIR}.${MACHINE};
+		otherwise, create it in the corresponding subdirectory
+		of ${BSDOBJDIR}
 
 =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=

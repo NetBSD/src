@@ -1,4 +1,4 @@
-/*	$NetBSD: lib.c,v 1.19 1998/12/17 14:34:51 pk Exp $	*/
+/*	$NetBSD: lib.c,v 1.19.4.1 1999/12/27 18:29:20 wrstuden Exp $	*/
 
 /*
  *	- library routines
@@ -306,7 +306,7 @@ symdef_library(fd, entry, member_length)
 
 			read_entry_symbols(fd, subentry);
 			subentry->strings = (char *)
-				alloca(subentry->string_size);
+				malloc(subentry->string_size);
 			read_entry_strings(fd, subentry);
 
 			/*
@@ -319,6 +319,7 @@ symdef_library(fd, entry, member_length)
 				if (subentry->symbols)
 					free(subentry->symbols);
 				free(subentry->filename);
+				free(subentry->strings);
 				free(subentry);
 			} else {
 				/*
@@ -354,6 +355,7 @@ symdef_library(fd, entry, member_length)
 				 * We'll read the strings again
 				 * if we need them.
 				 */
+				free(subentry->strings);
 				subentry->strings = 0;
 			}
 		}
@@ -823,7 +825,7 @@ struct file_entry	*p;
 
 	fname = findshlib(p->filename, &major, &minor, 1);
 
-	if (fname && (fd = open(fname, O_RDONLY, 0)) > 0) {
+	if (fname && (fd = open(fname, O_RDONLY, 0)) >= 0) {
 		p->filename = fname;
 		p->lib_major = major;
 		p->lib_minor = minor;
@@ -845,7 +847,7 @@ dot_a:
 		register char *path
 			= concat(search_dirs[i], "/", fname);
 		fd = open(path, O_RDONLY, 0);
-		if (fd > 0) {
+		if (fd >= 0) {
 			p->filename = path;
 			p->flags &= ~E_SEARCH_DIRS;
 			break;

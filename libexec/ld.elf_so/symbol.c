@@ -1,4 +1,4 @@
-/*	$NetBSD: symbol.c,v 1.3 1999/03/01 16:40:08 christos Exp $	 */
+/*	$NetBSD: symbol.c,v 1.3.4.1 1999/12/27 18:30:15 wrstuden Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -73,6 +73,37 @@ _rtld_elf_hash(name)
 	return h;
 }
 
+const Elf_Sym *
+_rtld_symlook_list(const char *name, unsigned long hash, Objlist *objlist,
+  const Obj_Entry **defobj_out, bool in_plt)
+{
+	const Elf_Sym *symp;
+	const Elf_Sym *def;
+	const Obj_Entry *defobj;
+	const Objlist_Entry *elm;
+	
+	def = NULL;
+	defobj = NULL;
+	for (elm = SIMPLEQ_FIRST(objlist); elm; elm = SIMPLEQ_NEXT(elm, link)) {
+		if (elm->obj->mark == _rtld_curmark)
+			continue;
+		elm->obj->mark = _rtld_curmark;
+		if ((symp = _rtld_symlook_obj(name, hash, elm->obj, in_plt))
+		    != NULL) {
+			if ((def == NULL) ||
+			    (ELF_ST_BIND(symp->st_info) != STB_WEAK)) {
+				def = symp;
+				defobj = elm->obj;
+				if (ELF_ST_BIND(def->st_info) != STB_WEAK)
+					break;
+			}
+		}
+	}
+	if (def != NULL)
+		*defobj_out = defobj;
+	return def;
+}
+
 /*
  * Search the symbol table of a single shared object for a symbol of
  * the given name.  Returns a pointer to the symbol, or NULL if no
@@ -101,13 +132,12 @@ _rtld_symlook_obj(name, hash, obj, in_plt)
 		assert(symp->st_name != 0);
 #endif
 		if (strcmp(name, strp) == 0) {
-			if (symp->st_shndx != Elf_eshn_undefined
+			if (symp->st_shndx != SHN_UNDEF
 #if !defined(__mips__)		/* Following doesn't work on MIPS? mhitch */
 			    || (!in_plt && symp->st_value != 0 &&
-			    ELF_SYM_TYPE(symp->st_info) == Elf_estt_func)) {
-#else
-				) {
+			        ELF_ST_TYPE(symp->st_info) == STT_FUNC)
 #endif
+				) {
 				return symp;
 			}
 		}
@@ -128,13 +158,17 @@ _rtld_find_symdef(obj_list, r_info, name, refobj, defobj_out, in_plt)
 	const Obj_Entry *obj_list;
 	Elf_Word r_info;
 	const char *name;
-	const Obj_Entry *refobj;
+	Obj_Entry *refobj;
 	const Obj_Entry **defobj_out;
 	bool in_plt;
 {
 	Elf_Word symnum = ELF_R_SYM(r_info);
 	const Elf_Sym  *ref;
+	const Elf_Sym  *def;
+	const Elf_Sym  *symp;
 	const Obj_Entry *obj;
+	const Obj_Entry *defobj;
+	const Objlist_Entry *elm;
 	unsigned long   hash;
 
 	if (name == NULL) {
@@ -142,37 +176,68 @@ _rtld_find_symdef(obj_list, r_info, name, refobj, defobj_out, in_plt)
 		name = refobj->strtab + ref->st_name;
 	}
 	hash = _rtld_elf_hash(name);
-
+	def = NULL;
+	defobj = NULL;
+	_rtld_curmark++;
+	
 	if (refobj->symbolic) {	/* Look first in the referencing object */
-		const Elf_Sym *def;
-
-		def = _rtld_symlook_obj(name, hash, refobj, in_plt);
-		if (def != NULL) {
-			*defobj_out = refobj;
-			return def;
+		symp = _rtld_symlook_obj(name, hash, refobj, in_plt);
+		refobj->mark = _rtld_curmark;
+		if (symp != NULL) {
+			def = symp;
+			defobj = refobj;
 		}
 	}
+	
+	/* Search all objects loaded at program start up. */
+	if (def == NULL || ELF_ST_BIND(def->st_info) == STB_WEAK) {
+		symp = _rtld_symlook_list(name, hash, &_rtld_list_main, &obj, in_plt);
+		if (symp != NULL &&
+		    (def == NULL || ELF_ST_BIND(symp->st_info) != STB_WEAK)) {
+			def = symp;
+			defobj = obj;
+		}
+	}
+	
+	/* Search all dlopened DAGs containing the referencing object. */
+	for (elm = SIMPLEQ_FIRST(&refobj->dldags); elm; elm = SIMPLEQ_NEXT(elm, link)) {
+		if (def != NULL && ELF_ST_BIND(def->st_info) != STB_WEAK)
+			break;
+		symp = _rtld_symlook_list(name, hash, &elm->obj->dagmembers, &obj,
+					  in_plt);
+		if (symp != NULL &&
+		    (def == NULL || ELF_ST_BIND(symp->st_info) != STB_WEAK)) {
+			def = symp;
+			defobj = obj;
+		}
+	}
+	
+	/* Search all RTLD_GLOBAL objects. */
+	if (def == NULL || ELF_ST_BIND(def->st_info) == STB_WEAK) {
+		symp = _rtld_symlook_list(name, hash, &_rtld_list_global, &obj, in_plt);
+		if (symp != NULL &&
+		    (def == NULL || ELF_ST_BIND(symp->st_info) != STB_WEAK)) {
+			def = symp;
+			defobj = obj;
+		}
+	}
+	
 	/*
-         * Look in all loaded objects.  Skip the referencing object, if
-         * we have already searched it.
-         */
-	for (obj = obj_list; obj != NULL; obj = obj->next) {
-		if (obj != refobj || !refobj->symbolic) {
-			const Elf_Sym *def;
-
-			def = _rtld_symlook_obj(name, hash, obj, in_plt);
-			if (def != NULL) {
-				*defobj_out = obj;
-				return def;
-			}
-		}
+	 * If we found no definition and the reference is weak, treat the
+	 * symbol as having the value zero.
+	 */
+	if (def == NULL && ELF_ST_BIND(ref->st_info) == STB_WEAK) {
+		def = &_rtld_sym_zero;
+		defobj = _rtld_objmain;
 	}
-
-	if (ELF_R_TYPE(r_info) != R_TYPE(NONE)) {
+	
+	if (def != NULL)
+		*defobj_out = defobj;
+	else if (ELF_R_TYPE(r_info) != R_TYPE(NONE)) {
 		_rtld_error(
 	    "%s: Undefined %ssymbol \"%s\" (reloc type = %d, symnum = %d)",
-		    refobj->path, in_plt ? "PLT " : "", name,
-		    ELF_R_TYPE(r_info), symnum);
+			    refobj->path, in_plt ? "PLT " : "", name,
+			    ELF_R_TYPE(r_info), symnum);
 	}
-	return NULL;
+	return def;
 }

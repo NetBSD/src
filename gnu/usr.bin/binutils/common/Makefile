@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 1999/02/13 02:54:24 lukem Exp $
+#	$NetBSD: Makefile,v 1.7.4.1 1999/12/27 18:29:16 wrstuden Exp $
 
 LIB=		common
 
@@ -13,5 +13,8 @@ MKLINT=		no
 
 # only needed during build
 libinstall::
+
+# mention explicit dependency, so arparse.h will appear timely
+arlex.c: arparse.h
 
 .include <bsd.lib.mk>

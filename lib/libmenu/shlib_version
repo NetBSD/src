@@ -1,0 +1,5 @@
+#	$Id: shlib_version,v 1.4.2.2 1999/12/27 18:30:05 wrstuden Exp $
+#	Remember to update distrib/sets/lists/base/shl.* when changing
+#
+major=0
+minor=1

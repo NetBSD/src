@@ -1,7 +1,7 @@
-/*	$NetBSD: elf_machdep.h,v 1.5 1999/04/24 08:10:35 simonb Exp $	*/
+/*	$NetBSD: elf_machdep.h,v 1.5.6.1 1999/12/27 18:32:45 wrstuden Exp $	*/
 
 #define	ELF32_MACHDEP_ID_CASES						\
-		case Elf_em_mips:					\
+		case EM_MIPS:						\
 			break;
 
 #define	ELF64_MACHDEP_ID_CASES						\

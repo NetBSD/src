@@ -1,4 +1,4 @@
-/*	$NetBSD: strftime.c,v 1.8 1999/02/07 17:33:30 augustss Exp $	*/
+/*	$NetBSD: strftime.c,v 1.8.4.1 1999/12/27 18:29:55 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -38,7 +38,7 @@
 #if 0
 static char *sccsid = "@(#)strftime.c	5.11 (Berkeley) 2/24/91";
 #else
-__RCSID("$NetBSD: strftime.c,v 1.8 1999/02/07 17:33:30 augustss Exp $");
+__RCSID("$NetBSD: strftime.c,v 1.8.4.1 1999/12/27 18:29:55 wrstuden Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -397,8 +397,12 @@ _conv(n, digits, pad, pt, ptlim)
 	char *p;
 
 	buf[sizeof (buf) - 1] = '\0';
-	for (p = buf + sizeof(buf) - 2; n > 0 && p > buf; n /= 10, --digits)
+	p = buf + sizeof(buf) - 2;
+	do {
 		*p-- = n % 10 + '0';
+		n /= 10;
+		--digits;
+	} while (n > 0 && p > buf);
 	while (p > buf && digits-- > 0)
 		*p-- = pad;
 	return (_add(++p, pt, ptlim));

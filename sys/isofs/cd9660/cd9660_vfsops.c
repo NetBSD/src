@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.39.2.1 1999/12/21 23:19:57 wrstuden Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.39.2.2 1999/12/27 18:35:50 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -439,7 +439,7 @@ iso_mountfs(devvp, mp, p, argp)
 	isomp->im_dev = dev;
 	isomp->im_devvp = devvp;
 	
-	devvp->v_specflags |= SI_MOUNTEDON;
+	devvp->v_specmountpoint = mp;
 	
 	/* Check the Rock Ridge Extention support */
 	if (!(argp->flags & ISOFSMNT_NORRIP)) {
@@ -543,10 +543,13 @@ cd9660_unmount(mp, mntflags, p)
 	if (isomp->iso_ftype == ISO_FTYPE_RRIP)
 		iso_dunmap(isomp->im_dev);
 #endif
-	
-	isomp->im_devvp->v_specflags &= ~SI_MOUNTEDON;
+
+	if (isomp->im_devvp->v_type != VBAD)
+		isomp->im_devvp->v_specmountpoint = NULL;
+
+	vn_lock(isomp->im_devvp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_CLOSE(isomp->im_devvp, FREAD, NOCRED, p);
-	vrele(isomp->im_devvp);
+	vput(isomp->im_devvp);
 	free((caddr_t)isomp, M_ISOFSMNT);
 	mp->mnt_data = (qaddr_t)0;
 	mp->mnt_flag &= ~MNT_LOCAL;

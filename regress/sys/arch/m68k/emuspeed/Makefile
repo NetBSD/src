@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.3 1999/02/13 02:54:33 lukem Exp $
+#	$NetBSD: Makefile,v 1.3.6.1 1999/12/27 18:30:19 wrstuden Exp $
 #
 PROG=emuspeed
 MKMAN=no
 
-SRCS=emuspeed.c test.s mul64.s div64.s # movepto.c movepfrom.c
+SRCS=emuspeed.c test.S mul64.S div64.S # movepto.c movepfrom.c
 
 /* don't install: */
 proginstall:

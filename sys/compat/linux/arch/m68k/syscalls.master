@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.9 1999/10/04 16:55:55 tron Exp $
+	$NetBSD: syscalls.master,v 1.9.8.1 1999/12/27 18:34:26 wrstuden Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -88,7 +88,8 @@
 23	NOARGS		{ int sys_setuid(uid_t uid); }
 24	NOARGS		{ uid_t sys_getuid(void); }
 25	STD		{ int linux_sys_stime(linux_time_t *t); }
-26	UNIMPL		ptrace
+26	STD		{ int linux_sys_ptrace(int request, int pid, \
+			  int addr, int data); }
 27	STD		{ int linux_sys_alarm(unsigned int secs); }
 28	OBSOL		ofstat
 29	STD		{ int linux_sys_pause(void); }
@@ -112,7 +113,7 @@
 45	STD		{ int linux_sys_brk(char *nsize); }
 46	NOARGS		{ int sys_setgid(gid_t gid); }
 47	NOARGS		{ gid_t sys_getgid(void); }
-48	STD		{ int linux_sys_signal(int sig, \
+48	STD		{ int linux_sys_signal(int signum, \
 			    linux_handler_t handler); }
 49	NOARGS		{ uid_t sys_geteuid(void); }
 50	NOARGS		{ gid_t sys_getegid(void); }
@@ -321,10 +322,10 @@
 			    void *uinfo); }
 179	STD		{ int linux_sys_rt_sigsuspend(linux_sigset_t *unewset, \
 			    size_t sigsetsize); }
-180	NOARGS		{ int sys_pread(int fd, char *buf, size_t nbytes, \
-			    off_t offset); }
-181	NOARGS		{ int sys_pwrite(int fd, char *buf, size_t nbytes, \
-			    off_t offset); }
+180	STD		{ int linux_sys_pread(int fd, char *buf, \
+			    size_t nbyte, linux_off_t offset); }
+181	STD		{ int linux_sys_pwrite(int fd, char *buf, \
+			    size_t nbyte, linux_off_t offset); }
 ;182 chown on i386; lchown on m68k.
 182	STD		{ int linux_sys_lchown(const char *path, int uid, \
 			    int gid); }

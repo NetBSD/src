@@ -1,4 +1,4 @@
-/*	$NetBSD: rz.h,v 1.2 1999/11/27 03:09:51 simonb Exp $	*/
+/*	$NetBSD: rz.h,v 1.2.2.1 1999/12/27 18:33:33 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)

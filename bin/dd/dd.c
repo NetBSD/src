@@ -1,4 +1,4 @@
-/*	$NetBSD: dd.c,v 1.13 1999/07/29 19:03:31 hubertf Exp $	*/
+/*	$NetBSD: dd.c,v 1.13.4.1 1999/12/27 18:26:59 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)dd.c	8.5 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: dd.c,v 1.13 1999/07/29 19:03:31 hubertf Exp $");
+__RCSID("$NetBSD: dd.c,v 1.13.4.1 1999/12/27 18:26:59 wrstuden Exp $");
 #endif
 #endif /* not lint */
 
@@ -156,12 +156,12 @@ setup()
 	 */
 	if (!(ddflags & (C_BLOCK|C_UNBLOCK))) {
 		if ((in.db = malloc(out.dbsz + in.dbsz - 1)) == NULL)
-			err(1, "%s", "");
+			err(1, NULL);
 		out.db = in.db;
 	} else if ((in.db =
 	    malloc((u_int)(MAX(in.dbsz, cbsz) + cbsz))) == NULL ||
 	    (out.db = malloc((u_int)(out.dbsz + cbsz))) == NULL)
-		err(1, "%s", "");
+		err(1, NULL);
 	in.dbp = in.db;
 	out.dbp = out.db;
 

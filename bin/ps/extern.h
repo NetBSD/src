@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.13 1999/03/26 22:36:02 bgrayson Exp $	*/
+/*	$NetBSD: extern.h,v 1.13.4.1 1999/12/27 18:27:10 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -43,6 +43,9 @@ struct varent;
 extern fixpt_t ccpu;
 extern int eval, fscale, mempages, nlistread, rawcpu;
 extern int sumrusage, termwidth, totwidth;
+extern int needenv, needcomm, commandonly, dontuseprocfs, use_procfs;
+extern uid_t myuid;
+extern kvm_t *kd;
 extern VAR var[];
 extern VARENT *vhead;
 
@@ -68,7 +71,8 @@ void	 pmem __P((KINFO *, VARENT *));
 void	 pnice __P((KINFO *, VARENT *));
 void	 pri __P((KINFO *, VARENT *));
 void	 printheader __P((void));
-struct kinfo_proc *	 procfs_getprocs __P((int, int, int*));
+KINFO	*getkinfo_procfs __P((int, int, int*));
+char	**procfs_getargv __P((const struct kinfo_proc *, int));
 void	 pvar __P((KINFO *, VARENT *));
 void	 rssize __P((KINFO *, VARENT *));
 void	 runame __P((KINFO *, VARENT *));

@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.9 1999/07/04 20:07:52 fvdl Exp $
+# $NetBSD: shl.mi,v 1.9.4.1 1999/12/27 18:28:35 wrstuden Exp $
 ./usr/lib/libbz2_pic.a
 ./usr/lib/libc_pic.a
 ./usr/lib/libcrypt_pic.a
@@ -9,6 +9,7 @@
 ./usr/lib/libipsec_pic.a
 ./usr/lib/libkvm_pic.a
 ./usr/lib/libm_pic.a
+./usr/lib/libmenu_pic.a
 ./usr/lib/libntp_pic.a
 ./usr/lib/libobjc_pic.a
 ./usr/lib/libossaudio_pic.a

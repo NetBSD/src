@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops.h,v 1.7 1999/08/24 11:07:32 ad Exp $ */
+/* 	$NetBSD: rasops.h,v 1.7.6.1 1999/12/27 18:35:30 wrstuden Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@ struct rasops_info {
 	 */
 	struct	wsdisplay_font *ri_font;
 	int	ri_wsfcookie;	/* wsfont cookie */
-	void	*ri_priv;	/* driver private data */
+	void	*ri_hw;		/* driver private data; ignored by rasops */
 	int	ri_crow;	/* cursor row */
 	int	ri_ccol;	/* cursor column */
 	int	ri_flg;		/* various operational flags */
@@ -122,6 +122,17 @@ struct rasops_info {
  * to -1 (or a new, valid cookie).
  */
 
+/* 
+ * Per-depth initalization functions. These should not be called outside
+ * the rasops code.
+ */
+void	rasops1_init __P((struct rasops_info *));
+void	rasops2_init __P((struct rasops_info *));
+void	rasops8_init __P((struct rasops_info *));
+void	rasops15_init __P((struct rasops_info *));
+void	rasops24_init __P((struct rasops_info *));
+void	rasops32_init __P((struct rasops_info *));
+
 /* rasops.c */
 int	rasops_init __P((struct rasops_info *, int, int));
 int	rasops_reconfig __P((struct rasops_info *, int, int));
@@ -130,7 +141,7 @@ void	rasops_eraserows __P((void *, int, int, long));
 void	rasops_erasecols __P((void *, int, int, int, long));
 void	rasops_copycols __P((void *, int, int, int, int));
 
-extern u_char	rasops_isgray[16];
-extern u_char	rasops_cmap[256*3];
+extern const u_char	rasops_isgray[16];
+extern const u_char	rasops_cmap[256*3];
 
 #endif /* _RASOPS_H_ */

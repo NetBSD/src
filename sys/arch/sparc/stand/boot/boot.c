@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.8 1999/06/12 12:49:24 pk Exp $ */
+/*	$NetBSD: boot.c,v 1.8.8.1 1999/12/27 18:33:53 wrstuden Exp $ */
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -37,7 +37,7 @@
 
 #include <sys/param.h>
 #include <sys/reboot.h>
-#include <a.out.h>
+#include <sys/exec.h>
 
 #include <lib/libsa/stand.h>
 #include <lib/libsa/loadfile.h>

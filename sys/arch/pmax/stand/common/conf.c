@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.16 1999/11/27 06:45:52 simonb Exp $	*/
+/*	$NetBSD: conf.c,v 1.16.2.1 1999/12/27 18:33:33 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993

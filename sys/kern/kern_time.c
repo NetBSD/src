@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.40 1999/08/16 18:53:55 tron Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.40.2.1 1999/12/27 18:35:52 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -358,7 +358,7 @@ sys_adjtime(p, v, retval)
 	 * overshoot and start taking us away from the desired final time.
 	 */
 	ndelta = atv.tv_sec * 1000000 + atv.tv_usec;
-	if (ndelta > bigadj)
+	if (ndelta > bigadj || ndelta < -bigadj)
 		ntickdelta = 10 * tickadj;
 	else
 		ntickdelta = tickadj;

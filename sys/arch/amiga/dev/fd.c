@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.40.20.1 1999/12/21 23:15:54 wrstuden Exp $	*/
+/*	$NetBSD: fd.c,v 1.40.20.2 1999/12/27 18:31:34 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -883,10 +883,10 @@ fdsetdisklabel(sc, lp)
 	 * make sure selected partition is within bounds
 	 * XXX on the second check, its to handle a bug in
 	 * XXX the cluster routines as they require mutliples
-	 * XXX of CLBYTES currently
+	 * XXX of NBPG currently
 	 */
 	if ((pp->p_offset + pp->p_size >= lp->d_secperunit) ||
-	    (pp->p_frag * pp->p_fsize % CLBYTES))
+	    (pp->p_frag * pp->p_fsize % NBPG))
 		return(EINVAL);
 done:
 	bcopy(lp, clp, sizeof(struct disklabel));

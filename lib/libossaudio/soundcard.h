@@ -1,4 +1,4 @@
-/*	$NetBSD: soundcard.h,v 1.9 1999/04/13 20:45:25 augustss Exp $	*/
+/*	$NetBSD: soundcard.h,v 1.9.4.1 1999/12/27 18:30:06 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -267,6 +267,21 @@
 #define SOUND_MASK_LINE1	(1 << SOUND_MIXER_LINE1)
 #define SOUND_MASK_LINE2	(1 << SOUND_MIXER_LINE2)
 #define SOUND_MASK_LINE3	(1 << SOUND_MIXER_LINE3)
+
+typedef struct mixer_info {
+	char id[16];
+	char name[32];
+	int  modify_counter;
+	int  fillers[10];
+} mixer_info;
+
+typedef struct _old_mixer_info {
+	char id[16];
+	char name[32];
+} _old_mixer_info;
+
+#define SOUND_MIXER_INFO		_IOR('M', 101, mixer_info)
+#define SOUND_OLD_MIXER_INFO		_IOR('M', 101, _old_mixer_info)
 
 #define OSS_GETVERSION			_IOR ('M', 118, int)
 

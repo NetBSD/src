@@ -1,11 +1,9 @@
-/*	$NetBSD: vrkiu.c,v 1.1.1.1 1999/09/16 12:23:33 takemura Exp $	*/
+/*	$NetBSD: vrkiu.c,v 1.1.1.1.6.1 1999/12/27 18:32:15 wrstuden Exp $	*/
 
 /*-
- * Copyright (c) 1999 SASAKI Takesi
+ * Copyright (c) 1999 SASAKI Takesi All rights reserved.
+ * Copyright (c) 1999 TAKEMRUA, Shin All rights reserved.
  * Copyright (c) 1999 PocketBSD Project. All rights reserved.
- * All rights reserved.
- *
- * This code is a part of the PocketBSD.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -51,12 +49,21 @@
 #include <machine/cpu.h>
 #include <machine/bus.h>
 #include <machine/platid.h>
+#include <machine/platid_mask.h>
 
 #include <hpcmips/vr/vr.h>
 #include <hpcmips/vr/vripvar.h>
 #include <hpcmips/vr/vrkiuvar.h>
 #include <hpcmips/vr/vrkiureg.h>
 #include <hpcmips/vr/icureg.h>
+
+#include <dev/wscons/wsconsio.h>
+#include <dev/wscons/wskbdvar.h>
+#include <dev/wscons/wsksymdef.h>
+#include <dev/wscons/wsksymvar.h>
+#include <dev/pckbc/wskbdmap_mfii.h>
+
+#include "opt_pckbd_layout.h"
 
 #ifdef VRKIUDEBUG
 int vrkiu_debug = 0;
@@ -65,241 +72,307 @@ int vrkiu_debug = 0;
 #define	DPRINTF(arg)
 #endif
 
+/*
+ * structure and data types
+ */
+struct vrkiu_chip {
+	bus_space_tag_t kc_iot;
+	bus_space_handle_t kc_ioh;
+	unsigned short kc_scandata[KIU_NSCANLINE/2];
+	int kc_polling;
+	u_int kc_type;
+	int kc_data;
+
+	int kc_sft:1, kc_alt:1, kc_ctrl:1;
+
+	struct vrkiu_softc* kc_sc;	/* back link */
+};
+
+struct vrkiu_softc {
+	struct device sc_dev;
+	struct vrkiu_chip *sc_chip;
+	struct vrkiu_chip sc_chip_body;
+	int sc_enabled;
+	struct device *sc_wskbddev;
+
+	void *sc_handler;
+#define NKEYBUF 32
+	unsigned char keybuf[NKEYBUF];
+	int keybufhead, keybuftail;
+};
+
+/*
+ * function prototypes
+ */
 static int vrkiumatch __P((struct device *, struct cfdata *, void *));
 static void vrkiuattach __P((struct device *, struct device *, void *));
 
-static void vrkiu_write __P((struct vrkiu_softc *, int, unsigned short));
-static unsigned short vrkiu_read __P((struct vrkiu_softc *, int));
-
 int vrkiu_intr __P((void *));
 
-static void detect_key __P((struct vrkiu_softc *));
-static void process_key __P((struct vrkiu_softc *, int, int));
+static int vrkiu_init(struct vrkiu_chip*, bus_space_tag_t, bus_space_handle_t);
+static void vrkiu_write __P((struct vrkiu_chip *, int, unsigned short));
+static unsigned short vrkiu_read __P((struct vrkiu_chip *, int));
+static int vrkiu_is_console(bus_space_tag_t, bus_space_handle_t);
+static void detect_key __P((struct vrkiu_chip *));
 
+static struct vrkiu_softc *the_vrkiu = NULL; /* XXX: kludge!! */
+
+/* wskbd accessopts */
+int vrkiu_enable __P((void *, int));
+void vrkiu_set_leds __P((void *, int));
+int vrkiu_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
+
+/* consopts */
+void vrkiu_cngetc __P((void*, u_int*, int*));
+void vrkiu_cnpollc __P((void *, int));
+
+/*
+ * global/static data
+ */
 struct cfattach vrkiu_ca = {
 	sizeof(struct vrkiu_softc), vrkiumatch, vrkiuattach
 };
 
-static struct vrkiu_softc *the_vrkiu = NULL; /* XXX: kludge!! */
-
-/* XXX: This tranlation table may depend on each machine.
-        Should I build it in? */
-static char keytrans[] = {
-	-1,  28,  25,  52,  21,  48,  44,  57,  /* - enter p . y b z space */
-	-1,  53,  24,  51,  20,  47,  30,  -1,  /* - / o , t v a - */
-	-1,  -1,  23,  50,  19,  46,  17,  -1,  /* - - i m r c w - */
-	13,  -1,  22,  -1,  18,  45,  16,   2,  /* = - u - e x q 1 */
-	-1,  -1,  11,  38,  40,  34,  15,  59,  /* - - 0 l ' g tab f1 */
-	-1,  39,  10,  49,   6,  33,   3,  37,  /* - ; 9 n 5 f 2 k */
-	-1,  27,   9,  36,   5,  32,   7,  -1,  /* - ] 8 j 4 d 6 - */
-	12,  26,   8,  35,   4,  41,  31,  -1,  /* - [ 7 h 3 ` s - */
-	58,  -1,  -1,  -1,  14,  -1,  66,  61,  /* caps - - - bs - f8 f3 */
-	-1,  56,  -1,  -1,  43,  -1,  65,  62,  /* - alt - - \ - f7 f4 */
-	-1,  -1,  29,  -1,  68,  -1,  64,  60,  /* - - ctrl - f10 - f6 f2 */
-	-1,  -1,  -1,  42,  -1,  67,  63,   1,  /* - - - shift - f9 f5 esc */
-};
-/* XXX: fill the field of funct. keys, ex. arrow, fnc, nfer... */
-
-#define	SCROLL		0x0001	/* stop output */
-#define	NUM		0x0002	/* numeric shift  cursors vs. numeric */
-#define	CAPS		0x0004	/* caps shift -- swaps case of letter */
-#define	SHIFT		0x0008	/* keyboard shift */
-#define	CTL		0x0010	/* control shift  -- allows ctl function */
-#define	ASCII		0x0020	/* ascii code for this key */
-#define	ALT		0x0080	/* alternate shift -- alternate chars */
-#define	FUNC		0x0100	/* function key */
-#define	KP		0x0200	/* Keypad keys */
-#define	NONE		0x0400	/* no function */
-
-#define	CODE_SIZE	4		/* Use a max of 4 for now... */
-
-typedef struct {
-	u_short	type;
-	char unshift[CODE_SIZE];
-	char shift[CODE_SIZE];
-	char ctl[CODE_SIZE];
-} Scan_def;
-
-#if !defined(PCCONS_REAL_BS)
-#define PCCONS_REAL_BS 1
-#endif
-#if !defined(CAPS_IS_CONTROL)
-#define CAPS_IS_CONTROL 1
-#endif
-#if !defined(CAPS_ADD_CONTROL)
-#define CAPS_ADD_CONTROL 0
-#endif
-
-static Scan_def	scan_codes[] = {
-	{ NONE,	"",		"",		"" },		/* 0 unused */
-	{ ASCII,"\033",		"\033",		"\033" },	/* 1 ESCape */
-	{ ASCII,"1",		"!",		"!" },		/* 2 1 */
-	{ ASCII,"2",		"@",		"\000" },	/* 3 2 */
-	{ ASCII,"3",		"#",		"#" },		/* 4 3 */
-	{ ASCII,"4",		"$",		"$" },		/* 5 4 */
-	{ ASCII,"5",		"%",		"%" },		/* 6 5 */
-	{ ASCII,"6",		"^",		"\036" },	/* 7 6 */
-	{ ASCII,"7",		"&",		"&" },		/* 8 7 */
-	{ ASCII,"8",		"*",		"\010" },	/* 9 8 */
-	{ ASCII,"9",		"(",		"(" },		/* 10 9 */
-	{ ASCII,"0",		")",		")" },		/* 11 0 */
-	{ ASCII,"-",		"_",		"\037" },	/* 12 - */
-	{ ASCII,"=",		"+",		"+" },		/* 13 = */
-#ifndef PCCONS_REAL_BS
-	{ ASCII,"\177",		"\177",		"\010" },	/* 14 backspace */
-#else
-	{ ASCII,"\010",		"\010",		"\177" },	/* 14 backspace */
-#endif
-	{ ASCII,"\t",		"\177\t",	"\t" },		/* 15 tab */
-	{ ASCII,"q",		"Q",		"\021" },	/* 16 q */
-	{ ASCII,"w",		"W",		"\027" },	/* 17 w */
-	{ ASCII,"e",		"E",		"\005" },	/* 18 e */
-	{ ASCII,"r",		"R",		"\022" },	/* 19 r */
-	{ ASCII,"t",		"T",		"\024" },	/* 20 t */
-	{ ASCII,"y",		"Y",		"\031" },	/* 21 y */
-	{ ASCII,"u",		"U",		"\025" },	/* 22 u */
-	{ ASCII,"i",		"I",		"\011" },	/* 23 i */
-	{ ASCII,"o",		"O",		"\017" },	/* 24 o */
-	{ ASCII,"p",		"P",		"\020" },	/* 25 p */
-	{ ASCII,"[",		"{",		"\033" },	/* 26 [ */
-	{ ASCII,"]",		"}",		"\035" },	/* 27 ] */
-	{ ASCII,"\r",		"\r",		"\n" },		/* 28 return */
-#if CAPS_IS_CONTROL == 1 && CAPS_ADD_CONTROL == 0
-	{ CAPS,	"",		"",		"" },		/* 29 caps */
-#else
-	{ CTL,	"",		"",		"" },		/* 29 control */
-#endif
-	{ ASCII,"a",		"A",		"\001" },	/* 30 a */
-	{ ASCII,"s",		"S",		"\023" },	/* 31 s */
-	{ ASCII,"d",		"D",		"\004" },	/* 32 d */
-	{ ASCII,"f",		"F",		"\006" },	/* 33 f */
-	{ ASCII,"g",		"G",		"\007" },	/* 34 g */
-	{ ASCII,"h",		"H",		"\010" },	/* 35 h */
-	{ ASCII,"j",		"J",		"\n" },		/* 36 j */
-	{ ASCII,"k",		"K",		"\013" },	/* 37 k */
-	{ ASCII,"l",		"L",		"\014" },	/* 38 l */
-	{ ASCII,";",		":",		";" },		/* 39 ; */
-	{ ASCII,"'",		"\"",		"'" },		/* 40 ' */
-	{ ASCII,"`",		"~",		"`" },		/* 41 ` */
-	{ SHIFT,"",		"",		"" },		/* 42 shift */
-	{ ASCII,"\\",		"|",		"\034" },	/* 43 \ */
-	{ ASCII,"z",		"Z",		"\032" },	/* 44 z */
-	{ ASCII,"x",		"X",		"\030" },	/* 45 x */
-	{ ASCII,"c",		"C",		"\003" },	/* 46 c */
-	{ ASCII,"v",		"V",		"\026" },	/* 47 v */
-	{ ASCII,"b",		"B",		"\002" },	/* 48 b */
-	{ ASCII,"n",		"N",		"\016" },	/* 49 n */
-	{ ASCII,"m",		"M",		"\r" },		/* 50 m */
-	{ ASCII,",",		"<",		"<" },		/* 51 , */
-	{ ASCII,".",		">",		">" },		/* 52 . */
-	{ ASCII,"/",		"?",		"\037" },	/* 53 / */
-	{ SHIFT,"",		"",		"" },		/* 54 shift */
-	{ KP,	"*",		"*",		"*" },		/* 55 kp * */
-	{ ALT,	"",		"",		"" },		/* 56 alt */
-	{ ASCII," ",		" ",		"\000" },	/* 57 space */
-#if CAPS_IS_CONTROL == 1 || CAPS_ADD_CONTROL == 1
-	{ CTL,	"",		"",		"" },		/* 58 control */
-#else
-	{ CAPS,	"",		"",		"" },		/* 58 caps */
-#endif
-	{ FUNC,	"\033[M",	"\033[Y",	"\033[k" },	/* 59 f1 */
-	{ FUNC,	"\033[N",	"\033[Z",	"\033[l" },	/* 60 f2 */
-	{ FUNC,	"\033[O",	"\033[a",	"\033[m" },	/* 61 f3 */
-	{ FUNC,	"\033[P",	"\033[b",	"\033[n" },	/* 62 f4 */
-	{ FUNC,	"\033[Q",	"\033[c",	"\033[o" },	/* 63 f5 */
-	{ FUNC,	"\033[R",	"\033[d",	"\033[p" },	/* 64 f6 */
-	{ FUNC,	"\033[S",	"\033[e",	"\033[q" },	/* 65 f7 */
-	{ FUNC,	"\033[T",	"\033[f",	"\033[r" },	/* 66 f8 */
-	{ FUNC,	"\033[U",	"\033[g",	"\033[s" },	/* 67 f9 */
-	{ FUNC,	"\033[V",	"\033[h",	"\033[t" },	/* 68 f10 */
-	{ NUM,	"",		"",		"" },		/* 69 num lock */
-	{ SCROLL,"",		"",		"" },		/* 70 scroll lock */
-	{ KP,	"7",		"\033[H",	"7" },		/* 71 kp 7 */
-	{ KP,	"8",		"\033[A",	"8" },		/* 72 kp 8 */
-	{ KP,	"9",		"\033[I",	"9" },		/* 73 kp 9 */
-	{ KP,	"-",		"-",		"-" },		/* 74 kp - */
-	{ KP,	"4",		"\033[D",	"4" },		/* 75 kp 4 */
-	{ KP,	"5",		"\033[E",	"5" },		/* 76 kp 5 */
-	{ KP,	"6",		"\033[C",	"6" },		/* 77 kp 6 */
-	{ KP,	"+",		"+",		"+" },		/* 78 kp + */
-	{ KP,	"1",		"\033[F",	"1" },		/* 79 kp 1 */
-	{ KP,	"2",		"\033[B",	"2" },		/* 80 kp 2 */
-	{ KP,	"3",		"\033[G",	"3" },		/* 81 kp 3 */
-	{ KP,	"0",		"\033[L",	"0" },		/* 82 kp 0 */
-	{ KP,	".",		"\177",		"." },		/* 83 kp . */
-	{ NONE,	"",		"",		"" },		/* 84 0 */
-	{ NONE,	"100",		"",		"" },		/* 85 0 */
-	{ NONE,	"101",		"",		"" },		/* 86 0 */
-	{ FUNC,	"\033[W",	"\033[i",	"\033[u" },	/* 87 f11 */
-	{ FUNC,	"\033[X",	"\033[j",	"\033[v" },	/* 88 f12 */
-	{ NONE,	"102",		"",		"" },		/* 89 0 */
-	{ NONE,	"103",		"",		"" },		/* 90 0 */
-	{ NONE,	"",		"",		"" },		/* 91 0 */
-	{ ASCII,"\177",		"\177",		"\010" },	/* 92 del */
-	{ NONE,	"",		"",		"" },		/* 93 0 */
-	{ NONE,	"",		"",		"" },		/* 94 0 */
-	{ NONE,	"",		"",		"" },		/* 95 0 */
-	{ NONE,	"",		"",		"" },		/* 96 0 */
-	{ NONE,	"",		"",		"" },		/* 97 0 */
-	{ NONE,	"",		"",		"" },		/* 98 0 */
-	{ NONE,	"",		"",		"" },		/* 99 0 */
-	{ NONE,	"",		"",		"" },		/* 100 */
-	{ NONE,	"",		"",		"" },		/* 101 */
-	{ NONE,	"",		"",		"" },		/* 102 */
-	{ NONE,	"",		"",		"" },		/* 103 */
-	{ NONE,	"",		"",		"" },		/* 104 */
-	{ NONE,	"",		"",		"" },		/* 105 */
-	{ NONE,	"",		"",		"" },		/* 106 */
-	{ NONE,	"",		"",		"" },		/* 107 */
-	{ NONE,	"",		"",		"" },		/* 108 */
-	{ NONE,	"",		"",		"" },		/* 109 */
-	{ NONE,	"",		"",		"" },		/* 110 */
-	{ NONE,	"",		"",		"" },		/* 111 */
-	{ NONE,	"",		"",		"" },		/* 112 */
-	{ NONE,	"",		"",		"" },		/* 113 */
-	{ NONE,	"",		"",		"" },		/* 114 */
-	{ NONE,	"",		"",		"" },		/* 115 */
-	{ NONE,	"",		"",		"" },		/* 116 */
-	{ NONE,	"",		"",		"" },		/* 117 */
-	{ NONE,	"",		"",		"" },		/* 118 */
-	{ NONE,	"",		"",		"" },		/* 119 */
-	{ NONE,	"",		"",		"" },		/* 120 */
-	{ NONE,	"",		"",		"" },		/* 121 */
-	{ NONE,	"",		"",		"" },		/* 122 */
-	{ NONE,	"",		"",		"" },		/* 123 */
-	{ NONE,	"",		"",		"" },		/* 124 */
-	{ NONE,	"",		"",		"" },		/* 125 */
-	{ NONE,	"",		"",		"" },		/* 126 */
-	{ NONE,	"",		"",		"" },		/* 127 */
+const struct wskbd_accessops vrkiu_accessops = {
+	vrkiu_enable,
+	vrkiu_set_leds,
+	vrkiu_ioctl,
 };
 
-/* XXX: Make these queue obsolute, or move these into vrkiu_softc */
+const struct wskbd_consops vrkiu_consops = {
+	vrkiu_cngetc,
+	vrkiu_cnpollc,
+};
+
+struct wskbd_mapdata vrkiu_keymapdata = {
+	pckbd_keydesctab,
+#ifdef PCKBD_LAYOUT
+	PCKBD_LAYOUT,
+#else
+	KB_US,
+#endif
+};
+
+struct vrkiu_chip *vrkiu_consdata = NULL;
+
+#define UNK	-1	/* unknown */
+#define IGN	-2	/* ignore */
+
+static char default_keytrans[] = {
+/*00*/ UNK,  UNK,  UNK,  UNK,  UNK,  UNK,  UNK,  UNK,	/* - - - - - - - - */
+/*08*/ UNK,  UNK,  UNK,  UNK,  UNK,  UNK,  UNK,  UNK,	/* - - - - - - - - */
+/*10*/ UNK,  UNK,  UNK,  UNK,  UNK,  UNK,  UNK,  UNK,	/* - - - - - - - - */
+/*18*/ UNK,  UNK,  UNK,  UNK,  UNK,  UNK,  UNK,  UNK,	/* - - - - - - - - */
+/*20*/ UNK,  UNK,  UNK,  UNK,  UNK,  UNK,  UNK,  UNK,	/* - - - - - - - - */
+/*28*/ UNK,  UNK,  UNK,  UNK,  UNK,  UNK,  UNK,  UNK,	/* - - - - - - - - */
+/*30*/ UNK,  UNK,  UNK,  UNK,  UNK,  UNK,  UNK,  UNK,	/* - - - - - - - - */
+/*38*/ UNK,  UNK,  UNK,  UNK,  UNK,  UNK,  UNK,  UNK,	/* - - - - - - - - */
+/*40*/ UNK,  UNK,  UNK,  UNK,  UNK,  UNK,  UNK,  UNK,	/* - - - - - - - - */
+/*48*/ UNK,  UNK,  UNK,  UNK,  UNK,  UNK,  UNK,  UNK,	/* - - - - - - - - */
+/*50*/ UNK,  UNK,  UNK,  UNK,  UNK,  UNK,  UNK,  UNK,	/* - - - - - - - - */
+/*58*/ UNK,  UNK,  UNK,  UNK,  UNK,  UNK,  UNK,  UNK,	/* - - - - - - - - */
+};
+
+/* NEC MobileGearII MCR series (Japan) */
+static char mcr_jp_keytrans[] = {
+/*00*/  77,  28,  25,  52,  21,  48,  44,  57, /* right ent p . y b z space */
+/*08*/  80,  53,  24,  51,  20,  47,  30, 123, /* down / o , t v a nfer */
+/*10*/  75, 115,  23,  50,  19,  46,  17, 221, /* left \ i m r c w menu */
+/*18*/  13, IGN,  22, IGN,  18,  45,  16,   2, /* ^ - u - e x q 1 */
+/*20*/  81,  41,  11,  38,  40,  34,  15,  59, /* pgdn h/z 0 l : g tab f1 */
+/*28*/ 121,  39,  10,  49,   6,  33,   3,  37, /* xfer ; 9 n 5 f 2 k */
+/*30*/  72,  27,   9,  36,   5,  32,   7, IGN, /* up [ 8 j 4 d 6 - */
+/*38*/  12,  26,   8,  35,   4,  43,  31, IGN, /* - @ 7 h 3 ] s - */
+/*40*/  58, IGN, IGN, IGN,  14, IGN,  66,  61, /* caps - - - bs - f8 f3 */
+/*48*/ IGN,  56, IGN, IGN, 125, 112,  65,  62, /* - alt - - | k/h f7 f4 */
+/*50*/ IGN, IGN,  29, IGN,  68,  73,  64,  60, /* - - ctrl - f10 pgup f6 f2 */
+/*58*/ IGN, IGN, IGN,  42,  14,  67,  63,   1, /* - - - shift del f9 f5 esc */
+};
+
+/* IBM WorkPad z50 */
+static char z50_keytrans[] = {
+/*00*/  59,  61,  63,  65,  67, IGN, IGN,  87,	/* f1 f3 f5 f7 f9 - - f11 */
+/*08*/  60,  62,  64,  66,  68, IGN, IGN,  88,	/* f2 f4 f6 f8 f10 - - f12 */
+/*10*/  40,  26,  12,  11,  25,  39,  72,  53,	/* ' [ - 0 p ; up / */
+/*18*/ IGN, IGN, IGN,  10,  24,  38,  52, IGN,	/* - - - 9 o l . - */
+/*20*/  75,  27,  13,   9,  23,  37,  51, IGN,	/* left ] = 8 i k , - */
+/*28*/  35,  21,   7,   8,  22,  36,  50,  49,	/* h y 6 7 u j m n */
+/*30*/ IGN,  14,  69,  14, IGN,  43,  28,  57,	/* - bs num del - \ ent sp */
+/*38*/  34,  20,   6,   5,  19,  33,  47,  48,	/* g t 5 4 r f v b */
+/*40*/ IGN, IGN, IGN,   4,  18,  32,  46,  77,	/* - - - 3 e d c right */
+/*48*/ IGN, IGN, IGN,   3,  17,  31,  45,  80,	/* - - - 2 w s x down */
+/*50*/   1,  29,  41,   2,  16,  30,  44, IGN,	/* esc tab ~ 1 q a z - */
+/*58*/ 221,  42,  29,  29,  56,  56,  54, IGN,	/* menu Ls Lc Rc La Ra Rs - */
+};
+
+/* Sharp Tripad PV6000 */
+static char tripad_keytrans[] = {
+/*00*/  42,  15,  41,  16,   1,   2, 104, 221,	/* lsh tab ` q esc 1 WIN - */
+/*08*/  58,  44,  45,  30,  31,  17,  18,   3,	/* ctrl z x a s w e 2 */
+/*10*/  56,  57,  46,  47,  32,  33,  19,   4,	/* lalt sp c v d f r 3 */
+/*18*/  48,  49,  34,  35,  20,  21,   5,   6,	/* b n g h t y 4 5 */
+/*20*/  50,  51,  36,  37,  22,  23,   7,   8,	/* m , j k u i 6 7 */
+/*28*/ 105,  29,  38,  24,  25,   9,  10,  11,	/* Fn caps l o p 8 9 0 */
+/*30*/  26,  27, 102,  52,  53,  39,  12,  13,	/* [ ] dar , / ; \- = */
+/*38*/  54, 103, 100, 102,  39,  28,  43,  14,	/* rsh - - uar - ; ent \ del */
+/*40*/ IGN, IGN, IGN, IGN, IGN, IGN, IGN, IGN,	/* - - - - - - - - */
+/*48*/ IGN, IGN, IGN, IGN, IGN, IGN, IGN, IGN,	/* - - - - - - - - */
+/*50*/ IGN, IGN, IGN, IGN, IGN, IGN, IGN, IGN,	/* - - - - - - - - */
+/*58*/ IGN, IGN, IGN, IGN, IGN, IGN, IGN, IGN,	/* - - - - - - - - */
+};
+
+/* NEC Mobile Gear MCCS series */
+static char mccs_keytrans[] = {
+/*00*/  58,  28, 102,  25,  52,  21,  48,  44,  /* caps cr rar p . y b z */
+/*08*/  56,  27, 103,  24,  51,  20,  47,  30,  /* alt [ dar o , t v a */
+/*10*/  41,  26, 101,  23,  50,  19,  46,  17,  /* zen @ lar i m r c w */
+/*18*/  29,  39, 100,  22,  49,  18,  45,  16,  /* lctrl ; uar u n e x q */
+/*20*/  42,  14, 115,  11,  38,   7,  34,  15,  /* lshft bs \ 0 l 6 g tab */
+/*28*/ 123, 125,  53,  10,  37,   6,  33,   3,  /* nconv | / 9 k 5 f 2 */
+/*30*/ 121,  13,  43,   9,  36,   5,  32,   2,  /* conv = ] 8 j 4 d 1 */
+/*38*/ 112,  12,  40,   8,  35,   4,  31,   1,  /* hira - ' 7 h 3 s esc */
+/*40*/ IGN,  57, IGN, IGN, IGN, IGN, IGN, IGN,  /* - sp - - - - - - */
+/*48*/ IGN, IGN, IGN, IGN, IGN, IGN, IGN, IGN,  /* - - - - - - - - */
+/*50*/ IGN, IGN, IGN, IGN, IGN, IGN, IGN, IGN,  /* - - - - - - - - */
+/*58*/ IGN, IGN, IGN, IGN, IGN, IGN, IGN, IGN,  /* - - - - - - - - */
+};
+
+static char mobilepro_keytrans[] = {
+/*00*/  57,  27,  43,  53,  75,  80,  28,  38,  /* space ] \ / - - enter l */
+/*08*/ IGN,  26,  40,  39,  77,  72,  52,  24,  /* - [ ' ; - - . o */
+/*10*/ IGN, IGN, IGN, 221,  47,  46,  45,  44,  /* - - - Windows v c x z */
+/*18*/ IGN,  13,  12,  41,  33,  32,  31,  30,  /* - = \- ` f d s a */
+/*20*/   9,   8,   7,   6,  19,  18,  17,  16,  /* 8 7 6 5 r e w q */
+/*28*/  51,  50,  49,  48, IGN, IGN,  11,  10,  /* , m n b - - 0 9 */
+/*30*/  37,  36,  35,  34,   5,   4,   3,   2,  /* k j h g 4 3 2 1 */
+/*38*/  23,  22,  21,  20, IGN,  58,  14,   1,  /* i u y t - caps del esc */
+/*40*/ 184, IGN, IGN, IGN,  14,  25,  15, IGN,  /* alt_R - - - BS p TAB Fn */
+/*48*/ IGN,  56, IGN, IGN,  88,  87,  68,  67,  /* - alt_L - - f12 f11 f10 f9*/
+/*50*/ IGN, IGN,  29, IGN,  66,  65,  64,  63,  /* - - ctrl - f8 f7 f6 f5 */
+/*58*/ IGN, IGN, IGN,  42,  62,  61,  60,  59,  /* - - - shift f4 f3 f2 f1 */
+};
+
+/* NEC MobilePro 750c by "Castor Fu" <castor@geocast.com> */
+static char mobilepro750c_keytrans[] = {
+/*00*/  77,  43,  25,  52,  21,  48,  44,  57, /* right \ p . y b z space */
+/*08*/  80,  53,  24,  51,  20,  47,  30, IGN, /* down / o , t v a  - */
+/*10*/  75,  28,  23,  50,  19,  46,  17, 221, /* left enter i m r c w Win */
+/*18*/  69,  27,  22,  49,  18,  45,  16,  58, /* num ] u n e x q caps */
+/*20*/  81,  IGN, 11,  38,   7,  34,  15,   1, /* pgdn - 0 l : g tab esc */
+/*28*/ IGN,  39,  10,  37,   6,  33,   3,  41, /* - ; 9 k 5 f 2 ` */
+/*30*/  72,  26,   9,  36,   5,  32,   2,  40, /* up [ 8 j 4 d 1 ' */
+/*38*/  12,  26,   8,  35,   4,  31,  83, IGN, /* - @ 7 h 3 s del - */
+/*40*/  42, IGN, IGN, IGN,  14,  88,  66,  62, /* shift - - - bs f12 f8 f4 */
+/*48*/ IGN,  56, IGN, IGN, 125,  87,  65,  61, /* - alt - - | f11 f7 f3 */
+/*50*/ IGN, IGN,  29, IGN,  68,  68,  64,  60, /* - - ctrl - f10 f10 f6 f2 */
+/*58*/ IGN, IGN, IGN,  42,  13,  67,  63,  59, /* - - - shift del f9 f5 f1 */
+};
+
+/* FUJITSU INTERTOP CX300 */
+static char intertop_keytrans[] = {
+  57,  60,   2,  15,  28,  58,  75,  41,
+ 112,  59,   3,  16, IGN,  30,  56,   1,
+ 210,  17,   4,  31,  83,  43,  80,  45,
+  44,  18,   5,  32,  68, 125,  77,  46,
+ 115,  19,  39,  33,  67,  26,  13,  47,
+  53,  20,   6,  34,  66,  25,  12,  48,
+  52,  21,   7,  35,  65,  38,  11,  49,
+ IGN,  22,   8,  36,  63,  24,  14,  50,
+ IGN,  61,   9,  62, IGN,  23,  37,  51,
+  69,  40,  10,  27,  64, IGN,  72, IGN,
+ IGN, IGN, IGN, IGN,  42, IGN, IGN,  54,
+  29, 221, 123, 121, 184, IGN, IGN, IGN,
+};
+/*
+space   a2      1       tab     enter   caps    left    zenkaku
+hiraga  a1      2       q       -       a       fnc     esc
+ins     w       3       s       del     ]       down    x
+z       e       4       d       a10     \       right   c
+backsla r       ;       f       a9      @       ^       v
+/       t       5       g       a8      p       -       b
+.       y       6       h       a7      l       0       n
+-       u       7       j       a5      o       bs      m
+-       a3      8       a4      -       i       k       ,
+num     :       9       [       a6      -       up      -
+-       -       -       -       shift_L -       -       shift_R
+ctrl    win     muhenka henkan  alt     -       -       -
+*/
+
+static char *keytrans = default_keytrans;
+
+/*
+ * utilities
+ */
+static inline void
+vrkiu_write(chip, port, val)
+	struct vrkiu_chip *chip;
+	int port;
+	unsigned short val;
+{
+	bus_space_write_2(chip->kc_iot, chip->kc_ioh, port, val);
+}
+
+static inline unsigned short
+vrkiu_read(chip, port)
+	struct vrkiu_chip *chip;
+	int port;
+{
+	return bus_space_read_2(chip->kc_iot, chip->kc_ioh, port);
+}
+
+static inline int
+vrkiu_is_console(iot, ioh)
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh;
+{
+	if (vrkiu_consdata &&
+	    vrkiu_consdata->kc_iot == iot &&
+	    vrkiu_consdata->kc_ioh == ioh) {
+		return 1;
+	} else {
+		return 0;
+	}
+}
+
+/*
+ * initialize device
+ */
+static int
+vrkiu_init(chip, iot, ioh)
+	struct vrkiu_chip* chip;
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh;
+{
+	memset(chip, 0, sizeof(struct vrkiu_chip));
+	chip->kc_iot = iot;
+	chip->kc_ioh = ioh;
+	chip->kc_polling = 0;
+
+	/* set KIU */
+	vrkiu_write(chip, KIURST, 1);   /* reset */
+	vrkiu_write(chip, KIUSCANLINE, 0); /* 96keys */
+	vrkiu_write(chip, KIUWKS, 0x18a4); /* XXX: scan timing! */
+	vrkiu_write(chip, KIUWKI, 450);
+	vrkiu_write(chip, KIUSCANREP, 0x8023);
+				/* KEYEN | STPREP = 2 | ATSTP | ATSCAN */
+	return 0;
+}
+
+/*
+ * probe
+ */
 static int
 vrkiumatch(parent, cf, aux)
 	struct device *parent;
 	struct cfdata *cf;
 	void *aux;
 {
-	return 1;		/* XXX */
+	return 1;
 }
 
-static inline void
-vrkiu_write(sc, port, val)
-	struct vrkiu_softc *sc;
-	int port;
-	unsigned short val;
-{
-	bus_space_write_2(sc->sc_iot, sc->sc_ioh, port, val);
-}
-
-static inline unsigned short
-vrkiu_read(sc, port)
-	struct vrkiu_softc *sc;
-	int port;
-{
-	return bus_space_read_2(sc->sc_iot, sc->sc_ioh, port);
-}
-
+/*
+ * attach
+ */
 static void
 vrkiuattach(parent, self, aux)
 	struct device *parent;
@@ -308,6 +381,8 @@ vrkiuattach(parent, self, aux)
 {
 	struct vrkiu_softc *sc = (struct vrkiu_softc *)self;
 	struct vrip_attach_args *va = aux;
+	struct wskbddev_attach_args wa;
+	int isconsole;
 
 	bus_space_tag_t iot = va->va_iot;
 	bus_space_handle_t ioh;
@@ -317,18 +392,14 @@ vrkiuattach(parent, self, aux)
 		return;
 	}
 
-	sc->sc_iot = iot;
-	sc->sc_ioh = ioh;
-
-	/* set KIU */
-	vrkiu_write(sc, KIURST, 1);   /* reset */
-	vrkiu_write(sc, KIUSCANLINE, 0); /* 96keys */
-	vrkiu_write(sc, KIUWKS, 0x18a4); /* XXX: scan timing! */
-	vrkiu_write(sc, KIUWKI, 450);
-	vrkiu_write(sc, KIUSCANREP, 0x8023);
-				/* KEYEN | STPREP = 2 | ATSTP | ATSCAN */
-
-	the_vrkiu = sc;
+	isconsole = vrkiu_is_console(iot, ioh);
+	if (isconsole) {
+		sc->sc_chip = vrkiu_consdata;
+	} else {
+		sc->sc_chip = &sc->sc_chip_body;
+		vrkiu_init(sc->sc_chip, iot, ioh);
+	}
+	sc->sc_chip->kc_sc = sc;
 
 	if (!(sc->sc_handler = 
 	      vrip_intr_establish(va->va_vc, va->va_intr, IPL_TTY,
@@ -340,6 +411,54 @@ vrkiuattach(parent, self, aux)
 	vrip_intr_setmask2(va->va_vc, sc->sc_handler, KIUINT_KDATRDY, 1);
 
 	printf("\n");
+
+	if (platid_match(&platid, &platid_mask_MACH_NEC_MCR_520A)) {
+		keytrans = mobilepro_keytrans;
+#if !defined(PCKBD_LAYOUT)
+		vrkiu_keymapdata.layout = KB_US;
+#endif
+	} else if (platid_match(&platid, &platid_mask_MACH_NEC_MCR_500A)) {
+		keytrans = mobilepro750c_keytrans;
+#if !defined(PCKBD_LAYOUT)
+		vrkiu_keymapdata.layout = KB_US;
+#endif
+	} else if (platid_match(&platid, &platid_mask_MACH_NEC_MCR_700A)) {
+		keytrans = mobilepro_keytrans;
+#if !defined(PCKBD_LAYOUT)
+		vrkiu_keymapdata.layout = KB_US;
+#endif
+	} else if (platid_match(&platid, &platid_mask_MACH_NEC_MCR)) {
+		keytrans = mcr_jp_keytrans;
+#if !defined(PCKBD_LAYOUT)
+		vrkiu_keymapdata.layout = KB_JP;
+#endif
+	} else if (platid_match(&platid, &platid_mask_MACH_IBM_WORKPAD_Z50)) {
+		keytrans = z50_keytrans;
+#if !defined(PCKBD_LAYOUT)
+		vrkiu_keymapdata.layout = KB_US;
+#endif
+	} else if (platid_match(&platid, &platid_mask_MACH_SHARP_TRIPAD)) {
+		keytrans = tripad_keytrans;
+#if !defined(PCKBD_LAYOUT)
+		vrkiu_keymapdata.layout = KB_JP;
+#endif
+	} else if (platid_match(&platid, &platid_mask_MACH_NEC_MCCS)) {
+		keytrans = mccs_keytrans;
+#if !defined(PCKBD_LAYOUT)
+		vrkiu_keymapdata.layout = KB_JP;
+#endif
+	} else if (platid_match(&platid, &platid_mask_MACH_FUJITSU_INTERTOP)) {
+		keytrans = intertop_keytrans;
+#if !defined(PCKBD_LAYOUT)
+		vrkiu_keymapdata.layout = KB_JP;
+#endif
+	}
+	wa.console = isconsole;
+	wa.keymap = &vrkiu_keymapdata;
+	wa.accessops = &vrkiu_accessops;
+	wa.accesscookie = sc;
+
+	sc->sc_wskbddev = config_found(self, &wa, wskbddevprint);
 }
 
 int
@@ -347,91 +466,77 @@ vrkiu_intr(arg)
 	void *arg;
 {
         struct vrkiu_softc *sc = arg;
-	/* When key scan finisshed, this entry is called. */
-	detect_key(sc);
-	DPRINTF(("%d", vrkiu_read(sc, KIUINT) & 7));
 
-	vrkiu_write(sc, KIUINT, 0x7); /* Clear all interrupt */
+	/* When key scan finisshed, this entry is called. */
+	DPRINTF(("%s(%d): vrkiu_intr: %d\n",
+		 __FILE__, __LINE__,
+		 vrkiu_read(sc->sc_chip, KIUINT) & 7));
+
+	/*
+	 * First, we must clear the interrupt register because
+	 * detect_key() may takes long time if a bitmap screen
+	 * scrolls up and it makes us to miss some key release
+	 * event.
+	 */
+	vrkiu_write(sc->sc_chip, KIUINT, 0x7); /* Clear all interrupt */
+	detect_key(sc->sc_chip);
 
 	return 0;
 }
 
 static void
-detect_key(sc)
-	struct vrkiu_softc *sc;
+detect_key(chip)
+	struct vrkiu_chip* chip;
 {
-	int i, k;
-
-	DPRINTF(("[detect_key():begin read]"));
+	int i, j, modified, mask;
+	unsigned short scandata[KIU_NSCANLINE/2];
 
 	for (i = 0; i < KIU_NSCANLINE / 2; i++) {
-		k = vrkiu_read(sc, KIUDATP + i * 2) ^ sc->keystat[i];
-		sc->keystat[i] = vrkiu_read(sc, KIUDATP + i * 2);
-		while (k) {
-			int n, m;
-			n = ffs(k) - 1;
-			if (n < 0) {
-				break;
-			}
-			k ^= 1 << n;
-			m = n + i * 16;
-			if (keytrans[m] < 0) {
-                                printf("vrkiu: Unkown scan code 0x%02x\n", m);
-                                continue;
-			}
-			/* XXX: scanbuf may overflow! */
-			process_key(sc, keytrans[m],
-				    !((sc->keystat[i] & (1 << n))));
-		}
-		/* XXX: The order of keys can be a problem.
-		   If CTRL and normal key are pushed simultaneously,
-		   normal key can be entered in queue first. 
-		   Same problem would occur in key break. */
+		scandata[i] = vrkiu_read(chip, KIUDATP + i * 2);
 	}
-	/* TODO: Enter scancode into the queue as long as the key pressed */
 
-}
+	DPRINTF(("%s(%d): detect_key():", __FILE__, __LINE__));
 
-static void
-process_key(sc, k, brk) 
-	struct vrkiu_softc *sc;
-	int k, brk;
-{
-	char *p;
-	extern struct tty biconsdev_tty[];
-
-	switch (scan_codes[k].type) {
-	case ALT:
-		sc->k_alt = brk ? 0 : 1;
-		break;
-	case SHIFT:
-		sc->k_sft = brk ? 0 : 1;
-		break;
-	case CTL:
-		sc->k_ctrl = brk ? 0 : 1;
-		break;
-	case ASCII:
-		if (!brk) {
-			if (sc->k_ctrl) {
-				p = scan_codes[k].ctl;
-			} else if (sc->k_sft) {
-				p = scan_codes[k].shift;
-			} else {
-				p = scan_codes[k].unshift;
-			}
-			sc->keybuf[sc->keybufhead++] = 
-				sc->k_alt ? (*p | 0x80) : *p;
-				/* XXX: multi byte key! */
-			if (sc->keybufhead >= NKEYBUF) {
-				sc->keybufhead = 0;
-			}
-			(*linesw[0].l_rint)(sc->k_alt ? (*p | 0x80) : *p, 
-					    &biconsdev_tty [0]);
-		}
-		break;
-	default:
-		/* Ignored */
+	if (chip->kc_polling) {
+		chip->kc_type = WSCONS_EVENT_ALL_KEYS_UP;
 	}
+
+	for (i = 0; i < KIU_NSCANLINE / 2; i++) {
+		modified = scandata[i] ^ chip->kc_scandata[i];
+		mask = 1;
+		for (j = 0; j < 16; j++, mask <<= 1) {
+			/* XXX: The order of keys can be a problem.
+			   If CTRL and normal key are pushed simultaneously,
+			   normal key can be entered in queue first. 
+			   Same problem would occur in key break. */
+			if (modified & mask) {
+				int key, type;
+				key = i * 16 + j;
+				if (keytrans[key] == UNK) {
+	                                printf("vrkiu: Unknown scan code 0x%02x\n", key);
+	                                continue;
+				} else if (keytrans[key] == IGN) {
+					continue;
+				}
+				type = (scandata[i] & mask) ? 
+					WSCONS_EVENT_KEY_DOWN :
+					WSCONS_EVENT_KEY_UP;
+				DPRINTF(("(%d,%d)=%s%d ", i, j,
+					 (scandata[i] & mask) ? "v" : "^",
+					 keytrans[key]));
+				if (chip->kc_polling) {
+					chip->kc_type = type;
+					chip->kc_data = keytrans[key];
+				} else {
+					wskbd_input(chip->kc_sc->sc_wskbddev,
+						    type,
+						    keytrans[key]);
+				}
+			}
+		}
+		chip->kc_scandata[i] = scandata[i];
+	}
+	DPRINTF(("\n"));
 }
 
 /* called from biconsdev.c */
@@ -445,7 +550,7 @@ vrkiu_getc()
 	}
 
 	while (the_vrkiu->keybuftail == the_vrkiu->keybufhead) {
-		detect_key(the_vrkiu);
+		detect_key(vrkiu_consdata);
 	}
 	ret = the_vrkiu->keybuf[the_vrkiu->keybuftail++];
 	if (the_vrkiu->keybuftail >= NKEYBUF) {
@@ -454,3 +559,133 @@ vrkiu_getc()
 	return ret;
 }
 
+int
+vrkiu_enable(scx, on)
+	void *scx;
+	int on;
+{
+	struct vrkiu_softc *sc = scx;
+
+	if (on) {
+		if (sc->sc_enabled)
+			return (EBUSY);
+		sc->sc_enabled = 1;
+	} else {
+		if (sc->sc_chip == vrkiu_consdata)
+			return (EBUSY);
+		sc->sc_enabled = 0;
+	}
+
+	return (0);
+}
+
+void
+vrkiu_set_leds(scx, leds)
+	void *scx;
+	int leds;
+{
+	/*struct pckbd_softc *sc = scx;
+	 */
+
+	DPRINTF(("%s(%d): vrkiu_set_leds() not implemented\n",
+		 __FILE__, __LINE__));
+}
+
+int
+vrkiu_ioctl(scx, cmd, data, flag, p)
+	void *scx;
+	u_long cmd;
+	caddr_t data;
+	int flag;
+	struct proc *p;
+{
+	/*struct vrkiu_softc *sc = scx;
+	 */
+
+	switch (cmd) {
+	case WSKBDIO_GTYPE:
+		/*
+		 * XXX, fix me !
+		 */
+		*(int *)data = WSKBD_TYPE_PC_XT;
+		return 0;
+	case WSKBDIO_SETLEDS:
+		DPRINTF(("%s(%d): no LED\n", __FILE__, __LINE__));
+		return 0;
+	case WSKBDIO_GETLEDS:
+		DPRINTF(("%s(%d): no LED\n", __FILE__, __LINE__));
+		*(int *)data = 0;
+		return (0);
+	}
+	return -1;
+}
+
+/*
+ * console support routines
+ */
+int
+vrkiu_cnattach(iot, iobase)
+	bus_space_tag_t iot;
+	int iobase;
+{
+	static struct vrkiu_chip vrkiu_consdata_body;
+	bus_space_handle_t ioh;
+
+	if (vrkiu_consdata) {
+		panic("vrkiu is already attached as the console");
+	}
+	if (bus_space_map(iot, iobase, 1, 0, &ioh)) {
+		printf("%s(%d): can't map bus space\n", __FILE__, __LINE__);
+		return -1;
+	}
+
+	if (vrkiu_init(&vrkiu_consdata_body, iot, ioh) != 0) {
+		DPRINTF(("%s(%d): vrkiu_init() failed\n", __FILE__, __LINE__));
+		return -1;
+	}
+	vrkiu_consdata = &vrkiu_consdata_body;
+
+	wskbd_cnattach(&vrkiu_consops, vrkiu_consdata, &vrkiu_keymapdata);
+
+	return (0);
+}
+
+void
+vrkiu_cngetc(chipx, type, data)
+	void *chipx;
+	u_int *type;
+	int *data;
+{
+	struct vrkiu_chip* chip = chipx;
+	int s;
+
+	if (!chip->kc_polling) {
+		printf("%s(%d): kiu is not polled\n", __FILE__, __LINE__);
+		while (1);
+	}
+
+	s = splimp();
+	if (chip->kc_type == WSCONS_EVENT_ALL_KEYS_UP) {
+		detect_key(chip);
+	}
+	*type = chip->kc_type;
+	*data = chip->kc_data;
+	chip->kc_type = WSCONS_EVENT_ALL_KEYS_UP;
+	splx(s);
+}
+
+void
+vrkiu_cnpollc(chipx, on)
+	void *chipx;
+        int on;
+{
+	struct vrkiu_chip* chip = chipx;
+	int s = splimp();
+
+	chip->kc_polling = on;
+
+	splx(s);
+
+	DPRINTF(("%s(%d): vrkiu polling %s\n",
+		 __FILE__, __LINE__, on ? "ON" : "OFF"));
+}

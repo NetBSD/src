@@ -1,4 +1,4 @@
-/*	$NetBSD: crt0.c,v 1.1 1999/10/07 11:56:28 msaitoh Exp $	*/
+/*	$NetBSD: crt0.c,v 1.1.4.1 1999/12/27 18:29:24 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1996 Charles M. Hannum.  All rights reserved.
@@ -50,7 +50,7 @@ start:
 ");
 	
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.1 1999/10/07 11:56:28 msaitoh Exp $");
+__RCSID("$NetBSD: crt0.c,v 1.1.4.1 1999/12/27 18:29:24 wrstuden Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: ebus_bus.c,v 1.3 1999/07/08 18:08:59 thorpej Exp $	*/
+/*	$NetBSD: ebus_bus.c,v 1.3.8.1 1999/12/27 18:33:56 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -913,7 +913,7 @@ ebus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 
 		addr = VM_PAGE_TO_PHYS(m);
 		pmap_enter(pmap_kernel(), va, addr | cbit,
-		    VM_PROT_READ | VM_PROT_WRITE, TRUE, 0);
+		    VM_PROT_READ | VM_PROT_WRITE, PMAP_WIRED);
 		va += PAGE_SIZE;
 		size -= PAGE_SIZE;
 	}

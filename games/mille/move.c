@@ -1,4 +1,4 @@
-/*	$NetBSD: move.c,v 1.10 1999/09/08 21:17:51 jsm Exp $	*/
+/*	$NetBSD: move.c,v 1.10.2.1 1999/12/27 18:29:03 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)move.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: move.c,v 1.10 1999/09/08 21:17:51 jsm Exp $");
+__RCSID("$NetBSD: move.c,v 1.10.2.1 1999/12/27 18:29:03 wrstuden Exp $");
 #endif
 #endif /* not lint */
 
@@ -79,7 +79,7 @@ domove()
 				else
 					error("no card there");
 			else {
-				if (issafety(pp->hand[Card_no])) {
+				if (is_safety(pp->hand[Card_no])) {
 					error("discard a safety?");
 					goodplay = FALSE;
 					break;
@@ -112,7 +112,7 @@ domove()
 acc:
 			if (Play == COMP) {
 				account(*Topcard);
-				if (issafety(*Topcard))
+				if (is_safety(*Topcard))
 					pp->safety[*Topcard-S_CONV] = S_IN_HAND;
 			}
 			if (pp->hand[1] == C_INIT && Topcard > Deck) {
@@ -171,11 +171,11 @@ check_go()
 		op = (pp == &Player[COMP] ? &Player[PLAYER] : &Player[COMP]);
 		for (i = 0; i < HAND_SZ; i++) {
 			card = pp->hand[i];
-			if (issafety(card) || canplay(pp, op, card)) {
+			if (is_safety(card) || canplay(pp, op, card)) {
 #ifdef DEBUG
 				if (Debug) {
 					fprintf(outf, "CHECK_GO: can play %s (%d), ", C_name[card], card);
-					fprintf(outf, "issafety(card) = %d, ", issafety(card));
+					fprintf(outf, "is_safety(card) = %d, ", is_safety(card));
 					fprintf(outf, "canplay(pp, op, card) = %d\n", canplay(pp, op, card));
 				}
 #endif
@@ -248,7 +248,7 @@ mustpick:
 
 	  case C_GO:
 		if (pp->battle != C_INIT && pp->battle != C_STOP
-		    && !isrepair(pp->battle))
+		    && !is_repair(pp->battle))
 			return error("cannot play \"Go\" on a \"%s\"",
 			    C_name[pp->battle]);
 		pp->battle = C_GO;
@@ -290,7 +290,7 @@ protected:
 	  case C_DRIVE_SAFE:	case C_RIGHT_WAY:
 		if (pp->battle == opposite(card)
 		    || (card == C_RIGHT_WAY && pp->speed == C_LIMIT)) {
-			if (!(card == C_RIGHT_WAY && !isrepair(pp->battle))) {
+			if (!(card == C_RIGHT_WAY && !is_repair(pp->battle))) {
 				pp->battle = C_GO;
 				pp->can_go = TRUE;
 			}
@@ -323,7 +323,7 @@ protected:
 				pp->can_go = TRUE;
 				pp->battle = C_INIT;
 			}
-			if (!pp->can_go && isrepair(pp->battle))
+			if (!pp->can_go && is_repair(pp->battle))
 				pp->can_go = TRUE;
 		}
 		Next = -1;

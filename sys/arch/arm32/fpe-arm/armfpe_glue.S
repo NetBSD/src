@@ -1,4 +1,4 @@
-/* $NetBSD: armfpe_glue.S,v 1.12 1998/04/01 22:55:05 mark Exp $ */
+/* $NetBSD: armfpe_glue.S,v 1.12.18.1 1999/12/27 18:31:42 wrstuden Exp $ */
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -178,7 +178,7 @@ ENTRY_NP(arm_fpe_post_proc)
 
 ENTRY_NP(arm_fpe_panic)
 	adr	r0, Lfpe_panic_text
-	b	_panic
+	b	_C_LABEL(panic)
 
 Lfpe_panic_text:
 	.asciz	"armfpe: we are panicing"

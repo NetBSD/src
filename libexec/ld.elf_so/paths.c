@@ -1,4 +1,4 @@
-/*	$NetBSD: paths.c,v 1.6 1999/08/20 21:10:27 christos Exp $	 */
+/*	$NetBSD: paths.c,v 1.6.4.1 1999/12/27 18:30:14 wrstuden Exp $	 */
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -37,9 +37,18 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/types.h>
+#include <sys/param.h>
+#include <sys/sysctl.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
-#include <dirent.h>
+#include <sys/gmon.h>
+#include <sys/sysctl.h>
+#include <sys/socket.h>
+#include <sys/mount.h>
+#include <sys/mbuf.h>
+#include <sys/resource.h>
+#include <vm/vm_param.h>
+#include <machine/cpu.h>
 
 #include "debug.h"
 #include "rtld.h"
@@ -47,6 +56,7 @@
 static Search_Path *_rtld_find_path __P((Search_Path *, const char *, size_t));
 static Search_Path **_rtld_append_path __P((Search_Path **, Search_Path **,
     const char *, const char *, bool));
+static void _rtld_process_mapping __P((Library_Xform **, char *, char *, bool));
 
 static Search_Path *
 _rtld_find_path(path, pathstr, pathlen)
@@ -127,9 +137,197 @@ _rtld_add_paths(path_p, pathstr, dodebug)
 	}
 }
 
+
+struct sysctldesc {
+	const char *name;
+	int type;
+};
+
+struct list {
+	const struct sysctldesc *ctl;
+	int numentries;
+};
+
+static struct sysctldesc ctl_machdep[] = CTL_MACHDEP_NAMES;
+static struct sysctldesc ctl_toplvl[] = CTL_NAMES;
+
+struct list toplevel[] = {
+	{ 0, 0 },
+	{ ctl_toplvl, CTL_MAXID },
+	{ 0, -1 },
+};
+
+struct list secondlevel[] = {
+	{ 0, 0 },			/* CTL_UNSPEC */
+	{ 0, KERN_MAXID },		/* CTL_KERN */
+	{ 0, VM_MAXID },		/* CTL_VM */
+	{ 0, VFS_MAXID },		/* CTL_VFS */
+	{ 0, NET_MAXID },		/* CTL_NET */
+	{ 0, CTL_DEBUG_MAXID },		/* CTL_DEBUG */
+	{ 0, HW_MAXID },		/* CTL_HW */
+#ifdef CTL_MACHDEP_NAMES
+	{ ctl_machdep, CPU_MAXID },	/* CTL_MACHDEP */
+#else
+	{ 0, 0 },			/* CTL_MACHDEP */
+#endif
+	{ 0, USER_MAXID },		/* CTL_USER_NAMES */
+	{ 0, DDBCTL_MAXID },		/* CTL_DDB_NAMES */
+	{ 0, 2 },			/* dummy name */
+	{ 0, -1 },
+};
+
+struct list *lists[] = {
+	toplevel,
+	secondlevel,
+	0
+};
+
+#define CTL_MACHDEP_SIZE (sizeof(ctl_machdep) / sizeof(ctl_machdep[0]))
+
+/*
+ * Process library mappings of the form:
+ *	<library_name>	<machdep_variable> <value,...:library_name,...> ... 
+ */
+static void
+_rtld_process_mapping(lib_p, bp, ep, dodebug)
+	Library_Xform **lib_p;
+	char *bp, *ep;
+	bool dodebug;
+{
+	static const char WS[] = " \t\n";
+	Library_Xform *hwptr = NULL;
+	char *ptr, *key, *lib, *l;
+	int i, j, k;
+	
+	if (bp == NULL || bp == ep || *bp == '\0')
+		return;
+
+	if (dodebug)
+		dbg((" processing mapping \"%s\"", bp));
+
+	if ((ptr = strsep(&bp, WS)) == NULL)
+		return;
+
+	if (dodebug)
+		dbg((" library \"%s\"", ptr));
+
+	hwptr = xmalloc(sizeof(*hwptr));
+	memset(hwptr, 0, sizeof(*hwptr));
+	hwptr->name = xstrdup(ptr);
+
+	if ((ptr = strsep(&bp, WS)) == NULL) {
+		warnx("missing sysctl variable name");
+		goto cleanup;
+	}
+
+	if (dodebug)
+		dbg((" sysctl \"%s\"", ptr));
+
+	for (i = 0; (l = strsep(&ptr, ".")) != NULL; i++) {
+
+		if (lists[i] == NULL || i >= RTLD_MAX_CTL) {
+			warnx("sysctl nesting too deep");
+			goto cleanup;
+		}
+
+		for (j = 1; lists[i][j].numentries != -1; j++) {
+
+			if (lists[i][j].ctl == NULL)
+				continue;
+
+			for (k = 1; k < lists[i][j].numentries; k++) {
+				if (strcmp(lists[i][j].ctl[k].name, l) == 0)
+					break;
+			}
+
+			if (lists[i][j].numentries == -1) {
+				warnx("unknown sysctl variable name `%s'", l);
+				goto cleanup;
+			}
+
+			hwptr->ctl[hwptr->ctlmax] = k;
+			hwptr->ctltype[hwptr->ctlmax++] =
+			    lists[i][j].ctl[k].type;
+		}
+	}
+
+	if (dodebug)
+		for (i = 0; i < hwptr->ctlmax; i++)
+			dbg((" sysctl %d, %d", hwptr->ctl[i],
+			    hwptr->ctltype[i]));
+
+	for (i = 0; (ptr = strsep(&bp, WS)) != NULL; i++) {
+		if (i == RTLD_MAX_ENTRY) {
+no_more:
+			warnx("maximum library entries exceeded `%s'",
+			    hwptr->name);
+			goto cleanup;
+		}
+		if ((key = strsep(&ptr, ":")) == NULL) {
+			warnx("missing sysctl variable value for `%s'",
+			    hwptr->name);
+			goto cleanup;
+		}
+		if ((lib = strsep(&ptr, ":")) == NULL) {
+			warnx("missing sysctl library list for `%s'",
+			    hwptr->name);
+			goto cleanup;
+		}
+		for (j = 0; (l = strsep(&lib, ",")) != NULL; j++) {
+			if (j == RTLD_MAX_LIBRARY) {
+				warnx("maximum library entries exceeded `%s'",
+				    hwptr->name);
+				goto cleanup;
+			}
+			if (dodebug)
+				dbg((" library \"%s\"", l));
+			hwptr->entry[i].library[j] = xstrdup(l);
+		}
+		if (j == 0) {
+			warnx("No library map entries for `%s/%s'",
+				hwptr->name, ptr);
+			goto cleanup;
+		}
+		j = i;
+		for (; (l = strsep(&key, ",")) != NULL; i++) {
+			if (dodebug)
+				dbg((" key \"%s\"", l));
+			if (i == RTLD_MAX_ENTRY)
+				goto no_more;
+			if (i != j)
+				(void)memcpy(hwptr->entry[i].library, 
+				    hwptr->entry[j].library,
+				    sizeof(hwptr->entry[j].library));
+			hwptr->entry[i].value = xstrdup(l);
+		}
+
+		if (j != i)
+			i--;
+	}
+
+	if (i == 0) {
+		warnx("No library entries for `%s'", hwptr->name);
+		goto cleanup;
+	}
+
+
+	hwptr->next = NULL;
+	if (*lib_p != NULL)
+		(*lib_p)->next = hwptr;
+	*lib_p = hwptr;
+
+	return;
+
+cleanup:
+	if (hwptr->name)
+		free(hwptr->name);
+	free(hwptr);
+}
+
 void
-_rtld_process_hints(path_p, fname, dodebug)
+_rtld_process_hints(path_p, lib_p, fname, dodebug)
 	Search_Path **path_p;
+	Library_Xform **lib_p;
 	const char *fname;
 	bool dodebug;
 {
@@ -138,6 +336,7 @@ _rtld_process_hints(path_p, fname, dodebug)
 	struct stat st;
 	size_t sz;
 	Search_Path **head_p = path_p;
+	int doing_path = 0;
 
 	if ((fd = open(fname, O_RDONLY)) == -1) {
 		/* Don't complain */
@@ -169,6 +368,11 @@ _rtld_process_hints(path_p, fname, dodebug)
 			b = p;
 
 		switch (*p) {
+		case '/':
+			if (b == p)
+				doing_path = 1;
+			break;
+
 		case ' ': case '\t':
 			if (b == p)
 				b++;
@@ -176,8 +380,11 @@ _rtld_process_hints(path_p, fname, dodebug)
 
 		case '\n':
 			*p = '\0';
-			path_p = _rtld_append_path(head_p, path_p, b, p,
-			    dodebug);
+			if (doing_path)
+				path_p = _rtld_append_path(head_p, path_p, b, p,
+				    dodebug);
+			else
+				_rtld_process_mapping(lib_p, b, p, dodebug);
 			b = NULL;
 			break;
 
@@ -188,19 +395,28 @@ _rtld_process_hints(path_p, fname, dodebug)
 				    *sp == '\t'; --sp)
 					continue;
 				*++sp = '\0';
-				path_p = _rtld_append_path(head_p, path_p, b,
-				    sp, dodebug);
+				if (doing_path)
+					path_p = _rtld_append_path(head_p,
+					    path_p, b, sp, dodebug);
+				else
+					_rtld_process_mapping(lib_p, b, sp,
+					    dodebug);
 				*sp = ' ';
 			}
 			b = NULL;
 			break;
 
 		default:
+			if (b == p)
+				doing_path = 0;
 			break;
 		}
 	}
 
-	path_p = _rtld_append_path(head_p, path_p, b, ebuf, dodebug);
+	if (doing_path)
+		path_p = _rtld_append_path(head_p, path_p, b, ebuf, dodebug);
+	else
+		_rtld_process_mapping(lib_p, b, ebuf, dodebug);
 
 	(void)munmap(buf, sz);
 }

@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_SMALL,v 1.42 1999/09/27 23:59:51 ad Exp $
+#	$NetBSD: INSTALL_SMALL,v 1.42.8.1 1999/12/27 18:32:18 wrstuden Exp $
 #
 #	INSTALL_SMALL - Small Installation kernel.
 #
@@ -215,7 +215,7 @@ pc0	at isa? port 0x60 irq 1		# pccons generic PC console driver
 # Serial Devices
 
 # PCI serial interfaces
-#com*	at puc? port ?			# 16x450s on "universal" comm boards
+#com*	at puc? port ?			# 16x50s on "universal" comm boards
 #cy*	at pci? dev ? function ?	# Cyclades Cyclom-Y serial boards
 
 # ISA Plug-and-Play serial interfaces

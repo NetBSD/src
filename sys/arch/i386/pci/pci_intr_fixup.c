@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_intr_fixup.c,v 1.3 1999/12/13 15:42:05 uch Exp $	*/
+/*	$NetBSD: pci_intr_fixup.c,v 1.3.2.1 1999/12/27 18:32:26 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.

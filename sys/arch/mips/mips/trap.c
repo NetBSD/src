@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.113 1999/09/25 00:00:39 shin Exp $	*/
+/*	$NetBSD: trap.c,v 1.113.8.1 1999/12/27 18:32:49 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.113 1999/09/25 00:00:39 shin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.113.8.1 1999/12/27 18:32:49 wrstuden Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_inet.h"
@@ -459,12 +459,8 @@ trap(status, cause, vaddr, opc, frame)
 			}
 			entry |= mips_pg_m_bit();
 			pte->pt_entry = entry;
-#if defined(MIPS1) && !defined(MIPS3)
-			MachTLBUpdate(~0, entry);	/* use entryhi */
-#else
 			vaddr &= ~PGOFSET;
 			MachTLBUpdate(vaddr, entry);
-#endif
 			pa = pfn_to_vad(entry);
 			if (!IS_VM_PHYSADDR(pa)) {
 				printf("ktlbmod: va %x pa %lx\n", vaddr, pa);
@@ -496,13 +492,9 @@ trap(status, cause, vaddr, opc, frame)
 		}
 		entry |= mips_pg_m_bit();
 		pte->pt_entry = entry;
-#if defined(MIPS1) && !defined(MIPS3)
-		MachTLBUpdate(~0, entry);		/* use entryhi */
-#else
 		vaddr = (vaddr & ~PGOFSET) |
 			(pmap->pm_asid << MIPS_TLB_PID_SHIFT);
 		MachTLBUpdate(vaddr, entry);
-#endif
 		pa = pfn_to_vad(entry);
 		if (!IS_VM_PHYSADDR(pa)) {
 			printf("utlbmod: va %x pa %lx\n", vaddr, pa);
@@ -572,7 +564,7 @@ trap(status, cause, vaddr, opc, frame)
 			if (rv == KERN_SUCCESS) {
 				unsigned nss;
 
-				nss = clrnd(btoc(USRSTACK-(unsigned)va));
+				nss = btoc(USRSTACK-(unsigned)va);
 				if (nss > vm->vm_ssize)
 					vm->vm_ssize = nss;
 			}
@@ -682,18 +674,20 @@ trap(status, cause, vaddr, opc, frame)
 		sig = SIGILL;
 		break; /* SIGNAL */
 	case T_COP_UNUSABLE+T_USER:
-#ifdef SOFTFLOAT /* No FPU; avoid touching FPU registers */
-		sig = SIGILL;
-		break; /* SIGNAL */
-#endif
 		if ((cause & MIPS_CR_COP_ERR) != 0x10000000) {
 			sig = SIGILL;	/* only FPU instructions allowed */
 			break; /* SIGNAL */
 		}
+#ifndef SOFTFLOAT
 		switchfpregs(fpcurproc, p);
+#endif
 		fpcurproc = p;
+#ifdef SOFTFLOAT
+		MachFPInterrupt(status, cause, opc, p->p_md.md_regs);
+#else
 		((struct frame *)p->p_md.md_regs)->f_regs[SR]
 			|= MIPS_SR_COP_1_BIT;
+#endif
 		p->p_md.md_flags |= MDP_FPUSED;
 		userret(p, opc, sticks);
 		return; /* GEN */

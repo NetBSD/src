@@ -1,4 +1,4 @@
-/*	$NetBSD: file_subs.c,v 1.10 1998/02/28 15:52:04 mrg Exp $	*/
+/*	$NetBSD: file_subs.c,v 1.10.4.1 1999/12/27 18:27:07 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)file_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: file_subs.c,v 1.10 1998/02/28 15:52:04 mrg Exp $");
+__RCSID("$NetBSD: file_subs.c,v 1.10.4.1 1999/12/27 18:27:07 wrstuden Exp $");
 #endif
 #endif /* not lint */
 
@@ -51,6 +51,7 @@ __RCSID("$NetBSD: file_subs.c,v 1.10 1998/02/28 15:52:04 mrg Exp $");
 #include <sys/stat.h>
 #include <unistd.h>
 #include <sys/param.h>
+#include <err.h>
 #include <fcntl.h>
 #include <string.h>
 #include <stdio.h>
@@ -180,6 +181,8 @@ file_close(arcn, fd)
 		set_pmode(arcn->name, arcn->sb.st_mode);
 	if (patime || pmtime)
 		set_ftime(arcn->name, arcn->sb.st_mtime, arcn->sb.st_atime, 0);
+	if (pfflags && arcn->type != PAX_SLK)
+		set_chflags(arcn->name, arcn->sb.st_flags);
 }
 
 /*
@@ -532,6 +535,8 @@ node_creat(arcn)
 
 	if (patime || pmtime)
 		set_ftime(arcn->name, arcn->sb.st_mtime, arcn->sb.st_atime, 0);
+	if (pfflags && arcn->type != PAX_SLK)
+		set_chflags(arcn->name, arcn->sb.st_flags);
 	return(0);
 }
 
@@ -786,6 +791,27 @@ set_pmode(fnm, mode)
 }
 
 /*
+ * set_chflags()
+ *	Set 4.4BSD file flags
+ */
+#if __STDC__
+void
+set_chflags(char *fnm, u_int32_t flags)
+#else
+void
+set_chflags(fnm, flags)
+	char *fnm;
+	u_int32_t flags;
+#endif
+{
+#if 0
+	if (chflags(fnm, flags) < 0)
+		syswarn(1, errno, "Could not set file flags on %s", fnm);
+#endif
+	return;
+}
+
+/*
  * file_write()
  *	Write/copy a file (during copy or archive extract). This routine knows
  *	how to copy files with lseek holes in it. (Which are read as file
@@ -893,7 +919,8 @@ file_write(fd, str, cnt, rem, isempt, sz, name)
 				/*
 				 * skip, buf is empty so far
 				 */
-				if (lseek(fd, (off_t)wcnt, SEEK_CUR) < 0) {
+				if (fd > -1 &&
+				    lseek(fd, (off_t)wcnt, SEEK_CUR) < 0) {
 					syswarn(1,errno,"File seek on %s",
 					    name);
 					return(-1);
@@ -910,7 +937,18 @@ file_write(fd, str, cnt, rem, isempt, sz, name)
 		/*
 		 * have non-zero data in this file system block, have to write
 		 */
-		if (write(fd, st, wcnt) != wcnt) {
+		if (fd == -1) {
+			/* GNU hack */
+			if (gnu_hack_string)
+				err(1, "WARNING! Major Internal Error! GNU hack Failing!");
+			gnu_hack_string = malloc(wcnt + 1);
+			if (gnu_hack_string == NULL) {
+				tty_warn(1, "Out of memory");
+				return(-1);
+			}
+			strncpy(gnu_hack_string, st, wcnt);
+			gnu_hack_string[wcnt] = 0;
+		} else if (write(fd, st, wcnt) != wcnt) {
 			syswarn(1, errno, "Failed write to file %s", name);
 			return(-1);
 		}
@@ -1019,11 +1057,6 @@ set_crc(arcn, fd)
 	unsigned long crc = 0L;
 	char tbuf[FILEBLK];
 	struct stat sb;
-
-#ifdef __GNUC__
-	/* This outrageous construct just to shut up a GCC warning. */
-	(void) &cpcnt;
-#endif
 
 	if (fd < 0) {
 		/*

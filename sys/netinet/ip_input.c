@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.92 1999/07/23 15:21:17 itojun Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.92.2.1 1999/12/27 18:36:16 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -443,11 +443,16 @@ ip_input(struct mbuf *m)
 			m_adj(m, len - m->m_pkthdr.len);
 	}
 
+#ifdef IPSEC
+	/* ipflow (IP fast fowarding) is not compatible with IPsec. */
+	m->m_flags &= ~M_CANFASTFWD;
+#else
 	/*
 	 * Assume that we can create a fast-forward IP flow entry
 	 * based on this packet.
 	 */
 	m->m_flags |= M_CANFASTFWD;
+#endif
 
 #ifdef PFIL_HOOKS
 	/*
@@ -1299,7 +1304,7 @@ ip_forward(m, srcrt)
 		    ntohl(ip->ip_src.s_addr),
 		    ntohl(ip->ip_dst.s_addr), ip->ip_ttl);
 #endif
-	if (m->m_flags & M_BCAST || in_canforward(ip->ip_dst) == 0) {
+	if (m->m_flags & (M_BCAST|M_MCAST) || in_canforward(ip->ip_dst) == 0) {
 		ipstat.ips_cantforward++;
 		m_freem(m);
 		return;

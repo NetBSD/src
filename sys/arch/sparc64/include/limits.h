@@ -1,4 +1,4 @@
-/*	$NetBSD: limits.h,v 1.5 1999/01/31 09:21:19 mrg Exp $ */
+/*	$NetBSD: limits.h,v 1.5.14.1 1999/12/27 18:33:57 wrstuden Exp $ */
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -34,6 +34,9 @@
  *
  *	@(#)limits.h	8.3 (Berkeley) 1/4/94
  */
+
+#ifndef	_MACHINE_LIMITS_H_
+#define	_MACHINE_LIMITS_H_
 
 #define	CHAR_BIT	8		/* number of bits in a char */
 #define	MB_LEN_MAX	1		/* no multibyte characters */
@@ -102,3 +105,5 @@
 #define FLT_MAX		3.40282347E+38F
 #define FLT_MIN		1.17549435E-38F
 #endif
+
+#endif	/* _MACHINE_LIMITS_H_ */

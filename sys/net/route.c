@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.27 1999/08/21 03:46:35 matt Exp $	*/
+/*	$NetBSD: route.c,v 1.27.2.1 1999/12/27 18:36:11 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -427,11 +427,11 @@ rtrequest(req, dst, gateway, netmask, flags, ret_nrt)
 		if (rn->rn_flags & (RNF_ACTIVE | RNF_ROOT))
 			panic ("rtrequest delete");
 		rt = (struct rtentry *)rn;
-		rt->rt_flags &= ~RTF_UP;
 		if (rt->rt_gwroute) {
 			rt = rt->rt_gwroute; RTFREE(rt);
 			(rt = (struct rtentry *)rn)->rt_gwroute = 0;
 		}
+		rt->rt_flags &= ~RTF_UP;
 		if ((ifa = rt->rt_ifa) && ifa->ifa_rtrequest)
 			ifa->ifa_rtrequest(RTM_DELETE, rt, SA(0));
 		rttrash++;
@@ -578,7 +578,7 @@ rt_maskedcopy(src, dst, netmask)
 }
 
 /*
- * Set up a routing table entry, normally
+ * Set up or tear down a routing table entry, normally
  * for an interface.
  */
 int
@@ -587,34 +587,28 @@ rtinit(ifa, cmd, flags)
 	int cmd, flags;
 {
 	register struct rtentry *rt;
-	register struct sockaddr *dst;
-	register struct sockaddr *deldst;
-	struct mbuf *m = 0;
+	register struct sockaddr *dst, *odst;
+	struct sockaddr_storage deldst;
 	struct rtentry *nrt = 0;
 	int error;
 
 	dst = flags & RTF_HOST ? ifa->ifa_dstaddr : ifa->ifa_addr;
 	if (cmd == RTM_DELETE) {
 		if ((flags & RTF_HOST) == 0 && ifa->ifa_netmask) {
-			m = m_get(M_WAIT, MT_SONAME);
-			deldst = mtod(m, struct sockaddr *);
-			rt_maskedcopy(dst, deldst, ifa->ifa_netmask);
-			dst = deldst;
+			/* Delete subnet route for this interface */
+			odst = dst;
+			dst = (struct sockaddr *)&deldst;
+			rt_maskedcopy(odst, dst, ifa->ifa_netmask);
 		}
 		if ((rt = rtalloc1(dst, 0)) != NULL) {
 			rt->rt_refcnt--;
-			if (rt->rt_ifa != ifa) {
-				if (m)
-					(void) m_free(m);
+			if (rt->rt_ifa != ifa)
 				return (flags & RTF_HOST ? EHOSTUNREACH
 							: ENETUNREACH);
-			}
 		}
 	}
 	error = rtrequest(cmd, dst, ifa->ifa_addr, ifa->ifa_netmask,
 			flags | ifa->ifa_flags, &nrt);
-	if (m)
-		(void) m_free(m);
 	if (cmd == RTM_DELETE && error == 0 && (rt = nrt)) {
 		rt_newaddrmsg(cmd, ifa, error, nrt);
 		if (rt->rt_refcnt <= 0) {

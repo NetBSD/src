@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 1999/04/19 21:22:58 kleink Exp $
+#	$NetBSD: Makefile,v 1.5.8.1 1999/12/27 18:31:58 wrstuden Exp $
 
 KDIR=	/sys/arch/hp300/include
 INCSDIR= /usr/include/hp300

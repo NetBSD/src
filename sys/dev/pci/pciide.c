@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.44 1999/09/02 23:23:03 ross Exp $	*/
+/*	$NetBSD: pciide.c,v 1.44.6.1 1999/12/27 18:35:23 wrstuden Exp $	*/
 
 
 /*
@@ -97,6 +97,8 @@ int wdcdebug_pciide_mask = 0;
 #include <sys/device.h>
 #include <sys/malloc.h>
 
+#include <machine/endian.h>
+
 #include <vm/vm.h>
 #include <vm/vm_param.h>
 #include <vm/vm_kern.h>
@@ -113,18 +115,6 @@ int wdcdebug_pciide_mask = 0;
 #include <dev/pci/pciide_sis_reg.h>
 #include <dev/pci/pciide_acer_reg.h>
 #include <dev/pci/pciide_pdc202xx_reg.h>
-#include <dev/ata/atavar.h>
-#include <dev/ic/wdcreg.h>
-#include <dev/ic/wdcvar.h>
-
-#if BYTE_ORDER == BIG_ENDIAN
-#include <machine/bswap.h> 
-#define	htopci(x)	bswap32(x)
-#define	pcitoh(x)	bswap32(x)
-#else 
-#define	htopci(x)	(x)
-#define	pcitoh(x)	(x)
-#endif
 
 /* inlines for reading/writing 8-bit PCI registers */
 static __inline u_int8_t pciide_pci_read __P((pci_chipset_tag_t, pcitag_t,
@@ -157,35 +147,6 @@ pciide_pci_write(pc, pa, reg, val)
 	pcival |= (val << ((reg & 0x03) * 8));
 	pci_conf_write(pc, pa, (reg & ~0x03), pcival);
 }
-
-struct pciide_softc {
-	struct wdc_softc	sc_wdcdev;	/* common wdc definitions */
-	pci_chipset_tag_t	sc_pc;		/* PCI registers info */
-	pcitag_t		sc_tag;
-	void			*sc_pci_ih;	/* PCI interrupt handle */
-	int			sc_dma_ok;	/* bus-master DMA info */
-	bus_space_tag_t		sc_dma_iot;
-	bus_space_handle_t	sc_dma_ioh;
-	bus_dma_tag_t		sc_dmat;
-	/* Chip description */
-	const struct pciide_product_desc *sc_pp;
-	/* common definitions */
-	struct channel_softc *wdc_chanarray[PCIIDE_NUM_CHANNELS];
-	/* internal bookkeeping */
-	struct pciide_channel {			/* per-channel data */
-		struct channel_softc wdc_channel; /* generic part */
-		char		*name;
-		int		hw_ok;		/* hardware mapped & OK? */
-		int		compat;		/* is it compat? */
-		void		*ih;		/* compat or pci handle */
-		/* DMA tables and DMA map for xfer, for each drive */
-		struct pciide_dma_maps {
-			bus_dmamap_t    dmamap_table;
-			struct idedma_table *dma_table;
-			bus_dmamap_t    dmamap_xfer;
-		} dma_maps[2];
-	} pciide_channels[PCIIDE_NUM_CHANNELS];
-};
 
 void default_chip_map __P((struct pciide_softc*, struct pci_attach_args*));
 
@@ -851,17 +812,17 @@ pciide_dma_init(v, channel, drive, databuf, datalen, flags)
 		}
 #endif
 		dma_maps->dma_table[seg].base_addr =
-		    htopci(dma_maps->dmamap_xfer->dm_segs[seg].ds_addr);
+		    htole32(dma_maps->dmamap_xfer->dm_segs[seg].ds_addr);
 		dma_maps->dma_table[seg].byte_count =
-		    htopci(dma_maps->dmamap_xfer->dm_segs[seg].ds_len &
+		    htole32(dma_maps->dmamap_xfer->dm_segs[seg].ds_len &
 		    IDEDMA_BYTE_COUNT_MASK);
 		WDCDEBUG_PRINT(("\t seg %d len %d addr 0x%x\n",
-		   seg, pcitoh(dma_maps->dma_table[seg].byte_count),
-		   pcitoh(dma_maps->dma_table[seg].base_addr)), DEBUG_DMA);
+		   seg, le32toh(dma_maps->dma_table[seg].byte_count),
+		   le32toh(dma_maps->dma_table[seg].base_addr)), DEBUG_DMA);
 
 	}
 	dma_maps->dma_table[dma_maps->dmamap_xfer->dm_nsegs -1].byte_count |=
-	    htopci(IDEDMA_BYTE_COUNT_EOT);
+	    htole32(IDEDMA_BYTE_COUNT_EOT);
 
 	bus_dmamap_sync(sc->sc_dmat, dma_maps->dmamap_table, 0,
 	    dma_maps->dmamap_table->dm_mapsize,
@@ -1300,7 +1261,7 @@ piix_chip_map(sc, pa)
 		    PIIX_IDETIM_IDE) == 0) {
 			printf("%s: %s channel ignored (disabled)\n",
 			    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
-			return;
+			continue;
 		}
 		/* PIIX are compat-only pciide devices */
 		pciide_mapchan(pa, cp, 0, &cmdsize, &ctlsize, pciide_pci_intr);
@@ -1691,7 +1652,7 @@ apollo_chip_map(sc, pa)
 		if ((ideconf & APO_IDECONF_EN(channel)) == 0) {
 			printf("%s: %s channel ignored (disabled)\n",
 			    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
-			return;
+			continue;
 		}
 		pciide_mapchan(pa, cp, interface, &cmdsize, &ctlsize,
 		    pciide_pci_intr);
@@ -1907,7 +1868,7 @@ cmd_chip_map(sc, pa)
 		return;
 #endif
 
-	printf("%s: hardware does not support DMA",
+	printf("%s: hardware does not support DMA\n",
 	    sc->sc_wdcdev.sc_dev.dv_xname);
 	sc->sc_dma_ok = 0;
 
@@ -2210,7 +2171,7 @@ sis_chip_map(sc, pa)
 		    (channel == 1 && (sis_ctr0 & SIS_CTRL0_CHAN1_EN) == 0)) {
 			printf("%s: %s channel ignored (disabled)\n",
 			    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
-			return;
+			continue;
 		}
 		pciide_mapchan(pa, cp, interface, &cmdsize, &ctlsize,
 		    pciide_pci_intr);
@@ -2478,6 +2439,9 @@ acer_pci_intr(arg)
 	return rv;
 }
 
+/* A macro to test product */
+#define PDC_IS_262(sc) (sc->sc_pp->ide_product == PCI_PRODUCT_PROMISE_ULTRA66)
+
 void
 pdc202xx_chip_map(sc, pa)
         struct pciide_softc *sc;
@@ -2515,7 +2479,7 @@ pdc202xx_chip_map(sc, pa)
 		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA | WDC_CAPABILITY_UDMA;
 	sc->sc_wdcdev.PIO_cap = 4;
 	sc->sc_wdcdev.DMA_cap = 2;
-	if (sc->sc_pp->ide_product == PCI_PRODUCT_PROMISE_ULTRA66) 
+	if (PDC_IS_262(sc))
 		sc->sc_wdcdev.UDMA_cap = 4;
 	else
 		sc->sc_wdcdev.UDMA_cap = 2;
@@ -2546,7 +2510,12 @@ pdc202xx_chip_map(sc, pa)
 	}
 
 	mode = PDC2xx_SCR_DMA;
-	mode = PDC2xx_SCR_SET_GEN(mode, 0x1); /* the BIOS set it up this way */
+	if (PDC_IS_262(sc)) {
+		mode = PDC2xx_SCR_SET_GEN(mode, PDC262_SCR_GEN_LAT);
+	} else {
+		/* the BIOS set it up this way */
+		mode = PDC2xx_SCR_SET_GEN(mode, 0x1);
+	}
 	mode = PDC2xx_SCR_SET_I2C(mode, 0x3); /* ditto */
 	mode = PDC2xx_SCR_SET_POLL(mode, 0x1); /* ditto */
 	WDCDEBUG_PRINT(("pdc202xx_setup_chip: initial SCR  0x%x, now 0x%x\n",
@@ -2555,7 +2524,7 @@ pdc202xx_chip_map(sc, pa)
 	bus_space_write_4(sc->sc_dma_iot, sc->sc_dma_ioh, PDC2xx_SCR, mode);
 
 	/* controller initial state register is OK even without BIOS */
-	/* The Linux driver does this */
+	/* Set DMA mode to IDE DMA compatibility */
 	mode = bus_space_read_1(sc->sc_dma_iot, sc->sc_dma_ioh, PDC2xx_PM);
 	WDCDEBUG_PRINT(("pdc202xx_setup_chip: primary mode 0x%x", mode ),
 	    DEBUG_PROBE);
@@ -2570,7 +2539,8 @@ pdc202xx_chip_map(sc, pa)
 		cp = &sc->pciide_channels[channel];
 		if (pciide_chansetup(sc, channel, interface) == 0)
 			continue;
-		if ((st & PDC2xx_STATE_EN(channel)) == 0) {
+		if ((st & (PDC_IS_262(sc) ?
+		    PDC262_STATE_EN(channel):PDC246_STATE_EN(channel))) == 0) {
 			printf("%s: %s channel ignored (disabled)\n",
 			    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
 			continue;
@@ -2580,7 +2550,8 @@ pdc202xx_chip_map(sc, pa)
 		if (cp->hw_ok == 0)
 			continue;
 		if (pciiide_chan_candisable(cp))
-			st &= ~PDC2xx_STATE_EN(channel);
+			st &= ~(PDC_IS_262(sc) ?
+			    PDC262_STATE_EN(channel):PDC246_STATE_EN(channel));
 		pciide_map_compat_intr(pa, cp, channel, interface);
 		pdc202xx_setup_channel(&cp->wdc_channel);
 	}
@@ -2596,23 +2567,64 @@ pdc202xx_setup_channel(chp)
 {
         struct ata_drive_datas *drvp;
 	int drive;
-	pcireg_t mode;
-	u_int32_t idedma_ctl;
+	pcireg_t mode, st;
+	u_int32_t idedma_ctl, scr, atapi;
 	struct pciide_channel *cp = (struct pciide_channel*)chp;
 	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.wdc;
+	int channel = chp->channel;
 
 	/* setup DMA if needed */
 	pciide_channel_dma_setup(cp);
 
 	idedma_ctl = 0;
+
+	/* Per channel settings */
+	if (PDC_IS_262(sc)) {
+		scr = bus_space_read_1(sc->sc_dma_iot, sc->sc_dma_ioh,
+		    PDC262_U66);
+		st = pci_conf_read(sc->sc_pc, sc->sc_tag, PDC2xx_STATE);
+		/* Trimm UDMA mode */
+		if ((st & PDC262_STATE_80P(channel)) == 0 ||
+		    (chp->ch_drive[0].drive_flags & DRIVE_UDMA &&
+		    chp->ch_drive[0].UDMA_mode <= 2) ||
+		    (chp->ch_drive[1].drive_flags & DRIVE_UDMA &&
+		    chp->ch_drive[1].UDMA_mode <= 2)) {
+			if (chp->ch_drive[0].UDMA_mode > 2)
+				chp->ch_drive[0].UDMA_mode = 2;
+			if (chp->ch_drive[1].UDMA_mode > 2)
+				chp->ch_drive[1].UDMA_mode = 2;
+		}
+		/* Set U66 if needed */
+		if ((chp->ch_drive[0].drive_flags & DRIVE_UDMA &&
+		    chp->ch_drive[0].UDMA_mode > 2) ||
+		    (chp->ch_drive[1].drive_flags & DRIVE_UDMA &&
+		    chp->ch_drive[1].UDMA_mode > 2))
+			scr |= PDC262_U66_EN(channel);
+		else
+			scr &= ~PDC262_U66_EN(channel);
+		bus_space_write_1(sc->sc_dma_iot, sc->sc_dma_ioh,
+		    PDC262_U66, scr);
+		if (chp->ch_drive[0].drive_flags & DRIVE_ATAPI ||
+			chp->ch_drive[1].drive_flags & DRIVE_ATAPI) {
+			if (((chp->ch_drive[0].drive_flags & DRIVE_UDMA) &&
+			    !(chp->ch_drive[1].drive_flags & DRIVE_UDMA) &&
+			    (chp->ch_drive[1].drive_flags & DRIVE_DMA)) ||
+			    ((chp->ch_drive[1].drive_flags & DRIVE_UDMA) &&
+			    !(chp->ch_drive[0].drive_flags & DRIVE_UDMA) &&
+			    (chp->ch_drive[0].drive_flags & DRIVE_DMA)))
+				atapi = 0;
+			else
+				atapi = PDC262_ATAPI_UDMA;
+			bus_space_write_4(sc->sc_dma_iot, sc->sc_dma_ioh,
+			    PDC262_ATAPI(channel), atapi);
+		}
+	}
 	for (drive = 0; drive < 2; drive++) {
 		drvp = &chp->ch_drive[drive];
 		/* If no drive, skip */
 		if ((drvp->drive_flags & DRIVE) == 0)
 			continue;
-		mode = PDC2xx_TIM_IORDY;
-		if (drvp->drive_flags & DRIVE_ATA)
-			mode |= PDC2xx_TIM_PRE;
+		mode = 0;
 		if (drvp->drive_flags & DRIVE_UDMA) {
 			mode = PDC2xx_TIM_SET_MB(mode,
 			    pdc2xx_udma_mb[drvp->UDMA_mode]);
@@ -2634,11 +2646,14 @@ pdc202xx_setup_channel(chp)
 		}
 		mode = PDC2xx_TIM_SET_PA(mode, pdc2xx_pa[drvp->PIO_mode]);
 		mode = PDC2xx_TIM_SET_PB(mode, pdc2xx_pb[drvp->PIO_mode]);
-		mode |= PDC2xx_TIM_SYNC;
-		if (drvp->PIO_mode >= 3 &&(drvp->drive_flags & DRIVE_ATA))
-			mode |= PDC2xx_TIM_ERRDY;
-		if (drive == 0)
-			mode |= PDC2xx_TIM_IORDYp;
+		if (drvp->drive_flags & DRIVE_ATA)
+			mode |= PDC2xx_TIM_PRE;
+		mode |= PDC2xx_TIM_SYNC | PDC2xx_TIM_ERRDY;
+		if (drvp->PIO_mode >= 3) {
+			mode |= PDC2xx_TIM_IORDY;
+			if (drive == 0)
+				mode |= PDC2xx_TIM_IORDYp;
+		}
 		WDCDEBUG_PRINT(("pdc202xx_setup_channel: %s:%d:%d "
 		    "timings 0x%x\n",
 		    sc->sc_wdcdev.sc_dev.dv_xname, 

@@ -1,4 +1,4 @@
-/*	$NetBSD: si_sebuf.c,v 1.8 1999/04/09 04:26:27 gwr Exp $	*/
+/*	$NetBSD: si_sebuf.c,v 1.8.12.1 1999/12/27 18:34:04 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -661,7 +661,7 @@ found:
 	dh->dh_flags = SIDH_BUSY;
 
 	/* Copy the "write" flag for convenience. */
-	if (xs->flags & SCSI_DATA_OUT)
+	if (xs->xs_control & XS_CTL_DATA_OUT)
 		dh->dh_flags |= SIDH_OUT;
 
 	dh->dh_addr = (u_char*) addr;

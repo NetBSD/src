@@ -1,4 +1,4 @@
-/*	$NetBSD: sbc.c,v 1.39 1999/09/17 20:04:34 thorpej Exp $	*/
+/*	$NetBSD: sbc.c,v 1.39.6.1 1999/12/27 18:32:35 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 1996 Scott Reynolds.  All rights reserved.
@@ -652,7 +652,7 @@ found:
 	dh->dh_len = xlen;
 
 	/* Copy the 'write' flag for convenience. */
-	if (xs->flags & SCSI_DATA_OUT)
+	if (xs->xs_control & XS_CTL_DATA_OUT)
 		dh->dh_flags |= SBC_DH_OUT;
 
 	sr->sr_dma_hand = dh;

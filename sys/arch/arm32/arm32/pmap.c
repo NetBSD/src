@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.64 1999/09/12 01:17:01 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.64.8.1 1999/12/27 18:31:39 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -659,7 +659,7 @@ pmap_map(va, spa, epa, prot)
 	int prot;
 {
 	while (spa < epa) {
-		pmap_enter(pmap_kernel(), va, spa, prot, FALSE, 0);
+		pmap_enter(pmap_kernel(), va, spa, prot, 0);
 		va += NBPG;
 		spa += NBPG;
 	}
@@ -999,7 +999,7 @@ pmap_alloc_l1pt(void)
 		pa = VM_PAGE_TO_PHYS(m);
 
 		pmap_enter(pmap_kernel(), va, pa,
-		    VM_PROT_READ | VM_PROT_WRITE, TRUE, 0);
+		    VM_PROT_READ | VM_PROT_WRITE, PMAP_WIRED);
 
 		/* Revoke cacheability and bufferability */
 		/* XXX should be done better than this */
@@ -1171,7 +1171,7 @@ pmap_pinit(pmap)
 
 	/* Map zero page for the pmap. This will also map the L2 for it */
 	pmap_enter(pmap, 0x00000000, systempage.pv_pa,
-	    VM_PROT_READ, TRUE, VM_PROT_READ);
+	    VM_PROT_READ, VM_PROT_READ | PMAP_WIRED);
 }
 
 
@@ -1973,7 +1973,7 @@ next:
 
 /*
  * void pmap_enter(pmap_t pmap, vm_offset_t va, vm_offset_t pa, vm_prot_t prot,
- * boolean_t wired)
+ * int flags)
  *  
  *      Insert the given physical page (p) at
  *      the specified virtual address (v) in the
@@ -1987,28 +1987,28 @@ next:
  *      insert this page into the given map NOW.
  */
 
-void
-pmap_enter(pmap, va, pa, prot, wired, access_type)
+int
+pmap_enter(pmap, va, pa, prot, flags)
 	pmap_t pmap;
 	vm_offset_t va;
 	vm_offset_t pa;
 	vm_prot_t prot;
-	boolean_t wired;
-	vm_prot_t access_type;
+	int flags;
 {
 	pt_entry_t *pte;
 	u_int npte;
 	int bank, off;
 	struct pv_entry *pv = NULL;
 	vm_offset_t opa;
-	int flags;
+	int nflags;
+	boolean_t wired = (flags & PMAP_WIRED) != 0;
 
 	PDEBUG(5, printf("pmap_enter: V%08lx P%08lx in pmap %p prot=%08x, wired = %d\n",
 	    va, pa, pmap, prot, wired));
 
 	/* Valid pmap ? */
 	if (pmap == NULL)
-		return;
+		return (KERN_SUCCESS);
 
 #ifdef DIAGNOSTIC
 	/* Valid address ? */
@@ -2074,11 +2074,11 @@ pmap_enter(pmap, va, pa, prot, wired, access_type)
 #endif
 	}
 
-	flags = 0;
+	nflags = 0;
 	if (prot & VM_PROT_WRITE)
-		flags |= PT_Wr;
+		nflags |= PT_Wr;
 	if (wired)
-		flags |= PT_W;
+		nflags |= PT_W;
 
 	/* More debugging info */
 	PDEBUG(5, printf("pmap_enter: pte for V%08lx = V%p (%08x)\n", va, pte,
@@ -2103,7 +2103,7 @@ pmap_enter(pmap, va, pa, prot, wired, access_type)
 			if ((bank = vm_physseg_find(atop(pa), &off)) != -1) {
 				pv = &vm_physmem[bank].pmseg.pvent[off];
 				(void) pmap_modify_pv(pmap, va, pv,
-				    PT_Wr | PT_W, flags);
+				    PT_Wr | PT_W, nflags);
  			}
 		} else {
 			/* We are replacing the page with a new one. */
@@ -2136,7 +2136,7 @@ pmap_enter(pmap, va, pa, prot, wired, access_type)
 		 */
 		if ((bank = vm_physseg_find(atop(pa), &off)) != -1) {
 			pv = &vm_physmem[bank].pmseg.pvent[off];
-			pmap_enter_pv(pmap, va, pv, flags);
+			pmap_enter_pv(pmap, va, pv, nflags);
 		}
 	}
 
@@ -2154,14 +2154,14 @@ pmap_enter(pmap, va, pa, prot, wired, access_type)
 
 	if (bank != -1) {
 #ifdef DIAGNOSTIC
-		if (access_type & ~prot)
+		if ((flags & VM_PROT_ALL) & ~prot)
 			panic("pmap_enter: access_type exceeds prot");
 #endif
 		npte |= PT_C | PT_B;
-		if (access_type & VM_PROT_WRITE) {
+		if (flags & VM_PROT_WRITE) {
 			npte |= L2_SPAGE | PT_AP(AP_W);
 			vm_physmem[bank].pmseg.attrs[off] |= PT_H | PT_M;
-		} else if (access_type & VM_PROT_ALL) {
+		} else if (flags & VM_PROT_ALL) {
 			npte |= L2_SPAGE;
 			vm_physmem[bank].pmseg.attrs[off] |= PT_H;
 		} else
@@ -2177,7 +2177,7 @@ pmap_enter(pmap, va, pa, prot, wired, access_type)
 
 #ifdef MYCROFT_HACK
 	if (mycroft_hack)
-		printf("pmap_enter: pmap=%p va=%lx pa=%lx prot=%x wired=%d access_type=%x npte=%08x\n", pmap, va, pa, prot, wired, access_type, npte);
+		printf("pmap_enter: pmap=%p va=%lx pa=%lx prot=%x wired=%d access_type=%x npte=%08x\n", pmap, va, pa, prot, wired, flags & VM_PROT_ALL, npte);
 #endif
 
 	*pte = npte;
@@ -2189,6 +2189,8 @@ pmap_enter(pmap, va, pa, prot, wired, access_type)
 	cpu_tlb_flushID_SE(va);
 
 	PDEBUG(5, printf("pmap_enter: pte = V%p %08x\n", pte, *pte));
+
+	return (KERN_SUCCESS);
 }
 
 void
@@ -2197,7 +2199,7 @@ pmap_kenter_pa(va, pa, prot)
 	paddr_t pa;
 	vm_prot_t prot;
 {
-	pmap_enter(pmap_kernel(), va, pa, prot, TRUE, 0);
+	pmap_enter(pmap_kernel(), va, pa, prot, PMAP_WIRED);
 }
 
 void
@@ -2210,7 +2212,7 @@ pmap_kenter_pgs(va, pgs, npgs)
 
 	for (i = 0; i < npgs; i++, va += PAGE_SIZE) {
 		pmap_enter(pmap_kernel(), va, VM_PAGE_TO_PHYS(pgs[i]),
-				VM_PROT_READ|VM_PROT_WRITE, TRUE, 0);
+				VM_PROT_READ|VM_PROT_WRITE, PMAP_WIRED);
 	}
 }
 

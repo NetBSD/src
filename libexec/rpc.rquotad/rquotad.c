@@ -1,4 +1,4 @@
-/*	$NetBSD: rquotad.c,v 1.13 1999/01/31 08:51:53 mrg Exp $	*/
+/*	$NetBSD: rquotad.c,v 1.13.6.1 1999/12/27 18:30:17 wrstuden Exp $	*/
 
 /*
  * by Manuel Bouyer (bouyer@ensta.fr)
@@ -8,7 +8,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rquotad.c,v 1.13 1999/01/31 08:51:53 mrg Exp $");
+__RCSID("$NetBSD: rquotad.c,v 1.13.6.1 1999/12/27 18:30:17 wrstuden Exp $");
 #endif
 
 #include <sys/param.h>
@@ -30,7 +30,6 @@ __RCSID("$NetBSD: rquotad.c,v 1.13 1999/01/31 08:51:53 mrg Exp $");
 #include <unistd.h>
 
 #include <syslog.h>
-#include <varargs.h>
 
 #include <ufs/ufs/quota.h>
 #include <rpc/rpc.h>

@@ -1,4 +1,4 @@
-.\" $NetBSD: ym.4,v 1.4 1999/04/13 20:25:29 augustss Exp $
+.\" $NetBSD: ym.4,v 1.4.4.1 1999/12/27 18:30:48 wrstuden Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -39,19 +39,156 @@
 .Os
 .Sh NAME
 .Nm ym
-.Nd Yamaha OPL3-SA3 sound driver
+.Nd Yamaha OPL3-SA3 audio device driver
 .Sh SYNOPSIS
-.Cd "ym* at isapnp?"
+.Cd "ym*    at isapnp?"
+.Cd "ym*    at pnpbios? index ?"
 .Cd "audio* at ym?"
+.Cd "mpu*   at ym?"
+.Cd "opl*   at ym?"
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for Yamaha OPL3-SA3 sound devices.
+driver provides support for Yamaha YMF715x (OPL3-SA3) sound devices.
+.Pp
+The OPL3-SA3 device has
+WSS compatible full-duplex 16bit CODEC,
+OPL3 FM synthesizer,
+MPU401 compatible MIDI I/O port interface,
+and built-in
+.Sq 3D Enhanced
+equalizer.
+.Pp
+The joystick interface is handled by the
+.Xr joy 4
+driver.
+.Sh MIXER DEVICE
+The mixer device of
+.Nm
+driver can be accessed by
+.Xr mixerctl 1
+command.
+The layout is shown below.
+.Bd -literal
+            dac ------------------------<-----  -----------------
+midi(OPL3/ZV)->-+----------------------------+->|inputs.midi    |
+cd      ->------+-*--------------------------+->|inputs.cd      |
+line    ->----*-+-+--------------------------+->|inputs.line    |
+speaker ->----+-+-+--------------------------+->|inputs.speaker |
+  inputs.mic  v v v      monitor.monitor     |  |               |
+     |  ---------------  -------  |  ------- |  |               |
+mic --->|record.record|->| A/D |---->| D/A |-*->|inputs.dac     |analog
+        |             |  |conv.|-- ->|conv.|    |               |output
+        ---------------  ------- | | -------    | outputs.master|-->
+                           wave  v | wave       | equalization.*|
+                         recording playback     -----------------
+.Ed
+.Pp
+Note that the
+.Sq Dv inputs.dac
+is twice as sensitive as other
+.Sq Dv inputs
+volume variables.
+.Pp
+The hardware volume changes the
+.Sq Dv outputs.master
+value.
+.Pp
+If the device is in global power down or power save mode,
+the output is automatically muted
+and none of the input source can be heard.
+To hear the external inputs while the parts are unused, use the
+.Sq Dv nosave
+mode of the driver.
+See
+.Sx POWER MANAGEMENT
+section below for the details of power management.
+.Sh POWER MANAGEMENT
+The
+.Nm
+driver is capable of power management on the OPL3-SA3 devices.
+The following modes can be selected by setting
+.Sq Dv power.power
+variable of
+.Xr mixerctl 1
+to
+.Sq Dv powerdown ,
+.Sq Dv powersave ,
+and
+.Sq Dv nosave
+respectively.
+.Pp
+.Bl -tag -width indent -compact
+.It Global power-down mode
+When a subpart of the device is unused, the part is power-down after
+a timeout period (specified by
+.Sq Dv power.power.timeout
+variable of
+.Xr mixerctl 1
+in seconds).
+When all the subpart of the devices are unused,
+the driver puts the device in
+.Sq Global Power Down
+mode.
+.Pp
+On the global power down mode, the power consumption is minimized
+(10\(*mA typ.),
+.\" Note: \(*m is Greek mu
+but the click noise on power up/down the device is rather loud.
+.Bf Em
+This mode should not be used with headphones or hi\-fi audio systems,
+or your ears or the systems may be damaged.
+.Ef
+.It Power save mode
+When a subpart of the device is unused, the part is powered-down after
+a timeout period (specified by
+.Sq Dv power.power.timeout
+variable of
+.Xr mixerctl 1
+in seconds).
+When all the subparts of the device are unused,
+the driver put the device in
+.Sq Power Save
+mode.
+.Pp
+In power save mode, the power consumption is reduced (5mA typ.).
+The click noise on power up/down of the device is very small,
+but this operation requires muting/unmuting the device, which make some noise.
+In order to reduce the noise, setting the master volume at the small value
+is effective.
+.It "No power-save mode"
+Once the device is powered-up, it remains on after the use of the device.
+Once a subpart of the device is powered-up, it shall not be power-down.
+This mode minimizes click noises on power switching,
+but maximizes power consumption (30-100mA).
+.Pp
+On suspending, the device is put into power-save state.
+.El
 .Sh BUGS
-The MIDI port is not supported.
+Although the parameters of the device are saved and restored on
+.Xr apm 4
+suspend/resume, the DMA state is not restored.
+That is, if the system suspends during playback,
+this is not continued after suspend/resume cycle.
+.Pp
+The joystick port is not under power management.
+If a
+.Xr joy 4
+device is configured,
+the device will never be put in global power down or power save mode.
+.Pp
+The external devices, such as Zoomed Video port, OPL4-ML/2, modem, and CD-ROM
+are not supported.
 .Sh SEE ALSO
+.Xr mixerctl 1 ,
 .Xr audio 4 ,
-.Xr isapnp 4 .
+.Xr apm 4 ,
+.Xr isapnp 4 ,
+.Xr joy 4 ,
+.Xr midi 4 ,
+.Xr mpu 4 ,
+.Xr opl 4 ,
+.Xr pnpbios 4
 .Sh HISTORY
 The
 .Nm

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ex_pci.c,v 1.8 1999/09/01 20:26:43 fvdl Exp $	*/
+/*	$NetBSD: if_ex_pci.c,v 1.8.8.1 1999/12/27 18:35:17 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -131,6 +131,8 @@ const struct ex_pci_product {
 	  "3c905B-TX 10/100 Ethernet" },
 	{ PCI_PRODUCT_3COM_3C905BT4,	EX_CONF_90XB|EX_CONF_MII,
 	  "3c905B-T4 10/100 Ethernet" },
+	{ PCI_PRODUCT_3COM_3C905BCOMBO,	EX_CONF_90XB/*|EX_CONF_MII|EX_CONF_INTPHY*/,
+	  "3c905B-COMBO 10/100 Ethernet" },
 	{ PCI_PRODUCT_3COM_3C905BFX,	EX_CONF_90XB,
 	  "3c905B-FX 10/100 Ethernet" },
 
@@ -187,7 +189,7 @@ ex_pci_attach(parent, self, aux)
 	pci_intr_handle_t ih;
 	const struct ex_pci_product *epp;
 	const char *intrstr = NULL;
-	int pmode;
+	int rev, pmode;
 
 	if (pci_mapreg_map(pa, PCI_CBIO, PCI_MAPREG_TYPE_IO, 0,
 	    &sc->sc_iot, &sc->sc_ioh, NULL, NULL)) {
@@ -201,7 +203,8 @@ ex_pci_attach(parent, self, aux)
 		panic("ex_pci_attach: impossible");
 	}
 
-	printf(": 3Com %s\n", epp->epp_name);
+	rev = PCI_REVISION(pci_conf_read(pc, pa->pa_tag, PCI_CLASS_REG));
+	printf(": 3Com %s (rev. 0x%x)\n", epp->epp_name, rev);
 
 	sc->enable = NULL;
 	sc->disable = NULL;

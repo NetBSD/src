@@ -1,4 +1,4 @@
-/*	$NetBSD: res_data.c,v 1.2 1999/11/20 19:16:55 veego Exp $	*/
+/*	$NetBSD: res_data.c,v 1.2.4.1 1999/12/27 18:27:48 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1995-1999 by Internet Software Consortium.

@@ -1,4 +1,4 @@
-/*	$NetBSD: fms.c,v 1.3 1999/11/02 17:48:01 augustss Exp $	*/
+/*	$NetBSD: fms.c,v 1.3.6.1 1999/12/27 18:35:16 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.

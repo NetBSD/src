@@ -1,4 +1,4 @@
-/*	$NetBSD: vr.h,v 1.1.1.1 1999/09/16 12:23:32 takemura Exp $	*/
+/*	$NetBSD: vr.h,v 1.1.1.1.8.1 1999/12/27 18:32:15 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -41,3 +41,10 @@ void vr_intr_disestablish __P((void *));
 #define VR_INTR1	1
 #define VR_INTR2	2
 #define VR_INTR3	3
+
+/*
+ *  special instructions, which are not supported by assembler.
+ */
+#define VR_OPCODE_STANDBY	0x42000021
+#define VR_OPCODE_SUSPEND	0x42000022
+#define VR_OPCODE_HIBERNATE	0x42000023

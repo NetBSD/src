@@ -1,5 +1,5 @@
 #
-#	$NetBSD: mr.profile,v 1.3 1996/10/09 00:13:36 jtc Exp $
+#	$NetBSD: mr.profile,v 1.3.8.1 1999/12/27 18:28:42 wrstuden Exp $
 #
 # Copyright (c) 1995 Jason R. Thorpe
 # Copyright (c) 1994 Christopher G. Demetriou
@@ -41,9 +41,6 @@ umask 022
 # set up some sane defaults
 echo intr '^C' kill '^U' erase '^?' werase '^W' newcrt
 stty intr '^C' kill '^U' erase '^?' werase '^W' newcrt
-
-# run update, so that installed software is written as it goes.
-update
 
 # get the terminal type?
 # (nah, ansi is good enough)

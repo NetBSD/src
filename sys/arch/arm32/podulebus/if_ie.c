@@ -1,4 +1,4 @@
-/* $NetBSD: if_ie.c,v 1.25 1999/09/13 20:17:35 tron Exp $ */
+/* $NetBSD: if_ie.c,v 1.25.8.1 1999/12/27 18:31:45 wrstuden Exp $ */
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson.
@@ -1327,6 +1327,8 @@ ie_read_frame(sc, num)
 	return;
     }
 
+    ifp->if_ipackets++;
+
 #if NBPFILTER > 0
     if ( ifp->if_bpf ) {
 	bpf_mtap(ifp->if_bpf, m );
@@ -1334,7 +1336,6 @@ ie_read_frame(sc, num)
 #endif
 
     (*ifp->if_input)(ifp, m);
-    ifp->if_ipackets++;
 }
 
 void

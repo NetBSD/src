@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4280_image.h,v 1.1 1999/12/13 20:19:24 augustss Exp $	*/
+/*	$NetBSD: cs4280_image.h,v 1.1.2.1 1999/12/27 18:35:14 wrstuden Exp $	*/
 
 /* This source is based on cwcimage.h in cwcealdr1.zip, the
  * sample source by Crystal Semiconductor.

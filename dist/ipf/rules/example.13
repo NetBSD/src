@@ -1,4 +1,4 @@
-#	$NetBSD: example.13,v 1.1.1.1 1999/12/11 22:24:11 veego Exp $
+#	$NetBSD: example.13,v 1.1.1.1.4.1 1999/12/27 18:28:05 wrstuden Exp $
 #
 # Log all short TCP packets to qe3, with 10.3.3.3 as the intended
 # destination for the packet.

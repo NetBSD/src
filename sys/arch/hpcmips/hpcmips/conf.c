@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.1.1.1 1999/09/16 12:23:20 takemura Exp $	*/
+/*	$NetBSD: conf.c,v 1.1.1.1.8.1 1999/12/27 18:32:04 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -106,7 +106,7 @@ cdev_decl(pts);
 #define ptcioctl ptyioctl
 cdev_decl(ptc);
 cdev_decl(log);
-
+#include "biconsdev.h"
 cdev_decl(biconsdev);
 
 cdev_decl(fd);
@@ -127,6 +127,8 @@ cdev_decl(ipl);
 
 #include "com.h"
 cdev_decl(com);
+#include "tx39uart.h"
+cdev_decl(txcom);
 #if notyet
 #include "lpt.h"
 cdev_decl(lpt);
@@ -212,7 +214,16 @@ struct cdevsw	cdevsw[] =
 	cdev_mouse_init(NWSMOUSE,
 	    wsmouse),			/* 32: mice */
 	cdev_rnd_init(NRND,rnd),	/* 33: random source pseudo-device */
+#if NBICONSDEV > 0
 	cdev_tty_init(1,biconsdev),	/* 34: bicons pseudo-dev */	
+#else 
+	cdev_notdef(),
+#endif
+#if NTX39UART > 0
+	cdev_tty_init(NTX39UART,txcom),	/* 35: TX39 internal UART */
+#else
+	cdev_notdef(),
+#endif
 };
 
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
@@ -277,6 +288,7 @@ static int chrtoblktbl[] =  {
 	/* 32 */	NODEV,
 	/* 33 */	NODEV,
 	/* 34 */	NODEV,
+	/* 35 */	NODEV,
 };
 
 /*

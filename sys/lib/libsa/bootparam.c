@@ -1,4 +1,4 @@
-/*	$NetBSD: bootparam.c,v 1.11 1997/06/26 19:11:32 drochner Exp $	*/
+/*	$NetBSD: bootparam.c,v 1.11.28.1 1999/12/27 18:36:00 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross

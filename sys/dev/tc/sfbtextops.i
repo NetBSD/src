@@ -1,4 +1,4 @@
-/* $NetBSD: sfbtextops.i,v 1.1 1999/12/03 09:50:54 nisimura Exp $ */
+/* $NetBSD: sfbtextops.i,v 1.1.2.1 1999/12/27 18:35:39 wrstuden Exp $ */
 
 /*
  * Copyright (c) 1999 Tohru Nishimura.  All rights reserved.

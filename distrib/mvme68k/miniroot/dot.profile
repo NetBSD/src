@@ -1,4 +1,4 @@
-#	$NetBSD: dot.profile,v 1.3 1999/06/26 06:12:58 cgd Exp $
+#	$NetBSD: dot.profile,v 1.3.4.1 1999/12/27 18:28:25 wrstuden Exp $
 #
 # Copyright (c) 1995 Jason R. Thorpe
 # Copyright (c) 1994 Christopher G. Demetriou
@@ -46,9 +46,6 @@ if [ "X${DONEPROFILE}" = "X" ]; then
 	# set up some sane defaults
 	echo 'erase ^H, werase ^W, kill ^U, intr ^C'
 	stty newcrt werase ^W intr ^C kill ^U erase ^H 9600
-
-	# run update, so that installed software is written as it goes.
-	update
 
 	# get the terminal type
 	_forceloop=""

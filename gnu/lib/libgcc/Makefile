@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 1999/02/24 17:18:26 drochner Exp $
+#	$NetBSD: Makefile,v 1.8.4.1 1999/12/27 18:29:14 wrstuden Exp $
 
 HAVE_GCC28!=	${CXX} --version | egrep "^(2\.8|egcs)" ; echo
 
@@ -17,6 +17,10 @@ ARCHSUBDIR= ${MACHINE_ARCH}
 
 CPPFLAGS+=	-I${ARCH}/${ARCHSUBDIR} -I${ARCH} \
 		-I${DIST}/config -I${DIST}/cp -I${DIST}
+
+.if (${MACHINE} == "hpcmips") # XXX
+CPPFLAGS+=-D${MACHINE}
+.endif
 
 LIB2OBJS=	__gcc_bcmp.o _varargs.o __dummy.o _eprintf.o _bb.o _shtab.o \
 		_clear_cache.o _trampoline.o __main.o _exit.o _ctors.o \

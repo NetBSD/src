@@ -1,4 +1,4 @@
-/*	$NetBSD: dptreg.h,v 1.3 1999/10/01 12:08:51 ad Exp $	*/
+/*	$NetBSD: dptreg.h,v 1.3.6.1 1999/12/27 18:34:45 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1999 Andy Doran <ad@NetBSD.org>
@@ -39,39 +39,24 @@
 #define	DPT_MAX_XFER		((DPT_SG_SIZE - 1) << PGSHIFT)
 #define DPT_MAX_CCBS		256
 #define DPT_SG_SIZE        	64
-#define DPT_ABORT_TIMEOUT	2000
+#define DPT_ABORT_TIMEOUT	2000	/* milliseconds */
+#define DPT_MORE_TIMEOUT	1000	/* microseconds */
 
 #ifdef _KERNEL
 
-#if BYTE_ORDER == LITTLE_ENDIAN
-#define SWAP32(x)	bswap32((x))
-#define SWAP16(x)	bswap16((x))
-#define RSWAP32(x)	(x)
-#define RSWAP16(x)	(x)
-#else
-#define SWAP32(x)	(x)
-#define SWAP16(x)	(x)
-#define RSWAP32(x)	bswap32((x))
-#define RSWAP16(x)	bswap16((x))
-#endif
-
 #define dpt_inb(x, o)	\
     bus_space_read_1((x)->sc_iot, (x)->sc_ioh, (o))
-
 #define dpt_inw(x, o)	\
-    RSWAP16(bus_space_read_2((x)->sc_iot, (x)->sc_ioh, (o)))
-
+    le16toh(bus_space_read_2((x)->sc_iot, (x)->sc_ioh, (o)))
 #define dpt_inl(x, o)	\
-    RSWAP32(bus_space_read_4((x)->sc_iot, (x)->sc_ioh, (o)))
+    le32toh(bus_space_read_4((x)->sc_iot, (x)->sc_ioh, (o)))
 
 #define dpt_outb(x, o, d) \
     bus_space_write_1((x)->sc_iot, (x)->sc_ioh, (o), (d))
-
 #define dpt_outw(x, o, d) \
-    bus_space_write_2((x)->sc_iot, (x)->sc_ioh, (o), RSWAP16(d))
-
+    bus_space_write_2((x)->sc_iot, (x)->sc_ioh, (o), htole16(d))
 #define dpt_outl(x, o, d) \
-    bus_space_write_4((x)->sc_iot, (x)->sc_ioh, (o), RSWAP32(d))
+    bus_space_write_4((x)->sc_iot, (x)->sc_ioh, (o), htole32(d))
 
 #endif	/* _KERNEL */
  
@@ -86,7 +71,7 @@
 #define HA_ICMD_CODE1	       	(HA_BASE + 5)
 #define HA_ICMD			(HA_BASE + 6)
 
-/* EATA commands. There are many more the we don't define or use. */
+/* EATA commands. There are many more that we don't define or use. */
 #define HA_COMMAND		(HA_BASE + 7)
 #define   CP_PIO_GETCFG		0xf0	/* Read configuration data, PIO */
 #define   CP_PIO_CMD		0xf2	/* Execute command, PIO */
@@ -181,8 +166,7 @@ struct eata_cp {
  * contains status, message info and a handle on the initiating CCB. 
  */
 struct eata_sp {
-	u_int8_t	sp_hba_status : 7;	/* host adapter status */
-	u_int8_t	sp_eoc : 1;		/* end of command (unsafe) */
+	u_int8_t	sp_hba_status;		/* host adapter status */
 	u_int8_t	sp_scsi_status;		/* SCSI bus status */
 	u_int8_t	sp_reserved[2];		/* reserved */
 	u_int32_t	sp_inv_residue;		/* bytes not transfered */
@@ -193,7 +177,9 @@ struct eata_sp {
 	u_int8_t	sp_messages[9];
 };
 
-/* HBA status as returned by status packet */
+/* 
+ * HBA status as returned by status packet. Bit 7 signals end of command. 
+ */
 #define HA_NO_ERROR             0x00    /* No error on command */
 #define HA_ERROR_SEL_TO         0x01    /* Device selection timeout */
 #define HA_ERROR_CMD_TO         0x02    /* Device command timeout */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci_cardbus.c,v 1.2 1999/10/27 10:04:41 haya Exp $	*/
+/*	$NetBSD: ohci_cardbus.c,v 1.2.4.1 1999/12/27 18:34:40 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.

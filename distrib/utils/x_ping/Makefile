@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 1999/10/18 20:19:39 pk Exp $
+# $NetBSD: Makefile,v 1.1.4.1 1999/12/27 18:28:45 wrstuden Exp $
 # Build ping without IPSEC
 
 SRCDIR= ${.CURDIR}/../../../sbin/ping

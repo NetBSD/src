@@ -1,4 +1,4 @@
-/*	$NetBSD: softmagic.c,v 1.16 1998/09/20 15:27:17 christos Exp $	*/
+/*	$NetBSD: softmagic.c,v 1.16.4.1 1999/12/27 18:36:52 wrstuden Exp $	*/
 
 /*
  * softmagic - interpret variable magic from MAGIC
@@ -33,9 +33,6 @@
 #include <time.h>
 #include <sys/types.h>
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
 #include "file.h"
 
 #include <sys/cdefs.h>
@@ -43,7 +40,7 @@
 #if 0
 FILE_RCSID("@(#)Id: softmagic.c,v 1.38 1998/09/12 13:21:01 christos Exp ")
 #else
-__RCSID("$NetBSD: softmagic.c,v 1.16 1998/09/20 15:27:17 christos Exp $");
+__RCSID("$NetBSD: softmagic.c,v 1.16.4.1 1999/12/27 18:36:52 wrstuden Exp $");
 #endif
 #endif	/* lint */
 

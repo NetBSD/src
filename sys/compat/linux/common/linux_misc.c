@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.61 1999/10/05 09:22:04 tron Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.61.8.1 1999/12/27 18:34:27 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -106,7 +106,20 @@
 #include <compat/linux/common/linux_dirent.h>
 #include <compat/linux/common/linux_util.h>
 #include <compat/linux/common/linux_misc.h>
+#include <compat/linux/common/linux_ptrace.h>
 
+int linux_ptrace_request_map[] = {
+	LINUX_PTRACE_TRACEME,	PT_TRACE_ME,
+	LINUX_PTRACE_PEEKTEXT,	PT_READ_I,
+	LINUX_PTRACE_PEEKDATA,	PT_READ_D,
+	LINUX_PTRACE_POKETEXT,	PT_WRITE_I,
+	LINUX_PTRACE_POKEDATA,	PT_WRITE_D,
+	LINUX_PTRACE_CONT,	PT_CONTINUE,
+	LINUX_PTRACE_KILL,	PT_KILL,
+	LINUX_PTRACE_ATTACH,	PT_ATTACH,
+	LINUX_PTRACE_DETACH,	PT_DETACH,
+	-1
+};
 
 /* Local linux_misc.c functions: */
 static void bsd_to_linux_statfs __P((struct statfs *, struct linux_statfs *));
@@ -1018,4 +1031,40 @@ linux_sys_getresuid(p, v, retval)
 		return (error);
 
 	return (copyout(&pc->p_svuid, SCARG(uap, suid), sizeof(uid_t)));
+}
+
+int
+linux_sys_ptrace(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct linux_sys_ptrace_args /* {
+		syscallarg(int) request;
+		syscallarg(int) pid;
+		syscallarg(int) addr;
+		syscallarg(int) data;
+	} */ *uap = v;
+	int *ptr, request;
+
+	ptr = linux_ptrace_request_map;
+	request = SCARG(uap, request);
+	while (*ptr != -1)
+		if (*ptr++ == request) {
+			struct sys_ptrace_args pta;
+			caddr_t sg;
+
+			sg = stackgap_init(p->p_emul);
+
+			SCARG(&pta, req) = *ptr;
+			SCARG(&pta, pid) = SCARG(uap, pid);
+			SCARG(&pta, addr) = (caddr_t)SCARG(uap, addr);
+			SCARG(&pta, data) = SCARG(uap, data);
+
+			return sys_ptrace(p, &pta, retval);
+		}
+		else
+			ptr++;
+
+	return LINUX_SYS_PTRACE_ARCH(p, uap, retval);
 }

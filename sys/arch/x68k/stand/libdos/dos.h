@@ -6,7 +6,7 @@
  *	(based on PD libc 1.1.32 by PROJECT C Library)
  *	public domain
  *
- *	$NetBSD: dos.h,v 1.1 1998/09/01 19:53:25 itohy Exp $
+ *	$NetBSD: dos.h,v 1.1.20.1 1999/12/27 18:34:18 wrstuden Exp $
  */
 /*
  * PROJECT C Library, X68000 PROGRAMMING INTERFACE DEFINITION
@@ -52,7 +52,7 @@ union dos_fcb {
 		char		nouse_3;
 		char		name2[10];
 		char		nouse_4[38];
-	} chr;
+	} __attribute__((__packed__)) chr;
 	struct {
 		unsigned char	dupcnt;
 		unsigned	mode	: 1;
@@ -79,7 +79,7 @@ union dos_fcb {
 		unsigned short	fatno;
 		unsigned long	size;
 		char		nouse_4[28];
-	} blk;
+	} __attribute__((__packed__)) blk;
 };
 
 struct dos_indos {
@@ -169,7 +169,7 @@ struct dos_dpbptr {
 	struct dos_dpbptr *next;
 	unsigned short	dirfat;
 	char		dirbuf[64];
-};
+} __attribute__((__packed__));
 
 struct dos_filbuf {
 	unsigned char	searchatr;
@@ -184,7 +184,7 @@ struct dos_filbuf {
 	unsigned short	date;
 	unsigned int	filelen;
 	char		name[23];
-};
+} __attribute__((__packed__));
 
 struct dos_exfilbuf {
 	unsigned char	searchatr;
@@ -202,7 +202,7 @@ struct dos_exfilbuf {
 	char		drive[2];
 	char		path[65];
 	char		unused[21];
-};
+} __attribute__((__packed__));
 
 struct dos_dregs {
 	int	d0;
@@ -247,7 +247,7 @@ struct dos_prcptr {
 	struct dos_prcctrl *buf_ptr;
 	unsigned char	name[16];
 	long		wait_time;
-};
+} __attribute__((__packed__));
 
 /*
  * arguments:

@@ -1,4 +1,4 @@
-/*	$NetBSD: softdep.h,v 1.2 1999/11/15 18:49:14 fvdl Exp $	*/
+/*	$NetBSD: softdep.h,v 1.2.2.1 1999/12/27 18:36:39 wrstuden Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -55,7 +55,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)softdep.h	9.6 (McKusick) 2/25/99
- *	$Id: softdep.h,v 1.2 1999/11/15 18:49:14 fvdl Exp $
+ *	$Id: softdep.h,v 1.2.2.1 1999/12/27 18:36:39 wrstuden Exp $
  */
 
 #include <sys/queue.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.h,v 1.26 1999/08/08 08:58:08 simonb Exp $	*/
+/*	$NetBSD: curses.h,v 1.26.2.1 1999/12/27 18:29:56 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -205,8 +205,8 @@ extern char	*AL, *BC, *BL, *BT, *CD, *CE, *CL, *CM, *CR, *CS, *DC,
 #define    KEY_MAX        0x198    /* maximum extended key value */
 
 /* 8-bit ASCII characters. */
-#define	unctrl(c)		__unctrl[(c) & 0xff]
-#define	unctrllen(ch)		__unctrllen[(ch) & 0xff]
+#define	unctrl(c)		__unctrl[((unsigned)c) & 0xff]
+#define	unctrllen(ch)		__unctrllen[((unsigned)ch) & 0xff]
 
 extern char	 *__unctrl[256];	/* Control strings. */
 extern char	 __unctrllen[256];	/* Control strings length. */
@@ -236,7 +236,7 @@ typedef struct {
 #define	__PROTECT	0x80  		/* Added characters are protected. */
 #define	__ATTRIBUTES	0xfe  		/* All character attributes
 						(excluding standout). */
-	char	attr;			/* attributes of character */
+	int	attr;			/* attributes of character */
 } __LDATA;
 
 #define __LDATASIZE	(sizeof(__LDATA))
@@ -472,13 +472,15 @@ int	 wunderend __P((WINDOW *));
 int	 vwprintw __P((WINDOW *, const char *, _BSD_VA_LIST_));
 
 /* Private functions that are needed for user programs prototypes. */
-void	 __cputchar __P((int));
+int	 __cputchar __P((int));
 int	 __waddbytes __P((WINDOW *, const char *, int, int));
 __END_DECLS
 
 /* Private functions. */
 #ifdef _CURSES_PRIVATE
+#ifdef DEBUG
 void	 __CTRACE __P((const char *, ...));
+#endif
 int	 __delay __P((void));
 unsigned int __hash __P((char *, int));
 void	 __id_subwins __P((WINDOW *));

@@ -1,4 +1,4 @@
-/* $NetBSD: bootxx.c,v 1.1 1999/03/06 16:36:06 ragge Exp $ */
+/* $NetBSD: bootxx.c,v 1.1.12.1 1999/12/27 18:34:11 wrstuden Exp $ */
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -53,13 +53,8 @@
 #define NRSP 1 /* Kludge */
 #define NCMD 1 /* Kludge */
 
-#include "../uba/ubareg.h"
-#include "../uba/udareg.h"
-
-#include "../mscp/mscp.h"
-#include "../mscp/mscpreg.h"
-
-#include <a.out.h>
+#include "dev/mscp/mscp.h"
+#include "dev/mscp/mscpreg.h"
 
 int	command(int, int);
 
@@ -71,10 +66,11 @@ int	command(int, int);
 volatile u_int  devtype, bootdev;
 unsigned        opendev, boothowto, bootset, memsz;
 
+struct open_file file;
+
 unsigned *bootregs;
 struct	rpb *rpb;
 int	vax_cputype;
-int	mtpr_cons = 0;
 
 /*
  * The boot block are used by 11/750, 8200, MicroVAX II/III, VS2000,
@@ -88,9 +84,9 @@ Xmain()
 	char *hej = "/boot";
 
 	vax_cputype = (mfpr(PR_SID) >> 24) & 0xFF;
-	if (vax_cputype < VAX_TYP_UV2)
-		mtpr_cons++;
 
+	/*
+	 */ 
         switch (vax_cputype) {
 
         case VAX_TYP_UV2:
@@ -119,71 +115,17 @@ Xmain()
 
                 break;
 	default:
-		nprint(vax_cputype, 10);
-		sprint(": Unknown CPU type, regs:\n");
-		for (io = 0; io < 16; io++) {
-			nprint(bootregs[io], 16);
-			putchar('\n');
-		}
 		asm("halt");
         }
 
 	bootset = getbootdev();
 
-	sprint("\nhowto 0x");
-	nprint(boothowto, 16);
-	sprint(", bdev 0x");
-	nprint(bootdev, 16);
-	sprint(", booting...");
 	io = open(hej, 0);
 
-	if (io >= 0 && io < SOPEN_MAX) {
-		copyunix(io);
-	} else {
-		sprint("Boot failed, saerrno ");
-		nprint(errno, 10);
-		putchar('\n');
-	}
-}
-
-/* ARGSUSED */
-copyunix(aio)
-{
-	struct exec     x;
-	register int    io = aio, i;
-	char           *addr;
-
-	i = read(io, (char *) &x, sizeof(x));
-	if (i != sizeof(x) || N_BADMAG(x)) {
-		sprint("Bad format\n");
-		return;
-	}
-
-	if (N_GETMAGIC(x) == ZMAGIC && lseek(io, N_TXTADDR(x), SEEK_SET) == -1)
-		goto shread;
-	if (read(io, (char *) 0x10000, x.a_text) != x.a_text)
-		goto shread;
-	addr = (char *) x.a_text;
-	if (N_GETMAGIC(x) == ZMAGIC || N_GETMAGIC(x) == NMAGIC)
-		while ((int) addr & CLOFSET)
-			*addr++ = 0;
-
-	if (read(io, addr + 0x10000, x.a_data) != x.a_data)
-		goto shread;
-	addr += x.a_data;
-	bcopy((void *) 0x10000, 0, (int) addr);
-
-	for (i = 0; i < x.a_bss; i++)
-		*addr++ = 0;
-	for (i = 0; i < 128 * 512; i++)	/* slop */
-		*addr++ = 0;
-	sprint("done.\n");
-	hoppabort(x.a_entry, boothowto, bootset);
-	(*((int (*) ()) x.a_entry)) ();
-	return;
-shread:
-	sprint("Short read\n");
-	return;
+	read(io, (void *)0x10000, 0x10000);
+	bcopy((void *) 0x10000, 0, 0xffff);
+	hoppabort(32, boothowto, bootset);
+	asm("halt");
 }
 
 getbootdev()
@@ -195,26 +137,19 @@ getbootdev()
 	switch (vax_cputype) {
 	case VAX_TYP_UV2:
 	case VAX_TYP_CVAX:
-		adaptor = 0;
-		controller = ((rpb->csrphy & 017777) == 0xDC)?1:0;
-		unit = rpb->unit;			/* DUC, DUD? */
-		
-		break;
-
 	case VAX_TYP_RIGEL:
-		unit = rpb->unit;
-		if (unit > 99)
-			unit /= 100;		/* DKB300 is target 3 */
+		if (rpb->devtyp == BDEV_SD) {
+			unit = rpb->unit / 100;
+			controller = (rpb->csrphy & 0x100 ? 1 : 0);
+		} else {
+			controller = ((rpb->csrphy & 017777) == 0xDC)?1:0;
+			unit = rpb->unit;			/* DUC, DUD? */
+		}
 		break;
-
 
 	case VAX_TYP_8SS:
-		controller = bootregs[1];
-		unit = bootregs[3];
-		break;
-
 	case VAX_TYP_750:
-		controller = 0;	/* XXX Actually massbuss can be on 3 ctlr's */
+		controller = bootregs[1];
 		unit = bootregs[3];
 		break;
 	}
@@ -232,23 +167,15 @@ getbootdev()
 	case BDEV_TK:		/* TK50 boot */
 	case BDEV_CNSL:		/* Console storage boot */
 	case BDEV_RD:		/* RD/RX on HDC9224 (MV2000) */
-		controller = 0; /* They are always on ctlr 0 */
+	case BDEV_ST:		/* SCSI-tape on NCR5380 (MV2000) */
+	case BDEV_SD:		/* SCSI-disk on NCR5380 (3100/76) */
 		break;
 
 	case BDEV_KDB:		/* DSA disk on KDB50 (VAXBI VAXen) */
 		bootdev = (bootdev & ~B_TYPEMASK) | BDEV_UDA;
 		break;
 
-	case BDEV_ST:		/* SCSI-tape on NCR5380 (MV2000) */
-	case BDEV_SD:		/* SCSI-disk on NCR5380 (3100/76) */
-		/*
-		 * No standalone routines for SCSI support yet.
-		 * Use rom-routines instead!
-		 */
-		break;
-
 	default:
-		sprint("Unsupported boot device, trying anyway.\n");
 		boothowto |= (RB_SINGLE | RB_ASKNAME);
 	}
 	return MAKEBOOTDEV(bootdev, adaptor, controller, unit, partition);
@@ -256,18 +183,39 @@ getbootdev()
 
 int     romstrategy __P((void *, int, daddr_t, size_t, void *, size_t *));
 
-struct devsw    devsw[] = {
-	{"rom", romstrategy, (int(*)(struct open_file *, ...))null_open,
-	    null_close, noioctl,},
-};
+/*
+ * Write an extremely limited version of a (us)tar filesystem, suitable
+ * for loading secondary-stage boot loader.
+ * - Can only load file "boot".
+ * - Must be the first file on tape.
+ */
+int tar_open(char *path, struct open_file *f);
+ssize_t tar_read(struct open_file *f, void *buf, size_t size, size_t *resid);
 
-int             ndevs = (sizeof(devsw) / sizeof(devsw[0]));
+int
+tar_open(path, f)
+	char *path;
+	struct open_file *f;
+{
+	char *buf = alloc(512);
 
-struct fs_ops   file_system[] = {
-	{ufs_open, ufs_close, ufs_read, ufs_write, ufs_seek, ufs_stat}
-};
+	bzero(buf, 512);
+	romstrategy(0, 0, 8192, 512, buf, 0);
+	if (bcmp(buf, "boot", 5) || bcmp(&buf[257], "ustar", 5))
+		return EINVAL; /* Not a ustarfs with "boot" first */
+	return 0;
+}
 
-int             nfsys = (sizeof(file_system) / sizeof(struct fs_ops));
+ssize_t
+tar_read(f, buf, size, resid)
+	struct open_file *f;
+	void *buf;
+	size_t size;
+	size_t *resid;
+{
+	romstrategy(0, 0, (8192+512), size, buf, 0);
+	*resid = size;
+}
 
 struct disklabel lp;
 int part_off = 0;		/* offset into partition holding /boot */
@@ -277,6 +225,7 @@ volatile struct uda {
 	struct  mscp uda_rsp;     /* response packets */
 	struct  mscp uda_cmd;     /* command packets */
 } uda;
+struct udadevice {u_short udaip;u_short udasa;};
 volatile struct udadevice *csr;
 
 devopen(f, fname, file)
@@ -289,7 +238,6 @@ devopen(f, fname, file)
 	int		i, err, off;
 	char		line[64];
 
-	f->f_dev = &devsw[0];
 	*file = (char *)fname;
 
 	/*
@@ -329,13 +277,7 @@ devopen(f, fname, file)
 	 * Actually disklabel is only needed when using hp disks,
 	 * but it doesn't hurt to always get it.
 	 */
-	if ((bootdev != BDEV_TK) && (bootdev != BDEV_CNSL)) {
-		msg = getdisklabel(LABELOFFSET + &start, &lp);
-		if (msg) {
-			sprint(msg);
-			putchar('\n');
-		}
-	}
+	getdisklabel(LABELOFFSET + &start, &lp);
 	return 0;
 }
 
@@ -422,9 +364,6 @@ romstrategy(sc, func, dblk, size, buf, rsize)
 		if (bootdev != BDEV_HP) {
 			while (size > 0) {
 				while ((read750(block, bootregs) & 0x01) == 0){
-					sprint("Retrying read bn# ");
-					nprint(block, 10);
-					putchar('\n');
 				}
 				bcopy(0, buf, 512);
 				size -= 512;
@@ -436,7 +375,8 @@ romstrategy(sc, func, dblk, size, buf, rsize)
 		break;
 	}
 
-	*rsize = nsize;
+	if (rsize)
+		*rsize = nsize;
 	return 0;
 }
 
@@ -469,37 +409,28 @@ hpread(block, size, buf)
 	return 0;
 }
 
-sprint(s)
-	char *s;
-{
-	while(*s)
-		putchar(*s++);
-}
+extern char end[];
+static char *top = (char*)end;
 
-nprint(nr, base)
+void *
+alloc(size)
+        unsigned size;
 {
-
-	do {
-		putchar("0123456789abcdef"[nr % base]);
-	} while (nr /= base);
+	void *ut = top;
+	top += size;
+	return ut;
 }
 
 void
-twiddle()
+free(ptr, size)
+        void *ptr;
+        unsigned size;
 {
-        static int pos;
-
-        putchar("|/-\\"[pos++ & 3]);
-        putchar('\b');
 }
 
-void
-putchar(c)
-	int c;
+int
+romclose(f)
+	struct open_file *f;
 {
-	if (mtpr_cons) {
-		while ((mfpr(PR_TXCS) & 0x80) == 0)  /* Wait until xmit ready */
-			;
-        	mtpr(c, PR_TXDB);
-	}
+	return 0;
 }

@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.13 1999/07/04 11:46:24 mrg Exp $
+#	$NetBSD: list,v 1.13.2.1 1999/12/27 18:28:40 wrstuden Exp $
 
 # Sparc extra's
 LINK	instbin			sbin/disklabel
@@ -6,7 +6,6 @@ LINK	instbin			sbin/mount_kernfs
 
 SYMLINK	../../instbin		usr/bin/basename
 SYMLINK ../../instbin		usr/bin/cksum usr/bin/sum
-SYMLINK ../../instbin		usr/bin/gawk usr/bin/awk
 SYMLINK ../../instbin		usr/bin/getopt
 SYMLINK ../../instbin		usr/bin/netstat
 SYMLINK ../../instbin		usr/bin/rsh
@@ -18,6 +17,7 @@ SYMLINK	../../instbin		usr/sbin/sysctl
 # crunchgen source directory specials
 CRUNCHSPECIAL	vi srcdir usr.bin/vi/build
 CRUNCHSPECIAL	less srcdir usr.bin/less/less
+CRUNCHSPECIAL	sysinst srcdir distrib/utils/sysinst/arch/sparc
 
 # for /kern
 SPECIAL	mkdir kern
@@ -53,6 +53,7 @@ SYMLINK	/tmp/resolv.conf.shadow		etc/resolv.conf
 SYMLINK	/tmp/hosts			etc/hosts
 
 # and the installation tools
+LINK	instbin				sysinst
 COPY	${ARCHDIR}/dot.profile		.profile
 COPY	${ARCHDIR}/../install.md	install.md
 COPY	${DESTDIR}/usr/mdec/boot	boot

@@ -1,4 +1,4 @@
-/*	$NetBSD: vrip.c,v 1.1.1.1 1999/09/16 12:23:32 takemura Exp $	*/
+/*	$NetBSD: vrip.c,v 1.1.1.1.8.1 1999/12/27 18:32:15 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -61,6 +61,8 @@ struct cfattach vrip_ca = {
 };
 
 #define MAX_LEVEL1 32
+
+struct vrip_softc *the_vrip_sc = NULL;
 
 static struct intrhand {
 	int	 (*ih_fun) __P((void *));
@@ -147,12 +149,14 @@ vripattach(parent, self, aux)
 	/*
 	 *  Disable all Level 1 interrupts.
 	 */
+	sc->sc_intrmask = 0;
 	bus_space_write_2(sc->sc_iot, sc->sc_ioh, MSYSINT1_REG_W, 0x0000);
 	bus_space_write_2(sc->sc_iot, sc->sc_ioh, MSYSINT2_REG_W, 0x0000);
 	/*
 	 *  Level 1 interrupts are redirected to HwInt0
 	 */
 	vr_intr_establish(VR_INTR0, vrip_intr, self);
+	the_vrip_sc = sc;
 	/*
 	 *  Attach each devices
 	 */
@@ -247,6 +251,27 @@ vrip_intr_disestablish(vc, arg)
 	vrip_intr_setmask1(vc, ih, 0);
 }
 
+void
+vrip_intr_suspend()
+{
+	bus_space_tag_t iot = the_vrip_sc->sc_iot;
+	bus_space_handle_t ioh = the_vrip_sc->sc_ioh;
+
+	bus_space_write_2 (iot, ioh, MSYSINT1_REG_W, (1<<VRIP_INTR_POWER));
+	bus_space_write_2 (iot, ioh, MSYSINT2_REG_W, 0);
+}
+
+void
+vrip_intr_resume()
+{
+	u_int32_t reg = the_vrip_sc->sc_intrmask;
+	bus_space_tag_t iot = the_vrip_sc->sc_iot;
+	bus_space_handle_t ioh = the_vrip_sc->sc_ioh;
+
+	bus_space_write_2 (iot, ioh, MSYSINT1_REG_W, reg & 0xffff);
+	bus_space_write_2 (iot, ioh, MSYSINT2_REG_W, (reg >> 16) & 0xffff);
+}
+
 /* Set level 1 interrupt mask. */
 void
 vrip_intr_setmask1(vc, arg, enable)
@@ -259,7 +284,7 @@ vrip_intr_setmask1(vc, arg, enable)
 	int level1 = ih->ih_l1line;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
-	u_int32_t reg;
+	u_int32_t reg = sc->sc_intrmask;
 
 	reg = (bus_space_read_2 (iot, ioh, MSYSINT1_REG_W)&0xffff) |
 		((bus_space_read_2 (iot, ioh, MSYSINT2_REG_W)<< 16)&0xffff0000);
@@ -268,6 +293,7 @@ vrip_intr_setmask1(vc, arg, enable)
 	else {
 		reg &= ~(1 << level1);	
 	}
+	sc->sc_intrmask = reg;
 	bus_space_write_2 (iot, ioh, MSYSINT1_REG_W, reg & 0xffff);
 	bus_space_write_2 (iot, ioh, MSYSINT2_REG_W, (reg >> 16) & 0xffff);
 /*    bitdisp32(reg);    */

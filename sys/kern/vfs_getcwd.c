@@ -1,4 +1,4 @@
-/* $NetBSD: vfs_getcwd.c,v 1.10 1999/07/11 09:27:23 sommerfeld Exp $ */
+/* $NetBSD: vfs_getcwd.c,v 1.10.8.1 1999/12/27 18:35:54 wrstuden Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -62,8 +62,6 @@ getcwd_getcache __P((struct vnode **, struct vnode **,
 static int
 getcwd_common __P((struct vnode *, struct vnode *,
 		   char **, char *, int, int, struct proc *));
-
-int vn_isunder __P((struct vnode *, struct vnode *, struct proc *));
 
 #define DIRENT_MINSIZE (sizeof(struct dirent) - (MAXNAMLEN+1) + 4)
 
@@ -370,7 +368,8 @@ getcwd_getcache(lvpp, uvpp, bpp, bufp)
 
 #define GETCWD_CHECK_ACCESS 0x0001
 
-static int getcwd_common (lvp, rvp, bpp, bufp, limit, flags, p)
+static int
+getcwd_common (lvp, rvp, bpp, bufp, limit, flags, p)
 	struct vnode *lvp;
 	struct vnode *rvp;
 	char **bpp;
@@ -505,7 +504,8 @@ out:
  * Intended to be used in chroot, chdir, fchdir, etc., to ensure that
  * chroot() actually means something.
  */
-int vn_isunder(lvp, rvp, p)
+int
+vn_isunder(lvp, rvp, p)
 	struct vnode *lvp;
 	struct vnode *rvp;
 	struct proc *p;
@@ -527,7 +527,8 @@ int vn_isunder(lvp, rvp, p)
  * Intended to be used from ptrace/procfs sorts of things.
  */
 
-int proc_isunder (p1, p2)
+int
+proc_isunder (p1, p2)
 	struct proc *p1;
 	struct proc *p2;
 {
@@ -549,7 +550,8 @@ int proc_isunder (p1, p2)
  * to reading directory contents.
  */
 
-int sys___getcwd(p, v, retval) 
+int
+sys___getcwd(p, v, retval) 
 	struct proc *p;
 	void   *v;
 	register_t *retval;
@@ -597,6 +599,3 @@ out:
 	free(path, M_TEMP);
 	return error;
 }
-
-
-

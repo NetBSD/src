@@ -1,4 +1,4 @@
-/*	$NetBSD: checkpasswd.c,v 1.1 1999/09/09 15:52:38 drochner Exp $	*/
+/*	$NetBSD: checkpasswd.c,v 1.1.8.1 1999/12/27 18:36:00 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1993

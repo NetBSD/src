@@ -1,4 +1,4 @@
-/* $NetBSD: ega.c,v 1.1 1999/12/13 16:28:57 drochner Exp $ */
+/* $NetBSD: ega.c,v 1.1.2.1 1999/12/27 18:34:54 wrstuden Exp $ */
 
 /*
  * Copyright (c) 1999

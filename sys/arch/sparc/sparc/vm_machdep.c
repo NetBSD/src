@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.48 1999/07/08 18:08:59 thorpej Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.48.8.1 1999/12/27 18:33:53 wrstuden Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -78,7 +78,7 @@ pagemove(from, to, size)
 {
 	paddr_t pa;
 
-	if (size & CLOFSET || (int)from & CLOFSET || (int)to & CLOFSET)
+	if (size & PGOFSET || (int)from & PGOFSET || (int)to & PGOFSET)
 		panic("pagemove 1");
 	while (size > 0) {
 		if (pmap_extract(pmap_kernel(), (vaddr_t)from, &pa) == FALSE)
@@ -86,8 +86,8 @@ pagemove(from, to, size)
 		pmap_remove(pmap_kernel(),
 		    (vaddr_t)from, (vaddr_t)from + PAGE_SIZE);
 		pmap_enter(pmap_kernel(),
-		    (vaddr_t)to, pa, VM_PROT_READ|VM_PROT_WRITE, 1,
-		    VM_PROT_READ|VM_PROT_WRITE);
+		    (vaddr_t)to, pa, VM_PROT_READ|VM_PROT_WRITE,
+		    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
 		from += PAGE_SIZE;
 		to += PAGE_SIZE;
 		size -= PAGE_SIZE;
@@ -140,7 +140,7 @@ vmapbuf(bp, len)
 			panic("vmapbuf: null page frame");
 		/* Now map the page into kernel space. */
 		pmap_enter(kpmap, kva, pa | PMAP_NC,
-		    VM_PROT_READ|VM_PROT_WRITE, TRUE, 0);
+		    VM_PROT_READ|VM_PROT_WRITE, PMAP_WIRED);
 		uva += PAGE_SIZE;
 		kva += PAGE_SIZE;
 		len -= PAGE_SIZE;

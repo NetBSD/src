@@ -1,4 +1,4 @@
-/*	$NetBSD: sysconf.h,v 1.1.1.1 1999/09/16 12:23:24 takemura Exp $	*/
+/*	$NetBSD: sysconf.h,v 1.1.1.1.8.1 1999/12/27 18:32:06 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -72,7 +72,12 @@ extern struct platform {
 	 *	device_register	-	boot configuration aid
 	 *	iointr		-	I/O interrupt handler
 	 *	clockintr	-	Clock Interrupt Handler
+	 *	fb_init         -       frame buffer initialization
+	 *      mem_init        -       Count available memory
+#ifdef notyet
 	 *	mcheck_handler	-	Platform Specific Machine Check Handler
+#endif
+	 *	reboot		-	reboot or powerdown
 	 */
 	void	(*os_init) __P((void));
 	void	(*bus_reset) __P((void));
@@ -80,10 +85,13 @@ extern struct platform {
 	void	(*device_register) __P((struct device *, void *));
 	void	(*iointr) __P((void *, unsigned long));
 	void	(*clockintr) __P((void *));
+	void	(*fb_init) __P((caddr_t*));
+	int	(*mem_init) __P((caddr_t));
 #ifdef notyet
 	void	(*mcheck_handler) __P((unsigned long, struct trapframe *,
 		unsigned long, unsigned long));
 #endif
+	void	(*reboot) __P((int howto, char *bootstr));
 } platform;
 
 extern struct platform unimpl_platform;

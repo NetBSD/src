@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.83 1999/07/20 22:25:19 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.83.8.1 1999/12/27 18:32:22 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -304,8 +304,7 @@ setredzone(pte, vaddr)
 
 /*
  * Move pages from one kernel virtual address to another.
- * Both addresses are assumed to reside in the Sysmap,
- * and size must be a multiple of CLSIZE.
+ * Both addresses are assumed to reside in the Sysmap.
  */
 void
 pagemove(from, to, size)
@@ -314,7 +313,7 @@ pagemove(from, to, size)
 {
 	register pt_entry_t *fpte, *tpte, ofpte, otpte;
 
-	if (size % CLBYTES)
+	if (size % NBPG)
 		panic("pagemove");
 	fpte = kvtopte(from);
 	tpte = kvtopte(to);
@@ -394,7 +393,7 @@ vmapbuf(bp, len)
 		(void) pmap_extract(vm_map_pmap(&bp->b_proc->p_vmspace->vm_map),
 		    faddr, &fpa);
 		pmap_enter(vm_map_pmap(phys_map), taddr, fpa,
-			   VM_PROT_READ|VM_PROT_WRITE, TRUE, 0);
+			   VM_PROT_READ|VM_PROT_WRITE, PMAP_WIRED);
 		faddr += PAGE_SIZE;
 		taddr += PAGE_SIZE;
 		len -= PAGE_SIZE;

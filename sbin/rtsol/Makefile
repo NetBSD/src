@@ -1,7 +1,7 @@
-# $NetBSD: Makefile,v 1.2 1999/09/03 05:25:44 itojun Exp $
+# $NetBSD: Makefile,v 1.2.4.1 1999/12/27 18:30:33 wrstuden Exp $
 
 PROG=	rtsol
-SRCS=	rtsold.c rtsol.c if.c probe.c
+SRCS=	rtsold.c rtsol.c if.c probe.c dump.c
 
 CPPFLAGS+=-DINET6
 

@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.165 1999/09/29 00:20:25 thorpej Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.165.2.1 1999/12/27 18:35:22 wrstuden Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.158 1999/09/29 00:19:51 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.179 1999/12/17 17:18:48 drochner Exp 
  */
 
 /*
@@ -43,10 +43,9 @@
  *
  *	http://members.hyperlink.net.au/~chart/pci.htm
  *
- * which replaces the database previously found at
+ * which replaces the database found at
  *
- *	http://www.halcyon.com/scripts/jboemler/pci/pcicode
- *   or http://www.yourvote.com/pci/
+ *	http://www.yourvote.com/pci/
  *
  * (but it doesn't always seem to match vendor documentation)
  */
@@ -489,6 +488,7 @@
 #define	PCI_VENDOR_SPECIALIX	0x11cb		/* Specialix Research */
 #define	PCI_VENDOR_MKC	0x11cc		/* Michels & Kleberhoff Computer */
 #define	PCI_VENDOR_HAL	0x11cd		/* HAL Computer Systems */
+#define	PCI_VENDOR_AURAVISION	0x11d1		/* Auravision */
 #define	PCI_VENDOR_ZORAN	0x11de		/* Zoran Corporation */
 #define	PCI_VENDOR_COMPEX	0x11f6		/* Compex */
 #define	PCI_VENDOR_PMCSIERRA	0x11f8		/* PMC-Sierra */
@@ -517,15 +517,20 @@
 #define	PCI_VENDOR_RISCOM	0x12aa		/* RISCom */
 #define	PCI_VENDOR_PICTUREEL	0x12c5		/* Picture Elements */
 #define	PCI_VENDOR_NVIDIA_SGS	0x12d2		/* Nvidia Corporation & SGS Thomson Microelectric */
+#define	PCI_VENDOR_AUREAL	0x12eb		/* Aureal Semiconductor */
 #define	PCI_VENDOR_ADMTEK	0x1317		/* ADMtek */
+#define	PCI_VENDOR_FORTEMEDIA	0x1319		/* Forte Media */
+#define	PCI_VENDOR_DOMEX	0x134a		/* Domex */
 #define	PCI_VENDOR_LMC	0x1376		/* LAN Media Corporation */
 #define	PCI_VENDOR_NETGEAR	0x1385		/* Netgear */
 #define	PCI_VENDOR_SUNDANCETI	0x13f0		/* Sundance Technology */
 #define	PCI_VENDOR_DELTA	0x1500		/* Delta Electronics */
-#define	PCI_VENDOR_SOLIDUM	0x1588		/* Solidum Systems Corp. www.solidum.com/pcisig.html */
+#define	PCI_VENDOR_TERRATEC	0x153b		/* TerraTec Electronic */
+#define	PCI_VENDOR_SOLIDUM	0x1588		/* Solidum Systems Corp. */
 #define	PCI_VENDOR_GEOCAST	0x15a1		/* Geocast Network Systems */
 #define	PCI_VENDOR_SYMPHONY2	0x1c1c		/* Symphony Labs (2nd PCI Vendor ID) */
 #define	PCI_VENDOR_TEKRAM2	0x1de1		/* Tekram Technology (2nd PCI Vendor ID) */
+#define	PCI_VENDOR_LAVA	0x1407		/* Lava Semiconductor Manufacturing, Inc. */
 #define	PCI_VENDOR_3DLABS	0x3d3d		/* 3D Labs */
 #define	PCI_VENDOR_AVANCE2	0x4005		/* Avance Logic (2nd PCI Vendor ID) */
 #define	PCI_VENDOR_ADDTRON	0x4033		/* Addtron Technology */
@@ -565,6 +570,7 @@
 #define	PCI_PRODUCT_3COM_3C900BTPC	0x9006		/* 3c900B-TPC Ethernet */
 #define	PCI_PRODUCT_3COM_3C905BTX	0x9055		/* 3c905B-TX 10/100 Ethernet */
 #define	PCI_PRODUCT_3COM_3C905BT4	0x9056		/* 3c905B-T4 10/100 Ethernet */
+#define	PCI_PRODUCT_3COM_3C905BCOMBO	0x9058		/* 3c905B-COMBO 10/100 Ethernet */
 #define	PCI_PRODUCT_3COM_3C905BFX	0x905a		/* 3c905B-FX 10/100 Ethernet */
 #define	PCI_PRODUCT_3COM_3C905CTX	0x9200		/* 3c905C-TX 10/100 Ethernet with mngmt */
 #define	PCI_PRODUCT_3COM_3C980SRV	0x9800		/* 3c980 Server Adapter 10/100 Ethernet */
@@ -623,6 +629,7 @@
 #define	PCI_PRODUCT_ADP_AIC5905	0x5905		/* AIC-5905 ATM */
 #define	PCI_PRODUCT_ADP_AIC6915	0x6915		/* AIC-6915 10/100 Ethernet */
 #define	PCI_PRODUCT_ADP_AIC7860	0x6078		/* AIC-7860 */
+#define	PCI_PRODUCT_ADP_APA1480	0x6075		/* APA-1480 Ultra */
 #define	PCI_PRODUCT_ADP_2940AU	0x6178		/* AHA-2940A Ultra */
 #define	PCI_PRODUCT_ADP_AIC7870	0x7078		/* AIC-7870 */
 #define	PCI_PRODUCT_ADP_2940	0x7178		/* AHA-2940 */
@@ -635,6 +642,7 @@
 #define	PCI_PRODUCT_ADP_3940U	0x8278		/* AHA-3940 Ultra */
 #define	PCI_PRODUCT_ADP_389XU	0x8378		/* AHA-389X Ultra */
 #define	PCI_PRODUCT_ADP_2944U	0x8478		/* AHA-2944 Ultra */
+#define	PCI_PRODUCT_ADP_2940UP	0x8778		/* AHA-2940 Ultra Pro */
 
 #define	PCI_PRODUCT_ADP2_2940U2	0x0010		/* AHA-2940 Ultra2 */
 #define	PCI_PRODUCT_ADP2_2930U2	0x0011		/* AHA-2930 Ultra2 */
@@ -707,6 +715,12 @@
 #define	PCI_PRODUCT_ATI_MACH64_LG	0x4c47		/* Mach64 LG */
 #define	PCI_PRODUCT_ATI_MACH64_LI	0x4c49		/* Mach64 LI */
 #define	PCI_PRODUCT_ATI_MACH64_LP	0x4c50		/* Mach64 LP */
+
+/* Auravision products */
+#define	PCI_PRODUCT_AURAVISION_VXP524	0x01f7		/* VxP524 PCI Video Processor */
+
+/* Aureal Semiconductor */
+#define	PCI_PRODUCT_AUREAL_AU8820	0x0001		/* AU8820 Vortex Digital Audio Processor */
 
 /* Applied Micro Circuts products */
 #define	PCI_PRODUCT_AMCIRCUITS_S5933	0x4750		/* S5933 PCI Matchmaker */
@@ -798,11 +812,12 @@
 #define	PCI_PRODUCT_COMPAQ_QVISION_V2	0x3034		/* QVision */
 #define	PCI_PRODUCT_COMPAQ_TRIFLEX4	0x4000		/* Triflex Host-PCI Bridge */
 #define	PCI_PRODUCT_COMPAQ_USB	0x7020		/* USB Controller */
+#define	PCI_PRODUCT_COMPAQ_SMART2P	0xae10		/* SMART2P RAID */
 #define	PCI_PRODUCT_COMPAQ_N100TX	0xae32		/* Netelligent 10/100 TX */
 #define	PCI_PRODUCT_COMPAQ_N10T	0xae34		/* Netelligent 10 T */
 #define	PCI_PRODUCT_COMPAQ_IntNF3P	0xae35		/* Integrated NetFlex 3/P */
-#define	PCI_PRODUCT_COMPAQ_IntPL100TX	0xae43		/* ProLiant Integrated Netelligent 10/100 TX */
 #define	PCI_PRODUCT_COMPAQ_DPNet100TX	0xae40		/* Dual Port Netelligent 10/100 TX */
+#define	PCI_PRODUCT_COMPAQ_IntPL100TX	0xae43		/* ProLiant Integrated Netelligent 10/100 TX */
 #define	PCI_PRODUCT_COMPAQ_DP4000	0xb011		/* Deskpro 4000 5233MMX */
 #define	PCI_PRODUCT_COMPAQ_NF3P_BNC	0xf150		/* NetFlex 3/P w/ BNC */
 #define	PCI_PRODUCT_COMPAQ_NF3P	0xf130		/* NetFlex 3/P */
@@ -819,9 +834,17 @@
 /* Corollary Products */
 #define	PCI_PRODUCT_COROLLARY_CBUSII_PCIB	0x0014		/* \"C-Bus II\"-PCI Bridge */
 
+/* Creative Labs products */
+#define	PCI_PRODUCT_CREATIVELABS_SBLIVE	0x0002		/* SBLive! EMU 10000 */
+#define	PCI_PRODUCT_CREATIVELABS_SBJOY	0x7002		/* PCI Gameport Joystick */
+
 /* Cyclades products */
 #define	PCI_PRODUCT_CYCLADES_CYCLOMY_1	0x0100		/* Cyclom-Y below 1M */
 #define	PCI_PRODUCT_CYCLADES_CYCLOMY_2	0x0101		/* Cyclom-Y above 1M */
+#define	PCI_PRODUCT_CYCLADES_CYCLOM4Y_1	0x0102		/* Cyclom-4Y below 1M */
+#define	PCI_PRODUCT_CYCLADES_CYCLOM4Y_2	0x0103		/* Cyclom-4Y above 1M */
+#define	PCI_PRODUCT_CYCLADES_CYCLOM8Y_1	0x0104		/* Cyclom-8Y below 1M */
+#define	PCI_PRODUCT_CYCLADES_CYCLOM8Y_2	0x0105		/* Cyclom-8Y above 1M */
 #define	PCI_PRODUCT_CYCLADES_CYCLOMZ_1	0x0200		/* Cyclom-Z below 1M */
 #define	PCI_PRODUCT_CYCLADES_CYCLOMZ_2	0x0201		/* Cyclom-Z above 1M */
 
@@ -846,6 +869,7 @@
 #define	PCI_PRODUCT_DEC_21152	0x0024		/* DECchip 21152 PCI-PCI Bridge */
 #define	PCI_PRODUCT_DEC_21153	0x0025		/* DECchip 21153 PCI-PCI Bridge */
 #define	PCI_PRODUCT_DEC_21154	0x0026		/* DECchip 21154 PCI-PCI Bridge */
+#define	PCI_PRODUCT_DEC_CPQ42XX	0x0046		/* Compaq SMART RAID 42xx */
 
 /* Delta products */
 #define	PCI_PRODUCT_DELTA_8139	0x1360		/* 8139 Ethernet */
@@ -862,6 +886,9 @@
 /* Dolphin products */
 #define	PCI_PRODUCT_DOLPHIN_PCISCI	0x0658		/* PCI-SCI Bridge */
 
+/* Domex products */
+#define	PCI_PRODUCT_DOMEX_PCISCSI	0x0001		/* DMX-3191D */
+
 /* ELSA products */
 #define	PCI_PRODUCT_ELSA_QS1PCI	0x1000		/* QuickStep 1000 ISDN card */
 
@@ -877,6 +904,7 @@
 #define	PCI_PRODUCT_ESSENTIAL_RR_GIGE	0x0005		/* RoadRunner Gig-E Interface */
 
 /* ESS Technology Inc products */
+#define	PCI_PRODUCT_ESSTECH_MAESTRO2	0x1968		/* Maestro 2 */
 #define	PCI_PRODUCT_ESSTECH_SOLO1	0x1969		/* Solo-1 PCI AudioDrive */
 #define	PCI_PRODUCT_ESSTECH_MAESTRO2E	0x1978		/* Maestro 2E */
 
@@ -890,6 +918,9 @@
 #define	PCI_PRODUCT_FORE_PCA200	0x0210		/* ATM PCA-200 */
 #define	PCI_PRODUCT_FORE_PCA200E	0x0300		/* ATM PCA-200e */
 
+/* Forte Media products */
+#define	PCI_PRODUCT_FORTEMEDIA_FM801	0x0801		/* Forte Media 801 Sound */
+
 /* Fujtsu products */
 #define	PCI_PRODUCT_LUCENT_LTMODEM	0x0440		/* K56flex DSVD LTMODEM */
 #define	PCI_PRODUCT_LUCENT_USBHC	0x5801		/* USB Host Controller */
@@ -902,6 +933,13 @@
 #define	PCI_PRODUCT_EFFICIENTNETS_ENI155PA	0x0002		/* 155P-MF1 ATM (ASIC) */
 #define	PCI_PRODUCT_EFFICIENTNETS_ENI25P	0x0003		/* SpeedStream ENI-25p */
 #define	PCI_PRODUCT_EFFICIENTNETS_SS3000	0x0005		/* SpeedStream 3000 */
+
+/* Galileo Technology products */
+#define	PCI_PRODUCT_GALILEO_GT64010A	0x0146		/* GT-64010A System Controller */
+#define	PCI_PRODUCT_GALILEO_GT64115	0x4111		/* GT-64115 System Controller */
+#define	PCI_PRODUCT_GALILEO_GT64011	0x4146		/* GT-64011/GT-64111 System Controller */
+#define	PCI_PRODUCT_GALILEO_GT64120	0x4620		/* GT-64120 System Controller */
+#define	PCI_PRODUCT_GALILEO_GT64130	0x6320		/* GT-64130 System Controller */
 
 /* Hewlett-Packard products */
 #define	PCI_PRODUCT_HP_J2585A	0x1030		/* J2585A */
@@ -990,6 +1028,8 @@
 #define	PCI_PRODUCT_INTEL_I740	0x7800		/* i740 Graphics Accelerator */
 #define	PCI_PRODUCT_INTEL_PCI450_PB	0x84c4		/* 82454KX/GX PCI Bridge (PB) */
 #define	PCI_PRODUCT_INTEL_PCI450_MC	0x84c5		/* 82451KX/GX Memory Controller (MC) */
+#define	PCI_PRODUCT_INTEL_82451NX_MIOC	0x84ca		/* 82451NX Memory & I/O Controller (MIOC) */
+#define	PCI_PRODUCT_INTEL_82451NX_PXB	0x84cb		/* 82451NX PCI Expander Bridge (PXB) */
 
 /* Intergraph products */
 #define	PCI_PRODUCT_INTERGRAPH_4D50T	0x00e4		/* Powerstorm 4D50T */
@@ -1061,6 +1101,7 @@
 #define	PCI_PRODUCT_SYMBIOS_810AP	0x0005		/* 53c810AP */
 #define	PCI_PRODUCT_SYMBIOS_860	0x0006		/* 53c860 */
 #define	PCI_PRODUCT_SYMBIOS_875	0x000f		/* 53c875 */
+#define	PCI_PRODUCT_SYMBIOS_1510	0x0010		/* 53c1510 */
 #define	PCI_PRODUCT_SYMBIOS_875J	0x008f		/* 53c875J */
 
 /* Packet Engines products */
@@ -1140,12 +1181,12 @@
 #define	PCI_PRODUCT_REALTEK_RT8139	0x8139		/* 8139 10/100 Ethernet */
 
 /* RICOH products */
-#define	PCI_PRODUCT_RICOH_RF5C465	0x0465		/* 5C465 PCI-CardBus bridge */
-#define	PCI_PRODUCT_RICOH_RF5C466	0x0466		/* 5C466 PCI-CardBus bridge */
-#define	PCI_PRODUCT_RICOH_RF5C475	0x0475		/* 5C475 PCI-CardBus bridge */
-#define	PCI_PRODUCT_RICOH_RF5C476	0x0476		/* 5C476 PCI-CardBus bridge */
-#define	PCI_PRODUCT_RICOH_RF5C477	0x0477		/* 5C477 PCI-CardBus bridge */
-#define	PCI_PRODUCT_RICOH_RF5C478	0x0478		/* 5C478 PCI-CardBus bridge */
+#define	PCI_PRODUCT_RICOH_Rx5C465	0x0465		/* 5C465 PCI-CardBus bridge */
+#define	PCI_PRODUCT_RICOH_Rx5C466	0x0466		/* 5C466 PCI-CardBus bridge */
+#define	PCI_PRODUCT_RICOH_Rx5C475	0x0475		/* 5C475 PCI-CardBus bridge */
+#define	PCI_PRODUCT_RICOH_RL5C476	0x0476		/* 5C476 PCI-CardBus bridge */
+#define	PCI_PRODUCT_RICOH_Rx5C477	0x0477		/* 5C477 PCI-CardBus bridge */
+#define	PCI_PRODUCT_RICOH_Rx5C478	0x0478		/* 5C478 PCI-CardBus bridge */
 
 /* RISCom (SDL Communications, Inc?) products */
 #define	PCI_PRODUCT_RISCOM_N2	0x5568		/* N2 */
@@ -1384,6 +1425,13 @@
 #define	PCI_PRODUCT_WINBOND_W83769F	0x0001		/* W83769F */
 #define	PCI_PRODUCT_WINBOND_W89C840F	0x0840		/* W89C840F 10/100 Ethernet */
 #define	PCI_PRODUCT_WINBOND_W89C940F	0x0940		/* W89C940F Ethernet */
+
+/* Xircom products */
+/* is the `-3' here just indicating revision 3, or is it really part
+   of the device name? */
+#define	PCI_PRODUCT_XIRCOM_X3201_3	0x0002		/* X3201-3 Fast Ethernet Controller */
+/* this is the device id `indicating 21143 driver compatibility' */
+#define	PCI_PRODUCT_XIRCOM_X3201_3_21143	0x0003		/* X3201-3 Fast Ethernet Controller (21143) */
 
 /* Yamaha products */
 #define	PCI_PRODUCT_YAMAHA_YMF724E_V	0x0004		/* 724 Audio */

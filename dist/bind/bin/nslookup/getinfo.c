@@ -1,4 +1,4 @@
-/*	$NetBSD: getinfo.c,v 1.2 1999/11/20 20:03:47 veego Exp $	*/
+/*	$NetBSD: getinfo.c,v 1.2.4.1 1999/12/27 18:27:25 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989

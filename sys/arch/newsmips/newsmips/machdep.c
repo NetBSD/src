@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.30 1999/09/17 20:04:43 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.30.8.1 1999/12/27 18:33:10 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.30 1999/09/17 20:04:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.30.8.1 1999/12/27 18:33:10 wrstuden Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -86,11 +86,16 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.30 1999/09/17 20:04:43 thorpej Exp $")
 #include <machine/psl.h>
 #include <machine/pte.h>
 #include <machine/autoconf.h>
+#include <machine/bootinfo.h>
 #include <mips/locore.h>		/* wbflush() */
 
 #ifdef DDB
 #include <machine/db_machdep.h>
+#include <ddb/db_access.h>
+#include <ddb/db_extern.h>
+#include <ddb/db_sym.h>
 #endif
+
 #include <machine/adrsmap.h>
 #include <machine/machConst.h>
 #include <machine/intr.h>
@@ -109,6 +114,7 @@ vm_map_t exec_map = NULL;
 vm_map_t mb_map = NULL;
 vm_map_t phys_map = NULL;
 
+char *bootinfo = NULL;		/* pointer to bootinfo structure */
 int maxmem;			/* max memory per process */
 int physmem;			/* max supported memory, changes to actual */
 
@@ -167,14 +173,13 @@ extern void stacktrace __P((void)); /*XXX*/
  * XXX disables interrupt 5 to disable mips3 on-chip clock, which also
  * disables mips1 FPU interrupts.
  */
-int	safepri = MIPS3_PSL_LOWIPL;	/* XXX */
+int safepri = MIPS3_PSL_LOWIPL;		/* XXX */
 
 struct idrom idrom;
 
-/* locore callback-vector setup */
-extern void mips_vector_init  __P((void));
-
 extern struct user *proc0paddr;
+extern u_long bootdev;
+extern char edata[], end[];
 
 /*
  * Do all the stuff that locore normally does before calling main().
@@ -192,8 +197,35 @@ mach_init(x_boothowto, x_bootdev, x_bootname, x_maxmem)
 	u_long first, last;
 	caddr_t kernend, v;
 	vsize_t size;
-	extern u_long bootdev;
-	extern char edata[], end[];
+	struct btinfo_magic *bi_magic;
+	struct btinfo_bootarg *bi_arg;
+#ifdef DDB
+	struct btinfo_symtab *bi_sym;
+	int nsym = 0;
+	char *ssym, *esym;
+#endif
+
+	/* clear the BSS segment */
+	bzero(edata, end - edata);
+
+	bootinfo = (char *)BOOTINFO_ADDR;	/* XXX */
+	bi_magic = lookup_bootinfo(BTINFO_MAGIC);
+	if (bi_magic && bi_magic->magic == BOOTINFO_MAGIC) {
+		bi_arg = lookup_bootinfo(BTINFO_BOOTARG);
+		if (bi_arg) {
+			x_boothowto = bi_arg->howto;
+			x_bootdev = bi_arg->bootdev;
+			x_maxmem = bi_arg->maxmem;
+		}
+#ifdef DDB
+		bi_sym = lookup_bootinfo(BTINFO_SYMTAB);
+		if (bi_sym) {
+			nsym = bi_sym->nsym;
+			ssym = (void *)bi_sym->ssym;
+			esym = (void *)bi_sym->esym;
+		}
+#endif
+	}
 
 	/*
 	 * Save parameters into kernel work area.
@@ -202,9 +234,10 @@ mach_init(x_boothowto, x_bootdev, x_bootname, x_maxmem)
 	*(int *)(MIPS_PHYS_TO_KSEG1(MACH_BOOTDEV_ADDR)) = x_bootdev;
 	*(int *)(MIPS_PHYS_TO_KSEG1(MACH_BOOTSW_ADDR)) = x_boothowto;
 
-	/* clear the BSS segment */
-	kernend = (caddr_t)mips_round_page(end);
-	bzero(edata, kernend - edata);
+	if (nsym)
+		kernend = (caddr_t)mips_round_page(esym);
+	else
+		kernend = (caddr_t)mips_round_page(end);
 
 	/*
 	 * Set the VM page size.
@@ -235,6 +268,8 @@ mach_init(x_boothowto, x_bootdev, x_bootname, x_maxmem)
 	 * Initialize machine-dependent DDB commands, in case of early panic.
 	 */
 	db_machine_init();
+	if (nsym)
+		ddb_init(esym - ssym, ssym, esym);
 #endif
 
 	boothowto &= ~RB_ASKNAME;	/* for lack of cn_getc */
@@ -377,7 +412,7 @@ cpu_startup()
 		 * "base" pages for the rest.
 		 */
 		curbuf = (vaddr_t) buffers + (i * MAXBSIZE);
-		curbufsize = CLBYTES * ((i < residual) ? (base+1) : base);
+		curbufsize = NBPG * ((i < residual) ? (base+1) : base);
 
 		while (curbufsize) {
 			pg = uvm_pagealloc(NULL, 0, NULL, 0);
@@ -421,7 +456,7 @@ cpu_startup()
 #endif
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
-	format_bytes(pbuf, sizeof(pbuf), bufpages * CLBYTES);
+	format_bytes(pbuf, sizeof(pbuf), bufpages * NBPG);
 	printf("using %d buffers containing %s of memory\n", nbuf, pbuf);
 
 	/*
@@ -454,6 +489,32 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		return (EOPNOTSUPP);
 	}
 	/* NOTREACHED */
+}
+
+/*
+ * lookup_bootinfo:
+ * Look up information in bootinfo of boot loader.
+ */
+void *
+lookup_bootinfo(type)
+	int type;
+{
+	struct btinfo_common *bt;
+	char *help = bootinfo;
+
+	/* Check for a bootinfo record first. */
+	if (help == NULL)
+		return (NULL);
+
+	do {
+		bt = (struct btinfo_common *)help;
+		if (bt->type == type)
+			return ((void *)help);
+		help += bt->next;
+	} while (bt->next != 0 &&
+		(size_t)help < (size_t)bootinfo + BOOTINFO_SIZE);
+
+	return (NULL);
 }
 
 int	waittime = -1;

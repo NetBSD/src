@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.28 1999/04/12 20:38:18 pk Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.28.2.1 1999/12/27 18:31:39 wrstuden Exp $	*/
 
 /* 
  * Copyright (c) 1996 Scott K. Stevens
@@ -295,7 +295,7 @@ db_write_bytes(addr, size, data)
 }
 
 void
-Debugger()
+cpu_Debugger()
 {
 	asm(".word	0xe7ffffff");
 }
@@ -312,16 +312,16 @@ void db_of_exit_cmd	__P((db_expr_t addr, int have_addr, db_expr_t count, char *m
 #endif
 
 struct db_command arm32_db_command_table[] = {
-	{ "vmstat",	db_show_vmstat_cmd,	0, NULL },
-	{ "vnode",	db_show_vnode_cmd,	0, NULL },
-	{ "intrchain",	db_show_intrchain_cmd,	0, NULL },
-	{ "panic",	db_show_panic_cmd,	0, NULL },
 	{ "frame",	db_show_frame_cmd,	0, NULL },
+	{ "intrchain",	db_show_intrchain_cmd,	0, NULL },
 #ifdef	OFW
 	{ "ofboot",	db_of_boot_cmd,		0, NULL },
 	{ "ofenter",	db_of_enter_cmd,	0, NULL },
 	{ "ofexit",	db_of_exit_cmd,		0, NULL },
 #endif
+	{ "panic",	db_show_panic_cmd,	0, NULL },
+	{ "vmstat",	db_show_vmstat_cmd,	0, NULL },
+	{ "vnode",	db_show_vnode_cmd,	0, NULL },
 	{ NULL, 	NULL, 			0, NULL }
 };
 

@@ -1,4 +1,4 @@
-/* $NetBSD: awivar.h,v 1.4 1999/11/09 14:58:07 sommerfeld Exp $ */
+/* $NetBSD: awivar.h,v 1.4.4.1 1999/12/27 18:34:44 wrstuden Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.

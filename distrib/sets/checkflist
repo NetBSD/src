@@ -1,6 +1,6 @@
 #! /bin/sh --
 #
-#	$NetBSD: checkflist,v 1.10 1998/07/22 17:01:43 perry Exp $
+#	$NetBSD: checkflist,v 1.10.6.1 1999/12/27 18:28:32 wrstuden Exp $
 #
 # Verify output of makeflist against contents of $DESTDIR.
 
@@ -28,12 +28,16 @@ while : ; do
 	-secr)
 		dargs="-d"
 		;;
+	-cryptint)
+		dargs="-i"
+		;;
 	-*)
 		cat 1>&2 <<USAGE
 Usage: $0 [-x11|-both] [-secr]
 	-x11		check only x11 lists
 	-both		check netbsd + x11 lists
 	-secr		check domestic ("secr") lists
+	-cryptint	check international crypto ("cryptint") lists
 USAGE
 		exit 1
 		;;

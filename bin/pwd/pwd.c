@@ -1,4 +1,4 @@
-/*	$NetBSD: pwd.c,v 1.12 1999/05/31 14:31:07 kleink Exp $	*/
+/*	$NetBSD: pwd.c,v 1.12.4.1 1999/12/27 18:27:11 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)pwd.c	8.3 (Berkeley) 4/1/94";
 #else
-__RCSID("$NetBSD: pwd.c,v 1.12 1999/05/31 14:31:07 kleink Exp $");
+__RCSID("$NetBSD: pwd.c,v 1.12.4.1 1999/12/27 18:27:11 wrstuden Exp $");
 #endif
 #endif /* not lint */
 
@@ -93,7 +93,7 @@ main(argc, argv)
 		p = getcwd(NULL, 0);
 
 	if (p == NULL)
-		err(EXIT_FAILURE, "%s", "");
+		err(EXIT_FAILURE, NULL);
 
 	(void)printf("%s\n", p);
 

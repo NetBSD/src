@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_parser.h,v 1.1.1.1 1999/11/20 18:54:01 veego Exp $	*/
+/*	$NetBSD: ns_parser.h,v 1.1.1.1.4.1 1999/12/27 18:27:20 wrstuden Exp $	*/
 
 #define YYEMPTY (-1)
 #define L_EOS 257

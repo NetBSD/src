@@ -1,4 +1,4 @@
-/*	$NetBSD: tx3912videoreg.h,v 1.1 1999/11/20 19:56:31 uch Exp $ */
+/*	$NetBSD: tx3912videoreg.h,v 1.1.2.1 1999/12/27 18:32:10 wrstuden Exp $ */
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi

@@ -1,4 +1,4 @@
-/*	$NetBSD: bt459.c,v 1.18 1999/09/05 11:34:29 simonb Exp $	*/
+/*	$NetBSD: bt459.c,v 1.18.8.1 1999/12/27 18:33:22 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: bt459.c,v 1.18 1999/09/05 11:34:29 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bt459.c,v 1.18.8.1 1999/12/27 18:33:22 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -450,7 +450,7 @@ bt459InitColorMap(fi)
 int
 bt459LoadColorMap(fi, newbits, index, count)
 	struct fbinfo *fi;
-	caddr_t newbits;
+	const u_char *newbits;
 	int index, count;
 {
 	bt459_regmap_t *regs;
@@ -479,7 +479,7 @@ bt459LoadColorMap(fi, newbits, index, count)
 int
 bt459GetColorMap(fi, bits, index, count)
 	struct fbinfo *fi;
-	caddr_t bits;
+	u_char *bits;
 	int index, count;
 {
 	u_char *cmap_bits;

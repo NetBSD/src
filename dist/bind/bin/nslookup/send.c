@@ -1,4 +1,4 @@
-/*	$NetBSD: send.c,v 1.2 1999/11/20 20:02:49 veego Exp $	*/
+/*	$NetBSD: send.c,v 1.2.4.1 1999/12/27 18:27:25 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989

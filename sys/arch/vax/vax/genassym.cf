@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.9 1999/03/09 12:57:58 ragge Exp $
+#	$NetBSD: genassym.cf,v 1.9.14.1 1999/12/27 18:34:13 wrstuden Exp $
 #
 # Copyright (c) 1997 Ludd, University of Lule}, Sweden.
 # All rights reserved.
@@ -100,6 +100,7 @@ define	NETISR_ATALK	NETISR_ATALK
 define	NETISR_ISO	NETISR_ISO
 define	NETISR_CCITT	NETISR_CCITT
 define	NETISR_PPP	NETISR_PPP
+define	NETISR_IPV6	NETISR_IPV6
 
 define	USPACE		USPACE
 

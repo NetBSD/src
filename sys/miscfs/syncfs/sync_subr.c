@@ -1,4 +1,4 @@
-/*	$NetBSD: sync_subr.c,v 1.3 1999/11/23 23:52:41 fvdl Exp $	*/
+/*	$NetBSD: sync_subr.c,v 1.3.2.1 1999/12/27 18:36:05 wrstuden Exp $	*/
 
 /*
  * Copyright 1997 Marshall Kirk McKusick. All Rights Reserved.

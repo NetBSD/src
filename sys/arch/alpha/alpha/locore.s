@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.65 1999/09/17 19:59:35 thorpej Exp $ */
+/* $NetBSD: locore.s,v 1.65.6.1 1999/12/27 18:31:21 wrstuden Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.65 1999/09/17 19:59:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.65.6.1 1999/12/27 18:31:21 wrstuden Exp $");
 
 #ifndef EVCNT_COUNTERS
 #include <machine/intrcnt.h>
@@ -91,40 +91,25 @@ __KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.65 1999/09/17 19:59:35 thorpej Exp $");
 #define	SPLRAISE _splraise
 #endif
 
-IMPORT(cpu_info, SIZEOF_CPU_INFO * ALPHA_MAXPROCS)
-
 /*
- * Get pointer to our cpu_info structure.  Clobbers v0, t0, t8...t11.
+ * Get various per-cpu values.  A pointer to our cpu_info structure
+ * is stored in SysValue.  These macros clobber v0, t0, t8..t11.
  */
-#define	GET_CPUINFO(reg)						\
-	/* Get our processor ID. */					\
-	call_pal PAL_OSF1_whami					;	\
-									\
-	/* Compute offset of our cpu_info. */				\
-	ldiq	reg, SIZEOF_CPU_INFO				;	\
-	mulq	reg, v0, v0					;	\
-									\
-	/* Get the address of cpu_info, and add the offset. */		\
-	lda	reg, cpu_info					;	\
-	addq	reg, v0, reg
-
-
 #define	GET_CURPROC(reg)						\
-	GET_CPUINFO(reg)					;	\
-	addq	reg, CPU_INFO_CURPROC, reg
+	call_pal PAL_OSF1_rdval					;	\
+	addq	v0, CPU_INFO_CURPROC, reg
 
 #define	GET_FPCURPROC(reg)						\
-	GET_CPUINFO(reg)					;	\
-	addq	reg, CPU_INFO_FPCURPROC, reg
+	call_pal PAL_OSF1_rdval					;	\
+	addq	v0, CPU_INFO_FPCURPROC, reg
 
 #define	GET_CURPCB(reg)							\
-	GET_CPUINFO(reg)					;	\
-	addq	reg, CPU_INFO_CURPCB, reg
+	call_pal PAL_OSF1_rdval					;	\
+	addq	v0, CPU_INFO_CURPCB, reg
 
-#define	GET_IDLE_THREAD(reg)						\
-	GET_CPUINFO(reg)					;	\
-	addq	reg, CPU_INFO_IDLE_THREAD, reg			;	\
-	ldq	reg, 0(reg)
+#define	GET_IDLE_PCB(reg)						\
+	call_pal PAL_OSF1_rdval					;	\
+	ldq	reg, CPU_INFO_IDLE_PCB_PADDR(v0)
 
 #else	/* if not MULTIPROCESSOR... */
 
@@ -143,12 +128,14 @@ IMPORT(curpcb, 8)
 
 #define	GET_CURPCB(reg)		lda reg, curpcb
 
-#define	GET_IDLE_THREAD(reg)	lda reg, proc0
+#define	GET_IDLE_PCB(reg)						\
+	lda	reg, proc0					;	\
+	ldq	reg, P_MD_PCBPADDR(reg)
 #endif
 
 /*
  * Perform actions necessary to switch to a new context.  The
- * hwpcb should be in a0.  Clobbers v0, t0.
+ * hwpcb should be in a0.  Clobbers v0, t0, t8..t11, a0.
  */
 #define	SWITCH_CONTEXT							\
 	/* Make a note of the context we're running on. */		\
@@ -267,24 +254,6 @@ NESTED_NOPROFILE(locorestart,1,0,ra,0,0)
 
 /**************************************************************************/
 
-/*
- * Pull in the atomic primitives.
- */
-#include <alpha/alpha/atomic.s>
-
-/**************************************************************************/
-
-/**************************************************************************/
-
-/*
- * Pull in the BWX instruction stubs.
- *
- * XXX Eventually, we want to do these with inline __asm() statements.
- */
-#include <alpha/alpha/bwx.s>
-
-/**************************************************************************/
-
 #if defined(MULTIPROCESSOR)
 /*
  * Pull in the multiprocssor glue.
@@ -396,7 +365,7 @@ LEAF(exception_return, 1)			/* XXX should be NESTED */
 	ldq	t0, 0(t0)
 	ldq	t1, RPB_PRIMARY_CPU_ID(t0)
 	cmpeq	t1, v0, t0
-	beq	t0, 4f				/* == 0: bail out now */
+	beq	t0, 5f				/* == 0: bail out now */
 #endif
 
 	ldq	s1, (FRAME_PS * 8)(sp)		/* get the saved PS */
@@ -404,32 +373,25 @@ LEAF(exception_return, 1)			/* XXX should be NESTED */
 	bne	t0, 4f				/* != 0: can't do AST or SIR */
 
 	/* see if we can do an SIR */
-	ldq	t1, ssir			/* SIR pending? */
-	beq	t1, 2f				/* no, try an AST*/
+2:	ldq	t1, ssir			/* SIR pending? */
+	bne	t1, 5f				/* yes */
+	/* no */
 
-	/* We've got a SIR. */
-	CALL(do_sir)				/* do the SIR; lowers IPL */
-
-	/* Check for AST */
-2:	ldiq	a0, ALPHA_PSL_IPL_0		/* drop IPL to zero*/
-	call_pal PAL_OSF1_swpipl
-
-	and	s1, ALPHA_PSL_USERMODE, t0	/* are we returning to user? */
+	/* check for AST */
+3:	and	s1, ALPHA_PSL_USERMODE, t0	/* are we returning to user? */
 	beq	t0, 4f				/* no: just return */
+	/* yes */
 
 	ldq	t2, astpending			/* AST pending? */
-	beq	t2, 3f				/* no: return & deal with FP */
-
-	/* We've got an AST.  Handle it. */
-	mov	sp, a0				/* only arg is frame */
-	CALL(ast)
-
+	bne	t2, 6f				/* yes */
+	/* no: return & deal with FP */
 
 	/*
-	 * enable FPU based on whether the current proc is fpcurproc.
-	 * Note: GET_*() clobbers v0, t0, t8...t11.
+	 * We are going back to usermode.  Enable the FPU based on whether
+	 * the current proc is fpcurproc.  Note: GET_*() clobbers v0, t0,
+	 * t8...t11.
 	 */
-3:	GET_CURPROC(t1)
+	GET_CURPROC(t1)
 	ldq	t1, 0(t1)
 	GET_FPCURPROC(t2)
 	ldq	t2, 0(t2)
@@ -438,8 +400,8 @@ LEAF(exception_return, 1)			/* XXX should be NESTED */
 	cmovne	t1, 1, a0
 	call_pal PAL_OSF1_wrfen
 
-4:	/* restore the registers, and return */
-	bsr	ra, exception_restore_regs	/* jmp/CALL trashes pv/t12 */
+	/* restore the registers, and return */
+4:	bsr	ra, exception_restore_regs	/* jmp/CALL trashes pv/t12 */
 	ldq	ra,(FRAME_RA*8)(sp)
 	.set noat
 	ldq	at_reg,(FRAME_AT*8)(sp)
@@ -447,6 +409,32 @@ LEAF(exception_return, 1)			/* XXX should be NESTED */
 	lda	sp,(FRAME_SW_SIZE*8)(sp)
 	call_pal PAL_OSF1_rti
 	.set at
+	/* NOTREACHED */
+
+	/* We've got a SIR */
+5:	ldiq	a0, ALPHA_PSL_IPL_SOFT
+	call_pal PAL_OSF1_swpipl
+	mov	v0, s2				/* remember old IPL */
+	CALL(do_sir)
+
+	/* SIR handled; restore IPL and check again */
+	mov	s2, a0
+	call_pal PAL_OSF1_swpipl
+	br	2b
+
+	/* We've got an AST */
+6:	ldiq	a0, ALPHA_PSL_IPL_0		/* drop IPL to zero */
+	call_pal PAL_OSF1_swpipl
+	mov	v0, s2				/* remember old IPL */
+
+	mov	sp, a0				/* only arg is frame */
+	CALL(ast)
+
+	/* AST handled; restore IPL and check again */
+	mov	s2, a0
+	call_pal PAL_OSF1_swpipl
+	br	3b
+
 	END(exception_return)
 
 LEAF(exception_save_regs, 0)
@@ -1022,9 +1010,8 @@ LEAF(switch_exit, 1)
 	/* save the exiting proc pointer */
 	mov	a0, s2
 
-	/* Switch to our idle thread. */
-	GET_IDLE_THREAD(a0)			/* clobbers v0, t0, t8-t11 */
-	ldq	a0, P_MD_PCBPADDR(a0)		/* phys addr of PCB */
+	/* Switch to our idle stack. */
+	GET_IDLE_PCB(a0)			/* clobbers v0, t0, t8-t11 */
 	SWITCH_CONTEXT
 
 	/*
@@ -1058,7 +1045,9 @@ LEAF(copystr, 4)
 	LDGP(pv)
 
 	mov	a2, t0			/* t0 = i = len */
-	beq	a2, 2f			/* if (len == 0), bail out */
+	bne	a2, 1f			/* if (len != 0), proceed */
+	ldiq	t1, 1			/* else bail */
+	br	zero, 2f
 
 1:	ldq_u	t1, 0(a0)		/* t1 = *from */
 	extbl	t1, a0, t1
@@ -1079,7 +1068,7 @@ LEAF(copystr, 4)
 	stq	t0, 0(a3)
 3:	beq	t1, 4f			/* *from == '\0'; leave quietly */
 
-	ldiq	v0, ENAMETOOLONG		/* *from != '\0'; error. */
+	ldiq	v0, ENAMETOOLONG	/* *from != '\0'; error. */
 	RET
 
 4:	mov	zero, v0		/* return 0. */

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.38 1999/07/21 06:51:30 mycroft Exp $
+# $NetBSD: mi,v 1.38.2.1 1999/12/27 18:28:36 wrstuden Exp $
 ./.cshrc
 ./.profile
 ./dev/MAKEDEV.local
@@ -79,6 +79,8 @@
 ./root/.klogin
 ./root/.login
 ./root/.profile
+./root/.shrc
+./var/at/at.deny
 ./var/crash/minfree
 ./var/cron/log
 ./var/cron/tabs/root

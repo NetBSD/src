@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.20 1999/06/27 11:24:35 mrg Exp $	
+.\"	$NetBSD: install,v 1.20.2.1 1999/12/27 18:28:29 wrstuden Exp $	
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -57,7 +57,7 @@ available during the installation process.
 .Pp
 Loading the miniroot onto your raw partition is simple. On NetBSD as well
 as SunOS you use a command like:
-.Dl # Ic dd if=miniroot-\*V.fs of=/dev/rsd0b bs=20b conv=sync
+.Dl # Ic dd if=miniroot-\*V.fs of=/dev/rsd0b bs=4k conv=sync
 (Here, `/dev/rsd0b' is assumed to be your swap partition.) There's a
 potential problem here if /dev/rsd0b is actually in use as a swap
 partition by your currently running system. If you don't have another

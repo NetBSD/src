@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.1 1999/12/09 14:53:18 tsutsui Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.1.2.1 1999/12/27 18:33:02 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993

@@ -1,4 +1,4 @@
-/*	$NetBSD: getservent_r.c,v 1.1.1.1 1999/11/20 18:54:09 veego Exp $	*/
+/*	$NetBSD: getservent_r.c,v 1.1.1.1.4.1 1999/12/27 18:27:37 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1998-1999 by Internet Software Consortium.

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.6 1999/07/08 18:05:29 thorpej Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.6.8.1 1999/12/27 18:32:36 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -172,11 +172,11 @@ bus_mem_add_mapping(bpa, size, flags, bshp)
 	if (va == 0)
 		return (ENOMEM);
 
-	*bshp = (bus_space_handle_t)(va + (bpa & PGOFSET));
+	*bshp = (bus_space_handle_t)(va + m68k_page_offset(bpa));
 
 	for (; pa < endpa; pa += NBPG, va += NBPG) {
 		pmap_enter(pmap_kernel(), va, pa,
-		    VM_PROT_READ | VM_PROT_WRITE, TRUE, 0);
+		    VM_PROT_READ | VM_PROT_WRITE, PMAP_WIRED);
 		pte = kvtopte(va);
 		if ((flags & BUS_SPACE_MAP_CACHEABLE))
 			*pte &= ~PG_CI;
@@ -206,7 +206,7 @@ bus_space_unmap(t, bsh, size)
 #endif
 
 	(void) pmap_extract(pmap_kernel(), va, &bpa);
-	bpa += (bsh & PGOFSET);
+	bpa += m68k_page_offset(bsh);
 
 	/*
 	 * Free the kernel virtual mapping.

@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4280.c,v 1.1 1999/12/13 20:19:23 augustss Exp $	*/
+/*	$NetBSD: cs4280.c,v 1.1.2.1 1999/12/27 18:35:14 wrstuden Exp $	*/
 /*	$Tera: cs4280.c,v 1.24 1999/12/13 15:24:04 tacha Exp $	*/
 
 /*

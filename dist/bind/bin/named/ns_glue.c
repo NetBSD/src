@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_glue.c,v 1.1.1.1 1999/11/20 18:53:59 veego Exp $	*/
+/*	$NetBSD: ns_glue.c,v 1.1.1.1.4.1 1999/12/27 18:27:19 wrstuden Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 static const char rcsid[] = "Id: ns_glue.c,v 8.14 1999/10/19 02:06:26 gson Exp";

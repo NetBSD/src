@@ -1,4 +1,4 @@
-/*	$NetBSD: strfile.c,v 1.14 1999/09/18 19:38:50 jsm Exp $	*/
+/*	$NetBSD: strfile.c,v 1.14.4.1 1999/12/27 18:29:01 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)strfile.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: strfile.c,v 1.14 1999/09/18 19:38:50 jsm Exp $");
+__RCSID("$NetBSD: strfile.c,v 1.14.4.1 1999/12/27 18:29:01 wrstuden Exp $");
 #endif
 #endif /* not lint */
 
@@ -94,19 +94,14 @@ __RCSID("$NetBSD: strfile.c,v 1.14 1999/09/18 19:38:50 jsm Exp $");
 # define	STORING_PTRS	(Oflag || Rflag)
 # define	CHUNKSIZE	512
 
-#ifdef lint
-# define	ALWAYS	atoi("1")
-#else
-# define	ALWAYS	1
-#endif
-# define	ALLOC(ptr,sz)	if (ALWAYS) { \
+# define	ALLOC(ptr,sz)	do { \
 			if (ptr == NULL) \
 				ptr = malloc((unsigned int) (CHUNKSIZE * sizeof *ptr)); \
 			else if (((sz) + 1) % CHUNKSIZE == 0) \
 				ptr = realloc((void *) ptr, ((unsigned int) ((sz) + CHUNKSIZE) * sizeof *ptr)); \
 			if (ptr == NULL) \
 				errx(1, "out of space"); \
-		} else
+		} while (0)
 
 #ifdef NO_VOID
 # define	void	char

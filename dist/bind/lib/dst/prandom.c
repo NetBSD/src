@@ -1,7 +1,7 @@
-/*	$NetBSD: prandom.c,v 1.1.1.1 1999/11/20 18:54:07 veego Exp $	*/
+/*	$NetBSD: prandom.c,v 1.1.1.1.4.1 1999/12/27 18:27:30 wrstuden Exp $	*/
 
 #ifndef LINT
-static const char rcsid[] = "$Header: /cvsroot/src/dist/bind/lib/dst/Attic/prandom.c,v 1.1.1.1 1999/11/20 18:54:07 veego Exp $";
+static const char rcsid[] = "$Header: /cvsroot/src/dist/bind/lib/dst/Attic/prandom.c,v 1.1.1.1.4.1 1999/12/27 18:27:30 wrstuden Exp $";
 #endif
 /*
  * Portions Copyright (c) 1995-1998 by Trusted Information Systems, Inc.

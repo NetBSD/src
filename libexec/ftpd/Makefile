@@ -1,16 +1,16 @@
-#	$NetBSD: Makefile,v 1.35 1999/07/20 09:35:20 mrg Exp $
+#	$NetBSD: Makefile,v 1.35.4.1 1999/12/27 18:30:11 wrstuden Exp $
 #	@(#)Makefile	8.2 (Berkeley) 4/4/94
 
 SRCTOP=	../..
 .include <bsd.crypto.mk>
 
 PROG=	ftpd
-SRCS=	conf.c ftpd.c ftpcmd.y logwtmp.c popen.c
+SRCS=	conf.c ftpd.c ftpcmd.y logutmp.c logwtmp.c popen.c
 CPPFLAGS+=-DHASSETPROCTITLE
-DPADD+=	${LIBCRYPT}
-LDADD+=	-lcrypt
-MAN=	ftpd.8
-MLINKS+=ftpd.8 ftpd.conf.5
+DPADD+=	${LIBCRYPT} ${LIBUTIL}
+LDADD+=	-lcrypt -lutil
+MAN=	ftpd.conf.5 ftpusers.5 ftpd.8
+MLINKS=	ftpusers.5 ftpchroot.5
 
 # for `internal' ls
 SRCS+=	ls.c cmp.c print.c stat_flags.c util.c
@@ -24,6 +24,8 @@ CPPFLAGS+=-DSKEY
 DPADD+= ${LIBSKEY}
 LDADD+= -lskey
 .endif
+
+ftpd.o: version.h
 
 .if defined(CRYPTOPATH)
 .sinclude "${CRYPTOPATH}/libexec/ftpd/Makefile.frag"

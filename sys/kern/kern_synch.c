@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.65 1999/09/17 20:09:05 thorpej Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.65.2.1 1999/12/27 18:35:51 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -223,8 +223,8 @@ schedcpu(arg)
 	register struct proc *p;
 	register int s;
 	register unsigned int newcpu;
+	int clkhz;
 
-	wakeup((caddr_t)&lbolt);
 	proclist_lock_read();
 	for (p = allproc.lh_first; p != 0; p = p->p_list.le_next) {
 		/*
@@ -246,15 +246,15 @@ schedcpu(arg)
 		/*
 		 * p_pctcpu is only for ps.
 		 */
-		KASSERT(profhz);
+		clkhz = stathz != 0 ? stathz : hz;
 #if	(FSHIFT >= CCPU_SHIFT)
-		p->p_pctcpu += (profhz == 100)?
+		p->p_pctcpu += (clkhz == 100)?
 			((fixpt_t) p->p_cpticks) << (FSHIFT - CCPU_SHIFT):
                 	100 * (((fixpt_t) p->p_cpticks)
-				<< (FSHIFT - CCPU_SHIFT)) / profhz;
+				<< (FSHIFT - CCPU_SHIFT)) / clkhz;
 #else
 		p->p_pctcpu += ((FSCALE - ccpu) *
-			(p->p_cpticks * FSCALE / profhz)) >> FSHIFT;
+			(p->p_cpticks * FSCALE / clkhz)) >> FSHIFT;
 #endif
 		p->p_cpticks = 0;
 		newcpu = (u_int)decay_cpu(loadfac, p->p_estcpu);
@@ -275,6 +275,7 @@ schedcpu(arg)
 	}
 	proclist_unlock_read();
 	uvm_meter();
+	wakeup((caddr_t)&lbolt);
 	timeout(schedcpu, (void *)0, hz);
 }
 

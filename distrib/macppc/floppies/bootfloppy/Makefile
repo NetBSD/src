@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 1999/03/04 20:32:20 wrstuden Exp $
+#	$NetBSD: Makefile,v 1.3.4.1 1999/12/27 18:28:24 wrstuden Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -39,7 +39,7 @@ all:	netbsd.ram.gz
 	dd if=/dev/zero of=${IMAGE} bs=1440k count=1
 	# vnconfig -v -c ${VND_CDEV} ${IMAGE}
 	vnconfig -t ${DISKTYPE} -v -c ${VND_CDEV} ${IMAGE}
-	disklabel -rw ${VND_CDEV} ${DISKTYPE}
+	disklabel -f ${DESTDIR}/etc/disktab -rw ${VND_CDEV} ${DISKTYPE}
 	newfs -B be -m 0 -o space -i ${INO_BYTES} -c 80 \
 	    -f 1024 -b 8192 ${VND_RDEV}
 	mount ${VND_DEV} ${MOUNT_POINT}
@@ -63,7 +63,7 @@ unconfig:
 netbsd.ram.gz: ${KERN} ${RAMDISK}
 	cp ${KERN} netbsd.tmp
 	mdsetimage -v netbsd.tmp ${RAMDISK}
-	gzip netbsd.tmp
+	gzip -9 netbsd.tmp
 	mv netbsd.tmp.gz ${.TARGET}
 
 clean cleandir distclean:

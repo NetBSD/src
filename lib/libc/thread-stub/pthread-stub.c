@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread-stub.c,v 1.2 1999/12/03 06:36:55 explorer Exp $	*/
+/*	$NetBSD: pthread-stub.c,v 1.2.2.1 1999/12/27 18:29:54 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1999 Michael Graff <explorer@flame.org>.

@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_3max.c,v 1.14 1999/08/16 13:11:45 simonb Exp $	*/
+/* $NetBSD: dec_3max.c,v 1.14.8.1 1999/12/27 18:33:28 wrstuden Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.14 1999/08/16 13:11:45 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.14.8.1 1999/12/27 18:33:28 wrstuden Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -82,16 +82,12 @@ __KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.14 1999/08/16 13:11:45 simonb Exp $")
 #include <machine/intr.h>
 #include <machine/reg.h>
 #include <machine/psl.h>
-#include <machine/locore.h>		/* wbflush() */
-#include <machine/autoconf.h>		/* intr_arg_t */
+#include <machine/locore.h>
 #include <machine/sysconf.h>
 
-#include <mips/mips_param.h>		/* hokey spl()s */
 #include <mips/mips/mips_mcclock.h>	/* mcclock CPUspeed estimation */
 
-#include <pmax/pmax/clockreg.h>
 #include <pmax/pmax/turbochannel.h>
-#include <pmax/pmax/pmaxtype.h>
 
 #include <pmax/pmax/kn02.h>
 #include <pmax/pmax/memc.h>
@@ -100,67 +96,39 @@ __KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.14 1999/08/16 13:11:45 simonb Exp $")
  * forward declarations
  */
 void		dec_3max_init __P((void));
-void		dec_3max_os_init __P((void));
 void		dec_3max_bus_reset __P((void));
 
 void		dec_3max_enable_intr
-		   __P ((u_int slotno, int (*handler)  __P((intr_arg_t sc)),
-			 intr_arg_t sc, int onoff));
+		   __P ((unsigned slotno, int (*handler)(void *),
+			 void *sc, int onoff));
 int		dec_3max_intr __P((unsigned, unsigned, unsigned, unsigned));
 void		dec_3max_cons_init __P((void));
 void		dec_3max_device_register __P((struct device *, void *));
 
 static void	dec_3max_errintr __P((void));
 
-extern unsigned nullclkread __P((void));
-extern unsigned (*clkread) __P((void));
+#define	kn02_wbflush()	mips1_wbflush()	/* XXX to be corrected XXX */
 
-extern volatile struct chiptime *mcclock_addr; /* XXX */
-extern char cpu_model[];
-
-/*
- * Fill in platform struct.
- */
 void
 dec_3max_init()
 {
-	platform.iobus = "tc3max";
+	u_int32_t csr;
+	extern char cpu_model[];
 
-	platform.os_init = dec_3max_os_init;
+	platform.iobus = "tcbus";
 	platform.bus_reset = dec_3max_bus_reset;
 	platform.cons_init = dec_3max_cons_init;
 	platform.device_register = dec_3max_device_register;
+	platform.iointr = dec_3max_intr;
+	platform.memsize = memsize_scan;
+	/* no high resolution timer available */
 
-	strcpy(cpu_model, "DECstation 5000/200 (3MAX)");
-
-	dec_3max_os_init();
-}
-
-
-void
-dec_3max_os_init()
-{
-	u_int32_t csr;
-
-	/* clear any memory errors from new-config probes */
-	*(volatile u_int *)MIPS_PHYS_TO_KSEG1(KN02_SYS_ERRADR) = 0;
-	wbflush();
-
-	/*
-	 * Enable ECC memory correction, turn off LEDs, and
-	 * disable all TURBOchannel interrupts.
-	 */
-	csr = *(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN02_SYS_CSR);
-	csr &= ~(KN02_CSR_WRESERVED|KN02_CSR_IOINTEN|KN02_CSR_CORRECT|0xff);
-	*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(KN02_SYS_CSR) = csr;
+	/* clear any memory errors */
+	*(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN02_SYS_ERRADR) = 0;
+	kn02_wbflush();
 
 	mips_hardware_intr = dec_3max_intr;
 	tc_enable_interrupt = dec_3max_enable_intr;
-	mcclock_addr = (volatile struct chiptime *)
-		MIPS_PHYS_TO_KSEG1(KN02_SYS_CLOCK);
-
-	/* no high resolution timer circuit; possibly never called */
-	clkread = nullclkread;
 
 	splvec.splbio = MIPS_SPL0;
 	splvec.splnet = MIPS_SPL0;
@@ -169,7 +137,19 @@ dec_3max_os_init()
 	splvec.splclock = MIPS_SPL_0_1;
 	splvec.splstatclock = MIPS_SPL_0_1;
 
-	mc_cpuspeed(mcclock_addr, MIPS_INT_MASK_1);
+	/* calibrate cpu_mhz value */
+	mc_cpuspeed(MIPS_PHYS_TO_KSEG1(KN02_SYS_CLOCK), MIPS_INT_MASK_1);
+
+	/*
+	 * Enable ECC memory correction, turn off LEDs, and
+	 * disable all TURBOchannel interrupts.
+	 */
+	csr = *(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN02_SYS_CSR);
+	csr &= ~(KN02_CSR_WRESERVED|KN02_CSR_IOINTEN|KN02_CSR_CORRECT|0xff);
+	*(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN02_SYS_CSR) = csr;
+	kn02_wbflush();
+
+	strcpy(cpu_model, "DECstation 5000/200 (3MAX)");
 }
 
 /*
@@ -183,10 +163,10 @@ dec_3max_bus_reset()
 	 */
 
 	*(volatile u_int *)MIPS_PHYS_TO_KSEG1(KN02_SYS_ERRADR) = 0;
-	wbflush();
+	kn02_wbflush();
 
 	*(u_int *)MIPS_PHYS_TO_KSEG1(KN02_SYS_CHKSYN) = 0;
-	wbflush();
+	kn02_wbflush();
 }
 
 void
@@ -209,7 +189,7 @@ dec_3max_device_register(dev, aux)
 void
 dec_3max_enable_intr(slotno, handler, sc, on)
 	u_int slotno;
-	int (*handler) __P((void* softc));
+	int (*handler) __P((void *));
 	void *sc;
 	int on;
 {
@@ -219,8 +199,8 @@ dec_3max_enable_intr(slotno, handler, sc, on)
 	int s;
 
 #if 0
-	printf("3MAX enable_intr: imask %x, %sabling slot %d, sc %p\n",
-	       kn03_tc3_imask, (on? "en" : "dis"), slotno, sc);
+	printf("3MAX enable_intr: %sabling slot %d, sc %p\n",
+	       (on? "en" : "dis"), slotno, sc);
 #endif
 
 	if (slotno > TC_MAX_LOGICAL_SLOTS)
@@ -264,8 +244,6 @@ dec_3max_intr(mask, pc, status, cause)
 	/* handle clock interrupts ASAP */
 	if (mask & MIPS_INT_MASK_1) {
 		struct clockframe cf;
-		struct chiptime *clk;
-		volatile int temp;
 
 		csr = *(unsigned *)MIPS_PHYS_TO_KSEG1(KN02_SYS_CSR);
 		if ((csr & KN02_CSR_PSWARN) && !warned) {
@@ -276,9 +254,8 @@ dec_3max_intr(mask, pc, status, cause)
 			printf("WARNING: power supply is OK again\n");
 		}
 
-		clk = (void *)MIPS_PHYS_TO_KSEG1(KN02_SYS_CLOCK);
-		temp = clk->regc;	/* XXX clear interrupt bits */
-
+		__asm __volatile("lbu $0,48(%0)" ::
+			"r"(MIPS_PHYS_TO_KSEG1(KN02_SYS_CLOCK)));
 		cf.pc = pc;
 		cf.sr = status;
 		hardclock(&cf);
@@ -342,7 +319,7 @@ dec_3max_errintr()
 	erradr = *(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN02_SYS_ERRADR);
 	errsyn = MIPS_PHYS_TO_KSEG1(KN02_SYS_CHKSYN);
 	*(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN02_SYS_ERRADR) = 0;
-	wbflush();
+	kn02_wbflush();
 	csr = *(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN02_SYS_CSR);
 
 	/* Send to kn02/kn03 memory subsystem handler */

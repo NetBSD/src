@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_general.h,v 1.3 1999/02/05 00:06:12 oster Exp $	*/
+/*	$NetBSD: rf_general.h,v 1.3.14.1 1999/12/27 18:35:28 wrstuden Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -94,19 +94,6 @@ extern char rf_panicbuf[];
 #define RF_PGMASK          RF_UL(NBPG-1)
 #define RF_BLIP(x)         (NBPG - (RF_UL(x) & RF_PGMASK))	/* bytes left in page */
 #define RF_PAGE_ALIGNED(x) ((RF_UL(x) & RF_PGMASK) == 0)
-
-#if DKUSAGE > 0
-#define RF_DKU_END_IO(_unit_,_bp_) { \
-	int s = splbio(); \
-	dku_end_io(DKU_RAIDFRAME_BUS, _unit_, 0, \
-			(((_bp_)->b_flags&(B_READ|B_WRITE) == B_READ) ? \
-		    CAM_DIR_IN : CAM_DIR_OUT), \
-			(_bp_)->b_bcount); \
-	splx(s); \
-}
-#else				/* DKUSAGE > 0 */
-#define RF_DKU_END_IO(unit) { /* noop */ }
-#endif				/* DKUSAGE > 0 */
 
 #ifdef __STDC__
 #define RF_STRING(_str_) #_str_

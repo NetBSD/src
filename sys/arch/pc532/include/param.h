@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.21.20.1 1999/12/21 23:16:12 wrstuden Exp $	*/
+/*	$NetBSD: param.h,v 1.21.20.2 1999/12/27 18:33:17 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -86,10 +86,6 @@
 #define BLKDEV_IOSIZE	4096		/* Was 2048 (pan) */
 #define	MAXPHYS		(128 * 1024)	/* max raw I/O transfer size */
 
-#define	CLSIZELOG2	0
-#define	CLSIZE		(1 << CLSIZELOG2)
-
-/* NOTE: SSIZE, SINCR and UPAGES must be multiples of CLSIZE */
 #define	SSIZE	1		/* initial stack size/NBPG */
 #define	SINCR	1		/* increment of stack/NBPG */
 #define	UPAGES	2		/* pages of u-area */
@@ -131,10 +127,10 @@
 #endif
 
 /*
- * Size of kernel malloc arena in CLBYTES-sized logical pages
+ * Size of kernel malloc arena in NBPG-sized logical pages
  */ 
 #ifndef NKMEMCLUSTERS
-#define	NKMEMCLUSTERS	(2 * 1024 * 1024/CLBYTES)
+#define	NKMEMCLUSTERS	(2 * 1024 * 1024/NBPG)
 #endif
 
 /*

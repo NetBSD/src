@@ -1,4 +1,4 @@
-/*	$NetBSD: db_load.c,v 1.1.1.1 1999/11/20 18:53:59 veego Exp $	*/
+/*	$NetBSD: db_load.c,v 1.1.1.1.4.1 1999/12/27 18:27:18 wrstuden Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 static const char sccsid[] = "@(#)db_load.c	4.38 (Berkeley) 3/2/91";

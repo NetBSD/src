@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 1999/02/24 17:18:26 drochner Exp $
+#	$NetBSD: Makefile,v 1.6.4.1 1999/12/27 18:29:14 wrstuden Exp $
 
 HAVE_GCC28!= ${CXX} --version | egrep "^(2\.8|egcs)" ; echo
 
@@ -23,6 +23,10 @@ ARCHSUBDIR= ${MACHINE_ARCH}
 
 CPPFLAGS+=	-I. -I${ARCH}/${ARCHSUBDIR} -I${ARCH} \
 		-I${DIST}/config -I${DIST}
+
+.if (${MACHINE} == "hpcmips") # XXX
+CPPFLAGS+=-D${MACHINE}
+.endif
 
 MKLINT=		no
 

@@ -1,78 +1,118 @@
-#	$NetBSD: Makefile.booters,v 1.24 1999/07/21 13:34:34 mrg Exp $
-#
-#	NOTE: $S must correspond to the top of the 'sys' tree
+# $NetBSD: Makefile.booters,v 1.24.8.1 1999/12/27 18:33:30 wrstuden Exp $
 
-.BEGIN: ${.OBJDIR}/machine ${.OBJDIR}/mips
-${PROG} depend all: ${.OBJDIR}/machine ${.OBJDIR}/mips
-CLEANFILES+= machine mips
+# $S must correspond to the top of the 'sys' tree
+S=	${.CURDIR}/../../../..
 
+.BEGIN: ${.OBJDIR}/machine ${.OBJDIR}/pmax ${.OBJDIR}/mips
+${PROG} depend beforedepend all: ${.OBJDIR}/machine ${.OBJDIR}/pmax ${.OBJDIR}/mips
+CLEANFILES+= machine pmax mips
 ${.OBJDIR}/machine:
 	-rm -f ${.TARGET}
 	ln -s $S/arch/${MACHINE}/include ${.TARGET}
-
+${.OBJDIR}/pmax:
+	-rm -f ${.TARGET}
+	ln -s $S/arch/${MACHINE}/include ${.TARGET}
 ${.OBJDIR}/mips:
 	-rm -f ${.TARGET}
 	ln -s $S/arch/mips/include mips
 
-# Tailor C compilation for standalone environment.
-COPTS=	-Os				# -Os gives smaller code
+BINMODE?=	444
 
-C_MACHDEP=-mmemcpy -mno-abicalls -G 128	# even smaller code
-
-DEFS?=	-D_STANDALONE -D_NO_PROM_DEFINES -DNO_ABICALLS \
-	${BOOTDEFADD}
-INCL?=	-nostdinc -I${.OBJDIR} -I$S -I${PMAX_STAND_DIR}/lib -I$S/lib/libsa
-
-CFLAGS+=	${CWARN} ${C_MACHDEP}
+.PATH:		${.CURDIR}/../common
 AFLAGS+=	-D_LOCORE -D_KERNEL
-CPPFLAGS+=	${DEFS} ${INCL}
+# -I${.CURDIR}/../.. done by Makefile.inc
+CPPFLAGS+=	-nostdinc -D_STANDALONE -DNO_ABICALLS -D_NO_PROM_DEFINES -I${.OBJDIR} -I${S}
+# compiler flags for smallest code size
+CFLAGS=		-Os -g -mmemcpy -mno-abicalls -G 128
+LDBUG=		-T $S/arch/mips/conf/stand.ldscript
 
-LDBUG=	-T $S/arch/mips/conf/stand.ldscript
+NETBSD_VERS!=	sh ${.CURDIR}/../../../../conf/osrelease.sh
+CPPFLAGS+=	-DNETBSD_VERS='"${NETBSD_VERS}"'
 
-### find out what to use for libsa
-SA_AS=		library
-SAMISCMAKEFLAGS+=SA_USE_LOADFILE=yes SA_INCLUDE_NET=yes
-.include "${S}/lib/libsa/Makefile.inc"
-LIBSA=		${SALIB}
+PRIMARY_LOAD_ADDRESS?=	0x80700000
+SECONDARY_LOAD_ADDRESS?=0x80710000
 
-# We don't need libkern/libz for the first stage bootblocks
-.if ${PROG} != "bootxx"
+.if defined(PRIMARY_PROG)
+PROG=		${PRIMARY_PROG}
+SRCS =		start.S bootxx.c callvec.c
+SRCS+=		devopen.c conf.c rz.c
+SRCS+=		bootinit.S bootread.S clear_cache.S printf.S
 
-### find out what to use for libz
-Z_AS=		library
-.include "${S}/lib/libz/Makefile.inc"
-LIBZ=		${ZLIB}
-# and use compressed read in libsa
-SAMISCMAKEFLAGS+=SA_USE_CREAD=yes
+LOAD_ADDRESS=	${PRIMARY_LOAD_ADDRESS}
+# Pick a number, any number...
+PRIMARY_MAX_TOTAL!=	expr 16 \* 1024
+
+CPPFLAGS+=	-DPRIMARY_BOOTBLOCK \
+		-DPRIMARY_LOAD_ADDRESS="${PRIMARY_LOAD_ADDRESS}" \
+		-DNO_GETCHAR \
+		-DLIBSA_NO_FS_SYMLINK -DLIBSA_NO_FS_WRITE \
+		-DLIBSA_NO_FS_CLOSE \
+		-DLIBSA_NO_DEV_CLOSE \
+		-DLIBSA_SINGLE_DEVICE=rz \
+		-D"rzioctl(x,y,z)=EINVAL" -D"rzclose(f)=0" \
+		-DLIBSA_NO_TWIDDLE \
+		-DLIBSA_NO_FD_CHECKING \
+		-DLIBSA_NO_RAW_ACCESS \
+		-DLIBSA_NO_DISKLABEL_MSGS \
+		-DALLOC_FIRST_FIT \
+		-DLIBSA_USE_MEMCPY -DLIBSA_USE_MEMSET
+
+CHECKSIZE_CMD?=	SIZE=${SIZE} sh ${.CURDIR}/../common/checksize.sh
+
+.elif defined(SECONDARY_PROG)
+PROG=		${SECONDARY_PROG}
+LOAD_ADDRESS=	${SECONDARY_LOAD_ADDRESS}
+CPPFLAGS+=	-DSECONDARY_BOOTBLOCK
+VERS_O?=	vers.o
+.else
+# XXX ?
+.endif
 
 ### find out what to use for libkern
 KERN_AS=	library
 .include "${S}/lib/libkern/Makefile.inc"
 LIBKERN=	${KERNLIB}
 
-.else	# ${PROG} == "bootxx"
+### find out what to use for libz
+.if defined(PRIMARY_PROG)
 LIBZ=
+.else
+Z_AS=		library
+.include "${S}/lib/libz/Makefile.inc"
+LIBZ=		${ZLIB}
 .endif
 
-PMAX_STAND_DIR?= $S/arch/pmax/stand
-### find out what to use for libpmax
-PMAXDIR= ${PMAX_STAND_DIR}/lib
-.include "${PMAXDIR}/Makefile.inc"
-LIBPMAX=		${PMAXLIB}
+### find out what to use for libsa
+SA_AS=		library
+.if defined(PRIMARY_PROG)
+SAMISCMAKEFLAGS+=SA_INCLUDE_NET=no
+.endif
+.if defined(SECONDARY_PROG)
+SAMISCMAKEFLAGS+=SA_USE_LOADFILE=yes SA_USE_CREAD=yes
+# for now:
+SAMISCMAKEFLAGS+=SA_INCLUDE_NET=no
+.endif
+.include "${S}/lib/libsa/Makefile.inc"
+LIBSA=		${SALIB}
 
-LIBS=	${LIBPMAX} ${LIBKERN} ${LIBSA} ${LIBZ} ${LIBKERN} ${LIBPMAX}
-VERS_O?=vers.o
+LIBS=		${LIBSA} ${LIBZ} ${LIBSA} ${LIBKERN}
+
 
 ${PROG}: ${OBJS} ${LIBS}
-.if ${VERS_O} != ""
-	sh ${PMAX_STAND_DIR}/lib/newvers.sh ${VERSIONFILE} ${NEWVERSWHAT}
+.if defined(VERS_O)
+	sh ${.CURDIR}/../common/newvers.sh ${.CURDIR}/version
 	${COMPILE.c} vers.c
 .endif
-	ld -Map ${PROG}.map -N -x -Ttext ${RELOC} ${LDBUG} -e start \
-	    ${OBJS} ${VERS_O} ${LIBS} -o ${PROG}
+	${LD} -Map ${PROG}.map -N -x -Ttext ${LOAD_ADDRESS} ${LDBUG} \
+	    -e start -o ${PROG} ${OBJS} ${VERS_O} ${LIBS}
+	@${SIZE} ${PROG}
+.if defined(CHECKSIZE_CMD)
+	@${CHECKSIZE_CMD} ${PROG} ${PRIMARY_MAX_LOAD} ${PRIMARY_MAX_TOTAL} || \
+	    (rm -f ${PROG} ; false)
+.endif
 
-CLEANFILES+=${PROG}.map
-.if ${VERS_O} != ""
+CLEANFILES+=	${PROG}.map
+.if defined(VERS_O)
 CLEANFILES+=vers.c vers.o
 .endif
 
@@ -82,9 +122,3 @@ cleanlibdir:
 	rm -rf lib
 
 .include <bsd.prog.mk>
-
-# be sure to turn off any PIC flags for standalone library code.
-CPICFLAGS=
-CAPICFLAGS=
-CPPPICFLAGS=
-APICFLAGS=

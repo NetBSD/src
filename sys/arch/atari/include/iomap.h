@@ -1,4 +1,4 @@
-/*	$NetBSD: iomap.h,v 1.6 1999/09/22 07:15:43 leo Exp $	*/
+/*	$NetBSD: iomap.h,v 1.6.8.1 1999/12/27 18:31:49 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -60,6 +60,8 @@ vaddr_t	pci_mem_addr;		/* KVA base of PCI mem-space		*/
 #define PCI_CONF_SIZE	(4 * NBPG)
 #define PCI_IO_SIZE	(NBPG)
 #define PCI_VGA_SIZE	(32 * 1024)
+
+#define	BOOTM_VA_POOL	(32 * 8192)	/* Pre-allocated VA-space	*/
 
 #define	AD_RAM		(0x000000L)	/* main memory			*/
 #define	AD_CART		(0xFA0000L)	/* expansion cartridge		*/

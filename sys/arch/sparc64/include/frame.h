@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.5 1998/09/22 02:48:43 eeh Exp $ */
+/*	$NetBSD: frame.h,v 1.5.12.1 1999/12/27 18:33:57 wrstuden Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -75,8 +75,6 @@ struct frame32 {
  * area at times anyway.
  */
 #define CCFSZ		96
-#define STACK_ALIGN	8
-#define SA(X)	(((X)+(STACK_ALIGN-1))&~(STACK_ALIGN-1))
 
 
 /*
@@ -110,8 +108,6 @@ struct frame64 {
  * by the compiler in 64-bit mode.  It is (16)*8; space for 8 ins, 8 outs.
  */
 #define CC64FSZ		176
-#define STACK_ALIGN64	16
-#define SA64(x)		(((x)+(STACK_ALIGN64-1))&~(STACK_ALIGN64-1))
 
 /*
  * v9 stacks all have a bias of 2047 added to the %sp and %fp, so you can easily

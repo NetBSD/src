@@ -1,4 +1,4 @@
-/* $NetBSD: installboot.c,v 1.1 1999/11/28 00:32:29 simonb Exp $ */
+/* $NetBSD: installboot.c,v 1.1.2.1 1999/12/27 18:33:34 wrstuden Exp $ */
 
 /*
  * Copyright (c) 1999 Ross Harvey.  All rights reserved.

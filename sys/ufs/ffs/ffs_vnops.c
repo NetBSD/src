@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.19 1999/08/03 20:19:21 wrstuden Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.19.8.1 1999/12/27 18:36:37 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -110,6 +110,7 @@ struct vnodeopv_entry_desc ffs_vnodeop_entries[] = {
 	{ &vop_advlock_desc, ufs_advlock },		/* advlock */
 	{ &vop_blkatoff_desc, ffs_blkatoff },		/* blkatoff */
 	{ &vop_valloc_desc, ffs_valloc },		/* valloc */
+	{ &vop_balloc_desc, ffs_balloc },		/* balloc */
 	{ &vop_reallocblks_desc, ffs_reallocblks },	/* reallocblks */
 	{ &vop_vfree_desc, ffs_vfree },			/* vfree */
 	{ &vop_truncate_desc, ffs_truncate },		/* truncate */
@@ -228,6 +229,116 @@ int doclusterread = 1;
 int doclusterwrite = 1;
 
 #include <ufs/ufs/ufs_readwrite.c>
+
+/*
+ * Synch an open file.
+ */
+/* ARGSUSED */
+int
+ffs_fsync(v)
+	void *v;
+{
+	struct vop_fsync_args /* {
+		struct vnode *a_vp;
+		struct ucred *a_cred;
+		int a_flags;
+		struct proc *a_p;
+	} */ *ap = v;
+	struct vnode *vp = ap->a_vp;
+	struct buf *bp, *nbp;
+	struct timespec ts;
+	int s, error, passes, skipmeta;
+
+	if (vp->v_type == VBLK &&
+	    vp->v_specmountpoint != NULL &&
+	    (vp->v_specmountpoint->mnt_flag & MNT_SOFTDEP))
+		softdep_fsync_mountdev(vp);
+	
+	/* 
+	 * Flush all dirty buffers associated with a vnode
+	 */
+	passes = NIADDR + 1;
+	skipmeta = 0;
+	if (ap->a_flags & (FSYNC_DATAONLY|FSYNC_WAIT))
+		skipmeta = 1;
+	s = splbio();
+loop:
+	for (bp = vp->v_dirtyblkhd.lh_first; bp;
+	     bp = bp->b_vnbufs.le_next)
+		bp->b_flags &= ~B_SCANNED;
+	for (bp = vp->v_dirtyblkhd.lh_first; bp; bp = nbp) {
+		nbp = bp->b_vnbufs.le_next;
+		if (bp->b_flags & (B_BUSY | B_SCANNED))
+			continue;
+		if ((bp->b_flags & B_DELWRI) == 0)
+			panic("ffs_fsync: not dirty");
+		if (skipmeta && bp->b_lblkno < 0)
+			continue;
+		bp->b_flags |= B_BUSY | B_VFLUSH | B_SCANNED;
+		splx(s);
+		/*
+		 * On our final pass through, do all I/O synchronously
+		 * so that we can find out if our flush is failing
+		 * because of write errors.
+		 */
+		if (passes > 0 || !(ap->a_flags & FSYNC_WAIT))
+			(void) bawrite(bp);
+		else if ((error = bwrite(bp)) != 0)
+			return (error);
+		s = splbio();
+		/*
+		 * Since we may have slept during the I/O, we need
+		 * to start from a known point.
+		 */
+		nbp = vp->v_dirtyblkhd.lh_first;
+	}
+	if (skipmeta && !(ap->a_flags & FSYNC_DATAONLY)) {
+		skipmeta = 0;
+		goto loop;
+	}
+	if (ap->a_flags & FSYNC_WAIT) {
+		while (vp->v_numoutput) {
+			vp->v_flag |= VBWAIT;
+			sleep((caddr_t)&vp->v_numoutput, PRIBIO + 1);
+		}
+
+		if (ap->a_flags & FSYNC_DATAONLY) {
+			splx(s);
+			return 0;
+		}
+
+		/* 
+		 * Ensure that any filesystem metadata associated
+		 * with the vnode has been written.
+		 */
+		splx(s);
+		if ((error = softdep_sync_metadata(ap)) != 0)
+			return (error);
+		s = splbio();
+
+                if (vp->v_dirtyblkhd.lh_first) {
+                       /*
+                        * Block devices associated with filesystems may
+                        * have new I/O requests posted for them even if
+                        * the vnode is locked, so no amount of trying will
+                        * get them clean. Thus we give block devices a
+                        * good effort, then just give up. For all other file
+                        * types, go around and try again until it is clean.
+                        */
+                       if (passes > 0) {
+                               passes -= 1;
+                               goto loop;
+                       }
+#ifdef DIAGNOSTIC
+		       if (vp->v_type != VBLK)
+			       vprint("ffs_fsync: dirty", vp);
+#endif
+                }
+        }
+        splx(s);
+	TIMEVAL_TO_TIMESPEC(&time, &ts);
+	return (VOP_UPDATE(vp, &ts, &ts, ap->a_flags & FSYNC_WAIT));
+}
 
 /*
  * Reclaim an inode so that it can be used for other purposes.

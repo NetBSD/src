@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.55 1999/07/20 09:47:07 mrg Exp $
+#	$NetBSD: Makefile,v 1.55.4.1 1999/12/27 18:29:23 wrstuden Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 SRCTOP=	..
 .include <bsd.crypto.mk>
 
 SUBDIR=	csu libarch libbz2 libc libcompat libcrypt libcurses libedit libkvm \
-	libl libm libntp libossaudio libpcap libposix libresolv librmt \
+	libl libm libmenu libntp libossaudio libpcap libposix libresolv librmt \
 	librpcsvc libskey libterm libusb libutil libwrap liby libz
 
 # XXX Crypto bits must be dealt with before libtelnet.

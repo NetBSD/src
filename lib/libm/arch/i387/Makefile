@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.1 1999/12/13 09:36:29 christos Exp $
+#  $NetBSD: Makefile,v 1.1.2.1 1999/12/27 18:29:59 wrstuden Exp $
 #
 
 NOLINT=yes

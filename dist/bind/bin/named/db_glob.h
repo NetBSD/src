@@ -1,4 +1,4 @@
-/*	$NetBSD: db_glob.h,v 1.1.1.1 1999/11/20 18:53:59 veego Exp $	*/
+/*	$NetBSD: db_glob.h,v 1.1.1.1.4.1 1999/12/27 18:27:17 wrstuden Exp $	*/
 
 /*
  *	from db.h	4.16 (Berkeley) 6/1/90

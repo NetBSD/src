@@ -1,4 +1,4 @@
-/*	$NetBSD: floatsidf.S,v 1.4 1999/05/02 20:17:21 kleink Exp $	*/
+/*	$NetBSD: floatsidf.S,v 1.4.2.1 1999/12/27 18:29:29 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -43,17 +43,17 @@
 #if 0
 	RCSID("from: @(#)floatsidf.s	5.1 (Berkeley) 6/7/90")
 #else
-	RCSID("$NetBSD: floatsidf.S,v 1.4 1999/05/02 20:17:21 kleink Exp $")
+	RCSID("$NetBSD: floatsidf.S,v 1.4.2.1 1999/12/27 18:29:29 wrstuden Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 /* (double) int */
 ENTRY(__floatsidf)
-	fmovel	sp@(4),fp0
+	fmovel	%sp@(4),%fp0
 #ifndef __SVR4_ABI__
-	fmoved	fp0,sp@-
-	movel	sp@+,d0
-	movel	sp@+,d1
+	fmoved	%fp0,%sp@-
+	movel	%sp@+,%d0
+	movel	%sp@+,%d1
 #endif
 	rts
 

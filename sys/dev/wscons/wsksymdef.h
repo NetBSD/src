@@ -1,4 +1,4 @@
-/*	$NetBSD: wsksymdef.h,v 1.25 1999/05/11 09:21:07 drochner Exp $ */
+/*	$NetBSD: wsksymdef.h,v 1.25.8.1 1999/12/27 18:35:48 wrstuden Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -474,8 +474,9 @@
 #define KB_LK401		0x0004	/* DEC LK401 instead LK201 */
 #define KB_SWAPCTRLCAPS		0x0008	/* Swap Control-L and Caps-Lock */
 #define KB_DVORAK		0x0010	/* Dvorak layout */
+#define KB_METAESC		0x0020	/* generate ESC prefix on ALT-key */
 
-#define KB_NAMETAB \
+#define KB_ENCTAB \
 	{ KB_USER,	"user" }, \
 	{ KB_US,	"us" }, \
 	{ KB_DE,	"de" }, \
@@ -484,11 +485,14 @@
 	{ KB_FR,	"fr" }, \
 	{ KB_UK,	"uk" }, \
 	{ KB_JP,	"jp" }, \
-	{ KB_SV,	"sv" }, \
+	{ KB_SV,	"sv" }
+
+#define KB_VARTAB \
 	{ KB_NODEAD,	"nodead" }, \
 	{ KB_DECLK,	"declk" }, \
 	{ KB_LK401,	"lk401" }, \
 	{ KB_SWAPCTRLCAPS, "swapctrlcaps" }, \
-	{ KB_DVORAK,	"dvorak" }
+	{ KB_DVORAK,	"dvorak" }, \
+	{ KB_METAESC,	"metaesc" }
 
 #endif /* !_DEV_WSCONS_WSKSYMDEF_H_ */

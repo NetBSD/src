@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.2 1997/04/16 23:02:00 thorpej Exp $	*/
+/*	$NetBSD: psl.h,v 1.2.28.1 1999/12/27 18:33:40 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -34,32 +34,40 @@
 #define	_MACHINE_PSL_H_
 
 /*
- * Flags in MSR:
+ * Machine State Register (MSR)
+ *
+ * The PowerPC 601 does not implement the following bits:
+ *
+ *	POW, ILE, BE, RI, LE[*]
+ *
+ * [*] Little-endian mode on the 601 is implemented in the HID0 register.
  */
-#define	PSL_POW		0x00040000
-#define	PSL_ILE		0x00010000
-#define	PSL_EE		0x00008000
-#define	PSL_PR		0x00004000
-#define	PSL_FP		0x00002000
-#define	PSL_ME		0x00001000
-#define	PSL_FE0		0x00000800
-#define	PSL_SE		0x00000400
-#define	PSL_BE		0x00000200
-#define	PSL_FE1		0x00000100
-#define	PSL_IP		0x00000040
-#define	PSL_IR		0x00000020
-#define	PSL_DR		0x00000010
-#define	PSL_RI		0x00000002
-#define	PSL_LE		0x00000001
+#define	PSL_POW		0x00040000	/* power management */
+#define	PSL_ILE		0x00010000	/* interrupt endian mode (1 == le) */
+#define	PSL_EE		0x00008000	/* external interrupt enable */
+#define	PSL_PR		0x00004000	/* privilege mode (1 == user) */
+#define	PSL_FP		0x00002000	/* floating point enable */
+#define	PSL_ME		0x00001000	/* machine check enable */
+#define	PSL_FE0		0x00000800	/* floating point interrupt mode 0 */
+#define	PSL_SE		0x00000400	/* single-step trace enable */
+#define	PSL_BE		0x00000200	/* branch trace enable */
+#define	PSL_FE1		0x00000100	/* floating point interrupt mode 1 */
+#define	PSL_IP		0x00000040	/* interrupt prefix */
+#define	PSL_IR		0x00000020	/* interrupt address relocation */
+#define	PSL_DR		0x00000010	/* data address relocation */
+#define	PSL_RI		0x00000002	/* recoverable interrupt */
+#define	PSL_LE		0x00000001	/* endian mode (1 == le) */
+
+#define	PSL_601_MASK	~(PSL_POW|PSL_ILE|PSL_BE|PSL_RI|PSL_LE)
 
 /*
  * Floating-point exception modes:
  */
-#define	PSL_FE_DIS	0
-#define	PSL_FE_NONREC	PSL_FE1
-#define	PSL_FE_REC	PSL_FE0
-#define	PSL_FE_PREC	(PSL_FE0 | PSL_FE1)
-#define	PSL_FE_DFLT	PSL_FE_DIS
+#define	PSL_FE_DIS	0		/* none */
+#define	PSL_FE_NONREC	PSL_FE1		/* imprecise non-recoverable */
+#define	PSL_FE_REC	PSL_FE0		/* imprecise recoverable */
+#define	PSL_FE_PREC	(PSL_FE0 | PSL_FE1) /* precise */
+#define	PSL_FE_DFLT	PSL_FE_DIS	/* default == none */
 
 /*
  * Note that PSL_POW and PSL_ILE are not in the saved copy of the MSR
