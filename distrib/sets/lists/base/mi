@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.466 2004/01/30 08:44:10 lukem Exp $
+# $NetBSD: mi,v 1.467 2004/03/09 20:10:47 garbled Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -2684,12 +2684,19 @@
 ./usr/share/sushi/system/weeklyconf/script1	base-sushi-share	share
 ./usr/share/sushi/system/weeklyconf/script3	base-sushi-share	share
 ./usr/share/sushi/users				base-sushi-share
+./usr/share/sushi/users/addgroup		base-sushi-share
+./usr/share/sushi/users/addgroup/form		base-sushi-share	share
+./usr/share/sushi/users/addgroup/script		base-sushi-share	share
 ./usr/share/sushi/users/adduser			base-sushi-share
 ./usr/share/sushi/users/adduser/form		base-sushi-share	share
 ./usr/share/sushi/users/adduser/script		base-sushi-share	share
 ./usr/share/sushi/users/adduser/script1		base-sushi-share	share
 ./usr/share/sushi/users/adduser/script2		base-sushi-share	share
 ./usr/share/sushi/users/adduser/script3		base-sushi-share	share
+./usr/share/sushi/users/delgroup		base-sushi-share
+./usr/share/sushi/users/delgroup/form		base-sushi-share	share
+./usr/share/sushi/users/delgroup/script		base-sushi-share	share
+./usr/share/sushi/users/delgroup/script1	base-sushi-share	share
 ./usr/share/sushi/users/deluser			base-sushi-share
 ./usr/share/sushi/users/deluser/form		base-sushi-share	share
 ./usr/share/sushi/users/deluser/preform		base-sushi-share	share
@@ -2701,8 +2708,20 @@
 ./usr/share/sushi/users/disuser/script		base-sushi-share	share
 ./usr/share/sushi/users/disuser/script1		base-sushi-share	share
 ./usr/share/sushi/users/index			base-sushi-share	share
+./usr/share/sushi/users/listgroup		base-sushi-share
+./usr/share/sushi/users/listgroup/script	base-sushi-share	share
 ./usr/share/sushi/users/listuser		base-sushi-share
 ./usr/share/sushi/users/listuser/script		base-sushi-share	share
+./usr/share/sushi/users/moduser			base-sushi-share
+./usr/share/sushi/users/moduser/form		base-sushi-share	share
+./usr/share/sushi/users/moduser/preform		base-sushi-share	share
+./usr/share/sushi/users/moduser/script		base-sushi-share	share
+./usr/share/sushi/users/moduser/script1		base-sushi-share	share
+./usr/share/sushi/users/moduser/script2		base-sushi-share	share
+./usr/share/sushi/users/passwd			base-sushi-share
+./usr/share/sushi/users/passwd/form		base-sushi-share	share
+./usr/share/sushi/users/passwd/script		base-sushi-share	share
+./usr/share/sushi/users/passwd/script1		base-sushi-share	share
 ./usr/share/sushi/util				base-sushi-share
 ./usr/share/sushi/util/help			base-sushi-share	share
 ./usr/share/sushi/util/index			base-sushi-share	share
