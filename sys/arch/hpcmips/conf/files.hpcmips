@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcmips,v 1.64 2001/11/28 10:21:14 lukem Exp $
+#	$NetBSD: files.hpcmips,v 1.65 2001/12/23 13:32:33 takemura Exp $
 
 # maxpartitions must be first item in files.${ARCH}.
 maxpartitions 8
@@ -54,6 +54,7 @@ file	arch/hpcmips/hpcmips/autoconf.c
 file	arch/hpcmips/hpcmips/bus_dma.c
 file	arch/hpcmips/hpcmips/bus_space.c
 file	arch/hpcmips/hpcmips/bus_space_notimpl.c
+file	arch/hpcmips/hpcmips/bus_space_through.c
 file	arch/hpcmips/hpcmips/conf.c
 file	arch/hpcmips/hpcmips/interrupt.c
 file	arch/hpcmips/hpcmips/machdep.c
@@ -389,6 +390,10 @@ include "dev/pcmcia/files.pcmcia"
 # Serial Interface Unit
 attach com at vrip with com_vrip
 file	arch/hpcmips/vr/com_vrip.c			com_vrip
+
+device sg2com
+attach sg2com at vrip with sg2com_vrip
+file	arch/hpcmips/vr/sg2com_vrip.c			sg2com_vrip needs-flag
 
 # Memory Disk for boot tape
 file dev/md_root.c				memory_disk_hooks
