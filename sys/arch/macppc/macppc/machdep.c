@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.106 2001/12/05 05:02:11 chs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.107 2001/12/10 02:46:05 augustss Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -952,8 +952,16 @@ cninit_kd()
 	if (OF_call_method("`usb-kbd-ihandles", stdin, 0, 1, &ukbds) != -1 &&
 	    ukbds != NULL && ukbds->ihandle != 0 &&
 	    OF_instance_to_package(ukbds->ihandle) != -1) {
-
 		printf("console keyboard type: USB\n");
+		ukbd_cnattach();
+		goto kbd_found;
+	}
+	/* Try old method name. */
+	if (OF_call_method("`usb-kbd-ihandle", stdin, 0, 1, &akbd) != -1 &&
+	    akbd != 0 &&
+	    OF_instance_to_package(akbd) != -1) {
+		printf("console keyboard type: USB\n");
+		stdin = akbd;
 		ukbd_cnattach();
 		goto kbd_found;
 	}
@@ -963,7 +971,6 @@ cninit_kd()
 	if (OF_call_method("`adb-kbd-ihandle", stdin, 0, 1, &akbd) != -1 &&
 	    akbd != 0 &&
 	    OF_instance_to_package(akbd) != -1) {
-
 		printf("console keyboard type: ADB\n");
 		stdin = akbd;
 		akbd_cnattach();
