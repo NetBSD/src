@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vfsops.c,v 1.9 1999/02/26 23:44:50 wrstuden Exp $	*/
+/*	$NetBSD: ufs_vfsops.c,v 1.10 2000/03/16 18:26:49 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994
@@ -56,6 +56,9 @@
 #include <ufs/ufs/inode.h>
 #include <ufs/ufs/ufsmount.h>
 #include <ufs/ufs/ufs_extern.h>
+
+/* how many times ufs_init() was called */
+int ufs_initcount = 0;
 
 /*
  * Make a filesystem operational.
@@ -219,17 +222,29 @@ ufs_fhtovp(mp, ufhp, vpp)
 /*
  * Initialize UFS filesystems, done only once.
  */
-
 void
 ufs_init()
 {
-	static int done = 0;
-
-	if (done)
+	if (ufs_initcount++ > 0)
 		return;
-	done = 1;
+
 	ufs_ihashinit();
 #ifdef QUOTA
 	dqinit();
+#endif
+}
+
+/*
+ * Free UFS filesystem resources, done only once.
+ */
+void
+ufs_done()
+{
+	if (--ufs_initcount > 0)
+		return;
+
+	ufs_ihashdone();
+#ifdef QUOTA
+	dqdone();
 #endif
 }
