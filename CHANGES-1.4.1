@@ -1,0 +1,389 @@
+#	$NetBSD: CHANGES-1.4.1,v 1.1.2.1 1999/08/08 07:00:04 cgd Exp $
+
+Woefully incomplete partial list of changes from NetBSD 1.4 to NetBSD 1.4.1:
+
+File						Version(s)
+----						--------
+
+sys/sys/mman.h					1.21
+
+  Provide the (documented, but not #defined) MADV_SPACEAVAIL madvise()
+  constant.  (cgd)
+
+sys/arch/alpha/alpha/db_instruction.h		1.5
+sys/arch/alpha/alpha/db_interface.c		1.7
+sys/arch/alpha/alpha/db_disasm.c		1.6
+sys/arch/alpha/alpha/trap.c			1.48-1.49
+
+  Implement BWX instruction emulation and handle unaligned BWX
+  accesses (for user processes) as required by the Alpha Architecture.
+  Fixes PR#7536.  (cgd)
+
+sys/compat/common/compat_util.c			1.13-1.14
+
+  Fix emul_find()'s handling of in-kernel buffers (it could return
+  incorrect pointers, which could lead to memory corruption).  (cgd)
+
+bin/csh/proc.c					1.18-1.20
+
+  Fix a potential memory corruption problem with the 'kill' builtin
+  that showed itself on NetBSD/alpha as an unaligned access.  (cgd)
+
+sys/arch/alpha/stand/bootxx/bootxx.c		1.15
+sys/arch/alpha/stand/common/bootxx.c		1.4
+sys/arch/alpha/stand/netboot/if_prom.c		1.13
+
+  Get the capitalization of the port name consistently correct.  (cgd)
+
+distrib/utils/libhack/opendir.c			1.2
+distrib/utils/libhack/perror.c			1.2
+distrib/utils/libhack/strerror.c		1.2
+distrib/utils/libhack/strsignal.c		1.2
+distrib/utils/libhack/utmp.c			1.2
+
+  Fix warnings that occurred compiling on some architectures.  (cgd)
+
+usr.bin/crunch/crunchgen/crunchgen.c		1.11
+
+  Put temporary files in /tmp and and change directory into
+  source directories so that relative path specifications in
+  Makefiles work properly.  (cgd)
+
+sbin/disklabel/disklabel.8			1.27
+
+  Kill some bogus comments about -r: it does not cause the boot
+  area to be clobbered.  (cgd)
+
+sbin/disklabel/Makefile				1.33
+sbin/disklabel/disklabel.c			1.70
+
+  On NetBSD/alpha, go out of the way to read the boot area's contents
+  if -r is specified, so that the boot blocks aren't clobbered when
+  writing labels.  (cgd)
+
+distrib/utils/script-installer/dot.instutils	1.5
+
+  Explicitly mention that the domain name requested is the DNS
+  domain name.  (cgd)
+
+sys/arch/alpha/stand/installboot/installboot.c	1.16
+
+  Fix a problem where disks would remain unbootable even after
+  'installboot' was run because of an uninitialized value in
+  the Alpha Boot Block.  (cgd)
+
+usr.sbin/pkg_install/add/perform.c		1.31
+usr.sbin/pkg_install/add/pkg_add.1		1.15
+usr.sbin/pkg_install/lib/file.c			1.27
+
+  Add support for http:// URLs in the package tools.  (cgd)
+
+etc/etc.arm32/ttys				1.5
+
+  Remove 'secure' from pty lines.  (cgd)
+
+sys/arch/alpha/alpha/machdep.c			1.171
+sys/arch/alpha/alpha/trap.c			1.45-1.46
+sys/arch/alpha/alpha/osf1_locore.s		1.1 (new)
+sys/arch/alpha/conf/ALPHA			1.96
+sys/arch/alpha/conf/BABYLON			1.14
+sys/arch/alpha/conf/GENERIC			1.118
+sys/arch/alpha/conf/NOSY			1.29
+sys/arch/alpha/conf/files.alpha			1.101
+sys/arch/alpha/include/ecoff_machdep.h		1.5
+sys/kern/kern_prot.c				1.54
+sys/kern/uipc_syscalls.c			1.42
+sys/kern/exec_ecoff.c				1.10
+sys/sys/exec_ecoff.h				1.11
+sys/sys/tty.h					1.47
+sys/sys/ioctl.h					1.25
+sys/compat/common/compat_util.c			1.12
+sys/compat/common/compat_util.h			1.6
+sys/compat/osf1/README.dynamic			1.2-1.3
+sys/compat/osf1/README.syscalls			1.2
+sys/compat/osf1/files.osf1			1.4-1.16
+sys/compat/osf1/osf1.h				1.1-1.21 (new)
+sys/compat/osf1/osf1_cvt.c			1.1-1.7 (new)
+sys/compat/osf1/osf1_cvt.h			1.1-1.6 (new)
+sys/compat/osf1/osf1_cvt_errno.c		1.1-1.5 (new)
+sys/compat/osf1/osf1_cvt_signal.c		1.1 (new)
+sys/compat/osf1/osf1_descrip.c			1.1-1.3,1.5 (new)
+sys/compat/osf1/osf1_errno.h			1.1-1.3 (new)
+sys/compat/osf1/osf1_exec.c			1.1 (new)
+sys/compat/osf1/osf1_file.c			1.1-1.5 (new)
+sys/compat/osf1/osf1_generic.c			1.1-1.2 (new)
+sys/compat/osf1/osf1_ioctl.c			1.7-1.11
+sys/compat/osf1/osf1_misc.c			1.16-1.52
+sys/compat/osf1/osf1_mmap.c			1.1-1.3 (new)
+sys/compat/osf1/osf1_mount.c			1.9-1.14
+sys/compat/osf1/osf1_prot.c			1.1-1.2 (new)
+sys/compat/osf1/osf1_resource.c			1.1-1.2 (new)
+sys/compat/osf1/osf1_signal.c			1.7-1.16
+sys/compat/osf1/osf1_signal.h			1.3-1.6
+sys/compat/osf1/osf1_socket.c			1.1-1.5 (new)
+sys/compat/osf1/osf1_sysv_ipc.c			1.1-1.2 (new)
+sys/compat/osf1/osf1_time.c			1.1-1.2 (new)
+sys/compat/osf1/osf1_util.h			1.4-1.5
+sys/compat/osf1/syscalls.master			1.14-1.30
+sys/compat/osf1/osf1_syscall.h			regenerate
+sys/compat/osf1/osf1_syscallargs.h		regenerate
+sys/compat/osf1/osf1_syscalls.c			regenerate
+sys/compat/osf1/osf1_sysent.c			regenerate
+
+  Make Digital UNIX (formerly DEC OSF/1) compatibilty functional again,
+  and greatly improve it (implement support for dynamically linked
+  binaries and more syscalls).  It's now capable of running many
+  applications, including Netscape Navigator.  (cgd)
+
+usr.bin/msgc/msg_sys.def			1.2-1.9
+usr.bin/msgc/msgc.1				1.4
+usr.bin/msgc/msgdb.c				1.3-1.5
+
+  Various improvements to msgc(1) including editing improvements (word
+  and line kill support via ^W and ^U respectively), various bug fixes,
+  and some display optimizations.  (cgd)
+
+usr.bin/menuc/main.c				1.5-1.6
+usr.bin/menuc/mdb.c				1.13-1.14
+usr.bin/menuc/mdb.h				1.4
+usr.bin/menuc/menu_sys.def			1.16-1.21
+usr.bin/menuc/parse.y				1.7
+usr.bin/menuc/scan.l				1.8
+
+  Various improvements to menuc(1) including bug fixes (more descriptive
+  error messages, improved horizontal placement algorithm, separate
+  initialization function for better error handling, better title
+  position and menu sizing), and functionality enhancements (horizontal
+  menu centering, ability to provide an "exit" item string).  (cgd)
+
+Makefile.inc					1.5
+SPELLING.en					1.1 (new)
+TODO						1.18
+arch/alpha/md.c					1.15-1.17
+arch/alpha/md.h					1.3
+arch/alpha/menus.md.en				1.1-1.9 (new)
+arch/alpha/menus.md.eng				deleted
+arch/alpha/menus.md.fr				1.7-1.9
+arch/alpha/msg.md.en				1.1-1.4 (new)
+arch/alpha/msg.md.eng				deleted
+arch/alpha/msg.md.fr				1.3-1.4
+arch/arm32/md.c					1.19-1.21
+arch/arm32/md.h					1.7
+arch/arm32/menus.md.en				1.1-1.8 (new)
+arch/arm32/menus.md.eng				deleted
+arch/arm32/menus.md.fr				1.5-1.7
+arch/arm32/msg.md.en				1.1-1.4 (new)
+arch/arm32/msg.md.eng				deleted
+arch/arm32/msg.md.fr				1.2-1.3
+arch/bebox/md.c					1.11-1.12
+arch/bebox/md.h					1.2
+arch/bebox/menus.md.en				1.1-1.7 (new)
+arch/bebox/menus.md.eng				deleted
+arch/bebox/menus.md.fr				1.4-1.6
+arch/bebox/msg.md.en				1.1-1.5 (new)
+arch/bebox/msg.md.eng				deleted
+arch/bebox/msg.md.fr				1.2
+arch/i386/md.c					1.27-1.29
+arch/i386/md.h					1.15
+arch/i386/menus.md.en				1.1-1.25 (new)
+arch/i386/menus.md.eng				deleted
+arch/i386/menus.md.fr				1.17-1.20
+arch/i386/msg.md.en				1.1-1.15 (new)
+arch/i386/msg.md.eng				deleted
+arch/i386/msg.md.fr				1.10
+arch/mac68k/md.c				1.6-1.8
+arch/mac68k/md.h				1.2-1.3
+arch/mac68k/menus.md.en				1.1-1.5 (new)
+arch/mac68k/menus.md.eng			deleted
+arch/mac68k/msg.md.en				1.1-1.4 (new)
+arch/mac68k/msg.md.eng				deleted
+arch/macppc/md.c				1.11-1.12
+arch/macppc/md.h				1.3
+arch/macppc/menus.md.en				1.1-1.8 (new)
+arch/macppc/menus.md.eng			deleted
+arch/macppc/menus.md.fr				1.6-1.8
+arch/macppc/msg.md.en				1.1-1.3 (new)
+arch/macppc/msg.md.eng				deleted
+arch/macppc/msg.md.fr				1.2-1.3
+arch/pc532/md.c					1.17
+arch/pc532/md.h					1.7-1.8
+arch/pc532/menus.md.en				1.1 (new)
+arch/pc532/menus.md.eng				deleted
+arch/pc532/menus.md.fr				1.4-1.5
+arch/pc532/msg.md.en				1.1-1.6 (new)
+arch/pc532/msg.md.eng				deleted
+arch/pc532/msg.md.fr				1.2-1.3
+arch/pmax/md.c					1.31-1.32
+arch/pmax/md.h					1.11
+arch/pmax/menus.md.en				1.1-1.11 (new)
+arch/pmax/menus.md.eng				deleted
+arch/pmax/menus.md.fr				1.4-1.6
+arch/pmax/msg.md.en				1.1-1.6 (new)
+arch/pmax/msg.md.eng				deleted
+arch/pmax/msg.md.fr				1.2-1.3
+arch/sparc/md.c					1.13-1.14
+arch/sparc/md.h					1.1-1.2
+arch/sparc/menus.md.en				1.1-1.8 (new)
+arch/sparc/menus.md.eng				deleted
+arch/sparc/menus.md.fr				1.6-1.8
+arch/sparc/msg.md.en				1.1-1.3 (new)
+arch/sparc/msg.md.eng				deleted
+arch/sparc/msg.md.fr				1.2-1.3
+arch/vax/md.c					1.7-1.8
+arch/vax/md.h					1.2
+arch/vax/menus.md.en				1.1-1.6 (new)
+arch/vax/menus.md.eng				deleted
+arch/vax/menus.md.fr				1.3-1.5
+arch/vax/msg.md.en				1.1-1.3 (new)
+arch/vax/msg.md.eng				deleted
+arch/vax/msg.md.fr				1.2-1.3
+defs.h						1.41-1.45
+disks.c						1.27
+factor.c					1.10
+install.c					1.17-1.19
+label.c						1.12
+main.c						1.14-1.19
+mbr.c						1.16
+mbr.h						1.7
+menus.mi.en					1.1-1.34 (new)
+menus.mi.eng					deleted
+menus.mi.fr					1.17-1.21
+msg.mi.en					1.1-1.49 (new)
+msg.mi.eng					deleted
+msg.mi.fr					1.19-1.24
+net.c						1.45-1.53
+run.c						1.15-1.21
+target.c					1.22
+txtwalk.c					1.5
+txtwalk.h					1.5
+upgrade.c					1.18-1.20
+util.c						1.41-1.46
+
+  Many improvements and bug fixes.  Should address (at least) the
+  following PRs: PR#4740, PR#5911, PR#6431, PR#6955. PR#7186, PR#7248,
+  PR#7520, PR#7523, PR#7806, PR#7833, and PR#7839, as well as problems
+  found when researching those PRs and some portions of other PRs.  Also
+  includes various display improvements and cleanups, and support for
+  word kill (^W) and line kill (^U) when responding to prompts.  (cgd)
+
+usr.bin/ftp/cmds.c				1.51
+usr.bin/ftp/cmdtab.c				1.21
+usr.bin/ftp/complete.c				1.22-1.24
+usr.bin/ftp/extern.h				1.29
+usr.bin/ftp/fetch.c				1.56
+usr.bin/ftp/ftp_var.h				1.32
+usr.bin/ftp/main.c				1.43
+usr.bin/ftp/util.c				1.50
+
+  Modularize the "SMALL" #ifdefs so that the install media can include
+  the progress meter but omit some other non-SMALL features (like
+  editing/completion).  (cgd)
+
+distrib/utils/x_ftp/Makefile			1.4-1.6
+
+  Include progress meter support in the installation binaries.  It's not
+  that large and it can be very handy when downloading the sets from a
+  remote site.  (cgd)
+
+sys/arch/arm32/conf/SHARK			1.22-1.23
+sys/arch/arm32/conf/SHARKINST			1.1-1.3 (new)
+
+  Clean up SHARK kernel memory disk-related options.  Add a kernel akin
+  to SHARK with space for a memory disk, for diskless boot and
+  installation.  (cgd)
+
+distrib/arm32/ramdisk/Makefile			1.10
+etc/etc.arm32/disktab				1.5-1.6
+
+  Since all of the arm32 kernels provide 3400 blocks of ramdisk space,
+  we ought to use it (and not just 3200 blocks).  (cgd)
+
+distrib/alpha/instkernel/ramdisk/dot.hdprofile	1.2
+distrib/alpha/instkernel/ramdisk/dot.profile	1.3
+distrib/amiga/floppies/inst/dot.profile		1.5
+distrib/amiga/floppies/upgr/dot.hdprofile	1.4
+distrib/amiga/floppies/upgr/dot.profile		1.4
+distrib/amiga/miniroot/dot.profile		1.5
+distrib/arm32/floppies/inst/dot.hdprofile	1.3
+distrib/arm32/floppies/inst/dot.profile		1.4
+distrib/arm32/floppies/upgr/dot.hdprofile	1.3
+distrib/arm32/floppies/upgr/dot.profile		1.4
+distrib/arm32/ramdisk/dot.hdprofile		1.4
+distrib/arm32/ramdisk/dot.profile		1.5
+distrib/atari/miniroot/dot.profile		1.5
+distrib/bebox/floppies/ramdisk/dot.hdprofile	1.2
+distrib/bebox/floppies/ramdisk/dot.profile	1.2
+distrib/hp300/miniroot/dot.profile		1.3
+distrib/i386/floppies/ramdisk/dot.hdprofile	1.4
+distrib/i386/floppies/ramdisk/dot.profile	1.6
+distrib/mac68k/instkernel/ramdisk/dot.hdprofile	1.2
+distrib/mac68k/instkernel/ramdisk/dot.profile	1.2
+distrib/mac68k/miniroot/dot.profile		1.4
+distrib/macppc/floppies/ramdisk/dot.profile	1.4
+distrib/mvme68k/miniroot/dot.profile		1.3
+distrib/pc532/floppies/inst/dot.hdprofile	1.5
+distrib/pc532/floppies/inst/dot.profile		1.6
+distrib/pc532/floppies/upgr/dot.hdprofile	1.5
+distrib/pc532/floppies/upgr/dot.profile		1.5
+distrib/pmax/ramdisk/dot.hdprofile		1.3
+distrib/pmax/ramdisk/dot.profile		1.3
+distrib/sparc/miniroot/dot.profile		1.3
+distrib/sparc/ramdisk/dot.profile		1.4
+distrib/sparc/ramdisk.sysinst/dot.profile.m4	1.2
+distrib/sparc64/miniroot/dot.profile		1.2
+distrib/vax/ramdisk/dot.hdprofile		1.2
+distrib/vax/ramdisk/dot.profile			1.2
+distrib/x68k/floppies/ramdisk/dot.hdprofile	1.4
+distrib/x68k/floppies/ramdisk/dot.profile	1.5
+
+  Arrange to have sysinst invoked automatically only when booting,
+  so that children of sysinst don't accidentally reinvoke it when
+  running subcommands wish a shell.  Fixes PR#7805.  (cgd)
+
+distrib/arm32/ramdisk/list			1.3
+
+  Cope with object directories.  Part of PR#7628.  (cgd)
+
+etc/etc.arm32/MAKEDEV				1.32
+
+  Include ptys on the ramdisk image, so that sysinst will work.  (cgd)
+
+etc/etc.arm32/MAKEDEV				1.33
+distrib/arm32/ramdisk/dot.profile		1.6
+distrib/arm32/ramdisk/install.tmpl		1.4
+
+  Create and name 'md' device nodes in the normal manner.  (cgd)
+
+distrib/arm32/ramdisk/list			1.5
+distrib/arm32/ramdisk/ramdiskbin.conf		1.5
+
+  Support pax and swapctl on the install kernel ramdisk.  (cgd)
+
+sbin/savecore/savecore.c			1.39
+
+  Fix a bug that would cause savecore to crash if the the bounds file
+  (usually /var/crash/bounds) could not be opened for writing.  Fixes
+  PR#7887.  (cgd)
+
+distrib/i386/floppies/Makefile			patch
+
+  Build the NetBSD/i386 single-floppy installation floppy image.  (cgd)
+
+share/man/man4/puc.4				1.6-1.7
+sys/dev/pci/pucdata.c				1.5-1.6
+
+  Add support for 36 more SIIG PCI serial/parallel cards (for a total
+  of 37).  This means that all SIIG PCI serial/parallel cards (described
+  on their web site as "I/O boards" as of July 2, 1999) should now be
+  supported.  (cgd)
+
+sys/uvm/uvm_amap.c				1.21
+
+  Fix allocation failure handling bugs in amap_alloc1().  (cgd)
+
+sys/uvm/uvm_mmap.c				1.28
+
+  Sanity check on data size requested of mmap(), even though we don't
+  do proper charging of mmap()'d space against the process's data size
+  at this time.  Prevents unreasonably large allocations from from
+  succeeding.  This is a band-aid for PR#7897.  (cgd)
