@@ -1,4 +1,4 @@
-/*	$NetBSD: crl.c,v 1.9 2000/06/02 21:51:46 matt Exp $	*/
+/*	$NetBSD: crl.c,v 1.10 2000/08/09 03:02:53 tv Exp $	*/
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -208,10 +208,18 @@ crlintr(arg)
 		switch (crltab.crl_active) {
 
 		case CRL_F_RETSTS:
-			crlstat.crl_ds = mfpr(PR_STXDB);
-			printf("crlcs=0x%b, crlds=0x%b\n", crlstat.crl_cs,
-				CRLCS_BITS, crlstat.crl_ds, CRLDS_BITS); 
-			break;
+			{
+				char sbuf[256], sbuf2[256];
+
+				crlstat.crl_ds = mfpr(PR_STXDB);
+
+				bitmask_snprintf(crlstat.crl_cs, CRLCS_BITS,
+						 sbuf, sizeof(sbuf));
+				bitmask_snprintf(crlstat.crl_ds, CRLDS_BITS,
+						 sbuf2, sizeof(sbuf2));
+				printf("crlcs=0x%s, crlds=0x%s\n", sbuf, sbuf2);
+				break;
+			}
 
 		case CRL_F_READ:
 		case CRL_F_WRITE:
