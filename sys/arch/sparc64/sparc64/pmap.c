@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.159 2004/12/03 01:54:14 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.159.6.1 2005/01/26 11:55:08 yamt Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.159 2004/12/03 01:54:14 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.159.6.1 2005/01/26 11:55:08 yamt Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -1355,7 +1355,7 @@ pmap_init()
 		(paddr_t)PAGE_SIZE, (paddr_t)0, &pglist, 1, 0) != 0)
 		panic("pmap_init: no memory");
 
-	va = uvm_km_valloc(kernel_map, size);
+	va = uvm_km_alloc(kernel_map, size, 0, UVM_KMF_VAONLY);
 	if (va == 0)
 		panic("pmap_init: no memory");
 
