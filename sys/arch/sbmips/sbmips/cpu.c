@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.5 2002/06/04 05:42:41 simonb Exp $ */
+/* $NetBSD: cpu.c,v 1.6 2002/06/04 05:49:26 simonb Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -57,15 +57,23 @@ struct cfattach cpu_ca = {
 	sizeof(struct device), cpu_match, cpu_attach
 };
 
+static int found = 0;
+
 static int
 cpu_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct zbbus_attach_args *zap = aux;
+	int part;
 
 	if (zap->za_locs.za_type != ZBBUS_ENTTYPE_CPU)
 		return (0);
 
-	return 1;
+	/*
+	 * The 3rd hex digit of the part number is the number of CPUs;
+	 * ref Table 26, p38 1250-UM101-R.
+	 */
+	part = G_SYS_PART(READ_REG(MIPS_PHYS_TO_KSEG1(A_SCD_SYSTEM_REVISION)));
+	return (found < ((part >> 8) & 0xf));
 }
 
 static void
@@ -79,6 +87,8 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 	config &= ~MIPS3_CONFIG_K0_MASK;
 	config |= 0x05;				/* XXX.  cacheable coherent */
 	mips3_cp0_config_write(config);
+
+	found++;
 
 	/*
 	 * Flush all of the caches, so that any lines marked non-coherent will
@@ -114,9 +124,19 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 	    (curcpu()->ci_cpu_freq % 1000000) / 10000,
 	    curcpu()->ci_cycles_per_hz, curcpu()->ci_divisor_delay);
 
-	printf("%s: ", self->dv_xname);
-	cpu_identify();
-
-	/* make sure processor is available for use */
-	/* XXXCGD */
+	/*
+	 * If we're the primary CPU, no more work to do; we're already
+	 * running!
+	 */
+	if (found == 1) {
+		printf("%s: ", self->dv_xname);
+		cpu_identify();
+	} else {
+#if defined(MULTIPROCESSOR)
+# error!
+#else
+		printf("%s: processor off-line; multiprocessor support "
+		    "not present in kernel\n", /* sc->sc_dev. */self->dv_xname);
+#endif
+	}
 }
