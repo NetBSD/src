@@ -1,4 +1,4 @@
-/* $NetBSD: pci_550.c,v 1.20 2001/03/25 06:38:50 ross Exp $ */
+/* $NetBSD: pci_550.c,v 1.21 2001/03/27 01:39:51 ross Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_550.c,v 1.20 2001/03/25 06:38:50 ross Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_550.c,v 1.21 2001/03/27 01:39:51 ross Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -120,11 +120,10 @@ void	*dec_550_pciide_compat_intr_establish __P((void *, struct device *,
 /*
  * Some Miata models, notably models with a Cypress PCI-ISA bridge, have
  * a PCI device (the OHCI USB controller) with interrupts tied to ISA IRQ
- * lines.  This IRQ is encoded as:
- *
- *	line = 0xe0 | isa_irq;
+ * lines.  This IRQ is encoded as: line = FLAG | isa_irq. Usually FLAG
+ * is 0xe0, however, it can be 0xf0.  We don't allow 0xf0 | irq15.
  */
-#define	DEC_550_LINE_IS_ISA(line)	((line) >= 0xe0 && (line) <= 0xef)
+#define	DEC_550_LINE_IS_ISA(line)	((line) >= 0xe0 && (line) <= 0xfe)
 #define	DEC_550_LINE_ISA_IRQ(line)	((line) & 0x0f)
 
 struct alpha_shared_intr *dec_550_pci_intr;
@@ -252,9 +251,11 @@ dec_550_intr_map(pa, ihp)
 	}
 #endif
 
-	if (DEC_550_LINE_IS_ISA(line) == 0 && line >= DEC_550_MAX_IRQ)
+	if (DEC_550_LINE_IS_ISA(line) == 0 && line >= DEC_550_MAX_IRQ) {
+		printf("dec_550_intr_map: irq %d out of range %d/%d/%d\n",
+		    line, bus, device, function);
 		return (1);
-
+	}
 	*ihp = line;
 	return (0);
 }
