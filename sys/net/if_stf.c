@@ -1,5 +1,5 @@
-/*	$NetBSD: if_stf.c,v 1.2 2000/04/21 02:40:53 itojun Exp $	*/
-/*	$KAME: if_stf.c,v 1.32 2000/04/21 02:39:43 itojun Exp $	*/
+/*	$NetBSD: if_stf.c,v 1.3 2000/05/14 03:44:02 itojun Exp $	*/
+/*	$KAME: if_stf.c,v 1.37 2000/05/05 11:00:55 sumikawa Exp $	*/
 
 /*
  * Copyright (C) 2000 WIDE Project.
@@ -72,7 +72,11 @@
  * Note that there is no way to be 100% secure.
  */
 
-#if (defined(__FreeBSD__) && __FreeBSD__ >= 3) || defined(__NetBSD__)
+#if defined(__FreeBSD__) && __FreeBSD__ >= 3
+#include "opt_inet.h"
+#include "opt_inet6.h"
+#endif
+#ifdef __NetBSD__
 #include "opt_inet.h"
 #endif
 
@@ -119,7 +123,12 @@
 
 #include <net/net_osdep.h>
 
+#if defined(__FreeBSD__) && __FreeBSD__ >= 4
+#include "bpf.h"
+#define NBPFILTER	NBPF
+#else
 #include "bpfilter.h"
+#endif
 #include "stf.h"
 #include "gif.h"	/*XXX*/
 
@@ -227,6 +236,9 @@ stfattach(dummy)
 		sc->sc_if.if_ioctl  = stf_ioctl;
 		sc->sc_if.if_output = stf_output;
 		sc->sc_if.if_type   = IFT_STF;
+#if defined(__FreeBSD__) && __FreeBSD__ >= 4
+		sc->sc_if.if_snd.ifq_maxlen = IFQ_MAXLEN;
+#endif
 		if_attach(&sc->sc_if);
 #if NBPFILTER > 0
 #ifdef HAVE_OLD_BPF
@@ -334,6 +346,10 @@ stf_getsrcifa6(ifp)
 		for (ia4 = in_ifaddr.tqh_first;
 		     ia4;
 		     ia4 = ia4->ia_list.tqe_next)
+#elif defined(__FreeBSD__) && __FreeBSD__ >= 3
+		for (ia4 = TAILQ_FIRST(&in_ifaddrhead);
+		     ia4;
+		     ia4 = TAILQ_NEXT(ia4, ia_link))
 #else
 		for (ia4 = in_ifaddr; ia4 != NULL; ia4 = ia4->ia_next)
 #endif
@@ -449,10 +465,12 @@ stf_checkaddr4(in, ifp)
 
 	/*
 	 * reject packets with the following address:
-	 * 224.0.0.0/4 0.0.0.0/32 255.255.255.255/32
+	 * 224.0.0.0/4 0.0.0.0/8 127.0.0.0/8 255.0.0.0/8
 	 */
-	if (IN_MULTICAST(in->s_addr) || in->s_addr == INADDR_ANY ||
-	    in->s_addr == INADDR_BROADCAST) {
+	if (IN_MULTICAST(in->s_addr))
+		return -1;
+	switch ((ntohl(in->s_addr) & 0xff000000) >> 24) {
+	case 0: case 127: case 255:
 		return -1;
 	}
 
@@ -461,6 +479,10 @@ stf_checkaddr4(in, ifp)
 	 */
 #if defined(__OpenBSD__) || defined(__NetBSD__)
 	for (ia4 = in_ifaddr.tqh_first; ia4; ia4 = ia4->ia_list.tqe_next)
+#elif defined(__FreeBSD__) && __FreeBSD__ >= 3
+	for (ia4 = TAILQ_FIRST(&in_ifaddrhead);
+	     ia4;
+	     ia4 = TAILQ_NEXT(ia4, ia_link))
 #else
 	for (ia4 = in_ifaddr; ia4 != NULL; ia4 = ia4->ia_next)
 #endif
