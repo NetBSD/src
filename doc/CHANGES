@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.177 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.178 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -426,3 +426,4 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 	libtelnet: no longer shipped under /usr/lib [itojun 20030716]
 	share/mk: Replace MANZ=, UPDATE=, UNPRIVED= with MKMANZ=yes,
 		MKUPDATE=yes, MKUNPRIVED=yes respectively.  [lukem 20030718]
+	ipsec: support hmac-sha2 for AH/ESP auth. [itojun 20030722]
