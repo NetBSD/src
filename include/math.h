@@ -1,4 +1,4 @@
-/*	$NetBSD: math.h,v 1.11 1998/04/08 23:42:59 tv Exp $	*/
+/*	$NetBSD: math.h,v 1.12 1998/05/07 18:50:08 kleink Exp $	*/
 
 /*
  * ====================================================
@@ -18,6 +18,8 @@
 #ifndef _MATH_H_
 #define _MATH_H_
 
+#include <sys/featuretest.h>
+
 /*
  * ANSI/POSIX
  */
@@ -27,7 +29,8 @@ extern char __infinity[];
 /*
  * XOPEN/SVID
  */
-#if !defined(_ANSI_SOURCE) && !defined(_POSIX_SOURCE)
+#if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) || \
+    defined(_XOPEN_SOURCE)
 #define	M_E		2.7182818284590452354	/* e */
 #define	M_LOG2E		1.4426950408889634074	/* log 2e */
 #define	M_LOG10E	0.43429448190325182765	/* log 10e */
@@ -44,8 +47,10 @@ extern char __infinity[];
 
 #define	MAXFLOAT	((float)3.40282346638528860e+38)
 extern int signgam;
+#endif /* !_ANSI_SOURCE && !_POSIX_C_SOURCE || _XOPEN_SOURCE */
 
-#if !defined(_XOPEN_SOURCE)
+#if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) && \
+    !defined(_XOPEN_SOURCE)
 enum fdversion {fdlibm_ieee = -1, fdlibm_svid, fdlibm_xopen, fdlibm_posix};
 
 #define _LIB_VERSION_TYPE enum fdversion
@@ -91,8 +96,7 @@ struct exception {
 #define	TLOSS		5
 #define	PLOSS		6
 
-#endif /* !_XOPEN_SOURCE */
-#endif /* !_ANSI_SOURCE && !_POSIX_SOURCE */
+#endif /* !_ANSI_SOURCE && !_POSIX_C_SOURCE && !_XOPEN_SOURCE */
 
 
 #include <sys/cdefs.h>
@@ -127,7 +131,8 @@ extern double fabs __P((double));
 extern double floor __P((double));
 extern double fmod __P((double, double));
 
-#if !defined(_ANSI_SOURCE) && !defined(_POSIX_SOURCE)
+#if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) || \
+    defined(_XOPEN_SOURCE)
 extern double erf __P((double));
 extern double erfc __P((double));
 extern double gamma __P((double));
@@ -143,16 +148,24 @@ extern double y0 __P((double));
 extern double y1 __P((double));
 extern double yn __P((int, double));
 
-#if !defined(_XOPEN_SOURCE)
+#if !defined(_XOPEN_SOURCE) || (_XOPEN_SOURCE - 0) >= 500
 extern double acosh __P((double));
 extern double asinh __P((double));
 extern double atanh __P((double));
 extern double cbrt __P((double));
+extern double expm1 __P((double));
+extern int ilogb __P((double));
+extern double log1p __P((double));
 extern double logb __P((double));
 extern double nextafter __P((double, double));
 extern double remainder __P((double, double));
+extern double rint __P((double));
 extern double scalb __P((double, double));
+#endif /* defined(_XOPEN_SOURCE) || (_XOPEN_SOURCE - 0) >= 500 */
+#endif /* !_ANSI_SOURCE) && !_POSIX_C_SOURCE || _XOPEN_SOURCE */
 
+#if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) && \
+    !defined(_XOPEN_SOURCE)
 #ifndef __cplusplus
 extern int matherr __P((struct exception *));
 #endif
@@ -166,8 +179,6 @@ extern double significand __P((double));
  * Functions callable from C, intended to support IEEE arithmetic.
  */
 extern double copysign __P((double, double));
-extern int ilogb __P((double));
-extern double rint __P((double));
 extern double scalbn __P((double, int));
 
 /*
@@ -175,19 +186,22 @@ extern double scalbn __P((double, int));
  */
 extern double cabs();
 extern double drem __P((double, double));
-extern double expm1 __P((double));
-extern double log1p __P((double));
 
+#endif /* !_ANSI_SOURCE && !_POSIX_C_SOURCE && !_XOPEN_SOURCE */
+
+#if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) && \
+    !defined(_XOPEN_SOURCE) || defined(_REENTRANT)
 /*
  * Reentrant version of gamma & lgamma; passes signgam back by reference
  * as the second argument; user must allocate space for signgam.
  */
-#ifdef _REENTRANT
 extern double gamma_r __P((double, int *));
 extern double lgamma_r __P((double, int *));
-#endif /* _REENTRANT */
+#endif /* !... || _REENTRANT */
 
 
+#if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) && \
+    !defined(_XOPEN_SOURCE)
 /* float versions of ANSI/POSIX functions */
 extern float acosf __P((float));
 extern float asinf __P((float));
@@ -260,19 +274,19 @@ extern float cabsf ();
 extern float dremf __P((float, float));
 extern float expm1f __P((float));
 extern float log1pf __P((float));
+#endif /* !_ANSI_SOURCE && !_POSIX_C_SOURCE && !_XOPEN_SOURCE */
 
+#if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) && \
+    !defined(_XOPEN_SOURCE) || defined(_REENTRANT)
 /*
  * Float versions of reentrant version of gamma & lgamma; passes
  * signgam back by reference as the second argument; user must
  * allocate space for signgam.
  */
-#ifdef _REENTRANT
 extern float gammaf_r __P((float, int *));
 extern float lgammaf_r __P((float, int *));
-#endif	/* _REENTRANT */
+#endif /* !... || _REENTRANT */
 
-#endif /* !_XOPEN_SOURCE */
-#endif /* !_ANSI_SOURCE && !_POSIX_SOURCE */
 __END_DECLS
 
 #endif /* _MATH_H_ */
