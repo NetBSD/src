@@ -1,4 +1,4 @@
-/*	$NetBSD: rwlock.h,v 1.1.2.1 2002/03/14 17:11:03 thorpej Exp $	*/
+/*	$NetBSD: rwlock.h,v 1.1.2.2 2002/03/17 06:50:55 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -79,6 +79,12 @@
  *		Set the has-waiters indication.  If the needs-waiting
  *		condition becomes false, abort the operation.
  *		Memory barriers are for the "acquire
+ *
+ *	RWLOCK_GIVE(rwl, new)
+ *		Give the lock to the receiver (direct-handoff).
+ *
+ *	RWLOCK_RECEIVE(rwl)
+ *		Receive the lock from the giver (direct-handoff).
  *
  *	RWLOCK_THREAD
  *		Mask if valid thread/count bits.
