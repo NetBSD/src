@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.178 1999/12/17 13:59:44 augustss Exp $
+$NetBSD: pcidevs,v 1.179 1999/12/17 17:18:48 drochner Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1021,6 +1021,8 @@ product INTEL 82443BX_NOAGP	0x7192	82443BX Host Bridge/Controller (AGP disabled)
 product INTEL I740		0x7800	i740 Graphics Accelerator
 product INTEL PCI450_PB		0x84c4	82454KX/GX PCI Bridge (PB)
 product INTEL PCI450_MC		0x84c5	82451KX/GX Memory Controller (MC)
+product INTEL 82451NX_MIOC	0x84ca	82451NX Memory & I/O Controller (MIOC)
+product INTEL 82451NX_PXB	0x84cb	82451NX PCI Expander Bridge (PXB)
 
 /* Intergraph products */
 product INTERGRAPH 4D50T	0x00e4	Powerstorm 4D50T
