@@ -1,4 +1,4 @@
-/*	$NetBSD: textdomain.c,v 1.5 2001/02/16 07:20:35 minoura Exp $	*/
+/*	$NetBSD: textdomain.c,v 1.6 2001/12/09 11:11:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: textdomain.c,v 1.5 2001/02/16 07:20:35 minoura Exp $");
+__RCSID("$NetBSD: textdomain.c,v 1.6 2001/12/09 11:11:01 yamt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -83,9 +83,12 @@ bindtextdomain(domainname, dirname)
 
 	if (strlen(dirname) + 1 > sizeof(p->path))
 		return NULL;
+
+#if 0
 	/* disallow relative path */
 	if (dirname[0] != '/')
 		return NULL;
+#endif
 
 	if (strlen(domainname) + 1 > sizeof(p->domainname))
 		return NULL;
