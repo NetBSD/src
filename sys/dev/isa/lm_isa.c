@@ -1,4 +1,4 @@
-/*	$NetBSD: lm_isa.c,v 1.1 2000/02/25 02:17:44 groo Exp $ */
+/*	$NetBSD: lm_isa.c,v 1.2 2000/03/09 04:19:03 groo Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -83,7 +83,6 @@ lm_isa_match(parent, match, aux)
 	struct isa_attach_args *ia = aux;
 	int iobase;
 	int rv;
-	u_int8_t cr;
 
 	/* Must supply an address */
 	if (ia->ia_iobase == ISACF_PORT_DEFAULT)
@@ -95,23 +94,9 @@ lm_isa_match(parent, match, aux)
 	if (bus_space_map(iot, iobase, 8, 0, &ioh))
 		return (0);
 
-	/* Check for some power-on defaults */
-	bus_space_write_1(iot, ioh, LMC_ADDR, LMD_CONFIG);
 
-	/* Perform LM78 reset */
-	bus_space_write_1(iot, ioh, LMC_DATA, 0x80);
-
-	/* XXX - Why do I have to reselect the register? */
-	bus_space_write_1(iot, ioh, LMC_ADDR, LMD_CONFIG);
-	cr = bus_space_read_1(iot, ioh, LMC_DATA);
-
-	/* XXX - spec says *only* 0x08! */
-	if ((cr == 0x08) || (cr == 0x01))
-		rv = 1;
-	else
-		rv = 0;
-
-	DPRINTF(("lm: rv = %d, cr = %x\n", rv, cr));
+	/* Bus independent probe */
+	rv = lm_probe(iot, ioh);
 
 	bus_space_unmap(iot, ioh, 8);
 
