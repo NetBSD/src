@@ -1,4 +1,4 @@
-/*	$NetBSD: adbsys.c,v 1.31 1997/10/02 15:12:54 briggs Exp $	*/
+/*	$NetBSD: adbsys.c,v 1.32 1997/11/05 08:21:47 ender Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -324,6 +324,9 @@ adb_init()
 			switch (adbdata.devType) {
 			case ADB_STDKBD:
 				printf("standard keyboard");
+				break;
+			case ADB_ISOKBD:
+				printf("standard keyboard (ISO layout)");
 				break;
 			case ADB_EXTKBD:
 				printf("extended keyboard");
