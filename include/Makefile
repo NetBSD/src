@@ -21,8 +21,7 @@ MFILES=	float.h frame.h
 LFILES=	errno.h fcntl.h signal.h syslog.h termios.h
 
 DIRS=arpa protocols
-# Missing: netimp netiso netns
-LDIRS=	net netinet nfs sys ufs vm
+LDIRS=	net netinet netccitt netiso netns nfs sys ufs vm 
 
 NOOBJ=	noobj
 
