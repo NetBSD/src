@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: amd2netbsd,v 1.1 2000/11/20 00:52:32 wiz Exp $
+#	$NetBSD: amd2netbsd,v 1.1.1.1 2003/03/09 01:13:04 christos Exp $
 #
 # Copyright (c) 2000 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -34,7 +34,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 # amd2netbsd:  convert an amd source tree into a
-# netbsd amd source tree, under basesrc/dist,
+# netbsd amd source tree, under src/dist,
 # based on bind2netbsd by Bernd Ernesti and changes by Simon Burge
 #
 # Rough instructions for importing new amd release:
@@ -42,14 +42,14 @@
 #	$ cd /some/where/temporary
 #	$ tar xpfz /new/amd/release/tar/file
 #	$ sh /usr/src/dist/am-utils/amd2netbsd am-utils-6.x.y `pwd`
-#	$ cd basesrc/dist/am-utils
-#	$ cvs import -m "Import am-utils 6.x.y" basesrc/dist/am-utils ezk am-utils-6-x-y
+#	$ cd src/dist/am-utils
+#	$ cvs import -m "Import am-utils 6.x.y" src/dist/am-utils ezk am-utils-6-x-y
 #	$ cd ../../../am-utils-6.x.y
 #	$ run ./configure
 # merge newly generated config.h with /usr/src/usr.sbin/amd/include/config.h
 # very carefully, since autoconfig seems to be broken (at least in 6.0.4)
 #	$ cd ..
-#	$ rm -r basesrc am-utils-6.x.y
+#	$ rm -r src am-utils-6.x.y
 #	$ cd /usr/src/usr.sbin/amd
 #	$ cvs commit -m "Updated autoconf generated files for am-utils 6.x.y."
 #
@@ -59,7 +59,7 @@
 if [ $# -ne 2 ]; then echo "amd2netbsd src dest"; exit 1; fi
 
 r=$1
-d=$2/basesrc/dist/am-utils
+d=$2/src/dist/am-utils
 
 case "$d" in
 	/*)

@@ -1,4 +1,3 @@
-# -*- text -*-
 PRIMARY AUTHORS AND MAJOR CONTRIBUTORS TO AM_UTILS:
 Original authors of amd were the Berkeley team and especially Jan-Simon
 Pendry.  Since then many people have contributed patches.
@@ -164,7 +163,7 @@ that do not allow forwarding of RPC messages to other services.
 August 10, 1997: netbsd and other bsd systems have a mask flag for
 pcfs_args (msdos mount).
 
-* Christos Zoulas <christos@deshaw.com>
+* Christos Zoulas <christos@zoulas.com>
 
 September 25, 1997: fix to initialize uid/gid fields of pcfs_args_t on
 netbsd.
@@ -172,6 +171,9 @@ netbsd.
 October 10, 1997: compile time cleanups of printf()s in hlfsd code.  If nfs
 server is down or does not support a portmapper call, then mark it down as
 version 2, and try again later.
+
+November 29, 2002: compile fixes for NetBSD, a couple of bug fixes (one
+already fixed by maintainers)
 
 * Bill Paul <wpaul@ctr.columbia.edu>
 
@@ -338,6 +340,9 @@ _must_ have a timeout 2 orders of magnitude larger than UDP
 * George Ross <gdmr@dcs.ed.ac.uk>
 April 29, 2002: Rework of old code, support for wildcards in LDAP queries,
 and an FD leak fix.  Amd -A support.
+
+October 21, 2002: ldap_unbind fix for SIGPIPE, and support for LDAPv3
+protocol version parameter (with Tim Colles <timc@inf.ed.ac.uk>).
 
 * Matthias Scheler <tron@zhadum.de>
 June 14, 2002: patch to use "xlatecookie" NFS mount option.

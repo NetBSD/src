@@ -1,7 +1,7 @@
-/*	$NetBSD: get_args.c,v 1.1.1.5 2002/11/29 22:58:21 christos Exp $	*/
+/*	$NetBSD: get_args.c,v 1.1.1.6 2003/03/09 01:13:17 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2002 Erez Zadok
+ * Copyright (c) 1997-2003 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: get_args.c,v 1.17 2002/06/23 01:50:10 ezk Exp
+ * Id: get_args.c,v 1.19 2002/12/27 22:43:49 ezk Exp
  *
  */
 
@@ -80,7 +80,7 @@ get_version_string(void)
 
   vers = xmalloc(2048 + wire_buf_len);
   sprintf(vers, "%s\n%s\n%s\n%s\n",
-	  "Copyright (c) 1997-2002 Erez Zadok",
+	  "Copyright (c) 1997-2003 Erez Zadok",
 	  "Copyright (c) 1990 Jan-Simon Pendry",
 	  "Copyright (c) 1990 Imperial College of Science, Technology & Medicine",
 	  "Copyright (c) 1990 The Regents of the University of California.");
@@ -332,14 +332,12 @@ get_args(int argc, char *argv[])
     strcat(hostd, hostdomain);
 
 #ifdef MOUNT_TABLE_ON_FILE
-#ifdef DEBUG
-    amuDebug(D_MTAB)
+    if (amuDebug(D_MTAB))
       mnttab_file_name = DEBUG_MNTTAB;
     else
-#endif /* DEBUG */
       mnttab_file_name = MNTTAB_FILE_NAME;
 #else /* not MOUNT_TABLE_ON_FILE */
-    amuDebug(D_MTAB)
+    if (amuDebug(D_MTAB))
       dlog("-D mtab option ignored");
 # ifdef MNTTAB_FILE_NAME
     mnttab_file_name = MNTTAB_FILE_NAME;

@@ -24,7 +24,7 @@ alldocs: ps install-NEWS install-INSTALL install-ChangeLog install-AUTHORS insta
 
 install-html: $(HOME)/html/am-utils/am-utils_1.html
 $(HOME)/html/am-utils/am-utils_1.html: am-utils.texi
-	texi2html -bodycode 'BGCOLOR="#FFFFFF"' -debug -verbose -expandinfo -number -split_chapter $<
+	texi2html -debug -verbose -expandinfo -number -split_chapter $<
 	mv *.html $(HOME)/html/am-utils
 	chmod -R a+r $(HOME)/html/am-utils
 

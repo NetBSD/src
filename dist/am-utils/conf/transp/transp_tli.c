@@ -1,7 +1,7 @@
-/*	$NetBSD: transp_tli.c,v 1.1.1.5 2002/11/29 22:58:39 christos Exp $	*/
+/*	$NetBSD: transp_tli.c,v 1.1.1.6 2003/03/09 01:13:33 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2002 Erez Zadok
+ * Copyright (c) 1997-2003 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: transp_tli.c,v 1.12 2002/06/23 01:05:39 ib42 Exp
+ * Id: transp_tli.c,v 1.14 2002/12/27 22:44:03 ezk Exp
  *
  * TLI specific utilities.
  *      -Erez Zadok <ezk@cs.columbia.edu>
@@ -679,3 +679,131 @@ get_nfs_version(char *host, struct sockaddr_in *sin, u_long nfs_version, const c
 
   return versout;
 }
+
+
+#if defined(HAVE_FS_AUTOFS) && defined(AUTOFS_PROG)
+/*
+ * find the IP address that can be used to connect autofs service to.
+ */
+static int
+get_autofs_address(struct netconfig *ncp, struct t_bind *tbp)
+{
+  int ret;
+  struct nd_addrlist *addrs = (struct nd_addrlist *) NULL;
+  struct nd_hostserv service;
+
+  service.h_host = HOST_SELF_CONNECT;
+  service.h_serv = "autofs";
+
+  ret = netdir_getbyname(ncp, &service, &addrs);
+
+  if (ret) {
+    plog(XLOG_FATAL, "get_autofs_address: cannot get local host address: %s", netdir_sperror());
+    goto out;
+  }
+
+  /*
+   * XXX: there may be more more than one address for this local
+   * host.  Maybe something can be done with those.
+   */
+  tbp->addr.len = addrs->n_addrs->len;
+  tbp->addr.maxlen = addrs->n_addrs->len;
+  memcpy(tbp->addr.buf, addrs->n_addrs->buf, addrs->n_addrs->len);
+  tbp->qlen = 8;		/* arbitrary? who cares really */
+
+  /* all OK */
+  netdir_free((voidp) addrs, ND_ADDRLIST);
+
+out:
+  return ret;
+}
+
+
+/*
+ * Register the autofs service for amd
+ */
+int
+register_autofs_service(char *autofs_conftype, void (*autofs_dispatch)())
+{
+  struct t_bind *tbp = 0;
+  struct netconfig *autofs_ncp;
+  SVCXPRT *autofs_xprt = NULL;
+  int fd = -1, err = 1;		/* assume failed */
+
+  plog(XLOG_INFO, "registering autofs service: %s", autofs_conftype);
+  autofs_ncp = getnetconfigent(autofs_conftype);
+  if (autofs_ncp == NULL) {
+    plog(XLOG_ERROR, "register_autofs_service: cannot getnetconfigent for %s", autofs_conftype);
+    goto out;
+  }
+
+  fd = t_open(autofs_ncp->nc_device, O_RDWR, NULL);
+  if (fd < 0) {
+    plog(XLOG_ERROR, "register_autofs_service: t_open failed (%s)",
+	 t_errlist[t_errno]);
+    goto out;
+  }
+
+  tbp = (struct t_bind *) t_alloc(fd, T_BIND, T_ADDR);
+  if (!tbp) {
+    plog(XLOG_ERROR, "register_autofs_service: t_alloca failed");
+    goto out;
+  }
+
+  if (get_autofs_address(autofs_ncp, tbp) != 0) {
+    plog(XLOG_ERROR, "register_autofs_service: get_autofs_address failed");
+    goto out;
+  }
+
+  autofs_xprt = svc_tli_create(fd, autofs_ncp, tbp, 0, 0);
+  if (autofs_xprt == NULL) {
+    plog(XLOG_ERROR, "cannot create autofs tli service for amd");
+    goto out;
+  }
+
+  rpcb_unset(AUTOFS_PROG, AUTOFS_VERS, autofs_ncp);
+  if (svc_reg(autofs_xprt, AUTOFS_PROG, AUTOFS_VERS, autofs_dispatch, autofs_ncp) == FALSE) {
+    plog(XLOG_ERROR, "could not register amd AUTOFS service");
+    goto out;
+  }
+  err = 0;
+  goto really_out;
+
+out:
+  if (autofs_ncp)
+    freenetconfigent(autofs_ncp);
+  if (autofs_xprt)
+    SVC_DESTROY(autofs_xprt);
+  else {
+    if (fd > 0)
+      t_close(fd);
+  }
+
+really_out:
+  if (tbp)
+    t_free((char *) tbp, T_BIND);
+
+  dlog("register_autofs_service: returning %d\n", err);
+  return err;
+}
+
+
+int
+unregister_autofs_service(char *autofs_conftype)
+{
+  struct netconfig *autofs_ncp;
+  int err = 1;
+
+  plog(XLOG_INFO, "unregistering autofs service listener: %s", autofs_conftype);
+
+  autofs_ncp = getnetconfigent(autofs_conftype);
+  if (autofs_ncp == NULL) {
+    plog(XLOG_ERROR, "destroy_autofs_service: cannot getnetconfigent for %s", autofs_conftype);
+    goto out;
+  }
+
+out:
+  rpcb_unset(AUTOFS_PROG, AUTOFS_VERS, autofs_ncp);
+  return err;
+}
+#endif /* HAVE_FS_AUTOFS && AUTOFS_PROG */

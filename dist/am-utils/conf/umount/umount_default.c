@@ -1,7 +1,7 @@
-/*	$NetBSD: umount_default.c,v 1.1.1.5 2002/11/29 22:58:40 christos Exp $	*/
+/*	$NetBSD: umount_default.c,v 1.1.1.6 2003/03/09 01:13:33 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2002 Erez Zadok
+ * Copyright (c) 1997-2003 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: umount_default.c,v 1.7 2002/03/29 20:01:30 ib42 Exp
+ * Id: umount_default.c,v 1.9 2002/12/27 22:44:03 ezk Exp
  *
  */
 
@@ -115,8 +115,24 @@ umount_fs2(char *mntdir, char *real_mntdir, const char *mnttabname)
     }
     dlog("Finished unmount(%s)", mp_save->mnt->mnt_dir);
 
-#ifdef MOUNT_TABLE_ON_FILE
     if (!error) {
+#ifdef HAVE_LOOP_DEVICE
+      /* look for loop=/dev/loopX in mnt_opts */
+      char *opt;
+      char loopstr[] = "loop=";
+      char *loopdev;
+      for (opt = strtok(mp_save->mnt->mnt_opts, ","); opt; opt = strtok(NULL, ","))
+	if (NSTREQ(opt, loopstr, sizeof(loopstr) - 1)) {
+	  loopdev = opt + sizeof(loopstr) - 1;
+	  if (delete_loop_device(loopdev) < 0)
+	    plog(XLOG_WARNING, "unmount() failed to release loop device %s: %m", loopdev);
+	  else
+	    plog(XLOG_INFO, "unmount() released loop device %s OK", loopdev);
+	  break;
+	}
+#endif /* HAVE_LOOP_DEVICE */
+
+#ifdef MOUNT_TABLE_ON_FILE
       free_mntlist(mlist);
       mp = mlist = read_mtab(mntdir, mnttabname);
 
@@ -136,8 +152,8 @@ umount_fs2(char *mntdir, char *real_mntdir, const char *mnttabname)
 	mp_save->mnt = 0;
 	rewrite_mtab(mlist, mnttabname);
       }
-    }
 #endif /* MOUNT_TABLE_ON_FILE */
+    }
 
   } else {
 

@@ -1,7 +1,7 @@
-/*	$NetBSD: umount_osf.c,v 1.1.1.5 2002/11/29 22:58:40 christos Exp $	*/
+/*	$NetBSD: umount_osf.c,v 1.1.1.6 2003/03/09 01:13:33 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2002 Erez Zadok
+ * Copyright (c) 1997-2003 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: umount_osf.c,v 1.7 2002/03/29 20:01:30 ib42 Exp
+ * Id: umount_osf.c,v 1.8 2002/12/27 22:44:03 ezk Exp
  *
  */
 

@@ -12,7 +12,7 @@ dnl ######################################################################
 dnl INITIALIZATION
 dnl AC_INIT
 dnl new init style: PACKAGE, VERSION, BUG-REPORTING-ADDRESS
-AC_INIT([am-utils],[6.1b1],[amd-dev@am-utils.org])
+AC_INIT([am-utils],[6.1b2],[amd-dev@am-utils.org])
 AC_MSG_NOTICE(*** INITIALIZATION ***)
 AC_CONFIG_SRCDIR([amd/amd.c])
 AM_CONFIG_HEADER(config.h)
@@ -28,7 +28,7 @@ AH_TOP([
 #ifndef _CONFIG_H
 #define _CONFIG_H
 ])
-dnl add actual "#undef" commands into aux/macros/header_templates.m4
+dnl add actual "#undef" commands into m4/macros/header_templates.m4
 AH_BOTTOM([
 /****************************************************************************/
 /*** INCLUDE localconfig.h if it exists, to allow users to make some      ***/
@@ -51,10 +51,10 @@ AH_BOTTOM([
 /* End of am-utils-6.x config.h file */
 ])
 dnl
-dnl AC_CONFIG_AUX_DIR(aux)
+dnl AC_CONFIG_AUX_DIR(m4)
 AC_PREREQ(2.52)
-AC_REVISION($Revision: 1.1.1.3 $)
-AC_COPYRIGHT([Copyright (c) 1997-2002 Erez Zadok])
+AC_REVISION($Revision: 1.1.1.4 $)
+AC_COPYRIGHT([Copyright (c) 1997-2003 Erez Zadok])
 dnl find out system type
 AC_MSG_NOTICE(*** SYSTEM TYPES ***)
 dnl run by libtool, but must be kept here because HOST_MACROS depends on it
@@ -90,7 +90,7 @@ dnl last version info was 4.1.2 (am-utils-6.0.4)
 dnl
 dnl We increase the minor number for am-utils-6.1, because it has a new API
 dnl (get_server_pid) but can be used without problems by am-utils-6.0.3+.
-LIBTOOL_LDFLAGS="-version-info 5:2:3"
+LIBTOOL_LDFLAGS="-version-info 5:3:3"
 AC_SUBST(LIBTOOL_LDFLAGS)
 dnl ======================================================================
 
@@ -571,6 +571,12 @@ dnl specific header to include.
 AMU_CHECK_NFS_PROT_HEADERS
 AMU_STRUCT_MNTENT
 AMU_STRUCT_MNTTAB
+dnl check for bad hasmntopt() function after struct mntent/mnttab
+dnl but only if hasmntopt() is actually defined.
+if test $ac_cv_func_hasmntopt = yes
+then
+	AMU_FUNC_BAD_HASMNTOPT
+fi
 AMU_STRUCT_NFS_ARGS
 AMU_STRUCT_NFS_GFS_MOUNT
 AMU_STRUCT_FIELD_NFS_FH
