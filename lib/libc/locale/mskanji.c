@@ -1,4 +1,4 @@
-/*	$NetBSD: mskanji.c,v 1.6 2001/01/25 01:25:07 itojun Exp $	*/
+/*	$NetBSD: mskanji.c,v 1.7 2001/01/27 05:40:18 tsutsui Exp $	*/
 
 /*
  *    ja_JP.SJIS locale table for BSD4.4/rune
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)mskanji.c	1.0 (Phase One) 5/5/95";
 #else
-__RCSID("$NetBSD: mskanji.c,v 1.6 2001/01/25 01:25:07 itojun Exp $");
+__RCSID("$NetBSD: mskanji.c,v 1.7 2001/01/27 05:40:18 tsutsui Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -50,6 +50,7 @@ __RCSID("$NetBSD: mskanji.c,v 1.6 2001/01/25 01:25:07 itojun Exp $");
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 static int _mskanji1 __P((int));
 static int _mskanji2 __P((int));

@@ -1,4 +1,4 @@
-/*	$NetBSD: utf2.c,v 1.6 2001/01/25 01:25:10 itojun Exp $	*/
+/*	$NetBSD: utf2.c,v 1.7 2001/01/27 05:40:18 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)utf2.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: utf2.c,v 1.6 2001/01/25 01:25:10 itojun Exp $");
+__RCSID("$NetBSD: utf2.c,v 1.7 2001/01/27 05:40:18 tsutsui Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -51,6 +51,7 @@ __RCSID("$NetBSD: utf2.c,v 1.6 2001/01/25 01:25:10 itojun Exp $");
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 const char *_UTF2_magic __P((void));
 int _UTF2_init __P((_RuneLocale *));

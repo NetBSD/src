@@ -1,4 +1,4 @@
-/*	$NetBSD: euctw.c,v 1.8 2001/01/25 01:25:06 itojun Exp $	*/
+/*	$NetBSD: euctw.c,v 1.9 2001/01/27 05:40:18 tsutsui Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: euctw.c,v 1.8 2001/01/25 01:25:06 itojun Exp $");
+__RCSID("$NetBSD: euctw.c,v 1.9 2001/01/27 05:40:18 tsutsui Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -41,6 +41,7 @@ __RCSID("$NetBSD: euctw.c,v 1.8 2001/01/25 01:25:06 itojun Exp $");
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #ifdef lint
 #define inline
