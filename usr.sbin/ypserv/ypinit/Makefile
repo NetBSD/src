@@ -1,13 +1,9 @@
-#	$NetBSD: Makefile,v 1.4 1997/01/27 00:28:31 cjs Exp $
+#	$NetBSD: Makefile,v 1.5 1997/03/24 22:03:05 christos Exp $
 
 MAN= ypinit.8
-
-beforeinstall:
-	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
-	    ${.CURDIR}/ypinit.sh ${DESTDIR}/usr/sbin/ypinit
-	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 0644 \
-	    ${.CURDIR}/Makefile.yp ${DESTDIR}/var/yp/Makefile.yp
-	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 0644 \
-	    ${.CURDIR}/Makefile.main ${DESTDIR}/var/yp/Makefile.main
+SCRIPTS=ypinit.sh
+FILES=Makefile.yp Makefile.main
+FILESDIR=/var/yp
+FILESMODE=0644
 
 .include <bsd.prog.mk>

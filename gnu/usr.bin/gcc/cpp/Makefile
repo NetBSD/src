@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	6.4 (Berkeley) 2/21/91
-#	$NetBSD: Makefile,v 1.3 1996/10/18 03:00:21 thorpej Exp $
+#	$NetBSD: Makefile,v 1.4 1997/03/24 22:06:19 christos Exp $
 
 PROG=		cpp
 BINDIR=		/usr/libexec
@@ -10,7 +10,7 @@ CFLAGS+=	-I. -I$(.CURDIR) -I$(.CURDIR)/../common -I$(.CURDIR)/../arch \
 		-DTOOL_INCLUDE_DIR=\"\" \
 		-DGPLUSPLUS_INCLUDE_DIR=\"/usr/include/g++\"
 LDADD+=		-lgnumalloc
-DPADD+=		/usr/lib/libgnumalloc.a
+DPADD+=		${LIBGNUMALLOC}
 YFLAGS=
 
 MLINKS=	cpp.1 cccp.1 cpp.1 gcpp.1
@@ -19,11 +19,10 @@ CLEANFILES+= cexp.c
 
 .PATH:		$(.CURDIR)/../common
 
-afterinstall:
-	${INSTALL} -c -o $(BINOWN) -g $(BINGRP) -m $(BINMODE) \
-		$(.CURDIR)/usr.bin.cpp.sh $(DESTDIR)/usr/bin/cpp
-	@/bin/rm -rf $(DESTDIR)/usr/bin/gcpp
-	@ln $(DESTDIR)/usr/bin/cpp $(DESTDIR)/usr/bin/gcpp
-	@echo $(DESTDIR)/usr/bin/gcpp -\> $(DESTDIR)/usr/bin/cpp
+LINKS=	/usr/bin/cpp /usr/bin/gcpp
+FILES=usr.bin.cpp.sh
+FILESNAME=cpp
+FILESDIR=/usr/bin
+FILESMODE=${BINMODE}
 
 .include <bsd.prog.mk>
