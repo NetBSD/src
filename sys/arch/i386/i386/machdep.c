@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.215 1996/11/18 01:06:12 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996 Charles M. Hannum.  All rights reserved.
@@ -544,6 +544,16 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 			consdev = NODEV;
 		return (sysctl_rdstruct(oldp, oldlenp, newp, &consdev,
 		    sizeof consdev));
+
+	case CPU_BIOSBASEMEM:
+		return (sysctl_rdint(oldp, oldlenp, newp, biosbasemem));
+
+	case CPU_BIOSEXTMEM:
+		return (sysctl_rdint(oldp, oldlenp, newp, biosextmem));
+
+	case CPU_NKPDE:
+		return (sysctl_rdint(oldp, oldlenp, newp, nkpde));
+
 	default:
 		return (EOPNOTSUPP);
 	}
@@ -1208,9 +1218,8 @@ init386(first_avail)
 	 * not all BIOSes (Dell, Compaq, others) report the correct
 	 * amount of extended memory.
 	 */
-#ifdef EXTMEM_SIZE
-	biosextmem = EXTMEM_SIZE;
-#endif
+	avail_end = biosextmem ? IOM_END + biosextmem * 1024
+	    : biosbasemem * 1024;	/* just temporary use */
 
 	/*
 	 * Allocate the physical addresses used by RAM from the iomem
@@ -1221,9 +1230,6 @@ init386(first_avail)
 		/* XXX What should we do? */
 		printf("WARNING: CAN'T ALLOCATE BASE RAM FROM IOMEM EXTENT MAP!\n");
 	}
-	avail_end = biosextmem ? IOM_END + biosextmem * 1024
-	    : biosbasemem * 1024;	/* just temporary use */
-
 	if (avail_end > IOM_END && extent_alloc_region(iomem_ex, IOM_END,
 	    (avail_end - IOM_END), EX_NOWAIT)) {
 		/* XXX What should we do? */
