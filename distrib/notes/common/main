@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.253 2004/02/06 07:47:10 minskim Exp $
+.\"	$NetBSD: main,v 1.254 2004/05/13 00:26:25 cl Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -50,7 +50,7 @@
 .as MACHINE_LIST " mipsco mmeye mvme68k mvmeppc netwinder news68k newsmips
 .as MACHINE_LIST " next68k ofppc pc532 playstation2 pmax pmppc prep sandpoint
 .as MACHINE_LIST " sbmips sgimips shark sparc sparc64 sun2 sun3 vax 
-.as MACHINE_LIST " x68k x86_64 .
+.as MACHINE_LIST " x68k x86_64 xen .
 .so \*[.CURDIR]/../common/macros
 .
 .Dd September 7, 2002
@@ -1116,6 +1116,12 @@ own checksum files, just as the source distribution does.
 .so hardware -----------------------------------------------
 .br_ne 7P
 .
+.if \n[xen] \{.Ss "Installation options"
+.br_ne 7P
+.
+.so instopt -----------------------------------------------
+.\}
+.
 .Ss "Getting the NetBSD System on to Useful Media"
 .
 .so xfer -----------------------------------------------
@@ -1648,6 +1654,7 @@ If you're one of them, and would like to mentioned, tell us!)
 .It Ta S\(/oren J\(/orvang Ta Mt soren@NetBSD.org Ta Sy sgimips
 .It Ta Wayne Knowles Ta Mt wdk@NetBSD.org Ta Sy mipsco
 .It Ta Paul Kranenburg Ta Mt pk@NetBSD.org Ta Sy sparc
+.It Ta Christian Limpach Ta Mt cl@NetBSD.org Ta Sy xen
 .It Ta "Frank van der Linden" Ta Mt fvdl@NetBSD.org Ta Sy i386
 .It Ta "Frank van der Linden" Ta Mt fvdl@NetBSD.org Ta Sy amd64
 .It Ta Anders Magnusson Ta Mt ragge@NetBSD.org Ta Sy vax
