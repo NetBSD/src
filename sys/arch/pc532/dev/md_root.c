@@ -1,4 +1,4 @@
-/*	$NetBSD: md_root.c,v 1.4 1997/04/21 16:20:39 matthias Exp $	*/
+/*	$NetBSD: md_root.c,v 1.5 1997/07/09 19:28:20 matthias Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -76,6 +76,6 @@ md_open_hook(unit, md)
 {
 	if (unit == 0) {
 		/* The root ramdisk only works single-user. */
-		boothowto |= RB_SINGLE;
+		boothowto |= RB_SINGLE | RB_DFLTROOT;
 	}
 }
