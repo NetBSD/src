@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.637 2003/10/26 20:51:10 kleink Exp $
+#	$NetBSD: mi,v 1.638 2003/11/12 02:48:42 christos Exp $
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
 ./usr/bin/as			comp-util-bin
@@ -2989,6 +2989,7 @@
 ./usr/share/man/cat3/pthread_attr_getdetachstate.0	comp-c-catman
 ./usr/share/man/cat3/pthread_attr_init.0	comp-c-catman
 ./usr/share/man/cat3/pthread_attr_setdetachstate.0	comp-c-catman
+./usr/share/man/cat3/pthread_attr_setcreatesuspend_np.0	comp-c-catman
 ./usr/share/man/cat3/pthread_barierattr_destroy.0	comp-c-catman
 ./usr/share/man/cat3/pthread_barierattr_init.0	comp-c-catman
 ./usr/share/man/cat3/pthread_barrier_destroy.0	comp-c-catman
@@ -3028,6 +3029,7 @@
 ./usr/share/man/cat3/pthread_mutexattr_init.0	comp-c-catman
 ./usr/share/man/cat3/pthread_mutexattr_settype.0	comp-c-catman
 ./usr/share/man/cat3/pthread_once.0	comp-c-catman
+./usr/share/man/cat3/pthread_resume_np.0	comp-c-catman
 ./usr/share/man/cat3/pthread_rwlock_destroy.0	comp-c-catman
 ./usr/share/man/cat3/pthread_rwlock_init.0	comp-c-catman
 ./usr/share/man/cat3/pthread_rwlock_rdlock.0	comp-c-catman
@@ -3046,6 +3048,7 @@
 ./usr/share/man/cat3/pthread_setcanceltype.0	comp-c-catman
 ./usr/share/man/cat3/pthread_setschedparam.0	comp-c-catman
 ./usr/share/man/cat3/pthread_setspecific.0	comp-c-catman
+./usr/share/man/cat3/pthread_suspend_np.0	comp-c-catman
 ./usr/share/man/cat3/pthread_sigmask.0	comp-c-catman
 ./usr/share/man/cat3/pthread_spin_destroy.0	comp-c-catman
 ./usr/share/man/cat3/pthread_spin_init.0	comp-c-catman
@@ -6445,6 +6448,7 @@
 ./usr/share/man/man3/pthread.3		comp-c-man
 ./usr/share/man/man3/pthread_atfork.3		comp-c-man
 ./usr/share/man/man3/pthread_attr.3	comp-c-man
+./usr/share/man/man3/pthread_attr_setcreatesuspend_np.3	comp-c-man
 ./usr/share/man/man3/pthread_attr_destroy.3	comp-c-man
 ./usr/share/man/man3/pthread_attr_getdetachstate.3	comp-c-man
 ./usr/share/man/man3/pthread_attr_init.3	comp-c-man
@@ -6488,6 +6492,7 @@
 ./usr/share/man/man3/pthread_mutexattr_init.3	comp-c-man
 ./usr/share/man/man3/pthread_mutexattr_settype.3	comp-c-man
 ./usr/share/man/man3/pthread_once.3	comp-c-man
+./usr/share/man/man3/pthread_resume_np.3	comp-c-man
 ./usr/share/man/man3/pthread_rwlock_destroy.3	comp-c-man
 ./usr/share/man/man3/pthread_rwlock_init.3	comp-c-man
 ./usr/share/man/man3/pthread_rwlock_rdlock.3	comp-c-man
@@ -6506,6 +6511,7 @@
 ./usr/share/man/man3/pthread_setcanceltype.3	comp-c-man
 ./usr/share/man/man3/pthread_setschedparam.3	comp-c-man
 ./usr/share/man/man3/pthread_setspecific.3	comp-c-man
+./usr/share/man/man3/pthread_suspend_np.3	comp-c-man
 ./usr/share/man/man3/pthread_sigmask.3	comp-c-man
 ./usr/share/man/man3/pthread_spin_destroy.3	comp-c-man
 ./usr/share/man/man3/pthread_spin_init.3	comp-c-man
