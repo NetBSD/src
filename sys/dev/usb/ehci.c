@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.26 2001/11/23 01:16:27 augustss Exp $	*/
+/*	$NetBSD: ehci.c,v 1.27 2001/12/01 09:39:32 enami Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.26 2001/11/23 01:16:27 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.27 2001/12/01 09:39:32 enami Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -381,7 +381,7 @@ ehci_init(ehci_softc_t *sc)
 	sqh->sqtd = NULL;
 #ifdef EHCI_DEBUG
 	if (ehcidebug) {
-		ehci_dump_sqh(sc->sc_async_head);
+		ehci_dump_sqh(sqh);
 	}
 #endif
 
