@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx_osm.c,v 1.8 2003/05/01 23:00:20 fvdl Exp $	*/
+/*	$NetBSD: aic7xxx_osm.c,v 1.9 2003/06/19 20:11:14 bouyer Exp $	*/
 
 /*
  * Bus independent FreeBSD shim for the aic7xxx based adaptec SCSI controllers
@@ -398,8 +398,20 @@ ahc_action(struct scsipi_channel *chan, scsipi_adapter_req_t req, void *arg)
 		 * so that it can print a message.
 		 */
 		if (!ahc_update_neg_request(ahc, &devinfo, tstate,
-		    tinfo, AHC_NEG_IF_NON_ASYNC) && first)
+		    tinfo, AHC_NEG_IF_NON_ASYNC) && first) {
+			xm->xm_mode = 0;
+			xm->xm_period = tinfo->curr.period;
+			xm->xm_offset = tinfo->curr.offset;
+			if (tinfo->curr.width == MSG_EXT_WDTR_BUS_16_BIT)
+				xm->xm_mode |= PERIPH_CAP_WIDE16;
+			if (tinfo->curr.period)
+				xm->xm_mode |= PERIPH_CAP_SYNC;
+			if (tstate->tagenable & devinfo.target_mask)
+				xm->xm_mode |= PERIPH_CAP_TQING;
+			if (tinfo->curr.ppr_options & MSG_EXT_PPR_DT_REQ)
+				xm->xm_mode |= PERIPH_CAP_DT;
 			scsipi_async_event(chan, ASYNC_EVENT_XFER_MODE, xm);
+		}
 		splx(s);
 	    }
 	}
