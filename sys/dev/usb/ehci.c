@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.34 2002/08/13 09:51:27 augustss Exp $	*/
+/*	$NetBSD: ehci.c,v 1.35 2002/08/13 09:58:05 enami Exp $	*/
 
 /*
  * TODO
@@ -44,7 +44,7 @@
 /*
  * USB Enhanced Host Controller Driver, a.k.a. USB 2.0 controller.
  *
- * The EHCI 0.96 spec can be found at
+ * The EHCI 1.0 spec can be found at
  * http://developer.intel.com/technology/usb/download/ehci-r10.pdf
  * and the USB 2.0 spec at
  * http://www.usb.org/developers/data/usb_20.zip
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.34 2002/08/13 09:51:27 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.35 2002/08/13 09:58:05 enami Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
