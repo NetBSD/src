@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_base.c,v 1.19 1994/12/01 12:04:43 mycroft Exp $	*/
+/*	$NetBSD: scsi_base.c,v 1.20 1994/12/01 12:45:25 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -353,8 +353,6 @@ scsi_scsi_cmd(sc_link, scsi_cmd, cmdlen, data_addr, datalen,
 	int error;
 	int s;
 
-	if (bp)
-		flags |= SCSI_NOSLEEP;
 	SC_DEBUG(sc_link, SDEV_DB2, ("scsi_cmd\n"));
 
 	xs = get_xs(sc_link, flags);	/* should wait unless booting */
