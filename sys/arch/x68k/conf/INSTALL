@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.19 1999/11/13 14:19:46 minoura Exp $
+#	$NetBSD: INSTALL,v 1.20 1999/11/18 14:09:40 minoura Exp $
 
 #
 #	INSTALL -- installation kernel.
@@ -162,6 +162,7 @@ file-system	MSDOSFS		# MS-DOS FAT filesystem(s).
 #options 	NFSSERVER	# Sun NFS-compatible filesystem server
 #options 	QUOTA		# FFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
+#options 	SOFTDEP         # FFS soft updates support.
 
 ## Network protocol support.  In most environments, INET is required.
 options 	INET		# IP (Internet Protocol) v4
