@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.47 2002/02/12 19:52:43 jdolecek Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.48 2002/02/14 12:55:51 kent Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.47 2002/02/12 19:52:43 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.48 2002/02/14 12:55:51 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2217,7 +2217,15 @@ uaudio_set_params(void *addr, int setmode, int usemode,
 		case AUDIO_ENCODING_ULAW:
 			if (flags & HAS_MULAW)
 				break;
-			if (flags & HAS_8U) {
+			if (flags & HAS_16) {
+				if (mode == AUMODE_PLAY)
+					swcode = mulaw_to_slinear16_le;
+				else
+					swcode = slinear16_to_mulaw_le;
+				factor = 2;
+				enc = AUDIO_ENCODING_SLINEAR_LE;
+				precision = 16;
+			} else if (flags & HAS_8U) {
 				if (mode == AUMODE_PLAY)
 					swcode = mulaw_to_ulinear8;
 				else
@@ -2229,14 +2237,6 @@ uaudio_set_params(void *addr, int setmode, int usemode,
 				else
 					swcode = slinear8_to_mulaw;
 				enc = AUDIO_ENCODING_SLINEAR_LE;
-			} else if (flags & HAS_16) {
-				if (mode == AUMODE_PLAY)
-					swcode = mulaw_to_slinear16_le;
-				else
-					swcode = slinear16_to_mulaw_le;
-				factor = 2;
-				enc = AUDIO_ENCODING_SLINEAR_LE;
-				precision = 16;
 			} else
 				return (EINVAL);
 			break;
