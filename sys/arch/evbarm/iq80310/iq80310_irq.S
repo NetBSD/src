@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310_irq.S,v 1.2 2001/11/07 02:06:38 thorpej Exp $	*/
+/*	$NetBSD: iq80310_irq.S,v 1.3 2001/11/28 01:31:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Mark Brinicombe.
@@ -313,18 +313,7 @@ exitirq:
 
 	bl	_C_LABEL(dosoftints)	/* Handle the soft interrupts */
 
-	/* Manage ASTs.  Maybe this sould be done as a soft interrupt? */
-	ldr	r0, [sp]		/* Get the SPSR from stack */
-
-	and	r0, r0, #(PSR_MODE)	/* Test for USR32 mode before the IRQ */
-	teq	r0, #(PSR_USR32_MODE)
-	ldreq	r0, Lastpending		/* Do we have an AST pending? */
-	ldreq	r1, [r0]
-	teqeq	r1, #0x00000001
-
-	beq	irqast			/* call the AST handler */
-
-	/* Kill IRQs in preparation for exit. */
+	/* Disable IRQs again. */
 	mrs	r0, cpsr_all
 	orr	r0, r0, #(I32_bit)
 	msr	cpsr_all, r0
@@ -338,47 +327,40 @@ irq_unknown:
 	sub	r1, r1, #1
 	str	r1, [r0]
 
-	PULLFRAMEFROMSVCANDEXIT
+	/* Check to see if we're returning to user mode. */
+	ldr	r0, [sp]		/* Get the SPSR from stack */
+	and	r0, r0, #(PSR_MODE)	/* Test for USR32 mode before the IRQ */
+	teq	r0, #(PSR_USR32_MODE)
+	bne	irqout			/* Nope, get out now */
 
+	ldr	r4, Lastpending		/* r4 = &astpending */
+irqastloop:
+	ldr	r1, [r4]		/* AST pending? */
+	teq	r1, #0x00000000
+	bne	irqast			/* Yep, handle them */
+
+	PULLFRAMEFROMSVCANDEXIT
 	movs	pc, lr			/* Exit */
 
-	/*
-	 * Ok, snag with current intr depth.  If ast() calls mi_sleep(),
-	 * the current_intr_depth will not be decremented until the
-	 * process is woken up.  This can result in the system believing
-	 * it is still in the interrupt handler.  If we are calling as(),
-	 * then correct the current_intr_depth before the call.
-	 */
 irqast:
-	mov	r1, #0x00000000		/* clear ast_pending */
-	str	r1, [r0]
-
-	/* Kill IRQs so we atomically decrement current_intr_depth. */
-	mrs	r2, cpsr_all
-	orr	r3, r2, #(I32_bit)
-	msr	cpsr_all, r3
-
-	/* Decremement the nest count. */
-	ldr	r0, Lcurrent_intr_depth
-	ldr	r4, Lcurrent_intr_depth+4
-	ldr	r1, [r0]
+	mov	r1, #0x00000000		/* clear astpending */
 	str	r1, [r4]
-	sub	r1, r1, #1
-	str	r1, [r0]
 
-	/* Restore IRQ's */
-	msr	cpsr_all, r2
+	mrs	r0, cpsr_all		/* enable IRQs */
+	bic	r0, r0, #(I32_bit)
+	msr	cpsr_all, r0
 
-	mov	r0, sp
+	mov	r0, sp			/* arg 0 = trap frame */
 	bl	_C_LABEL(ast)
 
-	/* Kill IRQ's in preparation for exit */
-	mrs	r0, cpsr_all
+	mrs	r0, cpsr_all		/* disable IRQs */
 	orr	r0, r0, #(I32_bit)
 	msr	cpsr_all, r0
 
-	PULLFRAMEFROMSVCANDEXIT
+	b	irqastloop		/* check for more ASTs */
 
+irqout:
+	PULLFRAMEFROMSVCANDEXIT
 	movs	pc, lr			/* Exit */
 
 Lcnt:
