@@ -1,0 +1,4 @@
+#	$NetBSD: md.evbsh3,v 1.1.2.2 2004/04/12 12:33:49 tron Exp $
+./usr/X11R6/bin/Xvfb
+./usr/X11R6/man/cat1/Xvfb.0
+./usr/X11R6/man/man1/Xvfb.1
