@@ -1,2 +1,0 @@
-gawk: sclifin.awk:7: fatal: attempt to use scalar `j' as array
-EXIT CODE: 2
