@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.2 2003/03/06 00:20:40 matt Exp $	*/
+/*	$NetBSD: extintr.c,v 1.3 2003/03/15 07:50:28 matt Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -86,12 +86,16 @@
 #include <sys/kernel.h>
 
 #include <machine/psl.h>
+#include <machine/bus.h>
 #include <machine/intr.h>
 #ifdef KGDB
 #include <machine/db_machdep.h>
 #endif
 #include <dev/marvell/gtreg.h>
+#include <dev/marvell/gtvar.h>
 #include <dev/marvell/gtintrreg.h>
+
+#include <net/netisr.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -118,6 +122,7 @@ int intrdebug = 0;
 #define ILLEGAL_IRQ(x) (((x) < 0) || ((x) >= NIRQ) || \
 		 ((1<<((x)&IMASK_BITMASK)) & imres[(x)>>IMASK_WORDSHIFT]))
 
+struct powerpc_bus_space gt_mem_bs_tag; 
 extern int safepri;
 
 struct intrsource {
@@ -161,22 +166,22 @@ const char intr_source_strings[NIRQ][16] = {
 	"unknown 52",	"unknown 53",	"unknown 54",	"unknown 55",
 	"gppsum 0",	"gppsum 1",	"gppsum 2",	"gppsum 3",
 	"unknown 60",	"unknown 61",	"unknown 62",	"unknown 63",
-/*64*/	"gpp 0"		"gpp 1",	"gpp 2",	"gpp 3",
-	"gpp 4"		"gpp 5",	"gpp 6",	"gpp 7",
-	"gpp 8"		"gpp 9",	"gpp 10",	"gpp 11",
-	"gpp 12"	"gpp 13",	"gpp 14",	"gpp 15",
-/*80*/	"gpp 16"	"gpp 17",	"gpp 18",	"gpp 19",
-	"gpp 20"	"gpp 21",	"gpp 22",	"gpp 23",
-	"gpp 24"	"gpp 25",	"gpp 26",	"gpp 27",
-	"gpp 28"	"gpp 29",	"gpp 30",	"gpp 31",
-/*96*/	"soft 0"	"soft 1",	"soft 2",	"soft 3",
-	"soft 4"	"soft 5",	"soft 6",	"soft 7",
-	"soft 8"	"soft 9",	"soft 10",	"soft 11",
-	"soft 12"	"soft 13",	"soft 14",	"soft 15",
-/*112*/	"soft 16"	"soft 17",	"soft 18",	"soft 19",
-	"soft 20"	"soft 21",	"soft 22",	"soft 23",
-	"soft 24"	"soft 25",	"soft 26",	"soft clock",
-	"soft net"	"soft iic",	"soft serial",	"hwclock",
+/*64*/	"gpp 0",	"gpp 1",	"gpp 2",	"gpp 3",
+	"gpp 4",	"gpp 5",	"gpp 6",	"gpp 7",
+	"gpp 8",	"gpp 9",	"gpp 10",	"gpp 11",
+	"gpp 12",	"gpp 13",	"gpp 14",	"gpp 15",
+/*80*/	"gpp 16",	"gpp 17",	"gpp 18",	"gpp 19",
+	"gpp 20",	"gpp 21",	"gpp 22",	"gpp 23",
+	"gpp 24",	"gpp 25",	"gpp 26",	"gpp 27",
+	"gpp 28",	"gpp 29",	"gpp 30",	"gpp 31",
+/*96*/	"soft 0",	"soft 1",	"soft 2",	"soft 3",
+	"soft 4",	"soft 5",	"soft 6",	"soft 7",
+	"soft 8",	"soft 9",	"soft 10",	"soft 11",
+	"soft 12",	"soft 13",	"soft 14",	"soft 15",
+/*112*/	"soft 16",	"soft 17",	"soft 18",	"soft 19",
+	"soft 20",	"soft 21",	"soft 22",	"soft 23",
+	"soft 24",	"soft 25",	"soft 26",	"soft clock",
+	"soft net",	"soft iic",	"soft serial",	"hwclock",
 };
 
 #ifdef EXT_INTR_STATS
@@ -242,23 +247,6 @@ imask_print(char *str, volatile imask_t *imp)
 		(*imp)[IMASK_SOFTINT]));
 }
 
-static __inline u_int32_t
-gtread(unsigned int p, int off)
-{
-	u_int32_t rv;
-
-	asm volatile("eieio; lwbrx %0,%1,%2; eieio; sync;"
-		: "=r"(rv) : "b"(off), "r"(p));
-	return rv;
-}
-
-static __inline void
-gtwrite(unsigned int p, int off, u_int32_t v)
-{
-	asm volatile("eieio; stwbrx %0,%1,%2; eieio; sync;"
-		:: "r"(v), "b"(off), "r"(p));
-}
-
 /*
  * Count leading zeros.
  */
@@ -270,6 +258,21 @@ cntlzw(int x)
 	__asm __volatile ("cntlzw %0,%1" : "=r"(a) : "r"(x));
 
 	return a;
+}
+
+static void
+xsoftnet(void)
+{
+	int pendisr;
+	__asm __volatile(
+		"1:	lwarx   %0,0,%2\n"
+		"	stwcx.  %1,0,%2\n"
+		"	bne-    1b\n"
+		"	sync"
+	   :	"=r"(pendisr)
+	   :	"r"(0), "r"(&netisr)
+	   :	"cr0");
+	softnet(pendisr);
 }
 
 /*
@@ -288,7 +291,7 @@ softintr_init(void)
 		panic("softintr_init: cannot intr_establish SIR_SOFTCLOCK");
 
 	p = intr_establish(SIR_NET, IST_SOFT, IPL_SOFTNET, 
-		(int (*) __P((void *)))softnet, NULL);
+		(int (*) __P((void *)))xsoftnet, NULL);
 	if (p == NULL)
 		panic("softintr_init: cannot intr_establish SIR_NET");
 }
@@ -462,7 +465,6 @@ write_intr_mask(volatile imask_t *imp)
 	u_int32_t lo;
 	u_int32_t hi;
 	u_int32_t gpp;
-	extern unsigned int gtbase;
 
 	imask_andnot_icu_vv(imp, &ipending);
 
@@ -473,10 +475,11 @@ write_intr_mask(volatile imask_t *imp)
 	lo |= IML_SUM;
 	hi |= IMH_GPP_SUM;
 
-	gtwrite(gtbase, ICR_CIM_LO, lo);
-	gtwrite(gtbase, ICR_CIM_HI, hi);
-	gtwrite(gtbase, GT_GPP_Interrupt_Mask, gpp);
-	(void)gtread(gtbase, GT_GPP_Interrupt_Mask);	/* R.A.W. */
+	bus_space_write_4(&gt_mem_bs_tag, gt_handle, ICR_CIM_LO, lo);
+	bus_space_write_4(&gt_mem_bs_tag, gt_handle, ICR_CIM_HI, hi);
+	bus_space_write_4(&gt_mem_bs_tag, gt_handle, GT_GPP_Interrupt_Mask, gpp);
+	(void)bus_space_read_4(&gt_mem_bs_tag, gt_handle,
+	    GT_GPP_Interrupt_Mask);	/* R.A.W. */
 }
 
 /*
@@ -555,21 +558,20 @@ ext_intr_cause(
 	u_int32_t hi;
 	u_int32_t gpp = 0;
 	u_int32_t gpp_v;
-	extern unsigned int gtbase;
 
-	lo = gtread(gtbase, ICR_MIC_LO);
+	lo = bus_space_read_4(&gt_mem_bs_tag, gt_handle, ICR_MIC_LO);
 	lo &= ~((*imresp)[IMASK_ICU_LO] | (*impendp)[IMASK_ICU_LO]);
 	(*imenp)[IMASK_ICU_LO] &= ~lo;
 
-	hi = gtread(gtbase, ICR_MIC_HI);
+	hi = bus_space_read_4(&gt_mem_bs_tag, gt_handle, ICR_MIC_HI);
 
 	if (hi & IMH_GPP_SUM) {
-		gpp = gtread(gtbase, GT_GPP_Interrupt_Cause);
+		gpp = bus_space_read_4(&gt_mem_bs_tag, gt_handle, GT_GPP_Interrupt_Cause);
 		gpp &= ~(*imresp)[IMASK_ICU_GPP];
-		gtwrite(gtbase, GT_GPP_Interrupt_Cause, ~gpp);
+		bus_space_write_4(&gt_mem_bs_tag, gt_handle, GT_GPP_Interrupt_Cause, ~gpp);
 	}
 
-	gpp_v = gtread(gtbase, GT_GPP_Value);
+	gpp_v = bus_space_read_4(&gt_mem_bs_tag, gt_handle, GT_GPP_Value);
 	KASSERT((gpp_intrtype_level_mask & (*imresp)[IMASK_ICU_GPP]) == 0);
 	gpp_v &= (gpp_intrtype_level_mask & (*imenp)[IMASK_ICU_GPP]);
 
@@ -792,7 +794,7 @@ _mftb()
         u_long scratch;
         u_int64_t tb;
 
-        asm volatile ("1: mftbu %0; mftb %0+1; mftbu %1; cmpw 0,%0,%1; bne 1b"
+        __asm __volatile ("1: mftbu %0; mftb %0+1; mftbu %1; cmpw 0,%0,%1; bne 1b"
 		: "=r"(tb), "=r"(scratch));
         return tb;
 }
@@ -1141,11 +1143,11 @@ spl_stats_log(int ipl, int cc)
 
 	if (cc == 0) {
 		/* log our calling address */
-		asm volatile ("mflr %0;" : "=r"(pc));
+		__asm __volatile ("mflr %0;" : "=r"(pc));
 		pc--;
 	} else {
 		/* log our caller's calling address */
-		asm volatile ("mr %0,1;" : "=r"(fp));
+		__asm __volatile ("mr %0,1;" : "=r"(fp));
 		fp = (register_t *)*fp;
 		pc = (register_t *)(fp[1] - sizeof(register_t));
 	}
