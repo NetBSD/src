@@ -1,4 +1,4 @@
-/*	$NetBSD: shell_cmd.c,v 1.4 1999/07/03 12:30:42 simonb Exp $	*/
+/*	$NetBSD: shell_cmd.c,v 1.5 2000/10/04 16:24:49 sommerfeld Exp $	*/
 
  /*
   * shell_cmd() takes a shell command after %<character> substitutions. The
@@ -15,7 +15,7 @@
 #if 0
 static char sccsid[] = "@(#) shell_cmd.c 1.5 94/12/28 17:42:44";
 #else
-__RCSID("$NetBSD: shell_cmd.c,v 1.4 1999/07/03 12:30:42 simonb Exp $");
+__RCSID("$NetBSD: shell_cmd.c,v 1.5 2000/10/04 16:24:49 sommerfeld Exp $");
 #endif
 #endif
 
@@ -71,7 +71,6 @@ char   *command;
 static void do_child(command)
 char   *command;
 {
-    char   *error;
     int     tmp_fd;
 
     /*
@@ -86,16 +85,14 @@ char   *command;
     for (tmp_fd = 0; tmp_fd < 3; tmp_fd++)
 	(void) close(tmp_fd);
     if (open("/dev/null", 2) != 0) {
-	error = "open /dev/null: %m";
+	tcpd_warn("open /dev/null: %m");
     } else if (dup(0) != 1 || dup(0) != 2) {
-	error = "dup: %m";
+	tcpd_warn("dup: %m");
     } else {
 	(void) execl("/bin/sh", "sh", "-c", command, (char *) 0);
-	error = "execl /bin/sh: %m";
+	tcpd_warn("execl /bin/sh: %m");
     }
 
     /* Something went wrong. We MUST terminate the child process. */
-
-    tcpd_warn(error);
     _exit(0);
 }
