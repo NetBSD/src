@@ -1,4 +1,4 @@
-/* $NetBSD: dec_eb164.c,v 1.29 1999/04/15 22:06:48 thorpej Exp $ */
+/* $NetBSD: dec_eb164.c,v 1.30 1999/09/02 22:04:41 ross Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 Carnegie-Mellon University.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_eb164.c,v 1.29 1999/04/15 22:06:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_eb164.c,v 1.30 1999/09/02 22:04:41 ross Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -200,10 +200,10 @@ dec_eb164_device_register(dev, aux)
 		else {
 			struct pci_attach_args *pa = aux;
 
-			if ((b->slot % 1000) != pa->pa_device)
+			if (b->slot % 1000 / 100 != pa->pa_function)
 				return;
-
-			/* XXX function? */
+			if (b->slot % 100 != pa->pa_device)
+				return;
 	
 			scsipidev = dev;
 #if 0
