@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_LAPTOP,v 1.10 2001/08/22 15:28:57 hubertf Exp $
+#	$NetBSD: INSTALL_LAPTOP,v 1.11 2001/09/14 21:44:22 nathanw Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -184,8 +184,8 @@ pcib*	at pci? dev ? function ?	# PCI-ISA bridges
 ppb*	at pci? dev ? function ?	# PCI-PCI bridges
 
 # ISA bus support
-isa*	at mainbus?
-isa*	at pcib?
+isa0	at mainbus?
+isa0	at pcib?
 
 # PCMCIA bus support
 pcmcia*	at pcic? controller ? socket ?
