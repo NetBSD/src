@@ -1,4 +1,4 @@
-/* $NetBSD: apicvar.h,v 1.1.2.2 2000/02/21 18:54:07 sommerfeld Exp $ */
+/* $NetBSD: apicvar.h,v 1.1.2.3 2000/02/27 20:25:00 sommerfeld Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,6 +38,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef _I386_APICVAR_H_
+#define _I386_APICVAR_H_
+
 struct apic_attach_args {
 	const char *aaa_name;
 	int apic_id;
@@ -50,3 +53,4 @@ struct apic_attach_args {
 
 void apic_format_redir __P((char *, char *, int, u_int32_t, u_int32_t));
 
+#endif /* !_I386_APICVAR_H_ */
