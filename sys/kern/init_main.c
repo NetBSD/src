@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.216 2003/01/18 10:06:23 thorpej Exp $	*/
+/*	$NetBSD: init_main.c,v 1.217 2003/01/20 20:02:56 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.216 2003/01/18 10:06:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.217 2003/01/20 20:02:56 christos Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfsserver.h"
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.216 2003/01/18 10:06:23 thorpej Exp 
 #include "opt_pipe.h"
 #include "opt_syscall_debug.h"
 #include "opt_systrace.h"
+#include "opt_posix.h"
 
 #include "rnd.h"
 
@@ -85,11 +86,14 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.216 2003/01/18 10:06:23 thorpej Exp 
 #ifdef SYSVSHM
 #include <sys/shm.h>
 #endif
-#ifdef SYSVSEM
+#ifdef SYSVSEM 
 #include <sys/sem.h>
 #endif
 #ifdef SYSVMSG
 #include <sys/msg.h>
+#endif
+#ifdef P1003_1B_SEMAPHORE
+#include <sys/ksem.h>
 #endif
 #ifdef SYSTRACE
 #include <sys/systrace.h>
@@ -396,6 +400,11 @@ main(void)
 	msginit();
 #endif
 
+
+#ifdef P1003_1B_SEMAPHORE
+	/* Initialize posix semaphores */
+	ksem_init();
+#endif
 	/* Attach pseudo-devices. */
 	for (pdev = pdevinit; pdev->pdev_attach != NULL; pdev++)
 		(*pdev->pdev_attach)(pdev->pdev_count);
