@@ -327,7 +327,7 @@ loop:
 	pp = NULL;
 	ppri = INT_MIN;
 	for (p = (struct proc *)allproc; p != NULL; p = p->p_nxt)
-		if (p->p_stat == SRUN && (p->p_flag & SLOAD) == 0) {
+		if (p->p_stat == SRUN && (p->p_flag & P_INMEM) == 0) {
 			pri = p->p_time + p->p_slptime - p->p_nice * 8;
 			if (pri > ppri) {
 				pp = p;
@@ -365,7 +365,7 @@ noswap:
 		(void) splclock();
 		if (p->p_stat == SRUN)
 			setrq(p);
-		p->p_flag |= SLOAD;
+		p->p_flag |= P_INMEM;
 		(void) spl0();
 		p->p_time = 0;
 		goto loop;
@@ -390,7 +390,8 @@ noswap:
 }
 
 #define	swappable(p) \
-	(((p)->p_flag & (SSYS|SLOAD|SKEEP|SWEXIT|SPHYSIO)) == SLOAD)
+	(((p)->p_flag & (P_SYSTEM|P_INMEM|P_NOSWAP|P_WEXIT|P_PHYSIO)) == \
+	    P_INMEM)
 
 /*
  * Swapout is driven by the pageout daemon.  Very simple, we find eligible
@@ -498,7 +499,7 @@ swapout(p)
 	pmap_collect(vm_map_pmap(&p->p_vmspace->vm_map));
 #endif
 	(void) splhigh();
-	p->p_flag &= ~SLOAD;
+	p->p_flag &= ~P_INMEM;
 	if (p->p_stat == SRUN)
 		remrq(p);
 	(void) spl0();

@@ -37,7 +37,7 @@
  * From:
  *	Id: procfs_status.c,v 4.1 1993/12/17 10:47:45 jsp Rel
  *
- *	$Id: procfs_status.c,v 1.3 1994/01/10 20:47:39 ws Exp $
+ *	$Id: procfs_status.c,v 1.4 1994/05/04 03:42:22 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -86,7 +86,7 @@ pfs_dostatus(curp, p, pfs, uio)
 	ps += strlen(ps);
 	ps += sprintf(ps, " %d %d %d %d ", pid, ppid, pgid, sid);
 
-	if ((p->p_flag&SCTTY) && (tp = sess->s_ttyp))
+	if ((p->p_flag&P_CONTROLT) && (tp = sess->s_ttyp))
 		ps += sprintf(ps, "%d,%d ", major(tp->t_dev), minor(tp->t_dev));
 	else
 		ps += sprintf(ps, "%d,%d ", -1, -1);
@@ -103,7 +103,7 @@ pfs_dostatus(curp, p, pfs, uio)
 	if (*sep != ',')
 		ps += sprintf(ps, "noflags");
 
-	if (p->p_stat & SLOAD)
+	if (p->p_stat & P_INMEM)
 		ps += sprintf(ps, " %d %d",
 			p->p_stats->p_start.tv_sec,
 			p->p_stats->p_start.tv_usec);

@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)kern_kinfo.c	7.17 (Berkeley) 6/26/91
- *	$Id: kern_kinfo.c,v 1.13 1994/01/28 04:55:41 cgd Exp $
+ *	$Id: kern_kinfo.c,v 1.14 1994/05/04 03:41:55 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -186,7 +186,7 @@ again:
 			break;
 
 		case KINFO_PROC_TTY:
-			if ((p->p_flag&SCTTY) == 0 || 
+			if ((p->p_flag&P_CONTROLT) == 0 || 
 			    p->p_session->s_ttyp == NULL ||
 			    p->p_session->s_ttyp->t_dev != (dev_t)arg)
 				continue;
@@ -256,7 +256,7 @@ fill_eproc(p, ep)
 		ep->e_ppid = 0;
 	ep->e_pgid = p->p_pgrp->pg_id;
 	ep->e_jobc = p->p_pgrp->pg_jobc;
-	if ((p->p_flag&SCTTY) && 
+	if ((p->p_flag&P_CONTROLT) && 
 	     (tp = ep->e_sess->s_ttyp)) {
 		ep->e_tdev = tp->t_dev;
 		ep->e_tpgid = tp->t_pgrp ? tp->t_pgrp->pg_id : NO_PID;

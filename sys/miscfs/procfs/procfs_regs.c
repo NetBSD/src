@@ -37,7 +37,7 @@
  * From:
  *	Id: procfs_regs.c,v 4.1 1993/12/17 10:47:45 jsp Rel
  *
- *	$Id: procfs_regs.c,v 1.4 1994/04/12 02:55:52 cgd Exp $
+ *	$Id: procfs_regs.c,v 1.5 1994/05/04 03:42:21 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -95,7 +95,7 @@ procfs_validregs(procp)
 	struct proc *procp;
 {
 #if defined(PT_SETREGS) || defined(PT_GETREGS)
-	return ((procp->p_flag & SSYS) == 0);
+	return ((procp->p_flag & P_SYSTEM) == 0);
 #else
 	return (0);
 #endif
