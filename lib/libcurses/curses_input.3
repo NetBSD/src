@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses_input.3,v 1.14 2004/03/16 19:25:05 snj Exp $
+.\"	$NetBSD: curses_input.3,v 1.15 2004/03/22 18:57:10 jdc Exp $
 .\"
 .\" Copyright (c) 2002
 .\"	Brett Lymn (blymn@NetBSD.org, brett_lymn@yahoo.com.au)
@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"
-.Dd June 13, 2003
+.Dd February 24, 2004
 .Dt CURSES_INPUT 3
 .Os
 .Sh NAME
@@ -112,6 +112,12 @@ flag has been set to
 then
 .Fn getch
 will assemble multi-character key sequences into key symbols,
+If the terminal is resized,
+.Fn getch
+will return
+.Dv KEY_RESIZE ,
+regardlesss of the setting of
+.Fn keypad .
 Calling
 .Fn getch
 will cause an implicit
@@ -123,7 +129,7 @@ The
 .Fn wgetch
 function is the same as the
 .Fn getch
-function, except that it reads from the input file descriptor associated
+function, excepting that it reads from the input file descriptor associated
 with the window specified by
 .Fa win .
 .Pp

@@ -1,4 +1,4 @@
-/*	$NetBSD: getch.c,v 1.43 2004/03/16 07:44:31 jdc Exp $	*/
+/*	$NetBSD: getch.c,v 1.44 2004/03/22 18:57:10 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)getch.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: getch.c,v 1.43 2004/03/16 07:44:31 jdc Exp $");
+__RCSID("$NetBSD: getch.c,v 1.44 2004/03/22 18:57:10 jdc Exp $");
 #endif
 #endif					/* not lint */
 
@@ -599,7 +599,15 @@ reread:
 		if (state == INKEY_NORM) {
 			if (delay && __timeout(delay) == ERR)
 				return ERR;
-			if ((c = getchar()) == EOF) {
+			c = getchar();
+			if (_cursesi_screen->resized) {
+				if (c != -1)
+					ungetch(c);
+				_cursesi_screen->resized = 0;
+				clearerr(infd);
+				return KEY_RESIZE;
+			}
+			if (c == EOF) {
 				clearerr(infd);
 				return ERR;
 			}
@@ -640,6 +648,13 @@ reread:
 			}
 
 			c = getchar();
+			if (_cursesi_screen->resized) {
+				if (c != -1)
+					ungetch(c);
+				_cursesi_screen->resized = 0;
+				clearerr(infd);
+				return KEY_RESIZE;
+			}
 			if (ferror(infd)) {
 				clearerr(infd);
 				return ERR;
@@ -891,6 +906,14 @@ wgetch(WINDOW *win)
 		}
 
 		c = getchar();
+		if (_cursesi_screen->resized) {
+			if (c != -1)
+				ungetch(c);
+			_cursesi_screen->resized = 0;
+			clearerr(infd);
+			__restore_termios();
+			return KEY_RESIZE;
+		}
 		if (feof(infd)) {
 			clearerr(infd);
 			__restore_termios();
