@@ -1,4 +1,4 @@
-.\"	$NetBSD: msgc.1,v 1.9 1999/07/04 21:30:14 cgd Exp $
+.\"	$NetBSD: msgc.1,v 1.10 1999/07/04 22:55:48 cgd Exp $
 .\"
 .\" Copyright 1997 Piermont Information Systems Inc.
 .\" All rights reserved.
@@ -59,10 +59,6 @@ msgc
 .Fn msg_display "msg msg_no" ...
 .Ft void 
 .Fn msg_display_add "msg msg_no" ...
-.Ft int  
-.Fn msg_printf  "const char *fmt" ...
-.Ft int  
-.Fn msg_printf_add  "const char *fmt" ...
 .Ft void 
 .Fn msg_prompt  "msg msg_no" "const char *def" "char *val" "int max_chars" ...
 .Ft void 
@@ -124,13 +120,6 @@ cause a defined message to be displayed in the message window and does
 the requested conversions before printing.  The difference is that
 .Fn msg_display
 clears the window before displaying the message.
-The functions
-.Fn msg_printf and
-.Fn msg_printf_add
-print to the message window but take the format string from the function
-call instead of the message directory.  Again, the first version,
-.Fn msg_printf ,
-clears the window before printing.
 .Pp
 The remaining functions deal with a prompt facility.  A prompt message
 is either taken from the message directory or from a given string.  The
