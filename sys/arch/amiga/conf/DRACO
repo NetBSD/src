@@ -1,4 +1,4 @@
-#	$NetBSD: DRACO,v 1.9 1997/01/31 01:45:40 thorpej Exp $
+#	$NetBSD: DRACO,v 1.10 1997/01/31 22:55:42 mhitch Exp $
 
 #
 # Macro System GmbH "DraCo", currently 68060-only until FPE is integrated.
@@ -79,7 +79,6 @@ options		SYSVSEM		# System V-like semaphores
 #
 # Support for various kernel options
 #
-options		GENERIC		# Mini-root boot support
 options		LKM		# Loadable kernel modules
 options		KTRACE		# Add kernel tracing system call
 options		DIAGNOSTIC	# Add additional error checking code
