@@ -1,10 +1,10 @@
-/*	$NetBSD: gpioreg.h,v 1.2 2005/01/23 19:22:22 shige Exp $	*/
+/*	$NetBSD: gpiovar.h,v 1.1 2005/01/23 19:22:22 shige Exp $	*/
 
 /*
- * Copyright 2001 Wasabi Systems, Inc.
+ * Copyright (c) 2003 Wasabi Systems, Inc.
  * All rights reserved.
  *
- * Written by Simon Burge and Eduardo Horvath for Wasabi Systems, Inc.
+ * Written by Steve C. Woodford and Jason R. Thorpe for Wasabi Systems, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -35,33 +35,29 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _IBM4XX_GPIOREG_H_
-#define	_IBM4XX_GPIOREG_H_
+#ifndef _IBM4XX_DEV_GPIOVAR_H_
+#define _IBM4XX_DEV_GPIOVAR_H_
+
+#include <sys/device.h>
 
 /*
- * GPIO Registers
+ * This structure provides the interface of ibm4xx GPIO controller.
  */
+typedef struct gpio_controller {
+	int (*io_or_read)(void *, int);
+	int (*io_tcr_read)(void *, int);
+	int (*io_odr_read)(void *, int);
+	int (*io_ir_read)(void *, int);
+	void (*io_or_write)(void *, int, int);
+	void (*io_tcr_write)(void *, int, int);
+	void (*io_odr_write)(void *, int, int);
+	void *cookie;
+} *gpio_tag_t;
 
-/*
- * GPIO ODR Control Logic:
- * 	ODR	OR	Out	TCR	TS_Ctrl	Module I/O 3-State Driver
- *	0	X	X	0	0	Forced to high impedance state
- *	0	0	0	1	1	Drive 0
- *	0	1	1	1	1	Drive 1
- *	1	0	0	X	1	Drive 0
- *	1	1	0	X	0	Forced to high impedance state
- */
+/* Used to attach devices on the GPIO controller */
+struct gpio_attach_args {
+	gpio_tag_t	ga_tag;		/* our controller */
+	int		ga_addr;	/* address of device */
+};
 
-/* GPIO Registers 0x00-0x7f */
-#define GPIO_NREG		(0x80)
-
-#define GPIO_SHIFT(n)		(31 - n)
-#define GPIO_SBIT(n)		(1 << GPIO_SHIFT(n))
-
-/* Offset */
-#define	GPIO_OR			(0x00)	/* Output */
-#define	GPIO_TCR		(0x04)	/* Three-State Control */
-#define	GPIO_ODR		(0x18)	/* Open Drain */
-#define	GPIO_IR			(0x1c)	/* Input */
-
-#endif	/* _IBM4XX_GPIOREG_H_ */
+#endif	/* _IBM4XX_DEV_GPIOVAR_H_ */
