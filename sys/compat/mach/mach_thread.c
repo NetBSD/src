@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_thread.c,v 1.20 2003/11/07 17:17:00 christos Exp $ */
+/*	$NetBSD: mach_thread.c,v 1.21 2003/11/09 11:10:11 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_thread.c,v 1.20 2003/11/07 17:17:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_thread.c,v 1.21 2003/11/09 11:10:11 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -113,6 +113,8 @@ mach_thread_policy(args)
 	mach_thread_policy_request_t *req = args->smsg;
 	mach_thread_policy_reply_t *rep = args->rmsg;
 	size_t *msglen = args->rsize;
+
+	uprintf("Unimplemented mach_thread_policy\n");
 
 	rep->rep_msgh.msgh_bits =
 	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
@@ -270,7 +272,7 @@ mach_thread_info(args)
 
 	case MACH_THREAD_SCHED_RR_INFO:
 	case MACH_THREAD_SCHED_FIFO_INFO:
-		printf("Unimplemented thread_info flavor %d\n", 
+		uprintf("Unimplemented thread_info flavor %d\n", 
 		    req->req_flavor);
 	default:
 		return mach_msg_error(args, EINVAL);
