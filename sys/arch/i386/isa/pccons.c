@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pccons.c	5.11 (Berkeley) 5/21/91
- *	$Id: pccons.c,v 1.68 1994/10/16 15:46:13 mycroft Exp $
+ *	$Id: pccons.c,v 1.69 1994/10/26 18:06:35 mycroft Exp $
  */
 
 /*
@@ -697,25 +697,38 @@ pccnputc(dev, c)
 pccngetc(dev)
 	dev_t dev;
 {
-	u_char oldpolling;
 	register char *cp;
 
 	if (pc_xmode > 0)
 		return 0;
 
-	oldpolling = polling;
-	polling = 1;
 	do {
 		/* wait for byte */
 		while ((inb(KBSTATP) & KBS_DIB) == 0);
 		/* see if it's worthwhile */
 		cp = sget();
 	} while (!cp);
-	polling = oldpolling;
 	if (*cp == '\r')
 		return '\n';
 	return *cp;
 }
+
+void
+pccnpollc(dev, on)
+	dev_t dev;
+	int on;
+{
+
+	polling = on;
+	if (!on) {
+		/*
+		 * If disabling polling, make sure there are no bytes left in
+		 * the FIFO, holding up the interrupt line.  Otherwise we
+		 * won't get any further interrupts.
+		 */
+		pcrint();
+	}
+}	
 
 /*
  * Set line parameters.
@@ -731,16 +744,6 @@ pcparam(tp, t)
 	tp->t_cflag = t->c_cflag;
 	return 0;
 }
-
-#ifdef KDB
-/*
- * Turn input polling on/off (used by debugger).
- */
-pcpoll(onoff)
-	int onoff;
-{
-}
-#endif
 
 #define	wrtchar(c, at) do {\
 	char *cp = (char *)crtat; *cp++ = (c); *cp = (at); crtat++; vs.col++; \
