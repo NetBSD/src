@@ -1,4 +1,4 @@
-/* $NetBSD: except.c,v 1.14 2000/12/09 18:57:17 bjh21 Exp $ */
+/* $NetBSD: except.c,v 1.15 2000/12/10 01:02:04 bjh21 Exp $ */
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.14 2000/12/09 18:57:17 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.15 2000/12/10 01:02:04 bjh21 Exp $");
 
 #include "opt_cputypes.h"
 #include "opt_ddb.h"
@@ -81,6 +81,7 @@ static void
 userret(struct proc *p, vaddr_t pc, u_quad_t oticks)
 {
 	int sig;
+	u_int32_t *ptr;
 
 	/* take pending signals */
 	while ((sig = CURSIG(p)) != 0)
@@ -107,6 +108,10 @@ userret(struct proc *p, vaddr_t pc, u_quad_t oticks)
 #ifdef DIAGNOSTIC
 	/* Mark trapframe as invalid. */
 	p->p_addr->u_pcb.pcb_tf = (void *)-1;
+	/* Check that the vectors are valid */
+	for (ptr = (u_int32_t *)0; ptr < 6; ptr++)
+		if (*ptr != 0xe59ff114)
+			panic("CPU vectors mangled");
 #endif
 }
 
