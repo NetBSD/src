@@ -1,4 +1,4 @@
-$NetBSD: version,v 1.14 2001/11/09 19:53:15 scw Exp $
+$NetBSD: version,v 1.15 2002/03/21 04:04:12 uwe Exp $
 
 NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.  The format of this
 file is important - make sure the entries are appended on end, last item
@@ -14,3 +14,4 @@ is taken as the current.
 1.9:	add ELF support for loading and bootinfo.
 1.10:	loadfile() update:  ELF symbols no longer need backward seeks.
 1.11:	loadfile() update to avoid backwards seeks for ELF Program Headers.
+1.12:	add prom patches for JavaStation-1
