@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.45.4.10 2002/09/17 21:16:40 nathanw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.45.4.11 2002/10/05 06:41:11 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -443,7 +443,7 @@ setregs(l, pack, stack)
 	frame->f_regs[D7] = 0;
 	frame->f_regs[A0] = 0;
 	frame->f_regs[A1] = 0;
-	frame->f_regs[A2] = (int)p->p_psstr;
+	frame->f_regs[A2] = (int)l->l_proc->p_psstr;
 	frame->f_regs[A3] = 0;
 	frame->f_regs[A4] = 0;
 	frame->f_regs[A5] = 0;
