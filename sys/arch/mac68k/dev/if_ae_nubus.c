@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ae_nubus.c,v 1.19 1997/08/11 22:53:32 scottr Exp $	*/
+/*	$NetBSD: if_ae_nubus.c,v 1.20 1997/09/26 00:37:06 briggs Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds
@@ -387,6 +387,7 @@ ae_nb_card_vendor(bst, bsh, na)
 		}
 		break;
 	case NUBUS_DRSW_APPLE:
+	case NUBUS_DRSW_DAYNA2:
 	case NUBUS_DRSW_TECHWORKS:
 		vendor = DP8390_VENDOR_APPLE;
 		break;
