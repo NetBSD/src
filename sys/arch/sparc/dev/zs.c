@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.76 2000/03/19 13:22:14 pk Exp $	*/
+/*	$NetBSD: zs.c,v 1.77 2000/03/19 14:58:02 pk Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -126,16 +126,6 @@ struct zsdevice {
 
 /* ZS channel used as the console device (if any) */
 void *zs_conschan_get, *zs_conschan_put;
-
-/* Default speed for each channel */
-static int zs_defspeed[NZS][2] = {
-	{ 9600, 	/* ttya */
-	  9600 },	/* ttyb */
-	{ 1200, 	/* keyboard */
-	  1200 },	/* mouse */
-	{ 9600, 	/* ttyc */
-	  9600 },	/* ttyd */
-};
 
 static u_char zs_init_reg[16] = {
 	0,	/* 0: CMD (reset, etc.) */
@@ -420,12 +410,8 @@ zs_attach(zsc, zsd, pri)
 		bcopy(zs_init_reg, cs->cs_creg, 16);
 		bcopy(zs_init_reg, cs->cs_preg, 16);
 
-		/* XXX: Get these from the PROM properties! */
-		/* XXX: See the mvme167 code.  Better. */
-		if (zsc_args.hwflags & ZS_HWFLAG_CONSOLE)
-			cs->cs_defspeed = zs_get_speed(cs);
-		else
-			cs->cs_defspeed = zs_defspeed[zsc->zsc_promunit][channel];
+		/* XXX: Consult PROM properties for this?! */
+		cs->cs_defspeed = zs_get_speed(cs);
 		cs->cs_defcflag = zs_def_cflag;
 
 		/* Make these correspond to cs_defcflag (-crtscts) */
