@@ -1,4 +1,4 @@
-/*	$NetBSD: revnetgroup.c,v 1.6 1998/06/08 06:53:49 lukem Exp $ */
+/*	$NetBSD: revnetgroup.c,v 1.7 1999/07/25 09:01:05 lukem Exp $ */
 
 /*
  * Copyright (c) 1995
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: revnetgroup.c,v 1.6 1998/06/08 06:53:49 lukem Exp $");
+__RCSID("$NetBSD: revnetgroup.c,v 1.7 1999/07/25 09:01:05 lukem Exp $");
 #endif
 
 #include <ctype.h>
@@ -90,7 +90,7 @@ main(argc, argv)
 	struct group_entry *gcur;
 	struct member_entry *mcur;
 	FILE	*fp;
-	char	*p, *host, *user, *domain;
+	char	*line, *p, *host, *user, *domain;
 	int	 ch, i;
 	size_t	 len;
 	char	*key;
@@ -137,10 +137,11 @@ main(argc, argv)
 
 	/* Stuff all the netgroup names and members into a hash table. */
 	for (;
-	    (p = fparseln(fp, &len, NULL, NULL, FPARSELN_UNESCALL));
-	    free(p)) {
+	    (line = fparseln(fp, &len, NULL, NULL, FPARSELN_UNESCALL));
+	    free(line)) {
 		if (len == 0)
 			continue;
+		p = line;
 
 		for (key = p; *p && isspace(*p) == 0; p++)
 			;

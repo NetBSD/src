@@ -1,4 +1,4 @@
-/*	$NetBSD: mknetid.c,v 1.9 1998/06/11 14:50:46 kleink Exp $	*/
+/*	$NetBSD: mknetid.c,v 1.10 1999/07/25 09:01:04 lukem Exp $	*/
 
 /*
  * Copyright (c) 1996 Mats O Jansson <moj@stacken.kth.se>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mknetid.c,v 1.9 1998/06/11 14:50:46 kleink Exp $");
+__RCSID("$NetBSD: mknetid.c,v 1.10 1999/07/25 09:01:04 lukem Exp $");
 #endif
 
 /*
@@ -232,21 +232,22 @@ read_passwd(fname)
 	size_t	 line_no;
 	int	 colon;
 	size_t	 len;
-	char	*p, *k, *u, *g;
+	char	*line, *p, *k, *u, *g;
 
 	if ((pfile = fopen(fname, "r")) == NULL)
 		err(1, "%s", fname);
 
 	line_no = 0;
 	for (;
-	    (p = fparseln(pfile, &len, &line_no, NULL, FPARSELN_UNESCALL));
-	    free(p)) {
+	    (line = fparseln(pfile, &len, &line_no, NULL, FPARSELN_UNESCALL));
+	    free(line)) {
 		if (len == 0) {
 			warnx("%s line %lu: empty line", fname,
 			    (unsigned long)line_no);
 			continue;
 		}
 
+		p = line;
 		for (k = p, colon = 0; *k != '\0'; k++)
 			if (*k == ':')
 				colon++;
@@ -308,21 +309,22 @@ read_group(fname)
 	size_t	 line_no;
 	int	 colon;
 	size_t	 len;
-	char	*p, *k, *u, *g;
+	char	*line, *p, *k, *u, *g;
 
 	if ((gfile = fopen(fname, "r")) == NULL)
 		err(1, "%s", fname);
 
 	line_no = 0;
 	for (;
-	    (p = fparseln(gfile, &len, &line_no, NULL, FPARSELN_UNESCALL));
-	    free(p)) {
+	    (line = fparseln(gfile, &len, &line_no, NULL, FPARSELN_UNESCALL));
+	    free(line)) {
 		if (len == 0) {
 			warnx("%s line %lu: empty line", fname,
 			    (unsigned long)line_no);
 			continue;
 		}
 
+		p = line;
 		for (k = p, colon = 0; *k != '\0'; k++)
 			if (*k == ':')
 				colon++;
@@ -402,17 +404,18 @@ print_hosts(fname, domain)
 {
 	FILE	*hfile;
 	size_t	 len;
-	char	*p, *k, *u;
+	char	*line, *p, *k, *u;
 
 	if ((hfile = fopen(fname, "r")) == NULL)
 		err(1, "%s", fname);
 
 	for (;
-	    (p = fparseln(hfile, &len, NULL, NULL, FPARSELN_UNESCALL));
-	    free(p)) {
+	    (line = fparseln(hfile, &len, NULL, NULL, FPARSELN_UNESCALL));
+	    free(line)) {
 		if (len == 0)
 			continue;
 
+		p = line;
 		/* Find the key, replace trailing whitespace will <NUL> */
 		for (k = p; *p && isspace(*p) == 0; p++)
 			;
@@ -435,18 +438,19 @@ print_netid(fname)
 {
 	FILE	*mfile;
 	size_t	 len;
-	char	*p, *k, *u;
+	char	*line, *p, *k, *u;
 
 	mfile = fopen(fname, "r");
 	if (mfile == NULL)
 		return;
 
 	for (;
-	    (p = fparseln(mfile, &len, NULL, NULL, FPARSELN_UNESCALL));
-	    free(p)) {
+	    (line = fparseln(mfile, &len, NULL, NULL, FPARSELN_UNESCALL));
+	    free(line)) {
 		if (len == 0)
 			continue;
 
+		p = line;
 		/* Find the key, replace trailing whitespace will <NUL> */
 		for (k = p; *p && !isspace(*p); p++)
 			;
