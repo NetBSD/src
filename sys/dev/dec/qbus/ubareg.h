@@ -1,4 +1,4 @@
-/*	$NetBSD: ubareg.h,v 1.11 1999/05/24 20:12:58 ragge Exp $ */
+/*	$NetBSD: ubareg.h,v 1.12 1999/05/27 03:45:21 ragge Exp $ */
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -89,6 +89,7 @@
 #define	UBAIOSIZE	8192		/* 8K I/O space */
 
 #ifndef _LOCORE
+#if 0
 /*
  * DW780/DW750 hardware registers
  */
@@ -107,6 +108,7 @@ struct uba_regs {
 	struct pte uba_map[UBAPAGES];	/* unibus map register */
 	int	pad3[UBAIOPAGES];	/* no maps for device address space */
 };
+#endif
 #endif
 
 #ifdef DW780

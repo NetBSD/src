@@ -1,4 +1,4 @@
-/*	$NetBSD: uba.c,v 1.44 1999/05/26 01:26:18 ragge Exp $	   */
+/*	$NetBSD: uba.c,v 1.45 1999/05/27 03:45:21 ragge Exp $	   */
 /*
  * Copyright (c) 1996 Jonathan Stone.
  * Copyright (c) 1994, 1996 Ludd, University of Lule}, Sweden.
@@ -62,8 +62,8 @@
 #include <machine/pte.h>
 #endif
 
-#include <dev/dec/uba/ubareg.h>
-#include <dev/dec/uba/ubavar.h>
+#include <dev/dec/qbus/ubareg.h>
+#include <dev/dec/qbus/ubavar.h>
 
 static	int ubasearch __P((struct device *, struct cfdata *, void *));
 static	int ubaprint __P((void *, const char *));

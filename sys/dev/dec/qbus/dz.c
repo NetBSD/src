@@ -1,4 +1,4 @@
-/*	$NetBSD: dz.c,v 1.15 1999/05/26 01:26:17 ragge Exp $	*/
+/*	$NetBSD: dz.c,v 1.16 1999/05/27 03:45:21 ragge Exp $	*/
 /*
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
  * Copyright (c) 1992, 1993
@@ -61,11 +61,11 @@
 #include <machine/trap.h>
 #include <machine/cpu.h>
 
-#include <dev/dec/uba/ubareg.h>
-#include <dev/dec/uba/ubavar.h>
+#include <dev/dec/qbus/ubareg.h>
+#include <dev/dec/qbus/ubavar.h>
 
-#include <dev/dec/uba/dzreg.h>
-#include <dev/dec/uba/dzvar.h>
+#include <dev/dec/qbus/dzreg.h>
+#include <dev/dec/qbus/dzvar.h>
 
 #define	DZ_READ_BYTE(adr) \
 	bus_space_read_1(sc->sc_iot, sc->sc_ioh, sc->sc_dr.adr)
