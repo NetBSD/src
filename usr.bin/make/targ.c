@@ -1,4 +1,4 @@
-/*	$NetBSD: targ.c,v 1.8 1996/08/13 16:42:21 christos Exp $	*/
+/*	$NetBSD: targ.c,v 1.9 1996/08/30 17:59:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -39,8 +39,11 @@
  */
 
 #ifndef lint
-/* from: static char sccsid[] = "@(#)targ.c	5.9 (Berkeley) 3/1/91"; */
-static char *rcsid = "$Id: targ.c,v 1.8 1996/08/13 16:42:21 christos Exp $";
+#if 0
+static char sccsid[] = "@(#)targ.c	5.9 (Berkeley) 3/1/91";
+#else
+static char *rcsid = "$NetBSD: targ.c,v 1.9 1996/08/30 17:59:43 thorpej Exp $";
+#endif
 #endif /* not lint */
 
 /*-
