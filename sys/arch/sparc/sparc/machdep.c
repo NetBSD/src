@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.54 1996/01/10 23:00:33 pk Exp $ */
+/*	$NetBSD: machdep.c,v 1.55 1996/01/12 21:22:46 chuck Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -874,7 +874,8 @@ mapdev(phys, virt, offset, size, bustype)
 		if (iobase > IODEV_END)	/* unlikely */
 			panic("mapiodev");
 	}
-	ret = (void *)v;
+	ret = (void *)(v | (((u_long)phys->rr_paddr + offset) & PGOFSET));
+			/* note: preserve page offset */
 
 	pa = trunc_page(phys->rr_paddr + offset);
 #ifdef notyet
