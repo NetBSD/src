@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.66.2.12 2002/04/01 21:31:33 nathanw Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.66.2.13 2002/05/29 21:33:15 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou.  All rights reserved.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.66.2.12 2002/04/01 21:31:33 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.66.2.13 2002/05/29 21:33:15 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,6 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.66.2.12 2002/04/01 21:31:33 nathan
 #include <sys/user.h>
 
 #include <sys/mount.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <uvm/uvm_extern.h>

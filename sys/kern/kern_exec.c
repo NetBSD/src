@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.138.2.9 2002/04/17 00:06:17 nathanw Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.138.2.10 2002/05/29 21:33:10 nathanw Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.138.2.9 2002/04/17 00:06:17 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.138.2.10 2002/05/29 21:33:10 nathanw Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -59,6 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.138.2.9 2002/04/17 00:06:17 nathanw 
 #include <sys/stat.h>
 #include <sys/syscall.h>
 
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <uvm/uvm_extern.h>

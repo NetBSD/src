@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.24.2.1 2001/06/21 19:59:13 nathanw Exp $
+	$NetBSD: syscalls.master,v 1.24.2.2 2002/05/29 21:32:24 nathanw Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -42,6 +42,7 @@
 #include <sys/mount.h>
 #include <sys/exec.h>
 #include <sys/poll.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <compat/hpux/hpux.h>

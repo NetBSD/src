@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_misc.c,v 1.2.4.7 2002/04/17 00:05:22 nathanw Exp $	 */
+/*	$NetBSD: svr4_32_misc.c,v 1.2.4.8 2002/05/29 21:33:04 nathanw Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_misc.c,v 1.2.4.7 2002/04/17 00:05:22 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_misc.c,v 1.2.4.8 2002/05/29 21:33:04 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,6 +77,7 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_32_misc.c,v 1.2.4.7 2002/04/17 00:05:22 nathanw
 #include <sys/signalvar.h>
 
 #include <netinet/in.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <miscfs/specfs/specdev.h>

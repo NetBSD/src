@@ -1,4 +1,4 @@
-/*	$NetBSD: aoutm68k_ioctl.c,v 1.1.4.2 2001/11/17 10:13:07 scw Exp $	*/
+/*	$NetBSD: aoutm68k_ioctl.c,v 1.1.4.3 2002/05/29 21:32:10 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aoutm68k_ioctl.c,v 1.1.4.2 2001/11/17 10:13:07 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aoutm68k_ioctl.c,v 1.1.4.3 2002/05/29 21:32:10 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,6 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: aoutm68k_ioctl.c,v 1.1.4.2 2001/11/17 10:13:07 scw E
 #include <sys/proc.h>
 
 #include <sys/syscall.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <compat/aoutm68k/aoutm68k_util.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_43.c,v 1.15.2.4 2001/11/14 19:12:55 nathanw Exp $	*/
+/*	$NetBSD: vfs_syscalls_43.c,v 1.15.2.5 2002/05/29 21:32:17 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_43.c,v 1.15.2.4 2001/11/14 19:12:55 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_43.c,v 1.15.2.5 2002/05/29 21:32:17 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_union.h"
@@ -68,6 +68,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_43.c,v 1.15.2.4 2001/11/14 19:12:55 nat
 #include <sys/resourcevar.h>
 
 #include <sys/mount.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 static void cvtstat __P((struct stat *, struct stat43 *));

@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_ioctl.c,v 1.15.2.3 2001/12/06 10:03:55 wdk Exp $ */
+/*	$NetBSD: ultrix_ioctl.c,v 1.15.2.4 2002/05/29 21:33:08 nathanw Exp $ */
 /*	from : NetBSD: sunos_ioctl.c,v 1.21 1995/10/07 06:27:31 mycroft Exp */
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_ioctl.c,v 1.15.2.3 2001/12/06 10:03:55 wdk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_ioctl.c,v 1.15.2.4 2002/05/29 21:33:08 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_ultrix.h"
@@ -51,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: ultrix_ioctl.c,v 1.15.2.3 2001/12/06 10:03:55 wdk Ex
 #include <sys/mount.h>
 
 #include <compat/ultrix/ultrix_syscallargs.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <compat/sunos/sunos.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stat.c,v 1.42.2.4 2002/04/01 07:44:49 nathanw Exp $	 */
+/*	$NetBSD: svr4_stat.c,v 1.42.2.5 2002/05/29 21:33:01 nathanw Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_stat.c,v 1.42.2.4 2002/04/01 07:44:49 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_stat.c,v 1.42.2.5 2002/05/29 21:33:01 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,6 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_stat.c,v 1.42.2.4 2002/04/01 07:44:49 nathanw E
 #include <uvm/uvm_extern.h>
 #include <sys/sysctl.h>
 
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <compat/svr4/svr4_types.h>

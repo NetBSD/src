@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_machdep.c,v 1.14.8.1 2002/04/01 07:43:15 nathanw Exp $	*/
+/*	$NetBSD: sunos_machdep.c,v 1.14.8.2 2002/05/29 21:32:01 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1995 Matthew R. Green
@@ -45,6 +45,7 @@
 #include <sys/signalvar.h>
 #include <sys/malloc.h>
 
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <compat/sunos/sunos.h>
 #include <compat/sunos/sunos_syscallargs.h>

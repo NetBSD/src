@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.17.2.3 2002/01/08 00:29:07 nathanw Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.17.2.4 2002/05/29 21:32:47 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -41,6 +41,7 @@
 #include <sys/systm.h>
 #include <sys/mount.h>
 #include <sys/stat.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/ipc.h>
 #include <sys/shm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_msg.c,v 1.32.2.3 2002/04/01 07:47:58 nathanw Exp $	*/
+/*	$NetBSD: sysv_msg.c,v 1.32.2.4 2002/05/29 21:33:16 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_msg.c,v 1.32.2.3 2002/04/01 07:47:58 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_msg.c,v 1.32.2.4 2002/05/29 21:33:16 nathanw Exp $");
 
 #define SYSVMSG
 
@@ -66,6 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: sysv_msg.c,v 1.32.2.3 2002/04/01 07:47:58 nathanw Ex
 #include <sys/msg.h>
 #include <sys/sysctl.h>
 #include <sys/mount.h>		/* XXX for <sys/syscallargs.h> */
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #define MSG_DEBUG

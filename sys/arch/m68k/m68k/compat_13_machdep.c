@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_13_machdep.c,v 1.3.8.1 2001/11/17 13:07:53 scw Exp $	*/
+/*	$NetBSD: compat_13_machdep.c,v 1.3.8.2 2002/05/29 21:31:44 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -51,6 +51,7 @@
 #include <sys/signalvar.h>
 
 #include <sys/mount.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <machine/cpu.h>

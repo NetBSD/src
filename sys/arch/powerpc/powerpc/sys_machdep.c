@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.3.10.1 2001/11/05 19:46:19 briggs Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.3.10.2 2002/05/29 21:31:55 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -34,6 +34,7 @@
 #include <sys/param.h>
 
 #include <sys/mount.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 int

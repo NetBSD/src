@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.35.4.3 2002/02/28 04:08:45 nathanw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.35.4.4 2002/05/29 21:31:41 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -47,6 +47,7 @@
 #include <uvm/uvm_extern.h>
 #include <sys/sysctl.h>
 #include <sys/mount.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/kcore.h>
 #include <sys/boot_flag.h>

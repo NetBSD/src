@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_machdep.c,v 1.20.8.1 2001/11/17 13:07:54 scw Exp $	*/
+/*	$NetBSD: sunos_machdep.c,v 1.20.8.2 2002/05/29 21:31:45 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -57,6 +57,7 @@
 #include <sys/malloc.h>
 #include <sys/buf.h>
 
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <compat/sunos/sunos.h>
 #include <compat/sunos/sunos_syscallargs.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.53.2.3 2001/11/14 19:16:35 nathanw Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.53.2.4 2002/05/29 21:33:10 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.53.2.3 2001/11/14 19:16:35 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.53.2.4 2002/05/29 21:33:10 nathanw Exp $");
 
 #include "opt_ktrace.h"
 
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.53.2.3 2001/11/14 19:16:35 nathanw
 #include <sys/ioctl.h>
 
 #include <sys/mount.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #ifdef KTRACE

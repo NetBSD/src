@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socketcall.c,v 1.19.20.4 2002/04/17 00:05:13 nathanw Exp $	*/
+/*	$NetBSD: linux_socketcall.c,v 1.19.20.5 2002/05/29 21:32:45 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socketcall.c,v 1.19.20.4 2002/04/17 00:05:13 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socketcall.c,v 1.19.20.5 2002/05/29 21:32:45 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -59,6 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_socketcall.c,v 1.19.20.4 2002/04/17 00:05:13 n
 #include <sys/vnode.h>
 #include <sys/device.h>
 
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <compat/linux/common/linux_types.h>

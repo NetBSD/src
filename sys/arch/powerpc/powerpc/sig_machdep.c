@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.5.8.4 2002/04/02 00:53:10 nathanw Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.5.8.5 2002/05/29 21:31:55 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -38,6 +38,7 @@
 #include <sys/lwp.h>
 #include <sys/mount.h>
 #include <sys/proc.h>
+#include <sys/sa.h>
 #include <sys/savar.h>
 #include <sys/syscallargs.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.57.2.3 2002/02/28 04:13:00 nathanw Exp $
+	$NetBSD: syscalls.master,v 1.57.2.4 2002/05/29 21:32:57 nathanw Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -43,6 +43,7 @@
 #include <sys/signal.h>
 #include <sys/mount.h>
 #include <sys/poll.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <compat/sunos/sunos.h>

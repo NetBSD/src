@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_syssgi.c,v 1.11.2.3 2002/04/01 07:44:02 nathanw Exp $ */
+/*	$NetBSD: irix_syssgi.c,v 1.11.2.4 2002/05/29 21:32:28 nathanw Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_syssgi.c,v 1.11.2.3 2002/04/01 07:44:02 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_syssgi.c,v 1.11.2.4 2002/05/29 21:32:28 nathanw Exp $");
 
 #include "opt_ddb.h"
 
@@ -63,6 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: irix_syssgi.c,v 1.11.2.3 2002/04/01 07:44:02 nathanw
 #include <sys/exec.h>
 #include <sys/exec_elf.h>
 #include <sys/mount.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <uvm/uvm_extern.h>

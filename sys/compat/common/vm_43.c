@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_43.c,v 1.6.2.2 2001/11/14 19:12:55 nathanw Exp $	*/
+/*	$NetBSD: vm_43.c,v 1.6.2.3 2002/05/29 21:32:18 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_43.c,v 1.6.2.2 2001/11/14 19:12:55 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_43.c,v 1.6.2.3 2002/05/29 21:32:18 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,6 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: vm_43.c,v 1.6.2.2 2001/11/14 19:12:55 nathanw Exp $"
 #include <sys/mman.h>
 
 #include <sys/mount.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <miscfs/specfs/specdev.h>

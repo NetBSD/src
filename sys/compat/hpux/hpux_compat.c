@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_compat.c,v 1.54.2.6 2002/04/01 07:43:51 nathanw Exp $	*/
+/*	$NetBSD: hpux_compat.c,v 1.54.2.7 2002/05/29 21:32:20 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_compat.c,v 1.54.2.6 2002/04/01 07:43:51 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_compat.c,v 1.54.2.7 2002/05/29 21:32:20 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -87,6 +87,7 @@ __KERNEL_RCSID(0, "$NetBSD: hpux_compat.c,v 1.54.2.6 2002/04/01 07:43:51 nathanw
 #include <machine/psl.h>
 #include <machine/vmparam.h>
 
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <compat/hpux/hpux.h>

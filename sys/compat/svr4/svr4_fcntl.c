@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_fcntl.c,v 1.36.2.4 2002/04/01 07:44:47 nathanw Exp $	 */
+/*	$NetBSD: svr4_fcntl.c,v 1.36.2.5 2002/05/29 21:32:59 nathanw Exp $	 */
 
 /*-
  * Copyright (c) 1994, 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_fcntl.c,v 1.36.2.4 2002/04/01 07:44:47 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_fcntl.c,v 1.36.2.5 2002/05/29 21:32:59 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_fcntl.c,v 1.36.2.4 2002/04/01 07:44:47 nathanw 
 #include <sys/malloc.h>
 #include <sys/vnode.h>
 
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <compat/svr4/svr4_types.h>

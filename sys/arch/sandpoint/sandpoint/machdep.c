@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.16.4.3 2002/04/01 07:42:16 nathanw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.16.4.4 2002/05/29 21:31:56 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -52,6 +52,7 @@
 #include <sys/msgbuf.h>
 #include <sys/proc.h>
 #include <sys/reboot.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/syslog.h>
 #include <sys/sysctl.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_13_machdep.c,v 1.5.4.3 2002/01/08 00:25:19 nathanw Exp $	*/
+/*	$NetBSD: compat_13_machdep.c,v 1.5.4.4 2002/05/29 21:31:42 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.5.4.3 2002/01/08 00:25:19 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.5.4.4 2002/05/29 21:31:42 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.5.4.3 2002/01/08 00:25:19 na
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/mount.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #ifdef VM86

@@ -1,4 +1,4 @@
-/* $NetBSD: sys_machdep.c,v 1.4.8.1 2001/11/18 18:10:21 scw Exp $ */
+/* $NetBSD: sys_machdep.c,v 1.4.8.2 2002/05/29 21:31:44 nathanw Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.4.8.1 2001/11/18 18:10:21 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.4.8.2 2002/05/29 21:31:44 nathanw Exp $");
 
 #include "opt_compat_hpux.h"
 
@@ -55,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.4.8.1 2001/11/18 18:10:21 scw Exp 
 
 #include <uvm/uvm_extern.h>
 
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <machine/cpu.h>

@@ -1,4 +1,4 @@
-/* $NetBSD: linux_time.c,v 1.2.2.6 2002/02/28 04:12:58 nathanw Exp $ */
+/* $NetBSD: linux_time.c,v 1.2.2.7 2002/05/29 21:32:46 nathanw Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_time.c,v 1.2.2.6 2002/02/28 04:12:58 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_time.c,v 1.2.2.7 2002/05/29 21:32:46 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/ucred.h>
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_time.c,v 1.2.2.6 2002/02/28 04:12:58 nathanw E
 #include <sys/stdint.h>
 #include <sys/time.h>
 #include <sys/systm.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <compat/linux/common/linux_types.h>

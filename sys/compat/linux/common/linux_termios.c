@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_termios.c,v 1.11.2.4 2002/01/08 00:29:06 nathanw Exp $	*/
+/*	$NetBSD: linux_termios.c,v 1.11.2.5 2002/05/29 21:32:46 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_termios.c,v 1.11.2.4 2002/01/08 00:29:06 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_termios.c,v 1.11.2.5 2002/05/29 21:32:46 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -48,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_termios.c,v 1.11.2.4 2002/01/08 00:29:06 natha
 #include <sys/mount.h>
 #include <sys/termios.h>
 
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <compat/linux/common/linux_types.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sysctl.c,v 1.2.2.5 2002/04/17 00:05:14 nathanw Exp $	*/
+/*	$NetBSD: linux_sysctl.c,v 1.2.2.6 2002/05/29 21:32:45 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sysctl.c,v 1.2.2.5 2002/04/17 00:05:14 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sysctl.c,v 1.2.2.6 2002/05/29 21:32:45 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_sysctl.c,v 1.2.2.5 2002/04/17 00:05:14 nathanw
 #include <sys/proc.h>
 #include <sys/mount.h>
 #include <sys/sysctl.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <compat/linux/common/linux_types.h>

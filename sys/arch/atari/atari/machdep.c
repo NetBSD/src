@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.112.4.5 2002/04/17 00:02:37 nathanw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.112.4.6 2002/05/29 21:31:38 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -66,6 +66,7 @@
 #include <sys/vnode.h>
 #include <sys/queue.h>
 #include <sys/mount.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <sys/exec.h>

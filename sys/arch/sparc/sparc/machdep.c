@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.187.4.7 2002/04/01 07:42:51 nathanw Exp $ */
+/*	$NetBSD: machdep.c,v 1.187.4.8 2002/05/29 21:31:57 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -105,6 +105,7 @@
 #include <sys/mbuf.h>
 #include <sys/mount.h>
 #include <sys/msgbuf.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/exec.h>
 #include <sys/savar.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.62.2.8 2002/04/17 00:04:57 nathanw Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.62.2.9 2002/05/29 21:32:31 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.62.2.8 2002/04/17 00:04:57 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.62.2.9 2002/05/29 21:32:31 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -64,6 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.62.2.8 2002/04/17 00:04:57 natha
 #include <sys/mount.h>
 #include <sys/vnode.h>
 #include <sys/device.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/filedesc.h>
 #include <sys/exec_elf.h>

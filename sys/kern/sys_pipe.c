@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.4.2.11 2002/04/01 07:47:57 nathanw Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.4.2.12 2002/05/29 21:33:14 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.4.2.11 2002/04/01 07:47:57 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.4.2.12 2002/05/29 21:33:14 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,6 +83,7 @@ __KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.4.2.11 2002/04/01 07:47:57 nathanw Ex
 #ifdef __NetBSD__
 #include <sys/select.h>
 #include <sys/mount.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <uvm/uvm.h>
 #include <sys/sysctl.h>

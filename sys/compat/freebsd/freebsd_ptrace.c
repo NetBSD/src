@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_ptrace.c,v 1.3.2.3 2002/04/01 07:43:51 nathanw Exp $	*/
+/*	$NetBSD: freebsd_ptrace.c,v 1.3.2.4 2002/05/29 21:32:19 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou.  All rights reserved.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_ptrace.c,v 1.3.2.3 2002/04/01 07:43:51 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_ptrace.c,v 1.3.2.4 2002/05/29 21:32:19 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: freebsd_ptrace.c,v 1.3.2.3 2002/04/01 07:43:51 natha
 #include <sys/uio.h>
 #include <sys/user.h>
 #include <sys/mount.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <machine/reg.h>

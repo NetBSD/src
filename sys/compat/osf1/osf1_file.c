@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_file.c,v 1.9.2.5 2002/04/01 07:44:35 nathanw Exp $ */
+/* $NetBSD: osf1_file.c,v 1.9.2.6 2002/05/29 21:32:51 nathanw Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_file.c,v 1.9.2.5 2002/04/01 07:44:35 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_file.c,v 1.9.2.6 2002/05/29 21:32:51 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
@@ -78,6 +78,7 @@ __KERNEL_RCSID(0, "$NetBSD: osf1_file.c,v 1.9.2.5 2002/04/01 07:44:35 nathanw Ex
 #include <sys/signal.h>
 #include <sys/signalvar.h>
 #include <sys/reboot.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/exec.h>
 #include <sys/vnode.h>

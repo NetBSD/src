@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.11.4.4 2002/04/01 07:43:20 nathanw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.11.4.5 2002/05/29 21:32:02 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001 Matthew Fredette.
@@ -152,6 +152,7 @@
 #include <sys/core.h>
 #include <sys/kcore.h>
 #include <sys/vnode.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #ifdef	KGDB
 #include <sys/kgdb.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: pecoff_misc.c,v 1.2.2.4 2002/04/17 00:05:18 nathanw Exp $	*/
+/*	$NetBSD: pecoff_misc.c,v 1.2.2.5 2002/05/29 21:32:55 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pecoff_misc.c,v 1.2.2.4 2002/04/17 00:05:18 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pecoff_misc.c,v 1.2.2.5 2002/05/29 21:32:55 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -57,6 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: pecoff_misc.c,v 1.2.2.4 2002/04/17 00:05:18 nathanw 
 #include <sys/lwp.h>
 #include <sys/proc.h>
 
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <compat/common/compat_util.h>

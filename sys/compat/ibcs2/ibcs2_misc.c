@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_misc.c,v 1.55.2.5 2002/04/01 22:09:50 nathanw Exp $	*/
+/*	$NetBSD: ibcs2_misc.c,v 1.55.2.6 2002/05/29 21:32:26 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.55.2.5 2002/04/01 22:09:50 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.55.2.6 2002/05/29 21:32:26 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,6 +85,7 @@ __KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.55.2.5 2002/04/01 22:09:50 nathanw 
 #include <sys/unistd.h>
 
 #include <netinet/in.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <miscfs/specfs/specdev.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.86.2.17 2002/04/24 21:57:19 nathanw Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.86.2.18 2002/05/29 21:33:12 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.86.2.17 2002/04/24 21:57:19 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.86.2.18 2002/05/29 21:33:12 nathanw Exp $");
 
 #include "opt_ddb.h"
 #include "opt_insecure.h"
@@ -70,6 +70,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.86.2.17 2002/04/24 21:57:19 nathan
 #include <sys/proc.h>
 #include <sys/resource.h>
 #include <sys/resourcevar.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/tty.h>
 #include <sys/unistd.h>

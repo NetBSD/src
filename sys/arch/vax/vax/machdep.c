@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.120.4.5 2002/04/17 00:04:42 nathanw Exp $	 */
+/* $NetBSD: machdep.c,v 1.120.4.6 2002/05/29 21:32:05 nathanw Exp $	 */
 
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
@@ -67,6 +67,7 @@
 #include <sys/device.h>
 #include <sys/exec.h>
 #include <sys/mount.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/ptrace.h>
 #include <sys/savar.h>
