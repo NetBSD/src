@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.8 2001/01/07 08:00:57 enami Exp $
+# $NetBSD: Makefile.inc,v 1.9 2001/01/27 08:14:43 itojun Exp $
 
 .include <bsd.own.mk>
 
@@ -6,6 +6,7 @@ WARNS=0
 WFORMAT=2
 BIND_DIR=	${.CURDIR}/..
 BIND_DIST_DIR=	${.CURDIR}/../../../dist/bind
+BIND_CRYPTO_DIST_DIR=	${.CURDIR}/../../../crypto/dist/bind
 
 VER!=		awk '$$1 == "VER=" { print $$2 ; exit }' ${BIND_DIR}/Makefile
 
