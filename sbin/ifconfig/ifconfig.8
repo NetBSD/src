@@ -1,4 +1,4 @@
-.\"	$NetBSD: ifconfig.8,v 1.26 1999/07/02 15:45:46 itojun Exp $
+.\"	$NetBSD: ifconfig.8,v 1.27 1999/07/03 17:31:15 sommerfeld Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -56,13 +56,20 @@
 .Fl a
 .Op Fl A
 .Op Fl mL
+.Op Fl b
 .Op Fl d
 .Op Fl u
+.Op Fl s
 .Op Ar protocol_family
 .Nm ""
 .Fl l
+.Op Fl b
 .Op Fl d
 .Op Fl u
+.Op Fl s
+.Nm ""
+.Fl s
+.Ar interface
 .Sh DESCRIPTION
 .Nm
 is used to assign an address
@@ -334,7 +341,20 @@ Set valid lifetime for the address.
 displays the current configuration for a network interface
 when no optional parameters are supplied.
 If a protocol family is specified,
-Ifconfig will report only the details specific to that protocol family.
+Ifconfig will report only the details specific to that protocol
+family.
+.Pp
+If the
+.Fl s
+flag is passed before an interface name,
+.Nm
+will attempt to query the interface for its media status.  If the
+interface supports reporting media status, and it reports that it does
+not appear to be connected to a network,
+.Nm 
+will exit with status of 1 (false); otherwise, it will exit with a
+zero (true) exit status.  Not all interface drivers support media
+status reporting.
 .Pp
 If the
 .Fl m
@@ -352,9 +372,13 @@ flag may be used instead of an interface name.  This flag instructs
 .Nm
 to display information about all interfaces in the system.
 .Fl d
-limits this to interfaces that are down, and
+limits this to interfaces that are down,
 .Fl u
-limits this to interfaces that are up.
+limits this to interfaces that are up,
+.Fl b
+limits this to broadcast interfaces, and
+.Fl s
+omits interfaces which appear not to be connected to a network.
 .Pp
 If the
 .Fl A
@@ -367,10 +391,13 @@ flag may be used to list all available interfaces on the system, with
 no other additional information.  Use of this flag is mutually exclusive
 with all other flags and commands, except for
 .Fl d
-(only list interfaces that are down)
-and
+(only list interfaces that are down),
 .Fl u
-(only list interfaces that are up).
+(only list interfaces that are up),
+.Fl s
+(only list interfaces that may be connected),
+.Fl b
+(only list broadcast interfaces).
 .Pp
 Only the super-user may modify the configuration of a network interface.
 .Sh DIAGNOSTICS
