@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.44 1999/04/13 20:17:48 bouyer Exp $	*/
+/*	$NetBSD: net.c,v 1.45 1999/06/18 23:26:40 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -56,7 +56,8 @@ int network_up = 0;
 /* URL encode unsafe characters.  */
 
 static char *url_encode __P((char *dst, const char *src, size_t len,
-				const char *safe_chars));
+				const char *safe_chars,
+				int encode_leading_slash));
 
 /* Get the list of network interfaces. */
 
@@ -74,12 +75,13 @@ static void get_ifinterface_info __P((void));
  * len is the length of the destination buffer.  The result will be
  * truncated if necessary to fit in the destination buffer.
  *
- * safe_chars is a string of characters that should not be encoded.  Any
- * characters in this string, as well as any alphanumeric characters,
- * will be copied from src to dst without encoding.  Some potentially
- * useful settings for this parameter are:
+ * safe_chars is a string of characters that should not be encoded.  If
+ * safe_chars is non-NULL, any characters in safe_chars as well as any
+ * alphanumeric characters will be copied from src to dst without
+ * encoding.  Some potentially useful settings for this parameter are:
  *
- *	NULL or ""	Everything except alphanumerics are encoded
+ *	NULL		Everything is encoded (even alphanumerics)
+ *	""		Everything except alphanumerics are encoded
  *	"/"		Alphanumerics and '/' remain unencoded
  *	"$-_.+!*'(),"	Consistent with a strict reading of RFC 1738
  *	"$-_.+!*'(),/"	As above, except '/' is not encoded
@@ -109,17 +111,29 @@ static void get_ifinterface_info __P((void));
 
 static char *
 url_encode(char *dst, const char *src, size_t len,
-	const char *safe_chars)
+	const char *safe_chars, int encode_leading_slash)
 {
 	char *p = dst;
+	const char *initialsrc = src;
 
-	if (safe_chars == NULL)
-		safe_chars = "";
 	/* Remove any initial '/'s if present */
 	while (*src == '/')
 		src++;
+
+	/*
+	 * If encoding of a leading slash was desired, and there was in
+	 * fact one or more leading shashes, encode one in the output string.
+	 */
+	if (encode_leading_slash && (src != initialsrc)) {
+		if (len < 3)
+			goto done;
+		sprintf(p, "%%%02X", '/');
+		p += 3;
+	}
+
 	while (--len > 0 && *src != '\0') {
-		if (isalnum(*src) || strchr(safe_chars, *src)) {
+		if (safe_chars != NULL &&
+		    (isalnum(*src) || strchr(safe_chars, *src))) {
 			*p++ = *src++;
 		} else {
 			/* encode this char */
@@ -130,6 +144,7 @@ url_encode(char *dst, const char *src, size_t len,
 			len -= 2;
 		}
 	}
+done:
 	*p = '\0';
 	return dst;
 }
@@ -429,18 +444,18 @@ get_via_ftp()
 			    "/usr/bin/ftp -a ftp://%s/%s/%s",
 			    ftp_host,
 			    url_encode(ftp_dir_encoded, ftp_dir, STRSIZE,
-					RFC1738_SAFE_LESS_SHELL_PLUS_SLASH),
+					RFC1738_SAFE_LESS_SHELL_PLUS_SLASH, 1),
 			    filename);
 		else {
 			ret = run_prog(0, 1, NULL, 
 			    "/usr/bin/ftp ftp://%s:%s@%s/%s/%s",
 			    url_encode(ftp_user_encoded, ftp_user, STRSIZE,
-					RFC1738_SAFE_LESS_SHELL),
+					RFC1738_SAFE_LESS_SHELL, 0),
 			    url_encode(ftp_pass_encoded, ftp_pass, STRSIZE,
-					RFC1738_SAFE_LESS_SHELL),
+					NULL, 0),
 			    ftp_host,
 			    url_encode(ftp_dir_encoded, ftp_dir, STRSIZE,
-					RFC1738_SAFE_LESS_SHELL_PLUS_SLASH),
+					RFC1738_SAFE_LESS_SHELL_PLUS_SLASH, 1),
 			    filename);
 		}
 		if (ret) {
