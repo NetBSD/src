@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)main.c	3.42 (Berkeley) 8/12/90";*/
-static char rcsid[] = "$Id: main.c,v 1.2 1993/08/01 18:02:18 mycroft Exp $";
+static char rcsid[] = "$Id: main.c,v 1.3 1994/12/24 17:07:47 cgd Exp $";
 #endif /* not lint */
 
 #include "defs.h"
@@ -46,7 +46,7 @@ static char rcsid[] = "$Id: main.c,v 1.2 1993/08/01 18:02:18 mycroft Exp $";
 #include "char.h"
 #include "local.h"
 
-#define next(a) (*++*(a) ? *(a) : (*++(a) ? *(a) : (char *)usage()))
+#define next(a) (*++*(a) ? *(a) : (*++(a) ? *(a) : (char *)(long)usage()))
 
 /*ARGSUSED*/
 main(argc, argv)

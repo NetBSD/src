@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)var.c	3.12 (Berkeley) 6/6/90";*/
-static char rcsid[] = "$Id: var.c,v 1.2 1993/08/01 18:02:01 mycroft Exp $";
+static char rcsid[] = "$Id: var.c,v 1.3 1994/12/24 17:07:50 cgd Exp $";
 #endif /* not lint */
 
 #include "value.h"
@@ -148,6 +148,7 @@ register char *name;
 var_walk1(r, func, a)
 register struct var *r;
 int (*func)();
+long a;
 {
 	if (r == 0)
 		return 0;

@@ -36,11 +36,12 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)wwdump.c	3.15 (Berkeley) 6/6/90";*/
-static char rcsid[] = "$Id: wwdump.c,v 1.2 1993/08/01 18:01:50 mycroft Exp $";
+static char rcsid[] = "$Id: wwdump.c,v 1.3 1994/12/24 17:07:52 cgd Exp $";
 #endif /* not lint */
 
 #include "ww.h"
 #include "tt.h"
+#include <string.h>
 
 static char cmap[] = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 

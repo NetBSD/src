@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)lcmd1.c	3.36 (Berkeley) 6/6/90";*/
-static char rcsid[] = "$Id: lcmd1.c,v 1.2 1993/08/01 18:02:20 mycroft Exp $";
+static char rcsid[] = "$Id: lcmd1.c,v 1.3 1994/12/24 17:07:42 cgd Exp $";
 #endif /* not lint */
 
 #include "defs.h"
@@ -44,6 +44,7 @@ static char rcsid[] = "$Id: lcmd1.c,v 1.2 1993/08/01 18:02:20 mycroft Exp $";
 #include "value.h"
 #include "lcmd.h"
 #include "var.h"
+#include <string.h>
 
 struct lcmd_arg arg_window[] = {
 	{ "row",	1,	ARG_NUM },
