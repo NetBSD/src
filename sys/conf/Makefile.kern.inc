@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.52 2004/04/24 22:07:15 pk Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.53 2004/04/25 04:24:06 matt Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -68,17 +68,19 @@ CWARNFLAGS+=	-Wmissing-prototypes -Wstrict-prototypes
 CWARNFLAGS+=	-Wno-sign-compare
 .endif
 
+CFLAGS+=	${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}}
+CFLAGS+=	${CPPFLAGS.${.IMPSRC:T}}
+CFLAGS+=	${CPUFLAGS} -ffreestanding
+CFLAGS+=	${CPUFLAGS} ${DEBUG} ${COPTS} ${CWARNFLAGS}
+AFLAGS+=	${CPUFLAGS} -D_LOCORE
+
 # Disable unitialized warnings with 2.95 - it gets it wrong way too often
 _ISGCC295!=		${CC} --version 2>/dev/null | grep 2.95 2>/dev/null || echo 0
 .if ${_ISGCC295}
 CWARNFLAGS+=	-Wno-uninitialized
+.else
+CFLAGS+=	-fno-zero-initialized-in-bss
 .endif
-
-CFLAGS+=	${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}}
-CFLAGS+=	${CPPFLAGS.${.IMPSRC:T}}
-CFLAGS+=	${CPUFLAGS} -ffreestanding -fno-zero-initialized-in-bss
-CFLAGS+=	${CPUFLAGS} ${DEBUG} ${COPTS} ${CWARNFLAGS}
-AFLAGS+=	${CPUFLAGS} -D_LOCORE
 
 # Use the per-source COPTS variables to add -g to just those
 # files that match the shell patterns given in ${DEBUGLIST}
