@@ -1,4 +1,4 @@
-/*	$NetBSD: tn3270.c,v 1.16 2003/06/19 11:16:13 christos Exp $	*/
+/*	$NetBSD: tn3270.c,v 1.17 2003/07/12 14:29:36 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tn3270.c	8.2 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: tn3270.c,v 1.16 2003/06/19 11:16:13 christos Exp $");
+__RCSID("$NetBSD: tn3270.c,v 1.17 2003/07/12 14:29:36 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -407,10 +407,10 @@ settranscom(int argc, char *argv[])
 	   return 1;
 	}
 	transcom = tline;
-	(void) strcpy(transcom, argv[1]);
+	(void) strlcpy(tline, argv[1], sizeof(tline));
 	for (i = 2; i < argc; ++i) {
-	    (void) strcat(transcom, " ");
-	    (void) strcat(transcom, argv[i]);
+	    (void) strlcat(tline, " ", sizeof(tline));
+	    (void) strlcat(tline, argv[i], sizeof(tline));
 	}
 	return 1;
 }
