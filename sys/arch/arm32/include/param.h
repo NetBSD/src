@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.13 1998/06/02 20:33:01 mark Exp $	*/
+/*	$NetBSD: param.h,v 1.14 1998/08/25 21:50:54 mark Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -143,18 +143,6 @@
  * For now though just use DEV_BSIZE.
  */
 #define	bdbtofsb(bn)	((bn) / (BLKDEV_IOSIZE / DEV_BSIZE))
-
-/* Define various base addresses and sizes */
-
-#define KERNEL_BASE            0xf0000000
-#define KERNEL_VM_BASE         0xf1000000
-#define KERNEL_VM_SIZE         0x01ffffff
-#define PAGE_DIRS_BASE         0xf3000000
-#define ALT_PAGE_TBLS_BASE     0xf3c00000
-#define CURRENT_PAGEDIR_BASE   0xeffd4000
-#define PROCESS_PAGE_TBLS_BASE 0xefc00000
-
-#define KERNBASE	KERNEL_BASE
 
 /* Constants used to divide the USPACE area */
 
