@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc,v 1.76 1999/06/07 20:31:34 thorpej Exp $
+#	$NetBSD: files.sparc,v 1.77 1999/06/20 16:30:22 pk Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
 # sparc-specific configuration info
@@ -266,7 +266,8 @@ file	arch/sparc/sparc/sunos_machdep.c compat_sunos
 include "compat/aout/files.aout"
 
 # Binary compatibility with previous NetBSD releases (COMPAT_XX)
-file	arch/sparc/sparc/compat_13_machdep.c	compat_13
+# Note: SunOS compatibility also uses some of `compat_13_machdep.c'
+file	arch/sparc/sparc/compat_13_machdep.c	compat_13 | compat_sunos
 
 # Miscellaneous
 file	netns/ns_cksum.c		ns
