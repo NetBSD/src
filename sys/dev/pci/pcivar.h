@@ -1,4 +1,4 @@
-/*	$NetBSD: pcivar.h,v 1.24 1997/07/17 01:01:06 jtk Exp $	*/
+/*	$NetBSD: pcivar.h,v 1.24.2.1 1997/09/01 20:29:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -154,15 +154,5 @@ int	pci_mapreg_map __P((struct pci_attach_args *, int, pcireg_t, int,
  */
 void	pci_devinfo __P((pcireg_t, pcireg_t, int, char *));
 void	set_pci_isa_bridge_callback __P((void (*)(void *), void *));
-
-/*
- * Backward compatibility functions.  NO NEW CODE SHOULD USE THESE.
- *
- * pci_io_find() and pci_mem_find() deprecated as of April 13, 1997.
- */
-int	pci_io_find __P((pci_chipset_tag_t, pcitag_t, int, bus_addr_t *,
-	    bus_size_t *));
-int	pci_mem_find __P((pci_chipset_tag_t, pcitag_t, int, bus_addr_t *,
-	    bus_size_t *, int *));
 
 #endif /* _DEV_PCI_PCIVAR_H_ */

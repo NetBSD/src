@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.31.2.2 1997/08/27 23:32:45 thorpej Exp $
+$NetBSD: pcidevs,v 1.31.2.3 1997/09/01 20:29:46 thorpej Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -856,6 +856,7 @@ product SIS 85C601	0x0601	85C601
 /* SMC products */
 product SMC 37C665	0x1000	FDC 37C665
 product SMC 37C922	0x1001	FDC 37C922
+product SMC 83C170	0x0005	83C170 (\"EPIC/100\") Fast Ethernet
 
 /* Symphony Labs products */
 product SYMPHONY 82C101	0x0001	82C101
