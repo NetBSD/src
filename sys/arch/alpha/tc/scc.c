@@ -1,4 +1,4 @@
-/*	$NetBSD: scc.c,v 1.13 1996/03/17 01:06:43 thorpej Exp $	*/
+/*	$NetBSD: scc.c,v 1.14 1996/04/12 01:31:47 cgd Exp $	*/
 
 /* 
  * Copyright (c) 1991,1990,1989,1994,1995 Carnegie Mellon University
@@ -177,11 +177,11 @@ static int      sccmatch(struct device *, void *, void *);
 static void     sccattach(struct device *, struct device *, void *);
 
 struct cfattach scc_ca = {
-	sizeof(struct scc_softc), sccmatch, sccattach
+	sizeof (struct scc_softc), sccmatch, sccattach,
 };
 
 struct cfdriver scc_cd = {
-	NULL, "scc", DV_TTY
+	NULL, "scc", DV_TTY,
 };
 
 int		sccGetc __P((dev_t));
