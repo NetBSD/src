@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxlvar.h,v 1.13 2002/06/20 23:47:26 itojun Exp $	*/
+/*	$NetBSD: elinkxlvar.h,v 1.14 2003/06/05 22:11:22 dogcow Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -89,6 +89,9 @@ struct ex_softc {
 #define EX_CONF_EEPROM_8BIT	0x0080	/* 8 bit EEPROM */
 #define EX_CONF_PCI_FUNCREG	0x0100	/* Has PCI function registers */
 #define EX_CONF_RESETHACK	0x0200	/* Hack to make reset work on 556B */
+#define EX_CONF_NO_XCVR_PWR	0x0400	/* Hack to enable later 556B xcvr */
+
+#define EX_XCVR_PWR_MAGICBITS	0x0900	/* NO_XCVR_PWR magic value */
 
 
 	/*
