@@ -1,4 +1,4 @@
-/*	$NetBSD: crtbegin.c,v 1.21 2003/05/31 19:41:24 thorpej Exp $	*/
+/*	$NetBSD: crtbegin.c,v 1.22 2003/09/07 22:27:54 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2002 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@ static void (*__DTOR_LIST__[1])(void)
     __attribute__((section(".dtors"))) = { (void *)-1 };	/* XXX */
 
 #ifdef DWARF2_EH
-static char __EH_FRAME_BEGIN__[]
+static __EH_FRAME_CONST char __EH_FRAME_BEGIN__[]
     __attribute__((section(".eh_frame"), aligned(4))) = { };
 #endif
 
