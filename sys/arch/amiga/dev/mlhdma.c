@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)mlhdma.c
- *	$Id: mlhdma.c,v 1.1 1994/02/28 06:06:21 chopps Exp $
+ *	$Id: mlhdma.c,v 1.2 1994/03/25 16:32:29 chopps Exp $
  */
 
 /*
@@ -51,8 +51,8 @@
 #define QPRINTF
 #ifdef DEBUG
 extern int sci_debug;
-#define	HIST(h,w)
 #endif
+#define	HIST(h,w)
 
 extern int sci_data_wait;
 

@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)supradma.c
- *	$Id: supradma.c,v 1.1 1994/02/28 06:06:31 chopps Exp $
+ *	$Id: supradma.c,v 1.2 1994/03/25 16:32:30 chopps Exp $
  */
 
 /*
@@ -52,9 +52,9 @@ int supradma_pseudo = 0;
 
 #ifdef DEBUG
 extern int sci_debug;
-#define	HIST(h,w)
 #define QUASEL
 #endif
+#define	HIST(h,w)
 
 #ifdef QUASEL
 #define QPRINTF(a) if (sci_debug > 1) printf a

@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)csa12gdma.c
- *	$Id: csa12gdma.c,v 1.1 1994/02/28 06:06:17 chopps Exp $
+ *	$Id: csa12gdma.c,v 1.2 1994/03/25 16:32:27 chopps Exp $
  */
 
 /*
@@ -51,8 +51,8 @@
 #define QPRINTF
 #ifdef DEBUG
 extern int sci_debug;
-#define	HIST(h,w)
 #endif
+#define	HIST(h,w)
 
 extern int sci_data_wait;
 
