@@ -134,9 +134,6 @@ typedef struct lang_output_section_statement_struct {
   int section_alignment;	/* alignment of start of section */
 
   union etree_union *load_base;
-  union etree_union *size_adj;
-
-  struct lang_output_section_statement_struct *last_orphan;
 
   /* If non-null, an expression to evaluate after setting the section's
      size.  The expression is evaluated inside REGION (above) with '.'

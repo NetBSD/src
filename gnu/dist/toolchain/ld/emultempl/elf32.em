@@ -1272,22 +1272,6 @@ gld${EMULATION_NAME}_place_orphan (file, s)
 				      exp_nameop (NAME, ".")));
     }
 
-  if (place != NULL)
-    {
-      /* By sorting the orphan after place->os, we effectively changed
-	 the size of that section.  Adjust the size of the section to
-	 reflect the additional output.  */
-      if (place->os->size_adj == NULL)
-	place->os->size_adj = exp_nameop (SIZEOF, os->name);
-      else
-	place->os->size_adj = exp_binop ('+', place->os->size_adj,
-					 exp_nameop (SIZEOF, os->name));
-
-      /* Record this orphan in case there are any more that are
-	 sorted with this parent.  */
-      place->os->last_orphan = os;
-    }
-
   /* Restore the global list pointer.  */
   stat_ptr = old;
 
