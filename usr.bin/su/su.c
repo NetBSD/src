@@ -1,4 +1,4 @@
-/*	$NetBSD: su.c,v 1.36 1999/11/09 15:06:37 drochner Exp $	*/
+/*	$NetBSD: su.c,v 1.37 2000/01/14 02:39:14 mjl Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)su.c	8.3 (Berkeley) 4/2/94";*/
 #else
-__RCSID("$NetBSD: su.c,v 1.36 1999/11/09 15:06:37 drochner Exp $");
+__RCSID("$NetBSD: su.c,v 1.37 2000/01/14 02:39:14 mjl Exp $");
 #endif
 #endif /* not lint */
 
@@ -67,12 +67,16 @@ __RCSID("$NetBSD: su.c,v 1.36 1999/11/09 15:06:37 drochner Exp $");
 #include <tzfile.h>
 #include <unistd.h>
 
+#ifdef LOGIN_CAP
+#include <login_cap.h>
+#endif
+
 #ifdef KERBEROS
 #include <kerberosIV/des.h>
 #include <kerberosIV/krb.h>
 #include <netdb.h>
 
-#define	ARGSTR	"-Kflm"
+#define	ARGSTRX	"-Kflm"
 
 int use_kerberos = 1;
 
@@ -80,11 +84,17 @@ static int kerberos __P((char *, char *, int));
 static int koktologin __P((char *, char *, char *));
 
 #else
-#define	ARGSTR	"-flm"
+#define	ARGSTRX	"-flm"
 #endif
 
 #ifndef	SUGROUP
 #define	SUGROUP	"wheel"
+#endif
+
+#ifdef LOGIN_CAP
+#define ARGSTR	ARGSTRX "c:"
+#else
+#define ARGSTR ARGSTRX
 #endif
 
 int main __P((int, char **));
@@ -110,16 +120,25 @@ main(argc, argv)
 	int asme, ch, asthem, fastlogin, prio;
 	enum { UNSET, YES, NO } iscsh = UNSET;
 	char *user, *shell, *avshell, *username, **np;
-	char *userpass;
+	char *userpass, *class;
 	char shellbuf[MAXPATHLEN], avshellbuf[MAXPATHLEN];
+	time_t pw_warntime = _PASSWORD_WARNDAYS * SECSPERDAY;
+#ifdef LOGIN_CAP
+	login_cap_t *lc;
+#endif
 
 	asme = asthem = fastlogin = 0;
-	shell = NULL;
+	shell = class = NULL;
 	while ((ch = getopt(argc, argv, ARGSTR)) != -1)
 		switch((char)ch) {
 #ifdef KERBEROS
 		case 'K':
 			use_kerberos = 0;
+			break;
+#endif
+#ifdef LOGIN_CAP
+		case 'c':
+			class = optarg;
 			break;
 #endif
 		case 'f':
@@ -163,6 +182,7 @@ main(argc, argv)
 	if (username == NULL || userpass == NULL)
 		err(1, "strdup");
 
+
 	if (asme) {
 		if (pwd->pw_shell && *pwd->pw_shell) {
 			shell = strncpy(shellbuf, pwd->pw_shell,
@@ -179,6 +199,22 @@ main(argc, argv)
 
 	if ((pwd = getpwnam(user)) == NULL)
 		errx(1, "unknown login %s", user);
+
+#ifdef LOGIN_CAP
+	/* force the usage of specified class */
+	if (class) {
+		if (ruid)
+			errx(1, "Only root may use -c");
+
+		pwd->pw_class = class;
+	}
+	lc = login_getclass(pwd->pw_class);
+
+	pw_warntime = login_getcaptime(lc, "password-warn",  
+                                    _PASSWORD_WARNDAYS * SECSPERDAY,
+                                    _PASSWORD_WARNDAYS * SECSPERDAY);
+#endif
+
 	if (ruid
 #ifdef KERBEROS
 	    && (!use_kerberos || kerberos(username, user, pwd->pw_uid))
@@ -280,6 +316,7 @@ badlogin:
 	if (iscsh == UNSET)
 		iscsh = strstr(avshell, "csh") ? YES : NO;
 
+#ifndef LOGIN_CAP /* This is done by setusercontext() */
 	/* set permissions */
 	if (setgid(pwd->pw_gid) < 0)
 		err(1, "setgid");
@@ -287,6 +324,7 @@ badlogin:
 		errx(1, "initgroups failed");
 	if (setuid(pwd->pw_uid) < 0)
 		err(1, "setuid");
+#endif
 
 	if (!asme) {
 		if (asthem) {
@@ -295,12 +333,24 @@ badlogin:
 			if ((environ = malloc(sizeof(char *))) == NULL)
 				err(1, NULL);
 			environ[0] = NULL;
+#ifdef LOGIN_CAP
+			if (setusercontext(lc,
+			    pwd, pwd->pw_uid, LOGIN_SETPATH))
+				err(1, "setting user context");
+#else
 			(void)setenv("PATH", _PATH_DEFPATH, 1);
+#endif
 			if (p)
 				(void)setenv("TERM", p, 1);
 			if (chdir(pwd->pw_dir) < 0)
 				errx(1, "no directory");
-		}
+		} 
+#ifdef LOGIN_CAP		
+		else if (pwd->pw_uid == 0)
+			if (setusercontext(lc,
+			    pwd, pwd->pw_uid, LOGIN_SETPATH|LOGIN_SETUMASK))
+				err(1, "setting path");
+#endif
 		if (asthem || pwd->pw_uid)
 			(void)setenv("USER", pwd->pw_name, 1);
 		(void)setenv("HOME", pwd->pw_dir, 1);
@@ -335,8 +385,7 @@ badlogin:
 				     (ruid ? "Sorry" : "Note"), user);
 			if (ruid != 0)
 				exit(1);
-		} else if (pwd->pw_change - tp.tv_sec <
-		    _PASSWORD_WARNDAYS * SECSPERDAY)
+		} else if (pwd->pw_change - tp.tv_sec < pw_warntime)
 			(void)printf("Warning: %s's password expires on %s",
 				     user, ctime(&pwd->pw_change));
 	}
@@ -357,6 +406,12 @@ badlogin:
 		    username, pwd->pw_name, ontty());
 
 	(void)setpriority(PRIO_PROCESS, 0, prio);
+#ifdef LOGIN_CAP
+	if (setusercontext(lc, pwd, pwd->pw_uid,
+	    (asthem ? (LOGIN_SETPRIORITY | LOGIN_SETUMASK) : 0) |
+	    LOGIN_SETRESOURCES | LOGIN_SETGROUP | LOGIN_SETUSER))
+		err(1, "setting user context");
+#endif
 
 	execv(shell, np);
 	err(1, "%s", shell);

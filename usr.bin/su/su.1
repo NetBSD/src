@@ -30,9 +30,9 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)su.1	8.2 (Berkeley) 4/18/94
-.\"	$NetBSD: su.1,v 1.16 1999/09/27 19:41:33 mjl Exp $
+.\"	$NetBSD: su.1,v 1.17 2000/01/14 02:39:14 mjl Exp $
 .\"
-.Dd April 18, 1994
+.Dd January 14, 2000
 .Dt SU 1
 .Os
 .Sh NAME
@@ -41,6 +41,7 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl Kflm
+.Op Fl c Ar login-class
 .Op Ar login Op Ar "shell arguments"
 .Sh DESCRIPTION
 .Nm
@@ -89,6 +90,9 @@ The options are as follows:
 .Bl -tag -width Ds
 .It Fl K
 Do not attempt to use Kerberos to authenticate the user.
+.It Fl c
+Specify a login class.
+You may only override the default class if you're already root.
 .It Fl f
 If the invoked shell is
 .Xr csh 1 ,
@@ -112,7 +116,11 @@ are modified as above.
 is set to the target login.
 .Ev PATH
 is set to
-.Dq Pa /usr/bin:/bin:/usr/pkg/bin:/usr/local/bin .
+is set to the path specified in the
+.Pa /etc/login.conf
+file (or to the default of
+.Dq Pa /usr/bin:/bin:/usr/pkg/bin:/usr/local/bin 
+).
 .Ev TERM
 is imported from your current environment.
 The invoked shell is the target login's, and
@@ -171,6 +179,8 @@ to remind one of its awesome power.
 .Xr skey 1 ,
 .Xr kinit 1 ,
 .Xr kerberos 1 ,
+.Xr setusercontext 3 ,
+.Xr login.conf 5 ,
 .Xr passwd 5 ,
 .Xr group 5 ,
 .Xr environ 7
