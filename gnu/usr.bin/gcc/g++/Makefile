@@ -1,14 +1,12 @@
-#	$NetBSD: Makefile,v 1.11 2001/06/18 16:18:36 tv Exp $
+#	$NetBSD: Makefile,v 1.12 2001/07/18 14:00:11 tv Exp $
 
 .include <bsd.own.mk>
 
 PROG=           g++
 SRCS=		cppspec.c
+MKMAN=		no
 
-#LINKS+=		${BINDIR}/gcc ${BINDIR}/cc 
-
-#MAN=		gcc.1
-#MLINKS=		gcc.1 cc.1
+LINKS+=		${BINDIR}/g++ ${BINDIR}/c++
 
 .include "../Makefile.frontend"
 
