@@ -1,4 +1,4 @@
-#	$NetBSD: kqueue-todo,v 1.1.2.12 2002/01/04 22:34:30 thorpej Exp $
+#	$NetBSD: kqueue-todo,v 1.1.2.13 2002/03/15 22:09:24 jdolecek Exp $
 
 items todo from bill sommerfeld/thorpej:
 	- multiple entry points
@@ -86,12 +86,6 @@ to fix:
 		* portal_unmount()	mount_portal ?
 
 not implemented:
-
-	- pipes/fifos
-		named pipes (fifos) don't work.
-		c.f. freebsd's kern/sys_pipe.c. need to integrate with the
-		pipe code that jdolocek has integrated
-
 	- aio support
 		not supported on netbsd; a noop for now
 
@@ -110,8 +104,7 @@ tested:
 			implement & test for other file systems.
 
 	EVFILT_READ	OK for ufs, socket listen, socket read
-			FAIL for fifos (not implemented; speak to jdolocek)
-			test tty
+			test pipes, fifos, tty
 			implement & test for other file systems.
 
 	EVFILT_AIO	FAIL: not implemented, returns EINVAL
@@ -124,4 +117,4 @@ tested:
 
 to test:
 
-	EVFILT_WRITE	test socket, tty, fifo
+	EVFILT_WRITE	test socket, tty, pipe, fifo
