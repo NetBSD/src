@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_isapnp.c,v 1.10 1997/10/28 21:27:59 christos Exp $	*/
+/*	$NetBSD: if_ep_isapnp.c,v 1.11 1997/12/17 01:31:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone <jonathan@NetBSD.org>
@@ -119,10 +119,6 @@ ep_isapnp_attach(parent, self, aux)
 
 	printf("\n");
 
-	sc->sc_iot = ipa->ipa_iot;
-	sc->sc_ioh = ipa->ipa_io[0].h;
-	sc->bustype = EP_BUS_ISA;
-
 	if (isapnp_config(ipa->ipa_iot, ipa->ipa_memt, ipa)) {
 		printf("%s: error in region allocation\n", sc->sc_dev.dv_xname);
 		return;
@@ -130,6 +126,10 @@ ep_isapnp_attach(parent, self, aux)
 
 	printf("%s: %s %s\n", sc->sc_dev.dv_xname, ipa->ipa_devident,
 	    ipa->ipa_devclass);
+
+	sc->sc_iot = ipa->ipa_iot;
+	sc->sc_ioh = ipa->ipa_io[0].h;
+	sc->bustype = EP_BUS_ISA;
 
 	sc->sc_ih = isa_intr_establish(ipa->ipa_ic, ipa->ipa_irq[0].num,
 	    ipa->ipa_irq[0].type, IPL_NET, epintr, sc);
