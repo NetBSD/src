@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.24 1995/07/02 00:49:52 briggs Exp $	*/
+/*	$NetBSD: grf.c,v 1.25 1995/07/02 05:26:27 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -255,6 +255,9 @@ grfioctl(dev, cmd, data, flag, p)
 		error = grfunmap(dev, *(caddr_t *) data, p);
 		break;
 
+	case GRFIOCGMODE:
+		bcopy(&gp->curr_mode, data, sizeof(struct grfmode));
+		break;
 	case GRFIOCGETMODE:
 		error = (*grfdev[gp->g_type].gd_mode)(gp, GM_CURRMODE, data);
 		break;
