@@ -2,7 +2,7 @@
 # Distribution kernel (TX3912 based model) kernel config file
 
 #
-#	$NetBSD: TX3912,v 1.1 1999/11/21 07:04:31 uch Exp $
+#	$NetBSD: TX3912,v 1.2 1999/12/08 15:56:03 uch Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
@@ -17,28 +17,29 @@ options		TX39XX			# Toshiba TX39 series
 options		TX391X			# Product TMPR3912
 
 options		TX39_DEBUG
-#options	TX39_WATCHDOGTIMER
-#options	WINCE_DEFAULT_SETTING # Debugging use
-options		TX39ICUDEBUG
-options		TX39BIUDEBUG
-options		TX39IODEBUG
-options		TX39POWERDEBUG
-#options	TX39UARTDEBUG
-options		IT8368DEBUG
+#options		TX39_WATCHDOGTIMER
+#options		WINCE_DEFAULT_SETTING # Debugging use
+#options		TX39ICUDEBUG
+#options		TX39CLKDEBUG
+#options		TX39BIUDEBUG
+#options		TX39IODEBUG
+#options		TX39POWERDEBUG
+#options		TX39UARTDEBUG
+#options		IT8368DEBUG
 
 options		__NO_SOFT_SERIAL_INTERRUPT
 options		SERIALCONSSLOT=0	# UARTA 0, UARTB 1
 
 options		DDB			# in-kernel debugger
-#options	DIAGNOSTIC		# extra kernel debugging checks
-#options	DEBUG			# extra kernel debugging support
+options		DIAGNOSTIC		# extra kernel debugging checks
+options		DEBUG			# extra kernel debugging support
 options		KTRACE			# system call tracing support
 options		NKMEMCLUSTERS=1024	# 4K pages in kernel malloc pool
 #options	 MINIROOTSIZE=10000
-options 	RTC_OFFSET=-540		# JST-9
 
 options		COMPAT_43
 
+options 	SCSIVERBOSE	# human readable SCSI error messages
 options		PCMCIAVERBOSE	# verbose PCMCIA configuration messages
 
 file-system	FFS		# fast filesystem with user and group quotas
@@ -69,18 +70,22 @@ txcom1		at	tx39uart? slot 1
 #
 # TX39 external modules. (Platform dependent)
 #
-options USE_POLL	
-options CCKBD_POLL	# XXX I could not find interrupt source. FIXME!!
+options USE_POLL	# p7416buf requires this
 
 #
 #	COMPAQ C-series
 #
 #options COMPAQ_LOCAL_INTR
 txcsbus3	at	tx39biu? platform COMPAQ_C
-# XXX interrupt line not found yet.
-cckbd*		at	txcsbus3 iocs 3 iocsbase 0 iocssize 0x100 iocswidth 16
+
+# PHILIPS 74ALVC*1624? connected keyboard
+#
+p7416buf*	at	txcsbus3 iocs 3 iocsbase 0 iocssize 0x100 iocswidth 16
+skbd*		at	p7416buf?
+
+# ITE IT8368E PCMCIA buffer chip
 # card		... 3:2 (98)
-# insert/remove ... 5:1 (161/168)
+# insert/remove ... 5:1/8 (161/168)
 it8368e*	at	txcsbus3 regcs 2 regcsbase 0 regcssize 0x20 regcswidth 16 iocs 8 iocsbase 0 iocssize 0x4000000 iocswidth 16 irq1 161 irq2 168 irq3 98
 
 #
@@ -95,16 +100,14 @@ it8368e*	at	txcsbus4 regcs 2 regcsbase 0 regcssize 0x20 regcswidth 16 iocs 8 ioc
 txcsbus*	at	tx39biu?
 
 # WS console uses SUN or VT100 terminal emulation
-options		WSDISPLAY_COMPAT_RAWKBD
 fb*		at	tx3912video?
 wsdisplay*	at	fb?
-wskbd*		at	cckbd? mux 1
+wskbd*		at	skbd? mux 1
 
 options 	WSEMUL_VT100
 options 	WSDISPLAY_DEFAULTSCREENS=4
 #options 	FONT_VT220L8x8
 options 	FONT_VT220L8x10
-
 
 # PCMCIA bus support
 pcmcia* at it8368e? controller ? socket ?
