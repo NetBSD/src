@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.405 2000/11/27 08:39:41 chs Exp $
+#	$NetBSD: files,v 1.406 2000/12/02 14:53:38 fvdl Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -217,8 +217,7 @@ define	smc93cx6
 file	dev/ic/smc93cx6.c		smc93cx6
 
 # Adaptec 2[789]4X, 394X, aic7770 and aic78[5678]0 SCSI controllers
-defopt	opt_ahc.h	AHC_BROKEN_CACHE AHC_DEBUG AHC_TAGENABLE
-			AHC_SCBPAGING_ENABLE
+defopt	opt_ahc.h	AHC_DEBUG AHC_NO_TAGS
 device	ahc: scsi
 define	ahc_seeprom
 define	ahc_aic77xx
