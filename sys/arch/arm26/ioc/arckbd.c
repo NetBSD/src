@@ -1,4 +1,4 @@
-/* $NetBSD: arckbd.c,v 1.8 2001/01/07 15:56:02 bjh21 Exp $ */
+/* $NetBSD: arckbd.c,v 1.9 2001/01/22 23:08:27 bjh21 Exp $ */
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * All rights reserved.
@@ -43,7 +43,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: arckbd.c,v 1.8 2001/01/07 15:56:02 bjh21 Exp $");
+__RCSID("$NetBSD: arckbd.c,v 1.9 2001/01/22 23:08:27 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <sys/errno.h>
@@ -133,7 +133,9 @@ struct arckbd_softc {
 	u_int			sc_poll_type;
 	int			sc_poll_value;
 	struct irq_handler	*sc_xirq;
+	struct evcnt		sc_xev;
 	struct irq_handler	*sc_rirq;
+	struct evcnt		sc_rev;
 };
 
 #define AKF_WANTKBD	0x01
@@ -200,25 +202,22 @@ arckbd_attach(struct device *parent, struct device *self, void *aux)
 	bus_space_tag_t bst;
 	bus_space_handle_t bsh;
 	struct arckbd_attach_args aka;
-	size_t intnamelen;
-	char *rintname, *xintname;
 
 	bst = sc->sc_bst = ioc->ioc_fast_t;
 	bsh = sc->sc_bsh = ioc->ioc_fast_h; 
 
-	intnamelen = strlen(self->dv_xname) + 4 + 1;
-	rintname = malloc(intnamelen, M_DEVBUF, M_WAITOK);
-	snprintf(rintname, intnamelen, "%s(rx)", self->dv_xname);
 	sc->sc_rirq = irq_establish(IOC_IRQ_SRX, IPL_TTY, arckbd_rint, self,
-	    rintname);
+	    NULL);
+	evcnt_attach_dynamic(&sc->sc_rev, EVCNT_TYPE_INTR, NULL,
+	    sc->sc_dev.dv_xname, "rx intr");
 	if (bootverbose)
 		printf("\n%s: interrupting at %s (rx)", self->dv_xname,
 		    irq_string(sc->sc_rirq));
 
-	xintname = malloc(intnamelen, M_DEVBUF, M_WAITOK);
-	snprintf(xintname, intnamelen, "%s(tx)", self->dv_xname);
 	sc->sc_xirq = irq_establish(IOC_IRQ_STX, IPL_TTY, arckbd_xint, self,
-	    xintname);
+	    NULL);
+	evcnt_attach_dynamic(&sc->sc_xev, EVCNT_TYPE_INTR, NULL,
+	    sc->sc_dev.dv_xname, "tx intr");
 	irq_disable(sc->sc_xirq);
 	if (bootverbose)
 		printf(" and %s (tx)", irq_string(sc->sc_xirq));
@@ -423,10 +422,8 @@ arckbd_xint(void *cookie)
 {
 	struct arckbd_softc *sc = cookie;
 
-	if (!ioc_irq_status(sc->sc_dev.dv_parent, IOC_IRQ_STX)) {
-		printf("%s: Stray tx interrupt\n", sc->sc_dev.dv_xname);
-		return IRQ_NOT_HANDLED;
-	}
+	if (!(sc->sc_flags & AKF_POLLING))
+		sc->sc_xev.ev_count++;
 	irq_disable(sc->sc_xirq);
 	/* First, process queued commands (acks from the last receive) */
 	if (sc->sc_cmdqueued) {
@@ -456,18 +453,16 @@ arckbd_rint(void *cookie)
 	bus_space_handle_t bsh = sc->sc_bsh;
 	int data;
 
-	if (!ioc_irq_status(sc->sc_dev.dv_parent, IOC_IRQ_SRX)) {
-		printf("%s: Stray rx interrupt\n", sc->sc_dev.dv_xname);
-		return IRQ_NOT_HANDLED;
-	}
+	if (!(sc->sc_flags & AKF_POLLING))
+		sc->sc_rev.ev_count++;
 	bus_space_barrier(bst, bsh, 0, 1, BUS_BARRIER_READ);
 	data = bus_space_read_1(bst, bsh, 0);
 	bus_space_barrier(bst, bsh, 0, 1, BUS_BARRIER_READ);
-	/* Reset protocol */
 #ifdef ARCKBD_DEBUG
 	log(LOG_DEBUG, "%s: got 0x%02x in state %s\n", self->dv_xname, data,
 	    arckbd_statenames[sc->sc_state]);
 #endif
+	/* Reset protocol */
 	if (data == ARCKBD_HRST && sc->sc_state == AS_HRST)
 		arckbd_send(self, ARCKBD_RAK1, AS_RAK1, 0);
 	else if (data == ARCKBD_RAK1 &&
