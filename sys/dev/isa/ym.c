@@ -1,4 +1,4 @@
-/* $NetBSD: ym.c,v 1.2 1998/05/21 19:09:28 augustss Exp $ */
+/* $NetBSD: ym.c,v 1.3 1998/06/17 08:17:25 augustss Exp $ */
 
 
 /*
@@ -44,7 +44,6 @@
 #include <machine/cpu.h>
 #include <machine/intr.h>
 #include <machine/bus.h>
-#include <machine/pio.h>
 
 #include <sys/audioio.h>
 #include <dev/audio_if.h>
