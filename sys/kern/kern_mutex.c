@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_mutex.c,v 1.1.2.5 2002/03/16 03:46:37 thorpej Exp $	*/
+/*	$NetBSD: kern_mutex.c,v 1.1.2.6 2002/03/16 20:57:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.1.2.5 2002/03/16 03:46:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.1.2.6 2002/03/16 20:57:42 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -250,7 +250,7 @@ mutex_vector_exit(kmutex_t *mtx)
 		turnstile_exit(mtx);
 	else
 		turnstile_wakeup(ts, TS_WRITER_Q,
-		    ts->ts_sleepq[TS_WRITER_Q].tsq_waiters);
+		    ts->ts_sleepq[TS_WRITER_Q].tsq_waiters, NULL);
 }
 
 /*

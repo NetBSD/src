@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rwlock.c,v 1.1.2.2 2002/03/16 03:46:38 thorpej Exp $	*/
+/*	$NetBSD: kern_rwlock.c,v 1.1.2.3 2002/03/16 20:57:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.1.2.2 2002/03/16 03:46:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.1.2.3 2002/03/16 20:57:42 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -299,7 +299,7 @@ rw_exit(krwlock_t *rwl)
 		 */
 		KASSERT(ts != NULL);
 		turnstile_wakeup(ts, TS_WRITER_Q,
-		    ts->ts_sleepq[TS_WRITER_Q].tsq_waiters);
+		    ts->ts_sleepq[TS_WRITER_Q].tsq_waiters, NULL);
 		break;
 	}
 }
@@ -337,7 +337,7 @@ rw_downgrade(krwlock_t *rwl)
 		if (owner & RWLOCK_HAS_WAITERS) {
 			KASSERT(ts != NULL);
 			turnstile_wakeup(ts, TS_WRITER_Q,
-			    ts->ts_sleepq[TS_WRITER_Q].tsq_waiters);
+			    ts->ts_sleepq[TS_WRITER_Q].tsq_waiters, NULL);
 		}
 		break;
 	}
