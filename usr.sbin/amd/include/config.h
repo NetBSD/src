@@ -1,4 +1,4 @@
-/* $NetBSD: config.h,v 1.16 2000/11/20 00:25:23 wiz Exp $ */
+/* $NetBSD: config.h,v 1.17 2000/11/20 01:23:14 wiz Exp $ */
 
 /* config.h.  Generated automatically by configure.  */
 /* config.h.in.  Generated automatically from configure.in by autoheader.  */
@@ -1264,7 +1264,7 @@
 #define HAVE_SETEUID 1
 
 /* Define if you have the setitimer function.  */
-/* #undef HAVE_SETITIMER */
+#define HAVE_SETITIMER 1
 
 /* Define if you have the setresuid function.  */
 /* #undef HAVE_SETRESUID */
@@ -1999,7 +1999,7 @@
 #define HAVE_EXTERN_SETEUID 1
 
 /* does extern definition for setitimer() exist? */
-/* #undef HAVE_EXTERN_SETITIMER */
+#define HAVE_EXTERN_SETITIMER 1
 
 /* does extern definition for strcasecmp() exist? */
 #define HAVE_EXTERN_STRCASECMP 1
