@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.35 1996/09/07 12:41:01 mycroft Exp $
+	$NetBSD: syscalls.master,v 1.36 1996/09/07 14:16:42 mycroft Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -358,7 +358,7 @@
 206	STD		{ int sys_futimes(int fd, struct timeval *tptr); }
 207	STD		{ int sys_getpgid(pid_t pid); }
 208	STD		{ int sys_reboot(int opt, char *bootstr); }
-209	STD		{ int sys_poll(struct pollfd *fds, size_t nfds, \
+209	STD		{ int sys_poll(struct pollfd *fds, u_int nfds, \
 			    int timeout); }
 ;
 ; Syscalls 210-219 are reserved for dynamically loaded syscalls
