@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.50 1999/07/25 06:30:35 thorpej Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.51 1999/09/27 16:24:40 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -405,6 +405,8 @@ kern_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		return (sysctl_rdint(oldp, oldlenp, newp, 1));
 	case KERN_MEMORY_PROTECTION:
 		return (sysctl_rdint(oldp, oldlenp, newp, 1));
+	case KERN_LOGIN_NAME_MAX:
+		return (sysctl_rdint(oldp, oldlenp, newp, LOGIN_NAME_MAX));
 	default:
 		return (EOPNOTSUPP);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: syslimits.h,v 1.17 1998/08/03 14:27:50 kleink Exp $	*/
+/*	$NetBSD: syslimits.h,v 1.18 1999/09/27 16:24:40 kleink Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -63,6 +63,17 @@
 #define	LINE_MAX		 2048	/* max bytes in an input line */
 #define	RE_DUP_MAX		  255	/* max RE's in interval notation */
 
+/*
+ * IEEE Std 1003.1c-95, adopted in X/Open CAE Specification Issue 5 Version 2
+ */
+#if (!defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)) || \
+    (_POSIX_C_SOURCE - 0) >= 199506L || (_XOPEN_SOURCE - 0) >= 500
+#define	LOGIN_NAME_MAX		   17	/* max login name length incl. NUL */
+#endif
+
+/*
+ * X/Open CAE Specification Issue 5 Version 2
+ */
 #if !defined(_POSIX_C_SOURCE) || defined(_XOPEN_SOURCE)
 #define	IOV_MAX			 1024	/* max # of iovec's for readv(2) etc. */
 #define	NZERO			   20	/* default "nice" */

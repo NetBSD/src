@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.35 1999/06/24 14:18:12 kleink Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.36 1999/09/27 16:24:40 kleink Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -153,7 +153,8 @@ struct ctlname {
 #define	KERN_MEMLOCK		41	/* int: POSIX memory locking */
 #define	KERN_MEMLOCK_RANGE	42	/* int: POSIX memory range locking */
 #define	KERN_MEMORY_PROTECTION	43	/* int: POSIX memory protections */
-#define	KERN_MAXID		44	/* number of valid kern ids */
+#define	KERN_LOGIN_NAME_MAX	44	/* int: max length login name + NUL */
+#define	KERN_MAXID		45	/* number of valid kern ids */
 
 #define CTL_KERN_NAMES { \
 	{ 0, 0 }, \
@@ -200,6 +201,7 @@ struct ctlname {
 	{ "memlock", CTLTYPE_INT }, \
 	{ "memlock_range", CTLTYPE_INT }, \
 	{ "memory_protection", CTLTYPE_INT }, \
+	{ "login_name_max", CTLTYPE_INT }, \
 }
 
 /*
