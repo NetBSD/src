@@ -1,4 +1,4 @@
-/*	$NetBSD: mkdevsw.c,v 1.1.2.3 2002/05/31 01:45:04 gehenna Exp $	*/
+/*	$NetBSD: mkdevsw.c,v 1.1.2.4 2002/06/05 13:27:11 gehenna Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -182,32 +182,20 @@ static int
 emitconv(FILE *fp)
 {
 	struct devm *dm;
-	char mstr[16];
 	int i;
 
 	if (fputs("\n/* device conversion table */\n"
 		  "struct devsw_conv devsw_conv0[] = {\n", fp) < 0)
 		return (-1);
-	for (i = 0 ; i < maxcdevm ; i++) {
-		(void)snprintf(mstr, sizeof(mstr), "%d", i);
-		dm = ht_lookup(cdevmtab, intern(mstr));
-		if (dm == NULL) {
-#if 0
-			dm = ht_lookup(alldevmtab, intern(mstr));
-			if (dm == NULL)
-				continue;
-#else
-			if (fputs("\t{ NULL, -1 },\n", fp) < 0)
-				return (-1);
-			continue;
-#endif
-		}
-		if (fprintf(fp, "\t{ \"%s\", %d },\n", dm->dm_name,
-			    dm->dm_bmajor) < 0)
+	for (dm = fixdevms ; dm != NULL ; dm = dm->dm_next) {
+		if (fprintf(fp, "\t{ \"%s\", %d, %d },\n", dm->dm_name,
+			    dm->dm_bmajor, dm->dm_cmajor) < 0)
 			return (1);
 	}
 	if (fputs("};\n\n"
-		  "struct devsw_conv *devsw_conv = devsw_conv0;\n", fp) < 0)
+		  "struct devsw_conv *devsw_conv = devsw_conv0;\n"
+		  "int max_devsw_convs = DEVSW_ARRAY_SIZE(devsw_conv0);\n",
+		  fp) < 0)
 		return (1);
 
 	return (0);
