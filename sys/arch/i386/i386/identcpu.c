@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.11 2004/04/05 02:09:41 mrg Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.12 2004/04/22 00:34:52 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.11 2004/04/05 02:09:41 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.12 2004/04/22 00:34:52 itojun Exp $");
 
 #include "opt_cputype.h"
 
@@ -821,7 +821,7 @@ amd_family6_probe(struct cpu_info *ci)
 	for (i = 1; i < sizeof(amd_brand) / sizeof(amd_brand[0]); i++)
 		if ((p = strstr((char *)brand, amd_brand[i])) != NULL) {
 			ci->ci_brand_id = i;
-			strcpy(amd_brand_name, p);
+			strlcpy(amd_brand_name, p, sizeof(amd_brand_name));
 			break;
 		}
 }
