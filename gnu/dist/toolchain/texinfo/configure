@@ -707,7 +707,7 @@ fi
 
 PACKAGE=texinfo
 
-VERSION=3.12
+VERSION=3.12nb1
 
 if test "`cd $srcdir && pwd`" != "`pwd`" && test -f $srcdir/config.status; then
   { echo "configure: error: source directory already configured; run "make distclean" there first" 1>&2; exit 1; }
