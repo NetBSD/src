@@ -1,4 +1,4 @@
-/* $NetBSD: loadfile.c,v 1.7 1999/12/29 11:08:02 hannken Exp $ */
+/* $NetBSD: loadfile.c,v 1.8 2000/11/01 14:23:04 ragge Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -155,8 +155,11 @@ loadfile(fname, marks, flags)
 	} else
 #endif
 #ifdef BOOT_AOUT
-	if (OKMAGIC(N_GETMAGIC(hdr.aout)) &&
-	    N_GETMID(hdr.aout) == MID_MACHINE) {
+	if (OKMAGIC(N_GETMAGIC(hdr.aout))
+#ifndef NO_MID_CHECK
+	    && N_GETMID(hdr.aout) == MID_MACHINE
+#endif
+	    ) {
 		rval = aout_exec(fd, &hdr.aout, marks, flags);
 	} else
 #endif
