@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.c,v 1.21 1994/10/30 22:16:37 mycroft Exp $	*/
+/*	$NetBSD: cons.c,v 1.22 1994/11/14 06:00:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -108,7 +108,7 @@ cnopen(dev, flag, mode, p)
 		/* try to get a reference on its vnode, but fail silently */
 		cdevvp(dev, &cn_devvp);
 	}
-	return ((*cdevsw[major(dev)].d_open)(dev, flag, mode, p));
+	return ((*cdevsw[major(dev)].d_open)(dev, flag, mode, p, NULL));
 }
  
 int
