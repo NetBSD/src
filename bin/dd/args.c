@@ -1,4 +1,4 @@
-/*	$NetBSD: args.c,v 1.23 2003/08/07 09:05:09 agc Exp $	*/
+/*	$NetBSD: args.c,v 1.24 2004/01/17 05:42:50 dbj Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)args.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: args.c,v 1.23 2003/08/07 09:05:09 agc Exp $");
+__RCSID("$NetBSD: args.c,v 1.24 2004/01/17 05:42:50 dbj Exp $");
 #endif
 #endif /* not lint */
 
@@ -139,8 +139,11 @@ jcl(char **argv)
 		 * just wanted to set both the input and output block sizes
 		 * and didn't want the bs semantics, so we don't warn.
 		 */
-		if (ddflags & (C_BLOCK|C_LCASE|C_SWAB|C_UCASE|C_UNBLOCK))
+		if (ddflags & (C_BLOCK | C_LCASE | C_SWAB | C_UCASE |
+		    C_UNBLOCK | C_OSYNC | C_ASCII | C_EBCDIC)) {
 			ddflags &= ~C_BS;
+			ddflags |= C_IBS|C_OBS;
+		}
 
 		/* Bs supersedes ibs and obs. */
 		if (ddflags & C_BS && ddflags & (C_IBS|C_OBS))
@@ -307,6 +310,9 @@ static const struct conv {
 	{ "sync",	C_SYNC,		0,		NULL },
 	{ "ucase",	C_UCASE,	C_LCASE,	NULL },
 	{ "unblock",	C_UNBLOCK,	C_BLOCK,	NULL },
+	/* If you add items to this table, be sure to add the
+	 * conversions to the C_BS check in the jcl routine above.
+	 */
 };
 
 static void
