@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.27 1999/11/10 18:48:19 thorpej Exp $	 */
+/*	$NetBSD: rtld.c,v 1.28 1999/12/13 09:09:34 christos Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -101,6 +101,9 @@ Objlist _rtld_list_main =	/* Objects loaded at program startup */
 
 Search_Path    *_rtld_default_paths;
 Search_Path    *_rtld_paths;
+
+Library_Xform  *_rtld_xforms;
+
 /*
  * Global declarations normally provided by crt0.
  */
@@ -370,7 +373,7 @@ _rtld(sp)
 #endif
 		_rtld_add_paths(&_rtld_paths, getenv("LD_LIBRARY_PATH"), true);
 	}
-	_rtld_process_hints(&_rtld_paths, _PATH_LD_HINTS, true);
+	_rtld_process_hints(&_rtld_paths, &_rtld_xforms, _PATH_LD_HINTS, true);
 	dbg(("%s is initialized, base address = %p", __progname,
 	     (void *) pAUX_base->a_v));
 
@@ -440,7 +443,7 @@ _rtld(sp)
 		_rtld_die();
 
 	dbg(("loading needed objects"));
-	if (_rtld_load_needed_objects(_rtld_objmain) == -1)
+	if (_rtld_load_needed_objects(_rtld_objmain, true) == -1)
 		_rtld_die();
 
 	for (obj = _rtld_objlist;  obj != NULL;  obj = obj->next)
@@ -668,8 +671,10 @@ _rtld_dlopen(name, mode)
 		if (*old_obj_tail != NULL) {	/* We loaded something new. */
 			assert(*old_obj_tail == obj);
 
-			if (_rtld_load_needed_objects(obj) == -1 || (_rtld_init_dag(obj),
-				 _rtld_relocate_objects(obj, ((mode & 3) == RTLD_NOW), true)) == -1) {
+			if (_rtld_load_needed_objects(obj, true) == -1 ||
+			    (_rtld_init_dag(obj),
+			    _rtld_relocate_objects(obj,
+			    ((mode & 3) == RTLD_NOW), true)) == -1) {
 				_rtld_unload_object(obj, false);
 				obj->dl_refcount--;
 				obj = NULL;
