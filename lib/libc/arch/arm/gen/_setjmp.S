@@ -1,4 +1,4 @@
-/*	$NetBSD: _setjmp.S,v 1.3 2001/11/13 20:04:52 chris Exp $	*/
+/*	$NetBSD: _setjmp.S,v 1.4 2002/08/17 19:54:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe
@@ -49,7 +49,7 @@
  */
 
 ENTRY(_setjmp)
-	ldr	r1, L_setjmp_magic
+	ldr	r1, .L_setjmp_magic
 	str	r1, [r0], #4
 #ifdef SOFTFLOAT
 	add	r0, r0, #52
@@ -70,11 +70,11 @@ ENTRY(_setjmp)
         mov	r15, r14
 #endif
 
-L_setjmp_magic:
+.L_setjmp_magic:
 	.word	_JB_MAGIC__SETJMP
 
 ENTRY(_longjmp)
-	ldr	r2, L_setjmp_magic
+	ldr	r2, .L_setjmp_magic
 	ldr	r3, [r0], #4
 	teq	r2, r3
 	bne	botch
