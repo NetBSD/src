@@ -1,4 +1,4 @@
-/*	$NetBSD: pk_input.c,v 1.7 1996/02/13 22:05:21 christos Exp $	*/
+/*	$NetBSD: pk_input.c,v 1.8 1996/05/23 23:35:24 mycroft Exp $	*/
 
 /*
  * Copyright (c) University of British Columbia, 1984
@@ -967,7 +967,7 @@ pk_incoming_call(pkp, m0)
 	 * It does provide a way of multiplexing services at the user level.
 	 */
 
-	for (l = pk_listenhead; l; l = l->lcd_listen) {
+	for (l = pk_listenhead.tqh_first; l; l = l->lcd_listen.tqe_next) {
 		struct sockaddr_x25 *sxp = l->lcd_ceaddr;
 
 		if (bcmp(sxp->x25_udata, u, sxp->x25_udlen))
