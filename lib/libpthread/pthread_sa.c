@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sa.c,v 1.36 2005/01/06 17:42:31 mycroft Exp $	*/
+/*	$NetBSD: pthread_sa.c,v 1.37 2005/03/17 17:23:21 jwise Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_sa.c,v 1.36 2005/01/06 17:42:31 mycroft Exp $");
+__RCSID("$NetBSD: pthread_sa.c,v 1.37 2005/03/17 17:23:21 jwise Exp $");
 
 #include <err.h>
 #include <errno.h>
@@ -134,7 +134,7 @@ pthread__upcall(int type, struct sa_t *sas[], int ev, int intr, void *arg)
 		pthread__assert(t->pt_vpid == sas[1]->sa_cpu);
 		t->pt_blockedlwp = sas[1]->sa_id;
 		t->pt_blockgen += 2;
-//		pthread__assert(t->pt_blockgen <= t->pt_unblockgen + 2);
+		/* pthread__assert(t->pt_blockgen <= t->pt_unblockgen + 2); */
 		if (t->pt_cancel)
 			_lwp_wakeup(t->pt_blockedlwp);
 #ifdef PTHREAD__DEBUG
