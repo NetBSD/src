@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.pl,v 1.1 2002/12/09 14:13:15 scw Exp $	*/
+/*	$NetBSD: menus.md.pl,v 1.2 2003/05/07 10:20:21 dsl Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: menus.md.en,v 1.2 2001/11/29 23:21:01 thorpej Exp 	*/
 
@@ -79,8 +79,7 @@ menu dlgeom, title "Wybierz opcje";
 
 menu editparttable, title  "Wybierz swoje partycje", exit;
 	display action  { msg_display (MSG_editparttable);
-			  disp_cur_part((struct mbr_partition *)&mbr[MBR_PARTOFF
-], activepart,-1);
+			  disp_cur_part(&mbr.mbr_parts[0], activepart,-1);
 			};
 	option "Edytuj partycje 0",  sub menu editpart,
 		action  { editpart = 0; };
@@ -95,8 +94,7 @@ menu editparttable, title  "Wybierz swoje partycje", exit;
 
 menu editpart, title  "Wybierz aby zmienic";
 	display action { msg_display (MSG_editpart, editpart);
-			   disp_cur_part((struct mbr_partition *)&mbr[MBR_PARTOFF
-], activepart,editpart);
+			   disp_cur_part(&mbr.mbr_parts[0], activepart,editpart);
 			   msg_display_add(MSG_newline);
 			};
 	option "Rodzaj", sub menu chooseid;

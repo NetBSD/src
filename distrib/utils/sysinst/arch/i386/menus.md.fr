@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.fr,v 1.35 2003/05/03 17:04:10 fvdl Exp $	*/
+/*	$NetBSD: menus.md.fr,v 1.36 2003/05/07 10:20:22 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -90,8 +90,7 @@ menu dlgeom, title "Choisissez une option";
 
 menu editparttable, title  "Choisissez votre partition", exit;
 	display action  { msg_display (MSG_editparttable);
-			  disp_cur_part((struct mbr_partition *)(void *)&mbr[MBR_PARTOFF
-], activepart,-1);
+			  disp_cur_part(&mbr.mbr_parts[0], activepart,-1);
 			};
 	option "Edition de la partition 0",  sub menu editpart,
 		action  { editpart = 0; };
@@ -106,8 +105,7 @@ menu editparttable, title  "Choisissez votre partition", exit;
 
 menu editpart, title  "Changement";
 	display action { msg_display (MSG_editpart, editpart);
-			   disp_cur_part((struct mbr_partition *)(void *)&mbr[MBR_PARTOFF
-], activepart,editpart);
+			   disp_cur_part(&mbr.mbr_parts[0], activepart,editpart);
 			   msg_display_add(MSG_newline);
 			};
 	option "du type de FS", sub menu chooseid;
@@ -267,8 +265,8 @@ menu biosmultmatch;
 
 menu configbootsel, title  "Changer une entree du menu", exit;
         display action  { msg_display(MSG_configbootsel);
-                          disp_bootsel((struct mbr_partition *)(void *)&mbr[MBR_PARTOFF], mbs);
-			  msg_display_add(MSG_bootseltimeout, (1000 * mbs->mbrb_timeo) / 18200);
+                          disp_bootsel(&mbr.mbr_parts[0], mbs);
+			  msg_display_add(MSG_bootseltimeout, (10 * mbs->mbrb_timeo + 9) / 182);
 			  msg_display_add(MSG_defbootselopt);
 			  if (mbs->mbrb_defkey == SCAN_ENTER)
 			  	msg_display_add(MSG_defbootseloptactive);
@@ -310,12 +308,12 @@ menu configbootsel, title  "Changer une entree du menu", exit;
 
 			do {
 				snprintf(tstr, 8, "%u",
-				    (1000 * mbs->mbrb_timeo) / 18200);
+				    (10 * mbs->mbrb_timeo + 9) / 182);
 				msg_prompt(MSG_bootseltimeoutval, tstr, tstr,
 				    8);
 				timo = (unsigned)atoi(tstr);
 			} while (timo > 3600);
-			mbs->mbrb_timeo = (u_int16_t)((timo * 18200) / 1000);
+			mbs->mbrb_timeo = (u_int16_t)((timo * 182) / 10);
 		};
 	option "Changer le choix par defaut", sub menu defaultbootsel;
 
