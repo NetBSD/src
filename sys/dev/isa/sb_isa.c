@@ -1,4 +1,4 @@
-/*	$NetBSD: sb_isa.c,v 1.9 1997/08/04 22:13:33 augustss Exp $	*/
+/*	$NetBSD: sb_isa.c,v 1.10 1997/08/07 12:14:39 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -108,8 +108,8 @@ sb_isa_match(parent, match, aux)
 	if (!sbmatch(sc))
 		goto bad;
 
-	if ((sc->sc_drq8 != -1 && isa_drq_isfree(parent, sc->sc_drq8) == 0) ||
-	    (sc->sc_drq16 != -1 && isa_drq_isfree(parent, sc->sc_drq16) == 0))
+	if ((sc->sc_drq8 != -1 && !isa_drq_isfree(parent, sc->sc_drq8)) ||
+	    (sc->sc_drq16 != -1 && !isa_drq_isfree(parent, sc->sc_drq16)))
 		goto bad;
 
 	if (ISSBPROCLASS(sc))
@@ -118,6 +118,8 @@ sb_isa_match(parent, match, aux)
 		ia->ia_iosize = SB_NPORT;
 
 	ia->ia_irq = sc->sc_irq;
+
+	return 1;
 
 bad:
 	bus_space_unmap(sc->sc_iot, sc->sc_ioh, SBP_NPORT);
