@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.236.2.14 2001/03/22 02:44:11 he Exp $
+$NetBSD: pcidevs,v 1.236.2.15 2001/04/23 22:04:13 he Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -612,6 +612,7 @@ product ACARD AEC6715UW	0x8050	AEC6715UW SCSI
 
 /* Accton products */
 product ACCTON MPX5030	0x1211	MPX 5030/5038 Ethernet
+product ACCTON EN2242	0x1216	EN2242 10/100 Ethernet
 
 /* Acer products */
 product ACER M1435	0x1435	M1435 VL-PCI Bridge
@@ -664,6 +665,7 @@ product ADDTRON 8139	0x1360	8139 Ethernet
 
 /* ADMtek products */
 product ADMTEK AL981	0x0981	ADMtek AL981 10/100 Ethernet
+product	ADMTEK AN985	0x0985	ADMtek AN985 10/100 Ethernet
 
 /* Advanced System Products */
 product ADVSYS 1200A	0x1100
