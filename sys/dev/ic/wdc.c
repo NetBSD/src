@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.129 2003/09/21 11:14:00 bouyer Exp $ */
+/*	$NetBSD: wdc.c,v 1.130 2003/09/21 11:56:40 enami Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.129 2003/09/21 11:14:00 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.130 2003/09/21 11:56:40 enami Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -322,12 +322,12 @@ wdcprobe(chp)
 		if ((ret_value & (0x01 << drive)) == 0)
 			continue;
 		if (1 < ++found && chp->wdc != NULL &&
-			    (chp->wdc->cap & WDC_CAPABILITY_SINGLE_DRIVE)) {
+		    (chp->wdc->cap & WDC_CAPABILITY_SINGLE_DRIVE)) {
 			/*
 			 * Ignore second drive if WDC_CAPABILITY_SINGLE_DRIVE
 			 * is set.
 			 *
-			 * Some CF Card (for ex. IBM MicroDrive and SanDisk) 
+			 * Some CF Card (for ex. IBM MicroDrive and SanDisk)
 			 * doesn't seem to implement drive select command. In
 			 * this case, you can't eliminate ghost drive properly.
 			 */
