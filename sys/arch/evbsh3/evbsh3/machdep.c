@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.3 1999/09/16 21:23:40 msaitoh Exp $	*/
+/*	$NetBSD: machdep.c,v 1.4 1999/09/16 22:52:11 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -893,12 +893,14 @@ initSH3(pc)
 
 	avail = sh3_round_page(end);
 
+	/* XXX nkpde = kernel page dir area (IOM_RAM_SIZE*2 Mbyte (why?)) */
+	nkpde = IOM_RAM_SIZE >> (PDSHIFT - 1);
+
 	/*
 	 * clear .bss, .common area, page dir area,
 	 *	process0 stack, page table area
 	 */
-
-	p = (char *)avail + (1 + UPAGES) * NBPG + NBPG * 9;
+	p = (char *)avail + (1 + UPAGES) * NBPG + NBPG * (1 + nkpde); /* XXX */
 	bzero(edata, p - edata);
 
 	/*
@@ -913,13 +915,12 @@ initSH3(pc)
  *	+-------------+------+-----+----------+-------------+------------+
  *	| kernel text | data | bss | Page Dir | Proc0 Stack | Page Table |
  *	+-------------+------+-----+----------+-------------+------------+
- *                                     NBPG       USPACE        9*NBPG
+ *                                     NBPG       USPACE    (1+nkpde)*NBPG
  *                                                (= 4*NBPG)
  *	Build initial page tables
  */
 	pagedir = (void *)avail;
 	pagetab = (void *)(avail + SYSMAP);
-	nkpde = 8;	/* XXX nkpde = kernel page dir area (32 Mbyte) */
 
 	/*
 	 *	Construct a page table directory
@@ -954,9 +955,6 @@ initSH3(pc)
 	/*
 	 * Activate MMU
 	 */
-#ifndef ROMIMAGE
-	MMEYE_LED = 1;
-#endif
 
 #define MMUCR_AT	0x0001	/* address traslation enable */
 #define MMUCR_IX	0x0002	/* index mode */
@@ -968,9 +966,6 @@ initSH3(pc)
 	/*
 	 * Now here is virtual address
 	 */
-#ifndef ROMIMAGE
-	MMEYE_LED = 0;
-#endif
 
 	/* Set proc0paddr */
 	proc0paddr = (void *)(avail + NBPG);
