@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.9 2002/02/14 11:59:26 bjh21 Exp $	*/
+/*	$NetBSD: fault.c,v 1.10 2002/02/22 03:24:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -450,7 +450,7 @@ copyfault:
 #endif
 
 		if (map == NULL)
-			panic("No map for fault address\n");
+			panic("No map for fault address va = 0x%08lx", va);
 
 		/*
 		 * We need to know whether the page should be mapped
