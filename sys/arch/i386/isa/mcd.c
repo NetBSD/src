@@ -36,7 +36,7 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: mcd.c,v 1.1.2.5 1994/02/02 07:00:15 mycroft Exp $
+ *	$Id: mcd.c,v 1.1.2.6 1994/02/02 09:09:48 mycroft Exp $
  */
 
 /*static char COPYRIGHT[] = "mcd-driver (C)1993 by H.Veit & B.Moore";*/
@@ -70,7 +70,7 @@
 #ifndef MCDDEBUG
 #define MCD_TRACE(fmt,a,b,c,d)
 #else
-#define MCD_TRACE(fmt,a,b,c,d)	{if (cd->debug) {printf("%s: st=%02x: ", cd->sc_dev.dv_xname, mcd->status); printf(fmt,a,b,c,d);}}
+#define MCD_TRACE(fmt,a,b,c,d)	{if (sc->debug) {printf("%s: st=%02x: ", sc->sc_dev.dv_xname, mcd->status); printf(fmt,a,b,c,d);}}
 #endif
 
 #define MCDPART(dev)	(((minor(dev)) & 0x07)     )
@@ -111,7 +111,7 @@ struct mcd_mbx {
 	short		count;
 };
 
-struct mcd_data {
+struct mcd_softc {
 	struct	device sc_dev;
 	struct	isadev sc_id;
 	struct	intrhand sc_ih;
@@ -135,11 +135,11 @@ struct mcd_data {
 	struct mcd_mbx mbx;
 };
 
-int mcdprobe __P((struct device *, struct cfdata *, void *));
+int mcdprobe __P((struct device *, struct device *, void *));
 void mcdattach __P((struct device *, struct device *, void *));
 
 struct cfdriver mcdcd =
-{ NULL, "mcd", mcdprobe, mcdattach, DV_DISK, sizeof(struct mcd_data) };
+{ NULL, "mcd", mcdprobe, mcdattach, DV_DISK, sizeof(struct mcd_softc) };
 
 void mcdstrategy __P((struct buf *));
 
@@ -154,35 +154,35 @@ struct dkdriver mcddkdriver = { mcdstrategy };
 
 int mcdopen __P((dev_t));
 int mcdclose __P((dev_t));
-static void mcd_start __P((struct mcd_data *));
+static void mcd_start __P((struct mcd_softc *));
 int mcdioctl __P((dev_t, int, caddr_t, int));
-static int mcd_getdisklabel __P((struct mcd_data *));
+static int mcd_getdisklabel __P((struct mcd_softc *));
 int mcdsize __P((dev_t));
-static void mcd_configure __P((struct mcd_data *));
+static void mcd_configure __P((struct mcd_softc *));
 static int mcd_waitrdy __P((u_short, int));
-static int mcd_getreply __P((struct mcd_data *, int));
-static int mcd_getstat __P((struct mcd_data *, int));
-static void mcd_setflags __P((struct mcd_data *));
-static int mcd_get __P((struct mcd_data *, char *, int));
-static int mcd_send __P((struct mcd_data *, int, int));
+static int mcd_getreply __P((struct mcd_softc *, int));
+static int mcd_getstat __P((struct mcd_softc *, int));
+static void mcd_setflags __P((struct mcd_softc *));
+static int mcd_get __P((struct mcd_softc *, char *, int));
+static int mcd_send __P((struct mcd_softc *, int, int));
 static int bcd2bin __P((bcd_t));
 static bcd_t bin2bcd __P((int));
 static void hsg2msf __P((int, bcd_t *));
 static int msf2hsg __P((bcd_t *));
-static int mcd_volinfo __P((struct mcd_data *));
+static int mcd_volinfo __P((struct mcd_softc *));
 int mcdintr __P((caddr_t));
 static void mcd_doread __P((int, struct mcd_mbx *));
-static int mcd_setmode __P((struct mcd_data *, int));
-static int mcd_toc_header __P((struct mcd_data *, struct ioc_toc_header *));
-static int mcd_read_toc __P((struct mcd_data *));
-static int mcd_toc_entry __P((struct mcd_data *, struct ioc_read_toc_entry *));
-static int mcd_stop __P((struct mcd_data *));
-static int mcd_getqchan __P((struct mcd_data *, struct mcd_qchninfo *));
-static int mcd_subchan __P((struct mcd_data *, struct ioc_read_subchannel *));
-static int mcd_playtracks __P((struct mcd_data *, struct ioc_play_track *));
-static int mcd_play __P((struct mcd_data *, struct mcd_read2 *));
-static int mcd_pause __P((struct mcd_data *));
-static int mcd_resume __P((struct mcd_data *));
+static int mcd_setmode __P((struct mcd_softc *, int));
+static int mcd_toc_header __P((struct mcd_softc *, struct ioc_toc_header *));
+static int mcd_read_toc __P((struct mcd_softc *));
+static int mcd_toc_entry __P((struct mcd_softc *, struct ioc_read_toc_entry *));
+static int mcd_stop __P((struct mcd_softc *));
+static int mcd_getqchan __P((struct mcd_softc *, struct mcd_qchninfo *));
+static int mcd_subchan __P((struct mcd_softc *, struct ioc_read_subchannel *));
+static int mcd_playtracks __P((struct mcd_softc *, struct ioc_play_track *));
+static int mcd_play __P((struct mcd_softc *, struct mcd_read2 *));
+static int mcd_pause __P((struct mcd_softc *));
+static int mcd_resume __P((struct mcd_softc *));
 
 #define mcd_put(port,byte)	outb(port,byte)
 
@@ -206,27 +206,27 @@ mcdattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct mcd_data *cd = (void *)self;
 	struct isa_attach_args *ia = aux;
+	struct mcd_softc *sc = (void *)self;
 	
-	cd->iobase = ia->ia_iobase;
-	cd->flags = MCDINIT;
+	sc->iobase = ia->ia_iobase;
+	sc->flags = MCDINIT;
 
 #ifdef notyet
 	/* get irq/drq configuration word */
-	cd->config = irqs[ia->ia_irq]; /* | drqs[ia->ia_drq];*/
+	sc->config = irqs[ia->ia_irq]; /* | drqs[ia->ia_drq];*/
 	/* wire controller for interrupts and dma */
-	mcd_configure(cd);
+	mcd_configure(sc);
 #endif
 
 	printf(": Mitsumi CD-ROM\n");
 
-	isa_establish(&cd->sc_id, &cd->sc_dev);
-	cd->sc_ih.ih_fun = mcdintr;
-	cd->sc_ih.ih_arg = cd;
-	intr_establish(ia->ia_irq, &cd->sc_ih, DV_DISK);
-	cd->sc_dk.dk_driver = &mcddkdriver;
-	dk_establish(&cd->sc_dk, &cd->sc_dev);
+	isa_establish(&sc->sc_id, &sc->sc_dev);
+	sc->sc_ih.ih_fun = mcdintr;
+	sc->sc_ih.ih_arg = sc;
+	intr_establish(ia->ia_irq, &sc->sc_ih, DV_DISK);
+	sc->sc_dk.dk_driver = &mcddkdriver;
+	dk_establish(&sc->sc_dk, &sc->sc_dev);
 }
 
 int
@@ -234,7 +234,7 @@ mcdopen(dev)
 	dev_t dev;
 {
 	int unit, part, phys;
-	struct mcd_data *cd;
+	struct mcd_softc *sc;
 	
 	unit = MCDUNIT(dev);
 	part = MCDPART(dev);
@@ -242,36 +242,36 @@ mcdopen(dev)
 
 	if (unit >= mcdcd.cd_ndevs)
 		return ENXIO;
-	cd = mcdcd.cd_devs[unit];
-	if (!cd || !(cd->flags & MCDINIT))
+	sc = mcdcd.cd_devs[unit];
+	if (!sc || !(sc->flags & MCDINIT))
 		return ENXIO;
 	
 	/* invalidated in the meantime? mark all open part's invalid */
-	if (!(cd->flags & MCDVALID) && cd->openflags)
+	if (!(sc->flags & MCDVALID) && sc->openflags)
 		return EBUSY;
 
-	if (mcd_getstat(cd, 1) < 0)
+	if (mcd_getstat(sc, 1) < 0)
 		return ENXIO;
 
 	/* XXX get a default disklabel */
-	mcd_getdisklabel(cd);
+	mcd_getdisklabel(sc);
 
 	if (mcdsize(dev) < 0) {
-		printf("%s: failed to get disk size\n", cd->sc_dev.dv_xname);
+		printf("%s: failed to get disk size\n", sc->sc_dev.dv_xname);
 		return ENXIO;
 	} else
-		cd->flags |= MCDVALID;
+		sc->flags |= MCDVALID;
 
 MCD_TRACE("open: partition=%d, disksize = %d, blksize=%d\n",
-	part,cd->disksize,cd->blksize,0);
+	part,sc->disksize,sc->blksize,0);
 
 	if (part == RAW_PART ||
-		(part < cd->dlabel.d_npartitions &&
-		cd->dlabel.d_partitions[part].p_fstype != FS_UNUSED)) {
-		cd->partflags[part] |= MCDOPEN;
-		cd->openflags |= (1<<part);
+		(part < sc->dlabel.d_npartitions &&
+		sc->dlabel.d_partitions[part].p_fstype != FS_UNUSED)) {
+		sc->partflags[part] |= MCDOPEN;
+		sc->openflags |= (1<<part);
 		if (part == RAW_PART && phys != 0)
-			cd->partflags[part] |= MCDREADRAW;
+			sc->partflags[part] |= MCDREADRAW;
 		return 0;
 	}
 	
@@ -283,17 +283,17 @@ mcdclose(dev)
 	dev_t dev;
 {
 	int unit, part;
-	struct mcd_data *cd;
+	struct mcd_softc *sc;
 	
 	unit = MCDUNIT(dev);
 	part = MCDPART(dev);
-	cd = mcdcd.cd_devs[unit];
+	sc = mcdcd.cd_devs[unit];
 	
-	mcd_getstat(cd, 1);	/* get status */
+	mcd_getstat(sc, 1);	/* get status */
 
 	/* close channel */
-	cd->partflags[part] &= ~(MCDOPEN|MCDREADRAW);
-	cd->openflags &= ~(1<<part);
+	sc->partflags[part] &= ~(MCDOPEN|MCDREADRAW);
+	sc->openflags &= ~(1<<part);
 	MCD_TRACE("close: partition=%d\n", part, 0, 0, 0);
 
 	return 0;
@@ -303,25 +303,25 @@ void
 mcdstrategy(bp)
 	struct buf *bp;
 {
-	struct mcd_data *cd;
+	struct mcd_softc *sc;
 	struct buf *qp;
 	int s;
 	
-	cd = mcdcd.cd_devs[MCDUNIT(bp->b_dev)];
+	sc = mcdcd.cd_devs[MCDUNIT(bp->b_dev)];
 
 	/* test validity */
 /*MCD_TRACE("strategy: buf=0x%lx, unit=%ld, block#=%ld bcount=%ld\n",
-	bp, cd->sc_dev.dv_unit, bp->b_blkno, bp->b_bcount);*/
+	bp, sc->sc_dev.dv_unit, bp->b_blkno, bp->b_bcount);*/
 	if (bp->b_blkno < 0) {
 		printf("mcdstrategy: unit = %d, blkno = %d, bcount = %d\n",
-			cd->sc_dev.dv_unit, bp->b_blkno, bp->b_bcount);
+			sc->sc_dev.dv_unit, bp->b_blkno, bp->b_bcount);
 		bp->b_error = EINVAL;
 		bp->b_flags |= B_ERROR;
 		goto bad;
 	}
 
 	/* if device invalidated (e.g. media change, door open), error */
-	if (!(cd->flags & MCDVALID)) {
+	if (!(sc->flags & MCDVALID)) {
 MCD_TRACE("strategy: drive not valid\n",0,0,0,0);
 		bp->b_error = EIO;
 		goto bad;
@@ -339,24 +339,24 @@ MCD_TRACE("strategy: drive not valid\n",0,0,0,0);
 	
 	/* for non raw access, check partition limits */
 	if (MCDPART(bp->b_dev) != RAW_PART) {
-		if (!(cd->flags & MCDLABEL)) {
+		if (!(sc->flags & MCDLABEL)) {
 			bp->b_error = EIO;
 			goto bad;
 		}
 		/* adjust transfer if necessary */
-		if (bounds_check_with_label(bp,&cd->dlabel,1) <= 0) {
+		if (bounds_check_with_label(bp,&sc->dlabel,1) <= 0) {
 			goto done;
 		}
 	}
 	
 	/* queue it */
-	qp = &cd->head;
+	qp = &sc->head;
 	s = splbio();
 	disksort(qp,bp);
 	splx(s);
 	
 	/* now check whether we can perform processing */
-	mcd_start(cd);
+	mcd_start(sc);
 	return;
 
 bad:
@@ -368,14 +368,14 @@ done:
 }
 
 static void
-mcd_start(cd)
-	struct mcd_data *cd;
+mcd_start(sc)
+	struct mcd_softc *sc;
 {
-	struct buf *bp, *qp = &cd->head;
+	struct buf *bp, *qp = &sc->head;
 	struct partition *p;
 	int s = splbio();
 	
-	if (cd->flags & MCDMBXBSY)
+	if (sc->flags & MCDMBXBSY)
 		return;
 
 	if ((bp = qp->b_actf) != 0) {
@@ -390,22 +390,22 @@ mcd_start(cd)
 	}
 
 	/* changed media? */
-	if (!(cd->flags	& MCDVALID)) {
+	if (!(sc->flags	& MCDVALID)) {
 		MCD_TRACE("mcd_start: drive not valid\n", 0, 0, 0, 0);
 		return;
 	}
 
-	p = &cd->sc_dk.dk_label.d_partitions[MCDPART(bp->b_dev)];
+	p = &sc->sc_dk.dk_label.d_partitions[MCDPART(bp->b_dev)];
 
-	cd->flags |= MCDMBXBSY;
-	cd->mbx.unit = cd->sc_dev.dv_unit;
-	cd->mbx.iobase = cd->iobase;
-	cd->mbx.retry = MCD_RETRIES;
-	cd->mbx.bp = bp;
-	cd->mbx.p_offset = p->p_offset;
+	sc->flags |= MCDMBXBSY;
+	sc->mbx.unit = sc->sc_dev.dv_unit;
+	sc->mbx.iobase = sc->iobase;
+	sc->mbx.retry = MCD_RETRIES;
+	sc->mbx.bp = bp;
+	sc->mbx.p_offset = p->p_offset;
 
 	/* calling the read routine */
-	mcd_doread(MCD_S_BEGIN, &cd->mbx);
+	mcd_doread(MCD_S_BEGIN, &sc->mbx);
 }
 
 int
@@ -415,13 +415,13 @@ mcdioctl(dev, cmd, addr, flags)
 	caddr_t addr;
 	int flags;
 {
-	struct mcd_data *cd;
+	struct mcd_softc *sc;
 	int unit;
 	
 	unit = MCDUNIT(dev);
-	cd = mcdcd.cd_devs[unit];
+	sc = mcdcd.cd_devs[unit];
 
-	if (!(cd->flags & MCDVALID))
+	if (!(sc->flags & MCDVALID))
 		return EIO;
 	MCD_TRACE("ioctl called 0x%x\n", cmd, 0, 0, 0);
 
@@ -435,15 +435,15 @@ mcdioctl(dev, cmd, addr, flags)
 	case DIOCWLABEL:
 		return ENOTTY;
 	case CDIOCPLAYTRACKS:
-		return mcd_playtracks(cd, (struct ioc_play_track *) addr);
+		return mcd_playtracks(sc, (struct ioc_play_track *) addr);
 	case CDIOCPLAYBLOCKS:
-		return mcd_play(cd, (struct mcd_read2 *) addr);
+		return mcd_play(sc, (struct mcd_read2 *) addr);
 	case CDIOCREADSUBCHANNEL:
-		return mcd_subchan(cd, (struct ioc_read_subchannel *) addr);
+		return mcd_subchan(sc, (struct ioc_read_subchannel *) addr);
 	case CDIOREADTOCHEADER:
-		return mcd_toc_header(cd, (struct ioc_toc_header *) addr);
+		return mcd_toc_header(sc, (struct ioc_toc_header *) addr);
 	case CDIOREADTOCENTRYS:
-		return mcd_toc_entry(cd, (struct ioc_read_toc_entry *) addr);
+		return mcd_toc_entry(sc, (struct ioc_read_toc_entry *) addr);
 	case CDIOCSETPATCH:
 	case CDIOCGETVOL:
 	case CDIOCSETVOL:
@@ -454,20 +454,20 @@ mcdioctl(dev, cmd, addr, flags)
 	case CDIOCSETRIGHT:
 		return EINVAL;
 	case CDIOCRESUME:
-		return mcd_resume(cd);
+		return mcd_resume(sc);
 	case CDIOCPAUSE:
-		return mcd_pause(cd);
+		return mcd_pause(sc);
 	case CDIOCSTART:
 		return EINVAL;
 	case CDIOCSTOP:
-		return mcd_stop(cd);
+		return mcd_stop(sc);
 	case CDIOCEJECT:
 		return EINVAL;
 	case CDIOCSETDEBUG:
-		cd->debug = 1;
+		sc->debug = 1;
 		return 0;
 	case CDIOCCLRDEBUG:
-		cd->debug = 0;
+		sc->debug = 0;
 		return 0;
 	case CDIOCRESET:
 		return EINVAL;
@@ -483,35 +483,35 @@ mcdioctl(dev, cmd, addr, flags)
  * whether the scsi cd driver is linked in
  */
 static int
-mcd_getdisklabel(cd)
-	struct mcd_data *cd;
+mcd_getdisklabel(sc)
+	struct mcd_softc *sc;
 {
 	
-	if (cd->flags & MCDLABEL)
+	if (sc->flags & MCDLABEL)
 		return -1;
 	
-	bzero(&cd->sc_dk.dk_label, sizeof(struct disklabel));
-	bzero(&cd->sc_dk.dk_cpulabel, sizeof(struct cpu_disklabel));
-	strncpy(cd->sc_dk.dk_label.d_typename, "Mitsumi CD ROM ", 16);
-	strncpy(cd->sc_dk.dk_label.d_packname, "unknown        ", 16);
-	cd->sc_dk.dk_label.d_secsize 	= cd->blksize;
-	cd->sc_dk.dk_label.d_nsectors	= 100;
-	cd->sc_dk.dk_label.d_ntracks	= 1;
-	cd->sc_dk.dk_label.d_ncylinders	= (cd->disksize/100)+1;
-	cd->sc_dk.dk_label.d_secpercyl	= 100;
-	cd->sc_dk.dk_label.d_secperunit	= cd->disksize;
-	cd->sc_dk.dk_label.d_rpm	= 300;
-	cd->sc_dk.dk_label.d_interleave	= 1;
-	cd->sc_dk.dk_label.d_flags	= D_REMOVABLE;
-	cd->sc_dk.dk_label.d_npartitions= 1;
-	cd->sc_dk.dk_label.d_partitions[0].p_offset = 0;
-	cd->sc_dk.dk_label.d_partitions[0].p_size = cd->disksize;
-	cd->sc_dk.dk_label.d_partitions[0].p_fstype = 9;
-	cd->sc_dk.dk_label.d_magic	= DISKMAGIC;
-	cd->sc_dk.dk_label.d_magic2	= DISKMAGIC;
-	cd->sc_dk.dk_label.d_checksum	= dkcksum(&cd->sc_dk.dk_label);
+	bzero(&sc->sc_dk.dk_label, sizeof(struct disklabel));
+	bzero(&sc->sc_dk.dk_cpulabel, sizeof(struct cpu_disklabel));
+	strncpy(sc->sc_dk.dk_label.d_typename, "Mitsumi CD ROM ", 16);
+	strncpy(sc->sc_dk.dk_label.d_packname, "unknown        ", 16);
+	sc->sc_dk.dk_label.d_secsize 	= sc->blksize;
+	sc->sc_dk.dk_label.d_nsectors	= 100;
+	sc->sc_dk.dk_label.d_ntracks	= 1;
+	sc->sc_dk.dk_label.d_ncylinders	= (sc->disksize/100)+1;
+	sc->sc_dk.dk_label.d_secpercyl	= 100;
+	sc->sc_dk.dk_label.d_secperunit	= sc->disksize;
+	sc->sc_dk.dk_label.d_rpm	= 300;
+	sc->sc_dk.dk_label.d_interleave	= 1;
+	sc->sc_dk.dk_label.d_flags	= D_REMOVABLE;
+	sc->sc_dk.dk_label.d_npartitions= 1;
+	sc->sc_dk.dk_label.d_partitions[0].p_offset = 0;
+	sc->sc_dk.dk_label.d_partitions[0].p_size = sc->disksize;
+	sc->sc_dk.dk_label.d_partitions[0].p_fstype = 9;
+	sc->sc_dk.dk_label.d_magic	= DISKMAGIC;
+	sc->sc_dk.dk_label.d_magic2	= DISKMAGIC;
+	sc->sc_dk.dk_label.d_checksum	= dkcksum(&sc->sc_dk.dk_label);
 	
-	cd->flags |= MCDLABEL;
+	sc->flags |= MCDLABEL;
 	return 0;
 }
 
@@ -521,12 +521,12 @@ mcdsize(dev)
 {
 	int size;
 	int unit = MCDUNIT(dev);
-	struct mcd_data *cd = mcdcd.cd_devs[unit];
+	struct mcd_softc *sc = mcdcd.cd_devs[unit];
 
-	if (mcd_volinfo(cd) >= 0) {
-		cd->blksize = MCDBLK;
-		size = msf2hsg(cd->volinfo.vol_msf);
-		cd->disksize = size * (MCDBLK/DEV_BSIZE);
+	if (mcd_volinfo(sc) >= 0) {
+		sc->blksize = MCDBLK;
+		size = msf2hsg(sc->volinfo.vol_msf);
+		sc->disksize = size * (MCDBLK/DEV_BSIZE);
 		return 0;
 	}
 	return -1;
@@ -548,20 +548,20 @@ static char drqs[] = {
 #endif
 
 static void
-mcd_configure(cd)
-	struct mcd_data *cd;
+mcd_configure(sc)
+	struct mcd_softc *sc;
 {
 
-	outb(cd->iobase + mcd_config, cd->config);
+	outb(sc->iobase + mcd_config, sc->config);
 }
 
 int
-mcdprobe(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
+mcdprobe(parent, self, aux)
+	struct device *parent, *self;
 	void *aux;
 {
 	struct isa_attach_args *ia = aux;
+	strict mcd_softc *sc = (void *)self;
 	u_short iobase = ia->ia_iobase;
 	int i, j;
 	u_char st, check, junk;
@@ -605,6 +605,8 @@ found:
 	printf("mcd%d: config register says %x\n", cf->cf_unit,
 		inb(iobase + mcd_config));
 
+	ia->ia_iosize = 4;
+	ia->ia_msize = 0;
 	return 1;
 }
 
@@ -625,15 +627,15 @@ mcd_waitrdy(iobase, dly)
 }
 
 static int
-mcd_getreply(cd, dly)
-	struct mcd_data *cd;
+mcd_getreply(sc, dly)
+	struct mcd_softc *sc;
 	int dly;
 {
-	u_short iobase = cd->iobase;
+	u_short iobase = sc->iobase;
 
 	/* wait data to become ready */
 	if (mcd_waitrdy(iobase, dly)<0) {
-		printf("%s: timeout getreply\n", cd->sc_dev.dv_xname);
+		printf("%s: timeout getreply\n", sc->sc_dev.dv_xname);
 		return -1;
 	}
 
@@ -642,46 +644,46 @@ mcd_getreply(cd, dly)
 }
 
 static int
-mcd_getstat(cd, sflg)
-	struct mcd_data *cd;
+mcd_getstat(sc, sflg)
+	struct mcd_softc *sc;
 	int sflg;
 {
 	int i;
-	u_short iobase = cd->iobase;
+	u_short iobase = sc->iobase;
 
 	/* get the status */
 	if (sflg)
 		outb(iobase + mcd_command, MCD_CMDGETSTAT);
-	i = mcd_getreply(cd, DELAY_GETREPLY);
+	i = mcd_getreply(sc, DELAY_GETREPLY);
 	if (i < 0)
 		return -1;
 
-	cd->status = i;
+	sc->status = i;
 
-	mcd_setflags(cd);
-	return cd->status;
+	mcd_setflags(sc);
+	return sc->status;
 }
 
 static void
-mcd_setflags(cd)
-	struct mcd_data *cd;
+mcd_setflags(sc)
+	struct mcd_softc *sc;
 {
 
 	/* check flags */
-	if (cd->status & (MCDDSKCHNG|MCDDOOROPEN)) {
+	if (sc->status & (MCDDSKCHNG|MCDDOOROPEN)) {
 		MCD_TRACE("getstat: sensed DSKCHNG or DOOROPEN\n", 0, 0, 0, 0);
-		cd->flags &= ~MCDVALID;
+		sc->flags &= ~MCDVALID;
 	}
 
-	if (cd->status & MCDAUDIOBSY)
-		cd->audio_status = CD_AS_PLAY_IN_PROGRESS;
-	else if (cd->audio_status == CD_AS_PLAY_IN_PROGRESS)
-		cd->audio_status = CD_AS_PLAY_COMPLETED;
+	if (sc->status & MCDAUDIOBSY)
+		sc->audio_status = CD_AS_PLAY_IN_PROGRESS;
+	else if (sc->audio_status == CD_AS_PLAY_IN_PROGRESS)
+		sc->audio_status = CD_AS_PLAY_COMPLETED;
 }
 
 static int
-mcd_get(cd, buf, nmax)
-	struct mcd_data *cd;
+mcd_get(sc, buf, nmax)
+	struct mcd_softc *sc;
 	char *buf;
 	int nmax;
 {
@@ -689,8 +691,8 @@ mcd_get(cd, buf, nmax)
 	
 	for (i = 0; i < nmax; i++) {
 		/* wait for data */
-		if ((k = mcd_getreply(cd, DELAY_GETREPLY)) < 0) {
-			printf("%s: timeout mcd_get\n", cd->sc_dev.dv_xname);
+		if ((k = mcd_getreply(sc, DELAY_GETREPLY)) < 0) {
+			printf("%s: timeout mcd_get\n", sc->sc_dev.dv_xname);
 			return -1;
 		}
 		buf[i] = k;
@@ -699,22 +701,22 @@ mcd_get(cd, buf, nmax)
 }
 
 static int
-mcd_send(cd, cmd, nretries)
-	struct mcd_data *cd;
+mcd_send(sc, cmd, nretries)
+	struct mcd_softc *sc;
 	int cmd, nretries;
 {
 	int i, k;
-	u_short iobase = cd->iobase;
+	u_short iobase = sc->iobase;
 	
 /*MCD_TRACE("mcd_send: command = 0x%x\n",cmd,0,0,0);*/
 	for (i = nretries; i; i--) {
 		outb(iobase + mcd_command, cmd);
-		if ((k = mcd_getstat(cd, 0)) != -1)
+		if ((k = mcd_getstat(sc, 0)) != -1)
 			break;
 	}
 	if (!i) {
 		printf("%s: mcd_send retry cnt exceeded\n",
-			cd->sc_dev.dv_xname);
+			sc->sc_dev.dv_xname);
 		return -1;
 	}
 
@@ -762,33 +764,33 @@ msf2hsg(msf)
 }
 
 static int
-mcd_volinfo(cd)
-	struct mcd_data *cd;
+mcd_volinfo(sc)
+	struct mcd_softc *sc;
 {
 
 /*MCD_TRACE("mcd_volinfo: enter\n",0,0,0,0);*/
 
 	/* Get the status, in case the disc has been changed */
-	if (mcd_getstat(cd, 1) < 0)
+	if (mcd_getstat(sc, 1) < 0)
 		return EIO;
 
 	/* Just return if we already have it */
-	if (cd->flags & MCDVOLINFO)
+	if (sc->flags & MCDVOLINFO)
 		return 0;
 
 	/* send volume info command */
-	if (mcd_send(cd, MCD_CMDGETVOLINFO, MCD_RETRIES) < 0)
+	if (mcd_send(sc, MCD_CMDGETVOLINFO, MCD_RETRIES) < 0)
 		return -1;
 
 	/* get data */
-	if (mcd_get(cd, (char*) &cd->volinfo, sizeof(struct mcd_volinfo)) < 0) {
+	if (mcd_get(sc, (char*) &sc->volinfo, sizeof(struct mcd_volinfo)) < 0) {
 		printf("%s: mcd_volinfo: error read data\n",
-			cd->sc_dev.dv_xname);
+			sc->sc_dev.dv_xname);
 		return -1;
 	}
 
-	if (cd->volinfo.trk_low != 0 || cd->volinfo.trk_high != 0) {
-		cd->flags |= MCDVOLINFO;	/* volinfo is OK */
+	if (sc->volinfo.trk_low != 0 || sc->volinfo.trk_high != 0) {
+		sc->flags |= MCDVOLINFO;	/* volinfo is OK */
 		return 0;
 	}
 
@@ -799,8 +801,8 @@ int
 mcdintr(arg)
 	caddr_t arg;
 {
-	struct mcd_data *cd = (void *)arg;
-	u_short iobase = cd->iobase;
+	struct mcd_softc *sc = (void *)arg;
+	u_short iobase = sc->iobase;
 	
 	MCD_TRACE("stray interrupt xfer=0x%x\n", inb(iobase + mcd_xfer),
 		0, 0, 0);
@@ -824,7 +826,7 @@ mcd_doread(state, mbxin)
 	struct mcd_mbx *mbxin;
 {
 	struct mcd_mbx *mbx = (state != MCD_S_BEGIN) ? mbxsave : mbxin;
-	struct mcd_data *cd = mcdcd.cd_devs[mbx->unit];
+	struct mcd_softc *sc = mcdcd.cd_devs[mbx->unit];
 	u_short iobase = mbx->iobase;
 	struct buf *bp = mbx->bp;
 
@@ -854,23 +856,23 @@ loop:
 					(caddr_t) MCD_S_WAITSTAT, hz/100);
 				return;
 			}
-			mcd_setflags(cd);
+			mcd_setflags(sc);
 			MCD_TRACE("got WAITSTAT delay=%d\n",
 				RDELAY_WAITSTAT-mbx->count, 0, 0, 0);
 			/* reject, if audio active */
-			if (cd->status & MCDAUDIOBSY) {
+			if (sc->status & MCDAUDIOBSY) {
 				printf("%s: audio is active\n",
-					cd->sc_dev.dv_xname);
+					sc->sc_dev.dv_xname);
 				goto readerr;
 			}
 
 			/* to check for raw/cooked mode */
-			if (cd->flags & MCDREADRAW) {
+			if (sc->flags & MCDREADRAW) {
 				rm = MCD_MD_RAW;
 				mbx->sz = MCDRBLK;
 			} else {
 				rm = MCD_MD_COOKED;
-				mbx->sz = cd->blksize;
+				mbx->sz = sc->blksize;
 			}
 
 			mbx->count = RDELAY_WAITMODE;
@@ -881,14 +883,14 @@ loop:
 				(caddr_t) MCD_S_WAITMODE, hz/100);
 			return;
 		} else {
-			printf("%s: timeout getstatus\n", cd->sc_dev.dv_xname);
+			printf("%s: timeout getstatus\n", sc->sc_dev.dv_xname);
 			goto readerr;
 		}
 
 	case MCD_S_WAITMODE:
 		untimeout((timeout_t) mcd_doread, (caddr_t) MCD_S_WAITMODE);
 		if (mbx->count-- < 0) {
-			printf("%s: timeout set mode\n", cd->sc_dev.dv_xname);
+			printf("%s: timeout set mode\n", sc->sc_dev.dv_xname);
 			goto readerr;
 		}
 		if (inb(iobase + mcd_xfer) & MCD_ST_BUSY) {
@@ -896,7 +898,7 @@ loop:
 				(caddr_t) MCD_S_WAITMODE, hz/100);
 			return;
 		}
-		mcd_setflags(cd);
+		mcd_setflags(sc);
 		MCD_TRACE("got WAITMODE delay=%d\n",
 			RDELAY_WAITMODE-mbx->count, 0, 0, 0);
 		/* for first block */
@@ -949,24 +951,24 @@ nextblock:
 				bp->b_resid = 0;
 				biodone(bp);
 
-				cd->flags &= ~MCDMBXBSY;
-				mcd_start(cd);
+				sc->flags &= ~MCDMBXBSY;
+				mcd_start(sc);
 				return;
 			}
 			if ((k & 4) == 0)
-				mcd_getstat(cd, 0);
+				mcd_getstat(sc, 0);
 			timeout((timeout_t) mcd_doread,
 				(caddr_t) MCD_S_WAITREAD, hz/100);
 			return;
 		} else {
-			printf("%s: timeout read data\n", cd->sc_dev.dv_xname);
+			printf("%s: timeout read data\n", sc->sc_dev.dv_xname);
 			goto readerr;
 		}
 	}
 
 readerr:
 	if (mbx->retry-- > 0) {
-		printf("%s: retrying\n", cd->sc_dev.dv_xname);
+		printf("%s: retrying\n", sc->sc_dev.dv_xname);
 		state = MCD_S_BEGIN1;
 		goto loop;
 	}
@@ -975,32 +977,32 @@ readerr:
 	bp->b_flags |= B_ERROR;
 	bp->b_resid = bp->b_bcount;
 	biodone(bp);
-	mcd_start(cd);
+	mcd_start(sc);
 
 #ifdef notdef
-	printf("%s: unit timeout, resetting\n", cd->sc_dev.dv_xname);
+	printf("%s: unit timeout, resetting\n", sc->sc_dev.dv_xname);
 	outb(mbx->iobase + mcd_reset,MCD_CMDRESET);
 	delay(300000);
-	(void)mcd_getstat(cd, 1);
-	(void)mcd_getstat(cd, 1);
-	/*cd->status &= ~MCDDSKCHNG; */
-	cd->debug = 1; /* preventive set debug mode */
+	(void)mcd_getstat(sc, 1);
+	(void)mcd_getstat(sc, 1);
+	/*sc->status &= ~MCDDSKCHNG; */
+	sc->debug = 1; /* preventive set debug mode */
 #endif
 }
 
 static int
-mcd_setmode(cd, mode)
-	struct mcd_data *cd;
+mcd_setmode(sc, mode)
+	struct mcd_softc *sc;
 	int mode;
 {
-	u_short iobase = cd->iobase;
+	u_short iobase = sc->iobase;
 	int retry;
 
-	printf("%s: setting mode to %d\n", cd->sc_dev.dv_xname, mode);
+	printf("%s: setting mode to %d\n", sc->sc_dev.dv_xname, mode);
 	for(retry = MCD_RETRIES; retry; retry--) {
 		outb(iobase + mcd_command, MCD_CMDSETMODE);
 		outb(iobase + mcd_command, mode);
-		if (mcd_getstat(cd, 0) != -1)
+		if (mcd_getstat(sc, 0) != -1)
 			return 0;
 	}
 
@@ -1008,63 +1010,63 @@ mcd_setmode(cd, mode)
 }
 
 static int
-mcd_toc_header(cd, th)
-	struct mcd_data *cd;
+mcd_toc_header(sc, th)
+	struct mcd_softc *sc;
 	struct ioc_toc_header *th;
 {
 
-	if (mcd_volinfo(cd) < 0)
+	if (mcd_volinfo(sc) < 0)
 		return ENXIO;
 
-	th->len = msf2hsg(cd->volinfo.vol_msf);
-	th->starting_track = bcd2bin(cd->volinfo.trk_low);
-	th->ending_track = bcd2bin(cd->volinfo.trk_high);
+	th->len = msf2hsg(sc->volinfo.vol_msf);
+	th->starting_track = bcd2bin(sc->volinfo.trk_low);
+	th->ending_track = bcd2bin(sc->volinfo.trk_high);
 
 	return 0;
 }
 
 static int
-mcd_read_toc(cd)
-	struct mcd_data *cd;
+mcd_read_toc(sc)
+	struct mcd_softc *sc;
 {
 	struct ioc_toc_header th;
 	struct mcd_qchninfo q;
 	int rc, trk, idx, retry;
 
 	/* Only read TOC if needed */
-	if (cd->flags & MCDTOC)
+	if (sc->flags & MCDTOC)
 		return 0;
 
-	printf("%s: reading toc header\n", cd->sc_dev.dv_xname);
-	if (mcd_toc_header(cd, &th) != 0)
+	printf("%s: reading toc header\n", sc->sc_dev.dv_xname);
+	if (mcd_toc_header(sc, &th) != 0)
 		return ENXIO;
 
-	printf("%s: stopping play\n", cd->sc_dev.dv_xname);
-	if ((rc = mcd_stop(cd)) != 0)
+	printf("%s: stopping play\n", sc->sc_dev.dv_xname);
+	if ((rc = mcd_stop(sc)) != 0)
 		return rc;
 
 	/* try setting the mode twice */
-	if (mcd_setmode(cd, MCD_MD_TOC) != 0)
+	if (mcd_setmode(sc, MCD_MD_TOC) != 0)
 		return EIO;
-	if (mcd_setmode(cd, MCD_MD_TOC) != 0)
+	if (mcd_setmode(sc, MCD_MD_TOC) != 0)
 		return EIO;
 
-	printf("%s: get_toc reading qchannel info\n", cd->sc_dev.dv_xname);	
+	printf("%s: get_toc reading qchannel info\n", sc->sc_dev.dv_xname);	
 	for(trk = th.starting_track; trk <= th.ending_track; trk++)
-		cd->toc[trk].idx_no = 0;
+		sc->toc[trk].idx_no = 0;
 	trk = th.ending_track - th.starting_track + 1;
 	for(retry = 300; retry && trk > 0; retry--) {
-		if (mcd_getqchan(cd, &q) < 0)
+		if (mcd_getqchan(sc, &q) < 0)
 			break;
 		idx = bcd2bin(q.idx_no);
 		if (idx > 0 && idx < MCD_MAXTOCS && q.trk_no==0)
-			if (cd->toc[idx].idx_no == 0) {
-				cd->toc[idx] = q;
+			if (sc->toc[idx].idx_no == 0) {
+				sc->toc[idx] = q;
 				trk--;
 			}
 	}
 
-	if (mcd_setmode(cd, MCD_MD_COOKED) != 0)
+	if (mcd_setmode(sc, MCD_MD_COOKED) != 0)
 		return EIO;
 
 	if (trk != 0)
@@ -1072,130 +1074,130 @@ mcd_read_toc(cd)
 
 	/* add a fake last+1 */
 	idx = th.ending_track + 1;
-	cd->toc[idx].ctrl_adr = cd->toc[idx-1].ctrl_adr;
-	cd->toc[idx].trk_no = 0;
-	cd->toc[idx].idx_no = 0xAA;
-	cd->toc[idx].hd_pos_msf[0] = cd->volinfo.vol_msf[0];
-	cd->toc[idx].hd_pos_msf[1] = cd->volinfo.vol_msf[1];
-	cd->toc[idx].hd_pos_msf[2] = cd->volinfo.vol_msf[2];
+	sc->toc[idx].ctrl_adr = sc->toc[idx-1].ctrl_adr;
+	sc->toc[idx].trk_no = 0;
+	sc->toc[idx].idx_no = 0xAA;
+	sc->toc[idx].hd_pos_msf[0] = sc->volinfo.vol_msf[0];
+	sc->toc[idx].hd_pos_msf[1] = sc->volinfo.vol_msf[1];
+	sc->toc[idx].hd_pos_msf[2] = sc->volinfo.vol_msf[2];
 
-	cd->flags |= MCDTOC;
+	sc->flags |= MCDTOC;
 
 	return 0;
 }
 
 static int
-mcd_toc_entry(cd, te)
-	struct mcd_data *cd;
+mcd_toc_entry(sc, te)
+	struct mcd_softc *sc;
 	struct ioc_read_toc_entry *te;
 {
 	struct ret_toc {
 		struct ioc_toc_header th;
-		struct cd_toc_entry rt;
+		struct sc_toc_entry rt;
 	} ret_toc;
 	struct ioc_toc_header th;
 	int rc, i;
 
 	/* Make sure we have a valid toc */
-	if ((rc = mcd_read_toc(cd)) != 0)
+	if ((rc = mcd_read_toc(sc)) != 0)
 		return rc;
 
 	/* find the toc to copy*/
 	i = te->starting_track;
 	if (i == MCD_LASTPLUS1)
-		i = bcd2bin(cd->volinfo.trk_high) + 1;
+		i = bcd2bin(sc->volinfo.trk_high) + 1;
 	
 	/* verify starting track */
-	if (i < bcd2bin(cd->volinfo.trk_low) ||
-	    i > bcd2bin(cd->volinfo.trk_high) + 1)
+	if (i < bcd2bin(sc->volinfo.trk_low) ||
+	    i > bcd2bin(sc->volinfo.trk_high) + 1)
 		return EINVAL;
 
 	/* do we have room */
 	if (te->data_len < sizeof(struct ioc_toc_header) +
-	    sizeof(struct cd_toc_entry))
+	    sizeof(struct sc_toc_entry))
 		return EINVAL;
 
 	/* Copy the toc header */
-	if (mcd_toc_header(cd, &th) < 0)
+	if (mcd_toc_header(sc, &th) < 0)
 		return EIO;
 	ret_toc.th = th;
 
 	/* copy the toc data */
-	ret_toc.rt.control = cd->toc[i].ctrl_adr;
+	ret_toc.rt.control = sc->toc[i].ctrl_adr;
 	ret_toc.rt.addr_type = te->address_format;
 	ret_toc.rt.track = i;
 	if (te->address_format == CD_MSF_FORMAT) {
-		ret_toc.rt.addr[1] = cd->toc[i].hd_pos_msf[0];
-		ret_toc.rt.addr[2] = cd->toc[i].hd_pos_msf[1];
-		ret_toc.rt.addr[3] = cd->toc[i].hd_pos_msf[2];
+		ret_toc.rt.addr[1] = sc->toc[i].hd_pos_msf[0];
+		ret_toc.rt.addr[2] = sc->toc[i].hd_pos_msf[1];
+		ret_toc.rt.addr[3] = sc->toc[i].hd_pos_msf[2];
 	}
 
 	/* copy the data back */
-	copyout(&ret_toc, te->data, sizeof(struct cd_toc_entry)
+	copyout(&ret_toc, te->data, sizeof(struct sc_toc_entry)
 		+ sizeof(struct ioc_toc_header));
 
 	return 0;
 }
 
 static int
-mcd_stop(cd)
-	struct mcd_data *cd;
+mcd_stop(sc)
+	struct mcd_softc *sc;
 {
 
-	if (mcd_send(cd, MCD_CMDSTOPAUDIO, MCD_RETRIES) < 0)
+	if (mcd_send(sc, MCD_CMDSTOPAUDIO, MCD_RETRIES) < 0)
 		return ENXIO;
-	cd->audio_status = CD_AS_PLAY_COMPLETED;
+	sc->audio_status = CD_AS_PLAY_COMPLETED;
 	return 0;
 }
 
 static int
-mcd_getqchan(cd, q)
-	struct mcd_data *cd;
+mcd_getqchan(sc, q)
+	struct mcd_softc *sc;
 	struct mcd_qchninfo *q;
 {
 
-	if (mcd_send(cd, MCD_CMDGETQCHN, MCD_RETRIES) < 0)
+	if (mcd_send(sc, MCD_CMDGETQCHN, MCD_RETRIES) < 0)
 		return -1;
-	if (mcd_get(cd, (char *) q, sizeof(struct mcd_qchninfo)) < 0)
+	if (mcd_get(sc, (char *) q, sizeof(struct mcd_qchninfo)) < 0)
 		return -1;
-	if (cd->debug)
+	if (sc->debug)
 	printf("%s: qchannel ctl=%d, t=%d, i=%d, ttm=%d:%d.%d dtm=%d:%d.%d\n",
-		cd->sc_dev.dv_xname, q->ctrl_adr, q->trk_no, q->idx_no,
+		sc->sc_dev.dv_xname, q->ctrl_adr, q->trk_no, q->idx_no,
 		q->trk_size_msf[0], q->trk_size_msf[1], q->trk_size_msf[2],
 		q->trk_size_msf[0], q->trk_size_msf[1], q->trk_size_msf[2]);
 	return 0;
 }
 
 static int
-mcd_subchan(cd, sc)
-	struct mcd_data *cd;
+mcd_subchan(sc, sc)
+	struct mcd_softc *sc;
 	struct ioc_read_subchannel *sc;
 {
 	struct mcd_qchninfo q;
-	struct cd_sub_channel_info data;
+	struct sc_sub_channel_info data;
 
-	printf("%s: subchan af=%d, df=%d\n", cd->sc_dev.dv_xname,
+	printf("%s: subchan af=%d, df=%d\n", sc->sc_dev.dv_xname,
 		sc->address_format, sc->data_format);
 	if (sc->address_format != CD_MSF_FORMAT)
 		return EIO;
 	if (sc->data_format != CD_CURRENT_POSITION)
 		return EIO;
 
-	if (mcd_getqchan(cd, &q) < 0)
+	if (mcd_getqchan(sc, &q) < 0)
 		return EIO;
 
-	data.header.audio_status = cd->audio_status;
+	data.header.audio_status = sc->audio_status;
 	data.what.position.data_format = CD_MSF_FORMAT;
 	data.what.position.track_number = bcd2bin(q.trk_no);
 
-	if (copyout(&data, sc->data, sizeof(struct cd_sub_channel_info)) != 0)
+	if (copyout(&data, sc->data, sizeof(struct sc_sub_channel_info)) != 0)
 		return EFAULT;
 	return 0;
 }
 
 static int
-mcd_playtracks(cd, pt)
-	struct mcd_data *cd;
+mcd_playtracks(sc, pt)
+	struct mcd_softc *sc;
 	struct ioc_play_track *pt;
 {
 	struct mcd_read2 pb;
@@ -1203,35 +1205,35 @@ mcd_playtracks(cd, pt)
 	int z = pt->end_track;
 	int rc;
 
-	if ((rc = mcd_read_toc(cd)) != 0)
+	if ((rc = mcd_read_toc(sc)) != 0)
 		return rc;
 
-	printf("%s: playtracks from %d:%d to %d:%d\n", cd->sc_dev.dv_xname,
+	printf("%s: playtracks from %d:%d to %d:%d\n", sc->sc_dev.dv_xname,
 		a, pt->start_index, z, pt->end_index);
 
-	if (a < cd->volinfo.trk_low || a > cd->volinfo.trk_high || a > z ||
-		z < cd->volinfo.trk_low || z > cd->volinfo.trk_high)
+	if (a < sc->volinfo.trk_low || a > sc->volinfo.trk_high || a > z ||
+		z < sc->volinfo.trk_low || z > sc->volinfo.trk_high)
 		return EINVAL;
 
-	pb.start_msf[0] = cd->toc[a].hd_pos_msf[0];
-	pb.start_msf[1] = cd->toc[a].hd_pos_msf[1];
-	pb.start_msf[2] = cd->toc[a].hd_pos_msf[2];
-	pb.end_msf[0] = cd->toc[z+1].hd_pos_msf[0];
-	pb.end_msf[1] = cd->toc[z+1].hd_pos_msf[1];
-	pb.end_msf[2] = cd->toc[z+1].hd_pos_msf[2];
+	pb.start_msf[0] = sc->toc[a].hd_pos_msf[0];
+	pb.start_msf[1] = sc->toc[a].hd_pos_msf[1];
+	pb.start_msf[2] = sc->toc[a].hd_pos_msf[2];
+	pb.end_msf[0] = sc->toc[z+1].hd_pos_msf[0];
+	pb.end_msf[1] = sc->toc[z+1].hd_pos_msf[1];
+	pb.end_msf[2] = sc->toc[z+1].hd_pos_msf[2];
 
-	return mcd_play(cd, &pb);
+	return mcd_play(sc, &pb);
 }
 
 static int
-mcd_play(cd, pb)
-	struct mcd_data *cd;
+mcd_play(sc, pb)
+	struct mcd_softc *sc;
 	struct mcd_read2 *pb;
 {
-	u_short iobase = cd->iobase;
+	u_short iobase = sc->iobase;
 	int retry, st;
 
-	cd->lastpb = *pb;
+	sc->lastpb = *pb;
 	for (retry = MCD_RETRIES; retry; retry--) {
 		outb(iobase + mcd_command, MCD_CMDREAD2);
 		outb(iobase + mcd_command, pb->start_msf[0]);
@@ -1240,54 +1242,54 @@ mcd_play(cd, pb)
 		outb(iobase + mcd_command, pb->end_msf[0]);
 		outb(iobase + mcd_command, pb->end_msf[1]);
 		outb(iobase + mcd_command, pb->end_msf[2]);
-		if ((st = mcd_getstat(cd, 0)) != -1)
+		if ((st = mcd_getstat(sc, 0)) != -1)
 			break;
 	}
 	if (!retry)
 		return ENXIO;
 
-	cd->audio_status = CD_AS_PLAY_IN_PROGRESS;
+	sc->audio_status = CD_AS_PLAY_IN_PROGRESS;
 	return 0;
 }
 
 static int
-mcd_pause(cd)
-	struct mcd_data *cd;
+mcd_pause(sc)
+	struct mcd_softc *sc;
 {
 	struct mcd_qchninfo q;
 	int rc;
 
 	/* Verify current status */
-	if (cd->audio_status != CD_AS_PLAY_IN_PROGRESS) {
+	if (sc->audio_status != CD_AS_PLAY_IN_PROGRESS) {
 		printf("%s: pause attempted when not playing\n",
-			cd->sc_dev.dv_xname);
+			sc->sc_dev.dv_xname);
 		return EINVAL;
 	}
 
 	/* Get the current position */
-	if (mcd_getqchan(cd, &q) < 0)
+	if (mcd_getqchan(sc, &q) < 0)
 		return EIO;
 
 	/* Copy it into lastpb */
-	cd->lastpb.start_msf[0] = q.hd_pos_msf[0];
-	cd->lastpb.start_msf[1] = q.hd_pos_msf[1];
-	cd->lastpb.start_msf[2] = q.hd_pos_msf[2];
+	sc->lastpb.start_msf[0] = q.hd_pos_msf[0];
+	sc->lastpb.start_msf[1] = q.hd_pos_msf[1];
+	sc->lastpb.start_msf[2] = q.hd_pos_msf[2];
 
 	/* Stop playing */
-	if ((rc = mcd_stop(cd)) != 0)
+	if ((rc = mcd_stop(sc)) != 0)
 		return rc;
 
 	/* Set the proper status and exit */
-	cd->audio_status = CD_AS_PLAY_PAUSED;
+	sc->audio_status = CD_AS_PLAY_PAUSED;
 	return 0;
 }
 
 static int
-mcd_resume(cd)
-	struct mcd_data *cd;
+mcd_resume(sc)
+	struct mcd_softc *sc;
 {
 
-	if (cd->audio_status != CD_AS_PLAY_PAUSED)
+	if (sc->audio_status != CD_AS_PLAY_PAUSED)
 		return EINVAL;
-	return mcd_play(cd, &cd->lastpb);
+	return mcd_play(sc, &sc->lastpb);
 }
