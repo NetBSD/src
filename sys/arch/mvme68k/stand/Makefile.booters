@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.booters,v 1.5 2000/12/04 21:25:57 scw Exp $
+#	$NetBSD: Makefile.booters,v 1.6 2000/12/07 21:37:51 scw Exp $
 
 S?=		${.CURDIR}/../../../..
 MDEC_DIR?=	/usr/mdec
@@ -78,12 +78,12 @@ ${LIBBUG}:
 	@echo making sure the libbug is up to date...
 	@(cd ${LIB_BUG_DIR}; ${MAKE})
 
-BUGCRT=${LIBBUG_DIR}/bugcrt.o
+BUGCRT=${LIBBUG_DIR}/bugstart.o
 
 .PHONY: ${BUGCRT}
 $(BUGCRT):
 	@echo making sure the bugcrt is up to date...
-	@(cd ${LIB_BUG_DIR}; ${MAKE} bugcrt.o)
+	@(cd ${LIB_BUG_DIR}; ${MAKE} bugstart.o)
 
 WRTVID_BOOT_DIR=  ${.CURDIR}/../wrtvid
 WRTVID_DIR!=cd ${WRTVID_BOOT_DIR}; \
