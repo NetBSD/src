@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.99 2003/03/22 21:31:41 perseant Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.100 2003/03/28 08:03:39 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.99 2003/03/22 21:31:41 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.100 2003/03/28 08:03:39 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1237,6 +1237,12 @@ lfs_fcntl(void *v)
 		return ufs_fcntl(v);
 	}
 
+	/* Avoid locking a draining lock */
+	if (ap->a_vp->v_mount->mnt_flag & MNT_UNMOUNT) {
+		return ESHUTDOWN;
+	}
+
+	fs = VTOI(ap->a_vp)->i_lfs;
 	fsidp = &ap->a_vp->v_mount->mnt_stat.f_fsid;
 
 	switch (ap->a_command) {
@@ -1245,9 +1251,18 @@ lfs_fcntl(void *v)
 		/* FALLSTHROUGH */
 	    case LFCNSEGWAIT:
 		tvp = (struct timeval *)ap->a_data;
+		simple_lock(&fs->lfs_interlock);
+		++fs->lfs_sleepers;
+		simple_unlock(&fs->lfs_interlock);
 		VOP_UNLOCK(ap->a_vp, 0);
+
 		error = lfs_segwait(fsidp, tvp);
+
 		VOP_LOCK(ap->a_vp, LK_EXCLUSIVE);
+		simple_lock(&fs->lfs_interlock);
+		if (--fs->lfs_sleepers == 0)
+			wakeup(&fs->lfs_sleepers);
+		simple_unlock(&fs->lfs_interlock);
 		return error;
 
 	    case LFCNBMAPV:
@@ -1266,6 +1281,9 @@ lfs_fcntl(void *v)
 			return error;
 		}
 
+		simple_lock(&fs->lfs_interlock);
+		++fs->lfs_sleepers;
+		simple_unlock(&fs->lfs_interlock);
 		VOP_UNLOCK(ap->a_vp, 0);
 		if (ap->a_command == LFCNBMAPV)
 			error = lfs_bmapv(ap->a_p, fsidp, blkiov, blkcnt);
@@ -1275,6 +1293,10 @@ lfs_fcntl(void *v)
 			error = copyout(blkiov, blkvp.blkiov,
 					blkcnt * sizeof(BLOCK_INFO));
 		VOP_LOCK(ap->a_vp, LK_EXCLUSIVE);
+		simple_lock(&fs->lfs_interlock);
+		if (--fs->lfs_sleepers == 0)
+			wakeup(&fs->lfs_sleepers);
+		simple_unlock(&fs->lfs_interlock);
 		free(blkiov, M_SEGMENT);
 		return error;
 
@@ -1283,7 +1305,6 @@ lfs_fcntl(void *v)
 		 * Flush dirops and write Ifile, allowing empty segments
 		 * to be immediately reclaimed.
 		 */
-		fs = VTOI(ap->a_vp)->i_lfs;
 		off = fs->lfs_offset;
 		lfs_seglock(fs, SEGM_FORCE_CKP | SEGM_CKP);
 		lfs_flush_dirops(fs);
