@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: db_disasm.c,v 1.4 1994/03/04 13:53:48 chopps Exp $
+ *	$Id: db_disasm.c,v 1.5 1994/05/09 16:17:08 gwr Exp $
  */
 /*
  * Notes:
@@ -171,7 +171,7 @@ db_disasm(loc,mit_syntax)
 	dis_func_t *func;
 	dis_buffer_t dbuf;
 	char *symname = NULL;
-	off_t diff;
+	db_expr_t diff;
 	db_sym_t sym;
 	struct nlist *nl;
 
@@ -2912,7 +2912,7 @@ print_disp(dbuf, disp, sz, rel)
 	dis_buffer_t *dbuf;
 	int disp, sz, rel;
 {
-	off_t diff;
+	db_expr_t diff;
 	db_sym_t sym;
 	char *symname;
 	u_long nv;
@@ -2945,7 +2945,7 @@ print_addr(dbuf, addr)
 	dis_buffer_t *dbuf;
 	u_long addr;
 {
-	off_t diff;
+	db_expr_t diff;
 	db_sym_t sym;
 	char *symname;
 				
