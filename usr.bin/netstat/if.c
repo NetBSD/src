@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.40 2000/04/19 03:26:55 enami Exp $	*/
+/*	$NetBSD: if.c,v 1.40.4.1 2000/07/03 22:45:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)if.c	8.2 (Berkeley) 2/21/94";
 #else
-__RCSID("$NetBSD: if.c,v 1.40 2000/04/19 03:26:55 enami Exp $");
+__RCSID("$NetBSD: if.c,v 1.40.4.1 2000/07/03 22:45:12 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -174,7 +174,11 @@ intpr(interval, ifnetaddr, pfunc)
 			*cp = '\0';
 			ifaddraddr = (u_long)ifnet.if_addrlist.tqh_first;
 		}
-		printf("%-5.5s %-5llu ", name,
+		if (vflag)
+			n = strlen(name) < 5 ? 5 : strlen(name);
+		else
+			n = 5;
+		printf("%-*.*s %-5llu ", n, n, name,
 		    (unsigned long long)ifnet.if_mtu);
 		if (ifaddraddr == 0) {
 			printf("%-13.13s ", "none");
