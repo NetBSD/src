@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.69 2004/04/09 17:51:18 thorpej Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.70 2004/05/06 10:06:50 ragge Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.69 2004/04/09 17:51:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.70 2004/05/06 10:06:50 ragge Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -2484,11 +2484,6 @@ wm_init(struct ifnet *ifp)
 	if(MCLBYTES == 2048) {
 		sc->sc_rctl |= RCTL_2k;
 	} else {
-	/*
-	 * XXX MCLBYTES > 2048 causes "Tx packet consumes too many DMA"
-	 * XXX segments, dropping" -- why?
-	 */
-#if 0
 		if(sc->sc_type >= WM_T_82543) {
 			switch(MCLBYTES) {
 			case 4096:
@@ -2506,9 +2501,6 @@ wm_init(struct ifnet *ifp)
 				break;
 			}
 		} else panic("wm_init: i82542 requires MCLBYTES = 2048");
-#else
-		panic("wm_init: MCLBYTES > 2048 not supported.");
-#endif
 	}
 
 	/* Set the receive filter. */
