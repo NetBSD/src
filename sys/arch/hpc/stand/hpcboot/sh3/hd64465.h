@@ -1,7 +1,7 @@
-/*	$NetBSD: sh_mmu.cpp,v 1.2 2002/02/04 17:38:27 uch Exp $	*/
+/*	$NetBSD: hd64465.h,v 1.1 2002/02/04 17:38:27 uch Exp $	*/
 
 /*-
- * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -36,67 +36,28 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sh3/sh_arch.h>
-#include <sh3/sh_mmu.h>
+#include "../../../../hpcsh/dev/hd64465/hd64465uartreg.h"
 
-BOOL
-MemoryManager_SHMMU::init(void)
-{
+#define	LSR_TXRDY	0x20	/* Transmitter buffer empty */
 
-	_kmode = SetKMode(1);
+#define HD64465COM_TX_BUSY()						\
+	while ((VOLATILE_REF8(HD64465_ULSR_REG8) & LSR_TXRDY) == 0)
 
-	_asid = VOLATILE_REF(MMUPTEH) & MMUPTEH_ASID_MASK;
-	DPRINTF((TEXT("ASID = %d\n"), _asid));
+#define HD64465COM_PUTC(c)						\
+__BEGIN_MACRO								\
+	HD64465COM_TX_BUSY();						\
+	VOLATILE_REF8(HD64465_UTBR_REG8) = (c);				\
+	HD64465COM_TX_BUSY();						\
+__END_MACRO
 
-	return TRUE;
-}
-
-MemoryManager_SHMMU::~MemoryManager_SHMMU(void)
-{
-
-	SetKMode(_kmode);
-}
-
-// get physical address from memory mapped TLB.
-paddr_t
-MemoryManager_SHMMU::searchPage(vaddr_t vaddr)
-{
-	u_int32_t vpn, idx, s, dum, aae, dae, entry_idx;
-	paddr_t paddr = ~0;
-	int way;
-
-	vpn = vaddr & SH3_PAGE_MASK;
-	// Windows CE uses VPN-only index-mode.
-	idx = vaddr & MMUAA_VPN_MASK;
-
-	// to avoid another TLB access, disable external interrupt.
-	s = suspendIntr();
-
-	do {
-		// load target address page to TLB
-		dum = VOLATILE_REF(vaddr);
-		VOLATILE_REF(vaddr) = dum;
-
-		for (way = 0; way < MMU_WAY; way++) {
-			entry_idx = idx | (way << MMUAA_WAY_SHIFT);
-			// inquire MMU address array.
-			aae = VOLATILE_REF(MMUAA | entry_idx);
-						      
-			if (!(aae & MMUAA_D_VALID) ||
-			    ((aae & MMUAA_D_ASID_MASK) != _asid) ||
-			    (((aae | idx) & SH3_PAGE_MASK) != vpn))
-				continue;
-
-			// entry found.
-			// inquire MMU data array to get its physical address.
-			dae = VOLATILE_REF(MMUDA | entry_idx);
-			paddr = (dae & SH3_PAGE_MASK) | (vaddr & ~SH3_PAGE_MASK);
-			break;
-		}
-	} while (paddr == ~0);
-
-	resumeIntr(s);
-
-	return paddr;
-}
-
+#define HD64465COM_PRINT(s)						\
+__BEGIN_MACRO								\
+	char *__s =(char *)(s);						\
+	int __i;							\
+	for (__i = 0; __s[__i] != '\0'; __i++) {			\
+		char __c = __s[__i];					\
+		if (__c == '\n')					\
+			HD64465COM_PUTC('\r');				\
+		HD64465COM_PUTC(__c);					\
+	}								\
+__END_MACRO
