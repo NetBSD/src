@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.18 2004/01/11 18:51:15 jdolecek Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.19 2004/02/14 11:56:28 jdolecek Exp $	*/
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
  * All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.18 2004/01/11 18:51:15 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.19 2004/02/14 11:56:28 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -886,7 +886,7 @@ kqueue_scan(struct file *fp, size_t maxevents, struct kevent *ulistp,
 	struct kqueue	*kq;
 	struct kevent	*kevp;
 	struct timeval	atv;
-	struct knote	*kn, marker;
+	struct knote	*kn, *marker=NULL;
 	size_t		count, nkev;
 	int		s, timeout, error;
 
@@ -912,6 +912,10 @@ kqueue_scan(struct file *fp, size_t maxevents, struct kevent *ulistp,
 		/* no timeout, wait forever */
 		timeout = 0;
 	}
+
+	MALLOC(marker, struct knote *, sizeof(*marker), M_KEVENT, M_WAITOK);
+	memset(marker, 0, sizeof(*marker));
+
 	goto start;
 
  retry:
@@ -949,14 +953,14 @@ kqueue_scan(struct file *fp, size_t maxevents, struct kevent *ulistp,
 	}
 
 	/* mark end of knote list */
-	TAILQ_INSERT_TAIL(&kq->kq_head, &marker, kn_tqe); 
+	TAILQ_INSERT_TAIL(&kq->kq_head, marker, kn_tqe); 
 	simple_unlock(&kq->kq_lock);
 
 	while (count) {				/* while user wants data ... */
 		simple_lock(&kq->kq_lock);
 		kn = TAILQ_FIRST(&kq->kq_head);	/* get next knote */
 		TAILQ_REMOVE(&kq->kq_head, kn, kn_tqe); 
-		if (kn == &marker) {		/* if it's our marker, stop */
+		if (kn == marker) {		/* if it's our marker, stop */
 			/* What if it's some else's marker? */
 			simple_unlock(&kq->kq_lock);
 			splx(s);
@@ -1020,10 +1024,13 @@ kqueue_scan(struct file *fp, size_t maxevents, struct kevent *ulistp,
 
 	/* remove marker */
 	simple_lock(&kq->kq_lock);
-	TAILQ_REMOVE(&kq->kq_head, &marker, kn_tqe); 
+	TAILQ_REMOVE(&kq->kq_head, marker, kn_tqe); 
 	simple_unlock(&kq->kq_lock);
 	splx(s);
  done:
+	if (marker)
+		FREE(marker, M_KEVENT);
+
 	if (nkev != 0) {
 		/* copyout remaining events */
 		error = copyout((caddr_t)&kq->kq_kev, (caddr_t)ulistp,
