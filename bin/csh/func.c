@@ -1,4 +1,4 @@
-/* $NetBSD: func.c,v 1.28 2004/04/17 15:40:52 christos Exp $ */
+/* $NetBSD: func.c,v 1.29 2004/05/13 15:25:58 christos Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)func.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: func.c,v 1.28 2004/04/17 15:40:52 christos Exp $");
+__RCSID("$NetBSD: func.c,v 1.29 2004/05/13 15:25:58 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -593,6 +593,7 @@ search(int type, int level, Char *goal)
     Char wordbuf[BUFSIZE];
     Char *aword, *cp;
     struct whyle *wp;
+    int wlevel = 0;
 
     aword = wordbuf;
     Stype = type;
@@ -630,14 +631,17 @@ search(int type, int level, Char *goal)
 	    break;
 	case T_END:
 	    if (type == T_BRKSW) {
-		wp = whyles;
-		if (wp) {
+		if (wlevel == 0) {
+		    wp = whyles;
+		    if (wp) {
 			whyles = wp->w_next;
 			wpfree(wp);
+		    }
 		}
 	    }
 	    if (type == T_BREAK)
 		level--;
+	    wlevel--;
 	    break;
 	case T_ENDIF:
 	    if (type == T_IF || type == T_ELSE)
@@ -664,6 +668,7 @@ search(int type, int level, Char *goal)
 	    break;
 	case T_FOREACH: 
 	case T_WHILE:
+	    wlevel++;
 	    if (type == T_BREAK)
 		level++;
 	    break;	    
