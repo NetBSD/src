@@ -1,0 +1,5 @@
+#	$NetBSD: list,v 1.1.2.1 2000/03/01 12:35:59 he Exp $
+
+# copy the kernel
+COPY	${OBJDIR}/netbsd.ram.gz	netbsd
+COPY	${DESTDIR}/boot		boot
