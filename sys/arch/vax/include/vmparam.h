@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.21 1999/01/01 21:43:18 ragge Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.22 1999/01/16 20:49:12 chuck Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -135,7 +135,6 @@
 					   protected against replacement */
 
 #if defined(UVM)
-#define MACHINE_NEW_NONCONTIG
 
 #define VM_PHYSSEG_MAX		1
 #define VM_PHYSSEG_NOADD
