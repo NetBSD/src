@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.35 1996/03/14 21:09:35 christos Exp $ */
+/*	$NetBSD: trap.c,v 1.36 1996/03/18 21:48:19 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -306,7 +306,9 @@ dopanic:
 			panic(type < N_TRAP_TYPES ? trap_type[type] : T);
 			/* NOTREACHED */
 		}
+#ifdef COMPAT_SVR4
 badtrap:
+#endif
 		/* the following message is gratuitous */
 		/* ... but leave it in until we find anything */
 		printf("%s[%d]: unimplemented software trap 0x%x\n",
