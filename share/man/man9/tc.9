@@ -1,4 +1,4 @@
-.\"     $NetBSD: tc.9,v 1.5 2002/02/13 08:18:52 ross Exp $
+.\"     $NetBSD: tc.9,v 1.6 2002/10/14 13:43:34 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -77,9 +77,9 @@ The
 .Nm
 device provides support for the DEC TURBOchannel bus found on all DEC
 TURBOchannel machines with MIPS (DECstation 5000 series, excluding the
-5000/200) and Alpha (3000-series) systems.  TURBOchannel is a 32-bit
-wide synchronous DMA-capable bus, running at 25 MHz on higher-end
-machines and at 12.5 MHz on lower-end machines.
+5000/200) and Alpha (3000-series) systems.
+TURBOchannel is a 32-bit wide synchronous DMA-capable bus, running
+at 25 MHz on higher-end machines and at 12.5 MHz on lower-end machines.
 .Sh DATA TYPES
 Drivers for devices attached to the TURBOchannel bus will make use of
 the following data types:
@@ -101,7 +101,8 @@ It contains the following members:
 The
 .Em ta_busspeed
 member specifies the TURBOchannel bus speed and is useful for
-time-related functions.  Values values are
+time-related functions.
+Values values are
 .Em TC_SPEED_12_5_MHZ
 for the 12.5 MHz bus and
 .Em TC_SPEED_25_MHZ
@@ -136,12 +137,13 @@ Do interrupt event counting with device
 for the event described completely by
 .Fa cookie .
 .It Fn tc_mb ""
-A read/write memory barrier.  Any CPU-to-memory reads/writes before
-the barrier must complete before any CPU-to-memory reads/writes after
-it.
+A read/write memory barrier.
+Any CPU-to-memory reads/writes before the barrier must complete before
+any CPU-to-memory reads/writes after it.
 .It Fn tc_wmb ""
-A write memory barrier.  Any CPU-to-memory writes before before the
-barrier must complete before any CPU-to-memory writes after it.
+A write memory barrier.
+Any CPU-to-memory writes before before the barrier must complete
+before any CPU-to-memory writes after it.
 .It Fn tc_syncbus ""
 Synchronise writes on the TURBOchannel bus by ensuring CPU writes are
 propagated across the TURBOchannel bus.
@@ -161,13 +163,14 @@ to the physical address of the corresponding region that is not
 cached.
 .El
 .Sh AUTOCONFIGURATION
-The TURBOchannel bus is a direct-connection bus.  During
-autoconfiguration, the parent specifies the name of the found
+The TURBOchannel bus is a direct-connection bus.
+During autoconfiguration, the parent specifies the name of the found
 TURBOchannel module into the
 .Fa ta_modname
 member of the
 .Em tc_attach_args
-structure.  Drivers should match on this name.
+structure.
+Drivers should match on this name.
 .Sh DMA SUPPORT
 The TURBOchannel bus supports 32-bit, bidirectional DMA transfers.
 Support is provided by the standard
@@ -177,8 +180,8 @@ interface.
 This section describes places within the
 .Nx
 source tree where actual code implementing or utilising the
-machine-independent TURBOchannel subsystem can be found.  All pathnames are
-relative to
+machine-independent TURBOchannel subsystem can be found.
+All pathnames are relative to
 .Pa /usr/src .
 .Pp
 The TURBOchannel subsystem itself is implemented within the file

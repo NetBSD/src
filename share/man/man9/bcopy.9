@@ -33,7 +33,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)bcopy.3	8.1 (Berkeley) 6/4/93
-.\"	$NetBSD: bcopy.9,v 1.6 2002/02/13 08:18:36 ross Exp $
+.\"	$NetBSD: bcopy.9,v 1.7 2002/10/14 13:43:15 wiz Exp $
 .\"
 .Dd July 7, 2001
 .Dt BCOPY 9
@@ -80,7 +80,8 @@ In the traditional
 .Bx
 kernel, overlapping copies were handled by the now-purged
 .Fn ovbcopy
-function. If you need to copy overlapping data, see
+function.
+If you need to copy overlapping data, see
 .Xr memmove 9 .
 .Pp
 If

@@ -1,4 +1,4 @@
-.\"     $NetBSD: wskbd.9,v 1.6 2002/03/19 10:34:50 wiz Exp $
+.\"     $NetBSD: wskbd.9,v 1.7 2002/10/14 13:43:38 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -66,8 +66,8 @@ The
 .Nm
 module is a component of the
 .Xr wscons 9
-framework to provide machine-indpendent keyboard support.  Most of the
-support is provided by the
+framework to provide machine-indpendent keyboard support.
+Most of the support is provided by the
 .Xr wskbd 4
 device driver, which must be a child of the hardware device driver.
 .Sh DATA TYPES
@@ -79,10 +79,11 @@ An opaque type describing keyboard properties.
 .It Fa keysym_t
 The wscons keyboard-independent symbolic representation of the keypress.
 .It Fa struct wskbd_accessops
-A structure used to specify the keyboard access functions.  All
-keyboards must provide this structure and pass it to the
+A structure used to specify the keyboard access functions.
+All keyboards must provide this structure and pass it to the
 .Xr wskbd 4
-child device.  It has the following members:
+child device.
+It has the following members:
 .Bd -literal
 	int	(*enable)(void *, int);
 	void	(*set_leds)(void *, int);
@@ -93,10 +94,12 @@ child device.  It has the following members:
 The
 .Fa enable
 member defines the function to be called to enable keypress passing to
-wscons.  The
+wscons.
+The
 .Fa set_leds
 member defined the function to be called to set the LEDs on the
-keyboard.  The
+keyboard.
+The
 .Fa ioctl
 member defines the function to be called to perform keyboard-specific
 ioctl calls.
@@ -106,12 +109,14 @@ There is a
 cookie provided by the keyboard driver associated with these
 functions, which is passed to them when they are invoked.
 .It Fa struct wskbd_consops
-A structure used to specify the keyboard console operations.  All
-keyboards which can operate as a console must provide this structure
+A structure used to specify the keyboard console operations.
+All keyboards which can operate as a console must provide this structure
 and pass it to the
 .Xr wskbd 4
-child device.  If the keyboard cannot be a console, it is not
-necessary to specify this structure.  It has the following members:
+child device.
+If the keyboard cannot be a console, it is not
+necessary to specify this structure.
+It has the following members:
 .Bd -literal
 	void	(*getc)(void *, u_int *, int *);
 	void	(*pollc)(void *, int);
@@ -124,7 +129,8 @@ cookie provided by the keyboard driver associated with these
 functions, which is passed to them when they are invoked.
 .It Fa struct wscons_keydesc
 A structure used to describe a keyboard mapping table to convert
-keyboard-specific keycodes to wscons keysyms.  It has the
+keyboard-specific keycodes to wscons keysyms.
+It has the
 following members:
 .Bd -literal
 	kbd_t	name;		/* name of this map */
@@ -134,7 +140,8 @@ following members:
 .Ed
 .It Fa struct wskbd_mapdata
 A structure used to describe the keyboard layout and operation to
-interpret the keyboard layout.  it contains the following members:
+interpret the keyboard layout.
+it contains the following members:
 .Bd -literal
         const struct wscons_keydesc *keydesc;
         kbd_t layout;
@@ -142,7 +149,8 @@ interpret the keyboard layout.  it contains the following members:
 .It Fa struct wskbd_attach_args
 A structure used to attach the
 .Xr wskbd 4
-child device.  It has the following members:
+child device.
+It has the following members:
 .Bd -literal
 	int console;
 	const struct wskbd_mapdata *keymap;
@@ -219,7 +227,8 @@ Pass the keypress of value
 .Fa value
 and type
 .Fa type
-to wscons keyboard driver.  Valid values of
+to wscons keyboard driver.
+Valid values of
 .Fa type
 are:
 .Bl -tag -width compact
@@ -231,9 +240,11 @@ Key pressed.
 .It Fn wskbd_rawinput "kbddev" "buf" "len"
 Pass the raw keypress in the buffer
 .Fa buf
-to the wscons keyboard driver.  The buffer is
+to the wscons keyboard driver.
+The buffer is
 .Fa len
-bytes long.  This function should only be called if the kernel option
+bytes long.
+This function should only be called if the kernel option
 .Em WSDISPLAY_COMPAT_RAWKBD
 is enabled.
 .It Fn wskbd_cnattach "consops" "conscookie" "mapdata"
@@ -259,7 +270,8 @@ The default wskbd printing routine used by
 Keyboard drivers which want to utilise the wskbd module must be a
 parent to the
 .Xr wskbd 4
-device and provide an attachment interface.  To attach the
+device and provide an attachment interface.
+To attach the
 .Xr wskbd 4
 device, the keyboard driver must allocate and populate a
 .Fa wskbd_attach_args
@@ -271,7 +283,8 @@ The
 .Fa keymap
 member points to the
 .Em wskbd_mapdata
-structure which describes the keycode mapping operations.  The
+structure which describes the keycode mapping operations.
+The
 .Fa accessops
 member points to the
 .Em wskbd_accessops
@@ -300,11 +313,13 @@ wscons via
 The wscons framework calls back into the hardware driver by invoking
 the functions that are specified in the
 .Em accessops
-structure.  The
+structure.
+The
 .Fn enable
 and
 .Fn set_leds
-functions are relatively simple and self-explanatory.  The
+functions are relatively simple and self-explanatory.
+The
 .Fn ioctl
 function is called by the wscons interface to perform
 keyboard-specific ioctl operations (see
@@ -321,8 +336,8 @@ Valid commands are listed in
 This section describes places within the
 .Nx
 source tree where actual code implementing or utilising the
-machine-independent wscons subsystem can be found.  All pathnames are
-relative to
+machine-independent wscons subsystem can be found.
+All pathnames are relative to
 .Pa /usr/src .
 .Pp
 The wscons subsystem is implemented within the directory

@@ -1,4 +1,4 @@
-.\"     $NetBSD: wsmouse.9,v 1.3 2002/02/13 08:18:58 ross Exp $
+.\"     $NetBSD: wsmouse.9,v 1.4 2002/10/14 13:43:38 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -55,8 +55,8 @@ The
 .Nm
 module is a component of the
 .Xr wscons 9
-framework to provide machine-indpendent mouse support.  Most of the
-support is provided by the
+framework to provide machine-indpendent mouse support.
+Most of the support is provided by the
 .Xr wsmouse 4
 device driver, which must be a child of the hardware device driver.
 .Sh DATA TYPES
@@ -64,10 +64,11 @@ Mouse drivers providing support for wscons pointer devices will make use
 of the following data types:
 .Bl -tag -width compact
 .It Fa struct wsmouse_accessops
-A structure used to specify the mouse access functions.  All pointer
-devices must provide this structure and pass it to the
+A structure used to specify the mouse access functions.
+All pointer devices must provide this structure and pass it to the
 .Xr wsmouse 4
-child device.  It has the following members:
+child device.
+It has the following members:
 .Bd -literal
 	int	(*enable)(void *);
 	int	(*ioctl)(void *v, u_long cmd, caddr_t data,
@@ -79,7 +80,8 @@ The
 .Fa enable
 member defines the function to be called to enable monitoring pointer
 movements and passing these events to
-wscons.  The
+wscons.
+The
 .Fa disable
 member defines the function to disable movement events.
 The
@@ -94,7 +96,8 @@ which is passed to them when they are invoked.
 .It Fa struct wsmouse_attach_args
 A structure used to attach the
 .Xr wsmouse 4
-child device.  It has the following members:
+child device.
+It has the following members:
 .Bd -literal
 	const struct wsmouse_accessops *accessops;
 	void *accesscookie;
@@ -106,15 +109,17 @@ child device.  It has the following members:
 Callback from the mouse driver to the wsmouse interface driver.
 The argument
 .Fa btns
-specifies the current button configuration.  The pointer coordinate is
-specified by the
+specifies the current button configuration.
+The pointer coordinate is specified by the
 .Fa x ,
 .Fa y ,
 .Fa z
-tuple.  The
+tuple.
+The
 .Fa flags
 argument specify whether the pointer device and the measurement is in
-relative or absolute mode.  Valid values for
+relative or absolute mode.
+Valid values for
 .Fa flags
 are:
 .Bl -tag -width compact
@@ -137,7 +142,8 @@ The default wsmouse printing routine used by
 Mouse drivers which want to utilise the wsmouse module must be a
 parent to the
 .Xr wsmouse 4
-device and provide an attachment interface.  To attach the
+device and provide an attachment interface.
+To attach the
 .Xr wsmouse 4
 device, the mouse driver must allocate and populate a
 .Fa wsmouse_attach_args
@@ -154,11 +160,13 @@ events to wscons via
 The wscons framework calls back into the hardware driver by invoking
 the functions that are specified in the
 .Em accessops
-structure.  The
+structure.
+The
 .Fn enable
 and
 .Fn disable
-functions are relatively simple and self-explanatory.  The
+functions are relatively simple and self-explanatory.
+The
 .Fn ioctl
 function is called by the wscons interface to perform
 mouse-specific ioctl operations (see
@@ -175,8 +183,8 @@ Valid commands are listed in
 This section describes places within the
 .Nx
 source tree where actual code implementing or utilising the
-machine-independent wscons subsystem can be found.  All pathnames are
-relative to
+machine-independent wscons subsystem can be found.
+All pathnames are relative to
 .Pa /usr/src .
 .Pp
 The wscons subsystem is implemented within the directory

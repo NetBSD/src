@@ -1,4 +1,4 @@
-.\" $NetBSD: linedisc.9,v 1.6 2002/02/13 08:18:44 ross Exp $
+.\" $NetBSD: linedisc.9,v 1.7 2002/10/14 13:43:25 wiz Exp $
 .\"
 .\" Copyright (c) 2000 Christopher G. Demetriou.
 .\" All rights reserved.
@@ -66,13 +66,14 @@ and calling
 The following is a brief description of each function in the framework:
 .Bl -tag -width "ttyldisc_remove()"
 .It Fn ttyldisc_add
-Register a line discipline.  The
+Register a line discipline.
+The
 .Fa l_name
 field of the
 .Fa struct linesw
 should point to a string which is to be the symbolic
-name of that line discipline.  For compatibility
-purposes, a line discipline number can be passed in
+name of that line discipline.
+For compatibility purposes, a line discipline number can be passed in
 .Fa no ,
 but for new disciplines this should be set to
 .Dv -1 .
@@ -84,8 +85,8 @@ is returned if it can not be found.
 .It Fn ttyldisc_remove
 Remove a line discipline called
 .Fa name
-and return a pointer to it.   If the discipline cannot
-be found or removed
+and return a pointer to it.
+If the discipline cannot be found or removed
 .Fn ttyldisc_remove
 will return
 .Dv NULL .

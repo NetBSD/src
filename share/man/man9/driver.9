@@ -1,4 +1,4 @@
-.\"     $NetBSD: driver.9,v 1.8 2002/09/14 14:19:38 jonb Exp $
+.\"     $NetBSD: driver.9,v 1.9 2002/10/14 13:43:22 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -55,15 +55,18 @@
 .Sh DESCRIPTION
 This page briefly describes the basic
 .Nx
-autoconfiguration interface utilised by device drivers.  For a detailed
-overview of the autoconfiguration framework see
+autoconfiguration interface utilised by device drivers.
+For a detailed overview of the autoconfiguration framework see
 .Xr autoconf 9 .
 .Pp
 Each device driver must present to the system a standard
-autoconfiguration interface.  This interface is provided by the
+autoconfiguration interface.
+This interface is provided by the
 .Em cfattach
-structure.  The interface to the driver is constant and is defined
-statically inside the driver.  For example, the interface to driver
+structure.
+The interface to the driver is constant and is defined
+statically inside the driver.
+For example, the interface to driver
 .Dq foo
 is defined with:
 .Pp
@@ -81,24 +84,28 @@ The structure variable must be named
 .Va foo_ca
 by appending the letters
 .Dq _ca
-to the driver's base name.  This convention is mandated by the
-autoconfiguration framework.
+to the driver's base name.
+This convention is mandated by the autoconfiguration framework.
 .Pp
 For each device instance controlled by the driver, the
 autoconfiguration framework allocates a block of memory to record
-device-instance-specific driver variables.  The size of this memory
-block is specified by the first field in the
+device-instance-specific driver variables.
+The size of this memory block is specified by the first field in the
 .Em cfattach
-structure.  The memory block is referred to as the driver's
+structure.
+The memory block is referred to as the driver's
 .Em softc
-structure.  The
+structure.
+The
 .Em softc
 structure is only accessed within the driver, so its definition is
-local to the driver.  Nevertheless, the
+local to the driver.
+Nevertheless, the
 .Em softc
 structure should adopt the standard
 .Nx
-configuration and naming conventions.  For example, the
+configuration and naming conventions.
+For example, the
 .Em softc
 structure for driver
 .Dq foo
@@ -122,8 +129,9 @@ device-instance name
 If a driver has character device interfaces accessed from userland, the driver
 must define the
 .Em cdevsw
-structure. The structure is constant and is defined inside the driver. For
-example, the
+structure.
+The structure is constant and is defined inside the driver.
+For example, the
 .Em cdevsw
 structure for driver
 .Dq foo
@@ -145,15 +153,16 @@ const struct cdevsw foo_cdevsw {
 .Pp
 The structure variable must be named foo_cdevsw by appending the letters
 .Dq _cdevsw
-to the driver's base name. This convention is mandated by the
-autoconfiguration framework.
+to the driver's base name.
+This convention is mandated by the autoconfiguration framework.
 .Pp
 If the driver
 .Dq foo
 has also block device interfaces, the driver must define the
 .Em bdevsw
-structure. The structure is constant and is defined inside the driver. For
-example, the
+structure.
+The structure is constant and is defined inside the driver.
+For example, the
 .Em bdevsw
 structure for driver
 .Dq foo
@@ -173,41 +182,47 @@ const struct bdevsw foo_bdevsw {
 .Pp
 The structure variable must be named foo_bdevsw by appending the letters
 .Dq _bdevsw
-to the driver's base name. This convention is mandated by the
-autoconfiguration framework.
+to the driver's base name.
+This convention is mandated by the autoconfiguration framework.
 .Pp
 During system bootstrap, the autoconfiguration framework searches the
-system for devices.  For each device driver, its match function
-is called
+system for devices.
+For each device driver, its match function is called
 .Po
 via its
 .Em cfattach
 structure
 .Pc
-to match the driver with a device instance.  The match function is
-called with three arguments.  This first argument
+to match the driver with a device instance.
+The match function is called with three arguments.
+This first argument
 .Fa parent
-is a pointer to the driver's parent device structure.  The second
-argument
+is a pointer to the driver's parent device structure.
+The second argument
 .Fa match
 is a pointer to a data structure describing the autoconfiguration
-framework's understanding of the driver.  Both the
+framework's understanding of the driver.
+Both the
 .Fa parent
 and
 .Fa match
-arguments are ignored by most drivers.  The third argument
+arguments are ignored by most drivers.
+The third argument
 .Fa aux
 contains a pointer to a structure describing a potential
-device-instance.  It is passed to the driver from the parent.
+device-instance.
+It is passed to the driver from the parent.
 The match function would type-cast the
 .Fa aux
 argument to its appropriate attachment structure and use its contents
-to determine whether it supports the device.  Depending on the device
-hardware, the contents of the attachment structure may contain
+to determine whether it supports the device.
+Depending on the device hardware, the contents of the attachment
+structure may contain
 .Dq locators
 to locate the device instance so that the driver can probe it for its
-identity.  If the probe process identifies additional device
-properties, it may modify the members of the attachment structure.
+identity.
+If the probe process identifies additional device properties, it may
+modify the members of the attachment structure.
 For these devices, the
 .Nx
 convention is to
@@ -215,9 +230,10 @@ call the match routine
 .Fn foo_probe
 instead of
 .Fn foo_match
-to make this distinction clear.  Either way, the match function
-returns a nonzero integer indicating the confidence of supporting this
-device and a value of 0 if the driver doesn't support the device.
+to make this distinction clear.
+Either way, the match function returns a nonzero integer indicating the
+confidence of supporting this device and a value of 0 if the driver
+doesn't support the device.
 Generally, only a single driver exists for a device, so the match
 function returns 1 for a positive match.
 .Pp
@@ -228,28 +244,31 @@ via its
 structure
 .Pc
 of the driver which returns the highest value from its match function.
-The attach function is called with three arguments.  The attach
-function performs the necessary process to initialise the device for
-operation.  The first argument
+The attach function is called with three arguments.
+The attach function performs the necessary process to initialise the
+device for operation.
+The first argument
 .Fa parent
-is a pointer to the driver's parent device structure.  The second
-argument
+is a pointer to the driver's parent device structure.
+The second argument
 .Fa self
-is a pointer to the driver's device structure.  It is also a pointer
-to our
+is a pointer to the driver's device structure.
+It is also a pointer to our
 .Em softc
-structure since the device structure is its first member.  The third
-argument
+structure since the device structure is its first member.
+The third argument
 .Fa aux
-is a pointer to the attachment structure.  The
+is a pointer to the attachment structure.
+The
 .Fa parent
 and
 .Fa aux
 arguments are the same as passed to the match function.
 .Pp
 The driver's attach function is called before system interrupts are
-enabled.  If interrupts are required during initialisation, then
-the attach function should make use of
+enabled.
+If interrupts are required during initialisation, then the attach
+function should make use of
 .Fn config_interrupts
 .Po
 see
@@ -257,22 +276,26 @@ see
 .Pc .
 .Pp
 Some devices can be removed from the system without requiring a system
-reboot.  The autoconfiguration framework calls the driver's detach
-function
+reboot.
+The autoconfiguration framework calls the driver's detach function
 .Po
 via its
 .Em cfattach
 structure
 .Pc
-during device detachment.  If the device does not support detachment,
-then the driver does not have to provide a detach function.  The
-detach function is used to relinquish resources allocated to the
-driver which are no longer needed.  The first argument
+during device detachment.
+If the device does not support detachment, then the driver does not
+have to provide a detach function.
+The detach function is used to relinquish resources allocated to the
+driver which are no longer needed.
+The first argument
 .Fa self
-is a pointer to the driver's device structure.  It is the same
-structure as passed to the attach function.  The second argument
+is a pointer to the driver's device structure.
+It is the same structure as passed to the attach function.
+The second argument
 .Fa flags
-contains detachment flags.  Valid values are DETACH_FORCE
+contains detachment flags.
+Valid values are DETACH_FORCE
 .Po
 force detachment; hardware gone
 .Pc and DETACH_QUIET
@@ -282,14 +305,17 @@ do not print a notice
 .Pp
 The autoconfiguration framework calls the driver's activate function
 to notify the driver of a change in the resources that have been
-allocated to it.  For example, an Ethernet driver has to be notified
-if the network stack is being added or removed from the kernel.  The
-first argument to the activate function
+allocated to it.
+For example, an Ethernet driver has to be notified if the network stack
+is being added or removed from the kernel.
+The first argument to the activate function
 .Fa self
-is a pointer to the driver's device structure.  It is the same
-argument as passed to the attach function.  The second argument
+is a pointer to the driver's device structure.
+It is the same argument as passed to the attach function.
+The second argument
 .Fa act
-describes the action.  Valid actions are DVACT_ACTIVATE
+describes the action.
+Valid actions are DVACT_ACTIVATE
 .Po
 activate the device
 .Pc and DVACT_DEACTIVATE
@@ -300,14 +326,17 @@ If the action is not supported the activate function should return
 EOPNOTSUPP.
 The activate function is called in interrupt context.
 .Pp
-Most drivers will want to make use of interrupt facilities.  Interrupt
-locators provided through the attachment structure should be used to
-establish interrupts within the system.  Generally, an interrupt
-interface is provided by the parent.  The interface will require a
-handler and a driver-specific argument to be specified.  This argument
-is usually a pointer to the device-instance-specific softc structure.
+Most drivers will want to make use of interrupt facilities.
+Interrupt locators provided through the attachment structure should be
+used to establish interrupts within the system.
+Generally, an interrupt interface is provided by the parent.
+The interface will require a handler and a driver-specific argument
+to be specified.
+This argument is usually a pointer to the device-instance-specific
+softc structure.
 When a hardware interrupt for the device occurs the handler is called
-with the argument.  Interrupt handlers should return 0 for
+with the argument.
+Interrupt handlers should return 0 for
 .Dq interrupt not for me ,
 1 for
 .Dq I took care of it ,
@@ -318,9 +347,10 @@ I guess it was mine, but I wasn't expecting it
 .Pp
 For a driver to be compiled into the kernel,
 .Xr config 8
-must be aware of its existence.  This is done by including an entry in
-files.\*[Lt]bus\*[Gt] in the directory containing the driver.  For example, the
-driver
+must be aware of its existence.
+This is done by including an entry in files.\*[Lt]bus\*[Gt] in the
+directory containing the driver.
+For example, the driver
 .Dq foo
 attaching to bus
 .Dq bar
@@ -340,8 +370,9 @@ foo*	at bar?
 .Pp
 For device interfaces of a driver to be compiled into the kernel,
 .Xr config 8
-must be aware of its existence. This is done by including an entry in
-majors.<arch>. For example, the driver
+must be aware of its existence.
+his is done by including an entry in majors.<arch>.
+For example, the driver
 .Dq foo
 with character device interfaces, a character major device number
 .Dq cmaj ,
