@@ -1,4 +1,4 @@
-.\"	$NetBSD: kbd.4,v 1.4 1997/11/25 22:15:58 pk Exp $
+.\"	$NetBSD: kbd.4,v 1.5 1998/06/11 09:03:46 fair Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
 .\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
 .\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS 
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
 .\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
 .\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
 .\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
@@ -46,17 +46,24 @@
 The
 .Nm
 driver provides an interface to the workstation console keyboard.
-.Dq type 2 ,
-.Dq type 3 ,
+.Qq type 2 ,
+.Qq type 3 ,
+.Qq type 4 ,
 and
-.Dq type 4
-keyboards are supported. All types generate keycodes encoding the
+.Qq type 5
+keyboards are supported.
+The
+.Qq type 5
+keyboard is treated as if it were a
+.Qq type 4 .
+All types generate keycodes encoding the
 key identity and motion (up or down) as the keys are pressed and released.
 The
 .Nm
 driver either passes the keycodes to an application as they come in, or
-translates them into ASCII characters first according to a set of built-in
-tables.
+translates them into
+.Tn ASCII
+characters first according to a set of built-in tables.
 If the keyboard is configured as the device
 to be used for system console input
 .Pq see Xr openprom 4 ,
@@ -67,24 +74,31 @@ device special file, which can be used as a
 device.
 The device special file
 .Pa /dev/kbd
-is used to get direct access to the keyboard input stream. The following
-ioctl's are supported (mostly just enough to keep the X11 server going):
+is used to get direct access to the keyboard input stream.
+The following
+ioctl's are supported (mostly just enough to keep the
+.Xr X 1
+server going):
 .Bl -tag -width KIOCSDIRECT
 .It KIOCTRANS
-Set translation mode. The argument is of type
+Set translation mode.
+The argument is of type
 .Fa "int *" ,
 the only value supported is
 .Dv TR_UNTRANS_EVENT .
 .It KIOCGTRANS
-Get translation mode. The argument is of type
+Get translation mode.
+The argument is of type
 .Fa "int *" .
 .Dv TR_UNTRANS_EVENT
 is always returned.
 .It KIOCGETKEY
-Fill in old-style key station translation. The argument is of type
+Fill in old-style key station translation.
+The argument is of type
 .Fa "struct okiockey *" .
 .It KIOCCMD
-Send a command to the keyboard. The argument is of type
+Send a command to the keyboard.
+The argument is of type
 .Fa "int *" ,
 and can have one of the following values:
 .Bl -tag -width KBD_CMD_NOCLICK
@@ -95,10 +109,11 @@ Stop the keyboard beeper.
 .It KBD_CMD_CLICK
 Instruct the keyboard to make extra noise when touching keys.
 .It KBD_CMD_NOCLICK
-Instruct the keyboard to.. oh well..
+Instruct the keyboard to stop making extra noise when touching keys.
 .El
 .It KIOCTYPE
-Get keyboard type. The argument is of type
+Get keyboard type.
+The argument is of type
 .Fa "int *" ,
 in which one of the values
 .Dv KB_SUN2 ,
@@ -107,7 +122,9 @@ or
 .Dv KB_SUN4
 will be returned.
 .It KIOCSDIRECT
-Route the keyboard input stream through the (SunOS) compatible event module.
+Route the keyboard input stream through the
+.Tn SunOS
+compatible event module.
 The argument is of type
 .Fa "int *" ,
 a non-zero value will put the driver into
@@ -116,11 +133,13 @@ mode, while a value of zero will make it return to
 .Dq ASCII translation
 mode.
 .It KIOCSKEY
-Set key station translation. The argument is of type
-.Fa "struct kiockey *" 
+Set key station translation.
+The argument is of type
+.Fa "struct kiockey *"
 .Pq see Pa /usr/include/machine/kbio.h No for more details .
 .It KIOCGKEY
-Get key station translation. The argument is of type
+Get key station translation.
+The argument is of type
 .Fa "struct kiockey *" .
 .It KIOCLAYOUT
 Get keyboard layout
@@ -161,4 +180,4 @@ in which the current LED state is returned.
 .Nm
 is hardwired to the built-in
 .Em zs1
-serial port.
+serial port at 1200 bps.
