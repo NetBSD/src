@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.43 2000/07/17 06:51:18 scottr Exp $	*/
+/*	$NetBSD: sd.c,v 1.44 2000/10/10 19:58:43 he Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -78,6 +78,9 @@
  * SCSI CCS (Command Command Set) disk driver.
  */
 
+#include "rnd.h"
+#include "opt_useleds.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
@@ -90,11 +93,13 @@
 #include <sys/proc.h>
 #include <sys/stat.h>
 
+#if NRND > 0
+#include <sys/rnd.h>
+#endif
+
 #include <hp300/dev/scsireg.h>
 #include <hp300/dev/scsivar.h>
 #include <hp300/dev/sdvar.h>
-
-#include "opt_useleds.h"
 
 #ifdef USELEDS
 #include <hp300/hp300/leds.h>
@@ -296,6 +301,13 @@ sdattach(parent, self, aux)
 	disk_attach(&sc->sc_dkdev);
 
 	sc->sc_flags |= SDF_ALIVE;
+#if NRND > 0
+	/*
+	 * attach the device into the random source list
+	 */
+	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname,
+			  RND_TYPE_DISK, 0);
+#endif
 }
 
 void
@@ -1008,6 +1020,9 @@ sdintr(arg, stat)
 		}
 	}
 	sdfinish(sc, bp);
+#if NRND > 0
+	rnd_add_uint32(&sc->rnd_source, bp->b_blkno);
+#endif
 }
 
 int
