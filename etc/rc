@@ -1,5 +1,5 @@
 #	@(#)rc	5.27 (Berkeley) 6/5/91
-#	$Id: rc,v 1.43 1994/06/03 05:02:10 jtc Exp $
+#	$Id: rc,v 1.44 1994/06/08 18:47:45 mycroft Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -92,13 +92,13 @@ fi
 if [ X${nfs_server} = X"YES" -a -r /etc/exports ]; then
 	rm -f /var/db/mountdtab	
 	echo -n ' mountd';		mountd
-	echo -n ' nfsd';		nfsd -u 0,0,4 -t 0,0
+	echo -n ' nfsd';		nfsd -tun 4
 fi
 
 # $nfs_client is imported from /etc/netstart;
 # if $nfs_client == YES, the machine is setup for being an nfs client
 if [ X${nfs_client} = X"YES" ]; then
-	echo -n ' nfsiod';		nfsiod 4
+	echo -n ' nfsiod';		nfsiod -n 4
 fi
 
 if [ X${amd} = X"YES" -a -d ${amd_dir} -a -r ${amd_master} ]; then
