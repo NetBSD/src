@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.3 2001/05/26 21:27:10 chs Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.4 2001/07/08 04:25:36 wdk Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -121,7 +121,7 @@ _bus_dmamap_create(t, size, nsegments, maxsegsz, boundary, flags, dmamp)
 	    (flags & BUS_DMA_NOWAIT) ? M_NOWAIT : M_WAITOK)) == NULL)
 		return (ENOMEM);
 
-	bzero(mapstore, mapsize);
+	memset(mapstore, 0, mapsize);
 	map = (struct mipsco_bus_dmamap *)mapstore;
 	map->_dm_size = size;
 	map->_dm_segcnt = nsegments;

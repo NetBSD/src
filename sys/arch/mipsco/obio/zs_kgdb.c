@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_kgdb.c,v 1.1 2001/02/21 09:08:35 wdk Exp $	*/
+/*	$NetBSD: zs_kgdb.c,v 1.2 2001/07/08 04:25:36 wdk Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -108,7 +108,7 @@ zs_setparam(cs, iena, rate)
 {
 	int s, tconst;
 
-	bcopy(zs_kgdb_regs, cs->cs_preg, 16);
+	memcpy(cs->cs_preg, zs_kgdb_regs, 16);
 
 	if (iena) {
 		cs->cs_preg[1] = ZSWR1_RIE | ZSWR1_SIE;

@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.2 2001/02/20 23:59:10 cgd Exp $	*/
+/*	$NetBSD: installboot.c,v 1.3 2001/07/08 04:25:37 wdk Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -162,7 +162,7 @@ do_remove(disk, filename)
 	if (vdp == NULL)
 		FATAL("%s: file not found", disk);
 
-	bzero(vdp, sizeof(*vdp));
+	memset(vdp, 0, sizeof(*vdp));
 
 	/* Update volume header */
 	write_volheader(disk, &vh);
@@ -198,7 +198,7 @@ do_install(disk, bootstrap, bootname)
 	boot_code = malloc(boot_size);
 	if (boot_code == NULL)
 		FATAL("malloc %d bytes failed", boot_size);
-	bzero(boot_code, boot_size);
+	memset(boot_code, 0, boot_size);
 
 	/* read the file into the buffer */
 	len = read(fd, boot_code, bootstrapsb.st_size);

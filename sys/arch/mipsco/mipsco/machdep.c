@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.27 2001/06/02 18:09:16 chs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.28 2001/07/08 04:25:36 wdk Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.27 2001/06/02 18:09:16 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.28 2001/07/08 04:25:36 wdk Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -243,7 +243,7 @@ mach_init(argc, argv, envp, bim, bip)
 
 	/* clear the BSS segment */
 	kernend = (caddr_t)mips_round_page(end);
-	bzero(edata, end - edata);
+	memset(edata, 0, end - edata);
 
 #ifdef DDB
 	bi_syms = lookup_bootinfo(BTINFO_SYMTAB);
