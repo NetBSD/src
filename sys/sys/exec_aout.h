@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_aout.h,v 1.7 1994/07/01 01:30:28 deraadt Exp $	*/
+/*	$NetBSD: exec_aout.h,v 1.8 1994/08/13 08:36:11 pk Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -80,7 +80,19 @@ struct exec {
 /*
  * a_flags
  */
-#define EX_DYNAMIC	0x20	/* a.out contains run-time link-edit info */
+#define EX_DYNAMIC	0x20
+#define EX_PIC		0x10
+#define EX_DPMASK	0x30
+/*
+ * Interpretation of the (a_flags & EX_DPMASK) bits:
+ *
+ *	00		traditional executable or object file
+ *	01		object file contains PIC code (set by `as -k')
+ *	10		dynamic executable
+ *	11		position independent executable image
+ * 			(eg. a shared library)
+ *
+ */
 
 /*
  * The a.out structure's a_midmag field is a network-byteorder encoding
