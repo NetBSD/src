@@ -1,4 +1,4 @@
-/*	$NetBSD: if_media.h,v 1.25 2001/06/30 17:53:59 bjh21 Exp $	*/
+/*	$NetBSD: if_media.h,v 1.26 2001/06/30 21:23:39 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -441,7 +441,7 @@ struct ifmedia_baudrate {
 	{ IFM_ETHER|IFM_10_FL,		IF_Mbps(10) },			\
 	{ IFM_ETHER|IFM_1000_LX,	IF_Mbps(1000) },		\
 	{ IFM_ETHER|IFM_1000_CX,	IF_Mbps(1000) },		\
-	{ IFM_ETHER|IFM_1000_TX,	IF_Mbps(1000) },		\
+	{ IFM_ETHER|IFM_1000_T,		IF_Mbps(1000) },		\
 	{ IFM_ETHER|IFM_HPNA_1,		IF_Mbps(1) },			\
 									\
 	{ IFM_TOKEN|IFM_TOK_STP4,	IF_Mbps(4) },			\
