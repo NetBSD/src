@@ -1,4 +1,4 @@
-/*	$NetBSD: rcmd.c,v 1.56 2004/03/21 05:46:42 mrg Exp $	*/
+/*	$NetBSD: rcmd.c,v 1.57 2004/11/16 06:04:12 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)rcmd.c	8.3 (Berkeley) 3/26/94";
 #else
-__RCSID("$NetBSD: rcmd.c,v 1.56 2004/03/21 05:46:42 mrg Exp $");
+__RCSID("$NetBSD: rcmd.c,v 1.57 2004/11/16 06:04:12 itojun Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -260,11 +260,7 @@ resrcmd(res, ahost, rport, locuser, remuser, cmd, fd2p)
 		if (r->ai_next) {
 			int oerrno = errno;
 			char hbuf[NI_MAXHOST];
-#ifdef NI_WITHSCOPEID
-			const int niflags = NI_NUMERICHOST | NI_WITHSCOPEID;
-#else
 			const int niflags = NI_NUMERICHOST;
-#endif
 
 			hbuf[0] = '\0';
 			if (getnameinfo(r->ai_addr, r->ai_addrlen,
@@ -916,9 +912,6 @@ __ivaliduser_sa(hostf, raddr, salen, luser, ruser)
 
 /*
  * Returns "true" if match, 0 if no match.
- *
- * NI_WITHSCOPEID is useful for comparing sin6_scope_id portion
- * if af == AF_INET6.
  */
 static int
 __icheckhost(raddr, salen, lhost)
@@ -929,11 +922,7 @@ __icheckhost(raddr, salen, lhost)
 	struct addrinfo hints, *res, *r;
 	char h1[NI_MAXHOST], h2[NI_MAXHOST];
 	int error;
-#ifdef NI_WITHSCOPEID
-	const int niflags = NI_NUMERICHOST | NI_WITHSCOPEID;
-#else
 	const int niflags = NI_NUMERICHOST;
-#endif
 
 	_DIAGASSERT(raddr != NULL);
 	_DIAGASSERT(lhost != NULL);
@@ -975,9 +964,6 @@ __icheckhost(raddr, salen, lhost)
  * Return the hostname associated with the supplied address.
  * Do a reverse lookup as well for security. If a loop cannot
  * be found, pack the numeric IP address into the string.
- *
- * NI_WITHSCOPEID is useful for comparing sin6_scope_id portion
- * if af == AF_INET6.
  */
 static char *
 __gethostloop(raddr, salen)
@@ -988,11 +974,7 @@ __gethostloop(raddr, salen)
 	char h1[NI_MAXHOST], h2[NI_MAXHOST];
 	struct addrinfo hints, *res, *r;
 	int error;
-#ifdef NI_WITHSCOPEID
-	const int niflags = NI_NUMERICHOST | NI_WITHSCOPEID;
-#else
 	const int niflags = NI_NUMERICHOST;
-#endif
 
 	_DIAGASSERT(raddr != NULL);
 
