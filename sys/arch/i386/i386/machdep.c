@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.329 1998/10/15 15:26:01 bad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.330 1998/10/17 00:07:11 jtk Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -1575,7 +1575,7 @@ dumpsys()
 	 */
 	if (dumpsize == 0)
 		cpu_dumpconf();
-	if (dumplo <= 0) {
+	if (dumplo <= 0 || dumpsize == 0) {
 		printf("\ndump to dev %u,%u not possible\n", major(dumpdev),
 		    minor(dumpdev));
 		return;
