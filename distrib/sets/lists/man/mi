@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.740 2004/12/26 12:37:03 tsutsui Exp $
+# $NetBSD: mi,v 1.741 2004/12/29 00:12:02 thorpej Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -1931,6 +1931,24 @@
 ./usr/share/man/cat8/ofppc/makedev.0		man-obsolete		obsolete
 ./usr/share/man/cat8/oqmgr.0			man-postfix-catman	postfix,.cat
 ./usr/share/man/cat8/pac.0			man-sysutil-catman	.cat
+./usr/share/man/cat8/pam_chroot.0		man-sysutil-catman	.cat
+./usr/share/man/cat8/pam_deny.0			man-sysutil-catman	.cat
+./usr/share/man/cat8/pam_echo.0			man-sysutil-catman	.cat
+./usr/share/man/cat8/pam_exec.0			man-sysutil-catman	.cat
+./usr/share/man/cat8/pam_ftpusers.0		man-sysutil-catman	.cat
+./usr/share/man/cat8/pam_group.0		man-sysutil-catman	.cat
+./usr/share/man/cat8/pam_guest.0		man-sysutil-catman	.cat
+./usr/share/man/cat8/pam_krb5.0			man-sysutil-catman	.cat
+./usr/share/man/cat8/pam_ksu.0			man-sysutil-catman	.cat
+./usr/share/man/cat8/pam_lastlog.0		man-sysutil-catman	.cat
+./usr/share/man/cat8/pam_login_access.0		man-sysutil-catman	.cat
+./usr/share/man/cat8/pam_nologin.0		man-sysutil-catman	.cat
+./usr/share/man/cat8/pam_permit.0		man-sysutil-catman	.cat
+./usr/share/man/cat8/pam_rhosts.0		man-sysutil-catman	.cat
+./usr/share/man/cat8/pam_rootok.0		man-sysutil-catman	.cat
+./usr/share/man/cat8/pam_securetty.0		man-sysutil-catman	.cat
+./usr/share/man/cat8/pam_self.0			man-sysutil-catman	.cat
+./usr/share/man/cat8/pam_unix.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/pc532/MAKEDEV.0		man-obsolete		obsolete
 ./usr/share/man/cat8/pc532/bim.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/pc532/makedev.0		man-obsolete		obsolete
@@ -4089,6 +4107,24 @@
 ./usr/share/man/man8/ofppc/makedev.8		man-obsolete		obsolete
 ./usr/share/man/man8/oqmgr.8			man-postfix-man		postfix,.man
 ./usr/share/man/man8/pac.8			man-sysutil-man		.man
+./usr/share/man/man8/pam_chroot.8		man-sysutil-man		.man
+./usr/share/man/man8/pam_deny.8			man-sysutil-man		.man
+./usr/share/man/man8/pam_echo.8			man-sysutil-man		.man
+./usr/share/man/man8/pam_exec.8			man-sysutil-man		.man
+./usr/share/man/man8/pam_ftpusers.8		man-sysutil-man		.man
+./usr/share/man/man8/pam_group.8		man-sysutil-man		.man
+./usr/share/man/man8/pam_guest.8		man-sysutil-man		.man
+./usr/share/man/man8/pam_krb5.8			man-sysutil-man		.man
+./usr/share/man/man8/pam_ksu.8			man-sysutil-man		.man
+./usr/share/man/man8/pam_lastlog.8		man-sysutil-man		.man
+./usr/share/man/man8/pam_login_access.8		man-sysutil-man		.man
+./usr/share/man/man8/pam_nologin.8		man-sysutil-man		.man
+./usr/share/man/man8/pam_permit.8		man-sysutil-man		.man
+./usr/share/man/man8/pam_rhosts.8		man-sysutil-man		.man
+./usr/share/man/man8/pam_rootok.8		man-sysutil-man		.man
+./usr/share/man/man8/pam_securetty.8		man-sysutil-man		.man
+./usr/share/man/man8/pam_self.8			man-sysutil-man		.man
+./usr/share/man/man8/pam_unix.8			man-sysutil-man		.man
 ./usr/share/man/man8/pc532/MAKEDEV.8		man-obsolete		obsolete
 ./usr/share/man/man8/pc532/bim.8		man-sysutil-man		.man
 ./usr/share/man/man8/pc532/makedev.8		man-obsolete		obsolete

@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.283 2004/12/16 04:11:22 atatat Exp $
+# $NetBSD: shl.mi,v 1.284 2004/12/29 00:12:00 thorpej Exp $
 # Note: libtermcap and libtermlib are hardlinked and share the same version.
 ./lib/libc.so.12.124				base-sys-shlib
 ./lib/libcrypt.so.0.1				base-sys-shlib
@@ -60,6 +60,7 @@
 ./usr/lib/libmagic.so.0.1			base-sys-shlib
 ./usr/lib/libmenu.so.5.0			base-sys-shlib
 ./usr/lib/libossaudio.so.0.0			base-sys-shlib
+./usr/lib/libpam.so.0.0				base-sys-shlib
 ./usr/lib/libpcap.so.1.3			base-net-shlib
 ./usr/lib/libpci.so.1.0				base-sys-shlib
 ./usr/lib/libposix.so.0.1			base-sys-shlib
@@ -78,3 +79,21 @@
 ./usr/lib/libutil.so.7.5			base-sys-shlib
 ./usr/lib/libwrap.so.0.2			base-net-shlib
 ./usr/lib/libz.so.0.4				base-sys-shlib
+./usr/lib/security/pam_chroot.so.0		base-sys-shlib
+./usr/lib/security/pam_deny.so.0		base-sys-shlib
+./usr/lib/security/pam_echo.so.0		base-sys-shlib
+./usr/lib/security/pam_exec.so.0		base-sys-shlib
+./usr/lib/security/pam_ftpusers.so.0		base-sys-shlib
+./usr/lib/security/pam_group.so.0		base-sys-shlib
+./usr/lib/security/pam_guest.so.0		base-sys-shlib
+./usr/lib/security/pam_krb5.so.0		base-sys-shlib
+./usr/lib/security/pam_ksu.so.0			base-sys-shlib
+./usr/lib/security/pam_lastlog.so.0		base-sys-shlib
+./usr/lib/security/pam_login_access.so.0	base-sys-shlib
+./usr/lib/security/pam_nologin.so.0		base-sys-shlib
+./usr/lib/security/pam_permit.so.0		base-sys-shlib
+./usr/lib/security/pam_rhosts.so.0		base-sys-shlib
+./usr/lib/security/pam_rootok.so.0		base-sys-shlib
+./usr/lib/security/pam_securetty.so.0		base-sys-shlib
+./usr/lib/security/pam_self.so.0		base-sys-shlib
+./usr/lib/security/pam_unix.so.0		base-sys-shlib
