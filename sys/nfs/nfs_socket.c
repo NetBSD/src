@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.100 2003/12/07 21:15:46 fvdl Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.101 2004/03/10 22:36:42 matt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.100 2003/12/07 21:15:46 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.101 2004/03/10 22:36:42 matt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -469,9 +469,12 @@ nfs_send(so, nam, top, rep)
 				 */
 				rep->r_flags |= R_MUSTRESEND;
 			} else {
-				log(LOG_INFO, "nfs send error %d for %s\n",
-				    error,
-				 rep->r_nmp->nm_mountp->mnt_stat.f_mntfromname);
+				if (error != EPIPE)
+					log(LOG_INFO,
+					    "nfs send error %d for %s\n",
+					    error,
+					    rep->r_nmp->nm_mountp->
+						    mnt_stat.f_mntfromname);
 				/*
 				 * Deal with errors for the client side.
 				 */
