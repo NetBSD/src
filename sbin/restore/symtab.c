@@ -1,4 +1,4 @@
-/*	$NetBSD: symtab.c,v 1.11 1997/09/15 08:04:38 lukem Exp $	*/
+/*	$NetBSD: symtab.c,v 1.12 1997/09/16 08:37:14 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)symtab.c	8.2 (Berkeley) 9/13/94";
 #else
-__RCSID("$NetBSD: symtab.c,v 1.11 1997/09/15 08:04:38 lukem Exp $");
+__RCSID("$NetBSD: symtab.c,v 1.12 1997/09/16 08:37:14 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -494,19 +494,20 @@ dumpsymtable(filename, checkpt)
 			memcpy(tep, ep, (long)sizeof(struct entry));
 			tep->e_name = (char *)stroff;
 			stroff += allocsize(ep->e_namlen);
-			tep->e_parent = (struct entry *)ep->e_parent->e_index;
+			tep->e_parent = (struct entry *)(long)
+			    ep->e_parent->e_index;
 			if (ep->e_links != NULL)
-				tep->e_links =
-					(struct entry *)ep->e_links->e_index;
+				tep->e_links = (struct entry *)(long)
+				    ep->e_links->e_index;
 			if (ep->e_sibling != NULL)
-				tep->e_sibling =
-					(struct entry *)ep->e_sibling->e_index;
+				tep->e_sibling = (struct entry *)(long)
+				    ep->e_sibling->e_index;
 			if (ep->e_entries != NULL)
-				tep->e_entries =
-					(struct entry *)ep->e_entries->e_index;
+				tep->e_entries = (struct entry *)(long)
+				    ep->e_entries->e_index;
 			if (ep->e_next != NULL)
-				tep->e_next =
-					(struct entry *)ep->e_next->e_index;
+				tep->e_next = (struct entry *)(long)
+				    ep->e_next->e_index;
 			(void) fwrite((char *)tep, sizeof(struct entry), 1, fd);
 		}
 	}
@@ -517,7 +518,7 @@ dumpsymtable(filename, checkpt)
 		if (entry[i] == NULL)
 			tentry = NULL;
 		else
-			tentry = (struct entry *)entry[i]->e_index;
+			tentry = (struct entry *)(long)entry[i]->e_index;
 		(void) fwrite((char *)&tentry, sizeof(struct entry *), 1, fd);
 	}
 	hdr.volno = checkpt;

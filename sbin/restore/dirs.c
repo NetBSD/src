@@ -1,4 +1,4 @@
-/*	$NetBSD: dirs.c,v 1.28 1997/09/15 08:04:28 lukem Exp $	*/
+/*	$NetBSD: dirs.c,v 1.29 1997/09/16 08:37:13 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)dirs.c	8.5 (Berkeley) 8/31/94";
 #else
-__RCSID("$NetBSD: dirs.c,v 1.28 1997/09/15 08:04:28 lukem Exp $");
+__RCSID("$NetBSD: dirs.c,v 1.29 1997/09/16 08:37:13 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -279,8 +279,8 @@ treescan(pname, ino, todo)
 	while (dp != NULL) {
 		locname[namelen] = '\0';
 		if (namelen + dp->d_namlen >= sizeof(locname)) {
-			fprintf(stderr, "%s%s: name exceeds %d char\n",
-				locname, dp->d_name, sizeof(locname) - 1);
+			fprintf(stderr, "%s%s: name exceeds %lu char\n",
+			    locname, dp->d_name, (u_long)(sizeof(locname) - 1));
 		} else {
 			(void) strncat(locname, dp->d_name, (int)dp->d_namlen);
 			locname[namelen + dp->d_namlen] = '\0';
@@ -390,8 +390,8 @@ putdir(buf, size)
 					   "reclen not multiple of 4 ");
 				if (dp->d_reclen < DIRSIZ(0, dp))
 					vprintf(stdout,
-					   "reclen less than DIRSIZ (%d < %d) ",
-					   dp->d_reclen, DIRSIZ(0, dp));
+					   "reclen less than DIRSIZ (%d < %lu) ",
+					   dp->d_reclen, (u_long)DIRSIZ(0, dp));
 				if (dp->d_namlen > NAME_MAX)
 					vprintf(stdout,
 					   "reclen name too big (%d > %d) ",

@@ -1,4 +1,4 @@
-/*	$NetBSD: fsdbutil.c,v 1.7 1997/09/14 14:56:59 lukem Exp $	*/
+/*	$NetBSD: fsdbutil.c,v 1.8 1997/09/16 08:37:09 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsdbutil.c,v 1.7 1997/09/14 14:56:59 lukem Exp $");
+__RCSID("$NetBSD: fsdbutil.c,v 1.8 1997/09/16 08:37:09 mrg Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -142,7 +142,8 @@ printstat(cp, inum, dp)
 		puts("fifo");
 		break;
 	}
-	printf("I=%u MODE=%o SIZE=%qu", inum, dp->di_mode, dp->di_size);
+	printf("I=%u MODE=%o SIZE=%qu", inum, dp->di_mode,
+	    (unsigned long long)dp->di_size);
 	t = dp->di_mtime;
 	p = ctime(&t);
 	printf("\n\tMTIME=%15.15s %4.4s [%d nsec]", &p[4], &p[20],
