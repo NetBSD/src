@@ -1,4 +1,4 @@
-/*	$NetBSD: lkm.h,v 1.26 2002/12/11 12:14:01 scw Exp $	*/
+/*	$NetBSD: lkm.h,v 1.27 2003/04/10 19:06:04 jdolecek Exp $	*/
 
 /*
  * Header file used by loadable kernel modules and loadable kernel module
@@ -53,8 +53,6 @@ typedef enum loadmod {
 	LM_MISC,
 } MODTYPE;
 
-
-#define	LKM_OLDVERSION	1		/* version of module loader */
 #define	LKM_VERSION	1		/* version of module loader */
 #define	MAXLKMNAME	32
 
@@ -277,7 +275,7 @@ extern int	lkmdispatch __P((struct lkm_table *, int));
  */
 #define	DISPATCH(lkmtp,cmd,ver,load,unload,stat)			\
 	if (ver != LKM_VERSION)						\
-		return EINVAL;	/* version mismatch */			\
+		return EINVAL;	/* version mismatch */		\
 	switch (cmd) {							\
 	int	error;							\
 	case LKM_E_LOAD:						\
@@ -306,7 +304,6 @@ void lkm_init(void);
 /*
  * IOCTL's recognized by /dev/lkm
  */
-#define	LMRESERV_O	_IOWR('K', 0, struct lmc_oresrv)
 #define	LMLOADBUF	_IOW('K', 1, struct lmc_loadbuf)
 #define	LMUNRESRV	_IO('K', 2)
 #define	LMREADY		_IOW('K', 3, u_long)
@@ -339,18 +336,6 @@ struct lmc_resrv {
 	u_long	sym_symsize;	/* IN: size of symbol portion of symtable */
 	u_long	sym_addr;	/* OUT: address of symbol table */
 };
-
-/*
- * (Compat with old kernels)
- */
-struct lmc_oresrv {
-	u_long	size;		/* IN: size of module to reserve */
-	char	*name;		/* IN: name (must be provided */
-	int	slot;		/* OUT: allocated slot (module ID) */
-	u_long	addr;		/* OUT: Link-to address */
-};
-
-
 
 /*
  * Copy a buffer at a time into the allocated area in the kernel; writes
