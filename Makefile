@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.84 1999/02/11 14:49:49 tv Exp $
+#	$NetBSD: Makefile,v 1.85 1999/02/11 17:56:46 tv Exp $
 
 .include <bsd.own.mk>			# for configuration variables.
 
@@ -79,12 +79,6 @@ build: beforeinstall
 .if !defined(NOSHARE)
 	(cd ${.CURDIR}/share/mk && ${MAKE} install)
 	(cd ${.CURDIR}/share/tmac && ${MAKE} && ${MAKE} install)
-	if [ -f ${DESTDIR}/usr/pkg/info/dir ]; then \
-		${INSTALL} -c -m 644 -o ${BINOWN} -g ${BINGRP} \
-			${DESTDIR}/usr/pkg/info/dir ${DESTDIR}/usr/share/info/dir; \
-		rm -f ${DESTDIR}/usr/pkg/info/dir; \
-		ln -s /usr/share/info/dir ${DESTDIR}/usr/pkg/info/dir; \
-	fi
 .endif
 .if !defined(UPDATE)
 	${MAKE} cleandir
