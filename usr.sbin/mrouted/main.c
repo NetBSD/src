@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.15 2002/07/14 16:30:42 wiz Exp $	*/
+/*	$NetBSD: main.c,v 1.16 2002/08/09 02:17:29 itojun Exp $	*/
 
 /*
  * The mrouted program is covered by the license in the accompanying file
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("@(#) $NetBSD: main.c,v 1.15 2002/07/14 16:30:42 wiz Exp $");
+__RCSID("@(#) $NetBSD: main.c,v 1.16 2002/08/09 02:17:29 itojun Exp $");
 #endif
 
 #include <err.h>
@@ -257,9 +257,13 @@ usage:	fprintf(stderr,
 	(void)signal(SIGQUIT, dump);
 
     FD_ZERO(&readers);
+    if (igmp_socket >= FD_SETSIZE)
+	log(LOG_ERR, 0, "descriptor too big");
     FD_SET(igmp_socket, &readers);
     nfds = igmp_socket + 1;
     for (i = 0; i < nhandlers; i++) {
+	if (ihandlers[i].fd >= FD_SETSIZE)
+	    log(LOG_ERR, 0, "descriptor too big");
 	FD_SET(ihandlers[i].fd, &readers);
 	if (ihandlers[i].fd >= nfds)
 	    nfds = ihandlers[i].fd + 1;
