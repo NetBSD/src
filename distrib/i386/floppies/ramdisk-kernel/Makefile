@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2000/06/12 18:51:15 he Exp $
+#	$NetBSD: Makefile,v 1.6 2000/08/24 00:41:54 jhawk Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -21,6 +21,7 @@ RAMDISK_T!=	cd ${.CURDIR}/../ramdisk-tiny/; \
 netbsd.INSTALL.gz: .NOTMAIN ${KERNOBJDIR}/INSTALL/netbsd ${RAMDISK}
 	cp ${KERNOBJDIR}/INSTALL/netbsd netbsd.tmp
 	${DESTDIR}/usr/sbin/mdsetimage -v netbsd.tmp ${RAMDISK}
+	nm netbsd.tmp > netbsd.INSTALL.symbols
 	${STRIP} netbsd.tmp
 	gzip -9 netbsd.tmp
 	mv netbsd.tmp.gz ${.TARGET}
@@ -28,17 +29,20 @@ netbsd.INSTALL.gz: .NOTMAIN ${KERNOBJDIR}/INSTALL/netbsd ${RAMDISK}
 netbsd.INSTALL_TINY.gz: .NOTMAIN ${KERNOBJDIR}/INSTALL_TINY/netbsd ${RAMDISK_T}
 	cp ${KERNOBJDIR}/INSTALL_TINY/netbsd netbsd.tmp
 	${DESTDIR}/usr/sbin/mdsetimage -v netbsd.tmp ${RAMDISK_T}
+	nm netbsd.tmp > netbsd.INSTALL_TINY.symbols
 	${STRIP} netbsd.tmp
 	gzip -9 netbsd.tmp
 	mv netbsd.tmp.gz ${.TARGET}
 
 KERNELS=netbsd.INSTALL.gz netbsd.INSTALL_TINY.gz
+KERNELSYMS=netbsd.INSTALL.symbols netbsd.INSTALL_TINY.symbols
 
 all: ${KERNELS}
 
 release:
 	-mkdir -p ${RELEASEDIR}/binary/kernel
 	cp -p ${KERNELS} ${RELEASEDIR}/binary/kernel
+	cp ${KERNELSYMS} ${RELEASEDIR}/binary/kernel
 
 clean cleandir distclean:
 	rm -f *.core ${KERNELS}
