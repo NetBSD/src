@@ -1,8 +1,4 @@
-#	$NetBSD: shlib_version,v 1.53 1998/06/05 20:58:54 kleink Exp $
-#
-# NOTICE: The next time the minor version is bumped (when christos adds
-# the fktrace syscall), add fdatasync.{o,po,so} and fdatasync.2 to
-# sys/Makefile.inc.
+#	$NetBSD: shlib_version,v 1.54 1998/06/08 14:19:38 lukem Exp $
 #
 major=12
-minor=26
+minor=27
