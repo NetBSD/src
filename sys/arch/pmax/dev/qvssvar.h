@@ -1,4 +1,4 @@
-/*	$NetBSD: qvssvar.h,v 1.1 1996/05/19 00:48:43 jonathan Exp $	*/
+/*	$NetBSD: qvssvar.h,v 1.2 1999/12/30 00:57:29 simonb Exp $	*/
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
  * Junior University. All Rights Reserved.
@@ -17,10 +17,6 @@
 #ifdef _KERNEL
 
 void	pmEventQueueInit __P((pmEventQueue *qe));
-
-void	genKbdEvent __P((int ch));
-void	genMouseEvent __P((MouseReport *newRepPtr));
-void	genMouseButtons __P((MouseReport *newRepPtr));
 void	genConfigMouse __P((void));
 void	genDeconfigMouse __P((void));
 void	mouseInput __P((int cc));
