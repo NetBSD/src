@@ -1,4 +1,4 @@
-.\"	$NetBSD: getNAME.8,v 1.6 1999/11/19 01:12:40 enami Exp $
+.\"	$NetBSD: getNAME.8,v 1.7 2002/01/15 02:21:13 wiz Exp $
 .\"
 .\" Copyright (c) 1997 Matthew R. Green
 .\" All rights reserved.
@@ -52,7 +52,7 @@ is designed to be called from
 or other manual grovelling tools, not to be used directly.
 .Sh OPTIONS
 The following options are available:
-.Bl -tag -width Ds 
+.Bl -tag -width Ds
 .It Fl i
 The
 .Fl i
@@ -77,18 +77,18 @@ or some unknown
 .Pq Dq UNKNOWN
 macros are in use.
 .El
+.Sh SEE ALSO
+.Xr man 1 ,
+.Xr catman 8 ,
+.Xr makewhatis 8
 .Sh HISTORY
 The
 .Nm
 command first appeared in
-.Bx 2.0
+.Bx 2.0 .
 .Sh BUGS
 It would be nice if
 .Nm
 could deal with compressed and/or preformatted manual pages.
 Looks for .S[Hh] NAME for consistency checking, but that breaks man pages
 in other languages.
-.Sh SEE ALSO
-.Xr man 1 ,
-.Xr catman 8 ,
-.Xr makewhatis 8
