@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcdefs.h,v 1.1 2001/02/09 18:34:43 uch Exp $	*/
+/*	$NetBSD: hpcdefs.h,v 1.2 2001/03/04 16:59:47 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -45,6 +45,19 @@
 #include <windows.h>
 #include <windowsx.h>
 #include <commctrl.h>
+
+#if _WIN32_WCE == 101
+#include <winnls.h>
+#elif WIN32_WCE == 100
+#error "can't convert WideChar <-> MutiByte"
+#endif
+#if _WIN32_WCE < 200
+#include <ctype.h>
+#include <stdlib.h>
+#endif
+#if _WIN32_WCE < 210
+#define EOF	(-1)
+#endif
 
 #include <machine/cdefs.h>
 #include <machine/types.h>
