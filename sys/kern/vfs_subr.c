@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.193 2003/04/18 22:44:45 christos Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.194 2003/04/22 13:11:23 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.193 2003/04/18 22:44:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.194 2003/04/22 13:11:23 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -2837,7 +2837,7 @@ set_statfs_info(const char *onp, int ukon, const char *fromp, int ukfrom,
 
 			if (len < sizeof(sfs->f_mntonname) - 1) {
 				error = (*fun)(onp, &sfs->f_mntonname[len],
-				    len - sizeof(sfs->f_mntonname) - 1, &size);
+				    sizeof(sfs->f_mntonname) - len - 1, &size);
 				if (error)
 					return error;
 				size += len;
