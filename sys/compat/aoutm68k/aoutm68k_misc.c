@@ -1,4 +1,4 @@
-/*	$NetBSD: aoutm68k_misc.c,v 1.2.2.2 2001/11/14 19:12:52 nathanw Exp $	*/
+/*	$NetBSD: aoutm68k_misc.c,v 1.2.2.3 2001/11/17 10:13:07 scw Exp $	*/
 
 /*-
  * Copyright (c) 1998-2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aoutm68k_misc.c,v 1.2.2.2 2001/11/14 19:12:52 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aoutm68k_misc.c,v 1.2.2.3 2001/11/17 10:13:07 scw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: aoutm68k_misc.c,v 1.2.2.2 2001/11/14 19:12:52 nathan
 #include <sys/systm.h>
 #include <sys/fcntl.h>
 #include <sys/mount.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 
 #include <sys/syscall.h>
@@ -65,409 +66,409 @@ __KERNEL_RCSID(0, "$NetBSD: aoutm68k_misc.c,v 1.2.2.2 2001/11/14 19:12:52 nathan
 
 
 int
-aoutm68k_sys_open(p, v, retval)
-	struct proc *p;
+aoutm68k_sys_open(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct aoutm68k_sys_open_args *uap = v;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(l->l_proc->p_emul);
 
-	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
-	return sys_open(p, v, retval);
+	return sys_open(l, v, retval);
 }
 
 
 int
-aoutm68k_sys_link(p, v, retval)
-	struct proc *p;
+aoutm68k_sys_link(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct aoutm68k_sys_link_args *uap = v;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(l->l_proc->p_emul);
 
-	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
-	return sys_link(p, v, retval);
+	return sys_link(l, v, retval);
 }
 
 
 int
-aoutm68k_sys_unlink(p, v, retval)
-	struct proc *p;
+aoutm68k_sys_unlink(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct aoutm68k_sys_unlink_args *uap = v;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(l->l_proc->p_emul);
 
-	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
-	return sys_unlink(p, v, retval);
+	return sys_unlink(l, v, retval);
 }
 
 
 int
-aoutm68k_sys_chdir(p, v, retval)
-	struct proc *p;
+aoutm68k_sys_chdir(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct aoutm68k_sys_chdir_args *uap = v;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(l->l_proc->p_emul);
 
-	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
-	return sys_chdir(p, v, retval);
+	return sys_chdir(l, v, retval);
 }
 
 
 int
-aoutm68k_sys_chmod(p, v, retval)
-	struct proc *p;
+aoutm68k_sys_chmod(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct aoutm68k_sys_chmod_args *uap = v;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(l->l_proc->p_emul);
 
-	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
-	return sys_chmod(p, v, retval);
+	return sys_chmod(l, v, retval);
 }
 
 
 int
-aoutm68k_sys_chown(p, v, retval)
-	struct proc *p;
+aoutm68k_sys_chown(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct aoutm68k_sys_chown_args *uap = v;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(l->l_proc->p_emul);
 
-	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
-	return sys_chown(p, v, retval);
+	return sys_chown(l, v, retval);
 }
 
 
 int
-aoutm68k_sys_access(p, v, retval)
-	struct proc *p;
+aoutm68k_sys_access(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct aoutm68k_sys_access_args *uap = v;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(l->l_proc->p_emul);
 
-	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
-	return sys_access(p, v, retval);
+	return sys_access(l, v, retval);
 }
 
 
 int
-aoutm68k_sys_chflags(p, v, retval)
-	struct proc *p;
+aoutm68k_sys_chflags(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct aoutm68k_sys_chflags_args *uap = v;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(l->l_proc->p_emul);
 
-	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
-	return sys_chflags(p, v, retval);
+	return sys_chflags(l, v, retval);
 }
 
 
 int
-aoutm68k_sys_revoke(p, v, retval)
-	struct proc *p;
+aoutm68k_sys_revoke(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct aoutm68k_sys_revoke_args *uap = v;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(l->l_proc->p_emul);
 
-	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
-	return sys_revoke(p, v, retval);
+	return sys_revoke(l, v, retval);
 }
 
 
 int
-aoutm68k_sys_symlink(p, v, retval)
-	struct proc *p;
+aoutm68k_sys_symlink(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct aoutm68k_sys_symlink_args *uap = v;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(l->l_proc->p_emul);
 
-	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
-	return sys_symlink(p, v, retval);
+	return sys_symlink(l, v, retval);
 }
 
 
 int
-aoutm68k_sys_readlink(p, v, retval)
-	struct proc *p;
+aoutm68k_sys_readlink(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct aoutm68k_sys_readlink_args *uap = v;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(l->l_proc->p_emul);
 
-	CHECK_ALT_SYMLINK(p, &sg, SCARG(uap, path));
+	CHECK_ALT_SYMLINK(l, &sg, SCARG(uap, path));
 
-	return sys_readlink(p, v, retval);
+	return sys_readlink(l, v, retval);
 }
 
 
 int
-aoutm68k_sys_execve(p, v, retval)
-	struct proc *p;
+aoutm68k_sys_execve(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct aoutm68k_sys_execve_args *uap = v;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(l->l_proc->p_emul);
 
-	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
-	return sys_execve(p, v, retval);
+	return sys_execve(l, v, retval);
 }
 
 
 int
-aoutm68k_sys_chroot(p, v, retval)
-	struct proc *p;
+aoutm68k_sys_chroot(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct aoutm68k_sys_chroot_args *uap = v;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(l->l_proc->p_emul);
 
-	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
-	return sys_chroot(p, v, retval);
+	return sys_chroot(l, v, retval);
 }
 
 
 int
-aoutm68k_sys_rename(p, v, retval)
-	struct proc *p;
+aoutm68k_sys_rename(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct aoutm68k_sys_rename_args *uap = v;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(l->l_proc->p_emul);
 
-	CHECK_ALT_EXIST(p, &sg, SCARG(uap, from));
+	CHECK_ALT_EXIST(l, &sg, SCARG(uap, from));
 
-	return sys_rename(p, v, retval);
+	return sys_rename(l, v, retval);
 }
 
 
 #ifdef COMPAT_43
 int
-aoutm68k_compat_43_sys_truncate(p, v, retval)
-	struct proc *p;
+aoutm68k_compat_43_sys_truncate(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct aoutm68k_compat_43_sys_truncate_args *uap = v;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(l->l_proc->p_emul);
 
-	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
-	return compat_43_sys_truncate(p, v, retval);
+	return compat_43_sys_truncate(l, v, retval);
 }
 #endif
 
 
 int
-aoutm68k_sys_rmdir(p, v, retval)
-	struct proc *p;
+aoutm68k_sys_rmdir(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct aoutm68k_sys_rmdir_args *uap = v;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(l->l_proc->p_emul);
 
-	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
-	return sys_rmdir(p, v, retval);
+	return sys_rmdir(l, v, retval);
 }
 
 
 int
-aoutm68k_sys_utimes(p, v, retval)
-	struct proc *p;
+aoutm68k_sys_utimes(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct aoutm68k_sys_utimes_args *uap = v;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(l->l_proc->p_emul);
 
-	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
-	return sys_utimes(p, v, retval);
+	return sys_utimes(l, v, retval);
 }
 
 
 int
-aoutm68k_sys_statfs(p, v, retval)
-	struct proc *p;
+aoutm68k_sys_statfs(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct aoutm68k_sys_statfs_args *uap = v;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(l->l_proc->p_emul);
 
-	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
-	return sys_statfs(p, v, retval);
+	return sys_statfs(l, v, retval);
 }
 
 
 #if defined(NFS) || defined(NFSSERVER)
 int
-aoutm68k_sys_getfh(p, v, retval)
-	struct proc *p;
+aoutm68k_sys_getfh(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct aoutm68k_sys_getfh_args *uap = v;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(l->l_proc->p_emul);
 
-	CHECK_ALT_EXIST(p, &sg, SCARG(uap, fname));
+	CHECK_ALT_EXIST(l, &sg, SCARG(uap, fname));
 
-	return sys_getfh(p, v, retval);
+	return sys_getfh(l, v, retval);
 }
 #endif
 
 
 int
-aoutm68k_sys_pathconf(p, v, retval)
-	struct proc *p;
+aoutm68k_sys_pathconf(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct aoutm68k_sys_pathconf_args *uap = v;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(l->l_proc->p_emul);
 
-	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
-	return sys_pathconf(p, v, retval);
+	return sys_pathconf(l, v, retval);
 }
 
 
 int
-aoutm68k_sys_truncate(p, v, retval)
-	struct proc *p;
+aoutm68k_sys_truncate(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct aoutm68k_sys_truncate_args *uap = v;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(l->l_proc->p_emul);
 
-	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
-	return sys_truncate(p, v, retval);
+	return sys_truncate(l, v, retval);
 }
 
 
 int
-aoutm68k_sys_undelete(p, v, retval)
-	struct proc *p;
+aoutm68k_sys_undelete(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct aoutm68k_sys_undelete_args *uap = v;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(l->l_proc->p_emul);
 
-	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
-	return sys_undelete(p, v, retval);
+	return sys_undelete(l, v, retval);
 }
 
 
 int
-aoutm68k_sys___posix_rename(p, v, retval)
-	struct proc *p;
+aoutm68k_sys___posix_rename(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct aoutm68k_sys___posix_rename_args *uap = v;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(l->l_proc->p_emul);
 
-	CHECK_ALT_EXIST(p, &sg, SCARG(uap, from));
+	CHECK_ALT_EXIST(l, &sg, SCARG(uap, from));
 
-	return sys___posix_rename(p, v, retval);
+	return sys___posix_rename(l, v, retval);
 }
 
 
 int
-aoutm68k_sys_lchmod(p, v, retval)
-	struct proc *p;
+aoutm68k_sys_lchmod(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct aoutm68k_sys_lchmod_args *uap = v;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(l->l_proc->p_emul);
 
-	CHECK_ALT_SYMLINK(p, &sg, SCARG(uap, path));
+	CHECK_ALT_SYMLINK(l, &sg, SCARG(uap, path));
 
-	return sys_lchmod(p, v, retval);
+	return sys_lchmod(l, v, retval);
 }
 
 
 int
-aoutm68k_sys_lchown(p, v, retval)
-	struct proc *p;
+aoutm68k_sys_lchown(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct aoutm68k_sys_lchown_args *uap = v;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(l->l_proc->p_emul);
 
-	CHECK_ALT_SYMLINK(p, &sg, SCARG(uap, path));
+	CHECK_ALT_SYMLINK(l, &sg, SCARG(uap, path));
 
-	return sys_lchown(p, v, retval);
+	return sys_lchown(l, v, retval);
 }
 
 
 int
-aoutm68k_sys_lutimes(p, v, retval)
-	struct proc *p;
+aoutm68k_sys_lutimes(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct aoutm68k_sys_lutimes_args *uap = v;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(l->l_proc->p_emul);
 
-	CHECK_ALT_SYMLINK(p, &sg, SCARG(uap, path));
+	CHECK_ALT_SYMLINK(l, &sg, SCARG(uap, path));
 
-	return sys_lutimes(p, v, retval);
+	return sys_lutimes(l, v, retval);
 }
 
 
 int
-aoutm68k_sys___posix_chown(p, v, retval)
-	struct proc *p;
+aoutm68k_sys___posix_chown(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct aoutm68k_sys___posix_chown_args *uap = v;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(l->l_proc->p_emul);
 
-	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
-	return sys___posix_chown(p, v, retval);
+	return sys___posix_chown(l, v, retval);
 }
