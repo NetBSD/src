@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.121 1998/08/23 09:59:24 pk Exp $ */
+/*	$NetBSD: machdep.c,v 1.122 1998/08/25 08:28:53 pk Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -357,7 +357,7 @@ cpu_startup()
 		 * [dvma_base - dvma_end] is for VME devices..
 		 */
 		dvmamap24 = extent_create("dvmamap24",
-					  D24_DVMA_END, D24_DVMA_END,
+					  D24_DVMA_BASE, D24_DVMA_END,
 					  M_DEVBUF, 0, 0, EX_NOWAIT);
 		if (dvmamap24 == NULL)
 			panic("unable to allocate DVMA map");
