@@ -1,5 +1,40 @@
-/*	$NetBSD: lfs_alloc.c,v 1.16 1998/10/23 00:32:35 thorpej Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.17 1999/03/10 00:20:00 perseant Exp $	*/
 
+/*-
+ * Copyright (c) 1999 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Konrad E. Schroder <perseant@hhhh.org>.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *      This product includes software developed by the NetBSD
+ *      Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 /*
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -37,6 +72,7 @@
 
 #if defined(_KERNEL) && !defined(_LKM)
 #include "opt_quota.h"
+#include "opt_uvm.h"
 #endif
 
 #include <sys/param.h>
@@ -59,6 +95,12 @@
 #include <ufs/lfs/lfs.h>
 #include <ufs/lfs/lfs_extern.h>
 
+#ifndef USE_UFS_HASHLOCK
+int free_lock = 0;
+#else
+extern struct lock ufs_hashlock;
+#endif
+
 /* Allocate a new inode. */
 /* ARGSUSED */
 int
@@ -66,11 +108,11 @@ lfs_valloc(v)
 	void *v;
 {
 	struct vop_valloc_args /* {
-		struct vnode *a_pvp;
-		int a_mode;
-		struct ucred *a_cred;
-		struct vnode **a_vpp;
-	} */ *ap = v;
+				  struct vnode *a_pvp;
+				  int a_mode;
+				  struct ucred *a_cred;
+				  struct vnode **a_vpp;
+				  } */ *ap = v;
 	struct lfs *fs;
 	struct buf *bp;
 	struct ifile *ifp;
@@ -81,26 +123,50 @@ lfs_valloc(v)
 	u_long i, max;
 	int error;
 
-	/* Get the head of the freelist. */
 	fs = VTOI(ap->a_pvp)->i_lfs;
+	
+	/*
+	 * Prevent a race getting lfs_free - XXX - KS
+	 * (this should be a proper lock, in struct lfs)
+	 */
+
+#ifndef USE_UFS_HASHLOCK
+	while(free_lock)
+		tsleep(&free_lock, PRIBIO+1, "lfs_free", 0);
+	free_lock++;
+#else
+	while(lockmgr(&ufs_hashlock, LK_EXCLUSIVE|LK_SLEEPFAIL, 0))
+		;
+#endif
+
+	/* Get the head of the freelist. */
 	new_ino = fs->lfs_free;
+#ifdef DIAGNOSTIC
+	if(new_ino == LFS_UNUSED_INUM) {
+#ifdef DEBUG
+		lfs_dump_super(fs);
+#endif /* DEBUG */
+		panic("inode 0 allocated [1]");
+	}
+#endif /* DIAGNOSTIC */
 #ifdef ALLOCPRINT
 	printf("lfs_ialloc: allocate inode %d\n", new_ino);
 #endif
-
+	
 	/*
 	 * Remove the inode from the free list and write the new start
 	 * of the free list into the superblock.
 	 */
 	LFS_IENTRY(ifp, fs, new_ino, bp);
 	if (ifp->if_daddr != LFS_UNUSED_DADDR)
-		panic("lfs_ialloc: inuse inode on the free list");
+		panic("lfs_ialloc: inuse inode %d on the free list", new_ino);
 	fs->lfs_free = ifp->if_nextfree;
 	brelse(bp);
-
+	
 	/* Extend IFILE so that the next lfs_valloc will succeed. */
 	if (fs->lfs_free == LFS_UNUSED_INUM) {
 		vp = fs->lfs_ivnode;
+		VOP_LOCK(vp,LK_EXCLUSIVE);
 		ip = VTOI(vp);
 		blkno = lblkno(fs, ip->i_ffs_size);
 		lfs_balloc(vp, 0, fs->lfs_bsize, blkno, &bp);
@@ -114,8 +180,12 @@ lfs_valloc(v)
 #endif
 
 		i = (blkno - fs->lfs_segtabsz - fs->lfs_cleansz) *
-		    fs->lfs_ifpb;
+			fs->lfs_ifpb;
 		fs->lfs_free = i;
+#ifdef DIAGNOSTIC
+		if(fs->lfs_free == LFS_UNUSED_INUM)
+			panic("inode 0 allocated [2]");
+#endif /* DIAGNOSTIC */
 		max = i + fs->lfs_ifpb;
 		for (ifp = (struct ifile *)bp->b_data; i < max; ++ifp) {
 			ifp->if_version = 1;
@@ -124,37 +194,60 @@ lfs_valloc(v)
 		}
 		ifp--;
 		ifp->if_nextfree = LFS_UNUSED_INUM;
-		if ((error = VOP_BWRITE(bp)) != 0)
+		VOP_UNLOCK(vp,0);
+		if ((error = VOP_BWRITE(bp)) != 0) {
+#ifndef USE_UFS_HASHLOCK
+			free_lock--;
+			wakeup(&free_lock);
+#else
+			lockmgr(&ufs_hashlock, LK_RELEASE, 0);
+#endif
 			return (error);
+		}
 	}
 
+#ifndef USE_UFS_HASHLOCK
+	free_lock--;
+	wakeup(&free_lock);
+#else
+	lockmgr(&ufs_hashlock, LK_RELEASE, 0);
+#endif
+
+#ifdef DIAGNOSTIC
+	if(fs->lfs_free == LFS_UNUSED_INUM)
+		panic("inode 0 allocated [3]");
+#endif /* DIAGNOSTIC */
+	
 	/* Create a vnode to associate with the inode. */
 	if ((error = lfs_vcreate(ap->a_pvp->v_mount, new_ino, &vp)) != 0)
 		return (error);
-
-
+	
 	ip = VTOI(vp);
 	/* Zero out the direct and indirect block addresses. */
 	bzero(&ip->i_din, sizeof(ip->i_din));
 	ip->i_din.ffs_din.di_inumber = new_ino;
-
+	
 	/* Set a new generation number for this inode. */
 	ip->i_ffs_gen++;
-
+	
 	/* Insert into the inode hash table. */
 	ufs_ihashins(ip);
-
+	
 	error = ufs_vinit(vp->v_mount, lfs_specop_p, lfs_fifoop_p, &vp);
 	if (error) {
 		vput(vp);
 		*ap->a_vpp = NULL;
 		return (error);
 	}
-
+	
 	*ap->a_vpp = vp;
+	if(!(vp->v_flag & VDIROP)) {
+		lfs_vref(vp);
+		++fs->lfs_dirvcount;
+	}
 	vp->v_flag |= VDIROP;
 	VREF(ip->i_devvp);
-
+	
 	/* Set superblock modified bit and increment file count. */
 	fs->lfs_fmod = 1;
 	++fs->lfs_nfiles;
@@ -175,16 +268,16 @@ lfs_vcreate(mp, ino, vpp)
 #ifdef QUOTA
 	int i;
 #endif
-
+	
 	/* Create the vnode. */
 	if ((error = getnewvnode(VT_LFS, mp, lfs_vnodeop_p, vpp)) != 0) {
 		*vpp = NULL;
 		return (error);
 	}
-
+	
 	/* Get a pointer to the private mount structure. */
 	ump = VFSTOUFS(mp);
-
+	
 	/* Initialize the inode. */
 	ip = pool_get(&lfs_inode_pool, PR_WAITOK);
 	lockinit(&ip->i_lock, PINOD, "lfsinode", 0, 0);
@@ -215,10 +308,10 @@ lfs_vfree(v)
 	void *v;
 {
 	struct vop_vfree_args /* {
-		struct vnode *a_pvp;
-		ino_t a_ino;
-		int a_mode;
-	} */ *ap = v;
+				 struct vnode *a_pvp;
+				 ino_t a_ino;
+				 int a_mode;
+				 } */ *ap = v;
 	SEGUSE *sup;
 	struct buf *bp;
 	struct ifile *ifp;
@@ -226,16 +319,57 @@ lfs_vfree(v)
 	struct lfs *fs;
 	ufs_daddr_t old_iaddr;
 	ino_t ino;
-
+	
 	/* Get the inode number and file system. */
 	ip = VTOI(ap->a_pvp);
 	fs = ip->i_lfs;
 	ino = ip->i_number;
+	
+	while(WRITEINPROG(ap->a_pvp)
+	      || fs->lfs_seglock
+#ifndef USE_UFS_HASHLOCK
+	      || free_lock
+#else
+	      || lockmgr(&ufs_hashlock, LK_EXCLUSIVE|LK_SLEEPFAIL, 0)
+#endif
+	      )
+	{
+		if (WRITEINPROG(ap->a_pvp)) {
+			tsleep(ap->a_pvp, (PRIBIO+1), "lfs_vfree", 0);
+		}
+		if(free_lock)
+			tsleep(&free_lock, PRIBIO+1, "free_lock", 0);
+		if (fs->lfs_seglock) {
+			if (fs->lfs_lockpid == curproc->p_pid) {
+#if 0
+				panic("lfs_vfree: we hold the seglock");
+#else
+				break;
+#endif
+			} else {
+				tsleep(&fs->lfs_seglock, PRIBIO + 1, "lfs_vfr1", 0);
+			}
+		}
+	}
+#ifndef USE_UFS_HASHLOCK
+	free_lock++;
+#endif
+	
+	if (ip->i_flag & IN_CLEANING) {
+		--fs->lfs_uinodes;
+		ip->i_flag &= ~IN_CLEANING;
+	}
 	if (ip->i_flag & IN_MODIFIED) {
 		--fs->lfs_uinodes;
 		ip->i_flag &=
-		    ~(IN_ACCESS | IN_CHANGE | IN_MODIFIED | IN_UPDATE);
+			~(IN_ACCESS | IN_CHANGE | IN_MODIFIED | IN_UPDATE);
 	}
+#ifdef DEBUG_LFS	
+	if((int32_t)fs->lfs_uinodes<0) {
+		printf("U1");
+		fs->lfs_uinodes=0;
+	}
+#endif
 	/*
 	 * Set the ifile's inode entry to unused, increment its version number
 	 * and link it into the free chain.
@@ -247,20 +381,33 @@ lfs_vfree(v)
 	ifp->if_nextfree = fs->lfs_free;
 	fs->lfs_free = ino;
 	(void) VOP_BWRITE(bp);
-
+#ifdef DIAGNOSTIC
+	if(fs->lfs_free == LFS_UNUSED_INUM) {
+		panic("inode 0 freed");
+	}
+#endif /* DIAGNOSTIC */
 	if (old_iaddr != LFS_UNUSED_DADDR) {
 		LFS_SEGENTRY(sup, fs, datosn(fs, old_iaddr), bp);
+		if (sup->su_nbytes < DINODE_SIZE) {
+			sup->su_nbytes = DINODE_SIZE;
 #ifdef DIAGNOSTIC
-		if (sup->su_nbytes < DINODE_SIZE)
 			panic("lfs_vfree: negative byte count (segment %d)\n",
-			    datosn(fs, old_iaddr));
-#endif
+			      datosn(fs, old_iaddr));
+#endif /* DIAGNOSTIC */
+		}
 		sup->su_nbytes -= DINODE_SIZE;
 		(void) VOP_BWRITE(bp);
 	}
-
+#ifndef USE_UFS_HASHLOCK
+	free_lock--;
+	wakeup(&free_lock);
+#else
+	lockmgr(&ufs_hashlock, LK_RELEASE, 0);
+#endif
+	
 	/* Set superblock modified bit and decrement file count. */
 	fs->lfs_fmod = 1;
 	--fs->lfs_nfiles;
+	
 	return (0);
 }

@@ -1,6 +1,41 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.25 1999/02/26 23:44:49 wrstuden Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.26 1999/03/10 00:20:00 perseant Exp $	*/
 
-/*
+/*-
+ * Copyright (c) 1999 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Konrad E. Schroder <perseant@hhhh.org>.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *      This product includes software developed by the NetBSD
+ *      Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+/*-
  * Copyright (c) 1989, 1991, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -37,6 +72,7 @@
 
 #if defined(_KERNEL) && !defined(_LKM)
 #include "opt_quota.h"
+#include "opt_uvm.h"
 #endif
 
 #include <sys/param.h>
@@ -55,6 +91,8 @@
 #include <sys/malloc.h>
 #include <sys/pool.h>
 #include <sys/socket.h>
+#include <vm/vm.h>
+#include <sys/sysctl.h>
 
 #include <miscfs/specfs/specdev.h>
 
@@ -107,13 +145,13 @@ void
 lfs_init()
 {
 	ufs_init();
-
+	
 	/*
 	 * XXX Same structure as FFS inodes?  Should we share a common pool?
 	 */
 	pool_init(&lfs_inode_pool, sizeof(struct inode), 0, 0, 0,
-	    "lfsinopl", 0, pool_page_alloc_nointr, pool_page_free_nointr,
-	    M_LFSNODE);
+		  "lfsinopl", 0, pool_page_alloc_nointr, pool_page_free_nointr,
+		  M_LFSNODE);
 }
 
 /*
@@ -253,17 +291,11 @@ lfs_mount(mp, path, data, ndp, p)
 	}
 	ump = VFSTOUFS(mp);
 	fs = ump->um_lfs;					/* LFS */
-#ifdef NOTLFS							/* LFS */
-	(void) copyinstr(path, fs->fs_fsmnt, sizeof(fs->fs_fsmnt) - 1, &size);
-	bzero(fs->fs_fsmnt + size, sizeof(fs->fs_fsmnt) - size);
-	bcopy(fs->fs_fsmnt, mp->mnt_stat.f_mntonname, MNAMELEN);
-#else
 	(void)copyinstr(path, fs->lfs_fsmnt, sizeof(fs->lfs_fsmnt) - 1, &size);
 	bzero(fs->lfs_fsmnt + size, sizeof(fs->lfs_fsmnt) - size);
 	bcopy(fs->lfs_fsmnt, mp->mnt_stat.f_mntonname, MNAMELEN);
-#endif
 	(void) copyinstr(args.fspec, mp->mnt_stat.f_mntfromname, MNAMELEN - 1,
-	    &size);
+			 &size);
 	bzero(mp->mnt_stat.f_mntfromname + size, MNAMELEN - size);
 	return (0);
 }
@@ -280,10 +312,16 @@ lfs_mountfs(devvp, mp, p)
 {
 	extern struct vnode *rootvp;
 	struct dlfs *dfs;
+#ifdef LFS_TOGGLE_SB
+	struct dlfs *adfs;
+#endif
 	register struct lfs *fs;
 	register struct ufsmount *ump;
 	struct vnode *vp;
 	struct buf *bp;
+#ifdef LFS_TOGGLE_SB
+	struct buf *abp;
+#endif
 	struct partinfo dpart;
 	dev_t dev;
 	int error, i, ronly, size;
@@ -312,12 +350,6 @@ lfs_mountfs(devvp, mp, p)
 		size = DEV_BSIZE;
 	else {
 		size = dpart.disklab->d_secsize;
-#ifdef NEVER_USED
-		dpart.part->p_fstype = FS_LFS;
-		dpart.part->p_fsize = fs->lfs_fsize;	/* frag size */
-		dpart.part->p_frag = fs->lfs_frag;	/* frags per block */
-		dpart.part->p_cpg = fs->lfs_segshift;	/* segment shift */
-#endif
 	}
 
 	/* Don't free random space on error. */
@@ -328,8 +360,21 @@ lfs_mountfs(devvp, mp, p)
 	error = bread(devvp, LFS_LABELPAD / size, LFS_SBPAD, cred, &bp);
 	if (error)
 		goto out;
-	
 	dfs = (struct dlfs *)bp->b_data;
+
+#ifdef LFS_TOGGLE_SB
+	/*
+	 * Check the second superblock to see which is newer; then mount
+	 * using the older of the two.  This is necessary to ensure that
+	 * the filesystem is valid if it was not unmounted cleanly.
+	 */
+	error = bread(devvp, dfs->dlfs_sboffs[1], LFS_SBPAD, cred, &abp);
+	if (error)
+		goto out;
+	adfs = (struct dlfs *)abp->b_data;
+	if(adfs->dlfs_tstamp < dfs->dlfs_tstamp) /* XXX KS - 1s resolution? */
+		dfs = adfs;
+#endif /* LFS_TOGGLE_SB */
 
 	/* Check the basics. */
 	if (dfs->dlfs_magic != LFS_MAGIC || dfs->dlfs_bsize > MAXBSIZE ||
@@ -346,9 +391,25 @@ lfs_mountfs(devvp, mp, p)
 		bp->b_flags |= B_INVAL;
 	brelse(bp);
 	bp = NULL;
+#ifdef LFS_TOGGLE_SB
+	brelse(abp);
+	abp = NULL;
+#endif
 
 	/* Set up the I/O information */
 	fs->lfs_iocount = 0;
+	fs->lfs_dirvcount = 0;
+#ifdef LFS_TOGGLE_SB
+	fs->lfs_activesb = 0;
+#endif
+#ifdef LFS_CANNOT_ROLLFW
+	fs->lfs_sbactive = NULL;
+#endif
+#ifdef LFS_TRACK_IOS
+	for(i=0;i<LFS_THROTTLE;i++)
+		fs->lfs_pending[i] = LFS_UNUSED_DADDR;
+#endif
+	fs->lfs_loanedbytes=0;
 
 	/* Set up the ifile and lock aflags */
 	fs->lfs_doifile = 0;
@@ -395,6 +456,10 @@ lfs_mountfs(devvp, mp, p)
 out:
 	if (bp)
 		brelse(bp);
+#ifdef TOGGLE_SB
+	if (abp)
+		brelse(abp);
+#endif
 	(void)VOP_CLOSE(devvp, ronly ? FREAD : FREAD|FWRITE, cred, p);
 	if (ump) {
 		free(ump->um_lfs, M_UFSMNT);
@@ -416,6 +481,7 @@ lfs_unmount(mp, mntflags, p)
 	register struct ufsmount *ump;
 	register struct lfs *fs;
 	int error, flags, ronly;
+	extern int lfs_allclean_wakeup;
 
 	flags = 0;
 	if (mntflags & MNT_FORCE)
@@ -455,6 +521,11 @@ lfs_unmount(mp, mntflags, p)
 	error = VOP_CLOSE(ump->um_devvp,
 	    ronly ? FREAD : FREAD|FWRITE, NOCRED, p);
 	vrele(ump->um_devvp);
+
+	/* XXX KS - wake up the cleaner so it can die */
+	wakeup(&fs->lfs_nextseg);
+	wakeup(&lfs_allclean_wakeup);
+
 	free(fs, M_UFSMNT);
 	free(ump, M_UFSMNT);
 	mp->mnt_data = (qaddr_t)0;
@@ -479,19 +550,28 @@ lfs_statfs(mp, sbp, p)
 	if (fs->lfs_magic != LFS_MAGIC)
 		panic("lfs_statfs: magic");
 	sbp->f_type = 0;
-	sbp->f_bsize = fs->lfs_bsize;
+	sbp->f_bsize = fs->lfs_fsize;
 	sbp->f_iosize = fs->lfs_bsize;
 	sbp->f_blocks = dbtofrags(fs, fs->lfs_dsize);
 	sbp->f_bfree = dbtofrags(fs, fs->lfs_bfree);
 	/*
 	 * To compute the available space.  Subtract the minimum free
-	 * from the total number of blocks in the file system.  Set avail
+	 * from the total number of blocks in the file system.	Set avail
 	 * to the smaller of this number and fs->lfs_bfree.
+	 *
+	 * XXX KS - is my modification below what is desired?  (This
+	 * will, e.g., change the report when the cleaner runs.)
 	 */
+#if 0
         sbp->f_bavail = (long) ((u_int64_t) fs->lfs_dsize * (u_int64_t)
 		(100 - fs->lfs_minfree) / (u_int64_t) 100);
 	sbp->f_bavail =
 	    sbp->f_bavail > fs->lfs_bfree ? fs->lfs_bfree : sbp->f_bavail;
+#else
+	sbp->f_bavail = (long) ((u_int64_t) fs->lfs_dsize * (u_int64_t)
+				(100 - fs->lfs_minfree) / (u_int64_t) 100)
+		- (u_int64_t)(fs->lfs_dsize - fs->lfs_bfree);
+#endif
 	sbp->f_bavail = dbtofrags(fs, sbp->f_bavail);
 	sbp->f_files = fs->lfs_nfiles;
 	sbp->f_ffree = sbp->f_bfree * INOPB(fs);
@@ -518,14 +598,26 @@ lfs_sync(mp, waitfor, cred, p)
 	struct proc *p;
 {
 	int error;
+	struct lfs *fs;
+
+	fs = ((struct ufsmount *)mp->mnt_data)->ufsmount_u.lfs;
+	while(fs->lfs_dirops)
+		error = tsleep(&fs->lfs_dirops, PRIBIO + 1, "lfs_dirops", 0);
+	fs->lfs_writer++;
 
 	/* All syncs must be checkpoints until roll-forward is implemented. */
 	error = lfs_segwrite(mp, SEGM_CKP | (waitfor ? SEGM_SYNC : 0));
+	if(--fs->lfs_writer==0)
+		wakeup(&fs->lfs_dirops);
 #ifdef QUOTA
 	qsync(mp);
 #endif
 	return (error);
 }
+
+#ifdef USE_UFS_HASHLOCK
+extern struct lock ufs_hashlock;
+#endif
 
 /*
  * Look up an LFS dinode number to find its incore vnode.  If not already
@@ -547,11 +639,21 @@ lfs_vget(mp, ino, vpp)
 	ufs_daddr_t daddr;
 	dev_t dev;
 	int error;
+#ifdef LFS_ATIME_IFILE
+	struct timespec ts;
+#endif
 
 	ump = VFSTOUFS(mp);
 	dev = ump->um_dev;
-	if ((*vpp = ufs_ihashget(dev, ino)) != NULL)
-		return (0);
+
+#ifdef USE_UFS_HASHLOCK
+	do {
+#endif
+		if ((*vpp = ufs_ihashget(dev, ino)) != NULL)
+			return (0);
+#ifdef USE_UFS_HASHLOCK
+	} while (lockmgr(&ufs_hashlock, LK_EXCLUSIVE|LK_SLEEPFAIL, 0));
+#endif
 
 	/* Translate the inode number to a disk address. */
 	fs = ump->um_lfs;
@@ -560,14 +662,24 @@ lfs_vget(mp, ino, vpp)
 	else {
 		LFS_IENTRY(ifp, fs, ino, bp);
 		daddr = ifp->if_daddr;
+#ifdef LFS_ATIME_IFILE
+		ts = ifp->if_atime; /* structure copy */
+#endif
 		brelse(bp);
-		if (daddr == LFS_UNUSED_DADDR)
+		if (daddr == LFS_UNUSED_DADDR) {
+#ifdef USE_UFS_HASHLOCK
+			lockmgr(&ufs_hashlock, LK_RELEASE, 0);
+#endif
 			return (ENOENT);
+		}
 	}
 
 	/* Allocate new vnode/inode. */
 	if ((error = lfs_vcreate(mp, ino, &vp)) != 0) {
 		*vpp = NULL;
+#ifdef USE_UFS_HASHLOCK
+		lockmgr(&ufs_hashlock, LK_RELEASE, 0);
+#endif
 		return (error);
 	}
 
@@ -579,6 +691,9 @@ lfs_vget(mp, ino, vpp)
 	 */
 	ip = VTOI(vp);
 	ufs_ihashins(ip);
+#ifdef USE_UFS_HASHLOCK
+	lockmgr(&ufs_hashlock, LK_RELEASE, 0);
+#endif
 
 	/*
 	 * XXX
@@ -603,6 +718,10 @@ lfs_vget(mp, ino, vpp)
 		return (error);
 	}
 	ip->i_din.ffs_din = *lfs_ifind(fs, ino, (struct dinode *)bp->b_data);
+#ifdef LFS_ATIME_IFILE
+	ip->i_ffs_atime = ts.tv_sec;
+	ip->i_ffs_atimensec = ts.tv_nsec;
+#endif
 	brelse(bp);
 
 	/*
@@ -615,12 +734,19 @@ lfs_vget(mp, ino, vpp)
 		*vpp = NULL;
 		return (error);
 	}
+	if(vp->v_type == VNON) {
+		printf("lfs_vget: ino %d is type VNON! (ifmt %o)\n", ip->i_number, (ip->i_ffs_mode&IFMT)>>12);
+#ifdef DDB
+		Debugger();
+#endif
+	}
 	/*
 	 * Finish inode initialization now that aliasing has been resolved.
 	 */
 	ip->i_devvp = ump->um_devvp;
 	VREF(ip->i_devvp);
 	*vpp = vp;
+
 	return (0);
 }
 
@@ -681,5 +807,33 @@ lfs_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	size_t newlen;
 	struct proc *p;
 {
-	return (EOPNOTSUPP);
+	extern int lfs_writeindir, lfs_dostats, lfs_clean_vnhead;
+	extern struct lfs_stats lfs_stats;
+	int error;
+
+	/* all sysctl names at this level are terminal */
+	if (namelen != 1)
+		return (ENOTDIR);
+
+	switch (name[0]) {
+	case LFS_WRITEINDIR:
+		return (sysctl_int(oldp, oldlenp, newp, newlen,
+				   &lfs_writeindir));
+	case LFS_CLEAN_VNHEAD:
+		return (sysctl_int(oldp, oldlenp, newp, newlen,
+				   &lfs_clean_vnhead));
+	case LFS_DOSTATS:
+		if((error = sysctl_int(oldp, oldlenp, newp, newlen,
+				       &lfs_dostats)))
+			return error;
+		if(lfs_dostats == 0)
+			memset(&lfs_stats,0,sizeof(lfs_stats));
+		return 0;
+	case LFS_STATS:
+		return (sysctl_rdstruct(oldp, oldlenp, newp,
+					&lfs_stats, sizeof(lfs_stats)));
+	default:
+		return (EOPNOTSUPP);
+	}
+	/* NOTREACHED */
 }

@@ -1,5 +1,40 @@
-/*	$NetBSD: lfs_subr.c,v 1.7 1998/08/25 04:52:38 thorpej Exp $	*/
+/*	$NetBSD: lfs_subr.c,v 1.8 1999/03/10 00:20:00 perseant Exp $	*/
 
+/*-
+ * Copyright (c) 1999 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Konrad E. Schroder <perseant@hhhh.org>.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *      This product includes software developed by the NetBSD
+ *      Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 /*
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -63,18 +98,18 @@ lfs_blkatoff(v)
 		off_t a_offset;
 		char **a_res;
 		struct buf **a_bpp;
-	} */ *ap = v;
+		} */ *ap = v;
 	register struct lfs *fs;
 	struct inode *ip;
 	struct buf *bp;
 	ufs_daddr_t lbn;
 	int bsize, error;
-
+	
 	ip = VTOI(ap->a_vp);
 	fs = ip->i_lfs;
 	lbn = lblkno(fs, ap->a_offset);
 	bsize = blksize(fs, ip, lbn);
-
+	
 	*ap->a_bpp = NULL;
 	if ((error = bread(ap->a_vp, lbn, bsize, NOCRED, &bp)) != 0) {
 		brelse(bp);
@@ -98,7 +133,7 @@ lfs_seglock(fs, flags)
 {
 	struct segment *sp;
 	int s;
-
+	
 	if (fs->lfs_seglock) {
 		if (fs->lfs_lockpid == curproc->p_pid) {
 			++fs->lfs_seglock;
@@ -106,20 +141,20 @@ lfs_seglock(fs, flags)
 			return;			
 		} else while (fs->lfs_seglock)
 			(void)tsleep(&fs->lfs_seglock, PRIBIO + 1,
-			    "lfs seglock", 0);
+				     "lfs seglock", 0);
 	}
-
+	
 	fs->lfs_seglock = 1;
 	fs->lfs_lockpid = curproc->p_pid;
-
+	
 	sp = fs->lfs_sp = malloc(sizeof(struct segment), M_SEGMENT, M_WAITOK);
 	sp->bpp = malloc(((LFS_SUMMARY_SIZE - sizeof(SEGSUM)) /
-	    sizeof(ufs_daddr_t) + 1) * sizeof(struct buf *), M_SEGMENT,
-	    M_WAITOK);
+			  sizeof(ufs_daddr_t) + 1) * sizeof(struct buf *),
+			 M_SEGMENT, M_WAITOK);
 	sp->seg_flags = flags;
 	sp->vp = NULL;
 	(void) lfs_initseg(fs);
-
+	
 	/*
 	 * Keep a cumulative count of the outstanding I/O operations.  If the
 	 * disk drive catches up with us it could go to zero before we finish,
@@ -130,6 +165,7 @@ lfs_seglock(fs, flags)
 	++fs->lfs_iocount;
 	splx(s);
 }
+
 /*
  * lfs_segunlock --
  *	Single thread the segment writer.
@@ -141,7 +177,7 @@ lfs_segunlock(fs)
 	struct segment *sp;
 	unsigned long sync, ckp;
 	int s;
-
+	
 	if (fs->lfs_seglock == 1) {
 
 		sp = fs->lfs_sp;
@@ -150,11 +186,10 @@ lfs_segunlock(fs)
 		if (sp->bpp != sp->cbpp) {
 			/* Free allocated segment summary */
 			fs->lfs_offset -= LFS_SUMMARY_SIZE / DEV_BSIZE;
-			brelvp(*sp->bpp);
-			free((*sp->bpp)->b_data, M_SEGMENT);
-			free(*sp->bpp, M_SEGMENT);
+                        lfs_freebuf(*sp->bpp);
 		} else
 			printf ("unlock to 0 with no summary");
+
 		free(sp->bpp, M_SEGMENT);
 		free(sp, M_SEGMENT);
 
@@ -172,12 +207,21 @@ lfs_segunlock(fs)
 		 * superblocks to make sure that the checkpoint described
 		 * by a superblock completed.
 		 */
-		if (sync && fs->lfs_iocount)
-		    (void)tsleep(&fs->lfs_iocount, PRIBIO + 1, "lfs vflush", 0);
+		while (sync && fs->lfs_iocount)
+			(void)tsleep(&fs->lfs_iocount, PRIBIO + 1,
+				     "lfs vflush", 0);
 		splx(s);
 		if (ckp) {
 			fs->lfs_nactive = 0;
-			lfs_writesuper(fs);
+#ifndef LFS_TOGGLE_SB
+			lfs_writesuper(fs,fs->lfs_sboffs[0]);
+#else
+			/* If we *know* everything's on disk, write both sbs */
+			if(sync)
+				lfs_writesuper(fs,fs->lfs_sboffs[fs->lfs_activesb]);
+			fs->lfs_activesb = 1 - fs->lfs_activesb;
+			lfs_writesuper(fs,fs->lfs_sboffs[fs->lfs_activesb]);
+#endif
 		}
 		--fs->lfs_seglock;
 		fs->lfs_lockpid = 0;
