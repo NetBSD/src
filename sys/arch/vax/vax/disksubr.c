@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.5 1995/02/13 00:46:06 ragge Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.6 1995/05/08 19:10:53 ragge Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -143,7 +143,6 @@ writedisklabel(dev, strat, lp, osdep)
 }
 /*
  *	from: @(#)ufs_disksubr.c	7.16 (Berkeley) 5/4/91
- *	$Id: disksubr.c,v 1.5 1995/02/13 00:46:06 ragge Exp $
  */
 
 /*
