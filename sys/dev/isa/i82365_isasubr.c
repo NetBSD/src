@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365_isasubr.c,v 1.11 2000/02/08 16:59:52 mycroft Exp $	*/
+/*	$NetBSD: i82365_isasubr.c,v 1.12 2000/02/08 17:14:29 chopps Exp $	*/
 
 #define	PCICISADEBUG
 
@@ -149,6 +149,14 @@ pcic_isa_count_intr(arg)
 		return (1);
 	}
 
+	/*
+	 * make sure we don't get stuck in a loop due to
+	 * unhandled level interupts
+	 */
+	if (++sc->intr_false > 40) {
+		isa_intr_disestablish(sc->intr_est, sc->ih);
+		sc->ih = 0;
+	}
 #ifdef PCICISADEBUG
 	if (cscreg)
 		DPRINTF(("o"));
@@ -170,7 +178,6 @@ pcic_isa_probe_interrupts(sc, h)
 	isa_chipset_tag_t ic;
 	int i, j, mask, irq;
 	int cd, cscintr, intr, csc;
-	void *ih;
 
 	ic = sc->intr_est;
 
@@ -186,8 +193,10 @@ pcic_isa_probe_interrupts(sc, h)
 
 	/* steer the interrupt to isa and disable ring and interrupt */
 	intr = pcic_read(h, PCIC_INTR);
+	DPRINTF(("pcic: old intr 0x%x\n", intr));
 	intr &= ~(PCIC_INTR_RI_ENABLE | PCIC_INTR_ENABLE | PCIC_INTR_IRQ_MASK);
 	pcic_write(h, PCIC_INTR, intr);
+
 
 	/* clear any current interrupt */
 	pcic_read(h, PCIC_CSC);
@@ -209,7 +218,7 @@ pcic_isa_probe_interrupts(sc, h)
 			continue;
 		}
 
-		if ((ih = isa_intr_establish(ic, irq, IST_LEVEL, IPL_TTY,
+		if ((sc->ih = isa_intr_establish(ic, irq, IST_LEVEL, IPL_TTY,
 		    pcic_isa_count_intr, h)) == NULL)
 			panic("cant get interrupt");
 
@@ -219,7 +228,8 @@ pcic_isa_probe_interrupts(sc, h)
 
 		/* interrupt 40 times */
 		sc->intr_detect = 0;
-		for (j = 0; j < 40; j++) {
+		for (j = 0; j < 40 && sc->ih; j++) {
+			sc->intr_false = 0;
 			pcic_write(h, PCIC_CARD_DETECT, cd);
 			delay(100);
 			csc = pcic_read(h, PCIC_CSC);
@@ -232,10 +242,9 @@ pcic_isa_probe_interrupts(sc, h)
 			DPRINTF((" succeded\n"));
 			mask |= (1 << i);
 		}
-
 		pcic_write(h, PCIC_CSC_INTR, 0);
-
-		isa_intr_disestablish(ic, ih);
+		if (sc->ih)
+			isa_intr_disestablish(ic, sc->ih);
 	}
 	sc->intr_mask[h->chip] = mask;
 
