@@ -1,4 +1,4 @@
-/*	$NetBSD: clientloop.c,v 1.19 2002/06/24 05:48:30 itojun Exp $	*/
+/*	$NetBSD: clientloop.c,v 1.20 2002/06/26 14:08:30 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -60,7 +60,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: clientloop.c,v 1.101 2002/06/09 13:32:01 markus Exp $");
+RCSID("$OpenBSD: clientloop.c,v 1.102 2002/06/24 14:33:27 markus Exp $");
 
 #include "ssh.h"
 #include "ssh1.h"
@@ -1209,10 +1209,8 @@ client_input_channel_open(int type, u_int32_t seq, void *ctxt)
 {
 	Channel *c = NULL;
 	char *ctype;
-	u_int len;
 	int rchan;
-	int rmaxpack;
-	int rwindow;
+	u_int rmaxpack, rwindow, len;
 
 	ctype = packet_get_string(&len);
 	rchan = packet_get_int();
