@@ -35,7 +35,7 @@
 .\" see ``http://www.vix.com''.   To learn more about Nominum, Inc., see
 .\" ``http://www.nominum.com''.
 .\"
-.\" $Id: dhcpd.8,v 1.5 2003/02/18 17:08:44 drochner Exp $
+.\" $Id: dhcpd.8,v 1.6 2003/03/15 22:38:46 wiz Exp $
 .\"
 .TH dhcpd 8
 .SH NAME
@@ -175,7 +175,7 @@ broadcasts may be specified on the command line.  This should be done
 on systems where dhcpd is unable to identify non-broadcast interfaces,
 but should not be required on other systems.  If no interface names
 are specified on the command line dhcpd will identify all network
-interfaces which are up, elimininating non-broadcast interfaces if
+interfaces which are up, eliminating non-broadcast interfaces if
 possible, and listen for DHCP broadcasts on each interface.
 .PP
 If dhcpd should listen on a port other than the standard (port 67),
