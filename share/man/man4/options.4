@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.228 2004/02/13 09:58:09 wiz Exp $
+.\"	$NetBSD: options.4,v 1.229 2004/03/17 14:15:30 aymeric Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -2170,6 +2170,13 @@ Include software support for 68060.
 This provides emulation of unimplemented
 integer instructions as well as emulation of unimplemented floating point
 instructions and data types and software support for floating point traps.
+.El
+.Ss powerpc-specific Options
+.Bl -ohang
+.It Cd options PMAP_MEMLIMIT=value
+Limit the amount of memory seen by the kernel to
+.Ar value
+bytes (OEA only).
 .El
 .Ss sparc-specific Options
 .Bl -ohang
