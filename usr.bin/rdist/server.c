@@ -33,7 +33,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)server.c	8.1 (Berkeley) 6/9/93"; */
-static char *rcsid = "$Id: server.c,v 1.9 1996/07/12 00:06:37 thorpej Exp $";
+static char *rcsid = "$Id: server.c,v 1.10 1996/07/12 00:38:55 thorpej Exp $";
 #endif /* not lint */
 
 #include <sys/wait.h>
@@ -661,7 +661,8 @@ query(name)
 	struct stat stb;
 
 	if (catname)
-		(void) sprintf(tp, "/%s", name);
+		(void) snprintf(tp, sizeof(target) - (tp - target),
+		    "/%s", name);
 
 	if (lstat(target, &stb) < 0) {
 		if (errno == ENOENT)
@@ -794,7 +795,7 @@ recvf(cmd, type)
 	}
 
 	if (catname)
-		(void) sprintf(tp, "/%s", cp);
+		(void) snprintf(tp, sizeof(target) - (tp - target), "/%s", cp);
 	cp = rindex(target, '/');
 	if (cp == NULL)
 		strcpy(new, tempname);
@@ -973,7 +974,7 @@ hardlink(cmd)
 	*cp++ = '\0';
 
 	if (catname) {
-		(void) sprintf(tp, "/%s", cp);
+		(void) snprintf(tp, sizeof(target) - (tp - target), "/%s", cp);
 	}
 	if (lstat(target, &stb) == 0) {
 		int mode = stb.st_mode & S_IFMT;
@@ -1130,7 +1131,8 @@ rmchk(opts)
 			 * Y\n -- file doesn't exist - REMOVE.
 			 */
 			*--cp = '\0';
-			(void) sprintf(tp, "/%s", s);
+			(void) snprintf(tp, sizeof(target) - (tp - target),
+			    "/%s", s);
 			if (debug)
 				printf("check %s\n", target);
 			if (except(target))
