@@ -1,4 +1,4 @@
-/*	$NetBSD: pathnames.h,v 1.4 1998/01/31 14:40:40 christos Exp $	*/
+/*	$NetBSD: pathnames.h,v 1.5 1999/04/09 02:47:03 cjs Exp $	*/
 
 /* Copyright 1993,1994 by Paul Vixie
  * All rights reserved
@@ -42,6 +42,9 @@
 			 * didn't exist last time around...)
 			 */
 #define SPOOL_DIR	"tabs"
+
+			/* File containing maximum crontab size, in bytes. */
+#define MAXTABSIZE_FILE	"maxtabsize"
 
 			/* undefining these turns off their features.  note
 			 * that ALLOW_FILE and DENY_FILE must both be defined

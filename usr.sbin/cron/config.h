@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.5 1998/01/31 14:40:17 christos Exp $	*/
+/*	$NetBSD: config.h,v 1.6 1999/04/09 02:47:03 cjs Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -73,6 +73,11 @@
 			 */
 /*#define ALLOW_ONLY_ROOT			*/
 
+			/* The maximum size of a crontab, in bytes, if
+			   MAXTABSIZE_FILE doesn't exist.
+			 */
+#define MAXTABSIZE_DEFAULT	(1024*32)
+
 			/* if you want to use syslog(3) instead of appending
 			 * to CRONDIR/LOG_FILE (/var/cron/log, e.g.), define
 			 * SYSLOG here.  Note that quite a bit of logging
@@ -87,3 +92,5 @@
 			 * places.
 			 */
 #define SYSLOG	 			/*-*/
+
+
