@@ -542,7 +542,7 @@ const struct alpha_opcode alpha_opcodes[] = {
   { "lda",		MEM(0x08), BASE, ARG_MEM },
   { "ldah",		MEM(0x09), BASE, ARG_MEM },
   { "ldbu",		MEM(0x0A), BWX, ARG_MEM },
-  { "unop",		MEM(0x0B), BASE, { ZA } },		/* pseudo */
+  { "unop",		MEM(0x0B) | 30 << 16, BASE, { ZA } },	/* pseudo */
   { "ldq_u",		MEM(0x0B), BASE, ARG_MEM },
   { "ldwu",		MEM(0x0C), BWX, ARG_MEM },
   { "stw",		MEM(0x0D), BWX, ARG_MEM },
