@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.37 1998/11/13 04:47:04 oster Exp $	*/
+/*	$NetBSD: conf.c,v 1.38 1998/11/20 12:43:11 leo Exp $	*/
 
 /*
  * Copyright (c) 1991 The Regents of the University of California.
@@ -70,7 +70,7 @@ bdev_decl(cd);
 bdev_decl(ccd);
 #include "raid.h"
 bdev_decl(raid);
-#include "wdc.h"
+#include "wd.h"
 bdev_decl(wd);
 
 struct bdevsw	bdevsw[] =
@@ -89,7 +89,7 @@ struct bdevsw	bdevsw[] =
 	bdev_lkm_dummy(),		/* 11 */
 	bdev_lkm_dummy(),		/* 12 */
 	bdev_disk_init(NCCD,ccd),	/* 13: concatenated disk driver */
-	bdev_disk_init(NWDC,wd),	/* 14: IDE disk driver */
+	bdev_disk_init(NWD,wd),		/* 14: IDE disk driver */
 	bdev_disk_init(NCCD,ccd),	/* 15: RAIDframe disk driver */
 };
 int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
@@ -287,7 +287,7 @@ struct cdevsw	cdevsw[] =
 	cdev_uk_init(NUK,uk),		/* 31: SCSI unknown	*/
 	cdev_ss_init(NSS,ss),		/* 32: SCSI scanner	*/
 	cdev_rtc_init(1,rtc),		/* 33: RealTimeClock	*/
-	cdev_disk_init(NWDC,wd),	/* 34: IDE disk driver	*/
+	cdev_disk_init(NWD,wd),		/* 34: IDE disk driver	*/
 	cdev_tty_init(NSER,ser),	/* 35: 68901 UART	*/
 	cdev_ipf_init(NIPFILTER,ipl),	/* 36: ip-filter device */
 	cdev_disk_init(NMD,md),		/* 37: memory disk - for install disk */
