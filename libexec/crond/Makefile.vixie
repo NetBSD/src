@@ -1,13 +1,13 @@
 # Makefile for vixie's cron
 #
-# $Header: /cvsroot/src/libexec/crond/Attic/Makefile.vixie,v 1.1.1.1 1993/03/21 09:45:37 cgd Exp $
+# $Header: /cvsroot/src/libexec/crond/Attic/Makefile.vixie,v 1.2 1993/05/28 08:34:03 cgd Exp $
 #
 # vix 03mar88 [moved to RCS, rest of log is in there]
 # vix 30mar87 [goodbye, time.c; hello, getopt]
 # vix 12feb87 [cleanup for distribution]
 # vix 30dec86 [written]
 
-#/* Copyright 1988,1990 by Paul Vixie
+#/* Copyright 1988,1990,1993 by Paul Vixie
 # * All rights reserved
 # *
 # * Distribute freely, except: don't remove my name from the source or
@@ -21,8 +21,7 @@
 # *
 # * Send bug reports, bug fixes, enhancements, requests, flames, etc., and
 # * I'll try to keep a version up to date.  I can be reached as follows:
-# * Paul Vixie, 329 Noe Street, San Francisco, CA, 94114, (415) 864-7013,
-# * paul@vixie.sf.ca.us || {hoptoad,pacbell,decwrl,crash}!vixie!paul
+# * paul@vix.com || {hoptoad,pacbell,decwrl}!vixie!paul
 # */
 
 # NOTES:
@@ -36,9 +35,7 @@
 #	SHELL is for the 'augumented make' systems where 'make' imports
 #	SHELL from the environment and then uses it to run its commands.
 #	if your environment SHELL variable is /bin/csh, make goes real
-#	slow and sometimes does the wrong thing.  BINDIR is where the
-#	'crontab' command goes, and should be a common place like /usr/bin.
-#	LIBDIR is where the cron daemon lives; /usr/etc is common.
+#	slow and sometimes does the wrong thing.
 #
 #	this package needs the 'bitstring macros' library, which is
 #	available from me or from the comp.sources.unix archive.  if you
@@ -50,7 +47,7 @@
 
 #################################### begin configurable stuff
 #<<DESTROOT is assumed to have ./etc, ./bin, and ./man subdirectories>>
-DESTROOT	=	/usr/
+DESTROOT	=	$(DESTDIR)/usr/local
 #<<CRONDIR will be created by crond or crontab if nec'y>>
 CRONDIR		=	/var/cron
 #<<need bitstring.h>>
@@ -60,8 +57,8 @@ INCLUDE		=	-I.
 #LIBS		=	/usr/local/lib/getopt.o
 LIBS		=
 #<<optimize or debug?>>
-OPTIM		=	-O -fstrength-reduce
-#OPTIM		=	-g
+#OPTIM		=	-O
+OPTIM		=	-g
 #<<want -x flag for debugging?>>
 DEBUGGING	=	-DDEBUGGING=1
 #DEBUGGING	=	-DDEBUGGING=0
@@ -84,10 +81,10 @@ INFOS		=	README CHANGES.V2 FEATURES INSTALL CONVERSION THANKS
 MANPAGES	=	bitstring.3 crontab.5 crontab.1 crond.8
 HEADERS		=	bitstring.h cron.h config.h
 SOURCES		=	crond.c crontab.c database.c do_command.c \
-			entry.c env.c job.c misc.c user.c
+			entry.c env.c job.c misc.c user.c arpadate.c
 SHAR_SOURCE	=	$(INFOS) $(MANPAGES) Makefile $(HEADERS) $(SOURCES)
 LINT_CROND	=	crond.c database.c user.c entry.c \
-			misc.c job.c do_command.c env.c
+			misc.c job.c do_command.c env.c arpadate.c
 LINT_CRONTAB	=	crontab.c misc.c entry.c env.c
 CRON_OBJ	=	crond.o database.o user.o entry.o \
 			misc.o job.o do_command.o env.o
@@ -108,10 +105,10 @@ crontab		:	$(CRONTAB_OBJ)
 			$(CC) -o crontab $(CRONTAB_OBJ) $(LIBS)
 
 install		:	all
-			install -c -m 111 -o root -s crond $(DESTROOT)/libexec/
+			install -c -m 111 -o root -s crond $(DESTROOT)/etc/
 			install -c -m 4111 -o root -s crontab $(DESTROOT)/bin/
-			#install -c crontab.1 $(DESTROOT)/man/man1/crontab.1
-			#install -c crond.8   $(DESTROOT)/man/man8/crond.8
+			install -c crontab.1 $(DESTROOT)/man/man1/crontab.1
+			install -c crond.8   $(DESTROOT)/man/man8/crond.8
 			install -c crontab.5 $(DESTROOT)/man/man5/crontab.5
 
 clean		:;	rm -f *.o crond crontab a.out core tags *~ #*

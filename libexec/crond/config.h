@@ -1,9 +1,9 @@
 /* config.h - configurables for Vixie Cron
  *
- * $Header: /cvsroot/src/libexec/crond/Attic/config.h,v 1.2 1993/05/11 08:16:02 glass Exp $
+ * $Header: /cvsroot/src/libexec/crond/Attic/config.h,v 1.3 1993/05/28 08:34:09 cgd Exp $
  */
 
-/* Copyright 1988,1990 by Paul Vixie
+/* Copyright 1988,1990,1993 by Paul Vixie
  * All rights reserved
  *
  * Distribute freely, except: don't remove my name from the source or
@@ -24,6 +24,24 @@
 #ifndef	_CONFIG_FLAG
 #define	_CONFIG_FLAG
 
+#if defined(BSD)
+# define OLDBSD BSD
+# undef BSD
+# include <sys/param.h>
+# if !defined(BSD)
+#  define BSD OLDBSD
+# endif /*BSD*/
+# undef OLDBSD
+#endif /*BSD*/
+
+#if (defined(BSD)) && (BSD >= 199103)
+# include <paths.h>
+#endif /*BSD*/
+
+#if !defined(_PATH_SENDMAIL)
+# define _PATH_SENDMAIL "/usr/lib/sendmail"
+#endif /*SENDMAIL*/
+
 /*
  * these are site-dependent
  */
@@ -36,15 +54,25 @@
 			 * (hint: MAILTO= was added for this reason).
 			 */
 
-# define MAILCMD "/usr/sbin/sendmail -F\"Cron Daemon\" -odi -oem -or0s %s" /*-*/
+#define MAILCMD _PATH_SENDMAIL					/*-*/
+#define MAILARGS "%s -F\"Cron Daemon\" -odi -oem -or0s -t"	/*-*/
 			/* -Fx	 = set full-name of sender
 			 * -odi	 = Option Deliverymode Interactive
 			 * -oem	 = Option Errors Mailedtosender
 			 * -or0s = Option Readtimeout -- don't time out
+			 * -t    = recipients are in To: headers
 			 */
 
-/* # define MAILCMD "/bin/mail -d  %s"		/*-*/
+/* #define MAILCMD "/bin/mail"			/*-*/
+/* #define MAILARGS "%s -d \"%s\""			/*-*/
 			/* -d = undocumented but common flag: deliver locally?
+			 */
+
+/* #define MAIL_DATE				/*-*/
+			/* should we include an ersatz Date: header in
+			 * generated mail?  if you are using sendmail
+			 * for MAILCMD, it is better to let sendmail
+			 * generate the Date: header.
 			 */
 
 #ifndef CRONDIR
@@ -75,7 +103,7 @@
 			 */
 #define	ALLOW_FILE	"allow"		/*-*/
 #define DENY_FILE	"deny"		/*-*/
-#define LOG_FILE	"log"		/*-*/
+/*#define LOG_FILE	"log"		/*-*/
 
 			/* if ALLOW_FILE and DENY_FILE are not defined or are
 			 * defined but neither exists, should crontab(1) be
@@ -110,6 +138,24 @@
 
 			/* where should the daemon stick its PID?
 			 */
-#define PIDFILE		"/var/run/crond.pid"
+#ifdef _PATH_VARRUN
+# define PIDDIR	_PATH_VARRUN
+#else
+# define PIDDIR "/etc/"
+#endif
+#if defined(BSD) && (BSD >= 199103)
+# define PIDFILE		"%scron.pid"
+#else
+# define PIDFILE		"%scrond.pid"
+#endif
+
+			/* what editor to use if no EDITOR or VISUAL
+			 * environment variable specified.
+			 */
+#if defined(_PATH_VI)
+# define EDITOR _PATH_VI
+#else
+# define EDITOR "/usr/ucb/vi"
+#endif
 
 #endif /*CONFIG_FLAG*/

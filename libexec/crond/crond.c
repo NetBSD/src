@@ -1,5 +1,5 @@
 #if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$Header: /cvsroot/src/libexec/crond/Attic/crond.c,v 1.2 1993/03/28 17:24:43 glass Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/libexec/crond/Attic/crond.c,v 1.3 1993/05/28 08:34:14 cgd Exp $";
 #endif
 
 /* Copyright 1988,1990 by Paul Vixie
@@ -33,10 +33,10 @@ static char rcsid[] = "$Header: /cvsroot/src/libexec/crond/Attic/crond.c,v 1.2 1
 # include <sys/resource.h>
 #endif /*BSD*/
 
-extern int	fork(), unlink();
+/*extern int	fprintf(), fork(), unlink();
 extern time_t	time();
 extern void	exit();
-extern unsigned	sleep();
+extern unsigned	sleep();*/
 
 void
 usage()
@@ -262,7 +262,7 @@ sigchld_handler()
 
 	for (;;)
 	{
-		pid = wait3((int *) &waiter, WNOHANG, (struct rusage *)0);
+		pid = wait3(&waiter, WNOHANG, (struct rusage *)0);
 		switch (pid)
 		{
 		case -1:
