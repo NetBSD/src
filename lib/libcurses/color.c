@@ -1,4 +1,4 @@
-/*	$NetBSD: color.c,v 1.5 2000/04/17 12:25:45 blymn Exp $	*/
+/*	$NetBSD: color.c,v 1.6 2000/04/18 22:47:40 jdc Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -71,6 +71,7 @@ attr_t	__nca;
 #define COLOR_ANSI	1	/* ANSI/DEC-style colour manipulation */
 #define COLOR_HP	2	/* HP-style colour manipulation */
 #define COLOR_TEK	3	/* Tektronix-style colour manipulation */
+#define COLOR_OTHER	4	/* None of the others but can set fore/back */
 int	__color_type = COLOR_NONE;
 
 static void
@@ -126,6 +127,8 @@ start_color(void)
 			COLOR_PAIRS = PA > MAX_PAIRS ? MAX_PAIRS : PA;
 		}
 	}
+	if (!COLORS)
+		return (ERR);
 
 	/* Initialise colours and pairs */
 	for (i = 0; i < COLORS; i++) {
@@ -157,20 +160,26 @@ start_color(void)
 		__color_type = COLOR_HP;
 	else if (iC != NULL)
 		__color_type = COLOR_TEK;
+	else if (sB != NULL && sF != NULL)
+		__color_type = COLOR_OTHER;
 	else
 		return(ERR);		/* Unsupported colour method */
 
 #ifdef DEBUG
-	__CTRACE("start_color: %d, %d", COLORS, COLOR_PAIRS);
+	__CTRACE("start_color: COLORS = %d, COLOR_PAIRS = %d",
+	    COLORS, COLOR_PAIRS);
 	switch (__color_type) {
 	case COLOR_ANSI:
-		__CTRACE(" (ANSI)\n");
+		__CTRACE(" (ANSI style)\n");
 		break;
 	case COLOR_HP:
-		__CTRACE(" (HP)\n");
+		__CTRACE(" (HP style)\n");
 		break;
 	case COLOR_TEK:
-		__CTRACE(" (TEK)\n");
+		__CTRACE(" (Tektronics style)\n");
+		break;
+	case COLOR_OTHER:
+		__CTRACE(" (Other style)\n");
 		break;
 	}
 #endif
@@ -220,7 +229,7 @@ start_color(void)
 			__nca |= __ALTCHARSET;
 	}
 #ifdef DEBUG
-	__CTRACE ("start_color: __nca = %d", __nca);
+	__CTRACE ("start_color: __nca = %d\n", __nca);
 #endif
 	return(OK);
 }
@@ -299,7 +308,7 @@ init_color(short color, short red, short green, short blue)
 	colors[color].blue = blue;
 	/* XXX Not yet implemented */
 	return(ERR);
-	/* XXX: need to initialise Tek style (iC) */
+	/* XXX: need to initialise Tek style (iC) and support HLS */
 }
 
 /*
@@ -343,6 +352,10 @@ __set_color(attr_t attr)
 		break;
 	case COLOR_TEK:
 		/* XXX: need to support Tek style */
+		break;
+	case COLOR_OTHER:
+		tputs(__parse_cap(sF, pairs[pair].fore), 0, __cputchar);
+		tputs(__parse_cap(sB, pairs[pair].back), 0, __cputchar);
 		break;
 	}
 }
