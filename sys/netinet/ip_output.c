@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.120 2003/09/06 03:36:30 itojun Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.121 2003/09/19 00:27:56 jonathan Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.120 2003/09/06 03:36:30 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.121 2003/09/19 00:27:56 jonathan Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_ipsec.h"
@@ -213,7 +213,7 @@ ip_output(m0, va_alist)
 
 	MCLAIM(m, &ip_tx_mowner);
 #ifdef FAST_IPSEC
-	if (so->so_proto->pr_domain->dom_family == AF_INET)
+	if (so != NULL && so->so_proto->pr_domain->dom_family == AF_INET)
 		inp = (struct inpcb *)so->so_pcb;
 	else
 		inp = NULL;
