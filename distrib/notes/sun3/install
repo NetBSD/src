@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.9 2000/10/29 14:08:11 lukem Exp $
+.\"	$NetBSD: install,v 1.10 2001/07/24 18:24:51 nra Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -81,7 +81,7 @@ screen:
         Welcome to the NetBSD/\*M RAMDISK root!
 
 This environment is designed to do only three things:
-1:  Partititon your disk (use the command:  edlabel /dev/rsd0c)
+1:  Partition your disk (use the command:  edlabel /dev/rsd0c)
 2:  Copy a miniroot image into the swap partition  (/dev/rsd0b)
 3:  Reboot (using the swap partition, i.e. /dev/sd?b).
 
