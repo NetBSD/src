@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.13 1999/09/20 19:26:54 thorpej Exp $	*/
+/*	$NetBSD: tulip.c,v 1.14 1999/09/20 19:34:08 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -1378,17 +1378,6 @@ tlp_init(sc)
 	 */
 	sc->sc_opmode |= OPMODE_SR | OPMODE_ST |
 	    sc->sc_txth[sc->sc_txthresh].txth_opmode;
-	switch (sc->sc_chip) {
-	case TULIP_CHIP_21140:
-	case TULIP_CHIP_21140A:
-	case TULIP_CHIP_21142:
-	case TULIP_CHIP_21143:
-		sc->sc_opmode |= OPMODE_MBO;
-		break;
-
-	default:
-		/* Nothing. */
-	}
 
 	if (sc->sc_flags & TULIPF_HAS_MII) {
 		switch (sc->sc_chip) {
