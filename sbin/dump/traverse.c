@@ -1,4 +1,4 @@
-/*	$NetBSD: traverse.c,v 1.9 1995/03/18 14:55:09 cgd Exp $	*/
+/*	$NetBSD: traverse.c,v 1.10 1995/03/27 21:48:52 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1988, 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)traverse.c	8.2 (Berkeley) 9/23/93";
 #else
-static char rcsid[] = "$NetBSD: traverse.c,v 1.9 1995/03/18 14:55:09 cgd Exp $";
+static char rcsid[] = "$NetBSD: traverse.c,v 1.10 1995/03/27 21:48:52 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -566,7 +566,7 @@ bread(blkno, buf, size)
 	extern int errno;
 
 loop:
-	if ((int)lseek(diskfd, ((off_t)blkno << dev_bshift), 0) < 0)
+	if (lseek(diskfd, ((off_t)blkno << dev_bshift), 0) < 0)
 		msg("bread: lseek fails\n");
 	if ((cnt = read(diskfd, buf, size)) == size)
 		return;
