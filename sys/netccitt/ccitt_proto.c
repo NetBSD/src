@@ -1,4 +1,4 @@
-/*	$NetBSD: ccitt_proto.c,v 1.15 2004/04/22 01:01:40 matt Exp $	*/
+/*	$NetBSD: ccitt_proto.c,v 1.16 2005/01/23 22:24:39 matt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ccitt_proto.c,v 1.15 2004/04/22 01:01:40 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ccitt_proto.c,v 1.16 2005/01/23 22:24:39 matt Exp $");
 
 #include "opt_hdlc.h"
 #include "opt_llc.h"
@@ -92,7 +92,7 @@ __KERNEL_RCSID(0, "$NetBSD: ccitt_proto.c,v 1.15 2004/04/22 01:01:40 matt Exp $"
  * Definitions of protocols supported in the CCITT domain.
  */
 
-extern	struct domain ccittdomain;
+DOMAIN_DEFINE(ccittdomain);	/* forward declare and add to link set */
 #define DOMAIN &ccittdomain
 
 #ifdef LLC
@@ -132,5 +132,5 @@ const struct protosw ccittsw[] = {
 
 struct domain ccittdomain =
 	{ PF_CCITT, "ccitt", 0, 0, 0, ccittsw,
-		&ccittsw[sizeof(ccittsw)/sizeof(ccittsw[0])], 0,
+		&ccittsw[sizeof(ccittsw)/sizeof(ccittsw[0])],
 		rn_inithead, 32, sizeof (struct sockaddr_x25) };

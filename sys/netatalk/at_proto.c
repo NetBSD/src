@@ -1,4 +1,4 @@
-/*	$NetBSD: at_proto.c,v 1.5 2004/04/22 01:01:40 matt Exp $	*/
+/*	$NetBSD: at_proto.c,v 1.6 2005/01/23 22:24:39 matt Exp $	*/
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at_proto.c,v 1.5 2004/04/22 01:01:40 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at_proto.c,v 1.6 2005/01/23 22:24:39 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: at_proto.c,v 1.5 2004/04/22 01:01:40 matt Exp $");
 #include <netatalk/ddp_var.h>
 #include <netatalk/at_extern.h>
 
+DOMAIN_DEFINE(atalkdomain);	/* forward declare and add to link set */
 
 const struct protosw atalksw[] = {
     {
@@ -72,9 +73,7 @@ const struct protosw atalksw[] = {
 struct domain		atalkdomain = {
     PF_APPLETALK,	"appletalk",	0,	0,	0,
     atalksw, &atalksw[sizeof(atalksw)/sizeof(atalksw[0])],
-    0, rn_inithead,
+    rn_inithead,
     32,
     sizeof(struct sockaddr_at)
 };
-
-
