@@ -1,4 +1,4 @@
-/*	$NetBSD: via.c,v 1.25 1995/07/27 04:19:21 briggs Exp $	*/
+/*	$NetBSD: via.c,v 1.26 1995/07/30 21:30:57 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -298,7 +298,7 @@ try_again:
 			mask >>= 1;
 		}
 	} else {
-		delay(20); /* Just a delay for the fun of it. */
+		delay(7);
 		if (cnt++ >= 2) {
 			return 1;
 		}
@@ -324,7 +324,7 @@ try_again:
 			mask >>= 1;
 		}
 	} else {
-		delay(20);
+		delay(7);
 		if (cnt++ >= 2)
 			return 1;
 	}
