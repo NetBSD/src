@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.529 2003/04/28 08:33:49 haya Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.530 2003/06/07 04:17:10 ichiro Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.530 2003/04/28 08:29:52 haya Exp 
+ *	NetBSD: pcidevs,v 1.531 2003/06/07 04:16:25 ichiro Exp 
  */
 
 /*
@@ -4406,6 +4406,48 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Intel",
 	    "31244 Serial ATA Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82855PM_DDR,
+	    0,
+	    "Intel",
+	    "82855PM MCH Host Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82855PM_AGP,
+	    0,
+	    "Intel",
+	    "82855PM Host-to-AGP Bridge",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82855PM_PM,
+	    0,
+	    "Intel",
+	    "82855PM Power Management Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82855GM_MCH,
+	    0,
+	    "Intel",
+	    "82855GM Host-to-Hub Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82855GM_AGP,
+	    0,
+	    "Intel",
+	    "82855PM GMCH Integrated Graphics Device",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82855GM_AGP,
+	    0,
+	    "Intel",
+	    "82855PM GMCH Memory Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82855GM_AGP,
+	    0,
+	    "Intel",
+	    "82855PM GMCH Configuration Process",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82830MP_IO_1,
