@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.29.2.2 2003/01/28 06:19:13 jmc Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.29.2.3 2003/06/16 13:04:42 grant Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -2576,7 +2576,6 @@ bge_tick(xsc)
 		    BGE_MACSTAT_TBI_PCS_SYNCHED) {
 			sc->bge_link++;
 			CSR_WRITE_4(sc, BGE_MAC_STS, 0xFFFFFFFF);
-			printf("%s: gigabit link up\n", sc->bge_dev.dv_xname);
 			if (!IFQ_IS_EMPTY(&ifp->if_snd))
 				bge_start(ifp);
 		}
@@ -2589,9 +2588,6 @@ bge_tick(xsc)
 	if (!sc->bge_link && mii->mii_media_status & IFM_ACTIVE &&
 	    IFM_SUBTYPE(mii->mii_media_active) != IFM_NONE) {
 		sc->bge_link++;
-		if (IFM_SUBTYPE(mii->mii_media_active) == IFM_1000_T ||
-		    IFM_SUBTYPE(mii->mii_media_active) == IFM_1000_SX)
-			printf("%s: gigabit link up\n", sc->bge_dev.dv_xname);
 		if (!IFQ_IS_EMPTY(&ifp->if_snd))
 			bge_start(ifp);
 	}
