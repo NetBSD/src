@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.75 2001/10/31 03:59:42 tv Exp $	*/
+/*	$NetBSD: parse.c,v 1.76 2002/01/24 01:39:03 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: parse.c,v 1.75 2001/10/31 03:59:42 tv Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.76 2002/01/24 01:39:03 reinoud Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.75 2001/10/31 03:59:42 tv Exp $");
+__RCSID("$NetBSD: parse.c,v 1.76 2002/01/24 01:39:03 reinoud Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1771,6 +1771,8 @@ ParseDoInclude (line)
      * find the durn thing. A return of NULL indicates the file don't
      * exist.
      */
+    fullname = (char *)NULL;
+
     if (!isSystem) {
 	/*
 	 * Include files contained in double-quotes are first searched for
@@ -1803,27 +1805,24 @@ ParseDoInclude (line)
 	    fullname = (char *)NULL;
 	}
 	free (Fname);
-    } else {
-	fullname = (char *)NULL;
+        if (fullname == (char *)NULL) {
+	    /*
+    	     * Makefile wasn't found in same directory as included makefile.
+	     * Search for it first on the -I search path,
+	     * then on the .PATH search path, if not found in a -I directory.
+	     * XXX: Suffix specific?
+	     */
+	    fullname = Dir_FindFile (file, parseIncPath);
+	    if (fullname == (char *)NULL) {
+	        fullname = Dir_FindFile(file, dirSearchPath);
+	    }
+        }
     }
 
+    /* Looking for a system file or file still not found */
     if (fullname == (char *)NULL) {
 	/*
-	 * System makefile or makefile wasn't found in same directory as
-	 * included makefile. Search for it first on the -I search path,
-	 * then on the .PATH search path, if not found in a -I directory.
-	 * XXX: Suffix specific?
-	 */
-	fullname = Dir_FindFile (file, parseIncPath);
-	if (fullname == (char *)NULL) {
-	    fullname = Dir_FindFile(file, dirSearchPath);
-	}
-    }
-
-    if (fullname == (char *)NULL) {
-	/*
-	 * Still haven't found the makefile. Look for it on the system
-	 * path as a last resort.
+	 * Look for it on the system path
 	 */
 	fullname = Dir_FindFile(file, Lst_IsEmpty(sysIncPath) ? defIncPath : sysIncPath);
     }
