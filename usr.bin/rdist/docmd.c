@@ -1,4 +1,4 @@
-/*	$NetBSD: docmd.c,v 1.25 2003/08/07 11:15:35 agc Exp $	*/
+/*	$NetBSD: docmd.c,v 1.26 2004/08/04 02:05:28 ginsbach Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)docmd.c	8.1 (Berkeley) 6/9/93";
 #else
-__RCSID("$NetBSD: docmd.c,v 1.25 2003/08/07 11:15:35 agc Exp $");
+__RCSID("$NetBSD: docmd.c,v 1.26 2004/08/04 02:05:28 ginsbach Exp $");
 #endif
 #endif /* not lint */
 
@@ -525,13 +525,19 @@ notify(char *file, char *rhost, struct namelist *to, time_t lmod)
 	int fd, len;
 	struct stat stb;
 	FILE *pf;
+	char *cp, *nrhost = rhost;
 
 	if ((options & VERIFY) || to == NULL)
 		return;
+
+	/* strip any leading user@ prefix from rhost */
+	if (rhost && (cp = strchr(rhost, '@')) != NULL)
+		nrhost = cp + 1;
+
 	if (!qflag) {
 		printf("notify ");
 		if (rhost)
-			printf("@%s ", rhost);
+			printf("@%s ", nrhost);
 		prnames(to);
 	}
 	if (nflag)
@@ -566,13 +572,13 @@ notify(char *file, char *rhost, struct namelist *to, time_t lmod)
 	fprintf(pf, "From: rdist (Remote distribution program)\n");
 	fprintf(pf, "To:");
 	if (!any('@', to->n_name) && rhost != NULL)
-		fprintf(pf, " %s@%s", to->n_name, rhost);
+		fprintf(pf, " %s@%s", to->n_name, nrhost);
 	else
 		fprintf(pf, " %s", to->n_name);
 	to = to->n_next;
 	while (to != NULL) {
 		if (!any('@', to->n_name) && rhost != NULL)
-			fprintf(pf, ", %s@%s", to->n_name, rhost);
+			fprintf(pf, ", %s@%s", to->n_name, nrhost);
 		else
 			fprintf(pf, ", %s", to->n_name);
 		to = to->n_next;
