@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)server.c	5.15 (Berkeley) 3/1/91";*/
-static char rcsid[] = "$Id: server.c,v 1.3 1993/10/09 01:11:39 cgd Exp $";
+static char rcsid[] = "$Id: server.c,v 1.4 1993/12/04 02:11:38 jtc Exp $";
 #endif /* not lint */
 
 #include "defs.h"
@@ -289,7 +289,7 @@ sendf(rname, opts)
 	int sizerr, f, u, len;
 	off_t i;
 	DIR *d;
-	struct direct *dp;
+	struct dirent *dp;
 	char *otp, *cp;
 	extern struct subcmd *subcmds;
 	static char user[15], group[15];
@@ -1159,7 +1159,7 @@ clean(cp)
 	register char *cp;
 {
 	DIR *d;
-	register struct direct *dp;
+	register struct dirent *dp;
 	struct stat stb;
 	char *otp;
 	int len, opts;
@@ -1231,7 +1231,7 @@ removeit(stp)
 	struct stat *stp;
 {
 	DIR *d;
-	struct direct *dp;
+	struct dirent *dp;
 	register char *cp;
 	struct stat stb;
 	char *otp;
