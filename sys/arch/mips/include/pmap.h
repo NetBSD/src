@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.10 1997/05/16 21:35:37 gwr Exp $	*/
+/*	$NetBSD: pmap.h,v 1.11 1997/05/18 17:33:08 mhitch Exp $	*/
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -101,7 +101,5 @@ struct pmap kernel_pmap_store;
 #define	pmap_wired_count(pmap) 	((pmap)->pm_stats.wired_count)
 #define pmap_kernel()		(&kernel_pmap_store)
 #endif	/* _KERNEL */
-
-#define	__VM_PMAP_HACK
 
 #endif	/* _PMAP_MACHINE_ */

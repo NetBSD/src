@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.14 1997/01/14 22:29:54 jonathan Exp $	*/
+/*	$NetBSD: pmap.c,v 1.15 1997/05/18 17:26:30 mhitch Exp $	*/
 
 /* 
  * Copyright (c) 1992, 1993
@@ -353,7 +353,7 @@ pmap_pinit(pmap)
 		if (pmap->pm_segtab->seg_tab[i] != 0)
 			panic("pmap_pinit: pm_segtab != 0");
 #endif
-	if (pmap == &vmspace0.vm_pmap) {
+	if (pmap == vmspace0.vm_map.pmap) {
 		/*
 		 * The initial process has already been allocated a TLBPID
 		 * in mach_init().
@@ -1386,7 +1386,7 @@ pmap_alloc_tlbpid(p)
 	register pmap_t pmap;
 	register int id;
 
-	pmap = &p->p_vmspace->vm_pmap;
+	pmap = p->p_vmspace->vm_map.pmap;
 	if (pmap->pm_tlbgen != tlbpid_gen) {
 		id = tlbpid_cnt;
 		if (id == VMMACH_NUM_PIDS) {
