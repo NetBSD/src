@@ -403,7 +403,7 @@ for machine in $build $host $target; do
 		;;
 	alpha*-*-netbsd*)
 		tm_file="${tm_file} alpha/elf.h alpha/netbsd.h alpha/netbsdl-elf.h"
-		xm_file="xm-netbsd.h ${xm_file}"
+		xm_file=alpha/xm-netbsd.h
 		target_cpu_default="MASK_GAS"
 		tmake_file="alpha/t-crtbe"
 		extra_parts="crtbegin.o crtend.o"
@@ -506,7 +506,7 @@ for machine in $build $host $target; do
 		;;
 	arm*-*-netbsd*)
 		tm_file=arm/netbsd.h
-		xm_file="xm-netbsd.h ${xm_file}"
+		xm_file=arm/xm-netbsd.h
 		tmake_file="t-netbsd arm/t-netbsd"
 		# On NetBSD, the headers are already okay, except for math.h.
 		fixincludes=fixinc.wrap
@@ -863,7 +863,7 @@ for machine in $build $host $target; do
 		;;
 	i[[34567]]86-*-netbsd*)
 		tm_file=i386/netbsd.h
-		xm_file="xm-netbsd.h ${xm_file}"
+		xm_file=i386/xm-netbsd.h
 		# On NetBSD, the headers are already okay, except for math.h.
 		fixincludes=fixinc.wrap
 		tmake_file=t-netbsd
@@ -1630,7 +1630,7 @@ for machine in $build $host $target; do
 		;;
 	m68k*-*-netbsd*)
 		tm_file=m68k/netbsd.h
-		xm_file="xm-netbsd.h ${xm_file}"
+		xm_file=m68k/xm-netbsd.h
 		# On NetBSD, the headers are already okay, except for math.h.
 		fixincludes=fixinc.wrap
 		tmake_file=t-netbsd
@@ -1951,7 +1951,7 @@ for machine in $build $host $target; do
 	      ;;
 	mipsel-*-netbsd* | mips-dec-netbsd*)    # Decstation running NetBSD
 		tm_file=mips/netbsd.h
-		xm_file="xm-netbsd.h ${xm_file}"
+		xm_file=mips/xm-netbsd.h
 		# On NetBSD, the headers are already okay, except for math.h.
 		fixincludes=fixinc.wrap
 		tmake_file=t-netbsd
@@ -2282,7 +2282,7 @@ for machine in $build $host $target; do
 		;;
 	ns32k-*-netbsd*)
 		tm_file=ns32k/netbsd.h
-		xm_file="xm-netbsd.h ${xm_file}"
+		xm_file=ns32k/xm-netbsd.h
 		# On NetBSD, the headers are already okay, except for math.h.
 		fixincludes=fixinc.wrap
 		tmake_file=t-netbsd
@@ -2584,7 +2584,7 @@ for machine in $build $host $target; do
 		;;
 	sparc-*-netbsd*)
 		tm_file=sparc/netbsd.h
-		xm_file="xm-netbsd.h ${xm_file}"
+		xm_file=sparc/xm-netbsd.h
 		# On NetBSD, the headers are already okay, except for math.h.
 		fixincludes=fixinc.wrap
 		tmake_file=t-netbsd
@@ -2777,7 +2777,7 @@ for machine in $build $host $target; do
 		;;
 	vax-*-netbsd*)
 		tm_file="${tm_file} netbsd.h vax/netbsd.h"
-		xm_file="xm-netbsd.h ${xm_file}"
+		xm_file=vax/xm-netbsd.h
 		# On NetBSD, the headers are already okay, except for math.h.
 		fixincludes=fixinc.wrap
 		tmake_file=t-netbsd
