@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.3 1995/06/28 02:44:51 cgd Exp $	*/
+/*	$NetBSD: clock.c,v 1.4 1995/08/03 00:53:34 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -313,6 +313,7 @@ bad:
  * TODRZERO + 100*(SECYEAR+2*SECDAY) (e.g. on Jan 2 just after midnight)
  * to wrap the TODR around.
  */
+void
 resettodr()
 {
 	struct clock_softc *csc = (struct clock_softc *)clockcd.cd_devs[0];
