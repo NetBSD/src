@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.16 1997/07/17 01:48:42 jtk Exp $	*/
+/*	$NetBSD: wd.c,v 1.17 1997/07/29 01:59:20 mark Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -203,6 +203,8 @@ wdcprobe_internal(iot, ioh, aux_ioh, data_ioh, data32_ioh, name)
 	wdc.sc_data32ioh = data32_ioh;
 	wdc.sc_inten = NULL;
 	wdc.sc_flags = WDCF_QUIET;	/* Supress warning during probe */
+	if (data32_ioh != -1)
+		wdc.sc_flags |= WDCF_32BIT;	/* Use 32 bit xfers if possible */
 	strcpy(wdc.sc_dev.dv_xname, name);
 
 	/* Check if we have registers that work. */
@@ -245,6 +247,10 @@ wdcprobe(parent, match, aux)
 	bus_space_handle_t ioh;
 	bus_space_handle_t aux_ioh;
 	int rv = 0;
+
+	/* We need a base address */
+	if (mb->mb_iobase == MAINBUSCF_BASE_DEFAULT)
+		return(0);
 
 	/* XXX - need xname */
 
@@ -1391,8 +1397,12 @@ wd_get_parms(wd)
 		wd->sc_dk.dk_label->d_type = DTYPE_ESDI;
 
 		/* Read in parameter block. */
-		bus_space_read_multi_2(wdc->sc_iot, wdc->sc_dataioh, wd_data,
-		    (u_int16_t *)tb, sizeof(tb) / sizeof(short));
+		if ((wd->sc_flags & WDF_32BIT) == 0)
+			bus_space_read_multi_2(wdc->sc_iot, wdc->sc_dataioh, wd_data,
+			    (u_int16_t *)tb, sizeof(tb) >> 1);
+		else
+			bus_space_read_multi_4(wdc->sc_iot, wdc->sc_data32ioh, wd_data,
+			    (u_int32_t *)tb, sizeof(tb) >> 2);
 		bcopy(tb, &wd->sc_params, sizeof(struct wdparams));
 
 		/* Shuffle string byte order. */
@@ -1669,8 +1679,12 @@ wddump(dev, blkno, va, size)
 			return EIO;
 		}
 	
-		bus_space_write_multi_2(wdc->sc_iot, wdc->sc_dataioh, wd_data,
-		    (u_int16_t *)va, lp->d_secsize >> 1);
+		if ((wd->sc_flags & WDF_32BIT) == 0)
+			bus_space_write_multi_2(wdc->sc_iot, wdc->sc_dataioh, wd_data,
+			    (u_int16_t *)va, lp->d_secsize >> 1);
+		else
+			bus_space_write_multi_4(wdc->sc_iot, wdc->sc_data32ioh, wd_data,
+			    (u_int32_t *)va, lp->d_secsize >> 2);
 	
 		/* Check data request (should be done). */
 		if (wait_for_ready(wdc) != 0) {
