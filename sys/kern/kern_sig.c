@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.192 2004/04/03 19:43:08 matt Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.193 2004/04/03 19:46:10 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.192 2004/04/03 19:43:08 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.193 2004/04/03 19:46:10 matt Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -1060,6 +1060,13 @@ kpsignal2(struct proc *p, const ksiginfo_t *ksi, int dolock)
 			if (prop & SA_TTYSTOP && p->p_pgrp->pg_jobc == 0)
 				return;
 		}
+	} else {
+		/*
+		 * If the process is being traced and the signal is being
+		 * caught, make sure to save any ksiginfo.
+		 */
+		if (sigismember(&p->p_sigctx.ps_sigcatch, signum))
+			ksiginfo_put(p, ksi);
 	}
 
 	if (prop & SA_CONT)
