@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.25 1997/03/24 21:50:48 mycroft Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.26 1997/06/24 23:38:10 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -97,6 +97,7 @@ static int nfs_numnfsd = 0;
 static int notstarted = 1;
 static int modify_flag = 0;
 static struct nfsdrt nfsdrt;
+extern struct nfs_public nfs_pub;
 #endif
 
 #define	TRUE	1
@@ -815,7 +816,8 @@ nfsrv_init(terminating)
 			free((caddr_t)slp, M_NFSSVC);
 		}
 		nfsrv_cleancache();	/* And clear out server cache */
-	}
+	} else
+		nfs_pub.np_valid = 0;
 
 	TAILQ_INIT(&nfssvc_sockhead);
 	nfssvc_sockhead_flag &= ~SLP_INIT;
