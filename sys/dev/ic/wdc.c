@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.160 2003/12/14 18:51:10 thorpej Exp $ */
+/*	$NetBSD: wdc.c,v 1.161 2003/12/15 00:27:13 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.160 2003/12/14 18:51:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.161 2003/12/15 00:27:13 thorpej Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -329,9 +329,15 @@ atabusconfig(atabus_sc)
 	}
 	need_delref = 1;
 
-	if (wdcprobe1(chp, 0) == 0)
+	if (chp->wdc && (chp->wdc->cap & WDC_CAPABILITY_DRVPROBE) != 0) {
+		if ((*chp->wdc->drv_probe)(chp) == 0) {
+			/* If no drives, abort attach here. */
+			goto out;
+		}
+	} else if (wdcprobe1(chp, 0) == 0) {
 		/* If no drives, abort attach here. */
 		goto out;
+	}
 
 	/* for ATA/OLD drives, wait for DRDY, 3s timeout */
 	for (i = 0; i < mstohz(3000); i++) {

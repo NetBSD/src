@@ -1,4 +1,4 @@
-/*	$NetBSD: wdcvar.h,v 1.45 2003/12/03 12:01:18 bouyer Exp $	*/
+/*	$NetBSD: wdcvar.h,v 1.46 2003/12/15 00:27:13 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -121,6 +121,7 @@ struct wdc_softc { /* Per controller state */
 #define WDC_CAPABILITY_NOIRQ  0x1000	/* Controller never interrupts */
 #define WDC_CAPABILITY_SELECT  0x2000	/* Controller selects target */
 #define	WDC_CAPABILITY_RAID   0x4000	/* Controller "supports" RAID */
+#define	WDC_CAPABILITY_DRVPROBE 0x8000	/* Controller has smart drive probe */
 	u_int8_t      PIO_cap; /* highest PIO mode supported */
 	u_int8_t      DMA_cap; /* highest DMA mode supported */
 	u_int8_t      UDMA_cap; /* highest UDMA mode supported */
@@ -159,6 +160,9 @@ struct wdc_softc { /* Per controller state */
 
 	/* if WDC_CAPABILITY_IRQACK set in 'cap' */
 	void		(*irqack) __P((struct channel_softc *));
+
+	/* if WDC_CAPABILITY_DRVPROBE is set in 'cap' */
+	int		(*drv_probe) __P((struct channel_softc *));
 };
 
  /*
