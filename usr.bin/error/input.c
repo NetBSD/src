@@ -1,4 +1,4 @@
-/*	$NetBSD: input.c,v 1.4 1995/09/10 15:55:13 christos Exp $	*/
+/*	$NetBSD: input.c,v 1.5 1997/10/18 14:44:32 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)input.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: input.c,v 1.4 1995/09/10 15:55:13 christos Exp $";
+__RCSID("$NetBSD: input.c,v 1.5 1997/10/18 14:44:32 lukem Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -52,29 +53,31 @@ char	**wordv;	/* the actual error message */
 int	nerrors;
 int	language;
 
-Errorclass	onelong();
-Errorclass	cpp();
-Errorclass	pccccom();	/* Portable C Compiler C Compiler */
-Errorclass	richieccom();	/* Richie Compiler for 11 */
-Errorclass	lint0();
-Errorclass	lint1();
-Errorclass	lint2();
-Errorclass	lint3();
-Errorclass	make();
-Errorclass	f77();
-Errorclass	pi();
-Errorclass	ri();
-Errorclass	troff();
-Errorclass	mod2();
+Errorclass	catchall __P((void));
+Errorclass	cpp __P((void));
+Errorclass	f77 __P((void));
+Errorclass	lint0 __P((void));
+Errorclass	lint1 __P((void));
+Errorclass	lint2 __P((void));
+Errorclass	lint3 __P((void));
+Errorclass	make __P((void));
+Errorclass	mod2 __P((void));
+Errorclass	onelong __P((void));
+Errorclass	pccccom __P((void));	/* Portable C Compiler C Compiler */
+Errorclass	pi __P((void));
+Errorclass	ri __P((void));
+Errorclass	richieccom __P((void));	/* Richie Compiler for 11 */
+Errorclass	troff __P((void));
+
 /*
  *	Eat all of the lines in the input file, attempting to categorize
  *	them by their various flavors
  */
+void
 eaterrors(r_errorc, r_errorv)
 	int	*r_errorc;
 	Eptr	**r_errorv;
 {
-	extern	boolean	piflag;
 	Errorclass	errorclass = C_SYNC;
 	char *line;
 	char *inbuffer;
@@ -122,14 +125,15 @@ eaterrors(r_errorc, r_errorv)
 /*
  *	create a new error entry, given a zero based array and count
  */
+void
 erroradd(errorlength, errorv, errorclass, errorsubclass)
 	int		errorlength;
 	char		**errorv;
 	Errorclass	errorclass;
 	Errorclass	errorsubclass;
 {
-	reg	Eptr	newerror;
-	reg	char	*cp;
+	Eptr	newerror;
+	char	*cp;
 
 	if (errorclass == C_TRUE){
 		/* check canonicalization of the second argument*/
@@ -167,7 +171,8 @@ erroradd(errorlength, errorv, errorclass, errorsubclass)
 	}	/* length > 0 */
 }
 
-Errorclass onelong()
+Errorclass
+onelong()
 {
 	char	**nwordv;
 	if ( (wordc == 1) && (language != INLD) ){
@@ -213,7 +218,8 @@ Errorclass onelong()
 	return(C_UNKNOWN);
 }	/* end of one long */
 
-Errorclass	cpp()
+Errorclass
+cpp()
 {
 	/* 
 	 *	Now attempt a cpp error message match
@@ -235,7 +241,8 @@ Errorclass	cpp()
 	return(C_UNKNOWN);
 }	/*end of cpp*/
 
-Errorclass pccccom()
+Errorclass
+pccccom()
 {
 	/*
 	 *	Now attempt a ccom error message match:
@@ -272,11 +279,13 @@ Errorclass pccccom()
  *	fprintf(stderr, "%d: ", line);
  *
  */
-Errorclass richieccom()
+
+Errorclass
+richieccom()
 {
-	reg	char	*cp;
-	reg	char	**nwordv;
-		char	*file;
+	char	*cp;
+	char	**nwordv;
+	char	*file;
 
 	if (lastchar(wordv[1]) == ':'){
 		cp = wordv[1] + strlen(wordv[1]) - 1;
@@ -299,10 +308,11 @@ Errorclass richieccom()
 	return(C_UNKNOWN);
 }
 
-Errorclass lint0()
+Errorclass
+lint0()
 {
-	reg	char	**nwordv;
-		char	*line, *file;
+	char	**nwordv;
+	char	*line, *file;
 	/*
 	 *	Attempt a match for the new lint style normal compiler
 	 *	error messages, of the form
@@ -329,7 +339,8 @@ Errorclass lint0()
 	return (C_UNKNOWN);
 }
 
-Errorclass lint1()
+Errorclass
+lint1()
 {
 	char	*line1, *line2;
 	char	*file1, *file2;
@@ -366,7 +377,8 @@ Errorclass lint1()
 	return(C_UNKNOWN);
 } /* end of lint 1*/
 
-Errorclass lint2()
+Errorclass
+lint2()
 {
 	char	*file;
 	char	*line;
@@ -396,7 +408,9 @@ Errorclass lint2()
 
 char	*Lint31[4] = {"returns", "value", "which", "is"};
 char	*Lint32[6] = {"value", "is", "used,", "but", "none", "returned"};
-Errorclass lint3()
+
+Errorclass
+lint3()
 {
 	if (   (wordvcmp(wordv+2, 4, Lint31) == 0)
 	    || (wordvcmp(wordv+2, 6, Lint32) == 0) ){
@@ -413,6 +427,8 @@ char	*F77_fatal[3] = {"Compiler", "error", "line"};
 char	*F77_error[3] = {"Error", "on", "line"};
 char	*F77_warning[3] = {"Warning", "on", "line"};
 char    *F77_no_ass[3] = {"Error.","No","assembly."};
+
+Errorclass 
 f77()
 {
 	char	**nwordv;
@@ -452,7 +468,9 @@ f77()
 
 char	*Make_Croak[3] = {"***", "Error", "code"};
 char	*Make_NotRemade[5] = {"not", "remade", "because", "of", "errors"};
-Errorclass make()
+
+Errorclass
+make()
 {
 	if (wordvcmp(wordv+1, 3, Make_Croak) == 0){
 		language = INMAKE;
@@ -464,7 +482,9 @@ Errorclass make()
 	}
 	return(C_UNKNOWN);
 }
-Errorclass ri()
+
+Errorclass
+ri()
 {
 /*
  *	Match an error message produced by ri; here is the
@@ -499,7 +519,8 @@ Errorclass ri()
 	return(C_UNKNOWN);
 }
 
-Errorclass catchall()
+Errorclass
+catchall()
 {
 	/*
 	 *	Catches random things.
@@ -508,7 +529,8 @@ Errorclass catchall()
 	return(C_NONSPEC);
 } /* end of catch all*/
 
-Errorclass troff()
+Errorclass
+troff()
 {
 	/*
 	 *	troff source error message, from eqn, bib, tbl...
@@ -532,7 +554,9 @@ Errorclass troff()
 	}
 	return(C_UNKNOWN);
 }
-Errorclass mod2()
+
+Errorclass
+mod2()
 {
 	/*
 	 *	for decwrl modula2 compiler (powell)
