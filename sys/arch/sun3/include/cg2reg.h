@@ -1,4 +1,4 @@
-/*	$NetBSD: cg2reg.h,v 1.1 1995/03/21 16:19:57 gwr Exp $ */
+/*	$NetBSD: cg2reg.h,v 1.2 1995/03/21 16:22:25 gwr Exp $ */
 
 /*
  * Copyright (c) 1994 Dennis Ferguson
@@ -25,7 +25,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* cgtworeg.h - CG2 colour frame buffer definitions
+/* cg2reg.h - CG2 colour frame buffer definitions
  *
  * The mapped memory looks like:
  *
