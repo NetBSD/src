@@ -1,4 +1,4 @@
-/* 	$NetBSD: px.c,v 1.11 1999/06/18 05:13:46 thorpej Exp $ */
+/* 	$NetBSD: px.c,v 1.12 1999/06/21 19:07:16 ad Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.11 1999/06/18 05:13:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.12 1999/06/21 19:07:16 ad Exp $");
 
 /*
  * px.c: driver for the DEC TURBOchannel 2D and 3D accelerated framebuffers
@@ -1078,15 +1078,11 @@ px_alloc_pbuf(pxi)
 		}
 
 		/*
-		 * XXX not needed if only the interrupt handling on the 3min
-		 * was not ``a disastrous mess''.
-		 */
+		 * Dequeue stalled packets manually. This should only
+		 * ever happen during prelonged periods at splhigh().
+		 * Autoconfiguration time is an example.
+		*/
 		if (i == 0) {
-			/*
-			 * Dequeue stalled packets manually. This should only
-			 * ever happen during prelonged periods at splhigh().
-			 * Autoconfiguration time is an example.
-			 */
 			for (i = pxi->pxi_lpr; i < pxi->pxi_lpw; i++) {
 				poll = pxi->pxi_qpoll[i & 15];
 
