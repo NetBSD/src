@@ -1,4 +1,4 @@
-# $NetBSD: md.arc,v 1.1 2000/03/03 16:31:22 soda Exp $
+# $NetBSD: md.arc,v 1.2 2000/03/17 22:54:04 tron Exp $
 ./usr/include/arc			comp-c-include
 ./usr/include/arc/_G_config.h		comp-c-include
 ./usr/include/arc/ansi.h		comp-c-include
@@ -15,6 +15,7 @@
 ./usr/include/arc/ecoff_machdep.h	comp-c-include
 ./usr/include/arc/elf_machdep.h		comp-c-include
 ./usr/include/arc/endian.h		comp-c-include
+./usr/include/arc/endian_machdep.h	comp-c-include
 ./usr/include/arc/float.h		comp-c-include
 ./usr/include/arc/ieee.h		comp-c-include
 ./usr/include/arc/ieeefp.h		comp-c-include
