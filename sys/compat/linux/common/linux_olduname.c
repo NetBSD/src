@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_olduname.c,v 1.35 1997/10/10 22:16:10 fvdl Exp $	*/
+/*	$NetBSD: linux_olduname.c,v 1.36 1997/10/21 00:57:38 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -543,13 +543,14 @@ linux_sys_msync(p, v, retval)
 		syscallarg(int) fl;
 	} */ *uap = v;
 
-	struct sys_msync_args bma;
+	struct sys___msync13_args bma;
 
 	/* flags are ignored */
 	SCARG(&bma, addr) = SCARG(uap, addr);
 	SCARG(&bma, len) = SCARG(uap, len);
+	SCARG(&bma, flags) = SCARG(uap, fl);
 
-	return sys_msync(p, &bma, retval);
+	return sys___msync13(p, &bma, retval);
 }
 
 /*
