@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.56 2001/03/22 22:20:28 petrov Exp $ */
+/*	$NetBSD: db_interface.c,v 1.57 2001/05/18 21:00:47 mrg Exp $ */
 
 /*
  * Mach Operating System
@@ -589,18 +589,19 @@ db_lock(addr, have_addr, count, modif)
 	char *modif;
 {
 #if 0
-	lock_t l = (lock_t)addr;
+	lock_t l;
 
-	if (have_addr) {
-		db_printf("interlock=%x want_write=%x want_upgrade=%x\n"
-			  "waiting=%x can_sleep=%x read_count=%x\n"
-			  "thread=%p recursion_depth=%x\n",
-			  l->interlock.lock_data, l->want_write, l->want_upgrade,
-			  l->waiting, l->can_sleep, l->read_count,
-			  l->thread, l->recursion_depth);
+	if (!have_addr) {
+		db_printf("What lock address?\n");
+		return;
 	}
 
-	db_printf("What lock address?\n");
+	l = (lock_t)addr;
+	db_printf("interlock=%x flags=%x\n waitcount=%x sharecount=%x "
+	    "exclusivecount=%x\n wmesg=%s recurselevel=%x\n",
+	    l->lk_interlock.lock_data, l->lk_flags, l->lk_waitcount,
+	    l->lk_sharecount, l->lk_exclusivecount, l->lk_wmesg,
+	    l->lk_recurselevel);
 #else
 	db_printf("locks unsupported\n");
 #endif
