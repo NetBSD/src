@@ -1,4 +1,4 @@
-/*	$NetBSD: sc_wrap.c,v 1.5 1998/08/21 13:19:43 tsubai Exp $	*/
+/*	$NetBSD: sc_wrap.c,v 1.6 1998/08/21 14:52:29 tsubai Exp $	*/
 
 /*
  * This driver is slow!  Need to rewrite.
@@ -50,7 +50,7 @@ extern void sc_send __P((struct sc_scb *, int, int));
 extern int scintr __P((void));
 extern void scsi_hardreset __P((void));
 extern int sc_busy __P((struct sc_softc *, int));
-extern vm_offset_t kvtophys __P((vm_offset_t));
+extern paddr_t kvtophys __P((vaddr_t));
 
 static int sc_disconnect = IDT_DISCON;
 
@@ -297,11 +297,11 @@ start:
 	if (xs->datalen > 0) {
 		int pages, offset;
 		int i, pn;
-		u_int va;
+		vaddr_t va;
 
 		/* bzero(&sc->sc_map[chan], sizeof(struct sc_map)); */
 
-		va = (u_int)xs->data;
+		va = (vaddr_t)xs->data;
 
 		offset = va & PGOFSET;
 		pages = (offset + xs->datalen + NBPG -1 ) >> PGSHIFT;
@@ -309,7 +309,7 @@ start:
 			panic("sc_map: Too many pages");
 
 		for (i = 0; i < pages; i++) {
-			pn = kvtophys((vm_offset_t)va) >> PGSHIFT;
+			pn = kvtophys(va) >> PGSHIFT;
 			sc->sc_map[chan].mp_addr[i] = pn;
 			va += NBPG;
 		}
