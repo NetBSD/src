@@ -1,4 +1,4 @@
-/*	$Id: ms.c,v 1.1 1998/10/23 01:16:24 ender Exp $	*/
+/*	$Id: ms.c,v 1.2 1999/01/16 22:49:37 scottr Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -131,6 +131,9 @@ msattach(parent, self, aux)
 	case ADBMS_USPEED:
 		printf("MicroSpeed mouse, default parameters\n");
 		break;
+	case ADBMS_UCONTOUR:
+		printf("Contour mouse, default parameters\n");
+		break;
 	case ADBMS_EXTENDED:
 		if (sc->sc_devid[0] == '\0') {
 			printf("Logitech ");
@@ -202,14 +205,15 @@ ems_init(sc)
 	adbaddr = sc->adbaddr;
 	if (sc->origaddr != ADBADDR_MS)
 		return;
-	if (sc->handler_id == ADBMS_USPEED) {
-		/* Found MicroSpeed Mouse Deluxe Mac */
+	if (sc->handler_id == ADBMS_USPEED ||
+	    sc->handler_id == ADBMS_UCONTOUR) {
+		/* Found MicroSpeed Mouse Deluxe Mac or Contour Mouse */
 		cmd = ((adbaddr<<4)&0xF0)|0x9;	/* listen 1 */
 
 		/*
-		 * To setup the MicroSpeed, it appears that we can
-		 * send the following command to the mouse and then
-		 * expect data back in the form:
+		 * To setup the MicroSpeed or the Contour, it appears
+		 * that we can send the following command to the mouse
+		 * and then expect data back in the form:
 		 *  buffer[0] = 4 (bytes)
 		 *  buffer[1], buffer[2] as std. mouse
 		 *  buffer[3] = buffer[4] = 0xff when no buttons
@@ -481,7 +485,8 @@ ms_processevent(event, msc)
 	button_bit = 1;
 	switch (event->hand_id) {
 	case ADBMS_USPEED:
-		/* MicroSpeed mouse */
+	case ADBMS_UCONTOUR:
+		/* MicroSpeed mouse and Contour mouse */
 		if (max_byte == 4)
 			buttons = (~event->bytes[2]) & 0xff;
 		else
