@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.147 2001/11/23 22:02:39 jdolecek Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.148 2001/12/08 00:35:30 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.147 2001/11/23 22:02:39 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.148 2001/12/08 00:35:30 thorpej Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -677,6 +677,10 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 
 	/* update p_emul, the old value is no longer needed */
 	p->p_emul = pack.ep_es->es_emul;
+
+	/* ...and the same for p_execsw */
+	p->p_execsw = pack.ep_es;
+
 #ifdef __HAVE_SYSCALL_INTERN
 	(*p->p_emul->e_syscall_intern)(p);
 #endif
