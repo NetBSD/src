@@ -1,4 +1,4 @@
-/*	$NetBSD: in_proto.c,v 1.39.4.2 2001/03/11 21:09:55 he Exp $	*/
+/*	$NetBSD: in_proto.c,v 1.39.4.3 2003/09/09 10:33:32 msaitoh Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -251,7 +251,7 @@ struct protosw inetsw[] = {
 },
 #endif /* NSIP */
 /* raw wildcard */
-{ SOCK_RAW,	&inetdomain,	0,		PR_ATOMIC|PR_ADDR,
+{ SOCK_RAW,	&inetdomain,	0,		PR_ATOMIC|PR_ADDR|PR_LASTHDR,
   rip_input,	rip_output,	0,		rip_ctloutput,
   rip_usrreq,
   rip_init,	0,		0,		0,
