@@ -1,4 +1,4 @@
-/*	$NetBSD: pvr.c,v 1.6 2001/02/19 21:37:31 marcus Exp $	*/
+/*	$NetBSD: pvr.c,v 1.7 2001/03/04 01:36:35 marcus Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt.
@@ -65,7 +65,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pvr.c,v 1.6 2001/02/19 21:37:31 marcus Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pvr.c,v 1.7 2001/03/04 01:36:35 marcus Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -325,7 +325,18 @@ pvrmmap(void *v, off_t offset, int prot)
 	 * XXX This should be easy to support -- just need to define
 	 * XXX offsets for the contol regs, etc.
 	 */
-	return (-1);
+
+	struct pvr_softc *sc = v;
+	struct fb_devconfig *dc = sc->sc_dc;
+	paddr_t addr;
+
+	if (offset >= 0 &&
+	    offset < sh3_round_page(dc->dc_rowbytes * dc->dc_ht))
+		addr = sh3_btop(dc->dc_paddr + offset);
+	else
+		addr = (-1);	/* XXX bogus */
+
+	return addr;
 }
 
 int
