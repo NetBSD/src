@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.46 2001/06/19 00:41:53 fvdl Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.47 2001/06/19 09:10:30 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@ typedef	__int64_t	Elf64_Sword;
 #define	ELF64_FSZ_SWORD	8
 typedef	__uint64_t	Elf64_Word;
 #define	ELF64_FSZ_WORD	8
-#endif
+#endif /* __sparc_v9__ */
 typedef	__int64_t	Elf64_Sxword;
 #define	ELF64_FSZ_XWORD	8
 typedef	__uint64_t	Elf64_Xword;
@@ -305,18 +305,18 @@ typedef struct {
 } Elf64_Shdr;
 
 /* sh_type */
-#define	SHT_NULL	0
-#define	SHT_PROGBITS	1
-#define	SHT_SYMTAB	2
-#define	SHT_STRTAB	3
-#define	SHT_RELA	4
-#define	SHT_HASH	5
-#define	SHT_DYNAMIC	6
-#define	SHT_NOTE	7
-#define	SHT_NOBITS	8
-#define	SHT_REL		9
-#define	SHT_SHLIB	10
-#define	SHT_DYNSYM	11
+#define	SHT_NULL	0		/* Section header table entry unused */
+#define	SHT_PROGBITS	1		/* Program information */
+#define	SHT_SYMTAB	2		/* Symbol table */
+#define	SHT_STRTAB	3		/* String table */
+#define	SHT_RELA	4		/* Relocation information w/ addend */
+#define	SHT_HASH	5		/* Symbol hash table */
+#define	SHT_DYNAMIC	6		/* Dynamic linking information */
+#define	SHT_NOTE	7		/* Auxiliary information */
+#define	SHT_NOBITS	8		/* No space allocated in file image */
+#define	SHT_REL		9		/* Relocation information w/o addend */
+#define	SHT_SHLIB	10		/* Reserved, unspecified semantics */
+#define	SHT_DYNSYM	11		/* Symbol table for dynamic linker */
 #define	SHT_NUM		12
 
 #define	SHT_LOOS	0x60000000	/* Operating system specific range */
@@ -423,7 +423,7 @@ typedef struct {
 	Elf32_Word	r_offset;	/* where to do it */
 	Elf32_Word	r_info;		/* index & type of relocation */
 	Elf32_Sword	r_addend;	/* adjustment value */
-} Elf32_RelA;
+} Elf32_Rela;
 
 /* r_info utility macros */
 #define	ELF32_R_SYM(info)	((info) >> 8)
@@ -439,7 +439,7 @@ typedef struct {
 	Elf64_Addr	r_offset;	/* where to do it */
 	Elf64_Xword	r_info;		/* index & type of relocation */
 	Elf64_Sxword	r_addend;	/* adjustment value */
-} Elf64_RelA;
+} Elf64_Rela;
 
 /* r_info utility macros */
 #define	ELF64_R_SYM(info)	((info) >> 32)
@@ -608,7 +608,7 @@ typedef struct {
 #define	Elf_Shdr	Elf32_Shdr
 #define	Elf_Sym		Elf32_Sym
 #define	Elf_Rel		Elf32_Rel
-#define	Elf_RelA	Elf32_RelA
+#define	Elf_Rela	Elf32_Rela
 #define	Elf_Dyn		Elf32_Dyn
 #define	Elf_Word	Elf32_Word
 #define	Elf_Sword	Elf32_Sword
@@ -631,7 +631,7 @@ typedef struct {
 #define	Elf_Shdr	Elf64_Shdr
 #define	Elf_Sym		Elf64_Sym
 #define	Elf_Rel		Elf64_Rel
-#define	Elf_RelA	Elf64_RelA
+#define	Elf_Rela	Elf64_Rela
 #define	Elf_Dyn		Elf64_Dyn
 #define	Elf_Word	Elf64_Word
 #define	Elf_Sword	Elf64_Sword
