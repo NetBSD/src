@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.128 2000/06/10 18:44:44 sommerfeld Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.128.2.1 2000/07/03 17:36:02 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -539,6 +539,36 @@ getnewvnode(tag, mp, vops, vpp)
 	if (mp && error != EDEADLK)
 		vfs_unbusy(mp);
 	return (0);
+}
+
+/*
+ * This is really just the reverse of getnewvnode(). Needed for
+ * VFS_VGET functions who may need to push back a vnode in case
+ * of a locking race.
+ */
+void
+ungetnewvnode(vp)
+	struct vnode *vp;
+{
+#ifdef DIAGNOSTIC
+	if (vp->v_usecount != 1)
+		panic("ungetnewvnode: busy vnode");
+#endif
+	vp->v_usecount--;
+	insmntque(vp, NULL);
+	vp->v_type = VBAD;
+
+	simple_lock(&vp->v_interlock);
+	/* 
+	 * Insert at head of LRU list
+	 */
+	simple_lock(&vnode_free_list_slock);
+	if (vp->v_holdcnt > 0)
+		TAILQ_INSERT_HEAD(&vnode_hold_list, vp, v_freelist);
+	else
+		TAILQ_INSERT_HEAD(&vnode_free_list, vp, v_freelist);
+	simple_unlock(&vnode_free_list_slock); 
+	simple_unlock(&vp->v_interlock);
 }
 
 /*
