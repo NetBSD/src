@@ -1,4 +1,4 @@
-/* $NetBSD: setnetbootinfo.c,v 1.11 2001/07/22 15:17:32 wiz Exp $ */
+/* $NetBSD: setnetbootinfo.c,v 1.12 2002/09/22 05:38:30 mycroft Exp $ */
 
 /*
  * Copyright (c) 1997 Christopher G. Demetriou
@@ -52,7 +52,6 @@ char	*netboot, *outfile, *addr, *host;
 
 char	*outfilename;
 
-extern char *ether_ntoa __P((struct ether_addr *s));		/* XXX */
 struct ether_addr *ether_addr, _ether_addr;
 
 static void
