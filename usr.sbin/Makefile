@@ -1,13 +1,13 @@
-#	$NetBSD: Makefile,v 1.75 1997/02/03 20:11:45 cgd Exp $
+#	$NetBSD: Makefile,v 1.76 1997/02/11 18:47:04 phil Exp $
 #	from: @(#)Makefile	5.6.1.2 (Berkeley) 5/8/91
 
 # not yet done: catman
 
 SUBDIR=	ac accton amd arp bootpd bootpgw bootpef bootptest chown \
 	chroot config cron dev_mkdb dhcpd diskpart edquota gettable \
-	gspa htable inetd iostat ipf kgmon kvm_mkdb lpr map-mbone \
-	mdconfig mdsetimage mrinfo mrouted mtrace mtree named \
-	netgroup_mkdb portmap pppd pstat pwd_mkdb quot quotaon \
+	gspa htable inetd iostat ipf kgmon kvm_mkdb lpr lastlogin \
+	map-mbone mdconfig mdsetimage mrinfo mrouted mtrace mtree \
+	named netgroup_mkdb portmap pppd pstat pwd_mkdb quot quotaon \
 	rarpd rbootd rdate repquota rmt rpc.bootparamd rpc.pcnfsd \
 	rpc.yppasswdd rwhod sa sendmail sliplogin slstats spray \
 	sysctl syslogd tcpdchk tcpdmatch tcpdump timed traceroute \
