@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.87 1998/03/26 16:11:40 pk Exp $ */
+/*	$NetBSD: autoconf.c,v 1.88 1998/03/29 21:59:44 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -768,41 +768,15 @@ configure()
 
 #if defined(SUN4)
 	if (CPU_ISSUN4) {
-		extern struct cfdriver memreg_cd;
-		extern struct cfdriver obio_cd;
-		extern struct cfdata cfdata[];
-		struct cfdata *cf, *memregcf = NULL;
+#define MEMREG_PHYSADDR	0xf4000000
 		bus_space_handle_t bh;
-		register short *p;
+		bus_addr_t paddr = MEMREG_PHYSADDR;
 
-		for (cf = cfdata; memregcf == NULL && cf->cf_driver; cf++) {
-			if (cf->cf_driver != &memreg_cd ||
-				cf->cf_loc[0] == -1) /* avoid sun4m memreg0 */
-				continue;
-			/*
-			 * On the 4/100 obio addresses must be mapped at
-			 * 0x0YYYYYYY, but alias higher up (we avoid the
-			 * alias condition because it causes pmap difficulties)
-			 * XXX: We also assume that 4/[23]00 obio addresses
-			 * must be 0xZYYYYYYY, where (Z != 0)
-			 * make sure we get the correct memreg cfdriver!
-			 */
-			if (cpuinfo.cpu_type == CPUTYP_4_100 &&
-			    (cf->cf_loc[0] & 0xf0000000))
-				continue;
-			if (cpuinfo.cpu_type != CPUTYP_4_100 &&
-			    !(cf->cf_loc[0] & 0xf0000000))
-				continue;
-			for (p = cf->cf_parents; memregcf==NULL && *p >= 0; p++)
-				if (cfdata[*p].cf_driver == &obio_cd)
-					memregcf = cf;
-		}
-		if (memregcf == NULL)
-			panic("configure: no memreg found!");
+		if (cpuinfo.cpu_type == CPUTYP_4_100)
+			/* Clear top bits of physical address on 4/100 */
+			paddr &= ~0xf0000000;
 
-		if (obio_bus_map(0, /* XXX - obio tag; we haven't got one */
-				 (void *)memregcf->cf_loc[0], 0, NBPG,
-				 0, 0, &bh) != 0)
+		if (obio_find_rom_map(paddr, PMAP_OBIO, NBPG, &bh) != 0)
 			panic("configure: ROM hasn't mapped memreg!");
 
 		par_err_reg = (volatile int *)bh;
@@ -1277,25 +1251,27 @@ findzs(zs)
 
 	if (CPU_ISSUN4) {
 		bus_space_handle_t bh;
-		void * paddr;
+		bus_addr_t paddr;
 
 		switch (zs) {
 		case 0:
-			paddr = (void *)ZS0_PHYS;
+			paddr = ZS0_PHYS;
 			break;
 		case 1:
-			paddr = (void *)ZS1_PHYS;
+			paddr = ZS1_PHYS;
 			break;
 		case 2:
-			paddr = (void *)ZS2_PHYS;
+			paddr = ZS2_PHYS;
 			break;
 		default:
 			panic("findzs: unknown zs device %d", zs);
 		}
 
-		if (obio_bus_map(0, /* XXX - obio tag; we haven't got one */
-				 paddr, 0, NBPG,
-				 0, 0, &bh) != 0)
+		if (cpuinfo.cpu_type == CPUTYP_4_100)
+			/* Clear top bits of physical address on 4/100 */
+			paddr &= ~0xf0000000;
+
+		if (obio_find_rom_map(paddr, PMAP_OBIO, NBPG, &bh) != 0)
 			panic("findzs: can't map zs%d registers", zs);
 
 		return ((void *)bh);
