@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.138 1998/02/22 03:24:58 mycroft Exp $	*/
+/*	$NetBSD: com.c,v 1.139 1998/02/22 05:09:58 enami Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997
@@ -706,30 +706,43 @@ comopen(dev, flag, mode, p)
 		    !ISSET(tp->t_cflag, CLOCAL | MDMBUF)) {
 			error = ttysleep(tp, &tp->t_rawq, TTIPRI | PCATCH,
 			    ttopen, 0);
-			if (error) {
-				/*
-				 * If the open was interrupted and nobody
-				 * else has the device open, then hang up.
-				 */
-				if (!ISSET(tp->t_state, TS_ISOPEN)) {
-					s2 = splserial();
-
-					/* Hang up. */
-					com_modem(sc, 0);
-
-					CLR(tp->t_state, TS_WOPEN);
-					ttwakeup(tp);
-
-					splx(s2);
-				}
+			if (error)
 				break;
-			}
 			SET(tp->t_state, TS_WOPEN);
 		}
 
 	splx(s);
 	if (error == 0)
 		error = (*linesw[tp->t_line].l_open)(dev, tp);
+	if (error)
+		if (!ISSET(tp->t_state, TS_ISOPEN)) {
+			s = splserial();
+
+			/*
+			 * When we're doing a blocking open,
+			 * if the open was interrupted and nobody
+			 * else has the device open, then hang up.
+			 */
+			if (!ISSET(flag, O_NONBLOCK))
+				/* Hang up. */
+				com_modem(sc, 0);
+
+			/*
+			 * If the device is enabled but finally failed to
+			 * open and nobody else has it open, disable it.
+			 */
+			if (sc->disable != NULL)
+				if (sc->enabled != 0) {
+					(*sc->disable)(sc);
+					sc->enabled = 0;
+				}
+
+			if (!ISSET(flag, O_NONBLOCK)) {
+				CLR(tp->t_state, TS_WOPEN);
+				ttwakeup(tp);
+			}
+			splx(s);
+		}
 	return (error);
 }
  
