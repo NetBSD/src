@@ -1,4 +1,4 @@
-#	$NetBSD: SUN_LAMP,v 1.70 1996/03/25 05:45:46 perry Exp $
+#	$NetBSD: SUN_LAMP,v 1.71 1996/05/20 18:17:53 mrg Exp $
 #
 #	SUN_LAMP -- kernel for one of cgd's 486/50 EISA boxes...
 #
@@ -62,7 +62,7 @@ options		CD9660		# ISO 9660 + Rock Ridge file system
 options		FIFO		# FIFOs; RECOMMENDED
 #options	KERNFS		# /kern
 options		NULLFS		# loopback file system
-#options	PORTAL		# ?
+#options	PORTAL		# portal filesystem (still experimental)
 #options	PROCFS		# /proc
 #options	UMAPFS		# NULLFS + uid and gid remapping
 #options	UNION		# union file system
