@@ -36,7 +36,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	/* .asciz "@(#)udiv.s	8.1 (Berkeley) 6/4/93" */
-	.asciz "$NetBSD: udiv.S,v 1.1 1995/04/17 12:23:47 ragge Exp $"
+	.asciz "$NetBSD: udiv.S,v 1.2 2000/08/07 03:18:04 matt Exp $"
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -50,7 +50,11 @@
 #define	DIVIDEND	4(ap)
 #define	DIVISOR		8(ap)
 
+#ifdef __ELF__
+ASENTRY(__udiv,0)
+#else
 ASENTRY(udiv,0)
+#endif
 	movl	DIVISOR,r2
 	jlss	Leasy		# big divisor: settle by comparison
 	movl	DIVIDEND,r0
@@ -70,7 +74,11 @@ Lone:
 	movl	$1,r0
 	ret
 
+#ifdef __ELF__
+ASENTRY(__audiv,0)
+#else
 ASENTRY(audiv,0)
+#endif
 	movl	DIVIDEND,r3
 	movl	DIVISOR,r2
 	jlss	La_easy		# big divisor: settle by comparison
