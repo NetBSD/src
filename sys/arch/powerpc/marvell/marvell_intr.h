@@ -1,4 +1,4 @@
-/*	$NetBSD: marvell_intr.h,v 1.1 2003/03/05 22:08:28 matt Exp $	*/
+/*	$NetBSD: marvell_intr.h,v 1.2 2003/03/15 07:50:28 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -510,6 +510,18 @@ void	ext_intr(struct intrframe *);
 
 void	softserial(void);
 void	strayintr(int);
+
+#define	schednetisr(isr)  do {			\
+	__asm __volatile(			\
+		"1:	lwarx	0,0,%1\n"	\
+		"	or	0,0,%0\n"	\
+		"	stwcx.	0,0,%1\n"	\
+		"	bne-	1b"		\
+	   :					\
+	   : "r"(1 << (isr)), "r"(&netisr)	\
+	   : "cr0", "r0");			\
+	setsoftnet();				\
+} while (/*CONSTCOND*/ 0)
 
 /*
  * defines for indexing intrcnt
