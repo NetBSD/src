@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.246 2004/04/03 12:38:14 pk Exp $ */
+/*	$NetBSD: machdep.c,v 1.247 2004/04/04 18:24:22 pk Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.246 2004/04/03 12:38:14 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.247 2004/04/04 18:24:22 pk Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
@@ -277,10 +277,10 @@ cpu_startup()
 
 		/* Clip max data & stack to avoid running into the MMU hole */
 #if MAXDSIZ > 256*1024*1024
-		{ extern rlim_t maxdmap; maxdmap = 256*1024*1024; }
+		maxdmap = 256*1024*1024;
 #endif
 #if MAXSSIZ > 256*1024*1024
-		{ extern rlim_t maxsmap; maxsmap = 256*1024*1024; }
+		maxsmap = 256*1024*1024;
 #endif
 	}
 
