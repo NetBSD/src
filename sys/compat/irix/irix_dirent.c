@@ -1,7 +1,7 @@
-/*	$NetBSD: irix_dirent.c,v 1.2 2001/12/25 19:04:18 manu Exp $ */
+/*	$NetBSD: irix_dirent.c,v 1.3 2001/12/26 10:54:56 manu Exp $ */
 
 /*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 1994, 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_dirent.c,v 1.2 2001/12/25 19:04:18 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_dirent.c,v 1.3 2001/12/26 10:54:56 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
