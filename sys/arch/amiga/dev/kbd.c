@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.44.2.3 2004/09/21 13:12:30 skrll Exp $ */
+/*	$NetBSD: kbd.c,v 1.44.2.4 2004/11/21 13:54:35 skrll Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.44.2.3 2004/09/21 13:12:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.44.2.4 2004/11/21 13:54:35 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,7 +103,7 @@ __KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.44.2.3 2004/09/21 13:12:30 skrll Exp $");
 /* accessops */
 int     kbd_enable(void *, int);
 void    kbd_set_leds(void *, int);
-int     kbd_ioctl(void *, u_long, caddr_t, int, struct proc *);
+int     kbd_ioctl(void *, u_long, caddr_t, int, struct lwp *);
 
 /* console ops */
 void    kbd_getc(void *, u_int *, int *);
@@ -434,20 +434,20 @@ drkbdputc2(u_int8_t c1, u_int8_t c2)
 #endif
 
 int
-kbdopen(dev_t dev, int flags, int mode, struct proc *p)
+kbdopen(dev_t dev, int flags, int mode, struct lwp *l)
 {
 
 	kbdenable();
 	if (kbd_softc.k_events.ev_io)
 		return EBUSY;
 
-	kbd_softc.k_events.ev_io = p;
+	kbd_softc.k_events.ev_io = l->l_proc;
 	ev_init(&kbd_softc.k_events);
 	return (0);
 }
 
 int
-kbdclose(dev_t dev, int flags, int mode, struct proc *p)
+kbdclose(dev_t dev, int flags, int mode, struct lwp *l)
 {
 
 	/* Turn off event mode, dump the queue */
@@ -465,7 +465,7 @@ kbdread(dev_t dev, struct uio *uio, int flags)
 
 int
 kbdioctl(dev_t dev, u_long cmd, register caddr_t data, int flag,
-         struct proc *p)
+         struct lwp *l)
 {
 	register struct kbd_softc *k = &kbd_softc;
 
@@ -511,9 +511,9 @@ kbdioctl(dev_t dev, u_long cmd, register caddr_t data, int flag,
 }
 
 int
-kbdpoll(dev_t dev, int events, struct proc *p)
+kbdpoll(dev_t dev, int events, struct lwp *l)
 {
-	return ev_poll (&kbd_softc.k_events, events, p);
+	return ev_poll (&kbd_softc.k_events, events, l);
 }
 
 int
@@ -762,7 +762,7 @@ kbd_set_leds(void *c, int leds)
 }
 
 int
-kbd_ioctl(void *c, u_long cmd, caddr_t data, int flag, struct proc *p)
+kbd_ioctl(void *c, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	switch (cmd)
 	{

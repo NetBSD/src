@@ -27,7 +27,7 @@
  *	i4b_i4bdrv.c - i4b userland interface driver
  *	--------------------------------------------
  *
- *	$Id: i4b_i4bdrv.c,v 1.23.2.3 2004/09/21 13:37:59 skrll Exp $ 
+ *	$Id: i4b_i4bdrv.c,v 1.23.2.4 2004/11/21 13:54:36 skrll Exp $ 
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_i4bdrv.c,v 1.23.2.3 2004/09/21 13:37:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_i4bdrv.c,v 1.23.2.4 2004/11/21 13:54:36 skrll Exp $");
 
 #include "isdn.h"
 
@@ -111,16 +111,16 @@ static void *devfs_token;
 
 #define	PDEVSTATIC	/* - not static - */
 PDEVSTATIC void isdnattach __P((void));
-PDEVSTATIC int isdnopen __P((dev_t dev, int flag, int fmt, struct proc *p));
-PDEVSTATIC int isdnclose __P((dev_t dev, int flag, int fmt, struct proc *p));
+PDEVSTATIC int isdnopen __P((dev_t dev, int flag, int fmt, struct lwp *l));
+PDEVSTATIC int isdnclose __P((dev_t dev, int flag, int fmt, struct lwp *l));
 PDEVSTATIC int isdnread __P((dev_t dev, struct uio *uio, int ioflag));
-PDEVSTATIC int isdnioctl __P((dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p));
+PDEVSTATIC int isdnioctl __P((dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l));
 
 #ifdef OS_USES_POLL
-PDEVSTATIC int isdnpoll __P((dev_t dev, int events, struct proc *p));
+PDEVSTATIC int isdnpoll __P((dev_t dev, int events, struct lwp *l));
 PDEVSTATIC int isdnkqfilter __P((dev_t dev, struct knote *kn));
 #else
-PDEVSTATIC int isdnselect __P((dev_t dev, int rw, struct proc *p));
+PDEVSTATIC int isdnselect __P((dev_t dev, int rw, struct lwp *l));
 #endif
 
 #endif /* #ifndef __FreeBSD__ */
@@ -262,7 +262,7 @@ isdnattach()
  *	i4bopen - device driver open routine
  *---------------------------------------------------------------------------*/
 PDEVSTATIC int
-isdnopen(dev_t dev, int flag, int fmt, struct proc *p)
+isdnopen(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	int x;
 
@@ -284,7 +284,7 @@ isdnopen(dev_t dev, int flag, int fmt, struct proc *p)
  *	i4bclose - device driver close routine
  *---------------------------------------------------------------------------*/
 PDEVSTATIC int
-isdnclose(dev_t dev, int flag, int fmt, struct proc *p)
+isdnclose(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	int x = splnet();
 	openflag = 0;
@@ -337,7 +337,7 @@ isdnread(dev_t dev, struct uio *uio, int ioflag)
  *	i4bioctl - device driver ioctl routine
  *---------------------------------------------------------------------------*/
 PDEVSTATIC int
-isdnioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+isdnioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct isdn_l3_driver *d;
 	call_desc_t *cd;
@@ -897,7 +897,7 @@ diag_done:
  *	i4bselect - device driver select routine
  *---------------------------------------------------------------------------*/
 PDEVSTATIC int
-i4bselect(dev_t dev, int rw, struct proc *p)
+i4bselect(dev_t dev, int rw, struct lwp *l)
 {
 	int x;
 	
@@ -910,7 +910,7 @@ i4bselect(dev_t dev, int rw, struct proc *p)
 			if(!IF_QEMPTY(&i4b_rdqueue))
 				return(1);
 			x = splnet();
-			selrecord(p, &select_rd_info);
+			selrecord(l, &select_rd_info);
 			selflag = 1;
 			splx(x);
 			return(0);
@@ -929,7 +929,7 @@ i4bselect(dev_t dev, int rw, struct proc *p)
  *	i4bpoll - device driver poll routine
  *---------------------------------------------------------------------------*/
 PDEVSTATIC int
-isdnpoll(dev_t dev, int events, struct proc *p)
+isdnpoll(dev_t dev, int events, struct lwp *l)
 {
 	int x;
 	
@@ -942,7 +942,7 @@ isdnpoll(dev_t dev, int events, struct proc *p)
 			return(1);
 
 		x = splnet();
-		selrecord(p, &select_rd_info);
+		selrecord(l, &select_rd_info);
 		selflag = 1;
 		splx(x);
 		return(0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.64.6.3 2004/09/21 13:12:29 skrll Exp $ */
+/*	$NetBSD: ite.c,v 1.64.6.4 2004/11/21 13:54:34 skrll Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.64.6.3 2004/09/21 13:12:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.64.6.4 2004/11/21 13:54:34 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -453,7 +453,7 @@ iteinit(dev_t dev)
 }
 
 int
-iteopen(dev_t dev, int mode, int devtype, struct proc *p)
+iteopen(dev_t dev, int mode, int devtype, struct lwp *l)
 {
 	struct ite_softc *ip;
 	struct tty *tp;
@@ -473,7 +473,7 @@ iteopen(dev_t dev, int mode, int devtype, struct proc *p)
 	} else
 		tp = ip->tp;
 	if ((tp->t_state & (TS_ISOPEN | TS_XCLUDE)) == (TS_ISOPEN | TS_XCLUDE)
-	    && p->p_ucred->cr_uid != 0)
+	    && l->l_proc->p_ucred->cr_uid != 0)
 		return (EBUSY);
 	if ((ip->flags & ITE_ACTIVE) == 0) {
 		error = ite_on(dev, 0);
@@ -513,7 +513,7 @@ bad:
 }
 
 int
-iteclose(dev_t dev, int flag, int mode, struct proc *p)
+iteclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct tty *tp;
 
@@ -549,14 +549,14 @@ itewrite(dev_t dev, struct uio *uio, int flag)
 }
 
 int
-itepoll(dev_t dev, int events, struct proc *p)
+itepoll(dev_t dev, int events, struct lwp *l)
 {
 	struct tty *tp;
 
 	tp = getitesp(dev)->tp;
 
 	KDASSERT(tp);
-	return ((*tp->t_linesw->l_poll)(tp, events, p));
+	return ((*tp->t_linesw->l_poll)(tp, events, l));
 }
 
 struct tty *
@@ -566,7 +566,7 @@ itetty(dev_t dev)
 }
 
 int
-iteioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
+iteioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
 {
 	struct iterepeat *irp;
 	struct ite_softc *ip;
@@ -579,10 +579,10 @@ iteioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 
 	KDASSERT(tp);
 
-	error = tp->t_linesw->l_ioctl(tp, cmd, addr, flag, p);
+	error = tp->t_linesw->l_ioctl(tp, cmd, addr, flag, l);
 	if (error != EPASSTHROUGH)
 		return (error);
-	error = ttioctl(tp, cmd, addr, flag, p);
+	error = ttioctl(tp, cmd, addr, flag, l);
 	if (error != EPASSTHROUGH)
 		return (error);
 
@@ -629,7 +629,7 @@ iteioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 #if NGRFCC > 0
 	/* XXX */
 	if (minor(dev) == 0) {
-		error = ite_grf_ioctl(ip, cmd, addr, flag, p);
+		error = ite_grf_ioctl(ip, cmd, addr, flag, l);
 		if (error >= 0)
 			return (error);
 	}
