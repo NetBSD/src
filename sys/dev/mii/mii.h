@@ -1,4 +1,4 @@
-/*	$NetBSD: mii.h,v 1.10 2001/07/25 22:00:43 thorpej Exp $	*/
+/*	$NetBSD: mii.h,v 1.11 2004/04/09 20:39:44 thorpej Exp $	*/
  
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -122,10 +122,10 @@
 
 #define	ANAR_X_FD	0x0020	/* local device supports 1000BASE-X FD */
 #define	ANAR_X_HD	0x0040	/* local device supports 1000BASE-X HD */
-#define	ANAR_X_PAUSE_NONE	(0 << 7)
-#define	ANAR_X_PAUSE_SYM	(1 << 7)
-#define	ANAR_X_PAUSE_ASYM	(2 << 7)
-#define	ANAR_X_PAUSE_TOWARDS	(3 << 7)
+#define	ANAR_X_PAUSE_NONE	(0 << 10)
+#define	ANAR_X_PAUSE_SYM	(1 << 10)
+#define	ANAR_X_PAUSE_ASYM	(2 << 10)
+#define	ANAR_X_PAUSE_TOWARDS	(3 << 10)
 
 #define	MII_ANLPAR	0x05	/* Autonegotiation lnk partner abilities (rw) */
 		/* section 28.2.4.1 and 37.2.6.1 */
@@ -142,11 +142,11 @@
 
 #define	ANLPAR_X_FD	0x0020	/* local device supports 1000BASE-X FD */
 #define	ANLPAR_X_HD	0x0040	/* local device supports 1000BASE-X HD */
-#define	ANLPAR_X_PAUSE_MASK	(3 << 7)
-#define	ANLPAR_X_PAUSE_NONE	(0 << 7)
-#define	ANLPAR_X_PAUSE_SYM	(1 << 7)
-#define	ANLPAR_X_PAUSE_ASYM	(2 << 7)
-#define	ANLPAR_X_PAUSE_TOWARDS	(3 << 7)
+#define	ANLPAR_X_PAUSE_MASK	(3 << 10)
+#define	ANLPAR_X_PAUSE_NONE	(0 << 10)
+#define	ANLPAR_X_PAUSE_SYM	(1 << 10)
+#define	ANLPAR_X_PAUSE_ASYM	(2 << 10)
+#define	ANLPAR_X_PAUSE_TOWARDS	(3 << 10)
 
 #define	MII_ANER	0x06	/* Autonegotiation expansion (ro) */
 		/* section 28.2.4.1 and 37.2.6.1 */
