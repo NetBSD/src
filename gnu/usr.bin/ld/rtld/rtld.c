@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.41 1995/12/28 17:57:32 pk Exp $	*/
+/*	$NetBSD: rtld.c,v 1.42 1996/01/09 00:02:28 pk Exp $	*/
 /*
  * Copyright (c) 1993 Paul Kranenburg
  * All rights reserved.
@@ -1116,7 +1116,8 @@ maphints()
 		return;
 	}
 
-	if (hheader->hh_version != LD_HINTS_VERSION_1) {
+	if (hheader->hh_version != LD_HINTS_VERSION_1 &&
+	    hheader->hh_version != LD_HINTS_VERSION_2) {
 		munmap(addr, hsize);
 		close(hfd);
 		hheader = (struct hints_header *)-1;
@@ -1161,7 +1162,8 @@ hinthash(cp, vmajor, vminor)
 		k = (((k << 1) + (k >> 14)) ^ (*cp++)) & 0x3fff;
 
 	k = (((k << 1) + (k >> 14)) ^ (vmajor*257)) & 0x3fff;
-	k = (((k << 1) + (k >> 14)) ^ (vminor*167)) & 0x3fff;
+	if (hheader->hh_version == LD_HINTS_VERSION_1)
+		k = (((k << 1) + (k >> 14)) ^ (vminor*167)) & 0x3fff;
 
 	return k;
 }
