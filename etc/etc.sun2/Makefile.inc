@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile.inc,v 1.4 2002/12/02 13:18:13 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.5 2002/12/02 13:31:22 lukem Exp $
 #
 #	etc.sun2/Makefile.inc -- sun2-specific etc Makefile targets
 #
 
-BIN3+= etc.sun2/ttyaction
+BIN3+=			etc.sun2/ttyaction
 
 KERNEL_SETS=		GENERIC FOURMEG DISKLESS
 
