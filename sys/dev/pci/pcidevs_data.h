@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.277 2000/11/18 05:29:27 thorpej Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.278 2000/11/20 06:23:14 onoe Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.273 2000/11/18 05:29:00 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.274 2000/11/20 06:22:13 onoe Exp 
  */
 
 /*
@@ -4282,7 +4282,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "CXD1947A IEEE 1394 Host Controller",
 	},
 	{
-	    PCI_VENDOR_SONY, PCI_PRODUCT_SONY_CXD32222,
+	    PCI_VENDOR_SONY, PCI_PRODUCT_SONY_CXD3222,
 	    0,
 	    "Sony",
 	    "CXD3222 OHCI IEEE 1394 Host Controller",
