@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci_pci.c,v 1.26 2004/04/23 21:13:07 itojun Exp $	*/
+/*	$NetBSD: uhci_pci.c,v 1.27 2004/08/02 18:43:38 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci_pci.c,v 1.26 2004/04/23 21:13:07 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci_pci.c,v 1.27 2004/08/02 18:43:38 mycroft Exp $");
 
 #include "ehci.h"
 
@@ -102,8 +102,8 @@ uhci_pci_attach(struct device *parent, struct device *self, void *aux)
 	char const *intrstr;
 	pci_intr_handle_t ih;
 	pcireg_t csr;
-	char *vendor;
-	char *devname = sc->sc.sc_bus.bdev.dv_xname;
+	const char *vendor;
+	const char *devname = sc->sc.sc_bus.bdev.dv_xname;
 	char devinfo[256];
 	usbd_status r;
 
