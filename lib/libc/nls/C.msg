@@ -183,6 +183,8 @@ $ ENOSTR
 91 Not a STREAM
 $ ETIME
 92 STREAM ioctl timeout
+$ ENOATTR
+93 Attribute not found
 $set 2
 $ SIGHUP
 1 Hangup
