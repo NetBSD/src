@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.31 1997/05/11 19:11:40 scottr Exp $	*/
+/*	$NetBSD: pmap.c,v 1.32 1997/06/10 19:09:05 veego Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -330,7 +330,7 @@ pmap_bootstrap_alloc(size)
 		avail_start + size, VM_PROT_READ|VM_PROT_WRITE);
 	avail_start += size;
 
-	avail_remaining -= mac68k_btop (size);
+	avail_remaining -= m68k_btop (size);
 	/* XXX hope this doesn't pop it into the next range: */
 	avail_next += size;
 
@@ -360,7 +360,7 @@ pmap_init()
 	 */
 	addr = (vm_offset_t) IOBase;
 	(void) vm_map_find(kernel_map, NULL, (vm_offset_t) 0, &addr,
-			   mac68k_ptob(IIOMAPSIZE + ROMMAPSIZE + NBMAPSIZE),
+			   m68k_ptob(IIOMAPSIZE + ROMMAPSIZE + NBMAPSIZE),
 			   FALSE);
 	if (addr != (vm_offset_t)IOBase)
 		panic("pmap_init: I/O space not mapped!\n");
@@ -1084,7 +1084,7 @@ pmap_enter(pmap, va, pa, prot, wired)
 	if (!pmap_ste_v(pmap, va))
 		pmap_enter_ptpage(pmap, va);
 
-	pa = mac68k_trunc_page(pa);
+	pa = m68k_trunc_page(pa);
 	pte = pmap_pte(pmap, va);
 	opa = pmap_pte_pa(pte);
 #ifdef DEBUG
@@ -1621,7 +1621,7 @@ vm_offset_t
 pmap_phys_address(ppn)
 	int ppn;
 {
-	return(mac68k_ptob(ppn));
+	return(m68k_ptob(ppn));
 }
 
 /*
@@ -2350,12 +2350,12 @@ pmap_page_index(pa)
 	index = 0;
 	for (i = 0; i < numranges; i++) {
 		if (pa >= low[i] && pa < high[i]) {
-			index += mac68k_btop (pa - low[i]);
+			index += m68k_btop (pa - low[i]);
 			/* printf ("pmap_page_index(0x%x): returning %d\n", */
 				/* (int)pa, index); */
 			return index;
 		}
-		index += mac68k_btop (high[i] - low[i]);
+		index += m68k_btop (high[i] - low[i]);
 	}
 
 	return -1;
