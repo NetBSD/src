@@ -156,6 +156,15 @@ device  asc: scsi, sbic
 attach	asc at podulebus
 file	arch/arm32/podulebus/asc.c		asc needs-flag
 
+# Generic AMD AM53C94 driver
+define	esc
+file	arch/arm32/podulebus/esc.c		esc
+
+# Connect32 specific layer for esc
+device	cosc: scsi, esc
+attach	cosc at podulebus
+file	arch/arm32/podulebus/cosc.c		cosc
+
 # Generic fas216 + esp216 driver
 define	sfas
 file	arch/arm32/podulebus/sfas.c		sfas
@@ -267,3 +276,8 @@ file	arch/arm32/arm32/db_disasm.c		ddb
 file	arch/arm32/arm32/db_interface.c		ddb
 file	arch/arm32/arm32/db_trace.c		ddb
 file	arch/arm32/arm32/db_machdep.c		ddb
+
+# RC7500 prom related files
+file	arch/arm32/dev/rc7500_prom.c		prom_debug
+file	arch/arm32/dev/rc7500_promsys.s		prom_debug
+
