@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.253.2.14 2000/12/15 05:09:13 he Exp $
+# $NetBSD: mi,v 1.253.2.15 2000/12/31 20:14:07 jhawk Exp $
 ./usr/share/info/am-utils.info
 ./usr/share/info/as.info
 ./usr/share/info/awk.info
@@ -857,6 +857,7 @@
 ./usr/share/man/cat4/vax/vv.0
 ./usr/share/man/cat4/vga.0
 ./usr/share/man/cat4/viaenv.0
+./usr/share/man/cat4/vlan.0
 ./usr/share/man/cat4/viapm.0
 ./usr/share/man/cat4/vnd.0
 ./usr/share/man/cat4/vr.0
@@ -2264,6 +2265,7 @@
 ./usr/share/man/man4/vax/vv.4
 ./usr/share/man/man4/vga.4
 ./usr/share/man/man4/viaenv.4
+./usr/share/man/man4/vlan.4
 ./usr/share/man/man4/viapm.4
 ./usr/share/man/man4/vnd.4
 ./usr/share/man/man4/vr.4
