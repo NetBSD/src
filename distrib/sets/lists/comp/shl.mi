@@ -1,8 +1,7 @@
-# $NetBSD: shl.mi,v 1.18 2001/01/25 09:49:55 wiz Exp $
+# $NetBSD: shl.mi,v 1.19 2001/05/08 16:22:02 minoura Exp $
 ./usr/lib/libasn1_pic.a		comp-c-piclib
 ./usr/lib/libbfd.so.3.0		comp-util-bin
 ./usr/lib/libbz2_pic.a		comp-c-piclib
-./usr/lib/libc_pic.a		comp-c-piclib
 ./usr/lib/libc_pic.a		comp-c-piclib
 ./usr/lib/libcdk_pic.a		comp-c-piclib
 ./usr/lib/libcom_err_pic.a	comp-c-piclib
