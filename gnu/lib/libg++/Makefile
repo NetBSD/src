@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 1996/10/18 02:54:56 thorpej Exp $
+#	$NetBSD: Makefile,v 1.21 1996/12/17 19:14:15 phil Exp $
 
 SUBDIR= libg++ libstdc++ # libio libiostream
 

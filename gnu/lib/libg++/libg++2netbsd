@@ -1,6 +1,6 @@
-#!/usr/gnu/bin/perl
+#!/usr/local/bin/perl
 #
-#	$NetBSD: libg++2netbsd,v 1.11 1996/10/18 02:54:55 thorpej Exp $
+#	$NetBSD: libg++2netbsd,v 1.12 1996/12/17 19:14:16 phil Exp $
 #
 #  Perl script to convert a standard distribution directory for libg++ into
 #	a NetBSD source tree.
@@ -8,13 +8,14 @@
 #  This is done as a script so that as each distribution is released,
 #	only changes from the previous one need to be dealt with as
 #	modifications to this script and related files.  This should
-#	reduce the cost of updating from a new release of gcc by an
+#	reduce the cost of updating from a new release of libg++ by an
 #	order of magnitude (or more?)
 #
 #  Written by Phil Nelson,  December 13, 1995.  (for libg++-2.7.1)
+#  Updated for libg++-2.7.2 by Chris Demetriou, September 13, 1996.
 #
 
-$version = "2.7.1";
+$version = "2.7.2";
 $srcdir = $ENV{'SRCDIR'};
 if (!$srcdir) { $srcdir = "libg++-$version" };
 $targetdir = "libg++";
@@ -35,9 +36,9 @@ $targetdir = "libg++";
        "SmplHist.cc", "SmplStat.cc", "String.cc", "Uniform.cc",
        "Weibull.cc", "bitand.c", "bitany.c", "bitblt.c", "bitclear.c",
        "bitcopy.c", "bitcount.c", "bitinvert.c", "bitlcomp.c",
-       "bitset1.c", "bitxor.c", "builtin.cc", "chr.cc", "compare.cc",
+       "bitset1.c", "bitxor.c", "builtin.cc", "compare.cc",
        "error.cc", "fmtq.cc", "gcd.cc", "hash.cc", "ioob.cc", "lg.cc",
-       "pow.cc", "sqrt.cc", "str.cc", "timer.c");
+       "pow.cc", "sqrt.cc", "timer.c");
 
 @gh = ("ACG.h", "AllocRing.h", "Binomial.h", "BitSet.h",
        "BitString.h", "Complex.h", "CursesW.h", "DLList.h",
@@ -75,7 +76,7 @@ $targetdir = "libg++";
         "stdiostream.h", "stream.h", "streambuf.h", "strfile.h",
         "strstream.h" );
 
-@iof = ("cleanup.c", "filedoalloc.c", "fileops.c", "floatconv.c",
+@iof = ("chr.cc", "cleanup.c", "filedoalloc.c", "fileops.c", "floatconv.c",
 	"genops.c", "iofclose.c", "iofdopen.c", "iofflush.c",
 	"iofgetpos.c", "iofgets.c", "iofopen.c", "iofprintf.c",
 	"iofputs.c", "iofread.c", "iofscanf.c", "iofsetpos.c",
@@ -85,7 +86,7 @@ $targetdir = "libg++";
 	"ioscanf.c", "ioseekoff.c", "ioseekpos.c", "iosetbuffer.c",
 	"iosetvbuf.c", "iosprintf.c", "iosscanf.c", "iostrerror.c",
 	"ioungetc.c", "iovfprintf.c", "iovfscanf.c", "iovsprintf.c",
-	"iovsscanf.c", "outfloat.c", "stdfiles.c", "strops.c");
+	"iovsscanf.c", "outfloat.c", "str.cc", "stdfiles.c", "strops.c");
 
 @iocf = ("iofdopen.c", "iofflush.c", "iofgets.c", "iofopen.c",
 	"iofprintf.c", "iofputs.c", "ioftell.c", "iofwrite.c",
@@ -562,35 +563,74 @@ NOMAN=	    noman
 /* AUTOMATICALLY GENERATED; DO NOT EDIT! */ 
 #ifndef _G_config_h
 #define _G_config_h
-#define _G_LIB_VERSION "2.7.1"
+#define _G_LIB_VERSION "2.7.2"
+#ifndef __alpha__
 #define _G_NAMES_HAVE_UNDERSCORE 1
+#else /* __alpha__ */
+#define _G_NAMES_HAVE_UNDERSCORE 0
+#endif /* __alpha__ */
 #define _G_VTABLE_LABEL_HAS_LENGTH 1
+#ifndef __alpha__
 #define _G_VTABLE_LABEL_PREFIX "__vt$"
+#else /* __alpha__ */
+#define _G_VTABLE_LABEL_PREFIX "_vt$"
+#endif /* __alpha__ */
 #define _G_HAVE_ST_BLKSIZE 1
+#ifndef __alpha__
 typedef unsigned long _G_clock_t;
+#else /* __alpha__ */
+typedef int _G_clock_t;
+#endif /* __alpha__ */
 typedef int _G_dev_t;
+#ifndef __alpha__
 typedef long long _G_fpos_t;
+#else /* __alpha__ */
+typedef long _G_fpos_t;
+#endif /* __alpha__ */
 typedef unsigned int _G_gid_t;
 typedef unsigned int _G_ino_t;
 typedef unsigned short _G_mode_t;
 typedef unsigned short _G_nlink_t;
+#ifndef __alpha__
 typedef long long _G_off_t;
+#else /* __alpha__ */
+typedef long _G_off_t;
+#endif /* __alpha__ */
 typedef int _G_pid_t;
 #ifndef __PTRDIFF_TYPE__
+#ifndef __alpha__
 #define __PTRDIFF_TYPE__ int
+#else /* __alpha__ */
+#define __PTRDIFF_TYPE__ long
+#endif /* __alpha__ */
 #endif
 typedef __PTRDIFF_TYPE__ _G_ptrdiff_t;
 typedef unsigned int _G_sigset_t;
 #ifndef __SIZE_TYPE__
+#ifndef __alpha__
 #define __SIZE_TYPE__ unsigned int
+#else /* __alpha__ */
+#define __SIZE_TYPE__ unsigned long
+#endif /* __alpha__ */
 #endif
 typedef __SIZE_TYPE__ _G_size_t;
+#ifndef __alpha__
 typedef long _G_time_t;
+#else /* __alpha__ */
+typedef int _G_time_t;
+#endif /* __alpha__ */
 typedef unsigned int _G_uid_t;
 typedef int _G_wchar_t;
+#ifndef __alpha__
 typedef int _G_ssize_t;
 typedef int /* default */ _G_wint_t;
 typedef char * _G_va_list;
+#else /* __alpha__ */
+typedef long _G_ssize_t;
+typedef unsigned int /* default */ _G_wint_t;
+#define _G_NEED_STDARG_H
+#define _G_va_list va_list
+#endif /* __alpha__ */
 #define _G_signal_return_type void
 #define _G_sprintf_return_type int
 
@@ -638,19 +678,19 @@ typedef unsigned int _G_uint32_t;
 #define _G_HAVE_BOOL 1
 #endif /* !_G_config_h */
 %% file libg++/src/shlib_version
-major=3
+major=4
 minor=0
 %% file libiostream/shlib_version
 major=0
-minor=0
+minor=1
 %% file libio/shlib_version
 major=0
-minor=0
+minor=1
 %% file libstdc++/shlib_version
 major=0
-minor=0
+minor=1
 %% file VERSION
-This is libg++ 2.7.1 from the Free Software Foundation.
+This is libg++ 2.7.2 from the Free Software Foundation.
 
 Complete, unmodified libg++ sources are available from
 prep.ai.mit.edu and prep's mirrors.
