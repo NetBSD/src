@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld_start.S,v 1.1 1996/12/16 20:38:09 cgd Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.2 1999/04/18 23:12:59 thorpej Exp $	*/
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -29,25 +29,37 @@
 
 #include <machine/asm.h>
 
-.extern	_GLOBAL_OFFSET_TABLE_
+	.extern	_GLOBAL_OFFSET_TABLE_
 
-LEAF(_rtld_start, 0)		/* XXX */
+/*
+ * Note: we can call ourselves LEAF even though we use callee-saved
+ * registers because we're the root of the call graph.
+ */
+LEAF_NOPROFILE(_rtld_start, 0)
 	.set	noreorder
-	br	pv, $33
-$33:	LDGP(pv)
+	br	pv, L1
+L1:	LDGP(pv)
 
-	/* save away the stack pointer */
+	/*
+	 * Save the stack pointer.  This is what we will pass to _rtld().
+	 */
+	lda	s0, 0(sp)
 
-	lda	s0, 0(sp)	/* get argc from stack */
+	/*
+	 * Make room for the atexit and cleanup vectors that _rtld() will
+	 * provide to us.
+	 */
 	lda	sp, -16(sp)
 
-	/* save ps_strings pointer */
+	/* Save ps_strings pointer */
 	mov	a3, s1
+
+	/* XXX Partially relocate ourself. */
 
 	/* Step 1 -- Figure out the displacement */
 
-	br	t2, $34		/* get our PC */
-$34:	ldiq	t3, $34		/* get where the linker thought we were */
+	br	t2, L2		/* get our PC */
+L2:	ldiq	t3, L2		/* get where the linker thought we were */
 	subq	t2, t3, t8	/* calculate the displacement */
 
 
@@ -67,12 +79,12 @@ $34:	ldiq	t3, $34		/* get where the linker thought we were */
 	 * modified for the displacement before any code will work.
 	 */
 
-$35:	ldq	t1, 0(t9)	/* load the value */
+L3:	ldq	t1, 0(t9)	/* load the value */
 	addq	t8, t1, t1	/* add the displacement */
 	stq	t1, 0(t9)	/* save the new value */
 	lda	t9, 8(t9)	/* point to next entry */
 	cmpult	t9, t10, t1	/* are we done? */
-	bne	t1, $35		/* no, do more */
+	bne	t1, L3		/* no, do more */
 
 	/*
 	 *  Ya!  Things are far enough so we can do some dynamic linking!
@@ -87,83 +99,92 @@ $35:	ldq	t1, 0(t9)	/* load the value */
 	mov	s0, a0		/* stack pointer */
 	mov	s1, a3		/* ps_strings pointer */
 	mov	v0, t12
-	jsr	ra, (v0), 0	/* (*_start)(sp, cleanup, obj); */
+	jsr	ra, (v0), 0	/* (*_start)(sp, cleanup, obj, ps_strings); */
 	ldgp	gp, 0(ra)
 
 	CALL(exit)
 	halt
 END(_rtld_start)
 
+/*
+ * Lazy binding entry point, called via PLT.
+ */
+NESTED_NOPROFILE(_rtld_bind_start, 0, 168, ra, 0, 0)
+	/* at_reg already used by PLT code. */
 	.set	noat
-	.globl	_rtld_bind_start
-	.ent	_rtld_bind_start
-_rtld_bind_start:
 
-	lda     sp, -168(sp)
-	.frame  sp, 168, $26
-	/* Preserve all registers that C normally doesn't.  */
-	stq     $26, 0(sp)
-	stq     $0, 8(sp)
-	stq     $1, 16(sp)
-	stq     $2, 24(sp)
-	stq     $3, 32(sp)
-	stq     $4, 40(sp)
-	stq     $5, 48(sp)
-	stq     $6, 56(sp)
-	stq     $7, 64(sp)
-	stq     $8, 72(sp)
-	stq     $16, 80(sp)
-	stq     $17, 88(sp)
-	stq     $18, 96(sp)
-	stq     $19, 104(sp)
-	stq     $20, 112(sp)
-	stq     $21, 120(sp)
-	stq     $22, 128(sp)
-	stq     $23, 136(sp)
-	stq     $24, 144(sp)
-	stq     $25, 152(sp)
-	stq     $29, 160(sp)
-	.mask   0x27ff01ff, -168
-	/* Set up our $gp */
-	br      gp, $100
-$100:	ldgp    gp, 0(gp)
-	.prologue 1
+	/*
+	 * Allocate stack frame and preserve all registers that the caller
+	 * would have normally saved themselves.
+	 */
+	lda	sp, -168(sp)
+	stq	ra, 0(sp)
+	stq	v0, 8(sp)
+	stq	t0, 16(sp)
+	stq	t1, 24(sp)
+	stq	t2, 32(sp)
+	stq	t3, 40(sp)
+	stq	t4, 48(sp)
+	stq	t5, 56(sp)
+	stq	t6, 64(sp)
+	stq	t7, 72(sp)
+	stq	a0, 80(sp)
+	stq	a1, 88(sp)
+	stq	a2, 96(sp)
+	stq	a3, 104(sp)
+	stq	a4, 112(sp)
+	stq	a5, 120(sp)
+	stq	t8, 128(sp)
+	stq	t9, 136(sp)
+	stq	t10, 144(sp)
+	stq	t11, 152(sp)
+	stq	gp, 160(sp)
+
+	/*
+	 * Load our global pointer.  Note, can't use pv, since it is
+	 * already used by the PLT code.
+	 */
+	br	t0, L100
+L100:	LDGP(t0)
+
 	/* Set up the arguments for _rtld_bind. */
-	ldq     a0, 8(t12)		/* object structure */
+	ldq	a0, 8(pv)		/* object structure */
 	mov	at_reg, a1		/* offset of reloc entry */
 	CALL(_rtld_bind)
 
-	/* Move the destination address into position.  */
-	mov     $0, $27
-	/* Restore program registers.  */
-	ldq     $26, 0(sp)
-	ldq     $0, 8(sp)
-	ldq     $1, 16(sp)
-	ldq     $2, 24(sp)
-	ldq     $3, 32(sp)
-	ldq     $4, 40(sp)
-	ldq     $5, 48(sp)
-	ldq     $6, 56(sp)
-	ldq     $7, 64(sp)
-	ldq     $8, 72(sp)
-	ldq     $16, 80(sp)
-	ldq     $17, 88(sp)
-	ldq     $18, 96(sp)
-	ldq     $19, 104(sp)
-	ldq     $20, 112(sp)
-	ldq     $21, 120(sp)
-	ldq     $22, 128(sp)
-	ldq     $23, 136(sp)
-	ldq     $24, 144(sp)
-	ldq     $25, 152(sp)
-	ldq     $29, 160(sp)
-	/* Flush the Icache after having modified the .plt code.  */
+	/* Move the destination address into position. */
+	mov	v0, pv
+
+	/* Restore program registers. */
+	ldq	ra, 0(sp)
+	ldq	v0, 8(sp)
+	ldq	t0, 16(sp)
+	ldq	t1, 24(sp)
+	ldq	t2, 32(sp)
+	ldq	t3, 40(sp)
+	ldq	t4, 48(sp)
+	ldq	t5, 56(sp)
+	ldq	t6, 64(sp)
+	ldq	t7, 72(sp)
+	ldq	a0, 80(sp)
+	ldq	a1, 88(sp)
+	ldq	a2, 96(sp)
+	ldq	a3, 104(sp)
+	ldq	a4, 112(sp)
+	ldq	a5, 120(sp)
+	ldq	t8, 128(sp)
+	ldq	t9, 136(sp)
+	ldq	t10, 144(sp)
+	ldq	t11, 152(sp)
+	ldq	gp, 160(sp)
+	/* XXX LDGP? */
+
+	/*
+	 * We've patched the PLT; sync the I-stream.
+	 */
 	imb
-	/* Clean up and turn control to the destination */
+
+	/* Pop the stack frame and turn control to the destination. */
 	lda     sp, 168(sp)
-	jmp     $31, ($27)
-	.end _rtld_bind_start
- 
-
-
-
+	jmp	zero, (pv)
+END(_rtld_bind_start)
