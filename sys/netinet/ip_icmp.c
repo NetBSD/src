@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.21 1996/10/10 23:12:48 christos Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.22 1996/10/13 02:03:04 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -93,7 +93,7 @@ icmp_error(n, type, code, dest, destifp)
 
 #ifdef ICMPPRINTFS
 	if (icmpprintfs)
-		kprintf("icmp_error(%x, %d, %d)\n", oip, type, code);
+		printf("icmp_error(%x, %d, %d)\n", oip, type, code);
 #endif
 	if (type != ICMP_REDIRECT)
 		icmpstat.icps_error++;
@@ -208,7 +208,7 @@ icmp_input(m, va_alist)
 	 */
 #ifdef ICMPPRINTFS
 	if (icmpprintfs)
-		kprintf("icmp_input from %x to %x, len %d\n",
+		printf("icmp_input from %x to %x, len %d\n",
 		    ntohl(ip->ip_src.s_addr), ntohl(ip->ip_dst.s_addr),
 		    icmplen);
 #endif
@@ -237,7 +237,7 @@ icmp_input(m, va_alist)
 	 * Message type specific processing.
 	 */
 	if (icmpprintfs)
-		kprintf("icmp_input, type %d code %d\n", icp->icmp_type,
+		printf("icmp_input, type %d code %d\n", icp->icmp_type,
 		    icp->icmp_code);
 #endif
 	if (icp->icmp_type > ICMP_MAXTYPE)
@@ -310,7 +310,7 @@ icmp_input(m, va_alist)
 		NTOHS(icp->icmp_ip.ip_len);
 #ifdef ICMPPRINTFS
 		if (icmpprintfs)
-			kprintf("deliver to protocol %d\n", icp->icmp_ip.ip_p);
+			printf("deliver to protocol %d\n", icp->icmp_ip.ip_p);
 #endif
 		icmpsrc.sin_addr = icp->icmp_ip.ip_dst;
 		ctlfunc = inetsw[ip_protox[icp->icmp_ip.ip_p]].pr_ctlinput;
@@ -388,7 +388,7 @@ reflect:
 		icmpdst.sin_addr = icp->icmp_gwaddr;
 #ifdef	ICMPPRINTFS
 		if (icmpprintfs)
-			kprintf("redirect dst %x to %x\n", icp->icmp_ip.ip_dst,
+			printf("redirect dst %x to %x\n", icp->icmp_ip.ip_dst,
 			    icp->icmp_gwaddr);
 #endif
 		icmpsrc.sin_addr = icp->icmp_ip.ip_dst;
@@ -486,7 +486,7 @@ icmp_reflect(m)
 		if (opts) {
 #ifdef ICMPPRINTFS
 		    if (icmpprintfs)
-			    kprintf("icmp_reflect optlen %d rt %d => ",
+			    printf("icmp_reflect optlen %d rt %d => ",
 				optlen, opts->m_len);
 #endif
 		    for (cnt = optlen; cnt > 0; cnt -= len, cp += len) {
@@ -520,7 +520,7 @@ icmp_reflect(m)
 		    }
 #ifdef ICMPPRINTFS
 		    if (icmpprintfs)
-			    kprintf("%d\n", opts->m_len);
+			    printf("%d\n", opts->m_len);
 #endif
 		}
 		/*
@@ -566,7 +566,7 @@ icmp_send(m, opts)
 	m->m_len += hlen;
 #ifdef ICMPPRINTFS
 	if (icmpprintfs)
-		kprintf("icmp_send dst %x src %x\n", ip->ip_dst, ip->ip_src);
+		printf("icmp_send dst %x src %x\n", ip->ip_dst, ip->ip_src);
 #endif
 	(void) ip_output(m, opts, NULL, 0, NULL);
 }
