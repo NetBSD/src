@@ -1,4 +1,4 @@
-/* $NetBSD: term_chk.c,v 1.1 2003/04/20 23:53:04 christos Exp $ */
+/* $NetBSD: term_chk.c,v 1.2 2003/05/03 15:57:11 christos Exp $ */
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: term_chk.c,v 1.1 2003/04/20 23:53:04 christos Exp $");
+__RCSID("$NetBSD: term_chk.c,v 1.2 2003/05/03 15:57:11 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -68,11 +68,13 @@ term_chk(uid_t uid, const char *tty, int *msgsokP, time_t *atimeP, int ismytty,
 	int i, fd, serrno;
 
 	if (strcspn(tty, "./") != strlen(tty)) {
-		errno = EINVAL; return(-1);
+		errno = EINVAL;
+		return -1;
 	}
 	i = snprintf(path, sizeof path, _PATH_DEV "%s", tty);
 	if (i < 0 || i >= sizeof(path)) {
-		errno = ENOMEM; return(-1);
+		errno = ENOMEM;
+		return -1;
 	}
 
 	(void)setegid(saved_egid);
@@ -85,20 +87,24 @@ term_chk(uid_t uid, const char *tty, int *msgsokP, time_t *atimeP, int ismytty,
 		return(-1);
 	if (fstat(fd, &s) == -1)
 		goto error;
-	if (!isatty(fd) || s.st_uid != uid)
+	if (!isatty(fd))
 		goto error;
+	if (s.st_uid != uid) {
+		errno = EPERM;
+		goto error;
+	}
 	*msgsokP = (s.st_mode & S_IWGRP) != 0;	/* group write bit */
 	*atimeP = s.st_atime;
 	if (ismytty)
-		(void) close(fd);
-	return(ismytty? 0: fd);
+		(void)close(fd);
+	return ismytty ? 0 : fd;
 error:
 	if (fd != -1) {
 		serrno = errno;
-		close(fd);
+		(void)close(fd);
 		errno = serrno;
 	}
-	return(-1);
+	return -1;
 }
 
 char *
