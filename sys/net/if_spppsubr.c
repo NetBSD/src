@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.46.4.5 2003/01/10 06:49:47 jmc Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.46.4.6 2003/01/28 18:28:12 jmc Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.46.4.5 2003/01/10 06:49:47 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.46.4.6 2003/01/28 18:28:12 jmc Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipx.h"
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.46.4.5 2003/01/10 06:49:47 jmc Exp
 #include <sys/mbuf.h>
 #include <sys/callout.h>
 #include <sys/md5.h>
+#include <sys/inttypes.h>
 
 #include <net/if.h>
 #include <net/netisr.h>
@@ -2766,12 +2767,23 @@ sppp_ipcp_open(struct sppp *sp)
 static void
 sppp_ipcp_close(struct sppp *sp)
 {
+	STDDCL;
+
 	sppp_close_event(&ipcp, sp);
 	if (sp->ipcp.flags & (IPCP_MYADDR_DYN|IPCP_HISADDR_DYN))
 		/*
 		 * Some address was dynamic, clear it again.
 		 */
 		sppp_clear_ip_addrs(sp);
+
+	if (sp->pp_saved_mtu > 0) {
+		ifp->if_mtu = sp->pp_saved_mtu;
+		sp->pp_saved_mtu = 0;
+		if (debug)
+			log(LOG_DEBUG,
+			    SPP_FMT "resetting MTU to %" PRIu64 " bytes\n",
+			    SPP_ARGS(ifp), ifp->if_mtu);
+	}
 }
 
 static void
@@ -3079,13 +3091,25 @@ static void
 sppp_ipcp_tlu(struct sppp *sp)
 {
 	/* we are up. Set addresses and notify anyone interested */
+	STDDCL;
 	u_int32_t myaddr, hisaddr;
+
 	sppp_get_ip_addrs(sp, &myaddr, &hisaddr, 0);
 	if ((sp->ipcp.flags & IPCP_MYADDR_DYN) && (sp->ipcp.flags & IPCP_MYADDR_SEEN))
 		myaddr = sp->ipcp.req_myaddr;
 	if ((sp->ipcp.flags & IPCP_HISADDR_DYN) && (sp->ipcp.flags & IPCP_HISADDR_SEEN))
 		hisaddr = sp->ipcp.req_hisaddr;
 	sppp_set_ip_addrs(sp, myaddr, hisaddr);
+
+	if (ifp->if_mtu > sp->lcp.their_mru) {
+		sp->pp_saved_mtu = ifp->if_mtu;
+		ifp->if_mtu = sp->lcp.their_mru;
+		if (debug)
+			log(LOG_DEBUG,
+			    SPP_FMT "setting MTU to %" PRIu64 " bytes\n",
+			    SPP_ARGS(ifp), ifp->if_mtu);
+	}
+
 	if (sp->pp_con)
 		sp->pp_con(sp);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppvar.h,v 1.4.8.2 2003/01/26 10:33:13 jmc Exp $	*/
+/*	$NetBSD: if_spppvar.h,v 1.4.8.3 2003/01/28 18:28:22 jmc Exp $	*/
 
 /*
  * Defines for synchronous PPP/Cisco link level subroutines.
@@ -85,6 +85,7 @@ struct sppp {
 	u_short pp_loopcnt;     /* loopback detection counter */
 	u_long  pp_seq[IDX_COUNT];	/* local sequence number */
 	u_long  pp_rseq[IDX_COUNT];	/* remote sequence number */
+	u_quad_t	pp_saved_mtu;	/* saved MTU value */
 	time_t	pp_last_activity;	/* second of last payload data s/r */
 	time_t	pp_idle_timeout;	/* idle seconds before auto-disconnect,
 					 * 0 = disabled */
