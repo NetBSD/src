@@ -1,8 +1,8 @@
-/*	$NetBSD: mb89352.c,v 1.28 2004/08/07 20:04:44 mycroft Exp $	*/
+/*	$NetBSD: mb89352.c,v 1.29 2004/08/09 14:07:57 mycroft Exp $	*/
 /*	NecBSD: mb89352.c,v 1.4 1998/03/14 07:31:20 kmatsuda Exp	*/
 
 /*-
- * Copyright (c) 1996,97,98,99 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996,97,98,99,2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb89352.c,v 1.28 2004/08/07 20:04:44 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb89352.c,v 1.29 2004/08/09 14:07:57 mycroft Exp $");
 
 #ifdef DDB
 #define	integrate
@@ -247,6 +247,8 @@ void
 spc_attach(sc)
 	struct spc_softc *sc;
 {
+	struct scsipi_adapter *adapt = &sc->sc_adapter;
+	struct scsipi_channel *chan = &sc->sc_channel;
 
 	SPC_TRACE(("spc_attach  "));
 	sc->sc_state = SPC_INIT;
@@ -267,29 +269,74 @@ spc_attach(sc)
 	sc->sc_maxsync = (9 * 250) / sc->sc_freq;
 #endif
 
-	spc_init(sc);	/* Init chip and driver */
-
 	/*
 	 * Fill in the adapter.
 	 */
-	sc->sc_adapter.adapt_dev = &sc->sc_dev;
-	sc->sc_adapter.adapt_nchannels = 1;
-	sc->sc_adapter.adapt_openings = 7;
-	sc->sc_adapter.adapt_max_periph = 1;
-	sc->sc_adapter.adapt_minphys = minphys;
-	sc->sc_adapter.adapt_request = spc_scsipi_request;
+	adapt->adapt_dev = &sc->sc_dev;
+	adapt->adapt_nchannels = 1;
+	adapt->adapt_openings = 7;
+	adapt->adapt_max_periph = 1;
+	adapt->adapt_request = spc_scsipi_request;
+	adapt->adapt_minphys = minphys;
 
-	sc->sc_channel.chan_adapter = &sc->sc_adapter;
-	sc->sc_channel.chan_bustype = &scsi_bustype;
-	sc->sc_channel.chan_channel = 0;
-	sc->sc_channel.chan_ntargets = 8;
-	sc->sc_channel.chan_nluns = 8;
-	sc->sc_channel.chan_id = sc->sc_initiator;
+	chan->chan_adapter = &sc->sc_adapter;
+	chan->chan_bustype = &scsi_bustype;
+	chan->chan_channel = 0;
+	chan->chan_ntargets = 8;
+	chan->chan_nluns = 8;
+	chan->chan_id = sc->sc_initiator;
+
+	/*
+	 * Add reference to adapter so that we drop the reference after
+	 * config_found() to make sure the adatper is disabled.
+	 */
+	if (scsipi_adapter_addref(adapt) != 0) {
+		printf("%s: unable to enable controller\n",
+		    sc->sc_dev.dv_xname);
+		return;
+	}
+
+	spc_init(sc, 1);	/* Init chip and driver */
 
 	/*
 	 * ask the adapter what subunits are present
 	 */
-	config_found(&sc->sc_dev, &sc->sc_channel, scsiprint);
+	sc->sc_child = config_found(&sc->sc_dev, chan, scsiprint);
+	scsipi_adapter_delref(adapt);
+}
+
+int
+spc_activate(struct device *self, enum devact act)
+{
+	struct spc_softc *sc = (void *)self;
+	int s, rv = 0;
+
+	s = splhigh();
+	switch (act) {
+	case DVACT_ACTIVATE:
+		rv = EOPNOTSUPP;
+		break;
+
+	case DVACT_DEACTIVATE:
+		if (sc->sc_child != NULL)
+			rv = config_deactivate(sc->sc_child);
+		break;
+	}
+	splx(s);
+
+	return (rv);
+}
+
+int
+spc_detach(struct device *self, int flags)
+{
+	struct spc_softc *sc = (void *)self;
+	int rv = 0;
+
+	if (sc->sc_child != NULL)
+		rv = config_detach(sc->sc_child, flags);
+
+	return (rv);
 }
 
 /*
@@ -350,15 +397,18 @@ spc_scsi_reset(sc)
  * Initialize spc SCSI driver.
  */
 void
-spc_init(sc)
+spc_init(sc, bus_reset)
 	struct spc_softc *sc;
+	int bus_reset;
 {
 	struct spc_acb *acb;
 	int r;
 
 	SPC_TRACE(("spc_init  "));
-	spc_reset(sc);
-	spc_scsi_reset(sc);
+	if (bus_reset) {
+		spc_reset(sc);
+		spc_scsi_reset(sc);
+	}
 	spc_reset(sc);
 
 	if (sc->sc_state == SPC_INIT) {
@@ -2018,7 +2068,7 @@ dophase:
 	printf("%s: unexpected bus phase; resetting\n", sc->sc_dev.dv_xname);
 	SPC_BREAK();
 reset:
-	spc_init(sc);
+	spc_init(sc, 1);
 	return 1;
 
 finish:
