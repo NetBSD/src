@@ -1,12 +1,12 @@
 // -*- C++ -*-
-/* Copyright (C) 1989, 1990, 1991 Free Software Foundation, Inc.
-     Written by James Clark (jjc@jclark.uucp)
+/* Copyright (C) 1989, 1990, 1991, 1992 Free Software Foundation, Inc.
+     Written by James Clark (jjc@jclark.com)
 
 This file is part of groff.
 
 groff is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free
-Software Foundation; either version 1, or (at your option) any later
+Software Foundation; either version 2, or (at your option) any later
 version.
 
 groff is distributed in the hope that it will be useful, but WITHOUT ANY
@@ -15,34 +15,32 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License along
-with groff; see the file LICENSE.  If not, write to the Free Software
+with groff; see the file COPYING.  If not, write to the Free Software
 Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. */
 
 #include "driver.h"
 #include "stringclass.h"
 #include "cset.h"
 
-extern "C" {
-  // Sun's stdlib.h fails to declare this.
-  char *mktemp(char *);
-}
+#include "ps.h"
 
 static int landscape_flag = 0;
 static int ncopies = 1;
 static int linewidth = -1;
+// Non-zero means generate PostScript code that guesses the paper
+// length using the imageable area.
+static int guess_flag = 0;
+
+// Non-zero if -b was specified on the command line.
+static int bflag = 0;
+unsigned broken_flags = 0;
 
 #define DEFAULT_LINEWIDTH 40	/* in ems/1000 */
 #define FILL_MAX 1000
 
-// Maximum number of definitions in the prologue (used for sizing the
-// dictionary.)
-
-const int MAX_PROLOGUE_DEFS = 50;
 const char *const dict_name = "grops";
 const char *const defs_dict_name = "DEFS";
 const int DEFS_DICT_SPARE = 50;
-
-#define PROLOGUE "prologue"
 
 double degrees(double r)
 {
@@ -59,34 +57,6 @@ inline double transform_fill(int fill)
   return 1 - fill/double(FILL_MAX);
 }
 
-class ps_output {
-public:
-  ps_output(FILE *, int max_line_length);
-  ps_output &put_string(const char *, int);
-  ps_output &put_number(int);
-  ps_output &put_fix_number(int);
-  ps_output &put_float(double);
-  ps_output &put_symbol(const char *);
-  ps_output &put_literal_symbol(const char *);
-  ps_output &set_fixed_point(int);
-  ps_output &simple_comment(const char *);
-  ps_output &begin_comment(const char *);
-  ps_output &comment_arg(const char *);
-  ps_output &end_comment();
-  ps_output &set_file(FILE *);
-  ps_output &include_file(FILE *);
-  ps_output &copy_file(FILE *);
-  ps_output &end_line();
-  ps_output &put_delimiter(char);
-  ps_output &special(const char *);
-private:
-  FILE *fp;
-  int col;
-  int max_line_length;		// not including newline
-  int need_space;
-  int fixed_point;
-};
-
 ps_output::ps_output(FILE *f, int n)
 : fp(f), max_line_length(n), col(0), need_space(0), fixed_point(0)
 {
@@ -96,69 +66,6 @@ ps_output &ps_output::set_file(FILE *f)
 {
   fp = f;
   col = 0;
-  return *this;
-}
-
-ps_output &ps_output::include_file(FILE *infp)
-{
-  if (col != 0)
-    putc('\n', fp);
-  int c;
-#ifdef BROKEN_SPOOLER
-  // Strip the first line if it's a comment.  I believe
-  // some spoolers get confused by %! in the middle of a file.
-  if ((c = getc(infp)) == '%') {
-    while ((c = getc(infp)) != '\n' && c != '\r' && c != EOF)
-      ;
-  }
-  else if (c != EOF)
-    ungetc(c, infp);
-#endif /* BROKEN_SPOOLER */
-  // We strip out lines beginning with STRIPENDUM.
-#ifdef BROKEN_SPOOLER
-#define STRIPENDUM "%%"
-#else
-#define STRIPENDUM "%%IncludeFont:"
-#endif
-  // Index into STRIPENDUM of next character to be matched.
-  int match = 0;
-  while ((c = getc(infp)) != EOF) {
-    if (match >= 0) {
-      if (c == STRIPENDUM[match]) {
-	if (++match == sizeof(STRIPENDUM) - 1) {
-	  match = -1;
-	  while ((c = getc(infp)) != EOF)
-	    if (c == '\r' || c == '\n') {
-	      match = 0;
-	      break;
-	    }
-	}
-      }
-      else {
-	for (int i = 0; i < match; i++)
-	  putc(STRIPENDUM[i], fp);
-	putc(c, fp);
-	match = (c == '\n' || c == '\r' ? 0 : -1);
-      }
-    }
-    else {
-      putc(c, fp);
-      match = (c == '\n' || c == '\r' ? 0 : -1);
-    }
-  }
-  for (int i = 0; i < match; i++)
-    putc(STRIPENDUM[i], fp);
-  if (match != 0)
-    putc('\n', fp);
-  int lastc = '\n';
-  while ((c = getc(infp)) != EOF) {
-    putc(c, fp);
-    lastc = c;
-  }
-  if (lastc != '\n')
-    putc('\n', fp);
-  col = 0;
-  need_space = 0;
   return *this;
 }
 
@@ -175,6 +82,7 @@ ps_output &ps_output::end_line()
   if (col != 0) {
     putc('\n', fp);
     col = 0;
+    need_space = 0;
   }
   return *this;
 }
@@ -366,7 +274,6 @@ ps_output &ps_output::put_number(int n)
   return *this;
 }
 
-
 ps_output &ps_output::put_fix_number(int i)
 {
   const char *p = iftoa(i, fixed_point);
@@ -445,7 +352,8 @@ public:
   char *encoding;
   char *reencoded_name;
   ~ps_font();
-  void handle_unknown_font_command(int argc, const char **argv);
+  void handle_unknown_font_command(const char *command, const char *arg,
+				   const char *filename, int lineno);
   static ps_font *load_ps_font(const char *);
 };
 
@@ -466,20 +374,33 @@ ps_font::ps_font(const char *nm)
 
 ps_font::~ps_font()
 {
-  delete encoding;
-  delete reencoded_name;
+  a_delete encoding;
+  a_delete reencoded_name;
 }
 
-void ps_font::handle_unknown_font_command(int argc, const char **argv)
+void ps_font::handle_unknown_font_command(const char *command, const char *arg,
+					  const char *filename, int lineno)
 {
-  if (strcmp(argv[0], "encoding") == 0) {
-    if (argc != 2)
-      error("`encoding' command requires exactly 1 argument");
+  if (strcmp(command, "encoding") == 0) {
+    if (arg == 0)
+      error_with_file_and_line(filename, lineno,
+			       "`encoding' command requires an argument");
     else
-      encoding = strsave(argv[1]);
+      encoding = strsave(arg);
   }
 }
 
+static void handle_unknown_desc_command(const char *command, const char *arg,
+					const char *filename, int lineno)
+{
+  if (strcmp(command, "broken") == 0) {
+    if (arg == 0)
+      error_with_file_and_line(filename, lineno,
+			       "`broken' command requires an argument");
+    else if (!bflag)
+      broken_flags = atoi(arg);
+  }
+}
 
 struct style {
   font *f;
@@ -511,27 +432,6 @@ int style::operator!=(const style &s) const
 {
   return !(*this == s);
 }
-
-struct depend_list;
-
-struct document_font {
-  enum { LISTED = 01, NEEDED = 02, SUPPLIED = 04 };
-  char *name;
-  char *filename;
-  int flags;
-  document_font *next;
-  depend_list *depends_on;
-  int mark;
-  document_font(const char *);
-  ~document_font();
-  void download(ps_output &);
-};
-
-struct depend_list {
-  document_font *p;
-  depend_list *next;
-};
-
 
 class ps_printer : public printer {
   FILE *tempfp;
@@ -567,7 +467,8 @@ class ps_printer : public printer {
   int next_encoding_index;
   string defs;
   int ndefs;
-  document_font *doc_fonts;
+  resource_manager rm;
+  int invis_count;
 
   void flush_sbuf();
   void set_style(const style &);
@@ -578,28 +479,20 @@ class ps_printer : public printer {
   void do_def(char *, const environment *);
   void do_mdef(char *, const environment *);
   void do_file(char *, const environment *);
+  void do_invis(char *, const environment *);
+  void do_endinvis(char *, const environment *);
   void set_line_thickness(const environment *);
   void fill_path();
-  void merge_download_fonts();
-  void merge_import_fonts(FILE *);
-  void merge_ps_fonts();
-  void print_font_comment();
-  void print_supplied_font_comment();
-  void print_needed_font_comment();
-  void print_include_font_comments();
-  document_font *lookup_doc_font(const char *);
   void encode_fonts();
-  void download_fonts();
   void define_encoding(const char *, int);
   void reencode_font(ps_font *);
-  void read_download_file();
 public:
   ps_printer();
   ~ps_printer();
   void set_char(int i, font *f, const environment *env, int w);
   void draw(int code, int *p, int np, const environment *env);
   void begin_page(int);
-  void end_page();
+  void end_page(int);
   void special(char *arg, const environment *env);
   font *make_font(const char *);
   void end_of_line();
@@ -616,16 +509,9 @@ ps_printer::ps_printer()
   line_thickness(-1),
   fill(FILL_MAX + 1),
   ndefs(0),
-  doc_fonts(0)
+  invis_count(0)
 {
-  static char temp_filename[] = "/tmp/gropsXXXXXX";
-  mktemp(temp_filename);
-  tempfp = fopen(temp_filename, "w+");
-  if (tempfp == 0)
-    fatal("can't open temporary file `%1': %2",
-	  temp_filename, strerror(errno));
-  if (unlink(temp_filename) < 0)
-    error("can't unlink `%1': %2", temp_filename, strerror(errno));
+  tempfp = xtmpfile();
   out.set_file(tempfp);
   if (linewidth < 0)
     linewidth = DEFAULT_LINEWIDTH;
@@ -668,7 +554,7 @@ int ps_printer::set_encoding_index(ps_font *f)
 
 void ps_printer::set_char(int i, font *f, const environment *env, int w)
 {
-  if (i == space_char_index)
+  if (i == space_char_index || invis_count > 0)
     return;
   unsigned char code = f->get_code(i);
   style sty(f, env->size, env->height, env->slant);
@@ -782,14 +668,16 @@ void ps_printer::define_encoding(const char *encoding, int encoding_index)
     }
     lineno++;
   }
-  delete path;
+  a_delete path;
   out.put_literal_symbol(make_encoding_name(encoding_index));
   out.put_delimiter('[');
   for (i = 0; i < 256; i++) {
     if (vec[i] == 0)
       out.put_literal_symbol(".notdef");
-    else
+    else {
       out.put_literal_symbol(vec[i]);
+      a_delete vec[i];
+    }
   }
   out.put_delimiter(']').put_symbol("def");
 }
@@ -820,7 +708,7 @@ void ps_printer::encode_fonts()
       reencode_font((ps_font *)f->p);
     }
   }
-  delete done_encoding;
+  a_delete done_encoding;
 }
 
 void ps_printer::set_style(const style &sty)
@@ -989,6 +877,8 @@ void ps_printer::fill_path()
 
 void ps_printer::draw(int code, int *p, int np, const environment *env)
 {
+  if (invis_count > 0)
+    return;
   int fill_flag = 0;
   switch (code) {
   case 'C':
@@ -1119,26 +1009,20 @@ void ps_printer::draw(int code, int *p, int np, const environment *env)
 	break;
       }
       set_line_thickness(env);
-      int x = p[0] + p[2];
-      int y = p[1] + p[3];
-      double n = p[0]*double(x) + p[1]*double(y);
-      if (n == 0)
-	out.put_fix_number(x + env->hpos)
-	   .put_fix_number(y + env->vpos)
+      double c[2];
+      if (adjust_arc_center(p, c))
+	out.put_fix_number(env->hpos + int(c[0]))
+	   .put_fix_number(env->vpos + int(c[1]))
+	   .put_fix_number(int(sqrt(c[0]*c[0] + c[1]*c[1])))
+	   .put_float(degrees(atan2(-c[1], -c[0])))
+	   .put_float(degrees(atan2(p[1] + p[3] - c[1], p[0] + p[2] - c[0])))
+	   .put_symbol("DA");
+      else
+	out.put_fix_number(p[0] + p[2] + env->hpos)
+	   .put_fix_number(p[1] + p[3] + env->vpos)
 	   .put_fix_number(env->hpos)
 	   .put_fix_number(env->vpos)
 	   .put_symbol("DL");
-      else {
-	double k = (double(x)*x + double(y)*y)/(2.0*n);
-	double cx = k*p[0];
-	double cy = k*p[1];
-	out.put_fix_number(env->hpos + int(cx))
-	   .put_fix_number(env->vpos + int(cy))
-	   .put_fix_number(int(sqrt(cx*cx + cy*cy)))
-	   .put_float(degrees(atan2(-cy, -cx)))
-	   .put_float(degrees(atan2(y - cy, x - cx)))
-	   .put_symbol("DA");
-      }
     }
     break;
   case 't':
@@ -1177,6 +1061,7 @@ void ps_printer::draw(int code, int *p, int np, const environment *env)
   output_hpos = output_vpos = -1;
 }
 
+
 void ps_printer::begin_page(int n)
 {
   out.begin_comment("Page:").comment_arg(itoa(n));
@@ -1187,13 +1072,19 @@ void ps_printer::begin_page(int n)
   output_line_thickness = -1;
   output_hpos = output_vpos = -1;
   ndefined_styles = 0;
+  out.simple_comment("BeginPageSetup");
   out.put_symbol("BP");
+  out.simple_comment("EndPageSetup");
 }
 
-void ps_printer::end_page()
+void ps_printer::end_page(int)
 {
   flush_sbuf();
   out.put_symbol("EP");
+  if (invis_count != 0) {
+    error("missing `endinvis' command");
+    invis_count = 0;
+  }
 }
 
 font *ps_printer::make_font(const char *nm)
@@ -1205,10 +1096,12 @@ ps_printer::~ps_printer()
 {
   out.simple_comment("Trailer");
   out.put_symbol("end");
-  out.end_line();
+  out.simple_comment("EOF");
   if (fseek(tempfp, 0L, 0) < 0)
     fatal("fseek on temporary file failed");
-  fputs("%!PS-Adobe-2.1\n", stdout);
+  fputs("%!PS-Adobe-", stdout);
+  fputs((broken_flags & USE_PS_ADOBE_2_0) ? "2.0" : "3.0", stdout);
+  putchar('\n');
   out.set_file(stdout);
   {
     extern const char *version_string;
@@ -1218,24 +1111,34 @@ ps_printer::~ps_printer()
        .comment_arg(version_string)
        .end_comment();
   }
-  read_download_file();
-  merge_ps_fonts();
-  merge_download_fonts();
-  print_font_comment();
-  print_supplied_font_comment();
-  print_needed_font_comment();
+  for (font_pointer_list *f = font_list; f; f = f->next) {
+    ps_font *psf = (ps_font *)(f->p);
+    rm.need_font(psf->get_internal_name());
+  }
+  rm.print_header_comments(out);
   out.begin_comment("Pages:").comment_arg(itoa(pages_output)).end_comment();
+  out.begin_comment("PageOrder:").comment_arg("Ascend").end_comment();
+#if 0
+  fprintf(out.get_file(), "%%%%DocumentMedia: () %g %g 0 () ()\n",
+	  font::paperwidth*72.0/font::res,
+	  paper_length*72.0/font::res);
+#endif
+  out.begin_comment("Orientation:")
+     .comment_arg(landscape_flag ? "Landscape" : "Portrait")
+     .end_comment(); 
+  if (ncopies != 1) {
+    out.end_line();
+    fprintf(out.get_file(), "%%%%Requirements: numcopies(%d)\n", ncopies);
+  }
   out.simple_comment("EndComments");
-  char *path;
-  FILE *fp = font::open_file(PROLOGUE, &path);
-  if (fp == 0)
-    fatal("can't find `%1'", PROLOGUE);
-  out.put_literal_symbol(dict_name);
-  out.put_number(MAX_DEFINED_STYLES + MAX_PROLOGUE_DEFS).put_symbol("dict");
-  out.put_symbol("def");
+  out.simple_comment("BeginProlog");
+  rm.output_prolog(out);
+  if (!(broken_flags & NO_SETUP_SECTION)) {
+    out.simple_comment("EndProlog");
+    out.simple_comment("BeginSetup");
+  }
+  rm.document_setup(out);
   out.put_symbol(dict_name).put_symbol("begin");
-  out.include_file(fp);
-  fclose(fp);
   if (ndefs > 0)
     ndefs += DEFS_DICT_SPARE;
   out.put_literal_symbol(defs_dict_name)
@@ -1254,29 +1157,22 @@ ps_printer::~ps_printer()
   defs += '\0';
   out.special(defs.contents());
   out.put_symbol("end");
-  delete path;
-  out.put_symbol("end");
-#ifndef BROKEN_SPOOLER
-  out.simple_comment("EndProlog");
-#endif /* !BROKEN_SPOOLER */
-  print_include_font_comments();
-  download_fonts();
-#ifndef BROKEN_SPOOLER
-  out.simple_comment("BeginSetup");
-#endif /* !BROKEN_SPOOLER */
-  out.put_symbol(dict_name).put_symbol("begin");
-  out.put_literal_symbol("#copies").put_number(ncopies).put_symbol("def");
+  if (ncopies != 1)
+    out.put_literal_symbol("#copies").put_number(ncopies).put_symbol("def");
   out.put_literal_symbol("RES").put_number(res).put_symbol("def");
-  out.put_literal_symbol("PL").put_fix_number(paper_length).put_symbol("def");
+  out.put_literal_symbol("PL");
+  if (guess_flag)
+    out.put_symbol("PLG");
+  else
+    out.put_fix_number(paper_length);
+  out.put_symbol("def");
   out.put_literal_symbol("LS")
      .put_symbol(landscape_flag ? "true" : "false")
      .put_symbol("def");
   encode_fonts();
-#ifndef BROKEN_SPOOLER
-  out.simple_comment("EndSetup");
-#else /* !BROKEN_SPOOLER */
-  out.simple_comment("EndProlog");
-#endif /* BROKEN_SPOOLER */
+  out.simple_comment((broken_flags & NO_SETUP_SECTION)
+		     ? "EndProlog"
+		     : "EndSetup");
   out.end_line();
   out.copy_file(tempfp);
   fclose(tempfp);
@@ -1294,6 +1190,8 @@ void ps_printer::special(char *arg, const environment *env)
     "mdef", &ps_printer::do_mdef,
     "import", &ps_printer::do_import,
     "file", &ps_printer::do_file,
+    "invis", &ps_printer::do_invis,
+    "endinvis", &ps_printer::do_endinvis,
   };
   for (char *p = arg; *p == ' ' || *p == '\n'; p++)
     ;
@@ -1316,7 +1214,6 @@ void ps_printer::special(char *arg, const environment *env)
   }
   for (int i = 0; i < sizeof(proc_table)/sizeof(proc_table[0]); i++)
     if (strncmp(command, proc_table[i].name, p - command) == 0) {
-      flush_sbuf();
       (this->*(proc_table[i].proc))(p, env);
       return;
     }
@@ -1343,6 +1240,7 @@ static int check_line_lengths(const char *p)
 
 void ps_printer::do_exec(char *arg, const environment *env)
 {
+  flush_sbuf();
   while (csspace(*arg))
     arg++;
   if (*arg == '\0') {
@@ -1363,10 +1261,13 @@ void ps_printer::do_exec(char *arg, const environment *env)
   output_draw_point_size = -1;
   output_line_thickness = -1;
   ndefined_styles = 0;
+  if (!ndefs)
+    ndefs = 1;
 }
 
 void ps_printer::do_file(char *arg, const environment *env)
 {
+  flush_sbuf();
   while (csspace(*arg))
     arg++;
   if (*arg == '\0') {
@@ -1377,26 +1278,23 @@ void ps_printer::do_file(char *arg, const environment *env)
   do {
     ++arg;
   } while (*arg != '\0' && *arg != ' ' && *arg != '\n');
-  FILE *fp = fopen(filename, "r");
-  if (!fp) {
-    error("can't open `%1': %2", filename, strerror(errno));
-    return;
-  }
   out.put_fix_number(env->hpos)
      .put_fix_number(env->vpos)
-     .put_symbol("EBEGIN")
-     .include_file(fp)
-     .put_symbol("EEND");
-  fclose(fp);
+     .put_symbol("EBEGIN");
+  rm.import_file(filename, out);
+  out.put_symbol("EEND");
   output_hpos = output_vpos = -1;
   output_style.f = 0;
   output_draw_point_size = -1;
   output_line_thickness = -1;
   ndefined_styles = 0;
+  if (!ndefs)
+    ndefs = 1;
 }
 
 void ps_printer::do_def(char *arg, const environment *)
 {
+  flush_sbuf();
   while (csspace(*arg))
     arg++;
   if (!check_line_lengths(arg)) {
@@ -1413,6 +1311,7 @@ void ps_printer::do_def(char *arg, const environment *)
 
 void ps_printer::do_mdef(char *arg, const environment *)
 {
+  flush_sbuf();
   char *p;
   int n = (int)strtol(arg, &p, 10);
   if (n == 0 && p == arg) {
@@ -1438,6 +1337,7 @@ void ps_printer::do_mdef(char *arg, const environment *)
 
 void ps_printer::do_import(char *arg, const environment *env)
 {
+  flush_sbuf();
   while (*arg == ' ' || *arg == '\n')
     arg++;
   for (char *p = arg; *p != '\0' && *p != ' ' && *p != '\n'; p++)
@@ -1506,15 +1406,6 @@ void ps_printer::do_import(char *arg, const environment *env)
   }
   if (env->vpos - desired_height < 0)
     warning("top of imported graphic is above the top of the page");
-  FILE *fp = fopen(arg, "r");
-  if (fp == 0) {
-    error("can't open `%1': %2", arg, strerror(errno));
-    return;
-  }
-  merge_import_fonts(fp);
-  out.put_literal_symbol("level1")
-     .put_symbol("save")
-     .put_symbol("def");
   out.put_number(llx)
      .put_number(lly)
      .put_fix_number(desired_width)
@@ -1523,389 +1414,24 @@ void ps_printer::do_import(char *arg, const environment *env)
      .put_number(ury - lly)
      .put_fix_number(env->hpos)
      .put_fix_number(env->vpos)
-     .put_symbol("PICTURE");
-  // Put our dictionary off the dictionary stack so that it isn't
-  // zapped by unfriendly applications.
+     .put_symbol("PBEGIN");
+  rm.import_file(arg, out);
+  // do this here just in case application defines PEND
   out.put_symbol("end");
-  // Disable showpage.
-  out.put_literal_symbol("showpage")
-     .put_delimiter('{')
-     .put_delimiter('}')
-     .put_symbol("def");
-  out.begin_comment("BeginDocument:")
-     .comment_arg(arg)
-     .end_comment();
-  out.include_file(fp);
-  fclose(fp);
-  out.simple_comment("EndDocument");
-  // Clear junk off operand stack, to lessen chance of an invalidrestore.
-  out.put_symbol("clear");
-  out.put_symbol(dict_name)
-     .put_symbol("begin");
-  out.put_symbol("level1")
-     .put_symbol("restore");
+  out.put_symbol("PEND");
 }
 
-static void add_font(const char *name, int t, document_font **pp)
+void ps_printer::do_invis(char *, const environment *)
 {
-  for (; *pp; pp = &(*pp)->next)
-    if (strcmp(name, (*pp)->name) == 0) {
-      (*pp)->flags |= t;
-      return;
-    }
-  *pp = new document_font(name);
-  (*pp)->flags = t;
+  invis_count++;
 }
 
-// Skip the rest of the current line, including any line termination
-// characters.
-
-static int skip_line(FILE *fp)
+void ps_printer::do_endinvis(char *, const environment *)
 {
-  // The spec says any combination of \n and \r is allowed as a line
-  // termination.  It seems wrong to allow multiple \n's or multiple
-  // \r's since this would mean we were swallowing blank lines.
-  for (;;) {
-    int c = getc(fp);
-    if (c == '\n') {
-      c = getc(fp);
-      if (c == EOF)
-	return 0;
-      if (c != '\r')
-	ungetc(c, fp);
-      return 1;
-    }
-    if (c == '\r') {
-      c = getc(fp);
-      if (c == EOF)
-	return 0;
-      if (c != '\n')
-	ungetc(c, fp);
-      return 1;
-    }
-    if (c == EOF)
-      break;
-  }
-  return 0;
-}
-
-static void parse_fonts_arg(FILE *fp, int type, document_font **font_listp,
-			    int *at_endp)
-{
-  // More than enough room for a single name.
-  char buf[256];
-  int c = getc(fp);
-  for (;;) {
-    while (c == ' ' || c == '\t')
-      c = getc(fp);
-    if (c == EOF || c == '\n' || c == '\r')
-      break;
-    int i = 0;
-    do {
-      if (i >= sizeof(buf) - 1)
-	return;
-      if (c == '\0')
-	return;
-      buf[i++] = c;
-      c = getc(fp);
-    } while (c != '\n' && c != '\r' && c != ' ' && c != '\t' && c != EOF);
-    buf[i++] = '\0';
-    if (strcmp(buf, "(atend)") == 0 && at_endp != 0)
-      *at_endp |= type;
-    else
-      add_font(buf, type, font_listp);
-  }
-  if (c == '\n' || c == '\r')
-    ungetc(c, fp);
-}
-
-static document_font *read_document_fonts(FILE *fp)
-{
-  int last_comment = 0;
-  int document_fonts_at_end = 0;
-  // This says which comments we've seen in the header.  The first of each
-  // is the significant one.
-  int header_comments = 0;
-  char buf[sizeof("DocumentSuppliedFonts:")];
-#define MAGIC "%!PS-Adobe-"
-  if (fread(buf, 1, sizeof(MAGIC)-1, fp) != sizeof(MAGIC)-1
-      || memcmp(buf, MAGIC, sizeof(MAGIC)-1) != 0)
-    return 0;
-  document_font *font_list = 0;
-  enum { HEADER, BODY, TRAILER } state = HEADER;
-  int level = 0;
-  while (skip_line(fp)) {
-    if (state == BODY && document_fonts_at_end == 0)
-      break;
-    int c = getc(fp);
-    if (c == '%')
-      c = getc(fp);
-    if (c == EOF)
-      break;
-    if (c != '%') {
-      if (state == HEADER)
-	state = BODY;
-      if (c == '\n' || c == '\r')
-	ungetc(c, fp);
-      continue;
-    }
-    c = getc(fp);
-    if (c == EOF)
-      break;
-    if (c == '+') {
-      if (last_comment)
-	parse_fonts_arg(fp, last_comment, &font_list, 0);
-      continue;
-    }
-    last_comment = 0;
-    int i = 0;
-    while (c != '\r' && c != '\n' && c != ' ' && c != '\t' && c != EOF) {
-      if (i >= sizeof(buf) - 1) {
-	i = 0;
-	break;
-      }
-      buf[i++] = c;
-      if (c == ':')
-	break;
-      c = getc(fp);
-    }
-    if (c == '\r' || c == '\n')
-      ungetc(c, fp);
-    buf[i++] = '\0';
-    if (strcmp(buf, "BeginDocument:") == 0)
-      level++;
-    else if (strcmp(buf, "EndDocument") == 0) {
-      if (level > 0)
-	level--;
-    }
-    else if (level == 0) {
-      if (strcmp(buf, "Trailer") == 0)
-	state = TRAILER;
-      else if (strcmp(buf, "EndComments") == 0) {
-	if (state == HEADER)
-	  state = BODY;
-      }
-      else if (state == HEADER) {
-	int comment_type = 0;
-	if (strcmp(buf, "DocumentFonts:") == 0)
-	  comment_type = document_font::LISTED;
-	else if (strcmp(buf, "DocumentNeededFonts:") == 0)
-	  comment_type = document_font::NEEDED;
-	else if (strcmp(buf, "DocumentSuppliedFonts:") == 0)
-	  comment_type = document_font::SUPPLIED;
-	if (comment_type != 0 && !(header_comments & comment_type)) {
-	  parse_fonts_arg(fp, comment_type, &font_list,
-			  (comment_type == document_font::LISTED
-			   ? &document_fonts_at_end
-			   : 0));
-	  last_comment = comment_type;
-	  header_comments |= comment_type;
-	}
-      }
-      else if (state == TRAILER && strcmp(buf, "DocumentFonts:") == 0) {
-	parse_fonts_arg(fp, document_font::LISTED, &font_list, 0);
-	last_comment = document_font::LISTED;
-      }
-    }
-  }
-  return font_list;
-}
-
-document_font *ps_printer::lookup_doc_font(const char *nm)
-{
-  for (document_font **p = &doc_fonts; *p; p = &(*p)->next)
-    if (strcmp((*p)->name, nm) == 0)
-      return *p;
-  return *p = new document_font(nm);
-}
-
-void ps_printer::merge_download_fonts()
-{
-  for (document_font *p = doc_fonts; p; p = p->next)
-    if (p->filename && (p->flags & document_font::NEEDED)) {
-      char *path = 0;
-      FILE *fp = font::open_file(p->filename, &path);
-      delete path;
-      if (fp) {
-	document_font *depends = read_document_fonts(fp);
-	fclose(fp);
-	while (depends) {
-	  document_font *tem = depends->next;
-	  if (strcmp(p->name, depends->name) != 0) {
-	    if ((depends->flags & document_font::LISTED)
-		&& !(depends->flags & document_font::SUPPLIED))
-	      depends->flags |= document_font::NEEDED;
-	    // We ignore the LISTED bit from now on.
-	    document_font *q = lookup_doc_font(depends->name);
-	    if (q->filename && (depends->flags & document_font::NEEDED)) {
-	      depend_list *dep = new depend_list;
-	      dep->next = p->depends_on;
-	      dep->p = q;
-	      p->depends_on = dep;
-	      if (!(q->flags & document_font::NEEDED)) {
-		// Move q to the end of the list.
-		for (document_font **pp = &doc_fonts;
-		     *pp != q;
-		     pp = &(*pp)->next)
-		  ;
-		*pp = q->next;
-		q->next = 0;
-		for (; *pp; pp = &(*pp)->next)
-		  ;
-		*pp = q;
-	      }
-	    }
-	    q->flags |= depends->flags;
-	  }
-	  delete depends;
-	  depends = tem;
-	}
-      }
-      else {
-	error("can't find font file `%1': %2", p->filename, strerror(errno));
-	delete p->filename;
-	p->filename = 0;
-      }
-    }
-}
-
-void ps_printer::merge_import_fonts(FILE *fp)
-{
-  document_font *p = read_document_fonts(fp);
-  rewind(fp);
-  while (p) {
-    if ((p->flags & document_font::LISTED)
-	&& !(p->flags & document_font::SUPPLIED))
-      p->flags |= document_font::NEEDED;
-    document_font *tem = p->next;
-    document_font *q = lookup_doc_font(p->name);
-    q->flags |= p->flags;
-    delete p;
-    p = tem;
-  }
-}
-
-void ps_printer::merge_ps_fonts()
-{
-  for (font_pointer_list *f = font_list; f; f = f->next) {
-    ps_font *psf = (ps_font *)(f->p);
-    document_font *p = lookup_doc_font(psf->get_internal_name());
-    p->flags |= document_font::NEEDED;
-  }
-}
-
-void ps_printer::print_font_comment()
-{
-  out.begin_comment("DocumentFonts:");
-  for (document_font *list = doc_fonts; list; list = list->next)
-    if (list->flags)
-      out.comment_arg(list->name);
-  out.end_comment();
-}
-
-void ps_printer::print_supplied_font_comment()
-{
-  out.begin_comment("DocumentSuppliedFonts:");
-  for (document_font *list = doc_fonts; list; list = list->next)
-    if (((list->flags & document_font::NEEDED) && list->filename)
-	|| ((list->flags & document_font::SUPPLIED)
-#if 0
-	    && !(list->flags & document_font::NEEDED)
-#endif
-	))
-      out.comment_arg(list->name);
-  out.end_comment();
-}
-
-void ps_printer::print_needed_font_comment()
-{
-  out.begin_comment("DocumentNeededFonts:");
-  for (document_font *list = doc_fonts; list; list = list->next)
-    if ((list->flags & document_font::NEEDED) && !list->filename)
-      out.comment_arg(list->name);
-  out.end_comment();
-}
-
-void ps_printer::print_include_font_comments()
-{
-  for (document_font *list = doc_fonts; list; list = list->next)
-    if ((list->flags & document_font::NEEDED) && !list->filename)
-      out.begin_comment("IncludeFont:").comment_arg(list->name).end_comment();
-}
-  
-void ps_printer::download_fonts()
-{
-  for (document_font *p = doc_fonts; p; p = p->next)
-    p->download(out);
-}
-
-void ps_printer::read_download_file()
-{
-  char *path = 0;
-  FILE *fp = font::open_file("download", &path);
-  if (!fp)
-    fatal("can't find `download'");
-  char buf[512];
-  int lineno = 0;
-  while (fgets(buf, sizeof(buf), fp)) {
-    lineno++;
-    char *p = strtok(buf, " \t\r\n");
-    if (p == 0 || *p == '#')
-      continue;
-    char *q = strtok(0, " \t\r\n");
-    if (!q)
-      fatal_with_file_and_line(path, lineno, "missing filename");
-    lookup_doc_font(p)->filename = strsave(q);
-  }
-  delete path;
-  fclose(fp);
-}
-
-document_font::document_font(const char *s)
-: name(strsave(s)), filename(0), flags(0), next(0), depends_on(0), mark(0)
-{
-  assert(name != 0);
-}
-
-document_font::~document_font()
-{
-  delete name;
-  delete filename;
-  while (depends_on) {
-    depend_list *tem = depends_on->next;
-    delete depends_on;
-    depends_on = tem;
-  }
-}
-
-void document_font::download(ps_output &out)
-{
-  if (!filename)
-    return;
-  if (!(flags & NEEDED))
-      return;
-  // Do a reverse topological sort on the dependency graph.
-  if (mark == 0) {
-    mark = -1;
-    for (depend_list *p = depends_on; p; p = p->next)
-      p->p->download(out);
-    char *path = 0;
-    FILE *fp = font::open_file(filename, &path);
-    // This shouldn't normally happen because we checked that the file
-    // exists in merge_download_fonts.
-    if (!fp)
-      fatal("can't open `%1': %2", filename, strerror(errno));
-    out.begin_comment("BeginFont:").comment_arg(name).end_comment();
-    out.begin_comment("BeginDocument:").comment_arg(filename).end_comment();
-    out.include_file(fp);
-    out.simple_comment("EndDocument");
-    out.simple_comment("EndFont");
-    fclose(fp);
-    delete path;
-    mark = 1;
-  }
-  else if (mark < 0)
-    error("loop detected in font dependencies for `%1'", name);
+  if (invis_count == 0)
+    error("unbalanced `endinvis' command");
+  else
+    --invis_count;
 }
 
 printer *make_printer()
@@ -1921,7 +1447,7 @@ int main(int argc, char **argv)
   static char stderr_buf[BUFSIZ];
   setbuf(stderr, stderr_buf);
   int c;
-  while ((c = getopt(argc, argv, "F:lc:w:v")) != EOF)
+  while ((c = getopt(argc, argv, "F:glc:w:vb:")) != EOF)
     switch(c) {
     case 'v':
       {
@@ -1936,6 +1462,9 @@ int main(int argc, char **argv)
 	ncopies = 1;
       }
       break;
+    case 'g':
+      guess_flag = 1;
+      break;
     case 'l':
       landscape_flag = 1;
       break;
@@ -1948,12 +1477,18 @@ int main(int argc, char **argv)
 	linewidth = -1;
       }
       break;
+    case 'b':
+      // XXX check this
+      broken_flags = atoi(optarg);
+      bflag = 1;
+      break;
     case '?':
       usage();
       break;
     default:
       assert(0);
     }
+  font::set_unknown_desc_command_handler(handle_unknown_desc_command);
   if (optind >= argc)
     do_file("-");
   else {
@@ -1966,7 +1501,7 @@ int main(int argc, char **argv)
 
 static void usage()
 {
-  fprintf(stderr, "usage: %s [-l] [-c n] [-w n] [-F dir] [-v] [files ...]\n",
+  fprintf(stderr, "usage: %s [-glv] [-b n] [-c n] [-w n] [-F dir] [files ...]\n",
 	  program_name);
   exit(1);
 }
