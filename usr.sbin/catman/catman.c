@@ -1,4 +1,4 @@
-/*      $NetBSD: catman.c,v 1.12 1999/04/20 10:59:13 dante Exp $       */
+/*      $NetBSD: catman.c,v 1.13 1999/04/20 14:22:32 mycroft Exp $       */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -410,29 +410,32 @@ scanmandir(catdir, mandir)
 		snprintf(manpage, sizeof(manpage), "%s/%s", mandir, dp->d_name);
 		snprintf(catpage, sizeof(catpage), "%s/%s", catdir, dp->d_name);
 
+		e_build = NULL;
 		buildp = getlist("_build");
-		for(e_build = buildp->list.tqh_first; e_build;
-				e_build = e_build->q.tqe_next) {
-			splitentry(e_build->s, buildsuff, buildcmd);
-			snprintf(match, sizeof(match), "*%s", buildsuff);
-			if(!fnmatch(match, manpage, 0))
-				break;
+		if(buildp) {
+			for(e_build = buildp->list.tqh_first; e_build;
+					e_build = e_build->q.tqe_next) {
+				splitentry(e_build->s, buildsuff, buildcmd);
+				snprintf(match, sizeof(match), "*%s",
+							buildsuff);
+				if(!fnmatch(match, manpage, 0))
+					break;
+			}
 		}
 
-		if(e_build == NULL) {
+		if(e_build == NULL)
 			continue;
-		} else {
-			e_crunch = NULL;
-			if(crunchp = getlist("_crunch")) {
-				for(e_crunch=crunchp->list.tqh_first; e_crunch;
-						e_crunch=e_crunch->q.tqe_next) {
-					splitentry(e_crunch->s, crunchsuff,
-								crunchcmd);
-					snprintf(match, sizeof(match), "*%s",
-								crunchsuff);
-					if(!fnmatch(match, manpage, 0))
-						break;
-				}
+
+		e_crunch = NULL;
+		crunchp = getlist("_crunch");
+		if(crunchp) {
+			for(e_crunch = crunchp->list.tqh_first; e_crunch;
+					e_crunch=e_crunch->q.tqe_next) {
+				splitentry(e_crunch->s, crunchsuff, crunchcmd);
+				snprintf(match, sizeof(match), "*%s",
+							crunchsuff);
+				if(!fnmatch(match, manpage, 0))
+					break;
 			}
 		}
 
