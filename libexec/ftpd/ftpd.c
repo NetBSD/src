@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.67 1999/07/02 05:52:14 itojun Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.68 1999/07/27 15:41:49 itojun Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -109,7 +109,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.67 1999/07/02 05:52:14 itojun Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.68 1999/07/27 15:41:49 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -342,9 +342,38 @@ main(argc, argv)
 		syslog(LOG_ERR, "getpeername (%s): %m",argv[0]);
 		exit(1);
 	}
-	/*XXX*/
+	addrlen = sizeof(ctrl_addr);
+	if (getsockname(0, (struct sockaddr *)&ctrl_addr, &addrlen) < 0) {
+		syslog(LOG_ERR, "getsockname (%s): %m",argv[0]);
+		exit(1);
+	}
 	if (his_addr.su_family == AF_INET6
 	 && IN6_IS_ADDR_V4MAPPED(&his_addr.su_sin6.sin6_addr)) {
+#if 1
+		/*
+		 * IPv4 control connection arrived to AF_INET6 socket.
+		 * I hate to do this, but this is the easiest solution.
+		 */
+		union sockunion tmp_addr;
+
+		tmp_addr = his_addr;
+		memset(&his_addr, 0, sizeof(his_addr));
+		his_addr.su_sin.sin_family = AF_INET;
+		his_addr.su_sin.sin_len = sizeof(his_addr.su_sin);
+		memcpy(&his_addr.su_sin.sin_addr,
+			&tmp_addr.su_sin6.sin6_addr.s6_addr32[3],
+			sizeof(his_addr.su_sin.sin_addr));
+		his_addr.su_sin.sin_port = tmp_addr.su_sin6.sin6_port;
+
+		tmp_addr = ctrl_addr;
+		memset(&ctrl_addr, 0, sizeof(ctrl_addr));
+		ctrl_addr.su_sin.sin_family = AF_INET;
+		ctrl_addr.su_sin.sin_len = sizeof(ctrl_addr.su_sin);
+		memcpy(&ctrl_addr.su_sin.sin_addr,
+			&tmp_addr.su_sin6.sin6_addr.s6_addr32[3],
+			sizeof(ctrl_addr.su_sin.sin_addr));
+		ctrl_addr.su_sin.sin_port = tmp_addr.su_sin6.sin6_port;
+#else
 		while (fgets(line, sizeof(line), fd) != NULL) {
 			if ((cp = strchr(line, '\n')) != NULL)
 				*cp = '\0';
@@ -355,11 +384,7 @@ main(argc, argv)
 		reply(530,
 			"Connection from IPv4 mapped address is not supported.");
 		exit(0);
-	}
-	addrlen = sizeof(ctrl_addr);
-	if (getsockname(0, (struct sockaddr *)&ctrl_addr, &addrlen) < 0) {
-		syslog(LOG_ERR, "getsockname (%s): %m",argv[0]);
-		exit(1);
+#endif
 	}
 #ifdef IP_TOS
 	if (family == AF_INET) {
@@ -1137,7 +1162,7 @@ dataconn(name, size, mode)
 		sizebuf[0] = '\0';
 	if (pdata >= 0) {
 		union sockunion from;
-		int s, fromlen = ctrl_addr.su_len;
+		int s, fromlen = sizeof(from);
 
 		(void) alarm(curclass.timeout);
 		s = accept(pdata, (struct sockaddr *)&from, &fromlen);
