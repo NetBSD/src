@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.213 2004/12/14 09:15:23 yamt Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.214 2004/12/17 03:31:20 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.213 2004/12/14 09:15:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.214 2004/12/17 03:31:20 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_nfs.h"
@@ -191,7 +191,7 @@ const struct vnodeopv_entry_desc spec_nfsv2nodeop_entries[] = {
 	{ &vop_reallocblks_desc, genfs_badop },		/* reallocblks */
 	{ &vop_vfree_desc, genfs_badop },		/* vfree */
 	{ &vop_truncate_desc, genfs_badop },		/* truncate */
-	{ &vop_bwrite_desc, genfs_badop },		/* bwrite */
+	{ &vop_bwrite_desc, spec_bwrite },		/* bwrite */
 	{ &vop_getpages_desc, spec_getpages },		/* getpages */
 	{ &vop_putpages_desc, spec_putpages },		/* putpages */
 	{ NULL, NULL }
