@@ -1,4 +1,4 @@
-/*	$NetBSD: ev_timers.c,v 1.5 2002/06/20 11:43:07 itojun Exp $	*/
+/*	$NetBSD: ev_timers.c,v 1.6 2002/07/04 23:30:40 itojun Exp $	*/
 
 /*
  * Copyright (c) 1995-1999 by Internet Software Consortium
@@ -154,10 +154,10 @@ evSetTimer(evContext opaqueCtx,
 	evTimer *id;
 
 	evPrintf(ctx, 1,
-"evSetTimer(ctx %p, func %p, uap %p, due %d.%09ld, inter %d.%09ld)\n",
+"evSetTimer(ctx %p, func %p, uap %p, due %ld.%09ld, inter %ld.%09ld)\n",
 		 ctx, func, uap,
-		 (int)due.tv_sec, due.tv_nsec,
-		 (int)inter.tv_sec, inter.tv_nsec);
+		 (long)due.tv_sec, due.tv_nsec,
+		 (long)inter.tv_sec, inter.tv_nsec);
 
 	/* due={0,0} is a magic cookie meaning "now." */
 	if (due.tv_sec == 0 && due.tv_nsec == 0L)
@@ -381,10 +381,10 @@ print_timer(void *what, void *uap) {
 
 	cur = what;
 	evPrintf(ctx, 7,
-	    "  func %p, uap %p, due %d.%09ld, inter %d.%09ld\n",
+	    "  func %p, uap %p, due %ld.%09ld, inter %ld.%09ld\n",
 		 cur->func, cur->uap,
-		 (int)cur->due.tv_sec, cur->due.tv_nsec,
-		 (int)cur->inter.tv_sec, cur->inter.tv_nsec);
+		 (long)cur->due.tv_sec, cur->due.tv_nsec,
+		 (long)cur->inter.tv_sec, cur->inter.tv_nsec);
 }
 
 static void
