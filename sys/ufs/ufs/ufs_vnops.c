@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.57 1999/03/24 05:51:31 mrg Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.57.2.1 1999/12/16 23:11:46 he Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -839,14 +839,14 @@ abortit:
 		vput(tvp);
 
 		/* Delete source. */
-		vrele(fdvp);
 		vrele(fvp);
-		fcnp->cn_flags &= ~MODMASK;
+		fcnp->cn_flags &= ~(MODMASK | SAVESTART);
 		fcnp->cn_flags |= LOCKPARENT | LOCKLEAF;
-		if ((fcnp->cn_flags & SAVESTART) == 0)
-			panic("ufs_rename: lost from startdir");
 		fcnp->cn_nameiop = DELETE;
-		(void) relookup(fdvp, &fvp, fcnp);
+		if ((error = relookup(fdvp, &fvp, fcnp))){
+			/* relookup blew away fdvp */
+			return (error);
+		}
 		return (VOP_REMOVE(fdvp, fvp, fcnp));
 	}
 	if ((error = vn_lock(fvp, LK_EXCLUSIVE)) != 0)
@@ -881,7 +881,7 @@ abortit:
 		oldparent = dp->i_number;
 		doingdirectory++;
 	}
-	vrele(fdvp);
+	/* vrele(fdvp); */
 
 	/*
 	 * When the target exists, both the directory
@@ -924,10 +924,12 @@ abortit:
 			goto bad;
 		if (xp != NULL)
 			vput(tvp);
-		if ((error = ufs_checkpath(ip, dp, tcnp->cn_cred)) != 0)
+		vref(tdvp);	/* compensate for the ref checkpath looses */
+		if ((error = ufs_checkpath(ip, dp, tcnp->cn_cred)) != 0) {
+			vrele(tdvp);
 			goto out;
-		if ((tcnp->cn_flags & SAVESTART) == 0)
-			panic("ufs_rename: lost to startdir");
+		}
+		tcnp->cn_flags &= ~SAVESTART;
 		if ((error = relookup(tdvp, &tvp, tcnp)) != 0)
 			goto out;
 		dp = VTOI(tdvp);
@@ -1047,11 +1049,12 @@ abortit:
 	/*
 	 * 3) Unlink the source.
 	 */
-	fcnp->cn_flags &= ~MODMASK;
+	fcnp->cn_flags &= ~(MODMASK | SAVESTART);
 	fcnp->cn_flags |= LOCKPARENT | LOCKLEAF;
-	if ((fcnp->cn_flags & SAVESTART) == 0)
-		panic("ufs_rename: lost from startdir");
-	(void) relookup(fdvp, &fvp, fcnp);
+	if ((error = relookup(fdvp, &fvp, fcnp))) {
+		vrele(ap->a_fvp);
+		return (error);
+	}
 	if (fvp != NULL) {
 		xp = VTOI(fvp);
 		dp = VTOI(fdvp);
@@ -1138,6 +1141,7 @@ abortit:
 	vrele(ap->a_fvp);
 	return (error);
 
+	/* exit routines from steps 1 & 2 */
 bad:
 	if (xp)
 		vput(ITOV(xp));
@@ -1151,6 +1155,7 @@ out:
 		vput(fvp);
 	} else
 		vrele(fvp);
+	vrele(fdvp);
 	return (error);
 }
 
