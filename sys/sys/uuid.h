@@ -1,5 +1,4 @@
-/* $FreeBSD: /repoman/r/ncvs/src/sys/sys/uuid.h,v 1.3 2003/05/31 16:47:07 phk Exp $ */
-/*	$NetBSD: uuid.h,v 1.1.4.5 2004/09/21 13:38:51 skrll Exp $	*/
+/*	$NetBSD: uuid.h,v 1.1.4.6 2004/10/30 07:34:49 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 Marcel Moolenaar
