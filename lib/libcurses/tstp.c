@@ -1,4 +1,4 @@
-/*	$NetBSD: tstp.c,v 1.18 2000/04/27 00:27:23 jdc Exp $	*/
+/*	$NetBSD: tstp.c,v 1.19 2000/05/17 16:23:49 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tstp.c	8.3 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: tstp.c,v 1.18 2000/04/27 00:27:23 jdc Exp $");
+__RCSID("$NetBSD: tstp.c,v 1.19 2000/05/17 16:23:49 jdc Exp $");
 #endif
 #endif				/* not lint */
 
@@ -134,7 +134,8 @@ __stopwin(void)
 	if (MO != NULL)
 		(void) tputs(MO, 0, __cputchar);
 	
-	(void) tputs(KE, 0, __cputchar);
+	if (curscr->flags & __KEYPAD)
+		(void) tputs(KE, 0, __cputchar);
 	(void) tputs(VE, 0, __cputchar);
 	(void) tputs(TE, 0, __cputchar);
 	(void) fflush(stdout);
