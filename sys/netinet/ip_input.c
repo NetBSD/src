@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.125 2000/12/25 02:00:47 wiz Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.126 2000/12/28 21:40:59 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -319,8 +319,8 @@ ip_init()
 
 #ifdef PFIL_HOOKS
 	/* Register our Packet Filter hook. */
-	inet_pfil_hook.ph_key = (void *)(u_long) AF_INET;
-	inet_pfil_hook.ph_dlt = DLT_RAW;
+	inet_pfil_hook.ph_type = PFIL_TYPE_AF;
+	inet_pfil_hook.ph_af   = AF_INET;
 	i = pfil_head_register(&inet_pfil_hook);
 	if (i != 0)
 		printf("ip_init: WARNING: unable to register pfil hook, "
