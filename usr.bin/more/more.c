@@ -71,7 +71,9 @@ static char sccsid[] = "@(#)more.c	5.26 (Berkeley) 4/18/91";
 #define Ungetc(c,f)	(--file_pos, ungetc(c,f))
 
 #define MBIT	CBREAK
+#ifndef stty
 #define stty(fd,argp)	ioctl(fd,TIOCSETN,argp)
+#endif
 
 #define TBUFSIZ	1024
 #define LINSIZ	256
@@ -1582,6 +1584,7 @@ retry:
 	    if (Home == 0 || *Home == '\0')
 	    {
 		if ((cursorm = tgetstr("cm", &clearptr)) != NULL) {
+		    char *tgoto();
 		    strcpy(cursorhome, tgoto(cursorm, 0, 0));
 		    Home = cursorhome;
 	       }
