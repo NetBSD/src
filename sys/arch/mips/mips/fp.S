@@ -1,4 +1,4 @@
-/*	$NetBSD: fp.S,v 1.7 1994/12/15 15:22:04 mycroft Exp $	*/
+/*	$NetBSD: fp.S,v 1.8 1994/12/15 17:48:39 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -636,14 +636,14 @@ func_fmt_tbl:
  * Single precision subtract.
  */
 sub_s:
-	jal	get_ft_fs_s
+	jal	_C_LABEL(get_ft_fs_s)
 	xor	t4, t4, 1			# negate FT sign bit
 	b	add_sub_s
 /*
  * Single precision add.
  */
 add_s:
-	jal	get_ft_fs_s
+	jal	_C_LABEL(get_ft_fs_s)
 add_sub_s:
 	bne	t1, SEXP_INF, 1f		# is FS an infinity?
 	bne	t5, SEXP_INF, result_fs_s	# if FT is not inf, result=FS
@@ -657,11 +657,11 @@ add_sub_s:
 	beq	t2, zero, 3f			# is FS zero?
 	bne	t5, zero, 2f			# is FT a denormalized num?
 	beq	t6, zero, result_fs_s		# FT is zero, result=FS
-	jal	renorm_fs_s
-	jal	renorm_ft_s
+	jal	_C_LABEL(renorm_fs_s)
+	jal	_C_LABEL(renorm_ft_s)
 	b	5f
 2:
-	jal	renorm_fs_s
+	jal	_C_LABEL(renorm_fs_s)
 	subu	t5, t5, SEXP_BIAS		# unbias FT exponent
 	or	t6, t6, SIMPL_ONE		# set implied one bit
 	b	5f
@@ -680,7 +680,7 @@ add_sub_s:
 	beq	t6, zero, result_fs_s		# FT is zero, result=FS
 	subu	t1, t1, SEXP_BIAS		# unbias FS exponent
 	or	t2, t2, SIMPL_ONE		# set implied one bit
-	jal	renorm_ft_s
+	jal	_C_LABEL(renorm_ft_s)
 	b	5f
 2:
 	subu	t1, t1, SEXP_BIAS		# unbias FS exponent
@@ -752,14 +752,14 @@ add_sub_s:
  * Double precision subtract.
  */
 sub_d:
-	jal	get_ft_fs_d
+	jal	_C_LABEL(get_ft_fs_d)
 	xor	t4, t4, 1			# negate sign bit
 	b	add_sub_d
 /*
  * Double precision add.
  */
 add_d:
-	jal	get_ft_fs_d
+	jal	_C_LABEL(get_ft_fs_d)
 add_sub_d:
 	bne	t1, DEXP_INF, 1f		# is FS an infinity?
 	bne	t5, DEXP_INF, result_fs_d	# if FT is not inf, result=FS
@@ -779,11 +779,11 @@ add_sub_d:
 	bne	t6, zero, 1f
 	beq	t7, zero, result_fs_d		# FT is zero, result=FS
 1:
-	jal	renorm_fs_d
-	jal	renorm_ft_d
+	jal	_C_LABEL(renorm_fs_d)
+	jal	_C_LABEL(renorm_ft_d)
 	b	5f
 2:
-	jal	renorm_fs_d
+	jal	_C_LABEL(renorm_fs_d)
 	subu	t5, t5, DEXP_BIAS		# unbias FT exponent
 	or	t6, t6, DIMPL_ONE		# set implied one bit
 	b	5f
@@ -805,7 +805,7 @@ add_sub_d:
 1:
 	subu	t1, t1, DEXP_BIAS		# unbias FS exponent
 	or	t2, t2, DIMPL_ONE		# set implied one bit
-	jal	renorm_ft_d
+	jal	_C_LABEL(renorm_ft_d)
 	b	5f
 2:
 	subu	t1, t1, DEXP_BIAS		# unbias FS exponent
@@ -922,7 +922,7 @@ add_sub_d:
  * Single precision multiply.
  */
 mul_s:
-	jal	get_ft_fs_s
+	jal	_C_LABEL(get_ft_fs_s)
 	xor	t0, t0, t4			# compute sign of result
 	move	t4, t0
 	bne	t1, SEXP_INF, 2f		# is FS an infinity?
@@ -943,7 +943,7 @@ mul_s:
 1:
 	bne	t1, zero, 1f			# is FS zero?
 	beq	t2, zero, result_fs_s		# result is zero
-	jal	renorm_fs_s
+	jal	_C_LABEL(renorm_fs_s)
 	b	2f
 1:
 	subu	t1, t1, SEXP_BIAS		# unbias FS exponent
@@ -951,7 +951,7 @@ mul_s:
 2:
 	bne	t5, zero, 1f			# is FT zero?
 	beq	t6, zero, result_ft_s		# result is zero
-	jal	renorm_ft_s
+	jal	_C_LABEL(renorm_ft_s)
 	b	2f
 1:
 	subu	t5, t5, SEXP_BIAS		# unbias FT exponent
@@ -968,7 +968,7 @@ mul_s:
  * Double precision multiply.
  */
 mul_d:
-	jal	get_ft_fs_d
+	jal	_C_LABEL(get_ft_fs_d)
 	xor	t0, t0, t4			# compute sign of result
 	move	t4, t0
 	bne	t1, DEXP_INF, 2f		# is FS an infinity?
@@ -996,7 +996,7 @@ mul_d:
 	bne	t2, zero, 1f
 	beq	t3, zero, result_fs_d		# result is zero
 1:
-	jal	renorm_fs_d
+	jal	_C_LABEL(renorm_fs_d)
 	b	3f
 2:
 	subu	t1, t1, DEXP_BIAS		# unbias FS exponent
@@ -1006,7 +1006,7 @@ mul_d:
 	bne	t6, zero, 1f
 	beq	t7, zero, result_ft_d		# result is zero
 1:
-	jal	renorm_ft_d
+	jal	_C_LABEL(renorm_ft_d)
 	b	3f
 2:
 	subu	t5, t5, DEXP_BIAS		# unbias FT exponent
@@ -1052,7 +1052,7 @@ mul_d:
  * Single precision divide.
  */
 div_s:
-	jal	get_ft_fs_s
+	jal	_C_LABEL(get_ft_fs_s)
 	xor	t0, t0, t4			# compute sign of result
 	move	t4, t0
 	bne	t1, SEXP_INF, 1f		# is FS an infinity?
@@ -1073,7 +1073,7 @@ div_s:
 	beq	t6, zero, invalid_s		# 0 / 0
 	b	result_fs_s			# result = zero
 1:
-	jal	renorm_fs_s
+	jal	_C_LABEL(renorm_fs_s)
 	b	3f
 2:
 	subu	t1, t1, SEXP_BIAS		# unbias FS exponent
@@ -1089,7 +1089,7 @@ div_s:
 	move	t2, zero
 	b	result_fs_s
 1:
-	jal	renorm_ft_s
+	jal	_C_LABEL(renorm_ft_s)
 	b	3f
 2:
 	subu	t5, t5, SEXP_BIAS		# unbias FT exponent
@@ -1119,7 +1119,7 @@ div_s:
  * Double precision divide.
  */
 div_d:
-	jal	get_ft_fs_d
+	jal	_C_LABEL(get_ft_fs_d)
 	xor	t0, t0, t4			# compute sign of result
 	move	t4, t0
 	bne	t1, DEXP_INF, 1f		# is FS an infinity?
@@ -1146,7 +1146,7 @@ div_d:
 	beq	t7, zero, invalid_d		# 0 / 0
 	b	result_fs_d			# result = zero
 1:
-	jal	renorm_fs_d
+	jal	_C_LABEL(renorm_fs_d)
 	b	3f
 2:
 	subu	t1, t1, DEXP_BIAS		# unbias FS exponent
@@ -1164,7 +1164,7 @@ div_d:
 	move	t3, zero
 	b	result_fs_d
 1:
-	jal	renorm_ft_d
+	jal	_C_LABEL(renorm_ft_d)
 	b	3f
 2:
 	subu	t5, t5, DEXP_BIAS		# unbias FT exponent
@@ -1221,7 +1221,7 @@ div_d:
  * Single precision absolute value.
  */
 abs_s:
-	jal	get_fs_s
+	jal	_C_LABEL(get_fs_s)
 	move	t0, zero			# set sign positive
 	b	result_fs_s
 
@@ -1229,7 +1229,7 @@ abs_s:
  * Double precision absolute value.
  */
 abs_d:
-	jal	get_fs_d
+	jal	_C_LABEL(get_fs_d)
 	move	t0, zero			# set sign positive
 	b	result_fs_d
 
@@ -1237,21 +1237,21 @@ abs_d:
  * Single precision move.
  */
 mov_s:
-	jal	get_fs_s
+	jal	_C_LABEL(get_fs_s)
 	b	result_fs_s
 
 /*
  * Double precision move.
  */
 mov_d:
-	jal	get_fs_d
+	jal	_C_LABEL(get_fs_d)
 	b	result_fs_d
 
 /*
  * Single precision negate.
  */
 neg_s:
-	jal	get_fs_s
+	jal	_C_LABEL(get_fs_s)
 	xor	t0, t0, 1			# reverse sign
 	b	result_fs_s
 
@@ -1259,7 +1259,7 @@ neg_s:
  * Double precision negate.
  */
 neg_d:
-	jal	get_fs_d
+	jal	_C_LABEL(get_fs_d)
 	xor	t0, t0, 1			# reverse sign
 	b	result_fs_d
 
@@ -1267,7 +1267,7 @@ neg_d:
  * Convert double to single.
  */
 cvt_s_d:
-	jal	get_fs_d
+	jal	_C_LABEL(get_fs_d)
 	bne	t1, DEXP_INF, 1f		# is FS an infinity?
 	li	t1, SEXP_INF			# convert to single
 	sll	t2, t2, 3			# convert D fraction to S
@@ -1279,7 +1279,7 @@ cvt_s_d:
 	bne	t2, zero, 1f
 	beq	t3, zero, result_fs_s		# result=0
 1:
-	jal	renorm_fs_d
+	jal	_C_LABEL(renorm_fs_d)
 	subu	t1, t1, 3			# correct exp for shift below
 	b	3f
 2:
@@ -1296,7 +1296,7 @@ cvt_s_d:
  * Convert integer to single.
  */
 cvt_s_w:
-	jal	get_fs_int
+	jal	_C_LABEL(get_fs_int)
 	bne	t2, zero, 1f			# check for zero
 	move	t1, zero
 	b	result_fs_s
@@ -1356,7 +1356,7 @@ cvt_s_w:
  * Convert single to double.
  */
 cvt_d_s:
-	jal	get_fs_s
+	jal	_C_LABEL(get_fs_s)
 	move	t3, zero
 	bne	t1, SEXP_INF, 1f		# is FS an infinity?
 	li	t1, DEXP_INF			# convert to double
@@ -1364,7 +1364,7 @@ cvt_d_s:
 1:
 	bne	t1, zero, 2f			# is FS denormalized or zero?
 	beq	t2, zero, result_fs_d		# is FS zero?
-	jal	renorm_fs_s
+	jal	_C_LABEL(renorm_fs_s)
 	move	t8, zero
 	b	norm_d
 2:
@@ -1377,7 +1377,7 @@ cvt_d_s:
  * Convert integer to double.
  */
 cvt_d_w:
-	jal	get_fs_int
+	jal	_C_LABEL(get_fs_int)
 	bne	t2, zero, 1f			# check for zero
 	move	t1, zero			# result=0
 	move	t3, zero
@@ -1439,7 +1439,7 @@ cvt_d_w:
  * Convert single to integer.
  */
 cvt_w_s:
-	jal	get_fs_s
+	jal	_C_LABEL(get_fs_s)
 	bne	t1, SEXP_INF, 1f		# is FS an infinity?
 	bne	t2, zero, invalid_w		# invalid conversion
 1:
@@ -1458,7 +1458,7 @@ cvt_w_s:
  * Convert double to integer.
  */
 cvt_w_d:
-	jal	get_fs_d
+	jal	_C_LABEL(get_fs_d)
 	bne	t1, DEXP_INF, 1f		# is FS an infinity?
 	bne	t2, zero, invalid_w		# invalid conversion
 	bne	t3, zero, invalid_w		# invalid conversion
@@ -1575,7 +1575,7 @@ underflow_w:
  * Compare single.
  */
 cmp_s:
-	jal	get_cmp_s
+	jal	_C_LABEL(get_cmp_s)
 	bne	t1, SEXP_INF, 1f		# is FS an infinity?
 	bne	t2, zero, unordered		# FS is a NAN
 1:
@@ -1603,7 +1603,7 @@ cmp_s:
  * Compare double.
  */
 cmp_d:
-	jal	get_cmp_d
+	jal	_C_LABEL(get_cmp_d)
 	bne	t1, DEXP_INF, 1f		# is FS an infinity?
 	bne	t2, zero, unordered
 	bne	t3, zero, unordered		# FS is a NAN
@@ -1772,7 +1772,7 @@ inexact_s:
 	addu	t1, t1, SEXP_BIAS		# bias exponent
 	and	t2, t2, ~SIMPL_ONE		# clear implied one bit
 inexact_nobias_s:
-	jal	set_fd_s			# save result
+	jal	_C_LABEL(set_fd_s)		# save result
 	or	a1, a1, MACH_FPC_EXCEPTION_INEXACT | MACH_FPC_STICKY_INEXACT
 	and	v0, a1, MACH_FPC_ENABLE_INEXACT
 	bne	v0, zero, fpe_trap
@@ -1790,7 +1790,7 @@ overflow_s:
 	beq	v0, zero, 1f
 	subu	t1, t1, 192			# bias exponent
 	and	t2, t2, ~SIMPL_ONE		# clear implied one bit
-	jal	set_fd_s			# save result
+	jal	_C_LABEL(set_fd_s)		# save result
 	b	fpe_trap
 1:
 	and	v0, a1, MACH_FPC_ROUNDING_BITS	# get rounding mode
@@ -1821,7 +1821,7 @@ underflow_s:
  */
 	addu	t1, t1, 192			# bias exponent
 	and	t2, t2, ~SIMPL_ONE		# clear implied one bit
-	jal	set_fd_s			# save result
+	jal	_C_LABEL(set_fd_s)		# save result
 	or	a1, a1, MACH_FPC_EXCEPTION_UNDERFLOW | MACH_FPC_STICKY_UNDERFLOW
 	b	fpe_trap
 /*
@@ -1885,7 +1885,7 @@ underflow_s:
 	and	t2, t2, ~1			#  clear LSB (round to nearest)
 5:
 	move	t1, zero			# denorm or zero exponent
-	jal	set_fd_s			# save result
+	jal	_C_LABEL(set_fd_s)		# save result
 	beq	t8, zero, done			# check for exact result
 	or	a1, a1, MACH_FPC_EXCEPTION_UNDERFLOW | MACH_FPC_STICKY_UNDERFLOW
 	or	a1, a1, MACH_FPC_EXCEPTION_INEXACT | MACH_FPC_STICKY_INEXACT
@@ -2022,7 +2022,7 @@ inexact_d:
 	addu	t1, t1, DEXP_BIAS		# bias exponent
 	and	t2, t2, ~DIMPL_ONE		# clear implied one bit
 inexact_nobias_d:
-	jal	set_fd_d			# save result
+	jal	_C_LABEL(set_fd_d)		# save result
 	or	a1, a1, MACH_FPC_EXCEPTION_INEXACT | MACH_FPC_STICKY_INEXACT
 	and	v0, a1, MACH_FPC_ENABLE_INEXACT
 	bne	v0, zero, fpe_trap
@@ -2040,7 +2040,7 @@ overflow_d:
 	beq	v0, zero, 1f
 	subu	t1, t1, 1536			# bias exponent
 	and	t2, t2, ~DIMPL_ONE		# clear implied one bit
-	jal	set_fd_d			# save result
+	jal	_C_LABEL(set_fd_d)		# save result
 	b	fpe_trap
 1:
 	and	v0, a1, MACH_FPC_ROUNDING_BITS	# get rounding mode
@@ -2073,7 +2073,7 @@ underflow_d:
  */
 	addu	t1, t1, 1536			# bias exponent
 	and	t2, t2, ~DIMPL_ONE		# clear implied one bit
-	jal	set_fd_d			# save result
+	jal	_C_LABEL(set_fd_d)		# save result
 	or	a1, a1, MACH_FPC_EXCEPTION_UNDERFLOW | MACH_FPC_STICKY_UNDERFLOW
 	b	fpe_trap
 /*
@@ -2157,7 +2157,7 @@ underflow_d:
 	and	t3, t3, ~1			#  clear LSB (round to nearest)
 5:
 	move	t1, zero			# denorm or zero exponent
-	jal	set_fd_d			# save result
+	jal	_C_LABEL(set_fd_d)		# save result
 	beq	t8, zero, done			# check for exact result
 	or	a1, a1, MACH_FPC_EXCEPTION_UNDERFLOW | MACH_FPC_STICKY_UNDERFLOW
 	or	a1, a1, MACH_FPC_EXCEPTION_INEXACT | MACH_FPC_STICKY_INEXACT
@@ -2178,7 +2178,7 @@ invalid_s:					# trap invalid operation
 	move	t0, zero			# result is a quiet NAN
 	li	t1, SEXP_INF
 	li	t2, SQUIET_NAN
-	jal	set_fd_s			# save result (in t0,t1,t2)
+	jal	_C_LABEL(set_fd_s)		# save result (in t0,t1,t2)
 	b	done
 
 /*
@@ -2194,7 +2194,7 @@ invalid_d:					# trap invalid operation
 	li	t1, DEXP_INF
 	li	t2, DQUIET_NAN0
 	li	t3, DQUIET_NAN1
-	jal	set_fd_d			# save result (in t0,t1,t2,t3)
+	jal	_C_LABEL(set_fd_d)		# save result (in t0,t1,t2,t3)
 	b	done
 
 /*
@@ -2234,11 +2234,11 @@ result_ft_s:
 	move	t1, t5
 	move	t2, t6
 result_fs_s:					# result is FS
-	jal	set_fd_s			# save result (in t0,t1,t2)
+	jal	_C_LABEL(set_fd_s)		# save result (in t0,t1,t2)
 	b	done
 
 result_fs_w:
-	jal	set_fd_word			# save result (in t2)
+	jal	_C_LABEL(set_fd_word)		# save result (in t2)
 	b	done
 
 result_ft_d:
@@ -2247,7 +2247,7 @@ result_ft_d:
 	move	t2, t6
 	move	t3, t7
 result_fs_d:					# result is FS
-	jal	set_fd_d			# save result (in t0,t1,t2,t3)
+	jal	_C_LABEL(set_fd_d)		# save result (in t0,t1,t2,t3)
 
 done:
 	lw	ra, STAND_RA_OFFSET(sp)
