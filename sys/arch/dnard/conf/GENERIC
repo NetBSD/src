@@ -1,8 +1,8 @@
-#	$NetBSD: GENERIC,v 1.1 2001/02/26 02:49:25 matt Exp $
+#	$NetBSD: GENERIC,v 1.2 2001/06/30 11:00:33 darcy Exp $
 
 include	"arch/dnard/conf/std.dnard"
 
-#ident		"GENERIC-$Revision: 1.1 $"
+#ident		"GENERIC-$Revision: 1.2 $"
 
 # estimated number of users
 maxusers	32
@@ -98,6 +98,10 @@ options 	COMPAT_12	# NetBSD 1.2 compatibility.
 
 options 	SYSVMSG		# System V-like message queues
 options 	SYSVSEM		# System V-like semaphores
+#options	SEMMNI=10	# number of semaphore identifiers
+#options	SEMMNS=60	# number of semaphores in system
+#options	SEMUME=10	# max number of undo entries per process
+#options	SEMMNU=30	# number of undo structures in system
 options 	SYSVSHM		# System V-like memory sharing
 #options 	SHMMAXPGS=1024	# 1024 pages is the default
 

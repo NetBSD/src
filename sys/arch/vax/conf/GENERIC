@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.88 2001/02/18 10:44:22 ragge Exp $
+#	$NetBSD: GENERIC,v 1.89 2001/06/30 11:00:37 darcy Exp $
 #
 # GENERIC VAX configuration file; all supported devices.
 #
 
 include		"arch/vax/conf/std.vax"
 
-#ident 		"GENERIC-$Revision: 1.88 $"
+#ident 		"GENERIC-$Revision: 1.89 $"
 
 # Here are all different supported CPU types listed.
 #options 	"VAX8800"	# VAX 8500, 8530, 8550, 8700, 8800
@@ -89,6 +89,10 @@ options 	FONT_QVSS8x15
 # System V shared memory & semaphores support.
 options 	SYSVMSG
 options 	SYSVSEM
+#options	SEMMNI=10	# number of semaphore identifiers
+#options	SEMMNS=60	# number of semaphores in system
+#options	SEMUME=10	# max number of undo entries per process
+#options	SEMMNU=30	# number of undo structures in system
 options 	SYSVSHM
 
 # Old compat stuff; needed to run 4.3BSD Reno programs.

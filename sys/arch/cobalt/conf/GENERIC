@@ -1,8 +1,8 @@
-#	$NetBSD: GENERIC,v 1.15 2001/02/16 19:48:05 soren Exp $
+#	$NetBSD: GENERIC,v 1.16 2001/06/30 11:00:33 darcy Exp $
 
 include 	"arch/cobalt/conf/std.cobalt"
 
-#ident 		"GENERIC-$Revision: 1.15 $"
+#ident 		"GENERIC-$Revision: 1.16 $"
 
 maxusers	32
 
@@ -10,6 +10,10 @@ maxusers	32
 options 	KTRACE		# system call tracing support
 options 	SYSVMSG		# System V message queues
 options 	SYSVSEM		# System V semaphores
+#options	SEMMNI=10	# number of semaphore identifiers
+#options	SEMMNS=60	# number of semaphores in system
+#options	SEMUME=10	# max number of undo entries per process
+#options	SEMMNU=30	# number of undo structures in system
 options 	SYSVSHM		# System V shared memory
 #options 	SHMMAXPGS=1024	# 1024 pages is the default
 #options 	LKM		# loadable kernel modules

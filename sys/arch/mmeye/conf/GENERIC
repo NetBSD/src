@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.22 2001/01/03 15:42:48 itojun Exp $
+#	$NetBSD: GENERIC,v 1.23 2001/06/30 11:00:34 darcy Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/mmeye/conf/std.mmeye"
 
-#ident 		"GENERIC-$Revision: 1.22 $"
+#ident 		"GENERIC-$Revision: 1.23 $"
 
 maxusers	16		# estimated number of users
 
@@ -27,6 +27,10 @@ options 	KTRACE		# system call tracing via ktrace(1)
 
 options 	SYSVMSG		# System V-like message queues
 options 	SYSVSEM		# System V-like semaphores
+#options	SEMMNI=10	# number of semaphore identifiers
+#options	SEMMNS=60	# number of semaphores in system
+#options	SEMUME=10	# max number of undo entries per process
+#options	SEMMNU=30	# number of undo structures in system
 options 	SYSVSHM		# System V-like memory sharing
 #options 	SHMMAXPGS=1024	# 1024 pages is the default
 

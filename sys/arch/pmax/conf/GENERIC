@@ -1,11 +1,11 @@
 #
-# 	$NetBSD: GENERIC,v 1.86 2000/12/19 10:42:06 bouyer Exp $
+# 	$NetBSD: GENERIC,v 1.87 2001/06/30 11:00:36 darcy Exp $
 #
 # Distribution kernel (any model) kernel config file
 #
 include		"arch/pmax/conf/std.pmax"
 
-#ident		"GENERIC-$Revision: 1.86 $"
+#ident		"GENERIC-$Revision: 1.87 $"
 
 maxusers	64
 
@@ -36,6 +36,10 @@ options 	KTRACE			# system call tracing support
 
 options 	SYSVMSG		# System V-like message queues
 options 	SYSVSEM		# System V-like semaphores
+#options	SEMMNI=10	# number of semaphore identifiers
+#options	SEMMNS=60	# number of semaphores in system
+#options	SEMUME=10	# max number of undo entries per process
+#options	SEMMNU=30	# number of undo structures in system
 options 	SYSVSHM		# System V-like memory sharing
 #options 	SHMMAXPGS=1024	# 1024 pages is the default
 

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.22 2001/06/24 10:34:26 bjh21 Exp $
+# $NetBSD: GENERIC,v 1.23 2001/06/30 11:00:32 darcy Exp $
 
 # GENERIC arm26 configuration -- everything I've implemented so far
 
@@ -82,6 +82,10 @@ options 	INET6		# IPV6
 # System V IPC
 options 	SYSVMSG		# System V-like message queues
 options 	SYSVSEM		# System V-like semaphores
+#options	SEMMNI=10	# number of semaphore identifiers
+#options	SEMMNS=60	# number of semaphores in system
+#options	SEMUME=10	# max number of undo entries per process
+#options	SEMMNU=30	# number of undo structures in system
 options 	SYSVSHM		# System V-like shared memory
 #options 	SHMMAXPGS=1024	# 1024 pages is the default
 

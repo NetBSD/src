@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.158 2001/06/11 01:50:52 wiz Exp $
+#	$NetBSD: GENERIC,v 1.159 2001/06/30 11:00:31 darcy Exp $
 
 #
 #if 0
@@ -16,7 +16,7 @@
 
 include "arch/amiga/conf/std.amiga"
 
-#ident 		"GENERIC-$Revision: 1.158 $"
+#ident 		"GENERIC-$Revision: 1.159 $"
 
 #ifdef INSTALL_CONFIGURATION
 makeoptions	COPTS="-Os"
@@ -146,6 +146,10 @@ options 	EXEC_ELF32	# 32-bit ELF executables (Linux, SVR4)
 options 	SYSVSHM		# System V-like shared memory
 options 	SYSVMSG		# System V-like messages
 options 	SYSVSEM		# System V-like semaphores
+#options	SEMMNI=10	# number of semaphore identifiers
+#options	SEMMNS=60	# number of semaphores in system
+#options	SEMUME=10	# max number of undo entries per process
+#options	SEMMNU=30	# number of undo structures in system
 #endif
 
 #

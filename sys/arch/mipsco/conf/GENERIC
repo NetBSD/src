@@ -1,5 +1,5 @@
 #
-# 	$NetBSD: GENERIC,v 1.5 2001/02/21 09:14:33 wdk Exp $
+# 	$NetBSD: GENERIC,v 1.6 2001/06/30 11:00:34 darcy Exp $
 #
 include		"arch/mipsco/conf/std.mipsco"
 
@@ -11,6 +11,10 @@ options 	MIPS1			# R2000/R3000 support
 options 	KTRACE			# system call tracing support
 options 	SYSVMSG			# System V message queues
 options 	SYSVSEM			# System V semaphores
+#options	SEMMNI=10	# number of semaphore identifiers
+#options	SEMMNS=60	# number of semaphores in system
+#options	SEMUME=10	# max number of undo entries per process
+#options	SEMMNU=30	# number of undo structures in system
 options 	SYSVSHM			# System V shared memory
 #options 	SHMMAXPGS=1024		# 1024 pages is the default
 #options 	LKM			# loadable kernel modules

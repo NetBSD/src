@@ -1,10 +1,10 @@
-#	$NetBSD: GENERIC,v 1.17 2001/06/11 01:50:53 wiz Exp $
+#	$NetBSD: GENERIC,v 1.18 2001/06/30 11:00:33 darcy Exp $
 #
 #	GENERIC LUNA68K
 #
 include		"arch/luna68k/conf/std.luna68k"
 
-#ident 		"GENERIC-$Revision: 1.17 $"
+#ident 		"GENERIC-$Revision: 1.18 $"
 
 maxusers	8
 
@@ -19,6 +19,10 @@ options 	NTP			# NTP phase/frequency locked loop
 options 	KTRACE
 #options 	SYSVMSG			# System V message queues
 #options 	SYSVSEM			# System V semaphores
+#options	SEMMNI=10	# number of semaphore identifiers
+#options	SEMMNS=60	# number of semaphores in system
+#options	SEMUME=10	# max number of undo entries per process
+#options	SEMMNU=30	# number of undo structures in system
 #options 	SYSVSHM			# System V shared memory
 #optoins 	SHMMAXPGS=1024		# 1024 pages is the default
 #options 	LKM			# loadable kernel modules
