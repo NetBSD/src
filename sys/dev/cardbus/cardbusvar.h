@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbusvar.h,v 1.14 2000/01/26 09:04:59 haya Exp $	*/
+/*	$NetBSD: cardbusvar.h,v 1.15 2000/02/04 07:59:20 haya Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -408,8 +408,9 @@ void *cardbus_intr_establish __P((cardbus_chipset_tag_t, cardbus_function_tag_t,
 void cardbus_intr_disestablish __P((cardbus_chipset_tag_t, cardbus_function_tag_t, void *handler));
 
 int cardbus_mapreg_map __P((struct cardbus_softc *, int, int, cardbusreg_t,
-			    int, bus_space_tag_t *, bus_space_handle_t *,
-			    bus_addr_t *, bus_size_t *));
+    int, bus_space_tag_t *, bus_space_handle_t *, bus_addr_t *, bus_size_t *));
+int cardbus_mapreg_unmap __P((struct cardbus_softc *, int, int,
+    bus_space_tag_t, bus_space_handle_t, bus_size_t));
 
 int cardbus_save_bar __P((cardbus_devfunc_t));
 int cardbus_restore_bar __P((cardbus_devfunc_t));
@@ -418,7 +419,7 @@ int cardbus_function_enable __P((struct cardbus_softc *, int function));
 int cardbus_function_disable __P((struct cardbus_softc *, int function));
 
 int cardbus_get_capability __P((cardbus_chipset_tag_t, cardbus_function_tag_t,
-	cardbustag_t, int, int *, cardbusreg_t *));
+    cardbustag_t, int, int *, cardbusreg_t *));
 
 #define Cardbus_function_enable(ct) cardbus_function_enable((ct)->ct_sc, (ct)->ct_func)
 #define Cardbus_function_disable(ct) cardbus_function_disable((ct)->ct_sc, (ct)->ct_func)
@@ -428,6 +429,8 @@ int cardbus_get_capability __P((cardbus_chipset_tag_t, cardbus_function_tag_t,
 #define Cardbus_mapreg_map(ct, reg, type, busflags, tagp, handlep, basep, sizep) \
 	cardbus_mapreg_map((ct)->ct_sc, (ct->ct_func), (reg), (type),\
 			   (busflags), (tagp), (handlep), (basep), (sizep))
+#define Cardbus_mapreg_unmap(ct, reg, tag, handle, size) \
+	cardbus_mapreg_unmap((ct)->ct_sc, (ct->ct_func), (reg), (tag), (handle), (size))
 
 #define Cardbus_make_tag(ct) (*(ct)->ct_cf->cardbus_make_tag)((ct)->ct_cc, (ct)->ct_bus, (ct)->ct_dev, (ct)->ct_func)
 #define cardbus_make_tag(cc, cf, bus, device, function) ((cf)->cardbus_make_tag)((cc), (bus), (device), (function))
