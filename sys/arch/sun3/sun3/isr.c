@@ -28,7 +28,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: isr.c,v 1.8 1994/05/27 14:58:29 gwr Exp $
+ * $Id: isr.c,v 1.9 1994/06/28 22:05:49 gwr Exp $
  */
 
 #include <sys/param.h>
@@ -219,7 +219,8 @@ void intrhand(ipl)
 }
 
 /*
- * XXX - This probably belongs in src/sys/net/netisr.c -gwr
+ * XXX - This really belongs in some common file, like
+ * src/sys/net/netisr.c  -gwr
  */
 netintr()
 {
@@ -235,6 +236,8 @@ netintr()
 	 * XXX	this is bogus: should just have a list of
 	 *	routines to call, a la timeouts.  Mods to
 	 *	netisr are not atomic and must be protected (gah).
+	 * Gordon says:
+	 * How about an array of characters (1 per protocol)?
 	 */
 #ifdef INET
 	if (n & (1 << NETISR_ARP))
@@ -255,4 +258,38 @@ netintr()
 		ccittintr();
 	}
 #endif
+}
+
+
+/*
+ * Level 1 software interrupt.
+ * Possible reasons:
+ *	Network software interrupt
+ *	Soft clock interrupt
+ */
+int
+soft1intr(fp)
+	void *fp;
+{
+	isr_soft_clear(1);
+	if (sun3sir.sir_any) {
+		cnt.v_soft++;
+		if (sun3sir.sir_which[SIR_NET]) {
+			sun3sir.sir_which[SIR_NET] = 0;
+			netintr();
+		}
+		if (sun3sir.sir_which[SIR_CLOCK]) {
+			sun3sir.sir_which[SIR_CLOCK] = 0;
+			softclock();
+		}
+		if (sun3sir.sir_which[SIR_SPARE2]) {
+			sun3sir.sir_which[SIR_SPARE2] = 0;
+			/* spare2intr(); */
+		}
+		if (sun3sir.sir_which[SIR_SPARE3]) {
+			sun3sir.sir_which[SIR_SPARE3] = 0;
+			/* spare3intr(); */
+		}
+	}
+	return (1);
 }

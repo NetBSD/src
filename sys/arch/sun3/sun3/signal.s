@@ -95,7 +95,7 @@ Lsigr1:
  */
 	.globl	_sigcode, _esigcode, _sigcodetrap
 	.data
-_sigcode:
+_sigcode:	/* Found at address: 0x0DFFffdc */
 	movl	sp@(12),a0		| signal handler addr	(4 bytes)
 	jsr	a0@			| call signal handler	(2 bytes)
 	addql	#4,sp			| pop signo		(2 bytes)
