@@ -1,4 +1,4 @@
-/* 	$NetBSD: mountd.c,v 1.79 2001/11/29 21:23:38 christos Exp $	 */
+/* 	$NetBSD: mountd.c,v 1.80 2002/09/21 20:35:00 christos Exp $	 */
 
 /*
  * Copyright (c) 1989, 1993
@@ -51,7 +51,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char     sccsid[] = "@(#)mountd.c  8.15 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: mountd.c,v 1.79 2001/11/29 21:23:38 christos Exp $");
+__RCSID("$NetBSD: mountd.c,v 1.80 2002/09/21 20:35:00 christos Exp $");
 #endif
 #endif				/* not lint */
 
@@ -95,11 +95,20 @@ __RCSID("$NetBSD: mountd.c,v 1.79 2001/11/29 21:23:38 christos Exp $");
 #include <string.h>
 #include <unistd.h>
 #include <netgroup.h>
+#include <err.h>
 #include <util.h>
 #include "pathnames.h"
 #ifdef KERBEROS
 #include <kerberosIV/krb.h>
 #include "kuid.h"
+#endif
+
+#ifdef IPSEC
+#include <netinet6/ipsec.h>
+#ifndef IPSEC_POLICY_IPSEC	/* no ipsec support on old ipsec */
+#undef IPSEC
+#endif
+#include "ipsec.h"
 #endif
 
 #include <stdarg.h>
@@ -287,9 +296,21 @@ main(argc, argv)
 	int udpsock, tcpsock, udp6sock, tcp6sock;
 	int xcreated = 0, s;
 	int c, one = 1;
+#ifdef IPSEC
+	char *policy = NULL;
+#define ADDOPTS "P:"
+#else
+#define ADDOPTS
+#endif
 
-	while ((c = getopt(argc, argv, "dnr")) != -1)
+	while ((c = getopt(argc, argv, "dnr" ADDOPTS)) != -1)
 		switch (c) {
+#ifdef IPSEC
+		case 'P':
+			if (ipsecsetup_test(policy = optarg))
+				errx(1, "Invalid ipsec policy `%s'", policy);
+			break;
+#endif
 		case 'd':
 			debug = 1;
 			break;
@@ -298,7 +319,11 @@ main(argc, argv)
 		case 'r':
 			break;
 		default:
-			fprintf(stderr, "Usage: mountd [-d] [export_file]\n");
+			fprintf(stderr, "Usage: %s [-d]"
+#ifdef IPSEC
+			    " [-P ipsec policy]"
+#endif
+			    " [export_file]\n", getprogname());
 			exit(1);
 		};
 	argc -= optind;
@@ -366,6 +391,10 @@ main(argc, argv)
 
 	if (udpsock != -1 && udpconf != NULL) {
 		bindresvport(udpsock, NULL);
+#ifdef IPSEC
+		if (policy)
+			ipsecsetup(AF_INET, udpsock, policy);
+#endif
 		udptransp = svc_dg_create(udpsock, 0, 0);
 		if (udptransp != NULL) {
 			if (!svc_reg(udptransp, RPCPROG_MNT, RPCMNT_VER1,
@@ -382,6 +411,10 @@ main(argc, argv)
 
 	if (tcpsock != -1 && tcpconf != NULL) {
 		bindresvport(tcpsock, NULL);
+#ifdef IPSEC
+		if (policy)
+			ipsecsetup(AF_INET, tcpsock, policy);
+#endif
 		listen(tcpsock, SOMAXCONN);
 		tcptransp = svc_vc_create(tcpsock, 0, 0);
 		if (tcptransp != NULL) {
@@ -399,6 +432,10 @@ main(argc, argv)
 
 	if (udp6sock != -1 && udp6conf != NULL) {
 		bindresvport(udp6sock, NULL);
+#ifdef IPSEC
+		if (policy)
+			ipsecsetup(AF_INET6, tcpsock, policy);
+#endif
 		udp6transp = svc_dg_create(udp6sock, 0, 0);
 		if (udp6transp != NULL) {
 			if (!svc_reg(udp6transp, RPCPROG_MNT, RPCMNT_VER1,
@@ -415,6 +452,10 @@ main(argc, argv)
 
 	if (tcp6sock != -1 && tcp6conf != NULL) {
 		bindresvport(tcp6sock, NULL);
+#ifdef IPSEC
+		if (policy)
+			ipsecsetup(AF_INET6, tcpsock, policy);
+#endif
 		listen(tcp6sock, SOMAXCONN);
 		tcp6transp = svc_vc_create(tcp6sock, 0, 0);
 		if (tcp6transp != NULL) {
