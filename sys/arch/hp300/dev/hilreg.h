@@ -35,10 +35,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: Utah $Hdr: hilreg.h 1.9 91/01/21$
- *
+ *	from: Utah Hdr: hilreg.h 1.9 91/01/21
  *	from: @(#)hilreg.h	7.3 (Berkeley) 5/7/91
- *	$Id: hilreg.h,v 1.2 1993/05/22 07:56:19 cgd Exp $
+ *	$Id: hilreg.h,v 1.3 1993/09/02 19:04:43 mycroft Exp $
  */
 
 struct	hil_dev {
