@@ -25,7 +25,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     $Id: rtadvd.8,v 1.1 1999/07/02 09:28:17 itojun Exp $
+.\"     $Id: rtadvd.8,v 1.2 1999/07/08 00:41:21 itojun Exp $
 .\"
 .Dd May 17, 1998
 .Dt RTADVD 8
@@ -106,5 +106,11 @@ The default configuration file.
 The
 .Nm
 command first appeared in WIDE Hydrangea IPv6 protocol stack kit.
-.\" .Sh BUGS
-.\" (to be written)
+.Sh CAVEAT
+Do not perform router advertisement toward upstream direction,
+you should only advertise to downstream direction.
+If you advertise toward upstream by mistake,
+you will see icmp6 redirect storm on that subnet.
+This is because of the specification,
+which says that advertising router is assumed to become
+the default outgoing router for end hosts in the subnet.
