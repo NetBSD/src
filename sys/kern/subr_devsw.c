@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_devsw.c,v 1.1.2.1 2002/05/16 03:39:13 gehenna Exp $	*/
+/*	$NetBSD: subr_devsw.c,v 1.1.2.2 2002/05/19 08:49:33 gehenna Exp $	*/
 /*-
  * Copyright (c) 2001,2002 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -300,7 +300,7 @@ devsw_blk2name(int bmajor)
  * Convert from device name to block major number.
  */
 int
-devsw_name2blk(const char *name, char *devname, size_t namelen)
+devsw_name2blk(const char *name, char *devname, size_t devnamelen)
 {
 	int len, i;
 
