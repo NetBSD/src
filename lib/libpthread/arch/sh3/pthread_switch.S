@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_switch.S,v 1.4 2003/11/20 17:55:11 uwe Exp $ */
+/*	$NetBSD: pthread_switch.S,v 1.5 2004/05/28 22:58:25 uwe Exp $ */
 	
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -87,7 +87,7 @@ CALL_TARGET(call_l,target_l):	.long _C_LABEL(target_l)
  * To avoid superfluous memory loads, or consuming extra registers
  * this code makes assumptions that certain constants are small
  * enough to be used as immediate data in certain instructions or
- * adressing formats.  It is expected that the layout of pthread
+ * addressing formats.  It is expected that the layout of pthread
  * internal structure is not going to be changed frequently.
  */
 #define ASSERT_LONG_DISPLACEMENT_OK(i)	.ifgt (i) -  60; .err; .endif
