@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.1.2.2 1999/01/30 15:07:41 minoura Exp $	*/
+/*	$NetBSD: bus.c,v 1.1.2.3 1999/02/02 23:46:05 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -885,6 +885,7 @@ x68k_bus_dmamap_load_buffer(map, buf, buflen, p, flags,
 		 */
 		if (map->x68k_dm_bounce_thresh != 0 &&
 		    curaddr >= map->x68k_dm_bounce_thresh)
+			return (EINVAL);
 
 		/*
 		 * Compute the segment size, and adjust counts.
