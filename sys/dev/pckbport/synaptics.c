@@ -1,4 +1,4 @@
-/*	$NetBSD: synaptics.c,v 1.3 2005/01/02 22:37:12 scw Exp $	*/
+/*	$NetBSD: synaptics.c,v 1.4 2005/01/18 10:22:51 scw Exp $	*/
 
 /*
  * Copyright (c) 2005, Steve C. Woodford
@@ -45,6 +45,8 @@
  *	- Maybe add some more gestures (can we use Palm support somehow?)
  *	- Support pass-through mode (whatever that is; my docs are too old).
  */
+
+#include "opt_pms.h"
 
 #include <sys/cdefs.h>
 
