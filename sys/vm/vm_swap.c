@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_swap.c,v 1.37.2.10 1997/05/09 02:29:29 mrg Exp $	*/
+/*	$NetBSD: vm_swap.c,v 1.37.2.11 1997/05/09 10:45:40 mrg Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -115,6 +115,7 @@ struct swapdev {
 #define swd_dev			swd_se.se_dev
 #define swd_flags		swd_se.se_flags
 #define swd_nblks		swd_se.se_nblks
+#define swd_inuse		swd_se.se_inuse
 #define swd_priority		swd_se.se_priority
 	daddr_t			swd_mapoffset;
 	int			swd_mapsize;
@@ -272,7 +273,7 @@ sys_swapon(p, v, retval)
 
 		nsdp = (struct swapdev *)malloc(sizeof *nsdp, M_VMSWAP,
 					        M_WAITOK);
-		nsdp->swd_flags = 0;
+		nsdp->swd_inuse = nsdp->swd_flags = 0;
 		nsdp->swd_priority = priority;
 		nsdp->swd_vp = vp;
 		nsdp->swd_dev = (vp->v_type == VBLK) ? vp->v_rdev : NODEV;
@@ -557,6 +558,7 @@ swap_alloc(size)
 			}
 			CIRCLEQ_REMOVE(&spp->spi_swapdev, sdp, swd_next);
 			CIRCLEQ_INSERT_TAIL(&spp->spi_swapdev, sdp, swd_next);
+			sdp->swd_inuse += size;
 			return (daddr_t)(result + sdp->swd_mapoffset);
 		}
 	}
@@ -578,6 +580,11 @@ swap_free(size, addr)
 #endif
 	extent_free(sdp->swd_ex, addr - sdp->swd_mapoffset, size,
 		    EX_MALLOCOK|EX_NOWAIT);
+	sdp->swd_inuse -= size;
+#ifdef DIAGNOSTIC
+	if (sdp->swd_inuse < 0)
+		panic("swap_free: inuse < 0");
+#endif
 }
 
 /*
