@@ -1,4 +1,4 @@
-/*	$NetBSD: comm.c,v 1.7 1995/03/26 20:12:13 jtc Exp $	*/
+/*	$NetBSD: comm.c,v 1.8 1995/03/27 15:54:30 glass Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -46,17 +46,17 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)comm.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$NetBSD: comm.c,v 1.7 1995/03/26 20:12:13 jtc Exp $";
+static char rcsid[] = "$NetBSD: comm.c,v 1.8 1995/03/27 15:54:30 glass Exp $";
 #endif
 #endif /* not lint */
 
+#include <err.h>
+#include <limits.h>
+#include <locale.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <limits.h>
-#include <locale.h>
 #include <unistd.h>
-#include <err.h>
 
 #define	MAXLINELEN	(LINE_MAX + 1)
 
@@ -181,10 +181,8 @@ file(name)
 
 	if (!strcmp(name, "-"))
 		return (stdin);
-	if ((fp = fopen(name, "r")) == NULL) {
-		(void)fprintf(stderr, "comm: %s: %s\n", name, strerror(errno));
-		exit(1);
-	}
+	if ((fp = fopen(name, "r")) == NULL)
+		err(1, "%s", name);
 	return (fp);
 }
 
