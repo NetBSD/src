@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.91 1999/08/11 17:37:59 thorpej Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.92 1999/08/23 14:14:30 christos Exp $	*/
 
 /*
 %%% portions-copyright-nrl-95
@@ -747,13 +747,13 @@ findpcb:
 				char dst[INET6_ADDRSTRLEN];
 #endif
 				if (ip) {
-					strcpy(src, inet_ntoa(ip->ip_dst));
+					strcpy(src, inet_ntoa(ip->ip_src));
 					strcpy(dst, inet_ntoa(ip->ip_dst));
 				}
 #ifdef INET6
 				else if (ip6) {
-					strcpy(src, ip6_sprintf(&ip6->ip6_dst));
-					strcpy(dst, ip6_sprintf(&ip6->ip6_src));
+					strcpy(src, ip6_sprintf(&ip6->ip6_src));
+					strcpy(dst, ip6_sprintf(&ip6->ip6_dst));
 				}
 #endif
 				else {
@@ -762,8 +762,8 @@ findpcb:
 				}
 				log(LOG_INFO,
 				    "Connection attempt to TCP %s:%d from %s:%d\n",
-				    src, ntohs(th->th_dport),
-				    dst, ntohs(th->th_sport));
+				    dst, ntohs(th->th_dport),
+				    src, ntohs(th->th_sport));
 			}
 			goto dropwithreset;
 		}
