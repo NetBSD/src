@@ -1,4 +1,4 @@
-/* $NetBSD: ras1.c,v 1.3 2004/01/02 22:16:43 martin Exp $ */
+/* $NetBSD: ras1.c,v 1.4 2004/01/07 19:42:22 martin Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -73,7 +73,8 @@ main(void)
 	if (rasctl((caddr_t)&&start, (caddr_t)&&end - (caddr_t)&&start,
 	    RAS_INSTALL) < 0)
 		return (1);
-	
+
+	__insn_barrier();
 start:
 	count++;
 	if (count > COUNT)
@@ -83,6 +84,7 @@ start:
 		continue;
 	}
 end:
+	__insn_barrier();
 
 	return (handled != 0);
 }
