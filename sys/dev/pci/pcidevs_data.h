@@ -1,4 +1,4 @@
-/*	$NetBSD: pcidevs_data.h,v 1.354 2001/08/30 16:22:49 soren Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.355 2001/09/04 15:25:00 pooka Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -2348,6 +2348,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "ESS Technology Inc",
 	    "Maestro 3 Modem",
+	},
+	{
+	    PCI_VENDOR_ESSTECH, PCI_PRODUCT_ESSTECH_MAESTRO3_2,
+	    0,
+	    "ESS Technology Inc",
+	    "Maestro 3 PCI Audio Accelerator",
 	},
 	{
 	    PCI_VENDOR_ESSTECH2, PCI_PRODUCT_ESSTECH2_MAESTRO1,
