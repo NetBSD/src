@@ -1,4 +1,4 @@
-/*	$NetBSD: getgrent.c,v 1.18 1997/05/22 03:24:37 lukem Exp $	*/
+/*	$NetBSD: getgrent.c,v 1.19 1997/05/22 10:38:07 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getgrent.c	8.2 (Berkeley) 3/21/94";
 #else
-static char rcsid[] = "$NetBSD: getgrent.c,v 1.18 1997/05/22 03:24:37 lukem Exp $";
+static char rcsid[] = "$NetBSD: getgrent.c,v 1.19 1997/05/22 10:38:07 lukem Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -304,7 +304,7 @@ grscan(search, gid, name)
 						continue;
 					if (name) {
 						id = strtoul(cp, &ep, 10);
-						if (id > GID_MAX || *ep == '\0')
+						if (id > GID_MAX || *ep != '\0')
 							continue;
 						_gr_group.gr_gid = (gid_t)id;
 					} else
@@ -336,7 +336,7 @@ parse:
 		if (!(cp = strsep(&bp, ":\n")))
 			continue;
 		id = strtoul(cp, &ep, 10);
-		if (id > GID_MAX || *ep == '\0')
+		if (id > GID_MAX || *ep != '\0')
 			continue;
 		_gr_group.gr_gid = (gid_t)id;
 		if (search && name == NULL && _gr_group.gr_gid != gid)
