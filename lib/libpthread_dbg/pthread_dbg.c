@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_dbg.c,v 1.20 2004/06/03 00:20:24 nathanw Exp $	*/
+/*	$NetBSD: pthread_dbg.c,v 1.21 2004/06/03 00:31:28 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_dbg.c,v 1.20 2004/06/03 00:20:24 nathanw Exp $");
+__RCSID("$NetBSD: pthread_dbg.c,v 1.21 2004/06/03 00:31:28 nathanw Exp $");
 
 #include <stddef.h>
 #include <stdlib.h>
@@ -1177,7 +1177,8 @@ td_thr_suspend(td_thread_t *thread)
 		if (val != 0)
 			return val;
 
-		/* XXX update thread->lwp or nthread's lwp? */
+		nthread->lwp = thread->lwp;
+		thread->lwp = -1;
 		break;
 	case PT_STATE_RUNNABLE:
 		/* remove from runq */
