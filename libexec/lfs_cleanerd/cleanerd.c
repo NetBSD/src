@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanerd.c,v 1.47 2003/04/02 10:39:22 fvdl Exp $	*/
+/*	$NetBSD: cleanerd.c,v 1.48 2003/07/13 09:44:02 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)cleanerd.c	8.5 (Berkeley) 6/10/95";
 #else
-__RCSID("$NetBSD: cleanerd.c,v 1.47 2003/04/02 10:39:22 fvdl Exp $");
+__RCSID("$NetBSD: cleanerd.c,v 1.48 2003/07/13 09:44:02 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -295,15 +295,18 @@ main(int argc, char **argv)
 		lasttime=0;
 		loopcount=0;
 	    loop:
-		if((childpid=fork())<0) {
+		if ((childpid=fork()) < 0) {
 			syslog(LOG_ERR,"%s: couldn't fork, exiting: %m",
 				fs_name);
 			exit(1);
 		}
 		if(childpid == 0) {
 			/* Record child's pid */
-			pidname = malloc(strlen(fs_name) + 16);
-			sprintf(pidname, "lfs_cleanerd:s:%s", fs_name);
+			asprintf(&pidname, "lfs_cleanerd:s:%s", fs_name);
+			if (!pidname) {
+				syslog(LOG_WARNING,"malloc failed: %m");
+				exit(1);
+			}
 			while((cp = strchr(pidname, '/')) != NULL)
 				*cp = '|';
 			pidfile(pidname);
@@ -313,8 +316,11 @@ main(int argc, char **argv)
 			}
 		} else {
 			/* Record parent's pid */
-			pidname = malloc(strlen(fs_name) + 16);
-			sprintf(pidname, "lfs_cleanerd:m:%s", fs_name);
+			asprintf(&pidname, "lfs_cleanerd:m:%s", fs_name);
+			if (!pidname) {
+				syslog(LOG_WARNING,"malloc failed: %m");
+				exit(1);
+			}
 			while((cp = strchr(pidname, '/')) != NULL)
 				*cp = '|';
 			pidfile(pidname);
