@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.40 2002/10/18 15:11:10 junyoung Exp $
+# $NetBSD: GENERIC,v 1.41 2002/10/25 00:08:43 chris Exp $
 #
 # GENERIC machine description file
 # 
@@ -140,10 +140,13 @@ options 	PCIVERBOSE	# Verbose PCI descriptions
 options 	MIIVERBOSE	# verbose PHY autoconfig messages
 #options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
 options 	USBVERBOSE	# verbose USB device autoconfig messages
-#options 	DDB_KEYCODE=0x40
 options 	PMAP_STATIC_L1S=128
 options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+
+# if set defines a keycode for the fcom console to break into ddb.
+# 0x40 == @, see man ascii(7)
+#options 	DDB_KEYCODE=0x40
 
 # wscons options
 #options 	WSEMUL_SUN		# sun terminal emulation
