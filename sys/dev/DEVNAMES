@@ -1,4 +1,4 @@
-#	$NetBSD: DEVNAMES,v 1.133 2003/04/06 10:10:38 tsutsui Exp $
+#	$NetBSD: DEVNAMES,v 1.134 2003/04/17 11:55:08 wiz Exp $
 #
 # This file contains all used device names and defined attributes in 
 # alphabetical order. New devices added to the system somewhere should first 
@@ -73,9 +73,9 @@ arcwskbd		acorn26
 arcwsmouse		acorn26
 aria			MI		
 arp			MI		Attribute
+asc			acorn32
 asc			alpha
 asc			arc
-asc			acorn32
 asc			mac68k
 asc			mipsco
 asc			pmax
@@ -111,7 +111,7 @@ bah			MI
 bandit			macppc
 bba			MI
 be			MI		
-beep			arm32
+beep			acorn32
 bha			MI		
 bi			MI		
 bicc			MI		
@@ -177,12 +177,14 @@ clcd			MI
 clcs			MI		
 clct			MI		
 clmpcc			MI		
+clock			acorn32
 clock			amiga
 clock			amigappc
-clock			arm32
 clock			atari
+clock			cats
 clock			luna68k
 clock			mvme68k
+clock			netwinder
 clock			pc532
 clock			sparc
 clock			sparc64
@@ -196,30 +198,35 @@ cnw			MI
 com			MI		
 commulti		MI		Attribute
 cosc			acorn32
-cprofb			MI
 cpc			MI
 cpcbus			MI		Attribute
 cpciic			MI
 cpctim			MI
+cprofb			MI
 cpu			acorn26
+cpu			acorn32
 cpu			algor
 cpu			alpha
 cpu			amiga
 cpu			amigappc
 cpu			arc
-cpu			arm32
 cpu			atari
+cpu			cats
 cpu			cobalt
+cpu			evbarm
 cpu			evbmips
 cpu			evbppc
+cpu			hpcarm
 cpu			hpcmips
 cpu			macppc
 cpu			mipsco
+cpu			netwinder
 cpu			newsmips
 cpu			pmax
 cpu			prep
 cpu			sbmips
 cpu			sgimips
+cpu			shark
 cpu			sparc
 cpu			sparc64
 cpu			vax
@@ -263,7 +270,7 @@ drsc			amiga
 drsc			amigappc
 drsupio			amiga
 drsupio			amigappc
-dsrtc			arm32
+dsrtc			cats
 dsrtc			evbppc
 dtide			MI
 dtop			pmax
@@ -307,7 +314,6 @@ ep			MI
 epic			MI		
 es			amiga
 es			amigappc
-es			arm32
 esa			MI
 esc			acorn32		Attribute
 esh			MI		
@@ -331,12 +337,13 @@ fb			newsmips
 fb			sparc		Attribute
 fb			sun2		Attribute
 fb			sun3		Attribute
-fcom			arm32
+fcom			cats
+fcom			netwinder
+fd			acorn32
 fd			alpha
 fd			amiga
 fd			amigappc
 fd			arc
-fd			acorn32
 fd			atari
 fd			bebox
 fd			hpcmips
@@ -349,11 +356,11 @@ fd			sparc
 fd			sparc64
 fd			sun3
 fd			x68k
+fdc			acorn32
 fdc			alpha
 fdc			amiga
 fdc			amigappc
 fdc			arc
-fdc			acorn32
 fdc			atari
 fdc			bebox
 fdc			evbsh3
@@ -377,8 +384,8 @@ flsc			amiga
 flsc			amigappc
 fms			MI		
 fmv			MI		
-footbridge		arm32
-footbridge		arm32		Attribute
+footbridge		cats		Attribute
+footbridge		netwinder	Attribute
 fpa			MI		
 fpu			acorn26
 fpu			mac68k
@@ -469,7 +476,7 @@ hyper			amigappc
 hyper			hp300
 i2c			MI		Attribute
 i2c_eeprom		MI		Attribute
-i8042			arm32		Attribute
+i8042			shark		Attribute
 i82586			MI		Attribute
 ibus			pmax
 ibus			vax
@@ -490,7 +497,7 @@ ifuba			MI		Attribute
 igsfb			MI
 iha			MI
 iic			acorn26
-iic			arm32
+iic			acorn32
 ik			vax
 il			MI
 imc			sgimips
@@ -508,7 +515,7 @@ iobl			amiga
 iobus			acorn26
 ioc			acorn26
 ioeb			acorn26
-iomd			arm32
+iomd			acorn32
 iommu			sparc
 iommu			sun3
 iop			MI
@@ -549,21 +556,22 @@ ivsc			amiga
 ivsc			amigappc
 iwm			mac68k
 ix			MI		
-ixpsip			arm32
-ixpio			arm32
-ixpclk			arm32
+ixpclk			evbarm
+ixpio			evbarm
+ixpsip			evbarm
 iy			MI		
 joy			arc
-joy			arm32
 joy			bebox
+joy			cats
 joy			i386
 joy			prep
+joy			shark
 kb			news68k
 kb			newsmips
 kbc			news68k
+kbd			acorn32
 kbd			amiga
 kbd			amigappc
-kbd			arm32
 kbd			atari
 kbd			sparc
 kbd			sparc64
@@ -591,7 +599,6 @@ lkms			vax
 lm			MI		
 lm700x			MI
 lmc			MI		
-lmcaudio		arm32
 lms			bebox
 lms			i386
 lp			atari
@@ -613,19 +620,22 @@ macfb			mac68k
 macofcons		macppc
 macvid			mac68k
 magma			MI		
+mainbus			acorn32
 mainbus			algor
 mainbus			alpha
 mainbus			amiga
 mainbus			amigappc
 mainbus			arc
-mainbus			arm32
 mainbus			atari
 mainbus			bebox
 mainbus			bebox		Attribute
+mainbus			cats
 mainbus			cobalt
+mainbus			evbarm
 mainbus			evbmips
 mainbus			evbppc
 mainbus			hp300
+mainbus			hpcarm
 mainbus			hpcmips
 mainbus			i386
 mainbus			i386		Attribute
@@ -634,6 +644,8 @@ mainbus			mac68k
 mainbus			macppc
 mainbus			macppc		Attribute
 mainbus			mvme68k
+mainbus			netwinder
+mainbus			news68k
 mainbus			news68k
 mainbus			newsmips
 mainbus			next68k
@@ -646,6 +658,7 @@ mainbus			prep		Attribute
 mainbus			sgimips
 mainbus			sh3
 mainbus			sh3		Attribute
+mainbus			shark
 mainbus			sparc
 mainbus			sparc64
 mainbus			sparc64		Attribute
@@ -759,7 +772,7 @@ nhpib			hp300
 ni			MI		
 np			vax
 npx			i386
-nsio			arm32		Attribute
+nsio			acorn26		Attribute
 nsphy			MI		
 nsphyter		MI		
 ntwoc			MI		
@@ -790,12 +803,12 @@ ofcons			MI
 ofdisk			MI		
 ofisa			MI		
 ofisa			MI		Attribute
-ofisapc			arm32
-ofisascr		arm32
+ofisapc			shark
+ofisascr		shark
 ofnet			MI		
 ofpci			sparc64
 ofppb			sparc64
-ofrom			arm32
+ofrom			shark
 ofrtc			MI		
 ohci			MI		
 oldscsi			pmax		Attribute
@@ -803,9 +816,9 @@ oldscsibus		pmax
 olms			i386
 omms			i386
 oosiop			MI
-openfirm		arm32
 openfirm		macppc
 openfirm		ofppc
+openfirm		shark
 openfirm		sparc64
 opl			MI		
 opm			x68k
@@ -823,10 +836,10 @@ par			x68k
 pas			MI		
 pbcpcibr		arc
 pc			arc
-pc			arm32
 pc			bebox
 pc			i386
 pc			prep
+pc			shark
 pcc			mvme68k
 pccard			amiga
 pcconskbd		bebox
@@ -845,11 +858,12 @@ pchb			macppc
 pchb			prep
 pci			MI		
 pcib			algor
-pcib			arm32
 pcib			bebox
+pcib			cats
 pcib			cobalt
 pcib			evbmips
 pcib			i386
+pcib			netwinder
 pcib			prep
 pcibus			MI		Attribute
 pcibus			atari
@@ -911,7 +925,7 @@ qd			MI
 qe			MI		
 qec			MI		
 qfont			MI		Attribute
-qms			arm32
+qms			acorn32
 qn			amiga
 qn			amigappc
 qsphy			MI		
@@ -935,15 +949,15 @@ rd			hp300
 rd			vax
 repulse			amiga
 repulse			amigappc
-rfc			MI
 rf			MI
+rfc			MI
 rk			vax
 rl			vax
 rlc			vax
-rpckbd			arm32
+rpckbd			acorn32
 rt			MI
 rtc			acorn26
-rtc			arm32
+rtc			acorn32
 rtc			hp300
 rtc			pc532
 rtc			pmppc
@@ -958,20 +972,20 @@ ry			vax
 rz			pmax
 sab			MI
 sableio			alpha
-sacc			arm32
-sacom			arm32
-sacpcic			arm32
-saip			arm32
-saost			arm32
+sacc			hpcarm
+sacom			hpcarm
+sacpcic			hpcarm
+saip			hpcarm
+saost			hpcarm
 satlink			MI		
 sb			MI		
 sbc			mac68k
 sbdsp			MI		Attribute
 sbi			vax
 sbic			acorn26		Attribute
+sbic			acorn32		Attribute
 sbic			amiga		Attribute
 sbic			amigappc	Attribute
-sbic			acorn32		Attribute
 sbic			mvme68k		Attribute
 sbmac			sbmips
 sbobio			sbmips
@@ -991,7 +1005,7 @@ sci			amigappc	Attribute
 sci			evbsh3
 scif			evbsh3
 scn			pc532
-scr			arm32
+scr			shark
 scsi			MI		Attribute
 scsibus			MI		
 scsirom			x68k
@@ -1043,7 +1057,7 @@ sp			MI
 sparcvme		sparc
 spc			luna68k
 spc			x68k
-spckbd			arm32		Attribute
+spckbd			shark		Attribute
 spd			playstation2
 spic			MI
 spifi			newsmips
@@ -1058,7 +1072,8 @@ supio			amiga		Attribute
 supio			amigappc	Attribute
 sv			MI		
 sw			sparc
-sysbeep			arm32
+sysbeep			acorn32
+sysbeep			cats
 sysbeep			i386
 sysmon			MI
 sysmon_envsys		MI		Attribute
@@ -1088,8 +1103,10 @@ tlsb			alpha
 tlsbmem			alpha
 tms320av110		MI		Attribute
 tod			sun2
-todclock		arm32
-todservice		arm32		Attribute
+todclock		acorn32
+todclock		cats
+todclock		netwinder
+todservice		cats		Attribute
 token			MI		Attribute
 topcat			hp300
 tpcalib			hpcmips		Attribute
@@ -1180,10 +1197,10 @@ veriexec		MI
 vga			MI		
 viaenv			MI
 viapm			MI
-vidc			arm32
-vidcaudio		arm32
-vidcconsole		arm32
-vidcvideo		arm32
+vidc			acorn32
+vidcaudio		acorn32
+vidcconsole		acorn32
+vidcvideo		acorn32
 vme			MI		
 vme			atari
 vme			sun3
@@ -1209,7 +1226,7 @@ vs			vax
 vs			x68k
 vsbus			vax
 vsms			alpha
-vt			arm32
+vt			acorn32
 vt			i386
 vtpbc			algor
 vz			vax
@@ -1217,9 +1234,9 @@ wavelan			MI		Attribute
 wd			MI		
 wdc			MI		
 wdc_base		MI		Attribute
+wdog			evbppc
 wdog			evbsh3
 wdog			mmeye
-wdog			evbppc
 wds			MI		
 wdsc			mvme68k
 we			MI		
@@ -1236,7 +1253,7 @@ wskbd			MI
 wskbddev		MI		Attribute
 wsmouse			MI		
 wsmousedev		MI		Attribute
-wsqms			arm32
+wsqms			acorn32
 wsrasteremulops		MI		Attribute
 wss			MI		
 wstsc			amiga
