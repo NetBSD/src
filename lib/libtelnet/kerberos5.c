@@ -1,4 +1,4 @@
-/*	$NetBSD: kerberos5.c,v 1.6 2001/01/06 23:36:37 christos Exp $	*/
+/*	$NetBSD: kerberos5.c,v 1.7 2001/02/11 18:28:50 assar Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -345,7 +345,7 @@ kerberos5_is(Authenticator * ap, unsigned char *data, int cnt)
 		}
 		if ((ap->way & AUTH_HOW_MASK) == AUTH_HOW_MUTUAL) {
 			ret = krb5_mk_rep(telnet_context,
-			    &auth_context, &outbuf);
+			    auth_context, &outbuf);
 			if (ret) {
 				Data(ap, KRB_REJECT,
 				    "krb5_mk_rep failed", -1);
@@ -432,7 +432,7 @@ kerberos5_is(Authenticator * ap, unsigned char *data, int cnt)
 					        ret));
 				break;
 			}
-			ret = krb5_rd_cred(telnet_context, auth_context,
+			ret = krb5_rd_cred2(telnet_context, auth_context,
 			    ccache, &inbuf);
 			if (ret) {
 				char *errbuf;
