@@ -1,4 +1,4 @@
-/*	$NetBSD: netcmds.c,v 1.12 2000/01/04 15:12:42 itojun Exp $	*/
+/*	$NetBSD: netcmds.c,v 1.13 2000/01/05 11:48:21 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)netcmds.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: netcmds.c,v 1.12 2000/01/04 15:12:42 itojun Exp $");
+__RCSID("$NetBSD: netcmds.c,v 1.13 2000/01/05 11:48:21 itojun Exp $");
 #endif /* not lint */
 
 /*
@@ -111,7 +111,7 @@ netstat_show (args)
 	char *args;
 {
 	move(CMDLINE, 0); clrtoeol();
-	if (*args == '\0') {
+	if (!args || *args == '\0') {
 		showprotos();
 		showhosts();
 		showports();
