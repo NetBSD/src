@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.79 2004/02/19 06:44:18 atatat Exp $ */
+/*	$NetBSD: sysctl.c,v 1.80 2004/02/19 06:51:11 atatat Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.79 2004/02/19 06:44:18 atatat Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.80 2004/02/19 06:51:11 atatat Exp $");
 #endif
 #endif /* not lint */
 
@@ -181,6 +181,7 @@ struct handlespec {
 	{ { CTL_KERN, KERN_MSGBUF },	printother,	NULL,	"dmesg" },
 	{ { CTL_KERN, KERN_BOOTTIME },	kern_boottime },
 	{ { CTL_KERN, KERN_CONSDEV },	kern_consdev },
+	{ { CTL_KERN, KERN_CP_TIME, -1 }, kern_cp_time },
 	{ { CTL_KERN, KERN_CP_TIME },	kern_cp_time },
 	{ { CTL_KERN, KERN_SYSVIPC_INFO }, printother,	NULL,	"ipcs" },
 	{ { CTL_VM,   VM_METER },	printother,	NULL,
@@ -1775,37 +1776,79 @@ kern_consdev(HANDLER_ARGS)
 static void
 kern_cp_time(HANDLER_ARGS)
 {
-	u_int64_t cp_time[CPUSTATES];
-	size_t sz;
-	int rc;
+	u_int64_t *cp_time;
+	size_t sz, osz;
+	int rc, i, n;
+	char s[sizeof("kern.cp_time.nnnnnn")];
+	const char *tname;
 
-	sz = sizeof(cp_time);
-	rc = sysctl(name, namelen, &cp_time, &sz, NULL, 0);
-	if (rc == -1) {
+	/*
+	 * three things to do here.
+	 * case 1: get sum (no Aflag and namelen == 2)
+	 * case 2: get specific processor (namelen == 3)
+	 * case 3: get all processors (Aflag and namelen == 2)
+	 */
+
+	if (namelen == 2 && Aflag) {
+		sz = sizeof(n);
+		rc = sysctlbyname("hw.ncpu", &n, &sz, NULL, 0);
+		if (rc != 0)
+			return; /* XXX print an error, eh? */
+		sz = n * sizeof(u_int64_t) * CPUSTATES;
+	}
+	else {
+		n = -1; /* just print it */
+		sz = sizeof(u_int64_t) * CPUSTATES;
+	}
+
+
+	cp_time = malloc(sz);
+	if (cp_time == NULL) {
 		sysctlerror(1);
 		return;
 	}
-	if (sz != sizeof(cp_time))
-		errx(1, "%s: !returned size wrong!", sname);
+	
+	osz = sz;
+	rc = sysctl(name, namelen, cp_time, &osz, NULL, 0);
 
-	if (xflag || rflag) {
-		display_struct(pnode, sname, &cp_time, sz,
-			       DISPLAY_VALUE);
+	if (rc == -1) {
+		sysctlerror(1);
+		free(cp_time);
 		return;
 	}
-	else if (!nflag)
-		printf("%s: ", sname);
-	printf("user = %" PRIu64
-	       ", nice = %" PRIu64
-	       ", sys = %" PRIu64
-	       ", intr = %" PRIu64
-	       ", idle = %" PRIu64
-	       "\n",
-	       cp_time[CP_USER],
-	       cp_time[CP_NICE],
-	       cp_time[CP_SYS],
-	       cp_time[CP_INTR],
-	       cp_time[CP_IDLE]);
+	if (osz != sz)
+		errx(1, "%s: !returned size wrong!", sname);
+
+	tname = sname;
+	for (i = 0; n == -1 || i < n; i++) {
+		if (n != -1) {
+			(void)snprintf(s, sizeof(s), "%s%s%d", sname, sep, i);
+			tname = s;
+		}
+		if (xflag || rflag)
+			display_struct(pnode, tname, cp_time + (i * CPUSTATES),
+				       sizeof(u_int64_t) * CPUSTATES,
+				       DISPLAY_VALUE);
+		else {
+			if (!nflag)
+				printf("%s: ", tname);
+			printf("user = %" PRIu64
+			       ", nice = %" PRIu64
+			       ", sys = %" PRIu64
+			       ", intr = %" PRIu64
+			       ", idle = %" PRIu64
+			       "\n",
+			       cp_time[i * CPUSTATES + CP_USER],
+			       cp_time[i * CPUSTATES + CP_NICE],
+			       cp_time[i * CPUSTATES + CP_SYS],
+			       cp_time[i * CPUSTATES + CP_INTR],
+			       cp_time[i * CPUSTATES + CP_IDLE]);
+		}
+		if (n == -1)
+			break;
+	}
+
+	free(cp_time);
 }
 
 /*ARGSUSED*/
