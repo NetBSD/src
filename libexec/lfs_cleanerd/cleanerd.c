@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanerd.c,v 1.41 2003/01/24 21:55:04 fvdl Exp $	*/
+/*	$NetBSD: cleanerd.c,v 1.42 2003/01/28 08:34:17 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)cleanerd.c	8.5 (Berkeley) 6/10/95";
 #else
-__RCSID("$NetBSD: cleanerd.c,v 1.41 2003/01/24 21:55:04 fvdl Exp $");
+__RCSID("$NetBSD: cleanerd.c,v 1.42 2003/01/28 08:34:17 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -754,7 +754,8 @@ add_segment(FS_INFO *fsp, struct seglist *slp, SEGS_AND_BLOCKS *sbp)
 			       tba[i].bi_inode,
 			       tba[i].bi_lbn,
 			       tba[i].bi_daddr,
-			       seg_addr + btofsb(lfsp, (char *)(tba[i].bi_bp) - seg_buf));
+			       (long long)(seg_addr +
+			       btofsb(lfsp, (char *)(tba[i].bi_bp) - seg_buf)));
 			error = EFAULT;
 			goto out;
 
