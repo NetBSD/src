@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_subr.c,v 1.20 2002/01/09 23:51:00 lukem Exp $	*/
+/*	$NetBSD: ffs_subr.c,v 1.21 2002/01/31 19:19:22 tv Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -36,7 +36,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_subr.c,v 1.20 2002/01/09 23:51:00 lukem Exp $");
+#if defined(__KERNEL_RCSID)
+__KERNEL_RCSID(0, "$NetBSD: ffs_subr.c,v 1.21 2002/01/31 19:19:22 tv Exp $");
+#endif
+
+#if HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #include <sys/param.h>
 
