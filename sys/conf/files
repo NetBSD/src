@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.268 1999/01/24 23:53:14 chuck Exp $
+#	$NetBSD: files,v 1.269 1999/01/25 02:21:50 msaitoh Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -587,6 +587,7 @@ file miscfs/portal/portal_vfsops.c	portal
 file miscfs/portal/portal_vnops.c	portal
 file miscfs/procfs/procfs_ctl.c		procfs
 file miscfs/procfs/procfs_fpregs.c
+file miscfs/procfs/procfs_map.c
 file miscfs/procfs/procfs_mem.c
 file miscfs/procfs/procfs_note.c	procfs
 file miscfs/procfs/procfs_regs.c
