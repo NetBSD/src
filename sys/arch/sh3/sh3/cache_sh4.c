@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_sh4.c,v 1.5 2002/04/28 17:10:38 uch Exp $	*/
+/*	$NetBSD: cache_sh4.c,v 1.6 2002/05/09 12:30:11 uch Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -67,9 +67,7 @@ sh4_cache_config()
 
 	/*
 	 * For now, P0, U0, P3 write-through P1 write-through
-	 * because..
-	 *	+ P3 page-mapping is always write-through. XXX
-	 *	+ PTE is access from P2. XXX
+	 * XXX will be obsoleted.
 	 */
 	sh4_icache_sync_all();
 	RUN_P2;
