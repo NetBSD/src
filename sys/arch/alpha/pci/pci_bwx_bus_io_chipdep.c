@@ -1,4 +1,4 @@
-/* $NetBSD: pci_bwx_bus_io_chipdep.c,v 1.9 2000/04/17 17:30:48 drochner Exp $ */
+/* $NetBSD: pci_bwx_bus_io_chipdep.c,v 1.9.4.1 2000/06/27 19:46:02 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.

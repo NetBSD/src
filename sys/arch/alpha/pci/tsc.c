@@ -1,4 +1,4 @@
-/* $NetBSD: tsc.c,v 1.2 1999/11/04 19:15:23 thorpej Exp $ */
+/* $NetBSD: tsc.c,v 1.2.4.1 2000/06/27 19:46:04 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 by Ross Harvey.  All rights reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.2 1999/11/04 19:15:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.2.4.1 2000/06/27 19:46:04 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.2 1999/11/04 19:15:23 thorpej Exp $");
 
 #include <machine/autoconf.h>
 #include <machine/rpb.h>
+#include <machine/sysarch.h>
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
@@ -82,9 +83,14 @@ extern struct cfdriver tsp_cd;
 
 static int tspprint __P((void *, const char *pnp));
 
-/* There can be only one */
+static int tsp_bus_get_window __P((int, int,
+	struct alpha_bus_space_translation *));
 
+/* There can be only one */
 static int tscfound;
+
+/* Which hose is the display console connected to? */
+int tsp_console_hose;
 
 int
 tscmatch(parent, match, aux)
@@ -163,7 +169,8 @@ tspmatch(parent, match, aux)
 	    && strcmp(t->tsp_name, tsp_cd.cd_name) == 0;
 }
 
-void tspattach(parent, self, aux)
+void
+tspattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
@@ -202,6 +209,11 @@ tsp_init(mallocsafe, n)
 	if (!pcp->pc_initted) {
 		tsp_bus_io_init(&pcp->pc_iot, pcp);
 		tsp_bus_mem_init(&pcp->pc_memt, pcp);
+
+		alpha_bus_window_count[ALPHA_BUS_TYPE_PCI_IO] = 1;
+		alpha_bus_window_count[ALPHA_BUS_TYPE_PCI_MEM] = 1;
+
+		alpha_bus_get_window = tsp_bus_get_window;
 	}
 	pcp->pc_mallocsafe = mallocsafe;
 	tsp_pci_init(&pcp->pc_pc, pcp);
@@ -220,4 +232,36 @@ tspprint(aux, p)
 		printf("%s at %s", pci->pba_busname, p);
 	printf(" bus %d", pci->pba_bus);
 	return UNCONF;
+}
+
+static int
+tsp_bus_get_window(type, window, abst)
+	int type, window;
+	struct alpha_bus_space_translation *abst;
+{
+	struct tsp_config *tsp = &tsp_configuration[tsp_console_hose];
+	bus_space_tag_t st;
+	int error;
+
+	switch (type) {
+	case ALPHA_BUS_TYPE_PCI_IO:
+		st = &tsp->pc_iot;
+		break;
+
+	case ALPHA_BUS_TYPE_PCI_MEM:
+		st = &tsp->pc_memt;
+		break;
+
+	default:
+		panic("tsp_bus_get_window");
+	}
+
+	error = alpha_bus_space_get_window(st, window, abst);
+	if (error)
+		return (error);
+
+	abst->abst_sys_start = TS_PHYSADDR(abst->abst_sys_start);
+	abst->abst_sys_end = TS_PHYSADDR(abst->abst_sys_end);
+
+	return (0);
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: irongate_bus_mem.c,v 1.1 2000/06/01 20:30:30 thorpej Exp $ */
+/* $NetBSD: irongate_bus_mem.c,v 1.1.2.1 2000/06/27 19:45:57 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(1, "$NetBSD: irongate_bus_mem.c,v 1.1 2000/06/01 20:30:30 thorpej Exp $");
+__KERNEL_RCSID(1, "$NetBSD: irongate_bus_mem.c,v 1.1.2.1 2000/06/27 19:45:57 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

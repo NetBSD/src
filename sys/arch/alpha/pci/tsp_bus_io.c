@@ -1,4 +1,4 @@
-/* $NetBSD: tsp_bus_io.c,v 1.2 1999/12/02 19:43:58 thorpej Exp $ */
+/* $NetBSD: tsp_bus_io.c,v 1.2.4.1 2000/06/27 19:46:05 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 by Ross Harvey.  All rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: tsp_bus_io.c,v 1.2 1999/12/02 19:43:58 thorpej Exp $");
+__KERNEL_RCSID(1, "$NetBSD: tsp_bus_io.c,v 1.2.4.1 2000/06/27 19:46:05 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
