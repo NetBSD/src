@@ -718,4 +718,4 @@ const device_descriptor hw_init_device_descriptor[] = {
   { NULL },
 };
 
-#endif _HW_INIT_C_
+#endif /* _HW_INIT_C_ */
