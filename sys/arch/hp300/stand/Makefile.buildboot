@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.buildboot,v 1.9 1999/12/14 21:38:31 thorpej Exp $
+#	$NetBSD: Makefile.buildboot,v 1.10 1999/12/21 21:06:33 frueauf Exp $
 
 S=		${.CURDIR}/../../../..
 
@@ -11,9 +11,21 @@ MKMAN=		no
 STRIPFLAG=
 BINMODE=	444
 
+.PHONY: machine-links
+beforedepend: machine-links
+# ${MACHINE} then ${MACHINE_ARCH}
+machine-links:
+	-rm -f machine && \
+		ln -s $S/arch/hp300/include machine
+	-rm -f hp300 && \
+		ln -s $S/arch/hp300/include hp300
+CLEANFILES+=machine hp300
+
+all: machine-links ${PROG}
+
 CLEANFILES+=	${PROGAOUT} vers.c vers.o
 
-CPPFLAGS+=	-I${.CURDIR}/../../.. -I${.CURDIR}/../../../..
+CPPFLAGS+=	-I${.CURDIR}/../../.. -I${.CURDIR}/../../../..  -I${.OBJDIR}
 CFLAGS=		-Os -msoft-float
 
 CPPFLAGS+=	-DBOOT_AOUT
