@@ -1,4 +1,4 @@
-/*	$NetBSD: btnmgr.c,v 1.5 2000/03/14 08:37:31 sato Exp $	*/
+/*	$NetBSD: btnmgr.c,v 1.6 2000/03/30 03:29:47 sato Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -153,9 +153,10 @@ static const int n_button_names =
 #define KC(n) KS_KEYCODE(n)
 static const keysym_t btnmgr_keydesc_default[] = {
 /*  pos      normal		shifted		altgr		shift-altgr */
-    KC(2), 			KS_Escape,
-    KC(3), 			KS_KP_Up,
-    KC(4), 			KS_KP_Down,
+    KC(2), 			KS_Return,
+    KC(3), 			KS_Escape,
+    KC(4), 			KS_KP_Up,
+    KC(5), 			KS_KP_Down,
     KC(10), 			KS_f9,
     KC(11), 			KS_f10,
     KC(12), 			KS_f11,
