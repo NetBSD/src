@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rmdir.c	5.3 (Berkeley) 5/31/90";*/
-static char rcsid[] = "$Id: rmdir.c,v 1.10 1993/12/31 19:29:02 jtc Exp $";
+static char rcsid[] = "$Id: rmdir.c,v 1.11 1994/04/28 00:03:18 jtc Exp $";
 #endif /* not lint */
 
 /*
@@ -53,7 +53,7 @@ static char rcsid[] = "$Id: rmdir.c,v 1.10 1993/12/31 19:29:02 jtc Exp $";
 #include <unistd.h>
 #include <err.h>
 
-static int rmdirp __P((char *));
+static int rmpath __P((char *));
 static void usage __P((void));
 
 int
@@ -85,50 +85,43 @@ main(argc, argv)
 	}
 
 	for (errors = 0; *argv; argv++) {
-		if (!delete_parent_directories) {
-			if (rmdir(*argv)) {
-				warn ("%s", *argv);
-				errors = 1;
-			}
-		} else {
-			if (rmdirp(*argv)) {
-				errors = 1;
-			}
-		}
+		register char *slash;
+
+		/* delete trailing slashes */
+		slash = strrchr(*argv, '\0');
+		while (--slash > *argv && *slash == '/')
+			*slash = '\0';
+
+		if (rmdir(*argv)) {
+			warn ("%s", *argv);
+			errors = 1;
+		} else if (delete_parent_directories) {
+			errors |= rmpath(*argv);
+		} 
 	}
 
 	exit(errors);
 }
 
 static int
-rmdirp (path)
+rmpath (path)
 	char *path;
 {
-	char *slash;
+	register char *slash;
 
-	if (rmdir (path)) {
-		warn ("%s", path);
-		return -1;
-	}
-
-	for (;;) {
-		slash = strrchr (path, '/');
-		if (slash == NULL) {
-			return 0;
-		}
-
-		/* skip trailing slash characters */
+	while ((slash = strrchr(path, '/')) != NULL) {
+		/* delete trailing slash characters */
 		while (slash > path && *slash == '/')
 			slash--;
 		*++slash = '\0';
 
 		if (rmdir (path)) {
 			warn ("%s", path);
-			return -1;
+			return 1;
 		}
 	}
 
-	/* NOTREACHED */
+	return 0;
 }
 
 static void
