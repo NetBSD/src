@@ -33,8 +33,8 @@
 
 #include "krb5_locl.h"
 
-__RCSID("$Heimdal: init_creds_pw.c,v 1.55 2003/03/20 18:07:31 lha Exp $"
-        "$NetBSD: init_creds_pw.c,v 1.1.1.6 2003/05/15 20:28:47 lha Exp $");
+__RCSID("$Heimdal: init_creds_pw.c,v 1.55.2.1 2004/08/30 23:21:07 lha Exp $"
+        "$NetBSD: init_creds_pw.c,v 1.1.1.7 2004/09/14 07:46:42 lha Exp $");
 
 static int
 get_config_time (krb5_context context,
@@ -399,6 +399,8 @@ krb5_get_init_creds_password(krb5_context context,
     krb5_data password_data;
     int done;
 
+    memset(&kdc_reply, 0, sizeof(kdc_reply));
+
     ret = get_init_creds_common(context, creds, client, start_time,
 				in_tkt_service, options,
 				&addrs, &etypes, &this_cred, &pre_auth_types,
@@ -487,8 +489,8 @@ krb5_get_init_creds_password(krb5_context context,
 		      data);
 out:
     memset (buf, 0, sizeof(buf));
-    if (ret == 0)
-	krb5_free_kdc_rep (context, &kdc_reply);
+
+    krb5_free_kdc_rep (context, &kdc_reply);
 
     free (pre_auth_types);
     free (etypes);

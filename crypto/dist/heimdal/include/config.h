@@ -221,7 +221,7 @@ static /**/const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 #define HAVE_FOUR_VALUED_EL_INIT 1
 
 /* define if krb_put_int takes four arguments. */
-/* #undef HAVE_FOUR_VALUED_KRB_PUT_INT */
+#define HAVE_FOUR_VALUED_KRB_PUT_INT 1
 
 /* Define to 1 if you have the `freeaddrinfo' function. */
 #define HAVE_FREEADDRINFO 1
@@ -321,7 +321,7 @@ static /**/const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 #define HAVE_GLOB 1
 
 /* Define to 1 if you have the `grantpt' function. */
-/* #undef HAVE_GRANTPT */
+#define HAVE_GRANTPT 1
 
 /* Define to 1 if you have the <grp.h> header file. */
 #define HAVE_GRP_H 1
@@ -399,19 +399,19 @@ static /**/const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 #define HAVE_ISSETUGID 1
 
 /* Define to 1 if you have the `krb_disable_debug' function. */
-/* #undef HAVE_KRB_DISABLE_DEBUG */
+#define HAVE_KRB_DISABLE_DEBUG 1
 
 /* Define to 1 if you have the `krb_enable_debug' function. */
-/* #undef HAVE_KRB_ENABLE_DEBUG */
+#define HAVE_KRB_ENABLE_DEBUG 1
 
 /* Define to 1 if you have the `krb_get_kdc_time_diff' function. */
-/* #undef HAVE_KRB_GET_KDC_TIME_DIFF */
+#define HAVE_KRB_GET_KDC_TIME_DIFF 1
 
 /* Define to 1 if you have the `krb_get_our_ip_for_realm' function. */
-/* #undef HAVE_KRB_GET_OUR_IP_FOR_REALM */
+#define HAVE_KRB_GET_OUR_IP_FOR_REALM 1
 
 /* Define to 1 if you have the `krb_kdctimeofday' function. */
-/* #undef HAVE_KRB_KDCTIMEOFDAY */
+#define HAVE_KRB_KDCTIMEOFDAY 1
 
 /* Define to 1 if you have the <libutil.h> header file. */
 /* #undef HAVE_LIBUTIL_H */
@@ -513,7 +513,7 @@ static /**/const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 #define HAVE_OPENPTY 1
 
 /* define to use openssl's libcrypto */
-/* #undef HAVE_OPENSSL */
+#define HAVE_OPENSSL 1
 
 /* define if your system declares optarg */
 #define HAVE_OPTARG_DECLARATION 1
@@ -540,7 +540,7 @@ static /**/const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 #define HAVE_PTHREAD_H 1
 
 /* Define to 1 if you have the `ptsname' function. */
-/* #undef HAVE_PTSNAME */
+#define HAVE_PTSNAME 1
 
 /* Define to 1 if you have the <pty.h> header file. */
 /* #undef HAVE_PTY_H */
@@ -573,7 +573,7 @@ static /**/const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 #define HAVE_RESOLV_H 1
 
 /* Define to 1 if you have the `res_nsearch' function. */
-/* #undef HAVE_RES_NSEARCH */
+#define HAVE_RES_NSEARCH 1
 
 /* Define to 1 if you have the `res_search' function. */
 #define HAVE_RES_SEARCH 1
@@ -1002,7 +1002,7 @@ static /**/const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 #define HAVE_UNISTD_H 1
 
 /* Define to 1 if you have the `unlockpt' function. */
-/* #undef HAVE_UNLOCKPT */
+#define HAVE_UNLOCKPT 1
 
 /* Define if you have the function `unsetenv'. */
 #define HAVE_UNSETENV 1
@@ -1125,13 +1125,13 @@ static /**/const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 /* #undef IRIX4 */
 
 /* Define if you have the krb4 package. */
-/* #undef KRB4 */
+#define KRB4 1
 
 /* Enable Kerberos 5 support in applications. */
 #define KRB5 1
 
 /* Define if krb_mk_req takes const char * */
-/* #undef KRB_MK_REQ_CONST */
+#define KRB_MK_REQ_CONST 1
 
 /* This is the krb4 sendauth version. */
 /* #undef KRB_SENDAUTH_VERS */
@@ -1255,13 +1255,13 @@ static /**/const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 #define PACKAGE_NAME "Heimdal"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "Heimdal 0.6.2"
+#define PACKAGE_STRING "Heimdal 0.6.3"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "heimdal"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "0.6.2"
+#define PACKAGE_VERSION "0.6.3"
 
 /* Define if getlogin has POSIX flavour (and not BSD). */
 /* #undef POSIX_GETLOGIN */
@@ -1297,7 +1297,7 @@ static /**/const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 /* #undef TM_IN_SYS_TIME */
 
 /* Version number of package */
-#define VERSION "0.6.2"
+#define VERSION "0.6.3"
 
 /* Define if signal handlers return void. */
 #define VOID_RETSIGTYPE 1
