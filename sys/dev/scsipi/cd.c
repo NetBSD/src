@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.42 1994/11/21 10:39:09 mycroft Exp $	*/
+/*	$NetBSD: cd.c,v 1.43 1994/11/22 03:23:49 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -186,11 +186,10 @@ cdopen(dev, flag, fmt)
 	dev_t dev;
 	int flag, fmt;
 {
-	int error = 0;
+	int error;
 	int unit, part;
 	struct cd_data *cd;
 	struct scsi_link *sc_link;
-	int s;
 
 	unit = CDUNIT(dev);
 	if (unit >= cdcd.cd_ndevs)
@@ -206,36 +205,27 @@ cdopen(dev, flag, fmt)
 	    ("cdopen: dev=0x%x (unit %d (of %d), partition %d)\n", dev, unit,
 	    cdcd.cd_ndevs, part));
 
-	s = splbio();
-
 	while ((cd->flags & CDF_LOCKED) != 0) {
 		cd->flags |= CDF_WANTED;
-		if ((error = tsleep(cd, PRIBIO | PCATCH, "cdopn", 0)) != 0) {
-			splx(s);
+		if ((error = tsleep(cd, PRIBIO | PCATCH, "cdopn", 0)) != 0)
 			return error;
-		}
 	}
 
-	/*
-	 * If any partition is open, but the disk has been invalidated,
-	 * disallow further opens.
-	 */
-	if (cd->sc_dk.dk_openmask != 0 &&
-	    (sc_link->flags & SDEV_MEDIA_LOADED) == 0) {
-		splx(s);
-		return ENXIO;
-	}
-
-	if (cd->sc_dk.dk_openmask == 0) {
+	if (cd->sc_dk.dk_openmask != 0) {
+		/*
+		 * If any partition is open, but the disk has been invalidated,
+		 * disallow further opens.
+		 */
+		if ((sc_link->flags & SDEV_MEDIA_LOADED) == 0)
+			return ENXIO;
+	} else {
 		cd->flags |= CDF_LOCKED;
-
-		splx(s);
 
 		/*
 		 * Check that it is still responding and ok.
 		 * if the media has been changed this will result in a
 		 * "unit attention" error which the error code will
-		 * disregard because the SDEV_MEDIA_LOADED flag is not yet set
+		 * disregard because the SDEV_OPEN flag is not yet set.
 		 */
 		scsi_test_unit_ready(sc_link, SCSI_SILENT);
 
@@ -246,7 +236,7 @@ cdopen(dev, flag, fmt)
 		scsi_start(sc_link, SSS_START, SCSI_ERR_OK | SCSI_SILENT);
 
 		/*
-		 * Next time actually take notice of error returns
+		 * Check that it is still responding and ok.
 		 */
 		sc_link->flags |= SDEV_OPEN;	/* unit attn errors are now errors */
 		if (scsi_test_unit_ready(sc_link, 0) != 0) {
@@ -275,8 +265,6 @@ cdopen(dev, flag, fmt)
 			SC_DEBUG(sc_link, SDEV_DB3, ("Disklabel fabricated "));
 		}
 
-		s = splbio();
-
 		cd->flags &= ~CDF_LOCKED;
 		if ((cd->flags & CDF_WANTED) != 0) {
 			cd->flags &= ~CDF_WANTED;
@@ -284,11 +272,7 @@ cdopen(dev, flag, fmt)
 		}
 	}
 
-	splx(s);
-
-	/*
-	 *  Check that the partition exists
-	 */
+	/* Check that the partition exists. */
 	if (part != RAW_PART &&
 	    (part >= cd->sc_dk.dk_label.d_npartitions ||
 	     cd->sc_dk.dk_label.d_partitions[part].p_fstype == FS_UNUSED)) {
@@ -319,15 +303,12 @@ bad:
 		sc_link->flags &= ~SDEV_OPEN;
 	}
 
-	s = splbio();
-
 	cd->flags &= ~CDF_LOCKED;
 	if ((cd->flags & CDF_WANTED) != 0) {
 		cd->flags &= ~CDF_WANTED;
 		wakeup(cd);
 	}
 
-	splx(s);
 	return error;
 }
 
@@ -342,6 +323,7 @@ cdclose(dev, flag, fmt)
 {
 	struct cd_data *cd = cdcd.cd_devs[CDUNIT(dev)];
 	int part = CDPART(dev);
+	int s;
 
 	switch (fmt) {
 	case S_IFCHR:
@@ -354,9 +336,28 @@ cdclose(dev, flag, fmt)
 	cd->sc_dk.dk_openmask = cd->sc_dk.dk_copenmask | cd->sc_dk.dk_bopenmask;
 
 	if (cd->sc_dk.dk_openmask == 0) {
+		cd->flags |= CDF_LOCKED;
+
+#if 0
+		s = splbio();
+		while (...) {
+			cd->flags |= CDF_WAITING;
+			if ((error = tsleep(cd, PRIBIO | PCATCH, "cdcls", 0)) != 0)
+				return error;
+		}
+		splx(s);
+#endif
+
 		scsi_prevent(cd->sc_link, PR_ALLOW, SCSI_ERR_OK | SCSI_SILENT);
 		cd->sc_link->flags &= ~SDEV_OPEN;
+
+		cd->flags &= ~CDF_LOCKED;
+		if ((cd->flags & CDF_WANTED) != 0) {
+			cd->flags &= ~CDF_WANTED;
+			wakeup(cd);
+		}
 	}
+
 	return 0;
 }
 
