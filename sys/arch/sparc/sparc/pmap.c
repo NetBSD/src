@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.108 1998/01/14 14:49:29 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.109 1998/01/17 15:02:17 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -695,8 +695,10 @@ pcache_flush(va, pa, n)
 	caddr_t	va, pa;
 	int	n;
 {
+	void (*f)__P((int,int)) = cpuinfo.pcache_flush_line;
+
 	while ((n -= 4) >= 0)
-		cpuinfo.pcache_flush_line((int)va+n, (int)pa+n);
+		(*f)((u_int)va+n, (u_int)pa+n);
 }
 
 
