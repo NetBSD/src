@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_init.c,v 1.12 1998/08/13 02:11:05 eeh Exp $	*/
+/*	$NetBSD: vm_init.c,v 1.13 1999/01/16 20:00:28 chuck Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -84,12 +84,7 @@
 
 void vm_mem_init()
 {
-#if !defined(MACHINE_NONCONTIG) && !defined(MACHINE_NEW_NONCONTIG)
-	extern paddr_t	avail_start, avail_end;
-	extern vaddr_t	virtual_avail, virtual_end;
-#else
 	vaddr_t	start, end;
-#endif
 
 	/*
 	 *	Initializes resident memory structures.
@@ -100,27 +95,14 @@ void vm_mem_init()
 		printf("vm_mem_init: WARN: MD code did not set page size\n");
 		vm_set_page_size();
 	}
-#if !defined(MACHINE_NONCONTIG) && !defined(MACHINE_NEW_NONCONTIG)
-	vm_page_startup(&avail_start, &avail_end);
-#else
 	vm_page_bootstrap(&start, &end);
-#endif
 
 	/*
 	 * Initialize other VM packages
 	 */
-#if !defined(MACHINE_NONCONTIG) && !defined(MACHINE_NEW_NONCONTIG)
-	vm_object_init(virtual_end - VM_MIN_KERNEL_ADDRESS);
-#else
 	vm_object_init(end - VM_MIN_KERNEL_ADDRESS);
-#endif
 	vm_map_startup();
-#if !defined(MACHINE_NONCONTIG) && !defined(MACHINE_NEW_NONCONTIG)
-	kmem_init(virtual_avail, virtual_end);
-	pmap_init(avail_start, avail_end);
-#else
 	kmem_init(start, end);
 	pmap_init();
-#endif
 	vm_pager_init();
 }
