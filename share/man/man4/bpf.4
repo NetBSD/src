@@ -1,6 +1,6 @@
 .\" -*- nroff -*-
 .\"
-.\"	$NetBSD: bpf.4,v 1.15 2001/09/11 17:54:20 wiz Exp $
+.\"	$NetBSD: bpf.4,v 1.16 2002/02/07 03:15:08 ross Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1992, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -110,7 +110,7 @@ Additionally, BIOCGETIF and BIOCSETIF require
 The (third) argument to the
 .Xr ioctl 2
 should be a pointer to the type indicated.
-.Bl -tag -width -offset indent
+.Bl -tag -width indent -offset indent
 .It Dv "BIOCGBLEN (u_int)"
 Returns the required buffer length for reads on
 .Nm
@@ -257,7 +257,7 @@ now supports several standard
 which allow the user to do async and/or non-blocking I/O to an open
 .I bpf
 file descriptor.
-.Bl -tag -width -offset indent
+.Bl -tag -width indent -offset indent
 .It Dv FIONREAD (int)
 Returns the number of bytes that are immediately available for reading.
 .It Dv SIOCGIFADDR (struct ifreq)
@@ -406,7 +406,7 @@ are the corresponding fields in the
 instruction definition.
 .Dq len
 refers to the length of the packet.
-.Bl -tag -width -offset indent
+.Bl -tag -width indent -offset indent
 .It Sy BPF_LD
 These instructions copy a value into the accumulator.  The type of the
 source operand is specified by an
@@ -432,7 +432,7 @@ halfword
 or byte
 .No ( Ns Sy BPF_B Ns ) .
 The semantics of all the recognized BPF_LD instructions follow.
-.Bl -column "BPF_LD+BPF_W+BPF_ABS" "A <- P[k:4]" -width -offset indent
+.Bl -column "BPF_LD+BPF_W+BPF_ABS" "A <- P[k:4]" -width indent -offset indent
 .It Sy BPF_LD+BPF_W+BPF_ABS Ta A <- P[k:4]
 .It Li Sy BPF_LD+BPF_H+BPF_ABS Ta A <- P[k:2]
 .It Li Sy BPF_LD+BPF_B+BPF_ABS Ta A <- P[k:1]
@@ -449,7 +449,7 @@ the addressing modes are more restricted than those of the accumulator loads,
 but they include
 .Sy BPF_MSH ,
 a hack for efficiently loading the IP header length.
-.Bl -column "BPF_LDX+BPF_W+BPF_IMM" "X <- k" -width -offset indent
+.Bl -column "BPF_LDX+BPF_W+BPF_IMM" "X <- k" -width indent -offset indent
 .It Sy BPF_LDX+BPF_W+BPF_IMM Ta X <- k
 .It Li Sy BPF_LDX+BPF_W+BPF_MEM Ta X <- M[k]
 .It Li Sy BPF_LDX+BPF_W+BPF_LEN Ta X <- len
@@ -459,12 +459,12 @@ a hack for efficiently loading the IP header length.
 This instruction stores the accumulator into the scratch memory.
 We do not need an addressing mode since there is only one possibility
 for the destination.
-.Bl -column "BPF_ST" "M[k] <- A" -width -offset indent
+.Bl -column "BPF_ST" "M[k] <- A" -width indent -offset indent
 .It Sy BPF_ST Ta M[k] <- A
 .El
 .It Sy BPF_STX
 This instruction stores the index register in the scratch memory store.
-.Bl -column "BPF_STX" "M[k] <- X" -width -offset indent
+.Bl -column "BPF_STX" "M[k] <- X" -width indent -offset indent
 .It Sy BPF_STX Ta M[k] <- X
 .El
 .It Sy BPF_ALU
@@ -474,7 +474,7 @@ For binary operations, a source mode is required
 .No ( Ns Sy BPF_K
 or
 .Sy BPF_X Ns ) .
-.Bl -column "BPF_ALU+BPF_ADD+BPF_K" "A <- A + k" -width -offset indent
+.Bl -column "BPF_ALU+BPF_ADD+BPF_K" "A <- A + k" -width indent -offset indent
 .It Sy BPF_ALU+BPF_ADD+BPF_K Ta A <- A + k
 .It Li Sy BPF_ALU+BPF_SUB+BPF_K Ta A <- A - k
 .It Li Sy BPF_ALU+BPF_MUL+BPF_K Ta A <- A * k
@@ -508,7 +508,7 @@ opcode uses the 32 bit
 .Va k
 field as the offset, allowing arbitrarily distant destinations.
 All conditionals use unsigned comparison conventions.
-.Bl -column "BPF_JMP+BPF_JGE+BPF_K" "pc += (A >= k) ? jt : jf" -width -offset indent
+.Bl -column "BPF_JMP+BPF_JGE+BPF_K" "pc += (A >= k) ? jt : jf" -width indent -offset indent
 .It Sy BPF_JMP+BPF_JA Ta pc += k
 .It Li Sy BPF_JMP+BPF_JGT+BPF_K Ta "pc += (A > k) ? jt : jf"
 .It Li Sy BPF_JMP+BPF_JGE+BPF_K Ta "pc += (A >= k) ? jt : jf"
@@ -527,7 +527,7 @@ The return value is either a constant
 .No ( Ns Sy BPF_K Ns )
 or the accumulator
 .No ( Ns Sy BPF_A Ns ) .
-.Bl -column "BPF_RET+BPF_A" "accept A bytes" -width -offset indent
+.Bl -column "BPF_RET+BPF_A" "accept A bytes" -width indent -offset indent
 .It Sy BPF_RET+BPF_A Ta accept A bytes
 .It Li Sy BPF_RET+BPF_K Ta accept k bytes
 .El
@@ -536,7 +536,7 @@ The miscellaneous category was created for anything that doesn't
 fit into the above classes, and for any new instructions that might need to
 be added.  Currently, these are the register transfer instructions
 that copy the index register to the accumulator or vice versa.
-.Bl -column "BPF_MISC+BPF_TAX" "X <- A" -width -offset indent
+.Bl -column "BPF_MISC+BPF_TAX" "X <- A" -width indent -offset indent
 .It Sy BPF_MISC+BPF_TAX Ta X <- A
 .It Li Sy BPF_MISC+BPF_TXA Ta A <- X
 .El

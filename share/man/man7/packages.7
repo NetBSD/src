@@ -1,4 +1,4 @@
-.\"	$NetBSD: packages.7,v 1.66 2002/01/05 06:49:42 tron Exp $
+.\"	$NetBSD: packages.7,v 1.67 2002/02/07 03:15:10 ross Exp $
 .\"
 .\" from: NetBSD: bsd.pkg.mk,v 1.89 1998/06/01 21:30:10 hubertf Exp
 .\"
@@ -21,7 +21,7 @@ and individual packages.
 This section documents variables that typically apply to all packages.
 Many of these may be set in
 .Xr mk.conf 5 .
-.Bl -tag -indent -width XXXXXXXXX
+.Bl -tag -offset indent -width XXXXXXXXX
 .It ARCH
 The architecture, as returned by
 .Dq uname -m .
@@ -114,7 +114,7 @@ etc.).
 .Sh PACKAGE SPECIFIC VARIABLES
 This section documents variables that typically apply to an individual
 package.  Non-Boolean variables without defaults are *mandatory*.
-.Bl -tag -indent XXXXXXXX -width XXXXXXXX
+.Bl -tag -offset indent -width XXXXXXXX
 .It ONLY_FOR_PLATFORM
 If set, it lists the values of OS triples (OS-version-platform)
 that the package will build under.  It can be a glob-style wildcard.
@@ -560,7 +560,7 @@ to denote such a package.
 This section documents variables related to the use and installation of
 Motif and/or LessTif.  Also, packages that require a Motif installation need
 to include motif.buildlink.mk.
-.Bl -tag -indent XXXXXXXX -width XXXXXXXX
+.Bl -tag -offset indent -width XXXXXXXX
 .It USE_MOTIF12
 Set this in your package if it requires Motif-1.2 headers and/or libraries.
 If Motif is not present on your system, the lesstif12 package will be
@@ -608,7 +608,7 @@ X Window System contributed source mirror.
 .El
 .Sh SPECIAL VARIABLES
 Variables to change if you want a special behavior:
-.Bl -tag -indent XXXXXXXX -width XXXXXXXX
+.Bl -tag -offset indent -width XXXXXXXX
 .It ECHO_MSG
 Used to print all the
 .Dq ===>
@@ -667,7 +667,7 @@ or you will get stuck in an endless loop!
 .Sh INSTALL VARIABLES
 This section documents variables that serve as convenient aliases.
 for your *-install targets.
-.Bl -tag -indent XXXXXXXX -width XXXXXXXX
+.Bl -tag -offset indent -width XXXXXXXX
 .It INSTALL_PROGRAM
 A command to install binary executables.
 Use these like:
@@ -690,7 +690,7 @@ Create a directory for storing man pages.
 .Sh MANUAL PAGE VARIABLES
 This section docuemnts variables used to configure the way manual pages
 are installed by this package.
-.Bl -tag -indent XXXXXXXX -width XXXXXXXX
+.Bl -tag -offset indent -width XXXXXXXX
 .It MANCOMPRESSED
 Indicates that the package installs manpages in a compressed
 form.  The default package installs manpages uncompressed.
@@ -706,7 +706,7 @@ target relies on another target for completion (eg, the
 target relies on the
 .Dq build
 target), then these targets will be executed beforehand.
-.Bl -tag -indent XXXXXXXX -width XXXXXXXX
+.Bl -tag -offset indent -width XXXXXXXX
 .It fetch
 Retrieves
 .Dv ${DISTFILES}

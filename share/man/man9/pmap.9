@@ -1,4 +1,4 @@
-.\"	$NetBSD: pmap.9,v 1.10 2001/12/26 01:07:45 wiz Exp $
+.\"	$NetBSD: pmap.9,v 1.11 2002/02/07 03:15:10 ross Exp $
 .\"
 .\" Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -346,7 +346,7 @@ when the statistics are queried.
 This section describes functions that a
 .Nm
 module must provide to the virtual memory system.
-.Bl -tag -width offset -indent
+.Bl -tag -width indent -offset indent
 .It void Fn "pmap_init" "void"
 This function initializes the
 .Nm
@@ -425,7 +425,7 @@ at the virtual address
 .Fa va
 with protection specified by bits in
 .Fa prot :
-.Bl -tag -width "VM_PROT_EXECUTE  " -indent
+.Bl -tag -width "VM_PROT_EXECUTE  " -offset indent
 .It VM_PROT_READ
 The mapping must allow reading.
 .It VM_PROT_WRITE
@@ -445,7 +445,7 @@ information for the page being mapped, possibly avoiding redundant faults
 on platforms that track modified/referenced information in software.
 Other information provided by
 .Fa flags :
-.Bl -tag -width "PMAP_CANFAIL  " -indent
+.Bl -tag -width "PMAP_CANFAIL  " -offset indent
 .It PMAP_WIRED
 The mapping being created is a wired mapping.
 .It PMAP_CANFAIL
@@ -776,7 +776,7 @@ Note that this function may be provided as a C pre-processor macro.
 This section describes several optional functions in the
 .Nm
 API.
-.Bl -tag -width offset -indent
+.Bl -tag -width indent -offset indent
 .It vaddr_t Fn "pmap_steal_memory" "vsize_t size" "vaddr_t *vstartp" \
     "vaddr_t *vendp"
 This function is a bootstrap memory allocator, which may be provided
