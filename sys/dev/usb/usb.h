@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.h,v 1.18 1999/02/15 00:32:16 augustss Exp $	*/
+/*	$NetBSD: usb.h,v 1.19 1999/05/09 14:35:50 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -341,6 +341,15 @@ typedef struct {
 #define  USUBCLASS_PRINTER	1
 #define  UPROTO_PRINTER_UNI	1
 #define  UPROTO_PRINTER_BI	2
+#define UCLASS_MASS		8
+#define  USUBCLASS_RBC		1
+#define  USUBCLASS_SFF8020I	2
+#define  USUBCLASS_QIC157	3
+#define  USUBCLASS_UFI		4
+#define  USUBCLASS_SFF8070I	5
+#define  USUBCLASS_SCSI		6
+#define  UPROTO_MASS_CBI_C	0
+#define  UPROTO_MASS_CBI_NC	1
 #define UCLASS_HUB		9
 #define  USUBCLASS_HUB		0
 #define UCLASS_DATA		10
