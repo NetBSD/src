@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.26 1998/12/05 19:41:31 mjacob Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.27 1998/12/08 00:13:58 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -174,12 +174,13 @@ struct scsipi_link {
 #define BUS_ATAPI		1
 	u_int8_t openings;		/* available operations */
 	u_int8_t active;		/* operations in progress */
-	u_int8_t flags;			/* flags that all devices have */
+	int flags;			/* flags that all devices have */
 #define	SDEV_REMOVABLE	 	0x01	/* media is removable */
 #define	SDEV_MEDIA_LOADED 	0x02	/* device figures are still valid */
 #define	SDEV_WAITING	 	0x04	/* a process is waiting for this */
 #define	SDEV_OPEN	 	0x08	/* at least 1 open session */
 #define	SDEV_DBX		0xf0	/* debuging flags (scsipi_debug.h) */
+#define	SDEV_WAITDRAIN		0x100	/* waiting for pending_xfers to drain */
 	u_int16_t quirks;		/* per-device oddities */
 #define	SDEV_AUTOSAVE		0x0001	/*
 					 * Do implicit SAVEDATAPOINTER on
@@ -235,6 +236,7 @@ struct scsipi_link {
 #define ACAP_LEN            0x0100  /* 16 bit commands */
 		} scsipi_atapi;
 	} _scsipi_link;
+	TAILQ_HEAD(, scsipi_xfer) pending_xfers;
 	int (*scsipi_cmd) __P((struct scsipi_link *, struct scsipi_generic *,
 	    int cmdlen, u_char *data_addr, int datalen, int retries,
 	    int timeout, struct buf *bp, int flags));
@@ -249,9 +251,19 @@ struct scsipi_link {
  * It includes information about the source of the command and also the
  * device and adapter for which the command is destined.
  * (via the scsipi_link structure)
+ *
+ * The adapter_q member may be used by host adapter drivers to queue
+ * requests, if necessary.
+ *
+ * The device_q member is maintained by the scsipi middle layer.  When
+ * a device issues a command, the xfer is placed on that device's
+ * pending commands queue.  When an xfer is done and freed, it is taken
+ * off the device's queue.  This allows for a device to wait for all of
+ * its pending commands to complete.
  */
 struct scsipi_xfer {
-	LIST_ENTRY(scsipi_xfer) free_list;
+	TAILQ_ENTRY(scsipi_xfer) adapter_q; /* queue entry for use by adapter */
+	TAILQ_ENTRY(scsipi_xfer) device_q;  /* device's pending xfers */
 	volatile int flags;		/* 0x00ff0000 reserved for ATAPI */
 	struct	scsipi_link *sc_link;	/* all about our device and adapter */
 	int	retries;		/* the number of times to retry */
@@ -386,6 +398,7 @@ int	scsipi_start __P((struct scsipi_link *, int, int));
 void	scsipi_done __P((struct scsipi_xfer *));
 void	scsipi_user_done __P((struct scsipi_xfer *));
 int	scsipi_interpret_sense __P((struct scsipi_xfer *));
+void	scsipi_wait_drain __P((struct scsipi_link *));
 #ifdef SCSIVERBOSE
 void	scsipi_print_sense __P((struct scsipi_xfer *, int));
 void	scsipi_print_sense_data __P((struct scsipi_sense_data *, int));
