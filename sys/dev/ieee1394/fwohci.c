@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.42 2001/09/07 11:04:35 haya Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.43 2001/09/18 16:11:00 tsutsui Exp $	*/
 
 #define DOUBLEBUF 1
 #define NO_THREAD 1
@@ -1734,7 +1734,7 @@ fwohci_ir_input(struct fwohci_softc *sc, struct fwohci_ctx *fc)
 		while ((reg = OHCI_SYNC_RX_DMA_READ(sc, fc->fc_ctx, OHCI_SUBREG_ContextControlSet)) & OHCI_CTXCTL_ACTIVE) {
 			delay(10);
 			if (++i > 10000) {
-				printf("cannot stop dma engine 0x08x\n", reg);
+				printf("cannot stop dma engine 0x%08x\n", reg);
 				return;
 			}
 		}
