@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425.c,v 1.3 2003/05/24 01:59:32 ichiro Exp $ */
+/*	$NetBSD: ixp425.c,v 1.4 2003/07/02 11:02:28 ichiro Exp $ */
 
 /*
  * Copyright (c) 2003
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp425.c,v 1.3 2003/05/24 01:59:32 ichiro Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425.c,v 1.4 2003/07/02 11:02:28 ichiro Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,7 +48,8 @@ __KERNEL_RCSID(0, "$NetBSD: ixp425.c,v 1.3 2003/05/24 01:59:32 ichiro Exp $");
 
 #include <evbarm/ixdp425/ixdp425reg.h>
 
-static struct ixp425_softc *ixp425_softc;
+int		ixp425_pcibus_print(void *, const char *);
+static struct	ixp425_softc *ixp425_softc;
 
 void
 ixp425_attach(struct ixp425_softc *sc)
@@ -56,56 +57,61 @@ ixp425_attach(struct ixp425_softc *sc)
 	ixp425_softc = sc;
 
 	printf("\n");
-}
 
-/*
- * IXP425 specific I/O registers mapping table
- */
-static struct pmap_ent	map_tbl_ixp425[] = {
-	{ "IXP425 Peripheral Registers",
-	  IXP425_IO_VBASE, IXP425_IO_HWBASE,
-	  IXP425_IO_SIZE,
-	  VM_PROT_READ|VM_PROT_WRITE,
-	  PTE_NOCACHE, },
-	{ "IXP425 Expansion bus Registers",
-	  IXP425_EXP_VBASE, IXP425_EXP_HWBASE,
-	  IXP425_EXP_SIZE,
-	  VM_PROT_READ|VM_PROT_WRITE,
-	  PTE_NOCACHE, },
-	{ "IXP425 PCI Configuration Registers",
-	  IXP425_PCI_VBASE, IXP425_PCI_HWBASE,
-	  IXP425_PCI_SIZE,
-	  VM_PROT_READ|VM_PROT_WRITE,
-	  PTE_NOCACHE, },
+#if 0
+	/*
+	 * PCI bus reset
+	 */
+	/* disable PCI command */
 
-	{ NULL, 0, 0, 0, 0, 0 },
-};
+	/* XXX assert PCI reset Mode */
 
-/*
- * mapping virtual memories
- */
-void
-ixp425_pmap_chunk_table(vaddr_t l1pt, struct pmap_ent* m)
-{
-	int loop;
+	/* We setup a 1:1 memory map of bus<->physical addresses */
 
-	loop = 0;
-	while (m[loop].msg) {
-#ifdef DEBUG
-		printf("mapping 0x%lx(0x%05lx) -> 0x%lx %s...\n",
-			m[loop].pa, m[loop].sz, m[loop].va, m[loop].msg);
+	/*
+	 * Enable bus mastering and I/O,memory access
+	 */
+	
+
+	/*
+	 * Initialize the bus space and DMA tags and the PCI chipset tag.
+	 */
+	ixp425_io_bs_init(&sc->ia_pci_iot, sc);
+	ixp425_mem_bs_init(&sc->ia_pci_memt, sc);
+	ixp425_pci_init(&sc->ia_pci_chipset, sc);
+
+	/*
+	 * Initialize the DMA tags.
+	 */
+	ixp425_pci_dma_init(sc);
+
+	/*
+	 * Attach the PCI bus.
+	 */
+	pba.pba_busname = "pci";
+	pba.pba_pc = &sc->ia_pci_chipset;
+	pba.pba_iot = &sc->ia_pci_iot;
+	pba.pba_memt = &sc->ia_pci_memt;
+	pba.pba_dmat = &sc->ia_pci_dmat;
+	pba.pba_bus = 0;	/* bus number = 0 */
+	pba.pba_intrswiz = 0;	/* XXX */
+	pba.pba_intrtag = 0;
+	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED |
+			PCI_FLAGS_MRL_OKAY | PCI_FLAGS_MRM_OKAY |
+			PCI_FLAGS_MWI_OKAY;
+	(void) config_found(&sc->sc_dev, &pba, ixp425_pcibus_print);
 #endif
-		pmap_map_chunk(l1pt, m[loop].va, m[loop].pa,
-			       m[loop].sz, m[loop].prot, m[loop].cache);
-		++loop;
-	}
 }
 
-/*
- * mapping I/O registers
- */
-void
-ixp425_pmap_io_reg(vaddr_t l1pt)
+int
+ixp425_pcibus_print(void *aux, const char *pnp)
 {
-	ixp425_pmap_chunk_table(l1pt, map_tbl_ixp425);
+	struct pcibus_attach_args *pba = aux;
+
+	if (pnp)
+		aprint_normal("%s at %s", pba->pba_busname, pnp);
+
+	aprint_normal(" bus %d", pba->pba_bus);
+
+	return (UNCONF);
 }
