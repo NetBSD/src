@@ -1,4 +1,4 @@
-.\"	$NetBSD: dkctl.8,v 1.12 2004/09/16 18:02:27 erh Exp $
+.\"	$NetBSD: dkctl.8,v 1.13 2004/09/25 03:31:35 thorpej Exp $
 .\"
 .\" Copyright 2002 Wasabi Systems, Inc.
 .\" All rights reserved.
@@ -121,8 +121,47 @@ This option
 .Em can only
 be used with character devices.
 .El
+.Pp
+.Nm addwedge
+.Ar name
+.Ar startblk
+.Ar blkcnt
+.Ar ptype
+.Pp
+Define a
+.Sq wedge
+on the specified disk starting at block number
+.Ar startblk
+and spanning
+.Ar blkcnt
+blocks.
+The wedge will have the volume name
+.Ar name
+and the partition type
+.Ar ptype .
+The device name of the virtual block device assigned to the wedge will be
+displayed after the wedge has been successfully created.
+See
+.Xr dk 4
+for more information about disk wedges.
+.Pp
+.Nm delwedge
+.Ar dk
+.Pp
+Delete the wedge specified by its device name
+.Ar dk
+from the specified disk.
+.Pp
+.Nm getwedgeinfo
+.Pp
+Display information about the specified disk wedge.
+.Pp
+.Nm listwedges
+.Pp
+List all of the wedges configured on the specified disk.
 .Sh SEE ALSO
 .Xr ioctl 2 ,
+.Xr dk 4 ,
 .Xr sd 4 ,
 .Xr wd 4 ,
 .Xr disklabel 5 ,
