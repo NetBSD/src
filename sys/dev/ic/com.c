@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.159.2.2 2000/01/05 23:44:41 he Exp $	*/
+/*	$NetBSD: com.c,v 1.159.2.3 2000/01/20 23:24:39 he Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -1019,20 +1019,20 @@ comioctl(dev, cmd, data, flag, p)
 		*(int *)data = com_to_tiocm(sc);
 		break;
 
-	case PPS_CREATE:
+	case PPS_IOC_CREATE:
 		break;
 
-	case PPS_DESTROY:
+	case PPS_IOC_DESTROY:
 		break;
 
-	case PPS_GETPARAMS: {
+	case PPS_IOC_GETPARAMS: {
 		pps_params_t *pp;
 		pp = (pps_params_t *)data;
 		*pp = sc->ppsparam;
 		break;
 	}
 
-	case PPS_SETPARAMS: {
+	case PPS_IOC_SETPARAMS: {
 	  	pps_params_t *pp;
 		int mode;
 		pp = (pps_params_t *)data;
@@ -1085,21 +1085,16 @@ comioctl(dev, cmd, data, flag, p)
 		break;
 	}
 
-	case PPS_GETCAP:
+	case PPS_IOC_GETCAP:
 		*(int*)data = ppscap;
 		break;
 
-	case PPS_FETCH: {
+	case PPS_IOC_FETCH: {
 		pps_info_t *pi;
 		pi = (pps_info_t *)data;
 		*pi = sc->ppsinfo;
 		break;
 	}
-
-	case PPS_WAIT:
-		/* XXX */
-		error = EOPNOTSUPP;
-		break;
 
 	case TIOCDCDTIMESTAMP:	/* XXX old, overloaded  API used by xntpd v3 */
 		/*
@@ -2032,7 +2027,6 @@ comintr(arg)
 						timespecadd(&sc->ppsinfo.assert_timestamp,
 						    &sc->ppsparam.assert_offset,
 						    &sc->ppsinfo.assert_timestamp);
-						TIMESPEC_TO_TIMEVAL(&tv, &sc->ppsinfo.assert_timestamp);
 	}
 
 #ifdef PPS_SYNC
@@ -2053,7 +2047,6 @@ comintr(arg)
 						timespecadd(&sc->ppsinfo.clear_timestamp,
 						    &sc->ppsparam.clear_offset,
 						    &sc->ppsinfo.clear_timestamp);
-						TIMESPEC_TO_TIMEVAL(&tv, &sc->ppsinfo.clear_timestamp);
 	}
 
 #ifdef PPS_SYNC
