@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.46 1995/08/06 17:59:10 mycroft Exp $	*/
+/*	$NetBSD: npx.c,v 1.47 1995/08/06 18:05:22 mycroft Exp $	*/
 
 #if 0
 #define iprintf(x)	printf x
@@ -535,7 +535,7 @@ npxdna(p)
 	 * first FPU instruction after a context switch.
 	 */
 	npxproc = p;
-	frstor(&pcb->pcb_savefpu);
+	frstor(&p->p_addr->u_pcb.pcb_savefpu);
 	return (1);
 }
 
