@@ -1,4 +1,4 @@
-/*	$NetBSD: ipxcp.c,v 1.7 1999/08/25 02:07:43 christos Exp $	*/
+/*	$NetBSD: ipxcp.c,v 1.7.8.1 2000/09/30 06:21:43 simonb Exp $	*/
 
 /*
  * ipxcp.c - PPP IPX Control Protocol.
@@ -20,12 +20,13 @@
  */
 
 #ifdef IPX_CHANGE
+
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 #define RCSID	"Id: ipxcp.c,v 1.18 1999/08/24 05:31:09 paulus Exp "
 #else
-__RCSID("$NetBSD: ipxcp.c,v 1.7 1999/08/25 02:07:43 christos Exp $");
+__RCSID("$NetBSD: ipxcp.c,v 1.7.8.1 2000/09/30 06:21:43 simonb Exp $");
 #endif
 #endif
 
