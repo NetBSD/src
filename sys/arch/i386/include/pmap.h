@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.22 1996/02/12 21:12:29 christos Exp $	*/
+/*	$NetBSD: pmap.h,v 1.23 1996/05/03 19:26:30 christos Exp $	*/
 
 /* 
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -159,6 +159,8 @@ struct pv_entry		*pv_table;	/* array of entries, one per page */
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
 #define	pmap_update()			tlbflush()
 
+vm_offset_t reserve_dumppages __P((vm_offset_t));
+
 static __inline void
 pmap_clear_modify(vm_offset_t pa)
 {
@@ -194,6 +196,8 @@ pmap_phys_address(int ppn)
 {
 	return i386_ptob(ppn);
 }
+
+void pmap_activate __P((pmap_t, struct pcb *));
 
 #endif	/* _KERNEL */
 
