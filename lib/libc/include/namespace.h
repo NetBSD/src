@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.40 1999/09/20 15:07:21 kleink Exp $	*/
+/*	$NetBSD: namespace.h,v 1.41 1999/11/25 16:54:15 wennmach Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -342,6 +342,8 @@
 #define strptime		_strptime
 #define strsep			_strsep
 #define strsignal		_strsignal
+#define strsvis			_strsvis
+#define strsvisx		_strsvisx
 #define strtok_r		_strtok_r
 #define strunvis		_strunvis
 #define strvis			_strvis
@@ -365,6 +367,7 @@
 #define svcudp_bufcreate	_svcudp_bufcreate
 #define svcudp_create		_svcudp_create
 #define svcudp_enablecache	_svcudp_enablecache
+#define svis			_svis
 #define sysconf			_sysconf
 #define sysctl			_sysctl
 #define syslog			_syslog
