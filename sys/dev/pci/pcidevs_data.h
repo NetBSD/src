@@ -1,4 +1,4 @@
-/*	$NetBSD: pcidevs_data.h,v 1.547 2003/07/06 17:12:36 simonb Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.548 2003/07/06 22:56:10 dyoung Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -812,6 +812,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "ADMtek",
 	    "ADMtek AN985 10/100 Ethernet",
+	},
+	{
+	    PCI_VENDOR_ADMTEK, PCI_PRODUCT_ADMTEK_ADM8211,
+	    0,
+	    "ADMtek",
+	    "ADMtek ADM8211 11Mbps 802.11b WLAN",
 	},
 	{
 	    PCI_VENDOR_ADVSYS, PCI_PRODUCT_ADVSYS_1200A,
