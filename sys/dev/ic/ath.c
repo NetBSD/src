@@ -1,4 +1,4 @@
-/*	$NetBSD: ath.c,v 1.33 2004/08/03 20:06:54 dyoung Exp $	*/
+/*	$NetBSD: ath.c,v 1.34 2004/08/08 13:01:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002-2004 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.54 2004/04/05 04:42:42 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.33 2004/08/03 20:06:54 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.34 2004/08/08 13:01:03 yamt Exp $");
 #endif
 
 /*
@@ -944,7 +944,7 @@ ath_init1(struct ath_softc *sc)
 	if (!ath_hal_reset(ah, ic->ic_opmode, &hchan, AH_FALSE, &status)) {
 		if_printf(ifp, "unable to reset hardware; hal status %u\n",
 			status);
-		error = -1;
+		error = EIO;
 		goto done;
 	}
 
