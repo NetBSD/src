@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.1 2001/06/13 06:02:00 simonb Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.2 2001/06/24 01:15:41 simonb Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -70,14 +70,12 @@
 static bus_space_tag_t pci_iot;
 static bus_space_handle_t pci_ioh;
 
-#define	OFF(r)	((r)-PCI0_CFGADDR)
-
 void pci_machdep_init(void)
 {
 
 	if (pci_ioh == 0) {
 		pci_iot = 0;
-		if (bus_space_map(pci_iot,PCI0_CFGADDR,8,0,&pci_ioh)){
+		if (bus_space_map(pci_iot, PCIC0_BASE, 8, 0, &pci_ioh)){
 			panic("Cannot map PCI registers\n");
 		}
 	}
@@ -141,9 +139,9 @@ pci_conf_read(pci_chipset_tag_t pc, pcitag_t tag, int reg)
 	pcireg_t data;
 
 	/* 405GT BIOS disables interrupts here. Should we? --Art */
-	bus_space_write_4(pci_iot,pci_ioh, OFF(PCI0_CFGADDR), tag | reg);
-	data = bus_space_read_4(pci_iot,pci_ioh,OFF(PCI0_CFGDATA));
-	bus_space_write_4(pci_iot,pci_ioh,OFF(PCI0_CFGADDR), 0); /* 405GP pass2 errata #6 */
+	bus_space_write_4(pci_iot, pci_ioh, PCIC0_CFGADDR, tag | reg);
+	data = bus_space_read_4(pci_iot, pci_ioh, PCIC0_CFGDATA);
+	bus_space_write_4(pci_iot, pci_ioh, PCIC0_CFGADDR, 0); /* 405GP pass2 errata #6 */
 	return data;
 }
 
@@ -151,9 +149,9 @@ void
 pci_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t data)
 {
 
-	bus_space_write_4(pci_iot,pci_ioh, OFF(PCI0_CFGADDR), tag | reg);
-	bus_space_write_4(pci_iot,pci_ioh,OFF(PCI0_CFGDATA), data);
-	bus_space_write_4(pci_iot,pci_ioh,OFF(PCI0_CFGADDR), 0); /* 405GP pass2 errata #6 */
+	bus_space_write_4(pci_iot, pci_ioh, PCIC0_CFGADDR, tag | reg);
+	bus_space_write_4(pci_iot, pci_ioh, PCIC0_CFGDATA, data);
+	bus_space_write_4(pci_iot, pci_ioh, PCIC0_CFGADDR, 0); /* 405GP pass2 errata #6 */
 }
 
 
@@ -179,7 +177,7 @@ pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 	case 3:	  *ihp = 2; break; /* Slot 1 Ext IRQ 5 */
 	case 4:	  *ihp = 1; break; /* Slot 0 Ext IRQ 6 */
 	default:
-	  printf("Hmm.. PCI device %d should not exist on this board\n",dev);
+	  printf("Hmm.. PCI device %d should not exist on this board\n", dev);
 	  goto bad;
 	}
 	return 0;
@@ -192,7 +190,7 @@ bad:
 const char *
 pci_intr_string(pci_chipset_tag_t pc, pci_intr_handle_t ih)
 {
-	static char irqstr[8];		/* 4 + 2 + NULL + sanity */
+	static char irqstr[8];		/* 4 + 2 + NUL + sanity */
 
 	if (ih == 0 || ih >= ICU_LEN)
 		panic("pci_intr_string: bogus handle 0x%x\n", ih);
