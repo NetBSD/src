@@ -1,8 +1,6 @@
-#	$NetBSD: Makefile.inc,v 1.2 2001/12/17 20:27:39 fredette Exp $
+#	$NetBSD: Makefile.inc,v 1.3 2002/03/06 12:14:26 lukem Exp $
 
 .include "../../Makefile.inc"
-
-REV!=sh ${.CURDIR}/../../../sys/conf/osrelease.sh -s
 
 LDSTATIC=	-static		# only static compilation makes sense here
 
