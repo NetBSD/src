@@ -1,4 +1,4 @@
-/*	$NetBSD: rtcreg.h,v 1.4 2001/09/18 17:37:29 uch Exp $	*/
+/*	$NetBSD: rtcreg.h,v 1.5 2001/09/30 11:24:07 sato Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura. All rights reserved.
@@ -60,8 +60,11 @@
 /*
  *	RTC (Real Time Clock Unit) Registers definitions.
  *		start 0x0B0000C0 (Vr4102-4121)
- *		start 0x0F000100 (Vr4122)
+ *		start 0x0F000100 (Vr4122-4131)
+ *		start 0x0B0000C0 (Vr4181)
  */
+#define RTC_NOREG_W		-1
+
 #define ETIME_L_REG_W		0x000	/* Elapsed Time L */
 #define ETIME_M_REG_W		0x002	/* Elapsed Time M */
 #define ETIME_H_REG_W		0x004	/* Elapsed Time H */
@@ -98,38 +101,56 @@
 #define VR4102_TCLK_H_REG_W	0x102	/* TCLK H */
 #define VR4122_TCLK_L_REG_W	0x020	/* TCLK L */
 #define VR4122_TCLK_H_REG_W	0x022	/* TCLK H */
+#if defined SINGLE_VRIP_BASE
 #if defined VRGROUP_4102_4121
 #define TCLK_L_REG_W		VR4102_TCLK_L_REG_W	/* TCLK L */
 #define TCLK_H_REG_W		VR4102_TCLK_H_REG_W	/* TCLK H */
 #endif /* VRGROUP_4102_4121 */
-#if defined VRGROUP_4122
+#if defined VRGROUP_4122_4131
 #define TCLK_L_REG_W		VR4122_TCLK_L_REG_W	/* TCLK L */
 #define TCLK_H_REG_W		VR4122_TCLK_H_REG_W	/* TCLK H */
-#endif /* VRGROUP_4122 */
+#endif /* VRGROUP_4122_4131 */
+#if defined VRGROUP_4181
+#define TCLK_L_REG_W		RTC_NOREG_W
+#define TCLK_H_REG_W		RTC_NOREG_W
+#endif /* VRGROUP_4181 */
+#endif /* defined SINGLE_VRIP_BASE */
 
 
 #define VR4102_TCLK_CNT_L_REG_W	0x104	/* TCLK Count L */
 #define VR4102_TCLK_CNT_H_REG_W	0x106	/* TCLK Count H */
 #define VR4122_TCLK_CNT_L_REG_W	0x024	/* TCLK Count L */
 #define VR4122_TCLK_CNT_H_REG_W	0x026	/* TCLK Count H */
+#if defined SINGLE_VRIP_BASE
 #if defined VRGROUP_4102_4121
 #define TCLK_CNT_L_REG_W	VR4102_TCLK_CNT_L_REG_W	/* TCLK Count L */
 #define TCLK_CNT_H_REG_W	VR4102_TCLK_CNT_L_REG_W	/* TCLK Count H */
 #endif /* VRGROUP_4102_4121 */
-#if defined VRGROUP_4122
+#if defined VRGROUP_4122_4131
 #define TCLK_CNT_L_REG_W	VR4122_TCLK_CNT_L_REG_W	/* TCLK Count L */
 #define TCLK_CNT_H_REG_W	VR4122_TCLK_CNT_H_REG_W	/* TCLK Count H */
-#endif /* VRGROUP_4122 */
+#endif /* VRGROUP_4122_4131 */
+#if defined VRGROUP_4181
+#define TCLK_CNT_L_REG_W	RTC_NOREG_W
+#define TCLK_CNT_H_REG_W	RTC_NOREG_W
+#endif /* VRGROUP_4181 */
+#endif /* defined SINGLE_VRIP_BASE */
 
 
 #define VR4102_RTCINT_REG_W		0x11e	/* RTC intr reg. */
 #define VR4122_RTCINT_REG_W		0x03e	/* RTC intr reg. */
+#define VR4181_RTCINT_REG_W		0x11e	/* RTC intr reg. */
+#if defined SINGLE_VRIP_BASE
 #if defined VRGROUP_4102_4121
 #define RTCINT_REG_W		VR4102_RTCINT_REG_W	/* RTC intr reg. */
 #endif /* VRGROUP_4102_4121 */
-#if defined VRGROUP_4122
+#if defined VRGROUP_4122_4131
 #define RTCINT_REG_W		VR4122_RTCINT_REG_W	/* RTC intr reg. */
 #endif /* VRGROUP_4122 */
+#if defined VRGROUP_4181
+#define RTCINT_REG_W		VR4181_RTCINT_REG_W	/* RTC intr reg. */
+#endif /* VRGROUP_4181 */
+#endif /* defined SINGLE_VRIP_BASE */
 
 #define		RTCINT_TCLOCK		(1<<3)	/* TClock */
 #define		RTCINT_RTCLONG2		(1<<2)	/* RTC Long 2 */
