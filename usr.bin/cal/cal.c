@@ -1,4 +1,4 @@
-/*	$NetBSD: cal.c,v 1.7 1997/10/18 12:24:59 lukem Exp $	*/
+/*	$NetBSD: cal.c,v 1.8 1998/02/04 15:17:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)cal.c	8.4 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: cal.c,v 1.7 1997/10/18 12:24:59 lukem Exp $");
+__RCSID("$NetBSD: cal.c,v 1.8 1998/02/04 15:17:49 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -58,6 +58,7 @@ __RCSID("$NetBSD: cal.c,v 1.7 1997/10/18 12:24:59 lukem Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <tzfile.h>
 #include <unistd.h>
 
 #define	THURSDAY		4		/* for reformation */
@@ -174,7 +175,7 @@ main(argc, argv)
 	case 0:
 		(void)time(&now);
 		local_time = localtime(&now);
-		year = local_time->tm_year + 1900;
+		year = local_time->tm_year + TM_YEAR_BASE;
 		if (!yflag)
 			month = local_time->tm_mon + 1;
 		break;
