@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.67 1999/12/01 03:45:54 phil Exp $	*/
+/*	$NetBSD: ld.c,v 1.68 2000/01/13 00:05:32 mycroft Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -88,7 +88,7 @@
 
 #ifndef lint
 /* from: "@(#)ld.c	6.10 (Berkeley) 5/22/91"; */
-__RCSID("$NetBSD: ld.c,v 1.67 1999/12/01 03:45:54 phil Exp $");
+__RCSID("$NetBSD: ld.c,v 1.68 2000/01/13 00:05:32 mycroft Exp $");
 #endif /* not lint */
 
 #define GNU_BINUTIL_COMPAT	/* forwards compatiblity with binutils 2.x */
@@ -1334,7 +1334,7 @@ read_entry_symbols(fd, entry)
 	if (!(entry->flags & E_HEADER_VALID))
 		read_header(fd, entry);
 
-	np = (struct nlist *)alloca(entry->header.a_syms);
+	np = (struct nlist *)malloc(entry->header.a_syms);
 	entry->nsymbols = entry->header.a_syms / sizeof(struct nlist);
 	if (entry->nsymbols == 0)
 		return;
@@ -1353,7 +1353,7 @@ read_entry_symbols(fd, entry)
 	md_swapin_symbols(np, entry->header.a_syms / sizeof(struct nlist));
 
 	for (i = 0; i < entry->nsymbols; i++) {
-		entry->symbols[i].nzlist.nlist = *np++;
+		entry->symbols[i].nzlist.nlist = np[i];
 		entry->symbols[i].nzlist.nz_size = 0;
 		entry->symbols[i].symbol = NULL;
 		entry->symbols[i].next = NULL;
@@ -1361,6 +1361,7 @@ read_entry_symbols(fd, entry)
 		entry->symbols[i].gotslot_offset = -1;
 		entry->symbols[i].flags = 0;
 	}
+	free(np);
 
 	entry->strings_offset = N_STROFF(entry->header) +
 				entry->starting_offset;
@@ -1525,10 +1526,11 @@ read_file_symbols(entry)
 			if (N_GETFLAG(hdr) & EX_PIC)
 				pic_code_seen = 1;
 			read_entry_symbols(fd, entry);
-			entry->strings = (char *)alloca(entry->string_size);
+			entry->strings = (char *)malloc(entry->string_size);
 			read_entry_strings(fd, entry);
 			read_entry_relocation(fd, entry);
 			enter_file_symbols(entry);
+			free(entry->strings);
 			entry->strings = 0;
 		}
 	} else {
@@ -2995,7 +2997,7 @@ copy_text(entry)
 	fd = file_open(entry);
 
 	/* Allocate space for the file's text section */
-	bytes = (char *)alloca(entry->header.a_text);
+	bytes = (char *)malloc(entry->header.a_text);
 
 	/* Deal with relocation information however is appropriate */
 	if (entry->textrel == NULL)
@@ -3013,6 +3015,8 @@ copy_text(entry)
 
 	/* Write the relocated text to the output file.  */
 	mywrite(bytes, entry->header.a_text, 1, outstream);
+
+	free(bytes);
 }
 
 /*
@@ -3069,7 +3073,7 @@ copy_data(entry)
 
 	fd = file_open(entry);
 
-	bytes = (char *)alloca(entry->header.a_data);
+	bytes = (char *)malloc(entry->header.a_data);
 
 	if (entry->datarel == NULL)
 		errx(1, "%s: no data relocation", get_file_name(entry));
@@ -3084,6 +3088,8 @@ copy_data(entry)
 			   entry->datarel, entry->ndatarel, entry, 1);
 
 	mywrite(bytes, entry->header.a_data, 1, outstream);
+
+	free(bytes);
 }
 
 /*
@@ -3966,7 +3972,7 @@ write_file_syms(entry, syms_written_addr)
 	}
 	/* Read the file's string table.  */
 
-	entry->strings = (char *)alloca(entry->string_size);
+	entry->strings = (char *)malloc(entry->string_size);
 	read_entry_strings(file_open(entry), entry);
 
 	lspend = entry->symbols + entry->nsymbols;
@@ -4016,8 +4022,9 @@ write_file_syms(entry, syms_written_addr)
 	 * Write the string-table data for the symbols just written, using
 	 * the data in vectors `strtab_vector' and `strtab_lens'.
 	 */
-
 	write_string_table();
+
+	free(entry->strings);
 	entry->strings = 0;	/* Since it will disappear anyway.  */
 }
 
@@ -4082,7 +4089,8 @@ padfile(padding, fd)
 	if (padding <= 0)
 		return;
 
-	buf = (char *)alloca(padding);
+	buf = (char *)malloc(padding);
 	bzero(buf, padding);
 	mywrite(buf, padding, 1, fd);
+	free(buf);
 }
