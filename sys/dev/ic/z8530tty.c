@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.24 1997/11/01 17:57:14 mycroft Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.25 1997/11/01 18:15:12 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997
@@ -883,14 +883,13 @@ zsparam(tp, t)
 	 * If nothing is being transmitted, set up new current values,
 	 * else mark them as pending.
 	 */
-	if (cs->cs_heldchange == 0) {
+	if (!cs->cs_heldchange) {
 		if (zst->zst_tx_busy) {
 			zst->zst_heldtbc = zst->zst_tbc;
 			zst->zst_tbc = 0;
-			cs->cs_heldchange = 0xFFFF;
-		} else {
+			cs->cs_heldchange = 1;
+		} else
 			zs_loadchannelregs(cs);
-		}
 	}
 
 	splx(s);
@@ -941,15 +940,13 @@ zs_modem(zst, onoff)
 	else
 		cs->cs_preg[5] &= ~cs->cs_wr5_dtr;
 
-	if (cs->cs_heldchange == 0) {
+	if (!cs->cs_heldchange) {
 		if (zst->zst_tx_busy) {
 			zst->zst_heldtbc = zst->zst_tbc;
 			zst->zst_tbc = 0;
-			cs->cs_heldchange = (1<<5);
-		} else {
-			cs->cs_creg[5] = cs->cs_preg[5];
-			zs_write_reg(cs, 5, cs->cs_creg[5]);
-		}
+			cs->cs_heldchange = 1;
+		} else
+			zs_loadchannelregs(cs);
 	}
 	splx(s);
 }
@@ -1115,12 +1112,7 @@ zstty_txint(cs)
 	 * often makes the stupid zs drop input...
 	 */
 	if (cs->cs_heldchange) {
-		if (cs->cs_heldchange == (1<<5)) {
-			/* Avoid whacking the chip... */
-			cs->cs_creg[5] = cs->cs_preg[5];
-			zs_write_reg(cs, 5, cs->cs_creg[5]);
-		} else
-			zs_loadchannelregs(cs);
+		zs_loadchannelregs(cs);
 		cs->cs_heldchange = 0;
 		count = zst->zst_heldtbc;
 	} else
