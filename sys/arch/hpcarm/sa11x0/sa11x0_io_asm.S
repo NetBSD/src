@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_io_asm.S,v 1.2 2001/03/10 13:29:38 toshii Exp $	*/
+/*	$NetBSD: sa11x0_io_asm.S,v 1.3 2001/03/10 17:32:14 toshii Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -83,8 +83,8 @@ ENTRY(sa11x0_bs_rm_1)
 	movle   pc, lr
 
 sa11x0_bs_rm_1_loop:
-	ldrb	r1, [r3]
-	strb	r1, [r0], #0x0001
+	ldrb	r1, [r0]
+	strb	r1, [r3], #0x0001
 	subs	r2, r2, #0x00000001
 	bgt	sa11x0_bs_rm_1_loop
 
@@ -97,8 +97,8 @@ ENTRY(sa11x0_bs_rm_2)
 	movle	pc, lr
 
 sa11x0_bs_rm_2_loop:
-	ldrh	r1, [r3]
-	strh	r1, [r0], #0x0002
+	ldrh	r1, [r0]
+	strh	r1, [r3], #0x0002
 	subs	r2, r2, #0x00000001
 	bgt	sa11x0_bs_rm_2_loop
 
@@ -111,8 +111,8 @@ ENTRY(sa11x0_bs_rm_4)
 	movle	pc, lr
 
 sa11x0_bs_rm_4_loop:
-	ldr	r1, [r3]
-	str	r1, [r0], #0x0004
+	ldr	r1, [r0]
+	str	r1, [r3], #0x0004
 	subs	r2, r2, #0x00000001
 	bgt	sa11x0_bs_rm_4_loop
 
@@ -157,8 +157,8 @@ ENTRY(sa11x0_bs_wm_4)
 	movle	pc, lr
 
 sa11x0_bs_wm_4_loop:
-	ldrh	r1, [r3], #0x0004
-	strh	r1, [r0]
+	ldr	r1, [r3], #0x0004
+	str	r1, [r0]
 	subs	r2, r2, #0x00000001
 	bgt	sa11x0_bs_wm_4_loop
 
