@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.c,v 1.8 2002/01/07 16:56:26 lukem Exp $	*/
+/*	$NetBSD: ffs.c,v 1.9 2002/01/18 08:39:23 lukem Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -71,7 +71,7 @@
 
 #include <sys/cdefs.h>
 #ifndef __lint
-__RCSID("$NetBSD: ffs.c,v 1.8 2002/01/07 16:56:26 lukem Exp $");
+__RCSID("$NetBSD: ffs.c,v 1.9 2002/01/18 08:39:23 lukem Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -270,37 +270,37 @@ ffs_validate(const char *dir, fsnode *root, fsinfo_t *fsopts)
 	}
 
 		/* set FFS defaults */
-	if (fsopts->sectorsize == 0)
+	if (fsopts->sectorsize == -1)
 		fsopts->sectorsize = DFL_SECSIZE;
-	if (fsopts->fsize == 0)
+	if (fsopts->fsize == -1)
 		fsopts->fsize = MAX(DFL_FRAGSIZE, fsopts->sectorsize);
-	if (fsopts->bsize == 0)
+	if (fsopts->bsize == -1)
 		fsopts->bsize = MIN(DFL_BLKSIZE, 8 * fsopts->fsize);
-	if (fsopts->cpg == 0)
+	if (fsopts->cpg == -1)
 		fsopts->cpg = DFL_CYLSPERGROUP;
 				/* fsopts->density is set below */
-	if (fsopts->ntracks == 0)
+	if (fsopts->ntracks == -1)
 		fsopts->ntracks = DFL_NTRACKS;
-	if (fsopts->nsectors == 0)
+	if (fsopts->nsectors == -1)
 		fsopts->nsectors = DFL_NSECTORS;
-	if (fsopts->rpm == 0)
+	if (fsopts->rpm == -1)
 		fsopts->rpm = DFL_RPM;
-	if (fsopts->minfree == 0)
+	if (fsopts->minfree == -1)
 		fsopts->minfree = MINFREE;
-	if (fsopts->optimization == 0)
+	if (fsopts->optimization == -1)
 		fsopts->optimization = DEFAULTOPT;
-	if (fsopts->maxcontig == 0)
+	if (fsopts->maxcontig == -1)
 		fsopts->maxcontig =
 		    MAX(1, MIN(MAXPHYS, MAXBSIZE) / fsopts->bsize);
-	if (fsopts->rotdelay == 0)
+	if (fsopts->rotdelay == -1)
 		fsopts->rotdelay = DFL_ROTDELAY;
-	if (fsopts->maxbpg == 0)
+	if (fsopts->maxbpg == -1)
 		fsopts->maxbpg = fsopts->bsize / sizeof(ufs_daddr_t);
-	if (fsopts->nrpos == 0)
+	if (fsopts->nrpos == -1)
 		fsopts->nrpos = DFL_NRPOS;
-	if (fsopts->avgfilesize == 0)
+	if (fsopts->avgfilesize == -1)
 		fsopts->avgfilesize = AVFILESIZ;
-	if (fsopts->avgfpdir == 0)
+	if (fsopts->avgfpdir == -1)
 		fsopts->avgfpdir = AFPDIR;
 
 		/* calculate size of tree */
@@ -358,7 +358,7 @@ ffs_validate(const char *dir, fsnode *root, fsinfo_t *fsopts)
 	fsopts->size = roundup(fsopts->size, fsopts->bsize);
 
 		/* calculate density if necessary */
-	if (fsopts->density == 0)
+	if (fsopts->density == -1)
 		fsopts->density = fsopts->size / fsopts->inodes + 1;
 
 	if (debug & DEBUG_FS_VALIDATE) {
