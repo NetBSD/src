@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.c,v 1.18 1997/05/28 04:48:47 thorpej Exp $	*/
+/*	$NetBSD: ip_fil.c,v 1.19 1997/06/01 06:57:09 thorpej Exp $	*/
 
 /*
  * (C)opyright 1993-1997 by Darren Reed.
@@ -269,9 +269,7 @@ int ipl_disable()
 		return EBUSY;
 	}
 
-#if defined(IPFILTER_LKM) || defined(IPFILTER)
 	fr_checkp = fr_savep;
-#endif
 	inetsw[0].pr_slowtimo = fr_saveslowtimo;
 	frflush((caddr_t)&i);
 	ipl_inited = 0;
