@@ -1,4 +1,4 @@
-/*	$NetBSD: mkarp.c,v 1.4 2002/07/14 00:58:30 wiz Exp $ */
+/*	$NetBSD: mkarp.c,v 1.5 2003/04/08 04:04:01 petrov Exp $ */
 
 /*
  * Copyright (c) 1984, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1984, 1993\n\
 #if 0
 static char sccsid[] = "@(#)arp.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: mkarp.c,v 1.4 2002/07/14 00:58:30 wiz Exp $");
+__RCSID("$NetBSD: mkarp.c,v 1.5 2003/04/08 04:04:01 petrov Exp $");
 #endif
 #endif /* not lint */
 
@@ -79,6 +79,10 @@ __RCSID("$NetBSD: mkarp.c,v 1.4 2002/07/14 00:58:30 wiz Exp $");
 #include <unistd.h>
 
 #include "mkarp.h"
+
+/* Roundup the same way rt_xaddrs does */
+#define ROUNDUP(a) \
+       ((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
 
 int	rtmsg(int, int, struct rt_msghdr *, struct sockaddr_inarp *, 
 	      struct sockaddr_dl *);
@@ -213,7 +217,7 @@ rtmsg(int cmd, int s, struct rt_msghdr *rtm, struct sockaddr_inarp *sin_m,
 #define NEXTADDR(w, s) \
 	if (rtm->rtm_addrs & (w)) { \
 		(void)memcpy(cp, s, ((struct sockaddr *)s)->sa_len); \
-		cp += ((struct sockaddr *)s)->sa_len;}
+                cp += ROUNDUP(((struct sockaddr *)s)->sa_len);}
 
 	NEXTADDR(RTA_DST, sin_m);
 	NEXTADDR(RTA_GATEWAY, sdl_m);
