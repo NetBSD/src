@@ -1,4 +1,4 @@
-/*	$NetBSD: passwd.c,v 1.27 2000/12/06 13:37:53 tron Exp $	*/
+/*	$NetBSD: passwd.c,v 1.28 2000/12/08 21:41:14 tron Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: passwd.c,v 1.27 2000/12/06 13:37:53 tron Exp $");
+__RCSID("$NetBSD: passwd.c,v 1.28 2000/12/08 21:41:14 tron Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -144,7 +144,7 @@ pw_mkdb(void)
 
 	if (pid == 0) {
 		execl(_PATH_PWD_MKDB, "pwd_mkdb", "-d", pw_prefix,
-		      "-p", _PATH_MASTERPASSWD_LOCK, NULL);
+		      "-p", pw_filename(_PATH_MASTERPASSWD_LOCK), NULL);
 		_exit(1);
 	}
 	pid = waitpid(pid, &pstat, 0);
