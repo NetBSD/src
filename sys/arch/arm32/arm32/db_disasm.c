@@ -1,4 +1,4 @@
-/* $NetBSD: db_disasm.c,v 1.7 1996/10/13 03:05:47 christos Exp $ */
+/* $NetBSD: db_disasm.c,v 1.8 1996/10/29 23:12:26 mark Exp $ */
 
 /*
  * Copyright (c) 1996 Mark Brinicombe.
@@ -45,7 +45,8 @@
  * Paul Kranenburg
  *
  * This code is not complete. Not all instructions are disassembled.
- * Current LDF, STF, CDT and MSRF are not supported.
+ * Current LDF, STF and CDT are not supported but these are low priority
+ * as FP is not used in the kernel.
  */
 
 #include <sys/param.h>
@@ -78,17 +79,23 @@
  * h - 3rd fp operand (register/immediate) (bits 0-4)
  * b - branch address
  * X - block transfer type
+ * Y - block transfer type (r13 base)
  * c - comment field bits(0-23)
  * p - saved or current status register
+ * F - PSR transfer fields
  * B - byte transfer flag
+ * L - co-processor transfer size
  * S - set status flag
  * T - user mode transfer
  * P - fp precision
+ * Q - fp precision (for ldf/stf)
  * R - fp rounding
+ * v - co-processor data transfer registers + addressing mode
  * w - writeback flag
+ * x - instruction in hex
  * # - co-processor number
  * y - co-processor data processing registers
- * z - co-processor data transfer registers
+ * z - co-processor register transfer registers
  */
 
 struct arm32_insn {
@@ -99,21 +106,35 @@ struct arm32_insn {
 };
 
 struct arm32_insn arm32_i[] = {
+    { 0x0fffffff, 0x0ff00000, "imb",	"c" },		/* Before swi */
+    { 0x0fffffff, 0x0ff00001, "imbrange",	"c" },	/* Before swi */
     { 0x0f000000, 0x0f000000, "swi",	"c" },
     { 0x0f000000, 0x0a000000, "b",	"b" },
     { 0x0f000000, 0x0b000000, "bl",	"b" },
-    { 0x0fe000f0, 0x00000090, "mul",	"Sdms" },
-    { 0x0fe000f0, 0x00200090, "mla",	"Sdmsn" },
+    { 0x0fe000f0, 0x00000090, "mul",	"Snms" },
+    { 0x0fe000f0, 0x00200090, "mla",	"Snmsd" },
+    { 0x0fe000f0, 0x00800090, "umull",	"Sdnms" },
+    { 0x0fe000f0, 0x00c00090, "smull",	"Sdnms" },
+    { 0x0fe000f0, 0x00a00090, "umlal",	"Sdnms" },
+    { 0x0fe000f0, 0x00e00090, "smlal",	"Sdnms" },
     { 0x0e100000, 0x04000000, "str",	"BTdaW" },
     { 0x0e100000, 0x04100000, "ldr",	"BTdaW" },
     { 0x0c100010, 0x04000000, "str",	"BTdaW" },
     { 0x0c100010, 0x04100000, "ldr",	"BTdaW" },
+    { 0x0e1f0000, 0x080d0000, "stm",	"YnWl" },	/* separate out r13 base */
+    { 0x0e1f0000, 0x081d0000, "ldm",	"YnWl" },	/* separate out r13 base */    
     { 0x0e100000, 0x08000000, "stm",	"XnWl" },
-    { 0x0e100000, 0x08100000, "ldm",	"XnWl" },
+    { 0x0e100000, 0x08100000, "ldm",	"XnWl" },    
+    { 0x0e500ff0, 0x001000b0, "ldrh",	"daW" },
+    { 0x0e500ff0, 0x000000b0, "strh",	"daW" },
+    { 0x0e500ff0, 0x001000d0, "ldrsb",	"daW" },
+    { 0x0e500ff0, 0x001000f0, "ldrsh",	"daW" },
+    { 0x0f200090, 0x00200090, "undefined",	"x" },	/* Before data processing */
+    { 0x0e1000d0, 0x000000d0, "undefined",	"x" },	/* Before data processing */
     { 0x0fb00ff0, 0x01000090, "swap",	"Bdmo" },
-    { 0x0fbf0fff, 0x010f0000, "mrs",	"dp" },
-    { 0x0dbffff0, 0x0129f000, "msr",	"pm" },
-    { 0x0dbffff0, 0x0128f000, "msrf",	"pm" },
+    { 0x0fbf0fff, 0x010f0000, "mrs",	"dp" },		/* Before data processing */
+    { 0x0fb0fff0, 0x0120f000, "msr",	"pFm" },	/* Before data processing */
+    { 0x0fb0f000, 0x0320f000, "msr",	"pF2" },	/* Before data processing */
     { 0x0de00000, 0x00000000, "and",	"Sdn2" },
     { 0x0de00000, 0x00200000, "eor",	"Sdn2" },
     { 0x0de00000, 0x00400000, "sub",	"Sdn2" },
@@ -122,8 +143,8 @@ struct arm32_insn arm32_i[] = {
     { 0x0de00000, 0x00a00000, "adc",	"Sdn2" },
     { 0x0de00000, 0x00c00000, "sbc",	"Sdn2" },
     { 0x0de00000, 0x00e00000, "rsc",	"Sdn2" },
-    { 0x0de00000, 0x01000000, "tst",	"Sn2" },
-    { 0x0de00000, 0x01200000, "teq",	"Sn2" },
+    { 0x0df00000, 0x01100000, "tst",	"Sn2" },
+    { 0x0df00000, 0x01300000, "teq",	"Sn2" },
     { 0x0de00000, 0x01400000, "cmp",	"Sn2" },
     { 0x0de00000, 0x01600000, "cmn",	"Sn2" },
     { 0x0de00000, 0x01800000, "orr",	"Sdn2" },
@@ -159,78 +180,56 @@ struct arm32_insn arm32_i[] = {
     { 0x0ff08f10, 0x0ec08100, "acs",	"PRfh" },
     { 0x0ff08f10, 0x0ed08100, "atn",	"PRfh" },
     { 0x0f008f10, 0x0e008100, "fpuop",	"PRfh" },
-    { 0x0e100f00, 0x0c000100, "stf",	"P" },
-    { 0x0e100f00, 0x0c100100, "ldf",	"P" },
+    { 0x0e100f00, 0x0c000100, "stf",	"QLv" },
+    { 0x0e100f00, 0x0c100100, "ldf",	"QLv" },
+    { 0x0ff00f10, 0x0e000110, "flt",	"PRgd" },
+    { 0x0ff00f10, 0x0e100110, "fix",	"PRdh" },
+    { 0x0ff00f10, 0x0e200110, "wfs",	"d" },
+    { 0x0ff00f10, 0x0e300110, "rfs",	"d" },
+    { 0x0ff00f10, 0x0e400110, "wfc",	"d" },
+    { 0x0ff00f10, 0x0e500110, "rfc",	"d" },
+    { 0x0ff0ff10, 0x0e90f110, "cmf",	"PRgh" },
+    { 0x0ff0ff10, 0x0eb0f110, "cnf",	"PRgh" },
+    { 0x0ff0ff10, 0x0ed0f110, "cmfe",	"PRgh" },
+    { 0x0ff0ff10, 0x0ef0f110, "cnfe",	"PRgh" },
     { 0x0f100010, 0x0e000010, "mcr",	"#z" },
     { 0x0f100010, 0x0e100010, "mrc",	"#z" },
     { 0x0f000010, 0x0e000000, "cdp",	"#y" },
-    { 0x0e000000, 0x0c000000, "cdt",	"#" },
+    { 0x0e100090, 0x0c100000, "ldc",	"L#v" },
+    { 0x0e100090, 0x0c000000, "stc",	"L#v" },
     { 0x00000000, 0x00000000, NULL,	NULL }
 };
 
 char *arm32_insn_conditions[] = {
-    "eq",
-    "ne",
-    "cs",
-    "cc",
-    "mi",
-    "pl",
-    "vs",
-    "vc",
-    "hi",
-    "ls",
-    "ge",
-    "lt",
-    "gt",
-    "le",
-    "",
-    "nv"
+	"eq", "ne", "cs", "cc",
+	"mi", "pl", "vs", "vc",
+	"hi", "ls", "ge", "lt",
+	"gt", "le", "",   "nv"
 };
 
 char *insn_block_transfers[] = {
-    "da",
-    "ia",
-    "db",
-    "ib"
+	"da", "ia", "db", "ib"
 };
 
 char *insn_stack_block_transfers[] = {
-    "fa",
-    "ea",
-    "fd",
-    "fa"
+	"fa", "ea", "fd", "fa"
 };
 
 char *op_shifts[] = {
-    "lsl",
-    "lsr",
-    "asr",
-    "ror"
+	"lsl", "lsr", "asr", "ror"
 };
 
 char *insn_fpa_rounding[] = {
-    "",
-    "p",
-    "m",
-    "z"
+	"", "p", "m", "z"
 };
 
 char *insn_fpa_precision[] = {
-    "s",
-    "d",
-    "e",
-    "p"
+	"s", "d", "e", "p"
 };
 
 char *insn_fpaconstants[] = {
-    "0.0",
-    "1.0",
-    "2.0",
-    "3.0",
-    "4.0",
-    "5.0",
-    "0.5",
-    "10.0"
+	"0.0", "1.0", "2.0", "3.0",
+	"4.0", "5.0", "0.5", "10.0"
 };
 
 #define insn_condition(x)	arm32_insn_conditions[(x >> 28) & 0x0f]
@@ -238,12 +237,14 @@ char *insn_fpaconstants[] = {
 #define insn_stkblktrans(x)	insn_stack_block_transfers[(x >> 23) & 3]
 #define op2_shift(x)		op_shifts[(x >> 5) & 3]
 #define insn_fparnd(x)		insn_fpa_rounding[(x >> 5) & 0x03]
-#define insn_fpaprec(x)		insn_fpa_precision[(((x >> 18) & 2)|(x >> 7)) & 3]
+#define insn_fpaprec(x)		insn_fpa_precision[(((x >> 18) & 2)|(x >> 7)) & 1]
+#define insn_fpaprect(x)	insn_fpa_precision[(((x >> 21) & 2)|(x >> 15)) & 1]
 #define insn_fpaimm(x)		insn_fpaconstants[x & 0x07]
 
 void db_register_shift	__P((u_int insn));
 void db_print_reglist	__P((u_int insn));
 void db_insn_ldrstr	__P((u_int insn, u_int loc));
+void db_insn_cdt	__P((u_int insn, u_int loc));
 
 
 vm_offset_t
@@ -251,7 +252,7 @@ db_disasm(loc, altfmt)
 	vm_offset_t loc;
 	boolean_t altfmt;
 {
-	struct arm32_insn*	i_ptr = (struct arm32_insn *)&arm32_i;
+	struct arm32_insn *i_ptr = (struct arm32_insn *)&arm32_i;
 
 	u_int insn;
 	int matchp;
@@ -264,7 +265,6 @@ db_disasm(loc, altfmt)
 	insn = db_get_value(loc, 4, 0);
 
 /*	db_printf("loc=%08x insn=%08x : ", loc, insn);*/
-/*	db_printf("loc=%08x : ", loc);*/
 
 	while (i_ptr->name) {
 		if ((insn & i_ptr->mask) ==  i_ptr->pattern) {
@@ -283,11 +283,23 @@ db_disasm(loc, altfmt)
 
 	f_ptr = i_ptr->format;
 
+	/* Insert tab if there are no instruction modifiers */
+
+	if (*(f_ptr) < 'A' || *(f_ptr) > 'Z') {
+		++fmt;
+		db_printf("\t");
+	}
+
 	while (*f_ptr) {
 		switch (*f_ptr) {
 		case '2':
 			if (insn & 0x02000000) {
-				db_printf("#0x%08x", (insn & 0xff) << (((insn >> 7) & 0x1e)));
+				int shift = ((insn >> 7) & 0x1e);
+
+				if (shift == 0)
+					db_printf("#0x%08x", (insn & 0xff));
+				else
+					db_printf("#0x%08x", ((insn & 0xff) << (32 - shift)));
 			} else {
 				db_register_shift(insn);
 			}
@@ -343,9 +355,25 @@ db_disasm(loc, altfmt)
 				db_printf("spsr");
 			else
 				db_printf("cpsr");
+			break;
+		case 'F':
+			printf("_");
+			if (insn & (1 << 16))
+				printf("c");
+			if (insn & (1 << 17))
+				printf("x");
+			if (insn & (1 << 18))
+				printf("s");
+			if (insn & (1 << 19))
+				printf("f");
+			break;
 		case 'B':
 			if (insn & 0x00400000)
 				db_printf("b");
+			break;
+		case 'L':
+			if (insn & (1 << 22))
+				db_printf("l");
 			break;
 		case 'S':
 			if (insn & 0x00100000)
@@ -366,32 +394,32 @@ db_disasm(loc, altfmt)
 				db_printf("!");
 			break;
 		case '#':
-			db_printf("CP #%d", (insn >> 8) & 0x0f);
+			db_printf("p%d", (insn >> 8) & 0x0f);
 			break;
 		case 'y':
 			db_printf("%d, ", (insn >> 20) & 0x0f);
 
-			db_printf("cr%d, cr%d, cr%d", (insn >> 12) & 0x0f, (insn >> 16) & 0x0f,
+			db_printf("c%d, c%d, c%d", (insn >> 12) & 0x0f, (insn >> 16) & 0x0f,
 			    insn & 0x0f);
 
 			db_printf(", %d", (insn >> 5) & 0x07);
 			break;
 		case 'z':
 			db_printf("%d, ", (insn >> 21) & 0x07);
-			db_printf("r%d, cr%d, cr%d", (insn >> 12) & 0x0f, (insn >> 16) & 0x0f,
-			    insn & 0x0f);
+			db_printf("r%d, c%d, c%d, %d", (insn >> 12) & 0x0f, (insn >> 16) & 0x0f,
+			    insn & 0x0f, (insn >> 5) & 0x07);
 
-			if (((insn >> 5) & 0x07) != 0)
-				db_printf(", %d", (insn >> 5) & 0x07);
+/*			if (((insn >> 5) & 0x07) != 0)
+				db_printf(", %d", (insn >> 5) & 0x07);*/
 			break;
 		default:
 			db_printf("[%02x:%c](unknown)", *f_ptr, *f_ptr);
 			break;
 		}
-		++fmt;
-		if (*(f_ptr+1) > 'A' && *(f_ptr+1) < 'Z')
+		if (*(f_ptr+1) >= 'A' && *(f_ptr+1) <= 'Z')
 			++f_ptr;
 		else if (*(++f_ptr)) {
+			++fmt;
 			if (fmt == 1)
 				db_printf("\t");
 			else
@@ -489,72 +517,30 @@ db_insn_ldrstr(insn, loc)
 }
 
 
+void
+db_insn_ldcstc(insn, loc)
+	u_int insn;
+	u_int loc;
+{
+	if (((insn >> 8) & 0xf) == 1)
+		printf("f%d, ", (insn >> 12) & 0x07);
+	else
+		printf("c%d, ", (insn >> 12) & 0x0f);
 
-#if 0
+	printf("[r%d", (insn >> 16) & 0x0f);
 
-u_int instruction_msrf(u_int addr, u_int word)
-  {
-    printf("MSR%s\t", opcode_condition(word));
+	printf("%s, ", (insn & (1 << 24)) ? "" : "]");
 
-    printf("%s_flg, ", (word & 0x00400000) ? "SPSR" : "CPSR");
+	if (!(insn & (1 << 23)))
+		printf("-");
 
-    if (word & 0x02000000)
-      printf("#0x%08x", (word & 0xff) << (32 - ((word >> 7) & 0x1e)));
-    else
-      printf("r%d", word &0x0f);
-    return(addr);
-  }
+	printf("#0x%03x", (insn & 0xff) << 2);
 
+	if (insn & (1 << 24))
+		printf("]");
 
-u_int instruction_cdt(u_int addr, u_int word)
-  {
-    printf("%s%s%s\t", (word & (1 << 20)) ? "LDC" : "STC",
-      opcode_condition(word), (word & (1 << 22)) ? "L" : "");
-
-    printf("CP #%d, cr%d, ", (word >> 8) & 0x0f, (word >> 12) & 0x0f);
-
-    printf("[r%d", (word >> 16) & 0x0f);
-
-    printf("%s, ", (word & (1 << 24)) ? "" : "]");
-
-    if (!(word & (1 << 23)))
-      printf("-");
-
-    printf("#0x%02x", word & 0xff);
-
-    if (word & (1 << 24))
-      printf("]");
-
-    if (word & (1 << 21))
-      printf("!");
-
-    return(addr);
-  }
-
-
-u_int instruction_ldfstf(u_int addr, u_int word)
-  {
-    printf("%s%s%s\t", (word & (1 << 20)) ? "LDF" : "STF",
-      opcode_condition(word), (word & (1 << 22)) ? "L" : "");
-
-    printf("f%d, [r%d", (word >> 12) & 0x07, (word >> 16) & 0x0f);
-
-    printf("%s, ", (word & (1 << 24)) ? "" : "]");
-
-    if (!(word & (1 << 23)))
-      printf("-");
-
-    printf("#0x%03x", (word & 0xff) << 2);
-
-    if (word & (1 << 24))
-      printf("]");
-
-    if (word & (1 << 21))
-      printf("!");
-
-    return(addr);
-  }
-
-#endif
+	if (insn & (1 << 21))
+		printf("!");
+}
 
 /* End of db_disasm.c */
