@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.3,v 1.1.2.51 2002/03/21 23:39:50 he Exp $
+#	$NetBSD: CHANGES-1.5.3,v 1.1.2.52 2002/03/25 17:41:19 he Exp $
 
 A complete list of changes from NetBSD 1.5.2 to NetBSD 1.5.3:
 
@@ -2474,3 +2474,57 @@ sys/compat/osf1/osf1_sysent.c			regenerate
 sys/compat/osf1/osf1_syscalls.c			regenerate
 
   Add entry for flock(), needed by Netscape communicator.
+
+etc/changelist					patch
+etc/mtree/special				patch
+
+  Check the postfix files for changes.  Fixes PR#15659.
+
+etc/changelist					patch
+
+  Remove /etc/primes, add /etc/moduli, following openssh upgrade.
+  Fixes PR#15486.
+
+distrib/sets/lists/comp/md.arc			1.12
+
+  There is no arc/cpuregs.h, so don't list it as being distributed.
+
+distrib/alpha/instkernel/Makefile.inc		patch
+distrib/alpha/instkernel/ramdisk/Makefile	patch
+distrib/amiga/floppies/Makefile.inc		patch
+distrib/amiga/floppies/inst-common/Makefile.inc	patch
+distrib/arm32/Makefile.inc			patch
+distrib/arm32/ramdisk/Makefile			patch
+distrib/bebox/floppies/Makefile.inc		patch
+distrib/bebox/floppies/ramdisk/Makefile		patch
+distrib/bebox/floppies/ramdisk/Makefile.inc	patch
+distrib/i386/floppies/Makefile.inc		patch
+distrib/i386/floppies/ramdisk-big/Makefile	patch
+distrib/i386/floppies/ramdisk-small/Makefile	patch
+distrib/i386/floppies/ramdisk-tiny/Makefile	patch
+distrib/mac68k/instkernel/Makefile.inc		patch
+distrib/mac68k/instkernel/ramdisk/Makefile	patch
+distrib/macppc/floppies/Makefile.inc		patch
+distrib/macppc/floppies/ramdisk/Makefile	patch
+distrib/miniroot/Makefile			patch
+distrib/mvme68k/ramdisk/Makefile		patch
+distrib/news68k/floppies/Makefile.inc		patch
+distrib/news68k/floppies/ramdisk/Makefile	patch
+distrib/newsmips/floppies/Makefile.inc		patch
+distrib/newsmips/floppies/ramdisk/Makefile	patch
+distrib/pc532/floppies/Makefile.inc		patch
+distrib/pc532/floppies/inst-common/Makefile.inc	patch
+distrib/pmax/Makefile.inc			patch
+distrib/pmax/ramdisk/Makefile			patch
+distrib/sparc/Makefile.inc			patch
+distrib/sparc/ramdisk/Makefile			patch
+distrib/sparc64/xminiroot/Makefile		patch
+distrib/sun3/Makefile.inc			patch
+distrib/sun3/common/Make.crunch			patch
+distrib/vax/Makefile.inc			patch
+distrib/vax/ramdisk/Makefile			patch
+distrib/x68k/floppies/Makefile.inc		patch
+distrib/x68k/floppies/ramdisk-common/Makefile.inc patch
+
+  Introduce dependency between ramdisk/miniroot construction and
+  osrelease.sh, to better support UPDATE builds of releases.
