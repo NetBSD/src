@@ -1,4 +1,4 @@
-/*	$NetBSD: sd_scsi.c,v 1.9 1999/08/26 09:28:18 hannken Exp $	*/
+/*	$NetBSD: sd_scsi.c,v 1.10 1999/09/11 21:42:58 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -75,7 +75,8 @@ int	sd_scsibus_match __P((struct device *, struct cfdata *, void *));
 void	sd_scsibus_attach __P((struct device *, struct device *, void *));
 
 struct cfattach sd_scsibus_ca = {
-	sizeof(struct sd_softc), sd_scsibus_match, sd_scsibus_attach
+	sizeof(struct sd_softc), sd_scsibus_match, sd_scsibus_attach,
+	sddetach, sdactivate,
 };
 
 struct scsipi_inquiry_pattern sd_scsibus_patterns[] = {
