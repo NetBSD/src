@@ -1,4 +1,4 @@
-/*	$NetBSD: namei.h,v 1.12 1996/10/25 23:14:15 cgd Exp $	*/
+/*	$NetBSD: namei.h,v 1.13 1997/05/08 14:55:25 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1991, 1993
@@ -137,6 +137,7 @@ struct nameidata {
 #define ISSYMLINK	0x10000	/* symlink needs interpretation */
 #define	ISWHITEOUT	0x20000	/* found whiteout */
 #define	DOWHITEOUT	0x40000	/* do whiteouts */
+#define	REQUIREDIR	0x80000	/* must be a directory */
 #define PARAMASK	0xfff00	/* mask of parameter descriptors */
 /*
  * Initialization of an nameidata structure.
