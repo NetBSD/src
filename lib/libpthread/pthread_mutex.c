@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_mutex.c,v 1.10 2003/03/08 08:03:35 lukem Exp $	*/
+/*	$NetBSD: pthread_mutex.c,v 1.11 2003/04/16 18:30:43 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_mutex.c,v 1.10 2003/03/08 08:03:35 lukem Exp $");
+__RCSID("$NetBSD: pthread_mutex.c,v 1.11 2003/04/16 18:30:43 nathanw Exp $");
 
 #include <errno.h>
 #include <limits.h>
@@ -244,7 +244,7 @@ pthread_mutex_lock_slow(pthread_mutex_t *mutex)
 				}
 			}
 
-			PTQ_INSERT_TAIL(&mutex->ptm_blocked, self, pt_sleep);
+			PTQ_INSERT_HEAD(&mutex->ptm_blocked, self, pt_sleep);
 			/*
 			 * Locking a mutex is not a cancellation
 			 * point, so we don't need to do the

@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_cond.c,v 1.8 2003/03/08 08:03:35 lukem Exp $	*/
+/*	$NetBSD: pthread_cond.c,v 1.9 2003/04/16 18:30:44 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_cond.c,v 1.8 2003/03/08 08:03:35 lukem Exp $");
+__RCSID("$NetBSD: pthread_cond.c,v 1.9 2003/04/16 18:30:44 nathanw Exp $");
 
 #include <errno.h>
 #include <sys/time.h>
@@ -149,7 +149,7 @@ pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex)
 	self->pt_sleeplock = &cond->ptc_lock;
 	pthread_spinunlock(self, &self->pt_statelock);
 
-	PTQ_INSERT_TAIL(&cond->ptc_waiters, self, pt_sleep);
+	PTQ_INSERT_HEAD(&cond->ptc_waiters, self, pt_sleep);
 	pthread_mutex_unlock(mutex);
 
 	pthread__block(self, &cond->ptc_lock);
@@ -229,7 +229,7 @@ pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex,
 	self->pt_sleeplock = &cond->ptc_lock;
 	pthread_spinunlock(self, &self->pt_statelock);
 
-	PTQ_INSERT_TAIL(&cond->ptc_waiters, self, pt_sleep);
+	PTQ_INSERT_HEAD(&cond->ptc_waiters, self, pt_sleep);
 	pthread_mutex_unlock(mutex);
 
 	pthread__block(self, &cond->ptc_lock);
