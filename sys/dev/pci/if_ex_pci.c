@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ex_pci.c,v 1.29 2002/12/23 03:06:39 tsutsui Exp $	*/
+/*	$NetBSD: if_ex_pci.c,v 1.30 2002/12/23 03:23:00 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ex_pci.c,v 1.29 2002/12/23 03:06:39 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ex_pci.c,v 1.30 2002/12/23 03:23:00 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -286,8 +286,8 @@ ex_pci_attach(parent, self, aux)
 		psc->psc_pwrmgmt_csr = (reg & ~PCI_PMCSR_STATE_MASK) |
 		    PCI_PMCSR_STATE_D0;
 
-		reg &= PCI_PMCSR_STATE_MASK;
-		if (reg == PCI_PMCSR_STATE_D3) {
+		switch (reg & PCI_PMCSR_STATE_MASK) {
+		case PCI_PMCSR_STATE_D3:
 			/*
 			 * The card has lost all configuration data in
 			 * this state, so punt.
@@ -295,11 +295,13 @@ ex_pci_attach(parent, self, aux)
 			printf("%s: unable to wake up from power state D3\n",
 			    sc->sc_dev.dv_xname);
 			return;
-		}
-		if (reg != PCI_PMCSR_STATE_D0) {
+		case PCI_PMCSR_STATE_D1:
+		case PCI_PMCSR_STATE_D2:
 			printf("%s: waking up from power state D%d\n",
 			    sc->sc_dev.dv_xname, reg);
-			pci_conf_write(pc, pa->pa_tag, pmreg + 4, 0);
+			pci_conf_write(pc, pa->pa_tag, pmreg + PCI_PMCSR,
+			    (reg & ~PCI_PMCSR_STATE_MASK) | PCI_PMCSR_STATE_D0);
+			break;
 		}
 	}
 
