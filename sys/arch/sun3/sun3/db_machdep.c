@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.3 1995/02/13 22:22:22 gwr Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.4 1995/04/26 23:23:23 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -74,7 +74,7 @@ db_read_bytes(addr, size, data)
 
 /*
  * Write one byte somewhere in kernel text.
- * It does not matter if this is slow. -gwr
+ * It does not matter if this is slow.
  */
 static void
 db_write_text(dst, ch)
@@ -86,7 +86,6 @@ db_write_text(dst, ch)
 
 	pgva = sun3_trunc_page((long)dst);
 	oldpte = get_pte(pgva);
-
 	if ((oldpte & PG_VALID) == 0) {
 		db_printf(" address 0x%x not a valid page\n", dst);
 		return;
@@ -94,10 +93,9 @@ db_write_text(dst, ch)
 
 	tmppte = oldpte | PG_WRITE;
 	set_pte(pgva, tmppte);
-
 	*dst = (char) ch;
-
 	set_pte(pgva, oldpte);
+	ICIA();
 }
 
 /*
