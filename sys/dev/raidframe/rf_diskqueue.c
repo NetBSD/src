@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_diskqueue.c,v 1.22.2.3 2004/09/21 13:32:52 skrll Exp $	*/
+/*	$NetBSD: rf_diskqueue.c,v 1.22.2.4 2004/11/29 07:24:32 skrll Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -66,7 +66,7 @@
  ****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_diskqueue.c,v 1.22.2.3 2004/09/21 13:32:52 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_diskqueue.c,v 1.22.2.4 2004/11/29 07:24:32 skrll Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -485,6 +485,10 @@ rf_CreateDiskQueueData(RF_IoType_t typ, RF_SectorNum_t ssect,
 void 
 rf_FreeDiskQueueData(RF_DiskQueueData_t *p)
 {
+	int s;
+
+	s = splbio();	
 	pool_put(&bufpool, p->bp);
+	splx(s);
 	pool_put(&rf_pools.dqd, p);
 }

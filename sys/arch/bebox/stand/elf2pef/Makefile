@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.3 2002/04/08 16:03:17 sakamoto Exp $
+#	$NetBSD: Makefile,v 1.3.10.1 2004/11/29 07:24:03 skrll Exp $
 
-HOSTPROG=	elf2pef
+PROG=		elf2pef
 CPPFLAGS=	-I${.CURDIR}
 NOMAN=	# defined
 
-.include <bsd.hostprog.mk>
+.include <bsd.prog.mk>

@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_readwrite.c,v 1.29.2.5 2004/09/21 13:39:07 skrll Exp $	*/
+/*	$NetBSD: ext2fs_readwrite.c,v 1.29.2.6 2004/11/29 07:25:05 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_readwrite.c,v 1.29.2.5 2004/09/21 13:39:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_readwrite.c,v 1.29.2.6 2004/11/29 07:25:05 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -249,7 +249,6 @@ ext2fs_write(v)
 	ump = ip->i_ump;
 	error = 0;
 
-	KASSERT(vp->v_size == ip->i_size);
 #ifdef DIAGNOSTIC
 	if (uio->uio_rw != UIO_WRITE)
 		panic("%s: mode", "ext2fs_write");

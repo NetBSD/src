@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.2.2.4 2004/11/02 07:50:57 skrll Exp $	*/
+/*	$NetBSD: lock.h,v 1.2.2.5 2004/11/29 07:24:06 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -48,16 +48,6 @@
 #endif
 
 #include <machine/cpufunc.h>
-
-/*
- * compiler barrier: prevent reordering of instructions.
- * XXX something similar will move to <sys/cdefs.h>
- * or thereabouts.
- * This prevents the compiler from reordering code around
- * this "instruction", acting as a sequence point for code generation.
- */
-
-#define __lockbarrier() __asm __volatile("": : :"memory")
 
 #ifdef LOCKDEBUG
 

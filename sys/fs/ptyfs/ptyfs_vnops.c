@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_vnops.c,v 1.2.2.2 2004/11/14 08:15:57 skrll Exp $	*/
+/*	$NetBSD: ptyfs_vnops.c,v 1.2.2.3 2004/11/29 07:24:51 skrll Exp $	*/
 
 /*
  * Copyright (c) 1993, 1995
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.2.2.2 2004/11/14 08:15:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.2.2.3 2004/11/29 07:24:51 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -352,6 +352,7 @@ ptyfs_getattr(void *v)
 
 	/* next do all the common fields */
 	vap->va_type = ap->a_vp->v_type;
+	vap->va_fsid = ap->a_vp->v_mount->mnt_stat.f_fsidx.__fsid_val[0];
 	vap->va_fileid = ptyfs->ptyfs_fileno;
 	vap->va_gen = 0;
 	vap->va_flags = 0;
@@ -810,7 +811,6 @@ ptyfs_close(void *v)
 	struct vnode *vp = ap->a_vp;
 	struct ptyfsnode *ptyfs = VTOPTYFS(vp);
         struct timespec ts;
-	ptyfs_time(ptyfs, &ts, &ts);
  
         simple_lock(&vp->v_interlock);
         if (vp->v_usecount > 1) {

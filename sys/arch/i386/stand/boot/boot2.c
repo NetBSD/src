@@ -1,4 +1,4 @@
-/*	$NetBSD: boot2.c,v 1.1.2.3 2004/09/21 13:17:10 skrll Exp $	*/
+/*	$NetBSD: boot2.c,v 1.1.2.4 2004/11/29 07:24:04 skrll Exp $	*/
 
 /*
  * Copyright (c) 2003
@@ -41,6 +41,7 @@
 
 /* Based on stand/biosboot/main.c */
 
+#include <sys/types.h>
 #include <sys/reboot.h>
 #include <sys/bootblock.h>
 

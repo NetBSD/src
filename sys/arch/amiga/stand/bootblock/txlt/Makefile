@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.6 2001/12/12 01:49:35 tv Exp $
+#	$NetBSD: Makefile,v 1.6.16.1 2004/11/29 07:24:02 skrll Exp $
 #
-HOSTPROG=txlt
+PROG=txlt
 NOMAN=	# defined
 LDADD=-ll
 CLEANFILES+=	txlt.c
 
-.include <bsd.hostprog.mk>
+.include <bsd.prog.mk>

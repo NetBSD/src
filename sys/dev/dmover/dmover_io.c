@@ -1,4 +1,4 @@
-/*	$NetBSD: dmover_io.c,v 1.11.2.5 2004/09/21 13:27:36 skrll Exp $	*/
+/*	$NetBSD: dmover_io.c,v 1.11.2.6 2004/11/29 07:24:15 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dmover_io.c,v 1.11.2.5 2004/09/21 13:27:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dmover_io.c,v 1.11.2.6 2004/11/29 07:24:15 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/queue.h>
@@ -588,7 +588,7 @@ static int
 dmio_fcntl(struct file *fp, u_int cmd, void *data, struct lwp *l)
 {
 
-	if (cmd == FNONBLOCK || cmd == FASYNC)
+	if (cmd == F_SETFL)
 		return (0);
 
 	return (EOPNOTSUPP);

@@ -1,4 +1,4 @@
-/*	$NetBSD: kauai.c,v 1.1.4.4 2004/09/21 13:18:19 skrll Exp $	*/
+/*	$NetBSD: kauai.c,v 1.1.4.5 2004/11/29 07:24:05 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2003 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kauai.c,v 1.1.4.4 2004/09/21 13:18:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kauai.c,v 1.1.4.5 2004/11/29 07:24:05 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -168,7 +168,6 @@ kauai_attach(parent, self, aux)
 			return;
 		}
 	}
-	wdc_init_shadow_regs(chp);
 
 	if (pci_intr_establish(pa->pa_pc, ih, IPL_BIO, wdcintr, chp) == NULL) {
 		printf("%s: unable to establish interrupt\n", self->dv_xname);
@@ -195,6 +194,7 @@ kauai_attach(parent, self, aux)
 	chp->ch_channel = 0;
 	chp->ch_atac = &sc->sc_wdcdev.sc_atac;
 	chp->ch_queue = &sc->sc_queue;
+	wdc_init_shadow_regs(chp);
 
 	wdcattach(chp);
 }

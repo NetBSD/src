@@ -1,4 +1,4 @@
-/*	$NetBSD: bufq_readprio.c,v 1.1.2.3 2004/11/02 07:53:23 skrll Exp $	*/
+/*	$NetBSD: bufq_readprio.c,v 1.1.2.4 2004/11/29 07:24:51 skrll Exp $	*/
 /*	NetBSD: subr_disk.c,v 1.61 2004/09/25 03:30:44 thorpej Exp 	*/
 
 /*-
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bufq_readprio.c,v 1.1.2.3 2004/11/02 07:53:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bufq_readprio.c,v 1.1.2.4 2004/11/29 07:24:51 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,6 +103,12 @@ struct bufq_prio {
 	struct buf *bq_next;		/* current request */
 	int bq_read_burst;		/* # of consecutive reads */
 };
+
+static void bufq_readprio_init(struct bufq_state *);
+static void bufq_prio_put(struct bufq_state *, struct buf *);
+static struct buf *bufq_prio_get(struct bufq_state *, int);
+
+BUFQ_DEFINE(readprio, BUFQ_READ_PRIO, bufq_readprio_init);
 
 static void
 bufq_prio_put(struct bufq_state *bufq, struct buf *bp)
@@ -212,7 +218,7 @@ bufq_prio_get(struct bufq_state *bufq, int remove)
 	return (bp);
 }
 
-void
+static void
 bufq_readprio_init(struct bufq_state *bufq)
 {
 	struct bufq_prio *prio;

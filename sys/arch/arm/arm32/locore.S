@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.14.2.3 2004/09/21 13:13:10 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.14.2.4 2004/11/29 07:24:02 skrll Exp $	*/
 
 /*
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -171,7 +171,7 @@ ENTRY_NP(Execute)
 	mov	ip, r3
 	ldr	r7, .Lreturn
 	stmfd	sp!, {r0, r7}
-	adr	r7, #.LExec
+	adr	r7, .LExec
 	mov	r5, r1
 	mrs	r4, cpsr
 	ldmia	r2, {r0-r3}

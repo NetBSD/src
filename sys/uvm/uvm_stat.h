@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_stat.h,v 1.27.2.3 2004/09/21 13:39:31 skrll Exp $	*/
+/*	$NetBSD: uvm_stat.h,v 1.27.2.4 2004/11/29 07:25:05 skrll Exp $	*/
 
 /*
  *
@@ -54,9 +54,9 @@
 struct uvm_history_ent {
 	struct timeval tv; 		/* time stamp */
 	int cpunum;
-	char *fmt; 			/* printf format */
+	const char *fmt;		/* printf format */
 	size_t fmtlen;			/* length of printf format */
-	char *fn;			/* function name */
+	const char *fn;			/* function name */
 	size_t fnlen;			/* length of function name */
 	u_long call;			/* function call number */
 	u_long v[4];			/* values */
@@ -88,6 +88,7 @@ LIST_HEAD(uvm_history_head, uvm_history);
 #define	UVMHIST_MAPHIST		0x00000001	/* maphist */
 #define	UVMHIST_PDHIST		0x00000002	/* pdhist */
 #define	UVMHIST_UBCHIST		0x00000004	/* ubchist */
+#define	UVMHIST_LOANHIST	0x00000008	/* loanhist */
 
 #ifdef _KERNEL
 
@@ -154,7 +155,7 @@ do { \
 	int _i_, _s_ = splhigh(); \
 	simple_lock(&(NAME).l); \
 	_i_ = (NAME).f; \
-	(NAME).f = (_i_ + 1) % (NAME).n; \
+	(NAME).f = (_i_ + 1 < (NAME).n) ? _i_ + 1 : 0; \
 	simple_unlock(&(NAME).l); \
 	splx(_s_); \
 	if (!cold) \
@@ -186,7 +187,7 @@ do { \
 
 #define UVMHIST_FUNC(FNAME) \
 	static int _uvmhist_cnt = 0; \
-	static char *const _uvmhist_name = FNAME; \
+	static const char *const _uvmhist_name = FNAME; \
 	int _uvmhist_call;
 
 static __inline void uvmhist_print(struct uvm_history_ent *);
