@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.22 1996/10/15 20:46:45 leo Exp $	*/
+/*	$NetBSD: trap.c,v 1.23 1997/01/04 00:10:30 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -124,17 +124,36 @@ short	exframesize[] = {
 	-1, -1, -1, -1	/* type C-F - undefined */
 };
 
-#ifdef M68040
-#define KDFAULT(c)	(mmutype == MMU_68040 ? \
-			    ((c) & SSW4_TMMASK) == SSW4_TMKD : \
-			    ((c) & (SSW_DF|FC_SUPERD)) == (SSW_DF|FC_SUPERD))
-#define WRFAULT(c) 	(mmutype == MMU_68040 ? \
-			    ((c) & SSW4_RW) == 0 : \
-			    ((c) & (SSW_DF|SSW_RW)) == SSW_DF)
+#ifdef M68060
+#define	KDFAULT_060(c)	(cputype == CPU_68060 && ((c) & FSLW_TM_SV))
+#define	WRFAULT_060(c)	(cputype == CPU_68060 && ((c) & FSLW_RW_W))
 #else
-#define KDFAULT(c)	(((c) & (SSW_DF|SSW_FCMASK)) == (SSW_DF|FC_SUPERD))
-#define WRFAULT(c)	(((c) & (SSW_DF|SSW_RW)) == SSW_DF)
+#define	KDFAULT_060(c)	0
+#define	WRFAULT_060(c)	0
 #endif
+
+#ifdef M68040
+#define	KDFAULT_040(c)	(cputype == CPU_68040 && \
+			 ((c) & SSW4_TMMASK) == SSW4_TMKD)
+#define	WRFAULT_040(c)	(cputype == CPU_68040 && \
+			 ((c) & SSW4_RW) == 0)
+#else
+#define	KDFAULT_040(c)	0
+#define	WRFAULT_040(c)	0
+#endif
+
+#if defined(M68030) || defined(M68020)
+#define	KDFAULT_OTH(c)	(cputype <= CPU_68030 && \
+			 ((c) & (SSW_DF|SSW_FCMASK)) == (SSW_DF|FC_SUPERD))
+#define	WRFAULT_OTH(c)	(cputype <= CPU_68030 && \
+			 ((c) & (SSW_DF|SSW_RW)) == SSW_DF)
+#else
+#define	KDFAULT_OTH(c)	0
+#define	WRFAULT_OTH(c)	0
+#endif
+
+#define	KDFAULT(c)	(KDFAULT_060(c) || KDFAULT_040(c) || KDFAULT_OTH(c))
+#define	WRFAULT(c)	(WRFAULT_060(c) || WRFAULT_040(c) || WRFAULT_OTH(c))
 
 #ifdef DEBUG
 int mmudebug = 0;
@@ -207,7 +226,7 @@ again:
 	 * we just return to the user without sucessfully completing
 	 * the writebacks.  Maybe we should just drop the sucker?
 	 */
-	if (mmutype == MMU_68040 && fp->f_format == FMT7) {
+	if (cputype == CPU_68040 && fp->f_format == FMT7) {
 		if (beenhere) {
 #ifdef DEBUG
 			if (mmudebug & MDB_WBFAILED)
@@ -348,7 +367,7 @@ trap(type, code, v, frame)
 	 * Kernel Bus error
 	 */
 	case T_BUSERR:
-		if (!p || !p->p_addr || !p->p_addr->u_pcb.pcb_onfault)
+		if (p->p_addr->u_pcb.pcb_onfault == 0)
 			panictrap(type, code, v, &frame);
 		trapcpfault(p, &frame);
 		return;
@@ -612,7 +631,7 @@ trap(type, code, v, frame)
 		if (rv == KERN_SUCCESS) {
 			if (type == T_MMUFLT) {
 #ifdef M68040
-				if (mmutype == MMU_68040)
+				if (cputype == CPU_68040)
 					(void) writeback(&frame, 1);
 #endif
 				return;
