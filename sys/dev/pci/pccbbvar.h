@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbbvar.h,v 1.20 2003/12/10 02:55:48 briggs Exp $	*/
+/*	$NetBSD: pccbbvar.h,v 1.21 2004/07/22 16:39:51 mycroft Exp $	*/
 /*
  * Copyright (c) 1999 HAYAKAWA Koichi.  All rights reserved.
  *
@@ -154,7 +154,6 @@ struct pccbb_softc {
 	int sc_pcmcia_flags;
 #define	PCCBB_PCMCIA_IO_RELOC	0x01	/* IO addr relocatable stuff exists */
 #define	PCCBB_PCMCIA_MEM_32	0x02	/* 32-bit memory address ready */
-#define	PCCBB_PCMCIA_16BITONLY	0x04	/* 32-bit mode disable */
 
 	struct proc *sc_event_thread;
 	SIMPLEQ_HEAD(, pcic_event) sc_events;
