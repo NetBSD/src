@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.20 2000/05/26 21:19:32 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.21 2000/06/07 04:59:29 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -283,11 +283,17 @@ void child_return	__P((void *));
  * CTL_MACHDEP definitions.
  */
 #define	CPU_DEBUG		1	/* int: misc kernel debug control */
-#define	CPU_MAXID		2	/* number of valid machdep ids */
+#define	CPU_BOOTED_DEVICE	2	/* string: device we booted from */
+#define	CPU_BOOTED_KERNEL	3	/* string: kernel we booted */
+#define	CPU_CONSDEV		4	/* struct: dev_t of our console */
+#define	CPU_MAXID		5	/* number of valid machdep ids */
 
 #define	CTL_MACHDEP_NAMES { \
 	{ 0, 0 }, \
 	{ "debug", CTLTYPE_INT }, \
+	{ "booted_device", CTLTYPE_STRING }, \
+	{ "booted_kernel", CTLTYPE_STRING }, \
+	{ "console_device", CTLTYPE_STRUCT }, \
 }    
 
 #endif /* !_ARM32_CPU_H_ */

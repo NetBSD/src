@@ -1,4 +1,4 @@
-/*	$NetBSD: shark_machdep.c,v 1.16 2000/06/06 20:17:36 matt Exp $	*/
+/*	$NetBSD: shark_machdep.c,v 1.17 2000/06/07 04:59:30 matt Exp $	*/
 
 /*
  * Copyright 1997
@@ -119,6 +119,7 @@ void	ofbus_attach __P((struct device *, struct device *, void *));
 BootConfig bootconfig;
 char *boot_args = NULL;
 char *boot_file = NULL;
+char *boot_kernel = NULL;
 #ifndef PMAP_STATIC_L1S
 int max_processes = 64;			/* Default number */
 #endif	/* !PMAP_STATIC_L1S */
@@ -398,8 +399,19 @@ ofw_device_register(struct device *dev, void *aux)
 	char name[64];
 	int i;
 
-	if (boot_component == NULL)
+	if (boot_component == NULL) {
+		char *cp;
 		boot_component = boot_file;
+		if (boot_component == NULL)
+			return;
+		cp = strrchr(boot_component, ':');
+		if (cp != NULL) {
+			*cp++ = '\0';
+			if (cp[0] == '\\')
+				cp++;
+			boot_kernel = cp; 
+		}
+	}
 
 	if (booted_device != NULL
 	    || boot_component == NULL
