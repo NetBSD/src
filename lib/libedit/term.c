@@ -836,10 +836,10 @@ term_set(el, term)
 
     if (i <= 0) {
 	if (i == -1) 
-	    (void) fprintf(el->el_errfile, "Cannot open /etc/termcap.\n");
+	    (void) fprintf(el->el_errfile, "Cannot open read termcap database;\n");
 	else if (i == 0) 
 	    (void) fprintf(el->el_errfile, 
-			   "No entry for terminal type \"%s\"\n", term);
+			   "No entry for terminal type \"%s\";\n", term);
 	(void) fprintf(el->el_errfile, "using dumb terminal settings.\n");
 	Val(T_co) = 80;		/* do a dumb terminal */
 	Val(T_pt) = Val(T_km) = Val(T_li) = 0;
