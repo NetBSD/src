@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_et.c,v 1.9 1997/03/05 22:50:38 veego Exp $	*/
+/*	$NetBSD: grf_et.c,v 1.10 1997/07/29 17:46:31 veego Exp $	*/
 
 /*
  * Copyright (c) 1997 Klaus Burkert
@@ -111,8 +111,10 @@ void	et_memset __P((unsigned char *d, unsigned char c, int l));
  * Graphics display definitions.
  * These are filled by 'grfconfig' using GRFIOCSETMON.
  */
-#define monitor_def_max 8
-static struct grfvideo_mode monitor_def[8] = {
+#define monitor_def_max 24
+static struct grfvideo_mode monitor_def[24] = {
+	{0}, {0}, {0}, {0}, {0}, {0}, {0}, {0},
+	{0}, {0}, {0}, {0}, {0}, {0}, {0}, {0},
 	{0}, {0}, {0}, {0}, {0}, {0}, {0}, {0}
 };
 static struct grfvideo_mode *monitor_current = &monitor_def[0];
@@ -133,8 +135,8 @@ static struct grfvideo_mode *monitor_current = &monitor_def[0];
 extern unsigned char TSENGFONT[];
 
 struct grfettext_mode etconsole_mode = {
-	{255, "", 25000000, 640, 480, 4, 640/8, 784/8, 680/8, 768/8, 800/8,
-	 481, 521, 491, 493, 525},
+	{255, "", 25000000, 640, 480, 4, 640/8, 680/8, 768/8, 800/8,
+	 481, 491, 493, 525, 0},
 	8, TSENGFONTY, 640 / 8, 480 / TSENGFONTY, TSENGFONT, 32, 255
 };
 
@@ -590,7 +592,6 @@ et_getvmode(gp, vm)
 	/* adjust internal values to pixel values */
 
 	vm->hblank_start *= 8;
-	vm->hblank_stop *= 8;
 	vm->hsync_start *= 8;
 	vm->hsync_stop *= 8;
 	vm->htotal *= 8;
@@ -835,7 +836,6 @@ et_setmonitor(gp, gv)
 	if (gv->mode_num == 255) {
 		bcopy(gv, &etconsole_mode.gv, sizeof(struct grfvideo_mode));
 		etconsole_mode.gv.hblank_start /= 8;
-		etconsole_mode.gv.hblank_stop /= 8;
 		etconsole_mode.gv.hsync_start /= 8;
 		etconsole_mode.gv.hsync_stop /= 8;
 		etconsole_mode.gv.htotal /= 8;
@@ -854,7 +854,6 @@ et_setmonitor(gp, gv)
 	/* adjust pixel oriented values to internal rep. */
 
 	md->hblank_start /= 8;
-	md->hblank_stop /= 8;
 	md->hsync_start /= 8;
 	md->hsync_stop /= 8;
 	md->htotal /= 8;
@@ -1071,10 +1070,22 @@ et_mondefok(gv)
                 maxpix = 21000000;
                 break;
 	    default:
+		printf("grfet: Illegal depth in mode %d\n",
+			(int) gv->mode_num);
 		return (0);
 	}
-        if (gv->pixel_clock > maxpix)
+
+        if (gv->pixel_clock > maxpix) {
+		printf("grfet: Pixelclock too high in mode %d\n",
+			(int) gv->mode_num);
                 return (0);
+	}
+
+	if (gv->disp_flags & GRF_FLAGS_SYNC_ON_GREEN) {
+		printf("grfet: sync-on-green is not supported\n");
+		return (0);
+	}
+
 	return (1);
 }
 
@@ -1090,9 +1101,8 @@ et_load_mon(gp, md)
 	unsigned char num0, denom0;
 	unsigned short HT, HDE, HBS, HBE, HSS, HSE, VDE, VBS, VBE, VSS,
 	        VSE, VT;
-	char    LACE, DBLSCAN, TEXT;
-	unsigned char seq;
-	int     uplim, lowlim;
+	unsigned char hvsync_pulse, seq;
+	char    TEXT;
 	int	hmul;
 
 	/* identity */
@@ -1100,9 +1110,10 @@ et_load_mon(gp, md)
 	TEXT = (gv->depth == 4);
 
 	if (!et_mondefok(gv)) {
-		printf("mondef not ok\n");
+		printf("grfet: Monitor definition not ok\n");
 		return (0);
 	}
+
 	ba = gp->g_regkva;
 
 	/* provide all needed information in grf device-independant locations */
@@ -1131,14 +1142,14 @@ et_load_mon(gp, md)
 	/* get display mode parameters */
 
 	HBS = gv->hblank_start;
-	HBE = gv->hblank_stop;
 	HSS = gv->hsync_start;
 	HSE = gv->hsync_stop;
+	HBE = gv->htotal - 1;
 	HT  = gv->htotal;
 	VBS = gv->vblank_start;
 	VSS = gv->vsync_start;
 	VSE = gv->vsync_stop;
-	VBE = gv->vblank_stop;
+	VBE = gv->vtotal - 1;
 	VT  = gv->vtotal;
 
 	if (TEXT)
@@ -1147,24 +1158,21 @@ et_load_mon(gp, md)
 		HDE = (gv->disp_width + 3) / 8 - 1;	/* HBS; */
 	VDE = gv->disp_height - 1;
 
-	/* figure out whether lace or dblscan is needed */
-
-	uplim = gv->disp_height + (gv->disp_height / 4);
-	lowlim = gv->disp_height - (gv->disp_height / 4);
-	LACE = (((VT * 2) > lowlim) && ((VT * 2) < uplim)) ? 1 : 0;
-	DBLSCAN = (((VT / 2) > lowlim) && ((VT / 2) < uplim)) ? 1 : 0;
-
 	/* adjustments (crest) */
 	switch (gv->depth) {
 	    case 15:
-	    case 16:	hmul = 2;
-			break;
-	    case 24:	hmul = 3;
-			break;
-			break;
-	    case 32:	hmul = 4;
-			break;
-	    default:	hmul = 1;
+	    case 16:
+		hmul = 2;
+		break;
+	    case 24:
+		hmul = 3;
+		break;
+	    case 32:
+		hmul = 4;
+		break;
+	    default:
+		hmul = 1;
+		break;
 	}
 
 	HDE *= hmul;
@@ -1174,16 +1182,19 @@ et_load_mon(gp, md)
 	HBE *= hmul;
 	HT  *= hmul;
 
-	if (LACE) {
-		VBS *= 2,
+	if (gv->disp_flags & GRF_FLAGS_LACE) {
+		VDE /= 2;
+		VT = VT + 1;
+	}
+
+	if (gv->disp_flags & GRF_FLAGS_DBLSCAN) {
+		VDE *= 2;
+		VBS *= 2;
 		VSS *= 2;
 		VSE *= 2;
 		VBE *= 2;
-		VT = VT * 2 + 1;
+		VT  *= 2;
 	}
-
-	if (DBLSCAN)
-		VDE *= 2;
 
 	WSeq(ba, SEQ_ID_MEMORY_MODE, (TEXT || (gv->depth == 1)) ? 0x06 : 0x0e);
 
@@ -1194,9 +1205,20 @@ et_load_mon(gp, md)
 	/* Set clock */
 	et_CompFQ( gv->pixel_clock * hmul, &num0, &denom0);
 
-	vgaw(ba, GREG_MISC_OUTPUT_W, 0xe3 | ((num0 & 3) << 2));
+	/* Horizontal/Vertical Sync Pulse */
+	hvsync_pulse = 0xe3;
+	if (gv->disp_flags & GRF_FLAGS_PHSYNC)
+		hvsync_pulse &= ~0x40;
+	else
+		hvsync_pulse |= 0x40;
+	if (gv->disp_flags & GRF_FLAGS_PVSYNC)
+		hvsync_pulse &= ~0x80;
+	else
+		hvsync_pulse |= 0x80;
+
+	vgaw(ba, GREG_MISC_OUTPUT_W, hvsync_pulse | ((num0 & 3) << 2));
 	WCrt(ba, CRT_ID_6845_COMPAT, (num0 & 4) ? 0x0a : 0x08);
-	seq=RSeq(ba, SEQ_ID_CLOCKING_MODE);
+	seq = RSeq(ba, SEQ_ID_CLOCKING_MODE);
 	switch(denom0) {
 	    case 0:
 		WSeq(ba, SEQ_ID_AUXILIARY_MODE, 0xb4);
@@ -1238,7 +1260,7 @@ et_load_mon(gp, md)
 
 	WCrt(ba, CRT_ID_MAX_ROW_ADDRESS,
 	    0x40 |		/* splitscreen not visible */
-	    (DBLSCAN ? 0x80 : 0x00) |
+	    ((gv->disp_flags & GRF_FLAGS_DBLSCAN) ? 0x80 : 0x00) |
 	    ((VBS & 0x200) ? 0x20 : 0x00) |
 	    (TEXT ? ((md->fy - 1) & 0x1f) : 0x00));
 
@@ -1278,7 +1300,7 @@ et_load_mon(gp, md)
 	    ((VDE & 0x400) ? 0x04 : 0x00) |
 	    ((VSS & 0x400) ? 0x08 : 0x00) |
 	    0x10 |
-	    (LACE ? 0x80 : 0x00));
+	    ((gv->disp_flags & GRF_FLAGS_LACE) ? 0x80 : 0x00));
 
 	WCrt(ba, CRT_ID_HOR_OVERFLOW,
 	    ((HT  & 0x100) ? 0x01 : 0x00) |
@@ -1511,10 +1533,9 @@ et_getControllerType(gp)
 	*mem = 0;
 
 	/* make ACL visible */
-	if(ettype == MERLIN) {
+	if (ettype == MERLIN) {
 		WCrt(ba, CRT_ID_VIDEO_CONFIG1, 0xbb);
-	}
-	else {
+	} else {
 		WCrt(ba, CRT_ID_VIDEO_CONFIG1, 0xfb);
 	}
 
@@ -1528,13 +1549,12 @@ et_getControllerType(gp)
 	/* hide ACL */
 	WIma(ba, IMA_PORTCONTROL, 0x00);
 
-	if(ettype == MERLIN) {
+	if (ettype == MERLIN) {
 		WCrt(ba, CRT_ID_VIDEO_CONFIG1, 0x93);
-	}
-	else {
+	} else {
 		WCrt(ba, CRT_ID_VIDEO_CONFIG1, 0xd3);
 	}
-	return((*mem == 0xff) ? ETW32 : ET4000);
+	return ((*mem == 0xff) ? ETW32 : ET4000);
 }
 
 

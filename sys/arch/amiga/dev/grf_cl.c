@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cl.c,v 1.19 1997/03/05 22:46:32 veego Exp $	*/
+/*	$NetBSD: grf_cl.c,v 1.20 1997/07/29 17:46:24 veego Exp $	*/
 
 /*
  * Copyright (c) 1997 Klaus Burkert
@@ -117,8 +117,10 @@ void	cl_memset __P((unsigned char *, unsigned char, int));
 /* Graphics display definitions.
  * These are filled by 'grfconfig' using GRFIOCSETMON.
  */
-#define monitor_def_max 8
-static struct grfvideo_mode monitor_def[8] = {
+#define monitor_def_max 24
+static struct grfvideo_mode monitor_def[24] = {
+	{0}, {0}, {0}, {0}, {0}, {0}, {0}, {0},
+	{0}, {0}, {0}, {0}, {0}, {0}, {0}, {0},
 	{0}, {0}, {0}, {0}, {0}, {0}, {0}, {0}
 };
 static struct grfvideo_mode *monitor_current = &monitor_def[0];
@@ -142,8 +144,8 @@ unsigned long cl_maxpixelclock = 86000000;
 extern unsigned char CIRRUSFONT[];
 
 struct grfcltext_mode clconsole_mode = {
-	{255, "", 25200000, 640, 480, 4, 80, 100, 94, 99, 100, 481, 522, 490,
-	498, 522},
+	{255, "", 25200000, 640, 480, 4, 640/8, 752/8, 792/8, 800/8,
+	 481, 490, 498, 522, 0},
 	8, CIRRUSFONTY, 80, 480 / CIRRUSFONTY, CIRRUSFONT, 32, 255
 };
 /* Console colors */
@@ -620,7 +622,6 @@ cl_getvmode(gp, vm)
         /* adjust internal values to pixel values */
 
         vm->hblank_start *= 8;
-        vm->hblank_stop *= 8;
         vm->hsync_start *= 8;
         vm->hsync_stop *= 8;
         vm->htotal *= 8;
@@ -1053,11 +1054,10 @@ cl_setmonitor(gp, gv)
 	/* handle interactive setting of console mode */
 	if (gv->mode_num == 255) {
 		bcopy(gv, &clconsole_mode.gv, sizeof(struct grfvideo_mode));
-                clconsole_mode.gv.hblank_start /= 8;
-                clconsole_mode.gv.hblank_stop /= 8;
-                clconsole_mode.gv.hsync_start /= 8;
-                clconsole_mode.gv.hsync_stop /= 8;
-                clconsole_mode.gv.htotal /= 8;
+		clconsole_mode.gv.hblank_start /= 8;
+		clconsole_mode.gv.hsync_start /= 8;
+		clconsole_mode.gv.hsync_stop /= 8;
+		clconsole_mode.gv.htotal /= 8;
 		clconsole_mode.rows = gv->disp_height / clconsole_mode.fy;
 		clconsole_mode.cols = gv->disp_width / clconsole_mode.fx;
 		if (!(gp->g_flags & GF_GRFON))
@@ -1070,13 +1070,12 @@ cl_setmonitor(gp, gv)
 	md = monitor_def + (gv->mode_num - 1);
 	bcopy(gv, md, sizeof(struct grfvideo_mode));
 
-        /* adjust pixel oriented values to internal rep. */
+	/* adjust pixel oriented values to internal rep. */
 
-        md->hblank_start /= 8;
-        md->hblank_stop /= 8;
-        md->hsync_start /= 8;
-        md->hsync_stop /= 8;
-        md->htotal /= 8;
+	md->hblank_start /= 8;
+	md->hsync_start /= 8;
+	md->hsync_stop /= 8;
+	md->htotal /= 8;
 
 	return (0);
 }
@@ -1345,10 +1344,22 @@ cl_mondefok(gv)
 	                maxpix = 0;
                 break;
 	default:
+		printf("grfcl: Illegal depth in mode %d\n",
+			(int) gv->mode_num);
 		return (0);
 	}
-        if (gv->pixel_clock > maxpix)
+
+        if (gv->pixel_clock > maxpix) {
+		printf("grfcl: Pixelclock too high in mode %d\n",
+			(int) gv->mode_num);
                 return (0);
+	}
+
+	if (gv->disp_flags & GRF_FLAGS_SYNC_ON_GREEN) {
+		printf("grfcl: sync-on-green is not supported\n");
+		return (0);
+	}
+
         return (1);
 }
 
@@ -1363,19 +1374,21 @@ cl_load_mon(gp, md)
 	unsigned char num0, denom0, clkdoub;
 	unsigned short HT, HDE, HBS, HBE, HSS, HSE, VDE, VBS, VBE, VSS,
 	        VSE, VT;
-	char    LACE, DBLSCAN, TEXT;
-	int     uplim, lowlim;
-	int	sr15;
 	int	clkmul, offsmul, clkmode;
+	int	vmul;
+	int	sr15;
+	unsigned char hvsync_pulse;
+	char    TEXT;
 
 	/* identity */
 	gv = &md->gv;
 	TEXT = (gv->depth == 4);
 
 	if (!cl_mondefok(gv)) {
-		printf("mondef not ok\n");
+		printf("grfcl: Monitor definition not ok\n");
 		return (0);
 	}
+
 	ba = gp->g_regkva;
 	fb = gp->g_fbkva;
 
@@ -1405,14 +1418,14 @@ cl_load_mon(gp, md)
 	/* get display mode parameters */
 
 	HBS = gv->hblank_start;
-	HBE = gv->hblank_stop;
 	HSS = gv->hsync_start;
 	HSE = gv->hsync_stop;
+	HBE = gv->htotal - 1;
 	HT = gv->htotal;
 	VBS = gv->vblank_start;
 	VSS = gv->vsync_start;
 	VSE = gv->vsync_stop;
-	VBE = gv->vblank_stop;
+	VBE = gv->vtotal - 1;
 	VT = gv->vtotal;
 
 	if (TEXT)
@@ -1420,13 +1433,6 @@ cl_load_mon(gp, md)
 	else
 		HDE = (gv->disp_width + 3) / 8 - 1;	/* HBS; */
 	VDE = gv->disp_height - 1;
-
-	/* figure out whether lace or dblscan is needed */
-
-	uplim = gv->disp_height + (gv->disp_height / 4);
-	lowlim = gv->disp_height - (gv->disp_height / 4);
-	LACE = (((VT * 2) > lowlim) && ((VT * 2) < uplim)) ? 1 : 0;
-	DBLSCAN = (((VT / 2) > lowlim) && ((VT / 2) < uplim)) ? 1 : 0;
 
 	/* adjustments */
 	switch (gv->depth) {
@@ -1461,23 +1467,23 @@ cl_load_mon(gp, md)
 		break;
 	}
 
-	if (LACE)
-		VDE /= 2;
-
-	if (DBLSCAN)
-		VDE *= 2;
-
-	if ((VT > 1023) && (!LACE)) {
-		VDE /= 2;
-		VBS /= 2;
-		VSS /= 2;
-		VSE /= 2;
-		VBE /= 2;
-		VT  /= 2;
+	if ((VT > 1023) && (!(gv->disp_flags & GRF_FLAGS_LACE))) {
 		WCrt(ba, CRT_ID_MODE_CONTROL, 0xe7);
-	}
-	else
+	} else
 		WCrt(ba, CRT_ID_MODE_CONTROL, 0xe3);
+
+	vmul = 2;
+	if ((VT > 1023) || (gv->disp_flags & GRF_FLAGS_LACE))
+		vmul = 1;
+	if (gv->disp_flags & GRF_FLAGS_DBLSCAN)
+		vmul = 4;
+
+	VDE = VDE * vmul / 2;
+	VBS = VBS * vmul / 2;
+	VSS = VSS * vmul / 2;
+	VSE = VSE * vmul / 2;
+	VBE = VBE * vmul / 2;
+	VT  = VT * vmul / 2;
 
 	WSeq(ba, SEQ_ID_MEMORY_MODE, (TEXT || (gv->depth == 1)) ? 0x06 : 0x0e);
 	if (cl_64bit == 1) {
@@ -1498,6 +1504,18 @@ cl_load_mon(gp, md)
 	/* Set clock */
 
 	cl_CompFQ(gv->pixel_clock * clkmul, &num0, &denom0, &clkdoub);
+
+	/* Horizontal/Vertical Sync Pulse */
+	hvsync_pulse = vgar(ba, GREG_MISC_OUTPUT_R);
+	if (gv->disp_flags & GRF_FLAGS_PHSYNC)
+		hvsync_pulse &= ~0x40;
+	else
+		hvsync_pulse |= 0x40;
+	if (gv->disp_flags & GRF_FLAGS_PVSYNC)
+		hvsync_pulse &= ~0x80;
+	else
+		hvsync_pulse |= 0x80;
+	vgaw(ba, GREG_MISC_OUTPUT_W, hvsync_pulse);
 
 	if (clkdoub) {
 		HDE /= 2;
@@ -1535,7 +1553,7 @@ cl_load_mon(gp, md)
 
 	WCrt(ba, CRT_ID_CHAR_HEIGHT,
 	    0x40 |		/* TEXT ? 0x00 ??? */
-	    (DBLSCAN ? 0x80 : 0x00) |
+	    ((gv->disp_flags & GRF_FLAGS_DBLSCAN) ? 0x80 : 0x00) |
 	    ((VBS & 0x200) ? 0x20 : 0x00) |
 	    (TEXT ? ((md->fy - 1) & 0x1f) : 0x00));
 
@@ -1566,7 +1584,7 @@ cl_load_mon(gp, md)
 	WCrt(ba, CRT_ID_LINE_COMPARE, 0xff);
 	WCrt(ba, CRT_ID_LACE_END, HT / 2);	/* MW/16 */
 	WCrt(ba, CRT_ID_LACE_CNTL,
-	    (LACE ? 0x01 : 0x00) |
+	    ((gv->disp_flags & GRF_FLAGS_LACE) ? 0x01 : 0x00) |
 	    ((HBE & 0x40) ? 0x10 : 0x00) |
 	    ((HBE & 0x80) ? 0x20 : 0x00) |
 	    ((VBE & 0x100) ? 0x40 : 0x00) |
