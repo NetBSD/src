@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_syssgi.c,v 1.6 2001/12/08 11:17:37 manu Exp $ */
+/*	$NetBSD: irix_syssgi.c,v 1.7 2001/12/08 19:29:03 manu Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_syssgi.c,v 1.6 2001/12/08 11:17:37 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_syssgi.c,v 1.7 2001/12/08 19:29:03 manu Exp $");
 
 #ifndef ELFSIZE
 #define ELFSIZE 32
@@ -344,16 +344,41 @@ irix_syssgi_sysconf(name, p, retval)
 	int len = sizeof(value);
 
 	switch (name) {
+	case IRIX_SC_ARG_MAX:
+		mib[0] = CTL_KERN;
+		mib[1] = KERN_ARGMAX;
+		break;
+	case IRIX_SC_CHILD_MAX:
+		mib[0] = CTL_KERN;
+		mib[1] = KERN_MAXPROC;
+		break;
 	case IRIX_SC_CLK_TCK:
 		*retval = hz;
 		return 0;
 		break;
-
+	case IRIX_SC_NGROUPS_MAX:
+		mib[0] = CTL_KERN;
+		mib[1] = KERN_NGROUPS;
+		break;
+	case IRIX_SC_OPEN_MAX:
+		mib[0] = CTL_KERN;
+		mib[1] = KERN_MAXFILES;
+		break;
+	case IRIX_SC_JOB_CONTROL:
+		*retval = 1;
+		return 0;
+		break;
+	case IRIX_SC_SAVED_IDS:
+		*retval = 1;
+		return 0;
+		break;
 	case IRIX_SC_PAGESIZE:
 		mib[0] = CTL_HW;
 		mib[1] = HW_PAGESIZE;
 		break;
 
+	case IRIX_SC_PASS_MAX:
+	case IRIX_SC_VERSION:
 	default:
 		printf("Warning: syssgi(SYSCONF) unsupported variable %d\n",
 		    name);
