@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 1995/09/27 15:17:48 cgd Exp $
+#	$NetBSD: Makefile,v 1.4 1995/09/29 07:22:43 cgd Exp $
 
 # Make a distribution for the alpha, on a spare disk.
 # This creates a large, gzipped disk image in ${.OBJDIR}
@@ -45,6 +45,7 @@ ${TARGET}:
 	ln -s ../local/bin/ranlib ${DESTDIR}/usr/bin
 	ln -s ../local/bin/size ${DESTDIR}/usr/bin
 	ln -s ../local/bin/strip ${DESTDIR}/usr/bin
+	cp -p ${DESTDIR}/usr/mdec/boot ${DESTDIR}/
 	umount ${DESTDIR}/usr ${DESTDIR}
 	fsck /dev/r${DESTDISK}a /dev/r${DESTDISK}d
 	/bin/rm -f $@
