@@ -1,4 +1,4 @@
-/*	$NetBSD: move.c,v 1.4 1995/04/22 10:08:58 cgd Exp $	*/
+/*	$NetBSD: move.c,v 1.5 1997/05/23 23:40:19 jtc Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)move.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: move.c,v 1.4 1995/04/22 10:08:58 cgd Exp $";
+static char rcsid[] = "$NetBSD: move.c,v 1.5 1997/05/23 23:40:19 jtc Exp $";
 #endif
 #endif /* not lint */
 
@@ -163,7 +163,6 @@ over:
 		  case 'W':
 			Waiting = TRUE;
 			leaveok(stdscr, TRUE);
-			flushok(stdscr, FALSE);
 			goto ret;
 		  case 't':
 		  case 'T':
