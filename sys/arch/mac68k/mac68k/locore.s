@@ -86,7 +86,7 @@
  * from: Utah $Hdr: locore.s 1.58 91/04/22$
  *
  *	from: @(#)locore.s	7.11 (Berkeley) 5/9/91
- *	$Id: locore.s,v 1.24 1994/08/01 04:50:03 lkestel Exp $
+ *	$Id: locore.s,v 1.25 1994/08/08 00:14:42 lkestel Exp $
  */
 
 #include "assym.s"
@@ -1248,9 +1248,11 @@ Lipt5:
 
 	movl	sp@,a0			| can I do this in one step?
 	movl	a0,sp@-			| address of start of kernel PT
+	movl	_Sysseg, a0
+	movl	a0,sp@-			| address of start of kernel ST
 	jbsr	_remap_MMU
-	addl	#4,sp
-#endif
+	addl	#8,sp			| pop start of PT & ST addresses
+#endif /* MACHINE_NONCONTIG */
 	addl	#4,sp			| pop start of PT address
 
 /*
