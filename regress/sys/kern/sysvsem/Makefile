@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.2 2001/12/12 01:24:17 tv Exp $
+#	$NetBSD: Makefile,v 1.3 2002/03/05 21:57:00 thorpej Exp $
 
 PROG=		semtest
 NOMAN=		# defined
 WARNS=		1
 
 regress:
-	@if ./semtest ${.OBJDIR}/semtest; then \
+	@if ./semtest ./semtest; then \
 		echo "PASSED"; \
 	else \
 		echo "FAILED"; \
