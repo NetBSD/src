@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.15 1997/02/10 03:50:53 mark Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.16 1997/02/10 03:57:42 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -256,23 +256,19 @@ Lcpufuncs:
 	.global	_idle
 _idle:
 idle:
-
 /* Enable interrupts */
 
 	IRQenable
 
-/*
- * The RC7500 doesn't support this yet!
- */
+	/* XXX - r1 needs to be preserved for cpu_switch */
 
-#if defined(CPU_ARM7500) && !defined(RC7500)
-/* ARM7500 has a suspend mode so use it */
+	mov	r7, r1
+	ldr	r0, Lcpufuncs
+	add	lr, pc, #Lidl_slept - . - 8
+	ldr	pc, [r0, #CF_SLEEP]
 
-	mov	r7, #(IOMD_BASE)
-	orr	r7, r7, #(IOMD_SUSPEND - IOMD_BASE)
-	mov	r3, #0x00000001		/* Keep external clocks running */
-	strb	r3, [r7]
-#endif
+Lidl_slept:
+	mov	r1, r7
 
 /* Disable interrupts while we check for an active queue */
 
@@ -797,3 +793,4 @@ trampoline_return:
 
 	movs	pc, lr			/* Exit */
 
+/* End of cpuswitch.S */
