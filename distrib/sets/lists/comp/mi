@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.487 2002/09/29 17:38:37 wiz Exp $
+#	$NetBSD: mi,v 1.488 2002/09/29 20:29:13 jdolecek Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -3316,9 +3316,13 @@
 ./usr/share/man/cat9/isapnp_unconfig.0		comp-sys-catman
 ./usr/share/man/cat9/issignal.0		comp-sys-catman
 ./usr/share/man/cat9/itimerfix.0		comp-sys-catman
+./usr/share/man/cat9/KNOTE.0	comp-sys-catman
 ./usr/share/man/cat9/kcopy.0	comp-sys-catman
-./usr/share/man/cat9/kernacc.0		comp-sys-catman
-./usr/share/man/cat9/killproc.0		comp-sys-catman
+./usr/share/man/cat9/kernacc.0			comp-sys-catman
+./usr/share/man/cat9/kfilter_register.0		comp-sys-catman
+./usr/share/man/cat9/kfilter_unregister.0	comp-sys-catman
+./usr/share/man/cat9/killproc.0			comp-sys-catman
+./usr/share/man/cat9/knote.0			comp-sys-catman
 ./usr/share/man/cat9/kprintf.0		comp-sys-catman
 ./usr/share/man/cat9/kthread.0		comp-sys-catman
 ./usr/share/man/cat9/kthread_create.0		comp-sys-catman
@@ -6045,9 +6049,13 @@
 ./usr/share/man/man9/isapnp_unconfig.9		comp-sys-man
 ./usr/share/man/man9/issignal.9			comp-sys-man
 ./usr/share/man/man9/itimerfix.9		comp-sys-man
+./usr/share/man/man9/KNOTE.9	comp-sys-man
 ./usr/share/man/man9/kcopy.9	comp-sys-man
-./usr/share/man/man9/kernacc.9		comp-sys-man
-./usr/share/man/man9/killproc.9		comp-sys-man
+./usr/share/man/man9/kernacc.9			comp-sys-man
+./usr/share/man/man9/kfilter_register.9		comp-sys-man
+./usr/share/man/man9/kfilter_unregister.9	comp-sys-man
+./usr/share/man/man9/killproc.9			comp-sys-man
+./usr/share/man/man9/knote.9			comp-sys-man
 ./usr/share/man/man9/kprintf.9		comp-sys-man
 ./usr/share/man/man9/kthread.9		comp-sys-man
 ./usr/share/man/man9/kthread_create.9		comp-sys-man
