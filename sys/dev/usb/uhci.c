@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.65 1999/11/16 22:19:03 augustss Exp $	*/
+/*	$NetBSD: uhci.c,v 1.66 1999/11/17 23:00:50 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -173,9 +173,9 @@ static void		uhci_waitintr __P((uhci_softc_t *,
 static void		uhci_check_intr __P((uhci_softc_t *,
 			    uhci_intr_info_t *));
 static void		uhci_idone __P((uhci_intr_info_t *));
-static void		uhci_abort_req __P((usbd_xfer_handle,
+static void		uhci_abort_xfer __P((usbd_xfer_handle,
 			    usbd_status status));
-static void		uhci_abort_req_end __P((void *v));
+static void		uhci_abort_xfer_end __P((void *v));
 static void		uhci_timeout __P((void *));
 static void		uhci_lock_frames __P((uhci_softc_t *));
 static void		uhci_unlock_frames __P((uhci_softc_t *));
@@ -1071,7 +1071,7 @@ uhci_timeout(addr)
 	DPRINTF(("uhci_timeout: ii=%p\n", ii));
 
 	ii->xfer->device->bus->intr_context++;
-	uhci_abort_req(ii->xfer, USBD_TIMEOUT);
+	uhci_abort_xfer(ii->xfer, USBD_TIMEOUT);
 	ii->xfer->device->bus->intr_context--;
 }
 
@@ -1485,11 +1485,11 @@ uhci_device_bulk_abort(xfer)
 	usbd_xfer_handle xfer;
 {
 	DPRINTF(("uhci_device_bulk_abort:\n"));
-	uhci_abort_req(xfer, USBD_CANCELLED);
+	uhci_abort_xfer(xfer, USBD_CANCELLED);
 }
 
 void
-uhci_abort_req(xfer, status)
+uhci_abort_xfer(xfer, status)
 	usbd_xfer_handle xfer;
 	usbd_status status;
 {
@@ -1497,7 +1497,7 @@ uhci_abort_req(xfer, status)
 	uhci_intr_info_t *ii = upipe->iinfo;
 	uhci_soft_td_t *std;
 
-	DPRINTFN(1,("uhci_abort_req: xfer=%p, status=%d\n", xfer, status));
+	DPRINTFN(1,("uhci_abort_xfer: xfer=%p, status=%d\n", xfer, status));
 
 	/* Make interrupt routine ignore it, */
 	xfer->status = status;
@@ -1514,16 +1514,16 @@ uhci_abort_req(xfer, status)
 	/* make sure hardware has completed, */
 	if (xfer->device->bus->intr_context) {
 		/* We have no process context, so we can't use tsleep(). */
-		timeout(uhci_abort_req_end, xfer, hz / USB_FRAMES_PER_SECOND);
+		timeout(uhci_abort_xfer_end, xfer, hz / USB_FRAMES_PER_SECOND);
 	} else {
 		usb_delay_ms(xfer->pipe->device->bus, 1);
 		/* and call final part of interrupt handler. */
-		uhci_abort_req_end(xfer);
+		uhci_abort_xfer_end(xfer);
 	}
 }
 
 void
-uhci_abort_req_end(v)
+uhci_abort_xfer_end(v)
 	void *v;
 {
 	usbd_xfer_handle xfer = v;
@@ -1673,7 +1673,7 @@ uhci_device_ctrl_abort(xfer)
 	usbd_xfer_handle xfer;
 {
 	DPRINTF(("uhci_device_ctrl_abort:\n"));
-	uhci_abort_req(xfer, USBD_CANCELLED);
+	uhci_abort_xfer(xfer, USBD_CANCELLED);
 }
 
 /* Close a device control pipe. */
@@ -1697,7 +1697,7 @@ uhci_device_intr_abort(xfer)
 		DPRINTFN(1,("uhci_device_intr_abort: remove\n"));
 		xfer->pipe->intrxfer = 0;
 	}
-	uhci_abort_req(xfer, USBD_CANCELLED);
+	uhci_abort_xfer(xfer, USBD_CANCELLED);
 }
 
 /* Close a device interrupt pipe. */
@@ -2024,11 +2024,11 @@ uhci_device_isoc_abort(xfer)
 	/* make sure hardware has completed, */
 	if (xfer->device->bus->intr_context) {
 		/* We have no process context, so we can't use tsleep(). */
-		timeout(uhci_abort_req_end, xfer, hz / USB_FRAMES_PER_SECOND);
+		timeout(uhci_abort_xfer_end, xfer, hz / USB_FRAMES_PER_SECOND);
 	} else {
 		usb_delay_ms(xfer->pipe->device->bus, 1);
 		/* and call final part of interrupt handler. */
-		uhci_abort_req_end(xfer);
+		uhci_abort_xfer_end(xfer);
 	}
 }
 
