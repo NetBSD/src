@@ -1,4 +1,4 @@
-/*	$NetBSD: inetd.c,v 1.54 1999/09/15 09:59:41 itojun Exp $	*/
+/*	$NetBSD: inetd.c,v 1.55 1999/10/06 21:54:10 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)inetd.c	8.4 (Berkeley) 4/13/94";
 #else
-__RCSID("$NetBSD: inetd.c,v 1.54 1999/09/15 09:59:41 itojun Exp $");
+__RCSID("$NetBSD: inetd.c,v 1.55 1999/10/06 21:54:10 ad Exp $");
 #endif
 #endif /* not lint */
 
@@ -108,8 +108,8 @@ __RCSID("$NetBSD: inetd.c,v 1.54 1999/09/15 09:59:41 itojun Exp $");
  *					name a tcpmux service
  *	socket type			stream/dgram/raw/rdm/seqpacket
  *	protocol			must be in /etc/protocols
- *	wait/nowait[.max]		single-threaded/multi-threaded, max #
- *	user[.group]			user/group to run daemon as
+ *	wait/nowait[:max]		single-threaded/multi-threaded, max #
+ *	user[:group]			user/group to run daemon as
  *	server program			full path name
  *	server program arguments	maximum of MAXARGS (20)
  *
@@ -117,8 +117,8 @@ __RCSID("$NetBSD: inetd.c,v 1.54 1999/09/15 09:59:41 itojun Exp $");
  *      service name/version            must be in /etc/rpc
  *	socket type			stream/dgram/raw/rdm/seqpacket
  *	protocol			must be in /etc/protocols
- *	wait/nowait[.max]		single-threaded/multi-threaded
- *	user[.group]			user to run daemon as
+ *	wait/nowait[:max]		single-threaded/multi-threaded
+ *	user[:group]			user to run daemon as
  *	server program			full path name
  *	server program arguments	maximum of MAXARGS (20)
  *
@@ -172,7 +172,7 @@ __RCSID("$NetBSD: inetd.c,v 1.54 1999/09/15 09:59:41 itojun Exp $");
  */
 
 /*
- * Here's the scoop concerning the user.group feature:
+ * Here's the scoop concerning the user:group feature:
  *
  * 1) set-group-option off.
  *
@@ -1561,8 +1561,9 @@ do { \
 	arg = sskip(&cp);
 	{
 		char *cp;
-		cp = strchr(arg, '.');
-		if (cp) {
+		if ((cp = strchr(arg, ':')) == NULL)
+			cp = strchr(arg, '.');
+		if (cp != NULL) {
 			*cp++ = '\0';
 			sep->se_max = atoi(cp);
 		} else
@@ -1590,8 +1591,11 @@ do { \
 		}
 	}
 	sep->se_user = newstr(sskip(&cp));
-	if ((sep->se_group = strchr(sep->se_user, '.')))
+	if ((sep->se_group = strchr(sep->se_user, ':')) != NULL)
 		*sep->se_group++ = '\0';
+	else if ((sep->se_group = strchr(sep->se_user, '.')) != NULL)
+		*sep->se_group++ = '\0';
+
 	sep->se_server = newstr(sskip(&cp));
 	if (strcmp(sep->se_server, "internal") == 0) {
 		struct biltin *bi;
@@ -2072,7 +2076,7 @@ print_service(action, sep)
 {
 	if (isrpcservice(sep))
 		fprintf(stderr,
-		    "%s: %s rpcprog=%d, rpcvers = %d/%d, proto=%s, wait.max=%d.%d, user.group=%s.%s builtin=%lx server=%s"
+		    "%s: %s rpcprog=%d, rpcvers = %d/%d, proto=%s, wait:max=%d.%d, user:group=%s.%s builtin=%lx server=%s"
 #ifdef IPSEC
 		    " policy=\"%s\""
 #endif
@@ -2087,7 +2091,7 @@ print_service(action, sep)
 		    );
 	else
 		fprintf(stderr,
-		    "%s: %s proto=%s, wait.max=%d.%d, user.group=%s.%s builtin=%lx server=%s"
+		    "%s: %s proto=%s, wait:max=%d.%d, user:group=%s.%s builtin=%lx server=%s"
 #ifdef IPSEC
 		    " policy=%s"
 #endif
