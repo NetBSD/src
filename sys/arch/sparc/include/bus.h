@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.14 1998/11/26 23:50:52 pk Exp $	*/
+/*	$NetBSD: bus.h,v 1.15 1999/01/29 16:30:51 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -630,8 +630,8 @@ bus_space_read_region_1(t, h, o, a, c)
 	bus_size_t		o, c;
 	u_int8_t		*a;
 {
-	for (; c; a++, c--)
-		*a = bus_space_read_1(t, h, o++);
+	for (; c; a++, c--, o++)
+		*a = bus_space_read_1(t, h, o);
 }
 extern __inline__ void
 bus_space_read_region_2(t, h, o, a, c)
@@ -640,8 +640,8 @@ bus_space_read_region_2(t, h, o, a, c)
 	bus_size_t		o, c;
 	u_int16_t		*a;
 {
-	for (; c; a++, c--)
-		*a = bus_space_read_1(t, h, o++);
+	for (; c; a++, c--, o+=2)
+		*a = bus_space_read_1(t, h, o);
 }
 extern __inline__ void
 bus_space_read_region_4(t, h, o, a, c)
@@ -650,8 +650,8 @@ bus_space_read_region_4(t, h, o, a, c)
 	bus_size_t		o, c;
 	u_int32_t		*a;
 {
-	for (; c; a++, c--)
-		*a = bus_space_read_1(t, h, o++);
+	for (; c; a++, c--, o+=4)
+		*a = bus_space_read_1(t, h, o);
 }
 extern __inline__ void
 bus_space_read_region_8(t, h, o, a, c)
@@ -660,8 +660,8 @@ bus_space_read_region_8(t, h, o, a, c)
 	bus_size_t		o, c;
 	u_int64_t		*a;
 {
-	for (; c; a++, c--)
-		*a = bus_space_read_1(t, h, o++);
+	for (; c; a++, c--, o+=8)
+		*a = bus_space_read_1(t, h, o);
 }
 
 /*
@@ -697,8 +697,8 @@ bus_space_write_region_1(t, h, o, a, c)
 	bus_size_t		o, c;
 	const u_int8_t		*a;
 {
-	for (; c; a++, c--)
-		bus_space_write_1(t, h, o++, *a);
+	for (; c; a++, c--, o++)
+		bus_space_write_1(t, h, o, *a);
 }
 
 extern __inline__ void
@@ -708,8 +708,8 @@ bus_space_write_region_2(t, h, o, a, c)
 	bus_size_t		o, c;
 	const u_int16_t		*a;
 {
-	for (; c; a++, c--)
-		bus_space_write_2(t, h, o++, *a);
+	for (; c; a++, c--, o+=2)
+		bus_space_write_2(t, h, o, *a);
 }
 
 extern __inline__ void
@@ -719,8 +719,8 @@ bus_space_write_region_4(t, h, o, a, c)
 	bus_size_t		o, c;
 	const u_int32_t		*a;
 {
-	for (; c; a++, c--)
-		bus_space_write_4(t, h, o++, *a);
+	for (; c; a++, c--, o+=4)
+		bus_space_write_4(t, h, o, *a);
 }
 
 extern __inline__ void
@@ -730,8 +730,8 @@ bus_space_write_region_8(t, h, o, a, c)
 	bus_size_t		o, c;
 	const u_int64_t		*a;
 {
-	for (; c; a++, c--)
-		bus_space_write_8(t, h, o++, *a);
+	for (; c; a++, c--, o+=8)
+		bus_space_write_8(t, h, o, *a);
 }
 
 
@@ -769,8 +769,8 @@ bus_space_set_region_1(t, h, o, v, c)
 	bus_size_t		o, c;
 	const u_int8_t		v;
 {
-	while (c-- != 0)
-		bus_space_write_1(t, h, o++, v);
+	for (; c; c--, o++)
+		bus_space_write_1(t, h, o, v);
 }
 
 extern __inline__ void
@@ -780,8 +780,8 @@ bus_space_set_region_2(t, h, o, v, c)
 	bus_size_t		o, c;
 	const u_int16_t		v;
 {
-	while (c-- != 0)
-		bus_space_write_2(t, h, o++, v);
+	for (; c; c--, o+=2)
+		bus_space_write_2(t, h, o, v);
 }
 
 extern __inline__ void
@@ -791,8 +791,8 @@ bus_space_set_region_4(t, h, o, v, c)
 	bus_size_t		o, c;
 	const u_int32_t		v;
 {
-	while (c-- != 0)
-		bus_space_write_4(t, h, o++, v);
+	for (; c; c--, o+=4)
+		bus_space_write_4(t, h, o, v);
 }
 
 extern __inline__ void
@@ -802,8 +802,8 @@ bus_space_set_region_8(t, h, o, v, c)
 	bus_size_t		o, c;
 	const u_int64_t		v;
 {
-	while (c-- != 0)
-		bus_space_write_8(t, h, o++, v);
+	for (; c; c--, o+=8)
+		bus_space_write_8(t, h, o, v);
 }
 
 
@@ -849,7 +849,7 @@ bus_space_copy_region_1(t, h1, o1, h2, o2, c)
 	bus_size_t		o1, o2;
 	bus_size_t		c;
 {
-	while (c-- > 0)
+	for (; c; c--, o1++, o2++)
 	    bus_space_write_1(t, h1, o1, bus_space_read_1(t, h2, o2));
 }
 
@@ -860,7 +860,7 @@ bus_space_copy_region_2(t, h1, o1, h2, o2, c)
 	bus_size_t		o1, o2;
 	bus_size_t		c;
 {
-	while (c-- > 0)
+	for (; c; c--, o1+=2, o2+=2)
 	    bus_space_write_2(t, h1, o1, bus_space_read_2(t, h2, o2));
 }
 
@@ -871,7 +871,7 @@ bus_space_copy_region_4(t, h1, o1, h2, o2, c)
 	bus_size_t		o1, o2;
 	bus_size_t		c;
 {
-	while (c-- > 0)
+	for (; c; c--, o1+=4, o2+=4)
 	    bus_space_write_4(t, h1, o1, bus_space_read_4(t, h2, o2));
 }
 
@@ -882,7 +882,7 @@ bus_space_copy_region_8(t, h1, o1, h2, o2, c)
 	bus_size_t		o1, o2;
 	bus_size_t		c;
 {
-	while (c-- > 0)
+	for (; c; c--, o1+=8, o2+=8)
 	    bus_space_write_8(t, h1, o1, bus_space_read_8(t, h2, o2));
 }
 /*--------------------------------*/
