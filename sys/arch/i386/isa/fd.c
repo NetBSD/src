@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fd.c	7.4 (Berkeley) 5/25/91
- *	$Id: fd.c,v 1.20.2.21 1993/10/28 17:02:30 mycroft Exp $
+ *	$Id: fd.c,v 1.20.2.22 1993/10/28 18:49:21 mycroft Exp $
  */
 
 #ifdef DIAGNOSTIC
@@ -177,7 +177,7 @@ void fdstrategy __P((struct buf *));
 STATIC struct dkdriver fddkdriver = { fdstrategy };
 
 STATIC struct fd_type *fd_nvtotype __P((char *, int, int));
-STATIC void set_motor __P((struct fd_softc *fd, int reset));
+STATIC void set_motor __P((struct fdc_softc *fdc, int reset));
 STATIC void fd_motor_off __P((struct fd_softc *fd));
 STATIC void fd_motor_on __P((struct fd_softc *fd));
 STATIC int fdc_result __P((struct fdc_softc *fdc));
@@ -322,10 +322,12 @@ fdprobe(parent, cf, aux)
 
 	fdc = (struct fdc_softc *)parent;
 	iobase = fdc->sc_iobase;
-	out_fdc(iobase, NE7CMD_SENSED);
+	out_fdc(iobase, NE7CMD_RECAL);
 	out_fdc(iobase, fa->fa_drive);
+	delay(1000000);
+	out_fdc(iobase, NE7CMD_SENSEI);
 #if 0 /* XXXX */
-	if (fdc_result(fdc) != 1)
+	if (fdc_result(fdc) != 2)
 		return 0;
 #else
 	{int n, i;
@@ -452,13 +454,19 @@ fdstrategy(bp)
 }
 
 STATIC void
-set_motor(fd, reset)
-	struct fd_softc *fd;
+set_motor(fdc, reset)
+	struct fdc_softc *fdc;
 	int reset;
 {
-	struct	fdc_softc *fdc = (struct fdc_softc *)fd->sc_dk.dk_dev.dv_parent;
-	u_char	status = fd->sc_drive | (reset ? 0 : (FDO_FRST|FDO_FDMAEN));
+	struct fd_softc *fd;
+	u_char status;
 
+	if (fd = fdc->sc_afd)
+		status = fd->sc_drive;
+	else
+		status = 0;
+	if (!reset)
+		status |= FDO_FRST | FDO_FDMAEN;
 	if ((fd = fdc->sc_fd[0]) && (fd->sc_flags & FD_MOTOR))
 		status |= FDO_MOEN0;
 	if ((fd = fdc->sc_fd[1]) && (fd->sc_flags & FD_MOTOR))
@@ -473,7 +481,7 @@ fd_motor_off(fd)
 	int s = splbio();
 
 	fd->sc_flags &= ~FD_MOTOR;
-	set_motor(fd, 0);
+	set_motor((struct fdc_softc *)fd->sc_dk.dk_dev.dv_parent, 0);
 	splx(s);
 }
 
@@ -714,14 +722,14 @@ fdcstate(fdc)
 		}
 		if (!(fd->sc_flags & FD_MOTOR)) {
 			fd->sc_flags |= FD_MOTOR | FD_MOTOR_WAIT;
-			set_motor(fd, 0);
+			set_motor(fdc, 0);
 			fdc->sc_state = MOTORWAIT;
 			/* allow 1 second for motor to stabilize */
 			timeout((timeout_t)fd_motor_on, (caddr_t)fd, hz);
 			return 0;
 		}
 		/* at least make sure we are selected */
-		set_motor(fd, 0);
+		set_motor(fdc, 0);
 
 		/* fall through */
 	    case DOSEEK:
@@ -831,9 +839,9 @@ fdcstate(fdc)
 
 	    case DORESET:
 		/* try a reset, keep motor on */
-		set_motor(fd, 1);
+		set_motor(fdc, 1);
 		delay(100);
-		set_motor(fd, 0);
+		set_motor(fdc, 0);
 		fdc->sc_state = RESETCOMPLETE;
 		timeout((timeout_t)fd_timeout, (caddr_t)fdc, hz/2);
 		return 0;			/* will return later */
