@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.9 1998/12/03 15:56:51 mycroft Exp $	*/
+/*	$NetBSD: md.c,v 1.10 1998/12/17 20:14:44 pk Exp $	*/
 
 /*
  * Copyright (C) 1997 Mark Brinicombe
@@ -50,6 +50,10 @@
 #endif	/* RTLD */
 
 #include "ld.h"
+#ifndef RTLD
+/* Pull in the ld(1) bits as well */
+#include "ld_i.h"
+#endif
 
 #ifdef RTLD
 /*
@@ -84,8 +88,8 @@ iflush(addr, len)
  */
 long
 md_get_addend(rp, addr)
-struct relocation_info	*rp;
-unsigned char		*addr;
+	struct relocation_info	*rp;
+	unsigned char		*addr;
 {
 	long rel;
 	
@@ -130,9 +134,9 @@ unsigned char		*addr;
 void
 md_relocate(rp, relocation, addr, relocatable_output)
 struct relocation_info	*rp;
-long			relocation;
-unsigned char		*addr;
-int			relocatable_output;
+	long		relocation;
+	unsigned char	*addr;
+	int		relocatable_output;
 {
 	/*
 	 * XXX
@@ -169,55 +173,6 @@ int			relocatable_output;
 	}
 }
 
-#ifndef	RTLD
-/*
- * Machine dependent part of claim_rrs_reloc().
- * Set RRS relocation type.
- */
-int
-md_make_reloc(rp, r, type)
-struct relocation_info	*rp, *r;
-int			type;
-{
-	/* Copy most attributes */
-	r->r_pcrel = rp->r_pcrel;
-	r->r_length = rp->r_length;
-	r->r_neg = rp->r_neg;
-	r->r_baserel = rp->r_baserel;
-	r->r_jmptable = rp->r_jmptable;
-	r->r_relative = rp->r_relative;
-
-	return 0;
-}
-#endif	/* RTLD */
-
-/*
- * Set up a transfer from jmpslot at OFFSET (relative to the PLT table)
- * to the binder slot (which is at offset 0 of the PLT).
- */
-void
-md_make_jmpslot(sp, offset, index)
-jmpslot_t	*sp;
-long		offset;
-long		index;
-{
-	/*
-	 * Build the jump slot as follows
-	 *
-	 *	ldr	ip, [pc]
-	 *	add	pc, pc, ip
-	 *	.word	rel_addr
-	 *	.word	reloc_index
-	 */
-	sp->opcode1 = GETRELADDR;
-	sp->opcode2 = ADDPC;
-	sp->address = - (offset + 12);
-	sp->reloc_index = index;
-#ifdef RTLD
-	iflush(sp, sizeof(jmpslot_t));
-#endif	/* RTLD */
-}
-
 /*
  * Set up a "direct" transfer (ie. not through the run-time binder) from
  * jmpslot at OFFSET to ADDR. Used by `ld' when the SYMBOLIC flag is on,
@@ -230,10 +185,10 @@ extern       void		binder_entry __P((void));
 
 void
 md_fix_jmpslot(sp, offset, addr, first)
-jmpslot_t	*sp;
-long		offset;
-u_long		addr;
-int		first;
+	jmpslot_t	*sp;
+	long		offset;
+	u_long		addr;
+	int		first;
 {
 	/*
 	 * For jmpslot 0 (the binder)
@@ -286,13 +241,72 @@ int		first;
 	}
 }
 
+void
+md_set_breakpoint(where, savep)
+	long	where;
+	long	*savep;
+{
+	*savep = *(long *)where;
+	*(long *)where = TRAP;
+#ifdef RTLD
+	iflush((long *)where, sizeof(long));
+#endif	/* RTLD */	
+}
+
+
+#ifndef	RTLD
+/*
+ * Machine dependent part of claim_rrs_reloc().
+ * Set RRS relocation type.
+ */
+int
+md_make_reloc(rp, r, type)
+	struct relocation_info	*rp, *r;
+	int			type;
+{
+	/* Copy most attributes */
+	r->r_pcrel = rp->r_pcrel;
+	r->r_length = rp->r_length;
+	r->r_neg = rp->r_neg;
+	r->r_baserel = rp->r_baserel;
+	r->r_jmptable = rp->r_jmptable;
+	r->r_relative = rp->r_relative;
+
+	return 0;
+}
+
+/*
+ * Set up a transfer from jmpslot at OFFSET (relative to the PLT table)
+ * to the binder slot (which is at offset 0 of the PLT).
+ */
+void
+md_make_jmpslot(sp, offset, index)
+	jmpslot_t	*sp;
+	long		offset;
+	long		index;
+{
+	/*
+	 * Build the jump slot as follows
+	 *
+	 *	ldr	ip, [pc]
+	 *	add	pc, pc, ip
+	 *	.word	rel_addr
+	 *	.word	reloc_index
+	 */
+	sp->opcode1 = GETRELADDR;
+	sp->opcode2 = ADDPC;
+	sp->address = - (offset + 12);
+	sp->reloc_index = index;
+}
+
+
 /*
  * Update the relocation record for a RRS jmpslot.
  */
 void
 md_make_jmpreloc(rp, r, type)
-struct relocation_info	*rp, *r;
-int			type;
+	struct relocation_info	*rp, *r;
+	int			type;
 {
 	r->r_address += 8;
 	r->r_pcrel = 0;
@@ -308,8 +322,8 @@ int			type;
  */
 void
 md_make_gotreloc(rp, r, type)
-struct relocation_info	*rp, *r;
-int			type;
+	struct relocation_info	*rp, *r;
+	int			type;
 {
 	r->r_pcrel = 0;
 	r->r_length = 2;
@@ -325,7 +339,7 @@ int			type;
  */
 void
 md_make_cpyreloc(rp, r)
-struct relocation_info	*rp, *r;
+	struct relocation_info	*rp, *r;
 {
 	r->r_pcrel = 0;
 	r->r_length = 2;
@@ -335,28 +349,14 @@ struct relocation_info	*rp, *r;
 	r->r_relative = 0;
 }
 
-void
-md_set_breakpoint(where, savep)
-long	where;
-long	*savep;
-{
-	*savep = *(long *)where;
-	*(long *)where = TRAP;
-#ifdef RTLD
-	iflush((long *)where, sizeof(long));
-#endif	/* RTLD */	
-}
-
-#ifndef RTLD
-
 /*
  * Initialize (output) exec header such that useful values are
  * obtained from subsequent N_*() macro evaluations.
  */
 void
 md_init_header(hp, magic, flags)
-struct exec	*hp;
-int		magic, flags;
+	struct exec	*hp;
+	int		magic, flags;
 {
 	N_SETMAGIC((*hp), magic, MID_ARM6, flags);
 
@@ -374,7 +374,7 @@ int		magic, flags;
 
 void
 md_swapin_exec_hdr(h)
-struct exec *h;
+	struct exec *h;
 {
 	/* NetBSD: Always leave magic alone */
 	int skip = 1;
@@ -384,7 +384,7 @@ struct exec *h;
 
 void
 md_swapout_exec_hdr(h)
-struct exec *h;
+	struct exec *h;
 {
 	/* NetBSD: Always leave magic alone */
 	int skip = 1;
@@ -394,8 +394,8 @@ struct exec *h;
 
 void
 md_swapout_jmpslot(j, n)
-jmpslot_t	*j;
-int		n;
+	jmpslot_t	*j;
+	int		n;
 {
 	for (; n; n--, j++) {
 		j->opcode1 = md_swap_long(j->opcode1);
@@ -420,8 +420,8 @@ int		n;
 
 void
 md_swapin_reloc(r, n)
-struct relocation_info *r;
-int n;
+	struct relocation_info *r;
+	int n;
 {
 	int	bits;
 
@@ -453,8 +453,8 @@ int n;
 
 void
 md_swapout_reloc(r, n)
-struct relocation_info *r;
-int n;
+	struct relocation_info *r;
+	int n;
 {
 	int	bits;
 
