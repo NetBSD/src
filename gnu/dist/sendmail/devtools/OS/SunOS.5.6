@@ -1,4 +1,4 @@
-#	Id: SunOS.5.6,v 8.14.18.2 2000/06/05 17:29:47 gshapiro Exp
+#	Id: SunOS.5.6,v 8.14.18.3 2000/12/14 01:04:46 rand Exp
 define(`confCC', `gcc')
 define(`confLDOPTS_SO',`-G')
 define(`confSONAME',`-h')
@@ -19,3 +19,24 @@ sysexits.h:
 		ln -s /usr/include/sysexits.h; \
 	fi
 POPDIVERT
+
+
+ifelse(confBLDVARIANT, `DEBUG',
+dnl Debug build
+`
+	define(`confOPTIMIZE',`-g')
+',
+dnl Optimized build
+confBLDVARIANT, `OPTIMIZED',
+`
+	define(`confOPTIMIZE',`-O')
+',
+dnl Purify build
+confBLDVARIANT, `PURIFY',
+`
+	define(`confOPTIMIZE',`-g')
+',
+dnl default
+`
+	define(`confOPTIMIZE',`-O')
+')
