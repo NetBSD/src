@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.532 2002/06/06 23:54:48 wrstuden Exp $
+#	$NetBSD: files,v 1.533 2002/06/08 21:22:29 itojun Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -1199,7 +1199,6 @@ file	netinet6/in6_cksum.c		inet6 & !inet6_md_cksum
 file	netinet6/in6_gif.c		gif & inet6
 file	netinet6/in6_ifattach.c		inet6
 file	netinet6/in6_pcb.c		inet6
-file	netinet6/in6_prefix.c		inet6
 file	netinet6/in6_proto.c		inet6
 file	netinet6/in6_src.c		inet6
 file	netinet6/ip6_forward.c		inet6
