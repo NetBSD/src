@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_misc.c,v 1.14 1995/01/09 01:04:18 christos Exp $	 */
+/*	$NetBSD: svr4_misc.c,v 1.15 1995/01/10 00:04:03 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -86,6 +86,7 @@ static int svr4_hrtcntl	__P((struct proc *, struct svr4_hrtcntl_args *,
 			     register_t *));
 static void bsd_statfs_to_svr4_statvfs __P((const struct statfs *,
 					    struct svr4_statvfs *));
+static struct proc *svr4_pfind __P((pid_t pid));
 
 int
 svr4_wait(p, uap, retval)
@@ -650,6 +651,26 @@ svr4_ulimit(p, uap, retval)
 	}
 }
 
+
+static struct proc *
+svr4_pfind(pid)
+	pid_t pid;
+{
+	struct proc *p;
+
+	/* look in the live processes */
+	if ((p = pfind(pid)) != NULL)
+		return p;
+
+	/* look in the zombies */
+	for (p = zombproc.lh_first; p != 0; p = p->p_list.le_next)
+		if (p->p_pid == pid)
+			return p;
+
+	return NULL;
+}
+
+
 int
 svr4_pgrpsys(p, uap, retval)
 	register struct proc			*p;
@@ -677,7 +698,7 @@ svr4_pgrpsys(p, uap, retval)
 
 	case 2:			/* getsid(pid) */
 		if (SCARG(uap, pid) != 0 &&
-		    (p = pfind(SCARG(uap, pid))) == NULL)
+		    (p = svr4_pfind(SCARG(uap, pid))) == NULL)
 			return ESRCH;
 		/* 
 		 * we return the pid of the session leader for this
@@ -692,8 +713,9 @@ svr4_pgrpsys(p, uap, retval)
 	case 4:			/* getpgid(pid) */
 
 		if (SCARG(uap, pid) != 0 &&
-		    (p = pfind(SCARG(uap, pid))) == NULL)
+		    (p = svr4_pfind(SCARG(uap, pid))) == NULL)
 			return ESRCH;
+
 		*retval = (int) p->p_pgrp->pg_id;
 		return 0;
 
@@ -813,11 +835,13 @@ svr4_setinfo(pid, st, s)
 	bzero(&i, sizeof(i));
 
 	if (WIFEXITED(st)) {
-	    i.si_errno = WEXITSTATUS(st);
+	    i.si_signo = 0;
+	    i.si_status = WEXITSTATUS(st);
 	    i.si_code = SVR4_CLD_EXITED;
 	}
 	else if (WIFSTOPPED(st)) {
 	    i.si_signo = WSTOPSIG(st);
+	    i.si_status = WSTOPSIG(st);
 	    if (i.si_signo == SIGCONT)
 		i.si_code = SVR4_CLD_CONTINUED;
 	    else
@@ -825,16 +849,21 @@ svr4_setinfo(pid, st, s)
 	}
 	else {
 	    i.si_signo = WTERMSIG(st);
+	    i.si_status = WTERMSIG(st);
 	    i.si_code = SVR4_CLD_KILLED;
 	}
 
 	if (WCOREDUMP(st)) {
-	    i.si_addr = (svr4_caddr_t) 0xfeedbeef;
 	    i.si_code = SVR4_CLD_DUMPED;
+	    i.si_addr = (svr4_caddr_t) 0xfeedbeef;
 	}
 
 	i.si_pid = pid;
 	i.si_uid = 0; /* XXX: */
+
+	DPRINTF(("siginfo[pid %d uid %d signo %d code %d errno %d status %d]\n",
+		 i.si_pid, i.si_uid, i.si_signo, i.si_code, i.si_errno,
+		 i.si_status));
 
 	return copyout(&i, s, sizeof(i));
 }
@@ -967,9 +996,9 @@ loop:
 
 	if (SCARG(uap, options) & SVR4_WNOHANG) {
 		*retval = 0;
-		if ((error = svr4_setinfo(-1, 0, SCARG(uap, info))) != 0)
+		if ((error = svr4_setinfo(0, 0, SCARG(uap, info))) != 0)
 			return error;
-		return ECHILD;
+		return 0;
 	}
 
 	if (error = tsleep((caddr_t)p, PWAIT | PCATCH, "svr4_wait", 0))

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stream.c,v 1.2 1994/11/18 02:54:04 christos Exp $	 */
+/*	$NetBSD: svr4_stream.c,v 1.3 1995/01/10 00:04:06 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -165,6 +165,33 @@ svr4_timod(fp, ioc, p)
 	switch (ioc->cmd) {
 	case SVR4_TI_GETINFO:
 		DPRINTF(("TI_GETINFO\n"));
+		{
+			struct svr4_infocmd info;
+
+			bzero(&info, sizeof(info));
+
+			if ((error = copyin(ioc->buf, &info, ioc->len)) != 0)
+				return error;
+
+			if (info.cmd != SVR4_TI_INFO_REQUEST)
+				return EINVAL;
+
+			info.cmd = SVR4_TI_INFO_REPLY;
+			info.tsdu = 0;
+			info.etsdu = 1;
+			info.cdata = -2;
+			info.ddata = -2;
+			info.addr = 16;
+			info.opt = -1;
+			info.tidu = 16384;
+			info.serv = 2;
+			info.current = 0;
+			info.provider = 2;
+
+			ioc->len = sizeof(info);
+			if ((error = copyout(&info, ioc->buf, ioc->len)) != 0)
+				return error;
+		}
 		return 0;
 
 	case SVR4_TI_OPTMGMT:

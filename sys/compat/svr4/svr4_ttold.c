@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_ttold.c,v 1.3 1995/01/09 01:04:22 christos Exp $	 */
+/*	$NetBSD: svr4_ttold.c,v 1.4 1995/01/10 00:04:13 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -161,11 +161,24 @@ svr4_ttoldioctl(fp, cmd, data, p, retval)
 
 	switch (cmd) {
 	case SVR4_TIOCGPGRP:
-		return copyout(&p->p_pgrp->pg_id, data,
-			       sizeof(p->p_pgrp->pg_id));
+		{
+			pid_t pid;
+
+			if ((error = copyin(data, &pid, sizeof(pid))) != 0)
+				return error;
+
+			return (*ctl)(fp, TIOCGPGRP, (caddr_t) &pid, p);
+		}
 
 	case SVR4_TIOCSPGRP:
-		return (*ctl)(fp, TIOCSPGRP, data, p);
+		{
+			pid_t pid;
+
+			if ((error = copyin(data, &pid, sizeof(pid))) != 0)
+				return error;
+
+			return (*ctl)(fp, TIOCSPGRP, (caddr_t) &pid, p);
+		}
 
 	case SVR4_TIOCGETP:
 		{

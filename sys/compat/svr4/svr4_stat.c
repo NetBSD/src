@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stat.c,v 1.6 1994/11/18 02:54:02 christos Exp $	 */
+/*	$NetBSD: svr4_stat.c,v 1.7 1995/01/10 00:04:05 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -320,21 +320,27 @@ svr4_uname(p, uap, retval)
 	register_t			*retval;
 {
 	struct svr4_utsname	sut;
-	extern struct utsname	utsname;
+	extern char ostype[], hostname[], osrelease[], version[], machine[];
 
-	/* first update utsname just as with NetBSD uname() */
-	bcopy(hostname, utsname.nodename, sizeof(utsname.nodename));
-	utsname.nodename[sizeof(utsname.nodename) - 1] = '\0';
 
-	/* then copy it over into SVR4 struct utsname */
 	bzero(&sut, sizeof(sut));
-	bcopy(utsname.sysname, sut.sysname, sizeof(utsname.sysname));
-	bcopy(utsname.nodename, sut.nodename, sizeof(utsname.nodename));
-	bcopy(utsname.release, sut.release, sizeof(utsname.release));
-	bcopy(utsname.version, sut.version, sizeof(utsname.version));
-	bcopy(utsname.machine, sut.machine, sizeof(utsname.machine));
 
-	return copyout((caddr_t) & sut, (caddr_t) SCARG(uap, name),
+	strncpy(sut.sysname, ostype, sizeof(sut.sysname));
+	sut.sysname[sizeof(sut.sysname) - 1] = '\0';
+
+	strncpy(sut.nodename, hostname, sizeof(sut.nodename));
+	sut.nodename[sizeof(sut.nodename) - 1] = '\0';
+
+	strncpy(sut.release, osrelease, sizeof(sut.release));
+	sut.release[sizeof(sut.release) - 1] = '\0';
+
+	strncpy(sut.version, version, sizeof(sut.version));
+	sut.version[sizeof(sut.version) - 1] = '\0';
+
+	strncpy(sut.machine, machine, sizeof(sut.machine));
+	sut.machine[sizeof(sut.machine) - 1] = '\0';
+
+	return copyout((caddr_t) &sut, (caddr_t) SCARG(uap, name),
 		       sizeof(struct svr4_utsname));
 }
 
@@ -344,36 +350,38 @@ svr4_systeminfo(p, uap, retval)
 	register struct svr4_systeminfo_args	*uap;
 	register_t				*retval;
 {
-	extern struct utsname	utsname;
 	char *str;
 	int name;
 	int error;
 	long len;
+	extern char ostype[], hostname[], osrelease[],
+		    version[], machine[], domainname[];
+
 	u_int rlen = SCARG(uap, len);
 
 	switch (SCARG(uap, what)) {
 	case SVR4_SI_SYSNAME:
-		str = utsname.sysname;
+		str = ostype;
 		break;
 
 	case SVR4_SI_HOSTNAME:
-		name = KERN_HOSTNAME;
-		return kern_sysctl(&name, 1, SCARG(uap, buf), &rlen, 0, 0);
+		str = hostname;
+		break;
 
 	case SVR4_SI_RELEASE:
-		str = utsname.release;
+		str = osrelease;
 		break;
 
 	case SVR4_SI_VERSION:
-		str = utsname.version;
+		str = version;
 		break;
 
 	case SVR4_SI_MACHINE:
-		str = utsname.machine;
+		str = machine;
 		break;
 
 	case SVR4_SI_ARCHITECTURE:
-		str = utsname.machine;
+		str = machine;
 		break;
 
 	case SVR4_SI_HW_SERIAL:
@@ -381,12 +389,12 @@ svr4_systeminfo(p, uap, retval)
 		break;
 
 	case SVR4_SI_HW_PROVIDER:
-		str = utsname.sysname;
+		str = ostype;
 		break;
 
 	case SVR4_SI_SRPC_DOMAIN:
-		name = KERN_DOMAINNAME;
-		return kern_sysctl(&name, 1, SCARG(uap, buf), &rlen, 0, 0);
+		str = domainname;
+		break;
 
 	case SVR4_SI_SET_HOSTNAME:
 		if (error = suser(p->p_ucred, &p->p_acflag))
@@ -406,8 +414,8 @@ svr4_systeminfo(p, uap, retval)
 	}
 
 	len = strlen(str) + 1;
-	if (len > SCARG(uap, len))
-		len = SCARG(uap, len);
+	if (len > rlen)
+		len = rlen;
 
 	return copyout(str, SCARG(uap, buf), len);
 }
