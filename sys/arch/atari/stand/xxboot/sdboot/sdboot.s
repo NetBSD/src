@@ -1,4 +1,4 @@
-/*	$NetBSD: sdboot.s,v 1.4 2001/09/05 19:48:13 thomas Exp $	*/
+/*	$NetBSD: sdboot.s,v 1.5 2002/04/15 09:30:00 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Waldi Ravens
@@ -33,12 +33,12 @@
 #include "xxboot.h"
 
 #ifdef __ELF__
-	.globl	_start, main, fill, end
+	.globl	_start, main, fill
 
 	.text
 _start:
 #else
-	.globl	start, main, fill, end
+	.globl	start, main, fill
 
 	.text
 start:
