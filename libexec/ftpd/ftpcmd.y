@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpcmd.y,v 1.59 2000/12/18 02:32:51 lukem Exp $	*/
+/*	$NetBSD: ftpcmd.y,v 1.60 2001/04/01 23:04:31 aidan Exp $	*/
 
 /*-
  * Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
 #if 0
 static char sccsid[] = "@(#)ftpcmd.y	8.3 (Berkeley) 4/6/94";
 #else
-__RCSID("$NetBSD: ftpcmd.y,v 1.59 2000/12/18 02:32:51 lukem Exp $");
+__RCSID("$NetBSD: ftpcmd.y,v 1.60 2001/04/01 23:04:31 aidan Exp $");
 #endif
 #endif /* not lint */
 
@@ -121,7 +121,8 @@ static	int cmd_type;
 static	int cmd_form;
 static	int cmd_bytesz;
 
-char	cbuf[512];
+char	cbuf[FTP_BUFLEN];
+char	*cmdp;
 char	*fromname;
 
 %}
@@ -169,20 +170,18 @@ char	*fromname;
 %type	<s> pathstring pathname password username
 %type	<s> mechanism_name base64data prot_code
 
-%start	cmd_list
+%start	cmd_sel
 
 %%
 
-cmd_list
-	: /* empty */
-
-	| cmd_list cmd
+cmd_sel
+	: cmd
 		{
 			fromname = NULL;
 			restart_point = (off_t) 0;
 		}
 
-	| cmd_list rcmd
+	| rcmd
 
 	;
 
@@ -454,7 +453,9 @@ cmd
 
 	| ABOR check_login CRLF
 		{
-			if ($2)
+			if (is_oob)
+				abor();
+			else if ($2)
 				reply(225, "ABOR command successful.");
 		}
 
@@ -687,7 +688,10 @@ cmd
 		
 	| STAT CRLF
 		{
-			statcmd();
+			if (is_oob)
+				statxfer();
+			else
+				statcmd();
 		}
 
 	| HELP CRLF
@@ -1170,6 +1174,7 @@ check_login
 #define	SITECMD	7	/* SITE command */
 #define	NSTR	8	/* Number followed by a string */
 #define NOARGS	9	/* No arguments allowed */
+#define EOLN	10	/* End of line */
 
 struct tab cmdtab[] = {
 				/* From RFC 959, in order defined (5.3.1) */
@@ -1198,7 +1203,7 @@ struct tab cmdtab[] = {
 	{ "REST", REST, ARGS,	1,	"<sp> offset (restart command)" },
 	{ "RNFR", RNFR, STR1,	1,	"<sp> file-name" },
 	{ "RNTO", RNTO, STR1,	1,	"<sp> file-name" },
-	{ "ABOR", ABOR, NOARGS,	1,	"(abort operation)" },
+	{ "ABOR", ABOR, NOARGS,	4,	"(abort operation)" },
 	{ "DELE", DELE, STR1,	1,	"<sp> file-name" },
 	{ "RMD",  RMD,  STR1,	1,	"<sp> path-name" },
 	{ "MKD",  MKD,  STR1,	1,	"<sp> path-name" },
@@ -1207,7 +1212,7 @@ struct tab cmdtab[] = {
 	{ "NLST", NLST, OSTR,	1,	"[ <sp> path-name ]" },
 	{ "SITE", SITE, SITECMD, 1,	"site-cmd [ <sp> arguments ]" },
 	{ "SYST", SYST, NOARGS,	1,	"(get type of operating system)" },
-	{ "STAT", STAT, OSTR,	1,	"[ <sp> path-name ]" },
+	{ "STAT", STAT, OSTR,	4,	"[ <sp> path-name ]" },
 	{ "HELP", HELP, OSTR,	1,	"[ <sp> <string> ]" },
 	{ "NOOP", NOOP, NOARGS,	2,	"" },
 
@@ -1217,9 +1222,9 @@ struct tab cmdtab[] = {
 	{ "PROT", PROT, STR1,	1,	"<sp> prot-code" },
 	{ "PBSZ", PBSZ, ARGS,	1,	"<sp> decimal-integer" },
 	{ "CCC",  CCC,  NOARGS,	1,	"(Disable data protection)" },
-	{ "MIC",  MIC,  STR1,	1,	"<sp> base64data" },
-	{ "CONF", CONF, STR1,	1,	"<sp> base64data" },
-	{ "ENC",  ENC,  STR1,	1,	"<sp> base64data" },
+	{ "MIC",  MIC,  STR1,	4,	"<sp> base64data" },
+	{ "CONF", CONF, STR1,	4,	"<sp> base64data" },
+	{ "ENC",  ENC,  STR1,	4,	"<sp> base64data" },
 
 				/* From RFC 2389, in order defined */
 	{ "FEAT", FEAT, NOARGS,	1,	"(display extended features)" },
@@ -1418,6 +1423,29 @@ toolong(int signo)
 	dologout(1);
 }
 
+void
+ftp_handle_line(char *cp)
+{
+	cmdp = cp;
+	yyparse();
+}
+
+void
+ftp_loop(void)
+{
+	while (1) {
+		(void) signal(SIGALRM, toolong);
+		(void) alarm(curclass.timeout);
+		if (getline(cbuf, sizeof(cbuf)-1, stdin) == NULL) {
+			reply(221, "You could at least say goodbye.");
+			dologout(0);
+		}
+		(void) alarm(0);
+		ftp_handle_line(cbuf);
+	}
+	/*NOTREACHED*/
+}
+
 static int
 yylex(void)
 {
@@ -1431,33 +1459,29 @@ yylex(void)
 
 	case CMD:
 		hasyyerrored = 0;
-		(void) signal(SIGALRM, toolong);
-		(void) alarm(curclass.timeout);
-		if (getline(cbuf, sizeof(cbuf)-1, stdin) == NULL) {
-			reply(221, "You could at least say goodbye.");
-			dologout(0);
-		}
-		(void) alarm(0);
-		if ((cp = strchr(cbuf, '\r'))) {
+		if ((cp = strchr(cmdp, '\r'))) {
 			*cp = '\0';
 #if HAVE_SETPROCTITLE
-			if (strncasecmp(cbuf, "PASS", 4) != 0 &&
-			    strncasecmp(cbuf, "ACCT", 4) != 0)
-				setproctitle("%s: %s", proctitle, cbuf);
+			if (strncasecmp(cmdp, "PASS", 4) != 0 &&
+			    strncasecmp(cmdp, "ACCT", 4) != 0)
+				setproctitle("%s: %s", proctitle, cmdp);
 #endif /* HAVE_SETPROCTITLE */
 			*cp++ = '\n';
 			*cp = '\0';
 		}
-		if ((cp = strpbrk(cbuf, " \n")))
-			cpos = cp - cbuf;
+		if ((cp = strpbrk(cmdp, " \n")))
+			cpos = cp - cmdp;
 		if (cpos == 0)
 			cpos = 4;
-		c = cbuf[cpos];
-		cbuf[cpos] = '\0';
-		p = lookup(cmdtab, cbuf);
-		cbuf[cpos] = c;
+		c = cmdp[cpos];
+		cmdp[cpos] = '\0';
+		p = lookup(cmdtab, cmdp);
+		cmdp[cpos] = c;
 		if (p != NULL) {
-			if (! CMD_IMPLEMENTED(p)) {
+			if (is_oob && ! CMD_OOB(p)) {
+				/* command will be handled in-band */
+				return (0);
+			} else if (! CMD_IMPLEMENTED(p)) {
 				reply(502, "%s command not implemented.",
 				    p->name);
 				hasyyerrored = 1;
@@ -1470,17 +1494,17 @@ yylex(void)
 		break;
 
 	case SITECMD:
-		if (cbuf[cpos] == ' ') {
+		if (cmdp[cpos] == ' ') {
 			cpos++;
 			return (SP);
 		}
-		cp = &cbuf[cpos];
+		cp = &cmdp[cpos];
 		if ((cp2 = strpbrk(cp, " \n")))
-			cpos = cp2 - cbuf;
-		c = cbuf[cpos];
-		cbuf[cpos] = '\0';
+			cpos = cp2 - cmdp;
+		c = cmdp[cpos];
+		cmdp[cpos] = '\0';
 		p = lookup(sitetab, cp);
-		cbuf[cpos] = c;
+		cmdp[cpos] = c;
 		if (p != NULL) {
 			if (!CMD_IMPLEMENTED(p)) {
 				reply(502, "SITE %s command not implemented.",
@@ -1495,8 +1519,8 @@ yylex(void)
 		break;
 
 	case OSTR:
-		if (cbuf[cpos] == '\n') {
-			state = CMD;
+		if (cmdp[cpos] == '\n') {
+			state = EOLN;
 			return (CRLF);
 		}
 		/* FALLTHROUGH */
@@ -1504,7 +1528,7 @@ yylex(void)
 	case STR1:
 	case ZSTR1:
 	dostr1:
-		if (cbuf[cpos] == ' ') {
+		if (cmdp[cpos] == ' ') {
 			cpos++;
 			state = state == OSTR ? STR2 : state+1;
 			return (SP);
@@ -1512,41 +1536,41 @@ yylex(void)
 		break;
 
 	case ZSTR2:
-		if (cbuf[cpos] == '\n') {
-			state = CMD;
+		if (cmdp[cpos] == '\n') {
+			state = EOLN;
 			return (CRLF);
 		}
 		/* FALLTHROUGH */
 
 	case STR2:
-		cp = &cbuf[cpos];
+		cp = &cmdp[cpos];
 		n = strlen(cp);
 		cpos += n - 1;
 		/*
 		 * Make sure the string is nonempty and \n terminated.
 		 */
-		if (n > 1 && cbuf[cpos] == '\n') {
-			cbuf[cpos] = '\0';
+		if (n > 1 && cmdp[cpos] == '\n') {
+			cmdp[cpos] = '\0';
 			yylval.s = xstrdup(cp);
-			cbuf[cpos] = '\n';
+			cmdp[cpos] = '\n';
 			state = ARGS;
 			return (STRING);
 		}
 		break;
 
 	case NSTR:
-		if (cbuf[cpos] == ' ') {
+		if (cmdp[cpos] == ' ') {
 			cpos++;
 			return (SP);
 		}
-		if (isdigit(cbuf[cpos])) {
-			cp = &cbuf[cpos];
-			while (isdigit(cbuf[++cpos]))
+		if (isdigit(cmdp[cpos])) {
+			cp = &cmdp[cpos];
+			while (isdigit(cmdp[++cpos]))
 				;
-			c = cbuf[cpos];
-			cbuf[cpos] = '\0';
+			c = cmdp[cpos];
+			cmdp[cpos] = '\0';
 			yylval.i = atoi(cp);
-			cbuf[cpos] = c;
+			cmdp[cpos] = c;
 			state = STR1;
 			return (NUMBER);
 		}
@@ -1554,26 +1578,26 @@ yylex(void)
 		goto dostr1;
 
 	case ARGS:
-		if (isdigit(cbuf[cpos])) {
-			cp = &cbuf[cpos];
-			while (isdigit(cbuf[++cpos]))
+		if (isdigit(cmdp[cpos])) {
+			cp = &cmdp[cpos];
+			while (isdigit(cmdp[++cpos]))
 				;
-			c = cbuf[cpos];
-			cbuf[cpos] = '\0';
+			c = cmdp[cpos];
+			cmdp[cpos] = '\0';
 			yylval.i = atoi(cp);
-			cbuf[cpos] = c;
+			cmdp[cpos] = c;
 			return (NUMBER);
 		}
-		if (strncasecmp(&cbuf[cpos], "ALL", 3) == 0
-		 && !isalnum(cbuf[cpos + 3])) {
+		if (strncasecmp(&cmdp[cpos], "ALL", 3) == 0
+		 && !isalnum(cmdp[cpos + 3])) {
 			yylval.s = xstrdup("ALL");
 			cpos += 3;
 			return ALL;
 		}
-		switch (cbuf[cpos++]) {
+		switch (cmdp[cpos++]) {
 
 		case '\n':
-			state = CMD;
+			state = EOLN;
 			return (CRLF);
 
 		case ' ':
@@ -1634,22 +1658,27 @@ yylex(void)
 		break;
 
 	case NOARGS:
-		if (cbuf[cpos] == '\n') {
-			state = CMD;
+		if (cmdp[cpos] == '\n') {
+			state = EOLN;
 			return (CRLF);
 		}
-		c = cbuf[cpos];
-		cbuf[cpos] = '\0';
-		reply(501, "'%s' command does not take any arguments.", cbuf);
+		c = cmdp[cpos];
+		cmdp[cpos] = '\0';
+		reply(501, "'%s' command does not take any arguments.", cmdp);
 		hasyyerrored = 1;
-		cbuf[cpos] = c;
+		cmdp[cpos] = c;
 		break;
+
+	case EOLN:
+		state = CMD;
+		return (0);
 
 	default:
 		fatal("Unknown state in scanner.");
 	}
 	yyerror(NULL);
 	state = CMD;
+	is_oob = 0;
 	longjmp(errcatch, 0);
 	/* NOTREACHED */
 }
@@ -1660,11 +1689,11 @@ yyerror(char *s)
 {
 	char *cp;
 
-	if (hasyyerrored)
+	if (hasyyerrored || is_oob)
 		return;
-	if ((cp = strchr(cbuf,'\n')) != NULL)
+	if ((cp = strchr(cmdp,'\n')) != NULL)
 		*cp = '\0';
-	reply(500, "'%s': command not understood.", cbuf);
+	reply(500, "'%s': command not understood.", cmdp);
 	hasyyerrored = 1;
 }
 

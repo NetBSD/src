@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.38 2001/02/04 22:04:11 christos Exp $	*/
+/*	$NetBSD: extern.h,v 1.39 2001/04/01 23:04:30 aidan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -118,6 +118,9 @@
 # define STRTOLL(x,y,z)	strtoll(x,y,z)
 #endif
 
+#define FTP_BUFLEN	512
+
+void	abor(void);
 void	blkfree(char **);
 void	closedataconn(FILE *);
 char   *conffilename(const char *);
@@ -171,6 +174,7 @@ void	show_chdir_messages(int);
 void	sizecmd(const char *);
 void	statcmd(void);
 void	statfilecmd(const char *);
+void	statxfer(void);
 void	store(const char *, const char *, int);
 LLT	strsuftoll(const char *);
 void	user(const char *);
@@ -213,7 +217,8 @@ struct tab {
 	char	*name;
 	short	 token;
 	short	 state;
-	short	 flags;	/* 1 if command implemented, 2 if has options */
+	short	 flags;	/* 1 if command implemented, 2 if has options,
+	                   4 if can occur OOB */
 	char	*help;
 	char	*options;
 };
@@ -271,9 +276,8 @@ struct ftpclass {
 	mode_t		 umask;		/* Umask to use */
 };
 
-#ifndef YYEMPTY
-extern  int		yyparse(void);
-#endif
+extern void		ftp_loop(void);
+extern void		ftp_handle_line(char *);
 
 #ifndef	GLOBAL
 #define	GLOBAL	extern
@@ -309,11 +313,12 @@ GLOBAL	struct passwd  *pw;
 GLOBAL	int		quietmessages;
 GLOBAL	char		remotehost[MAXHOSTNAMELEN+1];
 GLOBAL	off_t		restart_point;
-GLOBAL	char		tmpline[7];
+GLOBAL	char		tmpline[FTP_BUFLEN];
 GLOBAL	sig_atomic_t	transflag;
 GLOBAL	int		type;
 GLOBAL	int		usedefault;		/* for data transfers */
 GLOBAL	const char     *version;
+GLOBAL	int		is_oob;
 
 						/* total file data bytes */
 GLOBAL	off_t		total_data_in,  total_data_out,  total_data;
@@ -330,7 +335,8 @@ extern	struct tab	cmdtab[];
 
 
 #define CMD_IMPLEMENTED(x)	((x)->flags != 0)
-#define CMD_HAS_OPTIONS(x)	((x)->flags == 2)
+#define CMD_HAS_OPTIONS(x)	((x)->flags & 0x2)
+#define CMD_OOB(x)		((x)->flags & 0x4)
 
 #define	CPUTC(c, f)	do { \
 				putc(c, f); total_bytes++; total_bytes_out++; \
