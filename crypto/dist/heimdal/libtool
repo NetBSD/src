@@ -1,7 +1,7 @@
 #! /usr/pkg/bin/bash
 
 # libtoolT - Provide generalized library-building support services.
-# Generated automatically by  (GNU heimdal 0.6.1)
+# Generated automatically by  (GNU heimdal 0.6.2)
 # NOTE: Changes made to this file will be lost: look at ltmain.sh.
 #
 # Copyright (C) 1996, 1997, 1998, 1999, 2000, 2001
@@ -44,7 +44,7 @@ available_tags=" CXX F77"
 
 # ### BEGIN LIBTOOL CONFIG
 
-# Libtool was configured on host schelly.pdc.kth.se:
+# Libtool was configured on host hummel.it.su.se:
 
 # Shell to use when invoking shell scripts.
 SHELL="/usr/pkg/bin/bash"
@@ -66,7 +66,7 @@ fast_install=needless
 
 # The host system.
 host_alias=
-host=i386-unknown-netbsdelf2.0.
+host=i386-unknown-netbsdelf2.0C
 
 # An echo program that does not interpret backslashes.
 echo="echo"
@@ -6739,7 +6739,7 @@ build_old_libs=`case $build_libtool_libs in yes) $echo no;; *) $echo yes;; esac`
 # End:
 # ### BEGIN LIBTOOL TAG CONFIG: CXX
 
-# Libtool was configured on host schelly.pdc.kth.se:
+# Libtool was configured on host hummel.it.su.se:
 
 # Shell to use when invoking shell scripts.
 SHELL="/usr/pkg/bin/bash"
@@ -6761,7 +6761,7 @@ fast_install=needless
 
 # The host system.
 host_alias=
-host=i386-unknown-netbsdelf2.0.
+host=i386-unknown-netbsdelf2.0C
 
 # An echo program that does not interpret backslashes.
 echo="echo"
@@ -7035,7 +7035,7 @@ include_expsyms=""
 
 # ### BEGIN LIBTOOL TAG CONFIG: F77
 
-# Libtool was configured on host schelly.pdc.kth.se:
+# Libtool was configured on host hummel.it.su.se:
 
 # Shell to use when invoking shell scripts.
 SHELL="/usr/pkg/bin/bash"
@@ -7057,7 +7057,7 @@ fast_install=needless
 
 # The host system.
 host_alias=
-host=i386-unknown-netbsdelf2.0.
+host=i386-unknown-netbsdelf2.0C
 
 # An echo program that does not interpret backslashes.
 echo="echo"
