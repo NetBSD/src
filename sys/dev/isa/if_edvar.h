@@ -1,4 +1,4 @@
-/*	$NetBSD: if_edvar.h,v 1.1.2.1 1997/07/30 07:05:35 marc Exp $	*/
+/*	$NetBSD: if_edvar.h,v 1.1.2.2 1997/10/14 01:06:07 thorpej Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -13,8 +13,7 @@
  * the author assume any responsibility for damages incurred with its use.
  *
  * Currently supports the Western Digital/SMC 8003 and 8013 series, the SMC
- * Elite Ultra (8216), the 3Com 3c503, the NE1000 and NE2000, and a variety of
- * similar clones.
+ * Elite Ultra (8216), and the 3Com 3c503.
  */
 
 /*
@@ -64,7 +63,6 @@ struct ed_softc {
 	int	mem_size;	/* total NIC memory size */
 	int	mem_ring;	/* offset of RX ring-buffer (in NIC mem) */
 
-	u_char	mem_shared;	/* NIC memory is shared with host */
 	u_char	txb_cnt;	/* number of transmit buffers */
 	u_char	txb_inuse;	/* number of transmit buffers active */
 
@@ -81,8 +79,6 @@ struct ed_softc {
 
 void edattach __P((struct device *self));
 int edintr __P((void *));
-int ed_find_Novell __P((struct ed_softc *, struct cfdata *,
-    bus_space_tag_t, bus_space_handle_t));
 
 #define	NIC_PUT(t, bah, nic, reg, val)	\
 	bus_space_write_1((t), (bah), ((nic) + (reg)), (val))
