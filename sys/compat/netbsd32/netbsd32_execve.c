@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_execve.c,v 1.11 2002/08/25 21:18:18 thorpej Exp $	*/
+/*	$NetBSD: netbsd32_execve.c,v 1.12 2002/08/26 21:06:02 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_execve.c,v 1.11 2002/08/25 21:18:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_execve.c,v 1.12 2002/08/26 21:06:02 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -315,7 +315,7 @@ netbsd32_execve2(p, uap, retval)
 
 	stack = (char *) (vm->vm_minsaddr - len);
 	/* Now copy argc, args & environ to new stack */
-	error = (*pack.ep_es->es_copyargs)(&pack, &arginfo,
+	error = (*pack.ep_es->es_copyargs)(p, &pack, &arginfo,
 	    &stack, argp);
 	if (error) {
 #ifdef DEBUG

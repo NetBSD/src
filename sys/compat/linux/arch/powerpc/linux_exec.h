@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.h,v 1.7 2002/08/12 07:59:31 mrg Exp $  */
+/*	$NetBSD: linux_exec.h,v 1.8 2002/08/26 21:06:01 christos Exp $  */
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -119,7 +119,7 @@ typedef struct {
 
 #ifdef _KERNEL
 __BEGIN_DECLS
-int linux_elf32_copyargs __P((struct exec_package *,
+int linux_elf32_copyargs __P((struct proc *, struct exec_package *,
     struct ps_strings *, char **, void *)); 
 __END_DECLS
 #endif /* _KERNEL */

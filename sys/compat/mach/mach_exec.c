@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_exec.c,v 1.5 2001/11/13 02:09:02 lukem Exp $	 */
+/*	$NetBSD: mach_exec.c,v 1.6 2002/08/26 21:06:01 christos Exp $	 */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.5 2001/11/13 02:09:02 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.6 2002/08/26 21:06:01 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,14 +96,14 @@ const struct emul emul_mach = {
  * extra information in case of dynamic binding.
  */
 int
-exec_mach_copyargs(struct exec_package *pack, struct ps_strings *arginfo,
-    char **stackp, void *argp)
+exec_mach_copyargs(struct proc *p, struct exec_package *pack,
+    struct ps_strings *arginfo, char **stackp, void *argp)
 {
 	size_t len;
 	size_t zero = 0;
 	int error;
 
-	if ((error = copyargs(pack, arginfo, stackp, argp)) != 0) {
+	if ((error = copyargs(p, pack, arginfo, stackp, argp)) != 0) {
 		DPRINTF(("mach: copyargs failed\n"));
 		return error;
 	}
