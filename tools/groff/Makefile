@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2002/01/31 15:24:36 tv Exp $
+#	$NetBSD: Makefile,v 1.12 2002/01/31 22:43:51 tv Exp $
 
 MODULE=		groff
 
@@ -39,8 +39,18 @@ ${TMACDIR}/tmac.an.old: ${DIST}/tmac/tmac.an _installtmac
 afterinstall: ${TMACDIR}/tmac.an
 ${TMACDIR}/tmac.an: ${TMACDIR}/tmac.andoc _installtmac
 
+# The silly walk below is because sometimes the files begin with "g",
+# and sometimes not, depending on what the host tool has at build time.
+
+afterinstall: install.grofflinks
+install.grofflinks:
 .for F in eqn groff indxbib pic refer soelim tbl
-afterinstall: ${TOOLDIR}/bin/nb${F}
+	@cd ${.CURDIR} && ${MAKE} ${TOOLDIR}/bin/nb${F}
+
+.if exists(${TOOLDIR}/lib/groff/g${F})
+${TOOLDIR}/bin/nb${F}: ${TOOLDIR}/lib/groff/g${F}
+.else
 ${TOOLDIR}/bin/nb${F}: ${TOOLDIR}/lib/groff/${F}
+.endif
 	ln -f ${.ALLSRC} ${.TARGET}
 .endfor

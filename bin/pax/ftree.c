@@ -1,4 +1,4 @@
-/*	$NetBSD: ftree.c,v 1.16 2002/01/29 10:20:29 tv Exp $	*/
+/*	$NetBSD: ftree.c,v 1.17 2002/01/31 22:43:35 tv Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -74,11 +74,11 @@
  */
 
 #include <sys/cdefs.h>
-#ifndef lint
+#if defined(__RCSID) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)ftree.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: ftree.c,v 1.16 2002/01/29 10:20:29 tv Exp $");
+__RCSID("$NetBSD: ftree.c,v 1.17 2002/01/31 22:43:35 tv Exp $");
 #endif
 #endif /* not lint */
 
@@ -86,20 +86,17 @@ __RCSID("$NetBSD: ftree.c,v 1.16 2002/01/29 10:20:29 tv Exp $");
 #include <sys/time.h>
 #include <sys/stat.h>
 #include <sys/param.h>
-#include <unistd.h>
-#include <string.h>
-#include <stdio.h>
 #include <ctype.h>
 #include <errno.h>
+#include <fts.h>
+#include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 #include "pax.h"
 #include "ftree.h"
 #include "extern.h"
 #include "mtree.h"
-
-#if HAVE_FTS_H
-#include <fts.h>
-#endif
 
 /*
  * routines to interface with the fts library function.

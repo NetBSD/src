@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.264 2002/01/29 19:17:49 thorpej Exp $
+#	$NetBSD: bsd.own.mk,v 1.265 2002/01/31 22:43:42 tv Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -110,9 +110,11 @@ OBJC=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-gcc
 .endif
 
 ASN1_COMPILE=	${TOOLDIR}/bin/nbasn1_compile
+CAP_MKDB=	${TOOLDIR}/bin/nbcap_mkdb
 COMPILE_ET=	${TOOLDIR}/bin/nbcompile_et
 CONFIG=		${TOOLDIR}/bin/nbconfig
 CRUNCHGEN=	MAKE=${.MAKE:Q} ${TOOLDIR}/bin/nbcrunchgen
+CTAGS=		${TOOLDIR}/bin/nbctags
 DBSYM=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-dbsym
 EQN=		${TOOLDIR}/bin/nbeqn
 GENCAT=		${TOOLDIR}/bin/nbgencat
@@ -125,6 +127,7 @@ INSTALL_INFO=	${TOOLDIR}/bin/nbinstall-info
 LEX=		${TOOLDIR}/bin/nblex
 LINT=		CC=${CC:Q} ${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-lint
 LORDER=		NM=${NM:Q} ${TOOLDIR}/bin/nblorder
+M4=		${TOOLDIR}/bin/nbm4
 MAKEFS=		${TOOLDIR}/bin/nbmakefs
 MAKEINFO=	${TOOLDIR}/bin/nbmakeinfo
 MAKEWHATIS=	${TOOLDIR}/bin/nbmakewhatis
@@ -144,6 +147,7 @@ SPARCINSTALLBOOT=${TOOLDIR}/bin/nbsparc-installboot
 SUNLABEL=	${TOOLDIR}/bin/nbsunlabel
 TBL=		${TOOLDIR}/bin/nbtbl
 TSORT=		${TOOLDIR}/bin/nbtsort -q
+UUDECODE=	${TOOLDIR}/bin/nbuudecode
 YACC=		${TOOLDIR}/bin/nbyacc
 ZIC=		${TOOLDIR}/bin/nbzic
 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2002/01/24 03:21:07 lukem Exp $
+#	$NetBSD: Makefile,v 1.8 2002/01/31 22:44:02 tv Exp $
 #
 
 PROG=	makefs
@@ -7,8 +7,6 @@ SRCS=	makefs.c walk.c \
 	getid.c misc.c spec.c pack_dev.c stat_flags.c strsuftoull.c \
 	ffs_alloc.c ffs_balloc.c ffs_bswap.c ffs_subr.c ffs_tables.c ufs_bmap.c 
 MAN=	makefs.8
-DPADD+=	${LIBUTIL}
-LDADD+=	-lutil
 
 DDSRC=		${.CURDIR}/../../bin/dd
 LSSRC=		${.CURDIR}/../../bin/ls
@@ -24,5 +22,8 @@ CPPFLAGS+=	-I${.CURDIR} \
 WARNS?=	2
 
 .ifndef HOSTPROG
+DPADD+=	${LIBUTIL}
+LDADD+=	-lutil
+
 .include <bsd.prog.mk>
 .endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: stat_flags.c,v 1.12 2002/01/29 00:07:28 tv Exp $	*/
+/*	$NetBSD: stat_flags.c,v 1.13 2002/01/31 22:43:34 tv Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -33,31 +33,26 @@
  * SUCH DAMAGE.
  */
 
-#if HAVE_CONFIG_H
-#include "config.h"
-#else
-#define HAVE_FTS_H 1
-#define HAVE_STRUCT_STAT_ST_FLAGS 1
-#endif
-
 #include <sys/cdefs.h>
-#ifndef lint
+#if defined(__RCSID) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)stat_flags.c	8.2 (Berkeley) 7/28/94";
 #else
-__RCSID("$NetBSD: stat_flags.c,v 1.12 2002/01/29 00:07:28 tv Exp $");
+__RCSID("$NetBSD: stat_flags.c,v 1.13 2002/01/31 22:43:34 tv Exp $");
 #endif
 #endif /* not lint */
 
+#if HAVE_CONFIG_H
+#include "config.h"
+#else
+#define HAVE_STRUCT_STAT_ST_FLAGS 1
+#endif
+
 #include <sys/types.h>
 #include <sys/stat.h>
-
+#include <fts.h>
 #include <stddef.h>
 #include <string.h>
-
-#if HAVE_FTS_H
-#include <fts.h>
-#endif
 
 #include "stat_flags.h"
 

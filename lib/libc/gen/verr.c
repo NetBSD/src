@@ -1,4 +1,4 @@
-/*	$NetBSD: verr.c,v 1.8 2002/01/28 23:01:43 tv Exp $	*/
+/*	$NetBSD: verr.c,v 1.9 2002/01/31 22:43:38 tv Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)err.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: verr.c,v 1.8 2002/01/28 23:01:43 tv Exp $");
+__RCSID("$NetBSD: verr.c,v 1.9 2002/01/31 22:43:38 tv Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -47,9 +47,8 @@ __RCSID("$NetBSD: verr.c,v 1.8 2002/01/28 23:01:43 tv Exp $");
 #endif
 #if HAVE_CONFIG_H
 #include "config.h"
-#else
-#include <err.h>
 #endif
+#include <err.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
