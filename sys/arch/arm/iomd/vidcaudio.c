@@ -1,4 +1,4 @@
-/*	$NetBSD: vidcaudio.c,v 1.36 2004/01/17 23:41:20 bjh21 Exp $	*/
+/*	$NetBSD: vidcaudio.c,v 1.37 2004/01/18 14:42:09 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson
@@ -65,7 +65,7 @@
 
 #include <sys/param.h>	/* proc.h */
 
-__KERNEL_RCSID(0, "$NetBSD: vidcaudio.c,v 1.36 2004/01/17 23:41:20 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidcaudio.c,v 1.37 2004/01/18 14:42:09 bjh21 Exp $");
 
 #include <sys/audioio.h>
 #include <sys/conf.h>   /* autoconfig functions */
@@ -352,7 +352,7 @@ vidcaudio_set_params(void *addr, int setmode, int usemode,
 	int sample_period, ch;
 
 	if ((setmode & AUMODE_PLAY) == 0)
-		return;
+		return 0;
 
 	if (sc->sc_is16bit) {
 		/* ARM7500ish, 16-bit, two-channel */
