@@ -1,4 +1,4 @@
-/*	$NetBSD: msgs.c,v 1.13 1998/12/19 20:08:03 christos Exp $	*/
+/*	$NetBSD: msgs.c,v 1.14 1999/04/20 07:24:49 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)msgs.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: msgs.c,v 1.13 1998/12/19 20:08:03 christos Exp $");
+__RCSID("$NetBSD: msgs.c,v 1.14 1999/04/20 07:24:49 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -77,8 +77,10 @@ __RCSID("$NetBSD: msgs.c,v 1.13 1998/12/19 20:08:03 christos Exp $");
 #include <sys/param.h>
 #include <sys/ioctl.h>
 #include <sys/stat.h>
+
 #include <ctype.h>
 #include <dirent.h>
+#include <err.h>
 #include <errno.h>
 #include <pwd.h>
 #include <setjmp.h>
@@ -90,6 +92,7 @@ __RCSID("$NetBSD: msgs.c,v 1.13 1998/12/19 20:08:03 christos Exp $");
 #include <termios.h>
 #include <time.h>
 #include <unistd.h>
+
 #include "pathnames.h"
 
 #define CMODE	0664		/* bounds file creation mode */
@@ -784,8 +787,13 @@ ask(prompt)
 				strcpy(fname, "Messages");
 		}
 		else {
+			int	fd;
+
 			strcpy(fname, _PATH_TMP);
-			mktemp(fname);
+			fd = mkstemp(fname);
+			if (fd == -1)
+				err(1, "mkstemp failed");
+			close(fd);
 			sprintf(cmdbuf, _PATH_MAIL, fname);
 			mailing = YES;
 		}
