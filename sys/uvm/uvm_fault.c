@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.2 1998/02/06 22:31:45 thorpej Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.3 1998/02/07 02:19:55 chs Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -1247,7 +1247,7 @@ Case2:
      */
 
     locked = uvmfault_relock(&ufi);
-    if (locked) 
+    if (locked && amap)
       simple_lock(&amap->am_l);
     simple_lock(&uobj->vmobjlock);
     
