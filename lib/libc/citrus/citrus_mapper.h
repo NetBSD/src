@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_mapper.h,v 1.2 2003/07/10 08:50:44 tshiozak Exp $	*/
+/*	$NetBSD: citrus_mapper.h,v 1.3 2003/07/12 15:39:19 tshiozak Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -52,12 +52,12 @@ __END_DECLS
 #include "citrus_mapper_local.h"
 
 /* return values of _citrus_mapper_convert */
-#define _CITRUS_MAPPER_CONVERT_SUCCESS	(0)
-#define _CITRUS_MAPPER_CONVERT_INVAL	(1)
-#define _CITRUS_MAPPER_CONVERT_SRC_MORE	(2)
-#define _CITRUS_MAPPER_CONVERT_DST_MORE	(3)
-#define _CITRUS_MAPPER_CONVERT_ILSEQ	(4)
-#define _CITRUS_MAPPER_CONVERT_FATAL	(5)
+#define _CITRUS_MAPPER_CONVERT_SUCCESS		(0)
+#define _CITRUS_MAPPER_CONVERT_NONIDENTICAL	(1)
+#define _CITRUS_MAPPER_CONVERT_SRC_MORE		(2)
+#define _CITRUS_MAPPER_CONVERT_DST_MORE		(3)
+#define _CITRUS_MAPPER_CONVERT_ILSEQ		(4)
+#define _CITRUS_MAPPER_CONVERT_FATAL		(5)
 
 /*
  * _citrus_mapper_convert:

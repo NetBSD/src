@@ -1,4 +1,4 @@
-/*	$NetBSD: yacc.y,v 1.1 2003/06/26 06:30:15 tshiozak Exp $	*/
+/*	$NetBSD: yacc.y,v 1.2 2003/07/12 15:39:21 tshiozak Exp $	*/
 
 %{
 /*-
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: yacc.y,v 1.1 2003/06/26 06:30:15 tshiozak Exp $");
+__RCSID("$NetBSD: yacc.y,v 1.2 2003/07/12 15:39:21 tshiozak Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -69,7 +69,7 @@ static char		*map_name;
 static int		map_type;
 static zone_t		src_zone;
 static u_int32_t	colmask, rowmask;
-static u_int32_t	dst_invalid, dst_unit_bits;
+static u_int32_t	dst_invalid, dst_ilseq, oob_mode, dst_unit_bits;
 static void		(*putfunc)(void *, size_t, u_int32_t) = 0;
 
 static u_int32_t	src_next;
@@ -80,7 +80,9 @@ static u_int32_t	done_flag = 0;
 #define DF_NAME			0x00000002
 #define DF_SRC_ZONE		0x00000004
 #define DF_DST_INVALID		0x00000008
-#define DF_DST_UNIT_BITS	0x00000010
+#define DF_DST_ILSEQ		0x00000010
+#define DF_DST_UNIT_BITS	0x00000020
+#define DF_OOB_MODE		0x00000040
 
 static void	dump_file(void);
 static void	setup_map(void);
@@ -88,7 +90,9 @@ static void	set_type(int);
 static void	set_name(char *);
 static void	set_src_zone(const zone_t *);
 static void	set_dst_invalid(u_int32_t);
+static void	set_dst_ilseq(u_int32_t);
 static void	set_dst_unit_bits(u_int32_t);
+static void	set_oob_mode(u_int32_t);
 static void	calc_next(void);
 static int	check_src(u_int32_t, u_int32_t);
 static void	store(const linear_zone_t *, u_int32_t, int);
@@ -104,15 +108,17 @@ static void	put32(void *, size_t, u_int32_t);
 	linear_zone_t	lz_value;
 }
 
-%token			R_TYPE R_NAME R_SRC_ZONE R_DST_INVALID R_DST_UNIT_BITS
+%token			R_TYPE R_NAME R_SRC_ZONE R_DST_UNIT_BITS
+%token			R_DST_INVALID R_DST_ILSEQ
 %token			R_BEGIN_MAP R_END_MAP R_INVALID R_ROWCOL
+%token			R_ILSEQ R_OOB_MODE
 %token			R_LN
 %token <i_value>	L_IMM
 %token <s_value>	L_STRING
 
 %type <z_value>		zone
 %type <lz_value>	src
-%type <i_value>		dst types
+%type <i_value>		dst types oob_mode_sel
 
 %%
 
@@ -125,7 +131,9 @@ property	: /* empty */
 		| property type
 		| property src_zone
 		| property dst_invalid
+		| property dst_ilseq
 		| property dst_unit_bits
+		| property oob_mode
 
 name		: R_NAME L_STRING { set_name($2); $2 = NULL; }
 type		: R_TYPE types { set_type($2); }
@@ -143,8 +151,12 @@ zone		: L_IMM '-' L_IMM {
 		}
 
 dst_invalid	: R_DST_INVALID L_IMM { set_dst_invalid($2); }
+dst_ilseq	: R_DST_ILSEQ L_IMM { set_dst_ilseq($2); }
 dst_unit_bits	: R_DST_UNIT_BITS L_IMM { set_dst_unit_bits($2); }
+oob_mode	: R_OOB_MODE oob_mode_sel { set_oob_mode($2); }
 
+oob_mode_sel	: R_INVALID { $$ = _CITRUS_MAPPER_STD_OOB_NONIDENTICAL; }
+		| R_ILSEQ { $$ = _CITRUS_MAPPER_STD_OOB_ILSEQ; }
 
 mapping		: begin_map map_elems R_END_MAP
 begin_map	: R_BEGIN_MAP lns { setup_map(); }
@@ -163,6 +175,10 @@ dst		: L_IMM
 		| R_INVALID
 		{
 			$$ = dst_invalid;
+		}
+		| R_ILSEQ
+		{
+			$$ = dst_ilseq;
 		}
 
 src		: /* empty */
@@ -245,6 +261,7 @@ static void
 alloc_table(void)
 {
 	size_t i;
+	u_int32_t val;
 
 	table_size =
 	    (src_zone.row_end-src_zone.row_begin+1)*
@@ -255,8 +272,18 @@ alloc_table(void)
 		exit(1);
 	}
 
+	switch (oob_mode) {
+	case _CITRUS_MAPPER_STD_OOB_NONIDENTICAL:
+		val = dst_invalid;
+		break;
+	case _CITRUS_MAPPER_STD_OOB_ILSEQ:
+		val = dst_ilseq;
+		break;
+	default:
+		_DIAGASSERT(0);
+	}
 	for (i=0; i<table_size; i++)
-		(*putfunc)(table, i, dst_invalid);
+		(*putfunc)(table, i, val);
 }
 
 static void
@@ -274,6 +301,10 @@ setup_map(void)
 
 	if ((done_flag & DF_DST_INVALID) == 0)
 		dst_invalid = 0xFFFFFFFF;
+	if ((done_flag & DF_DST_ILSEQ) == 0)
+		dst_ilseq = 0xFFFFFFFE;
+	if ((done_flag & DF_OOB_MODE) == 0)
+		oob_mode = _CITRUS_MAPPER_STD_OOB_NONIDENTICAL;
 
 	alloc_table();
 }
@@ -299,6 +330,23 @@ create_rowcol_info(struct _region *r)
 	put32(ptr, ofs, 0); /* pad */
 
 	_region_init(r, ptr, _CITRUS_MAPPER_STD_ROWCOL_INFO_SIZE);
+}
+
+static void
+create_rowcol_ext_ilseq_info(struct _region *r)
+{
+	void *ptr;
+	size_t ofs;
+
+	ofs = 0;
+	ptr = malloc(_CITRUS_MAPPER_STD_ROWCOL_EXT_ILSEQ_SIZE);
+	if (ptr==NULL)
+		err(EXIT_FAILURE, "malloc");
+
+	put32(ptr, ofs, oob_mode); ofs++;
+	put32(ptr, ofs, dst_ilseq); ofs++;
+
+	_region_init(r, ptr, _CITRUS_MAPPER_STD_ROWCOL_EXT_ILSEQ_SIZE);
 }
 
 #define CHKERR(ret, func, a)						\
@@ -332,6 +380,11 @@ dump_file(void)
 	create_rowcol_info(&data);
 	CHKERR(ret, _db_factory_add_by_s,
 	       (df, _CITRUS_MAPPER_STD_SYM_INFO, &data, 1));
+
+	/* ilseq extension */
+	create_rowcol_ext_ilseq_info(&data);
+	CHKERR(ret, _db_factory_add_by_s,
+	       (df, _CITRUS_MAPPER_STD_SYM_ROWCOL_EXT_ILSEQ, &data, 1));
 
 	/* store table */
 	_region_init(&data, table, table_size*dst_unit_bits/8);
@@ -438,6 +491,32 @@ set_dst_invalid(u_int32_t val)
 	dst_invalid = val;
 
 	done_flag |= DF_DST_INVALID;
+}
+static void
+set_dst_ilseq(u_int32_t val)
+{
+
+	if (done_flag & DF_DST_ILSEQ) {
+		warning("DST_ILSEQ is duplicated. ignored this one");
+		return;
+	}
+
+	dst_ilseq = val;
+
+	done_flag |= DF_DST_ILSEQ;
+}
+static void
+set_oob_mode(u_int32_t val)
+{
+
+	if (done_flag & DF_OOB_MODE) {
+		warning("OOB_MODE is duplicated. ignored this one");
+		return;
+	}
+
+	oob_mode = val;
+
+	done_flag |= DF_OOB_MODE;
 }
 static void
 set_dst_unit_bits(u_int32_t val)

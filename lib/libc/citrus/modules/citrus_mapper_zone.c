@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_mapper_zone.c,v 1.3 2003/07/01 08:33:06 tshiozak Exp $	*/
+/*	$NetBSD: citrus_mapper_zone.c,v 1.4 2003/07/12 15:39:21 tshiozak Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_mapper_zone.c,v 1.3 2003/07/01 08:33:06 tshiozak Exp $");
+__RCSID("$NetBSD: citrus_mapper_zone.c,v 1.4 2003/07/12 15:39:21 tshiozak Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -368,7 +368,7 @@ _citrus_mapper_zone_mapper_convert(struct _citrus_mapper * __restrict cm,
 		col = src;
 		row = 0;
 		if (col < mz->mz_col.z_begin || col > mz->mz_col.z_end)
-			return _CITRUS_MAPPER_CONVERT_INVAL;
+			return _CITRUS_MAPPER_CONVERT_NONIDENTICAL;
 		if (mz->mz_col_offset>0)
 			col += (u_int32_t)mz->mz_col_offset;
 		else
@@ -379,7 +379,7 @@ _citrus_mapper_zone_mapper_convert(struct _citrus_mapper * __restrict cm,
 		row = src >> mz->mz_col_bits;
 		if (row < mz->mz_row.z_begin || row > mz->mz_row.z_end ||
 		    col < mz->mz_col.z_begin || col > mz->mz_col.z_end)
-			return _CITRUS_MAPPER_CONVERT_INVAL;
+			return _CITRUS_MAPPER_CONVERT_NONIDENTICAL;
 		if (mz->mz_col_offset>0)
 			col += (u_int32_t)mz->mz_col_offset;
 		else

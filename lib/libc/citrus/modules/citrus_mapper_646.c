@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_mapper_646.c,v 1.2 2003/06/27 17:53:31 tshiozak Exp $	*/
+/*	$NetBSD: citrus_mapper_646.c,v 1.3 2003/07/12 15:39:20 tshiozak Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_mapper_646.c,v 1.2 2003/06/27 17:53:31 tshiozak Exp $");
+__RCSID("$NetBSD: citrus_mapper_646.c,v 1.3 2003/07/12 15:39:20 tshiozak Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -57,6 +57,7 @@ _CITRUS_MAPPER_DEF_OPS(mapper_646);
 
 /* ---------------------------------------------------------------------- */
 
+#define ILSEQ	0xFFFFFFFE
 #define INVALID	0xFFFFFFFF
 #define SPECIALS(x)				\
 	x(0x23)					\
@@ -222,13 +223,13 @@ _citrus_mapper_646_mapper_convert(struct _citrus_mapper * __restrict cm,
 	if (m6->m6_forward) {
 		/* forward */
 		if (src>=0x80)
-			return _MAPPER_CONVERT_INVAL;
-#define FORWARD(x)				\
-if (src==(x)) {					\
-	if (m6->m6_map[INDEX_##x]==INVALID)	\
-		return _MAPPER_CONVERT_INVAL;	\
-	*dst = m6->m6_map[INDEX_##x];		\
-	return 0;				\
+			return _MAPPER_CONVERT_ILSEQ;
+#define FORWARD(x)					\
+if (src==(x)) {						\
+	if (m6->m6_map[INDEX_##x]==INVALID)		\
+		return _MAPPER_CONVERT_NONIDENTICAL;	\
+	*dst = m6->m6_map[INDEX_##x];			\
+	return 0;					\
 } else
 		SPECIALS(FORWARD);
 		*dst = src;
@@ -239,11 +240,11 @@ if (m6->m6_map[INDEX_##x]!=INVALID && src==m6->m6_map[INDEX_##x]) {	\
 	*dst = (x);							\
 	return 0;							\
 } else if (src==(x))							\
-	return _MAPPER_CONVERT_INVAL;					\
+	return _MAPPER_CONVERT_ILSEQ;					\
 else
 		SPECIALS(BACKWARD);
 		if (src>=0x80)
-			return _MAPPER_CONVERT_INVAL;
+			return _MAPPER_CONVERT_ILSEQ;
 		*dst = src;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_mapper_std_file.h,v 1.1 2003/06/25 09:51:47 tshiozak Exp $	*/
+/*	$NetBSD: citrus_mapper_std_file.h,v 1.2 2003/07/12 15:39:20 tshiozak Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -46,6 +46,16 @@ struct _citrus_mapper_std_rowcol_info_x {
 	u_int32_t		rcx_dst_unit_bits;
 	u_int32_t		rcx_pad;
 } __packed;
-#define _CITRUS_MAPPER_STD_ROWCOL_INFO_SIZE	32
+#define _CITRUS_MAPPER_STD_ROWCOL_INFO_SIZE		32
+
+/* rowcol oob extension info */
+#define _CITRUS_MAPPER_STD_SYM_ROWCOL_EXT_ILSEQ		"rowcol_ext_ilseq"
+struct _citrus_mapper_std_rowcol_ext_ilseq_info_x {
+#define _CITRUS_MAPPER_STD_OOB_NONIDENTICAL	0
+#define _CITRUS_MAPPER_STD_OOB_ILSEQ		1
+	u_int32_t		eix_oob_mode;
+	u_int32_t		eix_dst_ilseq;
+} __packed;
+#define _CITRUS_MAPPER_STD_ROWCOL_EXT_ILSEQ_SIZE	8
 
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_mapper_serial.c,v 1.1 2003/06/25 09:51:46 tshiozak Exp $	*/
+/*	$NetBSD: citrus_mapper_serial.c,v 1.2 2003/07/12 15:39:20 tshiozak Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_mapper_serial.c,v 1.1 2003/06/25 09:51:46 tshiozak Exp $");
+__RCSID("$NetBSD: citrus_mapper_serial.c,v 1.2 2003/07/12 15:39:20 tshiozak Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -249,9 +249,10 @@ _citrus_mapper_parallel_mapper_convert(struct _citrus_mapper * __restrict cm,
 		if (ret == _MAPPER_CONVERT_SUCCESS) {
 			*dst = tmp;
 			return _MAPPER_CONVERT_SUCCESS;
-		}
+		} else if (ret == _MAPPER_CONVERT_ILSEQ)
+			return _MAPPER_CONVERT_ILSEQ;
 	}
-	return _MAPPER_CONVERT_INVAL;
+	return _MAPPER_CONVERT_NONIDENTICAL;
 }
 
 static void

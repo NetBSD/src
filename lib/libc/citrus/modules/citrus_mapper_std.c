@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_mapper_std.c,v 1.2 2003/06/27 17:53:31 tshiozak Exp $	*/
+/*	$NetBSD: citrus_mapper_std.c,v 1.3 2003/07/12 15:39:20 tshiozak Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_mapper_std.c,v 1.2 2003/06/27 17:53:31 tshiozak Exp $");
+__RCSID("$NetBSD: citrus_mapper_std.c,v 1.3 2003/07/12 15:39:20 tshiozak Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -97,8 +97,15 @@ rowcol_convert(struct _citrus_mapper_std * __restrict ms,
 	}
 	if (row < rc->rc_src_row_begin || row > rc->rc_src_row_end ||
 	    col < rc->rc_src_col_begin || col > rc->rc_src_col_end) {
-		*dst = rc->rc_dst_invalid;
-		return _MAPPER_CONVERT_INVAL;
+		switch (rc->rc_oob_mode) {
+		case _CITRUS_MAPPER_STD_OOB_NONIDENTICAL:
+			*dst = rc->rc_dst_invalid;
+			return _MAPPER_CONVERT_NONIDENTICAL;
+		case _CITRUS_MAPPER_STD_OOB_ILSEQ:
+			return _MAPPER_CONVERT_ILSEQ;
+		default:
+			return _MAPPER_CONVERT_FATAL;
+		}
 	}
 
 	idx  =
@@ -119,8 +126,10 @@ rowcol_convert(struct _citrus_mapper_std * __restrict ms,
 
 	if (conv == rc->rc_dst_invalid) {
 		*dst = rc->rc_dst_invalid;
-		return _MAPPER_CONVERT_INVAL;
+		return _MAPPER_CONVERT_NONIDENTICAL;
 	}
+	if (conv == rc->rc_dst_ilseq)
+		return _MAPPER_CONVERT_ILSEQ;
 
 	*dst = conv;
 
@@ -134,6 +143,7 @@ rowcol_init(struct _citrus_mapper_std *ms)
 	int ret;
 	struct _citrus_mapper_std_rowcol *rc = &ms->ms_rowcol;
 	const struct _citrus_mapper_std_rowcol_info_x *rcx;
+	const struct _citrus_mapper_std_rowcol_ext_ilseq_info_x *eix;
 	struct _region r;
 	u_int64_t table_size;
 
@@ -153,7 +163,7 @@ rowcol_init(struct _citrus_mapper_std *ms)
 	ret = _db_lookup_by_s(ms->ms_db, _CITRUS_MAPPER_STD_SYM_INFO, &r, NULL);
 	if (ret) {
 		if (ret==ENOENT)
-			ret =EFTYPE;
+			ret = EFTYPE;
 		return ret;
 	}
 	if (_region_size(&r) < sizeof(*rcx))
@@ -173,6 +183,21 @@ do {							\
 	CONV_ROWCOL(rc, rcx, src_col_end);
 	CONV_ROWCOL(rc, rcx, dst_unit_bits);
 
+	/* ilseq extension */
+	rc->rc_oob_mode = _CITRUS_MAPPER_STD_OOB_NONIDENTICAL;
+	rc->rc_dst_ilseq = rc->rc_dst_invalid;
+	ret = _db_lookup_by_s(ms->ms_db,
+			      _CITRUS_MAPPER_STD_SYM_ROWCOL_EXT_ILSEQ,
+			      &r, NULL);
+	if (ret && ret != ENOENT)
+		return ret;
+	if (_region_size(&r) < sizeof(*eix))
+		return EFTYPE;
+	if (ret == 0) {
+		eix = _region_head(&r);
+		rc->rc_oob_mode = be32toh(eix->eix_oob_mode);
+		rc->rc_dst_ilseq = be32toh(eix->eix_dst_ilseq);
+	}
 	rc->rc_src_col_width = rc->rc_src_col_end - rc->rc_src_col_begin +1;
 
 	/* validation checks */

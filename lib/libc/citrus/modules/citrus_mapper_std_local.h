@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_mapper_std_local.h,v 1.1 2003/06/25 09:51:47 tshiozak Exp $	*/
+/*	$NetBSD: citrus_mapper_std_local.h,v 1.2 2003/07/12 15:39:21 tshiozak Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -41,6 +41,8 @@ struct _citrus_mapper_std_rowcol {
 	_citrus_index_t		rc_src_col_end;
 	_citrus_index_t		rc_src_col_width;
 	_citrus_index_t		rc_dst_unit_bits;
+	int			rc_oob_mode;
+	_citrus_index_t		rc_dst_ilseq;
 };
 
 struct _citrus_mapper_std;
