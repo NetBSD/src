@@ -1,4 +1,4 @@
-/*	$NetBSD: statvfs.h,v 1.1 2004/04/21 01:05:43 christos Exp $	 */
+/*	$NetBSD: statvfs.h,v 1.2 2004/04/23 08:44:33 kleink Exp $	 */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@ struct statvfs {
 	char	f_mntonname[_VFS_MNAMELEN];  /* directory on which mounted */
 	char	f_mntfromname[_VFS_MNAMELEN];  /* mounted file system */
 
-} statvfs_t;
+};
 
 #if defined(_NETBSD_SOURCE) && !defined(_POSIX_SOURCE) && \
     !defined(_XOPEN_SOURCE)
