@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.4,v 1.1.2.48 2002/09/11 00:45:50 itojun Exp $
+#	$NetBSD: CHANGES-1.5.4,v 1.1.2.49 2002/09/17 22:13:38 itojun Exp $
 
 A complete list of changes from NetBSD 1.5.3 to NetBSD 1.5.4:
 
@@ -33,7 +33,7 @@ crypto/dist/openssl/ssl/ssl_sess.c		patch
 
 lib/libc/rpc/xdr_array.c			1.13-1.14
 
-  Fix bounds checking, eliminating an overflow condition.
+  Fix bounds checking, eliminating an overflow condition.  Fixes SA#2002-011.
 
 crypto/Makefile.openssl				1.2.2.3 -> 1.7
 crypto/dist/openssl/CHANGES			1.1.1.1.2.2 -> 1.6
@@ -1233,155 +1233,193 @@ lib/libtelnet/shlib_version			1.8
 usr.bin/openssl/Makefile			1.8-1.10
 
   Update OpenSSL to version 0.9.6g.  Includes major version bump for
-  libcrypto and all the dependent libraries.
+  libcrypto and all the dependent libraries.  Fixes SA#2002-009.
 
 lib/libkrb5/Makefile                            1.11
 
   Use libc md4, not openssl md4.
 
 usr.sbin/rpcbind/util.c				1.5
+
   Move routines which fill in tbuf in addrmerge(), making sure tbuf is always
   initialised.
 
 include/netdb.h					1.27 via patch
-  remove unused/unsupported AI_xx.  notified by PR 18072
+
+  Remove unused/unsupported AI_xx.  Fixes PR#18072.
 
 sys/netinet6/esp_input.c			1.24
-  check packet length before fetching ESP crypto checksum.  sync w/kame
+
+  Check packet length before fetching ESP crypto checksum.
 
 sys/netinet6/esp.h				1.20
 sys/netinet6/esp_core.c				1.24
 sys/netinet6/esp_output.c			1.14
-  use correct padding boundary, to correctly estimate ESP header size.
-  problem found by Arto Selonen <arto@selonen.org>
+
+  Use correct padding boundary, to correctly estimate ESP header size.
 
 usr.sbin/mtrace/mtrace.c			1.21-1.23 via patch
-  revoke root priv earlier.  check fd_set overrun (and die if overrun).
-  avoid using runtime-generated printf format string.  from xs@kittenz.org
-  indentation fix.
+
+  Revoke root priv earlier.  Check fd_set overrun (and die if
+  overrun).  avoid using runtime-generated printf format string.
+  Also fix indentation.  Fixes SA#2002-014.
 
 usr.sbin/mrinfo/mrinfo.c			1.15 via patch
-  fix an exploitable fd_set overflow in mrinfo(8).  drop root priv earlier.
-  do not use generated printf format string.  from xs@kittenz.org
+
+  Fix an exploitable fd_set overflow in mrinfo(8).  Drop root
+  privileges earlier.  Do not use generated printf format string.
+  Fixes SA#2002-014.
 
 usr.sbin/pppd/pppd/sys-bsd.c			1.39
 usr.sbin/pppd/pppd/tty.c			1.5
-  die if fd_set overruns.
+
+  Die if fd_set overruns.  Fixes SA#2002-014.
 
 etc/security					1.77-1.78 via patch
-  understand md5 password
+
+  Understand md5 password.
 
 lib/libc/locale/setlocale.c			1.38-1.40
-  fix a bug of setlocale when changing locales with LC_ALL for the first
-  argunemt and with a string containing many slashes for the second argument.
-  This bug may cause setlocale() to destroy static datas.  exploitable
-  under certain situation.
+
+  Fix a bug of setlocale when changing locales with LC_ALL for the
+  first argunemt and with a string containing many slashes for the
+  second argument.  This bug may cause setlocale() to destroy static
+  datas.  Exploitable under certain situation.  Fixes SA#2002-012.
 
 usr.sbin/cron/database.c			1.5
 usr.sbin/cron/do_command.c			1.11
+
   Instead of passing "*system*" as the fname to process_crontab()
   for the system crontab file, pass a NULL pointer instead.  This
-  prevents someone from creating a "*system*" file in the tabs directory
-  that acts as an alternate root crontab.  from openbsd
+  prevents someone from creating a "*system*" file in the tabs
+  directory that acts as an alternate root crontab.
 
 sys/nfs/nfs_socket.c				1.75
-  Initialize recm to NULL inside the loop, so that a record length of
-  NULL will not accidentallly append bogus data (the previous record).
-  Derived from a fix by Matt Dillon in FreeBSD.
+
+  Initialize recm to NULL inside the loop, so that a record length
+  of NULL will not accidentallly append bogus data (the previous
+  record).  Fixes SA#2002-013.
 
 lib/libc/net/inet_ntop.c			1.11-1.12
-  be more picky about string buffer manipulation.  hints from freebsd.
-  correct snprintf return value handling.
+
+  Be more picky about string buffer manipulation.  Correct snprintf
+  return value handling.
 
 lib/libc/net/getaddrinfo.c			1.56
 lib/libc/net/res_mkquery.c			1.22
-  correct bad practice in the code - it uses two changing variables
-  to manage buffer (buf and buflen).  we eliminate buflen and use
+
+  Correct bad practice in the code - it uses two changing variables
+  to manage buffer (buf and buflen).  Eliminate buflen and use
   fixed point (ep) as the ending pointer.
 
 usr.sbin/pppd/pppd/tty.c			1.3
-  don't try to chmod if fchmod fails when restoring the original tty modes.
-  It could cause a symlink race. Just report the fchmod failure. Reported
-  by itojun, found in FreeBSD.
+
+  Do not try to chmod if fchmod fails when restoring the original
+  tty modes.  It could cause a symlink race.  Just report the fchmod
+  failure.  Fixes SA#2002-010.
 
 lib/libc/net/getaddrinfo.c			1.50
-  remove redundant declarations of h_errno and __hostalias
+
+  Remove redundant declarations of h_errno and __hostalias.
 
 lib/libc/net/getaddrinfo.c			1.52
-  make sure "qname" argument to getanswer() is properly given.  from lukem
+
+  Make sure "qname" argument to getanswer() is properly given.
 
 lib/libc/net/getaddrinfo.c			1.54
 lib/libc/net/gethnamaddr.c			1.43,1.49-1.50
 lib/libc/net/getnetnamadr.c			1.23
-  use snprintf, string manipulation cleanups
+
+  Use snprintf, string manipulation cleanups.
 
 lib/libc/net/getaddrinfo.c			1.57-1.59
-  correct port range check and signed/unsigned mixup
+
+  Correct port range check and signed/unsigned mixup.
 
 lib/libc/net/getaddrinfo.c			1.60-1.61
-  lint clean
+
+  Lint clean.
 
 lib/libc/net/getaddrinfo.c			1.62
 lib/libc/net/gethnamaddr.c			1.51
-  drop AAAA reply with IPv4 mapped address.  sync w/kame
-  draft-itojun-v6ops-v4mapped-harmful-00.txt
+
+  Drop AAAA reply with IPv4 mapped address.  This makes the code
+  consistent with draft-itojun-v6ops-v4mapped-harmful-00.txt
 
 lib/libc/net/getaddrinfo.c			1.63
 lib/libc/net/gethnamaddr.c			1.52
 lib/libc/net/getnetnamadr.c			1.24
-  allocate 64K recieve buffer for DNS responses.
+
+  Allocate 64K recieve buffer for DNS responses.
 
 lib/libc/net/gethnamaddr.c			1.37
-  on gethostby* with NIS backend, make a lookup against ipnodes.{byname,byaddr}
-  for non-IPv4 address.  obeys solaris8 practice.
+
+  On gethostby* with NIS backend, make a lookup against
+  ipnodes.{byname,byaddr} for non-IPv4 address.  Obeys solaris8
+  practice.
 
 lib/libc/net/gethnamaddr.c			1.38
-  Varargsify dprintf to allow for format string checking
+
+  Varargsify dprintf to allow for format string checking.
 
 lib/libc/net/gethnamaddr.c			1.39
 lib/libc/net/getnetnamadr.c			1.20
-  remove redundant declarations.
+
+  Remove redundant declarations.
 
 lib/libc/net/gethnamaddr.c			1.41
-  do not reverse-lookup scoped IPv6 address.  it does not make sense as
-  there's no way to give scope identifier.  sync w/kame
+
+  Do not reverse-lookup scoped IPv6 address.  It does not make sense as
+  there's no way to give scope identifier.
 
 lib/libc/net/gethnamaddr.c			1.42
-  style
+
+  Style.
 
 lib/libc/net/gethnamaddr.c			1.45
-  do not pass uninitialized variable to nsdispatch().
+
+  Do not pass uninitialized variable to nsdispatch().
 
 lib/libc/net/gethnamaddr.c			1.48
-  query ip6.arpa then ip6.int for IPv6 reverse lookup.  follows RFC3152.
+
+  Query ip6.arpa then ip6.int for IPv6 reverse lookup.  follows RFC 3152.
 
 sys/dev/pckbc/wskbdmap_mfii.c			1.24
-  Correct spannish mapping. Fix kern/15509 by Julio Merino <juli@merino.net>.
+
+  Correct Spanish mapping. Fixes PR#15509.
 
 crypto/dist/openssl/apps/progs.h		1.3
-  more NO_xx cleanup.  can't catch these by openssl-unifdef.pl
+
+  More NO_xx cleanup.  Can't catch these by openssl-unifdef.pl
 
 etc/etc.i386/ttys				1.12 via patch
-  Do what we should have been doing long ago; use /dev/console by default as the
-  boot console tty, so that the console is on the same place that the kernel
-  dmesg output goes, whether wscons or serial.  Users who want to use tty00
-  or ttyE0 explicitly can change /etc/ttys themselves.
+
+  Do what we should have been doing long ago; use /dev/console by
+  default as the boot console tty, so that the console is on the
+  same place that the kernel dmesg output goes, whether wscons or
+  serial.  Users who want to use tty00 or ttyE0 explicitly can
+  change /etc/ttys themselves.
 
 usr.bin/getconf/getconf.c			1.17-1.18
-  Fix ancient cut and paste error which made "_POSIX_PATH_MAX" actually
-  return "_POSIX_PIPE_BUF".
+
+  Fix ancient cut and paste error which made "_POSIX_PATH_MAX"
+  actually return "_POSIX_PIPE_BUF".
 
 sys/kern/tty.c					1.139
+
   Make sure repeated TIOCSCTTY doesn't corrupt session hold count.
-  Fixes kern/17382 by David Laight.
+  Fixes PR#17382.  Fixes SA#2002-007.
 
 sys/uvm/uvm_amap_i.h				1.18 via patch
-  In amap_ref, only increment the amap's refcnt after we have established
-  the ppref array.  Otherwise, the newly ref'ed pages will be doubly
-  counted and thus never freed because the pprefcnt can't fall to 0.
+
+  In amap_ref, only increment the amap's refcnt after we have
+  established the ppref array.  Otherwise, the newly ref'ed pages
+  will be doubly counted and thus never freed because the pprefcnt
+  can't fall to 0.
 
 sys/kern/exec_aout.c				1.23
-  only create a vmcmd for the BSS if there is any BSS.  fixes PR 17834.
+
+  Only create a vmcmd for the BSS if there is any BSS.  Fixes PR#17834.
 
 sys/arch/amiga/dev/grf_cv3d.c			1.11
 sys/arch/hpcmips/dev/mq200.c			1.21
@@ -1395,46 +1433,58 @@ sys/dev/sun/bt_subr.c				1.3
 sys/dev/tc/cfb.c				1.34
 sys/dev/tc/sfb.c				1.53
 sys/dev/tc/xcfb.c				1.29
-  integer overflow.  reported by silvio@qualys.com
+
+  Fix integer overflow.
 
 sys/dev/pci/pucdata.c				1.31 via patch
-  Add Siig 20x 8 ports and and Oxford x952 cards. From Paul Shupak in
-  kern/17790.
+
+  Add Siig 20x 8 ports and and Oxford x952 cards.  Fixes PR#17790.
 
 sys/dev/scsipi/scsiconf.c			1.186 via patch
-  add quirk entry for yet another broken sony cdrom. Fix kern/17773
+
+  Add quirk entry for yet another broken Sony CD-ROM. Fixes PR#17773.
 
 lib/libc/stdlib/calloc.c			1.10-1.12
-  allow calloc(0, x) and calloc(x, 0).  sync w/openbsd
+
+  Allow calloc(0, x) and calloc(x, 0).
 
 lib/libipsec/policy_parse.y			1.8
 lib/libipsec/policy_token.l			1.7
-  plug memory leak.  from ebisawa@iij, sync w/kame
+
+  Plug memory leak.
 
 sys/netinet/ip_mroute.c				1.61
-  bring back old copyright notice lost in rev 1.15 (which is the authors'
-  intent).
+
+  Bring back old copyright notice lost in rev 1.15 (which is the
+  authors' intent).
 
 sys/netinet6/ip6_mroute.c			1.36 via patch
-  correct multicast packet MTU check.  sync w/kame
+
+  Correct multicast packet MTU check.
 
 usr.bin/join/join.c				1.21
-  finish fixing PR#15412
+
+  Finish fixing PR#15412.
 
 sys/netinet/tcp_input.c				1.154 via patch
-  always consult SS_CANTRCVMORE.  PR 18185
+
+  Always consult SS_CANTRCVMORE.  PR#18185.  Fixes SA#2002-017.
 
 usr.bin/patch/pch.c				1.13 via patch
-  accept the output of diff when the diff'd files do not end with newlines.
+
+  Accept the output of diff when the diff'd files do not end with
+  newlines.
 
 dist/bind/bin/dig/dig.c				1.6
-  fix dig -x ip6addr.  PR 18193.
+
+  Fix dig -x ip6addr.  Fixes PR#18193.
 
 sys/arch/i386/pci/pci_machdep.c			1.46
-  Add quirk for Connectix Virtual PC 5 (for Windows at least) emulated
-  PCI bridge (440BX).
-  Note that there's still a problem that emulated 21140 cannot be driven
-  by if_tlp.  Workaround is to use if_de.
+
+  Add quirk for Connectix Virtual PC 5 (for Windows at least)
+  emulated PCI bridge (440BX).  Note that there's still a problem
+  that emulated 21140 cannot be driven by if_tlp.  The workaround
+  is to use if_de.
 
 libexec/Makefile				1.43
 usr.bin/Makefile				1.126
@@ -1442,5 +1492,6 @@ distrib/sets/lists/base/mi			1.350 via patch
 distrib/sets/lists/man/mi			1.513 via patch
 distrib/sets/lists/man/obsolete.mi		1.52
 distrib/sets/lists/base/obsolete.mi		1.53
-  obsolete usr.bin/kf and libexec/kfd for security issues, and are no longer
-  needed.
+
+  Obsolete usr.bin/kf and libexec/kfd for security issues, and they
+  are no longer needed.  Fixes SA#2002-018.
