@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.74 2004/07/09 02:57:48 mycroft Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.75 2004/07/09 18:08:00 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.74 2004/07/09 02:57:48 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.75 2004/07/09 18:08:00 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2370,7 +2370,7 @@ uaudio_set_params(void *addr, int setmode, int usemode,
 
 	for (mode = AUMODE_RECORD; mode != -1;
 	     mode = mode == AUMODE_RECORD ? AUMODE_PLAY : -1) {
-		if ((setmode & mode) == 0)
+		if ((setmode & sc->sc_mode & mode) == 0)
 			continue;
 
 		p = (mode == AUMODE_PLAY) ? play : rec;
