@@ -198,7 +198,7 @@ bcmp(v1, v2, len)
 
 #ifdef NEED_STRLEN
 strlen(s1)
-	register char *s1;
+	const register char *s1;
 {
 	register int len;
 

@@ -42,6 +42,10 @@
  *	William F. Jolitz (william@ernie.berkeley.edu) 6/20/1989
  */
 
+#if __GNUC__ >= 2
+#pragma pack(1)
+#endif
+
 /*
  * Selectors
  */
@@ -194,3 +198,7 @@ struct region_descriptor {
 
 #define	NIDT	256
 #define	NRSVIDT	32		/* reserved entries for cpu exceptions */
+
+#if __GNUC__ >= 2
+#pragma pack(4)
+#endif
