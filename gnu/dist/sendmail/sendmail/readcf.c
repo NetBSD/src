@@ -12,7 +12,7 @@
  */
 
 #ifndef lint
-static char id[] = "@(#)Id: readcf.c,v 8.382 2000/04/06 18:02:33 gshapiro Exp";
+static char id[] = "@(#)Id: readcf.c,v 8.382.6.1 2000/05/27 19:56:01 gshapiro Exp";
 #endif /* ! lint */
 
 #include <sendmail.h>
@@ -1915,9 +1915,12 @@ setoption(opt, val, safe, sticky, e)
 	{
 		if (opt != 'M' || (val[0] != 'r' && val[0] != 's'))
 		{
+			int dp;
+
 			if (tTd(37, 1))
 				dprintf(" (unsafe)");
-			(void) drop_privileges(TRUE);
+			dp = drop_privileges(TRUE);
+			setstat(dp);
 		}
 	}
 	if (tTd(37, 1))

@@ -1,4 +1,4 @@
-#	Id: OSF1.V5.0,v 1.1 2000/03/23 00:14:01 gshapiro Exp
+#	Id: OSF1.V5.0,v 8.1 2000/03/23 00:14:01 gshapiro Exp
 define(`confCC', `cc -std1 -Olimit 1000')
 define(`confMAPDEF', `-DNDBM -DNIS -DMAP_REGEX')
 define(`confENVDEF', `-DHASSNPRINTF=1')
