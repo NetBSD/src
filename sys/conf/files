@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.153 1997/10/16 00:38:11 thorpej Exp $
+#	$NetBSD: files,v 1.154 1997/10/16 23:58:23 is Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -137,6 +137,10 @@ file	dev/ic/smc91cxx.c		sm
 # Interwave Am78C201 audio driver
 define	interwave
 file	dev/ic/interwave.c		interwave
+
+# TMS 320av110 MPEG2/audio driver
+define	tms320av110
+file	dev/ic/tms320av110.c		tms320av110
 
 # Novell NE2000-compatible Ethernet cards, based on the
 # National Semiconductor DS8390.

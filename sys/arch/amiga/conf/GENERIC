@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.90 1997/10/10 04:56:09 mhitch Exp $
+#	$NetBSD: GENERIC,v 1.91 1997/10/16 23:58:39 is Exp $
 
 #
 # GENERIC AMIGA
@@ -203,6 +203,9 @@ a34kbbc0	at mainbus0		# A3000/A4000 battery backed clock
 aucc*		at mainbus0		# Amiga CC audio
 audio*		at aucc?
 
+melody*		at zbus0		# Melody MPEG audio decoder
+audio*		at melody?
+
 # Ethernet cards:
 le*		at zbus0		# A2065, Ameristar, Ariadne
 ed0		at zbus0		# Hydra
@@ -214,7 +217,6 @@ bah*		at zbus0		# C=/Ameristar A2060 / 560
 
 # Greater Valley Product Bus
 gvpbus* 	at zbus0
-
 
 # scsi stuff, all possible
 gtsc0		at gvpbus?		# GVP series II scsi
