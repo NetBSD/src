@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: md.c,v 1.8 1994/01/29 02:03:42 jtc Exp $
+ *	$Id: md.c,v 1.9 1994/02/10 21:21:27 pk Exp $
  */
 
 #include <sys/param.h>
@@ -109,6 +109,7 @@ int			relocatable_output;
 {
 	register unsigned long	mask;
 
+#ifndef RTLD
 	if (relocatable_output) {
 		/*
 		 * Non-PC relative relocations which are absolute or
@@ -129,6 +130,7 @@ int			relocatable_output;
 			RELOC_ADD_EXTRA(r) -= pc_relocation;
 		return;
 	}
+#endif
 
 	relocation >>= RELOC_VALUE_RIGHTSHIFT(r);
 
@@ -167,6 +169,7 @@ int			relocatable_output;
 	}
 }
 
+#ifndef RTLD
 /*
  * Machine dependent part of claim_rrs_reloc().
  * On the Sparc the relocation offsets are stored in the r_addend member.
@@ -197,6 +200,7 @@ int			type;
 
 	return 1;
 }
+#endif
 
 /*
  * Set up a transfer from jmpslot at OFFSET (relative to the PLT table)
