@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.15 2001/04/23 11:20:41 uch Exp $	*/
+/*	$NetBSD: clock.c,v 1.1 2001/04/23 11:20:41 uch Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -163,7 +163,6 @@ clockintr(arg)
 	void *arg;
 {
 	struct clockframe *frame = arg;		/* not strictly necessary */
-
 #if (NWDOG > 0)
 	unsigned int i;
 
@@ -309,8 +308,8 @@ void
 inittodr(base)
 	time_t base;
 {
-	struct clock_ymdhms dt;
-	int doreset = 0;
+	volatile unsigned int *rtc = (volatile unsigned int *)0xa0710000;
+	unsigned int old = 0, new;
 
 	/*
 	 * We mostly ignore the suggested time and go for the RTC clock time
@@ -326,49 +325,21 @@ inittodr(base)
 		base = 17*SECYR + 186*SECDAY + SECDAY/2;
 	}
 
-#ifdef SH4
-#define	FROMBCD2(x)	((((x) & 0xf000) >> 12) * 1000 + \
-			 (((x) & 0x0f00) >> 8) * 100 + \
-			 (((x) & 0x00f0) >> 4) * 10 + ((x) & 0xf))
-	dt.dt_year = FROMBCD2(SHREG_RYRCNT);
-#else
-	dt.dt_year = 1900 + FROMBCD(SHREG_RYRCNT);
-#endif
-	dt.dt_mon = FROMBCD(SHREG_RMONCNT);
-	dt.dt_day = FROMBCD(SHREG_RDAYCNT);
-	dt.dt_wday = FROMBCD(SHREG_RWKCNT);
-	dt.dt_hour = FROMBCD(SHREG_RHRCNT);
-	dt.dt_min = FROMBCD(SHREG_RMINCNT);
-	dt.dt_sec = FROMBCD(SHREG_RSECCNT);
+	for (;;) {
+		int i;
+		for (i = 0; i < 3; i++) {
+			new = ((rtc[0] & 0xffff) << 16) | (rtc[1] & 0xffff);
+			if (new != old)
+				break;
+		}
+		if (i < 3)
+			old = new;
+		else
+			break;
+	}
 
-#ifdef DEBUG
-	printf("readclock: %d/%d/%d/%d/%d/%d(%d)\n", dt.dt_year - 1900,
-	       dt.dt_mon, dt.dt_day, dt.dt_hour, dt.dt_min, dt.dt_sec,
-	       dt.dt_wday);
-#endif
-
-#ifndef SH4
-	if (dt.dt_year < 1970)
-		dt.dt_year += 100;
-#endif
-
-	if (dt.dt_mon < 1 || dt.dt_mon > 12)
-		doreset = 1;
-	if (dt.dt_day < 1 || dt.dt_day > 31)
-		doreset = 1;
-	if (dt.dt_hour > 23)
-		doreset = 1;
-	if (dt.dt_min > 59)
-		doreset = 1;
-	if (dt.dt_sec > 59)
-		doreset = 1;
-
-	if (doreset == 1) {
-		printf("WARNING: clock time is invalid.\n");
-		printf("WARNING: reset to epoch time!\n");
-		time.tv_sec = 0;
-	} else
-		time.tv_sec = clock_ymdhms_to_secs(&dt) + rtc_offset * 60;
+	/* offset 20 years */
+	time.tv_sec = new + rtc_offset * 60 - 631152000;
 
 #ifndef INITTODR_ALWAYS_USE_RTC
 	if (base < time.tv_sec - 5*SECYR)
@@ -424,14 +395,11 @@ resettodr()
 	SHREG_RWKCNT = TOBCD(dt.dt_wday);
 	SHREG_RDAYCNT = TOBCD(dt.dt_day);
 	SHREG_RMONCNT = TOBCD(dt.dt_mon);
-#ifdef SH4
+
 #define TOBCD2(x)	((((x) % 10000) / 1000 * 4096) + \
 			 (((x) % 1000) / 100 * 256) + \
 			 ((((x) % 100) / 10) * 16) + ((x) % 10))
 	SHREG_RYRCNT = TOBCD2(dt.dt_year);
-#else
-	SHREG_RYRCNT = TOBCD(dt.dt_year % 100);
-#endif
 
 	/* start RTC */
 	SHREG_RCR2 = SHREG_RCR2_RESET|SHREG_RCR2_ENABLE|SHREG_RCR2_START;
