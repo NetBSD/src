@@ -1,4 +1,4 @@
-/*	$NetBSD: ungetc.c,v 1.12 2001/12/07 11:47:44 yamt Exp $	*/
+/*	$NetBSD: ungetc.c,v 1.13 2003/01/18 11:29:59 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)ungetc.c	8.2 (Berkeley) 11/3/93";
 #else
-__RCSID("$NetBSD: ungetc.c,v 1.12 2001/12/07 11:47:44 yamt Exp $");
+__RCSID("$NetBSD: ungetc.c,v 1.13 2003/01/18 11:29:59 thorpej Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -50,8 +50,8 @@ __RCSID("$NetBSD: ungetc.c,v 1.12 2001/12/07 11:47:44 yamt Exp $");
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "local.h"
 #include "reentrant.h"
+#include "local.h"
 
 static int __submore __P((FILE *));
 /*

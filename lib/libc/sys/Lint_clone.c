@@ -1,4 +1,4 @@
-/* $NetBSD: Lint_clone.c,v 1.1 2001/07/17 03:05:43 thorpej Exp $ */
+/* $NetBSD: Lint_clone.c,v 1.2 2003/01/18 11:32:58 thorpej Exp $ */
 
 /*
  * This file placed in the public domain.

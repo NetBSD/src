@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_vc.c,v 1.11 2002/11/12 14:50:23 skrll Exp $	*/
+/*	$NetBSD: svc_vc.c,v 1.12 2003/01/18 11:29:07 thorpej Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)svc_tcp.c 1.21 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)svc_tcp.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: svc_vc.c,v 1.11 2002/11/12 14:50:23 skrll Exp $");
+__RCSID("$NetBSD: svc_vc.c,v 1.12 2003/01/18 11:29:07 thorpej Exp $");
 #endif
 #endif
 
@@ -76,7 +76,7 @@ __weak_alias(svc_fd_create,_svc_fd_create)
 __weak_alias(svc_vc_create,_svc_vc_create)
 #endif
 
-#ifdef __REENT
+#ifdef _REENTRANT
 extern rwlock_t svc_fd_lock;
 #endif
 
@@ -732,7 +732,7 @@ svc_vc_ops(xprt)
 {
 	static struct xp_ops ops;
 	static struct xp_ops2 ops2;
-#ifdef __REENT
+#ifdef _REENTRANT
 	extern mutex_t ops_lock;
 #endif
 
@@ -759,7 +759,7 @@ svc_vc_rendezvous_ops(xprt)
 {
 	static struct xp_ops ops;
 	static struct xp_ops2 ops2;
-#ifdef __REENT
+#ifdef _REENTRANT
 	extern mutex_t ops_lock;
 #endif
 
