@@ -1,4 +1,4 @@
-/*	$NetBSD: getttyent.c,v 1.20 2003/08/07 16:42:51 agc Exp $	*/
+/*	$NetBSD: getttyent.c,v 1.21 2004/11/10 23:59:06 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)getttyent.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: getttyent.c,v 1.20 2003/08/07 16:42:51 agc Exp $");
+__RCSID("$NetBSD: getttyent.c,v 1.21 2004/11/10 23:59:06 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -56,15 +56,13 @@ __weak_alias(getttynam,_getttynam)
 __weak_alias(setttyent,_setttyent)
 #endif
 
-static char zapchar;
 static FILE *tf;
 static size_t lineno = 0;
-static char *skip __P((char *));
-static char *value __P((char *));
+static char *skip(char *, char *);
+static char *value(char *);
 
 struct ttyent *
-getttynam(tty)
-	const char *tty;
+getttynam(const char *tty)
 {
 	struct ttyent *t;
 
@@ -79,51 +77,53 @@ getttynam(tty)
 }
 
 struct ttyent *
-getttyent()
+getttyent(void)
 {
 	static struct ttyent tty;
 	int c;
 	char *p;
 	size_t len;
 	static char *line = NULL;
+	char zapchar;
 
-	if (!tf && !setttyent())
-		return (NULL);
 	if (line)
 		free(line);
+
+	if (!tf && !setttyent())
+		return NULL;
+
 	for (;;) {
 		errno = 0;
 		line = fparseln(tf, &len, &lineno, NULL, FPARSELN_UNESCALL);
 		if (line == NULL) {
 			if (errno != 0)
-				warn("gettyent");
+				warn(__func__);
 			return NULL;
 		}
-		for (p = line; *p && isspace((unsigned char) *p); p++)
+		for (p = line; *p && isspace((unsigned char)*p); p++)
 			continue;
 		if (*p && *p != '#')
 			break;
 		free(line);
 	}
 
-	zapchar = 0;
 	tty.ty_name = p;
-	p = skip(p);
-	if (!*(tty.ty_getty = p))
+	p = skip(p, &zapchar);
+	if (*(tty.ty_getty = p) == '\0')
 		tty.ty_getty = tty.ty_type = NULL;
 	else {
-		p = skip(p);
-		if (!*(tty.ty_type = p))
+		p = skip(p, &zapchar);
+		if (*(tty.ty_type = p) == '\0')
 			tty.ty_type = NULL;
 		else
-			p = skip(p);
+			p = skip(p, &zapchar);
 	}
 	tty.ty_status = 0;
 	tty.ty_window = NULL;
 
 #define	scmp(e)	!strncmp(p, e, sizeof(e) - 1) && (isspace((unsigned char) p[sizeof(e) - 1]) || p[sizeof(e) - 1] == '\0')
 #define	vcmp(e)	!strncmp(p, e, sizeof(e) - 1) && p[sizeof(e) - 1] == '='
-	for (; *p; p = skip(p)) {
+	for (; *p; p = skip(p, &zapchar)) {
 		if (scmp(_TTYS_OFF))
 			tty.ty_status &= ~TTY_ON;
 		else if (scmp(_TTYS_ON))
@@ -145,19 +145,19 @@ getttyent()
 		else if (vcmp(_TTYS_CLASS))
 			tty.ty_class = value(p);
 		else
-			warnx("gettyent: %s, %lu: unknown option `%s'",
-			    _PATH_TTYS, (unsigned long)lineno, p);
+			warnx("%s: %s, %lu: unknown option `%s'",
+			    __func__, _PATH_TTYS, (unsigned long)lineno, p);
 	}
 
 	if (zapchar == '#' || *p == '#')
 		while ((c = *++p) == ' ' || c == '\t')
-			;
+			continue;
 	tty.ty_comment = p;
-	if (*p == 0)
-		tty.ty_comment = 0;
+	if (*p == '\0')
+		tty.ty_comment = NULL;
 	if ((p = strchr(p, '\n')) != NULL)
 		*p = '\0';
-	return (&tty);
+	return &tty;
 }
 
 #define	QUOTED	1
@@ -167,13 +167,13 @@ getttyent()
  * the next field.
  */
 static char *
-skip(p)
-	char *p;
+skip(char *p, char *zapchar)
 {
 	char *t;
 	int c, q;
 
 	_DIAGASSERT(p != NULL);
+	*zapchar = '\0';
 
 	for (q = 0, t = p; (c = *p) != '\0'; p++) {
 		if (c == '"') {
@@ -186,53 +186,55 @@ skip(p)
 		if (q == QUOTED)
 			continue;
 		if (c == '#') {
-			zapchar = c;
-			*p = 0;
-			break;
+			*zapchar = c;
+			*p = '\0';
+			*--t = '\0';
+			return p;
 		}
 		if (c == '\t' || c == ' ' || c == '\n') {
-			zapchar = c;
-			*p++ = 0;
+			*zapchar = c;
+			*p++ = '\0';
 			while ((c = *p) == '\t' || c == ' ' || c == '\n')
 				p++;
-			break;
+			*--t = '\0';
+			return p;
 		}
 	}
-	*--t = '\0';
-	return (p);
+	if (t != p)
+		*t = '\0';
+	return p;
 }
 
 static char *
-value(p)
-	char *p;
+value(char *p)
 {
 
 	_DIAGASSERT(p != NULL);
 
-	return ((p = strchr(p, '=')) ? ++p : NULL);
+	return (p = strchr(p, '=')) != NULL ? ++p : NULL;
 }
 
 int
-setttyent()
+setttyent(void)
 {
 	lineno = 0;
 	if (tf) {
 		rewind(tf);
-		return (1);
+		return 1;
 	} else if ((tf = fopen(_PATH_TTYS, "r")) != NULL)
-		return (1);
-	return (0);
+		return 1;
+	return 0;
 }
 
 int
-endttyent()
+endttyent(void)
 {
 	int rval;
 
 	if (tf) {
 		rval = !(fclose(tf) == EOF);
 		tf = NULL;
-		return (rval);
+		return rval;
 	}
-	return (1);
+	return 1;
 }
