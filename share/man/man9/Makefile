@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.46 1998/09/15 01:40:47 jeremy Exp $
+#       $NetBSD: Makefile,v 1.47 1998/10/01 02:33:50 jtk Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -117,7 +117,7 @@ MLINKS+=uvm.9 uvm_init.9 uvm.9 uvm_init_limits.9 uvm.9 uvm_setpagesize.9 \
 	uvm.9 uvm_fork.9 uvm.9 uvm_grow.9 uvm.9 uvm_coredump.9
 MLINKS+=vslock.9 vsunlock.9
 
-SUBDIR= man9.sun3
+SUBDIR= man9.i386 man9.sun3
 
 .include <bsd.man.mk>
 .include <bsd.subdir.mk>
