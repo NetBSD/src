@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.63 2002/05/18 02:54:57 enami Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.63.2.1 2002/06/01 22:43:21 tv Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.63 2002/05/18 02:54:57 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.63.2.1 2002/06/01 22:43:21 tv Exp $");
 
 #include "opt_nfsserver.h"
 
@@ -433,7 +433,9 @@ genfs_rel_pages(struct vm_page **pgs, int npages)
 			pg->flags |= PG_RELEASED;
 		}
 	}
+	uvm_lock_pageq();
 	uvm_page_unbusy(pgs, npages);
+	uvm_unlock_pageq();
 }
 
 /*
