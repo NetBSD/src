@@ -1,4 +1,4 @@
-.\"	$NetBSD: malloc.9,v 1.13 2000/12/24 02:52:53 wiz Exp $
+.\"	$NetBSD: malloc.9,v 1.14 2001/02/17 22:21:05 pooka Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -274,6 +274,8 @@ VM page buckets.
 UVM amap and related structs.
 .It Dv M_UVMAOBJ
 UVM aobj and related structs.
+.It Dv M_TEMP
+Misc temporary data buffers.
 .It Dv M_DMAMAP
 .Xr bus_dma 9
 structures.
@@ -287,12 +289,62 @@ USB permanent.
 Memory
 .Xr pool 9
 structures.
-.It Dv M_CFS
+.It Dv M_CODA
 Coda file system structures and tables.
-.It Dv M_TEMP
-Misc temporary data buffers.
+.It Dv M_FILECOREMNT
+Filecore FS mount structures.
+.It Dv M_FILECORENODE
+Filecore FS vnode private part.
 .It Dv M_RAIDFRAME
 RAIDframe structures and IO buffers.
+.It Dv M_USBHC
+USB host controller.
+.It Dv M_SECA
+security associations, key management.
+.It Dv M_IP6OPT
+IPv6 options.
+.It Dv M_IP6NDP
+IPv6 Neighbour Discovery.
+.It Dv M_NTFS
+Windows NT file system structures.
+.It Dv M_PAGEDEP
+File page dependencies.
+.It Dv M_INODEDEP
+Inode dependencies.
+.It Dv M_NEWBLK
+New block allocation.
+.It Dv M_BMSAFEMAP
+Block or frag allocated from cyl group map.
+.It Dv M_ALLOCDIRECT
+Block or frag dependency for an inode.
+.It Dv M_INDIRDEP
+Indirect block dependencies.
+.It Dv M_ALLOCINDIR
+Block dependency for an indirect block.
+.It Dv M_FREEFRAG
+Previously used frag for an inode.
+.It Dv M_FREEBLKS
+Blocks freed from an inode.
+.It Dv M_FREEFILE
+Inode deallocated.
+.It Dv M_DIRADD
+New directory entry.
+.It Dv M_MKDIR
+New directory.
+.It Dv M_DIRREM
+Directory entry deleted.
+.It Dv M_IP6RR
+IPv6 Router Renumbering Prefix.
+.It Dv M_RR_ADDR
+IPv6 Router Renumbering Ifid.
+.It Dv M_SOFTINTR
+Softinterrupt structures.
+.It Dv M_EMULDATA
+Per-process emulation data.
+.It Dv M_1394CTL
+IEEE 1394 control structures.
+.It Dv M_1394DATA
+IEEE 1394 data buffers.
 .El
 .Pp
 Statistics based on the
