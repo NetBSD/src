@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.2 1999/03/25 23:13:08 thorpej Exp $	*/
+/*	$NetBSD: if_ie.c,v 1.3 1999/03/28 18:08:55 scw Exp $	*/
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -33,9 +33,13 @@
 
 #include <sys/param.h>
 #include <sys/types.h>
+#include <sys/socket.h>
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
+
+#include <net/if.h>
+#include <net/if_ether.h>
 
 #define NTXBUF	1
 #define NRXBUF	16
