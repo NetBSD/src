@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.s,v 1.45 1999/08/23 08:24:37 kleink Exp $	*/
+/*	$NetBSD: vector.s,v 1.46 2000/01/20 03:19:27 enami Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -194,7 +194,7 @@ XINTR(irq_num):								;\
 	sti				/* safe to take intrs now */	;\
 	movl	_C_LABEL(intrhand) + (irq_num) * 4,%ebx	/* head of chain */ ;\
 	testl	%ebx,%ebx						;\
-	jz	XSTRAY(irq_num)		/* no handlears; we're stray */	;\
+	jz	XSTRAY(irq_num)		/* no handlers; we're stray */	;\
 	STRAY_INITIALIZE		/* nobody claimed it yet */	;\
 	incl	_C_LABEL(intrcnt) + (4*(irq_num))	/* XXX */	;\
 7:	movl	IH_ARG(%ebx),%eax	/* get handler arg */		;\
