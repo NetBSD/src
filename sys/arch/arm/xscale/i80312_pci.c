@@ -1,4 +1,4 @@
-/*	$NetBSD: i80312_pci.c,v 1.4 2001/11/28 23:48:35 thorpej Exp $	*/
+/*	$NetBSD: i80312_pci.c,v 1.5 2001/11/29 02:26:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -110,8 +110,7 @@ i80312_pci_init(pci_chipset_tag_t pc, void *cookie)
 	    M_DEVBUF, NULL, 0, EX_NOWAIT);
 
 	printf("%s: configuring Secondary PCI bus\n", sc->sc_dev.dv_xname);
-	/* XXX Magic number; XScale has a 32-byte cache line. */
-	pci_configure_bus(pc, ioext, memext, NULL, sbus, 32);
+	pci_configure_bus(pc, ioext, memext, NULL, sbus, arm_dcache_align);
 
 	extent_destroy(ioext);
 	extent_destroy(memext);
