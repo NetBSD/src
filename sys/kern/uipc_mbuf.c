@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.17 1996/12/18 20:24:50 gwr Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.18 1997/03/27 20:33:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1991, 1993
@@ -49,15 +49,22 @@
 
 #include <vm/vm.h>
 
+struct mbuf *mbutl;
+struct mbstat mbstat;
+union mcluster *mclfree;
+int	max_linkhdr;
+int	max_protohdr;
+int	max_hdr;
+int	max_datalen;
+
 extern	vm_map_t mb_map;
-struct	mbuf *mbutl;
-char	*mclrefcnt;
 
 void
 mbinit()
 {
 	int s;
 
+	mclfree = NULL;
 	s = splimp();
 	if (m_clalloc(max(4096/CLBYTES, 1), M_DONTWAIT) == 0)
 		goto bad;
@@ -85,7 +92,8 @@ m_clalloc(ncl, nowait)
 	int npg, s;
 
 	npg = ncl * CLSIZE;
-	p = (caddr_t)kmem_malloc(mb_map, ctob(npg), !nowait);
+	p = (caddr_t)kmem_malloc(mb_map, ctob(npg),
+	    nowait ? M_NOWAIT : M_WAITOK);
 	if (p == NULL) {
 		s = splclock();
 		curtime = time;
@@ -123,6 +131,10 @@ m_retry(i, t)
 #define m_retry(i, t)	(struct mbuf *)0
 	MGET(m, i, t);
 #undef m_retry
+	if (m != NULL)
+		mbstat.m_wait++;
+	else
+		mbstat.m_drops++;
 	return (m);
 }
 
@@ -139,6 +151,10 @@ m_retryhdr(i, t)
 #define m_retryhdr(i, t) (struct mbuf *)0
 	MGETHDR(m, i, t);
 #undef m_retryhdr
+	if (m != NULL)
+		mbstat.m_wait++;
+	else
+		mbstat.m_drops++;
 	return (m);
 }
 
@@ -215,7 +231,8 @@ m_freem(m)
 		return;
 	do {
 		MFREE(m, n);
-	} while ((m = n) != NULL);
+		m = n;
+	} while (m);
 }
 
 /*
@@ -304,9 +321,8 @@ m_copym(m, off0, len, wait)
 		n->m_len = min(len, m->m_len - off);
 		if (m->m_flags & M_EXT) {
 			n->m_data = m->m_data + off;
-			mclrefcnt[mtocl(m->m_ext.ext_buf)]++;
 			n->m_ext = m->m_ext;
-			n->m_flags |= M_EXT;
+			MCLADDREFERENCE(m, n);
 		} else
 			bcopy(mtod(m, caddr_t)+off, mtod(n, caddr_t),
 			    (unsigned)n->m_len);
@@ -323,6 +339,59 @@ nospace:
 	m_freem(top);
 	MCFail++;
 	return (0);
+}
+
+/*
+ * Copy an entire packet, including header (which must be present).
+ * An optimization of the common case `m_copym(m, 0, M_COPYALL, how)'.
+ */
+struct mbuf *
+m_copypacket(m, how)
+	struct mbuf *m;
+	int how;
+{
+	struct mbuf *top, *n, *o;
+
+	MGET(n, how, m->m_type);
+	top = n;
+	if (!n)
+		goto nospace;
+
+	M_COPY_PKTHDR(n, m);
+	n->m_len = m->m_len;
+	if (m->m_flags & M_EXT) {
+		n->m_data = m->m_data;
+		n->m_ext = m->m_ext;
+		MCLADDREFERENCE(m, n);
+	} else {
+		bcopy(mtod(m, char *), mtod(n, char *), n->m_len);
+	}
+
+	m = m->m_next;
+	while (m) {
+		MGET(o, how, m->m_type);
+		if (!o)
+			goto nospace;
+
+		n->m_next = o;
+		n = n->m_next;
+
+		n->m_len = m->m_len;
+		if (m->m_flags & M_EXT) {
+			n->m_data = m->m_data;
+			n->m_ext = m->m_ext;
+			MCLADDREFERENCE(m, n);
+		} else {
+			bcopy(mtod(m, char *), mtod(n, char *), n->m_len);
+		}
+
+		m = m->m_next;
+	}
+	return top;
+nospace:
+	m_freem(top);
+	MCFail++;
+	return 0;
 }
 
 /*
@@ -455,8 +524,8 @@ m_adj(mp, req_len)
 			}
 			count -= m->m_len;
 		}
-		while ((m = m->m_next) != NULL)
-			m->m_len = 0;
+		while (m->m_next)
+			(m = m->m_next) ->m_len = 0;
 	}
 }
 
@@ -579,10 +648,8 @@ m_split(m0, len0, wait)
 	}
 extpacket:
 	if (m->m_flags & M_EXT) {
-		n->m_flags |= M_EXT;
 		n->m_ext = m->m_ext;
-		mclrefcnt[mtocl(m->m_ext.ext_buf)]++;
-		m->m_ext.ext_size = 0; /* For Accounting XXXXXX danger */
+		MCLADDREFERENCE(m, n);
 		n->m_data = m->m_data + len;
 	} else {
 		bcopy(mtod(m, caddr_t) + len, mtod(n, caddr_t), remain);
@@ -601,7 +668,7 @@ m_devget(buf, totlen, off0, ifp, copy)
 	char *buf;
 	int totlen, off0;
 	struct ifnet *ifp;
-	void (*copy) __P((const void *, void *, size_t));
+	void (*copy) __P((const void *from, void *to, size_t len));
 {
 	register struct mbuf *m;
 	struct mbuf *top = 0, **mp = &top;
@@ -665,4 +732,57 @@ m_devget(buf, totlen, off0, ifp, copy)
 			cp = buf;
 	}
 	return (top);
+}
+
+/*
+ * Copy data from a buffer back into the indicated mbuf chain,
+ * starting "off" bytes from the beginning, extending the mbuf
+ * chain if necessary.
+ */
+void
+m_copyback(m0, off, len, cp)
+	struct	mbuf *m0;
+	register int off;
+	register int len;
+	caddr_t cp;
+{
+	register int mlen;
+	register struct mbuf *m = m0, *n;
+	int totlen = 0;
+
+	if (m0 == 0)
+		return;
+	while (off > (mlen = m->m_len)) {
+		off -= mlen;
+		totlen += mlen;
+		if (m->m_next == 0) {
+			n = m_getclr(M_DONTWAIT, m->m_type);
+			if (n == 0)
+				goto out;
+			n->m_len = min(MLEN, len + off);
+			m->m_next = n;
+		}
+		m = m->m_next;
+	}
+	while (len > 0) {
+		mlen = min (m->m_len - off, len);
+		bcopy(cp, mtod(m, caddr_t) + off, (unsigned)mlen);
+		cp += mlen;
+		len -= mlen;
+		mlen += off;
+		off = 0;
+		totlen += mlen;
+		if (len == 0)
+			break;
+		if (m->m_next == 0) {
+			n = m_get(M_DONTWAIT, m->m_type);
+			if (n == 0)
+				break;
+			n->m_len = min(MLEN, len);
+			m->m_next = n;
+		}
+		m = m->m_next;
+	}
+out:	if (((m = m0)->m_flags & M_PKTHDR) && (m->m_pkthdr.len < totlen))
+		m->m_pkthdr.len = totlen;
 }
