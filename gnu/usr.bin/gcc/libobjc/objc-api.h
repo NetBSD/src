@@ -27,8 +27,8 @@ Boston, MA 02111-1307, USA.  */
 #ifndef __objc_api_INCLUDE_GNU
 #define __objc_api_INCLUDE_GNU
 
-#include "objc.h"
-#include "hash.h"
+#include "objc/objc.h"
+#include "objc/hash.h"
 #include <stdio.h>
 
 /* For functions which return Method_t */
