@@ -1,4 +1,4 @@
-/*	$NetBSD: promlib.h,v 1.4 2002/03/22 00:28:09 fredette Exp $ */
+/*	$NetBSD: promlib.h,v 1.5 2004/03/19 14:50:53 he Exp $ */
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@ int	prom_sd_target	__P((int));
 #define PROM_OBP_V2	2
 #define PROM_OBP_V3	3
 #define PROM_OPENFIRM	4
-#define PROM_getpropint(a, b, c) (0)
+#define prom_getpropint(a, b, c) (0)
 #define CPU_ISSUN4 (1)
 
 #endif /* _MACHINE_PROMLIB_H_ */
