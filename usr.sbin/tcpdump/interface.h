@@ -1,4 +1,4 @@
-/*	$NetBSD: interface.h,v 1.11 1999/10/05 20:37:22 is Exp $	*/
+/*	$NetBSD: interface.h,v 1.12 1999/12/10 05:45:07 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -211,6 +211,7 @@ extern void arp_print(const u_char *, u_int, u_int);
 extern void atalk_print(const u_char *, u_int);
 extern void atm_if_print(u_char *, const struct pcap_pkthdr *, const u_char *);
 extern void bootp_print(const u_char *, u_int, u_short, u_short);
+extern void bgp_print(const u_char *, int);
 extern void decnet_print(const u_char *, u_int, u_int);
 extern void default_print(const u_char *, u_int);
 extern void default_print_unaligned(const u_char *, u_int);
@@ -229,6 +230,7 @@ extern void ipx_print(const u_char *, u_int);
 extern void isoclns_print(const u_char *, u_int, u_int, const u_char *,
 	const u_char *);
 extern void krb_print(const u_char *, u_int);
+extern void l2tp_print(const u_char *dat, u_int length);
 extern void llap_print(const u_char *, u_int);
 extern void mobile_print(const u_char *, u_int);
 extern void netbios_print(struct p8022Hdr *, u_int);
@@ -269,9 +271,10 @@ extern void ip6_print(const u_char *, int);
 extern void ip6_opt_print __P((const u_char *, int));
 extern int hbhopt_print(const u_char *);
 extern int dstopt_print(const u_char *);
-extern void frag6_print(const u_char *, const u_char *);
+extern int frag6_print(const u_char *, const u_char *);
 extern void icmp6_print(const u_char *, const u_char *);
 extern void ripng_print(const u_char *, int);
 extern int rt6_print(const u_char *, const u_char *);
 extern void ospf6_print(const u_char *, u_int);
+extern void dhcp6_print(const u_char *, u_int, u_short, u_short);
 #endif /*INET6*/

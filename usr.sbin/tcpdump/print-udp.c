@@ -1,4 +1,4 @@
-/*	$NetBSD: print-udp.c,v 1.12 1999/07/02 14:51:22 itojun Exp $	*/
+/*	$NetBSD: print-udp.c,v 1.13 1999/12/10 05:45:08 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -27,7 +27,7 @@
 static const char rcsid[] =
     "@(#) Header: print-udp.c,v 1.60 97/07/27 21:58:48 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: print-udp.c,v 1.12 1999/07/02 14:51:22 itojun Exp $");
+__RCSID("$NetBSD: print-udp.c,v 1.13 1999/12/10 05:45:08 itojun Exp $");
 #endif
 #endif
 
@@ -353,9 +353,12 @@ static int udp_cksum(register const struct ip *ip,
 #define ISAKMP_PORT 500		/*XXX*/
 #define RIP_PORT 520		/*XXX*/
 #define KERBEROS_SEC_PORT 750	/*XXX*/
+#define L2TP_PORT 1701		/*XXX*/
 
 #ifdef INET6
 #define RIPNG_PORT 521		/*XXX*/
+#define DHCP6_PORT1 546		/*XXX*/
+#define DHCP6_PORT2 547		/*XXX*/
 #endif
 
 void
@@ -554,6 +557,9 @@ udp_print(register const u_char *bp, u_int length, register const u_char *bp2)
 #ifdef INET6
 		else if (ISPORT(RIPNG_PORT))
 			ripng_print((const u_char *)(up + 1), length);
+		else if (ISPORT(DHCP6_PORT1) || ISPORT(DHCP6_PORT2))
+			dhcp6_print((const u_char *)(up + 1), length,
+				sport, dport);
 #endif /*INET6*/
 		/*
 		 * Kludge in test for whiteboard packets.
