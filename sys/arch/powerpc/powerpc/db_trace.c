@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.14 2001/08/30 21:44:58 matt Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.15 2001/12/30 20:53:04 dbj Exp $	*/
 /*	$OpenBSD: db_trace.c,v 1.3 1997/03/21 02:10:48 niklas Exp $	*/
 
 /* 
@@ -78,11 +78,11 @@ const struct db_variable db_regs[] = {
 	{ "r31", (long *)&ddb_regs.r[31], FCN_NULL },
 	{ "iar", (long *)&ddb_regs.iar,   FCN_NULL },
 	{ "msr", (long *)&ddb_regs.msr,   FCN_NULL },
-#ifdef PPC_IBM4XX
 	{ "lr",  (long *)&ddb_regs.lr,    FCN_NULL },
 	{ "ctr", (long *)&ddb_regs.ctr,   FCN_NULL },
 	{ "cr",  (long *)&ddb_regs.cr,    FCN_NULL },
 	{ "xer", (long *)&ddb_regs.xer,   FCN_NULL },
+#ifdef PPC_IBM4XX
 	{ "dear", (long *)&ddb_regs.dear, FCN_NULL },
 	{ "esr", (long *)&ddb_regs.esr,   FCN_NULL },
 	{ "pid", (long *)&ddb_regs.pid,   FCN_NULL },
