@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.23 1997/10/10 02:09:34 fvdl Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.23.2.1 1998/01/29 10:17:17 mellon Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -380,6 +380,9 @@ vn_write(fp, uio, cred)
 		ioflag |= IO_APPEND;
 	if (fp->f_flag & FNONBLOCK)
 		ioflag |= IO_NDELAY;
+	if (fp->f_flag & FFSYNC ||
+	    (vp->v_mount && (vp->v_mount->mnt_flag & MNT_SYNCHRONOUS)))
+		ioflag |= IO_SYNC;
 	VOP_LEASE(vp, uio->uio_procp, cred, LEASE_WRITE);
 	VOP_LOCK(vp);
 	uio->uio_offset = fp->f_offset;
