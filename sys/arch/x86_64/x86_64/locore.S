@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.7 2002/06/25 01:24:50 thorpej Exp $	*/
+/*	$NetBSD: locore.S,v 1.8 2002/07/04 10:34:22 fvdl Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -651,7 +651,7 @@ longmode_hi:
 	movw	%ax,%fs
 
 	/* XXX merge these */
-	movq	$VM_MIN_KERNEL_ADDRESS,%rdi
+	leaq	TABLESIZE(%rsi),%rdi
 	call	_C_LABEL(init_x86_64)
 
 	call 	_C_LABEL(main)
