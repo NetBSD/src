@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.8 2000/05/21 20:17:43 ragge Exp $ */
+/*	$NetBSD: conf.c,v 1.9 2000/05/26 20:18:57 ragge Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -37,6 +37,8 @@
 
 #include "../../include/rpb.h"
 
+#include "lib/libkern/libkern.h"
+
 #include "lib/libsa/stand.h"
 #include "lib/libsa/ufs.h"
 #include "lib/libsa/nfs.h"
@@ -45,9 +47,11 @@
 
 #include "vaxstand.h"
 
+static int nostrategy(void *, int, daddr_t, size_t, void *, size_t *);
+
 struct	devsw devsw[]={
 	SADEV("hp",hpstrategy, hpopen, nullsys, noioctl),
-	SADEV("qe",nodev, qeopen, qeclose, noioctl), /* DEQNA */
+	SADEV("qe",nostrategy, qeopen, qeclose, noioctl), /* DEQNA */
 	SADEV("ctu",ctustrategy, ctuopen, nullsys, noioctl),
 	SADEV("ra",rastrategy, raopen, nullsys, noioctl),
 	SADEV("mt",rastrategy, raopen, nullsys, noioctl),
@@ -55,10 +59,10 @@ struct	devsw devsw[]={
         SADEV("rd",mfmstrategy, mfmopen, nullsys, noioctl),
         SADEV("sd",romstrategy, romopen, nullsys, noioctl),
 	SADEV("st",nullsys, nullsys, nullsys, noioctl),
-	SADEV("le",nodev, leopen, leclose, noioctl), /* LANCE */
-        SADEV("ze",nodev, zeopen, zeclose, noioctl), /* SGEC */
+	SADEV("le",nostrategy, leopen, leclose, noioctl), /* LANCE */
+        SADEV("ze",nostrategy, zeopen, zeclose, noioctl), /* SGEC */
 	SADEV("rl",romstrategy, romopen, nullsys, noioctl),
-	SADEV("de",nodev, deopen, declose, noioctl), /* DEUNA */
+	SADEV("de",nostrategy, deopen, declose, noioctl), /* DEUNA */
 };
 
 int	cnvtab[] = {
@@ -89,3 +93,12 @@ struct fs_ops file_system[] = {
 };
 
 int nfsys = (sizeof(file_system) / sizeof(struct fs_ops));
+
+int
+nostrategy(void *f, int func, daddr_t dblk,
+    size_t size, void *buf, size_t *rsize)
+{
+	*rsize = size;
+	bzero(buf, size);
+	return 0;
+}
