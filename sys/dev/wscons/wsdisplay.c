@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.27 1999/08/14 14:40:08 augustss Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.28 1999/09/16 18:16:51 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -33,7 +33,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$NetBSD: wsdisplay.c,v 1.27 1999/08/14 14:40:08 augustss Exp $";
+    "$NetBSD: wsdisplay.c,v 1.28 1999/09/16 18:16:51 jdolecek Exp $";
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -104,8 +104,9 @@ struct wsscreen *wsscreen_attach __P((struct wsdisplay_softc *, int,
 				      int, int, long));
 void wsscreen_detach __P((struct wsscreen *));
 static const struct wsscreen_descr *
-wsdisplay_screentype_pick __P((const struct wsscreen_list *, char *));
-int wsdisplay_addscreen __P((struct wsdisplay_softc *, int, char *, char *));
+wsdisplay_screentype_pick __P((const struct wsscreen_list *, const char *));
+int wsdisplay_addscreen __P((struct wsdisplay_softc *, int, const char *, const char *));
+static void wsdisplay_addscreen_print __P((struct wsdisplay_softc *, int, int));
 static void wsdisplay_closescreen __P((struct wsdisplay_softc *,
 				       struct wsscreen *));
 int wsdisplay_delscreen __P((struct wsdisplay_softc *, int, int));
@@ -204,6 +205,11 @@ static struct consdev wsdisplay_cons = {
 	wsdisplay_pollc_dummy, NODEV, CN_NORMAL
 };
 
+#ifndef WSDISPLAY_DEFAULTSCREENS
+# define WSDISPLAY_DEFAULTSCREENS	0
+#endif
+int wsdisplay_defaultscreens = WSDISPLAY_DEFAULTSCREENS;
+
 int wsdisplay_switch1 __P((void *, int, int));
 int wsdisplay_switch3 __P((void *, int, int));
 
@@ -292,7 +298,7 @@ wsscreen_detach(scr)
 static const struct wsscreen_descr *
 wsdisplay_screentype_pick(scrdata, name)
 	const struct wsscreen_list *scrdata;
-	char *name;
+	const char *name;
 {
 	int i;
 	const struct wsscreen_descr *scr;
@@ -311,11 +317,30 @@ wsdisplay_screentype_pick(scrdata, name)
 	return (0);
 }
 
+/*
+ * print info about attached screen
+ */
+static void
+wsdisplay_addscreen_print(sc, idx, count)
+	struct wsdisplay_softc *sc;
+	int idx, count;
+{
+	printf("%s: screen %d", sc->sc_dv.dv_xname, idx);
+	if (count > 1)
+		printf("-%d", idx + (count-1));
+	printf(" added (%s", sc->sc_scr[idx]->scr_dconf->scrdata->name);
+	if (WSSCREEN_HAS_EMULATOR(sc->sc_scr[idx])) {
+		printf(", %s emulation",
+			sc->sc_scr[idx]->scr_dconf->wsemul->name);
+	}
+	printf(")\n");
+}
+
 int
 wsdisplay_addscreen(sc, idx, screentype, emul)
 	struct wsdisplay_softc *sc;
 	int idx;
-	char *screentype, *emul;
+	const char *screentype, *emul;
 {
 	const struct wsscreen_descr *scrdesc;
 	int error;
@@ -347,12 +372,6 @@ wsdisplay_addscreen(sc, idx, screentype, emul)
 	}
 
 	sc->sc_scr[idx] = scr;
-
-	printf("%s: screen %d added (%s", sc->sc_dv.dv_xname, idx,
-	       scrdesc->name);
-	if (WSSCREEN_HAS_EMULATOR(scr))
-		printf(", %s emulation", scr->scr_dconf->wsemul->name);
-	printf(")\n");
 
 	/* if no screen has focus yet, activate the first we get */
 	s = spltty();
@@ -572,7 +591,7 @@ wsdisplay_common_attach(sc, console, scrdata, accessops, accesscookie)
 	const struct wsdisplay_accessops *accessops;
 	void *accesscookie;
 {
-	int i = 0;
+	int i, start=0;
 #if NWSKBD > 0
 	struct device *dv;
 
@@ -602,7 +621,7 @@ wsdisplay_common_attach(sc, console, scrdata, accessops, accesscookie)
 
 		sc->sc_focusidx = 0;
 		sc->sc_focus = sc->sc_scr[0];
-		i++;
+		start = 1;
 	}
 	printf("\n");
 
@@ -615,11 +634,13 @@ wsdisplay_common_attach(sc, console, scrdata, accessops, accesscookie)
 	 * WSDISPLAYIO_ADDSCREEN ioctl is more flexible, so this code
 	 * is for special cases like installation kernels.
 	 */
-#ifdef WSDISPLAY_DEFAULTSCREENS
-	for (; i < WSDISPLAY_DEFAULTSCREENS; i++)
+	for (i = start; i < wsdisplay_defaultscreens; i++) {
 		if (wsdisplay_addscreen(sc, i, 0, 0))
 			break;
-#endif
+	}
+
+	if (i > start) 
+		wsdisplay_addscreen_print(sc, start, i-start);
 }
 
 void
@@ -1007,7 +1028,9 @@ wsdisplay_cfg_ioctl(sc, cmd, data, flag, p)
 		} else
 			emul = 0;
 
-		return (wsdisplay_addscreen(sc, d->idx, type, emul));
+		if ((error = wsdisplay_addscreen(sc, d->idx, type, emul)) == 0)
+			wsdisplay_addscreen_print(sc, d->idx, 0);
+		return (error);
 #undef d
 	case WSDISPLAYIO_DELSCREEN:
 #define d ((struct wsdisplay_delscreendata *)data)
