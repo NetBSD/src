@@ -29,7 +29,7 @@ provided "as is" without express or implied warranty.
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: newsyslog.c,v 1.8 1995/01/06 19:20:22 jtc Exp $";
+static char rcsid[] = "$Id: newsyslog.c,v 1.9 1995/01/21 21:53:46 jtc Exp $";
 #endif /* not lint */
 
 #ifndef CONF
@@ -221,7 +221,7 @@ PRS(argc,argv)
 usage()
 {
         fprintf(stderr,
-                "Usage: %s <-nrv> <-f config-file>\n");
+                "Usage: %s <-nrv> <-f config-file>\n", progname);
         exit(1);
 }
 
