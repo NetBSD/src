@@ -1,11 +1,11 @@
-/*	$NetBSD: main.c,v 1.16 2000/06/07 02:10:28 hubertf Exp $	*/
+/*	$NetBSD: main.c,v 1.16.2.1 2001/03/20 18:02:01 he Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char *rcsid = "from FreeBSD Id: main.c,v 1.11 1997/10/08 07:46:48 charnier Exp";
 #else
-__RCSID("$NetBSD: main.c,v 1.16 2000/06/07 02:10:28 hubertf Exp $");
+__RCSID("$NetBSD: main.c,v 1.16.2.1 2001/03/20 18:02:01 he Exp $");
 #endif
 #endif
 
@@ -35,7 +35,7 @@ __RCSID("$NetBSD: main.c,v 1.16 2000/06/07 02:10:28 hubertf Exp $");
 #include "lib.h"
 #include "delete.h"
 
-static char Options[] = "hvDdnfFp:OrR";
+static char Options[] = "hVvDdnfFp:OrR";
 
 char   *Prefix = NULL;
 char   *ProgramPath = NULL;
@@ -50,7 +50,7 @@ lpkg_head_t pkgs;
 static void
 usage(void)
 {
-	fprintf(stderr, "usage: pkg_delete [-vDdnFfOrR] [-p prefix] pkg-name ...\n");
+	fprintf(stderr, "usage: pkg_delete [-vVDdnFfOrR] [-p prefix] pkg-name ...\n");
 	exit(1);
 }
 
@@ -119,6 +119,10 @@ main(int argc, char **argv)
 		case 'O':
 			OnlyDeleteFromPkgDB = TRUE;
 			break;
+
+		case 'V':
+			show_version();
+			/* NOTREACHED */
 
 		case 'h':
 		case '?':
