@@ -1,4 +1,4 @@
-/*	$NetBSD: lptest.c,v 1.5 1996/03/21 18:13:20 jtc Exp $	*/
+/*	$NetBSD: lptest.c,v 1.6 1996/12/09 09:57:50 mrg Exp $	*/
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -79,6 +79,6 @@ main(argc, argv)
 		}
 		putchar('\n');
 	}
-	(void) fflush(stdout);
+	(void)fflush(stdout);
 	exit(0);
 }
