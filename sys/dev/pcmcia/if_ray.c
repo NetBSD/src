@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ray.c,v 1.20.2.1 2000/07/21 18:45:46 onoe Exp $	*/
+/*	$NetBSD: if_ray.c,v 1.20.2.2 2000/12/15 00:15:01 he Exp $	*/
 /* 
  * Copyright (c) 2000 Christian E. Hopps
  * All rights reserved.
@@ -47,6 +47,12 @@
  *	N.B. Its unclear yet whether the Aviator 2.4 cards interoperate
  *	with other 802.11 FH 2Mbps cards, since this was also untested.
  *	Given the nature of the buggy build 4 firmware there may be problems.
+ *
+ *	Authentication added by Steve Weiss <srw@alum.mit.edu> based on
+ *	advice from Corey Thomas (author the the Linux RayLink driver).
+ *	Authentication is currently limited to adhoc networks, and was
+ *	added to support a requirement of the newest Windows drivers for
+ *	the RayLink.  Tested with Aviator Pro (firmware 5.63) on Win98.
  */
 
 #include "opt_inet.h"
@@ -179,6 +185,8 @@ struct ray_softc {
 	u_int		sc_txfree;	/* a free count for efficiency */
 
 	u_int8_t	sc_bssid[ETHER_ADDR_LEN];	/* current net values */
+	u_int8_t	sc_authid[ETHER_ADDR_LEN];	/* ID of authenticating
+							   station */
 	struct ieee80211_nwid	sc_cnwid;	/* last nwid */
 	struct ieee80211_nwid	sc_dnwid;	/* desired nwid */
 	u_int8_t	sc_omode;	/* old operating mode SC_MODE_xx */
@@ -189,7 +197,7 @@ struct ray_softc {
 	bus_size_t	sc_txpad;	/* tib size plus "phy" size */
 	u_int8_t	sc_deftxrate;	/* default transfer rate */
 	u_int8_t	sc_encrypt;
-
+	u_int8_t	sc_authstate;	/* authentication state */
 
 	int		sc_promisc;	/* current set value */
 	int		sc_running;	/* things we are doing */
@@ -261,6 +269,15 @@ typedef	void (*ray_cmd_func_t)(struct ray_softc *);
 #define	SC_BUILD_5	0x5
 #define	SC_BUILD_4	0x55
 
+/* sc_authstate */
+#define	RAY_AUTH_UNAUTH		0
+#define	RAY_AUTH_WAITING	1
+#define	RAY_AUTH_AUTH		2
+#define	RAY_AUTH_NEEDED		3
+
+#define	OPEN_AUTH_REQUEST	1
+#define	OPEN_AUTH_RESPONSE	2
+#define	BROADCAST_DEAUTH	0xc0
 
 static int ray_alloc_ccs __P((struct ray_softc *, bus_size_t *, u_int, u_int));
 static bus_size_t ray_fill_in_tx_ccs __P((struct ray_softc *, size_t,
@@ -296,9 +313,11 @@ void ray_power __P((int, void *));
 static ray_cmd_func_t ray_rccs_intr __P((struct ray_softc *, bus_size_t));
 static void ray_read_region __P((struct ray_softc *, bus_size_t,void *,size_t));
 static void ray_recv __P((struct ray_softc *, bus_size_t));
+static void ray_recv_auth __P((struct ray_softc *, struct ieee80211_frame *));
 static void ray_report_params __P((struct ray_softc *));
 static void ray_reset __P((struct ray_softc *));
 static void ray_reset_resetloop __P((void *));
+static int ray_send_auth __P((struct ray_softc *, u_int8_t *, u_int8_t));
 static void ray_set_pending __P((struct ray_softc *, u_int));
 static void ray_shutdown __P((void *));
 static int ray_simple_cmd __P((struct ray_softc *, u_int, u_int));
@@ -808,6 +827,7 @@ ray_init(sc)
 	sc->sc_txfree = RAY_CCS_NTX;
 	sc->sc_checkcounters = 0;
 	sc->sc_flags &= ~RAY_FLAGS_RESUMEINIT;
+	sc->sc_authstate = RAY_AUTH_UNAUTH;
 
 	/* get startup results */
 	ep = &sc->sc_ecf_startup;
@@ -1193,20 +1213,32 @@ ray_intr_start(sc)
 		return;
 	}
 
+	/* Check to see if we need to authenticate before sending packets. */
+	if (sc->sc_authstate == RAY_AUTH_NEEDED) {
+		RAY_DPRINTF(("%s: Sending auth request.\n", ifp->if_xname));
+		sc->sc_authstate = RAY_AUTH_WAITING;
+		ray_send_auth(sc, sc->sc_authid, OPEN_AUTH_REQUEST);
+		return;
+	}
+
 	pcount = 0;
 	for (;;) {
 		/* if we have no descriptors be done */
 		if (i == RAY_CCS_LINK_NULL) {
 			i = ray_find_free_tx_ccs(sc, hinti);
 			if (i == RAY_CCS_LINK_NULL) {
+				RAY_DPRINTF(("%s: no descriptors.\n",
+				    ifp->if_xname));
 				ifp->if_flags |= IFF_OACTIVE;
 				break;
 			}
 		}
 
 		IF_DEQUEUE(&ifp->if_snd, m0);
-		if (!m0)
+		if (!m0) {
+			RAY_DPRINTF(("%s: dry queue.\n", ifp->if_xname));
 			break;
+		}
 		RAY_DPRINTF(("%s: gotmbuf 0x%lx\n", ifp->if_xname, (long)m0));
 		pktlen = m0->m_pkthdr.len;
 		if (pktlen > ETHER_MAX_LEN - ETHER_CRC_LEN) {
@@ -1420,8 +1452,7 @@ ray_recv(sc, ccs)
 	    (u_long)pktlen, nofrag));
 	RAY_DPRINTF_XMIT(("%s: received packet: len %ld\n", sc->sc_xname,
 	    (u_long)pktlen));
-	if (pktlen > MCLBYTES
-	    || pktlen < (sizeof(*frame) + sizeof(struct llc))) {
+	if (pktlen > MCLBYTES || pktlen < sizeof(*frame)) {
 		RAY_DPRINTF(("%s: PKTLEN TOO BIG OR TOO SMALL\n",
 		    sc->sc_xname));
 		ifp->if_ierrors++;
@@ -1526,9 +1557,38 @@ done:
 		m_freem(m);
 		return;
 	}
-	if ((fc0 & IEEE80211_FC0_TYPE_MASK) != IEEE80211_FC0_TYPE_DATA) {
+	if ((fc0 & IEEE80211_FC0_TYPE_MASK) == IEEE80211_FC0_TYPE_MGT) {
+		switch (frame->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK) {
+		case IEEE80211_FC0_SUBTYPE_BEACON:
+			/* Ignore beacon silently. */
+			break;
+		case IEEE80211_FC0_SUBTYPE_AUTH:
+			ray_recv_auth(sc, frame);
+			break;
+		case IEEE80211_FC0_SUBTYPE_DEAUTH:
+			sc->sc_authstate = RAY_AUTH_UNAUTH;
+			break;
+		default:
+			RAY_DPRINTF(("%s: mgt packet not supported\n",
+			    sc->sc_dev.dv_xname));
+#ifdef RAY_DEBUG
+			hexdump((const u_int8_t*)frame, pktlen, 16, 4, 0);
+#endif
+			RAY_DPRINTF(("\n"));
+			break;
+		}
+		m_freem(m);
+		return;
+	} else if ((fc0 & IEEE80211_FC0_TYPE_MASK) != IEEE80211_FC0_TYPE_DATA) {
 		RAY_DPRINTF(("%s: pkt not type data fc0 0x%x\n",
 		    sc->sc_xname, fc0));
+		m_freem(m);
+		return;
+	}
+
+	if (pktlen < sizeof(*frame) + sizeof(struct llc)) {
+		RAY_DPRINTF(("%s: pkt too small for llc (%d)\n",
+		    sc->sc_xname, pktlen));
 		m_freem(m);
 		return;
 	}
@@ -1591,6 +1651,85 @@ done:
 	(*ifp->if_input)(ifp, m);
 }
 
+/*
+ * receive an auth packet
+ */
+static void
+ray_recv_auth(sc, frame)
+	struct ray_softc *sc;
+	struct ieee80211_frame *frame;
+{
+	u_int8_t *var = (u_int8_t *)(frame + 1);
+
+	if (sc->sc_mode == SC_MODE_ADHOC) {
+		RAY_DPRINTF(("%s: recv auth packet:\n", sc->sc_dev.dv_xname));
+#ifdef RAY_DEBUG
+		hexdump((const u_int8_t *)frame, sizeof(*frame) + 6, 16, 4, 0);
+#endif
+		RAY_DPRINTF(("\n"));
+
+		if (var[2] == OPEN_AUTH_REQUEST) {
+			RAY_DPRINTF(("%s: Sending authentication response.\n",
+			    sc->sc_dev.dv_xname));
+			if (ray_send_auth(sc, frame->i_addr2,
+			    OPEN_AUTH_RESPONSE) == 0) {
+				sc->sc_authstate = RAY_AUTH_NEEDED;
+				memcpy(sc->sc_authid, frame->i_addr2,
+				    ETHER_ADDR_LEN);
+			}
+		} else if (var[2] == OPEN_AUTH_RESPONSE) {
+			RAY_DPRINTF(("%s: Authenticated!\n",
+			    sc->sc_dev.dv_xname));
+			sc->sc_authstate = RAY_AUTH_AUTH;
+		}
+	}
+}
+
+/*
+ * send an auth packet
+ */
+static int
+ray_send_auth(sc, dest, auth_type)
+	struct ray_softc *sc;
+	u_int8_t *dest;
+	u_int8_t auth_type;
+{
+	u_int8_t packet[sizeof(struct ieee80211_frame) + ETHER_ADDR_LEN], *var;
+	struct ieee80211_frame *frame;
+	bus_size_t bufp;
+	int ccsindex;
+
+	ccsindex = ray_find_free_tx_ccs(sc, RAY_CCS_TX_FIRST);
+	if (ccsindex == RAY_CCS_LINK_NULL) {
+		RAY_DPRINTF(("%s: send auth failed -- no free tx slots\n",
+		    sc->sc_dev.dv_xname));
+		return (ENOMEM);
+	}
+
+	bufp = ray_fill_in_tx_ccs(sc, sizeof(packet), ccsindex,
+	    RAY_CCS_LINK_NULL);
+	frame = (struct ieee80211_frame *) packet;
+	frame->i_fc[0] = IEEE80211_FC0_VERSION_0 | IEEE80211_FC0_SUBTYPE_AUTH;
+	frame->i_fc[1] = 0;
+	memcpy(frame->i_addr1, dest, ETHER_ADDR_LEN);
+	memcpy(frame->i_addr2, sc->sc_ecf_startup.e_station_addr,
+	    ETHER_ADDR_LEN);
+	memcpy(frame->i_addr3, sc->sc_bssid, ETHER_ADDR_LEN);
+
+	var = (u_int8_t *)(frame + 1);
+	memset(var, 0, ETHER_ADDR_LEN);
+	var[2] = auth_type;
+
+	ray_write_region(sc, bufp, packet, sizeof(packet));
+
+	SRAM_WRITE_1(sc, RAY_SCB_CCSI, ccsindex);
+	RAY_ECF_START_CMD(sc);
+
+	RAY_DPRINTF_XMIT(("%s: sent auth packet: len %lu\n",
+	    sc->sc_dev.dv_xname, (u_long) sizeof(packet)));
+
+	return (0);
+}
 
 /*
  * scan for free buffers
