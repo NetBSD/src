@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.15 1999/02/07 15:08:50 tron Exp $	*/
+/*	$NetBSD: extern.h,v 1.16 1999/03/03 18:06:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -50,6 +50,7 @@
  */
 extern const char *arcname;
 extern const char *gzip_program;
+extern time_t starttime;
 int ar_open __P((const char *));
 void ar_close __P((void));
 void ar_drain __P((void));
@@ -61,11 +62,13 @@ int ar_rdsync __P((void));
 int ar_fow __P((off_t, off_t *));
 int ar_rev __P((off_t ));
 int ar_next __P((void));
+void ar_summary __P((int));
 
 /*
  * ar_subs.c
  */
 extern u_long flcnt;
+extern ARCHD archd;
 void list __P((void));
 void extract __P((void));
 void append __P((void));

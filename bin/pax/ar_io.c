@@ -1,4 +1,4 @@
-/*	$NetBSD: ar_io.c,v 1.12 1998/11/04 19:40:13 christos Exp $	*/
+/*	$NetBSD: ar_io.c,v 1.13 1999/03/03 18:06:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ar_io.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: ar_io.c,v 1.12 1998/11/04 19:40:13 christos Exp $");
+__RCSID("$NetBSD: ar_io.c,v 1.13 1999/03/03 18:06:52 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -87,10 +87,13 @@ static int wr_trail = 1;		/* trailer was rewritten in append */
 static int can_unlnk = 0;		/* do we unlink null archives?  */
 const char *arcname;                  	/* printable name of archive */
 const char *gzip_program;		/* name of gzip program */
+time_t starttime;			/* time the run started */
 
 static int get_phys __P((void));
 extern sigset_t s_mask;
 static void ar_start_gzip __P((int));
+static const char *timefmt __P((char *, size_t, off_t, time_t));
+static const char *sizefmt __P((char *, size_t, off_t));
 
 /*
  * ar_open()
@@ -413,36 +416,8 @@ ar_close()
 		vfpart = 0;
 	}
 
-	/*
-	 * If we have not determined the format yet, we just say how many bytes
-	 * we have skipped over looking for a header to id. there is no way we
-	 * could have written anything yet.
-	 */
-	if (frmt == NULL) {
-#	ifdef NET2_STAT
-		(void)fprintf(outf, "%s: unknown format, %lu bytes skipped.\n",
-		    argv0, (unsigned long) rdcnt);
-#	else
-		(void)fprintf(outf, "%s: unknown format, %qu bytes skipped.\n",
-		    argv0, (unsigned long long) rdcnt);
-#	endif
-		(void)fflush(outf);
-		flcnt = 0;
-		return;
-	}
+	ar_summary(0);
 
-	(void)fprintf(outf,
-#	ifdef NET2_STAT
-	    "%s: %s vol %d, %lu files, %lu bytes read, %lu bytes written.\n",
-	    argv0, frmt->name, arvol-1, flcnt,
-	    (unsigned long) rdcnt, 
-	    (unsigned long) wrcnt);
-#	else
-	    "%s: %s vol %d, %lu files, %qu bytes read, %qu bytes written.\n",
-	    argv0, frmt->name, arvol-1, flcnt,
-	    (unsigned long long) rdcnt, 
-	    (unsigned long long) wrcnt);
-#	endif
 	(void)fflush(outf);
 	flcnt = 0;
 }
@@ -1403,4 +1378,102 @@ ar_start_gzip(fd)
 			err(1, "could not exec");
 		/* NOTREACHED */
 	}
+}
+
+static const char *
+timefmt(buf, size, sz, tm)
+	char *buf;
+	size_t size;
+	off_t sz;
+	time_t tm;
+{
+#ifdef NET2_STAT
+	(void)snprintf(buf, size, "%lu secs (%lu bytes/sec)",
+	    (unsigned long)tm, (unsigned long)(sz / tm));
+#else
+	(void)snprintf(buf, size, "%lu secs (%llu bytes/sec)",
+	    (unsigned long)tm, (unsigned long long)(sz / tm));
+#endif
+	return buf;
+}
+
+static const char *
+sizefmt(buf, size, sz)
+	char *buf;
+	size_t size;
+	off_t sz;
+{
+#ifdef NET2_STAT
+	(void)snprintf(buf, size, "%lu bytes", (unsigned long)sz);
+#else
+	(void)snprintf(buf, size, "%llu bytes", (unsigned long long)sz);
+#endif
+	return buf;
+}
+
+#if __STDC__
+void
+ar_summary(int n)
+#else
+void
+ar_summary(n)
+	int n;
+#endif
+{
+	time_t secs;
+	int len;
+	char buf[MAXPATHLEN];
+	char tbuf[MAXPATHLEN/4];
+	char s1buf[MAXPATHLEN/8];
+	char s2buf[MAXPATHLEN/8];
+	FILE *outf;
+
+	if (act == LIST)
+		outf = stdout;
+	else
+		outf = stderr;
+
+	/*
+	 * If we are called from a signal (n != 0), use snprintf(3) so that we
+	 * don't reenter stdio(3).
+	 */
+	(void)time(&secs);
+	if ((secs -= starttime) == 0)
+		secs = 1;
+
+	/*
+	 * If we have not determined the format yet, we just say how many bytes
+	 * we have skipped over looking for a header to id. there is no way we
+	 * could have written anything yet.
+	 */
+	if (frmt == NULL) {
+		len = snprintf(buf, sizeof(buf), 
+		    "unknown format, %s skipped in %s\n",
+		    sizefmt(s1buf, sizeof(s1buf), rdcnt),
+		    timefmt(tbuf, sizeof(tbuf), rdcnt, secs));
+		if (n == 0)
+			(void)fprintf(outf, "%s: %s", argv0, buf);
+		else	
+			(void)write(STDERR_FILENO, buf, len);
+		return;
+	}
+
+
+	if (n != 0) {
+		len = snprintf(buf, sizeof(buf), "Working on `%s' (%s)\n",
+		    archd.name, sizefmt(s1buf, sizeof(s1buf), archd.sb.st_size));
+		(void)write(STDERR_FILENO, buf, len);
+	}
+
+
+	len = snprintf(buf, sizeof(buf),
+	    "%s vol %d, %lu files, %s read, %s written in %s\n",
+	    frmt->name, arvol-1, (unsigned long)flcnt,
+	    sizefmt(s1buf, sizeof(s1buf), rdcnt),
+	    sizefmt(s2buf, sizeof(s2buf), wrcnt),
+	    timefmt(tbuf, sizeof(tbuf), rdcnt + wrcnt, secs));
+	if (n == 0)
+		(void)fprintf(outf, "%s: %s", argv0, buf);
+	else
+		(void)write(STDERR_FILENO, buf, strlen(buf));
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: pax.c,v 1.8 1998/07/28 05:31:26 mycroft Exp $	*/
+/*	$NetBSD: pax.c,v 1.9 1999/03/03 18:06:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)pax.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: pax.c,v 1.8 1998/07/28 05:31:26 mycroft Exp $");
+__RCSID("$NetBSD: pax.c,v 1.9 1999/03/03 18:06:52 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -239,6 +239,10 @@ main(argc, argv)
         if ((gen_init() < 0) || (tty_init() < 0))
 		return(exit_val);
 
+	(void)time(&starttime);
+#ifdef SIGINFO
+	(void)signal(SIGINFO, ar_summary);
+#endif
 	/*
 	 * select a primary operation mode 
 	 */
