@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.88 2002/09/27 21:54:17 thorpej Exp $	*/
+/*	$NetBSD: wi.c,v 1.89 2002/09/30 06:29:29 onoe Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.88 2002/09/27 21:54:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.89 2002/09/30 06:29:29 onoe Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -191,7 +191,7 @@ int
 wi_attach(sc)
 	struct wi_softc *sc;
 {
-	struct ifnet *ifp = sc->sc_ifp;
+	struct ifnet *ifp = &sc->sc_if;
 	const char *sep = "";
 	int i, nrate;
 	u_int8_t *r;
@@ -479,8 +479,8 @@ wi_tap_802_3(struct wi_softc *sc, struct mbuf *m, struct wi_frame *hwframe)
 	struct ether_header *eh;
 
 	/* hand up 802.3 frame */
-	if (sc->sc_ifp->if_bpf) {
-		bpf_mtap(sc->sc_ifp->if_bpf, m);
+	if (sc->sc_if.if_bpf) {
+		bpf_mtap(sc->sc_if.if_bpf, m);
 	}
 
 	if (m->m_len < sizeof(struct ether_header)) {
@@ -575,7 +575,7 @@ wi_rx_rfc1042(struct wi_softc *sc, int id, struct wi_frame *frame,
 	int		read_ofs, read_len;
 	caddr_t		read_ptr;
 
-	ifp = sc->sc_ifp;
+	ifp = &sc->sc_if;
 	eh = mtod(m, struct ether_header *);
 
 	read_len = le16toh(frame->wi_dat_len) - sizeof(struct llc);
@@ -619,7 +619,7 @@ wi_rx_ethii(struct wi_softc *sc, int id, struct wi_frame *frame,
 #endif
 	struct ether_header *eh;
 
-	ifp = sc->sc_ifp;
+	ifp = &sc->sc_if;
 	eh = mtod(m, struct ether_header *);
 
 	if (le16toh(frame->wi_dat_len) + sizeof(struct ether_header) > maxlen) {
@@ -681,7 +681,7 @@ wi_rx_mgmt(struct wi_softc *sc, int id, struct wi_frame *frame, struct llc *llc,
 	caddr_t		read_ptr;
 	struct ifnet		*ifp;
 
-	ifp = sc->sc_ifp;
+	ifp = &sc->sc_if;
 
 	if (le16toh(frame->wi_dat_len) + WI_SHORT_802_11_END > maxlen) {
 		printf("%s: oversized packet received in "
@@ -745,7 +745,7 @@ static void wi_rxeof(sc)
 	struct wi_frame		rx_frame;
 	struct llc		llc;
 
-	ifp = sc->sc_ifp;
+	ifp = &sc->sc_if;
 
 #if defined(OPTIMIZE_RW_DATA)
 	wi_rewind(sc);
@@ -872,7 +872,7 @@ static void wi_txeof(sc, status)
 	struct wi_softc	*sc;
 	int		status;
 {
-	struct ifnet	*ifp = sc->sc_ifp;
+	struct ifnet	*ifp = &sc->sc_if;
 
 	ifp->if_timer = 0;
 	ifp->if_flags &= ~IFF_OACTIVE;
@@ -1407,7 +1407,7 @@ wi_cmd(sc, cmd, val0, val1, val2)
 	int			i, s = 0;
 
 	/* Wait 100us for the busy bit to clear. */
-	for (i = 100; i--; DELAY(10)) {
+	for (i = 10; i--; DELAY(10)) {
 		if (!(CSR_READ_2(sc, WI_COMMAND) & WI_CMD_BUSY))
 			break;
 	}
@@ -3163,7 +3163,7 @@ int
 wi_detach(sc)
 	struct wi_softc *sc;
 {
-	struct ifnet *ifp = sc->sc_ifp;
+	struct ifnet *ifp = &sc->sc_if;
 	int s;
 
 	if (!sc->sc_attached)
@@ -3201,7 +3201,7 @@ wi_power(sc, why)
 	switch (why) {
 	case PWR_SUSPEND:
 	case PWR_STANDBY:
-		wi_stop(sc->sc_ifp, 0);
+		wi_stop(&sc->sc_if, 0);
 		if (sc->sc_enabled) {
 			if (sc->sc_disable)
 				(*sc->sc_disable)(sc);
@@ -3209,7 +3209,7 @@ wi_power(sc, why)
 		break;
 	case PWR_RESUME:
 		sc->sc_enabled = 0;
-		wi_init(sc->sc_ifp);
+		wi_init(&sc->sc_if);
 		(void)wi_intr(sc);
 		break;
 	case PWR_SOFTSUSPEND:
@@ -3628,7 +3628,7 @@ wi_set_channel(struct wi_softc *sc, struct ieee80211_channel *channel)
 		break;
 	}
 	if (!error && do_init)
-		error = wi_init(sc->sc_ifp);
+		error = wi_init(&sc->sc_if);
 	return error;
 }
 
