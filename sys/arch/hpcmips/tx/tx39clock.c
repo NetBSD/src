@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39clock.c,v 1.6 2000/09/28 16:18:26 uch Exp $ */
+/*	$NetBSD: tx39clock.c,v 1.7 2000/10/01 18:12:04 uch Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -322,8 +322,6 @@ tx39clock_set(struct device *dev, struct clocktime *ct)
 
 	if (sc->sc_enabled) {
 		sc->sc_epoch = *ct;
-		/* Reset RTC counter */
-		__tx39timer_rtcreset(sc->sc_tc);
 	}
 }
 
