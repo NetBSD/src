@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.445 2002/05/31 11:11:26 kleink Exp $
+#	$NetBSD: mi,v 1.446 2002/06/01 23:50:52 lukem Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -1429,6 +1429,7 @@
 ./usr/share/man/cat3/SIMPLEQ_INSERT_HEAD.0	comp-c-catman
 ./usr/share/man/cat3/SIMPLEQ_INSERT_TAIL.0	comp-c-catman
 ./usr/share/man/cat3/SIMPLEQ_NEXT.0	comp-c-catman
+./usr/share/man/cat3/SIMPLEQ_REMOVE.0	comp-c-catman
 ./usr/share/man/cat3/SIMPLEQ_REMOVE_HEAD.0	comp-c-catman
 ./usr/share/man/cat3/SSL_CIPHER_get_name.0	comp-c-catman
 ./usr/share/man/cat3/SSL_CTX_add_extra_chain_cert.0	comp-c-catman
@@ -3948,6 +3949,7 @@
 ./usr/share/man/man3/SIMPLEQ_INSERT_HEAD.3		comp-c-man
 ./usr/share/man/man3/SIMPLEQ_INSERT_TAIL.3		comp-c-man
 ./usr/share/man/man3/SIMPLEQ_NEXT.3		comp-c-man
+./usr/share/man/man3/SIMPLEQ_REMOVE.3		comp-c-man
 ./usr/share/man/man3/SIMPLEQ_REMOVE_HEAD.3		comp-c-man
 ./usr/share/man/man3/SSL_CIPHER_get_name.3	comp-c-man
 ./usr/share/man/man3/SSL_CTX_add_extra_chain_cert.3	comp-c-man

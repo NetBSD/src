@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmciavar.h,v 1.15 2001/12/15 13:23:23 soren Exp $	*/
+/*	$NetBSD: pcmciavar.h,v 1.16 2002/06/01 23:51:02 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -278,8 +278,8 @@ int	pcmcia_scan_cis __P((struct device * dev,
 int	pcmcia_ccr_read __P((struct pcmcia_function *, int));
 void	pcmcia_ccr_write __P((struct pcmcia_function *, int, int));
 
-#define	pcmcia_mfc(sc)	((sc)->card.pf_head.sqh_first &&		\
-			 (sc)->card.pf_head.sqh_first->pf_list.sqe_next)
+#define	pcmcia_mfc(sc)	(! SIMPLEQ_EMPTY(&(sc)->card.pf_head) &&	\
+		 SIMPLEQ_NEXT(SIMPLEQ_FIRST(&(sc)->card.pf_head), pf_list))
 
 void	pcmcia_function_init __P((struct pcmcia_function *,
 	    struct pcmcia_config_entry *));

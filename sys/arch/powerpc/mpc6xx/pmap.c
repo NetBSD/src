@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.43 2002/04/23 17:14:45 kleink Exp $	*/
+/*	$NetBSD: pmap.c,v 1.44 2002/06/01 23:50:56 lukem Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -2379,7 +2379,7 @@ pmap_pool_ualloc(struct pool *pp, int flags)
 	pvop = SIMPLEQ_FIRST(&pmap_upvop_head);
 	if (pvop != NULL) {
 		pmap_upvop_free--;
-		SIMPLEQ_REMOVE_HEAD(&pmap_upvop_head, pvop, pvop_link);
+		SIMPLEQ_REMOVE_HEAD(&pmap_upvop_head, pvop_link);
 		return pvop;
 	}
 	if (uvm.page_init_done != TRUE) {
@@ -2397,7 +2397,7 @@ pmap_pool_malloc(struct pool *pp, int flags)
 	pvop = SIMPLEQ_FIRST(&pmap_mpvop_head);
 	if (pvop != NULL) {
 		pmap_mpvop_free--;
-		SIMPLEQ_REMOVE_HEAD(&pmap_mpvop_head, pvop, pvop_link);
+		SIMPLEQ_REMOVE_HEAD(&pmap_mpvop_head, pvop_link);
 		return pvop;
 	}
  again:

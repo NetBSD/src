@@ -1,4 +1,4 @@
-/*	$NetBSD: symbol.c,v 1.11 2001/10/14 23:13:21 rafal Exp $	 */
+/*	$NetBSD: symbol.c,v 1.12 2002/06/01 23:50:53 lukem Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -84,7 +84,7 @@ _rtld_symlook_list(const char *name, unsigned long hash, Objlist *objlist,
 	
 	def = NULL;
 	defobj = NULL;
-	for (elm = SIMPLEQ_FIRST(objlist); elm; elm = SIMPLEQ_NEXT(elm, link)) {
+	SIMPLEQ_FOREACH(elm, objlist, link) {
 		if (elm->obj->mark == _rtld_curmark)
 			continue;
 		elm->obj->mark = _rtld_curmark;
@@ -200,7 +200,7 @@ _rtld_find_symdef(obj_list, r_info, name, refobj, defobj_out, in_plt)
 	}
 	
 	/* Search all dlopened DAGs containing the referencing object. */
-	for (elm = SIMPLEQ_FIRST(&refobj->dldags); elm; elm = SIMPLEQ_NEXT(elm, link)) {
+	SIMPLEQ_FOREACH(elm, &refobj->dldags, link) {
 		if (def != NULL && ELF_ST_BIND(def->st_info) != STB_WEAK)
 			break;
 		symp = _rtld_symlook_list(name, hash, &elm->obj->dagmembers, &obj,

@@ -1,4 +1,4 @@
-/*	$NetBSD: aic_pcmcia.c,v 1.18 2001/11/13 07:26:32 lukem Exp $	*/
+/*	$NetBSD: aic_pcmcia.c,v 1.19 2002/06/01 23:51:00 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic_pcmcia.c,v 1.18 2001/11/13 07:26:32 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic_pcmcia.c,v 1.19 2002/06/01 23:51:00 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -115,8 +115,7 @@ aic_pcmcia_attach(parent, self, aux)
 
 	psc->sc_pf = pf;
 
-	for (cfe = SIMPLEQ_FIRST(&pf->cfe_head); cfe != NULL;
-	    cfe = SIMPLEQ_NEXT(cfe, cfe_list)) {
+	SIMPLEQ_FOREACH(cfe, &pf->cfe_head, cfe_list) {
 		if (cfe->num_memspace != 0 ||
 		    cfe->num_iospace != 1)
 			continue;

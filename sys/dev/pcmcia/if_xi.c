@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xi.c,v 1.21 2002/05/05 03:19:26 takemura Exp $ */
+/*	$NetBSD: if_xi.c,v 1.22 2002/06/01 23:51:01 lukem Exp $ */
 /*	OpenBSD: if_xe.c,v 1.9 1999/09/16 11:28:42 niklas Exp 	*/
 
 /*
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.21 2002/05/05 03:19:26 takemura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.22 2002/06/01 23:51:01 lukem Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -397,7 +397,7 @@ xi_pcmcia_attach(parent, self, aux)
 
 	/* Enable the card */
 	psc->sc_pf = pa->pf;
-	pcmcia_function_init(psc->sc_pf, psc->sc_pf->cfe_head.sqh_first);
+	pcmcia_function_init(psc->sc_pf, SIMPLEQ_FIRST(&psc->sc_pf->cfe_head));
 	if (pcmcia_function_enable(psc->sc_pf)) {
 		printf(": function enable failed\n");
 		goto fail;
