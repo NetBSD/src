@@ -1,4 +1,4 @@
-/*	$NetBSD: isp_sbus.c,v 1.5 1997/05/24 20:16:27 pk Exp $	*/
+/*	$NetBSD: isp_sbus.c,v 1.6 1997/06/08 06:35:45 thorpej Exp $	*/
 
 /*
  * SBus specific probe and attach routines for Qlogic ISP SCSI adapters.
@@ -55,13 +55,11 @@
 
 static u_int16_t isp_sbus_rd_reg __P((struct ispsoftc *, int));
 static void isp_sbus_wr_reg __P((struct ispsoftc *, int, u_int16_t));
-static vm_offset_t
-isp_sbus_mbxdma __P((struct ispsoftc *, vm_offset_t, u_int32_t));
-static int
-isp_sbus_dmasetup __P((struct ispsoftc *, struct scsi_xfer *, ispreq_t *,
-		      u_int8_t *, u_int8_t));
-static void
-isp_sbus_dmateardown __P((struct ispsoftc *, struct scsi_xfer *, u_int32_t));
+static int isp_sbus_mbxdma __P((struct ispsoftc *));
+static int isp_sbus_dmasetup __P((struct ispsoftc *, struct scsi_xfer *,
+	ispreq_t *, u_int8_t *, u_int8_t));
+static void isp_sbus_dmateardown __P((struct ispsoftc *, struct scsi_xfer *,
+	u_int32_t));
 
 static struct ispmdvec mdvec = {
 	isp_sbus_rd_reg,
@@ -210,19 +208,43 @@ isp_sbus_wr_reg (isp, regoff, val)
 	*((u_int16_t *) &sbc->sbus_reg[offset]) = val;
 }
 
-static vm_offset_t
-isp_sbus_mbxdma(isp, kva, len)
+static int
+isp_sbus_mbxdma(isp)
 	struct ispsoftc *isp;
-	vm_offset_t kva;
-	u_int32_t len;
 {
+	size_t len;
+
 	/*
-	 * Since most Sun machines aren't I/O coherent,
-	 * map the mailboxes through kdvma space to
-	 * force them to be uncached.
+	 * NOTE: Since most Sun machines aren't I/O coherent,
+	 * map the mailboxes through kdvma space to force them
+	 * to be uncached.
 	 */
 
-	return ((vm_offset_t) kdvma_mapin((caddr_t)kva, len, 0));
+	/*
+	 * Allocate and map the request queue.
+	 */
+	len = ISP_QUEUE_SIZE(RQUEST_QUEUE_LEN);
+	isp->isp_rquest = (volatile caddr_t)malloc(len, M_DEVBUF, M_NOWAIT);
+	if (isp->isp_rquest == 0)
+		return (1);
+	isp->isp_rquest_dma = (u_int32_t)kdvma_mapin((caddr_t)isp->isp_rquest,
+	    len, 0);
+	if (isp->isp_rquest_dma == 0)
+		return (1);
+
+	/*
+	 * Allocate and map the result queue.
+	 */
+	len = ISP_QUEUE_SIZE(RESULT_QUEUE_LEN);
+	isp->isp_result = (volatile caddr_t)malloc(len, M_DEVBUF, M_NOWAIT);
+	if (isp->isp_result == 0)
+		return (1);
+	isp->isp_result_dma = (u_int32_t)kdvma_mapin((caddr_t)isp->isp_result,
+	    len, 0);
+	if (isp->isp_result_dma == 0)
+		return (1);
+
+	return (0);
 }
 
 /*
