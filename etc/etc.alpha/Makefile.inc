@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.3 2001/11/29 22:45:54 thorpej Exp $
+#	$NetBSD: Makefile.inc,v 1.4 2002/05/02 15:38:07 lukem Exp $
 
 KERNEL_SETS=		GENERIC
 
@@ -8,7 +8,6 @@ INSTALLATION_DIRS+=	installation/floppy	\
 			installation/diskimage	\
 			installation/instkernel	\
 			installation/netboot	\
-			installation/tapeimage	\
 			installation/misc
 
 snap_md_post:
