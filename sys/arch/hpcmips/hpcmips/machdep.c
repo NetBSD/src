@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.19 2000/02/21 13:46:02 shin Exp $	*/
+/*	$NetBSD: machdep.c,v 1.20 2000/03/25 10:14:14 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.19 2000/02/21 13:46:02 shin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.20 2000/03/25 10:14:14 nisimura Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 #include "opt_vr41x1.h"
@@ -370,8 +370,9 @@ mach_init(argc, argv, bi)
 	proc0.p_addr = proc0paddr = (struct user *)kernend;
 	proc0.p_md.md_regs =
 	    (struct frame *)((caddr_t)kernend + UPAGES * PAGE_SIZE) - 1;
-	curpcb = &proc0.p_addr->u_pcb;
 	memset(kernend, 0, UPAGES * PAGE_SIZE);
+	curpcb = &proc0.p_addr->u_pcb;
+	curpcb->pcb_context[11] = MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
 
 	kernend += UPAGES * PAGE_SIZE;
 

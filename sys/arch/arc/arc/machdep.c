@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.31 2000/03/03 12:50:19 soda Exp $	*/
+/*	$NetBSD: machdep.c,v 1.32 2000/03/25 10:14:13 nisimura Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -519,8 +519,9 @@ mach_init(argc, argv, envv)
 	 */
 	proc0.p_addr = proc0paddr = (struct user *)kernend;
 	proc0.p_md.md_regs = (struct frame *)(kernend + USPACE) - 1;
-	curpcb = &proc0.p_addr->u_pcb;
 	memset(proc0.p_addr, 0, USPACE);
+	curpcb = &proc0.p_addr->u_pcb;
+	curpcb->pcb_context[11] = MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
 
 	kernend += USPACE;
 

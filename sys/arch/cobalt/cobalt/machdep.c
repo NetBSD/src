@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.3 2000/03/21 02:27:50 soren Exp $	*/
+/*	$NetBSD: machdep.c,v 1.4 2000/03/25 10:14:13 nisimura Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -257,8 +257,9 @@ mach_init(void)
 	p0 = (caddr_t)pmap_steal_memory(USPACE, NULL, NULL); 
 	proc0.p_addr = proc0paddr = (struct user *)p0;
 	proc0.p_md.md_regs = (struct frame *)((caddr_t)p0 + USPACE) - 1;
-	curpcb = &proc0.p_addr->u_pcb;
 	memset(p0, 0, USPACE);
+	curpcb = &proc0.p_addr->u_pcb;
+	curpcb->pcb_context[11] = MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
 
 	/*
 	 * Allocate space for system data structures.  These data structures
