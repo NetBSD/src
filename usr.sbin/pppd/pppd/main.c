@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.24 1997/05/17 22:14:23 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.25 1997/09/26 19:53:04 christos Exp $	*/
 
 /*
  * main.c - Point-to-Point Protocol main module
@@ -19,11 +19,12 @@
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
-static char rcsid[] = "Id: main.c,v 1.41 1997/04/30 05:54:52 paulus Exp ";
+static char rcsid[] = "Id: main.c,v 1.42 1997/07/14 03:53:25 paulus Exp ";
 #else
-static char rcsid[] = "$NetBSD: main.c,v 1.24 1997/05/17 22:14:23 christos Exp $";
+__RCSID("$NetBSD: main.c,v 1.25 1997/09/26 19:53:04 christos Exp $");
 #endif
 #endif
 
@@ -455,12 +456,17 @@ main(argc, argv)
 	} else
 	    tty_mode = statbuf.st_mode;
 
+	/*
+	 * Set line speed, flow control, etc.
+	 * Previously, if we had a connection script, we would set CLOCAL
+	 * while the script was running.  But then, if CD was negated
+	 * before the script finished, we would miss it.
+	 */
+	set_up_tty(ttyfd, 0);
+
 	/* run connection script */
 	if (connector && connector[0]) {
 	    MAINDEBUG((LOG_INFO, "Connecting with <%s>", connector));
-
-	    /* set line speed, flow control, etc.; set CLOCAL for now */
-	    set_up_tty(ttyfd, 1);
 
 	    /* drop dtr to hang up in case modem is off hook */
 	    if (!default_device && modem) {
@@ -479,15 +485,12 @@ main(argc, argv)
 	    sleep(1);		/* give it time to set up its terminal */
 	}
 
-	/* set line speed, flow control, etc.; clear CLOCAL if modem option */
-	set_up_tty(ttyfd, 0);
-
 	/* reopen tty if necessary to wait for carrier */
 	if (connector == NULL && modem) {
 	    while ((i = open(devnam, O_RDWR)) < 0) {
 		if (errno != EINTR)
 		    syslog(LOG_ERR, "Failed to reopen %s: %m", devnam);
-		if (!persist || errno != EINTR)
+		if (!persist || errno != EINTR || hungup || kill_link)
 		    goto fail;
 	    }
 	    close(i);

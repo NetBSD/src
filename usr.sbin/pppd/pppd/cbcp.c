@@ -1,4 +1,4 @@
-/*	$NetBSD: cbcp.c,v 1.3 1997/05/17 22:14:14 christos Exp $	*/
+/*	$NetBSD: cbcp.c,v 1.4 1997/09/26 19:52:24 christos Exp $	*/
 
 /*
  * cbcp - Call Back Configuration Protocol.
@@ -20,11 +20,12 @@
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char rcsid[] = "Id: cbcp.c,v 1.2 1997/04/30 05:50:26 paulus Exp ";
 #else
-static char rcsid[] = "$NetBSD: cbcp.c,v 1.3 1997/05/17 22:14:14 christos Exp $";
+__RCSID("$NetBSD: cbcp.c,v 1.4 1997/09/26 19:52:24 christos Exp $");
 #endif
 #endif
 

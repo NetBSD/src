@@ -1,4 +1,4 @@
-/*	$NetBSD: magic.h,v 1.4 1997/03/12 20:18:00 christos Exp $	*/
+/*	$NetBSD: magic.h,v 1.5 1997/09/26 19:53:02 christos Exp $	*/
 
 /*
  * magic.h - PPP Magic Number definitions.

@@ -1,4 +1,4 @@
-/*	$NetBSD: pathnames.h,v 1.9 1997/03/12 20:18:11 christos Exp $	*/
+/*	$NetBSD: pathnames.h,v 1.10 1997/09/26 19:53:12 christos Exp $	*/
 
 /*
  * define path names

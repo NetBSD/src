@@ -1,4 +1,4 @@
-/*	$NetBSD: ccp.h,v 1.3 1997/03/12 20:17:31 christos Exp $	*/
+/*	$NetBSD: ccp.h,v 1.4 1997/09/26 19:52:31 christos Exp $	*/
 
 /*
  * ccp.h - Definitions for PPP Compression Control Protocol.

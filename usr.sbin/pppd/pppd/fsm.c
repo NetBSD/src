@@ -1,4 +1,4 @@
-/*	$NetBSD: fsm.c,v 1.10 1997/05/17 22:14:18 christos Exp $	*/
+/*	$NetBSD: fsm.c,v 1.11 1997/09/26 19:52:42 christos Exp $	*/
 
 /*
  * fsm.c - {Link, IP} Control Protocol Finite State Machine.
@@ -19,11 +19,12 @@
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char rcsid[] = "Id: fsm.c,v 1.13 1997/04/30 05:52:17 paulus Exp ";
 #else
-static char rcsid[] = "$NetBSD: fsm.c,v 1.10 1997/05/17 22:14:18 christos Exp $";
+__RCSID("$NetBSD: fsm.c,v 1.11 1997/09/26 19:52:42 christos Exp $");
 #endif
 #endif
 

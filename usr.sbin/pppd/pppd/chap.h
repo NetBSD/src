@@ -1,4 +1,4 @@
-/*	$NetBSD: chap.h,v 1.7 1997/03/12 20:17:34 christos Exp $	*/
+/*	$NetBSD: chap.h,v 1.8 1997/09/26 19:52:35 christos Exp $	*/
 
 /*
  * chap.h - Challenge Handshake Authentication Protocol definitions.
