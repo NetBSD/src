@@ -1,0 +1,417 @@
+.\" $NetBSD: boot.8,v 1.4.2.2 2004/03/29 02:20:52 fair Exp $
+.\"
+.\" Copyright (c) 2003 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Michael Wolfson and Erik E. Fair.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"          This product includes software developed for the
+.\"          NetBSD Project.  See http://www.NetBSD.org/ for
+.\"          information about NetBSD.
+.\" 4. The name of the author may not be used to endorse or promote products
+.\"    derived from this software without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+.\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.\"
+.Dd March 28, 2004
+.Dt BOOT 8 macppc
+.Os
+.Sh NAME
+.Nm boot
+.Nd Macppc system bootstrapping procedures
+.Sh DESCRIPTION
+.Ss Power fail and crash recovery
+Normally, the system will reboot itself at power-up or after crashes.
+An automatic consistency check of the file systems will be performed
+as described in
+.Xr fsck 8 ,
+and unless this fails, the system will resume multi-user operations.
+.Ss Cold starts
+The boot ROM performs a Power On Self Test (POST) then loads Open
+Firmware.
+Depending on the Open Firmware variable
+.Sq Ev auto-boot?
+it will either stop at the Open Firmware
+prompt or attempt to boot an operating system.
+Depending on the contents
+of the
+.Sq Ev use-nvramrc? ,
+.Sq Ev boot-command ,
+.Sq Ev boot-device ,
+and
+.Sq Ev boot-file
+Open Firmware variables, it will attempt to boot
+.Tn MacOS ,
+.Tn "MacOS X" ,
+or
+.Nx .
+.Pp
+To boot
+.Nx ,
+Open Firmware loads the bootloader
+.Xr ofwboot 8
+from the specified
+.Sq Ev boot-device .
+The bootloader then loads the kernel from the
+.Sq Ev boot-file ,
+.Pq if it exists .
+Otherwise, it tries to load (in the following order):
+.Pa netbsd , netbsd.gz ,
+or
+.Pa netbsd.macppc
+on the
+.Dq a
+partition of the same device that had the bootloader.
+.Ss "Open Firmware Commands"
+An essential but incomplete list of Open Firmware commands follows.
+A more thorough list is contained in the FAQ.
+.Lk http://www.NetBSD.org/Ports/macppc/faq.html#ofw-use
+.Pp
+.Ic boot
+.Op Ar boot-device Op Ar boot-file
+.Op Ar options
+.Pp
+Boot an operating system.
+The default arguments for this command are taken from the Open Firmware
+environment variables:
+.Bl -tag -width boot-device -compact
+.It Ar boot-device
+primary bootloader location
+.It Ar boot-file
+kernel location
+.It Ar options
+flags passed to the kernel
+.El
+.Pp
+.Ic reset-all
+.Pp
+Reset the system, and proceed as specified by the
+.Sq Ev use-nvramrc?
+and
+.Sq Ev auto-boot?
+variables.
+If
+.Sq Ev use-nvramrc?
+is set to
+.Sq Ev true ,
+then the system will attempt to execute the commands stored in the
+.Sq Ev nvramrc
+variable.
+If
+.Sq Ev auto-boot?
+is set to
+.Sq Ev true ,
+the system will attempt to use the values stored in
+.Sq Ev boot-command ,
+.Sq Ev boot-device ,
+and
+.Sq Ev boot-file
+to boot the system.
+If
+.Sq Ev auto-boot?
+is set to
+.Sq Ev false ,
+the system will halt at the Open Firmware prompt.
+.Pp
+.Ic shut-down
+.Pp
+Power off the system.
+.Pp
+.Ic setenv Ar variable Ar value
+.Pp
+Set an Open Firmware variable, e.g.,
+.Bd -literal -offset indent
+setenv auto-boot? false
+setenv boot-device hd:,\eofwboot.xcf
+setenv boot-file netbsd-GENERIC.gz
+.Ed
+.Pp
+.Ic set-default Ar variable
+.Pp
+Set an Open Firmware variable to its default value.
+.Pp
+.Ic printenv Op Ar variable
+.Pp
+Show Open Firmware variables and values.
+.Pp
+.Ic eject fd
+.Pp
+Eject floppy disk on systems with on-board floppy drives.
+.Pp
+.Ic mac-boot
+.Pp
+Attempt to boot
+.Tn MacOS
+on an Open Firmware 3 system.
+.Pp
+.Ic bye
+.Pp
+Attempt to boot
+.Tn MacOS
+on an Open Firmware 1.0.5, 2.0.x, or 2.4 system.
+.Ss "Open Firmware Variables"
+An essential but incomplete list of Open Firmware variables follows.
+A more thorough list is contained in the FAQ.
+.Lk http://www.NetBSD.org/Ports/macppc/faq.html#ofw-variables
+.Bl -tag -width "ew*0_protocols"
+.It Ev auto-boot?
+What Open Firmware will do at system startup or reset:
+.Bl -tag -width false
+.It Ar true
+automatically bootstrap an operating system using values from the
+.Sq Ev boot-command ,
+.Sq Ev boot-device ,
+and
+.Sq Ev boot-file
+variables.
+.It Ar false
+stop at the Open Firmware prompt.
+.El
+.Pp
+.It Ev use-nvramrc?
+If
+.Sq Ev true
+runs commands in variable
+.Sq Ev nvramrc .
+.Pp
+.It Ev real-base
+Kernel memory location.
+.Em "Do not modify this value on Open Firmware 3 systems \(em you may"
+.Em "damage your computer" .
+All other Open Firmware versions should use
+.Li F00000 .
+.Pp
+.It Ev load-base
+Bootloader memory location.
+.Em "Do not modify this value on Open Firmware 3 systems \(em you may"
+.Em "damage your computer" .
+All other Open Firmware versions should use
+.Li 600000 .
+.Pp
+.It Ev boot-command
+The command to use for booting.
+Typically, the default of
+.Sq Ev boot
+is used.
+.Pp
+.It Ev boot-device
+Device from which to load primary bootloader.
+Value depends on a variety of factors.
+See
+.Xr ofwboot 8 .
+.It Ev boot-file
+Kernel location.
+Value depends on a variety of factors.
+See
+.Xr ofwboot 8 .
+.Pp
+.It Ev input-device
+What type of console input device
+.Po
+.Tn ADB
+keyboard,
+.Tn USB
+keyboard, or serial port
+.Pc .
+.Bl -tag -width ttya
+.It Ar kbd
+.Tn ADB
+keyboard on models with
+.Tn ADB ,
+.Tn USB
+keyboard on models with
+.Tn USB ,
+and built-in keyboard on laptops.
+This is the default on some Open Firmware
+2.0.x machines and all Open Firmware 2.4 and 3 machines.
+.It Ar ttya
+.Sq Modem
+serial port on machines with serial ports.
+Properties are 38400 bps, 8 bits, no parity, 1 stop bit, no handshaking.
+This is the default on all
+Open Firmware 1.0.5 systems and some Open Firmware 2.0.x systems.
+.It Ar ttyb
+.Sq Printer
+serial port on machines with serial ports.
+Properties are the same as the
+.Sq Modem
+port.
+.It Ar scca
+Serial port on Xserve models.
+Properties are 57600 bps, 8 bits, no
+parity, 1 stop bit, no handshaking.
+.El
+.Pp
+.It output-device
+What type of console output device (On-board video, AGP video, PCI video,
+built-in LCD, or serial console).
+Value depends on a variety of factors.
+See
+.Xr ofwboot 8
+and
+.Lk http://www.NetBSD.org/Ports/macppc/faq.html#ofw-input-output-devices
+.Pp
+.It nvramrc
+If
+.Sq Ev use-nvramrc?
+is set to true, these
+.Tn FORTH
+commands will be run when the computer is reset
+.Pp
+.El
+.Ss "Normal Operation"
+When Open Firmware loads the primary bootloader, it will print something
+like the following:
+.Bd -unfilled -offset indent
+ loading XCOFF
+ tsize=CC50 dsize=14AC bsize=2668 entry=640000
+ SECTIONS:
+ .text    00640000 00640000 0000CC50 000000E0
+ .data    0064D000 0064D000 000014AC 0000CD30
+ .bss     0064E4B0 0064E4B0 00002668 00000000
+ loading .text, done..
+ loading .data, done..
+ clearing .bss, done..
+.Ed
+.Pp
+When
+.Xr ofwboot 8
+is started, it prints something like the following:
+.Bd -unfilled -offset indent
+ \*[Gt]\*[Gt] NetBSD/macppc OpenFirmware Boot, Revision 1.7
+ \*[Gt]\*[Gt] (autobuild@tgm.daemon.org, Thu Feb  6 17:50:27 UTC 2003)
+.Ed
+.Pp
+When
+.Xr ofwboot 8
+is loading the kernel, it prints something like the following:
+.Bd -unfilled -offset indent
+ 4395364+254568 [220144+193803]=0x4d477c
+  start=0x100000
+.Ed
+.Pp
+When the
+.Nx
+kernel has started it prints a banner similar to the following:
+.Bd -literal -offset indent
+ Copyright (c) 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003
+     The NetBSD Foundation, Inc.  All rights reserved.
+ Copyright (c) 1982, 1986, 1989, 1991, 1993
+     The Regents of the University of California.  All rights reserved.
+
+ NetBSD 1.6ZC (GENERIC) #0: Tue Sep 30 13:09:10 UTC 2003
+        autobuild@tgm.NetBSD.org:/autobuild/HEAD/macppc/OBJ/autobuild/HEAD/src/sys/arch/macppc/compile/GENERIC
+.Ed
+.Ss "After bootstrap"
+Once the
+.Nx Ns Tn /macppc
+kernel is booted normally
+it initializes itself and proceeds to start the system.
+An automatic consistency check of the file systems takes place,
+and unless this fails, the system comes up to multi-user operation.
+.Pp
+The proper way to shut the system down is with the
+.Xr shutdown 8
+command.
+.Pp
+If the system crashes, it will enter the kernel debugger,
+.Xr ddb 4 ,
+if it is configured in the kernel.
+If the crash occurred during initialization and the debugger is
+not present or is exited, the kernel will halt the system.
+.Pp
+If the crash occurred during normal operation and the debugger
+is not present or is exited, the system will attempt a dump to the
+configured dump device (which will be automatically recovered with
+.Xr savecore 8
+during the next bootstrap cycle), and after the dump is complete (successful
+or not) the kernel will attempt a reboot.
+.Sh FILES
+.Bl -tag -width /usr/mdec/bootxx_cd9660 -compact
+.It Pa /boot
+.Nx
+secondary bootstrap program (Open Firmware 1.x and 2.x)
+.It Pa /netbsd
+default
+.Nx
+system kernel
+.It Pa /usr/mdec/bootxx
+.Nx
+primary bootstrap program (Open Firmware 1.x and 2.x) a.k.a.
+.Dq "partition zero"
+bootloader
+.It Pa /usr/mdec/ofwboot
+.Nx
+secondary bootstrap program (Open Firmware 1.x and 2.x)
+.It Pa /usr/mdec/ofwboot.xcf
+primary bootstrap for netboot and
+.Dq cd9660
+.Pq Tn ISO 9660 ,
+.Dq MS-DOS ,
+.Dq HFS ,
+and
+.Dq HFS+
+file systems.
+.El
+.Sh SEE ALSO
+.Xr ddb 4 ,
+.Xr intro 4 ,
+.Xr diskless 8 ,
+.Xr halt 8 ,
+.Xr init 8 ,
+.Xr installboot 8 ,
+.Xr ofwboot 8 ,
+.Xr rc 8 ,
+.Xr reboot 8 ,
+.Xr savecore 8 ,
+.Xr shutdown 8
+.Pp
+.Lk http://www.NetBSD.org/Ports/macppc/faq.html
+.br
+.Lk http://www.NetBSD.org/Documentation/network/netboot/
+.Sh STANDARDS
+.St -ieee1275-94
+.Lk http://playground.sun.com/1275/home.html
+.Sh BUGS
+The device names used by
+.Nx Ns Tn /macppc
+and Open Firmware often have no relation to each other.
+.Pp
+Apple Computer's Open Firmware implementation is easily confused.
+It is best to reboot your computer
+after a failed boot attempt,
+.Ic halt ,
+or
+.Ic "shutdown -h" .
+Use the Open Firmware
+.Ic reset-all
+command.
+.Pp
+Apple Computer's Open Firmware implementation is notoriously bad.
+Thorough instructions for installing and booting
+.Nx
+are in the install notes
+.Pq Pa INSTALL.html
+included with every release of
+.Nx .
