@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_timer.c,v 1.24 1997/12/11 06:42:44 thorpej Exp $	*/
+/*	$NetBSD: tcp_timer.c,v 1.25 1997/12/11 22:47:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -230,7 +230,7 @@ tcp_timers(tp, timer)
 		 */
 		tp->t_rtt = 0;
 		/*
-		 * Close the congestion window down to one segment
+		 * Close the congestion window down to the initial window
 		 * (we'll open it by one segment for each ack we get).
 		 * Since we probably have a window's worth of unacked
 		 * data accumulated, this "slow start" keeps us from
@@ -257,7 +257,7 @@ tcp_timers(tp, timer)
 		u_int win = min(tp->snd_wnd, tp->snd_cwnd) / 2 / tp->t_segsz;
 		if (win < 2)
 			win = 2;
-		tp->snd_cwnd = tp->t_segsz;
+		tp->snd_cwnd = TCP_INITIAL_WINDOW(tp->t_segsz);
 		tp->snd_ssthresh = win * tp->t_segsz;
 		tp->t_dupacks = 0;
 		}

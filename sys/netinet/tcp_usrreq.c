@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.29 1997/12/11 06:53:06 thorpej Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.30 1997/12/11 22:47:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -603,6 +603,9 @@ tcp_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 	case TCPCTL_SYN_CACHE_INTER:
 		return (sysctl_int(oldp, oldlenp, newp, newlen,
 		    &tcp_syn_cache_interval));
+	case TCPCTL_INIT_WIN:
+		return (sysctl_int(oldp, oldlenp, newp, newlen,
+		    &tcp_init_win));
 	default:
 		return (ENOPROTOOPT);
 	}
