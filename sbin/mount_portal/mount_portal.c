@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_portal.c,v 1.11 1997/09/21 02:35:42 enami Exp $	*/
+/*	$NetBSD: mount_portal.c,v 1.12 1998/02/17 11:38:26 kleink Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_portal.c	8.6 (Berkeley) 4/26/95";
 #else
-__RCSID("$NetBSD: mount_portal.c,v 1.11 1997/09/21 02:35:42 enami Exp $");
+__RCSID("$NetBSD: mount_portal.c,v 1.12 1998/02/17 11:38:26 kleink Exp $");
 #endif
 #endif /* not lint */
 
@@ -55,6 +55,7 @@ __RCSID("$NetBSD: mount_portal.c,v 1.11 1997/09/21 02:35:42 enami Exp $");
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <sys/syslog.h>
+#include <sys/time.h>
 #include <sys/mount.h>
 
 #include <err.h>
