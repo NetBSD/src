@@ -38,7 +38,7 @@
  * from: Utah $Hdr: locore.s 1.66 92/12/22$
  *
  *	from: @(#)locore.s	8.6 (Berkeley) 5/27/94
- *	$Id: locore.s,v 1.27 1994/09/09 02:56:54 mycroft Exp $
+ *	$Id: locore.s,v 1.28 1994/09/09 03:11:31 mycroft Exp $
  */
 
 /*
@@ -2296,72 +2296,6 @@ Lcbbyte:
 Lcbbloop:
 	movb	a0@-,a1@-		| copy bytes
 	dbf	d0,Lcbbloop		| til done
-	rts
-
-/*
- * Emulate fancy VAX string operations:
- *	scanc(count, startc, table, mask)
- *	skpc(mask, count, startc)
- *	locc(mask, count, startc)
- */
-ENTRY(scanc)
-	movl	sp@(4),d0	| get length
-	jeq	Lscdone		| nothing to do, return
-	movl	sp@(8),a0	| start of scan
-	movl	sp@(12),a1	| table to compare with
-	movb	sp@(19),d1	| and mask to use
-	movw	d2,sp@-		| need a scratch register
-	clrw	d2		| clear it out
-	subqw	#1,d0		| adjust for dbra
-Lscloop:
-	movb	a0@+,d2		| get character
-	movb	a1@(0,d2:w),d2	| get table entry
-	andb	d1,d2		| mask it
-	dbne	d0,Lscloop	| keep going til no more or non-zero
-	addqw	#1,d0		| overshot by one
-	movw	sp@+,d2		| restore scratch
-Lscdone:
-	rts
-
-ENTRY(skpc)
-	movl	sp@(8),d0	| get length
-	jeq	Lskdone		| nothing to do, return
-	movb	sp@(7),d1	| mask to use
-	movl	sp@(12),a0	| where to start
-	subqw	#1,d0		| adjust for dbcc
-Lskloop:
-	cmpb	a0@+,d1		| compate with mask
-	dbne	d0,Lskloop	| keep going til no more or zero
-	addqw	#1,d0		| overshot by one
-Lskdone:
-	rts
-
-ENTRY(locc)
-	movl	sp@(8),d0	| get length
-	jeq	Llcdone		| nothing to do, return
-	movb	sp@(7),d1	| mask to use
-	movl	sp@(12),a0	| where to start
-	subqw	#1,d0		| adjust for dbcc
-Llcloop:
-	cmpb	a0@+,d1		| compate with mask
-	dbeq	d0,Llcloop	| keep going til no more or non-zero
-	addqw	#1,d0		| overshot by one
-Llcdone:
-	rts
-
-/*
- * Emulate VAX FFS (find first set) instruction.
- */
-ENTRY(ffs)
-	moveq	#-1,d0
-	movl	sp@(4),d1
-	jeq	Lffsdone
-Lffsloop:
-	addql	#1,d0
-	btst	d0,d1
-	jeq	Lffsloop
-Lffsdone:
-	addql	#1,d0
 	rts
 
 #ifdef FPCOPROC
