@@ -1,4 +1,4 @@
-.\"	$NetBSD: restore.8,v 1.41 2003/08/07 10:04:37 agc Exp $
+.\"	$NetBSD: restore.8,v 1.42 2004/07/27 02:17:06 enami Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)restore.8	8.4 (Berkeley) 5/1/95
 .\"
-.Dd May 26, 2003
+.Dd July 27, 2004
 .Dt RESTORE 8
 .Os
 .Sh NAME
@@ -41,18 +41,21 @@
 .Fl i
 .Op Fl cdhmuvyN
 .Op Fl b Ar blocksize
+.Op Fl D Ar algorithm
 .Op Fl f Ar file
 .Op Fl s Ar fileno
 .Nm
 .Fl R
 .Op Fl cduvyN
 .Op Fl b Ar blocksize
+.Op Fl D Ar algorithm
 .Op Fl f Ar file
 .Op Fl s Ar fileno
 .Nm
 .Fl r
 .Op Fl cduvyN
 .Op Fl b Ar blocksize
+.Op Fl D Ar algorithm
 .Op Fl f Ar file
 .Op Fl s Ar fileno
 .Nm
@@ -66,6 +69,7 @@
 .Fl x
 .Op Fl cdhmuvyN
 .Op Fl b Ar blocksize
+.Op Fl D Ar algorithm
 .Op Fl f Ar file
 .Op Fl s Ar fileno
 .Op Ar
@@ -277,6 +281,20 @@ The
 .Fl c
 flag disables this check, and only allows reading a dump in the old
 format.
+.It Fl D Ar algorithm
+Computes the digest of each regular files using the
+.Ar algorithm
+and output to standard output.
+The
+.Ar algorithm
+is one of
+.Cm md5 ,
+.Cm rmd160 
+or
+.Cm sha1 .
+This option doesn't imply
+.Fl N
+flag.
 .It Fl d
 Enable debugging.
 .It Fl f Ar file
