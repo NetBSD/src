@@ -110,11 +110,10 @@ FreeBSD 2.1                  |                               |
  |         |                 | NetBSD 1.3.2    |             |
  |     FreeBSD 2.2.7         |    |            |             |
  |         |                 |    |            |           BSD/OS 4.0
- |         v                 |    |            |             |
  |     FreeBSD 2.2.8         |    |            |             |
  |                           |    |            |             |
  |                           |    |        OpenBSD 2.4       |
-FreeBSD 3.0                  |    v            |             |
+FreeBSD 3.0                  |    |            |             |
  |                           | NetBSD 1.3.3    |             |
  *---FreeBSD 3.1             |                 |             |
  |       |                   |                 |           BSD/OS 4.0.1
@@ -134,14 +133,19 @@ FreeBSD 4.0  |               | NetBSD 1.4.2    |             |
  *---FreeBSD 4.1             |    |            |             |
  |      |                    |    |            |             |
  |   FreeBSD 4.1.1           |    |            |             |
- |      |                    |    v            |             |
+ |      |                    |    |            |             |
  |   FreeBSD 4.2             | NetBSD 1.4.3    |             |
+ |      |                    |    |            |             |
+ |      |                    |    v            |             |
  |      |                    |             OpenBSD 2.8     BSD/OS 4.2
  |      |                 NetBSD 1.5           |             |
  |   FreeBSD 4.3             |    |            |             v
- |      |                    |    v        OpenBSD 2.9
+ |      |                    |    |        OpenBSD 2.9
  |      |                    | NetBSD 1.5.1    |
- |      v                    |                 |
+ |      v                    |    |            |
+ |                           | NetBSD 1.5.2    |
+ |                           |    |            |
+ |                           |    v            |
  |                           |                 |
 FreeBSD 5.0-current       NetBSD -current  OpenBSD -current
  |                           |                 |
@@ -330,7 +334,8 @@ OpenBSD 2.8		2000-12-01 [OBD]
 NetBSD 1.5              2000-12-06 [NBD]
 FreeBSD 4.3  		2001-04-20 [FBD]
 OpenBSD 2.9  		2001-06-01 [OBD]
-NetBSD 1.5.1		2001-07-11 [NBD] (patch release)
+NetBSD 1.5.1		2001-06-11 [NBD] (patch release)
+NetBSD 1.5.2		2001-08-17 [NBD] (patch release)
 
 
 Bibliography
@@ -390,4 +395,4 @@ URL: ftp://ftp.freebsd.org/pub/FreeBSD/branches/-current/src/share/misc/bsd-fami
 
 $FreeBSD: /c/ncvs/src/share/misc/bsd-family-tree,v 1.49 2001/07/11 23:57:16 itojun Exp $
 
-$NetBSD: bsd-family-tree,v 1.5.8.3 2001/07/29 19:33:39 he Exp $
+$NetBSD: bsd-family-tree,v 1.5.8.4 2001/11/25 20:29:54 he Exp $
