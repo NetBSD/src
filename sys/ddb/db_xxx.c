@@ -1,4 +1,4 @@
-/*	$NetBSD: db_xxx.c,v 1.26 2003/08/07 16:30:49 agc Exp $	*/
+/*	$NetBSD: db_xxx.c,v 1.27 2003/09/07 14:14:36 uwe Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -39,7 +39,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.26 2003/08/07 16:30:49 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.27 2003/09/07 14:14:36 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -140,7 +140,7 @@ db_show_all_procs(db_expr_t addr, int haddr, db_expr_t count, char *modif)
 		    "COMMAND", "STRUCT PROC *", "UAREA *", "VMSPACE/VM_MAP");
 		break;
 	case 'l':
-		db_printf(" PID        %4s S %7s %18s %18s %-12s\n",
+		db_printf(" PID        %4s S %9s %18s %18s %-12s\n",
 		    "LID", "FLAGS", "STRUCT LWP *", "UAREA *", "WAIT");
 		break;
 	case 'n':
@@ -177,7 +177,7 @@ db_show_all_procs(db_expr_t addr, int haddr, db_expr_t count, char *modif)
 				break;
 			case 'l':
 				 while (l != NULL) {
-					db_printf("%c%4d %d %#7x %18p %18p %s\n",
+					db_printf("%c%4d %d %#9x %18p %18p %s\n",
 					    " >"[cl == l], l->l_lid,
 					    l->l_stat, l->l_flag, l, 
 					    l->l_addr, 
