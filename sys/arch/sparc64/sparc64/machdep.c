@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.140 2003/04/01 16:34:59 thorpej Exp $ */
+/*	$NetBSD: machdep.c,v 1.141 2003/05/10 14:10:54 martin Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -1401,31 +1401,23 @@ _bus_dmamap_load_mbuf(t, map, m, flags)
 		sglen = 0;
 		for (j = 0; j < i; j++)
 			sglen += segs[j].ds_len;
-		if (sglen != mbuflen) {
-			printf("load_mbuf: sglen %ld != mbuflen %lx\n",
+		if (sglen != mbuflen)
+			panic("load_mbuf: sglen %ld != mbuflen %lx\n",
 				sglen, mbuflen);
-			Debugger();
-		}
-		if (sglen != len) {
-			printf("load_mbuf: sglen %ld != len %lx\n",
+		if (sglen != len)
+			panic("load_mbuf: sglen %ld != len %lx\n",
 				sglen, len);
-			Debugger();
-		}
 		retval = bus_dmamap_load_raw(t, map, segs, i,
 			(bus_size_t)len, flags);
-		if (map->dm_mapsize != len) {
-			printf("load_mbuf: mapsize %ld != len %lx\n",
+		if (map->dm_mapsize != len)
+			panic("load_mbuf: mapsize %ld != len %lx\n",
 				(long)map->dm_mapsize, len);
-			Debugger();
-		}
 		sglen = 0;
 		for (j = 0; j < map->dm_nsegs; j++)
 			sglen += map->dm_segs[j].ds_len;
-		if (sglen != len) {
-			printf("load_mbuf: dmamap sglen %ld != len %lx\n",
+		if (sglen != len)
+			panic("load_mbuf: dmamap sglen %ld != len %lx\n",
 				sglen, len);
-			Debugger();
-		}
 		return (retval);
 	}
 #endif
