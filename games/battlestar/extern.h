@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.16 2000/07/23 23:57:23 mycroft Exp $ */
+/*	$NetBSD: extern.h,v 1.17 2000/09/08 17:22:02 jsm Exp $ */
 
 /*
  * Copyright (c) 1983, 1993
@@ -205,6 +205,9 @@
 #define JINXED		4
 #define DUG		5
 #define NUMOFNOTES	6
+
+/* Number of times room description shown. */
+#define ROOMDESC	3
 
  /* fundamental constants */
 #define NUMOFROOMS	275
