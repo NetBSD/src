@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_raudio_pxy.c,v 1.1.1.2 1999/12/28 07:31:00 darrenr Exp $	*/
+/*	$NetBSD: ip_raudio_pxy.c,v 1.1.1.3 2000/02/01 20:35:55 veego Exp $	*/
 
 #if SOLARIS && defined(_KERNEL)
 extern	kmutex_t	ipf_rw;
