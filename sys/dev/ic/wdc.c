@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.190 2004/08/11 17:49:27 mycroft Exp $ */
+/*	$NetBSD: wdc.c,v 1.191 2004/08/11 18:41:46 mycroft Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.190 2004/08/11 17:49:27 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.191 2004/08/11 18:41:46 mycroft Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -780,6 +780,12 @@ wdcattach(struct wdc_channel *chp)
 
 	if (chp->ch_flags & WDCF_DISABLED)
 		return;
+
+	/* default data transfer methods */
+	if (!wdc->datain_pio)
+		wdc->datain_pio = wdc_datain_pio;
+	if (!wdc->dataout_pio)
+		wdc->dataout_pio = wdc_dataout_pio;
 
 	/* initialise global data */
 	callout_init(&chp->ch_callout);
@@ -1861,7 +1867,7 @@ __wdccommand_intr(struct wdc_channel *chp, struct ata_xfer *xfer, int irq)
 			bcount = bcount & 0x03;
 		}
 		if (bcount > 0)
-			wdc_datain_pio(chp, DRIVE_NOSTREAM, data, bcount);
+			wdc->datain_pio(chp, DRIVE_NOSTREAM, data, bcount);
 		/* at this point the drive should be in its initial state */
 		wdc_c->flags |= AT_XFDONE;
 		/* XXX should read status register here ? */
@@ -1877,7 +1883,7 @@ __wdccommand_intr(struct wdc_channel *chp, struct ata_xfer *xfer, int irq)
 			bcount = bcount & 0x03;
 		}
 		if (bcount > 0)
-			wdc_dataout_pio(chp, DRIVE_NOSTREAM, data, bcount);
+			wdc->dataout_pio(chp, DRIVE_NOSTREAM, data, bcount);
 		wdc_c->flags |= AT_XFDONE;
 		if ((wdc_c->flags & AT_POLL) == 0) {
 			chp->ch_flags |= WDCF_IRQ_WAIT; /* wait for interrupt */
