@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.116 2004/06/23 06:27:54 mycroft Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.117 2004/09/08 19:59:15 drochner Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.116 2004/06/23 06:27:54 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.117 2004/09/08 19:59:15 drochner Exp $");
 
 #include "opt_usbverbose.h"
 
@@ -1236,8 +1236,7 @@ usbd_submatch(struct device *parent, void *match, void *aux)
 	    uaa->product, cf->uhubcf_product,
 	    uaa->release, cf->uhubcf_release));
 	if (uaa->port != 0 &&	/* root hub has port 0, it should match */
-	    ((uaa->port != 0 &&
-	      cf->uhubcf_port != UHUB_UNK_PORT &&
+	    ((cf->uhubcf_port != UHUB_UNK_PORT &&
 	      cf->uhubcf_port != uaa->port) ||
 	     (uaa->configno != UHUB_UNK_CONFIGURATION &&
 	      cf->uhubcf_configuration != UHUB_UNK_CONFIGURATION &&
