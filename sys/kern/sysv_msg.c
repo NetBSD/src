@@ -16,7 +16,7 @@
  *
  * This software is provided ``AS IS'' without any warranties of any kind.
  *
- *	$Id: sysv_msg.c,v 1.3 1994/02/13 09:36:09 mycroft Exp $
+ *	$Id: sysv_msg.c,v 1.4 1994/02/13 11:32:46 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -88,7 +88,7 @@ msginit()
 	if (msqids == NULL)
 		panic("msqids is NULL");
 
-	for (i = 0; i < msginfo.msgmni; i++)
+	for (i = 0; i < msginfo.msgmni; i++) {
 		msqids[i].msg_qbytes = 0;	/* implies entry is available */
 		msqids[i].msg_perm.seq = 0;	/* reset to a known value */
 	}
