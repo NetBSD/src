@@ -34,27 +34,27 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)setlogin.s	5.2 (Berkeley) 4/12/91
- *	$Id: setlogin.S,v 1.3 1993/10/21 02:19:37 jtc Exp $
+ *	$Id: setlogin.S,v 1.4 1993/12/18 01:02:47 jtc Exp $
  */
 
 #if defined(LIBC_SCCS)
 	.text
-	.asciz "$Id: setlogin.S,v 1.3 1993/10/21 02:19:37 jtc Exp $"
+	.asciz "$Id: setlogin.S,v 1.4 1993/12/18 01:02:47 jtc Exp $"
 #endif
 
 #include "SYS.h"
 
-.globl	__logname_valid		/* in getlogin() */
+.globl	___logname_valid		/* in getlogin() */
 
 SYSCALL(setlogin)
 #ifdef PIC
 	PIC_PROLOGUE
 	pushl	%eax
-	movl	PIC_GOT(__logname_valid),%eax
+	movl	PIC_GOT(___logname_valid),%eax
 	movl	$0,(%eax)
 	popl	%eax
 	PIC_EPILOGUE
 #else
-	movl	$0,__logname_valid
+	movl	$0,___logname_valid
 #endif
 	ret				/* setlogin(name) */
