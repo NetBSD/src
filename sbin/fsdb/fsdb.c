@@ -1,4 +1,4 @@
-/*	$NetBSD: fsdb.c,v 1.4 1996/03/21 17:56:15 jtc Exp $	*/
+/*	$NetBSD: fsdb.c,v 1.5 1996/09/28 19:30:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: fsdb.c,v 1.4 1996/03/21 17:56:15 jtc Exp $";
+static char rcsid[] = "$NetBSD: fsdb.c,v 1.5 1996/09/28 19:30:35 christos Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -55,6 +55,7 @@ static char rcsid[] = "$NetBSD: fsdb.c,v 1.4 1996/03/21 17:56:15 jtc Exp $";
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <err.h>
 
 #include <ufs/ufs/dinode.h>
 #include <ufs/ufs/dir.h>
@@ -62,19 +63,30 @@ static char rcsid[] = "$NetBSD: fsdb.c,v 1.4 1996/03/21 17:56:15 jtc Exp $";
 
 #include "fsdb.h"
 #include "fsck.h"
+#include "extern.h"
 
 extern char *__progname;	/* from crt0.o */
 
-void usage __P((void));
-int cmdloop __P((void));
+int main __P((int, char *[]));
+static void usage __P((void));
+static int cmdloop __P((void));
+static int helpfn __P((int, char *[]));
+static char *prompt __P((EditLine *));
+static int scannames __P((struct inodesc *));
+static int dolookup __P((char *));
+static int chinumfunc __P((struct inodesc *));
+static int chnamefunc __P((struct inodesc *));
+static int dotime __P((char *, int32_t *, int32_t *));
 
-void 
+int returntosingle = 0;
+struct dinode *curinode;
+ino_t curinum;
+
+static void 
 usage()
 {
 	errx(1, "usage: %s [-d] -f <fsname>", __progname);
 }
-
-int returntosingle = 0;
 
 /*
  * We suck in lots of fsck code, and just pick & choose the stuff we want.
@@ -89,7 +101,6 @@ main(argc, argv)
 {
 	int ch, rval;
 	char *fsys = NULL;
-	struct stat stb;
 
 	while (-1 != (ch = getopt(argc, argv, "f:d"))) {
 		switch (ch) {
@@ -119,9 +130,9 @@ main(argc, argv)
 	exit(rval);
 }
 
-#define CMDFUNC(func) int func __P((int argc, char *argv[]))
-#define CMDFUNCSTART(func) int func(argc, argv)		\
-				int argc;		\
+#define CMDFUNC(func) static int func __P((int argc, char *argv[]))
+#define CMDFUNCSTART(func) static int func(argc, argv)		\
+				int argc;			\
 				char *argv[];
 
 CMDFUNC(helpfn);
@@ -149,7 +160,7 @@ CMDFUNC(chatime);			/* Change atime */
 CMDFUNC(chinum);			/* Change inode # of dirent */
 CMDFUNC(chname);			/* Change dirname of dirent */
 
-struct cmdtable cmds[] = {
+static struct cmdtable cmds[] = {
 	{ "help", "Print out help", 1, 1, helpfn },
 	{ "?", "Print out help", 1, 1, helpfn },
 	{ "inode", "Set active inode to INUM", 2, 2, focus },
@@ -183,7 +194,7 @@ struct cmdtable cmds[] = {
 	{ NULL, 0, 0, 0 },
 };
 
-int
+static int
 helpfn(argc, argv)
 	int argc;
 	char *argv[];
@@ -199,7 +210,7 @@ helpfn(argc, argv)
     return 0;
 }
 
-char *
+static char *
 prompt(el)
 	EditLine *el;
 {
@@ -209,7 +220,7 @@ prompt(el)
 }
 
 
-int
+static int
 cmdloop()
 {
     char *line;
@@ -276,8 +287,7 @@ cmdloop()
     return rval;
 }
 
-struct dinode *curinode;
-ino_t curinum, ocurrent;
+static ino_t ocurrent;
 
 #define GETINUM(ac,inum)    inum = strtoul(argv[ac], &cp, 0); \
     if (inum < ROOTINO || inum > maxino || cp == argv[ac] || *cp != '\0' ) { \
@@ -355,7 +365,7 @@ CMDFUNCSTART(downlink)
     return 0;
 }
 
-const char *typename[] = {
+static const char *typename[] = {
     "unknown",
     "fifo",
     "char special",
@@ -373,9 +383,9 @@ const char *typename[] = {
     "whiteout",
 };
     
-int slot;
+static int slot;
 
-int
+static int
 scannames(idesc)
 	struct inodesc *idesc;
 {
@@ -402,9 +412,6 @@ CMDFUNCSTART(ls)
 
     return 0;
 }
-
-int findino __P((struct inodesc *idesc)); /* from fsck */
-static int dolookup __P((char *name));
 
 static int
 dolookup(name)
@@ -463,7 +470,6 @@ CMDFUNCSTART(focusname)
 CMDFUNCSTART(ln)
 {
     ino_t inum;
-    struct dinode *dp;
     int rval;
     char *cp;
 
@@ -496,9 +502,9 @@ CMDFUNCSTART(rm)
     }
 }
 
-long slotcount, desired;
+static long slotcount, desired;
 
-int
+static int
 chinumfunc(idesc)
 	struct inodesc *idesc;
 {
@@ -513,7 +519,6 @@ chinumfunc(idesc)
 
 CMDFUNCSTART(chinum)
 {
-    int rval;
     char *cp;
     ino_t inum;
     struct inodesc idesc;
@@ -543,31 +548,30 @@ CMDFUNCSTART(chinum)
     }
 }
 
-int
+static int
 chnamefunc(idesc)
 	struct inodesc *idesc;
 {
-	register struct direct *dirp = idesc->id_dirp;
-	struct direct testdir;
+    register struct direct *dirp = idesc->id_dirp;
+    struct direct testdir;
 
-	if (slotcount++ == desired) {
-	    /* will name fit? */
-	    testdir.d_namlen = strlen(idesc->id_name);
-	    if (DIRSIZ(NEWDIRFMT, &testdir) <= dirp->d_reclen) {
-		dirp->d_namlen = testdir.d_namlen;
-		strcpy(dirp->d_name, idesc->id_name);
-		return STOP|ALTERED|FOUND;
-	    } else
-		return STOP|FOUND;	/* won't fit, so give up */
-	}
-	return KEEPON;
+    if (slotcount++ == desired) {
+	/* will name fit? */
+	testdir.d_namlen = strlen(idesc->id_name);
+	if (DIRSIZ(NEWDIRFMT, &testdir) <= dirp->d_reclen) {
+	    dirp->d_namlen = testdir.d_namlen;
+	    strcpy(dirp->d_name, idesc->id_name);
+	    return STOP|ALTERED|FOUND;
+	} else
+	    return STOP|FOUND;	/* won't fit, so give up */
+    }
+    return KEEPON;
 }
 
 CMDFUNCSTART(chname)
 {
     int rval;
     char *cp;
-    ino_t inum;
     struct inodesc idesc;
     
     slotcount = 0;
@@ -598,7 +602,7 @@ CMDFUNCSTART(chname)
     }
 }
 
-struct typemap {
+static struct typemap {
     const char *typename;
     int typebits;
 } typenamemap[]  = {
@@ -610,7 +614,6 @@ struct typemap {
 
 CMDFUNCSTART(newtype)
 {
-    int rval = 1;
     int type;
     struct typemap *tp;
 
@@ -748,7 +751,7 @@ CMDFUNCSTART(chowner)
     uid = strtoul(argv[1], &cp, 0);
     if (cp == argv[1] || *cp != '\0' ) { 
 	/* try looking up name */
-	if (pwd = getpwnam(argv[1])) {
+	if ((pwd = getpwnam(argv[1])) != 0) {
 	    uid = pwd->pw_uid;
 	} else {
 	    warnx("bad uid `%s'", argv[1]);
@@ -774,7 +777,7 @@ CMDFUNCSTART(chgroup)
 
     gid = strtoul(argv[1], &cp, 0);
     if (cp == argv[1] || *cp != '\0' ) { 
-	if (grp = getgrnam(argv[1])) {
+	if ((grp = getgrnam(argv[1])) != 0) {
 	    gid = grp->gr_gid;
 	} else {
 	    warnx("bad gid `%s'", argv[1]);
@@ -788,7 +791,7 @@ CMDFUNCSTART(chgroup)
     return rval;
 }
 
-int
+static int
 dotime(name, rsec, rnsec)
 	char *name;
 	int32_t *rsec, *rnsec;
