@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.398 2004/08/13 04:10:54 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.399 2004/08/13 04:19:31 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -6485,6 +6485,7 @@ libexec/ftpd/ftpcmd.y				1.79
 	Correctly clamp illegal "SITE CHMOD" mode values.
 	[lukem, ticket #756]
 
+libexec/ftpd/cmds.c				1.23
 libexec/ftpd/conf.c				1.52
 libexec/ftpd/extern.h				1.50
 libexec/ftpd/ftpcmd.y				1.80
