@@ -1,3 +1,4 @@
+/*	$NetBSD: pf_ioctl.c,v 1.2 2004/06/22 14:17:07 itojun Exp $	*/
 /*	$OpenBSD: pf_ioctl.c,v 1.112 2004/03/22 04:54:18 mcbride Exp $ */
 
 /*
@@ -35,7 +36,17 @@
  *
  */
 
+#ifdef _KERNEL_OPT
+#include "opt_inet.h"
+#include "opt_altq.h"
+#include "opt_pfil_hooks.h"
+#endif
+
+#ifdef __OpenBSD__
 #include "pfsync.h"
+#else
+#define	NPFSYNC	0
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,9 +57,16 @@
 #include <sys/socketvar.h>
 #include <sys/kernel.h>
 #include <sys/time.h>
+#ifdef __OpenBSD__
 #include <sys/timeout.h>
+#else
+#include <sys/callout.h>
+#endif
 #include <sys/pool.h>
 #include <sys/malloc.h>
+#ifdef __NetBSD__
+#include <sys/conf.h>
+#endif
 
 #include <net/if.h>
 #include <net/if_types.h>
@@ -61,7 +79,9 @@
 #include <netinet/ip_var.h>
 #include <netinet/ip_icmp.h>
 
+#ifdef __OpenBSD__
 #include <dev/rndvar.h>
+#endif
 #include <net/pfvar.h>
 
 #if NPFSYNC > 0
@@ -96,7 +116,30 @@ int			 pf_begin_rules(u_int32_t *, int, char *, char *);
 int			 pf_rollback_rules(u_int32_t, int, char *, char *);
 int			 pf_commit_rules(u_int32_t, int, char *, char *);
 
+#ifdef __NetBSD__
+const struct cdevsw pf_cdevsw = {
+	pfopen, pfclose, noread, nowrite, pfioctl,
+	nostop, notty, nopoll, nommap, nokqfilter,
+};
+
+static int pf_pfil_attach(void);
+static int pf_pfil_detach(void);
+
+POOL_INIT(pf_rule_pl, sizeof(struct pf_rule), 0, 0, 0, "pfrulepl",
+    &pool_allocator_nointr);
+POOL_INIT(pf_src_tree_pl, sizeof(struct pf_src_node), 0, 0, 0,
+    "pfsrctrpl", NULL);
+POOL_INIT(pf_state_pl, sizeof(struct pf_state), 0, 0, 0, "pfstatepl", NULL);
+POOL_INIT(pf_altq_pl, sizeof(struct pf_altq), 0, 0, 0, "pfaltqpl", NULL);
+POOL_INIT(pf_pooladdr_pl, sizeof(struct pf_pooladdr), 0, 0, 0,
+    "pfpooladdrpl", NULL);
+#endif
+
+#ifdef __OpenBSD__
 extern struct timeout	 pf_expire_to;
+#else
+extern struct callout	 pf_expire_to;
+#endif
 
 struct pf_rule		 pf_default_rule;
 
@@ -113,11 +156,23 @@ static void		 tag_unref(struct pf_tags *, u_int16_t);
 
 #define DPFPRINTF(n, x) if (pf_status.debug >= (n)) printf x
 
+#ifdef __NetBSD__
+struct pfil_head pf_ioctl_head;
+struct pfil_head pf_newif_head;
+extern struct pfil_head if_pfil;
+#endif
+
 void
 pfattach(int num)
 {
 	u_int32_t *timeout = pf_default_rule.timeout;
 
+#ifdef __NetBSD__
+	pfil_head_register(&pf_ioctl_head);
+	pfil_head_register(&pf_newif_head);
+#endif
+
+#ifdef __OpenBSD__
 	pool_init(&pf_rule_pl, sizeof(struct pf_rule), 0, 0, 0, "pfrulepl",
 	    &pool_allocator_nointr);
 	pool_init(&pf_src_tree_pl, sizeof(struct pf_src_node), 0, 0, 0,
@@ -128,6 +183,7 @@ pfattach(int num)
 	    NULL);
 	pool_init(&pf_pooladdr_pl, sizeof(struct pf_pooladdr), 0, 0, 0,
 	    "pfpooladdrpl", NULL);
+#endif
 	pfr_initialize();
 	pfi_initialize();
 	pf_osfp_initialize();
@@ -169,8 +225,14 @@ pfattach(int num)
 	timeout[PFTM_INTERVAL] = 10;			/* Expire interval */
 	timeout[PFTM_SRC_NODE] = 0;			/* Source tracking */
 
+#ifdef __OpenBSD__
 	timeout_set(&pf_expire_to, pf_purge_timeout, &pf_expire_to);
 	timeout_add(&pf_expire_to, timeout[PFTM_INTERVAL] * hz);
+#else
+	callout_init(&pf_expire_to);
+	callout_reset(&pf_expire_to, timeout[PFTM_INTERVAL] * hz,
+	    pf_purge_timeout, &pf_expire_to);
+#endif
 
 	pf_normalize_init();
 	bzero(&pf_status, sizeof(pf_status));
@@ -854,6 +916,11 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		if (pf_status.running)
 			error = EEXIST;
 		else {
+#ifdef __NetBSD__
+			error = pf_pfil_attach();
+			if (error)
+				break;
+#endif
 			pf_status.running = 1;
 			pf_status.since = time.tv_sec;
 			if (pf_status.stateid == 0) {
@@ -868,6 +935,11 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		if (!pf_status.running)
 			error = ENOENT;
 		else {
+#ifdef __NetBSD__
+			error = pf_pfil_detach();
+			if (error)
+				break;
+#endif
 			pf_status.running = 0;
 			pf_status.since = time.tv_sec;
 			DPFPRINTF(PF_DEBUG_MISC, ("pf: stopped\n"));
@@ -1606,11 +1678,16 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			error = EINVAL;
 			goto fail;
 		}
+#ifdef __OpenBSD__
 		if (pool_sethardlimit(pf_pool_limits[pl->index].pp,
 		    pl->limit, NULL, 0) != 0) {
 			error = EBUSY;
 			goto fail;
 		}
+#else
+		pool_sethardlimit(pf_pool_limits[pl->index].pp,
+		    pl->limit, NULL, 0);
+#endif
 		old_limit = pf_pool_limits[pl->index].limit;
 		pf_pool_limits[pl->index].limit = pl->limit;
 		pl->limit = old_limit;
@@ -2653,3 +2730,139 @@ fail:
 
 	return (error);
 }
+
+#ifdef __NetBSD__
+int
+pfil4_wrapper(void *arg, struct mbuf **mp, struct ifnet *ifp, int dir)
+{
+
+	/*
+	 * If the packet is out-bound, we can't delay checksums
+	 * here.  For in-bound, the checksum has already been
+	 * validated.
+	 */
+	if (dir == PFIL_OUT) {
+		if ((*mp)->m_pkthdr.csum_flags & (M_CSUM_TCPv4|M_CSUM_UDPv4)) {
+			in_delayed_cksum(*mp);
+			(*mp)->m_pkthdr.csum_flags &=
+			    ~(M_CSUM_TCPv4|M_CSUM_UDPv4);
+		}
+	}
+
+	if (pf_test(dir == PFIL_OUT ? PF_OUT : PF_IN, ifp, mp) != PF_PASS)
+		return EHOSTUNREACH;
+	else
+		return (0);
+}
+
+int
+pfil6_wrapper(void *arg, struct mbuf **mp, struct ifnet *ifp, int dir)
+{
+
+	if (pf_test6(dir == PFIL_OUT ? PF_OUT : PF_IN, ifp, mp) != PF_PASS)
+		return EHOSTUNREACH;
+	else
+		return (0);
+}
+
+extern void pfi_kifaddr_update(void *);
+
+int
+pfil_if_wrapper(void *arg, struct mbuf **mp, struct ifnet *ifp, int dir)
+{
+	u_long cmd = (u_long)mp;
+
+	switch (cmd) {
+	case 0:
+		pfi_attach_ifnet(ifp);
+		break;
+	case SIOCSIFADDR:
+	case SIOCGIFALIAS:
+	case SIOCDIFADDR:
+		pfi_kifaddr_update((struct ifnet *)arg);
+		break;
+	default:
+		panic("unexpected ioctl");
+	}
+
+	return 0;
+}
+
+static int
+pf_pfil_attach(void)
+{
+	struct pfil_head *ph_inet;
+#ifdef INET6
+	struct pfil_head *ph_inet6;
+#endif
+	int error;
+	int i;
+
+	error = pfil_add_hook(pfil_if_wrapper, NULL, PFIL_IFADDR|PFIL_NEWIF,
+	    &if_pfil);
+	if (error)
+		return (error);
+	ph_inet = pfil_head_get(PFIL_TYPE_AF, AF_INET);
+	if (ph_inet)
+		error = pfil_add_hook((void *)pfil4_wrapper, NULL,
+		    PFIL_IN|PFIL_OUT, ph_inet);
+	else
+		error = ENOENT;
+	if (error) {
+		pfil_remove_hook(pfil_if_wrapper, NULL, PFIL_IFADDR|PFIL_NEWIF, 
+		    &if_pfil);
+	}
+#ifdef INET6
+	if (error) {
+		return (error);
+	}
+	ph_inet6 = pfil_head_get(PFIL_TYPE_AF, AF_INET6);
+	if (ph_inet6)
+		error = pfil_add_hook((void *)pfil6_wrapper, NULL,
+		    PFIL_IN|PFIL_OUT, ph_inet6);
+	else
+		error = ENOENT;
+	if (error) {
+		pfil_remove_hook(pfil_if_wrapper, NULL, PFIL_IFADDR|PFIL_NEWIF, 
+		    &if_pfil);
+		pfil_remove_hook((void *)pfil4_wrapper, NULL,
+		    PFIL_IN|PFIL_OUT, ph_inet);
+	}
+#endif
+	if (!error) {
+		for (i = 0; i < if_indexlim; i++) {
+			if (ifindex2ifnet[i])
+				pfi_attach_ifnet(ifindex2ifnet[i]);
+		}
+	}
+	return (error);
+}
+
+int
+pf_pfil_detach(void)
+{
+	struct pfil_head *ph_inet;
+#ifdef INET6
+	struct pfil_head *ph_inet6;
+#endif
+	int i;
+
+	for (i = 0; i < if_indexlim; i++) {
+		if (pfi_index2kif[i])
+			pfi_detach_ifnet(ifindex2ifnet[i]);
+	}
+	pfil_remove_hook(pfil_if_wrapper, NULL, PFIL_IFADDR|PFIL_NEWIF, 
+	    &if_pfil);
+	ph_inet = pfil_head_get(PFIL_TYPE_AF, AF_INET);
+	if (ph_inet)
+		pfil_remove_hook((void *)pfil4_wrapper, NULL,
+		    PFIL_IN|PFIL_OUT, ph_inet);
+#ifdef INET6
+	ph_inet6 = pfil_head_get(PFIL_TYPE_AF, AF_INET6);
+	if (ph_inet)
+		pfil_remove_hook((void *)pfil6_wrapper, NULL,
+		    PFIL_IN|PFIL_OUT, ph_inet6);
+#endif
+	return (0);
+}
+#endif

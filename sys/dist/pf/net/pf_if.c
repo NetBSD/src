@@ -1,3 +1,4 @@
+/*	$NetBSD: pf_if.c,v 1.2 2004/06/22 14:17:07 itojun Exp $	*/
 /*	$OpenBSD: pf_if.c,v 1.11 2004/03/15 11:38:23 cedric Exp $ */
 
 /*
@@ -29,6 +30,10 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#ifdef _KERNEL_OPT
+#include "opt_inet.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,6 +107,18 @@ RB_GENERATE(pfi_ifhead, pfi_kif, pfik_tree, pfi_if_compare);
 #define PFI_BUFFER_MAX		0x10000
 #define PFI_MTYPE		M_IFADDR
 
+#ifdef __NetBSD__
+static void	*hook_establish(struct hook_desc_head *, int, void (*)(void *),
+			void *);
+static void	hook_disestablish(struct hook_desc_head *, void *);
+
+#define HOOK_REMOVE	0x01
+#define HOOK_FREE	0x02
+
+POOL_INIT(pfi_addr_pl, sizeof(struct pfi_dynaddr), 0, 0, 0, "pfiaddrpl",
+    &pool_allocator_nointr);
+#endif
+
 void
 pfi_initialize(void)
 {
@@ -109,8 +126,10 @@ pfi_initialize(void)
 		return;
 
 	TAILQ_INIT(&pfi_statehead);
+#ifdef __OpenBSD__
 	pool_init(&pfi_addr_pl, sizeof(struct pfi_dynaddr), 0, 0, 0,
 	    "pfiaddrpl", &pool_allocator_nointr);
+#endif
 	pfi_buffer_max = 64;
 	pfi_buffer = malloc(pfi_buffer_max * sizeof(*pfi_buffer),
 	    PFI_MTYPE, M_WAITOK);
@@ -184,8 +203,13 @@ pfi_attach_ifnet(struct ifnet *ifp)
 		q = p->pfik_parent;
 	p->pfik_ifp = ifp;
 	p->pfik_flags |= PFI_IFLAG_ATTACHED;
+#ifdef __OpenBSD__
 	p->pfik_ah_cookie =
 	    hook_establish(ifp->if_addrhooks, 1, pfi_kifaddr_update, p);
+#else
+	p->pfik_ah_cookie =
+	    hook_establish(p->pfik_ifaddrhooks, 1, pfi_kifaddr_update, p);
+#endif
 	pfi_index2kif[ifp->if_index] = p;
 	pfi_dohooks(p);
 	splx(s);
@@ -207,7 +231,11 @@ pfi_detach_ifnet(struct ifnet *ifp)
 		splx(s);
 		return;
 	}
+#ifdef __OpenBSD__
 	hook_disestablish(p->pfik_ifp->if_addrhooks, p->pfik_ah_cookie);
+#else
+	hook_disestablish(p->pfik_ifaddrhooks, p->pfik_ah_cookie);
+#endif
 	q = p->pfik_parent;
 	p->pfik_ifp = NULL;
 	p->pfik_flags &= ~PFI_IFLAG_ATTACHED;
@@ -563,8 +591,21 @@ pfi_if_create(const char *name, struct pfi_kif *q, int flags)
 		return (NULL);
 	}
 	bzero(p->pfik_ah_head, sizeof(*p->pfik_ah_head));
+#ifdef __NetBSD__
+	p->pfik_ifaddrhooks = malloc(sizeof(*p->pfik_ifaddrhooks), PFI_MTYPE,
+	    M_DONTWAIT);
+	if (p->pfik_ifaddrhooks == NULL) {
+		free(p->pfik_ah_head, PFI_MTYPE);
+		free(p, PFI_MTYPE);
+		return (NULL);
+	}
+	bzero(p->pfik_ifaddrhooks, sizeof(*p->pfik_ifaddrhooks));
+#endif
 	TAILQ_INIT(p->pfik_ah_head);
 	TAILQ_INIT(&p->pfik_grouphead);
+#ifdef __NetBSD__
+	TAILQ_INIT(p->pfik_ifaddrhooks);
+#endif
 	strlcpy(p->pfik_name, name, sizeof(p->pfik_name));
 	RB_INIT(&p->pfik_lan_ext);
 	RB_INIT(&p->pfik_ext_gwy);
@@ -627,6 +668,7 @@ pfi_copy_group(char *p, const char *q, int m)
 void
 pfi_dynamic_drivers(void)
 {
+#ifdef __OpenBSD__
 	char		*buses[] = PFI_DYNAMIC_BUSES;
 	int		 nbuses = sizeof(buses)/sizeof(buses[0]);
 	int		 enabled[sizeof(buses)/sizeof(buses[0])];
@@ -662,6 +704,13 @@ pfi_dynamic_drivers(void)
 			}
 		}
 	}
+#else
+	struct if_clone *ifc;
+	extern LIST_HEAD(if_cloners, if_clone) if_cloners;
+
+	LIST_FOREACH(ifc, &if_cloners, ifc_list)
+		pfi_newgroup(ifc->ifc_name, PFI_IFLAG_DYNAMIC);
+#endif
 }
 
 void
@@ -809,8 +858,11 @@ pfi_unmask(void *addr)
 void
 pfi_dohooks(struct pfi_kif *p)
 {
+
+#ifdef __OpenBSD__
 	for (; p != NULL; p = p->pfik_parent)
 		dohooks(p->pfik_ah_head, 0);
+#endif
 }
 
 int
@@ -838,3 +890,49 @@ pfi_match_addr(struct pfi_dynaddr *dyn, struct pf_addr *a, sa_family_t af)
 		}
 	}
 }
+
+/* from openbsd/sys/kern/kern_subr.c */
+#ifdef __NetBSD__
+static void *
+hook_establish(head, tail, fn, arg)
+	struct hook_desc_head *head;
+	int tail;
+	void (*fn)(void *);
+	void *arg;
+{
+	struct hook_desc *hdp;
+
+	hdp = (struct hook_desc *)malloc(sizeof (*hdp), M_DEVBUF, M_NOWAIT);
+	if (hdp == NULL)
+		return (NULL);
+
+	hdp->hd_fn = fn;
+	hdp->hd_arg = arg;
+	if (tail)
+		TAILQ_INSERT_TAIL(head, hdp, hd_list);
+	else
+		TAILQ_INSERT_HEAD(head, hdp, hd_list);
+
+	return (hdp);
+}
+
+static void
+hook_disestablish(head, vhook)
+	struct hook_desc_head *head;
+	void *vhook;
+{
+	struct hook_desc *hdp;
+
+#ifdef DIAGNOSTIC
+	for (hdp = TAILQ_FIRST(head); hdp != NULL;
+	    hdp = TAILQ_NEXT(hdp, hd_list))
+                if (hdp == vhook)
+			break;
+	if (hdp == NULL)
+		panic("hook_disestablish: hook not established");
+#endif
+	hdp = vhook;
+	TAILQ_REMOVE(head, hdp, hd_list);
+	free(hdp, M_DEVBUF);
+}
+#endif
