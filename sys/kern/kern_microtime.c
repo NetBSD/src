@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_microtime.c,v 1.5 2004/05/18 16:09:07 nathanw Exp $	*/
+/*	$NetBSD: kern_microtime.c,v 1.6 2004/06/19 18:12:55 fredb Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: kern_microtime.c,v 1.5 2004/05/18 16:09:07 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_microtime.c,v 1.6 2004/06/19 18:12:55 fredb Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -97,7 +97,7 @@ cc_microtime(struct timeval *tvp)
 		 * Determine the current clock time as the time at last
 		 * microset() call, plus the CC accumulation since then.
 		 * This time should lie in the interval between the current
-		 * master clock time and the time at the nexdt tick, but
+		 * master clock time and the time at the next tick, but
 		 * this code does not explicitly require that in the interest
 		 * of speed.  If something ugly occurs, like a settimeofday()
 		 * call, the processors may disagree among themselves for not
