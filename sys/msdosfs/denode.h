@@ -1,4 +1,4 @@
-/*	$NetBSD: denode.h,v 1.8 1994/08/21 18:43:49 ws Exp $	*/
+/*	$NetBSD: denode.h,v 1.9 1994/09/28 11:31:23 mycroft Exp $	*/
 
 /*-
  * Copyright (C) 1994 Wolfgang Solfrank.
@@ -187,7 +187,8 @@ struct denode {
 	 putushort((dp)->deTime, (dep)->de_Time),	\
 	 putushort((dp)->deDate, (dep)->de_Date),	\
 	 putushort((dp)->deStartCluster, (dep)->de_StartCluster), \
-	 putulong((dp)->deFileSize, (dep)->de_FileSize))
+	 putulong((dp)->deFileSize, \
+	     ((dep)->de_Attributes & ATTR_DIRECTORY) ? 0 : (dep)->de_FileSize))
 
 #define	de_forw		de_chain[0]
 #define	de_back		de_chain[1]
@@ -262,5 +263,15 @@ int msdosfs_reallocblks __P((struct vop_reallocblks_args *));
 /*
  * Internal service routine prototypes.
  */
-int deget __P((struct msdosfsmount * pmp, u_long dirclust, u_long diroffset, struct direntry * direntptr, struct denode ** depp));
+int createde __P((struct denode *, struct denode *, struct denode **));
+int deextend __P((struct denode *, u_long, struct ucred *));
+int deget __P((struct msdosfsmount *, u_long, u_long, struct direntry *, struct denode **));
+int detrunc __P((struct denode *, u_long, int, struct ucred *, struct proc *));
+int deupdat __P((struct denode *, struct timespec *, int));
+int doscheckpath __P((struct denode *, struct denode *));
+int dosdirempty __P((struct denode *));
+int readde __P((struct denode *, struct buf **, struct direntry **));
+int readep __P((struct msdosfsmount *, u_long, u_long, struct buf **, struct direntry **));
+void reinsert __P((struct denode *));
+int removede __P((struct denode *, struct denode *));
 #endif	/* KERNEL */

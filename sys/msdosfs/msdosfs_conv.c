@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_conv.c,v 1.7 1994/08/30 01:31:11 mycroft Exp $	*/
+/*	$NetBSD: msdosfs_conv.c,v 1.8 1994/09/28 11:31:26 mycroft Exp $	*/
 
 /*
  * Written by Paul Popelka (paulp@uts.amdahl.com)
@@ -155,9 +155,8 @@ dos2unixtime(dd, dt, tsp)
 		lastdosdate = dd;
 		days = 0;
 		year = (dd & DD_YEAR_MASK) >> DD_YEAR_SHIFT;
-		for (y = 0; y < year; y++) {
+		for (y = 0; y < year; y++)
 			days += y & 0x03 ? 365 : 366;
-		}
 		months = year & 0x03 ? regyear : leapyear;
 		/*
 		 * Prevent going from 0 to 0xffffffff in the following
@@ -165,13 +164,12 @@ dos2unixtime(dd, dt, tsp)
 		 */
 		month = (dd & DD_MONTH_MASK) >> DD_MONTH_SHIFT;
 		if (month == 0) {
-			printf("dos2unixtime(): month value out of range (%d)\n",
+			printf("dos2unixtime(): month value out of range (%ld)\n",
 			       month);
 			month = 1;
 		}
-		for (m = 0; m < month - 1; m++) {
+		for (m = 0; m < month - 1; m++)
 			days += months[m];
-		}
 		days += ((dd & DD_DAY_MASK) >> DD_DAY_SHIFT) - 1;
 		lastseconds = (days * 24 * 60 * 60) + SECONDSTO1980;
 	}
@@ -264,7 +262,7 @@ dos2unixfn(dn, un)
 	if (*origun == SLOT_E5)
 		*origun = 0xe5;
 
-	return thislong;
+	return (thislong);
 }
 
 /*
@@ -346,12 +344,3 @@ unix2dosfn(un, dn, unlen)
 		unlen--;
 	}
 }
-
-/*
- * Get rid of these macros before someone discovers we are using such
- * hideous things.
- */
-#undef	isupper
-#undef	islower
-#undef	toupper
-#undef	tolower
