@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.65 2004/06/26 20:48:44 dsl Exp $	*/
+/*	$NetBSD: expand.c,v 1.66 2004/06/26 22:09:49 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)expand.c	8.5 (Berkeley) 5/15/95";
 #else
-__RCSID("$NetBSD: expand.c,v 1.65 2004/06/26 20:48:44 dsl Exp $");
+__RCSID("$NetBSD: expand.c,v 1.66 2004/06/26 22:09:49 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -175,9 +175,9 @@ expandarg(union node *arg, struct arglist *arglist, int flag)
 
 
 /*
- * Perform variable and command substitution.  If EXP_FULL is set, output CTLESC
- * characters to allow for further processing.  Otherwise treat
- * $@ like $* since no splitting will be performed.
+ * Perform variable and command substitution.
+ * If EXP_FULL is set, output CTLESC characters to allow for further processing.
+ * Otherwise treat $@ like $* since no splitting will be performed.
  */
 
 STATIC void
@@ -186,6 +186,11 @@ argstr(char *p, int flag)
 	char c;
 	int quotes = flag & (EXP_FULL | EXP_CASE);	/* do CTLESC */
 	int firsteq = 1;
+	const char *ifs;
+	int ifs_split = EXP_IFS_SPLIT;
+
+	if (flag & EXP_IFS_SPLIT)
+		ifs = ifsset() ? ifsval() : " \t\n";
 
 	if (*p == '~' && (flag & (EXP_TILDE | EXP_VARTILDE)))
 		p = exptilde(p, flag);
@@ -200,6 +205,10 @@ argstr(char *p, int flag)
 				break;
 			if ((flag & EXP_FULL) != 0)
 				STPUTC(c, expdest);
+			ifs_split = 0;
+			break;
+		case CTLQUOTEEND:
+			ifs_split = EXP_IFS_SPLIT;
 			break;
 		case CTLESC:
 			if (quotes)
@@ -208,7 +217,7 @@ argstr(char *p, int flag)
 			STPUTC(c, expdest);
 			break;
 		case CTLVAR:
-			p = evalvar(p, flag);
+			p = evalvar(p, (flag & ~EXP_IFS_SPLIT) | (flag & ifs_split));
 			break;
 		case CTLBACKQ:
 		case CTLBACKQ|CTLQUOTE:
@@ -237,6 +246,11 @@ argstr(char *p, int flag)
 			break;
 		default:
 			STPUTC(c, expdest);
+			if (flag & EXP_IFS_SPLIT & ifs_split && strchr(ifs, c) != NULL) {
+				/* We need to get the output split here... */
+				recordregion(expdest - stackblock() - 1,
+						expdest - stackblock(), 0);
+			}
 			break;
 		}
 	}
@@ -685,7 +699,7 @@ again: /* jump here after setting a variable with ${var=text} */
 		/* FALLTHROUGH */
 	case VSMINUS:
 		if (!set) {
-		        argstr(p, flag);
+		        argstr(p, flag | (apply_ifs ? EXP_IFS_SPLIT : 0));
 			/*
 			 * ${x-a b c} doesn't get split, but removing the
 			 * 'apply_ifs = 0' apparantly breaks ${1+"$@"}..
@@ -907,6 +921,11 @@ recordregion(int start, int end, int inquotes)
 	if (ifslastp == NULL) {
 		ifsp = &ifsfirst;
 	} else {
+		if (ifslastp->endoff == start) {
+			/* extend previous area */
+			ifslastp->endoff = end;
+			return;
+		}
 		ifsp = (struct ifsregion *)ckmalloc(sizeof (struct ifsregion));
 		ifslastp->next = ifsp;
 	}
