@@ -1,4 +1,4 @@
-/*	$NetBSD: wss.c,v 1.9 1996/02/16 08:18:36 mycroft Exp $	*/
+/*	$NetBSD: wss.c,v 1.10 1996/03/17 00:54:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -164,8 +164,12 @@ struct audio_hw_if wss_hw_if = {
 int	wssprobe __P((struct device *, void *, void *));
 void	wssattach __P((struct device *, struct device *, void *));
 
-struct cfdriver wsscd = {
-	NULL, "wss", wssprobe, wssattach, DV_DULL, sizeof(struct wss_softc)
+struct cfattach wss_ca = {
+	sizeof(struct wss_softc), wssprobe, wssattach
+};
+
+struct cfdriver wss_cd = {
+	NULL, "wss", DV_DULL
 };
 
 /*
@@ -304,10 +308,10 @@ wssopen(dev, flags)
     struct wss_softc *sc;
     int unit = AUDIOUNIT(dev);
     
-    if (unit >= wsscd.cd_ndevs)
+    if (unit >= wss_cd.cd_ndevs)
 	return ENODEV;
     
-    sc = wsscd.cd_devs[unit];
+    sc = wss_cd.cd_devs[unit];
     if (!sc)
 	return ENXIO;
     

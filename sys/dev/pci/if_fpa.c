@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fpa.c,v 1.6 1996/03/14 03:04:19 cgd Exp $	*/
+/*	$NetBSD: if_fpa.c,v 1.7 1996/03/17 00:55:30 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995 Matt Thomas (thomas@lkg.dec.com)
@@ -179,9 +179,15 @@ static pdq_softc_t *pdqs_pci[NFPA];
 #define	PDQ_PCI_UNIT_TO_SOFTC(unit)	(pdqs_pci[unit])
 #endif /* __FreeBSD__ */
 
-#if defined(__bsdi__) || defined(__NetBSD__)
+#if defined(__bsdi__)
 extern struct cfdriver fpacd;
 #define	PDQ_PCI_UNIT_TO_SOFTC(unit)	((pdq_softc_t *)fpacd.cd_devs[unit])
+#endif
+
+#if defined(__NetBSD__)
+extern struct cfattach fpa_ca;
+extern struct cfdriver fpa_cd;
+#define	PDQ_PCI_UNIT_TO_SOFTC(unit)	((pdq_softc_t *)fpa_cd.cd_devs[unit])
 #endif
 
 static ifnet_ret_t
@@ -455,7 +461,11 @@ pdq_pci_attach(
 #endif
 }
 
-struct cfdriver fpacd = {
-    0, "fpa", pdq_pci_probe, pdq_pci_attach, DV_IFNET, sizeof(pdq_softc_t)
+struct cfattach fpa_ca = {
+    sizeof(pdq_softc_t), pdq_pci_probe, pdq_pci_attach
+};
+
+struct cfdriver fpa_cd = {
+    0, "fpa", DV_IFNET
 };
 #endif /* __NetBSD__ */

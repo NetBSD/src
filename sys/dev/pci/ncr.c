@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.29 1996/03/14 05:21:20 cgd Exp $	*/
+/*	$NetBSD: ncr.c,v 1.30 1996/03/17 00:55:32 thorpej Exp $	*/
 
 /**************************************************************************
 **
@@ -1319,7 +1319,7 @@ static	void	ncr_attach	(pcici_t tag, int unit);
 
 
 static char ident[] =
-	"\n$NetBSD: ncr.c,v 1.29 1996/03/14 05:21:20 cgd Exp $\n";
+	"\n$NetBSD: ncr.c,v 1.30 1996/03/17 00:55:32 thorpej Exp $\n";
 
 u_long	ncr_version = NCR_VERSION	* 11
 	+ (u_long) sizeof (struct ncb)	*  7
@@ -1356,8 +1356,12 @@ int ncr_cache; /* to be aligned _NOT_ static */
 
 #ifdef __NetBSD__
 
-struct	cfdriver ncrcd = {
-	NULL, "ncr", ncr_probe, ncr_attach, DV_DULL, sizeof(struct ncb)
+struct	cfattach ncr_ca = {
+	sizeof(struct ncb), ncr_probe, ncr_attach
+};
+
+struct	cfdriver ncr_cd = {
+	NULL, "ncr", DV_DULL
 };
 
 #else /* !__NetBSD__ */

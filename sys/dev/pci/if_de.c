@@ -1,4 +1,4 @@
-/*    $NetBSD: if_de.c,v 1.13 1996/03/14 03:04:17 cgd Exp $       */
+/*    $NetBSD: if_de.c,v 1.14 1996/03/17 00:55:27 thorpej Exp $       */
 
 /*-
  * Copyright (c) 1994, 1995 Matt Thomas (matt@lkg.dec.com)
@@ -384,8 +384,9 @@ extern struct cfdriver decd;
 #if defined(__NetBSD__)
 typedef void ifnet_ret_t;
 typedef u_long ioctl_cmd_t;
-extern struct cfdriver decd;
-#define	TULIP_UNIT_TO_SOFTC(unit)	((tulip_softc_t *) decd.cd_devs[unit])
+extern struct cfattach de_ca;
+extern struct cfdriver de_cd;
+#define	TULIP_UNIT_TO_SOFTC(unit)	((tulip_softc_t *) de_cd.cd_devs[unit])
 #endif
 
 #ifndef TULIP_BURSTSIZE
@@ -2405,8 +2406,12 @@ tulip_pci_probe(
 
 static void tulip_pci_attach(TULIP_PCI_ATTACH_ARGS);
 
-struct cfdriver decd = {
-    0, "de", tulip_pci_probe, tulip_pci_attach, DV_IFNET, sizeof(tulip_softc_t)
+struct cfattach de_ca = {
+    sizeof(tulip_softc_t), tulip_pci_probe, tulip_pci_attach
+};
+
+struct cfdriver de_cd = {
+    0, "de", DV_IFNET
 };
 
 #endif /* __NetBSD__ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: wt.c,v 1.29 1996/03/01 04:08:40 mycroft Exp $	*/
+/*	$NetBSD: wt.c,v 1.30 1996/03/17 00:54:05 thorpej Exp $	*/
 
 /*
  * Streamer tape driver.
@@ -167,8 +167,12 @@ int wtprobe __P((struct device *, void *, void *));
 void wtattach __P((struct device *, struct device *, void *));
 int wtintr __P((void *sc));
 
-struct cfdriver wtcd = {
-	NULL, "wt", wtprobe, wtattach, DV_TAPE, sizeof(struct wt_softc)
+struct cfattach wt_ca = {
+	sizeof(struct wt_softc), wtprobe, wtattach
+};
+
+struct cfdriver wt_cd = {
+	NULL, "wt", DV_TAPE
 };
 
 /*
@@ -286,9 +290,9 @@ wtopen(dev, flag)
 	struct wt_softc *sc;
 	int error;
 
-	if (unit >= wtcd.cd_ndevs)
+	if (unit >= wt_cd.cd_ndevs)
 		return ENXIO;
-	sc = wtcd.cd_devs[unit];
+	sc = wt_cd.cd_devs[unit];
 	if (!sc)
 		return ENXIO;
 
@@ -371,7 +375,7 @@ wtclose(dev)
 	dev_t dev;
 {
 	int unit = minor(dev) & T_UNIT;
-	struct wt_softc *sc = wtcd.cd_devs[unit];
+	struct wt_softc *sc = wt_cd.cd_devs[unit];
 
 	/* If rewind is pending, do nothing */
 	if (sc->flags & TPREW)
@@ -425,7 +429,7 @@ wtioctl(dev, cmd, addr, flag)
 	int flag;
 {
 	int unit = minor(dev) & T_UNIT;
-	struct wt_softc *sc = wtcd.cd_devs[unit];
+	struct wt_softc *sc = wt_cd.cd_devs[unit];
 	int error, count, op;
 
 	switch (cmd) {
@@ -525,7 +529,7 @@ wtstrategy(bp)
 	struct buf *bp;
 {
 	int unit = minor(bp->b_dev) & T_UNIT;
-	struct wt_softc *sc = wtcd.cd_devs[unit];
+	struct wt_softc *sc = wt_cd.cd_devs[unit];
 	int s;
 
 	bp->b_resid = bp->b_bcount;
