@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cs_isa.c,v 1.21 1998/07/21 23:09:25 thorpej Exp $	*/
+/*	$NetBSD: if_cs_isa.c,v 1.22 1998/07/22 22:09:18 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -476,6 +476,9 @@ cs_isa_attach(parent, self, aux)
 	    IFF_BROADCAST | IFF_MULTICAST;
 
 #ifdef OFW
+    {
+	int *media, nmedia, defmedia, i;
+
 	/* Dig MAC address out of the firmware. */
 	if (OF_getprop((int) ia->ia_aux, "mac-address", sc->sc_enaddr,
 	    sizeof(sc->sc_enaddr)) < 0) {
@@ -484,15 +487,31 @@ cs_isa_attach(parent, self, aux)
 		return;
 	}
 
-	/*
-	 * XXX Media goop needs to come from OpenFirmware.
-	 */
-
 	/* Initialize ifmedia structures. */
 	ifmedia_init(&sc->sc_media, 0, cs_mediachange, cs_mediastatus);
 
-	ifmedia_add(&sc->sc_media, IFM_ETHER|IFM_10_T, 0, NULL);
-	ifmedia_set(&sc->sc_media, IFM_ETHER|IFM_10_T);
+	/* Get the media information from the firmware. */
+	media = of_network_decode_media((int) ia->ia_aux, &nmedia, &defmedia);
+	if (media == NULL) {
+		printf("%s: unable to get media from OpenFirmware\n",
+		    sc->sc_dev.dv_xname);
+		ifmedia_add(&sc->sc_media, IFM_ETHER|IFM_MANUAL, 0, NULL);
+		ifmedia_set(&sc->sc_media, IFM_ETHER|IFM_MANUAL);
+	} else {
+		for (i = 0; i < nmedia; i++)
+			ifmedia_add(&sc->sc_media, media[i], 0, NULL);
+		if (defmedia == -1) {
+			printf("%s: unable to get default media from OpenFirmware\n",
+			    sc->sc_dev.dv_xname);
+			/* XXX What do do? */
+			ifmedia_set(&sc->sc_media, media[i]);
+		} else
+			ifmedia_set(&sc->sc_media, defmedia);
+
+		/* Return value is malloc'd. */
+		free(media, M_DEVBUF);
+	}
+    }
 #else
 	/* Initialize ifmedia structures. */
 	ifmedia_init(&sc->sc_media, 0, cs_mediachange, cs_mediastatus);
