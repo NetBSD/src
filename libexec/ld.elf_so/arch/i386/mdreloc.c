@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.11 2002/09/11 14:19:30 junyoung Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.12 2002/09/11 17:23:25 mycroft Exp $	*/
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -6,11 +6,39 @@
 #include "debug.h"
 #include "rtld.h"
 
+void _rtld_relocate_nonplt_self(Elf_Dyn *, Elf_Addr);
+
 void
 _rtld_setup_pltgot(const Obj_Entry *obj)
 {
 	obj->pltgot[1] = (Elf_Addr) obj;
 	obj->pltgot[2] = (Elf_Addr) &_rtld_bind_start;
+}
+
+void
+_rtld_relocate_nonplt_self(dynp, relocbase)
+	Elf_Dyn *dynp;
+	Elf_Addr relocbase;
+{
+	const Elf_Rel *rel = 0, *rellim;
+	Elf_Addr relsz = 0;
+	Elf_Addr *where;
+
+	for (; dynp->d_tag != DT_NULL; dynp++) {
+		switch (dynp->d_tag) {
+		case DT_REL:
+			rel = (const Elf_Rel *)(relocbase + dynp->d_un.d_ptr);
+			break;
+		case DT_RELSZ:
+			relsz = dynp->d_un.d_val;
+			break;
+		}
+	}
+	rellim = (const Elf_Rel *)((caddr_t)rel + relsz);
+	for (; rel < rellim; rel++) {
+		where = (Elf_Addr *)(relocbase + rel->r_offset);
+		*where += (Elf_Addr)relocbase;
+	}
 }
 
 int
@@ -25,6 +53,9 @@ _rtld_relocate_nonplt_objects(obj, self, dodebug)
 	unsigned long lastsym = -1;
 #endif
 	Elf_Addr target;
+
+	if (self)
+		return 0;
 
 	for (rel = obj->rel; rel < obj->rellim; rel++) {
 		Elf_Addr        *where;
@@ -89,22 +120,10 @@ _rtld_relocate_nonplt_objects(obj, self, dodebug)
 			break;
 
 		case R_TYPE(RELATIVE):
-		    {
-			extern Elf_Addr	_GLOBAL_OFFSET_TABLE_[];
-			extern Elf_Addr	_GOT_END_[];
-
-			/* This is the ...iffy hueristic. */
-			if (!self ||
-			    (caddr_t)where < (caddr_t)_GLOBAL_OFFSET_TABLE_ ||
-			    (caddr_t)where >= (caddr_t)_GOT_END_) {
-				*where += (Elf_Addr)obj->relocbase;
-				rdbg(dodebug, ("RELATIVE in %s --> %p",
-				    obj->path, (void *)*where));
-			} else
-				rdbg(dodebug, ("RELATIVE in %s stays at %p",
-				    obj->path, (void *)*where));
+			*where += (Elf_Addr)obj->relocbase;
+			rdbg(dodebug, ("RELATIVE in %s --> %p", obj->path,
+			    (void *)*where));
 			break;
-		    }
 
 		case R_TYPE(COPY):
 			/*
