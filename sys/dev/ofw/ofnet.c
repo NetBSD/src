@@ -1,4 +1,4 @@
-/*	$NetBSD: ofnet.c,v 1.6 1997/04/16 23:41:19 thorpej Exp $	*/
+/*	$NetBSD: ofnet.c,v 1.7 1997/04/24 02:08:46 mycroft Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -221,8 +221,12 @@ ofnread(of)
 			}
 			if (len >= MINCLSIZE) {
 				MCLGET(m, M_DONTWAIT);
-				if (m->m_flags & M_EXT)
-					l = MCLBYTES;
+				if ((m->m_flags & M_EXT) == 0)
+					m_freem(head);
+					head = 0;
+					break;
+				}
+				l = MCLBYTES;
 			}
 			m->m_len = l = min(len, l);
 			bcopy(bufp, mtod(m, char *), l);
