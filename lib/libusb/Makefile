@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 1999/07/23 09:40:44 mrg Exp $
+#	$NetBSD: Makefile,v 1.5 1999/07/23 09:44:38 mrg Exp $
 
 LIB=	usb
 MAN=	usb.3
@@ -14,6 +14,8 @@ SRCS=	descr.c parse.c usage.c data.c
 
 INCS=	usb.h
 INCSDIR=/usr/include
+
+.include <bsd.own.mk>
 
 .if ${MKSHARE} != "no"
 FILES=  usb_hid_usages
