@@ -1,4 +1,4 @@
-/*	$NetBSD: ess.c,v 1.25 1998/08/26 12:10:22 augustss Exp $	*/
+/*	$NetBSD: ess.c,v 1.26 1998/08/26 13:08:44 augustss Exp $	*/
 
 /*
  * Copyright 1997
@@ -884,7 +884,8 @@ essattach(sc)
 	(void)config_found(&sc->sc_dev, &arg, audioprint);
 
 #ifdef AUDIO_DEBUG
-	ess_printsc(sc);
+	if (essdebug > 0)
+		ess_printsc(sc);
 #endif
 }
 
