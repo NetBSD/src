@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_net.c,v 1.26 2003/01/18 07:36:57 thorpej Exp $	*/
+/*	$NetBSD: hpux_net.c,v 1.27 2003/01/21 03:16:06 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_net.c,v 1.26 2003/01/18 07:36:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_net.c,v 1.27 2003/01/21 03:16:06 jdolecek Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -156,6 +156,9 @@ hpux_sys_netioctl(l, v, retval)
 	int *args, i;
 	int code;
 	int error;
+#ifdef KTRACE
+	struct proc *p = l->l_proc;
+#endif
 
 	args = SCARG(uap, args);
 	code = SCARG(uap, call) - MINBSDIPCCODE;
