@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)main.c	5.17 (Berkeley) 7/1/91";*/
-static char rcsid[] = "$Id: main.c,v 1.5 1993/09/13 15:27:38 brezak Exp $";
+static char rcsid[] = "$Id: main.c,v 1.6 1993/09/15 21:15:21 phil Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -133,6 +133,10 @@ usage:		fputs("usage: config [-gkp] sysname\n", stderr);
 		vector();		/* Create vector.s */
 		break;
 
+	case MACHINE_PC532:
+		pc532_ioconf();		/* Print ioconf.c */
+		break;
+
 	default:
 		printf("Specify machine type, e.g. ``machine vax''\n");
 		exit(1);
@@ -145,8 +149,14 @@ usage:		fputs("usage: config [-gkp] sysname\n", stderr);
 	{
 	char xxx[80];
 
+#ifndef NO_SYMLINK
 	(void) sprintf(xxx, "../../include", machinename);
 	(void) symlink(xxx, path("machine"));
+#else
+	sprintf  (xxx, "/bin/rm -rf %s; /bin/cp -r ../include %s",
+		 path("machine"), path("machine"));
+	system (xxx);
+#endif
 	}
 	makefile();			/* build Makefile */
 	headers();			/* make a lot of .h files */
