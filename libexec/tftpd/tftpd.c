@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)tftpd.c	5.13 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$Id: tftpd.c,v 1.4 1994/01/10 16:29:48 mycroft Exp $";
+static char rcsid[] = "$Id: tftpd.c,v 1.5 1994/03/01 08:27:44 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -70,6 +70,7 @@ static char rcsid[] = "$Id: tftpd.c,v 1.4 1994/01/10 16:29:48 mycroft Exp $";
 #define	TIMEOUT		5
 
 extern	int errno;
+extern	char *__progname;
 struct	sockaddr_in s_in = { AF_INET };
 int	peer;
 int	rexmtval = TIMEOUT;
@@ -86,42 +87,61 @@ char	*dirs[MAXARG+1];
 
 int	secure = 0;
 
-main(ac, av)
-	char **av;
+static void
+usage()
+{
+	syslog(LOG_ERR, "Usage: %s [-s] [directory ...]\n", __progname);
+	exit(1);
+}
+
+main(argc, argv)
+	int    argc;
+	char **argv;
 {
 	register struct tftphdr *tp;
 	register int n = 0;
 	int on = 1;
+	int fd = 0;
+	int c;
 
-	ac--; av++;
-	if (!strcmp(*av, "-s")) {
-		ac--; av++;
-		secure = 1;
-	}
 	openlog("tftpd", LOG_PID, LOG_DAEMON);
-	while (ac-- > 0) {
+
+	while ((c = getopt(argc, argv, "s")) != -1)
+		switch (c) {
+		case 's':
+			secure = 1;
+			break;
+
+		default:
+			usage();
+			break;
+		}
+
+	for (; optind != argc; optind++) {
 		if (!secure) {
 			if (n >= MAXARG) {
 				syslog(LOG_ERR, "too many directories\n");
 				exit(1);
 			} else
-				dirs[n++] = *av;
+				dirs[n++] = argv[optind];
 		}
-		if (chdir(*av++)) {
-			syslog(LOG_ERR, "%s: %m\n", av[-1]);
+		if (chdir(argv[optind])) {
+			syslog(LOG_ERR, "%s: %m\n", argv[optind]);
 			exit(1);
 		}
 	}
+
 	if (secure && chroot(".")) {
 		syslog(LOG_ERR, "chroot: %m\n");
 		exit(1);
 	}
-	if (ioctl(0, FIONBIO, &on) < 0) {
+
+	if (ioctl(fd, FIONBIO, &on) < 0) {
 		syslog(LOG_ERR, "ioctl(FIONBIO): %m\n");
 		exit(1);
 	}
 	fromlen = sizeof (from);
-	n = recvfrom(0, buf, sizeof (buf), 0,
+	n = recvfrom(fd, buf, sizeof (buf), 0,
 	    (struct sockaddr *)&from, &fromlen);
 	if (n < 0) {
 		syslog(LOG_ERR, "recvfrom: %m\n");
@@ -160,7 +180,7 @@ main(ac, av)
 				 * a single request from a single client.
 				 */
 				j = sizeof from;
-				i = recvfrom(0, buf, sizeof (buf), 0,
+				i = recvfrom(fd, buf, sizeof (buf), 0,
 				    (struct sockaddr *)&from, &j);
 				if (i > 0) {
 					n = i;
@@ -179,7 +199,7 @@ main(ac, av)
 	}
 	from.sin_family = AF_INET;
 	alarm(0);
-	close(0);
+	close(fd);
 	close(1);
 	peer = socket(AF_INET, SOCK_DGRAM, 0);
 	if (peer < 0) {
