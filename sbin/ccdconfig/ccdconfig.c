@@ -1,4 +1,4 @@
-/*	$NetBSD: ccdconfig.c,v 1.22 1998/08/10 18:03:04 msaitoh Exp $	*/
+/*	$NetBSD: ccdconfig.c,v 1.23 1998/08/25 19:18:13 ross Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 __COPYRIGHT(
 "@(#) Copyright (c) 1996, 1997\
 	The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: ccdconfig.c,v 1.22 1998/08/10 18:03:04 msaitoh Exp $");
+__RCSID("$NetBSD: ccdconfig.c,v 1.23 1998/08/25 19:18:13 ross Exp $");
 #endif
 
 #include <sys/param.h>
@@ -240,7 +240,7 @@ do_single(argc, argv, action)
 	}
 
 	/* Make sure there are enough arguments. */
-	if (argc < 4)
+	if (argc < 4)  {
 		if (argc == 3) {
 			/* Assume that no flags are specified. */
 			noflags = 1;
@@ -252,6 +252,7 @@ do_single(argc, argv, action)
 			} else
 				usage();
 		}
+	}
 
 	/* First argument is the ccd to configure. */
 	cp = *argv++; --argc;

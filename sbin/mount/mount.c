@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.c,v 1.43 1998/07/26 20:04:16 mycroft Exp $	*/
+/*	$NetBSD: mount.c,v 1.44 1998/08/25 19:18:16 ross Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount.c	8.25 (Berkeley) 5/8/95";
 #else
-__RCSID("$NetBSD: mount.c,v 1.43 1998/07/26 20:04:16 mycroft Exp $");
+__RCSID("$NetBSD: mount.c,v 1.44 1998/08/25 19:18:16 ross Exp $");
 #endif
 #endif /* not lint */
 
@@ -535,7 +535,7 @@ mangle(options, argcp, argvp, maxargcp)
 			maxargc <<= 1;
 			argv = realloc(argv, maxargc * sizeof(char *));
 		}
-		if (*p != '\0')
+		if (*p != '\0') {
 			if (*p == '-') {
 				argv[argc++] = p;
 				p = strchr(p, '=');
@@ -547,6 +547,7 @@ mangle(options, argcp, argvp, maxargcp)
 				argv[argc++] = "-o";
 				argv[argc++] = p;
 			}
+		}
 	}
 
 	*argcp = argc;

@@ -1,4 +1,4 @@
-/*	$NetBSD: traverse.c,v 1.20 1998/03/18 16:54:57 bouyer Exp $	*/
+/*	$NetBSD: traverse.c,v 1.21 1998/08/25 19:18:14 ross Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1988, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)traverse.c	8.7 (Berkeley) 6/15/95";
 #else
-__RCSID("$NetBSD: traverse.c,v 1.20 1998/03/18 16:54:57 bouyer Exp $");
+__RCSID("$NetBSD: traverse.c,v 1.21 1998/08/25 19:18:14 ross Exp $");
 #endif
 #endif /* not lint */
 
@@ -566,11 +566,12 @@ blksout(blkp, frags, ino)
 		writeheader(ino);
 		bp = &blkp[i / tbperdb];
 		for (j = i; j < count; j += tbperdb, bp++)
-			if (*bp != 0)
+			if (*bp != 0) {
 				if (j + tbperdb <= count)
 					dumpblock(iswap32(*bp), (int)sblock->fs_bsize);
 				else
 					dumpblock(iswap32(*bp), (count - j) * TP_BSIZE);
+			}
 		spcl.c_type = iswap32(TS_ADDR);
 	}
 }

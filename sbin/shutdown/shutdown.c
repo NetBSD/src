@@ -1,4 +1,4 @@
-/*	$NetBSD: shutdown.c,v 1.29 1998/07/26 20:18:32 mycroft Exp $	*/
+/*	$NetBSD: shutdown.c,v 1.30 1998/08/25 19:18:17 ross Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)shutdown.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: shutdown.c,v 1.29 1998/07/26 20:18:32 mycroft Exp $");
+__RCSID("$NetBSD: shutdown.c,v 1.30 1998/08/25 19:18:17 ross Exp $");
 #endif
 #endif /* not lint */
 
@@ -173,7 +173,7 @@ main(argc, argv)
 
 	getoffset(*argv++);
 
-	if (argv[0])
+	if (argv[0]) {
 		if (strcmp(argv[0], "-") || argv[1]) {
 			for (p = mbuf, len = sizeof(mbuf); *argv; ++argv) {
 				arglen = strlen(*argv);
@@ -200,6 +200,7 @@ main(argc, argv)
 				}
 			}
 		}
+	}
 	mbuflen = strlen(mbuf);
 
 	if (offset)
@@ -420,7 +421,7 @@ getoffset(timearg)
 
 	/* handle hh:mm by getting rid of the colon */
 	for (p = timearg; *p; ++p)
-		if (!isascii(*p) || !isdigit(*p))
+		if (!isascii(*p) || !isdigit(*p)) {
 			if (*p == ':' && strlen(p) == 3) {
 				p[0] = p[1];
 				p[1] = p[2];
@@ -428,6 +429,7 @@ getoffset(timearg)
 			}
 			else
 				badtime();
+		}
 
 	unsetenv("TZ");					/* OUR timezone */
 	lt = localtime(&now);				/* current time val */
