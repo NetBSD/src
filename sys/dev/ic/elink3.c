@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.82 2000/08/21 14:25:14 thorpej Exp $	*/
+/*	$NetBSD: elink3.c,v 1.83 2000/09/28 10:10:14 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -357,7 +357,7 @@ epconfig(sc, chipset, enaddr)
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	u_int16_t i;
-	u_int8_t myla[6];
+	u_int8_t myla[ETHER_ADDR_LEN];
 
 	callout_init(&sc->sc_mii_callout);
 	callout_init(&sc->sc_mbuf_callout);
@@ -375,7 +375,7 @@ epconfig(sc, chipset, enaddr)
 		/*
 		 * Read the station address from the eeprom.
 		 */
-		for (i = 0; i < 3; i++) {
+		for (i = 0; i < ETHER_ADDR_LEN / 2; i++) {
 			u_int16_t x = ep_read_eeprom(sc, i);
 			myla[(i << 1)] = x >> 8;
 			myla[(i << 1) + 1] = x;

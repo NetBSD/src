@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.36 2000/06/29 16:53:48 thorpej Exp $	*/
+/*	$NetBSD: i82557.c,v 1.37 2000/09/28 10:10:14 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -234,7 +234,7 @@ void
 fxp_attach(sc)
 	struct fxp_softc *sc;
 {
-	u_int8_t enaddr[6];
+	u_int8_t enaddr[ETHER_ADDR_LEN];
 	struct ifnet *ifp;
 	bus_dma_segment_t seg;
 	int rseg, i, error;
@@ -490,7 +490,7 @@ fxp_get_info(sc, enaddr)
 	struct fxp_softc *sc;
 	u_int8_t *enaddr;
 {
-	u_int16_t data, myea[3];
+	u_int16_t data, myea[ETHER_ADDR_LEN / 2];
 
 	/*
 	 * Reset to a stable state.
