@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.79 2002/03/04 02:25:23 simonb Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.80 2002/03/17 22:19:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.79 2002/03/04 02:25:23 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.80 2002/03/17 22:19:20 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -116,6 +116,21 @@ const char *findblkname __P((int));
 static struct device *finddevice __P((const char *));
 static struct device *getdisk __P((char *, int, int, dev_t *, int));
 static struct device *parsedisk __P((char *, int, int, dev_t *));
+
+/*
+ * A generic linear hook.
+ */
+struct hook_desc {
+	LIST_ENTRY(hook_desc) hk_list;
+	void	(*hk_fn) __P((void *));
+	void	*hk_arg;
+};
+typedef LIST_HEAD(, hook_desc) hook_list_t;
+
+static void *hook_establish __P((hook_list_t *, void (*)(void *), void *));
+static void hook_disestablish __P((hook_list_t *, void *));
+static void hook_destroy __P((hook_list_t *));
+static void hook_proc_run __P((hook_list_t *, struct proc *));
 
 int
 uiomove(buf, n, uio)
@@ -287,54 +302,95 @@ hashdone(hashtbl, mtype)
 	free(hashtbl, mtype);
 }
 
+
+static void *
+hook_establish(list, fn, arg)
+	hook_list_t *list;
+	void (*fn) __P((void *));
+	void *arg;
+{
+	struct hook_desc *hd;
+
+	hd = malloc(sizeof(*hd), M_DEVBUF, M_NOWAIT);
+	if (hd == NULL)
+		return (NULL);
+
+	hd->hk_fn = fn;
+	hd->hk_arg = arg;
+	LIST_INSERT_HEAD(list, hd, hk_list);
+
+	return (hd);
+}
+
+static void
+hook_disestablish(list, vhook)
+	hook_list_t *list;
+	void *vhook;
+{
+#ifdef DIAGNOSTIC
+	struct hook_desc *hd;
+
+	for (hd = list->lh_first; hd != NULL; hd = hd->hk_list.le_next)
+                if (hd == vhook)
+			break;
+	if (hd == NULL)
+		panic("hook_disestablish: hook not established");
+#endif
+	LIST_REMOVE((struct hook_desc *)vhook, hk_list);
+	free(vhook, M_DEVBUF);
+}
+
+static void
+hook_destroy(list)
+	hook_list_t *list;
+{
+	struct hook_desc *hd;
+
+	while ((hd = list->lh_first) != NULL) {
+		LIST_REMOVE(hd, hk_list);
+		free(hd, M_DEVBUF);
+	}
+}
+
+static void
+hook_proc_run(list, p)
+	hook_list_t *list;
+	struct proc *p;
+{
+	struct hook_desc *hd;
+
+	for (hd = LIST_FIRST(list); hd != NULL; hd = LIST_NEXT(hd, hk_list)) {
+		((void (*) __P((struct proc *, void *)))*hd->hk_fn)(p,
+		    hd->hk_arg);
+	}
+}
+
 /*
  * "Shutdown hook" types, functions, and variables.
+ *
+ * Should be invoked immediately before the
+ * system is halted or rebooted, i.e. after file systems unmounted,
+ * after crash dump done, etc.
+ *
+ * Each shutdown hook is removed from the list before it's run, so that
+ * it won't be run again.
  */
 
-struct shutdownhook_desc {
-	LIST_ENTRY(shutdownhook_desc) sfd_list;
-	void	(*sfd_fn) __P((void *));
-	void	*sfd_arg;
-};
-
-LIST_HEAD(, shutdownhook_desc) shutdownhook_list;
+hook_list_t shutdownhook_list;
 
 void *
 shutdownhook_establish(fn, arg)
 	void (*fn) __P((void *));
 	void *arg;
 {
-	struct shutdownhook_desc *ndp;
-
-	ndp = (struct shutdownhook_desc *)
-	    malloc(sizeof(*ndp), M_DEVBUF, M_NOWAIT);
-	if (ndp == NULL)
-		return (NULL);
-
-	ndp->sfd_fn = fn;
-	ndp->sfd_arg = arg;
-	LIST_INSERT_HEAD(&shutdownhook_list, ndp, sfd_list);
-
-	return (ndp);
+	return hook_establish(&shutdownhook_list, fn, arg);
 }
 
 void
 shutdownhook_disestablish(vhook)
 	void *vhook;
 {
-#ifdef DIAGNOSTIC
-	struct shutdownhook_desc *dp;
-
-	for (dp = shutdownhook_list.lh_first; dp != NULL;
-	    dp = dp->sfd_list.le_next)
-                if (dp == vhook)
-			break;
-	if (dp == NULL)
-		panic("shutdownhook_disestablish: hook not established");
-#endif
-
-	LIST_REMOVE((struct shutdownhook_desc *)vhook, sfd_list);
-	free(vhook, M_DEVBUF);
+	return hook_disestablish(&shutdownhook_list, vhook);
 }
 
 /*
@@ -348,11 +404,11 @@ shutdownhook_disestablish(vhook)
 void
 doshutdownhooks()
 {
-	struct shutdownhook_desc *dp;
+	struct hook_desc *dp;
 
 	while ((dp = shutdownhook_list.lh_first) != NULL) {
-		LIST_REMOVE(dp, sfd_list);
-		(*dp->sfd_fn)(dp->sfd_arg);
+		LIST_REMOVE(dp, hk_list);
+		(*dp->hk_fn)(dp->hk_arg);
 #if 0
 		/*
 		 * Don't bother freeing the hook structure,, since we may
@@ -367,13 +423,108 @@ doshutdownhooks()
 }
 
 /*
+ * "Mountroot hook" types, functions, and variables.
+ */
+
+hook_list_t mountroothook_list;
+
+void *
+mountroothook_establish(fn, dev)
+	void (*fn) __P((struct device *));
+	struct device *dev;
+{
+	return hook_establish(&mountroothook_list, (void (*)__P((void *)))fn,
+	    dev);
+}
+
+void
+mountroothook_disestablish(vhook)
+	void *vhook;
+{
+	return hook_disestablish(&mountroothook_list, vhook);
+}
+
+void
+mountroothook_destroy()
+{
+	hook_destroy(&mountroothook_list);
+}
+
+void
+domountroothook()
+{
+	struct hook_desc *hd;
+
+	for (hd = mountroothook_list.lh_first; hd != NULL;
+	    hd = hd->hk_list.le_next) {
+		if (hd->hk_arg == (void *)root_device) {
+			(*hd->hk_fn)(hd->hk_arg);
+			return;
+		}
+	}
+}
+
+hook_list_t exechook_list;
+
+void *
+exechook_establish(fn, arg)
+	void (*fn) __P((struct proc *, void *));
+	void *arg;
+{
+	return hook_establish(&exechook_list, (void (*) __P((void *)))fn, arg);
+}
+
+void
+exechook_disestablish(vhook)
+	void *vhook;
+{
+	hook_disestablish(&exechook_list, vhook);
+}
+
+/*
+ * Run exec hooks.
+ */
+void
+doexechooks(p)
+	struct proc *p;
+{
+	hook_proc_run(&exechook_list, p);
+}
+
+hook_list_t exithook_list;
+
+void *
+exithook_establish(fn, arg)
+	void (*fn) __P((struct proc *, void *));
+	void *arg;
+{
+	return hook_establish(&exithook_list, (void (*) __P((void *)))fn, arg);
+}
+
+void
+exithook_disestablish(vhook)
+	void *vhook;
+{
+	hook_disestablish(&exithook_list, vhook);
+}
+
+/*
+ * Run exit hooks.
+ */
+void
+doexithooks(p)
+	struct proc *p;
+{
+	hook_proc_run(&exithook_list, p);
+}
+
+/*
  * "Power hook" types, functions, and variables.
  * The list of power hooks is kept ordered with the last registered hook
  * first.
  * When running the hooks on power down the hooks are called in reverse
  * registration order, when powering up in registration order.
  */
-
 struct powerhook_desc {
 	CIRCLEQ_ENTRY(powerhook_desc) sfd_list;
 	void	(*sfd_fn) __P((int, void *));
@@ -438,147 +589,6 @@ dopowerhooks(why)
 		CIRCLEQ_FOREACH(dp, &powerhook_list, sfd_list) {
 			(*dp->sfd_fn)(why, dp->sfd_arg);
 		}
-	}
-}
-
-/*
- * "Mountroot hook" types, functions, and variables.
- */
-
-struct mountroothook_desc {
-	LIST_ENTRY(mountroothook_desc) mrd_list;
-	struct	device *mrd_device;
-	void 	(*mrd_func) __P((struct device *));
-};
-
-LIST_HEAD(, mountroothook_desc) mountroothook_list;
-
-void *
-mountroothook_establish(func, dev)
-	void (*func) __P((struct device *));
-	struct device *dev;
-{
-	struct mountroothook_desc *mrd;
-
-	mrd = (struct mountroothook_desc *)
-	    malloc(sizeof(*mrd), M_DEVBUF, M_NOWAIT);
-	if (mrd == NULL)
-		return (NULL);
-
-	mrd->mrd_device = dev;
-	mrd->mrd_func = func;
-	LIST_INSERT_HEAD(&mountroothook_list, mrd, mrd_list);
-
-	return (mrd);
-}
-
-void
-mountroothook_disestablish(vhook)
-	void *vhook;
-{
-#ifdef DIAGNOSTIC
-	struct mountroothook_desc *mrd;
-
-	for (mrd = mountroothook_list.lh_first; mrd != NULL;
-	    mrd = mrd->mrd_list.le_next)
-                if (mrd == vhook)
-			break;
-	if (mrd == NULL)
-		panic("mountroothook_disestablish: hook not established");
-#endif
-
-	LIST_REMOVE((struct mountroothook_desc *)vhook, mrd_list);
-	free(vhook, M_DEVBUF);
-}
-
-void
-mountroothook_destroy()
-{
-	struct mountroothook_desc *mrd;
-
-	while ((mrd = mountroothook_list.lh_first) != NULL) {
-		LIST_REMOVE(mrd, mrd_list);
-		free(mrd, M_DEVBUF);
-	}
-}
-
-void
-domountroothook()
-{
-	struct mountroothook_desc *mrd;
-
-	for (mrd = mountroothook_list.lh_first; mrd != NULL;
-	    mrd = mrd->mrd_list.le_next) {
-		if (mrd->mrd_device == root_device) {
-			(*mrd->mrd_func)(root_device);
-			return;
-		}
-	}
-}
-
-/*
- * Exec hook code.
- */
-
-struct exechook_desc {
-	LIST_ENTRY(exechook_desc) ehk_list;
-	void	(*ehk_fn) __P((struct proc *, void *));
-	void	*ehk_arg;
-};
-
-LIST_HEAD(, exechook_desc) exechook_list;
-
-void *
-exechook_establish(fn, arg)
-	void (*fn) __P((struct proc *, void *));
-	void *arg;
-{
-	struct exechook_desc *edp;
-
-	edp = (struct exechook_desc *)
-	    malloc(sizeof(*edp), M_DEVBUF, M_NOWAIT);
-	if (edp == NULL)
-		return (NULL);
-
-	edp->ehk_fn = fn;
-	edp->ehk_arg = arg;
-	LIST_INSERT_HEAD(&exechook_list, edp, ehk_list);
-
-	return (edp);
-}
-
-void
-exechook_disestablish(vhook)
-	void *vhook;
-{
-#ifdef DIAGNOSTIC
-	struct exechook_desc *edp;
-
-	for (edp = exechook_list.lh_first; edp != NULL;
-	    edp = edp->ehk_list.le_next)
-                if (edp == vhook)
-			break;
-	if (edp == NULL)
-		panic("exechook_disestablish: hook not established");
-#endif
-
-	LIST_REMOVE((struct exechook_desc *)vhook, ehk_list);
-	free(vhook, M_DEVBUF);
-}
-
-/*
- * Run exec hooks.
- */
-void
-doexechooks(p)
-	struct proc *p;
-{
-	struct exechook_desc *edp;
-
-	for (edp = LIST_FIRST(&exechook_list); 
-	     edp != NULL; 
-	     edp = LIST_NEXT(edp, ehk_list)) {
-		(*edp->ehk_fn)(p, edp->ehk_arg);
 	}
 }
 
