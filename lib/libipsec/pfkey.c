@@ -1,3 +1,5 @@
+/*	$NetBSD: pfkey.c,v 1.4 1999/07/04 01:36:13 itojun Exp $	*/
+
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
  * All rights reserved.
@@ -27,9 +29,13 @@
  * SUCH DAMAGE.
  */
 
+#if 0
+static char *rcsid = "@(#) pfkey.c KAME Revision: 1.1.4.11";
+#else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("@(#) pfkey.c $Revision: 1.3 $");
+__RCSID("$NetBSD: pfkey.c,v 1.4 1999/07/04 01:36:13 itojun Exp $");
+#endif
 #endif
 
 #include <sys/types.h>

@@ -1,3 +1,5 @@
+/*	$NetBSD: ipsec_policy.c,v 1.3 1999/07/04 01:36:12 itojun Exp $	*/
+
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
  * All rights reserved.
@@ -27,8 +29,14 @@
  * SUCH DAMAGE.
  */
 
+#if 0
+static char *rcsid = "@(#) ipsec_policy.c KAME Revision: 1.1.4.8";
+#else
 #include <sys/cdefs.h>
-__RCSID("@(#) ipsec_policy.c $Revision: 1.2 $");
+#ifndef lint
+__RCSID("$NetBSD: ipsec_policy.c,v 1.3 1999/07/04 01:36:12 itojun Exp $");
+#endif
+#endif
 
 /*
  * The following requests are accepted:

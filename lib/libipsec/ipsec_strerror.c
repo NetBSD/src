@@ -1,3 +1,5 @@
+/*	$NetBSD: ipsec_strerror.c,v 1.3 1999/07/04 01:36:13 itojun Exp $	*/
+
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
  * All rights reserved.
