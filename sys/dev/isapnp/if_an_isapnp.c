@@ -1,4 +1,4 @@
-/*	$NetBSD: if_an_isapnp.c,v 1.1 2000/12/17 20:34:40 thorpej Exp $	*/
+/*	$NetBSD: if_an_isapnp.c,v 1.2 2001/06/21 14:02:56 onoe Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -65,6 +65,7 @@
 #include <net/if_dl.h>
 #include <net/if_media.h>
 #include <net/if_ether.h>
+#include <net/if_ieee80211.h>
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
