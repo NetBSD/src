@@ -41,6 +41,9 @@
 # endif
 #endif
 #include <getopt.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <errno.h>
 #include "dc.h"
 #include "dc-proto.h"
 
@@ -107,10 +110,22 @@ try_file(const char *filename)
 
 	if (strcmp(filename, "-") == 0) {
 		input = stdin;
-	} else if ( !(input=fopen(filename, "r")) ) {
-		fprintf(stderr, "Could not open file ");
-		perror(filename);
-		exit(EXIT_FAILURE);
+	} else {
+		struct stat sb;
+		if (stat(filename, &sb) < 0) {
+			fprintf(stderr, "Cannot stat %s: %s\n", 
+				filename, strerror(errno));
+			exit(EXIT_FAILURE);
+		}
+		if (S_ISDIR(sb.st_mode)) {
+			fprintf(stderr, "Cannot use directory as input!\n");
+			exit(EXIT_FAILURE);
+		}
+		if ( !(input=fopen(filename, "r")) ) {
+			fprintf(stderr, "Could not open file ");
+			perror(filename);
+			exit(EXIT_FAILURE);
+		}
 	}
 	if (dc_evalfile(input))
 		exit(EXIT_FAILURE);
