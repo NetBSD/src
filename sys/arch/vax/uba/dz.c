@@ -1,4 +1,4 @@
-/*	$NetBSD: dz.c,v 1.7 1998/05/17 18:51:13 ragge Exp $	*/
+/*	$NetBSD: dz.c,v 1.8 1998/05/21 13:02:21 ragge Exp $	*/
 /*
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
  * Copyright (c) 1992, 1993
@@ -50,8 +50,13 @@
 #include <sys/syslog.h>
 #include <sys/device.h>
 
+#ifdef DDB
+#include <dev/cons.h>
+#endif
+
 #include <machine/pte.h>
 #include <machine/trap.h>
+#include <machine/cpu.h>
 
 #include <vax/uba/ubareg.h>
 #include <vax/uba/ubavar.h>
@@ -176,9 +181,20 @@ dzrint(cntlr)
 		if (c & DZ_RBUF_PARITY_ERR)
 			cc |= TTY_PE;
 
+#if DDB && (VAX410 || VAX43)
+#define	DZMAJOR 1 /* XXX */
+		if (makedev(DZMAJOR, line + NDZLINE*cntlr) == cn_tab->cn_dev) {
+			int j = kdbrint(cc);
+
+			if (j == 1)	/* Escape received, just return */
+				continue;
+
+			if (j == 2)	/* Second char wasn't 'D' */
+				(*linesw[tp->t_line].l_rint)(27, tp);
+		}
+#endif
 		(*linesw[tp->t_line].l_rint)(cc, tp);
 	}
-	return;
 }
 
 /* Transmitter Interrupt */

@@ -1,4 +1,4 @@
-/*	$NetBSD: dz_vsbus.c,v 1.1 1998/05/17 18:52:34 ragge Exp $ */
+/*	$NetBSD: dz_vsbus.c,v 1.2 1998/05/21 13:02:21 ragge Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -108,7 +108,7 @@ dz_vsbus_attach(parent, self, aux)
 
         sc->sc_txon = txon;
         sc->sc_rxon = rxon;
-	sc->sc_dsr = 0x0d; /* XXX check if VS has modem ctrl bits */
+	sc->sc_dsr = 0x0f; /* XXX check if VS has modem ctrl bits */
         vsbus_intr_attach(INR_SR, dzrint, 0);
         vsbus_intr_attach(INR_ST, dzxint, 0);
         printf(": DC367");
@@ -203,4 +203,18 @@ dzcnputc(dev,ch)
 		if (--timeout < 0)
 			break;
 	dz->tdr = ch;                    /* Put the  character */
+}
+
+void 
+dzcnpollc(dev, pollflag)
+	dev_t dev;
+	int pollflag;
+{
+	if (pollflag)  {
+		vsbus_intr_disable(INR_SR);
+		vsbus_intr_disable(INR_ST);
+	} else {
+		vsbus_intr_enable(INR_SR);
+		vsbus_intr_enable(INR_ST);
+	}
 }
