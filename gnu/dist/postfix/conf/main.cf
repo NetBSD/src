@@ -4,6 +4,20 @@
 # The general format is lines with parameter = value pairs. Lines
 # that begin with whitespace continue the previous line. A value can
 # contain references to other $names or ${name}s.
+#
+# NOTE - CHANGE NO MORE THAN 2-3 PARAMETERS AT A TIME, AND TEST IF
+# POSTFIX STILL WORKS AFTER EVERY CHANGE.
+
+# SOFT BOUNCE
+#
+# The soft_bounce parameter provides a limited safety net for
+# testing.  When soft_bounce is enabled, mail will remain queued that
+# would otherwise bounce. This parameter disables locally-generated
+# bounces, and prevents the SMTP server from rejecting mail permanently
+# (by changing 5xx replies into 4xx replies). However, soft_bounce
+# is no cure for address rewriting mistakes or mail routing mistakes.
+#
+#soft_bounce = no
 
 # LOCAL PATHNAME INFORMATION
 #
@@ -104,13 +118,106 @@ mail_owner = postfix
 # a name matches a lookup key.  Continue long lines by starting the
 # next line with whitespace.
 #
-# DO NOT LIST VIRTUAL DOMAINS HERE. LIST THEM IN THE VIRTUAL FILE
-# INSTEAD. BE SURE TO READ THE ENTIRE VIRTUAL MANUAL PAGE.
-#
 #mydestination = $myhostname, localhost.$mydomain
 #mydestination = $myhostname, localhost.$mydomain $mydomain
 #mydestination = $myhostname, localhost.$mydomain, $mydomain,
 #	mail.$mydomain, www.$mydomain, ftp.$mydomain
+
+# TRUST AND RELAY CONTROL
+
+# The mynetworks parameter specifies the list of "trusted" SMTP
+# clients that have more privileges than "strangers".
+#
+# In particular, "trusted" SMTP clients are allowed to relay mail
+# through Postfix.  See the smtpd_recipient_restrictions parameter
+# in file sample-smtpd.cf.
+#
+# You can specify the list of "trusted" network addresses by hand
+# or you can let Postfix do it for you (which is the default).
+#
+# By default (mynetworks_style = subnet), Postfix "trusts" SMTP
+# clients in the same IP subnetworks as the local machine.
+# On Linux, this does works correctly only with interfaces specified
+# with the "ifconfig" command.
+# 
+# Specify "mynetworks_style = class" when Postfix should "trust" SMTP
+# clients in the same IP class A/B/C networks as the local machine.
+# Don't do this with a dialup site - it would cause Postfix to "trust"
+# your entire provider's network.  Instead, specify an explicit
+# mynetworks list by hand, as described below.
+#  
+# Specify "mynetworks_style = host" when Postfix should "trust"
+# only the local machine.
+# 
+# mynetworks_style = class
+# mynetworks_style = subnet
+# mynetworks_style = host
+
+# Alternatively, you can specify the mynetworks list by hand, in
+# which case Postfix ignores the mynetworks_style setting.
+#
+# Specify an explicit list of network/netmask patterns, where the
+# mask specifies the number of bits in the network part of a host
+# address.
+#
+# You can also specify the absolute pathname of a pattern file instead
+# of listing the patterns here.
+#
+#mynetworks = 168.100.189.0/28, 127.0.0.0/8
+#mynetworks = $config_directory/mynetworks
+
+# The relay_domains parameter restricts what clients this mail system
+# will relay mail from, or what destinations this system will relay
+# mail to.  See the smtpd_recipient_restrictions restriction in the
+# file sample-smtpd.cf for detailed information.
+#
+# By default, Postfix relays mail
+# - from "trusted" clients whose IP address matches $mynetworks, 
+# - from "trusted" clients matching $relay_domains or subdomains thereof,
+# - from untrusted clients to destinations that match $relay_domains
+#   or subdomains thereof, except addresses with sender-specified routing.
+# The default relay_domains value is $mydestination.
+# 
+# In addition to the above, the Postfix SMTP server by default accepts mail
+# that Postfix is final destination for:
+# - destinations that match $inet_interfaces,
+# - destinations that match $mydestination
+# - destinations that match $virtual_maps.
+# These destinations do not need to be listed in $relay_domains.
+# 
+# Specify a list of hosts or domains, /file/name patterns or type:name
+# lookup tables, separated by commas and/or whitespace.  Continue
+# long lines by starting the next line with whitespace. A file name
+# is replaced by its contents; a type:name table is matched when a
+# (parent) domain appears as lookup key.
+#
+# NOTE: Postfix will not automatically forward mail for domains that
+# list this system as their primary or backup MX host. See the
+# permit_mx_backup restriction in the file sample-smtpd.cf.
+#
+#relay_domains = $mydestination
+
+# INTERNET OR INTRANET
+
+# The relayhost parameter specifies the default host to send mail to
+# when no entry is matched in the optional transport(5) table. When
+# no relayhost is given, mail is routed directly to the destination.
+#
+# On an intranet, specify the organizational domain name. If your
+# internal DNS uses no MX records, specify the name of the intranet
+# gateway host instead.
+#
+# In the case of SMTP, specify a domain, host, host:port, [host]:port,
+# [address] or [address]:port; the form [host] turns off MX lookups.
+# If you specify multiple SMTP destinations, Postfix will try them
+# in the specified order.
+#
+# If you're connected via UUCP, see also the default_transport parameter.
+#
+# relayhost = $mydomain
+# relayhost = gateway.my.domain
+# relayhost = uucphost
+# relayhost = [an.ip.add.ress]
 
 # REJECTING UNKNOWN LOCAL USERS
 #
@@ -237,12 +344,25 @@ mail_owner = postfix
 # has precedence over the mailbox_command, fallback_transport and
 # luser_relay parameters.
 #
+# Specify a string of the form transport:nexthop, where transport is
+# the name of a mail delivery transport defined in master.cf.  The
+# :nexthop part is optional. For more details see the sample transport
+# configuration file.
+#
+#mailbox_transport = lmtp:unix:/file/name
 #mailbox_transport = cyrus
 
 # The fallback_transport specifies the optional transport in master.cf
 # to use for recipients that are not found in the UNIX passwd database.
 # This parameter has precedence over the luser_relay parameter.
 #
+# Specify a string of the form transport:nexthop, where transport is
+# the name of a mail delivery transport defined in master.cf.  The
+# :nexthop part is optional. For more details see the sample transport
+# configuration file.
+#
+#fallback_transport = lmtp:unix:/file/name
+#fallback_transport = cyrus
 #fallback_transport =
 
 # The luser_relay parameter specifies an optional destination address
@@ -269,69 +389,40 @@ mail_owner = postfix
 # headers. This requires that POSIX or PCRE regular expression support
 # is built-in. Specify "/^header-name: stuff you do not want/ REJECT"
 # in the pattern file. Patterns are case-insensitive by default. Note:
-# specify only patterns ending in REJECT. Patterns ending in OK are
+# specify only patterns ending in REJECT (reject entire message) or
+# IGNORE (silently discard this header). Patterns ending in OK are
 # mostly a waste of cycles.
 #
 #header_checks = regexp:/etc/postfix/filename
 #header_checks = pcre:/etc/postfix/filename
 
-# The relay_domains parameter restricts what clients this mail system
-# will relay mail from, or what destinations this system will relay
-# mail to.  See the smtpd_recipient_restrictions restriction in the
-# file sample-smtpd.cf.
+# FAST ETRN SERVICE
 #
-# By default, Postfix relays mail
-# - from trusted clients whose IP address matches $mynetworks, 
-# - from trusted clients matching $relay_domains or subdomains thereof,
-# - from untrusted clients to destinations that match $relay_domains
-#   or subdomains thereof, except addresses with sender-specified routing.
-# The default relay_domains value is $mydestination.
+# Postfix maintains per-destination logfiles with information about
+# deferred mail, so that mail can be flushed quickly with the SMTP
+# "ETRN domain.name" command, or by executing "sendmail -qRdomain.name".
 # 
-# In addition to the above, the Postfix SMTP server by default accepts mail
-# that Postfix is final destination for:
-# - destinations that match $inet_interfaces,
-# - destinations that match $mydestination
-# - destinations that match $virtual_maps.
-# These destinations do not need to be listed in $relay_domains.
+# By default, Postfix maintains deferred mail logfile information
+# only for destinations that Postfix is willing to relay to (as
+# specified in the relay_domains parameter). For other destinations,
+# Postfix attempts to deliver ALL queued mail after receiving the
+# SMTP "ETRN domain.name" command, or after execution of "sendmail
+# -qRdomain.name". This can be slow when a lot of mail is queued.
 # 
-# Specify a list of hosts or domains, /file/name patterns or type:name
-# lookup tables, separated by commas and/or whitespace.  Continue
-# long lines by starting the next line with whitespace. A file name
-# is replaced by its contents; a type:name table is matched when a
-# (parent) domain appears as lookup key.
-#
-# NOTE: Postfix will not automatically forward mail for domains that
-# list this system as their primary or backup MX host. See the
-# permit_mx_backup restriction in the file sample-smtpd.cf.
-#
-#relay_domains = $mydestination
-
-# The mynetworks parameter specifies the list of networks that are
-# local to this machine.  The list is used by the anti-UCE software
-# to distinguish local clients from strangers. See permit_mynetworks
-# and smtpd_recipient_restrictions in the file sample-smtpd.cf file.
-#
-# The default is a list of all networks attached to the machine:  a
-# complete class A network (X.0.0.0/8), a complete class B network
-# (X.X.0.0/16), and so on. If you want stricter control, specify a
-# list of network/mask patterns, where the mask specifies the number
-# of bits in the network part of a host address. You can also specify
-# the absolute pathname of a pattern file instead of listing the
-# patterns here.
-#
-#mynetworks = 168.100.189.0/28, 127.0.0.0/8
-#mynetworks = $config_directory/mynetworks
+# The fast_flush_domains parameter controls what destinations are
+# eligible for this "fast ETRN/sendmail -qR" service.
+# 
+#fast_flush_domains = $relay_domains
+#fast_flush_domains =
 
 # SHOW SOFTWARE VERSION OR NOT
 #
 # The smtpd_banner parameter specifies the text that follows the 220
-# status code in the SMTP greeting banner. Some people like to see
+# code in the SMTP server's greeting banner. Some people like to see
 # the mail version advertised. By default, Postfix shows no version.
 #
-# You MUST specify the $myhostname at the start of the text. When
-# the SMTP client sees its own hostname at the start of an SMTP
-# greeting banner it will report a mailer loop. That's better than
-# having a machine meltdown.
+# You MUST specify $myhostname at the start of the text. That is an
+# RFC requirement. Postfix itself does not care.
 #
 #smtpd_banner = $myhostname ESMTP $mail_name
 #smtpd_banner = $myhostname ESMTP $mail_name ($mail_version)
@@ -347,10 +438,11 @@ mail_owner = postfix
 # raise eyebrows.
 # 
 # Each message delivery transport has its XXX_destination_concurrency_limit
-# parameter.  The default is $default_destination_concurrency_limit.
+# parameter.  The default is $default_destination_concurrency_limit for
+# most delivery transports. For the local delivery agent the default is 2.
 
-local_destination_concurrency_limit = 2
-default_destination_concurrency_limit = 10
+#local_destination_concurrency_limit = 2
+#default_destination_concurrency_limit = 10
 
 # DEBUGGING CONTROL
 #

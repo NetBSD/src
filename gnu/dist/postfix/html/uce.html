@@ -109,7 +109,8 @@ is allowed in message headers.
 <dt>Syntax:
 
 <dd>Specify a list of zero or more lookup tables. Whenever a header
-matches a table, a REJECT result means reject the message. 
+matches a table, a REJECT result means reject the message, and a 
+SKIP result means delete the header from the message.
 
 <p>
 
@@ -216,9 +217,9 @@ result as another list of UCE restrictions.  The
 
 <a name="reject_maps_rbl">
 
-<dt> <b>reject_maps_rbl</b> <dd> Reject the request when the client
-network address is listed under any of the domains listed in <a
-href="#maps_rbl_domains">$maps_rbl_domains</a>. The <b>
+<dt> <b>reject_maps_rbl</b> <dd> Reject the request when the reversed
+client network address is listed under any of the domains listed
+in <a href="#maps_rbl_domains">$maps_rbl_domains</a>. The <b>
 maps_rbl_reject_code</b> parameter specifies the response code for
 rejected requests (default: <b>554</b>).
 
@@ -979,7 +980,7 @@ appear as part of a client hostname/address restriction list.
 
 <dt>Default:
 
-<dd><b>maps_rbl_domains = rbl.maps.vix.com, dul.maps.vix.com</b>
+<dd><b>maps_rbl_domains = blackholes.mail-abuse.org</b>
 
 <p>
 

@@ -41,7 +41,8 @@ smtpd_banner = $myhostname ESMTP $mail_name
 #	or networks obtained by stripping octets.
 #	Reject if result is REJECT or "[45]xx text"
 #	Permit otherwise.
-#   reject_maps_rbl: reject if the client is listed under $maps_rbl_domains.
+#   reject_maps_rbl: reject if the reverse client network address
+#	is listed under $maps_rbl_domains.
 #   reject: reject the request. Place this at the end of a restriction.
 #   permit: permit the request. Place this at the end of a restriction.
 smtpd_etrn_restrictions =
@@ -51,13 +52,26 @@ smtpd_etrn_restrictions =
 #
 smtpd_recipient_limit = 1000
 
-# The smtpd_timeout parameter limits the time in seconds to send an
-# SMTP server response and to receive an SMTP client request.
+# The smtpd_timeout parameter limits the time to send an SMTP server
+# response and to receive an SMTP client request.
 #
 # Note: if you set SMTP timeouts to large values you must update the
 # global ipc_timeout parameter as well. See sample-misc.cf for details.
 #
-smtpd_timeout = 300
+# Time units: s (seconds), m (minutes), h (hours), d (days), w (weeks).
+# The default time unit is s (seconds).
+#
+smtpd_timeout = 300s
+
+# The strict_rfc821_envelopes configuration parameter controls whether
+# the Postfix SMTP server requires that MAIL FROM and RCPT TO addresses
+# are specified within <>, and that MAIL FROM and RCPT TO addresses
+# do not contain RFC822-style comments or phrases.  It's great to
+# stop SPAM mailers. But it also trips up broken peecee clients.
+# 
+# By default, Postfix SMTPD allows RFC822 syntax in MAIL FROM and RCPT TO.
+# 
+strict_rfc821_envelopes = no
 
 #
 # TARPIT CONTROLS
@@ -86,6 +100,45 @@ smtpd_hard_error_limit = 100
 #
 # UCE RESTRICTIONS
 #
+
+# The mynetworks parameter specifies the list of "trusted" SMTP
+# clients that have more privileges than "strangers".
+#
+# In particular, "trusted" SMTP clients are allowed to relay mail
+# through Postfix.  See the smtpd_recipient_restrictions parameter
+# in file sample-smtpd.cf.
+#
+# You can specify the list of "trusted" network addresses by hand
+# or you can let Postfix do it for you (which is the default).
+#
+# By default (mynetworks_style = subnet), Postfix "trusts" SMTP
+# clients in the same IP subnetworks as the local machine.
+# 
+# Specify "mynetworks_style = class" when Postfix should "trust" SMTP
+# clients in the same IP class A/B/C networks as the local machine.
+# Don't do this with a dialup site - it would cause Postfix to "trust"
+# your entire provider's network.  Instead, specify an explicit
+# mynetworks list by hand, as described below.
+#  
+# Specify "mynetworks_style = host" when Postfix should "trust"
+# only the local machine.
+# 
+# mynetworks_style = class
+mynetworks_style = subnet
+# mynetworks_style = host
+
+# Alternatively, you can specify the mynetworks list by hand, in
+# which case Postfix ignores the mynetworks_style setting.
+#
+# Specify an explicit list of network/netmask patterns, where the
+# mask specifies the number of bits in the network part of a host
+# address.
+#
+# You can also specify the absolute pathname of a pattern file instead
+# of listing the patterns here.
+#
+#mynetworks = 168.100.189.0/28, 127.0.0.0/8
+#mynetworks = $config_directory/mynetworks
 
 # The smtpd_client_restrictions parameter specifies optional restrictions
 # on SMTP client host names and addresses.
@@ -280,7 +333,8 @@ allow_untrusted_routing = no
 # network address, and reject service if it is listed below any of
 # the following domains.
 #
-maps_rbl_domains = rbl.maps.vix.com
+#maps_rbl_domains = blackholes.mail-abuse.org dialups.mail-abuse.org
+maps_rbl_domains = blackholes.mail-abuse.org
 
 # The relay_domains parameter restricts what client hostname domains
 # (and subdomains thereof) this mail system will relay mail from,

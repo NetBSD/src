@@ -145,7 +145,9 @@ reload)
 		exit 1
 	}
 	$INFO refreshing the Postfix mail system
+	$command_directory/postsuper active || exit 1
 	kill -HUP `sed 1q pid/master.pid`
+	$command_directory/postsuper &
 	;;
 
 flush)
@@ -188,7 +190,7 @@ check)
 		chmod 755 pid
 		chown $mail_owner pid
 	}
-	for dir in incoming active bounce defer deferred saved corrupt; do
+	for dir in incoming active bounce defer deferred flush saved corrupt; do
 		test -d $dir || {
 			$WARN creating missing Postfix $dir directory
 			mkdir $dir || exit 1
@@ -228,7 +230,35 @@ check)
 		done
 	done
 
-	$command_directory/postsuper || exit 1
+	# Look for incomplete upgrades.
+
+	test -f $config_directory/master.cf || {
+		$FATAL no $config_directory/master.cf file found
+		exit 1
+	}
+	grep 'flush.*flush' $config_directory/master.cf >/dev/null || {
+		$WARN adding missing entry for flush service to master.cf
+		cat >>$config_directory/master.cf <<EOF
+flush	  unix	-	-	n	1000?	0	flush
+EOF
+	}
+	found=`$command_directory/postconf -h hash_queue_names`
+	missing=
+	(echo "$found" | grep active >/dev/null) || missing="$missing active"
+	(echo "$found" | grep bounce >/dev/null) || missing="$missing bounce"
+	(echo "$found" | grep defer >/dev/null)  || missing="$missing defer"
+	(echo "$found" | grep flush >/dev/null)  || missing="$missing flush"
+	(echo "$found" | grep incoming>/dev/null)|| missing="$missing incoming"
+	(echo "$found" | grep deferred>/dev/null)|| missing="$missing deferred"
+	test -n "$missing" && {
+		$WARN fixing main.cf hash_queue_names for missing $missing
+		$command_directory/postconf -e hash_queue_names="$found$missing"
+	}
+
+	# See if all queue files are in the right place.
+
+	$command_directory/postsuper active
+	$command_directory/postsuper &
 
 	find corrupt -type f -exec $WARN damaged message: {} \;
 

@@ -187,7 +187,7 @@ envelope header to each message, prepends an
 optional \fBDelivered-To:\fR
 header with the recipient envelope address, prepends a
 \fBReturn-Path:\fR header with the sender envelope address,
-and appends an empty line.
+and appends no empty line.
 .SH EXTERNAL FILE DELIVERY
 .na
 .nf
@@ -232,7 +232,7 @@ or to the alias \fIname\fR, to the destinations listed in
 to the mailbox owned by the user \fIname\fR, or it is sent back as
 undeliverable.
 
-In all cases the \fBlocal\fR daemon prepends an opional
+In all cases the \fBlocal\fR daemon prepends an optional
 `\fBDelivered-To:\fR \fIname\fR+\fIfoo\fR' header line.
 .SH DELIVERY RIGHTS
 .na
@@ -284,10 +284,16 @@ a configuration change.
 .fi
 .IP \fBalias_maps\fR
 List of alias databases.
+.IP \fBbiff\fR
+Enable or disable notification of new mail via the
+\fBcomsat\fR network service.
 .IP \fBexpand_owner_alias\fR
 When delivering to an alias that has an owner- companion alias,
 set the envelope sender address to the right-hand side of the
 owner alias, instead using of the left-hand side address.
+.IP \fBexport_environment\fR
+List of names of environment parameters that can be exported
+to non-Postfix processes.
 .IP \fBforward_path\fR
 Search list for .forward files.  The names are subject to \fI$name\fR
 expansion.
@@ -306,6 +312,9 @@ forwarding, delivery to command or file. Specify zero or more of:
 forwarding mail is not recommended.
 .IP \fBrecipient_delimiter\fR
 Separator between username and address extension.
+.IP \fBrequire_home_directory\fR
+Require that a recipient's home directory is accessible by the
+recipient before attempting delivery. Defer delivery otherwise.
 .SH Mailbox delivery
 .ad
 .fi
@@ -342,6 +351,11 @@ Time in seconds between successive attempts to acquire
 an exclusive lock.
 .IP \fBstale_lock_time\fR
 Limit the time after which a stale lock is removed.
+.IP \fBmailbox_delivery_lock\fR
+What file locking method(s) to use when delivering to a UNIX-style
+mailbox.
+The default setting is system dependent.  For a list of available
+file locking methods, use the \fBpostconf -l\fR command.
 .SH "Resource controls"
 .ad
 .fi
@@ -361,13 +375,19 @@ The default limit is taken from the
 Limit the number of recipients per message delivery.
 The default limit is taken from the
 \fBdefault_destination_recipient_limit\fR parameter.
+.IP \fBmailbox_size_limit\fR
+Limit the size of a mailbox etc. file (any file that is
+written to upon delivery).
+Set to zero to disable the limit.
 .SH "Security controls"
 .ad
 .fi
 .IP \fBallow_mail_to_commands\fR
 Restrict the usage of mail delivery to external command.
+Specify zero or more of: \fBalias\fR, \fBforward\fR, \fBinclude\fR.
 .IP \fBallow_mail_to_files\fR
 Restrict the usage of mail delivery to external file.
+Specify zero or more of: \fBalias\fR, \fBforward\fR, \fBinclude\fR.
 .IP \fBcommand_expansion_filter\fR
 What characters are allowed to appear in $name expansions of
 mailbox_command. Illegal characters are replaced by underscores.

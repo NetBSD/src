@@ -26,9 +26,9 @@ SMTPD(8)                                                 SMTPD(8)
        system is not running.
 
        The SMTP server implements a variety of policies for  con-
-       nection  requests,  and for parameters given to <b>HELO,</b> <b>MAIL</b>
-       <b>FROM,</b> <b>VRFY</b> and <b>RCPT</b> <b>TO</b> commands. They are  detailed  below
-       and in the <b>main.cf</b> configuration file.
+       nection  requests, and for parameters given to <b>HELO,</b> <b>ETRN,</b>
+       <b>MAIL</b> <b>FROM,</b> <b>VRFY</b> and <b>RCPT</b> <b>TO</b> commands.  They  are  detailed
+       below and in the <b>main.cf</b> configuration file.
 
 <b>SECURITY</b>
        The SMTP server is moderately security-sensitive. It talks
@@ -42,7 +42,8 @@ SMTPD(8)                                                 SMTPD(8)
        <a href="http://www.faqs.org/rfcs/rfc1652.html">RFC 1652</a> (8bit-MIME transport)
        <a href="http://www.faqs.org/rfcs/rfc1854.html">RFC 1854</a> (SMTP Pipelining)
        <a href="http://www.faqs.org/rfcs/rfc1870.html">RFC 1870</a> (Message Size Declaration)
-       <a href="http://www.faqs.org/rfcs/rfc1985.html">RFC 1985</a> (ETRN command) (partial)
+       <a href="http://www.faqs.org/rfcs/rfc1985.html">RFC 1985</a> (ETRN command)
+       <a href="http://www.faqs.org/rfcs/rfc2554.html">RFC 2554</a> (AUTH command)
 
 <b>DIAGNOSTICS</b>
        Problems and transactions are logged to <b>syslogd</b>(8).
@@ -51,14 +52,13 @@ SMTPD(8)                                                 SMTPD(8)
        the postmaster is notified of bounces, protocol  problems,
        policy violations, and of other trouble.
 
-<b>BUGS</b>
-       <a href="http://www.faqs.org/rfcs/rfc1985.html">RFC  1985</a>  is  implemented  by  forcing  delivery  of  all
-       deferred mail.
-
 <b>CONFIGURATION</b> <b>PARAMETERS</b>
-       The following <b>main.cf</b> parameters are  especially  relevant
-       to  this  program. See the Postfix <b>main.cf</b> file for syntax
-       details and for default values.  Use  the  <b>postfix</b>  <b>reload</b>
+       The  following  <b>main.cf</b> parameters are especially relevant
+       to this program. See the Postfix <b>main.cf</b> file  for  syntax
+       details  and  for  default  values. Use the <b>postfix</b> <b>reload</b>
+       command after a configuration change.
+
+
 
 
 
@@ -71,13 +71,52 @@ SMTPD(8)                                                 SMTPD(8)
 SMTPD(8)                                                 SMTPD(8)
 
 
-       command after a configuration change.
-
 <b>Compatibility</b> <b>controls</b>
        <b>strict</b><i>_</i><b>rfc821</b><i>_</i><b>envelopes</b>
-              Disallow  non-<a href="http://www.faqs.org/rfcs/rfc821.html">RFC 821</a> style addresses in envelopes.
-              For example, allow <a href="http://www.faqs.org/rfcs/rfc822.html">RFC822</a>-style address forms  with
+              Disallow non-<a href="http://www.faqs.org/rfcs/rfc821.html">RFC 821</a> style addresses in  envelopes.
+              For  example, allow <a href="http://www.faqs.org/rfcs/rfc822.html">RFC822</a>-style address forms with
               comments, like Sendmail does.
+
+       <b>broken</b><i>_</i><b>sasl</b><i>_</i><b>auth</b><i>_</i><b>clients</b>
+              Support older Microsoft clients that  mis-implement
+              the AUTH protocol, and that expect an EHLO response
+              of "250 AUTH=list" instead of "250 AUTH list".
+
+<b>Content</b> <b>inspection</b> <b>controls</b>
+       <b>content</b><i>_</i><b>filter</b>
+              The name of a mail delivery transport that  filters
+              mail and that either bounces mail or re-injects the
+              result back into Postfix.  This parameter uses  the
+              same  syntax  as  the  right-hand side of a Postfix
+              transport table.
+
+<b>Authentication</b> <b>controls</b>
+       <b>enable</b><i>_</i><b>sasl</b><i>_</i><b>authentication</b>
+              Enable per-session authentication as per  <a href="http://www.faqs.org/rfcs/rfc2554.html">RFC  2554</a>
+              (SASL).   This functionality is available only when
+              explicitly  selected  at  program  build  time  and
+              explicitly enabled at runtime.
+
+       <b>smtpd</b><i>_</i><b>sasl</b><i>_</i><b>local</b><i>_</i><b>domain</b>
+              The name of the local authentication realm.
+
+       <b>smtpd</b><i>_</i><b>sasl</b><i>_</i><b>security</b><i>_</i><b>options</b>
+              Zero or more of the following.
+
+              <b>noplaintext</b>
+                     Disallow  authentication  methods  that  use
+                     plaintext passwords.
+
+              <b>noactive</b>
+                     Disallow  authentication  methods  that  are
+                     vulnerable to non-dictionary active attacks.
+
+              <b>nodictionary</b>
+                     Disallow  authentication  methods  that  are
+                     vulnerable to passive dictionary attack.
+
+              <b>noanonymous</b>
+                     Disallow anonymous logins.
 
 <b>Miscellaneous</b>
        <b>always</b><i>_</i><b>bcc</b>
@@ -86,6 +125,18 @@ SMTPD(8)                                                 SMTPD(8)
 
        <b>command</b><i>_</i><b>directory</b>
               Location  of  Postfix  support  commands  (default:
+
+
+
+                                                                2
+
+
+
+
+
+SMTPD(8)                                                 SMTPD(8)
+
+
               <b>$program</b><i>_</i><b>directory</b>).
 
        <b>debug</b><i>_</i><b>peer</b><i>_</i><b>level</b>
@@ -106,14 +157,14 @@ SMTPD(8)                                                 SMTPD(8)
        <b>hopcount</b><i>_</i><b>limit</b>
               Limit the number of <b>Received:</b> message headers.
 
-       <b>notify</b><i>_</i><b>classes</b>
-              List of error classes. Of special interest are:
-
        <b>local</b><i>_</i><b>recipient</b><i>_</i><b>maps</b>
               List  of  maps  with  user  names that are local to
               <b>$myorigin</b> or <b>$inet</b><i>_</i><b>interfaces</b>. If this parameter is
               defined,  then  the  SMTP  server  rejects mail for
               unknown local users.
+
+       <b>notify</b><i>_</i><b>classes</b>
+              List of error classes. Of special interest are:
 
               <b>policy</b> When a client violates any  policy,  mail  a
                      transcript of the entire SMTP session to the
@@ -124,18 +175,6 @@ SMTPD(8)                                                 SMTPD(8)
                      issues  an  unimplemented  command,  mail  a
                      transcript of the entire SMTP session to the
                      postmaster.
-
-
-
-
-                                                                2
-
-
-
-
-
-SMTPD(8)                                                 SMTPD(8)
-
 
        <b>smtpd</b><i>_</i><b>banner</b>
               Text  that  follows the <b>220</b> status code in the SMTP
@@ -148,6 +187,23 @@ SMTPD(8)                                                 SMTPD(8)
        <b>smtpd</b><i>_</i><b>timeout</b>
               Limit  the  time  to  send a server response and to
               receive a client request.
+
+       <b>soft</b><i>_</i><b>bounce</b>
+              Change hard (5xx) reject responses into soft  (4xx)
+              reject  responses.   This can be useful for testing
+
+
+
+                                                                3
+
+
+
+
+
+SMTPD(8)                                                 SMTPD(8)
+
+
+              purposes.
 
 <b>Resource</b> <b>controls</b>
        <b>line</b><i>_</i><b>length</b><i>_</i><b>limit</b>
@@ -192,17 +248,6 @@ SMTPD(8)                                                 SMTPD(8)
               Require that clients introduce  themselves  at  the
               beginning of an SMTP session.
 
-
-
-                                                                3
-
-
-
-
-
-SMTPD(8)                                                 SMTPD(8)
-
-
        <b>smtpd</b><i>_</i><b>helo</b><i>_</i><b>restrictions</b>
               Restrict  what client hostnames are allowed in <b>HELO</b>
               and <b>EHLO</b> commands.
@@ -210,6 +255,19 @@ SMTPD(8)                                                 SMTPD(8)
        <b>smtpd</b><i>_</i><b>sender</b><i>_</i><b>restrictions</b>
               Restrict what sender addresses are allowed in  <b>MAIL</b>
               <b>FROM</b> commands.
+
+
+
+
+
+                                                                4
+
+
+
+
+
+SMTPD(8)                                                 SMTPD(8)
+
 
        <b>smtpd</b><i>_</i><b>recipient</b><i>_</i><b>restrictions</b>
               Restrict  what  recipient  addresses are allowed in
@@ -256,19 +314,6 @@ SMTPD(8)                                                 SMTPD(8)
               Response code when  the  client  matches  a  <b>reject</b>
               restriction.
 
-
-
-
-
-                                                                4
-
-
-
-
-
-SMTPD(8)                                                 SMTPD(8)
-
-
        <b>relay</b><i>_</i><b>domains</b><i>_</i><b>reject</b><i>_</i><b>code</b>
               Server  response  when a client attempts to violate
               the mail relay policy.
@@ -276,6 +321,19 @@ SMTPD(8)                                                 SMTPD(8)
        <b>unknown</b><i>_</i><b>address</b><i>_</i><b>reject</b><i>_</i><b>code</b>
               Server  response  when  a   client   violates   the
               <b>reject</b><i>_</i><b>unknown</b><i>_</i><b>address</b> restriction.
+
+
+
+
+
+                                                                5
+
+
+
+
+
+SMTPD(8)                                                 SMTPD(8)
+
 
        <b>unknown</b><i>_</i><b>client</b><i>_</i><b>reject</b><i>_</i><b>code</b>
               Server  response  when  a client without address to
@@ -326,7 +384,15 @@ SMTPD(8)                                                 SMTPD(8)
 
 
 
-                                                                5
+
+
+
+
+
+
+
+
+                                                                6
 
 
 </pre> </body> </html>

@@ -1,105 +1,234 @@
-#++
+# 
+# VIRTUAL(5)                                             VIRTUAL(5)
+# 
 # NAME
-#	virtual 5
-# SUMMARY
-#	format of Postfix virtual table
+#        virtual - format of Postfix virtual table
+# 
 # SYNOPSIS
-#	\fBpostmap /etc/postfix/virtual\fR
+#        postmap /etc/postfix/virtual
+# 
 # DESCRIPTION
-#	The optional \fBvirtual\fR table specifies redirections for local
-#	and non-local recipients or domains. The redirections are used by
-#	the \fBcleanup\fR(8) daemon. The redirections are recursive.
-#
-#	The \fBvirtual\fR redirection is applied only to the recipient
-#	envelope address, and does not affect message headers.
-#	Think Sendmail rule set \fBS0\fR, if you like. Use \fBcanonical\fR(5)
-#	mapping to rewrite header and envelope addresses in general.
-#
-#	The file serves as input to the \fBpostmap\fR(1) command. The
-#	result, an indexed file in \fBdbm\fR or \fBdb\fR format,
-#	is used for fast searching by the mail system. After an update
-#	it may take a minute or so before the change becomes visible.
-#	Issue a \fBpostfix reload\fR command to eliminate the delay.
-#
-#	Typical support for a virtual domain looks like the following:
-#
-# .in +4
-# .nf
-#	\fIvirtual.domain	anything\fR (right-hand content does not matter)
-#	\fIuser1@virtual.domain	address1\fR
-#	\fIuser2@virtual.domain	address2, address3\fR
-# .fi
-# .in -4
-#
-#	With this, the SMTP server accepts mail for \fIvirtual.domain\fR and
-#	rejects mail for \fIunknown\fR@\fIvirtual.domain\fR as undeliverable.
-#
-#	The format of the virtual table is as follows, mappings being
-#	tried in the order as listed in this manual page:
-# .IP "blanks and comments"
-#	Blank lines are ignored, as are lines beginning with `#'.
-# .IP "\fIuser\fR@\fIdomain address, address, ...\fR"
-#	Mail for \fIuser\fR@\fIdomain\fR is redirected to \fIaddress\fR.
-#	This form has the highest precedence.
-# .IP "\fIuser address, address, ...\fR"
-#	Mail for \fIuser\fR@\fIsite\fR is redirected to \fIaddress\fR when
-#	\fIsite\fR is equal to $\fBmyorigin\fR, when \fIsite\fR is listed in
-#	$\fRmydestination\fR, or when it is listed in $\fIinet_interfaces\fR.
-#	.sp
-#	This functionality overlaps with functionality of the local
-#	\fIalias\fR(5) database. The difference is that \fBvirtual\fR
-#	mapping can be applied to non-local addresses.
-# .IP "@\fIdomain address, address, ...\fR"
-#	Mail for any user in \fIdomain\fR is redirected to \fIaddress\fR.
-#	This form has the lowest precedence.
-# .PP
-#	In all the above forms, when \fIaddress\fR has the form
-#	@\fIotherdomain\fR, the result is the same user in \fIotherdomain\fR.
-#	This works for the first address in the expansion only.
+#        The  optional virtual table specifies address redirections
+#        for local and non-local recipients or domains.  The  redi-
+#        rections  are  used by the cleanup(8) daemon. The redirec-
+#        tions are recursive.
+# 
+#        The virtual redirection is applied only to recipient enve-
+#        lope  addresses,  and  does  not  affect  message headers.
+#        Think Sendmail rule set S0, if you like. Use  canonical(5)
+#        mapping  to  rewrite header and envelope addresses in gen-
+#        eral.
+# 
+#        Normally, the virtual table is specified as  a  text  file
+#        that  serves  as  input  to  the  postmap(1) command.  The
+#        result, an indexed file in dbm or db format, is  used  for
+#        fast  searching  by  the  mail system. Execute the command
+#        postmap  /etc/postfix/virtual  in  order  to  rebuild  the
+#        indexed file after changing the text file.
+# 
+#        When  the  table  is provided via other means such as NIS,
+#        LDAP or SQL, the same lookups are  done  as  for  ordinary
+#        indexed files.
+# 
+#        Alternatively,  the  table  can  be provided as a regular-
+#        expression map where patterns are given as regular expres-
+#        sions.  In  that  case, the lookups are done in a slightly
+#        different way as described below.
+# 
+# POSTFIX-STYLE VIRTUAL DOMAINS
+#        With a Postfix-style virtual domain,  the  virtual  domain
+#        has  its  own  user  name  space. Local (i.e. non-virtual)
+#        usernames are  not  visible  in  a  Postfix-style  virtual
+#        domain.  In particular, local aliases(5) and mailing lists
+#        are not visible as localname@virtual.domain.
+# 
+#        Use a Sendmail-style virtual domain (see below)  if  local
+#        usernames,  aliases(5)  or mailing lists should be visible
+#        as localname@virtual.domain.
+# 
+#        Support for a Postfix-style virtual domain looks like:
+# 
+#        /etc/postfix/virtual:
+#            virtual.domain       anything (right-hand content does not matter)
+#            postmaster@virtual.domain    postmaster
+#            user1@virtual.domain address1
+#            user2@virtual.domain address2, address3
+# 
+#        The  virtual.domain  anything  entry  is  required  for  a
+# 
+#                                                                 1
+# 
+# VIRTUAL(5)                                             VIRTUAL(5)
+# 
+#        Postfix-style virtual domain.
+# 
+#        Do  not list a Postfix-style virtual domain in the main.cf
+#        mydestination configuration parameter.  Such an  entry  is
+#        required only for a Sendmail-style virtual domain.
+# 
+#        With  a  Postfix-style  virtual  domain,  the Postfix SMTP
+#        server  accepts  mail  for  known-user@virtual.domain  and
+#        rejects mail for unknown-user@virtual.domain as undeliver-
+#        able.
+# 
+# SENDMAIL-STYLE VIRTUAL DOMAINS
+#        With a Sendmail-style virtual domain,  every  local  (i.e.
+#        non-virtual) username is visible in the virtual domain. In
+#        particular, every local alias and mailing list is  visible
+#        as localname@virtual.domain.
+# 
+#        Use  a  Postfix-style  virtual domain (see above) if local
+#        usernames, aliases(5) or mailing lists should not be visi-
+#        ble as localname@virtual.domain.
+# 
+#        Support for a Sendmail-style virtual domain looks like:
+# 
+#        /etc/postfix/main.cf:
+#            mydestination = $myhostname localhost.$mydomain $mydomain
+#                virtual.domain
+# 
+#        /etc/postfix/virtual:
+#            user1@virtual.domain address1
+#            user2@virtual.domain address2, address3
+# 
+#        The  main.cf  mydestination  entry is required for a Send-
+#        mail-style virtual domain.
+# 
+#        Do not specify a virtual.domain whatever virtual map entry
+#        for  a  Sendmail-style  virtual  domain.  Such an entry is
+#        required only with a Postfix-style virtual domain.
+# 
+#        With a Sendmail-style virtual domain,  the  Postfix  local
+#        delivery  agent  delivers  mail  for  an unknown user@vir-
+#        tual.domain to a local (i.e.  non-virtual) user  that  has
+#        the  same  name;  if no such recipient exists, the Postfix
+#        local delivery agent bounces the mail to the sender.
+# 
+# TABLE FORMAT
+#        The format of the virtual table is  as  follows,  mappings
+#        being tried in the order as listed in this manual page:
+# 
+#        blanks and comments
+#               Blank  lines  are  ignored,  as are lines beginning
+#               with `#'.
+# 
+#        leading whitespace
+#               Lines  that  begin  with  whitespace  continue  the
+# 
+#                                                                 2
+# 
+# VIRTUAL(5)                                             VIRTUAL(5)
+# 
+#               previous line.
+# 
+#        pattern result
+#               When  pattern matches a mail address, replace it by
+#               the corresponding result.
+# 
+#        With lookups from indexed files such as DB or DBM, or from
+#        networked  tables  such  as NIS, LDAP or SQL, patterns are
+#        tried in the order as listed below:
+# 
+#        user@domain address, address, ...
+#               Mail for  user@domain  is  redirected  to  address.
+#               This form has the highest precedence.
+# 
+#        user address, address, ...
+#               Mail  for  user@site  is redirected to address when
+#               site is equal to $myorigin, when site is listed  in
+#               $mydestination,   or   when   it   is   listed   in
+#               $inet_interfaces.
+# 
+#               This functionality overlaps with  functionality  of
+#               the local alias(5) database. The difference is that
+#               virtual  mapping  can  be  applied   to   non-local
+#               addresses.
+# 
+#        @domain address, address, ...
+#               Mail  for  any  user  in  domain  is  redirected to
+#               address.  This form has the lowest precedence.
+# 
+#        In all the above forms, when address has the form  @other-
+#        domain,  the result is the same user in otherdomain.  This
+#        works for the first address in the expansion only.
+# 
 # ADDRESS EXTENSION
-# .fi
-# .ad
-#	When the search fails, and the address localpart contains the
-#	optional recipient delimiter (e.g., \fIuser+foo\fR@\fIdomain\fR),
-#	the search is repeated for the unextended address (e.g.
-#	\fIuser\fR@\fIdomain\fR), and the unmatched address extension is
-#	propagated to the result of expansion. The matching order is:
-#	\fIuser+foo\fR@\fIdomain\fR, \fIuser\fR@\fIdomain\fR,
-#	\fIuser+foo\fR, \fIuser\fR, and @\fIdomain\fR.
+#        When the search fails, and the address localpart  contains
+#        the  optional recipient delimiter (e.g., user+foo@domain),
+#        the search is repeated for the  unextended  address  (e.g.
+#        user@domain), and the unmatched address extension is prop-
+#        agated to the result of expansion. The matching order  is:
+#        user+foo@domain, user@domain, user+foo, user, and @domain.
+# 
+# REGULAR EXPRESSION TABLES
+#        This section describes how the table lookups  change  when
+#        the table is given in the form of regular expressions. For
+#        a description of regular expression lookup  table  syntax,
+#        see regexp_table(5) or pcre_table(5).
+# 
+#        Each  pattern  is  a regular expression that is applied to
+#        the entire address being looked up. Thus, user@domain mail
+#        addresses  are  not  broken up into their user and @domain
+#        constituent parts, nor is user+foo broken up into user and
+#        foo.
+# 
+#        Patterns  are  applied  in  the  order as specified in the
+# 
+#                                                                 3
+# 
+# VIRTUAL(5)                                             VIRTUAL(5)
+# 
+#        table, until a pattern is found that  matches  the  search
+#        string.
+# 
+#        Results  are the same as with normal indexed file lookups,
+#        with the additional feature that parenthesized  substrings
+#        from  the pattern can be interpolated as $1, $2 and so on.
+# 
 # BUGS
-#	The table format does not understand quoting conventions.
+#        The table format does not understand quoting  conventions.
+# 
 # CONFIGURATION PARAMETERS
-# .ad
-# .fi
-#	The following \fBmain.cf\fR parameters are especially relevant to
-#	this topic. See the Postfix \fBmain.cf\fR file for syntax details
-#	and for default values. Use the \fBpostfix reload\fR command after
-#	a configuration change.
-# .IP \fBvirtual_maps\fR
-#	List of virtual mapping tables.
-# .PP
-#	Other parameters of interest:
-# .IP \fBinet_interfaces\fR
-#	The network interface addresses that this system receives mail on.
-# .IP \fBmydestination\fR
-#	List of domains that this mail system considers local.
-# .IP \fBmyorigin\fR
-#	The domain that is appended to locally-posted mail.
-# .IP \fBowner_request_special\fR
-#	Give special treatment to \fBowner-\fIxxx\fR and \fIxxx\fB-request\fR
-#	addresses.
+#        The  following  main.cf parameters are especially relevant
+#        to this topic. See the Postfix  main.cf  file  for  syntax
+#        details  and  for  default  values. Use the postfix reload
+#        command after a configuration change.
+# 
+#        virtual_maps
+#               List of virtual mapping tables.
+# 
+#        Other parameters of interest:
+# 
+#        inet_interfaces
+#               The network interface addresses  that  this  system
+#               receives mail on.
+# 
+#        mydestination
+#               List  of  domains  that  this mail system considers
+#               local.
+# 
+#        myorigin
+#               The domain that is appended to locally-posted mail.
+# 
+#        owner_request_special
+#               Give special treatment to owner-xxx and xxx-request
+#               addresses.
+# 
 # SEE ALSO
-#	cleanup(8) canonicalize and enqueue mail
-#	postmap(1) create mapping table
+#        cleanup(8) canonicalize and enqueue mail
+#        postmap(1) create mapping table
+#        pcre_table(5) format of PCRE tables
+#        regexp_table(5) format of POSIX regular expression tables
+# 
 # LICENSE
-# .ad
-# .fi
-#	The Secure Mailer license must be distributed with this software.
+#        The Secure Mailer license must be  distributed  with  this
+#        software.
+# 
 # AUTHOR(S)
-#	Wietse Venema
-#	IBM T.J. Watson Research
-#	P.O. Box 704
-#	Yorktown Heights, NY 10598, USA
-#--
-
-# By default, this file is not used.  See sample-virtual.cf
+#        Wietse Venema
+#        IBM T.J. Watson Research
+#        P.O. Box 704
+#        Yorktown Heights, NY 10598, USA
+# 
+#                                                                 4
+# 

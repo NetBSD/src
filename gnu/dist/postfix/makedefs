@@ -89,6 +89,8 @@ case "$SYSTEM.$RELEASE" in
 		;;
   FreeBSD.4*)	SYSTYPE=FREEBSD4
 		;;
+  FreeBSD.5*)	SYSTYPE=FREEBSD5
+		;;
   OpenBSD.2*)	SYSTYPE=OPENBSD2
 		;;
    NetBSD.1*)	SYSTYPE=NETBSD1
@@ -143,7 +145,7 @@ case "$SYSTEM.$RELEASE" in
 		4)	SYSTYPE=AIX4
 			# How embarrassing...
 			case "$CC" in
-			cc|*/cc|xlc|*/xlc) OPT=; CCARGS="$CCARGS -w";;
+			cc|*/cc|xlc|*/xlc) OPT=; CCARGS="$CCARGS -w -blibpath:/usr/lib:/lib:/usr/local/lib";;
 			esac
 			CCARGS="$CCARGS -D_ALL_SOURCE -DHAS_POSIX_REGEXP"
 			;;
@@ -157,24 +159,27 @@ case "$SYSTEM.$RELEASE" in
 		*)	echo "Unknown AIX version: `uname -v`." 1>&2; exit 1;;
 		esac;;
     Linux.2*)	SYSTYPE=LINUX2
-		SYSLIBS="-ldb"
-		for name in nsl resolv
-		do
-		    test -f /usr/lib/lib$name.a && SYSLIBS="$SYSLIBS -l$name"
-		done
-		if [ -f /usr/include/db.h ]; then
-		    : all set
-		elif [ -f /usr/include/db/db.h ]; then
+		# Postfix no longer needs DB 1.85 compatibility
+		if [ -f /usr/include/db.h ]
+		then
+		    : we are all set
+		elif [ -f /usr/include/db/db.h ]
+		then
 		    CCARGS="$CCARGS -I/usr/include/db"
 		else
 		    # No, we're not going to try db1 db2 db3 etc.
 		    # On a properly installed system, Postfix builds
 		    # by including <db.h> and by linking with -ldb
-		    echo "No <db.h> include file." 1>&2
-		    echo "Install appropriate db development package first" 1>&2
+		    echo "No <db.h> include file found." 1>&2
+		    echo "Install the appropriate db*-devel package first." 1>&2
 		    echo "See the RELEASE_NOTES file for more information." 1>&2
 		    exit 1
 		fi
+		SYSLIBS="-ldb"
+		for name in nsl resolv
+		do
+		    test -f /usr/lib/lib$name.a && SYSLIBS="$SYSLIBS -l$name"
+		done
 		;;
      IRIX*.5.*)	SYSTYPE=IRIX5
 		# Use the native compiler by default
@@ -213,7 +218,13 @@ ReliantUNIX-?.5.43) SYSTYPE=ReliantUnix543
 		RANLIB=echo
 		SYSLIBS="-lresolv -lsocket -lnsl"
 		;;
- Rhapsody.5*)	SYSTYPE=RHAPSODY5
+Rhapsody.5*|Darwin.1.*)
+		SYSTYPE=RHAPSODY5
+		# Use the native compiler by default
+		: ${CC=cc}
+		AWK=gawk
+		;;
+"Mac OS".10*)	SYSTYPE=MACOSX
 		# Use the native compiler by default
 		: ${CC=cc}
 		AWK=gawk
@@ -267,4 +278,5 @@ CC	= $CC $CCARGS
 OPT	= $OPT
 DEBUG	= $DEBUG
 AWK	= $AWK
+EXPORT	= AUXLIBS="$AUXLIBS" CCARGS="$CCARGS" OPT="$OPT" DEBUG="$DEBUG"
 EOF

@@ -18,7 +18,7 @@ use something like:
 
     % make tidy
     % make makefiles CCARGS="-DHAS_DB -I/usr/local/BerkeleyDB.3.1/include" \
-	AUXLIBS=/usr/local/BerkeleyDB.3.1/lib/libdb.a
+	AUXLIBS="-L/usr/local/BerkeleyDB.3.1/lib -ldb"
     % make
 
 The exact pathnames depend on the DB version that you installed.

@@ -27,6 +27,10 @@ The SMTP client looks up a list of mail exchanger addresses for
 the destination host, sorts the list by preference, and connects
 to each listed address until it finds a server that responds.
 
+When the domain or host is specified as a comma/whitespace
+separated list, the SMTP client repeats the above process
+for all destinations until it finds a server that responds.
+
 Once the SMTP client has received the server greeting banner, no
 error will cause it to proceed to the next address on the mail
 exchanger list. Instead, the message is either bounced, or its
@@ -46,6 +50,7 @@ RFC 821 (SMTP protocol)
 RFC 1651 (SMTP service extensions)
 RFC 1870 (Message Size Declaration)
 RFC 2197 (Pipelining)
+RFC 2554 (AUTH command)
 .SH DIAGNOSTICS
 .ad
 .fi
@@ -92,7 +97,7 @@ Hosts to hand off mail to if a message destination is not found
 or if a destination is unreachable.
 .IP \fBignore_mx_lookup_error\fR
 When a name server fails to respond to an MX query, search for an
-A record instead of assuming that the name server will recover.
+A record instead deferring mail delivery.
 .IP \fBinet_interfaces\fR
 The network interface addresses that this mail system receives
 mail on. When any of those addresses appears in the list of mail
@@ -101,10 +106,39 @@ avoid mail delivery loops.
 .IP \fBnotify_classes\fR
 When this parameter includes the \fBprotocol\fR class, send mail to the
 postmaster with transcripts of SMTP sessions with protocol errors.
+.IP \fBsmtp_always_send_ehlo\fR
+Always send EHLO at the start of a connection.
+.IP \fBsmtp_never_send_ehlo\fR
+Never send EHLO at the start of a connection.
 .IP \fBsmtp_skip_4xx_greeting\fR
 Skip servers that greet us with a 4xx status code.
+.IP \fBsmtp_skip_5xx_greeting\fR
+Skip servers that greet us with a 5xx status code.
 .IP \fBsmtp_skip_quit_response\fR
 Do not wait for the server response after sending QUIT.
+.IP \fBsmtp_bind_address\fR
+Numerical network address to bind to when making a connection.
+.SH "Authentication controls"
+.IP \fBsmtp_enable_sasl_auth\fR
+Enable per-session authentication as per RFC 2554 (SASL).
+By default, Postfix is built without SASL support.
+.IP \fBsmtp_sasl_password_maps\fR
+Lookup tables with per-host or domain \fIname\fR:\fIpassword\fR entries.
+No entry for a host means no attempt to authenticate.
+.IP \fBsmtp_sasl_security_options\fR
+Zero or more of the following.
+.RS
+.IP \fBnoplaintext\fR
+Disallow authentication methods that use plaintext passwords.
+.IP \fBnoactive\fR
+Disallow authentication methods that are vulnerable to non-dictionary
+active attacks.
+.IP \fBnodictionary\fR
+Disallow authentication methods that are vulnerable to passive
+dictionary attack.
+.IP \fBnoanonymous\fR
+Disallow anonymous logins.
+.RE
 .SH "Resource controls"
 .ad
 .fi
@@ -119,36 +153,40 @@ The default limit is taken from the
 .SH "Timeout controls"
 .ad
 .fi
+.PP
+The default time unit is seconds; an explicit time unit can
+be specified by appending a one-letter suffix to the value:
+s (seconds), m (minutes), h (hours), d (days) or w (weeks).
 .IP \fBsmtp_connect_timeout\fR
-Timeout in seconds for completing a TCP connection. When no
+Timeout for completing a TCP connection. When no
 connection can be made within the deadline, the SMTP client
 tries the next address on the mail exchanger list.
 .IP \fBsmtp_helo_timeout\fR
-Timeout in seconds for receiving the SMTP greeting banner.
+Timeout for receiving the SMTP greeting banner.
 When the server drops the connection without sending a
 greeting banner, or when it sends no greeting banner within the
 deadline, the SMTP client tries the next address on the mail
 exchanger list.
 .IP \fBsmtp_helo_timeout\fR
-Timeout in seconds for sending the \fBHELO\fR command, and for
+Timeout for sending the \fBHELO\fR command, and for
 receiving the server response.
 .IP \fBsmtp_mail_timeout\fR
-Timeout in seconds for sending the \fBMAIL FROM\fR command, and for
+Timeout for sending the \fBMAIL FROM\fR command, and for
 receiving the server response.
 .IP \fBsmtp_rcpt_timeout\fR
-Timeout in seconds for sending the \fBRCPT TO\fR command, and for
+Timeout for sending the \fBRCPT TO\fR command, and for
 receiving the server response.
 .IP \fBsmtp_data_init_timeout\fR
-Timeout in seconds for sending the \fBDATA\fR command, and for
+Timeout for sending the \fBDATA\fR command, and for
 receiving the server response.
 .IP \fBsmtp_data_xfer_timeout\fR
-Timeout in seconds for sending the message content.
+Timeout for sending the message content.
 .IP \fBsmtp_data_done_timeout\fR
-Timeout in seconds for sending the "\fB.\fR" command, and for
+Timeout for sending the "\fB.\fR" command, and for
 receiving the server response. When no response is received, a
 warning is logged that the mail may be delivered multiple times.
 .IP \fBsmtp_quit_timeout\fR
-Timeout in seconds for sending the \fBQUIT\fR command, and for
+Timeout for sending the \fBQUIT\fR command, and for
 receiving the server response.
 .SH SEE ALSO
 .na

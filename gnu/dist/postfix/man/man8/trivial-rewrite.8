@@ -94,11 +94,22 @@ Rewrite \fIsite\fR!\fIuser\fR to \fIuser\fR@\fIsite\fR.
 .SH Routing
 .ad
 .fi
+.IP \fBlocal_transport\fR
+Where to deliver mail for destinations that match $\fBmydestination\fR
+or $\fBinet_interfaces\fR.
+The default transport is \fBlocal\fR.
+.sp
+Syntax is \fItransport\fR:\fInexthop\fR; see \fBtransport\fR(5)
+for details. The :\fInexthop\fR part is optional.
 .IP \fBdefault_transport\fR
-The default transport to use when no transport is explicitly
+Where to deliver non-local mail when no information is explicitly
 given in the \fBtransport\fR(5) table.
+The default transport is \fBsmtp\fR.
+.sp
+Syntax is \fItransport\fR:\fInexthop\fR; see \fBtransport\fR(5)
+for details. The :\fInexthop\fR part is optional.
 .IP \fBrelayhost\fR
-The default host to send mail to when no entry is matched
+The default host to send non-local mail to when no entry is matched
 in the \fBtransport\fR(5) table.
 .sp
 When no \fBrelayhost\fR is specified, mail is routed directly

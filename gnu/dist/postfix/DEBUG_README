@@ -18,8 +18,21 @@ from or to the loopback interface:
 
 You can specify one or more hosts, domains, addresses or net/masks.
 
-3 - Making daemon programs more verbose
-=======================================
+2b - Record the SMTP connection with a sniffer
+==============================================
+
+This example uses tcpdump. In order to record a conversation you
+need to specify a large enough buffer or else you will miss some
+or all of the packet payload.
+
+    tcpdump -w /file/name -s 2000 host hostname and port 25
+
+Run this for a while, stop with Ctrl-C when done. To view the data
+use a binary viewer, or use my tcpdumpx utility that is available
+from ftp://ftp.porcupine.org/pub/debugging.
+
+3 - Making Postfix daemon programs more verbose
+===============================================
 
 Append one or more -v options to selected daemon definitions in
 /etc/postfix/master.cf and type "postfix reload". This will cause
@@ -104,6 +117,10 @@ by its author? There are two possibilities.
 In both cases, the program being executed is not the program that
 was supposed to be executed, so anything can happen.
 
+There is a third possibility:
+
+3 - Bugs in system software (kernel or libraries).
+
 Hardware-related failures happen erratically, and they usually do
 not reproduce after power cycling and rebooting the system.  There's
 little I can do about bad hardware.  Be sure to use hardware that
@@ -124,7 +141,7 @@ In order to compile Postfix with optimizations turned off:
     % make makefiles OPT=
 
 This produces a set of Makefiles that do not request compiler
-optomization. 
+optimization. 
 
 Once the makefiles are set up, build the software:
 

@@ -9,8 +9,8 @@ lock mail folder and execute command
 .na
 .nf
 .fi
-\fBpostlock\fR [\fB-c \fIconfig_dir\fB] [\fB-v\fR]
-\fIfile command...\fR
+\fBpostlock\fR [\fB-c \fIconfig_dir\fB] [\fB-l \fIlock_style\fB]
+[\fB-v\fR] \fIfile command...\fR
 .SH DESCRIPTION
 .ad
 .fi
@@ -20,8 +20,11 @@ compatible with the Postfix UNIX-style local delivery agent.
 
 Options:
 .IP "\fB-c \fIconfig_dir\fR"
-Read configuration information from \fBmain.cf\fR in the named
-configuration directory.
+Read the \fBmain.cf\fR configuration file in the named directory
+instead of the default configuration directory.
+.IP "\fB-l \fIlock_style\fR"
+Override the locking method specified via the
+\fBmailbox_delivery_lock\fR configuration parameter (see below).
 .IP \fB-v\fR
 Enable verbose logging for debugging purposes. Multiple \fB-v\fR
 options make the software increasingly verbose.
@@ -36,8 +39,7 @@ interpretation by a shell command interpreter.
 .SH DIAGNOSTICS
 .ad
 .fi
-The result status is 75 (EX_TEMPFAIL) when the file is locked by
-another process, 255 (on some systems: -1) when \fBpostlock\fR
+The result status is 75 (EX_TEMPFAIL) when \fBpostlock\fR
 could not perform the requested operation.  Otherwise, the
 exit status is the exit status from the command.
 .SH BUGS
@@ -73,6 +75,11 @@ Time in seconds between successive attempts to acquire
 an exclusive lock.
 .IP \fBstale_lock_time\fR
 Limit the time after which a stale lock is removed.
+.IP \fBmailbox_delivery_lock\fR
+What file locking method(s) to use when delivering to a UNIX-style
+mailbox.
+The default setting is system dependent.  For a list of available
+file locking methods, use the \fBpostconf -l\fR command.
 .SH "Resource controls"
 .ad
 .fi

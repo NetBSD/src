@@ -19,8 +19,8 @@ from:
 You will need to add -DHAS_PCRE and a -I for the PCRE header to CCARGS,
 and add the path to the PCRE library to AUXLIBS, for example:
 
-   make -f Makefile.init makefiles 'CCARGS=-DHAS_PCRE -I../../pcre-2.08' \
-      'AUXLIBS=../../pcre-2.08/libpcre.a'
+   make -f Makefile.init makefiles 'CCARGS=-DHAS_PCRE -I../../../pcre-2.08' \
+      'AUXLIBS=../../../pcre-2.08/libpcre.a'
 
 [note: pcre versions before 2.06 are no longer compatible -- Wietse]
 

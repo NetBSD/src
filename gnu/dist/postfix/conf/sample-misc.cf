@@ -14,7 +14,10 @@ always_bcc =
 # take to handle a request before it assumes it is wedged and commits
 # suicide.
 #
-daemon_timeout = 18000
+# Time units: s (seconds), m (minutes), h (hours), d (days), w (weeks).
+# The default time unit is s (seconds).
+#
+daemon_timeout = 18000s
 
 # The default_database_type parameter specifies the default database
 # type to use in postalias(1) and postmap(1) commands. On many UNIX
@@ -28,7 +31,12 @@ daemon_timeout = 18000
 # delivery transport to use when no transport is explicitly given in
 # the optional transport(5) table.
 #
-# default_transport = uucp
+# Specify a string of the form transport:nexthop, where transport is
+# the name of a mail delivery transport defined in master.cf.  Either
+# transport or nexthop are optional. For more details see the sample
+# transports file.
+#
+# default_transport = uucp:relayhostname
 default_transport = smtp
 
 # The double_bounce_sender parameter specifies the sender address
@@ -37,6 +45,15 @@ default_transport = smtp
 # in order to terminate mail bounce loops.
 #
 double_bounce_sender = double-bounce
+
+# The export_environment parameter specifies the names of environment
+# parameters that Postfix will export to non-Postfix processes.
+# 
+# - TZ is needed for sane time keeping on most SYSV-ish systems
+# 
+# Specify a list of names separated by whitespace or comma.
+#
+export_environment = TZ
 
 # The hash_queue_depth parameter specifies the number of subdirectory
 # levels below the queue directories listed in the hash_queue_names
@@ -70,6 +87,20 @@ hash_queue_names = defer
 #
 hopcount_limit = 50
 
+# The import_environment parameter specifies the names of environment
+# parameters that Postfix processes will import from their parent
+# environment.
+# 
+# - TZ is needed for sane time keeping on most SYSV-ish systems
+# - DISPLAY and XAUTHORITY are needed for debugging Postfix daemons
+#   with an X-windows debugger.
+# - MAIL_CONFIG is needed to make "postfix -c" work.
+# 
+# Specify a list of names separated by whitespace or comma.
+#
+# import_environment = MAIL_CONFIG TZ XAUTHORITY DISPLAY HOME PURIFYOPTIONS
+import_environment = MAIL_CONFIG TZ XAUTHORITY DISPLAY
+
 # The inet_interfaces parameter specifies the network interface
 # addresses that this mail system receives mail on.  By default,
 # the software claims all active interfaces on the machine. The
@@ -77,19 +108,26 @@ hopcount_limit = 50
 #
 inet_interfaces = all
 
-# The ipc_idle parameter bounds the idle time in seconds after which
-# an internal IPC client disconnects. The purpose is to allow servers
-# to terminate voluntarily. Currently this is used by the address
-# resolving and rewriting clients.
+# The ipc_idle parameter bounds the idle time for internal communication
+# channels after which a client disconnects voluntarily. The purpose
+# is to allow servers to terminate voluntarily after they become
+# idle. Currently this is used by the address resolving and rewriting
+# clients.
 #
-ipc_idle = 100
+# Time units: s (seconds), m (minutes), h (hours), d (days), w (weeks).
+# The default time unit is s (seconds).
+#
+ipc_idle = 100s
 
-# The ipc_timeout parameter specifies a timeout in seconds for I/O
-# on internal communication channels.  The purpose is to break out
-# of deadlock situations. If the timeout is exceeded the software
-# aborts with a fatal error.
+# The ipc_timeout parameter specifies a timeout for I/O on internal
+# communication channels.  The purpose is to break out of deadlock
+# situations. If the timeout is exceeded the software aborts with a
+# fatal error.
 #
-ipc_timeout = 3600
+# Time units: s (seconds), m (minutes), h (hours), d (days), w (weeks).
+# The default time unit is s (seconds).
+#
+#ipc_timeout = 3600s
 
 # The mail_name parameter specifies the mail system name that is used
 # in Received: headers, in the SMTP greeting banner, and in bounced
@@ -111,11 +149,14 @@ mail_owner = postfix
 #
 mail_version = 19981207
 
-# The max_idle parameter limits the time in seconds that a Postfix
-# daemon process waits for the next service request before exiting.
-# This parameter is ignored by the Postfix queue manager.
+# The max_idle parameter limits the time that a Postfix daemon process
+# waits for the next service request before exiting.  This parameter
+# is ignored by the Postfix queue manager.
 #
-max_idle = 100
+# Time units: s (seconds), m (minutes), h (hours), d (days), w (weeks).
+# The default time unit is s (seconds).
+#
+max_idle = 100s
 
 # The max_use parameter limits the number of service requests handled
 # by a Postfix daemon process before exiting. This parameter is
@@ -170,23 +211,41 @@ mydestination = $myhostname, localhost.$mydomain
 # myorigin = $mydomain
 myorigin = $myhostname
 
-# The mynetworks parameter specifies the list of networks that are
-# local to this machine.  The list is used by the anti-UCE software
-# to distinguish local clients from strangers. See permit_mynetworks
-# in the sample-smtpd.cf file.
+# The mynetworks parameter specifies the list of "trusted" SMTP
+# clients that have more privileges than "strangers".
 #
-# The mynetworks parameter specifies the list of networks that are
-# local to this machine.  The list is used by the anti-UCE software
-# to distinguish local clients from strangers. See permit_mynetworks
-# and smtpd_recipient_restrictions in the file sample-smtpd.cf file.
+# In particular, "trusted" SMTP clients are allowed to relay mail
+# through Postfix.  See the smtpd_recipient_restrictions parameter
+# in file sample-smtpd.cf.
 #
-# The default is a list of all networks attached to the machine:  a
-# complete class A network (X.0.0.0/8), a complete class B network
-# (X.X.0.0/16), and so on. If you want stricter control, specify a
-# list of network/mask patterns, where the mask specifies the number
-# of bits in the network part of a host address. You can also specify
-# the absolute pathname of a pattern file instead of listing the
-# patterns here.
+# You can specify the list of "trusted" network addresses by hand
+# or you can let Postfix do it for you (which is the default).
+#
+# By default (mynetworks_style = subnet), Postfix "trusts" SMTP
+# clients in the same IP subnetworks as the local machine.
+# 
+# Specify "mynetworks_style = class" when Postfix should "trust" SMTP
+# clients in the same IP class A/B/C networks as the local machine.
+# Don't do this with a dialup site - it would cause Postfix to "trust"
+# your entire provider's network.  Instead, specify an explicit
+# mynetworks list by hand, as described below.
+#  
+# Specify "mynetworks_style = host" when Postfix should "trust"
+# only the local machine.
+# 
+# mynetworks_style = class
+# mynetworks_style = subnet
+# mynetworks_style = host
+
+# Alternatively, you can specify the mynetworks list by hand, in
+# which case Postfix ignores the mynetworks_style setting.
+#
+# Specify an explicit list of network/netmask patterns, where the
+# mask specifies the number of bits in the network part of a host
+# address.
+#
+# You can also specify the absolute pathname of a pattern file instead
+# of listing the patterns here.
 #
 #mynetworks = 168.100.189.0/28, 127.0.0.0/8
 
@@ -237,6 +296,25 @@ queue_directory = /var/spool/postfix
 # recipient_delimiter = +
 recipient_delimiter =
 
+# The propagate_unmatched_extensions parameter specifies what lookup
+# tables should copy the address extension from the lookup key to
+# the lookup result. 
+# 
+# For example, with a virtual table entry "joe@domain joe.user",
+# the address joe+foo@domain would be rewritten to joe.user+foo.
+# Address extensions can be propagated with canonical, virtual,
+# and alias maps, as well as with .forward and :include: files,
+# including mailing lists!!
+#
+# By default, only canonical and virtual maps propagate address
+# extensions to lookup results. Enabling this feature for other
+# types of lookups usually causes problems when mail is forwarded
+# to other sites, especially with mail that is sent to a mailing
+# list exploder address.
+#
+#propagate_unmatched_extensions = canonical, virtual, alias, forward, include
+#propagate_unmatched_extensions = canonical, virtual
+
 # The relayhost parameter specifies the default host to send mail to
 # when no entry is matched in the optional transport(5) table. When
 # no relayhost is given, mail is routed directly to the destination.
@@ -245,13 +323,17 @@ recipient_delimiter =
 # internal DNS uses no MX records, specify the name of the intranet
 # gateway host instead.
 #
-# Specify a domain, host, host:port, [address] or [address:port].
-# Use the form [destination] to turn off MX lookups. See also the
-# default_transport parameter if you're connected via UUCP.
+# In the case of SMTP, specify a domain, host, host:port, [host]:port,
+# [address] or [address]:port; the form [host] turns off MX lookups.
+# If you specify multiple SMTP destinations, Postfix will try them
+# in the specified order.
+#
+# If you're connected via UUCP, see also the default_transport parameter.
 #
 # relayhost = $mydomain
 # relayhost = gateway.my.domain
 # relayhost = uucphost
+# relayhost = [an.ip.add.ress]
 relayhost =
 
 # The relocated_maps parameter specifies optional tables with contact
@@ -266,23 +348,32 @@ relayhost =
 # relocated_maps = hash:/etc/postfix/relocated
 relocated_maps =
 
-# The sun_mailtool_compatibility parameter disables kernel file locks
-# on mailboxes. This is needed on SUN workstations because the mailtool
-# program keeps an exclusive kernel lock while its window is open.
-# SUN software uses user.lock files only. Unless you remove all SUN
-# mail software, kernel locks just give a false sense of security.
+# The syslog_facility parameter controls where Postfix logging is
+# sent by the syslog daemon. Specify a logging facility as defined
+# in syslog.conf(5). The default logging facility is "mail".
 #
-#sun_mailtool_compatibility = yes
-sun_mailtool_compatibility = no
+# Beware: a non-default syslog_facility setting takes effect only
+# after process initialization. Some initialization errors will be
+# logged with the default facility, especially errors while parsing
+# the command line and errors while accessing the Postfix main.cf
+# configuration file.
+#
+syslog_facility = mail
 
 # The trigger_timeout parameter limits the time to send a trigger to
 # a Postfix daemon. This prevents programs from getting stuck when the
 # mail system is under heavy load.
 #
-trigger_timeout = 10
+# Time units: s (seconds), m (minutes), h (hours), d (days), w (weeks).
+# The default time unit is s (seconds).
+#
+trigger_timeout = 10s
 
-# The delay_warning_time specifies after how many hours a warning
+# The delay_warning_time specifies after how much time a warning
 # is sent that mail has not yet been delivered. By default, no warning
 # is sent.
 #
-# delay_warning_time = 0
+# Time units: s (seconds), m (minutes), h (hours), d (days), w (weeks).
+# The default time unit is h (hours).
+#
+# delay_warning_time = 0h

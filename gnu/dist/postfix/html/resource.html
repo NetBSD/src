@@ -80,6 +80,14 @@ Header text that does not fit in <b>$header_size_limit</b> bytes
 overflows into the message body. This limit is enforced by the <a
 href="cleanup.8.html"> cleanup</a> header rewriting code.
 
+<p>
+
+<dt> <b>extract_recipient_limit</b> (default: 10240 recipients)
+
+<dd> How many recipients Postfix will extract from message headers
+before it gives up. This limits the damage that a run-away program
+can do with "sendmail -t".
+
 </dl>
 
 <p>
@@ -90,8 +98,8 @@ The following parameters restrict the use of file system storage:
 
 <dt> <b>message_size_limit</b> (default: 10240000 bytes)
 
-<dd> The maximal size of a Postfix queue file for inbound mail,
-including envelope information (sender, recipient, etc.).
+<dd> The maximal size of a Postfix queue file, including envelope
+information (sender, recipient, etc.).
 
 <p>
 

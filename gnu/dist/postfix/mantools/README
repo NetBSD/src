@@ -15,3 +15,7 @@ mansect		extract manual page section from source file
 srctoman	extract man page from source file
 		usage: srctoman file.suffix
 		usage: srctoman -type file
+
+man2html	quick script to htmlize nroff -man output
+
+postlink	quick script to hyperlink man2html output

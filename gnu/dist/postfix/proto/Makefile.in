@@ -1,0 +1,44 @@
+SHELL	= /bin/sh
+
+# For now, just hard-coded rules.
+
+CONFIG	= ../conf/access ../conf/aliases ../conf/canonical ../conf/relocated \
+	../conf/transport ../conf/virtual ../conf/pcre_table \
+	../conf/regexp_table
+
+update:	$(CONFIG)
+
+Makefile: Makefile.in
+	(set -e; echo "# DO NOT EDIT"; $(OPTS) $(SHELL) ../makedefs; cat $?) >$@
+
+clean:
+	:
+
+tidy:	clean
+
+clobber:
+	rm -f $(CONFIG)
+
+../conf/access: access
+	srctoman - $? | nroff -man | col -bx | uniq | sed 's/^/# /' >$@
+
+../conf/aliases: aliases0 aliases
+	(cat aliases0; srctoman - aliases | nroff -man | col -bx | uniq | sed 's/^/# /') >$@
+
+../conf/canonical: canonical
+	srctoman - $? | nroff -man | col -bx | uniq | sed 's/^/# /' >$@
+
+../conf/pcre_table: pcre_table
+	srctoman - $? | nroff -man | col -bx | uniq | sed 's/^/# /' >$@
+
+../conf/regexp_table: regexp_table
+	srctoman - $? | nroff -man | col -bx | uniq | sed 's/^/# /' >$@
+
+../conf/relocated: relocated
+	srctoman - $? | nroff -man | col -bx | uniq | sed 's/^/# /' >$@
+
+../conf/transport: transport
+	srctoman - $? | nroff -man | col -bx | uniq | sed 's/^/# /' >$@
+
+../conf/virtual: virtual
+	srctoman - $? | nroff -man | col -bx | uniq | sed 's/^/# /' >$@

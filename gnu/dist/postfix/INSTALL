@@ -31,7 +31,7 @@ should be executed as an unprivileged user.
 =================
 
 Documentation is available as HTML web pages (point your browser
-to html/index.html) and as UNIX-style manpages (point your MANPATH
+to html/index.html) and as UNIX-style man pages (point your MANPATH
 environment variable to the `man' subdirectory; be sure to use an
 absolute path).
 
@@ -55,6 +55,7 @@ If your system is supported, it is one of
     FreeBSD 2.x
     FreeBSD 3.x
     FreeBSD 4.x
+    FreeBSD 5.x
     HP-UX  9.x
     HP-UX 10.x
     HP-UX 11.x
@@ -65,12 +66,15 @@ If your system is supported, it is one of
     Linux RedHat 4.x
     Linux RedHat 5.x
     Linux RedHat 6.x
+    Linux RedHat 7.x
     Linux Slackware 3.5
     Linux Slackware 4.0
     Linux Slackware 7.0
     Linux SuSE 5.x
     Linux SuSE 6.x
+    Linux SuSE 7.x
     Mac OS X server
+    Mac OS X Public Beta
     NEXTSTEP 3.x
     NetBSD 1.x
     OPENSTEP 4.x
@@ -81,10 +85,18 @@ If your system is supported, it is one of
     Reliant UNIX 5.x
     Rhapsody 5.x
     SunOS 4.1.x
-    SunOS 5.4..5.7 (Solaris 2.4..7)
-    Ultrix 4.x
+    SunOS 5.4..5.8 (Solaris 2.4..8)
+    Ultrix 4.x (well, that was long ago)
 
 or something closely resemblant.
+
+On Solaris, the "make" command and other utilities for software
+development are in /usr/ccs/bin, so you MUST have /usr/ccs/bin in
+your command search path.
+
+If you need to build Postfix for multiple architectures, use the
+lndir command to build a shadow tree with symbolic links to the
+source files. lndir is part of X11R6.
 
 If at any time in the build process you get messages like: "make:
 don't know how to ..." you should be able to recover by running
@@ -193,7 +205,8 @@ In order to install or upgrade Postfix:
 
 - Run the INSTALL.sh script as the super-user:
 
-    # sh INSTALL.sh
+    # make install              (interactive version, first time install)
+    # make install </dev/null   (non-interactive version, for upgrades)
 
   The INSTALL.sh script offers suggestions for pathnames that you
   can override, either by editing INSTALL.sh or by specifying your
@@ -342,9 +355,10 @@ You can use $parameter before it is given a value. The Postfix
 configuration language uses lazy evaluation, and does not look at
 a parameter value until it is needed at runtime.
 
-First of all, you must specify what domain will be appended to a
-local address. The "myorigin" parameter defaults to the local
-hostname, but that is probably OK only for very small sites.
+First of all, you must specify what domain will be appended to an
+unqualified address (i.e. an address without @domain.name). The
+"myorigin" parameter defaults to the local hostname, but that is
+probably OK only for very small sites.
 
 Some examples:
 
@@ -354,8 +368,8 @@ Some examples:
 In the first case, local mail goes out as user@$myhostname, in
 the second case the sender address is user@$mydomain.
 
-Next you need to specify what mail addresses are local to the
-Postfix system.
+Next you need to specify what mail addresses Postfix should deliver
+locally.
 
 Some examples:
 
@@ -366,6 +380,14 @@ Some examples:
 The first example is appropriate for a workstation, the second is
 appropriate for the mailserver for an entire domain. The third
 example should be used when running on a virtual host interface.
+
+If your machine is on an open network then you must specify what
+client IP addresses are authorized to relay their mail through your
+machine.  The default setting includes all class A, B or C networks
+that the machine is attached to. Often, that gives relay permission
+to too many clients.  My own settings are:
+
+    mynetworks = 168.100.189.0/28, 127.0.0.0/8
 
 If you're behind a firewall, you should set up a relayhost.  If
 you can, specify the organizational domain name so that Postfix
@@ -394,27 +416,40 @@ and/or dial-up networks.
 Finally, if you haven't used Sendmail prior to using Postfix, you
 will have to build the alias database (with: sendmail -bi, or:
 newaliases). Be sure to set up aliases for root and postmaster that
-forward mail to a real person.
+forward mail to a real person. Postfix has a sample aliases file
+conf/aliases that you can adapt to local conditions.
 
 11 - To chroot or not to chroot
-==============================
+===============================
 
-Most Postfix daemons can run in a chroot jail, that is, in a chroot
-environment at fixed low privilege. This provides a significant
-barrier against intrusion. The barrier is not impenetrable, but
-every little bit helps.
+Postfix can run most daemon processes in a chroot jail, that is,
+the processes run at a fixed low privilege and with access only to
+the Postfix queue directories (/var/spool/postfix).  This provides
+a significant barrier against intrusion. The barrier is not
+impenetrable, but every little bit helps.
 
-The file /etc/postfix/master.cf by default runs no Postfix daemons
-in a chroot jail. However, with the exception of the `local' and
-`pipe' daemons, every Postfix daemon can run chrooted.
+With the exception of the Postfix local delivery and `pipe' daemons,
+every Postfix daemon can run chrooted.
 
-The examples/chroot-setup directory has a collection of scripts
-for setting up chroot environments for Postfix systems.
+Sites with high security requirements should consider to chroot
+all daemons that talk to the network:  the smtp and smtpd processes,
+and perhaps also the lmtp client.
+
+The default /etc/postfix/master.cf file specifies that no Postfix
+daemon runs chrooted.  In order to enable chroot operation, edit
+the file /etc/postfix/master.cf. Instructions are in the file.
+
+Note that a chrooted daemon resolves all filenames relative to the
+Postfix queue directory (/var/spool/postfix). For successful use
+of a chroot jail,  most UNIX systems require you to bring in some
+files or device nodes.  The examples/chroot-setup directory has a
+collection of scripts that help you set up chroot environments for
+Postfix systems.
 
 12 - Security: writable versus protected maildrop directory
 ===========================================================
 
-Postfix offers a choice of submission mechanims.
+Postfix offers a choice of submission mechanisms.
 
 1 - Postfix can use a world-writable, sticky, mode 1733 maildrop
     directory where local users can submit mail. This approach

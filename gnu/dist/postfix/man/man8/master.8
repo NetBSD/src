@@ -33,7 +33,7 @@ respective daemons.
 Options:
 .IP "\fB-c \fIconfig_dir\fR"
 Read the \fBmain.cf\fR and \fBmaster.cf\fR configuration files in
-the named directory.
+the named directory instead of the default configuration directory.
 .IP \fB-D\fR
 After initialization, run a debugger on the master process. The
 debugging command is specified with the \fBdebugger_command\fR in
@@ -93,6 +93,10 @@ a configuration change.
 .SH Miscellaneous
 .ad
 .fi
+.IP \fBimport_environment\fR
+.IP \fBexport_environment\fR
+Lists of names of environment parameters that can be imported
+from (exported to) non-Postfix processes.
 .IP \fBmail_owner\fR
 The owner of the mail queue and of most Postfix processes.
 .IP \fBcommand_directory\fR

@@ -1,115 +1,196 @@
-#++
+# 
+# CANONICAL(5)                                         CANONICAL(5)
+# 
 # NAME
-#	canonical 5
-# SUMMARY
-#	format of Postfix canonical table
+#        canonical - format of Postfix canonical table
+# 
 # SYNOPSIS
-#	\fBpostmap /etc/postfix/canonical\fR
+#        postmap /etc/postfix/canonical
+# 
 # DESCRIPTION
-#	The optional \fBcanonical\fR file specifies an address mapping for
-#	local and non-local addresses. The mapping is used by the
-#	\fBcleanup\fR(8) daemon.  The address mapping is recursive.
-#
-#	The file serves as input to the \fBpostmap\fR(1) command. The result,
-#	an indexed file in \fBdbm\fR or \fBdb\fR format, is used for
-#	fast searching by the mail system. After an update
-#	it may take a minute or so before the change becomes visible.
-#	Issue a \fBpostfix reload\fR command to eliminate the delay.
-#
-#	The \fBcanonical\fR mapping affects both message header addresses
-#	(i.e. addresses that appear inside messages) and message envelope
-#	addresses (for example, the addresses that are used in SMTP protocol
-#	commands). Think Sendmail rule set \fBS3\fR, if you like.
-#
-#	Typically, one would use the \fBcanonical\fR table to replace login
-#	names by \fIFirstname.Lastname\fR, or to clean up addresses produced
-#	by legacy mail systems.
-#
-#	The \fBcanonical\fR mapping is not to be confused with \fIvirtual
-#	domain\fR support. Use the \fBvirtual\fR(5) map for that purpose.
-#
-#	The \fBcanonical\fR mapping is not to be confused with local aliasing.
-#	Use the \fBaliases\fR(5) map for that purpose.
-#
-#	The format of the \fBcanonical\fR table is as follows, mappings
-#	being tried in the order as listed in this manual page:
-# .IP "blanks and comments"
-#	Blank lines are ignored, as are lines beginning with `#'.
-# .IP "\fIuser\fR@\fIdomain address\fR"
-#	\fIuser\fR@\fIdomain\fR is replaced by \fIaddress\fR. This form
-#	has the highest precedence.
-#	.sp
-#	This form useful to clean up addresses produced by legacy mail systems.
-#	It can also be used to produce \fIFirstname.Lastname\fR style
-#	addresses, but see below for a simpler solution.
-# .IP "\fIuser address\fR"
-#	\fIuser\fR@\fIsite\fR is replaced by \fIaddress\fR when \fIsite\fR is
-#	equal to $\fBmyorigin\fR, when \fIsite\fR is listed in
-#	$\fBmydestination\fR, or when it is listed in $\fBinet_interfaces\fR.
-#	.sp
-#	This form is useful for replacing login names by
-#	\fIFirstname.Lastname\fR.
-# .IP "@\fIdomain address\fR"
-#	Every address in \fIdomain\fR is replaced by \fIaddress\fR.
-#	This form has the lowest precedence.
-# .PP
-#	In all the above forms, when \fIaddress\fR has the form
-#	@\fIotherdomain\fR, the result is the same user in \fIotherdomain\fR.
+#        The  optional canonical table specifies an address mapping
+#        for local and non-local addresses. The mapping is used  by
+#        the  cleanup(8) daemon.  The address mapping is recursive.
+# 
+#        Normally, the canonical table is specified as a text  file
+#        that  serves  as  input  to  the  postmap(1) command.  The
+#        result, an indexed file in dbm or db format, is  used  for
+#        fast  searching  by  the  mail system. Execute the command
+#        postmap /etc/postfix/canonical in  order  to  rebuild  the
+#        indexed file after changing the text file.
+# 
+#        When  the  table  is provided via other means such as NIS,
+#        LDAP or SQL, the same lookups are  done  as  for  ordinary
+#        indexed files.
+# 
+#        Alternatively,  the  table  can  be provided as a regular-
+#        expression map where patterns are given as regular expres-
+#        sions.  In  that  case, the lookups are done in a slightly
+#        different way as described below.
+# 
+#        The  canonical  mapping  affects   both   message   header
+#        addresses (i.e. addresses that appear inside messages) and
+#        message envelope addresses  (for  example,  the  addresses
+#        that  are  used in SMTP protocol commands). Think Sendmail
+#        rule set S3, if you like.
+# 
+#        Typically, one would use the canonical  table  to  replace
+#        login   names   by  Firstname.Lastname,  or  to  clean  up
+#        addresses produced by legacy mail systems.
+# 
+#        The canonical mapping is not to be confused  with  virtual
+#        domain support. Use the virtual(5) map for that purpose.
+# 
+#        The  canonical  mapping  is  not to be confused with local
+#        aliasing.  Use the aliases(5) map for that purpose.
+# 
+# TABLE FORMAT
+#        The format of the canonical table is as follows:
+# 
+#        blanks and comments
+#               Blank lines are ignored,  as  are  lines  beginning
+#               with `#'.
+# 
+#        leading whitespace
+#               Lines  that begin with whitespace continue the pre-
+#               vious line.
+# 
+#                                                                 1
+# 
+# CANONICAL(5)                                         CANONICAL(5)
+# 
+#        pattern result
+#               When pattern matches a mail address, replace it  by
+#               the corresponding result.
+# 
+#        With lookups from indexed files such as DB or DBM, or from
+#        networked tables such as NIS, LDAP or  SQL,  patterns  are
+#        tried in the order as listed below:
+# 
+#        user@domain address
+#               user@domain  is  replaced by address. This form has
+#               the highest precedence.
+# 
+#               This form useful to clean up addresses produced  by
+#               legacy  mail  systems.  It can also be used to pro-
+#               duce Firstname.Lastname style  addresses,  but  see
+#               below for a simpler solution.
+# 
+#        user address
+#               user@site is replaced by address when site is equal
+#               to $myorigin, when site is  listed  in  $mydestina-
+#               tion, or when it is listed in $inet_interfaces.
+# 
+#               This  form  is  useful for replacing login names by
+#               Firstname.Lastname.
+# 
+#        @domain address
+#               Every address in domain  is  replaced  by  address.
+#               This form has the lowest precedence.
+# 
+#        In  all the above forms, when address has the form @other-
+#        domain, the result is the same user in otherdomain.
+# 
 # ADDRESS EXTENSION
-# .fi
-# .ad
-#	When table lookup fails, and the address localpart contains the
-#	optional recipient delimiter (e.g., \fIuser+foo\fR@\fIdomain\fR), the
-#	search is repeated for the unextended address (e.g.
-#	\fIuser\fR@\fIdomain\fR), and the unmatched extension is propagated
-#	to the result of table lookup. The matching order is:
-#	\fIuser+foo\fR@\fIdomain\fR, \fIuser\fR@\fIdomain\fR,
-#	\fIuser+foo\fR, \fIuser\fR, and @\fIdomain\fR.
+#        When table lookup fails, and the  address  localpart  con-
+#        tains    the    optional    recipient   delimiter   (e.g.,
+#        user+foo@domain), the search is  repeated  for  the  unex-
+#        tended  address  (e.g.   user@domain),  and  the unmatched
+#        extension is propagated to the result of table lookup. The
+#        matching order is: user+foo@domain, user@domain, user+foo,
+#        user, and @domain.
+# 
+# REGULAR EXPRESSION TABLES
+#        This section describes how the table lookups  change  when
+#        the table is given in the form of regular expressions. For
+#        a description of regular expression lookup  table  syntax,
+#        see regexp_table(5) or pcre_table(5).
+# 
+#        Each  pattern  is  a regular expression that is applied to
+#        the entire address being looked up. Thus, user@domain mail
+#        addresses  are  not  broken up into their user and @domain
+#        constituent parts, nor is user+foo broken up into user and
+#        foo.
+# 
+#        Patterns  are  applied  in  the  order as specified in the
+# 
+#                                                                 2
+# 
+# CANONICAL(5)                                         CANONICAL(5)
+# 
+#        table, until a pattern is found that  matches  the  search
+#        string.
+# 
+#        Results  are the same as with normal indexed file lookups,
+#        with the additional feature that parenthesized  substrings
+#        from  the pattern can be interpolated as $1, $2 and so on.
+# 
 # BUGS
-#	The table format does not understand quoting conventions.
+#        The table format does not understand quoting  conventions.
+# 
 # CONFIGURATION PARAMETERS
-# .ad
-# .fi
-#	The following \fBmain.cf\fR parameters are especially relevant to
-#	this topic. See the Postfix \fBmain.cf\fR file for syntax details
-#	and for default values. Use the \fBpostfix reload\fR command after
-#	a configuration change.
-# .IP \fBcanonical_maps\fR
-#	List of canonical mapping tables.
-# .IP \fBrecipient_canonical_maps\fR
-#	Address mapping lookup table for envelope and header recipient
-#	addresses.
-# .IP \fBsender_canonical_maps\fR
-#	Address mapping lookup table for envelope and header sender
-#	addresses.
-# .PP
-#	Other parameters of interest:
-# .IP \fBinet_interfaces\fR
-#	The network interface addresses that this system receives mail on.
-# .IP \fBmasquerade_domains\fR
-#	List of domains that hide their subdomain structure.
-# .IP \fBmasquerade_exceptions\fR
-#	List of user names that are not subject to address masquerading.
-# .IP \fBmydestination\fR
-#	List of domains that this mail system considers local.
-# .IP \fBmyorigin\fR
-#	The domain that is appended to locally-posted mail.
-# .IP \fBowner_request_special\fR
-#	Give special treatment to \fBowner-\fIxxx\fR and \fIxxx\fB-request\fR
-#	addresses.
+#        The  following  main.cf parameters are especially relevant
+#        to this topic. See the Postfix  main.cf  file  for  syntax
+#        details  and  for  default  values. Use the postfix reload
+#        command after a configuration change.
+# 
+#        canonical_maps
+#               List of canonical mapping tables.
+# 
+#        recipient_canonical_maps
+#               Address  mapping  lookup  table  for  envelope  and
+#               header recipient addresses.
+# 
+#        sender_canonical_maps
+#               Address  mapping  lookup  table  for  envelope  and
+#               header sender addresses.
+# 
+#        Other parameters of interest:
+# 
+#        inet_interfaces
+#               The network interface addresses  that  this  system
+#               receives mail on.
+# 
+#        masquerade_domains
+#               List  of  domains  that hide their subdomain struc-
+#               ture.
+# 
+#        masquerade_exceptions
+#               List of user names that are not subject to  address
+#               masquerading.
+# 
+#        mydestination
+#               List  of  domains  that  this mail system considers
+#               local.
+# 
+#        myorigin
+#               The domain that is appended to locally-posted mail.
+# 
+#        owner_request_special
+#               Give special treatment to owner-xxx and xxx-request
+#               addresses.
+# 
 # SEE ALSO
-#	cleanup(8) canonicalize and enqueue mail
-#	postmap(1) create mapping table
-#	virtual(5) virtual domain mapping
+#        cleanup(8) canonicalize and enqueue mail
+# 
+#                                                                 3
+# 
+# CANONICAL(5)                                         CANONICAL(5)
+# 
+#        postmap(1) create mapping table
+#        virtual(5) virtual domain mapping
+#        pcre_table(5) format of PCRE tables
+#        regexp_table(5) format of POSIX regular expression tables
+# 
 # LICENSE
-# .ad
-# .fi
-#	The Secure Mailer license must be distributed with this software.
+#        The Secure Mailer license must be  distributed  with  this
+#        software.
+# 
 # AUTHOR(S)
-#	Wietse Venema
-#	IBM T.J. Watson Research
-#	P.O. Box 704
-#	Yorktown Heights, NY 10598, USA
-#--
-
-# By default, this file is not used.  See sample-canonical.cf
+#        Wietse Venema
+#        IBM T.J. Watson Research
+#        P.O. Box 704
+#        Yorktown Heights, NY 10598, USA
+# 
+#                                                                 4
+# 

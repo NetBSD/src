@@ -30,15 +30,18 @@ to the \fBbounce\fR(8) or \fBdefer\fR(8) daemon as appropriate.
 .fi
 The external command attributes are given in the \fBmaster.cf\fR
 file at the end of a service definition.  The syntax is as follows:
-.IP "\fBflags=FR.>\fR (optional)"
+.IP "\fBflags=BFR.>\fR (optional)"
 Optional message processing flags. By default, a message is
 copied unchanged.
 .RS
+.IP \fBB\fR
+Append a blank line at the end of each message. This is required
+by some mail user agents that recognize "\fBFrom \fR" lines only
+when preceded by a blank line.
 .IP \fBF\fR
 Prepend a "\fBFrom \fIsender time_stamp\fR" envelope header to
 the message content.
-This is expected by, for example, \fBUUCP\fR software. The \fBF\fR
-flag also causes an empty line to be appended to the message.
+This is expected by, for example, \fBUUCP\fR software.
 .IP \fBR\fR
 Prepend a \fBReturn-Path:\fR message header with the envelope sender
 address.
@@ -56,7 +59,15 @@ specified \fIusername\fR.  The software refuses to execute
 commands with root privileges, or with the privileges of the
 mail system owner. If \fIgroupname\fR is specified, the
 corresponding group ID is used instead of the group ID of
-of \fIusername\fR.
+\fIusername\fR.
+.IP "\fBeol=string\fR (default: \fB\en\fR)"
+The output record delimiter. Typically one would use either
+\fB\er\en\fR or \fB\en\fR. The usual C-style backslash escape
+sequences are recognized: \fB\ea \eb \ef \en \er \et \ev
+\e\fIoctal\fR and \fB\e\e\fR.
+.IP "\fBsize\fR=\fIsize_limit\fR (optional)"
+Messages greater in size than this limit (in bytes) will be bounced
+back to the sender.
 .IP "\fBargv\fR=\fIcommand\fR... (required)"
 The command to be executed. This must be specified as the
 last command attribute.
@@ -87,6 +98,9 @@ A command-line argument that contains \fB${\fBrecipient\fR}\fR
 expands into as many command-line arguments as there are recipients.
 .IP \fB${\fBsender\fR}\fR
 This macro expands to the envelope sender address.
+.IP \fB${\fBsize\fR}\fR
+This macro expands to Postfix's idea of the message size, which
+is an approximation of the size of the message as delivered.
 .IP \fB${\fBuser\fR}\fR
 This macro expands to the username part of a recipient address.
 For example, with an address \fIuser+foo@domain\fR the username
@@ -127,6 +141,9 @@ a configuration change.
 .SH Miscellaneous
 .ad
 .fi
+.IP \fBexport_environment\fR
+List of names of environment parameters that can be exported
+to non-Postfix processes.
 .IP \fBmail_owner\fR
 The process privileges used while not running an external command.
 .SH "Resource controls"

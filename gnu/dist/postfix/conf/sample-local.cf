@@ -7,6 +7,25 @@
 # See the sample-aliases.cf file for parameters that are specific to
 # alias database lookup.
 
+# The biff parameter specifies whether or not to contact the biff
+# server.  This server sends "new mail" notifications to users who
+# have requested new mail notification with "biff y".   
+# 
+# For compatibility reasons this feature is on by default.  On systems
+# with lots of interactive users, this "protocol" can be a real
+# performance pig.  Specify "biff = no" to disable.
+# 
+# biff = no
+biff = yes
+
+# The require_home_directory parameter controls whether a local
+# recipient's home directory must exist before mail delivery is
+# attempted. By default this test is disabled. It can be useful for
+# environments that import home directories to the file server (NOT
+# RECOMMENDED).
+# 
+require_home_directory = no
+
 #
 # OVERRIDE LOCAL TRANSPORT
 #
@@ -18,6 +37,12 @@
 # By default, local mail is delivered to the transport called "local",
 # which is just the name of a service that is defined the master.cf file.
 #
+# Specify a string of the form transport:nexthop, where transport is
+# the name of a mail delivery transport defined in master.cf.  The
+# :nexthop part is optional. For more details see the sample transports
+# file.
+#
+local_transport = lmtp:unix:/file/name
 local_transport = local
 
 #
@@ -51,6 +76,8 @@ local_transport = local
 # ${name:value} to expand value only when $name does (does not) exist.
 #
 #forward_path = /var/forward/$user
+#forward_path = /var/forward/$user/.forward$recipient_delimiter$extension,
+#	/var/forward/$user/.forward
 forward_path = $home/.forward$recipient_delimiter$extension,$home/.forward
 
 # The allow_mail_to_commands parameter restricts mail delivery to
@@ -137,16 +164,30 @@ mailbox_command =
 # has precedence over the mailbox_command, fallback_transport and
 # luser_relay parameters.
 #
+# Specify a string of the form transport:nexthop, where transport is
+# the name of a mail delivery transport defined in master.cf.  The
+# :nexthop part is optional. For more details see the sample transport
+# configuration file.
+#
+# mailbox_transport = lmtp:unix:/file/name
+# mailbox_transport = cyrus
 mailbox_transport =
 
 # The fallback_transport specifies the optional transport in master.cf
 # to use for recipients that are not found in the UNIX passwd database.
 # This parameter has precedence over the luser_relay parameter.
 #
+# Specify a string of the form transport:nexthop, where transport is
+# the name of a mail delivery transport defined in master.cf.  The
+# :nexthop part is optional. For more details see the sample transport
+# configuration file.
+#
+# fallback_transport = lmtp:unix:/file/name
+# fallback_transport = cyrus
 fallback_transport =
 
 #
-# RATE CONTROLS
+# RESOURCE CONTROLS
 #
 
 # The local_destination_concurrency_limit parameter limits the number
@@ -158,6 +199,13 @@ fallback_transport =
 # a mailing list manager). You don't want to run lots of those.
 #
 local_destination_concurrency_limit = 2
+
+# The mailbox_size_limit parameter controls the maximal size of a
+# mailbox or maildir file (in fact, it limits the size of any file
+# that is written to upon local delivery) The default is 50 MBytes.
+# This limit must not be set smaller than the message size limit.
+# 
+mailbox_size_limit = 51200000
 
 # The local_destination_recipient_limit parameter limits the number
 # of recipients per local message delivery.  The default limit is

@@ -12,7 +12,7 @@ SHELL	= /bin/sh
 default: update
 
 update depend printfck clean tidy depend_update: Makefiles
-	$(MAKE) $@ MAKELEVEL=
+	$(MAKE) MAKELEVEL= $@
 
 makefiles Makefiles:
-	$(MAKE) -f Makefile.in Makefiles MAKELEVEL=
+	$(MAKE) -f Makefile.in MAKELEVEL= Makefiles

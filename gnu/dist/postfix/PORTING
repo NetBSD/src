@@ -15,9 +15,10 @@ native flavor, not the emulated one.
 - Add an #ifdef SYSTEMTYPE section to the central util/sys_defs.h
 include file.  You may have to invent new feature macros.  Please
 choose sensible feature macro names such as HAS_DBM or
-FIONREAD_IN_SYS_FILIO_H.  I strongly recommend against #ifdef
-SYSTEMTYPE dependencies in individual source files.  This may seem
-to be the quickest solution, but it will create a mess that becomes
-increasingly difficult to maintain over time. Moreover, with the
-next port you'd have to place #ifdefs all over the source code
-again.
+FIONREAD_IN_SYS_FILIO_H.  
+
+I strongly object to #ifdef SYSTEMTYPE dependencies in individual
+source files.  This may seem to be the quickest solution, but it
+will create a mess that becomes increasingly difficult to maintain
+over time. Moreover, with the next port to another system you'd
+have to place #ifdefs all over the source code again.

@@ -12,38 +12,127 @@ format of Postfix virtual table
 .SH DESCRIPTION
 .ad
 .fi
-The optional \fBvirtual\fR table specifies redirections for local
-and non-local recipients or domains. The redirections are used by
-the \fBcleanup\fR(8) daemon. The redirections are recursive.
+The optional \fBvirtual\fR table specifies address redirections for
+local and non-local recipients or domains. The redirections are used
+by the \fBcleanup\fR(8) daemon. The redirections are recursive.
 
-The \fBvirtual\fR redirection is applied only to the recipient
-envelope address, and does not affect message headers.
+The \fBvirtual\fR redirection is applied only to recipient
+envelope addresses, and does not affect message headers.
 Think Sendmail rule set \fBS0\fR, if you like. Use \fBcanonical\fR(5)
 mapping to rewrite header and envelope addresses in general.
 
-The file serves as input to the \fBpostmap\fR(1) command. The
-result, an indexed file in \fBdbm\fR or \fBdb\fR format,
-is used for fast searching by the mail system. After an update
-it may take a minute or so before the change becomes visible.
-Issue a \fBpostfix reload\fR command to eliminate the delay.
+Normally, the \fBvirtual\fR table is specified as a text file that
+serves as input to the \fBpostmap\fR(1) command.
+The result, an indexed file in \fBdbm\fR or \fBdb\fR format,
+is used for fast searching by the mail system. Execute the command
+\fBpostmap /etc/postfix/virtual\fR in order to rebuild the indexed
+file after changing the text file.
 
-Typical support for a virtual domain looks like the following:
+When the table is provided via other means such as NIS, LDAP
+or SQL, the same lookups are done as for ordinary indexed files.
 
+Alternatively, the table can be provided as a regular-expression
+map where patterns are given as regular expressions. In that case,
+the lookups are done in a slightly different way as described below.
+.SH POSTFIX-STYLE VIRTUAL DOMAINS
+.na
+.nf
+.ad
+.fi
+With a Postfix-style virtual domain, the virtual domain has its
+own user name space. Local (i.e. non-virtual) usernames are not
+visible in a Postfix-style virtual domain. In particular, local
+\fBaliases\fR(5) and mailing lists are not visible as
+\fIlocalname@virtual.domain\fR.
+
+Use a Sendmail-style virtual domain (see below) if local usernames,
+\fBaliases\fR(5) or mailing lists should be visible as
+\fIlocalname@virtual.domain\fR.
+
+Support for a Postfix-style virtual domain looks like:
+.sp
+/etc/postfix/virtual:
 .in +4
 .nf
 \fIvirtual.domain       anything\fR (right-hand content does not matter)
+\fIpostmaster@virtual.domain    postmaster\fR
 \fIuser1@virtual.domain address1\fR
 \fIuser2@virtual.domain address2, address3\fR
 .fi
 .in -4
 
-With this, the SMTP server accepts mail for \fIvirtual.domain\fR and
-rejects mail for \fIunknown\fR@\fIvirtual.domain\fR as undeliverable.
+The \fIvirtual.domain anything\fR entry is required for a
+Postfix-style virtual domain.
 
+Do not list a Postfix-style virtual domain in the \fBmain.cf
+mydestination\fR configuration parameter.
+Such an entry is required only for a Sendmail-style virtual domain.
+
+With a Postfix-style virtual domain, the Postfix SMTP server
+accepts mail for \fIknown-user@virtual.domain\fR and rejects
+mail for \fIunknown-user\fR@\fIvirtual.domain\fR as undeliverable.
+.SH SENDMAIL-STYLE VIRTUAL DOMAINS
+.na
+.nf
+.ad
+.fi
+With a Sendmail-style virtual domain, every local (i.e. non-virtual)
+username is visible in the virtual domain. In particular, every local
+alias and mailing list is visible as \fIlocalname@virtual.domain\fR.
+
+Use a Postfix-style virtual domain (see above) if local usernames,
+\fBaliases\fR(5) or mailing lists should not be visible as
+\fIlocalname@virtual.domain\fR.
+
+Support for a Sendmail-style virtual domain looks like:
+.sp
+/etc/postfix/main.cf:
+.in +4
+.nf
+mydestination = $myhostname localhost.$mydomain $mydomain
+.ti +4
+\fIvirtual.domain\fR
+.fi
+.in -4
+.sp
+/etc/postfix/virtual:
+.in +4
+.nf
+\fIuser1@virtual.domain address1\fR
+\fIuser2@virtual.domain address2, address3\fR
+.fi
+.in -4
+
+The \fBmain.cf mydestination\fR entry is required for a Sendmail-style
+virtual domain.
+
+Do not specify a \fIvirtual.domain whatever\fR virtual map entry
+for a Sendmail-style virtual domain.
+Such an entry is required only with a Postfix-style virtual domain.
+
+With a Sendmail-style virtual domain, the Postfix local delivery
+agent delivers mail for an unknown \fIuser\fR@\fIvirtual.domain\fR
+to a local (i.e.  non-virtual) user that has the same name; if no
+such recipient exists, the Postfix local delivery agent bounces the
+mail to the sender.
+.SH TABLE FORMAT
+.na
+.nf
+.ad
+.fi
 The format of the virtual table is as follows, mappings being
 tried in the order as listed in this manual page:
 .IP "blanks and comments"
 Blank lines are ignored, as are lines beginning with `#'.
+.IP "leading whitespace"
+Lines that begin with whitespace continue the previous line.
+.IP "\fIpattern result\fR"
+When \fIpattern\fR matches a mail address, replace it by the
+corresponding \fIresult\fR.
+.PP
+With lookups from indexed files such as DB or DBM, or from networked
+tables such as NIS, LDAP or SQL, patterns are tried in the order as
+listed below:
 .IP "\fIuser\fR@\fIdomain address, address, ...\fR"
 Mail for \fIuser\fR@\fIdomain\fR is redirected to \fIaddress\fR.
 This form has the highest precedence.
@@ -74,6 +163,27 @@ the search is repeated for the unextended address (e.g.
 propagated to the result of expansion. The matching order is:
 \fIuser+foo\fR@\fIdomain\fR, \fIuser\fR@\fIdomain\fR,
 \fIuser+foo\fR, \fIuser\fR, and @\fIdomain\fR.
+.SH REGULAR EXPRESSION TABLES
+.na
+.nf
+.ad
+.fi
+This section describes how the table lookups change when the table
+is given in the form of regular expressions. For a description of
+regular expression lookup table syntax, see \fBregexp_table\fR(5)
+or \fBpcre_table\fR(5).
+
+Each pattern is a regular expression that is applied to the entire
+address being looked up. Thus, \fIuser@domain\fR mail addresses are not
+broken up into their \fIuser\fR and \fI@domain\fR constituent parts,
+nor is \fIuser+foo\fR broken up into \fIuser\fR and \fIfoo\fR.
+
+Patterns are applied in the order as specified in the table, until a
+pattern is found that matches the search string.
+
+Results are the same as with normal indexed file lookups, with
+the additional feature that parenthesized substrings from the
+pattern can be interpolated as \fB$1\fR, \fB$2\fR and so on.
 .SH BUGS
 .ad
 .fi
@@ -105,6 +215,8 @@ addresses.
 .nf
 cleanup(8) canonicalize and enqueue mail
 postmap(1) create mapping table
+pcre_table(5) format of PCRE tables
+regexp_table(5) format of POSIX regular expression tables
 .SH LICENSE
 .na
 .nf

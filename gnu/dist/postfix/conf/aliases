@@ -32,121 +32,158 @@ decode:		root
 # Person who should get root's mail
 #root:		you
 
-#++
+# 
+# ALIASES(5)                                             ALIASES(5)
+# 
 # NAME
-#	aliases 5
-# SUMMARY
-#	format of the Postfix alias database
+#        aliases - format of the Postfix alias database
+# 
 # SYNOPSIS
-# .fi
-#	\fBpostalias\fR [\fB-c\fR \fIconfig_dir\fR] [\fB-v\fR]
-#		[\fIfile_type\fR:]\fIinput_file\fR
+#        newaliases
+# 
 # DESCRIPTION
-#	The \fBaliases\fR file provides a system-wide mechanism to
-#	redirect mail for local recipients.
-#
-#	The file serves as input to the \fBpostalias\fR(1) command. The
-#	result, an indexed file in \fBdbm\fR or \fBdb\fR format, is
-#	used for fast lookup by the mail system. After an update
-#	it may take a minute or so before the change becomes visible.
-#	Issue a \fBpostfix reload\fR command to eliminate the delay.
-#
-#	The input and output file formats are expected to be compatible
-#	with Sendmail version 8, and are expected to be suitable for the
-#	use as NIS maps.
-#
-#	Users can control delivery of their own mail by setting
-#	up \fB.forward\fR files in their home directory.
-#	Lines in per-user \fB.forward\fR files have the same syntax
-#	as the right-hand side of \fBaliases\fR entries.
-#
-#	The format of the alias database input file is as follows:
-# .IP \(bu
-#	An alias definition has the form
-# .sp
-# .ti +5
-#	\fIname\fR: \fIvalue1\fR, \fIvalue2\fR, \fI...\fR
-# .IP \(bu
-#	Lines that begin with whitespace continue the previous line.
-# .IP \(bu
-#	Blank lines are ignored, as are lines beginning with `#'.
-# .PP
-#	The \fIname\fR is a local address (no domain part).
-#	Use double quotes when the name contains any special characters
-#	such as whitespace, `#', `:', or `@'. The \fIname\fR is folded to
-#	lowercase, in order to make database lookups case insensitive.
-# .PP
-#	In addition, when an alias exists for \fBowner-\fIname\fR, delivery
-#	diagnostics are directed to that address, instead of to the originator.
-#	This is typically used to direct delivery errors to the owner of
-#	a mailing list, who is in a better position to deal with mailing
-#	list delivery problems than the originator of the undelivered mail.
-# .PP
-#	The \fIvalue\fR contains one or more of the following:
-# .IP \fIaddress\fR
-#	Mail is forwarded to \fIaddress\fR, which is compatible
-#	with the RFC 822 standard.
-# .IP \fI/file/name\fR
-#	Mail is appended to \fI/file/name\fR. See \fBlocal\fR(8)
-#	for details of delivery to file.
-#	Delivery is not limited to regular files.  For example, to dispose
-#	of unwanted mail, deflect it to \fB/dev/null\fR.
-# .IP "|\fIcommand\fR"
-#	Mail is piped into \fIcommand\fR. Commands that contain special
-#	characters, such as whitespace, should be enclosed between double
-#	quotes. See \fBlocal\fR(8) for details of delivery to command.
-# .sp
-#	When the command fails, a limited amount of command output is
-#	mailed back to the sender.  The file \fB/usr/include/sysexits.h\fR
-#	defines the expected exit status codes. For example, use
-#	\fB|"exit 67"\fR to simulate a "user unknown" error, and
-#	\fB|"exit 0"\fR to implement an expensive black hole.
-# .IP \fB:include:\fI/file/name\fR
-#	Mail is sent to the destinations listed in the named file.
-#	Lines in \fB:include:\fR files have the same syntax
-#	as the right-hand side of alias entries.
-# .sp
-#	A destination can be any destination that is described in this
-#	manual page. However, delivery to "|\fIcommand\fR" and
-#	\fI/file/name\fR is disallowed by default. To enable, edit the
-#	\fBallow_mail_to_commands\fR and \fBallow_mail_to_files\fR
-#	configuration parameters.
+#        The  aliases  table  provides  a  system-wide mechanism to
+#        redirect mail for local recipients. The  redirections  are
+#        processed by the Postfix local(8) delivery agent.
+# 
+#        Normally,  the  aliases  table is specified as a text file
+#        that serves as input  to  the  postalias(1)  command.  The
+#        result,  an  indexed file in dbm or db format, is used for
+#        fast lookup  by  the  mail  system.  Execute  the  command
+#        newaliases  in  order  to  rebuild  the indexed file after
+#        changing the Postfix alias database.
+# 
+#        The input and output file formats are expected to be  com-
+#        patible  with  Sendmail  version 8, and are expected to be
+#        suitable for the use as NIS maps.
+# 
+#        Users can control delivery of their own mail by setting up
+#        .forward files in their home directory.  Lines in per-user
+#        .forward files have the same syntax as the right-hand side
+#        of aliases entries.
+# 
+#        The format of the alias database input file is as follows:
+# 
+#        o      An alias definition has the form
+# 
+#                    name: value1, value2, ...
+# 
+#        o      Lines that begin with whitespace continue the  pre-
+#               vious line.
+# 
+#        o      Blank  lines  are  ignored,  as are lines beginning
+#               with `#'.
+# 
+#        The name is a local address (no domain part).  Use  double
+#        quotes  when the name contains any special characters such
+#        as whitespace, `#', `:', or `@'. The  name  is  folded  to
+#        lowercase, in order to make database lookups case insensi-
+#        tive.
+# 
+#        In addition, when an alias exists for owner-name, delivery
+#        diagnostics  are  directed  to that address, instead of to
+#        the originator.  This is typically used to direct delivery
+#        errors  to the owner of a mailing list, who is in a better
+#        position to deal with mailing list delivery problems  than
+#        the originator of the undelivered mail.
+# 
+#        The value contains one or more of the following:
+# 
+#                                                                 1
+# 
+# ALIASES(5)                                             ALIASES(5)
+# 
+#        address
+#               Mail  is  forwarded to address, which is compatible
+#               with the RFC 822 standard.
+# 
+#        /file/name
+#               Mail is appended to /file/name.  See  local(8)  for
+#               details  of delivery to file.  Delivery is not lim-
+#               ited to regular files.  For example, to dispose  of
+#               unwanted mail, deflect it to /dev/null.
+# 
+#        |command
+#               Mail  is  piped into command. Commands that contain
+#               special characters, such as whitespace,  should  be
+#               enclosed  between  double  quotes. See local(8) for
+#               details of delivery to command.
+# 
+#               When the command fails, a limited amount of command
+#               output  is  mailed  back  to  the sender.  The file
+#               /usr/include/sysexits.h defines the  expected  exit
+#               status  codes. For example, use |"exit 67" to simu-
+#               late a "user  unknown"  error,  and  |"exit  0"  to
+#               implement an expensive black hole.
+# 
+#        :include:/file/name
+#               Mail  is  sent  to  the  destinations listed in the
+#               named file.  Lines in :include: files have the same
+#               syntax as the right-hand side of alias entries.
+# 
+#               A  destination  can  be  any  destination  that  is
+#               described in this manual page. However, delivery to
+#               "|command" and /file/name is disallowed by default.
+#               To  enable,  edit  the  allow_mail_to_commands  and
+#               allow_mail_to_files configuration parameters.
+# 
 # ADDRESS EXTENSION
-# .ad
-# .fi
-#	When alias database search fails, and the recipient localpart
-#	contains the optional recipient delimiter (e.g., \fIuser+foo\fR),
-#	the search is repeated for the unextended address (e.g., \fIuser\fR).
+#        When alias database search fails, and the recipient local-
+#        part contains  the  optional  recipient  delimiter  (e.g.,
+#        user+foo),  the  search  is  repeated  for  the unextended
+#        address (e.g., user).
+# 
 # CONFIGURATION PARAMETERS
-# .ad
-# .fi
-#	The following \fBmain.cf\fR parameters are especially relevant to
-#	this topic. See the Postfix \fBmain.cf\fR file for syntax details
-#	and for default values. Use the \fBpostfix reload\fR command after
-#	a configuration change.
-# .IP \fBalias_maps\fR
-#	List of alias databases.
-# .IP \fBallow_mail_to_commands\fR
-#	Restrict the usage of mail delivery to external command.
-# .IP \fBallow_mail_to_files\fR
-#	Restrict the usage of mail delivery to external file.
-# .IP \fBowner_request_special\fR
-#	Give special treatment to \fBowner-\fIxxx\fR and \fIxxx\fB-request\fR
-#	addresses.
-# .IP \fBrecipient_delimiter\fR
-#	Delimiter that separates recipients from address extensions.
+#        The following main.cf parameters are  especially  relevant
+#        to  this  topic.  See  the Postfix main.cf file for syntax
+#        details and for default values.  Use  the  postfix  reload
+#        command after a configuration change.
+# 
+#        alias_maps
+#               List of alias databases.
+# 
+#        allow_mail_to_commands
+#               Restrict  the  usage  of  mail delivery to external
+#               command.
+# 
+#                                                                 2
+# 
+# ALIASES(5)                                             ALIASES(5)
+# 
+#        allow_mail_to_files
+#               Restrict the usage of  mail  delivery  to  external
+#               file.
+# 
+#        expand_owner_alias
+#               When delivering to an alias that has an owner- com-
+#               panion alias, set the envelope  sender  address  to
+#               the  right-hand  side  of  the owner alias, instead
+#               using of the left-hand side address.
+# 
+#        owner_request_special
+#               Give special treatment to owner-xxx and xxx-request
+#               addresses.
+# 
+#        recipient_delimiter
+#               Delimiter  that  separates  recipients from address
+#               extensions.
+# 
 # STANDARDS
-#	RFC 822 (ARPA Internet Text Messages)
+#        RFC 822 (ARPA Internet Text Messages)
+# 
 # SEE ALSO
-#	local(8) local delivery agent
-#	postalias(1) alias database management
+#        local(8) local delivery agent
+#        postalias(1) alias database management
+# 
 # LICENSE
-# .ad
-# .fi
-#	The Secure Mailer license must be distributed with this software.
+#        The Secure Mailer license must be  distributed  with  this
+#        software.
+# 
 # AUTHOR(S)
-#	Wietse Venema
-#	IBM T.J. Watson Research
-#	P.O. Box 704
-#	Yorktown Heights, NY 10598, USA
-#--
+#        Wietse Venema
+#        IBM T.J. Watson Research
+#        P.O. Box 704
+#        Yorktown Heights, NY 10598, USA
+# 
+#                                                                 3
+# 

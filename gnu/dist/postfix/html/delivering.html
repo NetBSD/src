@@ -39,11 +39,11 @@ click on the icon in the upper left-hand corner of this page.
 
 <li>The <a href="qmgr.8.html">queue manager</a> is the heart of
 the Postfix mail system. It contacts the <a href="local.8.html">local</a>,
-<a href="smtp.8.html">smtp</a>, or <a href="pipe.8.html">pipe</a>
-delivery agents, and sends a delivery request with queue file
-pathname information, the message sender address, the host to
-deliver to if the destination is remote, and one or more message
-recipient addresses.
+<a href="smtp.8.html">smtp</a>, <a href="lmtp.8.html">lmtp</a>, or
+<a href="pipe.8.html">pipe</a> delivery agents, and sends a delivery
+request with queue file pathname information, the message sender
+address, the host to deliver to if the destination is remote, and
+one or more message recipient addresses.
 
 <p>
 
@@ -108,11 +108,34 @@ such as the popular <a href="faq.html#procmail">procmail</a> program.
 
 <p>
 
+<li>The <a href="virtual.8.html">virtual</a> delivery agent is a
+very much stripped down version of the local delivery agent that
+delivers to mailboxes only. This is the most secure Postfix delivery
+agent, because it does not aliases expansions and no .forward file
+expansions. 
+
+<p>
+
+This delivery agent can deliver mail for multiple domains, which
+makes it especially suitable for hosting lots of small domains on
+a single machine.
+
+<p>
+
 <li>The <a href="smtp.8.html">SMTP client</a> looks up a list of
 mail exchangers for the destination host, sorts the list by
 preference, and tries each address in turn until it finds a server
 that responds.  On a busy Postfix system you will see several SMTP
 client processes running in parallel.
+
+<p>
+
+<li>The <a href="lmtp.8.html">LMTP client</a> speaks a protocol
+similar to SMTP. The client can connect to local or remote mailbox
+servers such as Cyrus. All the queue management is done by Postfix.
+The advantage of this setup is that one Postfix machine can feed
+multiple mailbox servers over LMTP. The opposite is true as well:
+one mailbox server can be fed over LMTP by multiple Postfix machines.
 
 <p>
 

@@ -1,0 +1,20 @@
+Qmail needs 54 seconds to relay 100 messages with one recipient.
+Default configuration, concurrencyremote = 100.
+
+spike_4% /usr/bin/time ./smtp-source -s 5 -m 100 fist
+       43.77 real         0.05 user         0.23 sys
+Jun  8 12:08:36 fist qmail: 865786116.744366 new msg 39901
+Jun  8 12:09:32 fist qmail: 865786172.791473 end msg 39921
+Total time: 56 sec
+
+/usr/bin/time ./smtp-source -s 10 -m 100 fist
+       26.66 real         0.06 user         0.26 sys
+Jun  8 12:06:20 fist qmail: 865785980.185885 new msg 39901
+Jun  8 12:07:14 fist qmail: 865786034.306429 end msg 39920
+Total time: 54 sec
+
+spike_8% /usr/bin/time ./smtp-source -s 20  -m 100 fist
+       20.94 real         0.11 user         0.27 sys
+Jun  8 12:10:52 fist qmail: 865786252.412648 new msg 39901
+Jun  8 12:11:46 fist qmail: 865786306.080605 end msg 39962
+Total time: 54 sec
