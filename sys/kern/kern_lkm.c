@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lkm.c,v 1.71 2004/02/18 23:44:49 matt Exp $	*/
+/*	$NetBSD: kern_lkm.c,v 1.72 2004/03/23 13:22:32 junyoung Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lkm.c,v 1.71 2004/02/18 23:44:49 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lkm.c,v 1.72 2004/03/23 13:22:32 junyoung Exp $");
 
 #include "opt_ddb.h"
 #include "opt_malloclog.h"
@@ -106,17 +106,17 @@ static int	lkm_state = LKMS_IDLE;
 static struct lkm_table	lkmods[MAXLKMS];	/* table of loaded modules */
 static struct lkm_table	*curp;			/* global for in-progress ops */
 
-static void lkmunreserve __P((void));
-static int _lkm_syscall __P((struct lkm_table *, int));
-static int _lkm_vfs __P((struct lkm_table *, int));
-static int _lkm_dev __P((struct lkm_table *, int));
+static void lkmunreserve(void);
+static int _lkm_syscall(struct lkm_table *, int);
+static int _lkm_vfs(struct lkm_table *, int);
+static int _lkm_dev(struct lkm_table *, int);
 #ifdef STREAMS
-static int _lkm_strmod __P((struct lkm_table *, int));
+static int _lkm_strmod(struct lkm_table *, int);
 #endif
-static int _lkm_exec __P((struct lkm_table *, int));
-static int _lkm_compat __P((struct lkm_table *, int));
+static int _lkm_exec(struct lkm_table *, int);
+static int _lkm_compat(struct lkm_table *, int);
 
-static int _lkm_checkver __P((struct lkm_table *));
+static int _lkm_checkver(struct lkm_table *);
 
 dev_type_open(lkmopen);
 dev_type_close(lkmclose);
@@ -332,7 +332,7 @@ lkmioctl(dev, cmd, data, flag, p)
 		}
 
 		/* copy in buffer full of data */
-		error = copyin(loadbufp->data, 
+		error = copyin(loadbufp->data,
 			       (caddr_t)curp->area + curp->offset, i);
 		if (error)
 			break;
@@ -408,7 +408,7 @@ lkmioctl(dev, cmd, data, flag, p)
 			return ENXIO;
 		}
 
-		if (curp->size - curp->offset > 0) 
+		if (curp->size - curp->offset > 0)
 			/* The remainder must be bss, so we clear it */
 			memset((caddr_t)curp->area + curp->offset, 0,
 			       curp->size - curp->offset);
@@ -426,7 +426,7 @@ lkmioctl(dev, cmd, data, flag, p)
 #endif
 		}
 
-		curp->entry = (int (*) __P((struct lkm_table *, int, int)))
+		curp->entry = (int (*)(struct lkm_table *, int, int))
 				(*((long *) (data)));
 
 		/* call entry(load)... (assigns "private" portion) */
@@ -575,7 +575,7 @@ lkmioctl(dev, cmd, data, flag, p)
 		statp->size	= curp->size / PAGESIZE;
 		statp->private	= (unsigned long)curp->private.lkm_any;
 		statp->ver	= LKM_VERSION;
-		copystr(curp->private.lkm_any->lkm_name, 
+		copystr(curp->private.lkm_any->lkm_name,
 			  statp->name,
 			  MAXLKMNAME - 2,
 			  (size_t *)0);
@@ -787,7 +787,7 @@ _lkm_dev(lkmtp, cmd)
 		if (error != 0)
 			return (error);
 
-		args->mod.lkm_offset = 
+		args->mod.lkm_offset =
 			LKM_MAKEMAJOR(args->lkm_bdevmaj, args->lkm_cdevmaj);
 		break;
 
@@ -910,7 +910,7 @@ _lkm_compat(lkmtp, cmd)
  */
 int
 lkmdispatch(lkmtp, cmd)
-	struct lkm_table *lkmtp;	
+	struct lkm_table *lkmtp;
 	int cmd;
 {
 	int error = 0;		/* default = success */
