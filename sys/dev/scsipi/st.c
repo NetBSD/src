@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.114.2.5 2000/11/22 16:04:50 bouyer Exp $ */
+/*	$NetBSD: st.c,v 1.114.2.6 2000/12/08 09:12:42 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -364,7 +364,7 @@ void	stattach __P((struct device *, struct device *, void *));
 void	st_identify_drive __P((struct st_softc *,
 	    struct scsipi_inquiry_pattern *));
 void	st_loadquirks __P((struct st_softc *));
-int	st_mount_tape __P((struct st_softc *, int, int));
+int	st_mount_tape __P((dev_t, int));
 void	st_unmount __P((struct st_softc *, boolean));
 int	st_decide_mode __P((struct st_softc *, boolean));
 void	ststart __P((struct scsipi_periph *));
@@ -484,9 +484,7 @@ stattach(parent, self, aux)
 	 */
 	st_identify_drive(st, &sa->sa_inqbuf);
 	/*
-	 * Use the subdriver to request information regarding
-	 * the drive. We cannot use interrupts yet, so the
-	 * request must specify this.
+	 * Use the subdriver to request information regarding the drive.
 	 */
 	printf("\n");
 	printf("%s: %s", st->sc_dev.dv_xname, st->quirkdata ? "rogue, " : "");
@@ -654,54 +652,54 @@ stopen(dev, flags, mode, p)
 		ntries = ST_MOUNT_DELAY;
 	}
 
-       for (error = tries = 0; tries < ntries; tries++) {
-	       int slpintr, oflags;
+	for (error = tries = 0; tries < ntries; tries++) {
+		int slpintr, oflags;
 
-	       /*
-		* If we had no error, or we're opening the control mode
-		* device, we jump out right away.
-		*/
+		/*
+		 * If we had no error, or we're opening the control mode
+		 * device, we jump out right away.
+		 */
 
-	       error = scsipi_test_unit_ready(periph, sflags);
-	       if (error == 0 || stmode == CTRL_MODE) {
-		       break;
-	       }
+		error = scsipi_test_unit_ready(periph, sflags);
+		if (error == 0 || stmode == CTRL_MODE) {
+			break;
+		}
 
-	       /*
-		* We had an error.
-		*
-		* If we're already mounted or we aren't configured for
-		* a mount delay, or the error isn't a NOT READY error,
-		* skip to the error exit now.
-		*/
-	       if ((st->flags & ST_MOUNTED) || ST_MOUNT_DELAY == 0 ||
-		   (st->mt_key != SKEY_NOT_READY)) {
-		       goto bad;
-	       }
+		/*
+		 * We had an error.
+		 *
+		 * If we're already mounted or we aren't configured for
+		 * a mount delay, or the error isn't a NOT READY error,
+		 * skip to the error exit now.
+		 */
+		if ((st->flags & ST_MOUNTED) || ST_MOUNT_DELAY == 0 ||
+		    (st->mt_key != SKEY_NOT_READY)) {
+			goto bad;
+		}
 
-	       /*
-		* clear any latched errors.
-		*/
-	       st->mt_resid = 0;
-	       st->mt_erreg = 0;
-	       st->asc = 0;
-	       st->ascq = 0;
+		/*
+		 * clear any latched errors.
+		 */
+		st->mt_resid = 0;
+		st->mt_erreg = 0;
+		st->asc = 0;
+		st->ascq = 0;
 
-	       /*
-		* Fake that we have the device open so
-		* we block other apps from getting in.
-		*/
+		/*
+		 * Fake that we have the device open so
+		 * we block other apps from getting in.
+		 */
 
-	       oflags = periph->periph_flags;
-	       periph->periph_flags |= PERIPH_OPEN;
+		oflags = periph->periph_flags;
+		periph->periph_flags |= PERIPH_OPEN;
 
-	       slpintr = tsleep(&lbolt, PUSER|PCATCH, "stload", 0);
+		slpintr = tsleep(&lbolt, PUSER|PCATCH, "stload", 0);
 
-	       periph->periph_flags = oflags;	/* restore flags */
-	       if (slpintr) {
-		       goto bad;
-	       }
-       } 
+		periph->periph_flags = oflags;	/* restore flags */
+		if (slpintr) {
+			goto bad;
+		}
+	} 
 
 
 	/*
@@ -859,12 +857,20 @@ stclose(dev, flags, mode, p)
  * and try guess any that seem to be defaulted.
  */
 int
-st_mount_tape(st, dsty, flags)
-	struct st_softc *st;
-	int dsty, flags;
+st_mount_tape(dev, flags)
+	dev_t dev;
+	int flags;
 {
-	struct scsipi_periph *periph = st->sc_periph;
+	int unit;
+	u_int dsty;
+	struct st_softc *st;
+	struct scsipi_periph *periph;
 	int error = 0;
+
+	unit = STUNIT(dev);
+	dsty = STDSTY(dev);
+	st = st_cd.cd_devs[unit];
+	periph = st->sc_periph;
 
 	if (st->flags & ST_MOUNTED)
 		return (0);
@@ -2484,7 +2490,7 @@ st_interpret_sense(xs)
 	 * If generic sense processing will continue, we should not
 	 * print sense info here.
 	 */
-	if (retval == SCSIRET_CONTINUE)
+	if (retval == EJUSTRETURN)
 		doprint = 0;
 
 	if (doprint) {

@@ -1,4 +1,4 @@
-#	$NetBSD: vnode_if.src,v 1.20.2.1 2000/11/20 18:09:18 bouyer Exp $
+#	$NetBSD: vnode_if.src,v 1.20.2.2 2000/12/08 09:14:04 bouyer Exp $
 #
 # Copyright (c) 1992, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -503,6 +503,17 @@ vop_balloc {
 };
 
 #
+#% ballocn    vp      L L L
+#
+vop_ballocn {
+	IN struct vnode *vp;
+	IN off_t offset;
+	IN off_t length;
+	IN struct ucred *cred;
+	IN int flags;
+};
+
+#
 #% reallocblks        vp      L L L
 #
 vop_reallocblks {
@@ -569,3 +580,37 @@ vop_whiteout {
 #vop_bwrite {
 #	IN struct buf *bp;
 #};
+
+#
+#% getpages	vp L L L
+#
+vop_getpages {
+	IN struct vnode *vp;
+	IN voff_t offset;
+	IN vm_page_t *m;
+	IN int *count;
+	IN int centeridx;
+	IN vm_prot_t access_type;
+	IN int advice;
+	IN int flags;
+};
+
+#
+#% putpages	vp L L L
+#
+vop_putpages {
+	IN struct vnode *vp;
+	IN vm_page_t *m;
+	IN int count;
+	IN int flags;
+	IN int *rtvals;
+};
+
+#
+#% size		vp = = =
+#
+vop_size {
+	IN struct vnode *vp;
+	IN off_t size;
+	OUT off_t *eobp;
+};

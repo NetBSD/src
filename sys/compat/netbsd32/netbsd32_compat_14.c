@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_14.c,v 1.1.2.2 2000/11/22 16:02:50 bouyer Exp $	*/
+/*	$NetBSD: netbsd32_compat_14.c,v 1.1.2.3 2000/12/08 09:08:32 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1999 Eduardo E. Horvath
@@ -39,9 +39,15 @@
 #include <sys/sem.h>
 #include <sys/shm.h>  
 
+#ifndef	SYSVMSG
 #define	SYSVMSG
+#endif
+#ifndef	SYSVSEM
 #define	SYSVSEM
+#endif
+#ifndef	SYSVSHM
 #define	SYSVSHM
+#endif
 
 #include <sys/syscallargs.h>
 #include <compat/netbsd32/netbsd32.h>

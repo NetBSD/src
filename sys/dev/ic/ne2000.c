@@ -1,4 +1,4 @@
-/*	$NetBSD: ne2000.c,v 1.23.2.1 2000/11/20 11:40:49 bouyer Exp $	*/
+/*	$NetBSD: ne2000.c,v 1.23.2.2 2000/12/08 09:12:24 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -314,12 +314,12 @@ ne2000_detect(nict, nich, asict, asich)
 	/* Reset the board. */
 #ifdef GWETHER
 	bus_space_write_1(asict, asich, NE2000_ASIC_RESET, 0);
-	bus_space_barrier(asict, asich, 0, NE2000_NPORTS,
+	bus_space_barrier(asict, asich, 0, NE2000_ASIC_NPORTS,
 			  BUS_SPACE_BARRIER_READ | BUS_SPACE_BARRIER_WRITE);
 	delay(200);
 #endif /* GWETHER */
 	tmp = bus_space_read_1(asict, asich, NE2000_ASIC_RESET);
-	bus_space_barrier(asict, asich, 0, NE2000_NPORTS,
+	bus_space_barrier(asict, asich, 0, NE2000_ASIC_NPORTS,
 			  BUS_SPACE_BARRIER_READ | BUS_SPACE_BARRIER_WRITE);
 	delay(10000);
 
@@ -332,7 +332,7 @@ ne2000_detect(nict, nich, asict, asich)
 	 * the invasive thing for now.  Yuck.]
 	 */
 	bus_space_write_1(asict, asich, NE2000_ASIC_RESET, tmp);
-	bus_space_barrier(asict, asich, 0, NE2000_NPORTS,
+	bus_space_barrier(asict, asich, 0, NE2000_ASIC_NPORTS,
 			  BUS_SPACE_BARRIER_READ | BUS_SPACE_BARRIER_WRITE);
 	delay(5000);
 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.15.2.1 2000/11/20 18:08:07 bouyer Exp $
+#	$NetBSD: Makefile.inc,v 1.15.2.2 2000/12/08 09:08:09 bouyer Exp $
 #
 #	Configuration variables (default values are below):
 #
@@ -43,7 +43,7 @@ COMPATMAKE= \
 	    COMPATCPPFLAGS=${CPPFLAGS:S@^-I.@-I${COMPATDOTDIR}@g:Q} \
 	    ${COMPATMISCMAKEFLAGS}
 
-${COMPATLIB}:		.NOTMAIN __always_make_compatlib
+${COMPATLIB}:		.NOTMAIN .MAKE __always_make_compatlib
 	@echo making sure the compat library is up to date...
 .if (${COMPAT_AS} == "library")
 	@${COMPATMAKE} libcompat.a
@@ -51,7 +51,7 @@ ${COMPATLIB}:		.NOTMAIN __always_make_compatlib
 	@${COMPATMAKE} libcompat.o
 .endif
 
-${COMPATLIB_PROF}:	.NOTMAIN __always_make_compatlib
+${COMPATLIB_PROF}:	.NOTMAIN .MAKE __always_make_compatlib
 	@echo making sure the profiled compat library is up to date...
 .if (${COMPAT_AS} == "library")
 	@${COMPATMAKE} libcompat_p.a
@@ -60,17 +60,17 @@ ${COMPATLIB_PROF}:	.NOTMAIN __always_make_compatlib
 .endif
 
 clean:			.NOTMAIN cleancompatlib
-cleancompatlib:		.NOTMAIN __always_make_compatlib
+cleancompatlib:		.NOTMAIN .MAKE __always_make_compatlib
 	@echo cleaning the compat library objects
 	@${COMPATMAKE} clean
 
 cleandir distclean:	.NOTMAIN cleandircompatlib
-cleandircompatlib:	.NOTMAIN __always_make_compatlib
+cleandircompatlib:	.NOTMAIN .MAKE  __always_make_compatlib
 	@echo cleandiring the compat library objects
 	@${COMPATMAKE} cleandir
 
 depend:			.NOTMAIN dependcompatlib
-dependcompatlib:	.NOTMAIN __always_make_compatlib
+dependcompatlib:	.NOTMAIN .MAKE __always_make_compatlib
 	@echo depending the compat library objects
 	@${COMPATMAKE} depend
 

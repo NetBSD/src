@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_subr.c,v 1.8.2.1 2000/11/20 18:08:04 bouyer Exp $	*/
+/*	$NetBSD: coda_subr.c,v 1.8.2.2 2000/12/08 09:07:05 bouyer Exp $	*/
 
 /*
  * 
@@ -227,7 +227,7 @@ coda_kill(whoIam, dcstat)
 #endif
 				count++;
 				CODADEBUG(CODA_FLUSH, 
-					 myprintf(("Live cnode fid %lx.%lx.%lx flags %d count %ld\n",
+					 myprintf(("Live cnode fid %lx.%lx.%lx flags %d count %d\n",
 						   (cp->c_fid).Volume,
 						   (cp->c_fid).Vnode,
 						   (cp->c_fid).Unique, 
@@ -277,7 +277,7 @@ coda_testflush(void)
 	for (cp = coda_cache[hash];
 	     cp != NULL;
 	     cp = CNODE_NEXT(cp)) {  
-	    myprintf(("Live cnode fid %lx.%lx.%lx count %ld\n",
+	    myprintf(("Live cnode fid %lx.%lx.%lx count %d\n",
 		      (cp->c_fid).Volume,(cp->c_fid).Vnode,
 		      (cp->c_fid).Unique, CTOV(cp)->v_usecount));
 	}
@@ -424,7 +424,7 @@ int handleDownCall(opcode, out)
 	      if (CTOV(cp)->v_flag & VTEXT)
 		  error = coda_vmflush(cp);
 	      CODADEBUG(CODA_ZAPFILE, myprintf(("zapfile: fid = (%lx.%lx.%lx), 
-                                              refcnt = %ld, error = %d\n",
+                                              refcnt = %d, error = %d\n",
 					      cp->c_fid.Volume, 
 					      cp->c_fid.Vnode, 
 					      cp->c_fid.Unique, 
@@ -452,7 +452,7 @@ int handleDownCall(opcode, out)
 	      coda_nc_zapParentfid(&out->coda_zapdir.CodaFid, IS_DOWNCALL);     
 	      
 	      CODADEBUG(CODA_ZAPDIR, myprintf(("zapdir: fid = (%lx.%lx.%lx), 
-                                          refcnt = %ld\n",cp->c_fid.Volume, 
+                                          refcnt = %d\n",cp->c_fid.Volume, 
 					     cp->c_fid.Vnode, 
 					     cp->c_fid.Unique, 
 					     CTOV(cp)->v_usecount - 1)););
@@ -486,7 +486,7 @@ int handleDownCall(opcode, out)
 		  
 		  error = coda_vmflush(cp);
 	      }
-	      CODADEBUG(CODA_PURGEFID, myprintf(("purgefid: fid = (%lx.%lx.%lx), refcnt = %ld, error = %d\n",
+	      CODADEBUG(CODA_PURGEFID, myprintf(("purgefid: fid = (%lx.%lx.%lx), refcnt = %d, error = %d\n",
                                             cp->c_fid.Volume, cp->c_fid.Vnode,
                                             cp->c_fid.Unique, 
 					    CTOV(cp)->v_usecount - 1, error)););

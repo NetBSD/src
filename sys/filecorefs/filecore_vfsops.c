@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vfsops.c,v 1.8.2.2 2000/11/20 18:08:51 bouyer Exp $	*/
+/*	$NetBSD: filecore_vfsops.c,v 1.8.2.3 2000/12/08 09:13:04 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 Andrew McMurry
@@ -324,6 +324,9 @@ filecore_mountfs(devvp, mp, p, argp)
 	mp->mnt_stat.f_fsid.val[1] = makefstype(MOUNT_FILECORE);
 	mp->mnt_maxsymlinklen = 0;
 	mp->mnt_flag |= MNT_LOCAL;
+	mp->mnt_dev_bshift = fcdr->log2secsize;
+	mp->mnt_fs_bshift = fcmp->log2bsize;
+
 	fcmp->fc_mountp = mp;
 	fcmp->fc_dev = dev;
 	fcmp->fc_devvp = devvp;

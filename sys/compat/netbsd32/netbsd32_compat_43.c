@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_43.c,v 1.8.2.1 2000/11/20 18:08:27 bouyer Exp $	*/
+/*	$NetBSD: netbsd32_compat_43.c,v 1.8.2.2 2000/12/08 09:08:33 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -27,6 +27,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#if defined(_KERNEL) && !defined(_LKM)
+#include "opt_compat_43.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,7 +99,7 @@ compat_43_netbsd32_ocreat(p, v, retval)
 	NETBSD32TO64_UAP(mode);
 	SCARG(&ua, flags) = O_WRONLY | O_CREAT | O_TRUNC;
 	sg = stackgap_init(p->p_emul);
-	NETBSD32_CHECK_ALT_EXIST(p, &sg, SCARG(&ua, path));
+	CHECK_ALT_EXIST(p, &sg, SCARG(&ua, path));
 
 	return (sys_open(p, &ua, retval));
 }
@@ -144,7 +148,7 @@ compat_43_netbsd32_stat43(p, v, retval)
 	NETBSD32TOP_UAP(path, const char);
 	SCARG(&ua, ub) = &sb43;
 	sg = stackgap_init(p->p_emul);
-	NETBSD32_CHECK_ALT_EXIST(p, &sg, SCARG(&ua, path));
+	CHECK_ALT_EXIST(p, &sg, SCARG(&ua, path));
 
 	rv = compat_43_sys_stat(p, &ua, retval);
 
@@ -174,7 +178,7 @@ compat_43_netbsd32_lstat43(p, v, retval)
 	NETBSD32TOP_UAP(path, const char);
 	SCARG(&ua, ub) = &sb43;
 	sg = stackgap_init(p->p_emul);
-	NETBSD32_CHECK_ALT_EXIST(p, &sg, SCARG(&ua, path));
+	CHECK_ALT_EXIST(p, &sg, SCARG(&ua, path));
 
 	rv = compat_43_sys_stat(p, &ua, retval);
 

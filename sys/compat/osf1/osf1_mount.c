@@ -1,4 +1,4 @@
-/*	$NetBSD: osf1_mount.c,v 1.15 1999/05/05 20:01:04 thorpej Exp $	*/
+/*	$NetBSD: osf1_mount.c,v 1.15.2.1 2000/12/08 09:08:40 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -57,7 +57,9 @@
  * rights to redistribute these changes.
  */
 
+#if defined(_KERNEL) && !defined(_LKM)
 #include "fs_nfs.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,7 +74,7 @@
 
 #include <compat/osf1/osf1.h>
 #include <compat/osf1/osf1_syscallargs.h>
-#include <compat/osf1/osf1_util.h>
+#include <compat/common/compat_util.h>
 #include <compat/osf1/osf1_cvt.h>
 
 #include <net/if.h>

@@ -1,7 +1,7 @@
-/*	$NetBSD: aout_util.h,v 1.1 1999/02/11 09:41:34 christos Exp $	 */
+/*	$NetBSD: svr4_exec_elf32.c,v 1.1.2.2 2000/12/08 09:08:45 bouyer Exp $	 */
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1994 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -36,23 +36,80 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef	_AOUT_UTIL_H_
-#define	_AOUT_UTIL_H_
+#define	ELFSIZE		32				/* XXX should die */
 
-#include <compat/common/compat_util.h>
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/kernel.h>
+#include <sys/proc.h>
+#include <sys/malloc.h>
+#include <sys/namei.h>
+#include <sys/vnode.h>
+#include <sys/exec_elf.h>
+#include <sys/exec.h>
 
-#ifdef DEBUG_AOUT
-#define DPRINTF(a)	uprintf a;
-#else
-#define DPRINTF(a)
+#include <sys/mman.h>
+
+#include <machine/cpu.h>
+#include <machine/reg.h>
+
+#include <compat/svr4/svr4_types.h>
+#include <compat/svr4/svr4_util.h>
+#include <compat/svr4/svr4_exec.h>
+#include <compat/svr4/svr4_errno.h>
+
+void *
+svr4_copyargs(pack, arginfo, stack, argp)
+	struct exec_package *pack;
+	struct ps_strings *arginfo;
+	void *stack;
+	void *argp;
+{
+	AuxInfo *a;
+
+	if (!(a = (AuxInfo *) elf32_copyargs(pack, arginfo, stack, argp)))
+		return NULL;
+#ifdef SVR4_COMPAT_SOLARIS2
+	if (pack->ep_emul_arg) {
+		a->au_type = AT_SUN_UID;
+		a->au_v = p->p_ucred->cr_uid;
+		a++;
+
+		a->au_type = AT_SUN_RUID;
+		a->au_v = p->p_cred->ruid;
+		a++;
+
+		a->au_type = AT_SUN_GID;
+		a->au_v = p->p_ucred->cr_gid;
+		a++;
+
+		a->au_type = AT_SUN_RGID;
+		a->au_v = p->p_cred->rgid;
+		a++;
+	}
 #endif
+	return a;
+}
 
-extern const char aout_emul_path[];
+int
+svr4_elf32_probe(p, epp, eh, itp, pos)
+	struct proc *p;
+	struct exec_package *epp;
+	void *eh;
+	char *itp;
+	vaddr_t *pos;
+{
+	const char *bp;
+	int error;
+	size_t len;
 
-#define AOUT_CHECK_ALT_EXIST(p, sgp, path) \
-    CHECK_ALT_EXIST(p, sgp, aout_emul_path, path)
-
-#define AOUT_CHECK_ALT_CREAT(p, sgp, path) \
-    CHECK_ALT_CREAT(p, sgp, aout_emul_path, path)
-
-#endif /* !_AOUT_UTIL_H_ */
+	if (itp[0]) {
+		if ((error = emul_find(p, NULL, epp->ep_esch->es_emul->e_path, itp, &bp, 0)))
+			return error;
+		if ((error = copystr(bp, itp, MAXPATHLEN, &len)))
+			return error;
+		free((void *)bp, M_TEMP);
+	}
+	*pos = SVR4_INTERP_ADDR;
+	return 0;
+}

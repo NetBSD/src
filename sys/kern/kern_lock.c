@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.25.2.2 2000/11/22 16:05:20 bouyer Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.25.2.3 2000/12/08 09:13:54 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -150,16 +150,51 @@ do {									\
 	}								\
 } while (0)
 
+#if defined(LOCKDEBUG)
+#if defined(DDB)
+#define	SPINLOCK_SPINCHECK_DEBUGGER	Debugger()
+#else
+#define	SPINLOCK_SPINCHECK_DEBUGGER	/* nothing */
+#endif
+
+#define	SPINLOCK_SPINCHECK_DECL						\
+	/* 32-bits of count -- wrap constitutes a "spinout" */		\
+	uint32_t __spinc = 0
+
+#define	SPINLOCK_SPINCHECK						\
+do {									\
+	if (++__spinc == 0) {						\
+		printf("LK_SPIN spinout, excl %d, share %d\n",		\
+		    lkp->lk_exclusivecount, lkp->lk_sharecount);	\
+		if (lkp->lk_exclusivecount)				\
+			printf("held by CPU %lu\n",			\
+			    (u_long) lkp->lk_cpu);			\
+		if (lkp->lk_lock_file)					\
+			printf("last locked at %s:%d\n",		\
+			    lkp->lk_lock_file, lkp->lk_lock_line);	\
+		if (lkp->lk_unlock_file)				\
+			printf("last unlocked at %s:%d\n",		\
+			    lkp->lk_unlock_file, lkp->lk_unlock_line);	\
+		SPINLOCK_SPINCHECK_DEBUGGER;				\
+	}								\
+} while (0)
+#else
+#define	SPINLOCK_SPINCHECK_DECL			/* nothing */
+#define	SPINLOCK_SPINCHECK			/* nothing */
+#endif /* LOCKDEBUG && DDB */
+
 /*
  * Acquire a resource.
  */
 #define ACQUIRE(lkp, error, extflags, drain, wanted)			\
 	if ((extflags) & LK_SPIN) {					\
 		int interlocked;					\
+		SPINLOCK_SPINCHECK_DECL;				\
 									\
 		if ((drain) == 0)					\
 			(lkp)->lk_waitcount++;				\
 		for (interlocked = 1;;) {				\
+			SPINLOCK_SPINCHECK;				\
 			if (wanted) {					\
 				if (interlocked) {			\
 					INTERLOCK_RELEASE((lkp),	\
@@ -305,6 +340,10 @@ lockinit(struct lock *lkp, int prio, const char *wmesg, int timo, int flags)
 		lkp->lk_timo = timo;
 	}
 	lkp->lk_wmesg = wmesg;	/* just a name for spin locks */
+#if defined(LOCKDEBUG)
+	lkp->lk_lock_file = NULL;
+	lkp->lk_unlock_file = NULL;
+#endif
 }
 
 /*
@@ -401,8 +440,13 @@ spinlock_switchcheck(void)
  * accepted shared locks and shared-to-exclusive upgrades to go away.
  */
 int
+#if defined(LOCKDEBUG)
+_lockmgr(__volatile struct lock *lkp, u_int flags,
+    struct simplelock *interlkp, const char *file, int line)
+#else
 lockmgr(__volatile struct lock *lkp, u_int flags,
     struct simplelock *interlkp)
+#endif
 {
 	int error;
 	pid_t pid;
@@ -513,6 +557,10 @@ lockmgr(__volatile struct lock *lkp, u_int flags,
 		lkp->lk_recurselevel = 0;
 		lkp->lk_flags &= ~LK_HAVE_EXCL;
 		SETHOLDER(lkp, LK_NOPROC, LK_NOCPU);
+#if defined(LOCKDEBUG)
+		lkp->lk_unlock_file = file;
+		lkp->lk_unlock_line = line;
+#endif
 		DONTHAVEIT(lkp);
 		WAKEUP_WAITER(lkp);
 		break;
@@ -566,6 +614,10 @@ lockmgr(__volatile struct lock *lkp, u_int flags,
 				break;
 			lkp->lk_flags |= LK_HAVE_EXCL;
 			SETHOLDER(lkp, pid, cpu_id);
+#if defined(LOCKDEBUG)
+			lkp->lk_lock_file = file;
+			lkp->lk_lock_line = line;
+#endif
 			HAVEIT(lkp);
 			if (lkp->lk_exclusivecount != 0)
 				panic("lockmgr: non-zero exclusive count");
@@ -631,6 +683,10 @@ lockmgr(__volatile struct lock *lkp, u_int flags,
 			break;
 		lkp->lk_flags |= LK_HAVE_EXCL;
 		SETHOLDER(lkp, pid, cpu_id);
+#if defined(LOCKDEBUG)
+		lkp->lk_lock_file = file;
+		lkp->lk_lock_line = line;
+#endif
 		HAVEIT(lkp);
 		if (lkp->lk_exclusivecount != 0)
 			panic("lockmgr: non-zero exclusive count");
@@ -661,6 +717,10 @@ lockmgr(__volatile struct lock *lkp, u_int flags,
 			if (lkp->lk_exclusivecount == 0) {
 				lkp->lk_flags &= ~LK_HAVE_EXCL;
 				SETHOLDER(lkp, LK_NOPROC, LK_NOCPU);
+#if defined(LOCKDEBUG)
+				lkp->lk_unlock_file = file;
+				lkp->lk_unlock_line = line;
+#endif
 				DONTHAVEIT(lkp);
 			}
 		} else if (lkp->lk_sharecount != 0) {
@@ -701,6 +761,10 @@ lockmgr(__volatile struct lock *lkp, u_int flags,
 			break;
 		lkp->lk_flags |= LK_DRAINING | LK_HAVE_EXCL;
 		SETHOLDER(lkp, pid, cpu_id);
+#if defined(LOCKDEBUG)
+		lkp->lk_lock_file = file;
+		lkp->lk_lock_line = line;
+#endif
 		HAVEIT(lkp);
 		lkp->lk_exclusivecount = 1;
 		/* XXX unlikely that we'd want this */
@@ -740,7 +804,11 @@ lockmgr(__volatile struct lock *lkp, u_int flags,
  */
 
 int
+#if defined(LOCKDEBUG)
+_spinlock_release_all(__volatile struct lock *lkp, const char *file, int line)
+#else
 spinlock_release_all(__volatile struct lock *lkp)
+#endif
 {
 	int s, count;
 	cpuid_t cpu_id;
@@ -765,6 +833,10 @@ spinlock_release_all(__volatile struct lock *lkp)
 		COUNT_CPU(cpu_id, -count);
 		lkp->lk_flags &= ~LK_HAVE_EXCL;
 		SETHOLDER(lkp, LK_NOPROC, LK_NOCPU);
+#if defined(LOCKDEBUG)
+		lkp->lk_unlock_file = file;
+		lkp->lk_unlock_line = line;
+#endif
 		DONTHAVEIT(lkp);
 	}
 #ifdef DIAGNOSTIC
@@ -785,7 +857,12 @@ spinlock_release_all(__volatile struct lock *lkp)
  */
 
 void
+#if defined(LOCKDEBUG)
+_spinlock_acquire_count(__volatile struct lock *lkp, int count,
+    const char *file, int line)
+#else
 spinlock_acquire_count(__volatile struct lock *lkp, int count)
+#endif
 {
 	int s, error;
 	cpuid_t cpu_id;
@@ -814,6 +891,10 @@ spinlock_acquire_count(__volatile struct lock *lkp, int count)
 	lkp->lk_flags &= ~LK_WANT_EXCL;
 	lkp->lk_flags |= LK_HAVE_EXCL;
 	SETHOLDER(lkp, LK_NOPROC, cpu_id);
+#if defined(LOCKDEBUG)
+	lkp->lk_lock_file = file;
+	lkp->lk_lock_line = line;
+#endif
 	HAVEIT(lkp);
 	if (lkp->lk_exclusivecount != 0)
 		panic("lockmgr: non-zero exclusive count");

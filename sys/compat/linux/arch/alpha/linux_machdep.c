@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.7.2.1 2000/11/20 18:08:17 bouyer Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.7.2.2 2000/12/08 09:08:21 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -80,7 +80,9 @@
 #include <machine/alpha.h>
 #include <machine/reg.h>
 
+#if defined(_KERNEL) && !defined(_LKM)
 #include "wsdisplay.h"
+#endif
 #if (NWSDISPLAY >0)
 #include <sys/ioctl.h>
 #include <dev/wscons/wsdisplay_usl_io.h>
@@ -312,6 +314,7 @@ linux_sendsig(catcher, sig, mask, code)
 {
 	struct proc *p = curproc;
 	struct trapframe *tf = p->p_md.md_tf;
+#ifdef notyet
 	struct linux_emuldata *edp;
 
 	/* Setup the signal frame (and part of the trapframe) */
@@ -326,6 +329,7 @@ linux_sendsig(catcher, sig, mask, code)
 	if (edp && sigismember(&edp->ps_siginfo, sig))
 		setup_linux_rt_sigframe(tf, sig, mask);
 	else
+#endif /* notyet */
 		setup_linux_sigframe(tf, sig, mask);
 
 	/* Signal handler for trampoline code */

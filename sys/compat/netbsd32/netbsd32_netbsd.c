@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.19.2.1 2000/11/20 18:08:30 bouyer Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.19.2.2 2000/12/08 09:08:34 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -28,22 +28,24 @@
  * SUCH DAMAGE.
  */
 
+#if defined(_KERNEL) && !defined(_LKM)
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
 #include "opt_ntp.h"
 #include "opt_compat_netbsd.h"
-#include "opt_compat_freebsd.h"
-#include "opt_compat_linux.h"
-#include "opt_compat_sunos.h"
 #include "opt_compat_43.h"
 #include "opt_sysv.h"
-#if defined(COMPAT_43) || defined(COMPAT_SUNOS) || defined(COMPAT_LINUX) || \
-    defined(COMPAT_FREEBSD)
-#define COMPAT_OLDSOCK /* used by <sys/socket.h> */
-#endif
 
 #include "fs_lfs.h"
 #include "fs_nfs.h"
+#endif
+
+/*
+ * Though COMPAT_OLDSOCK is needed only for COMPAT_43, SunOS, Linux,
+ * HP-UX, FreeBSD, Ultrix, OSF1, we define it unconditionally so that
+ * this would be LKM-safe.
+ */
+#define COMPAT_OLDSOCK /* used by <sys/socket.h> */
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,6 +89,7 @@
 #include <net/if.h>
 
 #include <compat/netbsd32/netbsd32.h>
+#include <compat/netbsd32/netbsd32_syscall.h>
 #include <compat/netbsd32/netbsd32_syscallargs.h>
 
 #include <machine/frame.h>
@@ -94,6 +97,9 @@
 #if defined(DDB)
 #include <ddb/ddbvar.h>
 #endif
+
+/* this is provided by kern/kern_exec.c */
+extern int exec_maxhdrsz;
 
 static __inline void netbsd32_from_timeval __P((struct timeval *, struct netbsd32_timeval *));
 static __inline void netbsd32_to_timeval __P((struct netbsd32_timeval *, struct timeval *));
@@ -129,6 +135,29 @@ static int dofilereadv32 __P((struct proc *, int, struct file *, struct netbsd32
 static int dofilewritev32 __P((struct proc *, int, struct file *, struct netbsd32_iovec *, 
 			       int,  off_t *, int, register_t *));
 static int change_utimes32 __P((struct vnode *, struct timeval *, struct proc *));
+
+extern char netbsd32_sigcode[], netbsd32_esigcode[];
+extern struct sysent netbsd32_sysent[];
+#ifdef SYSCALL_DEBUG
+extern const char * const netbsd32_syscallnames[];
+#endif
+
+const struct emul emul_netbsd32 = {
+	"netbsd32",
+	"/emul/netbsd32",
+	NULL,
+	netbsd32_sendsig,
+	netbsd32_SYS_syscall,
+	netbsd32_SYS_MAXSYSCALL,
+	netbsd32_sysent,
+#ifdef SYSCALL_DEBUG
+	netbsd32_syscallnames,
+#else
+	NULL,
+#endif
+	netbsd32_sigcode,
+	netbsd32_esigcode,
+};
 
 /* converters for structures that we need */
 static __inline void
@@ -268,6 +297,7 @@ netbsd32_to_iovecin(iov32p, iovp, len)
 		iovp->iov_base = (void *)(u_long)iov_base;
 		iovp->iov_len = (size_t)iov_len;
 	}
+	return error;
 }
 
 /* msg_iov must be done separately */
@@ -580,7 +610,7 @@ netbsd32_exit(p, v, retval)
 	struct sys_exit_args ua;
 
 	NETBSD32TO64_UAP(rval);
-	sys_exit(p, &ua, retval);
+	return sys_exit(p, &ua, retval);
 }
 
 int
@@ -654,7 +684,7 @@ netbsd32_open(p, v, retval)
 	NETBSD32TO64_UAP(flags);
 	NETBSD32TO64_UAP(mode);
 	sg = stackgap_init(p->p_emul);
-	NETBSD32_CHECK_ALT_EXIST(p, &sg, SCARG(&ua, path));
+	CHECK_ALT_EXIST(p, &sg, SCARG(&ua, path));
 
 	return (sys_open(p, &ua, retval));
 }
@@ -1468,7 +1498,7 @@ netbsd32_access(p, v, retval)
 	NETBSD32TOP_UAP(path, const char);
 	NETBSD32TO64_UAP(flags);
 	sg = stackgap_init(p->p_emul);
-	NETBSD32_CHECK_ALT_EXIST(p, &sg, SCARG(&ua, path));
+	CHECK_ALT_EXIST(p, &sg, SCARG(&ua, path));
 
 	return (sys_access(p, &ua, retval));
 }
@@ -1564,6 +1594,7 @@ netbsd32_profil(p, v, retval)
 	return (sys_profil(p, &ua, retval));
 }
 
+#ifdef KTRACE
 int
 netbsd32_ktrace(p, v, retval)
 	struct proc *p;
@@ -1584,6 +1615,7 @@ netbsd32_ktrace(p, v, retval)
 	NETBSD32TO64_UAP(pid);
 	return (sys_ktrace(p, &ua, retval));
 }
+#endif /* KTRACE */
 
 int
 netbsd32_sigaction(p, v, retval)
@@ -1688,7 +1720,7 @@ netbsd32_revoke(p, v, retval)
 
 	NETBSD32TOP_UAP(path, const char);
 	sg = stackgap_init(p->p_emul);
-	NETBSD32_CHECK_ALT_EXIST(p, &sg, SCARG(&ua, path));
+	CHECK_ALT_EXIST(p, &sg, SCARG(&ua, path));
 
 	return (sys_revoke(p, &ua, retval));
 }
@@ -1729,7 +1761,7 @@ netbsd32_readlink(p, v, retval)
 	NETBSD32TOP_UAP(buf, char);
 	NETBSD32TOX_UAP(count, size_t);
 	sg = stackgap_init(p->p_emul);
-	NETBSD32_CHECK_ALT_EXIST(p, &sg, SCARG(&ua, path));
+	CHECK_ALT_EXIST(p, &sg, SCARG(&ua, path));
 
 	return (sys_readlink(p, &ua, retval));
 }
@@ -1737,6 +1769,7 @@ netbsd32_readlink(p, v, retval)
 /* 
  * Need to completly reimplement this syscall due to argument copying.
  */
+/* ARGSUSED */
 int
 netbsd32_execve(p, v, retval)
 	struct proc *p;
@@ -1767,14 +1800,13 @@ netbsd32_execve(p, v, retval)
 	struct vmspace *vm;
 	char **tmpfap;
 	int szsigcode;
-	extern struct emul emul_netbsd;
-
+	struct exec_vmcmd *base_vcp = NULL;
 
 	NETBSD32TOP_UAP(path, const char);
 	NETBSD32TOP_UAP(argp, char *);
 	NETBSD32TOP_UAP(envp, char *);
 	sg = stackgap_init(p->p_emul);
-	NETBSD32_CHECK_ALT_EXIST(p, &sg, SCARG(&ua, path));
+	CHECK_ALT_EXIST(p, &sg, SCARG(&ua, path));
 
 	/*
 	 * figure out the maximum size of an exec header, if necessary.
@@ -1796,7 +1828,7 @@ netbsd32_execve(p, v, retval)
 	 * initialize the fields of the exec package.
 	 */
 	pack.ep_name = SCARG(&ua, path);
-	MALLOC(pack.ep_hdr, void *, exec_maxhdrsz, M_EXEC, M_WAITOK);
+	pack.ep_hdr = malloc(exec_maxhdrsz, M_EXEC, M_WAITOK);
 	pack.ep_hdrlen = exec_maxhdrsz;
 	pack.ep_hdrvalid = 0;
 	pack.ep_ndp = &nid;
@@ -1804,7 +1836,6 @@ netbsd32_execve(p, v, retval)
 	pack.ep_vmcmds.evs_cnt = 0;
 	pack.ep_vmcmds.evs_used = 0;
 	pack.ep_vap = &attr;
-	pack.ep_emul = &emul_netbsd;
 	pack.ep_flags = 0;
 
 	/* see if we can run it. */
@@ -1889,17 +1920,18 @@ netbsd32_execve(p, v, retval)
 
 	dp = (char *) ALIGN(dp);
 
-	szsigcode = pack.ep_emul->e_esigcode - pack.ep_emul->e_sigcode;
+	szsigcode = pack.ep_es->es_emul->e_esigcode -
+	    pack.ep_es->es_emul->e_sigcode;
 
 	/* Now check if args & environ fit into new stack */
 	if (pack.ep_flags & EXEC_32)
-		len = ((argc + envc + 2 + pack.ep_emul->e_arglen) * sizeof(int) +
-		       sizeof(int) + dp + STACKGAPLEN + szsigcode +
-		       sizeof(struct ps_strings)) - argp;
+		len = ((argc + envc + 2 + pack.ep_es->es_arglen) *
+		    sizeof(int) + sizeof(int) + dp + STACKGAPLEN +
+		    szsigcode + sizeof(struct ps_strings)) - argp;
 	else
-		len = ((argc + envc + 2 + pack.ep_emul->e_arglen) * sizeof(char *) +
-		       sizeof(int) + dp + STACKGAPLEN + szsigcode +
-		       sizeof(struct ps_strings)) - argp;
+		len = ((argc + envc + 2 + pack.ep_es->es_arglen) *
+		    sizeof(char *) + sizeof(int) + dp + STACKGAPLEN +
+		    szsigcode + sizeof(struct ps_strings)) - argp;
 
 	len = ALIGN(len);	/* make the stack "safely" aligned */
 
@@ -1937,15 +1969,40 @@ netbsd32_execve(p, v, retval)
 		struct exec_vmcmd *vcp;
 
 		vcp = &pack.ep_vmcmds.evs_cmds[i];
+		if (vcp->ev_flags & VMCMD_RELATIVE) {
+#ifdef DIAGNOSTIC
+			if (base_vcp == NULL)
+				panic("execve: relative vmcmd with no base");
+			if (vcp->ev_flags & VMCMD_BASE)
+				panic("execve: illegal base & relative vmcmd");
+#endif
+			vcp->ev_addr += base_vcp->ev_addr;
+		}
 		error = (*vcp->ev_proc)(p, vcp);
+#ifdef DEBUG
+		if (error) {
+			if (i > 0)
+				printf("vmcmd[%d] = %#lx/%#lx @ %#lx\n", i-1,
+				       vcp[-1].ev_addr, vcp[-1].ev_len,
+				       vcp[-1].ev_offset);
+			printf("vmcmd[%d] = %#lx/%#lx @ %#lx\n", i,
+			       vcp->ev_addr, vcp->ev_len, vcp->ev_offset);
+		}
+#endif
+		if (vcp->ev_flags & VMCMD_BASE)
+			base_vcp = vcp;
 	}
 
 	/* free the vmspace-creation commands, and release their references */
 	kill_vmcmds(&pack.ep_vmcmds);
 
 	/* if an error happened, deallocate and punt */
-	if (error)
+	if (error) {
+#ifdef DEBUG
+		printf("execve: vmcmd %i failed: %d\n", i-1, error);
+#endif
 		goto exec_abort;
+	}
 
 	/* remember information about the process */
 	arginfo.ps_nargvstr = argc;
@@ -1953,8 +2010,12 @@ netbsd32_execve(p, v, retval)
 
 	stack = (char *) (vm->vm_minsaddr - len);
 	/* Now copy argc, args & environ to new stack */
-	if (!(*pack.ep_emul->e_copyargs)(&pack, &arginfo, stack, argp))
+	if (!(*pack.ep_es->es_copyargs)(&pack, &arginfo, stack, argp)) {
+#ifdef DEBUG
+		printf("execve: copyargs failed\n");
+#endif
 		goto exec_abort;
+	}
 
 	/* fill process ps_strings info */
 	p->p_psstr = (struct ps_strings *)(stack - sizeof(struct ps_strings));
@@ -1964,15 +2025,23 @@ netbsd32_execve(p, v, retval)
 	p->p_psnenv = offsetof(struct ps_strings, ps_nenvstr);
 
 	/* copy out the process's ps_strings structure */
-	if (copyout(&arginfo, (char *)p->p_psstr, sizeof(arginfo)))
+	if (copyout(&arginfo, (char *)p->p_psstr, sizeof(arginfo))) {
+#ifdef DEBUG
+		printf("execve: ps_strings copyout failed\n");
+#endif
 		goto exec_abort;
+	}
 
 	/* copy out the process's signal trapoline code */
 	if (szsigcode) {
-		if (copyout((char *)pack.ep_emul->e_sigcode,
+		if (copyout((char *)pack.ep_es->es_emul->e_sigcode,
 		    p->p_sigacts->ps_sigcode = (char *)p->p_psstr - szsigcode,
-		    szsigcode))
+		    szsigcode)) {
+#ifdef DEBUG
+			printf("execve: sig trampoline copyout failed\n");
+#endif
 			goto exec_abort;
+		}
 #ifdef PMAP_NEED_PROCWR
 		/* This is code. Let the pmap do what is needed. */
 		pmap_procwr(p, (vaddr_t)p->p_sigacts->ps_sigcode, szsigcode);
@@ -2027,6 +2096,8 @@ netbsd32_execve(p, v, retval)
 	p->p_cred->p_svuid = p->p_ucred->cr_uid;
 	p->p_cred->p_svgid = p->p_ucred->cr_gid;
 
+	doexechooks(p);
+
 	uvm_km_free_wakeup(exec_map, (vaddr_t) argp, NCARGS);
 
 	PNBUF_PUT(nid.ni_cnd.cn_pnbuf);
@@ -2035,13 +2106,36 @@ netbsd32_execve(p, v, retval)
 	vput(pack.ep_vp);
 
 	/* setup new registers and do misc. setup. */
-	(*pack.ep_emul->e_setregs)(p, &pack, (u_long) stack);
+	(*pack.ep_es->es_setregs)(p, &pack, (u_long) stack);
 
 	if (p->p_flag & P_TRACED)
 		psignal(p, SIGTRAP);
 
-	p->p_emul = pack.ep_emul;
-	FREE(pack.ep_hdr, M_EXEC);
+	free(pack.ep_hdr, M_EXEC);
+
+	/*
+	 * Call emulation specific exec hook. This can setup setup per-process
+	 * p->p_emuldata or do any other per-process stuff an emulation needs.
+	 *
+	 * If we are executing process of different emulation than the
+	 * original forked process, call e_proc_exit() of the old emulation
+	 * first, then e_proc_exec() of new emulation. If the emulation is
+	 * same, the exec hook code should deallocate any old emulation
+	 * resources held previously by this process.
+	 */
+	if (p->p_emul && p->p_emul->e_proc_exit
+	    && p->p_emul != pack.ep_es->es_emul)
+		(*p->p_emul->e_proc_exit)(p);
+
+	/*
+	 * Call exec hook. Emulation code may NOT store reference to anything
+	 * from &pack.
+	 */
+        if (pack.ep_es->es_emul->e_proc_exec)
+                (*pack.ep_es->es_emul->e_proc_exec)(p, &pack);
+
+	/* update p_emul, the old value is no longer needed */
+	p->p_emul = pack.ep_es->es_emul;
 
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_EMUL))
@@ -2066,7 +2160,7 @@ bad:
 	uvm_km_free_wakeup(exec_map, (vaddr_t) argp, NCARGS);
 
 freehdr:
-	FREE(pack.ep_hdr, M_EXEC);
+	free(pack.ep_hdr, M_EXEC);
 	return error;
 
 exec_abort:
@@ -2084,7 +2178,7 @@ exec_abort:
 	VOP_CLOSE(pack.ep_vp, FREAD, cred, p);
 	vput(pack.ep_vp);
 	uvm_km_free_wakeup(exec_map, (vaddr_t) argp, NCARGS);
-	FREE(pack.ep_hdr, M_EXEC);
+	free(pack.ep_hdr, M_EXEC);
 	exit1(p, W_EXITCODE(0, SIGABRT));
 	exit1(p, -1);
 
@@ -4032,8 +4126,7 @@ netbsd32_mmap(p, v, retval)
 	NETBSD32TOX_UAP(pos, off_t);
 	error = sys_mmap(p, &ua, (register_t *)&rt);
 	if ((long)rt > (long)UINT_MAX)
-		printf("netbsd32_mmap: retval out of range: 0x%qx",
-		    rt);
+		printf("netbsd32_mmap: retval out of range: %p", rt);
 	*retval = (netbsd32_voidp)(u_long)rt;
 	return (error);
 }
@@ -5136,11 +5229,11 @@ netbsd32___stat13(p, v, retval)
 	int error;
 	struct nameidata nd;
 	caddr_t sg;
-	char *path;
+	const char *path;
 
 	path = (char *)(u_long)SCARG(uap, path);
 	sg = stackgap_init(p->p_emul);
-	NETBSD32_CHECK_ALT_EXIST(p, &sg, path);
+	CHECK_ALT_EXIST(p, &sg, path);
 
 	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE, path, p);
 	if ((error = namei(&nd)) != 0)
@@ -5210,11 +5303,11 @@ netbsd32___lstat13(p, v, retval)
 	int error;
 	struct nameidata nd;
 	caddr_t sg;
-	char *path;
+	const char *path;
 
 	path = (char *)(u_long)SCARG(uap, path);
 	sg = stackgap_init(p->p_emul);
-	NETBSD32_CHECK_ALT_EXIST(p, &sg, path);
+	CHECK_ALT_EXIST(p, &sg, path);
 
 	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE, path, p);
 	if ((error = namei(&nd)) != 0)
@@ -5337,6 +5430,7 @@ netbsd32_getsid(p, v, retval)
 	return (sys_getsid(p, &ua, retval));
 }
 
+#ifdef KTRACE
 int
 netbsd32_fktrace(p, v, retval)
 	struct proc *p;
@@ -5349,7 +5443,17 @@ netbsd32_fktrace(p, v, retval)
 		syscallarg(int) facs;
 		syscallarg(int) pid;
 	} */ *uap = v;
+#if 0
 	struct sys_fktrace_args ua;
+#else
+	/* XXXX */
+	struct sys_fktrace_noconst_args {
+		syscallarg(int) fd;
+		syscallarg(int) ops;
+		syscallarg(int) facs;
+		syscallarg(int) pid;
+	} ua;
+#endif
 
 	NETBSD32TOX_UAP(fd, int);
 	NETBSD32TO64_UAP(ops);
@@ -5357,6 +5461,7 @@ netbsd32_fktrace(p, v, retval)
 	NETBSD32TO64_UAP(pid);
 	return (sys_fktrace(p, &ua, retval));
 }
+#endif /* KTRACE */
 
 int
 netbsd32_preadv(p, v, retval)

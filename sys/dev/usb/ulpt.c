@@ -1,4 +1,4 @@
-/*	$NetBSD: ulpt.c,v 1.27.2.1 2000/11/20 11:43:27 bouyer Exp $	*/
+/*	$NetBSD: ulpt.c,v 1.27.2.2 2000/12/08 09:12:45 bouyer Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ulpt.c,v 1.24 1999/11/17 22:33:44 n_hibma Exp $	*/
 
 /*
@@ -402,33 +402,48 @@ ulptopen(dev_t dev, int flag, int mode, struct proc *p)
 #endif
 
 
+	error = 0;
+	sc->sc_refcnt++;
+
 	if ((flags & ULPT_NOPRIME) == 0)
 		ulpt_reset(sc);
 
 	for (spin = 0; (ulpt_status(sc) & LPS_SELECT) == 0; spin += STEP) {
 		if (spin >= TIMEOUT) {
+			error = EBUSY;
 			sc->sc_state = 0;
-			return (EBUSY);
+			goto done;
 		}
 
 		/* wait 1/4 second, give up if we get a signal */
 		error = tsleep((caddr_t)sc, LPTPRI | PCATCH, "ulptop", STEP);
 		if (error != EWOULDBLOCK) {
 			sc->sc_state = 0;
-			return (error);
+			goto done;
+		}
+
+		if (sc->sc_dying) {
+			error = ENXIO;
+			sc->sc_state = 0;
+			goto done;
 		}
 	}
 
 	err = usbd_open_pipe(sc->sc_iface, sc->sc_bulk, 0, &sc->sc_bulkpipe);
 	if (err) {
 		sc->sc_state = 0;
-		return (EIO);
+		error = EIO;
+		goto done;
 	}
 
 	sc->sc_state = ULPT_OPEN;
 
-	DPRINTF(("ulptopen: done\n"));
-	return (0);
+ done:
+	if (--sc->sc_refcnt < 0)
+		usb_detach_wakeup(USBDEV(sc->sc_dev));
+
+	DPRINTF(("ulptopen: done, error=%d\n", error));
+	return (error);
 }
 
 int

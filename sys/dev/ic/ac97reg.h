@@ -1,4 +1,4 @@
-/*	$NetBSD: ac97reg.h,v 1.1.6.2 2000/11/20 11:40:03 bouyer Exp $	*/
+/*	$NetBSD: ac97reg.h,v 1.1.6.3 2000/12/08 09:12:20 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1999 Constantine Sapuntzakis
@@ -27,30 +27,48 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#define AC97_REG_RESET                0x00
-#define AC97_SOUND_ENHANCEMENT(reg)   (((reg) >> 10) & 0x1f)
-#define AC97_REG_MASTER_VOLUME        0x02
-#define AC97_REG_HEADPHONE_VOLUME     0x04
-#define AC97_REG_MASTER_VOLUME_MONO   0x06
-#define AC97_REG_MASTER_TONE          0x08
-#define AC97_REG_PCBEEP_VOLUME        0x0a
-#define AC97_REG_PHONE_VOLUME         0x0c
-#define AC97_REG_MIC_VOLUME           0x0e
-#define AC97_REG_LINEIN_VOLUME        0x10
-#define AC97_REG_CD_VOLUME            0x12
-#define AC97_REG_VIDEO_VOLUME         0x14
-#define AC97_REG_AUX_VOLUME           0x16
-#define AC97_REG_PCMOUT_VOLUME        0x18
-#define AC97_REG_RECORD_SELECT        0x1a
-#define AC97_REG_RECORD_GAIN          0x1c
-#define AC97_REG_RECORD_GAIN_MIC      0x1e
-#define AC97_REG_GP                   0x20
-#define AC97_REG_3D_CONTROL           0x22
-#define AC97_REG_POWER                0x26
-#define AC97_REG_VENDOR_ID1           0x7c
-#define AC97_REG_VENDOR_ID2           0x7e
+#define	AC97_REG_RESET			0x00
+#define	AC97_SOUND_ENHANCEMENT(reg)	(((reg) >> 10) & 0x1f)
+#define	AC97_REG_MASTER_VOLUME		0x02
+#define	AC97_REG_HEADPHONE_VOLUME	0x04
+#define	AC97_REG_MASTER_VOLUME_MONO	0x06
+#define	AC97_REG_MASTER_TONE		0x08
+#define	AC97_REG_PCBEEP_VOLUME		0x0a
+#define	AC97_REG_PHONE_VOLUME		0x0c
+#define	AC97_REG_MIC_VOLUME		0x0e
+#define	AC97_REG_LINEIN_VOLUME		0x10
+#define	AC97_REG_CD_VOLUME		0x12
+#define	AC97_REG_VIDEO_VOLUME		0x14
+#define	AC97_REG_AUX_VOLUME		0x16
+#define	AC97_REG_PCMOUT_VOLUME		0x18
+#define	AC97_REG_RECORD_SELECT		0x1a
+#define	AC97_REG_RECORD_GAIN		0x1c
+#define	AC97_REG_RECORD_GAIN_MIC	0x1e
+#define	AC97_REG_GP			0x20
+#define	AC97_REG_3D_CONTROL		0x22
+				/*	0x24	reserved	*/
+#define	AC97_REG_POWER			0x26
 
-#define AC97_CODEC_ID(a0, a1, a2, x)					\
+/* AC'97 2.0 extensions -- 0x28-0x3a */
+#define	AC97_REG_EXTENDED_ID		0x28
+#define	AC97_REG_EXTENDED_STATUS	0x2a
+#define	AC97_REG_PCM_FRONT_DAC_RATE	0x2c
+#define	AC97_REG_PCM_SURR_DAC_RATE	0x2e
+#define	AC97_REG_PCM_LFE_DAC_RATE	0x30
+#define	AC97_REG_PCM_LR_ADC_RATE	0x32
+#define	AC97_REG_PCM_MIC_ADC_RATE	0x34
+#define	AC97_REG_CENTER_LFE_MASTER	0x36	/* center + LFE master volume */
+#define	AC97_REG_SURR_MASTER		0x38	/* surround (rear) master vol */
+				/*	0x3a	reserved	*/
+
+/* Modem -- 0x3c-0x58 */
+
+/* Vendor specific -- 0x5a-0x7b */
+
+#define	AC97_REG_VENDOR_ID1           0x7c
+#define	AC97_REG_VENDOR_ID2           0x7e
+
+#define	AC97_CODEC_ID(a0, a1, a2, x)					\
 	(((a0) << 24) | ((a1) << 16) | ((a2) << 8) | (x))
 
 #define	AC97_GET_CODEC_ID(id, cp)					\

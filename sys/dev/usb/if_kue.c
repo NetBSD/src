@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kue.c,v 1.32.2.3 2000/11/22 16:05:02 bouyer Exp $	*/
+/*	$NetBSD: if_kue.c,v 1.32.2.4 2000/12/08 09:12:44 bouyer Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -187,6 +187,7 @@ Static struct kue_type kue_devs[] = {
 	{ USB_VENDOR_SMC, USB_PRODUCT_SMC_2102USB },
 	{ USB_VENDOR_LINKSYS, USB_PRODUCT_LINKSYS_USB10T },
 	{ USB_VENDOR_KLSI, USB_PRODUCT_KLSI_DUH3E10BT },
+	{ USB_VENDOR_IODATA, USB_PRODUCT_IODATA_USBETT },
 	{ 0, 0 }
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: iopsp.c,v 1.2.2.2 2000/11/22 17:34:20 bouyer Exp $	*/
+/*	$NetBSD: iopsp.c,v 1.2.2.3 2000/12/08 09:12:19 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -53,6 +53,7 @@
 #include <sys/endian.h>
 #include <sys/malloc.h>
 #include <sys/scsiio.h>
+#include <sys/lock.h>
 
 #include <machine/bswap.h>
 #include <machine/bus.h>
@@ -74,8 +75,8 @@ static int	iopsp_ioctl(struct scsipi_link *, u_long, caddr_t, int,
 static int	iopsp_match(struct device *, struct cfdata *, void *);
 static void	iopsp_minphys(struct buf *);
 static int	iopsp_rescan(struct iopsp_softc *);
-static void	iopsp_scan(struct iopsp_softc *);
-static int	iopsp_scsi_abort(struct iopsp_softc *, struct iop_msg *);
+static int	iopsp_reconfig(struct device *);
+static int	iopsp_scsi_abort(struct iopsp_softc *, int, struct iop_msg *);
 static int	iopsp_scsi_cmd(struct scsipi_xfer *);
 
 static struct scsipi_device iopsp_dev = {
@@ -107,11 +108,14 @@ iopsp_match(struct device *parent, struct cfdata *match, void *aux)
 	if (ia->ia_class != I2O_CLASS_BUS_ADAPTER_PORT)
 		return (0);
 
-	if (iop_params_get((struct iop_softc *)parent, ia->ia_tid,
+	if (iop_param_op((struct iop_softc *)parent, ia->ia_tid, 0,
 	    I2O_PARAM_HBA_CTLR_INFO, &param, sizeof(param)) != 0)
 		return (0);
 
-	/* XXX */
+	/*
+	 * XXX DPT's driver matches fibrechannel ports, but the spec says we
+	 * shouldn't; need testing.
+	 */
 	return (param.ci.bustype == I2O_HBA_BUS_SCSI ||
 	    param.ci.bustype == I2O_HBA_BUS_FCA);
 }
@@ -133,10 +137,11 @@ iopsp_attach(struct device *parent, struct device *self, void *aux)
 			struct	i2o_param_device_identity di;
 			struct	i2o_param_hba_ctlr_info ci;
 			struct	i2o_param_hba_scsi_ctlr_info sci;
+			struct	i2o_param_hba_scsi_port_info spi;
 		} p;
 	} __attribute__ ((__packed__)) param;
 	char ident[64];
-	int fcal;
+	int fcal, rv;
 #ifdef I2OVERBOSE
 	int size;
 #endif
@@ -150,16 +155,19 @@ iopsp_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ii.ii_dv = self;
 	sc->sc_ii.ii_intr = iopsp_intr;
 	sc->sc_ii.ii_flags = 0;
+	sc->sc_ii.ii_tid = ia->ia_tid;
+	sc->sc_ii.ii_reconfig = iopsp_reconfig;
 	if (iop_initiator_register(iop, &sc->sc_ii) != 0) {
 		printf("%s: unable to register as an initiator",
 		    sc->sc_dv.dv_xname);
 		return;
 	}
 
-	if (iop_params_get(iop, ia->ia_tid, I2O_PARAM_HBA_CTLR_INFO, &param,
-	    sizeof(param)) != 0) {
-	    	printf("%s: unable to retrieve parameters\n",
-	    	    sc->sc_dv.dv_xname);
+	rv = iop_param_op(iop, ia->ia_tid, 0, I2O_PARAM_HBA_CTLR_INFO, &param,
+	    sizeof(param));
+	if (rv != 0) {
+		printf("%s: unable to get parameters (0x%04x; %d)\n",
+	    	    sc->sc_dv.dv_xname, I2O_PARAM_HBA_CTLR_INFO, rv);
 		goto bad;
 	}
 
@@ -169,25 +177,26 @@ iopsp_attach(struct device *parent, struct device *self, void *aux)
 	 * Say what the device is.  If we can find out what the controling
 	 * device is, say what that is too.
 	 */
-	printf(": %s port", fcal ? "FC-AL" : "SCSI");
-	if (iop_params_get(iop, ia->ia_tid, I2O_PARAM_DEVICE_IDENTITY, &param,
+	printf(": %s SCSI port", fcal ? "FC-AL" : "SE/LVD");
+	if (iop_param_op(iop, ia->ia_tid, 0, I2O_PARAM_DEVICE_IDENTITY, &param,
 	    sizeof(param)) == 0) {
-		iop_strvis(param.p.di.vendorinfo, 
+		iop_strvis(iop, param.p.di.vendorinfo, 
 		    sizeof(param.p.di.vendorinfo), ident, sizeof(ident));
 		printf(" <%s, ", ident);
-		iop_strvis(param.p.di.productinfo, 
+		iop_strvis(iop, param.p.di.productinfo, 
 		    sizeof(param.p.di.productinfo), ident, sizeof(ident));
 		printf("%s, ", ident);
-		iop_strvis(param.p.di.revlevel, 
+		iop_strvis(iop, param.p.di.revlevel, 
 		    sizeof(param.p.di.revlevel), ident, sizeof(ident));
 		printf("%s> ", ident);
 	}
 	printf("\n");
 
-	if (iop_params_get(iop, ia->ia_tid, I2O_PARAM_HBA_SCSI_CTLR_INFO,
-	    &param, sizeof(param)) != 0) {
-		printf("%s: unable to retrieve controller parameters\n",
-		    sc->sc_dv.dv_xname);
+	rv = iop_param_op(iop, ia->ia_tid, 0, I2O_PARAM_HBA_SCSI_CTLR_INFO,
+	    &param, sizeof(param));
+	if (rv != 0) {
+		printf("%s: unable to get parameters (0x%04x; %d)\n",
+		    sc->sc_dv.dv_xname, I2O_PARAM_HBA_SCSI_CTLR_INFO, rv);
 		goto bad;
 	}
 
@@ -212,7 +221,7 @@ iopsp_attach(struct device *parent, struct device *self, void *aux)
 	sc_link->scsipi_scsi.max_target = 
 	    fcal ? IOPSP_MAX_FCAL_TARGET : param.p.sci.maxdatawidth - 1;
 	sc_link->scsipi_scsi.max_lun = IOPSP_MAX_LUN;
-	sc_link->openings = iop->sc_maxqueuecnt;		/* XXX */
+	sc_link->openings = iop->sc_maxqueuecnt / 4;		/* XXX */
 
 #ifdef I2OVERBOSE
 	/*
@@ -225,8 +234,11 @@ iopsp_attach(struct device *parent, struct device *self, void *aux)
 	memset(sc->sc_targetmap, 0, size);
 #endif
 
-	/* Build the two maps, and attach to scsipi. */
-	iopsp_scan(sc);
+ 	/* Build the two maps, and attach to scsipi. */
+	if (iopsp_reconfig(self) != 0) {
+		printf("%s: bus scan failed\n", sc->sc_dv.dv_xname);
+		goto bad;
+	}
 	config_found(self, sc_link, scsiprint);
 	return;
 
@@ -235,11 +247,13 @@ bad:
 }
 
 /*
- * Determine which devices we control, and enter them into the maps.
+ * Scan the LCT to determine which devices we control, and enter them into
+ * the maps.
  */
-static void
-iopsp_scan(struct iopsp_softc *sc)
+static int
+iopsp_reconfig(struct device *dv)
 {
+	struct iopsp_softc *sc;
 	struct iop_softc *iop;
 	struct i2o_lct_entry *le;
 	struct scsipi_link *sc_link;
@@ -248,15 +262,20 @@ iopsp_scan(struct iopsp_softc *sc)
 		struct	i2o_param_read_results prr;
 		struct	i2o_param_scsi_device_info sdi;
 	} __attribute__ ((__packed__)) param;
-	int tid, nent, i, targ, lun, size;
+	int tid, nent, i, targ, lun, size, s, rv;
 	u_short *tidmap;
 #ifdef I2OVERBOSE
 	struct iopsp_target *it;
 	int syncrate;	
 #endif
 
+	sc = (struct iopsp_softc *)dv;
 	iop = (struct iop_softc *)sc->sc_dv.dv_parent;
 	sc_link = &sc->sc_link;
+
+	/* Anything to do? */
+	if (iop->sc_lct->changeindicator == sc->sc_chgindicator)
+		return (0);
 
 	/*
 	 * Allocate memory for the target/LUN -> TID map.  Use zero to
@@ -265,16 +284,14 @@ iopsp_scan(struct iopsp_softc *sc)
 	 */
 	size = (sc_link->scsipi_scsi.max_target + 1) *
 	    (IOPSP_MAX_LUN + 1) * sizeof(u_short);
-	tidmap = malloc(size, M_DEVBUF, M_NOWAIT);
-	memset(tidmap, 0, size);	/* XXX */
+	if ((tidmap = malloc(size, M_DEVBUF, M_WAITOK)) == NULL)
+		return (ENOMEM);
+	memset(tidmap, 0, size);
 
 #ifdef I2OVERBOSE
 	for (i = 0; i <= sc_link->scsipi_scsi.max_target; i++)
 		sc->sc_targetmap[i].it_flags &= ~IT_PRESENT;
 #endif
-
-	if (iop_lct_lock(iop) != 0)
-		return;
 
 	nent = iop->sc_nlctent;
 	for (i = 0, le = iop->sc_lct->entry; i < nent; i++, le++) {
@@ -290,24 +307,27 @@ iopsp_scan(struct iopsp_softc *sc)
 
 		tid = le32toh(le->localtid) & 4095;
 
-		if (iop_params_get(iop, tid, I2O_PARAM_SCSI_DEVICE_INFO, &param,
-		    sizeof(param)) != 0) {
-			printf("%s: unable to retrieve device parameters\n",
-			    sc->sc_dv.dv_xname);
+		rv = iop_param_op(iop, tid, 0, I2O_PARAM_SCSI_DEVICE_INFO,
+		    &param, sizeof(param));
+		if (rv != 0) {
+			printf("%s: unable to get parameters (0x%04x; %d)\n",
+			    sc->sc_dv.dv_xname, I2O_PARAM_SCSI_DEVICE_INFO,
+			    rv);
 			continue;
 		}
 		targ = le32toh(param.sdi.identifier);
 		lun = param.sdi.luninfo[1];
 
-		/* If the device is in use by another module, ignore it. */
-		if (!iop_tid_inuse(iop, tid)) {
+		/* If the device is in use by a DDM, ignore it. */
+		if ((le32toh(le->usertid) & 4095) != 4095) {
 #ifdef I2OVERBOSE
 			if (sc->sc_tidmap == NULL ||
 			    IOPSP_TIDMAP(sc->sc_tidmap, targ, lun) !=
 			    IOPSP_TID_INUSE)
 				printf("%s: target %d,%d (tid %d): in use by"
-				    " another module\n", sc->sc_dv.dv_xname,
-				    targ, lun, tid);
+				    " tid %d\n", sc->sc_dv.dv_xname,
+				    targ, lun, tid,
+				    le32toh(le->usertid) & 4095);
 #endif
 			IOPSP_TIDMAP(tidmap, targ, lun) = IOPSP_TID_INUSE;
 			continue;
@@ -341,8 +361,6 @@ iopsp_scan(struct iopsp_softc *sc)
 #endif
 	}
 
-	iop_lct_unlock(iop);
-
 #ifdef I2OVERBOSE
 	for (i = 0; i <= sc_link->scsipi_scsi.max_target; i++)
 		if ((sc->sc_targetmap[i].it_flags & IT_PRESENT) == 0)
@@ -350,14 +368,17 @@ iopsp_scan(struct iopsp_softc *sc)
 #endif
 
 	/* Swap in the new map and return. */
+	s = splbio();
 	if (sc->sc_tidmap != NULL)
 		free(sc->sc_tidmap, M_DEVBUF);
 	sc->sc_tidmap = tidmap;
+	splx(s);
 	sc->sc_chgindicator = iop->sc_lct->changeindicator;
+	return (0);
 }
 
 /*
- * Adjust the size an I/O request.
+ * Adjust the size of an I/O request.
  */
 static void
 iopsp_minphys(struct buf *bp)
@@ -369,8 +390,7 @@ iopsp_minphys(struct buf *bp)
 }
 
 /*
- * Ask the bus port to perform a rescan.  XXX It's unclear whether or not
- * TIDs for established targets will change.
+ * Re-scan the bus; to be called from a higher level (e.g. scsipi).
  */
 static int
 iopsp_rescan(struct iopsp_softc *sc)
@@ -382,38 +402,39 @@ iopsp_rescan(struct iopsp_softc *sc)
 
 	iop = (struct iop_softc *)sc->sc_dv.dv_parent;
 
-	if (iop_msg_alloc(iop, &sc->sc_ii, &im, IM_NOINTR) != 0)
-		return (-1);
-
-	mb = (struct i2o_hba_bus_scan *)im->im_msg;
-	mb->msgflags = I2O_MSGFLAGS(i2o_hba_bus_scan);
-	mb->msgfunc = I2O_MSGFUNC(sc->sc_tid, I2O_HBA_BUS_SCAN);
-	mb->msgictx = sc->sc_ii.ii_ictx;
-	mb->msgtctx = im->im_tctx;
-
-	if (iop_msg_enqueue(iop, im) != 0)
-		rv = -1;
-	else if(iop_msg_wait(iop, im, 1000) != 0)
-		rv = -1;
-	else
-		rv = 0;
-	iop_msg_free(iop, &sc->sc_ii, im);
-	if (rv != 0)
+	rv = lockmgr(&iop->sc_conflock, LK_EXCLUSIVE | LK_RECURSEFAIL, NULL);
+	if (rv != 0) {
+#ifdef I2ODEBUG
+		printf("iopsp_rescan: unable to acquire lock\n");
+#endif
 		return (rv);
+	}
 
-	/*
-         * Re-read the LCT and determine if it has changed.  XXX This should
-         * probably be accomplished by noticing a CHANGED_LCT event from the
-         * executive.
-	 */
-	if (iop_lct_get(iop))
-		return (-1);
-	if (iop->sc_lct->changeindicator == sc->sc_chgindicator)
-		return (0);
+	/* XXX If it's boot time, the bus will already have been scanned. */
+	if (curproc != &proc0) {
+		if ((rv = iop_msg_alloc(iop, &sc->sc_ii, &im, IM_NOINTR)) != 0)
+			goto done;
 
-	/* Rebuild the target/LUN -> TID map, and return. */
-	iopsp_scan(sc);
-	return (0);
+		mb = (struct i2o_hba_bus_scan *)im->im_msg;
+		mb->msgflags = I2O_MSGFLAGS(i2o_hba_bus_scan);
+		mb->msgfunc = I2O_MSGFUNC(sc->sc_tid, I2O_HBA_BUS_SCAN);
+		mb->msgictx = sc->sc_ii.ii_ictx;
+		mb->msgtctx = im->im_tctx;
+
+		rv = iop_msg_enqueue(iop, im, 5*60*1000);
+		iop_msg_free(iop, &sc->sc_ii, im);
+		if (rv != 0)
+			goto done;
+
+		if ((rv = iop_lct_get(iop)) != 0)
+			goto done;
+	}
+
+	/* Rebuild the target/LUN -> TID map, release lock, and return. */
+	rv = iopsp_reconfig(&sc->sc_dv);
+done:
+	lockmgr(&iop->sc_conflock, LK_RELEASE, NULL);
+	return (rv);
 }
 
 /*
@@ -446,7 +467,7 @@ iopsp_scsi_cmd(struct scsipi_xfer *xs)
 	/* Need to reset the target? */
 	if ((flags & XS_CTL_RESET) != 0) {
 		if (iop_simple_cmd(iop, tid, I2O_SCSI_DEVICE_RESET,
-		    sc->sc_ii.ii_ictx) != 0) {
+		    sc->sc_ii.ii_ictx, 1, 10*1000) != 0) {
 #ifdef I2ODEBUG
 			printf("%s: reset failed\n", sc->sc_dv.dv_xname);
 #endif
@@ -456,11 +477,8 @@ iopsp_scsi_cmd(struct scsipi_xfer *xs)
 	}
 
 #if defined(I2ODEBUG) || defined(SCSIDEBUG)
-	if (xs->cmdlen > 16) {
-		printf("%s: CDB too large\n", sc->sc_dv.dv_xname);
-		xs->error = XS_DRIVER_STUFFUP;
-		return (COMPLETE);
-	}
+	if (xs->cmdlen > 16)
+		panic("%s: CDB too large\n", sc->sc_dv.dv_xname);
 #endif
 
 	if (iop_msg_alloc(iop, &sc->sc_ii, &im,
@@ -477,15 +495,11 @@ iopsp_scsi_cmd(struct scsipi_xfer *xs)
 	mb->msgtctx = im->im_tctx;
 	mb->flags = xs->cmdlen | I2O_SCB_FLAG_ENABLE_DISCONNECT |
 	    I2O_SCB_FLAG_SENSE_DATA_IN_MESSAGE;
-	memset(mb->cdb, 0, sizeof(mb->cdb));
 	memcpy(mb->cdb, xs->cmd, xs->cmdlen);
 	mb->datalen = xs->datalen;
 
-	/* XXX */
 	if ((xs->sc_link->quirks & SDEV_NOTAG) == 0 &&
-	    xs->cmd->opcode != INQUIRY &&
-	    xs->cmd->opcode != TEST_UNIT_READY &&
-	    xs->cmd->opcode != REQUEST_SENSE) {
+	    (xs->xs_control & XS_CTL_POLL) != 0) {
 		if (xs->bp != NULL && (xs->bp->b_flags & B_ASYNC) != 0)
 			mb->flags |= I2O_SCB_FLAG_ORDERED_QUEUE_TAG;
 		else
@@ -512,25 +526,17 @@ iopsp_scsi_cmd(struct scsipi_xfer *xs)
 
 	/* 
 	 * If the command is allowed to execute asynchronously, enqueue it
-	 * with the IOP.  XXX Time out async commands?
+	 * with the IOP.
 	 */ 
 	if ((flags & XS_CTL_POLL) == 0) {
-		if (iop_msg_enqueue(iop, im)) {
-			iop_msg_unmap(iop, im);
-			iop_msg_free(iop, &sc->sc_ii, im);
-#ifdef I2ODEBUG
-			printf("%s: can't enqueue msg\n", sc->sc_dv.dv_xname);
-#endif
-			xs->error = XS_DRIVER_STUFFUP;
-			return (COMPLETE);
-		}
+		iop_msg_enqueue(iop, im, 0);
 		return (SUCCESSFULLY_QUEUED);
 	}
 
 	if (iop_msg_send(iop, im, xs->timeout)) {
 		scsi_print_addr(xs->sc_link);
 		printf("timeout; aborting command\n");
-		if (iopsp_scsi_abort(sc, im)) {
+		if (iopsp_scsi_abort(sc, tid, im)) {
 			scsi_print_addr(xs->sc_link);
 			printf("abort failed\n");
 		}
@@ -543,7 +549,7 @@ iopsp_scsi_cmd(struct scsipi_xfer *xs)
  * Abort the specified I2O_SCSI_SCB_EXEC message and its associated SCB.
  */
 static int
-iopsp_scsi_abort(struct iopsp_softc *sc, struct iop_msg *aim)
+iopsp_scsi_abort(struct iopsp_softc *sc, int atid, struct iop_msg *aim)
 {
 	struct iop_msg *im;
 	struct i2o_scsi_scb_abort *mb;
@@ -558,7 +564,7 @@ iopsp_scsi_abort(struct iopsp_softc *sc, struct iop_msg *aim)
 
 	mb = (struct i2o_scsi_scb_abort *)im->im_msg;
 	mb->msgflags = I2O_MSGFLAGS(i2o_scsi_scb_abort);
-	mb->msgfunc = I2O_MSGFUNC(aim->im_tid, I2O_SCSI_SCB_ABORT);
+	mb->msgfunc = I2O_MSGFUNC(atid, I2O_SCSI_SCB_ABORT);
 	mb->msgictx = sc->sc_ii.ii_ictx;
 	mb->msgtctx = im->im_tctx;
 	mb->tctxabort = aim->im_tctx;

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.h,v 1.13.2.1 2000/11/20 18:08:47 bouyer Exp $	*/
+/*	$NetBSD: db_command.h,v 1.13.2.2 2000/12/08 09:09:51 bouyer Exp $	*/
 
 /* 
  * Mach Operating System
@@ -43,6 +43,8 @@ void db_page_print_cmd __P((db_expr_t, int, db_expr_t, char *));
 void db_buf_print_cmd __P((db_expr_t, int, db_expr_t, char *));
 void db_vnode_print_cmd __P((db_expr_t, int, db_expr_t, char *));
 void db_pool_print_cmd __P((db_expr_t, int, db_expr_t, char *));
+void db_namecache_print_cmd __P((db_expr_t, int, db_expr_t, char *));
+void db_uvmexp_print_cmd __P((db_expr_t, int, db_expr_t, char *));
 void db_machine_commands_install __P((struct db_command *));
 void db_command_loop __P((void));
 void db_error __P((char *));

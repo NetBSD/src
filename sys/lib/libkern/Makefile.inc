@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.31.2.1 2000/11/20 18:09:19 bouyer Exp $
+#	$NetBSD: Makefile.inc,v 1.31.2.2 2000/12/08 09:14:16 bouyer Exp $
 #
 #	Configuration variables (default values are below):
 #
@@ -45,7 +45,7 @@ KERNMAKE= \
 	    KERNMISCCPPFLAGS=${KERNMISCCPPFLAGS:Q} \
 	    ${KERNMISCMAKEFLAGS}
 
-${KERNLIB}:		.NOTMAIN __always_make_kernlib
+${KERNLIB}:		.NOTMAIN .MAKE __always_make_kernlib
 	@echo making sure the kern library is up to date...
 .if (${KERN_AS} == "library")
 	@${KERNMAKE} libkern.a
@@ -53,7 +53,7 @@ ${KERNLIB}:		.NOTMAIN __always_make_kernlib
 	@${KERNMAKE} libkern.o
 .endif
 
-${KERNLIB_PROF}:	.NOTMAIN __always_make_kernlib
+${KERNLIB_PROF}:	.NOTMAIN .MAKE __always_make_kernlib
 	@echo making sure the profiled kern library is up to date...
 .if (${KERN_AS} == "library")
 	@${KERNMAKE} libkern_p.a
@@ -62,17 +62,17 @@ ${KERNLIB_PROF}:	.NOTMAIN __always_make_kernlib
 .endif
 
 clean:			.NOTMAIN cleankernlib
-cleankernlib:		.NOTMAIN __always_make_kernlib
+cleankernlib:		.NOTMAIN .MAKE __always_make_kernlib
 	@echo cleaning the kern library objects
 	@${KERNMAKE} clean
 
 cleandir distclean:	.NOTMAIN cleandirkernlib
-cleandirkernlib:	.NOTMAIN __always_make_kernlib
+cleandirkernlib:	.NOTMAIN .MAKE __always_make_kernlib
 	@echo cleandiring the kern library objects
 	@${KERNMAKE} cleandir
 
 depend:			.NOTMAIN dependkernlib
-dependkernlib:		.NOTMAIN __always_make_kernlib
+dependkernlib:		.NOTMAIN .MAKE __always_make_kernlib
 	@echo depending the kern library objects
 	@${KERNMAKE} depend
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.157.2.2 2000/11/22 16:05:17 bouyer Exp $	*/
+/*	$NetBSD: init_main.c,v 1.157.2.3 2000/12/08 09:13:53 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -323,6 +323,8 @@ main(void)
 	/* Configure the system hardware.  This will enable interrupts. */
 	configure();
 
+	ubc_init();		/* must be after autoconfig */
+
 	/* Lock the kernel on behalf of proc0. */
 	KERNEL_PROC_LOCK(p);
 
@@ -471,6 +473,10 @@ main(void)
 	/* Create the filesystem syncer kernel thread. */
 	if (kthread_create1(sched_sync, NULL, NULL, "ioflush"))
 		panic("fork syncer");
+
+	/* Create the aiodone daemon kernel thread. */
+	if (kthread_create1(uvm_aiodone_daemon, NULL, NULL, "aiodoned"))
+		panic("fork aiodoned");
 
 #if defined(MULTIPROCESSOR)
 	/* Boot the secondary processors. */

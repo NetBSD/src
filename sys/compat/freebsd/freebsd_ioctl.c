@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_ioctl.c,v 1.3.22.1 2000/11/20 18:08:10 bouyer Exp $	*/
+/*	$NetBSD: freebsd_ioctl.c,v 1.3.22.2 2000/12/08 09:08:11 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -42,7 +42,7 @@
 #include <net/if.h>
 
 #include <compat/freebsd/freebsd_syscallargs.h>
-#include <compat/freebsd/freebsd_util.h>
+#include <compat/common/compat_util.h>
 #include <compat/freebsd/freebsd_ioctl.h>
 
 #include <compat/ossaudio/ossaudio.h>

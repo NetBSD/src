@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.65.2.2 2000/11/22 16:04:02 bouyer Exp $
+#	$NetBSD: files.pci,v 1.65.2.3 2000/12/08 09:12:31 bouyer Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -48,8 +48,8 @@ file	dev/pci/twe.c			twe
 
 defopt	opt_twe.h	TWE_MAX_QUEUECNT TWE_MAX_PU_QUEUECNT
 
-attach	lsu at twe with lsu_twe
-file	dev/pci/lsu_twe.c		lsu_twe
+attach	ld at twe with ld_twe
+file	dev/pci/ld_twe.c		ld_twe
 
 # Compaq RAID controllers
 attach	cac at pci with cac_pci
@@ -229,6 +229,11 @@ file	dev/pci/mpu_fms.c		mpu_fms
 device	eap: audio, auconv, mulaw, ac97, midibus
 attach	eap at pci
 file	dev/pci/eap.c			eap
+
+# Intel ICH AC'97 audio
+device	auich: audio, auconv, mulaw, ac97
+attach	auich at pci
+file	dev/pci/auich.c			auich
 
 # VIA VT82C686A AC'97 Audio
 device  auvia: audio, auconv, mulaw, ac97

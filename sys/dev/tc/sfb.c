@@ -1,4 +1,4 @@
-/* $NetBSD: sfb.c,v 1.20.2.3 2000/11/22 16:05:00 bouyer Exp $ */
+/* $NetBSD: sfb.c,v 1.20.2.4 2000/12/08 09:12:43 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sfb.c,v 1.20.2.3 2000/11/22 16:05:00 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sfb.c,v 1.20.2.4 2000/12/08 09:12:43 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -751,7 +751,6 @@ set_cmap(sc, p)
 	return (0);
 }
 
-
 static int
 set_cursor(sc, p)
 	struct sfb_softc *sc;
@@ -910,7 +909,6 @@ bt459_set_curpos(sc)
 #define	SFBBG(p, v) \
 		(*(u_int32_t *)(BUMP(p) + SFB_ASIC_BG) = (v))
 
-
 #if 0
 /*
  * Paint (or unpaint) the cursor.
@@ -920,28 +918,13 @@ sfb_cursor(id, on, row, col)
 	void *id;
 	int on, row, col;
 {
-	struct rasops_info *ri = id;
 	caddr_t sfb, p;
 	int scanspan, height, width, align, x, y;
 	u_int32_t lmask, rmask;
 	int fg, bg;
 
-	/* turn the cursor off */
-	if (!on) {
-		/* make sure it's on */
-		if ((rc->rc_bits & RC_CURSOR) == 0)
-			return;
-
-		row = *rc->rc_crowp;
-		col = *rc->rc_ccolp;
-	} else {
-		/* unpaint the old copy. */
-		*rc->rc_crowp = row;
-		*rc->rc_ccolp = col;
-	}
-
-	x = col * ri->ri_font->fontwidth;
-	y = row * ri->ri_font->fontheight;
+	x = ri->ri_ccol * ri->ri_font->fontwidth;
+	y = ri->ri_crow * ri->ri_font->fontheight;
 	scanspan = ri->ri_stride;
 	height = ri->ri_font->fontheight;
 
@@ -970,23 +953,30 @@ sfb_cursor(id, on, row, col)
 			height--;
 		}
 	}
+#if supportlargerfonts
 	else {
 		caddr_t q = p;
 		while (height > 0) {
 			*(u_int32_t *)p = lmask;
-WRITE_MB();
+			WRITE_MB();
+			width -= 2 * SFBSTIPPLEBITS;
+			while (width > 0) {
+				p += SFBSTIPPLEBYTESDONE;
+				*(u_int32_t *)p = SFBSTIPPLEALL1;
+				WRITE_MB();
+				width -= SFBSTIPPLEBITS;
+			}
 			p += SFBSTIPPLEBYTESDONE;
 			*(u_int32_t *)p = rmask;
-WRITE_MB();
-
+			WRITE_MB();
 			p = (q += scanspan);
+			width = w + align;
 			height--;
 		}
 	}
+#endif
 	SFBMODE(sfb, MODE_SIMPLE);
 	SFBROP(sfb, 3);			/* ROP_COPY */
-
-	rc->rc_bits ^= RC_CURSOR;
 }
 #endif
 
@@ -1045,19 +1035,15 @@ sfb_putchar(id, row, col, uc, attr)
 	}
 #if supportlargerfonts
 	else {
+		/*
+		 * It's hard to draw oversized glyphs whose width is
+		 * larger than 24 pixel.
+		 */
 		caddr_t q = p;
 		while (height > 0) {
-			glyph = *(u_int16_t *)g;		/* XXX */
-			SFBPIXELMASK(sfb, lmask);
-WRITE_MB();
-			*(u_int32_t *)p = glyph << align;
-WRITE_MB();
-			p += SFBSTIPPLEBYTESDONE;
-			SFBPIXELMASK(sfb, rmask);
-WRITE_MB();
-			*(u_int32_t *)p = glyph >> (-width & SFBSTIPPLEBITMASK);
-WRITE_MB();
-
+			/* XXX */
+			/* XXX */
+			/* XXX */
 			p = (q += scanspan);
 			g += 2;					/* XXX */
 			height--;
@@ -1080,11 +1066,11 @@ sfb_copycols(id, row, srccol, dstcol, ncols)
 	struct rasops_info *ri = id;
 	caddr_t sp, dp, basex, sfb;
 	int scanspan, height, width, aligns, alignd, shift, w, y;
-	u_int32_t lmasks, rmasks, lmaskd, rmaskd;
+	u_int32_t lmaskd, rmaskd;
 
 	scanspan = ri->ri_stride;
 	y = row * ri->ri_font->fontheight;
-	basex = (caddr_t)rap->pixels + y * scanspan;
+	basex = ri->ri_bits + y * scanspan;
 	height = ri->ri_font->fontheight;
 	w = ri->ri_font->fontwidth * ncols;
 
@@ -1096,55 +1082,56 @@ sfb_copycols(id, row, srccol, dstcol, ncols)
 
 	SFBMODE(sfb, MODE_COPY);
 	SFBPLANEMASK(sfb, ~0);
-
+	/* small enough to fit in a single 32bit */
+	if ((aligns + w) <= SFBCOPYBITS && (alignd + w) <= SFBCOPYBITS) {
+		SFBPIXELSHIFT(sfb, alignd - aligns);
+		lmaskd = SFBCOPYALL1 << alignd;
+		rmaskd = SFBCOPYALL1 >> (-(alignd + w) & SFBCOPYBITMASK);
+		lmaskd = lmaskd & rmaskd;
+		sp -= aligns;
+		dp -= alignd;
+		while (height > 0) {
+			*(u_int32_t *)sp = SFBCOPYALL1;	WRITE_MB();
+			*(u_int32_t *)dp = lmaskd;	WRITE_MB();
+			sp += scanspan;
+			dp += scanspan;
+			height--;
+		}
+	}
 	/* copy forward (left-to-right) */
-	if (dstcol < srccol || srccol + ncols < dstcol) {
+	else if (dstcol < srccol || srccol + ncols < dstcol) {
 		caddr_t sq, dq;
 
 		shift = alignd - aligns;
 		if (shift < 0) {
 			shift = 8 + shift;	/* enforce right rotate */
 			alignd += 8;		/* bearing on left edge */
-			w += 8;			/* enlarge to left */
 		}
-		width = aligns + w;
-
+		width = alignd + w;
+		lmaskd = SFBCOPYALL1 << alignd;
+		rmaskd = SFBCOPYALL1 >> (-width & SFBCOPYBITMASK);
 		sp -= aligns;
 		dp -= alignd;
-		lmasks = SFBCOPYALL1 << aligns;
-		rmasks = SFBCOPYALL1 >> (-width & SFBCOPYBITMASK);
-		lmaskd = SFBCOPYALL1 << alignd;
-		rmaskd = SFBCOPYALL1 >> (-(w + alignd) & SFBCOPYBITMASK);
-
-		if (w + alignd <= SFBCOPYBITS)
-			goto singlewrite;
 
 		SFBPIXELSHIFT(sfb, shift);
 		w = width;
 		sq = sp;
 		dq = dp;
 		while (height > 0) {
-			*(u_int32_t *)sp = lmasks;
-WRITE_MB();
-			*(u_int32_t *)dp = lmaskd;
-WRITE_MB();
+			*(u_int32_t *)sp = SFBCOPYALL1;	WRITE_MB();
+			*(u_int32_t *)dp = lmaskd;	WRITE_MB();
 			width -= 2 * SFBCOPYBITS;
 			while (width > 0) {
 				sp += SFBCOPYBYTESDONE;
 				dp += SFBCOPYBYTESDONE;
-				*(u_int32_t *)sp = SFBCOPYALL1;
-WRITE_MB();
-				*(u_int32_t *)dp = SFBCOPYALL1;
-WRITE_MB();
+				*(u_int32_t *)sp = SFBCOPYALL1; WRITE_MB();
+				*(u_int32_t *)dp = SFBCOPYALL1; WRITE_MB();
 				width -= SFBCOPYBITS;
 			}
 			sp += SFBCOPYBYTESDONE;
 			dp += SFBCOPYBYTESDONE;
-			*(u_int32_t *)sp = rmasks;
-WRITE_MB();
-			*(u_int32_t *)dp = rmaskd;
-WRITE_MB();
-
+			*(u_int32_t *)sp = SFBCOPYALL1;	WRITE_MB();
+			*(u_int32_t *)dp = rmaskd;	WRITE_MB();
 			sp = (sq += scanspan);
 			dp = (dq += scanspan);
 			width = w;
@@ -1158,68 +1145,39 @@ WRITE_MB();
 		shift = alignd - aligns;
 		if (shift > 0) {
 			shift = shift - 8;	/* force left rotate */
-			aligns += 8;		/* flush edge at left end */
+			alignd += 24;
 		}
-		width = aligns + w;
-
+		width = alignd + w;
+		lmaskd = SFBCOPYALL1 << alignd;
+		rmaskd = SFBCOPYALL1 >> (-width & SFBCOPYBITMASK);
 		sp -= aligns;
 		dp -= alignd;
-		lmasks = SFBCOPYALL1 << aligns;
-		rmasks = SFBCOPYALL1 >> (-width & SFBCOPYBITMASK);
-		lmaskd = SFBCOPYALL1 << alignd;
-		rmaskd = SFBCOPYALL1 >> (-(w + alignd) & SFBCOPYBITMASK);
-
-		if (w + alignd <= SFBCOPYBITS)
-			goto singlewrite;
 
 		SFBPIXELSHIFT(sfb, shift);
 		w = width;
-		sq = sp += ((width - 1) & ~31);
-		dq = dp += (((w + alignd) - 1) & ~31);
+		sq = sp += (((aligns + w) - 1) & ~31);
+		dq = dp += (((alignd + w) - 1) & ~31);
 		while (height > 0) {
-			*(u_int32_t *)sp = rmasks;
-WRITE_MB();
-			*(u_int32_t *)dp = rmaskd;
-WRITE_MB();
+			*(u_int32_t *)sp = SFBCOPYALL1; WRITE_MB();
+			*(u_int32_t *)dp = rmaskd;	WRITE_MB();
 			width -= 2 * SFBCOPYBITS;
 			while (width > 0) {
 				sp -= SFBCOPYBYTESDONE;
 				dp -= SFBCOPYBYTESDONE;
-				*(u_int32_t *)sp = SFBCOPYALL1;
-WRITE_MB();
-				*(u_int32_t *)dp = SFBCOPYALL1;
-WRITE_MB();
+				*(u_int32_t *)sp = SFBCOPYALL1; WRITE_MB();
+				*(u_int32_t *)dp = SFBCOPYALL1; WRITE_MB();
 				width -= SFBCOPYBITS;
 			}
 			sp -= SFBCOPYBYTESDONE;
 			dp -= SFBCOPYBYTESDONE;
-			*(u_int32_t *)sp = lmasks;
-WRITE_MB();
-			*(u_int32_t *)dp = lmaskd;
-WRITE_MB();
+			*(u_int32_t *)sp = SFBCOPYALL1;	WRITE_MB();
+			*(u_int32_t *)dp = lmaskd;	WRITE_MB();
 
 			sp = (sq += scanspan);
 			dp = (dq += scanspan);
 			width = w;
 			height--;
 		}
-	}
-	SFBMODE(sfb, MODE_SIMPLE);
-	SFBPIXELSHIFT(sfb, 0);
-	return;
-
-singlewrite:
-	SFBPIXELSHIFT(sfb, shift);
-	lmasks = lmasks & rmasks;
-	lmaskd = lmaskd & rmaskd;
-	while (height > 0) {
-		*(u_int32_t *)sp = lmasks;
-WRITE_MB();
-		*(u_int32_t *)dp = lmaskd;
-WRITE_MB();
-		sp += scanspan;
-		dp += scanspan;
-		height--;
 	}
 	SFBMODE(sfb, MODE_SIMPLE);
 	SFBPIXELSHIFT(sfb, 0);
@@ -1274,17 +1232,17 @@ sfb_erasecols(id, row, startcol, ncols, attr)
 		caddr_t q = p;
 		while (height > 0) {
 			*(u_int32_t *)p = lmask;
-WRITE_MB();
+			WRITE_MB();
 			width -= 2 * SFBSTIPPLEBITS;
 			while (width > 0) {
 				p += SFBSTIPPLEBYTESDONE;
 				*(u_int32_t *)p = SFBSTIPPLEALL1;
-WRITE_MB();
+				WRITE_MB();
 				width -= SFBSTIPPLEBITS;
 			}
 			p += SFBSTIPPLEBYTESDONE;
 			*(u_int32_t *)p = rmask;
-WRITE_MB();
+			WRITE_MB();
 
 			p = (q += scanspan);
 			width = w + align;
@@ -1396,17 +1354,17 @@ sfb_eraserows(id, startrow, nrows, attr)
 		caddr_t q = p;
 		while (height > 0) {
 			*(u_int32_t *)p = lmask;
-WRITE_MB();
+			WRITE_MB();
 			width -= 2 * SFBSTIPPLEBITS;
 			while (width > 0) {
 				p += SFBSTIPPLEBYTESDONE;
 				*(u_int32_t *)p = SFBSTIPPLEALL1;
-WRITE_MB();
+				WRITE_MB();
 				width -= SFBSTIPPLEBITS;
 			}
 			p += SFBSTIPPLEBYTESDONE;
 			*(u_int32_t *)p = rmask;
-WRITE_MB();
+			WRITE_MB();
 
 			p = (q += scanspan);
 			width = w + align;

@@ -1,4 +1,4 @@
-/*	$NetBSD: fms.c,v 1.7.2.3 2000/11/22 16:04:02 bouyer Exp $	*/
+/*	$NetBSD: fms.c,v 1.7.2.4 2000/12/08 09:12:31 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -39,6 +39,8 @@
 /*
  * Forte Media FM801 Audio Device Driver
  */
+
+#include "mpu.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -476,8 +478,10 @@ fms_intr(arg)
 			printf("unexpected rec intr\n");
 	}
 	
+#if NMPU > 0
 	if (istat & FM_INTSTATUS_MPU)
 		mpu_intr(sc->sc_mpu_dev);
+#endif
 
 	bus_space_write_2(sc->sc_iot, sc->sc_ioh, FM_INTSTATUS, 
 			  istat & (FM_INTSTATUS_PLAY | FM_INTSTATUS_REC));

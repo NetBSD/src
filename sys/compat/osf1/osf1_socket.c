@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_socket.c,v 1.5 1999/05/10 05:58:44 cgd Exp $ */
+/* $NetBSD: osf1_socket.c,v 1.5.6.1 2000/12/08 09:08:40 bouyer Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -69,7 +69,7 @@
 
 #include <compat/osf1/osf1.h>
 #include <compat/osf1/osf1_syscallargs.h>
-#include <compat/osf1/osf1_util.h>
+#include <compat/common/compat_util.h>
 #include <compat/osf1/osf1_cvt.h>
 
 int

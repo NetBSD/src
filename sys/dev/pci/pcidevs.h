@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.166.2.2 2000/11/22 16:04:15 bouyer Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.166.2.3 2000/12/08 09:12:34 bouyer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.274 2000/11/20 06:22:13 onoe Exp 
+ *	NetBSD: pcidevs,v 1.275 2000/12/05 18:10:19 drochner Exp 
  */
 
 /*
@@ -751,6 +751,7 @@
 #define	PCI_PRODUCT_ATI_MACH64_GB	0x4742		/* Mach64 GB */
 #define	PCI_PRODUCT_ATI_MACH64_GD	0x4744		/* Mach64 GD */
 #define	PCI_PRODUCT_ATI_MACH64_GI	0x4749		/* Mach64 GI */
+#define	PCI_PRODUCT_ATI_RAGEXLAGP2X	0x474d		/* Rage XL AGP 2x */
 #define	PCI_PRODUCT_ATI_MACH64_GP	0x4750		/* Mach64 GP */
 #define	PCI_PRODUCT_ATI_MACH64_GQ	0x4751		/* Mach64 GQ */
 #define	PCI_PRODUCT_ATI_MACH64_GT	0x4754		/* Mach64 GT */
@@ -853,6 +854,7 @@
 
 /* Chips and Technologies products */
 #define	PCI_PRODUCT_CHIPS_64310	0x00b8		/* 64310 */
+#define	PCI_PRODUCT_CHIPS_69000	0x00c0		/* 69000 */
 #define	PCI_PRODUCT_CHIPS_65545	0x00d8		/* 65545 */
 #define	PCI_PRODUCT_CHIPS_65548	0x00dc		/* 65548 */
 #define	PCI_PRODUCT_CHIPS_65550	0x00e0		/* 65550 */
@@ -875,6 +877,7 @@
 #define	PCI_PRODUCT_CIRRUS_CL_CD4400	0x4400		/* CL-CD4400 Communications Controller */
 #define	PCI_PRODUCT_CIRRUS_CS4610	0x6001		/* CS4610 SoundFusion Audio Accelerator */
 #define	PCI_PRODUCT_CIRRUS_CS4280	0x6003		/* CS4280 CrystalClear Audio Interface */
+#define	PCI_PRODUCT_CIRRUS_CS4281	0x6005		/* CS4281 CrystalClear Audio Interface */
 
 /* CMD Technology products -- info gleaned from their web site */
 #define	PCI_PRODUCT_CMDTECH_640	0x0640		/* PCI0640 */
@@ -1308,8 +1311,10 @@
 #define	PCI_PRODUCT_SYMBIOS_896	0x000b		/* 53c896 */
 #define	PCI_PRODUCT_SYMBIOS_895	0x000c		/* 53c895 */
 #define	PCI_PRODUCT_SYMBIOS_885	0x000d		/* 53c885 */
-#define	PCI_PRODUCT_SYMBIOS_875	0x000f		/* 53c875 */
+#define	PCI_PRODUCT_SYMBIOS_875	0x000f		/* 53c875/876 */
 #define	PCI_PRODUCT_SYMBIOS_1510	0x0010		/* 53c1510 */
+#define	PCI_PRODUCT_SYMBIOS_895A	0x0012		/* 53c895A */
+#define	PCI_PRODUCT_SYMBIOS_1010	0x0020		/* 53c1010 */
 #define	PCI_PRODUCT_SYMBIOS_875J	0x008f		/* 53c875J */
 
 /* Packet Engines products */
@@ -1519,6 +1524,7 @@
 #define	PCI_PRODUCT_SIS_7016	0x7016		/* SiS 7016 10/100 Ethernet */
 
 /* Silicon Motion products */
+#define	PCI_PRODUCT_SILMOTION_LYNX_EMP	0x0712		/* Lynx EM+ */
 #define	PCI_PRODUCT_SILMOTION_LYNX_E	0x0810		/* Lynx E */
 
 /* SMC products */

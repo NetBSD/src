@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_exec.h,v 1.3.8.2 2000/11/22 16:02:51 bouyer Exp $	*/
+/*	$NetBSD: netbsd32_exec.h,v 1.3.8.3 2000/12/08 09:08:33 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -50,12 +50,67 @@ struct netbsd32_exec {
 	netbsd32_u_long	a_drsize;	/* data relocation size */
 };
 
+extern const struct emul emul_netbsd32;
+
 #ifdef EXEC_AOUT
 int exec_netbsd32_makecmds __P((struct proc *, struct exec_package *));
 #endif
 #ifdef EXEC_ELF32
 int netbsd32_elf32_probe __P((struct proc *, struct exec_package *, void *,
     char *, vaddr_t *));
+void *netbsd32_elf32_copyargs __P((struct exec_package *, struct ps_strings *,
+	void *, void *));
 #endif /* EXEC_ELF32 */
+
+static __inline void *netbsd32_copyargs __P((struct exec_package *,
+	struct ps_strings *, void *, void *));
+
+/*
+ * We need to copy out all pointers as 32-bit values.
+ */
+static __inline void *
+netbsd32_copyargs(pack, arginfo, stack, argp)
+	struct exec_package *pack;
+	struct ps_strings *arginfo;
+	void *stack;
+	void *argp;
+{
+	u_int32_t *cpp = stack;
+	u_int32_t dp;
+	u_int32_t nullp = 0;
+	char *sp;
+	size_t len;
+	int argc = arginfo->ps_nargvstr;
+	int envc = arginfo->ps_nenvstr;
+
+	if (copyout(&argc, cpp++, sizeof(argc)))
+		return NULL;
+
+	dp = (u_long) (cpp + argc + envc + 2 + pack->ep_esch->es_arglen);
+	sp = argp;
+
+	/* XXX don't copy them out, remap them! */
+	arginfo->ps_argvstr = (char **)(u_long)cpp; /* remember location of argv for later */
+
+	for (; --argc >= 0; sp += len, dp += len) {
+		if (copyout(&dp, cpp++, sizeof(dp)) ||
+		    copyoutstr(sp, (char *)(u_long)dp, ARG_MAX, &len))
+			return NULL;
+	}
+	if (copyout(&nullp, cpp++, sizeof(nullp)))
+		return NULL;
+
+	arginfo->ps_envstr = (char **)(u_long)cpp; /* remember location of envp for later */
+
+	for (; --envc >= 0; sp += len, dp += len) {
+		if (copyout(&dp, cpp++, sizeof(dp)) ||
+		    copyoutstr(sp, (char *)(u_long)dp, ARG_MAX, &len))
+			return NULL;
+	}
+	if (copyout(&nullp, cpp++, sizeof(nullp)))
+		return NULL;
+
+	return cpp;
+}
 
 #endif /* !_NETBSD32_EXEC_H_ */

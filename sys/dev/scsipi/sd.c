@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.151.2.4 2000/11/20 09:59:27 bouyer Exp $	*/
+/*	$NetBSD: sd.c,v 1.151.2.5 2000/12/08 09:12:41 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -164,9 +164,7 @@ sdattach(parent, sd, periph, ops)
 #endif
 
 	/*
-	 * Use the subdriver to request information regarding
-	 * the drive. We cannot use interrupts yet, so the
-	 * request must specify this.
+	 * Use the subdriver to request information regarding the drive.
 	 */
 	printf("\n");
 
@@ -565,6 +563,7 @@ sdstrategy(bp)
 	struct disklabel *lp;
 	daddr_t blkno;
 	int s;
+	boolean_t sector_aligned;
 
 	SC_DEBUG(sd->sc_periph, SCSIPI_DB2, ("sdstrategy "));
 	SC_DEBUG(sd->sc_periph, SCSIPI_DB1,
@@ -587,8 +586,12 @@ sdstrategy(bp)
 	 * The transfer must be a whole number of blocks, offset must not be
 	 * negative.
 	 */
-	if ((bp->b_bcount % lp->d_secsize) != 0 ||
-	    bp->b_blkno < 0) {
+	if (lp->d_secsize == DEV_BSIZE) {
+		sector_aligned = (bp->b_bcount & (DEV_BSIZE - 1)) == 0;
+	} else {
+		sector_aligned = (bp->b_bcount % lp->d_secsize) == 0;
+	}
+	if (!sector_aligned || bp->b_blkno < 0) {
 		bp->b_error = EINVAL;
 		goto bad;
 	}
@@ -611,7 +614,9 @@ sdstrategy(bp)
 	 * Now convert the block number to absolute and put it in
 	 * terms of the device's logical block size.
 	 */
-	if (lp->d_secsize >= DEV_BSIZE)
+	if (lp->d_secsize == DEV_BSIZE)
+		blkno = bp->b_blkno;
+	else if (lp->d_secsize > DEV_BSIZE)
 		blkno = bp->b_blkno / (lp->d_secsize / DEV_BSIZE);
 	else
 		blkno = bp->b_blkno * (DEV_BSIZE / lp->d_secsize);
@@ -720,7 +725,10 @@ sdstart(periph)
 		 * We have a buf, now we should make a command.
 		 */
 
-		nblks = howmany(bp->b_bcount, lp->d_secsize);
+		if (lp->d_secsize == DEV_BSIZE)
+			nblks = bp->b_bcount >> DEV_BSHIFT;
+		else
+			nblks = howmany(bp->b_bcount, lp->d_secsize);
 
 #if NSD_SCSIBUS > 0
 		/*

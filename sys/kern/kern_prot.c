@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_prot.c,v 1.55.2.1 2000/11/20 18:09:02 bouyer Exp $	*/
+/*	$NetBSD: kern_prot.c,v 1.55.2.2 2000/12/08 09:13:55 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1991, 1993
@@ -44,12 +44,7 @@
  * System calls related to processes and protection
  */
 
-#include "opt_compat_freebsd.h"
-#include "opt_compat_ibcs2.h"
-#include "opt_compat_sunos.h"
-#include "opt_compat_linux.h"
 #include "opt_compat_43.h"
-#include "opt_compat_osf1.h"
 
 #include <sys/param.h>
 #include <sys/acct.h>
@@ -72,11 +67,11 @@ sys_getpid(p, v, retval)
 {
 
 	*retval = p->p_pid;
-#if defined(COMPAT_43) || defined(COMPAT_SUNOS) || defined(COMPAT_IBCS2) || \
-    defined(COMPAT_FREEBSD) || defined(COMPAT_OSF1) || \
-    (defined(COMPAT_LINUX) && defined(__alpha__))
-	retval[1] = p->p_pptr->p_pid;
+#ifndef COMPAT_43
+	if (p->p_emul->e_flags & EMUL_GETPID_PASS_PPID)
 #endif
+	
+		retval[1] = p->p_pptr->p_pid;
 	return (0);
 }
 
@@ -155,11 +150,10 @@ sys_getuid(p, v, retval)
 {
 
 	*retval = p->p_cred->p_ruid;
-#if defined(COMPAT_43) || defined(COMPAT_SUNOS) || defined(COMPAT_IBCS2) || \
-    defined(COMPAT_FREEBSD) || defined(COMPAT_OSF1) || \
-    (defined(COMPAT_LINUX) && defined(__alpha__))
-	retval[1] = p->p_ucred->cr_uid;
+#ifndef COMPAT_43
+	if (p->p_emul->e_flags & EMUL_GETID_PASS_EID)
 #endif
+		retval[1] = p->p_ucred->cr_uid;
 	return (0);
 }
 
@@ -184,10 +178,10 @@ sys_getgid(p, v, retval)
 {
 
 	*retval = p->p_cred->p_rgid;
-#if defined(COMPAT_43) || defined(COMPAT_SUNOS) || defined(COMPAT_FREEBSD) || \
-    defined(COMPAT_OSF1) || (defined(COMPAT_LINUX) && defined(alpha))
-	retval[1] = p->p_ucred->cr_gid;
+#ifndef COMPAT_43
+	if (p->p_emul->e_flags & EMUL_GETID_PASS_EID)
 #endif
+		retval[1] = p->p_ucred->cr_gid;
 	return (0);
 }
 

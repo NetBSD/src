@@ -1,4 +1,4 @@
-/*	$NetBSD: i2o.h,v 1.1.2.2 2000/11/22 17:34:20 bouyer Exp $	*/
+/*	$NetBSD: i2o.h,v 1.1.2.3 2000/12/08 09:12:18 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -48,6 +48,10 @@
 /*
  * ================= Miscellenous definitions =================
  */
+
+/* Organisation IDs */
+#define	I2O_ORG_DPT			0x001b
+#define	I2O_ORG_AMI			0x1000
 
 /* Macros to assist in building message headers */
 #define	I2O_MSGFLAGS(s)		(I2O_VERSION_11 | (sizeof(struct s) << 14))
@@ -103,8 +107,13 @@
 #define	I2O_TID_NONE			4095
 
 /* SGL flags.  This list covers only a fraction of the possibilities. */
-#define	I2O_SGL_DATA_OUT		0x04000000
+#define	I2O_SGL_IGNORE			0x00000000
 #define	I2O_SGL_SIMPLE			0x10000000
+
+#define	I2O_SGL_BC_32BIT		0x01000000
+#define	I2O_SGL_BC_64BIT		0x02000000
+#define	I2O_SGL_BC_96BIT		0x03000000
+#define	I2O_SGL_DATA_OUT		0x04000000
 #define	I2O_SGL_END_BUFFER		0x40000000
 #define	I2O_SGL_END			0x80000000
 
@@ -154,21 +163,15 @@ struct i2o_msg {
 /*
  * Standard reply frame.  msgflags, msgfunc, msgictx and msgtctx have the
  * same meaning as in `struct i2o_msg'.
- *
- * Bits  Field          Meaning
- * ----  -------------  ----------------------------------------------------
- * 0-15  status         Detailed status code.  Specific to device class.
- * 16-23 status         Reserved.
- * 24-31 status         Request status code.
  */
 struct i2o_reply {
 	u_int32_t	msgflags;
 	u_int32_t	msgfunc;
 	u_int32_t	msgictx;
 	u_int32_t	msgtctx;
-	u_int16_t	detail;
+	u_int16_t	detail;		/* Detailed status code */
 	u_int8_t	reserved;
-	u_int8_t	reqstatus;
+	u_int8_t	reqstatus;	/* Request status code */
 
 	/* Reply payload */
 
@@ -179,12 +182,14 @@ struct i2o_reply {
  */
 struct i2o_hrt_entry {
 	u_int32_t	adapterid;
-	u_int32_t	controllingtid;
+	u_int16_t	controllingtid;
+	u_int8_t	busnumber;
+	u_int8_t	bustype;
 	u_int8_t	businfo[8];
 } __attribute__ ((__packed__));
 
 struct i2o_hrt {
-	u_int16_t	nentries;
+	u_int16_t	numentries;
 	u_int8_t	entrysize;
 	u_int8_t	hrtversion;
 	u_int32_t	changeindicator;
@@ -220,15 +225,14 @@ struct i2o_lct_entry {
  */
 struct i2o_lct {
 	u_int16_t	tablesize;
-	u_int8_t	boottid;
-	u_int8_t	lctversion;
+	u_int16_t	flags;
 	u_int32_t	iopflags;
 	u_int32_t	changeindicator;
 	struct i2o_lct_entry	entry[1];
 } __attribute__ ((__packed__));
 
 /*
- * IOP system table entry.  Bitfields are broken down as follows:
+ * IOP system table.  Bitfields are broken down as follows:
  *
  * Bits   Field           Meaning
  * -----  --------------  ---------------------------------------------------
@@ -239,17 +243,26 @@ struct i2o_lct {
  * 16-23  segnumber       IOP state.
  * 24-31  segnumber       Messenger type.
  */
-struct i2o_iop_entry {
+struct i2o_systab_entry {
 	u_int16_t	orgid;
 	u_int16_t	reserved0;
 	u_int32_t	iopid;
-	u_int32_t	segnumber;			/* Bitfields */
+	u_int32_t	segnumber;
 	u_int16_t	inboundmsgframesize;
 	u_int16_t	reserved1;
 	u_int32_t	lastchanged;
 	u_int32_t	iopcaps;
 	u_int32_t	inboundmsgportaddresslow;
 	u_int32_t	inboundmsgportaddresshigh;
+} __attribute__ ((__packed__));
+
+struct i2o_systab {
+	u_int8_t	numentries;
+	u_int8_t	version;
+	u_int16_t	reserved0;
+	u_int32_t	changeindicator;
+	u_int32_t	reserved1[2];
+	struct	i2o_systab_entry entry[1];
 } __attribute__ ((__packed__));
 
 /*
@@ -268,8 +281,8 @@ struct i2o_iop_entry {
 struct i2o_status {
 	u_int16_t	orgid;
 	u_int16_t	reserved0;
-	u_int32_t	iopid;			/* Bitfields */
-	u_int32_t	segnumber;		/* Bitfields */
+	u_int32_t	iopid;
+	u_int32_t	segnumber;
 	u_int16_t	inboundmframesize;
 	u_int8_t	initcode;
 	u_int8_t	reserved1;
@@ -301,9 +314,6 @@ struct i2o_status {
  * ================= Executive class messages =================
  */
 
-/*
- * Retrieve adapter status.
- */
 #define	I2O_EXEC_STATUS_GET		0xa0
 struct i2o_exec_status_get {
 	u_int32_t	msgflags;
@@ -314,9 +324,6 @@ struct i2o_exec_status_get {
 	u_int32_t	length;
 } __attribute__ ((__packed__));
 
-/*
- * Initalize outbound FIFO.
- */
 #define	I2O_EXEC_OUTBOUND_INIT		0xa1
 struct i2o_exec_outbound_init {
 	u_int32_t	msgflags;
@@ -332,9 +339,6 @@ struct i2o_exec_outbound_init {
 #define	I2O_EXEC_OUTBOUND_INIT_FAILED		3
 #define	I2O_EXEC_OUTBOUND_INIT_COMPLETE		4
 
-/*
- * Notify host of LCT change.
- */
 #define	I2O_EXEC_LCT_NOTIFY		0xa2
 struct i2o_exec_lct_notify {
 	u_int32_t	msgflags;
@@ -345,9 +349,6 @@ struct i2o_exec_lct_notify {
 	u_int32_t	changeindicator;
 } __attribute__ ((__packed__));
 
-/*
- * Set system table.
- */
 #define	I2O_EXEC_SYS_TAB_SET		0xa3
 struct i2o_exec_sys_tab_set {
 	u_int32_t	msgflags;
@@ -358,9 +359,6 @@ struct i2o_exec_sys_tab_set {
 	u_int32_t	segnumber;
 } __attribute__ ((__packed__));
 
-/*
- * Retrieve hardware resource table.
- */
 #define	I2O_EXEC_HRT_GET		0xa8
 struct i2o_exec_hrt_get {
 	u_int32_t	msgflags;
@@ -369,9 +367,6 @@ struct i2o_exec_hrt_get {
 	u_int32_t	msgtctx;
 } __attribute__ ((__packed__));
 
-/*
- * Reset IOP.
- */
 #define	I2O_EXEC_IOP_RESET		0xbd
 struct i2o_exec_iop_reset {
 	u_int32_t	msgflags;
@@ -385,6 +380,13 @@ struct i2o_exec_iop_reset {
 #define	I2O_RESET_REJECTED		0x02
 
 /*
+ * ================= Executive class parameter groups =================
+ */
+ 
+#define	I2O_PARAM_EXEC_LCT_SCALAR	0x0101
+#define	I2O_PARAM_EXEC_LCT_TABLE	0x0102
+
+/*
  * ================= HBA class messages =================
  */
 
@@ -394,7 +396,7 @@ struct i2o_hba_bus_scan {
 	u_int32_t	msgfunc;
 	u_int32_t	msgictx;
 	u_int32_t	msgtctx;
-};
+} __attribute__ ((__packed__));
 
 /*
  * ================= HBA class parameter groups =================
@@ -442,11 +444,34 @@ struct i2o_param_hba_scsi_ctlr_info {
  * ================= Utility messages =================
  */
 
-/*
- * Get parameter group operation.
- */
+#define	I2O_UTIL_ABORT			0x01
+struct i2o_util_abort {
+	u_int32_t	msgflags;
+	u_int32_t	msgfunc;
+	u_int32_t	msgictx;
+	u_int32_t	msgtctx;
+	u_int32_t	flags;		/* abort type and function type */
+	u_int32_t	tctxabort;
+} __attribute__ ((__packed__));
+
+#define	I2O_UTIL_ABORT_EXACT		0x00000000
+#define	I2O_UTIL_ABORT_FUNCTION		0x00010000
+#define	I2O_UTIL_ABORT_TRANSACTION	0x00020000
+#define	I2O_UTIL_ABORT_WILD		0x00030000
+
+#define	I2O_UTIL_ABORT_CLEAN		0x00040000
+
+struct i2o_util_abort_reply {
+	u_int32_t	msgflags;
+	u_int32_t	msgfunc;
+	u_int32_t	msgictx;
+	u_int32_t	msgtctx;
+	u_int32_t	count;
+} __attribute__ ((__packed__));
+
+#define	I2O_UTIL_PARAMS_SET		0x05 
 #define	I2O_UTIL_PARAMS_GET		0x06
-struct i2o_util_params_get {
+struct i2o_util_params_op {
 	u_int32_t	msgflags;
 	u_int32_t	msgfunc;
 	u_int32_t	msgictx;
@@ -474,6 +499,7 @@ struct i2o_param_op_all_template {
 	u_int16_t	operation;
 	u_int16_t	group;
 	u_int16_t	fieldcount;
+	u_int16_t	fields[1];
 } __attribute__ ((__packed__));
 
 struct i2o_param_op_results {
@@ -487,9 +513,14 @@ struct i2o_param_read_results {
 	u_int8_t	errorinfosize;
 } __attribute__ ((__packed__));
 
-/*
- * Device claim.
- */
+struct i2o_param_table_results {
+	u_int16_t	blocksize;
+	u_int8_t	blockstatus;
+	u_int8_t	errorinfosize;
+	u_int16_t	rowcount;
+	u_int16_t	moreflag;
+} __attribute__ ((__packed__));
+
 #define	I2O_UTIL_CLAIM			0x09
 struct i2o_util_claim {
 	u_int32_t	msgflags;
@@ -504,10 +535,74 @@ struct i2o_util_claim {
 #define	I2O_UTIL_CLAIM_CAPACITY_SENSITIVE	0x00000008
 #define	I2O_UTIL_CLAIM_NO_PEER_SERVICE		0x00000010
 #define	I2O_UTIL_CLAIM_NO_MANAGEMENT_SERVICE	0x00000020
+
 #define	I2O_UTIL_CLAIM_PRIMARY_USER		0x01000000
 #define	I2O_UTIL_CLAIM_AUTHORIZED_USER		0x02000000
 #define	I2O_UTIL_CLAIM_SECONDARY_USER		0x03000000
 #define	I2O_UTIL_CLAIM_MANAGEMENT_USER		0x04000000
+
+#define	I2O_UTIL_CLAIM_RELEASE		0x0b
+struct i2o_util_claim_release {
+	u_int32_t	msgflags;
+	u_int32_t	msgfunc;
+	u_int32_t	msgictx;
+	u_int32_t	msgtctx;
+	u_int32_t	flags;		/* User flags as per I2O_UTIL_CLAIM */
+} __attribute__ ((__packed__));
+
+#define	I2O_UTIL_CLAIM_RELEASE_CONDITIONAL	0x00000001
+
+#define	I2O_UTIL_CONFIG_DIALOG		0x10
+struct i2o_util_config_dialog {
+	u_int32_t	msgflags;
+	u_int32_t	msgfunc;
+	u_int32_t	msgictx;
+	u_int32_t	msgtctx;
+	u_int32_t	pageno;
+} __attribute__ ((__packed__));
+
+#define	I2O_UTIL_EVENT_REGISTER		0x13
+struct i2o_util_event_register {
+	u_int32_t	msgflags;
+	u_int32_t	msgfunc;
+	u_int32_t	msgictx;
+	u_int32_t	msgtctx;
+	u_int32_t	eventmask;
+} __attribute__ ((__packed__));
+
+struct i2o_util_event_register_reply {
+	u_int32_t	msgflags;
+	u_int32_t	msgfunc;
+	u_int32_t	msgictx;
+	u_int32_t	msgtctx;
+	u_int32_t	event;
+	u_int32_t	eventdata[1];
+} __attribute__ ((__packed__));
+
+/* Generic events. */
+#define	I2O_EVENT_GEN_DEVICE_STATE		0x00400000
+#define	I2O_EVENT_GEN_VENDOR_EVENT		0x00800000
+#define	I2O_EVENT_GEN_FIELD_MODIFIED		0x01000000
+#define	I2O_EVENT_GEN_EVENT_MASK_MODIFIED	0x02000000
+#define	I2O_EVENT_GEN_DEVICE_RESET		0x04000000
+#define	I2O_EVENT_GEN_CAPABILITY_CHANGE		0x08000000
+#define	I2O_EVENT_GEN_LOCK_RELEASE		0x10000000
+#define	I2O_EVENT_GEN_NEED_CONFIGURATION	0x20000000
+#define	I2O_EVENT_GEN_GENERAL_WARNING		0x40000000
+#define	I2O_EVENT_GEN_STATE_CHANGE		0x80000000
+
+/* Executive class events. */
+#define	I2O_EVENT_EXEC_RESOURCE_LIMITS		0x00000001
+#define	I2O_EVENT_EXEC_CONNECTION_FAIL		0x00000002
+#define	I2O_EVENT_EXEC_ADAPTER_FAULT		0x00000004
+#define	I2O_EVENT_EXEC_POWER_FAIL		0x00000008
+#define	I2O_EVENT_EXEC_RESET_PENDING		0x00000010
+#define	I2O_EVENT_EXEC_RESET_IMMINENT		0x00000020
+#define	I2O_EVENT_EXEC_HARDWARE_FAIL		0x00000040
+#define	I2O_EVENT_EXEC_XCT_CHANGE		0x00000080
+#define	I2O_EVENT_EXEC_NEW_LCT_ENTRY		0x00000100
+#define	I2O_EVENT_EXEC_MODIFIED_LCT		0x00000200
+#define	I2O_EVENT_EXEC_DDM_AVAILIBILITY		0x00000400
 
 /*
  * ================= Utility parameter groups =================
@@ -638,9 +733,6 @@ struct i2o_rbs_reply {
  * ================= Block storage class parameter groups =================
  */
 
-/*
- * Device information.
- */
 #define	I2O_PARAM_RBS_DEVICE_INFO	0x0000
 struct i2o_param_rbs_device_info {
 	u_int8_t	type;
@@ -681,9 +773,21 @@ struct i2o_param_rbs_device_info {
 #define	I2O_RBS_STATE_DATA_SECURITY	0x00000200
 #define	I2O_RBS_STATE_RAID		0x00000400
 
-/*
- * Cache control.
- */
+#define	I2O_PARAM_RBS_OPERATION		0x0001
+struct i2o_param_rbs_operation {
+	u_int8_t	autoreass;
+	u_int8_t	reasstolerance;
+	u_int8_t	numretries;
+	u_int8_t	reserved0;
+	u_int32_t	reasssize;
+	u_int32_t	expectedtimeout;
+	u_int32_t	rwvtimeout;
+	u_int32_t	rwvtimeoutbase;
+	u_int32_t	timeoutbase;
+	u_int32_t	orderedreqdepth;
+	u_int32_t	atomicwritesize;
+} __attribute__ ((__packed__));
+
 #define	I2O_PARAM_RBS_CACHE_CONTROL	0x0003
 struct i2o_param_rbs_cache_control {
 	u_int32_t	totalcachesize;
@@ -699,9 +803,6 @@ struct i2o_param_rbs_cache_control {
  * ================= SCSI peripheral class messages =================
  */
 
-/*
- * Reset SCSI device. 
- */
 #define	I2O_SCSI_DEVICE_RESET		0x27
 struct i2o_scsi_device_reset {
 	u_int32_t	msgflags;
@@ -710,9 +811,6 @@ struct i2o_scsi_device_reset {
 	u_int32_t	msgtctx;
 } __attribute__ ((__packed__));
 
-/*
- * Execute SCSI command. 
- */
 #define	I2O_SCSI_SCB_EXEC		0x81
 struct i2o_scsi_scb_exec {
 	u_int32_t	msgflags;
@@ -734,9 +832,6 @@ struct i2o_scsi_scb_exec {
 #define	I2O_SCB_FLAG_XFER_FROM_DEVICE       0x40000000
 #define	I2O_SCB_FLAG_XFER_TO_DEVICE         0x80000000
 
-/*
- * Abort SCSI command.
- */
 #define	I2O_SCSI_SCB_ABORT		0x83
 struct i2o_scsi_scb_abort {
 	u_int32_t	msgflags;
@@ -746,10 +841,6 @@ struct i2o_scsi_scb_abort {
 	u_int32_t	tctxabort;
 } __attribute__ ((__packed__));
 
-
-/*
- * SCSI message reply frame.
- */
 struct i2o_scsi_reply {
 	u_int32_t	msgflags;
 	u_int32_t	msgfunc;

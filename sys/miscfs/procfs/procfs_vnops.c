@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.69.2.1 2000/11/20 18:09:49 bouyer Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.69.2.2 2000/12/08 09:15:01 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -806,7 +806,7 @@ procfs_lookup(v)
 
 	found:
 		if (pt->pt_pfstype == Pfile) {
-			fvp = procfs_findtextvp(p);
+			fvp = p->p_textvp;
 			/* We already checked that it exists. */
 			VREF(fvp);
 			vn_lock(fvp, LK_EXCLUSIVE | LK_RETRY);
@@ -837,7 +837,7 @@ int
 procfs_validfile(p)
 	struct proc *p;
 {
-	return (procfs_findtextvp(p) != NULLVP);
+	return (p->p_textvp != NULL);
 }
 
 #ifdef COMPAT_LINUX

@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_fcntl.c,v 1.8.22.1 2000/11/20 18:08:13 bouyer Exp $	*/
+/*	$NetBSD: ibcs2_fcntl.c,v 1.8.22.2 2000/12/08 09:08:18 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Bartram
@@ -176,9 +176,9 @@ ibcs2_sys_open(p, v, retval)
 
 	SCARG(uap, flags) = cvt_o_flags(SCARG(uap, flags));
 	if (SCARG(uap, flags) & O_CREAT)
-		IBCS2_CHECK_ALT_CREAT(p, &sg, SCARG(uap, path));
+		CHECK_ALT_CREAT(p, &sg, SCARG(uap, path));
 	else
-		IBCS2_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+		CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 	ret = sys_open(p, uap, retval);
 
 	if (!ret && !noctty && SESS_LEADER(p) && !(p->p_flag & P_CONTROLT)) {
@@ -205,7 +205,7 @@ ibcs2_sys_creat(p, v, retval)
 	struct sys_open_args cup;   
 	caddr_t sg = stackgap_init(p->p_emul);
 
-	IBCS2_CHECK_ALT_CREAT(p, &sg, SCARG(uap, path));
+	CHECK_ALT_CREAT(p, &sg, SCARG(uap, path));
 	SCARG(&cup, path) = SCARG(uap, path);
 	SCARG(&cup, mode) = SCARG(uap, mode);
 	SCARG(&cup, flags) = O_WRONLY | O_CREAT | O_TRUNC;
@@ -225,7 +225,7 @@ ibcs2_sys_access(p, v, retval)
         struct sys_access_args cup;
         caddr_t sg = stackgap_init(p->p_emul);
 
-        IBCS2_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+        CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
         SCARG(&cup, path) = SCARG(uap, path);
         SCARG(&cup, flags) = SCARG(uap, flags);
         return sys_access(p, &cup, retval);
@@ -247,7 +247,7 @@ ibcs2_sys_eaccess(p, v, retval)
         struct nameidata nd;
         caddr_t sg = stackgap_init(p->p_emul);
 
-        IBCS2_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+        CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
         NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE,
             SCARG(uap, path), p);

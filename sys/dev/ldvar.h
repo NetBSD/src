@@ -1,4 +1,4 @@
-/*	$NetBSD$	*/
+/*	$NetBSD: ldvar.h,v 1.2.2.2 2000/12/08 09:12:15 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -36,10 +36,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef	_DEV_LSU_LSUVAR_H_
-#define	_DEV_LSU_LSUVAR_H_
+#ifndef	_DEV_LD_LDVAR_H_
+#define	_DEV_LD_LDVAR_H_
 
-struct lsu_softc {
+struct ld_softc {
 	struct	device sc_dv;
 	struct	disk sc_dk;
 	struct	buf_queue sc_bufq;
@@ -60,18 +60,20 @@ struct lsu_softc {
 	int	sc_maxxfer;			/* max xfer size in bytes */
 	int	sc_maxqueuecnt;			/* maximum h/w queue count */
 
-	int	(*sc_dump)(struct lsu_softc *, void *, int, int);
-	int	(*sc_flush)(struct lsu_softc *);
-	int	(*sc_start)(struct lsu_softc *, struct buf *);
+	int	(*sc_dump)(struct ld_softc *, void *, int, int);
+	int	(*sc_flush)(struct ld_softc *);
+	int	(*sc_start)(struct ld_softc *, struct buf *);
 };
 
-#define	LSUF_ENABLED	0x01		/* device enabled */
-#define	LSUF_LKHELD	0x02		/* lock held */
-#define	LSUF_LKWANTED	0x04		/* lock wanted */
-#define	LSUF_WLABEL	0x08		/* label is writable */
-#define	LSUF_LABELLING	0x10		/* writing label */
+#define	LDF_ENABLED	0x01		/* device enabled */
+#define	LDF_LKHELD	0x02		/* lock held */
+#define	LDF_LKWANTED	0x04		/* lock wanted */
+#define	LDF_WLABEL	0x08		/* label is writable */
+#define	LDF_LABELLING	0x10		/* writing label */
+#define	LDF_DRAIN	0x20		/* detach pending */
 
-void	lsuattach(struct lsu_softc *);
-void	lsudone(struct lsu_softc *, struct buf *);
+void	ldattach(struct ld_softc *);
+void	lddetach(struct ld_softc *);
+void	lddone(struct ld_softc *, struct buf *);
 
-#endif	/* !_DEV_LSU_LSUVAR_H_ */
+#endif	/* !_DEV_LD_LDVAR_H_ */

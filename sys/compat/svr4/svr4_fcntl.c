@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_fcntl.c,v 1.32.2.1 2000/11/20 18:08:39 bouyer Exp $	 */
+/*	$NetBSD: svr4_fcntl.c,v 1.32.2.2 2000/12/08 09:08:45 bouyer Exp $	 */
 
 /*-
  * Copyright (c) 1994, 1997 The NetBSD Foundation, Inc.
@@ -374,9 +374,9 @@ svr4_sys_open(p, v, retval)
 	SCARG(&cup, flags) = svr4_to_bsd_flags(SCARG(uap, flags));
 
 	if (SCARG(&cup, flags) & O_CREAT)
-		SVR4_CHECK_ALT_CREAT(p, &sg, SCARG(uap, path));
+		CHECK_ALT_CREAT(p, &sg, SCARG(uap, path));
 	else
-		SVR4_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+		CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
 	SCARG(&cup, path) = SCARG(uap, path);
 	SCARG(&cup, mode) = SCARG(uap, mode);
@@ -418,7 +418,7 @@ svr4_sys_creat(p, v, retval)
 	struct sys_open_args cup;
 
 	caddr_t sg = stackgap_init(p->p_emul);
-	SVR4_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
 	SCARG(&cup, path) = SCARG(uap, path);
 	SCARG(&cup, mode) = SCARG(uap, mode);
@@ -471,7 +471,7 @@ svr4_sys_access(p, v, retval)
 	struct sys_access_args cup;
 
 	caddr_t sg = stackgap_init(p->p_emul);
-	SVR4_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
 	SCARG(&cup, path) = SCARG(uap, path);
 	SCARG(&cup, flags) = SCARG(uap, flags);

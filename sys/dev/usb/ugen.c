@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.25.2.1 2000/11/20 11:43:24 bouyer Exp $	*/
+/*	$NetBSD: ugen.c,v 1.25.2.2 2000/12/08 09:12:44 bouyer Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ugen.c,v 1.26 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -487,9 +487,7 @@ ugen_do_read(struct ugen_softc *sc, int endpt, struct uio *uio, int flag)
 	int error = 0;
 	u_char buffer[UGEN_CHUNK];
 
-#ifdef __NetBSD__
-	DPRINTFN(5, ("ugenread: %d:%d\n", sc->sc_dev.dv_unit, endpt));
-#endif
+	DPRINTFN(5, ("%s: ugenread: %d\n", USBDEVNAME(sc->sc_dev), endpt));
 
 	if (sc->sc_dying)
 		return (EIO);

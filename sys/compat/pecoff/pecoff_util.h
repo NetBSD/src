@@ -1,4 +1,4 @@
-/*	$NetBSD: pecoff_util.h,v 1.1.6.2 2000/11/20 18:08:36 bouyer Exp $	*/
+/*	$NetBSD: pecoff_util.h,v 1.1.6.3 2000/12/08 09:08:42 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -75,13 +75,5 @@
 #else
 #define DPRINTF(a)
 #endif
-
-extern const char pecoff_emul_path[];
-
-#define PECOFF_CHECK_ALT_EXIST(p, sgp, path) \
-	CHECK_ALT_EXIST(p, sgp, pecoff_emul_path, path)
-
-#define PECOFF_CHECK_ALT_CREAT(p, sgp, path) \
-	CHECK_ALT_CREAT(p, sgp, pecoff_emul_path, path)
 
 #endif /* !_PECOFF_UTIL_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_util.h,v 1.6.2.1 2000/11/22 16:02:22 bouyer Exp $	*/
+/*	$NetBSD: compat_util.h,v 1.6.2.2 2000/12/08 09:08:10 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -87,10 +87,10 @@ unsigned long emul_flags_translate(const struct emul_flags_xtab *tab,
 
 void compat_offseterr __P((struct vnode *, char *msg));
 
-#define CHECK_ALT_EXIST(p, sgp, root, path) \
-    emul_find(p, sgp, root, path, &(path), 0)
+#define CHECK_ALT_EXIST(p, sgp, path) \
+    emul_find(p, sgp, p->p_emul->e_path, path, &(path), 0)
 
-#define CHECK_ALT_CREAT(p, sgp, root, path) \
-    emul_find(p, sgp, root, path, &(path), 1)
+#define CHECK_ALT_CREAT(p, sgp, path) \
+    emul_find(p, sgp, p->p_emul->e_path, path, &(path), 1)
 
 #endif /* !_COMPAT_UTIL_H_ */

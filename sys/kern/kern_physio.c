@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_physio.c,v 1.37.2.1 2000/11/20 18:09:02 bouyer Exp $	*/
+/*	$NetBSD: kern_physio.c,v 1.37.2.2 2000/12/08 09:13:54 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -290,8 +290,7 @@ getphysbuf()
 	splx(s);
 	memset(bp, 0, sizeof(*bp));
 
-	/* XXXCDC: are the following two lines necessary? */
-	bp->b_rcred = bp->b_wcred = NOCRED;
+	/* XXXCDC: is the following line necessary? */
 	bp->b_vnbufs.le_next = NOLIST;
 
 	return(bp);

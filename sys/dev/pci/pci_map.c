@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_map.c,v 1.5.12.1 2000/11/20 11:42:30 bouyer Exp $	*/
+/*	$NetBSD: pci_map.c,v 1.5.12.2 2000/12/08 09:12:33 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -47,20 +47,9 @@
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 
-static int pci_io_find __P((pci_chipset_tag_t, pcitag_t, int, pcireg_t,
-    bus_addr_t *, bus_size_t *, int *));
-static int pci_mem_find __P((pci_chipset_tag_t, pcitag_t, int, pcireg_t,
-    bus_addr_t *, bus_size_t *, int *));
-
 static int
-pci_io_find(pc, tag, reg, type, basep, sizep, flagsp)
-	pci_chipset_tag_t pc;
-	pcitag_t tag;
-	int reg;
-	pcireg_t type;
-	bus_addr_t *basep;
-	bus_size_t *sizep;
-	int *flagsp;
+pci_io_find(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t type,
+    bus_addr_t *basep, bus_size_t *sizep, int *flagsp)
 {
 	pcireg_t address, mask;
 	int s;
@@ -114,14 +103,8 @@ pci_io_find(pc, tag, reg, type, basep, sizep, flagsp)
 }
 
 static int
-pci_mem_find(pc, tag, reg, type, basep, sizep, flagsp)
-	pci_chipset_tag_t pc;
-	pcitag_t tag;
-	int reg;
-	pcireg_t type;
-	bus_addr_t *basep;
-	bus_size_t *sizep;
-	int *flagsp;
+pci_mem_find(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t type,
+    bus_addr_t *basep, bus_size_t *sizep, int *flagsp)
 {
 	pcireg_t address, mask, address1 = 0, mask1 = 0xffffffff;
 	u_int64_t waddress, wmask;
@@ -228,10 +211,7 @@ pci_mem_find(pc, tag, reg, type, basep, sizep, flagsp)
 }
 
 pcireg_t
-pci_mapreg_type(pc, tag, reg)
-	pci_chipset_tag_t pc;
-	pcitag_t tag;
-	int reg;
+pci_mapreg_type(pci_chipset_tag_t pc, pcitag_t tag, int reg)
 {
 	pcireg_t rv;
 
@@ -244,14 +224,8 @@ pci_mapreg_type(pc, tag, reg)
 }
 
 int
-pci_mapreg_info(pc, tag, reg, type, basep, sizep, flagsp)
-	pci_chipset_tag_t pc;
-	pcitag_t tag;
-	int reg;
-	pcireg_t type;
-	bus_addr_t *basep;
-	bus_size_t *sizep;
-	int *flagsp;
+pci_mapreg_info(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t type,
+    bus_addr_t *basep, bus_size_t *sizep, int *flagsp)
 {
 
 	if (PCI_MAPREG_TYPE(type) == PCI_MAPREG_TYPE_IO)
@@ -263,14 +237,9 @@ pci_mapreg_info(pc, tag, reg, type, basep, sizep, flagsp)
 }
 
 int
-pci_mapreg_map(pa, reg, type, busflags, tagp, handlep, basep, sizep)
-	struct pci_attach_args *pa;
-	int reg, busflags;
-	pcireg_t type;
-	bus_space_tag_t *tagp;
-	bus_space_handle_t *handlep;
-	bus_addr_t *basep;
-	bus_size_t *sizep;
+pci_mapreg_map(struct pci_attach_args *pa, int reg, pcireg_t type,
+    int busflags, bus_space_tag_t *tagp, bus_space_handle_t *handlep,
+    bus_addr_t *basep, bus_size_t *sizep)
 {
 	bus_space_tag_t tag;
 	bus_space_handle_t handle;

@@ -1,4 +1,4 @@
-/* $NetBSD: loadfile.c,v 1.3.2.2 2000/11/22 16:05:42 bouyer Exp $ */
+/* $NetBSD: loadfile.c,v 1.3.2.3 2000/12/08 09:14:17 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -473,7 +473,7 @@ aout_exec(fd, x, marks, flags)
 	 * symbols were loaded by this boot program.
 	 */
 	if (magic == OMAGIC || magic == NMAGIC) {
-		if (flags & LOAD_HDR)
+		if (flags & LOAD_HDR && maxp >= sizeof(*x))
 			BCOPY(x, maxp - sizeof(*x), sizeof(*x));
 	}
 	else {

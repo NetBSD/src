@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_43.c,v 1.12.2.1 2000/11/20 18:08:09 bouyer Exp $	*/
+/*	$NetBSD: vfs_syscalls_43.c,v 1.12.2.2 2000/12/08 09:08:10 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -40,7 +40,9 @@
  *	@(#)vfs_syscalls.c	8.28 (Berkeley) 12/10/94
  */
 
+#if defined(_KERNEL) && !defined(_LKM)
 #include "fs_union.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_conf.c,v 1.24.8.2 2000/11/22 16:05:27 bouyer Exp $	*/
+/*	$NetBSD: tty_conf.c,v 1.24.8.3 2000/12/08 09:13:57 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -96,6 +96,7 @@ int	stripinput __P((int c, struct tty *tp));
 int	stripstart __P((struct tty *tp));
 #endif
 
+
 struct  linesw termios_disc =
 	{ "termios", 0, ttylopen, ttylclose, ttread, ttwrite, nullioctl,
 	  ttyinput, ttstart, ttymodem };		/* 0- termios */
@@ -136,8 +137,6 @@ struct  linesw strip_disc =
 struct	linesw **linesw = NULL;
 int	nlinesw = 0;
 int	slinesw = 0;
-
-int	nlinesw = sizeof(linesw) / sizeof(linesw[0]);
 
 /*
  * Do nothing specific version of line

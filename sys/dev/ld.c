@@ -1,4 +1,4 @@
-/*	$NetBSD$	*/
+/*	$NetBSD: ld.c,v 1.2.2.2 2000/12/08 09:12:15 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -57,37 +57,38 @@
 #include <sys/lock.h>
 #include <sys/conf.h>
 #include <sys/fcntl.h>
+#include <sys/vnode.h>
 #include <sys/syslog.h>
 #if NRND > 0
 #include <sys/rnd.h>
 #endif
 
-#include <dev/lsuvar.h>
+#include <dev/ldvar.h>
 
-static void	lsugetdefaultlabel(struct lsu_softc *, struct disklabel *);
-static void	lsugetdisklabel(struct lsu_softc *);
-static int	lsulock(struct lsu_softc *);
-static void	lsuminphys(struct buf *bp);
-static void	lsushutdown(void *);
-static void	lsustart(struct lsu_softc *, struct buf *);
-static void	lsuunlock(struct lsu_softc *);
+static void	ldgetdefaultlabel(struct ld_softc *, struct disklabel *);
+static void	ldgetdisklabel(struct ld_softc *);
+static int	ldlock(struct ld_softc *);
+static void	ldminphys(struct buf *bp);
+static void	ldshutdown(void *);
+static int	ldstart(struct ld_softc *, struct buf *);
+static void	ldunlock(struct ld_softc *);
 
-extern struct	cfdriver lsu_cd;
+extern struct	cfdriver ld_cd;
 
-static struct	dkdriver lsudkdriver = { lsustrategy };
-static void	*lsu_sdh;
+static struct	dkdriver lddkdriver = { ldstrategy };
+static void	*ld_sdh;
 
 void
-lsuattach(struct lsu_softc *sc)
+ldattach(struct ld_softc *sc)
 {
 	char buf[9];
 
 	/* Initialise and attach the disk structure. */
-	sc->sc_dk.dk_driver = &lsudkdriver;
+	sc->sc_dk.dk_driver = &lddkdriver;
 	sc->sc_dk.dk_name = sc->sc_dv.dv_xname;
 	disk_attach(&sc->sc_dk);
 
-	if ((sc->sc_flags & LSUF_ENABLED) == 0) {
+	if ((sc->sc_flags & LDF_ENABLED) == 0) {
 		printf("%s: disabled\n", sc->sc_dv.dv_xname);
 		return;
 	}
@@ -107,19 +108,68 @@ lsuattach(struct lsu_softc *sc)
 #endif
 
 	/* Set the `shutdownhook'. */
-	if (lsu_sdh == NULL)
-		lsu_sdh = shutdownhook_establish(lsushutdown, NULL);
+	if (ld_sdh == NULL)
+		ld_sdh = shutdownhook_establish(ldshutdown, NULL);
 	BUFQ_INIT(&sc->sc_bufq);
 }
 
-static void
-lsushutdown(void *cookie)
+void
+lddetach(struct ld_softc *sc)
 {
-	struct lsu_softc *sc;
+	struct buf *bp;
+	int s, bmaj, cmaj, mn;
+
+	/* Wait for commands queued with the hardware to complete. */
+	if (sc->sc_queuecnt != 0)
+		tsleep(&sc->sc_queuecnt, PRIBIO, "lddrn", 0);
+
+	/* Locate the major numbers. */
+	for (bmaj = 0; bmaj <= nblkdev; bmaj++)
+		if (bdevsw[bmaj].d_open == sdopen)
+			break;
+	for (cmaj = 0; cmaj <= nchrdev; cmaj++)
+		if (cdevsw[cmaj].d_open == sdopen)
+			break;
+
+	/* Kill off any queued buffers. */
+	s = splbio();
+	while ((bp = BUFQ_FIRST(&sc->sc_bufq)) != NULL) {
+		BUFQ_REMOVE(&sc->sc_bufq, bp);
+		bp->b_error = EIO;
+		bp->b_flags |= B_ERROR;
+		bp->b_resid = bp->b_bcount;
+		biodone(bp);
+	}
+	splx(s);
+
+	/* Nuke the vnodes for any open instances. */
+	mn = DISKUNIT(sc->sc_dv.dv_unit);
+	vdevgone(bmaj, mn, mn + (MAXPARTITIONS - 1), VBLK);
+	vdevgone(cmaj, mn, mn + (MAXPARTITIONS - 1), VCHR);
+	
+	/* Detach from the disk list. */
+	disk_detach(&sc->sc_dk);
+
+#if NRND > 0
+	/* Unhook the entropy source. */
+	rnd_detach_source(&sc->sc_rnd_source);
+#endif
+
+	/* Flush the device's cache. */
+	if (sc->sc_flush != NULL)
+		if ((*sc->sc_flush)(sc) != 0)
+			printf("%s: unable to flush cache\n",
+			    sc->sc_dv.dv_xname);
+}
+
+static void
+ldshutdown(void *cookie)
+{
+	struct ld_softc *sc;
 	int i;
 
-	for (i = 0; i < lsu_cd.cd_ndevs; i++) {
-		if ((sc = device_lookup(&lsu_cd, i)) == NULL)
+	for (i = 0; i < ld_cd.cd_ndevs; i++) {
+		if ((sc = device_lookup(&ld_cd, i)) == NULL)
 			continue;
 		if (sc->sc_flush != NULL && (*sc->sc_flush)(sc) != 0)
 			printf("%s: unable to flush cache\n",
@@ -128,26 +178,26 @@ lsushutdown(void *cookie)
 }
 
 int
-lsuopen(dev_t dev, int flags, int fmt, struct proc *p)
+ldopen(dev_t dev, int flags, int fmt, struct proc *p)
 {
-	struct lsu_softc *sc;
+	struct ld_softc *sc;
 	int unit, part;
 
 	unit = DISKUNIT(dev);
-	if ((sc = device_lookup(&lsu_cd, unit))== NULL)
+	if ((sc = device_lookup(&ld_cd, unit))== NULL)
 		return (ENXIO);
-	if ((sc->sc_flags & LSUF_ENABLED) == 0)
+	if ((sc->sc_flags & LDF_ENABLED) == 0)
 		return (ENODEV);
 	part = DISKPART(dev);
-	lsulock(sc);
+	ldlock(sc);
 
 	if (sc->sc_dk.dk_openmask == 0)
-		lsugetdisklabel(sc);
+		ldgetdisklabel(sc);
 
 	/* Check that the partition exists. */
 	if (part != RAW_PART && (part >= sc->sc_dk.dk_label->d_npartitions ||
 	    sc->sc_dk.dk_label->d_partitions[part].p_fstype == FS_UNUSED)) {
-	     	lsuunlock(sc);
+	     	ldunlock(sc);
 		return (ENXIO);
 	}
 
@@ -163,20 +213,20 @@ lsuopen(dev_t dev, int flags, int fmt, struct proc *p)
 	sc->sc_dk.dk_openmask =
 	    sc->sc_dk.dk_copenmask | sc->sc_dk.dk_bopenmask;
 
-	lsuunlock(sc);
+	ldunlock(sc);
 	return (0);
 }
 
 int
-lsuclose(dev_t dev, int flags, int fmt, struct proc *p)
+ldclose(dev_t dev, int flags, int fmt, struct proc *p)
 {
-	struct lsu_softc *sc;
+	struct ld_softc *sc;
 	int part, unit;
 
 	unit = DISKUNIT(dev);
 	part = DISKPART(dev);
-	sc = device_lookup(&lsu_cd, unit);
-	lsulock(sc);
+	sc = device_lookup(&ld_cd, unit);
+	ldlock(sc);
 
 	switch (fmt) {
 	case S_IFCHR:
@@ -194,33 +244,33 @@ lsuclose(dev_t dev, int flags, int fmt, struct proc *p)
 			printf("%s: unable to flush cache\n",
 			    sc->sc_dv.dv_xname);
 
-	lsuunlock(sc);
+	ldunlock(sc);
 	return (0);
 }
 
 int
-lsuread(dev_t dev, struct uio *uio, int ioflag)
+ldread(dev_t dev, struct uio *uio, int ioflag)
 {
 
-	return (physio(lsustrategy, NULL, dev, B_READ, lsuminphys, uio));
+	return (physio(ldstrategy, NULL, dev, B_READ, ldminphys, uio));
 }
 
 int
-lsuwrite(dev_t dev, struct uio *uio, int ioflag)
+ldwrite(dev_t dev, struct uio *uio, int ioflag)
 {
 
-	return (physio(lsustrategy, NULL, dev, B_WRITE, lsuminphys, uio));
+	return (physio(ldstrategy, NULL, dev, B_WRITE, ldminphys, uio));
 }
 
 int
-lsuioctl(dev_t dev, u_long cmd, caddr_t addr, int32_t flag, struct proc *p)
+ldioctl(dev_t dev, u_long cmd, caddr_t addr, int32_t flag, struct proc *p)
 {
-	struct lsu_softc *sc;
+	struct ld_softc *sc;
 	int part, unit, error;
 
 	unit = DISKUNIT(dev);
 	part = DISKPART(dev);
-	sc = device_lookup(&lsu_cd, unit);
+	sc = device_lookup(&ld_cd, unit);
 	error = 0;
 
 	switch (cmd) {
@@ -239,9 +289,9 @@ lsuioctl(dev_t dev, u_long cmd, caddr_t addr, int32_t flag, struct proc *p)
 		if ((flag & FWRITE) == 0)
 			return (EBADF);
 
-		if ((error = lsulock(sc)) != 0)
+		if ((error = ldlock(sc)) != 0)
 			return (error);
-		sc->sc_flags |= LSUF_LABELLING;
+		sc->sc_flags |= LDF_LABELLING;
 
 		error = setdisklabel(sc->sc_dk.dk_label,
 		    (struct disklabel *)addr, /*sc->sc_dk.dk_openmask : */0,
@@ -249,24 +299,24 @@ lsuioctl(dev_t dev, u_long cmd, caddr_t addr, int32_t flag, struct proc *p)
 		if (error == 0 && cmd == DIOCWDINFO)
 			error = writedisklabel(
 			    MAKEDISKDEV(major(dev), DISKUNIT(dev), RAW_PART), 
-			    lsustrategy, sc->sc_dk.dk_label, 
+			    ldstrategy, sc->sc_dk.dk_label, 
 			    sc->sc_dk.dk_cpulabel);
 
-		sc->sc_flags &= ~LSUF_LABELLING;
-		lsuunlock(sc);
+		sc->sc_flags &= ~LDF_LABELLING;
+		ldunlock(sc);
 		break;
 
 	case DIOCWLABEL:
 		if ((flag & FWRITE) == 0)
 			return (EBADF);
 		if (*(int *)addr)
-			sc->sc_flags |= LSUF_WLABEL;
+			sc->sc_flags |= LDF_WLABEL;
 		else
-			sc->sc_flags &= ~LSUF_WLABEL;
+			sc->sc_flags &= ~LDF_WLABEL;
 		break;
 
 	case DIOCGDEFLABEL:
-		lsugetdefaultlabel(sc, (struct disklabel *)addr);
+		ldgetdefaultlabel(sc, (struct disklabel *)addr);
 		break;
 
 	default:
@@ -278,12 +328,12 @@ lsuioctl(dev_t dev, u_long cmd, caddr_t addr, int32_t flag, struct proc *p)
 }
 
 void
-lsustrategy(struct buf *bp)
+ldstrategy(struct buf *bp)
 {
-	struct lsu_softc *sc;
+	struct ld_softc *sc;
 	int s;
 
-	sc = device_lookup(&lsu_cd, DISKUNIT(bp->b_dev));
+	sc = device_lookup(&ld_cd, DISKUNIT(bp->b_dev));
 
 	s = splbio();
 	if (sc->sc_queuecnt == sc->sc_maxqueuecnt) {
@@ -292,14 +342,22 @@ lsustrategy(struct buf *bp)
 		return;
 	}
 	splx(s);
-	lsustart(sc, bp);
+	ldstart(sc, bp);
 }
 
-static void
-lsustart(struct lsu_softc *sc, struct buf *bp)
+static int
+ldstart(struct ld_softc *sc, struct buf *bp)
 {
 	struct disklabel *lp;
 	int part, s, rv;
+
+	if ((sc->sc_flags & LDF_DRAIN) != 0) {
+		bp->b_error = EIO;
+		bp->b_flags |= B_ERROR;
+		bp->b_resid = bp->b_bcount;
+		biodone(bp);
+		return (-1);
+	}
 
 	part = DISKPART(bp->b_dev);
 	lp = sc->sc_dk.dk_label;
@@ -311,6 +369,7 @@ lsustart(struct lsu_softc *sc, struct buf *bp)
 	if ((bp->b_bcount % lp->d_secsize) != 0 || bp->b_blkno < 0) {
 		bp->b_flags |= B_ERROR;
 		biodone(bp);
+		return (-1);
 	}
 
 	/*
@@ -319,7 +378,7 @@ lsustart(struct lsu_softc *sc, struct buf *bp)
 	if (bp->b_bcount == 0) {
 		bp->b_resid = bp->b_bcount;
 		biodone(bp);
-		return;
+		return (-1);
 	}
 
 	/*
@@ -328,10 +387,10 @@ lsustart(struct lsu_softc *sc, struct buf *bp)
 	 */
 	if (part != RAW_PART &&
 	    bounds_check_with_label(bp, lp,
-	    (sc->sc_flags & (LSUF_WLABEL | LSUF_LABELLING)) != 0) <= 0) {
+	    (sc->sc_flags & (LDF_WLABEL | LDF_LABELLING)) != 0) <= 0) {
 		bp->b_resid = bp->b_bcount;
 		biodone(bp);
-		return;
+		return (-1);
 	}
 
 	/*
@@ -356,17 +415,19 @@ lsustart(struct lsu_softc *sc, struct buf *bp)
 		bp->b_flags |= B_ERROR;
 		bp->b_resid = bp->b_bcount;
 		s = splbio();
-		lsudone(sc, bp);
+		lddone(sc, bp);
 		splx(s);
 	}
+
+	return (0);
 }
 
 void
-lsudone(struct lsu_softc *sc, struct buf *bp)
+lddone(struct ld_softc *sc, struct buf *bp)
 {
 
 	if ((bp->b_flags & B_ERROR) != 0) {
-		diskerr(bp, "lsu", "error", LOG_PRINTF, 0, sc->sc_dk.dk_label);
+		diskerr(bp, "ld", "error", LOG_PRINTF, 0, sc->sc_dk.dk_label);
 		printf("\n");
 	}
 
@@ -375,37 +436,39 @@ lsudone(struct lsu_softc *sc, struct buf *bp)
 	rnd_add_uint32(&sc->sc_rnd_source, bp->b_rawblkno);
 #endif
 	biodone(bp);
-	sc->sc_queuecnt--;
+	if (--sc->sc_queuecnt == 0 && (sc->sc_flags & LDF_DRAIN) != 0)
+		wakeup(&sc->sc_queuecnt);
 
-	if ((bp = BUFQ_FIRST(&sc->sc_bufq)) != NULL) {
+	while ((bp = BUFQ_FIRST(&sc->sc_bufq)) != NULL) {
 		BUFQ_REMOVE(&sc->sc_bufq, bp);
-		lsustart(sc, bp);
+		if (!ldstart(sc, bp))
+			break;
 	}
 }
 
 int
-lsusize(dev_t dev)
+ldsize(dev_t dev)
 {
-	struct lsu_softc *sc;
+	struct ld_softc *sc;
 	int part, unit, omask, size;
 
 	unit = DISKUNIT(dev);
-	if ((sc = device_lookup(&lsu_cd, unit)) == NULL)
+	if ((sc = device_lookup(&ld_cd, unit)) == NULL)
 		return (ENODEV);
-	if ((sc->sc_flags & LSUF_ENABLED) == 0)
+	if ((sc->sc_flags & LDF_ENABLED) == 0)
 		return (ENODEV);
 	part = DISKPART(dev);
 
 	omask = sc->sc_dk.dk_openmask & (1 << part);
 
-	if (omask == 0 && lsuopen(dev, 0, S_IFBLK, NULL) != 0)
+	if (omask == 0 && ldopen(dev, 0, S_IFBLK, NULL) != 0)
 		return (-1);
 	else if (sc->sc_dk.dk_label->d_partitions[part].p_fstype != FS_SWAP)
 		size = -1;
 	else
 		size = sc->sc_dk.dk_label->d_partitions[part].p_size *
 		    (sc->sc_dk.dk_label->d_secsize / DEV_BSIZE);
-	if (omask == 0 && lsuclose(dev, 0, S_IFBLK, NULL) != 0)
+	if (omask == 0 && ldclose(dev, 0, S_IFBLK, NULL) != 0)
 		return (-1);
 
 	return (size);
@@ -415,15 +478,15 @@ lsusize(dev_t dev)
  * Load the label information from the specified device.
  */
 static void
-lsugetdisklabel(struct lsu_softc *sc)
+ldgetdisklabel(struct ld_softc *sc)
 {
 	const char *errstring;
 
-	lsugetdefaultlabel(sc, sc->sc_dk.dk_label);
+	ldgetdefaultlabel(sc, sc->sc_dk.dk_label);
 
 	/* Call the generic disklabel extraction routine. */
 	errstring = readdisklabel(MAKEDISKDEV(0, sc->sc_dv.dv_unit, RAW_PART),
-	    lsustrategy, sc->sc_dk.dk_label, sc->sc_dk.dk_cpulabel);
+	    ldstrategy, sc->sc_dk.dk_label, sc->sc_dk.dk_cpulabel);
 	if (errstring != NULL)
 		printf("%s: %s\n", sc->sc_dv.dv_xname, errstring);
 }
@@ -432,7 +495,7 @@ lsugetdisklabel(struct lsu_softc *sc)
  * Construct a ficticious label.
  */
 static void
-lsugetdefaultlabel(struct lsu_softc *sc, struct disklabel *lp)
+ldgetdefaultlabel(struct ld_softc *sc, struct disklabel *lp)
 {
 
 	memset(lp, 0, sizeof(struct disklabel));
@@ -442,7 +505,7 @@ lsugetdefaultlabel(struct lsu_softc *sc, struct disklabel *lp)
 	lp->d_nsectors = sc->sc_nsectors;
 	lp->d_ncylinders = sc->sc_ncylinders;
 	lp->d_secpercyl = lp->d_ntracks * lp->d_nsectors;
-	lp->d_type = DTYPE_LSU;
+	lp->d_type = DTYPE_LD;
 	strcpy(lp->d_typename, "unknown");
 	strcpy(lp->d_packname, "fictitious");
 	lp->d_secperunit = sc->sc_secperunit;
@@ -467,16 +530,16 @@ lsugetdefaultlabel(struct lsu_softc *sc, struct disklabel *lp)
  * XXX Several drivers do this; it should be abstracted and made MP-safe.
  */
 static int
-lsulock(struct lsu_softc *sc)
+ldlock(struct ld_softc *sc)
 {
 	int error;
 
-	while ((sc->sc_flags & LSUF_LKHELD) != 0) {
-		sc->sc_flags |= LSUF_LKWANTED;
-		if ((error = tsleep(sc, PRIBIO | PCATCH, "lsulck", 0)) != 0)
+	while ((sc->sc_flags & LDF_LKHELD) != 0) {
+		sc->sc_flags |= LDF_LKWANTED;
+		if ((error = tsleep(sc, PRIBIO | PCATCH, "ldlck", 0)) != 0)
 			return (error);
 	}
-	sc->sc_flags |= LSUF_LKHELD;
+	sc->sc_flags |= LDF_LKHELD;
 	return (0);
 }
 
@@ -484,12 +547,12 @@ lsulock(struct lsu_softc *sc)
  * Unlock and wake up any waiters.
  */
 static void
-lsuunlock(struct lsu_softc *sc)
+ldunlock(struct ld_softc *sc)
 {
 
-	sc->sc_flags &= ~LSUF_LKHELD;
-	if ((sc->sc_flags & LSUF_LKWANTED) != 0) {
-		sc->sc_flags &= ~LSUF_LKWANTED;
+	sc->sc_flags &= ~LDF_LKHELD;
+	if ((sc->sc_flags & LDF_LKWANTED) != 0) {
+		sc->sc_flags &= ~LDF_LKWANTED;
 		wakeup(sc);
 	}
 }
@@ -498,9 +561,9 @@ lsuunlock(struct lsu_softc *sc)
  * Take a dump.
  */
 int
-lsudump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
+lddump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
 {
-	struct lsu_softc *sc;
+	struct ld_softc *sc;
 	struct disklabel *lp;
 	int unit, part, nsects, sectoff, towrt, nblk, maxblkcnt, rv;
 	static int dumping;
@@ -513,9 +576,9 @@ lsudump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
 		return (ENXIO);
 
 	unit = DISKUNIT(dev);
-	if ((sc = device_lookup(&lsu_cd, unit)) == NULL)
+	if ((sc = device_lookup(&ld_cd, unit)) == NULL)
 		return (ENXIO);
-	if ((sc->sc_flags & LSUF_ENABLED) == 0)
+	if ((sc->sc_flags & LDF_ENABLED) == 0)
 		return (ENODEV);
 	part = DISKPART(dev);
 
@@ -557,11 +620,11 @@ lsudump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
  * Adjust the size of a transfer.
  */
 static void
-lsuminphys(struct buf *bp)
+ldminphys(struct buf *bp)
 {
-	struct lsu_softc *sc;
+	struct ld_softc *sc;
 
-	sc = device_lookup(&lsu_cd, DISKUNIT(bp->b_dev));
+	sc = device_lookup(&ld_cd, DISKUNIT(bp->b_dev));
 
 	if (bp->b_bcount > sc->sc_maxxfer)
 		bp->b_bcount = sc->sc_maxxfer;

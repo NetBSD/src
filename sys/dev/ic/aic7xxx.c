@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.37.2.8 2000/11/22 16:03:11 bouyer Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.37.2.9 2000/12/08 09:12:20 bouyer Exp $	*/
 
 /*
  * Generic driver for the aic7xxx based adaptec SCSI controllers
@@ -327,7 +327,9 @@ static void ahcminphys(struct buf *);
 static __inline struct scsipi_xfer *ahc_first_xs(struct ahc_softc *);
 static __inline void ahc_swap_hscb(struct hardware_scb *);
 static __inline void ahc_swap_sg(struct ahc_dma_seg *);
+#ifndef AHC_NO_TAGS
 static void ahc_check_tags(struct ahc_softc *, struct scsipi_xfer *);
+#endif
 static int ahc_istagged_device(struct ahc_softc *, struct scsipi_xfer *, int);
 
 #if defined(AHC_DEBUG) && 0
@@ -3431,7 +3433,9 @@ ahc_done(struct ahc_softc *ahc, struct scb *scb)
 		splx(s);
 	} else {
 		xs->xs_status |= XS_STS_DONE;
+#ifndef AHC_NO_TAGS
 		ahc_check_tags(ahc, xs);
+#endif
 		scsipi_done(xs);
 	}
 
@@ -5623,6 +5627,7 @@ ahc_dumptinfo(struct ahc_softc *ahc, struct ahc_initiator_tinfo *tinfo)
 }
 #endif
 
+#ifndef AHC_NO_TAGS
 static void
 ahc_check_tags(struct ahc_softc *ahc, struct scsipi_xfer *xs)
 {
@@ -5678,11 +5683,15 @@ ahc_check_tags(struct ahc_softc *ahc, struct scsipi_xfer *xs)
 		}
 	}
 }
+#endif
 
 static int
 ahc_istagged_device(struct ahc_softc *ahc, struct scsipi_xfer *xs,
 		    int nocmdcheck)
 {
+#ifdef AHC_NO_TAGS
+	return 0;
+#else
 	char channel;
 	u_int our_id, target;
 	struct tmode_tstate *tstate;
@@ -5709,4 +5718,5 @@ ahc_istagged_device(struct ahc_softc *ahc, struct scsipi_xfer *xs,
 	    xs->sc_link->scsipi_scsi.lun, channel, ROLE_INITIATOR);
 
 	return (tstate->tagenable & devinfo.target_mask);
+#endif
 }

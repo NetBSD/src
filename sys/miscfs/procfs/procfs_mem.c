@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_mem.c,v 1.23.8.1 2000/11/20 18:09:49 bouyer Exp $	*/
+/*	$NetBSD: procfs_mem.c,v 1.23.8.2 2000/12/08 09:15:01 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -101,25 +101,6 @@ procfs_domem(curp, p, pfs, uio)
 }
 
 /*
- * Given process (p), find the vnode from which
- * it's text segment is being executed.
- *
- * It would be nice to grab this information from
- * the VM system, however, there is no sure-fire
- * way of doing that.  Instead, fork(), exec() and
- * wait() all maintain the p_textvp field in the
- * process proc structure which contains a held
- * reference to the exec'ed vnode.
- */
-struct vnode *
-procfs_findtextvp(p)
-	struct proc *p;
-{
-
-	return (p->p_textvp);
-}
-
-/*
  * Ensure that a process has permission to perform I/O on another.
  * Arguments:
  *	p	The process wishing to do the I/O (the tracer).
@@ -160,70 +141,3 @@ procfs_checkioperm(p, t)
 	
 	return (0);
 }
-
-#ifdef probably_never
-/*
- * Given process (p), find the vnode from which
- * it's text segment is being mapped.
- *
- * (This is here, rather than in procfs_subr in order
- * to keep all the VM related code in one place.)
- */
-struct vnode *
-procfs_findtextvp(p)
-	struct proc *p;
-{
-	int error;
-	vm_object_t object;
-	vaddr_t pageno;		/* page number */
-
-	/* find a vnode pager for the user address space */
-
-	for (pageno = VM_MIN_ADDRESS;
-			pageno < VM_MAXUSER_ADDRESS;
-			pageno += PAGE_SIZE) {
-		vm_map_t map;
-		vm_map_entry_t out_entry;
-		vm_prot_t out_prot;
-		boolean_t wired, single_use;
-		vaddr_t off;
-
-		map = &p->p_vmspace->vm_map;
-		error = vm_map_lookup(&map, pageno,
-			      VM_PROT_READ,
-			      &out_entry, &object, &off, &out_prot,
-			      &wired, &single_use);
-
-		if (!error) {
-			vm_pager_t pager;
-
-			printf("procfs: found vm object\n");
-			vm_map_lookup_done(map, out_entry);
-			printf("procfs: vm object = %p\n", object);
-
-			/*
-			 * At this point, assuming no errors, object
-			 * is the VM object mapping UVA (pageno).
-			 * Ensure it has a vnode pager, then grab
-			 * the vnode from that pager's handle.
-			 */
-
-			pager = object->pager;
-			printf("procfs: pager = %p\n", pager);
-			if (pager)
-				printf("procfs: found pager, type = %d\n",
-				    pager->pg_type);
-			if (pager && pager->pg_type == PG_VNODE) {
-				struct vnode *vp;
-
-				vp = (struct vnode *) pager->pg_handle;
-				printf("procfs: vp = %p\n", vp);
-				return (vp);
-			}
-		}
-	}
-
-	printf("procfs: text object not found\n");
-	return (0);
-}
-#endif /* probably_never */

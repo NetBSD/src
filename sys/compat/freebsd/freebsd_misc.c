@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_misc.c,v 1.4.14.1 2000/11/20 18:08:10 bouyer Exp $	*/
+/*	$NetBSD: freebsd_misc.c,v 1.4.14.2 2000/12/08 09:08:12 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -35,7 +35,9 @@
  * FreeBSD compatibility module. Try to deal with various FreeBSD system calls.
  */
 
+#if defined(_KERNEL) && !defined(_LKM)
 #include "opt_ntp.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,7 +49,7 @@
 #include <sys/syscallargs.h>
 
 #include <compat/freebsd/freebsd_syscallargs.h>
-#include <compat/freebsd/freebsd_util.h>
+#include <compat/common/compat_util.h>
 #include <compat/freebsd/freebsd_rtprio.h>
 #include <compat/freebsd/freebsd_timex.h>
 #include <compat/freebsd/freebsd_signal.h>

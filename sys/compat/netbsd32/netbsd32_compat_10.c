@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_10.c,v 1.4.2.2 2000/11/22 16:02:50 bouyer Exp $	*/
+/*	$NetBSD: netbsd32_compat_10.c,v 1.4.2.3 2000/12/08 09:08:32 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass and Charles M. Hannum.  All rights reserved.
@@ -30,8 +30,10 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#if defined(_KERNEL) && !defined(_LKM)
 #include "opt_sysv.h"
 #include "opt_compat_netbsd.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>

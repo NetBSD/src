@@ -1,4 +1,4 @@
-/*	$NetBSD: wsksymdef.h,v 1.25.2.1 2000/11/20 11:43:38 bouyer Exp $ */
+/*	$NetBSD: wsksymdef.h,v 1.25.2.2 2000/12/08 09:12:48 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -258,6 +258,11 @@
 #define	KS_thorn 		0xfe
 #define	KS_ydiaeresis 		0xff
 
+#define KS_Odoubleacute 	0x150
+#define KS_odoubleacute 	0x151
+#define KS_Udoubleacute 	0x170
+#define KS_udoubleacute 	0x171
+
 /*
  * Group Dead (dead accents)
  */
@@ -481,6 +486,7 @@
 #define KB_SV			0x0900
 #define KB_NO			0x0a00
 #define KB_ES			0x0b00
+#define KB_HU			0x0c00
 
 #define KB_NODEAD		0x0001
 #define KB_DECLK		0x0002	/* DEC LKnnn layout */
@@ -502,7 +508,8 @@
 	{ KB_JP,	"jp" }, \
 	{ KB_SV,	"sv" }, \
 	{ KB_NO,	"no" }, \
-	{ KB_ES,	"es" }
+	{ KB_ES,	"es" }, \
+	{ KB_HU,	"hu" }
 
 #define KB_VARTAB \
 	{ KB_NODEAD,	"nodead" }, \

@@ -1,4 +1,4 @@
-/*	$NetBSD$	*/
+/*	$NetBSD: ld_cac.c,v 1.1.2.2 2000/12/08 09:12:23 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 /*
- * Compaq array controller front-end for lsu(4) driver.
+ * Compaq array controller front-end for ld(4) driver.
  */
 
 #include "rnd.h"
@@ -56,45 +56,45 @@
 
 #include <machine/bus.h>
 
-#include <dev/lsuvar.h>
+#include <dev/ldvar.h>
 
 #include <dev/ic/cacreg.h>
 #include <dev/ic/cacvar.h>
 
-struct lsu_cac_softc {
-	struct	lsu_softc sc_lsu;
+struct ld_cac_softc {
+	struct	ld_softc sc_ld;
 	int	sc_hwunit;
 };
 
-static void	lsu_cac_attach(struct device *, struct device *, void *);
-static void	lsu_cac_done(struct device *, void *, int);
-static int	lsu_cac_dump(struct lsu_softc *, void *, int, int);
-static int	lsu_cac_match(struct device *, struct cfdata *, void *);
-static int	lsu_cac_start(struct lsu_softc *, struct buf *);
+static void	ld_cac_attach(struct device *, struct device *, void *);
+static void	ld_cac_done(struct device *, void *, int);
+static int	ld_cac_dump(struct ld_softc *, void *, int, int);
+static int	ld_cac_match(struct device *, struct cfdata *, void *);
+static int	ld_cac_start(struct ld_softc *, struct buf *);
 
-struct cfattach lsu_cac_ca = {
-	sizeof(struct lsu_cac_softc), lsu_cac_match, lsu_cac_attach
+struct cfattach ld_cac_ca = {
+	sizeof(struct ld_cac_softc), ld_cac_match, ld_cac_attach
 };
 
 static int
-lsu_cac_match(struct device *parent, struct cfdata *match, void *aux)
+ld_cac_match(struct device *parent, struct cfdata *match, void *aux)
 {
 
 	return (1);
 }
 
 static void
-lsu_cac_attach(struct device *parent, struct device *self, void *aux)
+ld_cac_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct cac_drive_info dinfo;
 	struct cac_attach_args *caca;
-	struct lsu_softc *lsu;
-	struct lsu_cac_softc *sc;
+	struct ld_softc *ld;
+	struct ld_cac_softc *sc;
 	struct cac_softc *cac;
 	const char *type;
 
-	sc = (struct lsu_cac_softc *)self;
-	lsu = &sc->sc_lsu;
+	sc = (struct ld_cac_softc *)self;
+	ld = &sc->sc_ld;
 	caca = (struct cac_attach_args *)aux;
 	sc->sc_hwunit = caca->caca_unit;
 	cac = (struct cac_softc *)parent;
@@ -105,16 +105,16 @@ lsu_cac_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	lsu->sc_ncylinders = CAC_GET2(dinfo.ncylinders);
-	lsu->sc_nheads = CAC_GET1(dinfo.nheads);
-	lsu->sc_nsectors = CAC_GET1(dinfo.nsectors);
-	lsu->sc_secsize = CAC_GET2(dinfo.secsize);
-	lsu->sc_maxxfer = CAC_MAX_XFER;
-	lsu->sc_maxqueuecnt = CAC_MAX_CCBS / cac->sc_nunits;	/* XXX */
-	lsu->sc_secperunit = lsu->sc_ncylinders * lsu->sc_nheads *
-	    lsu->sc_nsectors;
-	lsu->sc_start = lsu_cac_start;
-	lsu->sc_dump = lsu_cac_dump;
+	ld->sc_ncylinders = CAC_GET2(dinfo.ncylinders);
+	ld->sc_nheads = CAC_GET1(dinfo.nheads);
+	ld->sc_nsectors = CAC_GET1(dinfo.nsectors);
+	ld->sc_secsize = CAC_GET2(dinfo.secsize);
+	ld->sc_maxxfer = CAC_MAX_XFER;
+	ld->sc_maxqueuecnt = CAC_MAX_CCBS / cac->sc_nunits;	/* XXX */
+	ld->sc_secperunit = ld->sc_ncylinders * ld->sc_nheads *
+	    ld->sc_nsectors;
+	ld->sc_start = ld_cac_start;
+	ld->sc_dump = ld_cac_dump;
 
 	switch (CAC_GET1(dinfo.mirror)) {
 	case 0:
@@ -137,24 +137,24 @@ lsu_cac_attach(struct device *parent, struct device *self, void *aux)
 	printf(": %s array\n", type);
 
 	/* XXX We should verify this... */
-	lsu->sc_flags = LSUF_ENABLED;
-	lsuattach(lsu);
+	ld->sc_flags = LDF_ENABLED;
+	ldattach(ld);
 }
 
 static int
-lsu_cac_start(struct lsu_softc *lsu, struct buf *bp)
+ld_cac_start(struct ld_softc *ld, struct buf *bp)
 {
 	int flags, cmd;
 	struct cac_softc *cac;
-	struct lsu_cac_softc *sc;
+	struct ld_cac_softc *sc;
 	struct cac_context cc;
 	
-	sc = (struct lsu_cac_softc *)lsu;
-	cac = (struct cac_softc *)lsu->sc_dv.dv_parent;
+	sc = (struct ld_cac_softc *)ld;
+	cac = (struct cac_softc *)ld->sc_dv.dv_parent;
 
-	cc.cc_handler = lsu_cac_done;
+	cc.cc_handler = ld_cac_done;
 	cc.cc_context = bp;
-	cc.cc_dv = &lsu->sc_dv;
+	cc.cc_dv = &ld->sc_dv;
 
 	if ((bp->b_flags & B_READ) == 0) {
 		cmd = CAC_CMD_WRITE;
@@ -169,19 +169,19 @@ lsu_cac_start(struct lsu_softc *lsu, struct buf *bp)
 }
 
 static int
-lsu_cac_dump(struct lsu_softc *lsu, void *data, int blkno, int blkcnt)
+ld_cac_dump(struct ld_softc *ld, void *data, int blkno, int blkcnt)
 {
-	struct lsu_cac_softc *sc;
+	struct ld_cac_softc *sc;
 
-	sc = (struct lsu_cac_softc *)lsu;
+	sc = (struct ld_cac_softc *)ld;
 
-	return (cac_cmd((struct cac_softc *)lsu->sc_dv.dv_parent,
-	    CAC_CMD_WRITE_MEDIA, data, blkcnt * lsu->sc_secsize,
+	return (cac_cmd((struct cac_softc *)ld->sc_dv.dv_parent,
+	    CAC_CMD_WRITE_MEDIA, data, blkcnt * ld->sc_secsize,
 	    sc->sc_hwunit, blkno, CAC_CCB_DATA_OUT, NULL));
 }
 
 static void
-lsu_cac_done(struct device *dv, void *context, int error)
+ld_cac_done(struct device *dv, void *context, int error)
 {
 	struct buf *bp;
 
@@ -194,5 +194,5 @@ lsu_cac_done(struct device *dv, void *context, int error)
 	} else
 		bp->b_resid = 0;
 
-	lsudone((struct lsu_softc *)dv, bp);
+	lddone((struct ld_softc *)dv, bp);
 }

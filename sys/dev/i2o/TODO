@@ -1,29 +1,10 @@
-$NetBSD: TODO,v 1.1.2.2 2000/11/22 17:34:19 bouyer Exp $
+$NetBSD: TODO,v 1.1.2.3 2000/12/08 09:12:18 bouyer Exp $
 
-iop
-
+o Release MFA if CANT_PROCESS is set?
+o Handle device control & private space issues.
 o Rid us of kvtop()
 o Overhaul message allocation and queueing
-o ioctl interface
-o Asynchronous event notification
-o Reconfiguration
-o Useful statistics
-o Runtime tunables
 o Immediate transfer via the SGL for small payloads, if useful
-o Reset without reboot (for f/w upload/download/affix)
-
-lsu_iop
-
-o Handle removable and non-direct access devices
-o Timeouts
-
-iopsp
-
-o Timeouts & aborts for async commands
-o Hook in and test rescan; need to handle changed TIDs
-o Queueing, perhaps one initiator per target (not very useful ATM)
-
-misc
-
-o iopctl
-o Support for LAN class devices
+o ld_iop: handle removable and non-direct access devices
+o iopsp: use maxdevices from parameter group or default
+o Driver for LAN class devices

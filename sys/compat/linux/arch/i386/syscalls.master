@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.36.2.2 2000/11/22 16:02:40 bouyer Exp $
+	$NetBSD: syscalls.master,v 1.36.2.3 2000/12/08 09:08:24 bouyer Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -33,7 +33,9 @@
 ; #ifdef's, etc. may be included, and are copied to the output files.
 ; #include's are copied to the syscall names and switch definition files only.
 
+if defined(_KERNEL) && !defined(_LKM)
 #include "opt_compat_43.h"
+endif
 
 #include <sys/param.h>
 #include <sys/poll.h>
@@ -160,7 +162,7 @@
 85	STD		{ int linux_sys_readlink(const char *name, char *buf, \
 			    int count); }
 86	STD		{ int linux_sys_uselib(const char *path); }
-87	NOARGS		{ int compat_12_sys_swapon(char *name); }
+87	STD		{ int linux_sys_swapon(char *name); }
 88	STD		{ int linux_sys_reboot(int magic1, int magic2, \
 			    int cmd, void *arg); }
 89	STD		{ int linux_sys_readdir(int fd, caddr_t dent, \
@@ -200,14 +202,14 @@
 113	UNIMPL		vm86old
 114	STD		{ int linux_sys_wait4(int pid, int *status, \
 			    int options, struct rusage *rusage); }
-115	UNIMPL		swapoff
+115	STD		{ int linux_sys_swapoff(const char *path); }
 116	UNIMPL		sysinfo
 117	STD		{ int linux_sys_ipc(int what, int a1, int a2, int a3, \
 			    caddr_t ptr); }
 118	NOARGS		{ int sys_fsync(int fd); }
 119	STD		{ int linux_sys_sigreturn(struct linux_sigcontext *scp); }
 120	STD		{ int linux_sys_clone(int flags, void *stack); }
-121	NOARGS		{ int compat_09_sys_setdomainname(char *name, \
+121	STD		{ int linux_sys_setdomainname(char *domainname, \
 			    int len); }
 122	STD		{ int linux_sys_uname(struct linux_utsname *up); }
 123	STD		{ int linux_sys_modify_ldt(int func, void *ptr, \
