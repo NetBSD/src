@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2001/11/15 00:20:26 tv Exp $
+#	$NetBSD: Makefile,v 1.16 2001/11/16 01:50:17 tv Exp $
 
 .include <bsd.own.mk>
 
@@ -10,7 +10,7 @@ CONFIGURE_ENV=	LANGUAGES="c c++ objc"
 CONFIGURE_ARGS=	--target=${MACHINE_GNU_PLATFORM} --disable-nls \
 		--program-transform-name="s,^,${MACHINE_GNU_PLATFORM}-,"
 
-.MAKEFLAGS+=	MACHINE= \
+MAKE_ARGS=	MACHINE= \
 		LIBGCC= LIBGCC1= LIBGCC1_TEST= LIBGCC2= INSTALL_LIBGCC=
 
 ALL_TARGET=	all-binutils all-gas all-ld all-gcc
