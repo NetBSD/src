@@ -1,4 +1,4 @@
-.\"     $NetBSD: isr_add.9,v 1.5 2001/06/05 11:33:35 wiz Exp $
+.\"     $NetBSD: isr_add.9,v 1.6 2001/06/21 12:03:29 wiz Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -46,7 +46,6 @@
 .Sh SYNOPSIS
 .Fd #include <sun3/autoconf.h>
 .Bd -literal
-
 typedef int (*isr_func_t)(void *);
 .Ed
 .Ft void
@@ -124,9 +123,9 @@ These requirements generally dictate that
 .Fa fun
 be written in assembler.
 .El
-.Sh "CODE REFERENCES"
+.Sh CODE REFERENCES
 .Pa sys/arch/sun3/sun3/isr.c
-.Sh "REFERENCES"
+.Sh REFERENCES
 MC68030 User's Manual, Third edition, MC68030UM/AD Rev 2, Motorola Inc.
-.Sh "BUGS"
+.Sh BUGS
 There is no way to remove a handler once it has been added.
