@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.139 2001/11/05 21:38:14 fvdl Exp $	*/
+/*	$NetBSD: systm.h,v 1.140 2001/11/12 23:08:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -184,6 +184,7 @@ int	seltrue __P((dev_t, int, struct proc *));
 int	sys_nosys __P((struct proc *, void *, register_t *));
 
 
+#ifdef _KERNEL
 void	printf __P((const char *, ...))
     __attribute__((__format__(__printf__,1,2)));
 int	sprintf __P((char *, const char *, ...))
@@ -193,6 +194,7 @@ int	snprintf __P((char *, size_t, const char *, ...))
 void	vprintf __P((const char *, _BSD_VA_LIST_));
 int	vsprintf __P((char *, const char *, _BSD_VA_LIST_));
 int	vsnprintf __P((char *, size_t, const char *, _BSD_VA_LIST_));
+#endif /* _KERNEL */
 
 void	panic __P((const char *, ...))
     __attribute__((__noreturn__,__format__(__printf__,1,2)));
@@ -210,9 +212,11 @@ void	tablefull __P((const char *, const char *));
 
 int	kcopy __P((const void *, void *, size_t));
 
+#ifdef _KERNEL
 #define bcopy(src, dst, len)	memcpy((dst), (src), (len))
 #define bzero(src, len)		memset((src), 0, (len))
 #define bcmp(a, b, len)		memcmp((a), (b), (len))
+#endif /* KERNEL */
 
 int	copystr __P((const void *, void *, size_t, size_t *));
 int	copyinstr __P((const void *, void *, size_t, size_t *));
