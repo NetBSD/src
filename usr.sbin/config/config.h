@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.34 1997/10/18 07:59:03 lukem Exp $	*/
+/*	$NetBSD: config.h,v 1.35 1998/01/12 07:37:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -151,6 +151,7 @@ struct attr {
  */
 struct devbase {
 	const char *d_name;		/* e.g., "sd" */
+	const char *d_class;		/* e.g., "DV_DISK" */
 	struct	devbase *d_next;	/* linked list */
 	int	d_isdef;		/* set once properly defined */
 	int	d_ispseudo;		/* is a pseudo-device */
@@ -294,7 +295,6 @@ int	maxmaxusers;		/* default "maxusers" parameter */
 int	maxusers;		/* configuration's "maxusers" parameter */
 int	maxpartitions;		/* configuration's "maxpartitions" parameter */
 struct	nvlist *options;	/* options */
-struct	nvlist *defoptions;	/* "defopt"'d options */
 struct	nvlist *fsoptions;	/* filesystems */
 struct	nvlist *mkoptions;	/* makeoptions */
 struct	hashtab *devbasetab;	/* devbase lookup */
@@ -304,6 +304,7 @@ struct	hashtab *needcnttab;	/* retains names marked "needs-count" */
 struct	hashtab *opttab;	/* table of configured options */
 struct	hashtab *fsopttab;	/* table of configured file systems */
 struct	hashtab *defopttab;	/* options that have been "defopt"'d */
+struct	hashtab *optfiletab;	/* "defopt"'d option .h files */
 struct	hashtab *attrtab;	/* attributes (locators, etc.) */
 
 struct	devbase *allbases;	/* list of all devbase structures */
@@ -352,7 +353,7 @@ int	ht_enumerate __P((struct hashtab *, ht_callback, void *));
 void	addoption __P((const char *name, const char *value));
 void	addfsoption __P((const char *name));
 void	addmkoption __P((const char *name, const char *value));
-void	defoption __P((const char *name));
+void	defoption __P((const char *fname, struct nvlist *opts));
 int	devbase_has_instances __P((struct devbase *, int));
 int	deva_has_instances __P((struct deva *, int));
 void	setupdirs __P((void));

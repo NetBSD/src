@@ -1,4 +1,4 @@
-/*	$NetBSD: mkioconf.c,v 1.44 1997/10/18 07:59:25 lukem Exp $	*/
+/*	$NetBSD: mkioconf.c,v 1.45 1998/01/12 07:37:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -57,6 +57,7 @@
 static int cf_locnames_print __P((const char *, void *, void *));
 static int cforder __P((const void *, const void *));
 static int emitcfdata __P((FILE *));
+static int emitcfdrivers __P((FILE *));
 static int emitexterns __P((FILE *));
 static int emithdr __P((FILE *));
 static int emitloc __P((FILE *));
@@ -85,7 +86,7 @@ mkioconf()
 		return (1);
 	}
 	v = emithdr(fp);
-	if (v != 0 || emitexterns(fp) || emitloc(fp) ||
+	if (v != 0 || emitcfdrivers(fp) || emitexterns(fp) || emitloc(fp) ||
 	    emitpv(fp) || emitcfdata(fp) || emitroots(fp) || emitpseudo(fp)) {
 		if (v >= 0)
 			(void)fprintf(stderr,
@@ -147,20 +148,33 @@ emithdr(ofp)
 }
 
 static int
-emitexterns(fp)
+emitcfdrivers(fp)
 	FILE *fp;
 {
 	struct devbase *d;
-	struct deva *da;
 
 	NEWLINE;
 	for (d = allbases; d != NULL; d = d->d_next) {
 		if (!devbase_has_instances(d, WILD))
 			continue;
-		if (fprintf(fp, "extern struct cfdriver %s_cd;\n",
+		if (fprintf(fp, "struct cfdriver %s_cd = {\n",
 			    d->d_name) < 0)
 			return (1);
+		if (fprintf(fp, "\tNULL, \"%s\", %s\n",
+			    d->d_name, d->d_class) < 0)
+			return (1);
+		if (fprintf(fp, "};\n\n") < 0)
+			return (1);
 	}
+	return (0);
+}
+
+static int
+emitexterns(fp)
+	FILE *fp;
+{
+	struct deva *da;
+
 	NEWLINE;
 	for (da = alldevas; da != NULL; da = da->d_next) {
 		if (!deva_has_instances(da, WILD))

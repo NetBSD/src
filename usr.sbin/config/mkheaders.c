@@ -1,4 +1,4 @@
-/*	$NetBSD: mkheaders.c,v 1.16 1997/10/18 07:59:21 lukem Exp $	*/
+/*	$NetBSD: mkheaders.c,v 1.17 1998/01/12 07:37:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -54,21 +54,26 @@
 
 static int emitcnt __P((struct nvlist *));
 static int emitlocs __P((void));
-static int emitopt __P((struct nvlist *));
-static int err __P((const char *, char *, FILE *));
+static int emitopts __P((void));
+static int emitioconfh __P((void));
+static int err __P((const char *, const char *, FILE *));
 static int locators_print __P((const char *, void *, void *));
+static int defopts_print __P((const char *, void *, void *));
 static char *cntname __P((const char *));
+static int cmphdr __P((const char *, const char *));
 
 
 /*
- * Make headers containing counts, as needed.
+ * Make the various config-generated header files.
  */
 int
 mkheaders()
 {
 	struct files *fi;
-	struct nvlist *nv;
 
+	/*
+	 * Make headers containing counts, as needed.
+	 */
 	for (fi = allfiles; fi != NULL; fi = fi->fi_next) {
 		if (fi->fi_flags & FI_HIDDEN)
 			continue;
@@ -77,11 +82,7 @@ mkheaders()
 			return (1);
 	}
 
-	for (nv = defoptions; nv != NULL; nv = nv->nv_next)
-		if (emitopt(nv))
-			return (1);
-
-	if (emitlocs())
+	if (emitopts() || emitlocs() || emitioconfh())
 		return (1);
 
 	return (0);
@@ -91,109 +92,83 @@ static int
 emitcnt(head)
 	struct nvlist *head;
 {
+	char nfname[BUFSIZ], tfname[BUFSIZ];
 	struct nvlist *nv;
 	FILE *fp;
-	int cnt;
-	char nam[100];
-	char buf[BUFSIZ];
-	char fname[BUFSIZ];
 
-	(void)sprintf(fname, "%s.h", head->nv_name);
-	if ((fp = fopen(fname, "r")) == NULL)
-		goto writeit;
-	nv = head;
-	while (fgets(buf, sizeof(buf), fp) != NULL) {
-		if (nv == NULL)
-			goto writeit;
-		if (sscanf(buf, "#define %s %d", nam, &cnt) != 2 ||
-		    strcmp(nam, cntname(nv->nv_name)) != 0 ||
-		    cnt != nv->nv_int)
-			goto writeit;
-		nv = nv->nv_next;
-	}
-	if (ferror(fp))
-		return (err("read", fname, fp));
-	(void)fclose(fp);
-	if (nv == NULL)
-		return (0);
-writeit:
-	if ((fp = fopen(fname, "w")) == NULL) {
+	(void)sprintf(nfname, "%s.h", head->nv_name);
+	(void)sprintf(tfname, "tmp_%s", nfname);
+
+	if ((fp = fopen(tfname, "w")) == NULL) {
 		(void)fprintf(stderr, "config: cannot write %s: %s\n",
-		    fname, strerror(errno));
+		    tfname, strerror(errno));
 		return (1);
 	}
+
 	for (nv = head; nv != NULL; nv = nv->nv_next)
 		if (fprintf(fp, "#define\t%s\t%d\n",
 		    cntname(nv->nv_name), nv->nv_int) < 0)
-			return (err("writ", fname, fp));
-	if (fclose(fp))
-		return (err("writ", fname, NULL));
-	return (0);
+			return (err("writ", tfname, fp));
+
+	if (fclose(fp) == EOF)
+		return (err("clos", tfname, NULL));
+
+	return (cmphdr(tfname, nfname));
 }
 
+/*
+ * Callback function for walking the option file hash table.  We write out
+ * the options defined for this file.
+ */
 static int
-emitopt(nv)
-	struct nvlist *nv;
+defopts_print(name, value, arg)
+	const char *name;
+	void *value, *arg;
 {
-	struct nvlist *option;
-	char new_contents[BUFSIZ], buf[BUFSIZ];
-	char fname[BUFSIZ], *p;
-	int len, nlines;
+	char tfname[BUFSIZ];
+	struct nvlist *nv, *option;
 	FILE *fp;
 
-	/*
-	 * Generate the new contents of the file.
-	 */
-	p = new_contents;
-	if ((option = ht_lookup(opttab, nv->nv_str)) == NULL) {
-		(void)sprintf(p, "/* option `%s' not defined */\n",
-		    nv->nv_str);
-		len = strlen(p);
-		p += len;
-	} else {
-		(void)sprintf(p, "#define\t%s", option->nv_name);
-		len = strlen(p);
-		p += len;
-		if (option->nv_str != NULL) {
-			(void)sprintf(p, "\t%s", option->nv_str);
-			len = strlen(p);
-			p += len;
-		}
-		*p++ = '\n';
-		*p = '\0';
-	}
-
-	/*
-	 * Compare the new file to the old.
-	 */
-	sprintf(fname, "opt_%s.h", nv->nv_name);
-	if ((fp = fopen(fname, "r")) == NULL)
-		goto writeit;
-	nlines = 0;
-	while (fgets(buf, sizeof(buf), fp) != NULL) {
-		if (++nlines != 1 ||
-		    strcmp(buf, new_contents) != 0)
-			goto writeit;
-	}
-	if (ferror(fp))
-		return (err("read", fname, fp));
-	(void)fclose(fp);
-	if (nlines == 1)
-		return (0);
-writeit:
-	/*
-	 * They're different, or the file doesn't exist.
-	 */
-	if ((fp = fopen(fname, "w")) == NULL) {
+	(void)sprintf(tfname, "tmp_%s", name);
+	if ((fp = fopen(tfname, "w")) == NULL) {
 		(void)fprintf(stderr, "config: cannot write %s: %s\n",
-		    fname, strerror(errno));
+		    tfname, strerror(errno));
 		return (1);
 	}
-	if (fprintf(fp, "%s", new_contents) < 0)
-		return (err("writ", fname, fp));
-	if (fclose(fp))
-		return (err("writ", fname, fp));
-	return (0);
+
+	for (nv = value; nv != NULL; nv = nv->nv_next) {
+		if ((option = ht_lookup(opttab, nv->nv_name)) == NULL) {
+			if (fprintf(fp, "/* option `%s' not defined */\n",
+			    nv->nv_name) < 0)
+				goto bad;
+		} else {
+			if (fprintf(fp, "#define\t%s", option->nv_name) < 0)
+				goto bad;
+			if (option->nv_str != NULL &&
+			    fprintf(fp, "\t%s", option->nv_str) < 0)
+				goto bad;
+			if (fputc('\n', fp) < 0)
+				goto bad;
+		}
+	}
+
+	if (fclose(fp) == EOF)
+		return (err("clos", tfname, NULL));
+
+	return (cmphdr(tfname, name));
+
+ bad:
+	return (err("writ", tfname, fp));
+}
+
+/*
+ * Emit the option header files.
+ */
+static int
+emitopts()
+{
+
+	return (ht_enumerate(optfiletab, defopts_print, NULL));
 }
 
 /*
@@ -264,10 +239,9 @@ locators_print(name, value, arg)
 static int
 emitlocs()
 {
-	char nbuf[BUFSIZ], obuf[BUFSIZ];
-	char *tfname, *nfname = NULL;
+	char *tfname;
 	int rval;
-	FILE *tfp = NULL, *nfp = NULL;
+	FILE *tfp;
 	
 	tfname = "tmp_locators.h";
 	if ((tfp = fopen(tfname, "w")) == NULL) {
@@ -278,32 +252,90 @@ emitlocs()
 
 	rval = ht_enumerate(attrtab, locators_print, tfp);
 	if (fclose(tfp) == EOF)
-		return(err("clos", tfname, NULL));
+		return (err("clos", tfname, NULL));
+	if (rval)
+		return (rval);
+	return (cmphdr(tfname, "locators.h"));
+}
+
+/*
+ * Build the "ioconf.h" file with extern declarations for all configured
+ * cfdrivers.
+ */
+static int
+emitioconfh()
+{
+	const char *tfname;
+	FILE *tfp;
+	struct devbase *d;
+
+	tfname = "tmp_ioconf.h";
+	if ((tfp = fopen(tfname, "w")) == NULL) {
+		(void)fprintf(stderr, "config: cannot write %s: %s\n",
+		    tfname, strerror(errno));
+		return (1);
+	}
+
+	for (d = allbases; d != NULL; d = d->d_next) {
+		if (!devbase_has_instances(d, WILD))
+			continue;
+		if (fprintf(tfp, "extern struct cfdriver %s_cd;\n",
+			    d->d_name) < 0)
+			return (1);
+	}
+
+	if (fclose(tfp) == EOF)
+		return (err("clos", tfname, NULL));
+
+	return (cmphdr(tfname, "ioconf.h"));
+}
+
+/*
+ * Compare two header files.  If nfname doesn't exist, or is different from
+ * tfname, move tfname to nfname.  Otherwise, delete tfname.
+ */
+static int
+cmphdr(tfname, nfname)
+	const char *tfname, *nfname;
+{
+	char tbuf[BUFSIZ], nbuf[BUFSIZ];
+	FILE *tfp, *nfp;
 
 	if ((tfp = fopen(tfname, "r")) == NULL)
-		goto moveit;
+		return (err("open", tfname, NULL));
 
-	/*
-	 * Compare the new file to the old.
-	 */
-	nfname = "locators.h";
 	if ((nfp = fopen(nfname, "r")) == NULL)
 		goto moveit;
 
-	while (fgets(obuf, sizeof(obuf), tfp) != NULL) {
-		if (fgets(nbuf, sizeof(nbuf), nfp) == NULL)
+	while (fgets(tbuf, sizeof(tbuf), tfp) != NULL) {
+		if (fgets(nbuf, sizeof(nbuf), nfp) == NULL) {
+			/*
+			 * Old file has fewer lines.
+			 */
 			goto moveit;
-
-		if (strcmp(obuf, nbuf) != 0)
+		}
+		if (strcmp(tbuf, nbuf) != 0)
 			goto moveit;
 	}
+
+	/*
+	 * We've reached the end of the new file.  Check to see if new file
+	 * has fewer lines than old.
+	 */
+	if (fgets(nbuf, sizeof(nbuf), nfp) != NULL) {
+		/*
+		 * New file has fewer lines.
+		 */
+		goto moveit;
+	}
+
 	(void) fclose(nfp);
 	(void) fclose(tfp);
 	if (remove(tfname) == -1)
 		return(err("remov", tfname, NULL));
 	return (0);
 
-moveit:
+ moveit:
 	/*
 	 * They're different, or the file doesn't exist.
 	 */
@@ -312,14 +344,13 @@ moveit:
 	if (tfp)
 		(void) fclose(tfp);
 	if (rename(tfname, nfname) == -1)
-		return(err("renam", tfname, NULL));
+		return (err("renam", tfname, NULL));
 	return (0);
 }
 
 static int
 err(what, fname, fp)
-	const char *what;
-	char *fname;
+	const char *what, *fname;
 	FILE *fp;
 {
 
