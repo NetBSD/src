@@ -1,4 +1,4 @@
-/*	$NetBSD: console.c,v 1.6 2003/10/17 18:20:10 cdi Exp $	*/
+/*	$NetBSD: console.c,v 1.7 2004/01/07 12:43:43 cdi Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: console.c,v 1.6 2003/10/17 18:20:10 cdi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: console.c,v 1.7 2004/01/07 12:43:43 cdi Exp $");
 
 #include <sys/param.h>
 #include <sys/user.h>
@@ -41,6 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: console.c,v 1.6 2003/10/17 18:20:10 cdi Exp $");
 
 #include <machine/bus.h>
 #include <machine/nvram.h>
+#include <machine/bootinfo.h>
 
 #include <dev/cons.h>
 
@@ -72,14 +73,27 @@ void
 comcnprobe(cn)
 	struct consdev *cn;
 {
+	struct btinfo_flags *bi_flags;
 
 	/*
 	 * Linux code has a comment that serial console must be probed
 	 * early, otherwise the value which allows to detect serial port
 	 * could be overwritten. Okay, probe here and record the result
 	 * for the future use.
+	 *
+	 * Note that if the kernel was booted with a boot loader,
+	 * the latter *has* to provide a flag indicating whether console
+	 * is present or not due to the reasons outlined above.
 	 */
-	console_present = *(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(0x0020001c);
+	if ( (bi_flags = lookup_bootinfo(BTINFO_FLAGS)) == NULL) {
+		/* No boot information, probe console now */
+		console_present = *(volatile u_int32_t *)
+					MIPS_PHYS_TO_KSEG1(0x0020001c);
+	} else {
+		/* Get the value determined by the boot loader. */
+		console_present = bi_flags->bi_flags & BI_SERIAL_CONSOLE;
+	}
+
 	cn->cn_pri = (console_present != 0) ? CN_NORMAL : CN_DEAD;
 }
 
