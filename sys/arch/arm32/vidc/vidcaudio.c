@@ -1,4 +1,4 @@
-/*	$NetBSD: vidcaudio.c,v 1.25 1998/08/17 21:16:10 augustss Exp $	*/
+/*	$NetBSD: vidcaudio.c,v 1.26 1998/08/31 02:36:11 mark Exp $	*/
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson
@@ -30,12 +30,6 @@
  */
 
 /*
- * Yikes just had a look at this and realised that it does not conform
- * to Kernel Normal Form at all. I have fixed the first few functions
- * but there are a lot more still to do - mark
- */
-
-/*
  * audio driver for the RiscPC 16 bit sound
  *
  * Interfaces with the NetBSD generic audio driver to provide SUN
@@ -47,7 +41,6 @@
 #include "opt_uvm.h"
 
 #include <sys/param.h>	/* proc.h */
-#include <sys/types.h>  /* dunno  */
 #include <sys/conf.h>   /* autoconfig functions */
 #include <sys/device.h> /* device calls */
 #include <sys/proc.h>	/* device calls */
@@ -139,38 +132,38 @@ struct audio_device vidcaudio_device = {
 };
 
 struct audio_hw_if vidcaudio_hw_if = {
-    vidcaudio_open,
-    vidcaudio_close,
-    0,
-    vidcaudio_query_encoding,
-    vidcaudio_set_params,
-    vidcaudio_round_blocksize,
-    0,
-    0,
-    0,
-    vidcaudio_start_output,
-    vidcaudio_start_input,
-    vidcaudio_halt_output,
-    vidcaudio_halt_input,
-    vidcaudio_speaker_ctl,
-    vidcaudio_getdev,
-    0,
-    vidcaudio_set_port,
-    vidcaudio_get_port,
-    vidcaudio_query_devinfo,
-    0,
-    0,
-    0,
-    0,
-    vidcaudio_get_props,
+	vidcaudio_open,
+	vidcaudio_close,
+	0,
+	vidcaudio_query_encoding,
+	vidcaudio_set_params,
+	vidcaudio_round_blocksize,
+	0,
+	0,
+	0,
+	vidcaudio_start_output,
+	vidcaudio_start_input,
+	vidcaudio_halt_output,
+	vidcaudio_halt_input,
+	vidcaudio_speaker_ctl,
+	vidcaudio_getdev,
+	0,
+	vidcaudio_set_port,
+	vidcaudio_get_port,
+	vidcaudio_query_devinfo,
+	0,
+	0,
+	0,
+	0,
+	vidcaudio_get_props,
 };
 
 
 void
 vidcaudio_beep_generate()
 {
-	vidcaudio_dma_program ( ag.silence, ag.silence+sizeof(beep_waveform)-16,
-	    vidcaudio_dummy_routine, NULL );
+	vidcaudio_dma_program(ag.silence, ag.silence+sizeof(beep_waveform)-16,
+	    vidcaudio_dummy_routine, NULL);
 }
 
 
@@ -184,8 +177,7 @@ vidcaudio_probe(parent, cf, aux)
 
 	id = IOMD_ID;
 
-/* So far I only know about this IOMD */
-
+	/* So far I only know about this IOMD */
 	switch (id) {
 	case RPC600_IOMD_ID:
 		return(1);
@@ -246,7 +238,7 @@ vidcaudio_attach(parent, self, aux)
 	/* Install the irq handler for the DMA interrupt */
 	ag.ih.ih_func = vidcaudio_intr;
 	ag.ih.ih_arg = NULL;
-	ag.ih.ih_level = IPL_NONE;
+	ag.ih.ih_level = IPL_AUDIO;
 	ag.ih.ih_name = "vidcaudio";
 
 	ag.intr = NULL;
@@ -326,21 +318,23 @@ vidcaudio_close(addr)
  | Interface to the generic audio driver                                     |
  * ************************************************************************* */
 
-int vidcaudio_query_encoding ( void *addr, struct audio_encoding *fp )
+int
+vidcaudio_query_encoding(addr, fp)
+	void *addr;
+	struct audio_encoding *fp;
 {
-    switch ( fp->index )
-    {
-        case 0:
-	    strcpy (fp->name, "vidc" );
-            fp->encoding = AUDIO_ENCODING_ULAW;
-	    fp->precision = 8;
-	    fp->flags = 0;
-            break;
+	switch (fp->index) {
+	case 0:
+		strcpy(fp->name, "vidc");
+		fp->encoding = AUDIO_ENCODING_ULAW;
+		fp->precision = 8;
+		fp->flags = 0;
+		break;
 
 	default:
-	    return (EINVAL);
-    }
-    return 0;
+		return(EINVAL);
+	}
+	return 0;
 }
 
 int
@@ -357,130 +351,175 @@ vidcaudio_set_params(addr, setmode, usemode, p, r)
 	return 0;
 }
 
-int vidcaudio_round_blocksize ( void *addr, int blk )
+int
+vidcaudio_round_blocksize(addr, blk)
+	void *addr;
+	int blk;
 {
-
-    if (blk > NBPG)
-	blk = NBPG;
-    return (blk);
+	if (blk > NBPG)
+		blk = NBPG;
+	return (blk);
 }
 
 #define ROUND(s)  ( ((int)s) & (~(NBPG-1)) )
 
-int vidcaudio_start_output ( void *addr, void *p, int cc,
-			      void (*intr)(), void *arg )
+int
+vidcaudio_start_output(addr, p, cc, intr, arg)
+	void *addr;
+	void *p;
+	int cc;
+	void (*intr)();
+	void *arg;
 {
-    /* I can only DMA inside 1 page */
+	/* I can only DMA inside 1 page */
 
 #ifdef DEBUG
-    printf ( "vidcaudio_start_output (%d) %08x %08x\n", cc, intr, arg );
+	printf("vidcaudio_start_output (%d) %08x %08x\n", cc, intr, arg);
 #endif
 
-    if ( ROUND(p) != ROUND(p+cc) )
-    {
-        /* If it's over a page I can fix it up by copying it into my buffer */
+	if (ROUND(p) != ROUND(p+cc)) {
+		/*
+		 * If it's over a page I can fix it up by copying it into
+		 * my buffer
+		 */
 
 #ifdef DEBUG
-        printf ( "vidcaudio: DMA over page boundary requested.  Fixing up\n" );
+		printf("vidcaudio: DMA over page boundary requested."
+		    "  Fixing up\n");
 #endif
-        bcopy ( (char *)ag.silence, p, cc>NBPG ? NBPG : cc );
-        p=(void *)ag.silence;
+		bcopy((char *)ag.silence, p, cc > NBPG ? NBPG : cc);
+		p = (void *)ag.silence;
 
- 	/* I can't DMA any more than that, but it is possible to fix it up  */
-        /* by handling multiple buffers and only interrupting the audio     */
-        /* driver after sending out all the stuff it gave me.  That it more */
-        /* than I can be bothered to do right now and it probablly wont     */
-        /* happen so I'll just truncate the buffer and tell the user        */
+		/*
+		 * I can't DMA any more than that, but it is possible to
+		 * fix it up by handling multiple buffers and only
+		 * interrupting the audio driver after sending out all the
+		 * stuff it gave me.  That it more than I can be bothered
+		 * to do right now and it probablly wont happen so I'll just
+		 * truncate the buffer and tell the user.
+		 */
 
-	if ( cc>NBPG )
-	{
-	    printf ( "vidcaudio: DMA buffer truncated. I could fix this up\n" );
-	    cc=NBPG;
+		if (cc > NBPG) {
+			printf("vidcaudio: DMA buffer truncated. I could fix this up\n");
+			cc = NBPG;
+		}
 	}
-    }
-    vidcaudio_dma_program ( (vm_offset_t)p, (vm_offset_t)(p+cc), intr, arg );
-    return 0;
+	vidcaudio_dma_program((vm_offset_t)p, (vm_offset_t)(p+cc), intr, arg);
+	return 0;
 }
 
-int vidcaudio_start_input ( void *addr, void *p, int cc,
-			     void (*intr)(), void *arg )
+int
+vidcaudio_start_input(addr, p, cc, intr, arg)
+	void *addr;
+	void *p;
+	int cc;
+	void (*intr)();
+	void *arg;
 {
-    return EIO;
+	return EIO;
 }
 
-int vidcaudio_halt_output ( void *addr )
-{
-#ifdef DEBUG
-    printf ( "DEBUG: vidcaudio_halt_output\n" );
-#endif
-    return EIO;
-}
-
-int vidcaudio_halt_input ( void *addr )
+int
+vidcaudio_halt_output(addr)
+	void *addr;
 {
 #ifdef DEBUG
-    printf ( "DEBUG: vidcaudio_halt_input\n" );
+	printf("DEBUG: vidcaudio_halt_output\n");
 #endif
-    return EIO;
+	return EIO;
 }
 
-int vidcaudio_speaker_ctl ( void *addr, int newstate )
+int
+vidcaudio_halt_input(addr)
+	void *addr;
 {
 #ifdef DEBUG
-    printf ( "DEBUG: vidcaudio_speaker_ctl\n" );
+	printf("DEBUG: vidcaudio_halt_input\n");
 #endif
-    return 0;
+	return EIO;
 }
 
-int vidcaudio_getdev ( void *addr, struct audio_device *retp )
-{
-    *retp = vidcaudio_device;
-    return 0;
-}
-
-
-int vidcaudio_set_port ( void *addr, mixer_ctrl_t *cp )
-{
-    return EINVAL;
-}
-
-int vidcaudio_get_port ( void *addr, mixer_ctrl_t *cp )
-{
-    return EINVAL;
-}
-
-int vidcaudio_query_devinfo ( void *addr, mixer_devinfo_t *dip )
-{
-    return ENXIO;
-}
-
-int vidcaudio_get_props ( void *addr )
-{
-    return 0;
-}
-void vidcaudio_dummy_routine ( void *arg )
+int
+vidcaudio_speaker_ctl(addr, newstate)
+	void *addr;
+	int newstate;
 {
 #ifdef DEBUG
-    printf ( "vidcaudio_dummy_routine\n" );
+	printf("DEBUG: vidcaudio_speaker_ctl\n");
+#endif
+	return 0;
+}
+
+int
+vidcaudio_getdev(addr, retp)
+	void *addr;
+	struct audio_device *retp;
+{
+	*retp = vidcaudio_device;
+	return 0;
+}
+
+
+int
+vidcaudio_set_port(addr, cp)
+	void *addr;
+	mixer_ctrl_t *cp;
+{
+	return EINVAL;
+}
+
+int
+vidcaudio_get_port(addr, cp)
+	void *addr;
+	mixer_ctrl_t *cp;
+{
+	return EINVAL;
+}
+
+int
+vidcaudio_query_devinfo(addr, dip)
+	void *addr;
+	mixer_devinfo_t *dip;
+{
+	return ENXIO;
+}
+
+int
+vidcaudio_get_props(addr)
+	void *addr;
+{
+	return 0;
+}
+void
+vidcaudio_dummy_routine(arg)
+	void *arg;
+{
+#ifdef DEBUG
+	printf("vidcaudio_dummy_routine\n");
 #endif
 }
 
-int vidcaudio_rate ( int rate )
+int
+vidcaudio_rate(rate)
+	int rate;
 {
-    WriteWord ( VIDC_BASE, VIDC_SFR | rate );
-    return 0;
+	WriteWord(VIDC_BASE, VIDC_SFR | rate);
+	return 0;
 }
 
-int vidcaudio_stereo ( int channel, int position )
+int
+vidcaudio_stereo(channel, position)
+	int channel;
+	int position;
 {
-    if ( channel<0 ) return EINVAL;
-    if ( channel>7 ) return EINVAL;
-    channel = channel<<24 | VIDC_SIR0;
-    WriteWord ( VIDC_BASE, channel|position );
-    return 0;
+	if (channel < 0) return EINVAL;
+	if (channel > 7) return EINVAL;
+	channel = channel<<24 | VIDC_SIR0;
+	WriteWord(VIDC_BASE, channel | position);
+	return 0;
 }
 
-#define PHYS(x) (pmap_extract( kernel_pmap, ((x)&PG_FRAME) ))
+#define PHYS(x) (pmap_extract(kernel_pmap, ((x)&PG_FRAME)))
 
 /*
  * Program the next buffer to be used
@@ -489,190 +528,184 @@ int vidcaudio_stereo ( int channel, int position )
 
 #define FLAGS (0)
 
-int vidcaudio_dma_program ( vm_offset_t cur, vm_offset_t end,
-			    void (*intr)(), void *arg )
+int
+vidcaudio_dma_program(cur, end, intr, arg)
+	vm_offset_t cur;
+	vm_offset_t end;
+	void (*intr)();
+	void *arg;
 {
-    /* If there isn't a transfer in progress then start a new one */
-    if ( ag.in_progress==0 )
-    {
-	ag.buffer = 0;
-        IOMD_WRITE_WORD(IOMD_SD0CR, 0x90);	/* Reset State Machine */
-        IOMD_WRITE_WORD(IOMD_SD0CR, 0x30);	/* Reset State Machine */
+	/* If there isn't a transfer in progress then start a new one */
+	if (ag.in_progress == 0) {
+		ag.buffer = 0;
+		IOMD_WRITE_WORD(IOMD_SD0CR, 0x90);	/* Reset State Machine */
+		IOMD_WRITE_WORD(IOMD_SD0CR, 0x30);	/* Reset State Machine */
 
- 	IOMD_WRITE_WORD(IOMD_SD0CURB, PHYS(cur));
-        IOMD_WRITE_WORD(IOMD_SD0ENDB, PHYS(end-16)|FLAGS);
- 	IOMD_WRITE_WORD(IOMD_SD0CURA, PHYS(cur));
-        IOMD_WRITE_WORD(IOMD_SD0ENDA, PHYS(end-16)|FLAGS);
+		IOMD_WRITE_WORD(IOMD_SD0CURB, PHYS(cur));
+		IOMD_WRITE_WORD(IOMD_SD0ENDB, PHYS(end-16)|FLAGS);
+		IOMD_WRITE_WORD(IOMD_SD0CURA, PHYS(cur));
+		IOMD_WRITE_WORD(IOMD_SD0ENDA, PHYS(end-16)|FLAGS);
 
-        ag.in_progress = 1;
+		ag.in_progress = 1;
 
-	ag.next_cur = ag.next_end = 0;
-        ag.next_intr = ag.next_arg = 0; 
+		ag.next_cur = ag.next_end = 0;
+		ag.next_intr = ag.next_arg = 0; 
 
-	ag.intr = intr;
-        ag.arg = arg;
+		ag.intr = intr;
+		ag.arg = arg;
 
-        /* The driver 'clicks' between buffer swaps, leading me to think */
-        /* that the fifo is much small than on other sound cards.  So    */
-        /* so I'm going to have to do some tricks here                   */
+		/*
+		 * The driver 'clicks' between buffer swaps, leading me
+		 * to think  that the fifo is much small than on other
+		 * sound cards so I'm going to have to do some tricks here
+		 */
 
-        (*ag.intr)(ag.arg);			/* Schedule the next buffer */
-	ag.intr = vidcaudio_dummy_routine;	/* Already done this        */
-	ag.arg = NULL;
+		(*ag.intr)(ag.arg);			/* Schedule the next buffer */
+		ag.intr = vidcaudio_dummy_routine;	/* Already done this        */
+		ag.arg = NULL;
 
 #ifdef PRINT
-printf ( "vidcaudio: start output\n" );
+		printf("vidcaudio: start output\n");
 #endif
 #ifdef DEBUG
-	printf ( "SE" );
+		printf("SE");
 #endif
-        enable_irq(sound_dma_intr);
-    }
-    else
-    {
-        /* Otherwise schedule the next one */
-	if ( ag.next_cur!=0 )
-	{
-	    /* If there's one scheduled then complain */
-	    printf ( "vidcaudio: Buffer already Q'ed\n" );
-	    return EIO;
-	}
-	else
-	{
-	    /* We're OK to schedule it now */
-            ag.buffer = (++ag.buffer) & 1;
-            ag.next_cur = PHYS(cur);
-            ag.next_end = PHYS(end-16);
-            ag.next_intr = intr;
-            ag.next_arg = arg;
+		enable_irq(sound_dma_intr);
+	} else {
+		/* Otherwise schedule the next one */
+		if (ag.next_cur != 0) {
+			/* If there's one scheduled then complain */
+			printf("vidcaudio: Buffer already Q'ed\n");
+			return EIO;
+		} else {
+			/* We're OK to schedule it now */
+			ag.buffer = (++ag.buffer) & 1;
+			ag.next_cur = PHYS(cur);
+			ag.next_end = PHYS(end-16);
+			ag.next_intr = intr;
+			ag.next_arg = arg;
 #ifdef DEBUG
-printf ( "s" );
+			printf("s");
 #endif
+		}
 	}
-    }
-    return 0;
-}
-
-void vidcaudio_shutdown ( void )
-{
-    /* Shut down the channel */
-    ag.intr = NULL;
-    ag.in_progress = 0;
-#ifdef PRINT
-printf ( "vidcaudio: stop output\n" );
-#endif
-    IOMD_WRITE_WORD(IOMD_SD0CURB, ag.silence);
-    IOMD_WRITE_WORD(IOMD_SD0ENDB, (ag.silence + NBPG - 16) | (1<<30));
-    disable_irq(sound_dma_intr);
-}
-
-int vidcaudio_intr ( void *arg )
-{
-    int status = IOMD_READ_BYTE(IOMD_SD0ST);
-    void (*nintr)();
-    void *narg;
-    void (*xintr)();
-    void *xarg;
-    int xcur, xend;
-    IOMD_WRITE_WORD(IOMD_DMARQ, 0x10);
-
-#ifdef PRINT
-    printf ( "I" );
-#endif
-
-    if ( ag.open==0 )
-    {
-	vidcaudio_shutdown ();
 	return 0;
-    }
+}
 
-    /* Have I got the generic audio device attached */
+void
+vidcaudio_shutdown(void)
+{
+	/* Shut down the channel */
+	ag.intr = NULL;
+	ag.in_progress = 0;
+#ifdef PRINT
+	printf("vidcaudio: stop output\n");
+#endif
+	IOMD_WRITE_WORD(IOMD_SD0CURB, ag.silence);
+	IOMD_WRITE_WORD(IOMD_SD0ENDB, (ag.silence + NBPG - 16) | (1<<30));
+	disable_irq(sound_dma_intr);
+}
 
-#ifdef DEBUG
-    printf ( "[B%01x]", status );
+int
+vidcaudio_intr(arg)
+	void *arg;
+{
+	int status = IOMD_READ_BYTE(IOMD_SD0ST);
+	void (*nintr)();
+	void *narg;
+	void (*xintr)();
+	void *xarg;
+	int xcur, xend;
+	IOMD_WRITE_WORD(IOMD_DMARQ, 0x10);
+
+#ifdef PRINT
+	printf ( "I" );
 #endif
 
-    nintr=ag.intr;
-    narg=ag.arg;
-    ag.intr = NULL;
+	if (ag.open == 0) {
+		vidcaudio_shutdown();
+		return 0;
+	}
 
-    xintr=ag.next_intr;
-    xarg=ag.next_arg;
-    xcur=ag.next_cur;
-    xend=ag.next_end;
+	/* Have I got the generic audio device attached */
+
+#ifdef DEBUG
+	printf ( "[B%01x]", status );
+#endif
+
+	nintr = ag.intr;
+	narg = ag.arg;
+	ag.intr = NULL;
+
+	xintr = ag.next_intr;
+	xarg = ag.next_arg;
+	xcur = ag.next_cur;
+	xend = ag.next_end;
 	ag.next_cur = 0;
-        ag.intr = xintr;
+	ag.intr = xintr;
 	ag.arg = xarg;
 
-    if ( nintr )
-    {
+	if (nintr) {
 #ifdef DEBUG
-	printf ( "i" );
+		printf("i");
 #endif
-	(*nintr)(narg);
-    }
+		(*nintr)(narg);
+	}
 
-    if ( xcur==0 )
-    {
-	vidcaudio_shutdown ();
-    }
-    else
-    {
+	if (xcur == 0) {
+		vidcaudio_shutdown ();
+	} else {
 #define OVERRUN 	(0x04)
 #define INTERRUPT	(0x02)
 #define BANK_A		(0x00)
 #define BANK_B		(0x01)
-	switch ( status&0x7 )
-	{
-	    case (INTERRUPT|BANK_A):
+		switch (status & 0x7) {
+		case (INTERRUPT|BANK_A):
 #ifdef PRINT
-printf( "B" );
+			printf("B");
 #endif
-        	IOMD_WRITE_WORD(IOMD_SD0CURB, xcur);
-        	IOMD_WRITE_WORD(IOMD_SD0ENDB, xend|FLAGS);
-		break;
+			IOMD_WRITE_WORD(IOMD_SD0CURB, xcur);
+			IOMD_WRITE_WORD(IOMD_SD0ENDB, xend|FLAGS);
+			break;
 
-	    case (INTERRUPT|BANK_B):
+		case (INTERRUPT|BANK_B):
 #ifdef PRINT
-printf( "A" );
+			printf("A");
 #endif
-        	IOMD_WRITE_WORD(IOMD_SD0CURA, xcur);
-        	IOMD_WRITE_WORD(IOMD_SD0ENDA, xend|FLAGS);
-		break;
+			IOMD_WRITE_WORD(IOMD_SD0CURA, xcur);
+			IOMD_WRITE_WORD(IOMD_SD0ENDA, xend|FLAGS);
+			break;
 
-	    case (OVERRUN|INTERRUPT|BANK_A):
+		case (OVERRUN|INTERRUPT|BANK_A):
 #ifdef PRINT
-printf( "A" );
+			printf("A");
 #endif
-        	IOMD_WRITE_WORD(IOMD_SD0CURA, xcur);
-        	IOMD_WRITE_WORD(IOMD_SD0ENDA, xend|FLAGS);
-		break;
+			IOMD_WRITE_WORD(IOMD_SD0CURA, xcur);
+			IOMD_WRITE_WORD(IOMD_SD0ENDA, xend|FLAGS);
+			break;
 		 
-	    case (OVERRUN|INTERRUPT|BANK_B):
+		case (OVERRUN|INTERRUPT|BANK_B):
 #ifdef PRINT
-printf( "B" );
+			printf("B");
 #endif
-        	IOMD_WRITE_WORD(IOMD_SD0CURB, xcur);
-        	IOMD_WRITE_WORD(IOMD_SD0ENDB, xend|FLAGS);
-		break;
-	}
+			IOMD_WRITE_WORD(IOMD_SD0CURB, xcur);
+			IOMD_WRITE_WORD(IOMD_SD0ENDB, xend|FLAGS);
+			break;
+		}
 /*
 	ag.next_cur = 0;
-        ag.intr = xintr;
+	ag.intr = xintr;
 	ag.arg = xarg;
 */
-    }
+	}
 #ifdef PRINT
-printf ( "i" );
+	printf ( "i" );
 #endif
 
-    if ( ag.next_cur==0 )
-    {
-        (*ag.intr)(ag.arg);			/* Schedule the next buffer */
-	ag.intr = vidcaudio_dummy_routine;	/* Already done this        */
-	ag.arg = NULL;
-    }
-    return(0);	/* Pass interrupt on down the chain */
+	if (ag.next_cur == 0) {
+		(*ag.intr)(ag.arg);			/* Schedule the next buffer */
+		ag.intr = vidcaudio_dummy_routine;	/* Already done this        */
+		ag.arg = NULL;
+	}
+	return(0);	/* Pass interrupt on down the chain */
 }
-
-
