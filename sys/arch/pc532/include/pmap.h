@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.39 2004/01/23 04:03:38 simonb Exp $	*/
+/*	$NetBSD: pmap.h,v 1.40 2004/01/23 04:12:39 simonb Exp $	*/
 
 /*
  *
@@ -326,10 +326,10 @@ extern int nkpde;			/* current # of PDEs for kernel */
 
 #define	pmap_clear_modify(pg)		pmap_change_attrs(pg, 0, PG_M)
 #define	pmap_clear_reference(pg)	pmap_change_attrs(pg, 0, PG_U)
-#define	pmap_copy(DP,SP,D,L,S)		
+#define	pmap_copy(DP,SP,D,L,S)
 #define	pmap_is_modified(pg)		pmap_test_attrs(pg, PG_M)
 #define	pmap_is_referenced(pg)		pmap_test_attrs(pg, PG_U)
-#define	pmap_move(DP,SP,D,L,S)		
+#define	pmap_move(DP,SP,D,L,S)
 #define	pmap_phys_address(ppn)		ns532_ptob(ppn)
 #define	pmap_valid_entry(E) 		((E) & PG_V) /* is PDE or PTE valid? */
 
