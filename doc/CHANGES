@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.131 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.132 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -345,3 +345,5 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 		[yamt 20030327]
 	Move default cron log from /var/cron/log to /var/log/cron
 		[perry 20030402]
+	ssh(1): upgrade OpenBSD-based Secure Shell, based on OpenSSH 3.6.1
+		around 20030403.  [itojun 20030403]
