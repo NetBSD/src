@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_parityscan.c,v 1.3 1999/02/05 00:06:14 oster Exp $	*/
+/*	$NetBSD: rf_parityscan.c,v 1.4 1999/03/14 22:10:46 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -63,19 +63,21 @@ rf_RewriteParity(raidPtr)
 {
 	RF_RaidLayout_t *layoutPtr = &raidPtr->Layout;
 	RF_AccessStripeMapHeader_t *asm_h;
-	int     old_pctg, new_pctg, rc;
+	int rc;
 	RF_PhysDiskAddr_t pda;
 	RF_SectorNum_t i;
 
 	pda.startSector = 0;
 	pda.numSector = raidPtr->Layout.sectorsPerStripeUnit;
-	old_pctg = -1;
 
-/* rf_verifyParityDebug=1; */
-	for (i = 0; i < raidPtr->totalSectors; i += layoutPtr->dataSectorsPerStripe) {
-		asm_h = rf_MapAccess(raidPtr, i, layoutPtr->dataSectorsPerStripe, NULL, RF_DONT_REMAP);
+	for (i = 0; i < raidPtr->totalSectors; 
+	     i += layoutPtr->dataSectorsPerStripe) {
+		asm_h = rf_MapAccess(raidPtr, i, 
+				     layoutPtr->dataSectorsPerStripe, 
+				     NULL, RF_DONT_REMAP);
+
 		rc = rf_VerifyParity(raidPtr, asm_h->stripeMap, 1, 0);
-		/* printf("Parity verified: rc=%d\n",rc); */
+
 		switch (rc) {
 		case RF_PARITY_OKAY:
 		case RF_PARITY_CORRECTED:
@@ -97,14 +99,8 @@ rf_RewriteParity(raidPtr)
 			RF_PANIC();
 		}
 		rf_FreeAccessStripeMap(asm_h);
-		new_pctg = i * 1000 / raidPtr->totalSectors;
-		if (new_pctg != old_pctg) {
-		}
-		old_pctg = new_pctg;
 	}
-#if 1
-	return (0);		/* XXX nothing was here.. GO */
-#endif
+	return (0);
 }
 /*****************************************************************************************
  *
@@ -137,9 +133,12 @@ rf_VerifyParity(raidPtr, aasm, correct_it, flags)
 	rc = RF_PARITY_OKAY;
 	if (lp->VerifyParity) {
 		for (doasm = aasm; doasm; doasm = doasm->next) {
-			for (parityPDA = doasm->parityInfo; parityPDA; parityPDA = parityPDA->next) {
-				lrc = lp->VerifyParity(raidPtr, doasm->raidAddress, parityPDA,
-				    correct_it, flags);
+			for (parityPDA = doasm->parityInfo; parityPDA; 
+			     parityPDA = parityPDA->next) {
+				lrc = lp->VerifyParity(raidPtr, 
+						       doasm->raidAddress, 
+						       parityPDA,
+						       correct_it, flags);
 				if (lrc > rc) {
 					/* see rf_parityscan.h for why this
 					 * works */
@@ -162,7 +161,8 @@ rf_VerifyParityBasic(raidPtr, raidAddr, parityPDA, correct_it, flags)
 	RF_RaidAccessFlags_t flags;
 {
 	RF_RaidLayout_t *layoutPtr = &(raidPtr->Layout);
-	RF_RaidAddr_t startAddr = rf_RaidAddressOfPrevStripeBoundary(layoutPtr, raidAddr);
+	RF_RaidAddr_t startAddr = rf_RaidAddressOfPrevStripeBoundary(layoutPtr,
+								     raidAddr);
 	RF_SectorCount_t numsector = parityPDA->numSector;
 	int     numbytes = rf_RaidAddressToByte(raidPtr, numsector);
 	int     bytesPerStripe = numbytes * layoutPtr->numDataCol;
@@ -175,7 +175,9 @@ rf_VerifyParityBasic(raidPtr, raidAddr, parityPDA, correct_it, flags)
 	char   *pbuf, *buf, *end_p, *p;
 	int     i, retcode;
 	RF_ReconUnitNum_t which_ru;
-	RF_StripeNum_t psID = rf_RaidAddressToParityStripeID(layoutPtr, raidAddr, &which_ru);
+	RF_StripeNum_t psID = rf_RaidAddressToParityStripeID(layoutPtr, 
+							     raidAddr, 
+							     &which_ru);
 	int     stripeWidth = layoutPtr->numDataCol + layoutPtr->numParityCol;
 	RF_AccTraceEntry_t tracerec;
 	RF_MCPair_t *mcpair;
