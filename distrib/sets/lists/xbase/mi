@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.47 2005/03/23 00:38:10 tron Exp $
+# $NetBSD: mi,v 1.48 2005/03/23 15:43:42 tron Exp $
 ./etc/mtree/set.xbase				xbase-sys-root
 ./var/db/obsolete/xbase				xbase-sys-root
 ./var/db/obsolete/xcomp				xbase-sys-root
@@ -597,6 +597,7 @@
 ./usr/X11R6/lib/X11/xkb/symbols/en_US
 ./usr/X11R6/lib/X11/xkb/symbols/es
 ./usr/X11R6/lib/X11/xkb/symbols/fi
+./usr/X11R6/lib/X11/xkb/symbols/fo
 ./usr/X11R6/lib/X11/xkb/symbols/fr
 ./usr/X11R6/lib/X11/xkb/symbols/fr_CH
 ./usr/X11R6/lib/X11/xkb/symbols/fujitsu/jp
@@ -625,7 +626,9 @@
 ./usr/X11R6/lib/X11/xkb/symbols/jp
 ./usr/X11R6/lib/X11/xkb/symbols/kan
 ./usr/X11R6/lib/X11/xkb/symbols/keypad
+./usr/X11R6/lib/X11/xkb/symbols/ky
 ./usr/X11R6/lib/X11/xkb/symbols/la
+./usr/X11R6/lib/X11/xkb/symbols/lat
 ./usr/X11R6/lib/X11/xkb/symbols/level3
 ./usr/X11R6/lib/X11/xkb/symbols/lo
 ./usr/X11R6/lib/X11/xkb/symbols/lock
@@ -676,6 +679,7 @@
 ./usr/X11R6/lib/X11/xkb/symbols/pc/en_US
 ./usr/X11R6/lib/X11/xkb/symbols/pc/es
 ./usr/X11R6/lib/X11/xkb/symbols/pc/fi
+./usr/X11R6/lib/X11/xkb/symbols/pc/fo
 ./usr/X11R6/lib/X11/xkb/symbols/pc/fr
 ./usr/X11R6/lib/X11/xkb/symbols/pc/fr-latin9
 ./usr/X11R6/lib/X11/xkb/symbols/pc/gb
@@ -684,6 +688,8 @@
 ./usr/X11R6/lib/X11/xkb/symbols/pc/guj
 ./usr/X11R6/lib/X11/xkb/symbols/pc/gur
 ./usr/X11R6/lib/X11/xkb/symbols/pc/hr
+./usr/X11R6/lib/X11/xkb/symbols/pc/hsb
+./usr/X11R6/lib/X11/xkb/symbols/pc/hu
 ./usr/X11R6/lib/X11/xkb/symbols/pc/ie
 ./usr/X11R6/lib/X11/xkb/symbols/pc/il
 ./usr/X11R6/lib/X11/xkb/symbols/pc/il_phonetic
@@ -692,7 +698,9 @@
 ./usr/X11R6/lib/X11/xkb/symbols/pc/it
 ./usr/X11R6/lib/X11/xkb/symbols/pc/iu
 ./usr/X11R6/lib/X11/xkb/symbols/pc/kan
+./usr/X11R6/lib/X11/xkb/symbols/pc/ky
 ./usr/X11R6/lib/X11/xkb/symbols/pc/la
+./usr/X11R6/lib/X11/xkb/symbols/pc/lat
 ./usr/X11R6/lib/X11/xkb/symbols/pc/latin
 ./usr/X11R6/lib/X11/xkb/symbols/pc/lo
 ./usr/X11R6/lib/X11/xkb/symbols/pc/lt
@@ -718,6 +726,7 @@
 ./usr/X11R6/lib/X11/xkb/symbols/pc/se_NO
 ./usr/X11R6/lib/X11/xkb/symbols/pc/se_SE
 ./usr/X11R6/lib/X11/xkb/symbols/pc/si
+./usr/X11R6/lib/X11/xkb/symbols/pc/sin
 ./usr/X11R6/lib/X11/xkb/symbols/pc/sk
 ./usr/X11R6/lib/X11/xkb/symbols/pc/sk_qwerty
 ./usr/X11R6/lib/X11/xkb/symbols/pc/sr
@@ -731,6 +740,7 @@
 ./usr/X11R6/lib/X11/xkb/symbols/pc/tml
 ./usr/X11R6/lib/X11/xkb/symbols/pc/tr
 ./usr/X11R6/lib/X11/xkb/symbols/pc/ua
+./usr/X11R6/lib/X11/xkb/symbols/pc/ur_PK
 ./usr/X11R6/lib/X11/xkb/symbols/pc/us
 ./usr/X11R6/lib/X11/xkb/symbols/pc/us_intl
 ./usr/X11R6/lib/X11/xkb/symbols/pc/uz
