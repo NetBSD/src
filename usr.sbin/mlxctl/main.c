@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.1 2001/02/04 17:30:37 ad Exp $	*/
+/*	$NetBSD: main.c,v 1.2 2001/02/20 23:57:03 cgd Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #ifndef lint
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: main.c,v 1.1 2001/02/04 17:30:37 ad Exp $");
+__RCSID("$NetBSD: main.c,v 1.2 2001/02/20 23:57:03 cgd Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -151,10 +151,9 @@ main(int argc, char **argv)
 void
 usage(void)
 {
-	extern char *__progname;
 
 	(void)fprintf(stderr, "usage: %s [-f dev] [-av] command [...]\n",
-	    __progname);
+	    getprogname());
 	exit(EXIT_FAILURE);
 	/* NOTREACHED */
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.13 2001/01/05 03:27:28 lukem Exp $ */
+/* $NetBSD: main.c,v 1.14 2001/02/20 23:56:12 cgd Exp $ */
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -39,7 +39,7 @@
 __COPYRIGHT("@(#) Copyright (c) 1994 Christopher G. Demetriou\n\
  All rights reserved.\n");
 
-__RCSID("$NetBSD: main.c,v 1.13 2001/01/05 03:27:28 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.14 2001/02/20 23:56:12 cgd Exp $");
 #endif
 
 /*
@@ -557,10 +557,10 @@ cmp_calls(d1, d2)
 static void
 usage()
 {
-	extern char *__progname;
+
 	(void)fprintf(stderr,
 	    "Usage: %s [-abcdDfijkKlmnqrstu] [-v cutoff] [file ...]\n",
-	    __progname);
+	    getprogname());
 	exit(0);
 }
 

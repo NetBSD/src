@@ -1,4 +1,4 @@
-/*	$NetBSD: mdb.c,v 1.20 2001/01/07 06:09:19 phil Exp $	*/
+/*	$NetBSD: mdb.c,v 1.21 2001/02/20 23:52:55 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -203,8 +203,6 @@ write_menu_file (char *initcode)
 		"/* initilization flag */\n"
 		"extern int __m_endwin;\n"
 		"\n"
-		"extern char * __progname;\n"
-		"\n"
 		"/* Prototypes */\n"
 		"int menu_init (void);\n"
 		"void process_menu (int num);\n"
@@ -381,7 +379,7 @@ write_menu_file (char *initcode)
 		(void) fprintf (out_file,
 			"\t(void) fprintf (stderr, "
 			"\"%%s: Could not initialize curses\\n\", "
-			"__progname);\n"
+			"getprogname());\n"
 			"\texit(1);\n"
 			"}\n");
 	} else {

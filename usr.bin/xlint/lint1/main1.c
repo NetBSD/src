@@ -1,4 +1,4 @@
-/*	$NetBSD: main1.c,v 1.5 2000/07/06 01:10:51 christos Exp $	*/
+/*	$NetBSD: main1.c,v 1.6 2001/02/20 23:53:27 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -210,11 +210,10 @@ main(argc, argv)
 static void
 usage()
 {
-	extern char *__progname;
 
 	(void)fprintf(stderr,
 	    "Usage: %s [-abcdeghmprstuvwyzF] [-X <id>[,<id>]... src dest\n",
-	    __progname);
+	    getprogname());
 	exit(1);
 }
 	
