@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.139 1995/04/17 12:09:31 cgd Exp $	*/
+/*	$NetBSD: wd.c,v 1.140 1995/06/26 05:18:28 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -1407,76 +1407,103 @@ wdsize(dev)
 	return size;
 }
 
+
+#ifndef __BDEVSW_DUMP_OLD_TYPE
+/* #define WD_DUMP_NOT_TRUSTED if you just want to watch */
+static int wddoingadump;
+static int wddumprecalibrated;
+
 /*
  * Dump core after a system crash.
  */
 int
-wddump(dev)
-	dev_t dev;
+wddump(dev, blkno, va, size)
+        dev_t dev;
+        daddr_t blkno;
+        caddr_t va;
+        size_t size;
 {
-	struct wd_softc *wd;	/* disk unit to do the IO */
-	struct wdc_softc *wdc;
-	struct disklabel *lp;
-	int unit, part;
-	long rblkno, nblks;
-	char *addr;
-	static wddoingadump = 0;
-	extern caddr_t CADDR1;
-	extern pt_entry_t *CMAP1;
-	
+	struct wd_softc *wd;	/* disk unit to do the I/O */
+	struct wdc_softc *wdc;	/* disk controller to do the I/O */
+	struct disklabel *lp;	/* disk's disklabel */
+	int	unit, part;
+	int	sectorsize;	/* size of a disk sector */
+	int	nsects;		/* number of sectors in partition */
+	int	sectoff;	/* sector offset of partition */
+	int	totwrt;		/* total number of sectors left to write */
+	int	nwrt;		/* current number of sectors to write */
+	int	retval;
+
+	/* Check if recursive dump; if so, punt. */
 	if (wddoingadump)
 		return EFAULT;
+
+	/* Mark as active early. */
 	wddoingadump = 1;
 
-	unit = WDUNIT(dev);
-	/* Check for acceptable drive number. */
-	if (unit >= wdcd.cd_ndevs)
-		return ENXIO;
-	wd = wdcd.cd_devs[unit];
-	/* Was it ever initialized? */
-	if (wd == 0 || wd->sc_state < OPEN)
-		return ENXIO;
-
-	wdc = (void *)wd->sc_dev.dv_parent;
-	addr = (char *)0;	/* starting address */
-	lp = &wd->sc_dk.dk_label;
+	unit = WDUNIT(dev);	/* decompose unit & partition */
 	part = WDPART(dev);
 
-	/* Convert to disk sectors. */
-	rblkno = lp->d_partitions[part].p_offset + dumplo;
-	nblks = min(ctob(physmem) / lp->d_secsize,
-		    lp->d_partitions[part].p_size - dumplo);
+	/* Check for acceptable drive number. */
+	if (unit >= wdcd.cd_ndevs || (wd = wdcd.cd_devs[unit]) == NULL)
+		return ENXIO;
+
+	/* Make sure it was initialized. */
+	if (wd->sc_state < OPEN)
+		return ENXIO;
+
+	/* Remember the controller device, and sanity check */
+	if ((wdc = (void *)wd->sc_dev.dv_parent) == NULL)
+		return ENXIO;
+
+        /* Convert to disk sectors.  Request must be a multiple of size. */
+	lp = &wd->sc_dk.dk_label;
+	sectorsize = lp->d_secsize;
+	if ((size % sectorsize) != 0)
+		return EFAULT;
+	totwrt = size / sectorsize;
+	blkno = dbtob(blkno) / sectorsize;	/* blkno in DEV_BSIZE units */
+
+	nsects = lp->d_partitions[part].p_size;
+	sectoff = lp->d_partitions[part].p_offset;
 
 	/* Check transfer bounds against partition size. */
-	if (dumplo < 0 || nblks <= 0)
-		return EINVAL;
+	if ((blkno < 0) || ((blkno + totwrt) > nsects))
+		return EINVAL;  
 
-	/* Recalibrate. */
-	if (wdcommandshort(wdc, wd->sc_drive, WDCC_RECAL) != 0 ||
-	    wait_for_ready(wdc) != 0 || wdsetctlr(wd) != 0 ||
-	    wait_for_ready(wdc) != 0) {
-		wderror(wd, NULL, "wddump: recal failed");
-		return EIO;
+	/* Offset block number to start of partition. */
+	blkno += sectoff;
+
+	/* Recalibrate, if first dump transfer. */
+	if (wddumprecalibrated == 0) {
+		wddumprecalibrated = 1;
+		if (wdcommandshort(wdc, wd->sc_drive, WDCC_RECAL) != 0 ||
+		    wait_for_ready(wdc) != 0 || wdsetctlr(wd) != 0 ||
+		    wait_for_ready(wdc) != 0) {
+			wderror(wd, NULL, "wddump: recal failed");
+			return EIO;
+		}
 	}
-    
-	while (nblks > 0) {
-		long blkno;
+   
+	while (totwrt > 0) {
 		long cylin, head, sector;
+		daddr_t xlt_blkno;
 
-		blkno = rblkno;
+		nwrt = 1;		/* ouch XXX */
+		xlt_blkno = blkno;
 
 		if ((lp->d_flags & D_BADSECT) != 0) {
 			long blkdiff;
 			int i;
 
 			for (i = 0; (blkdiff = wd->sc_badsect[i]) != -1; i++) {
-				blkdiff -= blkno;
+				blkdiff -= xlt_blkno;
 				if (blkdiff < 0)
 					continue;
 				if (blkdiff == 0) {
 					/* Replace current block of transfer. */
-					blkno =
-					    lp->d_secperunit - lp->d_nsectors - i - 1;
+					xlt_blkno = lp->d_secperunit -
+					    lp->d_nsectors - i - 1;
 				}
 				break;
 			}
@@ -1484,40 +1511,28 @@ wddump(dev)
 		}
 
 		if ((wd->sc_params.wdp_capabilities & WD_CAP_LBA) != 0) {
-			sector = (blkno >> 0) & 0xff;
-			cylin = (blkno >> 8) & 0xffff;
-			head = (blkno >> 24) & 0xf;
+			sector = (xlt_blkno >> 0) & 0xff;
+			cylin = (xlt_blkno >> 8) & 0xffff;
+			head = (xlt_blkno >> 24) & 0xf;
 			head |= WDSD_LBA;
 		} else {
-			sector = blkno % lp->d_nsectors;
+			sector = xlt_blkno % lp->d_nsectors;
 			sector++;	/* Sectors begin with 1, not 0. */
-			blkno /= lp->d_nsectors;
-			head = blkno % lp->d_ntracks;
-			blkno /= lp->d_ntracks;
-			cylin = blkno;
+			xlt_blkno /= lp->d_nsectors;
+			head = xlt_blkno % lp->d_ntracks;
+			xlt_blkno /= lp->d_ntracks;
+			cylin = xlt_blkno;
 			head |= WDSD_CHS;
 		}
-	
-#ifdef notdef
-		/* Let's just talk about this first. */
-		printf("cylin %d, head %d, sector %d, addr 0x%x", cylin, head,
-		    sector, addr);
-#endif
+
+#ifndef WD_DUMP_NOT_TRUSTED
 		if (wdcommand(wd, WDCC_WRITE, cylin, head, sector, 1) != 0 ||
 		    wait_for_drq(wdc) != 0) {
 			wderror(wd, NULL, "wddump: write failed");
 			return EIO;
 		}
 	
-#ifdef notdef	/* Cannot use this since this address was mapped differently. */
-		pmap_enter(pmap_kernel(), CADDR1, trunc_page(addr), VM_PROT_READ, TRUE);
-#else
-		*CMAP1 = PG_V | PG_KW | ctob((long)addr);
-		tlbflush();
-#endif
-	
-		outsw(wdc->sc_iobase+wd_data, CADDR1 + ((int)addr & PGOFSET),
-		    DEV_BSIZE / sizeof(short));
+		outsw(wdc->sc_iobase+wd_data, va, sectorsize / sizeof(short));
 	
 		/* Check data request (should be done). */
 		if (wait_for_ready(wdc) != 0) {
@@ -1528,18 +1543,34 @@ wddump(dev)
 			wderror(wd, NULL, "wddump: extra drq");
 			return EIO;
 		}
-	
-		if ((unsigned)addr % 1048576 == 0)
-			printf("%d ", nblks / (1048576 / DEV_BSIZE));
+#else	/* WD_DUMP_NOT_TRUSTED */
+		/* Let's just talk about this first... */
+		printf("wd%d: dump addr 0x%x, cylin %d, head %d, sector %d\n",
+		    unit, va, cylin, head, sector);
+		delay(500 * 1000);	/* half a second */
+#endif
 
-		/* Update block count. */
-		nblks--;
-		rblkno++;
-		(int)addr += DEV_BSIZE;
+		/* update block count */
+		totwrt -= nwrt;
+		blkno += nwrt;
+		va += sectorsize * nwrt;
 	}
-
+	wddoingadump = 0;
 	return 0;
 }
+#else /* __BDEVSW_DUMP_NEW_TYPE */
+int
+wddump(dev, blkno, va, size)
+        dev_t dev;
+        daddr_t blkno;
+        caddr_t va;
+        size_t size;
+{
+
+	/* Not implemented. */
+	return ENXIO;
+}
+#endif /* __BDEVSW_DUMP_NEW_TYPE */
 
 /*
  * Internalize the bad sector table.
