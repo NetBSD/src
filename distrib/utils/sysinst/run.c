@@ -1,4 +1,4 @@
-/*	$NetBSD: run.c,v 1.7 1999/01/21 08:02:18 garbled Exp $	*/
+/*	$NetBSD: run.c,v 1.8 1999/02/01 14:08:35 he Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -72,7 +72,6 @@ extern int errno;
 /*
  * local prototypes 
  */
-int do_system __P((const char *cmdstr));
 char* va_prog_cmdstr __P((char *cmd, va_list ap));
 int launch_subwin __P((WINDOW *actionwin, char **args, struct winsize win, int display));
 int log_flip __P((void));

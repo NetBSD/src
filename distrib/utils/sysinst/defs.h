@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.33 1999/01/21 08:02:17 garbled Exp $	*/
+/*	$NetBSD: defs.h,v 1.34 1999/02/01 14:08:36 he Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -261,6 +261,7 @@ void	mnt_net_config __P((void));
 int	collect __P((int kind, char **buffer, const char *name, ...));
 int	run_prog __P((int, int, char *, ...));
 void	do_logging __P((void));
+int	do_system __P((const char *));
 
 /* from upgrade.c */
 void	do_upgrade __P((void));
