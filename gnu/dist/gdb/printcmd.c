@@ -113,6 +113,7 @@ static int display_number;
 /* Pointer to the target-dependent disassembly function.  */
 
 int (*tm_print_insn) PARAMS ((bfd_vma, disassemble_info *));
+disassemble_info tm_print_insn_info;
 
 /* Prototypes for local functions.  */
 
@@ -2079,18 +2080,15 @@ print_insn (memaddr, stream)
      CORE_ADDR memaddr;
      GDB_FILE *stream;
 {
-  disassemble_info info;
-
-  INIT_DISASSEMBLE_INFO (info, stream, (fprintf_ftype)fprintf_filtered);
-  info.read_memory_func = dis_asm_read_memory;
-  info.memory_error_func = dis_asm_memory_error;
-  info.print_address_func = dis_asm_print_address;
-
   /* If there's no disassembler, something is very wrong.  */
   if (tm_print_insn == NULL)
     abort ();
 
-  return (*tm_print_insn) (memaddr, &info);
+  if (TARGET_BYTE_ORDER == BIG_ENDIAN)
+    tm_print_insn_info.endian = BFD_ENDIAN_BIG;
+  else
+    tm_print_insn_info.endian = BFD_ENDIAN_LITTLE;
+  return (*tm_print_insn) (memaddr, &tm_print_insn_info);
 }
 
 
@@ -2245,4 +2243,10 @@ environment, the value is printed in its own window.");
   examine_h_type = init_type (TYPE_CODE_INT, 2, 0, "examine_h_type", NULL);
   examine_w_type = init_type (TYPE_CODE_INT, 4, 0, "examine_w_type", NULL);
   examine_g_type = init_type (TYPE_CODE_INT, 8, 0, "examine_g_type", NULL);
+
+  INIT_DISASSEMBLE_INFO (tm_print_insn_info, gdb_stdout,
+			 (fprintf_ftype)fprintf_filtered);
+  tm_print_insn_info.read_memory_func = dis_asm_read_memory;
+  tm_print_insn_info.memory_error_func = dis_asm_memory_error;
+  tm_print_insn_info.print_address_func = dis_asm_print_address;
 }
