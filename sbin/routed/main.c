@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.22 1999/02/25 10:56:47 ross Exp $	*/
+/*	$NetBSD: main.c,v 1.23 1999/06/06 02:00:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@ static char sccsid[] __attribute__((unused)) = "@(#)main.c	8.1 (Berkeley) 6/5/93
 #define __COPYRIGHT(a) char copyright[] = a;
 #elif defined(__NetBSD__)
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: main.c,v 1.22 1999/02/25 10:56:47 ross Exp $");
+__RCSID("$NetBSD: main.c,v 1.23 1999/06/06 02:00:32 thorpej Exp $");
 #endif
 __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993\n\
 	The Regents of the University of California.  All rights reserved.\n");
@@ -51,6 +51,10 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993\n\
 #include <signal.h>
 #include <fcntl.h>
 #include <sys/file.h>
+
+#if defined(__NetBSD__)
+#include <util.h>
+#endif
 
 pid_t	mypid;
 
@@ -291,6 +295,9 @@ usage:
 		BADERR(0,"daemon()");
 #endif
 
+#if defined(__NetBSD__)
+	pidfile(NULL);
+#endif
 	mypid = getpid();
 	srandom((int)(clk.tv_sec ^ clk.tv_usec ^ mypid));
 
