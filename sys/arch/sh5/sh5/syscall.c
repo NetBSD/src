@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.7 2003/01/19 19:49:56 scw Exp $	*/
+/*	$NetBSD: syscall.c,v 1.8 2003/03/19 11:37:58 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -189,6 +189,8 @@ syscall_plain(struct lwp *l, struct trapframe *tf)
 
 	uvmexp.syscalls++;
 
+	tf->tf_state.sf_spc += 4;	/* Step over the trapa insn */
+
 	code = tf->tf_caller.r0;	/* System call number passed in r0 */
 	callp = p->p_emul->e_sysent;
 
@@ -287,6 +289,8 @@ syscall_fancy(struct lwp *l, struct trapframe *tf)
 	struct proc *p = l->l_proc;
 
 	uvmexp.syscalls++;
+
+	tf->tf_state.sf_spc += 4;	/* Step over the trapa insn */
 
 	code = tf->tf_caller.r0;	/* System call number passed in r0 */
 	callp = p->p_emul->e_sysent;
