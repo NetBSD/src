@@ -1,4 +1,4 @@
-/*      $NetBSD: clockctl.c,v 1.3 2001/11/15 09:48:03 lukem Exp $ */
+/*      $NetBSD: clockctl.c,v 1.4 2001/12/09 16:10:43 manu Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clockctl.c,v 1.3 2001/11/15 09:48:03 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clockctl.c,v 1.4 2001/12/09 16:10:43 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,28 +91,31 @@ clockctlioctl(dev, cmd, data, flags, p)
 	
 	switch (cmd) {
 		case CLOCKCTL_SETTIMEOFDAY: {
-			struct clockctl_settimeofday_args *args =
-			    (struct clockctl_settimeofday_args *)&data;
+			struct sys_settimeofday_args *args =
+			    (struct sys_settimeofday_args *)data;
 
-			error = settimeofday1(&args->tv, &args->tzp, p);
+			error = settimeofday1(SCARG(args, tv), 
+			    SCARG(args, tzp), p);
 			if (error)
 				return (error);
 			break;
 		}
 		case CLOCKCTL_ADJTIME: {
-			struct clockctl_adjtime_args *args = 
-			    (struct clockctl_adjtime_args *)&data;
+			struct sys_adjtime_args *args = 
+			    (struct sys_adjtime_args *)data;
 
-			error = adjtime1(&args->delta, &args->olddelta, p);
+			error = adjtime1(SCARG(args, delta), 
+			    SCARG(args, olddelta), p);
 			if (error)
 				return (error);	
 			break;
 		}
 		case CLOCKCTL_CLOCK_SETTIME: {
-			struct clockctl_clock_settime_args *args = 
-			    (struct clockctl_clock_settime_args *)&data;
+			struct sys_clock_settime_args *args = 
+			    (struct sys_clock_settime_args *)data;
 
-			error = clock_settime1(args->clock_id, &args->tp);
+			error = clock_settime1(SCARG(args, clock_id), 
+			    SCARG(args, tp));
 			if (error)
 				return (error);	
 			break;
@@ -120,9 +123,9 @@ clockctlioctl(dev, cmd, data, flags, p)
 #ifdef NTP
 		case CLOCKCTL_NTP_ADJTIME: {
 			struct clockctl_ntp_adjtime_args *args =
-			    (struct clockctl_ntp_adjtime_args *)&data;
+			    (struct clockctl_ntp_adjtime_args *)data;
 
-			(void*)ntp_adjtime1(&args->tp, &error);
+			(void*)ntp_adjtime1(SCARG(args.uas,tp), &error);
 			return (error);	
 		}
 #endif /* NTP */
