@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.48 2004/01/05 23:23:33 jmmv Exp $	*/
+/*	$NetBSD: main.c,v 1.49 2004/01/17 22:17:07 dbj Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 5/14/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.48 2004/01/05 23:23:33 jmmv Exp $");
+__RCSID("$NetBSD: main.c,v 1.49 2004/01/17 22:17:07 dbj Exp $");
 #endif
 #endif /* not lint */
 
@@ -117,6 +117,10 @@ main(argc, argv)
 		case 'c':
 			skipclean = 0;
 			cvtlevel = argtoi('c', "conversion level", optarg, 10);
+			if (cvtlevel > 4) {
+				cvtlevel = 4;
+				warnx("Using maximum conversion level of %d\n",cvtlevel);
+			}
 			break;
 		
 		case 'd':
