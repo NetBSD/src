@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.71 2002/09/26 04:07:36 thorpej Exp $	*/
+/*	$NetBSD: main.c,v 1.72 2002/10/11 01:48:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -339,13 +339,26 @@ static void
 do_depend(struct nvlist *nv)
 {
 	struct nvlist *nextnv;
+	struct attr *a;
 
-	if (nv != NULL && !(nv->nv_flags & NV_DEPENDED)) {
+	if (nv != NULL && (nv->nv_flags & NV_DEPENDED) == 0) {
 		nv->nv_flags |= NV_DEPENDED;
-		if (ht_lookup(opttab, nv->nv_name) == NULL)
-			addoption(nv->nv_name, NULL);
-		if ((nextnv = find_declared_option(nv->nv_name)) != NULL)
-			do_depend(nextnv->nv_ptr);
+		/*
+		 * If the dependency is an attribute, then just add
+		 * it to the selecttab.
+		 */
+		if ((a = ht_lookup(attrtab, nv->nv_name)) != NULL) {
+			if (a->a_iattr)
+				panic("do_depend(%s): dep `%s' is an iattr",
+				    nv->nv_name, a->a_name);
+			expandattr(a, selectattr);
+		} else {
+			if (ht_lookup(opttab, nv->nv_name) == NULL)
+				addoption(nv->nv_name, NULL);
+			if ((nextnv =
+			     find_declared_option(nv->nv_name)) != NULL)
+				do_depend(nextnv->nv_ptr);
+		}
 	}
 }
 
@@ -491,7 +504,7 @@ badfilename(const char *fname)
 
 /*
  * Search for a defined option (defopt, filesystem, etc), and if found,
- * return the  option's struct nvlist.
+ * return the option's struct nvlist.
  */
 struct nvlist *
 find_declared_option(const char *name)
@@ -519,7 +532,8 @@ void
 defopt(struct hashtab *ht, const char *fname, struct nvlist *opts,
        struct nvlist *deps)
 {
-	struct nvlist *nv, *nextnv, *oldnv;
+	struct nvlist *nv, *nextnv, *oldnv, *dep;
+	struct attr *a;
 	const char *name, *n;
 	char *p, c;
 	char low[500];
@@ -568,6 +582,23 @@ defopt(struct hashtab *ht, const char *fname, struct nvlist *opts,
 
 		/* Use nv_ptr to link any other options that are implied. */
 		nv->nv_ptr = deps;
+		for (dep = deps; dep != NULL; dep = dep->nv_next) {
+			/*
+			 * If the dependency is an attribute, it must not
+			 * be an interface attribute.  Otherwise, is must
+			 * be a previously declared option.
+			 */
+			if ((a = ht_lookup(attrtab, dep->nv_name)) != NULL) {
+				if (a->a_iattr)
+					error("option `%s' dependency `%s' "
+					    "is an interface attribute",
+					    nv->nv_name, a->a_name);
+			} else if (find_declared_option(dep->nv_name) == NULL) {
+				error("option `%s' dependency `%s' "
+				    "is an unknown option",
+				    nv->nv_name, dep->nv_name);
+			}
+		}
 
 		/*
 		 * Remove this option from the parameter list before adding
@@ -962,7 +993,7 @@ crosscheck(void)
 		(void)fprintf(stderr, " (%s %s declared)\n",
 		    p->p_atunit == WILD ? "nothing matching" : "no",
 		    i->i_at);
-		errs++;
+		err++;
 	}
 	if (TAILQ_EMPTY(&allcf)) {
 		(void)fprintf(stderr, "%s has no configurations!\n",
