@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.213 2000/04/03 15:05:05 joda Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.214 2000/04/17 00:26:45 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.206 2000/04/03 15:04:42 joda Exp 
+ *	NetBSD: pcidevs,v 1.207 2000/04/17 00:26:22 thorpej Exp 
  */
 
 /*
@@ -1264,6 +1264,7 @@
 #define	PCI_PRODUCT_S3_TRIO3D	0x8904		/* 86C365 Trio3D */
 #define	PCI_PRODUCT_S3_VIRGE_DX	0x8a01		/* ViRGE/DX */
 #define	PCI_PRODUCT_S3_VIRGE_GX2	0x8a10		/* ViRGE/GX2 */
+#define	PCI_PRODUCT_S3_TRIO3D2X	0x8a13		/* Trio3D/2X */
 #define	PCI_PRODUCT_S3_VIRGE_MX	0x8c01		/* ViRGE/MX */
 #define	PCI_PRODUCT_S3_VIRGE_MXP	0x8c03		/* ViRGE/MXP */
 #define	PCI_PRODUCT_S3_SONICVIBES	0xca00		/* SonicVibes */
