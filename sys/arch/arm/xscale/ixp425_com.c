@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_com.c,v 1.3 2003/05/31 06:24:18 ichiro Exp $ */
+/*	$NetBSD: ixp425_com.c,v 1.4 2003/05/31 11:27:01 ichiro Exp $ */
 /*
  * Copyright (c) 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp425_com.c,v 1.3 2003/05/31 06:24:18 ichiro Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_com.c,v 1.4 2003/05/31 11:27:01 ichiro Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -231,9 +231,17 @@ ixp4xx_com_attach_subr(struct ixp4xx_com_softc *sc)
 #if 0
 	callout_init(&sc->sc_diag_callout);
 #endif
-	/* Disable interrupts before configuring the device. */
-	SET(sc->sc_ier, IER_UUE);
+	/* configuring the device. */
+	sc->sc_frequency = FREQ;
+	sc->sc_dlbl = ixp4xx_comspeed(CONSPEED, sc->sc_frequency);
+        sc->sc_dlbh = ixp4xx_comspeed(CONSPEED, sc->sc_frequency) >> 8;
+
+	/* Disabling interrupt */
+	sc->sc_ier = IER_UUE;
 	bus_space_write_4(iot, ioh, IXP425_UART_IER, sc->sc_ier);
+
+	sc->sc_fcr = FCR_TRIGGER_8 | FCR_RESETTF | FCR_RESETRF | FCR_ENABLE;
+	bus_space_write_4(iot, ioh, IXP425_UART_FCR, sc->sc_fcr);
 
 	if (iot == ixp4xx_comcn_sc.sc_iot
 		&& sc->sc_baseaddr == ixp4xx_comcn_sc.sc_baseaddr) {
@@ -244,8 +252,8 @@ ixp4xx_com_attach_subr(struct ixp4xx_com_softc *sc)
 		SET(sc->sc_hwflags, COM_HW_CONSOLE);
 		SET(sc->sc_swflags, TIOCFLAG_SOFTCAR);
 	}
-	bus_space_write_4(iot, ioh, IXP425_UART_FCR,
-			  FCR_TRIGGER_8 | FCR_RESETTF | FCR_RESETRF | FCR_ENABLE);
+
+
 #ifdef KGDB
 	if (ISSET(sc->sc_hwflags, COM_HW_KGDB)) {
                 ixp4xx_com_kgdb_attached = 1;
@@ -392,7 +400,7 @@ ixp4xx_comparam(struct tty *tp, struct termios *t)
          *    overflows.
          *  * Otherwise set it a bit higher.
          */
-#if NOTYET
+#if 0
 	if (ISSET(sc->sc_hwflags, COM_HW_FIFO))
 		sc->sc_fcr = FCR_ENABLE |
 			(t->c_ospeed <= 1200 ? FCR_TRIGGER_1 :
@@ -662,13 +670,16 @@ ixp4xx_comopen(dev, flag, mode, p)
 			sc->enabled = 1;
 		}
 		/* Turn on interrupts. */
-		SET(sc->sc_ier, IER_RAVIE | IER_RLSE | IER_RIE);
-		bus_space_write_4(sc->sc_iot, sc->sc_ioh, IXP425_UART_IER,
-			sc->sc_ier);
+#if 0
+		sc->sc_mcr = bus_space_read_4(sc->sc_iot, sc->sc_ioh, IXP425_UART_MCR);
+		SET(sc->sc_mcr, MCR_IENABLE);
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh, IXP425_UART_MCR, sc->sc_mcr);
+#endif
+		SET(sc->sc_ier, IER_RAVIE | IER_RLSE | IER_RIE | IER_TIE);
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh, IXP425_UART_IER, sc->sc_ier);
 #if 0
 		/* Fetch the current modem control status, needed later. */
-		sc->sc_msr = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
-					      IXP425_UART_MSR);
+		sc->sc_msr = bus_space_read_4(iot, ioh, IXP425_UART_MSR);
 #endif
 		COM_UNLOCK(sc);
 		splx(s2);
@@ -738,7 +749,6 @@ ixp4xx_comopen(dev, flag, mode, p)
 	return (0);
 
 bad:
-	panic("bad");
 	if (!ISSET(tp->t_state, TS_ISOPEN) && tp->t_wopen == 0) {
 		/*
 		 * We failed to open the device, and nobody else had it opened.
@@ -941,6 +951,8 @@ ixp4xx_comstop(struct tty *tp, int flag)
 static void
 ixp4xx_com_modem(struct ixp4xx_com_softc *sc, int onoff)
 {
+	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
 
 	if (sc->sc_mcr_dtr == 0)
 		return;
@@ -956,13 +968,15 @@ ixp4xx_com_modem(struct ixp4xx_com_softc *sc, int onoff)
 			sc->sc_tbc = 0;
 			sc->sc_heldchange = 1;
 		} else
-			ixp4xx_com_set_cr(sc);
+			bus_space_write_4(iot, ioh, IXP425_UART_MCR, sc->sc_mcr);
 	}
 }
 
 static void
 tiocm_to_ixp4xx_com(struct ixp4xx_com_softc *sc, u_long how, int ttybits)
 {
+	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
 	u_char combits;
 
 	combits = 0;
@@ -992,7 +1006,7 @@ tiocm_to_ixp4xx_com(struct ixp4xx_com_softc *sc, u_long how, int ttybits)
 			sc->sc_tbc = 0;
 			sc->sc_heldchange = 1;
 		} else
-			ixp4xx_com_set_cr(sc);
+			bus_space_write_4(iot, ioh, IXP425_UART_MCR, sc->sc_mcr);
 	}
 }
 
@@ -1200,6 +1214,7 @@ ixp4xxcomintr(void* arg)
 	u_char *put, *end;
 	u_int cc, res;
 	u_int32_t c;
+
 	if (COM_ISALIVE(sc) == 0)
 		return (0);
 
