@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sa.c,v 1.33 2004/10/12 22:17:56 mycroft Exp $	*/
+/*	$NetBSD: pthread_sa.c,v 1.34 2005/01/06 17:34:52 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_sa.c,v 1.33 2004/10/12 22:17:56 mycroft Exp $");
+__RCSID("$NetBSD: pthread_sa.c,v 1.34 2005/01/06 17:34:52 mycroft Exp $");
 
 #include <err.h>
 #include <errno.h>
@@ -656,7 +656,8 @@ pthread__setrrtimer(int msec, int startit)
 		it.it_interval.tv_sec = 0;
 		it.it_interval.tv_nsec = (long)msec * 1000000;
 		it.it_value = it.it_interval;
-		if (timer_settime(pthread_rrtimer, 0, &it, NULL) == -1)
+		if (timer_settime(pthread_rrtimer, TIMER_RELTIME, &it, NULL) ==
+		    -1)
 			return (errno);
 	}
 
