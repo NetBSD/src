@@ -1,11 +1,11 @@
-/*	$NetBSD: joy_pci.c,v 1.1 2002/02/02 18:37:46 jdolecek Exp $	*/
+/*	$NetBSD: joy_pci.c,v 1.2 2002/04/14 12:24:27 martin Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Martin Husemann
+ * by Martin Husemann <martin@netbsd.org>.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: joy_pci.c,v 1.1 2002/02/02 18:37:46 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: joy_pci.c,v 1.2 2002/04/14 12:24:27 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -27,14 +27,14 @@
  *	isic - I4B Siemens ISDN Chipset Driver for ELSA Quickstep 1000pro ISA
  *	=====================================================================
  *
- *	$Id: isic_isapnp_elsa_qs1i.c,v 1.6 2002/04/08 12:20:50 martin Exp $
+ *	$Id: isic_isapnp_elsa_qs1i.c,v 1.7 2002/04/14 12:24:27 martin Exp $
  *
  *      last edit-date: [Fri Jan  5 11:38:29 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_isapnp_elsa_qs1i.c,v 1.6 2002/04/08 12:20:50 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_isapnp_elsa_qs1i.c,v 1.7 2002/04/14 12:24:27 martin Exp $");
 
 #include "opt_isicpnp.h"
 #if defined(ISICPNP_ELSA_QS1ISA) || defined(ISICPNP_ELSA_PCC16)
@@ -486,10 +486,10 @@ elsa_command_req(struct isic_softc *sc, int command, void *data)
 #if 0
 	printf("%s: LED change, writing 0x%02x to ctrl port\n",
 	    sc->sc_dev.dv_xname, led_val);
+#endif
 
         bus_space_write_1(sc->sc_maps[0].t, sc->sc_maps[0].h,
 	    ELSA_OFF_CTRL, led_val);
-#endif
 
 	splx(s);
 }
