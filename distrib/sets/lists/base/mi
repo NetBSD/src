@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.219 2001/01/26 05:28:00 jwise Exp $
+# $NetBSD: mi,v 1.220 2001/01/28 04:33:47 jwise Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -1244,7 +1244,7 @@
 ./usr/share/misc/termcap.db		base-reference-share
 ./usr/share/misc/units.lib		base-reference-share
 ./usr/share/misc/usb_hid_usages		base-reference-share
-./usr/share/misc/vgrindefs.db		base-reference-share
+./usr/share/misc/vgrindefs.db		base-groff-share
 ./usr/share/misc/zipcodes		base-reference-share
 ./usr/share/mk				base-util-share
 ./usr/share/mk/sys.mk			base-util-share
