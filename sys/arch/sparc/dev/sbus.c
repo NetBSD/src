@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.22 1998/04/07 20:13:33 pk Exp $ */
+/*	$NetBSD: sbus.c,v 1.23 1998/04/07 20:43:58 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -112,6 +112,12 @@ static int _sbus_bus_map __P((
 		int,			/*flags*/
 		vm_offset_t,		/*preferred virtual address */
 		bus_space_handle_t *));
+static void *sbus_intr_establish __P((
+		bus_space_tag_t,
+		int,			/*level*/
+		int,			/*flags*/
+		int (*) __P((void *)),	/*handler*/
+		void *));		/*handler arg*/
 
 
 /* autoconfiguration driver */
