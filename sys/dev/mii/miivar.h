@@ -1,4 +1,4 @@
-/*	$NetBSD: miivar.h,v 1.19 2000/07/04 03:28:59 thorpej Exp $	*/
+/*	$NetBSD: miivar.h,v 1.20 2001/03/28 14:13:07 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -229,6 +229,12 @@ void	mii_phy_update __P((struct mii_softc *, int));
 void	mii_phy_statusmsg __P((struct mii_softc *));
 
 void	ukphy_status __P((struct mii_softc *));
+
+int mii_oui __P((int, int));
+#define	MII_OUI(id1, id2)	mii_oui(id1, id2)
+#define	MII_MODEL(id2)		(((id2) & IDR2_MODEL) >> 4)
+#define	MII_REV(id2)		((id2) & IDR2_REV)
+
 #endif /* _KERNEL */
 
 #endif /* _DEV_MII_MIIVAR_H_ */
