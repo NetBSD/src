@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.12 1999/04/28 09:15:05 christos Exp $	 */
+/*	$NetBSD: exec.c,v 1.13 1999/05/15 15:42:23 drochner Exp $	 */
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -107,7 +107,8 @@ exec_netbsd(file, loadaddr, boothowto)
 #endif
 
 #ifdef	DEBUG
-	printf("exec: file=%s loadaddr=0x%lx\n", file, loadaddr);
+	printf("exec: file=%s loadaddr=0x%lx\n",
+	       file ? file : "NULL", loadaddr);
 #endif
 
 	BI_ALLOC(6); /* ??? */
