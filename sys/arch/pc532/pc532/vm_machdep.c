@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.34 1999/05/26 22:19:37 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.35 1999/06/17 00:22:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller.
@@ -42,8 +42,6 @@
  *
  *	@(#)vm_machdep.c	7.3 (Berkeley) 5/13/91
  */
-
-#include "opt_pmap_new.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -345,7 +343,6 @@ extern vm_map_t phys_map;
  * Note: the pages are already locked by uvm_vslock(), so we
  * do not need to pass an access_type to pmap_enter().   
  */
-#if defined(PMAP_NEW)
 void
 vmapbuf(bp, len)
 	struct buf *bp;
@@ -384,35 +381,6 @@ vmapbuf(bp, len)
 		len -= PAGE_SIZE;
 	}
 }
-#else /* PMAP_NEW */
-void
-vmapbuf(bp, len)
-	struct buf *bp;
-	vsize_t len;
-{
-	vaddr_t faddr, taddr, off;
-	pt_entry_t *fpte, *tpte;
-	pt_entry_t *pmap_pte __P((pmap_t, vaddr_t));
-
-	if ((bp->b_flags & B_PHYS) == 0)
-		panic("vmapbuf");
-	faddr = trunc_page(bp->b_saveaddr = bp->b_data);
-	off = (vaddr_t)bp->b_data - faddr;
-	len = round_page(off + len);
-	taddr = uvm_km_valloc_wait(phys_map, len);
-	bp->b_data = (caddr_t)(taddr + off);
-	/*
-	 * The region is locked, so we expect that pmap_pte() will return
-	 * non-NULL.
-	 */
-	fpte = pmap_pte(vm_map_pmap(&bp->b_proc->p_vmspace->vm_map), faddr);
-	tpte = pmap_pte(vm_map_pmap(phys_map), taddr);
-	do {
-		*tpte++ = *fpte++;
-		len -= PAGE_SIZE;
-	} while (len);
-}
-#endif /* PMAP_NEW */
 
 /*
  * Unmap a previously-mapped user I/O request.

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.55 1999/03/24 05:51:08 mrg Exp $	*/
+/*	$NetBSD: locore.s,v 1.56 1999/06/17 00:22:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993 Philip A. Nelson.
@@ -41,7 +41,6 @@
  */
 
 #include "opt_ddb.h"
-#include "opt_pmap_new.h"
 
 #include "assym.h"
 
@@ -56,26 +55,6 @@
 #include <machine/jmpbuf.h>
 
 #define	SET(a, b)	.globl	_C_LABEL(a); .set _C_LABEL(a),b
-
-/*
- * PTmap is recursive pagemap at top of virtual address space.
- * Within PTmap, the page directory can be found (third indirection).
- */
-#if !defined(PMAP_NEW)
-	SET(PTmap,	(PTDPTDI << PDSHIFT))
-	SET(PTD,	(_C_LABEL(PTmap) + PTDPTDI * NBPG))
-	SET(PTDpde,	(_C_LABEL(PTD) + PTDPTDI * PDE_SIZE))
-#endif
-
-/*
- * APTmap, APTD is the alternate recursive pagemap.
- * It's used when modifying another process's page tables.
- */
-#if !defined(PMAP_NEW)
-	SET(APTmap,	(APTDPTDI << PDSHIFT))
-	SET(APTD,	(_C_LABEL(APTmap) + APTDPTDI * NBPG))
-	SET(APTDpde,	(_C_LABEL(PTD) + APTDPTDI * PDE_SIZE))
-#endif
 
 /*
  * kernel_text is used by libkvm.

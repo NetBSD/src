@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.17 1999/04/26 22:46:47 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.18 1999/06/17 00:22:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,10 +40,6 @@
 
 #ifndef _NS532_VMPARAM_H_
 #define _NS532_VMPARAM_H_
-
-#if defined(_KERNEL) && !defined(_LKM)
-#include "opt_pmap_new.h"
-#endif
 
 /*
  * Machine dependent constants for 532.
@@ -168,16 +164,9 @@
 /*
  * pmap specific data stored in the vm_physmem[] array
  */
-#if defined(PMAP_NEW)
 struct pmap_physseg {
 	struct pv_head *pvhead; 	/* pv_head array */
 	short *attrs;			/* attrs array */
 };
-#else
-struct pmap_physseg {
-	struct pv_entry *pvent;		/* pv_entry array */
-	short *attrs;			/* attrs array */
-};
-#endif
 
 #endif

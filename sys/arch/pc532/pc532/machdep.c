@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.102 1999/05/26 19:16:33 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.103 1999/06/17 00:22:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller.
@@ -49,7 +49,6 @@
 #include "opt_iso.h"
 #include "opt_ns.h"
 #include "opt_natm.h"
-#include "opt_pmap_new.h"
 #include "opt_compat_netbsd.h"
 
 #include <sys/param.h>
@@ -197,22 +196,15 @@ cpu_startup()
 	/*
 	 * Initialize error message buffer (at end of core).
 	 */
-#if defined(PMAP_NEW)
 	msgbuf_vaddr =  uvm_km_valloc(kernel_map, ns532_round_page(MSGBUFSIZE));
 	if (msgbuf_vaddr == NULL)
 		panic("failed to valloc msgbuf_vaddr");
-#endif
+
 	/* msgbuf_paddr was init'd in pmap */
-#if defined(PMAP_NEW)
 	for (i = 0; i < btoc(MSGBUFSIZE); i++)
 		pmap_kenter_pa(msgbuf_vaddr + i * NBPG,
 		    msgbuf_paddr + i * NBPG, VM_PROT_READ | VM_PROT_WRITE);
-#else
-	for (i = 0; i < btoc(MSGBUFSIZE); i++)
-		pmap_enter(pmap_kernel(), msgbuf_vaddr + i * NBPG,
-		    msgbuf_paddr + i * NBPG, VM_PROT_READ|VM_PROT_WRITE, TRUE,
-		    VM_PROT_READ|VM_PROT_WRITE);
-#endif
+
 	initmsgbuf((caddr_t)msgbuf_vaddr, round_page(MSGBUFSIZE));
 
 	printf(version);
@@ -265,13 +257,7 @@ cpu_startup()
 			if (pg == NULL)
 				panic("cpu_startup: not enough memory for "
 				    "buffer cache");
-#if defined(PMAP_NEW)
 			pmap_kenter_pgs(curbuf, &pg, 1);
-#else
-			pmap_enter(kernel_map->pmap, curbuf,
-			    VM_PAGE_TO_PHYS(pg), VM_PROT_READ|VM_PROT_WRITE,
-			    TRUE, VM_PROT_READ|VM_PROT_WRITE);
-#endif
 			curbuf += PAGE_SIZE;
 			curbufsize -= PAGE_SIZE;
 		}
@@ -983,13 +969,7 @@ init532()
 	if (maxphysmem != 0 && avail_end > maxphysmem)
 		avail_end = maxphysmem;
 	physmem     = btoc(avail_end);
-#if defined(PMAP_NEW)
 	nkpde = max(min(nkpde, NKPTP_MAX), NKPTP_MIN);
-#else
-	if (nkpde == 0)
-		nkpde = min(NKPDE_MAX,
-			NKPDE_BASE + ((u_int) avail_end >> 20) * NKPDE_SCALE);
-#endif
 
 #if VERYLOWDEBUG
 	umprintf ("avail_start = 0x%x\navail_end=0x%x\nphysmem=0x%x\n",
@@ -1006,11 +986,7 @@ init532()
 	pd = (pd_entry_t *) alloc_pages(1);
 
 	/* Recursively map in the page directory */
-#if defined(PMAP_NEW)
 	pd[PDSLOT_PTE] = (pd_entry_t)pd | PG_V | PG_KW;
-#else
-	pd[PTDPTDI] = (pd_entry_t)pd | PG_V | PG_KW;
-#endif
 
 	/* Map interrupt stack. */
 	map(pd, VA(0xffc00000), alloc_pages(1), PG_KW, 0x001000);
@@ -1178,11 +1154,7 @@ cpu_reset()
 	di();
 
 	/* Alias kernel memory at 0. */
-#if defined(PMAP_NEW)
 	PDP_BASE[0] = PDP_BASE[pdei(KERNBASE)];
-#else
-	PTD[0] = PTD[pdei(KERNBASE)];
-#endif
 	tlbflush();
 
 	/* Jump to low memory. */
