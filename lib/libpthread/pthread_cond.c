@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_cond.c,v 1.1.2.5 2001/12/30 02:15:08 nathanw Exp $	*/
+/*	$NetBSD: pthread_cond.c,v 1.1.2.6 2002/01/28 19:03:09 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,6 +41,8 @@
 
 #include "pthread.h"
 #include "pthread_int.h"
+
+static void pthread_cond_wait__callback(void *);
 
 
 int
@@ -98,25 +100,103 @@ pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex)
 			pthread_spinunlock(self, &cond->ptc_lock);
 			return EINVAL;
 		}
+	pthread_spinlock(self, &self->pt_statelock);
+	if (self->pt_cancel) {
+		pthread_spinunlock(self, &self->pt_statelock);
+		pthread_spinunlock(self, &cond->ptc_lock);
+		pthread_exit(PTHREAD_CANCELED);
+	}
+	self->pt_state = PT_STATE_BLOCKED_QUEUE;
+	self->pt_sleepq = &cond->ptc_waiters;
+	self->pt_sleeplock = &cond->ptc_lock;
+	pthread_spinunlock(self, &self->pt_statelock);
 
 	PTQ_INSERT_TAIL(&cond->ptc_waiters, self, pt_sleep);
 	pthread_mutex_unlock(mutex);
+
 	pthread__block(self, &cond->ptc_lock);
 	/* Spinlock is unlocked on return */
 	pthread_mutex_lock(mutex);
+	pthread__testcancel(self);
 
 	return 0;
 }
 
 
+struct pthread_cond__waitarg {
+	pthread_t ptw_thread;
+	pthread_cond_t *ptw_cond;
+};
+
 int
 pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex,
     const struct timespec *abstime)
 {
+	pthread_t self;
+	struct pthread_cond__waitarg wait;
+	int retval;
+	void *alarm;
 
-	return EINVAL;
+#ifdef ERRORCHECK
+	if ((cond == NULL) || (cond->ptc_magic != _PT_COND_MAGIC) ||
+	    (mutex == NULL) || (mutex->ptm_magic != _PT_MUTEX_MAGIC))
+		return EINVAL;
+#endif
+
+	self = pthread__self();
+	pthread_spinlock(self, &cond->ptc_lock);
+	if (cond->ptc_mutex == NULL)
+		cond->ptc_mutex = mutex;
+	else
+		if (cond->ptc_mutex != mutex) {
+			pthread_spinunlock(self, &cond->ptc_lock);
+			return EINVAL;
+		}
+
+	wait.ptw_thread = self;
+	wait.ptw_cond = cond;
+	retval = 0;
+
+	pthread_spinlock(self, &self->pt_statelock);
+	if (self->pt_cancel) {
+		pthread_spinunlock(self, &self->pt_statelock);
+		pthread_spinunlock(self, &cond->ptc_lock);
+		pthread_exit(PTHREAD_CANCELED);
+	}
+	alarm = pthread__alarm_add(self, abstime, pthread_cond_wait__callback,
+	    &wait);
+	self->pt_state = PT_STATE_BLOCKED_QUEUE;
+	self->pt_sleepq = &cond->ptc_waiters;
+	self->pt_sleeplock = &cond->ptc_lock;
+	pthread_spinunlock(self, &self->pt_statelock);
+
+	PTQ_INSERT_TAIL(&cond->ptc_waiters, self, pt_sleep);
+	pthread_mutex_unlock(mutex);
+
+	pthread__block(self, &cond->ptc_lock);
+	/* Spinlock is unlocked on return */
+	if (pthread__alarm_fired(alarm))
+		retval = ETIMEDOUT;
+	pthread__alarm_del(self, alarm);
+	pthread_mutex_lock(mutex);
+	pthread__testcancel(self);
+
+	return retval;
 }
 
+static void
+pthread_cond_wait__callback(void *arg)
+{
+	struct pthread_cond__waitarg *a;
+	pthread_t self;
+
+	a = arg;
+	self = pthread__self();
+	pthread_spinlock(self, &a->ptw_cond->ptc_lock);
+	PTQ_REMOVE(&a->ptw_cond->ptc_waiters, a->ptw_thread, pt_sleep);
+	pthread_spinunlock(self, &a->ptw_cond->ptc_lock);
+	pthread__sched(self, a->ptw_thread);
+}
 
 int
 pthread_cond_signal(pthread_cond_t *cond)
