@@ -1,4 +1,4 @@
-/*	$NetBSD: ch.c,v 1.36 1998/12/08 00:19:56 thorpej Exp $	*/
+/*	$NetBSD: ch.c,v 1.37 1998/12/17 22:28:07 gibbs Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998 Jason R. Thorpe <thorpej@and.com>
@@ -383,7 +383,7 @@ ch_move(sc, cm)
 	 * Check the request against the changer's capabilities.
 	 */
 	if ((sc->sc_movemask[cm->cm_fromtype] & (1 << cm->cm_totype)) == 0)
-		return (EINVAL);
+		return (ENODEV);
 
 	/*
 	 * Calculate the source and destination elements.
@@ -436,7 +436,7 @@ ch_exchange(sc, ce)
 	     (1 << ce->ce_fdsttype)) == 0) ||
 	    ((sc->sc_exchangemask[ce->ce_fdsttype] &
 	     (1 << ce->ce_sdsttype)) == 0))
-		return (EINVAL);
+		return (ENODEV);
 
 	/*
 	 * Calculate the source and destination elements.
