@@ -1,4 +1,4 @@
-/*	$NetBSD: plumpcmcia.c,v 1.5 2000/10/04 13:53:55 uch Exp $ */
+/*	$NetBSD: plumpcmcia.c,v 1.6 2001/05/08 18:08:02 uch Exp $ */
 
 /*
  * Copyright (c) 1999, 2000 UCHIYAMA Yasushi. All rights reserved.
@@ -311,9 +311,8 @@ plumpcmcia_attach_socket(struct plumpcmcia_handle *ph)
 	paa.paa_busname = "pcmcia";
 	paa.pct = (pcmcia_chipset_tag_t)&plumpcmcia_functions;
 	paa.pch = (pcmcia_chipset_handle_t)ph;
-	paa.iobase = 0;		/* I don't use them */
-	paa.iosize = 0;
-	
+	paa.iobase = 0;
+	paa.iosize = ph->ph_iosize;
 
 	if ((ph->ph_pcmcia = config_found_sm((void*)sc, &paa, 
 					     plumpcmcia_print,
