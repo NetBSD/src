@@ -1,4 +1,4 @@
-/* $NetBSD: mt.c,v 1.37 2003/08/07 09:05:17 agc Exp $ */
+/* $NetBSD: mt.c,v 1.38 2005/02/03 00:03:02 christos Exp $ */
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)mt.c	8.2 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: mt.c,v 1.37 2003/08/07 09:05:17 agc Exp $");
+__RCSID("$NetBSD: mt.c,v 1.38 2005/02/03 00:03:02 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -67,37 +67,39 @@ __RCSID("$NetBSD: mt.c,v 1.37 2003/08/07 09:05:17 agc Exp $");
 
 struct commands {
 	const char *c_name;		/* command */
+	size_t c_namelen;		/* command len */
 	int c_spcl;			/* ioctl request */
 	int c_code;			/* ioctl code for MTIOCTOP command */
 	int c_ronly;			/* open tape read-only */
 	int c_mincount;			/* min allowed count value */
 };
 
+#define CMD(a)	a, sizeof(a) - 1
 const struct commands com[] = {
-	{ "asf",	MTIOCTOP,     MTASF,      1,  0 },
-	{ "blocksize",	MTIOCTOP,     MTSETBSIZ,  1,  0 },
-	{ "bsf",	MTIOCTOP,     MTBSF,      1,  1 },
-	{ "bsr",	MTIOCTOP,     MTBSR,      1,  1 },
-	{ "compress",	MTIOCTOP,     MTCMPRESS,  1,  0 },
-	{ "density",	MTIOCTOP,     MTSETDNSTY, 1,  0 },
-	{ "eof",	MTIOCTOP,     MTWEOF,     0,  1 },
-	{ "eom",	MTIOCTOP,     MTEOM,      1,  0 },
-	{ "erase",	MTIOCTOP,     MTERASE,    0,  0 },
-	{ "fsf",	MTIOCTOP,     MTFSF,      1,  1 },
-	{ "fsr",	MTIOCTOP,     MTFSR,      1,  1 },
-	{ "offline",	MTIOCTOP,     MTOFFL,     1,  0 },
-	{ "rdhpos",     MTIOCRDHPOS,  0,          1,  0 },
-	{ "rdspos",     MTIOCRDSPOS,  0,          1,  0 },
-	{ "retension",	MTIOCTOP,     MTRETEN,    1,  0 },
-	{ "rewind",	MTIOCTOP,     MTREW,      1,  0 },
-	{ "rewoffl",	MTIOCTOP,     MTOFFL,     1,  0 },
-	{ "setblk",	MTIOCTOP,     MTSETBSIZ,  1,  0 },
-	{ "setdensity",	MTIOCTOP,     MTSETDNSTY, 1,  0 },
-	{ "sethpos",    MTIOCHLOCATE, 0,          1,  0 },
-	{ "setspos",    MTIOCSLOCATE, 0,          1,  0 },
-	{ "status",	MTIOCGET,     MTNOP,      1,  0 },
-	{ "weof",	MTIOCTOP,     MTWEOF,     0,  1 },
-	{ "eew",	MTIOCTOP,     MTEWARN,    1,  0 },
+	{ CMD("asf"),		MTIOCTOP,     MTASF,      1,  0 },
+	{ CMD("blocksize"),	MTIOCTOP,     MTSETBSIZ,  1,  0 },
+	{ CMD("bsf"),		MTIOCTOP,     MTBSF,      1,  1 },
+	{ CMD("bsr"),		MTIOCTOP,     MTBSR,      1,  1 },
+	{ CMD("compress"),	MTIOCTOP,     MTCMPRESS,  1,  0 },
+	{ CMD("density"),	MTIOCTOP,     MTSETDNSTY, 1,  0 },
+	{ CMD("eof"),		MTIOCTOP,     MTWEOF,     0,  1 },
+	{ CMD("eom"),		MTIOCTOP,     MTEOM,      1,  0 },
+	{ CMD("erase"),		MTIOCTOP,     MTERASE,    0,  0 },
+	{ CMD("fsf"),		MTIOCTOP,     MTFSF,      1,  1 },
+	{ CMD("fsr"),		MTIOCTOP,     MTFSR,      1,  1 },
+	{ CMD("offline"),	MTIOCTOP,     MTOFFL,     1,  0 },
+	{ CMD("rdhpos"),	MTIOCRDHPOS,  0,          1,  0 },
+	{ CMD("rdspos"),	MTIOCRDSPOS,  0,          1,  0 },
+	{ CMD("retension"),	MTIOCTOP,     MTRETEN,    1,  0 },
+	{ CMD("rewind"),	MTIOCTOP,     MTREW,      1,  0 },
+	{ CMD("rewoffl"),	MTIOCTOP,     MTOFFL,     1,  0 },
+	{ CMD("setblk"),	MTIOCTOP,     MTSETBSIZ,  1,  0 },
+	{ CMD("setdensity"),	MTIOCTOP,     MTSETDNSTY, 1,  0 },
+	{ CMD("sethpos"),	MTIOCHLOCATE, 0,          1,  0 },
+	{ CMD("setspos"),	MTIOCSLOCATE, 0,          1,  0 },
+	{ CMD("status"),	MTIOCGET,     MTNOP,      1,  0 },
+	{ CMD("weof"),		MTIOCTOP,     MTWEOF,     0,  1 },
+	{ CMD("eew"),		MTIOCTOP,     MTEWARN,    1,  0 },
 	{ NULL }
 };
 
@@ -112,7 +114,7 @@ main(int argc, char *argv[])
 	const struct commands *comp = (const struct commands *) NULL;
 	struct mtget mt_status;
 	struct mtop mt_com;
-	int ch, len, mtfd, flags;
+	int ch, mtfd, flags;
 	char *p;
 	const char *tape;
 	int count;
@@ -137,11 +139,11 @@ main(int argc, char *argv[])
 	if (argc < 1 || argc > 2)
 		usage();
 
-	len = strlen(p = *argv++);
+	p = *argv++;
 	for (comp = com;; comp++) {
 		if (comp->c_name == NULL)
 			errx(1, "%s: unknown command", p);
-		if (strncmp(p, comp->c_name, len) == 0)
+		if (strncmp(p, comp->c_name, comp->c_namelen) == 0)
 			break;
 	}
 
