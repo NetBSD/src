@@ -36,7 +36,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)vfscanf.c	5.7 (Berkeley) 12/14/92";*/
-static char *rcsid = "$Id: vfscanf.c,v 1.10 1995/01/27 15:20:26 jtc Exp $";
+static char *rcsid = "$Id: vfscanf.c,v 1.11 1995/01/30 00:46:01 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
@@ -638,7 +638,9 @@ literal:
 
 				*p = 0;
 				res = strtod(buf, (char **) NULL);
-				if (flags & LONG)
+				if (flags & LONGDBL)
+					*va_arg(ap, long double *) = res;
+				else if (flags & LONG)
 					*va_arg(ap, double *) = res;
 				else
 					*va_arg(ap, float *) = res;
