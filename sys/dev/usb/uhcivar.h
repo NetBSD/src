@@ -1,4 +1,4 @@
-/*	$NetBSD: uhcivar.h,v 1.2 1998/07/24 21:09:08 augustss Exp $	*/
+/*	$NetBSD: uhcivar.h,v 1.3 1998/07/26 00:40:59 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -134,10 +134,6 @@ typedef struct uhci_softc {
 	u_int8_t sc_addr;		/* device address */
 	u_int8_t sc_conf;		/* device configuration */
 
-	int sc_model;
-#define UHCI_PIIX3 1
-#define UHCI_PIIX4 2
-
 	char sc_isreset;
 
 	int sc_intrs;
@@ -151,6 +147,8 @@ typedef struct uhci_softc {
 #define UHCI_WANT_LOCK 2
 
 	usb_dma_t *sc_mallocs;
+
+	char sc_vendor[16];
 } uhci_softc_t;
 
 usbd_status	uhci_init __P((uhci_softc_t *));
