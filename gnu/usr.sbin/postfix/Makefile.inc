@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile.inc,v 1.2 2000/06/12 12:17:26 veego Exp $
+#	$NetBSD: Makefile.inc,v 1.3 2001/01/09 08:53:00 enami Exp $
+
+.include <bsd.own.mk>
 
 WARNS?=	0
 
@@ -8,21 +10,16 @@ CPPFLAGS+= -DNETBSD1 -I${DIST} \
 	-I${IDIST}/dns -I${IDIST}/global -I${IDIST}/master \
 	-I${IDIST}/util
 
-DOBJDIR!=cd $(.CURDIR)/../dns; \
-	printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}\n" | ${MAKE} -s -f-
-
-MOBJDIR!=cd $(.CURDIR)/../masterlib; \
-	printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}\n" | ${MAKE} -s -f-
-
-GOBJDIR!=cd $(.CURDIR)/../global; \
-	printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}\n" | ${MAKE} -s -f-
-
-UOBJDIR!=cd $(.CURDIR)/../util; \
-	printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}\n" | ${MAKE} -s -f-
-
+DOBJDIR!=	cd $(.CURDIR)/../dns && ${PRINTOBJDIR}
 LIBPDNS=	${DOBJDIR}/libdns.a
+
+MOBJDIR!=	cd $(.CURDIR)/../masterlib && ${PRINTOBJDIR}
 LIBPMASTER=	${MOBJDIR}/libmaster.a
+
+GOBJDIR!=	cd $(.CURDIR)/../global && ${PRINTOBJDIR}
 LIBPGLOBAL=	${GOBJDIR}/libglobal.a
+
+UOBJDIR!=	cd $(.CURDIR)/../util && ${PRINTOBJDIR}
 LIBPUTIL=	${UOBJDIR}/libutil.a
 
 # Directories to install into.

@@ -1,7 +1,9 @@
-#	$NetBSD: Makefile.inc,v 1.10 1999/07/30 04:07:26 mycroft Exp $
+#	$NetBSD: Makefile.inc,v 1.11 2001/01/09 08:52:57 enami Exp $
 
-LIBRCS!=cd $(.CURDIR)/../lib; \
-	printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}/librcs.a\n" | ${MAKE} -s -f-
+.include <bsd.own.mk>
+
+LIBRCSDIR!=cd $(.CURDIR)/../lib && ${PRINTOBJDIR}
+LIBRCS=${LIBRCSDIR}/librcs.a
 CPPFLAGS+=-I${.CURDIR}/../lib
 LDADD=	${LIBRCS}
 DPADD=	${LIBRCS}
