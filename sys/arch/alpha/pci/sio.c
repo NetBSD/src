@@ -1,4 +1,4 @@
-/*	$NetBSD: sio.c,v 1.5 1996/04/12 02:11:22 cgd Exp $	*/
+/*	$NetBSD: sio.c,v 1.6 1996/04/12 05:43:02 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -72,6 +72,8 @@ union sio_attach_args {
 };
 
 static int	sioprint __P((void *, char *pnp));
+static void	sio_isa_attach_hook __P((struct device *, struct device *,
+		    struct isabus_attach_args *));
 
 int
 siomatch(parent, match, aux)
@@ -109,6 +111,8 @@ sioattach(parent, self, aux)
 	void *aux;
 {
 	struct pci_attach_args *pa = aux;
+	struct alpha_isa_chipset ic;
+	struct alpha_eisa_chipset ec;
 	union sio_attach_args sa;
 	int sio, haseisa;
 	char devinfo[256];
@@ -135,13 +139,21 @@ sioattach(parent, self, aux)
 #endif
 
 	if (haseisa) {
+		/* XXX SET UP EISA CHIPSET */
 		sa.sa_eba.eba_busname = "eisa";
 		sa.sa_eba.eba_bc = pa->pa_bc;
+		sa.sa_eba.eba_ec = &ec;
 		config_found(self, &sa.sa_eba, sioprint);
 	}
 
+	ic.ic_v = NULL;
+	ic.ic_attach_hook = sio_isa_attach_hook;
+	ic.ic_intr_establish = sio_intr_establish;
+	ic.ic_intr_disestablish = sio_intr_disestablish;
+
 	sa.sa_iba.iba_busname = "isa";
 	sa.sa_iba.iba_bc = pa->pa_bc;
+	sa.sa_iba.iba_ic = &ic;
 	config_found(self, &sa.sa_iba, sioprint);
 }
 
@@ -155,4 +167,13 @@ sioprint(aux, pnp)
         if (pnp)
                 printf("%s at %s", sa->sa_name, pnp);
         return (UNCONF);
+}
+
+static void
+sio_isa_attach_hook(parent, self, iba)
+	struct device *parent, *self;
+	struct isabus_attach_args *iba;
+{
+
+	/* Nothing to do. */
 }
