@@ -46,7 +46,7 @@
  * SUCH DAMAGE.
  *
  */
-static char rcsid[] = "$Header: /cvsroot/src/sys/kern/Attic/tty_ring.c,v 1.3 1993/04/22 07:49:18 mycroft Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/sys/kern/Attic/tty_ring.c,v 1.4 1993/05/10 23:15:41 deraadt Exp $";
 
 #include "param.h"
 #include "systm.h"
@@ -57,15 +57,19 @@ static char rcsid[] = "$Header: /cvsroot/src/sys/kern/Attic/tty_ring.c,v 1.3 199
 /*
  * XXX - put this in tty.h someday.
  */
-size_t rb_read __P((struct ringb *from, char *bf, size_t nto));
-size_t rb_write __P((struct ringb *to, char *buf, size_t nfrom));
+size_t rb_read __P((struct ringb *from, rbchar *bf, size_t nto));
+size_t rb_write __P((struct ringb *to, rbchar *buf, size_t nfrom));
+size_t rb_cread __P((struct ringb *from, char *bf, size_t nto));
+size_t rb_cwrite __P((struct ringb *to, char *buf, size_t nfrom));
 
-putc(c, rbp) struct ringb *rbp;
+putc(c, rbp)
+struct ringb *rbp;
 {
-	char *nxtp;
+	rbchar *nxtp;
 
 	/* ring buffer full? */
-	if ( (nxtp = RB_SUCC(rbp, rbp->rb_tl)) == rbp->rb_hd) return (-1);
+	if ( (nxtp = RB_SUCC(rbp, rbp->rb_tl)) == rbp->rb_hd)
+		return (-1);
 
 	/* stuff character */
 	*rbp->rb_tl = c;
@@ -73,35 +77,44 @@ putc(c, rbp) struct ringb *rbp;
 	return(0);
 }
 
-getc(rbp) struct ringb *rbp;
+getc(rbp)
+struct ringb *rbp;
 {
-	u_char c;
+	rbchar c;
 
 	/* ring buffer empty? */
-	if (rbp->rb_hd == rbp->rb_tl) return(-1);
+	if (rbp->rb_hd == rbp->rb_tl)
+		return(-1);
 
 	/* fetch character, locate next character */
-	c = *(u_char *) rbp->rb_hd;
+	c = *(rbchar *) rbp->rb_hd;
 	rbp->rb_hd = RB_SUCC(rbp, rbp->rb_hd);
 	return (c);
 }
 
-nextc(cpp, rbp) struct ringb *rbp; char **cpp; {
+nextc(cpp, rbp)
+struct ringb *rbp;
+rbchar **cpp;
+{
+	rbchar *cp;
 
-	if (*cpp == rbp->rb_tl) return (0);
-	else {	char *cp;
+	if (*cpp == rbp->rb_tl)
+		return (0);
+	else {
 		cp = *cpp;
 		*cpp = RB_SUCC(rbp, cp);
 		return(*cp);
 	}
 }
 
-ungetc(c, rbp) struct ringb *rbp;
+ungetc(c, rbp)
+struct ringb *rbp;
 {
-	char	*backp;
+	rbchar *backp;
 
 	/* ring buffer full? */
-	if ( (backp = RB_PRED(rbp, rbp->rb_hd)) == rbp->rb_tl) return (-1);
+	if ( (backp = RB_PRED(rbp, rbp->rb_hd)) == rbp->rb_tl)
+		return (-1);
 	rbp->rb_hd = backp;
 
 	/* stuff character */
@@ -109,17 +122,19 @@ ungetc(c, rbp) struct ringb *rbp;
 	return(0);
 }
 
-unputc(rbp) struct ringb *rbp;
+unputc(rbp)
+struct ringb *rbp;
 {
-	char	*backp;
+	rbchar *backp;
 	int c;
 
 	/* ring buffer empty? */
-	if (rbp->rb_hd == rbp->rb_tl) return(-1);
+	if (rbp->rb_hd == rbp->rb_tl)
+		return(-1);
 
 	/* backup buffer and dig out previous character */
 	backp = RB_PRED(rbp, rbp->rb_tl);
-	c = *(u_char *)backp;
+	c = *(rbchar *)backp;
 	rbp->rb_tl = backp;
 
 	return(c);
@@ -127,8 +142,28 @@ unputc(rbp) struct ringb *rbp;
 
 #define	peekc(rbp)	(*(rbp)->rb_hd)
 
-initrb(rbp) struct ringb *rbp; {
+initrb(rbp)
+struct ringb *rbp;
+{
 	rbp->rb_hd = rbp->rb_tl = rbp->rb_buf;
+}
+
+rbpack(s, ss, n)
+char *s;
+rbchar *ss;
+int n;
+{
+	while(n--)
+		*ss++ = (rbchar)(*s++);
+}
+
+rbunpack(ss, s, n)
+rbchar *ss;
+char *s;
+int n;
+{
+	while(n--)
+		*s++ = (char)(*ss++);
 }
 
 /*
@@ -136,8 +171,9 @@ initrb(rbp) struct ringb *rbp; {
 	...
 	nc = RB_CONTIGPUT(&rb);
 	if (nc) {
-	if (nc > 9) nc = 9;
-		bcopy("ABCDEFGHI", rb.rb_tl, nc);
+		if (nc > 9)
+			nc = 9;
+		rbpack("ABCDEFGHI", rb.rb_tl, nc);
 		rb.rb_tl += nc;
 		rb.rb_tl = RB_ROLLOVER(&rb, rb.rb_tl);
 	}
@@ -145,8 +181,11 @@ initrb(rbp) struct ringb *rbp; {
 	...
 	nc = RB_CONTIGGET(&rb);
 	if (nc) {
-		if (nc > 79) nc = 79;
-		bcopy(rb.rb_hd, stringbuf, nc);
+		int i;
+
+		if (nc > 79)
+			nc = 79;
+		rbunpack(rb.rb_hd, stringbuf, nc);
 		rb.rb_hd += nc;
 		rb.rb_hd = RB_ROLLOVER(&rb, rb.rb_hd);
 		stringbuf[nc] = 0;
@@ -159,7 +198,7 @@ initrb(rbp) struct ringb *rbp; {
  * Concatenate ring buffers.
  */
 catb(from, to)
-	struct ringb *from, *to;
+struct ringb *from, *to;
 {
 	size_t nfromleft;
 	size_t nfromright;
@@ -178,9 +217,9 @@ catb(from, to)
  * read.
  */
 size_t rb_read(from, buf, nto)
-	struct ringb *from;
-	char *buf;
-	size_t nto;
+struct ringb *from;
+rbchar *buf;
+size_t nto;
 {
 	size_t nright, nleft;
 
@@ -195,7 +234,7 @@ size_t rb_read(from, buf, nto)
 	}
 	if (nright >= nto) {
 		noleft:
-		bcopy(from->rb_hd, buf, nto);
+		bcopy(from->rb_hd, buf, nto * sizeof(rbchar));
 		from->rb_hd = RB_ROLLOVER(from, from->rb_hd + nto);
 		return (nto);
 	}
@@ -203,11 +242,11 @@ size_t rb_read(from, buf, nto)
 		nto = nright;
 		goto noleft;
 	}
-	bcopy(from->rb_hd, buf, (size_t)nright);
+	bcopy(from->rb_hd, buf, nright * sizeof(rbchar));
 	nto -= nright;
 	if (nto > nleft)
 		nto = nleft;
-	bcopy(from->rb_buf, buf+nright, nto);
+	bcopy(from->rb_buf, buf+nright, nto * sizeof(rbchar));
 	from->rb_hd = from->rb_buf + nto;
 	return (nright + nto);
 }
@@ -216,27 +255,95 @@ size_t rb_read(from, buf, nto)
  * Copy ordinary buffer to ring buffer, return count of what fitted.
  */
 size_t rb_write(to, buf, nfrom)
-	struct ringb *to;
-	char *buf;
-	size_t nfrom;
+struct ringb *to;
+rbchar *buf;
+size_t nfrom;
 {
-	char *toleft;
+	rbchar *toleft;
 	size_t ntoleft;
 	size_t ntoright;
 
 	ntoright = RB_CONTIGPUT(to);
 	if (nfrom < ntoright) {
-		bcopy(buf, to->rb_tl, nfrom);
+		bcopy(buf, to->rb_tl, nfrom * sizeof(rbchar));
 		to->rb_tl += nfrom;
 		return (nfrom);
 	}
-	bcopy(buf, to->rb_tl, ntoright);
+	bcopy(buf, to->rb_tl, ntoright * sizeof(rbchar));
 	nfrom -= ntoright;
 	toleft = to->rb_buf;	/* fast RB_ROLLOVER */
 	ntoleft = to->rb_hd - toleft;	/* fast RB_CONTIGPUT */
 	if (nfrom > ntoleft)
 		nfrom = ntoleft;
-	bcopy(buf + ntoright, toleft, nfrom);
+	bcopy(buf + ntoright, toleft, nfrom * sizeof(rbchar));
+	to->rb_tl = toleft + nfrom;
+	return (ntoright + nfrom);
+}
+
+/*
+ * Copy from ring buffer to ordinary buffer, returning count of characters
+ * read.
+ */
+size_t rb_cread(from, buf, nto)
+struct ringb *from;
+char *buf;
+size_t nto;
+{
+	size_t nright, nleft;
+
+	if (from->rb_tl >= from->rb_hd) {
+		nright = from->rb_tl - from->rb_hd;
+		if (!nright)
+			return (0);
+		nleft = 0;
+	} else {
+		nleft = from->rb_tl - from->rb_buf;
+		nright = RBSZ - (from->rb_hd - from->rb_buf);
+	}
+	if (nright >= nto) {
+		noleft:
+		rbunpack(from->rb_hd, buf, nto);
+		from->rb_hd = RB_ROLLOVER(from, from->rb_hd + nto);
+		return (nto);
+	}
+	if (!nleft) {
+		nto = nright;
+		goto noleft;
+	}
+	rbunpack(from->rb_hd, buf, nright);
+	nto -= nright;
+	if (nto > nleft)
+		nto = nleft;
+	rbunpack(from->rb_buf, buf+nright, nto);
+	from->rb_hd = from->rb_buf + nto;
+	return (nright + nto);
+}
+
+/*
+ * Copy ordinary buffer to ring buffer, return count of what fitted.
+ */
+size_t rb_cwrite(to, buf, nfrom)
+struct ringb *to;
+char *buf;
+size_t nfrom;
+{
+	rbchar *toleft;
+	size_t ntoleft;
+	size_t ntoright;
+
+	ntoright = RB_CONTIGPUT(to);
+	if (nfrom < ntoright) {
+		rbpack(buf, to->rb_tl, nfrom);
+		to->rb_tl += nfrom;
+		return (nfrom);
+	}
+	rbpack(buf, to->rb_tl, ntoright);
+	nfrom -= ntoright;
+	toleft = to->rb_buf;	/* fast RB_ROLLOVER */
+	ntoleft = to->rb_hd - toleft;	/* fast RB_CONTIGPUT */
+	if (nfrom > ntoleft)
+		nfrom = ntoleft;
+	rbpack(buf + ntoright, toleft, nfrom);
 	to->rb_tl = toleft + nfrom;
 	return (ntoright + nfrom);
 }
