@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_node.h,v 1.14 1996/10/04 03:27:49 thorpej Exp $	*/
+/*	$NetBSD: cd9660_node.h,v 1.15 1997/04/11 21:52:01 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -118,7 +118,7 @@ int	cd9660_read	__P((void *));
 int	cd9660_ioctl	__P((void *));
 #define	cd9660_poll	genfs_poll
 int	cd9660_mmap	__P((void *));
-#define	cd9660_seek	genfs_nullop
+#define	cd9660_seek	genfs_seek
 int	cd9660_readdir	__P((void *));
 int	cd9660_readlink	__P((void *));
 #define	cd9660_abortop	genfs_abortop

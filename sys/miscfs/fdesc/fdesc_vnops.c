@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vnops.c,v 1.38 1996/10/25 21:57:58 cgd Exp $	*/
+/*	$NetBSD: fdesc_vnops.c,v 1.39 1997/04/11 21:52:02 kleink Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -100,7 +100,7 @@ int	fdesc_ioctl	__P((void *));
 int	fdesc_poll	__P((void *));
 #define	fdesc_mmap	genfs_eopnotsupp
 #define	fdesc_fsync	genfs_nullop
-#define	fdesc_seek	genfs_nullop
+#define	fdesc_seek	genfs_badop
 #define	fdesc_remove	genfs_eopnotsupp
 int	fdesc_link	__P((void *));
 #define	fdesc_rename	genfs_eopnotsupp
