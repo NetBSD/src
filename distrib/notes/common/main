@@ -1,4 +1,4 @@
-.\" $NetBSD: main,v 1.64 2000/07/10 16:25:44 jeffs Exp $
+.\" $NetBSD: main,v 1.65 2000/07/15 11:00:57 toddpw Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -972,6 +972,7 @@ them, and would like to mentioned, tell us!)
 .It Ta Krister Walfridsson Ta Mt kristerw@NetBSD.ORG
 .It Ta Lex Wennmacher Ta Mt wennmach@NetBSD.ORG
 .It Ta Assar Westerlund Ta Mt assar@NetBSD.ORG
+.It Ta Todd Whitesel Ta Mt toddpw@NetBSD.ORG
 .It Ta Rob Windsor Ta Mt windsor@NetBSD.ORG
 .It Ta Dan Winship Ta Mt danw@NetBSD.ORG
 .It Ta Jim Wise Ta Mt jwise@NetBSD.ORG
