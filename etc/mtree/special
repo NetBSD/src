@@ -1,4 +1,4 @@
-#	$NetBSD: special,v 1.58 2002/06/02 18:38:35 jmcneill Exp $
+#	$NetBSD: special,v 1.59 2002/07/03 23:29:51 yamt Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
 # Hand-crafted mtree specification for the dangerous files.
@@ -203,6 +203,7 @@
 ./etc/rc.d/ttys			type=file mode=0555
 ./etc/rc.d/virecover		type=file mode=0555
 ./etc/rc.d/wscons		type=file mode=0555
+./etc/rc.d/wsmoused		type=file mode=0555
 ./etc/rc.d/xdm			type=file mode=0555
 ./etc/rc.d/xfs			type=file mode=0555
 ./etc/rc.d/ypbind		type=file mode=0555
