@@ -22,7 +22,8 @@
 # 	stlib
 # 	toolchain_missing
 #
-list_set_files () {
+list_set_files()
+{
 	for setname; do
 		list_set_lists $setname
 	done | xargs cat | grep -v '^#'
@@ -44,7 +45,7 @@ list_set_files () {
 # In each file, a record consists of a path and a System Package name,
 # separated by whitespace. E.g.,
 #
-# 	# $NetBSD: sets.subr,v 1.7 2003/12/11 09:46:26 dyoung Exp $
+# 	# $NetBSD: sets.subr,v 1.8 2003/12/26 06:05:27 lukem Exp $
 # 	.			base-sys-root
 # 	./altroot		base-sys-root
 # 	./bin			base-sys-root
@@ -71,7 +72,8 @@ list_set_files () {
 # 	stlib
 # 	toolchain_missing
 #
-list_set_lists () {
+list_set_lists()
+{
 	setname=$1
 
 	echo $setd/lists/$setname/mi
@@ -196,7 +198,8 @@ list_set_lists () {
 	fi
 }
 
-arch_to_cpu () {
+arch_to_cpu()
+{
 MACHINE_ARCH=${1} ${MAKE:-make} -f- all <<EOF
 .include <bsd.own.mk>
 all:
