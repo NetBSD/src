@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.206 2004/04/14 15:43:27 kanaoka Exp $
+#	$NetBSD: 3RDPARTY,v 1.207 2004/04/16 04:08:50 itojun Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -147,8 +147,8 @@ ftp://ftp.isc.org/isc/cron/cron_4.0_b1.shar is available, apparently
 there's also a version in the works that has all changes from *BSD and Linux.
 
 Package:	cvs
-Version:	1.11.11
-Current Vers:	1.11.13/1.12.3
+Version:	1.11.15
+Current Vers:	1.11.15/1.12.3
 Maintainer:	cvshome
 Archive Site:	ftp://ftp.cvshome.org/pub/
 Mailing List:	bug-cvs@gnu.org
