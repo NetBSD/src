@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.10 2001/01/14 02:00:42 thorpej Exp $	*/
+/*	$NetBSD: intr.h,v 1.11 2001/04/13 23:30:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Charles M. Hannum.  All rights reserved.
@@ -109,7 +109,6 @@ spllower(ncpl)
 /*
  * Miscellaneous
  */
-#define	splimp()	splraise(imask[IPL_IMP])
 #define	splvm()		splraise(imask[IPL_IMP])
 #define	splhigh()	splraise(imask[IPL_HIGH])
 #define	splsched()	splhigh()

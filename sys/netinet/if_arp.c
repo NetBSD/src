@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.72 2001/01/26 11:40:32 is Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.73 2001/04/13 23:30:21 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -230,7 +230,7 @@ struct domain arpdomain =
  * to prevent lossage vs. the arp_drain routine (which may be called at
  * any time, including in a device driver context), we do two things:
  *
- * 1) manipulation of la->la_hold is done at splimp() (for all of
+ * 1) manipulation of la->la_hold is done at splnet() (for all of
  * about two instructions).
  *
  * 2) manipulation of the arp table's linked list is done under the
@@ -248,7 +248,11 @@ arp_lock_try(int recurse)
 {
 	int s;
 
-	s = splimp();
+	/*
+	 * Use splvm() -- we're blocking things that would cause
+	 * mbuf allocation.
+	 */
+	s = splvm();
 	if (!recurse && arp_locked) {
 		splx(s);
 		return (0);
@@ -263,7 +267,7 @@ arp_unlock()
 {
 	int s;
 
-	s = splimp();
+	s = splvm();
 	arp_locked--;
 	splx(s);
 }
@@ -292,7 +296,7 @@ do {									\
 
 /*
  * ARP protocol drain routine.  Called when memory is in short supply.
- * Called at splimp();
+ * Called at splvm();
  */
 
 void
@@ -515,7 +519,7 @@ arp_rtrequest(req, rt, info)
 		rt->rt_llinfo = 0;
 		rt->rt_flags &= ~RTF_LLINFO;
 
-		s = splimp();
+		s = splnet();
 		mold = la->la_hold;
 		la->la_hold = 0;
 		splx(s);
@@ -622,7 +626,7 @@ arpresolve(ifp, rt, m, dst, desten)
 	 */
 
 	arpstat.as_dfrtotal++;
-	s = splimp();
+	s = splnet();
 	mold = la->la_hold;
 	la->la_hold = m;
 	splx(s);
@@ -674,7 +678,7 @@ arpintr()
 	int s;
 
 	while (arpintrq.ifq_head) {
-		s = splimp();
+		s = splnet();
 		IF_DEQUEUE(&arpintrq, m);
 		splx(s);
 		if (m == 0 || (m->m_flags & M_PKTHDR) == 0)
@@ -891,7 +895,7 @@ in_arpinput(m)
 		rt->rt_flags &= ~RTF_REJECT;
 		la->la_asked = 0;
 
-		s = splimp();
+		s = splnet();
 		mold = la->la_hold;
 		la->la_hold = 0;
 		splx(s);

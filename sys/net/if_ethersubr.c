@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.78 2001/04/11 03:47:24 thorpej Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.79 2001/04/13 23:30:12 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -506,7 +506,7 @@ ether_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 
 	mflags = m->m_flags;
 	len = m->m_pkthdr.len;
-	s = splimp();
+	s = splnet();
 	/*
 	 * Queue message on interface, and start output if interface
 	 * not yet active.
@@ -654,6 +654,12 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 		return;
 	}
 
+	/* If the CRC is still on the packet, trim it off. */
+	if (m->m_flags & M_HASFCS) {
+		m_adj(m, -ETHER_CRC_LEN);
+		m->m_flags &= ~M_HASFCS;
+	}
+
 	ifp->if_lastchange = time;
 	ifp->if_ibytes += m->m_pkthdr.len;
 	if (ETHER_IS_MULTICAST(eh->ether_dhost)) {
@@ -750,8 +756,10 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 	m_adj(m, sizeof(struct ether_header));
 
 	/* If the CRC is still on the packet, trim it off. */
-	if (m->m_flags & M_HASFCS)
+	if (m->m_flags & M_HASFCS) {
 		m_adj(m, -ETHER_CRC_LEN);
+		m->m_flags &= ~M_HASFCS;
+	}
 
 	switch (etype) {
 #ifdef INET
@@ -942,7 +950,7 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 #endif /* ISO || LLC || NETATALK*/
 	}
 
-	s = splimp();
+	s = splnet();
 	if (IF_QFULL(inq)) {
 		IF_DROP(inq);
 		m_freem(m);
@@ -1014,7 +1022,7 @@ ether_ifdetach(struct ifnet *ifp)
 		vlan_ifdetach(ifp);
 #endif
 
-	s = splimp();
+	s = splnet();
 	while ((enm = LIST_FIRST(&ec->ec_multiaddrs)) != NULL) {
 		LIST_REMOVE(enm, enm_list);
 		free(enm, M_IFADDR);
@@ -1184,7 +1192,7 @@ ether_addmulti(struct ifreq *ifr, struct ethercom *ec)
 	struct ether_multi *enm;
 	u_char addrlo[ETHER_ADDR_LEN];
 	u_char addrhi[ETHER_ADDR_LEN];
-	int s = splimp(), error;
+	int s = splnet(), error;
 
 	error = ether_multiaddr(&ifr->ifr_addr, addrlo, addrhi);
 	if (error != 0) {
@@ -1243,7 +1251,7 @@ ether_delmulti(struct ifreq *ifr, struct ethercom *ec)
 	struct ether_multi *enm;
 	u_char addrlo[ETHER_ADDR_LEN];
 	u_char addrhi[ETHER_ADDR_LEN];
-	int s = splimp(), error;
+	int s = splnet(), error;
 
 	error = ether_multiaddr(&ifr->ifr_addr, addrlo, addrhi);
 	if (error != 0) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stf.c,v 1.12 2001/02/20 07:58:17 itojun Exp $	*/
+/*	$NetBSD: if_stf.c,v 1.13 2001/04/13 23:30:16 thorpej Exp $	*/
 /*	$KAME: if_stf.c,v 1.53 2001/02/16 03:00:30 itojun Exp $	*/
 
 /*
@@ -674,7 +674,7 @@ in_stf_input(m, va_alist)
 	ifq = &ip6intrq;
 	isr = NETISR_IPV6;
 
-	s = splimp();
+	s = splnet();
 	if (IF_QFULL(ifq)) {
 		IF_DROP(ifq);	/* update statistics */
 		m_freem(m);

@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_rtr.c,v 1.22 2001/04/04 06:28:41 itojun Exp $	*/
+/*	$NetBSD: nd6_rtr.c,v 1.23 2001/04/13 23:30:27 thorpej Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.95 2001/02/07 08:09:47 itojun Exp $	*/
 
 /*
@@ -1345,7 +1345,7 @@ in6_ifadd(ifp, in6, addr, prefixlen)
 	/*
 	 * To make the interface up. Only AF_INET6 in ia is used...
 	 */
-	s = splimp();
+	s = splnet();
 	if (ifp->if_ioctl && (*ifp->if_ioctl)(ifp, SIOCSIFADDR, (caddr_t)ia)) {
 		splx(s);
 		return NULL;
