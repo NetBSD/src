@@ -1,4 +1,4 @@
-/*	$NetBSD: wskbdmap_mfii.c,v 1.11 2000/01/15 17:14:22 aymeric Exp $	*/
+/*	$NetBSD: wskbdmap_mfii.c,v 1.12 2000/01/17 15:51:59 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -322,6 +322,7 @@ static const keysym_t pckbd_keydesc_jp[] = {
     KC(125), KS_backslash,      KS_bar,
 };
 
+/* Swedish keymap */
 static const keysym_t pckbd_keydesc_sv[] = {
 /*  pos      normal		shifted		altgr		shift-altgr */
     KC(12),  KS_plus,		KS_question,	KS_backslash,
