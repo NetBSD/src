@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.549 2003/03/05 10:27:59 grant Exp $
+# $NetBSD: GENERIC,v 1.550 2003/03/15 19:34:17 jmmv Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.549 $"
+#ident 		"GENERIC-$Revision: 1.550 $"
 
 maxusers	32		# estimated number of users
 
@@ -96,6 +96,7 @@ options 	USERCONF	# userconf(4) support
 #options 	DEBUG		# expensive debugging checks/support
 #options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
 options 	DDB		# in-kernel debugger
+#options 	DDB_ONPANIC=1	# see also sysctl(8): `ddb.onpanic'
 options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 #options 	KGDB		# remote debugger
 #options 	KGDB_DEVNAME="\"com\"",KGDB_DEVADDR=0x3f8,KGDB_DEVRATE=9600
