@@ -1,4 +1,6 @@
-/*	$NetBSD: math.h,v 1.5 2003/10/28 00:55:28 kleink Exp $	*/
+/*	$NetBSD: math.h,v 1.6 2003/10/30 13:18:24 kleink Exp $	*/
 
+#ifndef __mc68010__
 #define	__HAVE_LONG_DOUBLE
+#endif
 #define	__HAVE_NANF
