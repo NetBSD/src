@@ -1,5 +1,5 @@
-/*	$NetBSD: sa11x0_lcd.c,v 1.7 2001/07/08 14:45:03 ichiro Exp $	*/
-#define SALCD_DEBUG
+/*	$NetBSD: ipaq_lcd.c,v 1.1 2001/07/10 18:09:33 ichiro Exp $	*/
+#define IPAQ_LCD_DEBUG
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -55,28 +55,27 @@
 #include <machine/katelib.h>
 
 #include <hpcarm/sa11x0/sa11x0_reg.h> 
-#include <hpcarm/sa11x0/sa11x0_var.h>
-#include <hpcarm/sa11x0/sa11x0_lcdreg.h>
-#include <hpcarm/sa11x0/sa11x0_lcdvar.h>
-
 #include <hpcarm/sa11x0/sa11x0_gpioreg.h>
 
-#ifdef SALCD_DEBUG
-#define DPRINTFN(n, x)  if (salcddebug > (n)) printf x
-int     salcddebug = 0xff;
+#include <hpcarm/dev/ipaq_gpioreg.h>
+#include <hpcarm/dev/ipaq_saipvar.h>
+#include <hpcarm/dev/ipaq_lcdreg.h>
+#include <hpcarm/dev/ipaq_lcdvar.h>
+
+#ifdef IPAQ_LCD_DEBUG
+#define DPRINTFN(n, x)  if (ipaqlcddebug > (n)) printf x
+int     ipaqlcddebug = 0xff;
 #else
 #define DPRINTFN(n, x)
 #endif
 #define DPRINTF(x) DPRINTFN(0, x)
 
-static int	salcd_match(struct device *, struct cfdata *, void *);
-static void	salcd_attach(struct device *, struct device *, void *);
-static void	salcd_init(struct salcd_softc *);
-static int	salcd_fbinit(struct hpcfb_fbconf *);
-static int	salcd_ioctl(void *, u_long, caddr_t, int, struct proc *);
-static paddr_t	salcd_mmap(void *, off_t offset, int);
-
-extern  struct bus_space sa11x0_bs_tag;
+static int	ipaqlcd_match(struct device *, struct cfdata *, void *);
+static void	ipaqlcd_attach(struct device *, struct device *, void *);
+static void	ipaqlcd_init(struct ipaqlcd_softc *);
+static int	ipaqlcd_fbinit(struct ipaqlcd_softc *);
+static int	ipaqlcd_ioctl(void *, u_long, caddr_t, int, struct proc *);
+static paddr_t	ipaqlcd_mmap(void *, off_t offset, int);
 
 #if defined __mips__ || defined __sh__ || defined __arm__
 #define __BTOP(x)		((paddr_t)(x) >> PGSHIFT)
@@ -85,17 +84,17 @@ extern  struct bus_space sa11x0_bs_tag;
 #error "define btop, ptob."
 #endif
 
-struct cfattach salcd_ca = {
-	sizeof(struct salcd_softc), salcd_match, salcd_attach
+struct cfattach ipaqlcd_ca = {
+	sizeof(struct ipaqlcd_softc), ipaqlcd_match, ipaqlcd_attach
 };
 
-struct hpcfb_accessops salcd_ha = {
-	salcd_ioctl, salcd_mmap
+struct hpcfb_accessops ipaqlcd_ha = {
+	ipaqlcd_ioctl, ipaqlcd_mmap
 };
 static int console_flag = 0;
 
 static int
-salcd_match(parent, match, aux)
+ipaqlcd_match(parent, match, aux)
 	struct device *parent;
 	struct cfdata *match;
 	void *aux;
@@ -104,27 +103,28 @@ salcd_match(parent, match, aux)
 }
 
 void
-salcd_attach(parent, self, aux)
+ipaqlcd_attach(parent, self, aux)
 	struct device *parent;
 	struct device *self;
 	void *aux;
 {
-	struct salcd_softc *sc = (struct salcd_softc*)self;
+	struct ipaqlcd_softc *sc = (struct ipaqlcd_softc*)self;
 	struct hpcfb_attach_args ha;
+	struct ipaq_softc *psc = (struct ipaq_softc *)parent;
 
-	sc->sc_iot = &sa11x0_bs_tag;
-	sc->sc_parent = (struct sa11x0_softc *)parent;
+	sc->sc_iot = psc->sc_iot;
+	sc->sc_parent = (struct ipaq_softc *)parent;
 
-	salcd_init(sc);
-	salcd_fbinit(&sc->sc_fbconf);
+	ipaqlcd_init(sc);
+	ipaqlcd_fbinit(sc);
 
 	printf("\n");
-	printf("%s: SA-11x0 internal LCD controller\n",  sc->sc_dev.dv_xname);
+	printf("%s: iPAQ internal LCD controller\n",  sc->sc_dev.dv_xname);
 
 	DPRINTF(("framebuffer_baseaddr=%lx\n", (u_long)bootinfo->fb_addr));
 
         ha.ha_console = console_flag;
-        ha.ha_accessops = &salcd_ha;
+        ha.ha_accessops = &ipaqlcd_ha;
         ha.ha_accessctx = sc;
         ha.ha_curfbconf = 0;
         ha.ha_nfbconf = 1;
@@ -137,8 +137,8 @@ salcd_attach(parent, self, aux)
 }
 
 void
-salcd_init(sc)
-	struct salcd_softc *sc;
+ipaqlcd_init(sc)
+	struct ipaqlcd_softc *sc;
 {
 #if 0
 	/* Initialization of Extended GPIO */
@@ -148,7 +148,7 @@ salcd_init(sc)
 
 	if (bus_space_map(sc->sc_iot, SALCD_BASE, SALCD_NPORTS,
 			  0, &sc->sc_ioh))
-                panic("salcd_init:Cannot map registers\n");
+                panic("ipaqlcd_init:Cannot map registers\n");
 
 	(u_long)bootinfo->fb_addr =
 		bus_space_read_4(sc->sc_iot, sc->sc_ioh, SALCD_BA1);
@@ -180,9 +180,13 @@ salcd_init(sc)
 }
 
 int
-salcd_fbinit(fb)
-	struct hpcfb_fbconf *fb;
+ipaqlcd_fbinit(sc)
+	struct ipaqlcd_softc *sc;
 {
+	struct hpcfb_fbconf *fb;
+
+	fb = &sc->sc_fbconf;
+
 	/* Initialize fb */
 	memset(fb, 0, sizeof(*fb));
 
@@ -194,7 +198,7 @@ salcd_fbinit(fb)
 	fb->hf_height		= bootinfo->fb_height;
 	fb->hf_width		= bootinfo->fb_width;
 
-	if (bus_space_map(&sa11x0_bs_tag, (bus_addr_t)bootinfo->fb_addr,
+	if (bus_space_map(sc->sc_iot, (bus_addr_t)bootinfo->fb_addr,
 			   bootinfo->fb_height * bootinfo->fb_line_bytes,
 			   0, &fb->hf_baseaddr)) {
 		printf("unable to map framebuffer\n");
@@ -271,14 +275,14 @@ salcd_fbinit(fb)
 }
 
 int
-salcd_ioctl(v, cmd, data, flag, p)
+ipaqlcd_ioctl(v, cmd, data, flag, p)
 	void *v;
 	u_long cmd;
 	caddr_t data;
 	int flag;
 	struct proc *p;
 {
-	struct salcd_softc *sc = (struct salcd_softc *)v;
+	struct ipaqlcd_softc *sc = (struct ipaqlcd_softc *)v;
 	struct hpcfb_fbconf *fbconf;
 	struct hpcfb_dspconf *dspconf;
 	struct wsdisplay_cmap *cmap;
@@ -300,13 +304,13 @@ salcd_ioctl(v, cmd, data, flag, p)
                 dispparam = (struct wsdisplay_param*)data;
                 switch (dispparam->param) {
                 case WSDISPLAYIO_PARAM_BACKLIGHT:
-                        DPRINTF(("salcd_ioctl: GETPARAM:BACKLIGHT\n"));
+                        DPRINTF(("ipaqlcd_ioctl: GETPARAM:BACKLIGHT\n"));
                         return (EINVAL);
                 case WSDISPLAYIO_PARAM_CONTRAST:
-                        DPRINTF(("salcd_ioctl: GETPARAM:CONTRAST\n"));
+                        DPRINTF(("ipaqlcd_ioctl: GETPARAM:CONTRAST\n"));
                         return (EINVAL);
                 case WSDISPLAYIO_PARAM_BRIGHTNESS:
-                        DPRINTF(("salcd_ioctl: GETPARAM:BRIGHTNESS\n"));
+                        DPRINTF(("ipaqlcd_ioctl: GETPARAM:BRIGHTNESS\n"));
                         return (EINVAL);
                 default:
                         return (EINVAL);
@@ -316,13 +320,13 @@ salcd_ioctl(v, cmd, data, flag, p)
                 dispparam = (struct wsdisplay_param*)data;
                 switch (dispparam->param) {
                 case WSDISPLAYIO_PARAM_BACKLIGHT:
-                        DPRINTF(("salcd_ioctl: GETPARAM:BACKLIGHT\n"));
+                        DPRINTF(("ipaqlcd_ioctl: GETPARAM:BACKLIGHT\n"));
                         return (EINVAL);
                 case WSDISPLAYIO_PARAM_CONTRAST:
-                        DPRINTF(("salcd_ioctl: GETPARAM:CONTRAST\n"));
+                        DPRINTF(("ipaqlcd_ioctl: GETPARAM:CONTRAST\n"));
                         return (EINVAL);
                 case WSDISPLAYIO_PARAM_BRIGHTNESS:
-                        DPRINTF(("salcd_ioctl: GETPARAM:BRIGHTNESS\n"));
+                        DPRINTF(("ipaqlcd_ioctl: GETPARAM:BRIGHTNESS\n"));
                         return (EINVAL);
                 default:
                         return (EINVAL);
@@ -379,12 +383,12 @@ salcd_ioctl(v, cmd, data, flag, p)
 }
 
 paddr_t
-salcd_mmap(ctx, offset, prot)
+ipaqlcd_mmap(ctx, offset, prot)
 	void *ctx;
 	off_t offset;
 	int prot;
 {
-	struct salcd_softc *sc = (struct salcd_softc *)ctx;
+	struct ipaqlcd_softc *sc = (struct ipaqlcd_softc *)ctx;
 
 	if (offset < 0 ||
 	   (sc->sc_fbconf.hf_bytes_per_plane +
