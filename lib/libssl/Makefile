@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2001/11/21 17:33:26 wiz Exp $
+#	$NetBSD: Makefile,v 1.5 2002/08/19 09:41:34 lukem Exp $
 
 # RCSid:
 #	Id: Makefile,v 1.33 1998/11/11 11:53:53 sjg Exp
@@ -16,15 +16,17 @@
 #	sjg@quick.com.au
 #
 
+.include <bsd.own.mk>
+
 # XXX There's a bit of work to do before we can enable warnings.
 WARNS=0
 
 LIB=	ssl
 CFLAGS+= -Dlib${LIB}
 
-CRYPTODIST=	${.CURDIR}/../../crypto/dist
+CRYPTODIST=	${NETBSDSRCDIR}/crypto/dist
 
-.include "../../crypto/Makefile.openssl"
+.include "${NETBSDSRCDIR}/crypto/Makefile.openssl"
 .PATH: ${OPENSSLSRC}
 
 .include "srcs.inc"

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.105 2002/07/20 08:51:32 yamt Exp $
+#	$NetBSD: Makefile,v 1.106 2002/08/19 09:41:28 lukem Exp $
 #	@(#)Makefile	8.2 (Berkeley) 2/3/94
 #
 # All library objects contain sccsid strings by default; they may be
@@ -98,7 +98,7 @@ INCSDIR=	/usr/include
 NLS=	C.msg Pig.msg cs.msg de.msg es.msg fi.msg fr.msg nl.msg no.msg \
 	sv.msg pl.msg
 
-LIBKERN=	${.CURDIR}/../../sys/lib/libkern
+LIBKERN=	${NETBSDSRCDIR}/sys/lib/libkern
 
 KSRCS=	bcopy.c bcmp.c bswap16.c bswap32.c bswap64.c bzero.c ffs.c \
 	strcat.c strchr.c strcmp.c strcpy.c strlen.c \

@@ -1,10 +1,13 @@
-# $NetBSD: Makefile,v 1.4 2001/12/12 00:51:03 tv Exp $
+# $NetBSD: Makefile,v 1.5 2002/08/19 09:41:31 lukem Exp $
 
-DIST=		${.CURDIR}/../../crypto/dist
+NOLINT=		# defined
+
+.include <bsd.own.mk>
+
+DIST=		${NETBSDSRCDIR}/crypto/dist
 .PATH:		${DIST}/heimdal/lib/kafs
 
 WARNS?=		1
-NOLINT=		# defined
 
 LIB=		kafs
 
@@ -19,8 +22,8 @@ CPPFLAGS+= -I.					\
 	-I${DESTDIR}/usr/include/krb5		\
 	-I${DESTDIR}/usr/include/kerberosIV	\
 	-I${DESTDIR}/usr/include/openssl	\
-	-I${.CURDIR}/../../include/heimdal	\
-	-I${.CURDIR}/../libroken		\
+	-I${NETBSDSRCDIR}/include/heimdal	\
+	-I${NETBSDSRCDIR}/libroken		\
 	-I${DIST}/heimdal/lib/roken		\
 	-DHAVE_CONFIG_H
 

@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.21 2001/11/05 15:22:37 lukem Exp $
+#	$NetBSD: Makefile,v 1.22 2002/08/19 09:41:33 lukem Exp $
+
+.include <bsd.own.mk>
 
 LIB=	pcap
 MAN=	pcap.3
@@ -21,7 +23,7 @@ SRCS=	scanner.l savefile.c pcap.c pcap-bpf.c optimize.c nametoaddr.c \
 	inet.c grammar.y gencode.c etherent.c bpf_image.c
 SRCS+=	bpf_filter.c version.c
 
-.PATH:	${.CURDIR}/../../sys/net
+.PATH:	${NETBSDSRCDIR}/sys/net
 
 INCS=	pcap-namedb.h pcap.h
 INCSDIR=/usr/include

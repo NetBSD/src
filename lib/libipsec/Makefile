@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.6 2001/12/28 01:32:39 lukem Exp $
+# $NetBSD: Makefile,v 1.7 2002/08/19 09:41:31 lukem Exp $
 
 LIB=	ipsec
 USE_SHLIBDIR=	yes
@@ -11,7 +11,7 @@ LPREFIX+=__libyy
 YPREFIX+=__libyy
 YHEADER=1
 
-#.PATH:	${.CURDIR}/../../sys/netkey
+#.PATH:	${NETBSDSRCDIR}/sys/netkey
 #SRCS+=	pfkey.c pfkey_dump.c
 #SRCS+=	key_debug.c
 

@@ -1,10 +1,13 @@
-# $NetBSD: Makefile,v 1.4 2001/12/12 00:51:01 tv Exp $
+# $NetBSD: Makefile,v 1.5 2002/08/19 09:41:28 lukem Exp $
 
-DIST=		${.CURDIR}/../../dist
+NOLINT=		# defined
+
+.include <bsd.own.mk>
+
+DIST=		${NETBSDSRCDIR}/dist
 .PATH:		${DIST}/cdk ${DIST}/cdk/include ${DIST}/cdk/man
 
 LIB=		cdk
-NOLINT=		# defined
 CPPFLAGS+=	-I. -I${DIST}/cdk/include -DHAVE_CONFIG_H
 
 SRCS=	alphalist.c binding.c buttonbox.c calendar.c cdk.c cdkscreen.c \

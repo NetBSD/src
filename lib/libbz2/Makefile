@@ -1,10 +1,11 @@
-#	$NetBSD: Makefile,v 1.8 2002/06/27 21:03:37 thorpej Exp $
+#	$NetBSD: Makefile,v 1.9 2002/08/19 09:41:28 lukem Exp $
+
+NOMAN=		# defined
 
 .include <bsd.own.mk>
 
 LIB=		bz2
-NOMAN=		# defined
-DIST=		${.CURDIR}/../../dist/bzip2
+DIST=		${NETBSDSRCDIR}/dist/bzip2
 .PATH:		${DIST}
 
 SRCS=		blocksort.c huffman.c crctable.c randtable.c compress.c \

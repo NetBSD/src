@@ -1,10 +1,10 @@
-# $NetBSD: Makefile,v 1.7 2001/12/12 00:51:02 tv Exp $
+# $NetBSD: Makefile,v 1.8 2002/08/19 09:41:30 lukem Exp $
 
 NOLINT=		# defined
 
 .include <bsd.own.mk>
 
-DIST=		${.CURDIR}/../../crypto/dist
+DIST=		${NETBSDSRCDIR}/crypto/dist
 .PATH:		${DIST}/heimdal/lib/gssapi
 
 WARNS?=		1
@@ -65,8 +65,8 @@ CPPFLAGS+= -I.					\
 	 -I${DIST}/openssl/crypto		\
 	 -I${DIST}/heimdal/lib/asn1		\
 	 -I${DIST}/heimdal/lib/com_err		\
-	 -I${.CURDIR}/../../include/heimdal	\
-	 -I${.CURDIR}/../libroken		\
+	 -I${NETBSDSRCDIR}/include/heimdal	\
+	 -I${NETBSDSRCDIR}/lib/libroken		\
 	 -I${DIST}/heimdal/lib/roken		\
 	 -DHAVE_CONFIG_H
 

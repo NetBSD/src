@@ -1,8 +1,10 @@
-#	$NetBSD: Makefile,v 1.36 2002/07/19 13:22:41 blymn Exp $
+#	$NetBSD: Makefile,v 1.37 2002/08/19 09:41:30 lukem Exp $
 #	@(#)Makefile	8.2 (Berkeley) 1/2/94
 
+.include <bsd.own.mk>
+
 CPPFLAGS+=#-DTFILE=\"/dev/ttyp0\"
-CPPFLAGS+=-I${.CURDIR} -I${.CURDIR}/../libterm
+CPPFLAGS+=-I${.CURDIR} -I${NETBSDSRCDIR}/lib/libterm
 .if defined(DEBUG_CURSES)
 CFLAGS+=-g
 .if defined(FULL_DEBUG)
@@ -27,7 +29,7 @@ INCSDIR=/usr/include
 
 CPPFLAGS+=-DCM_N -DCM_GT -DCM_B -DCM_D
 SRCS+=	termcap.c tgoto.c tputs.c
-.PATH: ${.CURDIR}/../libterm
+.PATH: ${NETBSDSRCDIR}/lib/libterm
 
 .if make(install)
 SUBDIR+= PSD.doc
