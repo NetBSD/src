@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.141 2003/09/16 04:41:11 taca Exp $
+#	$NetBSD: 3RDPARTY,v 1.142 2003/09/19 08:57:52 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -259,7 +259,7 @@ is available at http://cm.bell-labs.com/who/bwk/
 See also nawk entry below.
 
 Package:	gcc
-Version:	2.95.3
+Version:	2.95.3/3.3.1
 Current Vers:	3.3.1
 Maintainer:	cygnus
 Archive Site:	ftp://ftp.gnu.org/gnu/gcc/
@@ -636,7 +636,7 @@ We don't allow RIP_TRACEON and RIP_TRACEOFF
 
 Package:	send-pr (part of GNATS)
 Version:	3.95
-Current Vers:	3.999.2
+Current Vers:	4.0
 Maintainer:	FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/gnats/
 Mailing List:	bug-gnats@gnu.org
@@ -645,7 +645,7 @@ Notes:
 
 Package:	sendmail
 Version:	8.12.9
-Current Vers:	8.12.9
+Current Vers:	8.12.10
 Maintainer:	Eric P. Allman
 Archive Site:	ftp://ftp.sendmail.org/pub/sendmail/
 Mailing List:
@@ -710,7 +710,7 @@ for the import.
 
 Package:	top
 Version:	3.5beta9
-Current Vers:	3.5beta12
+Current Vers:	3.5b12.7
 Maintainer:	William LeFebvre <wnl@groupsys.com>
 Archive Site:	ftp://ftp.groupsys.com/pub/top/
 Mailing List:	top-spinners@ocee.groupsys.com
