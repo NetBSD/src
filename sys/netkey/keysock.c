@@ -1,4 +1,4 @@
-/*	$NetBSD: keysock.c,v 1.17 2002/03/21 04:10:21 itojun Exp $	*/
+/*	$NetBSD: keysock.c,v 1.18 2002/03/21 04:41:03 itojun Exp $	*/
 /*	$KAME: keysock.c,v 1.23 2000/09/22 08:26:33 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.17 2002/03/21 04:10:21 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.18 2002/03/21 04:41:03 itojun Exp $");
 
 #include "opt_inet.h"
 
@@ -257,15 +257,11 @@ key_sendup_mbuf(so, m, target)
 	pfkeystat.in_total++;
 	pfkeystat.in_bytes += m->m_pkthdr.len;
 	if (m->m_len < sizeof(struct sadb_msg)) {
-#if 1
 		m = m_pullup(m, sizeof(struct sadb_msg));
 		if (m == NULL) {
 			pfkeystat.in_nomem++;
 			return ENOBUFS;
 		}
-#else
-		/* don't bother pulling it up just for stats */
-#endif
 	}
 	if (m->m_len >= sizeof(struct sadb_msg)) {
 		struct sadb_msg *msg;
