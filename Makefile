@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.189 2002/11/12 14:33:48 itohy Exp $
+#	$NetBSD: Makefile,v 1.190 2002/11/29 23:48:37 lukem Exp $
 
 # This is the top-level makefile for building NetBSD. For an outline of
 # how to build a snapshot or release, as well as other release engineering
@@ -200,6 +200,11 @@ do-distrib-dirs:
 .else
 	(cd ${.CURDIR}/etc && ${MAKE} DESTDIR=${DESTDIR} distrib-dirs)
 .endif
+
+.for targ in cleandir obj includes
+do-${targ}: ${targ}
+	@true
+.endfor
 
 .for dir in tools lib/csu lib/libc lib gnu/lib
 do-${dir:S/\//-/}:
