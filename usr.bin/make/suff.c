@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.14 1997/05/02 14:24:32 christos Exp $	*/
+/*	$NetBSD: suff.c,v 1.15 1997/05/06 22:06:58 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)suff.c	8.4 (Berkeley) 3/21/94";
 #else
-static char rcsid[] = "$NetBSD: suff.c,v 1.14 1997/05/02 14:24:32 christos Exp $";
+static char rcsid[] = "$NetBSD: suff.c,v 1.15 1997/05/06 22:06:58 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -2065,52 +2065,54 @@ sfnd_abort:
 	 * on the lhs of a dependency operator or [XXX] it has neither
 	 * children or commands) as the old pmake did.
 	 */
-	gn->path = Dir_FindFile(gn->name,
-				(targ == NULL ? dirSearchPath :
-				 targ->suff->searchPath));
-	if (gn->path != NULL) {
-	    char *ptr;
-	    Var_Set(TARGET, gn->path, gn);
+	if ((gn->type & OP_PHONY) == 0) {
+	    gn->path = Dir_FindFile(gn->name,
+				    (targ == NULL ? dirSearchPath :
+				     targ->suff->searchPath));
+	    if (gn->path != NULL) {
+		char *ptr;
+		Var_Set(TARGET, gn->path, gn);
 
-	    if (targ != NULL) {
-		/*
-		 * Suffix known for the thing -- trim the suffix off
-		 * the path to form the proper .PREFIX variable.
-		 */
-		int	savep = strlen(gn->path) - targ->suff->nameLen;
-		char	savec;
+		if (targ != NULL) {
+		    /*
+		     * Suffix known for the thing -- trim the suffix off
+		     * the path to form the proper .PREFIX variable.
+		     */
+		    int     savep = strlen(gn->path) - targ->suff->nameLen;
+		    char    savec;
 
-		if (gn->suffix)
-		    gn->suffix->refCount--;
-		gn->suffix = targ->suff;
-		gn->suffix->refCount++;
+		    if (gn->suffix)
+			gn->suffix->refCount--;
+		    gn->suffix = targ->suff;
+		    gn->suffix->refCount++;
 
-		savec = gn->path[savep];
-		gn->path[savep] = '\0';
+		    savec = gn->path[savep];
+		    gn->path[savep] = '\0';
 
-		if ((ptr = strrchr(gn->path, '/')) != NULL)
-		    ptr++;
-		else
-		    ptr = gn->path;
+		    if ((ptr = strrchr(gn->path, '/')) != NULL)
+			ptr++;
+		    else
+			ptr = gn->path;
 
-		Var_Set(PREFIX, ptr, gn);
+		    Var_Set(PREFIX, ptr, gn);
 
-		gn->path[savep] = savec;
-	    } else {
-		/*
-		 * The .PREFIX gets the full path if the target has
-		 * no known suffix.
-		 */
-		if (gn->suffix)
-		    gn->suffix->refCount--;
-		gn->suffix = NULL;
+		    gn->path[savep] = savec;
+		} else {
+		    /*
+		     * The .PREFIX gets the full path if the target has
+		     * no known suffix.
+		     */
+		    if (gn->suffix)
+			gn->suffix->refCount--;
+		    gn->suffix = NULL;
 
-		if ((ptr = strrchr(gn->path, '/')) != NULL)
-		    ptr++;
-		else
-		    ptr = gn->path;
+		    if ((ptr = strrchr(gn->path, '/')) != NULL)
+			ptr++;
+		    else
+			ptr = gn->path;
 
-		Var_Set(PREFIX, ptr, gn);
+		    Var_Set(PREFIX, ptr, gn);
+		}
 	    }
 	}
 
