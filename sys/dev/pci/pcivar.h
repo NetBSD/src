@@ -1,4 +1,4 @@
-/*	$NetBSD: pcivar.h,v 1.51 2002/05/18 21:40:41 sommerfeld Exp $	*/
+/*	$NetBSD: pcivar.h,v 1.52 2002/05/30 12:06:43 drochner Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -178,6 +178,7 @@ extern struct cfdriver pci_cd;
  * Configuration space access and utility functions.  (Note that most,
  * e.g. make_tag, conf_read, conf_write are declared by pci_machdep.h.)
  */
+int	pci_mapreg_probe __P((pci_chipset_tag_t, pcitag_t, int, pcireg_t *));
 pcireg_t pci_mapreg_type __P((pci_chipset_tag_t, pcitag_t, int));
 int	pci_mapreg_info __P((pci_chipset_tag_t, pcitag_t, int, pcireg_t,
 	    bus_addr_t *, bus_size_t *, int *));
