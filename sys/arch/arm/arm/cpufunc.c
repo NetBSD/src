@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.5 2001/06/02 21:03:33 bjh21 Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.6 2001/06/02 22:08:11 bjh21 Exp $	*/
 
 /*
  * arm8 support code Copyright (c) 1997 ARM Limited
@@ -746,102 +746,102 @@ late_abort_fixup(arg)
 			disassemble(fault_pc);
 #endif	/* DEBUG_FAULT_CORRECTION */
 		
-	/* This is for late abort only */
+		/* This is for late abort only */
 
-	if ((fault_instruction & (1 << 24)) == 0
-	    || (fault_instruction & (1 << 21)) != 0) {
-		base = (fault_instruction >> 16) & 0x0f;
-		if (base == 13 && (frame->tf_spsr & PSR_MODE) == PSR_SVC32_MODE) {
-			disassemble(fault_pc);
-			panic("Abort handler cannot fix this :-(\n");
-		}
-		if (base == 15) {
-			disassemble(fault_pc);
-			panic("Abort handler cannot fix this :-(\n");
-		}
-#ifdef DEBUG_FAULT_CORRECTION
-		if (pmap_debug_level >=0)
-			printf("late abt fix: r%d=%08x ", base, registers[base]);
-#endif	/* DEBUG_FAULT_CORRECTION */
-		if ((fault_instruction & (1 << 25)) == 0) {
-			/* Immediate offset - easy */                  
-			offset = fault_instruction & 0xfff;
-			if ((fault_instruction & (1 << 23)))
-				offset = -offset;
-			registers[base] += offset;
-#ifdef DEBUG_FAULT_CORRECTION
-			if (pmap_debug_level >=0)
-				printf("imm=%08x ", offset);
-#endif	/* DEBUG_FAULT_CORRECTION */
-		} else {
-			int shift;
-
-			offset = fault_instruction & 0x0f;
-			if (offset == base) {
+		if ((fault_instruction & (1 << 24)) == 0
+		    || (fault_instruction & (1 << 21)) != 0) {
+			base = (fault_instruction >> 16) & 0x0f;
+			if (base == 13 && (frame->tf_spsr & PSR_MODE) == PSR_SVC32_MODE) {
 				disassemble(fault_pc);
 				panic("Abort handler cannot fix this :-(\n");
 			}
-                
-/* Register offset - hard we have to cope with shifts ! */
-			offset = registers[offset];
+			if (base == 15) {
+				disassemble(fault_pc);
+				panic("Abort handler cannot fix this :-(\n");
+			}
+#ifdef DEBUG_FAULT_CORRECTION
+			if (pmap_debug_level >=0)
+				printf("late abt fix: r%d=%08x ", base, registers[base]);
+#endif	/* DEBUG_FAULT_CORRECTION */
+			if ((fault_instruction & (1 << 25)) == 0) {
+				/* Immediate offset - easy */                  
+				offset = fault_instruction & 0xfff;
+				if ((fault_instruction & (1 << 23)))
+					offset = -offset;
+				registers[base] += offset;
+#ifdef DEBUG_FAULT_CORRECTION
+				if (pmap_debug_level >=0)
+					printf("imm=%08x ", offset);
+#endif	/* DEBUG_FAULT_CORRECTION */
+			} else {
+				int shift;
 
-			if ((fault_instruction & (1 << 4)) == 0)
-				shift = (fault_instruction >> 7) & 0x1f;
-			else {
-				if ((fault_instruction & (1 << 7)) != 0) {
+				offset = fault_instruction & 0x0f;
+				if (offset == base) {
 					disassemble(fault_pc);
 					panic("Abort handler cannot fix this :-(\n");
 				}
-				shift = ((fault_instruction >> 8) & 0xf);
-				if (base == shift) {
-					disassemble(fault_pc);
-					panic("Abort handler cannot fix this :-(\n");
+                
+/* Register offset - hard we have to cope with shifts ! */
+				offset = registers[offset];
+
+				if ((fault_instruction & (1 << 4)) == 0)
+					shift = (fault_instruction >> 7) & 0x1f;
+				else {
+					if ((fault_instruction & (1 << 7)) != 0) {
+						disassemble(fault_pc);
+						panic("Abort handler cannot fix this :-(\n");
+					}
+					shift = ((fault_instruction >> 8) & 0xf);
+					if (base == shift) {
+						disassemble(fault_pc);
+						panic("Abort handler cannot fix this :-(\n");
+					}
+#ifdef DEBUG_FAULT_CORRECTION
+					if (pmap_debug_level >=0)
+						printf("shift reg=%d ", shift);
+#endif	/* DEBUG_FAULT_CORRECTION */
+					shift = registers[shift];
 				}
 #ifdef DEBUG_FAULT_CORRECTION
 				if (pmap_debug_level >=0)
-					printf("shift reg=%d ", shift);
+					printf("shift=%08x ", shift);
 #endif	/* DEBUG_FAULT_CORRECTION */
-				shift = registers[shift];
-			}
-#ifdef DEBUG_FAULT_CORRECTION
-			if (pmap_debug_level >=0)
-				printf("shift=%08x ", shift);
-#endif	/* DEBUG_FAULT_CORRECTION */
-			switch (((fault_instruction >> 5) & 0x3)) {
-			case 0 : /* Logical left */
-				offset = (int)(((u_int)offset) << shift);
-				break;
-			case 1 : /* Logical Right */
-				if (shift == 0) shift = 32;
-				offset = (int)(((u_int)offset) >> shift);
-				break;
-			case 2 : /* Arithmetic Right */
-				if (shift == 0) shift = 32;
-				offset = (int)(((int)offset) >> shift);
-				break;
-			case 3 : /* Rotate right */
-				disassemble(fault_pc);
-				panic("Abort handler cannot fix this :-(\n");
-				break;
-			}
+				switch (((fault_instruction >> 5) & 0x3)) {
+				case 0 : /* Logical left */
+					offset = (int)(((u_int)offset) << shift);
+					break;
+				case 1 : /* Logical Right */
+					if (shift == 0) shift = 32;
+					offset = (int)(((u_int)offset) >> shift);
+					break;
+				case 2 : /* Arithmetic Right */
+					if (shift == 0) shift = 32;
+					offset = (int)(((int)offset) >> shift);
+					break;
+				case 3 : /* Rotate right */
+					disassemble(fault_pc);
+					panic("Abort handler cannot fix this :-(\n");
+					break;
+				}
 
 #ifdef DEBUG_FAULT_CORRECTION
-			if (pmap_debug_level >=0)
-				printf("abt: fixed LDR/STR with register offset\n");
+				if (pmap_debug_level >=0)
+					printf("abt: fixed LDR/STR with register offset\n");
 #endif	/* DEBUG_FAULT_CORRECTION */               
-			if ((fault_instruction & (1 << 23)))
-				offset = -offset;
+				if ((fault_instruction & (1 << 23)))
+					offset = -offset;
+#ifdef DEBUG_FAULT_CORRECTION
+				if (pmap_debug_level >=0)
+					printf("offset=%08x ", offset);
+#endif	/* DEBUG_FAULT_CORRECTION */
+				registers[base] += offset;
+			}
 #ifdef DEBUG_FAULT_CORRECTION
 			if (pmap_debug_level >=0)
-				printf("offset=%08x ", offset);
+				printf("r%d=%08x\n", base, registers[base]);
 #endif	/* DEBUG_FAULT_CORRECTION */
-			registers[base] += offset;
 		}
-#ifdef DEBUG_FAULT_CORRECTION
-		if (pmap_debug_level >=0)
-			printf("r%d=%08x\n", base, registers[base]);
-#endif	/* DEBUG_FAULT_CORRECTION */
-	}
 	} else if ((fault_instruction & 0x0e000000) == 0x08000000) {
 		int base;
 		int loop;
