@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.25 2005/01/10 17:01:22 chs Exp $	*/
+/*	$NetBSD: zs.c,v 1.26 2005/01/10 17:07:09 chs Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.25 2005/01/10 17:01:22 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.26 2005/01/10 17:07:09 chs Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -110,15 +110,13 @@ struct zschan {
 	u_char		zc_xxx1;
 };
 
-static char *zsaddr[NZSC];
-
 /* Flags from cninit() */
-static int zs_hwflags[NZSC][2];
+static int zs_hwflags[2];
 
 /* Default speed for each channel */
-static int zs_defspeed[NZSC][2] = {
-	{ 9600, 	/* ttya */
-	  9600 },	/* ttyb */
+static int zs_defspeed[2] = {
+	9600,	 	/* ttya */
+	9600,		/* ttyb */
 };
 
 static u_char zs_init_reg[16] = {
@@ -141,19 +139,15 @@ static u_char zs_init_reg[16] = {
 };
 
 struct zschan *
-zs_get_chan_addr(int zs_unit, int channel)
+zs_get_chan_addr(int channel)
 {
 	char *addr;
 	struct zschan *zc;
 
-	if (zs_unit >= NZSC)
-		return (NULL);
-	addr = zsaddr[zs_unit];
-	if (addr == NULL)
-		return (NULL);
+	addr = (void *)IIOV(NEXT_P_SCC);
 	if (channel == 0) {
 		/* handle the fact the ports are intertwined. */
-		zc = (struct zschan *)(addr+1);
+		zc = (struct zschan *)(addr + 1);
 	} else {
 		zc = (struct zschan *)(addr);
 	}
@@ -178,6 +172,8 @@ CFATTACH_DECL(zsc, sizeof(struct zsc_softc),
 
 extern struct cfdriver zsc_cd;
 
+static int zs_attached;
+
 /* Interrupt handlers. */
 static int zshard(void *);
 static void zssoft(void *);
@@ -192,12 +188,12 @@ zs_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct intio_attach_args *ia = (struct intio_attach_args *)aux;
 
-	if (zsaddr[cf->cf_unit] == NULL)
-		return(0);
+	if (zs_attached)
+		return 0;
 
-	ia->ia_addr = (void *)zsaddr[cf->cf_unit];
+	ia->ia_addr = (void *)IIOV(NEXT_P_SCC);
 
-	return(1);
+	return 1;
 }
 
 /*
@@ -213,25 +209,18 @@ zs_attach(struct device *parent, struct device *self, void *aux)
 	struct zsc_attach_args zsc_args;
 	volatile struct zschan *zc;
 	struct zs_chanstate *cs;
-	int s, zs_unit, channel;
+	int s, channel, sir;
+
+	zs_attached = 1;
 
 	printf("\n");
-
-	zs_unit = zsc->zsc_dev.dv_unit;
-
-	if (zs_unit == 0) {
-		zsaddr[0] = (void *)IIOV(NEXT_P_SCC);
-	}
-
-	if (zsaddr[zs_unit] == NULL)
-		panic("zs_attach: zs%d not mapped", zs_unit);
 
 	/*
 	 * Initialize software state for each channel.
 	 */
 	for (channel = 0; channel < 2; channel++) {
 		zsc_args.channel = channel;
-		zsc_args.hwflags = zs_hwflags[zs_unit][channel];
+		zsc_args.hwflags = zs_hwflags[channel];
 		cs = &zsc->zsc_cs_store[channel];
 		zsc->zsc_cs[channel] = cs;
 
@@ -241,19 +230,19 @@ zs_attach(struct device *parent, struct device *self, void *aux)
 		cs->cs_ops = &zsops_null;
 		cs->cs_brg_clk = PCLK / 16;
 
-		zc = zs_get_chan_addr(zs_unit, channel);
+		zc = zs_get_chan_addr(channel);
 		cs->cs_reg_csr  = &zc->zc_csr;
 		cs->cs_reg_data = &zc->zc_data;
 
-		bcopy(zs_init_reg, cs->cs_creg, 16);
-		bcopy(zs_init_reg, cs->cs_preg, 16);
+		memcpy(cs->cs_creg, zs_init_reg, 16);
+		memcpy(cs->cs_preg, zs_init_reg, 16);
 
 		/* XXX: Get these from the PROM properties! */
 		/* XXX: See the mvme167 code.  Better. */
 		if (zsc_args.hwflags & ZS_HWFLAG_CONSOLE)
 			cs->cs_defspeed = zs_get_speed(cs);
 		else
-			cs->cs_defspeed = zs_defspeed[zs_unit][channel];
+			cs->cs_defspeed = zs_defspeed[channel];
 		cs->cs_defcflag = zs_def_cflag;
 
 		/* Make these correspond to cs_defcflag (-crtscts) */
@@ -288,12 +277,9 @@ zs_attach(struct device *parent, struct device *self, void *aux)
 	isrlink_autovec(zshard, NULL, NEXT_I_IPL(NEXT_I_SCC), 0, NULL);
 	INTR_ENABLE(NEXT_I_SCC);
 
-	{
-		int sir;
-		sir = allocate_sir(zssoft, zsc);
-		if (sir != SIR_SERIAL) {
-			panic("Unexpected zssoft sir");
-		}
+	sir = allocate_sir(zssoft, zsc);
+	if (sir != SIR_SERIAL) {
+		panic("Unexpected zssoft sir");
 	}
 
 	/*
@@ -656,9 +642,8 @@ zscnprobe(struct consdev *cp)
 		cp->cn_pri = CN_NORMAL;		 /* Lower than CN_INTERNAL */
 #endif
 		zs_consunit = 0;
-		zsaddr[0] = (void *)IIOV(NEXT_P_SCC);
 		cp->cn_dev = makedev(maj, zs_consunit);
-		zs_conschan = zs_get_chan_addr(0, zs_consunit);
+		zs_conschan = zs_get_chan_addr(zs_consunit);
 	} else {
 		cp->cn_pri = CN_DEAD;
 	}
@@ -672,7 +657,7 @@ zscninit(struct consdev *cn)
 	volatile struct zschan *zc;
 	int tconst, s;
 
-	zs_hwflags[0][zs_consunit] = ZS_HWFLAG_CONSOLE;
+	zs_hwflags[zs_consunit] = ZS_HWFLAG_CONSOLE;
 
 	/* Setup temporary chanstate. */
 	memset(&xcs, 0, sizeof(xcs));
@@ -687,7 +672,7 @@ zscninit(struct consdev *cn)
 	cs->cs_preg[5] |= ZSWR5_DTR | ZSWR5_RTS;
 	cs->cs_preg[15] = ZSWR15_BREAK_IE;
 
-	tconst = BPS_TO_TCONST(cs->cs_brg_clk, zs_defspeed[0][zs_consunit]);
+	tconst = BPS_TO_TCONST(cs->cs_brg_clk, zs_defspeed[zs_consunit]);
 	cs->cs_preg[12] = tconst;
 	cs->cs_preg[13] = tconst >> 8;
 
