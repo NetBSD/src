@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.34 1999/04/26 21:54:46 thorpej Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.35 1999/06/24 14:18:12 kleink Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -149,7 +149,11 @@ struct ctlname {
 #define	KERN_SYNCHRONIZED_IO	37	/* int: POSIX synchronized I/O */
 #define	KERN_IOV_MAX		38	/* int: max iovec's for readv(2) etc. */
 #define	KERN_MBUF		39	/* node: mbuf parameters */
-#define	KERN_MAXID		40	/* number of valid kern ids */
+#define	KERN_MAPPED_FILES	40	/* int: POSIX memory mapped files */
+#define	KERN_MEMLOCK		41	/* int: POSIX memory locking */
+#define	KERN_MEMLOCK_RANGE	42	/* int: POSIX memory range locking */
+#define	KERN_MEMORY_PROTECTION	43	/* int: POSIX memory protections */
+#define	KERN_MAXID		44	/* number of valid kern ids */
 
 #define CTL_KERN_NAMES { \
 	{ 0, 0 }, \
@@ -192,6 +196,10 @@ struct ctlname {
 	{ "synchronized_io", CTLTYPE_INT }, \
 	{ "iov_max", CTLTYPE_INT }, \
 	{ "mbuf", CTLTYPE_NODE }, \
+	{ "mapped_files", CTLTYPE_INT }, \
+	{ "memlock", CTLTYPE_INT }, \
+	{ "memlock_range", CTLTYPE_INT }, \
+	{ "memory_protection", CTLTYPE_INT }, \
 }
 
 /*
