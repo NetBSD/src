@@ -1,3 +1,0 @@
-| $NetBSD: wd0d,v 1.1 2001/10/05 22:28:03 reinoud Exp $
-
-<Obey$Dir>.mountufs ADFS wd0d

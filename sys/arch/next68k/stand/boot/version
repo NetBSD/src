@@ -1,6 +1,0 @@
-$NetBSD: version,v 1.4 2001/11/09 19:53:17 scw Exp $
-
-1.1:	initial import
-1.3:	Add ELF support
-1.4:	loadfile() update:  ELF symbols no longer need backward seeks.
-1.5:	loadfile() update to avoid backwards seeks for ELF Program Headers.

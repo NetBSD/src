@@ -1,7 +1,0 @@
-$NetBSD: version,v 1.4 2001/11/09 19:53:14 scw Exp $
-
-1.1:	Initial bootst (from Dale Rahn)
-1.2:	Update based on sun3 tapeboot (by Chuck Cranor)
-1.3:	Support verbose/quiet boot.
-1.4:	loadfile() update:  ELF symbols no longer need backward seeks.
-1.5:	loadfile() update to avoid backwards seeks for ELF Program Headers.
