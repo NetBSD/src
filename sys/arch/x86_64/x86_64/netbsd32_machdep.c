@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.13 2003/01/26 00:05:39 fvdl Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.14 2003/02/19 00:37:33 fvdl Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -63,39 +63,40 @@
 /* Provide a the name of the architecture we're emulating */
 char	machine_arch32[] = "x86_64";	
 
-int process_read_fpregs32(struct proc *, struct fpreg32 *);
-int process_read_regs32(struct proc *, struct reg32 *);
+int process_read_fpregs32(struct lwp *, struct fpreg32 *);
+int process_read_regs32(struct lwp *, struct reg32 *);
 
 extern void (osyscall_return) __P((void));
 
-static int x86_64_get_mtrr32(struct proc *, void *, register_t *);
-static int x86_64_set_mtrr32(struct proc *, void *, register_t *);
+static int x86_64_get_mtrr32(struct lwp *, void *, register_t *);
+static int x86_64_set_mtrr32(struct lwp *, void *, register_t *);
 
 void
-netbsd32_setregs(struct proc *p, struct exec_package *pack, u_long stack)
+netbsd32_setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 {
-	struct pcb *pcb = &p->p_addr->u_pcb;
+	struct pcb *pcb = &l->l_addr->u_pcb;
 	struct trapframe *tf;
+	struct proc *p = l->l_proc;
 	void **retaddr;
 
 	/* If we were using the FPU, forget about it. */
-	if (fpuproc == p)
+	if (fpulwp == l)
 		fpudrop();
 
 #if defined(USER_LDT) && 0
 	pmap_ldt_cleanup(p);
 #endif
 
-	p->p_md.md_flags &= ~MDP_USEDFPU;
+	l->l_md.md_flags &= ~MDP_USEDFPU;
 	pcb->pcb_flags = 0;
         pcb->pcb_savefpu.fp_fxsave.fx_fcw = __NetBSD_NPXCW__;
         pcb->pcb_savefpu.fp_fxsave.fx_mxcsr = __INITIAL_MXCSR__;  
 	pcb->pcb_savefpu.fp_fxsave.fx_mxcsr_mask = __INITIAL_MXCSR_MASK__;
 
 
-	p->p_flag |= P_32;
+	l->l_proc->p_flag |= P_32;
 
-	tf = p->p_md.md_regs;
+	tf = l->l_md.md_regs;
 	tf->tf_ds = LSEL(LUDATA32_SEL, SEL_UPL);
 	tf->tf_es = LSEL(LUDATA32_SEL, SEL_UPL);
 	tf->tf_fs = LSEL(LUDATA32_SEL, SEL_UPL);
@@ -181,7 +182,7 @@ netbsd32_sendsig(int sig, sigset_t *mask, u_long code)
 		 * Process has trashed its stack; give it an illegal
 		 * instruction to halt it in its tracks.
 		 */
-		sigexit(p, SIGILL);
+		sigexit(l, SIGILL);
 		/* NOTREACHED */
 	}
 
@@ -206,13 +207,14 @@ netbsd32_sendsig(int sig, sigset_t *mask, u_long code)
 
 
 int
-netbsd32___sigreturn14(struct proc *p, void *v, register_t *retval)
+netbsd32___sigreturn14(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32___sigreturn14_args /* {
 		syscallarg(struct netbsd32_sigcontext *) sigcntxp;
 	} */ *uap = v;
 	struct netbsd32_sigcontext *scp, context;
 	struct trapframe *tf;
+	struct proc *p = l->l_proc;
 
 	/*
 	 * The trampoline code hands us the context.
@@ -224,7 +226,7 @@ netbsd32___sigreturn14(struct proc *p, void *v, register_t *retval)
 		return (EFAULT);
 
 	/* Restore register context. */
-	tf = p->p_md.md_regs;
+	tf = l->l_md.md_regs;
 	/*
 	 * Check for security violations.  If we're returning to
 	 * protected mode, the CPU will validate the segment registers
@@ -275,9 +277,10 @@ struct md_core32 {
 };
 
 int
-cpu_coredump32(struct proc *p, struct vnode *vp, struct ucred *cred,
+cpu_coredump32(struct lwp *l, struct vnode *vp, struct ucred *cred,
 	     struct core32 *chdr)
 {
+	struct proc *p = l->l_proc;
 	struct md_core32 md_core;
 	struct coreseg cseg;
 	int error;
@@ -288,12 +291,12 @@ cpu_coredump32(struct proc *p, struct vnode *vp, struct ucred *cred,
 	chdr->c_cpusize = sizeof(md_core);
 
 	/* Save integer registers. */
-	error = process_read_regs32(p, &md_core.intreg);
+	error = process_read_regs32(l, &md_core.intreg);
 	if (error)
 		return error;
 
 	/* Save floating point registers. */
-	error = process_read_fpregs32(p, &md_core.freg);
+	error = process_read_fpregs32(l, &md_core.freg);
 	if (error)
 		return error;
 
@@ -319,9 +322,9 @@ cpu_coredump32(struct proc *p, struct vnode *vp, struct ucred *cred,
 
 
 int
-process_read_regs32(struct proc *p, struct reg32 *regs)
+process_read_regs32(struct lwp *l, struct reg32 *regs)
 {
-	struct trapframe *tf = p->p_md.md_regs;
+	struct trapframe *tf = l->l_md.md_regs;
 
 	regs->r_gs = LSEL(LUCODE32_SEL, SEL_UPL);
 	regs->r_fs = LSEL(LUCODE32_SEL, SEL_UPL);
@@ -345,18 +348,18 @@ process_read_regs32(struct proc *p, struct reg32 *regs)
 }
 
 int
-process_read_fpregs32(struct proc *p, struct fpreg32 *regs)
+process_read_fpregs32(struct lwp *l, struct fpreg32 *regs)
 {
 	struct oldfsave frame;
 
-	if (p->p_md.md_flags & MDP_USEDFPU) {
-		if (fpuproc == p)
+	if (l->l_md.md_flags & MDP_USEDFPU) {
+		if (fpulwp == l)
 			__asm__("fnsave %0" : "=m" (frame));
 	} else {
 		memset(&frame, 0, sizeof(*regs));
 		frame.fs_control = __NetBSD_NPXCW__;
 		frame.fs_tag = 0xffff;
-		p->p_md.md_flags |= MDP_USEDFPU;
+		l->l_md.md_flags |= MDP_USEDFPU;
 	}
 
 	memcpy(regs, &frame, sizeof(*regs));
@@ -364,8 +367,8 @@ process_read_fpregs32(struct proc *p, struct fpreg32 *regs)
 }
 
 int
-netbsd32_sysarch(p, v, retval)
-	struct proc *p;
+netbsd32_sysarch(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -377,16 +380,16 @@ netbsd32_sysarch(p, v, retval)
 
 	switch (SCARG(uap, op)) {
 		case X86_64_IOPL:
-			error = x86_64_iopl(p,
+			error = x86_64_iopl(l,
 			    (void *)(uintptr_t)SCARG(uap, parms), retval);
 			break;
 		case X86_64_GET_MTRR:
-			error = x86_64_get_mtrr32(p,
+			error = x86_64_get_mtrr32(l,
 			    (void *)(uintptr_t)SCARG(uap, parms),
 			    retval);
 			break;
 		case X86_64_SET_MTRR:
-			error = x86_64_set_mtrr32(p,
+			error = x86_64_set_mtrr32(l,
 			    (void *)(uintptr_t)SCARG(uap, parms),
 			    retval);
 			break;
@@ -398,13 +401,14 @@ netbsd32_sysarch(p, v, retval)
 }
 
 static int
-x86_64_get_mtrr32(struct proc *p, void *args, register_t *retval)
+x86_64_get_mtrr32(struct lwp *l, void *args, register_t *retval)
 {
 	struct x86_64_get_mtrr_args32 args32;
 	int error, i;
 	int32_t n;
 	struct mtrr32 *m32p, m32;
 	struct mtrr *m64p, *mp;
+	struct proc *p = l->l_proc;
 
 	m64p = NULL;
 
@@ -464,13 +468,14 @@ fail:
 }
 
 static int
-x86_64_set_mtrr32(struct proc *p, void *args, register_t *retval)
+x86_64_set_mtrr32(struct lwp *l, void *args, register_t *retval)
 {
 	struct x86_64_set_mtrr_args32 args32;
 	struct mtrr32 *m32p, m32;
 	struct mtrr *m64p, *mp;
 	int error, i;
 	int32_t n;
+	struct proc *p = l->l_proc;
 
 	m64p = NULL;
 
