@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.108 2000/03/30 09:27:11 augustss Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.109 2000/05/26 02:24:37 simonb Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -411,6 +411,13 @@ sys_execve(p, v, retval)
 	/* copy out the process's ps_strings structure */
 	if (copyout(&arginfo, (char *) PS_STRINGS, sizeof(arginfo)))
 		goto exec_abort;
+
+	/* fill process ps_strings info */
+	p->p_psstr = PS_STRINGS;
+	p->p_psargv = offsetof(struct ps_strings, ps_argvstr);
+	p->p_psnargv = offsetof(struct ps_strings, ps_nargvstr);
+	p->p_psenv = offsetof(struct ps_strings, ps_envstr);
+	p->p_psnenv = offsetof(struct ps_strings, ps_nenvstr);
 
 	/* copy out the process's signal trapoline code */
 	if (szsigcode) {
