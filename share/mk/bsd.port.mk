@@ -1,7 +1,7 @@
 #-*- mode: Fundamental; tab-width: 4; -*-
 # ex:ts=4
 #
-#	$NetBSD: bsd.port.mk,v 1.41 1998/01/28 15:36:31 hubertf Exp $
+#	$NetBSD: bsd.port.mk,v 1.42 1998/01/30 13:53:53 agc Exp $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
 #	This file is in the public domain.
@@ -188,10 +188,13 @@ NetBSD_MAINTAINER=	agc@netbsd.org
 # LIB_DEPENDS	- A list of "lib:dir" pairs of other ports this package
 #				  depends on.  "lib" is the name of a shared library.
 #				  make will use "ldconfig -r" to search for the
-#				  library.  Note that lib can be any regular expression,
-#				  and you need two backslashes in front of dots (.) to
-#				  supress its special meaning (e.g., use
-#				  "foo\\.2\\.:${PORTSDIR}/utils/foo" to match "libfoo.2.*").
+#				  library.  Note that lib can be any regular expression.
+#				  In older versions of this file, you need two backslashes
+#				  in front of dots (.) to supress its special meaning (e.g.,
+#				  use "foo\\.2\\.:${PORTSDIR}/utils/foo" to match "libfoo.2.*").
+#				  No special backslashes are needed to escape regular
+#				  expression metacharacters in NetBSD, and the old backslash
+#				  escapes are recognised for backwards compatibility.
 # DEPENDS		- A list of other ports this package depends on being
 #				  made first.  Use this for things that don't fall into
 #				  the above two categories.
@@ -1664,7 +1667,7 @@ lib-depends:
 .if defined(LIB_DEPENDS)
 .if !defined(NO_DEPENDS)
 	@for i in ${LIB_DEPENDS}; do \
-		lib=`${ECHO} $$i | ${SED} -e 's/:.*//'`; \
+		lib=`${ECHO} $$i | ${SED} -e 's/:.*//' -e 's|\([^\\]\)\.|\1\\\\.|g'`; \
 		dir=`${ECHO} $$i | ${SED} -e 's/[^:]*://'`; \
 		if expr "$$dir" : '.*:' > /dev/null; then \
 			target=`${ECHO} $$dir | ${SED} -e 's/.*://'`; \
@@ -1672,23 +1675,27 @@ lib-depends:
 		else \
 			target=${DEPENDS_TARGET}; \
 		fi; \
-		if ${LDCONFIG} -r | ${GREP} -q -e "-l$$lib"; then \
-			${ECHO_MSG} "===>  ${PKGNAME} depends on shared library: $$lib - found"; \
-		else \
-			${ECHO_MSG} "===>  ${PKGNAME} depends on shared library: $$lib - not found"; \
-			${ECHO_MSG} "===>  Verifying $$target for $$lib in $$dir"; \
+		libname=`${ECHO} $$lib | ${SED} -e 's|\\\\||g'`; \
+		reallib=`${LDCONFIG} -r | ${GREP} -e "-l$$lib" | awk '{ print $$3 }'`; \
+		if [ "X$$reallib" = X"" ]; then \
+			${ECHO_MSG} "===>  ${PKGNAME} depends on shared library: $$libname - not found"; \
+			${ECHO_MSG} "===>  Verifying $$target for $$libname in $$dir"; \
 			if [ ! -d "$$dir" ]; then \
-				${ECHO_MSG} ">> No directory for $$lib.  Skipping.."; \
+				${ECHO_MSG} ">> No directory for $$libname.  Skipping.."; \
 			else \
 				(cd $$dir; ${MAKE} ${.MAKEFLAGS} $$target) ; \
 				${ECHO_MSG} "===>  Returning to build of ${PKGNAME}"; \
 			fi; \
+		else \
+			${ECHO_MSG} "===>  ${PKGNAME} depends on shared library: $$libname - $$reallib found"; \
 		fi; \
 	done
 .endif
 .else
 	@${DO_NADA}
 .endif
+
+
 
 misc-depends:
 .if defined(DEPENDS)
