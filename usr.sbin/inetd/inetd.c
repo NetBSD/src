@@ -1,4 +1,4 @@
-/*	$NetBSD: inetd.c,v 1.88 2003/02/16 17:57:34 tron Exp $	*/
+/*	$NetBSD: inetd.c,v 1.89 2003/02/16 18:16:26 tron Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)inetd.c	8.4 (Berkeley) 4/13/94";
 #else
-__RCSID("$NetBSD: inetd.c,v 1.88 2003/02/16 17:57:34 tron Exp $");
+__RCSID("$NetBSD: inetd.c,v 1.89 2003/02/16 18:16:26 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -268,8 +268,6 @@ int deny_severity = LIBWRAP_DENY_FACILITY|LIBWRAP_DENY_SEVERITY;
 #define	TOOMANY		40		/* don't start more than TOOMANY */
 #define	CNT_INTVL	60		/* servers in CNT_INTVL sec. */
 #define	RETRYTIME	(60*10)		/* retry after bind or server fail */
-
-#define	SIGBLOCK	(sigmask(SIGCHLD)|sigmask(SIGHUP)|sigmask(SIGALRM))
 
 #define	A_CNT(a)	(sizeof (a) / sizeof (a[0]))
 
@@ -572,7 +570,6 @@ main(int argc, char *argv[])
 				}
 			} else
 				ctrl = sep->se_fd;
-			(void) sigblock(SIGBLOCK);
 			spawn(sep, ctrl);
 		}
 	}
@@ -608,7 +605,6 @@ spawn(struct servtab *sep, int ctrl)
 				    SOCK_STREAM)
 					close(ctrl);
 				close_sep(sep);
-				sigsetmask(0L);
 				if (!timingout) {
 					timingout = 1;
 					alarm(RETRYTIME);
@@ -621,7 +617,6 @@ spawn(struct servtab *sep, int ctrl)
 			syslog(LOG_ERR, "fork: %m");
 			if (!sep->se_wait && sep->se_socktype == SOCK_STREAM)
 				close(ctrl);
-			sigsetmask(0L);
 			sleep(1);
 			return;
 		}
@@ -642,7 +637,6 @@ spawn(struct servtab *sep, int ctrl)
 				setsid();
 		}
 	}
-	sigsetmask(0L);
 	if (pid == 0) {
 		run_service(ctrl, sep);
 		if (dofork)
@@ -804,7 +798,6 @@ static void
 config(void)
 {
 	struct servtab *sep, *cp, **sepp;
-	long omask;
 	int n;
 
 	if (!setconfig()) {
@@ -825,7 +818,6 @@ config(void)
 
 #define SWAP(type, a, b) {type c=(type)a; (type)a=(type)b; (type)b=(type)c;}
 
-			omask = sigblock(SIGBLOCK);
 			/*
 			 * sep->se_wait may be holding the pid of a daemon
 			 * that we're waiting for.  If so, don't overwrite
@@ -850,7 +842,6 @@ config(void)
 				unregister_rpc(sep);
 			sep->se_rpcversl = cp->se_rpcversl;
 			sep->se_rpcversh = cp->se_rpcversh;
-			sigsetmask(omask);
 			freeconfig(cp);
 			if (debug)
 				print_service("REDO", sep);
@@ -986,7 +977,6 @@ config(void)
 	/*
 	 * Purge anything not looked at above.
 	 */
-	omask = sigblock(SIGBLOCK);
 	sepp = &servtab;
 	while ((sep = *sepp)) {
 		if (sep->se_checked) {
@@ -1005,7 +995,6 @@ config(void)
 		freeconfig(sep);
 		free(sep);
 	}
-	(void) sigsetmask(omask);
 }
 
 static void
@@ -1221,7 +1210,6 @@ static struct servtab *
 enter(struct servtab *cp)
 {
 	struct servtab *sep;
-	long omask;
 
 	sep = (struct servtab *)malloc(sizeof (*sep));
 	if (sep == NULL) {
@@ -1231,10 +1219,8 @@ enter(struct servtab *cp)
 	*sep = *cp;
 	sep->se_fd = -1;
 	sep->se_rpcprog = -1;
-	omask = sigblock(SIGBLOCK);
 	sep->se_next = servtab;
 	servtab = sep;
-	sigsetmask(omask);
 	return (sep);
 }
 
