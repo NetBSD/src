@@ -1,4 +1,4 @@
-#	$NetBSD: SMDK2410,v 1.7 2004/02/13 10:10:18 wiz Exp $
+#	$NetBSD: SMDK2410,v 1.8 2004/02/14 07:32:31 bsh Exp $
 #
 #	SMDK2410 -- Samsung's S3C2410 evaluation board.
 #
@@ -169,6 +169,23 @@ options CONSPEED=115200
 options KGDB_DEVNAME="\"sscom1\""   # sscom0 or sscom1
 options KGDB_DEVRATE=115200
 
+# LCD
+#device-major	lcd	char 145
+lcd0		at ssio?
+wsdisplay*	at lcd? console ?
+options 	WSEMUL_VT100		# VT100 / VT220 emulation
+options 	FONT_VT220L8x16
+options 	FONT_VT220L8x10
+#options 	LCD_DEBUG
+
+# SPI port
+#ssspi0	at ssio? index 0
+ssspi1	at ssio? index 1
+
+# on-board keyboard controller (Semtech SPICoder-SA01) via SPI1
+sskbd0	at ssspi1	intr 1
+wskbd* at sskbd? # console ?
+
 # SCSI bus support
 scsibus* at scsi?
 
@@ -330,3 +347,9 @@ pseudo-device	loop			# network loopback
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	clockctl		# user control of clock subsystem
+
+# wscons pseudo-devices
+pseudo-device	wsmux			# mouse & keyboard multiplexor
+#pseudo-device	wsfont
+
+#pseudo-device	ksyms			# /dev/ksyms
