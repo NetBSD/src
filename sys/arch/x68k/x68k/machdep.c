@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.89 2000/09/13 15:00:24 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.90 2000/12/08 03:00:05 itohy Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1139,8 +1139,8 @@ mem_exists(mem, basemax)
 	b = (void*)base_v;
 
 	/* This is somewhat paranoid -- avoid overwriting myself */
-	asm("lea pc@(begin_check_mem),%0" : "=a"(begin_check));
-	asm("lea pc@(end_check_mem),%0" : "=a"(end_check));
+	asm("lea %pc@(begin_check_mem),%0" : "=a"(begin_check));
+	asm("lea %pc@(end_check_mem),%0" : "=a"(end_check));
 	if (base >= begin_check && base < end_check) {
 		size_t off = end_check - begin_check;
 
@@ -1245,7 +1245,7 @@ setmemrange(void)
 			cacr = CACHE60_OFF;
 			break;
 		}
-		asm volatile ("movc %0,cacr"::"d"(cacr));
+		asm volatile ("movc %0,%cacr"::"d"(cacr));
 	}
 
 	/* discover extended memory */
@@ -1289,7 +1289,7 @@ setmemrange(void)
 			cacr = CACHE60_ON;
 			break;
 		}
-		asm volatile ("movc %0,cacr"::"d"(cacr));
+		asm volatile ("movc %0,%cacr"::"d"(cacr));
 	}
 
 	physmem = m68k_btop(mem_size);
