@@ -1,11 +1,11 @@
-#	$NetBSD: DRACO,v 1.20 1997/12/01 15:17:09 kleink Exp $
+#	$NetBSD: DRACO,v 1.21 1998/02/05 20:07:17 is Exp $
 
 #
 # Macro System GmbH "DraCo", currently 68060-only until FPE is integrated.
 #
 
 # this will be replace by std.amiga soon:
-include "arch/amiga/conf/std.draco"
+include "arch/amiga/conf/std.amiga"
 
 maxusers	8
 options 	RTC_OFFSET=0
@@ -34,6 +34,7 @@ options 	INET		# IP networking support (Required)
 #options 	GATEWAY		# Packet forwarding
 #options 	DIRECTED_BROADCAST	# Broadcast across subnets
 #options 	NSIP		# XNS over IP
+#options	MROUTING
 
 #
 # File system related options
@@ -163,5 +164,6 @@ pseudo-device	loop			# network loopback
 pseudo-device	bpfilter 2		# berkeley packet filters
 pseudo-device	tun 2
 pseudo-device	ppp 2			# ppp protocol network drivers
+pseudo-device	vnd 4			# pseudo disk on file
 
 config	netbsd root on ? type ?

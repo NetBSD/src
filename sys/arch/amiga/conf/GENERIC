@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.97 1997/12/01 15:17:11 kleink Exp $
+#	$NetBSD: GENERIC,v 1.98 1998/02/05 20:07:15 is Exp $
 
 #
 # GENERIC AMIGA
@@ -204,15 +204,32 @@ hyper*		at zbus?		# zbus HyperCom3 + HyperCom4
 com*		at hyper? port ?	# Hypercom3/4 serial ports
 #lpt*		at hyper? port ?	# not yet: Hypercom3 parallel port
 
+#
+# Amiga Mainboard devices (sans graphics and keyboard)
+#
+
+ser0		at mainbus0		# Amiga onboard serial
+par0		at mainbus0		# Amiga onboard parallel
+ms*		at mainbus0		# Amiga mice
+fdc0		at mainbus0		# Amiga FDC
+fd*		at fdc0 unit ?		# floppy disks on the later
+a34kbbc0	at mainbus0		# A3000/A4000 battery backed clock
+a2kbbc0 	at mainbus0		# A2000 battery backed clock
+aucc*		at mainbus0		# Amiga CC audio
+audio*		at aucc?
+
+#
+# DraCo Mainboard devices (sans keyboard)
+#
+
 drbbc0		at mainbus0		# DraCo battery backed clock
 drsupio0	at mainbus0		# DraCo superio chip
 com*		at drsupio? port ?	# DraCo serial
 lpt0		at drsupio? port ?	# DraCo parallel
 
-a2kbbc0 	at mainbus0		# A2000 battery backed clock
-a34kbbc0	at mainbus0		# A3000/A4000 battery backed clock
-aucc*		at mainbus0		# Amiga CC audio
-audio*		at aucc?
+#
+# Zorro-II, Zorro-III, DraCo Direct-Bus devices (sans graphics)
+#
 
 melody* 	at zbus0		# Melody MPEG audio decoder
 audio*		at melody?
