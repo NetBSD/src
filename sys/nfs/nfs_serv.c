@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.50.2.1 1999/05/04 17:10:00 perry Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.50.2.2 1999/12/16 22:07:54 he Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -2934,7 +2934,7 @@ again:
 			 * are calculated conservatively, including all
 			 * XDR overheads.
 			 */
-			len += (7 * NFSX_UNSIGNED + nlen + rem + NFSX_V3FH +
+			len += (8 * NFSX_UNSIGNED + nlen + rem + NFSX_V3FH +
 				NFSX_V3POSTOPATTR);
 			dirlen += (6 * NFSX_UNSIGNED + nlen + rem);
 			if (len > cnt || dirlen > fullsiz) {
