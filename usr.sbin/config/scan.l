@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: scan.l,v 1.31 2002/06/05 10:56:19 lukem Exp $	*/
+/*	$NetBSD: scan.l,v 1.32 2002/06/22 02:04:28 ross Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -144,7 +144,7 @@ with		return WITH;
 			unput(tok);
 		}
 		yylval.str = intern(yytext + 1);
-		return WORD;
+		return QSTRING;
 	}
 0[0-7]*	{
 		yylval.val = strtol(yytext, NULL, 8);
