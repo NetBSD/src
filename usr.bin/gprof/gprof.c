@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)gprof.c	8.1 (Berkeley) 6/6/93"; */
-static char *rcsid = "$Id: gprof.c,v 1.4 1994/05/17 03:36:01 cgd Exp $";
+static char *rcsid = "$Id: gprof.c,v 1.5 1994/06/01 11:04:33 pk Exp $";
 #endif /* not lint */
 
 #include "gprof.h"
@@ -726,6 +726,8 @@ funcsymbol( nlistp )
 	 */
     name = strtab + nlistp -> n_un.n_strx;
 #ifdef sparc
+    if (nlistp -> n_value & 3)
+	return FALSE;
     if ( *name == '.' ) {
 	char *p = name + 1;
 	if ( *p == 'u' )
