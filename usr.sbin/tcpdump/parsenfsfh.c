@@ -1,8 +1,4 @@
-/*	$NetBSD: parsenfsfh.c,v 1.3 1996/05/20 00:41:07 fvdl Exp $	*/
-
-#ifndef lint
-static char *RCSid = "Header: parsenfsfh.c,v 1.5 94/01/13 19:06:41 leres Exp";
-#endif
+/*	$NetBSD: parsenfsfh.c,v 1.4 1997/10/03 19:54:55 christos Exp $	*/
 
 /*
  * parsenfsfh.c - portable parser for NFS file handles
@@ -13,23 +9,28 @@ static char *RCSid = "Header: parsenfsfh.c,v 1.5 94/01/13 19:06:41 leres Exp";
  * Western Research Laboratory
  */
 
+#include <sys/cdefs.h>
+#ifndef lint
+#if 0
+static const char rcsid[] =
+    "@(#) Header: parsenfsfh.c,v 1.14 97/06/15 13:20:27 leres Exp  (LBL)";
+#else
+__RCSID("$NetBSD: parsenfsfh.c,v 1.4 1997/10/03 19:54:55 christos Exp $");
+#endif
+#endif
+
 #include <sys/types.h>
 #include <sys/time.h>
 
-#include <stdio.h>
 #include <ctype.h>
+#ifdef HAVE_MEMORY_H
+#include <memory.h>
+#endif
+#include <stdio.h>
 #include <string.h>
 
 #include "interface.h"
 #include "nfsfh.h"
-
-/*
- * Make sure that we use 32-bit integers when necessary.  The "x"
- * suffix is to avoid possible identifier conflicts.
- */
-
-typedef int int32x;
-typedef unsigned int u_int32x;
 
 /*
  * This routine attempts to parse a file handle (in network byte order),
@@ -56,7 +57,7 @@ typedef unsigned int u_int32x;
 
 #ifdef	ultrix
 /* Nasty hack to keep the Ultrix C compiler from emitting bogus warnings */
-#define	XFF(x)	((unsigned long)(x))
+#define	XFF(x)	((u_int32_t)(x))
 #else
 #define	XFF(x)	(x)
 #endif
@@ -93,7 +94,7 @@ char **fsnamep;		/* if non-NULL, return server fs name here (for VMS) */
 int ourself;		/* true if file handle was generated on this host */
 {
 	register unsigned char *fhp = (unsigned char *)fh;
-	u_int32x temp;
+	u_int32_t temp;
 	int fhtype = FHT_UNKNOWN;
 
 	if (ourself) {
@@ -225,8 +226,8 @@ int ourself;		/* true if file handle was generated on this host */
 
 	switch (fhtype) {
 	case FHT_AUSPEX:
-	    fsidp->fsid_dev.Minor = fhp[7];
-	    fsidp->fsid_dev.Major = fhp[6];
+	    fsidp->Fsid_dev.Minor = fhp[7];
+	    fsidp->Fsid_dev.Major = fhp[6];
 	    fsidp->fsid_code = 0;
 
 	    temp = make_uint32(fhp[12], fhp[13], fhp[14], fhp[15]);
@@ -241,8 +242,8 @@ int ourself;		/* true if file handle was generated on this host */
 			/* XXX could ignore 3 high-order bytes */
 
 	    temp = make_uint32(fhp[3], fhp[2], fhp[1], fhp[0]);
-	    fsidp->fsid_dev.Minor = temp & 0xFFFFF;
-	    fsidp->fsid_dev.Major = (temp>>20) & 0xFFF;
+	    fsidp->Fsid_dev.Minor = temp & 0xFFFFF;
+	    fsidp->Fsid_dev.Major = (temp>>20) & 0xFFF;
 
 	    temp = make_uint32(fhp[15], fhp[14], fhp[13], fhp[12]);
 	    *inop = temp;
@@ -251,8 +252,8 @@ int ourself;		/* true if file handle was generated on this host */
 	    break;
 
 	case FHT_IRIX4:
-	    fsidp->fsid_dev.Minor = fhp[3];
-	    fsidp->fsid_dev.Major = fhp[2];
+	    fsidp->Fsid_dev.Minor = fhp[3];
+	    fsidp->Fsid_dev.Major = fhp[2];
 	    fsidp->fsid_code = 0;
 
 	    temp = make_uint32(fhp[8], fhp[9], fhp[10], fhp[11]);
@@ -263,8 +264,8 @@ int ourself;		/* true if file handle was generated on this host */
 	    break;
 
 	case FHT_IRIX5:
-	    fsidp->fsid_dev.Minor = make_uint16(fhp[2], fhp[3]);
-	    fsidp->fsid_dev.Major = make_uint16(fhp[0], fhp[1]);
+	    fsidp->Fsid_dev.Minor = make_uint16(fhp[2], fhp[3]);
+	    fsidp->Fsid_dev.Major = make_uint16(fhp[0], fhp[1]);
 	    fsidp->fsid_code = make_uint32(fhp[4], fhp[5], fhp[6], fhp[7]);
 
 	    temp = make_uint32(fhp[12], fhp[13], fhp[14], fhp[15]);
@@ -280,8 +281,8 @@ int ourself;		/* true if file handle was generated on this host */
 	    break;
 
 	case FHT_SUNOS4:
-	    fsidp->fsid_dev.Minor = fhp[3];
-	    fsidp->fsid_dev.Major = fhp[2];
+	    fsidp->Fsid_dev.Minor = fhp[3];
+	    fsidp->Fsid_dev.Major = fhp[2];
 	    fsidp->fsid_code = make_uint32(fhp[4], fhp[5], fhp[6], fhp[7]);
 
 	    temp = make_uint32(fhp[12], fhp[13], fhp[14], fhp[15]);
@@ -293,9 +294,9 @@ int ourself;		/* true if file handle was generated on this host */
 
 	case FHT_SUNOS5:
 	    temp = make_uint16(fhp[0], fhp[1]);
-	    fsidp->fsid_dev.Major = (temp>>2) &  0x3FFF;
+	    fsidp->Fsid_dev.Major = (temp>>2) &  0x3FFF;
 	    temp = make_uint24(fhp[1], fhp[2], fhp[3]);
-	    fsidp->fsid_dev.Minor = temp & 0x3FFFF;
+	    fsidp->Fsid_dev.Minor = temp & 0x3FFFF;
 	    fsidp->fsid_code = make_uint32(fhp[4], fhp[5], fhp[6], fhp[7]);
 
 	    temp = make_uint32(fhp[12], fhp[13], fhp[14], fhp[15]);
@@ -307,8 +308,8 @@ int ourself;		/* true if file handle was generated on this host */
 
 	case FHT_ULTRIX:
 	    fsidp->fsid_code = 0;
-	    fsidp->fsid_dev.Minor = fhp[0];
-	    fsidp->fsid_dev.Major = fhp[1];
+	    fsidp->Fsid_dev.Minor = fhp[0];
+	    fsidp->Fsid_dev.Major = fhp[1];
 
 	    temp = make_uint32(fhp[7], fhp[6], fhp[5], fhp[4]);
 	    *inop = temp;
@@ -320,16 +321,17 @@ int ourself;		/* true if file handle was generated on this host */
 	    /* No numeric file system ID, so hash on the device-name */
 	    if (sizeof(*fsidp) >= 14) {
 		if (sizeof(*fsidp) > 14)
-		    bzero((char *)fsidp, sizeof(*fsidp));
-		bcopy(fh, (char *)fsidp, 14);	/* just use the whole thing */
+		    memset((char *)fsidp, 0, sizeof(*fsidp));
+		/* just use the whole thing */
+		memcpy((char *)fsidp, (char *)fh, 14);
 	    }
 	    else {
-		u_long tempa[4];	/* at least 16 bytes, maybe more */
+		u_int32_t tempa[4];	/* at least 16 bytes, maybe more */
 
-		bzero((char *)tempa, sizeof(tempa));
-		bcopy(fh, (char *)tempa, 14);	/* ensure alignment */
-		fsidp->fsid_dev.Minor = tempa[0] + (tempa[1]<<1);
-		fsidp->fsid_dev.Major = tempa[2] + (tempa[3]<<1);
+		memset((char *)tempa, 0, sizeof(tempa));
+		memcpy((char *)tempa, (char *)fh, 14); /* ensure alignment */
+		fsidp->Fsid_dev.Minor = tempa[0] + (tempa[1]<<1);
+		fsidp->Fsid_dev.Major = tempa[2] + (tempa[3]<<1);
 		fsidp->fsid_code = 0;
 	    }
 
@@ -345,8 +347,8 @@ int ourself;		/* true if file handle was generated on this host */
 	    break;
 
 	case FHT_AIX32:
-	    fsidp->fsid_dev.Minor = make_uint16(fhp[2], fhp[3]);
-	    fsidp->fsid_dev.Major = make_uint16(fhp[0], fhp[1]);
+	    fsidp->Fsid_dev.Minor = make_uint16(fhp[2], fhp[3]);
+	    fsidp->Fsid_dev.Major = make_uint16(fhp[0], fhp[1]);
 	    fsidp->fsid_code = make_uint32(fhp[4], fhp[5], fhp[6], fhp[7]);
 
 	    temp = make_uint32(fhp[12], fhp[13], fhp[14], fhp[15]);
@@ -357,9 +359,9 @@ int ourself;		/* true if file handle was generated on this host */
 	    break;
 
 	case FHT_HPUX9:
-	    fsidp->fsid_dev.Major = fhp[0];
+	    fsidp->Fsid_dev.Major = fhp[0];
 	    temp = make_uint24(fhp[1], fhp[2], fhp[3]);
-	    fsidp->fsid_dev.Minor = temp;
+	    fsidp->Fsid_dev.Minor = temp;
 	    fsidp->fsid_code = make_uint32(fhp[4], fhp[5], fhp[6], fhp[7]);
 
 	    temp = make_uint32(fhp[12], fhp[13], fhp[14], fhp[15]);
@@ -374,14 +376,15 @@ int ourself;		/* true if file handle was generated on this host */
 	    {
 		/* XXX debugging */
 		int i;
-		for (i=0; i<32;i++) fprintf(stderr, "%x.", fhp[i]);
-		fprintf(stderr, "\n");
+		for (i = 0; i < 32; i++)
+			(void)fprintf(stderr, "%x.", fhp[i]);
+		(void)fprintf(stderr, "\n");
 	    }
 #endif
 	    /* XXX for now, give "bogus" values to aid debugging */
 	    fsidp->fsid_code = 0;
-	    fsidp->fsid_dev.Minor = 257;
-	    fsidp->fsid_dev.Major = 257;
+	    fsidp->Fsid_dev.Minor = 257;
+	    fsidp->Fsid_dev.Major = 257;
 	    *inop = 1;
 
 	    /* display will show this string instead of (257,257) */

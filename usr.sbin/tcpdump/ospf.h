@@ -1,7 +1,7 @@
-/*	$NetBSD: ospf.h,v 1.2 1995/03/06 19:10:57 mycroft Exp $	*/
+/*	$NetBSD: ospf.h,v 1.3 1997/10/03 19:54:50 christos Exp $	*/
 
 /*
- * Copyright (c) 1991, 1993, 1994
+ * Copyright (c) 1991, 1993, 1994, 1995, 1996, 1997
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -38,6 +38,9 @@
 /* ospf_authtype	*/
 #define	OSPF_AUTH_NONE		0	/* No auth-data */
 #define	OSPF_AUTH_SIMPLE	1	/* Simple password */
+#define OSPF_AUTH_MD5		2	/* MD5 authentication */
+#define     OSPF_AUTH_MD5_LEN	16	/* length of MD5 authentication */
+
 
 /* db_flags	*/
 #define	OSPF_DB_INIT		0x04	    /*	*/
@@ -95,7 +98,7 @@ struct lsa_hdr {
     u_char ls_type;
     struct in_addr ls_stateid;
     struct in_addr ls_router;
-    u_int32 ls_seq;
+    u_int32_t ls_seq;
     u_short ls_chksum;
     u_short ls_length;
 } ;
@@ -129,14 +132,14 @@ struct lsa {
 	/* Summary links advertisements */
 	struct {
 	    struct in_addr sla_mask;
-	    u_int32 sla_tosmetric[1];	/* may repeat	*/
+	    u_int32_t sla_tosmetric[1];	/* may repeat	*/
 	} un_sla;
 
 	/* AS external links advertisements */
 	struct {
 	    struct in_addr asla_mask;
 	    struct aslametric {
-		u_int32 asla_tosmetric;
+		u_int32_t asla_tosmetric;
 		struct in_addr asla_forward;
 		struct in_addr asla_tag;
 	    } asla_metric[1];		/* may repeat	*/
@@ -144,7 +147,7 @@ struct lsa {
 
 	/* Multicast group membership */
 	struct mcla {
-	    u_int32 mcla_vtype;
+	    u_int32_t mcla_vtype;
 	    struct in_addr mcla_vid;
 	} un_mcla[1];
     } lsa_un;
@@ -182,7 +185,7 @@ struct ospfhdr {
 	    u_short hello_helloint;
 	    u_char hello_options;
 	    u_char hello_priority;
-	    u_int32 hello_deadint;
+	    u_int32_t hello_deadint;
 	    struct in_addr hello_dr;
 	    struct in_addr hello_bdr;
 	    struct in_addr hello_neighbor[1]; /* may repeat	*/
@@ -193,24 +196,24 @@ struct ospfhdr {
 	    u_char db_zero[2];
 	    u_char db_options;
 	    u_char db_flags;
-	    u_int32 db_seq;
+	    u_int32_t db_seq;
 	    struct lsa_hdr db_lshdr[1]; /* may repeat	*/
 	} un_db;
 
 	/* Link State Request */
 	struct lsr {
-	    u_int32 ls_type;
+	    u_int32_t ls_type;
 	    struct in_addr ls_stateid;
 	    struct in_addr ls_router;
 	} un_lsr[1];		/* may repeat	*/
 
 	/* Link State Update */
 	struct {
-	    u_int32 lsu_count;
+	    u_int32_t lsu_count;
 	    struct lsa lsu_lsa[1]; /* may repeat	*/
 	} un_lsu;
 
-	/* Link State Acknowledment */
+	/* Link State Acknowledgement */
 	struct {
 	    struct lsa_hdr lsa_lshdr[1]; /* may repeat	*/
 	} un_lsa ;
