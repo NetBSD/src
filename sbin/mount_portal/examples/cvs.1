@@ -5,7 +5,7 @@ server using a local path.  Start off like this:
 
 	# mkdir /p
 	# mount -t portal `pwd`/cvs.conf /p
-	# chmod +x cvs.pl
+	# chmod +x cvs.sh
 	# 
 
 The next step is to set up the authentication.  The NetBSD anoncvs
@@ -19,10 +19,7 @@ Now the NetBSD source tree is close at hand.
 First, some caveats.  File name completion and globbing don't work,
 and diff has difficulties with this since it stat()s the file names
 it's given and gets back more or less meaningless information for
-names under a portal file system.   You also need to have perl
-installed for the cvs.pl script that supports this configuration.
-The script expects to find perl in /usr/pkg/bin, so change the
-script if you have perl installed somewhere else.
+names under a portal file system.
 
 Here's a list of things I've done with this:
 
