@@ -1,4 +1,4 @@
-/*	$NetBSD: pmc.c,v 1.8 2002/06/07 05:26:45 gmcgarry Exp $	*/
+/*	$NetBSD: pmc.c,v 1.9 2002/10/16 10:40:17 yamt Exp $	*/
 
 /*
  * Copyright 2000 Wasabi Systems, Inc.
@@ -425,7 +425,7 @@ main(int argc, char **argv)
 		}
 	}
 
-	if (pnp == NULL)
+	if (pnp == NULL || argc <= optind)
 		usage();
 
 	memset(&pss0, 0, sizeof pss0);
