@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.10 2001/07/24 18:24:51 nra Exp $
+.\"	$NetBSD: install,v 1.11 2001/10/27 22:38:10 chs Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -84,6 +84,10 @@ This environment is designed to do only three things:
 1:  Partition your disk (use the command:  edlabel /dev/rsd0c)
 2:  Copy a miniroot image into the swap partition  (/dev/rsd0b)
 3:  Reboot (using the swap partition, i.e. /dev/sd?b).
+
+Note that the sun3 firmware cannot boot from a partition located
+more than 1 GB from the beginning of the disk, so the swap partition
+should be completely below the 1 GB boundary.
 
 Copying the miniroot can be done several ways, allowing
 the source of the miniroot image to be on any of these:
