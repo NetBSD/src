@@ -1,12 +1,12 @@
-/*	$NetBSD: makedefs.c,v 1.5 1997/10/19 16:59:36 christos Exp $	*/
+/* $NetBSD: makedefs.c,v 1.6 2000/07/31 11:35:03 simonb Exp $ */
 
 /*
  * Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
  */
 
-#include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: makedefs.c,v 1.5 1997/10/19 16:59:36 christos Exp $");
+static char rcsid[] =
+    "$NetBSD: makedefs.c,v 1.6 2000/07/31 11:35:03 simonb Exp $";
 #endif				/* not lint */
 
 #include <stdio.h>
@@ -21,15 +21,15 @@ __RCSID("$NetBSD: makedefs.c,v 1.5 1997/10/19 16:59:36 christos Exp $");
 int             fd;
 char            string[STRSZ];
 
-static void readline __P((void));
-static char nextchar __P((void));
-static int skipuntil __P((char *));
-static int getentry __P((void));
-static void capitalize __P((char *));
-static int letter __P((int));
-static int digit __P((int));
+static void readline(void);
+static char nextchar(void);
+static int skipuntil(char *);
+static int getentry(void);
+static void capitalize(char *);
+static int letter(int);
+static int digit(int);
 
-int main __P((int, char **));
+int main(int, char **);
 
 int
 main(argc, argv)
