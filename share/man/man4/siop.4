@@ -1,4 +1,4 @@
-.\"	$NetBSD: siop.4,v 1.9 2002/01/25 14:15:44 bouyer Exp $
+.\"	$NetBSD: siop.4,v 1.10 2002/04/18 12:54:56 bouyer Exp $
 .\"
 .\" Copyright (c) 2000 Manuel Bouyer.
 .\"
@@ -37,6 +37,7 @@
 .Nd Symbios Logic/NCR 53c8xx SCSI driver
 .Sh SYNOPSIS
 .Cd "siop* at pci? dev ? function ?"
+.Cd "options SIOP_SYMLED"
 .Cd "scsibus* at siop?"
 .Sh DESCRIPTION
 The
@@ -79,6 +80,9 @@ and
 53c1510d (PCI 64bit, dual Ultra2-wide
 .Tn SCSI )
 .El
+The SIOP_SYMLED option causes the driver to report SCSI activity on the GPIO
+pin 1, which is connected to the activity LED on some adapters. At this time
+only the 53c895 based Symbios and Tekram adapters are known to require this.
 .Sh SEE ALSO
 .Xr cd 4 ,
 .Xr ch 4 ,
