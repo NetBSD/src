@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.31 2002/04/02 19:58:39 manu Exp $
+	$NetBSD: syscalls.master,v 1.32 2002/04/02 20:29:52 manu Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -262,7 +262,7 @@
 143	UNIMPL		getpgrp
 144	UNIMPL		setpgrp
 145	UNIMPL		vhangup
-146	UNIMPL		fsync
+146	NOARGS		{ int sys_fsync(int fd); }
 147	UNIMPL		fchdir
 148	UNIMPL		getrlimit
 149	UNIMPL		setrlimit
