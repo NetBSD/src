@@ -1,4 +1,4 @@
-/*	$NetBSD: w.c,v 1.36.2.3 2000/09/28 15:53:18 simonb Exp $	*/
+/*	$NetBSD: w.c,v 1.36.2.4 2000/09/28 18:47:47 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)w.c	8.6 (Berkeley) 6/30/94";
 #else
-__RCSID("$NetBSD: w.c,v 1.36.2.3 2000/09/28 15:53:18 simonb Exp $");
+__RCSID("$NetBSD: w.c,v 1.36.2.4 2000/09/28 18:47:47 jdolecek Exp $");
 #endif
 #endif /* not lint */
 
@@ -54,6 +54,7 @@ __RCSID("$NetBSD: w.c,v 1.36.2.3 2000/09/28 15:53:18 simonb Exp $");
  *
  */
 #include <sys/param.h>
+#include <sys/types.h>
 #include <sys/time.h>
 #include <sys/stat.h>
 #include <sys/sysctl.h>
@@ -110,6 +111,9 @@ struct	entry {
 	dev_t	tdev;			/* dev_t of terminal */
 	time_t	idle;			/* idle time of terminal in seconds */
 	struct	kinfo_proc2 *kp;	/* `most interesting' proc */
+#ifdef SUPPORT_FTPD_UTMP
+	pid_t	ftpd_pid;		/* pid as extracted from ftpd's entry */
+#endif
 } *ep, *ehead = NULL, **nextp = &ehead;
 
 static void	 pr_args __P((struct kinfo_proc2 *));
@@ -198,8 +202,22 @@ main(argc, argv)
 		*nextp = ep;
 		nextp = &(ep->next);
 		memmove(&(ep->utmp), &utmp, sizeof(struct utmp));
-		if (!(stp = ttystat(ep->utmp.ut_line)))
+		if (!(stp = ttystat(ep->utmp.ut_line))) {
+#ifdef SUPPORT_FTPD_UTMP
+			/*
+			 * Hack to recognize and correctly parse
+			 * utmp entry made by ftpd. The "tty" used
+			 * by ftpd is not a real tty, just identifier in
+			 * form ftpPROCESS_ID. Pid parsed from the "tty name"
+			 * is used later to match corresponding process.
+			 */
+			if (strncmp(ep->utmp.ut_line, "ftp", 3) == 0)
+				ep->ftpd_pid =
+					strtol(ep->utmp.ut_line + 3, NULL, 10);
+#endif /* SUPPORT_FTPD_UTMP */
+			
 			continue;
+		}
 		ep->tdev = stp->st_rdev;
 		/*
 		 * If this is the console device, attempt to ascertain
@@ -238,9 +256,10 @@ main(argc, argv)
 
 		if (kp->p_stat == SIDL || kp->p_stat == SZOMB)
 			continue;
+
 		for (ep = ehead; ep != NULL; ep = ep->next) {
-			if (ep->tdev == kp->p_tdev &&
-			    kp->p__pgid == kp->p_tpgid) {
+			if (ep->tdev == kp->p_tdev
+				&& kp->p__pgid == kp->p_tpgid) {
 				/*
 				 * Proc is in foreground of this terminal
 				 */
@@ -251,6 +270,17 @@ main(argc, argv)
 				}
 				break;
 			}
+#ifdef SUPPORT_FTPD_UTMP
+			/*
+			 * Hack to match process to ftp utmp entry.
+			 */
+			else if (ep->tdev == 0 && kp->p_tdev == NODEV
+				 && ep->ftpd_pid == kp->p_pid) {
+				ep->kp = kp;
+				lognamelen = max(lognamelen,
+					    strlen(kp->p_login));
+			}
+#endif /* SUPPORT_FTPD_UTMP */
 		}
 	}
 
