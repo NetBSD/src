@@ -31,15 +31,18 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1983, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "@(#)rwhod.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$Id: rwhod.c,v 1.10 1997/08/25 19:32:07 kleink Exp $";
+#if 0
+static char sccsid[] = "@(#)rwhod.c	8.1 (Berkeley) 6/6/93";
+#else
+__RCSID("$NetBSD: rwhod.c,v 1.11 1997/10/17 13:13:49 lukem Exp $");
+#endif
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -54,6 +57,7 @@ static char rcsid[] = "$Id: rwhod.c,v 1.10 1997/08/25 19:32:07 kleink Exp $";
 #include <net/route.h>
 #include <netinet/in.h>
 #include <protocols/rwhod.h>
+#include <arpa/inet.h>
 
 #include <ctype.h>
 #include <errno.h>
@@ -97,6 +101,7 @@ int	s, utmpf;
 
 int	 configure __P((int));
 void	 getboottime __P((int));
+int	 main __P((int, char **));
 void	 onalrm __P((int));
 void	 quit __P((char *));
 void	 rt_xaddrs __P((caddr_t, caddr_t, struct rt_addrinfo *));
@@ -110,7 +115,7 @@ void	 Sendto __P((int, char *, int, int, char *, int));
 int
 main(argc, argv)
 	int argc;
-	char argv[];
+	char *argv[];
 {
 	struct sockaddr_in from;
 	struct stat st;
@@ -199,8 +204,8 @@ main(argc, argv)
 		 */
 		wd.wd_hostname[sizeof(wd.wd_hostname)-1] = 0;
 		if (!verify(wd.wd_hostname)) {
-			syslog(LOG_WARNING, "malformed host name from %x",
-				from.sin_addr);
+			syslog(LOG_WARNING, "malformed host name from %s",
+				inet_ntoa(from.sin_addr));
 			continue;
 		}
 		snprintf(path, sizeof(path), "whod.%s", wd.wd_hostname);

@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)rwhod.8	8.2 (Berkeley) 12/11/93
-.\"	$NetBSD: rwhod.8,v 1.7 1997/07/14 01:43:49 mikel Exp $
+.\"	$NetBSD: rwhod.8,v 1.8 1997/10/17 13:13:40 lukem Exp $
 .\"
 .Dd December 11, 1993
 .Dt RWHOD 8
@@ -39,9 +39,9 @@
 .Nm rwhod
 .Nd system status server
 .Sh SYNOPSIS
-.Nm rwhod
+.Nm
 .Sh DESCRIPTION
-.Nm Rwhod
+.Nm
 is the server which maintains the database used by the
 .Xr rwho 1
 and
@@ -50,13 +50,13 @@ programs.  Its operation is predicated on the ability to
 .Em broadcast
 messages on a network.
 .Pp
-.Nm Rwhod
+.Nm
 operates as both a producer and consumer of status information.
 As a producer of information it periodically
 queries the state of the system and constructs
 status messages which are broadcast on a network.
 As a consumer of information, it listens for other
-.Nm rwhod
+.Nm
 servers' status messages, validating them, then recording
 them in a collection of files located in the directory
 .Pa /var/rwho .
@@ -113,7 +113,7 @@ in the message, contains any unprintable
 .Tn ASCII
 characters, the
 message is discarded.  Valid messages received by
-.Nm rwhod
+.Nm
 are placed in files named
 .Pa whod.hostname
 in the directory
