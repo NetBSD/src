@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.8 1996/01/01 22:40:56 thorpej Exp $	*/
+/*	$NetBSD: si.c,v 1.9 1996/01/04 00:20:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Jason R. Thorpe
@@ -278,7 +278,7 @@ si_match(parent, vcf, args)
 	 * what my board seems to be at.  --thorpej
 	 */
 	if (ra->ra_intr[0].int_pri == -1)
-		ra->ra_intr[0].int_pri == 3;
+		ra->ra_intr[0].int_pri = 3;
 
 	/* Figure out the bus type and look for the appropriate adapter. */
 	switch (ca->ca_bustype) {
