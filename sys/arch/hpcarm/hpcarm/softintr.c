@@ -1,4 +1,4 @@
-/*	$NetBSD: softintr.c,v 1.8 2003/07/15 00:25:09 lukem Exp $	*/
+/*	$NetBSD: softintr.c,v 1.9 2005/01/01 10:39:30 toshii Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: softintr.c,v 1.8 2003/07/15 00:25:09 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: softintr.c,v 1.9 2005/01/01 10:39:30 toshii Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -178,17 +178,21 @@ softintr_dispatch(int s)
 #else
 			SetCPSR(I32_bit, I32_bit & saved_cpsr);
 #endif
+			splx(s);
 			return;
 		}
 		sh = softintr_pending;
 		softintr_pending = softintr_pending->sh_vlink;
 
-		s = raisespl(sh->sh_level);
+		if (sh->sh_level > current_spl_level)
+			raisespl(sh->sh_level);
 #ifdef __GNUC__
 		asm volatile("msr cpsr_c, %0" : : "r" (saved_cpsr));
 #else
 		SetCPSR(I32_bit, I32_bit & saved_cpsr);
 #endif
+		if (sh->sh_level < current_spl_level)
+			lowerspl(sh->sh_level);
 
 		while (1) {
 			/* The order is important */
@@ -200,6 +204,6 @@ softintr_dispatch(int s)
 				break;
 			sh = sh1;
 		}
-		splx(s);
 	}
+	splx(s);
 }
