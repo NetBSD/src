@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.9 1998/12/19 22:26:13 christos Exp $	*/
+/*	$NetBSD: cmds.c,v 1.9.2.1 1999/09/26 13:38:54 he Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.2 (Berkeley) 4/29/95";
 #endif
-__RCSID("$NetBSD: cmds.c,v 1.9 1998/12/19 22:26:13 christos Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.9.2.1 1999/09/26 13:38:54 he Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -185,13 +185,19 @@ status()
 	error("Showing %s, refresh every %d seconds.", curcmd->c_name, naptime);
 }
 
+/* case insensitive prefix comparison */
 int
 prefix(s1, s2)
 	char *s1, *s2;
 {
+	char c1, c2;
 
-	while (*s1 == *s2) {
-		if (*s1 == '\0')
+	while (1) {
+		c1 = *s1 >= 'A' && *s1 <= 'Z' ? *s1 + 'a' - 'A' : *s1;	
+		c2 = *s2 >= 'A' && *s2 <= 'Z' ? *s2 + 'a' - 'A' : *s2;	
+		if (c1 != c2)
+			break;
+		if (c1 == '\0')
 			return (1);
 		s1++, s2++;
 	}
