@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode_if.c,v 1.23 2000/09/13 15:51:19 thorpej Exp $	*/
+/*	$NetBSD: vnode_if.c,v 1.24 2000/09/13 16:09:52 thorpej Exp $	*/
 
 /*
  * Warning: This file is generated automatically.
@@ -7,7 +7,7 @@
  * Created from the file:
  *	NetBSD: vnode_if.src,v 1.24 2000/05/13 23:43:07 perseant Exp 
  * by the script:
- *	NetBSD: vnode_if.sh,v 1.20 2000/09/13 15:50:26 thorpej Exp 
+ *	NetBSD: vnode_if.sh,v 1.21 2000/09/13 16:09:27 thorpej Exp 
  */
 
 /*
@@ -42,6 +42,14 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+/*
+ * If we have LKM support, always include the non-inline versions for
+ * LKMs.  Otherwise, do it based on the option.
+ */
+#ifdef LKM
+#define	VNODE_OP_NOINLINE
+#endif
 
 #include <sys/param.h>
 #include <sys/mount.h>
