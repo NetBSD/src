@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: install.sh,v 1.9 1996/06/25 07:35:20 thorpej Exp $
+#	$NetBSD: install.sh,v 1.10 1996/06/27 13:45:45 pk Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -55,8 +55,6 @@ MODE="install"
 #	md_get_ifdevs()		- return available network interfaces
 #	md_get_partition_range() - return range of valid partition letters
 #	md_installboot()	- install boot-blocks on disk
-#	md_checkfordisklabel()	- check for valid disklabel
-#	md_labeldisk()		- put label on a disk
 #	md_prep_disklabel()	- label the root disk
 #	md_welcome_banner()	- display friendly message
 #	md_not_going_to_install() - display friendly message
@@ -339,7 +337,24 @@ echo ""
 munge_fstab /tmp/fstab /tmp/fstab.shadow
 mount_fs /tmp/fstab.shadow
 
-install_sets $ALLSETS
+mount | while read line; do
+	set -- $line
+	if [ "$2" = "/" -a "$3" = "nfs" ]; then
+		echo "You appear to be running diskless."
+		echo -n	"Are the install sets on one of your currently mounted filesystems? [n] "
+		getresp "n"
+		case "$resp" in
+			y*|Y*)
+				get_localdir
+				;;
+			*)
+				;;
+		esac
+	fi
+done
+
+THESETS="$ALLSETS"
+install_sets
 
 # Copy in configuration information and make devices in target root.
 (
