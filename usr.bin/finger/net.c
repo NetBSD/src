@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)net.c	5.5 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: net.c,v 1.2 1993/08/01 18:16:00 mycroft Exp $";
+static char rcsid[] = "$Id: net.c,v 1.3 1994/01/14 03:50:50 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -120,7 +120,9 @@ netfinger(name)
 	if (fp = fdopen(s, "r"))
 		while ((c = getc(fp)) != EOF) {
 			c &= 0x7f;
-			if (c == 0x0d) {
+			if (c == '\r') {
+				if (lastc == '\r')
+					continue;
 				c = '\n';
 				lastc = '\r';
 			} else {
