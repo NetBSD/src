@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.4 1998/09/05 16:52:02 pk Exp $ */
+/*	$NetBSD: disksubr.c,v 1.5 1999/06/04 14:00:38 mrg Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -85,6 +85,7 @@ dk_establish(dk, dev)
 	 * scsi: sd,cd
 	 */
 	if (strncmp("sd", dev->dv_xname, 2) == 0 ||
+	    strncmp("wd", dev->dv_xname, 2) == 0 ||
 	    strncmp("cd", dev->dv_xname, 2) == 0) {
 
 		sbsc = (struct scsibus_softc *)dev->dv_parent;
