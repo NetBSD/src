@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)lp.h	5.5 (Berkeley) 6/1/90
- *	$Id: lp.h,v 1.3 1993/12/08 00:47:03 jtc Exp $
+ *	$Id: lp.h,v 1.4 1994/05/18 00:54:02 cgd Exp $
  */
 
 /*
@@ -54,6 +54,7 @@
 #include <sgtty.h>
 #include <ctype.h>
 #include <errno.h>
+#include <unistd.h>
 #include "lp.local.h"
 
 extern int	DU;		/* daeomon user-id */
