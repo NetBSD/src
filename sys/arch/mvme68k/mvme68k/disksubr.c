@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.5 1996/05/01 21:22:55 chuck Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.6 1996/05/08 01:45:46 chuck Exp $	*/
 
 /*
  * Copyright (c) 1995 Dale Rahn.
@@ -357,8 +357,11 @@ bsdtocpulabel(lp, clp)
 	clp->bbsize = lp->d_bbsize;
 	clp->sbsize = lp->d_sbsize;
 	clp->checksum = lp->d_checksum;
+	/* note: assume at least 4 partitions */
 	bcopy(&lp->d_partitions[0], clp->vid_4, sizeof(struct partition) * 4);
-	bcopy(&lp->d_partitions[4], clp->cfg_4, sizeof(struct partition) * 12);
+	bzero(clp->cfg_4, sizeof(struct partition) * 12);
+	bcopy(&lp->d_partitions[4], clp->cfg_4, sizeof(struct partition) 
+		* ((MAXPARTITIONS < 16) ? (MAXPARTITIONS - 4) : 12));
 }
 
 static void
@@ -422,8 +425,10 @@ cputobsdlabel(lp, clp)
 	lp->d_npartitions = clp->partitions;
 	lp->d_bbsize = clp->bbsize;
 	lp->d_sbsize = clp->sbsize;
+	/* note: assume at least 4 partitions */
 	bcopy(clp->vid_4, &lp->d_partitions[0], sizeof(struct partition) * 4);
-	bcopy(clp->cfg_4, &lp->d_partitions[4], sizeof(struct partition) * 12);
+	bcopy(clp->cfg_4, &lp->d_partitions[4], sizeof(struct partition) 
+		* ((MAXPARTITIONS < 16) ? (MAXPARTITIONS - 4) : 12));
 	lp->d_checksum = 0;
 	lp->d_checksum = dkcksum(lp);
 #if DEBUG
