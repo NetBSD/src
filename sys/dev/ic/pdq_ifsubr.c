@@ -1,4 +1,4 @@
-/*	$NetBSD: pdq_ifsubr.c,v 1.11 1997/06/08 19:47:16 thorpej Exp $	*/
+/*	$NetBSD: pdq_ifsubr.c,v 1.12 1998/04/07 13:32:07 matt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -124,16 +124,13 @@ pdq_ifinit(
 {
     if (sc->sc_if.if_flags & IFF_UP) {
 	sc->sc_if.if_flags |= IFF_RUNNING;
+#if NBPFILTER > 0
 	if (sc->sc_if.if_flags & IFF_PROMISC) {
 	    sc->sc_pdq->pdq_flags |= PDQ_PROMISC;
 	} else {
 	    sc->sc_pdq->pdq_flags &= ~PDQ_PROMISC;
 	}
-	if (sc->sc_if.if_flags & IFF_ALLMULTI) {
-	    sc->sc_pdq->pdq_flags |= PDQ_ALLMULTI;
-	} else {
-	    sc->sc_pdq->pdq_flags &= ~PDQ_ALLMULTI;
-	}
+#endif
 	if (sc->sc_if.if_flags & IFF_LINK1) {
 	    sc->sc_pdq->pdq_flags |= PDQ_PASS_SMT;
 	} else {
@@ -206,7 +203,8 @@ void
 pdq_os_receive_pdu(
     pdq_t *pdq,
     struct mbuf *m,
-    size_t pktlen)
+    size_t pktlen,
+    int drop)
 {
     pdq_softc_t *sc = (pdq_softc_t *) pdq->pdq_os_ctx;
     struct fddi_header *fh = mtod(m, struct fddi_header *);
@@ -215,11 +213,11 @@ pdq_os_receive_pdu(
 #if NBPFILTER > 0
     if (sc->sc_bpf != NULL)
 	PDQ_BPF_MTAP(sc, m);
-    if ((fh->fddi_fc & (FDDIFC_L|FDDIFC_F)) != FDDIFC_LLC_ASYNC) {
+#endif
+    if (drop || (fh->fddi_fc & (FDDIFC_L|FDDIFC_F)) != FDDIFC_LLC_ASYNC) {
 	m_freem(m);
 	return;
     }
-#endif
 
     m->m_data += sizeof(struct fddi_header);
     m->m_len  -= sizeof(struct fddi_header);
