@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ksyms.c,v 1.6 2003/05/02 09:19:51 tron Exp $	*/
+/*	$NetBSD: kern_ksyms.c,v 1.7 2003/05/02 09:34:57 ragge Exp $	*/
 /*
  * Copyright (c) 2001, 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -409,7 +409,7 @@ addsym(Elf_Sym *sym, char *name)
 	savedsyms[cursyms] = *sym;
 	symnmoff[cursyms] = savedsyms[cursyms].st_name = curnamep;
 	curnamep += len;
-#ifdef KSYMS_DEBUG
+#if NKSYMS
 	if (len > ksyms_maxlen)
 		ksyms_maxlen = len;
 #endif
