@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.20 1999/07/30 04:07:23 mycroft Exp $
+#	$NetBSD: Makefile.inc,v 1.21 1999/09/29 13:19:15 takemura Exp $
 
 .if !defined(GCC_MAKEFILE_INC)
 GCC_MAKEFILE_INC=1
@@ -36,6 +36,10 @@ CPPFLAGS+=	-I${.CURDIR}/../arch \
 
 .if (${OBJECT_FMT} == "ELF" || defined(BOOTSTRAP_ELF))
 CPPFLAGS+=-DDEFAULT_ELF
+.endif
+
+.if (${MACHINE} == "hpcmips") # XXX
+CPPFLAGS+=-D${MACHINE}
 .endif
 
 HOST_CPPFLAGS=	${CPPFLAGS}
