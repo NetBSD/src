@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.77 2001/11/12 15:25:35 lukem Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.78 2002/02/10 23:14:18 chs Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.77 2001/11/12 15:25:35 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.78 2002/02/10 23:14:18 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -668,7 +668,8 @@ start:
 			goto start;
 		}
 #ifdef DIAGNOSTIC
-		if (ISSET(bp->b_flags, B_DONE|B_DELWRI) && bp->b_bcount < size)
+		if (ISSET(bp->b_flags, B_DONE|B_DELWRI) &&
+		    bp->b_bcount < size && vp->v_type != VBLK)
 			panic("getblk: block size invariant failed");
 #endif
 		SET(bp->b_flags, B_BUSY);
