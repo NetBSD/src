@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.36 1999/06/19 18:16:07 mjl Exp $
+$NetBSD: pcmciadevs,v 1.37 1999/06/23 10:36:19 mjl Exp $
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -57,6 +57,7 @@ vendor LINKSYS			0x0149	Linksys Corporation
 vendor SIMPLETECH		0x014d	Simple Technology
 vendor DAYNA			0x0194	Dayna Corporation
 vendor IODATA			0x01bf	I-O DATA
+vender LASAT			0x3401	Lasat Communications A/S
 vendor COMPEX			0x8a01	Compex Corporation
 vendor COREGA			0xc00f	Corega K.K.
 vendor HAGIWARASYSCOM		0xc012	Hagiwara SYS-COM
@@ -76,6 +77,9 @@ product 3COM 3CXEM556		0x0035 3Com/Megahertz 3CXEM556 Ethernet/Modem
 
 /* Compex Products */
 product COMPEX LINKPORT_ENET_B	0x0100 Compex Linkport ENET-B Ethernet
+
+/* Lasat Products */
+product LASAT CREDIT_288	0x2811 Lasat Credit 288 Modem
 
 /* Dayna Products */
 product DAYNA COMMUNICARD_E_1	0x002d Dayna CommuniCard E
