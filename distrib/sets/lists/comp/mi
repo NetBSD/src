@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.420 2002/01/01 22:28:58 augustss Exp $
+#	$NetBSD: mi,v 1.421 2002/01/02 04:52:55 briggs Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -2251,6 +2251,7 @@
 ./usr/share/man/cat3/mktime.0	comp-c-catman
 ./usr/share/man/cat3/modf.0	comp-c-catman
 ./usr/share/man/cat3/moncontrol.0	comp-c-catman
+./usr/share/man/cat3/monstartup.0	comp-c-catman
 ./usr/share/man/cat3/mpool.0	comp-c-catman
 ./usr/share/man/cat3/mpool_close.0	comp-c-catman
 ./usr/share/man/cat3/mpool_filter.0	comp-c-catman
@@ -4712,6 +4713,7 @@
 ./usr/share/man/man3/mktime.3		comp-c-man
 ./usr/share/man/man3/modf.3		comp-c-man
 ./usr/share/man/man3/moncontrol.3		comp-c-man
+./usr/share/man/man3/monstartup.3		comp-c-man
 ./usr/share/man/man3/mpool.3		comp-c-man
 ./usr/share/man/man3/mpool_close.3		comp-c-man
 ./usr/share/man/man3/mpool_filter.3		comp-c-man
