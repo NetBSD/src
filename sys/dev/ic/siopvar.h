@@ -1,4 +1,4 @@
-/*	$NetBSD: siopvar.h,v 1.8.2.1 2000/12/15 04:49:52 he Exp $	*/
+/*	$NetBSD: siopvar.h,v 1.8.2.2 2002/01/05 17:59:16 he Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -63,6 +63,8 @@ struct siop_softc {
 	struct cmd_list free_list;	/* cmd descr free list */
 	struct cmd_list urgent_list;	/* hitgh priority cmd descr list */
 	struct cmd_list ready_list;	/* cmd descr ready list */
+	int sc_cmd_total;		/* total # of cmd desc allocated */
+	int sc_cmd_reserved;		/* # of cmd desc reserved for devices */
 	struct lunsw_list lunsw_list;	/* lunsw free list */
 	u_int32_t script_free_lo;	/* free ram offset from sc_scriptaddr */
 	u_int32_t script_free_hi;	/* free ram offset from sc_scriptaddr */
