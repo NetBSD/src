@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_loan.c,v 1.6 1998/03/09 00:58:57 mrg Exp $	*/
+/*	$NetBSD: uvm_loan.c,v 1.7 1998/03/22 21:29:30 chuck Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -379,7 +379,7 @@ uvm_loananon(ufi, output, flags, anon)
 	if (pg->loan_count == 0)
 		pmap_page_protect(PMAP_PGARG(pg), VM_PROT_READ);
 	pg->loan_count++;
-	uvm_pagewire(pg, FALSE);	/* always wire it */
+	uvm_pagewire(pg);	/* always wire it */
 	uvm_unlock_pageq();
 	**output = pg;
 	*output = (*output) + 1;
@@ -531,7 +531,7 @@ uvm_loanuobj(ufi, output, flags, va)
 		if (pg->loan_count == 0)
 			pmap_page_protect(PMAP_PGARG(pg), VM_PROT_READ);
 		pg->loan_count++;
-		uvm_pagewire(pg, FALSE);
+		uvm_pagewire(pg);
 		uvm_unlock_pageq();
 		**output = pg;
 		*output = (*output) + 1;
@@ -639,7 +639,7 @@ uvm_loanzero(ufi, output, flags)
 		*output = (*output) + 1;
 		uvm_lock_pageq();
 		/* wire it as we are loaning to kernel-page */
-		uvm_pagewire(pg, FALSE);
+		uvm_pagewire(pg);
 		pg->loan_count = 1;
 		uvm_unlock_pageq();
 		return(1);
