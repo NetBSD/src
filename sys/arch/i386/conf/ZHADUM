@@ -1,4 +1,4 @@
-#	$NetBSD: ZHADUM,v 1.17 1999/07/05 09:14:10 fvdl Exp $
+#	$NetBSD: ZHADUM,v 1.18 1999/07/29 10:37:18 augustss Exp $
 #
 #	ZHADUM -- zhadum.netbsd.org, the new CVS server
 #
@@ -76,6 +76,7 @@ options 	COMPAT_10	# NetBSD 1.0,
 options 	COMPAT_11	# NetBSD 1.1,
 options 	COMPAT_12	# NetBSD 1.2,
 options 	COMPAT_13	# NetBSD 1.3,
+options 	COMPAT_14	# NetBSD 1.4,
 options 	COMPAT_43	# and 4.3BSD
 
 #options 	COMPAT_SVR4	# binary compatibility with SVR4

@@ -1,4 +1,4 @@
-# $NetBSD: TCWSCONS,v 1.1 1998/10/22 01:05:36 briggs Exp $
+# $NetBSD: TCWSCONS,v 1.2 1999/07/29 10:37:13 augustss Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
 
@@ -41,6 +41,7 @@ options 	COMPAT_10
 options 	COMPAT_11
 options 	COMPAT_12
 options 	COMPAT_13
+options 	COMPAT_14
 
 # System V-like message queues
 options 	SYSVMSG
