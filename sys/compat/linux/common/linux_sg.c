@@ -1,4 +1,4 @@
-/* $NetBSD: linux_sg.c,v 1.2 2005/02/13 09:01:25 christos Exp $ */
+/* $NetBSD: linux_sg.c,v 1.3 2005/02/13 09:05:31 christos Exp $ */
 
 /*
  * Copyright (c) 2004 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sg.c,v 1.2 2005/02/13 09:01:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sg.c,v 1.3 2005/02/13 09:05:31 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -147,9 +147,9 @@ linux_ioctl_sg(struct proc *p, struct linux_sys_ioctl_args *uap,
 #ifdef LINUX_SG_DEBUG
 		dump_scsireq(&req);
 #endif
-		(void)memset(&lreq, 0, sizeof(lreq));
-
 		if (req.senselen_used) {
+			if (req.senselen > lreq.mx_sb_len)
+				req.senselen = lreq.mx_sb_len;
 			lreq.sb_len_wr = req.senselen;
 			error = copyout(req.sense, lreq.sbp, req.senselen);
 			if (error) {
