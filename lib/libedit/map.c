@@ -1,4 +1,4 @@
-/*	$NetBSD: map.c,v 1.11 2000/09/04 22:06:30 lukem Exp $	*/
+/*	$NetBSD: map.c,v 1.12 2000/11/11 22:18:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)map.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: map.c,v 1.11 2000/09/04 22:06:30 lukem Exp $");
+__RCSID("$NetBSD: map.c,v 1.12 2000/11/11 22:18:57 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -903,11 +903,11 @@ map_init(EditLine *el)
          */
 #ifdef MAP_DEBUG
 	if (sizeof(el_map_emacs) != N_KEYS * sizeof(el_action_t))
-		abort();
+		EL_ABORT((el->errfile, "Emacs map incorrect\n"));
 	if (sizeof(el_map_vi_command) != N_KEYS * sizeof(el_action_t))
-		abort();
+		EL_ABORT((el->errfile, "Vi command map incorrect\n"));
 	if (sizeof(el_map_vi_insert) != N_KEYS * sizeof(el_action_t))
-		abort();
+		EL_ABORT((el->errfile, "Vi insert map incorrect\n"));
 #endif
 
 	el->el_map.alt = (el_action_t *)el_malloc(sizeof(el_action_t) * N_KEYS);
@@ -1189,7 +1189,7 @@ map_print_some_keys(EditLine *el, el_action_t *map, int first, int last)
 		    first, el->el_map.alt[first]);
 	}
 #endif
-	abort();
+	EL_ABORT((el->el_errfile, "Error printing keys\n"));
 }
 
 
@@ -1371,7 +1371,7 @@ map_bind(EditLine *el, int argc, char **argv)
 		break;
 
 	default:
-		abort();
+		EL_ABORT((el->el_errfile, "Bad XK_ type\n", ntype));
 		break;
 	}
 	return (0);
