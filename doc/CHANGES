@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.108 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.109 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -305,3 +305,5 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 	libc: Add _Exit(), the C99 name for _exit().  [bjh21 20030301]
 	acorn26: Add support for the 82C710 multi-I/O chip, as found in (some?)
 		A5000s.  [bjh21 20030301]
+	mdsetimage(1): only use libbfd calls to get symbol information; writing
+		is now done directly into the file. [dogcow 20030304]
