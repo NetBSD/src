@@ -1,4 +1,4 @@
-/*	$NetBSD: cy.c,v 1.13 2000/05/29 12:05:42 tsubai Exp $	*/
+/*	$NetBSD: cy.c,v 1.13.2.1 2000/11/10 16:40:07 tv Exp $	*/
 
 /*
  * cy.c
@@ -1108,10 +1108,6 @@ cy_intr(arg)
 			cy->cy_rx_int_count++;
 #endif
 
-			if (cy->cy_tty == NULL ||
-			    !ISSET(cy->cy_tty->t_state, TS_ISOPEN))
-				goto end_rx_serv;
-
 			buf_p = cy->cy_ibuf_wr_ptr;
 
 			if (ISSET(serv_type, CD1400_RIVR_EXCEPTION)) {
@@ -1119,6 +1115,10 @@ cy_intr(arg)
 				    CD1400_RDSR);
 				recv_data = cd_read_reg(sc, cy->cy_chip,
 				    CD1400_RDSR);
+
+				if (cy->cy_tty == NULL ||
+				    !ISSET(cy->cy_tty->t_state, TS_ISOPEN))
+					goto end_rx_serv;
 
 #ifdef CY_DEBUG
 				printf("%s port %d recv exception, line_stat 0x%x, char 0x%x\n",
@@ -1142,6 +1142,16 @@ cy_intr(arg)
 			} else {/* no exception, received data OK */
 				n_chars = cd_read_reg(sc, cy->cy_chip,
 				    CD1400_RDCR);
+
+				/* If no tty or not open, discard data */
+				if (cy->cy_tty == NULL ||
+				    !ISSET(cy->cy_tty->t_state, TS_ISOPEN)) {
+					while (n_chars--)
+						cd_read_reg(sc, cy->cy_chip, 
+							    CD1400_RDSR);
+					goto end_rx_serv;
+				}
+
 #ifdef CY_DEBUG
 				printf("%s port %d receive ok %d chars\n",
 				    sc->sc_dev.dv_xname, cy->cy_port_num, n_chars);
@@ -1168,24 +1178,26 @@ cy_intr(arg)
 
 			/* RTS handshaking for incoming data */
 			if (ISSET(cy->cy_tty->t_cflag, CRTSCTS)) {
-				int bf;
+				int bf, msvr;
 
 				bf = buf_p - cy->cy_ibuf_rd_ptr;
 				if (bf < 0)
 					bf += CY_IBUF_SIZE;
 
-				if (bf > (CY_IBUF_SIZE / 2)) { /* turn RTS off */
-				  if (cy->cy_clock == CY_CLOCK_60) {
-					cd_write_reg(sc, cy->cy_chip, CD1400_MSVR2, 0);
-				  } else {
-					cd_write_reg(sc, cy->cy_chip, CD1400_MSVR1, 0);
-				  }
+				if (bf > (CY_IBUF_SIZE / 2)) { 
+					/* turn RTS off */
+					if (cy->cy_clock == CY_CLOCK_60) 
+						msvr = CD1400_MSVR2;
+					else
+						msvr = CD1400_MSVR1; 
+					cd_write_reg(sc, cy->cy_chip, msvr, 0);
 				}
 			}
 
 	end_rx_serv:
 			/* terminate service context */
-			cd_write_reg(sc, cy->cy_chip, CD1400_RIR, save_rir & 0x3f);
+			cd_write_reg(sc, cy->cy_chip, CD1400_RIR, 
+				     save_rir & 0x3f);
 			cd_write_reg(sc, cy->cy_chip, CD1400_CAR, save_car);
 			int_serviced = 1;
 		} /* if (rx_service...) */
