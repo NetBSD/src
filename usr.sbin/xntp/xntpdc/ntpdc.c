@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpdc.c,v 1.4 1998/03/06 18:17:25 christos Exp $	*/
+/*	$NetBSD: ntpdc.c,v 1.5 1998/03/30 02:27:57 mrg Exp $	*/
 
 /*
  * xntpdc - control and monitor your xntpd daemon
@@ -263,7 +263,7 @@ void clear_globals()
  * main - parse arguments and handle options
  */
 #if !defined(VMS)
-void
+int
 #endif /* VMS */
 #ifndef NO_MAIN_ALLOWED
 main
