@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.287 2004/06/21 17:27:18 tron Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.288 2004/06/22 07:38:48 tron Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -4130,4 +4130,136 @@ sys/dev/pci/if_re.c				1.1-1.4
 
 	Add re(4) RealTek 8139C+/8169/8169S/8110S PCI ethernet adapter driver.
 	[toshii, ticket #517]
+
+bin/pax/ar_io.c					1.41
+bin/pax/file_subs.c				1.47
+bin/pax/ftree.c					1.31
+bin/pax/getoldopt.c				1.20
+bin/pax/options.c				1.76
+bin/pax/pax.c					1.35
+include/getopt.h				1.6
+include/glob.h					1.18
+include/pwd.h					1.33
+lib/libc/db/btree/bt_conv.c			1.11
+lib/libc/db/btree/bt_debug.c			1.11
+lib/libc/db/btree/bt_utils.c			1.10
+lib/libc/db/hash/hash_bigkey.c			1.18
+lib/libc/db/hash/hash_buf.c			1.11
+lib/libc/db/hash/hash_func.c			1.10
+lib/libc/db/hash/hash_log2.c			1.9
+lib/libc/db/recno/rec_utils.c			1.10
+lib/libc/gen/__fts13.c				1.43
+lib/libc/gen/pwcache.c				1.29
+lib/libc/stdio/fparseln.c			1.3-1.5
+lib/libc/stdlib/getopt_long.c			1.17
+lib/libc/string/strmode.c			1.16
+share/mk/bsd.hostprog.mk			1.44
+tools/compat/Makefile				1.31
+tools/compat/compat_defs.h			1.39-1.40 (1.39 via patch)
+tools/compat/compat_getopt.h			1.1
+tools/compat/configure				1.45
+tools/compat/configure.ac			1.44
+tools/compat/defs.mk.in				1.9
+tools/compat/nbtool_config.h.in			1.4
+usr.bin/cksum/cksum.c				1.20
+usr.bin/cksum/crc.c				1.15
+usr.bin/cksum/md5.c				1.5
+usr.bin/cksum/print.c				1.10
+usr.bin/cksum/sum1.c				1.11
+usr.bin/cksum/sum2.c				1.11
+usr.bin/ctags/C.c				1.11
+usr.bin/ctags/ctags.c				1.10
+usr.bin/ctags/fortran.c				1.9
+usr.bin/ctags/lisp.c				1.9
+usr.bin/ctags/print.c				1.8
+usr.bin/ctags/tree.c				1.10
+usr.bin/ctags/yacc.c				1.9
+usr.bin/m4/eval.c				1.18
+usr.bin/m4/expr.c				1.16
+usr.bin/m4/gnum4.c				1.4
+usr.bin/m4/look.c				1.10
+usr.bin/m4/main.c				1.35
+usr.bin/m4/misc.c				1.17
+usr.bin/m4/trace.c				1.5
+usr.bin/menuc/avl.c				1.6
+usr.bin/menuc/main.c				1.10
+usr.bin/menuc/mdb.c				1.40
+usr.bin/menuc/util.c				1.4
+usr.bin/msgc/msgdb.c				1.20
+usr.bin/msgc/msgmain.c				1.7
+usr.bin/rpcgen/rpc_clntout.c			1.13
+usr.bin/rpcgen/rpc_cout.c			1.26
+usr.bin/rpcgen/rpc_hout.c			1.20
+usr.bin/rpcgen/rpc_main.c			1.26
+usr.bin/rpcgen/rpc_parse.c			1.13
+usr.bin/rpcgen/rpc_sample.c			1.10
+usr.bin/rpcgen/rpc_scan.c			1.9
+usr.bin/rpcgen/rpc_svcout.c			1.22
+usr.bin/rpcgen/rpc_tblout.c			1.11
+usr.bin/rpcgen/rpc_util.c			1.10
+usr.bin/stat/stat.c				1.19
+usr.bin/xinstall/xinstall.c			1.87
+usr.bin/xlint/common/emit.c			1.4
+usr.bin/xlint/common/inittyp.c			1.6
+usr.bin/xlint/common/mem.c			1.7
+usr.bin/xlint/lint1/decl.c			1.33
+usr.bin/xlint/lint1/emit1.c			1.14
+usr.bin/xlint/lint1/err.c			1.27
+usr.bin/xlint/lint1/func.c			1.21
+usr.bin/xlint/lint1/init.c			1.18
+usr.bin/xlint/lint1/main1.c			1.15
+usr.bin/xlint/lint1/mem1.c			1.11
+usr.bin/xlint/lint1/tree.c			1.37
+usr.bin/xlint/lint2/chk.c			1.17
+usr.bin/xlint/lint2/hash.c			1.9
+usr.bin/xlint/lint2/main2.c			1.7
+usr.bin/xlint/lint2/mem2.c			1.9
+usr.bin/xlint/lint2/msg.c			1.8
+usr.bin/xlint/lint2/read.c			1.14
+usr.bin/xlint/xlint/xlint.c			1.35
+usr.bin/yacc/main.c				1.15
+usr.sbin/config/files.c				1.24
+usr.sbin/config/hash.c				1.14
+usr.sbin/config/main.c				1.94
+usr.sbin/config/mkdevsw.c			1.5
+usr.sbin/config/mkheaders.c			1.36
+usr.sbin/config/mkioconf.c			1.73
+usr.sbin/config/mkmakefile.c			1.62
+usr.sbin/config/mkswap.c			1.17
+usr.sbin/config/pack.c				1.16
+usr.sbin/config/sem.c				1.43
+usr.sbin/config/util.c				1.21
+usr.sbin/installboot/arch/amiga.c		1.3
+usr.sbin/installboot/arch/i386.c		1.16
+usr.sbin/installboot/arch/next68k.c		1.3
+usr.sbin/installboot/arch/sparc64.c		1.14
+usr.sbin/installboot/ffs.c			1.15
+usr.sbin/installboot/fstypes.c			1.7
+usr.sbin/installboot/installboot.c		1.16
+usr.sbin/installboot/machines.c			1.24
+usr.sbin/installboot/sum.c			1.3
+usr.sbin/makefs/ffs.c				1.29
+usr.sbin/makefs/ffs/buf.c			1.12
+usr.sbin/makefs/ffs/ffs_alloc.c			1.14
+usr.sbin/makefs/ffs/ffs_balloc.c		1.13
+usr.sbin/makefs/ffs/mkfs.c			1.19
+usr.sbin/makefs/ffs/ufs_bmap.c			1.14
+usr.sbin/makefs/makefs.c			1.20
+usr.sbin/makefs/makefs.h			1.14
+usr.sbin/makefs/walk.c				1.17
+usr.sbin/mtree/compare.c			1.44
+usr.sbin/mtree/crc.c				1.6
+usr.sbin/mtree/create.c				1.45
+usr.sbin/mtree/excludes.c			1.13
+usr.sbin/mtree/getid.c				1.5
+usr.sbin/mtree/misc.c				1.25
+usr.sbin/mtree/mtree.c				1.31
+usr.sbin/mtree/spec.c				1.56
+usr.sbin/mtree/verify.c				1.37
+usr.sbin/pwd_mkdb/pwd_mkdb.c			1.29
+
+	Fix various cross building issues which occured e.g. under older
+	NetBSD releases. Includes fixes for PR toolchain/17762 and
+	toolchain/25944.
+	[jmc, ticket #527]
 
