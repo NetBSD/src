@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.38 1999/01/13 07:30:05 ross Exp $	
+.\"	$NetBSD: hardware,v 1.39 1999/02/02 17:32:27 bouyer Exp $	
 .Nx \*V
 runs on ISA (AT-Bus), EISA, PCI, and VL-bus systems
 with 386-family processors, with or without math coprocessors. It
@@ -17,10 +17,21 @@ Supported devices include:
 .Bd -literal
 	Floppy controllers.
 	MFM, ESDI, IDE, and RLL hard disk controllers.
-		bus-master DMA is supported for the Intel PIIX, CMD Tech
-		PCI0643 and PCI0646, and VIA Apollo (VT82C586 and VT82C586A/B)
-		series of pci ide controllers.
-	SCSI host adapters:
+		There is complete support (including IDE DMA or Ultra-
+		DMA) for the following PCI controllers:
+                -  Acer labs M5229 IDE Controller
+                -  CMD Tech PCI0643 and PCI0646 IDE Controllers
+                -  Contaq Microsystems/Cypress CY82C693 IDE Controller
+                -  Intel PIIX, PIIX3 and PIIX4 IDE Controllers
+                -  Silicon Integrated System 5597/5598 IDE controller
+                -  VIA Technologies VT82C586 and VT82C586A IDE Controllers
+                Most of these controllers are only available in
+		multifunction PCI chips. 
+		Other PCI IDE controllers are supported, but
+		performances may not be optimal.
+		ISA, ISA plug and play and PCMCIA IDE controllers
+		are supported as well.
+	SCSI host adapters
 		Adaptec AHA-154xA, -B, -C, and -CF 
 		Adaptec AHA-174x
 		Adaptec AIC-6260 and AIC-6360 based boards, including
@@ -262,6 +273,8 @@ Western Digital WD7000 based ISA SCSI host adapters
 		wds0	0x350	15	6
 		wds1	0x358	11	5
 
+PCI IDE hard disk controllers
+		pciide0	any	any	any	[supports four devices]
 MFM/ESDI/IDE/RLL hard disk controllers
 		wdc0	0x1f0	14		[supports two devices]
 		wdc1	0x170	15		[supports two devices]
