@@ -1,4 +1,4 @@
-/*	$NetBSD: crc.c,v 1.10 2001/03/21 03:16:38 atatat Exp $	*/
+/*	$NetBSD: crc.c,v 1.11 2001/11/10 05:16:43 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)crc.c	8.1 (Berkeley) 6/17/93";
 #else
-__RCSID("$NetBSD: crc.c,v 1.10 2001/03/21 03:16:38 atatat Exp $");
+__RCSID("$NetBSD: crc.c,v 1.11 2001/11/10 05:16:43 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -111,8 +111,6 @@ static const u_int32_t crctab[] = {
  * locations to store the crc and the number of bytes read.  It returns 0 on
  * success and 1 on failure.  Errno is set on failure.
  */
-u_int32_t crc_total = ~0;		/* The crc over a number of files. */
-
 int
 crc(fd, cval, clen)
 	register int fd;
@@ -126,11 +124,9 @@ crc(fd, cval, clen)
 #define	COMPUTE(var, ch)	(var) = (var) << 8 ^ crctab[(var) >> 24 ^ (ch)]
 
 	thecrc = len = 0;
-	crc_total = ~crc_total;
 	while ((nr = read(fd, buf, sizeof(buf))) > 0)
 		for (len += nr, p = buf; nr--; ++p) {
 			COMPUTE(thecrc, *p);
-			COMPUTE(crc_total, *p);
 		}
 	if (nr < 0)
 		return (1);
@@ -140,10 +136,8 @@ crc(fd, cval, clen)
 	/* Include the length of the file. */
 	for (; len != 0; len >>= 8) {
 		COMPUTE(thecrc, len & 0xff);
-		COMPUTE(crc_total, len & 0xff);
 	}
 
 	*cval = ~thecrc;
-	crc_total = ~crc_total;
 	return (0);
 }
