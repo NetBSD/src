@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.121 2000/04/14 14:44:49 augustss Exp $	*/
+/*	$NetBSD: conf.c,v 1.122 2000/05/07 00:41:06 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -242,6 +242,7 @@ cdev_decl(wsmux);
 cdev_decl(esh_fp);
 #include "scsibus.h"
 cdev_decl(scsibus);
+#include "bktr.h"
 
 #ifdef __I4B_IS_INTEGRATED
 /* open, close, ioctl */
@@ -389,6 +390,7 @@ struct cdevsw	cdevsw[] =
 	cdev_vmegen_init(NVMEGENERIC, vmegeneric), /* 68: generic VME access */
 	cdev_disk_init(NCA, ca),	/* 69: Compaq array */
 	cdev_usbdev_init(NURIO,urio),	/* 70: Diamond Rio 500 */
+	cdev_bktr_init(NBKTR, bktr),    /* 71: Bt848 video capture device */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 

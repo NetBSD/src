@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.333 2000/05/04 19:41:44 jhawk Exp $
+#	$NetBSD: GENERIC,v 1.334 2000/05/07 00:44:45 wiz Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.333 $"
+#ident 		"GENERIC-$Revision: 1.334 $"
 
 maxusers	32		# estimated number of users
 
@@ -766,6 +766,10 @@ midi*	at sb?			# SB1 MIDI port
 # The spkr driver provides a simple tone interface to the built in speaker.
 #spkr0	at pcppi?		# PC speaker
 
+# TV cards
+
+# Brooktree 848/849/878/879 based TV cards
+bktr* at pci? dev ? function ?
 
 # Mice
 
