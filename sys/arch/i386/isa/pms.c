@@ -1,4 +1,4 @@
-/*	$NetBSD: pms.c,v 1.42 1999/01/23 15:07:10 drochner Exp $	*/
+/*	$NetBSD: pms.c,v 1.42.2.1 1999/11/05 07:57:29 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1997 Charles M. Hannum.
@@ -324,20 +324,22 @@ opms_pckbc_probe(parent, match, aux)
 	cmd[0] = PMS_RESET;
 	res = pckbc_poll_cmd(pa->pa_tag, pa->pa_slot, cmd, 1, 2, resp, 1);
 	if (res) {
-		printf("opmsprobe: command error\n");
-		return(0);
+#ifdef DEBUG
+		printf("opmsprobe: reset error\n");
+#endif
+		return (0);
 	}
 	if (resp[0] != 0xaa) {
-		printf("opmsprobe: reset error\n");
-		return(0);
+		printf("opmsprobe: reset response 0x%x\n", resp[0]);
+		return (0);
 	}
 
 	/* get type number (0 = mouse) */
 	if (resp[1] != 0) {
-#ifdef DIAGNOSTIC
+#ifdef DEBUG
 		printf("opmsprobe: type 0x%x\n", resp[1]);
 #endif
-		return(0);
+		return (0);
 	}
 
 	return (1);
