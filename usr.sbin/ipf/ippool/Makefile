@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2004/03/28 09:03:38 martti Exp $
+#	$NetBSD: Makefile,v 1.2 2004/03/28 09:35:26 mrg Exp $
 
 PROG=		ippool
 SRCS=		ippool_y.c ippool_l.c kmem.c ippool.c
@@ -17,7 +17,7 @@ ippool_y.c ippool_y.h: ippool_y.y ippool_l.h
 	sed -e 's/yy/ippool_yy/g' \
 		y.tab.h > ippool_y.h
 
-ippool_l.c: lexer.c ippool_l.h
+ippool_l.c: lexer.c ippool_l.h ippool_y.h
 	sed -e 's/yy/ippool_yy/g' \
 	     -e 's/y.tab.h/ippool_y.h/' \
 	     -e 's/lexer.h/ippool_l.h/' \
