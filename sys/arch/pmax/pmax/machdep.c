@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.120.2.6 1999/03/30 08:22:12 nisimura Exp $ */
+/*	$NetBSD: machdep.c,v 1.120.2.7 1999/04/05 06:55:18 nisimura Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.120.2.6 1999/03/30 08:22:12 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.120.2.7 1999/04/05 06:55:18 nisimura Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -53,27 +53,23 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.120.2.6 1999/03/30 08:22:12 nisimura E
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/map.h>
 #include <sys/proc.h>
+#include <sys/user.h>
 #include <sys/buf.h>
-#include <sys/reboot.h>
-#include <sys/file.h>
 #include <sys/callout.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
-#include <sys/msgbuf.h>
-#include <sys/ioctl.h>
-#include <sys/signalvar.h>
-#include <sys/tty.h>
-#include <sys/user.h>
 #include <sys/exec.h>
 #include <vm/vm.h>
 #include <sys/sysctl.h>
+#include <sys/kcore.h>
+#include <sys/file.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
-#include <sys/kcore.h>
+#include <sys/reboot.h>
+#include <sys/msgbuf.h>
 
 #include <vm/vm_kern.h>
 #include <uvm/uvm_extern.h>
@@ -155,13 +151,12 @@ volatile struct chiptime *mcclock_addr;
 phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
 int mem_cluster_cnt;
 
-struct splvec splvec;			/* XXX will go XXX */
-
 struct intrhand intrtab[MAX_DEV_NCOOKIES];
 u_int32_t iplmask[IPL_HIGH + 1];	/* interrupt mask bits for each IPL */
 u_int32_t oldiplmask[IPL_HIGH + 1];	/* old values for splx(s) */
 struct splsw *__spl;			/* model dependent spl call switch */
 unsigned (*clkread) __P((void));	/* model dependent clkread() */
+struct splvec splvec;			/* XXX will go XXX */
 
 extern caddr_t esym;
 
@@ -170,12 +165,13 @@ const	struct callback *callv;	/* pointer to PROM entry points */
 
 void mach_init __P((int, char *[], unsigned,
 			const struct callback *, u_int, char *));
-void prom_haltbutton __P((void));
-void prom_halt __P((int, char *)) __attribute__((__noreturn__));
-int  initcpu __P((void));
-int  atoi __P((const char *));
-int  nullintr __P((void *));
+int	initcpu __P((void));
+int	nullintr __P((void *));
 unsigned nullclkread __P((void));
+int	atoi __P((const char *));
+void	prom_haltbutton __P((void));
+void	prom_halt __P((int, char *)) __attribute__((__noreturn__));
+int	prom_systype __P((void));
 
 #ifdef DEBUG
 /* stacktrace code violates prototypes to get callee's registers */
@@ -265,11 +261,7 @@ mach_init(argc, argv, code, cv, bim, bip)
 	}
 
 	/* Initialize callv so we can do PROM output... */
-	if (code == DEC_PROM_MAGIC) {
-		callv = cv;
-	} else {
-		callv = &callvec;
-	}
+	callv = (code == DEC_PROM_MAGIC) ? cv : &callvec;
 
 	/* Use PROM console output until we initialize a console driver. */
 	cn_tab = &promcd;
@@ -366,23 +358,12 @@ mach_init(argc, argv, code, cv, bim, bip)
 	/*
 	 * Determine what model of computer we are running on.
 	 */
-	if (code == DEC_PROM_MAGIC) {
-		i = (*cv->_getsysid)();
-		cp = "";
-	} else {
-		cp = (*callv->_getenv)("systype");
-		if (cp)
-			i = atoi(cp);
-		else {
-			cp = "";
-			i = 0;
-		}
-	}
+	i = prom_systype();
 
 	/* Check for MIPS based platform */
 	/* 0x82 -> MIPS1, 0x84 -> MIPS3 */
 	if (((i >> 24) & 0xFF) != 0x82 && ((i >> 24) & 0xff) != 0x84) {
-		printf("Unknown System type '%s' 0x%x\n", cp, i);
+		printf("Unknown System type '%x'\n", i);
 		cpu_reboot(RB_HALT | RB_NOSYNC, NULL);
 	}
 
@@ -392,12 +373,10 @@ mach_init(argc, argv, code, cv, bim, bip)
 	 */
 	physmem_boardmax = MIPS_MAX_MEM_ADDR;
 
-	/* check what model platform we are running on */
-	systype = ((i >> 16) & 0xff);
-
 	/*
 	 * Find out what hardware we're on, and do basic initialization.
 	 */
+	systype = ((i >> 16) & 0xff);
 	if (systype >= nsysinit) {
 		platform_not_supported();
 		/* NOTREACHED */
@@ -615,11 +594,6 @@ cpu_startup()
 		intrtab[i].ih_func = nullintr;
 		intrtab[i].ih_arg = (void *)i;
 	}
-
-	/*
-	 * Configure the system.
-	 */
-	configure();
 }
 
 
@@ -656,74 +630,6 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	}
 	/* NOTREACHED */
 }
-
-/*
- * lookup_bootinfo:
- * Look up information in bootinfo of boot loader.
- */
-void *
-lookup_bootinfo(type)
-	int type;
-{
-	struct btinfo_common *bt;
-	char *help = bootinfo;
-
-	/* Check for a bootinfo record first. */
-	if (help == NULL)
-		return (NULL);
-
-	do {
-		bt = (struct btinfo_common *)help;
-		if (bt->type == type)
-			return ((void *)help);
-		help += bt->next;
-	} while (bt->next != 0 &&
-		(size_t)help < (size_t)bootinfo + BOOTINFO_SIZE);
-
-	return (NULL);
-}
-
-/*
- * PROM reset callback for reset switch.
- * XXX enter ddb instead?
- */
-void
-prom_haltbutton()
-{
-	(*callv->_halt)((int *)0, 0);
-}
-
-
-/*
- * call PROM to halt or reboot.
- */
-volatile void
-prom_halt(howto, bootstr)
-	int howto;
-	char *bootstr;
-
-{
-	if (callv != &callvec) {
-		if (howto & RB_HALT)
-			(*callv->_rex)('h');
-		else {
-			(*callv->_rex)('b');
-		}
-	} else if (howto & RB_HALT) {
-		volatile void (*f) __P((void)) =
-		    (volatile void (*) __P((void))) DEC_PROM_REINIT;
-
-		(*f)();	/* jump back to prom monitor */
-	} else {
-		volatile void (*f) __P((void)) =
-		    (volatile void (*) __P((void)))DEC_PROM_AUTOBOOT;
-		(*f)();	/* jump back to prom monitor and do 'auto' cmd */
-	}
-
-	while(1) ;	/* fool gcc */
-	/*NOTREACHED*/
-}
-
 
 void
 cpu_reboot(howto, bootstr)
@@ -788,6 +694,62 @@ haltsys:
 	/*NOTREACHED*/
 }
 
+
+int
+initcpu()
+{
+	volatile struct chiptime *c;
+	int i = 0;
+
+	/*
+	 * reset after autoconfig probe:
+	 * clear  any memory errors, reset any pending interrupts.
+	 */
+
+	(*platform.bus_reset)();	/* XXX_cf_alpha */
+
+	/*
+	 * With newconf, this should be  done elswhere, but without it
+	 * we hang (?)
+	 */
+#if 1 /*XXX*/
+	/* disable clock interrupts (until startrtclock()) */
+	if (mcclock_addr) {
+		c = mcclock_addr;
+		c->regb = REGB_DATA_MODE | REGB_HOURS_FORMAT;
+		i = c->regc;
+	}
+	return (i);
+#endif
+}
+
+
+/*
+ * lookup_bootinfo:
+ * Look up information in bootinfo of boot loader.
+ */
+void *
+lookup_bootinfo(type)
+	int type;
+{
+	struct btinfo_common *bt;
+	char *help = bootinfo;
+
+	/* Check for a bootinfo record first. */
+	if (help == NULL)
+		return (NULL);
+
+	do {
+		bt = (struct btinfo_common *)help;
+		if (bt->type == type)
+			return ((void *)help);
+		help += bt->next;
+	} while (bt->next != 0 &&
+		(size_t)help < (size_t)bootinfo + BOOTINFO_SIZE);
+
+	return (NULL);
+}
+
 #include "opt_dec_3min.h"
 #include "opt_dec_maxine.h"
 #include "opt_dec_3maxplus.h"
@@ -822,34 +784,6 @@ microtime(tvp)
 	}
 	lasttime = *tvp;
 	splx(s);
-}
-
-int
-initcpu()
-{
-	volatile struct chiptime *c;
-	int i = 0;
-
-	/*
-	 * reset after autoconfig probe:
-	 * clear  any memory errors, reset any pending interrupts.
-	 */
-
-	(*platform.bus_reset)();	/* XXX_cf_alpha */
-
-	/*
-	 * With newconf, this should be  done elswhere, but without it
-	 * we hang (?)
-	 */
-#if 1 /*XXX*/
-	/* disable clock interrupts (until startrtclock()) */
-	if (mcclock_addr) {
-		c = mcclock_addr;
-		c->regb = REGB_DATA_MODE | REGB_HOURS_FORMAT;
-		i = c->regc;
-	}
-	return (i);
-#endif
 }
 
 /*
@@ -991,4 +925,56 @@ unsigned
 nullclkread()
 {
 	return 0;
+}
+
+
+/*
+ * PROM reset callback for reset switch.
+ * XXX enter ddb instead?
+ */
+void
+prom_haltbutton()
+{
+	(*callv->_halt)((int *)0, 0);
+}
+
+
+/*
+ * Call PROM to halt or reboot.
+ */
+volatile void
+prom_halt(howto, bootstr)
+	int howto;
+	char *bootstr;
+
+{
+	if (callv != &callvec)
+		(*callv->_rex)((howto & RB_HALT) ? 'h' : 'b');
+	else {
+		volatile void (*f) __P((void));
+
+		f = (howto & RB_HALT)
+			? (void *)DEC_PROM_REINIT
+			: (void *)DEC_PROM_AUTOBOOT;
+		(*f)();
+	}
+
+	while(1) ;	/* fool gcc */
+	/*NOTREACHED*/
+}
+
+/*
+ * Get 32bit system type of Digital hardware.
+ *	From highest order byte to lowest;
+ *	'cputype,' 'systype,' 'firmware revision' and 'hardware revision.'
+ */
+int
+prom_systype()
+{
+	char *cp;
+
+	if (callv != &callvec)
+		return (*callv->_getsysid)();
+	cp = (*callv->_getenv)("systype");
+	return (cp != NULL) ? atoi(cp) : 0;
 }
