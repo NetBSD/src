@@ -1,5 +1,7 @@
 #!/bin/sh -
 #
+#	$NetBSD: lorder.sh,v 1.2 1994/12/23 01:14:01 jtc Exp $
+#
 # Copyright (c) 1990, 1993
 #	The Regents of the University of California.  All rights reserved.
 #
