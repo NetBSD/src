@@ -14,7 +14,7 @@
  *
  * Ported to run under 386BSD by Julian Elischer (julian@dialix.oz.au) Sept 1992
  *
- *      $Id: sd.c,v 1.18.2.10 1994/02/01 20:05:24 mycroft Exp $
+ *      $Id: sd.c,v 1.18.2.11 1994/02/06 10:06:35 mycroft Exp $
  */
 
 #include <sys/types.h>
@@ -441,7 +441,7 @@ sdstart(unit)
 		dp = &sd->buf_queue;
 		if ((bp = dp->b_actf) == NULL)	/* yes, an assign */
 			return;
-		dp->b_actf = bp->av_forw;
+		dp->b_actf = bp->b_actf;
 
 		/*
 		 * If the device has become invalid, abort all the
