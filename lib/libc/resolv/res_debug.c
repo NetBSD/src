@@ -1,4 +1,4 @@
-/*	$NetBSD: res_debug.c,v 1.1.1.1 2004/05/20 17:18:55 christos Exp $	*/
+/*	$NetBSD: res_debug.c,v 1.2 2004/05/20 17:39:55 christos Exp $	*/
 
 /*
  * Copyright (c) 1985
@@ -128,6 +128,8 @@ static const char rcsid[] = "Id: res_debug.c,v 1.3.2.5.4.4 2004/04/13 06:53:20 m
 # define SPRINTF(x) sprintf x
 #endif
 
+static const char *precsize_ntoa(u_int32_t);
+
 extern const char *_res_opcodes[];
 extern const char *_res_sectioncodes[];
 
@@ -163,7 +165,7 @@ do_section(const res_state statp,
 	if (statp->pfcode && !sflag)
 		return;
 
-	buf = malloc(buflen);
+	buf = malloc((size_t)buflen);
 	if (buf == NULL) {
 		fprintf(file, ";; memory allocation failure\n");
 		return;
@@ -196,13 +198,13 @@ do_section(const res_state statp,
 				(ttl>>16)&0xff, ns_rr_class(rr), ttl&0xffff);
 		} else {
 			n = ns_sprintrr(handle, &rr, NULL, NULL,
-					buf, buflen);
+					buf, (u_int)buflen);
 			if (n < 0) {
 				if (errno == ENOSPC) {
 					free(buf);
 					buf = NULL;
 					if (buflen < 131072)
-						buf = malloc(buflen += 1024);
+						buf = malloc((size_t)(buflen += 1024));
 					if (buf == NULL) {
 						fprintf(file,
 				              ";; memory allocation failure\n");
@@ -252,7 +254,7 @@ res_pquery(const res_state statp, const u_char *msg, int len, FILE *file) {
 	if ((!statp->pfcode) || (statp->pfcode & RES_PRF_HEADX) || rcode)
 		fprintf(file,
 			";; ->>HEADER<<- opcode: %s, status: %s, id: %d\n",
-			_res_opcodes[opcode], p_rcode(rcode), id);
+			_res_opcodes[opcode], p_rcode((int)rcode), id);
 	if ((!statp->pfcode) || (statp->pfcode & RES_PRF_HEADX))
 		putc(';', file);
 	if ((!statp->pfcode) || (statp->pfcode & RES_PRF_HEAD2)) {
@@ -276,13 +278,13 @@ res_pquery(const res_state statp, const u_char *msg, int len, FILE *file) {
 	}
 	if ((!statp->pfcode) || (statp->pfcode & RES_PRF_HEAD1)) {
 		fprintf(file, "; %s: %d",
-			p_section(ns_s_qd, opcode), qdcount);
+			p_section(ns_s_qd, (int)opcode), qdcount);
 		fprintf(file, ", %s: %d",
-			p_section(ns_s_an, opcode), ancount);
+			p_section(ns_s_an, (int)opcode), ancount);
 		fprintf(file, ", %s: %d",
-			p_section(ns_s_ns, opcode), nscount);
+			p_section(ns_s_ns, (int)opcode), nscount);
 		fprintf(file, ", %s: %d",
-			p_section(ns_s_ar, opcode), arcount);
+			p_section(ns_s_ar, (int)opcode), arcount);
 	}
 	if ((!statp->pfcode) || (statp->pfcode & 
 		(RES_PRF_HEADX | RES_PRF_HEAD2 | RES_PRF_HEAD1))) {
@@ -508,7 +510,7 @@ const char *
 sym_ntos(const struct res_sym *syms, int number, int *success) {
 	static char unname[20];
 
-	for ((void)NULL; syms->name != 0; syms++) {
+	for (; syms->name != 0; syms++) {
 		if (number == syms->number) {
 			if (success)
 				*success = 1;
@@ -526,7 +528,7 @@ const char *
 sym_ntop(const struct res_sym *syms, int number, int *success) {
 	static char unname[20];
 
-	for ((void)NULL; syms->name != 0; syms++) {
+	for (; syms->name != 0; syms++) {
 		if (number == syms->number) {
 			if (success)
 				*success = 1;
@@ -643,7 +645,7 @@ const char *
 p_time(u_int32_t value) {
 	static char nbuf[40];		/* XXX nonreentrant */
 
-	if (ns_format_ttl(value, nbuf, sizeof nbuf) < 0)
+	if (ns_format_ttl((u_long)value, nbuf, sizeof nbuf) < 0)
 		sprintf(nbuf, "%u", value);
 	return (nbuf);
 }
@@ -1043,9 +1045,9 @@ loc_ntoa(binary, ascii)
 	altfrac = altval % 100;
 	altmeters = (altval / 100);
 
-	sizestr = strdup(precsize_ntoa(sizeval));
-	hpstr = strdup(precsize_ntoa(hpval));
-	vpstr = strdup(precsize_ntoa(vpval));
+	sizestr = strdup(precsize_ntoa((u_int32_t)sizeval));
+	hpstr = strdup(precsize_ntoa((u_int32_t)hpval));
+	vpstr = strdup(precsize_ntoa((u_int32_t)vpval));
 
 	sprintf(ascii,
 	    "%d %.2d %.2d.%.3d %c %d %.2d %.2d.%.3d %c %s%d.%.2dm %sm %sm %sm",
@@ -1101,20 +1103,20 @@ char *
 p_secstodate (u_long secs) {
 	/* XXX nonreentrant */
 	static char output[15];		/* YYYYMMDDHHMMSS and null */
-	time_t clock = secs;
-	struct tm *time;
+	time_t myclock = secs;
+	struct tm *mytime;
 #ifdef HAVE_TIME_R
 	struct tm res;
 	
-	time = gmtime_r(&clock, &res);
+	mytime = gmtime_r(&myclock, &res);
 #else
-	time = gmtime(&clock);
+	mytime = gmtime(&myclock);
 #endif
-	time->tm_year += 1900;
-	time->tm_mon += 1;
+	mytime->tm_year += 1900;
+	mytime->tm_mon += 1;
 	sprintf(output, "%04d%02d%02d%02d%02d%02d",
-		time->tm_year, time->tm_mon, time->tm_mday,
-		time->tm_hour, time->tm_min, time->tm_sec);
+		mytime->tm_year, mytime->tm_mon, mytime->tm_mday,
+		mytime->tm_hour, mytime->tm_min, mytime->tm_sec);
 	return (output);
 }
 
@@ -1138,7 +1140,7 @@ res_nametoclass(const char *buf, int *successp) {
  done:
 	if (successp)
 		*successp = success;
-	return (result);
+	return (u_int16_t)(result);
 }
 
 u_int16_t
@@ -1161,5 +1163,5 @@ res_nametotype(const char *buf, int *successp) {
  done:
 	if (successp)
 		*successp = success;
-	return (result);
+	return (u_int16_t)(result);
 }
