@@ -1,4 +1,4 @@
-/*	$NetBSD: mq200_vrip.c,v 1.7 2002/05/11 14:10:06 takemura Exp $	*/
+/*	$NetBSD: mq200_vrip.c,v 1.7.4.1 2002/11/30 12:59:40 he Exp $	*/
 
 /*-
  * Copyright (c) 2000 Takemura Shin
@@ -74,7 +74,8 @@ mq200_vrip_probe(struct device *parent, struct cfdata *cf, void *aux)
 		return 0;
 #endif /* NBIVIDEO > 0 */
 
-	if (bus_space_map(va->va_iot, va->va_addr, va->va_size, 0, &ioh)) {
+	if (bus_space_map(va->va_iot, va->va_addr + MQ200_REGADDR,
+	    va->va_size, 0, &ioh)) {
 		printf(": can't map i/o space\n");
 		return 0;
 	}
