@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.1 1997/10/14 06:47:45 sakamoto Exp $	*/
+/*	$NetBSD: machdep.c,v 1.1.2.1 1997/11/15 00:48:15 mellon Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -747,8 +747,8 @@ softnet()
 
 	netisr = 0;
 #ifdef	INET
-#include "ether.h"
-#if NETHER > 0
+#include "arp.h"
+#if NARP > 0
 	if (isr & (1 << NETISR_ARP))
 		arpintr();
 #endif

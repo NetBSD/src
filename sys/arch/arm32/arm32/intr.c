@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.1 1997/10/14 09:31:14 mark Exp $	*/
+/*	$NetBSD: intr.c,v 1.1.4.1 1997/11/15 00:47:42 mellon Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -171,8 +171,8 @@ dosoftints()
 		atomic_clear_bit(&soft_interrupts, IRQMASK_SOFTNET);
 
 #ifdef INET
-#include "ether.h"
-#if NETHER > 0
+#include "arp.h"
+#if NARP > 0
 		if (netisr & (1 << NETISR_ARP)) {
 			atomic_clear_bit(&netisr, (1 << NETISR_ARP));
 			arpintr();
