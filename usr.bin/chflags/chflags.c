@@ -1,4 +1,4 @@
-/*	$NetBSD: chflags.c,v 1.11 2005/01/12 17:19:23 xtraeme Exp $	*/
+/*	$NetBSD: chflags.c,v 1.12 2005/01/20 15:44:59 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "from: @(#)chflags.c	8.5 (Berkeley) 4/1/94";
 #else
-__RCSID("$NetBSD: chflags.c,v 1.11 2005/01/12 17:19:23 xtraeme Exp $");
+__RCSID("$NetBSD: chflags.c,v 1.12 2005/01/20 15:44:59 xtraeme Exp $");
 #endif
 #endif /* not lint */
 
@@ -56,7 +56,7 @@ __RCSID("$NetBSD: chflags.c,v 1.11 2005/01/12 17:19:23 xtraeme Exp $");
 
 #include "stat_flags.h"
 
-void	usage (void);
+void	usage(void);
 
 int
 main(int argc, char *argv[])
