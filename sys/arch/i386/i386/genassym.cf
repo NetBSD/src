@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.26 2001/04/14 13:56:02 augustss Exp $
+#	$NetBSD: genassym.cf,v 1.27 2001/05/26 17:46:12 sommerfeld Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -89,6 +89,7 @@ include <sys/mbuf.h>
 include <netinet/in.h>
 include <netinet/in_systm.h>
 include <netinet/ip.h>
+include <netinet/ip6.h>
 include <netinet/ip_var.h>
 
 include <uvm/uvm.h>
@@ -157,6 +158,9 @@ define	M_NEXT			offsetof(struct mbuf, m_next)
 
 define	IP_SRC			offsetof(struct ip, ip_src)
 define	IP_DST			offsetof(struct ip, ip_dst)
+
+define	IP6_SRC			offsetof(struct ip6_hdr, ip6_src)
+define	IP6_DST			offsetof(struct ip6_hdr, ip6_dst)
 
 define	V_TRAP			offsetof(struct uvmexp, traps)
 define	V_INTR			offsetof(struct uvmexp, intrs)
