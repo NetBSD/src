@@ -1,4 +1,4 @@
-#	$NetBSD: tc.options,v 1.4 1998/01/05 20:51:52 perry Exp $
+#	$NetBSD: tc.options,v 1.5 1998/05/28 00:57:55 matt Exp $
 
 ########################################################################
 #  Supported turbochannel option cards			               #
@@ -15,5 +15,6 @@ px0	at tc?
 
 le0	at tc? #slot ?  offset ?		# DS 5000/200 baseboard 
 le*	at tc? #slot ?  offset ?		# TC ether option
+fta*	at tc? #slot ?  offset ?		# TC FDDI option
 
 asc*	at tc?					# PMAZ SCSI option
