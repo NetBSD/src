@@ -1,4 +1,4 @@
-/*	$NetBSD: comsat.c,v 1.11 1998/04/01 14:29:08 kleink Exp $	*/
+/*	$NetBSD: comsat.c,v 1.12 1998/07/03 02:27:58 mrg Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)comsat.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: comsat.c,v 1.11 1998/04/01 14:29:08 kleink Exp $");
+__RCSID("$NetBSD: comsat.c,v 1.12 1998/07/03 02:27:58 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -64,6 +64,7 @@ __RCSID("$NetBSD: comsat.c,v 1.11 1998/04/01 14:29:08 kleink Exp $");
 #include <syslog.h>
 #include <termios.h>
 #include <time.h>
+#include <vis.h>
 #include <unistd.h>
 #include <utmp.h>
 
@@ -72,7 +73,7 @@ int	debug = 0;
 
 #define MAXIDLE	120
 
-char	hostname[MAXHOSTNAMELEN];
+char	hostname[MAXHOSTNAMELEN+1];
 struct	utmp *utmp = NULL;
 time_t	lastmsgtime;
 int	nutmp, uf;
@@ -90,7 +91,7 @@ main(argc, argv)
 	char *argv[];
 {
 	struct sockaddr_in from;
-	register int cc;
+	int cc;
 	int fromlen;
 	char msgbuf[100];
 	sigset_t sigset;
@@ -105,7 +106,7 @@ main(argc, argv)
 	openlog("comsat", LOG_PID, LOG_DAEMON);
 	if (chdir(_PATH_MAILDIR)) {
 		syslog(LOG_ERR, "chdir: %s: %m", _PATH_MAILDIR);
-		(void) recv(0, msgbuf, sizeof(msgbuf) - 1, 0);
+		(void)recv(0, msgbuf, sizeof(msgbuf) - 1, 0);
 		exit(1);
 	}
 	if ((uf = open(_PATH_UTMP, O_RDONLY, 0)) < 0) {
@@ -144,6 +145,7 @@ void
 reapchildren(signo)
 	int signo;
 {
+
 	while (wait3(NULL, WNOHANG, NULL) > 0);
 }
 
@@ -177,8 +179,8 @@ void
 mailfor(name)
 	char *name;
 {
-	register struct utmp *utp = &utmp[nutmp];
-	register char *cp;
+	struct utmp *utp = &utmp[nutmp];
+	char *cp;
 	off_t offset;
 
 	if (!(cp = strchr(name, '@')))
@@ -194,10 +196,11 @@ static char *cr;
 
 void
 notify(utp, offset)
-	register struct utmp *utp;
+	struct utmp *utp;
 	off_t offset;
 {
 	FILE *tp;
+	struct passwd *p;
 	struct stat stb;
 	struct termios ttybuf;
 	char tty[20], name[sizeof(utmp[0].ut_name) + 1];
@@ -206,6 +209,10 @@ notify(utp, offset)
 	    _PATH_DEV, (int)sizeof(utp->ut_line), utp->ut_line);
 	if (strchr(tty + sizeof(_PATH_DEV) - 1, '/')) {
 		/* A slash is an attempt to break security... */
+		/*
+		 * XXX but what about something like "/dev/pts/5"
+		 * that we may one day "support". ?
+		 */
 		syslog(LOG_AUTH | LOG_NOTICE, "'/' in \"%s\"", tty);
 		return;
 	}
@@ -227,6 +234,14 @@ notify(utp, offset)
 	    "\n" : "\n\r";
 	(void)strncpy(name, utp->ut_name, sizeof(utp->ut_name));
 	name[sizeof(name) - 1] = '\0';
+
+	/* Set uid/gid/groups to users in case mail drop is on nfs */
+	if ((p = getpwnam(name)) == NULL ||
+	    initgroups(p->pw_name, p->pw_gid) < 0 ||
+	    setgid(p->pw_gid) < 0 ||
+	    setuid(p->pw_uid) < 0)
+		_exit(-1);
+
 	(void)fprintf(tp, "%s\007New mail for %s@%.*s\007 has arrived:%s----%s",
 	    cr, name, (int)sizeof(hostname), hostname, cr, cr);
 	jkfprintf(tp, name, offset);
@@ -236,19 +251,13 @@ notify(utp, offset)
 
 void
 jkfprintf(tp, name, offset)
-	register FILE *tp;
+	FILE *tp;
 	char name[];
 	off_t offset;
 {
-	register char *cp, ch;
-	register FILE *fi;
-	register int linecnt, charcnt, inheader;
-	register struct passwd *p;
-	char line[BUFSIZ];
-
-	/* Set effective uid to user in case mail drop is on nfs */
-	if ((p = getpwnam(name)) != NULL)
-		(void) setuid(p->pw_uid);
+	FILE *fi;
+	int linecnt, charcnt, inheader;
+	char line[BUFSIZ], visline[BUFSIZ*4];
 
 	if ((fi = fopen(name, "r")) == NULL)
 		return;
@@ -269,8 +278,8 @@ jkfprintf(tp, name, offset)
 				continue;
 			}
 			if (line[0] == ' ' || line[0] == '\t' ||
-			    (strncmp(line, "From:", 5) &&
-			    strncmp(line, "Subject:", 8)))
+			    (strncasecmp(line, "From:", 5) &&
+			    strncasecmp(line, "Subject:", 8)))
 				continue;
 		}
 		if (linecnt <= 0 || charcnt <= 0) {
@@ -279,13 +288,8 @@ jkfprintf(tp, name, offset)
 			return;
 		}
 		/* strip weird stuff so can't trojan horse stupid terminals */
-		for (cp = line; (ch = *cp) && ch != '\n'; ++cp, --charcnt) {
-			ch = toascii(ch);
-			if (!isprint(ch) && !isspace(ch))
-				ch |= 0x40;
-			(void)fputc(ch, tp);
-		}
-		(void)fputs(cr, tp);
+		(void)strvis(visline, line, VIS_CSTYLE);
+		fputs(visline, tp);
 		--linecnt;
 	}
 	(void)fprintf(tp, "----%s\n", cr);
