@@ -1,4 +1,4 @@
-/*      $NetBSD: clock.c,v 1.10 2003/07/15 02:59:27 lukem Exp $	*/
+/*      $NetBSD: clock.c,v 1.11 2003/07/19 02:25:22 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.10 2003/07/15 02:59:27 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.11 2003/07/19 02:25:22 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -65,12 +65,12 @@ static	void (*cpu_initclocks_hook)(int, int);
  * Common parts of todclock autoconfiguration.
  */
 void
-todclock_config(handle)
+todr_attach(handle)
 	todr_chip_handle_t handle;
 {
 
 	if (todr_handle)
-		panic("todclock_config: too many todclocks configured");
+		panic("todr_attach: too many todclocks configured");
 
 	todr_handle = handle;
 }

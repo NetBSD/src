@@ -1,4 +1,4 @@
-/*	$NetBSD: mkclock_hb.c,v 1.6 2003/07/15 02:59:26 lukem Exp $	*/
+/*	$NetBSD: mkclock_hb.c,v 1.7 2003/07/19 02:25:21 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mkclock_hb.c,v 1.6 2003/07/15 02:59:26 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mkclock_hb.c,v 1.7 2003/07/19 02:25:21 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -108,5 +108,5 @@ mkclock_hb_attach(parent, self, aux)
 	handle->bus_cookie = NULL;
 	handle->todr_setwen = NULL;
 
-        todclock_config(handle);
+        todr_attach(handle);
 }
