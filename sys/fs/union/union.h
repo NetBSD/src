@@ -1,4 +1,4 @@
-/*	$NetBSD: union.h,v 1.2 2003/03/17 09:11:30 jdolecek Exp $	*/
+/*	$NetBSD: union.h,v 1.3 2003/03/17 10:31:14 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
@@ -132,7 +132,6 @@ int union_readdirhook(struct vnode **, struct file *, struct proc *);
 #define OTHERVP(vp) (UPPERVP(vp) ? UPPERVP(vp) : LOWERVP(vp))
 
 extern int (**union_vnodeop_p) __P((void *));
-extern struct vfsops union_vfsops;
 
 void union_init __P((void));
 void union_done __P((void));
