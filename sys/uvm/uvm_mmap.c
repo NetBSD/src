@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.88 2005/02/11 02:12:03 chs Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.89 2005/03/26 05:12:36 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.88 2005/02/11 02:12:03 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.89 2005/03/26 05:12:36 fvdl Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -297,7 +297,7 @@ sys_mmap(l, v, retval)
 	vsize_t size, pageoff;
 	vm_prot_t prot, maxprot;
 	int flags, fd;
-	vaddr_t vm_min_address = VM_MIN_ADDRESS;
+	vaddr_t vm_min_address = VM_MIN_ADDRESS, defaddr;
 	struct filedesc *fdp = p->p_fd;
 	struct file *fp;
 	struct vnode *vp;
@@ -363,13 +363,14 @@ sys_mmap(l, v, retval)
 		 * VAC, etc)
 		 */
 
+		defaddr = p->p_emul->e_vm_default_addr(p,
+		    (vaddr_t)p->p_vmspace->vm_daddr, size);
+
 		if (addr == 0 ||
 		    !(p->p_vmspace->vm_map.flags & VM_MAP_TOPDOWN))
-			addr = MAX(addr,
-			    VM_DEFAULT_ADDRESS(p->p_vmspace->vm_daddr, size));
+			addr = MAX(addr, defaddr);
 		else
-			addr = MIN(addr,
-			    VM_DEFAULT_ADDRESS(p->p_vmspace->vm_daddr, size));
+			addr = MIN(addr, defaddr);
 	}
 
 	/*
@@ -1205,4 +1206,10 @@ uvm_mmap(map, addr, size, prot, maxprot, flags, handle, foff, locklimit)
 	}
 	vm_map_unlock(map);
 	return 0;
+}
+
+vaddr_t
+uvm_default_mapaddr(struct proc *p, vaddr_t base, vsize_t sz)
+{
+	return VM_DEFAULT_ADDRESS(base, sz);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.90 2005/03/23 04:01:04 christos Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.91 2005/03/26 05:12:36 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.90 2005/03/23 04:01:04 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.91 2005/03/26 05:12:36 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -328,11 +328,13 @@ dosetrlimit(p, cred, which, limp)
 			if (limp->rlim_cur > alimp->rlim_cur) {
 				prot = VM_PROT_READ | VM_PROT_WRITE;
 				size = limp->rlim_cur - alimp->rlim_cur;
-				addr = USRSTACK - limp->rlim_cur;
+				addr = (vaddr_t)p->p_vmspace->vm_minsaddr -
+				    limp->rlim_cur;
 			} else {
 				prot = VM_PROT_NONE;
 				size = alimp->rlim_cur - limp->rlim_cur;
-				addr = USRSTACK - alimp->rlim_cur;
+				addr = (vaddr_t)p->p_vmspace->vm_minsaddr -
+				     alimp->rlim_cur;
 			}
 			(void) uvm_map_protect(&p->p_vmspace->vm_map,
 					      addr, addr+size, prot, FALSE);
