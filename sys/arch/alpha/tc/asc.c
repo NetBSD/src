@@ -1,4 +1,4 @@
-/* $NetBSD: asc.c,v 1.13 1998/09/05 13:42:07 pk Exp $ */
+/* $NetBSD: asc.c,v 1.14 1998/10/10 00:28:30 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.13 1998/09/05 13:42:07 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.14 1998/10/10 00:28:30 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -118,8 +118,7 @@ struct cfattach asc_tcds_ca = {
 struct scsipi_adapter asc_tcds_switch = {
 	ncr53c9x_scsi_cmd,
 	minphys,		/* no max at this level; handled by DMA code */
-	NULL,
-	NULL,
+	NULL,			/* scsipi_ioctl */
 };
 
 struct scsipi_device asc_tcds_dev = {

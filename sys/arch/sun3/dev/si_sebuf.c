@@ -1,4 +1,4 @@
-/*	$NetBSD: si_sebuf.c,v 1.5 1997/12/09 22:29:06 gwr Exp $	*/
+/*	$NetBSD: si_sebuf.c,v 1.6 1998/10/10 00:28:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -144,10 +144,9 @@ struct cfattach si_sebuf_ca = {
 
 static void	se_minphys __P((struct buf *));
 static struct scsipi_adapter	se_ops = {
-	ncr5380_scsi_cmd,		/* scsi_cmd()		*/
-	se_minphys,			/* scsi_minphys()	*/
-	NULL,				/* open_target_lu()	*/
-	NULL,				/* close_target_lu()	*/
+	ncr5380_scsi_cmd,		/* scsipi_cmd()		*/
+	se_minphys,			/* scsipi_minphys()	*/
+	NULL,				/* scsipi_ioctl()	*/
 };
 
 /* This is copied from julian's bt driver */

@@ -1,4 +1,4 @@
-/*	$NetBSD: sc_wrap.c,v 1.6 1998/08/21 14:52:29 tsubai Exp $	*/
+/*	$NetBSD: sc_wrap.c,v 1.7 1998/10/10 00:28:31 thorpej Exp $	*/
 
 /*
  * This driver is slow!  Need to rewrite.
@@ -57,8 +57,7 @@ static int sc_disconnect = IDT_DISCON;
 struct scsipi_adapter cxd1185_switch = {
 	sc_scsi_cmd,
 	minphys,
-	NULL,
-	NULL
+	NULL,		/* scsipi_ioctl */
 };
 
 struct scsipi_device cxd1185_dev = {

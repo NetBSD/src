@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_isa.c,v 1.14 1998/09/05 17:23:09 pk Exp $	*/
+/*	$NetBSD: esp_isa.c,v 1.15 1998/10/10 00:28:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -142,8 +142,7 @@ struct cfattach esp_isa_ca = {
 struct scsipi_adapter esp_switch = {
 	ncr53c9x_scsi_cmd,
 	minphys,		/* no max at this level; handled by DMA code */
-	NULL,
-	NULL,
+	NULL,			/* scsipi_ioctl */
 };
 
 struct scsipi_device esp_dev = {

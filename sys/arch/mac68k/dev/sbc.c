@@ -1,4 +1,4 @@
-/*	$NetBSD: sbc.c,v 1.36 1998/07/04 22:18:27 jonathan Exp $	*/
+/*	$NetBSD: sbc.c,v 1.37 1998/10/10 00:28:38 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1996 Scott Reynolds.  All rights reserved.
@@ -90,10 +90,9 @@ int	sbc_link_flags = 0 /* | SDEV_DB2 */;
 int	sbc_options = 0 /* | SBC_PDMA */;
 
 struct scsipi_adapter	sbc_ops = {
-	ncr5380_scsi_cmd,		/* scsi_cmd()		*/
-	minphys,			/* scsi_minphys()	*/
-	NULL,				/* open_target_lu()	*/
-	NULL,				/* close_target_lu()	*/
+	ncr5380_scsi_cmd,		/* scsipi_cmd		*/
+	minphys,			/* scsipi_minphys	*/
+	NULL,				/* scsipi_ioctl		*/
 };
 
 /* This is copied from julian's bt driver */

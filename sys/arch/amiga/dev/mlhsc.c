@@ -1,4 +1,4 @@
-/*	$NetBSD: mlhsc.c,v 1.18 1998/01/12 10:40:02 thorpej Exp $	*/
+/*	$NetBSD: mlhsc.c,v 1.19 1998/10/10 00:28:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -59,8 +59,7 @@ int mlhsc_dma_xfer_out __P((struct sci_softc *dev, int len,
 struct scsipi_adapter mlhsc_scsiswitch = {
 	sci_scsicmd,
 	sci_minphys,
-	0,			/* no lun support */
-	0,			/* no lun support */
+	NULL,		/* scsipi_ioctl */
 };
 
 struct scsipi_device mlhsc_scsidev = {

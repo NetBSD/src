@@ -1,4 +1,4 @@
-/*	$NetBSD: csc.c,v 1.1 1998/09/01 02:24:11 mark Exp $	*/
+/*	$NetBSD: csc.c,v 1.2 1998/10/10 00:28:38 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -68,8 +68,7 @@ int  csc_scsicmd __P((struct scsipi_xfer *));
 struct scsipi_adapter csc_scsiswitch = {
 	csc_scsicmd,
 	sfas_minphys,
-	0,			/* no lun support */
-	0,			/* no lun support */
+	NULL,		/* scsipi_ioctl */
 };
 
 struct scsipi_device csc_scsidev = {
