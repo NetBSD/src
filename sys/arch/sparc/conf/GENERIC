@@ -1,4 +1,4 @@
-# 	$NetBSD: GENERIC,v 1.22 1996/03/31 22:57:09 pk Exp $
+# 	$NetBSD: GENERIC,v 1.23 1996/04/01 00:20:31 pk Exp $
 
 machine		sparc
 options		"SUN4", "SUN4C", "SUN4M"
@@ -92,7 +92,7 @@ zs1	at obio0 addr 0x00000000 level 12 flags 0x103	# 4/100
 zs2	at obio0 addr 0xe0000000 level 12 flags 0x103
 
 # FSBE/S or sun4m
-espdma0	at sbus0 slot ? offset ?
+espdma0	at sbus0 slot ? offset ?			# on-board SCSI
 espdma*	at sbus0 slot ? offset ?
 esp0	at espdma? slot ? offset ?
 esp*	at espdma? slot ? offset ?
@@ -101,7 +101,7 @@ esp*	at espdma? slot ? offset ?
 dma0	at sbus0 slot ? offset ?
 dma*	at sbus0 slot ? offset ?
 dma0	at obio0 addr 0xfa001000 level 4
-esp0	at sbus0 slot ? offset ?
+esp0	at sbus0 slot ? offset ?			# on-board SCSI
 esp*	at sbus0 slot ? offset ?
 esp0	at obio0 addr 0xfa000000 level 4
 
@@ -109,6 +109,10 @@ esp0	at obio0 addr 0xfa000000 level 4
 le0	at sbus? slot ? offset ?
 le*	at sbus? slot ? offset ?
 le0	at obio0 addr 0xf9000000 level 6
+
+# sun4m
+ledma0	at sbus? slot ? offset ?			# on-board Lance
+le0	at ledma? slot ? offset ?			# on-board Lance
 
 ie0	at obio0 addr 0xf6000000 level 6
 ie0	at obio0 addr 0x06000000 level 6		# 4/100
@@ -162,7 +166,7 @@ sd*	at scsibus? target ? lun ?
 st*	at scsibus? target ? lun ?
 cd*	at scsibus? target ? lun ?
 
-fdc0	at mainbus0
+fdc0	at mainbus0				# floppy controller
 fdc0	at obio0				# sun4m
 fd*	at fdc0
 
