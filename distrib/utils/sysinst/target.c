@@ -1,4 +1,4 @@
-/*	$NetBSD: target.c,v 1.2.2.8 1997/12/04 09:10:58 jonathan Exp $	*/
+/*	$NetBSD: target.c,v 1.2.2.9 1997/12/05 14:12:49 jonathan Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: target.c,v 1.2.2.8 1997/12/04 09:10:58 jonathan Exp $");
+__RCSID("$NetBSD: target.c,v 1.2.2.9 1997/12/05 14:12:49 jonathan Exp $");
 #endif
 
 
@@ -79,7 +79,9 @@ static void make_prefixed_dir __P((const char *prefix, const char *path));
 const char* target_prefix __P((void));
 static int do_target_chdir __P((const char *dir, int flag));
 static const char* concat_paths __P((const char *prefix, const char *suffix));
-int target_test(const char *test, const char *path);
+int	target_test(const char *test, const char *path);
+int	target_test_dir __P((const char *path));	/* deprecated */
+int	target_test_file __P((const char *path));	/* deprecated */
 
 void backtowin(void);
 
@@ -565,6 +567,12 @@ void
 unwind_mounts()
 {
 	struct unwind_mount *m, *prev;
+	volatile static int unwind_in_progress = 0;
+
+	/* signal safety */
+	if (unwind_in_progress)
+		return;
+	unwind_in_progress = 1;
 
 	prev = NULL;
 	for (m = unwind_mountlist; m;  ) {
@@ -580,6 +588,7 @@ unwind_mounts()
 		m = prev;
 	}
 	unwind_mountlist = NULL;
+	unwind_in_progress = 0;
 }
 
 
@@ -635,7 +644,7 @@ int target_test(const char *test, const char *path)
  * filesystem. Do not create the directory if it doesn't  exist.
  * Assumes that sysinst has already mounted the target root.
  */
-int target_verify_dir(const char *path)
+int target_test_dir(const char *path)
 {
  	return target_test("-d", path);
 }
@@ -645,7 +654,18 @@ int target_verify_dir(const char *path)
  * filesystem. Do not create the directory if it doesn't  exist.
  * Assumes that sysinst has already mounted the target root.
  */
-int target_verify_file(const char *path)
+int target_test_file(const char *path)
 {
  	return target_test("-f", path);
 }
+
+int target_file_exists_p(const char *path)
+{
+	return (target_test_file(path) == 0);
+}
+
+int target_dir_exists_p(const char *path)
+{
+	return (target_test_dir(path) == 0);
+}
+
