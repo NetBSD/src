@@ -3,7 +3,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: operators.c,v 1.2 1993/08/02 17:18:54 mycroft Exp $";
+static char rcsid[] = "$Id: operators.c,v 1.3 1993/09/23 22:51:17 mycroft Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -44,6 +44,14 @@ char *const binary_op[] = {
       "-le",
       "-ge",
       NULL
+};
+
+char *const andor_op[] = {
+	"-o",
+	"|",
+	"-a",
+	"&",
+	NULL
 };
 
 const char op_priority[] = {
