@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.h,v 1.26.4.2 2003/11/26 09:41:35 cyber Exp $	*/
+/*	$NetBSD: ip_nat.h,v 1.26.4.3 2003/12/30 21:21:18 jmc Exp $	*/
 
 /*
  * Copyright (C) 1995-2001 by Darren Reed.
@@ -47,33 +47,15 @@
 #ifndef	NAT_TABLE_SZ
 # define	NAT_TABLE_SZ	127
 #endif
-#ifndef NAT_TABLE_MAX
-/*
- * This is newly introduced and for the sake of "least surprise", the numbers
- * present aren't what we'd normally use for creating a proper hash table.
- *
- * As an example, NAT_TABLE_MAX should not be > 127 when LARGE_NAT is undefined
- * but this is the default situation and introducing a limit as low as 100 for
- * people may cause a lot of pain.  Similarly, other derived numbers are
- * larger than the hash table size when in fact they should be smaller.
- */
-# ifdef	NAT_TABLE_SZ
-#  define	NAT_TABLE_MAX	(NAT_TABLE_SZ * 2)
-# else
-#  define	NAT_TABLE_MAX	1027
-# endif
-#endif
 #ifdef	LARGE_NAT
 #undef	NAT_SIZE
 #undef	RDR_SIZE
 #undef	NAT_TABLE_SZ
-#undef	HOSTMAP_SIZE
-#undef	NAT_TABLE_MAX
+#undef	HOSTMAP_SIZE	127
 #define	NAT_SIZE	2047
 #define	RDR_SIZE	2047
 #define	NAT_TABLE_SZ	16383
 #define	HOSTMAP_SIZE	8191
-#define	NAT_TABLE_MAX	31000
 #endif
 #ifndef	APR_LABELLEN
 #define	APR_LABELLEN	16
