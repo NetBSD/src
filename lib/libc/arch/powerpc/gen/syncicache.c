@@ -1,4 +1,4 @@
-/*	$NetBSD: syncicache.c,v 1.11 2002/11/26 21:14:04 thorpej Exp $	*/
+/*	$NetBSD: syncicache.c,v 1.12 2003/08/11 02:11:23 matt Exp $	*/
 
 /*
  * Copyright (C) 1995-1997, 1999 Wolfgang Solfrank.
@@ -57,24 +57,27 @@ static struct cache_info _cache_info = {
 #else
 #include <stdlib.h>
 
-static void getcachelinesize (void);
+size_t __getcachelinesize (void);
 
 static int _cachelinesize = 0;
 
 static struct cache_info _cache_info;
 #define CACHEINFO	_cache_info
 
-static void
-getcachelinesize(void)
+size_t
+__getcachelinesize(void)
 {
 	static int cachemib[] = { CTL_MACHDEP, CPU_CACHELINE };
 	static int cacheinfomib[] = { CTL_MACHDEP, CPU_CACHEINFO };
 	size_t clen = sizeof(_cache_info);
 
+	if (_cachelinesize)
+		return _cachelinesize;
+
 	if (sysctl(cacheinfomib, sizeof(cacheinfomib) / sizeof(cacheinfomib[0]),
 		&_cache_info, &clen, NULL, 0) == 0) {
 		_cachelinesize = _cache_info.dcache_line_size;
-		return;
+		return _cachelinesize;
 	}
 
 	/* Try older deprecated sysctl */
@@ -88,8 +91,12 @@ getcachelinesize(void)
 	_cache_info.dcache_line_size = _cachelinesize;
 	_cache_info.icache_size = _cachelinesize;
 	_cache_info.icache_line_size = _cachelinesize;
+
 	/* If there is no cache, indicate we have issued the sysctl. */
-	if (!_cachelinesize) _cachelinesize = 1;
+	if (!_cachelinesize)
+		_cachelinesize = 1;
+
+	return _cachelinesize;
 }
 #endif
 
@@ -102,7 +109,7 @@ __syncicache(void *from, size_t len)
 
 #if	!defined(_KERNEL) && !defined(_STANDALONE)
 	if (!_cachelinesize)
-		getcachelinesize();
+		__getcachelinesize();
 #endif	
 
 	if (CACHEINFO.dcache_size > 0) {
