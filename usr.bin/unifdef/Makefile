@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.5 2003/07/30 08:24:13 itojun Exp $
+#	$NetBSD: Makefile,v 1.6 2003/08/01 11:51:14 lukem Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/6/93
 
 PROG=	unifdef
 
-SCRIPTS=unifdefall
+SCRIPTS=unifdefall.sh
 
 MLINKS=	unifdef.1 unifdefall.1
 
