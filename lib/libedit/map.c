@@ -1,4 +1,4 @@
-/*	$NetBSD: map.c,v 1.13 2001/01/04 15:56:32 christos Exp $	*/
+/*	$NetBSD: map.c,v 1.14 2001/01/09 17:22:09 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)map.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: map.c,v 1.13 2001/01/04 15:56:32 christos Exp $");
+__RCSID("$NetBSD: map.c,v 1.14 2001/01/09 17:22:09 jdolecek Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -63,7 +63,7 @@ private void	map_init_meta(EditLine *);
 /* keymap tables ; should be N_KEYS*sizeof(KEYCMD) bytes long */
 
 
-private el_action_t  el_map_emacs[] = {
+private const el_action_t  el_map_emacs[] = {
 	/*   0 */	EM_SET_MARK,		/* ^@ */
 	/*   1 */	ED_MOVE_TO_BEG,		/* ^A */
 	/*   2 */	ED_PREV_CHAR,		/* ^B */
@@ -330,7 +330,7 @@ private el_action_t  el_map_emacs[] = {
  * insert mode characters are in the normal keymap, and command mode
  * in the extended keymap.
  */
-private el_action_t  el_map_vi_insert[] = {
+private const el_action_t  el_map_vi_insert[] = {
 #ifdef KSHVI
 	/*   0 */	ED_UNASSIGNED,		/* ^@ */
 	/*   1 */	ED_INSERT,		/* ^A */
@@ -631,7 +631,7 @@ private el_action_t  el_map_vi_insert[] = {
 	/* 255 */	ED_UNASSIGNED		/* M-^? */
 };
 
-private el_action_t el_map_vi_command[] = {
+private const el_action_t el_map_vi_command[] = {
 	/*   0 */	ED_UNASSIGNED,		/* ^@ */
 	/*   1 */	ED_MOVE_TO_BEG,		/* ^A */
 	/*   2 */	ED_UNASSIGNED,		/* ^B */
@@ -1028,8 +1028,8 @@ map_init_vi(EditLine *el)
 	int i;
 	el_action_t *key = el->el_map.key;
 	el_action_t *alt = el->el_map.alt;
-	el_action_t *vii = el->el_map.vii;
-	el_action_t *vic = el->el_map.vic;
+	const el_action_t *vii = el->el_map.vii;
+	const el_action_t *vic = el->el_map.vic;
 
 	el->el_map.type = MAP_VI;
 	el->el_map.current = el->el_map.key;
@@ -1059,7 +1059,7 @@ map_init_emacs(EditLine *el)
 	char buf[3];
 	el_action_t *key = el->el_map.key;
 	el_action_t *alt = el->el_map.alt;
-	el_action_t *emacs = el->el_map.emacs;
+	const el_action_t *emacs = el->el_map.emacs;
 
 	el->el_map.type = MAP_EMACS;
 	el->el_map.current = el->el_map.key;

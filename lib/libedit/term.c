@@ -1,4 +1,4 @@
-/*	$NetBSD: term.c,v 1.28 2001/01/04 15:56:32 christos Exp $	*/
+/*	$NetBSD: term.c,v 1.29 2001/01/09 17:22:09 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)term.c	8.2 (Berkeley) 4/30/95";
 #else
-__RCSID("$NetBSD: term.c,v 1.28 2001/01/04 15:56:32 christos Exp $");
+__RCSID("$NetBSD: term.c,v 1.29 2001/01/09 17:22:09 jdolecek Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -77,8 +77,8 @@ __RCSID("$NetBSD: term.c,v 1.28 2001/01/04 15:56:32 christos Exp $");
 #define	Val(a)		el->el_term.t_val[a]
 
 #ifdef notdef
-private struct {
-	char *b_name;
+private const struct {
+	const char *b_name;
 	int b_rate;
 } baud_rate[] = {
 #ifdef B0
@@ -148,9 +148,9 @@ private struct {
 };
 #endif
 
-private struct termcapstr {
-	char *name;
-	char *long_name;
+private const struct termcapstr {
+	const char *name;
+	const char *long_name;
 } tstr[] = {
 #define	T_al	0
 	{ "al", "add new blank line" },
@@ -232,9 +232,9 @@ private struct termcapstr {
 	{ NULL, NULL }
 };
 
-private struct termcapval {
-	char *name;
-	char *long_name;
+private const struct termcapval {
+	const char *name;
+	const char *long_name;
 } tval[] = {
 #define	T_am	0
 	{ "am", "has automatic margins" },
@@ -261,7 +261,7 @@ private void	term_setflags(EditLine *);
 private int	term_rebuffer_display(EditLine *);
 private void	term_free_display(EditLine *);
 private int	term_alloc_display(EditLine *);
-private void	term_alloc(EditLine *, struct termcapstr *, char *);
+private void	term_alloc(EditLine *, const struct termcapstr *, char *);
 private void	term_init_arrow(EditLine *);
 private void	term_reset_arrow(EditLine *);
 
@@ -370,7 +370,7 @@ term_end(EditLine *el)
  *	Maintain a string pool for termcap strings
  */
 private void
-term_alloc(EditLine *el, struct termcapstr *t, char *cap)
+term_alloc(EditLine *el, const struct termcapstr *t, char *cap)
 {
 	char termbuf[TC_BUFSIZE];
 	int tlen, clen;
@@ -883,7 +883,7 @@ term_set(EditLine *el, char *term)
 	int i;
 	char buf[TC_BUFSIZE];
 	char *area;
-	struct termcapstr *t;
+	const struct termcapstr *t;
 	sigset_t oset, nset;
 	int lins, cols;
 
@@ -1165,7 +1165,8 @@ term_print_arrow(EditLine *el, char *name)
 protected void
 term_bind_arrow(EditLine *el)
 {
-	el_action_t *map, *dmap;
+	el_action_t *map;
+	const el_action_t *dmap;
 	int i, j;
 	char *p;
 	fkey_t *arrow = el->el_term.t_fkey;
@@ -1244,7 +1245,7 @@ protected int
 /*ARGSUSED*/
 term_telltc(EditLine *el, int argc, char **argv)
 {
-	struct termcapstr *t;
+	const struct termcapstr *t;
 	char **ts;
 	char upbuf[EL_BUFSIZ];
 
@@ -1279,8 +1280,8 @@ protected int
 /*ARGSUSED*/
 term_settc(EditLine *el, int argc, char **argv)
 {
-	struct termcapstr *ts;
-	struct termcapval *tv;
+	const struct termcapstr *ts;
+	const struct termcapval *tv;
 	char *what, *how;
 
 	if (argv == NULL || argv[1] == NULL || argv[2] == NULL)
@@ -1360,7 +1361,7 @@ term_echotc(EditLine *el, int argc, char **argv)
 	int verbose = 0, silent = 0;
 	char *area;
 	static const char fmts[] = "%s\n", fmtd[] = "%d\n";
-	struct termcapstr *t;
+	const struct termcapstr *t;
 	char buf[TC_BUFSIZE];
 	long i;
 

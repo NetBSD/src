@@ -1,4 +1,4 @@
-/*	$NetBSD: map.h,v 1.5 2000/09/04 22:06:31 lukem Exp $	*/
+/*	$NetBSD: map.h,v 1.6 2001/01/09 17:22:09 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -55,9 +55,9 @@ typedef struct el_map_t {
 	el_action_t	*alt;		/* The current alternate key map */
 	el_action_t	*key;		/* The current normal key map	*/
 	el_action_t	*current;	/* The keymap we are using	*/
-	el_action_t	*emacs;		/* The default emacs key map	*/
-	el_action_t	*vic;		/* The vi command mode key map	*/
-	el_action_t	*vii;		/* The vi insert mode key map	*/
+	const el_action_t *emacs;	/* The default emacs key map	*/
+	const el_action_t *vic;		/* The vi command mode key map	*/
+	const el_action_t *vii;		/* The vi insert mode key map	*/
 	int		 type;		/* Emacs or vi			*/
 	el_bindings_t	*help;		/* The help for the editor functions */
 	el_func_t	*func;		/* List of available functions	*/
