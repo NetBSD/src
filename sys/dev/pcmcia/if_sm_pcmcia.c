@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sm_pcmcia.c,v 1.10 1998/08/15 20:11:38 thorpej Exp $	*/
+/*	$NetBSD: if_sm_pcmcia.c,v 1.11 1998/08/15 20:47:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -121,8 +121,10 @@ struct sm_pcmcia_product {
 	{ PCMCIA_VENDOR_NEWMEDIA,	PCMCIA_PRODUCT_NEWMEDIA_BASICS,
 	  0,				PCMCIA_STR_NEWMEDIA_BASICS },
 
+#if 0
 	{ PCMCIA_VENDOR_SMC,		PCMCIA_PRODUCT_SMC_8020BT,
 	  0,				PCMCIA_STR_SMC_8020BT },
+#endif
 
 	{ 0,				0,
 	  0,				NULL },
