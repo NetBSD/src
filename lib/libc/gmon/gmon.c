@@ -1,4 +1,4 @@
-/*	$NetBSD: gmon.c,v 1.8 1997/01/23 14:02:00 mrg Exp $	*/
+/*	$NetBSD: gmon.c,v 1.9 1997/04/22 11:17:58 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)gmon.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: gmon.c,v 1.8 1997/01/23 14:02:00 mrg Exp $";
+static char rcsid[] = "$NetBSD: gmon.c,v 1.9 1997/04/22 11:17:58 mrg Exp $";
 #endif
 #endif
 
@@ -147,9 +147,10 @@ _mcleanup()
 	char *profdir;
 	char *proffile;
 	char  buf[PATH_MAX];
+	int len = sizeof(buf) - 1;
 #ifdef DEBUG
 	int log, len;
-	char buf[200];
+	char buf2[200];
 #endif
 
 	if (p->state == GMON_PROF_ERROR)
@@ -186,7 +187,11 @@ _mcleanup()
 		
 		t = buf;
 		s = profdir;
-		while((*t = *s) != '\0') {
+		while ((*t = *s) != '\0') {
+			if (len-- == 0) {
+				warnx("_mcleanup: internal buffer overflow, PROFDIR too long");
+				return;
+			}
 			t++;
 			s++;
 		}
@@ -226,9 +231,9 @@ _mcleanup()
 		perror("mcount: gmon.log");
 		return;
 	}
-	len = snprintf(buf, sizeof buf, "[mcleanup1] kcount 0x%x ssiz %d\n",
+	len = snprintf(buf2, sizeof buf2, "[mcleanup1] kcount 0x%x ssiz %d\n",
 	    p->kcount, p->kcountsize);
-	write(log, buf, len);
+	write(log, buf2, len);
 #endif
 	hdr = (struct gmonhdr *)&gmonhdr;
 	hdr->lpc = p->lowpc;
@@ -248,11 +253,11 @@ _mcleanup()
 		for (toindex = p->froms[fromindex]; toindex != 0;
 		     toindex = p->tos[toindex].link) {
 #ifdef DEBUG
-			len = snprintf(buf, sizeof buf,
+			len = snprintf(buf2, sizeof buf2,
 			"[mcleanup2] frompc 0x%x selfpc 0x%x count %d\n" ,
 				frompc, p->tos[toindex].selfpc,
 				p->tos[toindex].count);
-			write(log, buf, len);
+			write(log, buf2, len);
 #endif
 			rawarc.raw_frompc = frompc;
 			rawarc.raw_selfpc = p->tos[toindex].selfpc;
