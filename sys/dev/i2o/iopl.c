@@ -1,4 +1,4 @@
-/*	$NetBSD: iopl.c,v 1.14 2004/10/30 18:08:35 thorpej Exp $	*/
+/*	$NetBSD: iopl.c,v 1.15 2005/01/31 02:51:17 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iopl.c,v 1.14 2004/10/30 18:08:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iopl.c,v 1.15 2005/01/31 02:51:17 thorpej Exp $");
 
 #include "opt_i2o.h"
 #include "opt_inet.h"
@@ -1081,13 +1081,13 @@ iopl_intr_rx(struct device *dv, struct iop_msg *im, void *reply)
 		}
 
 		/*
-		 * Otherwise, fix up the header, feed a copy to BPF, and
-		 * then pass it on up.
+		 * Otherwise, fix up the header, trim off the CRC, feed
+		 * a copy to BPF, and then pass it on up.
 		 */
-		m->m_flags |= M_HASFCS;
 		m->m_pkthdr.rcvif = ifp;
 		m->m_pkthdr.len = len;
 		m->m_pkthdr.csum_flags = csumflgs[pkt] | sc->sc_rx_csumflgs;
+		m_adj(m, -ETHER_CRC_LEN);
 
 #if NBPFILTER > 0
 		if (ifp->if_bpf)

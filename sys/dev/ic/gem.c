@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.32 2004/10/30 18:08:36 thorpej Exp $ */
+/*	$NetBSD: gem.c,v 1.33 2005/01/31 02:53:19 thorpej Exp $ */
 
 /*
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.32 2004/10/30 18:08:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.33 2005/01/31 02:53:19 thorpej Exp $");
 
 #include "bpfilter.h"
 
@@ -1406,7 +1406,7 @@ gem_rint(sc)
 		 * No errors; receive the packet.  Note the Gem
 		 * includes the CRC with every packet.
 		 */
-		len = GEM_RD_BUFLEN(rxstat);
+		len = GEM_RD_BUFLEN(rxstat) - ETHER_CRC_LEN;
 
 		/*
 		 * Allocate a new mbuf cluster.  If that fails, we are
@@ -1425,7 +1425,6 @@ gem_rint(sc)
 		m->m_data += 2; /* We're already off by two */
 
 		eh = mtod(m, struct ether_header *);
-		m->m_flags |= M_HASFCS;
 		m->m_pkthdr.rcvif = ifp;
 		m->m_pkthdr.len = m->m_len = len;
 
