@@ -1,4 +1,4 @@
-/*	$NetBSD: wireg.h,v 1.18 2002/01/21 11:29:23 ichiro Exp $	*/
+/*	$NetBSD: wireg.h,v 1.19 2002/03/10 00:16:47 augustss Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -393,6 +393,7 @@ struct wi_ltv_ver {
 	u_int16_t		wi_len;
 	u_int16_t		wi_type;
 	u_int16_t		wi_ver[4];
+#define WI_NIC_LUCENT	0x0005
 #define WI_NIC_EVB2	0x8000
 #define WI_NIC_HWB3763	0x8001
 #define WI_NIC_HWB3163	0x8002
