@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.82 2002/11/24 11:52:13 scw Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.83 2003/01/20 04:08:44 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.82 2002/11/24 11:52:13 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.83 2003/01/20 04:08:44 simonb Exp $");
 
 #include "opt_scsi.h"
 
@@ -746,9 +746,9 @@ scsipi_interpret_sense(xs)
 	struct scsipi_sense_data *sense;
 	struct scsipi_periph *periph = xs->xs_periph;
 	u_int8_t key;
-	u_int32_t info;
 	int error;
 #ifndef	SCSIVERBOSE
+	u_int32_t info;
 	static char *error_mes[] = {
 		"soft error (corrected)",
 		"not ready", "medium error",
@@ -836,10 +836,12 @@ scsipi_interpret_sense(xs)
 		printf(" DEFERRED ERROR, key = 0x%x\n", key);
 		/* FALLTHROUGH */
 	case 0x70:
+#ifndef	SCSIVERBOSE
 		if ((sense->error_code & SSD_ERRCODE_VALID) != 0)
 			info = _4btol(sense->info);
 		else
 			info = 0;
+#endif
 		key = sense->flags & SSD_KEY;
 
 		switch (key) {
