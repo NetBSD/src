@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.112 2004/03/24 17:21:02 atatat Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.113 2004/03/24 17:40:02 atatat Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -45,6 +45,13 @@
 #include <sys/ucontext.h>
 #include <sys/proc.h>
 #include <uvm/uvm_extern.h>
+
+/* For offsetof() */
+#ifdef _KERNEL
+#include <sys/systm.h>
+#else
+#include <stddef.h>
+#endif
 
 /*
  * Definitions for sysctl call.  The sysctl call uses a hierarchical name
@@ -97,6 +104,7 @@ struct ctlname {
 #define CTLFLAG_HIDDEN		0x00008000
 #define CTLFLAG_ALIAS		0x00010000
 #define CTLFLAG_MMAP		0x00020000
+#define CTLFLAG_OWNDESC		0x00040000
 
 /*
  * sysctl API version
@@ -135,6 +143,7 @@ struct ctlname {
 #define CTL_CREATESYM	-4		/* node create request with symbol */
 #define CTL_DESTROY	-5		/* node destroy request */
 #define CTL_MMAP	-6		/* mmap request */
+#define CTL_DESCRIBE	-7		/* get node descriptions */
 
 /*
  * Top-level identifiers
@@ -944,6 +953,7 @@ int	sysctl_query(SYSCTLFN_PROTO);
 int	sysctl_create(SYSCTLFN_RWPROTO);
 int	sysctl_destroy(SYSCTLFN_RWPROTO);
 int	sysctl_lookup(SYSCTLFN_RWPROTO);
+int	sysctl_describe(SYSCTLFN_PROTO);
 
 /*
  * simple variadic interface for adding/removing nodes
@@ -1094,6 +1104,29 @@ struct sysctlnode {
 #define sysctl_alias	sysctl_un.scu_alias
 #define sysctl_idata	sysctl_un.scu_idata
 #define sysctl_qdata	sysctl_un.scu_qdata
+
+/*
+ * when requesting a description of a node (a set of nodes, actually),
+ * you get back an "array" of these, where the actual length of the
+ * descr_str is noted in descr_len (which includes the trailing nul
+ * byte), rounded up to the nearest four (sizeof(int32_t) actually).
+ *
+ * NEXT_DESCR() will take a pointer to a description and advance it to
+ * the next description.
+ */
+struct sysctldesc {
+	int32_t		descr_num;	/* mib number of node */
+	uint32_t	descr_ver;	/* version of node */
+	uint32_t	descr_len;	/* length of description string */
+	char		descr_str[1];	/* not really 1...see above */
+};
+
+#define __sysc_desc_roundup(x) ((((x) - 1) | (sizeof(int32_t) - 1)) + 1)
+#define __sysc_desc_adv(d, l) \
+	(((const char*)(d)) + offsetof(struct sysctldesc, descr_str) + \
+		__sysc_desc_roundup(l))
+#define NEXT_DESCR(d) ((struct sysctldesc *) \
+	__sysc_desc_adv((d), (d)->descr_len))
 
 static __inline struct sysctlnode *
 sysctl_rootof(struct sysctlnode *n)
