@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.52 2001/03/03 18:06:55 bjh21 Exp $
+#	$NetBSD: MAKEDEV,v 1.53 2001/05/10 01:05:47 lukem Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -54,8 +54,7 @@
 #	raid*	RAIDframe disk driver
 #
 # Console ports:
-#	ttyv0	pccons or virtual console 0
-#	ttyv*	virtual console screen
+#	ttyv0	pccons console
 #	ttyE*	wscons
 #
 # Pointing devices:
@@ -129,7 +128,7 @@ all)
 	sh $0 tty0 tty1 pty0 pty1 pty2 pty3 st0 st1 ch0 cd0 cd1 vnd0 vnd1
 	sh $0 ccd0 ccd1 uk0 uk1 ss0
 	sh $0 raid0 raid1 raid2 raid3
-	sh $0 ttyv0 ttyv1 ttyv2 ttyv3 ttyv4 ttyv5 ttyv6 ttyv7 ttyv8 ttyv9
+	sh $0 ttyv0
 	sh $0 bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7
 	sh $0 lpa0 lpt0 tun0 tun1 tun2 ipl
 	sh $0 beep lkm qms0 pms0 local
@@ -141,7 +140,7 @@ all)
 
 ramdisk|floppy)
 	sh $0 std fd0 fd1 wd0 wd1 wd2 wd3 md0 md1 sd0 sd1 sd2 sd3
-	sh $0 tty0 tty1 pty0 ttyv0 ttyv1 ttyv2 ttyv3 ttyv4 ttyv5
+	sh $0 tty0 tty1 pty0 ttyv0
 	sh $0 st0 st1 cd0 cd1
 	;;
 
@@ -345,6 +344,8 @@ pty*)
 	4)      name=t;;
 	5)      name=u;;
 	6)      name=v;;
+		echo "$0: $i: pty unit conflicts with console ttyv* devices."
+		continue;;
 	7)      name=w;;
 	8)      name=x;;
 	9)      name=y;;
