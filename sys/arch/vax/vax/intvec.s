@@ -1,4 +1,4 @@
-/*	$NetBSD: intvec.s,v 1.42 2000/03/01 00:17:17 matt Exp $   */
+/*	$NetBSD: intvec.s,v 1.43 2000/06/02 21:51:15 matt Exp $   */
 
 /*
  * Copyright (c) 1994, 1997 Ludd, University of Lule}, Sweden.
@@ -43,6 +43,8 @@
 
 #include "opt_vax410.h"
 #include "opt_vax46.h"
+#include "opt_vax48.h"
+#include "opt_vax49.h"
 #include "opt_vax630.h"
 #include "opt_vax650.h"
 
@@ -67,7 +69,7 @@ ENTRY(namn)			; \
 #define FASTINTR(namn, rutin) \
 ENTRY(namn)			; \
 	pushr $0x3f		; \
-	calls $0,_/**/rutin	; \
+	calls $0,__CONCAT(_,rutin)	; \
 	popr $0x3f		; \
 	rei
 
@@ -126,20 +128,20 @@ _rpb:
 	NOVEC;				# Unused, 7C
 	NOVEC;				# Unused, 80
 	NOVEC;				# Unused, 84
-	INTVEC(astintr,	KSTACK)		# Asynchronous Sustem Trap, AST
+	INTVEC(astintr,	KSTACK)		# Asynchronous Sustem Trap, AST (IPL 02)
 	NOVEC;				# Unused, 8C
 	NOVEC;				# Unused, 90
 	NOVEC;				# Unused, 94
 	NOVEC;				# Unused, 98
 	NOVEC;				# Unused, 9C
-	INTVEC(softclock,ISTACK)	# Software clock interrupt
-	NOVEC;				# Unused, A4
-	NOVEC;				# Unused, A8
-	NOVEC;				# Unused, AC
-	INTVEC(netint,	ISTACK)		# Network interrupt
-	NOVEC;				# Unused, B4
-	NOVEC;				# Unused, B8
-	INTVEC(ddbtrap, ISTACK) 	# Kernel debugger trap, BC
+	INTVEC(softclock,ISTACK)	# Software clock interrupt (IPL 08)
+	NOVEC;				# Unused, A4 (IPL 09)
+	NOVEC;				# Unused, A8 (IPL 10)
+	NOVEC;				# Unused, AC (IPL 11)
+	INTVEC(softnet, ISTACK)		# Software network interrupt (IPL 12)
+	INTVEC(softserial, ISTACK)	# Software serial interrupt (IPL 13)
+	NOVEC;				# Unused, B8 (IPL 14)
+	INTVEC(ddbtrap, ISTACK) 	# Kernel debugger trap, BC (IPL 15)
 	INTVEC(hardclock,ISTACK)	# Interval Timer
 	NOVEC;				# Unused, C4
 	INTVEC(emulate, KSTACK)		# Subset instruction emulation, C8
@@ -246,10 +248,10 @@ access_v:.globl access_v	# Access cntrl viol fault,	24
 ptelen: movl	$T_PTELEN, (sp)		# PTE must expand (or send segv)
 	jbr trap;
 
-	TRAPCALL(tracep, T_TRCTRAP)
-	TRAPCALL(breakp, T_BPTFLT)
+TRAPCALL(tracep, T_TRCTRAP)
+TRAPCALL(breakp, T_BPTFLT)
 
-	TRAPARGC(arithflt, T_ARITHFLT)
+TRAPARGC(arithflt, T_ARITHFLT)
 
 ENTRY(syscall)			# Main system call
 	pushl	$T_SYSCALL
@@ -264,7 +266,7 @@ ENTRY(syscall)			# Main system call
 	mtpr	(sp)+, $PR_USP
 	popr	$0xfff
 	addl2	$8, sp
-	mtpr	$0x1f, $PR_IPL	# Be sure we can REI
+	mtpr	$IPL_HIGH, $PR_IPL	# Be sure we can REI
 	rei
 
 
@@ -279,11 +281,11 @@ ENTRY(sbiflt);
 	movab	sbifltmsg, -(sp)
 	calls	$1, _panic
 
-	TRAPCALL(astintr, T_ASTFLT)
+TRAPCALL(astintr, T_ASTFLT)
 
-	FASTINTR(softclock,softclock)
+FASTINTR(softclock,softclock)
 
-ENTRY(netint)
+ENTRY(softnet)
 	PUSHR
 
 #define DONETISR(bit, fn) \
@@ -293,26 +295,51 @@ ENTRY(netint)
 
 #undef DONETISR
 
+	movab	_softnet_head,r0
+	jsb	softintr_dispatch
 	POPR
 	rei
 
-	TRAPCALL(ddbtrap, T_KDBTRAP)
+ENTRY(softserial)
+	PUSHR
+	movab	_softserial_head,r0
+	jsb	softintr_dispatch
+	POPR
+	rei
 
-		.align	2
-		.globl	hardclock
-hardclock:	mtpr	$0xc1,$PR_ICCS		# Reset interrupt flag
-		pushr	$0x3f
+	.align	2
+softintr_dispatch:
+	movl	SHD_INTRS(r0), r0	# anything to do? (get first handler)
+	beql	3f			# nope return
+	pushl	r7			# we need to use r7 so save it
+	movl	r0, r7			# move first item to r7
+1:	tstl	SH_PENDING(r7)		# need call this one?
+	bneq	2f			# nope, go to next one
+	clrl	SH_PENDING(r7)		# clear pending flag
+	pushl	SH_ARG(r7)		# push function argument
+	calls	$1, *SH_FUNC(r7)	# call function
+2:	movl	SH_NEXT(r7), r7		# get next handler
+	bneq	1b			# if not null, process it
+	movl	(sp)+, r7		# done, restore r7
+3:	rsb				# return to caller
+
+TRAPCALL(ddbtrap, T_KDBTRAP)
+
+	.align	2
+	.globl	hardclock
+hardclock:
+	mtpr	$0xc1,$PR_ICCS		# Reset interrupt flag
+	pushr	$0x3f
 #if VAX46
-		cmpl	_vax_boardtype,$VAX_BTYP_46
-		bneq	1f
-		movl	_ka46_cpu,r0
-		clrl	0x1c(r0)
+	cmpl	_vax_boardtype,$VAX_BTYP_46
+	bneq	1f
+	clrl	_ka46_cpu+VC_DIAGTIMM
 #endif
-1:		pushl	sp
-		addl2	$24,(sp)
-		calls	$1,_hardclock
-		popr	$0x3f
-		rei
+1:	pushl	sp
+	addl2	$24,(sp)
+	calls	$1,_hardclock
+	popr	$0x3f
+	rei
 
 /*
  * Main routine for traps; all go through this.
@@ -333,7 +360,7 @@ _sret:	movl	(sp)+, fp
 	mtpr	(sp)+, $PR_USP
 	popr	$0xfff
 	addl2	$8, sp
-	mtpr	$0x1f, $PR_IPL	# Be sure we can REI
+	mtpr	$IPL_HIGH, $PR_IPL	# Be sure we can REI
 	rei
 
 sbifltmsg:
