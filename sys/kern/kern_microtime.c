@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_microtime.c,v 1.1 2003/02/05 12:06:51 nakayama Exp $	*/
+/*	$NetBSD: kern_microtime.c,v 1.2 2003/05/17 01:50:56 nakayama Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: kern_microtime.c,v 1.1 2003/02/05 12:06:51 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_microtime.c,v 1.2 2003/05/17 01:50:56 nakayama Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,7 +108,7 @@ cc_microtime(struct timeval *tvp)
 		t = ci->ci_cc_time;
 		usec = cpu_counter32() - ci->ci_cc_cc;
 		if (usec < 0)
-			usec += 0x100000000L;
+			usec += 0x100000000LL;
 		t.tv_usec += (usec * ci->ci_cc_ms_delta) / ci->ci_cc_denom;
 		while (t.tv_usec >= 1000000) {
 			t.tv_usec -= 1000000;
@@ -186,7 +186,7 @@ cc_microset(struct cpu_info *ci)
 
 	denom = ci->ci_cc_cc - denom;
 	if (denom < 0)
-		denom += 0x100000000L;
+		denom += 0x100000000LL;
 
 	delta = (t.tv_sec - ci->ci_cc_time.tv_sec) * 1000000 +
 	    (t.tv_usec - ci->ci_cc_time.tv_usec);
