@@ -33,7 +33,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)date.1	6.16 (Berkeley) 7/30/91
-.\"	$Id: date.1,v 1.5 1993/08/16 23:08:51 jtc Exp $
+.\"	$Id: date.1,v 1.6 1993/08/19 17:02:40 jtc Exp $
 .\"
 .Dd July 30, 1991
 .Dt DATE 1
@@ -107,7 +107,7 @@ in the
 manual page, as well as any arbitrary text.
 The format string for the default display is:
 .Bd -literal -offset indent
-``%a %b %e %H:%M:%S %Z n''.
+``%a %b %e %H:%M:%S %Z %Y''.
 .Ed
 .Pp
 If an operand does not have a leading plus sign, it is interpreted as
@@ -215,8 +215,8 @@ and
 .Tn VMS
 will be running on
 .Tn GMT .
-.Sh HISTORY
+.Sh STANDARDS
 The
 .Nm date
-command is expected to be compatible with
-.St -p1003.2 .
+command conforms to
+.St -p1003.2-92 .
