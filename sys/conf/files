@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.484 2001/12/15 17:47:34 bjh21 Exp $
+#	$NetBSD: files,v 1.485 2001/12/16 00:22:43 bjh21 Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -456,6 +456,11 @@ file	dev/ic/gem.c			gem
 defflag	opt_ipkdb.h		IPKDB_DP8390			: IPKDB
 define	dp8390nic
 file	dev/ic/dp8390.c			dp8390nic | IPKDB_DP8390
+
+# National Semiconductor DP83905 AT/LANTIC Ethernet media support
+#
+define	dp83905
+file	dev/ic/dp83905.c		dp83905
 
 # Macronix MX98905 Ethernet controller
 # (use as an attribute for an "ne" bus attachment)
