@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.c,v 1.57 2005/01/30 17:23:05 chs Exp $	*/
+/*	$NetBSD: uvm_amap.c,v 1.58 2005/04/06 13:58:40 yamt Exp $	*/
 
 /*
  *
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.57 2005/01/30 17:23:05 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.58 2005/04/06 13:58:40 yamt Exp $");
 
 #undef UVM_AMAP_INLINE		/* enable/disable amap inlines */
 
@@ -676,17 +676,6 @@ amap_wipeout(amap)
 
 			uvm_anfree(anon);
 		}
-
-		/*
-		 * XXX
-		 * releasing the swap space held by an N anons is an O(N^2)
-		 * operation because of the implementation of extents.
-		 * if there are many anons, tearing down an exiting process'
-		 * address space can take many seconds, which causes very
-		 * annoying pauses.  we yield here to give other processes
-		 * a chance to run.  this should be removed once the performance
-		 * of swap space management is improved.
-		 */
 
 		if (curlwp->l_cpu->ci_schedstate.spc_flags & SPCF_SHOULDYIELD)
 			preempt(1);
