@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagutils.c,v 1.13 2002/07/13 20:14:34 oster Exp $	*/
+/*	$NetBSD: rf_dagutils.c,v 1.14 2002/08/02 03:32:56 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagutils.c,v 1.13 2002/07/13 20:14:34 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagutils.c,v 1.14 2002/08/02 03:32:56 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -160,27 +160,9 @@ rf_FreeDAG(dag_h)
 {
 	RF_AccessStripeMapHeader_t *asmap, *t_asmap;
 	RF_DagHeader_t *nextDag;
-	int     i;
 
 	while (dag_h) {
 		nextDag = dag_h->next;
-		for (i = 0; dag_h->memChunk[i] && i < RF_MAXCHUNKS; i++) {
-			/* release mem chunks */
-			rf_ReleaseMemChunk(dag_h->memChunk[i]);
-			dag_h->memChunk[i] = NULL;
-		}
-
-		RF_ASSERT(i == dag_h->chunkIndex);
-		if (dag_h->xtraChunkCnt > 0) {
-			/* free xtraMemChunks */
-			for (i = 0; dag_h->xtraMemChunk[i] && i < dag_h->xtraChunkIndex; i++) {
-				rf_ReleaseMemChunk(dag_h->xtraMemChunk[i]);
-				dag_h->xtraMemChunk[i] = NULL;
-			}
-			RF_ASSERT(i == dag_h->xtraChunkIndex);
-			/* free ptrs to xtraMemChunks */
-			RF_Free(dag_h->xtraMemChunk, dag_h->xtraChunkCnt * sizeof(RF_ChunkDesc_t *));
-		}
 		rf_FreeAllocList(dag_h->allocList);
 		for (asmap = dag_h->asmList; asmap;) {
 			t_asmap = asmap;
