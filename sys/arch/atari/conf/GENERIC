@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.17 1996/09/16 06:14:24 leo Exp $
+#	$NetBSD: GENERIC,v 1.18 1996/10/04 07:08:31 leo Exp $
 #
 # Generic atari
 #
@@ -77,6 +77,7 @@ options		NFSCLIENT	# Network File System client side code
 options		COMPAT_43	# 4.3 BSD compatible system calls (required)
 options		COMPAT_10	# Compatibility to NetBSD1.0
 options		COMPAT_11	# Compatibility to NetBSD1.1
+options		COMPAT_12	# Compatibility to NetBSD1.2
 #options	COMPAT_09	# has no meaning on the atari
 #options	COMPAT_SUNOS	# Support to run Sun-3 executables
 #options	TCP_COMPAT_42	# Disable UDP checksums (not needed)
@@ -137,3 +138,7 @@ pseudo-device	rd	 1	# Boot ramdisk
 zs0	at mainbus0		# Serial support through 8530
 nvr0	at mainbus0		# nvram driver
 lpt0	at mainbus0		# centronics printer
+
+ch*	at scsibus? target ? lun ?	# SCSI changer
+ss*	at scsibus? target ? lun ?	# SCSI scanner
+uk*	at scsibus? target ? lun ?	# SCSI unknown
