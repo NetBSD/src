@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep.c,v 1.90 1996/04/11 22:29:15 cgd Exp $	*/
+/*	$NetBSD: if_ep.c,v 1.91 1996/04/19 00:01:19 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Herb Peyerl <hpeyerl@novatel.ca>
@@ -82,7 +82,7 @@
 #define PCI_VENDORID(x)		((x) & 0xFFFF)
 #define PCI_CHIPID(x)		(((x) >> 16) & 0xFFFF)
 #define PCI_CONN		0x48    /* Connector type */
-#define PCI_CBMA		0x10    /* Configuration Base Memory Address */
+#define PCI_CBIO		0x10    /* Configuration Base IO Address */
 
 
 #define ETHER_MIN_LEN	64
@@ -94,7 +94,7 @@
 struct ep_softc {
 	struct device sc_dev;
 	void *sc_ih;
-
+	bus_io_handle_t sc_ioh;
 	struct arpcom sc_arpcom;	/* Ethernet common part		*/
 	int	ep_iobase;		/* i/o bus address		*/
 	char    ep_connectors;		/* Connectors on this card.	*/
@@ -131,7 +131,7 @@ struct cfdriver ep_cd = {
 };
 
 int epintr __P((void *));
-static void epxstat __P((struct ep_softc *));
+static void eptxstat __P((struct ep_softc *));
 static int epstatus __P((struct ep_softc *));
 void epinit __P((struct ep_softc *));
 int epioctl __P((struct ifnet *, u_long, caddr_t));
@@ -146,6 +146,7 @@ void epstop __P((struct ep_softc *));
 void epsetfilter __P((struct ep_softc *));
 void epsetlink __P((struct ep_softc *));
 static void epconfig __P((struct ep_softc *, u_int));
+static void epaddcard __P((int, int, int));
 
 static u_short epreadeeprom __P((int id_port, int offset));
 static int epbusyeeprom __P((struct ep_softc *));
@@ -398,16 +399,26 @@ epattach(parent, self, aux)
 
 	if (parent->dv_cfdata->cf_driver == &pci_cd) {
 		struct pci_attach_args *pa = aux;
-		int iobase;
+		bus_io_addr_t iobase;
+		bus_io_size_t iosize;
 		u_short i;
+		int error;
 
-		if (pci_map_io(pa->pa_tag, PCI_CBMA, &iobase)) {
-			printf("%s: couldn't map io\n", sc->sc_dev.dv_xname);
+		error = pci_io_find(pa->pa_pc, pa->pa_tag, PCI_CBIO,
+		     &iobase, &iosize);
+		if (error) {
+			printf(": couldn't find io");
 			return;
 		}
+		error = bus_io_map(pa->pa_bc, iobase, iosize, &sc->sc_ioh);
+		if (error) {
+			printf(": couldn't map io");
+			return;
+		}
+		
 		sc->bustype = EP_BUS_PCI;
 		sc->ep_iobase = iobase; /* & 0xfffffff0 */
-		i = pci_conf_read(pa->pa_bc, pa->pa_tag, PCI_CONN);
+		i = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_CONN);
 
 		/*
 		 * Bits 13,12,9 of the isa adapter are the same as bits 
@@ -438,16 +449,28 @@ epattach(parent, self, aux)
 #if NPCI > 0
 	if (parent->dv_cfdata->cf_driver == &pci_cd) {
 		struct pci_attach_args *pa = aux;
+		pci_intr_handle_t intrh;
+		const char *intrstr;
 
-		pci_conf_write(pa->pa_bc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
-			       pci_conf_read(pa->pa_bc, pa->pa_tag,
-					     PCI_COMMAND_STATUS_REG) |
-			       PCI_COMMAND_MASTER_ENABLE);
+		pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
+		    pci_conf_read(pa->pa_pc, pa->pa_tag,
+		    PCI_COMMAND_STATUS_REG) | PCI_COMMAND_MASTER_ENABLE);
 
-		sc->sc_ih = pci_map_int(pa->pa_tag, IPL_NET, epintr, sc);
+                if (pci_intr_map(pa->pa_pc, pa->pa_intrtag, pa->pa_intrpin, 
+                    pa->pa_intrline, &intrh)) { 
+                        printf(": couldn't map interrupt");
+                        return;
+                }
+
+		intrstr = pci_intr_string(pa->pa_pc, intrh);
+
+		sc->sc_ih = pci_intr_establish(pa->pa_pc, intrh, IPL_NET,
+		    epintr, sc);
 		if (sc->sc_ih == NULL) {
-			printf("%s: couldn't map interrupt\n",
-			       sc->sc_dev.dv_xname);
+			printf(": couldn't establish interrupt");
+			if (intrstr != NULL)
+				printf("at %s", intrstr);
+			printf("\n");
 			return;
 		}
 		epstop(sc);
