@@ -1,4 +1,4 @@
-/*	$KAME: str2val.h,v 1.5 2000/10/04 17:41:04 itojun Exp $	*/
+/*	$KAME: str2val.h,v 1.6 2001/08/16 14:37:29 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -30,4 +30,4 @@
  */
 
 extern caddr_t val2str __P((const char *, size_t));
-extern char *str2val __P((char *, int, size_t *));
+extern char *str2val __P((const char *, int, size_t *));

@@ -1,4 +1,4 @@
-/*	$KAME: grabmyaddr.c,v 1.26 2001/04/03 15:51:55 thorpej Exp $	*/
+/*	$KAME: grabmyaddr.c,v 1.27 2001/08/16 14:37:28 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -114,21 +114,16 @@ find_myaddr(db, p)
 {
 	struct myaddrs *q;
 	char h1[NI_MAXHOST], h2[NI_MAXHOST];
-#ifdef NI_WITHSCOPEID
-	const int niflags = NI_NUMERICHOST | NI_WITHSCOPEID;
-#else
-	const int niflags = NI_NUMERICHOST;
-#endif
 
 	if (getnameinfo(p->addr, p->addr->sa_len, h1, sizeof(h1), NULL, 0,
-	    niflags) != 0)
+	    NI_NUMERICHOST | niflags) != 0)
 		return NULL;
 
 	for (q = db; q; q = q->next) {
 		if (p->addr->sa_len != q->addr->sa_len)
 			continue;
 		if (getnameinfo(q->addr, q->addr->sa_len, h2, sizeof(h2),
-		    NULL, 0, niflags) != 0)
+		    NULL, 0, NI_NUMERICHOST | niflags) != 0)
 			return NULL;
 		if (strcmp(h1, h2) == 0)
 			return q;
@@ -387,7 +382,7 @@ suitable_ifaddr6(ifname, ifaddr)
 	memset(&ifr6, 0, sizeof(ifr6));
 	strncpy(ifr6.ifr_name, ifname, strlen(ifname));
 
-	ifr6.ifr_addr = *(struct sockaddr_in6 *)ifaddr;
+	ifr6.ifr_addr = *(const struct sockaddr_in6 *)ifaddr;
 
 	if (ioctl(s, SIOCGIFAFLAG_IN6, &ifr6) < 0) {
 		plog(LLV_ERROR, LOCATION, NULL,
@@ -468,7 +463,7 @@ int
 autoconf_myaddrsport()
 {
 	struct myaddrs *p;
-	struct sockaddr_in *sin;
+	struct sockaddr_in *sin4;
 #ifdef INET6
 	struct sockaddr_in6 *sin6;
 #endif
@@ -480,8 +475,8 @@ autoconf_myaddrsport()
 	for (p = lcconf->myaddrs; p; p = p->next) {
 		switch (p->addr->sa_family) {
 		case AF_INET:
-			sin = (struct sockaddr_in *)p->addr;
-			sin->sin_port = htons(lcconf->port_isakmp);
+			sin4 = (struct sockaddr_in *)p->addr;
+			sin4->sin_port = htons(lcconf->port_isakmp);
 			break;
 #ifdef INET6
 		case AF_INET6:
