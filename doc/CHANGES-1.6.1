@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.1,v 1.1.2.49 2002/11/24 16:08:58 tron Exp $
+#	$NetBSD: CHANGES-1.6.1,v 1.1.2.50 2002/11/24 16:34:15 tron Exp $
 
 A complete list of changes from NetBSD 1.6 to NetBSD 1.6.1:
 
@@ -1572,4 +1572,32 @@ usr.sbin/rpc.yppasswdd/yppasswdd_mkpw.c		1.10
 	master NIS server without requiring the NIS accounts to exist (via
 	/etc/master.passwd, nis or other ways) on the local machine.
 	[martti, ticket #741]
+
+gnu/dist/toolchain/gcc/config/alpha/netbsd.h	1.10
+gnu/dist/toolchain/gcc/config/i386/netbsd-elf.h	1.6
+
+	Fix SELECT_SECTION() so that C++ run-time type info constructors do
+	not go in .rodata on PIC systems, which was causing text relocations
+	(and associated performance loss).
+	[mycroft, ticket #742]
+
+crypto/dist/openssl/crypto/md32_common.h	1.4
+
+	somehow main trunk was not in sync with 0.9.6f for this file.
+	noted by havard.
+	[itojun, ticket #744]
+
+sys/dev/ic/siopreg.h				1.13
+
+	Add definitions for the AIP control registers (1010 only).
+	[bouyer, ticket #746]
+
+sys/dev/ic/siop_common.c			1.30
+
+	The 1010 will generate a scsi gross error if a RAM entry is read
+	before being written (i.e. is used uninitialised). The esiop SCRIPT
+	may do this in some circonstances (and it is safe) so
+	bus_space_set_region_4() the RAM in reset routine.
+	Problem reported and fix tested by Allen Briggs.
+	[bouyer, ticket #747]
 
