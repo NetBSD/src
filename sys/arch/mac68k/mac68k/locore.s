@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.37 1995/06/21 03:36:27 briggs Exp $	*/
+/*	$NetBSD: locore.s,v 1.38 1995/06/25 02:45:14 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -270,17 +270,22 @@ Lstkadj:
  */
 _fpfline:
 #if defined(M68040)
-	cmpw	#0x202c,sp@(6)	| format type 2?
-	jne	_illinst	| no, not an FP emulation
+	cmpl	#MMU_68040,_mmutype	| 68040?
+	jne	Lfp_unimp		| no, skip FPSP
+	cmpw	#0x202c,sp@(6)		| format type 2?
+	jne	_illinst		| no, treat as illinst
+Ldofp_unimp:
 #ifdef FPSP
 	.globl	fpsp_unimp
-	jmp	fpsp_unimp	| yes, go handle it
-#else
+	jmp	fpsp_unimp		| go handle in fpsp
+#endif
+Lfp_unimp:
+#endif
+#ifdef FPU_EMULATE
 	clrl	sp@-		| pad SR to longword
 	moveml	#0xFFFF,sp@-	| save user registers
 	moveq	#T_FPEMULI,d0	| denote it as an FP emulation trap.
 	jra	fault		| do it.
-#endif
 #else
 	jra	_illinst
 #endif
@@ -288,16 +293,18 @@ _fpfline:
 _fpunsupp:
 #if defined(M68040)
 	cmpl	#MMU_68040,_mmutype	| 68040?
-	jne	_illinst		| no, treat as illinst
+	jne	Lfp_unsupp		| no, treat as illinst
 #ifdef FPSP
 	.globl	fpsp_unsupp
 	jmp	fpsp_unsupp		| yes, go handle it
-#else
+#endif
+Lfp_unsupp:
+#endif
+#ifdef FPU_EMULATE
 	clrl	sp@-			| pad SR to longword
 	moveml	#0xFFFF,sp@-		| save user registers
 	moveq	#T_FPEMULD,d0		| denote it as an FP emulation trap.
 	jra	fault			| do it.
-#endif
 #else
 	jra	_illinst
 #endif
