@@ -1,4 +1,4 @@
-/*	$NetBSD: delch.c,v 1.16 2003/08/07 16:44:20 agc Exp $	*/
+/*	$NetBSD: delch.c,v 1.17 2004/01/20 08:28:26 wiz Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)delch.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: delch.c,v 1.16 2003/08/07 16:44:20 agc Exp $");
+__RCSID("$NetBSD: delch.c,v 1.17 2004/01/20 08:28:26 wiz Exp $");
 #endif
 #endif				/* not lint */
 
@@ -46,7 +46,7 @@ __RCSID("$NetBSD: delch.c,v 1.16 2003/08/07 16:44:20 agc Exp $");
 #ifndef _CURSES_USE_MACROS
 /*
  * delch --
- *	Do an delete-char on the line, leaving (cury, curx) unchanged.
+ *	Do a delete-char on the line, leaving (cury, curx) unchanged.
  */
 int
 delch(void)
@@ -56,7 +56,7 @@ delch(void)
 
 /*
  * mvdelch --
- *      Do an delete-char on the line at (y, x) on stdscr.
+ *      Do a delete-char on the line at (y, x) on stdscr.
  */
 int
 mvdelch(int y, int x)
@@ -66,7 +66,7 @@ mvdelch(int y, int x)
 
 /*
  * mvwdelch --
- *      Do an delete-char on the line at (y, x) of the given window.
+ *      Do a delete-char on the line at (y, x) of the given window.
  */
 int
 mvwdelch(WINDOW *win, int y, int x)
@@ -81,7 +81,7 @@ mvwdelch(WINDOW *win, int y, int x)
 
 /*
  * wdelch --
- *	Do an delete-char on the line, leaving (cury, curx) unchanged.
+ *	Do a delete-char on the line, leaving (cury, curx) unchanged.
  */
 int
 wdelch(WINDOW *win)
