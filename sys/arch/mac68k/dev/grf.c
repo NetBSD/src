@@ -38,7 +38,7 @@
  * from: Utah $Hdr: grf.c 1.31 91/01/21$
  *
  *	from: from: from: from: @(#)grf.c	7.8 (Berkeley) 5/7/91
- *	$Id: grf.c,v 1.4 1994/01/30 01:15:31 briggs Exp $
+ *	$Id: grf.c,v 1.5 1994/04/05 01:30:28 briggs Exp $
  */
 
 /*
@@ -287,7 +287,6 @@ grfioctl(dev, cmd, data, flag, p)
 
 	case GRFIOCMAP:
 		error = grfmmap(dev, (caddr_t *)data, p);
-printf("error %d from map ioctl\n",error);
 		break;
 
 	case GRFIOCUNMAP:
@@ -472,7 +471,7 @@ grfmmap(dev, addrp, p)
 		printf("grfmmap(%d): addr %x\n", p->p_pid, *addrp);
 #endif
 	len = gp->g_display.gd_regsize + gp->g_display.gd_fbsize;
-	flags = MAP_FILE|MAP_SHARED;
+	flags = MAP_SHARED;
 	if (*addrp)
 		flags |= MAP_FIXED;
 	else
@@ -483,14 +482,10 @@ grfmmap(dev, addrp, p)
 	vn.v_type = VCHR;			/* XXX */
 	vn.v_specinfo = &si;			/* XXX */
 	vn.v_rdev = dev;			/* XXX */
-printf("*addrp = %x\n",*addrp);
-printf("params: 0x%x, 0x%x, %d\n",&p->p_vmspace->vm_map,(vm_offset_t *)addrp,
-	(vm_size_t)len);
-printf("frame buffer address %x\n",gp->g_display.gd_fbaddr);
 
 	error = vm_mmap(&p->p_vmspace->vm_map, (vm_offset_t *)addrp,
 			(vm_size_t)len, VM_PROT_ALL, VM_PROT_ALL, flags, (caddr_t)&vn, 0);
-printf("back\n");
+
 	return(error);
 }
 
