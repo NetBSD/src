@@ -1,4 +1,4 @@
-/*	$NetBSD: sbc.c,v 1.24 1997/04/18 17:38:08 scottr Exp $	*/
+/*	$NetBSD: sbc.c,v 1.25 1997/04/28 15:59:20 scottr Exp $	*/
 
 /*
  * Copyright (C) 1996 Scott Reynolds.  All rights reserved.
@@ -282,7 +282,7 @@ sbc_pdma_out(ncr_sc, phase, datalen, data)
 	int i, s, resid;
 	u_char icmd;
 
-	if (datalen < 64)
+	if (datalen < ncr_sc->sc_min_dma_len)
 		return ncr5380_pio_out(ncr_sc, phase, datalen, data);
 
 	s = splbio();
@@ -339,7 +339,11 @@ sbc_pdma_out(ncr_sc, phase, datalen, data)
 			break;
 	}
 	if (i != 0)
+#ifdef __notyet__	/* not sure why this is ever necessary... */
 		*byte_data = 0;
+#else
+		;
+#endif
 	else
 		printf("%s: timeout waiting for final SCI_DSR_DREQ.\n",
 			ncr_sc->sc_dev.dv_xname);
