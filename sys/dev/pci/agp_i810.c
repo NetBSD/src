@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_i810.c,v 1.21 2003/12/23 19:56:58 tron Exp $	*/
+/*	$NetBSD: agp_i810.c,v 1.22 2004/03/20 14:00:40 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.21 2003/12/23 19:56:58 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.22 2004/03/20 14:00:40 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -253,9 +253,6 @@ agp_i810_attach(struct device *parent, struct device *self, void *aux)
 			aprint_error(": detected %dk stolen memory\n%s",
 			    isc->stolen * 4, sc->as_dev.dv_xname);
 		}
-		aprint_error(": aperture size is %dM\n%s",
-		       isc->initial_aperture / 1024 / 1024,
-		       sc->as_dev.dv_xname);
 
 		/* GATT address is already in there, make sure it's enabled */
 		pgtblctl = READ4(AGP_I810_PGTBL_CTL);
@@ -298,9 +295,6 @@ agp_i810_attach(struct device *parent, struct device *self, void *aux)
 			aprint_error(": detected %dk stolen memory\n%s",
 			    isc->stolen * 4, sc->as_dev.dv_xname);
 		}
-		aprint_error(": aperture size is %dM\n%s",
-			isc->initial_aperture / 1024 / 1024,
-			sc->as_dev.dv_xname);
 
 		/* GATT address is already in there, make sure it's enabled */
 		pgtblctl = READ4(AGP_I810_PGTBL_CTL);
