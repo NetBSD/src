@@ -1,4 +1,4 @@
-.\"	$NetBSD: chmod.2,v 1.9 1997/05/16 15:31:02 kleink Exp $
+.\"	$NetBSD: chmod.2,v 1.10 1997/07/12 18:38:06 perry Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -155,6 +155,14 @@ The named file resides on a read-only file system.
 points outside the process's allocated address space.
 .It Bq Er EIO
 An I/O error occurred while reading from or writing to the file system.
+.It Bq Er EFTYPE
+The effective user ID is not the super-user, the
+.Fa mode
+includes the sticky bit
+.Pq Dv S_ISVTX ,
+and
+.Fa path
+does not refer to a directory.
 .El
 .Pp
 .Fn Fchmod
@@ -169,6 +177,14 @@ refers to a socket, not to a file.
 The file resides on a read-only file system.
 .It Bq Er EIO
 An I/O error occurred while reading from or writing to the file system.
+.It Bq Er EFTYPE
+The effective user ID is not the super-user, the
+.Fa mode
+includes the sticky bit
+.Pq Dv S_ISVTX ,
+and
+.Fa fd
+does not refer to a directory.
 .El
 .Sh SEE ALSO
 .Xr chmod 1 ,
