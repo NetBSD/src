@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.6 1995/03/26 03:27:55 glass Exp $	*/
+/*	$NetBSD: misc.c,v 1.7 1997/01/09 12:40:10 tls Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,9 +38,9 @@
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)misc.c	8.3 (Berkeley) 4/2/94";
+static char sccsid[] = "@(#)misc.c	8.4 (Berkeley) 4/27/95";
 #else
-static char rcsid[] = "$NetBSD: misc.c,v 1.6 1995/03/26 03:27:55 glass Exp $";
+static char rcsid[] = "$NetBSD: misc.c,v 1.7 1997/01/09 12:40:10 tls Exp $";
 #endif
 #endif /* not lint */
 
@@ -141,7 +141,6 @@ compare(dest)
 void
 badfmt()
 {
-
 	errno = EFTYPE;
 	err(1, "%s", archive);
 }
@@ -150,6 +149,5 @@ void
 error(name)
 	char *name;
 {
-
 	err(1, "%s", name);
 }

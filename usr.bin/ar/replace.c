@@ -1,4 +1,4 @@
-/*	$NetBSD: replace.c,v 1.6 1995/03/26 03:28:01 glass Exp $	*/
+/*	$NetBSD: replace.c,v 1.7 1997/01/09 12:40:12 tls Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,9 +38,9 @@
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)replace.c	8.3 (Berkeley) 4/2/94";
+static char sccsid[] = "@(#)replace.c	8.4 (Berkeley) 4/27/95";
 #else
-static char rcsid[] = "$NetBSD: replace.c,v 1.6 1995/03/26 03:28:01 glass Exp $";
+static char rcsid[] = "$NetBSD: replace.c,v 1.7 1997/01/09 12:40:12 tls Exp $";
 #endif
 #endif /* not lint */
 
@@ -109,7 +109,7 @@ replace(argv)
 			}
 			(void)fstat(sfd, &sb);
 			if (options & AR_U && sb.st_mtime <= chdr.date) {
-				close(sfd);
+				(void)close(sfd);
 				goto useold;
 			}
 
