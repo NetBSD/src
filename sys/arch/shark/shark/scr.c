@@ -1,4 +1,4 @@
-/*	$NetBSD: scr.c,v 1.12 2003/11/07 18:49:29 martin Exp $	*/
+/*	$NetBSD: scr.c,v 1.13 2004/07/29 18:39:00 drochner Exp $	*/
 
 /*
  * Copyright 1997
@@ -102,7 +102,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scr.c,v 1.12 2003/11/07 18:49:29 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scr.c,v 1.13 2004/07/29 18:39:00 drochner Exp $");
 
 #include "opt_ddb.h"
 
@@ -598,7 +598,7 @@ static unsigned char hatStack[HATSTACKSIZE];   /* actual stack used during a FIQ
 */
 
 /* configure routines */
-int     scrprobe    __P((struct device *, void *, void *));
+int     scrprobe    __P((struct device *, struct cfdata *, void *));
 void    scrattach   __P((struct device *, struct device *, void *));
 
 static void   initStates           __P((struct scr_softc * sc)); 
@@ -654,7 +654,7 @@ static void scrUntimeout   __P((void (*func)(struct scr_softc*,int), struct scr_
 
 
 CFATTACH_DECL(scr, sizeof(struct scr_softc),
-    (cfmatch_t)scrprobe, scrattach, NULL, NULL);
+    scrprobe, scrattach, NULL, NULL);
 
 extern struct cfdriver scr_cd;
 
@@ -703,7 +703,7 @@ const struct cdevsw scr_cdevsw = {
 */
 int scrprobe(parent, match, aux)
     struct  device  *parent;
-    void            *match;
+    struct cfdata   *match;
     void            *aux;
 {
     struct isa_attach_args  *ia = aux;
