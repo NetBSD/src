@@ -1,4 +1,4 @@
-/*	$NetBSD: podulebus_io.c,v 1.1 1997/01/17 01:00:47 mark Exp $	*/
+/*	$NetBSD: podulebus_io.c,v 1.2 1997/01/26 01:55:02 mark Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -59,15 +59,18 @@ struct bus_space podulebus_bs_tag = {
 	podulebus_alloc,
 	podulebus_free,
 
+	/* barrier */
+	podulebus_barrier,
+
 	/* read (single) */
 	podulebus_r_1,
 	podulebus_r_2,
 	podulebus_r_4,
 	podulebus_r_8,
 
-	/* read multi */
+	/* read multiple */
 	podulebus_rm_1,
-	podulebus_rm_2,
+   	podulebus_rm_2,
 	podulebus_rm_4,
 	podulebus_rm_8,
 
@@ -83,7 +86,7 @@ struct bus_space podulebus_bs_tag = {
 	podulebus_w_4,
 	podulebus_w_8,
 
-	/* write multi */
+	/* write multiple */
 	podulebus_wm_1,
 	podulebus_wm_2,
 	podulebus_wm_4,
@@ -95,17 +98,23 @@ struct bus_space podulebus_bs_tag = {
 	podulebus_wr_4,
 	podulebus_wr_8,
 
-	/* set multi */
-	/* XXX IMPLEMENT */
+	/* set multiple */
+	podulebus_sm_1,
+	podulebus_sm_2,
+	podulebus_sm_4,
+	podulebus_sm_8,
 
 	/* set region */
-	/* XXX IMPLEMENT */
+	podulebus_sr_1,
+	podulebus_sr_2,
+	podulebus_sr_4,
+	podulebus_sr_8,
 
 	/* copy */
-	/* XXX IMPLEMENT */
-
-	/* barrier */
-	podulebus_barrier
+	podulebus_c_1,
+	podulebus_c_2,
+	podulebus_c_4,
+	podulebus_c_8,
 };
 
 /* bus space functions */
