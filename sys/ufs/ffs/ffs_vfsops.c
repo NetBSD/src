@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.65 2000/06/15 22:35:37 fvdl Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.66 2000/06/16 00:30:15 matt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -39,6 +39,7 @@
 #include "opt_ffs.h"
 #include "opt_quota.h"
 #include "opt_compat_netbsd.h"
+#include "opt_softdep.h"
 #endif
 
 #include <sys/param.h>
@@ -182,6 +183,11 @@ ffs_mount(mp, path, data, ndp, p)
 	error = copyin(data, (caddr_t)&args, sizeof (struct ufs_args));
 	if (error)
 		return (error);
+
+#if !defined(SOFTDEP)
+	mp->mnt_flags &= ~MNT_SOFTDEP;
+#endif
+
 	/*
 	 * If updating, check whether changing from read-only to
 	 * read/write; if there is no device name, that's all we do.
@@ -225,7 +231,7 @@ ffs_mount(mp, path, data, ndp, p)
 			if (error == 0 && ffs_cgupdate(ump, MNT_WAIT) == 0)
 				fs->fs_flags &= ~FS_DOSOFTDEP;
 				(void) ffs_sbupdate(ump, MNT_WAIT);
-#else
+#elif defined(SOFTDEP)
 			mp->mnt_flag |= MNT_SOFTDEP;
 #endif
 		}
