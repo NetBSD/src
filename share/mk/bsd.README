@@ -304,4 +304,4 @@ if it exists, as well as the include file <bsd.man.mk>.
 It has rules for building profiled objects; profiled libraries are
 built by default.
 
-Libraries are ranlib'd before installation.
+Libraries are ranlib'd when made.
