@@ -1,8 +1,7 @@
-/*	$NetBSD: getnameinfo.c,v 1.30 2001/10/05 01:39:38 itojun Exp $	*/
+/*	$NetBSD: getnameinfo.c,v 1.31 2001/10/05 20:51:19 bjh21 Exp $	*/
 /*	$KAME: getnameinfo.c,v 1.45 2000/09/25 22:43:56 itojun Exp $	*/
 
 /*
- * Copyright (c) 2000 Ben Harris.
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
  *
@@ -45,18 +44,13 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getnameinfo.c,v 1.30 2001/10/05 01:39:38 itojun Exp $");
+__RCSID("$NetBSD: getnameinfo.c,v 1.31 2001/10/05 20:51:19 bjh21 Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <net/if.h>
-#include <net/if_dl.h>
-#if 0
-#include <net/if_ieee1394.h>
-#endif
-#include <net/if_types.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <arpa/nameser.h>
@@ -96,16 +90,11 @@ struct sockinet {
 	u_short	si_port;
 };
 
-static int getnameinfo_inet __P((const struct sockaddr *, socklen_t, char *,
-    size_t, char *, size_t, int));
 #ifdef INET6
 static int ip6_parsenumeric __P((const struct sockaddr *, const char *, char *,
 				 size_t, int));
 static int ip6_sa2str __P((const struct sockaddr_in6 *, char *, size_t, int));
 #endif
-static int getnameinfo_link __P((const struct sockaddr *, socklen_t, char *,
-    size_t, char *, size_t, int));
-static int hexname __P((u_int8_t *, size_t, char *, size_t));
 
 /* 2553bis: use EAI_xx for getnameinfo */
 #define ENI_NOSOCKET 	EAI_FAIL		/*XXX*/
@@ -116,39 +105,8 @@ static int hexname __P((u_int8_t *, size_t, char *, size_t));
 #define ENI_FAMILY	EAI_FAMILY
 #define ENI_SALEN	EAI_FAMILY
 
-/*
- * Top-level getnameinfo() code.  Look at the address family, and pick an
- * appropriate function to call.
- */
 int
 getnameinfo(sa, salen, host, hostlen, serv, servlen, flags)
-	const struct sockaddr *sa;
-	socklen_t salen;
-	char *host, *serv;
-	size_t hostlen, servlen;
-	int flags;
-{
-
-	switch (sa->sa_family) {
-	case AF_INET:
-	case AF_INET6:
-		return getnameinfo_inet(sa, salen, host, hostlen,
-		    serv, servlen, flags);
-	case AF_LINK:
-		return getnameinfo_link(sa, salen, host, hostlen,
-		    serv, servlen, flags);
-	default:
-		return EAI_FAMILY;
-	}
-}	
-
-
-/*
- * getnameinfo_inet():
- * Format an IPv4 or IPv6 sockaddr into a printable string.
- */
-static int
-getnameinfo_inet(sa, salen, host, hostlen, serv, servlen, flags)
 	const struct sockaddr *sa;
 	socklen_t salen;
 	char *host;
@@ -439,108 +397,3 @@ ip6_sa2str(sa6, buf, bufsiz, flags)
 		return n;
 }
 #endif /* INET6 */
-
-
-/*
- * getnameinfo_link():
- * Format a link-layer address into a printable format, paying attention to
- * the interface type.
- */
-static int
-getnameinfo_link(const struct sockaddr *sa, socklen_t salen,
-    char *host, size_t hostlen, char *serv, size_t servlen, int flags)
-{
-	const struct sockaddr_dl *sdl = (const struct sockaddr_dl *)sa;
-#if 0
-	struct ieee1394_hwaddr *iha;
-#endif
-	int n;
-
-	if (serv != NULL && servlen > 0)
-		*serv = '\0';
-
-	if (sdl->sdl_nlen == 0 && sdl->sdl_alen == 0 && sdl->sdl_slen == 0) {
-		n = snprintf(host, hostlen, "link#%d", sdl->sdl_index);
-		if (n > hostlen) {
-			*host = '\0';
-			return EAI_MEMORY;
-		}
-		return 0;
-	}
-
-	switch (sdl->sdl_type) {
-#ifdef IFT_ECONET
-	case IFT_ECONET:
-		if (sdl->sdl_alen < 2)
-			return EAI_FAMILY;
-		if (LLADDR(sdl)[1] == 0)
-			n = snprintf(host, hostlen, "%d", LLADDR(sdl)[0]);
-		else
-			n = snprintf(host, hostlen, "%d.%d",
-			    LLADDR(sdl)[1], LLADDR(sdl)[0]);
-		if (n >= hostlen) {
-			*host = '\0';
-			return EAI_MEMORY;
-		} else
-			return 0;
-#endif
-#if 0
-	case IFT_IEEE1394:
-		if (sdl->sdl_alen < sizeof(iha->iha_uid))
-			return EAI_FAMILY;
-		iha = (struct ieee1394_hwaddr *)LLADDR(sdl);
-		return hexname(iha->iha_uid, sizeof(iha->iha_uid),
-		    host, hostlen);
-#endif
-	/*
-	 * The following have zero-length addresses.
-	 * IFT_ATM	(net/if_atmsubr.c)
-	 * IFT_FAITH	(net/if_faith.c)
-	 * IFT_GIF	(net/if_gif.c)
-	 * IFT_LOOP	(net/if_loop.c)
-	 * IFT_PPP	(net/if_ppp.c, net/if_spppsubr.c)
-	 * IFT_SLIP	(net/if_sl.c, net/if_strip.c)
-	 * IFT_STF	(net/if_stf.c)
-	 * IFT_L2VLAN	(net/if_vlan.c)
-	 * IFT_PROPVIRTUAL (net/if_bridge.h>
-	 */
-	/*
-	 * The following use IPv4 addresses as link-layer addresses:
-	 * IFT_OTHER	(net/if_gre.c)
-	 * IFT_OTHER	(netinet/ip_ipip.c)
-	 */
-	case IFT_ARCNET: /* default below is believed correct for all these. */
-	case IFT_ETHER:
-	case IFT_FDDI:
-	case IFT_HIPPI:
-	case IFT_ISO88025:
-	default:
-		return hexname(LLADDR(sdl), sdl->sdl_alen, host, hostlen);
-	}
-}
-
-static int
-hexname(cp, len, host, hostlen)
-	u_int8_t *cp;
-	char *host;
-	size_t len, hostlen;
-{
-	int i, n, space = hostlen;
-	char *outp = host;
-
-	*outp = '\0';
-	for (i = 0; i < len; i++) {
-		n = snprintf(outp, space, "%s%02x", i ? ":" : "", cp[i]);
-		if (n < 0 || n >= space) {
-			*host = '\0';
-			return EAI_MEMORY;
-		}
-		outp += n;
-		space -= n;
-		if (space <= 0) {
-			*host = '\0';
-			return EAI_MEMORY;
-		}
-	}
-	return 0;
-}
