@@ -1,4 +1,4 @@
-.\"	$NetBSD: dlfcn.3,v 1.18 2004/11/11 14:47:02 jmmv Exp $
+.\"	$NetBSD: dlfcn.3,v 1.18.2.1 2005/03/21 21:25:37 jwise Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -55,9 +55,9 @@ dynamically linked program automatically.)
 .Ft "int"
 .Fn dlclose "void *handle"
 .Ft "void *"
-.Fn dlsym "void *handle" "const char *symbol"
+.Fn dlsym "void * restrict handle" "const char * restrict symbol"
 .Ft "int"
-.Fn dladdr "void *addr" "Dl_info *dli"
+.Fn dladdr "void * restrict addr" "Dl_info * restrict dli"
 .Ft "int"
 .Fn dlctl "void *handle" "int cmd" "void *data"
 .Ft "char *"
