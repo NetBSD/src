@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.21 1997/01/08 11:28:03 leo Exp $	*/
+/*	$NetBSD: ite.c,v 1.22 1997/01/10 21:24:25 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -754,12 +754,13 @@ ite_reset(ip)
 }
 
 /*
- * has to be global becuase of the shared filters.
+ * has to be global because of the shared filters.
  */
-static u_char key_mod;
 static u_char last_dead;
 
-/* Used in console at startup only */
+/*
+ * Used in console at startup only and for DDB.
+ */
 int
 ite_cnfilter(c, caller)
 u_int		c;
@@ -779,39 +780,6 @@ enum caller	caller;
 	s = spltty();
 
 	/*
-	 * Handle special keys
-	 */
-	switch(c) {
-		case KBD_LEFT_SHIFT:
-			mask = KBD_MOD_LSHIFT;
-			break;
-		case KBD_RIGHT_SHIFT:
-			mask = KBD_MOD_RSHIFT;
-			break;
-		case KBD_CTRL:
-			mask = KBD_MOD_CTRL;
-			break;
-		case KBD_ALT:
-			mask = KBD_MOD_ALT;
-			break;
-		case KBD_CAPS_LOCK:
-			/* CAPSLOCK is a toggle */
-			if(!up)
-				key_mod ^= KBD_MOD_CAPS;
-			splx(s);
-			return -1;
-			break;
-	}
-	if(mask) {
-		if(up)
-			key_mod &= ~mask;
-		else
-			key_mod |= mask;
-		splx(s);
-		return -1;
-	}	
-
-	/*
 	 * No special action if key released
 	 */
 	if(up) {
@@ -820,19 +788,19 @@ enum caller	caller;
 	}
 	
 	/* translate modifiers */
-	if(key_mod & KBD_MOD_SHIFT) {
-		if(key_mod & KBD_MOD_ALT)
+	if(kbd_modifier & KBD_MOD_SHIFT) {
+		if(kbd_modifier & KBD_MOD_ALT)
 			key = kbdmap->alt_shift_keys[c];
 		else key = kbdmap->shift_keys[c];
 	}
-	else if(key_mod & KBD_MOD_ALT)
+	else if(kbd_modifier & KBD_MOD_ALT)
 			key = kbdmap->alt_keys[c];
 	else {
 		key = kbdmap->keys[c];
 		/*
 		 * If CAPS and key is CAPable (no pun intended)
 		 */
-		if((key_mod & KBD_MOD_CAPS) && (key.mode & KBD_MODE_CAPS))
+		if((kbd_modifier & KBD_MOD_CAPS) && (key.mode & KBD_MODE_CAPS))
 			key = kbdmap->shift_keys[c];
 	}
 	code = key.code;
@@ -864,7 +832,7 @@ enum caller	caller;
 		last_dead = 0;
 	}
 #endif
-	if(key_mod & KBD_MOD_CTRL)
+	if(kbd_modifier & KBD_MOD_CTRL)
 		code &= 0x1f;
 
 	/*
@@ -926,40 +894,6 @@ enum caller	caller;
 	 */
 	rem_sicallback((si_farg)ite_filter);
 
-
-	/*
-	 * Handle special keys
-	 */
-	switch(c) {
-		case KBD_LEFT_SHIFT:
-			mask = KBD_MOD_LSHIFT;
-			break;
-		case KBD_RIGHT_SHIFT:
-			mask = KBD_MOD_RSHIFT;
-			break;
-		case KBD_CTRL:
-			mask = KBD_MOD_CTRL;
-			break;
-		case KBD_ALT:
-			mask = KBD_MOD_ALT;
-			break;
-		case KBD_CAPS_LOCK:
-			/* CAPSLOCK is a toggle */
-			if(!up)
-				key_mod ^= KBD_MOD_CAPS;
-			splx(s);
-			return;
-			break;
-	}
-	if(mask) {
-		if(up)
-			key_mod &= ~mask;
-		else
-			key_mod |= mask;
-		splx(s);
-		return;
-	}	
-
 	/*
 	 * Stop repeating on up event
 	 */
@@ -984,7 +918,7 @@ enum caller	caller;
 	/*
 	 * Handle ite-switching ALT + Fx
 	 */
-	if((key_mod == KBD_MOD_ALT) && (c >= 0x3b) && (c <= 0x44)) {
+	if((kbd_modifier == KBD_MOD_ALT) && (c >= 0x3b) && (c <= 0x44)) {
 		ite_switch(c - 0x3b);
 		splx(s);
 		return;
@@ -992,15 +926,17 @@ enum caller	caller;
 	/*
 	 * Safety button, switch back to ascii keymap.
 	 */
-	if(key_mod == (KBD_MOD_ALT | KBD_MOD_LSHIFT) && c == 0x3b) {
+	if(kbd_modifier == (KBD_MOD_ALT | KBD_MOD_LSHIFT) && c == 0x3b) {
 		/* ALT + LSHIFT + F1 */
 		bcopy(&ascii_kbdmap, kbdmap, sizeof(struct kbdmap));
 		splx(s);
 		return;
 #ifdef DDB
 	}
-	else if(key_mod == (KBD_MOD_ALT | KBD_MOD_LSHIFT) && c == 0x43) {
-		/* ALT + LSHIFT + F9 */
+	else if(kbd_modifier == (KBD_MOD_ALT | KBD_MOD_LSHIFT) && c == 0x43) {
+		/*
+		 * ALT + LSHIFT + F9 -> Debugger!
+		 */
 		Debugger();
 		splx(s);
 		return;
@@ -1018,19 +954,19 @@ enum caller	caller;
 	/*
 	 * Translate modifiers
 	 */
-	if(key_mod & KBD_MOD_SHIFT) {
-		if(key_mod & KBD_MOD_ALT)
+	if(kbd_modifier & KBD_MOD_SHIFT) {
+		if(kbd_modifier & KBD_MOD_ALT)
 			key = kbdmap->alt_shift_keys[c];
 		else key = kbdmap->shift_keys[c];
 	}
-	else if(key_mod & KBD_MOD_ALT)
+	else if(kbd_modifier & KBD_MOD_ALT)
 			key = kbdmap->alt_keys[c];
 	else {
 		key = kbdmap->keys[c];
 		/*
 		 * If CAPS and key is CAPable (no pun intended)
 		 */
-		if((key_mod & KBD_MOD_CAPS) && (key.mode & KBD_MODE_CAPS))
+		if((kbd_modifier & KBD_MOD_CAPS) && (key.mode & KBD_MODE_CAPS))
 			key = kbdmap->shift_keys[c];
 	}
 	code = key.code;
@@ -1078,7 +1014,7 @@ enum caller	caller;
 	if(!(key.mode & KBD_MODE_STRING)
 	    	&& (!(key.mode & KBD_MODE_KPAD)
 		|| (kbd_ite && !kbd_ite->keypad_appmode))) {
-		if(key_mod & KBD_MOD_CTRL)
+		if(kbd_modifier & KBD_MOD_CTRL)
 			code &= 0x1f;
 	}
 	else if((key.mode & KBD_MODE_KPAD)
