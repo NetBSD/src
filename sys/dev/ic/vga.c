@@ -1,4 +1,4 @@
-/* $NetBSD: vga.c,v 1.73 2004/05/28 22:38:28 christos Exp $ */
+/* $NetBSD: vga.c,v 1.74 2004/05/29 02:04:56 christos Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.73 2004/05/28 22:38:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.74 2004/05/29 02:04:56 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -122,7 +122,9 @@ static int vga_mapchar(void *, int, unsigned int *);
 void vga_putchar(void *, int, int, u_int, long);
 static int vga_allocattr(void *, int, int, int, long *);
 static void vga_copyrows(void *, int, int, int);
+#ifdef WSDISPLAY_SCROLLSUPPORT
 void vga_scroll (void *, void *, int);
+#endif
 
 const struct wsdisplay_emulops vga_emulops = {
 	pcdisplay_cursor,
@@ -1364,10 +1366,12 @@ vga_scroll(void *v, void *cookie, int lines)
 void
 vga_putchar(void *c, int row, int col, u_int uc, long attr)
 {
+#ifdef WSDISPLAY_SCROLLSUPPORT
 	struct vgascreen *scr = c;
 
 	if (scr->pcs.visibleoffset != scr->pcs.dispoffset)
 		vga_scroll(scr->cfg, scr, WSDISPLAY_SCROLL_BACKWARD);
+#endif
 
 	pcdisplay_putchar(c, row, col, uc, attr);
 }
