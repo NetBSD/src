@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot_sparc.8,v 1.4 1995/04/25 11:37:25 pk Exp $
+.\"	$NetBSD: boot_sparc.8,v 1.5 1996/08/09 10:32:21 mrg Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -45,6 +45,9 @@ bootstrapping procedures
 .Nm reboot
 .Op Fl n
 .Op Fl q
+.Oo
+.Ar -- <boot string>
+.Oc
 .Sh DESCRIPTION
 .Sy Power fail and crash recovery.
 Normally, the system will reboot itself at power-up or after crashes.
@@ -73,6 +76,9 @@ and the primary swap partition.
 .\"flag to the SunOS boot loader will bring the system up in debug mode.
 .\"Here it waits for a kernel debugger connect; see
 .\".Xr kgdb 8 .
+Any extra flags or arguments, the after the -- separator, 
+.Ar <boot string>
+are passed to the boot prom.
 Other flags are currently ignored.
 .Pp
 The Sparc boot rom comes in two flavours: an ``old-style'' rom is used in
