@@ -1,4 +1,4 @@
-/*	$NetBSD: sb_isapnp.c,v 1.30 1999/02/19 16:10:44 mycroft Exp $	*/
+/*	$NetBSD: sb_isapnp.c,v 1.31 1999/03/22 07:41:36 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -129,10 +129,10 @@ sb_isapnp_attach(parent, self, aux)
 
 #if NMIDI > 0
 	if (ipa->ipa_nio > 1) {
-		sc->sc_mpu_sc.iobase = ipa->ipa_io[1].base;
-		sc->sc_mpu_sc.ioh = ipa->ipa_io[1].h;
-	} else
-		sc->sc_mpu_sc.iobase = 0;
+		sc->sc_hasmpu = 1;
+		sc->sc_mpu.iot = ipa->ipa_iot;
+		sc->sc_mpu.ioh = ipa->ipa_io[1].h;
+	}
 #endif
 
 	if (!sbmatch(sc)) {
