@@ -55,6 +55,7 @@ $set 3 run.c stuff
 14 be edited by issuing the List(F4) command, and toggling desired options
 15 with the spacebar.  Press the ENTER key to return from the list popup.
 16 No help is available for this screen.
+17 Are you sure? (Y/n)
 $set 4 menu titles and stuff
 1 Select choice
 2 Generating form data, please wait
