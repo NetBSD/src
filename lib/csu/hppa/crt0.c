@@ -1,11 +1,11 @@
-/*	$NetBSD: crt0.c,v 1.1 2002/06/06 20:31:20 fredette Exp $	*/
-
-/*	$OpenBSD: crt0.c,v 1.1 2001/08/19 19:57:54 mickey Exp $	*/
+/*	$NetBSD: crt0.c,v 1.2 2002/07/01 15:56:41 fredette Exp $	*/
 
 /*
- * Copyright (c) 2001 Michael Shalayeff
+ * Copyright (c) 2002 Matt Fredette
+ * Copyright (c) 1999 Klaus Klein
+ * Copyright (c) 1995 Christopher G. Demetriou
  * All rights reserved.
- *
+ * 
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -16,93 +16,140 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by Michael Shalayeff.
+ *          This product includes software developed for the
+ *          NetBSD Project.  See http://www.netbsd.org/ for
+ *          information about NetBSD.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
- *
+ * 
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE AUTHOR OR HIS RELATIVES BE LIABLE FOR ANY DIRECT,
- * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
- * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- * SERVICES; LOSS OF MIND, USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
- * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
- * THE POSSIBILITY OF SUCH DAMAGE.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * 
+ * <<Id: LICENSE,v 1.2 2000/06/14 15:57:33 cgd Exp>>
  */
-
-int	global __asm ("$global$") = 0;
-int	sh_func_adrs __asm ("$$sh_func_adrs") = 0;
-
-#if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "$OpenBSD: crt0.c,v 1.1 2001/08/19 19:57:54 mickey Exp $";
-#endif /* LIBC_SCCS and not lint */
-
-#include <stdlib.h>
-#include <sys/syscall.h>
-#include <sys/fcntl.h>
-#include <sys/exec.h>
-#include <paths.h>
 
 #include "common.h"
 
-/*
- * Lots of the chunks of this file cobbled together from pieces of
- * other OpenBSD crt files, including the common code.
- */
+int	__global __asm ("$global$") = 0;
 
-char	**environ;
+static void __start __P((struct ps_strings *,
+    void (*cleanup) __P((void)), const Obj_Entry *, int)) 
+#ifdef __GNUC__
+    __attribute__((__unused__))
+#endif
+    ;
 
-extern void	__init __P((void));
-extern void	__fini __P((void));
+__asm("\n"
+"	.text				\n"
+"	.align	4			\n"
+"	.globl	_start			\n"
+"	.type	_start,@function	\n"
+"_start					\n"
+"	.import	$global$, data		\n"
+"	ldil	L%$global$, %r27	\n"
+"	ldo	R%$global$(%r27), %r27	\n"
+"	copy	%r27, %r19		\n"
+"	b	__start			\n"
+"	copy	%r27, %arg3		\n");
 
-void __main __P((void));
-void __main() {}
-
-__asm(".align 4\n\t.globl $START$\n\t.type $START$,@function\n$START$\n");
-
-void __start __P((char **, void (*cleanup) __P((void)), const Obj_Entry *));
-void
-__start(sp, cleanup, obj)
-	char **sp;
+static void
+__start(ps_strings, cleanup, obj, dp)
+	struct ps_strings *ps_strings;
 	void (*cleanup) __P((void));		/* from shared loader */
 	const Obj_Entry *obj;			/* from shared loader */
+	int dp;
 {
-	struct ps_strings *arginfo = (struct ps_strings *)sp;
-	char **argv, *namep;
+	int argc;
+	char **argv;
+	int fini_plabel[2];
 
-	__asm __volatile (".import $global$, data\n\t"
-			  "ldil L%%$global$, %%r27\n\t"
-			  "ldo	R%%$global$(%%r27), %%r27" ::: "r27");
+	argc = ps_strings->ps_nargvstr;
+	argv = ps_strings->ps_argvstr;
+	environ = ps_strings->ps_envstr;
 
-	argv = arginfo->ps_argvstr;
-	environ = arginfo->ps_envstr;
-	if ((namep = argv[0]) != NULL) {	/* NULL ptr if argc = 0 */
-		if ((__progname = _strrchr(namep, '/')) == NULL)
-			__progname = namep;
+	if ((__progname = argv[0]) != NULL) {	/* NULL ptr if argc = 0 */
+		if ((__progname = _strrchr(__progname, '/')) == NULL)
+			__progname = argv[0];
 		else
 			__progname++;
 	}
+
+	if (ps_strings != (struct ps_strings *)0)
+		__ps_strings = ps_strings;
+
+#ifdef DYNAMIC
+	/*
+	 * XXX fredette - when not compiling PIC, you currently 
+	 * can't detect an undefined weak symbol by seeing if 
+	 * its address is NULL.  The compiler emits code to find 
+	 * _DYNAMIC relative to %dp, the assembler notes the 
+	 * needed relocations, but when the linker sees that the 
+	 * (weak) symbol isn't defined it drops the ball - the 
+	 * relocations are never filled, and the binary ends up 
+	 * with code that sees an address of %dp plus zero, 
+	 * which != NULL.
+	 *
+	 * Arguably the linker could/should distinguish between
+	 * code that is after a weak undefined symbol's contents 
+	 * from code that is after its address.  In the first case, 
+	 * it would warn and/or bail.  In the second case, it 
+	 * would fix up instructions to give a symbol address
+	 * of NULL.
+	 *
+	 * For now, we take the easy way out and compare &_DYNAMIC 
+	 * to %dp, as well as to NULL.
+	 */
+	if (&_DYNAMIC != NULL && (int)&_DYNAMIC != dp)
+		_rtld_setup(cleanup, obj);
+#endif
 
 #ifdef MCRT0
 	atexit(_mcleanup);
 	monstartup((u_long)&_eprol, (u_long)&_etext);
 #endif
 
-	exit(main(arginfo->ps_nargvstr, argv, environ));
+	/*
+	 * Since crt0.o, crtbegin.o, and crtend.o are always
+	 * compiled PIC, they must have %r19 set correctly on
+	 * entry to any function they contain.  However, when
+	 * a program is linked statically, the linker does
+	 * not fill a PLABEL relocation with a pointer to a 
+	 * true PLABEL, it just fills it with the offset of the
+	 * function.  This shows the linker's assumption that 
+	 * when linking statically, *all* of the code has *not* 
+	 * been compiled PIC.  I guess to assume otherwise
+	 * would be a performance hit, as you would end up
+	 * with unnecessary PLABELs for function pointers.
+	 *
+	 * But here, passing the address of the PIC _fini to
+	 * atexit, we must make sure that we pass a PLABEL.
+	 */
+	fini_plabel[0] = (int)_fini;
+	if (fini_plabel[0] & 2)
+		/* _fini is already a PLABEL. */
+		atexit(_fini);
+	else {
+		fini_plabel[1] = dp;
+		atexit((void (*)(void))(((int)fini_plabel) | 2));
+	}
+	_init();
+
+	exit(main(argc, argv, environ));
 }
 
 /*
  * NOTE: Leave the RCS ID _after_ __start(), in case it gets placed in .text.
  */
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.1 2002/06/06 20:31:20 fredette Exp $");
+__RCSID("$NetBSD: crt0.c,v 1.2 2002/07/01 15:56:41 fredette Exp $");
 #endif /* LIBC_SCCS and not lint */
-
-#ifdef MCRT0
-__asm(".export _eprol, entry\n");
-#endif
 
 #include "common.c"
