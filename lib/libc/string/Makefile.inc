@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	5.6 (Berkeley) 3/5/91
-#	$Id: Makefile.inc,v 1.27 1994/06/22 00:15:22 cgd Exp $
+#	$Id: Makefile.inc,v 1.28 1994/07/06 04:07:53 mycroft Exp $
 
 # string sources
 .PATH: ${.CURDIR}/arch/${MACHINE_ARCH}/string ${.CURDIR}/string
@@ -48,17 +48,17 @@ SRCS+=	bcmp.c bcopy.c bzero.S ffs.S index.c memchr.c memcmp.c memset.c \
 .if empty(SRCS:Mmemmove.S)
 OBJS+=	memmove.o
 memmove.o: bcopy.c
-	${CC} -DMEMMOVE ${CFLAGS} -c ${.ALLSRC} -o ${.TARGET}
+	${CC} -DMEMMOVE ${CFLAGS} ${CPPFLAGS} -c ${.ALLSRC} -o ${.TARGET}
 	@${LD} -x -r ${.TARGET}
 	@mv a.out ${.TARGET}
 
 memmove.po: bcopy.c
-	${CC} -DMEMMOVE ${CFLAGS} -c -p ${.ALLSRC} -o ${.TARGET}
+	${CC} -DMEMMOVE ${CFLAGS} ${CPPFLAGS} -c -p ${.ALLSRC} -o ${.TARGET}
 	@${LD} -X -r ${.TARGET}
 	@mv a.out ${.TARGET}
 
 memmove.so: bcopy.c
-	${CC} ${PICFLAG} -DPIC -DMEMMOVE ${CFLAGS} -c ${.ALLSRC} \
+	${CC} ${PICFLAG} -DPIC -DMEMMOVE ${CFLAGS} ${CPPFLAGS} -c ${.ALLSRC} \
 		-o ${.TARGET}
 .endif
 
@@ -69,17 +69,17 @@ memmove.so: bcopy.c
 .if empty(SRCS:Mmemmove.S)
 OBJS+=	memcpy.o
 memcpy.o: bcopy.c
-	${CC} -DMEMCOPY ${CFLAGS} -c ${.ALLSRC} -o ${.TARGET}
+	${CC} -DMEMCOPY ${CFLAGS} ${CPPFLAGS} -c ${.ALLSRC} -o ${.TARGET}
 	@${LD} -x -r ${.TARGET}
 	@mv a.out ${.TARGET}
 
 memcpy.po: bcopy.c
-	${CC} -DMEMCOPY ${CFLAGS} -c -p ${.ALLSRC} -o ${.TARGET}
+	${CC} -DMEMCOPY ${CFLAGS} ${CPPFLAGS} -c -p ${.ALLSRC} -o ${.TARGET}
 	@${LD} -X -r ${.TARGET}
 	@mv a.out ${.TARGET}
 
 memcpy.so: bcopy.c
-	${CC} ${PICFLAG} -DPIC -DMEMCOPY ${CFLAGS} -c ${.ALLSRC} \
+	${CC} ${PICFLAG} -DPIC -DMEMCOPY ${CFLAGS} ${CPPFLAGS} -c ${.ALLSRC} \
 		-o ${.TARGET}
 .endif
 .endif
@@ -88,17 +88,17 @@ memcpy.so: bcopy.c
 .if empty(SRCS:Mstrchr.S)
 OBJS+=	strchr.o
 strchr.o: index.c
-	${CC} -DSTRCHR ${CFLAGS} -c ${.ALLSRC} -o ${.TARGET}
+	${CC} -DSTRCHR ${CFLAGS} ${CPPFLAGS} -c ${.ALLSRC} -o ${.TARGET}
 	@${LD} -x -r ${.TARGET}
 	@mv a.out ${.TARGET}
 
 strchr.po: index.c
-	${CC} -DSTRCHR ${CFLAGS} -c -p ${.ALLSRC} -o ${.TARGET}
+	${CC} -DSTRCHR ${CFLAGS} ${CPPFLAGS} -c -p ${.ALLSRC} -o ${.TARGET}
 	@${LD} -X -r ${.TARGET}
 	@mv a.out ${.TARGET}
 
 strchr.so: index.c
-	${CC} ${PICFLAG} -DPIC -DSTRCHR ${CFLAGS} -c ${.ALLSRC} \
+	${CC} ${PICFLAG} -DPIC -DSTRCHR ${CFLAGS} ${CPPFLAGS} -c ${.ALLSRC} \
 	    -o ${.TARGET}
 .endif
 
@@ -106,17 +106,17 @@ strchr.so: index.c
 .if empty(SRCS:Mstrrchr.S)
 OBJS+=	strrchr.o
 strrchr.o: rindex.c
-	${CC} -DSTRRCHR ${CFLAGS} -c ${.ALLSRC} -o ${.TARGET}
+	${CC} -DSTRRCHR ${CFLAGS} ${CPPFLAGS} -c ${.ALLSRC} -o ${.TARGET}
 	@${LD} -x -r ${.TARGET}
 	@mv a.out ${.TARGET}
 
 strrchr.po: rindex.c
-	${CC} -DSTRRCHR ${CFLAGS} -c -p ${.ALLSRC} -o ${.TARGET}
+	${CC} -DSTRRCHR ${CFLAGS} ${CPPFLAGS} -c -p ${.ALLSRC} -o ${.TARGET}
 	@${LD} -X -r ${.TARGET}
 	@mv a.out ${.TARGET}
 
 strrchr.so: rindex.c
-	${CC} ${PICFLAG} -DPIC -DSTRRCHR ${CFLAGS} -c ${.ALLSRC} \
+	${CC} ${PICFLAG} -DPIC -DSTRRCHR ${CFLAGS} ${CPPFLAGS} -c ${.ALLSRC} \
 	    -o ${.TARGET}
 .endif
 
