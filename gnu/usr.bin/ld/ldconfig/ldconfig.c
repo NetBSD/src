@@ -1,4 +1,4 @@
-/*	$NetBSD: ldconfig.c,v 1.17 1997/04/16 16:46:28 christos Exp $	*/
+/*	$NetBSD: ldconfig.c,v 1.18 1997/08/26 19:29:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993,1995 Paul Kranenburg
@@ -51,6 +51,8 @@
 
 #include "ld.h"
 
+#define _PATH_LD_SO_CONF "/etc/ld.so.conf"
+
 #undef major
 #undef minor
 
@@ -58,6 +60,7 @@ extern char			*__progname;
 
 static int			verbose;
 static int			nostd;
+static int			noconf;
 static int			justread;
 static int			merge;
 
@@ -76,7 +79,8 @@ static struct shlib_list	*shlib_head = NULL, **shlib_tail = &shlib_head;
 static char			*dir_list;
 
 static void	enter __P((char *, char *, char *, int *, int));
-static int	dodir __P((char *, int));
+static int	dodir __P((char *, int, int));
+static int	do_conf __P((void));
 static int	buildhints __P((void));
 static int	readhints __P((void));
 static void	listhints __P((void));
@@ -89,8 +93,11 @@ char	*argv[];
 	int		i, c;
 	int		rval = 0;
 
-	while ((c = getopt(argc, argv, "mrsv")) != EOF) {
+	while ((c = getopt(argc, argv, "cmrsSv")) != -1) {
 		switch (c) {
+		case 'c':
+			noconf = 1;
+			break;
 		case 'm':
 			merge = 1;
 			break;
@@ -99,12 +106,16 @@ char	*argv[];
 			break;
 		case 's':
 			nostd = 1;
+			noconf = 1;
+			break;
+		case 'S':
+			nostd = 1;
 			break;
 		case 'v':
 			verbose = 1;
 			break;
 		default:
-			errx(1, "Usage: %s [-m][-r][-s][-v][dir ...]",
+			errx(1, "Usage: %s [-c][-m][-r][-s][-S][-v][dir ...]",
 				__progname);
 			break;
 		}
@@ -126,14 +137,13 @@ char	*argv[];
 		std_search_path();
 
 	for (i = 0; i < n_search_dirs; i++)
-		rval |= dodir(search_dirs[i], 1);
+		rval |= dodir(search_dirs[i], 1, 0);
+
+	if (!noconf && !merge)
+		rval |= do_conf();
 
 	for (i = optind; i < argc; i++) {
-		/* Check for duplicates? */
-		char *cp = concat(dir_list, *dir_list?":":"", argv[i]);
-		free(dir_list);
-		dir_list = cp;
-		rval |= dodir(argv[i], 0);
+		rval |= dodir(argv[i], 0, 1);
 	}
 
 	rval |= buildhints();
@@ -142,9 +152,53 @@ char	*argv[];
 }
 
 int
-dodir(dir, silent)
+do_conf ()
+{
+	FILE		*conf;
+	char		*line, *c;
+	char		*cline = NULL;
+	size_t		len;
+	int		rval = 0;
+
+	if ((conf = fopen(_PATH_LD_SO_CONF, "r")) == NULL)
+		return;
+
+	while ((line = fgetln(conf, &len)) != NULL) {
+		if (*line == '#' || *line == '\n')
+			continue;
+
+		if (line[len-1] == '\n') {
+			line[--len] = '\0';
+		} else {
+			cline = xmalloc(len+1);
+			bcopy(line, cline, len);
+			line = cline;
+			line[len] = '\0';
+		}
+
+		while (isblank(*line)) { line++; len--; }
+		if ((c = strchr(line, '#')) == NULL)
+			c = line + len;
+		while (--c >= line && isblank(*c)) continue;
+		if (c >= line) {
+			*++c = '\0';
+			rval |= dodir(line, 0, 1);
+		}
+
+		if (cline) {
+			free(cline);
+			cline = NULL;
+		}
+	}
+
+	return rval;
+}
+
+int
+dodir(dir, silent, update_dir_list)
 char	*dir;
 int	silent;
+int	update_dir_list;
 {
 	DIR		*dd;
 	struct dirent	*dp;
@@ -155,6 +209,13 @@ int	silent;
 		if (!silent || errno != ENOENT)
 			warn("%s", dir);
 		return -1;
+	}
+
+	if (update_dir_list) {
+		/* Check for duplicates? */
+		char *cp = concat(dir_list, *dir_list?":":"", dir);
+		free(dir_list);
+		dir_list = cp;
 	}
 
 	while ((dp = readdir(dd)) != NULL) {
