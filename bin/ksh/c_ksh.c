@@ -1,4 +1,4 @@
-/*	$NetBSD: c_ksh.c,v 1.8 2003/06/23 11:38:52 agc Exp $	*/
+/*	$NetBSD: c_ksh.c,v 1.9 2003/08/25 13:23:59 wiz Exp $	*/
 
 /*
  * built-in Korn commands: c_*
@@ -6,7 +6,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: c_ksh.c,v 1.8 2003/06/23 11:38:52 agc Exp $");
+__RCSID("$NetBSD: c_ksh.c,v 1.9 2003/08/25 13:23:59 wiz Exp $");
 #endif
 
 #include "sh.h"
@@ -1217,6 +1217,7 @@ c_kill(wp)
 						builtin_opt.optarg);
 					return 1;
 				}
+				break;
 			  case '?':
 				return 1;
 			}
