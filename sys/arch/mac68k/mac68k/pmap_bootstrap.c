@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.38 1997/10/20 08:14:18 scottr Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.39 1997/12/01 05:51:51 scottr Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -585,19 +585,6 @@ bootstrap_mac68k(tc)
 			printf("Faked range to byte 0x%lx.\n", high[0]);
 	}
 	nextpa = load_addr + (((int)esym + NBPG - 1) & PG_FRAME);
-
-#if MFS
-	if (boothowto & RB_MINIROOT) {
-		int	v;
-		boothowto |= RB_DFLTROOT;
-		nextpa = m68k_round_page(nextpa);
-		if ((v = mfs_initminiroot((caddr_t) nextpa-load_addr)) == 0) {
-			printf("Error loading miniroot.\n");
-		}
-		printf("Loaded %d byte miniroot.\n", v);
-		nextpa += v;
-	}
-#endif
 
 	if (mac68k_machine.do_graybars)
 		printf("Bootstrapping the pmap system.\n");
