@@ -1,4 +1,4 @@
-/*	$NetBSD: consio.c,v 1.11 2000/07/19 00:58:24 matt Exp $ */
+/*	$NetBSD: consio.c,v 1.12 2001/05/04 14:13:50 ragge Exp $ */
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -134,14 +134,6 @@ consinit(void)
 	 * it isn't a supported system.
 	 */
 	switch (vax_boardtype) {
-
-	case VAX_BTYP_690:
-		put_fp = rom_putchar;
-		get_fp = rom_getchar;
-		test_fp = rom_testchar;
-		rom_putc = 0x20040058;		/* 537133144 */
-		rom_getc = 0x20040008;		/* 537133064 */
-		break;
 
 	case VAX_BTYP_43:
 	case VAX_BTYP_410:	  
