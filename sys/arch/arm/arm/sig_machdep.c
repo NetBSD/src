@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.6 2001/08/06 22:32:23 bjh21 Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.7 2001/08/07 22:56:09 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -45,7 +45,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.6 2001/08/06 22:32:23 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.7 2001/08/07 22:56:09 bjh21 Exp $");
 
 #include <sys/mount.h>		/* XXX only needed by syscallargs.h */
 #include <sys/proc.h>
@@ -101,7 +101,7 @@ sendsig(sig_t catcher, int sig, sigset_t *mask, u_long code)
 	else
 		fp = (struct sigframe *)tf->tf_usr_sp;
 	fp--;
-	(u_int)fp &= ~7;
+	(u_int)fp = STACKALIGN(fp);
 
 	/* Build stack frame for signal trampoline. */
 	frame.sf_signum = sig;
