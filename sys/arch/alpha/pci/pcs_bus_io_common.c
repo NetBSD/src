@@ -1,4 +1,4 @@
-/*	$NetBSD: pcs_bus_io_common.c,v 1.12 1996/12/02 06:46:52 cgd Exp $	*/
+/*	$NetBSD: pcs_bus_io_common.c,v 1.13 1996/12/02 07:07:21 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -55,6 +55,10 @@ int		__C(CHIP,_io_alloc) __P((void *, bus_addr_t, bus_addr_t,
                     bus_space_handle_t *));
 void		__C(CHIP,_io_free) __P((void *, bus_space_handle_t,
 		    bus_size_t));
+
+/* barrier */
+inline void	__C(CHIP,_io_barrier) __P((void *, bus_space_handle_t,
+		    bus_size_t, bus_size_t, int));
 
 /* read (single) */
 inline u_int8_t	__C(CHIP,_io_read_1) __P((void *, bus_space_handle_t,
@@ -136,10 +140,6 @@ void		__C(CHIP,_io_set_region_4) __P((void *, bus_space_handle_t,
 void		__C(CHIP,_io_set_region_8) __P((void *, bus_space_handle_t,
 		    bus_size_t, u_int64_t, bus_size_t));
 
-/* barrier */
-void		__C(CHIP,_io_barrier) __P((void *, bus_space_handle_t,
-		    bus_size_t, bus_size_t, int));
-
 static long
     __C(CHIP,_io_ex_storage)[EXTENT_FIXED_STORAGE_SIZE(8) / sizeof(long)];
 
@@ -155,6 +155,9 @@ static struct alpha_bus_space __C(CHIP,_io_space) = {
 	/* allocation/deallocation */
 	__C(CHIP,_io_alloc),
 	__C(CHIP,_io_free),
+
+	/* barrier */
+	__C(CHIP,_io_barrier),
 	
 	/* read (single) */
 	__C(CHIP,_io_read_1),
@@ -206,9 +209,6 @@ static struct alpha_bus_space __C(CHIP,_io_space) = {
 
 	/* copy */
 	/* XXX IMPLEMENT */
-
-	/* barrier */
-	__C(CHIP,_io_barrier),
 };
 
 bus_space_tag_t
@@ -401,6 +401,20 @@ __C(CHIP,_io_free)(v, bsh, size)
 
 	/* XXX XXX XXX XXX XXX XXX */
 	panic("%s not implemented", __S(__C(CHIP,_io_free)));
+}
+
+inline void
+__C(CHIP,_io_barrier)(v, h, o, l, f)
+	void *v;
+	bus_space_handle_t h;
+	bus_size_t o, l;
+	int f;
+{
+
+	if ((f & BUS_BARRIER_READ) != 0)
+		alpha_mb();
+	else if ((f & BUS_BARRIER_WRITE) != 0)
+		alpha_wmb();
 }
 
 inline u_int8_t
@@ -670,17 +684,3 @@ CHIP_io_set_region_N(1,u_int8_t)
 CHIP_io_set_region_N(2,u_int16_t)
 CHIP_io_set_region_N(4,u_int32_t)
 CHIP_io_set_region_N(8,u_int64_t)
-
-void
-__C(CHIP,_io_barrier)(v, h, o, l, f)
-	void *v;
-	bus_space_handle_t h;
-	bus_size_t o, l;
-	int f;
-{
-
-	if ((f & BUS_BARRIER_READ) != 0)
-		alpha_mb();
-	else if ((f & BUS_BARRIER_WRITE) != 0)
-		alpha_wmb();
-}
