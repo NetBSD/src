@@ -1,4 +1,4 @@
-/*	$NetBSD: isa.c,v 1.71 1995/01/16 10:36:26 mycroft Exp $	*/
+/*	$NetBSD: isa.c,v 1.72 1995/04/17 12:09:09 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.  All rights reserved.
@@ -36,14 +36,8 @@
 #include <sys/malloc.h>
 #include <sys/device.h>
 
-#include <i386/isa/isareg.h>
-#include <i386/isa/isavar.h>
-
-#include <machine/limits.h>
-
-/* sorry, has to be here, no place else really suitable */
-#include <machine/pc/display.h>
-u_short *Crtat = (u_short *)MONO_BUF;
+#include <dev/isa/isareg.h>
+#include <dev/isa/isavar.h>
 
 int isamatch __P((struct device *, void *, void *));
 void isaattach __P((struct device *, struct device *, void *));
@@ -113,8 +107,29 @@ isaattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
+	struct isa_softc *sc = (struct isa_softc *)self;
 
 	printf("\n");
 
+	TAILQ_INIT(&sc->sc_subdevs);
 	config_scan(isascan, self);
+}
+
+char *
+isa_intr_typename(type)
+	isa_intrtype type;
+{
+
+	switch (type) {
+        case ISA_IST_NONE :
+		return ("none");
+        case ISA_IST_PULSE:
+		return ("pulsed");
+        case ISA_IST_EDGE:
+		return ("edge-triggered");
+        case ISA_IST_LEVEL:
+		return ("level-triggered");
+	default:
+		panic("isa_intr_typename: invalid type %d", type);
+	}
 }

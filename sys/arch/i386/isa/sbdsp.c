@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdsp.c,v 1.5 1995/03/25 00:01:00 mycroft Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.6 1995/04/17 12:07:41 cgd Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: sbdsp.c,v 1.5 1995/03/25 00:01:00 mycroft Exp $
+ *	$Id: sbdsp.c,v 1.6 1995/04/17 12:07:41 cgd Exp $
  */
 /*
  * SoundBlaster Pro code provided by John Kohl, based on lots of
@@ -57,8 +57,8 @@
 #include <sys/audioio.h>
 #include <dev/audio_if.h>
 
-#include <i386/isa/isavar.h>
-#include <i386/isa/dmavar.h>
+#include <dev/isa/isavar.h>
+#include <dev/isa/isadmavar.h>
 #include <i386/isa/icu.h>
 
 #include <i386/isa/sbreg.h>
@@ -1123,9 +1123,10 @@ sbdsp_dma_output(addr, p, cc, intr, arg)
  * exclusive so we know a priori which event has occurred.
  */
 int
-sbdsp_intr(sc)
-	register struct sbdsp_softc *sc;
+sbdsp_intr(arg)
+	void *arg;
 {
+	register struct sbdsp_softc *sc = arg;
 
 #ifdef DEBUG
 	if (sbdspdebug > 1)

@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848var.h,v 1.3 1995/03/28 18:17:42 jtc Exp $	*/
+/*	$NetBSD: ad1848var.h,v 1.4 1995/04/17 12:06:57 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -33,7 +33,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: ad1848var.h,v 1.3 1995/03/28 18:17:42 jtc Exp $
+ *	$Id: ad1848var.h,v 1.4 1995/04/17 12:06:57 cgd Exp $
  */
 
 #define AD1848_NPORT	8
@@ -46,7 +46,7 @@ struct ad1848_volume {
 struct ad1848_softc {
 	struct	device sc_dev;		/* base device */
 	struct	isadev sc_id;		/* ISA device */
-	struct	intrhand sc_ih;		/* interrupt vectoring */
+	void	*sc_ih;			/* interrupt vectoring */
 
 	void	*parent;
 	
@@ -88,7 +88,7 @@ struct ad1848_softc {
 	u_char	format_bits;
 
 	u_long	sc_interrupts;		/* number of interrupts taken */
-	void	(*sc_intr)(void*);	/* dma completion intr handler */
+	void	(*sc_intr)(void *);	/* dma completion intr handler */
 	void	*sc_arg;		/* arg for sc_intr() */
 };
 
@@ -135,7 +135,7 @@ int	ad1848_halt_out_dma __P((void *));
 int	ad1848_cont_in_dma __P((void *));
 int	ad1848_cont_out_dma __P((void *));
 
-int	ad1848_intr __P((struct ad1848_softc *));
+int	ad1848_intr __P((void *));
 
 int	ad1848_set_rec_port __P((struct ad1848_softc *, int));
 int	ad1848_get_rec_port __P((struct ad1848_softc *));

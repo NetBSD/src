@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdspvar.h,v 1.4 1995/03/28 18:17:49 jtc Exp $	*/
+/*	$NetBSD: sbdspvar.h,v 1.5 1995/04/17 12:07:44 cgd Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: sbdspvar.h,v 1.4 1995/03/28 18:17:49 jtc Exp $
+ *	$Id: sbdspvar.h,v 1.5 1995/04/17 12:07:44 cgd Exp $
  */
 
 #define SB_MIC_PORT	0
@@ -74,7 +74,7 @@
 struct sbdsp_softc {
 	struct	device sc_dev;		/* base device */
 	struct	isadev sc_id;		/* ISA device */
-	struct	intrhand sc_ih;		/* interrupt vectoring */
+	void	*sc_ih;			/* interrupt vectoring */
 
 	u_short	sc_iobase;		/* I/O port base address */
 	u_short sc_irq;			/* interrupt */
@@ -184,7 +184,7 @@ void	sbdsp_spkroff __P((struct sbdsp_softc *));
 int	sbdsp_wdsp(u_short iobase, int v);
 int	sbdsp_rdsp(u_short iobase);
 
-int	sbdsp_intr __P((struct sbdsp_softc *));
+int	sbdsp_intr __P((void *));
 short	sbversion __P((struct sbdsp_softc *));
 
 int	sbdsp_set_sr __P((struct sbdsp_softc *, u_long *, int));

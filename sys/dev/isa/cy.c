@@ -1,4 +1,6 @@
-/*	$NetBSD: cy.c,v 1.10 1995/01/29 02:58:24 cgd Exp $	*/
+/*	$NetBSD: cy.c,v 1.11 1995/04/17 12:08:46 cgd Exp $	*/
+
+/* XXX THIS DRIVER IS BROKEN.  IT WILL NOT EVEN COMPILE. */
 
 /*
  * cyclades cyclom-y serial driver
@@ -77,7 +79,7 @@
 #include <machine/pio.h>
 #include <machine/cpufunc.h>
 
-#include <i386/isa/isa_device.h>
+#include <i386/isa/isa_device.h>	/* XXX BROKEN */
 #include <dev/ic/cd1400.h>
 
 #define RxFifoThreshold	3	/* 3 characters (out of 12) in the receive

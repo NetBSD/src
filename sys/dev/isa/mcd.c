@@ -1,4 +1,4 @@
-/*	$NetBSD: mcd.c,v 1.36 1995/04/15 05:02:53 mycroft Exp $	*/
+/*	$NetBSD: mcd.c,v 1.37 1995/04/17 12:09:20 cgd Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -75,7 +75,7 @@
 #include <machine/cpu.h>
 #include <machine/pio.h>
 
-#include <i386/isa/isavar.h>
+#include <dev/isa/isavar.h>
 #include <dev/isa/mcdreg.h>
 
 #ifndef MCDDEBUG
@@ -108,7 +108,7 @@ struct mcd_mbx {
 struct mcd_softc {
 	struct	device sc_dev;
 	struct	dkdevice sc_dk;
-	struct	intrhand sc_ih;
+	void *sc_ih;
 
 	int	iobase;
 	int	irq, drq;
@@ -221,10 +221,8 @@ mcdattach(parent, self, aux)
 
 	sc->sc_dk.dk_driver = &mcddkdriver;
 
-	sc->sc_ih.ih_fun = mcdintr;
-	sc->sc_ih.ih_arg = sc;
-	sc->sc_ih.ih_level = IPL_BIO;
-	intr_establish(ia->ia_irq, IST_EDGE, &sc->sc_ih);
+	sc->sc_ih = isa_intr_establish(ia->ia_irq, ISA_IST_EDGE, ISA_IPL_BIO,
+	    mcdintr, sc);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: lms.c,v 1.18 1995/01/03 01:30:49 mycroft Exp $	*/
+/*	$NetBSD: lms.c,v 1.19 1995/04/17 12:07:17 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -40,7 +40,7 @@
 #include <machine/pio.h>
 #include <machine/mouse.h>
 
-#include <i386/isa/isavar.h>
+#include <dev/isa/isavar.h>
 
 #define	LMS_DATA	0       /* offset for data port, read-only */
 #define	LMS_SIGN	1       /* offset for signature port, read-write */
@@ -54,7 +54,7 @@
 
 struct lms_softc {		/* driver status information */
 	struct device sc_dev;
-	struct intrhand sc_ih;
+	void *sc_ih;
 
 	struct clist sc_q;
 	struct selinfo sc_rsel;
@@ -68,7 +68,7 @@ struct lms_softc {		/* driver status information */
 
 int lmsprobe __P((struct device *, void *, void *));
 void lmsattach __P((struct device *, struct device *, void *));
-int lmsintr __P((struct lms_softc *));
+int lmsintr __P((void *));
 
 struct cfdriver lmscd = {
 	NULL, "lms", lmsprobe, lmsattach, DV_TTY, sizeof(struct lms_softc)
@@ -119,10 +119,8 @@ lmsattach(parent, self, aux)
 	sc->sc_iobase = iobase;
 	sc->sc_state = 0;
 
-	sc->sc_ih.ih_fun = lmsintr;
-	sc->sc_ih.ih_arg = sc;
-	sc->sc_ih.ih_level = IPL_NONE;
-	intr_establish(ia->ia_irq, IST_PULSE, &sc->sc_ih);
+	sc->sc_ih = isa_intr_establish(ia->ia_irq, ISA_IST_PULSE, ISA_IPL_NONE,
+	    lmsintr, sc);
 }
 
 int
@@ -272,9 +270,10 @@ lmsioctl(dev, cmd, addr, flag)
 }
 
 int
-lmsintr(sc)
-	struct lms_softc *sc;
+lmsintr(arg)
+	void *arg;
 {
+	struct lms_softc *sc = arg;
 	int iobase = sc->sc_iobase;
 	u_char hi, lo, buttons, changed;
 	char dx, dy;

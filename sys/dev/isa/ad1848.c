@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848.c,v 1.2 1995/03/25 00:00:53 mycroft Exp $	*/
+/*	$NetBSD: ad1848.c,v 1.3 1995/04/17 12:06:55 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -33,7 +33,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: ad1848.c,v 1.2 1995/03/25 00:00:53 mycroft Exp $
+ *	$Id: ad1848.c,v 1.3 1995/04/17 12:06:55 cgd Exp $
  */
 
 /*
@@ -87,8 +87,8 @@
 #include <sys/audioio.h>
 #include <dev/audio_if.h>
 
-#include <i386/isa/isavar.h>
-#include <i386/isa/dmavar.h>
+#include <dev/isa/isavar.h>
+#include <dev/isa/isadmavar.h>
 #include <i386/isa/icu.h>
 
 #include <i386/isa/ad1848reg.h>
@@ -1341,9 +1341,10 @@ ad1848_dma_output(addr, p, cc, intr, arg)
 }
 
 int
-ad1848_intr(sc)
-    register struct ad1848_softc *sc;
+ad1848_intr(arg)
+	void *arg;
 {
+    register struct ad1848_softc *sc = arg;
     int retval = 0;
     u_char status;
     

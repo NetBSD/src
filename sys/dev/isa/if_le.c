@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.24 1995/04/10 18:21:52 mycroft Exp $	*/
+/*	$NetBSD: if_le.c,v 1.25 1995/04/17 12:09:06 cgd Exp $	*/
 
 /*
  * LANCE Ethernet driver
@@ -52,9 +52,10 @@
 #include <machine/cpu.h>
 #include <machine/pio.h>
 
-#include <i386/isa/isareg.h>
-#include <i386/isa/isavar.h>
-#include <i386/isa/dmavar.h>
+#include <dev/isa/isareg.h>
+#include <dev/isa/isavar.h>
+#include <i386/isa/isa_machdep.h>	/* XXX USES ISA HOLE DIRECTLY */
+#include <dev/isa/isadmavar.h>
 #include <dev/isa/if_lereg.h>
 
 
@@ -75,7 +76,7 @@ char *chip_type[] = {"unknown", "Am7990 LANCE", "Am79960 PCnet-ISA"};
  */
 struct le_softc {
 	struct	device sc_dev;
-	struct	intrhand sc_ih;
+	void *sc_ih;
 
 	struct	arpcom sc_arpcom;	/* Ethernet common part */
 	int	sc_iobase;		/* IO base address of card */
@@ -92,12 +93,12 @@ struct le_softc {
 #endif
 };
 
-int leintr __P((struct le_softc *));
+int leintr __P((void *));
 int leioctl __P((struct ifnet *, u_long, caddr_t));
 void lestart __P((struct ifnet *));
-void lewatchdog __P((/* short */));
-static inline void lewrcsr __P((/* struct le_softc *, u_short, u_short */));
-static inline u_short lerdcsr __P((/* struct le_softc *, u_short */));
+void lewatchdog __P((short));
+static inline void lewrcsr __P((struct le_softc *, u_short, u_short));
+static inline u_short lerdcsr __P((struct le_softc *, u_short));
 void leinit __P((struct le_softc *));
 void lememinit __P((struct le_softc *));
 void lereset __P((struct le_softc *));
@@ -416,10 +417,8 @@ leattach(parent, self, aux)
 	bpfattach(&sc->sc_arpcom.ac_if.if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
 #endif
 
-	sc->sc_ih.ih_fun = leintr;
-	sc->sc_ih.ih_arg = sc;
-	sc->sc_ih.ih_level = IPL_NET;
-	intr_establish(ia->ia_irq, IST_EDGE, &sc->sc_ih);
+	sc->sc_ih = isa_intr_establish(ia->ia_irq, ISA_IST_EDGE, ISA_IPL_NET,
+	    leintr, sc);
 }
 
 void
@@ -581,9 +580,10 @@ leinit(sc)
  * Controller interrupt.
  */
 int
-leintr(sc)
-	register struct le_softc *sc;
+leintr(arg)
+	void *arg;
 {
+	register struct le_softc *sc = arg;
 	register u_short isr;
 
 	isr = lerdcsr(sc, 0);

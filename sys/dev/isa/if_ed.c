@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ed.c,v 1.72 1995/04/11 04:46:09 mycroft Exp $	*/
+/*	$NetBSD: if_ed.c,v 1.73 1995/04/17 12:08:50 cgd Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -54,8 +54,9 @@
 #include <machine/cpu.h>
 #include <machine/pio.h>
 
-#include <i386/isa/isareg.h>
-#include <i386/isa/isavar.h>
+#include <dev/isa/isareg.h>
+#include <dev/isa/isavar.h>
+#include <i386/isa/isa_machdep.h>	/* XXX USES ISA HOLE DIRECTLY */
 #include <dev/ic/dp8390.h>
 #include <dev/isa/if_edreg.h>
 
@@ -64,7 +65,7 @@
  */
 struct ed_softc {
 	struct	device sc_dev;
-	struct	intrhand sc_ih;
+	void *sc_ih;
 
 	struct	arpcom sc_arpcom;	/* ethernet common */
 
@@ -110,10 +111,10 @@ struct ed_softc {
 
 int edprobe __P((struct device *, void *, void *));
 void edattach __P((struct device *, struct device *, void *));
-int edintr __P((struct ed_softc *));
+int edintr __P((void *));
 int ed_ioctl __P((struct ifnet *, u_long, caddr_t));
 void ed_start __P((struct ifnet *));
-void ed_watchdog __P((/* short */));
+void ed_watchdog __P((int));
 void ed_reset __P((struct ed_softc *));
 void ed_init __P((struct ed_softc *));
 void ed_stop __P((struct ed_softc *));
@@ -121,15 +122,15 @@ void ed_getmcaf __P((struct arpcom *, u_long *));
 
 #define inline	/* XXX for debugging porpoises */
 
-void ed_get_packet __P((/* struct ed_softc *, caddr_t, u_short */));
+void ed_get_packet __P((struct ed_softc *, caddr_t, u_short));
 static inline void ed_rint __P((struct ed_softc *));
 static inline void ed_xmit __P((struct ed_softc *));
-static inline caddr_t ed_ring_copy __P((/* struct ed_softc *, caddr_t, caddr_t,
-					u_short */));
+static inline caddr_t ed_ring_copy __P((struct ed_softc *, caddr_t, caddr_t,
+					u_short));
 
-void ed_pio_readmem __P((/* struct ed_softc *, u_short, caddr_t, u_short */));
-void ed_pio_writemem __P((/* struct ed_softc *, caddr_t, u_short, u_short */));
-u_short ed_pio_write_mbufs __P((/* struct ed_softc *, struct mbuf *, u_short */));
+void ed_pio_readmem __P((struct ed_softc *, u_short, caddr_t, u_short));
+void ed_pio_writemem __P((struct ed_softc *, caddr_t, u_short, u_short));
+u_short ed_pio_write_mbufs __P((struct ed_softc *, struct mbuf *, u_short));
 
 struct cfdriver edcd = {
 	NULL, "ed", edprobe, edattach, DV_IFNET, sizeof(struct ed_softc)
@@ -1091,10 +1092,8 @@ edattach(parent, self, aux)
 	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
 #endif
 
-	sc->sc_ih.ih_fun = edintr;
-	sc->sc_ih.ih_arg = sc;
-	sc->sc_ih.ih_level = IPL_NET;
-	intr_establish(ia->ia_irq, IST_EDGE, &sc->sc_ih);
+	sc->sc_ih = isa_intr_establish(ia->ia_irq, ISA_IST_EDGE, ISA_IPL_NET,
+	    edintr, sc);
 }
 
 /*
@@ -1138,7 +1137,7 @@ ed_stop(sc)
  */
 void
 ed_watchdog(unit)
-	short unit;
+	int unit;
 {
 	struct ed_softc *sc = edcd.cd_devs[unit];
 
@@ -1443,7 +1442,7 @@ outloop:
 			break;
 		}
 	} else
-		len = ed_pio_write_mbufs(sc, m, (u_short)buffer);
+		len = ed_pio_write_mbufs(sc, m, (long)buffer);
 
 	sc->txb_len[sc->txb_new] = max(len, ETHER_MIN_LEN);
 	sc->txb_inuse++;
@@ -1511,7 +1510,7 @@ loop:
 		if (sc->mem_shared)
 			packet_hdr = *(struct ed_ring *)packet_ptr;
 		else
-			ed_pio_readmem(sc, (u_short)packet_ptr,
+			ed_pio_readmem(sc, (long)packet_ptr,
 			    (caddr_t) &packet_hdr, sizeof(packet_hdr));
 		len = packet_hdr.count;
 
@@ -1586,9 +1585,10 @@ loop:
 
 /* Ethernet interface interrupt processor. */
 int
-edintr(sc)
-	struct ed_softc *sc;
+edintr(arg)
+	void *arg;
 {
+	struct ed_softc *sc = arg;
 	u_char isr;
 
 	/* Set NIC to page 0 registers. */
@@ -1916,7 +1916,7 @@ ed_get_packet(sc, buf, len)
 	if (sc->mem_shared)
 		bcopy(buf, mtod(m, caddr_t), sizeof(struct ether_header));
 	else
-		ed_pio_readmem(sc, (u_short)buf, mtod(m, caddr_t),
+		ed_pio_readmem(sc, (long)buf, mtod(m, caddr_t),
 		    sizeof(struct ether_header));
 	buf += sizeof(struct ether_header);
 	m->m_len += sizeof(struct ether_header);
@@ -2171,7 +2171,7 @@ ed_ring_copy(sc, src, dst, amount)
 		if (sc->mem_shared)
 			bcopy(src, dst, tmp_amount);
 		else
-			ed_pio_readmem(sc, (u_short)src, dst, tmp_amount);
+			ed_pio_readmem(sc, (long)src, dst, tmp_amount);
 
 		amount -= tmp_amount;
 		src = sc->mem_ring;
@@ -2181,7 +2181,7 @@ ed_ring_copy(sc, src, dst, amount)
 	if (sc->mem_shared)
 		bcopy(src, dst, amount);
 	else
-		ed_pio_readmem(sc, (u_short)src, dst, amount);
+		ed_pio_readmem(sc, (long)src, dst, amount);
 
 	return (src + amount);
 }

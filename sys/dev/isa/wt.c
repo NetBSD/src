@@ -1,4 +1,4 @@
-/*	$NetBSD: wt.c,v 1.23 1995/01/29 07:37:18 cgd Exp $	*/
+/*	$NetBSD: wt.c,v 1.24 1995/04/17 12:09:37 cgd Exp $	*/
 
 /*
  * Streamer tape driver.
@@ -64,8 +64,8 @@
 
 #include <machine/pio.h>
 
-#include <i386/isa/isavar.h>
-#include <i386/isa/dmavar.h>
+#include <dev/isa/isavar.h>
+#include <dev/isa/isadmavar.h>
 #include <dev/isa/wtreg.h>
 
 /*
@@ -126,7 +126,7 @@ enum wttype {
 
 struct wt_softc {
 	struct device sc_dev;
-	struct intrhand sc_ih;
+	void *sc_ih;
 
 	enum wttype type;	/* type of controller */
 	int sc_iobase;		/* base i/o port */
@@ -165,7 +165,7 @@ u_char wtpoll __P((struct wt_softc *sc, int mask, int bits));
 
 int wtprobe __P((struct device *, void *, void *));
 void wtattach __P((struct device *, struct device *, void *));
-int wtintr __P((struct wt_softc *sc));
+int wtintr __P((void *sc));
 
 struct cfdriver wtcd = {
 	NULL, "wt", wtprobe, wtattach, DV_TAPE, sizeof(struct wt_softc)
@@ -249,10 +249,8 @@ wtattach(parent, self, aux)
 	sc->flags = TPSTART;		/* tape is rewound */
 	sc->dens = -1;			/* unknown density */
 
-	sc->sc_ih.ih_fun = wtintr;
-	sc->sc_ih.ih_arg = sc;
-	sc->sc_ih.ih_level = IPL_BIO;
-	intr_establish(ia->ia_irq, IST_EDGE, &sc->sc_ih);
+	sc->sc_ih = isa_intr_establish(ia->ia_irq, ISA_IST_EDGE, ISA_IPL_BIO,
+	    wtintr, sc);
 }
 
 int
@@ -598,9 +596,10 @@ xit:
  * Interrupt routine.
  */
 int
-wtintr(sc)
-	struct wt_softc *sc;
+wtintr(arg)
+	void *arg;
 {
+	struct wt_softc *sc = arg;
 	u_char x;
 
 	x = inb(sc->STATPORT);			/* get status */

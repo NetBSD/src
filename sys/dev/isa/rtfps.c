@@ -1,4 +1,4 @@
-/*	$NetBSD: rtfps.c,v 1.11 1995/01/04 00:47:58 mycroft Exp $	*/
+/*	$NetBSD: rtfps.c,v 1.12 1995/04/17 12:09:22 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995 Charles Hannum.  All rights reserved.
@@ -37,11 +37,11 @@
 
 #include <machine/pio.h>
 
-#include <i386/isa/isavar.h>
+#include <dev/isa/isavar.h>
 
 struct rtfps_softc {
 	struct device sc_dev;
-	struct intrhand sc_ih;
+	void *sc_ih;
 
 	int sc_iobase;
 	int sc_irqport;
@@ -51,7 +51,7 @@ struct rtfps_softc {
 
 int rtfpsprobe();
 void rtfpsattach();
-int rtfpsintr __P((struct rtfps_softc *));
+int rtfpsintr __P((void *));
 
 struct cfdriver rtfpscd = {
 	NULL, "rtfps", rtfpsprobe, rtfpsattach, DV_TTY, sizeof(struct rtfps_softc)
@@ -145,16 +145,15 @@ rtfpsattach(parent, self, aux)
 		}
 	}
 
-	sc->sc_ih.ih_fun = rtfpsintr;
-	sc->sc_ih.ih_arg = sc;
-	sc->sc_ih.ih_level = IPL_TTY;
-	intr_establish(ia->ia_irq, IST_EDGE, &sc->sc_ih);
+	sc->sc_ih = isa_intr_establish(ia->ia_irq, ISA_IST_EDGE, ISA_IPL_TTY,
+	    rtfpsintr, sc);
 }
 
 int
-rtfpsintr(sc)
-	struct rtfps_softc *sc;
+rtfpsintr(arg)
+	void *arg;
 {
+	struct rtfps_softc *sc = arg;
 	int iobase = sc->sc_iobase;
 	int alive = sc->sc_alive;
 

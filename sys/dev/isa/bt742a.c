@@ -1,4 +1,4 @@
-/*	$NetBSD: bt742a.c,v 1.38 1995/01/13 14:46:51 mycroft Exp $	*/
+/*	$NetBSD: bt742a.c,v 1.39 1995/04/17 12:08:39 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -62,8 +62,8 @@
 
 #include <machine/pio.h>
 
-#include <i386/isa/isavar.h>
-#include <i386/isa/dmavar.h>
+#include <dev/isa/isavar.h>
+#include <dev/isa/isadmavar.h>
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
 
@@ -333,7 +333,7 @@ struct bt_config {
 struct bt_softc {
         struct device sc_dev;
         struct isadev sc_id;
-        struct intrhand sc_ih;
+        void *sc_ih;
 
 	int sc_iobase;
 	int sc_irq, bt_drq;
@@ -354,7 +354,7 @@ struct bt_softc {
 int     bt_debug = 0;
 
 int bt_cmd();	/* XXX must be varargs to prototype */
-int btintr __P((struct bt_softc *));
+int btintr __P((void *));
 void bt_free_ccb __P((struct bt_softc *, struct bt_ccb *, int));
 struct bt_ccb *bt_get_ccb __P((struct bt_softc *, int));
 struct bt_ccb *bt_ccb_phys_kv __P((struct bt_softc *, u_long));
@@ -608,10 +608,8 @@ btattach(parent, self, aux)
 #ifdef NEWCONFIG
 	isa_establish(&bt->sc_id, &bt->sc_dev);
 #endif
-	bt->sc_ih.ih_fun = btintr;
-	bt->sc_ih.ih_arg = bt;
-	bt->sc_ih.ih_level = IPL_BIO;
-	intr_establish(ia->ia_irq, IST_EDGE, &bt->sc_ih);
+	bt->sc_ih = isa_intr_establish(ia->ia_irq, ISA_IST_EDGE, ISA_IPL_BIO,
+	    btintr, bt);
 
 	/*
 	 * ask the adapter what subunits are present
@@ -623,9 +621,10 @@ btattach(parent, self, aux)
  * Catch an interrupt from the adaptor
  */
 int
-btintr(bt)
-	struct bt_softc *bt;
+btintr(arg)
+	void *arg;
 {
+	struct bt_softc *bt = arg;
 	struct bt_mbx_in *wmbi;
 	struct bt_mbx *wmbx;
 	struct bt_ccb *ccb;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.37 1995/04/07 22:27:42 mycroft Exp $	*/
+/*	$NetBSD: if_ie.c,v 1.38 1995/04/17 12:09:03 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -143,8 +143,9 @@ iomem, and to make 16-pointers, we subtract sc_maddr and and with 0xffff.
 #include <machine/cpu.h>
 #include <machine/pio.h>
 
-#include <i386/isa/isareg.h>
-#include <i386/isa/isavar.h>
+#include <dev/isa/isareg.h>
+#include <dev/isa/isavar.h>
+#include <i386/isa/isa_machdep.h>	/* XXX USES ISA HOLE DIRECTLY */
 #include <dev/ic/i82586.h>
 #include <dev/isa/if_ieatt.h>
 #include <dev/isa/if_ie507.h>
@@ -218,7 +219,7 @@ const char *ie_hardware_names[] = {
  */
 struct ie_softc {
 	struct device sc_dev;
-	struct intrhand sc_ih;
+	void *sc_ih;
 
 	int sc_iobase;
 	caddr_t sc_maddr;
@@ -256,8 +257,8 @@ struct ie_softc {
 #endif
 };
 
-void iewatchdog __P((/* short */));
-int ieintr __P((struct ie_softc *));
+void iewatchdog __P((int));
+int ieintr __P((void *));
 void iestop __P((struct ie_softc *));
 int ieinit __P((struct ie_softc *));
 int ieioctl __P((struct ifnet *, u_long, caddr_t));
@@ -553,10 +554,8 @@ ieattach(parent, self, aux)
 	    sizeof(struct ether_header));
 #endif
 
-	sc->sc_ih.ih_fun = ieintr;
-	sc->sc_ih.ih_arg = sc;
-	sc->sc_ih.ih_level = IPL_NET;
-	intr_establish(ia->ia_irq, IST_EDGE, &sc->sc_ih);
+	sc->sc_ih = isa_intr_establish(ia->ia_irq, ISA_IST_EDGE, ISA_IPL_NET,
+	    ieintr, sc);
 }
 
 /*
@@ -565,7 +564,7 @@ ieattach(parent, self, aux)
  */
 void
 iewatchdog(unit)
-	short unit;
+	int unit;
 {
 	struct ie_softc *sc = iecd.cd_devs[unit];
 
@@ -578,9 +577,10 @@ iewatchdog(unit)
  * What to do upon receipt of an interrupt.
  */
 int
-ieintr(sc)
-	struct ie_softc *sc;
+ieintr(arg)
+	void *arg;
 {
+	struct ie_softc *sc = arg;
 	register u_short status;
 
 	/* Clear the interrupt latch on the 3C507. */

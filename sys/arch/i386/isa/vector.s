@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.s,v 1.24 1994/11/18 22:22:41 mycroft Exp $	*/
+/*	$NetBSD: vector.s,v 1.25 1995/04/17 12:07:47 cgd Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles Hannum.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <i386/isa/icu.h>
-#include <i386/isa/isareg.h>
+#include <dev/isa/isareg.h>
 
 /*
  * These macros are fairly self explanatory.  If SPECIAL_MASK_MODE is defined,

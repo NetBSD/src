@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386.newconf,v 1.48 1995/04/17 07:45:29 cgd Exp $
+#	$NetBSD: files.i386.newconf,v 1.49 1995/04/17 12:06:34 cgd Exp $
 #
 # new style config file for i386 architecture
 #
@@ -69,12 +69,12 @@ device	pci at root {[bus = -1], [dev = -1]}
 #
 # ISA and mixed ISA+EISA or ISA+PCI drivers
 #
-file	arch/i386/isa/isa.c		isa needs-flag
+file	dev/isa/isa.c			isa needs-flag
+file	arch/i386/isa/isa_machdep.c	isa
 
 file	arch/i386/isa/clock.c		isa
-define	dma
-file	arch/i386/isa/dma.c		dma needs-flag
-file	arch/i386/isa/intr.c		isa
+define	isadma
+file	dev/isa/isadma.c		isadma needs-flag
 device	npx at isa
 file	arch/i386/isa/npx.c		npx needs-flag
 
@@ -111,21 +111,21 @@ file	arch/i386/isa/mms.c		mms needs-flag
 device	pms at isa
 file	arch/i386/isa/pms.c		pms needs-flag
 
-device	aha at isa: scsi, dma
+device	aha at isa: scsi, isadma
 file	dev/isa/aha1542.c		aha
-device	aic at isa: scsi, dma
+device	aic at isa: scsi, isadma
 file	dev/isa/aic6360.c		aic
-device	bt at isa: scsi, dma
+device	bt at isa: scsi, isadma
 file	dev/isa/bt742a.c		bt
-device	sea at isa: scsi, dma
+device	sea at isa: scsi, isadma
 file	dev/isa/seagate.c		sea
-device	uha at isa: scsi, dma
+device	uha at isa: scsi, isadma
 file	dev/isa/ultra14f.c		uha
-device	wds at isa: scsi, dma
+device	wds at isa: scsi, isadma
 file	dev/isa/wd7000.c		wds
 
 device	fdc at isa {drive = -1}
-device	fd at fdc: disk, dma
+device	fd at fdc: disk, isadma
 file	arch/i386/isa/fd.c		fdc needs-flag
 major	{fd = 2}
 device	mcd at isa: disk
@@ -135,10 +135,10 @@ device	scd at isa: disk
 file	dev/isa/t/scd.c			scd needs-flag
 major	{scd = 15}
 device	wdc at isa {drive = -1}
-device	wd at wdc: disk, dma
+device	wd at wdc: disk, isadma
 file	dev/isa/wd.c			wdc needs-flag
 major	{wd = 0}
-device	wt at isa: tape, dma
+device	wt at isa: tape, isadma
 file	dev/isa/wt.c			wt needs-flag
 major	{wt = 3}
 
@@ -159,14 +159,14 @@ device	ie at isa: ether, ifnet, elink
 file	dev/isa/if_ie.c			ie
 device	ix at isa: ether, ifnet
 file	dev/isa/if_ix.c			ix
-device	le at isa: ether, ifnet, dma
+device	le at isa: ether, ifnet, isadma
 file	dev/isa/if_le.c			le
 
 define	sbdsp
 file	arch/i386/isa/sbdsp.c		sbdsp
-device	sb at isa: audio, dma, sbdsp
+device	sb at isa: audio, isadma, sbdsp
 file	arch/i386/isa/sb.c		sb needs-flag
-device	pas at isa: audio, dma, sbdsp
+device	pas at isa: audio, isadma, sbdsp
 file	arch/i386/isa/pas.c		pas needs-flag
 
 define	ad1848
@@ -174,9 +174,9 @@ file	arch/i386/isa/ad1848.c		ad1848
 device	pss at isa {[port = -1], [size = 0],
 		     [iomem = -1], [iosiz = 0],
 		     [irq = -1], [drq = -1]}
-device	sp at pss: audio, dma, ad1848
+device	sp at pss: audio, isadma, ad1848
 file	arch/i386/isa/pss.c		pss needs-flag
-device	wss at isa: audio, dma, ad1848
+device	wss at isa: audio, isadma, ad1848
 file	arch/i386/isa/wss.c		wss needs-flag
 
 device	spkr at isa: tty

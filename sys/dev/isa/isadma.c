@@ -1,4 +1,4 @@
-/*	$NetBSD: isadma.c,v 1.11 1995/04/10 13:14:54 mycroft Exp $	*/
+/*	$NetBSD: isadma.c,v 1.12 1995/04/17 12:09:11 cgd Exp $	*/
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -12,9 +12,9 @@
 
 #include <machine/pio.h>
 
-#include <i386/isa/isareg.h>
-#include <i386/isa/dmavar.h>
-#include <i386/isa/dmareg.h>
+#include <dev/isa/isareg.h>
+#include <dev/isa/isadmavar.h>
+#include <dev/isa/isadmareg.h>
 
 /* region of physical memory known to be contiguous */
 vm_offset_t isaphysmem;

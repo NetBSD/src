@@ -1,4 +1,4 @@
-/*	$NetBSD: pss.c,v 1.3 1995/03/25 00:01:10 mycroft Exp $	*/
+/*	$NetBSD: pss.c,v 1.4 1995/04/17 12:07:34 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -33,7 +33,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: pss.c,v 1.3 1995/03/25 00:01:10 mycroft Exp $
+ *	$Id: pss.c,v 1.4 1995/04/17 12:07:34 cgd Exp $
  */
 
 /*
@@ -66,7 +66,7 @@
 #include <sys/audioio.h>
 #include <dev/audio_if.h>
 
-#include <i386/isa/isavar.h>
+#include <dev/isa/isavar.h>
 #include <i386/isa/dmavar.h>
 #include <i386/isa/icu.h>
 
@@ -107,40 +107,40 @@
 struct pss_softc {
 	struct	device sc_dev;		/* base device */
 	struct	isadev sc_id;		/* ISA device */
-	struct	intrhand sc_ih;		/* interrupt vectoring */
+	void	*sc_ih;			/* interrupt vectoring */
 
 	u_short	sc_iobase;		/* I/O port base address */
-	u_short sc_drq;			/* dma channel */
+	u_short	sc_drq;			/* dma channel */
 
-	struct ad1848_softc *ad1848_sc;
+	struct	ad1848_softc *ad1848_sc;
 	
-	int out_port;
+	int	out_port;
 	
-	struct ad1848_volume master_volume;
-	int master_mode;
+	struct	ad1848_volume master_volume;
+	int	master_mode;
 	
-	int monitor_treble;
-	int monitor_bass;
+	int	monitor_treble;
+	int	monitor_bass;
 
-	int mic_mute, cd_mute, dac_mute;
+	int	mic_mute, cd_mute, dac_mute;
 };
 
 struct mpu_softc {
 	struct	device sc_dev;		/* base device */
 	struct	isadev sc_id;		/* ISA device */
-	struct	intrhand sc_ih;		/* interrupt vectoring */
+	void	*sc_ih;			/* interrupt vectoring */
     
-	u_short sc_iobase;		/* MIDI I/O port base address */
-	u_short sc_irq;			/* MIDI interrupt */
+	u_short	sc_iobase;		/* MIDI I/O port base address */
+	u_short	sc_irq;			/* MIDI interrupt */
 };
 
 struct cd_softc {
 	struct	device sc_dev;		/* base device */
 	struct	isadev sc_id;		/* ISA device */
-	struct	intrhand sc_ih;		/* interrupt vectoring */
+	void	*sc_ih;			/* interrupt vectoring */
 
-	u_short sc_iobase;		/* CD I/O port base address */
-	u_short sc_irq;			/* CD interrupt */
+	u_short	sc_iobase;		/* CD I/O port base address */
+	u_short	sc_irq;			/* CD interrupt */
 };
 
 #define DEBUG	/*XXX*/
@@ -165,8 +165,8 @@ void	pcdattach __P((struct device *, struct device *, void *));
 
 int	spopen __P((dev_t, int));
 
-int	pssintr __P((struct pss_softc *));
-int	mpuintr __P((struct mpu_softc *));
+int	pssintr __P((void *));
+int	mpuintr __P((void *));
 
 int	pss_speaker_ctl __P((void *, int));
 
@@ -1004,10 +1004,8 @@ pssattach(parent, self, aux)
 #endif
 
     /* Setup interrupt handler for PSS */
-    sc->sc_ih.ih_fun = pssintr;
-    sc->sc_ih.ih_arg = sc;
-    sc->sc_ih.ih_level = IPL_CLOCK;
-    intr_establish(ia->ia_irq, IST_EDGE, &sc->sc_ih);
+    sc->sc_ih = isa_intr_establish(ia->ia_irq, ISA_IST_EDGE, ISA_IPL_CLOCK,
+	pssintr, sc);
 
     vers = (inw(sc->sc_iobase+PSS_ID_VERS)&0xff) - 1;
     printf(": esc614%c\n", (vers > 0)?'A'+vers:' ');
@@ -1041,10 +1039,8 @@ spattach(parent, self, aux)
     isa_establish(&sc->sc_id, &sc->sc_dev);
 #endif
 
-    sc->sc_ih.ih_fun = ad1848_intr;
-    sc->sc_ih.ih_arg = sc;
-    sc->sc_ih.ih_level = IPL_CLOCK;
-    intr_establish(cf->cf_irq, IST_EDGE, &sc->sc_ih);
+    sc->sc_ih = isa_intr_establish(cf->cf_irq, ISA_IST_EDGE, ISA_IPL_CLOCK,
+	ad1848_intr, sc);
 
     /* XXX might use pssprint func ?? */
     printf(" port 0x%x-0x%x irq %d drq %d",
@@ -1071,10 +1067,8 @@ mpuattach(parent, self, aux)
     isa_establish(&sc->sc_id, &sc->sc_dev);
 #endif
 
-    sc->sc_ih.ih_fun = mpuintr;
-    sc->sc_ih.ih_arg = sc;
-    sc->sc_ih.ih_level = IPL_CLOCK;
-    intr_establish(cf->cf_irq, IST_EDGE, &sc->sc_ih);
+    sc->sc_ih = isa_intr_establish(cf->cf_irq, ISA_IST_EDGE, ISA_IPL_CLOCK,
+	mpuintr, sc);
 
     /* XXX might use pssprint func ?? */
     printf(" port 0x%x-0x%x irq %d\n",
@@ -1304,9 +1298,10 @@ pss_speaker_ctl(addr, newstate)
 }
 
 int
-pssintr(sc)
-    register struct pss_softc *sc;
+pssintr(arg)
+	void *arg;
 {
+    register struct pss_softc *sc = arg;
     u_short sr;
     
     sr = inw(sc->sc_iobase+PSS_STATUS);
@@ -1326,9 +1321,10 @@ pssintr(sc)
 }
 
 int
-mpuintr(sc)
-    register struct mpu_softc *sc;
+mpuintr(arg)
+	void *arg;
 {
+    register struct mpu_softc *sc = arg;
     u_char sr;
     
     sr = inb(sc->sc_iobase+MIDI_STATUS_REG);

@@ -1,4 +1,4 @@
-/*	$NetBSD: boca.c,v 1.3 1995/01/04 00:47:54 mycroft Exp $	*/
+/*	$NetBSD: boca.c,v 1.4 1995/04/17 12:08:37 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995 Charles Hannum.  All rights reserved.
@@ -37,11 +37,11 @@
 
 #include <machine/pio.h>
 
-#include <i386/isa/isavar.h>
+#include <dev/isa/isavar.h>
 
 struct boca_softc {
 	struct device sc_dev;
-	struct intrhand sc_ih;
+	void *sc_ih;
 
 	int sc_iobase;
 	int sc_alive;		/* mask of slave units attached */
@@ -50,7 +50,7 @@ struct boca_softc {
 
 int bocaprobe();
 void bocaattach();
-int bocaintr __P((struct boca_softc *));
+int bocaintr __P((void *));
 
 struct cfdriver bocacd = {
 	NULL, "boca", bocaprobe, bocaattach, DV_TTY, sizeof(struct boca_softc)
@@ -132,16 +132,15 @@ bocaattach(parent, self, aux)
 		}
 	}
 
-	sc->sc_ih.ih_fun = bocaintr;
-	sc->sc_ih.ih_arg = sc;
-	sc->sc_ih.ih_level = IPL_TTY;
-	intr_establish(ia->ia_irq, IST_EDGE, &sc->sc_ih);
+	sc->sc_ih = isa_intr_establish(ia->ia_irq, ISA_IST_EDGE, ISA_IPL_TTY,
+	    bocaintr, sc);
 }
 
 int
-bocaintr(sc)
-	struct boca_softc *sc;
+bocaintr(arg)
+	void *arg;
 {
+	struct boca_softc *sc = arg;
 	int iobase = sc->sc_iobase;
 	int alive = sc->sc_alive;
 	int bits;

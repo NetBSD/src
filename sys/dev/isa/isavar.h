@@ -1,6 +1,7 @@
-/*	$NetBSD: isavar.h,v 1.14 1995/01/03 03:14:35 mycroft Exp $	*/
+/*	$NetBSD: isavar.h,v 1.15 1995/04/17 12:09:15 cgd Exp $	*/
 
 /*
+ * Copyright (c) 1995 Chris G. Demetriou
  * Copyright (c) 1992 Berkeley Software Design, Inc.
  * All rights reserved.
  *
@@ -36,6 +37,12 @@
  */
 
 /*
+ * Definitions for ISA autoconfiguration.
+ */
+
+#include <sys/queue.h>
+
+/*
  * ISA driver attach arguments
  */
 struct isa_attach_args {
@@ -54,19 +61,21 @@ struct isa_attach_args {
 #define	MADDRUNK	-1		/* shared memory address is unknown */
 
 /*
- * per-device ISA variables
+ * Per-device ISA variables
  */
 struct isadev {
 	struct  device *id_dev;		/* back pointer to generic */
-	struct	isadev *id_bchain;	/* forward link in bus chain */	
+	TAILQ_ENTRY(isadev)
+		id_bchain;		/* bus chain */
 };
 
 /*
- * ISA masterbus 
+ * ISA master bus
  */
 struct isa_softc {
 	struct	device sc_dev;		/* base device */
-	struct	isadev *sc_isadev;	/* list of all children */
+	TAILQ_HEAD(, isadev)
+		sc_subdevs;		/* list of all children */
 };
 
 #define		cf_iobase		cf_loc[0]
@@ -77,38 +86,54 @@ struct isa_softc {
 #define		cf_drq			cf_loc[5]
 
 /*
- * Interrupt handler chains.  Interrupt handlers should return 0 for
- * `not I', 1 (`I took care of it'), or -1 (`I guess it was mine, but
- * I wasn't expecting it').  intr_establish() inserts a handler into
- * the list.  The handler is called with its (single) argument.
+ * ISA interrupt handler manipulation.
+ * 
+ * To establish an ISA interrupt handler, a driver calls isa_intr_establish()
+ * with the interrupt number, type, level, function, and function argument of
+ * the interrupt it wants to handle.  Isa_intr_establish() returns an opaque
+ * handle to an event descriptor if it succeeds, and invokes panic() if it
+ * fails.  (XXX It should return NULL, then drivers should handle that, but
+ * what should they do?)  Interrupt handlers should return 0 for "interrupt
+ * not for me", 1  for "I took care of it", or -1 for "I guess it was mine,
+ * but I wasn't expecting it."
+ *
+ * To remove an interrupt handler, the driver calls isa_intr_disestablish() 
+ * with the handle returned by isa_intr_establish() for that handler.
  */
-struct intrhand {
-	int	(*ih_fun)();
-	void	*ih_arg;
-	u_long	ih_count;
-	struct	intrhand *ih_next;
-	int	ih_level;
-};
 
-void intr_establish __P((int intr, int type, struct intrhand *));
-void intr_disestablish __P((int intr, struct intrhand *));
+/* ISA interrupt sharing types */
+typedef enum {
+	ISA_IST_NONE = 0,	/* not yet assigned */
+	ISA_IST_PULSE,		/* pulsed */
+	ISA_IST_EDGE,		/* edge-triggered */
+	ISA_IST_LEVEL		/* level-triggered */
+} isa_intrtype;
+
+/* ISA interrupt levels; system interrupt levels for ISA bus use */
+typedef enum {
+	ISA_IPL_NONE,		/* block only the interrupt's IRQ*/
+	ISA_IPL_BIO,		/* block I/O interrupts */
+	ISA_IPL_NET,		/* network */
+	ISA_IPL_TTY,		/* terminal */
+	ISA_IPL_CLOCK,		/* clock */
+} isa_intrlevel;
+
+void *isa_intr_establish __P((int intr, isa_intrtype type,
+		    isa_intrlevel level, int (*ih_fun)(void *),
+		    void *ih_arg));
+void isa_intr_disestablish __P((void *handler));
+char *isa_intr_typename __P((isa_intrtype type));
+
+#ifdef NEWCONFIG
+/*
+ * Establish a device as being on the ISA bus (XXX NOT IMPLEMENTED).
+ */
 void isa_establish __P((struct isadev *, struct device *));
+#endif
 
 /*
  * software conventions
  */
-typedef enum { BUS_ISA, BUS_EISA, BUS_MCA } isa_type;
+typedef enum { BUS_ISA, BUS_EISA } isa_type;
 
-extern int atdevbase;		/* kernel virtual address of "hole" */
-extern isa_type isa_bustype;	/* type of bus */
-
-/*
- * Given a kernel virtual address for some location
- * in the "hole" I/O space, return a physical address.
- */
-#define	ISA_PHYSADDR(v)	((caddr_t) ((u_long)(v) - atdevbase + IOM_BEGIN))
-/*
- * Given a physical address in the "hole",
- * return a kernel virtual address.
- */
-#define	ISA_HOLE_VADDR(p)  ((caddr_t) ((u_long)(p) - IOM_BEGIN + atdevbase))
+extern isa_type isa_bustype;	/* type of bus; XXX should be in softc */

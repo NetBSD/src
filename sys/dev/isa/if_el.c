@@ -1,4 +1,4 @@
-/*	$NetBSD: if_el.c,v 1.22 1995/04/11 05:10:24 mycroft Exp $	*/
+/*	$NetBSD: if_el.c,v 1.23 1995/04/17 12:08:56 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, Matthew E. Kimmel.  Permission is hereby granted
@@ -53,7 +53,7 @@
 #include <machine/cpu.h>
 #include <machine/pio.h>
 
-#include <i386/isa/isavar.h>
+#include <dev/isa/isavar.h>
 #include <dev/isa/if_elreg.h>
 
 #define ETHER_MIN_LEN	64
@@ -72,7 +72,7 @@
  */
 struct el_softc {
 	struct device sc_dev;
-	struct intrhand sc_ih;
+	void *sc_ih;
 
 	struct arpcom sc_arpcom;	/* ethernet common */
 	int sc_iobase;			/* base I/O addr */
@@ -82,7 +82,7 @@ struct el_softc {
 /*
  * prototypes
  */
-int elintr __P((struct el_softc *));
+int elintr __P((void *));
 static int el_init __P((struct el_softc *));
 static int el_ioctl __P((struct ifnet *, u_long, caddr_t));
 static void el_start __P((struct ifnet *));
@@ -206,10 +206,8 @@ elattach(parent, self, aux)
 	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
 #endif
 
-	sc->sc_ih.ih_fun = elintr;
-	sc->sc_ih.ih_arg = sc;
-	sc->sc_ih.ih_level = IPL_NET;
-	intr_establish(ia->ia_irq, IST_EDGE, &sc->sc_ih);
+	sc->sc_ih = isa_intr_establish(ia->ia_irq, ISA_IST_EDGE, ISA_IPL_NET,
+	    elintr, sc);
 
 	dprintf(("elattach() finished.\n"));
 }
@@ -451,9 +449,10 @@ el_xmit(sc, len)
  * Controller interrupt.
  */
 int
-elintr(sc)
-	register struct el_softc *sc;
+elintr(arg)
+	void *arg;
 {
+	register struct el_softc *sc = arg;
 	int iobase = sc->sc_iobase;
 	int stat, rxstat, len, done;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.34 1995/01/26 06:35:42 mycroft Exp $	*/
+/*	$NetBSD: npx.c,v 1.35 1995/04/17 12:07:21 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995 Charles Hannum.
@@ -54,8 +54,8 @@
 #include <machine/specialreg.h>
 
 #include <i386/isa/icu.h>
-#include <i386/isa/isavar.h>
-#include <i386/isa/isareg.h>
+#include <dev/isa/isavar.h>
+#include <dev/isa/isareg.h>
 
 /*
  * 387 and 287 Numeric Coprocessor Extension (NPX) Driver.
@@ -86,13 +86,13 @@ extern	struct gate_descriptor idt[];
 int	npxdna		__P((void));
 void	npxexit		__P((void));
 void	npxinit		__P((void));
-int	npxintr		__P((struct intrframe *frame));
+int	npxintr		__P((void *));
 void	npxsave		__P((struct save87 *addr));
 int	npxprobe1	__P((struct isa_attach_args *));
 
 struct npx_softc {
 	struct device sc_dev;
-	struct intrhand sc_ih;
+	void *sc_ih;
 };
 
 int npxprobe __P((struct device *, void *, void *));
@@ -324,10 +324,8 @@ npxattach(parent, self, aux)
 	switch (npx_type) {
 	case NPX_INTERRUPT:
 		printf("\n");
-		sc->sc_ih.ih_fun = npxintr;
-		sc->sc_ih.ih_arg = 0;
-		sc->sc_ih.ih_level = IPL_NONE;
-		intr_establish(ia->ia_irq, IST_EDGE, &sc->sc_ih);
+		sc->sc_ih = isa_intr_establish(ia->ia_irq, ISA_IST_EDGE,
+		    ISA_IPL_NONE, npxintr, 0);
 		break;
 	case NPX_EXCEPTION:
 		printf(": using exception 16\n");
@@ -363,11 +361,12 @@ npxattach(parent, self, aux)
  * IRQ13 exception handling makes exceptions even less precise than usual.
  */
 int
-npxintr(frame)
-	struct intrframe *frame;
+npxintr(arg)
+	void *arg;
 {
 	register struct proc *p = npxproc;
 	register struct save87 *addr;
+	struct intrframe *frame = arg;
 	int code;
 
 	cnt.v_trap++;

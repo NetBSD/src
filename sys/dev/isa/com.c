@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.48 1995/04/10 01:05:55 mycroft Exp $	*/
+/*	$NetBSD: com.c,v 1.49 1995/04/17 12:08:44 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -60,13 +60,13 @@
 #include <machine/cpu.h>
 #include <machine/pio.h>
 
-#include <i386/isa/isavar.h>
+#include <dev/isa/isavar.h>
 #include <dev/isa/comreg.h>
 #include <dev/ic/ns16550.h>
 
 struct com_softc {
 	struct device sc_dev;
-	struct intrhand sc_ih;
+	void *sc_ih;
 
 	int sc_overflows;
 	int sc_iobase;
@@ -89,7 +89,7 @@ void comattach __P((struct device *, struct device *, void *));
 int comopen __P((dev_t, int, int, struct proc *));
 int comclose __P((dev_t, int, int, struct proc *));
 void comdiag __P((void *));
-int comintr __P((struct com_softc *));
+int comintr __P((void *));
 int comparam __P((struct tty *, struct termios *));
 void comstart __P((struct tty *));
 
@@ -211,12 +211,9 @@ comattach(parent, self, aux)
 	outb(iobase + com_ier, 0);
 	outb(iobase + com_mcr, 0);
 
-	if (ia->ia_irq != IRQUNK) {
-		sc->sc_ih.ih_fun = comintr;
-		sc->sc_ih.ih_arg = sc;
-		sc->sc_ih.ih_level = IPL_TTY;
-		intr_establish(ia->ia_irq, IST_EDGE, &sc->sc_ih);
-	}
+	if (ia->ia_irq != IRQUNK)
+		sc->sc_ih = isa_intr_establish(ia->ia_irq, ISA_IST_EDGE,
+		    ISA_IPL_TTY, comintr, sc);
 
 #ifdef KGDB
 	if (kgdb_dev == makedev(commajor, unit)) {
@@ -768,9 +765,10 @@ comdiag(arg)
 }
 
 int
-comintr(sc)
-	struct com_softc *sc;
+comintr(arg)
+	void *arg;
 {
+	struct com_softc *sc = arg;
 	int iobase = sc->sc_iobase;
 	struct tty *tp;
 	u_char code;
