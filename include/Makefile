@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.45.1.1 (Berkeley) 5/6/91
-#	$Id: Makefile,v 1.35 1994/03/31 04:06:01 cgd Exp $
+#	$Id: Makefile,v 1.36 1994/05/11 03:37:39 cgd Exp $
 
 # Doing a make install builds /usr/include
 #
@@ -12,13 +12,13 @@ FILES=	a.out.h ar.h assert.h bitstring.h ctype.h db.h dirent.h disktab.h \
 	err.h fnmatch.h fstab.h fts.h glob.h grp.h kvm.h limits.h locale.h \
 	math.h memory.h mpool.h ndbm.h netdb.h nlist.h paths.h pwd.h ranlib.h \
 	regex.h regexp.h resolv.h \
-	search.h setjmp.h sgtty.h stab.h stdarg.h stddef.h \
+	search.h setjmp.h sgtty.h signal.h stab.h stdarg.h stddef.h \
 	stdio.h stdlib.h string.h strings.h struct.h sysexits.h time.h \
 	ttyent.h tzfile.h unistd.h utime.h utmp.h varargs.h vis.h malloc.h \
 	link.h
 
 MFILES=	float.h frame.h
-LFILES=	errno.h fcntl.h signal.h syslog.h termios.h
+LFILES=	errno.h fcntl.h syslog.h termios.h
 
 DIRS=	arpa protocols rpc rpcsvc
 LDIRS=	dev net netinet netccitt netiso netns nfs sys ufs vm 
