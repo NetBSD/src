@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.25 1995/12/27 06:30:38 mycroft Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.26 1996/02/07 10:25:58 pk Exp $	*/
 
 /*
  * if_ppp.c - Point-to-Point Protocol (PPP) Asynchronous driver.
@@ -1083,6 +1083,10 @@ ppp_inproc(sc, m)
     ifp->if_ipackets++;
     ifp->if_lastchange = time;
 
+    ilen = 0;
+    for (mp = m; mp != NULL; mp = mp->m_next)
+	ilen += mp->m_len;
+
     if (sc->sc_flags & SC_LOG_INPKT) {
 	printf("ppp%d: got %d bytes\n", ifp->if_unit, ilen);
 	pppdumpm(m);
@@ -1145,10 +1149,6 @@ ppp_inproc(sc, m)
 	}
     }
 #endif
-
-    ilen = 0;
-    for (mp = m; mp != NULL; mp = mp->m_next)
-	ilen += mp->m_len;
 
 #ifdef VJC
     if (sc->sc_flags & SC_VJ_RESET) {
