@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.52 2002/07/28 07:03:47 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.53 2002/08/06 06:14:38 chs Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -276,26 +276,10 @@ unsigned int pmapdebug = 0;
 #define	SYNC()		__asm __volatile("sync")
 #define	EIEIO()		__asm __volatile("eieio")
 #define	MFMSR()		mfmsr()
-#define	MTMSR(psl)	__asm __volatile("mtmsr %0" :: "r"(psl))
+#define	MTMSR(psl)	mtmsr(psl)
 #define	MFPVR()		mfpvr()
 #define	MFSRIN(va)	mfsrin(va)
-#define	MFTB()		mftb()
-
-static __inline u_int
-mftb(void)
-{
-	u_int tb;
-	__asm __volatile("mftb %0" : "=r"(tb) : );
-	return tb;
-}
-
-static __inline u_int
-mfpvr(void)
-{
-	u_int pvr;
-	__asm __volatile("mfspr %0,%1" : "=r"(pvr) : "n"(SPR_PVR));
-	return pvr;
-}
+#define	MFTB()		mftbl()
 
 static __inline sr_t
 mfsrin(vaddr_t va)
