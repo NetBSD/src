@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file.c,v 1.35 2001/01/19 01:44:46 manu Exp $	*/
+/*	$NetBSD: linux_file.c,v 1.36 2001/01/22 20:08:05 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -704,7 +704,7 @@ linux_sys_lchown16(p, v, retval)
 	struct sys___posix_lchown_args bla;
 	caddr_t sg = stackgap_init(p->p_emul);
 
-	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	CHECK_ALT_SYMLINK(p, &sg, SCARG(uap, path));
 
 	SCARG(&bla, path) = SCARG(uap, path);
 	SCARG(&bla, uid) = ((linux_uid_t)SCARG(uap, uid) == (linux_uid_t)-1) ?
@@ -747,7 +747,7 @@ linux_sys_lchown(p, v, retval)
 	} */ *uap = v;
 	caddr_t sg = stackgap_init(p->p_emul);
 
-	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	CHECK_ALT_SYMLINK(p, &sg, SCARG(uap, path));
 
 	return sys___posix_lchown(p, uap, retval);
 }
@@ -853,7 +853,7 @@ linux_sys_readlink(p, v, retval)
 	} */ *uap = v;
 	caddr_t sg = stackgap_init(p->p_emul);
 
-	CHECK_ALT_EXIST(p, &sg, SCARG(uap, name));
+	CHECK_ALT_SYMLINK(p, &sg, SCARG(uap, name));
 
 	return sys_readlink(p, uap, retval);
 }
