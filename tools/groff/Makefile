@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.21 2003/07/05 22:05:28 martin Exp $
+#	$NetBSD: Makefile,v 1.22 2003/07/10 10:34:43 lukem Exp $
 
 MODULE=		groff
 
 ALL_TARGET=	src/include all
-MAKE_ARGS=	bindir=${TOOLDIR}/lib/groff MAKEINFO=${MAKEINFO:Q}
+MAKE_ARGS=	bindir=${TOOLDIR}/lib/groff MAKEINFO=${TOOL_MAKEINFO:Q}
 
 TMACDIR=	${TOOLDIR}/share/groff/tmac
 SITETMACDIR=	${TOOLDIR}/share/groff/site-tmac

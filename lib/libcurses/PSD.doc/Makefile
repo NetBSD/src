@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2002/08/13 20:07:31 pooka Exp $
+#	$NetBSD: Makefile,v 1.10 2003/07/10 10:34:22 lukem Exp $
 #	from: @(#)Makefile	8.2 (Berkeley) 5/23/94
 
 DIR=	psd/19.curses
@@ -22,16 +22,19 @@ CLEANFILES+= ${CEXAMPLES} ${TBLFILES}
 # bold font, and comments in italics.
 #
 
+
 # Don't re-run vgrind unless you want to patch the output files.
+# XXXBUILDSH: can we use TOOL_VGRIND here ?
 VFONT=	/usr/libexec/vfontedpr
 .c.gr:
 	${VFONT} ${.IMPSRC} | grep -v "^'wh" > ${.TARGET}
 
 paper.ps: ${SRCS} ${OTHER} ${CEXAMPLES} ${TBLFILES}
-	${SOELIM} -I${.CURDIR} Master | ${ROFF} ${MACROS} > ${.TARGET}
+	${TOOL_SOELIM} -I${.CURDIR} Master | \
+	    ${TOOL_ROFF_PS} ${MACROS} > ${.TARGET}
 
 # Unfortunately our make doesn't handle single-suffix rules.
 intro.2.tbl: intro.2
-	${TBL} ${.ALLSRC} > ${.TARGET}
+	${TOOL_TBL} ${.ALLSRC} > ${.TARGET}
 
 .include <bsd.doc.mk>

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.21 2002/08/19 13:35:05 lukem Exp $
+# $NetBSD: Makefile,v 1.22 2003/07/10 10:34:21 lukem Exp $
 
 NOLINT=		# defined
 
@@ -11,11 +11,11 @@ WARNS?=		1
 LIB=		asn1
 
 .if ${USETOOLS} != "yes"
-COMPILEETOBJ!=	cd ${NETBSDSRCDIR}/lib/libcom_err/compile_et && ${PRINTOBJDIR}
-COMPILE_ET?=	${COMPILEETOBJ}/compile_et
+COMPILEETOBJ!=		cd ${NETBSDSRCDIR}/lib/libcom_err/compile_et && ${PRINTOBJDIR}
+TOOL_COMPILE_ET=	${COMPILEETOBJ}/compile_et
 
-ASN1COMPILEOBJ!=cd ${.CURDIR}/asn1_compile && ${PRINTOBJDIR}
-ASN1_COMPILE?=	${ASN1COMPILEOBJ}/asn1_compile
+ASN1COMPILEOBJ!=	cd ${NETBSDSRCDIR}/lib/libasn1/asn1_compile && ${PRINTOBJDIR}
+TOOL_ASN1_COMPILE=	${ASN1COMPILEOBJ}/asn1_compile
 
 .PHONY: ${ASN1COMPILEOBJ}/asn1_compile
 
@@ -23,8 +23,8 @@ ${ASN1COMPILEOBJ}/asn1_compile:
 	@cd ${.CURDIR}/asn1_compile && ${MAKE}
 .endif
 
-asn1_err.h asn1_err.c: asn1_err.et
-	${COMPILE_ET} ${DIST}/heimdal/lib/asn1/asn1_err.et
+asn1_err.h asn1_err.c: asn1_err.et ${TOOL_COMPILE_ET}
+	${TOOL_COMPILE_ET} ${DIST}/heimdal/lib/asn1/asn1_err.et
 
 DPSRCS=	asn1_err.h
 
@@ -108,8 +108,8 @@ CPPFLAGS+= -I.					\
 
 ${gen_files} krb5_asn1.hx: asn1_files
 
-asn1_files: k5.asn1 ${ASN1_COMPILE}
-	${ASN1_COMPILE} ${DIST}/heimdal/lib/asn1/k5.asn1 krb5_asn1
+asn1_files: k5.asn1 ${TOOL_ASN1_COMPILE}
+	${TOOL_ASN1_COMPILE} ${DIST}/heimdal/lib/asn1/k5.asn1 krb5_asn1
 
 ${SRCS}: krb5_asn1.h
 

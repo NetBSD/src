@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.45 2003/05/26 13:42:33 pooka Exp $
+#	$NetBSD: Makefile,v 1.46 2003/07/10 10:34:43 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -9,7 +9,7 @@ WFORMAT=	1
 MFILESDIR=	/usr/share/misc
 MFILES=		magic magic.mgc ${DIST}/magic/magic.mime magic.mime.mgc
 MAGIC=		${MFILESDIR}/magic
-MKMAGIC?=	${.OBJDIR}/file
+TOOL_MKMAGIC?=	${.OBJDIR}/file
 
 .if ${MKSHARE} != "no"
 FILESDIR=	${MFILESDIR}
@@ -37,14 +37,14 @@ MAGFILES=	${DIST}/magic/Header \
 
 .if ${MKSHARE} != "no"
 magic: ${MAGFILES}
-	${CAT} ${MAGFILES} > ${.TARGET}
+	${TOOL_CAT} ${MAGFILES} > ${.TARGET}
 
 magic.mgc: magic
-	 ${MKMAGIC} -C -m magic
+	 ${TOOL_MKMAGIC} -C -m magic
 
 magic.mime.mgc:
 	cp ${DIST}/magic/magic.mime ${.OBJDIR}
-	${MKMAGIC} -C -m magic.mime
+	${TOOL_MKMAGIC} -C -m magic.mime
 .else
 magic:
 .endif

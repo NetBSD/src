@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.8 2001/10/13 06:15:16 jmc Exp $
+#	$NetBSD: Makefile.inc,v 1.9 2003/07/10 10:34:04 lukem Exp $
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -18,9 +18,6 @@ LISTS=		${COMMONDIR}/list ${.CURDIR}/list
 CRUNCHCONF=	${COMMONDIR}/${CBIN}.conf
 MTREECONF=	${COMMONDIR}/mtree.conf
 
-CRUNCHGEN?=	crunchgen
-MTREE?=		mtree
-
 DISKTYPE=	floppy3
 
 all: ${AUXTARGETS} ${CBIN} 
@@ -29,7 +26,7 @@ all: ${AUXTARGETS} ${CBIN}
 	disklabel -rw ${VND_CDEV} ${DISKTYPE}
 	newfs -B be -m 0 -o space -i 5120 -c 80 ${VND_RDEV} ${DISKTYPE}
 	mount ${VND_DEV} ${MOUNT_POINT}
-	${MTREE} -def ${MTREECONF} -p ${MOUNT_POINT}/ -u
+	${TOOL_MTREE} -def ${MTREECONF} -p ${MOUNT_POINT}/ -u
 	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
 	    KERNOBJDIR=${KERNOBJDIR} \
 	    TARGDIR=${MOUNT_POINT} sh ${TOP}/runlist.sh ${LISTS}
@@ -45,7 +42,7 @@ unconfig:
 	-/bin/rm -f ${IMAGE}
 
 ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
-	${CRUNCHGEN} -D ${TOP}/../../.. -L ${DESTDIR}/usr/lib ${CRUNCHCONF}
+	${TOOL_CRUNCHGEN} -D ${TOP}/../../.. -L ${DESTDIR}/usr/lib ${CRUNCHCONF}
 
 ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
 	${MAKE} -f ${CBIN}.mk all

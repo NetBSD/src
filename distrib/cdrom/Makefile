@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.17 2003/03/07 09:52:59 lukem Exp $
+# $NetBSD: Makefile,v 1.18 2003/07/10 10:34:04 lukem Exp $
 #
 # Consult "*.conf" for the configuration variables; this Makefile is typically
 # not edited for basic configuration changes.
@@ -71,9 +71,9 @@ SUBDIR+=	macppc_installboot
 
 MKISOFS?=	/usr/pkg/bin/mkisofs
 RSYNC?=		/usr/pkg/bin/rsync
-ALPHA_IBOOT?=	${INSTALLBOOT} -m alpha -o sunsum,append
-PMAX_IBOOT?=	${INSTALLBOOT} -m pmax -o sunsum,append
-VAX_IBOOT?=	${INSTALLBOOT} -m vax -o sunsum,append
+ALPHA_IBOOT?=	${TOOL_INSTALLBOOT} -m alpha -o sunsum,append
+PMAX_IBOOT?=	${TOOL_INSTALLBOOT} -m pmax -o sunsum,append
+VAX_IBOOT?=	${TOLL_INSTALLBOOT} -m vax -o sunsum,append
 .if !empty(ALL_PORTS:Mmacppc)
 MACPPC_IBOOTDIR!= cd ${.CURDIR}/macppc_installboot && ${PRINTOBJDIR}
 .endif
@@ -389,7 +389,8 @@ ${IMAGEDIR}/${image}.iso: size-${image}
 	cd ${STAGEDIR}/${image} && ${MKISOFS} -o $@ ${MKISOFS_ARGS} ${MKISOFS_ARGS.${image}} .
 .endif
 .if !empty(SUN_BOOT_ARGS.${image})
-	SUNLABEL=${SUNLABEL:Q} sh ${NETBSDSRCDIR}/distrib/common/sunbootcd.sh \
+	SUNLABEL=${TOOL_SUNLABEL:Q} \
+	    ${HOST_SH} ${NETBSDSRCDIR}/distrib/common/sunbootcd.sh \
 	    ${.TARGET} ${SUN_BOOT_ARGS.${image}}
 .endif
 .if !empty(BASE_PORTS.${image}:Mmacppc)

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.20 2002/03/06 22:55:18 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.21 2003/07/10 10:34:03 lukem Exp $
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -16,9 +16,6 @@ LISTS=		${COMMONDIR}/list ${.CURDIR}/list
 CRUNCHCONF=	${COMMONDIR}/${CBIN}.conf
 MTREECONF=	${COMMONDIR}/mtree.conf
 
-CRUNCHGEN?=	crunchgen
-MTREE?=		mtree
-
 DISKTYPE=	miniroot
 
 all: ${CBIN}
@@ -27,7 +24,7 @@ all: ${CBIN}
 	installboot ${MDEC}/xxboot ${VND_RDEV}
 	newfs -B be -c 64 -m 0 -o space ${VND_RDEV} ${DISKTYPE}
 	mount -t ffs ${VND_DEV} ${MOUNT_POINT}
-	${MTREE} -def ${MTREECONF} -p ${MOUNT_POINT}/ -u
+	${TOOL_MTREE} -def ${MTREECONF} -p ${MOUNT_POINT}/ -u
 	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
 	    KERNOBJDIR=${KERNOBJDIR} \
 	    TARGDIR=${MOUNT_POINT} sh ${TOP}/runlist.sh ${LISTS}
@@ -43,7 +40,7 @@ unconfig:
 	-/bin/rm -f ${IMAGE}
 
 ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
-	${CRUNCHGEN} -D ${TOP}/../../.. -L ${DESTDIR}/usr/lib ${CRUNCHCONF}
+	${TOOL_CRUNCHGEN} -D ${TOP}/../../.. -L ${DESTDIR}/usr/lib ${CRUNCHCONF}
 
 ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
 	${MAKE} -f ${CBIN}.mk all

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2002/04/26 15:25:34 lukem Exp $
+#	$NetBSD: Makefile,v 1.10 2003/07/10 10:34:03 lukem Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -24,9 +24,6 @@ LISTS=		list
 CRUNCHCONF=	${CBIN}.conf
 MTREECONF=	mtree.conf
 
-CRUNCHGEN?=	crunchgen
-MTREE?=		mtree
-
 DISKTYPE=	floppy3
 
 install.sh: install.tmpl
@@ -44,7 +41,7 @@ all: ${AUXTARGETS} ${CBIN}
 	disklabel -rw ${VND_CDEV} ${DISKTYPE}
 	newfs -B be -m 0 -o space -i 5120 -c 80 ${VND_RDEV} ${DISKTYPE}
 	mount ${VND_DEV} ${MOUNT_POINT}
-	${MTREE} -def ${.CURDIR}/${MTREECONF} -p ${MOUNT_POINT}/ -u
+	${TOOL_MTREE} -def ${.CURDIR}/${MTREECONF} -p ${MOUNT_POINT}/ -u
 	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
 	    KERNOBJDIR=${KERNOBJDIR} \
 	    TARGDIR=${MOUNT_POINT} sh ${TOP}/runlist.sh ${.CURDIR}/${LISTS}
@@ -60,7 +57,7 @@ unconfig:
 	-/bin/rm -f ${IMAGE}
 
 ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
-	${CRUNCHGEN} -D ${TOP}/../../.. -L ${DESTDIR}/usr/lib ${.ALLSRC}
+	${TOOL_CRUNCHGEN} -D ${TOP}/../../.. -L ${DESTDIR}/usr/lib ${.ALLSRC}
 
 ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
 	${MAKE} -f ${CBIN}.mk all

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.27 2003/05/26 01:11:56 lha Exp $
+# $NetBSD: Makefile,v 1.28 2003/07/10 10:34:24 lukem Exp $
 
 NOLINT=		# defined
 
@@ -12,18 +12,18 @@ WARNS?=		1
 LIB=		krb5
 
 .if ${USETOOLS} != "yes"
-COMPILEETOBJ!=	cd ${NETBSDSRCDIR}/lib/libcom_err/compile_et && ${PRINTOBJDIR}
-COMPILE_ET=	${COMPILEETOBJ}/compile_et
+COMPILEETOBJ!=		cd ${NETBSDSRCDIR}/lib/libcom_err/compile_et && ${PRINTOBJDIR}
+TOOL_COMPILE_ET=	${COMPILEETOBJ}/compile_et
 .endif
 
-krb5_err.c krb5_err.h: krb5_err.et
-	${COMPILE_ET} ${DIST}/heimdal/lib/krb5/krb5_err.et
+krb5_err.c krb5_err.h: krb5_err.et ${TOOL_COMPILE_ET}
+	${TOOL_COMPILE_ET} ${DIST}/heimdal/lib/krb5/krb5_err.et
 
-heim_err.c heim_err.h: heim_err.et
-	${COMPILE_ET} ${DIST}/heimdal/lib/krb5/heim_err.et
+heim_err.c heim_err.h: heim_err.et ${TOOL_COMPILE_ET}
+	${TOOL_COMPILE_ET} ${DIST}/heimdal/lib/krb5/heim_err.et
 
-k524_err.c k524_err.h: k524_err.et
-	${COMPILE_ET} ${DIST}/heimdal/lib/krb5/k524_err.et
+k524_err.c k524_err.h: k524_err.et ${TOOL_COMPILE_ET}
+	${TOOL_COMPILE_ET} ${DIST}/heimdal/lib/krb5/k524_err.et
 
 ERR_FILES=	krb5_err.c heim_err.c k524_err.c
 DPSRCS=		krb5_err.h heim_err.h k524_err.h

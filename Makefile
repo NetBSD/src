@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.210 2003/07/08 04:25:21 lukem Exp $
+#	$NetBSD: Makefile,v 1.211 2003/07/10 10:33:58 lukem Exp $
 
 #
 # This is the top-level makefile for building NetBSD. For an outline of
@@ -347,13 +347,14 @@ install-${dir}:
 dependall-distrib depend-distrib all-distrib:
 	@true
 
+.include <bsd.sys.mk>
 .include <bsd.obj.mk>
 .include <bsd.kernobj.mk>
 .include <bsd.subdir.mk>
 
 build-docs: ${.CURDIR}/BUILDING
 ${.CURDIR}/BUILDING: doc/BUILDING.mdoc
-	groff -mdoc -Tascii -P-b -P-u -P-o $> >$@
+	${TOOL_GROFF} -mdoc -Tascii -P-b -P-u -P-o $> >$@
 
 
 #

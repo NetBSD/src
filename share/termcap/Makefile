@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.26 2003/05/18 08:20:34 lukem Exp $
+#	$NetBSD: Makefile,v 1.27 2003/07/10 10:34:38 lukem Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/8/93
 
 MAN=	termcap.5
@@ -19,6 +19,6 @@ CAP_MKDB_ENDIAN=
 .endif
 
 termcap.db: termcap.src
-	${CAP_MKDB} ${CAP_MKDB_ENDIAN} -f termcap ${.ALLSRC}
+	${TOOL_CAP_MKDB} ${CAP_MKDB_ENDIAN} -f termcap ${.ALLSRC}
 
 .include <bsd.prog.mk>

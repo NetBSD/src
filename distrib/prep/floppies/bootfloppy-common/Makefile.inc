@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.8 2003/01/03 15:34:34 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.9 2003/07/10 10:34:13 lukem Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -8,11 +8,10 @@
 #	KERNEL
 
 MDEC?=		${DESTDIR}/usr/mdec
-MKBOOTIMAGE?=	${PREPMKBOOTIMAGE}
 BOOTLOADER?=	${MDEC}/boot_com0
 
 ${IMAGE}: ${KERNEL}
-	${MKBOOTIMAGE} ${BOOTLOADER} ${.TARGET} ${KERNEL}	# XXXDISTRIB
+	${TOOL_PREPMKBOOTIMAGE} ${BOOTLOADER} ${.TARGET} ${KERNEL} # XXXDISTRIB
 
 ${IMAGE}.gz: ${IMAGE}
 	gzip -9c ${IMAGE} > ${.TARGET}
