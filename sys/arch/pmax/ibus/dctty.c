@@ -1,4 +1,4 @@
-/*	$NetBSD: dctty.c,v 1.1.2.1 1999/04/17 13:45:53 nisimura Exp $ */
+/*	$NetBSD: dctty.c,v 1.1.2.2 1999/10/29 16:44:57 drochner Exp $ */
 
 /*
  * Copyright (c) 1999 Tohru Nishimura.  All rights reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dctty.c,v 1.1.2.1 1999/04/17 13:45:53 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dctty.c,v 1.1.2.2 1999/10/29 16:44:57 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,6 +107,8 @@ dctty_attach(parent, self, aux)
 	struct dc_attach_args *args = aux;
 	struct tty *tp;
 	int line;
+
+	printf("\n");
 
 	line = args->line;
 	tp = ttymalloc();
