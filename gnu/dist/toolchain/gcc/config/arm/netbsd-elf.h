@@ -145,6 +145,10 @@ const_section ()                                                        \
  %{mapcs-float:-mapcs-float} \
  %{mthumb-interwork:-mthumb-interwork} \
  -matpcs \
+ %{mhard-float:-mfpa10} \
+ %{msoft-float:-mfpu=softvfp} \
+ %{!mhard-float: \
+   %{!msoft-float:-mfpu=softvfp}} \
  %{fpic:-k} %{fPIC:-k}"
 
 /* Some defines for CPP. */
