@@ -1,4 +1,4 @@
-/*	$NetBSD: fb_elb.c,v 1.1 2003/03/11 10:57:57 hannken Exp $	*/
+/*	$NetBSD: fb_elb.c,v 1.2 2003/03/17 18:39:23 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -79,7 +79,14 @@ static void	fb_free_screen(void *, void *);
 static int	fb_show_screen(void *, void *, int, void (*)(void *, int, int),
                     void *);
 
+static void	fb_eraserows(void *, int, int, long);
+static void	fb_erasecols(void *, int, int, int, long);
+static void	fb_copyrows(void *, int, int, int);
+static void	fb_copycols(void *, int, int, int, int);
+
 static void	s3_init(struct fb_dev *, int *, int *);
+static void	s3_copy(struct fb_dev *, int, int, int, int, int, int, int);
+static void	s3_fill(struct fb_dev *, int, int, int, int, int, int);
 
 static struct fb_dev console_dev;
 
@@ -180,6 +187,13 @@ fb_init(struct fb_dev *fb, int full)
 		rasops_reconfig(ri, 500, 500);
 	}
 
+	/* Replace the copy/erase ops. */
+	ri->ri_hw = fb;
+	ri->ri_ops.eraserows = fb_eraserows;
+	ri->ri_ops.erasecols = fb_erasecols;
+	ri->ri_ops.copyrows = fb_copyrows;
+	ri->ri_ops.copycols = fb_copycols;
+
 	stdscreen.nrows = ri->ri_rows;
 	stdscreen.ncols = ri->ri_cols; 
 	stdscreen.textops = &ri->ri_ops;
@@ -274,6 +288,60 @@ fb_cnattach(bus_space_tag_t iot, bus_addr_t iobase, void *vram)
 	wsdisplay_cnattach(&stdscreen, ri, 0, 0, defattr);
 }
 
+static void
+fb_eraserows(void *v, int row, int nrows, long attr)
+{
+	struct rasops_info *ri = v;
+	struct fb_dev *fb = ri->ri_hw;
+
+	row *= ri->ri_font->fontheight; 
+	nrows *= ri->ri_font->fontheight;
+
+	s3_fill(fb, 0, row, ri->ri_stride, nrows, (attr >> 16)&0x0f, 0x0f);
+}
+
+static void
+fb_erasecols(void *v, int row, int startcol, int ncols, long attr)
+{
+	struct rasops_info *ri = v;
+	struct fb_dev *fb = ri->ri_hw;
+
+	row *= ri->ri_font->fontheight; 
+	startcol *= ri->ri_font->fontwidth;
+	ncols *= ri->ri_font->fontwidth;
+
+	s3_fill(fb, startcol, row, ncols, ri->ri_font->fontheight,
+	    (attr >> 16)&0x0f, 0x0f);
+}
+
+static void
+fb_copyrows(void *v, int srcrow, int dstrow, int nrows)
+{
+	struct rasops_info *ri = v;
+	struct fb_dev *fb = ri->ri_hw;
+
+	srcrow *= ri->ri_font->fontheight;
+	dstrow *= ri->ri_font->fontheight;
+	nrows *= ri->ri_font->fontheight;
+
+	s3_copy(fb, 0, srcrow, 0, dstrow, ri->ri_stride, nrows, 0x0f);
+}
+
+static void
+fb_copycols(void *v, int row, int srccol, int dstcol, int ncols)
+{
+	struct rasops_info *ri = v;
+	struct fb_dev *fb = ri->ri_hw;
+
+	row *= ri->ri_font->fontheight;
+	srccol *= ri->ri_font->fontwidth;
+	dstcol *= ri->ri_font->fontwidth;
+	ncols *= ri->ri_font->fontwidth;
+
+	s3_copy(fb, srccol, row, dstcol, row,
+	    ncols, ri->ri_font->fontheight, 0x0f);
+}
+
 /*
  * S3 support routines
  */
@@ -284,6 +352,36 @@ fb_cnattach(bus_space_tag_t iot, bus_addr_t iobase, void *vram)
 #define S3_DAC_RD_INDEX		0x83c7
 #define S3_DAC_WR_INDEX		0x83c8
 #define S3_DAC_DATA		0x83c9
+
+#define S3_CUR_Y		0x82e8
+#define S3_CUR_X		0x86e8
+#define S3_DESTY_AXSTP		0x8ae8
+#define S3_DESTX_DIASTP		0x8ee8
+#define S3_MAJ_AXIS_PCNT	0x96e8
+#define S3_GP_STAT		0x9ae8
+#define S3_CMD			0x9ae8
+#define S3_BKGD_COLOR		0xa2e8
+#define S3_FRGD_COLOR		0xa6e8
+#define S3_WRT_MASK		0xaae8
+#define S3_RD_MASK		0xaee8
+#define S3_BKGD_MIX		0xb6e8
+#define S3_FRGD_MIX		0xbae8
+#define S3_MULTIFUNC_CNTL	0xbee8
+
+#define S3_GP_STAT_FIFO_1	0x0080
+#define S3_GP_STAT_BSY		0x0200
+
+#define S3_CMD_BITBLT		0xc001
+#define S3_CMD_RECT		0x4001
+#define S3_INC_Y		0x0080
+#define S3_INC_X		0x0020 
+#define S3_DRAW			0x0010
+#define S3_MULTI		0x0002
+
+#define S3_CSRC_BKGDCOL		0x0000
+#define S3_CSRC_FRGDCOL		0x0020
+#define S3_CSRC_DISPMEM		0x0060
+#define S3_MIX_NEW		0x0007
 
 #define CMAP_SIZE		256
 
@@ -338,4 +436,67 @@ s3_init(struct fb_dev *fb, int *width, int *height)
 
 	*width = (w+1) << 3;
 	*height = h+1;
+}
+
+static void
+s3_copy(struct fb_dev *fb, int src_x, int src_y, int dest_x, int dest_y,
+    int width, int height, int mask)
+{
+	bus_space_tag_t iot = fb->fb_iot;
+	bus_space_handle_t ioh = fb->fb_ioh;
+	u_int16_t cmd = S3_CMD_BITBLT | S3_DRAW;
+
+	if (src_x > dest_x)
+		cmd |= S3_INC_X;
+	else {
+		src_x += width-1;
+		dest_x += width-1;
+	}
+
+	if (src_y > dest_y)
+		cmd |= S3_INC_Y;
+	else {
+		src_y += height-1;
+		dest_y += height-1;
+	}
+
+	while (bus_space_read_2(iot, ioh, S3_GP_STAT) & S3_GP_STAT_FIFO_1)
+		;
+
+	bus_space_write_2(iot, ioh, S3_FRGD_MIX, S3_CSRC_DISPMEM | S3_MIX_NEW);
+	bus_space_write_2(iot, ioh, S3_WRT_MASK, mask);
+	bus_space_write_2(iot, ioh, S3_CUR_X, src_x);
+	bus_space_write_2(iot, ioh, S3_CUR_Y, src_y);
+	bus_space_write_2(iot, ioh, S3_DESTX_DIASTP, dest_x);
+	bus_space_write_2(iot, ioh, S3_DESTY_AXSTP, dest_y);
+	bus_space_write_2(iot, ioh, S3_MULTIFUNC_CNTL, height-1);
+	bus_space_write_2(iot, ioh, S3_MAJ_AXIS_PCNT, width-1);
+	bus_space_write_2(iot, ioh, S3_CMD, cmd);
+
+	while (bus_space_read_2(iot, ioh, S3_GP_STAT) & S3_GP_STAT_BSY)
+		;
+}
+
+static void
+s3_fill(struct fb_dev *fb, int x, int y, int width, int height,
+    int color, int mask)
+{
+	bus_space_tag_t iot = fb->fb_iot;
+	bus_space_handle_t ioh = fb->fb_ioh;
+	u_int16_t cmd = S3_CMD_RECT | S3_INC_X | S3_INC_Y | S3_DRAW;
+
+	while (bus_space_read_2(iot, ioh, S3_GP_STAT) & S3_GP_STAT_FIFO_1)
+		;
+
+	bus_space_write_2(iot, ioh, S3_FRGD_MIX, S3_CSRC_FRGDCOL | S3_MIX_NEW);
+	bus_space_write_2(iot, ioh, S3_FRGD_COLOR, color);
+	bus_space_write_2(iot, ioh, S3_WRT_MASK, mask);
+	bus_space_write_2(iot, ioh, S3_CUR_X, x);
+	bus_space_write_2(iot, ioh, S3_CUR_Y, y);
+	bus_space_write_2(iot, ioh, S3_MULTIFUNC_CNTL, height-1);
+	bus_space_write_2(iot, ioh, S3_MAJ_AXIS_PCNT, width-1);
+	bus_space_write_2(iot, ioh, S3_CMD, cmd);
+
+	while (bus_space_read_2(iot, ioh, S3_GP_STAT) & S3_GP_STAT_BSY)
+		;
 }
