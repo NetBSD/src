@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_mem.c,v 1.15 1999/10/12 11:24:22 augustss Exp $	*/
+/*	$NetBSD: usb_mem.c,v 1.16 1999/11/12 00:34:58 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -85,10 +85,10 @@ static usbd_status	usb_block_allocmem __P((bus_dma_tag_t, size_t, size_t,
 						usb_dma_block_t **));
 static void		usb_block_freemem  __P((usb_dma_block_t *));
 
-LIST_HEAD(, usb_dma_block) usb_blk_freelist = 
+static LIST_HEAD(, usb_dma_block) usb_blk_freelist = 
 	LIST_HEAD_INITIALIZER(usb_blk_freelist);
 /* XXX should have different free list for different tags (for speed) */
-LIST_HEAD(, usb_frag_dma) usb_frag_freelist =
+static LIST_HEAD(, usb_frag_dma) usb_frag_freelist =
 	LIST_HEAD_INITIALIZER(usb_frag_freelist);
 
 static usbd_status
@@ -134,7 +134,7 @@ usb_block_allocmem(tag, size, align, dmap)
 
 	DPRINTFN(6, ("usb_block_allocmem: no free\n"));
 	p = malloc(sizeof *p, M_USB, M_NOWAIT);
-	if (p == 0)
+	if (p == NULL)
 		return (USBD_NOMEM);
 	*dmap = p;
 
@@ -161,7 +161,7 @@ usb_block_allocmem(tag, size, align, dmap)
 				BUS_DMA_NOWAIT);
 	if (error)
 		goto destroy;
-	return 0;
+	return (USBD_NORMAL_COMPLETION);
 
 destroy:
 	bus_dmamap_destroy(tag, p->map);
@@ -216,7 +216,7 @@ usb_allocmem(bus, size, align, p)
         usb_dma_t *p;
 {
 	bus_dma_tag_t tag = bus->dmatag;
-	usbd_status r;
+	usbd_status err;
 	struct usb_frag_dma *f;
 	usb_dma_block_t *b;
 	int i;
@@ -226,12 +226,12 @@ usb_allocmem(bus, size, align, p)
 	if (size > USB_MEM_SMALL || align > USB_MEM_SMALL) {
 		DPRINTFN(1, ("usb_allocmem: large alloc %d\n", (int)size));
 		size = (size + USB_MEM_BLOCK - 1) & ~(USB_MEM_BLOCK - 1);
-		r = usb_block_allocmem(tag, size, align, &p->block);
-		if (r == USBD_NORMAL_COMPLETION) {
+		err = usb_block_allocmem(tag, size, align, &p->block);
+		if (!err) {
 			p->block->fullblock = 1;
 			p->offs = 0;
 		}
-		return (r);
+		return (err);
 	}
 	
 	s = splusb();
@@ -239,12 +239,12 @@ usb_allocmem(bus, size, align, p)
 	for (f = LIST_FIRST(&usb_frag_freelist); f; f = LIST_NEXT(f, next))
 		if (f->block->tag == tag)
 			break;
-	if (!f) {
+	if (f == NULL) {
 		DPRINTFN(1, ("usb_allocmem: adding fragments\n"));
-		r = usb_block_allocmem(tag, USB_MEM_BLOCK, USB_MEM_SMALL, &b);
-		if (r != USBD_NORMAL_COMPLETION) {
+		err = usb_block_allocmem(tag, USB_MEM_BLOCK, USB_MEM_SMALL,&b);
+		if (err) {
 			splx(s);
-			return (r);
+			return (err);
 		}
 		b->fullblock = 0;
 		for (i = 0; i < USB_MEM_BLOCK; i += USB_MEM_SMALL) {
