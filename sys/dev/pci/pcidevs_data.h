@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.586 2003/10/25 16:22:25 chs Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.587 2003/11/03 15:58:48 cube Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.590 2003/10/25 16:21:31 chs Exp 
+ *	NetBSD: pcidevs,v 1.591 2003/11/03 15:57:46 cube Exp 
  */
 
 /*
@@ -9458,6 +9458,18 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "VIA Technologies",
 	    "VT6105 (Rhine III) 10/100 Ethernet",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8623_VGA,
+	    0,
+	    "VIA Technologies",
+	    "VT8623 (Apollo CLE266) VGA Controller",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8623,
+	    0,
+	    "VIA Technologies",
+	    "VT8623 (Apollo CLE266) CPU-PCI Bridge",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8233A,
