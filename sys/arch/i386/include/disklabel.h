@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.10 2003/05/10 16:12:04 thorpej Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.11 2003/07/07 13:30:10 dsl Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -58,7 +58,6 @@
 #ifndef __ASSEMBLER__
 #include <sys/dkbad.h>
 struct cpu_disklabel {
-	struct mbr_partition dosparts[NMBRPART];
 	struct dkbad bad;
 };
 #endif
