@@ -31,15 +31,18 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1990, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1990, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)dev_mkdb.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$NetBSD: dev_mkdb.c,v 1.6 1997/03/08 06:48:02 mikel Exp $";
+#if 0
+static char sccsid[] = "from: @(#)dev_mkdb.c	8.1 (Berkeley) 6/6/93";
+#else
+__RCSID("$NetBSD: dev_mkdb.c,v 1.7 1997/10/17 00:12:49 lukem Exp $");
+#endif
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -58,6 +61,7 @@ static char rcsid[] = "$NetBSD: dev_mkdb.c,v 1.6 1997/03/08 06:48:02 mikel Exp $
 #include <string.h>
 #include <unistd.h>
 
+int	main __P((int, char **));
 void	usage __P((void));
 
 int
@@ -78,7 +82,7 @@ main(argc, argv)
 	u_char buf[MAXNAMLEN + 1];
 	char dbtmp[MAXPATHLEN + 1], dbname[MAXPATHLEN + 1];
 
-	while ((ch = getopt(argc, argv, "")) != EOF)
+	while ((ch = getopt(argc, argv, "")) != -1)
 		switch((char)ch) {
 		case '?':
 		default:
@@ -112,7 +116,7 @@ main(argc, argv)
 	key.data = &bkey;
 	key.size = sizeof(bkey);
 	data.data = buf;
-	while (dp = readdir(dirp)) {
+	while ((dp = readdir(dirp)) != NULL) {
 		if (lstat(dp->d_name, &sb)) {
 			warn("%s", dp->d_name);
 			continue;
