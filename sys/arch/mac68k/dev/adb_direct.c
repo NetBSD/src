@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_direct.c,v 1.24 1999/06/28 01:56:56 briggs Exp $	*/
+/*	$NetBSD: adb_direct.c,v 1.25 1999/06/29 04:45:59 briggs Exp $	*/
 
 /* From: adb_direct.c 2.02 4/18/97 jpw */
 
@@ -713,7 +713,6 @@ adb_intr_II(void *arg)
 
 	delay(ADB_DELAY);	/* yuck (don't remove) */
 
-if (!mac68k_machine.aux_interrupts)
 	(void)intr_dispatch(0x70); /* grab any serial interrupts */
 
 	if (ADB_INTR_IS_ON)
@@ -761,7 +760,6 @@ switch_start:
 			adbActionState = ADB_ACTION_IN;
 		}
 		delay(ADB_DELAY);
-if (!mac68k_machine.aux_interrupts)
 		(void)intr_dispatch(0x70); /* grab any serial interrupts */
 		goto switch_start;
 		break;
@@ -2133,7 +2131,7 @@ adb_reinit(void)
 
 	/* send an ADB reset first */
 	adb_op_sync((Ptr)0, (Ptr)0, (Ptr)0, (short)0x00);
-	delay(4000);
+	delay(3000);
 
 	/*
 	 * Probe for ADB devices. Probe devices 1-15 quickly to determine
