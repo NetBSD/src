@@ -1,4 +1,22 @@
-/*	$NetBSD: pcmcia.c,v 1.41 2004/08/08 23:17:13 mycroft Exp $	*/
+/*	$NetBSD: pcmcia.c,v 1.42 2004/08/08 23:19:59 mycroft Exp $	*/
+
+/*
+ * Copyright (c) 2004 Charles M. Hannum.  All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *      This product includes software developed by Charles M. Hannum.
+ * 4. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
+ */
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.41 2004/08/08 23:17:13 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.42 2004/08/08 23:19:59 mycroft Exp $");
 
 #include "opt_pcmciaverbose.h"
 
