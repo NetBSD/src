@@ -1,4 +1,4 @@
-/* $NetBSD: pci_axppci_33.c,v 1.24 2000/06/05 21:47:24 thorpej Exp $ */
+/* $NetBSD: pci_axppci_33.c,v 1.25 2000/06/29 08:58:48 mrg Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_axppci_33.c,v 1.24 2000/06/05 21:47:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_axppci_33.c,v 1.25 2000/06/29 08:58:48 mrg Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -37,7 +37,8 @@ __KERNEL_RCSID(0, "$NetBSD: pci_axppci_33.c,v 1.24 2000/06/05 21:47:24 thorpej E
 #include <sys/systm.h>
 #include <sys/errno.h>
 #include <sys/device.h>
-#include <vm/vm.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <machine/autoconf.h>
 #include <machine/bus.h>

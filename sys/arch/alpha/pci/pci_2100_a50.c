@@ -1,4 +1,4 @@
-/* $NetBSD: pci_2100_a50.c,v 1.27 2000/06/05 21:47:22 thorpej Exp $ */
+/* $NetBSD: pci_2100_a50.c,v 1.28 2000/06/29 08:58:48 mrg Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_2100_a50.c,v 1.27 2000/06/05 21:47:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_2100_a50.c,v 1.28 2000/06/29 08:58:48 mrg Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -37,7 +37,8 @@ __KERNEL_RCSID(0, "$NetBSD: pci_2100_a50.c,v 1.27 2000/06/05 21:47:22 thorpej Ex
 #include <sys/systm.h>
 #include <sys/errno.h>
 #include <sys/device.h>
-#include <vm/vm.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <machine/autoconf.h>
 #include <machine/bus.h>
