@@ -1,4 +1,4 @@
-# $NetBSD: md.vax,v 1.22 2003/02/13 23:57:52 jmc Exp $
+# $NetBSD: md.vax,v 1.23 2003/02/26 22:31:01 thorpej Exp $
 ./boot				base-sys-root
 ./pcs750.bin			base-sys-root
 ./sbin/ldconfig			base-sysutil-root
@@ -10,7 +10,3 @@
 ./usr/mdec/sdboot		base-sysutil-bin
 ./usr/mdec/xxboot		base-sysutil-bin
 ./usr/mdec/xxboot_ustarfs	base-sysutil-bin
-./usr/lib/libpthread.so.0	base-sys-shlib
-./usr/lib/libpthread_dbg.so.0	base-sys-shlib
-./usr/lib/libpthread.so.0.1		base-sys-shlib
-./usr/lib/libpthread_dbg.so.0.0		base-sys-shlib

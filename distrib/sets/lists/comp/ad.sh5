@@ -1,8 +1,0 @@
-# $NetBSD: ad.sh5,v 1.1 2003/02/13 23:57:53 jmc Exp $
-./usr/libdata/lint/llib-lpthread.ln	comp-c-lintlib
-./usr/libdata/lint/llib-lpthread_dbg.ln	comp-c-lintlib
-./usr/include/pthread_dbg.h		comp-c-include
-./usr/lib/libpthread.a		comp-c-lib
-./usr/lib/libpthread_dbg.a	comp-c-lib
-./usr/lib/libpthread_p.a	comp-c-proflib
-./usr/lib/libpthread_dbg_p.a	comp-c-proflib

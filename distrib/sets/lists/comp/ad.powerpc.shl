@@ -1,5 +1,0 @@
-# $NetBSD: ad.powerpc.shl,v 1.1 2003/02/13 23:57:53 jmc Exp $
-./usr/lib/libpthread.so		comp-c-lib
-./usr/lib/libpthread_dbg.so	comp-c-lib
-./usr/lib/libpthread_dbg_pic.a	comp-c-piclib
-./usr/lib/libpthread_pic.a	comp-c-piclib

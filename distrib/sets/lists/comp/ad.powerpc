@@ -1,4 +1,4 @@
-# $NetBSD: ad.powerpc,v 1.32 2003/02/13 23:57:52 jmc Exp $
+# $NetBSD: ad.powerpc,v 1.33 2003/02/26 22:31:06 thorpej Exp $
 ./usr/bin/elf2aout	comp-sysutil-bin
 ./usr/include/powerpc	comp-c-include
 ./usr/include/powerpc/ansi.h	comp-c-include
@@ -61,10 +61,3 @@
 ./usr/include/powerpc/trap.h	comp-c-include
 ./usr/include/powerpc/types.h	comp-c-include
 ./usr/include/powerpc/varargs.h	comp-c-include
-./usr/libdata/lint/llib-lpthread.ln	comp-c-lintlib
-./usr/libdata/lint/llib-lpthread_dbg.ln	comp-c-lintlib
-./usr/include/pthread_dbg.h		comp-c-include
-./usr/lib/libpthread.a		comp-c-lib
-./usr/lib/libpthread_dbg.a	comp-c-lib
-./usr/lib/libpthread_p.a	comp-c-proflib
-./usr/lib/libpthread_dbg_p.a	comp-c-proflib

@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.98 2003/02/13 23:57:52 jmc Exp $
+# $NetBSD: md.i386,v 1.99 2003/02/26 22:31:00 thorpej Exp $
 ./lib/libm387.so.0			base-sys-shlib
 ./lib/libm387.so.0.0			base-sys-shlib
 ./sbin/fdisk				base-sysutil-root
@@ -46,7 +46,3 @@
 ./usr/sbin/apmd				base-sysutil-bin
 ./usr/sbin/bad144			base-sysutil-bin
 ./usr/sbin/zzz				base-sysutil-bin
-./usr/lib/libpthread.so.0	base-sys-shlib
-./usr/lib/libpthread_dbg.so.0	base-sys-shlib
-./usr/lib/libpthread.so.0.1		base-sys-shlib
-./usr/lib/libpthread_dbg.so.0.0		base-sys-shlib

@@ -1,4 +1,4 @@
-# $NetBSD: ad.arm,v 1.15 2003/02/13 23:57:52 jmc Exp $
+# $NetBSD: ad.arm,v 1.16 2003/02/26 22:31:04 thorpej Exp $
 ./usr/include/arm			comp-c-include
 ./usr/include/arm/ansi.h		comp-c-include
 ./usr/include/arm/aout_machdep.h	comp-c-include
@@ -72,10 +72,3 @@
 ./usr/lib/libpmc_pic.a			comp-c-piclib
 ./usr/libdata/lint/llib-larm.ln		comp-c-lintlib
 ./usr/libdata/lint/llib-lpmc.ln		comp-c-lintlib
-./usr/libdata/lint/llib-lpthread.ln	comp-c-lintlib
-./usr/libdata/lint/llib-lpthread_dbg.ln	comp-c-lintlib
-./usr/include/pthread_dbg.h		comp-c-include
-./usr/lib/libpthread.a		comp-c-lib
-./usr/lib/libpthread_dbg.a	comp-c-lib
-./usr/lib/libpthread_p.a	comp-c-proflib
-./usr/lib/libpthread_dbg_p.a	comp-c-proflib
