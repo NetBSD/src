@@ -1,4 +1,4 @@
-/*	$NetBSD: eso.c,v 1.4 1999/08/14 15:05:02 kleink Exp $	*/
+/*	$NetBSD: eso.c,v 1.5 1999/08/14 22:42:16 kleink Exp $	*/
 
 /*
  * Copyright (c) 1999 Klaus J. Klein
@@ -31,6 +31,8 @@
 /*
  * ESS Technology Inc. Solo-1 PCI AudioDrive (ES1938/1946) device driver.
  */
+
+#include "mpu.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -201,7 +203,7 @@ eso_attach(parent, self, aux)
 	bus_addr_t vcbase;
 	const char *intrstring;
 	int idx;
-	uint8_t a2mode;
+	uint8_t a2mode, mvctl;
 
 	sc->sc_revision = PCI_REVISION(pa->pa_class);
 
@@ -262,9 +264,9 @@ eso_attach(parent, self, aux)
 	    pci_conf_read(pa->pa_pc, pa->pa_tag, ESO_PCI_S1C) &
 	    ~(ESO_PCI_S1C_IRQP_MASK | ESO_PCI_S1C_DMAP_MASK));
 
-	/* Enable the relevant DMA interrupts. */
+	/* Enable the relevant (DMA) interrupts. */
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, ESO_IO_IRQCTL,
-	    ESO_IO_IRQCTL_A1IRQ | ESO_IO_IRQCTL_A2IRQ);
+	    ESO_IO_IRQCTL_A1IRQ | ESO_IO_IRQCTL_A2IRQ | ESO_IO_IRQCTL_MPUIRQ);
 	
 	/* Set up A1's sample rate generator for new-style parameters. */
 	a2mode = eso_read_mixreg(sc, ESO_MIXREG_A2MODE);
@@ -357,12 +359,16 @@ eso_attach(parent, self, aux)
 	aa.hdl = NULL;
 	(void)config_found(&sc->sc_dev, &aa, audioprint);
 
-#if 0
 	aa.type = AUDIODEV_TYPE_MPU;
 	aa.hwif = NULL;
 	aa.hdl = NULL;
 	sc->sc_mpudev = config_found(&sc->sc_dev, &aa, audioprint);
-#endif
+	if (sc->sc_mpudev != NULL) {
+		/* Unmask the MPU irq. */
+		mvctl = eso_read_mixreg(sc, ESO_MIXREG_MVCTL);
+		mvctl |= ESO_MIXREG_MVCTL_MPUIRQM;
+		eso_write_mixreg(sc, ESO_MIXREG_MVCTL, mvctl);
+	}
 }
 
 static void
@@ -511,7 +517,8 @@ eso_intr(hdl)
 	irqctl = bus_space_read_1(sc->sc_iot, sc->sc_ioh, ESO_IO_IRQCTL);
 
 	/* If it wasn't ours, that's all she wrote. */
-	if ((irqctl & (ESO_IO_IRQCTL_A1IRQ | ESO_IO_IRQCTL_A2IRQ)) == 0)
+	if ((irqctl & (ESO_IO_IRQCTL_A1IRQ | ESO_IO_IRQCTL_A2IRQ |
+	    ESO_IO_IRQCTL_MPUIRQ)) == 0)
 		return (0);
 	
 	if (irqctl & ESO_IO_IRQCTL_A1IRQ) {
@@ -538,8 +545,8 @@ eso_intr(hdl)
 			wakeup(&sc->sc_pintr);
 	}
 
-#if 0
-	if ((irqctl & ESO_IO_IRQCTL_MPUIRQ) && sc->sc_mpudev != 0)
+#if NMPU > 0
+	if ((irqctl & ESO_IO_IRQCTL_MPUIRQ) && sc->sc_mpudev != NULL)
 		mpu_intr(sc->sc_mpudev);
 #endif
  
