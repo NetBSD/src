@@ -1,11 +1,10 @@
 #	from: @(#)symbols.raw	7.6 (Berkeley) 5/8/91
-#	$Id: symbols.raw,v 1.3 1993/05/22 08:00:01 cgd Exp $
+#	$Id: symbols.raw,v 1.3.4.1 1993/10/26 11:55:10 mycroft Exp $
 
 #gdb
 	_IdlePTD
 	_PTD
 	_curpcb
-	_kstack
 	_panicstr
 	_atdevbase
 #	_version
