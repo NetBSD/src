@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_macho.h,v 1.3 2002/08/26 21:09:03 christos Exp $	*/
+/*	$NetBSD: exec_macho.h,v 1.4 2002/10/29 22:22:30 manu Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,6 +41,11 @@
 
 #include <machine/int_types.h>
 #include <machine/macho_machdep.h>
+
+/*
+ * CPU supported by a given arch, in sys/arch/<arch>/<arch>/macho_machdep.c
+ */
+extern u_int32_t exec_macho_supported_cpu[];
 
 /*
  * the `fat' binary description

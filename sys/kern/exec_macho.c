@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_macho.c,v 1.9 2002/10/29 19:28:19 manu Exp $	*/
+/*	$NetBSD: exec_macho.c,v 1.10 2002/10/29 22:22:31 manu Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_macho.c,v 1.9 2002/10/29 19:28:19 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_macho.c,v 1.10 2002/10/29 22:22:31 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -351,6 +351,7 @@ exec_macho_load_vnode(struct proc *p, struct exec_package *epp,
 	int error = ENOEXEC, i;
 	size_t size;
 	void *buf = &lc;
+	u_int32_t *sc;
 
 #ifdef DEBUG_MACHO
 	exec_macho_print_fat_header(fat);
@@ -365,14 +366,14 @@ exec_macho_load_vnode(struct proc *p, struct exec_package *epp,
 #ifdef DEBUG_MACHO
 			exec_macho_print_fat_arch(&arch);
 #endif
-			switch (be32toh(arch.cputype)) {
-			MACHO_MACHDEP_CASES
+			for (sc = exec_macho_supported_cpu; *sc; sc++)
+				if (*sc == be32toh(arch.cputype))
+					break;
+			if (*sc == NULL) {
+				DPRINTF(("CPU not supported by this binary"));
+				goto bad;
 			}
 		}
-
-		DPRINTF(("This MACH-O binary does not support your cpu"));
-		goto bad;
-done:
 		break;
 
 	case MACHO_MOH_MAGIC:
