@@ -1,4 +1,4 @@
-#	$NetBSD: SMDK2800,v 1.9 2003/12/13 23:24:47 thorpej Exp $
+#	$NetBSD: SMDK2800,v 1.10 2003/12/13 23:31:21 thorpej Exp $
 #
 #	SMDK2800 -- Samsung's S3C2800 evaluation board.
 #
@@ -165,18 +165,11 @@ pci0	at sspci0
 # how to set up DMA modes for this chip. This may work, or may cause
 # a machine hang with some controllers.
 #pciide* 	at pci? dev ? function ? flags 0x0000	# GENERIC pciide driver
-#acardide*	at pci? dev ? function ?	# Acard IDE controllers
-#aceride* 	at pci? dev ? function ?	# Acer Lab IDE controllers
 #cmdide* 	at pci? dev ? function ?	# CMD tech IDE controllers
-#cypide* 	at pci? dev ? function ?	# Cypress IDE controllers
 #hptide* 	at pci? dev ? function ?	# Triones/HighPoint IDE controllers
-#optiide* 	at pci? dev ? function ?	# Opti IDE controllers
 #piixide* 	at pci? dev ? function ?	# Intel IDE controllers
 #pdcide* 	at pci? dev ? function ?	# Promise IDE controllers
 #satalink*	at pci? dev ? function ?	# SiI SATALink controllers
-#siside* 	at pci? dev ? function ?	# SiS IDE controllers
-#slide*  	at pci? dev ? function ?	# Symphony Labs IDE controllers
-#viaide* 	at pci? dev ? function ?	# VIA/AMD/Nvidia IDE controllers
 
 # ATA bus support
 #atabus* 	at ata? channel ?
