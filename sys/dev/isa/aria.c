@@ -99,10 +99,10 @@ struct aria_mixmaster {
 
 struct aria_softc {
 	struct	device sc_dev;		/* base device */
-	struct	device *sc_isa;		/* pointer to ISA parent */
 	void	*sc_ih;			/* interrupt vectoring */
 	bus_space_tag_t sc_iot;		/* Tag on 'da bus. */
 	bus_space_handle_t sc_ioh;	/* Handle of iospace */
+	isa_chipset_tag_t sc_ic;	/* ISA chipset info */
 
 	u_short	sc_open;		/* reference count of open calls */
 	u_short sc_play;		/* non-paused play chans 2**chan */
@@ -412,8 +412,8 @@ ariaattach(parent, self, aux)
 
 	sc->sc_iot = ia->ia_iot;
 	sc->sc_ioh = ioh;
+	sc->sc_ic = ia->ia_ic;
 
-	sc->sc_isa = parent;
 	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
 			IPL_AUDIO, aria_intr, sc);
 
