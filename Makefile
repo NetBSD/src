@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.229 2004/01/27 04:22:25 lukem Exp $
+#	$NetBSD: Makefile,v 1.230 2004/02/06 23:12:56 lukem Exp $
 
 #
 # This is the top-level makefile for building NetBSD. For an outline of
@@ -383,6 +383,7 @@ dependall-distrib depend-distrib all-distrib: .PHONY
 
 build-docs: .PHONY ${.CURDIR}/BUILDING
 ${.CURDIR}/BUILDING: doc/BUILDING.mdoc
+	${_MKMSG_CREATE} ${.TARGET}
 	${TOOL_GROFF} -mdoc -Tascii -P-bou $> >$@
 
 
