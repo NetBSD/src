@@ -1,4 +1,4 @@
-/*	$NetBSD: in_var.h,v 1.41 2000/10/08 09:15:28 enami Exp $	*/
+/*	$NetBSD: in_var.h,v 1.42 2001/11/04 13:42:27 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -140,7 +140,7 @@ extern  struct in_ifaddrhashhead *in_ifaddrhashtbl;	/* Hash table head */
 extern  struct in_ifaddrhead in_ifaddr;		/* List head (in ip_input) */
 
 extern	struct	ifqueue	ipintrq;		/* ip packet input queue */
-extern	int	inetctlerrmap[];
+extern	const	int	inetctlerrmap[];
 
 
 /*

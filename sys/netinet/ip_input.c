@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.138 2001/10/29 07:02:33 simonb Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.139 2001/11/04 13:42:27 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1436,7 +1436,7 @@ ip_stripoptions(m, mopt)
 	ip->ip_hl = sizeof (struct ip) >> 2;
 }
 
-int inetctlerrmap[PRC_NCMDS] = {
+const int inetctlerrmap[PRC_NCMDS] = {
 	0,		0,		0,		0,
 	0,		EMSGSIZE,	EHOSTDOWN,	EHOSTUNREACH,
 	EHOSTUNREACH,	EHOSTUNREACH,	ECONNREFUSED,	ECONNREFUSED,

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.119 2001/09/11 21:03:21 thorpej Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.120 2001/11/04 13:42:27 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1285,7 +1285,7 @@ tcp_ctlinput(cmd, sa, v)
 	struct ip *ip = v;
 	struct tcphdr *th;
 	struct icmp *icp;
-	extern int inetctlerrmap[];
+	extern const int inetctlerrmap[];
 	void (*notify) __P((struct inpcb *, int)) = tcp_notify;
 	int errno;
 	int nmatch;
