@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.4 1994/06/29 06:46:37 cgd Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.5 1994/10/28 19:59:21 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -469,7 +469,7 @@ ffs_oldfscompat(fs)
 	if (fs->fs_postblformat == FS_42POSTBLFMT)		/* XXX */
 		fs->fs_nrpos = 8;				/* XXX */
 	if (fs->fs_inodefmt < FS_44INODEFMT) {			/* XXX */
-		quad_t sizepb = fs->fs_bsize;			/* XXX */
+		u_int64_t sizepb = fs->fs_bsize;		/* XXX */
 								/* XXX */
 		fs->fs_maxfilesize = fs->fs_bsize * NDADDR - 1;	/* XXX */
 		for (i = 0; i < NIADDR; i++) {			/* XXX */
@@ -840,9 +840,9 @@ ffs_sbupdate(mp, waitfor)
 	if (fs->fs_postblformat == FS_42POSTBLFMT)		/* XXX */
 		((struct fs *)bp->b_data)->fs_nrpos = -1;	/* XXX */
 	if (fs->fs_inodefmt < FS_44INODEFMT) {			/* XXX */
-		long *lp, tmp;					/* XXX */
+		int32_t *lp, tmp;				/* XXX */
 								/* XXX */
-		lp = (long *)&((struct fs *)bp->b_data)->fs_qbmask; /* XXX */
+		lp = (int32_t *)&((struct fs *)bp->b_data)->fs_qbmask; /* XXX */
 		tmp = lp[4];					/* XXX */
 		for (i = 4; i > 0; i--)				/* XXX */
 			lp[i] = lp[i-1];			/* XXX */
