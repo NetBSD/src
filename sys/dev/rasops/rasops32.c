@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops32.c,v 1.5 1999/10/23 23:14:14 ad Exp $	*/
+/*	 $NetBSD: rasops32.c,v 1.6 1999/10/24 15:14:57 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include "opt_rasops.h"
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops32.c,v 1.5 1999/10/23 23:14:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops32.c,v 1.6 1999/10/24 15:14:57 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -120,7 +120,8 @@ rasops32_putchar(cookie, row, col, uc, attr)
 
 		while (height--) {
 			dp = rp;
-			fb = fr[3] | (fr[2] << 8) | (fr[1] << 16) | (fr[0] << 24);
+			fb = fr[3] | (fr[2] << 8) | (fr[1] << 16) | 
+			    (fr[0] << 24);
 			fr += fs;
 			DELTA(rp, ri->ri_stride, int32_t *);
 			
