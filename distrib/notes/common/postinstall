@@ -1,4 +1,4 @@
-.\"	$NetBSD: postinstall,v 1.32 2002/04/14 13:12:38 bjh21 Exp $
+.\"	$NetBSD: postinstall,v 1.33 2002/05/03 04:12:02 mbw Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -156,6 +156,9 @@ For example:
 .ie \n[hp300]:\n[pmax]:\n[sparc] \{\
 .Dl                  ifconfig_le0="inet 123.45.67.89 netmask 255.255.255.0"
 .\}
+.el .ie \n[next68k] \{\
+.Dl                  ifconfig_xe0="inet 123.45.67.89 netmask 255.255.255.0"
+.\}
 .el .ie r_macppc .Dl ifconfig_mc0="inet 123.45.67.89 netmask 255.255.255.0"
 .el              .Dl ifconfig_de0="inet 123.45.67.89 netmask 255.255.255.0"
 .Pp
@@ -166,6 +169,9 @@ in
 .Pp
 .ie \n[hp300]:\n[pmax]:\n[sparc] \{\
 .Dl                  ifconfig_le0="inet myname.my.dom netmask 255.255.255.0"
+.\}
+.el .ie \n[next68k] \{\
+.Dl                  ifconfig_xe0="inet myname.my.dom netmask 255.255.255.0"
 .\}
 .el .ie r_macppc .Dl ifconfig_mc0="inet myname.my.dom netmask 255.255.255.0"
 .el              .Dl ifconfig_de0="inet myname.my.dom netmask 255.255.255.0"
@@ -223,12 +229,21 @@ edit
 directly. See
 .Xr useradd 8
 for more information on how to add a new user to the system.
+.if !\n[next68k] \{\
 .It
 The X Window System
 .Pp
 If you have installed the X Window System, look at the files in
 .Pa /usr/X11R6/lib/X11/doc
 for information.
+.if \n[hp300] \{\
+Also, you may want to read through the 
+.Nx*M
+FAQ entry on X11.
+.br
+.Lk
+http://www.netbsd.org/Ports/faq.html#x11
+.\}
 .if \n[macppc] \{\
 Also, you may want to read through the 
 .Nx*M
@@ -236,6 +251,7 @@ X11R6 FAQ.
 .br
 .Lk http://www.netbsd.org/Ports/macppc/x11.html
 .\}
+.\} \" ! !\n[next68k]
 .if \n[cats]:\n[i386]:\n[shark] \{\
 .Pp
 You will need to set up a configuration file, see
