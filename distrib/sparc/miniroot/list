@@ -1,9 +1,10 @@
-#	$NetBSD: list,v 1.16 2000/05/02 13:59:20 sjg Exp $
+#	$NetBSD: list,v 1.16.4.1 2000/10/19 14:24:22 tv Exp $
 
 # Sparc extra's
 LINK	instbin			sbin/disklabel
-LINK	instbin			sbin/mount_kernfs
+LINK	instbin			sbin/dmesg
 LINK	instbin			sbin/sysctl
+LINK	instbin			bin/rcmd
 
 SYMLINK	../../instbin		usr/bin/basename
 SYMLINK ../../instbin		usr/bin/cksum usr/bin/sum
@@ -26,10 +27,7 @@ SPECIAL	mkdir kern
 SYMLINK	/tmp	var/tmp
 
 # copy the MAKEDEV script and make some devices
-COPY	${DESTDIR}/dev/MAKEDEV		dev/MAKEDEV
-COPY	${DESTDIR}/dev/MAKEDEV.local	dev/MAKEDEV.local
-SPECIAL	cd dev; sh MAKEDEV all
-SPECIAL	/bin/rm dev/MAKEDEV
+SPECIAL	cd dev; sh ${DESTDIR}/dev/MAKEDEV all
 
 # we need the contents of /usr/mdec
 COPYDIR	${DESTDIR}/usr/mdec	usr/mdec
@@ -51,6 +49,9 @@ SYMLINK	/tmp/disktab.shadow		etc/disktab
 SYMLINK	/tmp/fstab.shadow		etc/fstab
 SYMLINK	/tmp/resolv.conf.shadow		etc/resolv.conf
 SYMLINK	/tmp/hosts			etc/hosts
+
+# generate lists of obsolete files used by sysinst
+SPECIAL sh ${CURDIR}/../sets/makeobsolete -b -s ${CURDIR}/../sets -t ./dist
 
 # and the installation tools
 LINK	instbin				sysinst
