@@ -1,3 +1,5 @@
+/*	$NetBSD: rlogind.c,v 1.10 1997/10/07 10:29:01 mrg Exp $	*/
+
 /*-
  * Copyright (c) 1983, 1988, 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -31,15 +33,15 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1983, 1988, 1989, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-/* from: static char sccsid[] = "@(#)rlogind.c	8.1 (Berkeley) 6/4/93"; */
-static char *rcsid = "$Id: rlogind.c,v 1.9 1996/11/08 07:47:45 lukem Exp $";
+__COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1989, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
+#if 0
+static char sccsid[] = "@(#)rlogind.c	8.2 (Berkeley) 4/28/95";
+#else
+__RCSID("$NetBSD: rlogind.c,v 1.10 1997/10/07 10:29:01 mrg Exp $");
+#endif
 #endif /* not lint */
 
 /*
@@ -328,7 +330,7 @@ control(pty, cp, n)
 	if (n < 4+sizeof (w) || cp[2] != 's' || cp[3] != 's')
 		return (0);
 	oobdata[0] &= ~TIOCPKT_WINDOW;	/* we know he heard */
-	bcopy(cp+4, (char *)&w, sizeof(w));
+	memmove(&w, cp+4, sizeof(w));
 	w.ws_row = ntohs(w.ws_row);
 	w.ws_col = ntohs(w.ws_col);
 	w.ws_xpixel = ntohs(w.ws_xpixel);
