@@ -1,5 +1,4 @@
-/*	$NetBSD: ym_isapnp.c,v 1.16 2002/10/02 16:34:05 thorpej Exp $ */
-
+/*	$NetBSD: ym_isapnp.c,v 1.17 2005/01/13 15:14:03 kent Exp $ */
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -43,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ym_isapnp.c,v 1.16 2002/10/02 16:34:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ym_isapnp.c,v 1.17 2005/01/13 15:14:03 kent Exp $");
 
 #include "mpu_ym.h"
 
@@ -72,8 +71,8 @@ __KERNEL_RCSID(0, "$NetBSD: ym_isapnp.c,v 1.16 2002/10/02 16:34:05 thorpej Exp $
 #include <dev/isa/wssreg.h>
 #include <dev/isa/ymvar.h>
 
-int	ym_isapnp_match __P((struct device *, struct cfdata *, void *));
-void	ym_isapnp_attach __P((struct device *, struct device *, void *));
+int	ym_isapnp_match(struct device *, struct cfdata *, void *);
+void	ym_isapnp_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(ym_isapnp, sizeof(struct ym_softc),
     ym_isapnp_match, ym_isapnp_attach, NULL, NULL);
@@ -86,17 +85,14 @@ CFATTACH_DECL(ym_isapnp, sizeof(struct ym_softc),
  * Probe for the Yamaha hardware.
  */
 int
-ym_isapnp_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+ym_isapnp_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	int pri, variant;
 
 	pri = isapnp_devmatch(aux, &isapnp_ym_devinfo, &variant);
 	if (pri && variant > 0)
 		pri = 0;
-	return (pri);
+	return pri;
 }
 
 /*
@@ -104,14 +100,15 @@ ym_isapnp_match(parent, match, aux)
  * pseudo-device driver.
  */
 void
-ym_isapnp_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+ym_isapnp_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct ym_softc *sc = (struct ym_softc *)self;
-	struct ad1848_softc *ac = &sc->sc_ad1848.sc_ad1848;
-	struct isapnp_attach_args *ipa = aux;
+	struct ym_softc *sc;
+	struct ad1848_softc *ac;
+	struct isapnp_attach_args *ipa;
 
+	sc = (struct ym_softc *)self;
+	ac = &sc->sc_ad1848.sc_ad1848;
+	ipa = aux;
 	printf("\n");
 
 	if (isapnp_config(ipa->ipa_iot, ipa->ipa_memt, ipa)) {
