@@ -1,6 +1,43 @@
-.\" -*- nroff -*-
-.\" 
-.\"	$NetBSD: ddb.4,v 1.13 1997/10/09 08:31:45 mycroft Exp $
+.\"	$NetBSD: ddb.4,v 1.13.2.1 1997/11/24 00:13:11 mellon Exp $
+.\"
+.\" Copyright (c) 1997 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Luke Mewburn
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"        This product includes software developed by the NetBSD
+.\"        Foundation, Inc. and its contributors.
+.\" 4. Neither the name of The NetBSD Foundation nor the names of its
+.\"    contributors may be used to endorse or promote products derived
+.\"    from this software without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.\" ---
+.\"	This manual page was derived from a -man.old document which bore
+.\"	the following copyright message:
+.\" ---
 .\"
 .\" Mach Operating System
 .\" Copyright (c) 1991,1990 Carnegie Mellon University
@@ -25,357 +62,695 @@
 .\" 
 .\" any improvements or extensions that they make and grant Carnegie Mellon
 .\" the rights to redistribute these changes.
-.\" 
-.TH DDB 4
-.SH NAME
-ddb \- kernel debugger
-.de XX
-.br
-.sp
-.ti -4n
-\\$1
-.br
-.sp
-..
-.de XS
-.nr )R +\\$1
-..
-.de XE
-.nr )R -\\$1
-..
-.SH SYNOPSIS
-.B "options DDB"
-.br
-.B "options DDB_ONPANIC=0"
-.SH DESCRIPTION
-The kernel debugger has most of the features of the old kdb,
-but with a more rational (gdb-like) syntax.
-.sp
-The current location is called 'dot'.  The 'dot' is displayed with
-a hexadecimal format at a prompt.
-Examine and write commands update 'dot' to the address of the last line
-examined or the last location modified, and set 'next' to the address of
-the next location to be examined or changed.
-Other commands don't change 'dot', and set 'next' to be the same as 'dot'.
-.sp
+.\"
+.Dd November 17, 1997
+.Dt DDB 4
+.Os NetBSD
+.Sh NAME
+.Nm ddb
+.Nd in-kernel debugger
+.Sh SYNOPSIS
+.Cd options DDB
+.Pp
+To enable history editing:
+.Cd options DDB_HISTORY_SIZE=integer
+.Pp
+To disable entering
+.Nm
+upon kernel panic:
+.Cd options DDB_ONPANIC=0
+.Sh DESCRIPTION
+.Nm
+is the in-kernel debugger.
+It may be entered at any time via a special key sequence, and
+optionally may be invoked when the kernel panics.
+.Pp
+The current memory location being edited is referred to as
+.Ar dot ,
+and the next location is
+.Ar next .
+They are displayed as hexadecimal numbers.
+.Pp
+Commands that examine and/or modify memory update
+.Ar dot
+to the address of the last line examined or the last location
+modified, and set
+.Ar next
+to the next location to be examined or modified.
+Other commands don't change
+.Ar dot ,
+and set
+.Ar next
+to be the same as
+.Ar dot .
+.Pp
 The general command syntax is:
-.sp
-.ti +4n
-\fIcommand[/modifier] address [,count]\fR
-.sp
-A blank line repeats from the address 'next' with count 1 and no modifiers.
-Specifying 'address' sets 'dot' to the address.
-Omitting 'address' uses 'dot'.
-A missing 'count' is taken to be 1 for printing commands or infinity
-for stack traces.
-.sp
-"\fBddb\fR" has a feature like a command "\fBmore\fR"
-for the output.  If an output line exceeds the number set in the $lines
-variable, it displays "\fI--db_more--\fR"
-and waits for a response.
-The valid responses for it are:
-.XS 4n
-.IP \fI\<space>\fR 10n
-one more page
-.IP \fI\<return>\fR 10n
-one more line
-.IP \fB\q\fR 10n
-abort the current command, and return to the command input mode.
-.LP
-.XE 4n
-.SH COMMANDS
-.XS 4n
-.XX "\fBexamine(x) \fI[/<modifier>] <addr>[,<count>]\fR"
-Display the addressed locations according to the formats in the modifier.
-Multiple modifier formats display multiple locations.
-If no format is specified, the last formats specified for this command
+.Bd -ragged -offset indent
+.Ic command Ns Op Cm / Ns Ar modifier
+.Ar address
+.Op Cm , Ns Ar count
+.Ed
+.Pp
+A blank line repeats the previous command from the address
+.Ar next
+with a
+.Cm count
+of 1 and no modifiers.
+Specifying
+.Cm address
+sets
+.Em dot
+to the address.
+If 
+.Cm address
+is omitted,
+.Em dot
 is used.
-.sp
-The format characters are:
-.XS 2n
-.IP b 5n
-look at by bytes(8 bits)
-.IP h 5n
-look at by half words(16 bits)
-.IP l 5n
-look at by long words(32 bits)
-.IP a 5n
-print the location being displayed
-.IP A 5n
-print the location with a line number if possible
-.IP x 5n
-display in unsigned hex
-.IP z 5n
-display in signed hex
-.IP o 5n
-display in unsigned octal
-.IP d 5n
-display in signed decimal
-.IP u 5n
-display in unsigned decimal
-.IP r 5n
-display in current radix, signed
-.IP c 5n
+A missing
+.Cm count
+is taken to be 1 for printing commands, and infinity for stack traces.
+.Pp
+.Nm
+has a
+.Xr more 1 -like
+functionality; if a number of lines in a command's output exceeds the number
+defined in the
+.Va lines
+variable, then
+.Nm
+displays
+.Dq "--db more--"
+and waits for a response, which may be one of:
+.Bl -tag -offset indent -width "<return>"
+.It <return>
+one more line.
+.It <space>
+one more page.
+.It Ic q 
+abort the current command, and return to the command input mode.
+.El
+.Pp
+If 
+.Nm
+history editing is enabled (by defining the
+.D1 Cd options DDB_HISTORY_SIZE=num
+kernel option), then a history of the last
+.Cm num
+commands is kept.
+The history can be manipulated with the following key sequences:
+.Bl -tag -offset indent -width "<Ctrl>-P"
+.It <Ctrl>-P
+retrieve previous command in history (if any).
+.It <Ctrl>-N
+retrieve next command in history (if any).
+.El
+.Sh COMMANDS
+.Nm
+supports the following commands:
+.Bl -tag -width 5n
+.It Xo
+.Ic examine Ns Op Cm / Ns Ar modifier
+.Ar address Ns Op Cm , Ns Ar count
+.Xc
+Display the address locations according to the format in 
+.Ar modifier .
+Multiple modifier formats display multiple locations.
+If
+.Ar modifier
+isn't specified, the modifier from the last use of
+.Ic examine
+is used.
+.Pp
+The valid format characters for
+.Ar modifier
+are:
+.Bl -tag -offset indent -width 2n
+.It Cm b
+examine bytes (8 bits).
+.It Cm h
+examine half-words (16 bits).
+.It Cm l
+examine long-words (32 bits).
+.It Cm a
+print the location being examined.
+.It Cm A
+print the location with a line number if possible.
+.It Cm x
+display in unsigned hex.
+.It Cm z
+display in signed hex.
+.It Cm o
+display in unsigned octal.
+.It Cm d
+display in signed decimal.
+.It Cm u
+display in unsigned decimal.
+.It Cm r
+display in current radix, signed.
+.It Cm c
 display low 8 bits as a character.
-Non-printing characters are displayed as an octal escape code (e.g. '\\000').
-.IP s 5n
-display the null-terminated string at the location.
+Non-printing characters as displayed as an octal escape code
+(e.g.,
+.Sq \e000 ) .
+.It Cm s
+display the NUL terminated string at the location.
 Non-printing characters are displayed as octal escapes.
-.IP m 5n
-display in unsigned hex with character dump at the end of each line.
-The location is also displayed in hex at the beginning of each line.
-.IP i 5n
-display as an instruction
-.IP I 5n
-display as an instruction with possible alternative formats depending on the
-machine:
-.LP
-.XS 2n
-.IP i386 8n
-don't round to the next long word boundary.
-.IP mips 8n
-print register contents.
-.IP vax 8n
-don't assume that each external label is a procedure entry mask.
-.LP
-.XE 2n
-.XE 2n
-.XX "\fBxf\fR"
+.It Cm m
+display in unsigned hex with a character dump at the end of each line.
+The location is displayed as hex at the beginning of each line.
+.It Cm i
+display as a machine instruction.
+.It Cm I
+display as a machine instruction, with possible alternative formats
+depending upon the machine:
+.Bl -tag -offset indent -width "sparc"
+.It i386
+don't round to the next long word boundary
+.It mips
+print register contents
+.It vax
+don't assume that each external label is a procedure entry mask
+.El
+.El
+.It Xo
+.Ic x Ns Op Cm / Ns Ar modifier
+.Ar address Ns Op Cm , Ns Ar count
+.Xc
+A synonym for
+.Ic examine .
+.It Ic xf
 Examine forward.
-It executes an examine command with the last specified parameters to it
-except that the next address displayed by it is used as the start address.
-.XX "\fBxb\fR"
+.Ic xf
+re-executes the most recent
+.Ic execute
+command with the same parameters except that
+.Ar address
+is set to
+.Ar next .
+.It Ic xb
 Examine backward.
-It executes an examine command with the last specified parameters to it
-except that the last start address subtracted by the size displayed by it
-is used as the start address.
-.XX "\fBprint[/axzodurc] \fI<addr1> [ <addr2> ... ]\fR"
-Print 'addr's according to the modifier character.
-Valid formats are: a x z o d u r c.
-If no modifier is specified, the last one specified to it is used.  'addr'
-can be a string, and it is printed as it is.  For example:
-.sp
-.ti +4n
-print/x "eax = " $eax "\\necx = " $ecx "\\n"
-.sp
-will print like:
-.sp
-.in +4n
+.Ic xb
+re-executes the most recent
+.Ic execute
+command with the same parameters, except that
+.Ar address
+is set to the last start address minus its size.
+.It Xo
+.Ic print Ns Op Cm /axzodurc
+.Ar address Op Ar address ...
+.Xc
+Print addresses
+.Ar address
+according to the modifier character, as per
+.Ic examine .
+Valid modifiers are:
+.Cm /a ,
+.Cm /x ,
+.Cm /z ,
+.Cm /o ,
+.Cm /d ,
+.Cm /u ,
+.Cm /r ,
+and
+.Cm /c
+(as per
+.Ic examine ) .
+If no modifier is specified, the most recent one specified is used.
+.Ar address
+may be a string, and is printed
+.Dq as-is .
+For example:
+.Bd -literal -offset indent
+print/x "eax = " $eax "\enecx = " $ecx "\en"
+.Ed
+.Pp
+will produce:
+.Bd -literal -offset indent
 eax = xxxxxx
-.br
 ecx = yyyyyy
-.in -4n
-.XX "\fBwrite[/bhl] \fI<addr> <expr1> [ <expr2> ... ]\fR"
-Write the expressions at succeeding locations.
-The write unit size can be specified in the modifier with a letter
-b (byte), h (half word) or l(long word) respectively.  If omitted,
-long word is assumed.
-.sp
-Warning: since there is no delimiter between expressions, strange
-things may happen.
-It's best to enclose each expression in parentheses.
-.XX "\fBset \fI$<variable> [=] <expr>\fR"
-Set the named variable or register with the value of 'expr'.
-Valid variable names are described below.
-.XX "\fBbreak[/u] \fI<addr>[,<count>]\fR"
-Set a break point at 'addr'.
-If count is supplied, continues (count-1) times before stopping at the
-break point.  If the break point is set, a break point number is
-printed with '#'.  This number can be used in deleting the break point
-or adding conditions to it.
-.XS 2n
-.IP u 5n
-Set a break point in user space address. Without 'u' option,
-the address is considered in the kernel space, and wrong space address
-is rejected with an error message.
-This option can be used only if it is supported by machine dependent
+.Ed
+.It Xo
+.Ic write Ns Op Cm /bhl
+.Ar address
+.Ar expression Op Ar expression ...
+.Xc
+Write the
+.Ar expression Ns s
+at succeeding locations.
+The unit size is specified with a modifier character, as per
+.Ic examine .
+Valid modifiers are:
+.Cm /b ,
+.Cm /h ,
+and
+.Cm /l .
+If no modifier is specified,
+.Cm /l
+is used.
+.Pp
+Warning: since there is no delimiter between
+.Ar expression Ns s ,
+strange things may occur.
+It's best to enclose each
+.Ar expression
+in parentheses.
+.It Xo
+.Ic set
+.Cm $ Ns Ar variable
+.Op Cm =
+.Ar expression
+.Xc
+Set the named variable or register to the value of
+.Ar expression .
+Valid variable names are described in
+.Sx VARIABLES .
+.It Xo
+.Cm break Ns Op Cm /u
+.Ar address Ns Op Cm , Ns Ar count
+.Xc
+Set a breakpoint at
+.Ar address .
+If
+.Ar count
+is supplied, continues
+.Pq Ar count Ns -1
+times before stopping at the breakpoint.
+If the breakpoint is set, a breakpoint number is printed with
+.Sq # .
+This number can be used to
+.Ic delete
+the breakpoint, or to add
+conditions to it.
+.Pp
+If
+.Cm /u
+is specified,
+set a breakpoint at a user-space address.
+Without
+.Cm /u ,
+.Ar address
+is considered to be in the kernel-space, and an address in the wrong
+space will be rejected, and an error message will be emitted.
+This modifier may only be used if it is supported by machine dependent
 routines.
-.LP
-.XE 2n
-Warning: if a user text is shadowed by a normal user space debugger,
-user space break points may not work correctly.  Setting a break
-point at the low-level code paths may also cause strange behavior.
-.XX "\fBdelete \fI<addr>|#<number>\fR"
-Delete the break point.  The target break point can be specified by a
-break point number with '#', or by 'addr' like specified in 'break'
-command.
-.XX "\fBstep[/p] \fI[,<count>]\fR"
-Single step 'count' times.
-If 'p' option is specified, print each instruction at each step.
+.Pp
+Warning: if a user text is shadowed by a normal user-space debugger,
+user-space breakpoints may not work correctly.
+Setting a breakpoint at the low-level code paths may also cause
+strange behavior.
+.It Xo
+.Ic delete
+.Ar "address" |
+.Cm # Ns Ar number
+.Xc
+Delete a breakpoint.
+The target breakpoint may be specified by
+.Ar address ,
+as per
+.Ic break ,
+or by the breakpoint number returned by
+.Ic break
+if it's prefixed with
+.Sq Cm # .
+.It Xo
+.Ic step Ns Op Cm /p
+.Op Cm , Ns Ar count
+.Xc
+Single-step
+.Ar count
+times.
+If
+.Cm /p
+is specified, print each instruction at each step.
 Otherwise, only print the last instruction.
-.sp
-Warning: depending on machine type, it may not be possible to
-single-step through some low-level code paths or user space code.
+.Pp
+Warning: depending on the machine type, it may not be possible
+to single-step through some low-level code paths or user-space
+code.
 On machines with software-emulated single-stepping (e.g., pmax),
 stepping through code executed by interrupt handlers will probably
 do the wrong thing.
-.XX "\fBcontinue[/c]\fR"
+.It Ic continue Ns Op Cm /c
 Continue execution until a breakpoint or watchpoint.
-If /c, count instructions while executing.
+If
+.Cm /c
+is specified, count instructions while executing.
 Some machines (e.g., pmax) also count loads and stores.
-.sp
-Warning: when counting, the debugger is really silently single-stepping.
-This means that single-stepping on low-level code may cause strange
+.Pp
+Warning: when counting, the debugger is really silently
+single-stepping.
+This means that single-stepping on low-level may cause strange
 behavior.
-.XX "\fBuntil[/p]\fR"
+.It Ic until Ns Op Cm /p
 Stop at the next call or return instruction.
-If 'p' option is specified, print the call nesting depth and the
-cumulative instruction count at each call or return.  Otherwise,
-only print when the matching return is hit.
-.XX "\fBnext[/p]\fR"
+If
+.Cm /p
+is specified, print the call nesting depth and the
+cumulative instruction count at each call or return.
+Otherwise, only print when the matching return is hit.
+.It Ic next Ns Op Cm /p
 Stop at the matching return instruction.
-If 'p' option is specified, print the call nesting depth and the
-cumulative instruction count at each call or return.  Otherwise,
-only print when the matching return is hit.
-.XX "\fBmatch[/p]\fR"
-A synonym for 'next'.
-.XX "\fBtrace[/u] \fI[ <frame_addr> ][,<count>]\fR"
-Stack trace.  'u' option traces user space; if omitted, only traces
-kernel space. 'count' is the number of frames to be traced. 
-If the 'count' is omitted, all frames are printed.
-.sp
-Warning: User space stack trace is valid
-only if the machine dependent code supports it.
-.XX "\fBtrace/t \fI[ <pid> ][,<count>]\fR"
-Stack trace by "thread" (process, on NetBSD) rather than by stack
-frame address.  Note that pid is interpreted using the current radix,
-while ps displays pids in decimal; prefix the pid with "0t" to force
-it to be interpreted as decimal.
-.sp
+If
+.Cm /p
+is specified, print the call nesting depth and the
+cumulative instruction count at each call or return.
+Otherwise, only print when the matching return is hit.
+.It Ic match Ns Op Cm /p
+A synonym for
+.Ic next .
+.It Xo
+.Cm trace Ns Op Cm /u
+.Sm off
+.Op Ar frame-address
+.Op Cm , Ar count
+.Sm on
+.Xc
+Stack trace from
+.Ar frame-address .
+If
+.Cm /u
+is specified, trace user-space, otherwise trace kernel-space.
+.Ar count
+is the number of frames to be traced.
+If
+.Ar count
+is omitted, all frames are printed.
+.Pp
+Warning: user-space stack trace is valid only if the machine dependent
+code supports it.
+.It Xo
+.Cm trace/t
+.Sm off
+.Op Ar pid
+.Op Cm , Ar count
+.Sm on
+.Xc
+Stack trace by
+.Dq thread
+(process, on NetBSD) rather than by stack frame address.
+Note that
+.Ar pid
+is interpreted using the current radix, whilst
+.Ic ps
+displays pids in decimal; prefix
+.Ar pid
+with
+.Sq 0t
+to force it to be interpreted as decimal.
+.Pp
 Warning: trace by pid is valid only if the machine dependent code
 supports it.
-.XX "\fBsearch[/bhl] \fI<addr> <value> [<mask>] [,<count>]\fR"
-Search memory for a value. This command might fail in interesting
-ways if it doesn't find the searched-for value.  This is because
-ddb doesn't always recover from touching bad memory.  The optional
-count argument limits the search.
-.XX "\fBreboot \fI[<flags>]\fR"
-Reboot, using the optionally supplied boot flags.
-.sp
-Note:  Limitations of the command line interface
-preclude specification of a boot string.
-.XX "\fBshow all procs[/m]\fR"
+.It Xo
+.Ic search Ns Op Cm /bhl
+.Ar address
+.Ar value
+.Op Ar mask
+.Op Cm , Ns Ar count
+.Xc
+Search memory from
+.Ar address
+for
+.Ar value .
+The unit size is specified with a modifier character, as per
+.Ic examine .
+Valid modifiers are:
+.Cm /b ,
+.Cm /h ,
+and
+.Cm /l .
+If no modifier is specified,
+.Cm /l
+is used.
+.Pp
+This command might fail in interesting ways if it doesn't find
+.Ar value .
+This is because
+.Nm
+doesn't always recover from touching bad memory.
+The optional
+.Ar count
+limits the search.
+.It Ic reboot Op Ar flags
+Reboot, using the optionally supplied boot
+.Ar flags .
+.Pp
+Note: Limitations of the command line interface preclude
+specification of a boot string.
+.It Xo
+.Sm off
+.Ic "show\ all\ procs"
+.Op Cm /a
+.Op Cm /n
+.Op Cm /w
+.Sm on
+.Xc
 Display all process information.
-This version of "\fBddb\fR"
-prints more information than previous one.
-It shows UNIX process information like "ps".
-The UNIX process information may not be shown if it is not
-supported in the machine, or the bottom of the stack of the
-target process is not in the main memory at that time.
-The 'm' options will alter the 'ps' display to show vm_map
-addresses for the process and not show other info.
-.XX "\fBps[/m]\fR"
-A synonym for 'show all procs'.
-.XX "\fBshow registers\fR"
-Display the register set.
-If 'u' option is specified, it displays user registers instead of
-kernel or currently saved one.
-.sp
-Warning: The support of 'u' option depends on the machine.  If
-not supported, incorrect information will be displayed.
-.XX "\fBshow map[/f] \fI<addr>\fR"
-Prints the vm_map at 'addr'. If the 'f' option is specified the
-complete map is printed.
-.XX "\fBshow object[/f]  \fI<addr>\fR"
-Prints the vm_object at 'addr'. If the 'f' option is specified the
-complete object is printed.
-.XX "\fBshow watches\fR"
-Displays all watchpoints.
-.XX "\fBwatch \fI<addr>,<size>\fR"
-Set a watchpoint for a region.  Execution stops
-when an attempt to modify the region occurs.
-The 'size' argument defaults to 4.
-.sp
-If you specify a wrong space address, the request is rejected
-with an error message.
-.sp
-Warning: Attempts to watch wired kernel memory
-may cause unrecoverable error in some systems such as i386.
-Watchpoints on user addresses work best.
-.XE 4n
-.SH VARIABLES
-The debugger accesses registers and variables as
-.I $<name>.
-Register names are as in the "\fBshow registers\fR"
+Valid modifiers:
+.Bl -tag -width 3n
+.It Cm /n
+show process information in a
+.Xr ps 1
+style format (this is the default).
+Information printed includes: process ID, parent process ID,
+process group, UID, process status, process flags, process
+command name, and process wait channel message.
+.It Cm /a
+show the kernel virtual addresses of each process'
+proc structure, u-are, and vmspace structure.
+The vmspace address is also the address of the process'
+vm_map structure, and can be used in the
+.Ic "show map"
 command.
-Some variables are suffixed with numbers, and may have some modifier
+.It Cm /w
+show each process' PID, command, system call emulation, wait channel
+address, and wait channel message.
+.El
+.It Xo
+.Sm off
+.Ic ps
+.Op Cm /a
+.Op Cm /n
+.Op Cm /w
+.Sm on
+.Xc
+A synonym for
+.Ic "show all procs" .
+.It Ic "show registers" Ns Op Cm /u
+Display the register set.
+If
+.Cm /u
+is specified, display user registers instead of kernel registers
+or the currently save one.
+.Pp
+Warning: support for
+.Cm /u
+is machine dependent.
+If not supported, incorrect information will be displayed.
+.It Xo
+.Ic "show map" Ns Op Cm /f
+.Ar address
+.Xc 
+Print the vm_map at
+.Ar address .
+If
+.Cm /f
+is specified the complete map is printed.
+.It Xo
+.Ic "show object" Ns Op Cm /f
+.Ar address
+.Xc 
+Print the vm_object at
+.Ar address .
+If
+.Cm /f
+is specified the complete object is printed.
+.It Ic "show watches"
+Display all watchpoints.
+.It Xo
+.Ic watch
+.Sm off
+.Ar address
+.Op Cm , Ar size
+.Sm on
+.Xc
+Set a watchpoint for a region.
+Execution stops when an attempt to modify the region occurs.
+.Ar size
+defaults to 4.
+.Pp
+If you specify a wrong space address, the request is
+rejected with an error message.
+.Pp
+Warning: attempts to watch wired kernel memory may cause
+an unrecoverable error in some systems such as i386.
+Watchpoints on user addresses work the best.
+.El
+.Sh VARIABLES
+.Nm
+accesses registers and variables as
+.Cm $ Ns Ar name .
+Register names are as per the
+.Ic "show registers"
+command.
+Some variables are suffixed with numbers, and may have a modifier
 following a colon immediately after the variable name.
-For example, register variables can have 'u' modifier to indicate
-user register (e.g. $eax:u).
-.sp
+For example, register variables may have a
+.Sq u
+modifier to indicate user register
+(e.g.,
+.Li "$eax:u" ) .
+.Pp
 Built-in variables currently supported are:
-.IP radix 12n
-Input and output radix
-.IP maxoff 12n
-Addresses are printed as 'symbol'+offset unless offset is greater than maxoff.
-.IP maxwidth 12n
+.Bl -tag -offset indent -width "maxwidth"
+.It Va lines
+The number of lines.
+This is used by the
+.Ic more
+feature.
+.It Va maxoff
+Addresses are printed as
+.Li 'symbol'+offset
+unless
+.Li offset
+is greater than
+.Va maxoff .
+.It Va maxwidth
 The width of the displayed line.
-.IP lines 12n
-The number of lines.  It is used by "more" feature.
-.IP tabstops 12n
+.It Va onpanic
+If non-zero (the default),
+.Nm
+will be invoked when the kernel panics.
+If the kernel configuration option
+.D1 Cd options DDB_ONPANIC=0
+is used,
+.Va onpanic
+will be initialised to off.
+.It Va radix
+Input and output radix.
+.It Va tabstops
 Tab stop width.
-.IP onpanic 12n
-If non-zero, the debugger will be called when the kernel panics.  Default
-is "on", and may be initialzed at build time with the "DDB_ONPANIC=0"
-option set in the kernel configuration file.
-.IP work\fIxx\fR
-Work variable.
-.I 'xx'
-can be 0 to 31.
-.LP
-All built-in variables are accessible via sysctl(3).
-.SH EXPRESSIONS
-Almost all expression operators in C are supported except '~', '^',
-and unary '&'.
-Special rules in "\fBddb\fR"
+.It Va work Ns Sy xx
+Temporary work variable.
+.Sq Sy xx
+is between 0 and 31.
+.El
+.Pp
+All built-in variables are accessible via
+.Xr sysctl 3 .
+.Sh EXPRESSIONS
+Almost all expression operators in C are supported, except
+.Sq ~ ,
+.Sq ^ ,
+and unary
+.Sq & .
+Special rules in
+.Nm
 are:
-.IP "<identifier>" 15n
-name of a symbol.  It is translated to the address(or value) of it.  '.'
-and ':' can be used in the identifier.  If supported by an object format
-dependent routine,
-[\fI<file_name>\fR:]\fI<func>\fR[:\fI<line_number>\fR]
-[\fI<file_name>\fR:]\fI<variable>\fR, and
-\fI<file_name>\fR[:\fI<line_number>\fR]
+.Bl -tag -offset indent -width "identifier"
+.It Ar identifier
+name of a symbol.
+It is translated to the address (or value) of it.
+.Sq .
+and
+.Sq :
+can be used in the identifier.
+If supported by an object format dependent routine,
+.Sm off
+.Xo
+.Oo Ar filename : Oc
+.Ar function
+.Oo : Ar "line number" Oc ,
+.Xc
+.Xo
+.Oo Ar filename : Oc
+.Ar variable ,
+.Xc
+and
+.Xo
+.Ar filename
+.Oo : Ar "line number" Oc ,
+.Xc
+.Sm on
 can be accepted as a symbol.
-The symbol may be prefixed with '\fI<symbol_table_name>\fR::'
-like 'emulator::mach_msg_trap' to specify other than kernel symbols.
-.IP "<number>" 15n
-radix is determined by the first two letters:
-0x: hex, 0o: octal, 0t: decimal, otherwise, follow current radix.
-.IP \. 15n
-\'dot'
-.IP \+ 15n
-\'next'
-.IP \.. 15n
+The symbol may be prefixed with
+.Ar "symbol_table_name" Ns ::
+(e.g.,
+.Li emulator::mach_msg_trap )
+to specify other than kernel symbols.
+.It Ar number
+number.
+Radix is determined by the first two characters:
+.Sq 0x
+- hex,
+.Sq 0o
+- octal,
+.Sq 0t
+- decimal,
+otherwise follow current radix.
+.It Cm .
+.Ar dot
+.It Cm +
+.Ar next
+.It Cm ..
 address of the start of the last line examined.
-Unlike 'dot' or 'next', this is only changed by "examine" or
-"write" command.
-.IP \' 15n
+Unlike
+.Ar dot
+or
+.Ar next ,
+this is only changed by the
+.Ic examine
+or
+.Ic write
+commands.
+.It Cm ,
 last address explicitly specified.
-.IP "$<variable>" 15n
-register name or variable.  It is translated to the value of it.
-It may be followed by a ':' and modifiers as described above.
-.IP \# 15n
-a binary operator which rounds up the left hand side to the next
-multiple of right hand side.
-.IP "*<expr>" 15n
-indirection.  It may be followed by a ':' and  modifiers as described above.
-.LP
-.SH ENTERING THE DEBUGGER
-Unless \fBDDB_ONPANIC\fR is set to 0, the debugger will be activated
-whenever the kernel would otherwise panic.
-.sp
-The debugger may also be activated from the console.  In general, sending a
-break on a serial console will activate the debugger.  There are also key
-sequences for each port that will activate the debugger from the keyboard:
-.XS 2n
-.IP hp300 8n
-Shift-Reset
-.IP i386 8n
-Ctrl-Alt-Esc
-.IP sparc 8n
-L1-A or Stop-A
-.LP
-.XE 2n
-In addition, the debugger may be explicitly activated by debugging code in
-the kernel if \fBDDB\fR is configured.
+.It Cm $ Ns Ar name
+register name or variable.
+It is translated to the value of it.
+It may be followed by a
+.Sq :
+and modifiers as described above.
+.It Cm a
+multiple of right-hand side.
+.It Cm * Ns Ar expr
+expression indirection.
+It may be followed by a
+.Sq :
+and modifiers as described above.
+.El
+.Sh ENTERING THE DEBUGGER
+Unless
+.Va onpanic
+is set to 0,
+.Nm
+will be activated whenever the kernel would otherwise panic.
+.Pp
+.Nm
+may also be activated from the console.
+In general, sending a break on a serial console will activate
+.Nm "" .
+There are also key sequences for each port that will activate
+.Nm
+from the keyboard:
+.Bl -tag -offset indent -width "mac68k"
+.It amiga
+<LAlt>-<LAmiga>-<F10>
+.It hp300
+<Shift>-<Reset>
+.It i386
+<Ctrl>-<Alt>-<Esc>
+.It mac68k
+<Command>-<Power>, or the Interrupt switch.
+.It sparc
+<L1>-A, or <Stop>-A
+.El
+.Pp
+In addition,
+.Nm
+may be explicitly activated by the debugging code in the kernel
+if
+.Cm DDB
+is configured.
+.Sh SEE ALSO
+.Xr options 4 ,
+.Xr sysctl 8
