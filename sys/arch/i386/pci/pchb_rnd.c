@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb_rnd.c,v 1.10 2002/05/28 17:23:07 tron Exp $	*/
+/*	$NetBSD: pchb_rnd.c,v 1.11 2002/05/28 17:25:43 tron Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pchb_rnd.c,v 1.10 2002/05/28 17:23:07 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pchb_rnd.c,v 1.11 2002/05/28 17:25:43 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,18 +128,6 @@ pchb_attach_rnd(struct pchb_softc *sc, struct pci_attach_args *pa)
 			 *
 			 *	http://csrc.nist.gov/fips/fips1401.htm
 			 */
-
-			/*
-			 * See how quickly the RNG provides entropy.
-			 */
-			for (i = 0; i < 8192; i++) {
-				while ((bus_space_read_1(sc->sc_st, sc->sc_sh,
-				    I82802_RNG_RNGST) &
-				    I82802_RNG_RNGST_DATAV) == 0)
-					/* spin */;
-				(void) bus_space_read_1(sc->sc_st, sc->sc_sh,
-				    I82802_RNG_DATA);
-			}
 
 			printf("%s: random number generator enabled\n",
 			    sc->sc_dev.dv_xname);
