@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.gzboot,v 1.5 2002/04/25 22:30:38 thorpej Exp $
+#	$NetBSD: Makefile.gzboot,v 1.6 2003/03/29 22:25:25 thorpej Exp $
 
 NOMAN=  # defined
 
@@ -40,9 +40,6 @@ CPPFLAGS+= -DHEAP_SIZE=1048576		# 1M
 
 # libsa options
 CPPFLAGS+= -DHEAP_VARIABLE
-
-# libz options
-CPPFLAGS+= -DDYNAMIC_CRC_TABLE
 
 CPPFLAGS+= -DRELOC=${RELOC}
 CPPFLAGS+= -DMAXIMAGESIZE=${MAXIMAGESIZE}
