@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.524 2002/11/13 20:00:04 jdolecek Exp $
+# $NetBSD: GENERIC,v 1.525 2002/11/14 22:37:18 atatat Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.524 $"
+#ident 		"GENERIC-$Revision: 1.525 $"
 
 maxusers	32		# estimated number of users
 
@@ -878,7 +878,6 @@ eso*	at pci? dev ? function ?	# ESS Solo-1 PCI AudioDrive
 fms*	at pci? dev ? function ?	# Forte Media FM801
 neo*	at pci? dev ? function ?	# NeoMagic 256 AC'97 Audio
 sv*	at pci? dev ? function ?	# S3 SonicVibes
-t4dw*	at pci? dev ? function ?	# Trident 4DWave/SIS7018/ALi M5453
 yds*	at pci? dev ? function ?	# Yamaha DS-1 PCI Audio
 
 # ISA Plug-and-Play audio devices
