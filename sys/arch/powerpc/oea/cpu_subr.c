@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.4 2003/03/15 07:22:46 matt Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.5 2003/03/29 18:18:54 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -224,8 +224,11 @@ cpu_setup(self, ci)
 
 	case MPC7455:
 	case MPC7450:
+		/* Enable the 7450 branch caches */
+		hid0 |= HID0_SGE | HID0_BTIC;
+		hid0 |= HID0_LRSTK | HID0_FOLD | HID0_BHT;
 		/* Disable BTIC on 7450 Rev 2.0 or earlier */
-		if ((pvr >> 16) == MPC7450 && (pvr & 0xFFFF) <= 0x0200)
+		if (vers == MPC7450 && (pvr & 0xFFFF) <= 0x0200)
 			hid0 &= ~HID0_BTIC;
 		/* Select NAP mode. */
 		hid0 &= ~(HID0_DOZE | HID0_NAP | HID0_SLEEP);
