@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.6 1999/01/28 20:21:24 christos Exp $	 */
+/*	$NetBSD: exec.c,v 1.7 1999/01/28 22:45:06 christos Exp $	 */
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -89,7 +89,7 @@ exec_netbsd(file, loadaddr, boothowto)
 	int             unit, part;
 	const char     *filename;
 	int             bootdevnr;
-	u_long		marks[LOAD_MAX];
+	u_long		marks[MARK_MAX];
 	struct btinfo_symtab btinfo_symtab;
 #endif
 
@@ -101,16 +101,16 @@ exec_netbsd(file, loadaddr, boothowto)
 
 	BI_ADD(&btinfo_console, BTINFO_CONSOLE, sizeof(struct btinfo_console));
 
-	marks[LOAD_START] = loadaddr;
-	if ((fd = loadfile(file, marks)) == -1)
+	marks[MARK_START] = loadaddr;
+	if ((fd = loadfile(file, marks, LOAD_ALL)) == -1)
 		goto out;
 
-	marks[LOAD_END] = (((u_long) marks[LOAD_END] + sizeof(int) - 1)) &
+	marks[MARK_END] = (((u_long) marks[MARK_END] + sizeof(int) - 1)) &
 	    (-sizeof(int));
 
-	btinfo_symtab.nsym = marks[LOAD_NSYM];
-	btinfo_symtab.ssym = marks[LOAD_SYM];
-	btinfo_symtab.esym = marks[LOAD_END];
+	btinfo_symtab.nsym = marks[MARK_NSYM];
+	btinfo_symtab.ssym = marks[MARK_SYM];
+	btinfo_symtab.esym = marks[MARK_END];
 	BI_ADD(&btinfo_symtab, BTINFO_SYMTAB, sizeof(struct btinfo_symtab));
 
 	boot_argv[0] = boothowto;
@@ -159,18 +159,18 @@ exec_netbsd(file, loadaddr, boothowto)
 	bi_getbiosgeom();
 #endif
 	boot_argv[2] = vtophys(bootinfo);	/* old cyl offset */
-	boot_argv[3] = marks[LOAD_END];
+	boot_argv[3] = marks[MARK_END];
 	boot_argv[4] = getextmem();
 	boot_argv[5] = getbasemem();
 
 	close(fd);
 
 #ifdef DEBUG
-	printf("Start @ 0x%lx [%ld=0x%lx-0x%lx]...\n", marks[LOAD_START],
-	    marks[LOAD_NSYM], marks[LOAD_SYM], marks[LOAD_END]);
+	printf("Start @ 0x%lx [%ld=0x%lx-0x%lx]...\n", marks[MARK_START],
+	    marks[MARK_NSYM], marks[MARK_SYM], marks[MARK_END]);
 #endif
 
-	startprog(marks[LOAD_START], BOOT_NARGS, boot_argv, 0x90000);
+	startprog(marks[MARK_START], BOOT_NARGS, boot_argv, 0x90000);
 	panic("exec returned");
 
 out:
