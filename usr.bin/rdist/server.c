@@ -1,4 +1,4 @@
-/*	$NetBSD: server.c,v 1.16 1998/12/19 20:32:17 christos Exp $	*/
+/*	$NetBSD: server.c,v 1.17 1998/12/19 20:34:53 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)server.c	8.1 (Berkeley) 6/9/93";
 #else
-__RCSID("$NetBSD: server.c,v 1.16 1998/12/19 20:32:17 christos Exp $");
+__RCSID("$NetBSD: server.c,v 1.17 1998/12/19 20:34:53 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -633,14 +633,14 @@ again:
 		return(3);
 
 	size = 0;
-	while (isdigit(*s))
+	while (isdigit((unsigned char)*s))
 		size = size * 10 + (*s++ - '0');
 	if (*s++ != ' ') {
 		error("update: size not delimited\n");
 		return(0);
 	}
 	mtime = 0;
-	while (isdigit(*s))
+	while (isdigit((unsigned char)*s))
 		mtime = mtime * 10 + (*s++ - '0');
 	if (*s != '\n') {
 		error("update: mtime not delimited\n");
@@ -735,14 +735,14 @@ recvf(cmd, type)
 		return;
 	}
 	size = 0;
-	while (isdigit(*cp))
+	while (isdigit((unsigned char)*cp))
 		size = size * 10 + (*cp++ - '0');
 	if (*cp++ != ' ') {
 		error("recvf: size not delimited\n");
 		return;
 	}
 	mtime = 0;
-	while (isdigit(*cp))
+	while (isdigit((unsigned char)*cp))
 		mtime = mtime * 10 + (*cp++ - '0');
 	if (*cp++ != ' ') {
 		error("recvf: mtime not delimited\n");
