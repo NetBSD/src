@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips3.S,v 1.27 2000/05/10 01:34:15 nisimura Exp $	*/
+/*	$NetBSD: locore_mips3.S,v 1.28 2000/05/17 12:44:48 soren Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -1739,7 +1739,6 @@ END(mips3_InvalidateDCache)
  * mips5200_FlushCache -- (QED)
  *
  *	Flush the caches. Assumes a line size of 32 bytes for speed.
- *	Does not currently support a second level cache.
  *
  * Results:
  *	None.
@@ -1793,8 +1792,22 @@ LEAF(mips5200_FlushCache)
 	bne	t0, t1, 1b
 	addu	t3, t3, 128		# Branch delay slot
 
-	j	ra
-	nop
+        lw      t2, mips_L2CacheSize
+        beq     t2, zero, 2f
+        nop
+        li      t0, MIPS_KSEG0_START
+        addu    t1, t0, t2
+        subu    t1, t1, 128
+1:
+        cache   3, 0(t0)
+        cache   3, 32(t0)
+        cache   3, 64(t0)
+        cache   3, 96(t0)
+        bne     t0, t1, 1b
+        addu    t0, t0, 128
+2:      
+        j       ra 
+        nop
 END(mips5200_FlushCache)
 
 /*----------------------------------------------------------------------------
