@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_machdep.c,v 1.36 2003/08/07 16:27:36 agc Exp $	*/
+/*	$NetBSD: hpux_machdep.c,v 1.37 2003/09/22 14:35:58 cl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_machdep.c,v 1.36 2003/08/07 16:27:36 agc Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: hpux_machdep.c,v 1.37 2003/09/22 14:35:58 cl Exp $");                                                  
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -452,34 +452,18 @@ int hpuxsigpid = 0;
  * Send an interrupt to process.
  */
 void
-hpux_sendsig(sig, mask, code)
-	int sig;
-	sigset_t *mask;
-	u_long code;
+hpux_sendsig(ksiginfo_t *ksi, sigset_t *mask)
 {
+	u_long code = ksi->ksi_trap;
+	int sig = ksi->ksi_signo;
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
-	struct hpuxsigframe *fp, kf;
-	struct frame *frame;
-	short ft;
-	int onstack, fsize;
+	struct frame *frame = (struct frame *)l->l_md.md_regs;
+	int onstack;
+	struct hpuxsigframe *fp = getframe(l, sig, &onstack), kf;
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
+	short ft = frame->f_format;
 
-	frame = (struct frame *)l->l_md.md_regs;
-	ft = frame->f_format;
-
-	/* Do we need to jump onto the signal stack? */
-	onstack =
-	    (p->p_sigctx.ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
-	    (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
-
-	/* Allocate space for the signal handler context. */
-	fsize = sizeof(struct hpuxsigframe);
-	if (onstack)
-		fp = (struct hpuxsigframe *)((caddr_t)p->p_sigctx.ps_sigstk.ss_sp +
-						p->p_sigctx.ps_sigstk.ss_size);
-	else
-		fp = (struct hpuxsigframe *)(frame->f_regs[SP]);
 	fp--;
 
 #ifdef DEBUG
@@ -561,7 +545,7 @@ hpux_sendsig(sig, mask, code)
 	kf.hsf_sc._hsc_pad	= 0;
 	kf.hsf_sc._hsc_ap	= (int)&fp->hsf_sigstate;
 
-	if (copyout(&kf, fp, fsize)) {
+	if (copyout(&kf, fp, sizeof(kf))) {
 #ifdef DEBUG
 		if ((hpuxsigdebug & SDB_KSTACK) && p->p_pid == hpuxsigpid)
 			printf("hpux_sendsig(%d): copyout failed on sig %d\n",
@@ -583,9 +567,7 @@ hpux_sendsig(sig, mask, code)
 	}
 #endif
 
-	/* Set up the registers to return to sigcode. */
-	frame->f_regs[SP] = (int)fp;
-	frame->f_pc = (int)p->p_sigctx.ps_sigcode;
+	buildcontext(l, p->p_sigctx.ps_sigcode, fp);
 
 	/* Remember that we're now on the signal stack. */
 	if (onstack)
