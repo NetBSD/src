@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)lgamma.3	6.4 (Berkeley) 5/6/91
-.\"	$Id: lgamma.3,v 1.2 1993/08/01 07:41:13 mycroft Exp $
+.\"	$Id: lgamma.3,v 1.3 1993/08/03 23:00:07 jtc Exp $
 .\"
 .Dd May 6, 1991
 .Dt LGAMMA 3
@@ -49,8 +49,9 @@ Lgamma returns ln\||\(*G(x)| where
 .Bd -unfilled -offset indent
 \(*G(x) = \(is\d\s8\z0\s10\u\u\s8\(if\s10\d t\u\s8x\-1\s10\d e\u\s8\-t\s10\d dt	for x > 0 and
 .br
-\(*G(x) = \(*p/(\(*G(1\-x)\|sin(\(*px))	for x < 1.  \}
+\(*G(x) = \(*p/(\(*G(1\-x)\|sin(\(*px))	for x < 1.
 .Ed
+\}
 .if n \
 Lgamma returns ln\||\(*G(x)|.
 .ta
