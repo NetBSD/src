@@ -1,4 +1,4 @@
-/*	$NetBSD: tc_subr.c,v 1.21.4.3 1999/03/15 12:51:49 nisimura Exp $	*/
+/*	$NetBSD: tc_subr.c,v 1.21.4.4 1999/05/21 01:19:29 nisimura Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -14,7 +14,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: tc_subr.c,v 1.21.4.3 1999/03/15 12:51:49 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tc_subr.c,v 1.21.4.4 1999/05/21 01:19:29 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -132,7 +132,7 @@ tc_fb_cnattach(slotno)
 
 	tcaddr = (*callv->_slot_address)(slotno);
 	if (tc_badaddr(tcaddr) || tc_checkslot(tcaddr, tcname) == 0)
-		panic("TC console designed by PROM does not exist!?");
+		panic("TC console designated by PROM does not exist!?");
 
 #if NSFB > 0
 	if (strncmp("PMAGB-BA", tcname, TC_ROM_LLEN) == 0) {
