@@ -1,4 +1,4 @@
-/*	$NetBSD: cat.c,v 1.18 1998/07/28 05:31:22 mycroft Exp $	*/
+/*	$NetBSD: cat.c,v 1.19 1999/03/11 12:04:18 fair Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)cat.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: cat.c,v 1.18 1998/07/28 05:31:22 mycroft Exp $");
+__RCSID("$NetBSD: cat.c,v 1.19 1999/03/11 12:04:18 fair Exp $");
 #endif
 #endif /* not lint */
 
@@ -254,22 +254,30 @@ void
 raw_cat(rfd)
 	int rfd;
 {
-	int nr, nw, off, wfd;
-	static int bsize;
+	int wfd = 0;
 	static char *buf;
 	struct stat sbuf;
+	static size_t bsize;
+	ssize_t nr, nw, off;
 
 	wfd = fileno(stdout);
-	if (buf == NULL) {
-		if (fstat(wfd, &sbuf))
-			err(1, "%s", filename);
-		bsize = MAX(sbuf.st_blksize, 1024);
-		if ((buf = malloc((u_int)bsize)) == NULL)
-			err(1, "cannot allocate buffer");
+	if (fstat(wfd, &sbuf))
+		err(1, "%s", filename);
+	if (bsize < sbuf.st_blksize) {
+		bsize = MIN(sbuf.st_blksize, SSIZE_MAX);
+		if (bsize != sbuf.st_blksize) {
+			bsize = 16384;
+		}
+		if(buf != NULL)
+			free(buf);
+		if ((buf = malloc(bsize)) == NULL) {
+			bsize = 0;
+			err(1, "malloc failed: cannot allocate buffer");
+		}
 	}
-	while ((nr = read(rfd, buf, (u_int)bsize)) > 0)
+	while ((nr = read(rfd, buf, bsize)) > 0)
 		for (off = 0; nr; nr -= nw, off += nw)
-			if ((nw = write(wfd, buf + off, (u_int)nr)) < 0)
+			if ((nw = write(wfd, buf + off, (size_t)nr)) < 0)
 				err(1, "stdout");
 	if (nr < 0) {
 		warn("%s", filename);
