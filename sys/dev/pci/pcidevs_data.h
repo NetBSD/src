@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.27 1997/04/04 00:22:00 augustss Exp 
+ *	NetBSD: pcidevs,v 1.28 1997/05/13 14:44:54 jtk Exp 
  */
 
 /*
@@ -926,16 +926,16 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "82371AB PIIX4 ISA Bridge",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82450KX,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PCI450_PB,
 	    0,
 	    "Intel",
-	    "82450KX (Orion) PCI Memory Controller",
+	    "450 PCIset (Orion) Host-PCI bridge",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82454GX,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PCI450_MC,
 	    0,
 	    "Intel",
-	    "82454GX (Orion) Host-PCI bridge",
+	    "450 PCIset (Orion) Memory Controller",
 	},
 	{
 	    PCI_VENDOR_ITT, PCI_PRODUCT_ITT_AGX016,
