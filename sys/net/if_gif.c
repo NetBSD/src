@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.c,v 1.13 2000/07/05 16:54:19 thorpej Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.14 2000/07/06 12:56:26 itojun Exp $	*/
 /*	$KAME: if_gif.c,v 1.28 2000/06/20 12:30:03 jinmei Exp $	*/
 
 /*
@@ -30,29 +30,16 @@
  * SUCH DAMAGE.
  */
 
-/*
- * gif.c
- */
-
-#if (defined(__FreeBSD__) && __FreeBSD__ >= 3) || defined(__NetBSD__)
 #include "opt_inet.h"
-#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#if defined(__FreeBSD__) && __FreeBSD__ >= 3
-#include <sys/malloc.h>
-#endif
 #include <sys/mbuf.h>
 #include <sys/socket.h>
 #include <sys/sockio.h>
 #include <sys/errno.h>
-#if defined(__FreeBSD__) || __FreeBSD__ >= 3
-/*nothing*/
-#else
 #include <sys/ioctl.h>
-#endif
 #include <sys/time.h>
 #include <sys/syslog.h>
 #include <sys/protosw.h>
@@ -93,11 +80,7 @@
 
 #if NGIF > 0
 
-#ifdef __FreeBSD__
-void gifattach __P((void *));
-#else
 void gifattach __P((int));
-#endif
 static int gif_encapcheck __P((const struct mbuf *, int, int, void *));
 #ifdef INET
 extern struct protosw in_gif_protosw;
@@ -218,10 +201,6 @@ gif_clone_destroy(ifp)
 	free(sc, M_DEVBUF);
 }
 
-#ifdef __FreeBSD__
-PSEUDO_SET(gifattach, if_gif);
-#endif
-
 static int
 gif_encapcheck(m, off, proto, arg)
 	const struct mbuf *m;
@@ -306,11 +285,7 @@ gif_output(ifp, m, dst, rt)
 		goto end;
 	}
 
-#if defined(__FreeBSD__) && __FreeBSD__ >= 3
-	getmicrotime(&ifp->if_lastchange);
-#else
 	ifp->if_lastchange = time;	
-#endif
 	m->m_flags &= ~(M_BCAST|M_MCAST);
 	if (!(ifp->if_flags & IFF_UP) ||
 	    sc->gif_psrc == NULL || sc->gif_pdst == NULL) {
@@ -461,11 +436,7 @@ gif_input(m, af, gifp)
 int
 gif_ioctl(ifp, cmd, data)
 	struct ifnet *ifp;
-#if defined(__FreeBSD__) && __FreeBSD__ < 3
-	int cmd;
-#else
 	u_long cmd;
-#endif
 	caddr_t data;
 {
 	struct gif_softc *sc  = (struct gif_softc*)ifp;
@@ -484,7 +455,6 @@ gif_ioctl(ifp, cmd, data)
 
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
-#if !(defined(__FreeBSD__) && __FreeBSD__ >= 3)
 		switch (ifr->ifr_addr.sa_family) {
 #ifdef INET
 		case AF_INET:	/* IP supports Multicast */
@@ -498,7 +468,6 @@ gif_ioctl(ifp, cmd, data)
 			error = EAFNOSUPPORT;
 			break;
 		}
-#endif /*not FreeBSD3*/
 		break;
 
 #ifdef	SIOCSIFMTU /* xxx */
@@ -507,13 +476,8 @@ gif_ioctl(ifp, cmd, data)
 
 	case SIOCSIFMTU:
 		{
-#ifdef __bsdi__
-			short mtu;
-			mtu = *(short *)ifr->ifr_data;
-#else
 			u_long mtu;
 			mtu = ifr->ifr_mtu;
-#endif
 			if (mtu < GIF_MTU_MIN || mtu > GIF_MTU_MAX) {
 				return (EINVAL);
 			}
