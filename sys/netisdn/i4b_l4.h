@@ -27,7 +27,7 @@
  *	i4b_l4.h - kernel interface to userland header file
  *	---------------------------------------------------
  *
- *	$Id: i4b_l4.h,v 1.1.1.1 2001/01/05 12:49:56 martin Exp $ 
+ *	$Id: i4b_l4.h,v 1.2 2002/03/17 11:08:32 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -40,7 +40,7 @@
 
 extern void i4bputqueue ( struct mbuf *m );
 extern void i4bputqueue_hipri(struct mbuf *m);
-extern void i4b_l4_accounting(int, int, int, int, int, int, int, int, int);
+extern void i4b_l4_accounting(int, int, int, int, int, int, int, int);
 extern void i4b_l4_alert_ind ( call_desc_t *cd );
 extern void i4b_l4_charging_ind( call_desc_t *cd );
 extern void i4b_l4_connect_active_ind ( call_desc_t *cd );
