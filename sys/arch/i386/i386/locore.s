@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)locore.s	7.3 (Berkeley) 5/13/91
- *	$Id: locore.s,v 1.23 1993/07/18 08:22:59 andrew Exp $
+ *	$Id: locore.s,v 1.24 1993/07/18 13:08:41 cgd Exp $
  */
 
 
@@ -78,12 +78,12 @@
 
 /* NB: NOP now preserves registers so NOPs can be inserted anywhere */
 /* XXX: NOP and FASTER_NOP are misleadingly named */
-#ifdef BROKEN_HARDWARE_AND_OR_SOFTWARE /* XXX - rarely necessary */
-#define	FASTER_NOP	pushl %eax ; inb $0x84,%al ; popl %eax
-#define	NOP	pushl %eax ; inb $0x84,%al ; inb $0x84,%al ; popl %eax
-#else
+#ifdef DUMMY_NOPS	/* this will break some older machines */
 #define	FASTER_NOP
 #define	NOP
+#else
+#define	FASTER_NOP	pushl %eax ; inb $0x84,%al ; popl %eax
+#define	NOP	pushl %eax ; inb $0x84,%al ; inb $0x84,%al ; popl %eax
 #endif
 
 /*
