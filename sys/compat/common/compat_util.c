@@ -1,4 +1,4 @@
-/* 	$NetBSD: compat_util.c,v 1.11 1999/02/14 14:32:02 christos Exp $	*/
+/* 	$NetBSD: compat_util.c,v 1.11.2.1 1999/06/18 18:17:12 perry Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -62,6 +62,13 @@
  * If cflag is set, we check if an attempt can be made to create
  * the named file, i.e. we check if the directory it should
  * be in exists.
+ *
+ * In case of success, emul_find returns 0:
+ * 	If sgp is provided, the path is in user space, and pbuf gets
+ *	allocated in user space (in the stackgap). Otherwise the path
+ *	is already in kernel space and a kernel buffer gets allocated
+ *	and returned in pbuf, that must be freed by the user.
+ * In case of error, the error number is returned and *pbuf = path.
  */
 int
 emul_find(p, sgp, prefix, path, pbuf, cflag)
@@ -81,7 +88,7 @@ emul_find(p, sgp, prefix, path, pbuf, cflag)
 	const char		*pr;
 	size_t			 sz, len;
 
-	buf = (char *) malloc(MAXPATHLEN, M_TEMP, M_WAITOK);
+	buf = (char *)malloc(MAXPATHLEN, M_TEMP, M_WAITOK);
 	*pbuf = path;
 
 	for (ptr = buf, pr = prefix; (*ptr = *pr) != '\0'; ptr++, pr++)
@@ -111,8 +118,10 @@ emul_find(p, sgp, prefix, path, pbuf, cflag)
 	 * by /../ we kill the alternate search
 	 */
 	if (ptr[1] == '.' && ptr[2] == '.' && ptr[3] == '/') {
-		*pbuf = &path[3];
-		goto bad;
+		len -= 3;
+		(void)memcpy(buf, &ptr[3], len);
+		ptr = buf;
+		goto good;
 	}
 
 	/*
@@ -167,19 +176,24 @@ emul_find(p, sgp, prefix, path, pbuf, cflag)
 			goto bad3;
 		}
 	}
+
+	vrele(nd.ni_vp);
+	if (!cflag)
+		vrele(ndroot.ni_vp);
+
+good:
 	if (sgp == NULL)
 		*pbuf = buf;
 	else {
 		sz = &ptr[len] - buf;
 		*pbuf = stackgap_alloc(sgp, sz + 1);
-		error = copyout(buf, (void *)*pbuf, sz);
+		if ((error = copyout(buf, (void *)*pbuf, sz)) != 0) {
+			*pbuf = path;
+			return error;
+		}
 		free(buf, M_TEMP);
 	}
-
-	vrele(nd.ni_vp);
-	if (!cflag)
-		vrele(ndroot.ni_vp);
-	return error;
+	return 0;
 
 bad3:
 	vrele(ndroot.ni_vp);
