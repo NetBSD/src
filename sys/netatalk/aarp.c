@@ -1,4 +1,4 @@
-/*	$NetBSD: aarp.c,v 1.10 2002/12/21 15:45:10 kristerw Exp $	*/
+/*	$NetBSD: aarp.c,v 1.11 2003/01/28 22:26:35 wiz Exp $	*/
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aarp.c,v 1.10 2002/12/21 15:45:10 kristerw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aarp.c,v 1.11 2003/01/28 22:26:35 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -411,7 +411,7 @@ at_aarpinput(ifp, m)
 	if (aat) {
 		if (op == AARPOP_PROBE) {
 			/*
-		         * Someone's probing for spa, dealocate the one we've
+		         * Someone's probing for spa, deallocate the one we've
 			 * got, so that if the prober keeps the address, we'll
 			 * be able to arp for him.
 		         */
