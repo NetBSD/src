@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.43 1997/06/12 23:57:28 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.44 1997/09/19 13:54:17 leo Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -198,7 +198,7 @@ int	nkpde = 0;
 #endif
 
 #if BSDVM_COMPAT
-#include <sys/msgbuf.h>
+extern caddr_t msgbufaddr;
 
 /*
  * All those kernel PT submaps that BSD is so fond of
@@ -229,7 +229,7 @@ pmap_bootstrap(virtual_start)
 	pt_entry_t *pte;
 #endif
 	/* XXX: allow for msgbuf */
-	avail_end -= i386_round_page(sizeof(struct msgbuf));
+	avail_end -= i386_round_page(MSGBUFSIZE);
 
 	virtual_avail = virtual_start;
 	virtual_end = VM_MAX_KERNEL_ADDRESS;
@@ -273,10 +273,10 @@ pmap_bootstrap(virtual_start)
 	va = virtual_avail;
 	pte = pmap_pte(pmap_kernel(), va);
 
-	SYSMAP(caddr_t		,CMAP1		,CADDR1	   ,1		)
-	SYSMAP(caddr_t		,CMAP2		,CADDR2	   ,1		)
-	SYSMAP(caddr_t		,XXX_mmap	,vmmap	   ,1		)
-	SYSMAP(struct msgbuf *	,msgbufmap	,msgbufp   ,1		)
+	SYSMAP(caddr_t	,CMAP1	   ,CADDR1	,1		 )
+	SYSMAP(caddr_t	,CMAP2	   ,CADDR2	,1		 )
+	SYSMAP(caddr_t	,XXX_mmap  ,vmmap	,1		 )
+	SYSMAP(caddr_t	,msgbufmap ,msgbufaddr	,btoc(MSGBUFSIZE))
 	virtual_avail = va;
 #endif
 

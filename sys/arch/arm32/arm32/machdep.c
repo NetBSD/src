@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.25 1997/09/11 23:01:52 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.26 1997/09/19 13:53:18 leo Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -54,7 +54,6 @@
 #include <sys/user.h>
 #include <sys/kernel.h>
 #include <sys/mbuf.h>
-#include <sys/msgbuf.h>
 #include <sys/buf.h>
 #include <sys/map.h>
 #include <sys/exec.h>
@@ -164,7 +163,7 @@ char	machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
 char *boot_args;
 
 extern pt_entry_t msgbufpte;
-int	msgbufmapped;
+caddr_t	msgbufaddr;
 vm_offset_t msgbufphys;
 
 extern u_int data_abort_handler_address;
@@ -1068,8 +1067,8 @@ initarm(bootconf)
 	    - physical_start;
 
 	msgbufphys = physical_freestart;
-	physical_freestart += round_page(sizeof(struct msgbuf));
-	free_pages -= round_page(sizeof(struct msgbuf)) / NBPG;
+	physical_freestart += round_page(MSGBUFSIZE);
+	free_pages -= round_page(MSGBUFSIZE) / NBPG;
 
 	/* Ok we have allocated physical pages for the primary kernel page tables */
 
@@ -1775,8 +1774,8 @@ initarm(prom_id)
 	kernelstack.virtual = KERNEL_BASE + kernelstack.physical - physical_start;
 
 	msgbufphys = physical_freestart;
-	physical_freestart += round_page(sizeof(struct msgbuf));
-	free_pages -= round_page(sizeof(struct msgbuf)) / NBPG;
+	physical_freestart += round_page(MSGBUFSIZE);
+	free_pages -= round_page(MSGBUFSIZE) / NBPG;
 
 #ifdef PROM_DEBUG
 	printf("physical_fs=%08x next_phys=%08x\n", (u_int)physical_freestart,
@@ -2184,10 +2183,9 @@ cpu_startup()
 
 	for (loop = 0; loop < btoc(sizeof(struct msgbuf)); ++loop)
 		pmap_enter(pmap_kernel(),
-		    (vm_offset_t)((caddr_t)msgbufp + loop * NBPG),
+		    (vm_offset_t)((caddr_t)msgbufaddr + loop * NBPG),
 		    msgbufphys + loop * NBPG, VM_PROT_ALL, TRUE);
-
-	msgbufmapped = 1;
+	initmsgbuf(msgbufaddr, round_page(MSGBUFSIZE));
 
 	/*
 	 * Identify ourselves for the msgbuf (everything printed earlier will

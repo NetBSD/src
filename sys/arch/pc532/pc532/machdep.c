@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.67 1997/09/11 23:02:14 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.68 1997/09/19 13:55:03 leo Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller.
@@ -170,8 +170,7 @@ int	maxphysmem = 0;
 int	physmem;
 int	boothowto;
 
-struct	msgbuf *msgbufp;
-int	msgbufmapped;
+caddr_t	msgbufaddr;
 
 vm_map_t buffer_map;
 
@@ -206,11 +205,10 @@ cpu_startup()
 	 * Initialize error message buffer (at end of core).
 	 */
 	/* avail_end was pre-decremented in pmap_bootstrap to compensate */
-	for (i = 0; i < btoc(sizeof(struct msgbuf)); i++)
-		pmap_enter(pmap_kernel(),
-		    (vm_offset_t)((caddr_t)msgbufp + i * NBPG),
-		    avail_end + i * NBPG, VM_PROT_ALL, TRUE);
-	msgbufmapped = 1;
+	for (i = 0; i < btoc(MSGBUFSIZE); i++)
+		pmap_enter(pmap_kernel(), (vm_offset_t)msgbufaddr + i * NBPG),
+			avail_end + i * NBPG, VM_PROT_ALL, TRUE);
+	initmsgbuf(msgbufaddr, round_page(MSGBUFSIZE));
 
 	printf(version);
 	printf("real mem  = %d\n", ctob(physmem));
