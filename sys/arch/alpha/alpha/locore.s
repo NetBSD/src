@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.98 2001/08/29 20:17:08 nathanw Exp $ */
+/* $NetBSD: locore.s,v 1.99 2002/04/30 16:05:13 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.98 2001/08/29 20:17:08 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.99 2002/04/30 16:05:13 thorpej Exp $");
 
 #include "assym.h"
 
@@ -828,13 +828,6 @@ cpu_switch_queuescan:
 5:
 	mov	t4, s2				/* save new proc */
 	ldq	s3, P_MD_PCBPADDR(s2)		/* save new pcbpaddr */
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
-	/*
-	 * Done mucking with the run queues, release the
-	 * scheduler lock, but keep interrupts out.
-	 */
-	CALL(sched_unlock_idle)
-#endif
 
 	/*
 	 * Check to see if we're switching to ourself.  If we are,
@@ -879,7 +872,17 @@ cpu_switch_queuescan:
 	mov	s3, a0				/* swap the context */
 	SWITCH_CONTEXT
 
-7:	/*
+7:
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
+	/*
+	 * Done mucking with the run queues, and we have fully switched
+	 * to the new process.  Release the scheduler lock, but keep
+	 * interrupts out.
+	 */
+	CALL(sched_unlock_idle)
+#endif
+
+	/*
 	 * Now that the switch is done, update curproc and other
 	 * globals.  We must do this even if switching to ourselves
 	 * because we might have re-entered cpu_switch() from idle(),
