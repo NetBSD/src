@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.18 1996/10/13 03:35:30 christos Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.19 1997/01/11 11:31:29 ragge Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -206,7 +206,7 @@ backplane_match(parent, gcf, aux)
 }
 
 static	void find_sbi __P((struct device *, struct bp_conf *,
-	    int (*) __P((void *, char *))));
+	    int (*) __P((void *, const char *))));
 
 
 void
