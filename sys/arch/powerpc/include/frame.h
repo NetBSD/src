@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.15 2003/07/31 15:29:29 matt Exp $	*/
+/*	$NetBSD: frame.h,v 1.16 2003/08/12 18:34:48 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -104,7 +104,7 @@ struct utrapframe32 {
 
 struct switchframe {
 	register_t sp;
-	register_t fill;
+	register_t lr;
 	register_t user_sr;	/* VSID on IBM4XX */
 	register_t cr;
 	register_t fixreg2;

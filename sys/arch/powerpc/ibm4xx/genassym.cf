@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.6 2003/08/12 05:06:58 matt Exp $
+#	$NetBSD: genassym.cf,v 1.7 2003/08/12 18:34:47 matt Exp $
 
 #
 # Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -115,6 +115,7 @@ define	CFRAME_R31	offsetof(struct callframe, r31)
 
 define	SFRAMELEN	roundup(sizeof(struct switchframe), CALLFRAMELEN)
 define	SFRAME_SP	offsetof(struct switchframe, sp)
+define	SFRAME_LR	offsetof(struct switchframe, lr)
 define	SFRAME_USER_SR	offsetof(struct switchframe, user_sr)
 define	SFRAME_CR	offsetof(struct switchframe, cr)
 define	SFRAME_R2	offsetof(struct switchframe, fixreg2)
@@ -140,7 +141,6 @@ define	SFRAME_R31	offsetof(struct switchframe, fixreg[18])
 
 define	PCB_PM		offsetof(struct pcb, pcb_pm)
 define	PCB_SP		offsetof(struct pcb, pcb_sp)
-define	PCB_SPL		offsetof(struct pcb, pcb_spl)
 define	PCB_FAULT	offsetof(struct pcb, pcb_onfault)
 
 define	PM_CTX		offsetof(struct pmap, pm_ctx)
