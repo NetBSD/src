@@ -1,4 +1,4 @@
-/*	$NetBSD: hash_page.c,v 1.10 1998/06/30 21:30:52 thorpej Exp $	*/
+/*	$NetBSD: hash_page.c,v 1.11 1998/07/26 14:05:20 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)hash_page.c	8.7 (Berkeley) 8/16/94";
 #else
-__RCSID("$NetBSD: hash_page.c,v 1.10 1998/06/30 21:30:52 thorpej Exp $");
+__RCSID("$NetBSD: hash_page.c,v 1.11 1998/07/26 14:05:20 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -865,7 +865,7 @@ open_temp(hashp)
 	HTAB *hashp;
 {
 	sigset_t set, oset;
-	static char namestr[] = "_hashXXXXXX";
+	char namestr[] = "_hashXXXXXX";
 
 	/* Block signals; make sure file goes away at process exit. */
 	(void)sigfillset(&set);
