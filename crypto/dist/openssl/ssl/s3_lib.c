@@ -271,7 +271,7 @@ OPENSSL_GLOBAL SSL_CIPHER ssl3_ciphers[]={
 	SSL_ALL_STRENGTHS,
 	},
 /* Cipher 07 */
-#if 0
+#if 0 /* XXX - we can use OPENSSL_NO_IDEA now. */
 	{
 	1,
 	SSL3_TXT_RSA_IDEA_128_SHA,
