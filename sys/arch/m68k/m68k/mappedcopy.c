@@ -1,4 +1,4 @@
-/*	$NetBSD: mappedcopy.c,v 1.15 2001/09/10 21:19:16 chris Exp $	*/
+/*	$NetBSD: mappedcopy.c,v 1.16 2003/04/02 00:00:46 thorpej Exp $	*/
 
 /*
  * XXX This doesn't work yet.  Soon.  --thorpej@netbsd.org
@@ -71,10 +71,6 @@ u_int	mappedcopysize = -1;
 
 static caddr_t caddr1 = 0;
 
-/*
- * N.B. Both of these routines assume PAGE_SIZE == NBPG.
- */
-
 int
 mappedcopyin(f, t, count)
 	void *f, *t;
@@ -96,7 +92,7 @@ mappedcopyin(f, t, count)
 #endif
 
 	if (CADDR1 == 0)
-		CADDR1 = (caddr_t) uvm_km_valloc(kernel_map, NBPG);
+		CADDR1 = (caddr_t) uvm_km_valloc(kernel_map, PAGE_SIZE);
 
 	kva = (vaddr_t)CADDR1;
 	off = (int)((u_long)fromp & PAGE_MASK);
@@ -155,7 +151,7 @@ mappedcopyout(f, t, count)
 #endif
 
 	if (CADDR2 == 0)
-		CADDR2 = (caddr_t) uvm_km_valloc(kernel_map, NBPG);
+		CADDR2 = (caddr_t) uvm_km_valloc(kernel_map, PAGE_SIZE);
 
 	kva = (vaddr_t) CADDR2;
 	off = (int)((u_long)top & PAGE_MASK);
