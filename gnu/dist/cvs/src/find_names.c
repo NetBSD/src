@@ -363,7 +363,7 @@ find_dirs (dir, list, checkadm, entries)
 	    expand_string (&tmp,
 			   &tmp_size,
 			   strlen (dir) + strlen (dp->d_name) + 10);
-	    sprintf (tmp, "%s/%s", dir, dp->d_name);
+	    snprintf (tmp, tmp_size, "%s/%s", dir, dp->d_name);
 	    if (!isdir (tmp))
 		goto do_it_again;
 
@@ -394,8 +394,8 @@ find_dirs (dir, list, checkadm, entries)
 	    expand_string (&tmp,
 			   &tmp_size,
 			   (strlen (dir) + strlen (dp->d_name)
-			    + sizeof (CVSADM) + 10));
-	    (void) sprintf (tmp, "%s/%s/%s", dir, dp->d_name, CVSADM);
+			    + strlen (CVSADM) + 10));
+	    (void) snprintf (tmp, tmp_size, "%s/%s/%s", dir, dp->d_name, CVSADM);
 	    if (!isdir (tmp))
 		goto do_it_again;
 	}
