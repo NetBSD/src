@@ -1,4 +1,5 @@
 /*
+ * Copyright (c) 1994 Charles Hannum.
  * Copyright (c) 1994 Jarle Greipsland
  * All rights reserved.
  *
@@ -30,7 +31,7 @@
  */
 
 /*
- * $Id: aic6360.c,v 1.5.2.1 1994/08/07 10:52:40 mycroft Exp $
+ * $Id: aic6360.c,v 1.5.2.2 1994/08/08 07:09:56 mycroft Exp $
  *
  * Acknowledgements: Many of the algorithms used in this driver are
  * inspired by the work of Julian Elischer (julian@tfs.com) and
