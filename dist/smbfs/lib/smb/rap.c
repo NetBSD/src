@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rap.c,v 1.3 2003/04/04 08:05:36 jdolecek Exp $");
+__RCSID("$NetBSD: rap.c,v 1.4 2003/10/21 02:36:06 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -199,7 +199,7 @@ smb_rap_create(int fn, const char *param, const char *data,
 
 	rap = malloc(sizeof(*rap));
 	if (rap == NULL)
-		return NULL;
+		return 0;
 	bzero(rap, sizeof(*rap));
 	p = rap->r_sparam = rap->r_nparam = strdup(param);
 	rap->r_sdata = rap->r_ndata = strdup(data);
