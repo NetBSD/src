@@ -1,4 +1,4 @@
-/*	$NetBSD: commands.c,v 1.39 2000/02/29 19:36:43 itojun Exp $	*/
+/*	$NetBSD: commands.c,v 1.40 2000/05/13 03:13:59 itojun Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)commands.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: commands.c,v 1.39 2000/02/29 19:36:43 itojun Exp $");
+__RCSID("$NetBSD: commands.c,v 1.40 2000/05/13 03:13:59 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -2326,7 +2326,10 @@ tn(argc, argv)
 	hints.ai_protocol = 0;
 	hints.ai_flags = AI_CANONNAME;
 	error = getaddrinfo(hostname, portp, &hints, &res0);
-	if (error) {
+	if (error == EAI_SERVICE) {
+	    fprintf(stderr, "tcp/%s: unknown service\n", portp);
+	    return 0;
+	} else if (error) {
 	    fprintf(stderr, "%s: %s\n", hostname, gai_strerror(error));
 	    return 0;
 	}
