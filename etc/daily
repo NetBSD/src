@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: daily,v 1.22 1997/06/23 01:45:21 lukem Exp $
+#	$NetBSD: daily,v 1.23 1997/07/11 00:36:55 phil Exp $
 #	@(#)daily	8.2 (Berkeley) 1/25/94
 #
 
@@ -9,6 +9,10 @@ host=`hostname`
 echo "Subject: $host daily run output"
 
 umask 077
+
+if [ -z "$MAILTO" -o "$USER" != "root" ]; then
+  MAILTO=root
+fi
 
 if [ -s /etc/daily.conf ]; then
 	. /etc/daily.conf
@@ -194,7 +198,7 @@ if [ "$run_rdist" != NO -a -f /etc/Distfile ]; then
 fi
 
 if [ "$run_security" != NO ]; then
-	sh /etc/security 2>&1 | mail -s "$host daily insecurity output" root
+	sh /etc/security 2>&1 | mail -s "$host daily insecurity output" $MAILTO
 fi
 
 rm -rf $TMPDIR
