@@ -1,4 +1,4 @@
-/*	$NetBSD: byte_swap_4.S,v 1.3 2000/12/14 19:33:00 bjh21 Exp $	*/
+/*	$NetBSD: byte_swap_4.S,v 1.4 2000/12/16 14:38:50 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,9 +38,10 @@
 
 #include <machine/asm.h>
 
-ENTRY(bswap32)
-ALTENTRY(ntohl)
-ALTENTRY(htonl)
+_ENTRY(_C_LABEL(bswap32))
+_ENTRY(_C_LABEL(ntohl))
+_ENTRY(_C_LABEL(htonl))
+_PROF_PROLOGUE
 	eor		r1, r0, r0, ror #16
 	bic		r1, r1, #0x00FF0000
 	mov		r0, r0, ror #8
