@@ -1,4 +1,4 @@
-/*	$NetBSD: crunchgen.c,v 1.47 2003/05/15 17:49:46 dsl Exp $	*/
+/*	$NetBSD: crunchgen.c,v 1.48 2003/06/01 02:03:22 thorpej Exp $	*/
 /*
  * Copyright (c) 1994 University of Maryland
  * All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: crunchgen.c,v 1.47 2003/05/15 17:49:46 dsl Exp $");
+__RCSID("$NetBSD: crunchgen.c,v 1.48 2003/06/01 02:03:22 thorpej Exp $");
 #endif
 
 #if HAVE_CONFIG_H
@@ -57,7 +57,7 @@ __RCSID("$NetBSD: crunchgen.c,v 1.47 2003/05/15 17:49:46 dsl Exp $");
 #define MAXFIELDS 	 2048
 
 /*
- * Define RENAME_SYMS to rename symbols using objcopy --redefine-syms-file.
+ * Define RENAME_SYMS to rename symbols using objcopy --redefine-syms.
  * Undef RENAME_SYMS to hide globals symbols using objcopy --keep-global-symbol.
  */
 #define	RENAME_SYMS
@@ -926,7 +926,7 @@ void prog_makefile_rules(FILE *outmk, prog_t *p)
     fprintf(outmk, "env CRO=%s.cro awk "
 	"'{ print $$3 \" _$$$$hide$$$$\" ENVIRON[\"CRO\"] \"$$$$\" $$3 }' "
 	"> %s.cro.syms\n", p->name, p->name);
-    fprintf(outmk, "\t${OBJCOPY} --redefine-syms-file %s.cro.syms ", p->name);
+    fprintf(outmk, "\t${OBJCOPY} --redefine-syms %s.cro.syms ", p->name);
 #else
     fprintf(outmk, "\t${OBJCOPY} --keep-global-symbol _crunched_%s_stub ",
   	    p->ident);
