@@ -1,4 +1,4 @@
-/*	$NetBSD: yperr_string.c,v 1.1 1996/05/14 13:36:50 jtc Exp $	 */
+/*	$NetBSD: yperr_string.c,v 1.2 1997/07/13 20:28:15 christos Exp $	 */
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -31,10 +31,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$NetBSD: yperr_string.c,v 1.1 1996/05/14 13:36:50 jtc Exp $";
+__RCSID("$NetBSD: yperr_string.c,v 1.2 1997/07/13 20:28:15 christos Exp $");
 #endif
 
+#include <stdio.h>
 #include <rpc/rpc.h>
 #include <rpcsvc/yp_prot.h>
 #include <rpcsvc/ypclnt.h>

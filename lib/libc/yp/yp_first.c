@@ -1,4 +1,4 @@
-/*	$NetBSD: yp_first.c,v 1.6 1997/07/07 02:00:32 lukem Exp $	 */
+/*	$NetBSD: yp_first.c,v 1.7 1997/07/13 20:28:11 christos Exp $	 */
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -31,8 +31,9 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$NetBSD: yp_first.c,v 1.6 1997/07/07 02:00:32 lukem Exp $";
+__RCSID("$NetBSD: yp_first.c,v 1.7 1997/07/13 20:28:11 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -40,6 +41,7 @@ static char rcsid[] = "$NetBSD: yp_first.c,v 1.6 1997/07/07 02:00:32 lukem Exp $
 #include <rpc/rpc.h>
 #include <rpcsvc/yp_prot.h>
 #include <rpcsvc/ypclnt.h>
+#include "local.h"
 
 extern struct timeval _yplib_timeout;
 extern int _yplib_nerrs;

@@ -1,4 +1,4 @@
-/*	$NetBSD: xdryp.c,v 1.15 1996/08/15 21:43:03 chuck Exp $	*/
+/*	$NetBSD: xdryp.c,v 1.16 1997/07/13 20:28:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe <thorpej@NetBSD.ORG>.
@@ -36,8 +36,9 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$NetBSD: xdryp.c,v 1.15 1996/08/15 21:43:03 chuck Exp $";
+__RCSID("$NetBSD: xdryp.c,v 1.16 1997/07/13 20:28:10 christos Exp $");
 #endif
 
 /*
@@ -284,8 +285,6 @@ xdr_ypall(xdrs, incallback)
 	struct ypresp_key_val out;
 	char key[YPMAXRECORD], val[YPMAXRECORD];
 	bool_t more, status;
-	int size;
-	int r;
 
 	/*
 	 * Set up key/val struct to be used during the transaction.

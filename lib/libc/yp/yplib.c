@@ -1,4 +1,4 @@
-/*	$NetBSD: yplib.c,v 1.28 1997/07/07 02:00:43 lukem Exp $	 */
+/*	$NetBSD: yplib.c,v 1.29 1997/07/13 20:28:16 christos Exp $	 */
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -31,8 +31,9 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$NetBSD: yplib.c,v 1.28 1997/07/07 02:00:43 lukem Exp $";
+__RCSID("$NetBSD: yplib.c,v 1.29 1997/07/13 20:28:16 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -50,6 +51,7 @@ static char rcsid[] = "$NetBSD: yplib.c,v 1.28 1997/07/07 02:00:43 lukem Exp $";
 #include <rpc/xdr.h>
 #include <rpcsvc/yp_prot.h>
 #include <rpcsvc/ypclnt.h>
+#include "local.h"
 
 #define BINDINGDIR	"/var/yp/binding"
 #define YPBINDLOCK	"/var/run/ypbind.lock"
@@ -64,9 +66,6 @@ struct timeval _yplib_timeout = { YPLIB_TIMEOUT, 0 };
 struct timeval _yplib_rpc_timeout = { YPLIB_TIMEOUT / YPLIB_RPC_RETRIES,
 	1000000 * (YPLIB_TIMEOUT % YPLIB_RPC_RETRIES) / YPLIB_RPC_RETRIES };
 int _yplib_nerrs = 5;
-
-void	_yp_unbind __P((struct dom_binding *));
-int	_yp_invalid_domain __P((const char *));
 
 int
 _yp_dobind(dom, ypdb)

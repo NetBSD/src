@@ -1,4 +1,4 @@
-/*	$NetBSD: ypprot_err.c,v 1.1 1996/05/18 19:06:47 jtc Exp $	 */
+/*	$NetBSD: ypprot_err.c,v 1.2 1997/07/13 20:28:17 christos Exp $	 */
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -31,8 +31,9 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$NetBSD: ypprot_err.c,v 1.1 1996/05/18 19:06:47 jtc Exp $";
+__RCSID("$NetBSD: ypprot_err.c,v 1.2 1997/07/13 20:28:17 christos Exp $");
 #endif
 
 #include <rpc/rpc.h>
