@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.105 2000/09/05 16:27:51 bouyer Exp $	*/
+/*	$NetBSD: proc.h,v 1.106 2000/11/07 12:41:53 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -103,6 +103,11 @@ struct	emul {
 
 	char	*e_sigcode;		/* Start of sigcode */
 	char	*e_esigcode;		/* End of sigcode */
+
+	/* Per-process hooks */
+	void	(*e_proc_exec) __P((struct proc *));
+	void	(*e_proc_fork) __P((struct proc *p, struct proc *parent));
+	void	(*e_proc_exit) __P((struct proc *));
 };
 
 /*
@@ -183,6 +188,8 @@ struct	proc {
 
 	int	p_holdcnt;		/* If non-zero, don't swap. */
 	struct	emul *p_emul;		/* Emulation information */
+	void	*p_emuldata;		/* Per-process emulation data, or NULL.
+					 * Malloc type M_EMULDATA */
 
 /* End area that is zeroed on creation. */
 #define	p_endzero	p_startcopy

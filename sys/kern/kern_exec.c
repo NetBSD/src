@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.121 2000/09/28 19:05:07 eeh Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.122 2000/11/07 12:41:52 jdolecek Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -526,8 +526,26 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 	if (p->p_flag & P_TRACED)
 		psignal(p, SIGTRAP);
 
-	p->p_emul = pack.ep_emul;
 	free(pack.ep_hdr, M_EXEC);
+
+	/*
+	 * Call emulation specific exec hook. This can setup setup per-process
+	 * p->p_emuldata or do any other per-process stuff an emulation needs.
+	 *
+	 * If we are executing process of different emulation than the
+	 * original forked process, call e_proc_exit() of the old emulation
+	 * first, then e_proc_exec() of new emulation. If the emulation is
+	 * same, the exec hook code should deallocate any old emulation
+	 * resources held previously by this process.
+	 */
+	if (p->p_emul && p->p_emul->e_proc_exit && p->p_emul != pack.ep_emul)
+		(*p->p_emul->e_proc_exit)(p);
+
+        if (pack.ep_emul->e_proc_exec)
+                (*pack.ep_emul->e_proc_exec)(p);
+
+	/* update p_emul, the old value is no longer needed */
+	p->p_emul = pack.ep_emul;
 
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_EMUL))

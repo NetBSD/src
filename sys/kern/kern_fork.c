@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.74 2000/11/07 12:31:17 jdolecek Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.75 2000/11/07 12:41:52 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -345,6 +345,12 @@ again:
 		sigactsshare(p1, p2);
 	else
 		p2->p_sigacts = sigactsinit(p1);
+
+	/*
+	 * If emulation has process fork hook, call it now.
+	 */
+	if (p2->p_emul->e_proc_fork)
+		(*p2->p_emul->e_proc_fork)(p2, p1);
 
 	/*
 	 * This begins the section where we must prevent the parent
