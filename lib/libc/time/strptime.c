@@ -1,4 +1,4 @@
-/*	$NetBSD: strptime.c,v 1.4 1997/06/03 10:04:20 kleink Exp $	*/
+/*	$NetBSD: strptime.c,v 1.5 1997/06/03 10:19:45 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$NetBSD: strptime.c,v 1.4 1997/06/03 10:04:20 kleink Exp $";
+static char rcsid[] = "$NetBSD: strptime.c,v 1.5 1997/06/03 10:19:45 kleink Exp $";
 #endif
 
 #include <sys/localedef.h>
@@ -45,7 +45,7 @@ static char rcsid[] = "$NetBSD: strptime.c,v 1.4 1997/06/03 10:04:20 kleink Exp 
 #include <string.h>
 #include <time.h>
 
-#define	_ctloc(x)		__CONCAT(_CurrentTimeLocale->, x)
+#define	_ctloc(x)		__CONCAT(_CurrentTimeLocale->,x)
 
 /*
  * We do not implement alternate representations. However, we always
