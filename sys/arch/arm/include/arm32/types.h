@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.3 2002/09/22 04:11:32 gmcgarry Exp $	*/
+/*	$NetBSD: types.h,v 1.4 2002/09/22 05:56:32 simonb Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -44,7 +44,6 @@
 
 #include <arm/types.h>		/* pull in generic ARM definitions */
 
-#define __HAVE_MD_RUNQUEUE
 #define	__HAVE_RAS
 #define __HAVE_MD_RUNQUEUE
 
