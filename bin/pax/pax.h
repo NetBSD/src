@@ -1,4 +1,4 @@
-/*	$NetBSD: pax.h,v 1.13.2.1 2004/04/07 06:58:32 jmc Exp $	*/
+/*	$NetBSD: pax.h,v 1.13.2.2 2004/06/16 01:27:38 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -35,7 +35,7 @@
  *	@(#)pax.h	8.2 (Berkeley) 4/18/94
  */
 
-#if ! HAVE_NBTOOL_CONFIG_H
+#if ! HAVE_CONFIG_H
 #define HAVE_LUTIMES 1
 #define HAVE_STRUCT_STAT_ST_FLAGS 1
 #endif
