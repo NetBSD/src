@@ -1,4 +1,4 @@
-/*	$NetBSD: pcidevs.h,v 1.220 2000/04/30 18:46:18 dante Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.221 2000/05/07 17:00:06 jonathan Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -1516,6 +1516,8 @@
 
 /* Yamaha products */
 #define	PCI_PRODUCT_YAMAHA_YMF724E_V	0x0004		/* 724 Audio */
+#define	PCI_PRODUCT_YAMAHA_YMF744B	0x0010		/* 744 (DS-1S) Audio */
+#define	PCI_PRODUCT_YAMAHA_YMF754	0x0012		/* 754 (DS-1E) Audio */
 
 /* Zeinet products */
 #define	PCI_PRODUCT_ZEINET_1221	0x0001		/* 1221 */
