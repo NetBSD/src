@@ -1,4 +1,4 @@
-# $NetBSD: ALPHA,v 1.176 2003/02/10 08:04:39 grant Exp $
+# $NetBSD: ALPHA,v 1.177 2003/02/10 09:02:07 mjacob Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
@@ -6,7 +6,7 @@ include	"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident		"ALPHA-$Revision: 1.176 $"
+ident		"ALPHA-$Revision: 1.177 $"
 
 maxusers 32
 
@@ -298,6 +298,7 @@ puc*	at 	pci? dev ? function ?		# PCI "universal" comm. cards
 rtk*	at	pci? dev ? function ?		# RealTek 8129/8139 Ethernet
 sio*	at	pci? dev ? function ?		# Intel PCI-ISA Bridges
 sip*	at	pci? dev ? function ?		# SiS 900 Ethernet
+stge*	at	pci? dev ? function ?		# Sundance/Tamarack TC9021 GigE
 sv*	at	pci? dev ? function ?		# S3 SonicVibes
 tga*	at	pci? dev ? function ?		# DEC ZLXp-E[123] Graphics
 ti*	at	pci? dev ? function ?		# Alteon Tigon Gig-E
