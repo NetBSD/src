@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.96 2003/11/04 01:53:28 perry Exp $	*/
+/*	$NetBSD: net.c,v 1.97 2003/11/04 16:27:22 perry Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -651,13 +651,14 @@ again:
 		/* NB: ctime() returns a string ending in  '\n' */
 		scripting_fprintf(f, ";\n; BIND data file\n; %s %s;\n",
 		    "Created by NetBSD sysinst on", ctime(&now));
+		if (net_domain[0] != '\0')
+			scripting_fprintf(f, "search %s\n", net_domain);
 		if (net_namesvr[0] != '\0')
 			scripting_fprintf(f, "nameserver %s\n", net_namesvr);
 #ifdef INET6
 		if (net_namesvr6[0] != '\0')
 			scripting_fprintf(f, "nameserver %s\n", net_namesvr6);
 #endif
-		scripting_fprintf(f, "search %s\n", net_domain);
 		scripting_fprintf(NULL, "EOF\n");
 		fflush(NULL);
 		fclose(f);
@@ -914,10 +915,13 @@ write_etc_hosts(FILE *f)
 	scripting_fprintf(f, "# Added by NetBSD sysinst\n");
 	scripting_fprintf(f, "#\n");
 
-	scripting_fprintf(f, "127.0.0.1	localhost\n");
+	if (net_domain[0] != '\0')
+		scripting_fprintf(f, "127.0.0.1	localhost.%s\n", net_domain);
 
 	scripting_fprintf(f, "%s\t", net_ip);
-	scripting_fprintf(f, "%s\n", recombine_host_domain());
+	if (net_domain[0] != '\0')
+		scripting_fprintf(f, "%s ", recombine_host_domain());
+	scripting_fprintf(f, "%s\n", net_host);
 }
 
 /*
