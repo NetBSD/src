@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.12 1999/01/12 10:26:18 tsubai Exp $	*/
+/*	$NetBSD: pmap.c,v 1.13 1999/01/12 11:03:04 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -805,7 +805,16 @@ void
 pmap_zero_page(pa)
 	paddr_t pa;
 {
+#if 0
 	bzero((caddr_t)pa, NBPG);
+#else
+	int i;
+
+	for (i = NBPG/CACHELINESIZE; i > 0; i--) {
+		__asm __volatile ("dcbz 0,%0" :: "r"(pa));
+		pa += CACHELINESIZE;
+	}
+#endif
 }
 
 /*
