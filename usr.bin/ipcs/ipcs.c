@@ -1,4 +1,4 @@
-/*	$NetBSD: ipcs.c,v 1.30 2003/07/12 13:29:15 itojun Exp $	*/
+/*	$NetBSD: ipcs.c,v 1.31 2003/10/21 02:20:22 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -452,7 +452,7 @@ msg_sysctl(void)
 	mib[0] = CTL_KERN;
 	mib[1] = KERN_SYSVMSG;
 	len = sizeof(valid);
-	if (sysctl(mib, 2, &valid, &len, NULL, NULL) < 0) {
+	if (sysctl(mib, 2, &valid, &len, NULL, 0) < 0) {
 		perror("sysctl(KERN_SYSVMSG)");
 		return;
 	}
@@ -470,7 +470,7 @@ msg_sysctl(void)
 		/* totals only */
 		len = sizeof(struct msginfo);
 	} else {
-		if (sysctl(mib, 3, NULL, &len, NULL, NULL) < 0) {
+		if (sysctl(mib, 3, NULL, &len, NULL, 0) < 0) {
 			perror("sysctl(KERN_SYSVIPC_MSG_INFO)");
 			return;
 		}
@@ -479,7 +479,7 @@ msg_sysctl(void)
 	if ((buf = malloc(len)) == NULL)
 		err(1, "malloc");
 	msgsi = (struct msg_sysctl_info *)buf;
-	if (sysctl(mib, 3, msgsi, &len, NULL, NULL) < 0) {
+	if (sysctl(mib, 3, msgsi, &len, NULL, 0) < 0) {
 		perror("sysctl(KERN_SYSVIPC_MSG_INFO)");
 		return;
 	}
@@ -525,7 +525,7 @@ shm_sysctl(void)
 	mib[0] = CTL_KERN;
 	mib[1] = KERN_SYSVSHM;
 	len = sizeof(valid);
-	if (sysctl(mib, 2, &valid, &len, NULL, NULL) < 0) {
+	if (sysctl(mib, 2, &valid, &len, NULL, 0) < 0) {
 		perror("sysctl(KERN_SYSVSHM)");
 		return;
 	}
@@ -543,7 +543,7 @@ shm_sysctl(void)
 		/* totals only */
 		len = sizeof(struct shminfo);
 	} else {
-		if (sysctl(mib, 3, NULL, &len, NULL, NULL) < 0) {
+		if (sysctl(mib, 3, NULL, &len, NULL, 0) < 0) {
 			perror("sysctl(KERN_SYSVIPC_SHM_INFO)");
 			return;
 		}
@@ -552,7 +552,7 @@ shm_sysctl(void)
 	if ((buf = malloc(len)) == NULL)
 		err(1, "malloc");
 	shmsi = (struct shm_sysctl_info *)buf;
-	if (sysctl(mib, 3, shmsi, &len, NULL, NULL) < 0) {
+	if (sysctl(mib, 3, shmsi, &len, NULL, 0) < 0) {
 		perror("sysctl(KERN_SYSVIPC_SHM_INFO)");
 		return;
 	}
@@ -596,7 +596,7 @@ sem_sysctl(void)
 	mib[0] = CTL_KERN;
 	mib[1] = KERN_SYSVSEM;
 	len = sizeof(valid);
-	if (sysctl(mib, 2, &valid, &len, NULL, NULL) < 0) {
+	if (sysctl(mib, 2, &valid, &len, NULL, 0) < 0) {
 		perror("sysctl(KERN_SYSVSEM)");
 		return;
 	}
@@ -614,7 +614,7 @@ sem_sysctl(void)
 		/* totals only */
 		len = sizeof(struct seminfo);
 	} else {
-		if (sysctl(mib, 3, NULL, &len, NULL, NULL) < 0) {
+		if (sysctl(mib, 3, NULL, &len, NULL, 0) < 0) {
 			perror("sysctl(KERN_SYSVIPC_SEM_INFO)");
 			return;
 		}
@@ -623,7 +623,7 @@ sem_sysctl(void)
 	if ((buf = malloc(len)) == NULL)
 		err(1, "malloc");
 	semsi = (struct sem_sysctl_info *)buf;
-	if (sysctl(mib, 3, semsi, &len, NULL, NULL) < 0) {
+	if (sysctl(mib, 3, semsi, &len, NULL, 0) < 0) {
 		perror("sysctl(KERN_SYSVIPC_SEM_INFO)");
 		return;
 	}
