@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.69 2003/04/03 18:54:16 christos Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.70 2003/05/02 12:43:01 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.69 2003/04/03 18:54:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.70 2003/05/02 12:43:01 yamt Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h"
@@ -498,15 +498,22 @@ sys_fktrace(l, v, retval)
 	struct proc *curp = l->l_proc;
 	struct file *fp = NULL;
 	struct filedesc *fdp = curp->p_fd;
+	int error;
 
 	if ((fp = fd_getfile(fdp, SCARG(uap, fd))) == NULL)
 		return (EBADF);
 
-	if ((fp->f_flag & FWRITE) == 0)
-		return (EBADF);
+	FILE_USE(fp);
 
-	return ktrace_common(curp, SCARG(uap, ops),
-	    SCARG(uap, facs), SCARG(uap, pid), fp);
+	if ((fp->f_flag & FWRITE) == 0)
+		error = EBADF;
+	else
+		error = ktrace_common(curp, SCARG(uap, ops),
+		    SCARG(uap, facs), SCARG(uap, pid), fp);
+
+	FILE_UNUSE(fp, curp);
+
+	return error;
 }
 
 /*
