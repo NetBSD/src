@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.108 2002/05/14 02:58:32 matt Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.108.4.1 2003/08/24 09:33:27 tron Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.108 2002/05/14 02:58:32 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.108.4.1 2003/08/24 09:33:27 tron Exp $");
 
 #include "opt_ddb.h"
 #include "opt_insecure.h"
@@ -797,7 +797,8 @@ cleanup:
 		return (error);
 	}
 	if (name[1] == PROC_PID_LIMIT) {
-		if (namelen != 4 || name[2] >= PROC_PID_LIMIT_MAXID)
+		if (namelen != 4 || name[2] < 1 ||
+		    name[2] >= PROC_PID_LIMIT_MAXID)
 			return EINVAL;
 		memcpy(&alim, &ptmp->p_rlimit[name[2] - 1], sizeof(alim));
 		if (name[3] == PROC_PID_LIMIT_TYPE_HARD)
