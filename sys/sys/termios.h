@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)termios.h	7.22 (Berkeley) 5/7/91
- *	$Id: termios.h,v 1.6 1994/02/09 20:54:52 mycroft Exp $
+ *	$Id: termios.h,v 1.7 1994/03/12 03:14:19 cgd Exp $
  */
 
 #ifndef _SYS_TERMIOS_H_
@@ -135,9 +135,9 @@
 #define HUPCL		0x00004000	/* hang up on last close */
 #define CLOCAL		0x00008000	/* ignore modem status lines */
 #ifndef _POSIX_SOURCE
-#define CCTS_OFLOW	0x00010000	/* CTS flow control of output */
-#define CRTSCTS		CCTS_OFLOW	/* ??? */
-#define CRTS_IFLOW	0x00020000	/* RTS flow control of input */
+#define	CRTSCTS		0x00010000	/* RTS/CTS full-duplex flow control */
+#define	CRTS_IFLOW	CRTSCTS		/* XXX compat */
+#define	CCTS_OFLOW	CRTSCTS		/* XXX compat */
 #define	MDMBUF		0x00100000	/* flow control output via Carrier */
 #endif
 
