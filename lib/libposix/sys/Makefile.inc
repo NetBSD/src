@@ -1,49 +1,23 @@
-#	$NetBSD: Makefile.inc,v 1.11 1999/10/27 14:58:30 is Exp $
+#	$NetBSD: Makefile.inc,v 1.12 2001/11/13 18:55:00 tv Exp $
 
 # sys sources
 .PATH: ${.CURDIR}/sys
 
 # stubs providing an entry "foo" but calling "__posix_foo()"
-PSEUDO=	chown.o fchown.o lchown.o rename.o
-PPSEUDO=${PSEUDO:.o=.po}
-SPSEUDO=${PSEUDO:.o=.so}
+PSEUDO=		chown.S fchown.S lchown.S rename.S
 
-OBJS+=	${PSEUDO}
+SRCS+=		${PSEUDO}
+CLEANFILES+=	${PSEUDO}
 
-${PPSEUDO}: ${ARCHDIR}/SYS.h \
-    ${DESTDIR}/usr/include/sys/syscall.h
-	@echo creating ${.TARGET}
-	@printf '#include "SYS.h"\n \
-	    PSEUDO(${.PREFIX},${.PREFIX:S/^/__posix_/})\n' | \
-	    ${CPP} -DGPROF ${CPPFLAGS:M-[ID]*} ${AINC} | ${AS} -o ${.TARGET}.o
-	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
-	@rm -f ${.TARGET}.o
-
-${SPSEUDO}: ${ARCHDIR}/SYS.h \
-    ${DESTDIR}/usr/include/sys/syscall.h
-	@echo creating ${.TARGET}
-	@printf '#include "SYS.h"\n \
-	    PSEUDO(${.PREFIX},${.PREFIX:S/^/__posix_/})\n' | \
-	    ${CPP} ${CPPPICFLAGS} ${CPPFLAGS:M-[ID]*} ${AINC} | \
-	    ${AS} ${APICFLAGS} -o ${.TARGET}
-
-${PSEUDO}: ${ARCHDIR}/SYS.h \
-    ${DESTDIR}/usr/include/sys/syscall.h
-	@echo creating ${.TARGET}
-	@printf '#include "SYS.h"\n \
-	    PSEUDO(${.PREFIX},${.PREFIX:S/^/__posix_/})\n' | \
-	    ${CPP} ${CPPFLAGS:M-[ID]*} ${AINC} | ${AS} -o ${.TARGET}.o
-	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
-	@rm -f ${.TARGET}.o
+${PSEUDO}: ${ARCHDIR}/SYS.h ${DESTDIR}/usr/include/sys/syscall.h
+	@printf '#include "SYS.h"\nPSEUDO(${.PREFIX},${.PREFIX:S/^/__posix_/})\n' \
+		>${.TARGET}
 
 # Lint stubs for all automatically-generated assembly stubs (GENERATED)
-LSRCS+=	LintSysPseudo.c
-DPSRCS+=LintSysPseudo.c
-
-CLEANFILES+= LintSysPseudo.c
+LSRCS+=		LintSysPseudo.c
+DPSRCS+=	LintSysPseudo.c
 
 LintSysPseudo.c: ${.CURDIR}/../libc/sys/makelintstub \
     ${DESTDIR}/usr/include/sys/syscall.h
-	@echo creating ${.TARGET}
-	@sh ${.CURDIR}/../libc/sys/makelintstub -o ${.TARGET} -p \
+	sh ${.CURDIR}/../libc/sys/makelintstub -o ${.TARGET} -p \
 	    -s ${DESTDIR}/usr/include/sys/syscall.h ${PSEUDO}
