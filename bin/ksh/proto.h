@@ -1,9 +1,9 @@
-/*	$NetBSD: proto.h,v 1.2 1997/01/12 19:12:10 tls Exp $	*/
+/*	$NetBSD: proto.h,v 1.3 1998/07/26 14:54:36 mycroft Exp $	*/
 
 /*
  * prototypes for PD-KSH
  * originally generated using "cproto.c 3.5 92/04/11 19:28:01 cthuang "
- * $NetBSD: proto.h,v 1.2 1997/01/12 19:12:10 tls Exp $
+ * $NetBSD: proto.h,v 1.3 1998/07/26 14:54:36 mycroft Exp $
  */
 
 /* alloc.c */
@@ -180,7 +180,6 @@ void	change_flag	ARGS((enum sh_flag f, int what, int newval));
 int	parse_args	ARGS((char **argv, int what, int *setargsp));
 int 	getn		ARGS((const char *as, int *ai));
 int 	bi_getn		ARGS((const char *as, int *ai));
-char *	strerror	ARGS((int i));
 int 	gmatch		ARGS((const char *s, const char *p, int isfile));
 int	has_globbing	ARGS((const char *xp, const char *xpe));
 const unsigned char *pat_scan ARGS((const unsigned char *p,
