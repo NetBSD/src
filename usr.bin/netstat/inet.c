@@ -1,4 +1,4 @@
-/*	$NetBSD: inet.c,v 1.43 2001/03/02 04:26:11 itojun Exp $	*/
+/*	$NetBSD: inet.c,v 1.44 2001/03/20 17:00:08 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet.c,v 1.43 2001/03/02 04:26:11 itojun Exp $");
+__RCSID("$NetBSD: inet.c,v 1.44 2001/03/20 17:00:08 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -410,11 +410,11 @@ static	char *icmpnames[] = {
 	"destination unreachable",
 	"source quench",
 	"routing redirect",
-	"#6",
+	"alternate host address",
 	"#7",
 	"echo",
-	"#9",
-	"#10",
+	"router advertisement",
+	"router solicitation",
 	"time exceeded",
 	"parameter problem",
 	"time stamp",
