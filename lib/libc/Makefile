@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.2 (Berkeley) 3/5/91
-#	$Id: Makefile,v 1.26 1994/06/30 06:44:54 deraadt Exp $
+#	$Id: Makefile,v 1.27 1994/07/06 04:06:43 mycroft Exp $
 #
 # All library objects contain sccsid strings by default; they may be
 # excluded as a space-saving measure.  To produce a library that does
@@ -13,6 +13,9 @@
 LIB=c
 CFLAGS+=-DYP -DLIBC_SCCS -DSYSLIBC_SCCS
 AINC=	-I${.CURDIR}/arch/${MACHINE_ARCH}
+.if defined(DESTDIR)
+AINC+=	-nostdinc -idirafter ${DESTDIR}/usr/include
+.endif
 
 .if exists (${.CURDIR}/arch/${MACHINE_ARCH}/Makefile.inc)
 .PATH:	${.CURDIR}/arch/${MACHINE_ARCH}
