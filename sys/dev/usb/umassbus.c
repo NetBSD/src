@@ -1,4 +1,4 @@
-/*	$NetBSD: umassbus.c,v 1.15 2001/12/02 22:44:34 bouyer Exp $	*/
+/*	$NetBSD: umassbus.c,v 1.16 2001/12/14 08:46:20 gehenna Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umassbus.c,v 1.15 2001/12/02 22:44:34 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umassbus.c,v 1.16 2001/12/14 08:46:20 gehenna Exp $");
 
 #include "atapibus.h"
 #include "scsibus.h"
@@ -330,9 +330,10 @@ umass_scsipi_request(struct scsipi_channel *chan,
 			    ("umass_scsi_cmd: sync dir=%d\n", dir));
 			sc->sc_xfer_flags = USBD_SYNCHRONOUS;
 			sc->bus.sc_sync_status = USBD_INVAL;
-			sc->transfer(sc, periph->periph_lun, cmd, cmdlen,
-				     xs->data, xs->datalen, dir, xs->timeout,
-				     0, xs);
+			sc->sc_methods->wire_xfer(sc, periph->periph_lun, cmd,
+						  cmdlen, xs->data,
+						  xs->datalen, dir,
+						  xs->timeout, 0, xs);
 			sc->sc_xfer_flags = 0;
 			DPRINTF(UDMASS_SCSI, ("umass_scsi_cmd: done err=%d\n", 
 					      sc->bus.sc_sync_status));
@@ -353,9 +354,11 @@ umass_scsipi_request(struct scsipi_channel *chan,
 			    ("umass_scsi_cmd: async dir=%d, cmdlen=%d"
 				      " datalen=%d\n",
 				      dir, cmdlen, xs->datalen));
-			sc->transfer(sc, periph->periph_lun, cmd, cmdlen,
-			    xs->data, xs->datalen, dir, xs->timeout,
-			    umass_scsipi_cb, xs);
+			sc->sc_methods->wire_xfer(sc, periph->periph_lun, cmd,
+						  cmdlen, xs->data,
+						  xs->datalen, dir,
+						  xs->timeout,
+						  umass_scsipi_cb, xs);
 			return;
 		}
 
@@ -467,10 +470,11 @@ umass_scsipi_cb(struct umass_softc *sc, void *priv, int residue, int status)
 		cmdlen = sizeof(sc->bus.sc_sense_cmd);
 		if (sc->cmd_proto == CPROTO_UFI) /* XXX */
 			cmdlen = UFI_COMMAND_LENGTH;
-		sc->transfer(sc, periph->periph_lun,
-			     &sc->bus.sc_sense_cmd, cmdlen,
-			     &xs->sense, sizeof(xs->sense), DIR_IN,
-			     xs->timeout, umass_scsipi_sense_cb, xs);
+		sc->sc_methods->wire_xfer(sc, periph->periph_lun,
+					  &sc->bus.sc_sense_cmd, cmdlen,
+					  &xs->sense, sizeof(xs->sense),
+					  DIR_IN, xs->timeout,
+					  umass_scsipi_sense_cb, xs);
 		return;
 
 	case STATUS_WIRE_FAILED:

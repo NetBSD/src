@@ -1,4 +1,4 @@
-/*	$NetBSD: umassvar.h,v 1.6 2001/12/14 05:58:14 gehenna Exp $	*/
+/*	$NetBSD: umassvar.h,v 1.7 2001/12/14 08:46:21 gehenna Exp $	*/
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
  *		      Nick Hibma <n_hibma@freebsd.org>
@@ -135,21 +135,23 @@ typedef union {
 
 struct umass_softc;		/* see below */
 
-typedef void (*transfer_cb_f)(struct umass_softc *sc, void *priv,
-			      int residue, int status);
+typedef void (*umass_callback)(struct umass_softc *, void *, int, int);
 #define STATUS_CMD_OK		0	/* everything ok */
 #define STATUS_CMD_UNKNOWN	1	/* will have to fetch sense */
 #define STATUS_CMD_FAILED	2	/* transfer was ok, command failed */
 #define STATUS_WIRE_FAILED	3	/* couldn't even get command across */
 
-typedef void (*wire_reset_f)(struct umass_softc *sc, int status);
-typedef void (*wire_transfer_f)(struct umass_softc *sc, int lun,
-				void *cmd, int cmdlen, void *data, int datalen, 
-				int dir, u_int timeout, transfer_cb_f cb,
-				void *priv);
-typedef void (*wire_state_f)(usbd_xfer_handle xfer,
-			     usbd_private_handle priv, usbd_status err);
+typedef void (*umass_wire_xfer)(struct umass_softc *, int, void *, int, void *,
+				int, int, u_int, umass_callback, void *);
+typedef void (*umass_wire_reset)(struct umass_softc *, int);
+typedef void (*umass_wire_state)(usbd_xfer_handle, usbd_private_handle,
+				 usbd_status);
 
+struct umass_wire_methods {
+	umass_wire_xfer		wire_xfer;
+	umass_wire_reset	wire_reset;
+	umass_wire_state	wire_state;
+};
 
 /* the per device structure */
 struct umass_softc {
@@ -158,6 +160,8 @@ struct umass_softc {
 
 	u_int8_t		sc_epaddr[UMASS_NEP];
 	usbd_pipe_handle	sc_pipe[UMASS_NEP];
+
+	const struct umass_wire_methods *sc_methods;
 
 	unsigned char		drive;
 #define DRIVE_GENERIC		0	/* use defaults for this one */
@@ -207,18 +211,6 @@ struct umass_softc {
 	usbd_interface_handle	iface;		/* Mass Storage interface */
 	int			ifaceno;	/* MS iface number */
 
-	/* Reset the device in a wire protocol specific way */
-	wire_reset_f		reset;
-
-	/* The start of a wire transfer. It prepares the whole transfer (cmd,
-	 * data, and status stage) and initiates it. It is up to the state
-	 * machine (below) to handle the various stages and errors in these
-	 */
-	wire_transfer_f		transfer;
-
-	/* The state machine, handling the various states during a transfer */
-	wire_state_f		state;
-
 	/* Bulk specific variables for transfers in progress */
 	umass_bbb_cbw_t		cbw;	/* command block wrapper */
 	umass_bbb_csw_t		csw;	/* command status wrapper*/
@@ -265,7 +257,7 @@ struct umass_softc {
 	void			*transfer_data;		/* data buffer */
 	int			transfer_datalen;	/* (maximum) length */
 	int			transfer_actlen;	/* actual length */ 
-	transfer_cb_f		transfer_cb;		/* callback */
+	umass_callback		transfer_cb;		/* callback */
 	void			*transfer_priv;		/* for callback */
 	int			transfer_status;
 
