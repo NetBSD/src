@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.17 2002/08/20 00:28:00 itojun Exp $	*/
+/*	$NetBSD: net.c,v 1.18 2002/09/10 03:02:40 kim Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)net.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: net.c,v 1.17 2002/08/20 00:28:00 itojun Exp $");
+__RCSID("$NetBSD: net.c,v 1.18 2002/09/10 03:02:40 kim Exp $");
 #endif
 #endif /* not lint */
 
@@ -131,25 +131,25 @@ netfinger(name)
 	 * Read from the remote system; once we're connected, we assume some
 	 * data.  If none arrives, we hang until the user interrupts.
 	 *
-	 * If we see a <CR> or a <CR> with the high bit set, treat it as
-	 * a newline; if followed by a newline character, only output one
-	 * newline.
+	 * If we see a <CR> followed by a newline character, only output
+	 * one newline.
 	 *
-	 * Otherwise, all high bits are stripped; if it isn't printable and
-	 * it isn't a space, we can simply set the 7th bit.  Every ASCII
-	 * character with bit 7 set is printable.
+	 * If a character isn't printable and it isn't a space, we strip the
+	 * 8th bit and set the 7th bit.  Every ASCII character with bit 7 set
+	 * is printable.
 	 */
 	if ((fp = fdopen(s, "r")) != NULL)
 		while ((c = getc(fp)) != EOF) {
-			c &= 0x7f;
 			if (c == '\r') {
 				if (lastc == '\r')	/* ^M^M - skip dupes */
 					continue;
 				c = '\n';
 				lastc = '\r';
 			} else {
-				if (!isprint(c) && !isspace(c))
+				if (!isprint(c) && !isspace(c)) {
+					c &= 0x7f;
 					c |= 0x40;
+				}
 				if (lastc != '\r' || c != '\n')
 					lastc = c;
 				else {
