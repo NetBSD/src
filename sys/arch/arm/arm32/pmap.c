@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.137 2003/06/23 11:01:07 martin Exp $	*/
+/*	$NetBSD: pmap.c,v 1.138 2003/09/06 09:44:10 rearnsha Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -212,7 +212,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.137 2003/06/23 11:01:07 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.138 2003/09/06 09:44:10 rearnsha Exp $");
 
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
@@ -4688,6 +4688,28 @@ pmap_pte_init_arm9(void)
 }
 #endif /* CPU_ARM9 */
 #endif /* (ARM_MMU_GENERIC + ARM_MMU_SA1) != 0 */
+
+#if defined(CPU_ARM10)
+void
+pmap_pte_init_arm10(void)
+{
+
+	/*
+	 * ARM10 is compatible with generic, but we want to use
+	 * write-through caching for now.
+	 */
+	pmap_pte_init_generic();
+
+	pte_l1_s_cache_mode = L1_S_B | L1_S_C;
+	pte_l2_l_cache_mode = L2_B | L2_C;
+	pte_l2_s_cache_mode = L2_B | L2_C;
+
+	pte_l1_s_cache_mode_pt = L1_S_C;
+	pte_l2_l_cache_mode_pt = L2_C;
+	pte_l2_s_cache_mode_pt = L2_C;
+
+}
+#endif /* CPU_ARM10 */
 
 #if ARM_MMU_SA1 == 1
 void
