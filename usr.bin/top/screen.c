@@ -1,4 +1,4 @@
-/*	$NetBSD: screen.c,v 1.3 1999/04/12 06:02:26 ross Exp $	*/
+/*	$NetBSD: screen.c,v 1.4 1999/10/04 23:33:45 lukem Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -490,12 +490,12 @@ go_home()
 
 /* This has to be defined as a subroutine for tputs (instead of a macro) */
 
-void
+int
 putstdout(ch)
 
 int ch;
 
 {
-    putchar(ch);
+    return (putchar(ch));
 }
 

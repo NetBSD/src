@@ -1,4 +1,4 @@
-/*	$NetBSD: subs.c,v 1.12 1999/09/08 21:45:25 jsm Exp $	*/
+/*	$NetBSD: subs.c,v 1.13 1999/10/04 23:26:59 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)subs.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: subs.c,v 1.12 1999/09/08 21:45:25 jsm Exp $");
+__RCSID("$NetBSD: subs.c,v 1.13 1999/10/04 23:26:59 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -73,7 +73,7 @@ errexit(s)
 	getout(0);
 }
 
-void
+int
 addbuf(c)
 	int     c;
 {
@@ -84,6 +84,7 @@ addbuf(c)
 		buffnum = 0;
 	}
 	outbuff[buffnum] = c;
+	return (0);
 }
 
 void

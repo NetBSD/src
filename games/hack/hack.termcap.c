@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.termcap.c,v 1.8 1999/08/14 16:36:42 tron Exp $	*/
+/*	$NetBSD: hack.termcap.c,v 1.9 1999/10/04 23:27:01 lukem Exp $	*/
 
 /*
  * Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
@@ -6,7 +6,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.termcap.c,v 1.8 1999/08/14 16:36:42 tron Exp $");
+__RCSID("$NetBSD: hack.termcap.c,v 1.9 1999/10/04 23:27:01 lukem Exp $");
 #endif				/* not lint */
 
 #include <string.h>
@@ -185,11 +185,11 @@ cmov(x, y)
 	curx = x;
 }
 
-void
+int
 xputc(c)
 	char            c;
 {
-	(void) fputc(c, stdout);
+	return (fputc(c, stdout));
 }
 
 void

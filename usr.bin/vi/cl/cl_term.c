@@ -1,4 +1,4 @@
-/*	$NetBSD: cl_term.c,v 1.2 1998/01/09 08:06:26 perry Exp $	*/
+/*	$NetBSD: cl_term.c,v 1.3 1999/10/04 23:31:49 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -430,9 +430,9 @@ noterm:	if (row == 0)
  *
  * PUBLIC: int cl_putchar __P((int));
  */
-void
+int
 cl_putchar(ch)
 	int ch;
 {
-	putchar(ch);
+	return (putchar(ch));
 }
