@@ -7,7 +7,7 @@
 
 #include "abi.h"
 
-RCSID("$NetBSD: e_exp.S,v 1.10 2001/06/19 00:26:30 fvdl Exp $")
+RCSID("$NetBSD: e_exp.S,v 1.11 2001/06/19 17:49:36 fvdl Exp $")
 
 /* e^x = 2^(x * log2(e)) */
 ENTRY(__ieee754_exp)
@@ -50,6 +50,6 @@ ENTRY(__ieee754_exp)
 #else
 	fstpl	-8(%rsp)
 	movsd	-8(%rsp),%xmm0
-	fldcw	-12(%rbp)
+	fldcw	-12(%rsp)
 #endif
 	ret
