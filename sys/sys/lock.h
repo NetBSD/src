@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.19 1999/07/25 06:24:22 thorpej Exp $	*/
+/*	$NetBSD: lock.h,v 1.20 1999/07/27 21:29:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -89,26 +89,40 @@
 
 #include <sys/queue.h>
 
+#if defined(MULTIPROCESSOR)
+#include <machine/lock.h>
+#endif
+
 /*
- * Placeholder for simple lock structure until spinlocks are
- * really used an machine-dependently defined.
+ * The simple lock.  Provides a simple spinning mutex.  Note the
+ * member which is used in atomic operations must be aligned in
+ * order for it to work on the widest range of processor types.
  */
 struct simplelock {
-	int lock_data;
+	int lock_data __attribute__((__aligned__));
 #ifdef LOCKDEBUG
 	const char *lock_file;
 	int lock_line;
 	const char *unlock_file;
 	int unlock_line;
-	LIST_ENTRY(simplelock) list;
+	TAILQ_ENTRY(simplelock) list;
 	unsigned long lock_holder;		/* CPU ID */
 #endif
 };
 
+#ifndef SIMPLELOCK_LOCKED
+#define	SIMPLELOCK_LOCKED	1
+#endif
+
+#ifndef SIMPLELOCK_UNLOCKED
+#define	SIMPLELOCK_UNLOCKED	0
+#endif
+
 #ifdef LOCKDEBUG
-#define	SIMPLELOCK_INITIALIZER	{ 0, NULL, 0, NULL, 0, { NULL, NULL }, 0 }
+#define	SIMPLELOCK_INITIALIZER	{ SIMPLELOCK_UNLOCKED, NULL, 0, NULL, 0, \
+				  { NULL, NULL }, 0 }
 #else
-#define	SIMPLELOCK_INITIALIZER	{ 0 }
+#define	SIMPLELOCK_INITIALIZER	{ SIMPLELOCK_UNLOCKED }
 #endif
 
 /* XXXCDC: kill typedefs later? */
@@ -119,8 +133,8 @@ typedef struct lock             *lock_t;
 
 /*
  * The general lock structure.  Provides for multiple shared locks,
- * upgrading from shared to exclusive, and sleeping until the lock
- * can be gained. The simple locks are defined in <machine/param.h>.
+ * upgrading from shared to exclusive, and sleeping/spinning until the
+ * lock can be gained.
  */
 struct lock {
 	struct	simplelock lk_interlock; /* lock on remaining fields */
@@ -152,6 +166,9 @@ struct lock {
 		struct {
 			/* CPU ID of exclusive lock holder */
 			u_long lk_spin_cpu;
+#if defined(LOCKDEBUG)
+			TAILQ_ENTRY(lock) lk_spin_list;
+#endif
 		} lk_un_spin;
 	} lk_un;
 
@@ -161,7 +178,11 @@ struct lock {
 #define	lk_timo		lk_un.lk_un_sleep.lk_sleep_timo
 
 #define	lk_cpu		lk_un.lk_un_spin.lk_spin_cpu
+#if defined(LOCKDEBUG)
+#define	lk_list		lk_un.lk_un_spin.lk_spin_list
+#endif
 };
+
 /*
  * Lock request types:
  *   LK_SHARED - get one of many possible shared locks. If a process
@@ -277,30 +298,29 @@ void	lockmgr_printinfo __P((__volatile struct lock *));
 #define	spinlockmgr(lkp, flags, intrlk)					\
 	lockmgr((lkp), (flags) | LK_SPIN, (intrlk))
 
-#if defined(LOCKDEBUG) && !defined(MULTIPROCESSOR)
-void _simple_unlock __P((__volatile struct simplelock *alp, const char *, int));
-#define simple_unlock(alp) _simple_unlock(alp, __FILE__, __LINE__)
-int _simple_lock_try __P((__volatile struct simplelock *alp, const char *, int));
-#define simple_lock_try(alp) _simple_lock_try(alp, __FILE__, __LINE__)
-void _simple_lock __P((__volatile struct simplelock *alp, const char *, int));
-#define simple_lock(alp) _simple_lock(alp, __FILE__, __LINE__)
-void simple_lock_init __P((struct simplelock *alp));
-void simple_lock_dump __P((void));
-void simple_lock_freecheck __P((void *, void *));
-#else /* !(LOCKDEBUG && !MULTIPROCESSOR) */
-#if defined(MULTIPROCESSOR)
-/*
- * Pull in machine-dependent spin lock defs.  Note that this file is
- * responsible for handling the LOCKDEBUG && MULTIPROCESSOR case.
- */
-#include <machine/lock.h>
+#if defined(LOCKDEBUG)
+void	_simple_lock __P((__volatile struct simplelock *, const char *, int));
+int	_simple_lock_try __P((__volatile struct simplelock *, const char *,
+	    int));
+void	_simple_unlock __P((__volatile struct simplelock *, const char *, int));
+
+#define	simple_lock(alp)	_simple_lock((alp), __FILE__, __LINE__)
+#define	simple_lock_try(alp)	_simple_lock_try((alp), __FILE__, __LINE__)
+#define	simple_unlock(alp)	_simple_unlock((alp), __FILE__, __LINE__)
+
+void	simple_lock_init __P((struct simplelock *));
+void	simple_lock_dump __P((void));
+void	simple_lock_freecheck __P((void *, void *));
+#elif defined(MULTIPROCESSOR)
+#define	simple_lock_init(alp)	cpu_simple_lock_init((alp))
+#define	simple_lock(alp)	cpu_simple_lock((alp))
+#define	simple_lock_try(alp)	cpu_simple_lock_try((alp))
+#define	simple_unlock(alp)	cpu_simple_unlock((alp))
 #else
-/* single-processor; no locking neecessary */
-#define	simple_lock_init(alp)	(alp)->lock_data = 0
-#define	simple_lock(alp)
+#define	simple_lock_init(alp)	(alp)->lock_data = SIMPLELOCK_UNLOCKED
+#define	simple_lock(alp)		/* nothing */
 #define	simple_lock_try(alp)	(1)	/* always succeeds */
-#define	simple_unlock(alp)
-#endif /* MULTIPROCESSOR */
-#endif /* LOCKDEBUG && ! MULTIPROCESSOR */
+#define	simple_unlock(alp)		/* nothing */
+#endif
 
 #endif /* _SYS_LOCK_H_ */
