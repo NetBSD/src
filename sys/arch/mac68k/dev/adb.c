@@ -1,4 +1,4 @@
-/*	$NetBSD: adb.c,v 1.32 1999/11/07 08:22:50 scottr Exp $	*/
+/*	$NetBSD: adb.c,v 1.33 1999/11/28 10:10:51 scottr Exp $	*/
 
 /*
  * Copyright (C) 1994	Bradley A. Grantham
@@ -170,7 +170,7 @@ adb_config_interrupts(self)
 
 	totaladbs = CountADBs();
 
-	printf(": %d targets\n", totaladbs);
+	printf(": %d target%s\n", totaladbs, (totaladbs == 1) ? "" : "s");
 
 #if NAED > 0
 	/* ADB event device for compatibility */
