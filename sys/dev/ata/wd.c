@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.292 2004/08/30 09:34:41 drochner Exp $ */
+/*	$NetBSD: wd.c,v 1.293 2004/09/16 20:52:43 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.292 2004/08/30 09:34:41 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.293 2004/09/16 20:52:43 bouyer Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -761,7 +761,7 @@ wddone(void *v)
 		errmsg = "error";
 		do_perror = 1;
 retry:		/* Just reset and retry. Can we do more ? */
-		(*wd->atabus->ata_reset_drive)(wd->drvp, 0);
+		(*wd->atabus->ata_reset_drive)(wd->drvp, AT_RST_NOCMD);
 retry2:
 		diskerr(bp, "wd", errmsg, LOG_PRINTF,
 		    wd->sc_wdc_bio.blkdone, wd->sc_dk.dk_label);
