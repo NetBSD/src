@@ -1,4 +1,4 @@
-.\"     $NetBSD: sa_setconcurrency.2,v 1.2 2004/03/14 10:20:43 snj Exp $
+.\"     $NetBSD: sa_setconcurrency.2,v 1.3 2004/03/14 23:05:09 yamt Exp $
 .\"
 .\" Copyright (c)2004 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -54,7 +54,7 @@ However,
 won't try to allocate more virtual processors than there are physical
 processors on the system.
 .Pp
-Upcall handlers should be registered by
+An upcall handler should be registered by
 .Fn sa_register
 beforehand.
 .\" ------------------------------------------------------------
