@@ -1,4 +1,4 @@
-/* $NetBSD: lunafb.c,v 1.2 2000/01/06 00:19:10 nisimura Exp $ */
+/* $NetBSD: lunafb.c,v 1.3 2000/01/08 04:40:25 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lunafb.c,v 1.2 2000/01/06 00:19:10 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lunafb.c,v 1.3 2000/01/08 04:40:25 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -174,8 +174,13 @@ omfbmatch(parent, cf, aux)
 
 	if (strcmp(ma->ma_name, fb_cd.cd_name))
 		return (0);
+#if 0	/* badaddr() bombs if no framebuffer is installed */
 	if (badaddr((caddr_t)ma->ma_addr, 4))
 		return (0);
+#else
+	if (hwplanemask == 0)
+		return (0);
+#endif
 	return (1);
 }
 
