@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_func.h,v 1.2 2003/08/09 17:35:43 yamt Exp $	*/
+/*	$NetBSD: acpi_func.h,v 1.3 2003/08/13 12:38:35 yamt Exp $	*/
 
 #include <machine/cpufunc.h>
 
@@ -13,7 +13,7 @@ do { \
 	__asm __volatile( \
 	"1:	movl (%1),%%eax		;" \
 	"	movl %%eax,%%edx	;" \
-	"	andl %2,%%edx		;" \
+	"	andl %3,%%edx		;" \
 	"	btsl $0x1,%%edx		;" \
 	"	adcl $0x0,%%edx		;" \
 	"	lock			;" \
@@ -32,7 +32,7 @@ do { \
 	int dummy; \
 	__asm __volatile( \
 	"1:	movl (%1),%%eax		;" \
-	"	andl %2,%%edx		;" \
+	"	andl %3,%%edx		;" \
 	"	lock			;" \
 	"	cmpxchgl %%edx,(%1)	;" \
 	"	jnz 1b			;" \
