@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.81 1999/05/03 23:30:27 thorpej Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.82 1999/05/23 20:33:50 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -112,6 +112,7 @@
 #include <machine/stdarg.h>
 
 int	tcprexmtthresh = 3;
+int	tcp_log_refused;
 struct	tcpiphdr tcp_saveti;
 
 #define TCP_PAWS_IDLE	(24 * 24 * 60 * 60 * PR_SLOWHZ)
@@ -549,6 +550,14 @@ findpcb:
 		inp = in_pcblookup_bind(&tcbtable, ti->ti_dst, ti->ti_dport);
 		if (inp == 0) {
 			++tcpstat.tcps_noport;
+			if (tcp_log_refused && (tiflags & TH_SYN)) {
+				char buf[4*sizeof "123"];
+				strcpy(buf, inet_ntoa(ti->ti_dst));
+				log(LOG_INFO,
+				    "Connection attempt to TCP %s:%d from %s:%d\n",
+				    buf, ntohs(ti->ti_dport), inet_ntoa(ti->ti_src),
+				    ntohs(ti->ti_sport));
+			}
 			goto dropwithreset;
 		}
 	}
