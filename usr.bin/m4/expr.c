@@ -1,4 +1,4 @@
-/*	$NetBSD: expr.c,v 1.10 2000/10/17 18:51:32 jdolecek Exp $	*/
+/*	$NetBSD: expr.c,v 1.11 2001/03/05 20:26:17 wiz Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)expr.c	8.2 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: expr.c,v 1.10 2000/10/17 18:51:32 jdolecek Exp $");
+__RCSID("$NetBSD: expr.c,v 1.11 2001/03/05 20:26:17 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -126,7 +126,7 @@ static int constant __P((void));
 static int num __P((void));
 static int geteqrel __P((void));
 static int skipws __P((void));
-static void experr __P((char *));
+static void experr __P((const char *));
 
 /*
  * For longjmp
@@ -248,13 +248,13 @@ not()
 static int
 eqrel()
 {
-	int vl, vr, eqrel;
+	int vl, vr, eqrelvar;
 
 	vl = shift();
-	while ((eqrel = geteqrel()) != -1) {
+	while ((eqrelvar = geteqrel()) != -1) {
 		vr = shift();
 
-		switch (eqrel) {
+		switch (eqrelvar) {
 
 		case EQL:
 			vl = (vl == vr);
@@ -591,7 +591,7 @@ skipws()
  */
 static void
 experr(msg)
-	char *msg;
+	const char *msg;
 {
 	printf("m4: %s in expr.\n", msg);
 	longjmp(expjump, -1);
