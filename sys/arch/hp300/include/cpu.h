@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.22 1997/04/01 03:03:58 scottr Exp $	*/
+/*	$NetBSD: cpu.h,v 1.23 1997/04/09 20:08:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -250,7 +250,6 @@ void	ecacheoff __P((void));
 /* machdep.c functions */
 int	badaddr __P((caddr_t));
 int	badbaddr __P((caddr_t));
-void	regdump __P((struct frame *, int));
 
 /* sys_machdep.c functions */
 int	cachectl __P((int, caddr_t, int));
