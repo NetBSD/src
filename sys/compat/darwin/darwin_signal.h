@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_signal.h,v 1.2 2002/11/26 23:54:10 manu Exp $ */
+/*	$NetBSD: darwin_signal.h,v 1.3 2002/11/27 16:44:01 atatat Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -47,15 +47,15 @@ union darwin_sigval {
 };
 
 typedef struct darwin___siginfo {
-	int si_signo;
-	int si_errno;
-	int si_code;
-	int si_pid;
-	unsigned int si_uid;
-	int si_status;
-	void *si_addr;
-	union darwin_sigval si_value;
-	long si_band;
+	int darwin_si_signo;
+	int darwin_si_errno;
+	int darwin_si_code;
+	int darwin_si_pid;
+	unsigned int darwin_si_uid;
+	int darwin_si_status;
+	void *darwin_si_addr;
+	union darwin_sigval darwin_si_value;
+	long darwin_si_band;
 	int pad[7];
 } darwin_siginfo_t;
 
@@ -72,10 +72,10 @@ struct darwin___sigaction {
 	union {
 		void (*__sa_handler)(int);
 		void (*__sa_sigaction)(int, struct darwin___siginfo *, void *);
-	} sa_handler;
-	void (*sa_tramp)(void *, int, int, darwin_siginfo_t *, void *);
-	sigset13_t sa_mask;
-	int sa_flags;
+	} darwin_sa_handler;
+	void (*darwin_sa_tramp)(void *, int, int, darwin_siginfo_t *, void *);
+	sigset13_t darwin_sa_mask;
+	int darwin_sa_flags;
 };
 
 void darwin_sendsig(int, sigset_t *, u_long);
