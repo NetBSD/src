@@ -1,4 +1,4 @@
-/*	$NetBSD: start.S,v 1.12 1999/03/29 13:48:25 simonb Exp $	*/
+/*	$NetBSD: start.S,v 1.13 1999/04/11 04:27:53 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
 #include <mips/cpuregs.h>
 #include <machine/dec_prom.h>
 
-#ifdef BOOTXX
+#ifdef BOOTRZ
 /*
  * Boot block that starts in sector 0
  */
@@ -164,6 +164,14 @@ LEAF(prom_open)
 	j	v0
 	nop
 END(prom_open)
+
+#ifndef LIBSA_NO_DEV_CLOSE
+LEAF(prom_close)
+	li	v0, DEC_PROM_CLOSE
+	j	v0
+	nop
+END(prom_close)
+#endif
 
 LEAF(prom_lseek)
 	li	v0, DEC_PROM_LSEEK
