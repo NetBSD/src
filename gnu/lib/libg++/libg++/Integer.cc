@@ -28,7 +28,6 @@ Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 #ifdef __GNUG__
 #pragma implementation
 #endif
-#include <Integer.h>
 #include <std.h>
 #include <ctype.h>
 #include <float.h>
@@ -38,6 +37,7 @@ Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 #include <AllocRing.h>
 #include <new.h>
 #include <builtin.h>
+#include <Integer.h>
 
 #ifndef HUGE_VAL
 #ifdef HUGE
