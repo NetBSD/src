@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.139 2005/03/19 07:34:40 jmc Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.140 2005/03/19 07:38:57 jmc Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -1654,3 +1654,8 @@ xfree/xc/extras/Xpm/sxpm/sxpm.man		patch
 
 	Fix for security problems reported in CAN-2005-0605
 	[tron, ticket #5703]
+
+sys/dev/microcode/siop/ncr53cxxx.c		patch
+
+	Fix this to build with GCC 3.3.x.
+	[tron, ticket #5713]
