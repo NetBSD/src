@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2002/03/22 18:10:26 thorpej Exp $
+#	$NetBSD: Makefile,v 1.12.2.1 2002/11/30 15:20:30 he Exp $
 
 .include <bsd.own.mk>
 
@@ -17,20 +17,19 @@ SRCS=	pcnfsd_v1.c pcnfsd_v2.c pcnfsd_misc.c \
 DPADD=	${LIBRPCSVC} ${LIBCRYPT}
 LDADD=	-lrpcsvc -lcrypt
 
-.ifnmake getrpcgen
-XRPCGEN != cd ${.CURDIR} && ${MAKE} -B getrpcgen
+# Resolve rpcgen's path, to allow it to be a dependency.
+_RPCGEN:=	${RPCGEN:M*rpcgen}
+.if ${_RPCGEN:M/*} == ""
+_RPCGEN!=	type ${RPCGEN} | awk '{print $$NF}'
 .endif
 
-getrpcgen:
-	@set -- X `type ${RPCGEN}` && shift `expr $$# - 1` && echo "$$1"
-
-pcnfsd_svc.c: pcnfsd.x ${XRPCGEN}
+pcnfsd_svc.c: pcnfsd.x ${_RPCGEN}
 	${RPCGEN} -C -s udp -s tcp -I ${.CURDIR}/pcnfsd.x -o $@
 
-pcnfsd_xdr.c: pcnfsd.x ${XRPCGEN}
+pcnfsd_xdr.c: pcnfsd.x ${_RPCGEN}
 	${RPCGEN} -C -c ${.CURDIR}/pcnfsd.x -o $@
 
-pcnfsd.h: pcnfsd.x ${XRPCGEN}
+pcnfsd.h: pcnfsd.x ${_RPCGEN}
 	${RPCGEN} -C -h ${.CURDIR}/pcnfsd.x -o $@
 
 CLEANFILES += pcnfsd_svc.c pcnfsd_xdr.c pcnfsd.h
