@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.520 2002/04/22 13:03:06 augustss Exp $
+#	$NetBSD: files,v 1.521 2002/04/22 21:05:22 ad Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -297,6 +297,18 @@ file	dev/ic/mlx.c			mlx			needs-flag
 
 attach	ld at mlx with ld_mlx
 file	dev/ic/ld_mlx.c			ld_mlx
+
+# ICP-Vortex/Intel RAID controllers
+#
+device	icp {unit = -1}
+file	dev/ic/icp.c			icp			needs-flag
+
+attach	ld at icp with ld_icp
+file	dev/ic/ld_icp.c			ld_icp
+
+device	icpsp: scsi
+file	dev/ic/icpsp.c			icpsp
+attach	icpsp at icp
 
 # AdvanSys 1200A, 1200B and ULTRA SCSI controllers
 #
