@@ -1,4 +1,4 @@
-#	$NetBSD: NC_WSCONS,v 1.27 2004/03/13 17:59:00 bjh21 Exp $
+#	$NetBSD: NC_WSCONS,v 1.28 2004/03/13 18:25:25 bjh21 Exp $
 #
 #	NC - with wscons
 #
@@ -140,9 +140,6 @@ iomd0	at mainbus?
 # system clock via IOMD
 clock*	at iomd?
 
-# quadrature mouse via IOMD
-#qms*	at iomd?
-
 # IIC bus device
 iomdiic* at iomd?
 iic0 at iomdiic?
@@ -177,12 +174,13 @@ wsdisplay*	at vidcvideo? console ?	# display itself
 rpckbd*		at iomd?		# based on old `kbd' driver
 wskbd*		at rpckbd?		# wskbd on RiscPC keyboard
 
-#iomdkbc*	at iomd?
-#pckbd*		at iomdkbc? slot ?
-#options 	PCKBD_LAYOUT=KB_UK
-pms*		at iomdkbc? slot ?
+iomdkbc*	at iomd?		# IOMD keyboard/mouse interface
 
+#pckbd*		at iomdkbc? slot ?	# PS/2 keyboard
+#options 	PCKBD_LAYOUT=KB_UK
 #wskbd*		at pckbd?
+
+pms*		at iomdkbc? slot ?	# PS/2 mouse
 wsmouse*	at pms?
 
 #wsqms*		at iomd?		# ws quadmouse driver
@@ -196,7 +194,6 @@ pseudo-device	wsmux
 # vidcconsole PS2 mouse at IOMD
 #vidcconsole0	at vidc?		# display + vt100 emulation
 #kbd*		at iomd?		# PS/2 keyboard for vidcconsole
-#opms*		at iomd?		# PS/2 mouse
 
 # generic VT console device
 #vt0	at vidc?
