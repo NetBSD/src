@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.10 2002/07/14 00:37:46 wiz Exp $	*/
+/*	$NetBSD: if.c,v 1.11 2003/04/02 23:29:29 itojun Exp $	*/
 /*	$KAME: if.c,v 1.18 2002/05/31 10:10:03 itojun Exp $	*/
 
 /*
@@ -321,7 +321,7 @@ get_llflag(const char *name)
 		exit(1);
 	}
 	if (getifaddrs(&ifap) != 0) {
-		warnmsg(LOG_ERR, __FUNCTION__, "etifaddrs: %s",
+		warnmsg(LOG_ERR, __FUNCTION__, "getifaddrs: %s",
 		    strerror(errno));
 		exit(1);
 	}
