@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc_machdep.c,v 1.37 2002/03/03 11:23:01 chris Exp $	*/
+/*	$NetBSD: hpc_machdep.c,v 1.38 2002/03/23 02:22:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -503,7 +503,7 @@ initarm(argc, argv, bi)
 	for (loop = 0; loop < KERNEL_PT_VMDATA_NUM; ++loop)
 		pmap_link_l2pt(l1pagetable, KERNEL_VM_BASE + loop * 0x00400000,
 		    &kernel_pt_table[KERNEL_PT_VMDATA + loop]);
-	pmap_link_l2pt(l1pagetable, PROCESS_PAGE_TBLS_BASE,
+	pmap_link_l2pt(l1pagetable, PTE_BASE,
 	    &kernel_ptpt);
 
 	/* update the top of the kernel VM */
@@ -569,25 +569,25 @@ initarm(argc, argv, bi)
 	 */
 	/* The -2 is slightly bogus, it should be -log2(sizeof(pt_entry_t)) */
 	pmap_map_entry(l1pagetable,
-	    PROCESS_PAGE_TBLS_BASE + (0x00000000 >> (PGSHIFT-2)),
+	    PTE_BASE + (0x00000000 >> (PGSHIFT-2)),
 	    kernel_pt_table[KERNEL_PT_SYS].pv_pa,
 	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
 	pmap_map_entry(l1pagetable,
-	    PROCESS_PAGE_TBLS_BASE + (KERNEL_SPACE_START >> (PGSHIFT-2)),
+	    PTE_BASE + (KERNEL_SPACE_START >> (PGSHIFT-2)),
 	    kernel_pt_table[KERNEL_PT_KERNEL].pv_pa,
 	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
 	for (loop = 0; loop < KERNEL_PT_VMDATA_NUM; ++loop) {
 		pmap_map_entry(l1pagetable,
-		    PROCESS_PAGE_TBLS_BASE + ((KERNEL_VM_BASE +
+		    PTE_BASE + ((KERNEL_VM_BASE +
 		    (loop * 0x00400000)) >> (PGSHIFT-2)),
 		    kernel_pt_table[KERNEL_PT_VMDATA + loop].pv_pa,
 		    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
 	}
 	pmap_map_entry(l1pagetable,
-	    PROCESS_PAGE_TBLS_BASE + (PROCESS_PAGE_TBLS_BASE >> (PGSHIFT-2)),
+	    PTE_BASE + (PTE_BASE >> (PGSHIFT-2)),
 	    kernel_ptpt.pv_pa, VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
 	pmap_map_entry(l1pagetable,
-	    PROCESS_PAGE_TBLS_BASE + (SAIPIO_BASE >> (PGSHIFT-2)),
+	    PTE_BASE + (SAIPIO_BASE >> (PGSHIFT-2)),
 	    kernel_pt_table[KERNEL_PT_IO].pv_pa, VM_PROT_READ|VM_PROT_WRITE,
 	    PTE_NOCACHE);
 
@@ -691,7 +691,7 @@ initarm(argc, argv, bi)
 
 #ifdef BOOT_DUMP
 	dumppages((char *)kernel_l1pt.pv_va, 16);
-	dumppages((char *)PROCESS_PAGE_TBLS_BASE, 16);
+	dumppages((char *)PTE_BASE, 16);
 #endif
 
 #ifdef DDB

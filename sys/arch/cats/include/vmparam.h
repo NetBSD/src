@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.8 2002/03/03 11:23:00 chris Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.9 2002/03/23 02:22:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -53,7 +53,7 @@
 /* Various constants used by the MD code*/
 #define	KERNEL_BASE		0xf0000000
 #define	KERNEL_TEXT_BASE	KERNEL_BASE
-#define	ALT_PAGE_TBLS_BASE	0xf0c00000
+#define	APTE_BASE		0xf0c00000
 #define	KERNEL_VM_BASE		0xf1000000
 /*
  * The Kernel VM Size varies depending on the machine depending on how
@@ -69,7 +69,6 @@
  * The range 0xf1000000 - 0xfcffffff is available for kernel VM space
  * Footbridge registers and I/O mappings occupy 0xfd000000 - 0xffffffff
  */
-#define	PROCESS_PAGE_TBLS_BASE	PAGE_TABLE_SPACE_START
 
 /*
  * Size of available KVM space, note that growkernel will grow into this.
