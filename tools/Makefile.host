@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.host,v 1.15 2001/12/12 12:07:26 lukem Exp $
+#	$NetBSD: Makefile.host,v 1.16 2002/01/21 20:59:40 tv Exp $
 
 NOLINT=		# defined
 NOMAN=		# defined
@@ -35,7 +35,7 @@ ${var}:=	${${var}}
 
 HOSTPROGNAME?=	${HOSTPROG}
 HOST_BINDIR?=	${TOOLDIR}/bin
-HOST_CPPFLAGS:=	-Wall ${HOST_CPPFLAGS} ${CPPFLAGS}
+HOST_CPPFLAGS:=	${HOST_CPPFLAGS} ${CPPFLAGS}
 .undef LINKS
 
 SRCS?=		${HOSTPROG}.c
@@ -45,7 +45,7 @@ SRCS+=		${HOST_SRCS}
 COMPATOBJ!=	cd ${.CURDIR}/../compat && ${PRINTOBJDIR}
 DPADD+=		${COMPATOBJ}/libnbcompat.a
 LDADD+=		-L${COMPATOBJ} -lnbcompat
-HOST_CPPFLAGS+=	-include ${COMPATOBJ}/config.h
+HOST_CPPFLAGS+=	-I${COMPATOBJ} -I${.CURDIR}/../compat -DHAVE_CONFIG_H
 .-include	"${COMPATOBJ}/defs.mk"
 .endif
 
@@ -56,7 +56,7 @@ realinstall: install.host install.files
 install.host: ${HOST_BINDIR}/${HOSTPROGNAME}
 ${HOST_BINDIR}/${HOSTPROGNAME}:: ${HOSTPROG}
 	mkdir -p ${HOST_BINDIR}
-	${HOST_INSTALL_FILE} -m ${BINMODE} ${.ALLSRC} ${.TARGET}
+	${HOST_INSTALL_FILE} -m ${BINMODE} ${HOSTPROG}${HOSTEXEEXT} ${.TARGET}
 
 .if !defined(UPDATE)
 .PHONY:		${HOST_BINDIR}/${HOSTPROGNAME}
