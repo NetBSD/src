@@ -1,4 +1,4 @@
-/*	$NetBSD: sfas.c,v 1.5 2002/03/24 18:12:54 thorpej Exp $	*/
+/*	$NetBSD: sfas.c,v 1.6 2002/04/05 16:58:02 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Stevens
@@ -204,7 +204,7 @@ sfasinitialize(dev)
  * every time we need "bumped" transfer.
  */
 	pte = vtopte((vaddr_t) dev->sc_bump_va);
-	*pte &= ~(PT_C | PT_B);
+	*pte &= ~(L2_C | L2_B);
 	cpu_tlb_flushD();
 	cpu_dcache_wbinv_range((vm_offset_t)dev->sc_bump_va, NBPG);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.17 2002/01/25 19:19:24 thorpej Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.18 2002/04/05 16:58:04 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1996 Scott K. Stevens
@@ -214,23 +214,22 @@ db_write_text(vaddr_t addr, size_t size, char *data)
 	do {
 		/* Get the PDE of the current VA. */
 		pde = pmap_pde(pmap, (vaddr_t) dst);
-		switch ((oldpde = *pde) & L1_MASK) {
-		case L1_SECTION:
-			pgva = (vaddr_t)dst & ~(L1_SEC_SIZE - 1);
-			limit = L1_SEC_SIZE -
-			    ((vaddr_t)dst & (L1_SEC_SIZE - 1));
+		switch ((oldpde = *pde) & L1_TYPE_MASK) {
+		case L1_TYPE_S:
+			pgva = (vaddr_t)dst & L1_S_FRAME;
+			limit = L1_S_SIZE - ((vaddr_t)dst & L1_S_OFFSET);
 
-			tmppde = oldpde | (AP_KRW << AP_SECTION_SHIFT);
+			tmppde = oldpde | L1_S_AP(AP_KRW);
 			*pde = tmppde;
 			break;
 
-		case L1_PAGE:
-			pgva = (vaddr_t)dst & ~PGOFSET;
-			limit = NBPG - ((vaddr_t)dst & PGOFSET);
+		case L1_TYPE_C:
+			pgva = (vaddr_t)dst & L2_S_FRAME;
+			limit = L2_S_SIZE - ((vaddr_t)dst & L2_S_OFFSET);
 
 			pte = vtopte(pgva);
 			oldpte = *pte;
-			tmppte = oldpte | PT_AP(AP_KRW);
+			tmppte = oldpte | L2_AP(AP_KRW);
 			*pte = tmppte;
 			break;
 
@@ -256,12 +255,12 @@ db_write_text(vaddr_t addr, size_t size, char *data)
 		/*
 		 * Restore old mapping permissions.
 		 */
-		switch (oldpde & L1_MASK) {
-		case L1_SECTION:
+		switch (oldpde & L1_TYPE_MASK) {
+		case L1_TYPE_S:
 			*pde = oldpde;
 			break;
 
-		case L1_PAGE:
+		case L1_TYPE_C:
 			*pte = oldpte;
 			break;
 		}

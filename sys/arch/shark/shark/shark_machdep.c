@@ -1,4 +1,4 @@
-/*	$NetBSD: shark_machdep.c,v 1.2 2002/04/03 23:33:35 thorpej Exp $	*/
+/*	$NetBSD: shark_machdep.c,v 1.3 2002/04/05 16:58:12 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -221,8 +221,8 @@ initarm(ofw_handle)
 
 	/* Map-in ISA I/O and memory space. */
 	/* XXX - this should be done in the isa-bus attach routine! -JJK */
-	isa_mem_virtaddr = ofw_map(isa_mem_physaddr, NBPD, 0);
-	isa_io_virtaddr  = ofw_map(isa_io_physaddr,  NBPD, 0);
+	isa_mem_virtaddr = ofw_map(isa_mem_physaddr, L1_S_SIZE, 0);
+	isa_io_virtaddr  = ofw_map(isa_io_physaddr,  L1_S_SIZE, 0);
 
 	/* Set-up the ISA system: must be done before consinit */
 	isa_init(isa_io_virtaddr, isa_mem_virtaddr);
@@ -241,7 +241,7 @@ initarm(ofw_handle)
 	/* allocate a cache clean space */
 	if ((pclean = ofw_getcleaninfo()) != -1) {
 		sa110_cache_clean_addr = ofw_map(pclean, 0x4000 * 2,
-		     PT_B | PT_C);
+		     L2_B | L2_C);
 		sa110_cache_clean_size = 0x4000;
 	}
 

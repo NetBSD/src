@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.43 2002/04/04 04:25:45 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.44 2002/04/05 16:58:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -192,18 +192,18 @@ extern vaddr_t	pmap_curmaxkvaddr;
 
 /* Virtual address to physical address */
 #define vtophys(va) \
-	((*vtopte(va) & PG_FRAME) | ((vaddr_t) (va) & ~PG_FRAME))
+	((*vtopte(va) & L2_S_FRAME) | ((vaddr_t) (va) & L2_S_OFFSET))
 
 #define	l1pte_valid(pde)	((pde) != 0)
-#define	l1pte_section_p(pde)	(((pde) & L1_MASK) == L1_SECTION)
-#define	l1pte_page_p(pde)	(((pde) & L1_MASK) == L1_PAGE)
-#define	l1pte_fpage_p(pde)	(((pde) & L1_MASK) == L1_FPAGE)
+#define	l1pte_section_p(pde)	(((pde) & L1_TYPE_MASK) == L1_TYPE_S)
+#define	l1pte_page_p(pde)	(((pde) & L1_TYPE_MASK) == L1_TYPE_C)
+#define	l1pte_fpage_p(pde)	(((pde) & L1_TYPE_MASK) == L1_TYPE_F)
 
 #define	l2pte_valid(pte)	((pte) != 0)
-#define	l2pte_pa(pte)		((pte) & PG_FRAME)
+#define	l2pte_pa(pte)		((pte) & L2_S_FRAME)
 
 /* L1 and L2 page table macros */
-#define pmap_pdei(v)		((v & PD_MASK) >> PDSHIFT)
+#define pmap_pdei(v)		((v & L1_S_FRAME) >> L1_S_SHIFT)
 #define pmap_pde(m, v)		(&((m)->pm_pdir[pmap_pdei(v)]))
 
 #define pmap_pde_v(pde)		l1pte_valid(*(pde))
@@ -217,13 +217,27 @@ extern vaddr_t	pmap_curmaxkvaddr;
 
 /* Size of the kernel part of the L1 page table */
 #define KERNEL_PD_SIZE	\
-	(PD_SIZE - (KERNEL_BASE >> PDSHIFT) * sizeof(pd_entry_t))
+	(L1_TABLE_SIZE - (KERNEL_BASE >> L1_S_SHIFT) * sizeof(pd_entry_t))
 
 /*
  * tell MI code that the cache is virtually-indexed *and* virtually-tagged.
  */
 
 #define PMAP_CACHE_VIVT
+
+extern pt_entry_t		pte_cache_mode;
+
+/* PTE construction macros */
+#define	L2_LPTE(p, a, f)	((p) | L2_AP(a) | L2_TYPE_L | (f))
+#define	L2_SPTE(p, a, f)	((p) | L2_AP(a) | L2_TYPE_S | (f))
+#define	L2_PTE(p, a)		L2_SPTE((p), (a), pte_cache_mode)
+#define	L2_PTE_NC(p, a)		L2_SPTE((p), (a), L2_B)
+#define	L2_PTE_NC_NB(p, a)	L2_SPTE((p), (a), 0)
+#define	L1_SECPTE(p, a, f)	((p) | L1_S_AP(a) | (f) \
+				    | L1_TYPE_S | L1_S_IMP)/* XXX IMP */
+
+#define	L1_PTE(p)		((p) | 0x00 | L1_TYPE_C | L1_S_IMP)
+#define	L1_SEC(p, c)		L1_SECPTE((p), AP_KRW, (c))
 
 #endif /* _KERNEL */
 

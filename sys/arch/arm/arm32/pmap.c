@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.80 2002/04/04 05:42:29 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.81 2002/04/05 16:58:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -143,7 +143,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.80 2002/04/04 05:42:29 thorpej Exp $");        
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.81 2002/04/05 16:58:05 thorpej Exp $");        
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
 	if (pmap_debug_level >= (_lev_)) \
@@ -342,7 +342,7 @@ static void pmap_vac_me_user __P((struct pmap *, struct vm_page *,
  * On most machines this is cacheable/bufferable, but on some, eg arm10, we
  * can chose between write-through and write-back cacheing.
  */
-pt_entry_t pte_cache_mode = (PT_C | PT_B);
+pt_entry_t pte_cache_mode = (L2_C | L2_B);
 
 /*
  * real definition of pv_entry.
@@ -902,7 +902,7 @@ pmap_map_in_l1(struct pmap *pmap, vaddr_t va, paddr_t l2pa, boolean_t selfref)
 	vaddr_t ptva;
 
 	/* Calculate the index into the L1 page table. */
-	ptva = (va >> PDSHIFT) & ~3;
+	ptva = (va >> L1_S_SHIFT) & ~3;
 
 	/* Map page table into the L1. */
 	pmap->pm_pdir[ptva + 0] = L1_PTE(l2pa + 0x000);
@@ -923,7 +923,7 @@ pmap_unmap_in_l1(struct pmap *pmap, vaddr_t va)
 	vaddr_t ptva;
 
 	/* Calculate the index into the L1 page table. */
-	ptva = (va >> PDSHIFT) & ~3;
+	ptva = (va >> L1_S_SHIFT) & ~3;
 
 	/* Unmap page table from the L1. */
 	pmap->pm_pdir[ptva + 0] = 0;
@@ -1186,7 +1186,7 @@ pmap_postinit(void)
 			panic("Cannot allocate static L1 page tables\n");
 
 		/* Clean it */
-		bzero((void *)pt->pt_va, PD_SIZE);
+		bzero((void *)pt->pt_va, L1_TABLE_SIZE);
 		pt->pt_flags |= (PTFLAG_STATIC | PTFLAG_CLEAN);
 		/* Add the page table to the queue */
 		SIMPLEQ_INSERT_TAIL(&l1pt_static_queue, pt, pt_queue);
@@ -1255,7 +1255,7 @@ pmap_alloc_l1pt(void)
 	pt_entry_t *ptes;
 
 	/* Allocate virtual address space for the L1 page table */
-	va = uvm_km_valloc(kernel_map, PD_SIZE);
+	va = uvm_km_valloc(kernel_map, L1_TABLE_SIZE);
 	if (va == 0) {
 #ifdef DIAGNOSTIC
 		PDEBUG(0,
@@ -1271,8 +1271,8 @@ pmap_alloc_l1pt(void)
 	 * Allocate pages from the VM system.
 	 */
 	TAILQ_INIT(&pt->pt_plist);
-	error = uvm_pglistalloc(PD_SIZE, physical_start, physical_end,
-	    PD_SIZE, 0, &pt->pt_plist, 1, M_WAITOK);
+	error = uvm_pglistalloc(L1_TABLE_SIZE, physical_start, physical_end,
+	    L1_TABLE_SIZE, 0, &pt->pt_plist, 1, M_WAITOK);
 	if (error) {
 #ifdef DIAGNOSTIC
 		PDEBUG(0,
@@ -1281,7 +1281,7 @@ pmap_alloc_l1pt(void)
 #endif	/* DIAGNOSTIC */
 		/* Release the resources we already have claimed */
 		free(pt, M_VMPMAP);
-		uvm_km_free(kernel_map, va, PD_SIZE);
+		uvm_km_free(kernel_map, va, L1_TABLE_SIZE);
 		return(NULL);
 	}
 
@@ -1289,14 +1289,14 @@ pmap_alloc_l1pt(void)
 	pt->pt_va = va;
 	m = TAILQ_FIRST(&pt->pt_plist);
 	ptes = pmap_map_ptes(pmap_kernel());
-	while (m && va < (pt->pt_va + PD_SIZE)) {
+	while (m && va < (pt->pt_va + L1_TABLE_SIZE)) {
 		pa = VM_PAGE_TO_PHYS(m);
 
 		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE);
 
 		/* Revoke cacheability and bufferability */
 		/* XXX should be done better than this */
-		ptes[arm_btop(va)] &= ~(PT_C | PT_B);
+		ptes[arm_btop(va)] &= ~(L2_C | L2_B);
 
 		va += NBPG;
 		m = m->pageq.tqe_next;
@@ -1320,14 +1320,14 @@ static void
 pmap_free_l1pt(struct l1pt *pt)
 {
 	/* Separate the physical memory for the virtual space */
-	pmap_kremove(pt->pt_va, PD_SIZE);
+	pmap_kremove(pt->pt_va, L1_TABLE_SIZE);
 	pmap_update(pmap_kernel());
 
 	/* Return the physical memory */
 	uvm_pglistfree(&pt->pt_plist);
 
 	/* Free the virtual space */
-	uvm_km_free(kernel_map, pt->pt_va, PD_SIZE);
+	uvm_km_free(kernel_map, pt->pt_va, L1_TABLE_SIZE);
 
 	/* Free the l1pt structure */
 	free(pt, M_VMPMAP);
@@ -1379,7 +1379,7 @@ pmap_allocpagedir(struct pmap *pmap)
 
 	/* Clean the L1 if it is dirty */
 	if (!(pt->pt_flags & PTFLAG_CLEAN))
-		bzero((void *)pmap->pm_pdir, (PD_SIZE - KERNEL_PD_SIZE));
+		bzero((void *)pmap->pm_pdir, (L1_TABLE_SIZE - KERNEL_PD_SIZE));
 
 	/* Allocate a page table to map all the page tables for this pmap */
 
@@ -1400,8 +1400,8 @@ pmap_allocpagedir(struct pmap *pmap)
 	/* wish we didn't have to keep this locked... */
 
 	/* Duplicate the kernel mappings. */
-	bcopy((char *)pmap_kernel()->pm_pdir + (PD_SIZE - KERNEL_PD_SIZE),
-		(char *)pmap->pm_pdir + (PD_SIZE - KERNEL_PD_SIZE),
+	bcopy((char *)pmap_kernel()->pm_pdir + (L1_TABLE_SIZE - KERNEL_PD_SIZE),
+		(char *)pmap->pm_pdir + (L1_TABLE_SIZE - KERNEL_PD_SIZE),
 		KERNEL_PD_SIZE);
 
 	pte = vtopte(pmap->pm_vptpt);
@@ -1409,7 +1409,7 @@ pmap_allocpagedir(struct pmap *pmap)
 
 	/* Revoke cacheability and bufferability */
 	/* XXX should be done better than this */
-	*pte &= ~(PT_C | PT_B);
+	*pte &= ~(L2_C | L2_B);
 
 	/* Wire in this page table */
 	pmap_map_in_l1(pmap, PTE_BASE, pmap->pm_pptpt, TRUE);
@@ -1421,8 +1421,8 @@ pmap_allocpagedir(struct pmap *pmap)
 	 */
 	bcopy((char *)(PTE_BASE
 	    + (PTE_BASE >> (PGSHIFT - 2))
-	    + ((PD_SIZE - KERNEL_PD_SIZE) >> 2)),
-	    (char *)pmap->pm_vptpt + ((PD_SIZE - KERNEL_PD_SIZE) >> 2),
+	    + ((L1_TABLE_SIZE - KERNEL_PD_SIZE) >> 2)),
+	    (char *)pmap->pm_vptpt + ((L1_TABLE_SIZE - KERNEL_PD_SIZE) >> 2),
 	    (KERNEL_PD_SIZE >> 2));
 
 	LIST_INSERT_HEAD(&pmaps, pmap, pm_list);
@@ -1873,7 +1873,7 @@ pmap_pte_addref(struct pmap *pmap, vaddr_t va)
 	if (pmap == pmap_kernel())
 		return;
 
-	pde = pmap_pde(pmap, va & ~(3 << PDSHIFT));
+	pde = pmap_pde(pmap, va & ~(3 << L1_S_SHIFT));
 	pa = pmap_pte_pa(pde);
 	m = PHYS_TO_VM_PAGE(pa);
 	++m->wire_count;
@@ -1893,7 +1893,7 @@ pmap_pte_delref(struct pmap *pmap, vaddr_t va)
 	if (pmap == pmap_kernel())
 		return;
 
-	pde = pmap_pde(pmap, va & ~(3 << PDSHIFT));
+	pde = pmap_pde(pmap, va & ~(3 << L1_S_SHIFT));
 	pa = pmap_pte_pa(pde);
 	m = PHYS_TO_VM_PAGE(pa);
 	--m->wire_count;
@@ -2117,7 +2117,7 @@ pmap_vac_me_user(struct pmap *pmap, struct vm_page *pg, pt_entry_t *ptes,
 			if ((pmap == npv->pv_pmap 
 			    || kpmap == npv->pv_pmap) && 
 			    (npv->pv_flags & PVF_NC) == 0) {
-				ptes[arm_btop(npv->pv_va)] &= ~(PT_C | PT_B);
+				ptes[arm_btop(npv->pv_va)] &= ~(L2_C | L2_B);
  				npv->pv_flags |= PVF_NC;
 				/*
 				 * If this page needs flushing from the
@@ -2206,7 +2206,7 @@ pmap_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
 	while (sva < eva) {
 		if (pmap_pde_page(pmap_pde(pmap, sva)))
 			break;
-		sva = (sva & PD_MASK) + NBPD;
+		sva = (sva & L1_S_FRAME) + L1_S_SIZE;
 	}
 	
 	pte = &ptes[arm_btop(sva)];
@@ -2216,10 +2216,10 @@ pmap_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
 	/* Now loop along */
 	while (sva < eva) {
 		/* Check if we can move to the next PDE (l1 chunk) */
-		if (!(sva & PT_MASK))
+		if (!(sva & L2_ADDR_BITS))
 			if (!pmap_pde_page(pmap_pde(pmap, sva))) {
-				sva += NBPD;
-				pte += arm_btop(NBPD);
+				sva += L1_S_SIZE;
+				pte += arm_btop(L1_S_SIZE);
 				continue;
 			}
 
@@ -2440,18 +2440,18 @@ pmap_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 	while (sva < eva) {
 		if (pmap_pde_page(pmap_pde(pmap, sva)))
 			break;
-		sva = (sva & PD_MASK) + NBPD;
+		sva = (sva & L1_S_FRAME) + L1_S_SIZE;
 	}
 	
 	pte = &ptes[arm_btop(sva)];
 	
 	while (sva < eva) {
 		/* only check once in a while */
-		if ((sva & PT_MASK) == 0) {
+		if ((sva & L2_ADDR_BITS) == 0) {
 			if (!pmap_pde_page(pmap_pde(pmap, sva))) {
 				/* We can race ahead here, to the next pde. */
-				sva += NBPD;
-				pte += arm_btop(NBPD);
+				sva += L1_S_SIZE;
+				pte += arm_btop(L1_S_SIZE);
 				continue;
 			}
 		}
@@ -2463,9 +2463,9 @@ pmap_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 
 		armprot = 0;
 		if (sva < VM_MAXUSER_ADDRESS)
-			armprot |= PT_AP(AP_U);
+			armprot |= L2_AP(AP_U);
 		else if (sva < VM_MAX_ADDRESS)
-			armprot |= PT_AP(AP_W);  /* XXX Ekk what is this ? */
+			armprot |= L2_AP(AP_W);  /* XXX Ekk what is this ? */
 		*pte = (*pte & 0xfffff00f) | armprot;
 
 		pa = pmap_pte_pa(pte);
@@ -2558,7 +2558,7 @@ pmap_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
 		KASSERT(pmap != pmap_kernel());
 
 		/* if failure is allowed then don't try too hard */
-		ptp = pmap_get_ptp(pmap, va & PD_MASK);
+		ptp = pmap_get_ptp(pmap, va & L1_S_FRAME);
 		if (ptp == NULL) {
 			if (flags & PMAP_CANFAIL) {
 				error = ENOMEM;
@@ -2646,7 +2646,7 @@ pmap_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
 
 	/* VA 0 is magic. */
 	if (pmap != pmap_kernel() && va != vector_page)
-		npte |= PT_AP(AP_U);
+		npte |= L2_AP(AP_U);
 
 	if (pg != NULL) {
 #ifdef DIAGNOSTIC
@@ -2655,20 +2655,20 @@ pmap_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
 #endif
 		npte |= pte_cache_mode;
 		if (flags & VM_PROT_WRITE) {
-			npte |= L2_SPAGE | PT_AP(AP_W);
+			npte |= L2_TYPE_S | L2_AP(AP_W);
 			pg->mdpage.pvh_attrs |= PVF_REF | PVF_MOD;
 		} else if (flags & VM_PROT_ALL) {
-			npte |= L2_SPAGE;
+			npte |= L2_TYPE_S;
 			pg->mdpage.pvh_attrs |= PVF_REF;
 		} else
-			npte |= L2_INVAL;
+			npte |= L2_TYPE_INV;
 	} else {
 		if (prot & VM_PROT_WRITE)
-			npte |= L2_SPAGE | PT_AP(AP_W);
+			npte |= L2_TYPE_S | L2_AP(AP_W);
 		else if (prot & VM_PROT_ALL)
-			npte |= L2_SPAGE;
+			npte |= L2_TYPE_S;
 		else
-			npte |= L2_INVAL;
+			npte |= L2_TYPE_INV;
 	}
 
 	ptes[arm_btop(va)] = npte;
@@ -2823,25 +2823,23 @@ pmap_extract(struct pmap *pmap, vaddr_t va, paddr_t *pap)
 	ptes = pmap_map_ptes(pmap);
 	pte = &ptes[arm_btop(va)]; 
 
-	l1_ptype = *pde & L1_MASK;
+	l1_ptype = *pde & L1_TYPE_MASK;
 
-	if (l1_ptype == L1_SECTION) {
+	if (l1_ptype == L1_TYPE_S) {
 		/* Extract the physical address from the pde */
-		pa = (*pde & PD_MASK) | (va & (L1_SEC_SIZE - 1));
+		pa = (*pde & L1_S_FRAME) | (va & L1_S_OFFSET);
 		rv = TRUE;
-	} else if (l1_ptype == L1_PAGE) {
+	} else if (l1_ptype == L1_TYPE_C) {
 
-		l2_ptype = *pte & L2_MASK;
+		l2_ptype = *pte & L2_TYPE_MASK;
 
-		if (l2_ptype == L2_LPAGE) {
+		if (l2_ptype == L2_TYPE_L) {
 			/* Extract the physical address from the pte */
-			pa  = *pte & ~(L2_LPAGE_SIZE - 1);
-			pa |=  va  &  (L2_LPAGE_SIZE - 1);
+			pa = (*pte & L2_L_FRAME) | (va & L2_L_OFFSET);
 			rv = TRUE;
-		} else if (l2_ptype == L2_SPAGE) {
+		} else if (l2_ptype == L2_TYPE_S) {
 			/* Extract the physical address from the pte */
-			pa  = *pte & ~(L2_SPAGE_SIZE - 1);
-			pa |=  va  &  (L2_SPAGE_SIZE - 1);
+			pa = (*pte & L2_S_FRAME) | (va & L2_S_OFFSET);
 			rv = TRUE;
 		};
 	};
@@ -3022,12 +3020,12 @@ pmap_clearbit(struct vm_page *pg, u_int maskbits)
 			}
 
 			/* make the pte read only */
-			ptes[arm_btop(va)] &= ~PT_AP(AP_W);
+			ptes[arm_btop(va)] &= ~L2_AP(AP_W);
 		}
 
 		if (maskbits & PVF_REF)
 			ptes[arm_btop(va)] =
-			    (ptes[arm_btop(va)] & ~L2_MASK) | L2_INVAL;
+			    (ptes[arm_btop(va)] & ~L2_TYPE_MASK) | L2_TYPE_INV;
 
 		if (pmap_is_curpmap(pv->pv_pmap)) {
 			/* 
@@ -3130,7 +3128,7 @@ pmap_modified_emulation(struct pmap *pmap, vaddr_t va)
 		goto out;
 
 	/* This can happen if user code tries to access kernel memory. */
-	if ((ptes[arm_btop(va)] & PT_AP(AP_W)) != 0)
+	if ((ptes[arm_btop(va)] & L2_AP(AP_W)) != 0)
 		goto out;
 
 	/* Extract the physical address of the page */
@@ -3169,7 +3167,7 @@ pmap_modified_emulation(struct pmap *pmap, vaddr_t va)
 	 * that we can write to this page.
 	 */
 	ptes[arm_btop(va)] =
-	    (ptes[arm_btop(va)] & ~L2_MASK) | L2_SPAGE | PT_AP(AP_W);
+	    (ptes[arm_btop(va)] & ~L2_TYPE_MASK) | L2_TYPE_S | L2_AP(AP_W);
 	PDEBUG(0, printf("->(%08x)\n", ptes[arm_btop(va)]));
 
 	simple_unlock(&pg->mdpage.pvh_slock);
@@ -3208,7 +3206,7 @@ pmap_handled_emulation(struct pmap *pmap, vaddr_t va)
 		goto out;
 
 	/* This can happen if user code tries to access kernel memory. */
-	if ((ptes[arm_btop(va)] & L2_MASK) != L2_INVAL)
+	if ((ptes[arm_btop(va)] & L2_TYPE_MASK) != L2_TYPE_INV)
 		goto out;
 
 	/* Extract the physical address of the page */
@@ -3227,7 +3225,7 @@ pmap_handled_emulation(struct pmap *pmap, vaddr_t va)
 	    va, ptes[arm_btop(va)]));
 	pg->mdpage.pvh_attrs |= PVF_REF;
 
-	ptes[arm_btop(va)] = (ptes[arm_btop(va)] & ~L2_MASK) | L2_SPAGE;
+	ptes[arm_btop(va)] = (ptes[arm_btop(va)] & ~L2_TYPE_MASK) | L2_TYPE_S;
 	PDEBUG(0, printf("->(%08x)\n", ptes[arm_btop(va)]));
 
 	simple_unlock(&pg->mdpage.pvh_slock);
@@ -3287,7 +3285,7 @@ pmap_get_ptp(struct pmap *pmap, vaddr_t va)
 
 		/* valid... check hint (saves us a PA->PG lookup) */
 		if (pmap->pm_ptphint &&
-		    (pmap->pm_pdir[pmap_pdei(va)] & PG_FRAME) ==
+		    (pmap->pm_pdir[pmap_pdei(va)] & L2_S_FRAME) ==
 		    VM_PAGE_TO_PHYS(pmap->pm_ptphint))
 			return (pmap->pm_ptphint);
 		ptp = uvm_pagelookup(&pmap->pm_obj, va);
@@ -3352,7 +3350,7 @@ pmap_growkernel(vaddr_t maxkvaddr)
 	simple_lock(&kpm->pm_obj.vmobjlock);
 	/* due to the way the arm pmap works we map 4MB at a time */
 	for (/*null*/ ; pmap_curmaxkvaddr < maxkvaddr;
-	     pmap_curmaxkvaddr += 4 * NBPD) {
+	     pmap_curmaxkvaddr += 4 * L1_S_SIZE) {
 
 		if (uvm.page_init_done == FALSE) {
 
@@ -3422,7 +3420,7 @@ vector_page_setprot(int prot)
 
 	pte = vtopte(vector_page);
 
-	*pte = (*pte & ~PT_AP(AP_KRW)) | PT_AP(ap);
+	*pte = (*pte & ~L2_AP(AP_KRW)) | L2_AP(ap);
 	cpu_tlb_flushD_SE(vector_page);
 	cpu_cpwait();
 }
@@ -3462,9 +3460,9 @@ pmap_map_section(vaddr_t l1pt, vaddr_t va, paddr_t pa, int prot, int cache)
 	pd_entry_t ap = (prot & VM_PROT_WRITE) ? AP_KRW : AP_KR;
 	pd_entry_t fl = (cache == PTE_CACHE) ? pte_cache_mode : 0;
 
-	KASSERT(((va | pa) & (L1_SEC_SIZE - 1)) == 0);
+	KASSERT(((va | pa) & L1_S_OFFSET) == 0);
 
-	pde[va >> PDSHIFT] = L1_SECPTE(pa, ap, fl);
+	pde[va >> L1_S_SHIFT] = L1_SECPTE(pa, ap, fl);
 }
 
 /*
@@ -3482,11 +3480,11 @@ pmap_map_entry(vaddr_t l1pt, vaddr_t va, paddr_t pa, int prot, int cache)
 
 	KASSERT(((va | pa) & PGOFSET) == 0);
 
-	if ((pde[va >> PDSHIFT] & L1_MASK) != L1_PAGE)
+	if ((pde[va >> L1_S_SHIFT] & L1_TYPE_MASK) != L1_TYPE_C)
 		panic("pmap_map_entry: no L2 table for VA 0x%08lx", va);
 
 	pte = (pt_entry_t *)
-	    kernel_pt_lookup(pde[va >> PDSHIFT] & PG_FRAME);
+	    kernel_pt_lookup(pde[va >> L1_S_SHIFT] & L2_S_FRAME);
 	if (pte == NULL)
 		panic("pmap_map_entry: can't find L2 table for VA 0x%08lx", va);
 
@@ -3503,7 +3501,7 @@ void
 pmap_link_l2pt(vaddr_t l1pt, vaddr_t va, pv_addr_t *l2pv)
 {
 	pd_entry_t *pde = (pd_entry_t *) l1pt;
-	u_int slot = va >> PDSHIFT;
+	u_int slot = va >> L1_S_SHIFT;
 
 	KASSERT((l2pv->pv_pa & PGOFSET) == 0);
 
@@ -3547,15 +3545,15 @@ pmap_map_chunk(vaddr_t l1pt, vaddr_t va, paddr_t pa, vsize_t size,
 
 	while (resid > 0) {
 		/* See if we can use a section mapping. */
-		if (((pa | va) & (L1_SEC_SIZE - 1)) == 0 &&
-		    resid >= L1_SEC_SIZE) {
+		if (((pa | va) & L1_S_OFFSET) == 0 &&
+		    resid >= L1_S_SIZE) {
 #ifdef VERBOSE_INIT_ARM
 			printf("S");
 #endif
-			pde[va >> PDSHIFT] = L1_SECPTE(pa, ap, fl);
-			va += L1_SEC_SIZE;
-			pa += L1_SEC_SIZE;
-			resid -= L1_SEC_SIZE;
+			pde[va >> L1_S_SHIFT] = L1_SECPTE(pa, ap, fl);
+			va += L1_S_SIZE;
+			pa += L1_S_SIZE;
+			resid -= L1_S_SIZE;
 			continue;
 		}
 
@@ -3564,18 +3562,18 @@ pmap_map_chunk(vaddr_t l1pt, vaddr_t va, paddr_t pa, vsize_t size,
 		 * one is actually in the corresponding L1 slot
 		 * for the current VA.
 		 */
-		if ((pde[va >> PDSHIFT] & L1_MASK) != L1_PAGE)
+		if ((pde[va >> L1_S_SHIFT] & L1_TYPE_MASK) != L1_TYPE_C)
 			panic("pmap_map_chunk: no L2 table for VA 0x%08lx", va);
 
 		pte = (pt_entry_t *)
-		    kernel_pt_lookup(pde[va >> PDSHIFT] & PG_FRAME);
+		    kernel_pt_lookup(pde[va >> L1_S_SHIFT] & L2_S_FRAME);
 		if (pte == NULL)
 			panic("pmap_map_chunk: can't find L2 table for VA"
 			    "0x%08lx", va);
 
 		/* See if we can use a L2 large page mapping. */
-		if (((pa | va) & (L2_LPAGE_SIZE - 1)) == 0 &&
-		    resid >= L2_LPAGE_SIZE) {
+		if (((pa | va) & L2_L_OFFSET) == 0 &&
+		    resid >= L2_L_SIZE) {
 #ifdef VERBOSE_INIT_ARM
 			printf("L");
 #endif
@@ -3583,9 +3581,9 @@ pmap_map_chunk(vaddr_t l1pt, vaddr_t va, paddr_t pa, vsize_t size,
 				pte[((va >> PGSHIFT) & 0x3f0) + i] =
 				    L2_LPTE(pa, ap, fl);
 			}
-			va += L2_LPAGE_SIZE;
-			pa += L2_LPAGE_SIZE;
-			resid -= L2_LPAGE_SIZE;
+			va += L2_L_SIZE;
+			pa += L2_L_SIZE;
+			resid -= L2_L_SIZE;
 			continue;
 		}
 
