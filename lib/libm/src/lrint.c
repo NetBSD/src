@@ -1,4 +1,4 @@
-/* $NetBSD: lrint.c,v 1.1 2004/06/30 15:08:30 drochner Exp $ */
+/* $NetBSD: lrint.c,v 1.2 2004/07/01 16:06:30 drochner Exp $ */
 
 #include <math.h>
 #include <sys/ieee754.h>
@@ -53,14 +53,14 @@ LRINTNAME(double x)
 
 	shift = e - DBL_FRACBITS;
 	if (shift >=0)
-		res = (RESTYPE)i1 << shift;
+		res = (shift < 32 ? (RESTYPE)i1 << shift : 0);
 	else
-		res = i1 >> -shift;
+		res = (shift > -32 ? i1 >> -shift : 0);
 	shift += 32;
 	if (shift >=0)
-		res |= (RESTYPE)i0 << shift;
+		res |= (shift < 32 ? (RESTYPE)i0 << shift : 0);
 	else
-		res |= i0 >> -shift;
+		res |= (shift > -32 ? i0 >> -shift : 0);
 
 	return (s ? -res : res);
 }
