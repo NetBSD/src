@@ -1,4 +1,40 @@
-/*	$NetBSD: linux_termios.c,v 1.3 1996/04/05 00:01:54 christos Exp $	*/
+/*	$NetBSD: linux_termios.c,v 1.4 1998/10/01 03:36:27 erh Exp $	*/
+
+/*-
+ * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Eric Haszlakiewicz.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -51,7 +87,7 @@
 
 static speed_t linux_speeds[] = {
 	0, 50, 75, 110, 134, 150, 200, 300, 600, 1200, 1800, 2400, 4800,
-	9600, 19200, 38400, 57600, 115200
+	9600, 19200, 38400, 57600, 115200, 230400
 };
 
 static int linux_spmasks[] = {
@@ -155,13 +191,13 @@ linux_termio_to_bsd_termios(lt, bts)
 		index = (index & ~LINUX_CBAUDEX) + LINUX_NSPEEDS - 1;
 	bts->c_ispeed = bts->c_ospeed = linux_speeds[index];
 
-	bts->c_cc[VINTR] = lt->c_cc[LINUX_VINTR];
-	bts->c_cc[VQUIT] = lt->c_cc[LINUX_VQUIT];
-	bts->c_cc[VERASE] = lt->c_cc[LINUX_VERASE];
-	bts->c_cc[VKILL] = lt->c_cc[LINUX_VKILL];
-	bts->c_cc[VEOF] = lt->c_cc[LINUX_VEOF];
-	bts->c_cc[VTIME] = lt->c_cc[LINUX_VTIME];
-	bts->c_cc[VMIN] = lt->c_cc[LINUX_VMIN];
+	bts->c_cc[VINTR] = lt->c_cc[LINUX_OLD_VINTR];
+	bts->c_cc[VQUIT] = lt->c_cc[LINUX_OLD_VQUIT];
+	bts->c_cc[VERASE] = lt->c_cc[LINUX_OLD_VERASE];
+	bts->c_cc[VKILL] = lt->c_cc[LINUX_OLD_VKILL];
+	bts->c_cc[VEOF] = lt->c_cc[LINUX_OLD_VEOF];
+	bts->c_cc[VTIME] = lt->c_cc[LINUX_OLD_VTIME];
+	bts->c_cc[VMIN] = lt->c_cc[LINUX_OLD_VMIN];
 }
 
 static void
@@ -559,6 +595,9 @@ linux_ioctl_termios(p, uap, retval)
 		case PPPDISC:
 			idat = LINUX_N_PPP;
 			break;
+		case STRIPDISC:
+			idat = LINUX_N_STRIP;
+			break;
 		/*
 		 * Linux does not have the tablet line discipline.
 		 */
@@ -585,10 +624,16 @@ linux_ioctl_termios(p, uap, retval)
 		case LINUX_N_PPP:
 			idat = PPPDISC;
 			break;
+		case LINUX_N_STRIP:
+			idat = STRIPDISC;
+			break;
 		/*
 		 * We can't handle the mouse line discipline Linux has.
 		 */
 		case LINUX_N_MOUSE:
+		case LINUX_N_AX25:
+		case LINUX_N_X25:
+		case LINUX_N_6PACK:
 		default:
 			return EINVAL;
 		}
