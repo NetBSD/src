@@ -1,4 +1,4 @@
-/*	$NetBSD: cz.c,v 1.1 2000/05/17 17:58:10 thorpej Exp $	*/
+/*	$NetBSD: cz.c,v 1.2 2000/05/18 17:55:17 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -1010,7 +1010,7 @@ czttyopen(dev_t dev, int flags, int mode, struct proc *p)
 	return (0);
 
  bad:
-	if (!ISSET(tp->t_state, TS_ISOPEN) == 0 && tp->t_wopen == 0) {
+	if (!ISSET(tp->t_state, TS_ISOPEN) && tp->t_wopen == 0) {
 		/*
 		 * We failed to open the device, and nobody else had it opened.
 		 * Clean up the state as appropriate.
@@ -1033,13 +1033,13 @@ czttyclose(dev_t dev, int flags, int mode, struct proc *p)
 	struct tty *tp = sc->sc_tty;
 
 	/* XXX This is for cons.c. */
-	if (ISSET(tp->t_state, TS_ISOPEN) == 0)
+	if (!ISSET(tp->t_state, TS_ISOPEN))
 		return (0);
 
 	(*linesw[tp->t_line].l_close)(tp, flags);
 	ttyclose(tp);
 
-	if (ISSET(tp->t_state, TS_ISOPEN) == 0 && tp->t_wopen == 0) {
+	if (!ISSET(tp->t_state, TS_ISOPEN) && tp->t_wopen == 0) {
 		/*
 		 * Although we got a last close, the device may still be in
 		 * use; e.g. if this was the dialout node, and there are still
