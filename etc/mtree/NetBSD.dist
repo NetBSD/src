@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.182 2002/03/17 22:14:12 tshiozak Exp $
+#	$NetBSD: NetBSD.dist,v 1.183 2002/03/24 22:31:13 bjh21 Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -400,9 +400,9 @@
 ./usr/share/man/cat3
 ./usr/share/man/cat3f
 ./usr/share/man/cat4
+./usr/share/man/cat4/acorn26
 ./usr/share/man/cat4/alpha
 ./usr/share/man/cat4/amiga
-./usr/share/man/cat4/arm26
 ./usr/share/man/cat4/arm32
 ./usr/share/man/cat4/atari
 ./usr/share/man/cat4/hp300
@@ -422,10 +422,10 @@
 ./usr/share/man/cat7
 ./usr/share/man/cat8
 ./usr/share/man/cat8/acorn32
+./usr/share/man/cat8/acorn26
 ./usr/share/man/cat8/alpha
 ./usr/share/man/cat8/amiga
 ./usr/share/man/cat8/arc
-./usr/share/man/cat8/arm26
 ./usr/share/man/cat8/arm32
 ./usr/share/man/cat8/atari
 ./usr/share/man/cat8/bebox
@@ -459,9 +459,9 @@
 ./usr/share/man/cat8/walnut
 ./usr/share/man/cat8/x68k
 ./usr/share/man/cat9
+./usr/share/man/cat9/acorn26
 ./usr/share/man/cat9/alpha
 ./usr/share/man/cat9/amiga
-./usr/share/man/cat9/arm26
 ./usr/share/man/cat9/arm32
 ./usr/share/man/cat9/atari
 ./usr/share/man/cat9/hp300
@@ -480,9 +480,9 @@
 ./usr/share/man/man3
 ./usr/share/man/man3f
 ./usr/share/man/man4
+./usr/share/man/man4/acorn26
 ./usr/share/man/man4/alpha
 ./usr/share/man/man4/amiga
-./usr/share/man/man4/arm26
 ./usr/share/man/man4/arm32
 ./usr/share/man/man4/atari
 ./usr/share/man/man4/hp300
@@ -501,11 +501,11 @@
 ./usr/share/man/man6
 ./usr/share/man/man7
 ./usr/share/man/man8
+./usr/share/man/man8/acorn26
 ./usr/share/man/man8/acorn32
 ./usr/share/man/man8/alpha
 ./usr/share/man/man8/amiga
 ./usr/share/man/man8/arc
-./usr/share/man/man8/arm26
 ./usr/share/man/man8/arm32
 ./usr/share/man/man8/atari
 ./usr/share/man/man8/bebox
@@ -539,9 +539,9 @@
 ./usr/share/man/man8/walnut
 ./usr/share/man/man8/x68k
 ./usr/share/man/man9
+./usr/share/man/man9/acorn26
 ./usr/share/man/man9/alpha
 ./usr/share/man/man9/amiga
-./usr/share/man/man9/arm26
 ./usr/share/man/man9/arm32
 ./usr/share/man/man9/atari
 ./usr/share/man/man9/hp300
@@ -560,9 +560,9 @@
 ./usr/share/man/html3
 ./usr/share/man/html3f
 ./usr/share/man/html4
+./usr/share/man/html4/acorn26
 ./usr/share/man/html4/alpha
 ./usr/share/man/html4/amiga
-./usr/share/man/html4/arm26
 ./usr/share/man/html4/arm32
 ./usr/share/man/html4/atari
 ./usr/share/man/html4/hp300
@@ -581,11 +581,11 @@
 ./usr/share/man/html6
 ./usr/share/man/html7
 ./usr/share/man/html8
+./usr/share/man/html8/acorn26
 ./usr/share/man/html8/acorn32
 ./usr/share/man/html8/alpha
 ./usr/share/man/html8/amiga
 ./usr/share/man/html8/arc
-./usr/share/man/html8/arm26
 ./usr/share/man/html8/arm32
 ./usr/share/man/html8/atari
 ./usr/share/man/html8/bebox
@@ -619,9 +619,9 @@
 ./usr/share/man/html8/walnut
 ./usr/share/man/html8/x68k
 ./usr/share/man/html9
+./usr/share/man/html9/acorn26
 ./usr/share/man/html9/alpha
 ./usr/share/man/html9/amiga
-./usr/share/man/html9/arm26
 ./usr/share/man/html9/arm32
 ./usr/share/man/html9/atari
 ./usr/share/man/html9/hp300
