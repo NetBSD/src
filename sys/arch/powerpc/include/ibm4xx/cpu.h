@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.7 2005/01/13 17:16:33 shige Exp $	*/
+/*	$NetBSD: cpu.h,v 1.8 2005/01/17 17:19:36 shige Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -60,7 +60,8 @@
 #if defined(_KERNEL)
 extern char bootpath[];
 
-void ibm4xx_init_board_data(void *, u_int);
+/* export from ibm4xx/ibm40x_machdep.c */
+void ibm40x_memsize_init(u_int, u_int);
 void ibm4xx_init(void (*)(void));
 void ibm4xx_startup(const char *);
 void ibm4xx_setup_propdb(void);
@@ -82,6 +83,17 @@ extern void ibm4xx_device_register(struct device *dev, void *aux);
 
 #include <powerpc/cpu.h>
 
+/* Board info database stuff */
+extern struct propdb *board_info;
+
+extern void board_info_init(void);
+#define	board_info_set(n, v, l, f, w)	\
+	prop_set(board_info, 0, (n), (v), (l), (f), (w))
+#define	board_info_get(n, v, l)		\
+	prop_get(board_info, 0, (n), (v), (l), NULL)
+
+/*****************************************************************************/
+/* THIS CODE IS OBSOLETE. WILL BE REMOVED */
 /*
  * Board configuration structure from the OpenBIOS.
  */
@@ -97,13 +109,6 @@ struct board_cfg_data {
 };
 
 extern struct board_cfg_data board_data;
-
-/* Board info database stuff */
-extern struct propdb *board_info;
-
-#define	board_info_set(n, v, l, f, w)	\
-	prop_set(board_info, 0, (n), (v), (l), (f), (w))
-#define	board_info_get(n, v, l)		\
-	prop_get(board_info, 0, (n), (v), (l), NULL)
+/*****************************************************************************/
 
 #endif	/* _IBM4XX_CPU_H_ */
