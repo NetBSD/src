@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.75 2003/09/02 05:26:44 mrg Exp $
+# $NetBSD: obsolete.mi,v 1.76 2003/10/14 14:59:04 wiz Exp $
 ./usr/share/info/g++FAQ.info
 ./usr/share/info/iostream.info
 ./usr/share/info/tar.info
@@ -116,6 +116,8 @@
 ./usr/share/man/cat5/pim6sd.conf.0
 ./usr/share/man/cat5/primes.0
 ./usr/share/man/cat5/securenet.0
+./usr/share/man/cat5/siginfo.0
+./usr/share/man/cat5/ucontext.0
 ./usr/share/man/cat5/uuencode.format.0
 ./usr/share/man/cat5/ypserv.acl.0
 ./usr/share/man/cat7/mandoc.0
@@ -292,6 +294,8 @@
 ./usr/share/man/man5/pim6sd.conf.5
 ./usr/share/man/man5/primes.5
 ./usr/share/man/man5/securenet.5
+./usr/share/man/man5/siginfo.5
+./usr/share/man/man5/ucontext.5
 ./usr/share/man/man5/uuencode.format.5
 ./usr/share/man/man5/ypserv.acl.5
 ./usr/share/man/man7/mandoc.7
