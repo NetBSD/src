@@ -1,4 +1,4 @@
-/*	$NetBSD: ctu.c,v 1.13 2001/05/13 21:19:44 ragge Exp $ */
+/*	$NetBSD: ctu.c,v 1.14 2001/05/14 14:43:45 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -200,7 +200,7 @@ ctustart()
 	if (bp == NULL)
 		return;
 #ifdef TUDEBUG
-	printf("ctustart\n");
+	printf("ctustart: %s\n", bp->b_flags & B_READ ? "READING":"WRITING");
 #endif
 	tu_sc.sc_tpblk = bp->b_blkno;
 	tu_sc.sc_xbytes = 0;
@@ -336,8 +336,39 @@ cturintr(void *arg)
 #endif
 				goto bad;
 			}
+			if ((i == 2) &&
+			    ((c != RSP_MOD_OK) && (c != RSP_MOD_RETR))) {
+#ifdef TUDEBUG
+				printf("end packet status bad: %d\n", c);
+#endif
+				bp->b_flags |= B_ERROR;
+			}
 		}
 		break;
+
+	case TU_WRITING:
+#define	WAIT	while ((mfpr(PR_CSTS) & 0x80) == 0)
+
+		if (status != RSP_TYP_CONTINUE)
+			goto bad;
+#ifdef TUDEBUG
+		printf("Writing byte %d\n", tu_sc.sc_xbytes);
+#endif
+		WAIT; mtpr(RSP_TYP_DATA, PR_CSTD); 
+		WAIT; mtpr(128, PR_CSTD);
+		for (i = 0; i < 128; i++) {
+			WAIT;
+			mtpr(bp->b_data[tu_sc.sc_xbytes++], PR_CSTD);
+		}
+		tck = ctu_cksum((void *)&bp->b_data[tu_sc.sc_xbytes-128], 64);
+		tck += 0x8001; if (tck > 0xffff) tck -= 0xffff;
+		WAIT; mtpr(tck & 0xff, PR_CSTD);
+		WAIT; mtpr((tck >> 8) & 0xff, PR_CSTD);
+		bp->b_resid = 0;
+		if (tu_sc.sc_xbytes == bp->b_bcount)
+			tu_sc.sc_state = TU_ENDPACKET;
+		return;
+#undef WAIT
 
 	case TU_RESTART:
 		if (status != RSP_TYP_CONTINUE)
@@ -407,6 +438,8 @@ ctutintr(void *arg)
 		printf("Idle interrupt\n");
 		return;
 
+	case TU_ENDPACKET:
+	case TU_WRITING:
 	case TU_RESTART:
 		return;
 
