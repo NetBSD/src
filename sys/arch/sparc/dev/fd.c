@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.42 1996/12/08 23:40:32 pk Exp $	*/
+/*	$NetBSD: fd.c,v 1.43 1996/12/10 14:44:53 pk Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -650,7 +650,8 @@ fdstrategy(bp)
 	if (unit >= fd_cd.cd_ndevs ||
 	    (fd = fd_cd.cd_devs[unit]) == 0 ||
 	    bp->b_blkno < 0 ||
-	    (bp->b_bcount % FDC_BSIZE) != 0) {
+	    ((bp->b_bcount % FDC_BSIZE) != 0 &&
+	     (bp->b_flags & B_FORMAT) == 0)) {
 		bp->b_error = EINVAL;
 		goto bad;
 	}
@@ -1183,6 +1184,7 @@ fdcstate(fdc)
 	struct buf *bp;
 	int read, head, sec, nblks;
 	struct fd_type *type;
+	struct ne7_fd_formb *finfo = NULL;
 
 
 	if (fdc->sc_istate != ISTATE_IDLE) {
@@ -1213,6 +1215,9 @@ loop:
 		fd->sc_q.b_active = 0;
 		goto loop;
 	}
+
+	if (bp->b_flags & B_FORMAT)
+		finfo = (struct ne7_fd_formb *)bp->b_data;
 
 	switch (fdc->sc_state) {
 	case DEVIDLE:
@@ -1250,7 +1255,8 @@ loop:
 		/* fall through */
 	case DOSEEK:
 	doseek:
-		if (fdc->sc_flags & FDC_EIS) {
+		if ((fdc->sc_flags & FDC_EIS) &&
+		    (bp->b_flags & B_FORMAT) == 0) {
 			fd->sc_cylin = bp->b_cylin;
 			/* We use implied seek */
 			goto doio;
@@ -1282,13 +1288,16 @@ loop:
 
 	case DOIO:
 	doio:
+		if (finfo)
+			fd->sc_skip = (char *)&(finfo->fd_formb_cylno(0)) -
+				      (char *)finfo;
 		type = fd->sc_type;
 		sec = fd->sc_blkno % type->seccyl;
 		nblks = type->seccyl - sec;
 		nblks = min(nblks, fd->sc_bcount / FDC_BSIZE);
 		nblks = min(nblks, FDC_MAXIOSIZE / FDC_BSIZE);
 		fd->sc_nblks = nblks;
-		fd->sc_nbytes = nblks * FDC_BSIZE;
+		fd->sc_nbytes = finfo ? bp->b_bcount : nblks * FDC_BSIZE;
 		head = sec / type->sectrac;
 		sec -= head * type->sectrac;
 #ifdef DIAGNOSTIC
@@ -1317,18 +1326,28 @@ loop:
 		fdc->sc_state = IOCOMPLETE;
 		fdc->sc_istate = ISTATE_DMA;
 		fdc->sc_nstat = 0;
-		if (read)
-			OUT_FDC(fdc, NE7CMD_READ, IOTIMEDOUT);	/* READ */
-		else
-			OUT_FDC(fdc, NE7CMD_WRITE, IOTIMEDOUT);	/* WRITE */
-		OUT_FDC(fdc, (head << 2) | fd->sc_drive, IOTIMEDOUT);
-		OUT_FDC(fdc, fd->sc_cylin, IOTIMEDOUT);	/* track */
-		OUT_FDC(fdc, head, IOTIMEDOUT);
-		OUT_FDC(fdc, sec + 1, IOTIMEDOUT);	/* sector +1 */
-		OUT_FDC(fdc, type->secsize, IOTIMEDOUT);/* sector size */
-		OUT_FDC(fdc, type->sectrac, IOTIMEDOUT);/* sectors/track */
-		OUT_FDC(fdc, type->gap1, IOTIMEDOUT);	/* gap1 size */
-		OUT_FDC(fdc, type->datalen, IOTIMEDOUT);/* data length */
+		if (finfo) {
+			/* formatting */
+			OUT_FDC(fdc, NE7CMD_FORMAT, IOTIMEDOUT);
+			OUT_FDC(fdc, (head << 2) | fd->sc_drive, IOTIMEDOUT);
+			OUT_FDC(fdc, finfo->fd_formb_secshift, IOTIMEDOUT);
+			OUT_FDC(fdc, finfo->fd_formb_nsecs, IOTIMEDOUT);
+			OUT_FDC(fdc, finfo->fd_formb_gaplen, IOTIMEDOUT);
+			OUT_FDC(fdc, finfo->fd_formb_fillbyte, IOTIMEDOUT);
+		} else {
+			if (read)
+				OUT_FDC(fdc, NE7CMD_READ, IOTIMEDOUT);
+			else
+				OUT_FDC(fdc, NE7CMD_WRITE, IOTIMEDOUT);
+			OUT_FDC(fdc, (head << 2) | fd->sc_drive, IOTIMEDOUT);
+			OUT_FDC(fdc, fd->sc_cylin, IOTIMEDOUT);	/*track*/
+			OUT_FDC(fdc, head, IOTIMEDOUT);
+			OUT_FDC(fdc, sec + 1, IOTIMEDOUT);	/*sector+1*/
+			OUT_FDC(fdc, type->secsize, IOTIMEDOUT);/*sector size*/
+			OUT_FDC(fdc, type->sectrac, IOTIMEDOUT);/*secs/track*/
+			OUT_FDC(fdc, type->gap1, IOTIMEDOUT);	/*gap1 size*/
+			OUT_FDC(fdc, type->datalen, IOTIMEDOUT);/*data length*/
+		}
 
 		disk_busy(&fd->sc_dk);
 
@@ -1438,7 +1457,7 @@ loop:
 		fd->sc_blkno += fd->sc_nblks;
 		fd->sc_skip += fd->sc_nbytes;
 		fd->sc_bcount -= fd->sc_nbytes;
-		if (fd->sc_bcount > 0) {
+		if (!finfo && fd->sc_bcount > 0) {
 			bp->b_cylin = fd->sc_blkno / fd->sc_type->seccyl;
 			goto doseek;
 		}
@@ -1664,7 +1683,7 @@ fdioctl(dev, cmd, addr, flag, p)
 		default:
 			return (EINVAL);
 		}
-		return 0;
+		return (0);
 
 	case FDIOCSETFORMAT:
 		if ((flag & FWRITE) == 0)
