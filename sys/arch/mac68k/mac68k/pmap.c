@@ -65,7 +65,7 @@
  */
 /* 
  *	from: @(#)pmap.c	7.5 (Berkeley) 5/10/91
- *	$Id: pmap.c,v 1.6 1994/04/06 03:10:13 briggs Exp $
+ *	$Id: pmap.c,v 1.7 1994/04/18 03:02:16 briggs Exp $
  */
 
 /*
@@ -106,19 +106,18 @@
  *	and to when physical maps must be made correct.
  */
 
-#include "param.h"
-#include "proc.h"
-#include "malloc.h"
-#include "user.h"
+#include <sys/param.h>
+#include <sys/proc.h>
+#include <sys/malloc.h>
+#include <sys/user.h>
 
-#include "machine/pte.h"
+#include <machine/pte.h>
 
-#include "vm/vm.h"
-#include "vm/vm_kern.h"
-#include "vm/vm_page.h"
-#include "vm/vm_statistics.h"
+#include <vm/vm.h>
+#include <vm/vm_kern.h>
+#include <vm/vm_page.h>
 
-#include "machine/cpu.h"
+#include <machine/cpu.h>
 
 /*
  * Allocate various and sundry SYSMAPs used in the days of old VM
@@ -304,7 +303,7 @@ pmap_bootstrap(firstaddr, loadaddr)
 	mem_size = physmem << PGSHIFT;
 	virtual_avail = VM_MIN_KERNEL_ADDRESS + (firstaddr - loadaddr);
 	virtual_end = VM_MAX_KERNEL_ADDRESS;
-	macpagesperpage = PAGE_SIZE / MAC_PAGE_SIZE;
+	macpagesperpage = 1;  /* MAC_PAGE_SIZE / PAGE_SIZE */
 
 
 /* BARF HELP ME! DAYSTAR CACHE fails */
