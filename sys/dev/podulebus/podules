@@ -1,4 +1,4 @@
-$NetBSD: podules,v 1.14 2002/11/03 12:58:15 bjh21 Exp $
+$NetBSD: podules,v 1.15 2003/01/26 19:35:04 chris Exp $
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -344,6 +344,7 @@ podule	SIMTEC_IDE		0x0131	16 bit IDE interface
 podule	MIDICONNECT		0x0133	Midi-Connect
 podule	ETHERI			0x0139	EtherI interface
 podule	SIMTEC_USB		0x0145	USB interface
+podule	SIMTEC_NET100		0x0150	NET100 interface
 podule	MIDIMAX			0x0200	MIDI max
 podule	MMETHERV		0x1234	Multi-media/EtherV
 podule	ETHERN			0x5678	EtherN interface
