@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.131 2004/11/11 22:30:49 dsl Exp $	*/
+/*	$NetBSD: util.c,v 1.132 2004/11/11 22:39:03 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -653,16 +653,16 @@ extract_file(int set, int update, int verbose, char *path)
 	} else
 		target_chdir_or_die("/");
 
-	/* now extract set files files into "./". */
+	/* now extract set files into "./". */
 	if (verbose == 0)
 		tarexit = run_program(RUN_DISPLAY | RUN_PROGRESS, 
-				    "progress -zf %s tar -xepf -", path);
+				"progress -zf %s tar --chroot -xhepf -", path);
 	else if (verbose == 1)
 		tarexit = run_program(RUN_DISPLAY, 
-				    "tar -zxepf %s", path);
+				"tar --chroot -zxhepf %s", path);
 	else
 		tarexit = run_program(RUN_DISPLAY | RUN_PROGRESS, 
-				    "tar -zxvepf %s", path);
+				"tar --chroot -zxhvepf %s", path);
 
 	chdir(owd);
 	free(owd);
