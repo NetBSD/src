@@ -1,4 +1,4 @@
-/* $NetBSD: if_mtd_pci.c,v 1.4 2004/04/23 21:13:06 itojun Exp $ */
+/* $NetBSD: if_mtd_pci.c,v 1.5 2004/08/21 23:48:33 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
 /* TODO: Check why in IO space, the MII won't work. Memory mapped works */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mtd_pci.c,v 1.4 2004/04/23 21:13:06 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mtd_pci.c,v 1.5 2004/08/21 23:48:33 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -74,17 +74,14 @@ static struct mtd_pci_device_id mtd_ids[] = {
 	{ 0, 0 }
 };
 
-int	mtd_pci_match __P((struct device *, struct cfdata *, void *));
-void	mtd_pci_attach __P((struct device *, struct device *, void *));
+static int	mtd_pci_match(struct device *, struct cfdata *, void *);
+static void	mtd_pci_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(mtd_pci, sizeof(struct mtd_softc), mtd_pci_match, mtd_pci_attach,
     NULL, NULL);
 
-int
-mtd_pci_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+static int
+mtd_pci_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	struct mtd_pci_device_id *id;
@@ -97,11 +94,8 @@ mtd_pci_match(parent, match, aux)
 	return (0);
 }
 
-void
-mtd_pci_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+static void
+mtd_pci_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pci_attach_args * const pa = aux;
 	struct mtd_softc * const sc = (void *)self;

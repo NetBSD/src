@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pci.c,v 1.25 2004/02/13 10:05:50 wiz Exp $	*/
+/*	$NetBSD: if_ne_pci.c,v 1.26 2004/08/21 23:48:33 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_pci.c,v 1.25 2004/02/13 10:05:50 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_pci.c,v 1.26 2004/08/21 23:48:33 thorpej Exp $");
 
 #include "opt_ipkdb.h"
 
@@ -80,8 +80,8 @@ struct ne_pci_softc {
 	void *sc_ih;				/* interrupt handle */
 };
 
-int ne_pci_match __P((struct device *, struct cfdata *, void *));
-void ne_pci_attach __P((struct device *, struct device *, void *));
+static int	ne_pci_match(struct device *, struct cfdata *, void *);
+static void	ne_pci_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(ne_pci, sizeof(struct ne_pci_softc),
     ne_pci_match, ne_pci_attach, NULL, NULL);
@@ -92,20 +92,19 @@ static pci_chipset_tag_t ipkdb_pc;
 static pcitag_t ipkdb_tag;
 static struct ipkdb_if *ne_kip;
 
-int ne_pci_ipkdb_attach __P((struct ipkdb_if *, bus_space_tag_t,       /* XXX */
-			pci_chipset_tag_t, int, int));
+int ne_pci_ipkdb_attach(struct ipkdb_if *, bus_space_tag_t,       /* XXX */
+			pci_chipset_tag_t, int, int);
 
-static int ne_pci_isipkdb __P((pci_chipset_tag_t, pcitag_t));
+static int ne_pci_isipkdb(pci_chipset_tag_t, pcitag_t);
 #endif
 
-const struct ne_pci_product {
+static const struct ne_pci_product {
 	pci_vendor_id_t npp_vendor;
 	pci_product_id_t npp_product;
-	int (*npp_mediachange) __P((struct dp8390_softc *));
-	void (*npp_mediastatus) __P((struct dp8390_softc *,
-	    struct ifmediareq *));
-	void (*npp_init_card) __P((struct dp8390_softc *));
-	void (*npp_media_init) __P((struct dp8390_softc *));
+	int (*npp_mediachange)(struct dp8390_softc *);
+	void (*npp_mediastatus)(struct dp8390_softc *, struct ifmediareq *);
+	void (*npp_init_card)(struct dp8390_softc *);
+	void (*npp_media_init)(struct dp8390_softc *);
 	const char *npp_name;
 } ne_pci_products[] = {
 	{ PCI_VENDOR_REALTEK,		PCI_PRODUCT_REALTEK_RT8029,
@@ -160,12 +159,8 @@ const struct ne_pci_product {
 	  NULL },
 };
 
-const struct ne_pci_product *ne_pci_lookup
-    __P((const struct pci_attach_args *));
-
-const struct ne_pci_product *
-ne_pci_lookup(pa)
-	const struct pci_attach_args *pa;
+static const struct ne_pci_product *
+ne_pci_lookup(const struct pci_attach_args *pa)
 {
 	const struct ne_pci_product *npp;
 
@@ -183,11 +178,8 @@ ne_pci_lookup(pa)
  */
 #define PCI_CBIO	0x10		/* Configuration Base IO Address */
 
-int
-ne_pci_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+static int
+ne_pci_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -197,10 +189,8 @@ ne_pci_match(parent, match, aux)
 	return (0);
 }
 
-void
-ne_pci_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+static void
+ne_pci_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ne_pci_softc *psc = (struct ne_pci_softc *)self;
 	struct ne2000_softc *nsc = &psc->sc_ne2000;
@@ -290,20 +280,15 @@ ne_pci_attach(parent, self, aux)
 
 #ifdef IPKDB_NE_PCI
 static int
-ne_pci_isipkdb(pc, tag)
-	pci_chipset_tag_t pc;
-	pcitag_t tag;
+ne_pci_isipkdb(pci_chipset_tag_t pc, pcitag_t tag)
 {
 	return !memcmp(&pc, &ipkdb_pc, sizeof pc)
 		&& !memcmp(&tag, &ipkdb_tag, sizeof tag);
 }
 
 int
-ne_pci_ipkdb_attach(kip, iot, pc, bus, dev)
-	struct ipkdb_if *kip;
-	bus_space_tag_t iot;
-	pci_chipset_tag_t pc;
-	int bus, dev;
+ne_pci_ipkdb_attach(struct ipkdb_if *kip, bus_space_tag_t iot,
+    pci_chipset_tag_t pc, int bus, int dev)
 {
 	struct pci_attach_args pa;
 	bus_space_tag_t nict, asict;
@@ -354,4 +339,4 @@ ne_pci_ipkdb_attach(kip, iot, pc, bus, dev)
 
 	return 0;
 }
-#endif
+#endif /* IPKDB_NE_PCI */
