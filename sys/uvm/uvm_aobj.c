@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.47 2001/11/06 08:07:49 chs Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.48 2001/11/07 14:07:23 chs Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -453,10 +453,12 @@ uao_free(aobj)
 	 * the swap slots we've freed.
 	 */
 
-	simple_lock(&uvm.swap_data_lock);
-	KASSERT(uvmexp.swpgonly >= swpgonlydelta);
-	uvmexp.swpgonly -= swpgonlydelta;
-	simple_unlock(&uvm.swap_data_lock);
+	if (swpgonlydelta > 0) {
+		simple_lock(&uvm.swap_data_lock);
+		KASSERT(uvmexp.swpgonly >= swpgonlydelta);
+		uvmexp.swpgonly -= swpgonlydelta;
+		simple_unlock(&uvm.swap_data_lock);
+	}
 }
 
 /*
