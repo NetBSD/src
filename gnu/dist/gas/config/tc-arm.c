@@ -5066,8 +5066,9 @@ md_apply_fix3 (fixP, val, seg)
 	md_number_to_chars (buf, value, 2);
       break;
 
-    case BFD_RELOC_RVA:
     case BFD_RELOC_32:
+    case BFD_RELOC_RVA:
+    case BFD_RELOC_ARM_GOT32:
       if (fixP->fx_done || fixP->fx_pcrel)
 	md_number_to_chars (buf, value, 4);
       break;
@@ -5279,10 +5280,7 @@ tc_gen_reloc (section, fixp)
     case BFD_RELOC_32:
       if (pic_code && fixp->fx_pcrel == 0 && fixp->fx_addsy != NULL)
 	{
-	  if (section == text_section) 
-	    code = BFD_RELOC_ARM_GOT32;
-	  else
-	    code = fixp->fx_r_type;
+	  code = fixp->fx_r_type;
 	  break;
 	}
       if (fixp->fx_pcrel)
@@ -5297,7 +5295,9 @@ tc_gen_reloc (section, fixp)
 	  code = BFD_RELOC_ARM_JMPSLOT;
 	  break;
 	}
+
     case BFD_RELOC_RVA:      
+    case BFD_RELOC_ARM_GOT32:
       code = fixp->fx_r_type;
       break;
 
@@ -6144,21 +6144,21 @@ cons_fix_new_arm(frag, where, size, exp)
 	 * and a 32 bit size
 	 */
 
-	if (pic_code != 0 && size == 4 && exp->X_op == O_add
-	    && exp->X_add_symbol
-	    && S_GET_SEGMENT (exp->X_add_symbol) == undefined_section
-	    && exp->X_op_symbol
-	    && S_GET_SEGMENT (exp->X_op_symbol) == expr_section) 
+	if (pic_code != 0 && size == 4 && exp->X_add_symbol)
 	  {
-	    /*
-	     * This could be it
-	     * Is the primary symbol name "__GLOBAL_OFFSET_TABLE" ?
-	     */
-	    if (strcmp (S_GET_NAME(exp->X_add_symbol),
-		       GLOBAL_OFFSET_TABLE_NAME) == 0) 
+	    if (exp->X_op == O_add
+		&& S_GET_SEGMENT (exp->X_add_symbol) == undefined_section
+		&& exp->X_op_symbol
+		&& S_GET_SEGMENT (exp->X_op_symbol) == expr_section
+		&& strcmp (S_GET_NAME(exp->X_add_symbol),
+			   GLOBAL_OFFSET_TABLE_NAME) == 0)
 	      {
 		type = BFD_RELOC_ARM_GOTPC;
 		pcrel = 1;
+	      }
+	    else if (exp->X_op == O_symbol)
+	      {
+		type = BFD_RELOC_ARM_GOT32;
 	      }
 	  }
 	
