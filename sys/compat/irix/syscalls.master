@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.27 2002/03/10 21:56:24 manu Exp $
+	$NetBSD: syscalls.master,v 1.28 2002/03/16 13:29:42 manu Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -293,7 +293,7 @@
 165	NOARGS		{ int svr4_sys_sigsuspend( \
 			    const svr4_sigset_t *set); }
 166	UNIMPL		sigpoll_sys
-167	UNIMPL		swapctl
+167	STD		{ int irix_sys_swapctl(int cmd, void *arg); }
 168	STD		{ int irix_sys_getcontext(irix_ucontext_t *ucp); }
 169	STD		{ int irix_sys_setcontext(const irix_ucontext_t *ucp); }
 170	STD		{ int irix_sys_waitsys(int type, int pid, \
