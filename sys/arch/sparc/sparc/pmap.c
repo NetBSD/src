@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.222 2003/01/05 19:38:42 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.223 2003/01/06 12:10:46 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -659,8 +659,8 @@ smp_tlb_flush_all()
 #define tlb_flush_page(va,ctx)		sp_tlb_flush(va,ctx,ASI_SRMMUFP_L3)
 #define tlb_flush_segment(va,ctx)	sp_tlb_flush(va,ctx,ASI_SRMMUFP_L2)
 #define tlb_flush_region(va,ctx)	sp_tlb_flush(va,ctx,ASI_SRMMUFP_L1)
-#define tlb_flush_context(ctx)		sp_tlb_flush(ctx,ASI_SRMMUFP_L0)
-#define tlb_flush_all()			sp_tlb_flush(ASI_SRMMUFP_LN)
+#define tlb_flush_context(ctx)		sp_tlb_flush(ctx,0,ASI_SRMMUFP_L0)
+#define tlb_flush_all()			sp_tlb_flush_all()
 #endif
 
 /*
