@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_page.c,v 1.42 1998/03/01 02:24:01 fvdl Exp $	*/
+/*	$NetBSD: vm_page.c,v 1.43 1998/03/12 06:25:52 thorpej Exp $	*/
 
 #define	VM_PAGE_ALLOC_MEMORY_STATS
 
@@ -1401,6 +1401,70 @@ vm_page_free(mem)
 {
 
 	vm_page_remove(mem);
+	vm_page_free1(mem);
+}
+
+/*
+ *	vm_page_alloc1:
+ *
+ *	Allocate and return a memory cell with no associated object.
+ */
+vm_page_t
+vm_page_alloc1()
+{
+	vm_page_t	mem;
+	int		spl;
+
+	spl = splimp();
+	simple_lock(&vm_page_queue_free_lock);
+	if (vm_page_queue_free.tqh_first == NULL) {
+		simple_unlock(&vm_page_queue_free_lock);
+		splx(spl);
+		return (NULL);
+	}
+
+	mem = vm_page_queue_free.tqh_first;
+	TAILQ_REMOVE(&vm_page_queue_free, mem, pageq);
+
+	cnt.v_free_count--;
+	simple_unlock(&vm_page_queue_free_lock);
+	splx(spl);
+
+	mem->flags = PG_BUSY | PG_CLEAN | PG_FAKE;
+	mem->wire_count = 0;
+
+	/*
+	 *	Decide if we should poke the pageout daemon.
+	 *	We do this if the free count is less than the low
+	 *	water mark, or if the free count is less than the high
+	 *	water mark (but above the low water mark) and the inactive
+	 *	count is less than its target.
+	 *
+	 *	We don't have the counts locked ... if they change a little,
+	 *	it doesn't really matter.
+	 */
+
+	if (cnt.v_free_count < cnt.v_free_min ||
+	    (cnt.v_free_count < cnt.v_free_target &&
+	     cnt.v_inactive_count < cnt.v_inactive_target))
+		thread_wakeup((void *)&vm_pages_needed);
+
+	return (mem);
+}
+
+/*
+ *	vm_page_free1:
+ *
+ *	Returns the given page to the free list.
+ *
+ *	The page must already be disassociated with
+ *	any objects.
+ */
+void
+vm_page_free1(mem)
+	vm_page_t mem;
+{
+
 	if (mem->flags & PG_ACTIVE) {
 		TAILQ_REMOVE(&vm_page_queue_active, mem, pageq);
 		mem->flags &= ~PG_ACTIVE;
