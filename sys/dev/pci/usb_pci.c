@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_pci.c,v 1.3 2002/02/14 21:58:30 augustss Exp $	*/
+/*	$NetBSD: usb_pci.c,v 1.4 2004/12/21 16:41:24 fvdl Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_pci.c,v 1.3 2002/02/14 21:58:30 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_pci.c,v 1.4 2004/12/21 16:41:24 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: usb_pci.c,v 1.3 2002/02/14 21:58:30 augustss Exp $")
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdivar.h>
+#include <dev/usb/usb_mem.h>
 
 #include <dev/usb/ehcireg.h>
 #include <dev/usb/ehcivar.h>

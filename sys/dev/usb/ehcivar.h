@@ -1,4 +1,4 @@
-/*	$NetBSD: ehcivar.h,v 1.15 2004/10/22 10:38:17 augustss Exp $ */
+/*	$NetBSD: ehcivar.h,v 1.16 2004/12/21 16:41:24 fvdl Exp $ */
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -136,6 +136,9 @@ typedef struct ehci_softc {
 	device_ptr_t sc_child;		/* /dev/usb# device */
 
 	char sc_dying;
+#ifdef __NetBSD__
+	struct usb_dma_reserve sc_dma_reserve;
+#endif
 } ehci_softc_t;
 
 #define EREAD1(sc, a) bus_space_read_1((sc)->iot, (sc)->ioh, (a))
