@@ -1,4 +1,4 @@
-/*	$NetBSD: proc_compare.c,v 1.6 1996/06/07 01:39:27 thorpej Exp $	*/
+/*	$NetBSD: proc_compare.c,v 1.7 1997/10/20 02:49:14 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)proc_compare.c	8.2 (Berkeley) 9/23/93";
 #else
-static char rcsid[] = "$NetBSD: proc_compare.c,v 1.6 1996/06/07 01:39:27 thorpej Exp $";
+__RCSID("$NetBSD: proc_compare.c,v 1.7 1997/10/20 02:49:14 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -74,7 +75,7 @@ static char rcsid[] = "$NetBSD: proc_compare.c,v 1.6 1996/06/07 01:39:27 thorpej
 
 int
 proc_compare(p1, p2)
-	register struct proc *p1, *p2;
+	struct proc *p1, *p2;
 {
 
 	if (p1 == NULL)
