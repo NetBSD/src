@@ -1,4 +1,4 @@
-/*      $NetBSD: blabel.c,v 1.2 2001/01/09 09:41:41 garbled Exp $       */
+/*      $NetBSD: blabel.c,v 1.3 2001/01/09 17:08:47 augustss Exp $       */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -93,8 +93,6 @@ bottom_help(int type)
 static void
 wrap_help(EObjectType cdktype, void *object, void *clientdata, chtype key)
 {
-	char buf[PATH_MAX+30];
-	struct stat sb;
 	char *p;
 	int rc, i;
 
