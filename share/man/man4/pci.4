@@ -1,4 +1,4 @@
-.\"	$NetBSD: pci.4,v 1.24 2000/01/05 17:55:22 ad Exp $
+.\"	$NetBSD: pci.4,v 1.25 2000/02/14 00:01:35 augustss Exp $
 .\"
 .\" Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
 .\" Copyright (c) 1997 Jonathan Stone
@@ -121,6 +121,10 @@ Midway-based Efficent Networks Inc. and Adaptec ATM interfaces.
 3Com 3c590, 3c595, 3c900, and 3c905
 .Tn Ethernet
 interfaces.
+.It ex
+3Com 3c900, 3c905, and 3c980
+.Tn Ethernet
+interfaces.
 .It fpa
 .Tn DEC
 DEFPA
@@ -211,6 +215,7 @@ USB UHCI host controller
 .Xr en 4 ,
 .Xr ep 4 ,
 .Xr eso 4 ,
+.Xr ex 4 ,
 .Xr fpa 4 ,
 .Xr fxp 4 ,
 .Xr isp 4 ,
