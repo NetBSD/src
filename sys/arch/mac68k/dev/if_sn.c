@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn.c,v 1.3 1997/03/17 04:38:28 briggs Exp $	*/
+/*	$NetBSD: if_sn.c,v 1.4 1997/03/17 04:57:56 briggs Exp $	*/
 
 /*
  * National Semiconductor  SONIC Driver
@@ -213,6 +213,8 @@ snsetup(sc, lladdr)
 printf("sonic buffers: rra=%p cda=0x%x rda=0x%x tda=0x%x\n",
 	sc->p_rra[0], sc->p_cda, sc->p_rda[0], sc->mtda[0].mtd_txp);
 #endif
+
+	bcopy(lladdr, sc->sc_enaddr, 6);
 
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 	ifp->if_softc = sc;
