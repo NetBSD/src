@@ -1634,7 +1634,6 @@ ENTRY(savectx)
  * addupc(int pc, struct uprof *up, int ticks):
  * update profiling information for the user process.
  */
-
 ENTRY(addupc)
 	pushl %ebp
 	movl %esp,%ebp
@@ -1672,6 +1671,7 @@ proffault:
 	movl $0,PR_SCALE(%ecx)		/* up->pr_scale = 0 */
 	leave
 	ret
+
 
 /*
  * Trap and fault vector routines
