@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.31 2000/05/19 18:54:27 thorpej Exp $ */
+/*	$NetBSD: db_interface.c,v 1.32 2000/05/25 19:57:35 jhawk Exp $ */
 
 /*
  * Mach Operating System
@@ -691,7 +691,7 @@ db_print_trace_entry(te, i)
 		  (int)te->tt, (u_long)te->tstate, 
 		  (u_long)te->tfault, (u_long)te->tsp,
 		  (u_long)te->tpc);
-	db_printsym((u_long)te->tpc, DB_STGY_PROC);
+	db_printsym((u_long)te->tpc, DB_STGY_PROC, db_printf);
 	db_printf(": ");
 	if ((te->tpc && !(te->tpc&0x3)) &&
 	    curproc &&
@@ -832,7 +832,7 @@ db_dump_buf(addr, have_addr, count, modif)
 		  buf->b_dev, buf->b_data);
 	db_printf("saveaddr:%p lblkno:%x blkno:%x iodone:%x",
 		  buf->b_saveaddr, buf->b_lblkno, buf->b_blkno, buf->b_iodone);
-	db_printsym((long)buf->b_iodone, DB_STGY_PROC);
+	db_printsym((long)buf->b_iodone, DB_STGY_PROC, db_printf);
 	db_printf("\nvp:%p dirtyoff:%x dirtyend:%x\n", buf->b_vp, buf->b_dirtyoff, buf->b_dirtyend);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.1 1999/09/13 10:31:27 itojun Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.2 2000/05/25 19:57:34 jhawk Exp $	*/
 
 /*
  * Mach Operating System
@@ -939,7 +939,7 @@ db_print_address(seg, size, addrp)
 	if (seg)
 		db_printf("%s:", seg);
 
-	db_printsym((db_addr_t)addrp->disp, DB_STGY_ANY);
+	db_printsym((db_addr_t)addrp->disp, DB_STGY_ANY, db_printf);
 	if (addrp->base != 0 || addrp->index != 0) {
 		db_printf("(");
 		if (addrp->base)
@@ -1281,15 +1281,18 @@ db_disasm(loc, altfmt)
 			if (seg)
 				db_printf("%s:%#r",seg, displ);
 			else
-				db_printsym((db_addr_t)displ, DB_STGY_ANY);
+				db_printsym((db_addr_t)displ, DB_STGY_ANY,
+				    db_printf);
 			break;
 		    case Db:
 			get_value_inc(displ, loc, 1, TRUE);
-			db_printsym((db_addr_t)(displ + loc), DB_STGY_XTRN);
+			db_printsym((db_addr_t)(displ + loc), DB_STGY_XTRN,
+			    db_printf);
 			break;
 		    case Dl:
 			get_value_inc(displ, loc, 4, TRUE);
-			db_printsym((db_addr_t)(displ + loc), DB_STGY_XTRN);
+			db_printsym((db_addr_t)(displ + loc), DB_STGY_XTRN,
+			    db_printf);
 			break;
 		    case o1:
 			db_printf("$1");

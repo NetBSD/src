@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.12 2000/04/06 13:32:49 mrg Exp $ */
+/*	$NetBSD: db_trace.c,v 1.13 2000/05/25 19:57:35 jhawk Exp $ */
 
 /*
  * Mach Operating System
@@ -126,7 +126,7 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 					db_printf("%x, ", f32->fr_arg[i]);
 				db_printf("%x) at ", f32->fr_arg[i]);
 			}
-			db_printsym(pc, DB_STGY_PROC);
+			db_printsym(pc, DB_STGY_PROC, db_printf);
 			db_printf("\n");
 		}
 }
@@ -176,7 +176,7 @@ u_int64_t frame;
 				  f->fr_arg[4], f->fr_arg[5], f->fr_fp, f->fr_pc);
 #if 0
 			/* Sometimes this don't work.  Dunno why. */
-			db_printsym(f->fr_pc, DB_STGY_PROC);
+			db_printsym(f->fr_pc, DB_STGY_PROC, db_printf);
 #endif
 			db_printf("\n");
 		} else {
@@ -205,7 +205,7 @@ u_int64_t frame;
 			db_printf("%8x %8x %8x %8x %8x %8x %8x=sp %8x=pc:",
 				  f->fr_arg[0], f->fr_arg[1], f->fr_arg[2], f->fr_arg[3],
 				  f->fr_arg[4], f->fr_arg[5], f->fr_fp, f->fr_pc);
-			db_printsym(f->fr_pc, DB_STGY_PROC);
+			db_printsym(f->fr_pc, DB_STGY_PROC, db_printf);
 			db_printf("\n");
 		} else {
 			struct frame32 fr;

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_sym.c,v 1.20 2000/05/22 14:49:10 jhawk Exp $	*/
+/*	$NetBSD: db_sym.c,v 1.21 2000/05/25 19:57:36 jhawk Exp $	*/
 
 /* 
  * Mach Operating System
@@ -499,9 +499,10 @@ unsigned int	db_maxoff = 0x10000000;
 
 
 void
-db_printsym(off, strategy)
+db_printsym(off, strategy, pr)
 	db_expr_t	off;
 	db_strategy_t	strategy;
+	void (*pr) __P((const char *, ...));
 {
 	db_expr_t	d;
 	char 		*filename;
@@ -514,17 +515,17 @@ db_printsym(off, strategy)
 		cursym = db_search_symbol(off, strategy, &d);
 		db_symbol_values(cursym, &name, &value);
 		if (name && (d < db_maxoff) && value) {
-			db_printf("%s", name);
+			(*pr)("%s", name);
 			if (d)
-				db_printf("+%#lr", d);
+				(*pr)("+%#lr", d);
 			if (strategy == DB_STGY_PROC) {
 				if (db_line_at_pc(cursym, &filename, &linenum, off))
-					db_printf(" [%s:%d]", filename, linenum);
+					(*pr)(" [%s:%d]", filename, linenum);
 			}
 			return;
 		}
 	}
-	db_printf("%#ln", off);
+	(*pr)("%#ln", off);
 	return;
 }
 

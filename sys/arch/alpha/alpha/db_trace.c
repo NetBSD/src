@@ -1,4 +1,4 @@
-/* $NetBSD: db_trace.c,v 1.4 1999/07/12 07:37:14 ross Exp $ */
+/* $NetBSD: db_trace.c,v 1.5 2000/05/25 19:57:30 jhawk Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.4 1999/07/12 07:37:14 ross Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.5 2000/05/25 19:57:30 jhawk Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -208,7 +208,7 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 		 * debugger (for serious debugging).
 		 */
 		db_printf("%s() at ", symname);
-		db_printsym(callpc, DB_STGY_PROC);
+		db_printsym(callpc, DB_STGY_PROC, db_printf);
 		db_printf("\n");
 
 		/*

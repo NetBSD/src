@@ -1,4 +1,4 @@
-/* $NetBSD: db_disasm.c,v 1.7 2000/03/20 02:54:45 thorpej Exp $ */
+/* $NetBSD: db_disasm.c,v 1.8 2000/05/25 19:57:30 jhawk Exp $ */
 
 /* 
  * Mach Operating System
@@ -48,7 +48,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.7 2000/03/20 02:54:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.8 2000/05/25 19:57:30 jhawk Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1080,7 +1080,7 @@ loadstore_address:
 			  register_name(i.branch_format.ra));
 branch_displacement:
 		db_printsym(iadr + sizeof(alpha_instruction) +
-		    (signed_immediate << 2), DB_STGY_PROC);
+		    (signed_immediate << 2), DB_STGY_PROC, db_printf);
 		break;
 	default:
 		/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.1 2000/05/09 21:55:55 bjh21 Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.2 2000/05/25 19:57:32 jhawk Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe.
@@ -62,7 +62,7 @@ static void
 db_disasm_printaddr(u_int address)
 {
 
-	db_printsym((db_addr_t)address, DB_STGY_ANY);
+	db_printsym((db_addr_t)address, DB_STGY_ANY, db_printf);
 }
 
 vm_offset_t

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.2 2000/05/13 14:43:11 bjh21 Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.3 2000/05/25 19:57:32 jhawk Exp $	*/
 
 /* 
  * Copyright (c) 1996 Scott K. Stevens
@@ -140,9 +140,9 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 
 		db_printf("%s", name);
 		db_printf("(scp=0x%x(", frame[FR_SCP]);
-		db_printsym(scp, DB_STGY_PROC);
+		db_printsym(scp, DB_STGY_PROC, db_printf);
 		db_printf("), rlv=0x%x(", frame[FR_RLV]);
-		db_printsym(frame[FR_RLV] & R15_PC, DB_STGY_PROC);
+		db_printsym(frame[FR_RLV] & R15_PC, DB_STGY_PROC, db_printf);
 		db_printf("),\n\trsp=0x%x", frame[FR_RSP]);
 		db_printf(", rfp=0x%x", frame[FR_RFP]);
 

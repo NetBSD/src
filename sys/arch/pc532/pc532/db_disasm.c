@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.4 1997/03/20 12:00:37 matthias Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.5 2000/05/25 19:57:33 jhawk Exp $	*/
 
 /* 
  * Mach Operating System
@@ -997,20 +997,24 @@ void db_formatOperand(operand, loc)
 		break;
 		
 	      case AMODE_MREL:
-		db_printsym((db_addr_t) operand->o_disp1, DB_STGY_ANY);
+		db_printsym((db_addr_t) operand->o_disp1, DB_STGY_ANY,
+		    db_printf);
 		db_printf("(");
-		db_printsym((db_addr_t) operand->o_disp0, DB_STGY_ANY);
+		db_printsym((db_addr_t) operand->o_disp0, DB_STGY_ANY,
+		    db_printf);
 		db_printf("(%s))",regTable[operand->o_reg0].name);
 		break;
 		
 	      case AMODE_QUICK:
 	      case AMODE_IMM:
-		db_printsym((db_addr_t) operand->o_disp0, DB_STGY_ANY);
+		db_printsym((db_addr_t) operand->o_disp0, DB_STGY_ANY,
+		    db_printf);
 		break;
 		
 	      case AMODE_ABS:
 		db_printf("@");
-		db_printsym((db_addr_t) operand->o_disp0, DB_STGY_ANY);
+		db_printsym((db_addr_t) operand->o_disp0, DB_STGY_ANY,
+		    db_printf);
 		break;
 		
 	      case AMODE_EXT:
@@ -1025,7 +1029,8 @@ void db_formatOperand(operand, loc)
 		
 	      case AMODE_RREL:
 	      case AMODE_MSPC:
-		db_printsym((db_addr_t) operand->o_disp0, DB_STGY_XTRN);
+		db_printsym((db_addr_t) operand->o_disp0, DB_STGY_XTRN,
+		    db_printf);
 		db_printf("(%s)",regTable[operand->o_reg0].name);
 		break;
 		
@@ -1156,7 +1161,7 @@ void db_formatAsm(insn, loc, altfmt)
 			}
 			db_printsym((db_addr_t)
 					 insn->i_opr[i].o_disp0 + value,
-					 DB_STGY_XTRN);
+					 DB_STGY_XTRN, db_printf);
 			j++;
 		}
 	}

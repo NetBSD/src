@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.14 1999/10/05 12:34:32 tron Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.15 2000/05/25 19:57:32 jhawk Exp $	*/
 
 /* 
  * Copyright (c) 1996 Mark Brinicombe
@@ -178,7 +178,8 @@ db_show_intrchain_cmd(addr, have_addr, count, modif)
 					name = "?";
 
 				db_printf("%s(", name);
-				db_printsym((u_int)ptr->ih_func, DB_STGY_PROC);
+				db_printsym((u_int)ptr->ih_func, DB_STGY_PROC,
+				    db_printf);
 				db_printf(") %08x\n", (u_int)ptr->ih_arg);
 				ptr = ptr->ih_next;
 			}

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.11 1998/09/22 05:40:14 chs Exp $ */
+/*	$NetBSD: db_disasm.c,v 1.12 2000/05/25 19:57:35 jhawk Exp $ */
 
 /*
  * Copyright (c) 1994 David S. Miller, davem@nadzieja.rutgers.edu
@@ -910,17 +910,17 @@ db_disasm(loc, altfmt)
 		case 'm':
 			db_printsym(
 				(db_addr_t)(loc + DISP22_SE(insn)),
-				DB_STGY_ANY);
+				DB_STGY_ANY, db_printf);
 			break;
 		case 'u':
 			db_printsym(
 				(db_addr_t)(loc + DISP19_SE(insn)),
-				DB_STGY_ANY);
+				DB_STGY_ANY, db_printf);
 			break;
 		case 'n':
 			db_printsym(
 				(db_addr_t)(loc + DISP30_SE(insn)),
-				DB_STGY_PROC);
+				DB_STGY_PROC, db_printf);
 			break;
 		case 's':
 			db_printf("%%asi");
