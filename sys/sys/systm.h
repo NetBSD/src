@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.41 1996/03/07 14:29:48 christos Exp $	*/
+/*	$NetBSD: systm.h,v 1.42 1996/03/13 21:08:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -192,7 +192,7 @@ void	doshutdownhooks __P((void));
 int	uiomove __P((caddr_t, int, struct uio *));
 
 int	setjmp	__P((label_t *));
-void	longjmp	__P((label_t *, int));
+void	longjmp	__P((label_t *));
 
 #include <lib/libkern/libkern.h>
 
