@@ -1,4 +1,4 @@
-/*	$NetBSD: mq200_vrip.c,v 1.1 2000/07/22 08:53:38 takemura Exp $	*/
+/*	$NetBSD: mq200_vrip.c,v 1.2 2000/10/02 04:15:51 sato Exp $	*/
 
 /*-
  * Copyright (c) 2000 Takemura Shin
@@ -39,6 +39,11 @@
 #include <hpcmips/vr/vripvar.h>
 #include <hpcmips/vr/vrgiureg.h>
 #include <hpcmips/dev/mq200var.h>
+#include "bivideo.h"
+#if NBIVIDEO > 0
+#include <hpcmips/dev/bivideovar.h>     
+#endif
+
 
 #include "locators.h"
 
@@ -67,6 +72,11 @@ mq200_vrip_probe(parent, cf, aux)
 
 	if (va->va_addr == VRIPCF_ADDR_DEFAULT)
 		return (0);
+
+#if NBIVIDEO > 0
+	if (bivideo_dont_attach) /* already attach video driver */
+		return 0;
+#endif /* NBIVIDEO > 0 */
 
 	if (bus_space_map(va->va_iot, va->va_addr, va->va_size, 0, &ioh)) {
 		printf(": can't map i/o space\n");
