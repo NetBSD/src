@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_mchain.c,v 1.5 2003/02/26 21:50:15 jdolecek Exp $	*/
+/*	$NetBSD: subr_mchain.c,v 1.6 2003/03/24 07:09:34 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Boris Popov
@@ -31,11 +31,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * FreeBSD: src/sys/kern/subr_mchain.c,v 1.3 2001/12/10 05:51:45 obrien Exp
+ * FreeBSD: src/sys/kern/subr_mchain.c,v 1.4 2002/02/21 16:23:38 bp Exp $
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_mchain.c,v 1.5 2003/02/26 21:50:15 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_mchain.c,v 1.6 2003/03/24 07:09:34 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -322,7 +322,6 @@ mb_put_mbuf(struct mbchain *mbp, struct mbuf *m)
 
 /*
  * copies a uio scatter/gather list to an mbuf chain.
- * NOTE: can ony handle iovcnt == 1
  */
 int
 mb_put_uio(struct mbchain *mbp, struct uio *uiop, int size)
@@ -330,14 +329,17 @@ mb_put_uio(struct mbchain *mbp, struct uio *uiop, int size)
 	long left;
 	int mtype, error;
 
-#ifdef DIAGNOSTIC
-	if (uiop->uio_iovcnt != 1)
-		MBPANIC("iovcnt != 1");
-#endif
 	mtype = (uiop->uio_segflg == UIO_SYSSPACE) ? MB_MSYSTEM : MB_MUSER;
 
-	while (size > 0) {
+	while (size > 0 && uiop->uio_resid) {
+		if (uiop->uio_iovcnt <= 0 || uiop->uio_iov == NULL)
+			return EFBIG;
 		left = uiop->uio_iov->iov_len;
+		if (left == 0) {
+			uiop->uio_iov++;
+			uiop->uio_iovcnt--;
+			continue;
+		}
 		if (left > size)
 			left = size;
 		error = mb_put_mem(mbp, uiop->uio_iov->iov_base, left, mtype);
@@ -579,10 +581,15 @@ md_get_uio(struct mdchain *mdp, struct uio *uiop, int size)
 	int mtype, error;
 
 	mtype = (uiop->uio_segflg == UIO_SYSSPACE) ? MB_MSYSTEM : MB_MUSER;
-	while (size > 0) {
+	while (size > 0 && uiop->uio_resid) {
 		if (uiop->uio_iovcnt <= 0 || uiop->uio_iov == NULL)
 			return EFBIG;
 		left = uiop->uio_iov->iov_len;
+		if (left == 0) {
+			uiop->uio_iov++;
+			uiop->uio_iovcnt--;
+			continue;
+		}
 		uiocp = uiop->uio_iov->iov_base;
 		if (left > size)
 			left = size;
@@ -591,14 +598,9 @@ md_get_uio(struct mdchain *mdp, struct uio *uiop, int size)
 			return error;
 		uiop->uio_offset += left;
 		uiop->uio_resid -= left;
-		if (uiop->uio_iov->iov_len <= size) {
-			uiop->uio_iovcnt--;
-			uiop->uio_iov++;
-		} else {
-                        uiop->uio_iov->iov_base =
+                uiop->uio_iov->iov_base =
                                 (char *)uiop->uio_iov->iov_base + left;
-			uiop->uio_iov->iov_len -= left;
-		}
+		uiop->uio_iov->iov_len -= left;
 		size -= left;
 	}
 	return 0;
