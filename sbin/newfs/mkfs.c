@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.62 2002/04/10 08:27:23 mycroft Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.63 2002/04/10 08:27:54 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mkfs.c,v 1.62 2002/04/10 08:27:23 mycroft Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.63 2002/04/10 08:27:54 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -718,8 +718,6 @@ initcg(int cylno, time_t utime)
 		acg.cg_nextfreeoff = acg.cg_clusteroff +
 		    howmany(fragstoblks(&sblock, sblock.fs_fpg), NBBY);
 	}
-	printf("%d %d %d\n", acg.cg_clustersumoff, acg.cg_clusteroff,
-	    acg.cg_nextfreeoff);
 	if (acg.cg_nextfreeoff > sblock.fs_cgsize) {
 		printf("Panic: cylinder group too big\n");
 		exit(37);
