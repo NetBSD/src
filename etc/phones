@@ -1,8 +1,8 @@
-#	$NetBSD: phones,v 1.2 1996/05/08 17:19:43 thorpej Exp $
+#	$NetBSD: phones,v 1.3 1996/12/29 03:30:11 mrg Exp $
 #	@(#)phones	5.2 (Berkeley) 6/30/90
 #
 # phones -- remote host phone number data base
 # see tip(1), phones(5)
 
-system1		9=3156427750
-system2		  9148841241
+#system1		9=3156427750
+#system2		  9148841241
