@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.209 2001/11/05 19:45:25 tv Exp $
+#	$NetBSD: bsd.own.mk,v 1.210 2001/11/09 07:30:55 thorpej Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -80,6 +80,7 @@ CONFIG=		${TOOLDIR}/bin/config
 CPP=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-cpp
 CRUNCHGEN=	MAKE=${.MAKE} ${TOOLDIR}/bin/crunchgen
 CXX=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-c++
+DBSYM=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-dbsym
 #EQN=		${TOOLDIR}/bin/eqn
 FC=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-g77
 GENCAT=		${TOOLDIR}/bin/gencat
