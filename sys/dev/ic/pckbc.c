@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc.c,v 1.25 2003/06/10 07:46:29 grant Exp $ */
+/* $NetBSD: pckbc.c,v 1.26 2003/06/12 03:34:12 uwe Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc.c,v 1.25 2003/06/10 07:46:29 grant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc.c,v 1.26 2003/06/12 03:34:12 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -997,6 +997,9 @@ pckbc_cnattach(iot, addr, cmd_offset, slot)
 	pckbc_slot_t slot;
 {
 	bus_space_handle_t ioh_d, ioh_c;
+#ifdef PCKBC_CNATTACH_SELFTEST
+	int reply;
+#endif
 	int res = 0;
 
 	if (bus_space_map(iot, addr + KBDATAP, 1, 0, &ioh_d))
@@ -1016,34 +1019,51 @@ pckbc_cnattach(iot, addr, cmd_offset, slot)
 	/* flush */
 	(void) pckbc_poll_data1(&pckbc_consdata, PCKBC_KBD_SLOT, 0);
 
-	/* selftest? */
+#ifdef PCKBC_CNATTACH_SELFTEST
+	/*
+	 * In some machines (e.g. netwinder) pckbc refuses to talk at
+	 * all until we request a self-test.
+	 */
+	if (!pckbc_send_cmd(iot, ioh_c, KBC_SELFTEST)) {
+		printf("kbc: unable to request selftest\n");
+		res = EIO;
+		goto out;
+	}
+
+	reply = pckbc_poll_data1(&pckbc_consdata, PCKBC_KBD_SLOT, 0);
+	if (reply != 0x55) {
+		printf("kbc: selftest returned 0x%02x\n", reply);
+		res = EIO;
+		goto out;
+	}
+#endif /* PCKBC_CNATTACH_SELFTEST */
 
 	/* init cmd byte, enable ports */
 	pckbc_consdata.t_cmdbyte = KC8_CPU;
 	if (!pckbc_put8042cmd(&pckbc_consdata)) {
 		printf("kbc: cmd word write error\n");
 		res = EIO;
+		goto out;
 	}
 
-	if (!res) {
 #if (NPCKBD > 0)
-		res = pckbd_cnattach(&pckbc_consdata, slot);
+	res = pckbd_cnattach(&pckbc_consdata, slot);
 #else
-		/*
-		 * XXX This should be replaced with the `notyet' case
-		 * XXX when all of the old PC-style console drivers
-		 * XXX have gone away.  When that happens, all of
-		 * XXX the pckbc_machdep_cnattach() should be purged,
-		 * XXX as well.
-		 */
+	/*
+	 * XXX This should be replaced with the `notyet' case
+	 * XXX when all of the old PC-style console drivers
+	 * XXX have gone away.  When that happens, all of
+	 * XXX the pckbc_machdep_cnattach() should be purged,
+	 * XXX as well.
+	 */
 #ifdef notyet
-		res = ENXIO;
+	res = ENXIO;
 #else
-		res = pckbc_machdep_cnattach(&pckbc_consdata, slot);
+	res = pckbc_machdep_cnattach(&pckbc_consdata, slot);
 #endif
 #endif /* NPCKBD > 0 */
-	}
 
+  out:
 	if (res) {
 		bus_space_unmap(iot, pckbc_consdata.t_ioh_d, 1);
 		bus_space_unmap(iot, pckbc_consdata.t_ioh_c, 1);
