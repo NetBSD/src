@@ -1,4 +1,4 @@
-/*	$NetBSD: if_epic_pci.c,v 1.9 2000/07/15 10:32:36 tron Exp $	*/
+/*	$NetBSD: if_epic_pci.c,v 1.10 2000/07/15 19:59:27 tron Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -100,8 +100,8 @@ struct epic_pci_softc {
 	void	*sc_ih;			/* interrupt handle */
 };
 
-int	epic_pci_match __P((struct device *, struct cfdata *, void *));
-void	epic_pci_attach __P((struct device *, struct device *, void *));
+int	epic_pci_match(struct device *, struct cfdata *, void *);
+void	epic_pci_attach(struct device *, struct device *, void *);
 
 struct cfattach epic_pci_ca = {
 	sizeof(struct epic_pci_softc), epic_pci_match, epic_pci_attach,
@@ -116,8 +116,7 @@ const struct epic_pci_product {
 	{ 0,				NULL },
 };
 
-const struct epic_pci_product *epic_pci_lookup
-    __P((const struct pci_attach_args *));
+const struct epic_pci_product *epic_pci_lookup(const struct pci_attach_args *);
 
 const struct epic_pci_product *
 epic_pci_lookup(pa)
