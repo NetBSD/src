@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.7 1998/07/05 08:49:40 jonathan Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.8 1999/01/09 19:55:58 itohy Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -254,7 +254,6 @@ setdisklabel(olp, nlp, openmask, osdep)
 	u_long openmask;
 	struct cpu_disklabel *osdep;
 {
-	struct dos_partition *dp = osdep->dosparts;
 	int i;
 	struct partition *opp, *npp;
 
@@ -349,7 +348,7 @@ writedisklabel(dev, strat, lp, osdep)
 
 		if ((error = biowait(bp)) == 0) {
 			/* XXX how do we check veracity/bounds of this? */
-			dp = (void *)bp->b_data + sizeof(*dp);
+			dp = (struct dos_partition *)bp->b_data + 1;
 			for (i = 0; i < NDOSPART; i++, dp++) {
 				int part = i + (i < RAW_PART ? 0 : 1);
 				int start, size;
