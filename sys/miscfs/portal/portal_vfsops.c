@@ -1,4 +1,4 @@
-/*	$NetBSD: portal_vfsops.c,v 1.46 2004/05/25 14:54:57 hannken Exp $	*/
+/*	$NetBSD: portal_vfsops.c,v 1.47 2004/09/13 19:19:45 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: portal_vfsops.c,v 1.46 2004/05/25 14:54:57 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: portal_vfsops.c,v 1.47 2004/09/13 19:19:45 jdolecek Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -156,6 +156,7 @@ portal_mount(mp, path, data, ndp, p)
 	fp->f_count++;
 	simple_unlock(&fp->f_slock);
 
+	mp->mnt_stat.f_namemax = MAXNAMLEN;
 	mp->mnt_flag |= MNT_LOCAL;
 	mp->mnt_data = fmp;
 	vfs_getnewfsid(mp);
@@ -277,7 +278,6 @@ portal_statvfs(mp, sbp, p)
 	sbp->f_ffree = 0;		/* See comments above */
 	sbp->f_favail = 0;		/* See comments above */
 	sbp->f_fresvd = 0;
-	sbp->f_namemax = MAXNAMLEN;
 	copy_statvfs_info(sbp, mp);
 	return (0);
 }

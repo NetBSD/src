@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vfsops.c,v 1.64 2004/05/29 14:28:41 tron Exp $	*/
+/*	$NetBSD: kernfs_vfsops.c,v 1.65 2004/09/13 19:19:45 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vfsops.c,v 1.64 2004/05/29 14:28:41 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vfsops.c,v 1.65 2004/09/13 19:19:45 jdolecek Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -158,8 +158,9 @@ kernfs_mount(mp, path, data, ndp, p)
 	memset(fmp, 0, sizeof(*fmp));
 	TAILQ_INIT(&fmp->nodelist);
 
-	mp->mnt_data = fmp;
+	mp->mnt_stat.f_namemax = MAXNAMLEN;
 	mp->mnt_flag |= MNT_LOCAL;
+	mp->mnt_data = fmp;
 	vfs_getnewfsid(mp);
 
 	if ((error = set_statvfs_info(path, UIO_USERSPACE, "kernfs",
@@ -245,7 +246,6 @@ kernfs_statvfs(mp, sbp, p)
 	sbp->f_ffree = 128;	/* XXX lie */
 	sbp->f_favail = 128;	/* XXX lie */
 	sbp->f_fresvd = 0;
-	sbp->f_namemax = MAXNAMLEN;
 	copy_statvfs_info(sbp, mp);
 	return (0);
 }

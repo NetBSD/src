@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vfsops.c,v 1.57 2004/05/25 14:54:57 hannken Exp $	*/
+/*	$NetBSD: procfs_vfsops.c,v 1.58 2004/09/13 19:19:45 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vfsops.c,v 1.57 2004/05/25 14:54:57 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vfsops.c,v 1.58 2004/09/13 19:19:45 jdolecek Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -162,10 +162,11 @@ procfs_mount(mp, path, data, ndp, p)
 	} else
 		args.flags = 0;
 
-	mp->mnt_flag |= MNT_LOCAL;
 	pmnt = (struct procfsmount *) malloc(sizeof(struct procfsmount),
 	    M_UFSMNT, M_WAITOK);   /* XXX need new malloc type */
 
+	mp->mnt_stat.f_namemax = MAXNAMLEN;
+	mp->mnt_flag |= MNT_LOCAL;
 	mp->mnt_data = pmnt;
 	vfs_getnewfsid(mp);
 
@@ -244,7 +245,6 @@ procfs_statvfs(mp, sbp, p)
 	sbp->f_ffree = maxproc - nprocs;	/* approx */
 	sbp->f_favail = maxproc - nprocs;	/* approx */
 	sbp->f_fresvd = 0;
-	sbp->f_namemax = MAXNAMLEN;
 	copy_statvfs_info(sbp, mp);
 	return (0);
 }
