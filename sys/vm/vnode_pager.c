@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode_pager.c,v 1.16 1994/06/29 06:48:47 cgd Exp $	*/
+/*	$NetBSD: vnode_pager.c,v 1.17 1996/02/05 01:54:11 christos Exp $	*/
 
 /*
  * Copyright (c) 1990 University of Utah.
@@ -212,7 +212,7 @@ vnode_pager_dealloc(pager)
 	if (vpagerdebug & VDB_FOLLOW)
 		printf("vnode_pager_dealloc(%x)\n", pager);
 #endif
-	if (vp = vnp->vnp_vp) {
+	if ((vp = vnp->vnp_vp) != NULL) {
 		vp->v_vmdata = NULL;
 		vp->v_flag &= ~VTEXT;
 #if NOTDEF

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_meter.c,v 1.17 1995/07/08 03:12:22 cgd Exp $	*/
+/*	$NetBSD: vm_meter.c,v 1.18 1996/02/05 01:53:59 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -99,6 +99,7 @@ loadav(avg)
 /*
  * Attributes associated with virtual memory.
  */
+int
 vm_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	int *name;
 	u_int namelen;
