@@ -1,4 +1,4 @@
-/*	$NetBSD: aic_isa.c,v 1.4 1997/10/20 18:43:04 thorpej Exp $	*/
+/*	$NetBSD: aic_isa.c,v 1.5 1997/11/30 15:31:23 drochner Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Charles M. Hannum.  All rights reserved.
@@ -73,7 +73,11 @@
 #include <dev/ic/aic6360reg.h>
 #include <dev/ic/aic6360var.h>
 
-int	aic_isa_probe	__P((struct device *, void *, void *));
+#ifdef __BROKEN_INDIRECT_CONFIG
+int	aic_isa_probe __P((struct device *, void *, void *));
+#else
+int	aic_isa_probe __P((struct device *, struct cfdata *, void *));
+#endif
 
 struct aic_isa_softc {
 	struct	aic_softc sc_aic;	/* real "aic" softc */
@@ -98,7 +102,12 @@ struct cfattach aic_isa_ca = {
 int
 aic_isa_probe(parent, match, aux)
 	struct device *parent;
-	void *match, *aux;
+#ifdef __BROKEN_INDIRECT_CONFIG
+	void *match;
+#else
+	struct cfdata *match;
+#endif
+	void *aux;
 {
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;

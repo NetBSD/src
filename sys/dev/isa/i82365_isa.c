@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365_isa.c,v 1.7 1997/11/05 21:41:36 thorpej Exp $	*/
+/*	$NetBSD: i82365_isa.c,v 1.8 1997/11/30 15:31:24 drochner Exp $	*/
 
 #define	PCICISADEBUG
 
@@ -106,7 +106,11 @@ int	pcicisa_debug = 0 /* XXX */ ;
 #define	DPRINTF(arg)
 #endif
 
+#ifdef __BROKEN_INDIRECT_CONFIG
 int	pcic_isa_probe __P((struct device *, void *, void *));
+#else
+int	pcic_isa_probe __P((struct device *, struct cfdata *, void *));
+#endif
 void	pcic_isa_attach __P((struct device *, struct device *, void *));
 
 void	*pcic_isa_chip_intr_establish __P((pcmcia_chipset_handle_t,
@@ -138,7 +142,12 @@ static struct pcmcia_chip_functions pcic_isa_functions = {
 int
 pcic_isa_probe(parent, match, aux)
 	struct device *parent;
-	void *match, *aux;
+#ifdef __BROKEN_INDIRECT_CONFIG
+	void *match;
+#else
+	struct cfdata *match;
+#endif
+	void *aux;
 {
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;

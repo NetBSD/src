@@ -1,4 +1,4 @@
-/*	$NetBSD: if_el.c,v 1.49 1997/10/15 05:59:26 explorer Exp $	*/
+/*	$NetBSD: if_el.c,v 1.50 1997/11/30 15:31:25 drochner Exp $	*/
 
 /*
  * Copyright (c) 1994, Matthew E. Kimmel.  Permission is hereby granted
@@ -106,7 +106,11 @@ void elread __P((struct el_softc *, int));
 struct mbuf *elget __P((struct el_softc *sc, int));
 static inline void el_hardreset __P((struct el_softc *));
 
+#ifdef __BROKEN_INDIRECT_CONFIG
 int elprobe __P((struct device *, void *, void *));
+#else
+int elprobe __P((struct device *, struct cfdata *, void *));
+#endif
 void elattach __P((struct device *, struct device *, void *));
 
 struct cfattach el_ca = {
@@ -126,7 +130,12 @@ struct cfdriver el_cd = {
 int
 elprobe(parent, match, aux)
 	struct device *parent;
-	void *match, *aux;
+#ifdef __BROKEN_INDIRECT_CONFIG
+	void *match;
+#else
+	struct cfdata *match;
+#endif
+	void *aux;
 {
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;
