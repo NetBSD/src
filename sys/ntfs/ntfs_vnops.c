@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vnops.c,v 1.14 1999/09/09 17:59:25 jdolecek Exp $	*/
+/*	$NetBSD: ntfs_vnops.c,v 1.15 1999/09/09 18:10:23 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -42,7 +42,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/proc.h>
 #include <sys/time.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -77,6 +76,8 @@
 #include <miscfs/genfs/genfs.h>
 #endif 
 
+#include <sys/unistd.h> /* for pathconf(2) constants */
+
 static int	ntfs_bypass __P((struct vop_generic_args *ap));
 static int	ntfs_read __P((struct vop_read_args *));
 static int	ntfs_write __P((struct vop_write_args *ap));
@@ -101,6 +102,7 @@ static int	ntfs_getpages __P((struct vop_getpages_args *ap));
 static int	ntfs_putpages __P((struct vop_putpages_args *));
 static int	ntfs_fsync __P((struct vop_fsync_args *ap));
 #endif
+static int	ntfs_pathconf __P((void *));
 
 int	ntfs_prtactive = 1;	/* 1 => print out reclaim of active vnodes */
 
@@ -986,6 +988,47 @@ ntfs_fsync(ap)
 #endif
 
 /*
+ * Return POSIX pathconf information applicable to NTFS filesystem
+ */
+int
+ntfs_pathconf(v)
+	void *v;
+{
+	struct vop_pathconf_args /* {
+		struct vnode *a_vp;
+		int a_name;
+		register_t *a_retval;
+	} */ *ap = v;
+
+	switch (ap->a_name) {
+	case _PC_LINK_MAX:
+		*ap->a_retval = 1;
+		return (0);
+	case _PC_NAME_MAX:
+		*ap->a_retval = NTFS_MAXFILENAME;
+		return (0);
+	case _PC_PATH_MAX:
+		*ap->a_retval = PATH_MAX;
+		return (0);
+	case _PC_CHOWN_RESTRICTED:
+		*ap->a_retval = 1;
+		return (0);
+	case _PC_NO_TRUNC:
+		*ap->a_retval = 0;
+		return (0);
+	case _PC_SYNC_IO:
+		*ap->a_retval = 1;
+		return (0);
+	case _PC_FILESIZEBITS:
+		*ap->a_retval = 64;
+		return (0);
+	default:
+		return (EINVAL);
+	}
+	/* NOTREACHED */
+}
+
+/*
  * Global vfs data structures
  */
 vop_t **ntfs_vnodeop_p;
@@ -998,6 +1041,7 @@ struct vnodeopv_entry_desc ntfs_vnodeop_entries[] = {
 	{ &vop_inactive_desc, (vop_t *)ntfs_inactive },
 	{ &vop_reclaim_desc, (vop_t *)ntfs_reclaim },
 	{ &vop_print_desc, (vop_t *)ntfs_print },
+	{ &vop_pathconf_desc, ntfs_pathconf },
 
 	{ &vop_islocked_desc, (vop_t *)vop_stdislocked },
 	{ &vop_unlock_desc, (vop_t *)vop_stdunlock },
@@ -1075,7 +1119,7 @@ struct vnodeopv_entry_desc ntfs_vnodeop_entries[] = {
 	{ &vop_bmap_desc, (vop_t *) ntfs_bmap },	/* bmap */
 	{ &vop_strategy_desc, (vop_t *) ntfs_strategy },	/* strategy */
 	{ &vop_print_desc, (vop_t *) ntfs_print },	/* print */
-	{ &vop_pathconf_desc, genfs_eopnotsupp },	/* pathconf */
+	{ &vop_pathconf_desc, ntfs_pathconf },		/* pathconf */
 	{ &vop_advlock_desc, genfs_nullop },		/* advlock */
 	{ &vop_blkatoff_desc, genfs_eopnotsupp },	/* blkatoff */
 	{ &vop_valloc_desc, genfs_eopnotsupp },		/* valloc */
