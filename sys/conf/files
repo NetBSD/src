@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.191 1998/06/22 20:08:42 sommerfe Exp $
+#	$NetBSD: files,v 1.192 1998/06/22 21:12:52 sommerfe Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -51,6 +51,9 @@ deffs	fs_union.h UNION
 
 # file system options
 defopt	QUOTA
+
+# Not entirely MI, but present on multiple arch's
+defopt	opt_mbr.h	COMPAT_386BSD_MBRPART
 
 # device classes
 devclass disk
