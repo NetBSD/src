@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: bind2netbsd,v 1.9 1999/11/20 18:21:56 veego Exp $
+#	$NetBSD: bind2netbsd,v 1.10 2000/04/28 03:34:00 itojun Exp $
 #
 # Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -62,6 +62,7 @@ esac
 
 echo preparing directory $d
 rm -rf $d
+mkdir -p $d
 mkdir -p $d/man
 
 ### Copy the files and directories
@@ -73,6 +74,10 @@ cd $r/src/port/netbsd/bin
 pax -rvw probe_ipv6 $d/bin
 cd $r/doc/man
 pax -rvw dig.1 dnskeygen.1 dnsquery.1 host.1 named-bootconf.8 named-xfer.8 named.8 named.conf.5 ndc.8 nslookup.8 nsupdate.8 $d/man
+cd $r/doc
+pax -rvw bog $d
+cd $d/bog
+make clean
 
 ### Remove lib/bsd, lib/cylink and lib/dnssafe
 cd $d/lib
@@ -117,6 +122,15 @@ echo ".\\\"" >>/tmp/bind2m$$
 		-e "s/@BSD_SYSCALL_EXT@/2/g" -e "s/@BSD_SYSCALL_EXT_U@/2/g" \
 		-e "s/@LIB_C_EXT@/3/g" -e "s/@LIB_C_EXT_U@/3/g" < $m > /tmp/bind3m$$ && \
 	mv /tmp/bind3m$$ $m && echo fixup $m
+	)
+done
+
+find $d/bog -type f -print | while read m; do
+	sed 1q < $m | grep -q '\$NetBSD' || (
+echo ".\\\"     \$NetBSD\$" >/tmp/bind2m$$
+echo ".\\\"" >>/tmp/bind2m$$
+	cat $m >> /tmp/bind2m$$
+	mv /tmp/bind2m$$ $m && echo added RCS tag to $m
 	)
 done
 
