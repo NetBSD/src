@@ -1,8 +1,11 @@
-/*	$NetBSD: linux_exec_elf32.c,v 1.30 1998/09/11 12:50:08 mycroft Exp $	*/
+/*	$NetBSD: linux_exec_elf32.c,v 1.31 1998/10/01 03:11:33 erh Exp $	*/
 
 /*-
- * Copyright (c) 1994 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Eric Haszlakiewicz.
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Christos Zoulas.
@@ -17,8 +20,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
  * 4. Neither the name of The NetBSD Foundation nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
@@ -65,7 +68,9 @@
  * based on exec_aout.c, sunos_exec.c and svr4_exec.c
  */
 
+#ifndef ELFSIZE
 #define	ELFSIZE		32				/* XXX should die */
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,47 +96,29 @@
 #include <compat/linux/linux_types.h>
 #include <compat/linux/linux_syscall.h>
 #include <compat/linux/linux_signal.h>
+#include <compat/linux/linux_siginfo.h>
 #include <compat/linux/linux_syscallargs.h>
 #include <compat/linux/linux_util.h>
 #include <compat/linux/linux_exec.h>
-#include <machine/linux_machdep.h>
 
-static void *linux_aout_copyargs __P((struct exec_package *,
-    struct ps_strings *, void *, void *));
-static int linux_elf32_signature __P((struct proc *p, struct exec_package *,
-    Elf32_Ehdr *));
+#include <compat/linux/linux_machdep.h>
 
-#define	LINUX_AOUT_AUX_ARGSIZ	2
+static int ELFNAME2(linux,signature) __P((struct proc *, struct exec_package *,
+	Elf_Ehdr *));
+#ifdef LINUX_GCC_SIGNATURE
+static int ELFNAME2(linux,gcc_signature) __P((struct proc *p,
+	struct exec_package *, Elf_Ehdr *));
+#endif
+
 #define LINUX_ELF_AUX_ARGSIZ (sizeof(AuxInfo) * 8 / sizeof(char *))
 
 
-const char linux_emul_path[] = "/emul/linux";
 extern int linux_error[];
 extern char linux_sigcode[], linux_esigcode[];
 extern struct sysent linux_sysent[];
 extern char *linux_syscallnames[];
 
-int exec_linux_aout_prep_zmagic __P((struct proc *, struct exec_package *));
-int exec_linux_aout_prep_nmagic __P((struct proc *, struct exec_package *));
-int exec_linux_aout_prep_omagic __P((struct proc *, struct exec_package *));
-int exec_linux_aout_prep_qmagic __P((struct proc *, struct exec_package *));
-
-struct emul emul_linux_aout = {
-	"linux",
-	linux_error,
-	linux_sendsig,
-	LINUX_SYS_syscall,
-	LINUX_SYS_MAXSYSCALL,
-	linux_sysent,
-	linux_syscallnames,
-	LINUX_AOUT_AUX_ARGSIZ,
-	linux_aout_copyargs,
-	linux_setregs,
-	linux_sigcode,
-	linux_esigcode,
-};
-
-struct emul emul_linux_elf = {
+struct emul ELFNAMEEND(emul_linux) = {
 	"linux",
 	linux_error,
 	linux_sendsig,
@@ -140,295 +127,49 @@ struct emul emul_linux_elf = {
 	linux_sysent,
 	linux_syscallnames,
 	LINUX_ELF_AUX_ARGSIZ,
-	elf32_copyargs,
+	ELFNAME(copyargs),
 	linux_setregs,
 	linux_sigcode,
 	linux_esigcode,
 };
 
 
-static void *
-linux_aout_copyargs(pack, arginfo, stack, argp)
-	struct exec_package *pack;
-	struct ps_strings *arginfo;
-	void *stack;
-	void *argp;
-{
-	char **cpp = stack;
-	char **stk = stack;
-	char *dp, *sp;
-	size_t len;
-	void *nullp = NULL;
-	int argc = arginfo->ps_nargvstr;
-	int envc = arginfo->ps_nenvstr;
-
-	if (copyout(&argc, cpp++, sizeof(argc)))
-		return NULL;
-
-	/* leave room for envp and argv */
-	cpp += 2;
-	if (copyout(&cpp, &stk[1], sizeof (cpp)))
-		return NULL;
-
-	dp = (char *) (cpp + argc + envc + 2);
-	sp = argp;
-
-	/* XXX don't copy them out, remap them! */
-	arginfo->ps_argvstr = cpp; /* remember location of argv for later */
-
-	for (; --argc >= 0; sp += len, dp += len)
-		if (copyout(&dp, cpp++, sizeof(dp)) ||
-		    copyoutstr(sp, dp, ARG_MAX, &len))
-			return NULL;
-
-	if (copyout(&nullp, cpp++, sizeof(nullp)))
-		return NULL;
-
-	if (copyout(&cpp, &stk[2], sizeof (cpp)))
-		return NULL;
-
-	arginfo->ps_envstr = cpp; /* remember location of envp for later */
-
-	for (; --envc >= 0; sp += len, dp += len)
-		if (copyout(&dp, cpp++, sizeof(dp)) ||
-		    copyoutstr(sp, dp, ARG_MAX, &len))
-			return NULL;
-
-	if (copyout(&nullp, cpp++, sizeof(nullp)))
-		return NULL;
-
-	return cpp;
-}
-
-int
-exec_linux_aout_makecmds(p, epp)
-	struct proc *p;
-	struct exec_package *epp;
-{
-	struct exec *linux_ep = epp->ep_hdr;
-	int machtype, magic;
-	int error = ENOEXEC;
-
-	magic = LINUX_N_MAGIC(linux_ep);
-	machtype = LINUX_N_MACHTYPE(linux_ep);
-
-
-	if (machtype != LINUX_MID_MACHINE)
-		return (ENOEXEC);
-
-	switch (magic) {
-	case QMAGIC:
-		error = exec_linux_aout_prep_qmagic(p, epp);
-		break;
-	case ZMAGIC:
-		error = exec_linux_aout_prep_zmagic(p, epp);
-		break;
-	case NMAGIC:
-		error = exec_linux_aout_prep_nmagic(p, epp);
-		break;
-	case OMAGIC:
-		error = exec_linux_aout_prep_omagic(p, epp);
-		break;
-	}
-	if (error == 0)
-		epp->ep_emul = &emul_linux_aout;
-	return error;
-}
-
-/*
- * Since text starts at 0x400 in Linux ZMAGIC executables, and 0x400
- * is very likely not page aligned on most architectures, it is treated
- * as an NMAGIC here. XXX
- */
-
-int
-exec_linux_aout_prep_zmagic(p, epp)
-	struct proc *p;
-	struct exec_package *epp;
-{
-	struct exec *execp = epp->ep_hdr;
-
-	epp->ep_taddr = LINUX_N_TXTADDR(*execp, ZMAGIC);
-	epp->ep_tsize = execp->a_text;
-	epp->ep_daddr = LINUX_N_DATADDR(*execp, ZMAGIC);
-	epp->ep_dsize = execp->a_data + execp->a_bss;
-	epp->ep_entry = execp->a_entry;
-
-	/* set up command for text segment */
-	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_readvn, execp->a_text,
-	    epp->ep_taddr, epp->ep_vp, LINUX_N_TXTOFF(*execp, ZMAGIC),
-	    VM_PROT_READ|VM_PROT_EXECUTE);
-
-	/* set up command for data segment */
-	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_readvn, execp->a_data,
-	    epp->ep_daddr, epp->ep_vp, LINUX_N_DATOFF(*execp, ZMAGIC),
-	    VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
-
-	/* set up command for bss segment */
-	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, execp->a_bss,
-	    epp->ep_daddr + execp->a_data, NULLVP, 0,
-	    VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
-
-	return exec_aout_setup_stack(p, epp);
-}
-
-/*
- * exec_aout_prep_nmagic(): Prepare Linux NMAGIC package.
- * Not different from the normal stuff.
- */
-
-int
-exec_linux_aout_prep_nmagic(p, epp)
-	struct proc *p;
-	struct exec_package *epp;
-{
-	struct exec *execp = epp->ep_hdr;
-	long bsize, baddr;
-
-	epp->ep_taddr = LINUX_N_TXTADDR(*execp, NMAGIC);
-	epp->ep_tsize = execp->a_text;
-	epp->ep_daddr = LINUX_N_DATADDR(*execp, NMAGIC);
-	epp->ep_dsize = execp->a_data + execp->a_bss;
-	epp->ep_entry = execp->a_entry;
-
-	/* set up command for text segment */
-	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_readvn, execp->a_text,
-	    epp->ep_taddr, epp->ep_vp, LINUX_N_TXTOFF(*execp, NMAGIC),
-	    VM_PROT_READ|VM_PROT_EXECUTE);
-
-	/* set up command for data segment */
-	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_readvn, execp->a_data,
-	    epp->ep_daddr, epp->ep_vp, LINUX_N_DATOFF(*execp, NMAGIC),
-	    VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
-
-	/* set up command for bss segment */
-	baddr = roundup(epp->ep_daddr + execp->a_data, NBPG);
-	bsize = epp->ep_daddr + epp->ep_dsize - baddr;
-	if (bsize > 0)
-		NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, bsize, baddr,
-		    NULLVP, 0, VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
-
-	return exec_aout_setup_stack(p, epp);
-}
-
-/*
- * exec_aout_prep_omagic(): Prepare Linux OMAGIC package.
- * Business as usual.
- */
-
-int
-exec_linux_aout_prep_omagic(p, epp)
-	struct proc *p;
-	struct exec_package *epp;
-{
-	struct exec *execp = epp->ep_hdr;
-	long dsize, bsize, baddr;
-
-	epp->ep_taddr = LINUX_N_TXTADDR(*execp, OMAGIC);
-	epp->ep_tsize = execp->a_text;
-	epp->ep_daddr = LINUX_N_DATADDR(*execp, OMAGIC);
-	epp->ep_dsize = execp->a_data + execp->a_bss;
-	epp->ep_entry = execp->a_entry;
-
-	/* set up command for text and data segments */
-	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_readvn,
-	    execp->a_text + execp->a_data, epp->ep_taddr, epp->ep_vp,
-	    LINUX_N_TXTOFF(*execp, OMAGIC), VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
-
-	/* set up command for bss segment */
-	baddr = roundup(epp->ep_daddr + execp->a_data, NBPG);
-	bsize = epp->ep_daddr + epp->ep_dsize - baddr;
-	if (bsize > 0)
-		NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, bsize, baddr,
-		    NULLVP, 0, VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
-
-	/*
-	 * Make sure (# of pages) mapped above equals (vm_tsize + vm_dsize);
-	 * obreak(2) relies on this fact. Both `vm_tsize' and `vm_dsize' are
-	 * computed (in execve(2)) by rounding *up* `ep_tsize' and `ep_dsize'
-	 * respectively to page boundaries.
-	 * Compensate `ep_dsize' for the amount of data covered by the last
-	 * text page. 
-	 */
-	dsize = epp->ep_dsize + execp->a_text - roundup(execp->a_text, NBPG);
-	epp->ep_dsize = (dsize > 0) ? dsize : 0;
-	return exec_aout_setup_stack(p, epp);
-}
-
-int
-exec_linux_aout_prep_qmagic(p, epp)
-	struct proc *p;
-	struct exec_package *epp;
-{
-	struct exec *execp = epp->ep_hdr;
-
-	epp->ep_taddr = LINUX_N_TXTADDR(*execp, QMAGIC);
-	epp->ep_tsize = execp->a_text;
-	epp->ep_daddr = LINUX_N_DATADDR(*execp, QMAGIC);
-	epp->ep_dsize = execp->a_data + execp->a_bss;
-	epp->ep_entry = execp->a_entry;
-
-	/*
-	 * check if vnode is in open for writing, because we want to
-	 * demand-page out of it.  if it is, don't do it, for various
-	 * reasons
-	 */
-	if ((execp->a_text != 0 || execp->a_data != 0) &&
-	    epp->ep_vp->v_writecount != 0) {
-#ifdef DIAGNOSTIC
-		if (epp->ep_vp->v_flag & VTEXT)
-			panic("exec: a VTEXT vnode has writecount != 0\n");
-#endif
-		return ETXTBSY;
-	}
-	epp->ep_vp->v_flag |= VTEXT;
-
-	/* set up command for text segment */
-	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_pagedvn, execp->a_text,
-	    epp->ep_taddr, epp->ep_vp, LINUX_N_TXTOFF(*execp, QMAGIC),
-	    VM_PROT_READ|VM_PROT_EXECUTE);
-
-	/* set up command for data segment */
-	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_pagedvn, execp->a_data,
-	    epp->ep_daddr, epp->ep_vp, LINUX_N_DATOFF(*execp, QMAGIC),
-	    VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
-
-	/* set up command for bss segment */
-	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, execp->a_bss,
-	    epp->ep_daddr + execp->a_data, NULLVP, 0,
-	    VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
-
-	return exec_aout_setup_stack(p, epp);
-}
-
+#ifdef LINUX_GCC_SIGNATURE
 /*
  * Take advantage of the fact that all the linux binaries are compiled
  * with gcc, and gcc sticks in the comment field a signature. Note that
  * on SVR4 binaries, the gcc signature will follow the OS name signature,
  * that will not be a problem. We don't bother to read in the string table,
  * but we check all the progbits headers.
+ *
+ * XXX This only works in the i386.  On the alpha (at least)
+ * XXX we have the same gcc signature which incorrectly identifies
+ * XXX NetBSD binaries as Linux.
  */
 static int
-linux_elf32_signature(p, epp, eh)
+ELFNAME2(linux,gcc_signature)(p, epp, eh)
 	struct proc *p;
 	struct exec_package *epp;
-	Elf32_Ehdr *eh;
+	Elf_Ehdr *eh;
 {
-	size_t shsize = sizeof(Elf32_Shdr) * eh->e_shnum;
+	size_t shsize = sizeof(Elf_Shdr) * eh->e_shnum;
 	size_t i;
 	static const char signature[] = "\0GCC: (GNU) ";
 	char buf[sizeof(signature) - 1];
-	Elf32_Shdr *sh;
+	Elf_Shdr *sh;
 	int error;
 
-	sh = (Elf32_Shdr *) malloc(shsize, M_TEMP, M_WAITOK);
+printf("XAXlinuxgccsig.\n");
+DELAY(500000);
+	error = ENOEXEC;
+	sh = (Elf_Shdr *) malloc(shsize, M_TEMP, M_WAITOK);
 
-	if ((error = elf32_read_from(p, epp->ep_vp, eh->e_shoff,
+	if ((error = ELFNAME(read_from)(p, epp->ep_vp, eh->e_shoff,
 	    (caddr_t) sh, shsize)) != 0)
 		goto out;
 
 	for (i = 0; i < eh->e_shnum; i++) {
-		Elf32_Shdr *s = &sh[i];
+		Elf_Shdr *s = &sh[i];
 
 		/*
 		 * Identify candidates for the comment header;
@@ -441,7 +182,7 @@ linux_elf32_signature(p, epp, eh)
 		    s->sh_size < sizeof(signature) - 1)
 			continue;
 
-		if ((error = elf32_read_from(p, epp->ep_vp, s->sh_offset,
+		if ((error = ELFNAME(read_from)(p, epp->ep_vp, s->sh_offset,
 		    (caddr_t) buf, sizeof(signature) - 1)) != 0)
 			goto out;
 
@@ -451,27 +192,129 @@ linux_elf32_signature(p, epp, eh)
 		if (memcmp(buf, signature, sizeof(signature) - 1) == 0)
 			goto out;
 	}
-	error = EFTYPE;
 
 out:
 	free(sh, M_TEMP);
 	return error;
 }
+#endif
 
-int
-linux_elf32_probe(p, epp, eh, itp, pos)
+static int
+ELFNAME2(linux,signature)(p, epp, eh)
 	struct proc *p;
 	struct exec_package *epp;
-	Elf32_Ehdr *eh;
+	Elf_Ehdr *eh;
+{
+	size_t i;
+	Elf_Phdr *ph;
+	Elf_Note *notep;
+	char *testp;
+	size_t phsize;
+	int error = ENOEXEC;
+
+	phsize = eh->e_phnum * sizeof(Elf_Phdr);
+	ph = (Elf_Phdr *)malloc(phsize, M_TEMP, M_WAITOK);
+	if ((error = ELFNAME(read_from)(p, epp->ep_vp, eh->e_phoff,
+					(caddr_t) ph, phsize)) != 0)
+		goto out1;
+
+	for (i = 0; i < eh->e_phnum; i++) {
+		Elf_Phdr *ephp = &ph[i];
+		u_int32_t ostype;
+
+/* XAX 
+use interp field.
+/lib/ld-linux
+1234567890123	= 13
+*/
+printf("inloop:%d is %d\n", i, ephp->p_type);
+		if (ephp->p_type != Elf_pt_interp /* XAX pt_note */
+/*		    ephp->p_flags != 0 ||
+		    ephp->p_filesz < sizeof(Elf_Note))*/ )
+			continue;
+
+		notep = (Elf_Note *)malloc(ephp->p_filesz, M_TEMP, M_WAITOK);
+		if ((error = ELFNAME(read_from)(p, epp->ep_vp, ephp->p_offset,
+					(caddr_t)notep, ephp->p_filesz)) != 0)
+			goto out3;
+
+		testp = (char *)notep;
+		testp[16] = '\0';
+		printf("interp:%s\n", testp);
+		if (testp[8] == 'l' && testp[9] == 'i' && testp[12] == 'x')  {
+printf("okok\n");
+			error = 0;
+			goto out3;
+		}
+
+		goto out2;
+
+printf("checkosverfor:%d\n", ELF_NOTE_TYPE_OSVERSION);
+		/* XXX XAX Should handle NETBSD_TYPE_EMULNAME */
+		if (notep->type != ELF_NOTE_TYPE_OSVERSION) {
+			free(notep, M_TEMP);
+			continue;
+		}
+
+printf("checksize: n=%d, d=%d\n", notep->namesz, notep->descsz);
+		/* Check the name and description sizes. */
+		if (notep->namesz != ELF_NOTE_GNU_NAMESZ ||
+		    notep->descsz != ELF_NOTE_GNU_DESCSZ)
+			goto out2;
+
+printf("checkname: %s\n", (char *)(notep + sizeof(Elf_Note)));
+		/* Is the name "GNU\0"? */
+		if (memcmp((notep + sizeof(Elf_Note)),
+			   ELF_NOTE_GNU_NAME, ELF_NOTE_GNU_NAMESZ))
+			goto out2;
+
+		/* Make sure the OS is Linux */
+		ostype = (u_int32_t)(*((u_int32_t *)notep + sizeof(Elf_Note)
+						+ notep->namesz))
+			& ELF_NOTE_GNU_OSMASK;
+printf("ostype:%d\n", ostype);
+		if (ostype != ELF_NOTE_GNU_OSLINUX)
+			goto out2;
+
+printf("allok\n");
+		/* All checks succeeded. */
+		error = 0;
+		goto out3;
+	}
+
+	error = ENOEXEC;
+
+out1:
+	free(ph, M_TEMP);
+	return error;
+
+out2:
+	error = ENOEXEC;
+out3:
+	free(notep, M_TEMP);
+	free(ph, M_TEMP);
+	return error;
+}
+
+int
+ELFNAME2(linux,probe)(p, epp, eh, itp, pos)
+	struct proc *p;
+	struct exec_package *epp;
+	Elf_Ehdr *eh;
 	char *itp;
-	Elf32_Addr *pos;
+	Elf_Addr *pos;
 {
 	char *bp;
 	int error;
 	size_t len;
 
-	if ((error = linux_elf32_signature(p, epp, eh)) != 0)
+	if ((error = ELFNAME2(linux,signature)(p, epp, eh)) != 0)
+#ifdef LINUX_GCC_SIGNATURE
+		if ((error = ELFNAME2(linux,gcc_signature)(p, epp, eh)) != 0)
+			return error;
+#else
 		return error;
+#endif
 
 	if (itp[0]) {
 		if ((error = emul_find(p, NULL, linux_emul_path, itp, &bp, 0)))
@@ -480,137 +323,9 @@ linux_elf32_probe(p, epp, eh, itp, pos)
 			return error;
 		free(bp, M_TEMP);
 	}
-	epp->ep_emul = &emul_linux_elf;
-	*pos = ELF32_NO_ADDR;
+	epp->ep_emul = &ELFNAMEEND(emul_linux);
+	*pos = ELF_NO_ADDR;
+printf("ret0\n");
 	return 0;
 }
 
-/*
- * The Linux system call to load shared libraries, a.out version. The
- * a.out shared libs are just files that are mapped onto a fixed
- * address in the process' address space. The address is given in
- * a_entry. Read in the header, set up some VM commands and run them.
- *
- * Yes, both text and data are mapped at once, so we're left with
- * writeable text for the shared libs. The Linux crt0 seemed to break
- * sometimes when data was mapped seperately. It munmapped a uselib()
- * of ld.so by hand, which failed with shared text and data for ld.so
- * Yuck.
- *
- * Because of the problem with ZMAGIC executables (text starts
- * at 0x400 in the file, but needs to be mapped at 0), ZMAGIC
- * shared libs are not handled very efficiently :-(
- */
-
-int
-linux_sys_uselib(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	struct linux_sys_uselib_args /* {
-		syscallarg(char *) path;
-	} */ *uap = v;
-	caddr_t sg;
-	long bsize, dsize, tsize, taddr, baddr, daddr;
-	struct nameidata ni;
-	struct vnode *vp;
-	struct exec hdr;
-	struct exec_vmcmd_set vcset;
-	int i, magic, error;
-	size_t rem;
-
-	sg = stackgap_init(p->p_emul);
-	LINUX_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
-
-	NDINIT(&ni, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path), p);
-
-	if ((error = namei(&ni)))
-		return error;
-
-	vp = ni.ni_vp;
-
-	if ((error = vn_rdwr(UIO_READ, vp, (caddr_t) &hdr, LINUX_AOUT_HDR_SIZE,
-			     0, UIO_SYSSPACE, IO_NODELOCKED, p->p_ucred,
-			     &rem, p))) {
-		vrele(vp);
-		return error;
-	}
-
-	if (rem != 0) {
-		vrele(vp);
-		return ENOEXEC;
-	}
-
-	if (LINUX_N_MACHTYPE(&hdr) != LINUX_MID_MACHINE)
-		return ENOEXEC;
-
-	magic = LINUX_N_MAGIC(&hdr);
-	taddr = hdr.a_entry & (~(NBPG - 1));
-	tsize = hdr.a_text;
-	daddr = taddr + tsize;
-	dsize = hdr.a_data + hdr.a_bss;
-
-	if ((hdr.a_text != 0 || hdr.a_data != 0) && vp->v_writecount != 0) {
-		vrele(vp);
-                return ETXTBSY;
-        }
-	vp->v_flag |= VTEXT;
-
-	vcset.evs_cnt = 0;
-	vcset.evs_used = 0;
-
-	NEW_VMCMD(&vcset,
-		  magic == ZMAGIC ? vmcmd_map_readvn : vmcmd_map_pagedvn,
-		  hdr.a_text + hdr.a_data, taddr,
-		  vp, LINUX_N_TXTOFF(hdr, magic),
-		  VM_PROT_READ|VM_PROT_EXECUTE|VM_PROT_WRITE);
-
-	baddr = roundup(daddr + hdr.a_data, NBPG);
-	bsize = daddr + dsize - baddr;
-        if (bsize > 0) {
-                NEW_VMCMD(&vcset, vmcmd_map_zero, bsize, baddr,
-                    NULLVP, 0, VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
-	}
-
-	for (i = 0; i < vcset.evs_used && !error; i++) {
-		struct exec_vmcmd *vcp;
-
-		vcp = &vcset.evs_cmds[i];
-		error = (*vcp->ev_proc)(p, vcp);
-	}
-
-	kill_vmcmds(&vcset);
-
-	vrele(vp);
-
-	return error;
-}
-
-/*
- * Execve(2). Just check the alternate emulation path, and pass it on
- * to the NetBSD execve().
- */
-int
-linux_sys_execve(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	struct linux_sys_execve_args /* {
-		syscallarg(char *) path;
-		syscallarg(char **) argv;
-		syscallarg(char **) envp;
-	} */ *uap = v;
-	struct sys_execve_args ap;
-	caddr_t sg;
-
-	sg = stackgap_init(p->p_emul);
-	LINUX_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
-
-	SCARG(&ap, path) = SCARG(uap, path);
-	SCARG(&ap, argp) = SCARG(uap, argp);
-	SCARG(&ap, envp) = SCARG(uap, envp);
-
-	return sys_execve(p, &ap, retval);
-}
