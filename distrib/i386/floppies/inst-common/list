@@ -1,4 +1,4 @@
-#	$Id: list,v 1.3 1994/10/18 21:21:39 cgd Exp $
+#	$Id: list,v 1.4 1995/08/14 01:50:19 cgd Exp $
 
 # copy the crunched binary, link to it, and kill it
 COPY	${OBJDIR}/instbin	instbin
@@ -28,6 +28,7 @@ LINK	instbin			sbin/init
 LINK	instbin			sbin/mknod
 LINK	instbin			sbin/mount
 LINK	instbin			sbin/mount_cd9660
+LINK	instbin			sbin/mount_ffs
 LINK	instbin			sbin/mount_msdos
 LINK	instbin			sbin/mount_nfs
 LINK	instbin			sbin/newfs
@@ -59,17 +60,17 @@ COPY	${DESTDIR}/dev/MAKEDEV	dev/MAKEDEV
 SPECIAL	cd dev; sh MAKEDEV floppy
 SPECIAL	/bin/rm dev/MAKEDEV
 
-# we need the contents of /usr/mdec (XXX)
-COPY	${DESTDIR}/usr/mdec/*	usr/mdec
+# we need the contents of /usr/mdec
+COPYDIR	${DESTDIR}/usr/mdec	usr/mdec
 
 # various files that we need in /etc for the install
-COPY	${DESTDIR}/etc/group		etc
-COPY	${DESTDIR}/etc/master.passwd	etc
-COPY	${DESTDIR}/etc/passwd		etc
-COPY	${DESTDIR}/etc/protocols	etc
-COPY	${DESTDIR}/etc/pwd.db		etc
-COPY	${DESTDIR}/etc/services		etc
-COPY	${DESTDIR}/etc/spwd.db		etc
+COPY	${DESTDIR}/etc/group		etc/group
+COPY	${DESTDIR}/etc/master.passwd	etc/master.passwd
+COPY	${DESTDIR}/etc/passwd		etc/passwd
+COPY	${DESTDIR}/etc/protocols	etc/protocols
+COPY	${DESTDIR}/etc/pwd.db		etc/pwd.db
+COPY	${DESTDIR}/etc/services		etc/services
+COPY	${DESTDIR}/etc/spwd.db		etc/spwd.db
 
 # and the common installation tools
 COPY	${TOPDIR}/inst-common/dot.commonutils	.commonutils
