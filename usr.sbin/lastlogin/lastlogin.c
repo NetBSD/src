@@ -1,4 +1,4 @@
-/*	$NetBSD: lastlogin.c,v 1.8 2003/12/16 15:40:29 wulf Exp $	*/
+/*	$NetBSD: lastlogin.c,v 1.9 2004/11/11 20:17:36 christos Exp $	*/
 /*
  * Copyright (c) 1996 John M. Vinopal
  * All rights reserved.
@@ -33,29 +33,46 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: lastlogin.c,v 1.8 2003/12/16 15:40:29 wulf Exp $");
+__RCSID("$NetBSD: lastlogin.c,v 1.9 2004/11/11 20:17:36 christos Exp $");
 #endif
 
 #include <sys/types.h>
 #include <err.h>
+#include <db.h>
 #include <errno.h>
 #include <pwd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <fcntl.h>
 #include <time.h>
+#include <arpa/inet.h>
+#include <sys/socket.h>
+#ifdef SUPPORT_UTMP
 #include <utmp.h>
+#endif
+#ifdef SUPPORT_UTMPX
+#include <utmpx.h>
+#endif
 #include <unistd.h>
 
 struct output {
-	char		 o_name[UT_NAMESIZE];
-	char		 o_line[UT_LINESIZE];
-	char		 o_host[UT_HOSTSIZE];
-	time_t		 o_time;
+	struct timeval	 o_tv;
+	struct sockaddr_storage o_ss;
+	char		 o_name[64];
+	char		 o_line[64];
+	char		 o_host[256];
 	struct output	*next;
 };
 
-static	char *logfile = _PATH_LASTLOG;
+static	char *logfile =
+#if defined(SUPPORT_UTMPX)
+    _PATH_LASTLOGX;
+#elif defined(SUPPORT_UTMP)
+    _PATH_LASTLOG;
+#else
+	#error "either SUPPORT_UTMP or SUPPORT_UTMPX must be defined"
+#endif
 
 #define SORT_NONE	0x0000
 #define SORT_REVERSE	0x0001
@@ -64,26 +81,52 @@ static	char *logfile = _PATH_LASTLOG;
 static	int sortlog = SORT_NONE;
 static	struct output *outstack = NULL;
 
-	int	main __P((int, char **));
-static	int	comparelog __P((const void *, const void *));
-static	void	output __P((struct output *));
-static	void	process_entry __P((struct passwd *, struct lastlog *));
-static	void	push __P((struct output *));
-static	void	sortoutput __P((struct output *));
-static	void	usage __P((void));
+static int numeric = 0;
+static size_t namelen = UT_NAMESIZE;
+static size_t linelen = UT_LINESIZE;
+static size_t hostlen = UT_HOSTSIZE;
+
+	int	main(int, char **);
+static	int	comparelog(const void *, const void *);
+static	void	output(struct output *);
+#ifdef SUPPORT_UTMP
+static	void	process_entry(struct passwd *, struct lastlog *);
+static	void	dolastlog(const char *, int, char *[]);
+#endif
+#ifdef SUPPORT_UTMPX
+static	void	process_entryx(struct passwd *, struct lastlogx *);
+static	void	dolastlogx(const char *, int, char *[]);
+#endif
+static	void	push(struct output *);
+static	const char 	*gethost(struct output *);
+static	void	sortoutput(struct output *);
+static	void	usage(void);
 
 int
 main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	int	ch, i;
-	FILE	*fp;
-	struct passwd	*passwd;
-	struct lastlog	last;
+	int	ch;
+	size_t	len;
 
-	while ((ch = getopt(argc, argv, "rt")) != -1) {
+	while ((ch = getopt(argc, argv, "f:H:L:nN:rt")) != -1) {
 		switch (ch) {
+		case 'H':
+			hostlen = atoi(optarg);
+			break;
+		case 'f':
+			logfile = optarg;
+			break;
+		case 'L':
+			linelen = atoi(optarg);
+			break;
+		case 'n':
+			numeric++;
+			break;
+		case 'N':
+			namelen = atoi(optarg);
+			break;
 		case 'r':
 			sortlog |= SORT_REVERSE;
 			break;
@@ -97,53 +140,74 @@ main(argc, argv)
 	argc -= optind;
 	argv += optind;
 
-	fp = fopen(logfile, "r");
-	if (fp == NULL)
-		err(1, "%s", logfile);
+	len = strlen(logfile);
 
 	setpassent(1);	/* Keep passwd file pointers open */
 
-	/* Process usernames given on the command line. */
-	if (argc > 0) {
-		long offset;
-		for (i = 0; i < argc; i++) {
-			if ((passwd = getpwnam(argv[i])) == NULL) {
-				warnx("user '%s' not found", argv[i]);
-				continue;
-			}
-			/* Calculate the offset into the lastlog file. */
-			offset = (long)(passwd->pw_uid * sizeof(last));
-			if (fseek(fp, offset, SEEK_SET)) {
-				warn("fseek error");
-				continue;
-			}
-			if (fread(&last, sizeof(last), 1, fp) != 1) {
-				warnx("fread error on '%s'", passwd->pw_name);
-				clearerr(fp);
-				continue;
-			}
-			process_entry(passwd, &last);
-		}
-	}
-	/* Read all lastlog entries, looking for active ones */
-	else {
-		for (i = 0; fread(&last, sizeof(last), 1, fp) == 1; i++) {
-			if (last.ll_time == 0)
-				continue;
-			if ((passwd = getpwuid(i)) != NULL)
-				process_entry(passwd, &last);
-		}
-		if (ferror(fp))
-			warnx("fread error");
-	}
+#if defined(SUPPORT_UTMPX)
+	if (len > 0 && logfile[len - 1] == 'x')
+		dolastlogx(logfile, argc, argv);
+	else
+#endif
+#if defined(SUPPORT_UTMP)
+		dolastlog(logfile, argc, argv);
+#endif
 
 	setpassent(0);	/* Close passwd file pointers */
 
 	if (DOSORT(sortlog))
 		sortoutput(outstack);
 
-	fclose(fp);
-	exit(0);
+	return 0;
+}
+
+#ifdef SUPPORT_UTMP
+static void
+dolastlog(const char *logfile, int argc, char **argv)
+{
+	int i;
+	FILE *fp = fopen(logfile, "r");
+	struct passwd	*passwd;
+	struct lastlog l;
+
+	if (fp == NULL)
+		err(1, "%s", logfile);
+
+	/* Process usernames given on the command line. */
+	if (argc > 0) {
+		off_t offset;
+		for (i = 0; i < argc; i++) {
+			if ((passwd = getpwnam(argv[i])) == NULL) {
+				warnx("user '%s' not found", argv[i]);
+				continue;
+			}
+			/* Calculate the offset into the lastlog file. */
+			offset = passwd->pw_uid * sizeof(l);
+			if (fseeko(fp, offset, SEEK_SET)) {
+				warn("fseek error");
+				continue;
+			}
+			if (fread(&l, sizeof(l), 1, fp) != 1) {
+				warnx("fread error on '%s'", passwd->pw_name);
+				clearerr(fp);
+				continue;
+			}
+			process_entry(passwd, &l);
+		}
+	}
+	/* Read all lastlog entries, looking for active ones */
+	else {
+		for (i = 0; fread(&l, sizeof(l), 1, fp) == 1; i++) {
+			if (l.ll_time == 0)
+				continue;
+			if ((passwd = getpwuid(i)) != NULL)
+				process_entry(passwd, &l);
+		}
+		if (ferror(fp))
+			warnx("fread error");
+	}
+
+	(void)fclose(fp);
 }
 
 static void
@@ -151,10 +215,12 @@ process_entry(struct passwd *p, struct lastlog *l)
 {
 	struct output	o;
 
-	strncpy(o.o_name, p->pw_name, UT_NAMESIZE);
-	strncpy(o.o_line, l->ll_line, UT_LINESIZE);
-	strncpy(o.o_host, l->ll_host, UT_HOSTSIZE);
-	o.o_time = l->ll_time;
+	(void)strlcpy(o.o_name, p->pw_name, sizeof(o.o_name));
+	(void)strlcpy(o.o_line, l->ll_line, sizeof(l->ll_line));
+	(void)strlcpy(o.o_host, l->ll_host, sizeof(l->ll_host));
+	o.o_tv.tv_sec = l->ll_time;
+	o.o_tv.tv_usec = 0;
+	(void)memset(&o.o_ss, 0, sizeof(o.o_ss));
 	o.next = NULL;
 
 	/*
@@ -167,6 +233,125 @@ process_entry(struct passwd *p, struct lastlog *l)
 	else
 		output(&o);
 }
+#endif
+
+#ifdef SUPPORT_UTMPX
+static void
+dolastlogx(const char *logfile, int argc, char **argv)
+{
+	int i = 0;
+	DB *db = dbopen(logfile, O_RDONLY|O_SHLOCK, 0, DB_HASH, NULL);
+	DBT key, data;
+	struct lastlogx l;
+	struct passwd	*passwd;
+
+	if (db == NULL)
+		err(1, "%s", logfile);
+
+	if (argc > 0) {
+		for (i = 0; i < argc; i++) {
+			if ((passwd = getpwnam(argv[i])) == NULL) {
+				warnx("User `%s' not found", argv[i]);
+				continue;
+			}
+			key.data = &passwd->pw_uid;
+			key.size = sizeof(passwd->pw_uid);
+
+			switch ((*db->get)(db, &key, &data, 0)) {
+			case 0:
+				break;
+			case 1:
+				warnx("User `%s' not found", passwd->pw_name);
+				continue;
+			case -1:
+				warn("Error looking up `%s'", passwd->pw_name);
+				continue;
+			default:
+				abort();
+			}
+
+			if (data.size != sizeof(l)) {
+				errno = EFTYPE;
+				err(1, "%s", logfile);
+			}
+			(void)memcpy(&l, data.data, sizeof(l));
+
+			process_entryx(passwd, &l);
+		}
+	}
+	/* Read all lastlog entries, looking for active ones */
+	else {
+		switch ((*db->seq)(db, &key, &data, R_FIRST)) {
+		case 0:
+			break;
+		case 1:
+			warnx("No entries found");
+			(*db->close)(db);
+			return;
+		case -1:
+			warn("Error seeking to first entry");
+			(*db->close)(db);
+			return;
+		default:
+			abort();
+		}
+
+		do {
+			uid_t uid;
+
+			if (key.size != sizeof(uid) || data.size != sizeof(l)) {
+				errno = EFTYPE;
+				err(1, "%s", logfile);
+			}
+			(void)memcpy(&uid, key.data, sizeof(uid));
+
+			if ((passwd = getpwuid(uid)) == NULL) {
+				warnx("Cannot find user for uid %lu",
+				    (unsigned long)uid);
+				continue;
+			}
+			(void)memcpy(&l, data.data, sizeof(l));
+			process_entryx(passwd, &l);
+		} while ((i = (*db->seq)(db, &key, &data, R_NEXT)) == 0);
+
+		switch (i) {
+		case 1:
+			break;
+		case -1:
+			warn("Error seeking to last entry");
+			break;
+		case 0:
+		default:
+			abort();
+		}
+	}
+
+	(*db->close)(db);
+}
+
+static void
+process_entryx(struct passwd *p, struct lastlogx *l)
+{
+	struct output	o;
+
+	(void)strlcpy(o.o_name, p->pw_name, sizeof(o.o_name));
+	(void)strlcpy(o.o_line, l->ll_line, sizeof(l->ll_line));
+	(void)strlcpy(o.o_host, l->ll_host, sizeof(l->ll_host));
+	(void)memcpy(&o.o_ss, &l->ll_ss, sizeof(o.o_ss));
+	o.o_tv = l->ll_tv;
+	o.next = NULL;
+
+	/*
+	 * If we are sorting it, we need all the entries in memory so
+	 * push the current entry onto a stack.  Otherwise, we can just
+	 * output it.
+	 */
+	if (DOSORT(sortlog))
+		push(&o);
+	else
+		output(&o);
+}
+#endif
 
 static void
 push(struct output *o)
@@ -176,7 +361,7 @@ push(struct output *o)
 	out = malloc(sizeof(*out));
 	if (!out)
 		err(EXIT_FAILURE, "malloc failed");
-	memcpy(out, o, sizeof(*out));
+	(void)memcpy(out, o, sizeof(*out));
 	out->next = NULL;
 
 	if (outstack) {
@@ -218,28 +403,61 @@ comparelog(const void *left, const void *right)
 	struct output *r = *(struct output **)right;
 	int order = (sortlog&SORT_REVERSE)?-1:1;
 
-	if (l->o_time < r->o_time)
+	if (l->o_tv.tv_sec < r->o_tv.tv_sec)
 		return 1 * order;
-	if (l->o_time == r->o_time)
+	if (l->o_tv.tv_sec == r->o_tv.tv_sec)
 		return 0;
 	return -1 * order;
+}
+
+static const char *
+gethost(struct output *o)
+{
+	if (!numeric)
+		return o->o_host;
+	else {
+		static char buf[512];
+		const char *p;
+		struct sockaddr_storage *ss = &o->o_ss;
+		void *a;
+		switch (ss->ss_family) {
+		default:
+			(void)snprintf(buf, sizeof(buf), "%d: unknown family",
+				ss->ss_family);
+			return buf;
+		case 0:	/* reboot etc. entries */
+			return "";
+		case AF_INET:
+			a = &((struct sockaddr_in *)(void *)ss)->sin_addr;
+			break;
+		case AF_INET6:
+			a = &((struct sockaddr_in6 *)(void *)ss)->sin6_addr;
+			break;
+		}
+		if ((p = inet_ntop(ss->ss_family, a, buf, ss->ss_len)) != NULL)
+			return p;
+		(void)snprintf(buf, sizeof(buf), "%s", strerror(errno));
+		return buf;
+	}
 }
 
 /* Duplicate the output of last(1) */
 static void
 output(struct output *o)
 {
-
+	time_t t = (time_t)o->o_tv.tv_sec;
 	printf("%-*.*s  %-*.*s %-*.*s   %s",
-		UT_NAMESIZE, UT_NAMESIZE, o->o_name,
-		UT_LINESIZE, UT_LINESIZE, o->o_line,
-		UT_HOSTSIZE, UT_HOSTSIZE, o->o_host,
-		(o->o_time) ? ctime(&(o->o_time)) : "Never logged in\n");
+		namelen, namelen, o->o_name,
+		linelen, linelen, o->o_line,
+		hostlen, hostlen, gethost(o),
+		t ? ctime(&t) : "Never logged in\n");
 }
 
 static void
-usage()
+usage(void)
 {
-	fprintf(stderr, "usage: %s [-rt] [user ...]\n", getprogname());
+	(void)fprintf(stderr, "Usage: %s [-nrt] [-f <filename>] "
+	    "[-H <hostlen>] [-L <linelen>] [-N <namelen>] [user ...]\n",
+	    getprogname());
 	exit(1);
 }
