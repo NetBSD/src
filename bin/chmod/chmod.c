@@ -1,4 +1,4 @@
-/* $NetBSD: chmod.c,v 1.26 2001/09/16 12:16:20 wiz Exp $ */
+/* $NetBSD: chmod.c,v 1.27 2002/05/31 18:54:01 bjh21 Exp $ */
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)chmod.c	8.8 (Berkeley) 4/1/94";
 #else
-__RCSID("$NetBSD: chmod.c,v 1.26 2001/09/16 12:16:20 wiz Exp $");
+__RCSID("$NetBSD: chmod.c,v 1.27 2002/05/31 18:54:01 bjh21 Exp $");
 #endif
 #endif /* not lint */
 
@@ -99,12 +99,12 @@ main(int argc, char *argv[])
 			break;
 		case 'h':
 			/*
-			 * In System V (and probably POSIX.2) the -h option
-			 * causes chmod to change the mode of the symbolic
-			 * link.  4.4BSD's symbolic links didn't have modes,
-			 * so it was an undocumented noop.  In NetBSD 1.3,
-			 * lchmod(2) is introduced and this option does real
-			 * work.
+			 * In System V the -h option causes chmod to
+			 * change the mode of the symbolic link.
+			 * 4.4BSD's symbolic links didn't have modes,
+			 * so it was an undocumented noop.  In NetBSD
+			 * 1.3, lchmod(2) is introduced and this
+			 * option does real work.
 			 */
 			hflag = 1;
 			break;
