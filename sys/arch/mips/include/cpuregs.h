@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuregs.h,v 1.60 2003/06/09 12:20:37 simonb Exp $	*/
+/*	$NetBSD: cpuregs.h,v 1.61 2003/06/10 06:42:06 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -208,7 +208,7 @@
  */
 #define	MIPS3_SR_XX		0x80000000
 #define	MIPS3_SR_RP		0x08000000
-#define	MIPS3_SR_FR_32		0x04000000
+#define	MIPS3_SR_FR		0x04000000
 #define	MIPS3_SR_RE		0x02000000
 
 #define	MIPS3_SR_DIAG_DL	0x01000000		/* QED 52xx */
