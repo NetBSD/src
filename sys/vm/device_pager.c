@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)device_pager.c	8.1 (Berkeley) 6/11/93
- *	$Id: device_pager.c,v 1.11 1993/12/20 12:39:55 cgd Exp $
+ *	$Id: device_pager.c,v 1.12 1994/01/07 17:12:51 mycroft Exp $
  */
 
 /*
@@ -310,7 +310,7 @@ dev_pager_putpage(pager, m, sync)
 		printf("dev_pager_putpage(%x, %x)\n", pager, m);
 #endif
 	if (pager == NULL)
-		return;
+		return(VM_PAGER_OK);
 	panic("dev_pager_putpage called");
 }
 
