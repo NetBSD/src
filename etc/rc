@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: rc,v 1.161 2002/05/19 01:01:32 lukem Exp $
+# $NetBSD: rc,v 1.162 2003/01/04 15:27:43 lukem Exp $
 #
 # rc --
 #	Run the scripts in /etc/rc.d with rcorder.
@@ -15,7 +15,7 @@ umask 022
 
 . /etc/rc.subr
 . /etc/rc.conf
-_rc_conf_loaded=YES
+_rc_conf_loaded=true
 
 if ! checkyesno rc_configured; then
 	echo "/etc/rc.conf is not configured.  Multiuser boot aborted."
