@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.200 2004/07/09 03:19:51 enami Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.201 2004/07/17 19:55:28 mycroft Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.199 2004/07/09 03:19:20 enami Exp 
+ *	NetBSD: pcmciadevs,v 1.200 2004/07/17 19:55:14 mycroft Exp 
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -1135,13 +1135,6 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "Xircom CreditCard Ethernet + Modem 56",	}
 	,
 	{
-	    PCMCIA_VENDOR_ZONET, PCMCIA_PRODUCT_ZONET_ZEN,
-	    PCMCIA_CIS_ZONET_ZEN,
-	    0,
-	    "Zonet Technology Inc.",
-	    "Zonet Zen 10/10",	}
-	,
-	{
 	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_ACCTON_EN2212,
 	    PCMCIA_CIS_ACCTON_EN2212,
 	    0,
@@ -2137,14 +2130,6 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_CIS_INVALID,
 	    0,
 	    "Melco Corporation",
-	    NULL,
-	},
-	{
-	    PCMCIA_VENDOR_ZONET,
-	    PCMCIA_KNOWNDEV_NOPROD,
-	    PCMCIA_CIS_INVALID,
-	    0,
-	    "Zonet Technology Inc.",
 	    NULL,
 	},
 	{
