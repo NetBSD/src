@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmciadevs.h,v 1.145 2001/11/08 17:05:58 christos Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.146 2001/11/18 04:26:16 mrg Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -99,6 +99,7 @@
 #define	PCMCIA_VENDOR_HAGIWARASYSCOM	0xc012	/* Hagiwara SYS-COM */
 #define	PCMCIA_VENDOR_RATOC	0xc015	/* RATOC System Inc. */
 #define	PCMCIA_VENDOR_EMTAC	0xc250	/* EMTAC Technology Corporation */
+#define	PCMCIA_VENDOR_LINKSYS2	0x0274	/* The Linksys Group */
 #define	PCMCIA_VENDOR_ELSA	0xd601	/* Elsa */
 
 /*
@@ -533,6 +534,11 @@
 #define	PCMCIA_PRODUCT_ZONET_ZEN	0x0100
 #define	PCMCIA_STR_ZONET_ZEN	"Zonet Zen 10/10"
 
+/* Linksys */
+#define	PCMCIA_CIS_LINKSYS2_IWN	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_LINKSYS2_IWN	0x1612
+#define	PCMCIA_STR_LINKSYS2_IWN	"Instant Wireless Network PC Card"
+
 
 /*
  * Cards we know only by their cis, sorted by name.
@@ -716,4 +722,3 @@
 #define	PCMCIA_CIS_YEDATA_EXTERNAL_FDD	{ "Y-E DATA", "External FDD", NULL, NULL }
 #define	PCMCIA_PRODUCT_YEDATA_EXTERNAL_FDD	-1
 #define	PCMCIA_STR_YEDATA_EXTERNAL_FDD	"Y-E DATA External FDD"
-
