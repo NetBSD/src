@@ -1,4 +1,4 @@
-/* $NetBSD: asc_asm.S,v 1.1 1996/01/31 23:25:29 mark Exp $ */
+/* $NetBSD: asc_asm.S,v 1.2 1996/02/02 02:36:13 mycroft Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -41,10 +41,10 @@
  * Created      : 01/07/95
  * Last updated : 01/07/95
  *
- *    $Id: asc_asm.S,v 1.1 1996/01/31 23:25:29 mark Exp $
+ *    $Id: asc_asm.S,v 1.2 1996/02/02 02:36:13 mycroft Exp $
  */
 
-#include "assym.s"
+#include "assym.h"
 #include <arm32/podulebus/ascreg.h>
 
 #define	SCSI_DATA_IN	0x0800	/* expect data to come INTO memory	*/

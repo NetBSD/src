@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.48 1996/01/31 02:26:05 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.49 1996/02/02 02:36:31 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -42,7 +42,7 @@
  *	@(#)locore.s	8.6 (Berkeley) 5/27/94
  */
 
-#include "assym.s"
+#include "assym.h"
 #include <hp300/hp300/vectors.s>
 
 #define MMUADDR(ar)	movl	_MMUbase,ar

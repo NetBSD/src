@@ -1,4 +1,4 @@
-/* $NetBSD: irq.S,v 1.1 1996/01/31 23:16:08 mark Exp $ */
+/* $NetBSD: irq.S,v 1.2 1996/02/02 02:35:41 mycroft Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -43,10 +43,10 @@
  * Created      : 27/09/94
  * Last updated : 01/07/95
  *
- *    $Id: irq.S,v 1.1 1996/01/31 23:16:08 mark Exp $
+ *    $Id: irq.S,v 1.2 1996/02/02 02:35:41 mycroft Exp $
  */
 
-#include "assym.s"
+#include "assym.h"
 #include <machine/cpu.h>
 #include <machine/iomd.h>
 

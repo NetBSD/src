@@ -1,4 +1,4 @@
-/* $NetBSD: scratch.S,v 1.1 1996/01/31 23:16:50 mark Exp $ */
+/* $NetBSD: scratch.S,v 1.2 1996/02/02 02:35:49 mycroft Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -41,10 +41,10 @@
  * Created      : 02/04/95
  * Last updated : 04/06/95
  *
- *    $Id: scratch.S,v 1.1 1996/01/31 23:16:50 mark Exp $
+ *    $Id: scratch.S,v 1.2 1996/02/02 02:35:49 mycroft Exp $
  */
 
-#include "assym.s"
+#include "assym.h"
 
 lr	.req	r14
 pc	.req	r15

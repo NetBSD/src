@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mac68k,v 1.28 1996/02/01 22:31:33 mycroft Exp $
+#	$NetBSD: Makefile.mac68k,v 1.29 1996/02/02 02:36:48 mycroft Exp $
 
 # Makefile for NetBSD for the mac
 #	Derived from makefile for hp300 from NetBSD
@@ -119,7 +119,7 @@ symbols.sort: ${MAC68K}/mac68k/symbols.raw
 	grep -v '^#' ${MAC68K}/mac68k/symbols.raw \
 	    | sed 's/^	//' | sort -u > symbols.sort
 
-locore.o: assym.s ${MAC68K}/mac68k/vectors.s ${MAC68K}/mac68k/macglobals.s
+locore.o: assym.h ${MAC68K}/mac68k/vectors.s ${MAC68K}/mac68k/macglobals.s
 locore.o: ${MAC68K}/mac68k/locore.s 
 locore.o: ${MAC68K}/include/trap.h ${MAC68K}/include/psl.h
 locore.o: ${MAC68K}/include/pte.h ${MAC68K}/include/cpu.h
@@ -136,16 +136,16 @@ clock.o machdep.o autoconf.o conf.o: Makefile
 af.o uipc_proto.o locore.o: Makefile
 
 # depend on maxusers
-assym.s: Makefile
+assym.h: Makefile
 
-assym.s: genassym
-	./genassym >assym.s
+assym.h: genassym
+	./genassym >assym.h
 
 genassym: ${MAC68K}/mac68k/genassym.c
 	${LOCAL_CC} ${INCLUDES} ${IDENT} -D_KERNEL ${PARAM} -o genassym \
 	    ${MAC68K}/mac68k/genassym.c
 
-depend: assym.s param.c vnode_if.h
+depend: assym.h param.c vnode_if.h
 	mkdep ${COPTS} ${CFILES} ioconf.c param.c
 	mkdep -a -p ${INCLUDES} ${IDENT} ${PARAM} ${MAC68K}/mac68k/genassym.c
 

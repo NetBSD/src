@@ -1,4 +1,4 @@
-/* $NetBSD: armfpe_glue.S,v 1.1 1996/01/31 23:21:04 mark Exp $ */
+/* $NetBSD: armfpe_glue.S,v 1.2 1996/02/02 02:36:09 mycroft Exp $ */
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -40,10 +40,10 @@
  * Created      : 21/12/95
  * Last updated : 30/12/95
  *
- *    $Id: armfpe_glue.S,v 1.1 1996/01/31 23:21:04 mark Exp $
+ *    $Id: armfpe_glue.S,v 1.2 1996/02/02 02:36:09 mycroft Exp $
  */
 
-#include "assym.s"
+#include "assym.h"
 #include <machine/cpu.h>
 
 sp	.req	r13

@@ -1,4 +1,4 @@
-/* $NetBSD: copystr.S,v 1.1 1996/01/31 23:15:36 mark Exp $ */
+/* $NetBSD: copystr.S,v 1.2 1996/02/02 02:35:32 mycroft Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -43,10 +43,10 @@
  * Created      : 16/05/95
  * Last updated : 16/05/95
  *
- *    $Id: copystr.S,v 1.1 1996/01/31 23:15:36 mark Exp $
+ *    $Id: copystr.S,v 1.2 1996/02/02 02:35:32 mycroft Exp $
  */
 
-#include "assym.s"
+#include "assym.h"
 #include "sys/errno.h"
 
 sp	.req	r13

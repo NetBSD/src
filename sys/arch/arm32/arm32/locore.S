@@ -1,4 +1,4 @@
-/* $NetBSD: locore.S,v 1.1 1996/01/31 23:16:19 mark Exp $ */
+/* $NetBSD: locore.S,v 1.2 1996/02/02 02:35:45 mycroft Exp $ */
 
 /*
  * Copyright (C) 1994 Mark Brinicombe
@@ -30,10 +30,10 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: locore.S,v 1.1 1996/01/31 23:16:19 mark Exp $
+ *	$Id: locore.S,v 1.2 1996/02/02 02:35:45 mycroft Exp $
  */
 
-#include "assym.s"
+#include "assym.h"
 #include <machine/asm.h>
 #include <machine/cpu.h>
 #include <machine/param.h>

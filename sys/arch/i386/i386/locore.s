@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.142 1996/01/07 03:59:28 mycroft Exp $	*/
+/*	$NetBSD: locore.s,v 1.143 1996/02/02 02:36:40 mycroft Exp $	*/
 
 #undef DIAGNOSTIC
 #define DIAGNOSTIC
@@ -42,7 +42,7 @@
  */
 
 #include "npx.h"
-#include "assym.s"
+#include "assym.h"
 
 #include <sys/errno.h>
 #include <sys/syscall.h>

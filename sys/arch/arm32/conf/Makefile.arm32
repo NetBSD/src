@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.arm32,v 1.2 1996/02/01 22:29:30 mycroft Exp $
+#	$NetBSD: Makefile.arm32,v 1.3 1996/02/02 02:35:59 mycroft Exp $
 #
 # Makefile for NetBSD
 #
@@ -121,7 +121,7 @@ lint: /tmp param.c
 	    grep -v 'struct/union .* never defined' | \
 	    grep -v 'possible pointer alignment problem'
 
-locore.o: ${ARM32}/arm32/locore.S assym.s
+locore.o: ${ARM32}/arm32/locore.S assym.h
 	${NORMAL_S}
 
 # depend on network or filesystem configuration
@@ -134,10 +134,10 @@ vm_machdep.o cpuswitch.o cpu.o: Makefile
 lpt.o: Makefile
 
 # depend on maxusers
-assym.s: Makefile
+assym.h: Makefile
 
-assym.s: genassym
-	./genassym >assym.s
+assym.h: genassym
+	./genassym >assym.h
 
 genassym: ${ARM32}/arm32/genassym.c
 	${LCC} ${INCLUDES} ${IDENT} ${PARAM} -Darm32 -o genassym \
@@ -147,7 +147,7 @@ SRCS= ${CFILES} ${SFILES} ${ARM32}/arm32/genassym.c ioconf.c param.c vnode_if.c 
       ${ARM32}/arm32/makemodes.c
 
 depend: .depend
-.depend: ${SRCS} assym.s
+.depend: ${SRCS} assym.h
 	mkdepend ${COPTS} ${SRCS}
 	mkdepend -a -p ${COPTS} ${ARM32}/arm32/genassym.c
 
