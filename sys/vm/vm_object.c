@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_object.c,v 1.36.2.1 1996/12/07 12:10:02 mrg Exp $	*/
+/*	$NetBSD: vm_object.c,v 1.36.2.2 1996/12/07 13:52:24 mrg Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -1101,7 +1101,7 @@ vm_object_collapse_aux(object)
 
 #ifdef DEBUG
 	if (vmdebug & VMDEBUG_COLLAPSE)
-		printf("vm_object_collapse_aux(0x%x)\n", object);
+		printf("vm_object_collapse_aux(0x%p)\n", object);
 #endif
 
 		/*
@@ -1811,8 +1811,8 @@ vm_object_set_shadow(object, shadow)
 
 #ifdef DEBUG
 	if (vmdebug & VMDEBUG_SHADOW)
-		printf("vm_object_set_shadow(object=0x%x, shadow=0x%x) "
-		    "old_shadow=0x%x\n", object, shadow, old_shadow);
+		printf("vm_object_set_shadow(object=0x%p, shadow=0x%p) "
+		    "old_shadow=0x%p\n", object, shadow, old_shadow);
 	if (vmdebug & VMDEBUG_SHADOW_VERBOSE) {
 		vm_object_print(object, 0);
 		vm_object_print(old_shadow, 0);
