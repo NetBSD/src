@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_port.h,v 1.18 2000/01/16 09:42:36 augustss Exp $	*/
+/*	$NetBSD: usb_port.h,v 1.19 2000/01/16 10:38:58 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_port.h,v 1.21 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -174,7 +174,7 @@ __CONCAT(dname,_detach)(self, flags) \
 #define	uhidpoll		uhidselect
 #define	ugenpoll		ugenselect
 
-#define powerhook_establish(fn, sc) 0
+#define powerhook_establish(fn, sc) (fn)
 #define powerhook_disestablish(hdl)
 #define PWR_RESUME 0
 
@@ -306,7 +306,7 @@ __CONCAT(dname,_detach)(self, flags) \
 #define clalloc(p, s, x) (clist_alloc_cblocks((p), (s), (s)), 0)
 #define clfree(p) clist_free_cblocks((p))
 
-#define powerhook_establish(fn, sc) 0
+#define powerhook_establish(fn, sc) (fn)
 #define powerhook_disestablish(hdl)
 #define PWR_RESUME 0
 
