@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.47 1997/01/31 02:34:53 thorpej Exp $
+	$NetBSD: syscalls.master,v 1.47.2.1 1997/02/12 12:26:16 mrg Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -166,7 +166,7 @@
 			    const struct itimerval *itv, \
 			    struct itimerval *oitv); }
 84	COMPAT_43	{ int sys_wait(void); } owait
-85	STD		{ int sys_swapon(const char *name); }
+85	COMPAT_12	{ int sys_swapon(const char *name); }
 86	STD		{ int sys_getitimer(u_int which, \
 			    struct itimerval *itv); }
 87	COMPAT_43	{ int sys_gethostname(char *hostname, u_int len); } \
@@ -461,3 +461,4 @@
 238	UNIMPL		timer_gettime
 239	UNIMPL		timer_getoverrun
 240	UNIMPL		nanosleep
+241	STD		{ int sys_swapon(int cmd, void *arg, int misc); }

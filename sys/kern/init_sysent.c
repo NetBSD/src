@@ -219,8 +219,8 @@ struct sysent sysent[] = {
 	    sys_setitimer },			/* 83 = setitimer */
 	{ 0, 0,
 	    compat_43(sys_wait) },		/* 84 = compat_43 owait */
-	{ 1, s(struct sys_swapon_args),
-	    sys_swapon },			/* 85 = swapon */
+	{ 1, s(struct compat_12_sys_swapon_args),
+	    compat_12(sys_swapon) },		/* 85 = compat_12 swapon */
 	{ 2, s(struct sys_getitimer_args),
 	    sys_getitimer },			/* 86 = getitimer */
 	{ 2, s(struct compat_43_sys_gethostname_args),
@@ -628,5 +628,7 @@ struct sysent sysent[] = {
 	    sys_nosys },			/* 239 = unimplemented timer_getoverrun */
 	{ 0, 0,
 	    sys_nosys },			/* 240 = unimplemented nanosleep */
+	{ 3, s(struct sys_swapon_args),
+	    sys_swapon },			/* 241 = swapon */
 };
 

@@ -1,7 +1,0 @@
-#	from: @(#)Makefile.bsd44	8.1 (Berkeley) 6/6/93
-#	$Id: Makefile.bsd44,v 1.3 1994/06/13 20:48:30 mycroft Exp $
-#
-# Extra Makefile definitions for 4.4 BSD
-#
-
-RPCLIB = -lrpc

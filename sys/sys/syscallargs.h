@@ -355,7 +355,7 @@ struct sys_setitimer_args {
 	syscallarg(struct itimerval *) oitv;
 };
 
-struct sys_swapon_args {
+struct compat_12_sys_swapon_args {
 	syscallarg(const char *) name;
 };
 
@@ -983,6 +983,12 @@ struct sys_clock_getres_args {
 	syscallarg(struct timespec *) tp;
 };
 
+struct sys_swapon_args {
+	syscallarg(int) cmd;
+	syscallarg(void *) arg;
+	syscallarg(int) misc;
+};
+
 /*
  * System call prototypes.
  */
@@ -1069,7 +1075,7 @@ int	sys_getpgrp	__P((struct proc *, void *, register_t *));
 int	sys_setpgid	__P((struct proc *, void *, register_t *));
 int	sys_setitimer	__P((struct proc *, void *, register_t *));
 int	compat_43_sys_wait	__P((struct proc *, void *, register_t *));
-int	sys_swapon	__P((struct proc *, void *, register_t *));
+int	compat_12_sys_swapon	__P((struct proc *, void *, register_t *));
 int	sys_getitimer	__P((struct proc *, void *, register_t *));
 int	compat_43_sys_gethostname	__P((struct proc *, void *, register_t *));
 int	compat_43_sys_sethostname	__P((struct proc *, void *, register_t *));
@@ -1229,3 +1235,4 @@ int	sys_shmget	__P((struct proc *, void *, register_t *));
 int	sys_clock_gettime	__P((struct proc *, void *, register_t *));
 int	sys_clock_settime	__P((struct proc *, void *, register_t *));
 int	sys_clock_getres	__P((struct proc *, void *, register_t *));
+int	sys_swapon	__P((struct proc *, void *, register_t *));
