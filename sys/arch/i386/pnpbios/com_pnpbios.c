@@ -1,4 +1,4 @@
-/* $NetBSD: com_pnpbios.c,v 1.1 1999/11/12 18:36:46 drochner Exp $ */
+/* $NetBSD: com_pnpbios.c,v 1.2 1999/11/14 02:15:50 thorpej Exp $ */
 /*
  * Copyright (c) 1999
  * 	Matthias Drochner.  All rights reserved.
@@ -96,7 +96,10 @@ com_pnpbios_attach(parent, self, aux)
 	}
 	sc->sc_iobase = iobase;
 
-	printf("\n%s", self->dv_xname);
+	printf("\n");
+	pnpbios_print_devres(self, aa);
+
+	printf("%s", self->dv_xname);
 
 	/*
 	 * if the chip isn't something we recognise skip it.
