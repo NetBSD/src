@@ -1,4 +1,4 @@
-/*	$NetBSD: logout.c,v 1.12 2000/07/05 11:46:41 ad Exp $	*/
+/*	$NetBSD: logout.c,v 1.13 2002/07/27 23:49:23 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -38,12 +38,13 @@
 #if 0
 static char sccsid[] = "@(#)logout.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: logout.c,v 1.12 2000/07/05 11:46:41 ad Exp $");
+__RCSID("$NetBSD: logout.c,v 1.13 2002/07/27 23:49:23 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 #include <sys/time.h>
+#include <sys/wait.h>
 
 #include <assert.h>
 #include <fcntl.h>
@@ -53,30 +54,49 @@ __RCSID("$NetBSD: logout.c,v 1.12 2000/07/05 11:46:41 ad Exp $");
 #include <unistd.h>
 #include <util.h>
 #include <utmp.h>
-
-typedef struct utmp UTMP;
+#include <utmpx.h>
 
 int
 logout(const char *line)
 {
 	int fd, rval;
-	UTMP ut;
+	struct utmp ut;
 
 	_DIAGASSERT(line != NULL);
 
 	if ((fd = open(_PATH_UTMP, O_RDWR, 0)) < 0)
 		return(0);
 	rval = 0;
-	while (read(fd, &ut, sizeof(UTMP)) == sizeof(UTMP)) {
+	while (read(fd, &ut, sizeof(ut)) == sizeof(ut)) {
 		if (!ut.ut_name[0] || strncmp(ut.ut_line, line, UT_LINESIZE))
 			continue;
 		memset(ut.ut_name, 0, UT_NAMESIZE);
 		memset(ut.ut_host, 0, UT_HOSTSIZE);
 		(void)time(&ut.ut_time);
-		(void)lseek(fd, -(off_t)sizeof(UTMP), SEEK_CUR);
-		(void)write(fd, &ut, sizeof(UTMP));
+		(void)lseek(fd, -(off_t)sizeof(ut), SEEK_CUR);
+		(void)write(fd, &ut, sizeof(ut));
 		rval = 1;
 	}
 	(void)close(fd);
 	return(rval);
+}
+
+int
+logoutx(const char *line, int status, int type)
+{
+	struct utmpx *utp, ut;
+	(void)strlcpy(ut.ut_line, line, sizeof(ut.ut_line));
+	if ((utp = getutxline(&ut)) == NULL) {
+		endutxent();
+		return 0;
+	}
+	utp->ut_type = type;
+	if (WIFEXITED(status))
+		utp->ut_exit.e_exit = (uint16_t)WEXITSTATUS(status);
+	if (WIFSIGNALED(status))
+		utp->ut_exit.e_termination = (uint16_t)WTERMSIG(status);
+	(void)gettimeofday(&utp->ut_tv, NULL);
+	(void)pututxline(utp);
+	endutxent();
+	return 1;
 }
