@@ -1,4 +1,4 @@
-/*	$NetBSD: debuglog.c,v 1.3 2003/01/27 20:54:26 nathanw Exp $	*/
+/*	$NetBSD: debuglog.c,v 1.4 2003/06/25 23:26:00 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -112,8 +112,8 @@ pthread__debuglog_rawdump(void)
 	printf("Debug log raw dump\n");
 	printf("Magic: %06x\n", debugbuf->msg_magic);
 	printf("Size: %06llx\n", (long long)debugbuf->msg_bufs);
-	printf("Read start: %d   Write start: %d\n\n",
-	    debugbuf->msg_bufr, debugbuf->msg_bufw);
+	printf("Read start: %ld   Write start: %ld\n\n",
+	    (long)debugbuf->msg_bufr, (long)debugbuf->msg_bufw);
 
 	fwrite(&debugbuf->msg_bufc[0], debugbuf->msg_bufs, 1, stdout);
 }
