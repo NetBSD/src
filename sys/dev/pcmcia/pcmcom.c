@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcom.c,v 1.2 1998/10/14 18:05:45 thorpej Exp $	*/
+/*	$NetBSD: pcmcom.c,v 1.3 1998/11/19 00:01:30 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -96,9 +96,12 @@ struct pcmcom_attach_args {
 
 int	pcmcom_match __P((struct device *, struct cfdata *, void *));
 void	pcmcom_attach __P((struct device *, struct device *, void *));
+int	pcmcom_detach __P((struct device *, int));
+int	pcmcom_activate __P((struct device *, enum devact));
 
 struct cfattach pcmcom_ca = {
-	sizeof(struct pcmcom_softc), pcmcom_match, pcmcom_attach
+	sizeof(struct pcmcom_softc), pcmcom_match, pcmcom_attach,
+	    pcmcom_detach, pcmcom_activate
 };
 
 struct pcmcom_product {
@@ -289,6 +292,69 @@ pcmcom_attach_slave(sc, slave)
 }
 
 int
+pcmcom_detach(self, flags)
+	struct device *self;
+	int flags;
+{
+	struct pcmcom_softc *sc = (struct pcmcom_softc *)self;
+	struct pcmcom_slave_info *psi;
+	int slave, error;
+
+	for (slave = 0; slave < sc->sc_nslaves; slave++) {
+		psi = &sc->sc_slaves[slave];
+		if (psi->psi_child == NULL)
+			continue;
+
+		/* Detach the child. */
+		if ((error = config_detach(self, flags)) != 0)
+			return (error);
+		psi->psi_child = NULL;
+
+		/* Unmap the i/o window. */
+		pcmcia_io_unmap(sc->sc_pf, psi->psi_io_window);
+
+		/* Free the i/o space. */
+		pcmcia_io_free(sc->sc_pf, &psi->psi_pcioh);
+	}
+	return (0);
+}
+
+int
+pcmcom_activate(self, act)
+	struct device *self;
+	enum devact act;
+{
+	struct pcmcom_softc *sc = (struct pcmcom_softc *)self;
+	struct pcmcom_slave_info *psi;
+	int slave, error = 0, s;
+
+	s = splserial();
+	switch (act) {
+	case DVACT_ACTIVATE:
+		error = EOPNOTSUPP;
+		break;
+
+	case DVACT_DEACTIVATE:
+		for (slave = 0; slave < sc->sc_nslaves; slave++) {
+			psi = &sc->sc_slaves[slave];
+			if (psi->psi_child == NULL)
+				continue;
+
+			/*
+			 * Deactivate the child.  Doing so will cause our
+			 * own enabled count to drop to 0, once all children
+			 * are deactivated.
+			 */
+			if ((error = config_deactivate(psi->psi_child)) != 0)
+				break;
+		}
+		break;
+	}
+	splx(s);
+	return (error);
+}
+
+int
 pcmcom_print(aux, pnp)
 	void *aux;
 	const char *pnp;
@@ -383,7 +449,8 @@ void	com_pcmcom_attach __P((struct device *, struct device *, void *));
 
 /* No pcmcom-specific goo in the softc; it's all in the parent. */
 struct cfattach com_pcmcom_ca = {
-	sizeof(struct com_softc), com_pcmcom_match, com_pcmcom_attach
+	sizeof(struct com_softc), com_pcmcom_match, com_pcmcom_attach,
+	    com_detach, com_activate
 };
 
 int	com_pcmcom_enable __P((struct com_softc *));
