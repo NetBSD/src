@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.2 2002/06/17 20:22:34 leo Exp $
+#	$NetBSD: list,v 1.3 2003/01/19 12:26:49 tsutsui Exp $
 
 PROG	bin/cat
 PROG	bin/chmod
@@ -39,7 +39,6 @@ PROG	usr/sbin/chroot
 PROG	sbin/ahdilabel
 PROG	usr/sbin/loadkmap
 
-SPECIAL	mount		srcdir	distrib/utils/x_mount
 SPECIAL	umount		srcdir	distrib/utils/x_umount
 
 # The installation scripts
