@@ -29,7 +29,7 @@
  */
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rpc_main.c 1.7 87/06/24 (C) 1987 SMI";*/
-static char rcsid[] = "$Id: rpc_main.c,v 1.4 1993/08/01 18:09:20 mycroft Exp $";
+static char rcsid[] = "$Id: rpc_main.c,v 1.5 1994/01/20 18:21:56 jtc Exp $";
 #endif
 
 /*
@@ -109,15 +109,21 @@ main(argc, argv)
 }
 
 /*
- * add extension to filename 
+ * strip path and add extension to filename 
  */
 static char *
-extendfile(file, ext)
-	char *file;
+extendfile(path, ext)
+	char *path;
 	char *ext;
 {
+	char *file;
 	char *res;
 	char *p;
+
+	if ((file = rindex(path, '/')) == NULL)
+		file = path;
+	else
+		file++;
 
 	res = alloc(strlen(file) + strlen(ext) + 1);
 	if (res == NULL) {
