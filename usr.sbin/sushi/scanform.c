@@ -1,4 +1,4 @@
-/*      $NetBSD: scanform.c,v 1.17 2001/03/16 12:54:47 garbled Exp $       */
+/*      $NetBSD: scanform.c,v 1.18 2001/04/06 07:57:05 garbled Exp $       */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -1071,7 +1071,7 @@ gen_script(FTREE_ENTRY *ftp, char *dir, int max, char **args)
 	char *p, *q, *qo, *po, *comm, *test;
 	FILE *file;
 	char buf[PATH_MAX+30];
-	struct stat sb;
+/*	struct stat sb; */
 	size_t len;
 	int i, cur;
 
@@ -1113,8 +1113,10 @@ gen_script(FTREE_ENTRY *ftp, char *dir, int max, char **args)
 
 	sprintf(buf, "%s/%s", dir, comm);
 
+#if 0
 	if (stat(buf, &sb) != 0)
 		bailout("%s: %s", buf, strerror(errno));
+#endif
 
 	file = popen(buf, "r");
 	if (file == NULL)
