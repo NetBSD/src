@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.139 2000/03/01 16:48:35 joda Exp $
+#	$NetBSD: Makefile,v 1.140 2000/03/10 11:59:35 lukem Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -156,6 +156,7 @@ distribution: distrib-dirs
 	(cd namedb; \
 		${INSTALL} ${INSTPRIV} -c -o ${BINOWN} -g ${BINGRP} -m 644 \
 		    ${NAMEDB} ${DESTDIR}/etc/namedb)
+	(cd rc.d; ${MAKE} install)
 	/bin/rm -f ${DESTDIR}/etc/localtime
 	ln -s ${TZDIR}/${LOCALTIME} ${DESTDIR}/etc/localtime
 	/bin/rm -f ${DESTDIR}/etc/rmt
