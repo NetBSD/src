@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.15 1995/01/15 06:28:36 briggs Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.16 1995/02/01 13:40:59 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -313,6 +313,7 @@ findblkmajor(register struct dkdevice *dv)
 		    dv->dk_driver->d_strategy)
 			return i;
 	}
+	return -1;
 }
 
 /*
