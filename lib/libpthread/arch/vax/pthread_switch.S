@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_switch.S,v 1.2 2003/01/20 01:08:03 matt Exp $	*/
+/*	$NetBSD: pthread_switch.S,v 1.3 2003/07/09 00:55:45 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
@@ -62,7 +62,10 @@
  */
 	
 #define STACK_SWITCH(pt)	\
-	movl	PT_UC(pt),%sp
+	movl	PT_TRAPUC(pt),%sp ; \
+	bneq	1f; \
+	movl	PT_UC(pt),%sp; \
+1:	clrl	PT_TRAPUC(pt)
 
 ENTRY(pthread__switch, 0)
 	movab	-(CONTEXTSIZE)(%sp), %sp
@@ -75,12 +78,13 @@ ENTRY(pthread__switch, 0)
 	movab	switch_return_point,(UC_GREGS + _REG_PC)(%sp)
 
 	movq	4(%ap),%r2
+	movl	%sp,PT_UC(%r2)		/* self->pt_uc = &context */
 
-	STACK_SWITCH(%r3)		/* r3 = next */
-	
-	pushl	PT_UC(%r3)		/* r3 = next */
-	movl	%sp,PT_UC(%r2)		/* r2 = self */
+	STACK_SWITCH(%r3)		/* r2 = self; r3 = next */
+setcontext:
+	pushl	%sp			/* sp = &context */
 	calls	$1,_setcontext_u
+	NOTREACHED
 switch_return_point:	
 	ret
 
@@ -99,16 +103,14 @@ pthread__switch_away:
 	 * using the old stack.  
 	 */
 	subl2	%r4,PT_SPINLOCKS(%r5)
-	pushl	PT_UC(%r3)
-	calls	$1, _setcontext_u
-	NOTREACHED
+	jbr	setcontext		/* sp = &context */
 
 /*
  * void	pthread__locked_switch(pthread_t self, pthread_t next, 
  *           pt_spin_t *lock);
  */
 ENTRY(pthread__locked_switch, 0)
-	movab	-(CONTEXTSIZE)(%sp),(%sp)
+	movab	-(CONTEXTSIZE)(%sp),%sp
 	movl	8(%ap),%r5
 
 	/* Make sure we get continuted */
@@ -122,10 +124,10 @@ ENTRY(pthread__locked_switch, 0)
 
 	/* Edit the context to make it continue below, rather than here */
 	movab	locked_return_point, (UC_GREGS + _REG_PC)(%sp)
-
-	STACK_SWITCH(%r5)
-
 	movl	%sp, PT_UC(%r4)
+
+	STACK_SWITCH(%r5)	/* sp = next->pt_uc */
+
 	/* Check if the switcher was preempted and continued to here. */
 	movl	PT_NEXT(%r4),%r3
 	beql	1f
@@ -139,16 +141,12 @@ ENTRY(pthread__locked_switch, 0)
 	 * PT_SWITCHTO will be stomped by another switch_lock and
 	 * preemption.
 	 */
-	movl	%r5, PT_SWITCHTO(%r4)
-	movl	PT_UC(%r5), PT_SWITCHTOUC(%r4)
 	movl	12(%ap), PT_HELDLOCK(%r4)
+	movl	%sp, PT_SWITCHTOUC(%r4)
+	movl	%r5, PT_SWITCHTO(%r4)
 	incl	PT_SPINLOCKS(%r4)
 
-	/* Save the context we previously stored in PT_UC(a0); 
-	 * that was overwritten when we were preempted and continued,
-	 * so we need to put it somewhere. 
-	 */
-	movl	%sp, PT_SLEEPUC(%r4)
+	/* %r3 = self->pt_next */
 	movl	$1, %r4
 	brw	pthread__switch_away
 
@@ -167,17 +165,15 @@ ENTRY(pthread__locked_switch, 0)
 	
 	/* Check if we were preempted while holding the fake lock. */
 	movl	PT_NEXT(%r5),%r3
-	beql	2f
+	jeql	setcontext
 	
 	/* Yes, we were. Go to the next element in the chain. */
+	movl	%sp, PT_SWITCHTOUC(%r5)
 	movl	%r5, PT_SWITCHTO(%r5)
-	movl	PT_UC(%r5), PT_SWITCHTOUC(%r5)
 	clrl	%r4
 	brw	pthread__switch_away
 	NOTREACHED
 
-2:	pushl	PT_UC(%r5)
-	calls	$1, _setcontext_u
 locked_return_point:	
 	ret
 
@@ -189,11 +185,9 @@ locked_return_point:
 
 ENTRY(pthread__upcall_switch, 0)
 	movq	4(%ap),%r4
-	/* Loading the global pointer is unnecessary;  this routine
-	 * is only ever called from the pthreads module, and the C
-	 * code will have gp set up.
-	 *
-	 * Also, this code never returns, so we can treat s0-s6 as
+
+	/*
+	 * this code never returns, so we can treat s0-s6 as
 	 * convenient registers that will be saved for us by callees,
 	 * but that we do not have to save.
 	 */
@@ -210,9 +204,9 @@ ENTRY(pthread__upcall_switch, 0)
 	/* Yes, it was. Stash the thread we were going to switch to,
 	 * and switch to the next thread in the continuation chain.
 	 */
-	movq	%r5,PT_SWITCHTO(%r4)
-	movl	PT_UC(%r5), PT_SWITCHTOUC(%r4)
 	movl	PT_STATE_RECYCLABLE,PT_STATE(%r4)
+	movl	%sp, PT_SWITCHTOUC(%r4)
+	movq	%r5,PT_SWITCHTO(%r4)
 	movl	$1,%r4
 	brw	pthread__switch_away
 	
@@ -228,17 +222,12 @@ ENTRY(pthread__upcall_switch, 0)
 
 	/* Check if we were preempted and continued while faking the lock */
 	movl	PT_NEXT(%r5),%r3
-	beql	2f
+	jeql	setcontext		/* No new-upcall-preemption */
 
 	/* Yes, we were. Stash the to-be-switched-to context in our thread
 	 * structure and go to the next link in the chain.
 	 */
+	movl	%sp, PT_SWITCHTOUC(%r5)
 	movl	%r5, PT_SWITCHTO(%r5)
-	movl	PT_UC(%r5), PT_SWITCHTOUC(%r5)
 	clrl	%r4
 	brw	pthread__switch_away	
-
-	/* No new-upcall-preemption */
-2:	pushl	PT_UC(%r5)
-	calls	$1, _setcontext_u
-	NOTREACHED
