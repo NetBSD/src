@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
+/*	$NetBSD: sd.c,v 1.112 1997/06/18 20:38:59 pk Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1997 Charles M. Hannum.  All rights reserved.
@@ -290,7 +290,7 @@ sdopen(dev, flag, fmt, p)
 	if (unit >= sd_cd.cd_ndevs)
 		return ENXIO;
 	sd = sd_cd.cd_devs[unit];
-	if (!sd)
+	if (sd == NULL)
 		return ENXIO;
 
 	sc_link = sd->sc_link;
@@ -1032,20 +1032,28 @@ sdsize(dev)
 	dev_t dev;
 {
 	struct sd_softc *sd;
-	int part;
+	int part, unit, omask;
 	int size;
 
-	if (sdopen(dev, 0, S_IFBLK, NULL) != 0)
-		return -1;
-	sd = sd_cd.cd_devs[SDUNIT(dev)];
+	unit = SDUNIT(dev);
+	if (unit >= sd_cd.cd_ndevs)
+		return (-1);
+	sd = sd_cd.cd_devs[unit];
+	if (sd == NULL)
+		return (-1);
+
 	part = SDPART(dev);
+	omask = sd->sc_dk.dk_openmask & (1 << part);
+
+	if (omask == 0 && sdopen(dev, 0, S_IFBLK, NULL) != 0)
+		return (-1);
 	if (sd->sc_dk.dk_label->d_partitions[part].p_fstype != FS_SWAP)
 		size = -1;
 	else
 		size = sd->sc_dk.dk_label->d_partitions[part].p_size;
-	if (sdclose(dev, 0, S_IFBLK, NULL) != 0)
-		return -1;
-	return size;
+	if (omask == 0 && sdclose(dev, 0, S_IFBLK, NULL) != 0)
+		return (-1);
+	return (size);
 }
 
 #ifndef __BDEVSW_DUMP_OLD_TYPE
