@@ -109,6 +109,8 @@ donlist()
 		eval = rval = 1;
 	}
 	mempages -= tmp;
+	mempages /= getpagesize();
+
 #else
 	if (kread(X_ECMX, mempages)) {
 		warnx("ecmx: %s", kvm_geterr(kd));
