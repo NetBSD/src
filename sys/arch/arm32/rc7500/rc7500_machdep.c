@@ -1,4 +1,4 @@
-/*	$NetBSD: rc7500_machdep.c,v 1.6 1998/06/09 01:57:42 tv Exp $	*/
+/*	$NetBSD: rc7500_machdep.c,v 1.7 1998/06/24 18:41:35 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -118,15 +118,13 @@ vm_offset_t physical_freeend;
 vm_offset_t physical_end;
 int physical_memoryblock;
 u_int free_pages;
-vm_offset_t pagetables_start;
 int physmem = 0;
 
-int debug_flags;
 #ifndef PMAP_STATIC_L1S
 int max_processes = 64;
 #endif	/* !PMAP_STATIC_L1S */
-int cpu_cache;
-int cpu_ctrl;
+/*int cpu_cache;
+int cpu_ctrl;*/
 
 u_int memory_disc_size;		/* Memory disc size */
 u_int videodram_size;		/* Amount of DRAM to reserve for video */
@@ -196,13 +194,15 @@ void map_entry		__P((vm_offset_t pt, vm_offset_t va, vm_offset_t pa));
 void map_entry_ro	__P((vm_offset_t pt, vm_offset_t va, vm_offset_t pa));
 
 void pmap_bootstrap		__P((vm_offset_t kernel_l1pt));
-void process_kernel_args	__P((void));
 caddr_t allocsys		__P((caddr_t v));
 void data_abort_handler		__P((trapframe_t *frame));
 void prefetch_abort_handler	__P((trapframe_t *frame));
 void undefinedinstruction_bounce	__P((trapframe_t *frame));
 void zero_page_readonly		__P((void));
 void zero_page_readwrite	__P((void));
+
+static void process_kernel_args	__P((void));
+
 extern void dump_spl_masks	__P((void));
 extern pt_entry_t *pmap_pte	__P((pmap_t pmap, vm_offset_t va));
 extern void db_machine_init	__P((void));
@@ -375,7 +375,7 @@ initarm(prom_id)
 	/*
 	 * XXXX - FIX ME
 	 */
-	cpu_cache = 0x03;
+/*	cpu_cache = 0x03;*/
 	boothowto = 0;
 
 #ifndef MEMORY_DISK_SIZE
@@ -1029,8 +1029,8 @@ promcngetc();
 	return(kernelstack.virtual + USPACE_SVC_STACK_TOP);
 }
 
-void
-process_kernel_args()
+static void
+process_kernel_args(void)
 {
 	parse_mi_bootargs(bootargs);
 	parse_rc7500_bootargs(bootargs);
