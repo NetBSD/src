@@ -1,11 +1,11 @@
-#	@(#)Makefile	6.11 (Berkeley) 7/1/90
+#	@(#)Makefile	8.2 (Berkeley) 3/27/94
 
 MELIB=	${BINDIR}/me
 TMLIB=	${BINDIR}/tmac
 MESRCS=	acm.me chars.me deltext.me eqn.me float.me footnote.me \
 	index.me letterhead.me local.me null.me refer.me sh.me \
 	tbl.me thesis.me
-TMSRCS=	tmac.e
+TMSRCS=	tmac.orig_me
 MAN7=	me.0
 
 beforeinstall:
