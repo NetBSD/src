@@ -1,32 +1,4 @@
-/*
- * Written by J.T. Conklin <jtc@NetBSD.org>.
- * Public domain.
- */
+/* $NetBSD: rindex.S,v 1.14 2005/02/09 18:15:16 christos Exp $ */
 
-#include <machine/asm.h>
-
-#if defined(LIBC_SCCS)
-	RCSID("$NetBSD: rindex.S,v 1.13 2005/02/07 05:22:51 christos Exp $")
-#endif
-
-#ifdef STRRCHR
-ENTRY(strrchr)
-#else
-ENTRY(rindex)
-#endif
-	pushl	%ebx
-	movl	8(%esp),%edx
-	movb	12(%esp),%cl
-	xorl	%eax,%eax		/* init pointer to null */
-	_ALIGN_TEXT,0x90
-L1:
-	movb	(%edx),%bl
-	cmpb	%bl,%cl
-	jne	L2
-	movl	%edx,%eax
-L2:
-	incl	%edx
-	testb	%bl,%bl			/* null terminator??? */
-	jnz	L1
-	popl	%ebx
-	ret
+#define RINDEX
+#include "strrchr.S"
