@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.20 1998/07/04 22:18:17 jonathan Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.21 1998/08/04 16:19:54 mark Exp $	*/
 
 /* 
  * Copyright (c) 1996 Scott K. Stevens
@@ -189,26 +189,32 @@ kdb_kbd_trap(tf)
 void
 db_read_bytes(addr, size, data)
 	vm_offset_t	addr;
-	register int	size;
-	register char	*data;
+	int	size;
+	char	*data;
 {
-	register char	*src;
+	char	*src;
+	pt_entry_t *ptep;
+	pd_entry_t *pdep;
 
+	pdep = (pd_entry_t *)CURRENT_PAGEDIR_BASE;
 	src = (char *)addr;
 	while (--size >= 0) {
-		pt_entry_t *ptep;
-
 		/* Make sure the address we are reading is valid */
-		ptep = vtopte((vm_offset_t)src);
-		if ((*ptep & L2_MASK) == L2_INVAL) {
+		switch ((pdep[((u_int)src >> 20) + 0] & L1_MASK)) {
+		case L1_SECTION:
+			break;
+		case L1_PAGE:
+			ptep = vtopte((vm_offset_t)src);
+			if ((*ptep & L2_MASK) != L2_INVAL)
+				break;
+			/* FALLTHROUGH */
+		default:
 			db_printf("address %p is invalid\n", src);
 			return;
 		}
 		*data++ = *src++;
 	}
 }
-
-#define	splpmap() splimp()
 
 static void
 db_write_text(dst, ch)
@@ -219,7 +225,7 @@ db_write_text(dst, ch)
 	int s;
 	vm_offset_t va;
 
-	s = splpmap();
+	s = splimp();
 	va = (unsigned long)dst & (~PGOFSET);
 	ptep = vtopte(va);
 
@@ -232,7 +238,7 @@ db_write_text(dst, ch)
 	pteo = ReadWord(ptep);
 	pte = pteo | PT_AP(AP_KRW);
 	WriteWord(ptep, pte);
-	tlb_flush();		/* XXX should be purge */
+	cpu_tlb_flushD_SE(va);
 
 	*dst = (unsigned char)ch;
 
@@ -240,7 +246,7 @@ db_write_text(dst, ch)
 	cpu_cache_syncI_rng((u_int)dst, 4);
 
 	WriteWord(ptep, pteo);
-	tlb_flush();		/* XXX should be purge */
+	cpu_tlb_flushD_SE(va);
 	(void)splx(s);
 }
 
