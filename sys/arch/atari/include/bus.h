@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.14 1998/12/01 15:32:28 leo Exp $	*/
+/*	$NetBSD: bus.h,v 1.15 1999/01/08 09:25:33 leo Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -265,6 +265,7 @@ struct atari_bus_space {
 	void		(*abs_sr_8) __P((bus_space_tag_t, bus_space_handle_t,
 			    bus_size_t, u_int64_t, bus_size_t));
 	
+#if 0 /* See comment on __abs_copy below */
 	/* copy */
 	void		(*abs_c_1) __P((bus_space_tag_t, bus_space_handle_t,
 			    bus_size_t, bus_space_handle_t, bus_size_t,
@@ -278,6 +279,7 @@ struct atari_bus_space {
 	void		(*abs_c_8) __P((bus_space_tag_t, bus_space_handle_t,
 			    bus_size_t, bus_space_handle_t, bus_size_t,
 			    bus_size_t));
+#endif
 };
 
 /*
@@ -300,8 +302,19 @@ struct atari_bus_space {
 	(*(t)->__abs_opname(type,sz))(t, h, o, a, c)
 #define	__abs_set(type, sz, t, h, o, v, c)				\
 	(*(t)->__abs_opname(type,sz))(t, h, o, v, c)
-#define	__abs_copy(sz, t, h1, o1, h2, o2, cnt)				\
+
+    /*
+     * No swaps needed and no other trickery, so it should be possible
+     * to shortcut these to memcpy() directly [ leo 19990107 ]
+     */
+#if 0
+    #define	__abs_copy(sz, t, h1, o1, h2, o2, cnt)			\
 	(*(t)->__abs_opname(c,sz))(t, h1, o1, h2, o2, cnt)
+#else
+    #define	__abs_copy(sz, t, h1, o1, h2, o2, cnt)			\
+	memcpy((void*)(h1 + o1), (void *)(h2 + o2), sz * cnt)
+#endif
+
 
 /*
  * Check accesibility of the location for various sized bus accesses
