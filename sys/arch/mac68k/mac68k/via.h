@@ -110,16 +110,23 @@
 #define VIA2_INTS	(V2IF_T1 | V2IF_ASC | V2IF_SCSIIRQ | V2IF_SLOTINT | \
 			 V2IF_SCSIDRQ)
 
+#define RBV_INTS	(V2IF_T1 | V2IF_ASC | V2IF_SCSIIRQ | V2IF_SLOTINT | \
+			 V2IF_SCSIDRQ | V1IF_ADBRDY)
+
 #define ACR_T1LATCH	0x40
 
 #define VIA1_addr	0x50000000
-#define VIA2_addr	0x50002000
+/* #define VIA2_addr	0x50002000 */	/* Not correct for IIci */
+#define VIA2OFF		1		/* VIA2 addr * 0x2000 */
+#define RBVOFF		0x13		/* RBV addr * 0x13000 */
 
 #define VIA1		0
-#define VIA2		1
+extern int VIA2;
+/* #define VIA2		1 */   /* These days we have to deal with RBV, too! */
 #define VIABUFA		0
 #define VIABUFB		1
 
+	/* VIA interface registers */
 #define vBufA		0x1e00	/* register A */
 #define vBufB		0	/* register B */
 #define vDirA		0x0600	/* data direction register */
@@ -130,18 +137,41 @@
 #define vT1LH		0x0e00
 #define vT2C		0x1000
 #define vT2CH		0x1200
-#define vSR		0x1400	/* shift register */
+#define vSR			0x1400	/* shift register */
 #define vACR		0x1600	/* aux control register */
 #define vPCR		0x1800	/* peripheral control register */
 #define vIFR		0x1a00	/* interrupt flag register */
 #define vIER		0x1c00	/* interrupt enable register */
 
+	/* RBV interface registers */
+#define rBufB		0	/* register B */
+#define rBufA		2	/* register A */
+#define rIFR		3	/* interrupt flag register */
+#define rIER		0x13	/* interrupt enable register */
+#define rMonitor	0x10	/* Monitor type */
+#define rSlotInt	0x12	/* Slot interrupt */
+
+	/* RBV monitor type flags and masks */
+#define RBVDepthMask	0x07	/* depth in bits */
+#define RBVMonitorMask	0x38	/* Type numbers */
+#define RBVOff		0x40	/* monitor turn off */
+#define RBVMonIDNone	0x38	/* What RBV actually has for no video */
+#define RBVMonIDOff	0x0		/* What rbv_vidstatus() returns for no video */
+#define RBVMonID15BWP	0x08	/* BW portrait */
+#define RBVMonIDRGB	0x10	/* color monitor */
+#define RBVMonIDRGB15	0x28	/* 15 inch RGB */
+#define RBVMonIDBW	0x30	/* No internal video */
+
+
 #define via_reg(v, r) (*((volatile unsigned char *)VIA1_addr+(v)*0x2000+(r)))
 
+
 #define vDirA_ADBState	0x30
+
 
 long		VIA_set_handler  (long vianum, long bitnum, long (*handle)());
 long		VIA_unset_handler(long vianum, long bitnum, long (*handle)());
 void		VIA_initialize   (void);
 unsigned char	VIA_get_SR       (long vianum);
 long		VIA_set_SR       (long vianum, unsigned char data);
+int		rbv_vidstatus(void);
