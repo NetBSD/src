@@ -1,4 +1,4 @@
-/*	$NetBSD: shared_intr.c,v 1.1 1996/11/17 02:03:08 cgd Exp $	*/
+/* $NetBSD: shared_intr.c,v 1.2 1997/04/06 22:55:59 cgd Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -30,6 +30,8 @@
 /*
  * Common shared-interrupt-line functionality.
  */
+
+#include <machine/options.h>		/* Pull in config options headers */
 
 #include <sys/param.h>
 #include <sys/systm.h>
