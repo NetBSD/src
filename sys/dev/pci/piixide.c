@@ -1,4 +1,4 @@
-/*	$NetBSD: piixide.c,v 1.3 2003/11/27 23:02:40 fvdl Exp $	*/
+/*	$NetBSD: piixide.c,v 1.4 2003/12/05 23:12:41 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -131,6 +131,11 @@ static const struct pciide_product_desc pciide_intel_products[] =  {
 	{ PCI_PRODUCT_INTEL_82801EB_SATA,
 	  0,
 	  "Intel 82801EB Serial ATA Controller",
+	  artisea_chip_map,
+	},
+	{ PCI_PRODUCT_INTEL_82801ER_SATA,
+	  0,
+	  "Intel 82801ER Serial ATA/Raid Controller",
 	  artisea_chip_map,
 	},
 	{ 0,
