@@ -1,4 +1,4 @@
-/*	$NetBSD: db_xxx.c,v 1.7 2000/03/23 07:01:25 thorpej Exp $	*/
+/*	$NetBSD: db_xxx.c,v 1.8 2000/03/26 20:24:12 kleink Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -171,8 +171,9 @@ db_show_all_procs(addr, haddr, count, modif)
 				    p->p_emul->e_name,p->p_priority);
 				calcru(p, tv+0, tv+1, tv+2);
 				for(i = 0; i < 2; ++i) {
-					db_printf("%4ld.%1ld", tv[i].tv_sec,
-					    tv[i].tv_usec/100000);
+					db_printf("%4ld.%1ld",
+					    (long)tv[i].tv_sec,
+					    (long)tv[i].tv_usec/100000);
 				}
 				if(p->p_wchan && p->p_wmesg) {
 					db_printf(" %-12s", p->p_wmesg);
