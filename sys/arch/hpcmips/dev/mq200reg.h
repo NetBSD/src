@@ -1,4 +1,4 @@
-/*	$NetBSD: mq200reg.h,v 1.6 2001/03/25 13:06:53 takemura Exp $	*/
+/*	$NetBSD: mq200reg.h,v 1.7 2002/05/11 14:10:06 takemura Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 TAKEMURA Shin
@@ -43,17 +43,17 @@
 #define MQ200_CLOCK_PLL2	2
 #define MQ200_CLOCK_PLL3	3
 
-#define MQ200_FRAMEBUFFER	0x000000	/* frame buffer base address */
-#define MQ200_PM		0x600000	/* power management	*/
-#define MQ200_CC		0x602000	/* CPU interface	*/
-#define MQ200_MM		0x604000	/* memory interface unit */
-#define MQ200_IN		0x608000	/* interrupt controller	*/
-#define MQ200_GC(n)		(0x60a000+0x80*(n))
-#define MQ200_GE		0x60c000	/* graphics engine	*/
-#define MQ200_FP		0x60e000	/* flat panel controller*/
-#define MQ200_CP1		0x610000	/* color palette 1	*/
-#define MQ200_DC		0x614000	/* device configration	*/
-#define MQ200_PC		0x616000	/* PCI configration	*/
+#define MQ200_REGADDR		0x600000	/* register base address */
+#define MQ200_PM		0x000000	/* power management	*/
+#define MQ200_CC		0x002000	/* CPU interface	*/
+#define MQ200_MM		0x004000	/* memory interface unit */
+#define MQ200_IN		0x008000	/* interrupt controller	*/
+#define MQ200_GC(n)		(0x00a000+0x80*(n))
+#define MQ200_GE		0x00c000	/* graphics engine	*/
+#define MQ200_FP		0x00e000	/* flat panel controller*/
+#define MQ200_CP1		0x010000	/* color palette 1	*/
+#define MQ200_DC		0x014000	/* device configration	*/
+#define MQ200_PC		0x016000	/* PCI configration	*/
 
 /*
  * Power Management
