@@ -1,4 +1,4 @@
-.\"	$NetBSD: pfil.9,v 1.22 2003/07/01 13:04:06 wiz Exp $
+.\"	$NetBSD: pfil.9,v 1.23 2004/01/01 05:43:08 mrg Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" All rights reserved.
@@ -150,6 +150,13 @@ In 1.5K, the
 .Nm
 framework was changed to work with an arbitrary number of filtering points,
 as well as be less IP-centric.
+.Sh AUTHORS
+The
+.Nm
+interface was designed and implemented by Matthew R. Green, with help
+from Darren Reed, Jason R. Thorpe and Charles M. Hannum.  Darren Reed
+added support for IPv6 in addition to IPv4.  Jason R. Thorpe added
+support for multiple hooks and other clean up.
 .Sh BUGS
 The current
 .Nm
