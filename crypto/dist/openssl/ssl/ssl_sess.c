@@ -112,7 +112,7 @@ SSL_SESSION *SSL_SESSION_new(void)
 	{
 	SSL_SESSION *ss;
 
-	ss=(SSL_SESSION *)Malloc(sizeof(SSL_SESSION));
+	ss=(SSL_SESSION *)OPENSSL_malloc(sizeof(SSL_SESSION));
 	if (ss == NULL)
 		{
 		SSLerr(SSL_F_SSL_SESSION_NEW,ERR_R_MALLOC_FAILURE);
@@ -200,7 +200,12 @@ int ssl_get_new_session(SSL *s, int session)
 		ss->session_id_length=0;
 		}
 
-	die(s->sid_ctx_length <= sizeof ss->sid_ctx);
+	if (s->sid_ctx_length > sizeof ss->sid_ctx)
+		{
+		SSLerr(SSL_F_SSL_GET_NEW_SESSION, SSL_R_INTERNAL_ERROR);
+		SSL_SESSION_free(ss);
+		return 0;
+		}
 	memcpy(ss->sid_ctx,s->sid_ctx,s->sid_ctx_length);
 	ss->sid_ctx_length=s->sid_ctx_length;
 	s->session=ss;
@@ -312,7 +317,7 @@ int ssl_get_prev_session(SSL *s, unsigned char *session_id, int len)
 #if 0 /* This is way too late. */
 
 	/* If a thread got the session, then 'swaped', and another got
-	 * it and then due to a time-out decided to 'Free' it we could
+	 * it and then due to a time-out decided to 'OPENSSL_free' it we could
 	 * be in trouble.  So I'll increment it now, then double decrement
 	 * later - am I speaking rubbish?. */
 	CRYPTO_add(&ret->references,1,CRYPTO_LOCK_SSL_SESSION);
@@ -425,10 +430,10 @@ static int remove_session_lock(SSL_CTX *ctx, SSL_SESSION *c, int lck)
 	if ((c != NULL) && (c->session_id_length != 0))
 		{
 		if(lck) CRYPTO_w_lock(CRYPTO_LOCK_SSL_CTX);
-		r=(SSL_SESSION *)lh_delete(ctx->sessions,c);
-		if (r != NULL)
+		if ((r = (SSL_SESSION *)lh_retrieve(ctx->sessions,c)) == c)
 			{
 			ret=1;
+			r=(SSL_SESSION *)lh_delete(ctx->sessions,c);
 			SSL_SESSION_list_remove(ctx,c);
 			}
 
@@ -476,7 +481,7 @@ void SSL_SESSION_free(SSL_SESSION *ss)
 	if (ss->peer != NULL) X509_free(ss->peer);
 	if (ss->ciphers != NULL) sk_SSL_CIPHER_free(ss->ciphers);
 	memset(ss,0,sizeof(*ss));
-	Free(ss);
+	OPENSSL_free(ss);
 	}
 
 int SSL_set_session(SSL *s, SSL_SESSION *session)
@@ -510,6 +515,7 @@ int SSL_set_session(SSL *s, SSL_SESSION *session)
 		if (s->session != NULL)
 			SSL_SESSION_free(s->session);
 		s->session=session;
+		s->verify_result = s->session->verify_result;
 		/* CRYPTO_w_unlock(CRYPTO_LOCK_SSL);*/
 		ret=1;
 		}
