@@ -1,4 +1,4 @@
-.\" $NetBSD: pms.4,v 1.11 2003/04/09 17:11:55 jmmv Exp $
+.\" $NetBSD: pms.4,v 1.12 2003/04/28 11:52:46 augustss Exp $
 .\"
 .\" Copyright (c) 1993 Christopher G. Demetriou
 .\" All rights reserved.
@@ -42,6 +42,7 @@
 .Cd pckbc* at isa?
 .Cd pms* at pckbc?
 .Cd wsmouse* at pms?
+.Cd opms* at pckbc? # obsolete
 .Pp
 .Cd options PMS_DISABLE_POWERHOOK
 .Sh DESCRIPTION
@@ -74,6 +75,11 @@ after being switched away or reset (for instance, by a console switch).
 The
 .Va PMS_DISABLE_POWERHOOK
 kernel option disables PS/2 reset on resume.
+.Pp
+The
+.Xr opms 4
+device driver is obsolete; it accesses the mouse without using
+.Xr wsmouse 4 .
 .Sh SEE ALSO
 .Xr pckbc 4 ,
 .Xr ums 4 ,
