@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.65 2004/08/14 01:08:02 mycroft Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.66 2004/08/14 01:32:02 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.65 2004/08/14 01:08:02 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.66 2004/08/14 01:32:02 mycroft Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -209,7 +209,7 @@ ffs_truncate(v)
 		oip->i_size = 0;
 		DIP_ASSIGN(oip, size, 0);
 		oip->i_flag |= IN_CHANGE | IN_UPDATE;
-		return (VOP_UPDATE(ovp, NULL, NULL, UPDATE_WAIT));
+		return (VOP_UPDATE(ovp, NULL, NULL, 0));
 	}
 	if (oip->i_size == length) {
 		oip->i_flag |= IN_CHANGE | IN_UPDATE;
