@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.20 1999/03/25 18:48:52 mrg Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.21 1999/03/26 17:34:16 chs Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -575,12 +575,7 @@ uvm_km_pgremove(uobj, start, end)
 			 * if this kernel object is an aobj, free the swap slot.
 			 */
 			if (is_aobj) {
-				int slot = uao_set_swslot(uobj,
-							  curoff >> PAGE_SHIFT,
-							  0);
-
-				if (slot)
-					uvm_swap_free(slot, 1);
+				uao_dropswap(uobj, curoff >> PAGE_SHIFT);
 			}
 
 			uvm_lock_pageq();
@@ -615,11 +610,7 @@ loop_by_list:
 			 * if this kernel object is an aobj, free the swap slot.
 			 */
 			if (is_aobj) {
-				int slot = uao_set_swslot(uobj,
-						pp->offset >> PAGE_SHIFT, 0);
-
-				if (slot)
-					uvm_swap_free(slot, 1);
+				uao_dropswap(uobj, pp->offset >> PAGE_SHIFT);
 			}
 
 			uvm_lock_pageq();
