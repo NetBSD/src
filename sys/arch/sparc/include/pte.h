@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.27 2003/08/09 09:30:04 pk Exp $ */
+/*	$NetBSD: pte.h,v 1.28 2003/08/17 18:00:51 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -271,6 +271,7 @@ extern int mmu_has_hole;
 #define PG_IOC		0x00800000
 #define	PG_MBZ		0x00780000	/* unused; must be zero (oh really?) */
 #define	PG_PFNUM	0x0007ffff	/* n.b.: only 16 bits on sun4c */
+#define PG_WIRED	0x00400000	/* S/W only; in MBZ area */
 
 #define	PG_TNC_SHIFT	26		/* shift to get PG_TYPE + PG_NC */
 #define	PG_M_SHIFT	24		/* shift to get PG_M, PG_U */
