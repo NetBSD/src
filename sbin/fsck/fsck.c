@@ -1,4 +1,4 @@
-/*	$NetBSD: fsck.c,v 1.11 1997/06/23 01:03:35 mikel Exp $	*/
+/*	$NetBSD: fsck.c,v 1.12 1997/09/14 14:11:00 lukem Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas. All rights reserved.
@@ -38,7 +38,10 @@
  *
  */
 
-static char rcsid[] = "$NetBSD: fsck.c,v 1.11 1997/06/23 01:03:35 mikel Exp $";
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: fsck.c,v 1.12 1997/09/14 14:11:00 lukem Exp $");
+#endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/mount.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: preen.c,v 1.15 1996/09/28 19:21:42 christos Exp $	*/
+/*	$NetBSD: preen.c,v 1.16 1997/09/14 14:11:02 lukem Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)preen.c	8.3 (Berkeley) 12/6/94";
 #else
-static char rcsid[] = "$NetBSD: preen.c,v 1.15 1996/09/28 19:21:42 christos Exp $";
+__RCSID("$NetBSD: preen.c,v 1.16 1997/09/14 14:11:02 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -177,7 +178,7 @@ checkfstab(flags, maxrun, docheck, checkit)
 			p = d->d_part.tqh_first;
 
 			if (flags & (CHECK_DEBUG|CHECK_VERBOSE))
-				(void) printf("done %s: %s (%s) = %x\n",
+				(void) printf("done %s: %s (%s) = 0x%x\n",
 				    p->p_type, p->p_devname, p->p_mntpt,
 				    status);
 
@@ -251,7 +252,7 @@ finddisk(name)
 	const char *name;
 {
 	const char *p;
-	size_t len;
+	size_t len = 0;
 	struct diskentry *d;
 
 	for (p = name + strlen(name) - 1; p >= name; --p)
@@ -322,11 +323,11 @@ addpart(type, devname, mntpt, auxarg)
 
 static int
 startdisk(d, checkit)
-	register struct diskentry *d;
+	struct diskentry *d;
 	int (*checkit) __P((const char *, const char *, const char *, void *,
 	    pid_t *));
 {
-	register struct partentry *p = d->d_part.tqh_first;
+	struct partentry *p = d->d_part.tqh_first;
 	int rv;
 
 	while ((rv = (*checkit)(p->p_type, p->p_devname, p->p_mntpt,
