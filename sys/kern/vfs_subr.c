@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.94 1998/11/13 20:15:32 thorpej Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.95 1998/11/15 18:38:11 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -81,6 +81,7 @@
  * External virtual filesystem routines
  */
 
+#include "opt_compat_netbsd.h"
 #include "opt_uvm.h"
 
 #include <sys/param.h>
@@ -1471,7 +1472,9 @@ vfs_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	size_t newlen;
 	struct proc *p;
 {
+#if defined(COMPAT_09) || defined(COMPAT_43) || defined(COMPAT_44)
 	struct vfsconf vfc;
+#endif
 	struct vfsops *vfsp;
 
 	/* all sysctl names at this level are at least name and field */
@@ -1492,6 +1495,7 @@ vfs_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 
 	/* The rest are generic vfs sysctls. */
 	switch (name[1]) {
+#if defined(COMPAT_09) || defined(COMPAT_43) || defined(COMPAT_44)
 	case VFS_MAXTYPENUM:
 		/*
 		 * Provided for 4.4BSD-Lite2 compatibility.
@@ -1519,6 +1523,9 @@ vfs_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		vfc.vfc_next = NULL;
 		return (sysctl_rdstruct(oldp, oldlenp, newp, &vfc,
 		    sizeof(struct vfsconf)));
+#endif
+	default:
+		break;
 	}
 	return (EOPNOTSUPP);
 }
