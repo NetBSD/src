@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.249 2004/11/03 15:40:52 taca Exp $
+#	$NetBSD: 3RDPARTY,v 1.250 2004/11/06 19:50:10 soren Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -687,8 +687,8 @@ Use src/gnu/dist/texinfo/texinfo2netbsd for preparing the source tree
 for the import.
 
 Package:	top
-Version:	3.5beta9
-Current Vers:	3.5b12.7
+Version:	3.5beta12
+Current Vers:	3.5beta13
 Maintainer:	William LeFebvre <wnl@groupsys.com>
 Archive Site:	ftp://ftp.groupsys.com/pub/top/
 Mailing List:	top-spinners@ocee.groupsys.com
