@@ -8,7 +8,7 @@
 %#ifndef lint
 %/*static char sccsid[] = "from: @(#)rquota.x 1.2 87/09/20 Copyr 1987 Sun Micro";*/
 %/*static char sccsid[] = "from: @(#)rquota.x	2.1 88/08/01 4.0 RPCSRC";*/
-%__RCSID("$NetBSD: rquota.x,v 1.4 1999/07/02 15:44:13 simonb Exp $");
+%__RCSID("$NetBSD: rquota.x,v 1.5 2003/02/14 14:55:58 bouyer Exp $");
 %#endif /* not lint */
 #endif
 
@@ -17,6 +17,16 @@ const RQ_PATHLEN = 1024;
 struct getquota_args {
 	string gqa_pathp<RQ_PATHLEN>;  	/* path to filesystem of interest */
 	int gqa_uid;	        	/* inquire about quota for uid */
+};
+
+const RQUOTA_MAXQUOTAS = 0x02;
+const RQUOTA_USRQUOTA = 0x00;
+const RQUOTA_GRPQUOTA = 0x01;
+
+struct ext_getquota_args {
+	string gqa_pathp<RQ_PATHLEN>;  	/* path to filesystem of interest */
+	int gqa_type;			/* type of quota */
+	int gqa_id;	        	/* inquire about quota for uid/gid */
 };
 
 /*
@@ -64,4 +74,17 @@ program RQUOTAPROG {
 		getquota_rslt
 		RQUOTAPROC_GETACTIVEQUOTA(getquota_args) = 2;
 	} = 1;
+	version EXT_RQUOTAVERS {
+		/*
+		 * Get all quotas
+		 */
+		getquota_rslt
+		RQUOTAPROC_GETQUOTA(ext_getquota_args) = 1;
+
+		/*
+	 	 * Get active quotas only
+		 */
+		getquota_rslt
+		RQUOTAPROC_GETACTIVEQUOTA(ext_getquota_args) = 2;
+	} = 2;
 } = 100011;

@@ -1,4 +1,4 @@
-/*	$NetBSD: rquotad.c,v 1.19 2002/06/09 17:10:44 bouyer Exp $	*/
+/*	$NetBSD: rquotad.c,v 1.20 2003/02/14 14:55:59 bouyer Exp $	*/
 
 /*
  * by Manuel Bouyer (bouyer@ensta.fr). Public domain.
@@ -6,7 +6,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rquotad.c,v 1.19 2002/06/09 17:10:44 bouyer Exp $");
+__RCSID("$NetBSD: rquotad.c,v 1.20 2003/02/14 14:55:59 bouyer Exp $");
 #endif
 
 #include <sys/param.h>
@@ -35,10 +35,11 @@ __RCSID("$NetBSD: rquotad.c,v 1.19 2002/06/09 17:10:44 bouyer Exp $");
 #include <arpa/inet.h>
 
 void rquota_service(struct svc_req *request, SVCXPRT *transp);
-void sendquota(struct svc_req *request, SVCXPRT *transp);
+void ext_rquota_service(struct svc_req *request, SVCXPRT *transp);
+void sendquota(struct svc_req *request, int vers, SVCXPRT *transp);
 void initfs(void);
-int getfsquota(long id, char *path, struct dqblk *dqblk);
-int hasquota(struct fstab *fs, char **qfnamep);
+int getfsquota(int type, long id, char *path, struct dqblk *dqblk);
+int hasquota(struct fstab *fs, char **uqfnamep, char **gqfnamep);
 void cleanup(int);
 int main(int, char *[]);
 
@@ -49,7 +50,8 @@ int main(int, char *[]);
 struct fs_stat {
 	struct fs_stat *fs_next;	/* next element */
 	char   *fs_file;		/* mount point of the filesystem */
-	char   *qfpathname;		/* pathname of the quota file */
+	char   *uqfpathname;		/* pathname of the user quota file */
+	char   *gqfpathname;		/* pathname of the group quota file */
 	dev_t   st_dev;			/* device of the filesystem */
 } fs_stat;
 struct fs_stat *fs_begin = NULL;
@@ -62,6 +64,7 @@ cleanup(int dummy)
 {
 
 	(void)rpcb_unset(RQUOTAPROG, RQUOTAVERS, NULL);
+	(void)rpcb_unset(RQUOTAPROG, EXT_RQUOTAVERS, NULL);
 	exit(0);
 }
 
@@ -80,7 +83,7 @@ main(int argc, char *argv[])
 		daemon(0, 0);
 
 		(void) rpcb_unset(RQUOTAPROG, RQUOTAVERS, NULL);
-
+		(void) rpcb_unset(RQUOTAPROG, EXT_RQUOTAVERS, NULL);
 		(void) signal(SIGINT, cleanup);
 		(void) signal(SIGTERM, cleanup);
 		(void) signal(SIGHUP, cleanup);
@@ -101,10 +104,22 @@ main(int argc, char *argv[])
 			    "unable to register (RQUOTAPROG, RQUOTAVERS).");
 			exit(1);
 		}
+		if (!svc_reg(transp, RQUOTAPROG, EXT_RQUOTAVERS,
+		    ext_rquota_service, NULL)) {
+			syslog(LOG_ERR,
+			    "unable to register (RQUOTAPROG, EXT_RQUOTAVERS).");
+			exit(1);
+		}
 	} else {
 		if (!svc_create(rquota_service, RQUOTAPROG, RQUOTAVERS, "udp")){
 			syslog(LOG_ERR,
 			    "unable to create (RQUOTAPROG, RQUOTAVERS).");
+			exit(1);
+		}
+		if (!svc_create(ext_rquota_service, RQUOTAPROG,
+		    EXT_RQUOTAVERS, "udp")){
+			syslog(LOG_ERR,
+			    "unable to create (RQUOTAPROG, EXT_RQUOTAVERS).");
 			exit(1);
 		}
 	}
@@ -125,7 +140,28 @@ rquota_service(struct svc_req *request, SVCXPRT *transp)
 
 	case RQUOTAPROC_GETQUOTA:
 	case RQUOTAPROC_GETACTIVEQUOTA:
-		sendquota(request, transp);
+		sendquota(request, RQUOTAVERS, transp);
+		break;
+
+	default:
+		svcerr_noproc(transp);
+		break;
+	}
+	if (from_inetd)
+		exit(0);
+}
+
+void 
+ext_rquota_service(struct svc_req *request, SVCXPRT *transp)
+{
+	switch (request->rq_proc) {
+	case NULLPROC:
+		(void)svc_sendreply(transp, xdr_void, (char *)NULL);
+		break;
+
+	case RQUOTAPROC_GETQUOTA:
+	case RQUOTAPROC_GETACTIVEQUOTA:
+		sendquota(request, EXT_RQUOTAVERS, transp);
 		break;
 
 	default:
@@ -138,23 +174,39 @@ rquota_service(struct svc_req *request, SVCXPRT *transp)
 
 /* read quota for the specified id, and send it */
 void 
-sendquota(struct svc_req *request, SVCXPRT *transp)
+sendquota(struct svc_req *request, int vers, SVCXPRT *transp)
 {
 	struct getquota_args getq_args;
+	struct ext_getquota_args ext_getq_args;
 	struct getquota_rslt getq_rslt;
 	struct dqblk dqblk;
 	struct timeval timev;
 
 	memset((char *)&getq_args, 0, sizeof(getq_args));
-	if (!svc_getargs(transp, xdr_getquota_args, (caddr_t)&getq_args)) {
-		svcerr_decode(transp);
-		return;
+	switch (vers) {
+	case RQUOTAVERS:
+		if (!svc_getargs(transp, xdr_getquota_args,
+		    (caddr_t)&getq_args)) {
+			svcerr_decode(transp);
+			return;
+		}
+		ext_getq_args.gqa_pathp = getq_args.gqa_pathp;
+		ext_getq_args.gqa_id = getq_args.gqa_uid;
+		ext_getq_args.gqa_type = RQUOTA_USRQUOTA;
+		break;
+	case EXT_RQUOTAVERS:
+		if (!svc_getargs(transp, xdr_ext_getquota_args,
+		    (caddr_t)&ext_getq_args)) {
+			svcerr_decode(transp);
+			return;
+		}
+		break;
 	}
 	if (request->rq_cred.oa_flavor != AUTH_UNIX) {
 		/* bad auth */
 		getq_rslt.status = Q_EPERM;
-	} else if (!getfsquota(getq_args.gqa_uid, getq_args.gqa_pathp,
-	    &dqblk)) {
+	} else if (!getfsquota(ext_getq_args.gqa_type, ext_getq_args.gqa_id,
+	    ext_getq_args.gqa_pathp, &dqblk)) {
 		/* failed, return noquota */
 		getq_rslt.status = Q_NOQUOTA;
 	} else {
@@ -193,7 +245,7 @@ initfs()
 {
 	struct fs_stat *fs_current = NULL;
 	struct fs_stat *fs_next = NULL;
-	char *qfpathname;
+	char *uqfpathname, *gqfpathname;
 	struct fstab *fs;
 	struct stat st;
 
@@ -201,7 +253,7 @@ initfs()
 	while ((fs = getfsent())) {
 		if (strcmp(fs->fs_vfstype, MOUNT_FFS))
 			continue;
-		if (!hasquota(fs, &qfpathname))
+		if (!hasquota(fs, &uqfpathname, &gqfpathname))
 			continue;
 
 		fs_current = (struct fs_stat *) malloc(sizeof(struct fs_stat));
@@ -217,12 +269,22 @@ initfs()
 			exit(1);
 		}
 
-		fs_current->qfpathname = strdup(qfpathname);
-		if (fs_current->qfpathname == NULL) {
-			syslog(LOG_ERR, "can't strdup: %m");
-			exit(1);
-		}
-
+		if (uqfpathname) {
+			fs_current->uqfpathname = strdup(uqfpathname);
+			if (fs_current->uqfpathname == NULL) {
+				syslog(LOG_ERR, "can't strdup: %m");
+				exit(1);
+			}
+		} else
+			fs_current->uqfpathname = NULL;
+		if (gqfpathname) {
+			fs_current->gqfpathname = strdup(gqfpathname);
+			if (fs_current->gqfpathname == NULL) {
+				syslog(LOG_ERR, "can't strdup: %m");
+				exit(1);
+			}
+		} else
+			fs_current->gqfpathname = NULL;
 		stat(fs->fs_file, &st);
 		fs_current->st_dev = st.st_dev;
 
@@ -237,16 +299,17 @@ initfs()
  * Return 0 if fail, 1 otherwise
  */
 int
-getfsquota(long id, char *path, struct dqblk *dqblk)
+getfsquota(int type, long id, char *path, struct dqblk *dqblk)
 {
 	struct stat st_path;
 	struct fs_stat *fs;
 	int	qcmd, fd, ret = 0;
+	char *filename;
 
 	if (stat(path, &st_path) < 0)
 		return (0);
 
-	qcmd = QCMD(Q_GETQUOTA, USRQUOTA);
+	qcmd = QCMD(Q_GETQUOTA, type == RQUOTA_USRQUOTA ? USRQUOTA : GRPQUOTA);
 
 	for (fs = fs_begin; fs != NULL; fs = fs->fs_next) {
 		/* where the device is the same as path */
@@ -256,16 +319,18 @@ getfsquota(long id, char *path, struct dqblk *dqblk)
 		/* find the specified filesystem. get and return quota */
 		if (quotactl(fs->fs_file, qcmd, id, dqblk) == 0)
 			return (1);
-
-		if ((fd = open(fs->qfpathname, O_RDONLY)) < 0) {
-			syslog(LOG_WARNING, "open error: %s: %m",
-			    fs->qfpathname);
+		filename = (type == RQUOTA_USRQUOTA) ?
+		    fs->uqfpathname : fs->gqfpathname;
+		if (filename == NULL)
+			return 0;
+		if ((fd = open(filename, O_RDONLY)) < 0) {
+			syslog(LOG_WARNING, "open error: %s: %m", filename);
 			return (0);
 		}
 		if (lseek(fd, (off_t)(id * sizeof(struct dqblk)), SEEK_SET)
 		    == (off_t)-1) {
 			close(fd);
-			return (1);
+			return (0);
 		}
 		switch (read(fd, dqblk, sizeof(struct dqblk))) {
 		case 0:
@@ -280,8 +345,7 @@ getfsquota(long id, char *path, struct dqblk *dqblk)
 			ret = 1;
 			break;
 		default:	/* ERROR */
-			syslog(LOG_WARNING, "read error: %s: %m",
-			    fs->qfpathname);
+			syslog(LOG_WARNING, "read error: %s: %m", filename);
 			close(fd);
 			return (0);
 		}
@@ -295,33 +359,48 @@ getfsquota(long id, char *path, struct dqblk *dqblk)
  * Comes from quota.c, NetBSD 0.9
  */
 int
-hasquota(struct fstab *fs, char **qfnamep)
+hasquota(struct fstab *fs, char **uqfnamep, char **gqfnamep)
 {
-	static char initname, usrname[100];
-	static char buf[MAXPATHLEN];
+	static char initname=0, usrname[100], grpname[100];
+	static char buf[MAXPATHLEN], ubuf[MAXPATHLEN], gbuf[MAXPATHLEN];
 	char	*opt, *cp = NULL;
+	int ret = 0;
 
 	if (!initname) {
 		(void)snprintf(usrname, sizeof usrname, "%s%s",
 		    qfextension[USRQUOTA], QUOTAFILENAME);
-		initname = 1;
+		(void)snprintf(grpname, sizeof grpname, "%s%s",
+		    qfextension[GRPQUOTA], QUOTAFILENAME);
 	}
+
+	*uqfnamep = NULL;
+	*gqfnamep = NULL;
 	strncpy(buf, fs->fs_mntops, sizeof(buf) - 1);
 	buf[sizeof(buf) - 1] = '\0';
 	for (opt = strtok(buf, ","); opt; opt = strtok(NULL, ",")) {
 		if ((cp = strchr(opt, '=')))
 			*cp++ = '\0';
-		if (strcmp(opt, usrname) == 0)
-			break;
+		if (strcmp(opt, usrname) == 0) {
+			ret = 1;
+			if (cp)
+				*uqfnamep = cp;
+			else {
+				(void)snprintf(ubuf, sizeof ubuf, "%s/%s.%s",
+				    fs->fs_file, QUOTAFILENAME,
+				    qfextension[USRQUOTA]);
+				*uqfnamep = ubuf;
+			}
+		} else if (strcmp(opt, grpname) == 0) {
+			ret = 1;
+			if (cp)
+				*gqfnamep = cp;
+			else {
+				(void)snprintf(gbuf, sizeof gbuf, "%s/%s.%s",
+				    fs->fs_file, QUOTAFILENAME,
+				    qfextension[GRPQUOTA]);
+				*gqfnamep = gbuf;
+			}
+		}
 	}
-	if (!opt)
-		return (0);
-	if (cp) {
-		*qfnamep = cp;
-		return (1);
-	}
-	(void)snprintf(buf, sizeof buf, "%s/%s.%s", fs->fs_file, QUOTAFILENAME,
-	    qfextension[USRQUOTA]);
-	*qfnamep = buf;
-	return (1);
+	return (ret);
 }
