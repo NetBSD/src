@@ -1,4 +1,4 @@
-/* $NetBSD: dol.c,v 1.18 2002/01/30 07:02:01 itohy Exp $ */
+/* $NetBSD: dol.c,v 1.19 2002/01/30 20:53:33 christos Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)dol.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: dol.c,v 1.18 2002/01/30 07:02:01 itohy Exp $");
+__RCSID("$NetBSD: dol.c,v 1.19 2002/01/30 20:53:33 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -475,10 +475,8 @@ Dgetdol(void)
 		c = DgetC(0);
 	    } while (Isdigit(c));
 	    unDredc(c);
-	    if (subscr < 0) {
+	    if (subscr < 0)
 		stderror(ERR_RANGE);
-		return;
-	    }
 	    if (subscr == 0) {
 		if (bitset) {
 		    dolp = ffile ? STR1 : STR0;
