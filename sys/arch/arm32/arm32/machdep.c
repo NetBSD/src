@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.42 1998/08/02 21:50:31 mark Exp $	*/
+/*	$NetBSD: machdep.c,v 1.43 1998/08/04 16:25:28 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -45,6 +45,7 @@
  * Created      : 17/09/94
  */
 
+#include "opt_compat_netbsd.h"
 #include "opt_pmap_debug.h"
 #include "opt_uvm.h"
 
@@ -666,7 +667,11 @@ setregs(p, pack, stack)
 	tf->tf_r9 = 0;
 	tf->tf_r10 = 0;
 	tf->tf_r11 = 0;				/* bottom of the fp chain */
-	tf->tf_r12 = stack;			/* needed by old crt0.c */
+#if (COMPAT_11 + COMPAT_12 + COMPAT_13) > 0
+	tf->tf_r12 = stack;			/* needed by pre 1.4 crt0.c */
+#else
+	tf->tf_r12 = 0;
+#endif
 	tf->tf_usr_sp = stack;
 	tf->tf_usr_lr = pack->ep_entry;
 	tf->tf_svc_lr = 0x77777777;		/* Something we can see */
