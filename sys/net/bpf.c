@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.94 2004/04/15 14:56:57 darrenr Exp $	*/
+/*	$NetBSD: bpf.c,v 1.95 2004/04/20 10:51:09 darrenr Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.94 2004/04/15 14:56:57 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.95 2004/04/20 10:51:09 darrenr Exp $");
 
 #include "bpfilter.h"
 
@@ -1102,7 +1102,10 @@ bpfpoll(dev, events, p)
 		    (d->bd_immediate && d->bd_slen != 0)) {
 			revents |= events & (POLLIN | POLLRDNORM);
 		} else if (d->bd_state == BPF_TIMED_OUT) {
-			revents |= events & POLLIN;
+			if (d->bd_slen != 0)
+				revents |= events & (POLLIN | POLLRDNORM);
+			else
+				revents |= events & POLLIN;
 		} else {
 			selrecord(p, &d->bd_sel);
 			/* Start the read timeout if necessary */
