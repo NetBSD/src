@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)test.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: test.c,v 1.4 1997/10/23 06:35:42 lukem Exp $");
+__RCSID("$NetBSD: test.c,v 1.5 1998/05/20 01:12:25 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -133,6 +133,7 @@ main(argc, argv)
     int num;
     const char *buf;
     Tokenizer *tok;
+    int lastevent = 0, ncontinuation;
     History *hist;
     HistEvent ev;
 
@@ -142,11 +143,11 @@ main(argc, argv)
     (void) signal(SIGTERM, sig);
 
     hist = history_init();		/* Init the builtin history	*/
-    history(hist, &ev, H_SETMAXSIZE, 100);	/* Remember 100 events	*/
+    history(hist, &ev, H_SETSIZE, 100);	/* Remember 100 events		*/
 
     tok  = tok_init(NULL);		/* Initialize the tokenizer	*/
 
-    el = el_init(*argv, stdin, stdout);	/* Initialize editline		*/
+    el = el_init(*argv, stdin, stdout, stderr);	/* Initialize editline	*/
 
     el_set(el, EL_EDITOR, "vi");	/* Default editor is vi 	*/
     el_set(el, EL_SIGNAL, 1);		/* Handle signals gracefully	*/
@@ -181,15 +182,25 @@ main(argc, argv)
 	if (!continuation && num == 1)
 	    continue;
 
-	if (tok_line(tok, buf, &ac, &av) > 0) {
-	    history(hist, &ev, continuation ? H_ADD : H_ENTER, buf);
-	    continuation = 1;
-	    continue;
+	if (tok_line(tok, buf, &ac, &av) > 0)
+	    ncontinuation = 1;
+
+	if (continuation) {
+	    /*
+	     * Append to the right event in case the user
+	     * moved around in history.
+	     */
+	    if (history(hist, &ev, H_SET, lastevent) == -1) 
+		err(1, "%d: %s\n", lastevent, ev.str);
+	    history(hist, &ev, H_ADD , buf);
+	}
+	else {
+	    history(hist, &ev, H_ENTER, buf);
+	    lastevent = ev.num;
 	}
 
-	history(hist, &ev, continuation ? H_ADD : H_ENTER, buf);
-
-	continuation = 0;
+	continuation = ncontinuation;
+	ncontinuation = 0;
 
 	if (strcmp(av[0], "history") == 0) {
 	    int rv;
