@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_obio.c,v 1.8 1998/08/23 10:04:56 pk Exp $	*/
+/*	$NetBSD: if_ie_obio.c,v 1.9 1999/03/18 21:33:14 pk Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -237,11 +237,17 @@ ie_obio_write24(sc, offset, addr)
 	int offset;
 	int addr;
 {
-	u_int32_t v;
-	u_char *t = (u_char *)&v, *f = (u_char *)&addr;
+	u_char *f = (u_char *)&addr;
+	u_int16_t v0, v1;
+	u_char *t;
 
-	t[0] = f[3]; t[1] = f[2]; t[2] = f[1]; t[3] = 0;
-	bus_space_write_4(sc->bt, sc->bh, offset, v);
+	t = (u_char *)&v0;
+	t[0] = f[3]; t[1] = f[2];
+	bus_space_write_2(sc->bt, sc->bh, offset, v0);
+
+	t = (u_char *)&v1;
+	t[0] = f[1]; t[1] = 0;
+	bus_space_write_2(sc->bt, sc->bh, offset+2, v1);
 }
 
 int
@@ -277,9 +283,9 @@ ie_obio_attach(parent, self, aux)
 	bus_dma_segment_t seg;
 	int rseg;
 	struct bootpath *bp;
-	volatile struct ieob *ieo;
 	paddr_t pa;
 	struct intrhand *ih;
+	u_long iebase;
 	u_int8_t myaddr[ETHER_ADDR_LEN];
 extern	void myetheraddr(u_char *);	/* should be elsewhere */
 
@@ -304,7 +310,6 @@ extern	void myetheraddr(u_char *);	/* should be elsewhere */
 		return;
 	}
 	sc->sc_reg = (void *)bh;
-	ieo = (volatile struct ieob *)bh;
 
 	/*
 	 * Allocate control & buffer memory.
@@ -316,6 +321,7 @@ extern	void myetheraddr(u_char *);	/* should be elsewhere */
 			self->dv_xname);
 		return;
 	}
+#if 0
 	if (bus_dmamem_map(oba->oba_dmatag, &seg, rseg, sc->sc_msize,
 			   (caddr_t *)&sc->sc_maddr,
 			   BUS_DMA_NOWAIT|BUS_DMA_COHERENT) != 0) {
@@ -323,13 +329,18 @@ extern	void myetheraddr(u_char *);	/* should be elsewhere */
 		bus_dmamem_free(oba->oba_dmatag, &seg, rseg);
 		return;
 	}
+#else
+	/*
+	 * We happen to know we can use the DVMA address directly as
+	 * a CPU virtual address on machines where this driver can
+	 * attach (sun4's). So we possibly save a MMU resource
+	 * by not asking for a double mapping.
+	 */
+	sc->sc_maddr = (void *)seg.ds_addr;
+#endif
 
 	wzero(sc->sc_maddr, sc->sc_msize);
 	sc->bh = (bus_space_handle_t)(sc->sc_maddr);
-
-#if 0
-	sc->sc_iobase = (caddr_t)IEOB_ADBASE; /* 24 bit base addr */
-#endif
 
 	/*
 	 * The i82586's 24-bit address space maps to the last 16MB of
@@ -372,21 +383,26 @@ extern	void myetheraddr(u_char *);	/* should be elsewhere */
 	/* scb follows iscp */
 	sc->scb = IE_ISCP_SZ;
 
-	/* scp is at the fixed location IE_SCP_ADDR (relative to IEOB_ADBASE) */
-	sc->scp = IE_SCP_ADDR + IEOB_ADBASE - (u_long)sc->sc_maddr;
+	/* scp is at the fixed location IE_SCP_ADDR (modulo the page size) */
+	sc->scp = IE_SCP_ADDR & PGOFSET;
 
+	/* Calculate the 24-bit base of i82586 operations */
+	iebase = (u_long)seg.ds_addr - (u_long)IEOB_ADBASE;
 	ie_obio_write16(sc, IE_ISCP_SCB(sc->iscp), sc->scb);
-	ie_obio_write24(sc, IE_ISCP_BASE(sc->iscp), (u_long)sc->sc_maddr);
-	ie_obio_write24(sc, IE_SCP_ISCP(sc->scp),
-			(u_long)sc->sc_maddr - (u_long)IEOB_ADBASE + sc->iscp);
-
+	ie_obio_write24(sc, IE_ISCP_BASE(sc->iscp), iebase);
+	ie_obio_write24(sc, IE_SCP_ISCP(sc->scp), iebase + sc->iscp);
 
 	/*
-	 * Rest of first page is unused (wasted!); rest of ram
-	 * for buffers.
+	 * Rest of first page is unused (wasted!); the other pages
+	 * are used for buffers.
 	 */
 	sc->buf_area = NBPG;
 	sc->buf_area_sz = sc->sc_msize - NBPG;
+
+	if (i82586_proberam(sc) == 0) {
+		printf(": memory probe failed\n");
+		return;
+	}
 
 	myetheraddr(myaddr);
 	i82586_attach(sc, "onboard", myaddr, media, NMEDIA, media[0]);
