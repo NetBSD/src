@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_options.c,v 1.13 2003/08/07 16:33:33 agc Exp $	*/
+/*	$NetBSD: clnp_options.c,v 1.14 2004/04/19 05:16:45 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clnp_options.c,v 1.13 2003/08/07 16:33:33 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clnp_options.c,v 1.14 2004/04/19 05:16:45 matt Exp $");
 
 #include "opt_iso.h"
 #ifdef ISO
@@ -95,9 +95,9 @@ __KERNEL_RCSID(0, "$NetBSD: clnp_options.c,v 1.13 2003/08/07 16:33:33 agc Exp $"
  * NOTES:		If source routing has been terminated, do nothing.
  */
 void
-clnp_update_srcrt(options, oidx)
-	struct mbuf    *options;/* ptr to options mbuf */
-	struct clnp_optidx *oidx;	/* ptr to option index */
+clnp_update_srcrt(
+	struct mbuf *options,		/* ptr to options mbuf */
+	struct clnp_optidx *oidx)	/* ptr to option index */
 {
 	u_char          len;	/* length of current address */
 	struct iso_addr isoa;	/* copy current address into here */
@@ -148,11 +148,11 @@ clnp_update_srcrt(options, oidx)
  * NOTES:
  */
 void
-clnp_dooptions(options, oidx, ifp, isoa)
-	struct mbuf    *options;/* ptr to options mbuf */
-	struct clnp_optidx *oidx;	/* ptr to option index */
-	struct ifnet   *ifp;	/* ptr to interface pkt is leaving on */
-	struct iso_addr *isoa;	/* ptr to our address for this ifp */
+clnp_dooptions(
+	struct mbuf *options,		/* ptr to options mbuf */
+	struct clnp_optidx *oidx,	/* ptr to option index */
+	struct ifnet *ifp,		/* ptr to interface pkt is leaving on */
+	struct iso_addr *isoa)		/* ptr to our address for this ifp */
 {
 	/*
 	 *	If record route is specified, move all
@@ -230,9 +230,9 @@ clnp_dooptions(options, oidx, ifp, isoa)
  * NOTES:
  */
 int
-clnp_set_opts(options, data)
-	struct mbuf   **options;/* target for option information */
-	struct mbuf   **data;	/* source of option information */
+clnp_set_opts(
+	struct mbuf **options,	/* target for option information */
+	struct mbuf **data)	/* source of option information */
 {
 	int             error = 0;	/* error return value */
 	struct clnp_optidx dummy;	/* dummy index - not used */
@@ -284,11 +284,11 @@ clnp_set_opts(options, data)
  *			actual address.
  */
 int
-clnp_opt_sanity(m, opts, len, oidx)
-	struct mbuf    *m;	/* mbuf options reside in */
-	caddr_t         opts;	/* ptr to buffer containing options */
-	int             len;	/* length of buffer */
-	struct clnp_optidx *oidx;	/* RETURN: filled in with option idx
+clnp_opt_sanity(
+	struct mbuf    *m,	/* mbuf options reside in */
+	caddr_t         opts,	/* ptr to buffer containing options */
+	int             len,	/* length of buffer */
+	struct clnp_optidx *oidx)	/* RETURN: filled in with option idx
 					 * info */
 {
 	u_char          opcode = 0;	/* code of particular option */
