@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.174 2004/07/05 11:19:46 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.175 2004/10/10 09:52:29 yamt Exp $	*/
 
 /*
  *
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.174 2004/07/05 11:19:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.175 2004/10/10 09:52:29 yamt Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
@@ -3019,6 +3019,7 @@ pmap_clear_attrs(pg, clearbits)
 	*myattrs &= ~clearbits;
 
 	SPLAY_FOREACH(pve, pvtree, &pvh->pvh_root) {
+		pt_entry_t *ptep;
 #ifdef DIAGNOSTIC
 		if (!pmap_valid_entry(pve->pv_pmap->pm_pdir[pdei(pve->pv_va)]))
 			panic("pmap_change_attrs: mapping without PTP "
@@ -3026,7 +3027,8 @@ pmap_clear_attrs(pg, clearbits)
 #endif
 
 		ptes = pmap_map_ptes(pve->pv_pmap);	/* locks pmap */
-		opte = ptes[x86_btop(pve->pv_va)];
+		ptep = &ptes[x86_btop(pve->pv_va)];
+		opte = *ptep;
 		if (opte & clearbits) {
 			/* We need to do something */
 			if (clearbits == PG_RW) {
@@ -3038,9 +3040,8 @@ pmap_clear_attrs(pg, clearbits)
 				 */
 
 				/* First zap the RW bit! */
-				x86_atomic_clearbits_l(
-				    &ptes[x86_btop(pve->pv_va)], PG_RW); 
-				opte = ptes[x86_btop(pve->pv_va)];
+				x86_atomic_clearbits_l(ptep, PG_RW); 
+				opte = *ptep;
 
 				/*
 				 * Then test if it is not cached as RW the TLB
@@ -3055,8 +3056,7 @@ pmap_clear_attrs(pg, clearbits)
 			 */
 
 			/* zap! */
-			opte = x86_atomic_testset_ul(
-			    &ptes[x86_btop(pve->pv_va)],
+			opte = x86_atomic_testset_ul(ptep,
 			    (opte & ~(PG_U | PG_M)));
 
 			result |= (opte & clearbits);
@@ -3260,6 +3260,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 	int flags;
 {
 	pt_entry_t *ptes, opte, npte;
+	pt_entry_t *ptep;
 	struct vm_page *ptp, *pg;
 	struct vm_page_md *mdpg;
 	struct pv_head *old_pvh, *new_pvh;
@@ -3315,7 +3316,8 @@ pmap_enter(pmap, va, pa, prot, flags)
 	 * on SMP the PTE might gain PG_U and PG_M flags
 	 * before we zap it later
 	 */
-	opte = ptes[x86_btop(va)];		/* old PTE */
+	ptep = &ptes[x86_btop(va)];
+	opte = *ptep;		/* old PTE */
 
 	/*
 	 * is there currently a valid mapping at our VA and does it
@@ -3335,7 +3337,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 		npte |= (opte & PG_PVLIST);
 
 		/* zap! */
-		opte = x86_atomic_testset_ul(&ptes[x86_btop(va)], npte);
+		opte = x86_atomic_testset_ul(ptep, npte);
 
 		/*
 		 * Any change in the protection level that the CPU
@@ -3347,8 +3349,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 			 * No need to flush the TLB.
 			 * Just add old PG_M, ... flags in new entry.
 			 */
-			x86_atomic_setbits_l(&ptes[x86_btop(va)],
-			    opte & (PG_M | PG_U));
+			x86_atomic_setbits_l(ptep, opte & (PG_M | PG_U));
 			goto out_ok;
 		}
 
@@ -3428,7 +3429,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 			pmap_lock_pvhs(old_pvh, new_pvh);
 
 			/* zap! */
-			opte = x86_atomic_testset_ul(&ptes[x86_btop(va)], npte);
+			opte = x86_atomic_testset_ul(ptep, npte);
 
 			pve = pmap_remove_pv(old_pvh, pmap, va);
 			KASSERT(pve != 0);
@@ -3457,7 +3458,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 		simple_unlock(&new_pvh->pvh_lock);
 	}
 
-	opte = x86_atomic_testset_ul(&ptes[x86_btop(va)], npte);   /* zap! */
+	opte = x86_atomic_testset_ul(ptep, npte);   /* zap! */
 
 shootdown_test:
 	/* Update page attributes if needed */
