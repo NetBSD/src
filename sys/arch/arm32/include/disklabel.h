@@ -1,4 +1,4 @@
-/* $NetBSD: disklabel.h,v 1.1 1996/01/31 23:21:42 mark Exp $ */
+/* $NetBSD: disklabel.h,v 1.2 1996/03/06 23:17:51 mark Exp $ */
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -41,13 +41,10 @@
  * machine specific disk label info
  *
  * Created      : 04/10/94
- * Last updated : 01/07/95
- *
- *    $Id: disklabel.h,v 1.1 1996/01/31 23:21:42 mark Exp $
  */
 
-#ifndef _MACHINE_DISKLABEL_H_
-#define _MACHINE_DISKLABEL_H_
+#ifndef _ARM32_DISKLABEL_H_
+#define _ARM32_DISKLABEL_H_
 
 #define LABELSECTOR	1		/* sector containing label */
 #define LABELOFFSET	0		/* offset of label in sector */
@@ -63,9 +60,28 @@
 #define PARTITION_FORMAT_RISCIX  2
 #define PARTITION_FORMAT_RISCBSD 0x42
 
+#define FILECORE_BOOT_SECTOR 6
+
+/* Stuff to deal with RISCiX partitions */
+
+#define NRISCIX_PARTITIONS 8
 #define RISCIX_PARTITION_OFFSET 8
 
-#define FILECORE_BOOT_SECTOR 6
+struct riscix_partition {
+	u_int rp_start;
+	u_int rp_length;
+	u_int rp_type;
+	char rp_name[16];
+};
+
+struct riscix_partition_table {
+	u_int pad0;
+	u_int pad1;
+	struct riscix_partition partitions[NRISCIX_PARTITIONS];
+};
+
+  
+#include <sys/dkbad.h>
 
 struct riscbsd_partition {
 	u_int rp_start;
@@ -74,15 +90,12 @@ struct riscbsd_partition {
 	char rp_name[16];
 };
 
-  
-#include <sys/dkbad.h>
 struct cpu_disklabel {
 	u_int pad0;
 	u_int pad1;
 	struct riscbsd_partition partitions[NRISCBSD_PARTITIONS];
 	struct dkbad bad;
 };
-
 
 struct filecore_bootblock {
 	u_char  padding0[0x1c0];
@@ -114,8 +127,8 @@ struct filecore_bootblock {
 #ifdef _KERNEL
 struct disklabel;
 int	bounds_check_with_label __P((struct buf *, struct disklabel *, int));
-#endif
+#endif /* _KERNEL */
 
-#endif /* _MACHINE_DISKLABEL_H_ */
+#endif /* _ARM32_DISKLABEL_H_ */
 
 /* End of disklabel.h */
