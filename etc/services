@@ -1,4 +1,4 @@
-#	$NetBSD: services,v 1.35 2000/06/02 22:54:10 fvdl Exp $
+#	$NetBSD: services,v 1.36 2000/06/05 18:12:57 mycroft Exp $
 #
 # Network services, Internet style
 #
@@ -209,6 +209,7 @@ kerberos-master	751/udp			# Kerberos admin server udp
 kerberos-master	751/tcp			# Kerberos admin server tcp
 krbupdate	760/tcp		kreg	# BSD Kerberos registration
 kpasswd		761/tcp		kpwd	# BSD Kerberos `passwd'
+kpop		1109/tcp		# Kerberos POP server
 eklogin		2105/tcp		# Kerberos encrypted `rlogin'
 
 #
