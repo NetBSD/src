@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 1990, 1993, 1994
+ * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,105 +32,84 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)nlist.c	8.4 (Berkeley) 4/2/94";
+static char sccsid[] = "@(#)fmt.c	8.4 (Berkeley) 4/15/94";
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/time.h>
-#include <sys/proc.h>
 #include <sys/resource.h>
-
-#include <err.h>
-#include <errno.h>
-#include <kvm.h>
-#include <nlist.h>
+#include <ctype.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
-
+#include <vis.h>
 #include "ps.h"
 
-#ifdef P_PPWAIT
-#define NEWVM
-#endif
+static char *cmdpart __P((char *));
+static char *shquote __P((char **));
 
-struct	nlist psnl[] = {
-	{"_fscale"},
-#define	X_FSCALE	0
-	{"_ccpu"},
-#define	X_CCPU		1
-#ifdef NEWVM
-	{"_avail_start"},
-#define	X_AVAILSTART	2
-	{"_avail_end"},
-#define	X_AVAILEND	3
-#else
-	{"_ecmx"},
-#define	X_ECMX		2
-#endif
-	{NULL}
-};
-
-fixpt_t	ccpu;				/* kernel _ccpu variable */
-int	nlistread;			/* if nlist already read. */
-int	mempages;			/* number of pages of phys. memory */
-int	fscale;				/* kernel _fscale variable */
-
-extern kvm_t *kd;
-
-#define kread(x, v) \
-	kvm_read(kd, psnl[x].n_value, (char *)&v, sizeof v) != sizeof(v)
-
-int
-donlist()
+/*
+ * XXX
+ * This is a stub until marc does the real one.
+ */
+static char *
+shquote(argv)
+	char **argv;
 {
-	int rval;
-#ifdef NEWVM
-	int tmp;
-#endif
+	char **p, *dst, *src;
+	static char buf[4096];		/* XXX */
 
-	rval = 0;
-	nlistread = 1;
-	if (kvm_nlist(kd, psnl)) {
-		nlisterr(psnl);
-		eval = 1;
-		return (1);
+	if (*argv == 0) {
+		buf[0] = 0;
+		return (buf);
 	}
-	if (kread(X_FSCALE, fscale)) {
-		warnx("fscale: %s", kvm_geterr(kd));
-		eval = rval = 1;
+	dst = buf;
+	for (p = argv; (src = *p++) != 0; ) {
+		if (*src == 0)
+			continue;
+		strvis(dst, src, VIS_NL | VIS_CSTYLE);
+		while (*dst)
+			dst++;
+		*dst++ = ' ';
 	}
-#ifdef NEWVM
-	if (kread(X_AVAILEND, mempages)) {
-		warnx("avail_start: %s", kvm_geterr(kd));
-		eval = rval = 1;
-	}
-	if (kread(X_AVAILSTART, tmp)) {
-		warnx("avail_end: %s", kvm_geterr(kd));
-		eval = rval = 1;
-	}
-	mempages -= tmp;
-#else
-	if (kread(X_ECMX, mempages)) {
-		warnx("ecmx: %s", kvm_geterr(kd));
-		eval = rval = 1;
-	}
-#endif
-	if (kread(X_CCPU, ccpu)) {
-		warnx("ccpu: %s", kvm_geterr(kd));
-		eval = rval = 1;
-	}
-	return (rval);
+	*dst = '\0';
+	return (buf);
 }
 
-void
-nlisterr(nl)
-	struct nlist nl[];
+static char *
+cmdpart(arg0)
+	char *arg0;
 {
-	int i;
+	char *cp;
 
-	(void)fprintf(stderr, "ps: nlist: can't find following symbols:");
-	for (i = 0; nl[i].n_name != NULL; i++)
-		if (nl[i].n_value == 0)
-			(void)fprintf(stderr, " %s", nl[i].n_name);
-	(void)fprintf(stderr, "\n");
+	return ((cp = strrchr(arg0, '/')) != NULL ? cp + 1 : arg0);
+}
+
+char *
+fmt_argv(argv, cmd, maxlen)
+	char **argv;
+	char *cmd;
+	int maxlen;
+{
+	int len;
+	char *ap, *cp;
+
+	if (argv == 0 || argv[0] == 0) {
+		if (cmd == NULL)
+			return ("");
+		ap = NULL;
+		len = maxlen + 3;
+	} else {
+		ap = shquote(argv);
+		len = strlen(ap) + maxlen + 4;
+	}
+	if ((cp = malloc(len)) == NULL)
+		return (NULL);
+	if (ap == NULL)
+		sprintf(cp, "(%.*s)", maxlen, cmd);
+	else if (strncmp(cmdpart(argv[0]), cmd, maxlen) != 0)
+		sprintf(cp, "%s (%.*s)", ap, maxlen, cmd);
+	else
+		(void) strcpy(cp, ap);
+	return (cp);
 }
