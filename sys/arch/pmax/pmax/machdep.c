@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.15 1994/10/26 21:10:33 cgd Exp $	*/
+/*	$NetBSD: machdep.c,v 1.16 1994/11/22 18:59:59 dean Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1002,7 +1002,7 @@ void
 sendsig(catcher, sig, mask, code)
 	sig_t catcher;
 	int sig, mask;
-	unsigned code;
+	u_long code;
 {
 	register struct proc *p = curproc;
 	register struct sigframe *fp;
