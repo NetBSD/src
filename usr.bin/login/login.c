@@ -1,4 +1,4 @@
-/*	$NetBSD: login.c,v 1.19 1997/06/23 11:19:10 veego Exp $	*/
+/*	$NetBSD: login.c,v 1.20 1997/06/25 00:15:06 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-static char rcsid[] = "$NetBSD: login.c,v 1.19 1997/06/23 11:19:10 veego Exp $";
+static char rcsid[] = "$NetBSD: login.c,v 1.20 1997/06/25 00:15:06 lukem Exp $";
 #endif /* not lint */
 
 /*
@@ -114,6 +114,11 @@ int	authok;
 struct	passwd *pwd;
 int	failures;
 char	term[64], *envinit[1], *hostname, *username, *tty;
+#ifdef SKEY
+int	used_skey = 0;
+int 	require_skey = 0;
+char	skeypw[] = "s/key";
+#endif
 
 int
 main(argc, argv)
@@ -127,9 +132,13 @@ main(argc, argv)
 	struct utmp utmp;
 	int ask, ch, cnt, fflag, hflag, pflag, quietlog, rootlogin, rval;
 	uid_t uid;
-	char *domain, *p, *salt, *ttyn;
+	char *domain, *p, *salt, *ttyn, *pwprompt;
 	char tbuf[MAXPATHLEN + 2], tname[sizeof(_PATH_TTY) + 10];
 	char localhost[MAXHOSTNAMELEN];
+
+	tbuf[0] = '\0';
+	rval = 0;
+	pwprompt = NULL;
 
 	(void)signal(SIGALRM, timedout);
 	(void)alarm(timeout);
@@ -144,6 +153,7 @@ main(argc, argv)
 	 * -f is used to skip a second login authentication
 	 * -h is used by other servers to pass the name of the remote
 	 *    host to login so that it may be placed in utmp and wtmp
+	 * -s is used to force use of S/Key or equivalent.
 	 */
 	domain = NULL;
 	if (gethostname(localhost, sizeof(localhost)) < 0)
@@ -153,7 +163,7 @@ main(argc, argv)
 
 	fflag = hflag = pflag = 0;
 	uid = getuid();
-	while ((ch = getopt(argc, argv, "fh:p")) != EOF)
+	while ((ch = getopt(argc, argv, "fh:ps")) != EOF)
 		switch (ch) {
 		case 'f':
 			fflag = 1;
@@ -169,6 +179,15 @@ main(argc, argv)
 			break;
 		case 'p':
 			pflag = 1;
+			break;
+		case 's':
+#ifdef SKEY
+			/*
+			 * If -s given twice, use S/Key or no login
+			 * otherwise just insist on S/Key if user has one.
+			 */
+			require_skey++;
+#endif
 			break;
 		case '?':
 		default:
@@ -201,6 +220,9 @@ main(argc, argv)
 		tty = ttyn;
 
 	for (cnt = 0;; ask = 1) {
+#ifdef SKEY
+		used_skey = 0;
+#endif
 #if defined(KERBEROS) || defined(KERBEROS5)
 	        kdestroy();
 #endif
@@ -269,7 +291,28 @@ main(argc, argv)
 
 		(void)setpriority(PRIO_PROCESS, 0, -4);
 
-		p = getpass("Password:");
+#ifdef SKEY
+		p = NULL;
+		pwprompt = "Password:";
+		
+		if (require_skey > 1)		/* -s -s */
+			p = skeypw;
+		else if (skey_haskey(username) == 0) {
+			if (require_skey > 0)	/* -s */
+				p = skeypw;
+			else {
+				extern char *skey_keyinfo();
+				static char skprompt[80];
+				char *skinfo = skey_keyinfo(username);
+				
+				(void)snprintf(skprompt, sizeof(skprompt)-1,
+				    "Password [%s]:", skinfo);
+				pwprompt = skprompt;
+			}
+		}
+		if (p == NULL)
+#endif
+			p = getpass(pwprompt);
 
 		if (pwd) {
 #if defined(KERBEROS) || defined(KERBEROS5)
@@ -287,7 +330,10 @@ main(argc, argv)
 			rval = pwcheck(username, p, salt, pwd->pw_passwd);
 #endif
 		}
-		memset(p, 0, strlen(p));
+#ifdef SKEY
+		if (used_skey == 0 && p != skeypw)
+#endif
+			memset(p, 0, strlen(p));
 
 		(void)setpriority(PRIO_PROCESS, 0, 0);
 
@@ -471,14 +517,29 @@ int
 pwcheck(user, p, salt, passwd)
 	char *user, *p, *salt, *passwd;
 {
+	int sts = strcmp(crypt(p, salt), passwd);
+	
 #ifdef SKEY
-	if (strcasecmp(p, "s/key") == 0)
-		if (skey_haskey(user))
+	if (sts) {				/* wasn't passwd */
+		if (skey_haskey(user)) {
+			if (strcasecmp(p, skeypw) == 0) {
+				(void) fprintf(stderr, "You have no s/key. ");
 			return 1;
-		else
-			return skey_authenticate(user);
+			}
+		} else {
+			if (strcasecmp(p, skeypw) == 0) {
+				sts = skey_authenticate(user);
+			} else {
+				if ((sts = skey_passcheck(user, p)) != -1) {
+					sts = 0; /* ok */
+				}
+			}
+		}
+		if (sts == 0)
+			used_skey = 1;
+	}
 #endif
-	return strcmp(crypt(p, salt), passwd);
+	return sts;
 }
 
 #if defined(KERBEROS) || defined(KERBEROS5)
