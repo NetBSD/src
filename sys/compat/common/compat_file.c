@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_file.c,v 1.6 2003/06/05 12:26:27 manu Exp $ */
+/*	$NetBSD: compat_file.c,v 1.7 2003/06/05 18:51:40 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_file.c,v 1.6 2003/06/05 12:26:27 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_file.c,v 1.7 2003/06/05 18:51:40 manu Exp $");
 
 #include "opt_compat_darwin.h"
 #include "opt_nfsserver.h"
@@ -452,7 +452,7 @@ bsd_sys_bind(l, v, retval)
 	struct sys_bind_args /* {
 		syscallarg(int) s;
 		syscallarg(struct sockaddr *) name;
-		syscallarg(unsigned int) namelen);
+		syscallarg(unsigned int) namelen;
 	} */ *uap = v;
 	struct sys_bind_args cup;
 	struct proc *p = l->l_proc;
@@ -494,7 +494,6 @@ bsd_sys_bind(l, v, retval)
 	    name, &name, CHECK_ALT_FL_CREAT)) != 0)
 		goto out2;
 
-	namelen, strlen(oksun->sun_path), strlen(name));
 	/* 
 	 * Rebuild a new struct sockaddr_un and store it in userspace.
 	 */
