@@ -1,4 +1,4 @@
-.\"	$NetBSD: wdc.4,v 1.7 2000/03/01 16:28:34 hubertf Exp $
+.\"	$NetBSD: wdc.4,v 1.8 2000/04/13 22:04:23 jhawk Exp $
 .\"
 .\" Copyright (c) 1998 Manuel Bouyer.
 .\"
@@ -60,9 +60,10 @@ drivers. This driver supports IDE and EIDE controllers, as well as MFM, RLL
 and ESDI on the ISA bus. PCI IDE controllers in legacy mode are also supported,
 but the
 .Xr pciide 4
-driver may provide more functionalities.
+<<<<<<< wdc.4
+driver may provide more functionaliy.
 .Pp
-For the ISA front-end, the 0x01 flag enables the 32 bits I/O negociation in
+For the ISA front-end, the 0x01 flag enables 32-bit I/O negotiation in
 the driver. This is known to cause problems with some motherboards.
 .Sh SEE ALSO
 .Xr atapi 4 ,
