@@ -1155,7 +1155,8 @@ precommit_proc (repository, filter)
     run_setup (filter);
     run_arg (repository);
     (void) walklist (saved_ulist, precommit_list_proc, NULL);
-    return (run_exec (RUN_TTY, RUN_TTY, RUN_TTY, RUN_NORMAL|RUN_REALLY|RUN_UNSETXID));
+    return (run_exec (RUN_TTY, RUN_TTY, RUN_TTY, RUN_NORMAL|RUN_REALLY|
+	(server_active ? 0 : RUN_UNSETXID)));
 }
 
 /*
