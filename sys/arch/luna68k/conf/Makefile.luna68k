@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.luna68k,v 1.3 2000/01/19 16:30:05 tsutsui Exp $
+#	$NetBSD: Makefile.luna68k,v 1.4 2000/01/24 20:36:13 tron Exp $
 
 # Makefile for NetBSD
 #
@@ -180,6 +180,9 @@ depend: .depend
 	  ${CPPFLAGS} < ${LUNA68K}/luna68k/genassym.cf
 	@sed -e 's/.*\.o:.*\.c/assym.h:/' < assym.dep >> .depend
 	@rm -f assym.dep
+
+dependall: depend all
+
 
 # depend on root or device configuration
 autoconf.o conf.o: Makefile
