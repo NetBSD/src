@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.260 2000/07/24 11:54:41 ad Exp $
+# $NetBSD: mi,v 1.261 2000/07/26 22:12:08 augustss Exp $
 ./usr/share/info/am-utils.info
 ./usr/share/info/as.info
 ./usr/share/info/awk.info
@@ -493,6 +493,7 @@
 ./usr/share/man/cat4/ntwo.0
 ./usr/share/man/cat4/ntwoc.0
 ./usr/share/man/cat4/null.0
+./usr/share/man/cat4/ofisa.0
 ./usr/share/man/cat4/ohci.0
 ./usr/share/man/cat4/opl.0
 ./usr/share/man/cat4/options.0
@@ -1524,6 +1525,7 @@
 ./usr/share/man/man4/ntwo.4
 ./usr/share/man/man4/ntwoc.4
 ./usr/share/man/man4/null.4
+./usr/share/man/man4/ofisa.4
 ./usr/share/man/man4/ohci.4
 ./usr/share/man/man4/opl.4
 ./usr/share/man/man4/options.4
