@@ -1,4 +1,4 @@
-/*	$NetBSD: engine.c,v 1.12 1999/09/16 11:45:20 lukem Exp $	*/
+/*	$NetBSD: engine.c,v 1.13 2001/12/17 16:32:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
@@ -154,6 +154,7 @@ int eflags;
 	const sopno gl = g->laststate;
 	char *start;
 	char *stop;
+	int error = 0;
 
 	_DIAGASSERT(g != NULL);
 	_DIAGASSERT(string != NULL);
@@ -202,8 +203,8 @@ int eflags;
 	for (;;) {
 		endp = fast(m, start, stop, gf, gl);
 		if (endp == NULL) {		/* a miss */
-			STATETEARDOWN(m);
-			return(REG_NOMATCH);
+			error = REG_NOMATCH;
+			goto done;
 		}
 		if (nmatch == 0 && !g->backrefs)
 			break;		/* no further info needed */
@@ -226,8 +227,8 @@ int eflags;
 			m->pmatch = (regmatch_t *)malloc((m->g->nsub + 1) *
 							sizeof(regmatch_t));
 		if (m->pmatch == NULL) {
-			STATETEARDOWN(m);
-			return(REG_ESPACE);
+			error = REG_ESPACE;
+			goto done;
 		}
 		for (i = 1; i <= m->g->nsub; i++)
 			m->pmatch[i].rm_so = m->pmatch[i].rm_eo = (regoff_t)-1;
@@ -239,9 +240,8 @@ int eflags;
 				m->lastpos = (char **)malloc((g->nplus+1) *
 							sizeof(char *));
 			if (g->nplus > 0 && m->lastpos == NULL) {
-				free(m->pmatch);
-				STATETEARDOWN(m);
-				return(REG_ESPACE);
+				error = REG_ESPACE;
+				goto done;
 			}
 			NOTE("backref dissect");
 			dp = backref(m, m->coldp, endp, gf, gl, (sopno)0);
@@ -296,12 +296,17 @@ int eflags;
 			}
 	}
 
-	if (m->pmatch != NULL)
+done:
+	if (m->pmatch != NULL) {
 		free(m->pmatch);
-	if (m->lastpos != NULL)
+		m->pmatch = NULL;
+	}
+	if (m->lastpos != NULL) {
 		free(m->lastpos);
+		m->lastpos = NULL;
+	}
 	STATETEARDOWN(m);
-	return(0);
+	return error;
 }
 
 /*
