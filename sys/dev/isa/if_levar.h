@@ -1,4 +1,4 @@
-/*	$NetBSD: if_levar.h,v 1.2 1995/07/27 04:39:08 mycroft Exp $	*/
+/*	$NetBSD: if_levar.h,v 1.3 1995/10/07 09:19:16 mycroft Exp $	*/
 
 /*
  * LANCE Ethernet driver header file
@@ -77,6 +77,7 @@ struct le_softc {
 #endif
 
 	void	*sc_ih;
+	void	*sc_sh;
 	int	sc_card;
 	int	sc_rap, sc_rdp;		/* LANCE registers */
 };
