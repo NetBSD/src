@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.67.4.4 2001/07/29 20:02:05 he Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.67.4.5 2002/02/09 19:50:24 he Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -302,8 +302,8 @@ sys_fcntl(p, v, retval)
 			goto out;
 		}
 		error = (*fp->f_ops->fo_ioctl)
-			(fp, TIOCGPGRP, (caddr_t)retval, p);
-		*retval = -*retval;
+			(fp, TIOCGPGRP, (caddr_t)&tmp, p);
+		*retval = -*tmp;
 		break;
 
 	case F_SETOWN:
