@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.49 2001/10/24 22:31:04 augustss Exp $	*/
+/*	$NetBSD: ugen.c,v 1.50 2001/11/13 06:24:54 lukem Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ugen.c,v 1.26 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -38,6 +38,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.50 2001/11/13 06:24:54 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

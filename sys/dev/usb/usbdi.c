@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.83 2001/11/10 17:11:38 augustss Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.84 2001/11/13 06:24:56 lukem Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -37,6 +37,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.84 2001/11/13 06:24:56 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
