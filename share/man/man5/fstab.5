@@ -1,4 +1,4 @@
-.\"	$NetBSD: fstab.5,v 1.8 1997/01/27 22:10:18 perry Exp $
+.\"	$NetBSD: fstab.5,v 1.9 1997/07/21 05:10:46 mrg Exp $
 .\"
 .\" Copyright (c) 1980, 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -167,8 +167,10 @@ If
 .Fa fs_type
 is ``sw'' then the special file is made available as a piece of swap
 space by the
-.Xr swapon 8
-command at the end of the system reboot procedure.
+.Xr swapctl 8
+command towards the beginning of the system reboot procedure.  See
+.Xr swapctl 8
+for more information on configuring swap devices.
 The fields other than
 .Fa fs_spec
 and
