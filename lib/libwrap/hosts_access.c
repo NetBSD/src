@@ -1,4 +1,4 @@
-/*	$NetBSD: hosts_access.c,v 1.14 2002/05/24 05:38:20 itojun Exp $	*/
+/*	$NetBSD: hosts_access.c,v 1.15 2002/06/06 21:28:49 itojun Exp $	*/
 
  /*
   * This module implements a simple access control language that is based on
@@ -24,7 +24,7 @@
 #if 0
 static char sccsid[] = "@(#) hosts_access.c 1.21 97/02/12 02:13:22";
 #else
-__RCSID("$NetBSD: hosts_access.c,v 1.14 2002/05/24 05:38:20 itojun Exp $");
+__RCSID("$NetBSD: hosts_access.c,v 1.15 2002/06/06 21:28:49 itojun Exp $");
 #endif
 #endif
 
@@ -372,9 +372,14 @@ char   *string;
 #ifndef INET6
     return masked_match4(net_tok, mask_tok, string);
 #else
-    if (dot_quad_addr(net_tok, NULL) != INADDR_NONE
-     && dot_quad_addr(mask_tok, NULL) != INADDR_NONE
-     && dot_quad_addr(string, NULL) != INADDR_NONE) {
+    /*
+     * masked_match4() is kept just for supporting shortened IPv4 address form.
+     * If we could get rid of shortened IPv4 form, we could just always use
+     * masked_match6().
+     */
+    if (dot_quad_addr(net_tok, NULL) != INADDR_NONE &&
+        dot_quad_addr(mask_tok, NULL) != INADDR_NONE &&
+        dot_quad_addr(string, NULL) != INADDR_NONE) {
 	return masked_match4(net_tok, mask_tok, string);
     } else
 	return masked_match6(net_tok, mask_tok, string);
@@ -398,8 +403,8 @@ char   *string;
 
     if (dot_quad_addr(string, &addr) != 0)
 	return (NO);
-    if (dot_quad_addr(net_tok, &net) != 0
-	|| dot_quad_addr(mask_tok, &mask) != 0) {
+    if (dot_quad_addr(net_tok, &net) != 0 ||
+        dot_quad_addr(mask_tok, &mask) != 0) {
 	tcpd_warn("bad net/mask expression: %s/%s", net_tok, mask_tok);
 	return (NO);				/* not tcpd_jump() */
     }
@@ -411,75 +416,140 @@ char   *string;
 }
 
 #ifdef INET6
-/* Ugly because it covers IPv4 mapped address.  I hate mapped addresses. */
 static int masked_match6(net_tok, mask_tok, string)
 char   *net_tok;
 char   *mask_tok;
 char   *string;
 {
-    struct in6_addr net;
-    struct in6_addr mask;
-    struct in6_addr addr;
-    int masklen;
-    int fail;
+    union {
+	struct sockaddr sa;
+	struct sockaddr_in sin;
+	struct sockaddr_in6 sin6;
+    } net, mask, addr;
+    struct addrinfo hints, *res;
+    unsigned long masklen;
+    char *ep;
     int i;
-    int maskoff;
-    int netaf;
-    int dirty;
-    const int sizoff64 = sizeof(struct in6_addr) - sizeof(struct in_addr);
+    char *np, *mp, *ap;
+    int alen;
 
-    memset(&addr, 0, sizeof(addr));
-    if (inet_pton(AF_INET6, string, &addr) == 1)
-	; /* okay */
-    else if (inet_pton(AF_INET, string, &addr.s6_addr[sizoff64]) == 1)
-	addr.s6_addr[10] = addr.s6_addr[11] = 0xff;
-    else
-	return NO;
-
-    memset(&net, 0, sizeof(net));
-    if (inet_pton(AF_INET6, net_tok, &net) == 1) {
-	netaf = AF_INET6;
-	maskoff = 0;
-    } else if (inet_pton(AF_INET, net_tok, &net.s6_addr[sizoff64]) == 1) {
-	netaf = AF_INET;
-	maskoff = sizoff64;
-	net.s6_addr[10] = net.s6_addr[11] = 0xff;
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_family = PF_UNSPEC;
+    hints.ai_socktype = SOCK_DGRAM;	/*dummy*/
+    hints.ai_flags = AI_NUMERICHOST;
+    if (getaddrinfo(net_tok, "0", &hints, &res) == 0) {
+	if (res->ai_addrlen > sizeof(net) || res->ai_next) {
+	    freeaddrinfo(res);
+	    return NO;
+	}
+	memcpy(&net, res->ai_addr, res->ai_addrlen);
+	freeaddrinfo(res);
     } else
 	return NO;
 
-    fail = 0;
-    if (mask_tok[strspn(mask_tok, "0123456789")] == '\0') {
-	masklen = atoi(mask_tok) + maskoff * 8;
-	if (0 <= masklen && masklen <= 128) {
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_family = net.sa.sa_family;
+    hints.ai_socktype = SOCK_DGRAM;	/*dummy*/
+    hints.ai_flags = AI_NUMERICHOST;
+    ep = NULL;
+    if (getaddrinfo(mask_tok, "0", &hints, &res) == 0) {
+	if (res->ai_family == AF_INET6 &&
+	    ((struct sockaddr_in6 *)res->ai_addr)->sin6_scope_id) {
+	    freeaddrinfo(res);
+	    return NO;
+	}
+	if (res->ai_addrlen > sizeof(mask) || res->ai_next) {
+	    freeaddrinfo(res);
+	    return NO;
+	}
+	memcpy(&mask, res->ai_addr, res->ai_addrlen);
+	freeaddrinfo(res);
+    } else {
+	ep = NULL;
+	masklen = strtoul(mask_tok, &ep, 10);
+	if (ep && !*ep) {
 	    memset(&mask, 0, sizeof(mask));
-	    memset(&mask, 0xff, masklen / 8);
-	    if (masklen % 8) {
-		((u_char *)&mask)[masklen / 8] =
-			(0xff00 >> (masklen % 8)) & 0xff;
+	    mask.sa.sa_family = net.sa.sa_family;
+	    mask.sa.sa_len = net.sa.sa_len;
+	    switch (mask.sa.sa_family) {
+	    case AF_INET:
+		mp = (char *)&mask.sin.sin_addr;
+		alen = sizeof(mask.sin.sin_addr);
+		break;
+	    case AF_INET6:
+		mp = (char *)&mask.sin6.sin6_addr;
+		alen = sizeof(mask.sin6.sin6_addr);
+		break;
+	    default:
+		return NO;
 	    }
+	    if (masklen / 8 > alen)
+		return NO;
+	    memset(mp, 0xff, masklen / 8);
+	    if (masklen % 8)
+		mp[masklen / 8] = 0xff00 >> (masklen % 8);
 	} else
-	    fail++;
-    } else if (netaf == AF_INET6 && inet_pton(AF_INET6, mask_tok, &mask) == 1)
-	; /* okay */
-    else if (netaf == AF_INET
-	  && inet_pton(AF_INET, mask_tok, &mask.s6_addr[12]) == 1) {
-	memset(&mask, 0xff, sizoff64);
+	    return NO;
+    }
+
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_family = PF_UNSPEC;
+    hints.ai_socktype = SOCK_DGRAM;	/*dummy*/
+    hints.ai_flags = AI_NUMERICHOST;
+    if (getaddrinfo(string, "0", &hints, &res) == 0) {
+	if (res->ai_addrlen > sizeof(addr) || res->ai_next) {
+	    freeaddrinfo(res);
+	    return NO;
+	}
+	/* special case - IPv4 mapped address */
+	if (net.sa.sa_family == AF_INET && res->ai_family == AF_INET6 && 
+	    IN6_IS_ADDR_V4MAPPED(&((struct sockaddr_in6 *)res->ai_addr)->sin6_addr)) {
+	    memset(&addr, 0, sizeof(addr));
+	    addr.sa.sa_family = net.sa.sa_family;
+	    addr.sa.sa_len = net.sa.sa_len;
+	    memcpy(&addr.sin.sin_addr,
+	        &((struct sockaddr_in6 *)res->ai_addr)->sin6_addr.s6_addr[12],
+		sizeof(addr.sin.sin_addr));
+	} else
+	    memcpy(&addr, res->ai_addr, res->ai_addrlen);
+	freeaddrinfo(res);
     } else
-	fail++;
-    if (fail) {
-	tcpd_warn("bad net/mask expression: %s/%s", net_tok, mask_tok);
-	return (NO);				/* not tcpd_jump() */
+	return NO;
+
+    if (net.sa.sa_family != mask.sa.sa_family ||
+        net.sa.sa_family != addr.sa.sa_family) {
+	return NO;
+    }
+     
+    switch (net.sa.sa_family) {
+    case AF_INET:
+	np = (char *)&net.sin.sin_addr;
+	mp = (char *)&mask.sin.sin_addr;
+	ap = (char *)&addr.sin.sin_addr;
+	alen = sizeof(net.sin.sin_addr);
+	break;
+    case AF_INET6:
+	np = (char *)&net.sin6.sin6_addr;
+	mp = (char *)&mask.sin6.sin6_addr;
+	ap = (char *)&addr.sin6.sin6_addr;
+	alen = sizeof(net.sin6.sin6_addr);
+	break;
+    default:
+	return NO;
     }
 
-    dirty = 0;
-    for (i = 0; i < sizeof(addr); i++) {
-	addr.s6_addr[i] &= mask.s6_addr[i];
-	dirty |= (net.s6_addr[i] & ~mask.s6_addr[i]);
-    }
+    for (i = 0; i < alen; i++)
+	if (np[i] & ~mp[i]) {
+	    tcpd_warn("host bits not all zero in %s/%s", net_tok, mask_tok);
+	    break;
+	}
 
-    if (dirty)
-	tcpd_warn("host bits not all zero in %s/%s", net_tok, mask_tok);
+    for (i = 0; i < alen; i++)
+	ap[i] &= mp[i];
 
-    return (memcmp(&addr, &net, sizeof(addr)) == 0);
+    if (addr.sa.sa_family == AF_INET6 && addr.sin6.sin6_scope_id &&
+        addr.sin6.sin6_scope_id != net.sin6.sin6_scope_id)
+	return NO;
+    return (memcmp(ap, np, alen) == 0);
 }
 #endif
