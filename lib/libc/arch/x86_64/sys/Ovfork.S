@@ -1,4 +1,4 @@
-/*	$NetBSD: Ovfork.S,v 1.1 2001/06/19 00:25:05 fvdl Exp $	*/
+/*	$NetBSD: Ovfork.S,v 1.2 2002/06/03 18:30:33 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,7 +40,7 @@
 
 #include <machine/asm.h>
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: Ovfork.S,v 1.1 2001/06/19 00:25:05 fvdl Exp $")
+	RCSID("$NetBSD: Ovfork.S,v 1.2 2002/06/03 18:30:33 fvdl Exp $")
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
@@ -56,14 +56,14 @@ WARN_REFERENCES(vfork, \
  *
  */
 ENTRY(vfork)
-	popq	%rcx		/* my rta into ecx */
+	popq	%r9		/* my rta into r9 */
 	SYSTRAP(vfork)
 	jc	err
 	decl	%edx
 	andl	%edx,%eax
-	jmp	*%rcx
+	jmp	*%r9
 err:
-	pushq	%rcx
+	pushq	%r9
 #ifdef PIC
 	movq	PIC_GOT(CERROR), %rcx
 	jmp	*%rcx

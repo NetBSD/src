@@ -1,4 +1,4 @@
-/*	$NetBSD: brk.S,v 1.1 2001/06/19 00:25:06 fvdl Exp $	*/
+/*	$NetBSD: brk.S,v 1.2 2002/06/03 18:30:33 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,7 +40,7 @@
 
 #include <machine/asm.h>
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: brk.S,v 1.1 2001/06/19 00:25:06 fvdl Exp $")
+	RCSID("$NetBSD: brk.S,v 1.2 2002/06/03 18:30:33 fvdl Exp $")
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
@@ -68,7 +68,7 @@ ENTRY(_brk)
 	SYSTRAP(break)
 	jc	err
 	movq	PIC_GOT(CURBRK),%rdx	# set up GOT addressing
-	movl	%ecx,(%rdx)
+	movq	%rdi,(%rdx)
 	xorl	%eax,%eax
 	ret
 err:
