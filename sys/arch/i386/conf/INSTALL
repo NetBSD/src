@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.192 2002/04/17 02:22:50 mycroft Exp $
+#	$NetBSD: INSTALL,v 1.193 2002/04/18 12:54:14 wiz Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -230,9 +230,7 @@ pc0	at isa? port 0x60 irq 1		# pccons generic PC console driver
 # wscons
 #pckbc0	at isa?			# pc keyboard controller
 #pckbd*	at pckbc?		# PC keyboard
-# "opms" should not be enabled together with "pms"
 #pms*		at pckbc?		# PS/2 mouse for wsmouse
-#opms*		at pckbc?		# backwards compatible PS/2 mouse
 #vga0		at isa?
 #vga*		at pci?
 #pcdisplay0	at isa?			# CGA, MDA, EGA, HGA
@@ -664,7 +662,6 @@ url*	at uhub? port ?		# Realtek RTL8150L based adapters
 #olms1	at isa? port 0x238 irq 5
 #omms0	at isa? port 0x23c irq 5	# Microsoft InPort mouse
 #omms1	at isa? port 0x238 irq 5
-#opms0	at pc? irq 12		# PS/2 auxiliary port mouse
 
 # Joysticks
 

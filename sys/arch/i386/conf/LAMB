@@ -1,11 +1,11 @@
-#	$NetBSD: LAMB,v 1.20 2002/04/17 23:23:49 hubertf Exp $
+#	$NetBSD: LAMB,v 1.21 2002/04/18 12:54:14 wiz Exp $
 #
 #	LAMB - a complete kernel for wildlab LAMB, http://www.wildlab.com/
 #
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.20 $"
+#ident 		"GENERIC-$Revision: 1.21 $"
 
 maxusers	32		# estimated number of users
 
@@ -264,9 +264,7 @@ npx0	at isa? port 0xf0 irq 13	# x86 math coprocessor
 # wscons
 pckbc0		at isa?			# pc keyboard controller
 pckbd*		at pckbc?		# PC keyboard
-# "opms" should not be enabled together with "pms"
 pms*		at pckbc?		# PS/2 mouse for wsmouse
-#opms*		at pckbc?		# backwards compatible PS/2 mouse
 vga0		at isa?
 pcdisplay0	at isa?			# CGA, MDA, EGA, HGA
 wsdisplay*	at vga? console ?

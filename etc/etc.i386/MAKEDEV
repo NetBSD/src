@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.174 2002/03/16 17:03:33 martin Exp $
+#	$NetBSD: MAKEDEV,v 1.175 2002/04/18 12:54:11 wiz Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -64,7 +64,6 @@
 # Pointing devices:
 #	mms*	Microsoft bus mouse
 #	lms*	Logitech bus mouse
-#	pms*	PS/2 mouse
 #	wsmouse* wscons mouse events
 #
 # Keyboard devices:
@@ -174,7 +173,7 @@ all)
 	makedev bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7
 	makedev lpt0 lpt1 lpt2 ttyv0 tun0 tun1 tun2 tun3 ipl
 	makedev ccd0 ccd1 ccd2 ccd3 md0 ss0 ch0 uk0 uk1 random
-	makedev speaker lkm mms0 lms0 pms0 joy0 joy1 apm local satlink0
+	makedev speaker lkm mms0 lms0 joy0 joy1 apm local satlink0
 	makedev iop0 mlx0 mly0
 	makedev audio
 	makedev radio
@@ -664,13 +663,12 @@ lpt*|lpa*)
 	mknod $name$unit	c $chr $(($unit + $flags))
 	;;
 
-bpf*|tun*|mms*|lms*|pms*|joy*)
+bpf*|tun*|mms*|lms*|joy*)
 	case $i in
 	bpf*) name=bpf;	unit=${i#bpf};	chr=23;;
 	tun*) name=tun;	unit=${i#tun};	chr=40;;
 	mms*) name=mms;	unit=${i#mms};	chr=35;;
 	lms*) name=lms;	unit=${i#lms};	chr=36;;
-	pms*) name=pms;	unit=${i#pms};	chr=37;;
 	joy*) name=joy;	unit=${i#joy};	chr=26;;
 	esac
 	rm -f $name$unit
