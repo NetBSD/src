@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  * from: @(#)genassym.c	7.4 (Berkeley) 2/4/93
- * $Id: genassym.c,v 1.1.1.1 1993/10/12 03:22:30 deraadt Exp $
+ * $Id: genassym.c,v 1.2 1993/10/15 02:57:23 deraadt Exp $
  */
 
 #define KERNEL
@@ -45,6 +45,7 @@
 #include <sys/proc.h>
 #include <sys/mbuf.h>
 #include <sys/user.h>
+#include <sys/vmmeter.h>
 
 #include <machine/reg.h>
 #include <machine/pmap.h>

@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  * from: @(#)pmap.c	7.12 (Berkeley) 10/24/92
- * $Id: pmap.c,v 1.1.1.1 1993/10/12 03:22:32 deraadt Exp $
+ * $Id: pmap.c,v 1.2 1993/10/15 02:57:27 deraadt Exp $
  */
 
 /*
@@ -141,6 +141,7 @@ u_int	whichpids[2] = {	/* bit mask of hardware PID's in use */
 };
 
 struct pmap	kernel_pmap_store;
+pmap_t		kernel_pmap;
 pmap_t		cur_pmap;	/* current pmap mapped in hardware */
 
 vm_offset_t    	avail_start;	/* PA of first available physical page */
@@ -221,6 +222,13 @@ pmap_bootstrap(firstaddr)
 	virtual_end = VM_MIN_KERNEL_ADDRESS + PMAP_HASH_KPAGES * NPTEPG * NBPG;
 	/* XXX need to decide how to set cnt.v_page_size */
 	pmaxpagesperpage = 1;
+
+	/*
+	 * The kernel's pmap is statically allocated so we don't
+	 * have to use pmap_create, which is unlikely to work
+	 * correctly at this part of the boot sequence.
+	 */
+	kernel_pmap = &kernel_pmap_store;
 
 	cur_pmap = &kernel_pmap_store;
 	simple_lock_init(&kernel_pmap_store.pm_lock);

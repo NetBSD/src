@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  * from: @(#)pmap.h	7.6 (Berkeley) 2/4/93
- * $Id: pmap.h,v 1.1.1.1 1993/10/12 03:22:40 deraadt Exp $
+ * $Id: pmap.h,v 1.2 1993/10/15 02:57:13 deraadt Exp $
  */
 
 #ifndef	_PMAP_MACHINE_
@@ -94,7 +94,7 @@ typedef struct pmap_hash {
 /*
  * Machine dependent pmap structure.
  */
-typedef struct pmap {
+struct pmap {
 	int			pm_count;	/* pmap reference count */
 	simple_lock_data_t	pm_lock;	/* lock on pmap */
 	struct pmap_statistics	pm_stats;	/* pmap statistics */
@@ -102,7 +102,9 @@ typedef struct pmap {
 	int			pm_tlbpid;	/* address space tag */
 	pmap_hash_t		pm_hash;	/* TLB cache */
 	unsigned		pm_hash_ptes[PMAP_HASH_UPAGES];
-} *pmap_t;
+};
+
+typedef struct pmap *pmap_t;
 
 #define PM_MODIFIED	1		/* flush tlbpid before resume() */
 
@@ -114,7 +116,7 @@ typedef struct pmap {
 
 #ifdef	KERNEL
 extern struct pmap kernel_pmap_store;
-#define kernel_pmap (&kernel_pmap_store)
+extern pmap_t kernel_pmap;
 extern	char *pmap_attributes;		/* reference and modify bits */
 #endif	KERNEL
 #endif	_PMAP_MACHINE_
