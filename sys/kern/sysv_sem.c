@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_sem.c,v 1.11 1994/12/04 14:06:36 mycroft Exp $	*/
+/*	$NetBSD: sysv_sem.c,v 1.12 1994/12/05 06:41:42 mycroft Exp $	*/
 
 /*
  * Implementation of SVID semaphores
@@ -50,8 +50,8 @@ seminit()
  * This will probably eventually evolve into a general purpose semaphore
  * facility status enquiry mechanism (I don't like the "read /dev/kmem"
  * approach currently taken by ipcs and the amount of info that we want
- * to be able to extract for ipcs is probably beyond what the capability
- * of the getkerninfo facility.
+ * to be able to extract for ipcs is probably beyond the capability of
+ * the getkerninfo facility.
  *
  * At the time that the current version of semconfig was written, ipcs is
  * the only user of the semconfig facility.  It uses it to ensure that the
@@ -68,6 +68,9 @@ semconfig(p, uap, retval)
 	register_t *retval;
 {
 	int eval = 0;
+
+	while (semlock_holder != NULL && semlock_holder != p)
+		sleep((caddr_t)&semlock_holder, (PZERO - 4));
 
 	switch (SCARG(uap, flag)) {
 	case SEM_CONFIG_FREEZE:
@@ -285,6 +288,9 @@ __semctl(p, uap, retval)
 	printf("call to semctl(%d, %d, %d, 0x%x)\n", semid, semnum, cmd, arg);
 #endif
 
+	while (semlock_holder != NULL && semlock_holder != p)
+		sleep((caddr_t)&semlock_holder, (PZERO - 4));
+
 	semid = IPCID_TO_IX(semid);
 	if (semid < 0 || semid >= seminfo.semmsl)
 		return(EINVAL);
@@ -442,6 +448,9 @@ semget(p, uap, retval)
 	printf("semget(0x%x, %d, 0%o)\n", key, nsems, semflg);
 #endif
 
+	while (semlock_holder != NULL && semlock_holder != p)
+		sleep((caddr_t)&semlock_holder, (PZERO - 4));
+
 	if (key != IPC_PRIVATE) {
 		for (semid = 0; semid < seminfo.semmni; semid++) {
 			if ((sema[semid].sem_perm.mode & SEM_ALLOC) &&
@@ -557,6 +566,9 @@ semop(p, uap, retval)
 #ifdef SEM_DEBUG
 	printf("call to semop(%d, 0x%x, %d)\n", semid, sops, nsops);
 #endif
+
+	while (semlock_holder != NULL && semlock_holder != p)
+		sleep((caddr_t)&semlock_holder, (PZERO - 4));
 
 	semid = IPCID_TO_IX(semid);	/* Convert back to zero origin */
 
@@ -815,12 +827,8 @@ semexit(p)
 	 * If somebody else is holding the global semaphore facility lock
 	 * then sleep until it is released.
 	 */
-	while (semlock_holder != NULL && semlock_holder != p) {
-#ifdef SEM_DEBUG
-		printf("semaphore facility locked - sleeping ...\n");
-#endif
+	while (semlock_holder != NULL && semlock_holder != p)
 		sleep((caddr_t)&semlock_holder, (PZERO - 4));
-	}
 
 	did_something = 0;
 
@@ -941,9 +949,6 @@ compat_10_semsys(p, uap, retval)
 	struct semconfig_args /* {
 		syscallarg(int) flag;
 	} */ semconfig_args;
-
-	while (semlock_holder != NULL && semlock_holder != p)
-		sleep((caddr_t)&semlock_holder, (PZERO - 4));
 
 	switch (SCARG(uap, which)) {
 	case 0:						/* __semctl() */
