@@ -1,4 +1,4 @@
-$NetBSD: TODO,v 1.7 2000/03/04 06:54:17 nisimura Exp $
+$NetBSD: TODO,v 1.8 2000/03/04 07:09:09 nisimura Exp $
 
 To do list (not in any particular order).
 
@@ -35,6 +35,10 @@ To do list (not in any particular order).
 	    that R4030/R4230 chip provides
 
 	-   clean up bus_space implementation, remove inb/outb
+
+	-   try to interporate HZ; may be possible for R4030/R4230 system
+	    or 'hardclock() by R4000' system.  Clock resolution of 100Hz
+	    without any interporation is substandard
 
     o	fix kernel start address
 
