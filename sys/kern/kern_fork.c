@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.82 2000/12/31 17:43:41 ad Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.83 2001/01/09 23:36:50 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -198,9 +198,7 @@ fork1(struct proc *p1, int flags, int exitsig, void *stack, size_t stacksize,
 	 */
 	p2->p_flag = P_INMEM | (p1->p_flag & P_SUGID);
 	p2->p_emul = p1->p_emul;
-#ifdef __HAVE_SYSCALL_INTERN
-	(*p2->p_emul->e_syscall_intern)(p2);
-#endif
+
 	if (p1->p_flag & P_PROFIL)
 		startprofclock(p2);
 	p2->p_cred = pool_get(&pcred_pool, PR_WAITOK);
@@ -253,12 +251,17 @@ fork1(struct proc *p1, int flags, int exitsig, void *stack, size_t stacksize,
 	 * Copy traceflag and tracefile if enabled.
 	 * If not inherited, these were zeroed above.
 	 */
-	if (p1->p_traceflag&KTRFAC_INHERIT) {
+	if (p1->p_traceflag & KTRFAC_INHERIT) {
 		p2->p_traceflag = p1->p_traceflag;
 		if ((p2->p_tracep = p1->p_tracep) != NULL)
 			ktradref(p2);
 	}
 #endif
+
+#ifdef __HAVE_SYSCALL_INTERN
+	(*p2->p_emul->e_syscall_intern)(p2);
+#endif
+
 	scheduler_fork_hook(p1, p2);
 
 	/*
