@@ -1,3 +1,5 @@
+/*	$NetBSD: kcmd.c,v 1.2 1995/03/21 07:58:32 cgd Exp $	*/
+
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -32,8 +34,12 @@
  */
 
 #ifndef lint
+#if 0
 static char Xsccsid[] = "derived from @(#)rcmd.c 5.17 (Berkeley) 6/27/88";
 static char sccsid[] = "@(#)kcmd.c	8.2 (Berkeley) 8/19/93";
+#else
+static char rcsid[] = "$NetBSD: kcmd.c,v 1.2 1995/03/21 07:58:32 cgd Exp $";
+#endif
 #endif /* not lint */
 
 #include <sys/param.h>
