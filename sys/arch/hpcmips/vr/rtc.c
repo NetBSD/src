@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.c,v 1.8 2001/09/18 17:37:29 uch Exp $	*/
+/*	$NetBSD: rtc.c,v 1.9 2001/09/19 14:51:13 uch Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura. All rights reserved.
@@ -92,8 +92,8 @@ struct cfattach vrrtc_ca = {
 	sizeof(struct vrrtc_softc), vrrtc_match, vrrtc_attach
 };
 
-void	vrrtc_write(struct vrrtc_softc *, int, u_int16_t);
-u_int16_t vrrtc_read(struct vrrtc_softc *, int);
+static __inline__ void vrrtc_write(struct vrrtc_softc *, int, u_int16_t);
+static __inline__ u_int16_t vrrtc_read(struct vrrtc_softc *, int);
 void	cvt_timehl_ymdhms(u_int32_t, u_int32_t, struct clock_ymdhms *);
 
 extern int rtc_offset;
