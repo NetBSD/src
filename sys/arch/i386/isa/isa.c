@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)isa.c	7.2 (Berkeley) 5/13/91
- *	$Id: isa.c,v 1.28.2.7 1993/10/14 05:22:09 mycroft Exp $
+ *	$Id: isa.c,v 1.28.2.8 1993/10/15 03:07:51 mycroft Exp $
  */
 
 /*
@@ -235,7 +235,7 @@ isa_defaultirq()
 	outb(IO_ICU1+1, 1);		/* 8086 mode */
 #endif
 	outb(IO_ICU1+1, 0xff);		/* leave interrupts masked */
-	outb(IO_ICU1, 0x0a);		/* default to IRR on read */
+	outb(IO_ICU1, 0x0a);		/* default to IRR on read */ 
 #ifdef REORDER_IRQ
 	outb(IO_ICU1, 0xc0 | (3 - 1));	/* pri order 3-7, 0-2 (com2 first) */
 #endif
@@ -250,6 +250,53 @@ isa_defaultirq()
 #endif
 	outb(IO_ICU2+1, 0xff);		/* leave interrupts masked */
 	outb(IO_ICU2, 0x0a);		/* default to IRR on read */
+}
+
+/*
+ * Determine what IRQ a device is using by trying to force it to generate an
+ * interrupt and seeing which IRQ line goes high.  It is not safe to call
+ * this function after autoconfig.
+ */
+u_short
+isa_discoverintr(force, aux)
+	void (*force)();
+{
+	int time = TIMER_FREQ * 1;	/* wait up to 1 second */
+	u_int last, now;
+	int i;
+	u_short iobase = IO_TIMER1;
+
+	/* clear any pending interrupts */
+	for (i = 0; i < 8; i++) {
+		outb(IO_ICU1, ICU_EOI);
+		outb(IO_ICU2, ICU_EOI);
+	}
+	/* attempt to force interrupt */
+	force(aux);
+	/* set timer 2 to a known state */
+	outb(iobase + TIMER_MODE, TIMER_SEL2|TIMER_RATEGEN|TIMER_16BIT);
+	outb(iobase + TIMER_CNTR2, 0xff);
+	outb(iobase + TIMER_CNTR2, 0xff);
+	last = 0xffff;
+	while (time > 0) {
+		register u_char irr, lo, hi;
+		irr = inb(IO_ICU1);
+		if (irr)
+			return 1 << (ffs(irr) - 1);
+		irr = inb(IO_ICU2);
+		if (irr)
+			return 1 << (ffs(irr) + 7);
+		outb(iobase + TIMER_MODE, TIMER_SEL2|TIMER_LATCH);
+		lo = inb(iobase + TIMER_CNTR2);
+		hi = inb(iobase + TIMER_CNTR2);
+		now = (hi << 8) | lo;
+		if (now <= last)
+			time -= (last - now);
+		else
+			time -= 0xffff - (now - last);
+		last = now;
+	}
+	return IRQNONE;
 }
 
 /*
