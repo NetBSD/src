@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.63 1998/03/22 02:26:48 mycroft Exp $
+#	$NetBSD: MAKEDEV,v 1.64 1998/06/12 15:39:35 drochner Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -47,6 +47,7 @@
 # Console ports:
 #	ttyv0	pccons or pcvt screen 0
 #	ttyv*	pcvt
+#	ttyw*	wscons
 #
 # Pointing devices:
 #	mms*	Microsoft bus mouse
@@ -140,6 +141,17 @@ ttyv*)
 		ln -s ttyv0 vga
 		;;
 	esac
+	;;
+
+wscons)
+	sh $0 ttyw0 ttyw1 ttyw2 ttyw3 ttyw4 ttyw5 ttyw6 ttyw7
+	;;
+
+ttyw*)
+	chr=47; unit=${i#ttyw}
+	rm -f ttyw$unit
+	mknod ttyw$unit	c $chr $unit
+	chown root.wheel ttyw$unit
 	;;
 
 fd)
