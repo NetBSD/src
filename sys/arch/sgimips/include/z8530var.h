@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530var.h,v 1.5 2003/08/07 16:29:26 agc Exp $	*/
+/*	$NetBSD: z8530var.h,v 1.6 2004/02/08 13:15:42 sekiya Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -108,13 +108,13 @@ struct zsc_softc {
  * The SCC chip requires 3-4 PCLK cycles recovery time between accesses
  */
 
-u_char zs_read_reg __P((struct zs_chanstate *cs, u_char reg));
-u_char zs_read_csr __P((struct zs_chanstate *cs));
-u_char zs_read_data __P((struct zs_chanstate *cs));
+u_char zs_read_reg (struct zs_chanstate *, u_char);
+u_char zs_read_csr (struct zs_chanstate *);
+u_char zs_read_data (struct zs_chanstate *);
 
-void  zs_write_reg __P((struct zs_chanstate *cs, u_char reg, u_char val));
-void  zs_write_csr __P((struct zs_chanstate *cs, u_char val));
-void  zs_write_data __P((struct zs_chanstate *cs, u_char val));
+void  zs_write_reg (struct zs_chanstate *, u_char, u_char);
+void  zs_write_csr (struct zs_chanstate *, u_char);
+void  zs_write_data (struct zs_chanstate *, u_char);
 
 /* Zilog Serial hardware interrupts (level 0) */
 #define splzs()		spltty()
