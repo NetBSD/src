@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: upgrade.sh,v 1.10 1997/06/22 22:28:43 pk Exp $
+#	$NetBSD: upgrade.sh,v 1.11 1997/08/05 08:44:03 pk Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -69,6 +69,7 @@ MODE="upgrade"
 THESETS="$UPGRSETS"
 
 # Files that moved between 1.2 and 1.3
+RELOCATED_FILES_13="${RELOCATED_FILES_13} /sbin/mountd /usr/sbin/mountd"
 RELOCATED_FILES_13="${RELOCATED_FILES_13} /sbin/rtquey /usr/sbin/rtquery"
 RELOCATED_FILES_13="${RELOCATED_FILES_13} /sbin/quotacheck /usr/sbin/quotacheck"
 RELOCATED_FILES_13="${RELOCATED_FILES_13} /sbin/dumpfs /usr/sbin/dumpfs"
