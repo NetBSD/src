@@ -1,4 +1,4 @@
-/*	$NetBSD: ddp_input.c,v 1.8 2003/02/26 07:53:04 matt Exp $	 */
+/*	$NetBSD: ddp_input.c,v 1.9 2004/06/24 04:15:51 jonathan Exp $	 */
 
 /*
  * Copyright (c) 1990,1994 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ddp_input.c,v 1.8 2003/02/26 07:53:04 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ddp_input.c,v 1.9 2004/06/24 04:15:51 jonathan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,7 +76,7 @@ atintr()
 		if (m == 0)	/* no more queued packets */
 			break;
 
-		m_claim(m, &atalk_rx_mowner);
+		m_claimm(m, &atalk_rx_mowner);
 		ifp = m->m_pkthdr.rcvif;
 		for (aa = at_ifaddr.tqh_first; aa; aa = aa->aa_list.tqe_next) {
 			if (aa->aa_ifp == ifp && (aa->aa_flags & AFA_PHASE2))
@@ -100,7 +100,7 @@ atintr()
 
 			break;
 
-		m_claim(m, &atalk_rx_mowner);
+		m_claimm(m, &atalk_rx_mowner);
 		ifp = m->m_pkthdr.rcvif;
 		for (aa = at_ifaddr.tqh_first; aa; aa = aa->aa_list.tqe_next) {
 			if (aa->aa_ifp == ifp &&

@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.82 2004/05/25 04:30:32 atatat Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.83 2004/06/24 04:15:50 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.82 2004/05/25 04:30:32 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.83 2004/06/24 04:15:50 jonathan Exp $");
 
 #include "opt_mbuftrace.h"
 
@@ -447,8 +447,11 @@ m_freem(struct mbuf *m)
 }
 
 #ifdef MBUFTRACE
+/*
+ * Walk a chain of mbufs, claiming ownership of each mbuf in the chain.
+ */
 void
-m_claim(struct mbuf *m, struct mowner *mo)
+m_claimm(struct mbuf *m, struct mowner *mo)
 {
 
 	for (; m != NULL; m = m->m_next)
