@@ -58,7 +58,6 @@
 #define b_cylin b_resid
 #define b_step b_resid
 #define FDBLK 512
-#define NUMTYPES 4+1
 
 struct fd_type {
 	int	sectrac;		/* sectors per track         */
@@ -71,12 +70,14 @@ struct fd_type {
 	int	trans;			/* transfer speed code       */
 };
 
+#define NUMTYPES 5+1
 struct fd_type fd_types[NUMTYPES] = {
-	{ 0,0,0,0, 0,0,0,0},		/* non-existtant */
-	{ 18,2,0xFF,0x1B,80,2880,1,0 },	/* 1.44 meg HD 3.5in floppy    */
-	{ 15,2,0xFF,0x1B,80,2400,1,0 },	/* 1.2 meg HD floppy           */
-	{ 9,2,0xFF,0x23,40,720,2,1 },	/* 360k floppy in 1.2meg drive */
-	{ 9,2,0xFF,0x2A,40,720,1,1 },	/* 360k floppy in DD drive     */
+	{ 0,0,0,0, 0,0,0,0},		/* non-existant */
+	{ 18,2,0xFF,0x1B,80,2880,1,0 },	/* 1.44 meg HD 3.5in floppy	*/
+	{ 15,2,0xFF,0x1B,80,2400,1,0 },	/* 1.2 meg HD floppy		*/
+	{ 9,2,0xFF,0x23,40,720,2,1 },	/* 360k floppy in 1.2meg drive	*/
+	{ 9,2,0xFF,0x2A,40,720,1,1 },	/* 360k floppy in DD drive	*/
+	{ 9,2,0xFF,0x2A,80,1440,1,0 },	/* 720K drive. PROBABLY WRONG	*/
 };
 
 struct fd_u {
@@ -173,16 +174,38 @@ fdattach(struct isa_device *dev)
 	if (st0 & 0xd0)
 		return 0;
 
-	if ((fdt & 0xf0) == RTCFDT_12M) {
-		printf("fd%d at fdc%d slave %d: <1.2M>\n", dev->id_unit,
-			dev->id_masunit, dev->id_physid);
+	switch(fdt & 0xf0) {
+	case RTCFDT_NONE:
+		printf("fd%d at fdc%d slave %d: CMOS nonexistant device\n",
+			dev->id_unit, dev->id_masunit, dev->id_physid);
+		fd_unit[dev->id_unit].type = 0;
+		break;
+	case RTCFDT_12M:
+		printf("fd%d at fdc%d slave %d: 1.2MB 80 cyl, 2 head, 15 sec\n",
+			dev->id_unit, dev->id_masunit, dev->id_physid);
 		fd_unit[dev->id_unit].type = 2;
-	}
-
-	if ((fdt & 0xf0) == RTCFDT_144M) {
-		printf("fd%d at fdc%d slave %d: <1.44M>\n", dev->id_unit,
-			dev->id_masunit, dev->id_physid);
+		break;
+	case RTCFDT_144M:
+		printf("fd%d at fdc%d slave %d: 1.44MB 80 cyl, 2 head, 18 sec\n",
+			dev->id_unit, dev->id_masunit, dev->id_physid);
 		fd_unit[dev->id_unit].type = 1;
+		break;
+	case RTCFDT_360K:
+		printf("fd%d at fdc%d slave %d: 360KB 40 cyl, 2 head, 9 sec\n",
+			dev->id_unit, dev->id_masunit, dev->id_physid);
+		fd_unit[dev->id_unit].type = 4;
+		break;
+	case RTCFDT_720K:
+		printf("fd%d at fdc%d slave %d: 720KB 80 cyl, 2 head, 9 sec\n",
+			dev->id_unit, dev->id_masunit, dev->id_physid);
+		fd_unit[dev->id_unit].type = 5;
+		break;
+	default:
+		printf("fd%d at fdc%d slave %d: CMOS unknown device 0x%x\n",
+			dev->id_unit, dev->id_masunit, dev->id_physid,
+			fdt & 0xf0);
+		fd_unit[dev->id_unit].type = 0;
+		break;
 	}
 
 	outb(fdc+fdctl,0);	/* Set transfer to 500kbps */
