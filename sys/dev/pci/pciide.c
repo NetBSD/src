@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.99 2000/12/28 22:59:15 sommerfeld Exp $	*/
+/*	$NetBSD: pciide.c,v 1.100 2000/12/29 18:59:01 tsutsui Exp $	*/
 
 
 /*
@@ -1977,7 +1977,7 @@ apollo_setup_channel(chp)
 	datatim_reg = pci_conf_read(sc->sc_pc, sc->sc_tag, APO_DATATIM);
 	udmatim_reg = pci_conf_read(sc->sc_pc, sc->sc_tag, APO_UDMA);
 	datatim_reg &= ~APO_DATATIM_MASK(chp->channel);
-	udmatim_reg &= ~AP0_UDMA_MASK(chp->channel);
+	udmatim_reg &= ~APO_UDMA_MASK(chp->channel);
 
 	/* setup DMA if needed */
 	pciide_channel_dma_setup(cp);
