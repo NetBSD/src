@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc,v 1.93 2000/06/26 19:54:08 pk Exp $
+#	$NetBSD: files.sparc,v 1.94 2000/07/03 23:30:34 pk Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
 # sparc-specific configuration info
@@ -216,10 +216,6 @@ file	arch/sparc/dev/if_ie_obio.c	ie_obio
 
 attach com at obio with com_obio
 file	arch/sparc/dev/com_obio.c	com_obio
-
-device si: scsi, ncr5380sbc
-attach si at vme
-file	arch/sparc/dev/si.c		si
 
 device sw: scsi, ncr5380sbc
 attach sw at obio
