@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_r2000.S,v 1.27 1996/10/13 21:37:41 jonathan Exp $	*/
+/*	$NetBSD: locore_r2000.S,v 1.28 1997/06/15 17:44:50 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -53,6 +53,13 @@
  *	@(#)locore.s	8.5 (Berkeley) 1/4/94
  */
 
+#define TRAP_FRAME_SIZE	(4 * 38 + 4 * 4 + 4 + 4)
+#define TRAP_RA_OFFSET	(TRAP_FRAME_SIZE - 4)
+#define TRAP_FRAME_OFFSET (4 * 4)
+#define INTR_FRAME_SIZE	(4 * 38 + 4 * 4 + 4 + 4)
+#define INTR_RA_OFFSET	STAND_RA_OFFSET
+#define INTR_FRAME_OFFSET STAND_FRAME_SIZE
+
 /*
  *----------------------------------------------------------------------------
  *
@@ -69,8 +76,9 @@
 _C_LABEL(mips1_UTLBMiss):
 	.set	noat
 	mfc0	k0, MACH_COP_0_BAD_VADDR	# get the virtual address
-	lw	k1, UADDR+U_PCB_SEGTAB		# get the current segment table
+	lw	k1, _C_LABEL(curpcb)
 	bltz	k0, 1f				# R3000 chip bug
+	lw	k1, U_PCB_SEGTAB(k1)		# get the current segment table
 	srl	k0, k0, SEGSHIFT		# compute segment table index
 	sll	k0, k0, 2
 	addu	k1, k1, k0
@@ -181,94 +189,70 @@ mips1_SlowFault:
  *
  *----------------------------------------------------------------------------
  */
-
-/*
- * The kernel exception stack contains 18 saved general registers,
- * the status register and the multiply lo and high registers.
- * In addition, we set this up for linkage conventions.
- */
-#define KERN_REG_SIZE		(18 * 4)
-#define KERN_REG_OFFSET		(STAND_FRAME_SIZE)
-#define KERN_SR_OFFSET		(STAND_FRAME_SIZE + KERN_REG_SIZE)
-#define KERN_MULT_LO_OFFSET	(STAND_FRAME_SIZE + KERN_REG_SIZE + 4)
-#define KERN_MULT_HI_OFFSET	(STAND_FRAME_SIZE + KERN_REG_SIZE + 8)
-#define	KERN_EXC_FRAME_SIZE	(STAND_FRAME_SIZE + KERN_REG_SIZE + 12)
-
-NNON_LEAF(mips1_KernGenException, KERN_EXC_FRAME_SIZE, ra)
+NNON_LEAF(mips1_KernGenException, TRAP_FRAME_SIZE, ra)
 	.set	noat
-#ifdef KADB
-	la	k0, kdbpcb			# save registers for kadb
-	sw	s0, (S0 * 4)(k0)
-	sw	s1, (S1 * 4)(k0)
-	sw	s2, (S2 * 4)(k0)
-	sw	s3, (S3 * 4)(k0)
-	sw	s4, (S4 * 4)(k0)
-	sw	s5, (S5 * 4)(k0)
-	sw	s6, (S6 * 4)(k0)
-	sw	s7, (S7 * 4)(k0)
-	sw	s8, (S8 * 4)(k0)
-	sw	gp, (GP * 4)(k0)
-	sw	sp, (SP * 4)(k0)
-#endif
-	subu	sp, sp, KERN_EXC_FRAME_SIZE
-	.mask	0x80000000, (STAND_RA_OFFSET - KERN_EXC_FRAME_SIZE)
-/*
- * Save the relevant kernel registers onto the stack.
- * We don't need to save s0 - s8, sp and gp because
- * the compiler does it for us.
- */
-	sw	AT, KERN_REG_OFFSET + 0(sp)
-	sw	v0, KERN_REG_OFFSET + 4(sp)
-	sw	v1, KERN_REG_OFFSET + 8(sp)
-	sw	a0, KERN_REG_OFFSET + 12(sp)
+	.mask	0x80000000, (TRAP_RA_OFFSET - TRAP_FRAME_SIZE)
+	subu	sp, sp, TRAP_FRAME_SIZE
+	sw	AT, TRAP_FRAME_OFFSET+(AST * 4)(sp)
+	sw	v0, TRAP_FRAME_OFFSET+(V0 * 4)(sp)
+	sw	v1, TRAP_FRAME_OFFSET+(V1 * 4)(sp)
+	sw	a0, TRAP_FRAME_OFFSET+(A0 * 4)(sp)
 	mflo	v0
 	mfhi	v1
-	sw	a1, KERN_REG_OFFSET + 16(sp)
-	sw	a2, KERN_REG_OFFSET + 20(sp)
-	sw	a3, KERN_REG_OFFSET + 24(sp)
-	sw	t0, KERN_REG_OFFSET + 28(sp)
-	mfc0	a0, MACH_COP_0_STATUS_REG	# First arg is the status reg.
-	sw	t1, KERN_REG_OFFSET + 32(sp)
-	sw	t2, KERN_REG_OFFSET + 36(sp)
-	sw	t3, KERN_REG_OFFSET + 40(sp)
-	sw	t4, KERN_REG_OFFSET + 44(sp)
-	mfc0	a1, MACH_COP_0_CAUSE_REG	# Second arg is the cause reg.
-	sw	t5, KERN_REG_OFFSET + 48(sp)
-	sw	t6, KERN_REG_OFFSET + 52(sp)
-	sw	t7, KERN_REG_OFFSET + 56(sp)
-	sw	t8, KERN_REG_OFFSET + 60(sp)
-	mfc0	a2, MACH_COP_0_BAD_VADDR	# Third arg is the fault addr.
-	sw	t9, KERN_REG_OFFSET + 64(sp)
-	sw	ra, KERN_REG_OFFSET + 68(sp)
-	sw	v0, KERN_MULT_LO_OFFSET(sp)
-	sw	v1, KERN_MULT_HI_OFFSET(sp)
-	mfc0	a3, MACH_COP_0_EXC_PC		# Fourth arg is the pc.
-	sw	a0, KERN_SR_OFFSET(sp)
-/*
- * Call the exception handler.
- */
+	sw	a1, TRAP_FRAME_OFFSET+(A1 * 4)(sp)
+	sw	a2, TRAP_FRAME_OFFSET+(A2 * 4)(sp)
+	sw	a3, TRAP_FRAME_OFFSET+(A3 * 4)(sp)
+	sw	t0, TRAP_FRAME_OFFSET+(T0 * 4)(sp)
+	mfc0	a0, MACH_COP_0_STATUS_REG	# 1st arg is STATUS
+	sw	t1, TRAP_FRAME_OFFSET+(T1 * 4)(sp)
+	sw	t2, TRAP_FRAME_OFFSET+(T2 * 4)(sp)
+	sw	t3, TRAP_FRAME_OFFSET+(T3 * 4)(sp)
+	sw	t4, TRAP_FRAME_OFFSET+(T4 * 4)(sp)
+	mfc0	a1, MACH_COP_0_CAUSE_REG	# 2nd arg is CAUSE
+	sw	t5, TRAP_FRAME_OFFSET+(T5 * 4)(sp)
+	sw	t6, TRAP_FRAME_OFFSET+(T6 * 4)(sp)
+	sw	t7, TRAP_FRAME_OFFSET+(T7 * 4)(sp)
+	sw	t8, TRAP_FRAME_OFFSET+(T8 * 4)(sp)
+	mfc0	a2, MACH_COP_0_BAD_VADDR	# 3rd arg is fault address
+	sw	t9, TRAP_FRAME_OFFSET+(T9 * 4)(sp)
+	sw	ra, TRAP_FRAME_OFFSET+(RA * 4)(sp)
+	sw	a0, TRAP_FRAME_OFFSET+(SR * 4)(sp)
+	sw	v0, TRAP_FRAME_OFFSET+(MULLO * 4)(sp)
+	mfc0	a3, MACH_COP_0_EXC_PC		# 4th arg is PC
+	sw	v1, TRAP_FRAME_OFFSET+(MULHI * 4)(sp)
+	sw	a3, TRAP_FRAME_OFFSET+(PC * 4)(sp)
+
 	jal	_C_LABEL(trap)
-	sw	a3, STAND_RA_OFFSET(sp)		# for debugging
-/*
- * Restore registers and return from the exception.
- * v0 contains the return address.
- */
-	lw	a0, KERN_SR_OFFSET(sp)
-	lw	t0, KERN_MULT_LO_OFFSET(sp)
-	lw	t1, KERN_MULT_HI_OFFSET(sp)
-	mtc0	a0, MACH_COP_0_STATUS_REG	# Restore the SR, disable intrs
+	sw	a3, TRAP_RA_OFFSET(sp)		# for debugging
+
+	lw	a0, TRAP_FRAME_OFFSET+(SR * 4)(sp)
+	lw	t0, TRAP_FRAME_OFFSET+(MULLO * 4)(sp)
+	lw	t1, TRAP_FRAME_OFFSET+(MULHI * 4)(sp)
+	mtc0	a0, MACH_COP_0_STATUS_REG
 	mtlo	t0
 	mthi	t1
-	move	k0, v0
-
-	lw	AT, KERN_REG_OFFSET + 0(sp)
-	lw	v0, KERN_REG_OFFSET + 4(sp)
-
-	RESTORE_KERN_REGISTERS(KERN_REG_OFFSET)
-
-	addu	sp, sp, KERN_EXC_FRAME_SIZE
-	j	k0				# Now return from the
-	rfe					#  exception.
+	lw	k0, TRAP_FRAME_OFFSET+(PC * 4)(sp)	# might be changed inside trap
+	lw	AT, TRAP_FRAME_OFFSET+(AST * 4)(sp)
+	lw	v0, TRAP_FRAME_OFFSET+(V0 * 4)(sp)
+	lw	v1, TRAP_FRAME_OFFSET+(V1 * 4)(sp)
+	lw	a0, TRAP_FRAME_OFFSET+(A0 * 4)(sp)
+	lw	a1, TRAP_FRAME_OFFSET+(A1 * 4)(sp)
+	lw	a2, TRAP_FRAME_OFFSET+(A2 * 4)(sp)
+	lw	a3, TRAP_FRAME_OFFSET+(A3 * 4)(sp)
+	lw	t0, TRAP_FRAME_OFFSET+(T0 * 4)(sp)
+	lw	t1, TRAP_FRAME_OFFSET+(T1 * 4)(sp) 
+	lw	t2, TRAP_FRAME_OFFSET+(T2 * 4)(sp)
+	lw	t3, TRAP_FRAME_OFFSET+(T3 * 4)(sp)
+	lw	t4, TRAP_FRAME_OFFSET+(T4 * 4)(sp)
+	lw	t5, TRAP_FRAME_OFFSET+(T5 * 4)(sp)
+	lw	t6, TRAP_FRAME_OFFSET+(T6 * 4)(sp)
+	lw	t7, TRAP_FRAME_OFFSET+(T7 * 4)(sp)
+	lw	t8, TRAP_FRAME_OFFSET+(T8 * 4)(sp)
+	lw	t9, TRAP_FRAME_OFFSET+(T9 * 4)(sp)	
+	lw	ra, TRAP_FRAME_OFFSET+(RA * 4)(sp)
+	addu	sp, sp, TRAP_FRAME_SIZE		# restore kernel SP
+	j	k0
+	rfe	
 	.set	at
 END(mips1_KernGenException)
 
@@ -289,80 +273,207 @@ END(mips1_KernGenException)
 NNON_LEAF(mips1_UserGenException, STAND_FRAME_SIZE, ra)
 	.set	noat
 	.mask	0x80000000, (STAND_RA_OFFSET - STAND_FRAME_SIZE)
-/*
- * Save all of the registers except for the kernel temporaries in u.u_pcb.
- */
-	sw	AT, UADDR+U_PCB_REGS+(AST * 4)
-	sw	v0, UADDR+U_PCB_REGS+(V0 * 4)
-	sw	v1, UADDR+U_PCB_REGS+(V1 * 4)
-	sw	a0, UADDR+U_PCB_REGS+(A0 * 4)
+	lw	k1, _C_LABEL(curpcb)
+	nop
+	sw	AT, U_PCB_REGS+(AST * 4)(k1)
+	sw	v0, U_PCB_REGS+(V0 * 4)(k1)
+	sw	v1, U_PCB_REGS+(V1 * 4)(k1)
+	sw	a0, U_PCB_REGS+(A0 * 4)(k1)
 	mflo	v0
-	sw	a1, UADDR+U_PCB_REGS+(A1 * 4)
-	sw	a2, UADDR+U_PCB_REGS+(A2 * 4)
-	sw	a3, UADDR+U_PCB_REGS+(A3 * 4)
-	sw	t0, UADDR+U_PCB_REGS+(T0 * 4)
+	sw	a1, U_PCB_REGS+(A1 * 4)(k1)
+	sw	a2, U_PCB_REGS+(A2 * 4)(k1)
+	sw	a3, U_PCB_REGS+(A3 * 4)(k1)
+	sw	t0, U_PCB_REGS+(T0 * 4)(k1)
 	mfhi	v1
-	sw	t1, UADDR+U_PCB_REGS+(T1 * 4)
-	sw	t2, UADDR+U_PCB_REGS+(T2 * 4)
-	sw	t3, UADDR+U_PCB_REGS+(T3 * 4)
-	sw	t4, UADDR+U_PCB_REGS+(T4 * 4)
-	mfc0	a0, MACH_COP_0_STATUS_REG	# First arg is the status reg.
-	sw	t5, UADDR+U_PCB_REGS+(T5 * 4)
-	sw	t6, UADDR+U_PCB_REGS+(T6 * 4)
-	sw	t7, UADDR+U_PCB_REGS+(T7 * 4)
-	sw	s0, UADDR+U_PCB_REGS+(S0 * 4)
-	mfc0	a1, MACH_COP_0_CAUSE_REG	# Second arg is the cause reg.
-	sw	s1, UADDR+U_PCB_REGS+(S1 * 4)
-	sw	s2, UADDR+U_PCB_REGS+(S2 * 4)
-	sw	s3, UADDR+U_PCB_REGS+(S3 * 4)
-	sw	s4, UADDR+U_PCB_REGS+(S4 * 4)
-	mfc0	a2, MACH_COP_0_BAD_VADDR	# Third arg is the fault addr
-	sw	s5, UADDR+U_PCB_REGS+(S5 * 4)
-	sw	s6, UADDR+U_PCB_REGS+(S6 * 4)
-	sw	s7, UADDR+U_PCB_REGS+(S7 * 4)
-	sw	t8, UADDR+U_PCB_REGS+(T8 * 4)
-	mfc0	a3, MACH_COP_0_EXC_PC		# Fourth arg is the pc.
-	sw	t9, UADDR+U_PCB_REGS+(T9 * 4)
-	sw	gp, UADDR+U_PCB_REGS+(GP * 4)
-	sw	sp, UADDR+U_PCB_REGS+(SP * 4)
-	sw	s8, UADDR+U_PCB_REGS+(S8 * 4)
+	sw	t1, U_PCB_REGS+(T1 * 4)(k1)
+	sw	t2, U_PCB_REGS+(T2 * 4)(k1)
+	sw	t3, U_PCB_REGS+(T3 * 4)(k1)
+	sw	t4, U_PCB_REGS+(T4 * 4)(k1)
+	mfc0	a0, MACH_COP_0_STATUS_REG	# 1st arg is STATUS
+	sw	t5, U_PCB_REGS+(T5 * 4)(k1)
+	sw	t6, U_PCB_REGS+(T6 * 4)(k1)
+	sw	t7, U_PCB_REGS+(T7 * 4)(k1)
+	sw	s0, U_PCB_REGS+(S0 * 4)(k1)
+	mfc0	a1, MACH_COP_0_CAUSE_REG	# 2nd arg is CAUSE
+	sw	s1, U_PCB_REGS+(S1 * 4)(k1)
+	sw	s2, U_PCB_REGS+(S2 * 4)(k1)
+	sw	s3, U_PCB_REGS+(S3 * 4)(k1)
+	sw	s4, U_PCB_REGS+(S4 * 4)(k1)
+	mfc0	a2, MACH_COP_0_BAD_VADDR	# 3rd arg is fault address
+	sw	s5, U_PCB_REGS+(S5 * 4)(k1)
+	sw	s6, U_PCB_REGS+(S6 * 4)(k1)
+	sw	s7, U_PCB_REGS+(S7 * 4)(k1)
+	sw	t8, U_PCB_REGS+(T8 * 4)(k1)
+	mfc0	a3, MACH_COP_0_EXC_PC		# 4th arg is PC
+	sw	t9, U_PCB_REGS+(T9 * 4)(k1)
+	sw	gp, U_PCB_REGS+(GP * 4)(k1)
+	sw	sp, U_PCB_REGS+(SP * 4)(k1)
+	sw	s8, U_PCB_REGS+(S8 * 4)(k1)
 	li	sp, KERNELSTACK - STAND_FRAME_SIZE	# switch to kernel SP
-	sw	ra, UADDR+U_PCB_REGS+(RA * 4)
-	sw	v0, UADDR+U_PCB_REGS+(MULLO * 4)
-	sw	v1, UADDR+U_PCB_REGS+(MULHI * 4)
-	sw	a0, UADDR+U_PCB_REGS+(SR * 4)
+	sw	ra, U_PCB_REGS+(RA * 4)(k1)
+	sw	a0, U_PCB_REGS+(SR * 4)(k1)
+	sw	v0, U_PCB_REGS+(MULLO * 4)(k1)
+	sw	v1, U_PCB_REGS+(MULHI * 4)(k1)
+	sw	a3, U_PCB_REGS+(PC * 4)(k1)
+	sw	a3, STAND_RA_OFFSET(sp)		# for debugging
 #ifdef __GP_SUPPORT__
 	la	gp, _C_LABEL(_gp)		# switch to kernel GP
 #endif
-	sw	a3, UADDR+U_PCB_REGS+(PC * 4)
-	sw	a3, STAND_RA_OFFSET(sp)		# for debugging
 	.set	at
 	and	t0, a0, ~MACH_SR_COP_1_BIT	# Turn off the FPU.
 	.set	noat
-/*
- * Call the exception handler.
- */
 	jal	_C_LABEL(trap)
 	mtc0	t0, MACH_COP_0_STATUS_REG
 /*
  * Restore user registers and return. NOTE: interrupts are enabled.
  */
-	lw	a0, UADDR+U_PCB_REGS+(SR * 4)
-	lw	t0, UADDR+U_PCB_REGS+(MULLO * 4)
-	lw	t1, UADDR+U_PCB_REGS+(MULHI * 4)
+	lw	a1, _C_LABEL(curpcb)
+	nop
+	lw	a0, U_PCB_REGS+(SR * 4)(a1)
+	lw	t0, U_PCB_REGS+(MULLO * 4)(a1)
+	lw	t1, U_PCB_REGS+(MULHI * 4)(a1)
 	mtc0	a0, MACH_COP_0_STATUS_REG	# this should disable interrupts
 	mtlo	t0
 	mthi	t1
-	lw	k0, UADDR+U_PCB_REGS+(PC * 4)
-	lw	AT, UADDR+U_PCB_REGS+(AST * 4)
-	lw	v0, UADDR+U_PCB_REGS+(V0 * 4)
-
-	RESTORE_USER_REGS(UADDR)
-
+	move	k1, a1
+	lw	k0, U_PCB_REGS+(PC * 4)(k1)
+	lw	AT, U_PCB_REGS+(AST * 4)(k1)
+	lw	v0, U_PCB_REGS+(V0 * 4)(k1)
+	lw	v1, U_PCB_REGS+(V1 * 4)(k1)
+	lw	a0, U_PCB_REGS+(A0 * 4)(k1)
+	lw	a1, U_PCB_REGS+(A1 * 4)(k1)
+	lw	a2, U_PCB_REGS+(A2 * 4)(k1)
+	lw	a3, U_PCB_REGS+(A3 * 4)(k1)
+	lw	t0, U_PCB_REGS+(T0 * 4)(k1)
+	lw	t1, U_PCB_REGS+(T1 * 4)(k1)
+	lw	t2, U_PCB_REGS+(T2 * 4)(k1)
+	lw	t3, U_PCB_REGS+(T3 * 4)(k1)
+	lw	t4, U_PCB_REGS+(T4 * 4)(k1)
+	lw	t5, U_PCB_REGS+(T5 * 4)(k1)
+	lw	t6, U_PCB_REGS+(T6 * 4)(k1)
+	lw	t7, U_PCB_REGS+(T7 * 4)(k1)
+	lw	s0, U_PCB_REGS+(S0 * 4)(k1)
+	lw	s1, U_PCB_REGS+(S1 * 4)(k1)
+	lw	s2, U_PCB_REGS+(S2 * 4)(k1)
+	lw	s3, U_PCB_REGS+(S3 * 4)(k1)
+	lw	s4, U_PCB_REGS+(S4 * 4)(k1)
+	lw	s5, U_PCB_REGS+(S5 * 4)(k1)
+	lw	s6, U_PCB_REGS+(S6 * 4)(k1)
+	lw	s7, U_PCB_REGS+(S7 * 4)(k1)
+	lw	t8, U_PCB_REGS+(T8 * 4)(k1)
+	lw	t9, U_PCB_REGS+(T9 * 4)(k1)
+	lw	gp, U_PCB_REGS+(GP * 4)(k1)
+	lw	sp, U_PCB_REGS+(SP * 4)(k1)
+	lw	s8, U_PCB_REGS+(S8 * 4)(k1)
+	lw	ra, U_PCB_REGS+(RA * 4)(k1)
 	j	k0
 	rfe
 	.set	at
 END(mips1_UserGenException)
+
+/*
+ * System call handler
+ */
+NNON_LEAF(mips1_SystemCall, STAND_FRAME_SIZE, ra)
+	.set	noat
+	.mask	0x80000000, (STAND_RA_OFFSET - STAND_FRAME_SIZE)
+	lw	k1, _C_LABEL(curpcb)
+	nop
+	sw	AT, U_PCB_REGS+(AST * 4)(k1)
+	sw	v0, U_PCB_REGS+(V0 * 4)(k1)
+	sw	v1, U_PCB_REGS+(V1 * 4)(k1)
+	mflo	v0
+	mfhi	v1
+	sw	a0, U_PCB_REGS+(A0 * 4)(k1)
+	sw	a1, U_PCB_REGS+(A1 * 4)(k1)
+	sw	a2, U_PCB_REGS+(A2 * 4)(k1)
+	sw	a3, U_PCB_REGS+(A3 * 4)(k1)
+	sw	t0, U_PCB_REGS+(T0 * 4)(k1)
+	sw	t1, U_PCB_REGS+(T1 * 4)(k1)
+	sw	t2, U_PCB_REGS+(T2 * 4)(k1)
+	sw	t3, U_PCB_REGS+(T3 * 4)(k1)
+	sw	t4, U_PCB_REGS+(T4 * 4)(k1)
+	mfc0	a0, MACH_COP_0_STATUS_REG	# 1st arg is STATUS
+	sw	t5, U_PCB_REGS+(T5 * 4)(k1)
+	sw	t6, U_PCB_REGS+(T6 * 4)(k1)
+	sw	t7, U_PCB_REGS+(T7 * 4)(k1)
+	sw	s0, U_PCB_REGS+(S0 * 4)(k1)
+	mfc0	a1, MACH_COP_0_CAUSE_REG	# 2nd arg is CAUSE
+	sw	s1, U_PCB_REGS+(S1 * 4)(k1)
+	sw	s2, U_PCB_REGS+(S2 * 4)(k1)
+	sw	s3, U_PCB_REGS+(S3 * 4)(k1)
+	sw	s4, U_PCB_REGS+(S4 * 4)(k1)
+	sw	s5, U_PCB_REGS+(S5 * 4)(k1)
+	sw	s6, U_PCB_REGS+(S6 * 4)(k1)
+	sw	s7, U_PCB_REGS+(S7 * 4)(k1)
+	sw	t8, U_PCB_REGS+(T8 * 4)(k1)
+	mfc0	a2, MACH_COP_0_EXC_PC		# 3rd arg is PC
+	sw	t9, U_PCB_REGS+(T9 * 4)(k1)
+	sw	gp, U_PCB_REGS+(GP * 4)(k1)
+	sw	sp, U_PCB_REGS+(SP * 4)(k1)
+	sw	s8, U_PCB_REGS+(S8 * 4)(k1)
+	sw	ra, U_PCB_REGS+(RA * 4)(k1)
+	la	a3, U_PCB_REGS(k1)		# 4th arg is p. to trapframe
+	sw	a0, U_PCB_REGS+(SR * 4)(k1)
+	sw	v0, U_PCB_REGS+(MULLO * 4)(k1)
+	sw	v1, U_PCB_REGS+(MULHI * 4)(k1)
+	sw	a2, U_PCB_REGS+(PC * 4)(k1)
+	li	sp, KERNELSTACK - STAND_FRAME_SIZE	# switch to kernel SP
+	sw	a2, STAND_RA_OFFSET(sp)		# for debugging
+#ifdef __GP_SUPPORT__
+	la	gp, _C_LABEL(_gp)		# switch to kernel GP
+#endif
+	.set	at
+	and	t0, a0, ~MACH_SR_COP_1_BIT	# Turn off the FPU.
+	.set	noat
+	jal	_C_LABEL(syscall)
+	mtc0	t0, MACH_COP_0_STATUS_REG
+/*
+ * Restore user registers and return. NOTE: interrupts are enabled.
+ */
+	lw	a1, _C_LABEL(curpcb)
+	nop
+	lw	a0, U_PCB_REGS+(SR * 4)(a1)
+	lw	t0, U_PCB_REGS+(MULLO * 4)(a1)
+	lw	t1, U_PCB_REGS+(MULHI * 4)(a1)
+	mtc0	a0, MACH_COP_0_STATUS_REG	# this should disable interrupts
+	mtlo	t0
+	mthi	t1
+	move	k1, a1
+	lw	k0, U_PCB_REGS+(PC * 4)(k1)	# might be changed in syscall
+	lw	AT, U_PCB_REGS+(AST * 4)(k1)
+	lw	v0, U_PCB_REGS+(V0 * 4)(k1)
+	lw	v1, U_PCB_REGS+(V1 * 4)(k1)
+	lw	a0, U_PCB_REGS+(A0 * 4)(k1)
+	lw	a1, U_PCB_REGS+(A1 * 4)(k1)
+	lw	a2, U_PCB_REGS+(A2 * 4)(k1)
+	lw	a3, U_PCB_REGS+(A3 * 4)(k1)
+	lw	t0, U_PCB_REGS+(T0 * 4)(k1)
+	lw	t1, U_PCB_REGS+(T1 * 4)(k1)
+	lw	t2, U_PCB_REGS+(T2 * 4)(k1)
+	lw	t3, U_PCB_REGS+(T3 * 4)(k1)
+	lw	t4, U_PCB_REGS+(T4 * 4)(k1)
+	lw	t5, U_PCB_REGS+(T5 * 4)(k1)
+	lw	t6, U_PCB_REGS+(T6 * 4)(k1)
+	lw	t7, U_PCB_REGS+(T7 * 4)(k1)
+	lw	s0, U_PCB_REGS+(S0 * 4)(k1)
+	lw	s1, U_PCB_REGS+(S1 * 4)(k1)
+	lw	s2, U_PCB_REGS+(S2 * 4)(k1)
+	lw	s3, U_PCB_REGS+(S3 * 4)(k1)
+	lw	s4, U_PCB_REGS+(S4 * 4)(k1)
+	lw	s5, U_PCB_REGS+(S5 * 4)(k1)
+	lw	s6, U_PCB_REGS+(S6 * 4)(k1)
+	lw	s7, U_PCB_REGS+(S7 * 4)(k1)
+	lw	t8, U_PCB_REGS+(T8 * 4)(k1)
+	lw	t9, U_PCB_REGS+(T9 * 4)(k1)
+	lw	gp, U_PCB_REGS+(GP * 4)(k1)
+	lw	sp, U_PCB_REGS+(SP * 4)(k1)
+	lw	s8, U_PCB_REGS+(S8 * 4)(k1)
+	lw	ra, U_PCB_REGS+(RA * 4)(k1)
+	j	k0
+	rfe
+	.set	at
+END(mips1_SystemCall)
 
 /*----------------------------------------------------------------------------
  *
@@ -376,80 +487,82 @@ END(mips1_UserGenException)
  *	None.
  *
  * Side effects:
- *	None.
+ *	OBNone.
  *
  *----------------------------------------------------------------------------
  */
-#define KINTR_REG_OFFSET	(STAND_FRAME_SIZE)
-#define KINTR_SR_OFFSET		(STAND_FRAME_SIZE + KERN_REG_SIZE)
-#define KINTR_MULT_LO_OFFSET	(STAND_FRAME_SIZE + KERN_REG_SIZE + 4)
-#define KINTR_MULT_HI_OFFSET	(STAND_FRAME_SIZE + KERN_REG_SIZE + 8)
-#define KINTR_GP_OFFSET		(STAND_FRAME_SIZE + KERN_REG_SIZE + 12)
-#define	KINTR_FRAME_SIZE	(STAND_FRAME_SIZE + KERN_REG_SIZE + 16)
-
-NNON_LEAF(mips1_KernIntr, KINTR_FRAME_SIZE, ra)
+NNON_LEAF(mips1_KernIntr, INTR_FRAME_SIZE, ra)
 	.set	noat
-	subu	sp, sp, KINTR_FRAME_SIZE	# allocate stack frame
-	.mask	0x80000000, (STAND_RA_OFFSET - KINTR_FRAME_SIZE)
+	subu	sp, sp, INTR_FRAME_SIZE
+	.mask	0x80000000, (STAND_RA_OFFSET - INTR_FRAME_SIZE)
 /*
  * Save the relevant kernel registers onto the stack.
  * We don't need to save s0 - s8 and sp because
  * the compiler does it for us.
  */
-	sw	AT, KINTR_REG_OFFSET + 0(sp)
-	sw	v0, KINTR_REG_OFFSET + 4(sp)
-	sw	v1, KINTR_REG_OFFSET + 8(sp)
-	sw	a0, KINTR_REG_OFFSET + 12(sp)
+	sw	AT, INTR_FRAME_OFFSET+(AST * 4)(sp)
+	sw	v0, INTR_FRAME_OFFSET+(V0 * 4)(sp)
+	sw	v1, INTR_FRAME_OFFSET+(V1 * 4)(sp)
+	sw	a0, INTR_FRAME_OFFSET+(A0 * 4)(sp)
 	mflo	v0
 	mfhi	v1
-	sw	a1, KINTR_REG_OFFSET + 16(sp)
-	sw	a2, KINTR_REG_OFFSET + 20(sp)
-	sw	a3, KINTR_REG_OFFSET + 24(sp)
-	sw	t0, KINTR_REG_OFFSET + 28(sp)
-	mfc0	a0, MACH_COP_0_STATUS_REG	# First arg is the status reg.
-	sw	t1, KINTR_REG_OFFSET + 32(sp)
-	sw	t2, KINTR_REG_OFFSET + 36(sp)
-	sw	t3, KINTR_REG_OFFSET + 40(sp)
-	sw	t4, KINTR_REG_OFFSET + 44(sp)
+	sw	a1, INTR_FRAME_OFFSET+(A1 * 4)(sp)
+	sw	a2, INTR_FRAME_OFFSET+(A2 * 4)(sp)
+	sw	a3, INTR_FRAME_OFFSET+(A3 * 4)(sp)
+	sw	t0, INTR_FRAME_OFFSET+(T0 * 4)(sp)
+	mfc0	a0, MACH_COP_0_STATUS_REG	# 1st arg is STATUS
+	sw	t1, INTR_FRAME_OFFSET+(T1 * 4)(sp)
+	sw	t2, INTR_FRAME_OFFSET+(T2 * 4)(sp)
+	sw	t3, INTR_FRAME_OFFSET+(T3 * 4)(sp)
+	sw	t4, INTR_FRAME_OFFSET+(T4 * 4)(sp)
 	mfc0	a1, MACH_COP_0_CAUSE_REG	# Second arg is the cause reg.
-	sw	t5, KINTR_REG_OFFSET + 48(sp)
-	sw	t6, KINTR_REG_OFFSET + 52(sp)
-	sw	t7, KINTR_REG_OFFSET + 56(sp)
-	sw	t8, KINTR_REG_OFFSET + 60(sp)
-	mfc0	a2, MACH_COP_0_EXC_PC		# Third arg is the pc.
-	sw	t9, KINTR_REG_OFFSET + 64(sp)
-	sw	ra, KINTR_REG_OFFSET + 68(sp)
-	sw	v0, KINTR_MULT_LO_OFFSET(sp)
-	sw	v1, KINTR_MULT_HI_OFFSET(sp)
-	sw	a0, KINTR_SR_OFFSET(sp)
-	sw	gp, KINTR_GP_OFFSET(sp)
+	sw	t5, INTR_FRAME_OFFSET+(T5 * 4)(sp)
+	sw	t6, INTR_FRAME_OFFSET+(T6 * 4)(sp)
+	sw	t7, INTR_FRAME_OFFSET+(T7 * 4)(sp)
+	sw	t8, INTR_FRAME_OFFSET+(T8 * 4)(sp)
+	mfc0	a2, MACH_COP_0_EXC_PC		# 3rd arg is PC
+	sw	t9, INTR_FRAME_OFFSET+(T9 * 4)(sp)
+	sw	ra, INTR_FRAME_OFFSET+(RA * 4)(sp)
+	la	a3, INTR_FRAME_OFFSET(sp)	# 4th arg is p. to trapframe
+	sw	a0, INTR_FRAME_OFFSET+(SR * 4)(sp)
+	sw	v0, INTR_FRAME_OFFSET+(MULLO * 4)(sp)
+	sw	v1, INTR_FRAME_OFFSET+(MULHI * 4)(sp)
+	sw	gp, INTR_FRAME_OFFSET+(GP * 4)(sp)
 #ifdef __GP_SUPPORT__
 	la	gp, _C_LABEL(_gp)		# switch to kernel GP
 #endif
-/*
- * Call the interrupt handler.
- */
 	jal	_C_LABEL(interrupt)
 	sw	a2, STAND_RA_OFFSET(sp)		# for debugging
-/*
- * Restore registers and return from the interrupt.
- */
-	lw	a0, KINTR_SR_OFFSET(sp)
-	lw	t0, KINTR_MULT_LO_OFFSET(sp)
-	lw	t1, KINTR_MULT_HI_OFFSET(sp)
+
+	lw	a0, INTR_FRAME_OFFSET+(SR * 4)(sp)
+	lw	t0, INTR_FRAME_OFFSET+(MULLO * 4)(sp)
+	lw	t1, INTR_FRAME_OFFSET+(MULHI * 4)(sp)
 	mtc0	a0, MACH_COP_0_STATUS_REG	# Restore the SR, disable intrs
 	mtlo	t0
 	mthi	t1
-	lw	k0, STAND_RA_OFFSET(sp)
-	lw	AT, KINTR_REG_OFFSET + 0(sp)
-	lw	v0, KINTR_REG_OFFSET + 4(sp)
-
-	RESTORE_KERN_REGISTERS(KINTR_REG_OFFSET)
-
-	addu	sp, sp, KINTR_FRAME_SIZE
-	j	k0				# Now return from the
-	rfe					#  interrupt.
-	.set	at
+	lw	k0, STAND_RA_OFFSET(sp)		# restore original PC
+	lw	AT, INTR_FRAME_OFFSET+(AST * 4)(sp)
+	lw	v0, INTR_FRAME_OFFSET+(V0 * 4)(sp)
+	lw	v1, INTR_FRAME_OFFSET+(V1 * 4)(sp)
+	lw	a0, INTR_FRAME_OFFSET+(A0 * 4)(sp)
+	lw	a1, INTR_FRAME_OFFSET+(A1 * 4)(sp)
+	lw	a2, INTR_FRAME_OFFSET+(A2 * 4)(sp)
+	lw	a3, INTR_FRAME_OFFSET+(A3 * 4)(sp)
+	lw	t0, INTR_FRAME_OFFSET+(T0 * 4)(sp)
+	lw	t1, INTR_FRAME_OFFSET+(T1 * 4)(sp)
+	lw	t2, INTR_FRAME_OFFSET+(T2 * 4)(sp)
+	lw	t3, INTR_FRAME_OFFSET+(T3 * 4)(sp)
+	lw	t4, INTR_FRAME_OFFSET+(T4 * 4)(sp)
+	lw	t5, INTR_FRAME_OFFSET+(T5 * 4)(sp)
+	lw	t6, INTR_FRAME_OFFSET+(T6 * 4)(sp)
+	lw	t7, INTR_FRAME_OFFSET+(T7 * 4)(sp)
+	lw	t8, INTR_FRAME_OFFSET+(T8 * 4)(sp)
+	lw	t9, INTR_FRAME_OFFSET+(T9 * 4)(sp)
+	lw	gp, INTR_FRAME_OFFSET+(GP * 4)(sp)
+	lw	ra, INTR_FRAME_OFFSET+(RA * 4)(sp)
+	addu	sp, sp, INTR_FRAME_SIZE	# restore kernel SP
+	j	k0				# Now return from interrupt
+	rfe					#
 END(mips1_KernIntr)
 
 /*----------------------------------------------------------------------------
@@ -476,120 +589,120 @@ NNON_LEAF(mips1_UserIntr, STAND_FRAME_SIZE, ra)
 	.mask	0x80000000, (STAND_RA_OFFSET - STAND_FRAME_SIZE)
 /*
  * Save the relevant user registers into the u.u_pcb struct.
- * We don't need to save s0 - s8 because
- * the compiler does it for us.
+ * We don't need to save s0 - s8 because the compiler does it for us.
  */
-	sw	AT, UADDR+U_PCB_REGS+(AST * 4)
-	sw	v0, UADDR+U_PCB_REGS+(V0 * 4)
-	sw	v1, UADDR+U_PCB_REGS+(V1 * 4)
-	sw	a0, UADDR+U_PCB_REGS+(A0 * 4)
+	lw	k1, _C_LABEL(curpcb)
+	nop
+	sw	AT, U_PCB_REGS+(AST * 4)(k1)
+	sw	v0, U_PCB_REGS+(V0 * 4)(k1)
+	sw	v1, U_PCB_REGS+(V1 * 4)(k1)
+	sw	a0, U_PCB_REGS+(A0 * 4)(k1)
 	mflo	v0
 	mfhi	v1
-	sw	a1, UADDR+U_PCB_REGS+(A1 * 4)
-	sw	a2, UADDR+U_PCB_REGS+(A2 * 4)
-	sw	a3, UADDR+U_PCB_REGS+(A3 * 4)
-	sw	t0, UADDR+U_PCB_REGS+(T0 * 4)
-	mfc0	a0, MACH_COP_0_STATUS_REG	# First arg is the status reg.
-	sw	t1, UADDR+U_PCB_REGS+(T1 * 4)
-	sw	t2, UADDR+U_PCB_REGS+(T2 * 4)
-	sw	t3, UADDR+U_PCB_REGS+(T3 * 4)
-	sw	t4, UADDR+U_PCB_REGS+(T4 * 4)
-	mfc0	a1, MACH_COP_0_CAUSE_REG	# Second arg is the cause reg.
-	sw	t5, UADDR+U_PCB_REGS+(T5 * 4)
-	sw	t6, UADDR+U_PCB_REGS+(T6 * 4)
-	sw	t7, UADDR+U_PCB_REGS+(T7 * 4)
-	sw	t8, UADDR+U_PCB_REGS+(T8 * 4)
-	mfc0	a2, MACH_COP_0_EXC_PC		# Third arg is the pc.
-	sw	t9, UADDR+U_PCB_REGS+(T9 * 4)
-	sw	gp, UADDR+U_PCB_REGS+(GP * 4)
-	sw	sp, UADDR+U_PCB_REGS+(SP * 4)
-	sw	ra, UADDR+U_PCB_REGS+(RA * 4)
+	sw	a1, U_PCB_REGS+(A1 * 4)(k1)
+	sw	a2, U_PCB_REGS+(A2 * 4)(k1)
+	sw	a3, U_PCB_REGS+(A3 * 4)(k1)
+	sw	t0, U_PCB_REGS+(T0 * 4)(k1)
+	mfc0	a0, MACH_COP_0_STATUS_REG	# 1st arg is STATUS
+	sw	t1, U_PCB_REGS+(T1 * 4)(k1)
+	sw	t2, U_PCB_REGS+(T2 * 4)(k1)
+	sw	t3, U_PCB_REGS+(T3 * 4)(k1)
+	sw	t4, U_PCB_REGS+(T4 * 4)(k1)
+	mfc0	a1, MACH_COP_0_CAUSE_REG	# 2nd arg is CAUSE
+	sw	t5, U_PCB_REGS+(T5 * 4)(k1)
+	sw	t6, U_PCB_REGS+(T6 * 4)(k1)
+	sw	t7, U_PCB_REGS+(T7 * 4)(k1)
+	sw	t8, U_PCB_REGS+(T8 * 4)(k1)
+	mfc0	a2, MACH_COP_0_EXC_PC		# 3rd arg is PC
+	sw	t9, U_PCB_REGS+(T9 * 4)(k1)
+	sw	gp, U_PCB_REGS+(GP * 4)(k1)
+	sw	sp, U_PCB_REGS+(SP * 4)(k1)
+	sw	ra, U_PCB_REGS+(RA * 4)(k1)
+	la	a3, U_PCB_REGS(k1)		# 4th arg is p. to trapframe
+	sw	a0, U_PCB_REGS+(SR * 4)(k1)
+	sw	v0, U_PCB_REGS+(MULLO * 4)(k1)
+	sw	v1, U_PCB_REGS+(MULHI * 4)(k1)
 	li	sp, KERNELSTACK - STAND_FRAME_SIZE	# switch to kernel SP
-	sw	v0, UADDR+U_PCB_REGS+(MULLO * 4)
-	sw	v1, UADDR+U_PCB_REGS+(MULHI * 4)
-	sw	a0, UADDR+U_PCB_REGS+(SR * 4)
-	sw	a2, UADDR+U_PCB_REGS+(PC * 4)
+	sw	a2, STAND_RA_OFFSET(sp)		# for debugging
 #ifdef __GP_SUPPORT__
 	la	gp, _C_LABEL(_gp)		# switch to kernel GP
 #endif
-	.set	at
-	and	t0, a0, ~MACH_SR_COP_1_BIT	# Turn off the FPU.
-	.set	noat
-	mtc0	t0, MACH_COP_0_STATUS_REG
 /*
  * Call the interrupt handler.
  */
+	.set	at
+	and	t0, a0, ~MACH_SR_COP_1_BIT	# Turn off the FPU.
+	.set	noat
 	jal	_C_LABEL(interrupt)
-	sw	a2, STAND_RA_OFFSET(sp)		# for debugging
+	mtc0	t0, MACH_COP_0_STATUS_REG
 /*
- * Restore registers and return from the interrupt.
+ * Check pending asynchoronous traps.
  */
-	lw	a0, UADDR+U_PCB_REGS+(SR * 4)
-	lw	v0, _C_LABEL(astpending)	# any pending interrupts?
-	mtc0	a0, MACH_COP_0_STATUS_REG	# Restore the SR, disable intrs
-	bne	v0, zero, 1f			# dont restore, call softintr
-	lw	t0, UADDR+U_PCB_REGS+(MULLO * 4)
-	lw	t1, UADDR+U_PCB_REGS+(MULHI * 4)
-	lw	k0, UADDR+U_PCB_REGS+(PC * 4)
-	lw	AT, UADDR+U_PCB_REGS+(AST * 4)
-	lw	v0, UADDR+U_PCB_REGS+(V0 * 4)
-	lw	v1, UADDR+U_PCB_REGS+(V1 * 4)
-	lw	a0, UADDR+U_PCB_REGS+(A0 * 4)
-	lw	a1, UADDR+U_PCB_REGS+(A1 * 4)
-	lw	a2, UADDR+U_PCB_REGS+(A2 * 4)
-	lw	a3, UADDR+U_PCB_REGS+(A3 * 4)
-	mtlo	t0
-	mthi	t1
-	lw	t0, UADDR+U_PCB_REGS+(T0 * 4)
-	lw	t1, UADDR+U_PCB_REGS+(T1 * 4)
-	lw	t2, UADDR+U_PCB_REGS+(T2 * 4)
-	lw	t3, UADDR+U_PCB_REGS+(T3 * 4)
-	lw	t4, UADDR+U_PCB_REGS+(T4 * 4)
-	lw	t5, UADDR+U_PCB_REGS+(T5 * 4)
-	lw	t6, UADDR+U_PCB_REGS+(T6 * 4)
-	lw	t7, UADDR+U_PCB_REGS+(T7 * 4)
-	lw	t8, UADDR+U_PCB_REGS+(T8 * 4)
-	lw	t9, UADDR+U_PCB_REGS+(T9 * 4)
-	lw	gp, UADDR+U_PCB_REGS+(GP * 4)
-	lw	sp, UADDR+U_PCB_REGS+(SP * 4)
-	lw	ra, UADDR+U_PCB_REGS+(RA * 4)
-	j	k0				# Now return from the
-	rfe					#  interrupt.
+	lw	a1, _C_LABEL(curpcb)
+	nop
+	lw	a0, U_PCB_REGS+(SR * 4)(a1)
+	lw	v0, _C_LABEL(astpending)	# any pending ast?
+	mtc0	a0, MACH_COP_0_STATUS_REG	# restore SR disabling intrs
+	beq	v0, zero, 1f			# if no, skip ast processing
+/*
+ * We have pending asynchronous traps; save remaining user state in u.u_pcb.
+ */
+	sw	s0, U_PCB_REGS+(S0 * 4)(a1)
+	sw	s1, U_PCB_REGS+(S1 * 4)(a1)
+	sw	s2, U_PCB_REGS+(S2 * 4)(a1)
+	sw	s3, U_PCB_REGS+(S3 * 4)(a1)
+	sw	s4, U_PCB_REGS+(S4 * 4)(a1)
+	sw	s5, U_PCB_REGS+(S5 * 4)(a1)
+	sw	s6, U_PCB_REGS+(S6 * 4)(a1)
+	sw	s7, U_PCB_REGS+(S7 * 4)(a1)
+	sw	s8, U_PCB_REGS+(S8 * 4)(a1)
 
-1:
-/*
- * We have pending software interrupts; save remaining user state in u.u_pcb.
- */
-	sw	s0, UADDR+U_PCB_REGS+(S0 * 4)
-	sw	s1, UADDR+U_PCB_REGS+(S1 * 4)
-	sw	s2, UADDR+U_PCB_REGS+(S2 * 4)
-	sw	s3, UADDR+U_PCB_REGS+(S3 * 4)
-	sw	s4, UADDR+U_PCB_REGS+(S4 * 4)
-	sw	s5, UADDR+U_PCB_REGS+(S5 * 4)
-	sw	s6, UADDR+U_PCB_REGS+(S6 * 4)
-	sw	s7, UADDR+U_PCB_REGS+(S7 * 4)
-	sw	s8, UADDR+U_PCB_REGS+(S8 * 4)
+	lw	a0, STAND_RA_OFFSET(sp)		# argment is interrupted PC
 	li	t0, MACH_HARD_INT_MASK | MIPS_SR_INT_IE
-/*
- * Call the software interrupt handler.
- */
-	jal	_C_LABEL(softintr)
+	jal	_C_LABEL(ast)
 	mtc0	t0, MACH_COP_0_STATUS_REG	# enable interrupts (spl0)
-/*
- * Restore user registers and return. NOTE: interrupts are enabled.
- */
-	lw	a0, UADDR+U_PCB_REGS+(SR * 4)
-	lw	t0, UADDR+U_PCB_REGS+(MULLO * 4)
-	lw	t1, UADDR+U_PCB_REGS+(MULHI * 4)
+
+	lw	a1, _C_LABEL(curpcb)
+	nop
+	lw	a0, U_PCB_REGS+(SR * 4)(a1)
+	lw	s0, U_PCB_REGS+(S0 * 4)(a1)
 	mtc0	a0, MACH_COP_0_STATUS_REG	# this should disable interrupts
-	mtlo	t0
-	mthi	t1
-	lw	k0, UADDR+U_PCB_REGS+(PC * 4)
-	lw	AT, UADDR+U_PCB_REGS+(AST * 4)
-	lw	v0, UADDR+U_PCB_REGS+(V0 * 4)
-
-	RESTORE_USER_REGS(UADDR)
-
+	lw	s1, U_PCB_REGS+(S1 * 4)(a1)
+	lw	s2, U_PCB_REGS+(S2 * 4)(a1)
+	lw	s3, U_PCB_REGS+(S3 * 4)(a1)
+	lw	s4, U_PCB_REGS+(S4 * 4)(a1)
+	lw	s5, U_PCB_REGS+(S5 * 4)(a1)
+	lw	s6, U_PCB_REGS+(S6 * 4)(a1)
+	lw	s7, U_PCB_REGS+(S7 * 4)(a1)
+	lw	s8, U_PCB_REGS+(S8 * 4)(a1)
+1:
+	move	k1, a1
+	lw	v0, U_PCB_REGS+(MULLO * 4)(k1)
+	lw	v1, U_PCB_REGS+(MULHI * 4)(k1)
+	mtlo	v0
+	mthi	v1
+	lw	k0, STAND_RA_OFFSET(sp)		# interrupted PC
+	move	k1, a1
+	lw	AT, U_PCB_REGS+(AST * 4)(k1)
+	lw	v0, U_PCB_REGS+(V0 * 4)(k1)
+	lw	v1, U_PCB_REGS+(V1 * 4)(k1)
+	lw	a0, U_PCB_REGS+(A0 * 4)(k1)
+	lw	a1, U_PCB_REGS+(A1 * 4)(k1)
+	lw	a2, U_PCB_REGS+(A2 * 4)(k1)
+	lw	a3, U_PCB_REGS+(A3 * 4)(k1)
+	lw	t0, U_PCB_REGS+(T0 * 4)(k1)
+	lw	t1, U_PCB_REGS+(T1 * 4)(k1)
+	lw	t2, U_PCB_REGS+(T2 * 4)(k1)
+	lw	t3, U_PCB_REGS+(T3 * 4)(k1)
+	lw	t4, U_PCB_REGS+(T4 * 4)(k1)
+	lw	t5, U_PCB_REGS+(T5 * 4)(k1)
+	lw	t6, U_PCB_REGS+(T6 * 4)(k1)
+	lw	t7, U_PCB_REGS+(T7 * 4)(k1)
+	lw	t8, U_PCB_REGS+(T8 * 4)(k1)
+	lw	t9, U_PCB_REGS+(T9 * 4)(k1)
+	lw	gp, U_PCB_REGS+(GP * 4)(k1)
+	lw	sp, U_PCB_REGS+(SP * 4)(k1)
+	lw	ra, U_PCB_REGS+(RA * 4)(k1)
 	j	k0
 	rfe
 	.set	at
@@ -1111,7 +1224,7 @@ END(mips1_TLBGetPID)
  *	NOTE: should only be called from mach_init().
  *
  * Results:
- *     	None.
+ *	None.
  *
  * Side effects:
  *	The size of the data cache is stored into machDataCacheSize and the
@@ -1388,6 +1501,90 @@ LEAF(mips1_FlushDCache)
 	j	ra				# return and run cached
 	nop
 END(mips1_FlushDCache)
+
+/*----------------------------------------------------------------------------
+ *
+ * mips1_wbflush --
+ *
+ *	Return when the write buffer is empty.
+ *
+ *	mips1_wbflush()
+ *
+ * Results:
+ *	None.
+ *
+ * Side effects:
+ *	None.
+ *
+ *----------------------------------------------------------------------------
+ */
+LEAF(mips1_wbflush)
+	nop
+	nop
+	nop
+	nop
+1:	bc0f	1b
+	nop
+	j	ra
+	nop
+END(mips1_wbflush)
+
+/*
+ * mips1_proc_trampoline()
+ *
+ * Arrange for a function to be invoked neatly, after a cpu_switch().
+ * Invoke the service function with one argument, specified by the s0
+ * and s1 respectively.  There is no need register save operation.
+ */
+LEAF(mips1_proc_trampoline) 
+	jal	ra, s0
+	move	a0, s1
+	.set	noat
+	lw	a1, _C_LABEL(curpcb)
+	nop
+	lw	a0, U_PCB_REGS + (SR * 4)(a1)
+	lw	t0, U_PCB_REGS + (MULLO * 4)(a1)
+	lw	t1, U_PCB_REGS + (MULHI * 4)(a1)
+	mtc0	a0, MACH_COP_0_STATUS_REG	# this should disable interrupts
+	mtlo	t0
+	mthi	t1
+	nop
+	move	k1, a1
+	lw	AT, U_PCB_REGS + (AST * 4)(k1)
+	lw	k0, U_PCB_REGS + (PC * 4)(k1)
+	lw	v0, U_PCB_REGS + (V0 * 4)(k1)
+	lw	v1, U_PCB_REGS + (V1 * 4)(k1)
+	lw	a0, U_PCB_REGS + (A0 * 4)(k1)
+	lw	a1, U_PCB_REGS + (A1 * 4)(k1)
+	lw	a2, U_PCB_REGS + (A2 * 4)(k1)
+	lw	a3, U_PCB_REGS + (A3 * 4)(k1)
+	lw	t0, U_PCB_REGS + (T0 * 4)(k1)
+	lw	t1, U_PCB_REGS + (T1 * 4)(k1)
+	lw	t2, U_PCB_REGS + (T2 * 4)(k1)
+	lw	t3, U_PCB_REGS + (T3 * 4)(k1)
+	lw	t4, U_PCB_REGS + (T4 * 4)(k1)
+	lw	t5, U_PCB_REGS + (T5 * 4)(k1)
+	lw	t6, U_PCB_REGS + (T6 * 4)(k1)
+	lw	t7, U_PCB_REGS + (T7 * 4)(k1)
+	lw	s0, U_PCB_REGS + (S0 * 4)(k1)
+	lw	s1, U_PCB_REGS + (S1 * 4)(k1)
+	lw	s2, U_PCB_REGS + (S2 * 4)(k1)
+	lw	s3, U_PCB_REGS + (S3 * 4)(k1)
+	lw	s4, U_PCB_REGS + (S4 * 4)(k1)
+	lw	s5, U_PCB_REGS + (S5 * 4)(k1)
+	lw	s6, U_PCB_REGS + (S6 * 4)(k1)
+	lw	s7, U_PCB_REGS + (S7 * 4)(k1)
+	lw	t8, U_PCB_REGS + (T8 * 4)(k1)
+	lw	t9, U_PCB_REGS + (T9 * 4)(k1)
+	lw	gp, U_PCB_REGS + (GP * 4)(k1)
+	lw	s8, U_PCB_REGS + (S8 * 4)(k1)
+	lw	ra, U_PCB_REGS + (RA * 4)(k1)
+	lw	sp, U_PCB_REGS + (SP * 4)(k1)
+	nop
+	j	k0
+	rfe
+	.set	at
+END(mips1_proc_trampoline)
 
 /*----------------------------------------------------------------------------
  *
