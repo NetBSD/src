@@ -1,4 +1,4 @@
-/*	$NetBSD: autri.c,v 1.18 2003/10/29 03:46:10 mycroft Exp $	*/
+/*	$NetBSD: autri.c,v 1.19 2004/04/23 21:13:06 itojun Exp $	*/
 
 /*
  * Copyright (c) 2001 SOMEYA Yoshihiko and KUROSAWA Takahiro.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autri.c,v 1.18 2003/10/29 03:46:10 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autri.c,v 1.19 2004/04/23 21:13:06 itojun Exp $");
 
 #include "midi.h"
 
@@ -500,7 +500,7 @@ autri_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_devid = pa->pa_id;
 	sc->sc_class = pa->pa_class;
 
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
+	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
 	sc->sc_revision = PCI_REVISION(pa->pa_class);
 	aprint_normal(": %s (rev. 0x%02x)\n", devinfo, sc->sc_revision);
 

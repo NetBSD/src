@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.57 2004/02/04 06:58:24 soren Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.58 2004/04/23 21:13:07 itojun Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.57 2004/02/04 06:58:24 soren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.58 2004/04/23 21:13:07 itojun Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -326,7 +326,8 @@ pci_findvendor(pcireg_t id_reg)
 }
 
 void
-pci_devinfo(pcireg_t id_reg, pcireg_t class_reg, int showclass, char *cp)
+pci_devinfo(pcireg_t id_reg, pcireg_t class_reg, int showclass, char *cp,
+    size_t l)
 {
 	pci_vendor_id_t vendor;
 	pci_product_id_t product;
@@ -342,6 +343,9 @@ pci_devinfo(pcireg_t id_reg, pcireg_t class_reg, int showclass, char *cp)
 #else
 	const char *unmatched = "";
 #endif
+	char *ep;
+
+	ep = cp + l;
 
 	vendor = PCI_VENDOR(id_reg);
 	product = PCI_PRODUCT(id_reg);
@@ -385,32 +389,35 @@ pci_devinfo(pcireg_t id_reg, pcireg_t class_reg, int showclass, char *cp)
 	}
 
 	if (vendor_namep == NULL)
-		cp += sprintf(cp, "%svendor 0x%04x product 0x%04x",
+		cp += snprintf(cp, ep - cp, "%svendor 0x%04x product 0x%04x",
 		    unmatched, vendor, product);
 	else if (product_namep != NULL)
-		cp += sprintf(cp, "%s %s", vendor_namep, product_namep);
+		cp += snprintf(cp, ep - cp, "%s %s", vendor_namep,
+		    product_namep);
 	else
-		cp += sprintf(cp, "%s product 0x%04x",
+		cp += snprintf(cp, ep - cp, "%s product 0x%04x",
 		    vendor_namep, product);
 	if (showclass) {
-		cp += sprintf(cp, " (");
+		cp += snprintf(cp, ep - cp, " (");
 		if (classp->name == NULL)
-			cp += sprintf(cp, "class 0x%02x, subclass 0x%02x",
-			    class, subclass);
+			cp += snprintf(cp, ep - cp,
+			    "class 0x%02x, subclass 0x%02x", class, subclass);
 		else {
 			if (subclassp == NULL || subclassp->name == NULL)
-				cp += sprintf(cp,
+				cp += snprintf(cp, ep - cp,
 				    "%s subclass 0x%02x",
 				    classp->name, subclass);
 			else
-				cp += sprintf(cp, "%s %s",
+				cp += snprintf(cp, ep - cp, "%s %s",
 				    subclassp->name, classp->name);
 		}
 		if (interface != 0)
-			cp += sprintf(cp, ", interface 0x%02x", interface);
+			cp += snprintf(cp, ep - cp, ", interface 0x%02x",
+			    interface);
 		if (revision != 0)
-			cp += sprintf(cp, ", revision 0x%02x", revision);
-		cp += sprintf(cp, ")");
+			cp += snprintf(cp, ep - cp, ", revision 0x%02x",
+			    revision);
+		cp += snprintf(cp, ep - cp, ")");
 	}
 }
 

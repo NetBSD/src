@@ -1,4 +1,4 @@
-/*	$NetBSD: emuxki.c,v 1.32 2004/04/03 10:51:43 martti Exp $	*/
+/*	$NetBSD: emuxki.c,v 1.33 2004/04/23 21:13:06 itojun Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.32 2004/04/03 10:51:43 martti Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.33 2004/04/23 21:13:06 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -393,7 +393,7 @@ emuxki_attach(struct device *parent, struct device *self, void *aux)
 		aprint_error(": can't map iospace\n");
 		return;
 	}
-	pci_devinfo(pa->pa_id, pa->pa_class, 1, devinfo);
+	pci_devinfo(pa->pa_id, pa->pa_class, 1, devinfo, sizeof(devinfo));
 	aprint_normal(": %s\n", devinfo);
 
 	sc->sc_pc   = pa->pa_pc;

@@ -1,4 +1,4 @@
-/* $NetBSD: if_txp.c,v 1.5 2003/10/27 16:52:01 thorpej Exp $ */
+/* $NetBSD: if_txp.c,v 1.6 2004/04/23 21:13:06 itojun Exp $ */
 
 /*
  * Copyright (c) 2001
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.5 2003/10/27 16:52:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.6 2004/04/23 21:13:06 itojun Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -224,7 +224,7 @@ txp_attach(parent, self, aux)
 	}
 	sc->sc_flags = flags;
 
-	pci_devinfo(pa->pa_id, 0, 0, devinfo);
+	pci_devinfo(pa->pa_id, 0, 0, devinfo, sizeof(devinfo));
 #define TXP_EXTRAINFO ((flags & (TXP_USESUBSYSTEM|TXP_SERVERVERSION)) == \
   (TXP_USESUBSYSTEM|TXP_SERVERVERSION) ? " (SVR)" : "")
 	printf(": %s%s\n%s", devinfo, TXP_EXTRAINFO, sc->sc_dev.dv_xname);

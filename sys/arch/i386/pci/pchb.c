@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.49 2004/02/27 09:01:26 jdolecek Exp $	*/
+/*	$NetBSD: pchb.c,v 1.50 2004/04/23 21:13:05 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.49 2004/02/27 09:01:26 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.50 2004/04/23 21:13:05 itojun Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -125,7 +125,7 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 	 * have auxiliary PCI buses.
 	 */
 
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
+	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
 	printf("%s: %s (rev. 0x%02x)\n", self->dv_xname, devinfo,
 	    PCI_REVISION(pa->pa_class));
 	switch (PCI_VENDOR(pa->pa_id)) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: yds.c,v 1.18 2003/09/29 09:50:22 wiz Exp $	*/
+/*	$NetBSD: yds.c,v 1.19 2004/04/23 21:13:07 itojun Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Kazuki Sakamoto and Minoura Makoto.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: yds.c,v 1.18 2003/09/29 09:50:22 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: yds.c,v 1.19 2004/04/23 21:13:07 itojun Exp $");
 
 #include "mpu.h"
 
@@ -708,7 +708,7 @@ yds_attach(parent, self, aux)
 	int revision;
 	int ac97_id2;
 
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
+	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
 	revision = PCI_REVISION(pa->pa_class);
 	printf(": %s (rev. 0x%02x)\n", devinfo, revision);
 

@@ -1,4 +1,4 @@
-/* $NetBSD: com_cardbus.c,v 1.10 2004/03/11 16:34:54 kanaoka Exp $ */
+/* $NetBSD: com_cardbus.c,v 1.11 2004/04/23 21:13:08 itojun Exp $ */
 
 /*
  * Copyright (c) 2000 Johan Danielsson
@@ -40,7 +40,7 @@
    updated below.  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_cardbus.c,v 1.10 2004/03/11 16:34:54 kanaoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_cardbus.c,v 1.11 2004/04/23 21:13:08 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,7 +77,7 @@ static int com_cardbus_detach (struct device*, int);
 
 static void com_cardbus_setup(struct com_cardbus_softc*);
 static int com_cardbus_enable (struct com_softc*);
-static void com_cardbus_disable (struct com_softc*);
+static void com_cardbus_disable(struct com_softc*);
 
 CFATTACH_DECL(com_cardbus, sizeof(struct com_cardbus_softc),
     com_cardbus_match, com_cardbus_attach, com_cardbus_detach, com_activate);

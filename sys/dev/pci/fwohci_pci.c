@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci_pci.c,v 1.18 2003/01/31 00:07:42 thorpej Exp $	*/
+/*	$NetBSD: fwohci_pci.c,v 1.19 2004/04/23 21:13:06 itojun Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci_pci.c,v 1.18 2003/01/31 00:07:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci_pci.c,v 1.19 2004/04/23 21:13:06 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,7 +92,7 @@ fwohci_pci_attach(struct device *parent, struct device *self, void *aux)
 
 	aprint_naive(": IEEE 1394 Controller\n");
 
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
+	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
 	aprint_normal(": %s (rev. 0x%02x)\n", devinfo,
 	    PCI_REVISION(pa->pa_class));
 

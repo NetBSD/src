@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4281.c,v 1.16 2003/05/03 18:11:33 wiz Exp $	*/
+/*	$NetBSD: cs4281.c,v 1.17 2004/04/23 21:13:06 itojun Exp $	*/
 
 /*
  * Copyright (c) 2000 Tatoku Ogaito.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4281.c,v 1.16 2003/05/03 18:11:33 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4281.c,v 1.17 2004/04/23 21:13:06 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -193,7 +193,7 @@ cs4281_attach(parent, self, aux)
 
 	aprint_naive(": Audio controller\n");
 
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
+	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
 	aprint_normal(": %s (rev. 0x%02x)\n", devinfo,
 	    PCI_REVISION(pa->pa_class));
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.5 2003/07/15 01:29:19 lukem Exp $	*/
+/*	$NetBSD: pcib.c,v 1.6 2004/04/23 21:13:05 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.5 2003/07/15 01:29:19 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.6 2004/04/23 21:13:05 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,7 +102,7 @@ pcibattach(parent, self, aux)
 	 * Just print out a description and set the ISA bus
 	 * callback.
 	 */
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
+	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
 	printf("%s: %s (rev. 0x%02x)\n", self->dv_xname, devinfo,
 	    PCI_REVISION(pa->pa_class));
 

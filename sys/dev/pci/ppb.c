@@ -1,4 +1,4 @@
-/*	$NetBSD: ppb.c,v 1.27 2003/12/09 19:51:39 briggs Exp $	*/
+/*	$NetBSD: ppb.c,v 1.28 2004/04/23 21:13:07 itojun Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppb.c,v 1.27 2003/12/09 19:51:39 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppb.c,v 1.28 2004/04/23 21:13:07 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,7 +88,7 @@ ppbattach(parent, self, aux)
 	pcireg_t busdata;
 	char devinfo[256];
 
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
+	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
 	aprint_normal(": %s (rev. 0x%02x)\n", devinfo,
 	    PCI_REVISION(pa->pa_class));
 	aprint_naive("\n");

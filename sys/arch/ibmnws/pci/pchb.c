@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.1 2003/10/19 03:33:50 matt Exp $	*/
+/*	$NetBSD: pchb.c,v 1.2 2004/04/23 21:13:06 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -93,7 +93,7 @@ pchbattach(parent, self, aux)
 	 * possibly chipset-specific.
 	 */
 
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
+	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
 	printf("%s: %s (rev. 0x%02x)\n", self->dv_xname, devinfo,
 	    PCI_REVISION(pa->pa_class));
 
