@@ -2,8 +2,8 @@
 
 /*
  * $Author: garbled $
- * $Date: 2001/01/04 20:15:31 $
- * $Revision: 1.2 $
+ * $Date: 2001/01/09 18:41:54 $
+ * $Revision: 1.3 $
  */
 
 /*
@@ -463,6 +463,9 @@ int injectCDKSwindow (CDKSWINDOW *swindow, chtype input)
    /* Declare local variables. */
    int ppReturn = 1;
 
+   /* Set the exit type */
+   swindow->exitType = vEARLY_EXIT;
+
    /* Draw the window.... */
    drawCDKSwindow (swindow, ObjOf(swindow)->box);
 
@@ -479,7 +482,6 @@ int injectCDKSwindow (CDKSWINDOW *swindow, chtype input)
       /* Check for a key binding. */
       if (checkCDKObjectBind (vSWINDOW, swindow, input) != 0)
       {
-	 swindow->exitType = vESCAPE_HIT;
 	 return -1;
       }
       else
