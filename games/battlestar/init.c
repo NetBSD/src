@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.6 1997/10/10 11:40:01 lukem Exp $	*/
+/*	$NetBSD: init.c,v 1.7 1997/10/11 02:07:25 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,15 +38,15 @@
 #if 0
 static char sccsid[] = "@(#)init.c	8.4 (Berkeley) 4/30/95";
 #else
-__RCSID("$NetBSD: init.c,v 1.6 1997/10/10 11:40:01 lukem Exp $");
+__RCSID("$NetBSD: init.c,v 1.7 1997/10/11 02:07:25 lukem Exp $");
 #endif
-#endif /* not lint */
+#endif				/* not lint */
 
 #include "extern.h"
 
 void
 initialize(startup)
-	char startup;
+	char    startup;
 {
 	struct objs *p;
 
@@ -75,7 +75,7 @@ initialize(startup)
 
 void
 getutmp(uname)
-	char *uname;
+	char   *uname;
 {
 	struct passwd *ptr;
 
@@ -83,7 +83,7 @@ getutmp(uname)
 	strcpy(uname, ptr ? ptr->pw_name : "");
 }
 
-char *list[] = {	/* hereditary wizards */
+char   *list[] = {		/* hereditary wizards */
 	"riggle",
 	"chris",
 	"edward",
@@ -94,7 +94,7 @@ char *list[] = {	/* hereditary wizards */
 	0
 };
 
-char *badguys[] = {
+char   *badguys[] = {
 	"wnj",
 	"root",
 	"ted",
@@ -103,9 +103,9 @@ char *badguys[] = {
 
 int
 wizard(uname)
-	char *uname;
+	char   *uname;
 {
-	int flag;
+	int     flag;
 
 	if ((flag = checkout(uname)) != 0)
 		printf("You are the Great wizard %s.\n", uname);
@@ -114,9 +114,9 @@ wizard(uname)
 
 int
 checkout(uname)
-	char *uname;
+	char   *uname;
 {
-	char **ptr;
+	char  **ptr;
 
 	for (ptr = list; *ptr; ptr++)
 		if (strcmp(*ptr, uname) == 0)
@@ -124,7 +124,7 @@ checkout(uname)
 	for (ptr = badguys; *ptr; ptr++)
 		if (strcmp(*ptr, uname) == 0) {
 			printf("You are the Poor anti-wizard %s.  Good Luck!\n",
-				uname);
+			    uname);
 			CUMBER = 3;
 			WEIGHT = 9;	/* that'll get him! */
 			ourclock = 10;
