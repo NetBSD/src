@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.115 2004/10/28 07:22:23 martti Exp $
+.\"	$NetBSD: hardware,v 1.116 2004/11/24 20:49:17 bouyer Exp $
 .
 .Nx \*V
 runs on ISA (AT-Bus), EISA, MCA, PCI, and VL-bus systems
@@ -46,6 +46,9 @@ Intel 82801 (ICH/ICH0/ICH2/ICH4/ICH5) IDE Controllers
 Promise PDC20246 (Ultra/33), PDC20262 (Ultra/66), PDC20265/PDC20267 (Ultra/100),
 PDC20268 (Ultra/100TX2 and Ultra/100TX2v2), Ultra/133, Ultra/133TX2,
 and Ultra/133TX2v2.
+.It
+Promise SATA150 serial-ATA controllers: PDC20318, PDC20319, PDC20371,
+PDC20375, PDC20376, PDC20377, PDC20378 and PDC20379.
 .It
 Silicon Integrated System 5597/5598 IDE controller
 .It
