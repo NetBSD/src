@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.100 1997/10/29 20:12:11 jonathan Exp $	*/
+/*	$NetBSD: machdep.c,v 1.101 1998/01/24 16:46:43 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.100 1997/10/29 20:12:11 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.101 1998/01/24 16:46:43 mycroft Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -1041,10 +1041,15 @@ dumpsys()
 	 */
 	if (dumpsize == 0)
 		cpu_dumpconf();
-	if (dumplo < 0)
+	if (dumplo <= 0) {
+		printf("\ndump to dev %u,%u not possible\n", major(dumpdev),
+		    minor(dumpdev));
 		return;
-	printf("\ndumping to dev %x, offset %ld\n", dumpdev, dumplo);
+	}
+	printf("\ndumping to dev %u,%u offset %ld\n", major(dumpdev),
+	    minor(dumpdev), dumplo);
 	printf("dump ");
+
 	/*
 	 * XXX
 	 * All but first arguments to  dump() bogus.

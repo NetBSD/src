@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.102 1997/12/04 15:33:29 tv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.103 1998/01/24 16:46:33 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -952,12 +952,16 @@ dumpsys()
 		if (dumpsize == 0)
 			return;
 	}
-	if (dumplo < 0)
+	if (dumplo <= 0) {
+		printf("\ndump to dev %u,%u not possible\n", major(dumpdev),
+		    minor(dumpdev));
 		return;
+	}
 	dump = bdevsw[major(dumpdev)].d_dump;
 	blkno = dumplo;
 
-	printf("\ndumping to dev 0x%x, offset %ld\n", dumpdev, dumplo);
+	printf("\ndumping to dev %u,%u offset %ld\n", major(dumpdev),
+	    minor(dumpdev), dumplo);
 
 	printf("dump ");
 
