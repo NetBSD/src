@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.6 1999/04/19 03:11:37 simonb Exp $
+# $NetBSD: mi,v 1.7 2002/02/11 16:23:20 tron Exp $
 ./usr/X11R6/lib/X11/fonts/100dpi/UTI___10.pcf.gz
 ./usr/X11R6/lib/X11/fonts/100dpi/UTI___12.pcf.gz
 ./usr/X11R6/lib/X11/fonts/100dpi/UTI___14.pcf.gz
@@ -439,11 +439,8 @@
 ./usr/X11R6/lib/X11/fonts/misc/6x9.pcf.gz
 ./usr/X11R6/lib/X11/fonts/misc/7x13.pcf.gz
 ./usr/X11R6/lib/X11/fonts/misc/7x13B.pcf.gz
-./usr/X11R6/lib/X11/fonts/misc/7x13euro.pcf.gz
-./usr/X11R6/lib/X11/fonts/misc/7x13euroB.pcf.gz
 ./usr/X11R6/lib/X11/fonts/misc/7x14.pcf.gz
 ./usr/X11R6/lib/X11/fonts/misc/7x14B.pcf.gz
-./usr/X11R6/lib/X11/fonts/misc/7x14rk.pcf.gz
 ./usr/X11R6/lib/X11/fonts/misc/8x13.pcf.gz
 ./usr/X11R6/lib/X11/fonts/misc/8x13B.pcf.gz
 ./usr/X11R6/lib/X11/fonts/misc/8x16.pcf.gz
@@ -492,8 +489,6 @@
 ./usr/X11R6/lib/X11/fonts/misc/hanglg16.pcf.gz
 ./usr/X11R6/lib/X11/fonts/misc/hanglm16.pcf.gz
 ./usr/X11R6/lib/X11/fonts/misc/hanglm24.pcf.gz
-./usr/X11R6/lib/X11/fonts/misc/heb6x13.pcf.gz
-./usr/X11R6/lib/X11/fonts/misc/heb8x13.pcf.gz
 ./usr/X11R6/lib/X11/fonts/misc/jiskan16.pcf.gz
 ./usr/X11R6/lib/X11/fonts/misc/jiskan24.pcf.gz
 ./usr/X11R6/lib/X11/fonts/misc/k14.pcf.gz
