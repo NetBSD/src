@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.70 2001/12/05 01:29:04 enami Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.70.4.1 2002/03/22 18:59:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.70 2001/12/05 01:29:04 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.70.4.1 2002/03/22 18:59:31 thorpej Exp $");
 
 #include "opt_lockdebug.h"
 
@@ -52,6 +52,8 @@ __KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.70 2001/12/05 01:29:04 enami Exp $
 
 static struct vm_map kmem_map_store;
 struct vm_map *kmem_map = NULL;
+
+kmutex_t malloc_mutex;
 
 #include "opt_kmempages.h"
 
@@ -208,7 +210,6 @@ malloc(unsigned long size, int type, int flags)
 	struct kmemusage *kup;
 	struct freelist *freep;
 	long indx, npg, allocsize;
-	int s;
 	caddr_t va, cp, savedlist;
 #ifdef DIAGNOSTIC
 	int32_t *end, *lp;
@@ -231,11 +232,13 @@ malloc(unsigned long size, int type, int flags)
 #endif
 	indx = BUCKETINDX(size);
 	kbp = &bucket[indx];
-	s = splvm();
+
+	mutex_enter(&malloc_mutex);
+
 #ifdef KMEMSTATS
 	while (ksp->ks_memuse >= ksp->ks_limit) {
 		if (flags & M_NOWAIT) {
-			splx(s);
+			mutex_exit(&malloc_mutex);
 			return ((void *) NULL);
 		}
 		if (ksp->ks_limblocks < 65535)
@@ -268,7 +271,7 @@ malloc(unsigned long size, int type, int flags)
 			 */
 			if ((flags & (M_NOWAIT|M_CANFAIL)) == 0)
 				panic("malloc: out of space in kmem_map");
-			splx(s);
+			mutex_exit(&malloc_mutex);
 			return ((void *) NULL);
 		}
 #ifdef KMEMSTATS
@@ -396,7 +399,7 @@ out:
 #ifdef MALLOCLOG
 	domlog(va, size, type, 1, file, line);
 #endif
-	splx(s);
+	mutex_exit(&malloc_mutex);
 	if ((flags & M_ZERO) != 0)
 		memset(va, 0, size);
 	return ((void *) va);
@@ -417,7 +420,6 @@ free(void *addr, int type)
 	struct kmemusage *kup;
 	struct freelist *freep;
 	long size;
-	int s;
 #ifdef DIAGNOSTIC
 	caddr_t cp;
 	int32_t *end, *lp;
@@ -446,7 +448,9 @@ free(void *addr, int type)
 	kup = btokup(addr);
 	size = 1 << kup->ku_indx;
 	kbp = &bucket[kup->ku_indx];
-	s = splvm();
+
+	mutex_enter(&malloc_mutex);
+
 #ifdef MALLOCLOG
 	domlog(addr, 0, type, 2, file, line);
 #endif
@@ -476,7 +480,7 @@ free(void *addr, int type)
 		ksp->ks_inuse--;
 		kbp->kb_total -= 1;
 #endif
-		splx(s);
+		mutex_exit(&malloc_mutex);
 		return;
 	}
 	freep = (struct freelist *)addr;
@@ -536,7 +540,7 @@ free(void *addr, int type)
 		((struct freelist *)kbp->kb_last)->next = addr;
 	freep->next = NULL;
 	kbp->kb_last = addr;
-	splx(s);
+	mutex_exit(&malloc_mutex);
 }
 
 /*
@@ -724,6 +728,8 @@ kmeminit(void)
 #ifdef MALLOC_DEBUG
 	debug_malloc_init();
 #endif
+
+	mutex_init(&malloc_mutex, MUTEX_SPIN, IPL_VM);
 }
 
 #ifdef DDB
