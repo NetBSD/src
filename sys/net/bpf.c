@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)bpf.c	7.5 (Berkeley) 7/15/91
- *	$Id: bpf.c,v 1.9 1994/01/12 00:38:50 deraadt Exp $
+ *	$Id: bpf.c,v 1.10 1994/01/12 02:45:11 mycroft Exp $
  */
 
 #include "bpfilter.h"
@@ -180,14 +180,12 @@ bpf_movein(uio, linktype, mp, sockp)
 			goto bad;
 		}
 	}
-	m->m_len = len;
-	m->m_pkthdr.len = len + hlen;
+	m->m_len = m->m_pkthdr.len = len - hlen;
 	*mp = m;
 	/*
 	 * Make room for link header.
 	 */
 	if (hlen != 0) {
-		m->m_len -= hlen;
 #if BSD >= 199103
 		m->m_data += hlen; /* XXX */
 #else
