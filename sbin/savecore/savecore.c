@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)savecore.c	5.26 (Berkeley) 4/8/91";*/
-static char rcsid[] = "$Id: savecore.c,v 1.8 1994/04/06 01:41:32 cgd Exp $";
+static char rcsid[] = "$Id: savecore.c,v 1.9 1994/04/06 06:40:28 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -321,7 +321,7 @@ check_kmem()
 		exit(1);
 	}
 
-	fseek(fp, (off_t)(dumplo+ok(dump_nl[X_VERSION].n_value)), L_SET);
+	fseek(fp, (dumplo+ok(dump_nl[X_VERSION].n_value)), L_SET);
 	fgets(core_vers, sizeof (core_vers), fp);
 	if (!eq(vers, core_vers) && kernel == 0) {
 		log(LOG_WARNING, "Warning: %s version mismatch:\n", _PATH_UNIX);
@@ -329,7 +329,7 @@ check_kmem()
 		log(LOG_WARNING, "and\t%s\n", core_vers);
 	}
 
-	fseek(fp, (off_t)(dumplo + ok(dump_nl[X_PANICSTR].n_value)), L_SET);
+	fseek(fp, (dumplo + ok(dump_nl[X_PANICSTR].n_value)), L_SET);
 	fread((char *)&panicstr, sizeof (panicstr), 1, fp);
 	if (panicstr) {
 		fseek(fp, dumplo + ok(panicstr), L_SET);
