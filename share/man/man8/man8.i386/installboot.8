@@ -1,4 +1,4 @@
-.\" $NetBSD: installboot.8,v 1.10 2000/06/14 06:49:19 cgd Exp $
+.\" $NetBSD: installboot.8,v 1.10.2.1 2000/10/16 23:21:34 tv Exp $
 .\"
 .\" Copyright (c) 1997 Perry E. Metzger.  All rights reserved.
 .\" Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -111,15 +111,34 @@ program enforces its name to be in the form
 \&.
 .El
 .Sh EXAMPLES
-Assuming the file containing the boot program is in its typical place,
+Assuming the system containing the boot program is in its typical place,
 and you wished to make
 .Pa /dev/fd0a
 bootable. To install the boot blocks, one then would issue the command:
 .Bd -literal -offset indent
 installboot -f /usr/mdec/biosboot.sym /dev/rfd0a
 .Ed
+.Pp
 Note that the -f option is needed if the floppy is unlabeled -- see
 .Xr disklabel 8 .
+Also, be sure to
+.Xr newfs 8
+the floppy before running installboot, as this is needed to copy a
+kernel to it later, that the bootloader can boot then.
+.Pp
+It is also possible to make a bootstrap-only floppy without any
+filesystem by using the following command:
+.Bd -literal -offset indent
+/usr/mdec/installboot -f -b 200 /usr/mdec/biosboot.sym /dev/rfd0a
+.Ed
+.Pp
+To install new bootblocks on your
+.Pa wd0
+harddisk, use the following command:
+.Bd -literal -offset indent
+/usr/mdec/installboot /usr/mdec/biosboot.sym /dev/rwd0a
+.Ed
+.Pp
 .Sh BUGS
 .Pp
 .Nx
