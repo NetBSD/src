@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)wd.c	7.2 (Berkeley) 5/9/91
- *	$Id: wd.c,v 1.50 1994/02/26 19:49:25 mycroft Exp $
+ *	$Id: wd.c,v 1.51 1994/03/02 21:42:31 mycroft Exp $
  */
 
 #define	QUIETWORKS	/* define this to make wdopen() set DKFL_QUIET */
@@ -75,19 +75,18 @@
 #include <i386/isa/icu.h>
 #include <i386/isa/wdreg.h>
 
-#ifndef WDCNDELAY
 #define WDCNDELAY	100000	/* delay = 100us; so 10s for a controller state change */
-#endif
 #define WDCDELAY	100
 
+#if 0
 /* if you enable this, it will report any delays more than 100us * N long */
-/*#define WDCNDELAY_DEBUG	2*/
+#define WDCNDELAY_DEBUG	100
+#endif
 
 #define	WDIORETRIES	5	/* number of retries before giving up */
 
-#define wdnoreloc(dev)	(minor(dev) & 0x80)	/* ignore partition table */
-#define wdunit(dev)	((minor(dev) & 0x38) >> 3)
-#define wdpart(dev)	(minor(dev) & 0x7)
+#define WDUNIT(dev)	((minor(dev) & 0xf8) >> 3)
+#define WDPART(dev)	((minor(dev) & 0x07)     )
 #define makewddev(maj, unit, part)	(makedev(maj, ((unit << 3) + part)))
 #define WDRAW	3		/* 'd' partition isn't a partition! */
 
@@ -160,13 +159,13 @@ static int wdcontrol(struct buf *);
 static int wdsetctlr(dev_t, struct disk *);
 static int wdgetctlr(int, struct disk *);
 static void bad144intern(struct disk *);
-static int wdreset(int, int, int);
+static int wdreset(struct disk *, int);
 static int wdtimeout(caddr_t);
 void wddisksort(struct buf *dp, struct buf *bp);
-int wdc_wait(int, int, int);
-#define	wait_for_drq(p, u)	wdc_wait(p, u, WDCS_DRQ)
-#define	wait_for_ready(p, u)	wdc_wait(p, u, WDCS_READY)
-#define	wait_for_unbusy(p, u)	wdc_wait(p, u, 0)
+int wdc_wait(struct disk *, int);
+#define	wait_for_drq(d)		wdc_wait(d, WDCS_DRQ)
+#define	wait_for_ready(d)	wdc_wait(d, WDCS_READY)
+#define	wait_for_unbusy(d)	wdc_wait(d, 0)
 
 /*
  * Probe for controller.
@@ -196,11 +195,10 @@ wdprobe(struct isa_device *dvp)
 	if (inb(wdc+wd_error) == 0x5a || inb(wdc+wd_cyl_lo) != 0xa5)
 		goto nodevice;
 
-	wdreset(dvp->id_unit, wdc, 0);
+	wdreset(du, 0);
 
 	/* execute a controller only command */
-	if (wdcommand(du, WDCC_DIAGNOSE) < 0 ||
-	    wait_for_unbusy(wdc, du->dk_ctrlr) < 0)
+	if (wdcommand(du, WDCC_DIAGNOSE) < 0)
 		goto nodevice;
 
 	free(du, M_TEMP);
@@ -298,7 +296,7 @@ wdstrategy(register struct buf *bp)
 {
 	register struct buf *dp;
 	struct disk *du;	/* Disk unit to do the IO.	*/
-	int lunit = wdunit(bp->b_dev);
+	int lunit = WDUNIT(bp->b_dev);
 	int s;
     
 	/* valid unit, controller, and request?  */
@@ -318,7 +316,7 @@ wdstrategy(register struct buf *bp)
 	}
     
 	/* have partitions and want to use them? */
-	if ((du->dk_flags & DKFL_BSDLABEL) != 0 && wdpart(bp->b_dev) != WDRAW) {
+	if ((du->dk_flags & DKFL_BSDLABEL) != 0 && WDPART(bp->b_dev) != WDRAW) {
 		/*
 		 * do bounds checking, adjust transfer. if error, process.
 		 * if end of partition, just return
@@ -382,8 +380,8 @@ wdustart(register struct disk *du)
     
 	/* link onto controller queue */
 	dp->b_forw = NULL;
-	if (wdtab[ctrlr].b_actf == NULL)
-		wdtab[ctrlr].b_actf = dp;
+	if (wdtab[ctrlr].b_forw == NULL)
+		wdtab[ctrlr].b_forw = dp;
 	else
 		wdtab[ctrlr].b_actl->b_forw = dp;
 	wdtab[ctrlr].b_actl = dp;
@@ -414,7 +412,7 @@ wdstart(int ctrlr)
     
 loop:
 	/* is there a drive for the controller to do a transfer with? */
-	dp = wdtab[ctrlr].b_actf;
+	dp = wdtab[ctrlr].b_forw;
 	if (dp == NULL)
 		return;
     
@@ -422,13 +420,16 @@ loop:
 	   the controller's queue */
 	bp = dp->b_actf;
 	if (bp == NULL) {
-		wdtab[ctrlr].b_actf = dp->b_forw;
+		wdtab[ctrlr].b_forw = dp->b_forw;
 		goto loop;
 	}
     
 	/* obtain controller and drive information */
-	lunit = wdunit(bp->b_dev);
+	lunit = WDUNIT(bp->b_dev);
 	du = wddrives[lunit];
+
+	/* clear any pending timeout, just in case */
+	wdtimeoutstatus[lunit] = 0;
     
 	/* if not really a transfer, do control operations specially */
 	if (du->dk_state < OPEN) {
@@ -471,8 +472,8 @@ loop:
 	lp = &du->dk_dd;
 	secpertrk = lp->d_nsectors;
 	secpercyl = lp->d_secpercyl;
-	if ((du->dk_flags & DKFL_BSDLABEL) != 0 && wdpart(bp->b_dev) != WDRAW)
-		blknum += lp->d_partitions[wdpart(bp->b_dev)].p_offset;
+	if ((du->dk_flags & DKFL_BSDLABEL) != 0 && WDPART(bp->b_dev) != WDRAW)
+		blknum += lp->d_partitions[WDPART(bp->b_dev)].p_offset;
 	cylin = blknum / secpercyl;
 	head = (blknum % secpercyl) / secpertrk;
 	sector = blknum % secpertrk;
@@ -514,7 +515,7 @@ loop:
 	}
 
 #ifdef WDDEBUG
-	pg("c%d h%d s%d ", cylin, head, sector);
+	printf("c%d h%d s%d ", cylin, head, sector);
 #endif
 
 	sector++;	/* sectors begin with 1, not 0 */
@@ -537,14 +538,18 @@ loop:
 retry:
 	/* if starting a multisector transfer, or doing single transfers */
 	if (du->dk_skipm == 0 || (du->dk_flags & DKFL_SINGLE)) {
+		int command;
+
 		if (wdtab[ctrlr].b_errcnt && (bp->b_flags & B_READ) == 0) {
 			du->dk_bc += DEV_BSIZE;
 			du->dk_bct += DEV_BSIZE;
 		}
 
 		/* controller idle? */
-		if (wait_for_unbusy(wdc, ctrlr) == -1)
-			wdreset(ctrlr, wdc, 1);
+		if (wait_for_unbusy(du) < 0) {
+			wdreset(du, 1);
+			goto retry;
+		}
 	
 		/* stuff the task file */
 		outb(wdc+wd_precomp, lp->d_precompcyl / 4);
@@ -572,24 +577,26 @@ retry:
 	
 		/* set up the SDH register (select drive) */
 		outb(wdc+wd_sdh, WDSD_IBM | (du->dk_unit<<4) | (head & 0xf));
-	
 		/* wait for drive to become ready */
-		if (wait_for_ready(wdc, ctrlr) == -1) {
-			wdreset(ctrlr, wdc, 1);
+		if (wait_for_ready(du) < 0) {
+			wdreset(du, 1);
 			goto retry;
 		}
 	
 		/* initiate command! */
 #ifdef B_FORMAT
 		if (bp->b_flags & B_FORMAT)
-			outb(wdc+wd_command, WDCC_FORMAT);
+			command = WDCC_FORMAT;
 		else
-			outb(wdc+wd_command,
-			    (bp->b_flags & B_READ) ? WDCC_READ : WDCC_WRITE);
+			command =
+			    (bp->b_flags & B_READ) ? WDCC_READ : WDCC_WRITE;
 #else
-		outb(wdc+wd_command,
-		    (bp->b_flags & B_READ) ? WDCC_READ : WDCC_WRITE);
+		command = (bp->b_flags & B_READ) ? WDCC_READ : WDCC_WRITE;
 #endif
+		if (wdcommand(du, command) < 0) {
+			wdreset(du, 1);
+			goto retry;
+		}
 #ifdef WDDEBUG
 		printf("sector %d cylin %d head %d addr %x sts %x\n", sector,
 		    cylin, head, addr, inb(wdc+wd_altsts));
@@ -602,15 +609,16 @@ retry:
 		return;
 	}
     
-	/* ready to send data?	*/
-	if (wait_for_drq(wdc, ctrlr) == -1) {
-		wdreset(ctrlr, wdc, 1);
+	if (wait_for_drq(du) < 0) {
+		wdreset(du, 1);
 		goto retry;
 	}
-    
+	/* clear interrupt from command upload */
+	(void) inb(wdc+wd_status);
 	/* then send it! */
 	outsw(wdc+wd_data, addr + du->dk_skip * DEV_BSIZE,
 	    DEV_BSIZE / sizeof(short));
+
 	du->dk_bc -= DEV_BSIZE;
 	du->dk_bct -= DEV_BSIZE;
 
@@ -623,34 +631,37 @@ retry:
  * continue with the next chunk if so.
  */
 void
-wdintr(struct intrframe wdif)
+wdintr(int ctrlr)
 {
 	register struct	disk *du;
 	register struct buf *bp, *dp;
-	int stat, wdc, ctrlr;
-    
-	ctrlr = wdif.if_vec;
+	int stat, wdc;
+
+	/* clear the pending interrupt */
+	stat = inb(wdcontroller[ctrlr].dkc_port+wd_status);
+#ifdef WDDEBUG
+	printf("i%02x ", stat);
+#endif
 
 	if (!wdtab[ctrlr].b_active) {
 		printf("wdc%d: extra interrupt\n", ctrlr);
 		return;
 	}
     
-	dp = wdtab[ctrlr].b_actf;
+	dp = wdtab[ctrlr].b_forw;
 	bp = dp->b_actf;
-	du = wddrives[wdunit(bp->b_dev)];
+	du = wddrives[WDUNIT(bp->b_dev)];
 	wdc = du->dk_port;
-	wdtimeoutstatus[wdunit(bp->b_dev)] = 0;
+	wdtimeoutstatus[WDUNIT(bp->b_dev)] = 0;
     
 #ifdef WDDEBUG
 	printf("I%d ", ctrlr);
 #endif
 
-	stat = wait_for_unbusy(wdc, ctrlr);
-	if (stat == -1) {
-		/* XXXX looks bogus */
-		wdstart(ctrlr);
-		printf("wdc%d: timeout in wdintr WDCS_BUSY\n", ctrlr);
+	stat = wait_for_unbusy(du);
+	if (stat < 0) {
+		printf("wdc%d: timeout waiting for unbusy\n", ctrlr);
+		goto lose;
 	}
     
 	/* is it not a transfer, but a control operation? */
@@ -663,6 +674,7 @@ wdintr(struct intrframe wdif)
     
 	/* have we an error? */
 	if (stat & (WDCS_ERR | WDCS_ECCCOR)) {
+	lose:
 		du->dk_status = stat;
 		du->dk_error = inb(wdc+wd_error);
 #ifdef WDDEBUG
@@ -708,15 +720,14 @@ wdintr(struct intrframe wdif)
 	 */
 	if (((bp->b_flags & (B_READ | B_ERROR)) == B_READ) &&
 	    wdtab[ctrlr].b_active) {
-		int chk, dummy;
+		int chk;
 	
 		chk = min(DEV_BSIZE / sizeof(short), du->dk_bc / sizeof(short));
 	
 		/* ready to receive data? */
-		if (wait_for_drq(wdc, ctrlr) == -1) {
-			/* XXXX abort here? */
-			wdstart(ctrlr);
-			printf("wdc%d: timeout in wdintr WDCS_DRQ\n", ctrlr);
+		if (wait_for_drq(du) < 0) {
+			printf("wdc%d: timeout waiting for drq\n", ctrlr);
+			goto lose;
 		}
 
 		/* suck in data */
@@ -727,7 +738,7 @@ wdintr(struct intrframe wdif)
 	
 		/* for obselete fractional sector reads */
 		while (chk++ < (DEV_BSIZE / sizeof(short)))
-			insw(wdc+wd_data, &dummy, 1);
+			(void) inw(wdc+wd_data);
 	}
     
 	wdxfer[du->dk_lunit]++;
@@ -752,13 +763,13 @@ outt:
 				wdstart(ctrlr);
 				return;	/* next chunk is started */
 			} else if ((du->dk_flags & (DKFL_SINGLE | DKFL_ERROR)) == DKFL_ERROR) {
-				wdtab[ctrlr].b_active = 0;
 				du->dk_skip = 0;
 				du->dk_skipm = 0;
 				du->dk_flags &= ~DKFL_ERROR;
 				du->dk_flags |=  DKFL_SINGLE;
+				wdtab[ctrlr].b_active = 0;
 				wdstart(ctrlr);
-				return;		/* redo xfer sector by sector */
+				return;	/* redo xfer sector by sector */
 			}
 		}
 
@@ -767,7 +778,7 @@ done:
 		du->dk_flags &= ~DKFL_SINGLE;
 		wdtab[ctrlr].b_errcnt = 0;
 		if (du->dk_bct == 0) {
-			wdtab[ctrlr].b_actf = dp->b_forw;
+			wdtab[ctrlr].b_forw = dp->b_forw;
 			du->dk_skipm = 0;
 			dp->b_active = 0;
 		}
@@ -787,7 +798,7 @@ done:
 		wdustart(du);
 
 	/* anything more for controller to do? */
-	if (wdtab[ctrlr].b_actf)
+	if (wdtab[ctrlr].b_forw)
 		wdstart(ctrlr);
 }
 
@@ -799,11 +810,11 @@ wdopen(dev_t dev, int flags, int fmt, struct proc *p)
 {
 	register unsigned int lunit;
 	register struct disk *du;
-	int part = wdpart(dev), mask = 1 << part;
+	int part = WDPART(dev), mask = 1 << part;
 	struct partition *pp;
 	char *msg;
     
-	lunit = wdunit(dev);
+	lunit = WDUNIT(dev);
 	if (lunit >= NWD)
 		return ENXIO;
 	du = wddrives[lunit];
@@ -840,11 +851,11 @@ wdopen(dev_t dev, int flags, int fmt, struct proc *p)
 		/* read label using "raw" partition */
 #if defined(TIHMODS) && defined(garbage)
 		/* wdsetctlr(dev, du); */	/* Maybe do this TIH */
-		msg = readdisklabel(makewddev(major(dev), wdunit(dev), WDRAW),
+		msg = readdisklabel(makewddev(major(dev), WDUNIT(dev), WDRAW),
 		    wdstrategy, &du->dk_dd, &du->dk_cpd);
 		wdsetctlr(dev, du);
 #endif
-		if (msg = readdisklabel(makewddev(major(dev), wdunit(dev),
+		if (msg = readdisklabel(makewddev(major(dev), WDUNIT(dev),
 		    WDRAW), wdstrategy, &du->dk_dd, &du->dk_cpd)) {
 			if ((du->dk_flags & DKFL_QUIET) == 0) {
 				log(LOG_WARNING,
@@ -921,7 +932,7 @@ wdcontrol(register struct buf *bp)
 	int s, ctrlr;
 	int wdc;
     
-	du = wddrives[wdunit(bp->b_dev)];
+	du = wddrives[WDUNIT(bp->b_dev)];
 	ctrlr = du->dk_ctrlr;
 	unit = du->dk_unit;
 	lunit = du->dk_lunit;
@@ -936,22 +947,27 @@ wdcontrol(register struct buf *bp)
 		s = splbio();		/* not called from intr level ... */
 		wdgetctlr(unit, du);
 
-		if (wait_for_ready(wdc, ctrlr) == -1) {
-			wdreset(ctrlr, wdc, 1);
+		if (wait_for_unbusy(du) < 0) {
+			wdreset(du, 1);
 			goto tryagainrecal;
 		}
+
 		outb(wdc+wd_sdh, WDSD_IBM | (unit << 4));
+		if (wait_for_ready(du) < 0) {
+			wdreset(du, 1);
+			goto tryagainrecal;
+		}
+
 		wdtab[ctrlr].b_active = 1;
-		outb(wdc+wd_command, WDCC_RESTORE | WD_STEP);
-		if (wait_for_ready(wdc, ctrlr) == -1) {
-			wdreset(ctrlr, wdc, 1);
+		if (wdcommand(du, WDCC_RESTORE | WD_STEP) < 0) {
+			wdreset(du, 1);
 			goto tryagainrecal;
 		}
 		du->dk_state = RECAL;
 		splx(s);
 		return 0;
 	case RECAL:
-		if ((stat = inb(wdc+wd_status)) & WDCS_ERR) {
+		if ((stat = inb(wdc+wd_altsts)) & WDCS_ERR) {
 			if ((du->dk_flags & DKFL_QUIET) == 0) {
 				printf("wd%d: recal", du->dk_lunit);
 				printf(": status %b error %b\n", stat,
@@ -1001,20 +1017,26 @@ wdcommand(struct disk *du, int cmd)
 	wdc = du->dk_port;
 
 	/* controller ready for command? */
-	if (wait_for_unbusy(wdc, du->dk_ctrlr) == -1)
+	if (wait_for_unbusy(du) < 0)
 		return -1;
     
 	/* send command, await results */
 	outb(wdc+wd_command, cmd);
-	stat = wait_for_unbusy(wdc, du->dk_ctrlr);
-	if (stat == -1)
-		return -1;
 
-	if (cmd != WDCC_READP)
-		return stat;
-    
-	/* is controller ready to return data? */
-	return wdc_wait(wdc, du->dk_ctrlr, WDCS_ERR | WDCS_DRQ);
+	switch (cmd) {
+	default:
+#if 0
+	case WDCC_READ:
+	case WDCC_FORMAT:
+	case WDCC_RESTORE | WD_STEP:
+	case WDCC_IDC:
+	case WDCC_DIAGNOSE:
+	case WDCC_WRITE:
+#endif
+		return wait_for_unbusy(du);
+	case WDCC_READP:
+		return wait_for_drq(du);
+	}
 }
 
 /*
@@ -1033,14 +1055,17 @@ wdsetctlr(dev_t dev, struct disk *du)
 	wdc = du->dk_port;
 
 	x = splbio();
+	if (wait_for_unbusy(du) < 0)
+		return -1;
 	outb(wdc+wd_cyl_lo, du->dk_dd.d_ncylinders);	/* TIH: was ...ders+1 */
 	outb(wdc+wd_cyl_hi, du->dk_dd.d_ncylinders>>8);	/* TIH: was ...ders+1 */
 	outb(wdc+wd_sdh,
 	    WDSD_IBM | (du->dk_unit << 4) + du->dk_dd.d_ntracks - 1);
 	outb(wdc+wd_seccnt, du->dk_dd.d_nsectors);
+	if (wait_for_ready(du) < 0)
+		return -1;
 	stat = wdcommand(du, WDCC_IDC);
-    
-	if (stat & WDCS_ERR)
+	if (stat < 0 || stat & WDCS_ERR)
 		printf("wdsetctlr: stat %b error %b\n", stat, WDCS_BITS,
 		    inb(wdc+wd_error), WDERR_BITS);
 	splx(x);
@@ -1059,26 +1084,21 @@ wdgetctlr(int u, struct disk *du)
     
 	x = splbio();		/* not called from intr level ... */
 	wdc = du->dk_port;
-	if (wait_for_unbusy(wdc, du->dk_ctrlr) == -1) {
+	if (wait_for_unbusy(du) < 0) {
 		splx(x);
 		return -1;
 	}
 
 	outb(wdc+wd_sdh, WDSD_IBM | (u << 4));
-	if (wait_for_ready(wdc, du->dk_ctrlr) == -1) {
+	if (wait_for_ready(du) < 0) {
 		splx(x);
 		return -1;
 	}
 
 	stat = wdcommand(du, WDCC_READP);
-	if (wait_for_ready(wdc, du->dk_ctrlr) == -1) {
-		splx(x);
-		return -1;
-	}
-    
 	if (stat < 0) {
 		splx(x);
-		return stat;
+		return -1;
 	}
 
 	if ((stat & WDCS_ERR) == 0) {
@@ -1116,7 +1136,7 @@ wdgetctlr(int u, struct disk *du)
 		 * drive is there but it's OLD AND KRUSTY.
 		 */
 		stat = wdcommand(du, WDCC_RESTORE | WD_STEP);
-		if (stat & WDCS_ERR) {
+		if (stat < 0 || stat & WDCS_ERR) {
 			splx(x);
 			return inb(wdc+wd_error);
 		}
@@ -1149,9 +1169,9 @@ int
 wdclose(dev_t dev, int flags, int fmt)
 {
 	register struct disk *du;
-	int part = wdpart(dev), mask = 1 << part;
+	int part = WDPART(dev), mask = 1 << part;
     
-	du = wddrives[wdunit(dev)];
+	du = wddrives[WDUNIT(dev)];
     
 	/* insure only one open at a time */
 	du->dk_openpart &= ~mask;
@@ -1169,7 +1189,7 @@ wdclose(dev_t dev, int flags, int fmt)
 int
 wdioctl(dev_t dev, int cmd, caddr_t addr, int flag, struct proc *p)
 {
-	int lunit = wdunit(dev);
+	int lunit = WDUNIT(dev);
 	register struct disk *du;
 	int error = 0;
 	struct uio auio;
@@ -1194,7 +1214,7 @@ wdioctl(dev_t dev, int cmd, caddr_t addr, int flag, struct proc *p)
 	case DIOCGPART:
 		((struct partinfo *)addr)->disklab = &du->dk_dd;
 		((struct partinfo *)addr)->part =
-		    &du->dk_dd.d_partitions[wdpart(dev)];
+		    &du->dk_dd.d_partitions[WDPART(dev)];
 		break;
 	
 	case DIOCSDINFO:
@@ -1291,7 +1311,7 @@ wdformat(struct buf *bp)
 int
 wdsize(dev_t dev)
 {
-	int lunit = wdunit(dev), part = wdpart(dev);
+	int lunit = WDUNIT(dev), part = WDPART(dev);
 	struct disk *du;
     
 	if (lunit >= NWD)
@@ -1340,8 +1360,8 @@ wddump(dev_t dev)
 #endif
     
 	/* size of memory to dump */
-	lunit = wdunit(dev);
-	part = wdpart(dev);	/* file system */
+	lunit = WDUNIT(dev);
+	part = WDPART(dev);	/* file system */
 	/* check for acceptable drive number */
 	if (lunit >= NWD)
 		return ENXIO;
@@ -1367,8 +1387,8 @@ wddump(dev_t dev)
 	nblocks = du->dk_dd.d_partitions[part].p_size;
 	blkoff = du->dk_dd.d_partitions[part].p_offset;
     
-	/*pg("xunit %x, nblocks %d, dumplo %d num %d\n", part, nblocks, dumplo,
-	    num);*/
+	/*printf("xunit %x, nblocks %d, dumplo %d num %d\n", part, nblocks,
+	    dumplo, num);*/
 	/* check transfer bounds against partition size */
 	if (dumplo < 0 || dumplo + num > nblocks)
 		return EINVAL;
@@ -1377,12 +1397,13 @@ wddump(dev_t dev)
 	/*wdtab[ctrlr].b_active = 1;*/
 	wddoingadump = 1;
 	i = 200000000;
-	while ((inb(wdc+wd_status) & WDCS_BUSY) && (i-- > 0))
-		;
+	if (wait_for_unbusy(du) < 0)
+		return EIO;
 	outb(wdc+wd_sdh, WDSD_IBM | (du->dk_unit << 4));
-	outb(wdc+wd_command, WDCC_RESTORE | WD_STEP);
-	while (inb(wdc+wd_status) & WDCS_BUSY)
-		;
+	if (wait_for_ready(du) < 0)
+		return EIO;
+	if (wdcommand(du, WDCC_RESTORE | WD_STEP) < 0)
+		return EIO;
     
 	/* some compaq controllers require this ... */
 	wdsetctlr(dev, du);
@@ -1415,10 +1436,12 @@ wddump(dev_t dev)
 		}
 		sector++;		/* origin 1 */
 	    
+		if (wait_for_unbusy(du) < 0)
+			return EIO;
 		/* select drive.     */
 		outb(wdc+wd_sdh, WDSD_IBM | (du->dk_unit << 4) | (head & 0xf));
-		while ((inb(wdc+wd_status) & WDCS_READY) == 0)
-			;
+		if (wait_for_ready(du) < 0)
+			return EIO;
 
 		/* transfer some blocks */
 		outb(wdc+wd_sector, sector);
@@ -1427,11 +1450,13 @@ wddump(dev_t dev)
 		outb(wdc+wd_cyl_hi, cylin >> 8);
 #ifdef notdef
 		/* lets just talk about this first...*/
-		pg("sdh 0%o sector %d cyl %d addr 0x%x", inb(wdc+wd_sdh),
+		printf("sdh 0%o sector %d cyl %d addr 0x%x", inb(wdc+wd_sdh),
 		    inb(wdc+wd_sector),
 		    (inb(wdc+wd_cyl_hi) << 8) + inb(wdc+wd_cyl_lo), addr);
 #endif
-		outb(wdc+wd_command, WDCC_WRITE);
+		stat = wdcommand(du, WDCC_WRITE);
+		if (stat < 0 || stat & WDCS_ERR)
+			return EIO;
 	
 #ifdef notdef	/* cannot use this since this address was mapped differently */
 		pmap_enter(kernel_pmap, CADDR1, trunc_page(addr), VM_PROT_READ, TRUE);
@@ -1440,26 +1465,15 @@ wddump(dev_t dev)
 		tlbflush();
 #endif
 	
-		/* Ready to send data?	*/
-		while ((inb(wdc+wd_status) & WDCS_DRQ) == 0)
-			;
-		if (inb(wdc+wd_status) & WDCS_ERR)
-			return EIO;
-	
 		outsw(wdc+wd_data, CADDR1 + ((int)addr & PGOFSET),
-		    DEV_BSIZE / 2);
+		    DEV_BSIZE / sizeof(short));
 	
-		if (inb(wdc+wd_status) & WDCS_ERR)
-			return EIO;
 		/* Check data request (should be done). */
-		if (inb(wdc+wd_status) & WDCS_DRQ)
+		if (inb(wdc+wd_status) & (WDCS_ERR | WDCS_DRQ))
 			return EIO;
 	
-		/* wait for completion */
-		for (i = 200000000; inb(wdc+wd_status) & WDCS_BUSY; i--) {
-			if (i < 0)
-				return EIO;
-		}
+		if (wait_for_unbusy(du) < 0)
+			return EIO;
 
 		/* error check the xfer */
 		if (inb(wdc+wd_status) & WDCS_ERR)
@@ -1506,32 +1520,34 @@ bad144intern(struct disk *du)
 }
 
 static int
-wdreset(int ctrlr, int wdc, int err)
+wdreset(struct disk *du, int err)
 {
+	int wdc = du->dk_port;
 	int stat;
 
 	if (err)
-		printf("wdc%d: busy too long, resetting\n", ctrlr);
+		printf("wdc%d: busy too long, resetting\n", du->dk_ctrlr);
 
 	/* reset the device  */
 	outb(wdc+wd_ctlr, WDCTL_RST | WDCTL_IDS);
 	DELAY(1000);
 	outb(wdc+wd_ctlr, WDCTL_4BIT);
 
-	if (wait_for_unbusy(wdc, ctrlr) == -1)
-		printf("wdc%d: failed to reset controller\n", ctrlr);
+	if (wait_for_unbusy(du) < 0)
+		printf("wdc%d: failed to reset controller\n", du->dk_ctrlr);
 }
 
 int
-wdc_wait(wdc, ctrlr, mask)
-	int wdc, ctrlr;
+wdc_wait(du, mask)
+	struct disk *du;
 	int mask;
 {
+	int wdc = du->dk_port;
 	int timeout = 0;
 	int stat;
 
 	for (;;) {
-		stat = inb(wdc+wd_status);
+		stat = inb(wdc+wd_altsts);
 		if ((stat & WDCS_BUSY) == 0)
 			/* XXXX Yuck.  Need to redo this junk. */
 			if (mask == 0 || (stat & mask) != 0)
@@ -1542,7 +1558,8 @@ wdc_wait(wdc, ctrlr, mask)
 	}
 #ifdef WDCNDELAY_DEBUG
 	if (timeout > WDCNDELAY_DEBUG)
-		printf("wdc%d: timeout took %dus\n", ctrlr, WDCDELAY * timeout);
+		printf("wdc%d: timeout took %dus\n", du->dk_ctrlr,
+		    WDCDELAY * timeout);
 #endif
 	return stat;
 }
@@ -1569,7 +1586,7 @@ wdtimeout(caddr_t arg)
 		du->dk_flags |= DKFL_SINGLE;
 		wdstart(du->dk_ctrlr);		/* start controller */
 	}
-	timeout((timeout_t)wdtimeout, (caddr_t)unit, hz/2);
+	timeout((timeout_t)wdtimeout, (caddr_t)unit, hz*2);
 	splx(x);
 	return 0;
 }
