@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)rwhod.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: rwhod.c,v 1.20 2003/02/12 17:49:35 christos Exp $");
+__RCSID("$NetBSD: rwhod.c,v 1.21 2003/07/13 12:13:49 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -511,17 +511,17 @@ interval(time, updown)
 	int days, hours, minutes;
 
 	if (time < 0 || time > 3*30*24*60*60) {
-		(void)sprintf(resbuf, "   %s ??:??", updown);
+		(void)snprintf(resbuf, sizeof(resbuf), "   %s ??:??", updown);
 		return (resbuf);
 	}
 	minutes = (time + 59) / 60;		/* round to minutes */
 	hours = minutes / 60; minutes %= 60;
 	days = hours / 24; hours %= 24;
 	if (days)
-		(void)sprintf(resbuf, "%s %2d+%02d:%02d",
+		(void)snprintf(resbuf, sizeof(resbuf), "%s %2d+%02d:%02d",
 		    updown, days, hours, minutes);
 	else
-		(void)sprintf(resbuf, "%s    %2d:%02d",
+		(void)snprintf(resbuf, sizeof(resbuf), "%s    %2d:%02d",
 		    updown, hours, minutes);
 	return (resbuf);
 }

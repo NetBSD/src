@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcbind.c,v 1.3 2002/11/08 00:16:40 fvdl Exp $	*/
+/*	$NetBSD: rpcbind.c,v 1.4 2003/07/13 12:16:05 itojun Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -262,7 +262,7 @@ init_transport(struct netconfig *nconf)
 		memset(&sun, 0, sizeof sun);
 		sun.sun_family = AF_LOCAL;
 		unlink(_PATH_RPCBINDSOCK);
-		strcpy(sun.sun_path, _PATH_RPCBINDSOCK);
+		strlcpy(sun.sun_path, _PATH_RPCBINDSOCK, sizeof(sun.sun_path));
 		sun.sun_len = SUN_LEN(&sun);
 		addrlen = sizeof (struct sockaddr_un);
 		sa = (struct sockaddr *)&sun;
