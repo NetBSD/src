@@ -1,4 +1,4 @@
-/*	$NetBSD: mlcd.c,v 1.1 2002/11/15 14:10:51 itohy Exp $	*/
+/*	$NetBSD: mlcd.c,v 1.2 2002/12/06 15:59:53 itohy Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,6 @@
  */
 
 #include <sys/param.h>
-#include <sys/buf.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
@@ -86,11 +85,21 @@ struct mlcd_response_media_info {
 	struct mlcd_media_info info;
 };
 
+struct mlcd_buf {
+	SIMPLEQ_ENTRY(mlcd_buf)	lb_q;
+	int		lb_error;
+	int		lb_partno;
+	int		lb_blkno;
+	u_int32_t	lb_data[1];	/* variable length */
+};
+#define MLCD_BUF_SZ(sc) (offsetof(struct mlcd_buf, lb_data) + (sc)->sc_bsize)
+
 struct mlcd_softc {
 	struct device	sc_dev;
 
 	struct device	*sc_parent;
 	struct maple_unit *sc_unit;
+	int		sc_direction;
 	enum mlcd_stat {
 		MLCD_INIT,	/* during initialization */
 		MLCD_INIT2,	/* during initialization */
@@ -110,9 +119,9 @@ struct mlcd_softc {
 #define MLCD_PT_OPEN	2
 		struct mlcd_media_info pt_info;	/* geometry per part */
 		int		pt_size;	/* partition size in byte */
-		int		pt_nblk;	/* partition size on block */
+		int		pt_nblk;	/* partition size in block */
 
-		char		pt_name[16 /* see device.h */ + 4 /* ".256" */];
+		char		pt_name[16 /* see device.h */ + 4 /* ".255" */];
 	} *sc_pt;
 
 	/* write request buffer (only one is used at a time) */
@@ -124,10 +133,10 @@ struct mlcd_softc {
 #define sc_reqm	sc_req.req_minfo
 
 	/* pending buffers */
-	struct bufq_state sc_q;
+	SIMPLEQ_HEAD(mlcd_bufq, mlcd_buf) sc_q;
 
 	/* current I/O access */
-	struct buf	*sc_bp;
+	struct mlcd_buf	*sc_bp;
 	int		sc_retry;
 #define MLCD_MAXRETRY	10
 };
@@ -148,15 +157,18 @@ static void	mlcdattach __P((struct device *, struct device *, void *));
 static int	mlcddetach __P((struct device *, int));
 static void	mlcd_intr __P((void *, struct maple_response *, int, int));
 static void	mlcd_printerror __P((const char *, u_int32_t));
+static struct mlcd_buf *mlcd_buf_alloc __P((int /*dev*/, int /*flags*/));
+static void	mlcd_buf_free __P((struct mlcd_buf *));
+static __inline u_int32_t reverse_32 __P((u_int32_t));
+static void	mlcd_rotate_bitmap __P((void *, size_t));
 static void	mlcdstart __P((struct mlcd_softc *));
-static void	mlcdstart_bp __P((struct mlcd_softc *, struct buf *bp));
+static void	mlcdstart_bp __P((struct mlcd_softc *));
 static void	mlcddone __P((struct mlcd_softc *));
 
 dev_type_open(mlcdopen);
 dev_type_close(mlcdclose);
 dev_type_write(mlcdwrite);
 dev_type_ioctl(mlcdioctl);
-dev_type_strategy(mlcdstrategy);
 
 const struct cdevsw mlcd_cdevsw = {
 	mlcdopen, mlcdclose, noread, mlcdwrite, mlcdioctl,
@@ -173,21 +185,22 @@ static const char initimg48x32[192] = {
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+	0x1c, 0x70, 0x00, 0x7e, 0x1c, 0xf0, 0x0c, 0x60, 0x00, 0x33, 0x26, 0x6c,
+	0x0c, 0x60, 0x0c, 0x33, 0x66, 0x66, 0x1e, 0xc7, 0x0c, 0x62, 0x60, 0xc6,
+	0x1a, 0xc9, 0xbe, 0x7c, 0x30, 0xc6, 0x1a, 0xdb, 0x98, 0x66, 0x18, 0xc6,
+	0x1a, 0xdc, 0x18, 0x66, 0x0d, 0x8c, 0x31, 0xb0, 0x32, 0xc6, 0x8d, 0x8c,
+	0x31, 0xb1, 0x36, 0xcd, 0x99, 0x98, 0x71, 0x9e, 0x1d, 0xf9, 0xf3, 0xe0,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+	0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 0x08,
+	0x1d, 0x6c, 0x63, 0xc7, 0x30, 0xde, 0x25, 0x92, 0x12, 0xa8, 0x09, 0x08,
+	0x25, 0x1e, 0x72, 0xa8, 0x38, 0xc8, 0x25, 0x10, 0x92, 0xa8, 0x48, 0x28,
+	0x1d, 0x0e, 0x6a, 0xa7, 0x35, 0xc6, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x63, 0xac, 0xe5, 0x56, 0x70, 0xb8,
-	0x14, 0x12, 0x15, 0x49, 0x08, 0xa4, 0x13, 0x1c, 0x15, 0x4e, 0x78, 0xa4,
-	0x10, 0x90, 0x15, 0x48, 0x49, 0xa4, 0x7b, 0x0c, 0xe3, 0xc6, 0x36, 0xb8,
-	0x10, 0x00, 0x00, 0x00, 0x00, 0x20, 0x00, 0x00, 0x00, 0x00, 0x00, 0x20,
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x07, 0xcf, 0x9f, 0xb8, 0x79, 0x8e, 0x19, 0x99, 0xb3, 0x6c, 0x8d, 0x8c,
-	0x31, 0xb1, 0x63, 0x4c, 0x0d, 0x8c, 0x31, 0xb0, 0x66, 0x18, 0x3b, 0x58,
-	0x63, 0x18, 0x66, 0x19, 0xdb, 0x58, 0x63, 0x0c, 0x3e, 0x7d, 0x93, 0x58,
-	0x63, 0x06, 0x46, 0x30, 0xe3, 0x78, 0x66, 0x66, 0xcc, 0x30, 0x06, 0x30,
-	0x36, 0x64, 0xcc, 0x00, 0x06, 0x30, 0x0f, 0x38, 0x7e, 0x00, 0x0e, 0x38,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 };
 
+/* ARGSUSED */
 static int
 mlcdmatch(parent, cf, aux)
 	struct device *parent;
@@ -214,6 +227,7 @@ mlcdattach(parent, self, aux)
 
 	sc->sc_parent = parent;
 	sc->sc_unit = ma->ma_unit;
+	sc->sc_direction = ma->ma_basedevinfo->di_connector_direction;
 
 	funcdef.v = maple_get_function_data(ma->ma_devinfo, MAPLE_FN_LCD);
 	printf(": LCD display\n");
@@ -225,15 +239,16 @@ mlcdattach(parent, self, aux)
 		printf("no ");
 	else
 		printf("%d acc/", sc->sc_wacc);
-	printf("write, %s, normally %s\n",
-	    funcdef.s.hv ? "vertical" : "horizontal",
-	    funcdef.s.bw ? "black" : "white");
+	printf("write, %s, norm %s%s\n",
+	    funcdef.s.hv ? "vert" : "horiz",
+	    funcdef.s.bw ? "black" : "white",
+	    sc->sc_direction == MAPLE_CONN_TOP ? ", upside-down" : "");
 
 	/*
 	 * start init sequence
 	 */
 	sc->sc_stat = MLCD_INIT;
-	bufq_alloc(&sc->sc_q, BUFQ_DISKSORT|BUFQ_SORT_RAWBLOCK);
+	SIMPLEQ_INIT(&sc->sc_q);
 
 	/* check consistency */
 	if (sc->sc_wacc != 0) {
@@ -274,13 +289,14 @@ mlcdattach(parent, self, aux)
 	    MAPLE_COMMAND_GETMINFO, sizeof sc->sc_reqm / 4, &sc->sc_reqm, 0);
 }
 
+/* ARGSUSED1 */
 static int
 mlcddetach(self, flags)
 	struct device *self;
 	int flags;
 {
 	struct mlcd_softc *sc = (struct mlcd_softc *) self;
-	struct buf *bp;
+	struct mlcd_buf *bp;
 	int minor_l, minor_h;
 
 	sc->sc_stat = MLCD_DETACH;	/* just in case */
@@ -289,18 +305,14 @@ mlcddetach(self, flags)
 	 * kill pending I/O
 	 */
 	if ((bp = sc->sc_bp) != NULL) {
-		bp->b_error = EIO;
-		bp->b_flags |= B_ERROR;
-		bp->b_resid = bp->b_bcount;
-		biodone(bp);
+		bp->lb_error = EIO;
+		wakeup(bp);
 	}
-	while ((bp = BUFQ_GET(&sc->sc_q)) != NULL) {
-		bp->b_error = EIO;
-		bp->b_flags |= B_ERROR;
-		bp->b_resid = bp->b_bcount;
-		biodone(bp);
+	while ((bp = SIMPLEQ_FIRST(&sc->sc_q)) != NULL) {
+		SIMPLEQ_REMOVE_HEAD(&sc->sc_q, lb_q);
+		bp->lb_error = EIO;
+		wakeup(bp);
 	}
-	bufq_free(&sc->sc_q);
 
 	/*
 	 * revoke vnodes
@@ -321,6 +333,7 @@ mlcddetach(self, flags)
 /*
  * called back from maple bus driver
  */
+/* ARGSUSED3 */
 static void
 mlcd_intr(dev, response, sz, flags)
 	void *dev;
@@ -329,7 +342,7 @@ mlcd_intr(dev, response, sz, flags)
 {
 	struct mlcd_softc *sc = dev;
 	struct mlcd_response_media_info *rm = (void *) response->data;
-	struct buf *bp;
+	struct mlcd_buf *bp;
 	int part;
 	struct mlcd_pt *pt;
 
@@ -373,6 +386,11 @@ mlcd_intr(dev, response, sz, flags)
 				sc->sc_reqw.phase = 0;
 				bcopy(initimg48x32, sc->sc_reqw.data,
 				    sizeof initimg48x32);
+				if (sc->sc_direction == MAPLE_CONN_TOP) {
+					/* the LCD is upside-down */
+					mlcd_rotate_bitmap(sc->sc_reqw.data,
+					    sizeof initimg48x32);
+				}
 				maple_command(sc->sc_parent, sc->sc_unit,
 				    MAPLE_FN_LCD, MAPLE_COMMAND_BWRITE,
 				    MLCD_SIZE_REQW(sc) / 4, &sc->sc_reqw, 0);
@@ -400,7 +418,7 @@ mlcd_intr(dev, response, sz, flags)
 				mlcddone(sc);
 			} else {
 				/* go next phase */
-				bcopy(bp->b_data
+				bcopy((char *)bp->lb_data
 					+ sc->sc_waccsz * sc->sc_reqw.phase,
 				    sc->sc_reqw.data, sc->sc_waccsz);
 				maple_command(sc->sc_parent, sc->sc_unit,
@@ -411,14 +429,14 @@ mlcd_intr(dev, response, sz, flags)
 		case MAPLE_RESPONSE_LCDERR:
 			mlcd_printerror(sc->sc_pt[sc->sc_reqw.pt].pt_name,
 			    rm->func_code /* XXX */);
-			mlcdstart_bp(sc, bp);		/* retry */
+			mlcdstart_bp(sc);		/* retry */
 			break;
 		default:
 			printf("%s: write: unexpected response %#x, %#x, sz %d\n",
 			    sc->sc_pt[sc->sc_reqw.pt].pt_name,
 			    ntohl(response->response_code),
 			    ntohl(rm->func_code), sz);
-			mlcdstart_bp(sc, bp);		/* retry */
+			mlcdstart_bp(sc);		/* retry */
 			break;
 		}
 		break;
@@ -451,6 +469,7 @@ mlcd_printerror(head, code)
 	printf("\n");
 }
 
+/* ARGSUSED */
 int
 mlcdopen(dev, flags, devtype, p)
 	dev_t dev;
@@ -477,6 +496,7 @@ mlcdopen(dev, flags, devtype, p)
 	return 0;
 }
 
+/* ARGSUSED */
 int
 mlcdclose(dev, flags, devtype, p)
 	dev_t dev;
@@ -497,71 +517,6 @@ mlcdclose(dev, flags, devtype, p)
 	return 0;
 }
 
-void
-mlcdstrategy(bp)
-	struct buf *bp;
-{
-	int dev, unit, part;
-	struct mlcd_softc *sc;
-	struct mlcd_pt *pt;
-	daddr_t off, nblk, cnt;
-
-	dev = bp->b_dev;
-	unit = MLCD_UNIT(dev);
-	part = MLCD_PART(dev);
-	sc = mlcd_cd.cd_devs[unit];
-	pt = &sc->sc_pt[part];
-
-#if 0
-	printf("%s: mlcdstrategy: blkno %d, count %ld\n",
-	    pt->pt_name, bp->b_blkno, bp->b_bcount);
-#endif
-
-	if (bp->b_flags & B_READ)
-		goto inval;			/* no read */
-
-	cnt = howmany(bp->b_bcount, sc->sc_bsize);
-	if (cnt == 0)
-		goto done;	/* no work */
-
-	/* XXX We have set the transfer is only one block in mlcd_minphys(). */
-	KASSERT(cnt == 1);
-
-	if (bp->b_blkno & ~(~(daddr_t)0 >> (DEV_BSHIFT + 1 /* sign bit */))
-	    /*|| (bp->b_bcount % sc->sc_bsize) != 0*/)
-		goto inval;
-
-	off = bp->b_blkno * DEV_BSIZE / sc->sc_bsize;
-	nblk = pt->pt_nblk;
-
-	/* deal with the EOF condition */
-	if (off + cnt > nblk) {
-		if (off >= nblk) {
-			if (off == nblk) {
-				bp->b_resid = bp->b_bcount;
-				goto done;
-			}
-			goto inval;
-		}
-		cnt = nblk - off;
-		bp->b_resid = bp->b_bcount - (cnt * sc->sc_bsize);
-	}
-
-	bp->b_rawblkno = off;
-
-	/* queue this transfer */
-	BUFQ_PUT(&sc->sc_q, bp);
-
-	if (sc->sc_stat == MLCD_IDLE)
-		mlcdstart(sc);
-
-	return;
-
-inval:	bp->b_error = EINVAL;
-	bp->b_flags |= B_ERROR;
-done:	biodone(bp);
-}
-
 /*
  * start I/O operations
  */
@@ -569,44 +524,42 @@ static void
 mlcdstart(sc)
 	struct mlcd_softc *sc;
 {
-	struct buf *bp;
+	struct mlcd_buf *bp;
 
-	if ((bp = BUFQ_GET(&sc->sc_q)) == NULL) {
+	if ((bp = SIMPLEQ_FIRST(&sc->sc_q)) == NULL) {
 		sc->sc_stat = MLCD_IDLE;
 		maple_enable_unit_ping(sc->sc_parent, sc->sc_unit,
 		    MAPLE_FN_LCD, 1);
 		return;
 	}
 
+	SIMPLEQ_REMOVE_HEAD(&sc->sc_q, lb_q);
+
+	sc->sc_bp = bp;
 	sc->sc_retry = 0;
-	mlcdstart_bp(sc, bp);
+	mlcdstart_bp(sc);
 }
 
 /*
  * start/retry a specified I/O operation
  */
 static void
-mlcdstart_bp(sc, bp)
+mlcdstart_bp(sc)
 	struct mlcd_softc *sc;
-	struct buf *bp;
 {
-	int part;
+	struct mlcd_buf *bp;
 	struct mlcd_pt *pt;
 
-	part = MLCD_PART(bp->b_dev);
-	pt = &sc->sc_pt[part];
+	bp = sc->sc_bp;
+	pt = &sc->sc_pt[bp->lb_partno];
 
 	/* handle retry */
 	if (sc->sc_retry++ > MLCD_MAXRETRY) {
 		/* retry count exceeded */
-		bp->b_error = EIO;
-		bp->b_flags |= B_ERROR;
+		bp->lb_error = EIO;
 		mlcddone(sc);
 		return;
 	}
-
-	sc->sc_bp = bp;
-	/* sc->sc_cnt = cnt; */	/* cnt is always 1 */
 
 	/*
 	 * I/O access will fail if the removal detection (by maple driver)
@@ -618,14 +571,13 @@ mlcdstart_bp(sc, bp)
 	/*
 	 * Start the first phase (phase# = 0).
 	 */
-	KASSERT((bp->b_flags & B_READ) == 0);
 	/* write */
 	sc->sc_stat = MLCD_WRITE;
 	sc->sc_reqw.func_code = htonl(MAPLE_FUNC(MAPLE_FN_LCD));
-	sc->sc_reqw.pt = part;
-	sc->sc_reqw.block = htons(bp->b_rawblkno);
+	sc->sc_reqw.pt = bp->lb_partno;
+	sc->sc_reqw.block = htons(bp->lb_blkno);
 	sc->sc_reqw.phase = 0;		/* first phase */
-	bcopy(bp->b_data /* + sc->sc_waccsz * phase */,
+	bcopy((char *) bp->lb_data /* + sc->sc_waccsz * phase */,
 	    sc->sc_reqw.data, sc->sc_waccsz);
 	maple_command(sc->sc_parent, sc->sc_unit, MAPLE_FN_LCD,
 	    MAPLE_COMMAND_BWRITE, MLCD_SIZE_REQW(sc) / 4, &sc->sc_reqw, 0);
@@ -635,43 +587,166 @@ static void
 mlcddone(sc)
 	struct mlcd_softc *sc;
 {
-	struct buf *bp;
+	struct mlcd_buf *bp;
 
 	/* terminate current transfer */
 	bp = sc->sc_bp;
 	KASSERT(bp);
 	sc->sc_bp = NULL;
-	biodone(bp);
+	wakeup(bp);
 
 	/* go next transfer */
 	mlcdstart(sc);
 }
 
-static void mlcd_minphys __P((struct buf *));
-
-static void
-mlcd_minphys(bp)
-	struct buf *bp;
+/*
+ * allocate a buffer for one block
+ *
+ * return NULL if
+ *	[flags == M_NOWAIT] out of buffer space
+ *	[flags == M_WAITOK] device detach detected
+ */
+static struct mlcd_buf *
+mlcd_buf_alloc(dev, flags)
+	int dev;
+	int flags;	/* flags for malloc() */
 {
-	int unit;
 	struct mlcd_softc *sc;
+	struct mlcd_pt *pt;
+	int unit, part;
+	struct mlcd_buf *bp;
 
-	unit = MLCD_UNIT(bp->b_dev);
+	unit = MLCD_UNIT(dev);
+	part = MLCD_PART(dev);
 	sc = mlcd_cd.cd_devs[unit];
+	KASSERT(sc);
+	pt = &sc->sc_pt[part];
+	KASSERT(pt);
 
-	/* XXX one block only */
-	if (bp->b_bcount > sc->sc_bsize)
-		bp->b_bcount = sc->sc_bsize;
+	if ((bp = malloc(MLCD_BUF_SZ(sc), M_DEVBUF, flags)) == NULL)
+		return bp;
+
+	/*
+	 * malloc() may sleep, and the device may be detached during sleep.
+	 * XXX this check is not complete.
+	 */
+	if (sc != device_lookup(&mlcd_cd, unit)
+	    || sc->sc_stat == MLCD_INIT
+	    || sc->sc_stat == MLCD_INIT2
+	    || part >= sc->sc_npt || pt != &sc->sc_pt[part]
+	    || pt->pt_flags == 0) {
+		free(bp, M_DEVBUF);
+		return NULL;
+	}
+
+	bp->lb_error = 0;
+
+	return bp;
 }
 
+static void
+mlcd_buf_free(bp)
+	struct mlcd_buf *bp;
+{
+
+	free(bp, M_DEVBUF);
+}
+
+/* invert order of bits */
+static __inline u_int32_t
+reverse_32(b)
+	u_int32_t b;
+{
+	u_int32_t b1;
+
+	/* invert every 8bit */
+	b1 = (b & 0x55555555) << 1;  b = (b >> 1) & 0x55555555;  b |= b1;
+	b1 = (b & 0x33333333) << 2;  b = (b >> 2) & 0x33333333;  b |= b1;
+	b1 = (b & 0x0f0f0f0f) << 4;  b = (b >> 4) & 0x0f0f0f0f;  b |= b1;
+
+	/* invert byte order */
+	return bswap32(b);
+}
+
+static void
+mlcd_rotate_bitmap(ptr, size)
+	void *ptr;
+	size_t size;
+{
+	u_int32_t *p, *q, tmp;
+
+	KDASSERT(size % sizeof(u_int32_t) == 0);
+	for (p = ptr, q = (void *)((char *)ptr + size); p < q; ) {
+		tmp = reverse_32(*p);
+		*p++ = reverse_32(*--q);
+		*q = tmp;
+	}
+}
+
+/* ARGSUSED2 */
 int
 mlcdwrite(dev, uio, flags)
 	dev_t	dev;
 	struct	uio *uio;
 	int	flags;
 {
+	struct mlcd_softc *sc;
+	struct mlcd_pt *pt;
+	struct mlcd_buf *bp;
+	int part;
+	off_t devsize;
+	int error = 0;
 
-	return (physio(mlcdstrategy, NULL, dev, B_WRITE, mlcd_minphys, uio));
+	part = MLCD_PART(dev);
+	sc = mlcd_cd.cd_devs[MLCD_UNIT(dev)];
+	pt = &sc->sc_pt[part];
+
+#if 0
+	printf("%s: mlcdwrite: offset %ld, size %d\n",
+	    pt->pt_name, (long) uio->uio_offset, uio->uio_resid);
+#endif
+
+	devsize = pt->pt_nblk * sc->sc_bsize;
+	if (uio->uio_offset % sc->sc_bsize || uio->uio_offset > devsize)
+		return EINVAL;
+
+	if ((bp = mlcd_buf_alloc(dev, M_WAITOK)) == NULL)
+		return EIO;	/* device is detached during allocation */
+
+	bp->lb_partno = part;
+
+	while (uio->uio_offset < devsize
+	    && uio->uio_resid >= (size_t) sc->sc_bsize) {
+		/* invert block number if upside-down */
+		bp->lb_blkno = (sc->sc_direction == MAPLE_CONN_TOP) ?
+		    pt->pt_nblk - uio->uio_offset / sc->sc_bsize - 1 :
+		    uio->uio_offset / sc->sc_bsize;
+
+		if ((error = uiomove(bp->lb_data, sc->sc_bsize, uio)) != 0)
+			break;
+
+		if (sc->sc_direction == MAPLE_CONN_TOP) {
+			/* the LCD is upside-down */
+			mlcd_rotate_bitmap(bp->lb_data, sc->sc_bsize);
+		}
+
+		/* queue this transfer */
+		SIMPLEQ_INSERT_TAIL(&sc->sc_q, bp, lb_q);
+
+		if (sc->sc_stat == MLCD_IDLE)
+			mlcdstart(sc);
+
+		tsleep(bp, PRIBIO + 1, "mlcdbuf", 0);
+
+		if ((error = bp->lb_error) != 0) {
+			uio->uio_resid += sc->sc_bsize;
+			break;
+		}
+	}
+
+	mlcd_buf_free(bp);
+
+	return error;
 }
 
 int
