@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.8 1995/01/09 11:16:50 mycroft Exp $	*/
+/*	$NetBSD: mem.c,v 1.9 1995/04/10 00:59:33 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -176,7 +176,7 @@ unlock:
 	return (error);
 }
 
-mmmap(dev, off, prot)
+mmmmap(dev, off, prot)
 	dev_t dev;
 	int off, prot;
 {
