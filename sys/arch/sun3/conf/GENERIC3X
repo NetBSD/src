@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC3X,v 1.17.4.1 1998/01/27 19:13:03 gwr Exp $
+# $NetBSD: GENERIC3X,v 1.17.4.2 1998/01/28 19:12:06 gwr Exp $
 
 # GENERIC Sun3X (3/80, 3/470)
 # Supports root on: ie0, le0, sd*, ...
@@ -78,6 +78,7 @@ options 	TCP_COMPAT_42	# compatibility with 4.2BSD TCP/IP
 
 # Work-around for root on slow servers (insurance...)
 options 	NFS_BOOT_RWSIZE=1024
+options 	NFS_BOOT_BOOTPARAM
 
 config		netbsd root on ? type ?
 
@@ -110,7 +111,7 @@ ms0	at zsc0 channel 1	# mouse
 # Network devices
 #
 
-# Intel Ethernet
+# Intel Ethernet (onboard, or VME)
 ie0 at obio0 addr 0x65000000 ipl 3
 ie1 at vme2  addr   0xe88000 ipl 3 vect 0x75
 

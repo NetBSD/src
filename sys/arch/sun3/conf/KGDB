@@ -1,4 +1,4 @@
-# $NetBSD: KGDB,v 1.15.4.1 1998/01/27 19:14:02 gwr Exp $
+# $NetBSD: KGDB,v 1.15.4.2 1998/01/28 19:12:07 gwr Exp $
 
 # KGDB Sun3 (3/50, 3/60, 3/110, 3/160, 3/260, 3/E)
 # like GENERIC but supports gdb on other machine, i.e.:
@@ -80,6 +80,7 @@ options 	TCP_COMPAT_42	# compatibility with 4.2BSD TCP/IP
 
 # Work-around for root on slow servers (insurance...)
 options 	NFS_BOOT_RWSIZE=1024
+options 	NFS_BOOT_BOOTPARAM
 
 config		netbsd root on ? type ?
 

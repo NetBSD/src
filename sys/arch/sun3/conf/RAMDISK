@@ -1,4 +1,4 @@
-# $NetBSD: RAMDISK,v 1.14.2.1 1998/01/27 19:14:04 gwr Exp $
+# $NetBSD: RAMDISK,v 1.14.2.2 1998/01/28 19:12:11 gwr Exp $
 
 # RAMDISK: Root/swap on ramdisk
 # This kernel is used to:
@@ -44,9 +44,6 @@ options 	MINIROOTSIZE=512	# size of memory disk, in blocks
 # Networking options
 options 	INET		# IP prototol stack support
 options 	TCP_COMPAT_42	# compatibility with 4.2BSD TCP/IP
-
-# Work-around for root on slow servers (insurance...)
-options 	NFS_BOOT_RWSIZE=1024
 
 config		netbsd root on md0 type ffs
 
@@ -135,7 +132,7 @@ cd* at scsibus? target ? lun ?		# SCSI CD-ROMs
 #ss* at scsibus? target ? lun ?		# SCSI scanners
 #uk* at scsibus? target ? lun ?		# unknown SCSI devices
 
-# Memory-disk (root for install tape)
+# Memory-disk drivers (root for install tape)
 pseudo-device	md		2
 
 # Misc.
