@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.71 1996/04/15 23:44:53 jtc Exp $
+#	$NetBSD: Makefile.inc,v 1.72 1996/07/03 21:41:46 jtc Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 4/16/94
 
 # gen sources
@@ -6,7 +6,8 @@
 
 SRCS+=	alarm.c assert.c clock.c closedir.c confstr.c ctermid.c \
 	ctype_.c daemon.c devname.c disklabel.c err.c errx.c errlist.c \
-	errno.c exec.c fnmatch.c fstab.c ftok.c fts.c getbsize.c getcap.c \
+	errno.c execl.c execle.c execlp.c execv.c execvp.c fnmatch.c fstab.c \
+	ftok.c fts.c getbsize.c getcap.c \
 	getcwd.c getdomainname.c getgrent.c getgrouplist.c gethostname.c \
 	getloadavg.c getlogin.c getmntinfo.c getnetgrent.c getpagesize.c \
 	getpass.c getpwent.c getsubopt.c getttyent.c getusershell.c glob.c \

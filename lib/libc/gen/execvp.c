@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.8 1996/07/03 19:53:46 jtc Exp $	*/
+/*	$NetBSD: execvp.c,v 1.1 1996/07/03 21:41:54 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,127 +37,19 @@
 #if 0
 static char sccsid[] = "@(#)exec.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: exec.c,v 1.8 1996/07/03 19:53:46 jtc Exp $";
+static char rcsid[] = "$NetBSD: execvp.c,v 1.1 1996/07/03 21:41:54 jtc Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
-#include <sys/param.h>
-#include <sys/types.h>
 #include <errno.h>
-#include <unistd.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdio.h>
+#include <limits.h>
+#include <unistd.h>
 #include <paths.h>
 
-#if __STDC__
-#include <stdarg.h>
-#define VA_START(ap, last)	va_start(ap, last)
-#else
-#include <varargs.h>
-#define VA_START(ap, last)	va_start(ap)
-#endif
-
 extern char **environ;
-
-int
-#if __STDC__
-execl(const char *name, const char *arg, ...)
-#else
-execl(name, arg, va_alist)
-	const char *name;
-	const char *arg;
-	va_dcl
-#endif
-{
-	va_list ap;
-	char **argv;
-	int i;
-
-	VA_START(ap, arg);
-	for (i = 1; va_arg(ap, char *) != NULL; i++)
-		;
-	va_end(ap);
-
-	argv = alloca (i * sizeof (char *));
-	
-	VA_START(ap, arg);
-	argv[0] = (char *) arg;
-	for (i = 1; (argv[i] = (char *) va_arg(ap, char *)) != NULL; i++) 
-		;
-	va_end(ap);
-	
-	return execve(name, argv, environ);
-}
-
-int
-#if __STDC__
-execle(const char *name, const char *arg, ...)
-#else
-execle(name, arg, va_alist)
-	const char *name;
-	const char *arg;
-	va_dcl
-#endif
-{
-	va_list ap;
-	char **argv, **envp;
-	int i;
-
-	VA_START(ap, arg);
-	for (i = 1; va_arg(ap, char *) != NULL; i++)
-		;
-	va_end(ap);
-
-	argv = alloca (i * sizeof (char *));
-	
-	VA_START(ap, arg);
-	argv[0] = (char *) arg;
-	for (i = 1; (argv[i] = (char *) va_arg(ap, char *)) != NULL; i++) 
-		;
-	envp = (char **) va_arg(ap, char **);
-	va_end(ap);
-
-	return execve(name, argv, envp);
-}
-
-int
-#if __STDC__
-execlp(const char *name, const char *arg, ...)
-#else
-execlp(name, arg, va_alist)
-	const char *name;
-	const char *arg;
-	va_dcl
-#endif
-{
-	va_list ap;
-	char **argv;
-	int i;
-
-	VA_START(ap, arg);
-	for (i = 1; va_arg(ap, char *) != NULL; i++)
-		;
-	va_end(ap);
-
-	argv = alloca (i * sizeof (char *));
-	
-	VA_START(ap, arg);
-	argv[0] = (char *) arg;
-	for (i = 1; (argv[i] = va_arg(ap, char *)) != NULL; i++) 
-		;
-	va_end(ap);
-	
-	return execvp(name, argv);
-}
-
-int
-execv(name, argv)
-	const char *name;
-	char * const *argv;
-{
-	return execve(name, argv, environ);
-}
 
 int
 execvp(name, argv)
@@ -169,7 +61,7 @@ execvp(name, argv)
 	register int cnt, lp, ln;
 	register char *p;
 	int eacces = 0, etxtbsy = 0;
-	char *bp, *cur, *path, buf[MAXPATHLEN];
+	char *bp, *cur, *path, buf[PATH_MAX];
 
 	/* If it's an absolute or relative path name, it's easy. */
 	if (strchr(name, '/')) {
