@@ -1,4 +1,4 @@
-/*	$NetBSD: com_pcmcia.c,v 1.34 2003/10/23 00:22:55 uwe Exp $	 */
+/*	$NetBSD: com_pcmcia.c,v 1.35 2004/07/06 13:43:00 mycroft Exp $	 */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_pcmcia.c,v 1.34 2003/10/23 00:22:55 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_pcmcia.c,v 1.35 2004/07/06 13:43:00 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -238,8 +238,8 @@ retry:
 			    (cfe->iospace[0].start != 0)) {
 				if (!pcmcia_io_alloc(pa->pf,
 				    cfe->iospace[0].start, 
-				    cfe->iospace[0].length, 0,
-				    &psc->sc_pcioh)) {
+				    cfe->iospace[0].length,
+				    cfe->iospace[0].length, &psc->sc_pcioh)) {
 					goto found;
 				}
 			}
