@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.1,v 1.1.2.131 2003/03/25 20:01:35 jmc Exp $
+#	$NetBSD: CHANGES-1.6.1,v 1.1.2.132 2003/03/29 23:21:46 tron Exp $
 
 A complete list of changes from NetBSD 1.6 to NetBSD 1.6.1:
 
@@ -3859,3 +3859,15 @@ gnu/usr.bin/tar/extract.c			patched by hand
 	[wennmach, ticket #1229]
 
 	[Moved RC3 tag for this file]
+
+gnu/dist/sendmail/sendmail/conf.c		patch
+gnu/dist/sendmail/sendmail/parseaddr.c		patch
+gnu/dist/sendmail/sendmail/version.c		patch
+
+	Fix a buffer overflow in address parsing due to a char to int
+	conversion problem which is potentially remotely exploitable.
+	Problem found by Michal Zalewski.
+	Note: an MTA that is not patched might be vulnerable to data
+	that it receives from untrusted sources, which includes DNS.
+	[atatat, ticket #1237]
+
