@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.71 2003/01/05 08:11:33 jmc Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.72 2003/01/06 13:10:29 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.71 2003/01/05 08:11:33 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.72 2003/01/06 13:10:29 wiz Exp $");
 
 #define FWOHCI_WAIT_DEBUG 1
 
@@ -1067,7 +1067,7 @@ fwohci_desc_put(struct fwohci_softc *sc, struct fwohci_desc *fd, int ndesc)
 }
 
 /*
- * Asyncronous/Isochronous Transmit/Receive Context
+ * Asynchronous/Isochronous Transmit/Receive Context
  */
 static int
 fwohci_ctx_alloc(struct fwohci_softc *sc, struct fwohci_ctx **fcp,
@@ -2140,7 +2140,7 @@ fwohci_it_ctx_clear(ieee1394_it_tag_t *it)
 
 
 /*
- * Asyncronous Receive Requests input frontend.
+ * Asynchronous Receive Requests input frontend.
  */
 static void
 fwohci_arrq_input(struct fwohci_softc *sc, struct fwohci_ctx *fc)
